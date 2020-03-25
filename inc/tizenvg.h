@@ -25,12 +25,145 @@
     #define TIZENVG_EXPORT
 #endif
 
+#ifdef  LOG_TAG
+#undef  LOG_TAG
+#endif
+#define LOG_TAG "TIZENVG"
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-namespace tizenvg
+#define _TIZENVG_DECLARE_PRIVATE(A) \
+private: \
+    struct Impl; \
+    std::unique_ptr<Impl> pImpl; \
+    A(const A&) = delete; \
+    const A& operator=(const A&) = delete; \
+    A()
+
+#define _TIZENVG_DISABLE_CTOR(A) \
+    A() = delete; \
+    ~A() = delete
+
+namespace tvg
 {
+
+class SceneNode;
+
+
+/**
+ * @class PaintNode
+ *
+ * @ingroup TizenVG
+ *
+ * @brief description...
+ *
+ */
+class TIZENVG_EXPORT PaintNode
+{
+public:
+    virtual ~PaintNode() {}
+    virtual int prepare() = 0;
+};
+
+
+/**
+ * @class ShapeNode
+ *
+ * @ingroup TizenVG
+ *
+ * @brief description...
+ *
+ */
+class TIZENVG_EXPORT ShapeNode final : public PaintNode
+{
+public:
+    ~ShapeNode();
+
+    int prepare() noexcept override;
+
+    static std::unique_ptr<ShapeNode> gen();
+
+    _TIZENVG_DECLARE_PRIVATE(ShapeNode);
+};
+
+
+/**
+ * @class SceneNode
+ *
+ * @ingroup TizenVG
+ *
+ * @brief description...
+ *
+ */
+class TIZENVG_EXPORT SceneNode final : public PaintNode
+{
+public:
+    ~SceneNode();
+
+    int push(std::unique_ptr<ShapeNode> shape) noexcept;
+    int prepare() noexcept override;
+
+    static std::unique_ptr<SceneNode> gen() noexcept;
+
+    _TIZENVG_DECLARE_PRIVATE(SceneNode);
+};
+
+
+/**
+ * @class SwCanvas
+ *
+ * @ingroup TizenVG
+ *
+  @brief description...
+ *
+ */
+class TIZENVG_EXPORT SwCanvas final
+{
+public:
+    ~SwCanvas();
+
+    int push(std::unique_ptr<PaintNode> paint) noexcept;
+    int clear() noexcept;
+
+    int draw(bool async = true) noexcept;
+    int drawSync() noexcept;
+
+    int target(uint32_t* buffer, size_t stride, size_t height) noexcept;
+
+    static std::unique_ptr<SwCanvas> gen(uint32_t* buffer = nullptr, size_t stride = 0, size_t height = 0) noexcept;
+
+    _TIZENVG_DECLARE_PRIVATE(SwCanvas);
+};
+
+
+/**
+ * @class GlCanvas
+ *
+ * @ingroup TizenVG
+ *
+ * @brief description...
+ *
+ */
+class TIZENVG_EXPORT GlCanvas final
+{
+public:
+    ~GlCanvas();
+
+    int push(std::unique_ptr<PaintNode> paint) noexcept;
+    int clear() noexcept;
+
+    //TODO: Gl Specific methods. Need gl backend configuration methods as well.
+    int draw(bool async = true) noexcept { return 0; }
+    int drawSync() noexcept { return 0; }
+
+    static std::unique_ptr<GlCanvas> gen() noexcept;
+
+    _TIZENVG_DECLARE_PRIVATE(GlCanvas);
+};
+
 
 /**
  * @class Engine
@@ -56,6 +189,8 @@ public:
      */
     static int init() noexcept;
     static int term() noexcept;
+
+    _TIZENVG_DISABLE_CTOR(Engine);
 };
 
 } //namespace

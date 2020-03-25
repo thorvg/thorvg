@@ -1,5 +1,11 @@
 source_file = [
-   'TvgEngine.cpp'
+   'tvgCommon.h',
+   'tvgEngine.cpp',
+   'tvgCanvasBase.h',
+   'tvgSwCanvas.cpp',
+   'tvgGlCanvas.cpp',
+   'tvgSceneNode.cpp',
+   'tvgShapeNode.cpp'
 ]
 
 src_dep = declare_dependency(

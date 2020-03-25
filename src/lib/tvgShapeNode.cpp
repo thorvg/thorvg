@@ -14,48 +14,91 @@
  *  limitations under the License.
  *
  */
-#ifndef _TVG_ENGINE_CPP_
-#define _TVG_ENGINE_CPP_
+#ifndef _TVG_SHAPE_NODE_CPP_
+#define _TVG_SHAPE_NODE_CPP_
 
-#include <iostream>
-#include <cassert>
-#include "tizenvg.h"
-
-using namespace std;
-using namespace tizenvg;
+#include "tvgCommon.h"
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
 /************************************************************************/
-namespace tizenvg
-{
 
-class EngineImpl
+struct ShapeFill
 {
- public:
-    static int init() {
-        return 0;
-    }
-
-    static int term() {
-        return 0;
-    }
 };
 
-}
+
+struct ShapeStroke
+{
+};
+
+
+struct ShapePath
+{
+};
+
+
+struct ShapeTransform
+{
+    var e[4*4];
+};
+
+
+struct ShapeChildren
+{
+    vector<unique_ptr<ShapeNode>> v;
+};
+
+
+struct ShapeNode::Impl
+{
+    ShapeChildren *children = nullptr;
+    ShapeTransform *transform = nullptr;
+    ShapeFill *fill = nullptr;
+    ShapeStroke *stroke = nullptr;
+    ShapePath *path = nullptr;
+    uint32_t color = 0;
+    uint32_t id = 0;
+
+
+    ~Impl()
+    {
+        if (path) delete(path);
+        if (stroke) delete(stroke);
+        if (fill) delete(fill);
+        if (transform) delete(transform);
+        if (children) delete(children);
+    }
+
+};
+
 
 /************************************************************************/
 /* External Class Implementation                                        */
 /************************************************************************/
 
-int Engine::init() noexcept
+ShapeNode :: ShapeNode() : pImpl(make_unique<Impl>())
 {
-    return EngineImpl::init();
+
 }
 
-int Engine::term() noexcept
+
+ShapeNode :: ~ShapeNode()
 {
-    return EngineImpl::term();
+    cout << "ShapeNode(" << this << ") destroyed!" << endl;
 }
 
-#endif /* _TVG_ENGINE_CPP_ */
+
+unique_ptr<ShapeNode> ShapeNode::gen()
+{
+    return unique_ptr<ShapeNode>(new ShapeNode);
+}
+
+
+int ShapeNode :: prepare() noexcept
+{
+    return 0;
+}
+
+
+#endif //_TVG_SHAPE_NODE_CPP_
