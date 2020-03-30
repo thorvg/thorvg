@@ -25,8 +25,8 @@ int main(int argc, char **argv)
 
     //Prepare a Shape
     auto shape1 = tvg::ShapeNode::gen();
-    shape1->path(move(path));     //propagate owner
-    shape1->path(path.get());     //copy data directly
+    shape1->path(move(path));     //migrate owner otherwise,
+    shape1->path(path.get());     //copy raw data directly for performance
     shape1->fill(0, 255, 0, 255);
 
     //Draw the Shape onto the Canvas

@@ -16,7 +16,8 @@ int main(int argc, char **argv)
     auto canvas = tvg::SwCanvas::gen(buffer, WIDTH, HEIGHT);
 
     //Create a Scene
-    auto scene = tvg::SceneNode::gen(3);        //reserve 3 shape nodes (optional)
+    auto scene = tvg::SceneNode::gen();
+    scene->reserve(3);   //reserve 3 shape nodes (optional)
 
     //Shape1
     auto shape1 = tvg::ShapeNode::gen();

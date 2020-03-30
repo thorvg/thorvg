@@ -55,7 +55,7 @@ int SwCanvas::draw(bool async) noexcept
 }
 
 
-int SwCanvas::drawSync() noexcept
+int SwCanvas::sync() noexcept
 {
     return 0;
 }

@@ -26,7 +26,7 @@ int main(int argc, char **argv)
     shape1->strokeJoin(tvg::StrokeJoin::Miter);
     shape1->strokeLineCap(tvg::StrokeLineCap::Butt);
 
-    uint32_t dash[] = {3, 1, 5, 1};
+    uint32_t dash[] = {3, 1, 5, 1};        //dash pattern
     shape1->strokeDash(dash, 4);
 
     //Draw the Shape onto the Canvas

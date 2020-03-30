@@ -15,13 +15,17 @@ int main(int argc, char **argv)
     //Create a Canvas
     auto canvas = tvg::SwCanvas::gen(buffer, WIDTH, HEIGHT);
 
-    //Prepare a Shape
+    //Prepare a Shape (Rectangle)
     auto shape1 = tvg::ShapeNode::gen();
-    shape1->rect(0, 0, 400, 400, 0.1);      //x, y, w, h, corner_radius
-    shape1->fill(0, 255, 0, 255);
+//    shape1->rect(0, 0, 400, 400, 0.1);      //x, y, w, h, corner_radius
+//    shape1->fill(0, 255, 0, 255);           //r, g, b, a
 
-    //Draw the Shape onto the Canvas
+    /* Push the shape into the Canvas drawing list
+       When this shape is into the canvas list, the shape could update & prepare
+       internal data asynchronously for coming rendering.
+       Canvas keeps this shape node unless user call canvas->clear() */
     canvas->push(move(shape1));
+
     canvas->draw();
     canvas->sync();
 

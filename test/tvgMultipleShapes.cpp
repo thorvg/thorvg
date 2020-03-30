@@ -14,6 +14,7 @@ int main(int argc, char **argv)
 
     //Create a Canvas
     auto canvas = tvg::SwCanvas::gen(buffer, WIDTH, HEIGHT);
+    canvas->reserve(2);      //reserve 2 shape nodes (optional)
 
     //Prepare Rectangle
     auto shape1 = tvg::ShapeNode::gen();

@@ -129,7 +129,7 @@ public:
     int clear() noexcept;
 
     int draw(bool async = true) noexcept;
-    int drawSync() noexcept;
+    int sync() noexcept;
 
     int target(uint32_t* buffer, size_t stride, size_t height) noexcept;
 
@@ -157,7 +157,7 @@ public:
 
     //TODO: Gl Specific methods. Need gl backend configuration methods as well.
     int draw(bool async = true) noexcept { return 0; }
-    int drawSync() noexcept { return 0; }
+    int sync() noexcept { return 0; }
 
     static std::unique_ptr<GlCanvas> gen() noexcept;
 

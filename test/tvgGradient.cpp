@@ -27,14 +27,11 @@ int main(int argc, char **argv)
     fill1->color(1, 0, 0, 255, 255);          //color Stop 2: Blue
     shape1.fill(fill1);
 
-    //Draw the Shape onto the Canvas
     canvas->push(move(shape1));
 
     //Prepare Circle
     auto shape2 = tvg::ShapeNode::gen();
     shape2->circle(400, 400, 200);            //cx, cy, radius
-    shape2->fill(255, 255, 0, 255);           //r, g, b, a
-    canvas->push(move(shape2));
 
     //Radial Gradient Fill
     auto fill2 = tvg::RadialFill::gen();
@@ -44,9 +41,9 @@ int main(int argc, char **argv)
     fill2->color(1, 0, 0, 255, 255);          //color Stop 2: Blue
     shape2.fill(fill2);
 
-    //Draw the Shape onto the Canvas
     canvas->push(move(shape2));
 
+    //Draw the Shapes onto the Canvas
     canvas->draw();
     canvas->sync();
 
