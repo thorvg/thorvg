@@ -14,34 +14,48 @@
  *  limitations under the License.
  *
  */
-#ifndef _TVG_COMMON_H_
-#define _TVG_COMMON_H_
+#ifndef _TVG_SW_RASTER_CPP_
+#define _TVG_SW_RASTER_CPP_
 
-#include <iostream>
-#include <cassert>
-#include <vector>
-#include "tizenvg.h"
+#include "tvgCommon.h"
+#include "tvgSwRaster.h"
 
-using namespace std;
-using namespace tvg;
 
-namespace tvg
+static SwRaster* pInst = nullptr;
+
+int SwRaster::prepare(ShapeNode *shape)
 {
+    cout << "SWRaster prepare!!" << endl;
 
-struct Point
-{
-    float x, y;
-};
-
-class RasterMethod
-{
-public:
-    virtual ~RasterMethod() {}
-    virtual int prepare(ShapeNode *shape) = 0;
-};
-
-
+    return 0;
 }
 
 
-#endif //_TVG_COMMON_H_
+int SwRaster::init()
+{
+    if (pInst) return -1;
+    pInst = new SwRaster();
+    assert(pInst);
+
+    return 0;
+}
+
+
+int SwRaster::term()
+{
+    if (!pInst) return -1;
+    cout << "SwRaster(" << pInst << ") destroyed!" << endl;
+    delete(pInst);
+    pInst = nullptr;
+    return 0;
+}
+
+
+SwRaster* SwRaster::inst()
+{
+    assert(pInst);
+    return pInst;
+}
+
+
+#endif /* _TVG_SW_RASTER_CPP_ */

@@ -57,7 +57,7 @@ int SceneNode :: push(unique_ptr<ShapeNode> shape) noexcept
 }
 
 
-int SceneNode :: prepare() noexcept
+int SceneNode :: update() noexcept
 {
 
     return 0;

@@ -3,7 +3,7 @@ compiler_flags = ['-DTIZENVG_BUILD']
 subdir('lib')
 subdir('examples')
 
-tizenvg_lib_dep = [ src_dep ]
+tizenvg_lib_dep = [ src_dep, swraster_dep, glraster_dep ]
 
 tizenvg_lib = library(
 	'tizenvg',

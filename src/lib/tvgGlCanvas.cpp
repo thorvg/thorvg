@@ -19,6 +19,7 @@
 
 #include "tvgCommon.h"
 #include "tvgCanvasBase.h"
+#include "tvgGlRaster.h"
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
@@ -26,7 +27,7 @@
 
 struct GlCanvas::Impl : CanvasBase
 {
-    //...
+    Impl() : CanvasBase(GlRaster::inst()) {}
 };
 
 

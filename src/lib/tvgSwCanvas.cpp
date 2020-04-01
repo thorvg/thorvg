@@ -19,6 +19,8 @@
 
 #include "tvgCommon.h"
 #include "tvgCanvasBase.h"
+#include "tvgSwRaster.h"
+
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
@@ -29,6 +31,8 @@ struct SwCanvas::Impl : CanvasBase
     uint32_t* buffer = nullptr;
     int stride = 0;
     int height = 0;
+
+    Impl() : CanvasBase(SwRaster::inst()) {}
 };
 
 
@@ -65,6 +69,7 @@ int SwCanvas::push(unique_ptr<PaintNode> paint) noexcept
 {
     auto impl = pImpl.get();
     assert(impl);
+
     return impl->push(move(paint));
 }
 

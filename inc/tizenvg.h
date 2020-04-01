@@ -50,7 +50,7 @@ private: \
 namespace tvg
 {
 
-class SceneNode;
+enum class TIZENVG_EXPORT PathCommand { Close, MoveTo, LineTo, CubicTo };
 
 
 /**
@@ -65,7 +65,7 @@ class TIZENVG_EXPORT PaintNode
 {
 public:
     virtual ~PaintNode() {}
-    virtual int prepare() = 0;
+    virtual int update() = 0;
 };
 
 
@@ -82,7 +82,12 @@ class TIZENVG_EXPORT ShapeNode final : public PaintNode
 public:
     ~ShapeNode();
 
-    int prepare() noexcept override;
+    int update() noexcept override;
+
+    int appendRect(float x, float y, float w, float h, float radius) noexcept;
+    int appendCircle(float cx, float cy, float radius) noexcept;
+    int fill(uint32_t r, uint32_t g, uint32_t b, uint32_t a) noexcept;
+    int clear() noexcept;
 
     static std::unique_ptr<ShapeNode> gen();
 
@@ -103,8 +108,9 @@ class TIZENVG_EXPORT SceneNode final : public PaintNode
 public:
     ~SceneNode();
 
+    int update() noexcept override;
+
     int push(std::unique_ptr<ShapeNode> shape) noexcept;
-    int prepare() noexcept override;
 
     static std::unique_ptr<SceneNode> gen() noexcept;
 
@@ -128,6 +134,7 @@ public:
     int push(std::unique_ptr<PaintNode> paint) noexcept;
     int clear() noexcept;
 
+    int update(PaintNode* node) noexcept;
     int draw(bool async = true) noexcept;
     int sync() noexcept;
 

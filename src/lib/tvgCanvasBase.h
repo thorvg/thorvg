@@ -14,8 +14,8 @@
  *  limitations under the License.
  *
  */
-#ifndef _TVG_CANVAS_CPP_
-#define _TVG_CANVAS_CPP_
+#ifndef _TVG_CANVAS_BASE_CPP_
+#define _TVG_CANVAS_BASE_CPP_
 
 #include "tvgCommon.h"
 
@@ -25,15 +25,57 @@
 
 struct CanvasBase
 {
+    vector<PaintNode*> nodes;
+    RasterMethod*      raster;
 
-    int push(unique_ptr<PaintNode> paint)
+    CanvasBase(RasterMethod *pRaster):raster(pRaster)
     {
+
+    }
+
+    ~CanvasBase()
+    {
+       clear();
+    }
+
+    int reserve(size_t n)
+    {
+        nodes.reserve(n);
+
         return 0;
     }
 
     int clear()
     {
+        for (auto node : nodes) {
+            delete(node);
+        }
+        nodes.clear();
+
         return 0;
+    }
+
+    int push(unique_ptr<PaintNode> paint)
+    {
+        PaintNode *node = paint.release();
+        assert(node);
+
+        nodes.push_back(node);
+
+        int ret = node->update();
+        if (ret) return ret;
+
+        if (SceneNode *scene = dynamic_cast<SceneNode *>(node)) {
+
+             //TODO:
+
+        } else if (ShapeNode *shape = dynamic_cast<ShapeNode *>(node)) {
+            return raster->prepare(shape);
+        }
+
+        cout << "What type of PaintNode? = " << node << endl;
+
+        return -1;
     }
 
 };
@@ -43,4 +85,4 @@ struct CanvasBase
 /* External Class Implementation                                        */
 /************************************************************************/
 
-#endif /* _TVG_CANVAS_CPP_ */
+#endif /* _TVG_CANVAS_BASE_CPP_ */

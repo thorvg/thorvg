@@ -1,4 +1,4 @@
 build
 .vscode
 *.swp
-test
+testShape

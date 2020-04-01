@@ -14,34 +14,25 @@
  *  limitations under the License.
  *
  */
-#ifndef _TVG_COMMON_H_
-#define _TVG_COMMON_H_
-
-#include <iostream>
-#include <cassert>
-#include <vector>
-#include "tizenvg.h"
-
-using namespace std;
-using namespace tvg;
+#ifndef _TVG_SW_RASTER_H_
+#define _TVG_SW_RASTER_H_
 
 namespace tvg
 {
 
-struct Point
-{
-    float x, y;
-};
-
-class RasterMethod
+class SwRaster : public RasterMethod
 {
 public:
-    virtual ~RasterMethod() {}
-    virtual int prepare(ShapeNode *shape) = 0;
-};
+    int prepare(ShapeNode *shape) override;
+    static SwRaster* inst();
+    static int init();
+    static int term();
 
+private:
+    SwRaster(){};
+    ~SwRaster(){};
+};
 
 }
 
-
-#endif //_TVG_COMMON_H_
+#endif /* _TVG_SW_RASTER_H_ */

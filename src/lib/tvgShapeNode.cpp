@@ -18,6 +18,7 @@
 #define _TVG_SHAPE_NODE_CPP_
 
 #include "tvgCommon.h"
+#include "tvgShapePath.h"
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
@@ -33,33 +34,25 @@ struct ShapeStroke
 };
 
 
-struct ShapePath
-{
-};
-
-
 struct ShapeTransform
 {
-    var e[4*4];
-};
-
-
-struct ShapeChildren
-{
-    vector<unique_ptr<ShapeNode>> v;
+    float e[4*4];
 };
 
 
 struct ShapeNode::Impl
 {
-    ShapeChildren *children = nullptr;
     ShapeTransform *transform = nullptr;
     ShapeFill *fill = nullptr;
     ShapeStroke *stroke = nullptr;
     ShapePath *path = nullptr;
-    uint32_t color = 0;
-    uint32_t id = 0;
 
+    uint8_t color[4] = {0, 0, 0, 0};    //r, g, b, a
+
+    Impl() : path(new ShapePath)
+    {
+
+    }
 
     ~Impl()
     {
@@ -67,9 +60,7 @@ struct ShapeNode::Impl
         if (stroke) delete(stroke);
         if (fill) delete(fill);
         if (transform) delete(transform);
-        if (children) delete(children);
     }
-
 };
 
 
@@ -95,10 +86,69 @@ unique_ptr<ShapeNode> ShapeNode::gen()
 }
 
 
-int ShapeNode :: prepare() noexcept
+int ShapeNode :: update() noexcept
+{
+    auto impl = pImpl.get();
+    assert(impl);
+
+    return 0;
+}
+
+
+int ShapeNode :: clear() noexcept
+{
+    auto impl = pImpl.get();
+    assert(impl);
+
+    return impl->path->clear();
+}
+
+
+int ShapeNode ::appendCircle(float cx, float cy, float radius) noexcept
 {
     return 0;
 }
 
+
+int ShapeNode :: appendRect(float x, float y, float w, float h, float radius) noexcept
+{
+    auto impl = pImpl.get();
+    assert(impl);
+
+    //clamping radius by minimum size
+    auto min = (w < h ? w : h) * 0.5f;
+    if (radius > min) radius = min;
+
+    //rectangle
+    if (radius == 0) {
+        impl->path->reserve(5, 4);
+        impl->path->moveTo(x, y);
+        impl->path->lineTo(x + w, y);
+        impl->path->lineTo(x + w, y + h);
+        impl->path->lineTo(x, y + h);
+        impl->path->close();
+    //circle
+    } else if (w == h && radius * 2 == w) {
+        appendCircle(x + (w * 0.5f), y + (h * 0.5f), radius);
+    } else {
+        //...
+    }
+
+    return 0;
+}
+
+
+int ShapeNode :: fill(uint32_t r, uint32_t g, uint32_t b, uint32_t a) noexcept
+{
+    auto impl = pImpl.get();
+    assert(impl);
+
+    impl->color[0] = r;
+    impl->color[1] = g;
+    impl->color[2] = b;
+    impl->color[3] = a;
+
+    return 0;
+}
 
 #endif //_TVG_SHAPE_NODE_CPP_

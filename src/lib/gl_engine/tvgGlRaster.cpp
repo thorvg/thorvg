@@ -14,34 +14,48 @@
  *  limitations under the License.
  *
  */
-#ifndef _TVG_COMMON_H_
-#define _TVG_COMMON_H_
+#ifndef _TVG_GL_RASTER_CPP_
+#define _TVG_GL_RASTER_CPP_
 
-#include <iostream>
-#include <cassert>
-#include <vector>
-#include "tizenvg.h"
+#include "tvgCommon.h"
+#include "tvgGlRaster.h"
 
-using namespace std;
-using namespace tvg;
 
-namespace tvg
+static GlRaster* pInst = nullptr;
+
+int GlRaster::prepare(ShapeNode *shape)
 {
+    cout << "GlRaster prepare!!" << endl;
 
-struct Point
-{
-    float x, y;
-};
-
-class RasterMethod
-{
-public:
-    virtual ~RasterMethod() {}
-    virtual int prepare(ShapeNode *shape) = 0;
-};
-
-
+    return 0;
 }
 
 
-#endif //_TVG_COMMON_H_
+int GlRaster::init()
+{
+    if (pInst) return -1;
+    pInst = new GlRaster();
+    assert(pInst);
+
+    return 0;
+}
+
+
+int GlRaster::term()
+{
+    if (!pInst) return -1;
+    cout << "GlRaster(" << pInst << ") destroyed!" << endl;
+    delete(pInst);
+    pInst = nullptr;
+    return 0;
+}
+
+
+GlRaster* GlRaster::inst()
+{
+    assert(pInst);
+    return pInst;
+}
+
+
+#endif /* _TVG_GL_RASTER_CPP_ */
