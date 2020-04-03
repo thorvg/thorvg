@@ -1,6 +1,8 @@
 source_file = [
+   'tvgSwCommon.h',
    'tvgSwRaster.h',
    'tvgSwRaster.cpp',
+   'tvgSwShape.cpp',
 ]
 
 swraster_dep = declare_dependency(

@@ -62,15 +62,10 @@ struct CanvasBase
 
         nodes.push_back(node);
 
-        int ret = node->update();
-        if (ret) return ret;
-
         if (SceneNode *scene = dynamic_cast<SceneNode *>(node)) {
 
-             //TODO:
-
         } else if (ShapeNode *shape = dynamic_cast<ShapeNode *>(node)) {
-            return raster->prepare(shape);
+            return shape->update(raster);
         }
 
         cout << "What type of PaintNode? = " << node << endl;

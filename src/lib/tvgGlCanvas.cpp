@@ -69,4 +69,18 @@ int GlCanvas::clear() noexcept
     return impl->clear();
 }
 
+
+int GlCanvas::update() noexcept
+{
+    return 0;
+}
+
+
+RasterMethod* GlCanvas::engine() noexcept
+{
+    auto impl = pImpl.get();
+    assert(impl);
+    return impl->raster;
+}
+
 #endif /* _TVG_GLCANVAS_CPP_ */

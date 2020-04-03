@@ -46,12 +46,11 @@ struct ShapeNode::Impl
     ShapeFill *fill = nullptr;
     ShapeStroke *stroke = nullptr;
     ShapePath *path = nullptr;
-
     uint8_t color[4] = {0, 0, 0, 0};    //r, g, b, a
+    void *edata = nullptr;              //engine data
 
     Impl() : path(new ShapePath)
     {
-
     }
 
     ~Impl()
@@ -70,7 +69,6 @@ struct ShapeNode::Impl
 
 ShapeNode :: ShapeNode() : pImpl(make_unique<Impl>())
 {
-
 }
 
 
@@ -80,18 +78,20 @@ ShapeNode :: ~ShapeNode()
 }
 
 
-unique_ptr<ShapeNode> ShapeNode::gen()
+unique_ptr<ShapeNode> ShapeNode::gen() noexcept
 {
     return unique_ptr<ShapeNode>(new ShapeNode);
 }
 
 
-int ShapeNode :: update() noexcept
+int ShapeNode :: update(RasterMethod* engine) noexcept
 {
     auto impl = pImpl.get();
     assert(impl);
 
-    return 0;
+    impl->edata = engine->prepare(this, impl->edata);
+    if (impl->edata) return 0;
+    return - 1;
 }
 
 
@@ -104,7 +104,29 @@ int ShapeNode :: clear() noexcept
 }
 
 
-int ShapeNode ::appendCircle(float cx, float cy, float radius) noexcept
+int ShapeNode :: pathCommands(const PathCommand** cmds) noexcept
+{
+    auto impl = pImpl.get();
+    assert(impl && cmds);
+
+    *cmds = impl->path->cmds;
+
+    return impl->path->cmdCnt;
+}
+
+
+int ShapeNode :: pathCoords(const Point** pts) noexcept
+{
+    auto impl = pImpl.get();
+    assert(impl && pts);
+
+    *pts = impl->path->pts;
+
+    return impl->path->ptsCnt;
+}
+
+
+int ShapeNode :: appendCircle(float cx, float cy, float radius) noexcept
 {
     return 0;
 }

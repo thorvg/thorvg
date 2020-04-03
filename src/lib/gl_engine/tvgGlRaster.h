@@ -23,7 +23,7 @@ namespace tvg
 class GlRaster : public RasterMethod
 {
 public:
-    int prepare(ShapeNode *shape) override;
+    void* prepare(ShapeNode* shape, void* data) override;
     static GlRaster* inst();
     static int init();
     static int term();

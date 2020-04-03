@@ -17,17 +17,27 @@
 #ifndef _TVG_SW_RASTER_CPP_
 #define _TVG_SW_RASTER_CPP_
 
-#include "tvgCommon.h"
+#include "tvgSwCommon.h"
 #include "tvgSwRaster.h"
 
+/************************************************************************/
+/* Internal Class Implementation                                        */
+/************************************************************************/
 
 static SwRaster* pInst = nullptr;
 
-int SwRaster::prepare(ShapeNode *shape)
-{
-    cout << "SWRaster prepare!!" << endl;
 
-    return 0;
+void* SwRaster::prepare(ShapeNode *shape, void* data)
+{
+    SwShape *sdata = static_cast<SwShape*>(data);
+    if (!sdata) {
+        sdata = static_cast<SwShape*>(calloc(1, sizeof(SwShape)));
+        assert(sdata);
+    }
+
+    bool closed = shapeGenOutline(shape, sdata);
+
+    return sdata;
 }
 
 

@@ -104,4 +104,18 @@ unique_ptr<SwCanvas> SwCanvas::gen(uint32_t* buffer, size_t stride, size_t heigh
    return canvas;
 }
 
+
+int SwCanvas::update() noexcept
+{
+    return 0;
+}
+
+
+RasterMethod* SwCanvas::engine() noexcept
+{
+    auto impl = pImpl.get();
+    assert(impl);
+    return impl->raster;
+}
+
 #endif /* _TVG_SWCANVAS_CPP_ */

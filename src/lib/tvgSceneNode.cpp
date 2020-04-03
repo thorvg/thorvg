@@ -51,13 +51,14 @@ unique_ptr<SceneNode> SceneNode::gen() noexcept
     return unique_ptr<SceneNode>(new SceneNode);
 }
 
+
 int SceneNode :: push(unique_ptr<ShapeNode> shape) noexcept
 {
     return 0;
 }
 
 
-int SceneNode :: update() noexcept
+int SceneNode :: update(RasterMethod* engine) noexcept
 {
 
     return 0;

@@ -23,11 +23,11 @@
 
 static GlRaster* pInst = nullptr;
 
-int GlRaster::prepare(ShapeNode *shape)
+void* GlRaster::prepare(ShapeNode* shape, void* data)
 {
     cout << "GlRaster prepare!!" << endl;
 
-    return 0;
+    return nullptr;
 }
 
 

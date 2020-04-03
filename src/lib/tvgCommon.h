@@ -28,20 +28,13 @@ using namespace tvg;
 namespace tvg
 {
 
-struct Point
-{
-    float x, y;
-};
-
 class RasterMethod
 {
 public:
     virtual ~RasterMethod() {}
-    virtual int prepare(ShapeNode *shape) = 0;
+    virtual void* prepare(ShapeNode* shape, void* data) = 0;
 };
 
-
 }
-
 
 #endif //_TVG_COMMON_H_

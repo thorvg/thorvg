@@ -17,13 +17,10 @@
 #ifndef _TVG_SW_RASTER_H_
 #define _TVG_SW_RASTER_H_
 
-namespace tvg
-{
-
 class SwRaster : public RasterMethod
 {
 public:
-    int prepare(ShapeNode *shape) override;
+    void* prepare(ShapeNode* shape, void* data) override;
     static SwRaster* inst();
     static int init();
     static int term();
@@ -32,7 +29,5 @@ private:
     SwRaster(){};
     ~SwRaster(){};
 };
-
-}
 
 #endif /* _TVG_SW_RASTER_H_ */
