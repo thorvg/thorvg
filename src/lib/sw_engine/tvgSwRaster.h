@@ -20,7 +20,7 @@
 class SwRaster : public RasterMethod
 {
 public:
-    void* prepare(ShapeNode* shape, void* data) override;
+    void* prepare(const ShapeNode& shape, void* data) override;
     static SwRaster* inst();
     static int init();
     static int term();

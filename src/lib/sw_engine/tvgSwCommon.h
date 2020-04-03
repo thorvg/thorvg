@@ -20,29 +20,31 @@
 #include "tvgCommon.h"
 
 using namespace tvg;
-using SwPos = signed long;
 
-struct SwVector
-{
-  SwPos  x;
-  SwPos  y;
-};
+constexpr auto SW_CURVE_TAG_ON = 1;
+constexpr auto SW_CURVE_TAG_CUBIC = 2;
 
 struct SwOutline
 {
-  short*      cntrs;           /* the contour end points             */
-  short       cntrsCnt;        /* number of contours in glyph        */
-  SwVector*   pts;             /* the outline's points               */
-  short       ptsCnt;          /* number of points in the glyph      */
-  char*       tags;            /* the points flags                   */
-  int         flags;           /* outline masks                      */
+  size_t*     cntrs;            //the contour end points
+  size_t      cntrsCnt;         //number of contours in glyph
+  size_t      reservedCntrsCnt;
+  Point*      pts;              //the outline's points
+  size_t      ptsCnt;           //number of points in the glyph
+  size_t      reservedPtsCnt;
+  char*       tags;             //the points flags
+  size_t      flags;            //outline masks
 };
 
 struct SwShape
 {
-    SwOutline outline;
+//    SwRleRaster raster;
+    SwOutline*   outline;
 };
 
-bool shapeGenOutline(ShapeNode *shape, SwShape* sdata);
+bool shapeGenOutline(const ShapeNode& shape, SwShape& sdata);
+void shapeDelOutline(const ShapeNode& shape, SwShape& sdata);
+bool shapeGenRle(const ShapeNode& shape, SwShape& sdata);
+bool shapeUpdateBBox(const ShapeNode& shape, SwShape& sdata);
 
 #endif /* _TVG_SW_COMMON_H_ */

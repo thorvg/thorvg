@@ -19,86 +19,188 @@
 
 #include "tvgSwCommon.h"
 
-static void growOutlineContour(SwShape *sdata, size_t n)
-{
-    sdata->outline.cntrsCnt = n;
+/************************************************************************/
+/* Internal Class Implementation                                        */
+/************************************************************************/
 
+static void growOutlineContour(SwOutline& outline, size_t n)
+{
     if (n == 0) {
-        free(sdata->outline.cntrs);
-        sdata->outline.cntrs = nullptr;
+        free(outline.cntrs);
+        outline.cntrs = nullptr;
+        outline.cntrsCnt = 0;
+        outline.reservedCntrsCnt = 0;
         return;
     }
-    sdata->outline.cntrs = static_cast<short *>(realloc(sdata->outline.cntrs, n * sizeof(short)));
-    assert(sdata->outline.cntrs);
+    if (outline.reservedCntrsCnt >= outline.cntrsCnt + n) return;
+
+    cout << "Grow Cntrs: " << outline.reservedCntrsCnt << " -> " << outline.cntrsCnt + n << endl;;
+    outline.reservedCntrsCnt = n;
+    outline.cntrs = static_cast<size_t*>(realloc(outline.cntrs, n * sizeof(size_t)));
+    assert(outline.cntrs);
 }
 
 
-static void growOutlinePoint(SwShape *sdata, size_t n)
+static void growOutlinePoint(SwOutline& outline, size_t n)
 {
-    sdata->outline.ptsCnt = n;
-
     if (n == 0) {
-        free(sdata->outline.pts);
-        sdata->outline.pts = nullptr;
-        free(sdata->outline.tags);
-        sdata->outline.tags = nullptr;
+        free(outline.pts);
+        outline.pts = nullptr;
+        free(outline.tags);
+        outline.tags = nullptr;
+        outline.reservedPtsCnt = 0;
+        outline.ptsCnt = 0;
         return;
     }
 
-    sdata->outline.pts = static_cast<SwVector *>(realloc(sdata->outline.pts, n * sizeof(SwVector)));
-    assert(sdata->outline.pts);
-    sdata->outline.tags = static_cast<char*>(realloc(sdata->outline.tags, n * sizeof(char)));
-    assert(sdata->outline.tags);
+    if (outline.reservedPtsCnt >= outline.ptsCnt + n) return;
+
+    cout << "Grow Pts: " << outline.reservedPtsCnt << " -> " << outline.ptsCnt + n << endl;
+    outline.reservedPtsCnt = n;
+    outline.pts = static_cast<Point*>(realloc(outline.pts, n * sizeof(Point)));
+    assert(outline.pts);
+    outline.tags = static_cast<char*>(realloc(outline.tags, n * sizeof(char)));
+    assert(outline.tags);
 }
 
 
-static void outlineEnd(SwShape* sdata)
+static void outlineEnd(SwOutline& outline)
 {
-    //grow contour 1
+    growOutlineContour(outline, 1);
+    if (outline.ptsCnt > 0) {
+        outline.cntrs[outline.cntrsCnt] = outline.ptsCnt - 1;
+        ++outline.cntrs;
+    }
 }
 
 
-static void outlineMoveTo(SwShape* sdata, const Point* pt)
+static void outlineMoveTo(SwOutline& outline, const Point* pt)
 {
-    //grow pts 1,
-    //grow contour 1
+    assert(pt);
+
+    growOutlinePoint(outline, 1);
+
+    outline.pts[outline.ptsCnt] = *pt;
+    outline.tags[outline.ptsCnt] = SW_CURVE_TAG_ON;
+
+    if (outline.ptsCnt > 0) {
+        growOutlineContour(outline, 1);
+        outline.cntrs[outline.cntrsCnt] = outline.ptsCnt - 1;
+        ++outline.cntrsCnt;
+    }
+
+    ++outline.ptsCnt;
 }
 
 
-static void outlineLineTo(SwShape* sdata, const Point* pt)
+static void outlineLineTo(SwOutline& outline, const Point* pt)
 {
-    //grow pts 1
+    assert(pt);
+
+    growOutlinePoint(outline, 1);
+
+    outline.pts[outline.ptsCnt] = *pt;
+    outline.tags[outline.ptsCnt] = SW_CURVE_TAG_ON;
+
+    ++outline.ptsCnt;
 }
 
 
-static void outlineCubicTo(SwShape* sdata, const Point* ctrl1, const Point* ctrl2, const Point* pt)
+static void outlineCubicTo(SwOutline& outline, const Point* ctrl1, const Point* ctrl2, const Point* pt)
 {
-    //grow pts 3
+    assert(ctrl1 && ctrl2 && pt);
+
+    growOutlinePoint(outline, 3);
+
+    outline.pts[outline.ptsCnt] = *ctrl1;
+    outline.tags[outline.ptsCnt] = SW_CURVE_TAG_CUBIC;
+    ++outline.ptsCnt;
+
+    outline.pts[outline.ptsCnt] = *ctrl2;
+    outline.tags[outline.ptsCnt] = SW_CURVE_TAG_CUBIC;
+    ++outline.ptsCnt;
+
+    outline.pts[outline.ptsCnt] = *ctrl1;
+    outline.tags[outline.ptsCnt] = SW_CURVE_TAG_ON;
+    ++outline.ptsCnt;
 }
 
 
-static void outlineClose(SwShape* sdata)
+static bool outlineClose(SwOutline& outline)
 {
-    //grow pts 1
+    size_t i = 0;
+
+    if (outline.cntrsCnt > 0) {
+        i = outline.cntrs[outline.cntrsCnt - 1] + 1;
+    } else {
+        i = 0;   //First Path
+    }
+
+    //Make sure there is at least one point in the current path
+    if (outline.ptsCnt == i) return false;
+
+    //Close the path
+    growOutlinePoint(outline, 1);
+
+    outline.pts[outline.ptsCnt] = outline.pts[i];
+    outline.tags[outline.ptsCnt] = SW_CURVE_TAG_ON;
+    ++outline.ptsCnt;
+
+    return true;
 }
 
 
-bool shapeGenOutline(ShapeNode *shape, SwShape* sdata)
-{
-    bool closed = false;
+/************************************************************************/
+/* External Class Implementation                                        */
+/************************************************************************/
 
+bool shapeGenRle(const ShapeNode& shape, SwShape& sdata)
+{
+    //TODO: rle
+
+    return true;
+}
+
+
+bool shapeUpdateBBox(const ShapeNode& shape, SwShape& sdata)
+{
+    //TODO:
+    return true;
+}
+
+
+void shapeDelOutline(const ShapeNode& shape, SwShape& sdata)
+{
+    if (!sdata.outline) return;
+
+    SwOutline* outline = sdata.outline;
+    if (outline->cntrs) free(outline->cntrs);
+    if (outline->pts) free(outline->pts);
+    if (outline->tags) free(outline->tags);
+    free(outline);
+
+    sdata.outline = nullptr;
+}
+
+
+bool shapeGenOutline(const ShapeNode& shape, SwShape& sdata)
+{
     const PathCommand* cmds = nullptr;
-    auto cmdCnt = shape->pathCommands(&cmds);
+    auto cmdCnt = shape.pathCommands(&cmds);
 
     const Point* pts = nullptr;
-    shape->pathCoords(&pts);
+    auto ptsCnt = shape.pathCoords(&pts);
 
-    //reservation
+    //No actual shape data
+    if (cmdCnt == 0 || ptsCnt == 0) return false;
+
+    //smart reservation
     auto outlinePtsCnt = 0;
     auto outlineCntrsCnt = 0;
+//    auto closed = false;
 
     for (auto i = 0; i < cmdCnt; ++i) {
-        switch(*cmds) {
+        switch(*(cmds + i)) {
             case PathCommand::Close: {
                 ++outlinePtsCnt;
                 break;
@@ -119,30 +221,40 @@ bool shapeGenOutline(ShapeNode *shape, SwShape* sdata)
         }
     }
 
-    ++outlinePtsCnt;  //for close
+    ++outlinePtsCnt;    //for close
+    ++outlineCntrsCnt;  //for end
 
-    growOutlinePoint(sdata, outlinePtsCnt);
-    growOutlineContour(sdata, outlineCntrsCnt);
+    SwOutline* outline = sdata.outline;
+
+    if (!outline) {
+        outline = static_cast<SwOutline*>(calloc(1, sizeof(SwOutline)));
+        assert(outline);
+    } else {
+        cout << "Outline was already allocated? How?" << endl;
+    }
+
+    growOutlinePoint(*outline, outlinePtsCnt);
+    growOutlineContour(*outline, outlineCntrsCnt);
 
     //Generate Outlines
     while (cmdCnt-- > 0) {
         switch(*cmds) {
             case PathCommand::Close: {
-                outlineClose(sdata);
+                outlineClose(*outline);
                 break;
             }
             case PathCommand::MoveTo: {
-                outlineMoveTo(sdata, pts);
+                outlineMoveTo(*outline, pts);
                 ++pts;
                 break;
             }
             case PathCommand::LineTo: {
-                outlineLineTo(sdata, pts);
+                outlineLineTo(*outline, pts);
                 ++pts;
                 break;
             }
             case PathCommand::CubicTo: {
-                outlineCubicTo(sdata, pts, pts + 1, pts + 2);
+                outlineCubicTo(*outline, pts, pts + 1, pts + 2);
                 pts += 3;
                 break;
             }
@@ -150,9 +262,11 @@ bool shapeGenOutline(ShapeNode *shape, SwShape* sdata)
         ++cmds;
     }
 
-    outlineEnd(sdata);
+    outlineEnd(*outline);
 
-    return closed;
+    sdata.outline = outline;
+
+    return true;
 }
 
 

@@ -91,13 +91,16 @@ public:
     ~ShapeNode();
 
     int update(RasterMethod* engine) noexcept override;
+    int clear() noexcept;
 
     int appendRect(float x, float y, float w, float h, float radius) noexcept;
     int appendCircle(float cx, float cy, float radius) noexcept;
-    int fill(uint32_t r, uint32_t g, uint32_t b, uint32_t a) noexcept;
-    int clear() noexcept;
-    int pathCommands(const PathCommand** cmds) noexcept;
-    int pathCoords(const Point** pts) noexcept;
+
+    int fill(size_t r, size_t g, size_t b, size_t a) noexcept;
+
+    int pathCommands(const PathCommand** cmds) const noexcept;
+    int pathCoords(const Point** pts) const noexcept;
+    int fill(size_t* r, size_t* g, size_t* b, size_t* a) const noexcept;
 
     static std::unique_ptr<ShapeNode> gen() noexcept;
 

@@ -23,11 +23,22 @@
 
 static GlRaster* pInst = nullptr;
 
-void* GlRaster::prepare(ShapeNode* shape, void* data)
+struct GlShape
 {
-    cout << "GlRaster prepare!!" << endl;
+    //TODO:
+};
 
-    return nullptr;
+
+void* GlRaster::prepare(const ShapeNode& shape, void* data)
+{
+    //prepare shape data
+    GlShape* sdata = static_cast<GlShape*>(data);
+    if (!sdata) {
+        sdata = static_cast<GlShape*>(calloc(1, sizeof(GlShape)));
+        assert(sdata);
+    }
+
+    return sdata;
 }
 
 

@@ -89,7 +89,7 @@ int ShapeNode :: update(RasterMethod* engine) noexcept
     auto impl = pImpl.get();
     assert(impl);
 
-    impl->edata = engine->prepare(this, impl->edata);
+    impl->edata = engine->prepare(*this, impl->edata);
     if (impl->edata) return 0;
     return - 1;
 }
@@ -104,7 +104,7 @@ int ShapeNode :: clear() noexcept
 }
 
 
-int ShapeNode :: pathCommands(const PathCommand** cmds) noexcept
+int ShapeNode :: pathCommands(const PathCommand** cmds) const noexcept
 {
     auto impl = pImpl.get();
     assert(impl && cmds);
@@ -115,7 +115,7 @@ int ShapeNode :: pathCommands(const PathCommand** cmds) noexcept
 }
 
 
-int ShapeNode :: pathCoords(const Point** pts) noexcept
+int ShapeNode :: pathCoords(const Point** pts) const noexcept
 {
     auto impl = pImpl.get();
     assert(impl && pts);
@@ -160,7 +160,7 @@ int ShapeNode :: appendRect(float x, float y, float w, float h, float radius) no
 }
 
 
-int ShapeNode :: fill(uint32_t r, uint32_t g, uint32_t b, uint32_t a) noexcept
+int ShapeNode :: fill(size_t r, size_t g, size_t b, size_t a) noexcept
 {
     auto impl = pImpl.get();
     assert(impl);
@@ -169,6 +169,20 @@ int ShapeNode :: fill(uint32_t r, uint32_t g, uint32_t b, uint32_t a) noexcept
     impl->color[1] = g;
     impl->color[2] = b;
     impl->color[3] = a;
+
+    return 0;
+}
+
+
+int ShapeNode :: fill(size_t* r, size_t* g, size_t* b, size_t* a) const noexcept
+{
+    auto impl = pImpl.get();
+    assert(impl);
+
+    if (r) *r = impl->color[0];
+    if (g) *g = impl->color[0];
+    if (b) *b = impl->color[0];
+    if (a) *a = impl->color[0];
 
     return 0;
 }

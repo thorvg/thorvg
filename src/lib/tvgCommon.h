@@ -32,7 +32,7 @@ class RasterMethod
 {
 public:
     virtual ~RasterMethod() {}
-    virtual void* prepare(ShapeNode* shape, void* data) = 0;
+    virtual void* prepare(const ShapeNode& shape, void* data) = 0;
 };
 
 }

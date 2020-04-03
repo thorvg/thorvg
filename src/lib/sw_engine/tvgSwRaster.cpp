@@ -26,16 +26,31 @@
 
 static SwRaster* pInst = nullptr;
 
+/************************************************************************/
+/* External Class Implementation                                        */
+/************************************************************************/
 
-void* SwRaster::prepare(ShapeNode *shape, void* data)
+void* SwRaster::prepare(const ShapeNode& shape, void* data)
 {
-    SwShape *sdata = static_cast<SwShape*>(data);
+    //prepare shape data
+    SwShape* sdata = static_cast<SwShape*>(data);
     if (!sdata) {
         sdata = static_cast<SwShape*>(calloc(1, sizeof(SwShape)));
         assert(sdata);
     }
 
-    bool closed = shapeGenOutline(shape, sdata);
+    //invisible?
+    size_t alpha;
+    shape.fill(nullptr, nullptr, nullptr, &alpha);
+    if (alpha == 0) return sdata;
+
+    if (!shapeGenOutline(shape, *sdata)) return sdata;
+
+    //TODO: From below sequence starts threading?
+    if (!shapeGenRle(shape, *sdata)) return sdata;
+    if (!shapeUpdateBBox(shape, *sdata)) return sdata;
+
+    shapeDelOutline(shape, *sdata);
 
     return sdata;
 }

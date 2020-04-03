@@ -26,12 +26,12 @@
 struct ShapePath
 {
     PathCommand* cmds = nullptr;
-    uint32_t cmdCnt = 0;
-    uint32_t reservedCmdCnt = 0;
+    size_t cmdCnt = 0;
+    size_t reservedCmdCnt = 0;
 
     Point *pts = nullptr;
-    uint32_t ptsCnt = 0;
-    uint32_t reservedPtsCnt = 0;
+    size_t ptsCnt = 0;
+    size_t reservedPtsCnt = 0;
 
 
     ~ShapePath()
@@ -40,7 +40,7 @@ struct ShapePath
         if (pts) delete(pts);
     }
 
-    int reserveCmd(uint32_t cmdCnt)
+    int reserveCmd(size_t cmdCnt)
     {
         if (cmdCnt > reservedCmdCnt) {
             reservedCmdCnt = cmdCnt;
@@ -50,7 +50,7 @@ struct ShapePath
         return 0;
     }
 
-    int reservePts(uint32_t ptsCnt)
+    int reservePts(size_t ptsCnt)
     {
         if (ptsCnt > reservedPtsCnt) {
             reservedPtsCnt = ptsCnt;
@@ -60,7 +60,7 @@ struct ShapePath
         return 0;
     }
 
-    int reserve(uint32_t cmdCnt, uint32_t ptsCnt)
+    int reserve(size_t cmdCnt, size_t ptsCnt)
     {
         reserveCmd(cmdCnt);
         reservePts(ptsCnt);
@@ -126,7 +126,7 @@ struct ShapePath
         Point min = { pts[0].x, pts[0].y };
         Point max = { pts[0].x, pts[0].y };
 
-        for(uint32_t i = 1; i <= ptsCnt; ++i) {
+        for(size_t i = 1; i <= ptsCnt; ++i) {
             if (pts[i].x < min.x) min.x = pts[i].x;
             if (pts[i].y < min.y) min.y = pts[i].y;
             if (pts[i].x > max.x) max.x = pts[i].x;
