@@ -29,7 +29,7 @@ struct GlShape
 };
 
 
-void* GlRaster::prepare(const ShapeNode& shape, void* data)
+void* GlRaster::prepare(const ShapeNode& shape, void* data, UpdateFlag flags)
 {
     //prepare shape data
     GlShape* sdata = static_cast<GlShape*>(data);

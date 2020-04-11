@@ -89,7 +89,7 @@ int ShapeNode :: update(RasterMethod* engine) noexcept
     auto impl = pImpl.get();
     assert(impl);
 
-    impl->edata = engine->prepare(*this, impl->edata);
+    impl->edata = engine->prepare(*this, impl->edata, RasterMethod::UpdateFlag::All);
     if (impl->edata) return 0;
     return - 1;
 }
@@ -180,9 +180,9 @@ int ShapeNode :: fill(size_t* r, size_t* g, size_t* b, size_t* a) const noexcept
     assert(impl);
 
     if (r) *r = impl->color[0];
-    if (g) *g = impl->color[0];
-    if (b) *b = impl->color[0];
-    if (a) *a = impl->color[0];
+    if (g) *g = impl->color[1];
+    if (b) *b = impl->color[2];
+    if (a) *a = impl->color[3];
 
     return 0;
 }

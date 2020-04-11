@@ -20,31 +20,58 @@
 #include "tvgCommon.h"
 
 using namespace tvg;
+using SwPoint = Point;
 
+constexpr auto SW_CURVE_TAG_CONIC = 0;
 constexpr auto SW_CURVE_TAG_ON = 1;
 constexpr auto SW_CURVE_TAG_CUBIC = 2;
 
 struct SwOutline
 {
-  size_t*     cntrs;            //the contour end points
-  size_t      cntrsCnt;         //number of contours in glyph
-  size_t      reservedCntrsCnt;
-  Point*      pts;              //the outline's points
-  size_t      ptsCnt;           //number of points in the glyph
-  size_t      reservedPtsCnt;
-  char*       tags;             //the points flags
-  size_t      flags;            //outline masks
+    size_t*     cntrs;            //the contour end points
+    size_t      cntrsCnt;         //number of contours in glyph
+    size_t      reservedCntrsCnt;
+    SwPoint*    pts;              //the outline's points
+    size_t      ptsCnt;           //number of points in the glyph
+    size_t      reservedPtsCnt;
+    char*       tags;             //the points flags
+    size_t      flags;            //outline masks
+};
+
+struct SwSpan
+{
+    size_t x;
+    size_t y;
+    size_t len;
+    uint8_t coverage;
+};
+
+struct SwRleData
+{
+    size_t alloc;
+    size_t size;
+    SwSpan *spans;
+};
+
+struct SwBBox
+{
+    size_t xMin, yMin;
+    size_t xMax, yMax;
 };
 
 struct SwShape
 {
-//    SwRleRaster raster;
     SwOutline*   outline;
+    SwRleData    rle;
+    SwBBox       bbox;
 };
 
 bool shapeGenOutline(const ShapeNode& shape, SwShape& sdata);
 void shapeDelOutline(const ShapeNode& shape, SwShape& sdata);
 bool shapeGenRle(const ShapeNode& shape, SwShape& sdata);
-bool shapeUpdateBBox(const ShapeNode& shape, SwShape& sdata);
+void shapeDelRle(const ShapeNode& shape, SwShape& sdata);
+bool shapeTransformOutline(const ShapeNode& shape, SwShape& sdata);
+
+bool rleRender(SwShape& sdata);
 
 #endif /* _TVG_SW_COMMON_H_ */

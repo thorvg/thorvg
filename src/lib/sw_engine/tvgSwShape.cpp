@@ -69,7 +69,7 @@ static void outlineEnd(SwOutline& outline)
     growOutlineContour(outline, 1);
     if (outline.ptsCnt > 0) {
         outline.cntrs[outline.cntrsCnt] = outline.ptsCnt - 1;
-        ++outline.cntrs;
+        ++outline.cntrsCnt;
     }
 }
 
@@ -150,22 +150,74 @@ static bool outlineClose(SwOutline& outline)
 }
 
 
-/************************************************************************/
-/* External Class Implementation                                        */
-/************************************************************************/
-
-bool shapeGenRle(const ShapeNode& shape, SwShape& sdata)
+static void initBBox(SwShape& sdata)
 {
-    //TODO: rle
+    sdata.bbox.xMin = sdata.bbox.yMin = 0;
+    sdata.bbox.xMax = sdata.bbox.yMax = 0;
+}
+
+
+static bool updateBBox(SwShape& sdata)
+{
+    auto outline = sdata.outline;
+    assert(outline);
+
+    auto pt = outline->pts;
+    assert(pt);
+
+    if (outline->ptsCnt <= 0) {
+        initBBox(sdata);
+        return false;
+    }
+
+    auto xMin = pt->x;
+    auto xMax = pt->y;
+    auto yMin = pt->y;
+    auto yMax = pt->y;
+
+    ++pt;
+
+    for(size_t i = 1; i < outline->ptsCnt; ++i, ++pt) {
+        assert(pt);
+        if (xMin > pt->x) xMin = pt->x;
+        if (xMax < pt->y) xMax = pt->x;
+        if (yMin > pt->y) yMin = pt->y;
+        if (yMax < pt->y) yMax = pt->y;
+    }
+    sdata.bbox.xMin = round(xMin - 0.49);
+    sdata.bbox.xMax = round(xMax + 0.49);
+    sdata.bbox.yMin = round(yMin - 0.49);
+    sdata.bbox.yMax = round(yMax + 0.49);
+
+    if (xMax - xMin < 1 || yMax - yMin < 1) return false;
 
     return true;
 }
 
 
-bool shapeUpdateBBox(const ShapeNode& shape, SwShape& sdata)
+/************************************************************************/
+/* External Class Implementation                                        */
+/************************************************************************/
+
+bool shapeTransformOutline(const ShapeNode& shape, SwShape& sdata)
 {
     //TODO:
     return true;
+}
+
+
+void shapeDelRle(const ShapeNode& shape, SwShape& sdata)
+{
+    if (sdata.rle.spans) free(sdata.rle.spans);
+    sdata.rle.spans = nullptr;
+}
+
+
+bool shapeGenRle(const ShapeNode& shape, SwShape& sdata)
+{
+    shapeDelRle(shape, sdata);
+    if (!updateBBox(sdata)) return false;
+    return rleRender(sdata);
 }
 
 
@@ -185,6 +237,8 @@ void shapeDelOutline(const ShapeNode& shape, SwShape& sdata)
 
 bool shapeGenOutline(const ShapeNode& shape, SwShape& sdata)
 {
+    initBBox(sdata);
+
     const PathCommand* cmds = nullptr;
     auto cmdCnt = shape.pathCommands(&cmds);
 
@@ -233,6 +287,7 @@ bool shapeGenOutline(const ShapeNode& shape, SwShape& sdata)
         cout << "Outline was already allocated? How?" << endl;
     }
 
+    //TODO: Probabry we can copy pts from shape directly.
     growOutlinePoint(*outline, outlinePtsCnt);
     growOutlineContour(*outline, outlineCntrsCnt);
 
@@ -263,6 +318,9 @@ bool shapeGenOutline(const ShapeNode& shape, SwShape& sdata)
     }
 
     outlineEnd(*outline);
+
+    //FIXME:
+    //outline->flags = SwOutline::FillRule::Winding;
 
     sdata.outline = outline;
 

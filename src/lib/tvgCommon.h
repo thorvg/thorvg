@@ -20,6 +20,7 @@
 #include <iostream>
 #include <cassert>
 #include <vector>
+#include <math.h>
 #include "tizenvg.h"
 
 using namespace std;
@@ -31,8 +32,9 @@ namespace tvg
 class RasterMethod
 {
 public:
+    enum UpdateFlag { None = 0, Path = 1, Fill = 2, All = 3 };
     virtual ~RasterMethod() {}
-    virtual void* prepare(const ShapeNode& shape, void* data) = 0;
+    virtual void* prepare(const ShapeNode& shape, void* data, UpdateFlag flags) = 0;
 };
 
 }
