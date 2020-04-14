@@ -20,11 +20,32 @@
 #include "tvgCommon.h"
 
 using namespace tvg;
-using SwPoint = Point;
 
-constexpr auto SW_CURVE_TAG_CONIC = 0;
 constexpr auto SW_CURVE_TAG_ON = 1;
 constexpr auto SW_CURVE_TAG_CUBIC = 2;
+
+using SwCoord = signed long;
+
+struct SwPoint
+{
+    SwCoord x, y;
+
+    SwPoint operator+(const SwPoint& rhs) const {
+        return {x + rhs.x, y + rhs.y};
+    }
+
+    SwPoint operator-(const SwPoint& rhs) const {
+        return {x - rhs.x, y - rhs.y};
+    }
+
+    bool operator==(const SwPoint& rhs ) const {
+        return (x == rhs.x && y == rhs.y);
+    }
+
+    bool operator!=(const SwPoint& rhs) const {
+        return (x != rhs.x || y != rhs.y);
+    }
+};
 
 struct SwOutline
 {
@@ -55,8 +76,8 @@ struct SwRleData
 
 struct SwBBox
 {
-    size_t xMin, yMin;
-    size_t xMax, yMax;
+    SwPoint min;
+    SwPoint max;
 };
 
 struct SwShape

@@ -23,6 +23,12 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
+static inline SwPoint TO_SWPOINT(const Point* pt)
+{
+    return {SwCoord(pt->x * 64), SwCoord(pt->y * 64)};
+}
+
+
 static void growOutlineContour(SwOutline& outline, size_t n)
 {
     if (n == 0) {
@@ -57,7 +63,7 @@ static void growOutlinePoint(SwOutline& outline, size_t n)
 
     cout << "Grow Pts: " << outline.reservedPtsCnt << " -> " << outline.ptsCnt + n << endl;
     outline.reservedPtsCnt = n;
-    outline.pts = static_cast<Point*>(realloc(outline.pts, n * sizeof(Point)));
+    outline.pts = static_cast<SwPoint*>(realloc(outline.pts, n * sizeof(SwPoint)));
     assert(outline.pts);
     outline.tags = static_cast<char*>(realloc(outline.tags, n * sizeof(char)));
     assert(outline.tags);
@@ -74,13 +80,13 @@ static void outlineEnd(SwOutline& outline)
 }
 
 
-static void outlineMoveTo(SwOutline& outline, const Point* pt)
+static void outlineMoveTo(SwOutline& outline, const Point* to)
 {
-    assert(pt);
+    assert(to);
 
     growOutlinePoint(outline, 1);
 
-    outline.pts[outline.ptsCnt] = *pt;
+    outline.pts[outline.ptsCnt] = TO_SWPOINT(to);
     outline.tags[outline.ptsCnt] = SW_CURVE_TAG_ON;
 
     if (outline.ptsCnt > 0) {
@@ -93,34 +99,34 @@ static void outlineMoveTo(SwOutline& outline, const Point* pt)
 }
 
 
-static void outlineLineTo(SwOutline& outline, const Point* pt)
+static void outlineLineTo(SwOutline& outline, const Point* to)
 {
-    assert(pt);
+    assert(to);
 
     growOutlinePoint(outline, 1);
 
-    outline.pts[outline.ptsCnt] = *pt;
+    outline.pts[outline.ptsCnt] = TO_SWPOINT(to);
     outline.tags[outline.ptsCnt] = SW_CURVE_TAG_ON;
 
     ++outline.ptsCnt;
 }
 
 
-static void outlineCubicTo(SwOutline& outline, const Point* ctrl1, const Point* ctrl2, const Point* pt)
+static void outlineCubicTo(SwOutline& outline, const Point* ctrl1, const Point* ctrl2, const Point* to)
 {
-    assert(ctrl1 && ctrl2 && pt);
+    assert(ctrl1 && ctrl2 && to);
 
     growOutlinePoint(outline, 3);
 
-    outline.pts[outline.ptsCnt] = *ctrl1;
+    outline.pts[outline.ptsCnt] = TO_SWPOINT(ctrl1);
     outline.tags[outline.ptsCnt] = SW_CURVE_TAG_CUBIC;
     ++outline.ptsCnt;
 
-    outline.pts[outline.ptsCnt] = *ctrl2;
+    outline.pts[outline.ptsCnt] = TO_SWPOINT(ctrl2);
     outline.tags[outline.ptsCnt] = SW_CURVE_TAG_CUBIC;
     ++outline.ptsCnt;
 
-    outline.pts[outline.ptsCnt] = *ctrl1;
+    outline.pts[outline.ptsCnt] = TO_SWPOINT(to);
     outline.tags[outline.ptsCnt] = SW_CURVE_TAG_ON;
     ++outline.ptsCnt;
 }
@@ -152,8 +158,8 @@ static bool outlineClose(SwOutline& outline)
 
 static void initBBox(SwShape& sdata)
 {
-    sdata.bbox.xMin = sdata.bbox.yMin = 0;
-    sdata.bbox.xMax = sdata.bbox.yMax = 0;
+    sdata.bbox.min.x = sdata.bbox.min.y = 0;
+    sdata.bbox.max.x = sdata.bbox.max.y = 0;
 }
 
 
@@ -171,7 +177,7 @@ static bool updateBBox(SwShape& sdata)
     }
 
     auto xMin = pt->x;
-    auto xMax = pt->y;
+    auto xMax = pt->x;
     auto yMin = pt->y;
     auto yMax = pt->y;
 
@@ -180,14 +186,14 @@ static bool updateBBox(SwShape& sdata)
     for(size_t i = 1; i < outline->ptsCnt; ++i, ++pt) {
         assert(pt);
         if (xMin > pt->x) xMin = pt->x;
-        if (xMax < pt->y) xMax = pt->x;
+        if (xMax < pt->x) xMax = pt->x;
         if (yMin > pt->y) yMin = pt->y;
         if (yMax < pt->y) yMax = pt->y;
     }
-    sdata.bbox.xMin = round(xMin - 0.49);
-    sdata.bbox.xMax = round(xMax + 0.49);
-    sdata.bbox.yMin = round(yMin - 0.49);
-    sdata.bbox.yMax = round(yMax + 0.49);
+    sdata.bbox.min.x = xMin >> 6;
+    sdata.bbox.max.x = (xMax + 63) >> 6;
+    sdata.bbox.min.y = yMin >> 6;
+    sdata.bbox.max.y = (yMax + 63) >> 6;
 
     if (xMax - xMin < 1 || yMax - yMin < 1) return false;
 
