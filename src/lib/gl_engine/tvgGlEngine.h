@@ -24,6 +24,10 @@ class GlEngine : public RasterMethod
 {
 public:
     void* prepare(const ShapeNode& shape, void* data, UpdateFlag flags) override;
+    void* dispose(const ShapeNode& shape, void *data) override;
+    size_t ref() override;
+    size_t unref() override;
+
     static GlEngine* inst();
     static int init();
     static int term();

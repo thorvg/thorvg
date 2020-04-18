@@ -84,6 +84,17 @@ unique_ptr<ShapeNode> ShapeNode::gen() noexcept
 }
 
 
+int ShapeNode :: dispose(RasterMethod* engine) noexcept
+{
+    auto impl = pImpl.get();
+    assert(impl);
+
+    impl->edata = engine->dispose(*this, impl->edata);
+    if (impl->edata) return -1;
+    return 0;
+}
+
+
 int ShapeNode :: update(RasterMethod* engine) noexcept
 {
     auto impl = pImpl.get();

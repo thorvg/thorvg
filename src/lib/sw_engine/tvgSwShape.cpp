@@ -29,7 +29,7 @@ static inline SwPoint TO_SWPOINT(const Point* pt)
 }
 
 
-static void growOutlineContour(SwOutline& outline, size_t n)
+static void _growOutlineContour(SwOutline& outline, size_t n)
 {
     if (n == 0) {
         free(outline.cntrs);
@@ -40,14 +40,14 @@ static void growOutlineContour(SwOutline& outline, size_t n)
     }
     if (outline.reservedCntrsCnt >= outline.cntrsCnt + n) return;
 
-    cout << "Grow Cntrs: " << outline.reservedCntrsCnt << " -> " << outline.cntrsCnt + n << endl;;
+    //cout << "Grow Cntrs: " << outline.reservedCntrsCnt << " -> " << outline.cntrsCnt + n << endl;;
     outline.reservedCntrsCnt = n;
     outline.cntrs = static_cast<size_t*>(realloc(outline.cntrs, n * sizeof(size_t)));
     assert(outline.cntrs);
 }
 
 
-static void growOutlinePoint(SwOutline& outline, size_t n)
+static void _growOutlinePoint(SwOutline& outline, size_t n)
 {
     if (n == 0) {
         free(outline.pts);
@@ -61,7 +61,7 @@ static void growOutlinePoint(SwOutline& outline, size_t n)
 
     if (outline.reservedPtsCnt >= outline.ptsCnt + n) return;
 
-    cout << "Grow Pts: " << outline.reservedPtsCnt << " -> " << outline.ptsCnt + n << endl;
+    //cout << "Grow Pts: " << outline.reservedPtsCnt << " -> " << outline.ptsCnt + n << endl;
     outline.reservedPtsCnt = n;
     outline.pts = static_cast<SwPoint*>(realloc(outline.pts, n * sizeof(SwPoint)));
     assert(outline.pts);
@@ -70,9 +70,9 @@ static void growOutlinePoint(SwOutline& outline, size_t n)
 }
 
 
-static void outlineEnd(SwOutline& outline)
+static void _outlineEnd(SwOutline& outline)
 {
-    growOutlineContour(outline, 1);
+    _growOutlineContour(outline, 1);
     if (outline.ptsCnt > 0) {
         outline.cntrs[outline.cntrsCnt] = outline.ptsCnt - 1;
         ++outline.cntrsCnt;
@@ -80,17 +80,17 @@ static void outlineEnd(SwOutline& outline)
 }
 
 
-static void outlineMoveTo(SwOutline& outline, const Point* to)
+static void _outlineMoveTo(SwOutline& outline, const Point* to)
 {
     assert(to);
 
-    growOutlinePoint(outline, 1);
+    _growOutlinePoint(outline, 1);
 
     outline.pts[outline.ptsCnt] = TO_SWPOINT(to);
     outline.tags[outline.ptsCnt] = SW_CURVE_TAG_ON;
 
     if (outline.ptsCnt > 0) {
-        growOutlineContour(outline, 1);
+        _growOutlineContour(outline, 1);
         outline.cntrs[outline.cntrsCnt] = outline.ptsCnt - 1;
         ++outline.cntrsCnt;
     }
@@ -99,11 +99,11 @@ static void outlineMoveTo(SwOutline& outline, const Point* to)
 }
 
 
-static void outlineLineTo(SwOutline& outline, const Point* to)
+static void _outlineLineTo(SwOutline& outline, const Point* to)
 {
     assert(to);
 
-    growOutlinePoint(outline, 1);
+    _growOutlinePoint(outline, 1);
 
     outline.pts[outline.ptsCnt] = TO_SWPOINT(to);
     outline.tags[outline.ptsCnt] = SW_CURVE_TAG_ON;
@@ -112,11 +112,11 @@ static void outlineLineTo(SwOutline& outline, const Point* to)
 }
 
 
-static void outlineCubicTo(SwOutline& outline, const Point* ctrl1, const Point* ctrl2, const Point* to)
+static void _outlineCubicTo(SwOutline& outline, const Point* ctrl1, const Point* ctrl2, const Point* to)
 {
     assert(ctrl1 && ctrl2 && to);
 
-    growOutlinePoint(outline, 3);
+    _growOutlinePoint(outline, 3);
 
     outline.pts[outline.ptsCnt] = TO_SWPOINT(ctrl1);
     outline.tags[outline.ptsCnt] = SW_CURVE_TAG_CUBIC;
@@ -132,7 +132,7 @@ static void outlineCubicTo(SwOutline& outline, const Point* ctrl1, const Point* 
 }
 
 
-static bool outlineClose(SwOutline& outline)
+static bool _outlineClose(SwOutline& outline)
 {
     size_t i = 0;
 
@@ -146,7 +146,7 @@ static bool outlineClose(SwOutline& outline)
     if (outline.ptsCnt == i) return false;
 
     //Close the path
-    growOutlinePoint(outline, 1);
+    _growOutlinePoint(outline, 1);
 
     outline.pts[outline.ptsCnt] = outline.pts[i];
     outline.tags[outline.ptsCnt] = SW_CURVE_TAG_ON;
@@ -156,14 +156,14 @@ static bool outlineClose(SwOutline& outline)
 }
 
 
-static void initBBox(SwShape& sdata)
+static void _initBBox(SwShape& sdata)
 {
     sdata.bbox.min.x = sdata.bbox.min.y = 0;
     sdata.bbox.max.x = sdata.bbox.max.y = 0;
 }
 
 
-static bool updateBBox(SwShape& sdata)
+static bool _updateBBox(SwShape& sdata)
 {
     auto outline = sdata.outline;
     assert(outline);
@@ -172,7 +172,7 @@ static bool updateBBox(SwShape& sdata)
     assert(pt);
 
     if (outline->ptsCnt <= 0) {
-        initBBox(sdata);
+        _initBBox(sdata);
         return false;
     }
 
@@ -201,33 +201,17 @@ static bool updateBBox(SwShape& sdata)
 }
 
 
-/************************************************************************/
-/* External Class Implementation                                        */
-/************************************************************************/
-
-bool shapeTransformOutline(const ShapeNode& shape, SwShape& sdata)
+void _deleteRle(SwShape& sdata)
 {
-    //TODO:
-    return true;
+    if (sdata.rle) {
+        if (sdata.rle->spans) free(sdata.rle->spans);
+        free(sdata.rle);
+    }
+    sdata.rle = nullptr;
 }
 
 
-void shapeDelRle(const ShapeNode& shape, SwShape& sdata)
-{
-    if (sdata.rle.spans) free(sdata.rle.spans);
-    sdata.rle.spans = nullptr;
-}
-
-
-bool shapeGenRle(const ShapeNode& shape, SwShape& sdata)
-{
-    shapeDelRle(shape, sdata);
-    if (!updateBBox(sdata)) return false;
-    return rleRender(sdata);
-}
-
-
-void shapeDelOutline(const ShapeNode& shape, SwShape& sdata)
+void _deleteOutline(SwShape& sdata)
 {
     if (!sdata.outline) return;
 
@@ -240,11 +224,38 @@ void shapeDelOutline(const ShapeNode& shape, SwShape& sdata)
     sdata.outline = nullptr;
 }
 
+/************************************************************************/
+/* External Class Implementation                                        */
+/************************************************************************/
+
+bool shapeTransformOutline(const ShapeNode& shape, SwShape& sdata)
+{
+    //TODO:
+    return true;
+}
+
+
+bool shapeGenRle(const ShapeNode& shape, SwShape& sdata)
+{
+    if (!_updateBBox(sdata)) goto end;
+    sdata.rle = rleRender(sdata);
+    _deleteOutline(sdata);
+end:
+    if (sdata.rle) return true;
+    return false;
+}
+
+
+void shapeReset(SwShape& sdata)
+{
+    _deleteOutline(sdata);
+    _deleteRle(sdata);
+    _initBBox(sdata);
+}
+
 
 bool shapeGenOutline(const ShapeNode& shape, SwShape& sdata)
 {
-    initBBox(sdata);
-
     const PathCommand* cmds = nullptr;
     auto cmdCnt = shape.pathCommands(&cmds);
 
@@ -257,7 +268,6 @@ bool shapeGenOutline(const ShapeNode& shape, SwShape& sdata)
     //smart reservation
     auto outlinePtsCnt = 0;
     auto outlineCntrsCnt = 0;
-//    auto closed = false;
 
     for (auto i = 0; i < cmdCnt; ++i) {
         switch(*(cmds + i)) {
@@ -294,28 +304,28 @@ bool shapeGenOutline(const ShapeNode& shape, SwShape& sdata)
     }
 
     //TODO: Probabry we can copy pts from shape directly.
-    growOutlinePoint(*outline, outlinePtsCnt);
-    growOutlineContour(*outline, outlineCntrsCnt);
+    _growOutlinePoint(*outline, outlinePtsCnt);
+    _growOutlineContour(*outline, outlineCntrsCnt);
 
     //Generate Outlines
     while (cmdCnt-- > 0) {
         switch(*cmds) {
             case PathCommand::Close: {
-                outlineClose(*outline);
+                _outlineClose(*outline);
                 break;
             }
             case PathCommand::MoveTo: {
-                outlineMoveTo(*outline, pts);
+                _outlineMoveTo(*outline, pts);
                 ++pts;
                 break;
             }
             case PathCommand::LineTo: {
-                outlineLineTo(*outline, pts);
+                _outlineLineTo(*outline, pts);
                 ++pts;
                 break;
             }
             case PathCommand::CubicTo: {
-                outlineCubicTo(*outline, pts, pts + 1, pts + 2);
+                _outlineCubicTo(*outline, pts, pts + 1, pts + 2);
                 pts += 3;
                 break;
             }
@@ -323,7 +333,7 @@ bool shapeGenOutline(const ShapeNode& shape, SwShape& sdata)
         ++cmds;
     }
 
-    outlineEnd(*outline);
+    _outlineEnd(*outline);
 
     //FIXME:
     //outline->flags = SwOutline::FillRule::Winding;

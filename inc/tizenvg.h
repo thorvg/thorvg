@@ -73,6 +73,7 @@ class TIZENVG_EXPORT PaintNode
 {
 public:
     virtual ~PaintNode() {}
+    virtual int dispose(RasterMethod* engine) = 0;
     virtual int update(RasterMethod* engine) = 0;
 };
 
@@ -90,6 +91,7 @@ class TIZENVG_EXPORT ShapeNode final : public PaintNode
 public:
     ~ShapeNode();
 
+    int dispose(RasterMethod* engine) noexcept override;
     int update(RasterMethod* engine) noexcept override;
     int clear() noexcept;
 
@@ -121,6 +123,7 @@ class TIZENVG_EXPORT SceneNode final : public PaintNode
 public:
     ~SceneNode();
 
+    int dispose(RasterMethod* engine) noexcept override;
     int update(RasterMethod* engine) noexcept override;
 
     int push(std::unique_ptr<ShapeNode> shape) noexcept;

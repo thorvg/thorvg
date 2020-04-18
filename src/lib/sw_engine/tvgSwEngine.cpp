@@ -24,12 +24,21 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-static SwEngine* pInst = nullptr;
+static RasterMethodInit engineInit;
 
 
 /************************************************************************/
 /* External Class Implementation                                        */
 /************************************************************************/
+
+void* SwEngine::dispose(const ShapeNode& shape, void *data)
+{
+    SwShape* sdata = static_cast<SwShape*>(data);
+    if (!sdata) return nullptr;
+    shapeReset(*sdata);
+    free(sdata);
+    return nullptr;
+}
 
 void* SwEngine::prepare(const ShapeNode& shape, void* data, UpdateFlag flags)
 {
@@ -48,11 +57,11 @@ void* SwEngine::prepare(const ShapeNode& shape, void* data, UpdateFlag flags)
     if (alpha == 0) return sdata;
 
     if (flags & UpdateFlag::Path) {
+        shapeReset(*sdata);
         if (!shapeGenOutline(shape, *sdata)) return sdata;
         //TODO: From below sequence starts threading?
         if (!shapeTransformOutline(shape, *sdata)) return sdata;
         if (!shapeGenRle(shape, *sdata)) return sdata;
-        shapeDelOutline(shape, *sdata);
     }
 
     return sdata;
@@ -61,28 +70,31 @@ void* SwEngine::prepare(const ShapeNode& shape, void* data, UpdateFlag flags)
 
 int SwEngine::init()
 {
-    if (pInst) return -1;
-    pInst = new SwEngine();
-    assert(pInst);
-
-    return 0;
+    return RasterMethodInit::init(engineInit, new SwEngine);
 }
 
 
 int SwEngine::term()
 {
-    if (!pInst) return -1;
-    cout << "SwEngine(" << pInst << ") destroyed!" << endl;
-    delete(pInst);
-    pInst = nullptr;
-    return 0;
+    return RasterMethodInit::term(engineInit);
+}
+
+
+size_t SwEngine::unref()
+{
+    return RasterMethodInit::unref(engineInit);
+}
+
+
+size_t SwEngine::ref()
+{
+    return RasterMethodInit::ref(engineInit);
 }
 
 
 SwEngine* SwEngine::inst()
 {
-    assert(pInst);
-    return pInst;
+    return dynamic_cast<SwEngine*>(RasterMethodInit::inst(engineInit));
 }
 
 

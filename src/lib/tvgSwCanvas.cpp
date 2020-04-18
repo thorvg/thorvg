@@ -89,7 +89,7 @@ SwCanvas::SwCanvas() : pImpl(make_unique<Impl>())
 
 SwCanvas::~SwCanvas()
 {
-   cout << "SwCanvas(" << this << ") destroyed!" << endl;
+    cout << "SwCanvas(" << this << ") destroyed!" << endl;
 }
 
 

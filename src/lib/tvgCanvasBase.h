@@ -30,12 +30,13 @@ struct CanvasBase
 
     CanvasBase(RasterMethod *pRaster):raster(pRaster)
     {
-
+        raster->ref();
     }
 
     ~CanvasBase()
     {
        clear();
+       raster->unref();
     }
 
     int reserve(size_t n)
@@ -48,6 +49,7 @@ struct CanvasBase
     int clear()
     {
         for (auto node : nodes) {
+            node->dispose(raster);
             delete(node);
         }
         nodes.clear();

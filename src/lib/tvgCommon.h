@@ -35,6 +35,67 @@ public:
     enum UpdateFlag { None = 0, Path = 1, Fill = 2, All = 3 };
     virtual ~RasterMethod() {}
     virtual void* prepare(const ShapeNode& shape, void* data, UpdateFlag flags) = 0;
+    virtual void* dispose(const ShapeNode& shape, void *data) = 0;
+    virtual size_t ref() = 0;
+    virtual size_t unref() = 0;
+};
+
+struct RasterMethodInit
+{
+    RasterMethod* pInst = nullptr;
+    size_t refCnt = 0;
+    bool initted = false;
+
+    static int init(RasterMethodInit& initter, RasterMethod* engine)
+    {
+        assert(engine);
+        if (initter.pInst || initter.refCnt > 0) return -1;
+        initter.pInst = engine;
+        initter.refCnt = 0;
+        initter.initted = true;
+        return 0;
+    }
+
+    static int term(RasterMethodInit& initter)
+    {
+        if (!initter.pInst || !initter.initted) return -1;
+
+        initter.initted = false;
+
+        //Still it's refered....
+        if (initter.refCnt > 0) return  0;
+        delete(initter.pInst);
+        initter.pInst = nullptr;
+
+        return 0;
+    }
+
+    static size_t unref(RasterMethodInit& initter)
+    {
+        assert(initter.refCnt > 0);
+        --initter.refCnt;
+
+        //engine has been requested to termination
+        if (!initter.initted && initter.refCnt == 0) {
+            if (initter.pInst) {
+                delete(initter.pInst);
+                initter.pInst = nullptr;
+            }
+        }
+        return initter.refCnt;
+    }
+
+    static RasterMethod* inst(RasterMethodInit& initter)
+    {
+        assert(initter.pInst);
+        return initter.pInst;
+    }
+
+    static size_t ref(RasterMethodInit& initter)
+    {
+        return ++initter.refCnt;
+    }
+
 };
 
 }

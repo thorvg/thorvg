@@ -20,13 +20,28 @@
 #include "tvgCommon.h"
 #include "tvgGlEngine.h"
 
+/************************************************************************/
+/* Internal Class Implementation                                        */
+/************************************************************************/
 
-static GlEngine* pInst = nullptr;
+static RasterMethodInit engineInit;
 
 struct GlShape
 {
     //TODO:
 };
+
+/************************************************************************/
+/* External Class Implementation                                        */
+/************************************************************************/
+
+void* GlEngine::dispose(const ShapeNode& shape, void *data)
+{
+    GlShape* sdata = static_cast<GlShape*>(data);
+    if (!sdata) return nullptr;
+    free(sdata);
+    return nullptr;
+}
 
 
 void* GlEngine::prepare(const ShapeNode& shape, void* data, UpdateFlag flags)
@@ -37,35 +52,37 @@ void* GlEngine::prepare(const ShapeNode& shape, void* data, UpdateFlag flags)
         sdata = static_cast<GlShape*>(calloc(1, sizeof(GlShape)));
         assert(sdata);
     }
-
     return sdata;
 }
 
 
 int GlEngine::init()
 {
-    if (pInst) return -1;
-    pInst = new GlEngine();
-    assert(pInst);
-
-    return 0;
+    return RasterMethodInit::init(engineInit, new GlEngine);
 }
 
 
 int GlEngine::term()
 {
-    if (!pInst) return -1;
-    cout << "GlEngine(" << pInst << ") destroyed!" << endl;
-    delete(pInst);
-    pInst = nullptr;
-    return 0;
+    return RasterMethodInit::term(engineInit);
+}
+
+
+size_t GlEngine::unref()
+{
+    return RasterMethodInit::unref(engineInit);
+}
+
+
+size_t GlEngine::ref()
+{
+    return RasterMethodInit::ref(engineInit);
 }
 
 
 GlEngine* GlEngine::inst()
 {
-    assert(pInst);
-    return pInst;
+    return dynamic_cast<GlEngine*>(RasterMethodInit::inst(engineInit));
 }
 
 

@@ -19,6 +19,7 @@
 
 #include <setjmp.h>
 #include <limits.h>
+#include <memory.h>
 #include "tvgSwCommon.h"
 
 /************************************************************************/
@@ -28,7 +29,6 @@
 constexpr auto MAX_SPANS = 256;
 constexpr auto PIXEL_BITS = 8;   //must be at least 6 bits!
 constexpr auto ONE_PIXEL = (1L << PIXEL_BITS);
-
 
 using Area = long;
 
@@ -47,6 +47,8 @@ struct Cell
 
 struct RleWorker
 {
+    SwRleData* rle;
+
     SwPoint cellPos;
     SwPoint cellMin;
     SwPoint cellMax;
@@ -100,13 +102,19 @@ static inline SwPoint DOWNSCALE(const SwPoint& pt)
 
 static inline SwPoint TRUNC(const SwPoint& pt)
 {
-    return  { pt.x >> PIXEL_BITS, pt.y >> PIXEL_BITS };
+    return  {pt.x >> PIXEL_BITS, pt.y >> PIXEL_BITS};
+}
+
+
+static inline SwCoord TRUNC(const SwCoord x)
+{
+    return  x >> PIXEL_BITS;
 }
 
 
 static inline SwPoint SUBPIXELS(const SwPoint& pt)
 {
-    return {pt.x << PIXEL_BITS, pt.y << PIXEL_BITS };
+    return {pt.x << PIXEL_BITS, pt.y << PIXEL_BITS};
 }
 
 
@@ -115,20 +123,105 @@ static inline SwCoord SUBPIXELS(const SwCoord x)
     return (x << PIXEL_BITS);
 }
 
-
-static void horizLine(RleWorker& rw, SwCoord x, SwCoord y, SwCoord area, SwCoord acount)
+/*
+ *  Approximate sqrt(x*x+y*y) using the `alpha max plus beta min'
+ *  algorithm.  We use alpha = 1, beta = 3/8, giving us results with a
+ *  largest error less than 7% compared to the exact value.
+ */
+static inline SwCoord HYPOT(SwPoint pt)
 {
-    //TODO:
+    if (pt.x < 0) pt.x = -pt.x;
+    if (pt.y < 0) pt.y = -pt.y;
+    return ((pt.x > pt.y) ? (pt.x + (3 * pt.y >> 3)) : (pt.y + (3 * pt.x >> 3)));
+}
+
+static void _genSpan(SwRleData* rle, SwSpan* spans, size_t count)
+{
+    assert(rle && spans);
+
+    auto newSize = rle->size + count;
+
+    /* allocate enough memory for new spans */
+    /* alloc is required to prevent free and reallocation */
+    /* when the rle needs to be regenerated because of attribute change. */
+    if (rle->alloc < newSize) {
+        rle->spans = static_cast<SwSpan*>(realloc(rle->spans, newSize * sizeof(SwSpan)));
+        assert(rle->spans);
+        rle->alloc = newSize;
+    }
+
+    //copy the new spans to the allocated memory
+    SwSpan* lastSpan = rle->spans + rle->size;
+    assert(lastSpan);
+    memcpy(lastSpan, spans, count * sizeof(SwSpan));
+
+    rle->size = newSize;
 }
 
 
-static void genSpan(RleWorker& rw)
+static void _horizLine(RleWorker& rw, SwCoord x, SwCoord y, SwCoord area, SwCoord acount)
 {
-    //TODO:
+    /* compute the coverage line's coverage, depending on the outline fill rule */
+    /* the coverage percentage is area/(PIXEL_BITS*PIXEL_BITS*2) */
+    auto coverage = static_cast<int>(area >> (PIXEL_BITS * 2 + 1 - 8));    //range 0 - 256
+
+    if (coverage < 0) coverage = -coverage;
+
+    if (rw.outline->fillMode == SW_OUTLINE_FILL_EVEN_ODD) {
+        coverage &= 511;
+        if (coverage > 256) coverage = 512 - coverage;
+        else if (coverage == 256) coverage = 255;
+    } else {
+        //normal non-zero winding rule
+        if (coverage >= 256) coverage = 255;
+    }
+
+    x += rw.cellMin.x;
+    y += rw.cellMin.y;
+
+    //span has ushort coordinates. check limit overflow
+    if (x >= SHRT_MAX) {
+        cout << "x(" << x << ") coordinate overflow!" <<  endl;
+        x = SHRT_MAX;
+    }
+    if (y >= SHRT_MAX) {
+        cout << "y(" << y << ") coordinate overflow!" <<  endl;
+        y = SHRT_MAX;
+    }
+
+    if (coverage) {
+        auto count = rw.spansCnt;
+        auto span = rw.spans + count - 1;
+        assert(span);
+
+        //see whether we can add this span to the current list
+        if ((count > 0) && (rw.ySpan == y) &&
+            (span->x + span->len == x) && (span->coverage == coverage)) {
+                span->len = span->len + acount;
+            return;
+        }
+
+        if (count >=  MAX_SPANS) {
+            _genSpan(rw.rle, rw.spans, count);
+            rw.spansCnt = 0;
+            span = rw.spans;
+            assert(span);
+        } else {
+            ++span;
+            assert(span);
+        }
+
+        //add a span to the current list
+        span->x = x;
+        span->y = y;
+        span->len = acount;
+        span->coverage = coverage;
+        ++rw.spansCnt;
+    }
 }
 
 
-static void sweep(RleWorker& rw)
+static void _sweep(RleWorker& rw)
 {
     if (rw.cellsCnt == 0) return;
 
@@ -142,26 +235,26 @@ static void sweep(RleWorker& rw)
 
         while (cell) {
 
-            horizLine(rw, x, y, cover * (ONE_PIXEL * 2), cell->x - x);
+            _horizLine(rw, x, y, cover * (ONE_PIXEL * 2), cell->x - x);
             cover += cell->cover;
             auto area = cover * (ONE_PIXEL * 2) - cell->area;
 
             if (area != 0 && cell->x >= 0)
-                horizLine(rw, cell->x, y, area, 1);
+                _horizLine(rw, cell->x, y, area, 1);
 
             x = cell->x + 1;
             cell = cell->next;
         }
 
         if (cover != 0)
-            horizLine(rw, x, y, cover * (ONE_PIXEL * 2), rw.cellXCnt - x);
+            _horizLine(rw, x, y, cover * (ONE_PIXEL * 2), rw.cellXCnt - x);
     }
 
-    if (rw.spansCnt > 0) genSpan(rw);
+    if (rw.spansCnt > 0) _genSpan(rw.rle, rw.spans, rw.spansCnt);
 }
 
 
-static Cell* findCell(RleWorker& rw)
+static Cell* _findCell(RleWorker& rw)
 {
     auto x = rw.cellPos.x;
     if (x > rw.cellXCnt) x = rw.cellXCnt;
@@ -190,17 +283,18 @@ static Cell* findCell(RleWorker& rw)
 }
 
 
-static void recordCell(RleWorker& rw)
+static void _recordCell(RleWorker& rw)
 {
     if (rw.area | rw.cover) {
-        auto cell = findCell(rw);
+        auto cell = _findCell(rw);
         assert(cell);
         cell->area += rw.area;
         cell->cover += rw.cover;
     }
 }
 
-static void setCell(RleWorker& rw, SwPoint pos)
+
+static void _setCell(RleWorker& rw, SwPoint pos)
 {
     /* Move the cell pointer to a new position.  We set the `invalid'      */
     /* flag to indicate that the cell isn't part of those we're interested */
@@ -222,7 +316,7 @@ static void setCell(RleWorker& rw, SwPoint pos)
 
     //Are we moving to a different cell?
     if (pos != rw.cellPos) {
-        if (!rw.invalid) recordCell(rw);
+        if (!rw.invalid) _recordCell(rw);
     }
 
     rw.area = 0;
@@ -232,7 +326,7 @@ static void setCell(RleWorker& rw, SwPoint pos)
 }
 
 
-static void startCell(RleWorker& rw, SwPoint pos)
+static void _startCell(RleWorker& rw, SwPoint pos)
 {
     if (pos.x > rw.cellMax.x) pos.x = rw.cellMax.x;
     if (pos.x < rw.cellMin.x) pos.x = rw.cellMin.x;
@@ -242,23 +336,23 @@ static void startCell(RleWorker& rw, SwPoint pos)
     rw.cellPos = pos - rw.cellMin;
     rw.invalid = false;
 
-    setCell(rw, pos);
+    _setCell(rw, pos);
 }
 
 
-static void moveTo(RleWorker& rw, const SwPoint& to)
+static void _moveTo(RleWorker& rw, const SwPoint& to)
 {
     //record current cell, if any */
-    if (!rw.invalid) recordCell(rw);
+    if (!rw.invalid) _recordCell(rw);
 
     //start to a new position
-    startCell(rw, TRUNC(to));
+    _startCell(rw, TRUNC(to));
 
     rw.pos = to;
 }
 
 
-static void lineTo(RleWorker& rw, const SwPoint& to)
+static void _lineTo(RleWorker& rw, const SwPoint& to)
 {
 #define SW_UDIV(a, b) \
     static_cast<SwCoord>(((unsigned long)(a) * (unsigned long)(b)) >> \
@@ -284,7 +378,7 @@ static void lineTo(RleWorker& rw, const SwPoint& to)
     //any horizontal line
     } else if (diff.y == 0) {
         e1.x = e2.x;
-        setCell(rw, e1);
+        _setCell(rw, e1);
     } else if (diff.x == 0) {
         //vertical line up
         if (diff.y > 0) {
@@ -294,7 +388,7 @@ static void lineTo(RleWorker& rw, const SwPoint& to)
                 rw.area += (f2.y - f1.y) * f1.x * 2;
                 f1.y = 0;
                 ++e1.y;
-                setCell(rw, e1);
+                _setCell(rw, e1);
             } while(e1.y != e2.y);
         //vertical line down
         } else {
@@ -304,7 +398,7 @@ static void lineTo(RleWorker& rw, const SwPoint& to)
                 rw.area += (f2.y - f1.y) * f1.x * 2;
                 f1.y = ONE_PIXEL;
                 --e1.y;
-                setCell(rw, e1);
+                _setCell(rw, e1);
             } while(e1.y != e2.y);
         }
     //any other line
@@ -357,7 +451,7 @@ static void lineTo(RleWorker& rw, const SwPoint& to)
                 --e1.y;
             }
 
-            setCell(rw, e1);
+            _setCell(rw, e1);
 
         } while(e1 != e2);
     }
@@ -369,21 +463,111 @@ static void lineTo(RleWorker& rw, const SwPoint& to)
 }
 
 
-static bool renderCubic(RleWorker& rw, SwPoint& ctrl1, SwPoint& ctrl2, SwPoint& to)
+static void _splitCubic(SwPoint* base)
 {
-    return true;
+    assert(base);
+
+    SwCoord a, b, c, d;
+
+    base[6].x = base[3].x;
+    c = base[1].x;
+    d = base[2].x;
+    base[1].x = a = (base[0].x + c) / 2;
+    base[5].x = b = (base[3].x + d) / 2;
+    c = (c + d) / 2;
+    base[2].x = a = (a + c) / 2;
+    base[4].x = b = (b + c) / 2;
+    base[3].x = (a + b) / 2;
+
+    base[6].y = base[3].y;
+    c = base[1].y;
+    d = base[2].y;
+    base[1].y = a = (base[0].y + c) / 2;
+    base[5].y = b = (base[3].y + d) / 2;
+    c = (c + d) / 2;
+    base[2].y = a = (a + c) / 2;
+    base[4].y = b = (b + c) / 2;
+    base[3].y = (a + b) / 2;
 }
 
 
-static bool cubicTo(RleWorker& rw, SwPoint& ctrl1, SwPoint& ctrl2, SwPoint& to)
+static void _cubicTo(RleWorker& rw, const SwPoint& ctrl1, const SwPoint& ctrl2, const SwPoint& to)
 {
-    return renderCubic(rw, ctrl1, ctrl2, to);
+    auto arc = rw.bezStack;
+    assert(arc);
+
+    arc[0] = to;
+    arc[1] = ctrl2;
+    arc[2] = ctrl1;
+    arc[3] = rw.pos;
+
+    //Short-cut the arc that crosses the current band
+    auto min = arc[0].y;
+    auto max = arc[0].y;
+
+    SwCoord y;
+    for (auto i = 1; i < 4; ++i) {
+        y = arc[i].y;
+        if (y < min) min = y;
+        if (y > max) max = y;
+    }
+
+    if (TRUNC(min) >= rw.cellMax.y || TRUNC(max) < rw.cellMin.y) goto draw;
+
+    /* Decide whether to split or draw. See `Rapid Termination          */
+    /* Evaluation for Recursive Subdivision of Bezier Curves' by Thomas */
+    /* F. Hain, at                                                      */
+    /* http://www.cis.southalabama.edu/~hain/general/Publications/Bezier/Camera-ready%20CISST02%202.pdf */
+    while (true) {
+        {
+            //diff is the P0 - P3 chord vector
+            auto diff = arc[3] - arc[0];
+            auto L = HYPOT(diff);
+
+            //avoid possible arithmetic overflow below by splitting
+            if (L > SHRT_MAX) goto split;
+
+            //max deviation may be as much as (s/L) * 3/4 (if Hain's v = 1)
+            auto sLimit = L * (ONE_PIXEL / 6);
+
+            auto diff1 = arc[1] - arc[0];
+            auto s = diff.y * diff1.x - diff.x * diff1.y;
+            if (s < 0) s = -s;
+            if (s > sLimit) goto split;
+
+            //s is L * the perpendicular distance from P2 to the line P0 - P3
+            auto diff2 = arc[2] - arc[0];
+            s = diff.y * diff2.x - diff.x * diff2.y;
+            if (s < 0) s = -s;
+            if (s > sLimit) goto split;
+
+            /* Split super curvy segments where the off points are so far
+            from the chord that the angles P0-P1-P3 or P0-P2-P3 become
+            acute as detected by appropriate dot products */
+            if (diff1.x * (diff1.x - diff.x) + diff1.y * (diff1.y - diff.y) > 0 ||
+                diff2.x * (diff2.x - diff.x) + diff2.y * (diff2.y - diff.y) > 0)
+                goto split;
+
+            //no reason to split
+            goto draw;
+        }
+    split:
+        _splitCubic(arc);
+        arc += 3;
+        continue;
+
+    draw:
+        _lineTo(rw, arc[0]);
+
+        if (arc == rw.bezStack) return;
+
+        arc -= 3;
+    }
 }
 
 
-static bool decomposeOutline(RleWorker& rw)
+static bool _decomposeOutline(RleWorker& rw)
 {
- //   printf("decomposOutline\n");
     auto outline = rw.outline;
     assert(outline);
 
@@ -402,7 +586,7 @@ static bool decomposeOutline(RleWorker& rw)
         /* A contour cannot start with a cubic control point! */
         if (tags[0] == SW_CURVE_TAG_CUBIC) goto invalid_outline;
 
-        moveTo(rw, UPSCALE(outline->pts[first]));
+        _moveTo(rw, UPSCALE(outline->pts[first]));
 
         while (pt < limit) {
             assert(++pt);
@@ -410,7 +594,7 @@ static bool decomposeOutline(RleWorker& rw)
 
             //emit a single line_to
             if (tags[0] == SW_CURVE_TAG_ON) {
-                lineTo(rw, UPSCALE(*pt));
+                _lineTo(rw, UPSCALE(*pt));
             //tag cubic
             } else {
                 if (pt + 1 > limit || tags[1] != SW_CURVE_TAG_CUBIC)
@@ -420,10 +604,10 @@ static bool decomposeOutline(RleWorker& rw)
                 tags += 2;
 
                 if (pt <= limit) {
-                    if (!cubicTo(rw, pt[-2], pt[-1], pt[0])) return false;
+                    _cubicTo(rw, UPSCALE(pt[-2]), UPSCALE(pt[-1]), UPSCALE(pt[0]));
                     continue;
                 }
-                if (!cubicTo(rw, pt[-2], pt[-1], outline->pts[first])) return false;
+                _cubicTo(rw, UPSCALE(pt[-2]), UPSCALE(pt[-1]), UPSCALE(outline->pts[first]));
                 goto close;
             }
         }
@@ -442,13 +626,13 @@ invalid_outline:
 }
 
 
-static bool genRle(RleWorker& rw)
+static bool _genRle(RleWorker& rw)
 {
     bool ret = false;
 
     if (setjmp(rw.jmpBuf) == 0) {
-        ret = decomposeOutline(rw);
-        if (!rw.invalid)  recordCell(rw);
+        ret = _decomposeOutline(rw);
+        if (!rw.invalid) _recordCell(rw);
     } else {
         cout <<  "Memory Overflow" << endl;
     }
@@ -460,7 +644,7 @@ static bool genRle(RleWorker& rw)
 /* External Class Implementation                                        */
 /************************************************************************/
 
-bool rleRender(SwShape& sdata)
+SwRleData* rleRender(const SwShape& sdata)
 {
     constexpr auto RENDER_POOL_SIZE = 16384L;
     constexpr auto BAND_SIZE = 39;
@@ -468,7 +652,7 @@ bool rleRender(SwShape& sdata)
     auto outline = sdata.outline;
     assert(outline);
 
-    if (outline->ptsCnt == 0 || outline->cntrsCnt <= 0) return false;
+    if (outline->ptsCnt == 0 || outline->cntrsCnt <= 0) return nullptr;
 
     assert(outline->cntrs && outline->pts);
     assert(outline->ptsCnt == outline->cntrs[outline->cntrsCnt - 1] + 1);
@@ -494,6 +678,9 @@ bool rleRender(SwShape& sdata)
     rw.outline = outline;
     rw.bandSize = rw.bufferSize / (sizeof(Cell) * 8);  //bandSize: 64
     rw.bandShoot = 0;
+    rw.rle = reinterpret_cast<SwRleData*>(calloc(1, sizeof(SwRleData)));
+    assert(rw.rle);
+
     //printf("bufferSize = %d, bbox(%f %f %f %f), exCnt(%f), eyCnt(%f), bandSize(%d)\n", rw.bufferSize, rw.exMin, rw.eyMin, rw.exMax, rw.eyMax, rw.exCnt, rw.eyCnt, rw.bandSize);
 
     //Generate RLE
@@ -547,9 +734,9 @@ bool rleRender(SwShape& sdata)
             rw.cellMax.y = band->max;
             rw.cellYCnt = band->max - band->min;
 
-            if (!genRle(rw)) return -1;
+            if (!_genRle(rw)) goto error;
 
-            sweep(rw);
+            _sweep(rw);
             --band;
             continue;
 
@@ -561,7 +748,7 @@ bool rleRender(SwShape& sdata)
 
             /* This is too complex for a single scanline; there must
                be some problems */
-            if (middle == bottom) return -1;
+            if (middle == bottom) goto error;
 
             if (bottom - top >= rw.bandSize) ++rw.bandShoot;
 
@@ -576,7 +763,12 @@ bool rleRender(SwShape& sdata)
     if (rw.bandShoot > 8 && rw.bandSize > 16)
         rw.bandSize = (rw.bandSize >> 1);
 
-    return true;
+    return rw.rle;
+
+error:
+    free(rw.rle);
+    rw.rle = nullptr;
+    return nullptr;
 }
 
 #endif /* _TVG_SW_RLE_H_ */

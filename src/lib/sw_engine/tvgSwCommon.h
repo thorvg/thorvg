@@ -23,6 +23,8 @@ using namespace tvg;
 
 constexpr auto SW_CURVE_TAG_ON = 1;
 constexpr auto SW_CURVE_TAG_CUBIC = 2;
+constexpr auto SW_OUTLINE_FILL_WINDING = 0;
+constexpr auto SW_OUTLINE_FILL_EVEN_ODD = 1;
 
 using SwCoord = signed long;
 
@@ -56,43 +58,41 @@ struct SwOutline
     size_t      ptsCnt;           //number of points in the glyph
     size_t      reservedPtsCnt;
     char*       tags;             //the points flags
-    size_t      flags;            //outline masks
+    uint8_t     fillMode;         //outline fill mode
 };
 
 struct SwSpan
 {
-    size_t x;
-    size_t y;
-    size_t len;
+    uint16_t x, y;
+    uint16_t len;
     uint8_t coverage;
 };
 
 struct SwRleData
 {
+    SwSpan *spans;
     size_t alloc;
     size_t size;
-    SwSpan *spans;
 };
 
 struct SwBBox
 {
-    SwPoint min;
-    SwPoint max;
+    SwPoint min, max;
 };
 
 struct SwShape
 {
     SwOutline*   outline;
-    SwRleData    rle;
+    SwRleData*   rle;
     SwBBox       bbox;
 };
 
+void shapeReset(SwShape& sdata);
 bool shapeGenOutline(const ShapeNode& shape, SwShape& sdata);
 void shapeDelOutline(const ShapeNode& shape, SwShape& sdata);
 bool shapeGenRle(const ShapeNode& shape, SwShape& sdata);
-void shapeDelRle(const ShapeNode& shape, SwShape& sdata);
 bool shapeTransformOutline(const ShapeNode& shape, SwShape& sdata);
 
-bool rleRender(SwShape& sdata);
+SwRleData* rleRender(const SwShape& sdata);
 
 #endif /* _TVG_SW_COMMON_H_ */
