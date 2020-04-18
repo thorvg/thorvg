@@ -14,20 +14,25 @@
  *  limitations under the License.
  *
  */
-#ifndef _TVG_SW_RASTER_H_
-#define _TVG_SW_RASTER_H_
+#ifndef _TVG_GL_ENGINE_H_
+#define _TVG_GL_ENGINE_H_
 
-class SwRaster : public RasterMethod
+namespace tvg
+{
+
+class GlEngine : public RasterMethod
 {
 public:
     void* prepare(const ShapeNode& shape, void* data, UpdateFlag flags) override;
-    static SwRaster* inst();
+    static GlEngine* inst();
     static int init();
     static int term();
 
 private:
-    SwRaster(){};
-    ~SwRaster(){};
+    GlEngine(){};
+    ~GlEngine(){};
 };
 
-#endif /* _TVG_SW_RASTER_H_ */
+}
+
+#endif /* _TVG_GL_ENGINE_H_ */

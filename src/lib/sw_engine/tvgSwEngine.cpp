@@ -14,24 +14,24 @@
  *  limitations under the License.
  *
  */
-#ifndef _TVG_SW_RASTER_CPP_
-#define _TVG_SW_RASTER_CPP_
+#ifndef _TVG_SW_ENGINE_CPP_
+#define _TVG_SW_ENGINE_CPP_
 
 #include "tvgSwCommon.h"
-#include "tvgSwRaster.h"
+#include "tvgSwEngine.h"
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-static SwRaster* pInst = nullptr;
+static SwEngine* pInst = nullptr;
 
 
 /************************************************************************/
 /* External Class Implementation                                        */
 /************************************************************************/
 
-void* SwRaster::prepare(const ShapeNode& shape, void* data, UpdateFlag flags)
+void* SwEngine::prepare(const ShapeNode& shape, void* data, UpdateFlag flags)
 {
     //prepare shape data
     SwShape* sdata = static_cast<SwShape*>(data);
@@ -59,31 +59,31 @@ void* SwRaster::prepare(const ShapeNode& shape, void* data, UpdateFlag flags)
 }
 
 
-int SwRaster::init()
+int SwEngine::init()
 {
     if (pInst) return -1;
-    pInst = new SwRaster();
+    pInst = new SwEngine();
     assert(pInst);
 
     return 0;
 }
 
 
-int SwRaster::term()
+int SwEngine::term()
 {
     if (!pInst) return -1;
-    cout << "SwRaster(" << pInst << ") destroyed!" << endl;
+    cout << "SwEngine(" << pInst << ") destroyed!" << endl;
     delete(pInst);
     pInst = nullptr;
     return 0;
 }
 
 
-SwRaster* SwRaster::inst()
+SwEngine* SwEngine::inst()
 {
     assert(pInst);
     return pInst;
 }
 
 
-#endif /* _TVG_SW_RASTER_CPP_ */
+#endif /* _TVG_SW_ENGINE_CPP_ */

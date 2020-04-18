@@ -19,7 +19,7 @@
 
 #include "tvgCommon.h"
 #include "tvgCanvasBase.h"
-#include "tvgSwRaster.h"
+#include "tvgSwEngine.h"
 
 
 /************************************************************************/
@@ -32,7 +32,7 @@ struct SwCanvas::Impl : CanvasBase
     int stride = 0;
     int height = 0;
 
-    Impl() : CanvasBase(SwRaster::inst()) {}
+    Impl() : CanvasBase(SwEngine::inst()) {}
 };
 
 

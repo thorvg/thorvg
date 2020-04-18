@@ -14,14 +14,14 @@
  *  limitations under the License.
  *
  */
-#ifndef _TVG_GL_RASTER_CPP_
-#define _TVG_GL_RASTER_CPP_
+#ifndef _TVG_GL_ENGINE_CPP_
+#define _TVG_GL_ENGINE_CPP_
 
 #include "tvgCommon.h"
-#include "tvgGlRaster.h"
+#include "tvgGlEngine.h"
 
 
-static GlRaster* pInst = nullptr;
+static GlEngine* pInst = nullptr;
 
 struct GlShape
 {
@@ -29,7 +29,7 @@ struct GlShape
 };
 
 
-void* GlRaster::prepare(const ShapeNode& shape, void* data, UpdateFlag flags)
+void* GlEngine::prepare(const ShapeNode& shape, void* data, UpdateFlag flags)
 {
     //prepare shape data
     GlShape* sdata = static_cast<GlShape*>(data);
@@ -42,31 +42,31 @@ void* GlRaster::prepare(const ShapeNode& shape, void* data, UpdateFlag flags)
 }
 
 
-int GlRaster::init()
+int GlEngine::init()
 {
     if (pInst) return -1;
-    pInst = new GlRaster();
+    pInst = new GlEngine();
     assert(pInst);
 
     return 0;
 }
 
 
-int GlRaster::term()
+int GlEngine::term()
 {
     if (!pInst) return -1;
-    cout << "GlRaster(" << pInst << ") destroyed!" << endl;
+    cout << "GlEngine(" << pInst << ") destroyed!" << endl;
     delete(pInst);
     pInst = nullptr;
     return 0;
 }
 
 
-GlRaster* GlRaster::inst()
+GlEngine* GlEngine::inst()
 {
     assert(pInst);
     return pInst;
 }
 
 
-#endif /* _TVG_GL_RASTER_CPP_ */
+#endif /* _TVG_GL_ENGINE_CPP_ */

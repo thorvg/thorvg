@@ -1,7 +1,7 @@
 source_file = [
    'tvgSwCommon.h',
-   'tvgSwRaster.h',
-   'tvgSwRaster.cpp',
+   'tvgSwEngine.h',
+   'tvgSwEngine.cpp',
    'tvgSwShape.cpp',
    'tvgSwRle.cpp',
 ]

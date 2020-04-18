@@ -18,8 +18,8 @@
 #define _TVG_ENGINE_CPP_
 
 #include "tvgCommon.h"
-#include "tvgSwRaster.h"
-#include "tvgGlRaster.h"
+#include "tvgSwEngine.h"
+#include "tvgGlEngine.h"
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
@@ -35,8 +35,8 @@ int Engine::init() noexcept
     //TODO: Initialize Raster engines by configuration.
 
     int ret = 0;
-    ret |= SwRaster::init();
-    ret |= GlRaster::init();
+    ret |= SwEngine::init();
+    ret |= GlEngine::init();
 
     return ret;
 }
@@ -45,8 +45,8 @@ int Engine::init() noexcept
 int Engine::term() noexcept
 {
     int ret = 0;
-    ret |= SwRaster::term();
-    ret |= GlRaster::term();
+    ret |= SwEngine::term();
+    ret |= GlEngine::term();
 
     return ret;
 }
