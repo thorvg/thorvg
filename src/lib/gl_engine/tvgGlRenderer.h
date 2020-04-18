@@ -14,13 +14,13 @@
  *  limitations under the License.
  *
  */
-#ifndef _TVG_GL_ENGINE_H_
-#define _TVG_GL_ENGINE_H_
+#ifndef _TVG_GL_RENDERER_H_
+#define _TVG_GL_RENDERER_H_
 
 namespace tvg
 {
 
-class GlEngine : public RasterMethod
+class GlRenderer : public RenderMethod
 {
 public:
     void* prepare(const ShapeNode& shape, void* data, UpdateFlag flags) override;
@@ -28,15 +28,15 @@ public:
     size_t ref() override;
     size_t unref() override;
 
-    static GlEngine* inst();
+    static GlRenderer* inst();
     static int init();
     static int term();
 
 private:
-    GlEngine(){};
-    ~GlEngine(){};
+    GlRenderer(){};
+    ~GlRenderer(){};
 };
 
 }
 
-#endif /* _TVG_GL_ENGINE_H_ */
+#endif /* _TVG_GL_RENDERER_H_ */

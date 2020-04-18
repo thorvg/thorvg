@@ -14,10 +14,10 @@
  *  limitations under the License.
  *
  */
-#ifndef _TVG_SW_ENGINE_H_
-#define _TVG_SW_ENGINE_H_
+#ifndef _TVG_SW_RENDERER_H_
+#define _TVG_SW_RENDERER_H_
 
-class SwEngine : public RasterMethod
+class SwRenderer : public RenderMethod
 {
 public:
     void* prepare(const ShapeNode& shape, void* data, UpdateFlag flags) override;
@@ -25,13 +25,13 @@ public:
     size_t ref() override;
     size_t unref() override;
 
-    static SwEngine* inst();
+    static SwRenderer* inst();
     static int init();
     static int term();
 
 private:
-    SwEngine(){};
-    ~SwEngine(){};
+    SwRenderer(){};
+    ~SwRenderer(){};
 };
 
-#endif /* _TVG_SW_ENGINE_H_ */
+#endif /* _TVG_SW_RENDERER_H_ */

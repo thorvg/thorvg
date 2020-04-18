@@ -29,24 +29,24 @@ using namespace tvg;
 namespace tvg
 {
 
-class RasterMethod
+class RenderMethod
 {
 public:
     enum UpdateFlag { None = 0, Path = 1, Fill = 2, All = 3 };
-    virtual ~RasterMethod() {}
+    virtual ~RenderMethod() {}
     virtual void* prepare(const ShapeNode& shape, void* data, UpdateFlag flags) = 0;
     virtual void* dispose(const ShapeNode& shape, void *data) = 0;
     virtual size_t ref() = 0;
     virtual size_t unref() = 0;
 };
 
-struct RasterMethodInit
+struct RenderMethodInit
 {
-    RasterMethod* pInst = nullptr;
+    RenderMethod* pInst = nullptr;
     size_t refCnt = 0;
     bool initted = false;
 
-    static int init(RasterMethodInit& initter, RasterMethod* engine)
+    static int init(RenderMethodInit& initter, RenderMethod* engine)
     {
         assert(engine);
         if (initter.pInst || initter.refCnt > 0) return -1;
@@ -56,7 +56,7 @@ struct RasterMethodInit
         return 0;
     }
 
-    static int term(RasterMethodInit& initter)
+    static int term(RenderMethodInit& initter)
     {
         if (!initter.pInst || !initter.initted) return -1;
 
@@ -70,7 +70,7 @@ struct RasterMethodInit
         return 0;
     }
 
-    static size_t unref(RasterMethodInit& initter)
+    static size_t unref(RenderMethodInit& initter)
     {
         assert(initter.refCnt > 0);
         --initter.refCnt;
@@ -85,13 +85,13 @@ struct RasterMethodInit
         return initter.refCnt;
     }
 
-    static RasterMethod* inst(RasterMethodInit& initter)
+    static RenderMethod* inst(RenderMethodInit& initter)
     {
         assert(initter.pInst);
         return initter.pInst;
     }
 
-    static size_t ref(RasterMethodInit& initter)
+    static size_t ref(RenderMethodInit& initter)
     {
         return ++initter.refCnt;
     }

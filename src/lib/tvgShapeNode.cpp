@@ -84,7 +84,7 @@ unique_ptr<ShapeNode> ShapeNode::gen() noexcept
 }
 
 
-int ShapeNode :: dispose(RasterMethod* engine) noexcept
+int ShapeNode :: dispose(RenderMethod* engine) noexcept
 {
     auto impl = pImpl.get();
     assert(impl);
@@ -95,12 +95,12 @@ int ShapeNode :: dispose(RasterMethod* engine) noexcept
 }
 
 
-int ShapeNode :: update(RasterMethod* engine) noexcept
+int ShapeNode :: update(RenderMethod* engine) noexcept
 {
     auto impl = pImpl.get();
     assert(impl);
 
-    impl->edata = engine->prepare(*this, impl->edata, RasterMethod::UpdateFlag::All);
+    impl->edata = engine->prepare(*this, impl->edata, RenderMethod::UpdateFlag::All);
     if (impl->edata) return 0;
     return - 1;
 }

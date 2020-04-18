@@ -26,17 +26,17 @@
 struct CanvasBase
 {
     vector<PaintNode*> nodes;
-    RasterMethod*      raster;
+    RenderMethod*      renderer;
 
-    CanvasBase(RasterMethod *pRaster):raster(pRaster)
+    CanvasBase(RenderMethod *pRenderer):renderer(pRenderer)
     {
-        raster->ref();
+        renderer->ref();
     }
 
     ~CanvasBase()
     {
        clear();
-       raster->unref();
+       renderer->unref();
     }
 
     int reserve(size_t n)
@@ -49,7 +49,7 @@ struct CanvasBase
     int clear()
     {
         for (auto node : nodes) {
-            node->dispose(raster);
+            node->dispose(renderer);
             delete(node);
         }
         nodes.clear();
@@ -67,11 +67,11 @@ struct CanvasBase
         if (SceneNode *scene = dynamic_cast<SceneNode *>(node)) {
 
         } else if (ShapeNode *shape = dynamic_cast<ShapeNode *>(node)) {
-            return shape->update(raster);
+            return shape->update(renderer);
         }
 #else
         if (ShapeNode *shape = dynamic_cast<ShapeNode *>(node)) {
-            return shape->update(raster);
+            return shape->update(renderer);
         }
 #endif
         cout << "What type of PaintNode? = " << node << endl;

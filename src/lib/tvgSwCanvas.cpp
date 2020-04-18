@@ -19,7 +19,7 @@
 
 #include "tvgCommon.h"
 #include "tvgCanvasBase.h"
-#include "tvgSwEngine.h"
+#include "tvgSwRenderer.h"
 
 
 /************************************************************************/
@@ -32,7 +32,7 @@ struct SwCanvas::Impl : CanvasBase
     int stride = 0;
     int height = 0;
 
-    Impl() : CanvasBase(SwEngine::inst()) {}
+    Impl() : CanvasBase(SwRenderer::inst()) {}
 };
 
 
@@ -111,11 +111,11 @@ int SwCanvas::update() noexcept
 }
 
 
-RasterMethod* SwCanvas::engine() noexcept
+RenderMethod* SwCanvas::engine() noexcept
 {
     auto impl = pImpl.get();
     assert(impl);
-    return impl->raster;
+    return impl->renderer;
 }
 
 #endif /* _TVG_SWCANVAS_CPP_ */

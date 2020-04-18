@@ -52,7 +52,7 @@ namespace tvg
 
 enum class TIZENVG_EXPORT PathCommand { Close, MoveTo, LineTo, CubicTo };
 
-class RasterMethod;
+class RenderMethod;
 
 struct Point
 {
@@ -73,8 +73,8 @@ class TIZENVG_EXPORT PaintNode
 {
 public:
     virtual ~PaintNode() {}
-    virtual int dispose(RasterMethod* engine) = 0;
-    virtual int update(RasterMethod* engine) = 0;
+    virtual int dispose(RenderMethod* engine) = 0;
+    virtual int update(RenderMethod* engine) = 0;
 };
 
 
@@ -91,8 +91,8 @@ class TIZENVG_EXPORT ShapeNode final : public PaintNode
 public:
     ~ShapeNode();
 
-    int dispose(RasterMethod* engine) noexcept override;
-    int update(RasterMethod* engine) noexcept override;
+    int dispose(RenderMethod* engine) noexcept override;
+    int update(RenderMethod* engine) noexcept override;
     int clear() noexcept;
 
     int appendRect(float x, float y, float w, float h, float radius) noexcept;
@@ -123,8 +123,8 @@ class TIZENVG_EXPORT SceneNode final : public PaintNode
 public:
     ~SceneNode();
 
-    int dispose(RasterMethod* engine) noexcept override;
-    int update(RasterMethod* engine) noexcept override;
+    int dispose(RenderMethod* engine) noexcept override;
+    int update(RenderMethod* engine) noexcept override;
 
     int push(std::unique_ptr<ShapeNode> shape) noexcept;
 
@@ -153,7 +153,7 @@ public:
     int update() noexcept;
     int draw(bool async = true) noexcept;
     int sync() noexcept;
-    RasterMethod* engine() noexcept;
+    RenderMethod* engine() noexcept;
 
     int target(uint32_t* buffer, size_t stride, size_t height) noexcept;
 
@@ -183,7 +183,7 @@ public:
     int update() noexcept;
     int draw(bool async = true) noexcept { return 0; }
     int sync() noexcept { return 0; }
-    RasterMethod* engine() noexcept;
+    RenderMethod* engine() noexcept;
 
     static std::unique_ptr<GlCanvas> gen() noexcept;
 

@@ -1,6 +1,6 @@
 source_file = [
-   'tvgGlEngine.h',
-   'tvgGlEngine.cpp',
+   'tvgGlRenderer.h',
+   'tvgGlRenderer.cpp',
 ]
 
 glraster_dep = declare_dependency(

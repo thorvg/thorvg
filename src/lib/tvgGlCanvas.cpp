@@ -19,7 +19,7 @@
 
 #include "tvgCommon.h"
 #include "tvgCanvasBase.h"
-#include "tvgGlEngine.h"
+#include "tvgGlRenderer.h"
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
@@ -27,7 +27,7 @@
 
 struct GlCanvas::Impl : CanvasBase
 {
-    Impl() : CanvasBase(GlEngine::inst()) {}
+    Impl() : CanvasBase(GlRenderer::inst()) {}
 };
 
 
@@ -76,11 +76,11 @@ int GlCanvas::update() noexcept
 }
 
 
-RasterMethod* GlCanvas::engine() noexcept
+RenderMethod* GlCanvas::engine() noexcept
 {
     auto impl = pImpl.get();
     assert(impl);
-    return impl->raster;
+    return impl->renderer;
 }
 
 #endif /* _TVG_GLCANVAS_CPP_ */

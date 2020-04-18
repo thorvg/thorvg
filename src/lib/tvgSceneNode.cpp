@@ -58,14 +58,14 @@ int SceneNode :: push(unique_ptr<ShapeNode> shape) noexcept
 }
 
 
-int SceneNode :: dispose(RasterMethod* engine) noexcept
+int SceneNode :: dispose(RenderMethod* engine) noexcept
 {
 
     return 0;
 }
 
 
-int SceneNode :: update(RasterMethod* engine) noexcept
+int SceneNode :: update(RenderMethod* engine) noexcept
 {
 
     return 0;

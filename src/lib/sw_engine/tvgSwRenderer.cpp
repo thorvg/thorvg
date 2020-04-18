@@ -14,24 +14,24 @@
  *  limitations under the License.
  *
  */
-#ifndef _TVG_SW_ENGINE_CPP_
-#define _TVG_SW_ENGINE_CPP_
+#ifndef _TVG_SW_RENDERER_CPP_
+#define _TVG_SW_RENDERER_CPP_
 
 #include "tvgSwCommon.h"
-#include "tvgSwEngine.h"
+#include "tvgSwRenderer.h"
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-static RasterMethodInit engineInit;
+static RenderMethodInit engineInit;
 
 
 /************************************************************************/
 /* External Class Implementation                                        */
 /************************************************************************/
 
-void* SwEngine::dispose(const ShapeNode& shape, void *data)
+void* SwRenderer::dispose(const ShapeNode& shape, void *data)
 {
     SwShape* sdata = static_cast<SwShape*>(data);
     if (!sdata) return nullptr;
@@ -40,7 +40,7 @@ void* SwEngine::dispose(const ShapeNode& shape, void *data)
     return nullptr;
 }
 
-void* SwEngine::prepare(const ShapeNode& shape, void* data, UpdateFlag flags)
+void* SwRenderer::prepare(const ShapeNode& shape, void* data, UpdateFlag flags)
 {
     //prepare shape data
     SwShape* sdata = static_cast<SwShape*>(data);
@@ -68,34 +68,34 @@ void* SwEngine::prepare(const ShapeNode& shape, void* data, UpdateFlag flags)
 }
 
 
-int SwEngine::init()
+int SwRenderer::init()
 {
-    return RasterMethodInit::init(engineInit, new SwEngine);
+    return RenderMethodInit::init(engineInit, new SwRenderer);
 }
 
 
-int SwEngine::term()
+int SwRenderer::term()
 {
-    return RasterMethodInit::term(engineInit);
+    return RenderMethodInit::term(engineInit);
 }
 
 
-size_t SwEngine::unref()
+size_t SwRenderer::unref()
 {
-    return RasterMethodInit::unref(engineInit);
+    return RenderMethodInit::unref(engineInit);
 }
 
 
-size_t SwEngine::ref()
+size_t SwRenderer::ref()
 {
-    return RasterMethodInit::ref(engineInit);
+    return RenderMethodInit::ref(engineInit);
 }
 
 
-SwEngine* SwEngine::inst()
+SwRenderer* SwRenderer::inst()
 {
-    return dynamic_cast<SwEngine*>(RasterMethodInit::inst(engineInit));
+    return dynamic_cast<SwRenderer*>(RenderMethodInit::inst(engineInit));
 }
 
 
-#endif /* _TVG_SW_ENGINE_CPP_ */
+#endif /* _TVG_SW_RENDERER_CPP_ */

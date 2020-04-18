@@ -14,17 +14,17 @@
  *  limitations under the License.
  *
  */
-#ifndef _TVG_GL_ENGINE_CPP_
-#define _TVG_GL_ENGINE_CPP_
+#ifndef _TVG_GL_RENDERER_CPP_
+#define _TVG_GL_RENDERER_CPP_
 
 #include "tvgCommon.h"
-#include "tvgGlEngine.h"
+#include "tvgGlRenderer.h"
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-static RasterMethodInit engineInit;
+static RenderMethodInit engineInit;
 
 struct GlShape
 {
@@ -35,7 +35,7 @@ struct GlShape
 /* External Class Implementation                                        */
 /************************************************************************/
 
-void* GlEngine::dispose(const ShapeNode& shape, void *data)
+void* GlRenderer::dispose(const ShapeNode& shape, void *data)
 {
     GlShape* sdata = static_cast<GlShape*>(data);
     if (!sdata) return nullptr;
@@ -44,7 +44,7 @@ void* GlEngine::dispose(const ShapeNode& shape, void *data)
 }
 
 
-void* GlEngine::prepare(const ShapeNode& shape, void* data, UpdateFlag flags)
+void* GlRenderer::prepare(const ShapeNode& shape, void* data, UpdateFlag flags)
 {
     //prepare shape data
     GlShape* sdata = static_cast<GlShape*>(data);
@@ -56,34 +56,34 @@ void* GlEngine::prepare(const ShapeNode& shape, void* data, UpdateFlag flags)
 }
 
 
-int GlEngine::init()
+int GlRenderer::init()
 {
-    return RasterMethodInit::init(engineInit, new GlEngine);
+    return RenderMethodInit::init(engineInit, new GlRenderer);
 }
 
 
-int GlEngine::term()
+int GlRenderer::term()
 {
-    return RasterMethodInit::term(engineInit);
+    return RenderMethodInit::term(engineInit);
 }
 
 
-size_t GlEngine::unref()
+size_t GlRenderer::unref()
 {
-    return RasterMethodInit::unref(engineInit);
+    return RenderMethodInit::unref(engineInit);
 }
 
 
-size_t GlEngine::ref()
+size_t GlRenderer::ref()
 {
-    return RasterMethodInit::ref(engineInit);
+    return RenderMethodInit::ref(engineInit);
 }
 
 
-GlEngine* GlEngine::inst()
+GlRenderer* GlRenderer::inst()
 {
-    return dynamic_cast<GlEngine*>(RasterMethodInit::inst(engineInit));
+    return dynamic_cast<GlRenderer*>(RenderMethodInit::inst(engineInit));
 }
 
 
-#endif /* _TVG_GL_ENGINE_CPP_ */
+#endif /* _TVG_GL_RENDERER_CPP_ */
