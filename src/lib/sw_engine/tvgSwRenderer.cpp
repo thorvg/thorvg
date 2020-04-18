@@ -24,7 +24,7 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-static RenderMethodInit engineInit;
+static RenderInitializer renderInit;
 
 
 /************************************************************************/
@@ -70,31 +70,31 @@ void* SwRenderer::prepare(const ShapeNode& shape, void* data, UpdateFlag flags)
 
 int SwRenderer::init()
 {
-    return RenderMethodInit::init(engineInit, new SwRenderer);
+    return RenderInitializer::init(renderInit, new SwRenderer);
 }
 
 
 int SwRenderer::term()
 {
-    return RenderMethodInit::term(engineInit);
+    return RenderInitializer::term(renderInit);
 }
 
 
 size_t SwRenderer::unref()
 {
-    return RenderMethodInit::unref(engineInit);
+    return RenderInitializer::unref(renderInit);
 }
 
 
 size_t SwRenderer::ref()
 {
-    return RenderMethodInit::ref(engineInit);
+    return RenderInitializer::ref(renderInit);
 }
 
 
 SwRenderer* SwRenderer::inst()
 {
-    return dynamic_cast<SwRenderer*>(RenderMethodInit::inst(engineInit));
+    return dynamic_cast<SwRenderer*>(RenderInitializer::inst(renderInit));
 }
 
 

@@ -24,7 +24,7 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-static RenderMethodInit engineInit;
+static RenderInitializer renderInit;
 
 struct GlShape
 {
@@ -58,31 +58,31 @@ void* GlRenderer::prepare(const ShapeNode& shape, void* data, UpdateFlag flags)
 
 int GlRenderer::init()
 {
-    return RenderMethodInit::init(engineInit, new GlRenderer);
+    return RenderInitializer::init(renderInit, new GlRenderer);
 }
 
 
 int GlRenderer::term()
 {
-    return RenderMethodInit::term(engineInit);
+    return RenderInitializer::term(renderInit);
 }
 
 
 size_t GlRenderer::unref()
 {
-    return RenderMethodInit::unref(engineInit);
+    return RenderInitializer::unref(renderInit);
 }
 
 
 size_t GlRenderer::ref()
 {
-    return RenderMethodInit::ref(engineInit);
+    return RenderInitializer::ref(renderInit);
 }
 
 
 GlRenderer* GlRenderer::inst()
 {
-    return dynamic_cast<GlRenderer*>(RenderMethodInit::inst(engineInit));
+    return dynamic_cast<GlRenderer*>(RenderInitializer::inst(renderInit));
 }
 
 

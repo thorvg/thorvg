@@ -40,60 +40,60 @@ public:
     virtual size_t unref() = 0;
 };
 
-struct RenderMethodInit
+struct RenderInitializer
 {
     RenderMethod* pInst = nullptr;
     size_t refCnt = 0;
-    bool initted = false;
+    bool initialized = false;
 
-    static int init(RenderMethodInit& initter, RenderMethod* engine)
+    static int init(RenderInitializer& renderInit, RenderMethod* engine)
     {
         assert(engine);
-        if (initter.pInst || initter.refCnt > 0) return -1;
-        initter.pInst = engine;
-        initter.refCnt = 0;
-        initter.initted = true;
+        if (renderInit.pInst || renderInit.refCnt > 0) return -1;
+        renderInit.pInst = engine;
+        renderInit.refCnt = 0;
+        renderInit.initialized = true;
         return 0;
     }
 
-    static int term(RenderMethodInit& initter)
+    static int term(RenderInitializer& renderInit)
     {
-        if (!initter.pInst || !initter.initted) return -1;
+        if (!renderInit.pInst || !renderInit.initialized) return -1;
 
-        initter.initted = false;
+        renderInit.initialized = false;
 
         //Still it's refered....
-        if (initter.refCnt > 0) return  0;
-        delete(initter.pInst);
-        initter.pInst = nullptr;
+        if (renderInit.refCnt > 0) return  0;
+        delete(renderInit.pInst);
+        renderInit.pInst = nullptr;
 
         return 0;
     }
 
-    static size_t unref(RenderMethodInit& initter)
+    static size_t unref(RenderInitializer& renderInit)
     {
-        assert(initter.refCnt > 0);
-        --initter.refCnt;
+        assert(renderInit.refCnt > 0);
+        --renderInit.refCnt;
 
         //engine has been requested to termination
-        if (!initter.initted && initter.refCnt == 0) {
-            if (initter.pInst) {
-                delete(initter.pInst);
-                initter.pInst = nullptr;
+        if (!renderInit.initialized && renderInit.refCnt == 0) {
+            if (renderInit.pInst) {
+                delete(renderInit.pInst);
+                renderInit.pInst = nullptr;
             }
         }
-        return initter.refCnt;
+        return renderInit.refCnt;
     }
 
-    static RenderMethod* inst(RenderMethodInit& initter)
+    static RenderMethod* inst(RenderInitializer& renderInit)
     {
-        assert(initter.pInst);
-        return initter.pInst;
+        assert(renderInit.pInst);
+        return renderInit.pInst;
     }
 
-    static size_t ref(RenderMethodInit& initter)
+    static size_t ref(RenderInitializer& renderInit)
     {
-        return ++initter.refCnt;
+        return ++renderInit.refCnt;
     }
 
 };
