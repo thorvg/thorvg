@@ -56,8 +56,7 @@ class RenderMethod;
 
 struct Point
 {
-    float x;
-    float y;
+    float x, y;
 };
 
 
@@ -73,7 +72,6 @@ class TIZENVG_EXPORT PaintNode
 {
 public:
     virtual ~PaintNode() {}
-    virtual int dispose(RenderMethod* engine) = 0;
     virtual int update(RenderMethod* engine) = 0;
 };
 
@@ -91,7 +89,6 @@ class TIZENVG_EXPORT ShapeNode final : public PaintNode
 public:
     ~ShapeNode();
 
-    int dispose(RenderMethod* engine) noexcept override;
     int update(RenderMethod* engine) noexcept override;
     int clear() noexcept;
 
@@ -105,6 +102,9 @@ public:
     int fill(size_t* r, size_t* g, size_t* b, size_t* a) const noexcept;
 
     static std::unique_ptr<ShapeNode> gen() noexcept;
+
+    //FIXME: Ugly... Better design?
+    void *engine() noexcept;
 
     _TIZENVG_DECLARE_PRIVATE(ShapeNode);
 };
@@ -123,7 +123,6 @@ class TIZENVG_EXPORT SceneNode final : public PaintNode
 public:
     ~SceneNode();
 
-    int dispose(RenderMethod* engine) noexcept override;
     int update(RenderMethod* engine) noexcept override;
 
     int push(std::unique_ptr<ShapeNode> shape) noexcept;
@@ -181,7 +180,7 @@ public:
 
     //TODO: Gl Specific methods. Need gl backend configuration methods as well.
     int update() noexcept;
-    int draw(bool async = true) noexcept { return 0; }
+    int draw(bool async = true) noexcept;
     int sync() noexcept { return 0; }
     RenderMethod* engine() noexcept;
 

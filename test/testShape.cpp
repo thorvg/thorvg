@@ -19,7 +19,7 @@ void tvgtest()
     //Prepare a Shape (Rectangle)
     auto shape1 = tvg::ShapeNode::gen();
     shape1->appendRect(0, 0, 400, 400, 0);      //x, y, w, h, corner_radius
-    shape1->fill(0, 255, 0, 255);               //r, g, b, a
+    shape1->fill(255, 0, 0, 255);               //r, g, b, a
 
     /* Push the shape into the Canvas drawing list
        When this shape is into the canvas list, the shape could update & prepare

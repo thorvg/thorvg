@@ -28,10 +28,6 @@
 
 struct SwCanvas::Impl : CanvasBase
 {
-    uint32_t* buffer = nullptr;
-    int stride = 0;
-    int height = 0;
-
     Impl() : CanvasBase(SwRenderer::inst()) {}
 };
 
@@ -45,9 +41,7 @@ int SwCanvas::target(uint32_t* buffer, size_t stride, size_t height) noexcept
     auto impl = pImpl.get();
     assert(impl);
 
-    impl->buffer = buffer;
-    impl->stride = stride;
-    impl->height = height;
+    dynamic_cast<SwRenderer*>(impl->renderer)->target(buffer, stride, height);
 
     return 0;
 }
@@ -55,7 +49,9 @@ int SwCanvas::target(uint32_t* buffer, size_t stride, size_t height) noexcept
 
 int SwCanvas::draw(bool async) noexcept
 {
-    return 0;
+    auto impl = pImpl.get();
+    assert(impl);
+    return impl->draw();
 }
 
 
@@ -89,7 +85,6 @@ SwCanvas::SwCanvas() : pImpl(make_unique<Impl>())
 
 SwCanvas::~SwCanvas()
 {
-    cout << "SwCanvas(" << this << ") destroyed!" << endl;
 }
 
 
@@ -107,7 +102,9 @@ unique_ptr<SwCanvas> SwCanvas::gen(uint32_t* buffer, size_t stride, size_t heigh
 
 int SwCanvas::update() noexcept
 {
-    return 0;
+    auto impl = pImpl.get();
+    assert(impl);
+    return impl->update();
 }
 
 

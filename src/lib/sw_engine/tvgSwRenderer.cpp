@@ -26,18 +26,49 @@
 
 static RenderInitializer renderInit;
 
+static inline size_t COLOR(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
+{
+    return (a << 24 | r << 16 | g << 8 | b);
+}
 
 /************************************************************************/
 /* External Class Implementation                                        */
 /************************************************************************/
 
-void* SwRenderer::dispose(const ShapeNode& shape, void *data)
+bool SwRenderer::target(uint32_t* buffer, size_t stride, size_t height)
+{
+    assert(buffer && stride > 0 && height > 0);
+
+    surface.buffer = buffer;
+    surface.stride = stride;
+    surface.height = height;
+
+    return true;
+}
+
+
+bool SwRenderer::render(const ShapeNode& shape, void *data)
 {
     SwShape* sdata = static_cast<SwShape*>(data);
-    if (!sdata) return nullptr;
+    if (!sdata) return false;
+
+    //invisible?
+    size_t r, g, b, a;
+    shape.fill(&r, &g, &b, &a);
+    if (a == 0) return true;
+
+    //TODO: Threading
+    return rasterShape(surface, *sdata, COLOR(r, g, b, a));
+}
+
+
+bool SwRenderer::dispose(const ShapeNode& shape, void *data)
+{
+    SwShape* sdata = static_cast<SwShape*>(data);
+    if (!sdata) return false;
     shapeReset(*sdata);
     free(sdata);
-    return nullptr;
+    return true;
 }
 
 void* SwRenderer::prepare(const ShapeNode& shape, void* data, UpdateFlag flags)
@@ -56,10 +87,10 @@ void* SwRenderer::prepare(const ShapeNode& shape, void* data, UpdateFlag flags)
     shape.fill(nullptr, nullptr, nullptr, &alpha);
     if (alpha == 0) return sdata;
 
+    //TODO: Threading
     if (flags & UpdateFlag::Path) {
         shapeReset(*sdata);
         if (!shapeGenOutline(shape, *sdata)) return sdata;
-        //TODO: From below sequence starts threading?
         if (!shapeTransformOutline(shape, *sdata)) return sdata;
         if (!shapeGenRle(shape, *sdata)) return sdata;
     }

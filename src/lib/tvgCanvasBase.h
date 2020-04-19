@@ -19,9 +19,6 @@
 
 #include "tvgCommon.h"
 
-/************************************************************************/
-/* Internal Class Implementation                                        */
-/************************************************************************/
 
 struct CanvasBase
 {
@@ -48,42 +45,60 @@ struct CanvasBase
 
     int clear()
     {
+        assert(renderer);
+
+        auto ret = 0;
+
         for (auto node : nodes) {
-            node->dispose(renderer);
+            if (SceneNode *scene = dynamic_cast<SceneNode *>(node)) {
+                cout << "TODO: " <<  scene << endl;
+            } else if (ShapeNode *shape = dynamic_cast<ShapeNode *>(node)) {
+                ret |= renderer->dispose(*shape, shape->engine());
+            }
             delete(node);
         }
         nodes.clear();
 
-        return 0;
+        return ret;
+    }
+
+    int update()
+    {
+        assert(renderer);
+
+        auto ret = 0;
+
+        for(auto node: nodes) {
+            ret |= node->update(renderer);
+        }
+
+        return ret;
     }
 
     int push(unique_ptr<PaintNode> paint)
     {
         PaintNode *node = paint.release();
         assert(node);
-
         nodes.push_back(node);
-#if 0
-        if (SceneNode *scene = dynamic_cast<SceneNode *>(node)) {
+        return node->update(renderer);
+    }
 
-        } else if (ShapeNode *shape = dynamic_cast<ShapeNode *>(node)) {
-            return shape->update(renderer);
-        }
-#else
-        if (ShapeNode *shape = dynamic_cast<ShapeNode *>(node)) {
-            return shape->update(renderer);
-        }
-#endif
-        cout << "What type of PaintNode? = " << node << endl;
+    int draw()
+    {
+        assert(renderer);
 
-        return -1;
+        auto ret = 0;
+
+        for(auto node: nodes) {
+            if (SceneNode *scene = dynamic_cast<SceneNode *>(node)) {
+                cout << "TODO: " <<  scene << endl;
+            } else if (ShapeNode *shape = dynamic_cast<ShapeNode *>(node)) {
+                ret |= renderer->render(*shape, shape->engine());
+            }
+        }
+        return ret;
     }
 
 };
-
-
-/************************************************************************/
-/* External Class Implementation                                        */
-/************************************************************************/
 
 #endif /* _TVG_CANVAS_BASE_CPP_ */

@@ -42,7 +42,6 @@ GlCanvas::GlCanvas() : pImpl(make_unique<Impl>())
 
 GlCanvas::~GlCanvas()
 {
-   cout << "GlCanvas(" << this << ") destroyed!" << endl;
 }
 
 
@@ -72,7 +71,9 @@ int GlCanvas::clear() noexcept
 
 int GlCanvas::update() noexcept
 {
-    return 0;
+    auto impl = pImpl.get();
+    assert(impl);
+    return impl->update();
 }
 
 
@@ -81,6 +82,14 @@ RenderMethod* GlCanvas::engine() noexcept
     auto impl = pImpl.get();
     assert(impl);
     return impl->renderer;
+}
+
+
+int GlCanvas::draw(bool async) noexcept
+{
+    auto impl = pImpl.get();
+    assert(impl);
+    return impl->draw();
 }
 
 #endif /* _TVG_GLCANVAS_CPP_ */

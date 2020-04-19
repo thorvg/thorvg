@@ -20,13 +20,22 @@
 namespace tvg
 {
 
+struct Surface
+{
+    //TODO: Union for multiple types
+    uint32_t* buffer;
+    size_t stride;
+    size_t height;
+};
+
 class RenderMethod
 {
 public:
     enum UpdateFlag { None = 0, Path = 1, Fill = 2, All = 3 };
     virtual ~RenderMethod() {}
     virtual void* prepare(const ShapeNode& shape, void* data, UpdateFlag flags) = 0;
-    virtual void* dispose(const ShapeNode& shape, void *data) = 0;
+    virtual bool dispose(const ShapeNode& shape, void *data) = 0;
+    virtual bool render(const ShapeNode& shape, void *data) = 0;
     virtual size_t ref() = 0;
     virtual size_t unref() = 0;
 };

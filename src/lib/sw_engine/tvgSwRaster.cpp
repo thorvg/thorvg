@@ -14,30 +14,29 @@
  *  limitations under the License.
  *
  */
-#ifndef _TVG_GL_RENDERER_H_
-#define _TVG_GL_RENDERER_H_
+#ifndef _TVG_SW_RASTER_CPP_
+#define _TVG_SW_RASTER_CPP_
 
-namespace tvg
+#include "tvgSwCommon.h"
+
+
+bool rasterShape(Surface& surface, SwShape& sdata, size_t color)
 {
+    SwRleData* rle = sdata.rle;
+    assert(rle);
 
-class GlRenderer : public RenderMethod
-{
-public:
-    void* prepare(const ShapeNode& shape, void* data, UpdateFlag flags) override;
-    bool dispose(const ShapeNode& shape, void *data) override;
-    bool render(const ShapeNode& shape, void *data) override;
-    size_t ref() override;
-    size_t unref() override;
+    auto stride = surface.stride;
+    auto span = rle->spans;
 
-    static GlRenderer* inst();
-    static int init();
-    static int term();
+    for (size_t i = 0; i < rle->size; ++i) {
+        assert(span);
+        for (auto j = 0; j < span->len; ++j) {
+            surface.buffer[span->y * stride + span->x + j] = color;
+        }
+        ++span;
+    }
 
-private:
-    GlRenderer(){};
-    ~GlRenderer(){};
-};
-
+    return true;
 }
 
-#endif /* _TVG_GL_RENDERER_H_ */
+#endif /* _TVG_SW_RASTER_CPP_ */

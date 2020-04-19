@@ -4,6 +4,7 @@ source_file = [
    'tvgSwRenderer.cpp',
    'tvgSwShape.cpp',
    'tvgSwRle.cpp',
+   'tvgSwRaster.cpp',
 ]
 
 swraster_dep = declare_dependency(

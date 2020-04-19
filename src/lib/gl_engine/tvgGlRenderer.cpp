@@ -35,12 +35,26 @@ struct GlShape
 /* External Class Implementation                                        */
 /************************************************************************/
 
-void* GlRenderer::dispose(const ShapeNode& shape, void *data)
+bool GlRenderer::render(const ShapeNode& shape, void *data)
 {
     GlShape* sdata = static_cast<GlShape*>(data);
-    if (!sdata) return nullptr;
+    if (!sdata) return false;
+
+    //TODO:
+
+    return true;
+}
+
+
+bool GlRenderer::dispose(const ShapeNode& shape, void *data)
+{
+    GlShape* sdata = static_cast<GlShape*>(data);
+    if (!sdata) return false;
+
+    //TODO:
+
     free(sdata);
-    return nullptr;
+    return true;
 }
 
 
@@ -52,6 +66,9 @@ void* GlRenderer::prepare(const ShapeNode& shape, void* data, UpdateFlag flags)
         sdata = static_cast<GlShape*>(calloc(1, sizeof(GlShape)));
         assert(sdata);
     }
+
+    //TODO:
+
     return sdata;
 }
 

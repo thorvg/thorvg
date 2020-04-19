@@ -34,13 +34,13 @@ struct SceneNode::Impl
 /* External Class Implementation                                        */
 /************************************************************************/
 
-SceneNode :: SceneNode() : pImpl(make_unique<Impl>())
+SceneNode::SceneNode() : pImpl(make_unique<Impl>())
 {
 
 }
 
 
-SceneNode :: ~SceneNode()
+SceneNode::~SceneNode()
 {
     cout << "SceneNode(" << this << ") destroyed!" << endl;
 }
@@ -52,20 +52,13 @@ unique_ptr<SceneNode> SceneNode::gen() noexcept
 }
 
 
-int SceneNode :: push(unique_ptr<ShapeNode> shape) noexcept
+int SceneNode::push(unique_ptr<ShapeNode> shape) noexcept
 {
     return 0;
 }
 
 
-int SceneNode :: dispose(RenderMethod* engine) noexcept
-{
-
-    return 0;
-}
-
-
-int SceneNode :: update(RenderMethod* engine) noexcept
+int SceneNode::update(RenderMethod* engine) noexcept
 {
 
     return 0;

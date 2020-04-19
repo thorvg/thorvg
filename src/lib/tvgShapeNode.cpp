@@ -84,18 +84,15 @@ unique_ptr<ShapeNode> ShapeNode::gen() noexcept
 }
 
 
-int ShapeNode :: dispose(RenderMethod* engine) noexcept
+void* ShapeNode::engine() noexcept
 {
     auto impl = pImpl.get();
     assert(impl);
-
-    impl->edata = engine->dispose(*this, impl->edata);
-    if (impl->edata) return -1;
-    return 0;
+    return impl->edata;
 }
 
 
-int ShapeNode :: update(RenderMethod* engine) noexcept
+int ShapeNode::update(RenderMethod* engine) noexcept
 {
     auto impl = pImpl.get();
     assert(impl);
@@ -106,7 +103,7 @@ int ShapeNode :: update(RenderMethod* engine) noexcept
 }
 
 
-int ShapeNode :: clear() noexcept
+int ShapeNode::clear() noexcept
 {
     auto impl = pImpl.get();
     assert(impl);
@@ -115,7 +112,7 @@ int ShapeNode :: clear() noexcept
 }
 
 
-int ShapeNode :: pathCommands(const PathCommand** cmds) const noexcept
+int ShapeNode::pathCommands(const PathCommand** cmds) const noexcept
 {
     auto impl = pImpl.get();
     assert(impl && cmds);
@@ -126,7 +123,7 @@ int ShapeNode :: pathCommands(const PathCommand** cmds) const noexcept
 }
 
 
-int ShapeNode :: pathCoords(const Point** pts) const noexcept
+int ShapeNode::pathCoords(const Point** pts) const noexcept
 {
     auto impl = pImpl.get();
     assert(impl && pts);
@@ -137,13 +134,13 @@ int ShapeNode :: pathCoords(const Point** pts) const noexcept
 }
 
 
-int ShapeNode :: appendCircle(float cx, float cy, float radius) noexcept
+int ShapeNode::appendCircle(float cx, float cy, float radius) noexcept
 {
     return 0;
 }
 
 
-int ShapeNode :: appendRect(float x, float y, float w, float h, float radius) noexcept
+int ShapeNode::appendRect(float x, float y, float w, float h, float radius) noexcept
 {
     auto impl = pImpl.get();
     assert(impl);
@@ -171,7 +168,7 @@ int ShapeNode :: appendRect(float x, float y, float w, float h, float radius) no
 }
 
 
-int ShapeNode :: fill(size_t r, size_t g, size_t b, size_t a) noexcept
+int ShapeNode::fill(size_t r, size_t g, size_t b, size_t a) noexcept
 {
     auto impl = pImpl.get();
     assert(impl);
@@ -185,7 +182,7 @@ int ShapeNode :: fill(size_t r, size_t g, size_t b, size_t a) noexcept
 }
 
 
-int ShapeNode :: fill(size_t* r, size_t* g, size_t* b, size_t* a) const noexcept
+int ShapeNode::fill(size_t* r, size_t* g, size_t* b, size_t* a) const noexcept
 {
     auto impl = pImpl.get();
     assert(impl);

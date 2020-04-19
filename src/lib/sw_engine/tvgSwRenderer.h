@@ -20,8 +20,12 @@
 class SwRenderer : public RenderMethod
 {
 public:
+    Surface surface;
+
     void* prepare(const ShapeNode& shape, void* data, UpdateFlag flags) override;
-    void* dispose(const ShapeNode& shape, void *data) override;
+    bool dispose(const ShapeNode& shape, void *data) override;
+    bool render(const ShapeNode& shape, void *data) override;
+    bool target(uint32_t* buffer, size_t stride, size_t height);
     size_t ref() override;
     size_t unref() override;
 
