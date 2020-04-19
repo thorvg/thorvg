@@ -1,4 +1,5 @@
 #include <tizenvg.h>
+#include <Elementary.h>
 
 using namespace std;
 
@@ -7,7 +8,7 @@ using namespace std;
 
 static uint32_t buffer[WIDTH * HEIGHT];
 
-int main(int argc, char **argv)
+void tvgtest()
 {
     //Initialize TizenVG Engine
     tvg::Engine::init();
@@ -31,4 +32,28 @@ int main(int argc, char **argv)
 
     //Terminate TizenVG Engine
     tvg::Engine::term();
+}
+
+
+int main(int argc, char **argv)
+{
+    tvgtest();
+
+    //Show the result using EFL...
+    elm_init(argc, argv);
+
+    Eo* win = elm_win_util_standard_add(NULL, "TizenVG Test");
+
+    Eo* img = evas_object_image_filled_add(evas_object_evas_get(win));
+    evas_object_image_size_set(img, WIDTH, HEIGHT);
+    evas_object_image_data_set(img, buffer);
+    evas_object_size_hint_weight_set(img, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
+    evas_object_show(img);
+
+    elm_win_resize_object_add(win, img);
+    evas_object_geometry_set(win, 0, 0, WIDTH, HEIGHT);
+    evas_object_show(win);
+
+    elm_run();
+    elm_shutdown();
 }
