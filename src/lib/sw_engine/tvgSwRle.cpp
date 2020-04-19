@@ -228,17 +228,16 @@ static void _sweep(RleWorker& rw)
     rw.spansCnt = 0;
 
     for (int y = 0; y < rw.yCnt; ++y) {
-
         auto cover = 0;
         auto x = 0;
         auto cell = rw.yCells[y];
 
         while (cell) {
-
             _horizLine(rw, x, y, cover * (ONE_PIXEL * 2), cell->x - x);
             cover += cell->cover;
             auto area = cover * (ONE_PIXEL * 2) - cell->area;
 
+            //OPTIMIZE ME: This occurs 1 length span data.
             if (area != 0 && cell->x >= 0)
                 _horizLine(rw, cell->x, y, area, 1);
 
