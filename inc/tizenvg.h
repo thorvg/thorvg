@@ -92,7 +92,7 @@ public:
     int update(RenderMethod* engine) noexcept override;
     int clear() noexcept;
 
-    int appendRect(float x, float y, float w, float h, float radius) noexcept;
+    int appendRect(float x, float y, float w, float h, float cornerRadius) noexcept;
     int appendCircle(float cx, float cy, float radius) noexcept;
 
     int fill(size_t r, size_t g, size_t b, size_t a) noexcept;

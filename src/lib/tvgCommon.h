@@ -21,6 +21,7 @@
 #include <cassert>
 #include <vector>
 #include <math.h>
+#include <float.h>
 #include "tizenvg.h"
 #include "tvgRenderCommon.h"
 

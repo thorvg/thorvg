@@ -1,6 +1,6 @@
 project('tizenvg',
         'cpp',
-        default_options : ['buildtype=debugoptimized', 'werror=false', 'cpp_std=c++14'],
+        default_options : ['buildtype=debug', 'werror=false', 'cpp_std=c++14'],
         version : '0.1.0',
         license : 'Apache-2.0')
 

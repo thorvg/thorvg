@@ -136,21 +136,28 @@ int ShapeNode::pathCoords(const Point** pts) const noexcept
 
 int ShapeNode::appendCircle(float cx, float cy, float radius) noexcept
 {
+    auto impl = pImpl.get();
+    assert(impl);
+
+    impl->path->reserve(5, 13);   //decide size experimentally (move + curve * 4)
+    impl->path->arcTo(cx - radius, cy - radius, 2 * radius, 2 * radius, 0, 360);
+    impl->path->close();
+
     return 0;
 }
 
 
-int ShapeNode::appendRect(float x, float y, float w, float h, float radius) noexcept
+int ShapeNode::appendRect(float x, float y, float w, float h, float cornerRadius) noexcept
 {
     auto impl = pImpl.get();
     assert(impl);
 
-    //clamping radius by minimum size
+    //clamping cornerRadius by minimum size
     auto min = (w < h ? w : h) * 0.5f;
-    if (radius > min) radius = min;
+    if (cornerRadius > min) cornerRadius = min;
 
     //rectangle
-    if (radius == 0) {
+    if (cornerRadius == 0) {
         impl->path->reserve(5, 4);
         impl->path->moveTo(x, y);
         impl->path->lineTo(x + w, y);
@@ -158,8 +165,8 @@ int ShapeNode::appendRect(float x, float y, float w, float h, float radius) noex
         impl->path->lineTo(x, y + h);
         impl->path->close();
     //circle
-    } else if (w == h && radius * 2 == w) {
-        appendCircle(x + (w * 0.5f), y + (h * 0.5f), radius);
+    } else if (w == h && cornerRadius * 2 == w) {
+        return appendCircle(x + (w * 0.5f), y + (h * 0.5f), cornerRadius);
     } else {
         //...
     }

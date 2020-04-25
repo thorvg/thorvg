@@ -417,7 +417,7 @@ static void _lineTo(RleWorker& rw, const SwPoint& to)
             auto py = diff.y * ONE_PIXEL;
 
             //left
-            if (prod <= 0 && prod - px) {
+            if (prod <= 0 && prod - px > 0) {
                 f2 = {0, SW_UDIV(-prod, -dx_r)};
                 prod -= py;
                 rw.cover += (f2.y - f1.y);
@@ -557,9 +557,7 @@ static void _cubicTo(RleWorker& rw, const SwPoint& ctrl1, const SwPoint& ctrl2, 
 
     draw:
         _lineTo(rw, arc[0]);
-
         if (arc == rw.bezStack) return;
-
         arc -= 3;
     }
 }
@@ -612,7 +610,7 @@ static bool _decomposeOutline(RleWorker& rw)
         }
 
         //Close the contour with a line segment?
-        //if (!lineTo(rw, outline->pts[first]));
+        //_lineTo(rw, UPSCALE(outline->pts[first]));
     close:
        first = last + 1;
     }
@@ -680,7 +678,7 @@ SwRleData* rleRender(const SwShape& sdata)
     rw.rle = reinterpret_cast<SwRleData*>(calloc(1, sizeof(SwRleData)));
     assert(rw.rle);
 
-    //printf("bufferSize = %d, bbox(%f %f %f %f), exCnt(%f), eyCnt(%f), bandSize(%d)\n", rw.bufferSize, rw.exMin, rw.eyMin, rw.exMax, rw.eyMax, rw.exCnt, rw.eyCnt, rw.bandSize);
+    //printf("bufferSize = %d, bbox(%d %d %d %d), exCnt(%f), eyCnt(%f), bandSize(%d)\n", rw.bufferSize, rw.cellMin.x, rw.cellMin.y, rw.cellMax.x, rw.cellMax.y, rw.cellXCnt, rw.cellYCnt, rw.bandSize);
 
     //Generate RLE
     Band bands[BAND_SIZE];
