@@ -90,6 +90,7 @@ public:
     Canvas(RenderMethod*);
     virtual ~Canvas();
 
+    int reserve(size_t n);
     virtual int push(std::unique_ptr<PaintNode> paint) noexcept;
     virtual int clear() noexcept;
     virtual int update() noexcept;

@@ -120,6 +120,14 @@ Canvas::~Canvas()
 }
 
 
+int Canvas::reserve(size_t n)
+{
+    auto impl = pImpl.get();
+    assert(impl);
+    return impl->reserve(n);
+}
+
+
 int Canvas::push(unique_ptr<PaintNode> paint) noexcept
 {
     auto impl = pImpl.get();
