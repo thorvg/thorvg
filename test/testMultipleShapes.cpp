@@ -17,7 +17,7 @@ void tvgtest()
     auto canvas = tvg::SwCanvas::gen(buffer, WIDTH, HEIGHT);
     //canvas->reserve(2);      //reserve 2 shape nodes (optional)
 
-    //Prepare Rectangle
+    //Prepare Round Rectangle
     auto shape1 = tvg::ShapeNode::gen();
     shape1->appendRect(0, 0, 400, 400, 50);      //x, y, w, h, cornerRadius
     shape1->fill(0, 255, 0, 255);                //r, g, b, a
@@ -25,9 +25,15 @@ void tvgtest()
 
     //Prepare Circle
     auto shape2 = tvg::ShapeNode::gen();
-    shape2->appendCircle(400, 400, 200);         //cx, cy, radius
+    shape2->appendCircle(400, 400, 200, 200);    //cx, cy, radiusW, radiusH
     shape2->fill(255, 255, 0, 255);              //r, g, b, a
     canvas->push(move(shape2));
+
+    //Prepare Ellipse
+    auto shape3 = tvg::ShapeNode::gen();
+    shape3->appendCircle(600, 600, 150, 100);    //cx, cy, radiusW, radiusH
+    shape3->fill(0, 255, 255, 255);              //r, g, b, a
+    canvas->push(move(shape3));
 
     //Draw the Shapes onto the Canvas
     canvas->draw();

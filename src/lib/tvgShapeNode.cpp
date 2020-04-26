@@ -135,19 +135,20 @@ int ShapeNode::pathCoords(const Point** pts) const noexcept
 }
 
 
-int ShapeNode::appendCircle(float cx, float cy, float radius) noexcept
+int ShapeNode::appendCircle(float cx, float cy, float radiusW, float radiusH) noexcept
 {
     auto impl = pImpl.get();
     assert(impl);
 
-    auto halfKappa = radius * PATH_KAPPA;
+    auto halfKappaW = radiusW * PATH_KAPPA;
+    auto halfKappaH = radiusH * PATH_KAPPA;
 
     impl->path->reserve(6, 13);
-    impl->path->moveTo(cx, cy - radius);
-    impl->path->cubicTo(cx + halfKappa, cy - radius, cx + radius, cy - halfKappa, cx + radius, cy);
-    impl->path->cubicTo(cx + radius, cy + halfKappa, cx + halfKappa, cy + radius, cx, cy + radius);
-    impl->path->cubicTo(cx - halfKappa, cy + radius, cx - radius, cy + halfKappa, cx - radius, cy);
-    impl->path->cubicTo(cx - radius, cy - halfKappa, cx - halfKappa, cy - radius, cx, cy - radius);
+    impl->path->moveTo(cx, cy - radiusH);
+    impl->path->cubicTo(cx + halfKappaW, cy - radiusH, cx + radiusW, cy - halfKappaH, cx + radiusW, cy);
+    impl->path->cubicTo(cx + radiusW, cy + halfKappaH, cx + halfKappaW, cy + radiusH, cx, cy + radiusH);
+    impl->path->cubicTo(cx - halfKappaW, cy + radiusH, cx - radiusW, cy + halfKappaH, cx - radiusW, cy);
+    impl->path->cubicTo(cx - radiusW, cy - halfKappaH, cx - halfKappaW, cy - radiusH, cx, cy - radiusH);
     impl->path->close();
 
     return 0;
@@ -173,7 +174,7 @@ int ShapeNode::appendRect(float x, float y, float w, float h, float cornerRadius
         impl->path->close();
     //circle
     } else if (w == h && cornerRadius * 2 == w) {
-        return appendCircle(x + (w * 0.5f), y + (h * 0.5f), cornerRadius);
+        return appendCircle(x + (w * 0.5f), y + (h * 0.5f), cornerRadius, cornerRadius);
     } else {
         auto halfKappa = cornerRadius * 0.5;
         impl->path->reserve(10, 17);

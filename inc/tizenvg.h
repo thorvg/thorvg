@@ -93,7 +93,7 @@ public:
     int clear() noexcept;
 
     int appendRect(float x, float y, float w, float h, float cornerRadius) noexcept;
-    int appendCircle(float cx, float cy, float radius) noexcept;
+    int appendCircle(float cx, float cy, float radiusW, float radiusH) noexcept;
 
     int fill(size_t r, size_t g, size_t b, size_t a) noexcept;
 
