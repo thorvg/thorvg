@@ -2,3 +2,5 @@ build
 .vscode
 *.swp
 testShape
+testMultiShapes
+testMergeShapes
