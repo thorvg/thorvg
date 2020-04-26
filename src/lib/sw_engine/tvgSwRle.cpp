@@ -233,7 +233,10 @@ static void _sweep(RleWorker& rw)
         auto cell = rw.yCells[y];
 
         while (cell) {
-            _horizLine(rw, x, y, cover * (ONE_PIXEL * 2), cell->x - x);
+
+            if (cell->x > x && cover != 0)
+                _horizLine(rw, x, y, cover * (ONE_PIXEL * 2), cell->x - x);
+
             cover += cell->cover;
             auto area = cover * (ONE_PIXEL * 2) - cell->area;
 
@@ -315,6 +318,7 @@ static void _setCell(RleWorker& rw, SwPoint pos)
 
     //Are we moving to a different cell?
     if (pos != rw.cellPos) {
+        //Record the current one if it is valid
         if (!rw.invalid) _recordCell(rw);
     }
 
@@ -329,6 +333,7 @@ static void _startCell(RleWorker& rw, SwPoint pos)
 {
     if (pos.x > rw.cellMax.x) pos.x = rw.cellMax.x;
     if (pos.x < rw.cellMin.x) pos.x = rw.cellMin.x;
+    //if (pos.x < rw.cellMin.x) pos.x = (rw.cellMin.x - 1);
 
     rw.area = 0;
     rw.cover = 0;
@@ -362,7 +367,7 @@ static void _lineTo(RleWorker& rw, const SwPoint& to)
 
     //vertical clipping
     if ((e1.y >= rw.cellMax.y && e2.y >= rw.cellMax.y) ||
-        (e1.y < rw.cellMin.y && e2.y >= rw.cellMin.y)) {
+        (e1.y < rw.cellMin.y && e2.y < rw.cellMin.y)) {
             rw.pos = to;
             return;
     }
@@ -644,7 +649,7 @@ static bool _genRle(RleWorker& rw)
 SwRleData* rleRender(const SwShape& sdata)
 {
     constexpr auto RENDER_POOL_SIZE = 16384L;
-    constexpr auto BAND_SIZE = 39;
+    constexpr auto BAND_SIZE = 40;
 
     auto outline = sdata.outline;
     assert(outline);
@@ -687,7 +692,7 @@ SwRleData* rleRender(const SwShape& sdata)
     /* set up vertical bands */
     auto bandCnt = static_cast<int>((rw.cellMax.y - rw.cellMin.y) / rw.bandSize);
     if (bandCnt == 0) bandCnt = 1;
-    else if (bandCnt >= BAND_SIZE) bandCnt = BAND_SIZE;
+    else if (bandCnt >= BAND_SIZE) bandCnt = (BAND_SIZE - 1);
 
     auto min = rw.cellMin.y;
     auto yMax = rw.cellMax.y;
