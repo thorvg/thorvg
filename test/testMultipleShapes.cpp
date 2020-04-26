@@ -19,7 +19,7 @@ void tvgtest()
 
     //Prepare Rectangle
     auto shape1 = tvg::ShapeNode::gen();
-    shape1->appendRect(0, 0, 400, 400, 0);       //x, y, w, h, corner_radius
+    shape1->appendRect(0, 0, 400, 400, 50);      //x, y, w, h, cornerRadius
     shape1->fill(0, 255, 0, 255);                //r, g, b, a
     canvas->push(move(shape1));
 

@@ -17,7 +17,7 @@ int main(int argc, char **argv)
 
     //Prepare a Shape
     auto shape1 = tvg::ShapeNode::gen();
-    shape1->rect(0, 0, 400, 400, 0.1);     //x, y, w, h, corner_radius
+    shape1->rect(0, 0, 400, 400, 0.1);     //x, y, w, h, cornerRadius
     shape1->fill(0, 255, 0, 255);
 
     //Stroke Style

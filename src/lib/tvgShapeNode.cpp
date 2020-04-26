@@ -23,6 +23,7 @@
 /************************************************************************/
 /* Internal Class Implementation                                        */
 /************************************************************************/
+constexpr auto PATH_KAPPA = 0.552284f;
 
 struct ShapeFill
 {
@@ -139,8 +140,14 @@ int ShapeNode::appendCircle(float cx, float cy, float radius) noexcept
     auto impl = pImpl.get();
     assert(impl);
 
-    impl->path->reserve(5, 13);   //decide size experimentally (move + curve * 4)
-    impl->path->arcTo(cx - radius, cy - radius, 2 * radius, 2 * radius, 0, 360);
+    auto halfKappa = radius * PATH_KAPPA;
+
+    impl->path->reserve(6, 13);
+    impl->path->moveTo(cx, cy - radius);
+    impl->path->cubicTo(cx + halfKappa, cy - radius, cx + radius, cy - halfKappa, cx + radius, cy);
+    impl->path->cubicTo(cx + radius, cy + halfKappa, cx + halfKappa, cy + radius, cx, cy + radius);
+    impl->path->cubicTo(cx - halfKappa, cy + radius, cx - radius, cy + halfKappa, cx - radius, cy);
+    impl->path->cubicTo(cx - radius, cy - halfKappa, cx - halfKappa, cy - radius, cx, cy - radius);
     impl->path->close();
 
     return 0;
@@ -168,7 +175,18 @@ int ShapeNode::appendRect(float x, float y, float w, float h, float cornerRadius
     } else if (w == h && cornerRadius * 2 == w) {
         return appendCircle(x + (w * 0.5f), y + (h * 0.5f), cornerRadius);
     } else {
-        //...
+        auto halfKappa = cornerRadius * 0.5;
+        impl->path->reserve(10, 17);
+        impl->path->moveTo(x + cornerRadius, y);
+        impl->path->lineTo(x + w - cornerRadius, y);
+        impl->path->cubicTo(x + w - cornerRadius + halfKappa, y, x + w, y + cornerRadius - halfKappa, x + w, y + cornerRadius);
+        impl->path->lineTo(x + w, y + h - cornerRadius);
+        impl->path->cubicTo(x + w, y + h - cornerRadius + halfKappa, x + w - cornerRadius + halfKappa, y + h, x + w - cornerRadius, y + h);
+        impl->path->lineTo(x + cornerRadius, y + h);
+        impl->path->cubicTo(x + cornerRadius - halfKappa, y + h, x, y + h - cornerRadius + halfKappa, x, y + h - cornerRadius);
+        impl->path->lineTo(x, y + cornerRadius);
+        impl->path->cubicTo(x, y + cornerRadius - halfKappa, x + cornerRadius - halfKappa, y, x + cornerRadius, y);
+        impl->path->close();
     }
 
     return 0;
