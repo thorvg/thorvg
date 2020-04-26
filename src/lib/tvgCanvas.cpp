@@ -14,26 +14,30 @@
  *  limitations under the License.
  *
  */
-#ifndef _TVG_CANVAS_BASE_CPP_
-#define _TVG_CANVAS_BASE_CPP_
+#ifndef _TVG_CANVAS_CPP_
+#define _TVG_CANVAS_CPP_
 
 #include "tvgCommon.h"
 
 
-struct CanvasBase
+/************************************************************************/
+/* Internal Class Implementation                                        */
+/************************************************************************/
+
+struct Canvas::Impl
 {
     vector<PaintNode*> nodes;
     RenderMethod*      renderer;
 
-    CanvasBase(RenderMethod *pRenderer):renderer(pRenderer)
+    Impl(RenderMethod *pRenderer):renderer(pRenderer)
     {
         renderer->ref();
     }
 
-    ~CanvasBase()
+    ~Impl()
     {
-       clear();
-       renderer->unref();
+        clear();
+        renderer->unref();
     }
 
     int reserve(size_t n)
@@ -41,6 +45,14 @@ struct CanvasBase
         nodes.reserve(n);
 
         return 0;
+    }
+
+    int push(unique_ptr<PaintNode> paint)
+    {
+        PaintNode *node = paint.release();
+        assert(node);
+        nodes.push_back(node);
+        return node->update(renderer);
     }
 
     int clear()
@@ -75,14 +87,6 @@ struct CanvasBase
         return ret;
     }
 
-    int push(unique_ptr<PaintNode> paint)
-    {
-        PaintNode *node = paint.release();
-        assert(node);
-        nodes.push_back(node);
-        return node->update(renderer);
-    }
-
     int draw()
     {
         assert(renderer);
@@ -101,4 +105,59 @@ struct CanvasBase
 
 };
 
-#endif /* _TVG_CANVAS_BASE_CPP_ */
+
+/************************************************************************/
+/* External Class Implementation                                        */
+/************************************************************************/
+
+Canvas::Canvas(RenderMethod *pRenderer):pImpl(make_unique<Impl>(pRenderer))
+{
+}
+
+
+Canvas::~Canvas()
+{
+}
+
+
+int Canvas::push(unique_ptr<PaintNode> paint) noexcept
+{
+    auto impl = pImpl.get();
+    assert(impl);
+
+    return impl->push(move(paint));
+}
+
+
+int Canvas::clear() noexcept
+{
+    auto impl = pImpl.get();
+    assert(impl);
+    return impl->clear();
+}
+
+
+int Canvas::draw(bool async) noexcept
+{
+    auto impl = pImpl.get();
+    assert(impl);
+    return impl->draw();
+}
+
+
+int Canvas::update() noexcept
+{
+    auto impl = pImpl.get();
+    assert(impl);
+    return impl->update();
+}
+
+
+RenderMethod* Canvas::engine() noexcept
+{
+    auto impl = pImpl.get();
+    assert(impl);
+    return impl->renderer;
+}
+
+#endif /* _TVG_CANVAS_CPP_ */

@@ -72,7 +72,33 @@ class TIZENVG_EXPORT PaintNode
 {
 public:
     virtual ~PaintNode() {}
-    virtual int update(RenderMethod* engine) = 0;
+    virtual int update(RenderMethod*) = 0;
+};
+
+
+/**
+ * @class Canvas
+ *
+ * @ingroup TizenVG
+ *
+ * @brief description...
+ *
+ */
+class TIZENVG_EXPORT Canvas
+{
+public:
+    Canvas(RenderMethod*);
+    virtual ~Canvas();
+
+    virtual int push(std::unique_ptr<PaintNode> paint) noexcept;
+    virtual int clear() noexcept;
+    virtual int update() noexcept;
+    virtual int draw(bool async = true) noexcept;
+    virtual int sync() = 0;
+
+    RenderMethod* engine() noexcept;
+
+    _TIZENVG_DECLARE_PRIVATE(Canvas);
 };
 
 
@@ -141,21 +167,13 @@ public:
   @brief description...
  *
  */
-class TIZENVG_EXPORT SwCanvas final
+class TIZENVG_EXPORT SwCanvas final : public Canvas
 {
 public:
     ~SwCanvas();
 
-    int push(std::unique_ptr<PaintNode> paint) noexcept;
-    int clear() noexcept;
-
-    int update() noexcept;
-    int draw(bool async = true) noexcept;
-    int sync() noexcept;
-    RenderMethod* engine() noexcept;
-
     int target(uint32_t* buffer, size_t stride, size_t height) noexcept;
-
+    int sync() noexcept override;
     static std::unique_ptr<SwCanvas> gen(uint32_t* buffer = nullptr, size_t stride = 0, size_t height = 0) noexcept;
 
     _TIZENVG_DECLARE_PRIVATE(SwCanvas);
@@ -170,20 +188,14 @@ public:
  * @brief description...
  *
  */
-class TIZENVG_EXPORT GlCanvas final
+class TIZENVG_EXPORT GlCanvas final : public Canvas
 {
 public:
     ~GlCanvas();
 
-    int push(std::unique_ptr<PaintNode> paint) noexcept;
-    int clear() noexcept;
-
     //TODO: Gl Specific methods. Need gl backend configuration methods as well.
-    int update() noexcept;
-    int draw(bool async = true) noexcept;
-    int sync() noexcept { return 0; }
-    RenderMethod* engine() noexcept;
 
+    int sync() noexcept override;
     static std::unique_ptr<GlCanvas> gen() noexcept;
 
     _TIZENVG_DECLARE_PRIVATE(GlCanvas);

@@ -18,16 +18,15 @@
 #define _TVG_GLCANVAS_CPP_
 
 #include "tvgCommon.h"
-#include "tvgCanvasBase.h"
 #include "tvgGlRenderer.h"
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-struct GlCanvas::Impl : CanvasBase
+struct GlCanvas::Impl
 {
-    Impl() : CanvasBase(GlRenderer::inst()) {}
+    Impl() {}
 };
 
 
@@ -35,13 +34,19 @@ struct GlCanvas::Impl : CanvasBase
 /* External Class Implementation                                        */
 /************************************************************************/
 
-GlCanvas::GlCanvas() : pImpl(make_unique<Impl>())
+GlCanvas::GlCanvas() : Canvas(GlRenderer::inst()), pImpl(make_unique<Impl>())
 {
 }
 
 
 GlCanvas::~GlCanvas()
 {
+}
+
+
+int GlCanvas::sync() noexcept
+{
+    return 0;
 }
 
 
@@ -53,43 +58,5 @@ unique_ptr<GlCanvas> GlCanvas::gen() noexcept
     return canvas;
 }
 
-
-int GlCanvas::push(unique_ptr<PaintNode> paint) noexcept
-{
-    auto impl = pImpl.get();
-    assert(impl);
-    return impl->push(move(paint));
-}
-
-int GlCanvas::clear() noexcept
-{
-    auto impl = pImpl.get();
-    assert(impl);
-    return impl->clear();
-}
-
-
-int GlCanvas::update() noexcept
-{
-    auto impl = pImpl.get();
-    assert(impl);
-    return impl->update();
-}
-
-
-RenderMethod* GlCanvas::engine() noexcept
-{
-    auto impl = pImpl.get();
-    assert(impl);
-    return impl->renderer;
-}
-
-
-int GlCanvas::draw(bool async) noexcept
-{
-    auto impl = pImpl.get();
-    assert(impl);
-    return impl->draw();
-}
 
 #endif /* _TVG_GLCANVAS_CPP_ */

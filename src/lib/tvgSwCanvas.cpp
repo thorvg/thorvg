@@ -18,7 +18,6 @@
 #define _TVG_SWCANVAS_CPP_
 
 #include "tvgCommon.h"
-#include "tvgCanvasBase.h"
 #include "tvgSwRenderer.h"
 
 
@@ -26,9 +25,9 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-struct SwCanvas::Impl : CanvasBase
+struct SwCanvas::Impl
 {
-    Impl() : CanvasBase(SwRenderer::inst()) {}
+    Impl() {}
 };
 
 
@@ -36,55 +35,30 @@ struct SwCanvas::Impl : CanvasBase
 /* External Class Implementation                                        */
 /************************************************************************/
 
-int SwCanvas::target(uint32_t* buffer, size_t stride, size_t height) noexcept
-{
-    auto impl = pImpl.get();
-    assert(impl);
-
-    dynamic_cast<SwRenderer*>(impl->renderer)->target(buffer, stride, height);
-
-    return 0;
-}
-
-
-int SwCanvas::draw(bool async) noexcept
-{
-    auto impl = pImpl.get();
-    assert(impl);
-    return impl->draw();
-}
-
-
-int SwCanvas::sync() noexcept
-{
-    return 0;
-}
-
-
-int SwCanvas::push(unique_ptr<PaintNode> paint) noexcept
-{
-    auto impl = pImpl.get();
-    assert(impl);
-
-    return impl->push(move(paint));
-}
-
-
-int SwCanvas::clear() noexcept
-{
-    auto impl = pImpl.get();
-    assert(impl);
-    return impl->clear();
-}
-
-
-SwCanvas::SwCanvas() : pImpl(make_unique<Impl>())
+SwCanvas::SwCanvas() : Canvas(SwRenderer::inst()), pImpl(make_unique<Impl>())
 {
 }
 
 
 SwCanvas::~SwCanvas()
 {
+}
+
+
+int SwCanvas::target(uint32_t* buffer, size_t stride, size_t height) noexcept
+{
+    auto renderer = dynamic_cast<SwRenderer*>(engine());
+    assert(renderer);
+
+    if (!renderer->target(buffer, stride, height)) return -1;
+
+    return 0;
+}
+
+
+int SwCanvas::sync() noexcept
+{
+    return 0;
 }
 
 
@@ -97,22 +71,6 @@ unique_ptr<SwCanvas> SwCanvas::gen(uint32_t* buffer, size_t stride, size_t heigh
     if (ret > 0)  return nullptr;
 
    return canvas;
-}
-
-
-int SwCanvas::update() noexcept
-{
-    auto impl = pImpl.get();
-    assert(impl);
-    return impl->update();
-}
-
-
-RenderMethod* SwCanvas::engine() noexcept
-{
-    auto impl = pImpl.get();
-    assert(impl);
-    return impl->renderer;
 }
 
 #endif /* _TVG_SWCANVAS_CPP_ */
