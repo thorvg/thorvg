@@ -120,7 +120,7 @@ Canvas::~Canvas()
 }
 
 
-int Canvas::reserve(size_t n)
+int Canvas::reserve(size_t n) noexcept
 {
     auto impl = pImpl.get();
     assert(impl);
