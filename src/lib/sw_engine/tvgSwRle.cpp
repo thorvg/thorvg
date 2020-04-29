@@ -84,6 +84,8 @@ struct RleWorker
     Cell** yCells;
     SwCoord yCnt;
 
+    SwSize clip;
+
     bool invalid;
 };
 
@@ -161,6 +163,13 @@ static void _genSpan(SwRleData* rle, SwSpan* spans, size_t count)
 
 static void _horizLine(RleWorker& rw, SwCoord x, SwCoord y, SwCoord area, SwCoord acount)
 {
+    x += rw.cellMin.x;
+    y += rw.cellMin.y;
+
+    //Clip Y range
+    if (y < 0) return;
+    if (y >= rw.clip.h) return;
+
     /* compute the coverage line's coverage, depending on the outline fill rule */
     /* the coverage percentage is area/(PIXEL_BITS*PIXEL_BITS*2) */
     auto coverage = static_cast<int>(area >> (PIXEL_BITS * 2 + 1 - 8));    //range 0 - 256
@@ -175,9 +184,6 @@ static void _horizLine(RleWorker& rw, SwCoord x, SwCoord y, SwCoord area, SwCoor
         //normal non-zero winding rule
         if (coverage >= 256) coverage = 255;
     }
-
-    x += rw.cellMin.x;
-    y += rw.cellMin.y;
 
     //span has ushort coordinates. check limit overflow
     if (x >= SHRT_MAX) {
@@ -197,7 +203,13 @@ static void _horizLine(RleWorker& rw, SwCoord x, SwCoord y, SwCoord area, SwCoor
         //see whether we can add this span to the current list
         if ((count > 0) && (rw.ySpan == y) &&
             (span->x + span->len == x) && (span->coverage == coverage)) {
-                span->len = span->len + acount;
+
+            //Clip x range
+            SwCoord xOver = 0;
+            if (x + acount >= rw.clip.w) xOver -= (x + acount - rw.clip.w);
+            if (x < 0) xOver += x;
+
+            span->len += (acount + xOver) - 1;
             return;
         }
 
@@ -211,10 +223,21 @@ static void _horizLine(RleWorker& rw, SwCoord x, SwCoord y, SwCoord area, SwCoor
             assert(span);
         }
 
+        //Clip x range
+        SwCoord xOver = 0;
+        if (x + acount >= rw.clip.w) xOver -= (x + acount - rw.clip.w);
+        if (x < 0) {
+            xOver += x;
+            x = 0;
+        }
+
+        //Nothing to draw
+        if (acount + xOver <= 0) return;
+
         //add a span to the current list
         span->x = x;
         span->y = y;
-        span->len = acount;
+        span->len = (acount + xOver);
         span->coverage = coverage;
         ++rw.spansCnt;
     }
@@ -646,16 +669,13 @@ static bool _genRle(RleWorker& rw)
 /* External Class Implementation                                        */
 /************************************************************************/
 
-SwRleData* rleRender(const SwShape& sdata)
+SwRleData* rleRender(const SwShape& sdata, const SwSize& clip)
 {
     constexpr auto RENDER_POOL_SIZE = 16384L;
     constexpr auto BAND_SIZE = 40;
 
     auto outline = sdata.outline;
     assert(outline);
-
-    if (outline->ptsCnt == 0 || outline->cntrsCnt <= 0) return nullptr;
-
     assert(outline->cntrs && outline->pts);
     assert(outline->ptsCnt == outline->cntrs[outline->cntrsCnt - 1] + 1);
 
@@ -680,10 +700,9 @@ SwRleData* rleRender(const SwShape& sdata)
     rw.outline = outline;
     rw.bandSize = rw.bufferSize / (sizeof(Cell) * 8);  //bandSize: 64
     rw.bandShoot = 0;
+    rw.clip = clip;
     rw.rle = reinterpret_cast<SwRleData*>(calloc(1, sizeof(SwRleData)));
     assert(rw.rle);
-
-    //printf("bufferSize = %d, bbox(%d %d %d %d), exCnt(%f), eyCnt(%f), bandSize(%d)\n", rw.bufferSize, rw.cellMin.x, rw.cellMin.y, rw.cellMax.x, rw.cellMax.y, rw.cellXCnt, rw.cellYCnt, rw.bandSize);
 
     //Generate RLE
     Band bands[BAND_SIZE];
@@ -717,7 +736,6 @@ SwRleData* rleRender(const SwShape& sdata)
 
             auto cellEnd = rw.bufferSize;
             cellEnd -= cellEnd % sizeof(Cell);
-//printf("n:%d, cellStart(%d), cellEnd(%d) cellMod(%d)\n", n, cellStart, cellEnd, cellMod);
 
             auto cellsMax = reinterpret_cast<Cell*>((char*)rw.buffer + cellEnd);
             rw.cells = reinterpret_cast<Cell*>((char*)rw.buffer + cellStart);

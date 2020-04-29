@@ -49,6 +49,11 @@ struct SwPoint
     }
 };
 
+struct SwSize
+{
+    SwCoord w, h;
+};
+
 struct SwOutline
 {
     size_t*     cntrs;            //the contour end points
@@ -63,7 +68,7 @@ struct SwOutline
 
 struct SwSpan
 {
-    uint16_t x, y;
+    int16_t x, y;
     uint16_t len;
     uint8_t coverage;
 };
@@ -90,10 +95,9 @@ struct SwShape
 void shapeReset(SwShape& sdata);
 bool shapeGenOutline(const ShapeNode& shape, SwShape& sdata);
 void shapeDelOutline(const ShapeNode& shape, SwShape& sdata);
-bool shapeGenRle(const ShapeNode& shape, SwShape& sdata);
+bool shapeGenRle(const ShapeNode& shape, SwShape& sdata, const SwSize& clip);
 bool shapeTransformOutline(const ShapeNode& shape, SwShape& sdata);
-
-SwRleData* rleRender(const SwShape& sdata);
+SwRleData* rleRender(const SwShape& sdata, const SwSize& clip);
 
 bool rasterShape(Surface& surface, SwShape& sdata, size_t color);
 

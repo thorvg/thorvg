@@ -55,7 +55,6 @@ bool SwRenderer::render(const ShapeNode& shape, void *data)
     //invisible?
     size_t r, g, b, a;
     shape.fill(&r, &g, &b, &a);
-    if (a == 0) return true;
 
     //TODO: Threading
     return rasterShape(surface, *sdata, COLOR(r, g, b, a));
@@ -92,7 +91,9 @@ void* SwRenderer::prepare(const ShapeNode& shape, void* data, UpdateFlag flags)
         shapeReset(*sdata);
         if (!shapeGenOutline(shape, *sdata)) return sdata;
         if (!shapeTransformOutline(shape, *sdata)) return sdata;
-        if (!shapeGenRle(shape, *sdata)) return sdata;
+
+        SwSize clip = {static_cast<SwCoord>(surface.stride), static_cast<SwCoord>(surface.height)};
+        if (!shapeGenRle(shape, *sdata, clip)) return sdata;
     }
 
     return sdata;

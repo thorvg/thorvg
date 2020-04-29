@@ -23,13 +23,14 @@
 bool rasterShape(Surface& surface, SwShape& sdata, size_t color)
 {
     SwRleData* rle = sdata.rle;
-    assert(rle);
+    if (!rle) return false;
 
     auto stride = surface.stride;
     auto span = rle->spans;
 
     for (size_t i = 0; i < rle->size; ++i) {
         assert(span);
+//        printf("raster y(%d) x(%d) len(%d)\n", span->y, span->x, span->len);
         for (auto j = 0; j < span->len; ++j) {
             surface.buffer[span->y * stride + span->x + j] = color;
         }

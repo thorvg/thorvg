@@ -4,3 +4,4 @@ build
 testShape
 testMultiShapes
 testMergeShapes
+testBoundary

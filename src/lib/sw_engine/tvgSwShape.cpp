@@ -235,11 +235,19 @@ bool shapeTransformOutline(const ShapeNode& shape, SwShape& sdata)
 }
 
 
-bool shapeGenRle(const ShapeNode& shape, SwShape& sdata)
+bool shapeGenRle(const ShapeNode& shape, SwShape& sdata, const SwSize& clip)
 {
+    if (sdata.outline->ptsCnt == 0 || sdata.outline->cntrsCnt <= 0) goto end;
     if (!_updateBBox(sdata)) goto end;
-    sdata.rle = rleRender(sdata);
+
+    //Check boundary
+    if ((sdata.bbox.min.x > clip.w || sdata.bbox.min.y > clip.h) ||
+        (sdata.bbox.min.x + sdata.bbox.max.x < 0) ||
+        (sdata.bbox.min.y + sdata.bbox.max.y < 0)) goto end;
+
+    sdata.rle = rleRender(sdata, clip);
     _deleteOutline(sdata);
+
 end:
     if (sdata.rle) return true;
     return false;
