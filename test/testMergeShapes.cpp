@@ -16,7 +16,7 @@ void tvgtest()
     //Create a Canvas
     auto canvas = tvg::SwCanvas::gen(buffer, WIDTH, HEIGHT);
 
-    //Prepare a Shape (Rectangle + Rectangle + Circle)
+    //Prepare a Shape (Rectangle + Rectangle + Circle + Circle)
     auto shape1 = tvg::ShapeNode::gen();
     shape1->appendRect(0, 0, 200, 200, 0);          //x, y, w, h, cornerRadius
     shape1->appendRect(100, 100, 300, 300, 100);    //x, y, w, h, cornerRadius
