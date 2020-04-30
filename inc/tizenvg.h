@@ -121,6 +121,7 @@ public:
 
     int appendRect(float x, float y, float w, float h, float cornerRadius) noexcept;
     int appendCircle(float cx, float cy, float radiusW, float radiusH) noexcept;
+    int appendPath(const PathCommand* cmds, size_t cmdCnt, const Point* pts, size_t ptsCnt) noexcept;
 
     int fill(size_t r, size_t g, size_t b, size_t a) noexcept;
 

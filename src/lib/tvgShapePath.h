@@ -40,65 +40,68 @@ struct ShapePath
         if (pts) delete(pts);
     }
 
-    int reserveCmd(size_t cmdCnt)
+    void reserveCmd(size_t cmdCnt)
     {
-        if (cmdCnt > reservedCmdCnt) {
-            reservedCmdCnt = cmdCnt;
-            cmds = static_cast<PathCommand*>(realloc(cmds, sizeof(PathCommand) * reservedCmdCnt));
-            assert(cmds);
-        }
-        return 0;
+        if (cmdCnt <= reservedCmdCnt) return;
+        reservedCmdCnt = cmdCnt;
+        cmds = static_cast<PathCommand*>(realloc(cmds, sizeof(PathCommand) * reservedCmdCnt));
+        assert(cmds);
     }
 
-    int reservePts(size_t ptsCnt)
+    void reservePts(size_t ptsCnt)
     {
-        if (ptsCnt > reservedPtsCnt) {
-            reservedPtsCnt = ptsCnt;
-            pts = static_cast<Point*>(realloc(pts, sizeof(Point) * reservedPtsCnt));
-            assert(pts);
-        }
-        return 0;
+        if (ptsCnt <= reservedPtsCnt) return;
+        reservedPtsCnt = ptsCnt;
+        pts = static_cast<Point*>(realloc(pts, sizeof(Point) * reservedPtsCnt));
+        assert(pts);
     }
 
-    int reserve(size_t cmdCnt, size_t ptsCnt)
+    void reserve(size_t cmdCnt, size_t ptsCnt)
     {
         reserveCmd(cmdCnt);
         reservePts(ptsCnt);
-
-        return 0;
     }
 
-    int clear()
+    void grow(size_t cmdCnt, size_t ptsCnt)
+    {
+        reserveCmd(this->cmdCnt + cmdCnt);
+        reservePts(this->ptsCnt + ptsCnt);
+    }
+
+    void clear()
     {
         cmdCnt = 0;
         ptsCnt = 0;
-
-        return 0;
     }
 
-    int moveTo(float x, float y)
+    void append(const PathCommand* cmds, size_t cmdCnt, const Point* pts, size_t ptsCnt)
+    {
+        grow(cmdCnt, ptsCnt);
+        memcpy(this->cmds + this->cmdCnt, cmds, sizeof(PathCommand) * cmdCnt);
+        memcpy(this->pts + this->ptsCnt, pts, sizeof(Point) * ptsCnt);
+        this->cmdCnt += cmdCnt;
+        this->ptsCnt += ptsCnt;
+    }
+
+    void moveTo(float x, float y)
     {
         if (cmdCnt + 1 > reservedCmdCnt) reserveCmd((cmdCnt + 1) * 2);
         if (ptsCnt + 2 > reservedPtsCnt) reservePts((ptsCnt + 2) * 2);
 
         cmds[cmdCnt++] = PathCommand::MoveTo;
         pts[ptsCnt++] = {x, y};
-
-        return 0;
     }
 
-    int lineTo(float x, float y)
+    void lineTo(float x, float y)
     {
         if (cmdCnt + 1 > reservedCmdCnt) reserveCmd((cmdCnt + 1) * 2);
         if (ptsCnt + 2 > reservedPtsCnt) reservePts((ptsCnt + 2) * 2);
 
         cmds[cmdCnt++] = PathCommand::LineTo;
         pts[ptsCnt++] = {x, y};
-
-        return 0;
     }
 
-    int cubicTo(float cx1, float cy1, float cx2, float cy2, float x, float y)
+    void cubicTo(float cx1, float cy1, float cx2, float cy2, float x, float y)
     {
         if (cmdCnt + 1 > reservedCmdCnt) reserveCmd((cmdCnt + 1) * 2);
         if (ptsCnt + 3 > reservedPtsCnt) reservePts((ptsCnt + 3) * 2);
@@ -107,39 +110,12 @@ struct ShapePath
         pts[ptsCnt++] = {cx1, cy1};
         pts[ptsCnt++] = {cx2, cy2};
         pts[ptsCnt++] = {x, y};
-
-        return 0;
     }
 
-
-    int close()
+    void close()
     {
         if (cmdCnt + 1 > reservedCmdCnt) reserveCmd((cmdCnt + 1) * 2);
         cmds[cmdCnt++] = PathCommand::Close;
-
-        return 0;
-    }
-
-    int bounds(float& x, float& y, float& w, float& h)
-    {
-        if (ptsCnt == 0) return -1;
-
-        Point min = { pts[0].x, pts[0].y };
-        Point max = { pts[0].x, pts[0].y };
-
-        for(size_t i = 1; i <= ptsCnt; ++i) {
-            if (pts[i].x < min.x) min.x = pts[i].x;
-            if (pts[i].y < min.y) min.y = pts[i].y;
-            if (pts[i].x > max.x) max.x = pts[i].x;
-            if (pts[i].y > max.y) max.y = pts[i].y;
-        }
-
-        x = min.x;
-        y = min.y;
-        w = max.x - min.x;
-        h = max.y - min.y;
-
-        return 0;
     }
 };
 

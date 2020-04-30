@@ -22,6 +22,7 @@
 #include <vector>
 #include <math.h>
 #include <float.h>
+#include <string.h>
 #include "tizenvg.h"
 #include "tvgRenderCommon.h"
 

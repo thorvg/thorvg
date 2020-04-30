@@ -109,7 +109,9 @@ int ShapeNode::clear() noexcept
     auto impl = pImpl.get();
     assert(impl);
 
-    return impl->path->clear();
+    impl->path->clear();
+
+    return 0;
 }
 
 
@@ -135,6 +137,20 @@ int ShapeNode::pathCoords(const Point** pts) const noexcept
 }
 
 
+int ShapeNode::appendPath(const PathCommand *cmds, size_t cmdCnt, const Point* pts, size_t ptsCnt) noexcept
+{
+    if (cmdCnt < 0 || ptsCnt < 0) return -1;
+    assert(cmds && pts);
+
+    auto impl = pImpl.get();
+    assert(impl);
+
+    impl->path->append(cmds, cmdCnt, pts, ptsCnt);
+
+    return 0;
+}
+
+
 int ShapeNode::appendCircle(float cx, float cy, float radiusW, float radiusH) noexcept
 {
     auto impl = pImpl.get();
@@ -143,7 +159,7 @@ int ShapeNode::appendCircle(float cx, float cy, float radiusW, float radiusH) no
     auto halfKappaW = radiusW * PATH_KAPPA;
     auto halfKappaH = radiusH * PATH_KAPPA;
 
-    impl->path->reserve(6, 13);
+    impl->path->grow(6, 13);
     impl->path->moveTo(cx, cy - radiusH);
     impl->path->cubicTo(cx + halfKappaW, cy - radiusH, cx + radiusW, cy - halfKappaH, cx + radiusW, cy);
     impl->path->cubicTo(cx + radiusW, cy + halfKappaH, cx + halfKappaW, cy + radiusH, cx, cy + radiusH);
@@ -166,7 +182,7 @@ int ShapeNode::appendRect(float x, float y, float w, float h, float cornerRadius
 
     //rectangle
     if (cornerRadius == 0) {
-        impl->path->reserve(5, 4);
+        impl->path->grow(5, 4);
         impl->path->moveTo(x, y);
         impl->path->lineTo(x + w, y);
         impl->path->lineTo(x + w, y + h);
@@ -177,7 +193,7 @@ int ShapeNode::appendRect(float x, float y, float w, float h, float cornerRadius
         return appendCircle(x + (w * 0.5f), y + (h * 0.5f), cornerRadius, cornerRadius);
     } else {
         auto halfKappa = cornerRadius * 0.5;
-        impl->path->reserve(10, 17);
+        impl->path->grow(10, 17);
         impl->path->moveTo(x + cornerRadius, y);
         impl->path->lineTo(x + w - cornerRadius, y);
         impl->path->cubicTo(x + w - cornerRadius + halfKappa, y, x + w, y + cornerRadius - halfKappa, x + w, y + cornerRadius);
