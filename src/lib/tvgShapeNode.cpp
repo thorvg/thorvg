@@ -75,7 +75,6 @@ ShapeNode :: ShapeNode() : pImpl(make_unique<Impl>())
 
 ShapeNode :: ~ShapeNode()
 {
-    cout << "ShapeNode(" << this << ") destroyed!" << endl;
 }
 
 
