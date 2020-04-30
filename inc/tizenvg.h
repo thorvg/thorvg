@@ -119,6 +119,11 @@ public:
     int update(RenderMethod* engine) noexcept override;
     int clear() noexcept;
 
+    int moveTo(float x, float y) noexcept;
+    int lineTo(float x, float y) noexcept;
+    int cubicTo(float cx1, float cy1, float cx2, float cy2, float x, float y) noexcept;
+    int close() noexcept;
+
     int appendRect(float x, float y, float w, float h, float cornerRadius) noexcept;
     int appendCircle(float cx, float cy, float radiusW, float radiusH) noexcept;
     int appendPath(const PathCommand* cmds, size_t cmdCnt, const Point* pts, size_t ptsCnt) noexcept;

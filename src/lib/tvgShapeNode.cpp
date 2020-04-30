@@ -144,7 +144,52 @@ int ShapeNode::appendPath(const PathCommand *cmds, size_t cmdCnt, const Point* p
     auto impl = pImpl.get();
     assert(impl);
 
+    impl->path->grow(cmdCnt, ptsCnt);
     impl->path->append(cmds, cmdCnt, pts, ptsCnt);
+
+    return 0;
+}
+
+
+int ShapeNode::moveTo(float x, float y) noexcept
+{
+    auto impl = pImpl.get();
+    assert(impl);
+
+    impl->path->moveTo(x, y);
+
+    return 0;
+}
+
+
+int ShapeNode::lineTo(float x, float y) noexcept
+{
+    auto impl = pImpl.get();
+    assert(impl);
+
+    impl->path->lineTo(x, y);
+
+    return 0;
+}
+
+
+int ShapeNode::cubicTo(float cx1, float cy1, float cx2, float cy2, float x, float y) noexcept
+{
+    auto impl = pImpl.get();
+    assert(impl);
+
+    impl->path->cubicTo(cx1, cy1, cx2, cy2, x, y);
+
+    return 0;
+}
+
+
+int ShapeNode::close() noexcept
+{
+    auto impl = pImpl.get();
+    assert(impl);
+
+    impl->path->close();
 
     return 0;
 }

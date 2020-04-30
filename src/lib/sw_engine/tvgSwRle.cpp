@@ -637,7 +637,7 @@ static bool _decomposeOutline(RleWorker& rw)
             }
         }
 
-        //Close the contour with a line segment?
+        //FIXME: Close the contour with a line segment?
         //_lineTo(rw, UPSCALE(outline->pts[first]));
     close:
        first = last + 1;

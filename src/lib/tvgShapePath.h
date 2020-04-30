@@ -56,12 +56,6 @@ struct ShapePath
         assert(pts);
     }
 
-    void reserve(size_t cmdCnt, size_t ptsCnt)
-    {
-        reserveCmd(cmdCnt);
-        reservePts(ptsCnt);
-    }
-
     void grow(size_t cmdCnt, size_t ptsCnt)
     {
         reserveCmd(this->cmdCnt + cmdCnt);
@@ -76,7 +70,6 @@ struct ShapePath
 
     void append(const PathCommand* cmds, size_t cmdCnt, const Point* pts, size_t ptsCnt)
     {
-        grow(cmdCnt, ptsCnt);
         memcpy(this->cmds + this->cmdCnt, cmds, sizeof(PathCommand) * cmdCnt);
         memcpy(this->pts + this->ptsCnt, pts, sizeof(Point) * ptsCnt);
         this->cmdCnt += cmdCnt;
@@ -114,6 +107,8 @@ struct ShapePath
 
     void close()
     {
+        if (cmdCnt > 0 && cmds[cmdCnt - 1] == PathCommand::Close) return;
+
         if (cmdCnt + 1 > reservedCmdCnt) reserveCmd((cmdCnt + 1) * 2);
         cmds[cmdCnt++] = PathCommand::Close;
     }
