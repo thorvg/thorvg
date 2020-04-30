@@ -671,7 +671,8 @@ static bool _genRle(RleWorker& rw)
 
 SwRleData* rleRender(const SwShape& sdata, const SwSize& clip)
 {
-    constexpr auto RENDER_POOL_SIZE = 16384L;
+    //Please adjust when you out of cell memory (default: 16384L)
+    constexpr auto RENDER_POOL_SIZE = 166641L;
     constexpr auto BAND_SIZE = 40;
 
     auto outline = sdata.outline;

@@ -20,10 +20,9 @@ void tvgtest()
     auto shape1 = tvg::ShapeNode::gen();
     shape1->appendRect(0, 0, 200, 200, 0);          //x, y, w, h, cornerRadius
     shape1->appendRect(100, 100, 300, 300, 100);    //x, y, w, h, cornerRadius
-    shape1->appendCircle(500, 500, 100, 100);       //cx, cy, radiusW, radiusH
-    //FIXME: eeek! crash!
- //   shape1->appendCircle(400, 600, 170, 100);       //cx, cy, radiusW, radiusH
-    shape1->fill(255, 0, 0, 255);                   //r, g, b, a
+    shape1->appendCircle(400, 400, 100, 100);       //cx, cy, radiusW, radiusH
+    shape1->appendCircle(400, 500, 170, 100);       //cx, cy, radiusW, radiusH
+    shape1->fill(255, 255, 0, 255);                 //r, g, b, a
 
     /* Push the shape into the Canvas drawing list
        When this shape is into the canvas list, the shape could update & prepare
