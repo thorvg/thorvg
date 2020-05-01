@@ -14,7 +14,8 @@ void tvgtest()
     tvg::Engine::init();
 
     //Create a Canvas
-    auto canvas = tvg::SwCanvas::gen(buffer, WIDTH, HEIGHT);
+    auto canvas = tvg::SwCanvas::gen();
+    canvas->target(buffer, WIDTH, WIDTH, HEIGHT);
     canvas->reserve(3);                          //reserve 3 shape nodes (optional)
 
     //Prepare Round Rectangle

@@ -25,7 +25,8 @@ public:
     void* prepare(const ShapeNode& shape, void* data, UpdateFlag flags) override;
     bool dispose(const ShapeNode& shape, void *data) override;
     bool render(const ShapeNode& shape, void *data) override;
-    bool target(uint32_t* buffer, size_t stride, size_t height);
+    bool target(uint32_t* buffer, size_t stride, size_t w, size_t h);
+    bool clear();
     size_t ref() override;
     size_t unref() override;
 

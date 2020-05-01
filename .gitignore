@@ -7,3 +7,4 @@ testMergeShapes
 testBoundary
 testPath
 testPathCopy
+testBlending

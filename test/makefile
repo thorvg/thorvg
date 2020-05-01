@@ -5,3 +5,4 @@ all:
 	gcc -o testBoundary testBoundary.cpp -g -lstdc++ `pkg-config --cflags --libs elementary tizenvg`
 	gcc -o testPath testPath.cpp -g -lstdc++ `pkg-config --cflags --libs elementary tizenvg`
 	gcc -o testPathCopy testPathCopy.cpp -g -lstdc++ `pkg-config --cflags --libs elementary tizenvg`
+	gcc -o testBlending testBlending.cpp -g -lstdc++ `pkg-config --cflags --libs elementary tizenvg`

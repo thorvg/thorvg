@@ -26,22 +26,33 @@
 
 static RenderInitializer renderInit;
 
-static inline size_t COLOR(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
-{
-    return (a << 24 | r << 16 | g << 8 | b);
-}
-
 /************************************************************************/
 /* External Class Implementation                                        */
 /************************************************************************/
 
-bool SwRenderer::target(uint32_t* buffer, size_t stride, size_t height)
+bool SwRenderer::clear()
 {
-    assert(buffer && stride > 0 && height > 0);
+    if (!surface.buffer) return false;
+
+    assert(surface.stride > 0 && surface.w > 0 && surface.h > 0);
+
+    //OPTIMIZE ME: SIMD!
+    for (size_t i = 0; i < surface.h; i++) {
+        for (size_t j = 0; j < surface.w; j++)
+            surface.buffer[surface.stride * i + j] = 0xff000000;  //Solid Black
+    }
+
+    return true;
+}
+
+bool SwRenderer::target(uint32_t* buffer, size_t stride, size_t w, size_t h)
+{
+    assert(buffer && stride > 0 && w > 0 && h > 0);
 
     surface.buffer = buffer;
     surface.stride = stride;
-    surface.height = height;
+    surface.w = w;
+    surface.h = h;
 
     return true;
 }
@@ -57,7 +68,7 @@ bool SwRenderer::render(const ShapeNode& shape, void *data)
     shape.fill(&r, &g, &b, &a);
 
     //TODO: Threading
-    return rasterShape(surface, *sdata, COLOR(r, g, b, a));
+    return rasterShape(surface, *sdata, r, g, b, a);
 }
 
 
@@ -92,7 +103,7 @@ void* SwRenderer::prepare(const ShapeNode& shape, void* data, UpdateFlag flags)
         if (!shapeGenOutline(shape, *sdata)) return sdata;
         if (!shapeTransformOutline(shape, *sdata)) return sdata;
 
-        SwSize clip = {static_cast<SwCoord>(surface.stride), static_cast<SwCoord>(surface.height)};
+        SwSize clip = {static_cast<SwCoord>(surface.w), static_cast<SwCoord>(surface.h)};
         if (!shapeGenRle(shape, *sdata, clip)) return sdata;
     }
 

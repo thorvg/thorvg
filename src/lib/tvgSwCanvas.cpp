@@ -45,12 +45,13 @@ SwCanvas::~SwCanvas()
 }
 
 
-int SwCanvas::target(uint32_t* buffer, size_t stride, size_t height) noexcept
+int SwCanvas::target(uint32_t* buffer, size_t stride, size_t w, size_t h) noexcept
 {
     auto renderer = dynamic_cast<SwRenderer*>(engine());
     assert(renderer);
 
-    if (!renderer->target(buffer, stride, height)) return -1;
+    if (!renderer->target(buffer, stride, w, h)) return -1;
+    if (!renderer->clear()) return -1;
 
     return 0;
 }
@@ -62,13 +63,10 @@ int SwCanvas::sync() noexcept
 }
 
 
-unique_ptr<SwCanvas> SwCanvas::gen(uint32_t* buffer, size_t stride, size_t height) noexcept
+unique_ptr<SwCanvas> SwCanvas::gen() noexcept
 {
     auto canvas = unique_ptr<SwCanvas>(new SwCanvas);
     assert(canvas);
-
-    int ret = canvas.get()->target(buffer, stride, height);
-    if (ret > 0)  return nullptr;
 
    return canvas;
 }

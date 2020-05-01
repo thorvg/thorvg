@@ -179,9 +179,9 @@ class TIZENVG_EXPORT SwCanvas final : public Canvas
 public:
     ~SwCanvas();
 
-    int target(uint32_t* buffer, size_t stride, size_t height) noexcept;
+    int target(uint32_t* buffer, size_t stride, size_t w, size_t h) noexcept;
     int sync() noexcept override;
-    static std::unique_ptr<SwCanvas> gen(uint32_t* buffer = nullptr, size_t stride = 0, size_t height = 0) noexcept;
+    static std::unique_ptr<SwCanvas> gen() noexcept;
 
     _TIZENVG_DECLARE_PRIVATE(SwCanvas);
 };

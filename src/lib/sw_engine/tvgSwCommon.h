@@ -99,6 +99,6 @@ bool shapeGenRle(const ShapeNode& shape, SwShape& sdata, const SwSize& clip);
 bool shapeTransformOutline(const ShapeNode& shape, SwShape& sdata);
 SwRleData* rleRender(const SwShape& sdata, const SwSize& clip);
 
-bool rasterShape(Surface& surface, SwShape& sdata, size_t color);
+bool rasterShape(Surface& surface, SwShape& sdata, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
 
 #endif /* _TVG_SW_COMMON_H_ */

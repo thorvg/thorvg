@@ -20,20 +20,66 @@
 #include "tvgSwCommon.h"
 
 
-bool rasterShape(Surface& surface, SwShape& sdata, size_t color)
+/************************************************************************/
+/* Internal Class Implementation                                        */
+/************************************************************************/
+
+static inline size_t COLOR_ALPHA_BLEND(size_t color, size_t alpha)
+{
+  return (((((color >> 8) & 0x00ff00ff) * alpha) & 0xff00ff00) +
+          ((((color & 0x00ff00ff) * alpha) >> 8) & 0x00ff00ff));
+}
+
+
+static inline size_t COLOR_ARGB_JOIN(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
+{
+    return (a << 24 | r << 16 | g << 8 | b);
+}
+
+
+static void
+_drawTranslucentSpan(uint32_t* dst, size_t len, size_t color, size_t alpha)
+{
+  //OPTIMIZE ME: SIMD
+  auto ialpha = 255 - alpha;
+  for (size_t i = 0; i < len; ++i) {
+    dst[i] = color + COLOR_ALPHA_BLEND(dst[i], ialpha);
+  }
+}
+
+
+static void
+_drawSolidSpan(uint32_t* dst, size_t len, size_t color)
+{
+  //OPTIMIZE ME: SIMD
+  for (size_t i = 0; i < len; ++i) {
+    dst[i] = color;
+  }
+}
+
+
+/************************************************************************/
+/* External Class Implementation                                        */
+/************************************************************************/
+
+bool rasterShape(Surface& surface, SwShape& sdata, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 {
     SwRleData* rle = sdata.rle;
     if (!rle) return false;
 
-    auto stride = surface.stride;
     auto span = rle->spans;
+    auto stride = surface.stride;
+    auto color = COLOR_ARGB_JOIN(r, g, b, a);
 
     for (size_t i = 0; i < rle->size; ++i) {
         assert(span);
-//        printf("raster y(%d) x(%d) len(%d)\n", span->y, span->x, span->len);
-        for (auto j = 0; j < span->len; ++j) {
-            surface.buffer[span->y * stride + span->x + j] = color;
-        }
+
+        auto dst = &surface.buffer[span->y * stride + span->x];
+        assert(dst);
+
+        if (a == 255) _drawSolidSpan(dst, span->len, color);
+        else _drawTranslucentSpan(dst, span->len, color, a);
+
         ++span;
     }
 

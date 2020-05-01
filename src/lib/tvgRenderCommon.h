@@ -25,7 +25,7 @@ struct Surface
     //TODO: Union for multiple types
     uint32_t* buffer;
     size_t stride;
-    size_t height;
+    size_t w, h;
 };
 
 class RenderMethod

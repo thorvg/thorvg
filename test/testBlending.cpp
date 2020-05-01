@@ -16,42 +16,49 @@ void tvgtest()
     //Create a Canvas
     auto canvas = tvg::SwCanvas::gen();
     canvas->target(buffer, WIDTH, WIDTH, HEIGHT);
+    canvas->reserve(5);
 
-    //Star
+    //Prepare Round Rectangle
     auto shape1 = tvg::ShapeNode::gen();
-
-    //Appends Paths
-    shape1->moveTo(199, 34);
-    shape1->lineTo(253, 143);
-    shape1->lineTo(374, 160);
-    shape1->lineTo(287, 244);
-    shape1->lineTo(307, 365);
-    shape1->lineTo(199, 309);
-    shape1->lineTo(97, 365);
-    shape1->lineTo(112, 245);
-    shape1->lineTo(26, 161);
-    shape1->lineTo(146, 143);
-    shape1->close();
-    shape1->fill(0, 0, 255, 255);
+    shape1->appendRect(0, 0, 400, 400, 50);      //x, y, w, h, cornerRadius
+    shape1->fill(0, 255, 0, 255);                //r, g, b, a
     canvas->push(move(shape1));
 
-    //Circle
+    //Prepare Circle
     auto shape2 = tvg::ShapeNode::gen();
-
-    auto cx = 550.0f;
-    auto cy = 550.0f;
-    auto radius = 125.0f;
-    auto halfRadius = radius * 0.552284f;
-
-    //Append Paths
-    shape2->moveTo(cx, cy - radius);
-    shape2->cubicTo(cx + halfRadius, cy - radius, cx + radius, cy - halfRadius, cx + radius, cy);
-    shape2->cubicTo(cx + radius, cy + halfRadius, cx + halfRadius, cy + radius, cx, cy+ radius);
-    shape2->cubicTo(cx - halfRadius, cy + radius, cx - radius, cy + halfRadius, cx - radius, cy);
-    shape2->cubicTo(cx - radius, cy - halfRadius, cx - halfRadius, cy - radius, cx, cy - radius);
-    shape2->fill(255, 0, 0, 255);
+    shape2->appendCircle(400, 400, 200, 200);    //cx, cy, radiusW, radiusH
+    shape2->fill(170, 170, 0, 170);              //r, g, b, a
     canvas->push(move(shape2));
 
+    //Prepare Ellipse
+    auto shape3 = tvg::ShapeNode::gen();
+    shape3->appendCircle(400, 400, 250, 100);    //cx, cy, radiusW, radiusH
+    shape3->fill(100, 100, 100, 100);            //r, g, b, a
+    canvas->push(move(shape3));
+
+    //Prepare Star
+    auto shape4 = tvg::ShapeNode::gen();
+    shape4->moveTo(199, 234);
+    shape4->lineTo(253, 343);
+    shape4->lineTo(374, 360);
+    shape4->lineTo(287, 444);
+    shape4->lineTo(307, 565);
+    shape4->lineTo(199, 509);
+    shape4->lineTo(97, 565);
+    shape4->lineTo(112, 445);
+    shape4->lineTo(26, 361);
+    shape4->lineTo(146, 343);
+    shape4->close();
+    shape4->fill(200, 0, 200, 200);
+    canvas->push(move(shape4));
+
+    //Prepare Opaque Ellipse
+    auto shape5 = tvg::ShapeNode::gen();
+    shape5->appendCircle(600, 650, 200, 150);
+    shape5->fill(0, 0, 255, 255);
+    canvas->push(move(shape5));
+
+    //Draw the Shapes onto the Canvas
     canvas->draw();
     canvas->sync();
 
