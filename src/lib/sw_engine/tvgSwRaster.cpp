@@ -24,6 +24,12 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
+static inline size_t COLOR_ALPHA(size_t color)
+{
+  return (color >> 24) & 0xff;
+}
+
+
 static inline size_t COLOR_ALPHA_BLEND(size_t color, size_t alpha)
 {
   return (((((color >> 8) & 0x00ff00ff) * alpha) & 0xff00ff00) +
@@ -33,15 +39,18 @@ static inline size_t COLOR_ALPHA_BLEND(size_t color, size_t alpha)
 
 static inline size_t COLOR_ARGB_JOIN(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 {
-    return (a << 24 | r << 16 | g << 8 | b);
+  return (a << 24 | r << 16 | g << 8 | b);
 }
 
 
 static void
-_drawTranslucentSpan(uint32_t* dst, size_t len, size_t color, size_t alpha)
+_rasterTranslucent(uint32_t* dst, size_t len, size_t color, size_t cov)
 {
   //OPTIMIZE ME: SIMD
-  auto ialpha = 255 - alpha;
+
+  if (cov < 255) color = COLOR_ALPHA_BLEND(color, cov);
+  auto ialpha = 255 - COLOR_ALPHA(color);
+
   for (size_t i = 0; i < len; ++i) {
     dst[i] = color + COLOR_ALPHA_BLEND(dst[i], ialpha);
   }
@@ -49,11 +58,20 @@ _drawTranslucentSpan(uint32_t* dst, size_t len, size_t color, size_t alpha)
 
 
 static void
-_drawSolidSpan(uint32_t* dst, size_t len, size_t color)
+_rasterSolid(uint32_t* dst, size_t len, size_t color, size_t cov)
 {
   //OPTIMIZE ME: SIMD
-  for (size_t i = 0; i < len; ++i) {
-    dst[i] = color;
+
+  //Fully Opaque
+  if (cov == 255) {
+    for (size_t i = 0; i < len; ++i) {
+      dst[i] = color;
+    }
+  } else {
+    auto ialpha = 255 - cov;
+    for (size_t i = 0; i < len; ++i) {
+      dst[i] = COLOR_ALPHA_BLEND(color, cov) + COLOR_ALPHA_BLEND(dst[i], ialpha);
+    }
   }
 }
 
@@ -75,10 +93,9 @@ bool rasterShape(Surface& surface, SwShape& sdata, uint8_t r, uint8_t g, uint8_t
         assert(span);
 
         auto dst = &surface.buffer[span->y * stride + span->x];
-        assert(dst);
 
-        if (a == 255) _drawSolidSpan(dst, span->len, color);
-        else _drawTranslucentSpan(dst, span->len, color, a);
+        if (a == 255) _rasterSolid(dst, span->len, color, span->coverage);
+        else _rasterTranslucent(dst, span->len, color, span->coverage);
 
         ++span;
     }

@@ -434,8 +434,8 @@ static void _lineTo(RleWorker& rw, const SwPoint& to)
 
         /* These macros speed up repetitive divisions by replacing them
            with multiplications and right shifts. */
-        auto dx_r = (ULONG_MAX >> PIXEL_BITS) / (diff.x);
-        auto dy_r = (ULONG_MAX >> PIXEL_BITS) / (diff.y);
+        auto dx_r = static_cast<long>(ULONG_MAX >> PIXEL_BITS) / (diff.x);
+        auto dy_r = static_cast<long>(ULONG_MAX >> PIXEL_BITS) / (diff.y);
 
         /* The fundamental value `prod' determines which side and the  */
         /* exact coordinate where the line exits current cell.  It is  */
