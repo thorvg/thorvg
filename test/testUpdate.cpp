@@ -16,7 +16,7 @@ void tvgtest()
     canvas->target(buffer, WIDTH, WIDTH, HEIGHT);
 
     //Shape
-    auto shape = tvg::ShapeNode::gen();
+    auto shape = tvg::Shape::gen();
     shape->appendRect(-100, -100, 200, 200, 0);
     shape->fill(255, 255, 255, 255);
     canvas->push(move(shape));
@@ -32,7 +32,7 @@ void transit_cb(Elm_Transit_Effect *effect, Elm_Transit* transit, double progres
     canvas->clear();
 
     //Shape
-    auto shape = tvg::ShapeNode::gen();
+    auto shape = tvg::Shape::gen();
     shape->appendRect(-100 + (800 * progress), -100 + (800 * progress), 200, 200, (100 * progress));
     shape->fill(rand()%255, rand()%255, rand()%255, 255);
     canvas->push(move(shape));

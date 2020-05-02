@@ -93,10 +93,10 @@ struct SwShape
 };
 
 void shapeReset(SwShape& sdata);
-bool shapeGenOutline(const ShapeNode& shape, SwShape& sdata);
-void shapeDelOutline(const ShapeNode& shape, SwShape& sdata);
-bool shapeGenRle(const ShapeNode& shape, SwShape& sdata, const SwSize& clip);
-bool shapeTransformOutline(const ShapeNode& shape, SwShape& sdata);
+bool shapeGenOutline(const Shape& shape, SwShape& sdata);
+void shapeDelOutline(const Shape& shape, SwShape& sdata);
+bool shapeGenRle(const Shape& shape, SwShape& sdata, const SwSize& clip);
+bool shapeTransformOutline(const Shape& shape, SwShape& sdata);
 SwRleData* rleRender(const SwShape& sdata, const SwSize& clip);
 
 bool rasterShape(Surface& surface, SwShape& sdata, uint8_t r, uint8_t g, uint8_t b, uint8_t a);

@@ -46,7 +46,7 @@ void tvgtest()
     pts[8] = {26, 161};    //LineTo
     pts[9] = {146, 143};   //LineTo
 
-    auto shape1 = tvg::ShapeNode::gen();
+    auto shape1 = tvg::Shape::gen();
     shape1->appendPath(cmds, 11, pts, 10);     //copy path data
     shape1->fill(0, 255, 0, 255);
     canvas->push(move(shape1));
@@ -87,7 +87,7 @@ void tvgtest()
     pts2[11] = {cx - halfRadius, cy - radius};     //Ctrl2
     pts2[12] = {cx, cy - radius};                  //To
 
-    auto shape2 = tvg::ShapeNode::gen();
+    auto shape2 = tvg::Shape::gen();
     shape2->appendPath(cmds2, 6, pts2, 13);     //copy path data
     shape2->fill(255, 255, 0, 255);
     canvas->push(move(shape2));

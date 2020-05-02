@@ -14,8 +14,8 @@
  *  limitations under the License.
  *
  */
-#ifndef _TVG_SCENE_NODE_CPP_
-#define _TVG_SCENE_NODE_CPP_
+#ifndef _TVG_SCENE_CPP_
+#define _TVG_SCENE_CPP_
 
 #include "tvgCommon.h"
 
@@ -23,7 +23,7 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-struct SceneNode::Impl
+struct Scene::Impl
 {
 
 };
@@ -34,34 +34,34 @@ struct SceneNode::Impl
 /* External Class Implementation                                        */
 /************************************************************************/
 
-SceneNode::SceneNode() : pImpl(make_unique<Impl>())
+Scene::Scene() : pImpl(make_unique<Impl>())
 {
 
 }
 
 
-SceneNode::~SceneNode()
+Scene::~Scene()
 {
-    cout << "SceneNode(" << this << ") destroyed!" << endl;
+    cout << "Scene(" << this << ") destroyed!" << endl;
 }
 
 
-unique_ptr<SceneNode> SceneNode::gen() noexcept
+unique_ptr<Scene> Scene::gen() noexcept
 {
-    return unique_ptr<SceneNode>(new SceneNode);
+    return unique_ptr<Scene>(new Scene);
 }
 
 
-int SceneNode::push(unique_ptr<ShapeNode> shape) noexcept
+int Scene::push(unique_ptr<Shape> shape) noexcept
 {
     return 0;
 }
 
 
-int SceneNode::update(RenderMethod* engine) noexcept
+int Scene::update(RenderMethod* engine) noexcept
 {
 
     return 0;
 }
 
-#endif /* _TVG_SCENE_NODE_CPP_ */
+#endif /* _TVG_SCENE_CPP_ */

@@ -58,7 +58,7 @@ bool SwRenderer::target(uint32_t* buffer, size_t stride, size_t w, size_t h)
 }
 
 
-bool SwRenderer::render(const ShapeNode& shape, void *data)
+bool SwRenderer::render(const Shape& shape, void *data)
 {
     SwShape* sdata = static_cast<SwShape*>(data);
     if (!sdata) return false;
@@ -72,7 +72,7 @@ bool SwRenderer::render(const ShapeNode& shape, void *data)
 }
 
 
-bool SwRenderer::dispose(const ShapeNode& shape, void *data)
+bool SwRenderer::dispose(const Shape& shape, void *data)
 {
     SwShape* sdata = static_cast<SwShape*>(data);
     if (!sdata) return false;
@@ -81,7 +81,7 @@ bool SwRenderer::dispose(const ShapeNode& shape, void *data)
     return true;
 }
 
-void* SwRenderer::prepare(const ShapeNode& shape, void* data, UpdateFlag flags)
+void* SwRenderer::prepare(const Shape& shape, void* data, UpdateFlag flags)
 {
     //prepare shape data
     SwShape* sdata = static_cast<SwShape*>(data);

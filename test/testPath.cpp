@@ -18,7 +18,7 @@ void tvgtest()
     canvas->target(buffer, WIDTH, WIDTH, HEIGHT);
 
     //Star
-    auto shape1 = tvg::ShapeNode::gen();
+    auto shape1 = tvg::Shape::gen();
 
     //Appends Paths
     shape1->moveTo(199, 34);
@@ -36,7 +36,7 @@ void tvgtest()
     canvas->push(move(shape1));
 
     //Circle
-    auto shape2 = tvg::ShapeNode::gen();
+    auto shape2 = tvg::Shape::gen();
 
     auto cx = 550.0f;
     auto cy = 550.0f;

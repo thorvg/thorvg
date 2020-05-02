@@ -16,7 +16,7 @@ int main(int argc, char **argv)
     auto canvas = tvg::SwCanvas::gen(buffer, WIDTH, HEIGHT);
 
     //Prepare a Shape
-    auto shape1 = tvg::ShapeNode::gen();
+    auto shape1 = tvg::Shape::gen();
     shape1->rect(0, 0, 400, 400, 0.1);     //x, y, w, h, cornerRadius
     shape1->fill(0, 255, 0, 255);
 

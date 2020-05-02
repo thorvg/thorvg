@@ -8,7 +8,7 @@ using namespace std;
 
 static uint32_t buffer[WIDTH * HEIGHT];
 unique_ptr<tvg::SwCanvas> canvas = nullptr;
-tvg::ShapeNode* pShape = nullptr;
+tvg::Shape* pShape = nullptr;
 
 void tvgtest()
 {
@@ -17,7 +17,7 @@ void tvgtest()
     canvas->target(buffer, WIDTH, WIDTH, HEIGHT);
 
     //Shape
-    auto shape = tvg::ShapeNode::gen();
+    auto shape = tvg::Shape::gen();
 
     /* Acquire shape pointer to access it again.
        instead, you should consider not to interrupt this pointer life-cycle. */

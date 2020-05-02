@@ -42,7 +42,7 @@ bool GlRenderer::clear()
     return true;
 }
 
-bool GlRenderer::render(const ShapeNode& shape, void *data)
+bool GlRenderer::render(const Shape& shape, void *data)
 {
     GlShape* sdata = static_cast<GlShape*>(data);
     if (!sdata) return false;
@@ -53,7 +53,7 @@ bool GlRenderer::render(const ShapeNode& shape, void *data)
 }
 
 
-bool GlRenderer::dispose(const ShapeNode& shape, void *data)
+bool GlRenderer::dispose(const Shape& shape, void *data)
 {
     GlShape* sdata = static_cast<GlShape*>(data);
     if (!sdata) return false;
@@ -65,7 +65,7 @@ bool GlRenderer::dispose(const ShapeNode& shape, void *data)
 }
 
 
-void* GlRenderer::prepare(const ShapeNode& shape, void* data, UpdateFlag flags)
+void* GlRenderer::prepare(const Shape& shape, void* data, UpdateFlag flags)
 {
     //prepare shape data
     GlShape* sdata = static_cast<GlShape*>(data);

@@ -228,14 +228,14 @@ void _deleteOutline(SwShape& sdata)
 /* External Class Implementation                                        */
 /************************************************************************/
 
-bool shapeTransformOutline(const ShapeNode& shape, SwShape& sdata)
+bool shapeTransformOutline(const Shape& shape, SwShape& sdata)
 {
     //TODO:
     return true;
 }
 
 
-bool shapeGenRle(const ShapeNode& shape, SwShape& sdata, const SwSize& clip)
+bool shapeGenRle(const Shape& shape, SwShape& sdata, const SwSize& clip)
 {
     if (sdata.outline->ptsCnt == 0 || sdata.outline->cntrsCnt <= 0) goto end;
     if (!_updateBBox(sdata)) goto end;
@@ -262,7 +262,7 @@ void shapeReset(SwShape& sdata)
 }
 
 
-bool shapeGenOutline(const ShapeNode& shape, SwShape& sdata)
+bool shapeGenOutline(const Shape& shape, SwShape& sdata)
 {
     const PathCommand* cmds = nullptr;
     auto cmdCnt = shape.pathCommands(&cmds);

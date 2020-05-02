@@ -18,7 +18,7 @@ void tvgtest()
     canvas->target(buffer, WIDTH, WIDTH, HEIGHT);
 
     //Prepare a Shape (Rectangle)
-    auto shape1 = tvg::ShapeNode::gen();
+    auto shape1 = tvg::Shape::gen();
     shape1->appendRect(100, 100, 400, 400, 0);  //x, y, w, h, cornerRadius
     shape1->fill(255, 0, 0, 255);               //r, g, b, a
 

@@ -14,8 +14,8 @@
  *  limitations under the License.
  *
  */
-#ifndef _TVG_SHAPE_NODE_CPP_
-#define _TVG_SHAPE_NODE_CPP_
+#ifndef _TVG_SHAPE_CPP_
+#define _TVG_SHAPE_CPP_
 
 #include "tvgCommon.h"
 #include "tvgShapePath.h"
@@ -41,7 +41,7 @@ struct ShapeTransform
 };
 
 
-struct ShapeNode::Impl
+struct Shape::Impl
 {
     ShapeTransform *transform = nullptr;
     ShapeFill *fill = nullptr;
@@ -68,23 +68,23 @@ struct ShapeNode::Impl
 /* External Class Implementation                                        */
 /************************************************************************/
 
-ShapeNode :: ShapeNode() : pImpl(make_unique<Impl>())
+Shape :: Shape() : pImpl(make_unique<Impl>())
 {
 }
 
 
-ShapeNode :: ~ShapeNode()
+Shape :: ~Shape()
 {
 }
 
 
-unique_ptr<ShapeNode> ShapeNode::gen() noexcept
+unique_ptr<Shape> Shape::gen() noexcept
 {
-    return unique_ptr<ShapeNode>(new ShapeNode);
+    return unique_ptr<Shape>(new Shape);
 }
 
 
-void* ShapeNode::engine() noexcept
+void* Shape::engine() noexcept
 {
     auto impl = pImpl.get();
     assert(impl);
@@ -92,7 +92,7 @@ void* ShapeNode::engine() noexcept
 }
 
 
-int ShapeNode::update(RenderMethod* engine) noexcept
+int Shape::update(RenderMethod* engine) noexcept
 {
     auto impl = pImpl.get();
     assert(impl);
@@ -103,7 +103,7 @@ int ShapeNode::update(RenderMethod* engine) noexcept
 }
 
 
-int ShapeNode::reset() noexcept
+int Shape::reset() noexcept
 {
     auto impl = pImpl.get();
     assert(impl);
@@ -114,7 +114,7 @@ int ShapeNode::reset() noexcept
 }
 
 
-int ShapeNode::pathCommands(const PathCommand** cmds) const noexcept
+int Shape::pathCommands(const PathCommand** cmds) const noexcept
 {
     auto impl = pImpl.get();
     assert(impl && cmds);
@@ -125,7 +125,7 @@ int ShapeNode::pathCommands(const PathCommand** cmds) const noexcept
 }
 
 
-int ShapeNode::pathCoords(const Point** pts) const noexcept
+int Shape::pathCoords(const Point** pts) const noexcept
 {
     auto impl = pImpl.get();
     assert(impl && pts);
@@ -136,7 +136,7 @@ int ShapeNode::pathCoords(const Point** pts) const noexcept
 }
 
 
-int ShapeNode::appendPath(const PathCommand *cmds, size_t cmdCnt, const Point* pts, size_t ptsCnt) noexcept
+int Shape::appendPath(const PathCommand *cmds, size_t cmdCnt, const Point* pts, size_t ptsCnt) noexcept
 {
     if (cmdCnt < 0 || ptsCnt < 0) return -1;
     assert(cmds && pts);
@@ -151,7 +151,7 @@ int ShapeNode::appendPath(const PathCommand *cmds, size_t cmdCnt, const Point* p
 }
 
 
-int ShapeNode::moveTo(float x, float y) noexcept
+int Shape::moveTo(float x, float y) noexcept
 {
     auto impl = pImpl.get();
     assert(impl);
@@ -162,7 +162,7 @@ int ShapeNode::moveTo(float x, float y) noexcept
 }
 
 
-int ShapeNode::lineTo(float x, float y) noexcept
+int Shape::lineTo(float x, float y) noexcept
 {
     auto impl = pImpl.get();
     assert(impl);
@@ -173,7 +173,7 @@ int ShapeNode::lineTo(float x, float y) noexcept
 }
 
 
-int ShapeNode::cubicTo(float cx1, float cy1, float cx2, float cy2, float x, float y) noexcept
+int Shape::cubicTo(float cx1, float cy1, float cx2, float cy2, float x, float y) noexcept
 {
     auto impl = pImpl.get();
     assert(impl);
@@ -184,7 +184,7 @@ int ShapeNode::cubicTo(float cx1, float cy1, float cx2, float cy2, float x, floa
 }
 
 
-int ShapeNode::close() noexcept
+int Shape::close() noexcept
 {
     auto impl = pImpl.get();
     assert(impl);
@@ -195,7 +195,7 @@ int ShapeNode::close() noexcept
 }
 
 
-int ShapeNode::appendCircle(float cx, float cy, float radiusW, float radiusH) noexcept
+int Shape::appendCircle(float cx, float cy, float radiusW, float radiusH) noexcept
 {
     auto impl = pImpl.get();
     assert(impl);
@@ -215,7 +215,7 @@ int ShapeNode::appendCircle(float cx, float cy, float radiusW, float radiusH) no
 }
 
 
-int ShapeNode::appendRect(float x, float y, float w, float h, float cornerRadius) noexcept
+int Shape::appendRect(float x, float y, float w, float h, float cornerRadius) noexcept
 {
     auto impl = pImpl.get();
     assert(impl);
@@ -254,7 +254,7 @@ int ShapeNode::appendRect(float x, float y, float w, float h, float cornerRadius
 }
 
 
-int ShapeNode::fill(size_t r, size_t g, size_t b, size_t a) noexcept
+int Shape::fill(size_t r, size_t g, size_t b, size_t a) noexcept
 {
     auto impl = pImpl.get();
     assert(impl);
@@ -268,7 +268,7 @@ int ShapeNode::fill(size_t r, size_t g, size_t b, size_t a) noexcept
 }
 
 
-int ShapeNode::fill(size_t* r, size_t* g, size_t* b, size_t* a) const noexcept
+int Shape::fill(size_t* r, size_t* g, size_t* b, size_t* a) const noexcept
 {
     auto impl = pImpl.get();
     assert(impl);
@@ -281,4 +281,4 @@ int ShapeNode::fill(size_t* r, size_t* g, size_t* b, size_t* a) const noexcept
     return 0;
 }
 
-#endif //_TVG_SHAPE_NODE_CPP_
+#endif //_TVG_SHAPE_CPP_

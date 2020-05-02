@@ -22,7 +22,7 @@ int main(int argc, char **argv)
     auto canvas2 = tvg::SwCanvas::gen(buffer, WIDTH, HEIGHT);
 
     //Create a Shape
-    auto shape = tvg::ShapeNode::gen();
+    auto shape = tvg::Shape::gen();
     shape->composite(canvas, tvg::CompMaskAdd);
 
     //Draw the Scene onto the Canvas

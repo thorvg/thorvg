@@ -61,17 +61,17 @@ struct Point
 
 
 /**
- * @class PaintNode
+ * @class Paint
  *
  * @ingroup TizenVG
  *
  * @brief description...
  *
  */
-class TIZENVG_EXPORT PaintNode
+class TIZENVG_EXPORT Paint
 {
 public:
-    virtual ~PaintNode() {}
+    virtual ~Paint() {}
     virtual int update(RenderMethod*) = 0;
 };
 
@@ -91,7 +91,7 @@ public:
     virtual ~Canvas();
 
     int reserve(size_t n) noexcept;
-    virtual int push(std::unique_ptr<PaintNode> paint) noexcept;
+    virtual int push(std::unique_ptr<Paint> paint) noexcept;
     virtual int clear() noexcept;
     virtual int update() noexcept;
     virtual int draw(bool async = true) noexcept;
@@ -104,17 +104,17 @@ public:
 
 
 /**
- * @class ShapeNode
+ * @class Shape
  *
  * @ingroup TizenVG
  *
  * @brief description...
  *
  */
-class TIZENVG_EXPORT ShapeNode final : public PaintNode
+class TIZENVG_EXPORT Shape final : public Paint
 {
 public:
-    ~ShapeNode();
+    ~Shape();
 
     int update(RenderMethod* engine) noexcept override;
     int reset() noexcept;
@@ -134,35 +134,35 @@ public:
     int pathCoords(const Point** pts) const noexcept;
     int fill(size_t* r, size_t* g, size_t* b, size_t* a) const noexcept;
 
-    static std::unique_ptr<ShapeNode> gen() noexcept;
+    static std::unique_ptr<Shape> gen() noexcept;
 
     //FIXME: Ugly... Better design?
     void *engine() noexcept;
 
-    _TIZENVG_DECLARE_PRIVATE(ShapeNode);
+    _TIZENVG_DECLARE_PRIVATE(Shape);
 };
 
 
 /**
- * @class SceneNode
+ * @class Scene
  *
  * @ingroup TizenVG
  *
  * @brief description...
  *
  */
-class TIZENVG_EXPORT SceneNode final : public PaintNode
+class TIZENVG_EXPORT Scene final : public Paint
 {
 public:
-    ~SceneNode();
+    ~Scene();
 
     int update(RenderMethod* engine) noexcept override;
 
-    int push(std::unique_ptr<ShapeNode> shape) noexcept;
+    int push(std::unique_ptr<Shape> shape) noexcept;
 
-    static std::unique_ptr<SceneNode> gen() noexcept;
+    static std::unique_ptr<Scene> gen() noexcept;
 
-    _TIZENVG_DECLARE_PRIVATE(SceneNode);
+    _TIZENVG_DECLARE_PRIVATE(Scene);
 };
 
 

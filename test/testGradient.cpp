@@ -16,7 +16,7 @@ int main(int argc, char **argv)
     auto canvas = tvg::SwCanvas::gen(buffer, WIDTH, HEIGHT);
 
     //Prepare a Shape
-    auto shape1 = tvg::ShapeNode::gen();
+    auto shape1 = tvg::Shape::gen();
     shape1->rect(0, 0, 400, 400, 0.1);        //x, y, w, h, corner_radius
 
     //Linear Gradient Fill
@@ -30,7 +30,7 @@ int main(int argc, char **argv)
     canvas->push(move(shape1));
 
     //Prepare Circle
-    auto shape2 = tvg::ShapeNode::gen();
+    auto shape2 = tvg::Shape::gen();
     shape2->circle(400, 400, 200);            //cx, cy, radius
 
     //Radial Gradient Fill

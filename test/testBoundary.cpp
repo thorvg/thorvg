@@ -19,31 +19,31 @@ void tvgtest()
     canvas->reserve(5);             //reserve 5 shape nodes (optional)
 
     //Prepare Shape1
-    auto shape1 = tvg::ShapeNode::gen();
+    auto shape1 = tvg::Shape::gen();
     shape1->appendRect(-100, -100, 1000, 1000, 50);
     shape1->fill(255, 255, 255, 255);
     canvas->push(move(shape1));
 
     //Prepare Shape2
-    auto shape2 = tvg::ShapeNode::gen();
+    auto shape2 = tvg::Shape::gen();
     shape2->appendRect(-100, -100, 250, 250, 50);
     shape2->fill(0, 0, 255, 255);
     canvas->push(move(shape2));
 
     //Prepare Shape3
-    auto shape3 = tvg::ShapeNode::gen();
+    auto shape3 = tvg::Shape::gen();
     shape3->appendRect(500, 500, 550, 550, 0);
     shape3->fill(0, 255, 255, 255);
     canvas->push(move(shape3));
 
     //Prepare Shape4
-    auto shape4 = tvg::ShapeNode::gen();
+    auto shape4 = tvg::Shape::gen();
     shape4->appendCircle(800, 100, 200, 200);
     shape4->fill(255, 255, 0, 255);
     canvas->push(move(shape4));
 
     //Prepare Shape5
-    auto shape5 = tvg::ShapeNode::gen();
+    auto shape5 = tvg::Shape::gen();
     shape5->appendCircle(200, 650, 250, 200);
     shape5->fill(0, 0, 0, 255);
     canvas->push(move(shape5));

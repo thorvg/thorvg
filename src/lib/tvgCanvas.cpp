@@ -26,10 +26,10 @@
 
 struct Canvas::Impl
 {
-    vector<PaintNode*> nodes;
+    vector<Paint*> nodes;
     RenderMethod*      renderer;
 
-    Impl(RenderMethod *pRenderer):renderer(pRenderer)
+    Impl(RenderMethod* pRenderer):renderer(pRenderer)
     {
         renderer->ref();
     }
@@ -47,9 +47,9 @@ struct Canvas::Impl
         return 0;
     }
 
-    int push(unique_ptr<PaintNode> paint)
+    int push(unique_ptr<Paint> paint)
     {
-        PaintNode *node = paint.release();
+        Paint* node = paint.release();
         assert(node);
         nodes.push_back(node);
         return node->update(renderer);
@@ -60,9 +60,9 @@ struct Canvas::Impl
         assert(renderer);
 
         for (auto node : nodes) {
-            if (SceneNode *scene = dynamic_cast<SceneNode *>(node)) {
+            if (Scene* scene = dynamic_cast<Scene*>(node)) {
                 cout << "TODO: " <<  scene << endl;
-            } else if (ShapeNode *shape = dynamic_cast<ShapeNode *>(node)) {
+            } else if (Shape *shape = dynamic_cast<Shape*>(node)) {
                 if (!renderer->dispose(*shape, shape->engine())) return -1;
             }
             delete(node);
@@ -91,9 +91,9 @@ struct Canvas::Impl
         if (!renderer->clear()) return -1;
 
         for(auto node: nodes) {
-            if (SceneNode *scene = dynamic_cast<SceneNode *>(node)) {
+            if (Scene* scene = dynamic_cast<Scene*>(node)) {
                 cout << "TODO: " <<  scene << endl;
-            } else if (ShapeNode *shape = dynamic_cast<ShapeNode *>(node)) {
+            } else if (Shape *shape = dynamic_cast<Shape*>(node)) {
                 if (!renderer->render(*shape, shape->engine())) return -1;
             }
         }
@@ -125,7 +125,7 @@ int Canvas::reserve(size_t n) noexcept
 }
 
 
-int Canvas::push(unique_ptr<PaintNode> paint) noexcept
+int Canvas::push(unique_ptr<Paint> paint) noexcept
 {
     auto impl = pImpl.get();
     assert(impl);

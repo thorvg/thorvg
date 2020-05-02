@@ -19,25 +19,25 @@ void tvgtest()
     canvas->reserve(5);
 
     //Prepare Round Rectangle
-    auto shape1 = tvg::ShapeNode::gen();
+    auto shape1 = tvg::Shape::gen();
     shape1->appendRect(0, 0, 400, 400, 50);      //x, y, w, h, cornerRadius
     shape1->fill(0, 255, 0, 255);                //r, g, b, a
     canvas->push(move(shape1));
 
     //Prepare Circle
-    auto shape2 = tvg::ShapeNode::gen();
+    auto shape2 = tvg::Shape::gen();
     shape2->appendCircle(400, 400, 200, 200);    //cx, cy, radiusW, radiusH
     shape2->fill(170, 170, 0, 170);              //r, g, b, a
     canvas->push(move(shape2));
 
     //Prepare Ellipse
-    auto shape3 = tvg::ShapeNode::gen();
+    auto shape3 = tvg::Shape::gen();
     shape3->appendCircle(400, 400, 250, 100);    //cx, cy, radiusW, radiusH
     shape3->fill(100, 100, 100, 100);            //r, g, b, a
     canvas->push(move(shape3));
 
     //Prepare Star
-    auto shape4 = tvg::ShapeNode::gen();
+    auto shape4 = tvg::Shape::gen();
     shape4->moveTo(199, 234);
     shape4->lineTo(253, 343);
     shape4->lineTo(374, 360);
@@ -53,7 +53,7 @@ void tvgtest()
     canvas->push(move(shape4));
 
     //Prepare Opaque Ellipse
-    auto shape5 = tvg::ShapeNode::gen();
+    auto shape5 = tvg::Shape::gen();
     shape5->appendCircle(600, 650, 200, 150);
     shape5->fill(0, 0, 255, 255);
     canvas->push(move(shape5));

@@ -9,8 +9,8 @@ source_file = [
    'tvgCanvas.cpp',
    'tvgSwCanvas.cpp',
    'tvgGlCanvas.cpp',
-   'tvgSceneNode.cpp',
-   'tvgShapeNode.cpp'
+   'tvgScene.cpp',
+   'tvgShape.cpp'
 ]
 
 src_dep = declare_dependency(
