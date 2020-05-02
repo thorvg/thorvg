@@ -72,7 +72,13 @@ class TIZENVG_EXPORT Paint
 {
 public:
     virtual ~Paint() {}
+
     virtual int update(RenderMethod*) = 0;
+
+    virtual int rotate(float degree) = 0;
+    virtual int scale(float factor) = 0;
+
+    virtual int bounds(float&x, float& y, float& w, float& h) const = 0;
 };
 
 
@@ -130,9 +136,13 @@ public:
 
     int fill(size_t r, size_t g, size_t b, size_t a) noexcept;
 
+    int rotate(float degree) noexcept override;
+    int scale(float factor) noexcept override;
+
     int pathCommands(const PathCommand** cmds) const noexcept;
     int pathCoords(const Point** pts) const noexcept;
     int fill(size_t* r, size_t* g, size_t* b, size_t* a) const noexcept;
+    int bounds(float&x, float& y, float& w, float& h) const noexcept override;
 
     static std::unique_ptr<Shape> gen() noexcept;
 
@@ -157,8 +167,12 @@ public:
     ~Scene();
 
     int update(RenderMethod* engine) noexcept override;
-
     int push(std::unique_ptr<Shape> shape) noexcept;
+
+    int rotate(float degree) noexcept override;
+    int scale(float factor) noexcept override;
+
+    int bounds(float&x, float& y, float& w, float& h) const noexcept override;
 
     static std::unique_ptr<Scene> gen() noexcept;
 

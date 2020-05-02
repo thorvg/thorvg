@@ -64,4 +64,22 @@ int Scene::update(RenderMethod* engine) noexcept
     return 0;
 }
 
+
+int Scene::scale(float scaleFacator) noexcept
+{
+    return 0;
+}
+
+
+int Scene::rotate(float degree) noexcept
+{
+    return 0;
+}
+
+
+int Scene::bounds(float& x, float& y, float& w, float& h) const noexcept
+{
+    return 0;
+}
+
 #endif /* _TVG_SCENE_CPP_ */

@@ -112,6 +112,71 @@ struct ShapePath
         if (cmdCnt + 1 > reservedCmdCnt) reserveCmd((cmdCnt + 1) * 2);
         cmds[cmdCnt++] = PathCommand::Close;
     }
+
+    bool bounds(float& x, float& y, float& w, float& h)
+    {
+        if (ptsCnt == 0) return false;
+
+        Point min = { pts[0].x, pts[0].y };
+        Point max = { pts[0].x, pts[0].y };
+
+        for(size_t i = 1; i < ptsCnt; ++i) {
+            if (pts[i].x < min.x) min.x = pts[i].x;
+            if (pts[i].y < min.y) min.y = pts[i].y;
+            if (pts[i].x > max.x) max.x = pts[i].x;
+            if (pts[i].y > max.y) max.y = pts[i].y;
+        }
+
+        x = min.x;
+        y = min.y;
+        w = max.x - min.x;
+        h = max.y - min.y;
+
+        return true;
+    }
+
+    bool rotate(float degree)
+    {
+        constexpr auto PI = 3.141592f;
+
+        if (fabsf(degree) <= FLT_EPSILON) return false;
+
+        float x, y, w, h;
+        if (!bounds(x, y, w, h)) return false;
+
+        auto radian = degree / 180.0f * PI;
+        auto cx = x + w * 0.5f;
+        auto cy = y + h * 0.5f;
+        auto cosVal = cosf(radian);
+        auto sinVal = sinf(radian);
+
+        for(size_t i = 0; i < ptsCnt; ++i) {
+            auto dx = pts[i].x - cx;
+            auto dy = pts[i].y - cy;
+            pts[i].x = (cosVal * dx - sinVal * dy) + cx;
+            pts[i].y = (sinVal * dx + cosVal * dy) + cy;
+        }
+
+        return true;
+    }
+
+    bool scale(float factor)
+    {
+        if (fabsf(factor - 1) <= FLT_EPSILON) return false;
+
+        float x, y, w, h;
+        if (!bounds(x, y, w, h)) return false;
+
+        auto cx = x + w * 0.5f;
+        auto cy = y + h * 0.5f;
+
+        for(size_t i = 0; i < ptsCnt; ++i) {
+            pts[i].x = (pts[i].x - cx) * factor + cx;
+            pts[i].y = (pts[i].y - cy) * factor + cy;
+        }
+
+        return true;
+    }
 };
 
 #endif //_TVG_SHAPE_PATH_CPP_

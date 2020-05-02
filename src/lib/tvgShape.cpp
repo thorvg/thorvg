@@ -35,19 +35,14 @@ struct ShapeStroke
 };
 
 
-struct ShapeTransform
-{
-    float e[4*4];
-};
-
-
 struct Shape::Impl
 {
-    ShapeTransform *transform = nullptr;
     ShapeFill *fill = nullptr;
     ShapeStroke *stroke = nullptr;
     ShapePath *path = nullptr;
     uint8_t color[4] = {0, 0, 0, 0};    //r, g, b, a
+    float scale = 1;
+    float rotate = 0;
     void *edata = nullptr;              //engine data
 
     Impl() : path(new ShapePath)
@@ -59,7 +54,14 @@ struct Shape::Impl
         if (path) delete(path);
         if (stroke) delete(stroke);
         if (fill) delete(fill);
-        if (transform) delete(transform);
+    }
+
+    bool update()
+    {
+        if (path->scale(scale)) scale = 1;
+        if (path->rotate(rotate)) rotate = 0;
+
+        return true;
     }
 };
 
@@ -97,6 +99,7 @@ int Shape::update(RenderMethod* engine) noexcept
     auto impl = pImpl.get();
     assert(impl);
 
+    if (!impl->update()) return -1;
     impl->edata = engine->prepare(*this, impl->edata, RenderMethod::UpdateFlag::All);
     if (impl->edata) return 0;
     return - 1;
@@ -106,7 +109,7 @@ int Shape::update(RenderMethod* engine) noexcept
 int Shape::reset() noexcept
 {
     auto impl = pImpl.get();
-    assert(impl);
+    assert(impl && impl->path);
 
     impl->path->reset();
 
@@ -117,7 +120,7 @@ int Shape::reset() noexcept
 int Shape::pathCommands(const PathCommand** cmds) const noexcept
 {
     auto impl = pImpl.get();
-    assert(impl && cmds);
+    assert(impl && impl->path && cmds);
 
     *cmds = impl->path->cmds;
 
@@ -128,7 +131,7 @@ int Shape::pathCommands(const PathCommand** cmds) const noexcept
 int Shape::pathCoords(const Point** pts) const noexcept
 {
     auto impl = pImpl.get();
-    assert(impl && pts);
+    assert(impl && impl->path && pts);
 
     *pts = impl->path->pts;
 
@@ -142,7 +145,7 @@ int Shape::appendPath(const PathCommand *cmds, size_t cmdCnt, const Point* pts, 
     assert(cmds && pts);
 
     auto impl = pImpl.get();
-    assert(impl);
+    assert(impl && impl->path);
 
     impl->path->grow(cmdCnt, ptsCnt);
     impl->path->append(cmds, cmdCnt, pts, ptsCnt);
@@ -154,7 +157,7 @@ int Shape::appendPath(const PathCommand *cmds, size_t cmdCnt, const Point* pts, 
 int Shape::moveTo(float x, float y) noexcept
 {
     auto impl = pImpl.get();
-    assert(impl);
+    assert(impl && impl->path);
 
     impl->path->moveTo(x, y);
 
@@ -165,7 +168,7 @@ int Shape::moveTo(float x, float y) noexcept
 int Shape::lineTo(float x, float y) noexcept
 {
     auto impl = pImpl.get();
-    assert(impl);
+    assert(impl && impl->path);
 
     impl->path->lineTo(x, y);
 
@@ -176,7 +179,7 @@ int Shape::lineTo(float x, float y) noexcept
 int Shape::cubicTo(float cx1, float cy1, float cx2, float cy2, float x, float y) noexcept
 {
     auto impl = pImpl.get();
-    assert(impl);
+    assert(impl && impl->path);
 
     impl->path->cubicTo(cx1, cy1, cx2, cy2, x, y);
 
@@ -187,7 +190,7 @@ int Shape::cubicTo(float cx1, float cy1, float cx2, float cy2, float x, float y)
 int Shape::close() noexcept
 {
     auto impl = pImpl.get();
-    assert(impl);
+    assert(impl && impl->path);
 
     impl->path->close();
 
@@ -198,7 +201,7 @@ int Shape::close() noexcept
 int Shape::appendCircle(float cx, float cy, float radiusW, float radiusH) noexcept
 {
     auto impl = pImpl.get();
-    assert(impl);
+    assert(impl && impl->path);
 
     auto halfKappaW = radiusW * PATH_KAPPA;
     auto halfKappaH = radiusH * PATH_KAPPA;
@@ -218,7 +221,7 @@ int Shape::appendCircle(float cx, float cy, float radiusW, float radiusH) noexce
 int Shape::appendRect(float x, float y, float w, float h, float cornerRadius) noexcept
 {
     auto impl = pImpl.get();
-    assert(impl);
+    assert(impl && impl->path);
 
     //clamping cornerRadius by minimum size
     auto min = (w < h ? w : h) * 0.5f;
@@ -277,6 +280,43 @@ int Shape::fill(size_t* r, size_t* g, size_t* b, size_t* a) const noexcept
     if (g) *g = impl->color[1];
     if (b) *b = impl->color[2];
     if (a) *a = impl->color[3];
+
+    return 0;
+}
+
+
+int Shape::scale(float factor) noexcept
+{
+    if (factor < FLT_EPSILON || fabsf(factor - 1) <= FLT_EPSILON) return -1;
+
+    auto impl = pImpl.get();
+    assert(impl);
+
+    impl->scale *= factor;
+
+    return 0;
+}
+
+
+int Shape::rotate(float degree) noexcept
+{
+    if (fabsf(degree) <= FLT_EPSILON) return -1;
+
+    auto impl = pImpl.get();
+    assert(impl);
+
+    impl->rotate += degree;
+
+    return 0;
+}
+
+
+int Shape::bounds(float& x, float& y, float& w, float& h) const noexcept
+{
+    auto impl = pImpl.get();
+    assert(impl && impl->path);
+
+    if (!impl->path->bounds(x, y, w, h)) return -1;
 
     return 0;
 }

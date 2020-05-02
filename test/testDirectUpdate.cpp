@@ -25,6 +25,7 @@ void tvgtest()
 
     shape->appendRect(-100, -100, 200, 200, 0);
     shape->fill(127, 255, 255, 255);
+    shape->rotate(45);
     canvas->push(move(shape));
 
     //Draw first frame
@@ -41,6 +42,12 @@ void transit_cb(Elm_Transit_Effect *effect, Elm_Transit* transit, double progres
     pShape->reset();    //reset path
 
     pShape->appendRect(-100 + (800 * progress), -100 + (800 * progress), 200, 200, (100 * progress));
+
+    /* rotate, scale won't be retained, when you call reset() for the shape, these values will be reset as well.
+       These are working in fire & forget method, it actually modify the path data for avoiding compuatation every frames.
+       Thus user needs to keep the last values to understand the final accumulated values. */
+    pShape->rotate(45);
+    pShape->scale(1 - 0.75 * progress);
 
     //Update shape for drawing (this may work asynchronously)
     pShape->update(canvas->engine());
