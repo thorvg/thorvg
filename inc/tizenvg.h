@@ -117,7 +117,7 @@ public:
     ~ShapeNode();
 
     int update(RenderMethod* engine) noexcept override;
-    int clear() noexcept;
+    int reset() noexcept;
 
     int moveTo(float x, float y) noexcept;
     int lineTo(float x, float y) noexcept;

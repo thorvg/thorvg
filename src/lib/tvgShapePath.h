@@ -62,7 +62,7 @@ struct ShapePath
         reservePts(this->ptsCnt + ptsCnt);
     }
 
-    void clear()
+    void reset()
     {
         cmdCnt = 0;
         ptsCnt = 0;

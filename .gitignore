@@ -9,3 +9,4 @@ testPath
 testPathCopy
 testBlending
 testUpdate
+testDirectUpdate

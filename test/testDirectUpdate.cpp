@@ -8,6 +8,7 @@ using namespace std;
 
 static uint32_t buffer[WIDTH * HEIGHT];
 unique_ptr<tvg::SwCanvas> canvas = nullptr;
+tvg::ShapeNode* pShape = nullptr;
 
 void tvgtest()
 {
@@ -17,8 +18,13 @@ void tvgtest()
 
     //Shape
     auto shape = tvg::ShapeNode::gen();
+
+    /* Acquire shape pointer to access it again.
+       instead, you should consider not to interrupt this pointer life-cycle. */
+    pShape = shape.get();
+
     shape->appendRect(-100, -100, 200, 200, 0);
-    shape->fill(255, 255, 255, 255);
+    shape->fill(127, 255, 255, 255);
     canvas->push(move(shape));
 
     //Draw first frame
@@ -28,14 +34,16 @@ void tvgtest()
 
 void transit_cb(Elm_Transit_Effect *effect, Elm_Transit* transit, double progress)
 {
-    //Explicitly clear all retained paint nodes.
-    canvas->clear();
+    /* Update shape directly.
+       You can update only necessary properties of this shape,
+       while retaining other properties. */
 
-    //Shape
-    auto shape = tvg::ShapeNode::gen();
-    shape->appendRect(-100 + (800 * progress), -100 + (800 * progress), 200, 200, (100 * progress));
-    shape->fill(rand()%255, rand()%255, rand()%255, 255);
-    canvas->push(move(shape));
+    pShape->reset();    //reset path
+
+    pShape->appendRect(-100 + (800 * progress), -100 + (800 * progress), 200, 200, (100 * progress));
+
+    //Update shape for drawing (this may work asynchronously)
+    pShape->update(canvas->engine());
 
     //Draw Next frames
     canvas->draw();

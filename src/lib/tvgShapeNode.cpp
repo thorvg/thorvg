@@ -103,12 +103,12 @@ int ShapeNode::update(RenderMethod* engine) noexcept
 }
 
 
-int ShapeNode::clear() noexcept
+int ShapeNode::reset() noexcept
 {
     auto impl = pImpl.get();
     assert(impl);
 
-    impl->path->clear();
+    impl->path->reset();
 
     return 0;
 }
