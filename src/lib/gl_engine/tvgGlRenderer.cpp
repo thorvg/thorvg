@@ -37,6 +37,8 @@ struct GlShape
 
 bool GlRenderer::clear()
 {
+    //TODO: (Request) to clear target
+
     return true;
 }
 

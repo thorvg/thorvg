@@ -92,7 +92,7 @@ public:
 
     int reserve(size_t n) noexcept;
     virtual int push(std::unique_ptr<PaintNode> paint) noexcept;
-    virtual int clear(bool clearPaints = true) noexcept;
+    virtual int clear() noexcept;
     virtual int update() noexcept;
     virtual int draw(bool async = true) noexcept;
     virtual int sync() = 0;

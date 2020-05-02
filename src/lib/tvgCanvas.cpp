@@ -36,7 +36,7 @@ struct Canvas::Impl
 
     ~Impl()
     {
-        clearPaints();
+        clear();
         renderer->unref();
     }
 
@@ -55,13 +55,7 @@ struct Canvas::Impl
         return node->update(renderer);
     }
 
-    bool clearRender()
-    {
-        assert(renderer);
-        return renderer->clear());
-    }
-
-    int clearPaints()
+    int clear()
     {
         assert(renderer);
 
@@ -82,18 +76,19 @@ struct Canvas::Impl
     {
         assert(renderer);
 
-        auto ret = 0;
-
         for(auto node: nodes) {
-            ret |= node->update(renderer);
+            if (!node->update(renderer)) return -1;
         }
 
-        return ret;
+        return 0;
     }
 
     int draw()
     {
         assert(renderer);
+
+        //Clear render target before drawing
+        if (!renderer->clear()) return -1;
 
         for(auto node: nodes) {
             if (SceneNode *scene = dynamic_cast<SceneNode *>(node)) {
@@ -139,14 +134,11 @@ int Canvas::push(unique_ptr<PaintNode> paint) noexcept
 }
 
 
-int Canvas::clear(bool clearPaints) noexcept
+int Canvas::clear() noexcept
 {
     auto impl = pImpl.get();
     assert(impl);
-    auto ret = 0;
-    if (clearPaints) ret |= impl->clearPaints();
-    ret |= impl->clearRender();
-    return ret;
+    return impl->clear();
 }
 
 

@@ -50,7 +50,6 @@ int SwCanvas::target(uint32_t* buffer, size_t stride, size_t w, size_t h) noexce
     assert(renderer);
 
     if (!renderer->target(buffer, stride, w, h)) return -1;
-    if (!renderer->clear()) return -1;
 
     return 0;
 }
