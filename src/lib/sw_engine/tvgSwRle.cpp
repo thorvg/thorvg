@@ -606,27 +606,27 @@ static bool _decomposeOutline(RleWorker& rw)
         assert(limit);
 
         auto pt = outline->pts + first;
-        auto tags = outline->tags + first;
+        auto types = outline->types + first;
 
         /* A contour cannot start with a cubic control point! */
-        if (tags[0] == SW_CURVE_TAG_CUBIC) goto invalid_outline;
+        if (types[0] == SW_CURVE_TYPE_CUBIC) goto invalid_outline;
 
         _moveTo(rw, UPSCALE(outline->pts[first]));
 
         while (pt < limit) {
             assert(++pt);
-            assert(++tags);
+            assert(++types);
 
             //emit a single line_to
-            if (tags[0] == SW_CURVE_TAG_ON) {
+            if (types[0] == SW_CURVE_TYPE_POINT) {
                 _lineTo(rw, UPSCALE(*pt));
-            //tag cubic
+            //types cubic
             } else {
-                if (pt + 1 > limit || tags[1] != SW_CURVE_TAG_CUBIC)
+                if (pt + 1 > limit || types[1] != SW_CURVE_TYPE_CUBIC)
                     goto invalid_outline;
 
                 pt += 2;
-                tags += 2;
+                types += 2;
 
                 if (pt <= limit) {
                     _cubicTo(rw, UPSCALE(pt[-2]), UPSCALE(pt[-1]), UPSCALE(pt[0]));

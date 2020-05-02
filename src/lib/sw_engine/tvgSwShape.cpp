@@ -52,8 +52,8 @@ static void _growOutlinePoint(SwOutline& outline, size_t n)
     if (n == 0) {
         free(outline.pts);
         outline.pts = nullptr;
-        free(outline.tags);
-        outline.tags = nullptr;
+        free(outline.types);
+        outline.types = nullptr;
         outline.reservedPtsCnt = 0;
         outline.ptsCnt = 0;
         return;
@@ -65,8 +65,8 @@ static void _growOutlinePoint(SwOutline& outline, size_t n)
     outline.reservedPtsCnt = n;
     outline.pts = static_cast<SwPoint*>(realloc(outline.pts, n * sizeof(SwPoint)));
     assert(outline.pts);
-    outline.tags = static_cast<char*>(realloc(outline.tags, n * sizeof(char)));
-    assert(outline.tags);
+    outline.types = static_cast<uint8_t*>(realloc(outline.types, n * sizeof(uint8_t)));
+    assert(outline.types);
 }
 
 
@@ -87,7 +87,7 @@ static void _outlineMoveTo(SwOutline& outline, const Point* to)
     _growOutlinePoint(outline, 1);
 
     outline.pts[outline.ptsCnt] = TO_SWPOINT(to);
-    outline.tags[outline.ptsCnt] = SW_CURVE_TAG_ON;
+    outline.types[outline.ptsCnt] = SW_CURVE_TYPE_POINT;
 
     if (outline.ptsCnt > 0) {
         _growOutlineContour(outline, 1);
@@ -106,7 +106,7 @@ static void _outlineLineTo(SwOutline& outline, const Point* to)
     _growOutlinePoint(outline, 1);
 
     outline.pts[outline.ptsCnt] = TO_SWPOINT(to);
-    outline.tags[outline.ptsCnt] = SW_CURVE_TAG_ON;
+    outline.types[outline.ptsCnt] = SW_CURVE_TYPE_POINT;
 
     ++outline.ptsCnt;
 }
@@ -119,15 +119,15 @@ static void _outlineCubicTo(SwOutline& outline, const Point* ctrl1, const Point*
     _growOutlinePoint(outline, 3);
 
     outline.pts[outline.ptsCnt] = TO_SWPOINT(ctrl1);
-    outline.tags[outline.ptsCnt] = SW_CURVE_TAG_CUBIC;
+    outline.types[outline.ptsCnt] = SW_CURVE_TYPE_CUBIC;
     ++outline.ptsCnt;
 
     outline.pts[outline.ptsCnt] = TO_SWPOINT(ctrl2);
-    outline.tags[outline.ptsCnt] = SW_CURVE_TAG_CUBIC;
+    outline.types[outline.ptsCnt] = SW_CURVE_TYPE_CUBIC;
     ++outline.ptsCnt;
 
     outline.pts[outline.ptsCnt] = TO_SWPOINT(to);
-    outline.tags[outline.ptsCnt] = SW_CURVE_TAG_ON;
+    outline.types[outline.ptsCnt] = SW_CURVE_TYPE_POINT;
     ++outline.ptsCnt;
 }
 
@@ -149,7 +149,7 @@ static bool _outlineClose(SwOutline& outline)
     _growOutlinePoint(outline, 1);
 
     outline.pts[outline.ptsCnt] = outline.pts[i];
-    outline.tags[outline.ptsCnt] = SW_CURVE_TAG_ON;
+    outline.types[outline.ptsCnt] = SW_CURVE_TYPE_POINT;
     ++outline.ptsCnt;
 
     return true;
@@ -218,7 +218,7 @@ void _deleteOutline(SwShape& sdata)
     SwOutline* outline = sdata.outline;
     if (outline->cntrs) free(outline->cntrs);
     if (outline->pts) free(outline->pts);
-    if (outline->tags) free(outline->tags);
+    if (outline->types) free(outline->types);
     free(outline);
 
     sdata.outline = nullptr;

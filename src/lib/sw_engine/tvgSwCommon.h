@@ -21,8 +21,8 @@
 
 using namespace tvg;
 
-constexpr auto SW_CURVE_TAG_ON = 1;
-constexpr auto SW_CURVE_TAG_CUBIC = 2;
+constexpr auto SW_CURVE_TYPE_POINT = 0;
+constexpr auto SW_CURVE_TYPE_CUBIC = 1;
 constexpr auto SW_OUTLINE_FILL_WINDING = 0;
 constexpr auto SW_OUTLINE_FILL_EVEN_ODD = 1;
 
@@ -62,7 +62,7 @@ struct SwOutline
     SwPoint*    pts;              //the outline's points
     size_t      ptsCnt;           //number of points in the glyph
     size_t      reservedPtsCnt;
-    char*       tags;             //the points flags
+    uint8_t*    types;            //curve type
     uint8_t     fillMode;         //outline fill mode
 };
 
