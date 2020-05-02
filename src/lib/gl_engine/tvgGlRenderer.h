@@ -23,7 +23,7 @@ namespace tvg
 class GlRenderer : public RenderMethod
 {
 public:
-    void* prepare(const Shape& shape, void* data, UpdateFlag flags) override;
+    void* prepare(const Shape& shape, void* data, RenderUpdateFlag flags) override;
     bool dispose(const Shape& shape, void *data) override;
     bool render(const Shape& shape, void *data) override;
     bool clear() override;

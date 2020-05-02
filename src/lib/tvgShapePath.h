@@ -134,49 +134,6 @@ struct ShapePath
 
         return true;
     }
-
-    bool rotate(float degree)
-    {
-        constexpr auto PI = 3.141592f;
-
-        if (fabsf(degree) <= FLT_EPSILON) return false;
-
-        float x, y, w, h;
-        if (!bounds(x, y, w, h)) return false;
-
-        auto radian = degree / 180.0f * PI;
-        auto cx = x + w * 0.5f;
-        auto cy = y + h * 0.5f;
-        auto cosVal = cosf(radian);
-        auto sinVal = sinf(radian);
-
-        for(size_t i = 0; i < ptsCnt; ++i) {
-            auto dx = pts[i].x - cx;
-            auto dy = pts[i].y - cy;
-            pts[i].x = (cosVal * dx - sinVal * dy) + cx;
-            pts[i].y = (sinVal * dx + cosVal * dy) + cy;
-        }
-
-        return true;
-    }
-
-    bool scale(float factor)
-    {
-        if (fabsf(factor - 1) <= FLT_EPSILON) return false;
-
-        float x, y, w, h;
-        if (!bounds(x, y, w, h)) return false;
-
-        auto cx = x + w * 0.5f;
-        auto cy = y + h * 0.5f;
-
-        for(size_t i = 0; i < ptsCnt; ++i) {
-            pts[i].x = (pts[i].x - cx) * factor + cx;
-            pts[i].y = (pts[i].y - cy) * factor + cy;
-        }
-
-        return true;
-    }
 };
 
 #endif //_TVG_SHAPE_PATH_CPP_

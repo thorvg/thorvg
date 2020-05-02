@@ -82,4 +82,16 @@ int Scene::bounds(float& x, float& y, float& w, float& h) const noexcept
     return 0;
 }
 
+
+float Scene::scale() const noexcept
+{
+    return 0;
+}
+
+
+float Scene::rotate() const noexcept
+{
+    return 0;
+}
+
 #endif /* _TVG_SCENE_CPP_ */

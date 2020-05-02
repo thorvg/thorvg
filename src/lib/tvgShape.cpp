@@ -44,6 +44,7 @@ struct Shape::Impl
     float scale = 1;
     float rotate = 0;
     void *edata = nullptr;              //engine data
+    size_t flag = RenderUpdateFlag::None;
 
     Impl() : path(new ShapePath)
     {
@@ -54,14 +55,6 @@ struct Shape::Impl
         if (path) delete(path);
         if (stroke) delete(stroke);
         if (fill) delete(fill);
-    }
-
-    bool update()
-    {
-        if (path->scale(scale)) scale = 1;
-        if (path->rotate(rotate)) rotate = 0;
-
-        return true;
     }
 };
 
@@ -99,10 +92,10 @@ int Shape::update(RenderMethod* engine) noexcept
     auto impl = pImpl.get();
     assert(impl);
 
-    if (!impl->update()) return -1;
-    impl->edata = engine->prepare(*this, impl->edata, RenderMethod::UpdateFlag::All);
+    impl->edata = engine->prepare(*this, impl->edata, static_cast<RenderUpdateFlag>(impl->flag));
+    impl->flag = RenderUpdateFlag::None;
     if (impl->edata) return 0;
-    return - 1;
+    return -1;
 }
 
 
@@ -113,11 +106,13 @@ int Shape::reset() noexcept
 
     impl->path->reset();
 
+    impl->flag |= RenderUpdateFlag::Path;
+
     return 0;
 }
 
 
-int Shape::pathCommands(const PathCommand** cmds) const noexcept
+size_t Shape::pathCommands(const PathCommand** cmds) const noexcept
 {
     auto impl = pImpl.get();
     assert(impl && impl->path && cmds);
@@ -128,7 +123,7 @@ int Shape::pathCommands(const PathCommand** cmds) const noexcept
 }
 
 
-int Shape::pathCoords(const Point** pts) const noexcept
+size_t Shape::pathCoords(const Point** pts) const noexcept
 {
     auto impl = pImpl.get();
     assert(impl && impl->path && pts);
@@ -150,6 +145,8 @@ int Shape::appendPath(const PathCommand *cmds, size_t cmdCnt, const Point* pts, 
     impl->path->grow(cmdCnt, ptsCnt);
     impl->path->append(cmds, cmdCnt, pts, ptsCnt);
 
+    impl->flag |= RenderUpdateFlag::Path;
+
     return 0;
 }
 
@@ -160,6 +157,8 @@ int Shape::moveTo(float x, float y) noexcept
     assert(impl && impl->path);
 
     impl->path->moveTo(x, y);
+
+    impl->flag |= RenderUpdateFlag::Path;
 
     return 0;
 }
@@ -172,6 +171,8 @@ int Shape::lineTo(float x, float y) noexcept
 
     impl->path->lineTo(x, y);
 
+    impl->flag |= RenderUpdateFlag::Path;
+
     return 0;
 }
 
@@ -183,6 +184,8 @@ int Shape::cubicTo(float cx1, float cy1, float cx2, float cy2, float x, float y)
 
     impl->path->cubicTo(cx1, cy1, cx2, cy2, x, y);
 
+    impl->flag |= RenderUpdateFlag::Path;
+
     return 0;
 }
 
@@ -193,6 +196,8 @@ int Shape::close() noexcept
     assert(impl && impl->path);
 
     impl->path->close();
+
+    impl->flag |= RenderUpdateFlag::Path;
 
     return 0;
 }
@@ -213,6 +218,8 @@ int Shape::appendCircle(float cx, float cy, float radiusW, float radiusH) noexce
     impl->path->cubicTo(cx - halfKappaW, cy + radiusH, cx - radiusW, cy + halfKappaH, cx - radiusW, cy);
     impl->path->cubicTo(cx - radiusW, cy - halfKappaH, cx - halfKappaW, cy - radiusH, cx, cy - radiusH);
     impl->path->close();
+
+    impl->flag |= RenderUpdateFlag::Path;
 
     return 0;
 }
@@ -253,6 +260,8 @@ int Shape::appendRect(float x, float y, float w, float h, float cornerRadius) no
         impl->path->close();
     }
 
+    impl->flag |= RenderUpdateFlag::Path;
+
     return 0;
 }
 
@@ -266,6 +275,7 @@ int Shape::fill(size_t r, size_t g, size_t b, size_t a) noexcept
     impl->color[1] = g;
     impl->color[2] = b;
     impl->color[3] = a;
+    impl->flag |= RenderUpdateFlag::Fill;
 
     return 0;
 }
@@ -287,12 +297,13 @@ int Shape::fill(size_t* r, size_t* g, size_t* b, size_t* a) const noexcept
 
 int Shape::scale(float factor) noexcept
 {
-    if (factor < FLT_EPSILON || fabsf(factor - 1) <= FLT_EPSILON) return -1;
-
     auto impl = pImpl.get();
     assert(impl);
 
-    impl->scale *= factor;
+    if (fabsf(factor) < FLT_EPSILON || fabsf(factor - impl->scale) <= FLT_EPSILON) return -1;
+
+    impl->scale = factor;
+    impl->flag |= RenderUpdateFlag::Transform;
 
     return 0;
 }
@@ -300,12 +311,13 @@ int Shape::scale(float factor) noexcept
 
 int Shape::rotate(float degree) noexcept
 {
-    if (fabsf(degree) <= FLT_EPSILON) return -1;
-
     auto impl = pImpl.get();
     assert(impl);
 
-    impl->rotate += degree;
+    if (fabsf(degree - impl->rotate) <= FLT_EPSILON) return -1;
+
+    impl->rotate = degree;
+    impl->flag |= RenderUpdateFlag::Transform;
 
     return 0;
 }
@@ -319,6 +331,24 @@ int Shape::bounds(float& x, float& y, float& w, float& h) const noexcept
     if (!impl->path->bounds(x, y, w, h)) return -1;
 
     return 0;
+}
+
+
+float Shape::scale() const noexcept
+{
+    auto impl = pImpl.get();
+    assert(impl);
+
+    return impl->scale;
+}
+
+
+float Shape::rotate() const noexcept
+{
+    auto impl = pImpl.get();
+    assert(impl);
+
+    return impl->rotate;
 }
 
 #endif //_TVG_SHAPE_CPP_

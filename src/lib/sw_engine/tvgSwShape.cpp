@@ -211,26 +211,57 @@ void _deleteRle(SwShape& sdata)
 }
 
 
-void _deleteOutline(SwShape& sdata)
-{
-    if (!sdata.outline) return;
-
-    SwOutline* outline = sdata.outline;
-    if (outline->cntrs) free(outline->cntrs);
-    if (outline->pts) free(outline->pts);
-    if (outline->types) free(outline->types);
-    free(outline);
-
-    sdata.outline = nullptr;
-}
-
 /************************************************************************/
 /* External Class Implementation                                        */
 /************************************************************************/
 
 bool shapeTransformOutline(const Shape& shape, SwShape& sdata)
 {
-    //TODO:
+    constexpr auto PI = 3.141592f;
+
+    auto degree = shape.rotate();
+    auto scale = shape.scale();
+    bool rotateOn = false;
+    bool scaleOn = false;
+
+    if (fabsf(degree) > FLT_EPSILON) rotateOn = true;
+    if (fabsf(scale - 1) > FLT_EPSILON) scaleOn = true;
+
+    if (!rotateOn && !scaleOn) return true;
+
+    auto outline = sdata.outline;
+    assert(outline);
+
+    float x, y, w, h;
+    shape.bounds(x, y, w, h);
+
+    auto cx = x + w * 0.5f;
+    auto cy = y + h * 0.5f;
+
+    float radian, cosVal, sinVal;
+    if (rotateOn) {
+        radian = degree / 180.0f * PI;
+        cosVal = cosf(radian);
+        sinVal = sinf(radian);
+    }
+
+    for(size_t i = 0; i < outline->ptsCnt; ++i) {
+        auto dx = static_cast<float>(outline->pts[i].x >> 6) - cx;
+        auto dy = static_cast<float>(outline->pts[i].y >> 6) - cy;
+        if (rotateOn) {
+            auto tx = (cosVal * dx - sinVal * dy);
+            auto ty = (sinVal * dx + cosVal * dy);
+            dx = tx;
+            dy = ty;
+        }
+        if (scaleOn) {
+            dx *= scale;
+            dy *= scale;
+        }
+        auto pt = Point{dx + cx, dy + cy};
+        outline->pts[i] = TO_SWPOINT(&pt);
+    }
+
     return true;
 }
 
@@ -246,7 +277,6 @@ bool shapeGenRle(const Shape& shape, SwShape& sdata, const SwSize& clip)
         (sdata.bbox.min.y + sdata.bbox.max.y < 0)) goto end;
 
     sdata.rle = rleRender(sdata, clip);
-    _deleteOutline(sdata);
 
 end:
     if (sdata.rle) return true;
@@ -254,9 +284,23 @@ end:
 }
 
 
+void shapeDelOutline(SwShape& sdata)
+{
+    if (!sdata.outline) return;
+
+    SwOutline* outline = sdata.outline;
+    if (outline->cntrs) free(outline->cntrs);
+    if (outline->pts) free(outline->pts);
+    if (outline->types) free(outline->types);
+    free(outline);
+
+    sdata.outline = nullptr;
+}
+
+
 void shapeReset(SwShape& sdata)
 {
-    _deleteOutline(sdata);
+    shapeDelOutline(sdata);
     _deleteRle(sdata);
     _initBBox(sdata);
 }
@@ -277,7 +321,7 @@ bool shapeGenOutline(const Shape& shape, SwShape& sdata)
     auto outlinePtsCnt = 0;
     auto outlineCntrsCnt = 0;
 
-    for (auto i = 0; i < cmdCnt; ++i) {
+    for (size_t i = 0; i < cmdCnt; ++i) {
         switch(*(cmds + i)) {
             case PathCommand::Close: {
                 ++outlinePtsCnt;
@@ -311,7 +355,6 @@ bool shapeGenOutline(const Shape& shape, SwShape& sdata)
         cout << "Outline was already allocated? How?" << endl;
     }
 
-    //TODO: Probabry we can copy pts from shape directly.
     _growOutlinePoint(*outline, outlinePtsCnt);
     _growOutlineContour(*outline, outlineCntrsCnt);
 

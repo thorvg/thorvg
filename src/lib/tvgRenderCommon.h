@@ -28,12 +28,13 @@ struct Surface
     size_t w, h;
 };
 
+enum RenderUpdateFlag {None = 0, Path = 1, Fill = 2, Transform = 4, All = 8};
+
 class RenderMethod
 {
 public:
-    enum UpdateFlag { None = 0, Path = 1, Fill = 2, All = 3 };
     virtual ~RenderMethod() {}
-    virtual void* prepare(const Shape& shape, void* data, UpdateFlag flags) = 0;
+    virtual void* prepare(const Shape& shape, void* data, RenderUpdateFlag flags) = 0;
     virtual bool dispose(const Shape& shape, void *data) = 0;
     virtual bool render(const Shape& shape, void *data) = 0;
     virtual bool clear() = 0;

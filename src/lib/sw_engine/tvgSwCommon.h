@@ -94,7 +94,7 @@ struct SwShape
 
 void shapeReset(SwShape& sdata);
 bool shapeGenOutline(const Shape& shape, SwShape& sdata);
-void shapeDelOutline(const Shape& shape, SwShape& sdata);
+void shapeDelOutline(SwShape& sdata);
 bool shapeGenRle(const Shape& shape, SwShape& sdata, const SwSize& clip);
 bool shapeTransformOutline(const Shape& shape, SwShape& sdata);
 SwRleData* rleRender(const SwShape& sdata, const SwSize& clip);

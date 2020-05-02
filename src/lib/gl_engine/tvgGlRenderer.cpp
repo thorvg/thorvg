@@ -65,7 +65,7 @@ bool GlRenderer::dispose(const Shape& shape, void *data)
 }
 
 
-void* GlRenderer::prepare(const Shape& shape, void* data, UpdateFlag flags)
+void* GlRenderer::prepare(const Shape& shape, void* data, RenderUpdateFlag flags)
 {
     //prepare shape data
     GlShape* sdata = static_cast<GlShape*>(data);
