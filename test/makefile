@@ -6,3 +6,4 @@ all:
 	gcc -o testPath testPath.cpp -g -lstdc++ `pkg-config --cflags --libs elementary tizenvg`
 	gcc -o testPathCopy testPathCopy.cpp -g -lstdc++ `pkg-config --cflags --libs elementary tizenvg`
 	gcc -o testBlending testBlending.cpp -g -lstdc++ `pkg-config --cflags --libs elementary tizenvg`
+	gcc -o testUpdate testUpdate.cpp -g -lstdc++ `pkg-config --cflags --libs elementary tizenvg`
