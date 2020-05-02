@@ -36,7 +36,7 @@ struct Canvas::Impl
 
     ~Impl()
     {
-        clear();
+        clearPaints();
         renderer->unref();
     }
 
@@ -55,23 +55,27 @@ struct Canvas::Impl
         return node->update(renderer);
     }
 
-    int clear()
+    bool clearRender()
     {
         assert(renderer);
+        return renderer->clear());
+    }
 
-        auto ret = 0;
+    int clearPaints()
+    {
+        assert(renderer);
 
         for (auto node : nodes) {
             if (SceneNode *scene = dynamic_cast<SceneNode *>(node)) {
                 cout << "TODO: " <<  scene << endl;
             } else if (ShapeNode *shape = dynamic_cast<ShapeNode *>(node)) {
-                ret |= renderer->dispose(*shape, shape->engine());
+                if (!renderer->dispose(*shape, shape->engine())) return -1;
             }
             delete(node);
         }
         nodes.clear();
 
-        return ret;
+        return 0;
     }
 
     int update()
@@ -91,16 +95,14 @@ struct Canvas::Impl
     {
         assert(renderer);
 
-        auto ret = 0;
-
         for(auto node: nodes) {
             if (SceneNode *scene = dynamic_cast<SceneNode *>(node)) {
                 cout << "TODO: " <<  scene << endl;
             } else if (ShapeNode *shape = dynamic_cast<ShapeNode *>(node)) {
-                ret |= renderer->render(*shape, shape->engine());
+                if (!renderer->render(*shape, shape->engine())) return -1;
             }
         }
-        return ret;
+        return 0;
     }
 
 };
@@ -137,11 +139,14 @@ int Canvas::push(unique_ptr<PaintNode> paint) noexcept
 }
 
 
-int Canvas::clear() noexcept
+int Canvas::clear(bool clearPaints) noexcept
 {
     auto impl = pImpl.get();
     assert(impl);
-    return impl->clear();
+    auto ret = 0;
+    if (clearPaints) ret |= impl->clearPaints();
+    ret |= impl->clearRender();
+    return ret;
 }
 
 

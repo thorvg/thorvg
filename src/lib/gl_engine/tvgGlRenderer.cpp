@@ -35,6 +35,11 @@ struct GlShape
 /* External Class Implementation                                        */
 /************************************************************************/
 
+bool GlRenderer::clear()
+{
+    return true;
+}
+
 bool GlRenderer::render(const ShapeNode& shape, void *data)
 {
     GlShape* sdata = static_cast<GlShape*>(data);

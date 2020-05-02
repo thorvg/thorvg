@@ -44,18 +44,6 @@ SwCanvas::~SwCanvas()
 {
 }
 
-
-int SwCanvas::clear() noexcept
-{
-    auto renderer = dynamic_cast<SwRenderer*>(engine());
-    assert(renderer);
-
-    if (!renderer->clear()) return -1;
-
-    return Canvas::clear();
-}
-
-
 int SwCanvas::target(uint32_t* buffer, size_t stride, size_t w, size_t h) noexcept
 {
     auto renderer = dynamic_cast<SwRenderer*>(engine());

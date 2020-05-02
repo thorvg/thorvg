@@ -92,7 +92,7 @@ public:
 
     int reserve(size_t n) noexcept;
     virtual int push(std::unique_ptr<PaintNode> paint) noexcept;
-    virtual int clear() noexcept;
+    virtual int clear(bool clearPaints = true) noexcept;
     virtual int update() noexcept;
     virtual int draw(bool async = true) noexcept;
     virtual int sync() = 0;
@@ -179,7 +179,6 @@ class TIZENVG_EXPORT SwCanvas final : public Canvas
 public:
     ~SwCanvas();
 
-    int clear() noexcept override;
     int target(uint32_t* buffer, size_t stride, size_t w, size_t h) noexcept;
     int sync() noexcept override;
     static std::unique_ptr<SwCanvas> gen() noexcept;
