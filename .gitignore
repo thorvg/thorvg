@@ -3,10 +3,10 @@ build
 *.swp
 testShape
 testMultiShapes
-testMergeShapes
 testBoundary
 testPath
 testPathCopy
 testBlending
 testUpdate
 testDirectUpdate
+testTransform

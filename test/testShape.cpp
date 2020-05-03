@@ -17,10 +17,13 @@ void tvgtest()
     auto canvas = tvg::SwCanvas::gen();
     canvas->target(buffer, WIDTH, WIDTH, HEIGHT);
 
-    //Prepare a Shape (Rectangle)
+    //Prepare a Shape (Rectangle + Rectangle + Circle + Circle)
     auto shape1 = tvg::Shape::gen();
-    shape1->appendRect(100, 100, 400, 400, 0);  //x, y, w, h, cornerRadius
-    shape1->fill(255, 0, 0, 255);               //r, g, b, a
+    shape1->appendRect(0, 0, 200, 200, 0);          //x, y, w, h, cornerRadius
+    shape1->appendRect(100, 100, 300, 300, 100);    //x, y, w, h, cornerRadius
+    shape1->appendCircle(400, 400, 100, 100);       //cx, cy, radiusW, radiusH
+    shape1->appendCircle(400, 500, 170, 100);       //cx, cy, radiusW, radiusH
+    shape1->fill(255, 255, 0, 255);                 //r, g, b, a
 
     /* Push the shape into the Canvas drawing list
        When this shape is into the canvas list, the shape could update & prepare
@@ -40,6 +43,7 @@ win_del(void *data, Evas_Object *o, void *ev)
 {
    elm_exit();
 }
+
 
 int main(int argc, char **argv)
 {

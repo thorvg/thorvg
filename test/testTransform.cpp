@@ -23,11 +23,12 @@ void tvgtest()
        instead, you should consider not to interrupt this pointer life-cycle. */
     pShape = shape.get();
 
-    shape->appendRect(-100, -100, 200, 200, 0);
+    shape->appendRect(0, 0, 200, 200, 0);
+    shape->appendRect(100, 100, 300, 300, 100);
+    shape->appendCircle(400, 400, 100, 100);
+    shape->appendCircle(400, 500, 170, 100);
+    shape->fill(255, 255, 255, 255);
 
-    //fill and rotate properties will be retained
-    shape->fill(127, 255, 255, 255);
-    shape->rotate(45);
     canvas->push(move(shape));
 
     //Draw first frame
@@ -41,9 +42,8 @@ void transit_cb(Elm_Transit_Effect *effect, Elm_Transit* transit, double progres
        You can update only necessary properties of this shape,
        while retaining other properties. */
 
-    pShape->reset();    //reset path
-
-    pShape->appendRect(-100 + (800 * progress), -100 + (800 * progress), 200, 200, (100 * progress));
+    pShape->scale(1 - 0.75 * progress);
+    pShape->rotate(360 * progress);
 
     //Update shape for drawing (this may work asynchronously)
     pShape->update(canvas->engine());
