@@ -6,6 +6,7 @@ source_file = [
    'tvgRenderCommon.h',
    'tvgShapePath.h',
    'tvgShapeImpl.h',
+   'tvgCanvasImpl.h',
    'tvgEngine.cpp',
    'tvgCanvas.cpp',
    'tvgSwCanvas.cpp',

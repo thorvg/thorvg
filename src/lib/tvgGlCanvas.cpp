@@ -19,6 +19,7 @@
 
 #include "tvgCommon.h"
 #include "tvgGlRenderer.h"
+#include "tvgCanvasImpl.h"
 
 /************************************************************************/
 /* Internal Class Implementation                                        */

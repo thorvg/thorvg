@@ -36,7 +36,7 @@ extern "C" {
 #endif
 
 #define _TIZENVG_DECLARE_PRIVATE(A) \
-private: \
+protected: \
     struct Impl; \
     std::unique_ptr<Impl> pImpl; \
     A(const A&) = delete; \
@@ -106,8 +106,6 @@ public:
     virtual int update(Paint* paint) noexcept;
     virtual int draw(bool async = true) noexcept;
     virtual int sync() = 0;
-
-    RenderMethod* engine() noexcept;
 
     _TIZENVG_DECLARE_PRIVATE(Canvas);
 };
