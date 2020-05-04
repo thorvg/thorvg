@@ -43,6 +43,9 @@ private: \
     const A& operator=(const A&) = delete; \
     A()
 
+#define _TIZENVG_DECLARE_ACCESSOR(A) \
+    friend A
+
 #define _TIZENVG_DISABLE_CTOR(A) \
     A() = delete; \
     ~A() = delete
@@ -73,8 +76,6 @@ class TIZENVG_EXPORT Paint
 public:
     virtual ~Paint() {}
 
-    virtual int update(RenderMethod*) = 0;
-
     virtual int rotate(float degree) = 0;
     virtual int scale(float factor) = 0;
 
@@ -102,6 +103,7 @@ public:
     virtual int push(std::unique_ptr<Paint> paint) noexcept;
     virtual int clear() noexcept;
     virtual int update() noexcept;
+    virtual int update(Paint* paint) noexcept;
     virtual int draw(bool async = true) noexcept;
     virtual int sync() = 0;
 
@@ -124,7 +126,6 @@ class TIZENVG_EXPORT Shape final : public Paint
 public:
     ~Shape();
 
-    int update(RenderMethod* engine) noexcept override;
     int reset() noexcept;
 
     int moveTo(float x, float y) noexcept;
@@ -150,10 +151,8 @@ public:
 
     static std::unique_ptr<Shape> gen() noexcept;
 
-    //FIXME: Ugly... Better design?
-    void *engine() noexcept;
-
     _TIZENVG_DECLARE_PRIVATE(Shape);
+    _TIZENVG_DECLARE_ACCESSOR(Canvas);
 };
 
 
@@ -170,7 +169,6 @@ class TIZENVG_EXPORT Scene final : public Paint
 public:
     ~Scene();
 
-    int update(RenderMethod* engine) noexcept override;
     int push(std::unique_ptr<Shape> shape) noexcept;
 
     int rotate(float degree) noexcept override;

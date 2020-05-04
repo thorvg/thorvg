@@ -18,7 +18,7 @@
 #define _TVG_CANVAS_CPP_
 
 #include "tvgCommon.h"
-
+#include "tvgShapeImpl.h"
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
@@ -26,8 +26,8 @@
 
 struct Canvas::Impl
 {
-    vector<Paint*> nodes;
-    RenderMethod*      renderer;
+    vector<Paint*> paints;
+    RenderMethod*  renderer;
 
     Impl(RenderMethod* pRenderer):renderer(pRenderer)
     {
@@ -40,34 +40,30 @@ struct Canvas::Impl
         renderer->unref();
     }
 
-    int reserve(size_t n)
-    {
-        nodes.reserve(n);
-
-        return 0;
-    }
-
     int push(unique_ptr<Paint> paint)
     {
-        Paint* node = paint.release();
-        assert(node);
-        nodes.push_back(node);
-        return node->update(renderer);
+        Paint* pPaint = paint.release();
+        assert(pPaint);
+        paints.push_back(pPaint);
+
+        return update(pPaint);
     }
 
     int clear()
     {
         assert(renderer);
 
-        for (auto node : nodes) {
-            if (Scene* scene = dynamic_cast<Scene*>(node)) {
+        for (auto paint : paints) {
+            if (auto scene = dynamic_cast<Scene*>(paint)) {
                 cout << "TODO: " <<  scene << endl;
-            } else if (Shape *shape = dynamic_cast<Shape*>(node)) {
-                if (!renderer->dispose(*shape, shape->engine())) return -1;
+            } else if (auto shape = dynamic_cast<Shape*>(paint)) {
+                auto p = shape->pImpl.get();
+                assert(p);
+                if (!p->dispose(*shape, *renderer)) return -1;
             }
-            delete(node);
+            delete(paint);
         }
-        nodes.clear();
+        paints.clear();
 
         return 0;
     }
@@ -76,8 +72,29 @@ struct Canvas::Impl
     {
         assert(renderer);
 
-        for(auto node: nodes) {
-            if (!node->update(renderer)) return -1;
+        for(auto paint: paints) {
+            if (auto scene = dynamic_cast<Scene*>(paint)) {
+                cout << "TODO: " <<  scene << endl;
+            } else if (auto shape = dynamic_cast<Shape*>(paint)) {
+                auto p = shape->pImpl.get();
+                assert(p);
+                if (!p->update(*shape, *renderer)) return -1;
+            }
+        }
+
+        return 0;
+    }
+
+    int update(Paint* paint)
+    {
+        assert(renderer);
+
+        if (auto scene = dynamic_cast<Scene*>(paint)) {
+            cout << "TODO: " <<  scene << endl;
+        } else if (auto shape = dynamic_cast<Shape*>(paint)) {
+            auto p = shape->pImpl.get();
+            assert(p);
+            if (!p->update(*shape, *renderer)) return -1;
         }
 
         return 0;
@@ -90,11 +107,13 @@ struct Canvas::Impl
         //Clear render target before drawing
         if (!renderer->clear()) return -1;
 
-        for(auto node: nodes) {
-            if (Scene* scene = dynamic_cast<Scene*>(node)) {
+        for(auto paint: paints) {
+            if (auto scene = dynamic_cast<Scene*>(paint)) {
                 cout << "TODO: " <<  scene << endl;
-            } else if (Shape *shape = dynamic_cast<Shape*>(node)) {
-                if (!renderer->render(*shape, shape->engine())) return -1;
+            } else if (auto shape = dynamic_cast<Shape*>(paint)) {
+                auto p = shape->pImpl.get();
+                assert(p);
+                if(!p->render(*shape, *renderer)) return -1;
             }
         }
         return 0;
@@ -121,7 +140,8 @@ int Canvas::reserve(size_t n) noexcept
 {
     auto impl = pImpl.get();
     assert(impl);
-    return impl->reserve(n);
+    impl->paints.reserve(n);
+    return 0;
 }
 
 
@@ -158,11 +178,11 @@ int Canvas::update() noexcept
 }
 
 
-RenderMethod* Canvas::engine() noexcept
+int Canvas::update(Paint* paint) noexcept
 {
     auto impl = pImpl.get();
     assert(impl);
-    return impl->renderer;
+    return impl->update(paint);
 }
 
 #endif /* _TVG_CANVAS_CPP_ */

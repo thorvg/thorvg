@@ -58,13 +58,6 @@ int Scene::push(unique_ptr<Shape> shape) noexcept
 }
 
 
-int Scene::update(RenderMethod* engine) noexcept
-{
-
-    return 0;
-}
-
-
 int Scene::scale(float scaleFacator) noexcept
 {
     return 0;

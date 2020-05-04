@@ -4,8 +4,9 @@ subdir('gl_engine')
 source_file = [
    'tvgCommon.h',
    'tvgRenderCommon.h',
-   'tvgEngine.cpp',
    'tvgShapePath.h',
+   'tvgShapeImpl.h',
+   'tvgEngine.cpp',
    'tvgCanvas.cpp',
    'tvgSwCanvas.cpp',
    'tvgGlCanvas.cpp',

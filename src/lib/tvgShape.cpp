@@ -18,45 +18,12 @@
 #define _TVG_SHAPE_CPP_
 
 #include "tvgCommon.h"
-#include "tvgShapePath.h"
+#include "tvgShapeImpl.h"
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
 /************************************************************************/
 constexpr auto PATH_KAPPA = 0.552284f;
-
-struct ShapeFill
-{
-};
-
-
-struct ShapeStroke
-{
-};
-
-
-struct Shape::Impl
-{
-    ShapeFill *fill = nullptr;
-    ShapeStroke *stroke = nullptr;
-    ShapePath *path = nullptr;
-    uint8_t color[4] = {0, 0, 0, 0};    //r, g, b, a
-    float scale = 1;
-    float rotate = 0;
-    void *edata = nullptr;              //engine data
-    size_t flag = RenderUpdateFlag::None;
-
-    Impl() : path(new ShapePath)
-    {
-    }
-
-    ~Impl()
-    {
-        if (path) delete(path);
-        if (stroke) delete(stroke);
-        if (fill) delete(fill);
-    }
-};
 
 
 /************************************************************************/
@@ -76,26 +43,6 @@ Shape :: ~Shape()
 unique_ptr<Shape> Shape::gen() noexcept
 {
     return unique_ptr<Shape>(new Shape);
-}
-
-
-void* Shape::engine() noexcept
-{
-    auto impl = pImpl.get();
-    assert(impl);
-    return impl->edata;
-}
-
-
-int Shape::update(RenderMethod* engine) noexcept
-{
-    auto impl = pImpl.get();
-    assert(impl);
-
-    impl->edata = engine->prepare(*this, impl->edata, static_cast<RenderUpdateFlag>(impl->flag));
-    impl->flag = RenderUpdateFlag::None;
-    if (impl->edata) return 0;
-    return -1;
 }
 
 

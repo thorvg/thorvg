@@ -46,7 +46,7 @@ void transit_cb(Elm_Transit_Effect *effect, Elm_Transit* transit, double progres
     pShape->rotate(360 * progress);
 
     //Update shape for drawing (this may work asynchronously)
-    pShape->update(canvas->engine());
+    canvas->update(pShape);
 
     //Draw Next frames
     canvas->draw();
