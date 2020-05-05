@@ -273,9 +273,9 @@ int Shape::rotate(float degree) noexcept
 int Shape::bounds(float& x, float& y, float& w, float& h) const noexcept
 {
     auto impl = pImpl.get();
-    assert(impl && impl->path);
+    assert(impl);
 
-    if (!impl->path->bounds(x, y, w, h)) return -1;
+    if (!impl->bounds(x, y, w, h)) return -1;
 
     return 0;
 }

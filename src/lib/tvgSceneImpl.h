@@ -71,6 +71,29 @@ struct Scene::Impl
         }
         return true;
     }
+
+    bool bounds(float& x, float& y, float& w, float& h)
+    {
+        for(auto paint: paints) {
+            auto x2 = FLT_MAX;
+            auto y2 = FLT_MAX;
+            auto w2 = 0.0f;
+            auto h2 = 0.0f;
+
+            if (auto scene = dynamic_cast<Scene*>(paint)) {
+                if (!SCENE_IMPL->bounds(x2, y2, w2, h2)) return false;
+            } else if (auto shape = dynamic_cast<Shape*>(paint)) {
+                if (!SHAPE_IMPL->bounds(x2, y2, w2, h2)) return false;
+            }
+
+            //Merge regions
+            if (x2 < x) x = x2;
+            if (x + w < x2 + w2) w = (x2 + w2) - x;
+            if (y2 < y) y = x2;
+            if (y + h < y2 + h2) h = (y2 + h2) - y;
+        }
+        return true;
+    }
 };
 
 #endif //_TVG_SCENE_IMPL_H_
