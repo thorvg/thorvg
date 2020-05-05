@@ -79,10 +79,9 @@ public:
 
     virtual int rotate(float degree) = 0;
     virtual int scale(float factor) = 0;
+    virtual int translate(float x, float y) = 0;
 
     virtual int bounds(float&x, float& y, float& w, float& h) const = 0;
-    virtual float scale() const = 0;
-    virtual float rotate() const = 0;
 };
 
 
@@ -141,13 +140,12 @@ public:
 
     int rotate(float degree) noexcept override;
     int scale(float factor) noexcept override;
+    int translate(float x, float y) noexcept override;
 
     size_t pathCommands(const PathCommand** cmds) const noexcept;
     size_t pathCoords(const Point** pts) const noexcept;
     int fill(size_t* r, size_t* g, size_t* b, size_t* a) const noexcept;
     int bounds(float&x, float& y, float& w, float& h) const noexcept override;
-    float scale() const noexcept override;
-    float rotate() const noexcept override;
 
     static std::unique_ptr<Shape> gen() noexcept;
 
@@ -175,10 +173,9 @@ public:
 
     int rotate(float degree) noexcept override;
     int scale(float factor) noexcept override;
+    int translate(float x, float y) noexcept override;
 
     int bounds(float&x, float& y, float& w, float& h) const noexcept override;
-    float scale() const noexcept override;
-    float rotate() const noexcept override;
 
     static std::unique_ptr<Scene> gen() noexcept;
 

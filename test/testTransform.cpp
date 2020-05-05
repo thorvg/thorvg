@@ -23,11 +23,12 @@ void tvgtest()
        instead, you should consider not to interrupt this pointer life-cycle. */
     pShape = shape.get();
 
-    shape->appendRect(0, 0, 200, 200, 0);
-    shape->appendRect(100, 100, 300, 300, 100);
-    shape->appendCircle(400, 400, 100, 100);
-    shape->appendCircle(400, 500, 170, 100);
+    shape->appendRect(-285, -300, 200, 200, 0);
+    shape->appendRect(-185, -200, 300, 300, 100);
+    shape->appendCircle(115, 100, 100, 100);
+    shape->appendCircle(115, 200, 170, 100);
     shape->fill(255, 255, 255, 255);
+    shape->translate(285, 300);
 
     canvas->push(move(shape));
 

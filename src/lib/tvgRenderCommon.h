@@ -30,11 +30,87 @@ struct Surface
 
 enum RenderUpdateFlag {None = 0, Path = 1, Fill = 2, Transform = 4, All = 8};
 
+struct RenderTransform
+{
+    float e11, e12, e13;
+    float e21, e22, e23;
+    float e31, e32, e33;
+
+    void identity()
+    {
+        e11 = 1.0f;
+        e12 = 0.0f;
+        e13 = 0.0f;
+        e21 = 0.0f;
+        e22 = 1.0f;
+        e23 = 0.0f;
+        e31 = 0.0f;
+        e32 = 0.0f;
+        e33 = 1.0f;
+    }
+
+    void rotate(float degree)
+    {
+        constexpr auto PI = 3.141592f;
+
+        if (fabsf(degree) <= FLT_EPSILON) return;
+
+        auto radian = degree / 180.0f * PI;
+        auto cosVal = cosf(radian);
+        auto sinVal = sinf(radian);
+
+        auto t11 = e11 * cosVal + e12 * sinVal;
+        auto t12 = e11 * -sinVal + e12 * cosVal;
+        auto t21 = e21 * cosVal + e22 * sinVal;
+        auto t22 = e21 * -sinVal + e22 * cosVal;
+        auto t31 = e31 * cosVal + e32 * sinVal;
+        auto t32 = e31 * -sinVal + e32 * cosVal;
+
+        e11 = t11;
+        e12 = t12;
+        e21 = t21;
+        e22 = t22;
+        e31 = t31;
+        e32 = t32;
+    }
+
+    void translate(float x, float y)
+    {
+        e31 += x;
+        e32 += y;
+    }
+
+    void scale(float factor)
+    {
+        e11 *= factor;
+        e22 *= factor;
+        e33 *= factor;
+    }
+
+    RenderTransform& operator*=(const RenderTransform rhs)
+    {
+        e11 = e11 * rhs.e11 + e12 * rhs.e21 + e13 * rhs.e31;
+        e12 = e11 * rhs.e12 + e12 * rhs.e22 + e13 * rhs.e32;
+        e13 = e11 * rhs.e13 + e12 * rhs.e23 + e13 * rhs.e33;
+
+        e21 = e21 * rhs.e11 + e22 * rhs.e21 + e23 * rhs.e31;
+        e22 = e21 * rhs.e12 + e22 * rhs.e22 + e23 * rhs.e32;
+        e23 = e21 * rhs.e13 + e22 * rhs.e23 + e23 * rhs.e33;
+
+        e31 = e31 * rhs.e11 + e32 * rhs.e21 + e33 * rhs.e31;
+        e32 = e31 * rhs.e12 + e32 * rhs.e22 + e33 * rhs.e32;
+        e33 = e31 * rhs.e13 + e32 * rhs.e23 + e33 * rhs.e33;
+
+        return *this;
+    }
+};
+
+
 class RenderMethod
 {
 public:
     virtual ~RenderMethod() {}
-    virtual void* prepare(const Shape& shape, void* data, RenderUpdateFlag flags) = 0;
+    virtual void* prepare(const Shape& shape, void* data, const RenderTransform* transform, RenderUpdateFlag flags) = 0;
     virtual bool dispose(const Shape& shape, void *data) = 0;
     virtual bool render(const Shape& shape, void *data) = 0;
     virtual bool clear() = 0;

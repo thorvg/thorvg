@@ -81,7 +81,7 @@ bool SwRenderer::dispose(const Shape& shape, void *data)
     return true;
 }
 
-void* SwRenderer::prepare(const Shape& shape, void* data, RenderUpdateFlag flags)
+void* SwRenderer::prepare(const Shape& shape, void* data, const RenderTransform* transform, RenderUpdateFlag flags)
 {
     //prepare shape data
     SwShape* sdata = static_cast<SwShape*>(data);
@@ -98,10 +98,10 @@ void* SwRenderer::prepare(const Shape& shape, void* data, RenderUpdateFlag flags
     if (alpha == 0) return sdata;
 
     //TODO: Threading
-    if (flags & (RenderUpdateFlag::Path | RenderUpdateFlag::Transform)) {
+    if (flags & RenderUpdateFlag::Path || RenderUpdateFlag::Transform) {
         shapeReset(*sdata);
         if (!shapeGenOutline(shape, *sdata)) return sdata;
-        if (!shapeTransformOutline(shape, *sdata)) return sdata;
+        if (transform) shapeTransformOutline(shape, *sdata, *transform);
 
         SwSize clip = {static_cast<SwCoord>(surface.w), static_cast<SwCoord>(surface.h)};
         if (!shapeGenRle(shape, *sdata, clip)) return sdata;

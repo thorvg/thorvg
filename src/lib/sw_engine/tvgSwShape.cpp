@@ -215,54 +215,19 @@ void _deleteRle(SwShape& sdata)
 /* External Class Implementation                                        */
 /************************************************************************/
 
-bool shapeTransformOutline(const Shape& shape, SwShape& sdata)
+void shapeTransformOutline(const Shape& shape, SwShape& sdata, const RenderTransform& transform)
 {
-    constexpr auto PI = 3.141592f;
-
-    auto degree = shape.rotate();
-    auto scale = shape.scale();
-    bool rotateOn = false;
-    bool scaleOn = false;
-
-    if (fabsf(degree) > FLT_EPSILON) rotateOn = true;
-    if (fabsf(scale - 1) > FLT_EPSILON) scaleOn = true;
-
-    if (!rotateOn && !scaleOn) return true;
-
     auto outline = sdata.outline;
     assert(outline);
 
-    float x, y, w, h;
-    shape.bounds(x, y, w, h);
-
-    auto cx = x + w * 0.5f;
-    auto cy = y + h * 0.5f;
-
-    float radian, cosVal, sinVal;
-    if (rotateOn) {
-        radian = degree / 180.0f * PI;
-        cosVal = cosf(radian);
-        sinVal = sinf(radian);
-    }
-
     for(size_t i = 0; i < outline->ptsCnt; ++i) {
-        auto dx = static_cast<float>(outline->pts[i].x >> 6) - cx;
-        auto dy = static_cast<float>(outline->pts[i].y >> 6) - cy;
-        if (rotateOn) {
-            auto tx = (cosVal * dx - sinVal * dy);
-            auto ty = (sinVal * dx + cosVal * dy);
-            dx = tx;
-            dy = ty;
-        }
-        if (scaleOn) {
-            dx *= scale;
-            dy *= scale;
-        }
-        auto pt = Point{dx + cx, dy + cy};
+        auto dx = static_cast<float>(outline->pts[i].x >> 6);
+        auto dy = static_cast<float>(outline->pts[i].y >> 6);
+        auto tx = dx * transform.e11 + dy * transform.e12 + transform.e13;
+        auto ty = dx * transform.e21 + dy * transform.e22 + transform.e23;
+        auto pt = Point{tx + transform.e31, ty + transform.e32};
         outline->pts[i] = TO_SWPOINT(&pt);
     }
-
-    return true;
 }
 
 

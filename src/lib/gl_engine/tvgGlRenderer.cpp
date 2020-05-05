@@ -65,13 +65,21 @@ bool GlRenderer::dispose(const Shape& shape, void *data)
 }
 
 
-void* GlRenderer::prepare(const Shape& shape, void* data, RenderUpdateFlag flags)
+void* GlRenderer::prepare(const Shape& shape, void* data, const RenderTransform* transform, RenderUpdateFlag flags)
 {
     //prepare shape data
     GlShape* sdata = static_cast<GlShape*>(data);
     if (!sdata) {
         sdata = static_cast<GlShape*>(calloc(1, sizeof(GlShape)));
         assert(sdata);
+    }
+
+    if (RenderUpdateFlag::Path) {
+        //TODO: Updated Vertices
+    }
+
+    if (RenderUpdateFlag::Transform) {
+        //TODO: Updated Transform
     }
 
     //TODO:

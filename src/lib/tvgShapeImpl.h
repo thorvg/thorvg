@@ -41,6 +41,8 @@ struct Shape::Impl
     uint8_t color[4] = {0, 0, 0, 0};    //r, g, b, a
     float scale = 1;
     float rotate = 0;
+    float x = 0;
+    float y = 0;
     void *edata = nullptr;              //engine data
     size_t flag = RenderUpdateFlag::None;
 
@@ -67,8 +69,19 @@ struct Shape::Impl
 
     bool update(Shape& shape, RenderMethod& renderer)
     {
-        edata = renderer.prepare(shape, edata, static_cast<RenderUpdateFlag>(flag));
+        if (flag & RenderUpdateFlag::Transform) {
+            RenderTransform transform;
+            transform.identity();
+            transform.rotate(rotate);
+            transform.scale(scale);
+            transform.translate(x, y);
+            edata = renderer.prepare(shape, edata, &transform, static_cast<RenderUpdateFlag>(flag));
+        } else {
+            edata = renderer.prepare(shape, edata, nullptr, static_cast<RenderUpdateFlag>(flag));
+        }
+
         flag = RenderUpdateFlag::None;
+
         if (edata) return true;
         return false;
     }
