@@ -14,8 +14,8 @@
  *  limitations under the License.
  *
  */
-#ifndef _TVG_CANVAS_IMPL_H_
-#define _TVG_CANVAS_IMPL_H_
+#ifndef _TVG_SCENE_IMPL_H_
+#define _TVG_SCENE_IMPL_H_
 
 #include "tvgCommon.h"
 
@@ -23,90 +23,54 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-struct Canvas::Impl
+struct Scene::Impl
 {
     vector<Paint*> paints;
-    RenderMethod*  renderer;
-
-    Impl(RenderMethod* pRenderer):renderer(pRenderer)
-    {
-        renderer->ref();
-    }
 
     ~Impl()
     {
-        clear();
-        renderer->unref();
+        //Are you sure clear() prior to this?
+        assert(paints.empty());
     }
 
-    int push(unique_ptr<Paint> paint)
+    bool clear(RenderMethod& renderer)
     {
-        auto p = paint.release();
-        assert(p);
-        paints.push_back(p);
-
-        return update(p);
-    }
-
-    int clear()
-    {
-        assert(renderer);
-
         for (auto paint : paints) {
             if (auto scene = dynamic_cast<Scene*>(paint)) {
-                if (!SCENE_IMPL->clear(*renderer)) return -1;
+                if (!SCENE_IMPL->clear(renderer)) return false;
             } else if (auto shape = dynamic_cast<Shape*>(paint)) {
-                if (!SHAPE_IMPL->dispose(*shape, *renderer)) return -1;
+                if (!SHAPE_IMPL->dispose(*shape, renderer)) return false;
             }
             delete(paint);
         }
         paints.clear();
 
-        return 0;
+        return true;
     }
 
-    int update()
+    bool update(RenderMethod &renderer)
     {
-        assert(renderer);
-
         for(auto paint: paints) {
             if (auto scene = dynamic_cast<Scene*>(paint)) {
-                if (!SCENE_IMPL->update(*renderer)) return -1;
+                if (!SCENE_IMPL->update(renderer)) return false;
             } else if (auto shape = dynamic_cast<Shape*>(paint)) {
-                if (!SHAPE_IMPL->update(*shape, *renderer)) return -1;
+                if (!SHAPE_IMPL->update(*shape, renderer)) return false;
             }
         }
-        return 0;
+        return true;
     }
 
-    int update(Paint* paint)
+    bool render(RenderMethod &renderer)
     {
-        assert(renderer);
-
-        if (auto scene = dynamic_cast<Scene*>(paint)) {
-            if (!SCENE_IMPL->update(*renderer)) return -1;
-        } else if (auto shape = dynamic_cast<Shape*>(paint)) {
-            if (!SHAPE_IMPL->update(*shape, *renderer)) return -1;
-        }
-        return 0;
-    }
-
-    int draw()
-    {
-        assert(renderer);
-
-        //Clear render target before drawing
-        if (!renderer->clear()) return -1;
-
         for(auto paint: paints) {
             if (auto scene = dynamic_cast<Scene*>(paint)) {
-                if(!SCENE_IMPL->render(*renderer)) return -1;
+                if(!SCENE_IMPL->render(renderer)) return false;
             } else if (auto shape = dynamic_cast<Shape*>(paint)) {
-                if(!SHAPE_IMPL->render(*shape, *renderer)) return -1;
+                if(!SHAPE_IMPL->render(*shape, renderer)) return false;
             }
         }
-        return 0;
+        return true;
     }
 };
 
-#endif /* _TVG_CANVAS_IMPL_H_ */
+#endif //_TVG_SCENE_IMPL_H_

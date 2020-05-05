@@ -56,6 +56,7 @@ namespace tvg
 enum class TIZENVG_EXPORT PathCommand { Close, MoveTo, LineTo, CubicTo };
 
 class RenderMethod;
+class Scene;
 
 struct Point
 {
@@ -107,6 +108,7 @@ public:
     virtual int draw(bool async = true) noexcept;
     virtual int sync() = 0;
 
+    _TIZENVG_DECLARE_ACCESSOR(Scene);
     _TIZENVG_DECLARE_PRIVATE(Canvas);
 };
 
@@ -149,8 +151,9 @@ public:
 
     static std::unique_ptr<Shape> gen() noexcept;
 
-    _TIZENVG_DECLARE_PRIVATE(Shape);
+    _TIZENVG_DECLARE_ACCESSOR(Scene);
     _TIZENVG_DECLARE_ACCESSOR(Canvas);
+    _TIZENVG_DECLARE_PRIVATE(Shape);
 };
 
 
@@ -167,7 +170,8 @@ class TIZENVG_EXPORT Scene final : public Paint
 public:
     ~Scene();
 
-    int push(std::unique_ptr<Shape> shape) noexcept;
+    int push(std::unique_ptr<Paint> shape) noexcept;
+    int reserve(size_t size) noexcept;
 
     int rotate(float degree) noexcept override;
     int scale(float factor) noexcept override;
@@ -179,6 +183,7 @@ public:
     static std::unique_ptr<Scene> gen() noexcept;
 
     _TIZENVG_DECLARE_PRIVATE(Scene);
+    _TIZENVG_DECLARE_ACCESSOR(Canvas);
 };
 
 

@@ -24,9 +24,16 @@
 #include <float.h>
 #include <string.h>
 #include "tizenvg.h"
-#include "tvgRenderCommon.h"
 
 using namespace std;
 using namespace tvg;
+
+#define SCENE_IMPL scene->pImpl.get()
+#define SHAPE_IMPL shape->pImpl.get()
+
+#include "tvgRenderCommon.h"
+#include "tvgShapePath.h"
+#include "tvgShapeImpl.h"
+#include "tvgSceneImpl.h"
 
 #endif //_TVG_COMMON_H_

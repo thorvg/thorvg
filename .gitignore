@@ -9,4 +9,5 @@ testPathCopy
 testBlending
 testUpdate
 testDirectUpdate
+testScene
 testTransform

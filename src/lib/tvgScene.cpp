@@ -20,17 +20,6 @@
 #include "tvgCommon.h"
 
 /************************************************************************/
-/* Internal Class Implementation                                        */
-/************************************************************************/
-
-struct Scene::Impl
-{
-
-};
-
-
-
-/************************************************************************/
 /* External Class Implementation                                        */
 /************************************************************************/
 
@@ -42,7 +31,6 @@ Scene::Scene() : pImpl(make_unique<Impl>())
 
 Scene::~Scene()
 {
-    cout << "Scene(" << this << ") destroyed!" << endl;
 }
 
 
@@ -52,8 +40,26 @@ unique_ptr<Scene> Scene::gen() noexcept
 }
 
 
-int Scene::push(unique_ptr<Shape> shape) noexcept
+int Scene::push(unique_ptr<Paint> paint) noexcept
 {
+    auto impl = pImpl.get();
+    assert(impl);
+
+    auto p = paint.release();
+    assert(p);
+    impl->paints.push_back(p);
+
+    return 0;
+}
+
+
+int Scene::reserve(size_t size) noexcept
+{
+    auto impl = pImpl.get();
+    assert(impl);
+
+    impl->paints.reserve(size);
+
     return 0;
 }
 

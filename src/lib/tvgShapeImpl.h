@@ -18,7 +18,6 @@
 #define _TVG_SHAPE_IMPL_H_
 
 #include "tvgCommon.h"
-#include "tvgShapePath.h"
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
