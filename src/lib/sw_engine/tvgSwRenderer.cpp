@@ -98,7 +98,7 @@ void* SwRenderer::prepare(const Shape& shape, void* data, const RenderTransform*
     if (alpha == 0) return sdata;
 
     //TODO: Threading
-    if (flags & RenderUpdateFlag::Path || RenderUpdateFlag::Transform) {
+    if (flags & (RenderUpdateFlag::Path | RenderUpdateFlag::Transform)) {
         shapeReset(*sdata);
         if (!shapeGenOutline(shape, *sdata)) return sdata;
         if (transform) shapeTransformOutline(shape, *sdata, *transform);

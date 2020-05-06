@@ -74,11 +74,11 @@ void* GlRenderer::prepare(const Shape& shape, void* data, const RenderTransform*
         assert(sdata);
     }
 
-    if (RenderUpdateFlag::Path) {
+    if (flags & RenderUpdateFlag::Path) {
         //TODO: Updated Vertices
     }
 
-    if (RenderUpdateFlag::Transform) {
+    if (flags & RenderUpdateFlag::Transform) {
         //TODO: Updated Transform
     }
 
