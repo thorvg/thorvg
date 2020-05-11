@@ -1,7 +1,12 @@
 source_file = [
-   'tvgGlRenderer.h',
+   'tvgGlCommon.h',
+   'tvgGlGpuBuffer.h',
+   'tvgGlProgram.h',
    'tvgGlRenderer.cpp',
-]
+   'tvgGlRenderer.h',
+   'tvgGlShader.h',
+   'tvgGlGeometry.h',
+   ]
 
 glraster_dep = declare_dependency(
    include_directories : include_directories('.'),

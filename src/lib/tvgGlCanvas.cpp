@@ -45,6 +45,17 @@ GlCanvas::~GlCanvas()
 }
 
 
+int GlCanvas::target(uint32_t* buffer, size_t stride, size_t w, size_t h) noexcept
+{
+    auto renderer = dynamic_cast<GlRenderer*>(Canvas::pImpl.get()->renderer);
+    assert(renderer);
+
+    if (!renderer->target(buffer, stride, w, h)) return -1;
+
+    return 0;
+}
+
+
 int GlCanvas::sync() noexcept
 {
     return 0;

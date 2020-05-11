@@ -2,8 +2,12 @@ compiler_flags = ['-DTIZENVG_BUILD']
 
 subdir('lib')
 subdir('examples')
+m_dep = meson.get_compiler('cpp').find_library('m')
+egl_dep = meson.get_compiler('cpp').find_library('EGL')
+gl_dep = meson.get_compiler('cpp').find_library('GLESv2')
 
-tizenvg_lib_dep = [ src_dep, swraster_dep, glraster_dep ]
+tizenvg_lib_dep = [ src_dep, swraster_dep, glraster_dep, m_dep, egl_dep, gl_dep]
+
 
 tizenvg_lib = library(
 	'tizenvg',
