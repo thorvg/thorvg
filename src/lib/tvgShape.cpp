@@ -247,12 +247,7 @@ int Shape::scale(float factor) noexcept
     auto impl = pImpl.get();
     assert(impl);
 
-    if (fabsf(factor - impl->scale) <= FLT_EPSILON) return -1;
-
-    impl->scale = factor;
-    impl->flag |= RenderUpdateFlag::Transform;
-
-    return 0;
+    return impl->scale(factor);
 }
 
 
@@ -261,12 +256,7 @@ int Shape::rotate(float degree) noexcept
     auto impl = pImpl.get();
     assert(impl);
 
-    if (fabsf(degree - impl->rotate) <= FLT_EPSILON) return -1;
-
-    impl->rotate = degree;
-    impl->flag |= RenderUpdateFlag::Transform;
-
-    return 0;
+    return impl->rotate(degree);
 }
 
 
@@ -275,13 +265,7 @@ int Shape::translate(float x, float y) noexcept
     auto impl = pImpl.get();
     assert(impl);
 
-    if (fabsf(x - impl->x) <= FLT_EPSILON && fabsf(y - impl->y) <= FLT_EPSILON) return -1;
-
-    impl->x = x;
-    impl->y = y;
-    impl->flag |= RenderUpdateFlag::Transform;
-
-    return 0;
+    return impl->translate(x, y);
 }
 
 

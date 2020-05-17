@@ -32,12 +32,27 @@ enum RenderUpdateFlag {None = 0, Path = 1, Fill = 2, Transform = 4, All = 8};
 
 struct RenderTransform
 {
+    //3x3 Matrix Elements
     float e11, e12, e13;
     float e21, e22, e23;
     float e31, e32, e33;
 
-    void identity()
+    float x = 0.0f;
+    float y = 0.0f;
+    float degree = 0.0f;  //rotation degree
+    float factor = 1.0f;  //scale factor
+
+    bool update()
     {
+        constexpr auto PI = 3.141592f;
+
+        //Init Status
+        if (fabsf(x) <= FLT_EPSILON && fabsf(y) <= FLT_EPSILON &&
+            fabsf(degree) <= FLT_EPSILON && fabsf(factor - 1) <= FLT_EPSILON) {
+            return false;
+        }
+
+        //identity
         e11 = 1.0f;
         e12 = 0.0f;
         e13 = 0.0f;
@@ -47,44 +62,38 @@ struct RenderTransform
         e31 = 0.0f;
         e32 = 0.0f;
         e33 = 1.0f;
-    }
 
-    void rotate(float degree)
-    {
-        constexpr auto PI = 3.141592f;
+        //rotation
+        if (fabsf(degree) > FLT_EPSILON) {
+            auto radian = degree / 180.0f * PI;
+            auto cosVal = cosf(radian);
+            auto sinVal = sinf(radian);
 
-        if (fabsf(degree) <= FLT_EPSILON) return;
+            auto t11 = e11 * cosVal + e12 * sinVal;
+            auto t12 = e11 * -sinVal + e12 * cosVal;
+            auto t21 = e21 * cosVal + e22 * sinVal;
+            auto t22 = e21 * -sinVal + e22 * cosVal;
+            auto t31 = e31 * cosVal + e32 * sinVal;
+            auto t32 = e31 * -sinVal + e32 * cosVal;
 
-        auto radian = degree / 180.0f * PI;
-        auto cosVal = cosf(radian);
-        auto sinVal = sinf(radian);
+            e11 = t11;
+            e12 = t12;
+            e21 = t21;
+            e22 = t22;
+            e31 = t31;
+            e32 = t32;
+        }
 
-        auto t11 = e11 * cosVal + e12 * sinVal;
-        auto t12 = e11 * -sinVal + e12 * cosVal;
-        auto t21 = e21 * cosVal + e22 * sinVal;
-        auto t22 = e21 * -sinVal + e22 * cosVal;
-        auto t31 = e31 * cosVal + e32 * sinVal;
-        auto t32 = e31 * -sinVal + e32 * cosVal;
-
-        e11 = t11;
-        e12 = t12;
-        e21 = t21;
-        e22 = t22;
-        e31 = t31;
-        e32 = t32;
-    }
-
-    void translate(float x, float y)
-    {
-        e31 += x;
-        e32 += y;
-    }
-
-    void scale(float factor)
-    {
+        //scale
         e11 *= factor;
         e22 *= factor;
         e33 *= factor;
+
+        //translate
+        e31 += x;
+        e32 += y;
+
+        return true;
     }
 
     RenderTransform& operator*=(const RenderTransform rhs)

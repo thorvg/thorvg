@@ -38,13 +38,11 @@ struct Shape::Impl
     ShapeFill *fill = nullptr;
     ShapeStroke *stroke = nullptr;
     ShapePath *path = nullptr;
+    RenderTransform *transform = nullptr;
     uint8_t color[4] = {0, 0, 0, 0};    //r, g, b, a
-    float scale = 1;
-    float rotate = 0;
-    float x = 0;
-    float y = 0;
-    void *edata = nullptr;              //engine data
     size_t flag = RenderUpdateFlag::None;
+    void *edata = nullptr;              //engine data
+
 
     Impl() : path(new ShapePath)
     {
@@ -55,6 +53,7 @@ struct Shape::Impl
         if (path) delete(path);
         if (stroke) delete(stroke);
         if (fill) delete(fill);
+        if (transform) delete(transform);
     }
 
     bool dispose(Shape& shape, RenderMethod& renderer)
@@ -70,16 +69,13 @@ struct Shape::Impl
     bool update(Shape& shape, RenderMethod& renderer)
     {
         if (flag & RenderUpdateFlag::Transform) {
-            RenderTransform transform;
-            transform.identity();
-            transform.rotate(rotate);
-            transform.scale(scale);
-            transform.translate(x, y);
-            edata = renderer.prepare(shape, edata, &transform, static_cast<RenderUpdateFlag>(flag));
-        } else {
-            edata = renderer.prepare(shape, edata, nullptr, static_cast<RenderUpdateFlag>(flag));
+            assert(transform);
+            if (!transform->update()) {
+                delete(transform);
+                transform = nullptr;
+            }
         }
-
+        edata = renderer.prepare(shape, edata, transform, static_cast<RenderUpdateFlag>(flag));
         flag = RenderUpdateFlag::None;
 
         if (edata) return true;
@@ -90,6 +86,52 @@ struct Shape::Impl
     {
         assert(path);
         return path->bounds(x, y, w, h);
+    }
+
+    bool scale(float factor)
+    {
+        if (transform) {
+            if (fabsf(factor - transform->factor) <= FLT_EPSILON) return -1;
+        } else {
+            if (fabsf(factor) <= FLT_EPSILON) return -1;
+            transform = new RenderTransform();
+            assert(transform);
+        }
+        transform->factor = factor;
+        flag |= RenderUpdateFlag::Transform;
+
+        return 0;
+    }
+
+    bool rotate(float degree)
+    {
+        if (transform) {
+            if (fabsf(degree - transform->degree) <= FLT_EPSILON) return -1;
+        } else {
+            if (fabsf(degree) <= FLT_EPSILON) return -1;
+            transform = new RenderTransform();
+            assert(transform);
+        }
+        transform->degree = degree;
+        flag |= RenderUpdateFlag::Transform;
+
+        return 0;
+    }
+
+    bool translate(float x, float y)
+    {
+        if (transform) {
+            if (fabsf(x - transform->x) <= FLT_EPSILON && fabsf(y - transform->y) <= FLT_EPSILON) return -1;
+        } else {
+            if (fabsf(x) <= FLT_EPSILON && fabsf(y) <= FLT_EPSILON) return -1;
+            transform = new RenderTransform();
+            assert(transform);
+        }
+        transform->x = x;
+        transform->y = y;
+        flag |= RenderUpdateFlag::Transform;
+
+        return 0;
     }
 };
 
