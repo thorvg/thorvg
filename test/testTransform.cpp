@@ -75,7 +75,7 @@ void transit_cb(Elm_Transit_Effect *effect, Elm_Transit* transit, double progres
     pShape2->translate(400 + progress * 300, 400);
     canvas->update(pShape2);
 
-    //Update Shape2
+    //Update Shape3
     pShape3->rotate(-360 * progress);
     pShape3->scale(0.5 + progress);
     canvas->update(pShape3);

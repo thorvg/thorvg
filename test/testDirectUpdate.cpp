@@ -25,9 +25,9 @@ void tvgtest()
 
     shape->appendRect(-100, -100, 200, 200, 0);
 
-    //fill and rotate properties will be retained
+    //fill property will be retained
     shape->fill(127, 255, 255, 255);
-    shape->rotate(45);
+
     canvas->push(move(shape));
 
     //Draw first frame
