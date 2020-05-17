@@ -66,7 +66,7 @@ struct Shape::Impl
         return renderer.render(shape, edata);
     }
 
-    bool update(Shape& shape, RenderMethod& renderer, const RenderMatrix* pTransform = nullptr, size_t pFlag = 0)
+    bool update(Shape& shape, RenderMethod& renderer, const RenderTransform* pTransform = nullptr, size_t pFlag = 0)
     {
         if (flag & RenderUpdateFlag::Transform) {
             assert(transform);
@@ -77,11 +77,10 @@ struct Shape::Impl
         }
 
         if (transform && pTransform) {
-            RenderMatrix outTransform;
-            RenderMatrix::multiply(pTransform, &transform->m, &outTransform);
+            RenderTransform outTransform(pTransform, transform);
             edata = renderer.prepare(shape, edata, &outTransform, static_cast<RenderUpdateFlag>(pFlag | flag));
         } else {
-            auto outTransform = pTransform ? pTransform : &transform->m;
+            auto outTransform = pTransform ? pTransform : transform;
             edata = renderer.prepare(shape, edata, outTransform, static_cast<RenderUpdateFlag>(pFlag | flag));
         }
 

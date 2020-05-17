@@ -51,7 +51,7 @@ struct Scene::Impl
         return true;
     }
 
-    bool updateInternal(RenderMethod &renderer, const RenderMatrix* transform, size_t flag)
+    bool updateInternal(RenderMethod &renderer, const RenderTransform* transform, size_t flag)
     {
         for(auto paint: paints) {
             if (auto scene = dynamic_cast<Scene*>(paint)) {
@@ -63,7 +63,7 @@ struct Scene::Impl
         return true;
     }
 
-    bool update(RenderMethod &renderer, const RenderMatrix* pTransform = nullptr, size_t pFlag = 0)
+    bool update(RenderMethod &renderer, const RenderTransform* pTransform = nullptr, size_t pFlag = 0)
     {
         if (flag & RenderUpdateFlag::Transform) {
             assert(transform);
@@ -76,11 +76,10 @@ struct Scene::Impl
         auto ret = true;
 
         if (transform && pTransform) {
-            RenderMatrix outTransform;
-            RenderMatrix::multiply(pTransform, &transform->m, &outTransform);
+            RenderTransform outTransform(pTransform, transform);
             ret = updateInternal(renderer, &outTransform, pFlag | flag);
         } else {
-            auto outTransform = pTransform ? pTransform : &transform->m;
+            auto outTransform = pTransform ? pTransform : transform;
             ret = updateInternal(renderer, outTransform, pFlag | flag);
         }
 

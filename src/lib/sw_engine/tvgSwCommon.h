@@ -96,7 +96,7 @@ void shapeReset(SwShape& sdata);
 bool shapeGenOutline(const Shape& shape, SwShape& sdata);
 void shapeDelOutline(SwShape& sdata);
 bool shapeGenRle(const Shape& shape, SwShape& sdata, const SwSize& clip);
-void shapeTransformOutline(const Shape& shape, SwShape& sdata, const RenderMatrix& transform);
+void shapeTransformOutline(const Shape& shape, SwShape& sdata, const RenderTransform& transform);
 SwRleData* rleRender(const SwShape& sdata, const SwSize& clip);
 
 bool rasterShape(Surface& surface, SwShape& sdata, uint8_t r, uint8_t g, uint8_t b, uint8_t a);

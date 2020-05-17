@@ -20,39 +20,38 @@ void tvgtest()
     canvas = tvg::SwCanvas::gen();
     canvas->target(buffer, WIDTH, WIDTH, HEIGHT);
 
-    //Create a Scene
+    //Create a Scene1
     auto scene = tvg::Scene::gen();
     pScene1 = scene.get();
     scene->reserve(3);   //reserve 3 shape nodes (optional)
 
-    //Prepare Round Rectangle
+    //Prepare Round Rectangle (Scene1)
     auto shape1 = tvg::Shape::gen();
     shape1->appendRect(-235, -250, 400, 400, 50);      //x, y, w, h, cornerRadius
     shape1->fill(0, 255, 0, 255);                //r, g, b, a
     scene->push(move(shape1));
 
-    //Prepare Circle
+    //Prepare Circle (Scene1)
     auto shape2 = tvg::Shape::gen();
     shape2->appendCircle(-165, -150, 200, 200);    //cx, cy, radiusW, radiusH
     shape2->fill(255, 255, 0, 255);              //r, g, b, a
     scene->push(move(shape2));
 
-    //Prepare Ellipse
+    //Prepare Ellipse (Scene1)
     auto shape3 = tvg::Shape::gen();
     shape3->appendCircle(265, 250, 150, 100);    //cx, cy, radiusW, radiusH
     shape3->fill(0, 255, 255, 255);              //r, g, b, a
     scene->push(move(shape3));
 
     scene->translate(350, 350);
-    scene->scale(0.7);
+    scene->scale(0.5);
 
-    //Create another Scene
+    //Create Scene2
     auto scene2 = tvg::Scene::gen();
     pScene2 = scene2.get();
     scene2->reserve(2);   //reserve 2 shape nodes (optional)
 
-#if 0
-    //Star
+    //Star (Scene2)
     auto shape4 = tvg::Shape::gen();
 
     //Appends Paths
@@ -68,17 +67,14 @@ void tvgtest()
     shape4->lineTo(-53, -5.5);
     shape4->close();
     shape4->fill(0, 0, 127, 127);
-
-    float x, y, w, h;
-    shape4->bounds(x, y, w, h);
     scene2->push(move(shape4));
 
-    //Circle
+    //Circle (Scene2)
     auto shape5 = tvg::Shape::gen();
 
     auto cx = -150.0f;
     auto cy = -150.0f;
-    auto radius = 125.0f;
+    auto radius = 100.0f;
     auto halfRadius = radius * 0.552284f;
 
     //Append Paths
@@ -90,11 +86,11 @@ void tvgtest()
     shape5->fill(127, 0, 0, 127);
     scene2->push(move(shape5));
 
-    scene2->translate(300, 300);
+    scene2->translate(500, 350);
 
     //Push scene2 onto the scene
     scene->push(move(scene2));
-#endif
+
     //Draw the Scene onto the Canvas
     canvas->push(move(scene));
 
@@ -112,6 +108,7 @@ void transit_cb(Elm_Transit_Effect *effect, Elm_Transit* transit, double progres
        while retaining other properties. */
 
     pScene1->rotate(360 * progress);
+    pScene2->rotate(360 * progress);
 
     //Update shape for drawing (this may work asynchronously)
     canvas->update(pScene1);
