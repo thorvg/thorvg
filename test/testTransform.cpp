@@ -9,6 +9,8 @@ using namespace std;
 static uint32_t buffer[WIDTH * HEIGHT];
 unique_ptr<tvg::SwCanvas> canvas = nullptr;
 tvg::Shape* pShape = nullptr;
+tvg::Shape* pShape2 = nullptr;
+tvg::Shape* pShape3 = nullptr;
 
 void tvgtest()
 {
@@ -16,7 +18,7 @@ void tvgtest()
     canvas = tvg::SwCanvas::gen();
     canvas->target(buffer, WIDTH, WIDTH, HEIGHT);
 
-    //Shape
+    //Shape1
     auto shape = tvg::Shape::gen();
 
     /* Acquire shape pointer to access it again.
@@ -28,9 +30,27 @@ void tvgtest()
     shape->appendCircle(115, 100, 100, 100);
     shape->appendCircle(115, 200, 170, 100);
     shape->fill(255, 255, 255, 255);
-    shape->translate(285, 300);
-
+    shape->translate(385, 400);
     canvas->push(move(shape));
+
+    //Shape2
+    auto shape2 = tvg::Shape::gen();
+    pShape2 = shape2.get();
+    shape2->appendRect(-50, -50, 100, 100, 0);
+    shape2->fill(0, 255, 255, 255);
+    shape2->translate(400, 400);
+    canvas->push(move(shape2));
+
+    //Shape3
+    auto shape3 = tvg::Shape::gen();
+    pShape3 = shape3.get();
+
+    /* Look, how shape3's origin is different with shape2
+       The center of the shape is the anchor point for transformation. */
+    shape3->appendRect(100, 100, 150, 50, 20);
+    shape3->fill(255, 0, 255, 255);
+    shape3->translate(400, 400);
+    canvas->push(move(shape3));
 
     //Draw first frame
     canvas->draw();
@@ -43,11 +63,22 @@ void transit_cb(Elm_Transit_Effect *effect, Elm_Transit* transit, double progres
        You can update only necessary properties of this shape,
        while retaining other properties. */
 
+    //Update Shape1
     pShape->scale(1 - 0.75 * progress);
     pShape->rotate(360 * progress);
 
     //Update shape for drawing (this may work asynchronously)
     canvas->update(pShape);
+
+    //Update Shape2
+    pShape2->rotate(360 * progress);
+    pShape2->translate(400 + progress * 300, 400);
+    canvas->update(pShape2);
+
+    //Update Shape2
+    pShape3->rotate(-360 * progress);
+    pShape3->scale(0.5 + progress);
+    canvas->update(pShape3);
 
     //Draw Next frames
     canvas->draw();
