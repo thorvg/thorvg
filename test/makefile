@@ -9,3 +9,4 @@ all:
 	gcc -o testDirectUpdate testDirectUpdate.cpp -g -lstdc++ `pkg-config --cflags --libs elementary tizenvg`
 	gcc -o testScene testScene.cpp -g -lstdc++ `pkg-config --cflags --libs elementary tizenvg`
 	gcc -o testTransform testTransform.cpp -g -lstdc++ `pkg-config --cflags --libs elementary tizenvg`
+	gcc -o testSceneTransform testSceneTransform.cpp -g -lstdc++ `pkg-config --cflags --libs elementary tizenvg`

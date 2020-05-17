@@ -64,21 +64,30 @@ int Scene::reserve(size_t size) noexcept
 }
 
 
-int Scene::scale(float scaleFacator) noexcept
+int Scene::scale(float factor) noexcept
 {
-    return 0;
+    auto impl = pImpl.get();
+    assert(impl);
+
+    return impl->scale(factor);
 }
 
 
 int Scene::rotate(float degree) noexcept
 {
-    return 0;
+    auto impl = pImpl.get();
+    assert(impl);
+
+    return impl->rotate(degree);
 }
 
 
 int Scene::translate(float x, float y) noexcept
 {
-    return 0;
+    auto impl = pImpl.get();
+    assert(impl);
+
+    return impl->translate(x, y);
 }
 
 

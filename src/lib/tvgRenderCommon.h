@@ -30,13 +30,85 @@ struct Surface
 
 enum RenderUpdateFlag {None = 0, Path = 1, Fill = 2, Transform = 4, All = 8};
 
-struct RenderTransform
+struct RenderMatrix
 {
     //3x3 Matrix Elements
     float e11, e12, e13;
     float e21, e22, e23;
     float e31, e32, e33;
 
+    static void rotate(RenderMatrix* out, float degree)
+    {
+        constexpr auto PI = 3.141592f;
+
+        if (fabsf(degree) < FLT_EPSILON) return;
+
+        auto radian = degree / 180.0f * PI;
+        auto cosVal = cosf(radian);
+        auto sinVal = sinf(radian);
+
+        auto t11 = out->e11 * cosVal + out->e12 * sinVal;
+        auto t12 = out->e11 * -sinVal + out->e12 * cosVal;
+        auto t21 = out->e21 * cosVal + out->e22 * sinVal;
+        auto t22 = out->e21 * -sinVal + out->e22 * cosVal;
+        auto t31 = out->e31 * cosVal + out->e32 * sinVal;
+        auto t32 = out->e31 * -sinVal + out->e32 * cosVal;
+
+        out->e11 = t11;
+        out->e12 = t12;
+        out->e21 = t21;
+        out->e22 = t22;
+        out->e31 = t31;
+        out->e32 = t32;
+    }
+
+    static void scale(RenderMatrix* out, float factor)
+    {
+        out->e11 *= factor;
+        out->e22 *= factor;
+        out->e33 *= factor;
+    }
+
+    static void identity(RenderMatrix* out)
+    {
+        out->e11 = 1.0f;
+        out->e12 = 0.0f;
+        out->e13 = 0.0f;
+        out->e21 = 0.0f;
+        out->e22 = 1.0f;
+        out->e23 = 0.0f;
+        out->e31 = 0.0f;
+        out->e32 = 0.0f;
+        out->e33 = 1.0f;
+    }
+
+    static void translate(RenderMatrix* out, float x, float y)
+    {
+        out->e31 += x;
+        out->e32 += y;
+    }
+
+    static void multiply(const RenderMatrix* lhs, const RenderMatrix* rhs, RenderMatrix* out)
+    {
+        assert(lhs && rhs && out);
+
+        out->e11 = lhs->e11 * rhs->e11 + lhs->e12 * rhs->e21 + lhs->e13 * rhs->e31;
+        out->e12 = lhs->e11 * rhs->e12 + lhs->e12 * rhs->e22 + lhs->e13 * rhs->e32;
+        out->e13 = lhs->e11 * rhs->e13 + lhs->e12 * rhs->e23 + lhs->e13 * rhs->e33;
+
+        out->e21 = lhs->e21 * rhs->e11 + lhs->e22 * rhs->e21 + lhs->e23 * rhs->e31;
+        out->e22 = lhs->e21 * rhs->e12 + lhs->e22 * rhs->e22 + lhs->e23 * rhs->e32;
+        out->e23 = lhs->e21 * rhs->e13 + lhs->e22 * rhs->e23 + lhs->e23 * rhs->e33;
+
+        out->e31 = lhs->e31 * rhs->e11 + lhs->e32 * rhs->e21 + lhs->e33 * rhs->e31;
+        out->e32 = lhs->e31 * rhs->e12 + lhs->e32 * rhs->e22 + lhs->e33 * rhs->e32;
+        out->e33 = lhs->e31 * rhs->e13 + lhs->e32 * rhs->e23 + lhs->e33 * rhs->e33;
+    }
+};
+
+struct RenderTransform
+{
+    RenderMatrix m;
     float x = 0.0f;
     float y = 0.0f;
     float degree = 0.0f;  //rotation degree
@@ -44,73 +116,18 @@ struct RenderTransform
 
     bool update()
     {
-        constexpr auto PI = 3.141592f;
-
         //Init Status
         if (fabsf(x) <= FLT_EPSILON && fabsf(y) <= FLT_EPSILON &&
             fabsf(degree) <= FLT_EPSILON && fabsf(factor - 1) <= FLT_EPSILON) {
             return false;
         }
 
-        //identity
-        e11 = 1.0f;
-        e12 = 0.0f;
-        e13 = 0.0f;
-        e21 = 0.0f;
-        e22 = 1.0f;
-        e23 = 0.0f;
-        e31 = 0.0f;
-        e32 = 0.0f;
-        e33 = 1.0f;
-
-        //rotation
-        if (fabsf(degree) > FLT_EPSILON) {
-            auto radian = degree / 180.0f * PI;
-            auto cosVal = cosf(radian);
-            auto sinVal = sinf(radian);
-
-            auto t11 = e11 * cosVal + e12 * sinVal;
-            auto t12 = e11 * -sinVal + e12 * cosVal;
-            auto t21 = e21 * cosVal + e22 * sinVal;
-            auto t22 = e21 * -sinVal + e22 * cosVal;
-            auto t31 = e31 * cosVal + e32 * sinVal;
-            auto t32 = e31 * -sinVal + e32 * cosVal;
-
-            e11 = t11;
-            e12 = t12;
-            e21 = t21;
-            e22 = t22;
-            e31 = t31;
-            e32 = t32;
-        }
-
-        //scale
-        e11 *= factor;
-        e22 *= factor;
-        e33 *= factor;
-
-        //translate
-        e31 += x;
-        e32 += y;
+        RenderMatrix::identity(&m);
+        RenderMatrix::scale(&m, factor);
+        RenderMatrix::rotate(&m, degree);
+        RenderMatrix::translate(&m, x, y);
 
         return true;
-    }
-
-    RenderTransform& operator*=(const RenderTransform rhs)
-    {
-        e11 = e11 * rhs.e11 + e12 * rhs.e21 + e13 * rhs.e31;
-        e12 = e11 * rhs.e12 + e12 * rhs.e22 + e13 * rhs.e32;
-        e13 = e11 * rhs.e13 + e12 * rhs.e23 + e13 * rhs.e33;
-
-        e21 = e21 * rhs.e11 + e22 * rhs.e21 + e23 * rhs.e31;
-        e22 = e21 * rhs.e12 + e22 * rhs.e22 + e23 * rhs.e32;
-        e23 = e21 * rhs.e13 + e22 * rhs.e23 + e23 * rhs.e33;
-
-        e31 = e31 * rhs.e11 + e32 * rhs.e21 + e33 * rhs.e31;
-        e32 = e31 * rhs.e12 + e32 * rhs.e22 + e33 * rhs.e32;
-        e33 = e31 * rhs.e13 + e32 * rhs.e23 + e33 * rhs.e33;
-
-        return *this;
     }
 };
 
@@ -119,7 +136,7 @@ class RenderMethod
 {
 public:
     virtual ~RenderMethod() {}
-    virtual void* prepare(const Shape& shape, void* data, const RenderTransform* transform, RenderUpdateFlag flags) = 0;
+    virtual void* prepare(const Shape& shape, void* data, const RenderMatrix* transform, RenderUpdateFlag flags) = 0;
     virtual bool dispose(const Shape& shape, void *data) = 0;
     virtual bool render(const Shape& shape, void *data) = 0;
     virtual bool clear() = 0;

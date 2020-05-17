@@ -215,7 +215,7 @@ void _deleteRle(SwShape& sdata)
 /* External Class Implementation                                        */
 /************************************************************************/
 
-void shapeTransformOutline(const Shape& shape, SwShape& sdata, const RenderTransform& transform)
+void shapeTransformOutline(const Shape& shape, SwShape& sdata, const RenderMatrix& transform)
 {
     auto outline = sdata.outline;
     assert(outline);

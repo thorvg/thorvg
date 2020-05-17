@@ -71,9 +71,9 @@ struct Canvas::Impl
 
         for(auto paint: paints) {
             if (auto scene = dynamic_cast<Scene*>(paint)) {
-                if (!SCENE_IMPL->update(*renderer)) return -1;
+                if (!SCENE_IMPL->update(*renderer, nullptr)) return -1;
             } else if (auto shape = dynamic_cast<Shape*>(paint)) {
-                if (!SHAPE_IMPL->update(*shape, *renderer)) return -1;
+                if (!SHAPE_IMPL->update(*shape, *renderer, nullptr)) return -1;
             }
         }
         return 0;

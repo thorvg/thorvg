@@ -26,11 +26,14 @@
 struct Scene::Impl
 {
     vector<Paint*> paints;
+    RenderTransform *transform = nullptr;
+    size_t flag = RenderUpdateFlag::None;
 
     ~Impl()
     {
         //Are you sure clear() prior to this?
         assert(paints.empty());
+        if (transform) delete(transform);
     }
 
     bool clear(RenderMethod& renderer)
@@ -48,16 +51,42 @@ struct Scene::Impl
         return true;
     }
 
-    bool update(RenderMethod &renderer)
+    bool updateInternal(RenderMethod &renderer, const RenderMatrix* transform, size_t flag)
     {
         for(auto paint: paints) {
             if (auto scene = dynamic_cast<Scene*>(paint)) {
-                if (!SCENE_IMPL->update(renderer)) return false;
+                if (!SCENE_IMPL->update(renderer, transform, flag)) return false;
             } else if (auto shape = dynamic_cast<Shape*>(paint)) {
-                if (!SHAPE_IMPL->update(*shape, renderer)) return false;
+                if (!SHAPE_IMPL->update(*shape, renderer, transform, flag)) return false;
             }
         }
         return true;
+    }
+
+    bool update(RenderMethod &renderer, const RenderMatrix* pTransform = nullptr, size_t pFlag = 0)
+    {
+        if (flag & RenderUpdateFlag::Transform) {
+            assert(transform);
+            if (!transform->update()) {
+                delete(transform);
+                transform = nullptr;
+            }
+        }
+
+        auto ret = true;
+
+        if (transform && pTransform) {
+            RenderMatrix outTransform;
+            RenderMatrix::multiply(pTransform, &transform->m, &outTransform);
+            ret = updateInternal(renderer, &outTransform, pFlag | flag);
+        } else {
+            auto outTransform = pTransform ? pTransform : &transform->m;
+            ret = updateInternal(renderer, outTransform, pFlag | flag);
+        }
+
+        flag = RenderUpdateFlag::None;
+
+        return ret;
     }
 
     bool render(RenderMethod &renderer)
@@ -93,6 +122,52 @@ struct Scene::Impl
             if (y + h < y2 + h2) h = (y2 + h2) - y;
         }
         return true;
+    }
+
+    bool scale(float factor)
+    {
+        if (transform) {
+            if (fabsf(factor - transform->factor) <= FLT_EPSILON) return -1;
+        } else {
+            if (fabsf(factor) <= FLT_EPSILON) return -1;
+            transform = new RenderTransform();
+            assert(transform);
+        }
+        transform->factor = factor;
+        flag |= RenderUpdateFlag::Transform;
+
+        return 0;
+    }
+
+    bool rotate(float degree)
+    {
+        if (transform) {
+            if (fabsf(degree - transform->degree) <= FLT_EPSILON) return -1;
+        } else {
+            if (fabsf(degree) <= FLT_EPSILON) return -1;
+            transform = new RenderTransform();
+            assert(transform);
+        }
+        transform->degree = degree;
+        flag |= RenderUpdateFlag::Transform;
+
+        return 0;
+    }
+
+    bool translate(float x, float y)
+    {
+        if (transform) {
+            if (fabsf(x - transform->x) <= FLT_EPSILON && fabsf(y - transform->y) <= FLT_EPSILON) return -1;
+        } else {
+            if (fabsf(x) <= FLT_EPSILON && fabsf(y) <= FLT_EPSILON) return -1;
+            transform = new RenderTransform();
+            assert(transform);
+        }
+        transform->x = x;
+        transform->y = y;
+        flag |= RenderUpdateFlag::Transform;
+
+        return 0;
     }
 };
 
