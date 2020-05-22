@@ -113,7 +113,7 @@ struct ShapePath
         cmds[cmdCnt++] = PathCommand::Close;
     }
 
-    bool bounds(float& x, float& y, float& w, float& h)
+    bool bounds(float* x, float* y, float* w, float* h)
     {
         if (ptsCnt == 0) return false;
 
@@ -127,10 +127,10 @@ struct ShapePath
             if (pts[i].y > max.y) max.y = pts[i].y;
         }
 
-        x = min.x;
-        y = min.y;
-        w = max.x - min.x;
-        h = max.y - min.y;
+        if (x) *x = min.x;
+        if (y) *y = min.y;
+        if (w) *w = max.x - min.x;
+        if (h) *h = max.y - min.y;
 
         return true;
     }

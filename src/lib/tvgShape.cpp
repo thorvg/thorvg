@@ -269,7 +269,7 @@ int Shape::translate(float x, float y) noexcept
 }
 
 
-int Shape::bounds(float& x, float& y, float& w, float& h) const noexcept
+int Shape::bounds(float* x, float* y, float* w, float* h) const noexcept
 {
     auto impl = pImpl.get();
     assert(impl);

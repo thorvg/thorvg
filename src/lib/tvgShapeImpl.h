@@ -99,7 +99,7 @@ struct Shape::Impl
         return false;
     }
 
-    bool bounds(float& x, float& y, float& w, float& h)
+    bool bounds(float* x, float* y, float* w, float* h)
     {
         assert(path);
         return path->bounds(x, y, w, h);

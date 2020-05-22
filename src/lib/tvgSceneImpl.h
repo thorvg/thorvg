@@ -100,8 +100,13 @@ struct Scene::Impl
         return true;
     }
 
-    bool bounds(float& x, float& y, float& w, float& h)
+    bool bounds(float* px, float* py, float* pw, float* ph)
     {
+        auto x = FLT_MAX;
+        auto y = FLT_MAX;
+        auto w = 0.0f;
+        auto h = 0.0f;
+
         for(auto paint: paints) {
             auto x2 = FLT_MAX;
             auto y2 = FLT_MAX;
@@ -109,9 +114,9 @@ struct Scene::Impl
             auto h2 = 0.0f;
 
             if (auto scene = dynamic_cast<Scene*>(paint)) {
-                if (!SCENE_IMPL->bounds(x2, y2, w2, h2)) return false;
+                if (!SCENE_IMPL->bounds(&x2, &y2, &w2, &h2)) return false;
             } else if (auto shape = dynamic_cast<Shape*>(paint)) {
-                if (!SHAPE_IMPL->bounds(x2, y2, w2, h2)) return false;
+                if (!SHAPE_IMPL->bounds(&x2, &y2, &w2, &h2)) return false;
             }
 
             //Merge regions
@@ -120,6 +125,12 @@ struct Scene::Impl
             if (y2 < y) y = x2;
             if (y + h < y2 + h2) h = (y2 + h2) - y;
         }
+
+        if (px) *px = x;
+        if (py) *py = y;
+        if (pw) *pw = w;
+        if (ph) *ph = h;
+
         return true;
     }
 

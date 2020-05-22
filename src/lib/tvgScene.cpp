@@ -91,15 +91,10 @@ int Scene::translate(float x, float y) noexcept
 }
 
 
-int Scene::bounds(float& x, float& y, float& w, float& h) const noexcept
+int Scene::bounds(float* x, float* y, float* w, float* h) const noexcept
 {
     auto impl = pImpl.get();
     assert(impl);
-
-    x = FLT_MAX;
-    y = FLT_MAX;
-    w = 0;
-    h = 0;
 
     if (!impl->bounds(x, y, w, h)) return -1;
 
