@@ -136,6 +136,10 @@ public:
     int appendCircle(float cx, float cy, float radiusW, float radiusH) noexcept;
     int appendPath(const PathCommand* cmds, size_t cmdCnt, const Point* pts, size_t ptsCnt) noexcept;
 
+    int stroke(size_t width) noexcept;
+    int stroke(size_t r, size_t g, size_t b, size_t a) noexcept;
+    int stroke(const size_t* dashPattern, size_t cnt) noexcept;
+
     int fill(size_t r, size_t g, size_t b, size_t a) noexcept;
 
     int rotate(float degree) noexcept override;
@@ -145,6 +149,10 @@ public:
     size_t pathCommands(const PathCommand** cmds) const noexcept;
     size_t pathCoords(const Point** pts) const noexcept;
     int fill(size_t* r, size_t* g, size_t* b, size_t* a) const noexcept;
+    size_t stroke() const noexcept;
+    int stroke(size_t* r, size_t* g, size_t* b, size_t* a) const noexcept;
+    size_t stroke(const size_t** dashPattern) const noexcept;
+
     int bounds(float&x, float& y, float& w, float& h) const noexcept override;
 
     static std::unique_ptr<Shape> gen() noexcept;

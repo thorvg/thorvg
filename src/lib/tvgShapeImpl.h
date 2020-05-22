@@ -30,6 +30,15 @@ struct ShapeFill
 
 struct ShapeStroke
 {
+    size_t width = 0;
+    size_t color[4] = {0, 0, 0, 0};
+    size_t* dashPattern = nullptr;
+    size_t dashCnt = 0;
+
+    ~ShapeStroke()
+    {
+        if (dashPattern) free(dashPattern);
+    }
 };
 
 
@@ -140,6 +149,58 @@ struct Shape::Impl
         flag |= RenderUpdateFlag::Transform;
 
         return 0;
+    }
+
+    bool strokeWidth(size_t width)
+    {
+        //TODO: Size Exception?
+
+        if (!stroke) stroke = new ShapeStroke();
+        assert(stroke);
+
+        stroke->width = width;
+        flag |= RenderUpdateFlag::Stroke;
+
+        return 0;
+    }
+
+    bool strokeColor(size_t r, size_t g, size_t b, size_t a)
+    {
+        if (!stroke) stroke = new ShapeStroke();
+        assert(stroke);
+
+        stroke->color[0] = r;
+        stroke->color[1] = g;
+        stroke->color[2] = b;
+        stroke->color[3] = a;
+
+        flag |= RenderUpdateFlag::Stroke;
+
+        return 0;
+    }
+
+    bool strokeDash(const size_t* pattern, size_t cnt)
+    {
+        assert(pattern);
+
+       if (!stroke) stroke = new ShapeStroke();
+        assert(stroke);
+
+        if (stroke->dashCnt != cnt) {
+            if (stroke->dashPattern) free(stroke->dashPattern);
+            stroke->dashPattern = nullptr;
+        }
+
+        if (!stroke->dashPattern) stroke->dashPattern = static_cast<size_t*>(malloc(sizeof(size_t) * cnt));
+        assert(stroke->dashPattern);
+
+        memcpy(stroke->dashPattern, pattern, cnt);
+        stroke->dashCnt = cnt;
+
+        flag |= RenderUpdateFlag::Stroke;
+
+        return 0;
+
     }
 };
 

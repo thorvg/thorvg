@@ -280,4 +280,79 @@ int Shape::bounds(float& x, float& y, float& w, float& h) const noexcept
 }
 
 
+int Shape::stroke(size_t width) noexcept
+{
+    auto impl = pImpl.get();
+    assert(impl);
+
+    if (!impl->strokeWidth(width)) return -1;
+
+    return 0;
+}
+
+
+size_t Shape::stroke() const noexcept
+{
+    auto impl = pImpl.get();
+    assert(impl);
+
+    if (!impl->stroke) return -1;
+    return impl->stroke->width;
+}
+
+
+int Shape::stroke(size_t r, size_t g, size_t b, size_t a) noexcept
+{
+    auto impl = pImpl.get();
+    assert(impl);
+
+    if (!impl->strokeColor(r, g, b, a)) return -1;
+
+    return 0;
+}
+
+
+int Shape::stroke(size_t* r, size_t* g, size_t* b, size_t* a) const noexcept
+{
+    auto impl = pImpl.get();
+    assert(impl);
+
+    if (!impl->stroke) return -1;
+
+    if (r) *r = impl->stroke->color[0];
+    if (g) *g = impl->stroke->color[1];
+    if (b) *b = impl->stroke->color[2];
+    if (a) *a = impl->stroke->color[3];
+
+    return 0;
+}
+
+
+int Shape::stroke(const size_t* dashPattern, size_t cnt) noexcept
+{
+    if (cnt < 2 || !dashPattern) return -1;
+
+    auto impl = pImpl.get();
+    assert(impl);
+
+    if (!impl->strokeDash(dashPattern, cnt)) return -1;
+
+    return 0;
+}
+
+
+size_t Shape::stroke(const size_t** dashPattern) const noexcept
+{
+    assert(dashPattern);
+
+    auto impl = pImpl.get();
+    assert(impl);
+
+    if (!impl->stroke) return 0;
+
+    *dashPattern = impl->stroke->dashPattern;
+    return impl->stroke->dashCnt;
+}
+
+
 #endif //_TVG_SHAPE_CPP_

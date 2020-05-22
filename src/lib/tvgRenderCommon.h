@@ -28,7 +28,7 @@ struct Surface
     size_t w, h;
 };
 
-enum RenderUpdateFlag {None = 0, Path = 1, Fill = 2, Transform = 4, All = 8};
+enum RenderUpdateFlag {None = 0, Path = 1, Fill = 2, Stroke = 4, Transform = 8, All = 16};
 
 struct RenderTransform
 {
