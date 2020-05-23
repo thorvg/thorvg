@@ -34,6 +34,8 @@ struct ShapeStroke
     size_t color[4] = {0, 0, 0, 0};
     size_t* dashPattern = nullptr;
     size_t dashCnt = 0;
+    StrokeCap cap = StrokeCap::Square;
+    StrokeJoin join = StrokeJoin::Bevel;
 
     ~ShapeStroke()
     {
@@ -159,6 +161,28 @@ struct Shape::Impl
         assert(stroke);
 
         stroke->width = width;
+        flag |= RenderUpdateFlag::Stroke;
+
+        return 0;
+    }
+
+    bool strokeCap(StrokeCap cap)
+    {
+        if (!stroke) stroke = new ShapeStroke();
+        assert(stroke);
+
+        stroke->cap = cap;
+        flag |= RenderUpdateFlag::Stroke;
+
+        return 0;
+    }
+
+    bool strokeJoin(StrokeJoin join)
+    {
+        if (!stroke) stroke = new ShapeStroke();
+        assert(stroke);
+
+        stroke->join = join;
         flag |= RenderUpdateFlag::Stroke;
 
         return 0;

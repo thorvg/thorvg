@@ -53,7 +53,9 @@ protected: \
 namespace tvg
 {
 
-enum class TIZENVG_EXPORT PathCommand { Close, MoveTo, LineTo, CubicTo };
+enum class TIZENVG_EXPORT PathCommand { Close = 0, MoveTo, LineTo, CubicTo };
+enum class TIZENVG_EXPORT StrokeCap { Square = 0, Round, Butt };
+enum class TIZENVG_EXPORT StrokeJoin { Bevel = 0, Round, Miter };
 
 class RenderMethod;
 class Scene;
@@ -127,33 +129,43 @@ public:
 
     int reset() noexcept;
 
+    //Path
     int moveTo(float x, float y) noexcept;
     int lineTo(float x, float y) noexcept;
     int cubicTo(float cx1, float cy1, float cx2, float cy2, float x, float y) noexcept;
     int close() noexcept;
 
+    //Shape
     int appendRect(float x, float y, float w, float h, float cornerRadius) noexcept;
     int appendCircle(float cx, float cy, float radiusW, float radiusH) noexcept;
     int appendPath(const PathCommand* cmds, size_t cmdCnt, const Point* pts, size_t ptsCnt) noexcept;
 
+    //Stroke
     int stroke(size_t width) noexcept;
     int stroke(size_t r, size_t g, size_t b, size_t a) noexcept;
     int stroke(const size_t* dashPattern, size_t cnt) noexcept;
+    int stroke(StrokeCap cap) noexcept;
+    int stroke(StrokeJoin join) noexcept;
 
+    //Fill
     int fill(size_t r, size_t g, size_t b, size_t a) noexcept;
 
+    //Transform
     int rotate(float degree) noexcept override;
     int scale(float factor) noexcept override;
     int translate(float x, float y) noexcept override;
 
+    //Getters
     size_t pathCommands(const PathCommand** cmds) const noexcept;
     size_t pathCoords(const Point** pts) const noexcept;
     int fill(size_t* r, size_t* g, size_t* b, size_t* a) const noexcept;
-    size_t stroke() const noexcept;
-    int stroke(size_t* r, size_t* g, size_t* b, size_t* a) const noexcept;
-    size_t stroke(const size_t** dashPattern) const noexcept;
-
     int bounds(float* x, float* y, float* w, float* h) const noexcept override;
+
+    size_t strokeWidth() const noexcept;
+    int strokeColor(size_t* r, size_t* g, size_t* b, size_t* a) const noexcept;
+    size_t strokeDash(const size_t** dashPattern) const noexcept;
+    StrokeCap strokeCap() const noexcept;
+    StrokeJoin strokeJoin() const noexcept;
 
     static std::unique_ptr<Shape> gen() noexcept;
 

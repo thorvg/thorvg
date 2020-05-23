@@ -291,7 +291,7 @@ int Shape::stroke(size_t width) noexcept
 }
 
 
-size_t Shape::stroke() const noexcept
+size_t Shape::strokeWidth() const noexcept
 {
     auto impl = pImpl.get();
     assert(impl);
@@ -312,7 +312,7 @@ int Shape::stroke(size_t r, size_t g, size_t b, size_t a) noexcept
 }
 
 
-int Shape::stroke(size_t* r, size_t* g, size_t* b, size_t* a) const noexcept
+int Shape::strokeColor(size_t* r, size_t* g, size_t* b, size_t* a) const noexcept
 {
     auto impl = pImpl.get();
     assert(impl);
@@ -341,17 +341,59 @@ int Shape::stroke(const size_t* dashPattern, size_t cnt) noexcept
 }
 
 
-size_t Shape::stroke(const size_t** dashPattern) const noexcept
+size_t Shape::strokeDash(const size_t** dashPattern) const noexcept
 {
-    assert(dashPattern);
-
     auto impl = pImpl.get();
     assert(impl);
 
     if (!impl->stroke) return 0;
 
-    *dashPattern = impl->stroke->dashPattern;
+    if (dashPattern) *dashPattern = impl->stroke->dashPattern;
     return impl->stroke->dashCnt;
+}
+
+
+int Shape::stroke(StrokeCap cap) noexcept
+{
+    auto impl = pImpl.get();
+    assert(impl);
+
+    if (!impl->strokeCap(cap)) return -1;
+
+    return 0;
+}
+
+
+int Shape::stroke(StrokeJoin join) noexcept
+{
+    auto impl = pImpl.get();
+    assert(impl);
+
+    if (!impl->strokeJoin(join)) return -1;
+
+    return 0;
+}
+
+
+StrokeCap Shape::strokeCap() const noexcept
+{
+    auto impl = pImpl.get();
+    assert(impl);
+
+    if (!impl->stroke) return StrokeCap::Square;
+
+    return impl->stroke->cap;
+}
+
+
+StrokeJoin Shape::strokeJoin() const noexcept
+{
+    auto impl = pImpl.get();
+    assert(impl);
+
+    if (!impl->stroke) return StrokeJoin::Bevel;
+
+    return impl->stroke->join;
 }
 
 
