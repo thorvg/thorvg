@@ -24,52 +24,52 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-static inline size_t COLOR_ALPHA(size_t color)
+static inline uint32_t COLOR_ALPHA(uint32_t color)
 {
   return (color >> 24) & 0xff;
 }
 
 
-static inline size_t COLOR_ALPHA_BLEND(size_t color, size_t alpha)
+static inline uint32_t COLOR_ALPHA_BLEND(uint32_t color, uint32_t alpha)
 {
   return (((((color >> 8) & 0x00ff00ff) * alpha) & 0xff00ff00) +
           ((((color & 0x00ff00ff) * alpha) >> 8) & 0x00ff00ff));
 }
 
 
-static inline size_t COLOR_ARGB_JOIN(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
+static inline uint32_t COLOR_ARGB_JOIN(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 {
   return (a << 24 | r << 16 | g << 8 | b);
 }
 
 
 static void
-_rasterTranslucent(uint32_t* dst, size_t len, size_t color, size_t cov)
+_rasterTranslucent(uint32_t* dst, uint32_t len, uint32_t color, uint32_t cov)
 {
   //OPTIMIZE ME: SIMD
 
   if (cov < 255) color = COLOR_ALPHA_BLEND(color, cov);
   auto ialpha = 255 - COLOR_ALPHA(color);
 
-  for (size_t i = 0; i < len; ++i) {
+  for (uint32_t i = 0; i < len; ++i) {
     dst[i] = color + COLOR_ALPHA_BLEND(dst[i], ialpha);
   }
 }
 
 
 static void
-_rasterSolid(uint32_t* dst, size_t len, size_t color, size_t cov)
+_rasterSolid(uint32_t* dst, uint32_t len, uint32_t color, uint32_t cov)
 {
   //OPTIMIZE ME: SIMD
 
   //Fully Opaque
   if (cov == 255) {
-    for (size_t i = 0; i < len; ++i) {
+    for (uint32_t i = 0; i < len; ++i) {
       dst[i] = color;
     }
   } else {
     auto ialpha = 255 - cov;
-    for (size_t i = 0; i < len; ++i) {
+    for (uint32_t i = 0; i < len; ++i) {
       dst[i] = COLOR_ALPHA_BLEND(color, cov) + COLOR_ALPHA_BLEND(dst[i], ialpha);
     }
   }
@@ -89,7 +89,7 @@ bool rasterShape(Surface& surface, SwShape& sdata, uint8_t r, uint8_t g, uint8_t
     auto stride = surface.stride;
     auto color = COLOR_ARGB_JOIN(r, g, b, a);
 
-    for (size_t i = 0; i < rle->size; ++i) {
+    for (uint32_t i = 0; i < rle->size; ++i) {
         assert(span);
 
         auto dst = &surface.buffer[span->y * stride + span->x];

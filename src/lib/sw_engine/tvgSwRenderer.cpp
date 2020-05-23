@@ -37,8 +37,8 @@ bool SwRenderer::clear()
     assert(surface.stride > 0 && surface.w > 0 && surface.h > 0);
 
     //OPTIMIZE ME: SIMD!
-    for (size_t i = 0; i < surface.h; i++) {
-        for (size_t j = 0; j < surface.w; j++)
+    for (uint32_t i = 0; i < surface.h; i++) {
+        for (uint32_t j = 0; j < surface.w; j++)
             surface.buffer[surface.stride * i + j] = 0xff000000;  //Solid Black
     }
 
@@ -57,15 +57,19 @@ bool SwRenderer::target(uint32_t* buffer, size_t stride, size_t w, size_t h)
     return true;
 }
 
-
 bool SwRenderer::render(const Shape& shape, void *data)
 {
     SwShape* sdata = static_cast<SwShape*>(data);
     if (!sdata) return false;
 
-    //invisible?
     size_t r, g, b, a;
     shape.fill(&r, &g, &b, &a);
+
+    size_t sa;
+    shape.strokeColor(nullptr, nullptr, nullptr, &sa);
+
+    //invisible?
+    if (a == 0 && sa == 0) return false;
 
     //TODO: Threading
     return rasterShape(surface, *sdata, r, g, b, a);
@@ -74,10 +78,9 @@ bool SwRenderer::render(const Shape& shape, void *data)
 
 bool SwRenderer::dispose(const Shape& shape, void *data)
 {
-    SwShape* sdata = static_cast<SwShape*>(data);
+    auto sdata = static_cast<SwShape*>(data);
     if (!sdata) return false;
-    shapeReset(*sdata);
-    free(sdata);
+    shapeFree(sdata);
     return true;
 }
 
@@ -93,20 +96,32 @@ void* SwRenderer::prepare(const Shape& shape, void* data, const RenderTransform*
     if (flags == RenderUpdateFlag::None) return sdata;
 
     //invisible?
-    size_t alpha;
-    shape.fill(nullptr, nullptr, nullptr, &alpha);
-    if (alpha == 0) return sdata;
+    size_t a, sa;
+    shape.fill(nullptr, nullptr, nullptr, &a);
+    shape.strokeColor(nullptr, nullptr, nullptr, &sa);
+    if (a == 0 && sa == 0) return sdata;
 
     //TODO: Threading
+
+    SwSize clip = {static_cast<SwCoord>(surface.w), static_cast<SwCoord>(surface.h)};
+
+    //Shape
     if (flags & (RenderUpdateFlag::Path | RenderUpdateFlag::Transform)) {
         shapeReset(*sdata);
         if (!shapeGenOutline(shape, *sdata)) return sdata;
         if (transform) shapeTransformOutline(shape, *sdata, *transform);
-
-        SwSize clip = {static_cast<SwCoord>(surface.w), static_cast<SwCoord>(surface.h)};
         if (!shapeGenRle(shape, *sdata, clip)) return sdata;
-        shapeDelOutline(*sdata);
     }
+
+    //Stroke
+    if (flags & RenderUpdateFlag::Stroke) {
+        shapeResetStroke(shape, *sdata);
+        if (shape.strokeWidth() > 0.01) {
+            if (!shapeGenStrokeRle(shape, *sdata, clip)) return sdata;
+        }
+    }
+
+    shapeDelOutline(*sdata);
 
     return sdata;
 }
@@ -140,6 +155,5 @@ SwRenderer* SwRenderer::inst()
 {
     return dynamic_cast<SwRenderer*>(RenderInitializer::inst(renderInit));
 }
-
 
 #endif /* _TVG_SW_RENDERER_CPP_ */

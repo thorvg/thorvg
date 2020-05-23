@@ -23,13 +23,7 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-static inline SwPoint TO_SWPOINT(const Point* pt)
-{
-    return {SwCoord(pt->x * 64), SwCoord(pt->y * 64)};
-}
-
-
-static void _growOutlineContour(SwOutline& outline, size_t n)
+static void _growOutlineContour(SwOutline& outline, uint32_t n)
 {
     if (n == 0) {
         free(outline.cntrs);
@@ -42,12 +36,12 @@ static void _growOutlineContour(SwOutline& outline, size_t n)
 
     //cout << "Grow Cntrs: " << outline.reservedCntrsCnt << " -> " << outline.cntrsCnt + n << endl;;
     outline.reservedCntrsCnt = n;
-    outline.cntrs = static_cast<size_t*>(realloc(outline.cntrs, n * sizeof(size_t)));
+    outline.cntrs = static_cast<uint32_t*>(realloc(outline.cntrs, n * sizeof(uint32_t)));
     assert(outline.cntrs);
 }
 
 
-static void _growOutlinePoint(SwOutline& outline, size_t n)
+static void _growOutlinePoint(SwOutline& outline, uint32_t n)
 {
     if (n == 0) {
         free(outline.pts);
@@ -132,9 +126,9 @@ static void _outlineCubicTo(SwOutline& outline, const Point* ctrl1, const Point*
 }
 
 
-static bool _outlineClose(SwOutline& outline)
+static void _outlineClose(SwOutline& outline)
 {
-    size_t i = 0;
+    uint32_t i = 0;
 
     if (outline.cntrsCnt > 0) {
         i = outline.cntrs[outline.cntrsCnt - 1] + 1;
@@ -143,7 +137,10 @@ static bool _outlineClose(SwOutline& outline)
     }
 
     //Make sure there is at least one point in the current path
-    if (outline.ptsCnt == i) return false;
+    if (outline.ptsCnt == i) {
+        outline.opened = true;
+        return;
+    }
 
     //Close the path
     _growOutlinePoint(outline, 1);
@@ -152,7 +149,7 @@ static bool _outlineClose(SwOutline& outline)
     outline.types[outline.ptsCnt] = SW_CURVE_TYPE_POINT;
     ++outline.ptsCnt;
 
-    return true;
+    outline.opened = false;
 }
 
 
@@ -183,7 +180,7 @@ static bool _updateBBox(SwShape& sdata)
 
     ++pt;
 
-    for(size_t i = 1; i < outline->ptsCnt; ++i, ++pt) {
+    for(uint32_t i = 1; i < outline->ptsCnt; ++i, ++pt) {
         assert(pt);
         if (xMin > pt->x) xMin = pt->x;
         if (xMax < pt->x) xMax = pt->x;
@@ -201,14 +198,29 @@ static bool _updateBBox(SwShape& sdata)
 }
 
 
-void _deleteRle(SwShape& sdata)
+static bool _checkValid(SwShape& sdata, const SwSize& clip)
 {
-    if (sdata.rle) {
-        if (sdata.rle->spans) free(sdata.rle->spans);
-        free(sdata.rle);
-    }
+    assert(sdata.outline);
+
+    if (sdata.outline->ptsCnt == 0 || sdata.outline->cntrsCnt <= 0) return false;
+
+    //Check boundary
+    if ((sdata.bbox.min.x > clip.w || sdata.bbox.min.y > clip.h) ||
+        (sdata.bbox.min.x + sdata.bbox.max.x < 0) ||
+        (sdata.bbox.min.y + sdata.bbox.max.y < 0)) return false;
+
+    return true;
+}
+
+
+static void _deleteRle(SwShape& sdata)
+{
+    if (!sdata.rle) return;
+    if (sdata.rle->spans) free(sdata.rle->spans);
+    free(sdata.rle);
     sdata.rle = nullptr;
 }
+
 
 
 /************************************************************************/
@@ -220,7 +232,7 @@ void shapeTransformOutline(const Shape& shape, SwShape& sdata, const RenderTrans
     auto outline = sdata.outline;
     assert(outline);
 
-    for(size_t i = 0; i < outline->ptsCnt; ++i) {
+    for(uint32_t i = 0; i < outline->ptsCnt; ++i) {
         auto dx = static_cast<float>(outline->pts[i].x >> 6);
         auto dy = static_cast<float>(outline->pts[i].y >> 6);
         auto tx = dx * transform.e11 + dy * transform.e12 + transform.e13;
@@ -233,13 +245,8 @@ void shapeTransformOutline(const Shape& shape, SwShape& sdata, const RenderTrans
 
 bool shapeGenRle(const Shape& shape, SwShape& sdata, const SwSize& clip)
 {
-    if (sdata.outline->ptsCnt == 0 || sdata.outline->cntrsCnt <= 0) goto end;
     if (!_updateBBox(sdata)) goto end;
-
-    //Check boundary
-    if ((sdata.bbox.min.x > clip.w || sdata.bbox.min.y > clip.h) ||
-        (sdata.bbox.min.x + sdata.bbox.max.x < 0) ||
-        (sdata.bbox.min.y + sdata.bbox.max.y < 0)) goto end;
+    if (!_checkValid(sdata, clip)) goto end;
 
     sdata.rle = rleRender(sdata, clip);
 
@@ -251,14 +258,13 @@ end:
 
 void shapeDelOutline(SwShape& sdata)
 {
-    if (!sdata.outline) return;
+    auto outline = sdata.outline;
+    if (!outline) return;
 
-    SwOutline* outline = sdata.outline;
     if (outline->cntrs) free(outline->cntrs);
     if (outline->pts) free(outline->pts);
     if (outline->types) free(outline->types);
     free(outline);
-
     sdata.outline = nullptr;
 }
 
@@ -286,7 +292,7 @@ bool shapeGenOutline(const Shape& shape, SwShape& sdata)
     auto outlinePtsCnt = 0;
     auto outlineCntrsCnt = 0;
 
-    for (size_t i = 0; i < cmdCnt; ++i) {
+    for (uint32_t i = 0; i < cmdCnt; ++i) {
         switch(*(cmds + i)) {
             case PathCommand::Close: {
                 ++outlinePtsCnt;
@@ -311,14 +317,9 @@ bool shapeGenOutline(const Shape& shape, SwShape& sdata)
     ++outlinePtsCnt;    //for close
     ++outlineCntrsCnt;  //for end
 
-    SwOutline* outline = sdata.outline;
-
-    if (!outline) {
-        outline = static_cast<SwOutline*>(calloc(1, sizeof(SwOutline)));
-        assert(outline);
-    } else {
-        cout << "Outline was already allocated? How?" << endl;
-    }
+    auto outline = sdata.outline;
+    if (!outline) outline = static_cast<SwOutline*>(calloc(1, sizeof(SwOutline)));
+    assert(outline);
 
     _growOutlinePoint(*outline, outlinePtsCnt);
     _growOutlineContour(*outline, outlineCntrsCnt);
@@ -359,5 +360,39 @@ bool shapeGenOutline(const Shape& shape, SwShape& sdata)
     return true;
 }
 
+
+void shapeFree(SwShape* sdata)
+{
+    assert(sdata);
+
+    shapeDelOutline(*sdata);
+    _deleteRle(*sdata);
+    strokeFree(sdata->stroke);
+    free(sdata);
+}
+
+
+void shapeResetStroke(const Shape& shape, SwShape& sdata)
+{
+    if (!sdata.stroke) sdata.stroke = static_cast<SwStroke*>(calloc(1, sizeof(SwStroke)));
+    auto stroke = sdata.stroke;
+    assert(stroke);
+
+    strokeReset(*stroke, shape.strokeWidth(), shape.strokeCap(), shape.strokeJoin());
+}
+
+
+bool shapeGenStrokeRle(const Shape& shape, SwShape& sdata, const SwSize& clip)
+{
+    if (!sdata.outline) {
+        if (!shapeGenOutline(shape, sdata)) return false;
+    }
+
+    if (!_checkValid(sdata, clip)) return false;
+
+    if (!strokeParseOutline(*sdata.stroke, *sdata.outline)) return false;
+
+    return true;
+}
 
 #endif /* _TVG_SW_SHAPE_H_ */

@@ -137,7 +137,7 @@ static inline SwCoord HYPOT(SwPoint pt)
     return ((pt.x > pt.y) ? (pt.x + (3 * pt.y >> 3)) : (pt.y + (3 * pt.x >> 3)));
 }
 
-static void _genSpan(SwRleData* rle, SwSpan* spans, size_t count)
+static void _genSpan(SwRleData* rle, SwSpan* spans, uint32_t count)
 {
     assert(rle && spans);
 
@@ -598,15 +598,19 @@ static bool _decomposeOutline(RleWorker& rw)
 
     auto first = 0;  //index of first point in contour
 
-    for (size_t n = 0; n < outline->cntrsCnt; ++n) {
+    for (uint32_t n = 0; n < outline->cntrsCnt; ++n) {
         auto last = outline->cntrs[n];
         if (last < 0) goto invalid_outline;
 
         auto limit = outline->pts + last;
         assert(limit);
 
+        auto start = UPSCALE(outline->pts[first]);
+
         auto pt = outline->pts + first;
+        assert(pt);
         auto types = outline->types + first;
+        assert(types);
 
         /* A contour cannot start with a cubic control point! */
         if (types[0] == SW_CURVE_TYPE_CUBIC) goto invalid_outline;
@@ -632,7 +636,7 @@ static bool _decomposeOutline(RleWorker& rw)
                     _cubicTo(rw, UPSCALE(pt[-2]), UPSCALE(pt[-1]), UPSCALE(pt[0]));
                     continue;
                 }
-                _cubicTo(rw, UPSCALE(pt[-2]), UPSCALE(pt[-1]), UPSCALE(outline->pts[first]));
+                _cubicTo(rw, UPSCALE(pt[-2]), UPSCALE(pt[-1]), start);
                 goto close;
             }
         }
@@ -663,6 +667,7 @@ static bool _genRle(RleWorker& rw)
     }
     return ret;
 }
+
 
 
 /************************************************************************/
@@ -789,6 +794,15 @@ SwRleData* rleRender(const SwShape& sdata, const SwSize& clip)
 error:
     free(rw.rle);
     rw.rle = nullptr;
+    return nullptr;
+}
+
+
+SwRleData* rleStrokeRender(const SwShape& sdata)
+{
+    auto stroke = sdata.stroke;
+    assert(stroke);
+
     return nullptr;
 }
 
