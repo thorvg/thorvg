@@ -17,15 +17,23 @@
 #ifndef _TVG_GL_RENDERER_H_
 #define _TVG_GL_RENDERER_H_
 
+#include "tvgGlCommon.h"
+
 namespace tvg
 {
 
 class GlRenderer : public RenderMethod
 {
 public:
+    Surface surface;
+
     void* prepare(const Shape& shape, void* data, const RenderTransform* transform, RenderUpdateFlag flags) override;
     bool dispose(const Shape& shape, void *data) override;
     bool render(const Shape& shape, void *data) override;
+    bool target(uint32_t* buffer, size_t stride, size_t w, size_t h)
+    {
+        return 0;
+    };
     bool clear() override;
     size_t ref() override;
     size_t unref() override;
@@ -37,6 +45,10 @@ public:
 private:
     GlRenderer(){};
     ~GlRenderer(){};
+
+    std::unique_ptr<GlProgram>   mColorProgram;
+    int32_t   mColorUniform;
+    uint32_t  mVertexAttrID;
 };
 
 }

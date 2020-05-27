@@ -240,6 +240,7 @@ public:
 
     //TODO: Gl Specific methods. Need gl backend configuration methods as well.
 
+    int target(uint32_t* buffer, size_t stride, size_t w, size_t h) noexcept;
     int sync() noexcept override;
     static std::unique_ptr<GlCanvas> gen() noexcept;
 
