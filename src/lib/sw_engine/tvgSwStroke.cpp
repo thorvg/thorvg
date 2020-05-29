@@ -269,7 +269,7 @@ static void _growBorder(SwStrokeBorder* border, uint32_t newPts)
 
 static void _borderLineTo(SwStrokeBorder* border, SwPoint& to, bool movable)
 {
-    constexpr SwPoint EPSILON = 2;
+    constexpr SwCoord EPSILON = 2;
 
     assert(border && border->start >= 0);
 
