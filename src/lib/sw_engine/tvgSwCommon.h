@@ -27,10 +27,6 @@ constexpr auto SW_CURVE_TYPE_CUBIC = 1;
 constexpr auto SW_OUTLINE_FILL_WINDING = 0;
 constexpr auto SW_OUTLINE_FILL_EVEN_ODD = 1;
 
-constexpr auto SW_STROKE_TAG_ON = 1;
-constexpr auto SW_STROKE_TAG_BEGIN = 4;
-constexpr auto SW_STROKE_TAG_END = 8;
-
 using SwCoord = signed long;
 using SwFixed = signed long long;
 
@@ -59,6 +55,20 @@ struct SwPoint
     bool operator!=(const SwPoint& rhs) const {
         return (x != rhs.x || y != rhs.y);
     }
+
+    bool zero()
+    {
+        if (x == 0 && y == 0) return true;
+        else return false;
+    }
+
+    bool small()
+    {
+        //2 is epsilon...
+        if (abs(x) < 2 && abs(y) < 2) return true;
+        else return false;
+    }
+
 };
 
 struct SwSize
@@ -141,6 +151,13 @@ struct SwShape
     SwBBox       bbox;
 };
 
+
+constexpr static SwFixed ANGLE_PI = (180L << 16);
+constexpr static SwFixed ANGLE_2PI = (ANGLE_PI << 1);
+constexpr static SwFixed ANGLE_PI2 = (ANGLE_PI >> 1);
+constexpr static SwFixed ANGLE_PI4 = (ANGLE_PI >> 2);
+
+
 static inline SwPoint TO_SWPOINT(const Point* pt)
 {
     return {SwCoord(pt->x * 64), SwCoord(pt->y * 64)};
@@ -152,6 +169,20 @@ static inline SwCoord TO_SWCOORD(float val)
     return SwCoord(val * 64);
 }
 
+
+int64_t mathMultiply(int64_t a, int64_t b);
+int64_t mathDivide(int64_t a, int64_t b);
+int64_t mathMulDiv(int64_t a, int64_t b, int64_t c);
+void mathRotate(SwPoint& pt, SwFixed angle);
+SwFixed mathTan(SwFixed angle);
+SwFixed mathAtan(const SwPoint& pt);
+SwFixed mathCos(SwFixed angle);
+SwFixed mathSin(SwFixed angle);
+void mathSplitCubic(SwPoint* base);
+SwFixed mathDiff(SwFixed angle1, SwFixed angle2);
+SwFixed mathLength(SwPoint& pt);
+bool mathSmallCubic(SwPoint* base, SwFixed& angleIn, SwFixed& angleMid, SwFixed& angleOut);
+SwFixed mathMean(SwFixed angle1, SwFixed angle2);
 
 void shapeReset(SwShape& sdata);
 bool shapeGenOutline(const Shape& shape, SwShape& sdata);

@@ -23,222 +23,14 @@
 /************************************************************************/
 /* Internal Class Implementation                                        */
 /************************************************************************/
-constexpr auto CORDIC_FACTOR = 0xDBD95B16UL;            //the Cordic shrink factor 0.858785336480436 * 2^32
-constexpr static SwFixed ANGLE_PI = (180L << 16);
-constexpr static SwFixed ANGLE_2PI = (ANGLE_PI << 1);
-constexpr static SwFixed ANGLE_PI2 = (ANGLE_PI >> 1);
-constexpr static SwFixed ANGLE_PI4 = (ANGLE_PI >> 2);
+static constexpr auto SW_STROKE_TAG_ON = 1;
+static constexpr auto SW_STROKE_TAG_CUBIC = 2;
+static constexpr auto SW_STROKE_TAG_BEGIN = 4;
+static constexpr auto SW_STROKE_TAG_END = 8;
 
-//this table was generated for SW_FT_PI = 180L << 16, i.e. degrees
-constexpr static auto ATAN_MAX = 23;
-constexpr static SwFixed ATAN_TBL[] = {
-    1740967L, 919879L, 466945L, 234379L, 117304L, 58666L, 29335L,
-    14668L, 7334L, 3667L, 1833L, 917L, 458L, 229L, 115L,
-    57L, 29L, 14L, 7L, 4L, 2L, 1L};
-
-
-static inline SwCoord SATURATE(const SwCoord x)
-{
-    return (x >> (sizeof(long) * 8 - 1));
-}
-
-
-static inline SwFixed SIDE_TO_ROTATE(int32_t s)
+static inline SwFixed SIDE_TO_ROTATE(const int32_t s)
 {
     return (ANGLE_PI2 - (s) * ANGLE_PI);
-}
-
-
-static int64_t _multiply(int64_t a, int64_t b)
-{
-    int32_t s = 1;
-
-    //move sign
-    if (a < 0) {
-        a = -a;
-        s = -s;
-    }
-    //move sign
-    if (b < 0) {
-        b = -b;
-        s = -s;
-    }
-    int64_t c = (a * b + 0x8000L ) >> 16;
-    return (s > 0) ? c : -c;
-}
-
-
-static int64_t _divide(int64_t a, int64_t b)
-{
-    int32_t s = 1;
-
-    //move sign
-    if (a < 0) {
-        a = -a;
-        s = -s;
-    }
-    //move sign
-    if (b < 0) {
-        b = -b;
-        s = -s;
-    }
-    int64_t q = b > 0 ? ((a << 16) + (b >> 1)) / b : 0x7FFFFFFFL;
-    return (s < 0 ? -q : q);
-}
-
-
-static SwFixed _angleDiff(SwFixed angle1, SwFixed angle2)
-{
-    auto delta = angle2 - angle1;
-
-    delta %= ANGLE_2PI;
-    if (delta < 0) delta += ANGLE_2PI;
-    if (delta > ANGLE_PI) delta -= ANGLE_2PI;
-
-    return delta;
-}
-
-
-static void _trigDownscale(SwPoint& pt)
-{
-    //multiply a give value by the CORDIC shrink factor
-
-    auto s = pt;
-
-    //abs
-    if (pt.x < 0) pt.x = -pt.x;
-    if (pt.y < 0) pt.y = -pt.y;
-
-    int64_t vx = (pt.x * static_cast<int64_t>(CORDIC_FACTOR)) + 0x100000000UL;
-    int64_t vy = (pt.y * static_cast<int64_t>(CORDIC_FACTOR)) + 0x100000000UL;
-
-    pt.x = static_cast<SwFixed>(vx >> 32);
-    pt.y = static_cast<SwFixed>(vy >> 32);
-
-    if (s.x < 0) pt.x = -pt.x;
-    if (s.y < 0) pt.y = -pt.y;
-}
-
-
-static int32_t _trigPrenorm(SwPoint& pt)
-{
-    /* the highest bit in overflow-safe vector components
-       MSB of 0.858785336480436 * sqrt(0.5) * 2^30 */
-    constexpr auto TRIG_SAFE_MSB = 29;
-
-    auto v = pt;
-
-    //High order bit(MSB)
-    //clz: count leading zero’s
-    auto shift = 31 - __builtin_clz(abs(v.x) | abs(v.y));
-
-    if (shift <= TRIG_SAFE_MSB) {
-        shift = TRIG_SAFE_MSB - shift;
-        pt.x = static_cast<SwCoord>((unsigned long)v.x << shift);
-        pt.y = static_cast<SwCoord>((unsigned long)v.y << shift);
-    } else {
-        shift -= TRIG_SAFE_MSB;
-        pt.x = v.x >> shift;
-        pt.y = v.y >> shift;
-        shift = -shift;
-    }
-    return shift;
-}
-
-
-static void _trigPseudoRotate(SwPoint& pt, SwFixed theta)
-{
-    auto v = pt;
-
-    //Rotate inside [-PI/4, PI/4] sector
-    while (theta < -ANGLE_PI4) {
-        auto temp = v.y;
-        v.y = -v.x;
-        v.x = temp;
-        theta += ANGLE_PI2;
-    }
-
-    while (theta > ANGLE_PI4) {
-        auto temp = -v.y;
-        v.y = v.x;
-        v.x = temp;
-        theta -= ANGLE_PI2;
-    }
-
-    auto atan = ATAN_TBL;
-    uint32_t i;
-    SwFixed j;
-
-    for (i = 1, j = 1; i < ATAN_MAX; j <<= 1, ++i) {
-        if (theta < 0) {
-            auto temp = v.x + ((v.y + j) >> i);
-            v.y = v.y - ((v.x + j) >> i);
-            v.x = temp;
-            theta += *atan++;
-        }else {
-            auto temp = v.x - ((v.y + j) >> i);
-            v.y = v.y + ((v.x + j) >> i);
-            v.x = temp;
-            theta -= *atan++;
-        }
-    }
-
-    pt = v;
-}
-
-
-static void _rotate(SwPoint& pt, SwFixed angle)
-{
-    if (angle == 0 || (pt.x == 0 && pt.y == 0)) return;
-
-    auto v  = pt;
-    auto shift = _trigPrenorm(v);
-    _trigPseudoRotate(v, angle);
-    _trigDownscale(v);
-
-    if (shift > 0) {
-        auto half = static_cast<int32_t>(1L << (shift - 1));
-        v.x = (v.x + half + SATURATE(v.x)) >> shift;
-        v.y = (v.y + half + SATURATE(v.y)) >> shift;
-    } else {
-        shift = -shift;
-        v.x = static_cast<SwCoord>((unsigned long)v.x << shift);
-        v.y = static_cast<SwCoord>((unsigned long)v.y << shift);
-    }
-}
-
-
-static SwFixed _tan(SwFixed angle)
-{
-    SwPoint v = {CORDIC_FACTOR >> 8, 0};
-    _rotate(v, angle);
-    return _divide(v.y, v.x);
-}
-
-
-static SwFixed _cos(SwFixed angle)
-{
-    SwPoint v = {CORDIC_FACTOR >> 8, 0};
-    _rotate(v, angle);
-    return (v.x + 0x80L) >> 8;
-}
-
-
-static void _lineTo(SwStroke& stroke, const SwPoint& to)
-{
-
-}
-
-
-static void _cubicTo(SwStroke& stroke, const SwPoint& ctrl1, const SwPoint& ctrl2, const SwPoint& to)
-{
-
-}
-
-
-static void _arcTo(SwStroke& stroke, int32_t side)
-{
-
 }
 
 
@@ -266,11 +58,130 @@ static void _growBorder(SwStrokeBorder* border, uint32_t newPts)
 }
 
 
+static void _borderClose(SwStrokeBorder* border, bool reverse)
+{
+    assert(border && border->start >= 0);
+
+    uint32_t start = border->start;
+    uint32_t count = border->ptsCnt;
+
+    //Don't record empty paths!
+    if (count <= start + 1U) {
+        border->ptsCnt = start;
+    } else {
+        /* Copy the last point to the start of this sub-path,
+           since it contains the adjusted starting coordinates */
+        border->ptsCnt = --count;
+        border->pts[start] = border->pts[count];
+
+        if (reverse) {
+            //reverse the points
+            auto pt1 = border->pts + start + 1;
+            auto pt2 = border->pts + count - 1;
+
+            while (pt1 < pt2) {
+                auto tmp = *pt1;
+                *pt1 = *pt2;
+                *pt2 = tmp;
+                ++pt1;
+                --pt2;
+            }
+
+            //reverse the tags
+            auto tag1 = border->tags + start + 1;
+            auto tag2 = border->tags + count - 1;
+
+            while (tag1 < tag2) {
+                auto tmp = *tag1;
+                *tag1 = *tag2;
+                *tag2 = tmp;
+                ++tag1;
+                --tag2;
+            }
+        }
+
+        border->tags[start] |= SW_STROKE_TAG_BEGIN;
+        border->tags[count - 1] |=  SW_STROKE_TAG_END;
+    }
+
+    border->start = -1;
+    border->movable = false;
+}
+
+
+static void _borderCubicTo(SwStrokeBorder* border, SwPoint& ctrl1, SwPoint& ctrl2, SwPoint& to)
+{
+    assert(border->start >= 0);
+
+    _growBorder(border, 3);
+
+    auto pt = border->pts + border->ptsCnt;
+    auto tag = border->tags + border->ptsCnt;
+
+    pt[0] = ctrl1;
+    pt[1] = ctrl2;
+    pt[2] = to;
+
+    tag[0] = SW_STROKE_TAG_CUBIC;
+    tag[1] = SW_STROKE_TAG_CUBIC;
+    tag[2] = SW_STROKE_TAG_ON;
+
+    border->ptsCnt += 3;
+    border->movable = false;
+}
+
+
+static void _borderArcTo(SwStrokeBorder* border, SwPoint& center, SwFixed radius, SwFixed angleStart, SwFixed angleDiff)
+{
+    constexpr auto ARC_CUBIC_ANGLE = ANGLE_PI / 2;
+    SwPoint a = {radius, 0};
+    mathRotate(a, angleStart);
+    a += center;
+
+    auto total = angleDiff;
+    auto angle = angleStart;
+    auto rotate = (angleDiff >= 0) ? ANGLE_PI2 : -ANGLE_PI2;
+
+    while (total != 0) {
+        auto step = total;
+        if (step > ARC_CUBIC_ANGLE) step = ARC_CUBIC_ANGLE;
+        else if (step < -ARC_CUBIC_ANGLE) step = -ARC_CUBIC_ANGLE;
+
+        auto next = angle + step;
+        auto theta = step;
+        if (theta < 0) theta = -theta;
+
+        theta >>= 1;
+
+        //compute end point
+        SwPoint b = {radius, 0};
+        mathRotate(b, next);
+        b += center;
+
+        //compute first and second control points
+        auto length = mathMulDiv(radius, mathSin(theta) * 4, (0x10000L + mathCos(theta)) * 3);
+
+        SwPoint a2 = {length, 0};
+        mathRotate(a2, angle + rotate);
+        a2 += a;
+
+        SwPoint b2 = {length, 0};
+        mathRotate(b2, next - rotate);
+        b2 += b;
+
+        //add cubic arc
+        _borderCubicTo(border, a2, b2, b);
+
+        //process the rest of the arc?
+        a = b;
+        total -= step;
+        angle = next;
+    }
+}
+
 
 static void _borderLineTo(SwStrokeBorder* border, SwPoint& to, bool movable)
 {
-    constexpr SwCoord EPSILON = 2;
-
     assert(border && border->start >= 0);
 
     if (border->movable) {
@@ -279,7 +190,7 @@ static void _borderLineTo(SwStrokeBorder* border, SwPoint& to, bool movable)
     } else {
         //don't add zero-length line_to
         auto diff = border->pts[border->ptsCnt - 1] - to;
-        if (border->ptsCnt > 0 && abs(diff.x) < EPSILON && abs(diff.y) < EPSILON) return;
+        if (border->ptsCnt > 0 && diff.small()) return;
 
         _growBorder(border, 1);
         border->pts[border->ptsCnt] = to;
@@ -291,6 +202,356 @@ static void _borderLineTo(SwStrokeBorder* border, SwPoint& to, bool movable)
 }
 
 
+static void _borderMoveTo(SwStrokeBorder* border, SwPoint& to)
+{
+    assert(border);
+
+    //close current open path if any?
+    if (border->start >= 0)
+        _borderClose(border, false);
+
+    border->start = border->ptsCnt;
+    border->movable = false;
+
+    _borderLineTo(border, to, false);
+}
+
+
+static void _arcTo(SwStroke& stroke, int32_t side)
+{
+    auto border = stroke.borders + side;
+    auto rotate = SIDE_TO_ROTATE(side);
+    auto total = mathDiff(stroke.angleIn, stroke.angleOut);
+    if (total == ANGLE_PI) total = -rotate * 2;
+
+    _borderArcTo(border, stroke.center, stroke.width, stroke.angleIn + rotate, total);
+    border->movable = false;
+}
+
+
+static void _outside(SwStroke& stroke, int32_t side, SwFixed lineLength)
+{
+    constexpr SwFixed MITER_LIMIT = 4 * (1 << 16);
+
+    assert(MITER_LIMIT >= 0x10000);
+
+    auto border = stroke.borders + side;
+    assert(border);
+
+    if (stroke.join == StrokeJoin::Round) {
+        _arcTo(stroke, side);
+    } else {
+        //this is a mitered (pointed) or beveled (truncated) corner
+        auto rotate = SIDE_TO_ROTATE(side);
+        auto bevel = (stroke.join == StrokeJoin::Bevel) ? true : false;
+        SwFixed phi = 0;
+        SwFixed thcos = 0;
+
+        if (!bevel) {
+            auto theta = mathDiff(stroke.angleIn, stroke.angleOut);
+            if (theta == ANGLE_PI) {
+                theta = rotate;
+                phi = stroke.angleIn;
+            } else {
+                theta /= 2;
+                phi = stroke.angleIn + theta + rotate;
+            }
+
+            thcos = mathCos(theta);
+            auto sigma = mathMultiply(MITER_LIMIT, thcos);
+
+            //is miter limit exceeded?
+            if (sigma < 0x10000L) bevel = true;
+        }
+
+        //this is a bevel (broken angle)
+        if (bevel) {
+            SwPoint delta = {stroke.width, 0};
+            mathRotate(delta, stroke.angleOut + rotate);
+            delta += stroke.center;
+            border->movable = false;
+            _borderLineTo(border, delta, false);
+        //this is a miter (intersection)
+        } else {
+            auto length = mathDivide(stroke.width, thcos);
+            SwPoint delta = {length, 0};
+            mathRotate(delta, phi);
+            delta += stroke.center;
+            _borderLineTo(border, delta, false);
+
+            /* Now add and end point
+               Only needed if not lineto (lineLength is zero for curves) */
+            if (lineLength == 0) {
+                delta = {stroke.width, 0};
+                mathRotate(delta, stroke.angleOut + rotate);
+                delta += stroke.center;
+                _borderLineTo(border, delta, false);
+            }
+        }
+    }
+}
+
+
+static void _inside(SwStroke& stroke, int32_t side, SwFixed lineLength)
+{
+    auto border = stroke.borders + side;
+    auto theta = mathDiff(stroke.angleIn, stroke.angleOut) / 2;
+    SwPoint delta;
+    bool intersect;
+
+    /* Only intersect borders if between two line_to's and both
+       lines are long enough (line length is zero fur curves). */
+    if (!border->movable || lineLength == 0) {
+        intersect = false;
+    } else {
+        //compute minimum required length of lines
+        SwFixed minLength = abs(mathMultiply(stroke.width, mathTan(theta)));
+        if (stroke.lineLength >= minLength && lineLength >= minLength) intersect = true;
+    }
+
+    auto rotate = SIDE_TO_ROTATE(side);
+
+    if (!intersect) {
+        delta = {stroke.width, 0};
+        mathRotate(delta, stroke.angleOut + rotate);
+        delta += stroke.center;
+        border->movable = false;
+    } else {
+        //compute median angle
+        delta = {mathDivide(stroke.width, mathCos(theta)), 0};
+        mathRotate(delta, stroke.angleIn + theta + rotate);
+        delta += stroke.center;
+    }
+
+    _borderLineTo(border, delta, false);
+}
+
+
+void _processCorner(SwStroke& stroke, SwFixed lineLength)
+{
+    auto turn = mathDiff(stroke.angleIn, stroke.angleOut);
+
+    //no specific corner processing is required if the turn is 0
+    if (turn == 0) return;
+
+    //when we turn to the right, the inside side is 0
+    int32_t inside = 0;
+
+    //otherwise, the inside is 1
+    if (turn < 0) inside = 1;
+
+    //process the inside
+    _inside(stroke, inside, lineLength);
+
+    //process the outside
+    _outside(stroke, 1 - inside, lineLength);
+}
+
+
+void _subPathStart(SwStroke& stroke, SwFixed startAngle, SwFixed lineLength)
+{
+    SwPoint delta = {stroke.width, 0};
+    mathRotate(delta, startAngle + ANGLE_PI2);
+
+    auto pt = stroke.center + delta;
+    auto border = stroke.borders;
+    _borderMoveTo(border, pt);
+
+    pt = stroke.center - delta;
+    ++border;
+    _borderMoveTo(border, pt);
+
+    /* Save angle, position and line length for last join
+       lineLength is zero for curves */
+    stroke.subPathAngle = startAngle;
+    stroke.firstPt = false;
+    stroke.subPathLineLength = lineLength;
+}
+
+
+static void _lineTo(SwStroke& stroke, const SwPoint& to)
+{
+    auto delta = to - stroke.center;
+
+    //a zero-length lineto is a no-op; avoid creating a spurious corner
+    if (delta.zero()) return;
+
+    //compute length of line
+    auto lineLength =  mathLength(delta);
+    auto angle = mathAtan(delta);
+
+    delta = {stroke.width, 0};
+    mathRotate(delta, angle + ANGLE_PI2);
+
+    //process corner if necessary
+    if (stroke.firstPt) {
+        /* This is the first segment of a subpath. We need to add a point to each border
+        at their respective starting point locations. */
+        _subPathStart(stroke, angle, lineLength);
+    } else {
+        //process the current corner
+        stroke.angleOut = angle;
+        _processCorner(stroke, lineLength);
+    }
+
+    //now add a line segment to both the inside and outside paths
+    auto border = stroke.borders;
+    auto side = 1;
+
+    while (side >= 0) {
+        auto pt = to + delta;
+
+        //the ends of lineto borders are movable
+        _borderLineTo(border, pt, true);
+
+        delta.x = -delta.x;
+        delta.y = -delta.y;
+
+        --side;
+        ++border;
+    }
+
+    stroke.angleIn = angle;
+    stroke.center = to;
+    stroke.lineLength = lineLength;
+}
+
+
+static void _cubicTo(SwStroke& stroke, const SwPoint& ctrl1, const SwPoint& ctrl2, const SwPoint& to)
+{
+    /* if all control points are coincident, this is a no-op;
+       avoid creating a spurious corner */
+    if ((stroke.center - ctrl1).small() && (ctrl1 - ctrl2).small() && (ctrl2 - to).small()) {
+        stroke.center = to;
+        return;
+    }
+
+    SwPoint bezStack[37];   //TODO: static?
+    auto firstArc = true;
+    auto limit = bezStack + 32;
+    auto arc = bezStack;
+    arc[0] = to;
+    arc[1] = ctrl2;
+    arc[2] = ctrl1;
+    arc[3] = stroke.center;
+
+    while (arc >= bezStack) {
+        SwFixed angleIn, angleOut, angleMid;
+
+        //initialize with current direction
+        angleIn = angleOut = angleMid = stroke.angleIn;
+
+        if (arc < limit && mathSmallCubic(arc, angleIn, angleMid, angleOut)) {
+            if (stroke.firstPt) stroke.angleIn = angleIn;
+            mathSplitCubic(arc);
+            arc += 3;
+            continue;
+        }
+
+        if (firstArc) {
+            firstArc = false;
+            //process corner if necessary
+            if (stroke.firstPt) {
+                _subPathStart(stroke, angleIn, 0);
+            } else {
+                stroke.angleOut = angleIn;
+                _processCorner(stroke, 0);
+            }
+        } else if (abs(mathDiff(stroke.angleIn, angleIn)) > (ANGLE_PI / 8)) {
+            //if the deviation from one arc to the next is too great add a round corner
+            stroke.center = arc[3];
+            stroke.angleOut = angleIn;
+            stroke.join = StrokeJoin::Round;
+
+            _processCorner(stroke, 0);
+
+            //reinstate line join style
+            stroke.join = stroke.joinSaved;
+        }
+
+        //the arc's angle is small enough; we can add it directly to each border
+        auto theta1 = mathDiff(angleIn, angleMid) / 2;
+        auto theta2 = mathDiff(angleMid, angleOut) / 2;
+        auto phi1 = mathMean(angleIn, angleMid);
+        auto phi2 = mathMean(angleMid, angleOut);
+        auto length1 = mathDivide(stroke.width, mathCos(theta1));
+        auto length2 = mathDivide(stroke.width, mathCos(theta2));
+        SwFixed alpha0 = 0;
+
+        //compute direction of original arc
+        if (stroke.handleWideStrokes) {
+            alpha0 = mathAtan(arc[0] - arc[3]);
+        }
+
+        auto border = stroke.borders;
+        int32_t side = 0;
+
+        while (side <= 1)
+        {
+            auto rotate = SIDE_TO_ROTATE(side);
+
+            //compute control points
+            SwPoint _ctrl1 = {length1, 0};
+            mathRotate(_ctrl1, phi1 + rotate);
+            _ctrl1 += arc[2];
+
+            SwPoint _ctrl2 = {length2, 0};
+            mathRotate(_ctrl2, phi2 + rotate);
+            _ctrl2 += arc[1];
+
+            //compute end point
+            SwPoint _end = {stroke.width, 0};
+            mathRotate(_end, angleOut + rotate);
+            _end += arc[0];
+
+            if (stroke.handleWideStrokes) {
+
+                /* determine whether the border radius is greater than the radius of
+                   curvature of the original arc */
+                auto _start = border->pts[border->ptsCnt - 1];
+                auto alpha1 = mathAtan(_end - _start);
+
+                //is the direction of the border arc opposite to that of the original arc?
+                if (abs(mathDiff(alpha0, alpha1)) > ANGLE_PI / 2) {
+
+                    //use the sine rule to find the intersection point
+                    auto beta = mathAtan(arc[3] - _start);
+                    auto gamma = mathAtan(arc[0] - _end);
+                    auto bvec = _end - _start;
+                    auto blen = mathLength(bvec);
+                    auto sinA = abs(mathSin(alpha1 - gamma));
+                    auto sinB = abs(mathSin(beta - gamma));
+                    auto alen = mathMulDiv(blen, sinA, sinB);
+
+                    SwPoint delta = {alen, 0};
+                    mathRotate(delta, beta);
+                    delta += _start;
+
+                    //circumnavigate the negative sector backwards
+                    border->movable = false;
+                    _borderLineTo(border, delta, false);
+                    _borderLineTo(border, _end, false);
+                    _borderCubicTo(border, _ctrl2, _ctrl1, _start);
+
+                    //and thenmove to the endpoint
+                    _borderLineTo(border, _end, false);
+
+                    continue;
+                }
+
+            //else fall through
+            }
+            _borderCubicTo(border, _ctrl1, _ctrl2, _end);
+            ++side;
+            ++border;
+        }
+        arc -= 3;
+        stroke.angleIn = angleOut;
+    }
+    stroke.center = to;
+}
+
+
 static void _addCap(SwStroke& stroke, SwFixed angle, int32_t side)
 {
      if (stroke.cap == StrokeCap::Square) {
@@ -298,20 +559,20 @@ static void _addCap(SwStroke& stroke, SwFixed angle, int32_t side)
         auto border = stroke.borders + side;
 
         SwPoint delta = {stroke.width, 0};
-        _rotate(delta, angle);
+        mathRotate(delta, angle);
 
         SwPoint delta2 = {stroke.width, 0};
-        _rotate(delta2, angle + rotate);
+        mathRotate(delta2, angle + rotate);
 
         delta += stroke.center + delta2;
 
         _borderLineTo(border, delta, false);
 
         delta = {stroke.width, 0};
-        _rotate(delta, angle);
+        mathRotate(delta, angle);
 
         delta2 = {stroke.width, 0};
-        _rotate(delta2, angle - rotate);
+        mathRotate(delta2, angle - rotate);
 
         delta += delta2 + stroke.center;
 
@@ -329,14 +590,14 @@ static void _addCap(SwStroke& stroke, SwFixed angle, int32_t side)
         auto border = stroke.borders + side;
 
         SwPoint delta = {stroke.width, 0};
-        _rotate(delta, angle + rotate);
+        mathRotate(delta, angle + rotate);
 
         delta += stroke.center;
 
         _borderLineTo(border, delta, false);
 
         delta = {stroke.width, 0};
-        _rotate(delta, angle - rotate);
+        mathRotate(delta, angle - rotate);
 
         delta += stroke.center;
 
@@ -389,88 +650,6 @@ static void _addReverseLeft(SwStroke& stroke, bool opened)
 }
 
 
-static void _closeBorder(SwStrokeBorder* border, bool reverse)
-{
-    assert(border && border->start >= 0);
-
-    uint32_t start = border->start;
-    uint32_t count = border->ptsCnt;
-
-    //Don't record empty paths!
-    if (count <= start + 1U) {
-        border->ptsCnt = start;
-    } else {
-        /* Copy the last point to the start of this sub-path,
-           since it contains the adjusted starting coordinates */
-        border->ptsCnt = --count;
-        border->pts[start] = border->pts[count];
-
-        if (reverse) {
-            //reverse the points
-            auto pt1 = border->pts + start + 1;
-            auto pt2 = border->pts + count - 1;
-
-            for (; pt1 < pt2; pt1++, pt2--) {
-                auto tmp = *pt1;
-                *pt1 = *pt2;
-                *pt2 = tmp;
-            }
-
-            //reverse the tags
-            auto tag1 = border->tags + start + 1;
-            auto tag2 = border->tags + count - 1;
-
-            for (; tag1 < tag2; tag1++, tag2++) {
-                auto tmp = *tag1;
-                *tag1 = *tag2;
-                *tag2 = tmp;
-            }
-        }
-
-        border->tags[start] |= SW_STROKE_TAG_BEGIN;
-        border->tags[count - 1] |=  SW_STROKE_TAG_END;
-    }
-
-    border->start = -1;
-    border->movable = false;
-}
-
-
-static void _inside(SwStroke& stroke, int32_t side, SwFixed lineLength)
-{
-    auto border = stroke.borders + side;
-    auto theta = _angleDiff(stroke.angleIn, stroke.angleOut) / 2;
-    SwPoint delta;
-    bool intersect;
-
-    /* Only intersect borders if between two line_to's and both
-       lines are long enough (line length is zero fur curves). */
-    if (!border->movable || lineLength == 0) {
-        intersect = false;
-    } else {
-        //compute minimum required length of lines
-        SwFixed minLength = abs(_multiply(stroke.width, _tan(theta)));
-        if (stroke.lineLength >= minLength && lineLength >= minLength) intersect = true;
-    }
-
-    auto rotate = SIDE_TO_ROTATE(side);
-
-    if (!intersect) {
-        delta = {stroke.width, 0};
-        _rotate(delta, stroke.angleOut + rotate);
-        delta += stroke.center;
-        border->movable = false;
-    } else {
-        //compute median angle
-        delta = {_divide(stroke.width, _cos(theta)), 0};
-        _rotate(delta, stroke.angleIn + theta + rotate);
-        delta += stroke.center;
-    }
-
-    _borderLineTo(border, delta, false);
-}
-
-
 static void _beginSubPath(SwStroke& stroke, SwPoint& to, bool opened)
 {
     cout << "stroke opened? = " << opened << endl;
@@ -518,7 +697,7 @@ static void _endSubPath(SwStroke& stroke)
 
         /* now end the right subpath accordingly. The left one is rewind
            and deosn't need further processing */
-        _closeBorder(right, false);
+        _borderClose(right, false);
     } else {
 
         //close the path if needed
@@ -527,7 +706,7 @@ static void _endSubPath(SwStroke& stroke)
 
         //process the corner
         stroke.angleOut = stroke.subPathAngle;
-        auto turn = _angleDiff(stroke.angleIn, stroke.angleOut);
+        auto turn = mathDiff(stroke.angleIn, stroke.angleOut);
 
         //No specific corner processing is required if the turn is 0
         if (turn != 0) {
@@ -542,8 +721,8 @@ static void _endSubPath(SwStroke& stroke)
             _inside(stroke, 1 - inside, stroke.subPathLineLength);    //outside
         }
 
-        _closeBorder(stroke.borders + 0, false);
-        _closeBorder(stroke.borders + 1, true);
+        _borderClose(stroke.borders + 0, false);
+        _borderClose(stroke.borders + 1, true);
     }
 }
 
@@ -571,14 +750,6 @@ void strokeFree(SwStroke* stroke)
 void strokeReset(SwStroke& stroke, float width, StrokeCap cap, StrokeJoin join)
 {
     _deleteRle(stroke);
-
-#if 0
-    miterLimit = 4 * (1 >> 16);
-
-    /* ensure miter limit has sensible value */
-    if ( stroker->miter_limit < 0x10000 )
-      stroker->miter_limit = 0x10000;
-#endif
 
     stroke.width = TO_SWCOORD(width * 0.5f);
     stroke.cap = cap;
