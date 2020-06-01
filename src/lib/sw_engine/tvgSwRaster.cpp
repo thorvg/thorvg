@@ -76,18 +76,13 @@ _rasterSolid(uint32_t* dst, uint32_t len, uint32_t color, uint32_t cov)
 }
 
 
-/************************************************************************/
-/* External Class Implementation                                        */
-/************************************************************************/
-
-bool rasterShape(Surface& surface, SwShape& sdata, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
+static bool
+_rasterRle(Surface& surface, SwRleData* rle, uint32_t color, uint8_t a)
 {
-    SwRleData* rle = sdata.rle;
     if (!rle) return false;
 
     auto span = rle->spans;
     auto stride = surface.stride;
-    auto color = COLOR_ARGB_JOIN(r, g, b, a);
 
     for (uint32_t i = 0; i < rle->size; ++i) {
         assert(span);
@@ -102,5 +97,22 @@ bool rasterShape(Surface& surface, SwShape& sdata, uint8_t r, uint8_t g, uint8_t
 
     return true;
 }
+
+
+/************************************************************************/
+/* External Class Implementation                                        */
+/************************************************************************/
+
+bool rasterShape(Surface& surface, SwShape& sdata, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
+{
+    return _rasterRle(surface, sdata.rle, COLOR_ARGB_JOIN(r, g, b, a), a);
+}
+
+
+bool rasterStroke(Surface& surface, SwShape& sdata, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
+{
+    return _rasterRle(surface, sdata.strokeRle, COLOR_ARGB_JOIN(r, g, b, a), a);
+}
+
 
 #endif /* _TVG_SW_RASTER_CPP_ */

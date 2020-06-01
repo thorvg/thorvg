@@ -612,9 +612,7 @@ static bool _decomposeOutline(RleWorker& rw)
                 goto close;
             }
         }
-
-        //FIXME: Close the contour with a line segment?
-        //_lineTo(rw, UPSCALE(outline->pts[first]));
+        _lineTo(rw, UPSCALE(outline->pts[first]));
     close:
        first = last + 1;
     }
@@ -646,13 +644,12 @@ static bool _genRle(RleWorker& rw)
 /* External Class Implementation                                        */
 /************************************************************************/
 
-SwRleData* rleRender(const SwShape& sdata, const SwSize& clip)
+SwRleData* rleRender(const SwOutline* outline, const SwBBox& bbox, const SwSize& clip)
 {
     //Please adjust when you out of cell memory (default: 16384L)
     constexpr auto RENDER_POOL_SIZE = 166641L;
     constexpr auto BAND_SIZE = 40;
 
-    auto outline = sdata.outline;
     assert(outline);
     assert(outline->cntrs && outline->pts);
     assert(outline->ptsCnt == outline->cntrs[outline->cntrsCnt - 1] + 1);
@@ -671,11 +668,11 @@ SwRleData* rleRender(const SwShape& sdata, const SwSize& clip)
     rw.area = 0;
     rw.cover = 0;
     rw.invalid = true;
-    rw.cellMin = sdata.bbox.min;
-    rw.cellMax = sdata.bbox.max;
+    rw.cellMin = bbox.min;
+    rw.cellMax = bbox.max;
     rw.cellXCnt = rw.cellMax.x - rw.cellMin.x;
     rw.cellYCnt = rw.cellMax.y - rw.cellMin.y;
-    rw.outline = outline;
+    rw.outline = const_cast<SwOutline*>(outline);
     rw.bandSize = rw.bufferSize / (sizeof(Cell) * 8);  //bandSize: 64
     rw.bandShoot = 0;
     rw.clip = clip;
@@ -770,12 +767,13 @@ error:
 }
 
 
-SwRleData* rleStrokeRender(const SwShape& sdata)
+void rleFree(SwRleData* rle)
 {
-    auto stroke = sdata.stroke;
-    assert(stroke);
-
-    return nullptr;
+    if (!rle) return;
+    if (rle->spans) free(rle->spans);
+    free(rle);
 }
+
+
 
 #endif /* _TVG_SW_RLE_H_ */

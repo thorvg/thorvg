@@ -64,6 +64,17 @@ static void _growOutlinePoint(SwOutline& outline, uint32_t n)
 }
 
 
+static void _freeOutline(SwOutline* outline)
+{
+    if (!outline) return;
+
+    if (outline->cntrs) free(outline->cntrs);
+    if (outline->pts) free(outline->pts);
+    if (outline->types) free(outline->types);
+    free(outline);
+}
+
+
 static void _outlineEnd(SwOutline& outline)
 {
     _growOutlineContour(outline, 1);
@@ -153,23 +164,22 @@ static void _outlineClose(SwOutline& outline)
 }
 
 
-static void _initBBox(SwShape& sdata)
+static void _initBBox(SwBBox& bbox)
 {
-    sdata.bbox.min.x = sdata.bbox.min.y = 0;
-    sdata.bbox.max.x = sdata.bbox.max.y = 0;
+    bbox.min.x = bbox.min.y = 0;
+    bbox.max.x = bbox.max.y = 0;
 }
 
 
-static bool _updateBBox(SwShape& sdata)
+static bool _updateBBox(SwOutline* outline, SwBBox& bbox)
 {
-    auto outline = sdata.outline;
-    assert(outline);
+    if (!outline) return false;
 
     auto pt = outline->pts;
     assert(pt);
 
     if (outline->ptsCnt <= 0) {
-        _initBBox(sdata);
+        _initBBox(bbox);
         return false;
     }
 
@@ -187,10 +197,10 @@ static bool _updateBBox(SwShape& sdata)
         if (yMin > pt->y) yMin = pt->y;
         if (yMax < pt->y) yMax = pt->y;
     }
-    sdata.bbox.min.x = xMin >> 6;
-    sdata.bbox.max.x = (xMax + 63) >> 6;
-    sdata.bbox.min.y = yMin >> 6;
-    sdata.bbox.max.y = (yMax + 63) >> 6;
+    bbox.min.x = xMin >> 6;
+    bbox.max.x = (xMax + 63) >> 6;
+    bbox.min.y = yMin >> 6;
+    bbox.max.y = (yMax + 63) >> 6;
 
     if (xMax - xMin < 1 || yMax - yMin < 1) return false;
 
@@ -211,16 +221,6 @@ static bool _checkValid(SwShape& sdata, const SwSize& clip)
 
     return true;
 }
-
-
-static void _deleteRle(SwShape& sdata)
-{
-    if (!sdata.rle) return;
-    if (sdata.rle->spans) free(sdata.rle->spans);
-    free(sdata.rle);
-    sdata.rle = nullptr;
-}
-
 
 
 /************************************************************************/
@@ -245,10 +245,10 @@ void shapeTransformOutline(const Shape& shape, SwShape& sdata, const RenderTrans
 
 bool shapeGenRle(const Shape& shape, SwShape& sdata, const SwSize& clip)
 {
-    if (!_updateBBox(sdata)) goto end;
+    if (!_updateBBox(sdata.outline, sdata.bbox)) goto end;
     if (!_checkValid(sdata, clip)) goto end;
 
-    sdata.rle = rleRender(sdata, clip);
+    sdata.rle = rleRender(sdata.outline, sdata.bbox, clip);
 
 end:
     if (sdata.rle) return true;
@@ -259,12 +259,7 @@ end:
 void shapeDelOutline(SwShape& sdata)
 {
     auto outline = sdata.outline;
-    if (!outline) return;
-
-    if (outline->cntrs) free(outline->cntrs);
-    if (outline->pts) free(outline->pts);
-    if (outline->types) free(outline->types);
-    free(outline);
+    _freeOutline(outline);
     sdata.outline = nullptr;
 }
 
@@ -272,8 +267,9 @@ void shapeDelOutline(SwShape& sdata)
 void shapeReset(SwShape& sdata)
 {
     shapeDelOutline(sdata);
-    _deleteRle(sdata);
-    _initBBox(sdata);
+    rleFree(sdata.rle);
+    sdata.rle = nullptr;
+    _initBBox(sdata.bbox);
 }
 
 
@@ -366,8 +362,13 @@ void shapeFree(SwShape* sdata)
     assert(sdata);
 
     shapeDelOutline(*sdata);
-    _deleteRle(*sdata);
-    strokeFree(sdata->stroke);
+    rleFree(sdata->rle);
+
+    if (sdata->stroke) {
+        rleFree(sdata->strokeRle);
+        strokeFree(sdata->stroke);
+    }
+
     free(sdata);
 }
 
@@ -377,8 +378,9 @@ void shapeResetStroke(const Shape& shape, SwShape& sdata)
     if (!sdata.stroke) sdata.stroke = static_cast<SwStroke*>(calloc(1, sizeof(SwStroke)));
     auto stroke = sdata.stroke;
     assert(stroke);
-
     strokeReset(*stroke, shape.strokeWidth(), shape.strokeCap(), shape.strokeJoin());
+    rleFree(sdata.strokeRle);
+    sdata.strokeRle = nullptr;
 }
 
 
@@ -391,6 +393,16 @@ bool shapeGenStrokeRle(const Shape& shape, SwShape& sdata, const SwSize& clip)
     if (!_checkValid(sdata, clip)) return false;
 
     if (!strokeParseOutline(*sdata.stroke, *sdata.outline)) return false;
+
+    auto outline = strokeExportOutline(*sdata.stroke);
+    if (!outline) return false;
+
+    SwBBox bbox;
+    _updateBBox(outline, bbox);
+
+    sdata.strokeRle = rleRender(outline, bbox, clip);
+
+    _freeOutline(outline);
 
     return true;
 }

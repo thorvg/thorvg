@@ -63,16 +63,14 @@ bool SwRenderer::render(const Shape& shape, void *data)
     if (!sdata) return false;
 
     size_t r, g, b, a;
+
     shape.fill(&r, &g, &b, &a);
+    if (a > 0) rasterShape(surface, *sdata, r, g, b, a);
 
-    size_t sa;
-    shape.strokeColor(nullptr, nullptr, nullptr, &sa);
+    shape.strokeColor(&r, &g, &b, &a);
+    if (a > 0) rasterStroke(surface, *sdata, r, g, b, a);
 
-    //invisible?
-    if (a == 0 && sa == 0) return false;
-
-    //TODO: Threading
-    return rasterShape(surface, *sdata, r, g, b, a);
+    return true;
 }
 
 

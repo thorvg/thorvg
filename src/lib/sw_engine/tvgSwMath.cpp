@@ -24,7 +24,7 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-constexpr auto CORDIC_FACTOR = 0xDBD95B16UL;            //the Cordic shrink factor 0.858785336480436 * 2^32
+constexpr SwCoord CORDIC_FACTOR = 0xDBD95B16UL;            //the Cordic shrink factor 0.858785336480436 * 2^32
 
 //this table was generated for SW_FT_PI = 180L << 16, i.e. degrees
 constexpr static auto ATAN_MAX = 23;
@@ -45,15 +45,14 @@ static inline SwFixed PAD_ROUND(const SwFixed x, int32_t n)
 }
 
 
-static SwCoord _downscale(SwCoord x)
+static SwCoord _downscale(SwFixed x)
 {
     //multiply a give value by the CORDIC shrink factor
-
-    abs(x);
-    int64_t t = (x * static_cast<int64_t>(CORDIC_FACTOR)) + 0x100000000UL;
-    x = static_cast<SwFixed>(t >> 32);
-    if (x < 0) x = -x;
-    return x;
+    auto s = abs(x);
+    int64_t t = (s * static_cast<int64_t>(CORDIC_FACTOR)) + 0x100000000UL;
+    s = static_cast<SwFixed>(t >> 32);
+    if (x < 0) s = -s;
+    return s;
 }
 
 
@@ -136,6 +135,47 @@ static void _polarize(SwPoint& pt)
 
     pt.x = v.x;
     pt.y = theta;
+}
+
+
+static void _rotate(SwPoint& pt, SwFixed theta)
+{
+    auto v = pt;
+
+    //Rotate inside [-PI/4, PI/4] sector
+    while (theta < -ANGLE_PI4) {
+        auto tmp = v.y;
+        v.y = -v.x;
+        v.x = tmp;
+        theta += ANGLE_PI2;
+    }
+
+    while (theta > ANGLE_PI4) {
+        auto tmp = -v.y;
+        v.y = v.x;
+        v.x = tmp;
+        theta -= ANGLE_PI2;
+    }
+
+    auto atan = ATAN_TBL;
+    uint32_t i;
+    SwFixed j;
+
+    for (i = 1, j = 1; i < ATAN_MAX; j <<= 1, ++i) {
+        if (theta < 0) {
+            auto tmp = v.x + ((v.y + j) >> i);
+            v.y = v.y - ((v.x + j) >> i);
+            v.x = tmp;
+            theta += *atan++;
+        }else {
+            auto tmp = v.x - ((v.y + j) >> i);
+            v.y = v.y + ((v.x + j) >> i);
+            v.x = tmp;
+            theta -= *atan++;
+        }
+    }
+
+    pt = v;
 }
 
 
@@ -267,57 +307,26 @@ void mathRotate(SwPoint& pt, SwFixed angle)
     auto shift = _normalize(v);
     auto theta = angle;
 
-    //Rotate inside [-PI/4, PI/4] sector
-    while (theta < -ANGLE_PI4) {
-        auto tmp = v.y;
-        v.y = -v.x;
-        v.x = tmp;
-        theta += ANGLE_PI2;
-    }
-
-    while (theta > ANGLE_PI4) {
-        auto tmp = -v.y;
-        v.y = v.x;
-        v.x = tmp;
-        theta -= ANGLE_PI2;
-    }
-
-    auto atan = ATAN_TBL;
-    uint32_t i;
-    SwFixed j;
-
-    for (i = 1, j = 1; i < ATAN_MAX; j <<= 1, ++i) {
-        if (theta < 0) {
-            auto tmp = v.x + ((v.y + j) >> i);
-            v.y = v.y - ((v.x + j) >> i);
-            v.x = tmp;
-            theta += *atan++;
-        }else {
-            auto tmp = v.x - ((v.y + j) >> i);
-            v.y = v.y + ((v.x + j) >> i);
-            v.x = tmp;
-            theta -= *atan++;
-        }
-    }
+    _rotate(v, theta);
 
     v.x = _downscale(v.x);
     v.y = _downscale(v.y);
 
     if (shift > 0) {
         auto half = static_cast<int32_t>(1L << (shift - 1));
-        v.x = (v.x + half + SATURATE(v.x)) >> shift;
-        v.y = (v.y + half + SATURATE(v.y)) >> shift;
+        pt.x = (v.x + half + SATURATE(v.x)) >> shift;
+        pt.y = (v.y + half + SATURATE(v.y)) >> shift;
     } else {
         shift = -shift;
-        v.x = static_cast<SwCoord>((unsigned long)v.x << shift);
-        v.y = static_cast<SwCoord>((unsigned long)v.y << shift);
+        pt.x = static_cast<SwCoord>((unsigned long)v.x << shift);
+        pt.y = static_cast<SwCoord>((unsigned long)v.y << shift);
     }
 }
 
 SwFixed mathTan(SwFixed angle)
 {
     SwPoint v = {CORDIC_FACTOR >> 8, 0};
-    mathRotate(v, angle);
+    _rotate(v, angle);
     return mathDivide(v.y, v.x);
 }
 
@@ -343,7 +352,7 @@ SwFixed mathSin(SwFixed angle)
 SwFixed mathCos(SwFixed angle)
 {
     SwPoint v = {CORDIC_FACTOR >> 8, 0};
-    mathRotate(v, angle);
+    _rotate(v, angle);
     return (v.x + 0x80L) >> 8;
 }
 
