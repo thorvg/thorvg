@@ -30,7 +30,7 @@ struct ShapeFill
 
 struct ShapeStroke
 {
-    size_t width = 0;
+    float width = 0;
     size_t color[4] = {0, 0, 0, 0};
     size_t* dashPattern = nullptr;
     size_t dashCnt = 0;
@@ -153,7 +153,7 @@ struct Shape::Impl
         return 0;
     }
 
-    bool strokeWidth(size_t width)
+    bool strokeWidth(float width)
     {
         //TODO: Size Exception?
 

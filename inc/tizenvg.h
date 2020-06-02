@@ -141,7 +141,7 @@ public:
     int appendPath(const PathCommand* cmds, size_t cmdCnt, const Point* pts, size_t ptsCnt) noexcept;
 
     //Stroke
-    int stroke(size_t width) noexcept;
+    int stroke(float width) noexcept;
     int stroke(size_t r, size_t g, size_t b, size_t a) noexcept;
     int stroke(const size_t* dashPattern, size_t cnt) noexcept;
     int stroke(StrokeCap cap) noexcept;
@@ -161,7 +161,7 @@ public:
     int fill(size_t* r, size_t* g, size_t* b, size_t* a) const noexcept;
     int bounds(float* x, float* y, float* w, float* h) const noexcept override;
 
-    size_t strokeWidth() const noexcept;
+    float strokeWidth() const noexcept;
     int strokeColor(size_t* r, size_t* g, size_t* b, size_t* a) const noexcept;
     size_t strokeDash(const size_t** dashPattern) const noexcept;
     StrokeCap strokeCap() const noexcept;

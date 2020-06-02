@@ -280,7 +280,7 @@ int Shape::bounds(float* x, float* y, float* w, float* h) const noexcept
 }
 
 
-int Shape::stroke(size_t width) noexcept
+int Shape::stroke(float width) noexcept
 {
     auto impl = pImpl.get();
     assert(impl);
@@ -291,12 +291,12 @@ int Shape::stroke(size_t width) noexcept
 }
 
 
-size_t Shape::strokeWidth() const noexcept
+float Shape::strokeWidth() const noexcept
 {
     auto impl = pImpl.get();
     assert(impl);
 
-    if (!impl->stroke) return -1;
+    if (!impl->stroke) return 0;
     return impl->stroke->width;
 }
 
