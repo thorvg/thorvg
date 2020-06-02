@@ -295,7 +295,7 @@ int64_t mathMulDiv(int64_t a, int64_t b, int64_t c)
     }
     int64_t d = c > 0 ? (a * b + (c >> 1)) / c : 0x7FFFFFFFL;
 
-    return (s > 0 ? -d : d);
+    return (s > 0 ? d : -d);
 }
 
 

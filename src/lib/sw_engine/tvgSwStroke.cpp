@@ -134,7 +134,7 @@ static void _borderCubicTo(SwStrokeBorder* border, SwPoint& ctrl1, SwPoint& ctrl
 
 static void _borderArcTo(SwStrokeBorder* border, SwPoint& center, SwFixed radius, SwFixed angleStart, SwFixed angleDiff)
 {
-    constexpr auto ARC_CUBIC_ANGLE = ANGLE_PI / 2;
+    constexpr SwFixed ARC_CUBIC_ANGLE = ANGLE_PI / 2;
     SwPoint a = {radius, 0};
     mathRotate(a, angleStart);
     a += center;
