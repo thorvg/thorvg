@@ -93,29 +93,34 @@ void* SwRenderer::prepare(const Shape& shape, void* data, const RenderTransform*
 
     if (flags == RenderUpdateFlag::None) return sdata;
 
-    //invisible?
-    size_t a, sa;
-    shape.fill(nullptr, nullptr, nullptr, &a);
-    shape.strokeColor(nullptr, nullptr, nullptr, &sa);
-    if (a == 0 && sa == 0) return sdata;
-
     //TODO: Threading
 
     SwSize clip = {static_cast<SwCoord>(surface.w), static_cast<SwCoord>(surface.h)};
 
     //Shape
     if (flags & (RenderUpdateFlag::Path | RenderUpdateFlag::Transform)) {
-        shapeReset(*sdata);
-        if (!shapeGenOutline(shape, *sdata)) return sdata;
-        if (transform) shapeTransformOutline(shape, *sdata, *transform);
-        if (!shapeGenRle(shape, *sdata, clip)) return sdata;
+
+        size_t alpha = 0;
+        shape.fill(nullptr, nullptr, nullptr, &alpha);
+
+        if (alpha > 0) {
+            shapeReset(*sdata);
+            if (!shapeGenOutline(shape, *sdata)) return sdata;
+            if (transform) shapeTransformOutline(shape, *sdata, *transform);
+            if (!shapeGenRle(shape, *sdata, clip)) return sdata;
+        }
     }
 
     //Stroke
-    if (flags & RenderUpdateFlag::Stroke) {
-        shapeResetStroke(shape, *sdata);
-        if (shape.strokeWidth() > 0.01) {
-            if (!shapeGenStrokeRle(shape, *sdata, clip)) return sdata;
+    if (flags & (RenderUpdateFlag::Stroke | RenderUpdateFlag::Transform)) {
+
+        if (shape.strokeWidth() > 0.5) {
+            shapeResetStroke(shape, *sdata);
+            size_t alpha = 0;
+            shape.strokeColor(nullptr, nullptr, nullptr, &alpha);
+            if (alpha > 0) {
+                if (!shapeGenStrokeRle(shape, *sdata, clip)) return sdata;
+            }
         }
     }
 

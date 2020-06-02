@@ -27,6 +27,8 @@ void tvgtest()
 
     //fill property will be retained
     shape->fill(127, 255, 255, 255);
+    shape->stroke(0, 0, 255, 255);
+    shape->stroke(1);
 
     canvas->push(move(shape));
 
@@ -44,6 +46,7 @@ void transit_cb(Elm_Transit_Effect *effect, Elm_Transit* transit, double progres
     pShape->reset();    //reset path
 
     pShape->appendRect(-100 + (800 * progress), -100 + (800 * progress), 200, 200, (100 * progress));
+    pShape->stroke(30 * progress);
 
     //Update shape for drawing (this may work asynchronously)
     canvas->update(pShape);
