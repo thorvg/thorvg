@@ -672,6 +672,7 @@ SwRleData* rleRender(const SwOutline* outline, const SwBBox& bbox, const SwSize&
     rw.cellMax = bbox.max;
     rw.cellXCnt = rw.cellMax.x - rw.cellMin.x;
     rw.cellYCnt = rw.cellMax.y - rw.cellMin.y;
+    rw.ySpan = 0;
     rw.outline = const_cast<SwOutline*>(outline);
     rw.bandSize = rw.bufferSize / (sizeof(Cell) * 8);  //bandSize: 64
     rw.bandShoot = 0;
