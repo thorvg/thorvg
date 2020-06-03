@@ -245,6 +245,8 @@ void shapeTransformOutline(const Shape& shape, SwShape& sdata, const RenderTrans
 
 bool shapeGenRle(const Shape& shape, SwShape& sdata, const SwSize& clip)
 {
+    /* OPTIMIZE ME: We may avoid this bounding box calculation in this stage
+       if this shape has stroke and stroke bbox can be used here... */
     if (!_updateBBox(sdata.outline, sdata.bbox)) goto end;
     if (!_checkValid(sdata, clip)) goto end;
 
