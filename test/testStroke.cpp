@@ -14,9 +14,6 @@ void tvgtest()
     //Initialize TizenVG Engine
     tvg::Engine::init();
 
-    //Initialize TizenVG Engine
-    tvg::Engine::init();
-
     //Create a Canvas
     auto canvas = tvg::SwCanvas::gen();
     canvas->target(buffer, WIDTH, WIDTH, HEIGHT);
