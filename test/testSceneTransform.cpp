@@ -13,9 +13,6 @@ tvg::Scene* pScene2 = nullptr;
 
 void tvgtest()
 {
-    //Initialize TizenVG Engine
-    tvg::Engine::init();
-
     //Create a Canvas
     canvas = tvg::SwCanvas::gen();
     canvas->target(buffer, WIDTH, WIDTH, HEIGHT);
@@ -96,9 +93,6 @@ void tvgtest()
 
     canvas->draw();
     canvas->sync();
-
-    //Terminate TizenVG Engine
-    tvg::Engine::term();
 }
 
 void transit_cb(Elm_Transit_Effect *effect, Elm_Transit* transit, double progress)
