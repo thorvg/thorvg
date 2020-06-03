@@ -36,8 +36,8 @@ struct ShapePath
 
     ~ShapePath()
     {
-        if (cmds) delete(cmds);
-        if (pts) delete(pts);
+        if (cmds) free(cmds);
+        if (pts) free(pts);
     }
 
     void reserveCmd(size_t cmdCnt)

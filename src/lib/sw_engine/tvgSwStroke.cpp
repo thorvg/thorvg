@@ -838,6 +838,7 @@ void strokeReset(SwStroke& stroke, float width, StrokeCap cap, StrokeJoin join)
     stroke.borders[1].valid = false;
 }
 
+
 bool strokeParseOutline(SwStroke& stroke, SwOutline& outline)
 {
     uint32_t first = 0;
