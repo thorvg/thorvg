@@ -11,3 +11,4 @@ all:
 	gcc -o testTransform testTransform.cpp -g -lstdc++ `pkg-config --cflags --libs elementary tizenvg`
 	gcc -o testSceneTransform testSceneTransform.cpp -g -lstdc++ `pkg-config --cflags --libs elementary tizenvg`
 	gcc -o testStroke testStroke.cpp -g -lstdc++ `pkg-config --cflags --libs elementary tizenvg`
+	gcc -o testStrokeLine testStrokeLine.cpp -g -lstdc++ `pkg-config --cflags --libs elementary tizenvg`

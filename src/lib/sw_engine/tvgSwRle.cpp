@@ -612,7 +612,7 @@ static bool _decomposeOutline(RleWorker& rw)
                 goto close;
             }
         }
-        _lineTo(rw, UPSCALE(outline->pts[first]));
+        _lineTo(rw, start);
     close:
        first = last + 1;
     }

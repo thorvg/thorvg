@@ -635,15 +635,14 @@ static void _addReverseLeft(SwStroke& stroke, bool opened)
         } else {
             //switch begin/end tags if necessary
             auto ttag = dstTag[0] & (SW_STROKE_TAG_BEGIN | SW_STROKE_TAG_END);
-            if (ttag == (SW_STROKE_TAG_BEGIN || SW_STROKE_TAG_END)) {
-                dstTag[0] ^= (SW_STROKE_TAG_BEGIN || SW_STROKE_TAG_END);
-            }
+            if (ttag == SW_STROKE_TAG_BEGIN || ttag == SW_STROKE_TAG_END)
+              dstTag[0] ^= (SW_STROKE_TAG_BEGIN | SW_STROKE_TAG_END);
         }
 
         --srcPt;
         --srcTag;
-        --dstPt;
-        --dstTag;
+        ++dstPt;
+        ++dstTag;
     }
 
     left->ptsCnt = left->start;

@@ -316,6 +316,7 @@ bool shapeGenOutline(const Shape& shape, SwShape& sdata)
     auto outline = sdata.outline;
     if (!outline) outline = static_cast<SwOutline*>(calloc(1, sizeof(SwOutline)));
     assert(outline);
+    outline->opened = true;
 
     _growOutlinePoint(*outline, outlinePtsCnt);
     _growOutlineContour(*outline, outlineCntrsCnt);
