@@ -125,7 +125,8 @@ struct SwStroke
     SwFixed angleOut;
     SwPoint center;
     SwFixed lineLength;
-    SwPoint subPathStart;
+    SwFixed subPathAngle;
+    SwPoint ptStartSubPath;
     SwFixed subPathLineLength;
     SwFixed width;
 
@@ -136,9 +137,20 @@ struct SwStroke
     SwStrokeBorder borders[2];
 
     bool firstPt;
-    bool subPathOpen;
-    bool subPathAngle;
+    bool openSubPath;
     bool handleWideStrokes;
+};
+
+struct SwDashStroke
+{
+    SwOutline* outline;
+    int32_t curLen;
+    int32_t curIdx;
+    Point ptStart;
+    Point ptCur;
+    float* pattern;
+    size_t cnt;
+    bool curOpGap;
 };
 
 struct SwShape
@@ -183,18 +195,16 @@ SwFixed mathLength(SwPoint& pt);
 bool mathSmallCubic(SwPoint* base, SwFixed& angleIn, SwFixed& angleMid, SwFixed& angleOut);
 SwFixed mathMean(SwFixed angle1, SwFixed angle2);
 
-void shapeReset(SwShape& sdata);
-bool shapeGenOutline(const Shape& shape, SwShape& sdata);
-bool shapeGenRle(const Shape& shape, SwShape& sdata, const SwSize& clip);
-void shapeDelOutline(SwShape& sdata);
-void shapeResetStroke(const Shape& shape, SwShape& sdata);
-bool shapeGenStrokeOutline(const Shape& shape, SwShape& sdata);
-bool shapeGenStrokeRle(const Shape& shape, SwShape& sdata, const SwSize& clip);
-void shapeTransformOutline(const Shape& shape, SwShape& sdata, const RenderTransform& transform);
-void shapeFree(SwShape* sdata);
+void shapeReset(SwShape& shape);
+bool shapeGenOutline(SwShape& shape, const Shape& sdata);
+bool shapeGenRle(SwShape& shape, const Shape& sdata, const SwSize& clip, const RenderTransform* transform);
+void shapeDelOutline(SwShape& shape);
+void shapeResetStroke(SwShape& shape, const Shape& sdata);
+bool shapeGenStrokeRle(SwShape& shape, const Shape& sdata, const SwSize& clip);
+void shapeFree(SwShape* shape);
 
-void strokeReset(SwStroke& stroke, float width, StrokeCap cap, StrokeJoin join);
-bool strokeParseOutline(SwStroke& stroke, SwOutline& outline);
+void strokeReset(SwStroke& stroke, const Shape& shape);
+bool strokeParseOutline(SwStroke& stroke, const SwOutline& outline);
 SwOutline* strokeExportOutline(SwStroke& stroke);
 void strokeFree(SwStroke* stroke);
 

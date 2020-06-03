@@ -328,7 +328,7 @@ int Shape::strokeColor(uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a) const noe
 }
 
 
-int Shape::stroke(const size_t* dashPattern, size_t cnt) noexcept
+int Shape::stroke(const float* dashPattern, size_t cnt) noexcept
 {
     if (cnt < 2 || !dashPattern) return -1;
 
@@ -341,7 +341,7 @@ int Shape::stroke(const size_t* dashPattern, size_t cnt) noexcept
 }
 
 
-size_t Shape::strokeDash(const size_t** dashPattern) const noexcept
+size_t Shape::strokeDash(const float** dashPattern) const noexcept
 {
     auto impl = pImpl.get();
     assert(impl);

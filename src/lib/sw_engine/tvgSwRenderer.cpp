@@ -82,16 +82,16 @@ bool SwRenderer::dispose(const Shape& shape, void *data)
     return true;
 }
 
-void* SwRenderer::prepare(const Shape& shape, void* data, const RenderTransform* transform, RenderUpdateFlag flags)
+void* SwRenderer::prepare(const Shape& sdata, void* data, const RenderTransform* transform, RenderUpdateFlag flags)
 {
     //prepare shape data
-    SwShape* sdata = static_cast<SwShape*>(data);
-    if (!sdata) {
-        sdata = static_cast<SwShape*>(calloc(1, sizeof(SwShape)));
-        assert(sdata);
+    auto shape = static_cast<SwShape*>(data);
+    if (!shape) {
+        shape = static_cast<SwShape*>(calloc(1, sizeof(SwShape)));
+        assert(shape);
     }
 
-    if (flags == RenderUpdateFlag::None) return sdata;
+    if (flags == RenderUpdateFlag::None) return shape;
 
     //TODO: Threading
 
@@ -99,34 +99,29 @@ void* SwRenderer::prepare(const Shape& shape, void* data, const RenderTransform*
 
     //Shape
     if (flags & (RenderUpdateFlag::Path | RenderUpdateFlag::Transform)) {
-
+        shapeReset(*shape);
         uint8_t alpha = 0;
-        shape.fill(nullptr, nullptr, nullptr, &alpha);
-
+        sdata.fill(nullptr, nullptr, nullptr, &alpha);
         if (alpha > 0) {
-            shapeReset(*sdata);
-            if (!shapeGenOutline(shape, *sdata)) return sdata;
-            if (transform) shapeTransformOutline(shape, *sdata, *transform);
-            if (!shapeGenRle(shape, *sdata, clip)) return sdata;
+            if (!shapeGenRle(*shape, sdata, clip, transform)) return shape;
         }
     }
 
     //Stroke
     if (flags & (RenderUpdateFlag::Stroke | RenderUpdateFlag::Transform)) {
-
-        if (shape.strokeWidth() > 0.5) {
-            shapeResetStroke(shape, *sdata);
+        if (sdata.strokeWidth() > 0.5) {
+            shapeResetStroke(*shape, sdata);
             uint8_t alpha = 0;
-            shape.strokeColor(nullptr, nullptr, nullptr, &alpha);
+            sdata.strokeColor(nullptr, nullptr, nullptr, &alpha);
             if (alpha > 0) {
-                if (!shapeGenStrokeRle(shape, *sdata, clip)) return sdata;
+                if (!shapeGenStrokeRle(*shape, sdata, clip)) return shape;
             }
         }
     }
 
-    shapeDelOutline(*sdata);
+    shapeDelOutline(*shape);
 
-    return sdata;
+    return shape;
 }
 
 

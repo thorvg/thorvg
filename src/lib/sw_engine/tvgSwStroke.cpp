@@ -351,7 +351,7 @@ void _processCorner(SwStroke& stroke, SwFixed lineLength)
 }
 
 
-void _subPathStart(SwStroke& stroke, SwFixed startAngle, SwFixed lineLength)
+void _firstSubPath(SwStroke& stroke, SwFixed startAngle, SwFixed lineLength)
 {
     SwPoint delta = {stroke.width, 0};
     mathRotate(delta, startAngle + ANGLE_PI2);
@@ -390,7 +390,7 @@ static void _lineTo(SwStroke& stroke, const SwPoint& to)
     if (stroke.firstPt) {
         /* This is the first segment of a subpath. We need to add a point to each border
         at their respective starting point locations. */
-        _subPathStart(stroke, angle, lineLength);
+        _firstSubPath(stroke, angle, lineLength);
     } else {
         //process the current corner
         stroke.angleOut = angle;
@@ -455,7 +455,7 @@ static void _cubicTo(SwStroke& stroke, const SwPoint& ctrl1, const SwPoint& ctrl
             firstArc = false;
             //process corner if necessary
             if (stroke.firstPt) {
-                _subPathStart(stroke, angleIn, 0);
+                _firstSubPath(stroke, angleIn, 0);
             } else {
                 stroke.angleOut = angleIn;
                 _processCorner(stroke, 0);
@@ -566,7 +566,6 @@ static void _addCap(SwStroke& stroke, SwFixed angle, int32_t side)
 
         SwPoint delta2 = {stroke.width, 0};
         mathRotate(delta2, angle + rotate);
-
         delta += stroke.center + delta2;
 
         _borderLineTo(border, delta, false);
@@ -660,26 +659,26 @@ static void _beginSubPath(SwStroke& stroke, SwPoint& to, bool opened)
 
     stroke.firstPt = true;
     stroke.center = to;
-    stroke.subPathOpen = opened;
+    stroke.openSubPath = opened;
 
     /* Determine if we need to check whether the border radius is greater
        than the radius of curvature of a curve, to handle this case specially.
        This is only required if bevel joins or butt caps may be created because
        round & miter joins and round & square caps cover the nagative sector
        created with wide strokes. */
-    if ((stroke.join != StrokeJoin::Round) || (stroke.subPathOpen && stroke.cap == StrokeCap::Butt))
+    if ((stroke.join != StrokeJoin::Round) || (stroke.openSubPath && stroke.cap == StrokeCap::Butt))
         stroke.handleWideStrokes = true;
     else
         stroke.handleWideStrokes = false;
 
-    stroke.subPathStart = to;
+    stroke.ptStartSubPath = to;
     stroke.angleIn = 0;
 }
 
 
 static void _endSubPath(SwStroke& stroke)
 {
-    if (stroke.subPathOpen) {
+    if (stroke.openSubPath) {
         auto right = stroke.borders;
         assert(right);
 
@@ -692,7 +691,7 @@ static void _endSubPath(SwStroke& stroke)
         _addReverseLeft(stroke, true);
 
         //now add the final cap
-        stroke.center = stroke.subPathStart;
+        stroke.center = stroke.ptStartSubPath;
         _addCap(stroke, stroke.subPathAngle + ANGLE_PI, 0);
 
         /* now end the right subpath accordingly. The left one is rewind
@@ -701,8 +700,8 @@ static void _endSubPath(SwStroke& stroke)
     } else {
 
         //close the path if needed
-        if (stroke.center != stroke.subPathStart)
-            _lineTo(stroke, stroke.subPathStart);
+        if (stroke.center != stroke.ptStartSubPath)
+            _lineTo(stroke, stroke.ptStartSubPath);
 
         //process the corner
         stroke.angleOut = stroke.subPathAngle;
@@ -792,7 +791,6 @@ static void _exportBorderOutline(SwStroke& stroke, SwOutline* outline, uint32_t 
             ++cntrs;
             ++outline->cntrsCnt;
         }
-
         ++src;
         ++tags;
         ++idx;
@@ -820,13 +818,13 @@ void strokeFree(SwStroke* stroke)
 }
 
 
-void strokeReset(SwStroke& stroke, float width, StrokeCap cap, StrokeJoin join)
+void strokeReset(SwStroke& stroke, const Shape& shape)
 {
-    stroke.width = TO_SWCOORD(width * 0.5);
-    stroke.cap = cap;
+    stroke.width = TO_SWCOORD(shape.strokeWidth() * 0.5);
+    stroke.cap = shape.strokeCap();
 
     //Save line join: it can be temporarily changed when stroking curves...
-    stroke.joinSaved = stroke.join = join;
+    stroke.joinSaved = stroke.join = shape.strokeJoin();
 
     stroke.borders[0].ptsCnt = 0;
     stroke.borders[0].start = -1;
@@ -838,7 +836,7 @@ void strokeReset(SwStroke& stroke, float width, StrokeCap cap, StrokeJoin join)
 }
 
 
-bool strokeParseOutline(SwStroke& stroke, SwOutline& outline)
+bool strokeParseOutline(SwStroke& stroke, const SwOutline& outline)
 {
     uint32_t first = 0;
 
@@ -925,6 +923,5 @@ SwOutline* strokeExportOutline(SwStroke& stroke)
 
     return outline;
 }
-
 
 #endif /* _TVG_SW_STROKER_H_ */

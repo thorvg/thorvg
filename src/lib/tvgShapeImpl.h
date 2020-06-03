@@ -32,7 +32,7 @@ struct ShapeStroke
 {
     float width = 0;
     uint8_t color[4] = {0, 0, 0, 0};
-    size_t* dashPattern = nullptr;
+    float* dashPattern = nullptr;
     size_t dashCnt = 0;
     StrokeCap cap = StrokeCap::Square;
     StrokeJoin join = StrokeJoin::Bevel;
@@ -203,7 +203,7 @@ struct Shape::Impl
         return 0;
     }
 
-    bool strokeDash(const size_t* pattern, size_t cnt)
+    bool strokeDash(const float* pattern, size_t cnt)
     {
         assert(pattern);
 
@@ -215,12 +215,13 @@ struct Shape::Impl
             stroke->dashPattern = nullptr;
         }
 
-        if (!stroke->dashPattern) stroke->dashPattern = static_cast<size_t*>(malloc(sizeof(size_t) * cnt));
+        if (!stroke->dashPattern) stroke->dashPattern = static_cast<float*>(malloc(sizeof(float) * cnt));
         assert(stroke->dashPattern);
 
-        memcpy(stroke->dashPattern, pattern, cnt);
-        stroke->dashCnt = cnt;
+        for (size_t i = 0; i < cnt; ++i)
+            stroke->dashPattern[i] = pattern[i];
 
+        stroke->dashCnt = cnt;
         flag |= RenderUpdateFlag::Stroke;
 
         return 0;

@@ -17,6 +17,7 @@ void tvgtest()
     auto canvas = tvg::SwCanvas::gen();
     canvas->target(buffer, WIDTH, WIDTH, HEIGHT);
 
+    //Test for Stroke Width
     for (int i = 0; i < 10; ++i) {
         auto shape = tvg::Shape::gen();
         shape->moveTo(50, 50 + (25 * i));
@@ -27,6 +28,8 @@ void tvgtest()
         canvas->push(move(shape));
     }
 
+
+    //Test for StrokeJoin & StrokeCap
     auto shape1 = tvg::Shape::gen();
     shape1->moveTo(20, 350);
     shape1->lineTo(250, 350);
@@ -62,6 +65,52 @@ void tvgtest()
     shape3->stroke(tvg::StrokeJoin::Miter);
     shape3->stroke(tvg::StrokeCap::Butt);
     canvas->push(move(shape3));
+
+    //Test for Stroke Dash
+    auto shape4 = tvg::Shape::gen();
+    shape4->moveTo(20, 600);
+    shape4->lineTo(250, 600);
+    shape4->lineTo(220, 750);
+    shape4->lineTo(70, 720);
+    shape4->lineTo(70, 580);
+    shape4->stroke(255, 0, 0, 255);
+    shape4->stroke(5);
+    shape4->stroke(tvg::StrokeJoin::Round);
+    shape4->stroke(tvg::StrokeCap::Round);
+
+    float dashPattern1[2] = {10, 10};
+    shape4->stroke(dashPattern1, 2);
+    canvas->push(move(shape4));
+
+    auto shape5 = tvg::Shape::gen();
+    shape5->moveTo(270, 600);
+    shape5->lineTo(500, 600);
+    shape5->lineTo(470, 750);
+    shape5->lineTo(320, 720);
+    shape5->lineTo(320, 580);
+    shape5->stroke(255, 255, 0, 255);
+    shape5->stroke(5);
+    shape5->stroke(tvg::StrokeJoin::Bevel);
+    shape5->stroke(tvg::StrokeCap::Butt);
+
+    float dashPattern2[4] = {10, 10};
+    shape5->stroke(dashPattern2, 4);
+    canvas->push(move(shape5));
+
+    auto shape6 = tvg::Shape::gen();
+    shape6->moveTo(520, 600);
+    shape6->lineTo(750, 600);
+    shape6->lineTo(720, 750);
+    shape6->lineTo(570, 720);
+    shape6->lineTo(570, 580);
+    shape6->stroke(255, 255, 255, 255);
+    shape6->stroke(5);
+    shape6->stroke(tvg::StrokeJoin::Miter);
+    shape6->stroke(tvg::StrokeCap::Square);
+
+    float dashPattern3[2] = {10, 10};
+    shape6->stroke(dashPattern3, 2);
+    canvas->push(move(shape6));
 
     canvas->draw();
     canvas->sync();

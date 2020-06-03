@@ -143,7 +143,7 @@ public:
     //Stroke
     int stroke(float width) noexcept;
     int stroke(uint8_t r, uint8_t g, uint8_t b, uint8_t a) noexcept;
-    int stroke(const size_t* dashPattern, size_t cnt) noexcept;
+    int stroke(const float* dashPattern, size_t cnt) noexcept;
     int stroke(StrokeCap cap) noexcept;
     int stroke(StrokeJoin join) noexcept;
 
@@ -163,7 +163,7 @@ public:
 
     float strokeWidth() const noexcept;
     int strokeColor(uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a) const noexcept;
-    size_t strokeDash(const size_t** dashPattern) const noexcept;
+    size_t strokeDash(const float** dashPattern) const noexcept;
     StrokeCap strokeCap() const noexcept;
     StrokeJoin strokeJoin() const noexcept;
 

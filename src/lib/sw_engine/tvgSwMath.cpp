@@ -140,20 +140,21 @@ static void _polarize(SwPoint& pt)
 
 static void _rotate(SwPoint& pt, SwFixed theta)
 {
-    auto v = pt;
+    SwFixed x = pt.x;
+    SwFixed y = pt.y;
 
     //Rotate inside [-PI/4, PI/4] sector
     while (theta < -ANGLE_PI4) {
-        auto tmp = v.y;
-        v.y = -v.x;
-        v.x = tmp;
+        auto tmp = y;
+        y = -x;
+        x = tmp;
         theta += ANGLE_PI2;
     }
 
     while (theta > ANGLE_PI4) {
-        auto tmp = -v.y;
-        v.y = v.x;
-        v.x = tmp;
+        auto tmp = -y;
+        y = x;
+        x = tmp;
         theta -= ANGLE_PI2;
     }
 
@@ -163,19 +164,19 @@ static void _rotate(SwPoint& pt, SwFixed theta)
 
     for (i = 1, j = 1; i < ATAN_MAX; j <<= 1, ++i) {
         if (theta < 0) {
-            auto tmp = v.x + ((v.y + j) >> i);
-            v.y = v.y - ((v.x + j) >> i);
-            v.x = tmp;
+            auto tmp = x + ((y + j) >> i);
+            y = y - ((x + j) >> i);
+            x = tmp;
             theta += *atan++;
         }else {
-            auto tmp = v.x - ((v.y + j) >> i);
-            v.y = v.y + ((v.x + j) >> i);
-            v.x = tmp;
+            auto tmp = x - ((y + j) >> i);
+            y = y + ((x + j) >> i);
+            x = tmp;
             theta -= *atan++;
         }
     }
 
-    pt = v;
+    pt = {x, y};
 }
 
 
@@ -305,9 +306,9 @@ void mathRotate(SwPoint& pt, SwFixed angle)
 
     auto v  = pt;
     auto shift = _normalize(v);
-    auto theta = angle;
 
-    _rotate(v, theta);
+    auto theta = angle;
+   _rotate(v, theta);
 
     v.x = _downscale(v.x);
     v.y = _downscale(v.y);
