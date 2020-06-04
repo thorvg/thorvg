@@ -142,13 +142,13 @@ public:
 
     //Stroke
     int stroke(float width) noexcept;
-    int stroke(size_t r, size_t g, size_t b, size_t a) noexcept;
+    int stroke(uint8_t r, uint8_t g, uint8_t b, uint8_t a) noexcept;
     int stroke(const size_t* dashPattern, size_t cnt) noexcept;
     int stroke(StrokeCap cap) noexcept;
     int stroke(StrokeJoin join) noexcept;
 
     //Fill
-    int fill(size_t r, size_t g, size_t b, size_t a) noexcept;
+    int fill(uint8_t r, uint8_t g, uint8_t b, uint8_t a) noexcept;
 
     //Transform
     int rotate(float degree) noexcept override;
@@ -158,11 +158,11 @@ public:
     //Getters
     size_t pathCommands(const PathCommand** cmds) const noexcept;
     size_t pathCoords(const Point** pts) const noexcept;
-    int fill(size_t* r, size_t* g, size_t* b, size_t* a) const noexcept;
+    int fill(uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a) const noexcept;
     int bounds(float* x, float* y, float* w, float* h) const noexcept override;
 
     float strokeWidth() const noexcept;
-    int strokeColor(size_t* r, size_t* g, size_t* b, size_t* a) const noexcept;
+    int strokeColor(uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a) const noexcept;
     size_t strokeDash(const size_t** dashPattern) const noexcept;
     StrokeCap strokeCap() const noexcept;
     StrokeJoin strokeJoin() const noexcept;

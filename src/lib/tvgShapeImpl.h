@@ -31,7 +31,7 @@ struct ShapeFill
 struct ShapeStroke
 {
     float width = 0;
-    size_t color[4] = {0, 0, 0, 0};
+    uint8_t color[4] = {0, 0, 0, 0};
     size_t* dashPattern = nullptr;
     size_t dashCnt = 0;
     StrokeCap cap = StrokeCap::Square;
@@ -188,7 +188,7 @@ struct Shape::Impl
         return 0;
     }
 
-    bool strokeColor(size_t r, size_t g, size_t b, size_t a)
+    bool strokeColor(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
     {
         if (!stroke) stroke = new ShapeStroke();
         assert(stroke);

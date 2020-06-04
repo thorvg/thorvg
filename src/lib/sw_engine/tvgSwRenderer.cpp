@@ -62,7 +62,7 @@ bool SwRenderer::render(const Shape& shape, void *data)
     SwShape* sdata = static_cast<SwShape*>(data);
     if (!sdata) return false;
 
-    size_t r, g, b, a;
+    uint8_t r, g, b, a;
 
     shape.fill(&r, &g, &b, &a);
     if (a > 0) rasterShape(surface, *sdata, r, g, b, a);
@@ -100,7 +100,7 @@ void* SwRenderer::prepare(const Shape& shape, void* data, const RenderTransform*
     //Shape
     if (flags & (RenderUpdateFlag::Path | RenderUpdateFlag::Transform)) {
 
-        size_t alpha = 0;
+        uint8_t alpha = 0;
         shape.fill(nullptr, nullptr, nullptr, &alpha);
 
         if (alpha > 0) {
@@ -116,7 +116,7 @@ void* SwRenderer::prepare(const Shape& shape, void* data, const RenderTransform*
 
         if (shape.strokeWidth() > 0.5) {
             shapeResetStroke(shape, *sdata);
-            size_t alpha = 0;
+            uint8_t alpha = 0;
             shape.strokeColor(nullptr, nullptr, nullptr, &alpha);
             if (alpha > 0) {
                 if (!shapeGenStrokeRle(shape, *sdata, clip)) return sdata;

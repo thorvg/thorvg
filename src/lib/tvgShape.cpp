@@ -213,7 +213,7 @@ int Shape::appendRect(float x, float y, float w, float h, float cornerRadius) no
 }
 
 
-int Shape::fill(size_t r, size_t g, size_t b, size_t a) noexcept
+int Shape::fill(uint8_t r, uint8_t g, uint8_t b, uint8_t a) noexcept
 {
     auto impl = pImpl.get();
     assert(impl);
@@ -228,7 +228,7 @@ int Shape::fill(size_t r, size_t g, size_t b, size_t a) noexcept
 }
 
 
-int Shape::fill(size_t* r, size_t* g, size_t* b, size_t* a) const noexcept
+int Shape::fill(uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a) const noexcept
 {
     auto impl = pImpl.get();
     assert(impl);
@@ -301,7 +301,7 @@ float Shape::strokeWidth() const noexcept
 }
 
 
-int Shape::stroke(size_t r, size_t g, size_t b, size_t a) noexcept
+int Shape::stroke(uint8_t r, uint8_t g, uint8_t b, uint8_t a) noexcept
 {
     auto impl = pImpl.get();
     assert(impl);
@@ -312,7 +312,7 @@ int Shape::stroke(size_t r, size_t g, size_t b, size_t a) noexcept
 }
 
 
-int Shape::strokeColor(size_t* r, size_t* g, size_t* b, size_t* a) const noexcept
+int Shape::strokeColor(uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a) const noexcept
 {
     auto impl = pImpl.get();
     assert(impl);
