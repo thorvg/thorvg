@@ -633,7 +633,7 @@ static bool _genRle(RleWorker& rw)
         ret = _decomposeOutline(rw);
         if (!rw.invalid) _recordCell(rw);
     } else {
-        cout <<  "Memory Overflow" << endl;
+        cout <<  "Lack of Cell Memory" << endl;
     }
     return ret;
 }
@@ -647,7 +647,7 @@ static bool _genRle(RleWorker& rw)
 SwRleData* rleRender(const SwOutline* outline, const SwBBox& bbox, const SwSize& clip)
 {
     //Please adjust when you out of cell memory (default: 16384L)
-    constexpr auto RENDER_POOL_SIZE = 166641L;
+    constexpr auto RENDER_POOL_SIZE = 163840L * 2;
     constexpr auto BAND_SIZE = 40;
 
     assert(outline);
