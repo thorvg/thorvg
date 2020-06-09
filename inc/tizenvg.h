@@ -19,23 +19,23 @@
 
 #include <memory>
 
-#ifdef TIZENVG_BUILD
-    #define TIZENVG_EXPORT __attribute__ ((visibility ("default")))
+#ifdef TVG_BUILD
+    #define TVG_EXPORT __attribute__ ((visibility ("default")))
 #else
-    #define TIZENVG_EXPORT
+    #define TVG_EXPORT
 #endif
 
 #ifdef  LOG_TAG
 #undef  LOG_TAG
 #endif
-#define LOG_TAG "TIZENVG"
+#define LOG_TAG "TVG"
 
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#define _TIZENVG_DECLARE_PRIVATE(A) \
+#define _TVG_DECLARE_PRIVATE(A) \
 protected: \
     struct Impl; \
     std::unique_ptr<Impl> pImpl; \
@@ -43,14 +43,14 @@ protected: \
     const A& operator=(const A&) = delete; \
     A()
 
-#define _TIZENVG_DECLARE_ACCESSOR(A) \
+#define _TVG_DECLARE_ACCESSOR(A) \
     friend A
 
-#define _TIZENVG_DISABLE_CTOR(A) \
+#define _TVG_DISABLE_CTOR(A) \
     A() = delete; \
     ~A() = delete
 
-#define _TIZENVG_IDENTIFIER(A) \
+#define _TVG_DECALRE_IDENTIFIER(A) \
 protected: \
     unsigned A##_Id
 
@@ -62,10 +62,10 @@ class Scene;
 class Canvas;
 
 
-enum class TIZENVG_EXPORT Result { Success = 0, InvalidArguments, InsufficientCondition, FailedAllocation, MemoryCorruption, Unknown };
-enum class TIZENVG_EXPORT PathCommand { Close = 0, MoveTo, LineTo, CubicTo };
-enum class TIZENVG_EXPORT StrokeCap { Square = 0, Round, Butt };
-enum class TIZENVG_EXPORT StrokeJoin { Bevel = 0, Round, Miter };
+enum class TVG_EXPORT Result { Success = 0, InvalidArguments, InsufficientCondition, FailedAllocation, MemoryCorruption, Unknown };
+enum class TVG_EXPORT PathCommand { Close = 0, MoveTo, LineTo, CubicTo };
+enum class TVG_EXPORT StrokeCap { Square = 0, Round, Butt };
+enum class TVG_EXPORT StrokeJoin { Bevel = 0, Round, Miter };
 
 
 struct Point
@@ -82,7 +82,7 @@ struct Point
  * @brief description...
  *
  */
-class TIZENVG_EXPORT Paint
+class TVG_EXPORT Paint
 {
 public:
     virtual ~Paint() {}
@@ -93,9 +93,9 @@ public:
 
     virtual Result bounds(float* x, float* y, float* w, float* h) const = 0;
 
-    _TIZENVG_IDENTIFIER(Paint);
-    _TIZENVG_DECLARE_ACCESSOR(Scene);
-    _TIZENVG_DECLARE_ACCESSOR(Canvas);
+    _TVG_DECALRE_IDENTIFIER(Paint);
+    _TVG_DECLARE_ACCESSOR(Scene);
+    _TVG_DECLARE_ACCESSOR(Canvas);
 };
 
 
@@ -107,7 +107,7 @@ public:
  * @brief description...
  *
  */
-class TIZENVG_EXPORT Canvas
+class TVG_EXPORT Canvas
 {
 public:
     Canvas(RenderMethod*);
@@ -121,8 +121,8 @@ public:
     virtual Result draw(bool async = true) noexcept;
     virtual Result sync() = 0;
 
-    _TIZENVG_DECLARE_ACCESSOR(Scene);
-    _TIZENVG_DECLARE_PRIVATE(Canvas);
+    _TVG_DECLARE_ACCESSOR(Scene);
+    _TVG_DECLARE_PRIVATE(Canvas);
 };
 
 
@@ -134,7 +134,7 @@ public:
  * @brief description...
  *
  */
-class TIZENVG_EXPORT Shape final : public Paint
+class TVG_EXPORT Shape final : public Paint
 {
 public:
     ~Shape();
@@ -181,9 +181,9 @@ public:
 
     static std::unique_ptr<Shape> gen() noexcept;
 
-    _TIZENVG_DECLARE_ACCESSOR(Scene);
-    _TIZENVG_DECLARE_ACCESSOR(Canvas);
-    _TIZENVG_DECLARE_PRIVATE(Shape);
+    _TVG_DECLARE_ACCESSOR(Scene);
+    _TVG_DECLARE_ACCESSOR(Canvas);
+    _TVG_DECLARE_PRIVATE(Shape);
 };
 
 
@@ -195,7 +195,7 @@ public:
  * @brief description...
  *
  */
-class TIZENVG_EXPORT Scene final : public Paint
+class TVG_EXPORT Scene final : public Paint
 {
 public:
     ~Scene();
@@ -211,8 +211,8 @@ public:
 
     static std::unique_ptr<Scene> gen() noexcept;
 
-    _TIZENVG_DECLARE_PRIVATE(Scene);
-    _TIZENVG_DECLARE_ACCESSOR(Canvas);
+    _TVG_DECLARE_PRIVATE(Scene);
+    _TVG_DECLARE_ACCESSOR(Canvas);
 };
 
 
@@ -224,7 +224,7 @@ public:
   @brief description...
  *
  */
-class TIZENVG_EXPORT SwCanvas final : public Canvas
+class TVG_EXPORT SwCanvas final : public Canvas
 {
 public:
     ~SwCanvas();
@@ -233,7 +233,7 @@ public:
     Result sync() noexcept override;
     static std::unique_ptr<SwCanvas> gen() noexcept;
 
-    _TIZENVG_DECLARE_PRIVATE(SwCanvas);
+    _TVG_DECLARE_PRIVATE(SwCanvas);
 };
 
 
@@ -245,7 +245,7 @@ public:
  * @brief description...
  *
  */
-class TIZENVG_EXPORT GlCanvas final : public Canvas
+class TVG_EXPORT GlCanvas final : public Canvas
 {
 public:
     ~GlCanvas();
@@ -256,7 +256,7 @@ public:
     Result sync() noexcept override;
     static std::unique_ptr<GlCanvas> gen() noexcept;
 
-    _TIZENVG_DECLARE_PRIVATE(GlCanvas);
+    _TVG_DECLARE_PRIVATE(GlCanvas);
 };
 
 
@@ -268,7 +268,7 @@ public:
  * @brief description...
  *
  */
-class TIZENVG_EXPORT Engine final
+class TVG_EXPORT Engine final
 {
 public:
     /**
@@ -285,7 +285,7 @@ public:
     static Result init() noexcept;
     static Result term() noexcept;
 
-    _TIZENVG_DISABLE_CTOR(Engine);
+    _TVG_DISABLE_CTOR(Engine);
 };
 
 } //namespace
