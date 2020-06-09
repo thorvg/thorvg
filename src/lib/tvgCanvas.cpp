@@ -34,7 +34,7 @@ Canvas::~Canvas()
 }
 
 
-Result Canvas::reserve(size_t n) noexcept
+Result Canvas::reserve(uint32_t n) noexcept
 {
     auto impl = pImpl.get();
     if (!impl) return Result::MemoryCorruption;

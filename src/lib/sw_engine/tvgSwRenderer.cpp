@@ -45,7 +45,7 @@ bool SwRenderer::clear()
     return true;
 }
 
-bool SwRenderer::target(uint32_t* buffer, size_t stride, size_t w, size_t h)
+bool SwRenderer::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h)
 {
     if (!buffer || stride == 0 || w == 0 || h == 0) return false;
 
@@ -137,13 +137,13 @@ int SwRenderer::term()
 }
 
 
-size_t SwRenderer::unref()
+uint32_t SwRenderer::unref()
 {
     return RenderInitializer::unref(renderInit);
 }
 
 
-size_t SwRenderer::ref()
+uint32_t SwRenderer::ref()
 {
     return RenderInitializer::ref(renderInit);
 }

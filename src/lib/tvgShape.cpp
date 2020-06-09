@@ -59,7 +59,7 @@ Result Shape::reset() noexcept
 }
 
 
-size_t Shape::pathCommands(const PathCommand** cmds) const noexcept
+uint32_t Shape::pathCommands(const PathCommand** cmds) const noexcept
 {
     if (!cmds) return 0;
 
@@ -72,7 +72,7 @@ size_t Shape::pathCommands(const PathCommand** cmds) const noexcept
 }
 
 
-size_t Shape::pathCoords(const Point** pts) const noexcept
+uint32_t Shape::pathCoords(const Point** pts) const noexcept
 {
     if (!pts) return 0;
 
@@ -85,7 +85,7 @@ size_t Shape::pathCoords(const Point** pts) const noexcept
 }
 
 
-Result Shape::appendPath(const PathCommand *cmds, size_t cmdCnt, const Point* pts, size_t ptsCnt) noexcept
+Result Shape::appendPath(const PathCommand *cmds, uint32_t cmdCnt, const Point* pts, uint32_t ptsCnt) noexcept
 {
     if (cmdCnt < 0 || ptsCnt < 0 || !pts || !ptsCnt) return Result::InvalidArguments;
 
@@ -337,7 +337,7 @@ Result Shape::strokeColor(uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a) const 
 }
 
 
-Result Shape::stroke(const float* dashPattern, size_t cnt) noexcept
+Result Shape::stroke(const float* dashPattern, uint32_t cnt) noexcept
 {
     if (cnt < 2 || !dashPattern) return Result::InvalidArguments;
 
@@ -350,7 +350,7 @@ Result Shape::stroke(const float* dashPattern, size_t cnt) noexcept
 }
 
 
-size_t Shape::strokeDash(const float** dashPattern) const noexcept
+uint32_t Shape::strokeDash(const float** dashPattern) const noexcept
 {
     auto impl = pImpl.get();
     assert(impl);

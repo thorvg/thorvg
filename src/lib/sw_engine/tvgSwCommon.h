@@ -149,7 +149,7 @@ struct SwDashStroke
     Point ptStart;
     Point ptCur;
     float* pattern;
-    size_t cnt;
+    uint32_t cnt;
     bool curOpGap;
 };
 

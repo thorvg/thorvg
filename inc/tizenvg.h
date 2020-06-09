@@ -102,7 +102,7 @@ public:
     Canvas(RenderMethod*);
     virtual ~Canvas();
 
-    Result reserve(size_t n) noexcept;
+    Result reserve(uint32_t n) noexcept;
     virtual Result push(std::unique_ptr<Paint> paint) noexcept;
     virtual Result clear() noexcept;
     virtual Result update() noexcept;
@@ -139,12 +139,12 @@ public:
     //Shape
     Result appendRect(float x, float y, float w, float h, float cornerRadius) noexcept;
     Result appendCircle(float cx, float cy, float radiusW, float radiusH) noexcept;
-    Result appendPath(const PathCommand* cmds, size_t cmdCnt, const Point* pts, size_t ptsCnt) noexcept;
+    Result appendPath(const PathCommand* cmds, uint32_t cmdCnt, const Point* pts, uint32_t ptsCnt) noexcept;
 
     //Stroke
     Result stroke(float width) noexcept;
     Result stroke(uint8_t r, uint8_t g, uint8_t b, uint8_t a) noexcept;
-    Result stroke(const float* dashPattern, size_t cnt) noexcept;
+    Result stroke(const float* dashPattern, uint32_t cnt) noexcept;
     Result stroke(StrokeCap cap) noexcept;
     Result stroke(StrokeJoin join) noexcept;
 
@@ -157,14 +157,14 @@ public:
     Result translate(float x, float y) noexcept override;
 
     //Getters
-    size_t pathCommands(const PathCommand** cmds) const noexcept;
-    size_t pathCoords(const Point** pts) const noexcept;
+    uint32_t pathCommands(const PathCommand** cmds) const noexcept;
+    uint32_t pathCoords(const Point** pts) const noexcept;
     Result fill(uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a) const noexcept;
     Result bounds(float* x, float* y, float* w, float* h) const noexcept override;
 
     float strokeWidth() const noexcept;
     Result strokeColor(uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a) const noexcept;
-    size_t strokeDash(const float** dashPattern) const noexcept;
+    uint32_t strokeDash(const float** dashPattern) const noexcept;
     StrokeCap strokeCap() const noexcept;
     StrokeJoin strokeJoin() const noexcept;
 
@@ -190,7 +190,7 @@ public:
     ~Scene();
 
     Result push(std::unique_ptr<Paint> shape) noexcept;
-    Result reserve(size_t size) noexcept;
+    Result reserve(uint32_t size) noexcept;
 
     Result rotate(float degree) noexcept override;
     Result scale(float factor) noexcept override;
@@ -218,7 +218,7 @@ class TIZENVG_EXPORT SwCanvas final : public Canvas
 public:
     ~SwCanvas();
 
-    Result target(uint32_t* buffer, size_t stride, size_t w, size_t h) noexcept;
+    Result target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h) noexcept;
     Result sync() noexcept override;
     static std::unique_ptr<SwCanvas> gen() noexcept;
 
@@ -241,7 +241,7 @@ public:
 
     //TODO: Gl Specific methods. Need gl backend configuration methods as well.
 
-    Result target(uint32_t* buffer, size_t stride, size_t w, size_t h) noexcept;
+    Result target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h) noexcept;
     Result sync() noexcept override;
     static std::unique_ptr<GlCanvas> gen() noexcept;
 

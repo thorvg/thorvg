@@ -95,13 +95,13 @@ int GlRenderer::term()
 }
 
 
-size_t GlRenderer::unref()
+uint32_t GlRenderer::unref()
 {
     return RenderInitializer::unref(renderInit);
 }
 
 
-size_t GlRenderer::ref()
+uint32_t GlRenderer::ref()
 {
     return RenderInitializer::ref(renderInit);
 }

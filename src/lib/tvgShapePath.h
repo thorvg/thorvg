@@ -26,12 +26,12 @@
 struct ShapePath
 {
     PathCommand* cmds = nullptr;
-    size_t cmdCnt = 0;
-    size_t reservedCmdCnt = 0;
+    uint32_t cmdCnt = 0;
+    uint32_t reservedCmdCnt = 0;
 
     Point *pts = nullptr;
-    size_t ptsCnt = 0;
-    size_t reservedPtsCnt = 0;
+    uint32_t ptsCnt = 0;
+    uint32_t reservedPtsCnt = 0;
 
 
     ~ShapePath()
@@ -40,7 +40,7 @@ struct ShapePath
         if (pts) free(pts);
     }
 
-    void reserveCmd(size_t cmdCnt)
+    void reserveCmd(uint32_t cmdCnt)
     {
         if (cmdCnt <= reservedCmdCnt) return;
         reservedCmdCnt = cmdCnt;
@@ -48,7 +48,7 @@ struct ShapePath
         assert(cmds);
     }
 
-    void reservePts(size_t ptsCnt)
+    void reservePts(uint32_t ptsCnt)
     {
         if (ptsCnt <= reservedPtsCnt) return;
         reservedPtsCnt = ptsCnt;
@@ -56,7 +56,7 @@ struct ShapePath
         assert(pts);
     }
 
-    void grow(size_t cmdCnt, size_t ptsCnt)
+    void grow(uint32_t cmdCnt, uint32_t ptsCnt)
     {
         reserveCmd(this->cmdCnt + cmdCnt);
         reservePts(this->ptsCnt + ptsCnt);
@@ -68,7 +68,7 @@ struct ShapePath
         ptsCnt = 0;
     }
 
-    void append(const PathCommand* cmds, size_t cmdCnt, const Point* pts, size_t ptsCnt)
+    void append(const PathCommand* cmds, uint32_t cmdCnt, const Point* pts, uint32_t ptsCnt)
     {
         memcpy(this->cmds + this->cmdCnt, cmds, sizeof(PathCommand) * cmdCnt);
         memcpy(this->pts + this->ptsCnt, pts, sizeof(Point) * ptsCnt);
@@ -120,7 +120,7 @@ struct ShapePath
         Point min = { pts[0].x, pts[0].y };
         Point max = { pts[0].x, pts[0].y };
 
-        for(size_t i = 1; i < ptsCnt; ++i) {
+        for(uint32_t i = 1; i < ptsCnt; ++i) {
             if (pts[i].x < min.x) min.x = pts[i].x;
             if (pts[i].y < min.y) min.y = pts[i].y;
             if (pts[i].x > max.x) max.x = pts[i].x;

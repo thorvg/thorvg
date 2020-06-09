@@ -45,7 +45,7 @@ GlCanvas::~GlCanvas()
 }
 
 
-Result GlCanvas::target(uint32_t* buffer, size_t stride, size_t w, size_t h) noexcept
+Result GlCanvas::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h) noexcept
 {
     auto renderer = dynamic_cast<GlRenderer*>(Canvas::pImpl.get()->renderer);
     if (!renderer) return Result::MemoryCorruption;

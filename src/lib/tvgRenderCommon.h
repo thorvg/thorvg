@@ -24,8 +24,8 @@ struct Surface
 {
     //TODO: Union for multiple types
     uint32_t* buffer;
-    size_t stride;
-    size_t w, h;
+    uint32_t stride;
+    uint32_t w, h;
 };
 
 enum RenderUpdateFlag {None = 0, Path = 1, Fill = 2, Stroke = 4, Transform = 8, All = 16};
@@ -126,14 +126,14 @@ public:
     virtual bool dispose(const Shape& shape, void *data) = 0;
     virtual bool render(const Shape& shape, void *data) = 0;
     virtual bool clear() = 0;
-    virtual size_t ref() = 0;
-    virtual size_t unref() = 0;
+    virtual uint32_t ref() = 0;
+    virtual uint32_t unref() = 0;
 };
 
 struct RenderInitializer
 {
     RenderMethod* pInst = nullptr;
-    size_t refCnt = 0;
+    uint32_t refCnt = 0;
     bool initialized = false;
 
     static int init(RenderInitializer& renderInit, RenderMethod* engine)
@@ -160,7 +160,7 @@ struct RenderInitializer
         return 0;
     }
 
-    static size_t unref(RenderInitializer& renderInit)
+    static uint32_t unref(RenderInitializer& renderInit)
     {
         assert(renderInit.refCnt > 0);
         --renderInit.refCnt;
@@ -181,7 +181,7 @@ struct RenderInitializer
         return renderInit.pInst;
     }
 
-    static size_t ref(RenderInitializer& renderInit)
+    static uint32_t ref(RenderInitializer& renderInit)
     {
         return ++renderInit.refCnt;
     }

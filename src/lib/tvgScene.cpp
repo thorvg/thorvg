@@ -53,7 +53,7 @@ Result Scene::push(unique_ptr<Paint> paint) noexcept
 }
 
 
-Result Scene::reserve(size_t size) noexcept
+Result Scene::reserve(uint32_t size) noexcept
 {
     auto impl = pImpl.get();
     if (!impl) return Result::MemoryCorruption;

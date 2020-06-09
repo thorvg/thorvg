@@ -25,10 +25,10 @@ public:
     void* prepare(const Shape& shape, void* data, const RenderTransform* transform, RenderUpdateFlag flags) override;
     bool dispose(const Shape& shape, void *data) override;
     bool render(const Shape& shape, void *data) override;
-    bool target(uint32_t* buffer, size_t stride, size_t w, size_t h);
+    bool target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h);
     bool clear() override;
-    size_t ref() override;
-    size_t unref() override;
+    uint32_t ref() override;
+    uint32_t unref() override;
 
     static SwRenderer* inst();
     static int init();

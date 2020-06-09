@@ -15,7 +15,7 @@ public:
 
     GlGpuBuffer();
     ~GlGpuBuffer();
-    void updateBufferData(Target target, size_t size, void* data);
+    void updateBufferData(Target target, uint32_t size, void* data);
 
 private:
     uint32_t    mGlBufferId = 0;

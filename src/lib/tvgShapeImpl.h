@@ -33,7 +33,7 @@ struct ShapeStroke
     float width = 0;
     uint8_t color[4] = {0, 0, 0, 0};
     float* dashPattern = nullptr;
-    size_t dashCnt = 0;
+    uint32_t dashCnt = 0;
     StrokeCap cap = StrokeCap::Square;
     StrokeJoin join = StrokeJoin::Bevel;
 
@@ -51,7 +51,7 @@ struct Shape::Impl
     ShapePath *path = nullptr;
     RenderTransform *transform = nullptr;
     uint8_t color[4] = {0, 0, 0, 0};    //r, g, b, a
-    size_t flag = RenderUpdateFlag::None;
+    uint32_t flag = RenderUpdateFlag::None;
     void *edata = nullptr;              //engine data
 
 
@@ -77,7 +77,7 @@ struct Shape::Impl
         return renderer.render(shape, edata);
     }
 
-    bool update(Shape& shape, RenderMethod& renderer, const RenderTransform* pTransform = nullptr, size_t pFlag = 0)
+    bool update(Shape& shape, RenderMethod& renderer, const RenderTransform* pTransform = nullptr, uint32_t pFlag = 0)
     {
         if (flag & RenderUpdateFlag::Transform) {
             if (!transform) return false;
@@ -203,7 +203,7 @@ struct Shape::Impl
         return true;
     }
 
-    bool strokeDash(const float* pattern, size_t cnt)
+    bool strokeDash(const float* pattern, uint32_t cnt)
     {
         assert(pattern);
 
@@ -218,7 +218,7 @@ struct Shape::Impl
         if (!stroke->dashPattern) stroke->dashPattern = static_cast<float*>(malloc(sizeof(float) * cnt));
         assert(stroke->dashPattern);
 
-        for (size_t i = 0; i < cnt; ++i)
+        for (uint32_t i = 0; i < cnt; ++i)
             stroke->dashPattern[i] = pattern[i];
 
         stroke->dashCnt = cnt;

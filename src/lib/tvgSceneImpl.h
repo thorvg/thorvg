@@ -27,7 +27,7 @@ struct Scene::Impl
 {
     vector<Paint*> paints;
     RenderTransform *transform = nullptr;
-    size_t flag = RenderUpdateFlag::None;
+    uint32_t flag = RenderUpdateFlag::None;
 
     ~Impl()
     {
@@ -51,7 +51,7 @@ struct Scene::Impl
         return true;
     }
 
-    bool updateInternal(RenderMethod &renderer, const RenderTransform* transform, size_t flag)
+    bool updateInternal(RenderMethod &renderer, const RenderTransform* transform, uint32_t flag)
     {
         for(auto paint: paints) {
             if (auto scene = dynamic_cast<Scene*>(paint)) {
@@ -63,7 +63,7 @@ struct Scene::Impl
         return true;
     }
 
-    bool update(RenderMethod &renderer, const RenderTransform* pTransform = nullptr, size_t pFlag = 0)
+    bool update(RenderMethod &renderer, const RenderTransform* pTransform = nullptr, uint32_t pFlag = 0)
     {
         if (flag & RenderUpdateFlag::Transform) {
             if (!transform) return false;
