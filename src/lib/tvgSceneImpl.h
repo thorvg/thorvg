@@ -39,9 +39,12 @@ struct Scene::Impl
     bool clear(RenderMethod& renderer)
     {
         for (auto paint : paints) {
-            if (auto scene = dynamic_cast<Scene*>(paint)) {
+            if (paint->Paint_Id == PAINT_ID_SCENE) {
+                //We know renderer type, avoid dynamic_cast for performance.
+                auto scene = static_cast<Scene*>(paint);
                 if (!SCENE_IMPL->clear(renderer)) return false;
-            } else if (auto shape = dynamic_cast<Shape*>(paint)) {
+            } else {
+                auto shape = static_cast<Shape*>(paint);
                 if (!SHAPE_IMPL->dispose(*shape, renderer)) return false;
             }
             delete(paint);
@@ -54,9 +57,12 @@ struct Scene::Impl
     bool updateInternal(RenderMethod &renderer, const RenderTransform* transform, uint32_t flag)
     {
         for(auto paint: paints) {
-            if (auto scene = dynamic_cast<Scene*>(paint)) {
+            if (paint->Paint_Id == PAINT_ID_SCENE) {
+                //We know renderer type, avoid dynamic_cast for performance.
+                auto scene = static_cast<Scene*>(paint);
                 if (!SCENE_IMPL->update(renderer, transform, flag)) return false;
-            } else if (auto shape = dynamic_cast<Shape*>(paint)) {
+            } else {
+                auto shape = static_cast<Shape*>(paint);
                 if (!SHAPE_IMPL->update(*shape, renderer, transform, flag)) return false;
             }
         }
@@ -91,9 +97,12 @@ struct Scene::Impl
     bool render(RenderMethod &renderer)
     {
         for(auto paint: paints) {
-            if (auto scene = dynamic_cast<Scene*>(paint)) {
+            if (paint->Paint_Id == PAINT_ID_SCENE) {
+                //We know renderer type, avoid dynamic_cast for performance.
+                auto scene = static_cast<Scene*>(paint);
                 if(!SCENE_IMPL->render(renderer)) return false;
-            } else if (auto shape = dynamic_cast<Shape*>(paint)) {
+            } else {
+                auto shape = static_cast<Shape*>(paint);
                 if(!SHAPE_IMPL->render(*shape, renderer)) return false;
             }
         }
@@ -113,9 +122,12 @@ struct Scene::Impl
             auto w2 = 0.0f;
             auto h2 = 0.0f;
 
-            if (auto scene = dynamic_cast<Scene*>(paint)) {
+            if (paint->Paint_Id == PAINT_ID_SCENE) {
+                //We know renderer type, avoid dynamic_cast for performance.
+                auto scene = static_cast<Scene*>(paint);
                 if (!SCENE_IMPL->bounds(&x2, &y2, &w2, &h2)) return false;
-            } else if (auto shape = dynamic_cast<Shape*>(paint)) {
+            } else {
+                auto shape = static_cast<Shape*>(paint);
                 if (!SHAPE_IMPL->bounds(&x2, &y2, &w2, &h2)) return false;
             }
 

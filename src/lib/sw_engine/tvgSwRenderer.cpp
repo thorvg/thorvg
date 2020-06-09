@@ -151,7 +151,8 @@ uint32_t SwRenderer::ref()
 
 SwRenderer* SwRenderer::inst()
 {
-    return dynamic_cast<SwRenderer*>(RenderInitializer::inst(renderInit));
+    //We know renderer type, avoid dynamic_cast for performance.
+    return static_cast<SwRenderer*>(RenderInitializer::inst(renderInit));
 }
 
 #endif /* _TVG_SW_RENDERER_CPP_ */

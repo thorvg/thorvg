@@ -31,6 +31,9 @@ using namespace tvg;
 #define SCENE_IMPL scene->pImpl.get()
 #define SHAPE_IMPL shape->pImpl.get()
 
+#define PAINT_ID_SHAPE 0
+#define PAINT_ID_SCENE 1
+
 #include "tvgRenderCommon.h"
 #include "tvgShapePath.h"
 #include "tvgShapeImpl.h"

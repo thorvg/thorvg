@@ -50,16 +50,23 @@ protected: \
     A() = delete; \
     ~A() = delete
 
+#define _TIZENVG_IDENTIFIER(A) \
+protected: \
+    unsigned A##_Id
+
 namespace tvg
 {
+
+class RenderMethod;
+class Scene;
+class Canvas;
+
 
 enum class TIZENVG_EXPORT Result { Success = 0, InvalidArguments, InsufficientCondition, FailedAllocation, MemoryCorruption, Unknown };
 enum class TIZENVG_EXPORT PathCommand { Close = 0, MoveTo, LineTo, CubicTo };
 enum class TIZENVG_EXPORT StrokeCap { Square = 0, Round, Butt };
 enum class TIZENVG_EXPORT StrokeJoin { Bevel = 0, Round, Miter };
 
-class RenderMethod;
-class Scene;
 
 struct Point
 {
@@ -85,6 +92,10 @@ public:
     virtual Result translate(float x, float y) = 0;
 
     virtual Result bounds(float* x, float* y, float* w, float* h) const = 0;
+
+    _TIZENVG_IDENTIFIER(Paint);
+    _TIZENVG_DECLARE_ACCESSOR(Scene);
+    _TIZENVG_DECLARE_ACCESSOR(Canvas);
 };
 
 

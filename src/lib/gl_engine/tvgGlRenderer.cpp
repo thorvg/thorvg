@@ -109,7 +109,8 @@ uint32_t GlRenderer::ref()
 
 GlRenderer* GlRenderer::inst()
 {
-    return dynamic_cast<GlRenderer*>(RenderInitializer::inst(renderInit));
+    //We know renderer type, avoid dynamic_cast for performance.
+    return static_cast<GlRenderer*>(RenderInitializer::inst(renderInit));
 }
 
 
