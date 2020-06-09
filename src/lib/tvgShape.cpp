@@ -46,23 +46,25 @@ unique_ptr<Shape> Shape::gen() noexcept
 }
 
 
-int Shape::reset() noexcept
+Result Shape::reset() noexcept
 {
     auto impl = pImpl.get();
-    assert(impl && impl->path);
+    if (!impl || !impl->path) return Result::MemoryCorruption;
 
     impl->path->reset();
 
     impl->flag |= RenderUpdateFlag::Path;
 
-    return 0;
+    return Result::Success;
 }
 
 
 size_t Shape::pathCommands(const PathCommand** cmds) const noexcept
 {
+    if (!cmds) return 0;
+
     auto impl = pImpl.get();
-    assert(impl && impl->path && cmds);
+    if (!impl || !impl->path) return 0;
 
     *cmds = impl->path->cmds;
 
@@ -72,8 +74,10 @@ size_t Shape::pathCommands(const PathCommand** cmds) const noexcept
 
 size_t Shape::pathCoords(const Point** pts) const noexcept
 {
+    if (!pts) return 0;
+
     auto impl = pImpl.get();
-    assert(impl && impl->path && pts);
+    if (!impl || !impl->path) return 0;
 
     *pts = impl->path->pts;
 
@@ -81,79 +85,78 @@ size_t Shape::pathCoords(const Point** pts) const noexcept
 }
 
 
-int Shape::appendPath(const PathCommand *cmds, size_t cmdCnt, const Point* pts, size_t ptsCnt) noexcept
+Result Shape::appendPath(const PathCommand *cmds, size_t cmdCnt, const Point* pts, size_t ptsCnt) noexcept
 {
-    if (cmdCnt < 0 || ptsCnt < 0) return -1;
-    assert(cmds && pts);
+    if (cmdCnt < 0 || ptsCnt < 0 || !pts || !ptsCnt) return Result::InvalidArguments;
 
     auto impl = pImpl.get();
-    assert(impl && impl->path);
+    if (!impl || !impl->path) return Result::MemoryCorruption;
 
     impl->path->grow(cmdCnt, ptsCnt);
     impl->path->append(cmds, cmdCnt, pts, ptsCnt);
 
     impl->flag |= RenderUpdateFlag::Path;
 
-    return 0;
+    return Result::Success;
 }
 
 
-int Shape::moveTo(float x, float y) noexcept
+Result Shape::moveTo(float x, float y) noexcept
 {
     auto impl = pImpl.get();
-    assert(impl && impl->path);
+    if (!impl || !impl->path) return Result::MemoryCorruption;
 
     impl->path->moveTo(x, y);
 
     impl->flag |= RenderUpdateFlag::Path;
 
-    return 0;
+    return Result::Success;
 }
 
 
-int Shape::lineTo(float x, float y) noexcept
+Result Shape::lineTo(float x, float y) noexcept
 {
     auto impl = pImpl.get();
-    assert(impl && impl->path);
+    if (!impl || !impl->path) return Result::MemoryCorruption;
 
     impl->path->lineTo(x, y);
 
     impl->flag |= RenderUpdateFlag::Path;
 
-    return 0;
+    return Result::Success;
 }
 
 
-int Shape::cubicTo(float cx1, float cy1, float cx2, float cy2, float x, float y) noexcept
+Result Shape::cubicTo(float cx1, float cy1, float cx2, float cy2, float x, float y) noexcept
 {
     auto impl = pImpl.get();
-    assert(impl && impl->path);
+    if (!impl || !impl->path) return Result::MemoryCorruption;
 
     impl->path->cubicTo(cx1, cy1, cx2, cy2, x, y);
 
     impl->flag |= RenderUpdateFlag::Path;
 
-    return 0;
+    return Result::Success;
 }
 
 
-int Shape::close() noexcept
+Result Shape::close() noexcept
 {
     auto impl = pImpl.get();
-    assert(impl && impl->path);
+    if (!impl || !impl->path) return Result::MemoryCorruption;
 
     impl->path->close();
 
     impl->flag |= RenderUpdateFlag::Path;
 
-    return 0;
+    return Result::Success;
 }
 
 
-int Shape::appendCircle(float cx, float cy, float radiusW, float radiusH) noexcept
+Result Shape::appendCircle(float cx, float cy, float radiusW, float radiusH) noexcept
 {
     auto impl = pImpl.get();
-    assert(impl && impl->path);
+    if (!impl || !impl->path) return Result::MemoryCorruption;
 
     auto halfKappaW = radiusW * PATH_KAPPA;
     auto halfKappaH = radiusH * PATH_KAPPA;
@@ -168,14 +171,14 @@ int Shape::appendCircle(float cx, float cy, float radiusW, float radiusH) noexce
 
     impl->flag |= RenderUpdateFlag::Path;
 
-    return 0;
+    return Result::Success;
 }
 
 
-int Shape::appendRect(float x, float y, float w, float h, float cornerRadius) noexcept
+Result Shape::appendRect(float x, float y, float w, float h, float cornerRadius) noexcept
 {
     auto impl = pImpl.get();
-    assert(impl && impl->path);
+    if (!impl || !impl->path) return Result::MemoryCorruption;
 
     //clamping cornerRadius by minimum size
     auto min = (w < h ? w : h) * 0.5f;
@@ -209,14 +212,14 @@ int Shape::appendRect(float x, float y, float w, float h, float cornerRadius) no
 
     impl->flag |= RenderUpdateFlag::Path;
 
-    return 0;
+    return Result::Success;
 }
 
 
-int Shape::fill(uint8_t r, uint8_t g, uint8_t b, uint8_t a) noexcept
+Result Shape::fill(uint8_t r, uint8_t g, uint8_t b, uint8_t a) noexcept
 {
     auto impl = pImpl.get();
-    assert(impl);
+    if (!impl) return Result::MemoryCorruption;
 
     impl->color[0] = r;
     impl->color[1] = g;
@@ -224,120 +227,126 @@ int Shape::fill(uint8_t r, uint8_t g, uint8_t b, uint8_t a) noexcept
     impl->color[3] = a;
     impl->flag |= RenderUpdateFlag::Fill;
 
-    return 0;
+    return Result::Success;
 }
 
 
-int Shape::fill(uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a) const noexcept
+Result Shape::fill(uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a) const noexcept
 {
     auto impl = pImpl.get();
-    assert(impl);
+    if (!impl) return Result::MemoryCorruption;
 
     if (r) *r = impl->color[0];
     if (g) *g = impl->color[1];
     if (b) *b = impl->color[2];
     if (a) *a = impl->color[3];
 
-    return 0;
+    return Result::Success;
 }
 
 
-int Shape::scale(float factor) noexcept
+Result Shape::scale(float factor) noexcept
 {
     auto impl = pImpl.get();
-    assert(impl);
+    if (!impl) return Result::MemoryCorruption;
 
-    return impl->scale(factor);
+    if (!impl->scale(factor)) return Result::FailedAllocation;
+
+    return Result::Success;
 }
 
 
-int Shape::rotate(float degree) noexcept
+Result Shape::rotate(float degree) noexcept
 {
     auto impl = pImpl.get();
-    assert(impl);
+    if (!impl) return Result::MemoryCorruption;
 
-    return impl->rotate(degree);
+    if (!impl->rotate(degree)) return Result::FailedAllocation;
+
+    return Result::Success;
 }
 
 
-int Shape::translate(float x, float y) noexcept
+Result Shape::translate(float x, float y) noexcept
 {
     auto impl = pImpl.get();
-    assert(impl);
+    if (!impl) return Result::MemoryCorruption;
 
-    return impl->translate(x, y);
+    impl->translate(x, y);
+
+    return Result::Success;
 }
 
 
-int Shape::bounds(float* x, float* y, float* w, float* h) const noexcept
+Result Shape::bounds(float* x, float* y, float* w, float* h) const noexcept
 {
     auto impl = pImpl.get();
-    assert(impl);
+    if (!impl) return Result::MemoryCorruption;
 
-    if (!impl->bounds(x, y, w, h)) return -1;
+    if (!impl->bounds(x, y, w, h)) return Result::InsufficientCondition;
 
-    return 0;
+    return Result::Success;
 }
 
 
-int Shape::stroke(float width) noexcept
+Result Shape::stroke(float width) noexcept
 {
     auto impl = pImpl.get();
-    assert(impl);
+    if (!impl) return Result::MemoryCorruption;
 
-    if (!impl->strokeWidth(width)) return -1;
+    if (!impl->strokeWidth(width)) return Result::FailedAllocation;
 
-    return 0;
+    return Result::Success;
 }
 
 
 float Shape::strokeWidth() const noexcept
 {
     auto impl = pImpl.get();
-    assert(impl);
+    if (!impl) return 0;
 
     if (!impl->stroke) return 0;
     return impl->stroke->width;
 }
 
 
-int Shape::stroke(uint8_t r, uint8_t g, uint8_t b, uint8_t a) noexcept
+Result Shape::stroke(uint8_t r, uint8_t g, uint8_t b, uint8_t a) noexcept
 {
     auto impl = pImpl.get();
-    assert(impl);
+    if (!impl) return Result::MemoryCorruption;
 
-    if (!impl->strokeColor(r, g, b, a)) return -1;
+    if (!impl->strokeColor(r, g, b, a)) return Result::FailedAllocation;
 
-    return 0;
+    return Result::Success;
 }
 
 
-int Shape::strokeColor(uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a) const noexcept
+Result Shape::strokeColor(uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a) const noexcept
 {
     auto impl = pImpl.get();
-    assert(impl);
+    if (!impl) return Result::MemoryCorruption;
 
-    if (!impl->stroke) return -1;
+    if (!impl->stroke) return Result::InsufficientCondition;
 
     if (r) *r = impl->stroke->color[0];
     if (g) *g = impl->stroke->color[1];
     if (b) *b = impl->stroke->color[2];
     if (a) *a = impl->stroke->color[3];
 
-    return 0;
+    return Result::Success;
 }
 
 
-int Shape::stroke(const float* dashPattern, size_t cnt) noexcept
+Result Shape::stroke(const float* dashPattern, size_t cnt) noexcept
 {
-    if (cnt < 2 || !dashPattern) return -1;
+    if (cnt < 2 || !dashPattern) return Result::InvalidArguments;
 
     auto impl = pImpl.get();
-    assert(impl);
+    if (!impl) return Result::MemoryCorruption;
 
-    if (!impl->strokeDash(dashPattern, cnt)) return -1;
+    if (!impl->strokeDash(dashPattern, cnt)) return Result::FailedAllocation;
 
-    return 0;
+    return Result::Success;
 }
 
 
@@ -353,25 +362,25 @@ size_t Shape::strokeDash(const float** dashPattern) const noexcept
 }
 
 
-int Shape::stroke(StrokeCap cap) noexcept
+Result Shape::stroke(StrokeCap cap) noexcept
 {
     auto impl = pImpl.get();
-    assert(impl);
+    if (!impl) return Result::MemoryCorruption;
 
-    if (!impl->strokeCap(cap)) return -1;
+    if (!impl->strokeCap(cap)) return Result::FailedAllocation;
 
-    return 0;
+    return Result::Success;
 }
 
 
-int Shape::stroke(StrokeJoin join) noexcept
+Result Shape::stroke(StrokeJoin join) noexcept
 {
     auto impl = pImpl.get();
-    assert(impl);
+    if (!impl) return Result::MemoryCorruption;
 
-    if (!impl->strokeJoin(join)) return -1;
+    if (!impl->strokeJoin(join)) return Result::FailedAllocation;
 
-    return 0;
+    return Result::Success;
 }
 
 

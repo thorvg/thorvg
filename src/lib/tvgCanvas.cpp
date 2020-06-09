@@ -34,52 +34,51 @@ Canvas::~Canvas()
 }
 
 
-int Canvas::reserve(size_t n) noexcept
+Result Canvas::reserve(size_t n) noexcept
 {
     auto impl = pImpl.get();
-    assert(impl);
+    if (!impl) return Result::MemoryCorruption;
     impl->paints.reserve(n);
-    return 0;
+    return Result::Success;
 }
 
 
-int Canvas::push(unique_ptr<Paint> paint) noexcept
+Result Canvas::push(unique_ptr<Paint> paint) noexcept
 {
     auto impl = pImpl.get();
-    assert(impl);
-
+    if (!impl) return Result::MemoryCorruption;
     return impl->push(move(paint));
 }
 
 
-int Canvas::clear() noexcept
+Result Canvas::clear() noexcept
 {
     auto impl = pImpl.get();
-    assert(impl);
+    if (!impl) return Result::MemoryCorruption;
     return impl->clear();
 }
 
 
-int Canvas::draw(bool async) noexcept
+Result Canvas::draw(bool async) noexcept
 {
     auto impl = pImpl.get();
-    assert(impl);
+    if (!impl) return Result::MemoryCorruption;
     return impl->draw();
 }
 
 
-int Canvas::update() noexcept
+Result Canvas::update() noexcept
 {
     auto impl = pImpl.get();
-    assert(impl);
+    if (!impl) return Result::MemoryCorruption;
     return impl->update();
 }
 
 
-int Canvas::update(Paint* paint) noexcept
+Result Canvas::update(Paint* paint) noexcept
 {
     auto impl = pImpl.get();
-    assert(impl);
+    if (!impl) return Result::MemoryCorruption;
     return impl->update(paint);
 }
 

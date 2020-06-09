@@ -39,7 +39,7 @@ struct Canvas::Impl
         renderer->unref();
     }
 
-    int push(unique_ptr<Paint> paint)
+    Result push(unique_ptr<Paint> paint)
     {
         auto p = paint.release();
         assert(p);
@@ -48,64 +48,64 @@ struct Canvas::Impl
         return update(p);
     }
 
-    int clear()
+    Result clear()
     {
         assert(renderer);
 
         for (auto paint : paints) {
             if (auto scene = dynamic_cast<Scene*>(paint)) {
-                if (!SCENE_IMPL->clear(*renderer)) return -1;
+                if (!SCENE_IMPL->clear(*renderer)) return Result::InsufficientCondition;
             } else if (auto shape = dynamic_cast<Shape*>(paint)) {
-                if (!SHAPE_IMPL->dispose(*shape, *renderer)) return -1;
+                if (!SHAPE_IMPL->dispose(*shape, *renderer)) return Result::InsufficientCondition;
             }
             delete(paint);
         }
         paints.clear();
 
-        return 0;
+        return Result::Success;
     }
 
-    int update()
+    Result update()
     {
         assert(renderer);
 
         for(auto paint: paints) {
             if (auto scene = dynamic_cast<Scene*>(paint)) {
-                if (!SCENE_IMPL->update(*renderer, nullptr)) return -1;
+                if (!SCENE_IMPL->update(*renderer, nullptr)) return Result::InsufficientCondition;
             } else if (auto shape = dynamic_cast<Shape*>(paint)) {
-                if (!SHAPE_IMPL->update(*shape, *renderer, nullptr)) return -1;
+                if (!SHAPE_IMPL->update(*shape, *renderer, nullptr)) return Result::InsufficientCondition;
             }
         }
-        return 0;
+        return Result::Success;
     }
 
-    int update(Paint* paint)
+    Result update(Paint* paint)
     {
         assert(renderer);
 
         if (auto scene = dynamic_cast<Scene*>(paint)) {
-            if (!SCENE_IMPL->update(*renderer)) return -1;
+            if (!SCENE_IMPL->update(*renderer)) return Result::InsufficientCondition;
         } else if (auto shape = dynamic_cast<Shape*>(paint)) {
-            if (!SHAPE_IMPL->update(*shape, *renderer)) return -1;
+            if (!SHAPE_IMPL->update(*shape, *renderer)) return Result::InsufficientCondition;
         }
-        return 0;
+        return Result::Success;
     }
 
-    int draw()
+    Result draw()
     {
         assert(renderer);
 
         //Clear render target before drawing
-        if (!renderer->clear()) return -1;
+        if (!renderer->clear()) return Result::InsufficientCondition;
 
         for(auto paint: paints) {
             if (auto scene = dynamic_cast<Scene*>(paint)) {
-                if(!SCENE_IMPL->render(*renderer)) return -1;
+                if(!SCENE_IMPL->render(*renderer)) return Result::InsufficientCondition;
             } else if (auto shape = dynamic_cast<Shape*>(paint)) {
-                if(!SHAPE_IMPL->render(*shape, *renderer)) return -1;
+                if(!SHAPE_IMPL->render(*shape, *renderer)) return Result::InsufficientCondition;
             }
         }
-        return 0;
+        return Result::Success;
     }
 };
 

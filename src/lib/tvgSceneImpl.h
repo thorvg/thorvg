@@ -66,7 +66,7 @@ struct Scene::Impl
     bool update(RenderMethod &renderer, const RenderTransform* pTransform = nullptr, size_t pFlag = 0)
     {
         if (flag & RenderUpdateFlag::Transform) {
-            assert(transform);
+            if (!transform) return false;
             if (!transform->update()) {
                 delete(transform);
                 transform = nullptr;
@@ -137,47 +137,47 @@ struct Scene::Impl
     bool scale(float factor)
     {
         if (transform) {
-            if (fabsf(factor - transform->factor) <= FLT_EPSILON) return -1;
+            if (fabsf(factor - transform->factor) <= FLT_EPSILON) return true;
         } else {
-            if (fabsf(factor) <= FLT_EPSILON) return -1;
+            if (fabsf(factor) <= FLT_EPSILON) return true;
             transform = new RenderTransform();
-            assert(transform);
+            if (!transform) return false;
         }
         transform->factor = factor;
         flag |= RenderUpdateFlag::Transform;
 
-        return 0;
+        return true;
     }
 
     bool rotate(float degree)
     {
         if (transform) {
-            if (fabsf(degree - transform->degree) <= FLT_EPSILON) return -1;
+            if (fabsf(degree - transform->degree) <= FLT_EPSILON) return true;
         } else {
-            if (fabsf(degree) <= FLT_EPSILON) return -1;
+            if (fabsf(degree) <= FLT_EPSILON) return true;
             transform = new RenderTransform();
-            assert(transform);
+            if (!transform) return false;
         }
         transform->degree = degree;
         flag |= RenderUpdateFlag::Transform;
 
-        return 0;
+        return true;
     }
 
     bool translate(float x, float y)
     {
         if (transform) {
-            if (fabsf(x - transform->x) <= FLT_EPSILON && fabsf(y - transform->y) <= FLT_EPSILON) return -1;
+            if (fabsf(x - transform->x) <= FLT_EPSILON && fabsf(y - transform->y) <= FLT_EPSILON) return true;
         } else {
-            if (fabsf(x) <= FLT_EPSILON && fabsf(y) <= FLT_EPSILON) return -1;
+            if (fabsf(x) <= FLT_EPSILON && fabsf(y) <= FLT_EPSILON) return true;
             transform = new RenderTransform();
-            assert(transform);
+            if (!transform) return false;
         }
         transform->x = x;
         transform->y = y;
         flag |= RenderUpdateFlag::Transform;
 
-        return 0;
+        return true;
     }
 };
 

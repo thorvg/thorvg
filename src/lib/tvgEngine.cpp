@@ -30,7 +30,7 @@
 /* External Class Implementation                                        */
 /************************************************************************/
 
-int Engine::init() noexcept
+Result Engine::init() noexcept
 {
     //TODO: Initialize Raster engines by configuration.
 
@@ -38,17 +38,17 @@ int Engine::init() noexcept
     ret |= SwRenderer::init();
     ret |= GlRenderer::init();
 
-    return ret;
+    return Result::Success;
 }
 
 
-int Engine::term() noexcept
+Result Engine::term() noexcept
 {
     int ret = 0;
     ret |= SwRenderer::term();
     ret |= GlRenderer::term();
 
-    return ret;
+    return Result::Success;
 }
 
 #endif /* _TVG_ENGINE_CPP_ */

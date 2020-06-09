@@ -80,7 +80,7 @@ struct Shape::Impl
     bool update(Shape& shape, RenderMethod& renderer, const RenderTransform* pTransform = nullptr, size_t pFlag = 0)
     {
         if (flag & RenderUpdateFlag::Transform) {
-            assert(transform);
+            if (!transform) return false;
             if (!transform->update()) {
                 delete(transform);
                 transform = nullptr;
@@ -103,54 +103,54 @@ struct Shape::Impl
 
     bool bounds(float* x, float* y, float* w, float* h)
     {
-        assert(path);
+        if (!path) return false;
         return path->bounds(x, y, w, h);
     }
 
     bool scale(float factor)
     {
         if (transform) {
-            if (fabsf(factor - transform->factor) <= FLT_EPSILON) return -1;
+            if (fabsf(factor - transform->factor) <= FLT_EPSILON) return true;
         } else {
-            if (fabsf(factor) <= FLT_EPSILON) return -1;
+            if (fabsf(factor) <= FLT_EPSILON) return true;
             transform = new RenderTransform();
-            assert(transform);
+            if (!transform) return false;
         }
         transform->factor = factor;
         flag |= RenderUpdateFlag::Transform;
 
-        return 0;
+        return true;
     }
 
     bool rotate(float degree)
     {
         if (transform) {
-            if (fabsf(degree - transform->degree) <= FLT_EPSILON) return -1;
+            if (fabsf(degree - transform->degree) <= FLT_EPSILON) return true;
         } else {
-            if (fabsf(degree) <= FLT_EPSILON) return -1;
+            if (fabsf(degree) <= FLT_EPSILON) return true;
             transform = new RenderTransform();
-            assert(transform);
+            if (!transform) return false;
         }
         transform->degree = degree;
         flag |= RenderUpdateFlag::Transform;
 
-        return 0;
+        return true;
     }
 
     bool translate(float x, float y)
     {
         if (transform) {
-            if (fabsf(x - transform->x) <= FLT_EPSILON && fabsf(y - transform->y) <= FLT_EPSILON) return -1;
+            if (fabsf(x - transform->x) <= FLT_EPSILON && fabsf(y - transform->y) <= FLT_EPSILON) return true;
         } else {
-            if (fabsf(x) <= FLT_EPSILON && fabsf(y) <= FLT_EPSILON) return -1;
+            if (fabsf(x) <= FLT_EPSILON && fabsf(y) <= FLT_EPSILON) return true;
             transform = new RenderTransform();
-            assert(transform);
+            if (!transform) return false;
         }
         transform->x = x;
         transform->y = y;
         flag |= RenderUpdateFlag::Transform;
 
-        return 0;
+        return true;
     }
 
     bool strokeWidth(float width)
@@ -158,40 +158,40 @@ struct Shape::Impl
         //TODO: Size Exception?
 
         if (!stroke) stroke = new ShapeStroke();
-        assert(stroke);
+        if (!stroke) return false;
 
         stroke->width = width;
         flag |= RenderUpdateFlag::Stroke;
 
-        return 0;
+        return true;
     }
 
     bool strokeCap(StrokeCap cap)
     {
         if (!stroke) stroke = new ShapeStroke();
-        assert(stroke);
+        if (!stroke) return false;
 
         stroke->cap = cap;
         flag |= RenderUpdateFlag::Stroke;
 
-        return 0;
+        return true;
     }
 
     bool strokeJoin(StrokeJoin join)
     {
         if (!stroke) stroke = new ShapeStroke();
-        assert(stroke);
+        if (!stroke) return false;
 
         stroke->join = join;
         flag |= RenderUpdateFlag::Stroke;
 
-        return 0;
+        return true;
     }
 
     bool strokeColor(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
     {
         if (!stroke) stroke = new ShapeStroke();
-        assert(stroke);
+        if (!stroke) return false;
 
         stroke->color[0] = r;
         stroke->color[1] = g;
@@ -200,7 +200,7 @@ struct Shape::Impl
 
         flag |= RenderUpdateFlag::Stroke;
 
-        return 0;
+        return true;
     }
 
     bool strokeDash(const float* pattern, size_t cnt)
@@ -208,7 +208,7 @@ struct Shape::Impl
         assert(pattern);
 
        if (!stroke) stroke = new ShapeStroke();
-        assert(stroke);
+       if (!stroke) return false;
 
         if (stroke->dashCnt != cnt) {
             if (stroke->dashPattern) free(stroke->dashPattern);
@@ -224,8 +224,7 @@ struct Shape::Impl
         stroke->dashCnt = cnt;
         flag |= RenderUpdateFlag::Stroke;
 
-        return 0;
-
+        return true;
     }
 };
 

@@ -40,65 +40,71 @@ unique_ptr<Scene> Scene::gen() noexcept
 }
 
 
-int Scene::push(unique_ptr<Paint> paint) noexcept
+Result Scene::push(unique_ptr<Paint> paint) noexcept
 {
     auto impl = pImpl.get();
-    assert(impl);
+    if (!impl) return Result::MemoryCorruption;
 
     auto p = paint.release();
-    assert(p);
+    if (!p) return Result::MemoryCorruption;
     impl->paints.push_back(p);
 
-    return 0;
+    return Result::Success;
 }
 
 
-int Scene::reserve(size_t size) noexcept
+Result Scene::reserve(size_t size) noexcept
 {
     auto impl = pImpl.get();
-    assert(impl);
+    if (!impl) return Result::MemoryCorruption;
 
     impl->paints.reserve(size);
 
-    return 0;
+    return Result::Success;
 }
 
 
-int Scene::scale(float factor) noexcept
+Result Scene::scale(float factor) noexcept
 {
     auto impl = pImpl.get();
-    assert(impl);
+    if (!impl) return Result::MemoryCorruption;
 
-    return impl->scale(factor);
+    if (!impl->scale(factor)) return Result::FailedAllocation;
+
+    return Result::Success;
 }
 
 
-int Scene::rotate(float degree) noexcept
+Result Scene::rotate(float degree) noexcept
 {
     auto impl = pImpl.get();
-    assert(impl);
+    if (!impl) return Result::MemoryCorruption;
 
-    return impl->rotate(degree);
+    if (!impl->rotate(degree)) return Result::FailedAllocation;
+
+    return Result::Success;
 }
 
 
-int Scene::translate(float x, float y) noexcept
+Result Scene::translate(float x, float y) noexcept
 {
     auto impl = pImpl.get();
-    assert(impl);
+    if (!impl) return Result::MemoryCorruption;
 
-    return impl->translate(x, y);
+    if (!impl->translate(x, y)) return Result::FailedAllocation;
+
+    return Result::Success;
 }
 
 
-int Scene::bounds(float* x, float* y, float* w, float* h) const noexcept
+Result Scene::bounds(float* x, float* y, float* w, float* h) const noexcept
 {
     auto impl = pImpl.get();
-    assert(impl);
+    if (!impl) return Result::MemoryCorruption;
 
-    if (!impl->bounds(x, y, w, h)) return -1;
+    if (!impl->bounds(x, y, w, h)) return Result::InsufficientCondition;
 
-    return 0;
+    return Result::Success;
 }
 
 #endif /* _TVG_SCENE_CPP_ */

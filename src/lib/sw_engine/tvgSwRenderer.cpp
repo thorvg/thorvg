@@ -47,7 +47,7 @@ bool SwRenderer::clear()
 
 bool SwRenderer::target(uint32_t* buffer, size_t stride, size_t w, size_t h)
 {
-    assert(buffer && stride > 0 && w > 0 && h > 0);
+    if (!buffer || stride == 0 || w == 0 || h == 0) return false;
 
     surface.buffer = buffer;
     surface.stride = stride;
@@ -77,7 +77,7 @@ bool SwRenderer::render(const Shape& shape, void *data)
 bool SwRenderer::dispose(const Shape& shape, void *data)
 {
     auto sdata = static_cast<SwShape*>(data);
-    if (!sdata) return false;
+    if (!sdata) return true;
     shapeFree(sdata);
     return true;
 }

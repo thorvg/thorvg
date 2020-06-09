@@ -45,20 +45,20 @@ SwCanvas::~SwCanvas()
 {
 }
 
-int SwCanvas::target(uint32_t* buffer, size_t stride, size_t w, size_t h) noexcept
+Result SwCanvas::target(uint32_t* buffer, size_t stride, size_t w, size_t h) noexcept
 {
     auto renderer = dynamic_cast<SwRenderer*>(Canvas::pImpl.get()->renderer);
-    assert(renderer);
+    if (!renderer) return Result::MemoryCorruption;
 
-    if (!renderer->target(buffer, stride, w, h)) return -1;
+    if (!renderer->target(buffer, stride, w, h)) return Result::InvalidArguments;
 
-    return 0;
+    return Result::Success;
 }
 
 
-int SwCanvas::sync() noexcept
+Result SwCanvas::sync() noexcept
 {
-    return 0;
+    return Result::Success;
 }
 
 

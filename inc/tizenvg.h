@@ -53,6 +53,7 @@ protected: \
 namespace tvg
 {
 
+enum class TIZENVG_EXPORT Result { Success = 0, InvalidArguments, InsufficientCondition, FailedAllocation, MemoryCorruption, Unknown };
 enum class TIZENVG_EXPORT PathCommand { Close = 0, MoveTo, LineTo, CubicTo };
 enum class TIZENVG_EXPORT StrokeCap { Square = 0, Round, Butt };
 enum class TIZENVG_EXPORT StrokeJoin { Bevel = 0, Round, Miter };
@@ -79,11 +80,11 @@ class TIZENVG_EXPORT Paint
 public:
     virtual ~Paint() {}
 
-    virtual int rotate(float degree) = 0;
-    virtual int scale(float factor) = 0;
-    virtual int translate(float x, float y) = 0;
+    virtual Result rotate(float degree) = 0;
+    virtual Result scale(float factor) = 0;
+    virtual Result translate(float x, float y) = 0;
 
-    virtual int bounds(float* x, float* y, float* w, float* h) const = 0;
+    virtual Result bounds(float* x, float* y, float* w, float* h) const = 0;
 };
 
 
@@ -101,13 +102,13 @@ public:
     Canvas(RenderMethod*);
     virtual ~Canvas();
 
-    int reserve(size_t n) noexcept;
-    virtual int push(std::unique_ptr<Paint> paint) noexcept;
-    virtual int clear() noexcept;
-    virtual int update() noexcept;
-    virtual int update(Paint* paint) noexcept;
-    virtual int draw(bool async = true) noexcept;
-    virtual int sync() = 0;
+    Result reserve(size_t n) noexcept;
+    virtual Result push(std::unique_ptr<Paint> paint) noexcept;
+    virtual Result clear() noexcept;
+    virtual Result update() noexcept;
+    virtual Result update(Paint* paint) noexcept;
+    virtual Result draw(bool async = true) noexcept;
+    virtual Result sync() = 0;
 
     _TIZENVG_DECLARE_ACCESSOR(Scene);
     _TIZENVG_DECLARE_PRIVATE(Canvas);
@@ -127,42 +128,42 @@ class TIZENVG_EXPORT Shape final : public Paint
 public:
     ~Shape();
 
-    int reset() noexcept;
+    Result reset() noexcept;
 
     //Path
-    int moveTo(float x, float y) noexcept;
-    int lineTo(float x, float y) noexcept;
-    int cubicTo(float cx1, float cy1, float cx2, float cy2, float x, float y) noexcept;
-    int close() noexcept;
+    Result moveTo(float x, float y) noexcept;
+    Result lineTo(float x, float y) noexcept;
+    Result cubicTo(float cx1, float cy1, float cx2, float cy2, float x, float y) noexcept;
+    Result close() noexcept;
 
     //Shape
-    int appendRect(float x, float y, float w, float h, float cornerRadius) noexcept;
-    int appendCircle(float cx, float cy, float radiusW, float radiusH) noexcept;
-    int appendPath(const PathCommand* cmds, size_t cmdCnt, const Point* pts, size_t ptsCnt) noexcept;
+    Result appendRect(float x, float y, float w, float h, float cornerRadius) noexcept;
+    Result appendCircle(float cx, float cy, float radiusW, float radiusH) noexcept;
+    Result appendPath(const PathCommand* cmds, size_t cmdCnt, const Point* pts, size_t ptsCnt) noexcept;
 
     //Stroke
-    int stroke(float width) noexcept;
-    int stroke(uint8_t r, uint8_t g, uint8_t b, uint8_t a) noexcept;
-    int stroke(const float* dashPattern, size_t cnt) noexcept;
-    int stroke(StrokeCap cap) noexcept;
-    int stroke(StrokeJoin join) noexcept;
+    Result stroke(float width) noexcept;
+    Result stroke(uint8_t r, uint8_t g, uint8_t b, uint8_t a) noexcept;
+    Result stroke(const float* dashPattern, size_t cnt) noexcept;
+    Result stroke(StrokeCap cap) noexcept;
+    Result stroke(StrokeJoin join) noexcept;
 
     //Fill
-    int fill(uint8_t r, uint8_t g, uint8_t b, uint8_t a) noexcept;
+    Result fill(uint8_t r, uint8_t g, uint8_t b, uint8_t a) noexcept;
 
     //Transform
-    int rotate(float degree) noexcept override;
-    int scale(float factor) noexcept override;
-    int translate(float x, float y) noexcept override;
+    Result rotate(float degree) noexcept override;
+    Result scale(float factor) noexcept override;
+    Result translate(float x, float y) noexcept override;
 
     //Getters
     size_t pathCommands(const PathCommand** cmds) const noexcept;
     size_t pathCoords(const Point** pts) const noexcept;
-    int fill(uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a) const noexcept;
-    int bounds(float* x, float* y, float* w, float* h) const noexcept override;
+    Result fill(uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a) const noexcept;
+    Result bounds(float* x, float* y, float* w, float* h) const noexcept override;
 
     float strokeWidth() const noexcept;
-    int strokeColor(uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a) const noexcept;
+    Result strokeColor(uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a) const noexcept;
     size_t strokeDash(const float** dashPattern) const noexcept;
     StrokeCap strokeCap() const noexcept;
     StrokeJoin strokeJoin() const noexcept;
@@ -188,14 +189,14 @@ class TIZENVG_EXPORT Scene final : public Paint
 public:
     ~Scene();
 
-    int push(std::unique_ptr<Paint> shape) noexcept;
-    int reserve(size_t size) noexcept;
+    Result push(std::unique_ptr<Paint> shape) noexcept;
+    Result reserve(size_t size) noexcept;
 
-    int rotate(float degree) noexcept override;
-    int scale(float factor) noexcept override;
-    int translate(float x, float y) noexcept override;
+    Result rotate(float degree) noexcept override;
+    Result scale(float factor) noexcept override;
+    Result translate(float x, float y) noexcept override;
 
-    int bounds(float* x, float* y, float* w, float* h) const noexcept override;
+    Result bounds(float* x, float* y, float* w, float* h) const noexcept override;
 
     static std::unique_ptr<Scene> gen() noexcept;
 
@@ -217,8 +218,8 @@ class TIZENVG_EXPORT SwCanvas final : public Canvas
 public:
     ~SwCanvas();
 
-    int target(uint32_t* buffer, size_t stride, size_t w, size_t h) noexcept;
-    int sync() noexcept override;
+    Result target(uint32_t* buffer, size_t stride, size_t w, size_t h) noexcept;
+    Result sync() noexcept override;
     static std::unique_ptr<SwCanvas> gen() noexcept;
 
     _TIZENVG_DECLARE_PRIVATE(SwCanvas);
@@ -240,8 +241,8 @@ public:
 
     //TODO: Gl Specific methods. Need gl backend configuration methods as well.
 
-    int target(uint32_t* buffer, size_t stride, size_t w, size_t h) noexcept;
-    int sync() noexcept override;
+    Result target(uint32_t* buffer, size_t stride, size_t w, size_t h) noexcept;
+    Result sync() noexcept override;
     static std::unique_ptr<GlCanvas> gen() noexcept;
 
     _TIZENVG_DECLARE_PRIVATE(GlCanvas);
@@ -270,8 +271,8 @@ public:
      *
      * @see ...
      */
-    static int init() noexcept;
-    static int term() noexcept;
+    static Result init() noexcept;
+    static Result term() noexcept;
 
     _TIZENVG_DISABLE_CTOR(Engine);
 };

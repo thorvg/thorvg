@@ -45,20 +45,20 @@ GlCanvas::~GlCanvas()
 }
 
 
-int GlCanvas::target(uint32_t* buffer, size_t stride, size_t w, size_t h) noexcept
+Result GlCanvas::target(uint32_t* buffer, size_t stride, size_t w, size_t h) noexcept
 {
     auto renderer = dynamic_cast<GlRenderer*>(Canvas::pImpl.get()->renderer);
-    assert(renderer);
+    if (!renderer) return Result::MemoryCorruption;
 
-    if (!renderer->target(buffer, stride, w, h)) return -1;
+    if (!renderer->target(buffer, stride, w, h)) return Result::Unknown;
 
-    return 0;
+    return Result::Success;
 }
 
 
-int GlCanvas::sync() noexcept
+Result GlCanvas::sync() noexcept
 {
-    return 0;
+    return Result::Success;
 }
 
 
