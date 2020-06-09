@@ -28,7 +28,7 @@ struct Surface
     uint32_t w, h;
 };
 
-enum RenderUpdateFlag {None = 0, Path = 1, Fill = 2, Stroke = 4, Transform = 8, All = 16};
+enum RenderUpdateFlag {None = 0, Path = 1, Color = 2, Gradient = 4, Stroke = 8, Transform = 16, All = 32};
 
 struct RenderTransform
 {

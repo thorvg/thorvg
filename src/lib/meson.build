@@ -2,18 +2,21 @@ subdir('sw_engine')
 subdir('gl_engine')
 
 source_file = [
+   'tvgCanvasImpl.h',
    'tvgCommon.h',
    'tvgRenderCommon.h',
+   'tvgSceneImpl.h',
    'tvgShapePath.h',
    'tvgShapeImpl.h',
-   'tvgCanvasImpl.h',
-   'tvgSceneImpl.h',
-   'tvgEngine.cpp',
    'tvgCanvas.cpp',
-   'tvgSwCanvas.cpp',
+   'tvgEngine.cpp',
+   'tvgFill.cpp',
    'tvgGlCanvas.cpp',
+   'tvgLinearGradient.cpp',
+   'tvgRadialGradient.cpp',
    'tvgScene.cpp',
-   'tvgShape.cpp'
+   'tvgShape.cpp',
+   'tvgSwCanvas.cpp',
 ]
 
 src_dep = declare_dependency(

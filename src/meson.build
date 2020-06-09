@@ -1,4 +1,4 @@
-compiler_flags = ['-DTIZENVG_BUILD']
+compiler_flags = ['-DTVG_BUILD']
 
 subdir('lib')
 subdir('examples')

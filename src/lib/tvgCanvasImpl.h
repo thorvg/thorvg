@@ -53,7 +53,7 @@ struct Canvas::Impl
         assert(renderer);
 
         for (auto paint : paints) {
-            if (paint->Paint_Id == PAINT_ID_SCENE) {
+            if (paint->id == PAINT_ID_SCENE) {
                 //We know renderer type, avoid dynamic_cast for performance.
                 auto scene = static_cast<Scene*>(paint);
                 if (!SCENE_IMPL->clear(*renderer)) return Result::InsufficientCondition;
@@ -73,7 +73,7 @@ struct Canvas::Impl
         assert(renderer);
 
         for(auto paint: paints) {
-            if (paint->Paint_Id == PAINT_ID_SCENE) {
+            if (paint->id == PAINT_ID_SCENE) {
                 //We know renderer type, avoid dynamic_cast for performance.
                 auto scene = static_cast<Scene*>(paint);
                 if (!SCENE_IMPL->update(*renderer, nullptr)) return Result::InsufficientCondition;
@@ -89,7 +89,7 @@ struct Canvas::Impl
     {
         assert(renderer);
 
-        if (paint->Paint_Id == PAINT_ID_SCENE) {
+        if (paint->id == PAINT_ID_SCENE) {
             //We know renderer type, avoid dynamic_cast for performance.
             auto scene = static_cast<Scene*>(paint);
             if (!SCENE_IMPL->update(*renderer)) return Result::InsufficientCondition;
@@ -108,7 +108,7 @@ struct Canvas::Impl
         if (!renderer->clear()) return Result::InsufficientCondition;
 
         for(auto paint: paints) {
-           if (paint->Paint_Id == PAINT_ID_SCENE) {
+           if (paint->id == PAINT_ID_SCENE) {
                 //We know renderer type, avoid dynamic_cast for performance.
                 auto scene = static_cast<Scene*>(paint);
                 if(!SCENE_IMPL->render(*renderer)) return Result::InsufficientCondition;

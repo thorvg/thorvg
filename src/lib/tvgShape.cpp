@@ -32,7 +32,7 @@ constexpr auto PATH_KAPPA = 0.552284f;
 
 Shape :: Shape() : pImpl(make_unique<Impl>())
 {
-    Paint_Id = PAINT_ID_SHAPE;
+    id = PAINT_ID_SHAPE;
 }
 
 
@@ -226,7 +226,29 @@ Result Shape::fill(uint8_t r, uint8_t g, uint8_t b, uint8_t a) noexcept
     impl->color[1] = g;
     impl->color[2] = b;
     impl->color[3] = a;
-    impl->flag |= RenderUpdateFlag::Fill;
+    impl->flag |= RenderUpdateFlag::Color;
+
+    if (impl->fill) {
+        delete(impl->fill);
+        impl->fill = nullptr;
+        impl->flag |= RenderUpdateFlag::Gradient;
+    }
+
+    return Result::Success;
+}
+
+
+Result Shape::fill(unique_ptr<Fill> f) noexcept
+{
+    auto impl = pImpl.get();
+    if (!impl) return Result::MemoryCorruption;
+
+    auto p = f.release();
+    if (!p) return Result::MemoryCorruption;
+
+    if (impl->fill) delete(impl->fill);
+    impl->fill = p;
+    impl->flag |= RenderUpdateFlag::Gradient;
 
     return Result::Success;
 }
@@ -243,6 +265,14 @@ Result Shape::fill(uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a) const noexcep
     if (a) *a = impl->color[3];
 
     return Result::Success;
+}
+
+const Fill* Shape::fill() const noexcept
+{
+    auto impl = pImpl.get();
+    if (!impl) return nullptr;
+
+    return impl->fill;
 }
 
 

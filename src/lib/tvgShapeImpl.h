@@ -23,11 +23,6 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-struct ShapeFill
-{
-};
-
-
 struct ShapeStroke
 {
     float width = 0;
@@ -46,9 +41,9 @@ struct ShapeStroke
 
 struct Shape::Impl
 {
-    ShapeFill *fill = nullptr;
-    ShapeStroke *stroke = nullptr;
     ShapePath *path = nullptr;
+    Fill *fill = nullptr;
+    ShapeStroke *stroke = nullptr;
     RenderTransform *transform = nullptr;
     uint8_t color[4] = {0, 0, 0, 0};    //r, g, b, a
     uint32_t flag = RenderUpdateFlag::None;
@@ -62,8 +57,8 @@ struct Shape::Impl
     ~Impl()
     {
         if (path) delete(path);
-        if (stroke) delete(stroke);
         if (fill) delete(fill);
+        if (stroke) delete(stroke);
         if (transform) delete(transform);
     }
 

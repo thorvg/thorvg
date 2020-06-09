@@ -35,6 +35,7 @@
 extern "C" {
 #endif
 
+
 #define _TVG_DECLARE_PRIVATE(A) \
 protected: \
     struct Impl; \
@@ -43,16 +44,21 @@ protected: \
     const A& operator=(const A&) = delete; \
     A()
 
-#define _TVG_DECLARE_ACCESSOR(A) \
-    friend A
-
 #define _TVG_DISABLE_CTOR(A) \
     A() = delete; \
     ~A() = delete
 
-#define _TVG_DECALRE_IDENTIFIER(A) \
+#define _TVG_DECLARE_ACCESSOR(A) \
+    friend A
+
+#define _TVG_DECLARE_ACCESSORS(A, B) \
+    friend A; \
+    friend B
+
+#define _TVG_DECALRE_IDENTIFIER() \
 protected: \
-    unsigned A##_Id
+    unsigned id
+
 
 namespace tvg
 {
@@ -93,9 +99,79 @@ public:
 
     virtual Result bounds(float* x, float* y, float* w, float* h) const = 0;
 
-    _TVG_DECALRE_IDENTIFIER(Paint);
-    _TVG_DECLARE_ACCESSOR(Scene);
-    _TVG_DECLARE_ACCESSOR(Canvas);
+    _TVG_DECALRE_IDENTIFIER();
+    _TVG_DECLARE_ACCESSORS(Canvas, Scene);
+};
+
+
+/**
+ * @class Fill
+ *
+ * @ingroup TizenVG
+ *
+ * @brief description...
+ *
+ */
+class TVG_EXPORT Fill
+{
+public:
+    struct ColorStop
+    {
+        float pos;
+        uint8_t r, g, b, a;
+    };
+
+    virtual ~Fill();
+
+    Result colorStops(const ColorStop* colorStops, uint32_t cnt) noexcept;
+    uint32_t colorStops(const ColorStop** colorStops) const noexcept;
+
+    _TVG_DECALRE_IDENTIFIER();
+    _TVG_DECLARE_PRIVATE(Fill);
+};
+
+
+/**
+ * @class LinearGradient
+ *
+ * @ingroup TizenVG
+ *
+ * @brief description...
+ *
+ */
+class TVG_EXPORT LinearGradient final : public Fill
+{
+public:
+    ~LinearGradient();
+
+    Result linear(float x1, float y1, float x2, float y2) noexcept;
+    Result linear(float* x1, float* y1, float* x2, float* y2) const noexcept;
+
+    static std::unique_ptr<LinearGradient> gen() noexcept;
+
+    _TVG_DECLARE_PRIVATE(LinearGradient);
+};
+
+
+/**
+ * @class RadialGradient
+ *
+ * @ingroup TizenVG
+ *
+ * @brief description...
+ *
+ */
+class TVG_EXPORT RadialGradient final : public Fill
+{
+public:
+    ~RadialGradient();
+
+    Result radial(float cx, float cy, float radius) noexcept;
+    Result radial(float* cx, float* cy, float* radius) const noexcept;
+
+    static std::unique_ptr<RadialGradient> gen() noexcept;
+
+    _TVG_DECLARE_PRIVATE(RadialGradient);
 };
 
 
@@ -161,6 +237,7 @@ public:
 
     //Fill
     Result fill(uint8_t r, uint8_t g, uint8_t b, uint8_t a) noexcept;
+    Result fill(std::unique_ptr<Fill> f) noexcept;
 
     //Transform
     Result rotate(float degree) noexcept override;
@@ -171,6 +248,7 @@ public:
     uint32_t pathCommands(const PathCommand** cmds) const noexcept;
     uint32_t pathCoords(const Point** pts) const noexcept;
     Result fill(uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a) const noexcept;
+    const Fill* fill() const noexcept;
     Result bounds(float* x, float* y, float* w, float* h) const noexcept override;
 
     float strokeWidth() const noexcept;
@@ -181,9 +259,8 @@ public:
 
     static std::unique_ptr<Shape> gen() noexcept;
 
-    _TVG_DECLARE_ACCESSOR(Scene);
-    _TVG_DECLARE_ACCESSOR(Canvas);
     _TVG_DECLARE_PRIVATE(Shape);
+    _TVG_DECLARE_ACCESSORS(Canvas, Scene);
 };
 
 
@@ -211,8 +288,8 @@ public:
 
     static std::unique_ptr<Scene> gen() noexcept;
 
-    _TVG_DECLARE_PRIVATE(Scene);
     _TVG_DECLARE_ACCESSOR(Canvas);
+    _TVG_DECLARE_PRIVATE(Scene);
 };
 
 
@@ -231,6 +308,7 @@ public:
 
     Result target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h) noexcept;
     Result sync() noexcept override;
+
     static std::unique_ptr<SwCanvas> gen() noexcept;
 
     _TVG_DECLARE_PRIVATE(SwCanvas);
@@ -254,6 +332,7 @@ public:
 
     Result target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h) noexcept;
     Result sync() noexcept override;
+
     static std::unique_ptr<GlCanvas> gen() noexcept;
 
     _TVG_DECLARE_PRIVATE(GlCanvas);
