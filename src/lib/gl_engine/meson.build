@@ -5,7 +5,13 @@ source_file = [
    'tvgGlProgram.h',
    'tvgGlRenderer.h',
    'tvgGlShader.h',
+   'tvgGlShaderSrc.h',
+   'tvgGlGeometry.cpp',
+   'tvgGlGpuBuffer.cpp',
+   'tvgGlProgram.cpp',
    'tvgGlRenderer.cpp',
+   'tvgGlShader.cpp',
+   'tvgGlShaderSrc.cpp',
 ]
 
 glraster_dep = declare_dependency(

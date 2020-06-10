@@ -15,5 +15,6 @@ all:
 	gcc -o testLinearGradient testLinearGradient.cpp -g -lstdc++ `pkg-config --cflags --libs elementary tizenvg`
 	gcc -o testRadialGradient testRadialGradient.cpp -g -lstdc++ `pkg-config --cflags --libs elementary tizenvg`
 	gcc -o testGradientTransform testGradientTransform.cpp -g -lstdc++ `pkg-config --cflags --libs elementary tizenvg`
-	gcc -o testSvg testSvg.cpp -g -lstdc++ `pkg-config --cflags --libs elementary tizenvg`
-	gcc -o testSvg2 testSvg2.cpp -g -lstdc++ `pkg-config --cflags --libs elementary tizenvg`
+#	gcc -o testSvg testSvg.cpp -g -lstdc++ `pkg-config --cflags --libs elementary tizenvg`
+#	gcc -o testSvg2 testSvg2.cpp -g -lstdc++ `pkg-config --cflags --libs elementary tizenvg`
+	gcc -o testGlShape testGlShape.cpp -g -lstdc++ `pkg-config --cflags --libs elementary tizenvg`

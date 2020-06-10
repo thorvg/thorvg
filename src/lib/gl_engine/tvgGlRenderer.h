@@ -18,9 +18,8 @@
 #define _TVG_GL_RENDERER_H_
 
 #include "tvgGlCommon.h"
+#include "tvgGlProgram.h"
 
-namespace tvg
-{
 
 class GlRenderer : public RenderMethod
 {
@@ -30,10 +29,8 @@ public:
     void* prepare(const Shape& shape, void* data, const RenderTransform* transform, RenderUpdateFlag flags) override;
     bool dispose(const Shape& shape, void *data) override;
     bool render(const Shape& shape, void *data) override;
-    bool target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h)
-    {
-        return 0;
-    };
+    bool target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h);
+    void flush();
     bool clear() override;
     uint32_t ref() override;
     uint32_t unref() override;
@@ -46,11 +43,12 @@ private:
     GlRenderer(){};
     ~GlRenderer(){};
 
-    std::unique_ptr<GlProgram>   mColorProgram;
-    int32_t   mColorUniform;
-    uint32_t  mVertexAttrID;
-};
+    void initShaders();
+    void drawPrimitive(GlGeometry& geometry, float r, float g, float b, float a, uint32_t primitiveIndex, RenderUpdateFlag flag);
 
-}
+    unique_ptr<GlProgram>   mColorProgram;
+    int32_t   mColorUniformLoc;
+    uint32_t  mVertexAttrLoc;
+};
 
 #endif /* _TVG_GL_RENDERER_H_ */

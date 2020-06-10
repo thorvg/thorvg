@@ -1,13 +1,15 @@
 #ifndef _TVG_GL_GEOMETRY_H_
 #define _TVG_GL_GEOMETRY_H_
 
-#include "tvgGlGpuBuffer.h"
+#include "tvgGlCommon.h"
 
 class GlPoint
 {
 public:
     float x = 0.0f;
     float y = 0.0f;
+
+    GlPoint() = default;
 
     GlPoint(float pX, float pY):x(pX), y(pY)
     {}
@@ -145,36 +147,42 @@ struct VertexDataArray
     vector<uint32_t>     indices;
 };
 
-class GlGeometry
+struct GlPrimitive
 {
-public:
-    GlGeometry();
-    void reset();
-    void updateBuffer(const uint32_t location, const VertexDataArray& geometry);
-    void draw(const VertexDataArray& geometry);
-    bool decomposeOutline(const Shape& shape);
-    bool generateAAPoints(const Shape& shape, float strokeWd, RenderUpdateFlag flag);
-    bool tesselate(const Shape &shape, float viewWd, float viewHt, RenderUpdateFlag flag);
-
-    const VertexDataArray& getFill();
-    const VertexDataArray& getStroke();
-
-private:
-    GlPoint normalizePoint(GlPoint &pt, float viewWd, float viewHt);
-    void addGeometryPoint(VertexDataArray &geometry, GlPoint &pt, float viewWd, float viewHt, float opacity);
-    GlPoint getNormal(GlPoint &p1, GlPoint &p2);
-    float dotProduct(GlPoint &p1, GlPoint &p2);
-    GlPoint extendEdge(GlPoint &pt, GlPoint &normal, float scalar);
-    void addPoint(const GlPoint &pt);
-    void addTriangleFanIndices(uint32_t &curPt, vector<uint32_t> &indices);
-    void addQuadIndices(uint32_t &curPt, vector<uint32_t> &indices);
-    bool isBezierFlat(const GlPoint &p1, const GlPoint &c1, const GlPoint &c2, const GlPoint &p2);
-    void decomposeCubicCurve(const GlPoint &pt1, const GlPoint &cpt1, const GlPoint &cpt2, const GlPoint &pt2);
-
-    unique_ptr<GlGpuBuffer> mGpuBuffer;
     vector<SmoothPoint> mAAPoints;
     VertexDataArray mFill;
     VertexDataArray mStroke;
+};
+
+class GlGpuBuffer;
+
+class GlGeometry
+{
+public:
+
+    uint32_t getPrimitiveCount();
+    bool decomposeOutline(const Shape& shape);
+    bool generateAAPoints(const Shape& shape, float strokeWd, RenderUpdateFlag flag);
+    bool tesselate(const Shape &shape, float viewWd, float viewHt, RenderUpdateFlag flag);
+    void disableVertex(uint32_t location);
+    void draw(const uint32_t location, const uint32_t primitiveIndex, RenderUpdateFlag flag);
+
+private:
+    GlPoint normalizePoint(const GlPoint &pt, float viewWd, float viewHt);
+    void addGeometryPoint(VertexDataArray &geometry, const GlPoint &pt, float viewWd, float viewHt, float opacity);
+    GlPoint getNormal(const GlPoint &p1, const GlPoint &p2);
+    float dotProduct(const GlPoint &p1, const GlPoint &p2);
+    GlPoint extendEdge(const GlPoint &pt, const GlPoint &normal, float scalar);
+
+    void addPoint(GlPrimitive& primitve, const GlPoint &pt);
+    void addTriangleFanIndices(uint32_t &curPt, vector<uint32_t> &indices);
+    void addQuadIndices(uint32_t &curPt, vector<uint32_t> &indices);
+    bool isBezierFlat(const GlPoint &p1, const GlPoint &c1, const GlPoint &c2, const GlPoint &p2);
+    void decomposeCubicCurve(GlPrimitive& primitve, const GlPoint &pt1, const GlPoint &cpt1, const GlPoint &cpt2, const GlPoint &pt2);
+    void updateBuffer(const uint32_t location, const VertexDataArray& vertexArray);
+
+    unique_ptr<GlGpuBuffer> mGpuBuffer;
+    vector<GlPrimitive>     mPrimitives;
 };
 
 #endif /* _TVG_GL_GEOMETRY_H_ */

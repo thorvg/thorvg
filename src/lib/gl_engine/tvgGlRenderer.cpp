@@ -17,7 +17,10 @@
 #ifndef _TVG_GL_RENDERER_CPP_
 #define _TVG_GL_RENDERER_CPP_
 
-#include "tvgCommon.h"
+#include "tvgGlShaderSrc.h"
+#include "tvgGlGpuBuffer.h"
+#include "tvgGlGeometry.h"
+#include "tvgGlCommon.h"
 #include "tvgGlRenderer.h"
 
 /************************************************************************/
@@ -33,16 +36,55 @@ static RenderInitializer renderInit;
 bool GlRenderer::clear()
 {
     //TODO: (Request) to clear target
+    // Will be adding glClearColor for input buffer
+    return true;
+}
+
+
+bool GlRenderer::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h)
+{
+    assert(w > 0 && h > 0);
+
+    surface.stride = stride;
+    surface.w = w;
+    surface.h = h;
 
     return true;
 }
+
+
+void GlRenderer::flush()
+{
+    GL_CHECK(glFinish());
+    mColorProgram->unload();
+}
+
 
 bool GlRenderer::render(const Shape& shape, void *data)
 {
     GlShape* sdata = static_cast<GlShape*>(data);
     if (!sdata) return false;
 
-    //TODO:
+    uint8_t r, g, b, a;
+    size_t flags = static_cast<size_t>(sdata->updateFlag);
+
+    GL_CHECK(glViewport(0, 0, sdata->viewWd, sdata->viewHt));
+
+    uint32_t geometryCnt = sdata->geometry->getPrimitiveCount();
+    for (uint32_t i = 0; i < geometryCnt; ++i)
+    {
+        mColorProgram->load();
+        if (flags & RenderUpdateFlag::Color)
+        {
+            shape.fill(&r, &g, &b, &a);
+            drawPrimitive(*(sdata->geometry), (float)r / 255.0f, (float)g / 255.0f, (float)b / 255.0f, (float)a / 255.0f, i, RenderUpdateFlag::Color);
+        }
+        if (flags & RenderUpdateFlag::Stroke)
+        {
+            shape.strokeColor(&r, &g, &b, &a);
+            drawPrimitive(*(sdata->geometry), (float)r / 255.0f, (float)g / 255.0f, (float)b / 255.0f, (float)a / 255.0f, i, RenderUpdateFlag::Stroke);
+        }
+    }
 
     return true;
 }
@@ -53,9 +95,7 @@ bool GlRenderer::dispose(const Shape& shape, void *data)
     GlShape* sdata = static_cast<GlShape*>(data);
     if (!sdata) return false;
 
-    //TODO:
-
-    free(sdata);
+    delete sdata;
     return true;
 }
 
@@ -64,21 +104,35 @@ void* GlRenderer::prepare(const Shape& shape, void* data, const RenderTransform*
 {
     //prepare shape data
     GlShape* sdata = static_cast<GlShape*>(data);
-    if (!sdata) {
-        sdata = static_cast<GlShape*>(calloc(1, sizeof(GlShape)));
+    if (!sdata)
+    {
+        sdata = new GlShape;
         assert(sdata);
     }
+    sdata->viewWd = static_cast<float>(surface.w);
+    sdata->viewHt = static_cast<float>(surface.h);
+    sdata->updateFlag = flags;
 
-    if (flags & RenderUpdateFlag::Path) {
-        //TODO: Updated Vertices
+    if (sdata->updateFlag == RenderUpdateFlag::None) return nullptr;
+
+    initShaders();
+
+    sdata->geometry = make_unique<GlGeometry>();
+
+    //invisible?
+    uint8_t alphaF, alphaS;
+    shape.fill(nullptr, nullptr, nullptr, &alphaF);
+    shape.strokeColor(nullptr, nullptr, nullptr, &alphaS);
+    auto strokeWd = shape.strokeWidth();
+
+    if (alphaF == 0 && alphaS == 0) return sdata;
+
+    if (sdata->updateFlag & (RenderUpdateFlag::Color | RenderUpdateFlag::Stroke) )
+    {
+        if (!sdata->geometry->decomposeOutline(shape)) return sdata;
+        if (!sdata->geometry->generateAAPoints(shape, static_cast<float>(strokeWd), sdata->updateFlag)) return sdata;
+        if (!sdata->geometry->tesselate(shape, sdata->viewWd, sdata->viewHt, sdata->updateFlag)) return sdata;
     }
-
-    if (flags & RenderUpdateFlag::Transform) {
-        //TODO: Updated Transform
-    }
-
-    //TODO:
-
     return sdata;
 }
 
@@ -91,6 +145,10 @@ int GlRenderer::init()
 
 int GlRenderer::term()
 {
+    if (inst()->mColorProgram.get())
+    {
+        inst()->mColorProgram.reset(nullptr);
+    }
     return RenderInitializer::term(renderInit);
 }
 
@@ -113,5 +171,26 @@ GlRenderer* GlRenderer::inst()
     return static_cast<GlRenderer*>(RenderInitializer::inst(renderInit));
 }
 
+
+void GlRenderer::initShaders()
+{
+    if (!mColorProgram.get())
+    {
+        shared_ptr<GlShader> shader = GlShader::gen(COLOR_VERT_SHADER, COLOR_FRAG_SHADER);
+        mColorProgram = GlProgram::gen(shader);
+    }
+    mColorProgram->load();
+    mColorUniformLoc = mColorProgram->getUniformLocation("uColor");
+    mVertexAttrLoc = mColorProgram->getAttributeLocation("aLocation");
+}
+
+
+void GlRenderer::drawPrimitive(GlGeometry& geometry, float r, float g, float b, float a, uint32_t primitiveIndex, RenderUpdateFlag flag)
+{
+    mColorProgram->setUniformValue(mColorUniformLoc, r, g, b, a);
+    geometry.draw(mVertexAttrLoc, primitiveIndex, flag);
+    geometry.disableVertex(mVertexAttrLoc);
+
+}
 
 #endif /* _TVG_GL_RENDERER_CPP_ */

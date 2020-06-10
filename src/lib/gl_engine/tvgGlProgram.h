@@ -3,22 +3,25 @@
 
 #include "tvgGlShader.h"
 
+#include <memory>
 #include <map>
-
 
 class GlProgram
 {
 public:
-    GlProgram(shared_ptr<GlShader> shader);
-    void create();
+    static std::unique_ptr<GlProgram> gen(std::shared_ptr<GlShader> shader);
+    GlProgram(std::shared_ptr<GlShader> shader);
+    ~GlProgram();
+
     void load();
+    void unload();
     int32_t getAttributeLocation(const char* name);
     int32_t getUniformLocation(const char* name);
     void setUniformValue(int32_t location, float r, float g, float b, float a);
 
 private:
-    void linkProgram();
-    std::shared_ptr<GlShader> mShader;
+
+    void linkProgram(std::shared_ptr<GlShader> shader);
     uint32_t mProgramObj;
     static uint32_t mCurrentProgram;
 

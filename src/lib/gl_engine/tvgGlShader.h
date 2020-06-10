@@ -1,10 +1,13 @@
 #ifndef _TVG_GL_SHADER_H_
 #define _TVG_GL_SHADER_H_
 
+#include <memory>
+
 class GlShader
 {
 public:
-    static shared_ptr<GlShader> gen(const char * vertSrc, const char * fragSrc);
+    static std::shared_ptr<GlShader> gen(const char * vertSrc, const char * fragSrc);
+    ~GlShader();
 
     uint32_t getVertexShader();
     uint32_t getFragmentShader();
