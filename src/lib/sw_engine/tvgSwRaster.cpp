@@ -24,60 +24,28 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-static inline uint32_t COLOR_ALPHA(uint32_t color)
+static bool _rasterTranslucentRle(Surface& surface, SwRleData* rle, uint32_t color)
 {
-  return (color >> 24) & 0xff;
-}
+    if (!rle) return false;
 
+    auto span = rle->spans;
+    auto stride = surface.stride;
+    uint32_t tmp;
 
-static inline uint32_t COLOR_ALPHA_BLEND(uint32_t color, uint32_t alpha)
-{
-  return (((((color >> 8) & 0x00ff00ff) * alpha) & 0xff00ff00) +
-          ((((color & 0x00ff00ff) * alpha) >> 8) & 0x00ff00ff));
-}
-
-
-static inline uint32_t COLOR_ARGB_JOIN(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
-{
-  return (a << 24 | r << 16 | g << 8 | b);
-}
-
-
-static void
-_rasterTranslucent(uint32_t* dst, uint32_t len, uint32_t color, uint32_t cov)
-{
-  //OPTIMIZE ME: SIMD
-
-  if (cov < 255) color = COLOR_ALPHA_BLEND(color, cov);
-  auto ialpha = 255 - COLOR_ALPHA(color);
-
-  for (uint32_t i = 0; i < len; ++i) {
-    dst[i] = color + COLOR_ALPHA_BLEND(dst[i], ialpha);
-  }
-}
-
-
-static void
-_rasterSolid(uint32_t* dst, uint32_t len, uint32_t color, uint32_t cov)
-{
-  //OPTIMIZE ME: SIMD
-
-  //Fully Opaque
-  if (cov == 255) {
-    for (uint32_t i = 0; i < len; ++i) {
-      dst[i] = color;
+    for (uint32_t i = 0; i < rle->size; ++i) {
+        auto dst = &surface.buffer[span->y * stride + span->x];
+        if (span->coverage < 255) tmp = COLOR_ALPHA_BLEND(color, span->coverage);
+        else tmp = color;
+        for (uint32_t i = 0; i < span->len; ++i) {
+            dst[i] = tmp + COLOR_ALPHA_BLEND(dst[i], 255 - COLOR_ALPHA(tmp));
+        }
+        ++span;
     }
-  } else {
-    auto ialpha = 255 - cov;
-    for (uint32_t i = 0; i < len; ++i) {
-      dst[i] = COLOR_ALPHA_BLEND(color, cov) + COLOR_ALPHA_BLEND(dst[i], ialpha);
-    }
-  }
+    return true;
 }
 
 
-static bool
-_rasterRle(Surface& surface, SwRleData* rle, uint32_t color, uint8_t a)
+static bool _rasterSolidRle(Surface& surface, SwRleData* rle, uint32_t color)
 {
     if (!rle) return false;
 
@@ -85,16 +53,66 @@ _rasterRle(Surface& surface, SwRleData* rle, uint32_t color, uint8_t a)
     auto stride = surface.stride;
 
     for (uint32_t i = 0; i < rle->size; ++i) {
-        assert(span);
-
         auto dst = &surface.buffer[span->y * stride + span->x];
-
-        if (a == 255) _rasterSolid(dst, span->len, color, span->coverage);
-        else _rasterTranslucent(dst, span->len, color, span->coverage);
-
+        if (span->coverage == 255) {
+            for (uint32_t i = 0; i < span->len; ++i) {
+              dst[i] = color;
+            }
+        } else {
+            for (uint32_t i = 0; i < span->len; ++i) {
+                dst[i] = COLOR_ALPHA_BLEND(color, span->coverage) + COLOR_ALPHA_BLEND(dst[i], 255 - span->coverage);
+            }
+        }
         ++span;
     }
+    return true;
+}
 
+
+static bool _rasterGradientRle(Surface& surface, SwRleData* rle, const SwFill* fill)
+{
+    if (!rle || !fill) return false;
+
+    auto buf = static_cast<uint32_t*>(alloca(surface.w * sizeof(uint32_t)));
+    if (!buf) return false;
+
+    auto span = rle->spans;
+    auto stride = surface.stride;
+
+    //Translucent Gradient
+    if (fill->translucent) {
+        uint32_t tmp;
+        for (uint32_t i = 0; i < rle->size; ++i) {
+            auto dst = &surface.buffer[span->y * stride + span->x];
+            fillFetch(fill, buf, span->y, span->x, span->len);
+            if (span->coverage == 255) {
+                for (uint32_t i = 0; i < span->len; ++i) {
+                    dst[i] = buf[i] + COLOR_ALPHA_BLEND(dst[i], 255 - COLOR_ALPHA(buf[i]));
+                }
+            } else {
+                for (uint32_t i = 0; i < span->len; ++i) {
+                    tmp = COLOR_ALPHA_BLEND(buf[i], span->coverage);
+                    dst[i] = tmp + COLOR_ALPHA_BLEND(dst[i], 255 - COLOR_ALPHA(tmp));
+                }
+            }
+            ++span;
+        }
+    //Opaque Gradient
+    } else {
+        for (uint32_t i = 0; i < rle->size; ++i) {
+            auto dst = &surface.buffer[span->y * stride + span->x];
+            if (span->coverage == 255) {
+                fillFetch(fill, dst, span->y, span->x, span->len);
+            } else {
+                fillFetch(fill, buf, span->y, span->x, span->len);
+                auto ialpha = 255 - span->coverage;
+                for (uint32_t i = 0; i < span->len; ++i) {
+                    dst[i] = COLOR_ALPHA_BLEND(buf[i], span->coverage) + COLOR_ALPHA_BLEND(dst[i], ialpha);
+                }
+            }
+            ++span;
+        }
+    }
     return true;
 }
 
@@ -103,15 +121,23 @@ _rasterRle(Surface& surface, SwRleData* rle, uint32_t color, uint8_t a)
 /* External Class Implementation                                        */
 /************************************************************************/
 
-bool rasterShape(Surface& surface, SwShape& sdata, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
+bool rasterGradientShape(Surface& surface, SwShape& shape)
 {
-    return _rasterRle(surface, sdata.rle, COLOR_ARGB_JOIN(r, g, b, a), a);
+    return _rasterGradientRle(surface, shape.rle, shape.fill);
 }
 
 
-bool rasterStroke(Surface& surface, SwShape& sdata, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
+bool rasterSolidShape(Surface& surface, SwShape& shape, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 {
-    return _rasterRle(surface, sdata.strokeRle, COLOR_ARGB_JOIN(r, g, b, a), a);
+    if (a == 255) return _rasterSolidRle(surface, shape.rle, COLOR_ARGB_JOIN(r, g, b, a));
+    return _rasterTranslucentRle(surface, shape.rle, COLOR_ARGB_JOIN(r, g, b, a));
+}
+
+
+bool rasterStroke(Surface& surface, SwShape& shape, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
+{
+    if (a == 255) return _rasterSolidRle(surface, shape.strokeRle, COLOR_ARGB_JOIN(r, g, b, a));
+    return _rasterTranslucentRle(surface, shape.strokeRle, COLOR_ARGB_JOIN(r, g, b, a));
 }
 
 

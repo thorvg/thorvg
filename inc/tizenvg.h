@@ -51,14 +51,10 @@ protected: \
 #define _TVG_DECLARE_ACCESSOR(A) \
     friend A
 
-#define _TVG_DECLARE_ACCESSORS(A, B) \
-    friend A; \
-    friend B
-
 #define _TVG_DECALRE_IDENTIFIER() \
+    auto id() const { return _id; } \
 protected: \
-    unsigned id
-
+    unsigned _id
 
 namespace tvg
 {
@@ -101,7 +97,6 @@ public:
     virtual Result bounds(float* x, float* y, float* w, float* h) const = 0;
 
     _TVG_DECALRE_IDENTIFIER();
-    _TVG_DECLARE_ACCESSORS(Canvas, Scene);
 };
 
 
@@ -264,7 +259,8 @@ public:
     static std::unique_ptr<Shape> gen() noexcept;
 
     _TVG_DECLARE_PRIVATE(Shape);
-    _TVG_DECLARE_ACCESSORS(Canvas, Scene);
+    _TVG_DECLARE_ACCESSOR(Canvas);
+    _TVG_DECLARE_ACCESSOR(Scene);
 };
 
 

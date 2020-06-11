@@ -32,7 +32,7 @@ constexpr auto PATH_KAPPA = 0.552284f;
 
 Shape :: Shape() : pImpl(make_unique<Impl>())
 {
-    id = PAINT_ID_SHAPE;
+    _id = PAINT_ID_SHAPE;
 }
 
 

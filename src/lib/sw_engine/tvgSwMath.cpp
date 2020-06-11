@@ -93,15 +93,15 @@ static void _polarize(SwPoint& pt)
             auto tmp = v.y;
             v.y = -v.x;
             v.x = tmp;
-            theta = ANGLE_PI2;
+            theta = SW_ANGLE_PI2;
         } else {
-            theta = v.y > 0 ? ANGLE_PI : -ANGLE_PI;
+            theta = v.y > 0 ? SW_ANGLE_PI : -SW_ANGLE_PI;
             v.x = -v.x;
             v.y = -v.y;
         }
     } else {
         if (v.y < -v.x) {
-            theta = -ANGLE_PI2;
+            theta = -SW_ANGLE_PI2;
             auto tmp = -v.y;
             v.y = v.x;
             v.x = tmp;
@@ -144,18 +144,18 @@ static void _rotate(SwPoint& pt, SwFixed theta)
     SwFixed y = pt.y;
 
     //Rotate inside [-PI/4, PI/4] sector
-    while (theta < -ANGLE_PI4) {
+    while (theta < -SW_ANGLE_PI4) {
         auto tmp = y;
         y = -x;
         x = tmp;
-        theta += ANGLE_PI2;
+        theta += SW_ANGLE_PI2;
     }
 
-    while (theta > ANGLE_PI4) {
+    while (theta > SW_ANGLE_PI4) {
         auto tmp = -y;
         y = x;
         x = tmp;
-        theta -= ANGLE_PI2;
+        theta -= SW_ANGLE_PI2;
     }
 
     auto atan = ATAN_TBL;
@@ -236,7 +236,7 @@ bool mathSmallCubic(SwPoint* base, SwFixed& angleIn, SwFixed& angleMid, SwFixed&
     auto theta1 = abs(mathDiff(angleIn, angleMid));
     auto theta2 = abs(mathDiff(angleMid, angleOut));
 
-    if ((theta1 < (ANGLE_PI / 8)) && (theta2 < (ANGLE_PI / 8))) return true;
+    if ((theta1 < (SW_ANGLE_PI / 8)) && (theta2 < (SW_ANGLE_PI / 8))) return true;
     else return false;
 }
 
@@ -346,7 +346,7 @@ SwFixed mathAtan(const SwPoint& pt)
 
 SwFixed mathSin(SwFixed angle)
 {
-    return mathCos(ANGLE_PI2 - angle);
+    return mathCos(SW_ANGLE_PI2 - angle);
 }
 
 
@@ -408,9 +408,9 @@ SwFixed mathDiff(SwFixed angle1, SwFixed angle2)
 {
     auto delta = angle2 - angle1;
 
-    delta %= ANGLE_2PI;
-    if (delta < 0) delta += ANGLE_2PI;
-    if (delta > ANGLE_PI) delta -= ANGLE_2PI;
+    delta %= SW_ANGLE_2PI;
+    if (delta < 0) delta += SW_ANGLE_2PI;
+    if (delta > SW_ANGLE_PI) delta -= SW_ANGLE_2PI;
 
     return delta;
 }

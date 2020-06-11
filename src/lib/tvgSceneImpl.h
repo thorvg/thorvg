@@ -39,7 +39,7 @@ struct Scene::Impl
     bool clear(RenderMethod& renderer)
     {
         for (auto paint : paints) {
-            if (paint->id == PAINT_ID_SCENE) {
+            if (paint->id() == PAINT_ID_SCENE) {
                 //We know renderer type, avoid dynamic_cast for performance.
                 auto scene = static_cast<Scene*>(paint);
                 if (!SCENE_IMPL->clear(renderer)) return false;
@@ -57,7 +57,7 @@ struct Scene::Impl
     bool updateInternal(RenderMethod &renderer, const RenderTransform* transform, uint32_t flag)
     {
         for(auto paint: paints) {
-            if (paint->id == PAINT_ID_SCENE) {
+            if (paint->id() == PAINT_ID_SCENE) {
                 //We know renderer type, avoid dynamic_cast for performance.
                 auto scene = static_cast<Scene*>(paint);
                 if (!SCENE_IMPL->update(renderer, transform, flag)) return false;
@@ -97,7 +97,7 @@ struct Scene::Impl
     bool render(RenderMethod &renderer)
     {
         for(auto paint: paints) {
-            if (paint->id == PAINT_ID_SCENE) {
+            if (paint->id() == PAINT_ID_SCENE) {
                 //We know renderer type, avoid dynamic_cast for performance.
                 auto scene = static_cast<Scene*>(paint);
                 if(!SCENE_IMPL->render(renderer)) return false;
@@ -122,7 +122,7 @@ struct Scene::Impl
             auto w2 = 0.0f;
             auto h2 = 0.0f;
 
-            if (paint->id == PAINT_ID_SCENE) {
+            if (paint->id() == PAINT_ID_SCENE) {
                 //We know renderer type, avoid dynamic_cast for performance.
                 auto scene = static_cast<Scene*>(paint);
                 if (!SCENE_IMPL->bounds(&x2, &y2, &w2, &h2)) return false;

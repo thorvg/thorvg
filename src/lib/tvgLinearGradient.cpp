@@ -35,7 +35,7 @@ struct LinearGradient::Impl
 
 LinearGradient::LinearGradient():pImpl(make_unique<Impl>())
 {
-    id = FILL_ID_LINEAR;
+    _id = FILL_ID_LINEAR;
 }
 
 

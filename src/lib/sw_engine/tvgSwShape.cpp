@@ -666,19 +666,29 @@ bool shapeGenOutline(SwShape& shape, const Shape& sdata)
 }
 
 
-void shapeFree(SwShape* sdata)
+void shapeFree(SwShape* shape)
 {
-    assert(sdata);
+    assert(shape);
 
-    shapeDelOutline(*sdata);
-    rleFree(sdata->rle);
+    shapeDelOutline(*shape);
+    rleFree(shape->rle);
 
-    if (sdata->stroke) {
-        rleFree(sdata->strokeRle);
-        strokeFree(sdata->stroke);
+    if (shape->stroke) {
+        rleFree(shape->strokeRle);
+        strokeFree(shape->stroke);
     }
 
-    free(sdata);
+    free(shape);
+}
+
+
+void shapeDelStroke(SwShape& shape)
+{
+    if (!shape.stroke) return;
+    rleFree(shape.strokeRle);
+    shape.strokeRle = nullptr;
+    strokeFree(shape.stroke);
+    shape.stroke = nullptr;
 }
 
 
@@ -727,6 +737,34 @@ bool shapeGenStrokeRle(SwShape& shape, const Shape& sdata, const SwSize& clip)
     _delOutline(strokeOutline);
 
     return true;
+}
+
+
+bool shapeGenFillColors(SwShape& shape, const Fill* fill)
+{
+    assert(fill);
+
+    fillGenColorTable(shape.fill, fill);
+    return true;
+}
+
+
+void shapeResetFill(SwShape& shape, const Fill* fill)
+{
+    assert(fill);
+
+    if (!shape.fill) shape.fill = static_cast<SwFill*>(calloc(1, sizeof(SwFill)));
+    assert(shape.fill);
+
+    fillReset(shape.fill, fill);
+}
+
+
+void shapeDelFill(SwShape& shape)
+{
+    if (!shape.fill) return;
+    fillFree(shape.fill);
+    shape.fill = nullptr;
 }
 
 

@@ -30,7 +30,7 @@ static constexpr auto SW_STROKE_TAG_END = 8;
 
 static inline SwFixed SIDE_TO_ROTATE(const int32_t s)
 {
-    return (ANGLE_PI2 - (s) * ANGLE_PI);
+    return (SW_ANGLE_PI2 - (s) * SW_ANGLE_PI);
 }
 
 
@@ -134,14 +134,14 @@ static void _borderCubicTo(SwStrokeBorder* border, SwPoint& ctrl1, SwPoint& ctrl
 
 static void _borderArcTo(SwStrokeBorder* border, SwPoint& center, SwFixed radius, SwFixed angleStart, SwFixed angleDiff)
 {
-    constexpr SwFixed ARC_CUBIC_ANGLE = ANGLE_PI / 2;
+    constexpr SwFixed ARC_CUBIC_ANGLE = SW_ANGLE_PI / 2;
     SwPoint a = {radius, 0};
     mathRotate(a, angleStart);
     a += center;
 
     auto total = angleDiff;
     auto angle = angleStart;
-    auto rotate = (angleDiff >= 0) ? ANGLE_PI2 : -ANGLE_PI2;
+    auto rotate = (angleDiff >= 0) ? SW_ANGLE_PI2 : -SW_ANGLE_PI2;
 
     while (total != 0) {
         auto step = total;
@@ -222,7 +222,7 @@ static void _arcTo(SwStroke& stroke, int32_t side)
     auto border = stroke.borders + side;
     auto rotate = SIDE_TO_ROTATE(side);
     auto total = mathDiff(stroke.angleIn, stroke.angleOut);
-    if (total == ANGLE_PI) total = -rotate * 2;
+    if (total == SW_ANGLE_PI) total = -rotate * 2;
 
     _borderArcTo(border, stroke.center, stroke.width, stroke.angleIn + rotate, total);
     border->movable = false;
@@ -249,7 +249,7 @@ static void _outside(SwStroke& stroke, int32_t side, SwFixed lineLength)
 
         if (!bevel) {
             auto theta = mathDiff(stroke.angleIn, stroke.angleOut);
-            if (theta == ANGLE_PI) {
+            if (theta == SW_ANGLE_PI) {
                 theta = rotate;
                 phi = stroke.angleIn;
             } else {
@@ -354,7 +354,7 @@ void _processCorner(SwStroke& stroke, SwFixed lineLength)
 void _firstSubPath(SwStroke& stroke, SwFixed startAngle, SwFixed lineLength)
 {
     SwPoint delta = {stroke.width, 0};
-    mathRotate(delta, startAngle + ANGLE_PI2);
+    mathRotate(delta, startAngle + SW_ANGLE_PI2);
 
     auto pt = stroke.center + delta;
     auto border = stroke.borders;
@@ -384,7 +384,7 @@ static void _lineTo(SwStroke& stroke, const SwPoint& to)
     auto angle = mathAtan(delta);
 
     delta = {stroke.width, 0};
-    mathRotate(delta, angle + ANGLE_PI2);
+    mathRotate(delta, angle + SW_ANGLE_PI2);
 
     //process corner if necessary
     if (stroke.firstPt) {
@@ -460,7 +460,7 @@ static void _cubicTo(SwStroke& stroke, const SwPoint& ctrl1, const SwPoint& ctrl
                 stroke.angleOut = angleIn;
                 _processCorner(stroke, 0);
             }
-        } else if (abs(mathDiff(stroke.angleIn, angleIn)) > (ANGLE_PI / 8)) {
+        } else if (abs(mathDiff(stroke.angleIn, angleIn)) > (SW_ANGLE_PI / 8)) {
             //if the deviation from one arc to the next is too great add a round corner
             stroke.center = arc[3];
             stroke.angleOut = angleIn;
@@ -515,7 +515,7 @@ static void _cubicTo(SwStroke& stroke, const SwPoint& ctrl1, const SwPoint& ctrl
                 auto alpha1 = mathAtan(_end - _start);
 
                 //is the direction of the border arc opposite to that of the original arc?
-                if (abs(mathDiff(alpha0, alpha1)) > ANGLE_PI / 2) {
+                if (abs(mathDiff(alpha0, alpha1)) > SW_ANGLE_PI / 2) {
 
                     //use the sine rule to find the intersection point
                     auto beta = mathAtan(arc[3] - _start);
@@ -583,7 +583,7 @@ static void _addCap(SwStroke& stroke, SwFixed angle, int32_t side)
     } else if (stroke.cap == StrokeCap::Round) {
 
         stroke.angleIn = angle;
-        stroke.angleOut = angle + ANGLE_PI;
+        stroke.angleOut = angle + SW_ANGLE_PI;
         _arcTo(stroke, side);
         return;
 
@@ -692,7 +692,7 @@ static void _endSubPath(SwStroke& stroke)
 
         //now add the final cap
         stroke.center = stroke.ptStartSubPath;
-        _addCap(stroke, stroke.subPathAngle + ANGLE_PI, 0);
+        _addCap(stroke, stroke.subPathAngle + SW_ANGLE_PI, 0);
 
         /* now end the right subpath accordingly. The left one is rewind
            and deosn't need further processing */

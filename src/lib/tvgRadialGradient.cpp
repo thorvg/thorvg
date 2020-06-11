@@ -35,7 +35,7 @@ struct RadialGradient::Impl
 
 RadialGradient::RadialGradient():pImpl(make_unique<Impl>())
 {
-    id = FILL_ID_RADIAL;
+    _id = FILL_ID_RADIAL;
 }
 
 

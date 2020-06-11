@@ -57,28 +57,32 @@ bool SwRenderer::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t 
     return true;
 }
 
-bool SwRenderer::render(const Shape& shape, void *data)
+bool SwRenderer::render(const Shape& sdata, void *data)
 {
-    SwShape* sdata = static_cast<SwShape*>(data);
-    if (!sdata) return false;
+    SwShape* shape = static_cast<SwShape*>(data);
+    if (!shape) return false;
 
     uint8_t r, g, b, a;
 
-    shape.fill(&r, &g, &b, &a);
-    if (a > 0) rasterShape(surface, *sdata, r, g, b, a);
+    if (sdata.fill()) {
+        rasterGradientShape(surface, *shape);
+    } else {
+        sdata.fill(&r, &g, &b, &a);
+        if (a > 0) rasterSolidShape(surface, *shape, r, g, b, a);
+    }
 
-    shape.strokeColor(&r, &g, &b, &a);
-    if (a > 0) rasterStroke(surface, *sdata, r, g, b, a);
+    sdata.strokeColor(&r, &g, &b, &a);
+    if (a > 0) rasterStroke(surface, *shape, r, g, b, a);
 
     return true;
 }
 
 
-bool SwRenderer::dispose(const Shape& shape, void *data)
+bool SwRenderer::dispose(const Shape& sdata, void *data)
 {
-    auto sdata = static_cast<SwShape*>(data);
-    if (!sdata) return true;
-    shapeFree(sdata);
+    auto shape = static_cast<SwShape*>(data);
+    if (!shape) return true;
+    shapeFree(shape);
     return true;
 }
 
@@ -103,8 +107,19 @@ void* SwRenderer::prepare(const Shape& sdata, void* data, const RenderTransform*
         shapeReset(*shape);
         uint8_t alpha = 0;
         sdata.fill(nullptr, nullptr, nullptr, &alpha);
-        if (alpha > 0) {
+        if (alpha > 0 || sdata.fill()) {
             if (!shapeGenRle(*shape, sdata, clip, transform)) return shape;
+        }
+    }
+
+    //Fill
+    if (flags & (RenderUpdateFlag::Gradient)) {
+        auto fill = sdata.fill();
+        if (fill) {
+            shapeResetFill(*shape, fill);
+            if (!shapeGenFillColors(*shape, fill)) return shape;
+        } else {
+            shapeDelFill(*shape);
         }
     }
 
@@ -117,6 +132,8 @@ void* SwRenderer::prepare(const Shape& sdata, void* data, const RenderTransform*
             if (alpha > 0) {
                 if (!shapeGenStrokeRle(*shape, sdata, clip)) return shape;
             }
+        } else {
+            shapeDelStroke(*shape);
         }
     }
 

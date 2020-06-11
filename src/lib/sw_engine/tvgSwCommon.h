@@ -21,11 +21,14 @@
 
 using namespace tvg;
 
-constexpr auto SW_CURVE_TYPE_POINT = 0;
-constexpr auto SW_CURVE_TYPE_CUBIC = 1;
-
-constexpr auto SW_OUTLINE_FILL_WINDING = 0;
-constexpr auto SW_OUTLINE_FILL_EVEN_ODD = 1;
+#define SW_CURVE_TYPE_POINT 0
+#define SW_CURVE_TYPE_CUBIC 1
+#define SW_OUTLINE_FILL_WINDING 0
+#define SW_OUTLINE_FILL_EVEN_ODD 1
+#define SW_ANGLE_PI (180L << 16)
+#define SW_ANGLE_2PI (SW_ANGLE_PI << 1)
+#define SW_ANGLE_PI2 (SW_ANGLE_PI >> 1)
+#define SW_ANGLE_PI4 (SW_ANGLE_PI >> 2)
 
 using SwCoord = signed long;
 using SwFixed = signed long long;
@@ -153,20 +156,26 @@ struct SwDashStroke
     bool curOpGap;
 };
 
+struct SwFill
+{
+    uint32_t* ctable;
+    float x1, y1, x2, y2;
+    float dx, dy;
+    float len;
+    float offset;
+    FillSpread spread;
+    bool translucent;
+};
+
 struct SwShape
 {
     SwOutline*   outline;
     SwStroke*    stroke;
+    SwFill*      fill;
     SwRleData*   rle;
     SwRleData*   strokeRle;
     SwBBox       bbox;
 };
-
-
-constexpr static SwFixed ANGLE_PI = (180L << 16);
-constexpr static SwFixed ANGLE_2PI = (ANGLE_PI << 1);
-constexpr static SwFixed ANGLE_PI2 = (ANGLE_PI >> 1);
-constexpr static SwFixed ANGLE_PI4 = (ANGLE_PI >> 2);
 
 
 static inline SwPoint TO_SWPOINT(const Point* pt)
@@ -178,6 +187,33 @@ static inline SwPoint TO_SWPOINT(const Point* pt)
 static inline SwCoord TO_SWCOORD(float val)
 {
     return SwCoord(val * 64);
+}
+
+
+static inline uint32_t COLOR_ALPHA(uint32_t rgba)
+{
+  return (rgba >> 24) & 0xff;
+}
+
+
+static inline uint32_t COLOR_ALPHA_BLEND(uint32_t rgba, uint32_t alpha)
+{
+  return (((((rgba >> 8) & 0x00ff00ff) * alpha) & 0xff00ff00) +
+          ((((rgba & 0x00ff00ff) * alpha) >> 8) & 0x00ff00ff));
+}
+
+
+static inline uint32_t COLOR_INTERPOLATE(uint32_t rgba1, uint32_t a, uint32_t rgba2, uint32_t b)
+{
+   auto t = (((rgba1 & 0xff00ff) * a + (rgba2 & 0xff00ff) * b) >> 8) & 0xff00ff;
+   rgba1 = (((rgba1 >> 8) & 0xff00ff) * a + ((rgba2 >> 8) & 0xff00ff) * b) & 0xff00ff00;
+   return (rgba1 |= t);
+}
+
+
+static inline uint32_t COLOR_ARGB_JOIN(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
+{
+  return (a << 24 | r << 16 | g << 8 | b);
 }
 
 
@@ -202,16 +238,26 @@ void shapeDelOutline(SwShape& shape);
 void shapeResetStroke(SwShape& shape, const Shape& sdata);
 bool shapeGenStrokeRle(SwShape& shape, const Shape& sdata, const SwSize& clip);
 void shapeFree(SwShape* shape);
+void shapeDelStroke(SwShape& shape);
+bool shapeGenFillColors(SwShape& shape, const Fill* fill);
+void shapeResetFill(SwShape& shape, const Fill* fill);
+void shapeDelFill(SwShape& shape);
 
 void strokeReset(SwStroke& stroke, const Shape& shape);
 bool strokeParseOutline(SwStroke& stroke, const SwOutline& outline);
 SwOutline* strokeExportOutline(SwStroke& stroke);
 void strokeFree(SwStroke* stroke);
 
+bool fillGenColorTable(SwFill* fill, const Fill* fdata);
+void fillReset(SwFill* fill, const Fill* fdata);
+void fillFree(SwFill* fill);
+void fillFetch(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len);
+
 SwRleData* rleRender(const SwOutline* outline, const SwBBox& bbox, const SwSize& clip);
 void rleFree(SwRleData* rle);
 
-bool rasterShape(Surface& surface, SwShape& sdata, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
-bool rasterStroke(Surface& surface, SwShape& sdata, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
+bool rasterGradientShape(Surface& surface, SwShape& shape);
+bool rasterSolidShape(Surface& surface, SwShape& shape, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
+bool rasterStroke(Surface& surface, SwShape& shape, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
 
 #endif /* _TVG_SW_COMMON_H_ */

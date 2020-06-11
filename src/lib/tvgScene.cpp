@@ -25,7 +25,7 @@
 
 Scene::Scene() : pImpl(make_unique<Impl>())
 {
-    id = PAINT_ID_SCENE;
+    _id = PAINT_ID_SCENE;
 }
 
 
