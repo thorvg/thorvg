@@ -28,6 +28,7 @@ struct Fill::Impl
 {
     ColorStop* colorStops = nullptr;
     uint32_t cnt = 0;
+    FillSpread spread;
 
     ~Impl()
     {
@@ -83,6 +84,26 @@ uint32_t Fill::colorStops(const ColorStop** colorStops) const noexcept
     if (colorStops) *colorStops = impl->colorStops;
 
     return impl->cnt;
+}
+
+
+Result Fill::spread(FillSpread s) noexcept
+{
+    auto impl = pImpl.get();
+    if (!impl) return Result::MemoryCorruption;
+
+    impl->spread = s;
+
+    return Result::Success;
+}
+
+
+FillSpread Fill::spread() const noexcept
+{
+    auto impl = pImpl.get();
+    assert(impl);
+
+    return impl->spread;
 }
 
 #endif /* _TVG_FILL_CPP_ */

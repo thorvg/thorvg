@@ -72,6 +72,7 @@ enum class TVG_EXPORT Result { Success = 0, InvalidArguments, InsufficientCondit
 enum class TVG_EXPORT PathCommand { Close = 0, MoveTo, LineTo, CubicTo };
 enum class TVG_EXPORT StrokeCap { Square = 0, Round, Butt };
 enum class TVG_EXPORT StrokeJoin { Bevel = 0, Round, Miter };
+enum class TVG_EXPORT FillSpread { Pad = 0, Reflect, Repeat };
 
 
 struct Point
@@ -117,14 +118,17 @@ class TVG_EXPORT Fill
 public:
     struct ColorStop
     {
-        float pos;
+        float offset;
         uint8_t r, g, b, a;
     };
 
     virtual ~Fill();
 
     Result colorStops(const ColorStop* colorStops, uint32_t cnt) noexcept;
+    Result spread(FillSpread s) noexcept;
+
     uint32_t colorStops(const ColorStop** colorStops) const noexcept;
+    FillSpread spread() const noexcept;
 
     _TVG_DECALRE_IDENTIFIER();
     _TVG_DECLARE_PRIVATE(Fill);

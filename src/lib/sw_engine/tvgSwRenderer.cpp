@@ -82,6 +82,7 @@ bool SwRenderer::dispose(const Shape& shape, void *data)
     return true;
 }
 
+
 void* SwRenderer::prepare(const Shape& sdata, void* data, const RenderTransform* transform, RenderUpdateFlag flags)
 {
     //prepare shape data
