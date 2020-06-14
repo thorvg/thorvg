@@ -158,11 +158,24 @@ struct SwDashStroke
 
 struct SwFill
 {
+    struct SwLinear {
+        float dx, dy;
+        float len;
+        float offset;
+    };
+
+    struct SwRadial {
+        float cx, cy;
+        float a;
+        float inv2a;
+    };
+
+    union {
+        SwLinear linear;
+        SwRadial radial;
+    };
+
     uint32_t* ctable;
-    float x1, y1, x2, y2;
-    float dx, dy;
-    float len;
-    float offset;
     FillSpread spread;
     bool translucent;
 };
@@ -251,12 +264,13 @@ void strokeFree(SwStroke* stroke);
 bool fillGenColorTable(SwFill* fill, const Fill* fdata);
 void fillReset(SwFill* fill, const Fill* fdata);
 void fillFree(SwFill* fill);
-void fillFetch(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len);
+void fillFetchLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len);
+void fillFetchRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len);
 
 SwRleData* rleRender(const SwOutline* outline, const SwBBox& bbox, const SwSize& clip);
 void rleFree(SwRleData* rle);
 
-bool rasterGradientShape(Surface& surface, SwShape& shape);
+bool rasterGradientShape(Surface& surface, SwShape& shape, unsigned id);
 bool rasterSolidShape(Surface& surface, SwShape& shape, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
 bool rasterStroke(Surface& surface, SwShape& shape, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
 

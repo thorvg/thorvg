@@ -69,7 +69,7 @@ static bool _rasterSolidRle(Surface& surface, SwRleData* rle, uint32_t color)
 }
 
 
-static bool _rasterGradientRle(Surface& surface, SwRleData* rle, const SwFill* fill)
+static bool _rasterLinearGradientRle(Surface& surface, SwRleData* rle, const SwFill* fill)
 {
     if (!rle || !fill) return false;
 
@@ -81,17 +81,16 @@ static bool _rasterGradientRle(Surface& surface, SwRleData* rle, const SwFill* f
 
     //Translucent Gradient
     if (fill->translucent) {
-        uint32_t tmp;
         for (uint32_t i = 0; i < rle->size; ++i) {
             auto dst = &surface.buffer[span->y * stride + span->x];
-            fillFetch(fill, buf, span->y, span->x, span->len);
+            fillFetchLinear(fill, buf, span->y, span->x, span->len);
             if (span->coverage == 255) {
                 for (uint32_t i = 0; i < span->len; ++i) {
                     dst[i] = buf[i] + COLOR_ALPHA_BLEND(dst[i], 255 - COLOR_ALPHA(buf[i]));
                 }
             } else {
                 for (uint32_t i = 0; i < span->len; ++i) {
-                    tmp = COLOR_ALPHA_BLEND(buf[i], span->coverage);
+                    auto tmp = COLOR_ALPHA_BLEND(buf[i], span->coverage);
                     dst[i] = tmp + COLOR_ALPHA_BLEND(dst[i], 255 - COLOR_ALPHA(tmp));
                 }
             }
@@ -102,9 +101,56 @@ static bool _rasterGradientRle(Surface& surface, SwRleData* rle, const SwFill* f
         for (uint32_t i = 0; i < rle->size; ++i) {
             auto dst = &surface.buffer[span->y * stride + span->x];
             if (span->coverage == 255) {
-                fillFetch(fill, dst, span->y, span->x, span->len);
+                fillFetchLinear(fill, dst, span->y, span->x, span->len);
             } else {
-                fillFetch(fill, buf, span->y, span->x, span->len);
+                fillFetchLinear(fill, buf, span->y, span->x, span->len);
+                auto ialpha = 255 - span->coverage;
+                for (uint32_t i = 0; i < span->len; ++i) {
+                    dst[i] = COLOR_ALPHA_BLEND(buf[i], span->coverage) + COLOR_ALPHA_BLEND(dst[i], ialpha);
+                }
+            }
+            ++span;
+        }
+    }
+    return true;
+}
+
+
+static bool _rasterRadialGradientRle(Surface& surface, SwRleData* rle, const SwFill* fill)
+{
+    if (!rle || !fill) return false;
+
+    auto buf = static_cast<uint32_t*>(alloca(surface.w * sizeof(uint32_t)));
+    if (!buf) return false;
+
+    auto span = rle->spans;
+    auto stride = surface.stride;
+
+    //Translucent Gradient
+    if (fill->translucent) {
+        for (uint32_t i = 0; i < rle->size; ++i) {
+            auto dst = &surface.buffer[span->y * stride + span->x];
+            fillFetchRadial(fill, buf, span->y, span->x, span->len);
+            if (span->coverage == 255) {
+                for (uint32_t i = 0; i < span->len; ++i) {
+                    dst[i] = buf[i] + COLOR_ALPHA_BLEND(dst[i], 255 - COLOR_ALPHA(buf[i]));
+                }
+            } else {
+                for (uint32_t i = 0; i < span->len; ++i) {
+                    auto tmp = COLOR_ALPHA_BLEND(buf[i], span->coverage);
+                    dst[i] = tmp + COLOR_ALPHA_BLEND(dst[i], 255 - COLOR_ALPHA(tmp));
+                }
+            }
+            ++span;
+        }
+    //Opaque Gradient
+    } else {
+        for (uint32_t i = 0; i < rle->size; ++i) {
+            auto dst = &surface.buffer[span->y * stride + span->x];
+            if (span->coverage == 255) {
+                fillFetchRadial(fill, dst, span->y, span->x, span->len);
+            } else {
+                fillFetchRadial(fill, buf, span->y, span->x, span->len);
                 auto ialpha = 255 - span->coverage;
                 for (uint32_t i = 0; i < span->len; ++i) {
                     dst[i] = COLOR_ALPHA_BLEND(buf[i], span->coverage) + COLOR_ALPHA_BLEND(dst[i], ialpha);
@@ -121,9 +167,10 @@ static bool _rasterGradientRle(Surface& surface, SwRleData* rle, const SwFill* f
 /* External Class Implementation                                        */
 /************************************************************************/
 
-bool rasterGradientShape(Surface& surface, SwShape& shape)
+bool rasterGradientShape(Surface& surface, SwShape& shape, unsigned id)
 {
-    return _rasterGradientRle(surface, shape.rle, shape.fill);
+    if (id == FILL_ID_LINEAR) return _rasterLinearGradientRle(surface, shape.rle, shape.fill);
+    return _rasterRadialGradientRle(surface, shape.rle, shape.fill);
 }
 
 

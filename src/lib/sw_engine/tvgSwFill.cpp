@@ -29,9 +29,9 @@
 #define FIXPT_SIZE (1<<FIXPT_BITS)
 
 
-static bool _updateColorTable(SwFill* fill, const LinearGradient* linear)
+static bool _updateColorTable(SwFill* fill, const Fill* fdata)
 {
-    assert(fill && linear);
+    assert(fill && fdata);
 
     if (!fill->ctable) {
         fill->ctable = static_cast<uint32_t*>(malloc(GRADIENT_STOP_SIZE * sizeof(uint32_t)));
@@ -39,7 +39,7 @@ static bool _updateColorTable(SwFill* fill, const LinearGradient* linear)
     }
 
     const Fill::ColorStop* colors;
-    auto cnt = linear->colorStops(&colors);
+    auto cnt = fdata->colorStops(&colors);
     if (cnt == 0 || !colors) return false;
 
     auto pColors = colors;
@@ -92,18 +92,18 @@ bool _prepareLinear(SwFill* fill, const LinearGradient* linear)
 {
     assert(fill && linear);
 
-    if (linear->linear(&fill->x1, &fill->y1, &fill->x2, &fill->y2) != Result::Success) return false;
+    float x1, x2, y1, y2;
+    if (linear->linear(&x1, &y1, &x2, &y2) != Result::Success) return false;
 
-    fill->dx = fill->x2 - fill->x1;
-    fill->dy = fill->y2 - fill->y1;
-    fill->len = fill->dx * fill->dx + fill->dy * fill->dy;
-    fill->offset = 0;
+    fill->linear.dx = x2 - x1;
+    fill->linear.dy = y2 - y1;
+    fill->linear.len = fill->linear.dx * fill->linear.dx + fill->linear.dy * fill->linear.dy;
 
-    if (fill->len < FLT_EPSILON) return true;
+    if (fill->linear.len < FLT_EPSILON) return true;
 
-    fill->dx /= fill->len;
-    fill->dy /= fill->len;
-    fill->offset = -fill->dx * fill->x1 - fill->dy * fill->y1;
+    fill->linear.dx /= fill->linear.len;
+    fill->linear.dy /= fill->linear.len;
+    fill->linear.offset = -fill->linear.dx * x1 - fill->linear.dy * y1;
 
     return _updateColorTable(fill, linear);
 }
@@ -113,7 +113,14 @@ bool _prepareRadial(SwFill* fill, const RadialGradient* radial)
 {
     assert(fill && radial);
 
-    return true;
+    float radius;
+    if (radial->radial(&fill->radial.cx, &fill->radial.cy, &radius) != Result::Success) return false;
+    if (radius < FLT_EPSILON) return true;
+
+    fill->radial.a = radius * radius;
+    fill->radial.inv2a = pow(1 / (2 * fill->radial.a), 2);
+
+    return _updateColorTable(fill, radial);
 }
 
 
@@ -180,15 +187,39 @@ static inline void _write(uint32_t *dst, uint32_t val, uint32_t len)
 /* External Class Implementation                                        */
 /************************************************************************/
 
-void fillFetch(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len)
+void fillFetchRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len)
 {
-    assert(fill->len > 0);
+    if (fill->radial.a < FLT_EPSILON) return;
+
+    //TODO: Rotation???
+    auto rx = x + 0.5f - fill->radial.cx;
+    auto ry = y + 0.5f - fill->radial.cy;
+    auto inv2a = fill->radial.inv2a;
+    auto rxy = rx * rx + ry * ry;
+    auto rxryPlus = 2 * rx;
+    auto det = (-4 * fill->radial.a * -rxy) * inv2a;
+    auto detDelta = (4 * fill->radial.a * (rxryPlus + 1.0f)) * inv2a;
+    auto detDelta2 = (4 * fill->radial.a * 2.0f) * inv2a;
+
+   for (uint32_t i = 0 ; i < len ; ++i)
+     {
+        *dst = _pixel(fill, sqrt(det));
+        ++dst;
+        det += detDelta;
+        detDelta += detDelta2;
+     }
+}
+
+
+void fillFetchLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len)
+{
+    if (fill->linear.len < FLT_EPSILON) return;
 
     //TODO: Rotation???
     auto rx = x + 0.5f;
     auto ry = y + 0.5f;
-    auto t = (fill->dx * rx + fill->dy * ry + fill->offset) * (GRADIENT_STOP_SIZE - 1);
-    auto inc = (fill->dx) * (GRADIENT_STOP_SIZE - 1);
+    auto t = (fill->linear.dx * rx + fill->linear.dy * ry + fill->linear.offset) * (GRADIENT_STOP_SIZE - 1);
+    auto inc = (fill->linear.dx) * (GRADIENT_STOP_SIZE - 1);
 
     if (fabsf(inc) < FLT_EPSILON) {
         auto color = _fixedPixel(fill, static_cast<uint32_t>(t * FIXPT_SIZE));

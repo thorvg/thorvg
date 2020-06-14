@@ -64,8 +64,8 @@ bool SwRenderer::render(const Shape& sdata, void *data)
 
     uint8_t r, g, b, a;
 
-    if (sdata.fill()) {
-        rasterGradientShape(surface, *shape);
+    if (auto fill = sdata.fill()) {
+        rasterGradientShape(surface, *shape, fill->id());
     } else {
         sdata.fill(&r, &g, &b, &a);
         if (a > 0) rasterSolidShape(surface, *shape, r, g, b, a);
