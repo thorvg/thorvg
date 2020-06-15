@@ -24,6 +24,8 @@
 /************************************************************************/
 /* Internal Class Implementation                                        */
 /************************************************************************/
+static bool initialized = false;
+
 
 
 /************************************************************************/
@@ -32,11 +34,13 @@
 
 Result Engine::init() noexcept
 {
-    //TODO: Initialize Raster engines by configuration.
+    if (initialized) return Result::InsufficientCondition;
 
-    int ret = 0;
-    ret |= SwRenderer::init();
-    ret |= GlRenderer::init();
+    //TODO: Initialize Raster engines by configuration.
+    SwRenderer::init();
+    GlRenderer::init();
+
+    initialized = true;
 
     return Result::Success;
 }
@@ -44,9 +48,13 @@ Result Engine::init() noexcept
 
 Result Engine::term() noexcept
 {
-    int ret = 0;
-    ret |= SwRenderer::term();
-    ret |= GlRenderer::term();
+    if (!initialized) return Result::InsufficientCondition;
+
+    //TODO: Terminate only allowed engines.
+    SwRenderer::term();
+    GlRenderer::term();
+
+    initialized = false;
 
     return Result::Success;
 }
