@@ -26,7 +26,7 @@ void tvgtest()
     auto fill = tvg::LinearGradient::gen();
     fill->linear(0, 0, 400, 400);
 
-    //Linear Gradient Color Stops
+    //Gradient Color Stops
     tvg::Fill::ColorStop colorStops[2];
     colorStops[0] = {0, 0, 0, 0, 255};
     colorStops[1] = {1, 255, 255, 255, 255};
@@ -44,7 +44,7 @@ void tvgtest()
     auto fill2 = tvg::LinearGradient::gen();
     fill2->linear(400, 200, 400, 600);
 
-    //Linear Gradient Color Stops
+    //Gradient Color Stops
     tvg::Fill::ColorStop colorStops2[3];
     colorStops2[0] = {0, 255, 0, 0, 255};
     colorStops2[1] = {0.5, 255, 255, 0, 255};
@@ -64,7 +64,7 @@ void tvgtest()
     auto fill3 = tvg::LinearGradient::gen();
     fill3->linear(450, 600, 750, 600);
 
-    //Linear Gradient Color Stops
+    //Gradient Color Stops
     tvg::Fill::ColorStop colorStops3[4];
     colorStops3[0] = {0, 0, 127, 0, 127};
     colorStops3[1] = {0.25, 0, 170, 170, 170};
