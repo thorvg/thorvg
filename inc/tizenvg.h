@@ -69,7 +69,7 @@ enum class TVG_EXPORT PathCommand { Close = 0, MoveTo, LineTo, CubicTo };
 enum class TVG_EXPORT StrokeCap { Square = 0, Round, Butt };
 enum class TVG_EXPORT StrokeJoin { Bevel = 0, Round, Miter };
 enum class TVG_EXPORT FillSpread { Pad = 0, Reflect, Repeat };
-
+enum class TVG_EXPORT CanvasEngine { Sw = 0, Gl };
 
 struct Point
 {
@@ -131,6 +131,34 @@ public:
 
 
 /**
+ * @class Canvas
+ *
+ * @ingroup TizenVG
+ *
+ * @brief description...
+ *
+ */
+class TVG_EXPORT Canvas
+{
+public:
+    Canvas(RenderMethod*);
+    virtual ~Canvas();
+
+    Result reserve(uint32_t n) noexcept;
+    virtual Result push(std::unique_ptr<Paint> paint) noexcept;
+    virtual Result clear() noexcept;
+    virtual Result update() noexcept;
+    virtual Result update(Paint* paint) noexcept;
+    virtual Result draw(bool async = true) noexcept;
+    virtual Result sync() = 0;
+
+    _TVG_DECLARE_ACCESSOR(Scene);
+    _TVG_DECLARE_PRIVATE(Canvas);
+};
+
+
+
+/**
  * @class LinearGradient
  *
  * @ingroup TizenVG
@@ -173,32 +201,6 @@ public:
     _TVG_DECLARE_PRIVATE(RadialGradient);
 };
 
-
-/**
- * @class Canvas
- *
- * @ingroup TizenVG
- *
- * @brief description...
- *
- */
-class TVG_EXPORT Canvas
-{
-public:
-    Canvas(RenderMethod*);
-    virtual ~Canvas();
-
-    Result reserve(uint32_t n) noexcept;
-    virtual Result push(std::unique_ptr<Paint> paint) noexcept;
-    virtual Result clear() noexcept;
-    virtual Result update() noexcept;
-    virtual Result update(Paint* paint) noexcept;
-    virtual Result draw(bool async = true) noexcept;
-    virtual Result sync() = 0;
-
-    _TVG_DECLARE_ACCESSOR(Scene);
-    _TVG_DECLARE_PRIVATE(Canvas);
-};
 
 
 /**
@@ -277,7 +279,7 @@ class TVG_EXPORT Scene final : public Paint
 public:
     ~Scene();
 
-    Result push(std::unique_ptr<Paint> shape) noexcept;
+    Result push(std::unique_ptr<Paint> paint) noexcept;
     Result reserve(uint32_t size) noexcept;
 
     Result rotate(float degree) noexcept override;
@@ -347,9 +349,10 @@ public:
  * @brief description...
  *
  */
-class TVG_EXPORT Engine final
+class TVG_EXPORT Initializer final
 {
 public:
+
     /**
      * @brief ...
      *
@@ -361,10 +364,10 @@ public:
      *
      * @see ...
      */
-    static Result init() noexcept;
-    static Result term() noexcept;
+    static Result init(CanvasEngine engine) noexcept;
+    static Result term(CanvasEngine engine) noexcept;
 
-    _TVG_DISABLE_CTOR(Engine);
+    _TVG_DISABLE_CTOR(Initializer);
 };
 
 } //namespace

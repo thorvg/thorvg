@@ -136,28 +136,28 @@ struct RenderInitializer
     uint32_t refCnt = 0;
     bool initialized = false;
 
-    static int init(RenderInitializer& renderInit, RenderMethod* engine)
+    static bool init(RenderInitializer& renderInit, RenderMethod* engine)
     {
         assert(engine);
-        if (renderInit.pInst || renderInit.refCnt > 0) return -1;
+        if (renderInit.pInst || renderInit.refCnt > 0) return false;
         renderInit.pInst = engine;
         renderInit.refCnt = 0;
         renderInit.initialized = true;
-        return 0;
+        return true;
     }
 
-    static int term(RenderInitializer& renderInit)
+    static bool term(RenderInitializer& renderInit)
     {
-        if (!renderInit.pInst || !renderInit.initialized) return -1;
+        if (!renderInit.pInst || !renderInit.initialized) return false;
 
         renderInit.initialized = false;
 
         //Still it's refered....
-        if (renderInit.refCnt > 0) return  0;
+        if (renderInit.refCnt > 0) return  true;
         delete(renderInit.pInst);
         renderInit.pInst = nullptr;
 
-        return 0;
+        return true;
     }
 
     static uint32_t unref(RenderInitializer& renderInit)

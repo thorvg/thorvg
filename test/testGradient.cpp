@@ -10,7 +10,7 @@ static uint32_t buffer[WIDTH * HEIGHT];
 int main(int argc, char **argv)
 {
     //Initialize TizenVG Engine
-    tvg::Engine::init();
+    tvg::Initializer::init(tvg::CanvasEngine::Sw);
 
     //Create a Canvas
     auto canvas = tvg::SwCanvas::gen(buffer, WIDTH, HEIGHT);
@@ -48,5 +48,5 @@ int main(int argc, char **argv)
     canvas->sync();
 
     //Terminate TizenVG Engine
-    tvg::Engine::term();
+    tvg::Initializer::term(tvg::CanvasEngine::Sw);
 }

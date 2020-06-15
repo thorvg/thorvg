@@ -14,8 +14,8 @@
  *  limitations under the License.
  *
  */
-#ifndef _TVG_ENGINE_CPP_
-#define _TVG_ENGINE_CPP_
+#ifndef _TVG_INITIALIZER_CPP_
+#define _TVG_INITIALIZER_CPP_
 
 #include "tvgCommon.h"
 #include "tvgSwRenderer.h"
@@ -24,39 +24,42 @@
 /************************************************************************/
 /* Internal Class Implementation                                        */
 /************************************************************************/
-static bool initialized = false;
-
-
 
 /************************************************************************/
 /* External Class Implementation                                        */
 /************************************************************************/
 
-Result Engine::init() noexcept
+Result Initializer::init(CanvasEngine engine) noexcept
 {
-    if (initialized) return Result::InsufficientCondition;
+    if (engine == CanvasEngine::Sw) {
+        if (!SwRenderer::init()) return Result::InsufficientCondition;
+    } else if (engine == CanvasEngine::Gl) {
+        if (!GlRenderer::init()) return Result::InsufficientCondition;
+    } else {
+        return Result::InvalidArguments;
+    }
 
-    //TODO: Initialize Raster engines by configuration.
-    SwRenderer::init();
-    GlRenderer::init();
-
-    initialized = true;
+    //TODO: check modules then enable them
+    //1. TVG
+    //2. SVG
 
     return Result::Success;
 }
 
 
-Result Engine::term() noexcept
+Result Initializer::term(CanvasEngine engine) noexcept
 {
-    if (!initialized) return Result::InsufficientCondition;
+    //TODO: deinitialize modules
 
-    //TODO: Terminate only allowed engines.
-    SwRenderer::term();
-    GlRenderer::term();
-
-    initialized = false;
+    if (engine == CanvasEngine::Sw) {
+        if (!SwRenderer::term()) return Result::InsufficientCondition;
+    } else if (engine == CanvasEngine::Gl) {
+        if (!GlRenderer::term()) return Result::InsufficientCondition;
+    } else {
+        return Result::InvalidArguments;
+    }
 
     return Result::Success;
 }
 
-#endif /* _TVG_ENGINE_CPP_ */
+#endif /* _TVG_INITIALIZER_CPP_ */

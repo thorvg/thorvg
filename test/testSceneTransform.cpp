@@ -129,7 +129,7 @@ win_del(void *data, Evas_Object *o, void *ev)
 int main(int argc, char **argv)
 {
     //Initialize TizenVG Engine
-    tvg::Engine::init();
+    tvg::Initializer::init(tvg::CanvasEngine::Sw);
 
     tvgtest();
 
@@ -159,5 +159,5 @@ int main(int argc, char **argv)
     elm_shutdown();
 
     //Terminate TizenVG Engine
-    tvg::Engine::term();
+    tvg::Initializer::term(tvg::CanvasEngine::Sw);
 }
