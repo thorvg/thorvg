@@ -252,7 +252,7 @@ void shapeResetStroke(SwShape& shape, const Shape& sdata);
 bool shapeGenStrokeRle(SwShape& shape, const Shape& sdata, const SwSize& clip);
 void shapeFree(SwShape* shape);
 void shapeDelStroke(SwShape& shape);
-bool shapeGenFillColors(SwShape& shape, const Fill* fill);
+bool shapeGenFillColors(SwShape& shape, const Fill* fill, const RenderTransform* transform, bool ctable);
 void shapeResetFill(SwShape& shape, const Fill* fill);
 void shapeDelFill(SwShape& shape);
 
@@ -261,7 +261,7 @@ bool strokeParseOutline(SwStroke& stroke, const SwOutline& outline);
 SwOutline* strokeExportOutline(SwStroke& stroke);
 void strokeFree(SwStroke* stroke);
 
-bool fillGenColorTable(SwFill* fill, const Fill* fdata);
+bool fillGenColorTable(SwFill* fill, const Fill* fdata, const RenderTransform* transform, bool ctable);
 void fillReset(SwFill* fill, const Fill* fdata);
 void fillFree(SwFill* fill);
 void fillFetchLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len);

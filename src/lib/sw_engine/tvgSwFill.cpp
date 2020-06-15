@@ -88,12 +88,25 @@ static bool _updateColorTable(SwFill* fill, const Fill* fdata)
 }
 
 
-bool _prepareLinear(SwFill* fill, const LinearGradient* linear)
+bool _prepareLinear(SwFill* fill, const LinearGradient* linear, const RenderTransform* transform)
 {
     assert(fill && linear);
 
     float x1, x2, y1, y2;
     if (linear->linear(&x1, &y1, &x2, &y2) != Result::Success) return false;
+
+    if (transform) {
+        auto cx = (x2 - x1) * 0.5f + x1;
+        auto cy = (y2 - y1) * 0.5f + y1;
+        auto dx = x1 - cx;
+        auto dy = y1 - cy;
+        x1 = dx * transform->e11 + dy * transform->e12 + transform->e31;
+        y1 = dx * transform->e21 + dy * transform->e22 + transform->e32;
+        dx = x2 - cx;
+        dy = y2 - cy;
+        x2 = dx * transform->e11 + dy * transform->e12 + transform->e31;
+        y2 = dx * transform->e21 + dy * transform->e22 + transform->e32;
+    }
 
     fill->linear.dx = x2 - x1;
     fill->linear.dy = y2 - y1;
@@ -105,11 +118,11 @@ bool _prepareLinear(SwFill* fill, const LinearGradient* linear)
     fill->linear.dy /= fill->linear.len;
     fill->linear.offset = -fill->linear.dx * x1 - fill->linear.dy * y1;
 
-    return _updateColorTable(fill, linear);
+    return true;
 }
 
 
-bool _prepareRadial(SwFill* fill, const RadialGradient* radial)
+bool _prepareRadial(SwFill* fill, const RadialGradient* radial, const RenderTransform* transform)
 {
     assert(fill && radial);
 
@@ -117,10 +130,18 @@ bool _prepareRadial(SwFill* fill, const RadialGradient* radial)
     if (radial->radial(&fill->radial.cx, &fill->radial.cy, &radius) != Result::Success) return false;
     if (radius < FLT_EPSILON) return true;
 
+    if (transform) {
+        auto tx = fill->radial.cx * transform->e11 + fill->radial.cy * transform->e12 + transform->e31;
+        auto ty = fill->radial.cx * transform->e21 + fill->radial.cy * transform->e22 + transform->e32;
+        fill->radial.cx = tx;
+        fill->radial.cy = ty;
+        radius *= transform->e33;
+    }
+
     fill->radial.a = radius * radius;
     fill->radial.inv2a = pow(1 / (2 * fill->radial.a), 2);
 
-    return _updateColorTable(fill, radial);
+    return true;
 }
 
 
@@ -251,7 +272,7 @@ void fillFetchLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, 
 }
 
 
-bool fillGenColorTable(SwFill* fill, const Fill* fdata)
+bool fillGenColorTable(SwFill* fill, const Fill* fdata, const RenderTransform* transform, bool ctable)
 {
     if (!fill) return false;
 
@@ -259,10 +280,14 @@ bool fillGenColorTable(SwFill* fill, const Fill* fdata)
 
     fill->spread = fdata->spread();
 
+    if (ctable) {
+        if (!_updateColorTable(fill, fdata)) return false;
+    }
+
     if (fdata->id() == FILL_ID_LINEAR) {
-        return _prepareLinear(fill, static_cast<const LinearGradient*>(fdata));
+        return _prepareLinear(fill, static_cast<const LinearGradient*>(fdata), transform);
     } else if (fdata->id() == FILL_ID_RADIAL) {
-        return _prepareRadial(fill, static_cast<const RadialGradient*>(fdata));
+        return _prepareRadial(fill, static_cast<const RadialGradient*>(fdata), transform);
     }
 
     cout << "What type of gradient?!" << endl;

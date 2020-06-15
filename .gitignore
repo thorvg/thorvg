@@ -16,3 +16,4 @@ testStroke
 testStrokeLine
 testLinearGradient
 testRadialGradient
+testGradientTransform

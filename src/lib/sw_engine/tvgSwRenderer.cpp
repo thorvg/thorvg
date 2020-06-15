@@ -113,11 +113,12 @@ void* SwRenderer::prepare(const Shape& sdata, void* data, const RenderTransform*
     }
 
     //Fill
-    if (flags & (RenderUpdateFlag::Gradient)) {
+    if (flags & (RenderUpdateFlag::Gradient | RenderUpdateFlag::Transform)) {
         auto fill = sdata.fill();
         if (fill) {
-            shapeResetFill(*shape, fill);
-            if (!shapeGenFillColors(*shape, fill)) return shape;
+            auto ctable = (flags & RenderUpdateFlag::Gradient) ? true : false;
+            if (ctable) shapeResetFill(*shape, fill);
+            if (!shapeGenFillColors(*shape, fill, transform, ctable)) return shape;
         } else {
             shapeDelFill(*shape);
         }

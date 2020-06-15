@@ -347,9 +347,9 @@ static void _transformOutline(SwOutline* outline, const RenderTransform* transfo
     for(uint32_t i = 0; i < outline->ptsCnt; ++i) {
         auto dx = static_cast<float>(outline->pts[i].x >> 6);
         auto dy = static_cast<float>(outline->pts[i].y >> 6);
-        auto tx = dx * transform->e11 + dy * transform->e12 + transform->e13;
-        auto ty = dx * transform->e21 + dy * transform->e22 + transform->e23;
-        auto pt = Point{tx + transform->e31, ty + transform->e32};
+        auto tx = dx * transform->e11 + dy * transform->e12 + transform->e31;
+        auto ty = dx * transform->e21 + dy * transform->e22 + transform->e32;
+        auto pt = Point{tx, ty};
         outline->pts[i] = TO_SWPOINT(&pt);
     }
 }
@@ -740,11 +740,11 @@ bool shapeGenStrokeRle(SwShape& shape, const Shape& sdata, const SwSize& clip)
 }
 
 
-bool shapeGenFillColors(SwShape& shape, const Fill* fill)
+bool shapeGenFillColors(SwShape& shape, const Fill* fill, const RenderTransform* transform, bool ctable)
 {
     assert(fill);
 
-    fillGenColorTable(shape.fill, fill);
+    fillGenColorTable(shape.fill, fill, transform, ctable);
     return true;
 }
 
