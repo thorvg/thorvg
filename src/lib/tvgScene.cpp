@@ -107,4 +107,27 @@ Result Scene::bounds(float* x, float* y, float* w, float* h) const noexcept
     return Result::Success;
 }
 
+
+Result Scene::load(const std::string& path, float w, float h, bool lazy) noexcept
+{
+    if (path.empty()) return Result::InvalidArguments;
+
+    auto impl = pImpl.get();
+    if (!impl) return Result::MemoryCorruption;
+
+    return impl->load(path, w, h, lazy);
+}
+
+
+Result Scene::save(const std::string& path) noexcept
+{
+    if (path.empty()) return Result::InvalidArguments;
+
+    auto impl = pImpl.get();
+    if (!impl) return Result::MemoryCorruption;
+
+    return impl->save(path);
+}
+
+
 #endif /* _TVG_SCENE_CPP_ */

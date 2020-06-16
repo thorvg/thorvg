@@ -191,6 +191,16 @@ struct Scene::Impl
 
         return true;
     }
+
+    Result load(const string& path, float w, float h, bool lazy)
+    {
+        return Result::Success;
+    }
+
+    Result save(const string& path)
+    {
+        return Result::Success;
+    }
 };
 
 #endif //_TVG_SCENE_IMPL_H_

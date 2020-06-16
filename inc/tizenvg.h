@@ -71,6 +71,7 @@ enum class TVG_EXPORT StrokeJoin { Bevel = 0, Round, Miter };
 enum class TVG_EXPORT FillSpread { Pad = 0, Reflect, Repeat };
 enum class TVG_EXPORT CanvasEngine { Sw = 0, Gl };
 
+
 struct Point
 {
     float x, y;
@@ -281,6 +282,9 @@ public:
 
     Result push(std::unique_ptr<Paint> paint) noexcept;
     Result reserve(uint32_t size) noexcept;
+
+    Result load(const std::string& path, float w, float h, bool lazy = false) noexcept;
+    Result save(const std::string& path) noexcept;
 
     Result rotate(float degree) noexcept override;
     Result scale(float factor) noexcept override;

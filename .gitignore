@@ -17,3 +17,5 @@ testStrokeLine
 testLinearGradient
 testRadialGradient
 testGradientTransform
+testSvg
+testSvg2
