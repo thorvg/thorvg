@@ -126,7 +126,7 @@ void* SwRenderer::prepare(const Shape& sdata, void* data, const RenderTransform*
 
     //Stroke
     if (flags & (RenderUpdateFlag::Stroke | RenderUpdateFlag::Transform)) {
-        if (sdata.strokeWidth() > 0.5) {
+        if (sdata.strokeWidth() > FLT_EPSILON) {
             shapeResetStroke(*shape, sdata);
             uint8_t alpha = 0;
             sdata.strokeColor(nullptr, nullptr, nullptr, &alpha);
