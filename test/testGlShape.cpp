@@ -12,10 +12,6 @@ static unique_ptr<tvg::GlCanvas> canvas;
 static void
 tvgtest()
 {
-    //Initialize TizenVG Engine
-    tvg::Initializer::init(tvg::CanvasEngine::Gl);
-
-
     //Create a Canvas
     canvas = tvg::GlCanvas::gen();
     canvas->target(nullptr, WIDTH * BPP, WIDTH, HEIGHT);
@@ -40,6 +36,9 @@ tvgtest()
 static void
 init_gl(Evas_Object *obj)
 {
+    //Initialize TizenVG Engine
+    tvg::Initializer::init(tvg::CanvasEngine::Gl);
+
     tvgtest();
 }
 
@@ -78,10 +77,12 @@ int main(int argc, char **argv)
     //Show the result using EFL...
     elm_init(argc, argv);
 
+    elm_config_accel_preference_set("gl");
+
     Eo* win = elm_win_util_standard_add(nullptr, "TizenVG Test");
     evas_object_smart_callback_add(win, "delete,request", win_del, 0);
 
-    // create a new glview object
+    //Create a new glview object
     Eo* gl = elm_glview_add(win);
     glapi = elm_glview_gl_api_get(gl);
     evas_object_size_hint_align_set(gl, EVAS_HINT_FILL, EVAS_HINT_FILL);
@@ -93,15 +94,13 @@ int main(int argc, char **argv)
 
     evas_object_resize(gl, WIDTH, HEIGHT);
 
-    // initialize callback function gets registered here
+    //Initialize callback function gets registered here
     elm_glview_init_func_set(gl, init_gl);
-    // delete callback function gets registered here
+    //Delete callback function gets registered here
     elm_glview_del_func_set(gl, del_gl);
     elm_glview_render_func_set(gl, draw_gl);
 
     evas_object_show(gl);
-
-    elm_object_focus_set(gl, EINA_TRUE);
 
     evas_object_geometry_set(win, 0, 0, WIDTH, HEIGHT);
     evas_object_show(win);
