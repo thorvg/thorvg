@@ -10,7 +10,7 @@ source_file = [
    'tvgSwStroke.cpp',
 ]
 
-swraster_dep = declare_dependency(
+swengine_dep = declare_dependency(
    include_directories : include_directories('.'),
    sources : source_file
 )

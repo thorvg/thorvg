@@ -14,34 +14,25 @@
  *  limitations under the License.
  *
  */
-#ifndef _TVG_COMMON_H_
-#define _TVG_COMMON_H_
+#ifndef _TVG_SVG_LOADER_H_
+#define _TVG_SVG_LOADER_H_
 
-#include <iostream>
-#include <cassert>
-#include <vector>
-#include <math.h>
-#include <float.h>
-#include <string.h>
-#include "tizenvg.h"
+#include "tvgCommon.h"
 
-using namespace std;
-using namespace tvg;
+class SvgLoader : public Loader
+{
+private:
+    //TODO:
 
-#define SCENE_IMPL scene->pImpl.get()
-#define SHAPE_IMPL shape->pImpl.get()
+public:
+    SvgLoader();
+    ~SvgLoader();
 
-#define PAINT_ID_SHAPE 0
-#define PAINT_ID_SCENE 1
+    bool open(const char* path) override;
+    bool read() override;
+    bool close() override;
+    unique_ptr<Scene> data() override;
+};
 
-#define FILL_ID_LINEAR 0
-#define FILL_ID_RADIAL 1
 
-#include "tvgLoader.h"
-#include "tvgLoaderMgr.h"
-#include "tvgRenderCommon.h"
-#include "tvgShapePath.h"
-#include "tvgShapeImpl.h"
-#include "tvgSceneImpl.h"
-
-#endif //_TVG_COMMON_H_
+#endif //_TVG_SVG_LOADER_H_

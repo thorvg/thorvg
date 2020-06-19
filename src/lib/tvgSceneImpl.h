@@ -28,6 +28,7 @@ struct Scene::Impl
     vector<Paint*> paints;
     RenderTransform *transform = nullptr;
     uint32_t flag = RenderUpdateFlag::None;
+    unique_ptr<Loader> loader = nullptr;
 
     ~Impl()
     {
@@ -71,6 +72,15 @@ struct Scene::Impl
 
     bool update(RenderMethod &renderer, const RenderTransform* pTransform = nullptr, uint32_t pFlag = 0)
     {
+        if (loader) {
+            auto scene = loader->data();
+            auto p = scene.release();
+            if (!p) return false;
+            paints.push_back(p);
+            loader->close();
+            loader.reset(nullptr);
+        }
+
         if (flag & RenderUpdateFlag::Transform) {
             if (!transform) return false;
             if (!transform->update()) {
@@ -192,13 +202,12 @@ struct Scene::Impl
         return true;
     }
 
-    Result load(const string& path, float w, float h, bool lazy)
+    Result load(const string& path)
     {
-        return Result::Success;
-    }
-
-    Result save(const string& path)
-    {
+        if (loader) loader->close();
+        loader = LoaderMgr::loader(path.c_str());
+        if (!loader || !loader->open(path.c_str())) return Result::NonSupport;
+        if (!loader->read()) return Result::Unknown;
         return Result::Success;
     }
 };

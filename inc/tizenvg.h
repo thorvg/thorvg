@@ -64,7 +64,7 @@ class Scene;
 class Canvas;
 
 
-enum class TVG_EXPORT Result { Success = 0, InvalidArguments, InsufficientCondition, FailedAllocation, MemoryCorruption, Unknown };
+enum class TVG_EXPORT Result { Success = 0, InvalidArguments, InsufficientCondition, FailedAllocation, MemoryCorruption, NonSupport, Unknown };
 enum class TVG_EXPORT PathCommand { Close = 0, MoveTo, LineTo, CubicTo };
 enum class TVG_EXPORT StrokeCap { Square = 0, Round, Butt };
 enum class TVG_EXPORT StrokeJoin { Bevel = 0, Round, Miter };
@@ -283,8 +283,7 @@ public:
     Result push(std::unique_ptr<Paint> paint) noexcept;
     Result reserve(uint32_t size) noexcept;
 
-    Result load(const std::string& path, float w, float h, bool lazy = false) noexcept;
-    Result save(const std::string& path) noexcept;
+    Result load(const std::string& path) noexcept;
 
     Result rotate(float degree) noexcept override;
     Result scale(float factor) noexcept override;

@@ -4,6 +4,8 @@ subdir('gl_engine')
 source_file = [
    'tvgCanvasImpl.h',
    'tvgCommon.h',
+   'tvgLoader.h',
+   'tvgLoaderMgr.h',
    'tvgRenderCommon.h',
    'tvgSceneImpl.h',
    'tvgShapePath.h',
@@ -13,6 +15,7 @@ source_file = [
    'tvgGlCanvas.cpp',
    'tvgInitializer.cpp',
    'tvgLinearGradient.cpp',
+   'tvgLoaderMgr.cpp',
    'tvgRadialGradient.cpp',
    'tvgScene.cpp',
    'tvgShape.cpp',

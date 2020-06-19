@@ -14,7 +14,7 @@ source_file = [
    'tvgGlShaderSrc.cpp',
 ]
 
-glraster_dep = declare_dependency(
+glengine_dep = declare_dependency(
    include_directories : include_directories('.'),
    sources : source_file
 )

@@ -17,9 +17,7 @@ void tvgtest()
     auto canvas = tvg::SwCanvas::gen();
     canvas->target(buffer, WIDTH, WIDTH, HEIGHT);
 
-    /* Create a SVG scene, keep original size,
-       You can pass 0 x 0 size for lazying loading in this case.
-       scene->load("sample.svg", 0, 0, true); */
+    // Create a SVG scene, request the original size,
     auto scene = tvg::Scene::gen();
     scene->load("sample.svg");
     canvas->push(move(scene));

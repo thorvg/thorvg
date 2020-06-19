@@ -14,34 +14,39 @@
  *  limitations under the License.
  *
  */
-#ifndef _TVG_COMMON_H_
-#define _TVG_COMMON_H_
+#ifndef _TVG_LOADER_MGR_CPP_
+#define _TVG_LOADER_MGR_CPP_
 
-#include <iostream>
-#include <cassert>
-#include <vector>
-#include <math.h>
-#include <float.h>
-#include <string.h>
-#include "tizenvg.h"
+#include "tvgCommon.h"
+#include "tvgSvgLoader.h"
 
-using namespace std;
-using namespace tvg;
 
-#define SCENE_IMPL scene->pImpl.get()
-#define SHAPE_IMPL shape->pImpl.get()
+static int initCnt = 0;
 
-#define PAINT_ID_SHAPE 0
-#define PAINT_ID_SCENE 1
+bool LoaderMgr::init()
+{
+    if (initCnt > 0) return true;
+    ++initCnt;
 
-#define FILL_ID_LINEAR 0
-#define FILL_ID_RADIAL 1
+    //TODO:
 
-#include "tvgLoader.h"
-#include "tvgLoaderMgr.h"
-#include "tvgRenderCommon.h"
-#include "tvgShapePath.h"
-#include "tvgShapeImpl.h"
-#include "tvgSceneImpl.h"
+    return true;
+}
 
-#endif //_TVG_COMMON_H_
+bool LoaderMgr::term()
+{
+    --initCnt;
+    if (initCnt > 0) return true;
+
+    //TODO:
+
+    return true;
+}
+
+unique_ptr<Loader> LoaderMgr::loader(const char* path)
+{
+    //TODO:
+    return unique_ptr<SvgLoader>(new SvgLoader);
+}
+
+#endif //_TVG_LOADER_MGR_CPP_

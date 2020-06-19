@@ -14,53 +14,67 @@
  *  limitations under the License.
  *
  */
-#ifndef _TVG_INITIALIZER_CPP_
-#define _TVG_INITIALIZER_CPP_
+#ifndef _TVG_SVG_LOADER_CPP_
+#define _TVG_SVG_LOADER_CPP_
 
-#include "tvgCommon.h"
-#include "tvgSwRenderer.h"
-#include "tvgGlRenderer.h"
-#include "tvgLoaderMgr.h"
+#include "tvgSvgLoader.h"
+
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
+
+
 /************************************************************************/
 /* External Class Implementation                                        */
 /************************************************************************/
 
-Result Initializer::init(CanvasEngine engine) noexcept
+SvgLoader::SvgLoader()
 {
-    if (engine == CanvasEngine::Sw) {
-        if (!SwRenderer::init()) return Result::InsufficientCondition;
-    } else if (engine == CanvasEngine::Gl) {
-        if (!GlRenderer::init()) return Result::InsufficientCondition;
-    } else {
-        return Result::InvalidArguments;
-    }
-
-    if (!LoaderMgr::init()) return Result::Unknown;
-
-    return Result::Success;
+    cout << "SvgLoader()" << endl;
 }
 
 
-Result Initializer::term(CanvasEngine engine) noexcept
+SvgLoader::~SvgLoader()
 {
-    //TODO: deinitialize modules
-
-    if (engine == CanvasEngine::Sw) {
-        if (!SwRenderer::term()) return Result::InsufficientCondition;
-    } else if (engine == CanvasEngine::Gl) {
-        if (!GlRenderer::term()) return Result::InsufficientCondition;
-    } else {
-        return Result::InvalidArguments;
-    }
-
-    if (!LoaderMgr::term()) return Result::Unknown;
-
-    return Result::Success;
+    cout << "~SvgLoader()" << endl;
 }
 
-#endif /* _TVG_INITIALIZER_CPP_ */
+
+bool SvgLoader::open(const char* path)
+{
+    //TODO:
+    cout << "SvgLoader::open()" << endl;
+
+    return false;
+}
+
+
+bool SvgLoader::read()
+{
+    //TODO:
+    cout << "SvgLoader::read()" << endl;
+
+    return false;
+}
+
+
+bool SvgLoader::close()
+{
+    //TODO:
+    cout << "SvgLoader::close()" << endl;
+
+    return false;
+}
+
+
+unique_ptr<Scene> SvgLoader::data()
+{
+    //TODO:
+    cout << "SvgLoader::data()" << endl;
+
+    return nullptr;
+}
+
+#endif //_TVG_SVG_LOADER_CPP_
