@@ -39,7 +39,7 @@ using namespace tvg;
 
 #include "tvgLoader.h"
 #include "tvgLoaderMgr.h"
-#include "tvgRenderCommon.h"
+#include "tvgRender.h"
 #include "tvgShapePath.h"
 #include "tvgShapeImpl.h"
 #include "tvgSceneImpl.h"

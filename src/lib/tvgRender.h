@@ -14,8 +14,8 @@
  *  limitations under the License.
  *
  */
-#ifndef _TVG_RENDER_COMMON_H_
-#define _TVG_RENDER_COMMON_H_
+#ifndef _TVG_RENDER_H_
+#define _TVG_RENDER_H_
 
 namespace tvg
 {
@@ -42,79 +42,10 @@ struct RenderTransform
     float degree = 0.0f;  //rotation degree
     float factor = 1.0f;  //scale factor
 
-    bool update()
-    {
-        constexpr auto PI = 3.141592f;
+    bool update();
 
-        //Init Status
-        if (fabsf(x) <= FLT_EPSILON && fabsf(y) <= FLT_EPSILON &&
-            fabsf(degree) <= FLT_EPSILON && fabsf(factor - 1) <= FLT_EPSILON) {
-            return false;
-        }
-
-        //identity
-        e11 = 1.0f;
-        e12 = 0.0f;
-        e13 = 0.0f;
-        e21 = 0.0f;
-        e22 = 1.0f;
-        e23 = 0.0f;
-        e31 = 0.0f;
-        e32 = 0.0f;
-        e33 = 1.0f;
-
-        //scale
-        e11 *= factor;
-        e22 *= factor;
-        e33 *= factor;
-
-        //rotation
-        if (fabsf(degree) > FLT_EPSILON) {
-            auto radian = degree / 180.0f * PI;
-            auto cosVal = cosf(radian);
-            auto sinVal = sinf(radian);
-
-            auto t11 = e11 * cosVal + e12 * sinVal;
-            auto t12 = e11 * -sinVal + e12 * cosVal;
-            auto t21 = e21 * cosVal + e22 * sinVal;
-            auto t22 = e21 * -sinVal + e22 * cosVal;
-            auto t31 = e31 * cosVal + e32 * sinVal;
-            auto t32 = e31 * -sinVal + e32 * cosVal;
-
-            e11 = t11;
-            e12 = t12;
-            e21 = t21;
-            e22 = t22;
-            e31 = t31;
-            e32 = t32;
-        }
-
-        e31 += x;
-        e32 += y;
-
-        return true;
-    }
-
-    RenderTransform()
-    {
-    }
-
-    RenderTransform(const RenderTransform* lhs, const RenderTransform* rhs)
-    {
-        assert(lhs && rhs);
-
-        auto dx = rhs->x * lhs->factor;
-        auto dy = rhs->y * lhs->factor;
-        auto tx = dx * lhs->e11 + dy * lhs->e12 + lhs->e13;
-        auto ty = dx * lhs->e21 + dy * lhs->e22 + lhs->e23;
-
-        x = lhs->x + tx;
-        y = lhs->y + ty;
-        degree = lhs->degree + rhs->degree;
-        factor = lhs->factor * rhs->factor;
-
-        update();
-    }
+    RenderTransform();
+    RenderTransform(const RenderTransform* lhs, const RenderTransform* rhs);
 };
 
 
@@ -190,4 +121,4 @@ struct RenderInitializer
 
 }
 
-#endif //_TVG_RENDER_COMMON_H_
+#endif //_TVG_RENDER_H_
