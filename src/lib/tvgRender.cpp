@@ -18,8 +18,6 @@
 #define _TVG_RENDER_CPP_
 
 #include "tvgCommon.h"
-#include "tvgRender.h"
-
 
 /************************************************************************/
 /* Internal Class Implementation                                        */

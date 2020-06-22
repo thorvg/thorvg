@@ -30,15 +30,6 @@ struct Line
 };
 
 
-struct Bezier
-{
-    Point start;
-    Point ctrl1;
-    Point ctrl2;
-    Point end;
-};
-
-
 static float _lineLength(const Point& pt1, const Point& pt2)
 {
     /* approximate sqrt(x*x + y*y) using alpha max plus beta min algorithm.
@@ -61,102 +52,6 @@ static void _lineSplitAt(const Line& cur, float at, Line& left, Line& right)
     left.pt2.y = left.pt1.y + dy;
     right.pt1 = left.pt2;
     right.pt2 = cur.pt2;
-}
-
-
-static void _bezSplit(const Bezier&cur, Bezier& left, Bezier& right)
-{
-    auto c = (cur.ctrl1.x + cur.ctrl2.x) * 0.5f;
-    left.ctrl1.x = (cur.start.x + cur.ctrl1.x) * 0.5f;
-    right.ctrl2.x = (cur.ctrl2.x + cur.end.x) * 0.5f;
-    left.start.x = cur.start.x;
-    right.end.x = cur.end.x;
-    left.ctrl2.x = (left.ctrl1.x + c) * 0.5f;
-    right.ctrl1.x = (right.ctrl2.x + c) * 0.5f;
-    left.end.x = right.start.x = (left.ctrl2.x + right.ctrl1.x) * 0.5f;
-
-    c = (cur.ctrl1.y + cur.ctrl2.y) * 0.5f;
-    left.ctrl1.y = (cur.start.y + cur.ctrl1.y) * 0.5f;
-    right.ctrl2.y = (cur.ctrl2.y + cur.end.y) * 0.5f;
-    left.start.y = cur.start.y;
-    right.end.y = cur.end.y;
-    left.ctrl2.y = (left.ctrl1.y + c) * 0.5f;
-    right.ctrl1.y = (right.ctrl2.y + c) * 0.5f;
-    left.end.y = right.start.y = (left.ctrl2.y + right.ctrl1.y) * 0.5f;
-}
-
-
-static float _bezLength(const Bezier& cur)
-{
-    Bezier left, right;
-    auto len = _lineLength(cur.start, cur.ctrl1) + _lineLength(cur.ctrl1, cur.ctrl2) + _lineLength(cur.ctrl2, cur.end);
-    auto chord = _lineLength(cur.start, cur.end);
-
-    if (fabs(len - chord) > FLT_EPSILON) {
-        _bezSplit(cur, left, right);
-        return _bezLength(left) + _bezLength(right);
-    }
-    return len;
-}
-
-
-static void _bezSplitLeft(Bezier& cur, float at, Bezier& left)
-{
-    left.start = cur.start;
-
-    left.ctrl1.x = cur.start.x + at * (cur.ctrl1.x - cur.start.x);
-    left.ctrl1.y = cur.start.y + at * (cur.ctrl1.y - cur.start.y);
-
-    left.ctrl2.x = cur.ctrl1.x + at * (cur.ctrl2.x - cur.ctrl1.x); // temporary holding spot
-    left.ctrl2.y = cur.ctrl1.y + at * (cur.ctrl2.y - cur.ctrl1.y); // temporary holding spot
-
-    cur.ctrl2.x = cur.ctrl2.x + at * (cur.end.x - cur.ctrl2.x);
-    cur.ctrl2.y = cur.ctrl2.y + at * (cur.end.y - cur.ctrl2.y);
-
-    cur.ctrl1.x = left.ctrl2.x + at * (cur.ctrl2.x - left.ctrl2.x);
-    cur.ctrl1.y = left.ctrl2.y + at * (cur.ctrl2.y - left.ctrl2.y);
-
-    left.ctrl2.x = left.ctrl1.x + at * (left.ctrl2.x - left.ctrl1.x);
-    left.ctrl2.y = left.ctrl1.y + at * (left.ctrl2.y - left.ctrl1.y);
-
-    left.end.x = cur.start.x = left.ctrl2.x + at * (cur.ctrl1.x - left.ctrl2.x);
-    left.end.y = cur.start.y = left.ctrl2.y + at * (cur.ctrl1.y - left.ctrl2.y);
-}
-
-
-static float _bezAt(const Bezier& bz, float at)
-{
-    auto len = _bezLength(bz);
-    auto biggest = 1.0f;
-
-    if (at >= len) return 1.0f;
-
-    at *= 0.5f;
-
-    while (true) {
-        auto right = bz;
-        Bezier left;
-        _bezSplitLeft(right, at, left);
-        auto len2 = _bezLength(left);
-
-        if (fabs(len2 - len) < FLT_EPSILON) break;
-
-        if (len2 < len) {
-            at += (biggest - at) * 0.5f;
-        } else {
-            biggest = at;
-            at -= (at * 0.5f);
-        }
-    }
-    return at;
-}
-
-
-static void _bezSplitAt(const Bezier& cur, float at, Bezier& left, Bezier& right)
-{
-    right = cur;
-    auto t = _bezAt(right, at);
-    _bezSplitLeft(right, t, left);
 }
 
 
@@ -407,7 +302,7 @@ static void _dashCubicTo(SwDashStroke& dash, const Point* ctrl1, const Point* ct
     _growOutlineContour(*dash.outline, dash.outline->cntrsCnt >> 1);
 
     Bezier cur = { dash.ptCur, *ctrl1, *ctrl2, *to};
-    auto len = _bezLength(cur);
+    auto len = bezLength(cur);
 
     if (len < dash.curLen) {
         dash.curLen -= len;
@@ -419,7 +314,7 @@ static void _dashCubicTo(SwDashStroke& dash, const Point* ctrl1, const Point* ct
         while (len > dash.curLen) {
             Bezier left, right;
             len -= dash.curLen;
-            _bezSplitAt(cur, dash.curLen, left, right);
+            bezSplitAt(cur, dash.curLen, left, right);
             dash.curIdx = (dash.curIdx + 1) % dash.cnt;
             if (!dash.curOpGap) {
                 _outlineMoveTo(*dash.outline, &left.start);

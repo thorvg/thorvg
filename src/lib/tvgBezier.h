@@ -14,35 +14,26 @@
  *  limitations under the License.
  *
  */
-#ifndef _TVG_COMMON_H_
-#define _TVG_COMMON_H_
+#ifndef _TVG_BEZIER_H_
+#define _TVG_BEZIER_H_
 
-#include <iostream>
-#include <cassert>
-#include <vector>
-#include <math.h>
-#include <float.h>
-#include <string.h>
-#include "tizenvg.h"
+namespace tvg
+{
 
-using namespace std;
-using namespace tvg;
+struct Bezier
+{
+    Point start;
+    Point ctrl1;
+    Point ctrl2;
+    Point end;
+};
 
-#define SCENE_IMPL scene->pImpl.get()
-#define SHAPE_IMPL shape->pImpl.get()
+void bezSplit(const Bezier&cur, Bezier& left, Bezier& right);
+float bezLength(const Bezier& cur);
+void bezSplitLeft(Bezier& cur, float at, Bezier& left);
+float bezAt(const Bezier& bz, float at);
+void bezSplitAt(const Bezier& cur, float at, Bezier& left, Bezier& right);
 
-#define PAINT_ID_SHAPE 0
-#define PAINT_ID_SCENE 1
+}
 
-#define FILL_ID_LINEAR 0
-#define FILL_ID_RADIAL 1
-
-#include "tvgBezier.h"
-#include "tvgLoader.h"
-#include "tvgLoaderMgr.h"
-#include "tvgRender.h"
-#include "tvgShapePath.h"
-#include "tvgShapeImpl.h"
-#include "tvgSceneImpl.h"
-
-#endif //_TVG_COMMON_H_
+#endif //_TVG_BEZIER_H_
