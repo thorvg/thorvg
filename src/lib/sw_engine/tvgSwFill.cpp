@@ -189,7 +189,7 @@ void fillFetchRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, 
 {
     if (fill->radial.a < FLT_EPSILON) return;
 
-    //TODO: Rotation???
+    //Rotation
     auto rx = x + 0.5f - fill->radial.cx;
     auto ry = y + 0.5f - fill->radial.cy;
     auto inv2a = fill->radial.inv2a;
@@ -199,13 +199,12 @@ void fillFetchRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, 
     auto detDelta = (4 * fill->radial.a * (rxryPlus + 1.0f)) * inv2a;
     auto detDelta2 = (4 * fill->radial.a * 2.0f) * inv2a;
 
-   for (uint32_t i = 0 ; i < len ; ++i)
-     {
+   for (uint32_t i = 0 ; i < len ; ++i) {
         *dst = _pixel(fill, sqrt(det));
         ++dst;
         det += detDelta;
         detDelta += detDelta2;
-     }
+    }
 }
 
 
@@ -213,7 +212,7 @@ void fillFetchLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, 
 {
     if (fill->linear.len < FLT_EPSILON) return;
 
-    //TODO: Rotation???
+    //Rotation
     auto rx = x + 0.5f;
     auto ry = y + 0.5f;
     auto t = (fill->linear.dx * rx + fill->linear.dy * ry + fill->linear.offset) * (GRADIENT_STOP_SIZE - 1);

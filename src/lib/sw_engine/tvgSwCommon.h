@@ -19,7 +19,7 @@
 
 #include "tvgCommon.h"
 
-#if 1
+#if 0
 #include <sys/time.h>
 static double timeStamp()
 {

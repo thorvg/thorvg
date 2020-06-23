@@ -195,7 +195,7 @@ static void _horizLine(RleWorker& rw, SwCoord x, SwCoord y, SwCoord area, SwCoor
         y = SHRT_MAX;
     }
 
-    if (coverage) {
+    if (coverage > 0) {
         auto count = rw.spansCnt;
         auto span = rw.spans + count - 1;
         assert(span);
@@ -209,13 +209,15 @@ static void _horizLine(RleWorker& rw, SwCoord x, SwCoord y, SwCoord area, SwCoor
             if (x + acount >= rw.clip.w) xOver -= (x + acount - rw.clip.w);
             if (x < 0) xOver += x;
 
-            span->len += (acount + xOver) - 1;
+            //span->len += (acount + xOver) - 1;
+            span->len += (acount + xOver);
             return;
         }
 
         if (count >=  MAX_SPANS) {
             _genSpan(rw.rle, rw.spans, count);
             rw.spansCnt = 0;
+            rw.ySpan = 0;
             span = rw.spans;
             assert(span);
         } else {
@@ -240,6 +242,7 @@ static void _horizLine(RleWorker& rw, SwCoord x, SwCoord y, SwCoord area, SwCoor
         span->len = (acount + xOver);
         span->coverage = coverage;
         ++rw.spansCnt;
+        rw.ySpan = y;
     }
 }
 
@@ -249,6 +252,7 @@ static void _sweep(RleWorker& rw)
     if (rw.cellsCnt == 0) return;
 
     rw.spansCnt = 0;
+    rw.ySpan = 0;
 
     for (int y = 0; y < rw.yCnt; ++y) {
         auto cover = 0;
@@ -774,7 +778,5 @@ void rleFree(SwRleData* rle)
     if (rle->spans) free(rle->spans);
     free(rle);
 }
-
-
 
 #endif /* _TVG_SW_RLE_H_ */
