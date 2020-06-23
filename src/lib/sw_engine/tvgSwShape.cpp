@@ -225,9 +225,7 @@ static bool _checkValid(const SwOutline* outline, const SwBBox& bbox, const SwSi
     if (outline->ptsCnt == 0 || outline->cntrsCnt <= 0) return false;
 
     //Check boundary
-    if ((bbox.min.x > clip.w || bbox.min.y > clip.h) ||
-        (bbox.min.x + bbox.max.x < 0) ||
-        (bbox.min.y + bbox.max.y < 0)) return false;
+    if (bbox.min.x >= clip.w || bbox.min.y >= clip.h || bbox.max.x <= 0 || bbox.max.y <= 0) return false;
 
     return true;
 }
