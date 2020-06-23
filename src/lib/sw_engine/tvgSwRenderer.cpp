@@ -36,6 +36,7 @@ bool SwRenderer::clear()
     return rasterClear(surface);
 }
 
+
 bool SwRenderer::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h)
 {
     if (!buffer || stride == 0 || w == 0 || h == 0) return false;
@@ -48,22 +49,25 @@ bool SwRenderer::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t 
     return true;
 }
 
+
 bool SwRenderer::render(const Shape& sdata, void *data)
 {
-    SwShape* shape = static_cast<SwShape*>(data);
-    if (!shape) return false;
+    auto task = static_cast<SwTask*>(data);
+    if (!task) return false;
+
+    if (task->prepared.valid()) task->prepared.get();
 
     uint8_t r, g, b, a;
 
     if (auto fill = sdata.fill()) {
-        rasterGradientShape(surface, *shape, fill->id());
+        rasterGradientShape(surface, task->shape, fill->id());
     } else {
         sdata.fill(&r, &g, &b, &a);
-        if (a > 0) rasterSolidShape(surface, *shape, r, g, b, a);
+        if (a > 0) rasterSolidShape(surface, task->shape, r, g, b, a);
     }
 
     sdata.strokeColor(&r, &g, &b, &a);
-    if (a > 0) rasterStroke(surface, *shape, r, g, b, a);
+    if (a > 0) rasterStroke(surface, task->shape, r, g, b, a);
 
     return true;
 }
@@ -71,67 +75,74 @@ bool SwRenderer::render(const Shape& sdata, void *data)
 
 bool SwRenderer::dispose(const Shape& sdata, void *data)
 {
-    auto shape = static_cast<SwShape*>(data);
-    if (!shape) return true;
-    shapeFree(shape);
+    auto task = static_cast<SwTask*>(data);
+    if (!task) return true;
+    if (task->prepared.valid()) task->prepared.wait();
+    shapeFree(task->shape);
+    free(task);
     return true;
 }
 
 
 void* SwRenderer::prepare(const Shape& sdata, void* data, const RenderTransform* transform, RenderUpdateFlag flags)
 {
-    //prepare shape data
-    auto shape = static_cast<SwShape*>(data);
-    if (!shape) {
-        shape = static_cast<SwShape*>(calloc(1, sizeof(SwShape)));
-        assert(shape);
+    //prepare task
+    auto task = static_cast<SwTask*>(data);
+    if (!task) {
+        task = static_cast<SwTask*>(calloc(1, sizeof(SwTask)));
+        if (!task) return nullptr;
     }
 
-    if (flags == RenderUpdateFlag::None) return shape;
+    if (flags == RenderUpdateFlag::None || task->prepared.valid()) return task;
 
-    //TODO: Threading
+    task->sdata = &sdata;
+    task->clip = {static_cast<SwCoord>(surface.w), static_cast<SwCoord>(surface.h)};
 
-    SwSize clip = {static_cast<SwCoord>(surface.w), static_cast<SwCoord>(surface.h)};
+    if (transform) task->transform = &transform->m;
+    else task->transform = nullptr;
 
-    //Shape
-    if (flags & (RenderUpdateFlag::Path | RenderUpdateFlag::Transform)) {
-        shapeReset(*shape);
-        uint8_t alpha = 0;
-        sdata.fill(nullptr, nullptr, nullptr, &alpha);
-        if (alpha > 0 || sdata.fill()) {
-            if (!shapeGenRle(*shape, sdata, clip, transform)) return shape;
-        }
-    }
+    task->flags = flags;
 
-    //Fill
-    if (flags & (RenderUpdateFlag::Gradient | RenderUpdateFlag::Transform)) {
-        auto fill = sdata.fill();
-        if (fill) {
-            auto ctable = (flags & RenderUpdateFlag::Gradient) ? true : false;
-            if (ctable) shapeResetFill(*shape, fill);
-            if (!shapeGenFillColors(*shape, fill, transform, ctable)) return shape;
-        } else {
-            shapeDelFill(*shape);
-        }
-    }
-
-    //Stroke
-    if (flags & (RenderUpdateFlag::Stroke | RenderUpdateFlag::Transform)) {
-        if (sdata.strokeWidth() > FLT_EPSILON) {
-            shapeResetStroke(*shape, sdata);
+    auto asyncTask = [](SwTask* task) {
+        //Shape
+        if (task->flags & (RenderUpdateFlag::Path | RenderUpdateFlag::Transform)) {
+            shapeReset(task->shape);
             uint8_t alpha = 0;
-            sdata.strokeColor(nullptr, nullptr, nullptr, &alpha);
-            if (alpha > 0) {
-                if (!shapeGenStrokeRle(*shape, sdata, clip)) return shape;
+            task->sdata->fill(nullptr, nullptr, nullptr, &alpha);
+            if (alpha > 0 || task->sdata->fill()) {
+                if (!shapeGenRle(task->shape, task->sdata, task->clip, task->transform)) return;
             }
-        } else {
-            shapeDelStroke(*shape);
         }
-    }
+        //Fill
+        if (task->flags & (RenderUpdateFlag::Gradient | RenderUpdateFlag::Transform)) {
+            auto fill = task->sdata->fill();
+            if (fill) {
+                auto ctable = (task->flags & RenderUpdateFlag::Gradient) ? true : false;
+                if (ctable) shapeResetFill(task->shape);
+                if (!shapeGenFillColors(task->shape, fill, task->transform, ctable)) return;
+            } else {
+                shapeDelFill(task->shape);
+            }
+        }
+        //Stroke
+        if (task->flags & (RenderUpdateFlag::Stroke | RenderUpdateFlag::Transform)) {
+            if (task->sdata->strokeWidth() > FLT_EPSILON) {
+                shapeResetStroke(task->shape, task->sdata);
+                uint8_t alpha = 0;
+                task->sdata->strokeColor(nullptr, nullptr, nullptr, &alpha);
+                if (alpha > 0) {
+                    if (!shapeGenStrokeRle(task->shape, task->sdata, task->clip)) return;
+                }
+            } else {
+                shapeDelStroke(task->shape);
+            }
+        }
+        shapeDelOutline(task->shape);
+    };
 
-    shapeDelOutline(*shape);
+    task->prepared = async((launch::async | launch::deferred), asyncTask, task);
 
-    return shape;
+    return task;
 }
 
 

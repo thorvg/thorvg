@@ -816,13 +816,15 @@ void strokeFree(SwStroke* stroke)
 }
 
 
-void strokeReset(SwStroke& stroke, const Shape& shape)
+void strokeReset(SwStroke& stroke, const Shape* sdata)
 {
-    stroke.width = TO_SWCOORD(shape.strokeWidth() * 0.5);
-    stroke.cap = shape.strokeCap();
+    assert(sdata);
+
+    stroke.width = TO_SWCOORD(sdata->strokeWidth() * 0.5);
+    stroke.cap = sdata->strokeCap();
 
     //Save line join: it can be temporarily changed when stroking curves...
-    stroke.joinSaved = stroke.join = shape.strokeJoin();
+    stroke.joinSaved = stroke.join = sdata->strokeJoin();
 
     stroke.borders[0].ptsCnt = 0;
     stroke.borders[0].start = -1;

@@ -42,7 +42,7 @@ struct Canvas::Impl
     Result push(unique_ptr<Paint> paint)
     {
         auto p = paint.release();
-        assert(p);
+        if (!p) return Result::MemoryCorruption;
         paints.push_back(p);
 
         return update(p);
@@ -50,7 +50,7 @@ struct Canvas::Impl
 
     Result clear()
     {
-        assert(renderer);
+        if (!renderer) return Result::InsufficientCondition;
 
         for (auto paint : paints) {
             if (paint->id() == PAINT_ID_SCENE) {
@@ -70,7 +70,7 @@ struct Canvas::Impl
 
     Result update()
     {
-        assert(renderer);
+        if (!renderer) return Result::InsufficientCondition;
 
         for(auto paint: paints) {
             if (paint->id() == PAINT_ID_SCENE) {
@@ -87,7 +87,7 @@ struct Canvas::Impl
 
     Result update(Paint* paint)
     {
-        assert(renderer);
+        if (!renderer) return Result::InsufficientCondition;
 
         if (paint->id() == PAINT_ID_SCENE) {
             //We know renderer type, avoid dynamic_cast for performance.
@@ -102,7 +102,7 @@ struct Canvas::Impl
 
     Result draw()
     {
-        assert(renderer);
+        if (!renderer) return Result::InsufficientCondition;
 
         //Clear render target before drawing
         if (!renderer->clear()) return Result::InsufficientCondition;

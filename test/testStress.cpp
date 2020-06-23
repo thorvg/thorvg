@@ -3,12 +3,14 @@
 
 using namespace std;
 
-#define WIDTH 800
-#define HEIGHT 800
+#define WIDTH 1920
+#define HEIGHT 1080
 #define COUNT 50
 
 static uint32_t buffer[WIDTH * HEIGHT];
 unique_ptr<tvg::SwCanvas> canvas = nullptr;
+static double t1, t2, t3, t4;
+static unsigned cnt = 0;
 
 void tvgtest()
 {
@@ -19,20 +21,18 @@ void tvgtest()
 
 Eina_Bool anim_cb(void *data)
 {
-    static unsigned cnt = 0;
-
     //Explicitly clear all retained paint nodes.
-    double t1 = ecore_time_get();
+    t1 = ecore_time_get();
     canvas->clear();
-    double t2 = ecore_time_get();
+    t2 = ecore_time_get();
 
     for (int i = 0; i < COUNT; i++) {
         auto shape = tvg::Shape::gen();
 
-        float x = rand() % 400;
-        float y = rand() % 400;
-        float w = 1 + rand() % 600;
-        float h = 1 + rand() % 600;
+        float x = rand() % (WIDTH/2);
+        float y = rand() % (HEIGHT/2);
+        float w = 1 + rand() % 1200;
+        float h = 1 + rand() %  800;
 
         shape->appendRect(x, y, w, h, rand() % 400);
 
@@ -61,25 +61,28 @@ Eina_Bool anim_cb(void *data)
         canvas->push(move(shape));
     }
 
-    double t3 = ecore_time_get();
-
-    //Draw Next frames
-    canvas->draw();
-    canvas->sync();
-
-    double t4 = ecore_time_get();
-
-    printf("[%5d]: total[%fms] = clear[%fms] + update[%fms] + render[%fms]\n", ++cnt, t4 - t1, t2 - t1, t3 - t2, t4 - t3);
-
     //Update Efl Canvas
     Eo* img = (Eo*) data;
+    evas_object_image_pixels_dirty_set(img, EINA_TRUE);
     evas_object_image_data_update_add(img, 0, 0, WIDTH, HEIGHT);
 
     return ECORE_CALLBACK_RENEW;
 }
 
-void
-win_del(void *data, Evas_Object *o, void *ev)
+void render_cb(void* data, Eo* obj)
+{
+    t3 = ecore_time_get();
+
+    //Draw Next frames
+    canvas->draw();
+    canvas->sync();
+
+    t4 = ecore_time_get();
+
+    printf("[%5d]: total[%fms] = clear[%fms], update[%fms], render[%fms]\n", ++cnt, t4 - t1, t2 - t1, t3 - t2, t4 - t3);
+}
+
+void win_del(void *data, Evas_Object *o, void *ev)
 {
     elm_exit();
 }
@@ -100,6 +103,7 @@ int main(int argc, char **argv)
     Eo* img = evas_object_image_filled_add(evas_object_evas_get(win));
     evas_object_image_size_set(img, WIDTH, HEIGHT);
     evas_object_image_data_set(img, buffer);
+    evas_object_image_pixels_get_callback_set(img, render_cb, nullptr);
     evas_object_size_hint_weight_set(img, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
     evas_object_show(img);
 

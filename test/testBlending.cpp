@@ -66,8 +66,7 @@ void tvgtest()
     tvg::Initializer::term(tvg::CanvasEngine::Sw);
 }
 
-void
-win_del(void *data, Evas_Object *o, void *ev)
+void win_del(void *data, Evas_Object *o, void *ev)
 {
    elm_exit();
 }

@@ -9,8 +9,7 @@ using namespace std;
 static Evas_GL_API *glapi;
 static unique_ptr<tvg::GlCanvas> canvas;
 
-static void
-tvgtest()
+void tvgtest()
 {
     //Create a Canvas
     canvas = tvg::GlCanvas::gen();
@@ -33,8 +32,7 @@ tvgtest()
     canvas->push(move(shape1));
 }
 
-static void
-init_gl(Evas_Object *obj)
+void init_gl(Evas_Object *obj)
 {
     //Initialize TizenVG Engine
     tvg::Initializer::init(tvg::CanvasEngine::Gl);
@@ -42,15 +40,13 @@ init_gl(Evas_Object *obj)
     tvgtest();
 }
 
-static void
-del_gl(Evas_Object *obj)
+void del_gl(Evas_Object *obj)
 {
     //Terminate TizenVG Engine
     tvg::Initializer::term(tvg::CanvasEngine::Gl);
 }
 
-static void
-draw_gl(Evas_Object *obj)
+void draw_gl(Evas_Object *obj)
 {
     Evas_GL_API *gl = elm_glview_gl_api_get(obj);
     int w, h;
@@ -66,8 +62,7 @@ draw_gl(Evas_Object *obj)
     canvas->sync();
 }
 
-void
-win_del(void *data, Evas_Object *o, void *ev)
+void win_del(void *data, Evas_Object *o, void *ev)
 {
     elm_exit();
 }

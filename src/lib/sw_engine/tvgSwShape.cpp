@@ -231,17 +231,17 @@ static bool _checkValid(const SwOutline* outline, const SwBBox& bbox, const SwSi
 }
 
 
-static void _transformOutline(SwOutline* outline, const RenderTransform* transform)
+static void _transformOutline(SwOutline* outline, const Matrix* transform)
 {
-    assert(outline);
-
     if (!transform) return;
+
+    assert(outline);
 
     for(uint32_t i = 0; i < outline->ptsCnt; ++i) {
         auto dx = static_cast<float>(outline->pts[i].x >> 6);
         auto dy = static_cast<float>(outline->pts[i].y >> 6);
-        auto tx = dx * transform->m.e11 + dy * transform->m.e12 + transform->m.e31;
-        auto ty = dx * transform->m.e21 + dy * transform->m.e22 + transform->m.e32;
+        auto tx = dx * transform->e11 + dy * transform->e12 + transform->e31;
+        auto ty = dx * transform->e21 + dy * transform->e22 + transform->e32;
         auto pt = Point{tx, ty};
         outline->pts[i] = TO_SWPOINT(&pt);
     }
@@ -340,13 +340,15 @@ static void _dashCubicTo(SwDashStroke& dash, const Point* ctrl1, const Point* ct
 }
 
 
-SwOutline* _genDashOutline(const Shape& shape)
+SwOutline* _genDashOutline(const Shape* sdata)
 {
+    assert(sdata);
+
     const PathCommand* cmds = nullptr;
-    auto cmdCnt = shape.pathCommands(&cmds);
+    auto cmdCnt = sdata->pathCommands(&cmds);
 
     const Point* pts = nullptr;
-    auto ptsCnt = shape.pathCoords(&pts);
+    auto ptsCnt = sdata->pathCoords(&pts);
 
     //No actual shape data
     if (cmdCnt == 0 || ptsCnt == 0) return nullptr;
@@ -359,7 +361,7 @@ SwOutline* _genDashOutline(const Shape& shape)
     dash.curOpGap = false;
 
     const float* pattern;
-    dash.cnt = shape.strokeDash(&pattern);
+    dash.cnt = sdata->strokeDash(&pattern);
     assert(dash.cnt > 0 && pattern);
 
     //Is it safe to mutual exclusive?
@@ -440,7 +442,7 @@ SwOutline* _genDashOutline(const Shape& shape)
 /* External Class Implementation                                        */
 /************************************************************************/
 
-bool shapeGenRle(SwShape& shape, const Shape& sdata, const SwSize& clip, const RenderTransform* transform)
+bool shapeGenRle(SwShape& shape, const Shape* sdata, const SwSize& clip, const Matrix* transform)
 {
     if (!shapeGenOutline(shape, sdata)) return false;
 
@@ -474,13 +476,15 @@ void shapeReset(SwShape& shape)
 }
 
 
-bool shapeGenOutline(SwShape& shape, const Shape& sdata)
+bool shapeGenOutline(SwShape& shape, const Shape* sdata)
 {
+    assert(sdata);
+
     const PathCommand* cmds = nullptr;
-    auto cmdCnt = sdata.pathCommands(&cmds);
+    auto cmdCnt = sdata->pathCommands(&cmds);
 
     const Point* pts = nullptr;
-    auto ptsCnt = sdata.pathCoords(&pts);
+    auto ptsCnt = sdata->pathCoords(&pts);
 
     //No actual shape data
     if (cmdCnt == 0 || ptsCnt == 0) return false;
@@ -559,19 +563,15 @@ bool shapeGenOutline(SwShape& shape, const Shape& sdata)
 }
 
 
-void shapeFree(SwShape* shape)
+void shapeFree(SwShape& shape)
 {
-    assert(shape);
+    shapeDelOutline(shape);
+    rleFree(shape.rle);
 
-    shapeDelOutline(*shape);
-    rleFree(shape->rle);
-
-    if (shape->stroke) {
-        rleFree(shape->strokeRle);
-        strokeFree(shape->stroke);
+    if (shape.stroke) {
+        rleFree(shape.strokeRle);
+        strokeFree(shape.stroke);
     }
-
-    free(shape);
 }
 
 
@@ -585,7 +585,7 @@ void shapeDelStroke(SwShape& shape)
 }
 
 
-void shapeResetStroke(SwShape& shape, const Shape& sdata)
+void shapeResetStroke(SwShape& shape, const Shape* sdata)
 {
     if (!shape.stroke) shape.stroke = static_cast<SwStroke*>(calloc(1, sizeof(SwStroke)));
     auto stroke = shape.stroke;
@@ -598,12 +598,14 @@ void shapeResetStroke(SwShape& shape, const Shape& sdata)
 }
 
 
-bool shapeGenStrokeRle(SwShape& shape, const Shape& sdata, const SwSize& clip)
+bool shapeGenStrokeRle(SwShape& shape, const Shape* sdata, const SwSize& clip)
 {
+    assert(sdata);
+
     SwOutline* shapeOutline = nullptr;
 
     //Dash Style Stroke
-    if (sdata.strokeDash(nullptr) > 0) {
+    if (sdata->strokeDash(nullptr) > 0) {
         shapeOutline = _genDashOutline(sdata);
         if (!shapeOutline) return false;
 
@@ -633,23 +635,18 @@ bool shapeGenStrokeRle(SwShape& shape, const Shape& sdata, const SwSize& clip)
 }
 
 
-bool shapeGenFillColors(SwShape& shape, const Fill* fill, const RenderTransform* transform, bool ctable)
+bool shapeGenFillColors(SwShape& shape, const Fill* fill, const Matrix* transform, bool ctable)
 {
-    assert(fill);
-
-    fillGenColorTable(shape.fill, fill, transform, ctable);
-    return true;
+    return fillGenColorTable(shape.fill, fill, transform, ctable);
 }
 
 
-void shapeResetFill(SwShape& shape, const Fill* fill)
+void shapeResetFill(SwShape& shape)
 {
-    assert(fill);
-
     if (!shape.fill) shape.fill = static_cast<SwFill*>(calloc(1, sizeof(SwFill)));
     assert(shape.fill);
 
-    fillReset(shape.fill, fill);
+    fillReset(shape.fill);
 }
 
 

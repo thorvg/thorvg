@@ -50,8 +50,7 @@ void transit_cb(Elm_Transit_Effect *effect, Elm_Transit* transit, double progres
     evas_object_image_data_update_add(img, 0, 0, WIDTH, HEIGHT);
 }
 
-void
-win_del(void *data, Evas_Object *o, void *ev)
+void win_del(void *data, Evas_Object *o, void *ev)
 {
     elm_exit();
 }

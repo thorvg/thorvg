@@ -17,6 +17,8 @@
 #ifndef _TVG_SW_COMMON_H_
 #define _TVG_SW_COMMON_H_
 
+#include <future>
+#include <thread>
 #include "tvgCommon.h"
 
 #if 0
@@ -201,6 +203,16 @@ struct SwShape
 };
 
 
+struct SwTask
+{
+    SwShape shape;
+    const Shape* sdata;
+    SwSize clip;
+    const Matrix* transform;
+    RenderUpdateFlag flags;
+    future<void> prepared;
+};
+
 static inline SwPoint TO_SWPOINT(const Point* pt)
 {
     return {SwCoord(pt->x * 64), SwCoord(pt->y * 64)};
@@ -261,24 +273,24 @@ bool mathSmallCubic(SwPoint* base, SwFixed& angleIn, SwFixed& angleMid, SwFixed&
 SwFixed mathMean(SwFixed angle1, SwFixed angle2);
 
 void shapeReset(SwShape& shape);
-bool shapeGenOutline(SwShape& shape, const Shape& sdata);
-bool shapeGenRle(SwShape& shape, const Shape& sdata, const SwSize& clip, const RenderTransform* transform);
+bool shapeGenOutline(SwShape& shape, const Shape* sdata);
+bool shapeGenRle(SwShape& shape, const Shape* sdata, const SwSize& clip, const Matrix* transform);
 void shapeDelOutline(SwShape& shape);
-void shapeResetStroke(SwShape& shape, const Shape& sdata);
-bool shapeGenStrokeRle(SwShape& shape, const Shape& sdata, const SwSize& clip);
-void shapeFree(SwShape* shape);
+void shapeResetStroke(SwShape& shape, const Shape* sdata);
+bool shapeGenStrokeRle(SwShape& shape, const Shape* sdata, const SwSize& clip);
+void shapeFree(SwShape& shape);
 void shapeDelStroke(SwShape& shape);
-bool shapeGenFillColors(SwShape& shape, const Fill* fill, const RenderTransform* transform, bool ctable);
-void shapeResetFill(SwShape& shape, const Fill* fill);
+bool shapeGenFillColors(SwShape& shape, const Fill* fill, const Matrix* transform, bool ctable);
+void shapeResetFill(SwShape& shape);
 void shapeDelFill(SwShape& shape);
 
-void strokeReset(SwStroke& stroke, const Shape& shape);
+void strokeReset(SwStroke& stroke, const Shape* shape);
 bool strokeParseOutline(SwStroke& stroke, const SwOutline& outline);
 SwOutline* strokeExportOutline(SwStroke& stroke);
 void strokeFree(SwStroke* stroke);
 
-bool fillGenColorTable(SwFill* fill, const Fill* fdata, const RenderTransform* transform, bool ctable);
-void fillReset(SwFill* fill, const Fill* fdata);
+bool fillGenColorTable(SwFill* fill, const Fill* fdata, const Matrix* transform, bool ctable);
+void fillReset(SwFill* fill);
 void fillFree(SwFill* fill);
 void fillFetchLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len);
 void fillFetchRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len);
