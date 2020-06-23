@@ -181,29 +181,6 @@ static inline uint32_t _pixel(const SwFill* fill, float pos)
 }
 
 
-static inline void _write(uint32_t *dst, uint32_t val, uint32_t len)
-{
-   if (len <= 0) return;
-
-   // Cute hack to align future memcopy operation
-   // and do unroll the loop a bit. Not sure it is
-   // the most efficient, but will do for now.
-   auto n = (len + 7) / 8;
-
-   switch (len & 0x07) {
-        case 0: do { *dst++ = val;
-        case 7:      *dst++ = val;
-        case 6:      *dst++ = val;
-        case 5:      *dst++ = val;
-        case 4:      *dst++ = val;
-        case 3:      *dst++ = val;
-        case 2:      *dst++ = val;
-        case 1:      *dst++ = val;
-        } while (--n > 0);
-    }
-}
-
-
 /************************************************************************/
 /* External Class Implementation                                        */
 /************************************************************************/
@@ -244,7 +221,7 @@ void fillFetchLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, 
 
     if (fabsf(inc) < FLT_EPSILON) {
         auto color = _fixedPixel(fill, static_cast<uint32_t>(t * FIXPT_SIZE));
-        _write(dst, color, len);
+        COLOR_SET(dst, color, len);
         return;
     }
 

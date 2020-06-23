@@ -20,6 +20,7 @@
 #include "tvgSwCommon.h"
 #include "tvgSwRenderer.h"
 
+
 /************************************************************************/
 /* Internal Class Implementation                                        */
 /************************************************************************/
@@ -32,17 +33,7 @@ static RenderInitializer renderInit;
 
 bool SwRenderer::clear()
 {
-    if (!surface.buffer) return false;
-
-    assert(surface.stride > 0 && surface.w > 0 && surface.h > 0);
-
-    //OPTIMIZE ME: SIMD!
-    for (uint32_t i = 0; i < surface.h; i++) {
-        for (uint32_t j = 0; j < surface.w; j++)
-            surface.buffer[surface.stride * i + j] = 0xff000000;  //Solid Black
-    }
-
-    return true;
+    return rasterClear(surface);
 }
 
 bool SwRenderer::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h)

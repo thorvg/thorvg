@@ -24,20 +24,22 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
+
 static bool _rasterTranslucentRle(Surface& surface, SwRleData* rle, uint32_t color)
 {
     if (!rle) return false;
 
     auto span = rle->spans;
     auto stride = surface.stride;
-    uint32_t tmp;
+    uint32_t src;
 
     for (uint32_t i = 0; i < rle->size; ++i) {
         auto dst = &surface.buffer[span->y * stride + span->x];
-        if (span->coverage < 255) tmp = COLOR_ALPHA_BLEND(color, span->coverage);
-        else tmp = color;
+        if (span->coverage < 255) src = COLOR_ALPHA_BLEND(color, span->coverage);
+        else src = color;
+        auto ialpha = 255 - COLOR_ALPHA(src);
         for (uint32_t i = 0; i < span->len; ++i) {
-            dst[i] = tmp + COLOR_ALPHA_BLEND(dst[i], 255 - COLOR_ALPHA(tmp));
+            dst[i] = src + COLOR_ALPHA_BLEND(dst[i], ialpha);
         }
         ++span;
     }
@@ -55,12 +57,12 @@ static bool _rasterSolidRle(Surface& surface, SwRleData* rle, uint32_t color)
     for (uint32_t i = 0; i < rle->size; ++i) {
         auto dst = &surface.buffer[span->y * stride + span->x];
         if (span->coverage == 255) {
-            for (uint32_t i = 0; i < span->len; ++i) {
-              dst[i] = color;
-            }
+            COLOR_SET(dst, color, span->len);
         } else {
+            auto src = COLOR_ALPHA_BLEND(color, span->coverage);
+            auto ialpha = 255 - span->coverage;
             for (uint32_t i = 0; i < span->len; ++i) {
-                dst[i] = COLOR_ALPHA_BLEND(color, span->coverage) + COLOR_ALPHA_BLEND(dst[i], 255 - span->coverage);
+                dst[i] = src + COLOR_ALPHA_BLEND(dst[i], ialpha);
             }
         }
         ++span;
@@ -185,6 +187,21 @@ bool rasterStroke(Surface& surface, SwShape& shape, uint8_t r, uint8_t g, uint8_
 {
     if (a == 255) return _rasterSolidRle(surface, shape.strokeRle, COLOR_ARGB_JOIN(r, g, b, a));
     return _rasterTranslucentRle(surface, shape.strokeRle, COLOR_ARGB_JOIN(r, g, b, a));
+}
+
+
+bool rasterClear(Surface& surface)
+{
+    if (!surface.buffer || surface.stride <= 0 || surface.w <= 0 || surface.h <= 0) return false;
+
+    if (surface.w == surface.stride) {
+        COLOR_SET(surface.buffer, 0xff000000, surface.w * surface.h);
+    } else {
+        for (uint32_t i = 0; i < surface.h; i++) {
+            COLOR_SET(surface.buffer + surface.stride * i, 0xff000000, surface.w);
+        }
+    }
+    return true;
 }
 
 

@@ -19,6 +19,16 @@
 
 #include "tvgCommon.h"
 
+#if 1
+#include <sys/time.h>
+static double timeStamp()
+{
+   struct timeval tv;
+   gettimeofday(&tv, NULL);
+   return (tv.tv_sec + tv.tv_usec / 1000000.0);
+}
+#endif
+
 using namespace tvg;
 
 #define SW_CURVE_TYPE_POINT 0
@@ -230,6 +240,12 @@ static inline uint32_t COLOR_ARGB_JOIN(uint8_t r, uint8_t g, uint8_t b, uint8_t 
 }
 
 
+static inline void COLOR_SET(uint32_t *dst, uint32_t val, uint32_t len)
+{
+    while (len--) *dst++ = val;
+}
+
+
 int64_t mathMultiply(int64_t a, int64_t b);
 int64_t mathDivide(int64_t a, int64_t b);
 int64_t mathMulDiv(int64_t a, int64_t b, int64_t c);
@@ -273,5 +289,6 @@ void rleFree(SwRleData* rle);
 bool rasterGradientShape(Surface& surface, SwShape& shape, unsigned id);
 bool rasterSolidShape(Surface& surface, SwShape& shape, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
 bool rasterStroke(Surface& surface, SwShape& shape, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
+bool rasterClear(Surface& surface);
 
 #endif /* _TVG_SW_COMMON_H_ */
