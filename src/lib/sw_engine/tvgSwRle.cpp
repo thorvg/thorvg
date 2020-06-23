@@ -147,9 +147,9 @@ static void _genSpan(SwRleData* rle, SwSpan* spans, uint32_t count)
     /* alloc is required to prevent free and reallocation */
     /* when the rle needs to be regenerated because of attribute change. */
     if (rle->alloc < newSize) {
-        rle->spans = static_cast<SwSpan*>(realloc(rle->spans, (count + rle->size) << 2 * sizeof(SwSpan)));
+        rle->alloc = (newSize * 2);
+        rle->spans = static_cast<SwSpan*>(realloc(rle->spans, rle->alloc * sizeof(SwSpan)));
         assert(rle->spans);
-        rle->alloc = rle->size + (count << 2);
     }
 
     //copy the new spans to the allocated memory
