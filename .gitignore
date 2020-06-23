@@ -11,6 +11,7 @@ testUpdate
 testDirectUpdate
 testScene
 testTransform
+testCustomTransform
 testSceneTransform
 testStroke
 testStrokeLine

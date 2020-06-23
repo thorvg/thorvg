@@ -32,17 +32,15 @@ enum RenderUpdateFlag {None = 0, Path = 1, Color = 2, Gradient = 4, Stroke = 8, 
 
 struct RenderTransform
 {
-    //3x3 Matrix Elements
-    float e11, e12, e13;
-    float e21, e22, e23;
-    float e31, e32, e33;
-
+    Matrix m;  //3x3 Matrix Elements
     float x = 0.0f;
     float y = 0.0f;
     float degree = 0.0f;  //rotation degree
     float factor = 1.0f;  //scale factor
+    bool overriding = false;  //user transform?
 
     bool update();
+    void override(const Matrix& m);
 
     RenderTransform();
     RenderTransform(const RenderTransform* lhs, const RenderTransform* rhs);

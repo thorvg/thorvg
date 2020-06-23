@@ -26,7 +26,7 @@
 struct Scene::Impl
 {
     vector<Paint*> paints;
-    RenderTransform *transform = nullptr;
+    RenderTransform *rTransform = nullptr;
     uint32_t flag = RenderUpdateFlag::None;
     unique_ptr<Loader> loader = nullptr;
 
@@ -34,7 +34,7 @@ struct Scene::Impl
     {
         //Are you sure clear() prior to this?
         assert(paints.empty());
-        if (transform) delete(transform);
+        if (rTransform) delete(rTransform);
     }
 
     bool clear(RenderMethod& renderer)
@@ -82,20 +82,20 @@ struct Scene::Impl
         }
 
         if (flag & RenderUpdateFlag::Transform) {
-            if (!transform) return false;
-            if (!transform->update()) {
-                delete(transform);
-                transform = nullptr;
+            if (!rTransform) return false;
+            if (!rTransform->update()) {
+                delete(rTransform);
+                rTransform = nullptr;
             }
         }
 
         auto ret = true;
 
-        if (transform && pTransform) {
-            RenderTransform outTransform(pTransform, transform);
+        if (rTransform && pTransform) {
+            RenderTransform outTransform(pTransform, rTransform);
             ret = updateInternal(renderer, &outTransform, pFlag | flag);
         } else {
-            auto outTransform = pTransform ? pTransform : transform;
+            auto outTransform = pTransform ? pTransform : rTransform;
             ret = updateInternal(renderer, outTransform, pFlag | flag);
         }
 
@@ -158,14 +158,14 @@ struct Scene::Impl
 
     bool scale(float factor)
     {
-        if (transform) {
-            if (fabsf(factor - transform->factor) <= FLT_EPSILON) return true;
+        if (rTransform) {
+            if (fabsf(factor - rTransform->factor) <= FLT_EPSILON) return true;
         } else {
             if (fabsf(factor) <= FLT_EPSILON) return true;
-            transform = new RenderTransform();
-            if (!transform) return false;
+            rTransform = new RenderTransform();
+            if (!rTransform) return false;
         }
-        transform->factor = factor;
+        rTransform->factor = factor;
         flag |= RenderUpdateFlag::Transform;
 
         return true;
@@ -173,14 +173,14 @@ struct Scene::Impl
 
     bool rotate(float degree)
     {
-        if (transform) {
-            if (fabsf(degree - transform->degree) <= FLT_EPSILON) return true;
+        if (rTransform) {
+            if (fabsf(degree - rTransform->degree) <= FLT_EPSILON) return true;
         } else {
             if (fabsf(degree) <= FLT_EPSILON) return true;
-            transform = new RenderTransform();
-            if (!transform) return false;
+            rTransform = new RenderTransform();
+            if (!rTransform) return false;
         }
-        transform->degree = degree;
+        rTransform->degree = degree;
         flag |= RenderUpdateFlag::Transform;
 
         return true;
@@ -188,19 +188,33 @@ struct Scene::Impl
 
     bool translate(float x, float y)
     {
-        if (transform) {
-            if (fabsf(x - transform->x) <= FLT_EPSILON && fabsf(y - transform->y) <= FLT_EPSILON) return true;
+        if (rTransform) {
+            if (fabsf(x - rTransform->x) <= FLT_EPSILON && fabsf(y - rTransform->y) <= FLT_EPSILON) return true;
         } else {
             if (fabsf(x) <= FLT_EPSILON && fabsf(y) <= FLT_EPSILON) return true;
-            transform = new RenderTransform();
-            if (!transform) return false;
+            rTransform = new RenderTransform();
+            if (!rTransform) return false;
         }
-        transform->x = x;
-        transform->y = y;
+        rTransform->x = x;
+        rTransform->y = y;
         flag |= RenderUpdateFlag::Transform;
 
         return true;
     }
+
+
+    bool transform(const Matrix& m)
+    {
+        if (!rTransform) {
+            rTransform = new RenderTransform();
+            if (!rTransform) return false;
+        }
+        rTransform->override(m);
+        flag |= RenderUpdateFlag::Transform;
+
+        return true;
+    }
+
 
     Result load(const string& path)
     {

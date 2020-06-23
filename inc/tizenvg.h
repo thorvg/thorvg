@@ -78,6 +78,14 @@ struct Point
 };
 
 
+struct Matrix
+{
+    float e11, e12, e13;
+    float e21, e22, e23;
+    float e31, e32, e33;
+};
+
+
 /**
  * @class Paint
  *
@@ -90,12 +98,6 @@ class TVG_EXPORT Paint
 {
 public:
     virtual ~Paint() {}
-
-    virtual Result rotate(float degree) = 0;
-    virtual Result scale(float factor) = 0;
-    virtual Result translate(float x, float y) = 0;
-
-    virtual Result bounds(float* x, float* y, float* w, float* h) const = 0;
 
     _TVG_DECALRE_IDENTIFIER();
 };
@@ -242,16 +244,17 @@ public:
     Result fill(std::unique_ptr<Fill> f) noexcept;
 
     //Transform
-    Result rotate(float degree) noexcept override;
-    Result scale(float factor) noexcept override;
-    Result translate(float x, float y) noexcept override;
+    Result rotate(float degree) noexcept;
+    Result scale(float factor) noexcept;
+    Result translate(float x, float y) noexcept;
+    Result transform(const Matrix& m) noexcept;
 
     //Getters
     uint32_t pathCommands(const PathCommand** cmds) const noexcept;
     uint32_t pathCoords(const Point** pts) const noexcept;
     Result fill(uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a) const noexcept;
     const Fill* fill() const noexcept;
-    Result bounds(float* x, float* y, float* w, float* h) const noexcept override;
+    Result bounds(float* x, float* y, float* w, float* h) const noexcept;
 
     float strokeWidth() const noexcept;
     Result strokeColor(uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a) const noexcept;
@@ -282,14 +285,14 @@ public:
 
     Result push(std::unique_ptr<Paint> paint) noexcept;
     Result reserve(uint32_t size) noexcept;
-
     Result load(const std::string& path) noexcept;
 
-    Result rotate(float degree) noexcept override;
-    Result scale(float factor) noexcept override;
-    Result translate(float x, float y) noexcept override;
+    Result rotate(float degree) noexcept;
+    Result scale(float factor) noexcept;
+    Result translate(float x, float y) noexcept;
+    Result transform(const Matrix& m) noexcept;
 
-    Result bounds(float* x, float* y, float* w, float* h) const noexcept override;
+    Result bounds(float* x, float* y, float* w, float* h) const noexcept;
 
     static std::unique_ptr<Scene> gen() noexcept;
 

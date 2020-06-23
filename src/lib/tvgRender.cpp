@@ -28,9 +28,23 @@
 /* External Class Implementation                                        */
 /************************************************************************/
 
+void RenderTransform::override(const Matrix& m)
+{
+    this->m = m;
+
+    if (m.e11 == 0.0f && m.e12 == 0.0f && m.e13 == 0.0f &&
+        m.e21 == 0.0f && m.e22 == 0.0f && m.e23 == 0.0f &&
+        m.e31 == 0.0f && m.e32 == 0.0f && m.e33 == 0.0f) {
+        overriding = false;
+    } else overriding = true;
+}
+
+
 bool RenderTransform::update()
 {
     constexpr auto PI = 3.141592f;
+
+    if (overriding) return true;
 
     //Init Status
     if (fabsf(x) <= FLT_EPSILON && fabsf(y) <= FLT_EPSILON &&
@@ -39,20 +53,20 @@ bool RenderTransform::update()
     }
 
     //identity
-    e11 = 1.0f;
-    e12 = 0.0f;
-    e13 = 0.0f;
-    e21 = 0.0f;
-    e22 = 1.0f;
-    e23 = 0.0f;
-    e31 = 0.0f;
-    e32 = 0.0f;
-    e33 = 1.0f;
+    m.e11 = 1.0f;
+    m.e12 = 0.0f;
+    m.e13 = 0.0f;
+    m.e21 = 0.0f;
+    m.e22 = 1.0f;
+    m.e23 = 0.0f;
+    m.e31 = 0.0f;
+    m.e32 = 0.0f;
+    m.e33 = 1.0f;
 
     //scale
-    e11 *= factor;
-    e22 *= factor;
-    e33 *= factor;
+    m.e11 *= factor;
+    m.e22 *= factor;
+    m.e33 *= factor;
 
     //rotation
     if (fabsf(degree) > FLT_EPSILON) {
@@ -60,23 +74,23 @@ bool RenderTransform::update()
         auto cosVal = cosf(radian);
         auto sinVal = sinf(radian);
 
-        auto t11 = e11 * cosVal + e12 * sinVal;
-        auto t12 = e11 * -sinVal + e12 * cosVal;
-        auto t21 = e21 * cosVal + e22 * sinVal;
-        auto t22 = e21 * -sinVal + e22 * cosVal;
-        auto t31 = e31 * cosVal + e32 * sinVal;
-        auto t32 = e31 * -sinVal + e32 * cosVal;
+        auto t11 = m.e11 * cosVal + m.e12 * sinVal;
+        auto t12 = m.e11 * -sinVal + m.e12 * cosVal;
+        auto t21 = m.e21 * cosVal + m.e22 * sinVal;
+        auto t22 = m.e21 * -sinVal + m.e22 * cosVal;
+        auto t31 = m.e31 * cosVal + m.e32 * sinVal;
+        auto t32 = m.e31 * -sinVal + m.e32 * cosVal;
 
-        e11 = t11;
-        e12 = t12;
-        e21 = t21;
-        e22 = t22;
-        e31 = t31;
-        e32 = t32;
+        m.e11 = t11;
+        m.e12 = t12;
+        m.e21 = t21;
+        m.e22 = t22;
+        m.e31 = t31;
+        m.e32 = t32;
     }
 
-    e31 += x;
-    e32 += y;
+    m.e31 += x;
+    m.e32 += y;
 
     return true;
 }
@@ -93,8 +107,8 @@ RenderTransform::RenderTransform(const RenderTransform* lhs, const RenderTransfo
 
     auto dx = rhs->x * lhs->factor;
     auto dy = rhs->y * lhs->factor;
-    auto tx = dx * lhs->e11 + dy * lhs->e12 + lhs->e13;
-    auto ty = dx * lhs->e21 + dy * lhs->e22 + lhs->e23;
+    auto tx = dx * lhs->m.e11 + dy * lhs->m.e12 + lhs->m.e13;
+    auto ty = dx * lhs->m.e21 + dy * lhs->m.e22 + lhs->m.e23;
 
     x = lhs->x + tx;
     y = lhs->y + ty;

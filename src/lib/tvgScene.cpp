@@ -97,6 +97,17 @@ Result Scene::translate(float x, float y) noexcept
 }
 
 
+Result Scene::transform(const Matrix& m) noexcept
+{
+    auto impl = pImpl.get();
+    if (!impl) return Result::MemoryCorruption;
+
+    if (!impl->transform(m)) return Result::FailedAllocation;
+
+    return Result::Success;
+}
+
+
 Result Scene::bounds(float* x, float* y, float* w, float* h) const noexcept
 {
     auto impl = pImpl.get();

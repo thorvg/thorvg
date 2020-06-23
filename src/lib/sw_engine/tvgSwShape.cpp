@@ -242,8 +242,8 @@ static void _transformOutline(SwOutline* outline, const RenderTransform* transfo
     for(uint32_t i = 0; i < outline->ptsCnt; ++i) {
         auto dx = static_cast<float>(outline->pts[i].x >> 6);
         auto dy = static_cast<float>(outline->pts[i].y >> 6);
-        auto tx = dx * transform->e11 + dy * transform->e12 + transform->e31;
-        auto ty = dx * transform->e21 + dy * transform->e22 + transform->e32;
+        auto tx = dx * transform->m.e11 + dy * transform->m.e12 + transform->m.e31;
+        auto ty = dx * transform->m.e21 + dy * transform->m.e22 + transform->m.e32;
         auto pt = Point{tx, ty};
         outline->pts[i] = TO_SWPOINT(&pt);
     }

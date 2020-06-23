@@ -303,7 +303,18 @@ Result Shape::translate(float x, float y) noexcept
     auto impl = pImpl.get();
     if (!impl) return Result::MemoryCorruption;
 
-    impl->translate(x, y);
+    if (!impl->translate(x, y)) return Result::FailedAllocation;
+
+    return Result::Success;
+}
+
+
+Result Shape::transform(const Matrix& m) noexcept
+{
+    auto impl = pImpl.get();
+    if (!impl) return Result::MemoryCorruption;
+
+    if (!impl->transform(m)) return Result::FailedAllocation;
 
     return Result::Success;
 }
