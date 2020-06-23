@@ -297,13 +297,11 @@ static void _inside(SwStroke& stroke, int32_t side, SwFixed lineLength)
     auto border = stroke.borders + side;
     auto theta = mathDiff(stroke.angleIn, stroke.angleOut) / 2;
     SwPoint delta;
-    bool intersect;
+    bool intersect = false;
 
     /* Only intersect borders if between two line_to's and both
        lines are long enough (line length is zero fur curves). */
-    if (!border->movable || lineLength == 0) {
-        intersect = false;
-    } else {
+    if (border->movable && lineLength > 0) {
         //compute minimum required length of lines
         SwFixed minLength = abs(mathMultiply(stroke.width, mathTan(theta)));
         if (stroke.lineLength >= minLength && lineLength >= minLength) intersect = true;
