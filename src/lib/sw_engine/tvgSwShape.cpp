@@ -201,7 +201,6 @@ static bool _updateBBox(SwOutline* outline, SwBBox& bbox)
     ++pt;
 
     for(uint32_t i = 1; i < outline->ptsCnt; ++i, ++pt) {
-        assert(pt);
         if (xMin > pt->x) xMin = pt->x;
         if (xMax < pt->x) xMax = pt->x;
         if (yMin > pt->y) yMin = pt->y;
@@ -567,7 +566,6 @@ void shapeFree(SwShape& shape)
 {
     shapeDelOutline(shape);
     rleFree(shape.rle);
-
     shapeDelFill(shape);
 
     if (shape.stroke) {

@@ -32,7 +32,7 @@ namespace tvg {
         SwShape shape;
         const Shape* sdata;
         SwSize clip;
-        const Matrix* transform;
+        Matrix* transform;
         RenderUpdateFlag flags;
         future<void> progress;
     };
@@ -139,6 +139,7 @@ bool SwRenderer::dispose(const Shape& sdata, void *data)
     if (!task) return true;
     if (task->progress.valid()) task->progress.get();
     shapeFree(task->shape);
+    if (task->transform) free(task->transform);
     free(task);
     return true;
 }
@@ -158,8 +159,14 @@ void* SwRenderer::prepare(const Shape& sdata, void* data, const RenderTransform*
     task->sdata = &sdata;
     task->clip = {static_cast<SwCoord>(surface.w), static_cast<SwCoord>(surface.h)};
 
-    if (transform) task->transform = &transform->m;
-    else task->transform = nullptr;
+    if (transform) {
+        if (!task->transform) task->transform = static_cast<Matrix*>(malloc(sizeof(Matrix)));
+        assert(task->transform);
+        *task->transform = transform->m;
+    } else {
+        if (task->transform) free(task->transform);
+        task->transform = nullptr;
+    }
 
     task->flags = flags;
 
