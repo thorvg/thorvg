@@ -1,5 +1,8 @@
 source_file = [
+   'tvgSimpleXmlParser.h',
    'tvgSvgLoader.h',
+   'tvgSvgLoaderCommon.h',
+   'tvgSimpleXmlParser.cpp',
    'tvgSvgLoader.cpp',
 ]
 

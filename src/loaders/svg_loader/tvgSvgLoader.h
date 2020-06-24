@@ -17,12 +17,13 @@
 #ifndef _TVG_SVG_LOADER_H_
 #define _TVG_SVG_LOADER_H_
 
-#include "tvgCommon.h"
+#include "tvgSvgLoaderCommon.h"
 
 class SvgLoader : public Loader
 {
 private:
-    //TODO:
+    string content;
+    SvgLoaderData loaderData;
 
 public:
     SvgLoader();
