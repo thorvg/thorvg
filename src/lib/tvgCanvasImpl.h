@@ -52,6 +52,9 @@ struct Canvas::Impl
     {
         if (!renderer) return Result::InsufficientCondition;
 
+        //Clear render target before drawing
+        if (!renderer->clear()) return Result::InsufficientCondition;
+
         for (auto paint : paints) {
             if (paint->id() == PAINT_ID_SCENE) {
                 //We know renderer type, avoid dynamic_cast for performance.
@@ -104,8 +107,7 @@ struct Canvas::Impl
     {
         if (!renderer) return Result::InsufficientCondition;
 
-        //Clear render target before drawing
-        if (!renderer->clear()) return Result::InsufficientCondition;
+        if (!renderer->preRender()) return Result::InsufficientCondition;
 
         for(auto paint: paints) {
            if (paint->id() == PAINT_ID_SCENE) {
@@ -117,6 +119,9 @@ struct Canvas::Impl
                 if(!SHAPE_IMPL->render(*shape, *renderer)) return Result::InsufficientCondition;
             }
         }
+
+        if (!renderer->postRender()) return Result::InsufficientCondition;
+
         return Result::Success;
     }
 };

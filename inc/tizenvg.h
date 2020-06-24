@@ -153,7 +153,7 @@ public:
     virtual Result update() noexcept;
     virtual Result update(Paint* paint) noexcept;
     virtual Result draw(bool async = true) noexcept;
-    virtual Result sync() = 0;
+    virtual Result sync() noexcept;
 
     _TVG_DECLARE_ACCESSOR(Scene);
     _TVG_DECLARE_PRIVATE(Canvas);
@@ -315,7 +315,6 @@ public:
     ~SwCanvas();
 
     Result target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h) noexcept;
-    Result sync() noexcept override;
 
     static std::unique_ptr<SwCanvas> gen() noexcept;
 
@@ -337,9 +336,7 @@ public:
     ~GlCanvas();
 
     //TODO: Gl Specific methods. Need gl backend configuration methods as well.
-
     Result target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h) noexcept;
-    Result sync() noexcept override;
 
     static std::unique_ptr<GlCanvas> gen() noexcept;
 

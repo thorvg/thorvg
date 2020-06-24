@@ -45,6 +45,7 @@ SwCanvas::~SwCanvas()
 {
 }
 
+
 Result SwCanvas::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h) noexcept
 {
     //We know renderer type, avoid dynamic_cast for performance.
@@ -53,12 +54,6 @@ Result SwCanvas::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t 
 
     if (!renderer->target(buffer, stride, w, h)) return Result::InvalidArguments;
 
-    return Result::Success;
-}
-
-
-Result SwCanvas::sync() noexcept
-{
     return Result::Success;
 }
 

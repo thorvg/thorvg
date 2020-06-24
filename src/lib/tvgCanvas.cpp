@@ -82,4 +82,15 @@ Result Canvas::update(Paint* paint) noexcept
     return impl->update(paint);
 }
 
+
+Result Canvas::sync() noexcept
+{
+    auto impl = pImpl.get();
+    if (!impl) return Result::MemoryCorruption;
+
+    if (impl->renderer->flush()) return Result::Success;
+
+    return Result::InsufficientCondition;
+}
+
 #endif /* _TVG_CANVAS_CPP_ */

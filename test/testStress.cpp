@@ -21,9 +21,17 @@ void tvgtest()
 
 Eina_Bool anim_cb(void *data)
 {
+    auto t = ecore_time_get();
+
     //Explicitly clear all retained paint nodes.
-    t1 = ecore_time_get();
-    canvas->clear();
+    if (canvas->clear() != tvg::Result::Success)
+      {
+         //Probably, you missed sync() call before.
+         return ECORE_CALLBACK_RENEW;
+      }
+
+    t1 = t;
+
     t2 = ecore_time_get();
 
     for (int i = 0; i < COUNT; i++) {
@@ -61,6 +69,11 @@ Eina_Bool anim_cb(void *data)
         canvas->push(move(shape));
     }
 
+    t3 = ecore_time_get();
+
+    //Draw Next frames
+    canvas->draw();
+
     //Update Efl Canvas
     Eo* img = (Eo*) data;
     evas_object_image_pixels_dirty_set(img, EINA_TRUE);
@@ -71,10 +84,6 @@ Eina_Bool anim_cb(void *data)
 
 void render_cb(void* data, Eo* obj)
 {
-    t3 = ecore_time_get();
-
-    //Draw Next frames
-    canvas->draw();
     canvas->sync();
 
     t4 = ecore_time_get();

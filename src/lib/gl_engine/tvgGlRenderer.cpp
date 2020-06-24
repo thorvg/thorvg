@@ -53,10 +53,28 @@ bool GlRenderer::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t 
 }
 
 
-void GlRenderer::flush()
+bool GlRenderer::flush()
 {
     GL_CHECK(glFinish());
     mColorProgram->unload();
+
+    return true;
+}
+
+
+bool GlRenderer::preRender()
+{
+    //TODO: called just before render()
+
+    return true;
+}
+
+
+bool GlRenderer::postRender()
+{
+    //TODO: called just after render()
+
+    return true;
 }
 
 

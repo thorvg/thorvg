@@ -57,16 +57,6 @@ Result GlCanvas::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t 
 }
 
 
-Result GlCanvas::sync() noexcept
-{
-    auto renderer = dynamic_cast<GlRenderer*>(Canvas::pImpl.get()->renderer);
-    assert(renderer);
-
-    renderer->flush();
-    return Result::Success;
-}
-
-
 unique_ptr<GlCanvas> GlCanvas::gen() noexcept
 {
     auto canvas = unique_ptr<GlCanvas>(new GlCanvas);

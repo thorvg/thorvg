@@ -17,16 +17,26 @@
 #ifndef _TVG_SW_RENDERER_H_
 #define _TVG_SW_RENDERER_H_
 
+#include <queue>
+#include <future>
+#include <thread>
+
+namespace tvg
+{
+
+struct SwTask;
+
 class SwRenderer : public RenderMethod
 {
 public:
-    Surface surface;
-
     void* prepare(const Shape& shape, void* data, const RenderTransform* transform, RenderUpdateFlag flags) override;
     bool dispose(const Shape& shape, void *data) override;
+    bool preRender() override;
     bool render(const Shape& shape, void *data) override;
+    bool postRender() override;
     bool target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h);
     bool clear() override;
+    bool flush() override;
     uint32_t ref() override;
     uint32_t unref() override;
 
@@ -34,9 +44,18 @@ public:
     static int init();
     static int term();
 
+    void doRender();  //Internally used for threading
+
 private:
+    Surface surface;
+    future<void> progress;
+    queue<SwTask*> prepareTasks;
+    queue<SwTask*> renderTasks;
+
     SwRenderer(){};
-    ~SwRenderer(){};
+    ~SwRenderer();
 };
+
+}
 
 #endif /* _TVG_SW_RENDERER_H_ */

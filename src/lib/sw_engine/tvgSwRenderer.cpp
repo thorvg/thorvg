@@ -17,6 +17,8 @@
 #ifndef _TVG_SW_RENDERER_CPP_
 #define _TVG_SW_RENDERER_CPP_
 
+using namespace std;
+
 #include "tvgSwCommon.h"
 #include "tvgSwRenderer.h"
 
@@ -24,18 +26,36 @@
 /************************************************************************/
 /* Internal Class Implementation                                        */
 /************************************************************************/
+namespace tvg {
+    struct SwTask
+    {
+        SwShape shape;
+        const Shape* sdata;
+        SwSize clip;
+        const Matrix* transform;
+        RenderUpdateFlag flags;
+        future<void> progress;
+    };
+}
 
 static RenderInitializer renderInit;
+
 
 /************************************************************************/
 /* External Class Implementation                                        */
 /************************************************************************/
 
-bool SwRenderer::clear()
+SwRenderer::~SwRenderer()
 {
-    return rasterClear(surface);
+    if (progress.valid()) progress.get();
 }
 
+
+bool SwRenderer::clear()
+{
+    if (progress.valid()) return false;
+    return true;
+}
 
 bool SwRenderer::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h)
 {
@@ -50,24 +70,64 @@ bool SwRenderer::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t 
 }
 
 
+bool SwRenderer::preRender()
+{
+    //before we start rendering, we should finish all preparing tasks
+    while (prepareTasks.size() > 0) {
+        auto task = prepareTasks.front();
+        if (task->progress.valid()) task->progress.get();
+        prepareTasks.pop();
+        renderTasks.push(task);
+    }
+    return true;
+}
+
+
+bool SwRenderer::postRender()
+{
+    auto asyncTask = [](SwRenderer* renderer) {
+        renderer->doRender();
+    };
+
+    progress = async(launch::async, asyncTask, this);
+
+    return true;
+}
+
+
+void SwRenderer::doRender()
+{
+    rasterClear(surface);
+
+    while (renderTasks.size() > 0) {
+        auto task = renderTasks.front();
+        uint8_t r, g, b, a;
+        if (auto fill = task->sdata->fill()) {
+            rasterGradientShape(surface, task->shape, fill->id());
+        } else{
+            task->sdata->fill(&r, &g, &b, &a);
+            if (a > 0) rasterSolidShape(surface, task->shape, r, g, b, a);
+        }
+        task->sdata->strokeColor(&r, &g, &b, &a);
+        if (a > 0) rasterStroke(surface, task->shape, r, g, b, a);
+        renderTasks.pop();
+    }
+}
+
+
+bool SwRenderer::flush()
+{
+    if (progress.valid()) {
+        progress.get();
+        return true;
+    }
+    return false;
+}
+
+
 bool SwRenderer::render(const Shape& sdata, void *data)
 {
-    auto task = static_cast<SwTask*>(data);
-    if (!task) return false;
-
-    if (task->prepared.valid()) task->prepared.get();
-
-    uint8_t r, g, b, a;
-
-    if (auto fill = sdata.fill()) {
-        rasterGradientShape(surface, task->shape, fill->id());
-    } else {
-        sdata.fill(&r, &g, &b, &a);
-        if (a > 0) rasterSolidShape(surface, task->shape, r, g, b, a);
-    }
-
-    sdata.strokeColor(&r, &g, &b, &a);
-    if (a > 0) rasterStroke(surface, task->shape, r, g, b, a);
+    //Do Nothing
 
     return true;
 }
@@ -77,7 +137,7 @@ bool SwRenderer::dispose(const Shape& sdata, void *data)
 {
     auto task = static_cast<SwTask*>(data);
     if (!task) return true;
-    if (task->prepared.valid()) task->prepared.wait();
+    if (task->progress.valid()) task->progress.get();
     shapeFree(task->shape);
     free(task);
     return true;
@@ -93,7 +153,7 @@ void* SwRenderer::prepare(const Shape& sdata, void* data, const RenderTransform*
         if (!task) return nullptr;
     }
 
-    if (flags == RenderUpdateFlag::None || task->prepared.valid()) return task;
+    if (flags == RenderUpdateFlag::None || task->progress.valid()) return task;
 
     task->sdata = &sdata;
     task->clip = {static_cast<SwCoord>(surface.w), static_cast<SwCoord>(surface.h)};
@@ -140,7 +200,8 @@ void* SwRenderer::prepare(const Shape& sdata, void* data, const RenderTransform*
         shapeDelOutline(task->shape);
     };
 
-    task->prepared = async((launch::async | launch::deferred), asyncTask, task);
+    prepareTasks.push(task);
+    task->progress = async((launch::async | launch::deferred), asyncTask, task);
 
     return task;
 }

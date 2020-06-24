@@ -17,8 +17,6 @@
 #ifndef _TVG_SW_COMMON_H_
 #define _TVG_SW_COMMON_H_
 
-#include <future>
-#include <thread>
 #include "tvgCommon.h"
 
 #if 0
@@ -202,16 +200,6 @@ struct SwShape
     SwBBox       bbox;
 };
 
-
-struct SwTask
-{
-    SwShape shape;
-    const Shape* sdata;
-    SwSize clip;
-    const Matrix* transform;
-    RenderUpdateFlag flags;
-    future<void> prepared;
-};
 
 static inline SwPoint TO_SWPOINT(const Point* pt)
 {

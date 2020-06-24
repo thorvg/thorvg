@@ -568,6 +568,8 @@ void shapeFree(SwShape& shape)
     shapeDelOutline(shape);
     rleFree(shape.rle);
 
+    shapeDelFill(shape);
+
     if (shape.stroke) {
         rleFree(shape.strokeRle);
         strokeFree(shape.stroke);

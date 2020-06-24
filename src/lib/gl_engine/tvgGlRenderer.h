@@ -28,9 +28,11 @@ public:
 
     void* prepare(const Shape& shape, void* data, const RenderTransform* transform, RenderUpdateFlag flags) override;
     bool dispose(const Shape& shape, void *data) override;
+    bool preRender() override;
     bool render(const Shape& shape, void *data) override;
+    bool postRender() override;
     bool target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h);
-    void flush();
+    bool flush() override;
     bool clear() override;
     uint32_t ref() override;
     uint32_t unref() override;
