@@ -2289,6 +2289,8 @@ bool SvgLoader::read()
         }
     }
 
+    root = builder.build(loaderData.doc);
+
     if (!res) return false;
     return true;
 }
@@ -2304,7 +2306,7 @@ bool SvgLoader::close()
 
 unique_ptr<Scene> SvgLoader::data()
 {
-    return nullptr;
+    return move(root);
 }
 
 #endif //_TVG_SVG_LOADER_CPP_
