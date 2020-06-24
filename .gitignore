@@ -20,4 +20,4 @@ testRadialGradient
 testGradientTransform
 testSvg
 testGlShape
-testStress
+testAsync

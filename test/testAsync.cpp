@@ -26,12 +26,11 @@ Eina_Bool anim_cb(void *data)
     //Explicitly clear all retained paint nodes.
     if (canvas->clear() != tvg::Result::Success)
       {
-         //Probably, you missed sync() call before.
+         //Logically wrong! Probably, you missed to call sync() before.
          return ECORE_CALLBACK_RENEW;
       }
 
     t1 = t;
-
     t2 = ecore_time_get();
 
     for (int i = 0; i < COUNT; i++) {
@@ -44,34 +43,25 @@ Eina_Bool anim_cb(void *data)
 
         shape->appendRect(x, y, w, h, rand() % 400);
 
-        if (rand() % 2) {
-            //LinearGradient
-            auto fill = tvg::LinearGradient::gen();
-            fill->linear(x, y, x + w, y + h);
+        //LinearGradient
+        auto fill = tvg::LinearGradient::gen();
+        fill->linear(x, y, x + w, y + h);
 
-            //Gradient Color Stops
-            tvg::Fill::ColorStop colorStops[3];
-            colorStops[0] = {0, uint8_t(rand() % 255), uint8_t(rand() % 255), uint8_t(rand() % 255), 255};
-            colorStops[1] = {1, uint8_t(rand() % 255), uint8_t(rand() % 255), uint8_t(rand() % 255), 255};
-            colorStops[2] = {2, uint8_t(rand() % 255), uint8_t(rand() % 255), uint8_t(rand() % 255), 255};
+        //Gradient Color Stops
+        tvg::Fill::ColorStop colorStops[3];
+        colorStops[0] = {0, uint8_t(rand() % 255), uint8_t(rand() % 255), uint8_t(rand() % 255), 255};
+        colorStops[1] = {1, uint8_t(rand() % 255), uint8_t(rand() % 255), uint8_t(rand() % 255), 255};
+        colorStops[2] = {2, uint8_t(rand() % 255), uint8_t(rand() % 255), uint8_t(rand() % 255), 255};
 
-            fill->colorStops(colorStops, 3);
-            shape->fill(move(fill));
-        } else {
-            shape->fill(uint8_t(rand() % 255), uint8_t(rand() % 255), uint8_t(rand() % 255), 255);
-        }
-#if 0
-        if (rand() % 2) {
-           shape->stroke(float(rand() % 10));
-           shape->stroke(uint8_t(rand() % 255), uint8_t(rand() % 255), uint8_t(rand() % 255), 255);
-        }
-#endif
+        fill->colorStops(colorStops, 3);
+        shape->fill(move(fill));
+
         canvas->push(move(shape));
     }
 
     t3 = ecore_time_get();
 
-    //Draw Next frames
+    //Drawing task can be performed asynchronously.
     canvas->draw();
 
     //Update Efl Canvas
@@ -84,6 +74,7 @@ Eina_Bool anim_cb(void *data)
 
 void render_cb(void* data, Eo* obj)
 {
+    //Make it guarantee finishing drawing task.
     canvas->sync();
 
     t4 = ecore_time_get();

@@ -18,4 +18,4 @@ all:
 	gcc -o testGradientTransform testGradientTransform.cpp -g -lstdc++ `pkg-config --cflags --libs elementary tizenvg`
 	gcc -o testSvg testSvg.cpp -g -lstdc++ `pkg-config --cflags --libs elementary tizenvg`
 	gcc -o testGlShape testGlShape.cpp -g -lstdc++ `pkg-config --cflags --libs elementary tizenvg`
-	gcc -o testStress testStress.cpp -g -lstdc++ `pkg-config --cflags --libs elementary tizenvg`
+	gcc -o testAsync testAsync.cpp -g -lstdc++ `pkg-config --cflags --libs elementary tizenvg`
