@@ -1,4 +1,4 @@
-#include <tizenvg.h>
+#include <thorvg.h>
 #include <Elementary.h>
 
 using namespace std;
@@ -89,7 +89,7 @@ void win_del(void *data, Evas_Object *o, void *ev)
 
 int main(int argc, char **argv)
 {
-    //Initialize TizenVG Engine
+    //Initialize ThorVG Engine
     tvg::Initializer::init(tvg::CanvasEngine::Sw);
 
     tvgtest();
@@ -97,7 +97,7 @@ int main(int argc, char **argv)
     //Show the result using EFL...
     elm_init(argc, argv);
 
-    Eo* win = elm_win_util_standard_add(NULL, "TizenVG Test");
+    Eo* win = elm_win_util_standard_add(NULL, "ThorVG Test");
     evas_object_smart_callback_add(win, "delete,request", win_del, 0);
 
     Eo* img = evas_object_image_filled_add(evas_object_evas_get(win));
@@ -116,6 +116,6 @@ int main(int argc, char **argv)
     elm_run();
     elm_shutdown();
 
-    //Terminate TizenVG Engine
+    //Terminate ThorVG Engine
     tvg::Initializer::term(tvg::CanvasEngine::Sw);
 }

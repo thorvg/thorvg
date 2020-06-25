@@ -21,7 +21,7 @@ using namespace std;
 int
 main(int argc, char *argv[])
 {
-   cout << "test tizenvg!" << endl;
+   cout << "test thorvg!" << endl;
 
    return 0;
 }

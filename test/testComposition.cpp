@@ -1,4 +1,4 @@
-#include <tizenvg.h>
+#include <thorvg.h>
 
 using namespace std;
 
@@ -9,7 +9,7 @@ static uint32_t buffer[WIDTH * HEIGHT];
 
 int main(int argc, char **argv)
 {
-    //Initialize TizenVG Engine
+    //Initialize ThorVG Engine
     tvg::Initializer::init(tvg::CanvasEngine::Sw);
 
     //Create a Composition Source Canvas
@@ -30,6 +30,6 @@ int main(int argc, char **argv)
     canvas2->draw();
     canvas2->sync();
 
-    //Terminate TizenVG Engine
+    //Terminate ThorVG Engine
     tvg::Initializer::term(tvg::CanvasEngine::Sw);
 }

@@ -1,4 +1,4 @@
-project('tizenvg',
+project('thorvg',
         'cpp',
         default_options : ['buildtype=debugoptimized', 'werror=false', 'cpp_std=c++14', 'optimization=s'],
         version : '0.1.0',
@@ -19,9 +19,9 @@ subdir('src')
 summary = '''
 
 Summary:
-    tizenvg version :        @0@
-    Build type      :        @1@
-    Prefix          :        @2@
+    thorvg version :        @0@
+    Build type      :       @1@
+    Prefix          :       @2@
 '''.format(
         meson.project_version(),
         get_option('buildtype'),

@@ -1,1 +1,1 @@
-executable('tizenvg_sample', 'main.cpp')
+executable('thorvg_sample', 'main.cpp')

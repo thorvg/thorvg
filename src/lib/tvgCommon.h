@@ -23,7 +23,7 @@
 #include <math.h>
 #include <float.h>
 #include <string.h>
-#include "tizenvg.h"
+#include "thorvg.h"
 
 using namespace std;
 using namespace tvg;

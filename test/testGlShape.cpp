@@ -1,4 +1,4 @@
-#include <tizenvg.h>
+#include <thorvg.h>
 #include <Elementary.h>
 
 using namespace std;
@@ -34,7 +34,7 @@ void tvgtest()
 
 void init_gl(Evas_Object *obj)
 {
-    //Initialize TizenVG Engine
+    //Initialize ThorVG Engine
     tvg::Initializer::init(tvg::CanvasEngine::Gl);
 
     tvgtest();
@@ -42,7 +42,7 @@ void init_gl(Evas_Object *obj)
 
 void del_gl(Evas_Object *obj)
 {
-    //Terminate TizenVG Engine
+    //Terminate ThorVG Engine
     tvg::Initializer::term(tvg::CanvasEngine::Gl);
 }
 
@@ -74,7 +74,7 @@ int main(int argc, char **argv)
 
     elm_config_accel_preference_set("gl");
 
-    Eo* win = elm_win_util_standard_add(nullptr, "TizenVG Test");
+    Eo* win = elm_win_util_standard_add(nullptr, "ThorVG Test");
     evas_object_smart_callback_add(win, "delete,request", win_del, 0);
 
     //Create a new glview object

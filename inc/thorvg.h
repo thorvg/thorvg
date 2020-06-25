@@ -14,8 +14,8 @@
  *  limitations under the License.
  *
  */
-#ifndef _TIZENVG_H_
-#define _TIZENVG_H_
+#ifndef _THORVG_H_
+#define _THORVG_H_
 
 #include <memory>
 
@@ -89,7 +89,7 @@ struct Matrix
 /**
  * @class Paint
  *
- * @ingroup TizenVG
+ * @ingroup ThorVG
  *
  * @brief description...
  *
@@ -106,7 +106,7 @@ public:
 /**
  * @class Fill
  *
- * @ingroup TizenVG
+ * @ingroup ThorVG
  *
  * @brief description...
  *
@@ -136,7 +136,7 @@ public:
 /**
  * @class Canvas
  *
- * @ingroup TizenVG
+ * @ingroup ThorVG
  *
  * @brief description...
  *
@@ -164,7 +164,7 @@ public:
 /**
  * @class LinearGradient
  *
- * @ingroup TizenVG
+ * @ingroup ThorVG
  *
  * @brief description...
  *
@@ -186,7 +186,7 @@ public:
 /**
  * @class RadialGradient
  *
- * @ingroup TizenVG
+ * @ingroup ThorVG
  *
  * @brief description...
  *
@@ -209,7 +209,7 @@ public:
 /**
  * @class Shape
  *
- * @ingroup TizenVG
+ * @ingroup ThorVG
  *
  * @brief description...
  *
@@ -273,7 +273,7 @@ public:
 /**
  * @class Scene
  *
- * @ingroup TizenVG
+ * @ingroup ThorVG
  *
  * @brief description...
  *
@@ -304,7 +304,7 @@ public:
 /**
  * @class SwCanvas
  *
- * @ingroup TizenVG
+ * @ingroup ThorVG
  *
   @brief description...
  *
@@ -325,7 +325,7 @@ public:
 /**
  * @class GlCanvas
  *
- * @ingroup TizenVG
+ * @ingroup ThorVG
  *
  * @brief description...
  *
@@ -347,7 +347,7 @@ public:
 /**
  * @class Engine
  *
- * @ingroup TizenVG
+ * @ingroup ThorVG
  *
  * @brief description...
  *
@@ -379,4 +379,4 @@ public:
 }
 #endif
 
-#endif //_TIZENVG_H_
+#endif //_THORVG_H_

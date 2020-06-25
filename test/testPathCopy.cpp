@@ -1,4 +1,4 @@
-#include <tizenvg.h>
+#include <thorvg.h>
 #include <Elementary.h>
 
 using namespace std;
@@ -10,7 +10,7 @@ static uint32_t buffer[WIDTH * HEIGHT];
 
 void tvgtest()
 {
-    //Initialize TizenVG Engine
+    //Initialize ThorVG Engine
     tvg::Initializer::init(tvg::CanvasEngine::Sw);
 
     //Create a Canvas
@@ -95,7 +95,7 @@ void tvgtest()
     canvas->draw();
     canvas->sync();
 
-    //Terminate TizenVG Engine
+    //Terminate ThorVG Engine
     tvg::Initializer::term(tvg::CanvasEngine::Sw);
 }
 
@@ -111,7 +111,7 @@ int main(int argc, char **argv)
     //Show the result using EFL...
     elm_init(argc, argv);
 
-    Eo* win = elm_win_util_standard_add(NULL, "TizenVG Test");
+    Eo* win = elm_win_util_standard_add(NULL, "ThorVG Test");
     evas_object_smart_callback_add(win, "delete,request", win_del, 0);
 
     Eo* img = evas_object_image_filled_add(evas_object_evas_get(win));

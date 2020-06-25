@@ -1,3 +1,3 @@
 install_headers([
-                 'tizenvg.h',
+                 'thorvg.h',
                 ])
