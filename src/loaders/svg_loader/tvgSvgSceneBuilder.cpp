@@ -93,7 +93,10 @@ unique_ptr<tvg::Shape> _shapeBuildHelper(SvgNode* node)
     auto shape = tvg::Shape::gen();
     switch (node->type) {
         case SvgNodeType::Path: {
-            //TODO: Support path
+            if (node->node.path.path) {
+                auto pathResult = svgPathToTvgPath(node->node.path.path->c_str());
+                shape->appendPath(get<0>(pathResult).data(), get<0>(pathResult).size(), get<1>(pathResult).data(), get<1>(pathResult).size());
+            }
             break;
         }
         case SvgNodeType::Ellipse: {
