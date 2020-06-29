@@ -1218,8 +1218,8 @@ static constexpr struct
 } rectTags[] = {
     RECT_DEF(x, x, SvgParserLengthType::Horizontal),
     RECT_DEF(y, y, SvgParserLengthType::Vertical),
-    RECT_DEF(w, w, SvgParserLengthType::Horizontal),
-    RECT_DEF(h, h, SvgParserLengthType::Vertical),
+    RECT_DEF(width, w, SvgParserLengthType::Horizontal),
+    RECT_DEF(height, h, SvgParserLengthType::Vertical),
     RECT_DEF(rx, rx, SvgParserLengthType::Horizontal),
     RECT_DEF(ry, ry, SvgParserLengthType::Vertical)
 };
