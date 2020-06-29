@@ -1,13 +1,10 @@
-#include <thorvg.h>
-#include <iostream>
-#include <Elementary.h>
+#include "testCommon.h"
 
-using namespace std;
+/************************************************************************/
+/* Drawing Commands                                                     */
+/************************************************************************/
 
-#define WIDTH 800
-#define HEIGHT 800
-
-unique_ptr<tvg::Paint> tvgDrawCmds()
+void tvgDrawCmds(tvg::Canvas* canvas)
 {
     //Prepare a Shape (Rectangle + Rectangle + Circle + Circle)
     auto shape1 = tvg::Shape::gen();
@@ -17,62 +14,55 @@ unique_ptr<tvg::Paint> tvgDrawCmds()
     shape1->appendCircle(400, 500, 170, 100);       //cx, cy, radiusW, radiusH
     shape1->fill(255, 255, 0, 255);                 //r, g, b, a
 
-    return move(shape1);
+    canvas->push(move(shape1));
 }
+
 
 /************************************************************************/
 /* Sw Engine Test Code                                                  */
 /************************************************************************/
 
+static unique_ptr<tvg::SwCanvas> swCanvas;
+
 void tvgSwTest(uint32_t* buffer)
 {
-    //Initialize ThorVG Engine
-    tvg::Initializer::init(tvg::CanvasEngine::Sw);
-
     //Create a Canvas
-    auto canvas = tvg::SwCanvas::gen();
-    canvas->target(buffer, WIDTH, WIDTH, HEIGHT);
+    swCanvas = tvg::SwCanvas::gen();
+    swCanvas->target(buffer, WIDTH, WIDTH, HEIGHT);
 
     /* Push the shape into the Canvas drawing list
        When this shape is into the canvas list, the shape could update & prepare
        internal data asynchronously for coming rendering.
        Canvas keeps this shape node unless user call canvas->clear() */
-    canvas->push(tvgDrawCmds());
-    canvas->draw();
-    canvas->sync();
-
-    //Terminate ThorVG Engine
-    tvg::Initializer::term(tvg::CanvasEngine::Sw);
+    tvgDrawCmds(swCanvas.get());
 }
+
+void drawSwView(void* data, Eo* obj)
+{
+    swCanvas->draw();
+    swCanvas->sync();
+}
+
 
 /************************************************************************/
 /* GL Engine Test Code                                                  */
 /************************************************************************/
 
-static unique_ptr<tvg::GlCanvas> canvas;
+static unique_ptr<tvg::GlCanvas> glCanvas;
 
 void initGLview(Evas_Object *obj)
 {
     static constexpr auto BPP = 4;
 
-    //Initialize ThorVG Engine
-    tvg::Initializer::init(tvg::CanvasEngine::Gl);
-
     //Create a Canvas
-    canvas = tvg::GlCanvas::gen();
-    canvas->target(nullptr, WIDTH * BPP, WIDTH, HEIGHT);
+    glCanvas = tvg::GlCanvas::gen();
+    glCanvas->target(nullptr, WIDTH * BPP, WIDTH, HEIGHT);
 
     /* Push the shape into the Canvas drawing list
        When this shape is into the canvas list, the shape could update & prepare
        internal data asynchronously for coming rendering.
        Canvas keeps this shape node unless user call canvas->clear() */
-    canvas->push(tvgDrawCmds());
-}
-
-void delGLview(Evas_Object *obj)
-{
-    //Terminate ThorVG Engine
-    tvg::Initializer::term(tvg::CanvasEngine::Gl);
+    tvgDrawCmds(glCanvas.get());
 }
 
 void drawGLview(Evas_Object *obj)
@@ -87,65 +77,46 @@ void drawGLview(Evas_Object *obj)
     gl->glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE);
     gl->glEnable(GL_BLEND);
 
-    canvas->draw();
-    canvas->sync();
+    glCanvas->draw();
+    glCanvas->sync();
 }
 
-/************************************************************************/
-/* Common Infrastructure Code                                           */
-/************************************************************************/
 
-void win_del(void *data, Evas_Object *o, void *ev)
-{
-   elm_exit();
-}
+/************************************************************************/
+/* Main Code                                                            */
+/************************************************************************/
 
 int main(int argc, char **argv)
 {
-    bool swEngine = true;
+    tvg::CanvasEngine tvgEngine = tvg::CanvasEngine::Sw;
 
     if (argc > 1) {
-        if (!strcmp(argv[1], "gl")) swEngine = false;
+        if (!strcmp(argv[1], "gl")) tvgEngine = tvg::CanvasEngine::Gl;
     }
 
-    if (swEngine) cout << "engine: software" << endl;
-    else cout << "engine: opengl" << endl;
+    //Initialize ThorVG Engine
+    if (tvgEngine == tvg::CanvasEngine::Sw) {
+        cout << "tvg engine: software" << endl;
+    } else {
+        cout << "tvg engine: opengl" << endl;
+    }
+
+    //Initialize ThorVG Engine
+    tvg::Initializer::init(tvgEngine);
 
     elm_init(argc, argv);
 
-    //Show the result using EFL...
     elm_config_accel_preference_set("gl");
 
-    Eo* win = elm_win_util_standard_add(NULL, "ThorVG Test");
-    evas_object_smart_callback_add(win, "delete,request", win_del, 0);
-
-    Eo* viewer;
-
-    if (swEngine) {
-        static uint32_t buffer[WIDTH * HEIGHT];
-        viewer = evas_object_image_filled_add(evas_object_evas_get(win));
-        evas_object_image_size_set(viewer, WIDTH, HEIGHT);
-        evas_object_image_data_set(viewer, buffer);
-        evas_object_size_hint_weight_set(viewer, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
-        evas_object_show(viewer);
-        tvgSwTest(buffer);
-    //GlEngine
+    if (tvgEngine == tvg::CanvasEngine::Sw) {
+        createSwView();
     } else {
-        viewer = elm_glview_add(win);
-        evas_object_size_hint_weight_set(viewer, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
-        elm_glview_mode_set(viewer, ELM_GLVIEW_ALPHA);
-        elm_glview_resize_policy_set(viewer, ELM_GLVIEW_RESIZE_POLICY_RECREATE);
-        elm_glview_render_policy_set(viewer, ELM_GLVIEW_RENDER_POLICY_ON_DEMAND);
-        elm_glview_init_func_set(viewer, initGLview);
-        elm_glview_del_func_set(viewer, delGLview);
-        elm_glview_render_func_set(viewer, drawGLview);
-        evas_object_show(viewer);
+        createGlView();
     }
-
-    elm_win_resize_object_add(win, viewer);
-    evas_object_geometry_set(win, 0, 0, WIDTH, HEIGHT);
-    evas_object_show(win);
 
     elm_run();
     elm_shutdown();
+
+    //Terminate ThorVG Engine
+    tvg::Initializer::term(tvgEngine);
 }

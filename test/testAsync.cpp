@@ -1,25 +1,14 @@
-#include <thorvg.h>
-#include <Elementary.h>
+#include "testCommon.h"
 
-using namespace std;
-
-#define WIDTH 1920
-#define HEIGHT 1080
+/************************************************************************/
+/* Drawing Commands                                                     */
+/************************************************************************/
 #define COUNT 50
 
-static uint32_t buffer[WIDTH * HEIGHT];
-unique_ptr<tvg::SwCanvas> canvas = nullptr;
 static double t1, t2, t3, t4;
 static unsigned cnt = 0;
 
-void tvgtest()
-{
-    //Create a Canvas
-    canvas = tvg::SwCanvas::gen();
-    canvas->target(buffer, WIDTH, WIDTH, HEIGHT);
-}
-
-Eina_Bool anim_cb(void *data)
+bool tvgUpdateCmds(tvg::Canvas* canvas)
 {
     auto t = ecore_time_get();
 
@@ -27,7 +16,7 @@ Eina_Bool anim_cb(void *data)
     if (canvas->clear() != tvg::Result::Success)
       {
          //Logically wrong! Probably, you missed to call sync() before.
-         return ECORE_CALLBACK_RENEW;
+         return false;
       }
 
     t1 = t;
@@ -38,8 +27,8 @@ Eina_Bool anim_cb(void *data)
 
         float x = rand() % (WIDTH/2);
         float y = rand() % (HEIGHT/2);
-        float w = 1 + rand() % 1200;
-        float h = 1 + rand() %  800;
+        float w = 1 + rand() % (int)(WIDTH * 1.3 / 2);
+        float h = 1 + rand() %  (int)(HEIGHT * 1.3 / 2);
 
         shape->appendRect(x, y, w, h, rand() % 400);
 
@@ -61,8 +50,29 @@ Eina_Bool anim_cb(void *data)
 
     t3 = ecore_time_get();
 
+    return true;
+}
+
+
+/************************************************************************/
+/* Sw Engine Test Code                                                  */
+/************************************************************************/
+
+static unique_ptr<tvg::SwCanvas> swCanvas;
+
+void tvgSwTest(uint32_t* buffer)
+{
+    //Create a Canvas
+    swCanvas = tvg::SwCanvas::gen();
+    swCanvas->target(buffer, WIDTH, WIDTH, HEIGHT);
+}
+
+Eina_Bool animSwCb(void* data)
+{
+    if (!tvgUpdateCmds(swCanvas.get())) return ECORE_CALLBACK_RENEW;
+
     //Drawing task can be performed asynchronously.
-    canvas->draw();
+    swCanvas->draw();
 
     //Update Efl Canvas
     Eo* img = (Eo*) data;
@@ -72,50 +82,96 @@ Eina_Bool anim_cb(void *data)
     return ECORE_CALLBACK_RENEW;
 }
 
-void render_cb(void* data, Eo* obj)
+void drawSwView(void* data, Eo* obj)
 {
     //Make it guarantee finishing drawing task.
-    canvas->sync();
+    swCanvas->sync();
 
     t4 = ecore_time_get();
 
     printf("[%5d]: total[%fms] = clear[%fms], update[%fms], render[%fms]\n", ++cnt, t4 - t1, t2 - t1, t3 - t2, t4 - t3);
 }
 
-void win_del(void *data, Evas_Object *o, void *ev)
+
+/************************************************************************/
+/* GL Engine Test Code                                                  */
+/************************************************************************/
+
+static unique_ptr<tvg::GlCanvas> glCanvas;
+
+void initGLview(Evas_Object *obj)
 {
-    elm_exit();
+    static constexpr auto BPP = 4;
+
+    //Create a Canvas
+    glCanvas = tvg::GlCanvas::gen();
+    glCanvas->target(nullptr, WIDTH * BPP, WIDTH, HEIGHT);
 }
+
+void drawGLview(Evas_Object *obj)
+{
+    auto gl = elm_glview_gl_api_get(obj);
+    int w, h;
+    elm_glview_size_get(obj, &w, &h);
+    gl->glViewport(0, 0, w, h);
+    gl->glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    gl->glClear(GL_COLOR_BUFFER_BIT);
+    gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    gl->glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE);
+    gl->glEnable(GL_BLEND);
+
+    glCanvas->sync();
+}
+
+Eina_Bool animGlCb(void* data)
+{
+    if (!tvgUpdateCmds(glCanvas.get())) return ECORE_CALLBACK_RENEW;
+
+    //Drawing task can be performed asynchronously.
+    glCanvas->draw();
+
+    return ECORE_CALLBACK_RENEW;
+}
+
+
+/************************************************************************/
+/* Main Code                                                            */
+/************************************************************************/
 
 int main(int argc, char **argv)
 {
+    tvg::CanvasEngine tvgEngine = tvg::CanvasEngine::Sw;
+
+    if (argc > 1) {
+        if (!strcmp(argv[1], "gl")) tvgEngine = tvg::CanvasEngine::Gl;
+    }
+
     //Initialize ThorVG Engine
-    tvg::Initializer::init(tvg::CanvasEngine::Sw);
+    if (tvgEngine == tvg::CanvasEngine::Sw) {
+        cout << "tvg engine: software" << endl;
+    } else {
+        cout << "tvg engine: opengl" << endl;
+    }
 
-    tvgtest();
+    //Initialize ThorVG Engine
+    tvg::Initializer::init(tvgEngine);
 
-    //Show the result using EFL...
     elm_init(argc, argv);
 
-    Eo* win = elm_win_util_standard_add(NULL, "ThorVG Test");
-    evas_object_smart_callback_add(win, "delete,request", win_del, 0);
+    elm_config_accel_preference_set("gl");
 
-    Eo* img = evas_object_image_filled_add(evas_object_evas_get(win));
-    evas_object_image_size_set(img, WIDTH, HEIGHT);
-    evas_object_image_data_set(img, buffer);
-    evas_object_image_pixels_get_callback_set(img, render_cb, nullptr);
-    evas_object_size_hint_weight_set(img, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
-    evas_object_show(img);
-
-    elm_win_resize_object_add(win, img);
-    evas_object_geometry_set(win, 0, 0, WIDTH, HEIGHT);
-    evas_object_show(win);
-
-    ecore_animator_add(anim_cb, img);
+    if (tvgEngine == tvg::CanvasEngine::Sw) {
+        auto view = createSwView();
+        evas_object_image_pixels_get_callback_set(view, drawSwView, nullptr);
+        ecore_animator_add(animSwCb, view);
+    } else {
+        auto view = createGlView();
+        ecore_animator_add(animGlCb, view);
+    }
 
     elm_run();
     elm_shutdown();
 
     //Terminate ThorVG Engine
-    tvg::Initializer::term(tvg::CanvasEngine::Sw);
+    tvg::Initializer::term(tvgEngine);
 }

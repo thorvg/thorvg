@@ -1,77 +1,140 @@
-#include <thorvg.h>
-#include <Elementary.h>
+#include "testCommon.h"
 
-using namespace std;
+/************************************************************************/
+/* Drawing Commands                                                     */
+/************************************************************************/
 
-#define WIDTH 800
-#define HEIGHT 800
+#define NUM_PER_LINE 3
 
-static uint32_t buffer[WIDTH * HEIGHT];
-
-unique_ptr<tvg::SwCanvas> canvas = nullptr;
+int x = 30;
+int y = 30;
 int count = 0;
-static const int numberPerLine = 3;
-
-static int x = 30;
-static int y = 30;
-
 
 void svgDirCallback(const char* name, const char* path, void* data)
 {
+    tvg::Canvas* canvas = static_cast<tvg::Canvas*>(data);
+
     auto scene = tvg::Scene::gen();
+
     char buf[255];
     sprintf(buf,"%s/%s", path, name);
+
     scene->load(buf);
-    printf("SVG Load : %s\n", buf);
-    scene->translate(((WIDTH - (x * 2)) / numberPerLine) * (count % numberPerLine) + x, ((HEIGHT - (y * 2))/ numberPerLine) * (int)((float)count / (float)numberPerLine) + y);
+    scene->translate(((WIDTH - (x * 2)) / NUM_PER_LINE) * (count % NUM_PER_LINE) + x, ((HEIGHT - (y * 2))/ NUM_PER_LINE) * (int)((float)count / (float)NUM_PER_LINE) + y);    
     canvas->push(move(scene));
+
     count++;
+
+    cout << "SVG: " << buf << endl;
+}
+
+void tvgDrawCmds(tvg::Canvas* canvas)
+{
+    auto shape1 = tvg::Shape::gen();
+    shape1->appendRect(0, 0, WIDTH, HEIGHT, 0);       //x, y, w, h, cornerRadius
+    shape1->fill(255, 255, 255, 255);                 //r, g, b, a
+
+    canvas->push(move(shape1));
+
+    eina_file_dir_list("./svgs", EINA_TRUE, svgDirCallback, canvas);
 }
 
 
-void win_del(void* data, Evas_Object* o, void* ev)
+/************************************************************************/
+/* Sw Engine Test Code                                                  */
+/************************************************************************/
+
+static unique_ptr<tvg::SwCanvas> swCanvas;
+
+void tvgSwTest(uint32_t* buffer)
 {
-   elm_exit();
+    //Create a Canvas
+    swCanvas = tvg::SwCanvas::gen();
+    swCanvas->target(buffer, WIDTH, WIDTH, HEIGHT);
+
+    /* Push the shape into the Canvas drawing list
+       When this shape is into the canvas list, the shape could update & prepare
+       internal data asynchronously for coming rendering.
+       Canvas keeps this shape node unless user call canvas->clear() */
+    tvgDrawCmds(swCanvas.get());
+}
+
+void drawSwView(void* data, Eo* obj)
+{
+    swCanvas->draw();
+    swCanvas->sync();
 }
 
 
-int main(int argc, char** argv)
+/************************************************************************/
+/* GL Engine Test Code                                                  */
+/************************************************************************/
+
+static unique_ptr<tvg::GlCanvas> glCanvas;
+
+void initGLview(Evas_Object *obj)
 {
-    //Initialize ThorVG Engine
-    tvg::Initializer::init(tvg::CanvasEngine::Sw);
+    static constexpr auto BPP = 4;
 
     //Create a Canvas
-    canvas = tvg::SwCanvas::gen();
-    canvas->target(buffer, WIDTH, WIDTH, HEIGHT);
+    glCanvas = tvg::GlCanvas::gen();
+    glCanvas->target(nullptr, WIDTH * BPP, WIDTH, HEIGHT);
 
-    //Draw white background
-    auto scene = tvg::Scene::gen();
-    auto shape1 = tvg::Shape::gen();
-    shape1->appendRect(0, 0, WIDTH, HEIGHT, 0);
-    shape1->fill(255, 255, 255, 255);
-    scene->push(move(shape1));
-    canvas->push(move(scene));
+    /* Push the shape into the Canvas drawing list
+       When this shape is into the canvas list, the shape could update & prepare
+       internal data asynchronously for coming rendering.
+       Canvas keeps this shape node unless user call canvas->clear() */
+    tvgDrawCmds(glCanvas.get());
+}
 
-    eina_file_dir_list("./svgs", EINA_TRUE, svgDirCallback, NULL);
+void drawGLview(Evas_Object *obj)
+{
+    auto gl = elm_glview_gl_api_get(obj);
+    int w, h;
+    elm_glview_size_get(obj, &w, &h);
+    gl->glViewport(0, 0, w, h);
+    gl->glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    gl->glClear(GL_COLOR_BUFFER_BIT);
+    gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    gl->glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE);
+    gl->glEnable(GL_BLEND);
 
-    canvas->draw();
-    canvas->sync();
+    glCanvas->draw();
+    glCanvas->sync();
+}
 
-    //Show the result using EFL...
+
+/************************************************************************/
+/* Main Code                                                            */
+/************************************************************************/
+
+int main(int argc, char **argv)
+{
+    tvg::CanvasEngine tvgEngine = tvg::CanvasEngine::Sw;
+
+    if (argc > 1) {
+        if (!strcmp(argv[1], "gl")) tvgEngine = tvg::CanvasEngine::Gl;
+    }
+
+    //Initialize ThorVG Engine
+    if (tvgEngine == tvg::CanvasEngine::Sw) {
+        cout << "tvg engine: software" << endl;
+    } else {
+        cout << "tvg engine: opengl" << endl;
+    }
+
+    //Initialize ThorVG Engine
+    tvg::Initializer::init(tvgEngine);
+
     elm_init(argc, argv);
 
-    Eo* win = elm_win_util_standard_add(NULL, "ThorVG Test");
-    evas_object_smart_callback_add(win, "delete,request", win_del, 0);
+    elm_config_accel_preference_set("gl");
 
-    Eo* img = evas_object_image_filled_add(evas_object_evas_get(win));
-    evas_object_image_size_set(img, WIDTH, HEIGHT);
-    evas_object_image_data_set(img, buffer);
-    evas_object_size_hint_weight_set(img, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
-    evas_object_show(img);
-
-    elm_win_resize_object_add(win, img);
-    evas_object_geometry_set(win, 0, 0, WIDTH, HEIGHT);
-    evas_object_show(win);
+    if (tvgEngine == tvg::CanvasEngine::Sw) {
+        createSwView();
+    } else {
+        createGlView();
+    }
 
     elm_run();
     elm_shutdown();
