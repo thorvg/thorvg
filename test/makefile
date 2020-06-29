@@ -17,5 +17,4 @@ all:
 	gcc -o testRadialGradient testRadialGradient.cpp -g -lstdc++ `pkg-config --cflags --libs elementary thorvg`
 	gcc -o testGradientTransform testGradientTransform.cpp -g -lstdc++ `pkg-config --cflags --libs elementary thorvg`
 	gcc -o testSvg testSvg.cpp -g -lstdc++ `pkg-config --cflags --libs elementary thorvg`
-	gcc -o testGlShape testGlShape.cpp -g -lstdc++ `pkg-config --cflags --libs elementary thorvg`
 	gcc -o testAsync testAsync.cpp -g -lstdc++ `pkg-config --cflags --libs elementary thorvg`

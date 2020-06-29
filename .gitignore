@@ -19,5 +19,4 @@ testLinearGradient
 testRadialGradient
 testGradientTransform
 testSvg
-testGlShape
 testAsync
