@@ -1,4 +1,5 @@
 #include <thorvg.h>
+#include <iostream>
 #include <Elementary.h>
 
 using namespace std;
@@ -106,6 +107,9 @@ int main(int argc, char **argv)
     if (argc > 1) {
         if (!strcmp(argv[1], "gl")) swEngine = false;
     }
+
+    if (swEngine) cout << "engine: software" << endl;
+    else cout << "engine: opengl" << endl;
 
     elm_init(argc, argv);
 
