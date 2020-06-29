@@ -14,30 +14,29 @@
  *  limitations under the License.
  *
  */
-#ifndef _TVG_SVG_LOADER_H_
-#define _TVG_SVG_LOADER_H_
+#ifndef _TVG_SVG_SCENE_BUILDER_H_
+#define _TVG_SVG_SCENE_BUILDER_H_
 
 #include "tvgSvgLoaderCommon.h"
-#include "tvgSvgSceneBuilder.h"
 
-
-class SvgLoader : public Loader
+class SvgSceneBuilder
 {
 private:
-    string content;
-    SvgLoaderData loaderData;
-    SvgSceneBuilder builder;
-    unique_ptr<Scene> root;
+    struct {
+        int x, y;
+        uint32_t w, h;
+    } viewBox;
+    int      ref;
+    uint32_t w, h;                 //Default size
+    bool     staticViewBox;
+    bool     preserveAspect;       //Used in SVG
+    bool     shareable;
 
 public:
-    SvgLoader();
-    ~SvgLoader();
+    SvgSceneBuilder();
+    ~SvgSceneBuilder();
 
-    bool open(const char* path) override;
-    bool read() override;
-    bool close() override;
-    unique_ptr<Scene> data() override;
+    unique_ptr<Scene> build(SvgNode* node);
 };
 
-
-#endif //_TVG_SVG_LOADER_H_
+#endif //_TVG_SVG_SCENE_BUILDER_H_
