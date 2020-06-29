@@ -8,36 +8,54 @@ using namespace std;
 
 static uint32_t buffer[WIDTH * HEIGHT];
 
-void tvgtest()
+unique_ptr<tvg::SwCanvas> canvas = nullptr;
+int count = 0;
+static const int numberPerLine = 3;
+
+static int x = 30;
+static int y = 30;
+
+
+void svgDirCallback(const char* name, const char* path, void* data)
 {
-    //Initialize ThorVG Engine
-    tvg::Initializer::init(tvg::CanvasEngine::Sw);
-
-    //Create a Canvas
-    auto canvas = tvg::SwCanvas::gen();
-    canvas->target(buffer, WIDTH, WIDTH, HEIGHT);
-
-    // Create a SVG scene, request the original size,
     auto scene = tvg::Scene::gen();
-    scene->load("sample.svg");
+    char buf[255];
+    sprintf(buf,"%s/%s", path, name);
+    scene->load(buf);
+    printf("SVG Load : %s\n", buf);
+    scene->translate(((WIDTH - (x * 2)) / numberPerLine) * (count % numberPerLine) + x, ((HEIGHT - (y * 2))/ numberPerLine) * (int)((float)count / (float)numberPerLine) + y);
     canvas->push(move(scene));
-
-    canvas->draw();
-    canvas->sync();
-
-    //Terminate ThorVG Engine
-    tvg::Initializer::term(tvg::CanvasEngine::Sw);
+    count++;
 }
 
-void win_del(void *data, Evas_Object *o, void *ev)
+
+void win_del(void* data, Evas_Object* o, void* ev)
 {
    elm_exit();
 }
 
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
-    tvgtest();
+    //Initialize ThorVG Engine
+    tvg::Initializer::init(tvg::CanvasEngine::Sw);
+
+    //Create a Canvas
+    canvas = tvg::SwCanvas::gen();
+    canvas->target(buffer, WIDTH, WIDTH, HEIGHT);
+
+    //Draw white background
+    auto scene = tvg::Scene::gen();
+    auto shape1 = tvg::Shape::gen();
+    shape1->appendRect(0, 0, WIDTH, HEIGHT, 0);
+    shape1->fill(255, 255, 255, 255);
+    scene->push(move(shape1));
+    canvas->push(move(scene));
+
+    eina_file_dir_list("./svgs", EINA_TRUE, svgDirCallback, NULL);
+
+    canvas->draw();
+    canvas->sync();
 
     //Show the result using EFL...
     elm_init(argc, argv);
@@ -57,4 +75,7 @@ int main(int argc, char **argv)
 
     elm_run();
     elm_shutdown();
+
+    //Terminate ThorVG Engine
+    tvg::Initializer::term(tvg::CanvasEngine::Sw);
 }
