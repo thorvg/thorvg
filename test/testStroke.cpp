@@ -14,7 +14,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     shape1->stroke(tvg::StrokeJoin::Bevel);   //default is Bevel
     shape1->stroke(10);                       //width: 10px
 
-    canvas->push(move(shape1));
+    if (canvas->push(move(shape1)) != tvg::Result::Success) return;
 
     //Shape 2
     auto shape2 = tvg::Shape::gen();
@@ -24,7 +24,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     shape2->stroke(tvg::StrokeJoin::Round);
     shape2->stroke(10);
 
-    canvas->push(move(shape2));
+    if (canvas->push(move(shape2)) != tvg::Result::Success) return;
 
     //Shape 3
     auto shape3 = tvg::Shape::gen();
@@ -34,7 +34,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     shape3->stroke(tvg::StrokeJoin::Miter);
     shape3->stroke(10);
 
-    canvas->push(move(shape3));
+    if (canvas->push(move(shape3)) != tvg::Result::Success) return;
 
     //Shape 4
     auto shape4 = tvg::Shape::gen();
@@ -43,7 +43,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     shape4->stroke(255, 255, 255, 255);
     shape4->stroke(1);
 
-    canvas->push(move(shape4));
+    if (canvas->push(move(shape4)) != tvg::Result::Success) return;
 
     //Shape 5
     auto shape5 = tvg::Shape::gen();
@@ -52,7 +52,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     shape5->stroke(255, 255, 255, 255);
     shape5->stroke(2);
 
-    canvas->push(move(shape5));
+    if (canvas->push(move(shape5)) != tvg::Result::Success) return;
 
     //Shape 6
     auto shape6 = tvg::Shape::gen();
@@ -61,7 +61,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     shape6->stroke(255, 255, 255, 255);
     shape6->stroke(4);
 
-    canvas->push(move(shape6));
+    if (canvas->push(move(shape6)) != tvg::Result::Success) return;
 }
 
 
@@ -86,8 +86,9 @@ void tvgSwTest(uint32_t* buffer)
 
 void drawSwView(void* data, Eo* obj)
 {
-    swCanvas->draw();
-    swCanvas->sync();
+    if (swCanvas->draw() == tvg::Result::Success) {
+        swCanvas->sync();
+    }
 }
 
 
@@ -124,8 +125,9 @@ void drawGLview(Evas_Object *obj)
     gl->glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE);
     gl->glEnable(GL_BLEND);
 
-    glCanvas->draw();
-    glCanvas->sync();
+    if (glCanvas->draw() == tvg::Result::Success) {
+        glCanvas->sync();
+    }
 }
 
 

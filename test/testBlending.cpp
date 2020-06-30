@@ -12,19 +12,19 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     auto shape1 = tvg::Shape::gen();
     shape1->appendRect(0, 0, 400, 400, 50);      //x, y, w, h, cornerRadius
     shape1->fill(0, 255, 0, 255);                //r, g, b, a
-    canvas->push(move(shape1));
+    if (canvas->push(move(shape1)) != tvg::Result::Success) return;
 
     //Prepare Circle
     auto shape2 = tvg::Shape::gen();
     shape2->appendCircle(400, 400, 200, 200);    //cx, cy, radiusW, radiusH
     shape2->fill(170, 170, 0, 170);              //r, g, b, a
-    canvas->push(move(shape2));
+    if (canvas->push(move(shape2)) != tvg::Result::Success) return;
 
     //Prepare Ellipse
     auto shape3 = tvg::Shape::gen();
     shape3->appendCircle(400, 400, 250, 100);    //cx, cy, radiusW, radiusH
     shape3->fill(100, 100, 100, 100);            //r, g, b, a
-    canvas->push(move(shape3));
+    if (canvas->push(move(shape3)) != tvg::Result::Success) return;
 
     //Prepare Star
     auto shape4 = tvg::Shape::gen();
@@ -40,13 +40,13 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     shape4->lineTo(146, 343);
     shape4->close();
     shape4->fill(200, 0, 200, 200);
-    canvas->push(move(shape4));
+    if (canvas->push(move(shape4)) != tvg::Result::Success) return;
 
     //Prepare Opaque Ellipse
     auto shape5 = tvg::Shape::gen();
     shape5->appendCircle(600, 650, 200, 150);
     shape5->fill(0, 0, 255, 255);
-    canvas->push(move(shape5));
+    if (canvas->push(move(shape5)) != tvg::Result::Success) return;
 }
 
 
@@ -71,8 +71,9 @@ void tvgSwTest(uint32_t* buffer)
 
 void drawSwView(void* data, Eo* obj)
 {
-    swCanvas->draw();
-    swCanvas->sync();
+    if (swCanvas->draw() == tvg::Result::Success) {
+        swCanvas->sync();
+    }
 }
 
 
@@ -109,8 +110,9 @@ void drawGLview(Evas_Object *obj)
     gl->glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE);
     gl->glEnable(GL_BLEND);
 
-    glCanvas->draw();
-    glCanvas->sync();
+    if (glCanvas->draw() == tvg::Result::Success) {
+        glCanvas->sync();
+    }
 }
 
 

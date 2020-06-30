@@ -21,7 +21,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     shape->stroke(0, 0, 255, 255);
     shape->stroke(1);
 
-    canvas->push(move(shape));
+    if (canvas->push(move(shape)) != tvg::Result::Success) return;
 }
 
 void tvgUpdateCmds(tvg::Canvas* canvas, float progress)
@@ -30,13 +30,14 @@ void tvgUpdateCmds(tvg::Canvas* canvas, float progress)
        You can update only necessary properties of this shape,
        while retaining other properties. */
 
-    pShape->reset();    //reset path
+    //Reset Shape
+    if (pShape->reset() == tvg::Result::Success) {
+        pShape->appendRect(-100 + (800 * progress), -100 + (800 * progress), 200, 200, (100 * progress));
+        pShape->stroke(30 * progress);
 
-    pShape->appendRect(-100 + (800 * progress), -100 + (800 * progress), 200, 200, (100 * progress));
-    pShape->stroke(30 * progress);
-
-    //Update shape for drawing (this may work asynchronously)
-    canvas->update(pShape);
+        //Update shape for drawing (this may work asynchronously)
+        canvas->update(pShape);
+    }
 }
 
 
@@ -71,8 +72,9 @@ void transitSwCb(Elm_Transit_Effect *effect, Elm_Transit* transit, double progre
 
 void drawSwView(void* data, Eo* obj)
 {
-    swCanvas->draw();
-    swCanvas->sync();
+    if (swCanvas->draw() == tvg::Result::Success) {
+        swCanvas->sync();
+    }
 }
 
 
@@ -109,8 +111,9 @@ void drawGLview(Evas_Object *obj)
     gl->glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE);
     gl->glEnable(GL_BLEND);
 
-    glCanvas->draw();
-    glCanvas->sync();
+    if (glCanvas->draw() == tvg::Result::Success) {
+        glCanvas->sync();
+    }
 }
 
 void transitGlCb(Elm_Transit_Effect *effect, Elm_Transit* transit, double progress)

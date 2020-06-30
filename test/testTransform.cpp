@@ -22,7 +22,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     shape->appendCircle(115, 200, 170, 100);
     shape->fill(255, 255, 255, 255);
     shape->translate(385, 400);
-    canvas->push(move(shape));
+    if (canvas->push(move(shape)) != tvg::Result::Success) return;
 
     //Shape2
     auto shape2 = tvg::Shape::gen();
@@ -30,7 +30,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     shape2->appendRect(-50, -50, 100, 100, 0);
     shape2->fill(0, 255, 255, 255);
     shape2->translate(400, 400);
-    canvas->push(move(shape2));
+    if (canvas->push(move(shape2)) != tvg::Result::Success) return;
 
     //Shape3
     auto shape3 = tvg::Shape::gen();
@@ -41,7 +41,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     shape3->appendRect(100, 100, 150, 50, 20);
     shape3->fill(255, 0, 255, 255);
     shape3->translate(400, 400);
-    canvas->push(move(shape3));
+    if (canvas->push(move(shape3)) != tvg::Result::Success) return;
 }
 
 void tvgUpdateCmds(tvg::Canvas* canvas, float progress)
@@ -55,17 +55,17 @@ void tvgUpdateCmds(tvg::Canvas* canvas, float progress)
     pShape->rotate(360 * progress);
 
     //Update shape for drawing (this may work asynchronously)
-    canvas->update(pShape);
+    if (canvas->update(pShape) != tvg::Result::Success) return;
 
     //Update Shape2
     pShape2->rotate(360 * progress);
     pShape2->translate(400 + progress * 300, 400);
-    canvas->update(pShape2);
+    if (canvas->update(pShape2) != tvg::Result::Success) return;
 
     //Update Shape3
     pShape3->rotate(-360 * progress);
     pShape3->scale(0.5 + progress);
-    canvas->update(pShape3);
+    if (canvas->update(pShape3) != tvg::Result::Success) return;
 }
 
 
@@ -100,8 +100,9 @@ void transitSwCb(Elm_Transit_Effect *effect, Elm_Transit* transit, double progre
 
 void drawSwView(void* data, Eo* obj)
 {
-    swCanvas->draw();
-    swCanvas->sync();
+    if (swCanvas->draw() == tvg::Result::Success) {
+        swCanvas->sync();
+    }
 }
 
 
@@ -138,8 +139,9 @@ void drawGLview(Evas_Object *obj)
     gl->glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE);
     gl->glEnable(GL_BLEND);
 
-    glCanvas->draw();
-    glCanvas->sync();
+    if (glCanvas->draw() == tvg::Result::Success) {
+        glCanvas->sync();
+    }
 }
 
 void transitGlCb(Elm_Transit_Effect *effect, Elm_Transit* transit, double progress)

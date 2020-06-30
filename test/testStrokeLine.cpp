@@ -14,7 +14,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
         shape->stroke(255, 255, 255, 255);       //color: r, g, b, a
         shape->stroke(i + 1);                    //stroke width
         shape->stroke(tvg::StrokeCap::Round);    //default is Square
-        canvas->push(move(shape));
+        if (canvas->push(move(shape)) != tvg::Result::Success) return;
     }
 
     //Test for StrokeJoin & StrokeCap
@@ -28,7 +28,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     shape1->stroke(10);
     shape1->stroke(tvg::StrokeJoin::Round);
     shape1->stroke(tvg::StrokeCap::Round);
-    canvas->push(move(shape1));
+    if (canvas->push(move(shape1)) != tvg::Result::Success) return;
 
     auto shape2 = tvg::Shape::gen();
     shape2->moveTo(270, 350);
@@ -40,7 +40,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     shape2->stroke(10);
     shape2->stroke(tvg::StrokeJoin::Bevel);
     shape2->stroke(tvg::StrokeCap::Square);
-    canvas->push(move(shape2));
+    if (canvas->push(move(shape2)) != tvg::Result::Success) return;
 
     auto shape3 = tvg::Shape::gen();
     shape3->moveTo(520, 350);
@@ -52,7 +52,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     shape3->stroke(10);
     shape3->stroke(tvg::StrokeJoin::Miter);
     shape3->stroke(tvg::StrokeCap::Butt);
-    canvas->push(move(shape3));
+    if (canvas->push(move(shape3)) != tvg::Result::Success) return;
 
     //Test for Stroke Dash
     auto shape4 = tvg::Shape::gen();
@@ -68,7 +68,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     float dashPattern1[2] = {10, 10};
     shape4->stroke(dashPattern1, 2);
-    canvas->push(move(shape4));
+    if (canvas->push(move(shape4)) != tvg::Result::Success) return;
 
     auto shape5 = tvg::Shape::gen();
     shape5->moveTo(270, 600);
@@ -83,7 +83,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     float dashPattern2[4] = {10, 10};
     shape5->stroke(dashPattern2, 4);
-    canvas->push(move(shape5));
+    if (canvas->push(move(shape5)) != tvg::Result::Success) return;
 
     auto shape6 = tvg::Shape::gen();
     shape6->moveTo(520, 600);
@@ -98,7 +98,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     float dashPattern3[2] = {10, 10};
     shape6->stroke(dashPattern3, 2);
-    canvas->push(move(shape6));
+    if (canvas->push(move(shape6)) != tvg::Result::Success) return;
 }
 
 
@@ -123,8 +123,9 @@ void tvgSwTest(uint32_t* buffer)
 
 void drawSwView(void* data, Eo* obj)
 {
-    swCanvas->draw();
-    swCanvas->sync();
+    if (swCanvas->draw() == tvg::Result::Success) {
+        swCanvas->sync();
+    }
 }
 
 
@@ -161,8 +162,9 @@ void drawGLview(Evas_Object *obj)
     gl->glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE);
     gl->glEnable(GL_BLEND);
 
-    glCanvas->draw();
-    glCanvas->sync();
+    if (glCanvas->draw() == tvg::Result::Success) {
+        glCanvas->sync();
+    }
 }
 
 

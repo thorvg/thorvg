@@ -16,7 +16,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 void tvgUpdateCmds(tvg::Canvas* canvas, float progress)
 {
     //Explicitly clear all retained paint nodes.
-    canvas->clear();
+    if (canvas->clear() != tvg::Result::Success) return;
 
     //Shape
     auto shape = tvg::Shape::gen();
@@ -61,8 +61,9 @@ void transitSwCb(Elm_Transit_Effect *effect, Elm_Transit* transit, double progre
 
 void drawSwView(void* data, Eo* obj)
 {
-    swCanvas->draw();
-    swCanvas->sync();
+    if (swCanvas->draw() == tvg::Result::Success) {
+        swCanvas->sync();
+    }
 }
 
 
@@ -99,8 +100,9 @@ void drawGLview(Evas_Object *obj)
     gl->glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE);
     gl->glEnable(GL_BLEND);
 
-    glCanvas->draw();
-    glCanvas->sync();
+    if (glCanvas->draw() == tvg::Result::Success) {
+        glCanvas->sync();
+    }
 }
 
 void transitGlCb(Elm_Transit_Effect *effect, Elm_Transit* transit, double progress)

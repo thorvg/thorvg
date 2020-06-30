@@ -16,10 +16,11 @@ void svgDirCallback(const char* name, const char* path, void* data)
 
     auto scene = tvg::Scene::gen();
 
-    char buf[255];
+    char buf[PATH_MAX];
     sprintf(buf,"%s/%s", path, name);
 
-    scene->load(buf);
+    if (scene->load(buf) != tvg::Result::Success) return;
+
     scene->translate(((WIDTH - (x * 2)) / NUM_PER_LINE) * (count % NUM_PER_LINE) + x, ((HEIGHT - (y * 2))/ NUM_PER_LINE) * (int)((float)count / (float)NUM_PER_LINE) + y);
     canvas->push(move(scene));
 
@@ -30,11 +31,12 @@ void svgDirCallback(const char* name, const char* path, void* data)
 
 void tvgDrawCmds(tvg::Canvas* canvas)
 {
-    auto shape1 = tvg::Shape::gen();
-    shape1->appendRect(0, 0, WIDTH, HEIGHT, 0);       //x, y, w, h, cornerRadius
-    shape1->fill(255, 255, 255, 255);                 //r, g, b, a
+    //Background
+    auto shape = tvg::Shape::gen();
+    shape->appendRect(0, 0, WIDTH, HEIGHT, 0);       //x, y, w, h, cornerRadius
+    shape->fill(255, 255, 255, 255);                 //r, g, b, a
 
-    canvas->push(move(shape1));
+    if (canvas->push(move(shape)) != tvg::Result::Success) return;
 
     eina_file_dir_list("./svgs", EINA_TRUE, svgDirCallback, canvas);
 }
@@ -61,8 +63,9 @@ void tvgSwTest(uint32_t* buffer)
 
 void drawSwView(void* data, Eo* obj)
 {
-    swCanvas->draw();
-    swCanvas->sync();
+    if (swCanvas->draw() == tvg::Result::Success) {
+        swCanvas->sync();
+    }
 }
 
 
@@ -99,8 +102,9 @@ void drawGLview(Evas_Object *obj)
     gl->glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE);
     gl->glEnable(GL_BLEND);
 
-    glCanvas->draw();
-    glCanvas->sync();
+    if (glCanvas->draw() == tvg::Result::Success) {
+        glCanvas->sync();
+    }
 }
 
 

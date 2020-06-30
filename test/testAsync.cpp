@@ -13,11 +13,10 @@ bool tvgUpdateCmds(tvg::Canvas* canvas)
     auto t = ecore_time_get();
 
     //Explicitly clear all retained paint nodes.
-    if (canvas->clear() != tvg::Result::Success)
-      {
-         //Logically wrong! Probably, you missed to call sync() before.
-         return false;
-      }
+    if (canvas->clear() != tvg::Result::Success) {
+        //Logically wrong! Probably, you missed to call sync() before.
+        return false;
+    }
 
     t1 = t;
     t2 = ecore_time_get();
@@ -45,7 +44,10 @@ bool tvgUpdateCmds(tvg::Canvas* canvas)
         fill->colorStops(colorStops, 3);
         shape->fill(move(fill));
 
-        canvas->push(move(shape));
+        if (canvas->push(move(shape)) != tvg::Result::Success) {
+            //Did you call clear()? Make it sure if canvas is on rendering
+            break;
+        }
     }
 
     t3 = ecore_time_get();
@@ -72,7 +74,7 @@ Eina_Bool animSwCb(void* data)
     if (!tvgUpdateCmds(swCanvas.get())) return ECORE_CALLBACK_RENEW;
 
     //Drawing task can be performed asynchronously.
-    swCanvas->draw();
+    if (swCanvas->draw() != tvg::Result::Success) return false;
 
     //Update Efl Canvas
     Eo* img = (Eo*) data;

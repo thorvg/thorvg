@@ -24,7 +24,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     fill->colorStops(colorStops, 2);
 
     shape1->fill(move(fill));
-    canvas->push(move(shape1));
+    if (canvas->push(move(shape1)) != tvg::Result::Success) return;
 
     //Prepare Circle
     auto shape2 = tvg::Shape::gen();
@@ -43,7 +43,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     fill2->colorStops(colorStops2, 3);
 
     shape2->fill(move(fill2));
-    canvas->push(move(shape2));
+    if (canvas->push(move(shape2)) != tvg::Result::Success) return;
 
 
     //Prepare Ellipse
@@ -64,7 +64,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     fill3->colorStops(colorStops3, 4);
 
     shape3->fill(move(fill3));
-    canvas->push(move(shape3));
+    if (canvas->push(move(shape3)) != tvg::Result::Success) return;
 }
 
 
@@ -89,8 +89,9 @@ void tvgSwTest(uint32_t* buffer)
 
 void drawSwView(void* data, Eo* obj)
 {
-    swCanvas->draw();
-    swCanvas->sync();
+    if (swCanvas->draw() == tvg::Result::Success) {
+        swCanvas->sync();
+    }
 }
 
 
@@ -127,8 +128,9 @@ void drawGLview(Evas_Object *obj)
     gl->glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE);
     gl->glEnable(GL_BLEND);
 
-    glCanvas->draw();
-    glCanvas->sync();
+    if (glCanvas->draw() == tvg::Result::Success) {
+        glCanvas->sync();
+    }
 }
 
 
