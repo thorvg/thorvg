@@ -170,7 +170,20 @@ static void _processCommand(vector<PathCommand>* cmds, vector<Point>* pts, char 
         }
         case 'q':
         case 'Q': {
-            //TODO: Implement quadratic_to
+            tvg::Point p[3];
+            float ctrl_x0 = (cur->x + 2 * arr[0]) * (1.0 / 3.0);
+            float ctrl_y0 = (cur->y + 2 * arr[1]) * (1.0 / 3.0);
+            float ctrl_x1 = (arr[2] + 2 * arr[0]) * (1.0 / 3.0);
+            float ctrl_y1 = (arr[3] + 2 * arr[1]) * (1.0 / 3.0);
+            cmds->push_back(tvg::PathCommand::CubicTo);
+            p[0] = {ctrl_x0, ctrl_y0};
+            p[1] = {ctrl_x1, ctrl_y1};
+            p[2] = {arr[2], arr[3]};
+            pts->push_back(p[0]);
+            pts->push_back(p[1]);
+            pts->push_back(p[2]);
+            *curCtl = p[1];
+            *cur = p[2];
             break;
         }
         case 't':
