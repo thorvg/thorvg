@@ -20,7 +20,7 @@ void svgDirCallback(const char* name, const char* path, void* data)
     sprintf(buf,"%s/%s", path, name);
 
     scene->load(buf);
-    scene->translate(((WIDTH - (x * 2)) / NUM_PER_LINE) * (count % NUM_PER_LINE) + x, ((HEIGHT - (y * 2))/ NUM_PER_LINE) * (int)((float)count / (float)NUM_PER_LINE) + y);    
+    scene->translate(((WIDTH - (x * 2)) / NUM_PER_LINE) * (count % NUM_PER_LINE) + x, ((HEIGHT - (y * 2))/ NUM_PER_LINE) * (int)((float)count / (float)NUM_PER_LINE) + y);
     canvas->push(move(scene));
 
     count++;
