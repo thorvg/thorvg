@@ -47,15 +47,15 @@ static RenderInitializer renderInit;
 
 SwRenderer::~SwRenderer()
 {
-    if (progress.valid()) progress.get();
+    flush();
 }
 
 
 bool SwRenderer::clear()
 {
-    if (progress.valid()) return false;
-    return true;
+    return flush();
 }
+
 
 bool SwRenderer::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h)
 {
@@ -117,11 +117,15 @@ void SwRenderer::doRender()
 
 bool SwRenderer::flush()
 {
-    if (progress.valid()) {
-        progress.get();
-        return true;
+    while (prepareTasks.size() > 0) {
+        auto task = prepareTasks.front();
+        if (task->progress.valid()) task->progress.get();
+        prepareTasks.pop();
     }
-    return false;
+
+    if (progress.valid()) progress.get();
+
+    return true;
 }
 
 
