@@ -211,7 +211,7 @@ static bool _updateBBox(SwOutline* outline, SwBBox& bbox)
     bbox.min.y = yMin >> 6;
     bbox.max.y = (yMax + 63) >> 6;
 
-    if (xMax - xMin < 1 || yMax - yMin < 1) return false;
+    if (xMax - xMin < 1 && yMax - yMin < 1) return false;
 
     return true;
 }
@@ -450,6 +450,9 @@ bool shapeGenRle(SwShape& shape, const Shape* sdata, const SwSize& clip, const M
     if (!_updateBBox(shape.outline, shape.bbox)) goto end;
 
     if (!_checkValid(shape.outline, shape.bbox, clip)) goto end;
+
+    //Case: Stroke Line
+    if (shape.outline->opened) return true;
 
     shape.rle = rleRender(shape.outline, shape.bbox, clip);
 end:

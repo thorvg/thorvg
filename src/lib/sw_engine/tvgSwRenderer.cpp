@@ -175,12 +175,19 @@ void* SwRenderer::prepare(const Shape& sdata, void* data, const RenderTransform*
     task->flags = flags;
 
     auto asyncTask = [](SwTask* task) {
+
+        //Valid Stroking?
+        uint8_t strokeAlpha = 0;
+        if (task->sdata->strokeWidth() > FLT_EPSILON) {
+            task->sdata->strokeColor(nullptr, nullptr, nullptr, &strokeAlpha);
+        }
+
         //Shape
         if (task->flags & (RenderUpdateFlag::Path | RenderUpdateFlag::Transform)) {
             shapeReset(task->shape);
             uint8_t alpha = 0;
             task->sdata->fill(nullptr, nullptr, nullptr, &alpha);
-            if (alpha > 0 || task->sdata->fill()) {
+            if (alpha > 0 || task->sdata->fill() || strokeAlpha > 0) {
                 if (!shapeGenRle(task->shape, task->sdata, task->clip, task->transform)) return;
             }
         }
@@ -197,13 +204,9 @@ void* SwRenderer::prepare(const Shape& sdata, void* data, const RenderTransform*
         }
         //Stroke
         if (task->flags & (RenderUpdateFlag::Stroke | RenderUpdateFlag::Transform)) {
-            if (task->sdata->strokeWidth() > FLT_EPSILON) {
+            if (strokeAlpha > 0) {
                 shapeResetStroke(task->shape, task->sdata);
-                uint8_t alpha = 0;
-                task->sdata->strokeColor(nullptr, nullptr, nullptr, &alpha);
-                if (alpha > 0) {
-                    if (!shapeGenStrokeRle(task->shape, task->sdata, task->clip)) return;
-                }
+                if (!shapeGenStrokeRle(task->shape, task->sdata, task->clip)) return;
             } else {
                 shapeDelStroke(task->shape);
             }
