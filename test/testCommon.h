@@ -50,6 +50,8 @@ void drawGLview(Evas_Object *obj);
 
 static Eo* createGlView()
 {
+   elm_config_accel_preference_set("gl");
+
     Eo* win = elm_win_util_standard_add(NULL, "ThorVG Test");
     evas_object_smart_callback_add(win, "delete,request", win_del, 0);
 

@@ -165,8 +165,6 @@ int main(int argc, char **argv)
 
     elm_init(argc, argv);
 
-    elm_config_accel_preference_set("gl");
-
     if (tvgEngine == tvg::CanvasEngine::Sw) {
         createSwView();
     } else {

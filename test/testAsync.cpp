@@ -160,8 +160,6 @@ int main(int argc, char **argv)
 
     elm_init(argc, argv);
 
-    elm_config_accel_preference_set("gl");
-
     if (tvgEngine == tvg::CanvasEngine::Sw) {
         auto view = createSwView();
         evas_object_image_pixels_get_callback_set(view, drawSwView, nullptr);

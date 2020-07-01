@@ -211,8 +211,6 @@ int main(int argc, char **argv)
 
     elm_init(argc, argv);
 
-    elm_config_accel_preference_set("gl");
-
     Elm_Transit *transit = elm_transit_add();
 
     if (tvgEngine == tvg::CanvasEngine::Sw) {
