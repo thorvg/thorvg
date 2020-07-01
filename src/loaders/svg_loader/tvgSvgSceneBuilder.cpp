@@ -21,12 +21,37 @@
 #include "tvgSvgSceneBuilder.h"
 
 
+static void _getTransformationData(Matrix* m, float* tx, float* ty, float* s, float* z)
+{
+    float rz, si, cs, zcs, zsi;
+
+    *tx = m->e13;
+    *ty = m->e23;
+
+    cs = m->e11;
+    si = m->e12;
+    rz = atan2(si, cs);
+    *z = rz * (180.0 / M_PI);
+    zcs = cosf(rz);
+    zsi = sinf(rz);
+    m->e11 = m->e11 * zcs + m->e12 * zsi;
+    m->e22 = m->e21 * (-1 * zsi) + m->e22 * zcs;
+    *s = m->e11 > m->e22 ? m->e11 : m->e22;
+}
+
+
 unique_ptr<tvg::Shape> _applyProperty(SvgNode* node, unique_ptr<tvg::Shape> vg)
 {
     SvgStyleProperty* style = node->style;
 
     //Apply the transformation
-    if (node->transform) vg->transform(*node->transform);
+    if (node->transform) {
+         float tx = 0, ty = 0, s = 0, z = 0;
+         _getTransformationData(node->transform, &tx, &ty, &s, &z);
+         vg->scale(s);
+         vg->rotate(z);
+         vg->translate(tx, ty);
+    }
 
     if (node->type == SvgNodeType::Doc) return vg;
 
@@ -151,8 +176,13 @@ unique_ptr<tvg::Scene> _sceneBuildHelper(SvgNode* node)
 {
     if (node->type == SvgNodeType::Doc || node->type == SvgNodeType::G) {
         auto scene = tvg::Scene::gen();
-        if (node->transform) scene->transform(*node->transform);
-
+        if (node->transform) {
+            float tx = 0, ty = 0, s = 0, z = 0;
+            _getTransformationData(node->transform, &tx, &ty, &s, &z);
+            scene->scale(s);
+            scene->rotate(z);
+            scene->translate(tx, ty);
+        }
         for (vector<SvgNode*>::iterator itrChild = node->child.begin(); itrChild != node->child.end(); itrChild++) {
             SvgNode* child = *itrChild;
             if (child->type == SvgNodeType::Doc || child->type == SvgNodeType::G) scene->push(_sceneBuildHelper(*itrChild));
