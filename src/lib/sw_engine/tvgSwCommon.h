@@ -198,6 +198,8 @@ struct SwShape
     SwRleData*   rle;
     SwRleData*   strokeRle;
     SwBBox       bbox;
+
+    bool         rect;   //Fast Track: Othogonal rectangle?
 };
 
 

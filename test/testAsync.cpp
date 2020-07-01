@@ -29,7 +29,7 @@ bool tvgUpdateCmds(tvg::Canvas* canvas)
         float w = 1 + rand() % (int)(WIDTH * 1.3 / 2);
         float h = 1 + rand() %  (int)(HEIGHT * 1.3 / 2);
 
-        shape->appendRect(x, y, w, h, rand() % 400);
+        shape->appendRect(x, y, w, h, 0);
 
         //LinearGradient
         auto fill = tvg::LinearGradient::gen();

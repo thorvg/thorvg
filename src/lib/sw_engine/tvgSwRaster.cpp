@@ -24,17 +24,58 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
+static SwBBox _clipRegion(Surface& surface, SwBBox& in)
+{
+    auto bbox = in;
+
+    if (bbox.min.x < 0) bbox.min.x = 0;
+    if (bbox.min.y < 0) bbox.min.y = 0;
+    if (bbox.max.x > surface.w) bbox.max.x = surface.w;
+    if (bbox.max.y > surface.h) bbox.max.y = surface.h;
+
+    return bbox;
+}
+
+static bool _rasterTranslucentRect(Surface& surface, const SwBBox& region, uint32_t color)
+{
+    auto buffer = surface.buffer + (region.min.y * surface.stride) + region.min.x;
+    auto h = static_cast<uint32_t>(region.max.y - region.min.y);
+    auto w = static_cast<uint32_t>(region.max.x - region.min.x);
+    auto ialpha = 255 - COLOR_ALPHA(color);
+
+    for (uint32_t y = 0; y < h; ++y) {
+        auto dst = &buffer[y * surface.stride];
+        for (uint32_t x = 0; x < w; ++x) {
+            dst[x] = color + COLOR_ALPHA_BLEND(dst[x], ialpha);
+        }
+    }
+    return true;
+}
+
+
+static bool _rasterSolidRect(Surface& surface, const SwBBox& region, uint32_t color)
+{
+    auto buffer = surface.buffer + (region.min.y * surface.stride) + region.min.x;
+    auto h = static_cast<uint32_t>(region.max.y - region.min.y);
+    auto w = static_cast<uint32_t>(region.max.x - region.min.x);
+
+    for (uint32_t y = 0; y < h; ++y) {
+        auto dst = &buffer[y * surface.stride];
+        COLOR_SET(dst, color, w);
+    }
+    return true;
+}
+
 
 static bool _rasterTranslucentRle(Surface& surface, SwRleData* rle, uint32_t color)
 {
     if (!rle) return false;
 
     auto span = rle->spans;
-    auto stride = surface.stride;
     uint32_t src;
 
     for (uint32_t i = 0; i < rle->size; ++i) {
-        auto dst = &surface.buffer[span->y * stride + span->x];
+        auto dst = &surface.buffer[span->y * surface.stride + span->x];
         if (span->coverage < 255) src = COLOR_ALPHA_BLEND(color, span->coverage);
         else src = color;
         auto ialpha = 255 - COLOR_ALPHA(src);
@@ -52,10 +93,9 @@ static bool _rasterSolidRle(Surface& surface, SwRleData* rle, uint32_t color)
     if (!rle) return false;
 
     auto span = rle->spans;
-    auto stride = surface.stride;
 
     for (uint32_t i = 0; i < rle->size; ++i) {
-        auto dst = &surface.buffer[span->y * stride + span->x];
+        auto dst = &surface.buffer[span->y * surface.stride + span->x];
         if (span->coverage == 255) {
             COLOR_SET(dst, color, span->len);
         } else {
@@ -71,6 +111,70 @@ static bool _rasterSolidRle(Surface& surface, SwRleData* rle, uint32_t color)
 }
 
 
+static bool _rasterLinearGradientRect(Surface& surface, const SwBBox& region, const SwFill* fill)
+{
+    if (!fill) return false;
+
+    auto buffer = surface.buffer + (region.min.y * surface.stride) + region.min.x;
+    auto h = static_cast<uint32_t>(region.max.y - region.min.y);
+    auto w = static_cast<uint32_t>(region.max.x - region.min.x);
+
+    //Translucent Gradient
+    if (fill->translucent) {
+
+        auto tmpBuf = static_cast<uint32_t*>(alloca(surface.w * sizeof(uint32_t)));
+        if (!tmpBuf) return false;
+
+        for (uint32_t y = 0; y < h; ++y) {
+            auto dst = &buffer[y * surface.stride];
+            fillFetchLinear(fill, tmpBuf, region.min.y + y, region.min.x, w);
+            for (uint32_t x = 0; x < w; ++x) {
+                dst[x] = tmpBuf[x] + COLOR_ALPHA_BLEND(dst[x], 255 - COLOR_ALPHA(tmpBuf[x]));
+            }
+        }
+    //Opaque Gradient
+    } else {
+        for (uint32_t y = 0; y < h; ++y) {
+            auto dst = &buffer[y * surface.stride];
+            fillFetchLinear(fill, dst, region.min.y + y, region.min.x, w);
+        }
+    }
+    return true;
+}
+
+
+static bool _rasterRadialGradientRect(Surface& surface, const SwBBox& region, const SwFill* fill)
+{
+    if (!fill) return false;
+
+    auto buffer = surface.buffer + (region.min.y * surface.stride) + region.min.x;
+    auto h = static_cast<uint32_t>(region.max.y - region.min.y);
+    auto w = static_cast<uint32_t>(region.max.x - region.min.x);
+
+    //Translucent Gradient
+    if (fill->translucent) {
+
+        auto tmpBuf = static_cast<uint32_t*>(alloca(surface.w * sizeof(uint32_t)));
+        if (!tmpBuf) return false;
+
+        for (uint32_t y = 0; y < h; ++y) {
+            auto dst = &buffer[y * surface.stride];
+            fillFetchRadial(fill, tmpBuf, region.min.y + y, region.min.x, w);
+            for (uint32_t x = 0; x < w; ++x) {
+                dst[x] = tmpBuf[x] + COLOR_ALPHA_BLEND(dst[x], 255 - COLOR_ALPHA(tmpBuf[x]));
+            }
+        }
+    //Opaque Gradient
+    } else {
+        for (uint32_t y = 0; y < h; ++y) {
+            auto dst = &buffer[y * surface.stride];
+            fillFetchRadial(fill, dst, region.min.y + y, region.min.x, w);
+        }
+    }
+    return true;
+}
+
+
 static bool _rasterLinearGradientRle(Surface& surface, SwRleData* rle, const SwFill* fill)
 {
     if (!rle || !fill) return false;
@@ -79,12 +183,11 @@ static bool _rasterLinearGradientRle(Surface& surface, SwRleData* rle, const SwF
     if (!buf) return false;
 
     auto span = rle->spans;
-    auto stride = surface.stride;
 
     //Translucent Gradient
     if (fill->translucent) {
         for (uint32_t i = 0; i < rle->size; ++i) {
-            auto dst = &surface.buffer[span->y * stride + span->x];
+            auto dst = &surface.buffer[span->y * surface.stride + span->x];
             fillFetchLinear(fill, buf, span->y, span->x, span->len);
             if (span->coverage == 255) {
                 for (uint32_t i = 0; i < span->len; ++i) {
@@ -101,7 +204,7 @@ static bool _rasterLinearGradientRle(Surface& surface, SwRleData* rle, const SwF
     //Opaque Gradient
     } else {
         for (uint32_t i = 0; i < rle->size; ++i) {
-            auto dst = &surface.buffer[span->y * stride + span->x];
+            auto dst = &surface.buffer[span->y * surface.stride + span->x];
             if (span->coverage == 255) {
                 fillFetchLinear(fill, dst, span->y, span->x, span->len);
             } else {
@@ -126,12 +229,11 @@ static bool _rasterRadialGradientRle(Surface& surface, SwRleData* rle, const SwF
     if (!buf) return false;
 
     auto span = rle->spans;
-    auto stride = surface.stride;
 
     //Translucent Gradient
     if (fill->translucent) {
         for (uint32_t i = 0; i < rle->size; ++i) {
-            auto dst = &surface.buffer[span->y * stride + span->x];
+            auto dst = &surface.buffer[span->y * surface.stride + span->x];
             fillFetchRadial(fill, buf, span->y, span->x, span->len);
             if (span->coverage == 255) {
                 for (uint32_t i = 0; i < span->len; ++i) {
@@ -148,7 +250,7 @@ static bool _rasterRadialGradientRle(Surface& surface, SwRleData* rle, const SwF
     //Opaque Gradient
     } else {
         for (uint32_t i = 0; i < rle->size; ++i) {
-            auto dst = &surface.buffer[span->y * stride + span->x];
+            auto dst = &surface.buffer[span->y * surface.stride + span->x];
             if (span->coverage == 255) {
                 fillFetchRadial(fill, dst, span->y, span->x, span->len);
             } else {
@@ -171,15 +273,31 @@ static bool _rasterRadialGradientRle(Surface& surface, SwRleData* rle, const SwF
 
 bool rasterGradientShape(Surface& surface, SwShape& shape, unsigned id)
 {
-    if (id == FILL_ID_LINEAR) return _rasterLinearGradientRle(surface, shape.rle, shape.fill);
-    return _rasterRadialGradientRle(surface, shape.rle, shape.fill);
+    //Fast Track
+    if (shape.rect) {
+        auto region = _clipRegion(surface, shape.bbox);
+        if (id == FILL_ID_LINEAR) return _rasterLinearGradientRect(surface, region, shape.fill);
+        return _rasterRadialGradientRect(surface, region, shape.fill);
+    } else {
+        if (id == FILL_ID_LINEAR) return _rasterLinearGradientRle(surface, shape.rle, shape.fill);
+        return _rasterRadialGradientRle(surface, shape.rle, shape.fill);
+    }
+    return false;
 }
 
 
 bool rasterSolidShape(Surface& surface, SwShape& shape, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 {
-    if (a == 255) return _rasterSolidRle(surface, shape.rle, COLOR_ARGB_JOIN(r, g, b, a));
-    return _rasterTranslucentRle(surface, shape.rle, COLOR_ARGB_JOIN(r, g, b, a));
+    //Fast Track
+    if (shape.rect) {
+        auto region = _clipRegion(surface, shape.bbox);
+        if (a == 255) return _rasterSolidRect(surface, region, COLOR_ARGB_JOIN(r, g, b, a));
+        return _rasterTranslucentRect(surface, region, COLOR_ARGB_JOIN(r, g, b, a));
+    } else{
+        if (a == 255) return _rasterSolidRle(surface, shape.rle, COLOR_ARGB_JOIN(r, g, b, a));
+        return _rasterTranslucentRle(surface, shape.rle, COLOR_ARGB_JOIN(r, g, b, a));
+    }
+    return false;
 }
 
 
@@ -203,6 +321,5 @@ bool rasterClear(Surface& surface)
     }
     return true;
 }
-
 
 #endif /* _TVG_SW_RASTER_CPP_ */

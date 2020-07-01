@@ -241,7 +241,7 @@ static void _transformOutline(SwOutline* outline, const Matrix* transform)
         auto dy = static_cast<float>(outline->pts[i].y >> 6);
         auto tx = dx * transform->e11 + dy * transform->e12 + transform->e31;
         auto ty = dx * transform->e21 + dy * transform->e22 + transform->e32;
-        auto pt = Point{tx, ty};
+        auto pt = Point{round(tx), round(ty)};
         outline->pts[i] = TO_SWPOINT(&pt);
     }
 }
@@ -437,6 +437,28 @@ SwOutline* _genDashOutline(const Shape* sdata)
 }
 
 
+bool _fastTrack(const SwOutline* outline)
+{
+    //Fast Track: Othogonal rectangle?
+    if (outline->ptsCnt != 5) return false;
+
+    auto pt1 = outline->pts + 0;
+    auto pt2 = outline->pts + 1;
+    auto pt3 = outline->pts + 2;
+    auto pt4 = outline->pts + 3;
+
+    auto min1 = pt1->y < pt3->y ? pt1 : pt3;
+    auto min2 = pt2->y < pt4->y ? pt2 : pt4;
+    if (min1->y != min2->y) return false;
+
+    SwCoord len1 = pow(pt1->x - pt3->x, 2) + pow(pt1->y - pt3->y, 2);
+    SwCoord len2 = pow(pt2->x - pt4->x, 2) + pow(pt2->y - pt4->y, 2);
+    if (len1 == len2) return true;
+
+    return false;
+}
+
+
 /************************************************************************/
 /* External Class Implementation                                        */
 /************************************************************************/
@@ -450,6 +472,9 @@ bool shapeGenRle(SwShape& shape, const Shape* sdata, const SwSize& clip, const M
     if (!_updateBBox(shape.outline, shape.bbox)) goto end;
 
     if (!_checkValid(shape.outline, shape.bbox, clip)) goto end;
+
+    //Case: Fast Track Rectangle Drawing
+    if ((shape.rect = _fastTrack(shape.outline))) return true;
 
     //Case: Stroke Line
     if (shape.outline->opened) return true;
@@ -474,6 +499,7 @@ void shapeReset(SwShape& shape)
     shapeDelOutline(shape);
     rleFree(shape.rle);
     shape.rle = nullptr;
+    shape.rect = false;
     _initBBox(shape.bbox);
 }
 
