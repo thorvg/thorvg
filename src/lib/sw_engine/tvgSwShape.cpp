@@ -528,11 +528,14 @@ bool shapeGenOutline(SwShape& shape, const Shape* sdata)
     _growOutlinePoint(*outline, outlinePtsCnt);
     _growOutlineContour(*outline, outlineCntrsCnt);
 
+    auto closed = false;
+
     //Generate Outlines
     while (cmdCnt-- > 0) {
         switch(*cmds) {
             case PathCommand::Close: {
                 _outlineClose(*outline);
+                closed = true;
                 break;
             }
             case PathCommand::MoveTo: {
@@ -555,6 +558,8 @@ bool shapeGenOutline(SwShape& shape, const Shape* sdata)
     }
 
     _outlineEnd(*outline);
+
+    if (closed) outline->opened = false;
 
     //FIXME:
     //outline->flags = SwOutline::FillRule::Winding;

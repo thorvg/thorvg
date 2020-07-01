@@ -75,6 +75,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     shape5->cubicTo(cx + radius, cy + halfRadius, cx + halfRadius, cy + radius, cx, cy+ radius);
     shape5->cubicTo(cx - halfRadius, cy + radius, cx - radius, cy + halfRadius, cx - radius, cy);
     shape5->cubicTo(cx - radius, cy - halfRadius, cx - halfRadius, cy - radius, cx, cy - radius);
+    shape5->close();
     shape5->fill(127, 0, 0, 127);
     scene2->push(move(shape5));
 
