@@ -264,7 +264,8 @@ SwFixed mathMean(SwFixed angle1, SwFixed angle2);
 
 void shapeReset(SwShape& shape);
 bool shapeGenOutline(SwShape& shape, const Shape* sdata);
-bool shapeGenRle(SwShape& shape, const Shape* sdata, const SwSize& clip, const Matrix* transform);
+bool shapePrepare(SwShape& shape, const Shape* sdata, const SwSize& clip, const Matrix* transform);
+bool shapeGenRle(SwShape& shape, const Shape* sdata, const SwSize& clip);
 void shapeDelOutline(SwShape& shape);
 void shapeResetStroke(SwShape& shape, const Shape* sdata);
 bool shapeGenStrokeRle(SwShape& shape, const Shape* sdata, const SwSize& clip);

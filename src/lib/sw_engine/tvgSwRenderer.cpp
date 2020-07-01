@@ -187,8 +187,12 @@ void* SwRenderer::prepare(const Shape& sdata, void* data, const RenderTransform*
             shapeReset(task->shape);
             uint8_t alpha = 0;
             task->sdata->fill(nullptr, nullptr, nullptr, &alpha);
-            if (alpha > 0 || task->sdata->fill() || strokeAlpha > 0) {
-                if (!shapeGenRle(task->shape, task->sdata, task->clip, task->transform)) return;
+            bool renderShape = (alpha > 0 || task->sdata->fill());
+            if (renderShape || strokeAlpha > 0) {
+                if (!shapePrepare(task->shape, task->sdata, task->clip, task->transform)) return;
+                if (renderShape) {
+                    if (!shapeGenRle(task->shape, task->sdata, task->clip)) return;
+                }
             }
         }
         //Fill

@@ -463,25 +463,31 @@ bool _fastTrack(const SwOutline* outline)
 /* External Class Implementation                                        */
 /************************************************************************/
 
-bool shapeGenRle(SwShape& shape, const Shape* sdata, const SwSize& clip, const Matrix* transform)
+bool shapePrepare(SwShape& shape, const Shape* sdata, const SwSize& clip, const Matrix* transform)
 {
     if (!shapeGenOutline(shape, sdata)) return false;
 
     _transformOutline(shape.outline, transform);
 
-    if (!_updateBBox(shape.outline, shape.bbox)) goto end;
+    if (!_updateBBox(shape.outline, shape.bbox)) return false;
 
-    if (!_checkValid(shape.outline, shape.bbox, clip)) goto end;
+    if (!_checkValid(shape.outline, shape.bbox, clip)) return false;
 
-    //Case: Fast Track Rectangle Drawing
-    if ((shape.rect = _fastTrack(shape.outline))) return true;
+    return true;
+}
 
+
+bool shapeGenRle(SwShape& shape, const Shape* sdata, const SwSize& clip)
+{
+    //FIXME: Should we draw it?
     //Case: Stroke Line
-    if (shape.outline->opened) return true;
+    //if (shape.outline->opened) return true;
 
-    shape.rle = rleRender(shape.outline, shape.bbox, clip);
-end:
-    if (shape.rle) return true;
+    //Case A: Fast Track Rectangle Drawing
+    if ((shape.rect = _fastTrack(shape.outline))) return true;
+    //Case B: Normale Shape RLE Drawing
+    if ((shape.rle = rleRender(shape.outline, shape.bbox, clip))) return true;
+
     return false;
 }
 
