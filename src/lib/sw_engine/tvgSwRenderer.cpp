@@ -109,7 +109,7 @@ void SwRenderer::doRender()
             if (a > 0) rasterSolidShape(surface, task->shape, r, g, b, a);
         }
         task->sdata->strokeColor(&r, &g, &b, &a);
-        if (a > 0) rasterStroke(surface, task->shape, r, g, b, a);
+       if (a > 0) rasterStroke(surface, task->shape, r, g, b, a);
         renderTasks.pop();
     }
 }
@@ -178,7 +178,8 @@ void* SwRenderer::prepare(const Shape& sdata, void* data, const RenderTransform*
 
         //Valid Stroking?
         uint8_t strokeAlpha = 0;
-        if (task->sdata->strokeWidth() > FLT_EPSILON) {
+        auto strokeWidth = task->sdata->strokeWidth();
+        if (strokeWidth > FLT_EPSILON) {
             task->sdata->strokeColor(nullptr, nullptr, nullptr, &strokeAlpha);
         }
 
@@ -188,10 +189,11 @@ void* SwRenderer::prepare(const Shape& sdata, void* data, const RenderTransform*
             uint8_t alpha = 0;
             task->sdata->fill(nullptr, nullptr, nullptr, &alpha);
             bool renderShape = (alpha > 0 || task->sdata->fill());
-            if (renderShape || strokeAlpha > 0) {
+            if (renderShape || strokeAlpha) {
                 if (!shapePrepare(task->shape, task->sdata, task->clip, task->transform)) return;
                 if (renderShape) {
-                    if (!shapeGenRle(task->shape, task->sdata, task->clip)) return;
+                    auto antiAlias = (strokeAlpha > 0 && strokeWidth >= 2) ? false : true;
+                    if (!shapeGenRle(task->shape, task->sdata, task->clip, antiAlias)) return;
                 }
             }
         }

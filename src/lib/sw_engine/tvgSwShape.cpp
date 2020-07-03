@@ -477,7 +477,7 @@ bool shapePrepare(SwShape& shape, const Shape* sdata, const SwSize& clip, const 
 }
 
 
-bool shapeGenRle(SwShape& shape, const Shape* sdata, const SwSize& clip)
+bool shapeGenRle(SwShape& shape, const Shape* sdata, const SwSize& clip, bool antiAlias)
 {
     //FIXME: Should we draw it?
     //Case: Stroke Line
@@ -486,7 +486,7 @@ bool shapeGenRle(SwShape& shape, const Shape* sdata, const SwSize& clip)
     //Case A: Fast Track Rectangle Drawing
     if ((shape.rect = _fastTrack(shape.outline))) return true;
     //Case B: Normale Shape RLE Drawing
-    if ((shape.rle = rleRender(shape.outline, shape.bbox, clip))) return true;
+    if ((shape.rle = rleRender(shape.outline, shape.bbox, clip, antiAlias))) return true;
 
     return false;
 }
@@ -667,7 +667,7 @@ bool shapeGenStrokeRle(SwShape& shape, const Shape* sdata, const SwSize& clip)
 
     if (!_checkValid(strokeOutline, bbox, clip)) return false;
 
-    shape.strokeRle = rleRender(strokeOutline, bbox, clip);
+    shape.strokeRle = rleRender(strokeOutline, bbox, clip, true);
 
     _delOutline(strokeOutline);
 

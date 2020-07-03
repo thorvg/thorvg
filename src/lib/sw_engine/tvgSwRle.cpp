@@ -87,6 +87,7 @@ struct RleWorker
     SwSize clip;
 
     bool invalid;
+    bool antiAlias;
 };
 
 
@@ -196,6 +197,7 @@ static void _horizLine(RleWorker& rw, SwCoord x, SwCoord y, SwCoord area, SwCoor
     }
 
     if (coverage > 0) {
+        if (!rw.antiAlias) coverage = 255;
         auto count = rw.spansCnt;
         auto span = rw.spans + count - 1;
         assert(span);
@@ -261,22 +263,16 @@ static void _sweep(RleWorker& rw)
 
         while (cell) {
 
-            if (cell->x > x && cover != 0)
-                _horizLine(rw, x, y, cover * (ONE_PIXEL * 2), cell->x - x);
-
+            if (cell->x > x && cover != 0) _horizLine(rw, x, y, cover * (ONE_PIXEL * 2), cell->x - x);
             cover += cell->cover;
             auto area = cover * (ONE_PIXEL * 2) - cell->area;
-
-            //OPTIMIZE ME: This occurs 1 length span data.
-            if (area != 0 && cell->x >= 0)
-                _horizLine(rw, cell->x, y, area, 1);
+            if (area != 0 && cell->x >= 0) _horizLine(rw, cell->x, y, area, 1);
 
             x = cell->x + 1;
             cell = cell->next;
         }
 
-        if (cover != 0)
-            _horizLine(rw, x, y, cover * (ONE_PIXEL * 2), rw.cellXCnt - x);
+        if (cover != 0) _horizLine(rw, x, y, cover * (ONE_PIXEL * 2), rw.cellXCnt - x);
     }
 
     if (rw.spansCnt > 0) _genSpan(rw.rle, rw.spans, rw.spansCnt);
@@ -648,7 +644,7 @@ static bool _genRle(RleWorker& rw)
 /* External Class Implementation                                        */
 /************************************************************************/
 
-SwRleData* rleRender(const SwOutline* outline, const SwBBox& bbox, const SwSize& clip)
+SwRleData* rleRender(const SwOutline* outline, const SwBBox& bbox, const SwSize& clip, bool antiAlias)
 {
     //Please adjust when you out of cell memory (default: 16384L)
     constexpr auto RENDER_POOL_SIZE = 163840L * 2;
@@ -681,6 +677,7 @@ SwRleData* rleRender(const SwOutline* outline, const SwBBox& bbox, const SwSize&
     rw.bandSize = rw.bufferSize / (sizeof(Cell) * 8);  //bandSize: 64
     rw.bandShoot = 0;
     rw.clip = clip;
+    rw.antiAlias = antiAlias;
     rw.rle = reinterpret_cast<SwRleData*>(calloc(1, sizeof(SwRleData)));
     assert(rw.rle);
 

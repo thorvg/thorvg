@@ -265,7 +265,7 @@ SwFixed mathMean(SwFixed angle1, SwFixed angle2);
 void shapeReset(SwShape& shape);
 bool shapeGenOutline(SwShape& shape, const Shape* sdata);
 bool shapePrepare(SwShape& shape, const Shape* sdata, const SwSize& clip, const Matrix* transform);
-bool shapeGenRle(SwShape& shape, const Shape* sdata, const SwSize& clip);
+bool shapeGenRle(SwShape& shape, const Shape* sdata, const SwSize& clip, bool antiAlias);
 void shapeDelOutline(SwShape& shape);
 void shapeResetStroke(SwShape& shape, const Shape* sdata);
 bool shapeGenStrokeRle(SwShape& shape, const Shape* sdata, const SwSize& clip);
@@ -286,7 +286,7 @@ void fillFree(SwFill* fill);
 void fillFetchLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len);
 void fillFetchRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len);
 
-SwRleData* rleRender(const SwOutline* outline, const SwBBox& bbox, const SwSize& clip);
+SwRleData* rleRender(const SwOutline* outline, const SwBBox& bbox, const SwSize& clip, bool antiAlias);
 void rleFree(SwRleData* rle);
 
 bool rasterGradientShape(Surface& surface, SwShape& shape, unsigned id);
