@@ -150,11 +150,28 @@ unique_ptr<tvg::Shape> _shapeBuildHelper(SvgNode* node)
             break;
         }
         case SvgNodeType::Rect: {
-            if (node->node.rect.rx == node->node.rect.ry) {
+            if (node->node.rect.rx == node->node.rect.ry || (node->node.rect.rx == 0 || node->node.rect.ry == 0)) {
                  shape->appendRect(node->node.rect.x, node->node.rect.y, node->node.rect.w, node->node.rect.h, node->node.rect.rx);
             }
             else {
-                //TODO: Support rounded rectangle
+                float x = node->node.rect.x;
+                float y = node->node.rect.y;
+                float w = node->node.rect.w;
+                float h = node->node.rect.h;
+                float rx = node->node.rect.rx;
+                float ry = node->node.rect.ry;
+                float rhx = rx / 2;
+                float rhy = ry / 2;
+                shape->moveTo(x + rx, y);
+                shape->lineTo(x + w - rx, y);
+                shape->cubicTo(x + w - rx + rhx, y, x + w, y + ry - rhy, x + w, y + ry);
+                shape->lineTo(x + w, y + h - ry);
+                shape->cubicTo(x + w, y + h - ry + rhy, x + w - rx + rhx, y + h, x + w - rx, y + h);
+                shape->lineTo(x + rx, y + h);
+                shape->cubicTo(x + rx - rhx, y + h, x, y + h - ry + rhy, x, y + h - ry);
+                shape->lineTo(x, y + ry);
+                shape->cubicTo(x, y + ry - rhy, x + rx - rhx, y, x + rx, y);
+                shape->close();
             }
             break;
         }
