@@ -648,7 +648,6 @@ bool shapeGenStrokeRle(SwShape& shape, const Shape* sdata, const SwSize& clip)
     if (sdata->strokeDash(nullptr) > 0) {
         shapeOutline = _genDashOutline(sdata);
         if (!shapeOutline) return false;
-
     //Normal Style stroke
     } else {
         if (!shape.outline) {

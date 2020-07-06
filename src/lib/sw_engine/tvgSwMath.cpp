@@ -237,7 +237,7 @@ bool mathSmallCubic(SwPoint* base, SwFixed& angleIn, SwFixed& angleMid, SwFixed&
     auto theta2 = abs(mathDiff(angleMid, angleOut));
 
     if ((theta1 < (SW_ANGLE_PI / 8)) && (theta2 < (SW_ANGLE_PI / 8))) return true;
-    else return false;
+    return false;
 }
 
 

@@ -442,7 +442,7 @@ static void _cubicTo(SwStroke& stroke, const SwPoint& ctrl1, const SwPoint& ctrl
         //initialize with current direction
         angleIn = angleOut = angleMid = stroke.angleIn;
 
-        if (arc < limit && mathSmallCubic(arc, angleIn, angleMid, angleOut)) {
+        if (arc < limit && !mathSmallCubic(arc, angleIn, angleMid, angleOut)) {
             if (stroke.firstPt) stroke.angleIn = angleIn;
             mathSplitCubic(arc);
             arc += 3;
@@ -458,7 +458,7 @@ static void _cubicTo(SwStroke& stroke, const SwPoint& ctrl1, const SwPoint& ctrl
                 stroke.angleOut = angleIn;
                 _processCorner(stroke, 0);
             }
-        } else if (abs(mathDiff(stroke.angleIn, angleIn)) > (SW_ANGLE_PI / 8)) {
+        } else if (abs(mathDiff(stroke.angleIn, angleIn)) > (SW_ANGLE_PI / 8) / 4) {
             //if the deviation from one arc to the next is too great add a round corner
             stroke.center = arc[3];
             stroke.angleOut = angleIn;
@@ -534,9 +534,11 @@ static void _cubicTo(SwStroke& stroke, const SwPoint& ctrl1, const SwPoint& ctrl
                     _borderLineTo(border, _end, false);
                     _borderCubicTo(border, _ctrl2, _ctrl1, _start);
 
-                    //and thenmove to the endpoint
+                    //and then move to the endpoint
                     _borderLineTo(border, _end, false);
 
+                    ++side;
+                    ++border;
                     continue;
                 }
 
@@ -651,7 +653,7 @@ static void _addReverseLeft(SwStroke& stroke, bool opened)
 
 static void _beginSubPath(SwStroke& stroke, SwPoint& to, bool opened)
 {
-    /* We cannot process the first point because there is not enought
+    /* We cannot process the first point because there is not enough
        information regarding its corner/cap. Later, it will be processed
        in the _endSubPath() */
 
