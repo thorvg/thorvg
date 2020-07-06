@@ -125,7 +125,7 @@ unique_ptr<tvg::Shape> _shapeBuildHelper(SvgNode* node)
             break;
         }
         case SvgNodeType::Ellipse: {
-            //TODO: Support ellipse
+            shape->appendCircle(node->node.ellipse.cx, node->node.ellipse.cy, node->node.ellipse.rx, node->node.ellipse.ry);
             break;
         }
         case SvgNodeType::Polygon: {
