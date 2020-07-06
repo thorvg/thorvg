@@ -14,7 +14,7 @@ static char* _skipComma(const char* content)
 }
 
 
-static inline bool _parseNumber(char** content, float* number)
+static bool _parseNumber(char** content, float* number)
 {
     char* end = NULL;
     *number = strtof(*content, &end);
@@ -26,7 +26,7 @@ static inline bool _parseNumber(char** content, float* number)
 }
 
 
-static inline bool _parseLong(char** content, int* number)
+static bool _parseLong(char** content, int* number)
 {
     char* end = NULL;
     *number = strtol(*content, &end, 10) ? 1 : 0;
@@ -36,6 +36,183 @@ static inline bool _parseLong(char** content, int* number)
     return true;
 }
 
+void _pathAppendArcTo(vector<PathCommand>* cmds, vector<Point>* pts, float* arr, Point* cur, Point* curCtl, float x, float y, float rx, float ry, float angle, bool largeArc, bool sweep)
+{
+    float cxp, cyp, cx, cy;
+    float sx, sy;
+    float cosPhi, sinPhi;
+    float dx2, dy2;
+    float x1p, y1p;
+    float x1p2, y1p2;
+    float rx2, ry2;
+    float lambda;
+    float c;
+    float at;
+    float theta1, deltaTheta;
+    float nat;
+    float delta, bcp;
+    float cosPhiRx, cosPhiRy;
+    float sinPhiRx, sinPhiRy;
+    float cosTheta1, sinTheta1;
+    int segments, i;
+
+    //Some helpful stuff is available here:
+    //http://www.w3.org/TR/SVG/implnote.html#ArcImplementationNotes
+    sx = cur->x;
+    sy = cur->y;
+
+    //If start and end points are identical, then no arc is drawn
+    if ((fabs(x - sx) < (1.0f / 256.0f)) && (fabs(y - sy) < (1.0f / 256.0f))) return;
+
+    //Correction of out-of-range radii, see F6.6.1 (step 2)
+    rx = fabs(rx);
+    ry = fabs(ry);
+    if ((rx < 0.5f) || (ry < 0.5f)) {
+        Point p = {x, y};
+        cmds->push_back(PathCommand::LineTo);
+        pts->push_back(p);
+        *cur = p;
+        return;
+    }
+
+    angle = angle * M_PI / 180.0f;
+    cosPhi = cosf(angle);
+    sinPhi = sinf(angle);
+    dx2 = (sx - x) / 2.0f;
+    dy2 = (sy - y) / 2.0f;
+    x1p = cosPhi * dx2 + sinPhi * dy2;
+    y1p = cosPhi * dy2 - sinPhi * dx2;
+    x1p2 = x1p * x1p;
+    y1p2 = y1p * y1p;
+    rx2 = rx * rx;
+    ry2 = ry * ry;
+    lambda = (x1p2 / rx2) + (y1p2 / ry2);
+
+    //Correction of out-of-range radii, see F6.6.2 (step 4)
+    if (lambda > 1.0f) {
+        //See F6.6.3
+        float lambdaRoot = sqrt(lambda);
+
+        rx *= lambdaRoot;
+        ry *= lambdaRoot;
+        //Update rx2 and ry2
+        rx2 = rx * rx;
+        ry2 = ry * ry;
+    }
+
+    c = (rx2 * ry2) - (rx2 * y1p2) - (ry2 * x1p2);
+
+    //Check if there is no possible solution
+    //(i.e. we can't do a square root of a negative value)
+    if (c < 0.0f) {
+        //Scale uniformly until we have a single solution
+        //(see F6.2) i.e. when c == 0.0
+        float scale = sqrt(1.0f - c / (rx2 * ry2));
+        rx *= scale;
+        ry *= scale;
+        //Update rx2 and ry2
+        rx2 = rx * rx;
+        ry2 = ry * ry;
+
+        //Step 2 (F6.5.2) - simplified since c == 0.0
+        cxp = 0.0f;
+        cyp = 0.0f;
+        //Step 3 (F6.5.3 first part) - simplified since cxp and cyp == 0.0
+        cx = 0.0f;
+        cy = 0.0f;
+    } else {
+        //Complete c calculation
+        c = sqrt(c / ((rx2 * y1p2) + (ry2 * x1p2)));
+        //Inverse sign if Fa == Fs
+        if (largeArc == sweep) c = -c;
+
+        //Step 2 (F6.5.2)
+        cxp = c * (rx * y1p / ry);
+        cyp = c * (-ry * x1p / rx);
+
+        //Step 3 (F6.5.3 first part)
+        cx = cosPhi * cxp - sinPhi * cyp;
+        cy = sinPhi * cxp + cosPhi * cyp;
+    }
+
+    //Step 3 (F6.5.3 second part) we now have the center point of the ellipse
+    cx += (sx + x) / 2.0f;
+    cy += (sy + y) / 2.0f;
+
+    //Sstep 4 (F6.5.4)
+    //We dont' use arccos (as per w3c doc), see
+    //http://www.euclideanspace.com/maths/algebra/vectors/angleBetween/index.htm
+    //Note: atan2 (0.0, 1.0) == 0.0
+    at = atan2(((y1p - cyp) / ry), ((x1p - cxp) / rx));
+    theta1 = (at < 0.0f) ? 2.0f * M_PI + at : at;
+
+    nat = atan2(((-y1p - cyp) / ry), ((-x1p - cxp) / rx));
+    deltaTheta = (nat < at) ? 2.0f * M_PI - at + nat : nat - at;
+
+    if (sweep) {
+        //Ensure delta theta < 0 or else add 360 degrees
+        if (deltaTheta < 0.0f) deltaTheta += 2.0f * M_PI;
+    } else {
+        //Ensure delta theta > 0 or else substract 360 degrees
+        if (deltaTheta > 0.0f) deltaTheta -= 2.0f * M_PI;
+    }
+
+    //Add several cubic bezier to approximate the arc
+    //(smaller than 90 degrees)
+    //We add one extra segment because we want something
+    //Smaller than 90deg (i.e. not 90 itself)
+    segments = (int)(fabs(deltaTheta / M_PI_2)) + 1.0f;
+    delta = deltaTheta / segments;
+
+    //http://www.stillhq.com/ctpfaq/2001/comp.text.pdf-faq-2001-04.txt (section 2.13)
+    bcp = 4.0f / 3.0f * (1.0f - cos(delta / 2.0f)) / sin(delta / 2.0f);
+
+    cosPhiRx = cosPhi * rx;
+    cosPhiRy = cosPhi * ry;
+    sinPhiRx = sinPhi * rx;
+    sinPhiRy = sinPhi * ry;
+
+    cosTheta1 = cos(theta1);
+    sinTheta1 = sin(theta1);
+
+    for (i = 0; i < segments; ++i) {
+        //End angle (for this segment) = current + delta
+        float c1x, c1y, ex, ey, c2x, c2y;
+        float theta2 = theta1 + delta;
+        float cosTheta2 = cos(theta2);
+        float sinTheta2 = sin(theta2);
+        static Point p[3];
+
+        //First control point (based on start point sx,sy)
+        c1x = sx - bcp * (cosPhiRx * sinTheta1 + sinPhiRy * cosTheta1);
+        c1y = sy + bcp * (cosPhiRy * cosTheta1 - sinPhiRx * sinTheta1);
+
+        //End point (for this segment)
+        ex = cx + (cosPhiRx * cosTheta2 - sinPhiRy * sinTheta2);
+        ey = cy + (sinPhiRx * cosTheta2 + cosPhiRy * sinTheta2);
+
+        //Second control point (based on end point ex,ey)
+        c2x = ex + bcp * (cosPhiRx * sinTheta2 + sinPhiRy * cosTheta2);
+        c2y = ey + bcp * (sinPhiRx * sinTheta2 - cosPhiRy * cosTheta2);
+        cmds->push_back(PathCommand::CubicTo);
+        p[0] = {c1x, c1y};
+        p[1] = {c2x, c2y};
+        p[2] = {ex, ey};
+        pts->push_back(p[0]);
+        pts->push_back(p[1]);
+        pts->push_back(p[2]);
+        *curCtl = p[1];
+        *cur = p[2];
+
+        //Next start point is the current end point (same for angle)
+        sx = ex;
+        sy = ey;
+        theta1 = theta2;
+        //Avoid recomputations
+        cosTheta1 = cosTheta2;
+        sinTheta1 = sinTheta2;
+    }
+}
 
 static int _numberCount(char cmd)
 {
@@ -170,12 +347,12 @@ static void _processCommand(vector<PathCommand>* cmds, vector<Point>* pts, char 
         }
         case 'q':
         case 'Q': {
-            tvg::Point p[3];
+            Point p[3];
             float ctrl_x0 = (cur->x + 2 * arr[0]) * (1.0 / 3.0);
             float ctrl_y0 = (cur->y + 2 * arr[1]) * (1.0 / 3.0);
             float ctrl_x1 = (arr[2] + 2 * arr[0]) * (1.0 / 3.0);
             float ctrl_y1 = (arr[3] + 2 * arr[1]) * (1.0 / 3.0);
-            cmds->push_back(tvg::PathCommand::CubicTo);
+            cmds->push_back(PathCommand::CubicTo);
             p[0] = {ctrl_x0, ctrl_y0};
             p[1] = {ctrl_x1, ctrl_y1};
             p[2] = {arr[2], arr[3]};
@@ -217,12 +394,8 @@ static void _processCommand(vector<PathCommand>* cmds, vector<Point>* pts, char 
         }
         case 'a':
         case 'A': {
-            //TODO: Implement arc_to
-            break;
-        }
-        case 'E':
-        case 'e': {
-            //TODO: Implement arc
+            _pathAppendArcTo(cmds, pts, arr, cur, curCtl, arr[5], arr[6], arr[0], arr[1], arr[2], arr[3], arr[4]);
+            *cur = {arr[5] ,arr[6]};
             break;
         }
         default: {
