@@ -48,9 +48,9 @@ unique_ptr<tvg::Shape> _applyProperty(SvgNode* node, unique_ptr<tvg::Shape> vg)
     if (node->transform) {
          float tx = 0, ty = 0, s = 0, z = 0;
          _getTransformationData(node->transform, &tx, &ty, &s, &z);
-         vg->scale(s);
-         vg->rotate(z);
-         vg->translate(tx, ty);
+         if (!(fabsf(s - 1) <= FLT_EPSILON)) vg->scale(s);
+         if (!(fmod(fabsf(z), 360.0) <= FLT_EPSILON)) vg->rotate(fmod(z, 360.0));
+         if (!(fabsf(tx) <= FLT_EPSILON) && !(fabsf(ty) <= FLT_EPSILON)) vg->translate(tx, ty);
     }
 
     if (node->type == SvgNodeType::Doc) return vg;
@@ -174,9 +174,9 @@ unique_ptr<tvg::Scene> _sceneBuildHelper(SvgNode* node)
         if (node->transform) {
             float tx = 0, ty = 0, s = 0, z = 0;
             _getTransformationData(node->transform, &tx, &ty, &s, &z);
-            scene->scale(s);
-            scene->rotate(z);
-            scene->translate(tx, ty);
+            if (!(fabsf(s - 1) <= FLT_EPSILON)) scene->scale(s);
+            if (!(fmod(fabsf(z), 360.0) <= FLT_EPSILON)) scene->rotate(fmod(z, 360.0));
+            if (!(fabsf(tx) <= FLT_EPSILON) && !(fabsf(ty) <= FLT_EPSILON)) scene->translate(tx, ty);
         }
         for (vector<SvgNode*>::iterator itrChild = node->child.begin(); itrChild != node->child.end(); itrChild++) {
             SvgNode* child = *itrChild;
