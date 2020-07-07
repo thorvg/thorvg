@@ -23,6 +23,12 @@ namespace tvg
 class Loader
 {
 public:
+    //default view box, if any.
+    float vx = 0;
+    float vy = 0;
+    float vw = 0;
+    float vh = 0;
+
     virtual ~Loader() {}
 
     virtual bool open(const char* path) = 0;
