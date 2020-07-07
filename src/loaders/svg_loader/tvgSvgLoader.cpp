@@ -2242,7 +2242,7 @@ SvgLoader::SvgLoader() :
 
 SvgLoader::~SvgLoader()
 {
-    if (rootProgress.valid()) root = rootProgress.get();
+    close();
 }
 
 
@@ -2305,8 +2305,13 @@ bool SvgLoader::close()
 {
     if (rootProgress.valid()) root = rootProgress.get();
 
-    if (loaderData.svgParse) free(loaderData.svgParse);
+    if (loaderData.svgParse) {
+        free(loaderData.svgParse);
+        loaderData.svgParse = nullptr;
+    }
     _freeSvgNode(loaderData.doc);
+    loaderData.doc = nullptr;
+
     return true;
 }
 
