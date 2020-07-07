@@ -12,7 +12,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     //Prepare Round Rectangle
     auto shape1 = tvg::Shape::gen();
-    shape1->appendRect(0, 0, 400, 400, 50);      //x, y, w, h, cornerRadius
+    shape1->appendRect(0, 0, 400, 400, 50, 50);  //x, y, w, h, rx, ry
     shape1->fill(0, 255, 0, 255);                //r, g, b, a
     scene->push(move(shape1));
 

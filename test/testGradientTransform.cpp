@@ -16,8 +16,8 @@ void tvgDrawCmds(tvg::Canvas* canvas)
        instead, you should consider not to interrupt this pointer life-cycle. */
     pShape = shape.get();
 
-    shape->appendRect(-285, -300, 200, 200, 0);
-    shape->appendRect(-185, -200, 300, 300, 100);
+    shape->appendRect(-285, -300, 200, 200, 0, 0);
+    shape->appendRect(-185, -200, 300, 300, 100, 100);
     shape->appendCircle(115, 100, 100, 100);
     shape->appendCircle(115, 200, 170, 100);
 
@@ -39,7 +39,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     //Shape2
     auto shape2 = tvg::Shape::gen();
     pShape2 = shape2.get();
-    shape2->appendRect(-50, -50, 100, 100, 0);
+    shape2->appendRect(-50, -50, 100, 100, 0, 0);
     shape2->translate(400, 400);
 
     //LinearGradient
@@ -61,7 +61,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     /* Look, how shape3's origin is different with shape2
        The center of the shape is the anchor point for transformation. */
-    shape3->appendRect(100, 100, 150, 100, 20);
+    shape3->appendRect(100, 100, 150, 100, 20, 20);
 
     //RadialGradient
     auto fill3 = tvg::RadialGradient::gen();

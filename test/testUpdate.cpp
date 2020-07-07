@@ -8,7 +8,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 {
     //Shape
     auto shape = tvg::Shape::gen();
-    shape->appendRect(-100, -100, 200, 200, 0);
+    shape->appendRect(-100, -100, 200, 200, 0, 0);
     shape->fill(255, 255, 255, 255);
     canvas->push(move(shape));
 }
@@ -20,7 +20,7 @@ void tvgUpdateCmds(tvg::Canvas* canvas, float progress)
 
     //Shape
     auto shape = tvg::Shape::gen();
-    shape->appendRect(-100, -100, 200, 200, (100 * progress));
+    shape->appendRect(-100, -100, 200, 200, (100 * progress), (100 * progress));
     shape->fill(rand()%255, rand()%255, rand()%255, 255);
     shape->translate(800 * progress, 800 * progress);
     shape->scale(1 - 0.75 * progress);

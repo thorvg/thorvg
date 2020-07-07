@@ -228,8 +228,8 @@ public:
     Result close() noexcept;
 
     //Shape
-    Result appendRect(float x, float y, float w, float h, float cornerRadius) noexcept;
-    Result appendCircle(float cx, float cy, float radiusW, float radiusH) noexcept;
+    Result appendRect(float x, float y, float w, float h, float rx, float ry) noexcept;
+    Result appendCircle(float cx, float cy, float rx, float ry) noexcept;
     Result appendPath(const PathCommand* cmds, uint32_t cmdCnt, const Point* pts, uint32_t ptsCnt) noexcept;
 
     //Stroke

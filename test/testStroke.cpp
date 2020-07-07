@@ -8,7 +8,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 {
     //Shape 1
     auto shape1 = tvg::Shape::gen();
-    shape1->appendRect(50, 50, 200, 200, 0);
+    shape1->appendRect(50, 50, 200, 200, 0, 0);
     shape1->fill(50, 50, 50, 255);
     shape1->stroke(255, 255, 255, 255);       //color: r, g, b, a
     shape1->stroke(tvg::StrokeJoin::Bevel);   //default is Bevel
@@ -18,7 +18,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     //Shape 2
     auto shape2 = tvg::Shape::gen();
-    shape2->appendRect(300, 50, 200, 200, 0);
+    shape2->appendRect(300, 50, 200, 200, 0, 0);
     shape2->fill(50, 50, 50, 255);
     shape2->stroke(255, 255, 255, 255);
     shape2->stroke(tvg::StrokeJoin::Round);
@@ -28,7 +28,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     //Shape 3
     auto shape3 = tvg::Shape::gen();
-    shape3->appendRect(550, 50, 200, 200, 0);
+    shape3->appendRect(550, 50, 200, 200, 0, 0);
     shape3->fill(50, 50, 50, 255);
     shape3->stroke(255, 255, 255, 255);
     shape3->stroke(tvg::StrokeJoin::Miter);

@@ -8,11 +8,11 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 {
     //Prepare a Shape (Rectangle + Rectangle + Circle + Circle)
     auto shape1 = tvg::Shape::gen();
-    shape1->appendRect(0, 0, 200, 200, 0);          //x, y, w, h, cornerRadius
-    shape1->appendRect(100, 100, 300, 300, 100);    //x, y, w, h, cornerRadius
-    shape1->appendCircle(400, 400, 100, 100);       //cx, cy, radiusW, radiusH
-    shape1->appendCircle(400, 500, 170, 100);       //cx, cy, radiusW, radiusH
-    shape1->fill(255, 255, 0, 255);                 //r, g, b, a
+    shape1->appendRect(0, 0, 200, 200, 0, 0);          //x, y, w, h, rx, ry
+    shape1->appendRect(100, 100, 300, 300, 100, 100);  //x, y, w, h, rx, ry
+    shape1->appendCircle(400, 400, 100, 100);          //cx, cy, radiusW, radiusH
+    shape1->appendCircle(400, 500, 170, 100);          //cx, cy, radiusW, radiusH
+    shape1->fill(255, 255, 0, 255);                    //r, g, b, a
 
     canvas->push(move(shape1));
 }

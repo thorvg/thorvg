@@ -154,20 +154,20 @@ Result Shape::close() noexcept
 }
 
 
-Result Shape::appendCircle(float cx, float cy, float radiusW, float radiusH) noexcept
+Result Shape::appendCircle(float cx, float cy, float rx, float ry) noexcept
 {
     auto impl = pImpl.get();
     if (!impl || !impl->path) return Result::MemoryCorruption;
 
-    auto halfKappaW = radiusW * PATH_KAPPA;
-    auto halfKappaH = radiusH * PATH_KAPPA;
+    auto rxKappa = rx * PATH_KAPPA;
+    auto ryKappa = ry * PATH_KAPPA;
 
     impl->path->grow(6, 13);
-    impl->path->moveTo(cx, cy - radiusH);
-    impl->path->cubicTo(cx + halfKappaW, cy - radiusH, cx + radiusW, cy - halfKappaH, cx + radiusW, cy);
-    impl->path->cubicTo(cx + radiusW, cy + halfKappaH, cx + halfKappaW, cy + radiusH, cx, cy + radiusH);
-    impl->path->cubicTo(cx - halfKappaW, cy + radiusH, cx - radiusW, cy + halfKappaH, cx - radiusW, cy);
-    impl->path->cubicTo(cx - radiusW, cy - halfKappaH, cx - halfKappaW, cy - radiusH, cx, cy - radiusH);
+    impl->path->moveTo(cx, cy - ry);
+    impl->path->cubicTo(cx + rxKappa, cy - ry, cx + rx, cy - ryKappa, cx + rx, cy);
+    impl->path->cubicTo(cx + rx, cy + ryKappa, cx + rxKappa, cy + ry, cx, cy + ry);
+    impl->path->cubicTo(cx - rxKappa, cy + ry, cx - rx, cy + ryKappa, cx - rx, cy);
+    impl->path->cubicTo(cx - rx, cy - ryKappa, cx - rxKappa, cy - ry, cx, cy - ry);
     impl->path->close();
 
     impl->flag |= RenderUpdateFlag::Path;
@@ -176,17 +176,20 @@ Result Shape::appendCircle(float cx, float cy, float radiusW, float radiusH) noe
 }
 
 
-Result Shape::appendRect(float x, float y, float w, float h, float cornerRadius) noexcept
+Result Shape::appendRect(float x, float y, float w, float h, float rx, float ry) noexcept
 {
     auto impl = pImpl.get();
     if (!impl || !impl->path) return Result::MemoryCorruption;
 
+    auto halfW = w * 0.5f;
+    auto halfH = h * 0.5f;
+
     //clamping cornerRadius by minimum size
-    auto min = (w < h ? w : h) * 0.5f;
-    if (cornerRadius > min) cornerRadius = min;
+    if (rx > halfW) rx = halfW;
+    if (ry > halfH) ry = halfH;
 
     //rectangle
-    if (cornerRadius == 0) {
+    if (rx == 0 && ry == 0) {
         impl->path->grow(5, 4);
         impl->path->moveTo(x, y);
         impl->path->lineTo(x + w, y);
@@ -194,20 +197,21 @@ Result Shape::appendRect(float x, float y, float w, float h, float cornerRadius)
         impl->path->lineTo(x, y + h);
         impl->path->close();
     //circle
-    } else if (w == h && cornerRadius * 2 == w) {
-        return appendCircle(x + (w * 0.5f), y + (h * 0.5f), cornerRadius, cornerRadius);
+    } else if (fabsf(rx - halfW) < FLT_EPSILON && fabsf(ry - halfH) < FLT_EPSILON) {
+        return appendCircle(x + (w * 0.5f), y + (h * 0.5f), rx, ry);
     } else {
-        auto halfKappa = cornerRadius * 0.5;
+        auto hrx = rx * 0.5f;
+        auto hry = ry * 0.5f;
         impl->path->grow(10, 17);
-        impl->path->moveTo(x + cornerRadius, y);
-        impl->path->lineTo(x + w - cornerRadius, y);
-        impl->path->cubicTo(x + w - cornerRadius + halfKappa, y, x + w, y + cornerRadius - halfKappa, x + w, y + cornerRadius);
-        impl->path->lineTo(x + w, y + h - cornerRadius);
-        impl->path->cubicTo(x + w, y + h - cornerRadius + halfKappa, x + w - cornerRadius + halfKappa, y + h, x + w - cornerRadius, y + h);
-        impl->path->lineTo(x + cornerRadius, y + h);
-        impl->path->cubicTo(x + cornerRadius - halfKappa, y + h, x, y + h - cornerRadius + halfKappa, x, y + h - cornerRadius);
-        impl->path->lineTo(x, y + cornerRadius);
-        impl->path->cubicTo(x, y + cornerRadius - halfKappa, x + cornerRadius - halfKappa, y, x + cornerRadius, y);
+        impl->path->moveTo(x + rx, y);
+        impl->path->lineTo(x + w - rx, y);
+        impl->path->cubicTo(x + w - rx + hrx, y, x + w, y + ry - hry, x + w, y + ry);
+        impl->path->lineTo(x + w, y + h - ry);
+        impl->path->cubicTo(x + w, y + h - ry + hry, x + w - rx + hrx, y + h, x + w - rx, y + h);
+        impl->path->lineTo(x + rx, y + h);
+        impl->path->cubicTo(x + rx - hrx, y + h, x, y + h - ry + hry, x, y + h - ry);
+        impl->path->lineTo(x, y + ry);
+        impl->path->cubicTo(x, y + ry - hry, x + rx - hrx, y, x + rx, y);
         impl->path->close();
     }
 

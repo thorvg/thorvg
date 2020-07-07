@@ -33,7 +33,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 {
     //Background
     auto shape = tvg::Shape::gen();
-    shape->appendRect(0, 0, WIDTH, HEIGHT, 0);       //x, y, w, h, cornerRadius
+    shape->appendRect(0, 0, WIDTH, HEIGHT, 0, 0);    //x, y, w, h, rx, ry
     shape->fill(255, 255, 255, 255);                 //r, g, b, a
 
     if (canvas->push(move(shape)) != tvg::Result::Success) return;

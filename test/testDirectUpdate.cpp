@@ -14,7 +14,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
        instead, you should consider not to interrupt this pointer life-cycle. */
     pShape = shape.get();
 
-    shape->appendRect(-100, -100, 200, 200, 0);
+    shape->appendRect(-100, -100, 200, 200, 0, 0);
 
     //fill property will be retained
     shape->fill(127, 255, 255, 255);
@@ -32,7 +32,7 @@ void tvgUpdateCmds(tvg::Canvas* canvas, float progress)
 
     //Reset Shape
     if (pShape->reset() == tvg::Result::Success) {
-        pShape->appendRect(-100 + (800 * progress), -100 + (800 * progress), 200, 200, (100 * progress));
+        pShape->appendRect(-100 + (800 * progress), -100 + (800 * progress), 200, 200, (100 * progress), (100 * progress));
         pShape->stroke(30 * progress);
 
         //Update shape for drawing (this may work asynchronously)

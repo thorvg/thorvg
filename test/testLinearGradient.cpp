@@ -10,7 +10,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     //Prepare Round Rectangle
     auto shape1 = tvg::Shape::gen();
-    shape1->appendRect(0, 0, 400, 400, 0);      //x, y, w, h, cornerRadius
+    shape1->appendRect(0, 0, 400, 400, 0, 0);    //x, y, w, h, rx, ry
 
     //LinearGradient
     auto fill = tvg::LinearGradient::gen();
