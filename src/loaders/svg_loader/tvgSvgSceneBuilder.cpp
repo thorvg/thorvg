@@ -29,11 +29,11 @@ static void _getTransformationData(Matrix* m, float* tx, float* ty, float* s, fl
     *ty = m->e23;
 
     cs = m->e11;
-    si = m->e12;
+    si = m->e21;
     rz = atan2(si, cs);
-    *z = rz * (180.0 / M_PI);
-    zcs = cosf(rz);
-    zsi = sinf(rz);
+    *z = rz * (180.0f / M_PI);
+    zcs = cosf(-1.0f * rz);
+    zsi = sinf(-1.0f * rz);
     m->e11 = m->e11 * zcs + m->e12 * zsi;
     m->e22 = m->e21 * (-1 * zsi) + m->e22 * zcs;
     *s = m->e11 > m->e22 ? m->e11 : m->e22;
