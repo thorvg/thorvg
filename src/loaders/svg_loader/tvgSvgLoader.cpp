@@ -2227,13 +2227,22 @@ static void _freeSvgNode(SvgNode* node)
 /************************************************************************/
 
 
-SvgLoader::SvgLoader()
+SvgLoader::SvgLoader() :
+    loaderData {vector<SvgNode*>(),
+                nullptr,
+                nullptr,
+                vector<SvgStyleGradient*>(),
+                nullptr,
+                nullptr,
+                0,
+                false}
 {
 }
 
 
 SvgLoader::~SvgLoader()
 {
+    if (rootProgress.valid()) root = rootProgress.get();
 }
 
 
@@ -2261,52 +2270,53 @@ bool SvgLoader::read()
 {
     if (content.empty()) return false;
 
-    loaderData = {vector<SvgNode*>(),
-        nullptr,
-        nullptr,
-        vector<SvgStyleGradient*>(),
-        nullptr,
-        nullptr,
-        0,
-        false};
+    auto asyncTask = [](SvgLoader *loader) {
 
-    loaderData.svgParse = (SvgParser*)malloc(sizeof(SvgParser));
+        loader->loaderData.svgParse = (SvgParser*)malloc(sizeof(SvgParser));
 
-    bool res = simpleXmlParse(content.c_str(), content.size(), true, _svgLoaderParser, &loaderData);
+        bool res = simpleXmlParse(loader->content.c_str(), loader->content.size(), true, _svgLoaderParser, &(loader->loaderData));
 
-    if (loaderData.doc) {
-        SvgNode *defs;
-        _updateStyle(loaderData.doc, nullptr);
-        defs = loaderData.doc->node.doc.defs;
-        if (defs) _updateGradient(loaderData.doc, defs->node.defs.gradients);
-        else {
-            if (!loaderData.gradients.empty()) {
-                vector<SvgStyleGradient*> gradientList;
-                std::copy(loaderData.gradients.begin(), loaderData.gradients.end(), gradientList.begin());
-                _updateGradient(loaderData.doc, gradientList);
-                gradientList.clear();
+        if (!res) return unique_ptr<Scene>(nullptr);
+
+        if (loader->loaderData.doc) {
+            SvgNode *defs;
+            _updateStyle(loader->loaderData.doc, nullptr);
+            defs = loader->loaderData.doc->node.doc.defs;
+            if (defs) _updateGradient(loader->loaderData.doc, defs->node.defs.gradients);
+            else {
+                if (!loader->loaderData.gradients.empty()) {
+                    vector<SvgStyleGradient*> gradientList;
+                    std::copy(loader->loaderData.gradients.begin(), loader->loaderData.gradients.end(), gradientList.begin());
+                    _updateGradient(loader->loaderData.doc, gradientList);
+                    gradientList.clear();
+                }
             }
         }
-    }
+        return loader->builder.build(loader->loaderData.doc);
+    };
 
-    root = builder.build(loaderData.doc);
+    rootProgress = async(launch::async, asyncTask, this);
 
-    if (!res) return false;
     return true;
 }
 
 
 bool SvgLoader::close()
 {
+    if (rootProgress.valid()) root = rootProgress.get();
+
     if (loaderData.svgParse) free(loaderData.svgParse);
     _freeSvgNode(loaderData.doc);
-    return false;
+    return true;
 }
 
 
 unique_ptr<Scene> SvgLoader::data()
 {
-    return move(root);
+    if (rootProgress.valid()) root = rootProgress.get();
+
+    if (root) return move(root);
+    else return unique_ptr<Scene>(nullptr);
 }
 
 #endif //_TVG_SVG_LOADER_CPP_
