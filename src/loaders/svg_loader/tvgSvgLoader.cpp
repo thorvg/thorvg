@@ -2226,16 +2226,7 @@ static void _freeSvgNode(SvgNode* node)
 /* External Class Implementation                                        */
 /************************************************************************/
 
-
-SvgLoader::SvgLoader() :
-    loaderData {vector<SvgNode*>(),
-                nullptr,
-                nullptr,
-                vector<SvgStyleGradient*>(),
-                nullptr,
-                nullptr,
-                0,
-                false}
+SvgLoader::SvgLoader()
 {
 }
 

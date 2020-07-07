@@ -325,13 +325,13 @@ struct SvgParser
 struct SvgLoaderData
 {
     vector<SvgNode *> stack;
-    SvgNode* doc;
-    SvgNode* def;
+    SvgNode* doc = nullptr;
+    SvgNode* def = nullptr;
     vector<SvgStyleGradient*> gradients;
-    SvgStyleGradient* latestGradient; //For stops
-    SvgParser* svgParse;
-    int level;
-    bool result;
+    SvgStyleGradient* latestGradient = nullptr; //For stops
+    SvgParser* svgParse = nullptr;
+    int level = 0;
+    bool result = false;
 };
 
 #endif
