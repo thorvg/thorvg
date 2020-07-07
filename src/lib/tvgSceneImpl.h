@@ -74,11 +74,12 @@ struct Scene::Impl
     {
         if (loader) {
             auto scene = loader->data();
-            auto p = scene.release();
-            if (!p) return false;
-            paints.push_back(p);
-            loader->close();
-            loader.reset(nullptr);
+            if (scene) {
+                auto p = scene.release();
+                if (!p) return false;
+                paints.push_back(p);
+                loader->close();
+            }
         }
 
         if (flag & RenderUpdateFlag::Transform) {
@@ -121,38 +122,44 @@ struct Scene::Impl
 
     bool bounds(float* px, float* py, float* pw, float* ph)
     {
-        auto x = FLT_MAX;
-        auto y = FLT_MAX;
-        auto w = 0.0f;
-        auto h = 0.0f;
+        if (loader) {
+            if (px) *px = loader->vx;
+            if (py) *py = loader->vy;
+            if (pw) *pw = loader->vw;
+            if (ph) *ph = loader->vh;
+        } else {
+            auto x = FLT_MAX;
+            auto y = FLT_MAX;
+            auto w = 0.0f;
+            auto h = 0.0f;
 
-        for(auto paint: paints) {
-            auto x2 = FLT_MAX;
-            auto y2 = FLT_MAX;
-            auto w2 = 0.0f;
-            auto h2 = 0.0f;
+            for(auto paint: paints) {
+                auto x2 = FLT_MAX;
+                auto y2 = FLT_MAX;
+                auto w2 = 0.0f;
+                auto h2 = 0.0f;
 
-            if (paint->id() == PAINT_ID_SCENE) {
-                //We know renderer type, avoid dynamic_cast for performance.
-                auto scene = static_cast<Scene*>(paint);
-                if (!SCENE_IMPL->bounds(&x2, &y2, &w2, &h2)) return false;
-            } else {
-                auto shape = static_cast<Shape*>(paint);
-                if (!SHAPE_IMPL->bounds(&x2, &y2, &w2, &h2)) return false;
+                if (paint->id() == PAINT_ID_SCENE) {
+                    //We know renderer type, avoid dynamic_cast for performance.
+                    auto scene = static_cast<Scene*>(paint);
+                    if (!SCENE_IMPL->bounds(&x2, &y2, &w2, &h2)) return false;
+                } else {
+                    auto shape = static_cast<Shape*>(paint);
+                    if (!SHAPE_IMPL->bounds(&x2, &y2, &w2, &h2)) return false;
+                }
+
+                //Merge regions
+                if (x2 < x) x = x2;
+                if (x + w < x2 + w2) w = (x2 + w2) - x;
+                if (y2 < y) y = x2;
+                if (y + h < y2 + h2) h = (y2 + h2) - y;
             }
 
-            //Merge regions
-            if (x2 < x) x = x2;
-            if (x + w < x2 + w2) w = (x2 + w2) - x;
-            if (y2 < y) y = x2;
-            if (y + h < y2 + h2) h = (y2 + h2) - y;
+            if (px) *px = x;
+            if (py) *py = y;
+            if (pw) *pw = w;
+            if (ph) *ph = h;
         }
-
-        if (px) *px = x;
-        if (py) *py = y;
-        if (pw) *pw = w;
-        if (ph) *ph = h;
-
         return true;
     }
 

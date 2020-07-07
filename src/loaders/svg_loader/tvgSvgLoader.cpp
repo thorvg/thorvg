@@ -2253,6 +2253,13 @@ bool SvgLoader::open(const char* path)
         if (content.empty()) return false;
     }
 
+    //FIXME: Verify this resource is normal SVG, otherwise return false
+    //Also, return the brief resource info such as viewbox:
+    //this->vx = ?
+    //this->vy = ?
+    //this->vw = ?
+    //this->vh = ?
+
     return true;
 }
 
