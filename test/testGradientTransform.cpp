@@ -207,7 +207,7 @@ int main(int argc, char **argv)
     }
 
     //Initialize ThorVG Engine
-    tvg::Initializer::init(tvgEngine);
+    if (tvg::Initializer::init(tvgEngine) == tvg::Result::Success) {
 
     elm_init(argc, argv);
 
@@ -231,4 +231,9 @@ int main(int argc, char **argv)
 
     //Terminate ThorVG Engine
     tvg::Initializer::term(tvgEngine);
+
+    } else {
+        cout << "engine is not supported" << endl;
+    }
+    return 0;
 }

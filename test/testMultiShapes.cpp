@@ -114,19 +114,24 @@ int main(int argc, char **argv)
     }
 
     //Initialize ThorVG Engine
-    tvg::Initializer::init(tvgEngine);
+    if (tvg::Initializer::init(tvgEngine) == tvg::Result::Success) {
 
-    elm_init(argc, argv);
+        elm_init(argc, argv);
 
-    if (tvgEngine == tvg::CanvasEngine::Sw) {
-        createSwView();
+        if (tvgEngine == tvg::CanvasEngine::Sw) {
+            createSwView();
+        } else {
+            createGlView();
+        }
+
+        elm_run();
+        elm_shutdown();
+
+        //Terminate ThorVG Engine
+        tvg::Initializer::term(tvgEngine);
+
     } else {
-        createGlView();
+        cout << "engine is not supported" << endl;
     }
-
-    elm_run();
-    elm_shutdown();
-
-    //Terminate ThorVG Engine
-    tvg::Initializer::term(tvgEngine);
+    return 0;
 }

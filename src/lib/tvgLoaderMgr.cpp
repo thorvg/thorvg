@@ -18,8 +18,10 @@
 #define _TVG_LOADER_MGR_CPP_
 
 #include "tvgCommon.h"
-#include "tvgSvgLoader.h"
 
+#ifdef THORVG_SVG_LOADER_SUPPORT
+    #include "tvgSvgLoader.h"
+#endif
 
 static int initCnt = 0;
 
@@ -45,8 +47,11 @@ bool LoaderMgr::term()
 
 unique_ptr<Loader> LoaderMgr::loader(const char* path)
 {
-    //TODO:
+#ifdef THORVG_SVG_LOADER_SUPPORT
     return unique_ptr<SvgLoader>(new SvgLoader);
+#endif
+    cout << "Non supported format: " << path << endl;
+    return unique_ptr<Loader>(nullptr);
 }
 
 #endif //_TVG_LOADER_MGR_CPP_

@@ -1,6 +1,10 @@
-subdir('svg_loader')
+subloader_dep = []
+
+if get_option('loaders').contains('svg') == true
+    subdir('svg_loader')
+endif
 
 loader_dep = declare_dependency(
-   dependencies        : svgloader_dep,
+   dependencies: subloader_dep,
    include_directories : include_directories('.'),
 )

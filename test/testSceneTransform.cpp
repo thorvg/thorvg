@@ -203,28 +203,33 @@ int main(int argc, char **argv)
     }
 
     //Initialize ThorVG Engine
-    tvg::Initializer::init(tvgEngine);
+    if (tvg::Initializer::init(tvgEngine) == tvg::Result::Success) {
 
-    elm_init(argc, argv);
+        elm_init(argc, argv);
 
-    Elm_Transit *transit = elm_transit_add();
+        Elm_Transit *transit = elm_transit_add();
 
-    if (tvgEngine == tvg::CanvasEngine::Sw) {
-        auto view = createSwView();
-        elm_transit_effect_add(transit, transitSwCb, view, nullptr);
+        if (tvgEngine == tvg::CanvasEngine::Sw) {
+            auto view = createSwView();
+            elm_transit_effect_add(transit, transitSwCb, view, nullptr);
+        } else {
+            auto view = createGlView();
+            elm_transit_effect_add(transit, transitGlCb, view, nullptr);
+        }
+
+        elm_transit_duration_set(transit, 2);
+        elm_transit_repeat_times_set(transit, -1);
+        elm_transit_auto_reverse_set(transit, EINA_TRUE);
+        elm_transit_go(transit);
+
+        elm_run();
+        elm_shutdown();
+
+        //Terminate ThorVG Engine
+        tvg::Initializer::term(tvgEngine);
+
     } else {
-        auto view = createGlView();
-        elm_transit_effect_add(transit, transitGlCb, view, nullptr);
+        cout << "engine is not supported" << endl;
     }
-
-    elm_transit_duration_set(transit, 2);
-    elm_transit_repeat_times_set(transit, -1);
-    elm_transit_auto_reverse_set(transit, EINA_TRUE);
-    elm_transit_go(transit);
-
-    elm_run();
-    elm_shutdown();
-
-    //Terminate ThorVG Engine
-    tvg::Initializer::term(tvgEngine);
+    return 0;
 }

@@ -1,0 +1,11 @@
+option('engines',
+   type: 'array',
+   choices: ['sw', 'gl'],
+   value: ['sw', 'gl'],
+   description: 'Enable Rasterizer Engine in thorvg')
+
+option('loaders',
+   type: 'array',
+   choices: ['svg'],
+   value: ['svg'],
+   description: 'Enable Vector File Loader in thorvg')

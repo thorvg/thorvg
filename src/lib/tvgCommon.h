@@ -17,6 +17,8 @@
 #ifndef _TVG_COMMON_H_
 #define _TVG_COMMON_H_
 
+#include "config.h"
+
 #include <iostream>
 #include <cassert>
 #include <vector>

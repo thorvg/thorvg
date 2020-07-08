@@ -51,15 +51,15 @@ class RenderMethod
 {
 public:
     virtual ~RenderMethod() {}
-    virtual void* prepare(const Shape& shape, void* data, const RenderTransform* transform, RenderUpdateFlag flags) = 0;
-    virtual bool dispose(const Shape& shape, void *data) = 0;
-    virtual bool preRender() = 0;
-    virtual bool render(const Shape& shape, void *data) = 0;
-    virtual bool postRender() = 0;
-    virtual bool clear() = 0;
-    virtual bool flush() = 0;
-    virtual uint32_t ref() = 0;
-    virtual uint32_t unref() = 0;
+    virtual void* prepare(const Shape& shape, void* data, const RenderTransform* transform, RenderUpdateFlag flags) { return nullptr; }
+    virtual bool dispose(const Shape& shape, void *data) { return false; }
+    virtual bool preRender() { return false; }
+    virtual bool render(const Shape& shape, void *data) { return false; }
+    virtual bool postRender() { return false; }
+    virtual bool clear() { return false; }
+    virtual bool flush() { return false; }
+    virtual uint32_t ref() { return 0; }
+    virtual uint32_t unref() { return 0; }
 };
 
 struct RenderInitializer

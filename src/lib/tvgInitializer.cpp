@@ -18,9 +18,16 @@
 #define _TVG_INITIALIZER_CPP_
 
 #include "tvgCommon.h"
-#include "tvgSwRenderer.h"
-#include "tvgGlRenderer.h"
 #include "tvgLoaderMgr.h"
+
+#ifdef THORVG_SW_RASTER_SUPPORT
+    #include "tvgSwRenderer.h"
+#endif
+
+#ifdef THORVG_GL_RASTER_SUPPORT
+    #include "tvgGlRenderer.h"
+#endif
+
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
@@ -32,13 +39,23 @@
 
 Result Initializer::init(CanvasEngine engine) noexcept
 {
+    auto nonSupport = true;
+
     if (engine == CanvasEngine::Sw) {
-        if (!SwRenderer::init()) return Result::InsufficientCondition;
+        #ifdef THORVG_SW_RASTER_SUPPORT
+            if (!SwRenderer::init()) return Result::InsufficientCondition;
+            nonSupport = false;
+        #endif
     } else if (engine == CanvasEngine::Gl) {
-        if (!GlRenderer::init()) return Result::InsufficientCondition;
+        #ifdef THORVG_GL_RASTER_SUPPORT
+            if (!GlRenderer::init()) return Result::InsufficientCondition;
+            nonSupport = false;
+        #endif
     } else {
         return Result::InvalidArguments;
     }
+
+    if (nonSupport) return Result::NonSupport;
 
     if (!LoaderMgr::init()) return Result::Unknown;
 
@@ -48,15 +65,23 @@ Result Initializer::init(CanvasEngine engine) noexcept
 
 Result Initializer::term(CanvasEngine engine) noexcept
 {
-    //TODO: deinitialize modules
+    auto nonSupport = true;
 
     if (engine == CanvasEngine::Sw) {
-        if (!SwRenderer::term()) return Result::InsufficientCondition;
+        #ifdef THORVG_SW_RASTER_SUPPORT
+            if (!SwRenderer::term()) return Result::InsufficientCondition;
+            nonSupport = false;
+        #endif
     } else if (engine == CanvasEngine::Gl) {
-        if (!GlRenderer::term()) return Result::InsufficientCondition;
+        #ifdef THORVG_GL_RASTER_SUPPORT
+            if (!GlRenderer::term()) return Result::InsufficientCondition;
+            nonSupport = false;
+        #endif
     } else {
         return Result::InvalidArguments;
     }
+
+    if (nonSupport) return Result::NonSupport;
 
     if (!LoaderMgr::term()) return Result::Unknown;
 

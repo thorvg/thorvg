@@ -18,9 +18,16 @@
 #define _TVG_SWCANVAS_CPP_
 
 #include "tvgCommon.h"
-#include "tvgSwRenderer.h"
 #include "tvgCanvasImpl.h"
 
+#ifdef THORVG_SW_RASTER_SUPPORT
+    #include "tvgSwRenderer.h"
+#else
+    class SwRenderer : public RenderMethod
+    {
+        //Non Supported. Dummy Class */
+    };
+#endif
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
@@ -36,7 +43,11 @@ struct SwCanvas::Impl
 /* External Class Implementation                                        */
 /************************************************************************/
 
+#ifdef THORVG_SW_RASTER_SUPPORT
 SwCanvas::SwCanvas() : Canvas(SwRenderer::inst()), pImpl(make_unique<Impl>())
+#else
+SwCanvas::SwCanvas() : Canvas(nullptr), pImpl(make_unique<Impl>())
+#endif
 {
 }
 
@@ -48,6 +59,7 @@ SwCanvas::~SwCanvas()
 
 Result SwCanvas::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h) noexcept
 {
+#ifdef THORVG_SW_RASTER_SUPPORT
     //We know renderer type, avoid dynamic_cast for performance.
     auto renderer = static_cast<SwRenderer*>(Canvas::pImpl.get()->renderer);
     if (!renderer) return Result::MemoryCorruption;
@@ -55,15 +67,20 @@ Result SwCanvas::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t 
     if (!renderer->target(buffer, stride, w, h)) return Result::InvalidArguments;
 
     return Result::Success;
+#endif
+    return Result::NonSupport;
 }
 
 
 unique_ptr<SwCanvas> SwCanvas::gen() noexcept
 {
+#ifdef THORVG_SW_RASTER_SUPPORT
     auto canvas = unique_ptr<SwCanvas>(new SwCanvas);
     assert(canvas);
 
-   return canvas;
+    return canvas;
+#endif
+    return unique_ptr<SwCanvas>(nullptr);
 }
 
 #endif /* _TVG_SWCANVAS_CPP_ */

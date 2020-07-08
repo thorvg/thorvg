@@ -1,5 +1,12 @@
-subdir('sw_engine')
-subdir('gl_engine')
+engine_dep = []
+
+if get_option('engines').contains('sw') == true
+    subdir('sw_engine')
+endif
+
+if get_option('engines').contains('gl') == true
+    subdir('gl_engine')
+endif
 
 source_file = [
    'tvgCanvasImpl.h',
@@ -24,8 +31,6 @@ source_file = [
    'tvgShape.cpp',
    'tvgSwCanvas.cpp',
 ]
-
-engine_dep = [swengine_dep, glengine_dep]
 
 common_dep = declare_dependency(
    dependencies        : engine_dep,
