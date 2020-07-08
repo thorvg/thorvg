@@ -25,8 +25,10 @@ source_file = [
    'tvgSwCanvas.cpp',
 ]
 
-src_dep = declare_dependency(
-   include_directories : include_directories('.'),
-   sources : source_file
-)
+engine_dep = [swengine_dep, glengine_dep]
 
+common_dep = declare_dependency(
+   dependencies        : engine_dep,
+   include_directories : include_directories('.'),
+   sources             : source_file
+)

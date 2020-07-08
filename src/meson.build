@@ -5,8 +5,7 @@ subdir('loaders')
 subdir('examples')
 
 thread_dep = meson.get_compiler('cpp').find_library('pthread')
-thorvg_lib_dep = [ src_dep, swengine_dep, glengine_dep, svgloader_dep, thread_dep]
-
+thorvg_lib_dep = [ common_dep, loader_dep, thread_dep]
 
 thorvg_lib = library(
 	'thorvg',
