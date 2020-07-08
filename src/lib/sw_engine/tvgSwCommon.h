@@ -19,6 +19,10 @@
 
 #include "tvgCommon.h"
 
+#ifdef THORVG_AVX_VECTOR_SUPPORT
+    #include <immintrin.h>
+#endif
+
 #if 0
 #include <sys/time.h>
 static double timeStamp()
@@ -242,12 +246,6 @@ static inline uint32_t COLOR_ARGB_JOIN(uint8_t r, uint8_t g, uint8_t b, uint8_t 
 }
 
 
-static inline void COLOR_SET(uint32_t *dst, uint32_t val, uint32_t len)
-{
-    while (len--) *dst++ = val;
-}
-
-
 int64_t mathMultiply(int64_t a, int64_t b);
 int64_t mathDivide(int64_t a, int64_t b);
 int64_t mathMulDiv(int64_t a, int64_t b, int64_t c);
@@ -283,7 +281,7 @@ void strokeFree(SwStroke* stroke);
 bool fillGenColorTable(SwFill* fill, const Fill* fdata, const Matrix* transform, bool ctable);
 void fillReset(SwFill* fill);
 void fillFree(SwFill* fill);
-void fillFetchLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len);
+void fillFetchLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t offset, uint32_t len);
 void fillFetchRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len);
 
 SwRleData* rleRender(const SwOutline* outline, const SwBBox& bbox, const SwSize& clip, bool antiAlias);
@@ -293,5 +291,30 @@ bool rasterGradientShape(Surface& surface, SwShape& shape, unsigned id);
 bool rasterSolidShape(Surface& surface, SwShape& shape, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
 bool rasterStroke(Surface& surface, SwShape& shape, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
 bool rasterClear(Surface& surface);
+
+inline void rasterARGB32(uint32_t *dst, uint32_t val, uint32_t offset, int32_t len)
+{
+#ifdef THORVG_AVX_VECTOR_SUPPORT
+    int32_t align = (8 - (offset % 8)) % 8;
+    //Vectorization
+    auto avxDst = (__m256i*)(dst + offset + align);
+    int32_t i = (len - align);
+    for (;i > 7; i -= 8, ++avxDst) {
+       *avxDst = _mm256_set1_epi32(val);
+    }
+    //Alignment
+    if (align > 0) {
+        if (align > len) align -= (align - len);
+        auto tmp = dst + offset;
+        for (; align > 0; --align, ++tmp) *tmp = val;
+    }
+    //Pack Leftovers
+    dst += offset + (len - i);
+    while (i-- > 0) *(dst++) = val;
+#else
+    dst += offset;
+    while (len--) *dst++ = val;
+#endif
+}
 
 #endif /* _TVG_SW_COMMON_H_ */

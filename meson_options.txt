@@ -6,6 +6,12 @@ option('engines',
 
 option('loaders',
    type: 'array',
-   choices: ['svg'],
+   choices: ['', 'svg'],
    value: ['svg'],
    description: 'Enable Vector File Loader in thorvg')
+
+option('vectors',
+   type: 'array',
+   choices: ['', 'avx'],
+   value: [''],
+   description: 'Enable CPU Vectorization(SIMD) in thorvg')

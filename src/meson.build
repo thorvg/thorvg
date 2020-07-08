@@ -1,5 +1,14 @@
 compiler_flags = ['-DTVG_BUILD']
 
+cc = meson.get_compiler('cpp')
+if (cc.get_id() != 'msvc')
+    if get_option('vectors').contains('avx')
+        compiler_flags += ['-mavx']
+        message('Enable Advanced Vector Extension')
+    endif
+endif
+
+
 subdir('lib')
 subdir('loaders')
 subdir('examples')
