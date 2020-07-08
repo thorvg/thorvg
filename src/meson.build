@@ -4,12 +4,8 @@ subdir('lib')
 subdir('loaders')
 subdir('examples')
 
-m_dep = meson.get_compiler('cpp').find_library('m')
 thread_dep = meson.get_compiler('cpp').find_library('pthread')
-egl_dep = meson.get_compiler('cpp').find_library('EGL')
-gles_dep = meson.get_compiler('cpp').find_library('GLESv2')
-
-thorvg_lib_dep = [ src_dep, swengine_dep, glengine_dep, m_dep, egl_dep, gles_dep, svgloader_dep, thread_dep]
+thorvg_lib_dep = [ src_dep, swengine_dep, glengine_dep, svgloader_dep, thread_dep]
 
 
 thorvg_lib = library(
