@@ -623,13 +623,13 @@ static Matrix* _parseTransformationMatrix(const char* value)
                 tmp = { c, -s, 0, s, c, 0, 0, 0, 1 };
                 _matrixCompose(matrix, &tmp, matrix);
             } else if (ptCount == 3) {
-                tmp = { 1, 0, points[0], 0, 1, points[1], 0, 0, 1 };
+                tmp = { 1, 0, points[1], 0, 1, points[2], 0, 0, 1 };
                 _matrixCompose(matrix, &tmp, matrix);
 
                 tmp = { c, -s, 0, s, c, 0, 0, 0, 1 };
                 _matrixCompose(matrix, &tmp, matrix);
 
-                tmp = { 1, 0, points[0], 0, 1, points[1], 0, 0, 1 };
+                tmp = { 1, 0, -points[1], 0, 1, -points[2], 0, 0, 1 };
                 _matrixCompose(matrix, &tmp, matrix);
             } else {
                 goto error;
