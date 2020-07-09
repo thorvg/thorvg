@@ -1982,6 +1982,7 @@ static void _svgLoaderParserXmlOpen(SvgLoaderData* loader, const char* content, 
             node = method(loader, nullptr, attrs, attrsLength);
             loader->doc = node;
         } else {
+            if (!strcmp(tagName, "svg")) return; //Already loadded <svg>(SvgNodeType::Doc) tag
             if (loader->stack.size() > 0) parent = loader->stack.at(loader->stack.size() - 1);
             node = method(loader, parent, attrs, attrsLength);
         }
@@ -2223,6 +2224,64 @@ static void _freeSvgNode(SvgNode* node)
 }
 
 
+static bool _svgLoaderParserForValidCheckXmlOpen(SvgLoaderData* loader, const char* content, unsigned int length)
+{
+    const char* attrs = nullptr;
+    int sz = length;
+    char tagName[20] = "";
+    FactoryMethod method;
+    SvgNode *node = nullptr;
+    int attrsLength = 0;
+    loader->level++;
+    attrs = simpleXmlFindAttributesTag(content, length);
+
+    if (!attrs) {
+        //Parse the empty tag
+        attrs = content;
+        while ((attrs != nullptr) && *attrs != '>') attrs++;
+    }
+
+    if (attrs) {
+        sz = attrs - content;
+        attrsLength = length - sz;
+        while ((sz > 0) && (isspace(content[sz - 1]))) sz--;
+        strncpy(tagName, content, sz);
+        tagName[sz] = '\0';
+    }
+
+    if ((method = _findGroupFactory(tagName))) {
+        if (!loader->doc) {
+            if (strcmp(tagName, "svg")) return true; //Not a valid svg document
+            node = method(loader, nullptr, attrs, attrsLength);
+            loader->doc = node;
+            loader->stack.push_back(node);
+            return false;
+        }
+    }
+    return true;
+}
+
+
+static bool _svgLoaderParserForValidCheck(void* data, SimpleXMLType type, const char* content, unsigned int offset, unsigned int length)
+{
+    SvgLoaderData* loader = (SvgLoaderData*)data;
+    bool res = true;;
+
+    switch (type) {
+        case SimpleXMLType::Open:
+        case SimpleXMLType::OpenEmpty: {
+            //If 'res' is false, it means <svg> tag is found.
+            res = _svgLoaderParserForValidCheckXmlOpen(loader, content, length);
+            break;
+        }
+        default: {
+            break;
+        }
+    }
+
+    return res;
+}
+
 /************************************************************************/
 /* External Class Implementation                                        */
 /************************************************************************/
@@ -2254,12 +2313,25 @@ bool SvgLoader::open(const char* path)
         if (content.empty()) return false;
     }
 
-    //FIXME: Verify this resource is normal SVG, otherwise return false
-    //Also, return the brief resource info such as viewbox:
-    //this->vx = ?
-    //this->vy = ?
-    //this->vw = ?
-    //this->vh = ?
+    //For valid check, only <svg> tag is parsed first.
+    //If the <svg> tag is found, the loaded file is valid and stores viewbox information.
+    //After that, the remaining content data is parsed in order with async.
+    loaderData.svgParse = (SvgParser*)malloc(sizeof(SvgParser));
+    if (!loaderData.svgParse) return false;
+
+    simpleXmlParse(content.c_str(), content.size(), true, _svgLoaderParserForValidCheck, &(loaderData));
+
+    if (loaderData.doc && loaderData.doc->type == SvgNodeType::Doc) {
+        //Return the brief resource info such as viewbox:
+        this->vx = loaderData.doc->node.doc.vx;
+        this->vy = loaderData.doc->node.doc.vy;
+        this->vw = loaderData.doc->node.doc.vw;
+        this->vh = loaderData.doc->node.doc.vh;
+
+    } else {
+        cout << "ERROR : No SVG File. There is no <svg/>" <<endl;
+        return false;
+    }
 
     return true;
 }
@@ -2270,9 +2342,6 @@ bool SvgLoader::read()
     if (content.empty()) return false;
 
     auto asyncTask = [](SvgLoader *loader) {
-
-        loader->loaderData.svgParse = (SvgParser*)malloc(sizeof(SvgParser));
-
         bool res = simpleXmlParse(loader->content.c_str(), loader->content.size(), true, _svgLoaderParser, &(loader->loaderData));
 
         if (!res) return unique_ptr<Scene>(nullptr);
