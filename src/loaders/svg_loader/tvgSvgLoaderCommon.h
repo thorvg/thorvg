@@ -97,14 +97,6 @@ enum class SvgStyleType
     CompOp
 };
 
-enum class SvgGradientSpread
-{
-    Pad = 0,
-    Reflect,
-    Repeat,
-    Last
-};
-
 enum class SvgFillRule
 {
     Winding = 0,
@@ -221,7 +213,7 @@ struct SvgGradientStop
 struct SvgPaint
 {
     SvgStyleGradient* gradient;
-    string* url;
+    string *url;
     uint8_t r;
     uint8_t g;
     uint8_t b;
@@ -238,13 +230,13 @@ struct SvgDash
 struct _SvgStyleGradient
 {
     SvgGradientType type;
-    string* id;
-    string* ref;
-    SvgGradientSpread spread;
-    vector<SvgGradientStop *> stops;
+    string *id;
+    string *ref;
+    FillSpread spread;
     SvgRadialGradient* radial;
     SvgLinearGradient* linear;
     Matrix* transform;
+    vector<Fill::ColorStop *> stops;
     bool userSpace;
     bool usePercentage;
 };
@@ -286,8 +278,8 @@ struct _SvgNode
     SvgNodeType type;
     SvgNode* parent;
     vector<SvgNode*> child;
-    string* id;
-    SvgStyleProperty* style;
+    string *id;
+    SvgStyleProperty *style;
     Matrix* transform;
     union {
         SvgGNode g;
@@ -309,7 +301,7 @@ struct SvgParser
 {
     SvgNode* node;
     SvgStyleGradient* styleGrad;
-    SvgGradientStop* gradStop;
+    Fill::ColorStop* gradStop;
     struct
     {
         int x, y;
