@@ -1367,16 +1367,11 @@ static SvgNode* _findChildById(SvgNode* node, const char* id)
 
 static void _cloneGradStops(vector<Fill::ColorStop*> *dst, vector<Fill::ColorStop*> src)
 {
-    for(vector<Fill::ColorStop*>::iterator itrStop = src.begin(); itrStop != src.end(); itrStop++) {
-         Fill::ColorStop *stop = (Fill::ColorStop *)malloc(sizeof(Fill::ColorStop));
-         stop->r = (*itrStop)->r;
-         stop->g = (*itrStop)->g;
-         stop->b = (*itrStop)->b;
-         stop->a = (*itrStop)->a;
-         stop->offset = (*itrStop)->offset;
+    for (auto colorStop : src) {
+         auto stop = static_cast<Fill::ColorStop *>(malloc(sizeof(Fill::ColorStop)));
+         *stop = *colorStop;
          dst->push_back(stop);
     }
-
 }
 
 
@@ -1571,7 +1566,7 @@ FIND_FACTORY(Graphics, graphicsTags);
 
 FillSpread _parseSpreadValue(const char* value)
 {
-    FillSpread spread = FillSpread::Pad;
+    auto spread = FillSpread::Pad;
 
     if (!strcmp(value, "reflect")) {
         spread = FillSpread::Reflect;
@@ -1737,7 +1732,7 @@ static SvgStyleGradient* _createRadialGradient(SvgLoaderData* loader, const char
 static bool _attrParseStops(void* data, const char* key, const char* value)
 {
     SvgLoaderData* loader = (SvgLoaderData*)data;
-    Fill::ColorStop* stop = loader->svgParse->gradStop;
+    auto stop = loader->svgParse->gradStop;
 
     if (!strcmp(key, "offset")) {
         stop->offset = _toOffset(value);
@@ -2015,7 +2010,7 @@ static void _svgLoaderParserXmlOpen(SvgLoaderData* loader, const char* content, 
         }
         loader->latestGradient = gradient;
     } else if (!strcmp(tagName, "stop")) {
-        Fill::ColorStop* stop = (Fill::ColorStop*)calloc(1, sizeof(Fill::ColorStop));
+        auto stop = static_cast<Fill::ColorStop*>(calloc(1, sizeof(Fill::ColorStop)));
         loader->svgParse->gradStop = stop;
         /* default value for opacity */
         stop->a = 255;
@@ -2168,9 +2163,8 @@ static void _freeGradientStyle(SvgStyleGradient* grad)
     free(grad->linear);
     if (grad->transform) free(grad->transform);
 
-    for(vector<Fill::ColorStop*>::iterator itrStop = grad->stops.begin(); itrStop != grad->stops.end(); itrStop++) {
-        free(*itrStop);
-    }
+    for (auto colorStop : grad->stops) free(colorStop);
+
     free(grad);
 }
 
@@ -2291,8 +2285,8 @@ bool SvgLoader::read()
             else {
                 if (!loader->loaderData.gradients.empty()) {
                     vector<SvgStyleGradient*> gradientList;
-                    for(vector<SvgStyleGradient*>::iterator itrGrad = loader->loaderData.gradients.begin(); itrGrad != loader->loaderData.gradients.end(); itrGrad++) {
-                         gradientList.push_back(*itrGrad);
+                    for (auto gradient : loader->loaderData.gradients) {
+                        gradientList.push_back(gradient);
                     }
                     _updateGradient(loader->loaderData.doc, gradientList);
                     gradientList.clear();
