@@ -356,7 +356,7 @@ unique_ptr<Shape> _shapeBuildHelper(SvgNode* node, float vx, float vy, float vw,
 }
 
 
-unique_ptr<Scene> _sceneBuildHelper(SvgNode* node, float vx, float vy, float vw, float vh)
+unique_ptr<Scene> _sceneBuildHelper(SvgNode* node, float vx, float vy, float vw, float vh, int parentOpacity)
 {
     if (node->type == SvgNodeType::Doc || node->type == SvgNodeType::G) {
         auto scene = Scene::gen();
@@ -367,9 +367,11 @@ unique_ptr<Scene> _sceneBuildHelper(SvgNode* node, float vx, float vy, float vw,
             if (!(fmod(fabsf(z), 360.0) <= FLT_EPSILON)) scene->rotate(fmod(z, 360.0));
             if (!(fabsf(tx) <= FLT_EPSILON) && !(fabsf(ty) <= FLT_EPSILON)) scene->translate(tx, ty);
         }
+        node->style->opacity = (node->style->opacity * parentOpacity) / 255;
         for (vector<SvgNode*>::iterator itrChild = node->child.begin(); itrChild != node->child.end(); itrChild++) {
             SvgNode* child = *itrChild;
-            if (child->type == SvgNodeType::Doc || child->type == SvgNodeType::G) scene->push(_sceneBuildHelper(*itrChild, vx, vy, vw, vh));
+            child->style->opacity = (child->style->opacity * node->style->opacity) / 255;
+            if (child->type == SvgNodeType::Doc || child->type == SvgNodeType::G) scene->push(_sceneBuildHelper(*itrChild, vx, vy, vw, vh, node->style->opacity));
             else scene->push(_shapeBuildHelper(*itrChild, vx, vy, vw, vh));
         }
         return move(scene);
@@ -398,7 +400,7 @@ unique_ptr<Scene> SvgSceneBuilder::build(SvgNode* node)
     viewBox.h = node->node.doc.vh;
     preserveAspect = node->node.doc.preserveAspect;
     staticViewBox = true;
-    return _sceneBuildHelper(node, viewBox.x, viewBox.y, viewBox.w, viewBox.h);
+    return _sceneBuildHelper(node, viewBox.x, viewBox.y, viewBox.w, viewBox.h, 255);
 }
 
 
