@@ -1365,11 +1365,18 @@ static SvgNode* _findChildById(SvgNode* node, const char* id)
 }
 
 
-static vector<SvgGradientStop*> _cloneGradStops(vector<SvgGradientStop*> src)
+static void _cloneGradStops(vector<Fill::ColorStop*> *dst, vector<Fill::ColorStop*> src)
 {
-    vector<SvgGradientStop*> dst;
-    copy(src.begin(), src.end(), dst.begin());
-    return dst;
+    for(vector<Fill::ColorStop*>::iterator itrStop = src.begin(); itrStop != src.end(); itrStop++) {
+         Fill::ColorStop *stop = (Fill::ColorStop *)malloc(sizeof(Fill::ColorStop));
+         stop->r = (*itrStop)->r;
+         stop->g = (*itrStop)->g;
+         stop->b = (*itrStop)->b;
+         stop->a = (*itrStop)->a;
+         stop->offset = (*itrStop)->offset;
+         dst->push_back(stop);
+    }
+
 }
 
 
@@ -1381,8 +1388,8 @@ static SvgStyleGradient* _cloneGradient(SvgStyleGradient* from)
 
     grad = (SvgStyleGradient*)calloc(1, sizeof(SvgStyleGradient));
     grad->type = from->type;
-    grad->id = _copyId(from->id->c_str());
-    grad->ref = _copyId(from->ref->c_str());
+    grad->id = from->id ? _copyId(from->id->c_str()) : nullptr;
+    grad->ref = from->ref ? _copyId(from->ref->c_str()) : nullptr;
     grad->spread = from->spread;
     grad->usePercentage = from->usePercentage;
     grad->userSpace = from->userSpace;
@@ -1390,7 +1397,6 @@ static SvgStyleGradient* _cloneGradient(SvgStyleGradient* from)
         grad->transform = (Matrix*)calloc(1, sizeof(Matrix));
         memcpy(grad->transform, from->transform, sizeof(Matrix));
     }
-    grad->stops = _cloneGradStops(from->stops);
     if (grad->type == SvgGradientType::Linear) {
         grad->linear = (SvgLinearGradient*)calloc(1, sizeof(SvgLinearGradient));
         memcpy(grad->linear, from->linear, sizeof(SvgLinearGradient));
@@ -1399,6 +1405,7 @@ static SvgStyleGradient* _cloneGradient(SvgStyleGradient* from)
         memcpy(grad->radial, from->radial, sizeof(SvgRadialGradient));
     }
 
+    _cloneGradStops(&(grad->stops), from->stops);
     return grad;
 }
 
@@ -1562,14 +1569,14 @@ FIND_FACTORY(Group, groupTags);
 FIND_FACTORY(Graphics, graphicsTags);
 
 
-SvgGradientSpread _parseSpreadValue(const char* value)
+FillSpread _parseSpreadValue(const char* value)
 {
-    SvgGradientSpread spread = SvgGradientSpread::Pad;
+    FillSpread spread = FillSpread::Pad;
 
     if (!strcmp(value, "reflect")) {
-        spread = SvgGradientSpread::Reflect;
+        spread = FillSpread::Reflect;
     } else if (!strcmp(value, "repeat")) {
-        spread = SvgGradientSpread::Repeat;
+        spread = FillSpread::Repeat;
     }
 
     return spread;
@@ -1730,7 +1737,7 @@ static SvgStyleGradient* _createRadialGradient(SvgLoaderData* loader, const char
 static bool _attrParseStops(void* data, const char* key, const char* value)
 {
     SvgLoaderData* loader = (SvgLoaderData*)data;
-    SvgGradientStop* stop = loader->svgParse->gradStop;
+    Fill::ColorStop* stop = loader->svgParse->gradStop;
 
     if (!strcmp(key, "offset")) {
         stop->offset = _toOffset(value);
@@ -2008,7 +2015,7 @@ static void _svgLoaderParserXmlOpen(SvgLoaderData* loader, const char* content, 
         }
         loader->latestGradient = gradient;
     } else if (!strcmp(tagName, "stop")) {
-        SvgGradientStop* stop = (SvgGradientStop*)calloc(1, sizeof(SvgGradientStop));
+        Fill::ColorStop* stop = (Fill::ColorStop*)calloc(1, sizeof(Fill::ColorStop));
         loader->svgParse->gradStop = stop;
         /* default value for opacity */
         stop->a = 255;
@@ -2067,7 +2074,7 @@ static void _styleInherit(SvgStyleProperty* child, SvgStyleProperty* parent)
         child->fill.paint.b = parent->fill.paint.b;
         child->fill.paint.none = parent->fill.paint.none;
         child->fill.paint.curColor = parent->fill.paint.curColor;
-        child->fill.paint.url = parent->fill.paint.url ? _copyId(parent->fill.paint.url->c_str()) : nullptr;
+        if (parent->fill.paint.url) child->fill.paint.url = _copyId(parent->fill.paint.url->c_str());
     }
     if (!((int)child->fill.flags & (int)SvgFillFlags::Opacity)) {
         child->fill.opacity = parent->fill.opacity;
@@ -2109,12 +2116,12 @@ static void _updateStyle(SvgNode* node, SvgStyleProperty* parentStyle)
 }
 
 
-static SvgStyleGradient* _gradientDup(vector<SvgStyleGradient*> gradList, const char* id)
+static SvgStyleGradient* _gradientDup(vector<SvgStyleGradient*> gradList, string* id)
 {
     SvgStyleGradient* result = nullptr;
 
     for (vector<SvgStyleGradient*>::iterator itrGrad = gradList.begin(); itrGrad != gradList.end(); itrGrad++) {
-        if ((*itrGrad)->id->compare(string(id))) {
+        if (!((*itrGrad)->id->compare(*id))) {
             result = _cloneGradient(*itrGrad);
             break;
         }
@@ -2122,9 +2129,9 @@ static SvgStyleGradient* _gradientDup(vector<SvgStyleGradient*> gradList, const 
 
     if (result && result->ref) {
         for (vector<SvgStyleGradient*>::iterator itrGrad = gradList.begin(); itrGrad != gradList.end(); itrGrad++) {
-            if ((*itrGrad)->id->compare(*result->ref)) {
+            if (!((*itrGrad)->id->compare(*result->ref))) {
                 if (!result->stops.empty()) {
-                    result->stops = _cloneGradStops((*itrGrad)->stops);
+                    _cloneGradStops(&(result->stops), (*itrGrad)->stops);
                 }
                 //TODO: Properly inherit other property
                 break;
@@ -2138,15 +2145,15 @@ static SvgStyleGradient* _gradientDup(vector<SvgStyleGradient*> gradList, const 
 
 static void _updateGradient(SvgNode* node, vector<SvgStyleGradient*> gradList)
 {
-    if (node->child.empty()) {
+    if (!node->child.empty()) {
         for (vector<SvgNode*>::iterator itrChild = node->child.begin(); itrChild != node->child.end(); itrChild++) {
             _updateGradient(*itrChild, gradList);
         }
     } else {
         if (node->style->fill.paint.url) {
-            node->style->fill.paint.gradient = _gradientDup(gradList, node->style->fill.paint.url->c_str());
+            node->style->fill.paint.gradient = _gradientDup(gradList, node->style->fill.paint.url);
         } else if (node->style->stroke.paint.url) {
-            node->style->stroke.paint.gradient = _gradientDup(gradList, node->style->stroke.paint.url->c_str());
+            //node->style->stroke.paint.gradient = _gradientDup(gradList, node->style->stroke.paint.url);
         }
     }
 }
@@ -2161,7 +2168,7 @@ static void _freeGradientStyle(SvgStyleGradient* grad)
     free(grad->linear);
     if (grad->transform) free(grad->transform);
 
-    for(vector<SvgGradientStop*>::iterator itrStop = grad->stops.begin(); itrStop != grad->stops.end(); itrStop++) {
+    for(vector<Fill::ColorStop*>::iterator itrStop = grad->stops.begin(); itrStop != grad->stops.end(); itrStop++) {
         free(*itrStop);
     }
     free(grad);
@@ -2284,7 +2291,9 @@ bool SvgLoader::read()
             else {
                 if (!loader->loaderData.gradients.empty()) {
                     vector<SvgStyleGradient*> gradientList;
-                    std::copy(loader->loaderData.gradients.begin(), loader->loaderData.gradients.end(), gradientList.begin());
+                    for(vector<SvgStyleGradient*>::iterator itrGrad = loader->loaderData.gradients.begin(); itrGrad != loader->loaderData.gradients.end(); itrGrad++) {
+                         gradientList.push_back(*itrGrad);
+                    }
                     _updateGradient(loader->loaderData.doc, gradientList);
                     gradientList.clear();
                 }
