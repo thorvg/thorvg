@@ -328,9 +328,9 @@ static void _processCommand(vector<PathCommand>* cmds, vector<Point>* pts, char 
         case 's':
         case 'S': {
             Point p[3], ctrl;
-            if ((cmds->size() > 1) && (cmds->at(cmds->size() - 2) == PathCommand::CubicTo)) {
+            if ((cmds->size() > 1) && (cmds->at(cmds->size() - 1) == PathCommand::CubicTo)) {
                 ctrl.x = 2 * cur->x - curCtl->x;
-                ctrl.y = 2 * cur->x - curCtl->y;
+                ctrl.y = 2 * cur->y - curCtl->y;
             } else {
                 ctrl = *cur;
             }
