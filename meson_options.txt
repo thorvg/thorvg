@@ -15,3 +15,9 @@ option('vectors',
    choices: ['', 'avx'],
    value: [''],
    description: 'Enable CPU Vectorization(SIMD) in thorvg')
+
+option('bindings',
+   type: 'array',
+   choices: ['', 'capi'],
+   value: ['capi'],
+   description: 'Enable C API binding')
