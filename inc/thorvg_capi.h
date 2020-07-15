@@ -1,3 +1,20 @@
+/*
+ * Copyright (c) 2020 Samsung Electronics Co., Ltd All Rights Reserved
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *               http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ */
+
 #ifndef __THORVG_CAPI_H__
 #define __THORVG_CAPI_H__
 
@@ -22,6 +39,7 @@ typedef struct _Tvg_Paint Tvg_Paint;
 #define TVG_ENGINE_SW (1 << 1)
 #define TVG_ENGINE_GL (1 << 2)
 
+
 typedef enum {
     TVG_RESULT_SUCCESS = 0,
     TVG_RESULT_INVALID_ARGUMENT,
@@ -32,6 +50,7 @@ typedef enum {
     TVG_RESULT_UNKNOWN
 } Tvg_Result;
 
+
 typedef enum {
     TVG_PATH_COMMAND_CLOSE = 0,
     TVG_PATH_COMMAND_MOVE_TO,
@@ -39,17 +58,20 @@ typedef enum {
     TVG_PATH_COMMAND_CUBIC_TO
 } Tvg_Path_Command;
 
+
 typedef enum {
     TVG_STROKE_CAP_SQUARE = 0,
     TVG_STROKE_CAP_ROUND,
     TVG_STROKE_CAP_BUTT
 } Tvg_Stroke_Cap;
 
+
 typedef enum {
     TVG_STROKE_JOIN_BEVEL = 0,
     TVG_STROKE_JOIN_ROUND,
     TVG_STROKE_JOIN_MITER
 } Tvg_Stroke_Join;
+
 
 typedef enum {
     TVG_STROKE_FILL_PAD = 0,
@@ -63,6 +85,7 @@ typedef struct
     float x, y;
 } Tvg_Point;
 
+
 typedef struct
 {
     float e11, e12, e13;
@@ -71,13 +94,23 @@ typedef struct
 } Tvg_Matrix;
 
 
-
+/************************************************************************/
+/* Engine API                                                           */
+/************************************************************************/
 TVG_EXPORT Tvg_Result tvg_engine_init(unsigned engine_method);
 TVG_EXPORT Tvg_Result tvg_engine_term(unsigned engine_method);
 
+
+/************************************************************************/
+/* SwCanvas API                                                         */
+/************************************************************************/
 TVG_EXPORT Tvg_Canvas* tvg_swcanvas_create();
 TVG_EXPORT Tvg_Result tvg_swcanvas_set_target(Tvg_Canvas* canvas, uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h);
 
+
+/************************************************************************/
+/* Common Canvas API                                                    */
+/************************************************************************/
 TVG_EXPORT Tvg_Result tvg_canvas_destroy(Tvg_Canvas* canvas);
 TVG_EXPORT Tvg_Result tvg_canvas_push(Tvg_Canvas* canvas, Tvg_Paint* paint);
 TVG_EXPORT Tvg_Result tvg_canvas_reserve(Tvg_Canvas* canvas, uint32_t n);
@@ -87,6 +120,10 @@ TVG_EXPORT Tvg_Result tvg_canvas_update_paint(Tvg_Canvas* canvas, Tvg_Paint* pai
 TVG_EXPORT Tvg_Result tvg_canvas_draw(Tvg_Canvas* canvas, unsigned char async);
 TVG_EXPORT Tvg_Result tvg_canvas_sync(Tvg_Canvas* canvas);
 
+
+/************************************************************************/
+/* Shape API                                                            */
+/************************************************************************/
 TVG_EXPORT Tvg_Paint* tvg_shape_new();
 TVG_EXPORT Tvg_Result tvg_shape_del(Tvg_Paint* paint);
 TVG_EXPORT Tvg_Result tvg_shape_reset(Tvg_Paint* paint);
