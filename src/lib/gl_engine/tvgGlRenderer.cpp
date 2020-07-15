@@ -64,8 +64,9 @@ bool GlRenderer::flush()
 
 bool GlRenderer::preRender()
 {
-    //TODO: called just before render()
-
+    // Blend function for pre multiplied alpha
+    GL_CHECK(glBlendFuncSeparate(GL_ONE, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA));
+    GL_CHECK(glEnable(GL_BLEND));
     return true;
 }
 

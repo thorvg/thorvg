@@ -84,11 +84,11 @@ bool GlGeometry::generateAAPoints(const Shape &shape, float strokeWd, RenderUpda
 
         size_t fPoint = 0;
         size_t sPoint = 1;
-        for (size_t i = 0; i < nPoints - 1; ++i)
+        for (size_t i = 0; i < nPoints; ++i)
         {
             fPoint = i;
             sPoint = i + 1;
-            if (sPoint == nPoints - 1)
+            if (fPoint == nPoints - 1)
                 sPoint = 0;
 
             GlPoint normal = getNormal(aaPts[fPoint].orgPt, aaPts[sPoint].orgPt);
@@ -96,8 +96,8 @@ bool GlGeometry::generateAAPoints(const Shape &shape, float strokeWd, RenderUpda
             normalInfo[fPoint].normal1 = normal;
             normalInfo[sPoint].normal2 = normal;
         }
-        normalInfo[nPoints - 1].normal1 = normalInfo[0].normal1;
-        normalInfo[nPoints - 1].normal2 = normalInfo[0].normal2;
+        normalInfo[0].normal2 = normalInfo[0].normal1;
+        normalInfo[nPoints - 1].normal1 = normalInfo[nPoints - 1].normal2;
 
         for (uint32_t i = 0; i < nPoints; ++i)
         {

@@ -101,14 +101,8 @@ void initGLview(Evas_Object *obj)
 void drawGLview(Evas_Object *obj)
 {
     auto gl = elm_glview_gl_api_get(obj);
-    int w, h;
-    elm_glview_size_get(obj, &w, &h);
-    gl->glViewport(0, 0, w, h);
     gl->glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     gl->glClear(GL_COLOR_BUFFER_BIT);
-    gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    gl->glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE);
-    gl->glEnable(GL_BLEND);
 
     if (glCanvas->draw() == tvg::Result::Success) {
         glCanvas->sync();
