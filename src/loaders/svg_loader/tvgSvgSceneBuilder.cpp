@@ -229,9 +229,9 @@ void _applyProperty(SvgNode* node, Shape* vg, float vx, float vy, float vw, floa
     if (node->transform) {
          float tx = 0, ty = 0, s = 0, z = 0;
          _getTransformationData(node->transform, &tx, &ty, &s, &z);
-         if (!(fabsf(s - 1) <= FLT_EPSILON)) vg->scale(s);
-         if (!(fmod(fabsf(z), 360.0) <= FLT_EPSILON)) vg->rotate(fmod(z, 360.0));
-         if (!(fabsf(tx) <= FLT_EPSILON) && !(fabsf(ty) <= FLT_EPSILON)) vg->translate(tx, ty);
+         vg->scale(s);
+         vg->rotate(z);
+         vg->translate(tx, ty);
     }
 
     if (node->type == SvgNodeType::Doc) return;
@@ -362,9 +362,9 @@ unique_ptr<Scene> _sceneBuildHelper(SvgNode* node, float vx, float vy, float vw,
         if (node->transform) {
             float tx = 0, ty = 0, s = 0, z = 0;
             _getTransformationData(node->transform, &tx, &ty, &s, &z);
-            if (!(fabsf(s - 1) <= FLT_EPSILON)) scene->scale(s);
-            if (!(fmod(fabsf(z), 360.0) <= FLT_EPSILON)) scene->rotate(fmod(z, 360.0));
-            if (!(fabsf(tx) <= FLT_EPSILON) && !(fabsf(ty) <= FLT_EPSILON)) scene->translate(tx, ty);
+            scene->scale(s);
+            scene->rotate(z);
+            scene->translate(tx, ty);
         }
         node->style->opacity = (node->style->opacity * parentOpacity) / 255.0f;
         for (auto child : node->child) {
