@@ -118,14 +118,14 @@ unique_ptr<LinearGradient> _applyLinearGradientProperty(SvgStyleGradient* g, Sha
         float fopacity = fillOpacity / 255.0f; //fill opacity if any exists.
         int i = 0;
         stops = (Fill::ColorStop*)calloc(stopCount, sizeof(Fill::ColorStop));
-        for (vector<Fill::ColorStop*>::iterator itrStop = g->stops.begin(); itrStop != g->stops.end(); itrStop++) {
+        for (auto colorStop : g->stops) {
             //Use premultiplied color
-            opacity = ((float)(*itrStop)->a / 255) * fopacity;
-            stops[i].r = ((*itrStop)->r * opacity);
-            stops[i].g = ((*itrStop)->g * opacity);
-            stops[i].b = ((*itrStop)->b * opacity);
-            stops[i].a = ((*itrStop)->a * fopacity);
-            stops[i].offset = (*itrStop)->offset;
+            opacity = ((float)colorStop->a / 255.0f) * fopacity;
+            stops[i].r = colorStop->r * opacity;
+            stops[i].g = colorStop->g * opacity;
+            stops[i].b = colorStop->b * opacity;
+            stops[i].a = colorStop->a * fopacity;
+            stops[i].offset = colorStop->offset;
             i++;
         }
         fillGrad->colorStops(stops, stopCount);
@@ -204,14 +204,14 @@ unique_ptr<RadialGradient> _applyRadialGradientProperty(SvgStyleGradient* g, Sha
         float fopacity = fillOpacity / 255.0f; //fill opacity if any exists.
         int i = 0;
         stops = (Fill::ColorStop*)calloc(stopCount, sizeof(Fill::ColorStop));
-        for (vector<Fill::ColorStop*>::iterator itrStop = g->stops.begin(); itrStop != g->stops.end(); itrStop++) {
+        for (auto colorStop : g->stops) {
             //Use premultiplied color
-            opacity = ((float)(*itrStop)->a / 255) * fopacity;
-            stops[i].r = ((*itrStop)->r * opacity);
-            stops[i].g = ((*itrStop)->g * opacity);
-            stops[i].b = ((*itrStop)->b * opacity);
-            stops[i].a = ((*itrStop)->a * fopacity);
-            stops[i].offset = (*itrStop)->offset;
+            opacity = ((float)colorStop->a / 255.0f) * fopacity;
+            stops[i].r = colorStop->r * opacity;
+            stops[i].g = colorStop->g * opacity;
+            stops[i].b = colorStop->b * opacity;
+            stops[i].a = colorStop->a * fopacity;
+            stops[i].offset = colorStop->offset;
             i++;
         }
         fillGrad->colorStops(stops, stopCount);
@@ -366,12 +366,11 @@ unique_ptr<Scene> _sceneBuildHelper(SvgNode* node, float vx, float vy, float vw,
             if (!(fmod(fabsf(z), 360.0) <= FLT_EPSILON)) scene->rotate(fmod(z, 360.0));
             if (!(fabsf(tx) <= FLT_EPSILON) && !(fabsf(ty) <= FLT_EPSILON)) scene->translate(tx, ty);
         }
-        node->style->opacity = (node->style->opacity * parentOpacity) / 255;
-        for (vector<SvgNode*>::iterator itrChild = node->child.begin(); itrChild != node->child.end(); itrChild++) {
-            SvgNode* child = *itrChild;
-            child->style->opacity = (child->style->opacity * node->style->opacity) / 255;
-            if (child->type == SvgNodeType::Doc || child->type == SvgNodeType::G) scene->push(_sceneBuildHelper(*itrChild, vx, vy, vw, vh, node->style->opacity));
-            else scene->push(_shapeBuildHelper(*itrChild, vx, vy, vw, vh));
+        node->style->opacity = (node->style->opacity * parentOpacity) / 255.0f;
+        for (auto child : node->child) {
+            child->style->opacity = (child->style->opacity * node->style->opacity) / 255.0f;
+            if (child->type == SvgNodeType::Doc || child->type == SvgNodeType::G) scene->push(_sceneBuildHelper(child, vx, vy, vw, vh, node->style->opacity));
+            else scene->push(_shapeBuildHelper(child, vx, vy, vw, vh));
         }
         return move(scene);
     }
