@@ -221,7 +221,7 @@ unique_ptr<RadialGradient> _applyRadialGradientProperty(SvgStyleGradient* g, Sha
 }
 
 
-unique_ptr<Shape> _applyProperty(SvgNode* node, unique_ptr<Shape> vg, float vx, float vy, float vw, float vh)
+void _applyProperty(SvgNode* node, Shape* vg, float vx, float vy, float vw, float vh)
 {
     SvgStyleProperty* style = node->style;
 
@@ -234,7 +234,7 @@ unique_ptr<Shape> _applyProperty(SvgNode* node, unique_ptr<Shape> vg, float vx, 
          if (!(fabsf(tx) <= FLT_EPSILON) && !(fabsf(ty) <= FLT_EPSILON)) vg->translate(tx, ty);
     }
 
-    if (node->type == SvgNodeType::Doc) return vg;
+    if (node->type == SvgNodeType::Doc) return;
 
     //If fill property is nullptr then do nothing
     if (style->fill.paint.none) {
@@ -243,10 +243,10 @@ unique_ptr<Shape> _applyProperty(SvgNode* node, unique_ptr<Shape> vg, float vx, 
          if (!style->fill.paint.gradient->userSpace) vg->bounds(&vx, &vy, &vw, &vh);
 
         if (style->fill.paint.gradient->type == SvgGradientType::Linear) {
-             auto linear = _applyLinearGradientProperty(style->fill.paint.gradient, vg.get(), vx, vy, vw, vh);
+             auto linear = _applyLinearGradientProperty(style->fill.paint.gradient, vg, vx, vy, vw, vh);
              vg->fill(move(linear));
         } else if (style->fill.paint.gradient->type == SvgGradientType::Radial) {
-             auto radial = _applyRadialGradientProperty(style->fill.paint.gradient, vg.get(), vx, vy, vw, vh);
+             auto radial = _applyRadialGradientProperty(style->fill.paint.gradient, vg, vx, vy, vw, vh);
              vg->fill(move(radial));
         }
     } else if (style->fill.paint.curColor) {
@@ -267,7 +267,7 @@ unique_ptr<Shape> _applyProperty(SvgNode* node, unique_ptr<Shape> vg, float vx, 
         vg->fill(((float)r) * fa, ((float)g) * fa, ((float)b) * fa, ((float)a) * fa);
     }
 
-    if (node->type == SvgNodeType::G) return vg;
+    if (node->type == SvgNodeType::G) return;
 
     //Apply the stroke style property
     vg->stroke(style->stroke.width);
@@ -298,7 +298,6 @@ unique_ptr<Shape> _applyProperty(SvgNode* node, unique_ptr<Shape> vg, float vx, 
         float fa = ((float)style->opacity / 255.0);
         vg->stroke(((float)r) * fa, ((float)g) * fa, ((float)b) * fa, ((float)a) * fa);
     }
-    return vg;
 }
 
 
@@ -351,7 +350,7 @@ unique_ptr<Shape> _shapeBuildHelper(SvgNode* node, float vx, float vy, float vw,
             break;
         }
     }
-    shape = move(_applyProperty(node, move(shape), vx, vy, vw, vh));
+    _applyProperty(node, shape.get(), vx, vy, vw, vh);
     return shape;
 }
 
