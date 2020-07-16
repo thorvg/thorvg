@@ -18,4 +18,4 @@ all:
 	gcc -o testGradientTransform testGradientTransform.cpp -g -lstdc++ `pkg-config --cflags --libs elementary thorvg`
 	gcc -o testSvg testSvg.cpp -g -lstdc++ `pkg-config --cflags --libs elementary thorvg`
 	gcc -o testAsync testAsync.cpp -g -lstdc++ `pkg-config --cflags --libs elementary thorvg`
-	gcc -o testCapi testCapi.c -g 'pkg-config --cflags --libs elementary thorvg`
+	gcc -o testCapi testCapi.c -g `pkg-config --cflags --libs elementary thorvg`
