@@ -100,12 +100,12 @@ bool _prepareLinear(SwFill* fill, const LinearGradient* linear, const Matrix* tr
         auto cy = (y2 - y1) * 0.5f + y1;
         auto dx = x1 - cx;
         auto dy = y1 - cy;
-        x1 = dx * transform->e11 + dy * transform->e12 + transform->e31 + cx;
-        y1 = dx * transform->e21 + dy * transform->e22 + transform->e32 + cy;
+        x1 = dx * transform->e11 + dy * transform->e12 + transform->e13 + cx;
+        y1 = dx * transform->e21 + dy * transform->e22 + transform->e23 + cy;
         dx = x2 - cx;
         dy = y2 - cy;
-        x2 = dx * transform->e11 + dy * transform->e12 + transform->e31 + cx;
-        y2 = dx * transform->e21 + dy * transform->e22 + transform->e32 + cy;
+        x2 = dx * transform->e11 + dy * transform->e12 + transform->e13 + cx;
+        y2 = dx * transform->e21 + dy * transform->e22 + transform->e23 + cy;
     }
 
     fill->linear.dx = x2 - x1;
@@ -131,8 +131,8 @@ bool _prepareRadial(SwFill* fill, const RadialGradient* radial, const Matrix* tr
     if (radius < FLT_EPSILON) return true;
 
     if (transform) {
-        auto tx = fill->radial.cx * transform->e11 + fill->radial.cy * transform->e12 + transform->e31;
-        auto ty = fill->radial.cx * transform->e21 + fill->radial.cy * transform->e22 + transform->e32;
+        auto tx = fill->radial.cx * transform->e11 + fill->radial.cy * transform->e12 + transform->e13;
+        auto ty = fill->radial.cx * transform->e21 + fill->radial.cy * transform->e22 + transform->e23;
         fill->radial.cx = tx;
         fill->radial.cy = ty;
         radius *= transform->e33;

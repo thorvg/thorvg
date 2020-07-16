@@ -66,7 +66,6 @@ bool RenderTransform::update()
     //scale
     m.e11 *= factor;
     m.e22 *= factor;
-    m.e33 *= factor;
 
     //rotation
     if (fabsf(degree) > FLT_EPSILON) {
@@ -78,19 +77,19 @@ bool RenderTransform::update()
         auto t12 = m.e11 * -sinVal + m.e12 * cosVal;
         auto t21 = m.e21 * cosVal + m.e22 * sinVal;
         auto t22 = m.e21 * -sinVal + m.e22 * cosVal;
-        auto t31 = m.e31 * cosVal + m.e32 * sinVal;
-        auto t32 = m.e31 * -sinVal + m.e32 * cosVal;
+        auto t13 = m.e13 * cosVal + m.e23 * sinVal;
+        auto t23 = m.e13 * -sinVal + m.e23 * cosVal;
 
         m.e11 = t11;
         m.e12 = t12;
         m.e21 = t21;
         m.e22 = t22;
-        m.e31 = t31;
-        m.e32 = t32;
+        m.e13 = t13;
+        m.e23 = t23;
     }
 
-    m.e31 += x;
-    m.e32 += y;
+    m.e13 += x;
+    m.e23 += y;
 
     return true;
 }
@@ -105,17 +104,17 @@ RenderTransform::RenderTransform(const RenderTransform* lhs, const RenderTransfo
 {
     assert(lhs && rhs);
 
-    auto dx = rhs->x * lhs->factor;
-    auto dy = rhs->y * lhs->factor;
-    auto tx = dx * lhs->m.e11 + dy * lhs->m.e12 + lhs->m.e13;
-    auto ty = dx * lhs->m.e21 + dy * lhs->m.e22 + lhs->m.e23;
+    m.e11 = lhs->m.e11 * rhs->m.e11 + lhs->m.e12 * rhs->m.e21 + lhs->m.e13 * rhs->m.e31;
+    m.e12 = lhs->m.e11 * rhs->m.e12 + lhs->m.e12 * rhs->m.e22 + lhs->m.e13 * rhs->m.e32;
+    m.e13 = lhs->m.e11 * rhs->m.e13 + lhs->m.e12 * rhs->m.e23 + lhs->m.e13 * rhs->m.e33;
 
-    x = lhs->x + tx;
-    y = lhs->y + ty;
-    degree = lhs->degree + rhs->degree;
-    factor = lhs->factor * rhs->factor;
+    m.e21 = lhs->m.e21 * rhs->m.e11 + lhs->m.e22 * rhs->m.e21 + lhs->m.e23 * rhs->m.e31;
+    m.e22 = lhs->m.e21 * rhs->m.e12 + lhs->m.e22 * rhs->m.e22 + lhs->m.e23 * rhs->m.e32;
+    m.e23 = lhs->m.e21 * rhs->m.e13 + lhs->m.e22 * rhs->m.e23 + lhs->m.e23 * rhs->m.e33;
 
-    update();
+    m.e31 = lhs->m.e31 * rhs->m.e11 + lhs->m.e32 * rhs->m.e21 + lhs->m.e33 * rhs->m.e31;
+    m.e32 = lhs->m.e31 * rhs->m.e12 + lhs->m.e32 * rhs->m.e22 + lhs->m.e33 * rhs->m.e32;
+    m.e33 = lhs->m.e31 * rhs->m.e13 + lhs->m.e32 * rhs->m.e23 + lhs->m.e33 * rhs->m.e33;
 }
 
 #endif //_TVG_RENDER_CPP_

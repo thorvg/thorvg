@@ -20,26 +20,6 @@
 
 #include "tvgSvgSceneBuilder.h"
 
-
-static void _getTransformationData(Matrix* m, float* tx, float* ty, float* s, float* z)
-{
-    float rz, si, cs, zcs, zsi;
-
-    *tx = m->e13;
-    *ty = m->e23;
-
-    cs = m->e11;
-    si = m->e21;
-    rz = atan2(si, cs);
-    *z = rz * (180.0f / M_PI);
-    zcs = cosf(-1.0f * rz);
-    zsi = sinf(-1.0f * rz);
-    m->e11 = m->e11 * zcs + m->e12 * zsi;
-    m->e22 = m->e21 * (-1 * zsi) + m->e22 * zcs;
-    *s = m->e11 > m->e22 ? m->e11 : m->e22;
-}
-
-
 unique_ptr<LinearGradient> _applyLinearGradientProperty(SvgStyleGradient* g, Shape* vg, float rx, float ry, float rw, float rh)
 {
     Fill::ColorStop* stops;
@@ -225,15 +205,7 @@ void _applyProperty(SvgNode* node, Shape* vg, float vx, float vy, float vw, floa
 {
     SvgStyleProperty* style = node->style;
 
-    //Apply the transformation
-    if (node->transform) {
-         float tx = 0, ty = 0, s = 0, z = 0;
-         _getTransformationData(node->transform, &tx, &ty, &s, &z);
-         vg->scale(s);
-         vg->rotate(z);
-         vg->translate(tx, ty);
-    }
-
+    if (node->transform) vg->transform(*node->transform);
     if (node->type == SvgNodeType::Doc) return;
 
     //If fill property is nullptr then do nothing
@@ -359,13 +331,7 @@ unique_ptr<Scene> _sceneBuildHelper(SvgNode* node, float vx, float vy, float vw,
 {
     if (node->type == SvgNodeType::Doc || node->type == SvgNodeType::G) {
         auto scene = Scene::gen();
-        if (node->transform) {
-            float tx = 0, ty = 0, s = 0, z = 0;
-            _getTransformationData(node->transform, &tx, &ty, &s, &z);
-            scene->scale(s);
-            scene->rotate(z);
-            scene->translate(tx, ty);
-        }
+        if (node->transform) scene->transform(*node->transform);
         node->style->opacity = (node->style->opacity * parentOpacity) / 255.0f;
         for (auto child : node->child) {
             child->style->opacity = (child->style->opacity * node->style->opacity) / 255.0f;

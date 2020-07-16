@@ -239,8 +239,8 @@ static void _transformOutline(SwOutline* outline, const Matrix* transform)
     for(uint32_t i = 0; i < outline->ptsCnt; ++i) {
         auto dx = static_cast<float>(outline->pts[i].x >> 6);
         auto dy = static_cast<float>(outline->pts[i].y >> 6);
-        auto tx = dx * transform->e11 + dy * transform->e12 + transform->e31;
-        auto ty = dx * transform->e21 + dy * transform->e22 + transform->e32;
+        auto tx = dx * transform->e11 + dy * transform->e12 + transform->e13;
+        auto ty = dx * transform->e21 + dy * transform->e22 + transform->e23;
         auto pt = Point{round(tx), round(ty)};
         outline->pts[i] = TO_SWPOINT(&pt);
     }

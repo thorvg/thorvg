@@ -61,19 +61,19 @@ void tvgUpdateCmds(tvg::Canvas* canvas, float progress)
     auto t12 = m.e11 * -sinVal + m.e12 * cosVal;
     auto t21 = m.e21 * cosVal + m.e22 * sinVal;
     auto t22 = m.e21 * -sinVal + m.e22 * cosVal;
-    auto t31 = m.e31 * cosVal + m.e32 * sinVal;
-    auto t32 = m.e31 * -sinVal + m.e32 * cosVal;
+    auto t13 = m.e31 * cosVal + m.e32 * sinVal;
+    auto t23 = m.e31 * -sinVal + m.e32 * cosVal;
 
     m.e11 = t11;
     m.e12 = t12;
     m.e21 = t21;
     m.e22 = t22;
-    m.e31 = t31;
-    m.e32 = t32;
+    m.e13 = t13;
+    m.e23 = t23;
 
     //translate
-    m.e31 = progress * 300.0f + 300.0f;
-    m.e32 = progress * -100.0f + 300.0f;
+    m.e13 = progress * 300.0f + 300.0f;
+    m.e23 = progress * -100.0f + 300.0f;
 
     pShape->transform(m);
 
