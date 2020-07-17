@@ -12,13 +12,12 @@ using namespace std;
 /************************************************************************/
 
 void tvgSwTest(uint32_t* buffer);
+void drawSwView(void* data, Eo* obj);
 
 void win_del(void *data, Evas_Object *o, void *ev)
 {
    elm_exit();
 }
-
-void drawSwView(void* data, Eo* obj);
 
 static Eo* createSwView()
 {

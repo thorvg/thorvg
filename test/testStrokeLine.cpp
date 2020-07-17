@@ -6,6 +6,8 @@
 
 void tvgDrawCmds(tvg::Canvas* canvas)
 {
+    if (!canvas) return;
+
     //Test for Stroke Width
     for (int i = 0; i < 10; ++i) {
         auto shape = tvg::Shape::gen();

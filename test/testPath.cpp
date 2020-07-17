@@ -6,6 +6,8 @@
 
 void tvgDrawCmds(tvg::Canvas* canvas)
 {
+    if (!canvas) return;
+
     //Star
     auto shape1 = tvg::Shape::gen();
 

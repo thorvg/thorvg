@@ -6,6 +6,8 @@
 
 void tvgDrawCmds(tvg::Canvas* canvas)
 {
+    if (!canvas) return;
+
     canvas->reserve(5);             //reserve 5 shape nodes (optional)
 
     //Prepare Shape1

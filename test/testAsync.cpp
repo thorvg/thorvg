@@ -10,6 +10,8 @@ static unsigned cnt = 0;
 
 bool tvgUpdateCmds(tvg::Canvas* canvas)
 {
+   if (!canvas) return false;
+
     auto t = ecore_time_get();
 
     //Explicitly clear all retained paint nodes.

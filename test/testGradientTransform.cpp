@@ -9,6 +9,8 @@ tvg::Shape* pShape3 = nullptr;
 
 void tvgDrawCmds(tvg::Canvas* canvas)
 {
+    if (!canvas) return;
+
     //Shape1
     auto shape = tvg::Shape::gen();
 
@@ -83,6 +85,8 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
 void tvgUpdateCmds(tvg::Canvas* canvas, float progress)
 {
+    if (!canvas) return;
+
     /* Update shape directly.
        You can update only necessary properties of this shape,
        while retaining other properties. */

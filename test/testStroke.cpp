@@ -6,6 +6,8 @@
 
 void tvgDrawCmds(tvg::Canvas* canvas)
 {
+    if (!canvas) return;
+
     //Shape 1
     auto shape1 = tvg::Shape::gen();
     shape1->appendRect(50, 50, 200, 200, 0, 0);

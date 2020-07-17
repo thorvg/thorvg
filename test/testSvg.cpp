@@ -31,6 +31,8 @@ void svgDirCallback(const char* name, const char* path, void* data)
 
 void tvgDrawCmds(tvg::Canvas* canvas)
 {
+    if (!canvas) return;
+
     //Background
     auto shape = tvg::Shape::gen();
     shape->appendRect(0, 0, WIDTH, HEIGHT, 0, 0);    //x, y, w, h, rx, ry

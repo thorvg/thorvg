@@ -6,6 +6,8 @@
 
 void tvgDrawCmds(tvg::Canvas* canvas)
 {
+    if (!canvas) return;
+
     //Create a Scene
     auto scene = tvg::Scene::gen();
     scene->reserve(3);   //reserve 3 shape nodes (optional)

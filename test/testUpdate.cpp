@@ -6,6 +6,8 @@
 
 void tvgDrawCmds(tvg::Canvas* canvas)
 {
+    if (!canvas) return;
+
     //Shape
     auto shape = tvg::Shape::gen();
     shape->appendRect(-100, -100, 200, 200, 0, 0);
@@ -15,6 +17,8 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
 void tvgUpdateCmds(tvg::Canvas* canvas, float progress)
 {
+    if (!canvas) return;
+
     //Explicitly clear all retained paint nodes.
     if (canvas->clear() != tvg::Result::Success) return;
 

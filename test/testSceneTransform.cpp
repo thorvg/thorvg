@@ -8,6 +8,8 @@ tvg::Scene* pScene2 = nullptr;
 
 void tvgDrawCmds(tvg::Canvas* canvas)
 {
+    if (!canvas) return;
+
     //Create a Scene1
     auto scene = tvg::Scene::gen();
     pScene1 = scene.get();
@@ -90,6 +92,8 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
 void tvgUpdateCmds(tvg::Canvas* canvas, float progress)
 {
+    if (!canvas) return;
+
     /* Update scene directly.
        You can update only necessary properties of this scene,
        while retaining other properties. */
