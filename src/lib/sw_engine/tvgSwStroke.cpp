@@ -818,11 +818,18 @@ void strokeFree(SwStroke* stroke)
 }
 
 
-void strokeReset(SwStroke& stroke, const Shape* sdata)
+void strokeReset(SwStroke& stroke, const Shape* sdata, const Matrix* transform)
 {
     assert(sdata);
 
-    stroke.width = TO_SWCOORD(sdata->strokeWidth() * 0.5);
+    //If x/y scale factor is identical, we can scale width size simply.
+    auto scale = 1.0f;
+    if (transform && fabsf(transform->e11 - transform->e22) < FLT_EPSILON) {
+        scale = transform->e11;
+        stroke.preScaled = true;
+    }
+
+    stroke.width = TO_SWCOORD(sdata->strokeWidth() * 0.5 * scale);
     stroke.cap = sdata->strokeCap();
 
     //Save line join: it can be temporarily changed when stroking curves...

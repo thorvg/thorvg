@@ -32,7 +32,7 @@ enum RenderUpdateFlag {None = 0, Path = 1, Color = 2, Gradient = 4, Stroke = 8, 
 
 struct RenderTransform
 {
-    Matrix m;  //3x3 Matrix Elements
+    Matrix m;             //3x3 Matrix Elements
     float x = 0.0f;
     float y = 0.0f;
     float degree = 0.0f;  //rotation degree

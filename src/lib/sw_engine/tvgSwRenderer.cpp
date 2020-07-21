@@ -211,7 +211,7 @@ void* SwRenderer::prepare(const Shape& sdata, void* data, const RenderTransform*
         //Stroke
         if (task->flags & (RenderUpdateFlag::Stroke | RenderUpdateFlag::Transform)) {
             if (strokeAlpha > 0) {
-                shapeResetStroke(task->shape, task->sdata);
+                shapeResetStroke(task->shape, task->sdata, task->transform);
                 if (!shapeGenStrokeRle(task->shape, task->sdata, task->transform, task->clip)) return;
             } else {
                 shapeDelStroke(task->shape);

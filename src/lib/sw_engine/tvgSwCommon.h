@@ -156,6 +156,7 @@ struct SwStroke
     bool firstPt;
     bool openSubPath;
     bool handleWideStrokes;
+    bool preScaled;
 };
 
 struct SwDashStroke
@@ -259,7 +260,7 @@ bool shapeGenOutline(SwShape& shape, const Shape* sdata, const Matrix* transform
 bool shapePrepare(SwShape& shape, const Shape* sdata, const SwSize& clip, const Matrix* transform);
 bool shapeGenRle(SwShape& shape, const Shape* sdata, const SwSize& clip, bool antiAlias);
 void shapeDelOutline(SwShape& shape);
-void shapeResetStroke(SwShape& shape, const Shape* sdata);
+void shapeResetStroke(SwShape& shape, const Shape* sdata, const Matrix* transform);
 bool shapeGenStrokeRle(SwShape& shape, const Shape* sdata, const Matrix* transform, const SwSize& clip);
 void shapeFree(SwShape& shape);
 void shapeDelStroke(SwShape& shape);
@@ -267,7 +268,7 @@ bool shapeGenFillColors(SwShape& shape, const Fill* fill, const Matrix* transfor
 void shapeResetFill(SwShape& shape);
 void shapeDelFill(SwShape& shape);
 
-void strokeReset(SwStroke& stroke, const Shape* shape);
+void strokeReset(SwStroke& stroke, const Shape* shape, const Matrix* transform);
 bool strokeParseOutline(SwStroke& stroke, const SwOutline& outline);
 SwOutline* strokeExportOutline(SwStroke& stroke);
 void strokeFree(SwStroke* stroke);

@@ -618,13 +618,13 @@ void shapeDelStroke(SwShape& shape)
 }
 
 
-void shapeResetStroke(SwShape& shape, const Shape* sdata)
+void shapeResetStroke(SwShape& shape, const Shape* sdata, const Matrix* transform)
 {
     if (!shape.stroke) shape.stroke = static_cast<SwStroke*>(calloc(1, sizeof(SwStroke)));
     auto stroke = shape.stroke;
     assert(stroke);
 
-    strokeReset(*stroke, sdata);
+    strokeReset(*stroke, sdata, transform);
 
     rleFree(shape.strokeRle);
     shape.strokeRle = nullptr;
