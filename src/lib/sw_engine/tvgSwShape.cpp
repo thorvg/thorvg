@@ -96,13 +96,25 @@ static void _outlineEnd(SwOutline& outline)
 }
 
 
-static void _outlineMoveTo(SwOutline& outline, const Point* to)
+static inline SwPoint _transform(const Point* to, const Matrix* transform)
+{
+    if (!transform) return {TO_SWCOORD(to->x), TO_SWCOORD(to->y)};
+
+    auto tx = round(to->x * transform->e11 + to->y * transform->e12 + transform->e13);
+    auto ty = round(to->x * transform->e21 + to->y * transform->e22 + transform->e23);
+
+    return {TO_SWCOORD(tx), TO_SWCOORD(ty)};
+}
+
+
+static void _outlineMoveTo(SwOutline& outline, const Point* to, const Matrix* transform)
 {
     assert(to);
 
     _growOutlinePoint(outline, 1);
 
-    outline.pts[outline.ptsCnt] = TO_SWPOINT(to);
+    outline.pts[outline.ptsCnt] = _transform(to, transform);
+
     outline.types[outline.ptsCnt] = SW_CURVE_TYPE_POINT;
 
     if (outline.ptsCnt > 0) {
@@ -115,33 +127,33 @@ static void _outlineMoveTo(SwOutline& outline, const Point* to)
 }
 
 
-static void _outlineLineTo(SwOutline& outline, const Point* to)
+static void _outlineLineTo(SwOutline& outline, const Point* to, const Matrix* transform)
 {
     assert(to);
 
     _growOutlinePoint(outline, 1);
 
-    outline.pts[outline.ptsCnt] = TO_SWPOINT(to);
+    outline.pts[outline.ptsCnt] = _transform(to, transform);
     outline.types[outline.ptsCnt] = SW_CURVE_TYPE_POINT;
     ++outline.ptsCnt;
 }
 
 
-static void _outlineCubicTo(SwOutline& outline, const Point* ctrl1, const Point* ctrl2, const Point* to)
+static void _outlineCubicTo(SwOutline& outline, const Point* ctrl1, const Point* ctrl2, const Point* to, const Matrix* transform)
 {
     assert(ctrl1 && ctrl2 && to);
 
     _growOutlinePoint(outline, 3);
 
-    outline.pts[outline.ptsCnt] = TO_SWPOINT(ctrl1);
+    outline.pts[outline.ptsCnt] = _transform(ctrl1, transform);
     outline.types[outline.ptsCnt] = SW_CURVE_TYPE_CUBIC;
     ++outline.ptsCnt;
 
-    outline.pts[outline.ptsCnt] = TO_SWPOINT(ctrl2);
+    outline.pts[outline.ptsCnt] = _transform(ctrl2, transform);
     outline.types[outline.ptsCnt] = SW_CURVE_TYPE_CUBIC;
     ++outline.ptsCnt;
 
-    outline.pts[outline.ptsCnt] = TO_SWPOINT(to);
+    outline.pts[outline.ptsCnt] = _transform(to, transform);
     outline.types[outline.ptsCnt] = SW_CURVE_TYPE_POINT;
     ++outline.ptsCnt;
 }
@@ -230,24 +242,7 @@ static bool _checkValid(const SwOutline* outline, const SwBBox& bbox, const SwSi
 }
 
 
-static void _transformOutline(SwOutline* outline, const Matrix* transform)
-{
-    if (!transform) return;
-
-    assert(outline);
-
-    for(uint32_t i = 0; i < outline->ptsCnt; ++i) {
-        auto dx = static_cast<float>(outline->pts[i].x >> 6);
-        auto dy = static_cast<float>(outline->pts[i].y >> 6);
-        auto tx = dx * transform->e11 + dy * transform->e12 + transform->e13;
-        auto ty = dx * transform->e21 + dy * transform->e22 + transform->e23;
-        auto pt = Point{round(tx), round(ty)};
-        outline->pts[i] = TO_SWPOINT(&pt);
-    }
-}
-
-
-static void _dashLineTo(SwDashStroke& dash, const Point* to)
+static void _dashLineTo(SwDashStroke& dash, const Point* to, const Matrix* transform)
 {
     _growOutlinePoint(*dash.outline, dash.outline->ptsCnt >> 1);
     _growOutlineContour(*dash.outline, dash.outline->cntrsCnt >> 1);
@@ -258,8 +253,8 @@ static void _dashLineTo(SwDashStroke& dash, const Point* to)
     if (len < dash.curLen) {
         dash.curLen -= len;
         if (!dash.curOpGap) {
-            _outlineMoveTo(*dash.outline, &dash.ptCur);
-            _outlineLineTo(*dash.outline, to);
+            _outlineMoveTo(*dash.outline, &dash.ptCur, transform);
+            _outlineLineTo(*dash.outline, to, transform);
         }
     } else {
         while (len > dash.curLen) {
@@ -268,8 +263,8 @@ static void _dashLineTo(SwDashStroke& dash, const Point* to)
             _lineSplitAt(cur, dash.curLen, left, right);;
             dash.curIdx = (dash.curIdx + 1) % dash.cnt;
             if (!dash.curOpGap) {
-                _outlineMoveTo(*dash.outline, &left.pt1);
-                _outlineLineTo(*dash.outline, &left.pt2);
+                _outlineMoveTo(*dash.outline, &left.pt1, transform);
+                _outlineLineTo(*dash.outline, &left.pt2, transform);
             }
             dash.curLen = dash.pattern[dash.curIdx];
             dash.curOpGap = !dash.curOpGap;
@@ -278,9 +273,9 @@ static void _dashLineTo(SwDashStroke& dash, const Point* to)
         }
         //leftovers
         dash.curLen -= len;
-        if (!dash.curOpGap) {    
-            _outlineMoveTo(*dash.outline, &cur.pt1);
-            _outlineLineTo(*dash.outline, &cur.pt2);
+        if (!dash.curOpGap) {
+            _outlineMoveTo(*dash.outline, &cur.pt1, transform);
+            _outlineLineTo(*dash.outline, &cur.pt2, transform);
         }
         if (dash.curLen < 1) {
             //move to next dash
@@ -293,7 +288,7 @@ static void _dashLineTo(SwDashStroke& dash, const Point* to)
 }
 
 
-static void _dashCubicTo(SwDashStroke& dash, const Point* ctrl1, const Point* ctrl2, const Point* to)
+static void _dashCubicTo(SwDashStroke& dash, const Point* ctrl1, const Point* ctrl2, const Point* to, const Matrix* transform)
 {
     _growOutlinePoint(*dash.outline, dash.outline->ptsCnt >> 1);
     _growOutlineContour(*dash.outline, dash.outline->cntrsCnt >> 1);
@@ -304,8 +299,8 @@ static void _dashCubicTo(SwDashStroke& dash, const Point* ctrl1, const Point* ct
     if (len < dash.curLen) {
         dash.curLen -= len;
         if (!dash.curOpGap) {
-            _outlineMoveTo(*dash.outline, &dash.ptCur);
-            _outlineCubicTo(*dash.outline, ctrl1, ctrl2, to);
+            _outlineMoveTo(*dash.outline, &dash.ptCur, transform);
+            _outlineCubicTo(*dash.outline, ctrl1, ctrl2, to, transform);
         }
     } else {
         while (len > dash.curLen) {
@@ -314,8 +309,8 @@ static void _dashCubicTo(SwDashStroke& dash, const Point* ctrl1, const Point* ct
             bezSplitAt(cur, dash.curLen, left, right);
             dash.curIdx = (dash.curIdx + 1) % dash.cnt;
             if (!dash.curOpGap) {
-                _outlineMoveTo(*dash.outline, &left.start);
-                _outlineCubicTo(*dash.outline, &left.ctrl1, &left.ctrl2, &left.end);
+                _outlineMoveTo(*dash.outline, &left.start, transform);
+                _outlineCubicTo(*dash.outline, &left.ctrl1, &left.ctrl2, &left.end, transform);
             }
             dash.curLen = dash.pattern[dash.curIdx];
             dash.curOpGap = !dash.curOpGap;
@@ -325,8 +320,8 @@ static void _dashCubicTo(SwDashStroke& dash, const Point* ctrl1, const Point* ct
         //leftovers
         dash.curLen -= len;
         if (!dash.curOpGap) {
-            _outlineMoveTo(*dash.outline, &cur.start);
-            _outlineCubicTo(*dash.outline, &cur.ctrl1, &cur.ctrl2, &cur.end);
+            _outlineMoveTo(*dash.outline, &cur.start, transform);
+            _outlineCubicTo(*dash.outline, &cur.ctrl1, &cur.ctrl2, &cur.end, transform);
         }
         if (dash.curLen < 1) {
             //move to next dash
@@ -339,7 +334,7 @@ static void _dashCubicTo(SwDashStroke& dash, const Point* ctrl1, const Point* ct
 }
 
 
-SwOutline* _genDashOutline(const Shape* sdata)
+SwOutline* _genDashOutline(const Shape* sdata, const Matrix* transform)
 {
     assert(sdata);
 
@@ -405,7 +400,7 @@ SwOutline* _genDashOutline(const Shape* sdata)
     while (cmdCnt-- > 0) {
         switch(*cmds) {
             case PathCommand::Close: {
-                _dashLineTo(dash, &dash.ptStart);
+                _dashLineTo(dash, &dash.ptStart, transform);
                 break;
             }
             case PathCommand::MoveTo: {
@@ -418,12 +413,12 @@ SwOutline* _genDashOutline(const Shape* sdata)
                 break;
             }
             case PathCommand::LineTo: {
-                _dashLineTo(dash, pts);
+                _dashLineTo(dash, pts, transform);
                 ++pts;
                 break;
             }
             case PathCommand::CubicTo: {
-                _dashCubicTo(dash, pts, pts + 1, pts + 2);
+                _dashCubicTo(dash, pts, pts + 1, pts + 2, transform);
                 pts += 3;
                 break;
             }
@@ -465,9 +460,7 @@ bool _fastTrack(const SwOutline* outline)
 
 bool shapePrepare(SwShape& shape, const Shape* sdata, const SwSize& clip, const Matrix* transform)
 {
-    if (!shapeGenOutline(shape, sdata)) return false;
-
-    _transformOutline(shape.outline, transform);
+    if (!shapeGenOutline(shape, sdata, transform)) return false;
 
     if (!_updateBBox(shape.outline, shape.bbox)) return false;
 
@@ -510,7 +503,7 @@ void shapeReset(SwShape& shape)
 }
 
 
-bool shapeGenOutline(SwShape& shape, const Shape* sdata)
+bool shapeGenOutline(SwShape& shape, const Shape* sdata, const Matrix* transform)
 {
     assert(sdata);
 
@@ -571,17 +564,17 @@ bool shapeGenOutline(SwShape& shape, const Shape* sdata)
                 break;
             }
             case PathCommand::MoveTo: {
-                _outlineMoveTo(*outline, pts);
+                _outlineMoveTo(*outline, pts, transform);
                 ++pts;
                 break;
             }
             case PathCommand::LineTo: {
-                _outlineLineTo(*outline, pts);
+                _outlineLineTo(*outline, pts, transform);
                 ++pts;
                 break;
             }
             case PathCommand::CubicTo: {
-                _outlineCubicTo(*outline, pts, pts + 1, pts + 2);
+                _outlineCubicTo(*outline, pts, pts + 1, pts + 2, transform);
                 pts += 3;
                 break;
             }
@@ -638,7 +631,7 @@ void shapeResetStroke(SwShape& shape, const Shape* sdata)
 }
 
 
-bool shapeGenStrokeRle(SwShape& shape, const Shape* sdata, const SwSize& clip)
+bool shapeGenStrokeRle(SwShape& shape, const Shape* sdata, const Matrix* transform, const SwSize& clip)
 {
     assert(sdata);
 
@@ -646,12 +639,12 @@ bool shapeGenStrokeRle(SwShape& shape, const Shape* sdata, const SwSize& clip)
 
     //Dash Style Stroke
     if (sdata->strokeDash(nullptr) > 0) {
-        shapeOutline = _genDashOutline(sdata);
+        shapeOutline = _genDashOutline(sdata, transform);
         if (!shapeOutline) return false;
     //Normal Style stroke
     } else {
         if (!shape.outline) {
-            if (!shapeGenOutline(shape, sdata)) return false;
+            if (!shapeGenOutline(shape, sdata, transform)) return false;
         }
         shapeOutline = shape.outline;
     }

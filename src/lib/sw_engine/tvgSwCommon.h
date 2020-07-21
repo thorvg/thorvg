@@ -207,12 +207,6 @@ struct SwShape
 };
 
 
-static inline SwPoint TO_SWPOINT(const Point* pt)
-{
-    return {SwCoord(pt->x * 64), SwCoord(pt->y * 64)};
-}
-
-
 static inline SwCoord TO_SWCOORD(float val)
 {
     return SwCoord(val * 64);
@@ -261,12 +255,12 @@ bool mathSmallCubic(SwPoint* base, SwFixed& angleIn, SwFixed& angleMid, SwFixed&
 SwFixed mathMean(SwFixed angle1, SwFixed angle2);
 
 void shapeReset(SwShape& shape);
-bool shapeGenOutline(SwShape& shape, const Shape* sdata);
+bool shapeGenOutline(SwShape& shape, const Shape* sdata, const Matrix* transform);
 bool shapePrepare(SwShape& shape, const Shape* sdata, const SwSize& clip, const Matrix* transform);
 bool shapeGenRle(SwShape& shape, const Shape* sdata, const SwSize& clip, bool antiAlias);
 void shapeDelOutline(SwShape& shape);
 void shapeResetStroke(SwShape& shape, const Shape* sdata);
-bool shapeGenStrokeRle(SwShape& shape, const Shape* sdata, const SwSize& clip);
+bool shapeGenStrokeRle(SwShape& shape, const Shape* sdata, const Matrix* transform, const SwSize& clip);
 void shapeFree(SwShape& shape);
 void shapeDelStroke(SwShape& shape);
 bool shapeGenFillColors(SwShape& shape, const Fill* fill, const Matrix* transform, bool ctable);
