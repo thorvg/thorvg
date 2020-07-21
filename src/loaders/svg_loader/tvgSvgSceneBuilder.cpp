@@ -206,7 +206,7 @@ void _applyProperty(SvgNode* node, Shape* vg, float vx, float vy, float vw, floa
     SvgStyleProperty* style = node->style;
 
     if (node->transform) vg->transform(*node->transform);
-    if (node->type == SvgNodeType::Doc) return;
+    if (node->type == SvgNodeType::Doc || !node->display) return;
 
     //If fill property is nullptr then do nothing
     if (style->fill.paint.none) {
@@ -333,10 +333,12 @@ unique_ptr<Scene> _sceneBuildHelper(SvgNode* node, float vx, float vy, float vw,
         auto scene = Scene::gen();
         if (node->transform) scene->transform(*node->transform);
         node->style->opacity = (node->style->opacity * parentOpacity) / 255.0f;
-        for (auto child : node->child) {
-            child->style->opacity = (child->style->opacity * node->style->opacity) / 255.0f;
-            if (child->type == SvgNodeType::Doc || child->type == SvgNodeType::G) scene->push(_sceneBuildHelper(child, vx, vy, vw, vh, node->style->opacity));
-            else scene->push(_shapeBuildHelper(child, vx, vy, vw, vh));
+        if (node->display) {
+            for (auto child : node->child) {
+                child->style->opacity = (child->style->opacity * node->style->opacity) / 255.0f;
+                if (child->type == SvgNodeType::Doc || child->type == SvgNodeType::G) scene->push(_sceneBuildHelper(child, vx, vy, vw, vh, node->style->opacity));
+                else scene->push(_shapeBuildHelper(child, vx, vy, vw, vh));
+            }
         }
         return move(scene);
     }
