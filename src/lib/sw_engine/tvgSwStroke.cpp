@@ -34,6 +34,15 @@ static inline SwFixed SIDE_TO_ROTATE(const int32_t s)
 }
 
 
+static inline void SCALE(SwStroke& stroke, SwPoint& pt)
+{
+    if (stroke.postScale) {
+        pt.x = pt.x * stroke.sx;
+        pt.y = pt.y * stroke.sy;
+    }
+}
+
+
 static void _growBorder(SwStrokeBorder* border, uint32_t newPts)
 {
     assert(border);
@@ -132,11 +141,12 @@ static void _borderCubicTo(SwStrokeBorder* border, SwPoint& ctrl1, SwPoint& ctrl
 }
 
 
-static void _borderArcTo(SwStrokeBorder* border, SwPoint& center, SwFixed radius, SwFixed angleStart, SwFixed angleDiff)
+static void _borderArcTo(SwStrokeBorder* border, SwPoint& center, SwFixed radius, SwFixed angleStart, SwFixed angleDiff, SwStroke& stroke)
 {
     constexpr SwFixed ARC_CUBIC_ANGLE = SW_ANGLE_PI / 2;
     SwPoint a = {radius, 0};
     mathRotate(a, angleStart);
+    SCALE(stroke, a);
     a += center;
 
     auto total = angleDiff;
@@ -157,6 +167,7 @@ static void _borderArcTo(SwStrokeBorder* border, SwPoint& center, SwFixed radius
         //compute end point
         SwPoint b = {radius, 0};
         mathRotate(b, next);
+        SCALE(stroke, b);
         b += center;
 
         //compute first and second control points
@@ -164,10 +175,12 @@ static void _borderArcTo(SwStrokeBorder* border, SwPoint& center, SwFixed radius
 
         SwPoint a2 = {length, 0};
         mathRotate(a2, angle + rotate);
+        SCALE(stroke, a2);
         a2 += a;
 
         SwPoint b2 = {length, 0};
         mathRotate(b2, next - rotate);
+        SCALE(stroke, b2);
         b2 += b;
 
         //add cubic arc
@@ -224,7 +237,7 @@ static void _arcTo(SwStroke& stroke, int32_t side)
     auto total = mathDiff(stroke.angleIn, stroke.angleOut);
     if (total == SW_ANGLE_PI) total = -rotate * 2;
 
-    _borderArcTo(border, stroke.center, stroke.width, stroke.angleIn + rotate, total);
+    _borderArcTo(border, stroke.center, stroke.width, stroke.angleIn + rotate, total, stroke);
     border->movable = false;
 }
 
@@ -268,6 +281,7 @@ static void _outside(SwStroke& stroke, int32_t side, SwFixed lineLength)
         if (bevel) {
             SwPoint delta = {stroke.width, 0};
             mathRotate(delta, stroke.angleOut + rotate);
+            SCALE(stroke, delta);
             delta += stroke.center;
             border->movable = false;
             _borderLineTo(border, delta, false);
@@ -276,6 +290,7 @@ static void _outside(SwStroke& stroke, int32_t side, SwFixed lineLength)
             auto length = mathDivide(stroke.width, thcos);
             SwPoint delta = {length, 0};
             mathRotate(delta, phi);
+            SCALE(stroke, delta);
             delta += stroke.center;
             _borderLineTo(border, delta, false);
 
@@ -284,6 +299,7 @@ static void _outside(SwStroke& stroke, int32_t side, SwFixed lineLength)
             if (lineLength == 0) {
                 delta = {stroke.width, 0};
                 mathRotate(delta, stroke.angleOut + rotate);
+                SCALE(stroke, delta);
                 delta += stroke.center;
                 _borderLineTo(border, delta, false);
             }
@@ -312,15 +328,16 @@ static void _inside(SwStroke& stroke, int32_t side, SwFixed lineLength)
     if (!intersect) {
         delta = {stroke.width, 0};
         mathRotate(delta, stroke.angleOut + rotate);
+        SCALE(stroke, delta);
         delta += stroke.center;
         border->movable = false;
     } else {
         //compute median angle
         auto phi = stroke.angleIn + theta;
         auto thcos = mathCos(theta);
-        auto length = mathDivide(stroke.width, thcos);
-        delta = {length, 0};
+        delta = {mathDivide(stroke.width, thcos), 0};
         mathRotate(delta, phi + rotate);
+        SCALE(stroke, delta);
         delta += stroke.center;
     }
 
@@ -353,6 +370,7 @@ void _firstSubPath(SwStroke& stroke, SwFixed startAngle, SwFixed lineLength)
 {
     SwPoint delta = {stroke.width, 0};
     mathRotate(delta, startAngle + SW_ANGLE_PI2);
+    SCALE(stroke, delta);
 
     auto pt = stroke.center + delta;
     auto border = stroke.borders;
@@ -383,6 +401,7 @@ static void _lineTo(SwStroke& stroke, const SwPoint& to)
 
     delta = {stroke.width, 0};
     mathRotate(delta, angle + SW_ANGLE_PI2);
+    SCALE(stroke, delta);
 
     //process corner if necessary
     if (stroke.firstPt) {
@@ -428,9 +447,9 @@ static void _cubicTo(SwStroke& stroke, const SwPoint& ctrl1, const SwPoint& ctrl
     }
 
     SwPoint bezStack[37];   //TODO: static?
-    auto firstArc = true;
     auto limit = bezStack + 32;
     auto arc = bezStack;
+    auto firstArc = true;
     arc[0] = to;
     arc[1] = ctrl2;
     arc[2] = ctrl1;
@@ -494,15 +513,18 @@ static void _cubicTo(SwStroke& stroke, const SwPoint& ctrl1, const SwPoint& ctrl
             //compute control points
             SwPoint _ctrl1 = {length1, 0};
             mathRotate(_ctrl1, phi1 + rotate);
+            SCALE(stroke, _ctrl1);
             _ctrl1 += arc[2];
 
             SwPoint _ctrl2 = {length2, 0};
             mathRotate(_ctrl2, phi2 + rotate);
+            SCALE(stroke, _ctrl2);
             _ctrl2 += arc[1];
 
             //compute end point
             SwPoint _end = {stroke.width, 0};
             mathRotate(_end, angleOut + rotate);
+            SCALE(stroke, _end);
             _end += arc[0];
 
             if (stroke.handleWideStrokes) {
@@ -526,6 +548,7 @@ static void _cubicTo(SwStroke& stroke, const SwPoint& ctrl1, const SwPoint& ctrl
 
                     SwPoint delta = {alen, 0};
                     mathRotate(delta, beta);
+                    SCALE(stroke, delta);
                     delta += _start;
 
                     //circumnavigate the negative sector backwards
@@ -557,25 +580,28 @@ static void _cubicTo(SwStroke& stroke, const SwPoint& ctrl1, const SwPoint& ctrl
 
 static void _addCap(SwStroke& stroke, SwFixed angle, int32_t side)
 {
-     if (stroke.cap == StrokeCap::Square) {
+    if (stroke.cap == StrokeCap::Square) {
         auto rotate = SIDE_TO_ROTATE(side);
         auto border = stroke.borders + side;
 
         SwPoint delta = {stroke.width, 0};
         mathRotate(delta, angle);
+        SCALE(stroke, delta);
 
         SwPoint delta2 = {stroke.width, 0};
         mathRotate(delta2, angle + rotate);
+        SCALE(stroke, delta2);
         delta += stroke.center + delta2;
 
         _borderLineTo(border, delta, false);
 
         delta = {stroke.width, 0};
         mathRotate(delta, angle);
+        SCALE(stroke, delta);
 
         delta2 = {stroke.width, 0};
         mathRotate(delta2, angle - rotate);
-
+        SCALE(stroke, delta2);
         delta += delta2 + stroke.center;
 
         _borderLineTo(border, delta, false);
@@ -593,14 +619,14 @@ static void _addCap(SwStroke& stroke, SwFixed angle, int32_t side)
 
         SwPoint delta = {stroke.width, 0};
         mathRotate(delta, angle + rotate);
-
+        SCALE(stroke, delta);
         delta += stroke.center;
 
         _borderLineTo(border, delta, false);
 
         delta = {stroke.width, 0};
         mathRotate(delta, angle - rotate);
-
+        SCALE(stroke, delta);
         delta += stroke.center;
 
         _borderLineTo(border, delta, false);
@@ -822,11 +848,23 @@ void strokeReset(SwStroke& stroke, const Shape* sdata, const Matrix* transform)
 {
     assert(sdata);
 
-    //If x/y scale factor is identical, we can scale width size simply.
     auto scale = 1.0f;
-    if (transform && fabsf(transform->e11 - transform->e22) < FLT_EPSILON) {
-        scale = transform->e11;
-        stroke.preScaled = true;
+
+    if (transform) {
+        //Fast Track: if x/y scale factor is identical, we can scale width size simply.
+        auto sx = sqrt(pow(transform->e11, 2) + pow(transform->e21, 2));
+        auto sy = sqrt(pow(transform->e12, 2) + pow(transform->e22, 2));
+        if (fabsf(sx - sy) < FLT_EPSILON) {
+            scale = sx;
+            stroke.postScale = false;
+        //Try scaling stroke with normal approach.
+        } else {
+            stroke.postScale = true;
+            stroke.sx = sx;
+            stroke.sy = sy;
+        }
+    } else {
+        stroke.postScale = false;
     }
 
     stroke.width = TO_SWCOORD(sdata->strokeWidth() * 0.5 * scale);

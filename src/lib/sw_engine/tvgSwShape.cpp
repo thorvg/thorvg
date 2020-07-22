@@ -30,6 +30,17 @@ struct Line
 };
 
 
+static SwPoint _transform(const Point* to, const Matrix* transform)
+{
+    if (!transform) return {TO_SWCOORD(to->x), TO_SWCOORD(to->y)};
+
+    auto tx = round(to->x * transform->e11 + to->y * transform->e12 + transform->e13);
+    auto ty = round(to->x * transform->e21 + to->y * transform->e22 + transform->e23);
+
+    return {TO_SWCOORD(tx), TO_SWCOORD(ty)};
+}
+
+
 static float _lineLength(const Point& pt1, const Point& pt2)
 {
     /* approximate sqrt(x*x + y*y) using alpha max plus beta min algorithm.
@@ -93,17 +104,6 @@ static void _outlineEnd(SwOutline& outline)
         outline.cntrs[outline.cntrsCnt] = outline.ptsCnt - 1;
         ++outline.cntrsCnt;
     }
-}
-
-
-static inline SwPoint _transform(const Point* to, const Matrix* transform)
-{
-    if (!transform) return {TO_SWCOORD(to->x), TO_SWCOORD(to->y)};
-
-    auto tx = round(to->x * transform->e11 + to->y * transform->e12 + transform->e13);
-    auto ty = round(to->x * transform->e21 + to->y * transform->e22 + transform->e23);
-
-    return {TO_SWCOORD(tx), TO_SWCOORD(ty)};
 }
 
 
