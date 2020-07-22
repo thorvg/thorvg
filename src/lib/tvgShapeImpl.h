@@ -105,13 +105,13 @@ struct Shape::Impl
     bool scale(float factor)
     {
         if (rTransform) {
-            if (fabsf(factor - rTransform->factor) <= FLT_EPSILON) return true;
+            if (fabsf(factor - rTransform->scale) <= FLT_EPSILON) return true;
         } else {
             if (fabsf(factor) <= FLT_EPSILON) return true;
             rTransform = new RenderTransform();
             if (!rTransform) return false;
         }
-        rTransform->factor = factor;
+        rTransform->scale = factor;
         if (!rTransform->overriding) flag |= RenderUpdateFlag::Transform;
 
         return true;

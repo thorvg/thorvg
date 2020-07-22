@@ -36,7 +36,7 @@ struct RenderTransform
     float x = 0.0f;
     float y = 0.0f;
     float degree = 0.0f;  //rotation degree
-    float factor = 1.0f;  //scale factor
+    float scale = 1.0f;   //scale factor
     bool overriding = false;  //user transform?
 
     bool update();

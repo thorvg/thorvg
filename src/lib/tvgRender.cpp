@@ -48,7 +48,7 @@ bool RenderTransform::update()
 
     //Init Status
     if (fabsf(x) <= FLT_EPSILON && fabsf(y) <= FLT_EPSILON &&
-        fabsf(degree) <= FLT_EPSILON && fabsf(factor - 1) <= FLT_EPSILON) {
+        fabsf(degree) <= FLT_EPSILON && fabsf(scale - 1) <= FLT_EPSILON) {
         return false;
     }
 
@@ -64,8 +64,8 @@ bool RenderTransform::update()
     m.e33 = 1.0f;
 
     //scale
-    m.e11 *= factor;
-    m.e22 *= factor;
+    m.e11 *= scale;
+    m.e22 *= scale;
 
     //rotation
     if (fabsf(degree) > FLT_EPSILON) {
