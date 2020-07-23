@@ -130,12 +130,25 @@ bool _prepareRadial(SwFill* fill, const RadialGradient* radial, const Matrix* tr
     if (radial->radial(&fill->radial.cx, &fill->radial.cy, &radius) != Result::Success) return false;
     if (radius < FLT_EPSILON) return true;
 
+    fill->sx = 1.0f;
+    fill->sy = 1.0f;
+
     if (transform) {
         auto tx = fill->radial.cx * transform->e11 + fill->radial.cy * transform->e12 + transform->e13;
         auto ty = fill->radial.cx * transform->e21 + fill->radial.cy * transform->e22 + transform->e23;
         fill->radial.cx = tx;
         fill->radial.cy = ty;
-        radius *= transform->e33;
+
+        auto sx = sqrt(pow(transform->e11, 2) + pow(transform->e21, 2));
+        auto sy = sqrt(pow(transform->e12, 2) + pow(transform->e22, 2));
+
+        //FIXME; Scale + Rotation is not working properly
+        radius *= sx;
+
+        if (fabsf(sx - sy) > FLT_EPSILON) {
+            fill->sx = sx;
+            fill->sy = sy;
+        }
     }
 
     fill->radial.a = radius * radius;
@@ -190,8 +203,8 @@ void fillFetchRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, 
     if (fill->radial.a < FLT_EPSILON) return;
 
     //Rotation
-    auto rx = x + 0.5f - fill->radial.cx;
-    auto ry = y + 0.5f - fill->radial.cy;
+    auto rx = (x + 0.5f - fill->radial.cx) * fill->sy;
+    auto ry = (y + 0.5f - fill->radial.cy) * fill->sx;
     auto inv2a = fill->radial.inv2a;
     auto rxy = rx * rx + ry * ry;
     auto rxryPlus = 2 * rx;

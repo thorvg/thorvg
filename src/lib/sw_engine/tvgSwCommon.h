@@ -193,6 +193,8 @@ struct SwFill
 
     uint32_t* ctable;
     FillSpread spread;
+    float sx, sy;
+
     bool translucent;
 };
 
