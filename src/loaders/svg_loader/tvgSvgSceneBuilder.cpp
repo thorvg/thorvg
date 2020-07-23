@@ -335,9 +335,11 @@ unique_ptr<Scene> _sceneBuildHelper(SvgNode* node, float vx, float vy, float vw,
         node->style->opacity = (node->style->opacity * parentOpacity) / 255.0f;
         if (node->display) {
             for (auto child : node->child) {
-                child->style->opacity = (child->style->opacity * node->style->opacity) / 255.0f;
                 if (child->type == SvgNodeType::Doc || child->type == SvgNodeType::G) scene->push(_sceneBuildHelper(child, vx, vy, vw, vh, node->style->opacity));
-                else scene->push(_shapeBuildHelper(child, vx, vy, vw, vh));
+                else {
+                    child->style->opacity = (child->style->opacity * node->style->opacity) / 255.0f;
+                    scene->push(_shapeBuildHelper(child, vx, vy, vw, vh));
+                }
             }
         }
         return move(scene);
