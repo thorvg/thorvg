@@ -36,10 +36,8 @@ static inline SwFixed SIDE_TO_ROTATE(const int32_t s)
 
 static inline void SCALE(SwStroke& stroke, SwPoint& pt)
 {
-    if (stroke.postScale) {
-        pt.x = pt.x * stroke.sx;
-        pt.y = pt.y * stroke.sy;
-    }
+    pt.x *= stroke.sx;
+    pt.y *= stroke.sy;
 }
 
 
@@ -548,7 +546,6 @@ static void _cubicTo(SwStroke& stroke, const SwPoint& ctrl1, const SwPoint& ctrl
 
                     SwPoint delta = {alen, 0};
                     mathRotate(delta, beta);
-                    SCALE(stroke, delta);
                     delta += _start;
 
                     //circumnavigate the negative sector backwards
@@ -848,26 +845,14 @@ void strokeReset(SwStroke& stroke, const Shape* sdata, const Matrix* transform)
 {
     assert(sdata);
 
-    auto scale = 1.0f;
-
     if (transform) {
-        //Fast Track: if x/y scale factor is identical, we can scale width size simply.
-        auto sx = sqrt(pow(transform->e11, 2) + pow(transform->e21, 2));
-        auto sy = sqrt(pow(transform->e12, 2) + pow(transform->e22, 2));
-        if (fabsf(sx - sy) < FLT_EPSILON) {
-            scale = sx;
-            stroke.postScale = false;
-        //Try scaling stroke with normal approach.
-        } else {
-            stroke.postScale = true;
-            stroke.sx = sx;
-            stroke.sy = sy;
-        }
+        stroke.sx = sqrt(pow(transform->e11, 2) + pow(transform->e21, 2));
+        stroke.sy = sqrt(pow(transform->e12, 2) + pow(transform->e22, 2));
     } else {
-        stroke.postScale = false;
+        stroke.sx = stroke.sy = 1.0f;
     }
 
-    stroke.width = TO_SWCOORD(sdata->strokeWidth() * 0.5 * scale);
+    stroke.width = TO_SWCOORD(sdata->strokeWidth() * 0.5);
     stroke.cap = sdata->strokeCap();
 
     //Save line join: it can be temporarily changed when stroking curves...

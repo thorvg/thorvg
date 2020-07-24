@@ -153,13 +153,11 @@ struct SwStroke
 
     SwStrokeBorder borders[2];
 
-    float sx;
-    float sy;
+    float sx, sy;
 
     bool firstPt;
     bool openSubPath;
     bool handleWideStrokes;
-    bool postScale;
 };
 
 struct SwDashStroke
