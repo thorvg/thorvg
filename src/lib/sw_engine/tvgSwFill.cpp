@@ -96,16 +96,18 @@ bool _prepareLinear(SwFill* fill, const LinearGradient* linear, const Matrix* tr
     if (linear->linear(&x1, &y1, &x2, &y2) != Result::Success) return false;
 
     if (transform) {
+        auto sx = sqrt(pow(transform->e11, 2) + pow(transform->e21, 2));
+        auto sy = sqrt(pow(transform->e12, 2) + pow(transform->e22, 2));
         auto cx = (x2 - x1) * 0.5f + x1;
         auto cy = (y2 - y1) * 0.5f + y1;
         auto dx = x1 - cx;
         auto dy = y1 - cy;
-        x1 = dx * transform->e11 + dy * transform->e12 + transform->e13 + cx;
-        y1 = dx * transform->e21 + dy * transform->e22 + transform->e23 + cy;
+        x1 = dx * transform->e11 + dy * transform->e12 + transform->e13 + (cx * sx);
+        y1 = dx * transform->e21 + dy * transform->e22 + transform->e23 + (cy * sy);
         dx = x2 - cx;
         dy = y2 - cy;
-        x2 = dx * transform->e11 + dy * transform->e12 + transform->e13 + cx;
-        y2 = dx * transform->e21 + dy * transform->e22 + transform->e23 + cy;
+        x2 = dx * transform->e11 + dy * transform->e12 + transform->e13 + (cx * sx);
+        y2 = dx * transform->e21 + dy * transform->e22 + transform->e23 + (cy * sy);
     }
 
     fill->linear.dx = x2 - x1;
@@ -116,7 +118,7 @@ bool _prepareLinear(SwFill* fill, const LinearGradient* linear, const Matrix* tr
 
     fill->linear.dx /= fill->linear.len;
     fill->linear.dy /= fill->linear.len;
-    fill->linear.offset = -fill->linear.dx * x1 - fill->linear.dy * y1;
+    fill->linear.offset = -fill->linear.dx * x1 -fill->linear.dy * y1;
 
     return true;
 }
@@ -158,20 +160,23 @@ bool _prepareRadial(SwFill* fill, const RadialGradient* radial, const Matrix* tr
 }
 
 
-static inline uint32_t _clamp(const SwFill* fill, uint32_t pos)
+static inline uint32_t _clamp(const SwFill* fill, int32_t pos)
 {
     switch (fill->spread) {
         case FillSpread::Pad: {
             if (pos >= GRADIENT_STOP_SIZE) pos = GRADIENT_STOP_SIZE - 1;
+            else if (pos < 0) pos = 0;
             break;
         }
         case FillSpread::Repeat: {
+            if (pos < 0) pos = GRADIENT_STOP_SIZE + pos;
             pos = pos % GRADIENT_STOP_SIZE;
             break;
         }
         case FillSpread::Reflect: {
             auto limit = GRADIENT_STOP_SIZE * 2;
             pos = pos % limit;
+            if (pos < 0) pos = limit + pos;
             if (pos >= GRADIENT_STOP_SIZE) pos = (limit - pos - 1);
             break;
         }
@@ -180,16 +185,16 @@ static inline uint32_t _clamp(const SwFill* fill, uint32_t pos)
 }
 
 
-static inline uint32_t _fixedPixel(const SwFill* fill, uint32_t pos)
+static inline uint32_t _fixedPixel(const SwFill* fill, int32_t pos)
 {
-    auto i = (pos + (FIXPT_SIZE / 2)) >> FIXPT_BITS;
+    int32_t i = (pos + (FIXPT_SIZE / 2)) >> FIXPT_BITS;
     return fill->ctable[_clamp(fill, i)];
 }
 
 
 static inline uint32_t _pixel(const SwFill* fill, float pos)
 {
-    auto i = static_cast<uint32_t>(pos * (GRADIENT_STOP_SIZE - 1) + 0.5f);
+    auto i = static_cast<int32_t>(pos * (GRADIENT_STOP_SIZE - 1) + 0.5f);
     return fill->ctable[_clamp(fill, i)];
 }
 
@@ -226,13 +231,13 @@ void fillFetchLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, 
     if (fill->linear.len < FLT_EPSILON) return;
 
     //Rotation
-    auto rx = x + 0.5f;
-    auto ry = y + 0.5f;
-    auto t = (fill->linear.dx * rx + fill->linear.dy * ry + fill->linear.offset) * (GRADIENT_STOP_SIZE - 1);
-    auto inc = (fill->linear.dx) * (GRADIENT_STOP_SIZE - 1);
+    float rx = x + 0.5f;
+    float ry = y + 0.5f;
+    float t = (fill->linear.dx * rx + fill->linear.dy * ry + fill->linear.offset) * (GRADIENT_STOP_SIZE - 1);
+    float inc = (fill->linear.dx) * (GRADIENT_STOP_SIZE - 1);
 
     if (fabsf(inc) < FLT_EPSILON) {
-        auto color = _fixedPixel(fill, static_cast<uint32_t>(t * FIXPT_SIZE));
+        auto color = _fixedPixel(fill, static_cast<int32_t>(t * FIXPT_SIZE));
         rasterARGB32(dst, color, offset, len);
         return;
     }
