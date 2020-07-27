@@ -141,6 +141,7 @@ TVG_EXPORT Tvg_Result tvg_shape_set_stroke_cap(Tvg_Paint* paint, Tvg_Stroke_Cap 
 TVG_EXPORT Tvg_Result tvg_shape_set_stroke_join(Tvg_Paint* paint, Tvg_Stroke_Join join);
 TVG_EXPORT Tvg_Result tvg_shape_fill_color(Tvg_Paint* paint, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
 TVG_EXPORT Tvg_Result tvg_shape_scale(Tvg_Paint* paint, float factor);
+TVG_EXPORT Tvg_Result tvg_shape_rotate(Tvg_Paint* paint, float degree);
 
 #ifdef __cplusplus
 }
