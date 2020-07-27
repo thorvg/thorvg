@@ -236,6 +236,11 @@ TVG_EXPORT Tvg_Result tvg_shape_rotate(Tvg_Paint* paint, float degree)
     return (Tvg_Result) reinterpret_cast<Shape*>(paint)->rotate(degree);
 }
 
+TVG_EXPORT Tvg_Result tvg_shape_translate(Tvg_Paint* paint, float x, float y)
+{
+    return (Tvg_Result) reinterpret_cast<Shape*>(paint)->translate(x, y);
+}
+
 #ifdef __cplusplus
 }
 #endif
