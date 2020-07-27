@@ -226,6 +226,11 @@ TVG_EXPORT Tvg_Result tvg_shape_fill_color(Tvg_Paint* paint, uint8_t r, uint8_t 
     return (Tvg_Result) reinterpret_cast<Shape*>(paint)->fill(r, g, b, a);
 }
 
+TVG_EXPORT Tvg_Result tvg_shape_scale(Tvg_Paint* paint, float factor)
+{
+    return (Tvg_Result) reinterpret_cast<Shape*>(paint)->scale(factor);
+}
+
 #ifdef __cplusplus
 }
 #endif
