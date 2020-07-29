@@ -143,6 +143,7 @@ TVG_EXPORT Tvg_Result tvg_shape_fill_color(Tvg_Paint* paint, uint8_t r, uint8_t 
 TVG_EXPORT Tvg_Result tvg_shape_scale(Tvg_Paint* paint, float factor);
 TVG_EXPORT Tvg_Result tvg_shape_rotate(Tvg_Paint* paint, float degree);
 TVG_EXPORT Tvg_Result tvg_shape_translate(Tvg_Paint* paint, float x, float y);
+TVG_EXPORT Tvg_Result tvg_shape_transform(Tvg_Paint* paint, const Tvg_Matrix* m);
 
 #ifdef __cplusplus
 }
