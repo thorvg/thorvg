@@ -29,7 +29,7 @@ constexpr auto PATH_KAPPA = 0.552284f;
 /* External Class Implementation                                        */
 /************************************************************************/
 
-Shape :: Shape() : pImpl(make_unique<Impl>())
+Shape :: Shape() : pImpl(make_unique<Impl>(this))
 {
     _id = PAINT_ID_SHAPE;
 

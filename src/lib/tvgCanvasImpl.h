@@ -59,10 +59,10 @@ struct Canvas::Impl
             if (paint->id() == PAINT_ID_SCENE) {
                 //We know renderer type, avoid dynamic_cast for performance.
                 auto scene = static_cast<Scene*>(paint);
-                if (!SCENE_IMPL->clear(*renderer)) return Result::InsufficientCondition;
+                if (!SCENE_IMPL->dispose(*renderer)) return Result::InsufficientCondition;
             } else {
                 auto shape = static_cast<Shape*>(paint);
-                if (!SHAPE_IMPL->dispose(*shape, *renderer)) return Result::InsufficientCondition;
+                if (!SHAPE_IMPL->dispose(*renderer)) return Result::InsufficientCondition;
             }
             delete(paint);
         }
@@ -79,10 +79,10 @@ struct Canvas::Impl
             if (paint->id() == PAINT_ID_SCENE) {
                 //We know renderer type, avoid dynamic_cast for performance.
                 auto scene = static_cast<Scene*>(paint);
-                if (!SCENE_IMPL->update(*renderer, nullptr)) return Result::InsufficientCondition;
+                if (!SCENE_IMPL->update(*renderer, nullptr, RenderUpdateFlag::None)) return Result::InsufficientCondition;
             } else {
                 auto shape = static_cast<Shape*>(paint);
-                if (!SHAPE_IMPL->update(*shape, *renderer, nullptr)) return Result::InsufficientCondition;
+                if (!SHAPE_IMPL->update(*renderer, nullptr, RenderUpdateFlag::None)) return Result::InsufficientCondition;
             }
         }
         return Result::Success;
@@ -95,10 +95,10 @@ struct Canvas::Impl
         if (paint->id() == PAINT_ID_SCENE) {
             //We know renderer type, avoid dynamic_cast for performance.
             auto scene = static_cast<Scene*>(paint);
-            if (!SCENE_IMPL->update(*renderer)) return Result::InsufficientCondition;
+            if (!SCENE_IMPL->update(*renderer, nullptr, RenderUpdateFlag::None)) return Result::InsufficientCondition;
         } else {
             auto shape = static_cast<Shape*>(paint);
-            if (!SHAPE_IMPL->update(*shape, *renderer)) return Result::InsufficientCondition;
+            if (!SHAPE_IMPL->update(*renderer, nullptr, RenderUpdateFlag::None)) return Result::InsufficientCondition;
         }
         return Result::Success;
     }
@@ -116,7 +116,7 @@ struct Canvas::Impl
                 if(!SCENE_IMPL->render(*renderer)) return Result::InsufficientCondition;
             } else {
                 auto shape = static_cast<Shape*>(paint);
-                if(!SHAPE_IMPL->render(*shape, *renderer)) return Result::InsufficientCondition;
+                if(!SHAPE_IMPL->render(*renderer)) return Result::InsufficientCondition;
             }
         }
 

@@ -48,9 +48,10 @@ struct Shape::Impl
     uint8_t color[4] = {0, 0, 0, 0};    //r, g, b, a
     uint32_t flag = RenderUpdateFlag::None;
     void *edata = nullptr;              //engine data
+    Shape *shape = nullptr;
 
 
-    Impl() : path(new ShapePath)
+    Impl(Shape* s) : path(new ShapePath), shape(s)
     {
     }
 
@@ -62,17 +63,17 @@ struct Shape::Impl
         if (rTransform) delete(rTransform);
     }
 
-    bool dispose(Shape& shape, RenderMethod& renderer)
+    bool dispose(RenderMethod& renderer)
     {
-        return renderer.dispose(shape, edata);
+        return renderer.dispose(*shape, edata);
     }
 
-    bool render(Shape& shape, RenderMethod& renderer)
+    bool render(RenderMethod& renderer)
     {
-        return renderer.render(shape, edata);
+        return renderer.render(*shape, edata);
     }
 
-    bool update(Shape& shape, RenderMethod& renderer, const RenderTransform* pTransform = nullptr, uint32_t pFlag = 0)
+    bool update(RenderMethod& renderer, const RenderTransform* pTransform, uint32_t pFlag)
     {
         if (flag & RenderUpdateFlag::Transform) {
             if (!rTransform) return false;
@@ -84,10 +85,10 @@ struct Shape::Impl
 
         if (rTransform && pTransform) {
             RenderTransform outTransform(pTransform, rTransform);
-            edata = renderer.prepare(shape, edata, &outTransform, static_cast<RenderUpdateFlag>(pFlag | flag));
+            edata = renderer.prepare(*shape, edata, &outTransform, static_cast<RenderUpdateFlag>(pFlag | flag));
         } else {
             auto outTransform = pTransform ? pTransform : rTransform;
-            edata = renderer.prepare(shape, edata, outTransform, static_cast<RenderUpdateFlag>(pFlag | flag));
+            edata = renderer.prepare(*shape, edata, outTransform, static_cast<RenderUpdateFlag>(pFlag | flag));
         }
 
         flag = RenderUpdateFlag::None;

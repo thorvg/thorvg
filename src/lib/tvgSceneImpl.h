@@ -37,16 +37,16 @@ struct Scene::Impl
         if (rTransform) delete(rTransform);
     }
 
-    bool clear(RenderMethod& renderer)
+    bool dispose(RenderMethod& renderer)
     {
         for (auto paint : paints) {
             if (paint->id() == PAINT_ID_SCENE) {
                 //We know renderer type, avoid dynamic_cast for performance.
                 auto scene = static_cast<Scene*>(paint);
-                if (!SCENE_IMPL->clear(renderer)) return false;
+                if (!SCENE_IMPL->dispose(renderer)) return false;
             } else {
                 auto shape = static_cast<Shape*>(paint);
-                if (!SHAPE_IMPL->dispose(*shape, renderer)) return false;
+                if (!SHAPE_IMPL->dispose(renderer)) return false;
             }
             delete(paint);
         }
@@ -64,13 +64,13 @@ struct Scene::Impl
                 if (!SCENE_IMPL->update(renderer, transform, flag)) return false;
             } else {
                 auto shape = static_cast<Shape*>(paint);
-                if (!SHAPE_IMPL->update(*shape, renderer, transform, flag)) return false;
+                if (!SHAPE_IMPL->update(renderer, transform, flag)) return false;
             }
         }
         return true;
     }
 
-    bool update(RenderMethod &renderer, const RenderTransform* pTransform = nullptr, uint32_t pFlag = 0)
+    bool update(RenderMethod &renderer, const RenderTransform* pTransform, uint32_t pFlag)
     {
         if (loader) {
             auto scene = loader->data();
@@ -114,7 +114,7 @@ struct Scene::Impl
                 if(!SCENE_IMPL->render(renderer)) return false;
             } else {
                 auto shape = static_cast<Shape*>(paint);
-                if(!SHAPE_IMPL->render(*shape, renderer)) return false;
+                if(!SHAPE_IMPL->render(renderer)) return false;
             }
         }
         return true;
