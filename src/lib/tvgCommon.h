@@ -30,6 +30,7 @@
 using namespace std;
 using namespace tvg;
 
+#define IMPL pImpl.get()
 #define SCENE_IMPL scene->pImpl.get()
 #define SHAPE_IMPL shape->pImpl.get()
 

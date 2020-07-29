@@ -54,7 +54,6 @@ Fill::~Fill()
 Result Fill::colorStops(const ColorStop* colorStops, uint32_t cnt) noexcept
 {
     auto impl = pImpl.get();
-    if (!impl) return Result::MemoryCorruption;
 
     if (cnt == 0) {
         if (impl->colorStops) {
@@ -78,21 +77,15 @@ Result Fill::colorStops(const ColorStop* colorStops, uint32_t cnt) noexcept
 
 uint32_t Fill::colorStops(const ColorStop** colorStops) const noexcept
 {
-    auto impl = pImpl.get();
-    if (!impl) return 0;
+    if (colorStops) *colorStops = IMPL->colorStops;
 
-    if (colorStops) *colorStops = impl->colorStops;
-
-    return impl->cnt;
+    return IMPL->cnt;
 }
 
 
 Result Fill::spread(FillSpread s) noexcept
 {
-    auto impl = pImpl.get();
-    if (!impl) return Result::MemoryCorruption;
-
-    impl->spread = s;
+    IMPL->spread = s;
 
     return Result::Success;
 }
@@ -100,10 +93,7 @@ Result Fill::spread(FillSpread s) noexcept
 
 FillSpread Fill::spread() const noexcept
 {
-    auto impl = pImpl.get();
-    assert(impl);
-
-    return impl->spread;
+    return IMPL->spread;
 }
 
 #endif /* _TVG_FILL_CPP_ */

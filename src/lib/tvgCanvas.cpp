@@ -36,59 +36,44 @@ Canvas::~Canvas()
 
 Result Canvas::reserve(uint32_t n) noexcept
 {
-    auto impl = pImpl.get();
-    if (!impl) return Result::MemoryCorruption;
-    impl->paints.reserve(n);
+    IMPL->paints.reserve(n);
     return Result::Success;
 }
 
 
 Result Canvas::push(unique_ptr<Paint> paint) noexcept
 {
-    auto impl = pImpl.get();
-    if (!impl) return Result::MemoryCorruption;
-    return impl->push(move(paint));
+    return IMPL->push(move(paint));
 }
 
 
 Result Canvas::clear() noexcept
 {
-    auto impl = pImpl.get();
-    if (!impl) return Result::MemoryCorruption;
-    return impl->clear();
+    return IMPL->clear();
 }
 
 
 Result Canvas::draw(bool async) noexcept
 {
-    auto impl = pImpl.get();
-    if (!impl) return Result::MemoryCorruption;
-    return impl->draw();
+    return IMPL->draw();
 }
 
 
 Result Canvas::update() noexcept
 {
-    auto impl = pImpl.get();
-    if (!impl) return Result::MemoryCorruption;
-    return impl->update();
+    return IMPL->update();
 }
 
 
 Result Canvas::update(Paint* paint) noexcept
 {
-    auto impl = pImpl.get();
-    if (!impl) return Result::MemoryCorruption;
-    return impl->update(paint);
+    return IMPL->update(paint);
 }
 
 
 Result Canvas::sync() noexcept
 {
-    auto impl = pImpl.get();
-    if (!impl) return Result::MemoryCorruption;
-
-    if (impl->renderer->flush()) return Result::Success;
+    if (IMPL->renderer->flush()) return Result::Success;
 
     return Result::InsufficientCondition;
 }

@@ -39,35 +39,35 @@ Paint :: ~Paint()
 
 Result Paint::rotate(float degree) noexcept
 {
-    if (pImpl.get()->ts->rotate(degree)) return Result::Success;
+    if (IMPL->ts->rotate(degree)) return Result::Success;
     return Result::FailedAllocation;
 }
 
 
 Result Paint::scale(float factor) noexcept
 {
-    if (pImpl.get()->ts->scale(factor)) return Result::Success;
+    if (IMPL->ts->scale(factor)) return Result::Success;
     return Result::FailedAllocation;
 }
 
 
 Result Paint::translate(float x, float y) noexcept
 {
-    if (pImpl.get()->ts->translate(x, y)) return Result::Success;
+    if (IMPL->ts->translate(x, y)) return Result::Success;
     return Result::FailedAllocation;
 }
 
 
 Result Paint::transform(const Matrix& m) noexcept
 {
-    if (pImpl.get()->ts->transform(m)) return Result::Success;
+    if (IMPL->ts->transform(m)) return Result::Success;
     return Result::FailedAllocation;
 }
 
 
 Result Paint::bounds(float* x, float* y, float* w, float* h) const noexcept
 {
-    if (pImpl.get()->ts->bounds(x, y, w, h)) return Result::Success;
+    if (IMPL->ts->bounds(x, y, w, h)) return Result::Success;
     return Result::InsufficientCondition;
 }
 

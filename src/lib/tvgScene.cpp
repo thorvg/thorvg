@@ -44,12 +44,9 @@ unique_ptr<Scene> Scene::gen() noexcept
 
 Result Scene::push(unique_ptr<Paint> paint) noexcept
 {
-    auto impl = pImpl.get();
-    if (!impl) return Result::MemoryCorruption;
-
     auto p = paint.release();
     if (!p) return Result::MemoryCorruption;
-    impl->paints.push_back(p);
+    IMPL->paints.push_back(p);
 
     return Result::Success;
 }
@@ -57,10 +54,7 @@ Result Scene::push(unique_ptr<Paint> paint) noexcept
 
 Result Scene::reserve(uint32_t size) noexcept
 {
-    auto impl = pImpl.get();
-    if (!impl) return Result::MemoryCorruption;
-
-    impl->paints.reserve(size);
+    IMPL->paints.reserve(size);
 
     return Result::Success;
 }
@@ -70,10 +64,7 @@ Result Scene::load(const std::string& path) noexcept
 {
     if (path.empty()) return Result::InvalidArguments;
 
-    auto impl = pImpl.get();
-    if (!impl) return Result::MemoryCorruption;
-
-     return impl->load(path);
+     return IMPL->load(path);
 }
 
 #endif /* _TVG_SCENE_CPP_ */

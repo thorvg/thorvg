@@ -46,15 +46,11 @@ RadialGradient::~RadialGradient()
 
 Result RadialGradient::radial(float cx, float cy, float radius) noexcept
 {
-    if (radius < FLT_EPSILON)
-        return Result::InvalidArguments;
+    if (radius < FLT_EPSILON) return Result::InvalidArguments;
 
-    auto impl = pImpl.get();
-    if (!impl) return Result::MemoryCorruption;
-
-    impl->cx = cx;
-    impl->cy = cy;
-    impl->radius = radius;
+    IMPL->cx = cx;
+    IMPL->cy = cy;
+    IMPL->radius = radius;
 
     return Result::Success;
 }
@@ -62,12 +58,9 @@ Result RadialGradient::radial(float cx, float cy, float radius) noexcept
 
 Result RadialGradient::radial(float* cx, float* cy, float* radius) const noexcept
 {
-    auto impl = pImpl.get();
-    if (!impl) return Result::MemoryCorruption;
-
-    if (cx) *cx = impl->cx;
-    if (cy) *cy = impl->cy;
-    if (radius) *radius = impl->radius;
+    if (cx) *cx = IMPL->cx;
+    if (cy) *cy = IMPL->cy;
+    if (radius) *radius = IMPL->radius;
 
     return Result::Success;
 }

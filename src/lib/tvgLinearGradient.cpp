@@ -49,13 +49,10 @@ Result LinearGradient::linear(float x1, float y1, float x2, float y2) noexcept
     if (fabsf(x2 - x1) < FLT_EPSILON && fabsf(y2 - y1) < FLT_EPSILON)
         return Result::InvalidArguments;
 
-    auto impl = pImpl.get();
-    if (!impl) return Result::MemoryCorruption;
-
-    impl->x1 = x1;
-    impl->y1 = y1;
-    impl->x2 = x2;
-    impl->y2 = y2;
+    IMPL->x1 = x1;
+    IMPL->y1 = y1;
+    IMPL->x2 = x2;
+    IMPL->y2 = y2;
 
     return Result::Success;
 }
@@ -63,13 +60,10 @@ Result LinearGradient::linear(float x1, float y1, float x2, float y2) noexcept
 
 Result LinearGradient::linear(float* x1, float* y1, float* x2, float* y2) const noexcept
 {
-    auto impl = pImpl.get();
-    if (!impl) return Result::MemoryCorruption;
-
-    if (x1) *x1 = impl->x1;
-    if (x2) *x2 = impl->x2;
-    if (y1) *y1 = impl->y1;
-    if (y2) *y2 = impl->y2;
+    if (x1) *x1 = IMPL->x1;
+    if (x2) *x2 = IMPL->x2;
+    if (y1) *y1 = IMPL->y1;
+    if (y2) *y2 = IMPL->y2;
 
     return Result::Success;
 }
