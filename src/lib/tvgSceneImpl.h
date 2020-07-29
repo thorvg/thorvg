@@ -231,6 +231,12 @@ struct Scene::Impl
         if (!loader->read()) return Result::Unknown;
         return Result::Success;
     }
+
+    ITransformMethod* transformMethod()
+    {
+        return new TransformMethod<Scene::Impl>(this);
+    }
+
 };
 
 #endif //_TVG_SCENE_IMPL_H_

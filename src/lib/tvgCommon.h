@@ -43,6 +43,7 @@ using namespace tvg;
 #include "tvgLoader.h"
 #include "tvgLoaderMgr.h"
 #include "tvgRender.h"
+#include "tvgPaint.h"
 #include "tvgShapePath.h"
 #include "tvgShapeImpl.h"
 #include "tvgSceneImpl.h"

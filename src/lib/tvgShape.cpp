@@ -25,7 +25,6 @@
 /************************************************************************/
 constexpr auto PATH_KAPPA = 0.552284f;
 
-
 /************************************************************************/
 /* External Class Implementation                                        */
 /************************************************************************/
@@ -33,6 +32,8 @@ constexpr auto PATH_KAPPA = 0.552284f;
 Shape :: Shape() : pImpl(make_unique<Impl>())
 {
     _id = PAINT_ID_SHAPE;
+
+    Paint::pImpl.get()->ts = pImpl.get()->transformMethod();
 }
 
 
@@ -277,61 +278,6 @@ const Fill* Shape::fill() const noexcept
     if (!impl) return nullptr;
 
     return impl->fill;
-}
-
-
-Result Shape::scale(float factor) noexcept
-{
-    auto impl = pImpl.get();
-    if (!impl) return Result::MemoryCorruption;
-
-    if (!impl->scale(factor)) return Result::FailedAllocation;
-
-    return Result::Success;
-}
-
-
-Result Shape::rotate(float degree) noexcept
-{
-    auto impl = pImpl.get();
-    if (!impl) return Result::MemoryCorruption;
-
-    if (!impl->rotate(degree)) return Result::FailedAllocation;
-
-    return Result::Success;
-}
-
-
-Result Shape::translate(float x, float y) noexcept
-{
-    auto impl = pImpl.get();
-    if (!impl) return Result::MemoryCorruption;
-
-    if (!impl->translate(x, y)) return Result::FailedAllocation;
-
-    return Result::Success;
-}
-
-
-Result Shape::transform(const Matrix& m) noexcept
-{
-    auto impl = pImpl.get();
-    if (!impl) return Result::MemoryCorruption;
-
-    if (!impl->transform(m)) return Result::FailedAllocation;
-
-    return Result::Success;
-}
-
-
-Result Shape::bounds(float* x, float* y, float* w, float* h) const noexcept
-{
-    auto impl = pImpl.get();
-    if (!impl) return Result::MemoryCorruption;
-
-    if (!impl->bounds(x, y, w, h)) return Result::InsufficientCondition;
-
-    return Result::Success;
 }
 
 

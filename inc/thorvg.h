@@ -97,9 +97,16 @@ struct Matrix
 class TVG_EXPORT Paint
 {
 public:
-    virtual ~Paint() {}
+    virtual ~Paint();
+
+    Result rotate(float degree) noexcept;
+    Result scale(float factor) noexcept;
+    Result translate(float x, float y) noexcept;
+    Result transform(const Matrix& m) noexcept;
+    Result bounds(float* x, float* y, float* w, float* h) const noexcept;
 
     _TVG_DECALRE_IDENTIFIER();
+    _TVG_DECLARE_PRIVATE(Paint);
 };
 
 
@@ -243,18 +250,11 @@ public:
     Result fill(uint8_t r, uint8_t g, uint8_t b, uint8_t a) noexcept;
     Result fill(std::unique_ptr<Fill> f) noexcept;
 
-    //Transform
-    Result rotate(float degree) noexcept;
-    Result scale(float factor) noexcept;
-    Result translate(float x, float y) noexcept;
-    Result transform(const Matrix& m) noexcept;
-
     //Getters
     uint32_t pathCommands(const PathCommand** cmds) const noexcept;
     uint32_t pathCoords(const Point** pts) const noexcept;
     Result fill(uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a) const noexcept;
     const Fill* fill() const noexcept;
-    Result bounds(float* x, float* y, float* w, float* h) const noexcept;
 
     float strokeWidth() const noexcept;
     Result strokeColor(uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a) const noexcept;
@@ -286,13 +286,6 @@ public:
     Result push(std::unique_ptr<Paint> paint) noexcept;
     Result reserve(uint32_t size) noexcept;
     Result load(const std::string& path) noexcept;
-
-    Result rotate(float degree) noexcept;
-    Result scale(float factor) noexcept;
-    Result translate(float x, float y) noexcept;
-    Result transform(const Matrix& m) noexcept;
-
-    Result bounds(float* x, float* y, float* w, float* h) const noexcept;
 
     static std::unique_ptr<Scene> gen() noexcept;
 

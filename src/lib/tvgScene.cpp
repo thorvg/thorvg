@@ -26,6 +26,8 @@
 Scene::Scene() : pImpl(make_unique<Impl>())
 {
     _id = PAINT_ID_SCENE;
+
+    Paint::pImpl.get()->ts = pImpl.get()->transformMethod();
 }
 
 
@@ -59,61 +61,6 @@ Result Scene::reserve(uint32_t size) noexcept
     if (!impl) return Result::MemoryCorruption;
 
     impl->paints.reserve(size);
-
-    return Result::Success;
-}
-
-
-Result Scene::scale(float factor) noexcept
-{
-    auto impl = pImpl.get();
-    if (!impl) return Result::MemoryCorruption;
-
-    if (!impl->scale(factor)) return Result::FailedAllocation;
-
-    return Result::Success;
-}
-
-
-Result Scene::rotate(float degree) noexcept
-{
-    auto impl = pImpl.get();
-    if (!impl) return Result::MemoryCorruption;
-
-    if (!impl->rotate(degree)) return Result::FailedAllocation;
-
-    return Result::Success;
-}
-
-
-Result Scene::translate(float x, float y) noexcept
-{
-    auto impl = pImpl.get();
-    if (!impl) return Result::MemoryCorruption;
-
-    if (!impl->translate(x, y)) return Result::FailedAllocation;
-
-    return Result::Success;
-}
-
-
-Result Scene::transform(const Matrix& m) noexcept
-{
-    auto impl = pImpl.get();
-    if (!impl) return Result::MemoryCorruption;
-
-    if (!impl->transform(m)) return Result::FailedAllocation;
-
-    return Result::Success;
-}
-
-
-Result Scene::bounds(float* x, float* y, float* w, float* h) const noexcept
-{
-    auto impl = pImpl.get();
-    if (!impl) return Result::MemoryCorruption;
-
-    if (!impl->bounds(x, y, w, h)) return Result::InsufficientCondition;
 
     return Result::Success;
 }

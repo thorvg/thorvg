@@ -235,6 +235,12 @@ struct Shape::Impl
 
         return true;
     }
+
+
+    ITransformMethod* transformMethod()
+    {
+        return new TransformMethod<Shape::Impl>(this);
+    }
 };
 
 #endif //_TVG_SHAPE_IMPL_H_
