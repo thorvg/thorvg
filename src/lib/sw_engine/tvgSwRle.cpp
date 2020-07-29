@@ -625,17 +625,15 @@ invalid_outline:
 }
 
 
-static bool _genRle(RleWorker& rw)
+static int _genRle(RleWorker& rw)
 {
-    bool ret = false;
-
     if (setjmp(rw.jmpBuf) == 0) {
-        ret = _decomposeOutline(rw);
+        auto ret = _decomposeOutline(rw);
         if (!rw.invalid) _recordCell(rw);
-    } else {
-        cout <<  "Lack of Cell Memory" << endl;
+        if (ret) return 0;  //success
+        else return 1;      //fail
     }
-    return ret;
+    return -1;              //lack of cell memory
 }
 
 
@@ -646,13 +644,8 @@ static bool _genRle(RleWorker& rw)
 
 SwRleData* rleRender(const SwOutline* outline, const SwBBox& bbox, const SwSize& clip, bool antiAlias)
 {
-    //Please adjust when you out of cell memory (default: 16384L)
-    constexpr auto RENDER_POOL_SIZE = 163840L * 2;
+    constexpr auto RENDER_POOL_SIZE = 16384L;
     constexpr auto BAND_SIZE = 40;
-
-    assert(outline);
-    assert(outline->cntrs && outline->pts);
-    assert(outline->ptsCnt == outline->cntrs[outline->cntrsCnt - 1] + 1);
 
     //TODO: We can preserve several static workers in advance
     RleWorker rw;
@@ -693,6 +686,7 @@ SwRleData* rleRender(const SwOutline* outline, const SwBBox& bbox, const SwSize&
     auto min = rw.cellMin.y;
     auto yMax = rw.cellMax.y;
     SwCoord max;
+    int ret;
 
     for (int n = 0; n < bandCnt; ++n, min = max) {
         max = min + rw.bandSize;
@@ -706,8 +700,8 @@ SwRleData* rleRender(const SwOutline* outline, const SwBBox& bbox, const SwSize&
             rw.yCells = static_cast<Cell**>(rw.buffer);
             rw.yCnt = band->max - band->min;
 
-            auto cellStart = sizeof(Cell*) * (int)rw.yCnt;
-            auto cellMod = cellStart % sizeof(Cell);
+            int cellStart = sizeof(Cell*) * (int)rw.yCnt;
+            int cellMod = cellStart % sizeof(Cell);
 
             if (cellMod > 0) cellStart += sizeof(Cell) - cellMod;
 
@@ -722,7 +716,7 @@ SwRleData* rleRender(const SwOutline* outline, const SwBBox& bbox, const SwSize&
             rw.maxCells = cellsMax - rw.cells;
             if (rw.maxCells < 2) goto reduce_bands;
 
-            for (auto y = 0; y < rw.yCnt; ++y)
+            for (int y = 0; y < rw.yCnt; ++y)
                 rw.yCells[y] = nullptr;
 
             rw.cellsCnt = 0;
@@ -731,11 +725,14 @@ SwRleData* rleRender(const SwOutline* outline, const SwBBox& bbox, const SwSize&
             rw.cellMax.y = band->max;
             rw.cellYCnt = band->max - band->min;
 
-            if (!_genRle(rw)) goto error;
-
-            _sweep(rw);
-            --band;
-            continue;
+            ret = _genRle(rw);
+            if (ret == 0) {
+                _sweep(rw);
+                --band;
+                continue;
+            } else if (ret == 1) {
+                goto error;
+            }
 
         reduce_bands:
             /* render pool overflow: we will reduce the render band by half */
