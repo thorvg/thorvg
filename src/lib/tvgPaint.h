@@ -19,9 +19,9 @@
 
 namespace tvg
 {
-    struct PaintMethod
+    struct StrategyMethod
     {
-        virtual ~PaintMethod(){}
+        virtual ~StrategyMethod(){}
 
         virtual bool dispose(RenderMethod& renderer) = 0;
         virtual bool update(RenderMethod& renderer, const RenderTransform* pTransform, uint32_t pFlag) = 0;
@@ -37,21 +37,31 @@ namespace tvg
 
     struct Paint::Impl
     {
-        PaintMethod* method = nullptr;
+        StrategyMethod* smethod = nullptr;
 
         ~Impl() {
-            if (method) delete(method);
+            if (smethod) delete(smethod);
+        }
+
+        void method(StrategyMethod* method)
+        {
+            smethod = method;
+        }
+
+        StrategyMethod* method()
+        {
+            return smethod;
         }
     };
 
 
     template<class T>
-    struct TransformMethod : PaintMethod
+    struct PaintMethod : StrategyMethod
     {
         T* inst = nullptr;
 
-        TransformMethod(T* inst) : inst(_inst) {}
-        ~TransformMethod(){}
+        PaintMethod(T* _inst) : inst(_inst) {}
+        ~PaintMethod(){}
 
         bool rotate(float degree) override
         {

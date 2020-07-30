@@ -236,12 +236,6 @@ struct Shape::Impl
 
         return true;
     }
-
-
-    PaintMethod* transformMethod()
-    {
-        return new TransformMethod<Shape::Impl>(this);
-    }
 };
 
 #endif //_TVG_SHAPE_IMPL_H_

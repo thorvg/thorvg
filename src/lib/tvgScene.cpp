@@ -25,7 +25,7 @@
 
 Scene::Scene() : pImpl(make_unique<Impl>())
 {
-    Paint::IMPL->method = IMPL->transformMethod();
+    Paint::IMPL->method(new PaintMethod<Scene::Impl>(IMPL));
 }
 
 

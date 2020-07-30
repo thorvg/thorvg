@@ -56,7 +56,7 @@ struct Canvas::Impl
         if (!renderer->clear()) return Result::InsufficientCondition;
 
         for (auto paint : paints) {
-            paint->IMPL->method->dispose(*renderer);
+            paint->IMPL->method()->dispose(*renderer);
             delete(paint);
         }
         paints.clear();
@@ -70,13 +70,13 @@ struct Canvas::Impl
 
         //Update single paint node
         if (paint) {
-            if (!paint->IMPL->method->update(*renderer, nullptr, RenderUpdateFlag::None)) {
+            if (!paint->IMPL->method()->update(*renderer, nullptr, RenderUpdateFlag::None)) {
                 return Result::InsufficientCondition;
             }
         //Update retained all paint nodes
         } else {
             for(auto paint: paints) {
-                if (!paint->IMPL->method->update(*renderer, nullptr, RenderUpdateFlag::None)) {
+                if (!paint->IMPL->method()->update(*renderer, nullptr, RenderUpdateFlag::None)) {
                     return Result::InsufficientCondition;
                 }
             }
@@ -91,7 +91,7 @@ struct Canvas::Impl
         if (!renderer->preRender()) return Result::InsufficientCondition;
 
         for(auto paint: paints) {
-            if(!paint->IMPL->method->render(*renderer)) return Result::InsufficientCondition;
+            if(!paint->IMPL->method()->render(*renderer)) return Result::InsufficientCondition;
         }
 
         if (!renderer->postRender()) return Result::InsufficientCondition;

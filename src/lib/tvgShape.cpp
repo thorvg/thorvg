@@ -31,7 +31,7 @@ constexpr auto PATH_KAPPA = 0.552284f;
 
 Shape :: Shape() : pImpl(make_unique<Impl>(this))
 {
-    Paint::IMPL->method = IMPL->transformMethod();
+    Paint::IMPL->method(new PaintMethod<Shape::Impl>(IMPL));
 }
 
 

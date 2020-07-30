@@ -40,7 +40,7 @@ struct Scene::Impl
     bool dispose(RenderMethod& renderer)
     {
         for (auto paint : paints) {
-            paint->IMPL->method->dispose(renderer);
+            paint->IMPL->method()->dispose(renderer);
             delete(paint);
         }
         paints.clear();
@@ -51,7 +51,7 @@ struct Scene::Impl
     bool updateInternal(RenderMethod &renderer, const RenderTransform* transform, uint32_t flag)
     {
         for(auto paint: paints) {
-            if (!paint->IMPL->method->update(renderer, transform, flag))  return false;
+            if (!paint->IMPL->method()->update(renderer, transform, flag))  return false;
         }
         return true;
     }
@@ -94,7 +94,7 @@ struct Scene::Impl
     bool render(RenderMethod &renderer)
     {
         for(auto paint: paints) {
-            if(!paint->IMPL->method->render(renderer)) return false;
+            if(!paint->IMPL->method()->render(renderer)) return false;
         }
         return true;
     }
@@ -118,7 +118,7 @@ struct Scene::Impl
                 auto w2 = 0.0f;
                 auto h2 = 0.0f;
 
-                if (paint->IMPL->method->bounds(&x2, &y2, &w2, &h2)) return false;
+                if (paint->IMPL->method()->bounds(&x2, &y2, &w2, &h2)) return false;
 
                 //Merge regions
                 if (x2 < x) x = x2;
@@ -203,12 +203,6 @@ struct Scene::Impl
         if (!loader->read()) return Result::Unknown;
         return Result::Success;
     }
-
-    PaintMethod* transformMethod()
-    {
-        return new TransformMethod<Scene::Impl>(this);
-    }
-
 };
 
 #endif //_TVG_SCENE_IMPL_H_
