@@ -45,12 +45,10 @@ struct Shape::Impl
     ShapePath *path = nullptr;
     Fill *fill = nullptr;
     ShapeStroke *stroke = nullptr;
-    RenderTransform *rTransform = nullptr;
     uint8_t color[4] = {0, 0, 0, 0};    //r, g, b, a
-    uint32_t flag = RenderUpdateFlag::None;
     void *edata = nullptr;              //engine data
     Shape *shape = nullptr;
-
+    uint32_t flag = RenderUpdateFlag::None;
 
     Impl(Shape* s) : path(new ShapePath), shape(s)
     {
@@ -61,7 +59,6 @@ struct Shape::Impl
         if (path) delete(path);
         if (fill) delete(fill);
         if (stroke) delete(stroke);
-        if (rTransform) delete(rTransform);
     }
 
     bool dispose(RenderMethod& renderer)
@@ -74,23 +71,9 @@ struct Shape::Impl
         return renderer.render(*shape, edata);
     }
 
-    bool update(RenderMethod& renderer, const RenderTransform* pTransform, uint32_t pFlag)
+    bool update(RenderMethod& renderer, const RenderTransform* transform, RenderUpdateFlag pFlag)
     {
-        if (flag & RenderUpdateFlag::Transform) {
-            if (!rTransform) return false;
-            if (!rTransform->update()) {
-                delete(rTransform);
-                rTransform = nullptr;
-            }
-        }
-
-        if (rTransform && pTransform) {
-            RenderTransform outTransform(pTransform, rTransform);
-            edata = renderer.prepare(*shape, edata, &outTransform, static_cast<RenderUpdateFlag>(pFlag | flag));
-        } else {
-            auto outTransform = pTransform ? pTransform : rTransform;
-            edata = renderer.prepare(*shape, edata, outTransform, static_cast<RenderUpdateFlag>(pFlag | flag));
-        }
+        edata = renderer.prepare(*shape, edata, transform, static_cast<RenderUpdateFlag>(pFlag | flag));
 
         flag = RenderUpdateFlag::None;
 
@@ -103,66 +86,6 @@ struct Shape::Impl
         if (!path) return false;
         return path->bounds(x, y, w, h);
     }
-
-    bool scale(float factor)
-    {
-        if (rTransform) {
-            if (fabsf(factor - rTransform->scale) <= FLT_EPSILON) return true;
-        } else {
-            if (fabsf(factor) <= FLT_EPSILON) return true;
-            rTransform = new RenderTransform();
-            if (!rTransform) return false;
-        }
-        rTransform->scale = factor;
-        if (!rTransform->overriding) flag |= RenderUpdateFlag::Transform;
-
-        return true;
-    }
-
-    bool rotate(float degree)
-    {
-        if (rTransform) {
-            if (fabsf(degree - rTransform->degree) <= FLT_EPSILON) return true;
-        } else {
-            if (fabsf(degree) <= FLT_EPSILON) return true;
-            rTransform = new RenderTransform();
-            if (!rTransform) return false;
-        }
-        rTransform->degree = degree;
-        if (!rTransform->overriding) flag |= RenderUpdateFlag::Transform;
-
-        return true;
-    }
-
-    bool translate(float x, float y)
-    {
-        if (rTransform) {
-            if (fabsf(x - rTransform->x) <= FLT_EPSILON && fabsf(y - rTransform->y) <= FLT_EPSILON) return true;
-        } else {
-            if (fabsf(x) <= FLT_EPSILON && fabsf(y) <= FLT_EPSILON) return true;
-            rTransform = new RenderTransform();
-            if (!rTransform) return false;
-        }
-        rTransform->x = x;
-        rTransform->y = y;
-        if (!rTransform->overriding) flag |= RenderUpdateFlag::Transform;
-
-        return true;
-    }
-
-
-    bool transform(const Matrix& m)
-    {
-        if (!rTransform) {
-            rTransform = new RenderTransform();
-            if (!rTransform) return false;
-        }
-        rTransform->override(m);
-        flag |= RenderUpdateFlag::Transform;
-
-        return true;
-    }
-
 
     bool strokeWidth(float width)
     {

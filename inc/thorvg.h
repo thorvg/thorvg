@@ -48,8 +48,10 @@ protected: \
     A() = delete; \
     ~A() = delete
 
-#define _TVG_DECLARE_ACCESSOR(A) \
-    friend A
+#define _TVG_DECLARE_ACCESSOR() \
+    friend Canvas; \
+    friend Scene; \
+    friend Picture
 
 #define _TVG_DECALRE_IDENTIFIER() \
     auto id() const { return _id; } \
@@ -61,6 +63,7 @@ namespace tvg
 
 class RenderMethod;
 class Scene;
+class Picture;
 class Canvas;
 
 
@@ -105,9 +108,8 @@ public:
     Result transform(const Matrix& m) noexcept;
     Result bounds(float* x, float* y, float* w, float* h) const noexcept;
 
+    _TVG_DECLARE_ACCESSOR();
     _TVG_DECLARE_PRIVATE(Paint);
-    _TVG_DECLARE_ACCESSOR(Canvas);
-    _TVG_DECLARE_ACCESSOR(Scene);
 };
 
 
@@ -164,7 +166,6 @@ public:
 
     _TVG_DECLARE_PRIVATE(Canvas);
 };
-
 
 
 /**
@@ -308,7 +309,6 @@ public:
     static std::unique_ptr<Scene> gen() noexcept;
 
     _TVG_DECLARE_PRIVATE(Scene);
-    _TVG_DECLARE_ACCESSOR(Picture);
 };
 
 

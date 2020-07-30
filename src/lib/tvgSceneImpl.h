@@ -26,18 +26,11 @@
 struct Scene::Impl
 {
     vector<Paint*> paints;
-    RenderTransform *rTransform = nullptr;
-    uint32_t flag = RenderUpdateFlag::None;
-
-    ~Impl()
-    {
-        if (rTransform) delete(rTransform);
-    }
 
     bool dispose(RenderMethod& renderer)
     {
         for (auto paint : paints) {
-            paint->IMPL->method()->dispose(renderer);
+            paint->IMPL->dispose(renderer);
             delete(paint);
         }
         paints.clear();
@@ -45,43 +38,18 @@ struct Scene::Impl
         return true;
     }
 
-    bool updateInternal(RenderMethod &renderer, const RenderTransform* transform, uint32_t flag)
+    bool update(RenderMethod &renderer, const RenderTransform* transform, RenderUpdateFlag flag)
     {
         for(auto paint: paints) {
-            if (!paint->IMPL->method()->update(renderer, transform, flag))  return false;
+            if (!paint->IMPL->update(renderer, transform, static_cast<uint32_t>(flag))) return false;
         }
         return true;
-    }
-
-    bool update(RenderMethod &renderer, const RenderTransform* pTransform, uint32_t pFlag)
-    {
-        if (flag & RenderUpdateFlag::Transform) {
-            if (!rTransform) return false;
-            if (!rTransform->update()) {
-                delete(rTransform);
-                rTransform = nullptr;
-            }
-        }
-
-        auto ret = true;
-
-        if (rTransform && pTransform) {
-            RenderTransform outTransform(pTransform, rTransform);
-            ret = updateInternal(renderer, &outTransform, pFlag | flag);
-        } else {
-            auto outTransform = pTransform ? pTransform : rTransform;
-            ret = updateInternal(renderer, outTransform, pFlag | flag);
-        }
-
-        flag = RenderUpdateFlag::None;
-
-        return ret;
     }
 
     bool render(RenderMethod &renderer)
     {
         for(auto paint: paints) {
-            if(!paint->IMPL->method()->render(renderer)) return false;
+            if(!paint->IMPL->render(renderer)) return false;
         }
         return true;
     }
@@ -99,7 +67,7 @@ struct Scene::Impl
             auto w2 = 0.0f;
             auto h2 = 0.0f;
 
-            if (paint->IMPL->method()->bounds(&x2, &y2, &w2, &h2)) return false;
+            if (paint->IMPL->bounds(&x2, &y2, &w2, &h2)) return false;
 
             //Merge regions
             if (x2 < x) x = x2;
@@ -112,65 +80,6 @@ struct Scene::Impl
         if (py) *py = y;
         if (pw) *pw = w;
         if (ph) *ph = h;
-
-        return true;
-    }
-
-    bool scale(float factor)
-    {
-        if (rTransform) {
-            if (fabsf(factor - rTransform->scale) <= FLT_EPSILON) return true;
-        } else {
-            if (fabsf(factor) <= FLT_EPSILON) return true;
-            rTransform = new RenderTransform();
-            if (!rTransform) return false;
-        }
-        rTransform->scale = factor;
-        flag |= RenderUpdateFlag::Transform;
-
-        return true;
-    }
-
-    bool rotate(float degree)
-    {
-        if (rTransform) {
-            if (fabsf(degree - rTransform->degree) <= FLT_EPSILON) return true;
-        } else {
-            if (fabsf(degree) <= FLT_EPSILON) return true;
-            rTransform = new RenderTransform();
-            if (!rTransform) return false;
-        }
-        rTransform->degree = degree;
-        flag |= RenderUpdateFlag::Transform;
-
-        return true;
-    }
-
-    bool translate(float x, float y)
-    {
-        if (rTransform) {
-            if (fabsf(x - rTransform->x) <= FLT_EPSILON && fabsf(y - rTransform->y) <= FLT_EPSILON) return true;
-        } else {
-            if (fabsf(x) <= FLT_EPSILON && fabsf(y) <= FLT_EPSILON) return true;
-            rTransform = new RenderTransform();
-            if (!rTransform) return false;
-        }
-        rTransform->x = x;
-        rTransform->y = y;
-        flag |= RenderUpdateFlag::Transform;
-
-        return true;
-    }
-
-
-    bool transform(const Matrix& m)
-    {
-        if (!rTransform) {
-            rTransform = new RenderTransform();
-            if (!rTransform) return false;
-        }
-        rTransform->override(m);
-        flag |= RenderUpdateFlag::Transform;
 
         return true;
     }

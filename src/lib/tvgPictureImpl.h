@@ -18,7 +18,6 @@
 #define _TVG_PICTURE_IMPL_H_
 
 #include "tvgCommon.h"
-#include "tvgSceneImpl.h"
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
@@ -27,144 +26,53 @@
 struct Picture::Impl
 {
     unique_ptr<Loader> loader = nullptr;
-    Scene* scene = nullptr;
-    RenderTransform *rTransform = nullptr;
-    uint32_t flag = RenderUpdateFlag::None;
-
-    ~Impl()
-    {
-        if (rTransform) delete(rTransform);
-    }
+    Paint* paint = nullptr;
 
     bool dispose(RenderMethod& renderer)
     {
-        if (!scene) return false;
+        if (!paint) return false;
 
-        scene->IMPL->dispose(renderer);
-        delete(scene);
+        paint->IMPL->dispose(renderer);
+        delete(paint);
 
         return true;
     }
 
-    bool update(RenderMethod &renderer, const RenderTransform* pTransform, uint32_t pFlag)
+    bool update(RenderMethod &renderer, const RenderTransform* transform, RenderUpdateFlag flag)
     {
         if (loader) {
             auto scene = loader->data();
             if (scene) {
-                this->scene = scene.release();
-                if (!this->scene) return false;
+                this->paint = scene.release();
+                if (!this->paint) return false;
                 loader->close();
             }
         }
 
-        if (!scene) return false;
+        if (!paint) return false;
 
-        if (flag & RenderUpdateFlag::Transform) {
-            if (!rTransform) return false;
-            if (!rTransform->update()) {
-                delete(rTransform);
-                rTransform = nullptr;
-            }
-        }
-
-        auto ret = true;
-
-        if (rTransform && pTransform) {
-            RenderTransform outTransform(pTransform, rTransform);
-            ret = scene->IMPL->update(renderer, &outTransform, flag);
-        } else {
-            auto outTransform = pTransform ? pTransform : rTransform;
-            ret = scene->IMPL->update(renderer, outTransform, flag);
-        }
-
-        flag = RenderUpdateFlag::None;
-
-        return ret;
+        return paint->IMPL->update(renderer, transform, flag);
     }
 
     bool render(RenderMethod &renderer)
     {
-        if (!scene) return false;
-        return scene->IMPL->render(renderer);
+        if (!paint) return false;
+        return paint->IMPL->render(renderer);
     }
-
 
     bool size(float* w, float* h)
     {
-        if (loader) {
-            if (w) *w = loader->vw;
-            if (h) *h = loader->vh;
-            return true;
-        }
-
-        return false;
+        if (!loader) return false;
+        if (w) *w = loader->vw;
+        if (h) *h = loader->vh;
+        return true;
     }
 
     bool bounds(float* x, float* y, float* w, float* h)
     {
-        if (!scene) return false;
-        return scene->IMPL->bounds(x, y, w, h);
+        if (!paint) return false;
+        return paint->IMPL->bounds(x, y, w, h);
     }
-
-    bool scale(float factor)
-    {
-        if (rTransform) {
-            if (fabsf(factor - rTransform->scale) <= FLT_EPSILON) return true;
-        } else {
-            if (fabsf(factor) <= FLT_EPSILON) return true;
-            rTransform = new RenderTransform();
-            if (!rTransform) return false;
-        }
-        rTransform->scale = factor;
-        flag |= RenderUpdateFlag::Transform;
-
-        return true;
-    }
-
-    bool rotate(float degree)
-    {
-        if (rTransform) {
-            if (fabsf(degree - rTransform->degree) <= FLT_EPSILON) return true;
-        } else {
-            if (fabsf(degree) <= FLT_EPSILON) return true;
-            rTransform = new RenderTransform();
-            if (!rTransform) return false;
-        }
-        rTransform->degree = degree;
-        flag |= RenderUpdateFlag::Transform;
-
-        return true;
-    }
-
-    bool translate(float x, float y)
-    {
-        if (rTransform) {
-            if (fabsf(x - rTransform->x) <= FLT_EPSILON && fabsf(y - rTransform->y) <= FLT_EPSILON) return true;
-        } else {
-            if (fabsf(x) <= FLT_EPSILON && fabsf(y) <= FLT_EPSILON) return true;
-            rTransform = new RenderTransform();
-            if (!rTransform) return false;
-        }
-        rTransform->x = x;
-        rTransform->y = y;
-        flag |= RenderUpdateFlag::Transform;
-
-        return true;
-    }
-
-
-    bool transform(const Matrix& m)
-    {
-        if (!rTransform) {
-            rTransform = new RenderTransform();
-            if (!rTransform) return false;
-        }
-        rTransform->override(m);
-        flag |= RenderUpdateFlag::Transform;
-
-        return true;
-    }
-
 
     Result load(const string& path)
     {
