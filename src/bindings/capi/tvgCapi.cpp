@@ -241,6 +241,11 @@ TVG_EXPORT Tvg_Result tvg_shape_translate(Tvg_Paint* paint, float x, float y)
     return (Tvg_Result) reinterpret_cast<Shape*>(paint)->translate(x, y);
 }
 
+TVG_EXPORT Tvg_Result tvg_shape_transform(Tvg_Paint* paint, const Tvg_Matrix* m)
+{
+    return (Tvg_Result) reinterpret_cast<Shape*>(paint)->transform(*(reinterpret_cast<const Matrix*>(m)));
+}
+
 #ifdef __cplusplus
 }
 #endif
