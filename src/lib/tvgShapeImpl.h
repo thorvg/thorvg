@@ -238,7 +238,7 @@ struct Shape::Impl
     }
 
 
-    ITransformMethod* transformMethod()
+    PaintMethod* transformMethod()
     {
         return new TransformMethod<Shape::Impl>(this);
     }

@@ -56,14 +56,7 @@ struct Canvas::Impl
         if (!renderer->clear()) return Result::InsufficientCondition;
 
         for (auto paint : paints) {
-            if (paint->id() == PAINT_ID_SCENE) {
-                //We know renderer type, avoid dynamic_cast for performance.
-                auto scene = static_cast<Scene*>(paint);
-                if (!SCENE_IMPL->dispose(*renderer)) return Result::InsufficientCondition;
-            } else {
-                auto shape = static_cast<Shape*>(paint);
-                if (!SHAPE_IMPL->dispose(*renderer)) return Result::InsufficientCondition;
-            }
+            paint->IMPL->method->dispose(*renderer);
             delete(paint);
         }
         paints.clear();
@@ -77,24 +70,14 @@ struct Canvas::Impl
 
         //Update single paint node
         if (paint) {
-            if (paint->id() == PAINT_ID_SCENE) {
-                //We know renderer type, avoid dynamic_cast for performance.
-                auto scene = static_cast<Scene*>(paint);
-                if (!SCENE_IMPL->update(*renderer, nullptr, RenderUpdateFlag::None)) return Result::InsufficientCondition;
-            } else {
-                auto shape = static_cast<Shape*>(paint);
-                if (!SHAPE_IMPL->update(*renderer, nullptr, RenderUpdateFlag::None)) return Result::InsufficientCondition;
+            if (!paint->IMPL->method->update(*renderer, nullptr, RenderUpdateFlag::None)) {
+                return Result::InsufficientCondition;
             }
         //Update retained all paint nodes
         } else {
             for(auto paint: paints) {
-                if (paint->id() == PAINT_ID_SCENE) {
-                    //We know renderer type, avoid dynamic_cast for performance.
-                    auto scene = static_cast<Scene*>(paint);
-                    if (!SCENE_IMPL->update(*renderer, nullptr, RenderUpdateFlag::None)) return Result::InsufficientCondition;
-                } else {
-                    auto shape = static_cast<Shape*>(paint);
-                    if (!SHAPE_IMPL->update(*renderer, nullptr, RenderUpdateFlag::None)) return Result::InsufficientCondition;
+                if (!paint->IMPL->method->update(*renderer, nullptr, RenderUpdateFlag::None)) {
+                    return Result::InsufficientCondition;
                 }
             }
         }
@@ -108,14 +91,7 @@ struct Canvas::Impl
         if (!renderer->preRender()) return Result::InsufficientCondition;
 
         for(auto paint: paints) {
-           if (paint->id() == PAINT_ID_SCENE) {
-                //We know renderer type, avoid dynamic_cast for performance.
-                auto scene = static_cast<Scene*>(paint);
-                if(!SCENE_IMPL->render(*renderer)) return Result::InsufficientCondition;
-            } else {
-                auto shape = static_cast<Shape*>(paint);
-                if(!SHAPE_IMPL->render(*renderer)) return Result::InsufficientCondition;
-            }
+            if(!paint->IMPL->method->render(*renderer)) return Result::InsufficientCondition;
         }
 
         if (!renderer->postRender()) return Result::InsufficientCondition;

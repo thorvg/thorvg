@@ -105,8 +105,9 @@ public:
     Result transform(const Matrix& m) noexcept;
     Result bounds(float* x, float* y, float* w, float* h) const noexcept;
 
-    _TVG_DECALRE_IDENTIFIER();
     _TVG_DECLARE_PRIVATE(Paint);
+    _TVG_DECLARE_ACCESSOR(Canvas);
+    _TVG_DECLARE_ACCESSOR(Scene);
 };
 
 
@@ -161,7 +162,6 @@ public:
     virtual Result draw() noexcept;
     virtual Result sync() noexcept;
 
-    _TVG_DECLARE_ACCESSOR(Scene);
     _TVG_DECLARE_PRIVATE(Canvas);
 };
 
@@ -264,8 +264,6 @@ public:
     static std::unique_ptr<Shape> gen() noexcept;
 
     _TVG_DECLARE_PRIVATE(Shape);
-    _TVG_DECLARE_ACCESSOR(Canvas);
-    _TVG_DECLARE_ACCESSOR(Scene);
 };
 
 
@@ -288,7 +286,6 @@ public:
 
     static std::unique_ptr<Scene> gen() noexcept;
 
-    _TVG_DECLARE_ACCESSOR(Canvas);
     _TVG_DECLARE_PRIVATE(Scene);
 };
 

@@ -19,57 +19,78 @@
 
 namespace tvg
 {
-    struct ITransformMethod
+    struct PaintMethod
     {
-        virtual ~ITransformMethod(){}
+        virtual ~PaintMethod(){}
+
+        virtual bool dispose(RenderMethod& renderer) = 0;
+        virtual bool update(RenderMethod& renderer, const RenderTransform* pTransform, uint32_t pFlag) = 0;
+        virtual bool render(RenderMethod& renderer) = 0;
+
         virtual bool rotate(float degree) = 0;
         virtual bool scale(float factor) = 0;
         virtual bool translate(float x, float y) = 0;
         virtual bool transform(const Matrix& m) = 0;
         virtual bool bounds(float* x, float* y, float* w, float* h) const = 0;
+
     };
 
     struct Paint::Impl
     {
-        ITransformMethod* ts = nullptr;
+        PaintMethod* method = nullptr;
 
         ~Impl() {
-            if (ts) delete(ts);
+            if (method) delete(method);
         }
     };
 
 
     template<class T>
-    struct TransformMethod : ITransformMethod
+    struct TransformMethod : PaintMethod
     {
-        T* _inst = nullptr;
+        T* inst = nullptr;
 
-        TransformMethod(T* inst) : _inst(inst) {}
+        TransformMethod(T* inst) : inst(_inst) {}
         ~TransformMethod(){}
 
         bool rotate(float degree) override
         {
-            return _inst->rotate(degree);
+            return inst->rotate(degree);
         }
 
         bool scale(float factor) override
         {
-            return _inst->scale(factor);
+            return inst->scale(factor);
         }
 
         bool translate(float x, float y) override
         {
-            return _inst->translate(x, y);
+            return inst->translate(x, y);
         }
 
         bool transform(const Matrix& m) override
         {
-            return _inst->transform(m);
+            return inst->transform(m);
         }
 
         bool bounds(float* x, float* y, float* w, float* h) const override
         {
-            return _inst->bounds(x, y, w, h);
+            return inst->bounds(x, y, w, h);
+        }
+
+        bool dispose(RenderMethod& renderer)
+        {
+            return inst->dispose(renderer);
+        }
+
+        bool update(RenderMethod& renderer, const RenderTransform* pTransform, uint32_t pFlag)
+        {
+            return inst->update(renderer, pTransform, pFlag);
+        }
+
+        bool render(RenderMethod& renderer)
+        {
+            return inst->render(renderer);
         }
     };
 }

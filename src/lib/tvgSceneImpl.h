@@ -40,14 +40,7 @@ struct Scene::Impl
     bool dispose(RenderMethod& renderer)
     {
         for (auto paint : paints) {
-            if (paint->id() == PAINT_ID_SCENE) {
-                //We know renderer type, avoid dynamic_cast for performance.
-                auto scene = static_cast<Scene*>(paint);
-                if (!SCENE_IMPL->dispose(renderer)) return false;
-            } else {
-                auto shape = static_cast<Shape*>(paint);
-                if (!SHAPE_IMPL->dispose(renderer)) return false;
-            }
+            paint->IMPL->method->dispose(renderer);
             delete(paint);
         }
         paints.clear();
@@ -58,14 +51,7 @@ struct Scene::Impl
     bool updateInternal(RenderMethod &renderer, const RenderTransform* transform, uint32_t flag)
     {
         for(auto paint: paints) {
-            if (paint->id() == PAINT_ID_SCENE) {
-                //We know renderer type, avoid dynamic_cast for performance.
-                auto scene = static_cast<Scene*>(paint);
-                if (!SCENE_IMPL->update(renderer, transform, flag)) return false;
-            } else {
-                auto shape = static_cast<Shape*>(paint);
-                if (!SHAPE_IMPL->update(renderer, transform, flag)) return false;
-            }
+            if (!paint->IMPL->method->update(renderer, transform, flag))  return false;
         }
         return true;
     }
@@ -108,14 +94,7 @@ struct Scene::Impl
     bool render(RenderMethod &renderer)
     {
         for(auto paint: paints) {
-            if (paint->id() == PAINT_ID_SCENE) {
-                //We know renderer type, avoid dynamic_cast for performance.
-                auto scene = static_cast<Scene*>(paint);
-                if(!SCENE_IMPL->render(renderer)) return false;
-            } else {
-                auto shape = static_cast<Shape*>(paint);
-                if(!SHAPE_IMPL->render(renderer)) return false;
-            }
+            if(!paint->IMPL->method->render(renderer)) return false;
         }
         return true;
     }
@@ -139,14 +118,7 @@ struct Scene::Impl
                 auto w2 = 0.0f;
                 auto h2 = 0.0f;
 
-                if (paint->id() == PAINT_ID_SCENE) {
-                    //We know renderer type, avoid dynamic_cast for performance.
-                    auto scene = static_cast<Scene*>(paint);
-                    if (!SCENE_IMPL->bounds(&x2, &y2, &w2, &h2)) return false;
-                } else {
-                    auto shape = static_cast<Shape*>(paint);
-                    if (!SHAPE_IMPL->bounds(&x2, &y2, &w2, &h2)) return false;
-                }
+                if (paint->IMPL->method->bounds(&x2, &y2, &w2, &h2)) return false;
 
                 //Merge regions
                 if (x2 < x) x = x2;
@@ -232,7 +204,7 @@ struct Scene::Impl
         return Result::Success;
     }
 
-    ITransformMethod* transformMethod()
+    PaintMethod* transformMethod()
     {
         return new TransformMethod<Scene::Impl>(this);
     }

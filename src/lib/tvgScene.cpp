@@ -25,9 +25,7 @@
 
 Scene::Scene() : pImpl(make_unique<Impl>())
 {
-    _id = PAINT_ID_SCENE;
-
-    Paint::pImpl.get()->ts = pImpl.get()->transformMethod();
+    Paint::IMPL->method = IMPL->transformMethod();
 }
 
 
