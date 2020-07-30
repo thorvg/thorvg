@@ -31,8 +31,6 @@ using namespace std;
 using namespace tvg;
 
 #define IMPL pImpl.get()
-#define SCENE_IMPL scene->pImpl.get()
-#define SHAPE_IMPL shape->pImpl.get()
 
 #define FILL_ID_LINEAR 0
 #define FILL_ID_RADIAL 1
@@ -42,8 +40,5 @@ using namespace tvg;
 #include "tvgLoaderMgr.h"
 #include "tvgRender.h"
 #include "tvgPaint.h"
-#include "tvgShapePath.h"
-#include "tvgShapeImpl.h"
-#include "tvgSceneImpl.h"
 
 #endif //_TVG_COMMON_H_

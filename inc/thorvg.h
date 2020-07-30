@@ -268,6 +268,28 @@ public:
 
 
 /**
+ * @class Picture
+ *
+ * @ingroup ThorVG
+ *
+ * @brief description...
+ *
+ */
+class TVG_EXPORT Picture final : public Paint
+{
+public:
+    ~Picture();
+
+    Result load(const std::string& path) noexcept;
+    Result size(float* w, float* h) const noexcept;
+
+    static std::unique_ptr<Picture> gen() noexcept;
+
+    _TVG_DECLARE_PRIVATE(Picture);
+};
+
+
+/**
  * @class Scene
  *
  * @ingroup ThorVG
@@ -282,11 +304,11 @@ public:
 
     Result push(std::unique_ptr<Paint> paint) noexcept;
     Result reserve(uint32_t size) noexcept;
-    Result load(const std::string& path) noexcept;
 
     static std::unique_ptr<Scene> gen() noexcept;
 
     _TVG_DECLARE_PRIVATE(Scene);
+    _TVG_DECLARE_ACCESSOR(Picture);
 };
 
 

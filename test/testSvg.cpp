@@ -14,15 +14,15 @@ void svgDirCallback(const char* name, const char* path, void* data)
 {
     tvg::Canvas* canvas = static_cast<tvg::Canvas*>(data);
 
-    auto scene = tvg::Scene::gen();
+    auto picture = tvg::Picture::gen();
 
     char buf[PATH_MAX];
     sprintf(buf,"%s/%s", path, name);
 
-    if (scene->load(buf) != tvg::Result::Success) return;
+    if (picture->load(buf) != tvg::Result::Success) return;
 
-    scene->translate(((WIDTH - (x * 2)) / NUM_PER_LINE) * (count % NUM_PER_LINE) + x, ((HEIGHT - (y * 2))/ NUM_PER_LINE) * (int)((float)count / (float)NUM_PER_LINE) + y);
-    canvas->push(move(scene));
+    picture->translate(((WIDTH - (x * 2)) / NUM_PER_LINE) * (count % NUM_PER_LINE) + x, ((HEIGHT - (y * 2))/ NUM_PER_LINE) * (int)((float)count / (float)NUM_PER_LINE) + y);
+    canvas->push(move(picture));
 
     count++;
 

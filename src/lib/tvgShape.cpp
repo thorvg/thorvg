@@ -17,7 +17,6 @@
 #ifndef _TVG_SHAPE_CPP_
 #define _TVG_SHAPE_CPP_
 
-#include "tvgCommon.h"
 #include "tvgShapeImpl.h"
 
 /************************************************************************/

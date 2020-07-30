@@ -14,47 +14,44 @@
  *  limitations under the License.
  *
  */
-#ifndef _TVG_SCENE_CPP_
-#define _TVG_SCENE_CPP_
+#ifndef _TVG_PICTURE_CPP_
+#define _TVG_PICTURE_CPP_
 
-#include "tvgSceneImpl.h"
+#include "tvgPictureImpl.h"
 
 /************************************************************************/
 /* External Class Implementation                                        */
 /************************************************************************/
 
-Scene::Scene() : pImpl(make_unique<Impl>())
+Picture::Picture() : pImpl(make_unique<Impl>())
 {
-    Paint::IMPL->method(new PaintMethod<Scene::Impl>(IMPL));
+    Paint::IMPL->method(new PaintMethod<Picture::Impl>(IMPL));
 }
 
 
-Scene::~Scene()
+Picture::~Picture()
 {
 }
 
 
-unique_ptr<Scene> Scene::gen() noexcept
+unique_ptr<Picture> Picture::gen() noexcept
 {
-    return unique_ptr<Scene>(new Scene);
+    return unique_ptr<Picture>(new Picture);
 }
 
 
-Result Scene::push(unique_ptr<Paint> paint) noexcept
+Result Picture::load(const std::string& path) noexcept
 {
-    auto p = paint.release();
-    if (!p) return Result::MemoryCorruption;
-    IMPL->paints.push_back(p);
+    if (path.empty()) return Result::InvalidArguments;
 
-    return Result::Success;
+    return IMPL->load(path);
 }
 
 
-Result Scene::reserve(uint32_t size) noexcept
+Result Picture::size(float* w, float* h) const noexcept
 {
-    IMPL->paints.reserve(size);
-
-    return Result::Success;
+    if (IMPL->size(w, h)) return Result::Success;
+    return Result::InsufficientCondition;
 }
 
-#endif /* _TVG_SCENE_CPP_ */
+#endif /* _TVG_PICTURE_CPP_ */
