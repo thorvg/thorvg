@@ -26,7 +26,7 @@ void testCapi()
     tvg_shape_fill_color(shape, 255, 255, 0, 255);
     tvg_canvas_push(canvas, shape);
 
-    tvg_canvas_draw(canvas, 1);
+    tvg_canvas_draw(canvas);
     tvg_canvas_sync(canvas);
 
     tvg_canvas_destroy(canvas);

@@ -104,7 +104,7 @@ TVG_EXPORT Tvg_Result tvg_canvas_clear(Tvg_Canvas* canvas)
 
 TVG_EXPORT Tvg_Result tvg_canvas_update(Tvg_Canvas* canvas)
 {
-     return (Tvg_Result) reinterpret_cast<Canvas*>(canvas)->update();
+     return (Tvg_Result) reinterpret_cast<Canvas*>(canvas)->update(nullptr);
 }
 
 
@@ -114,9 +114,9 @@ TVG_EXPORT Tvg_Result tvg_canvas_update_paint(Tvg_Canvas* canvas, Tvg_Paint* pai
 }
 
 
-TVG_EXPORT Tvg_Result tvg_canvas_draw(Tvg_Canvas* canvas, unsigned char async)
+TVG_EXPORT Tvg_Result tvg_canvas_draw(Tvg_Canvas* canvas)
 {
-    return (Tvg_Result) reinterpret_cast<Canvas*>(canvas)->draw(async);
+    return (Tvg_Result) reinterpret_cast<Canvas*>(canvas)->draw();
 }
 
 

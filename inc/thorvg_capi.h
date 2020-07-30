@@ -117,7 +117,7 @@ TVG_EXPORT Tvg_Result tvg_canvas_reserve(Tvg_Canvas* canvas, uint32_t n);
 TVG_EXPORT Tvg_Result tvg_canvas_clear(Tvg_Canvas* canvas);
 TVG_EXPORT Tvg_Result tvg_canvas_update(Tvg_Canvas* canvas);
 TVG_EXPORT Tvg_Result tvg_canvas_update_paint(Tvg_Canvas* canvas, Tvg_Paint* paint);
-TVG_EXPORT Tvg_Result tvg_canvas_draw(Tvg_Canvas* canvas, unsigned char async);
+TVG_EXPORT Tvg_Result tvg_canvas_draw(Tvg_Canvas* canvas);
 TVG_EXPORT Tvg_Result tvg_canvas_sync(Tvg_Canvas* canvas);
 
 

@@ -53,15 +53,9 @@ Result Canvas::clear() noexcept
 }
 
 
-Result Canvas::draw(bool async) noexcept
+Result Canvas::draw() noexcept
 {
     return IMPL->draw();
-}
-
-
-Result Canvas::update() noexcept
-{
-    return IMPL->update();
 }
 
 

@@ -71,11 +71,12 @@ struct Canvas::Impl
         return Result::Success;
     }
 
-    Result update()
+    Result update(Paint* paint)
     {
         if (!renderer) return Result::InsufficientCondition;
 
-        for(auto paint: paints) {
+        //Update single paint node
+        if (paint) {
             if (paint->id() == PAINT_ID_SCENE) {
                 //We know renderer type, avoid dynamic_cast for performance.
                 auto scene = static_cast<Scene*>(paint);
@@ -84,21 +85,18 @@ struct Canvas::Impl
                 auto shape = static_cast<Shape*>(paint);
                 if (!SHAPE_IMPL->update(*renderer, nullptr, RenderUpdateFlag::None)) return Result::InsufficientCondition;
             }
-        }
-        return Result::Success;
-    }
-
-    Result update(Paint* paint)
-    {
-        if (!renderer) return Result::InsufficientCondition;
-
-        if (paint->id() == PAINT_ID_SCENE) {
-            //We know renderer type, avoid dynamic_cast for performance.
-            auto scene = static_cast<Scene*>(paint);
-            if (!SCENE_IMPL->update(*renderer, nullptr, RenderUpdateFlag::None)) return Result::InsufficientCondition;
+        //Update retained all paint nodes
         } else {
-            auto shape = static_cast<Shape*>(paint);
-            if (!SHAPE_IMPL->update(*renderer, nullptr, RenderUpdateFlag::None)) return Result::InsufficientCondition;
+            for(auto paint: paints) {
+                if (paint->id() == PAINT_ID_SCENE) {
+                    //We know renderer type, avoid dynamic_cast for performance.
+                    auto scene = static_cast<Scene*>(paint);
+                    if (!SCENE_IMPL->update(*renderer, nullptr, RenderUpdateFlag::None)) return Result::InsufficientCondition;
+                } else {
+                    auto shape = static_cast<Shape*>(paint);
+                    if (!SHAPE_IMPL->update(*renderer, nullptr, RenderUpdateFlag::None)) return Result::InsufficientCondition;
+                }
+            }
         }
         return Result::Success;
     }

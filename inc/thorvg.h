@@ -157,9 +157,8 @@ public:
     Result reserve(uint32_t n) noexcept;
     virtual Result push(std::unique_ptr<Paint> paint) noexcept;
     virtual Result clear() noexcept;
-    virtual Result update() noexcept;
     virtual Result update(Paint* paint) noexcept;
-    virtual Result draw(bool async = true) noexcept;
+    virtual Result draw() noexcept;
     virtual Result sync() noexcept;
 
     _TVG_DECLARE_ACCESSOR(Scene);
