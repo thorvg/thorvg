@@ -4,11 +4,10 @@
 /* Drawing Commands                                                     */
 /************************************************************************/
 
-#define NUM_PER_LINE 3
+#define NUM_PER_LINE 4
+#define SIZE 200
 
-int x = 30;
-int y = 30;
-int count = 0;
+static int count = 0;
 
 void svgDirCallback(const char* name, const char* path, void* data)
 {
@@ -21,12 +20,31 @@ void svgDirCallback(const char* name, const char* path, void* data)
 
     if (picture->load(buf) != tvg::Result::Success) return;
 
-    picture->translate(((WIDTH - (x * 2)) / NUM_PER_LINE) * (count % NUM_PER_LINE) + x, ((HEIGHT - (y * 2))/ NUM_PER_LINE) * (int)((float)count / (float)NUM_PER_LINE) + y);
+    float x, y, w, h;
+    picture->viewbox(&x, &y, &w, &h);
+
+    float rate = (SIZE/(w > h ? w : h));
+    picture->scale(rate);
+
+    x *= rate;
+    y *= rate;
+    w *= rate;
+    h *= rate;
+
+    //Center Align ?
+    if (w > h) {
+         y -= (SIZE - h) * 0.5f;
+    } else {
+         x -= (SIZE - w) * 0.5f;
+    }
+
+    picture->translate((count % NUM_PER_LINE) * SIZE - x, SIZE * (count / NUM_PER_LINE) - y);
+
     canvas->push(move(picture));
 
-    count++;
-
     cout << "SVG: " << buf << endl;
+
+    count++;
 }
 
 void tvgDrawCmds(tvg::Canvas* canvas)

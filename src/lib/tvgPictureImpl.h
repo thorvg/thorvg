@@ -60,9 +60,11 @@ struct Picture::Impl
         return paint->IMPL->render(renderer);
     }
 
-    bool size(float* w, float* h)
+    bool viewbox(float* x, float* y, float* w, float* h)
     {
         if (!loader) return false;
+        if (x) *x = loader->vx;
+        if (y) *y = loader->vy;
         if (w) *w = loader->vw;
         if (h) *h = loader->vh;
         return true;

@@ -48,9 +48,9 @@ Result Picture::load(const std::string& path) noexcept
 }
 
 
-Result Picture::size(float* w, float* h) const noexcept
+Result Picture::viewbox(float* x, float* y, float* w, float* h) const noexcept
 {
-    if (IMPL->size(w, h)) return Result::Success;
+    if (IMPL->viewbox(x, y, w, h)) return Result::Success;
     return Result::InsufficientCondition;
 }
 
