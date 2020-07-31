@@ -35,6 +35,11 @@ struct _Tvg_Paint
     //Dummy for Direct Casting
 };
 
+struct _Tvg_Gradient
+{
+    //Dummy for Direct Casting
+};
+
 
 /************************************************************************/
 /* Engine API                                                           */
@@ -244,6 +249,52 @@ TVG_EXPORT Tvg_Result tvg_shape_translate(Tvg_Paint* paint, float x, float y)
 TVG_EXPORT Tvg_Result tvg_shape_transform(Tvg_Paint* paint, const Tvg_Matrix* m)
 {
     return (Tvg_Result) reinterpret_cast<Shape*>(paint)->transform(*(reinterpret_cast<const Matrix*>(m)));
+}
+
+TVG_EXPORT Tvg_Result tvg_shape_linear_gradient_set(Tvg_Paint* paint, Tvg_Gradient *grad)
+{
+    return (Tvg_Result) reinterpret_cast<Shape*>(paint)->fill(unique_ptr<LinearGradient>((LinearGradient*)(grad)));
+}
+
+TVG_EXPORT Tvg_Result tvg_shape_radial_gradient_set(Tvg_Paint* paint, Tvg_Gradient *grad)
+{
+    return (Tvg_Result) reinterpret_cast<Shape*>(paint)->fill(unique_ptr<RadialGradient>((RadialGradient*)(grad)));
+}
+
+
+/************************************************************************/
+/* Gradient API                                                         */
+/************************************************************************/
+TVG_EXPORT Tvg_Gradient* tvg_linear_gradient_new()
+{
+    return (Tvg_Gradient*)LinearGradient::gen().release();
+}
+
+TVG_EXPORT Tvg_Gradient* tvg_radial_gradient_new()
+{
+    return (Tvg_Gradient*)RadialGradient::gen().release();
+
+}
+
+TVG_EXPORT Tvg_Result tvg_gradient_del(Tvg_Gradient* grad)
+{
+    delete(grad);
+    return TVG_RESULT_SUCCESS;
+}
+
+TVG_EXPORT Tvg_Result tvg_linear_gradient_set(Tvg_Gradient* grad, float x1, float y1, float x2, float y2)
+{
+    return (Tvg_Result) reinterpret_cast<LinearGradient*>(grad)->linear(x1, y1, x2, y2);
+}
+
+TVG_EXPORT Tvg_Result tvg_radial_gradient_set(Tvg_Gradient* grad, float cx, float cy, float radius)
+{
+    return (Tvg_Result) reinterpret_cast<RadialGradient*>(grad)->radial(cx, cy, radius);
+}
+
+TVG_EXPORT Tvg_Result tvg_gradient_color_stops(Tvg_Gradient* grad, const Tvg_Color_Stop* color_stop, uint32_t cnt)
+{
+    return (Tvg_Result) reinterpret_cast<Fill*>(grad)->colorStops(reinterpret_cast<const Fill::ColorStop*>(color_stop), cnt);
 }
 
 #ifdef __cplusplus

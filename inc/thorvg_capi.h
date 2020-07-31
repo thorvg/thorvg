@@ -35,6 +35,7 @@ extern "C" {
 
 typedef struct _Tvg_Canvas Tvg_Canvas;
 typedef struct _Tvg_Paint Tvg_Paint;
+typedef struct _Tvg_Gradient Tvg_Gradient;
 
 #define TVG_ENGINE_SW (1 << 1)
 #define TVG_ENGINE_GL (1 << 2)
@@ -93,6 +94,11 @@ typedef struct
     float e31, e32, e33;
 } Tvg_Matrix;
 
+typedef struct
+{
+    float offset;
+    uint8_t r, g, b, a;
+} Tvg_Color_Stop;
 
 /************************************************************************/
 /* Engine API                                                           */
@@ -144,6 +150,20 @@ TVG_EXPORT Tvg_Result tvg_shape_scale(Tvg_Paint* paint, float factor);
 TVG_EXPORT Tvg_Result tvg_shape_rotate(Tvg_Paint* paint, float degree);
 TVG_EXPORT Tvg_Result tvg_shape_translate(Tvg_Paint* paint, float x, float y);
 TVG_EXPORT Tvg_Result tvg_shape_transform(Tvg_Paint* paint, const Tvg_Matrix* m);
+TVG_EXPORT Tvg_Result tvg_shape_linear_gradient_set(Tvg_Paint* paint, Tvg_Gradient *grad);
+TVG_EXPORT Tvg_Result tvg_shape_radial_gradient_set(Tvg_Paint* paint, Tvg_Gradient *grad);
+
+
+/************************************************************************/
+/* Gradient API                                                         */
+/************************************************************************/
+TVG_EXPORT Tvg_Gradient* tvg_linear_gradient_new();
+TVG_EXPORT Tvg_Gradient* tvg_radial_gradient_new();
+TVG_EXPORT Tvg_Result tvg_gradient_del(Tvg_Gradient* grad);
+TVG_EXPORT Tvg_Result tvg_linear_gradient_set(Tvg_Gradient* grad, float x1, float y1, float x2, float y2);
+TVG_EXPORT Tvg_Result tvg_radial_gradient_set(Tvg_Gradient* grad, float cx, float cy, float radius);
+TVG_EXPORT Tvg_Result tvg_gradient_color_stops(Tvg_Gradient* grad, const Tvg_Color_Stop* color_stop, uint32_t cnt);
+
 
 #ifdef __cplusplus
 }

@@ -20,11 +20,36 @@ void testCapi()
 
     Tvg_Paint* shape = tvg_shape_new();
     tvg_shape_append_rect(shape, 0, 0, 200, 200, 0, 0);
+    tvg_shape_append_circle(shape, 200, 200, 100, 100);
     tvg_shape_append_rect(shape, 100, 100, 300, 300, 100, 100);
-    tvg_shape_append_circle(shape, 400, 400, 100, 100);
-    tvg_shape_append_circle(shape, 400, 500, 170, 100);
-    tvg_shape_fill_color(shape, 255, 255, 0, 255);
+    Tvg_Gradient* grad = tvg_linear_gradient_new();
+    tvg_linear_gradient_set(grad, 0, 0, 300, 300);
+    Tvg_Color_Stop color_stops[4] =
+    {
+        {.offset=0.0, .r=0, .g=0, .b=0, .a=255},
+        {.offset=0.25, .r=255, .g=0, .b=0, .a=255},
+        {.offset=0.5, .r=0, .g=255, .b=0, .a=255},
+        {.offset=1.0, .r=0, .g=0, .b=255, .a=255}
+    };
+
+    Tvg_Paint *shape1 = tvg_shape_new();
+    tvg_shape_append_rect(shape1, 500, 500, 100, 100, 30, 30);
+    Tvg_Gradient* grad1 = tvg_radial_gradient_new();
+    tvg_radial_gradient_set(grad1, 550, 550, 50);
+    Tvg_Color_Stop color_stops1[3] =
+    {
+        {.offset=0.0, .r=0, .g=0, .b=0, .a=255},
+        {.offset=0.6, .r=255, .g=0, .b=0, .a=255},
+        {.offset=1.0, .r=0, .g=255, .b=255, .a=255}
+    };
+
+    tvg_gradient_color_stops(grad, color_stops, 4);
+    tvg_gradient_color_stops(grad1, color_stops1, 3);
+    tvg_shape_linear_gradient_set(shape, grad);
+    tvg_shape_radial_gradient_set(shape1, grad1);
+
     tvg_canvas_push(canvas, shape);
+    tvg_canvas_push(canvas, shape1);
 
     tvg_canvas_draw(canvas);
     tvg_canvas_sync(canvas);
