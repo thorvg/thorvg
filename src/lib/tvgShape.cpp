@@ -150,73 +150,69 @@ Result Shape::appendCircle(float cx, float cy, float rx, float ry) noexcept
     return Result::Success;
 }
 
-Result Shape::appendArc(float x, float y, float w, float h, float startAngle, float sweep) noexcept
+Result Shape::appendArc(float cx, float cy, float radius, float startAngle, float sweep, bool pie) noexcept
 {
     const float M_PI_HALF = M_PI / 2.0;
-    const float radius = w / 2;
-
-    Point center = {x + radius, y + radius};
 
     auto impl = pImpl.get();
+
+    //just circle
+    if (sweep >= 360) return appendCircle(cx, cy, radius, radius);
 
     startAngle = (startAngle * M_PI) / 180;
     sweep = sweep * M_PI / 180;
 
-    auto  nCurves = ceil(sweep / M_PI_HALF);
+    auto nCurves = ceil(sweep / M_PI_HALF);
     auto fract = fmod(sweep, M_PI_HALF);
     fract = (fract < std::numeric_limits<float>::epsilon()) ? M_PI_HALF : fract;
 
+    //Start from here
+    Point start = {radius * cos(startAngle), radius * sin(startAngle)};
+
+    if (pie) {
+        impl->path->moveTo(cx, cy);
+        impl->path->lineTo(start.x + cx, start.y + cy);
+    }else {
+        impl->path->moveTo(start.x + cx, start.y + cy);
+    }
+
     for (int i = 0; i < nCurves; ++i) {
-        //bezier parameters
-        Point start = {0, 0};
-        Point end  = {0, 0};
-        Point bControl1 = {0, 0};
-        Point bControl2 = {0, 0};
+
+        auto endAngle = startAngle + ((i != nCurves - 1) ? M_PI_HALF : fract);
+        Point end = {radius * cos(endAngle), radius * sin(endAngle)};
 
         //variables needed to calculate bezier control points
-        auto ax = 0.0f, ay = 0.0f, bx = 0.0f, by = 0.0f, q1 = 0.0f, q2 = 0.0f, k2 = 0.0f;
-        auto endAngle = startAngle + ((i != nCurves - 1) ? M_PI_HALF : fract);
-
-        //get bezier start and end point
-        start.x = radius * cos(startAngle);
-        start.y = radius * sin(startAngle);
-        end.x = radius * cos(endAngle);
-        end.y = radius * sin(endAngle);
 
         //get bezier control points using article:
         //(http://itc.ktu.lt/index.php/ITC/article/view/11812/6479)
-        ax = start.x;
-        ay = start.y;
-        bx = end.x;
-        by = end.y;
+        auto ax = start.x;
+        auto ay = start.y;
+        auto bx = end.x;
+        auto by = end.y;
+        auto q1 = ax * ax + ay * ay;
+        auto q2 = ax * bx + ay * by + q1;
+        auto k2 = static_cast<float> (4.0/3.0) * ((sqrt(2 * q1 * q2) - q2) / (ax * by - ay * bx));
 
-        q1 = ax * ax + ay * ay;
-        q2 = ax * bx + ay * by + q1;
+        start = end; //Next start point is the current end point
 
-        k2 = static_cast<float> (4.0/3.0) * ((sqrt(2 * q1 * q2) - q2) / (ax * by - ay * bx));
+        end.x += cx;
+        end.y += cy;
 
-        bControl1.x = ax - k2 * ay;
-        bControl1.y = ay + k2 * ax;
-        bControl2.x = bx + k2 * by;
-        bControl2.y = by - k2 * bx;
+        Point ctrl1 = {ax - k2 * ay + cx, ay + k2 * ax + cy};
+        Point ctrl2 = {bx + k2 * by + cx, by - k2 * bx + cy};
 
-        //move points to proper arc center
-        start.x += center.x;
-        start.y += center.y;
-        end.x += center.x;
-        end.y += center.y;
-        bControl1.x += center.x;
-        bControl1.y += center.y;
-        bControl2.x += center.x;
-        bControl2.y += center.y;
-
-        impl->path->moveTo(start.x, start.y);
-        impl->path->cubicTo(bControl1.x, bControl1.y, bControl2.x, bControl2.y, end.x, end.y);
+        impl->path->cubicTo(ctrl1.x, ctrl1.y, ctrl2.x, ctrl2.y, end.x, end.y);
 
         startAngle = endAngle;
     }
 
+    if (pie) {
+        impl->path->moveTo(cx, cy);
+        impl->path->close();
+    }
+
     IMPL->flag |= RenderUpdateFlag::Path;
+
     return Result::Success;
 }
 

@@ -8,35 +8,29 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 {
     if (!canvas) return;
 
-    //draw reference rectangles
-    auto shape2 = tvg::Shape::gen();
-    shape2->appendRect(0, 0, 200, 200, 0, 0);
-    shape2->stroke(255, 0, 0, 255);
-    shape2->stroke(2);
+    //Arc Line
+    auto shape1 = tvg::Shape::gen();
+    shape1->appendArc(150, 150, 100, 10, 270, false);
+    shape1->stroke(255, 255, 255, 255);
+    shape1->stroke(2);
+    if (canvas->push(move(shape1)) != tvg::Result::Success) return;
 
+    auto shape2 = tvg::Shape::gen();
+    shape2->appendArc(500, 150, 125, 0, 300, true);
+    shape2->stroke(255, 255, 255, 255);
+    shape2->stroke(2);
+    if (canvas->push(move(shape2)) != tvg::Result::Success) return;
+
+    //Pie Fill
     auto shape3 = tvg::Shape::gen();
-    shape3->moveTo(0, 100);
-    shape3->lineTo(200, 100);
-    shape3->stroke(255, 0, 0, 255);
-    shape3->stroke(2);
+    shape3->appendArc(150, 500, 100, 0, 75, true);
+    shape3->fill(255, 255, 255, 255);
+    if (canvas->push(move(shape3)) != tvg::Result::Success) return;
 
     auto shape4 = tvg::Shape::gen();
-    shape4->moveTo(100, 0);
-    shape4->lineTo(100, 200);
-    shape4->stroke(255, 0, 0, 255);
-    shape4->stroke(2);
-
-    //test arc
-    auto shape1 = tvg::Shape::gen();
-    shape1->appendArc(0, 0, 200, 200, 10, 270);
-    shape1->stroke(255, 255, 255, 255);
-    shape1->stroke(3);
-
-    //Appends Paths
-    if (canvas->push(move(shape2)) != tvg::Result::Success) return;
-    if (canvas->push(move(shape3)) != tvg::Result::Success) return;
+    shape4->appendArc(500, 500, 150, 0, 215, true);
+    shape4->fill(255, 255, 255, 255);
     if (canvas->push(move(shape4)) != tvg::Result::Success) return;
-    if (canvas->push(move(shape1)) != tvg::Result::Success) return;
 }
 
 /************************************************************************/
