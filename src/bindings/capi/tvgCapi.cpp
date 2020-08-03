@@ -183,6 +183,10 @@ TVG_EXPORT Tvg_Result tvg_shape_append_rect(Tvg_Paint* paint, float x, float y, 
     return (Tvg_Result) reinterpret_cast<Shape*>(paint)->appendRect(x, y, w, h, rx, ry);
 }
 
+TVG_EXPORT Tvg_Result tvg_shape_append_arc(Tvg_Paint* paint, float x, float y, float w, float h, float startAngle, float sweep)
+{
+    return (Tvg_Result) reinterpret_cast<Shape*>(paint)->appendArc(x, y, w ,h, startAngle, sweep);
+}
 
 TVG_EXPORT Tvg_Result tvg_shape_append_circle(Tvg_Paint* paint, float cx, float cy, float rx, float ry)
 {
