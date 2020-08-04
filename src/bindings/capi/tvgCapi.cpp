@@ -333,6 +333,12 @@ TVG_EXPORT Tvg_Result tvg_gradient_color_stops(Tvg_Gradient* grad, const Tvg_Col
     return (Tvg_Result) reinterpret_cast<Fill*>(grad)->colorStops(reinterpret_cast<const Fill::ColorStop*>(color_stop), cnt);
 }
 
+TVG_EXPORT Tvg_Result tvg_gradient_spread(Tvg_Gradient* grad, const Tvg_Stroke_Fill spread)
+{
+    return (Tvg_Result) reinterpret_cast<Fill*>(grad)->spread((FillSpread)spread);
+}
+
+
 #ifdef __cplusplus
 }
 #endif

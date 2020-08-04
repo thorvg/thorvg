@@ -169,6 +169,7 @@ TVG_EXPORT Tvg_Result tvg_gradient_del(Tvg_Gradient* grad);
 TVG_EXPORT Tvg_Result tvg_linear_gradient_set(Tvg_Gradient* grad, float x1, float y1, float x2, float y2);
 TVG_EXPORT Tvg_Result tvg_radial_gradient_set(Tvg_Gradient* grad, float cx, float cy, float radius);
 TVG_EXPORT Tvg_Result tvg_gradient_color_stops(Tvg_Gradient* grad, const Tvg_Color_Stop* color_stop, uint32_t cnt);
+TVG_EXPORT Tvg_Result tvg_gradient_spread(Tvg_Gradient* grad, const Tvg_Stroke_Fill);
 
 
 /************************************************************************/
