@@ -132,19 +132,47 @@ TVG_EXPORT Tvg_Result tvg_canvas_sync(Tvg_Canvas* canvas)
 
 
 /************************************************************************/
+/* Paint API                                                            */
+/************************************************************************/
+
+TVG_EXPORT Tvg_Result tvg_paint_del(Tvg_Paint* paint)
+{
+    delete(paint);
+    return TVG_RESULT_SUCCESS;
+}
+
+
+TVG_EXPORT Tvg_Result tvg_paint_scale(Tvg_Paint* paint, float factor)
+{
+    return (Tvg_Result) reinterpret_cast<Paint*>(paint)->scale(factor);
+}
+
+
+TVG_EXPORT Tvg_Result tvg_paint_rotate(Tvg_Paint* paint, float degree)
+{
+    return (Tvg_Result) reinterpret_cast<Paint*>(paint)->rotate(degree);
+}
+
+
+TVG_EXPORT Tvg_Result tvg_paint_translate(Tvg_Paint* paint, float x, float y)
+{
+    return (Tvg_Result) reinterpret_cast<Paint*>(paint)->translate(x, y);
+}
+
+
+TVG_EXPORT Tvg_Result tvg_paint_transform(Tvg_Paint* paint, const Tvg_Matrix* m)
+{
+    return (Tvg_Result) reinterpret_cast<Paint*>(paint)->transform(*(reinterpret_cast<const Matrix*>(m)));
+}
+
+
+/************************************************************************/
 /* Shape API                                                            */
 /************************************************************************/
 
 TVG_EXPORT Tvg_Paint* tvg_shape_new()
 {
     return (Tvg_Paint*) Shape::gen().release();
-}
-
-
-TVG_EXPORT Tvg_Result tvg_shape_del(Tvg_Paint* paint)
-{
-    delete(paint);
-    return TVG_RESULT_SUCCESS;
 }
 
 
@@ -235,34 +263,38 @@ TVG_EXPORT Tvg_Result tvg_shape_fill_color(Tvg_Paint* paint, uint8_t r, uint8_t 
     return (Tvg_Result) reinterpret_cast<Shape*>(paint)->fill(r, g, b, a);
 }
 
-TVG_EXPORT Tvg_Result tvg_shape_scale(Tvg_Paint* paint, float factor)
+
+TVG_EXPORT Tvg_Result tvg_shape_linear_gradient_set(Tvg_Paint* paint, Tvg_Gradient *gradient)
 {
-    return (Tvg_Result) reinterpret_cast<Shape*>(paint)->scale(factor);
+    return (Tvg_Result) reinterpret_cast<Shape*>(paint)->fill(unique_ptr<LinearGradient>((LinearGradient*)(gradient)));
 }
 
-TVG_EXPORT Tvg_Result tvg_shape_rotate(Tvg_Paint* paint, float degree)
+
+TVG_EXPORT Tvg_Result tvg_shape_radial_gradient_set(Tvg_Paint* paint, Tvg_Gradient *gradient)
 {
-    return (Tvg_Result) reinterpret_cast<Shape*>(paint)->rotate(degree);
+    return (Tvg_Result) reinterpret_cast<Shape*>(paint)->fill(unique_ptr<RadialGradient>((RadialGradient*)(gradient)));
 }
 
-TVG_EXPORT Tvg_Result tvg_shape_translate(Tvg_Paint* paint, float x, float y)
+
+/************************************************************************/
+/* Picture API                                                          */
+/************************************************************************/
+
+TVG_EXPORT Tvg_Paint* tvg_picture_new()
 {
-    return (Tvg_Result) reinterpret_cast<Shape*>(paint)->translate(x, y);
+    return (Tvg_Paint*) Picture::gen().release();
 }
 
-TVG_EXPORT Tvg_Result tvg_shape_transform(Tvg_Paint* paint, const Tvg_Matrix* m)
+
+TVG_EXPORT Tvg_Result tvg_picture_load(Tvg_Paint* paint, const char* path)
 {
-    return (Tvg_Result) reinterpret_cast<Shape*>(paint)->transform(*(reinterpret_cast<const Matrix*>(m)));
+    return (Tvg_Result) reinterpret_cast<Picture*>(paint)->load(path);
 }
 
-TVG_EXPORT Tvg_Result tvg_shape_linear_gradient_set(Tvg_Paint* paint, Tvg_Gradient *grad)
-{
-    return (Tvg_Result) reinterpret_cast<Shape*>(paint)->fill(unique_ptr<LinearGradient>((LinearGradient*)(grad)));
-}
 
-TVG_EXPORT Tvg_Result tvg_shape_radial_gradient_set(Tvg_Paint* paint, Tvg_Gradient *grad)
+TVG_EXPORT Tvg_Result tvg_picture_get_viewbox(Tvg_Paint* paint, float* x, float* y, float* w, float* h)
 {
-    return (Tvg_Result) reinterpret_cast<Shape*>(paint)->fill(unique_ptr<RadialGradient>((RadialGradient*)(grad)));
+    return (Tvg_Result) reinterpret_cast<Picture*>(paint)->viewbox(x, y, w, h);
 }
 
 

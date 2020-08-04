@@ -128,10 +128,19 @@ TVG_EXPORT Tvg_Result tvg_canvas_sync(Tvg_Canvas* canvas);
 
 
 /************************************************************************/
+/* Paint API                                                            */
+/************************************************************************/
+TVG_EXPORT Tvg_Result tvg_paint_del(Tvg_Paint* paint);
+TVG_EXPORT Tvg_Result tvg_paint_scale(Tvg_Paint* paint, float factor);
+TVG_EXPORT Tvg_Result tvg_paint_rotate(Tvg_Paint* paint, float degree);
+TVG_EXPORT Tvg_Result tvg_paint_translate(Tvg_Paint* paint, float x, float y);
+TVG_EXPORT Tvg_Result tvg_paint_transform(Tvg_Paint* paint, const Tvg_Matrix* m);
+
+
+/************************************************************************/
 /* Shape API                                                            */
 /************************************************************************/
 TVG_EXPORT Tvg_Paint* tvg_shape_new();
-TVG_EXPORT Tvg_Result tvg_shape_del(Tvg_Paint* paint);
 TVG_EXPORT Tvg_Result tvg_shape_reset(Tvg_Paint* paint);
 TVG_EXPORT Tvg_Result tvg_shape_move_to(Tvg_Paint* paint, float x, float y);
 TVG_EXPORT Tvg_Result tvg_shape_line_to(Tvg_Paint* paint, float x, float y);
@@ -147,10 +156,6 @@ TVG_EXPORT Tvg_Result tvg_shape_set_stroke_dash(Tvg_Paint* paint, const float* d
 TVG_EXPORT Tvg_Result tvg_shape_set_stroke_cap(Tvg_Paint* paint, Tvg_Stroke_Cap cap);
 TVG_EXPORT Tvg_Result tvg_shape_set_stroke_join(Tvg_Paint* paint, Tvg_Stroke_Join join);
 TVG_EXPORT Tvg_Result tvg_shape_fill_color(Tvg_Paint* paint, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
-TVG_EXPORT Tvg_Result tvg_shape_scale(Tvg_Paint* paint, float factor);
-TVG_EXPORT Tvg_Result tvg_shape_rotate(Tvg_Paint* paint, float degree);
-TVG_EXPORT Tvg_Result tvg_shape_translate(Tvg_Paint* paint, float x, float y);
-TVG_EXPORT Tvg_Result tvg_shape_transform(Tvg_Paint* paint, const Tvg_Matrix* m);
 TVG_EXPORT Tvg_Result tvg_shape_linear_gradient_set(Tvg_Paint* paint, Tvg_Gradient *grad);
 TVG_EXPORT Tvg_Result tvg_shape_radial_gradient_set(Tvg_Paint* paint, Tvg_Gradient *grad);
 
@@ -165,6 +170,13 @@ TVG_EXPORT Tvg_Result tvg_linear_gradient_set(Tvg_Gradient* grad, float x1, floa
 TVG_EXPORT Tvg_Result tvg_radial_gradient_set(Tvg_Gradient* grad, float cx, float cy, float radius);
 TVG_EXPORT Tvg_Result tvg_gradient_color_stops(Tvg_Gradient* grad, const Tvg_Color_Stop* color_stop, uint32_t cnt);
 
+
+/************************************************************************/
+/* Picture API                                                          */
+/************************************************************************/
+TVG_EXPORT Tvg_Paint* tvg_picture_new();
+TVG_EXPORT Tvg_Result tvg_picture_load(Tvg_Paint* paint, const char* path);
+TVG_EXPORT Tvg_Result tvg_picture_get_viewbox(Tvg_Paint* paint, float* x, float* y, float* w, float* h);
 
 #ifdef __cplusplus
 }
