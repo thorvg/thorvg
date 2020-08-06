@@ -168,7 +168,7 @@ static void _rotate(SwPoint& pt, SwFixed theta)
             y = y - ((x + j) >> i);
             x = tmp;
             theta += *atan++;
-        }else {
+        } else {
             auto tmp = x - ((y + j) >> i);
             y = y + ((x + j) >> i);
             x = tmp;
@@ -176,7 +176,8 @@ static void _rotate(SwPoint& pt, SwFixed theta)
         }
     }
 
-    pt = {x, y};
+    pt.x = static_cast<SwCoord>(x);
+    pt.y = static_cast<SwCoord>(y);
 }
 
 

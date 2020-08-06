@@ -29,8 +29,8 @@ static SwBBox _clipRegion(Surface& surface, SwBBox& in)
 
     if (bbox.min.x < 0) bbox.min.x = 0;
     if (bbox.min.y < 0) bbox.min.y = 0;
-    if (bbox.max.x > surface.w) bbox.max.x = surface.w;
-    if (bbox.max.y > surface.h) bbox.max.y = surface.h;
+    if (bbox.max.x > static_cast<SwCoord>(surface.w)) bbox.max.x = surface.w;
+    if (bbox.max.y > static_cast<SwCoord>(surface.h)) bbox.max.y = surface.h;
 
     return bbox;
 }

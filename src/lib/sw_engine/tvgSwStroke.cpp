@@ -142,7 +142,7 @@ static void _borderCubicTo(SwStrokeBorder* border, SwPoint& ctrl1, SwPoint& ctrl
 static void _borderArcTo(SwStrokeBorder* border, SwPoint& center, SwFixed radius, SwFixed angleStart, SwFixed angleDiff, SwStroke& stroke)
 {
     constexpr SwFixed ARC_CUBIC_ANGLE = SW_ANGLE_PI / 2;
-    SwPoint a = {radius, 0};
+    SwPoint a = {static_cast<SwCoord>(radius), 0};
     mathRotate(a, angleStart);
     SCALE(stroke, a);
     a += center;
@@ -163,7 +163,7 @@ static void _borderArcTo(SwStrokeBorder* border, SwPoint& center, SwFixed radius
         theta >>= 1;
 
         //compute end point
-        SwPoint b = {radius, 0};
+        SwPoint b = {static_cast<SwCoord>(radius), 0};
         mathRotate(b, next);
         SCALE(stroke, b);
         b += center;
@@ -171,12 +171,12 @@ static void _borderArcTo(SwStrokeBorder* border, SwPoint& center, SwFixed radius
         //compute first and second control points
         auto length = mathMulDiv(radius, mathSin(theta) * 4, (0x10000L + mathCos(theta)) * 3);
 
-        SwPoint a2 = {length, 0};
+        SwPoint a2 = {static_cast<SwCoord>(length), 0};
         mathRotate(a2, angle + rotate);
         SCALE(stroke, a2);
         a2 += a;
 
-        SwPoint b2 = {length, 0};
+        SwPoint b2 = {static_cast<SwCoord>(length), 0};
         mathRotate(b2, next - rotate);
         SCALE(stroke, b2);
         b2 += b;
@@ -277,7 +277,7 @@ static void _outside(SwStroke& stroke, int32_t side, SwFixed lineLength)
 
         //this is a bevel (broken angle)
         if (bevel) {
-            SwPoint delta = {stroke.width, 0};
+            SwPoint delta = {static_cast<SwCoord>(stroke.width), 0};
             mathRotate(delta, stroke.angleOut + rotate);
             SCALE(stroke, delta);
             delta += stroke.center;
@@ -286,7 +286,7 @@ static void _outside(SwStroke& stroke, int32_t side, SwFixed lineLength)
         //this is a miter (intersection)
         } else {
             auto length = mathDivide(stroke.width, thcos);
-            SwPoint delta = {length, 0};
+            SwPoint delta = {static_cast<SwCoord>(length), 0};
             mathRotate(delta, phi);
             SCALE(stroke, delta);
             delta += stroke.center;
@@ -295,7 +295,7 @@ static void _outside(SwStroke& stroke, int32_t side, SwFixed lineLength)
             /* Now add and end point
                Only needed if not lineto (lineLength is zero for curves) */
             if (lineLength == 0) {
-                delta = {stroke.width, 0};
+                delta = {static_cast<SwCoord>(stroke.width), 0};
                 mathRotate(delta, stroke.angleOut + rotate);
                 SCALE(stroke, delta);
                 delta += stroke.center;
@@ -324,7 +324,7 @@ static void _inside(SwStroke& stroke, int32_t side, SwFixed lineLength)
     auto rotate = SIDE_TO_ROTATE(side);
 
     if (!intersect) {
-        delta = {stroke.width, 0};
+        delta = {static_cast<SwCoord>(stroke.width), 0};
         mathRotate(delta, stroke.angleOut + rotate);
         SCALE(stroke, delta);
         delta += stroke.center;
@@ -366,7 +366,7 @@ void _processCorner(SwStroke& stroke, SwFixed lineLength)
 
 void _firstSubPath(SwStroke& stroke, SwFixed startAngle, SwFixed lineLength)
 {
-    SwPoint delta = {stroke.width, 0};
+    SwPoint delta = {static_cast<SwCoord>(stroke.width), 0};
     mathRotate(delta, startAngle + SW_ANGLE_PI2);
     SCALE(stroke, delta);
 
@@ -397,7 +397,7 @@ static void _lineTo(SwStroke& stroke, const SwPoint& to)
     auto lineLength =  mathLength(delta);
     auto angle = mathAtan(delta);
 
-    delta = {stroke.width, 0};
+    delta = {static_cast<SwCoord>(stroke.width), 0};
     mathRotate(delta, angle + SW_ANGLE_PI2);
     SCALE(stroke, delta);
 
@@ -509,18 +509,18 @@ static void _cubicTo(SwStroke& stroke, const SwPoint& ctrl1, const SwPoint& ctrl
             auto rotate = SIDE_TO_ROTATE(side);
 
             //compute control points
-            SwPoint _ctrl1 = {length1, 0};
+            SwPoint _ctrl1 = {static_cast<SwCoord>(length1), 0};
             mathRotate(_ctrl1, phi1 + rotate);
             SCALE(stroke, _ctrl1);
             _ctrl1 += arc[2];
 
-            SwPoint _ctrl2 = {length2, 0};
+            SwPoint _ctrl2 = {static_cast<SwCoord>(length2), 0};
             mathRotate(_ctrl2, phi2 + rotate);
             SCALE(stroke, _ctrl2);
             _ctrl2 += arc[1];
 
             //compute end point
-            SwPoint _end = {stroke.width, 0};
+            SwPoint _end = {static_cast<SwCoord>(stroke.width), 0};
             mathRotate(_end, angleOut + rotate);
             SCALE(stroke, _end);
             _end += arc[0];
@@ -544,7 +544,7 @@ static void _cubicTo(SwStroke& stroke, const SwPoint& ctrl1, const SwPoint& ctrl
                     auto sinB = abs(mathSin(beta - gamma));
                     auto alen = mathMulDiv(blen, sinA, sinB);
 
-                    SwPoint delta = {alen, 0};
+                    SwPoint delta = {static_cast<SwCoord>(alen), 0};
                     mathRotate(delta, beta);
                     delta += _start;
 
@@ -581,22 +581,22 @@ static void _addCap(SwStroke& stroke, SwFixed angle, int32_t side)
         auto rotate = SIDE_TO_ROTATE(side);
         auto border = stroke.borders + side;
 
-        SwPoint delta = {stroke.width, 0};
+        SwPoint delta = {static_cast<SwCoord>(stroke.width), 0};
         mathRotate(delta, angle);
         SCALE(stroke, delta);
 
-        SwPoint delta2 = {stroke.width, 0};
+        SwPoint delta2 = {static_cast<SwCoord>(stroke.width), 0};
         mathRotate(delta2, angle + rotate);
         SCALE(stroke, delta2);
         delta += stroke.center + delta2;
 
         _borderLineTo(border, delta, false);
 
-        delta = {stroke.width, 0};
+        delta = {static_cast<SwCoord>(stroke.width), 0};
         mathRotate(delta, angle);
         SCALE(stroke, delta);
 
-        delta2 = {stroke.width, 0};
+        delta2 = {static_cast<SwCoord>(stroke.width), 0};
         mathRotate(delta2, angle - rotate);
         SCALE(stroke, delta2);
         delta += delta2 + stroke.center;
@@ -614,14 +614,14 @@ static void _addCap(SwStroke& stroke, SwFixed angle, int32_t side)
         auto rotate = SIDE_TO_ROTATE(side);
         auto border = stroke.borders + side;
 
-        SwPoint delta = {stroke.width, 0};
+        SwPoint delta = {static_cast<SwCoord>(stroke.width), 0};
         mathRotate(delta, angle + rotate);
         SCALE(stroke, delta);
         delta += stroke.center;
 
         _borderLineTo(border, delta, false);
 
-        delta = {stroke.width, 0};
+        delta = {static_cast<SwCoord>(stroke.width), 0};
         mathRotate(delta, angle - rotate);
         SCALE(stroke, delta);
         delta += stroke.center;
