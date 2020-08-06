@@ -17,6 +17,7 @@
 #ifndef _TVG_SVG_LOADER_CPP_
 #define _TVG_SVG_LOADER_CPP_
 
+#include <stddef.h>
 #include "tvgSvgLoader.h"
 #include <fstream>
 
