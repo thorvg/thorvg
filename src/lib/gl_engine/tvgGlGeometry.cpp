@@ -40,6 +40,7 @@ bool GlGeometry::decomposeOutline(const Shape &shape)
             case PathCommand::MoveTo:
                 mPrimitives.push_back(GlPrimitive());
                 curPrimitive = &mPrimitives.back();
+                __attribute__ ((fallthrough));
             case PathCommand::LineTo:
             {
                 if (curPrimitive)
