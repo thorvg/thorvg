@@ -1004,12 +1004,6 @@ static SvgNode* _createPathNode(SvgLoaderData* loader, SvgNode* parent, const ch
 }
 
 
-#define CIRCLE_DEF(Name, Field, Type)                                       \
-    {                                                                       \
-#Name, Type, sizeof(#Name), offsetof(SvgCircleNode, Field) \
-    }
-
-
 static constexpr struct
 {
     const char* tag;
@@ -1017,9 +1011,9 @@ static constexpr struct
     int sz;
     size_t offset;
 } circleTags[] = {
-    CIRCLE_DEF(cx, cx, SvgParserLengthType::Horizontal),
-    CIRCLE_DEF(cy, cy, SvgParserLengthType::Vertical),
-    CIRCLE_DEF(r, r, SvgParserLengthType::Other)
+    {"cx", SvgParserLengthType::Horizontal, sizeof("cx"), offsetof(SvgCircleNode, cx)},
+    {"cy", SvgParserLengthType::Vertical, sizeof("cy"), offsetof(SvgCircleNode, cy)},
+    {"r", SvgParserLengthType::Other, sizeof("r"), offsetof(SvgCircleNode, r)}
 };
 
 
@@ -1063,12 +1057,6 @@ static SvgNode* _createCircleNode(SvgLoaderData* loader, SvgNode* parent, const 
 }
 
 
-#define ELLIPSE_DEF(Name, Field, Type)                                       \
-    {                                                                        \
-#Name, Type, sizeof(#Name), offsetof(SvgEllipseNode, Field) \
-    }
-
-
 static constexpr struct
 {
     const char* tag;
@@ -1076,10 +1064,10 @@ static constexpr struct
     int sz;
     size_t offset;
 } ellipseTags[] = {
-    ELLIPSE_DEF(cx, cx, SvgParserLengthType::Horizontal),
-    ELLIPSE_DEF(cy, cy, SvgParserLengthType::Vertical),
-    ELLIPSE_DEF(rx, rx, SvgParserLengthType::Horizontal),
-    ELLIPSE_DEF(ry, ry, SvgParserLengthType::Vertical)
+    {"cx", SvgParserLengthType::Horizontal, sizeof("cx"), offsetof(SvgEllipseNode, cx)},
+    {"cy", SvgParserLengthType::Vertical, sizeof("cy"), offsetof(SvgEllipseNode, cy)},
+    {"rx", SvgParserLengthType::Horizontal, sizeof("rx"), offsetof(SvgEllipseNode, rx)},
+    {"ry", SvgParserLengthType::Vertical, sizeof("ry"), offsetof(SvgEllipseNode, ry)}
 };
 
 
@@ -1202,13 +1190,6 @@ static SvgNode* _createPolylineNode(SvgLoaderData* loader, SvgNode* parent, cons
     return loader->svgParse->node;
 }
 
-
-#define RECT_DEF(Name, Field, Type)                                       \
-    {                                                                     \
-#Name, Type, sizeof(#Name), offsetof(SvgRectNode, Field) \
-    }
-
-
 static constexpr struct
 {
     const char* tag;
@@ -1216,12 +1197,12 @@ static constexpr struct
     int sz;
     size_t offset;
 } rectTags[] = {
-    RECT_DEF(x, x, SvgParserLengthType::Horizontal),
-    RECT_DEF(y, y, SvgParserLengthType::Vertical),
-    RECT_DEF(width, w, SvgParserLengthType::Horizontal),
-    RECT_DEF(height, h, SvgParserLengthType::Vertical),
-    RECT_DEF(rx, rx, SvgParserLengthType::Horizontal),
-    RECT_DEF(ry, ry, SvgParserLengthType::Vertical)
+    {"x", SvgParserLengthType::Horizontal, sizeof("x"), offsetof(SvgRectNode, x)},
+    {"y", SvgParserLengthType::Vertical, sizeof("y"), offsetof(SvgRectNode, y)},
+    {"width", SvgParserLengthType::Horizontal, sizeof("width"), offsetof(SvgRectNode, w)},
+    {"height", SvgParserLengthType::Vertical, sizeof("height"), offsetof(SvgRectNode, h)},
+    {"rx", SvgParserLengthType::Horizontal, sizeof("rx"), offsetof(SvgRectNode, rx)},
+    {"ry", SvgParserLengthType::Vertical, sizeof("ry"), offsetof(SvgRectNode, ry)}
 };
 
 
@@ -1271,12 +1252,6 @@ static SvgNode* _createRectNode(SvgLoaderData* loader, SvgNode* parent, const ch
 }
 
 
-#define LINE_DEF(Name, Field, Type)                                       \
-    {                                                                     \
-#Name, Type, sizeof(#Name), offsetof(SvgLineNode, Field) \
-    }
-
-
 static constexpr struct
 {
     const char* tag;
@@ -1284,10 +1259,10 @@ static constexpr struct
     int sz;
     size_t offset;
 } lineTags[] = {
-    LINE_DEF(x1, x1, SvgParserLengthType::Horizontal),
-    LINE_DEF(y1, y1, SvgParserLengthType::Vertical),
-    LINE_DEF(x2, x2, SvgParserLengthType::Horizontal),
-    LINE_DEF(y2, y2, SvgParserLengthType::Vertical)
+    {"x1", SvgParserLengthType::Horizontal, sizeof("x1"), offsetof(SvgLineNode, x1)},
+    {"y1", SvgParserLengthType::Vertical, sizeof("y1"), offsetof(SvgLineNode, y1)},
+    {"x2", SvgParserLengthType::Horizontal, sizeof("x2"), offsetof(SvgLineNode, x2)},
+    {"y2", SvgParserLengthType::Vertical, sizeof("y2"), offsetof(SvgLineNode, y2)}
 };
 
 
