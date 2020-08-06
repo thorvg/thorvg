@@ -333,7 +333,7 @@ static void _inside(SwStroke& stroke, int32_t side, SwFixed lineLength)
         //compute median angle
         auto phi = stroke.angleIn + theta;
         auto thcos = mathCos(theta);
-        delta = {mathDivide(stroke.width, thcos), 0};
+        delta = {static_cast<SwCoord>(mathDivide(stroke.width, thcos)), 0};
         mathRotate(delta, phi + rotate);
         SCALE(stroke, delta);
         delta += stroke.center;
