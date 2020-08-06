@@ -572,8 +572,6 @@ static bool _decomposeOutline(RleWorker& rw)
 
     for (uint32_t n = 0; n < outline->cntrsCnt; ++n) {
         auto last = outline->cntrs[n];
-        if (last < 0) goto invalid_outline;
-
         auto limit = outline->pts + last;
         assert(limit);
 

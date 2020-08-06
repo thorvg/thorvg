@@ -79,7 +79,7 @@ uint32_t Shape::pathCoords(const Point** pts) const noexcept
 
 Result Shape::appendPath(const PathCommand *cmds, uint32_t cmdCnt, const Point* pts, uint32_t ptsCnt) noexcept
 {
-    if (cmdCnt < 0 || ptsCnt < 0 || !pts || !ptsCnt) return Result::InvalidArguments;
+    if (cmdCnt == 0 || ptsCnt == 0 || !pts || !ptsCnt) return Result::InvalidArguments;
 
     IMPL->path->grow(cmdCnt, ptsCnt);
     IMPL->path->append(cmds, cmdCnt, pts, ptsCnt);
