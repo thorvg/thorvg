@@ -63,7 +63,7 @@ bool GlGeometry::decomposeOutline(const Shape &shape)
     return true;
 }
 
-bool GlGeometry::generateAAPoints(const Shape &shape, float strokeWd, RenderUpdateFlag flag)
+bool GlGeometry::generateAAPoints(TVG_UNUSED const Shape &shape, float strokeWd, RenderUpdateFlag flag)
 {
     for (auto& shapeGeometry : mPrimitives)
     {
@@ -128,7 +128,7 @@ bool GlGeometry::generateAAPoints(const Shape &shape, float strokeWd, RenderUpda
     return true;
 }
 
-bool GlGeometry::tesselate(const Shape &shape, float viewWd, float viewHt, RenderUpdateFlag flag)
+bool GlGeometry::tesselate(TVG_UNUSED const Shape &shape, float viewWd, float viewHt, RenderUpdateFlag flag)
 {
     for (auto& shapeGeometry : mPrimitives)
     {

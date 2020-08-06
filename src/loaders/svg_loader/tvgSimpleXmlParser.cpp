@@ -141,7 +141,7 @@ bool simpleXmlParse(const char* buf, unsigned bufLength, bool strip, simpleXMLCb
     do {                                                         \
         size_t _sz = end - start;                                \
         bool _ret;                                               \
-        _ret = func((void*)data, type, start, start - buf, _sz); \
+        _ret = func((void*)data, type, start, _sz);              \
         if (!_ret)                                               \
             return false;                                        \
     } while (0)

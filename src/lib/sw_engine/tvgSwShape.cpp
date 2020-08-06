@@ -470,7 +470,7 @@ bool shapePrepare(SwShape& shape, const Shape* sdata, const SwSize& clip, const 
 }
 
 
-bool shapeGenRle(SwShape& shape, const Shape* sdata, const SwSize& clip, bool antiAlias)
+bool shapeGenRle(SwShape& shape, TVG_UNUSED const Shape* sdata, const SwSize& clip, bool antiAlias)
 {
     //FIXME: Should we draw it?
     //Case: Stroke Line

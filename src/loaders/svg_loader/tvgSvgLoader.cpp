@@ -727,7 +727,7 @@ static bool _attrParseSvgNode(void* data, const char* key, const char* value)
 
 
 //https://www.w3.org/TR/SVGTiny12/painting.html#SpecifyingPaint
-static void _handlePaintAttr(SvgLoaderData* loader, SvgPaint* paint, const char* value)
+static void _handlePaintAttr(SvgPaint* paint, const char* value)
 {
     if (!strcmp(value, "none")) {
         //No paint property
@@ -743,30 +743,30 @@ static void _handlePaintAttr(SvgLoaderData* loader, SvgPaint* paint, const char*
 }
 
 
-static void _handleColorAttr(SvgLoaderData* loader, SvgNode* node, const char* value)
+static void _handleColorAttr(TVG_UNUSED SvgLoaderData* loader, SvgNode* node, const char* value)
 {
     SvgStyleProperty* style = node->style;
     _toColor(value, &style->r, &style->g, &style->b, nullptr);
 }
 
 
-static void _handleFillAttr(SvgLoaderData* loader, SvgNode* node, const char* value)
+static void _handleFillAttr(TVG_UNUSED SvgLoaderData* loader, SvgNode* node, const char* value)
 {
     SvgStyleProperty* style = node->style;
     style->fill.flags = (SvgFillFlags)((int)style->fill.flags | (int)SvgFillFlags::Paint);
-    _handlePaintAttr(loader, &style->fill.paint, value);
+    _handlePaintAttr(&style->fill.paint, value);
 }
 
 
-static void _handleStrokeAttr(SvgLoaderData* loader, SvgNode* node, const char* value)
+static void _handleStrokeAttr(TVG_UNUSED SvgLoaderData* loader, SvgNode* node, const char* value)
 {
     SvgStyleProperty* style = node->style;
     style->stroke.flags = (SvgStrokeFlags)((int)style->stroke.flags | (int)SvgStrokeFlags::Paint);
-    _handlePaintAttr(loader, &style->stroke.paint, value);
+    _handlePaintAttr(&style->stroke.paint, value);
 }
 
 
-static void _handleStrokeOpacityAttr(SvgLoaderData* loader, SvgNode* node, const char* value)
+static void _handleStrokeOpacityAttr(TVG_UNUSED SvgLoaderData* loader, SvgNode* node, const char* value)
 {
     node->style->stroke.flags = (SvgStrokeFlags)((int)node->style->stroke.flags | (int)SvgStrokeFlags::Opacity);
     node->style->stroke.opacity = _toOpacity(value);
@@ -780,47 +780,47 @@ static void _handleStrokeWidthAttr(SvgLoaderData* loader, SvgNode* node, const c
 }
 
 
-static void _handleStrokeLineCapAttr(SvgLoaderData* loader, SvgNode* node, const char* value)
+static void _handleStrokeLineCapAttr(TVG_UNUSED SvgLoaderData* loader, SvgNode* node, const char* value)
 {
     node->style->stroke.flags = (SvgStrokeFlags)((int)node->style->stroke.flags | (int)SvgStrokeFlags::Cap);
     node->style->stroke.cap = _toLineCap(value);
 }
 
 
-static void _handleStrokeLineJoinAttr(SvgLoaderData* loader, SvgNode* node, const char* value)
+static void _handleStrokeLineJoinAttr(TVG_UNUSED SvgLoaderData* loader, SvgNode* node, const char* value)
 {
     node->style->stroke.flags = (SvgStrokeFlags)((int)node->style->stroke.flags | (int)SvgStrokeFlags::Join);
     node->style->stroke.join = _toLineJoin(value);
 }
 
 
-static void _handleFillRuleAttr(SvgLoaderData* loader, SvgNode* node, const char* value)
+static void _handleFillRuleAttr(TVG_UNUSED SvgLoaderData* loader, SvgNode* node, const char* value)
 {
     node->style->fill.flags = (SvgFillFlags)((int)node->style->fill.flags | (int)SvgFillFlags::FillRule);
     node->style->fill.fillRule = _toFillRule(value);
 }
 
 
-static void _handleOpacityAttr(SvgLoaderData* loader, SvgNode* node, const char* value)
+static void _handleOpacityAttr(TVG_UNUSED SvgLoaderData* loader, SvgNode* node, const char* value)
 {
     node->style->opacity = _toOpacity(value);
 }
 
 
-static void _handleFillOpacityAttr(SvgLoaderData* loader, SvgNode* node, const char* value)
+static void _handleFillOpacityAttr(TVG_UNUSED SvgLoaderData* loader, SvgNode* node, const char* value)
 {
     node->style->fill.flags = (SvgFillFlags)((int)node->style->fill.flags | (int)SvgFillFlags::Opacity);
     node->style->fill.opacity = _toOpacity(value);
 }
 
 
-static void _handleTransformAttr(SvgLoaderData* loader, SvgNode* node, const char* value)
+static void _handleTransformAttr(TVG_UNUSED SvgLoaderData* loader, SvgNode* node, const char* value)
 {
     node->transform = _parseTransformationMatrix(value);
 }
 
 
-static void _handleDisplayAttr(SvgLoaderData* loader, SvgNode* node, const char* value)
+static void _handleDisplayAttr(TVG_UNUSED SvgLoaderData* loader, SvgNode* node, const char* value)
 {
     //TODO : The display attribute can have various values as well as "none".
     //       The default is "inline" which means visible and "none" means invisible.
@@ -946,7 +946,7 @@ static SvgNode* _createNode(SvgNode* parent, SvgNodeType type)
 }
 
 
-static SvgNode* _createDefsNode(SvgLoaderData* loader, SvgNode* parent, const char* buf, unsigned bufLength)
+static SvgNode* _createDefsNode(TVG_UNUSED SvgLoaderData* loader, TVG_UNUSED SvgNode* parent, const char* buf, unsigned bufLength)
 {
     SvgNode* node = _createNode(nullptr, SvgNodeType::Defs);
     simpleXmlParseAttributes(buf, bufLength, nullptr, node);
@@ -954,7 +954,7 @@ static SvgNode* _createDefsNode(SvgLoaderData* loader, SvgNode* parent, const ch
 }
 
 
-static SvgNode* _createGNode(SvgLoaderData* loader, SvgNode* parent, const char* buf, unsigned bufLength)
+static SvgNode* _createGNode(TVG_UNUSED SvgLoaderData* loader, SvgNode* parent, const char* buf, unsigned bufLength)
 {
     loader->svgParse->node = _createNode(parent, SvgNodeType::G);
 
@@ -1907,7 +1907,7 @@ static constexpr struct
 };
 
 
-static void _svgLoaderParerXmlClose(SvgLoaderData* loader, const char* content, unsigned int length)
+static void _svgLoaderParerXmlClose(SvgLoaderData* loader, const char* content)
 {
     unsigned int i;
 
@@ -1999,7 +1999,7 @@ static void _svgLoaderParserXmlOpen(SvgLoaderData* loader, const char* content, 
 }
 
 
-static bool _svgLoaderParser(void* data, SimpleXMLType type, const char* content, unsigned int offset, unsigned int length)
+static bool _svgLoaderParser(void* data, SimpleXMLType type, const char* content, unsigned int length)
 {
     SvgLoaderData* loader = (SvgLoaderData*)data;
 
@@ -2013,7 +2013,7 @@ static bool _svgLoaderParser(void* data, SimpleXMLType type, const char* content
             break;
         }
         case SimpleXMLType::Close: {
-            _svgLoaderParerXmlClose(loader, content, length);
+            _svgLoaderParerXmlClose(loader, content);
             break;
         }
         case SimpleXMLType::Data:
@@ -2238,7 +2238,7 @@ static bool _svgLoaderParserForValidCheckXmlOpen(SvgLoaderData* loader, const ch
 }
 
 
-static bool _svgLoaderParserForValidCheck(void* data, SimpleXMLType type, const char* content, unsigned int offset, unsigned int length)
+static bool _svgLoaderParserForValidCheck(void* data, SimpleXMLType type, const char* content, unsigned int length)
 {
     SvgLoaderData* loader = (SvgLoaderData*)data;
     bool res = true;;

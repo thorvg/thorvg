@@ -36,7 +36,7 @@ static bool _parseLong(char** content, int* number)
     return true;
 }
 
-void _pathAppendArcTo(vector<PathCommand>* cmds, vector<Point>* pts, float* arr, Point* cur, Point* curCtl, float x, float y, float rx, float ry, float angle, bool largeArc, bool sweep)
+void _pathAppendArcTo(vector<PathCommand>* cmds, vector<Point>* pts, Point* cur, Point* curCtl, float x, float y, float rx, float ry, float angle, bool largeArc, bool sweep)
 {
     float cxp, cyp, cx, cy;
     float sx, sy;
@@ -394,7 +394,7 @@ static void _processCommand(vector<PathCommand>* cmds, vector<Point>* pts, char 
         }
         case 'a':
         case 'A': {
-            _pathAppendArcTo(cmds, pts, arr, cur, curCtl, arr[5], arr[6], arr[0], arr[1], arr[2], arr[3], arr[4]);
+            _pathAppendArcTo(cmds, pts, cur, curCtl, arr[5], arr[6], arr[0], arr[1], arr[2], arr[3], arr[4]);
             *cur = {arr[5] ,arr[6]};
             break;
         }

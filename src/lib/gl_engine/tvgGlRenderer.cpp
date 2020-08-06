@@ -41,7 +41,7 @@ bool GlRenderer::clear()
 }
 
 
-bool GlRenderer::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h)
+bool GlRenderer::target(TVG_UNUSED uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h)
 {
     assert(w > 0 && h > 0);
 
@@ -109,7 +109,7 @@ bool GlRenderer::render(const Shape& shape, void *data)
 }
 
 
-bool GlRenderer::dispose(const Shape& shape, void *data)
+bool GlRenderer::dispose(TVG_UNUSED const Shape& shape, void *data)
 {
     GlShape* sdata = static_cast<GlShape*>(data);
     if (!sdata) return false;
@@ -119,7 +119,7 @@ bool GlRenderer::dispose(const Shape& shape, void *data)
 }
 
 
-void* GlRenderer::prepare(const Shape& shape, void* data, const RenderTransform* transform, RenderUpdateFlag flags)
+void* GlRenderer::prepare(const Shape& shape, void* data, TVG_UNUSED const RenderTransform* transform, RenderUpdateFlag flags)
 {
     //prepare shape data
     GlShape* sdata = static_cast<GlShape*>(data);

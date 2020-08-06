@@ -129,7 +129,7 @@ bool SwRenderer::flush()
 }
 
 
-bool SwRenderer::render(const Shape& sdata, void *data)
+bool SwRenderer::render(TVG_UNUSED const Shape& sdata, TVG_UNUSED void *data)
 {
     //Do Nothing
 
@@ -137,7 +137,7 @@ bool SwRenderer::render(const Shape& sdata, void *data)
 }
 
 
-bool SwRenderer::dispose(const Shape& sdata, void *data)
+bool SwRenderer::dispose(TVG_UNUSED const Shape& sdata, void *data)
 {
     auto task = static_cast<SwTask*>(data);
     if (!task) return true;
