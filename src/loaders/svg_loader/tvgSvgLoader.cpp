@@ -182,7 +182,7 @@ static constexpr struct
 };
 
 
-_PARSE_TAG(StrokeCap, lineCap, LineCap, lineCapTags, StrokeCap::Butt);
+_PARSE_TAG(StrokeCap, lineCap, LineCap, lineCapTags, StrokeCap::Butt)
 
 
 /* parse the line join used during stroking a path.
@@ -201,7 +201,7 @@ static constexpr struct
 };
 
 
-_PARSE_TAG(StrokeJoin, lineJoin, LineJoin, lineJoinTags, StrokeJoin::Miter);
+_PARSE_TAG(StrokeJoin, lineJoin, LineJoin, lineJoinTags, StrokeJoin::Miter)
 
 
 /* parse the fill rule used during filling a path.
@@ -218,7 +218,7 @@ static constexpr struct
 };
 
 
-_PARSE_TAG(SvgFillRule, fillRule, FillRule, fillRuleTags, SvgFillRule::Winding);
+_PARSE_TAG(SvgFillRule, fillRule, FillRule, fillRuleTags, SvgFillRule::Winding)
 
 
 static string* _idFromUrl(const char* url)
@@ -1536,8 +1536,8 @@ static constexpr struct
         return nullptr;                                                                \
     }
 
-FIND_FACTORY(Group, groupTags);
-FIND_FACTORY(Graphics, graphicsTags);
+FIND_FACTORY(Group, groupTags)
+FIND_FACTORY(Graphics, graphicsTags)
 
 
 FillSpread _parseSpreadValue(const char* value)
