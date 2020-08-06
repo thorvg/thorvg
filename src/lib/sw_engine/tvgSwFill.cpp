@@ -46,7 +46,11 @@ static bool _updateColorTable(SwFill* fill, const Fill* fdata)
 
     if (pColors->a < 255) fill->translucent = true;
 
-    auto rgba = COLOR_ARGB_JOIN(pColors->r, pColors->g, pColors->b, pColors->a);
+    auto r = COLOR_ALPHA_MULTIPLY(pColors->r, pColors->a);
+    auto g = COLOR_ALPHA_MULTIPLY(pColors->g, pColors->a);
+    auto b = COLOR_ALPHA_MULTIPLY(pColors->b, pColors->a);
+
+    auto rgba = COLOR_ARGB_JOIN(r, g, b, pColors->a);
     auto inc = 1.0f / static_cast<float>(GRADIENT_STOP_SIZE);
     auto pos = 1.5f * inc;
     uint32_t i = 0;
@@ -65,7 +69,12 @@ static bool _updateColorTable(SwFill* fill, const Fill* fdata)
         assert(curr && next);
         auto delta = 1.0f / (next->offset - curr->offset);
         if (next->a < 255) fill->translucent = true;
-        auto rgba2 = COLOR_ARGB_JOIN(next->r, next->g, next->b, next->a);
+
+        auto r = COLOR_ALPHA_MULTIPLY(next->r, next->a);
+        auto g = COLOR_ALPHA_MULTIPLY(next->g, next->a);
+        auto b = COLOR_ALPHA_MULTIPLY(next->b, next->a);
+
+        auto rgba2 = COLOR_ARGB_JOIN(r, g, b, next->a);
 
         while (pos < next->offset && i < GRADIENT_STOP_SIZE) {
             auto t = (pos - curr->offset) * delta;

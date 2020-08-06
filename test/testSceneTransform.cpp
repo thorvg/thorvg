@@ -58,7 +58,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     shape4->lineTo(-173, 12.5);
     shape4->lineTo(-53, -5.5);
     shape4->close();
-    shape4->fill(0, 0, 127, 127);
+    shape4->fill(0, 0, 255, 127);
     shape4->stroke(3);                             //width
     shape4->stroke(0, 0, 255, 255);                //r, g, b, a
     scene2->push(move(shape4));
@@ -78,7 +78,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     shape5->cubicTo(cx - halfRadius, cy + radius, cx - radius, cy + halfRadius, cx - radius, cy);
     shape5->cubicTo(cx - radius, cy - halfRadius, cx - halfRadius, cy - radius, cx, cy - radius);
     shape5->close();
-    shape5->fill(127, 0, 0, 127);
+    shape5->fill(255, 0, 0, 127);
     scene2->push(move(shape5));
 
     scene2->translate(500, 350);

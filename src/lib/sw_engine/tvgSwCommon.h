@@ -244,6 +244,12 @@ static inline uint32_t COLOR_ARGB_JOIN(uint8_t r, uint8_t g, uint8_t b, uint8_t 
 }
 
 
+static inline uint8_t COLOR_ALPHA_MULTIPLY(uint32_t c, uint32_t a)
+{
+    return (c * a) >> 8;
+}
+
+
 int64_t mathMultiply(int64_t a, int64_t b);
 int64_t mathDivide(int64_t a, int64_t b);
 int64_t mathMulDiv(int64_t a, int64_t b, int64_t c);
@@ -290,7 +296,8 @@ bool rasterSolidShape(Surface& surface, SwShape& shape, uint8_t r, uint8_t g, ui
 bool rasterStroke(Surface& surface, SwShape& shape, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
 bool rasterClear(Surface& surface);
 
-inline void rasterARGB32(uint32_t *dst, uint32_t val, uint32_t offset, int32_t len)
+
+static inline void rasterARGB32(uint32_t *dst, uint32_t val, uint32_t offset, int32_t len)
 {
 #ifdef THORVG_AVX_VECTOR_SUPPORT
     int32_t align = (8 - (offset % 8)) % 8;

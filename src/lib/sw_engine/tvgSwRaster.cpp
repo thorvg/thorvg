@@ -285,6 +285,10 @@ bool rasterGradientShape(Surface& surface, SwShape& shape, unsigned id)
 
 bool rasterSolidShape(Surface& surface, SwShape& shape, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 {
+    r = COLOR_ALPHA_MULTIPLY(r, a);
+    g = COLOR_ALPHA_MULTIPLY(g, a);
+    b = COLOR_ALPHA_MULTIPLY(b, a);
+
     //Fast Track
     if (shape.rect) {
         auto region = _clipRegion(surface, shape.bbox);
@@ -300,6 +304,10 @@ bool rasterSolidShape(Surface& surface, SwShape& shape, uint8_t r, uint8_t g, ui
 
 bool rasterStroke(Surface& surface, SwShape& shape, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 {
+    r = COLOR_ALPHA_MULTIPLY(r, a);
+    g = COLOR_ALPHA_MULTIPLY(g, a);
+    b = COLOR_ALPHA_MULTIPLY(b, a);
+
     if (a == 255) return _rasterSolidRle(surface, shape.strokeRle, COLOR_ARGB_JOIN(r, g, b, a));
     return _rasterTranslucentRle(surface, shape.strokeRle, COLOR_ARGB_JOIN(r, g, b, a));
 }
