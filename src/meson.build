@@ -12,7 +12,6 @@ endif
 subdir('lib')
 subdir('loaders')
 subdir('bindings')
-subdir('examples')
 
 thread_dep = meson.get_compiler('cpp').find_library('pthread')
 thorvg_lib_dep = [common_dep, loader_dep, binding_dep, thread_dep]

@@ -35,6 +35,8 @@ using namespace tvg;
 #define FILL_ID_LINEAR 0
 #define FILL_ID_RADIAL 1
 
+#define TVG_UNUSED __attribute__ ((__unused__))
+
 #include "tvgBezier.h"
 #include "tvgLoader.h"
 #include "tvgLoaderMgr.h"
