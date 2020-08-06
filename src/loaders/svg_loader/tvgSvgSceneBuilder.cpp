@@ -111,7 +111,7 @@ unique_ptr<LinearGradient> _applyLinearGradientProperty(SvgStyleGradient* g, Sha
         fillGrad->colorStops(stops, stopCount);
         free(stops);
     }
-    return move(fillGrad);
+    return fillGrad;
 }
 
 
@@ -197,7 +197,7 @@ unique_ptr<RadialGradient> _applyRadialGradientProperty(SvgStyleGradient* g, Sha
         fillGrad->colorStops(stops, stopCount);
         free(stops);
     }
-    return move(fillGrad);
+    return fillGrad;
 }
 
 
@@ -342,7 +342,7 @@ unique_ptr<Scene> _sceneBuildHelper(SvgNode* node, float vx, float vy, float vw,
                 }
             }
         }
-        return move(scene);
+        return scene;
     }
     return nullptr;
 }
