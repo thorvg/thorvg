@@ -167,7 +167,7 @@ Result Shape::appendArc(float cx, float cy, float radius, float startAngle, floa
     startAngle = (startAngle * M_PI) / 180;
     sweep = sweep * M_PI / 180;
 
-    auto nCurves = ceil(sweep / M_PI_HALF);
+    auto nCurves = ceil(abs(sweep / M_PI_HALF));
     auto fract = fmod(sweep, M_PI_HALF);
     fract = (fract < std::numeric_limits<float>::epsilon()) ? M_PI_HALF : fract;
 
