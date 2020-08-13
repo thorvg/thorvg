@@ -377,7 +377,7 @@ SwFixed mathLength(SwPoint& pt)
     _polarize(v);
     v.x = _downscale(v.x);
 
-    if (shift > 0) return (v.x + (1 << (shift -1))) >> shift;
+    if (shift > 0) return (v.x + (static_cast<SwFixed>(1) << (shift -1))) >> shift;
     return static_cast<SwFixed>((uint32_t)v.x << -shift);
 }
 
