@@ -269,22 +269,22 @@ SwFixed mathLength(SwPoint& pt);
 bool mathSmallCubic(SwPoint* base, SwFixed& angleIn, SwFixed& angleMid, SwFixed& angleOut);
 SwFixed mathMean(SwFixed angle1, SwFixed angle2);
 
-void shapeReset(SwShape& shape);
-bool shapeGenOutline(SwShape& shape, const Shape* sdata, const Matrix* transform);
-bool shapePrepare(SwShape& shape, const Shape* sdata, const SwSize& clip, const Matrix* transform);
-bool shapeGenRle(SwShape& shape, const Shape* sdata, const SwSize& clip, bool antiAlias);
-void shapeDelOutline(SwShape& shape);
-void shapeResetStroke(SwShape& shape, const Shape* sdata, const Matrix* transform);
-bool shapeGenStrokeRle(SwShape& shape, const Shape* sdata, const Matrix* transform, const SwSize& clip);
-void shapeFree(SwShape& shape);
-void shapeDelStroke(SwShape& shape);
-bool shapeGenFillColors(SwShape& shape, const Fill* fill, const Matrix* transform, bool ctable);
-void shapeResetFill(SwShape& shape);
-void shapeDelFill(SwShape& shape);
+void shapeReset(SwShape* shape);
+bool shapeGenOutline(SwShape* shape, const Shape* sdata, const Matrix* transform);
+bool shapePrepare(SwShape* shape, const Shape* sdata, const SwSize& clip, const Matrix* transform);
+bool shapeGenRle(SwShape* shape, const Shape* sdata, const SwSize& clip, bool antiAlias);
+void shapeDelOutline(SwShape* shape);
+void shapeResetStroke(SwShape* shape, const Shape* sdata, const Matrix* transform);
+bool shapeGenStrokeRle(SwShape* shape, const Shape* sdata, const Matrix* transform, const SwSize& clip);
+void shapeFree(SwShape* shape);
+void shapeDelStroke(SwShape* shape);
+bool shapeGenFillColors(SwShape* shape, const Fill* fill, const Matrix* transform, bool ctable);
+void shapeResetFill(SwShape* shape);
+void shapeDelFill(SwShape* shape);
 
-void strokeReset(SwStroke& stroke, const Shape* shape, const Matrix* transform);
-bool strokeParseOutline(SwStroke& stroke, const SwOutline& outline);
-SwOutline* strokeExportOutline(SwStroke& stroke);
+void strokeReset(SwStroke* stroke, const Shape* shape, const Matrix* transform);
+bool strokeParseOutline(SwStroke* stroke, const SwOutline& outline);
+SwOutline* strokeExportOutline(SwStroke* stroke);
 void strokeFree(SwStroke* stroke);
 
 bool fillGenColorTable(SwFill* fill, const Fill* fdata, const Matrix* transform, bool ctable);
@@ -296,9 +296,9 @@ void fillFetchRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, 
 SwRleData* rleRender(const SwOutline* outline, const SwBBox& bbox, const SwSize& clip, bool antiAlias);
 void rleFree(SwRleData* rle);
 
-bool rasterGradientShape(Surface& surface, SwShape& shape, unsigned id);
-bool rasterSolidShape(Surface& surface, SwShape& shape, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
-bool rasterStroke(Surface& surface, SwShape& shape, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
+bool rasterGradientShape(Surface& surface, SwShape* shape, unsigned id);
+bool rasterSolidShape(Surface& surface, SwShape* shape, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
+bool rasterStroke(Surface& surface, SwShape* shape, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
 bool rasterClear(Surface& surface);
 
 

@@ -273,48 +273,48 @@ static bool _rasterRadialGradientRle(Surface& surface, SwRleData* rle, const SwF
 /* External Class Implementation                                        */
 /************************************************************************/
 
-bool rasterGradientShape(Surface& surface, SwShape& shape, unsigned id)
+bool rasterGradientShape(Surface& surface, SwShape* shape, unsigned id)
 {
     //Fast Track
-    if (shape.rect) {
-        auto region = _clipRegion(surface, shape.bbox);
-        if (id == FILL_ID_LINEAR) return _rasterLinearGradientRect(surface, region, shape.fill);
-        return _rasterRadialGradientRect(surface, region, shape.fill);
+    if (shape->rect) {
+        auto region = _clipRegion(surface, shape->bbox);
+        if (id == FILL_ID_LINEAR) return _rasterLinearGradientRect(surface, region, shape->fill);
+        return _rasterRadialGradientRect(surface, region, shape->fill);
     } else {
-        if (id == FILL_ID_LINEAR) return _rasterLinearGradientRle(surface, shape.rle, shape.fill);
-        return _rasterRadialGradientRle(surface, shape.rle, shape.fill);
+        if (id == FILL_ID_LINEAR) return _rasterLinearGradientRle(surface, shape->rle, shape->fill);
+        return _rasterRadialGradientRle(surface, shape->rle, shape->fill);
     }
     return false;
 }
 
 
-bool rasterSolidShape(Surface& surface, SwShape& shape, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
+bool rasterSolidShape(Surface& surface, SwShape* shape, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 {
     r = COLOR_ALPHA_MULTIPLY(r, a);
     g = COLOR_ALPHA_MULTIPLY(g, a);
     b = COLOR_ALPHA_MULTIPLY(b, a);
 
     //Fast Track
-    if (shape.rect) {
-        auto region = _clipRegion(surface, shape.bbox);
+    if (shape->rect) {
+        auto region = _clipRegion(surface, shape->bbox);
         if (a == 255) return _rasterSolidRect(surface, region, COLOR_ARGB_JOIN(r, g, b, a));
         return _rasterTranslucentRect(surface, region, COLOR_ARGB_JOIN(r, g, b, a));
     } else{
-        if (a == 255) return _rasterSolidRle(surface, shape.rle, COLOR_ARGB_JOIN(r, g, b, a));
-        return _rasterTranslucentRle(surface, shape.rle, COLOR_ARGB_JOIN(r, g, b, a));
+        if (a == 255) return _rasterSolidRle(surface, shape->rle, COLOR_ARGB_JOIN(r, g, b, a));
+        return _rasterTranslucentRle(surface, shape->rle, COLOR_ARGB_JOIN(r, g, b, a));
     }
     return false;
 }
 
 
-bool rasterStroke(Surface& surface, SwShape& shape, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
+bool rasterStroke(Surface& surface, SwShape* shape, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 {
     r = COLOR_ALPHA_MULTIPLY(r, a);
     g = COLOR_ALPHA_MULTIPLY(g, a);
     b = COLOR_ALPHA_MULTIPLY(b, a);
 
-    if (a == 255) return _rasterSolidRle(surface, shape.strokeRle, COLOR_ARGB_JOIN(r, g, b, a));
-    return _rasterTranslucentRle(surface, shape.strokeRle, COLOR_ARGB_JOIN(r, g, b, a));
+    if (a == 255) return _rasterSolidRle(surface, shape->strokeRle, COLOR_ARGB_JOIN(r, g, b, a));
+    return _rasterTranslucentRle(surface, shape->strokeRle, COLOR_ARGB_JOIN(r, g, b, a));
 }
 
 

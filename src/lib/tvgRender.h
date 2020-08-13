@@ -57,12 +57,12 @@ class RenderMethod
 public:
     virtual ~RenderMethod() {}
     virtual void* prepare(TVG_UNUSED const Shape& shape, TVG_UNUSED void* data, TVG_UNUSED const RenderTransform* transform, TVG_UNUSED RenderUpdateFlag flags) { return nullptr; }
-    virtual bool dispose(TVG_UNUSED const Shape& shape, TVG_UNUSED void *data) { return false; }
-    virtual bool preRender() { return false; }
-    virtual bool render(TVG_UNUSED const Shape& shape, TVG_UNUSED void *data) { return false; }
-    virtual bool postRender() { return false; }
-    virtual bool clear() { return false; }
-    virtual bool flush() { return false; }
+    virtual bool dispose(TVG_UNUSED const Shape& shape, TVG_UNUSED void *data) { return true; }
+    virtual bool preRender() { return true; }
+    virtual bool render(TVG_UNUSED const Shape& shape, TVG_UNUSED void *data) { return true; }
+    virtual bool postRender() { return true; }
+    virtual bool clear() { return true; }
+    virtual bool flush() { return true; }
     virtual uint32_t ref() { return 0; }
     virtual uint32_t unref() { return 0; }
 };

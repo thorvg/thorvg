@@ -463,52 +463,52 @@ bool _fastTrack(const SwOutline* outline)
 /* External Class Implementation                                        */
 /************************************************************************/
 
-bool shapePrepare(SwShape& shape, const Shape* sdata, const SwSize& clip, const Matrix* transform)
+bool shapePrepare(SwShape* shape, const Shape* sdata, const SwSize& clip, const Matrix* transform)
 {
     if (!shapeGenOutline(shape, sdata, transform)) return false;
 
-    if (!_updateBBox(shape.outline, shape.bbox)) return false;
+    if (!_updateBBox(shape->outline, shape->bbox)) return false;
 
-    if (!_checkValid(shape.outline, shape.bbox, clip)) return false;
+    if (!_checkValid(shape->outline, shape->bbox, clip)) return false;
 
     return true;
 }
 
 
-bool shapeGenRle(SwShape& shape, TVG_UNUSED const Shape* sdata, const SwSize& clip, bool antiAlias)
+bool shapeGenRle(SwShape* shape, TVG_UNUSED const Shape* sdata, const SwSize& clip, bool antiAlias)
 {
     //FIXME: Should we draw it?
     //Case: Stroke Line
     //if (shape.outline->opened) return true;
 
     //Case A: Fast Track Rectangle Drawing
-    if ((shape.rect = _fastTrack(shape.outline))) return true;
+    if ((shape->rect = _fastTrack(shape->outline))) return true;
     //Case B: Normale Shape RLE Drawing
-    if ((shape.rle = rleRender(shape.outline, shape.bbox, clip, antiAlias))) return true;
+    if ((shape->rle = rleRender(shape->outline, shape->bbox, clip, antiAlias))) return true;
 
     return false;
 }
 
 
-void shapeDelOutline(SwShape& shape)
+void shapeDelOutline(SwShape* shape)
 {
-    auto outline = shape.outline;
+    auto outline = shape->outline;
     _delOutline(outline);
-    shape.outline = nullptr;
+    shape->outline = nullptr;
 }
 
 
-void shapeReset(SwShape& shape)
+void shapeReset(SwShape* shape)
 {
     shapeDelOutline(shape);
-    rleFree(shape.rle);
-    shape.rle = nullptr;
-    shape.rect = false;
-    _initBBox(shape.bbox);
+    rleFree(shape->rle);
+    shape->rle = nullptr;
+    shape->rect = false;
+    _initBBox(shape->bbox);
 }
 
 
-bool shapeGenOutline(SwShape& shape, const Shape* sdata, const Matrix* transform)
+bool shapeGenOutline(SwShape* shape, const Shape* sdata, const Matrix* transform)
 {
     assert(sdata);
 
@@ -550,7 +550,7 @@ bool shapeGenOutline(SwShape& shape, const Shape* sdata, const Matrix* transform
     ++outlinePtsCnt;    //for close
     ++outlineCntrsCnt;  //for end
 
-    auto outline = shape.outline;
+    auto outline = shape->outline;
     if (!outline) outline = static_cast<SwOutline*>(calloc(1, sizeof(SwOutline)));
     assert(outline);
     outline->opened = true;
@@ -594,49 +594,49 @@ bool shapeGenOutline(SwShape& shape, const Shape* sdata, const Matrix* transform
     //FIXME:
     //outline->flags = SwOutline::FillRule::Winding;
 
-    shape.outline = outline;
+    shape->outline = outline;
 
     return true;
 }
 
 
-void shapeFree(SwShape& shape)
+void shapeFree(SwShape* shape)
 {
     shapeDelOutline(shape);
-    rleFree(shape.rle);
+    rleFree(shape->rle);
     shapeDelFill(shape);
 
-    if (shape.stroke) {
-        rleFree(shape.strokeRle);
-        strokeFree(shape.stroke);
+    if (shape->stroke) {
+        rleFree(shape->strokeRle);
+        strokeFree(shape->stroke);
     }
 }
 
 
-void shapeDelStroke(SwShape& shape)
+void shapeDelStroke(SwShape* shape)
 {
-    if (!shape.stroke) return;
-    rleFree(shape.strokeRle);
-    shape.strokeRle = nullptr;
-    strokeFree(shape.stroke);
-    shape.stroke = nullptr;
+    if (!shape->stroke) return;
+    rleFree(shape->strokeRle);
+    shape->strokeRle = nullptr;
+    strokeFree(shape->stroke);
+    shape->stroke = nullptr;
 }
 
 
-void shapeResetStroke(SwShape& shape, const Shape* sdata, const Matrix* transform)
+void shapeResetStroke(SwShape* shape, const Shape* sdata, const Matrix* transform)
 {
-    if (!shape.stroke) shape.stroke = static_cast<SwStroke*>(calloc(1, sizeof(SwStroke)));
-    auto stroke = shape.stroke;
-    assert(stroke);
+    if (!shape->stroke) shape->stroke = static_cast<SwStroke*>(calloc(1, sizeof(SwStroke)));
+    auto stroke = shape->stroke;
+    if (!stroke) return;
 
-    strokeReset(*stroke, sdata, transform);
+    strokeReset(stroke, sdata, transform);
 
-    rleFree(shape.strokeRle);
-    shape.strokeRle = nullptr;
+    rleFree(shape->strokeRle);
+    shape->strokeRle = nullptr;
 }
 
 
-bool shapeGenStrokeRle(SwShape& shape, const Shape* sdata, const Matrix* transform, const SwSize& clip)
+bool shapeGenStrokeRle(SwShape* shape, const Shape* sdata, const Matrix* transform, const SwSize& clip)
 {
     assert(sdata);
 
@@ -648,15 +648,15 @@ bool shapeGenStrokeRle(SwShape& shape, const Shape* sdata, const Matrix* transfo
         if (!shapeOutline) return false;
     //Normal Style stroke
     } else {
-        if (!shape.outline) {
+        if (!shape->outline) {
             if (!shapeGenOutline(shape, sdata, transform)) return false;
         }
-        shapeOutline = shape.outline;
+        shapeOutline = shape->outline;
     }
 
-    if (!strokeParseOutline(*shape.stroke, *shapeOutline)) return false;
+    if (!strokeParseOutline(shape->stroke, *shapeOutline)) return false;
 
-    auto strokeOutline = strokeExportOutline(*shape.stroke);
+    auto strokeOutline = strokeExportOutline(shape->stroke);
     if (!strokeOutline) return false;
 
     SwBBox bbox;
@@ -664,7 +664,7 @@ bool shapeGenStrokeRle(SwShape& shape, const Shape* sdata, const Matrix* transfo
 
     if (!_checkValid(strokeOutline, bbox, clip)) return false;
 
-    shape.strokeRle = rleRender(strokeOutline, bbox, clip, true);
+    shape->strokeRle = rleRender(strokeOutline, bbox, clip, true);
 
     _delOutline(strokeOutline);
 
@@ -672,26 +672,27 @@ bool shapeGenStrokeRle(SwShape& shape, const Shape* sdata, const Matrix* transfo
 }
 
 
-bool shapeGenFillColors(SwShape& shape, const Fill* fill, const Matrix* transform, bool ctable)
+bool shapeGenFillColors(SwShape* shape, const Fill* fill, const Matrix* transform, bool ctable)
 {
-    return fillGenColorTable(shape.fill, fill, transform, ctable);
+    return fillGenColorTable(shape->fill, fill, transform, ctable);
 }
 
 
-void shapeResetFill(SwShape& shape)
+void shapeResetFill(SwShape* shape)
 {
-    if (!shape.fill) shape.fill = static_cast<SwFill*>(calloc(1, sizeof(SwFill)));
-    assert(shape.fill);
-
-    fillReset(shape.fill);
+    if (!shape->fill) {
+        shape->fill = static_cast<SwFill*>(calloc(1, sizeof(SwFill)));
+        if (!shape->fill) return;
+    }
+    fillReset(shape->fill);
 }
 
 
-void shapeDelFill(SwShape& shape)
+void shapeDelFill(SwShape* shape)
 {
-    if (!shape.fill) return;
-    fillFree(shape.fill);
-    shape.fill = nullptr;
+    if (!shape->fill) return;
+    fillFree(shape->fill);
+    shape->fill = nullptr;
 }
 
 

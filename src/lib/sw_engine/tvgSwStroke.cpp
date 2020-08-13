@@ -846,34 +846,34 @@ void strokeFree(SwStroke* stroke)
 }
 
 
-void strokeReset(SwStroke& stroke, const Shape* sdata, const Matrix* transform)
+void strokeReset(SwStroke* stroke, const Shape* sdata, const Matrix* transform)
 {
     assert(sdata);
 
     if (transform) {
-        stroke.sx = sqrt(pow(transform->e11, 2) + pow(transform->e21, 2));
-        stroke.sy = sqrt(pow(transform->e12, 2) + pow(transform->e22, 2));
+        stroke->sx = sqrt(pow(transform->e11, 2) + pow(transform->e21, 2));
+        stroke->sy = sqrt(pow(transform->e12, 2) + pow(transform->e22, 2));
     } else {
-        stroke.sx = stroke.sy = 1.0f;
+        stroke->sx = stroke->sy = 1.0f;
     }
 
-    stroke.width = TO_SWCOORD(sdata->strokeWidth() * 0.5);
-    stroke.cap = sdata->strokeCap();
+    stroke->width = TO_SWCOORD(sdata->strokeWidth() * 0.5);
+    stroke->cap = sdata->strokeCap();
 
     //Save line join: it can be temporarily changed when stroking curves...
-    stroke.joinSaved = stroke.join = sdata->strokeJoin();
+    stroke->joinSaved = stroke->join = sdata->strokeJoin();
 
-    stroke.borders[0].ptsCnt = 0;
-    stroke.borders[0].start = -1;
-    stroke.borders[0].valid = false;
+    stroke->borders[0].ptsCnt = 0;
+    stroke->borders[0].start = -1;
+    stroke->borders[0].valid = false;
 
-    stroke.borders[1].ptsCnt = 0;
-    stroke.borders[1].start = -1;
-    stroke.borders[1].valid = false;
+    stroke->borders[1].ptsCnt = 0;
+    stroke->borders[1].start = -1;
+    stroke->borders[1].valid = false;
 }
 
 
-bool strokeParseOutline(SwStroke& stroke, const SwOutline& outline)
+bool strokeParseOutline(SwStroke* stroke, const SwOutline& outline)
 {
     uint32_t first = 0;
 
@@ -895,7 +895,7 @@ bool strokeParseOutline(SwStroke& stroke, const SwOutline& outline)
         //A contour cannot start with a cubic control point
         if (type == SW_CURVE_TYPE_CUBIC) return false;
 
-        _beginSubPath(stroke, start, outline.opened);
+        _beginSubPath(*stroke, start, outline.opened);
 
         while (pt < limit) {
             ++pt;
@@ -903,7 +903,7 @@ bool strokeParseOutline(SwStroke& stroke, const SwOutline& outline)
 
             //emit a signel line_to
             if (types[0] == SW_CURVE_TYPE_POINT) {
-                _lineTo(stroke, *pt);
+                _lineTo(*stroke, *pt);
             //types cubic
             } else {
                 if (pt + 1 > limit || types[1] != SW_CURVE_TYPE_CUBIC) return false;
@@ -912,28 +912,28 @@ bool strokeParseOutline(SwStroke& stroke, const SwOutline& outline)
                 types += 2;
 
                 if (pt <= limit) {
-                    _cubicTo(stroke, pt[-2], pt[-1], pt[0]);
+                    _cubicTo(*stroke, pt[-2], pt[-1], pt[0]);
                     continue;
                 }
-                _cubicTo(stroke, pt[-2], pt[-1], start);
+                _cubicTo(*stroke, pt[-2], pt[-1], start);
                 goto close;
             }
         }
 
     close:
-        if (!stroke.firstPt) _endSubPath(stroke);
+        if (!stroke->firstPt) _endSubPath(*stroke);
         first = last + 1;
     }
     return true;
 }
 
 
-SwOutline* strokeExportOutline(SwStroke& stroke)
+SwOutline* strokeExportOutline(SwStroke* stroke)
 {
     uint32_t count1, count2, count3, count4;
 
-    _getCounts(stroke.borders + 0, count1, count2);
-    _getCounts(stroke.borders + 1, count3, count4);
+    _getCounts(stroke->borders + 0, count1, count2);
+    _getCounts(stroke->borders + 1, count3, count4);
 
     auto ptsCnt = count1 + count3;
     auto cntrsCnt = count2 + count4;
@@ -950,8 +950,8 @@ SwOutline* strokeExportOutline(SwStroke& stroke)
     outline->cntrs = static_cast<uint32_t*>(malloc(sizeof(uint32_t) * cntrsCnt));
     assert(outline->cntrs);
 
-    _exportBorderOutline(stroke, outline, 0);  //left
-    _exportBorderOutline(stroke, outline, 1);  //right
+    _exportBorderOutline(*stroke, outline, 0);  //left
+    _exportBorderOutline(*stroke, outline, 1);  //right
 
     return outline;
 }

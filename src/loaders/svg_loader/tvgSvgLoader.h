@@ -24,7 +24,7 @@
 
 #include "tvgSvgLoaderCommon.h"
 #include "tvgSvgSceneBuilder.h"
-#include <future>
+
 
 class SvgLoader : public Loader
 {
@@ -32,7 +32,6 @@ private:
     string content;
     SvgLoaderData loaderData;
     SvgSceneBuilder builder;
-    future<unique_ptr<Scene>> rootProgress;
     unique_ptr<Scene> root;
 
 public:

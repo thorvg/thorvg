@@ -2324,31 +2324,34 @@ bool SvgLoader::read()
 {
     if (content.empty()) return false;
 
-    auto asyncTask = [](SvgLoader *loader) {
-        bool res = simpleXmlParse(loader->content.c_str(), loader->content.size(), true, _svgLoaderParser, &(loader->loaderData));
+    loaderData = {vector<SvgNode*>(),
+        nullptr,
+        nullptr,
+        vector<SvgStyleGradient*>(),
+        nullptr,
+        nullptr,
+        0,
+        false};
 
-        if (!res) return unique_ptr<Scene>(nullptr);
+    loaderData.svgParse = (SvgParser*)malloc(sizeof(SvgParser));
 
-        if (loader->loaderData.doc) {
-            SvgNode *defs;
-            _updateStyle(loader->loaderData.doc, nullptr);
-            defs = loader->loaderData.doc->node.doc.defs;
-            if (defs) _updateGradient(loader->loaderData.doc, defs->node.defs.gradients);
-            else {
-                if (!loader->loaderData.gradients.empty()) {
-                    vector<SvgStyleGradient*> gradientList;
-                    for (auto gradient : loader->loaderData.gradients) {
-                        gradientList.push_back(gradient);
-                    }
-                    _updateGradient(loader->loaderData.doc, gradientList);
-                    gradientList.clear();
-                }
+    if (!simpleXmlParse(content.c_str(), content.size(), true, _svgLoaderParser, &loaderData)) return false;
+
+    if (loaderData.doc) {
+        _updateStyle(loaderData.doc, nullptr);
+        auto defs = loaderData.doc->node.doc.defs;
+        if (defs) _updateGradient(loaderData.doc, defs->node.defs.gradients);
+        else {
+            if (!loaderData.gradients.empty()) {
+                vector<SvgStyleGradient*> gradientList;
+                std::copy(loaderData.gradients.begin(), loaderData.gradients.end(), gradientList.begin());
+                _updateGradient(loaderData.doc, gradientList);
+                gradientList.clear();
             }
         }
-        return loader->builder.build(loader->loaderData.doc);
-    };
+    }
 
-    rootProgress = async((launch::async | launch::deferred), asyncTask, this);
+    root = builder.build(loaderData.doc);
 
     return true;
 }
@@ -2356,8 +2359,6 @@ bool SvgLoader::read()
 
 bool SvgLoader::close()
 {
-    if (rootProgress.valid()) root = rootProgress.get();
-
     if (loaderData.svgParse) {
         free(loaderData.svgParse);
         loaderData.svgParse = nullptr;
@@ -2371,10 +2372,7 @@ bool SvgLoader::close()
 
 unique_ptr<Scene> SvgLoader::data()
 {
-    if (rootProgress.valid()) root = rootProgress.get();
-
-    if (root) return move(root);
-    else return unique_ptr<Scene>(nullptr);
+    return move(root);
 }
 
 #endif //_TVG_SVG_LOADER_CPP_

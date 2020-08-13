@@ -22,10 +22,6 @@
 #ifndef _TVG_SW_RENDERER_H_
 #define _TVG_SW_RENDERER_H_
 
-#include <queue>
-#include <future>
-#include <thread>
-
 namespace tvg
 {
 
@@ -38,10 +34,7 @@ public:
     bool dispose(const Shape& shape, void *data) override;
     bool preRender() override;
     bool render(const Shape& shape, void *data) override;
-    bool postRender() override;
     bool target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h);
-    bool clear() override;
-    bool flush() override;
     uint32_t ref() override;
     uint32_t unref() override;
 
@@ -49,13 +42,8 @@ public:
     static int init();
     static int term();
 
-    void doRender();  //Internally used for threading
-
 private:
     Surface surface = {nullptr, 0, 0, 0};
-    future<void> progress;
-    queue<SwTask*> prepareTasks;
-    queue<SwTask*> renderTasks;
 
     SwRenderer(){};
     ~SwRenderer();
