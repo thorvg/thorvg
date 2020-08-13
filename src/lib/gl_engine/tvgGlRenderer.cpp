@@ -129,16 +129,16 @@ void* GlRenderer::prepare(const Shape& shape, void* data, TVG_UNUSED const Rende
 {
     //prepare shape data
     GlShape* sdata = static_cast<GlShape*>(data);
-    if (!sdata)
-    {
+    if (!sdata) {
         sdata = new GlShape;
-        assert(sdata);
+        if (!sdata) return nullptr;
     }
+
     sdata->viewWd = static_cast<float>(surface.w);
     sdata->viewHt = static_cast<float>(surface.h);
     sdata->updateFlag = flags;
 
-    if (sdata->updateFlag == RenderUpdateFlag::None) return nullptr;
+    if (sdata->updateFlag == RenderUpdateFlag::None) return sdata;
 
     initShaders();
 
