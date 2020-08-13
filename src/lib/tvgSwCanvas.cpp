@@ -85,7 +85,7 @@ unique_ptr<SwCanvas> SwCanvas::gen() noexcept
 
     return canvas;
 #endif
-    return unique_ptr<SwCanvas>(nullptr);
+    return nullptr;
 }
 
 #endif /* _TVG_SWCANVAS_CPP_ */

@@ -86,7 +86,7 @@ unique_ptr<GlCanvas> GlCanvas::gen() noexcept
 
     return canvas;
 #endif
-    return unique_ptr<GlCanvas>(nullptr);
+    return nullptr;
 }
 
 
