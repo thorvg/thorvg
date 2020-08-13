@@ -56,7 +56,7 @@ unique_ptr<Loader> LoaderMgr::loader(const char* path)
     return unique_ptr<SvgLoader>(new SvgLoader);
 #endif
     cout << "Non supported format: " << path << endl;
-    return unique_ptr<Loader>(nullptr);
+    return nullptr;
 }
 
 #endif //_TVG_LOADER_MGR_CPP_
