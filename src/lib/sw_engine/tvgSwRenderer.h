@@ -52,7 +52,7 @@ public:
     void doRender();  //Internally used for threading
 
 private:
-    Surface surface;
+    Surface surface = {nullptr, 0, 0, 0};
     future<void> progress;
     queue<SwTask*> prepareTasks;
     queue<SwTask*> renderTasks;
