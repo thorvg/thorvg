@@ -30,7 +30,7 @@
 class GlRenderer : public RenderMethod
 {
 public:
-    Surface surface;
+    Surface surface = {nullptr, 0, 0, 0};
 
     void* prepare(const Shape& shape, void* data, const RenderTransform* transform, RenderUpdateFlag flags) override;
     bool dispose(const Shape& shape, void *data) override;
@@ -54,9 +54,9 @@ private:
     void initShaders();
     void drawPrimitive(GlGeometry& geometry, float r, float g, float b, float a, uint32_t primitiveIndex, RenderUpdateFlag flag);
 
-    unique_ptr<GlProgram>   mColorProgram;
-    int32_t   mColorUniformLoc;
-    uint32_t  mVertexAttrLoc;
+    unique_ptr<GlProgram>   mColorProgram = nullptr;
+    int32_t   mColorUniformLoc = 0;
+    uint32_t  mVertexAttrLoc = 0;
 };
 
 #endif /* _TVG_GL_RENDERER_H_ */
