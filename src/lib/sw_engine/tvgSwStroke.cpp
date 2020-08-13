@@ -35,7 +35,7 @@ static constexpr auto SW_STROKE_TAG_END = 8;
 
 static inline SwFixed SIDE_TO_ROTATE(const int32_t s)
 {
-    return (SW_ANGLE_PI2 - (s) * SW_ANGLE_PI);
+    return (SW_ANGLE_PI2 - static_cast<SwFixed>(s) * SW_ANGLE_PI);
 }
 
 
