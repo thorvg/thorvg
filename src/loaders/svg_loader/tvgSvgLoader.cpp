@@ -33,7 +33,7 @@
 
 typedef SvgNode* (*FactoryMethod)(SvgLoaderData* loader, SvgNode* parent, const char* buf, unsigned bufLength);
 typedef SvgStyleGradient* (*GradientFactoryMethod)(SvgLoaderData* loader, const char* buf, unsigned bufLength);
-
+static void _freeNode(SvgNode* node);
 
 static char* _skipSpace(const char* str, const char* end)
 {
@@ -1459,6 +1459,8 @@ static void _cloneNode(SvgNode* from, SvgNode* parent)
     for (vector<SvgNode*>::iterator itrChild = from->child.begin(); itrChild != from->child.end(); itrChild++) {
         _cloneNode(*itrChild, newNode);
     }
+
+    _freeNode(newNode);
 }
 
 
@@ -2161,12 +2163,12 @@ static void _freeNodeStyle(SvgStyleProperty* style)
     free(style);
 }
 
-static void _freeSvgNode(SvgNode* node)
+static void _freeNode(SvgNode* node)
 {
     if (!node) return;
 
     for(vector<SvgNode*>::iterator itrChild = node->child.begin(); itrChild != node->child.end(); itrChild++) {
-        _freeSvgNode(*itrChild);
+        _freeNode(*itrChild);
     }
     node->child.clear();
 
@@ -2187,7 +2189,7 @@ static void _freeSvgNode(SvgNode* node)
              break;
          }
          case SvgNodeType::Doc: {
-             _freeSvgNode(node->node.doc.defs);
+             _freeNode(node->node.doc.defs);
              break;
          }
          case SvgNodeType::Defs: {
@@ -2360,7 +2362,7 @@ bool SvgLoader::close()
         free(loaderData.svgParse);
         loaderData.svgParse = nullptr;
     }
-    _freeSvgNode(loaderData.doc);
+    _freeNode(loaderData.doc);
     loaderData.doc = nullptr;
 
     return true;
