@@ -880,7 +880,6 @@ bool strokeParseOutline(SwStroke& stroke, const SwOutline& outline)
     for (uint32_t i = 0; i < outline.cntrsCnt; ++i) {
         auto last = outline.cntrs[i];  //index of last point in contour
         auto limit = outline.pts + last;
-        assert(limit);
 
         //Skip empty points
         if (last <= first) {
@@ -889,12 +888,8 @@ bool strokeParseOutline(SwStroke& stroke, const SwOutline& outline)
         }
 
         auto start = outline.pts[first];
-
         auto pt = outline.pts + first;
-        assert(pt);
         auto types = outline.types + first;
-        assert(types);
-
         auto type = types[0];
 
         //A contour cannot start with a cubic control point
@@ -903,8 +898,8 @@ bool strokeParseOutline(SwStroke& stroke, const SwOutline& outline)
         _beginSubPath(stroke, start, outline.opened);
 
         while (pt < limit) {
-            assert(++pt);
-            assert(++types);
+            ++pt;
+            ++types;
 
             //emit a signel line_to
             if (types[0] == SW_CURVE_TYPE_POINT) {
