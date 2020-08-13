@@ -373,7 +373,6 @@ unique_ptr<Scene> SvgSceneBuilder::build(SvgNode* node)
     viewBox.w = node->node.doc.vw;
     viewBox.h = node->node.doc.vh;
     preserveAspect = node->node.doc.preserveAspect;
-    staticViewBox = true;
     return _sceneBuildHelper(node, viewBox.x, viewBox.y, viewBox.w, viewBox.h, 255);
 }
 

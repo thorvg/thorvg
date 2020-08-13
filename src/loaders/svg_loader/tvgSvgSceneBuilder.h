@@ -32,12 +32,8 @@ private:
     struct {
         int x, y;
         uint32_t w, h;
-    } viewBox;
-    int      ref;
-    uint32_t w, h;                 //Default size
-    bool     staticViewBox;
-    bool     preserveAspect;       //Used in SVG
-    bool     shareable;
+    } viewBox = {0, 0, 0, 0};
+    bool     preserveAspect = false;
 
 public:
     SvgSceneBuilder();
