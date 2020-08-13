@@ -571,21 +571,14 @@ static void _cubicTo(RleWorker& rw, const SwPoint& ctrl1, const SwPoint& ctrl2, 
 static bool _decomposeOutline(RleWorker& rw)
 {
     auto outline = rw.outline;
-    assert(outline);
-
     auto first = 0;  //index of first point in contour
 
     for (uint32_t n = 0; n < outline->cntrsCnt; ++n) {
         auto last = outline->cntrs[n];
         auto limit = outline->pts + last;
-        assert(limit);
-
         auto start = UPSCALE(outline->pts[first]);
-
         auto pt = outline->pts + first;
-        assert(pt);
         auto types = outline->types + first;
-        assert(types);
 
         /* A contour cannot start with a cubic control point! */
         if (types[0] == SW_CURVE_TYPE_CUBIC) goto invalid_outline;
@@ -593,8 +586,8 @@ static bool _decomposeOutline(RleWorker& rw)
         _moveTo(rw, UPSCALE(outline->pts[first]));
 
         while (pt < limit) {
-            assert(++pt);
-            assert(++types);
+            ++pt;
+            ++types;
 
             //emit a single line_to
             if (types[0] == SW_CURVE_TYPE_POINT) {
