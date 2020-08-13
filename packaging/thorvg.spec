@@ -3,7 +3,7 @@ Summary:    Thor Vector Graphics Library
 Version:    0.0.1
 Release:    1
 Group:      Graphics System/Rendering Engine
-License:    Apache-2.0
+License:    MIT
 URL:        https://github.com/samsung/thorvg
 Source0:    %{name}-%{version}.tar.gz
 
