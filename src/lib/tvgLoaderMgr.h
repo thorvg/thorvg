@@ -26,7 +26,7 @@ struct LoaderMgr
 {
     static bool init();
     static bool term();
-    static unique_ptr<Loader> loader(const char* path);
+    static unique_ptr<Loader> loader();
 };
 
 #endif //_TVG_LOADER_MGR_H_

@@ -29,7 +29,10 @@
 class SvgLoader : public Loader
 {
 private:
-    string content;
+    string filePath;
+    const char* content = nullptr;
+    uint32_t size = 0;
+
     SvgLoaderData loaderData;
     SvgSceneBuilder builder;
     unique_ptr<Scene> root;
@@ -39,6 +42,8 @@ public:
     ~SvgLoader();
 
     bool open(const char* path) override;
+    bool open(const char* data, uint32_t size) override;
+    bool header();
     bool read() override;
     bool close() override;
     unique_ptr<Scene> data() override;

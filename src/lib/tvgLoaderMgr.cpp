@@ -50,12 +50,11 @@ bool LoaderMgr::term()
     return true;
 }
 
-unique_ptr<Loader> LoaderMgr::loader(const char* path)
+unique_ptr<Loader> LoaderMgr::loader()
 {
 #ifdef THORVG_SVG_LOADER_SUPPORT
     return unique_ptr<SvgLoader>(new SvgLoader);
 #endif
-    cout << "Non supported format: " << path << endl;
     return nullptr;
 }
 

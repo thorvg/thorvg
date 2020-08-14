@@ -37,6 +37,7 @@ public:
     virtual ~Loader() {}
 
     virtual bool open(const char* path) = 0;
+    virtual bool open(const char* data, uint32_t size) = 0;
     virtual bool read() = 0;
     virtual bool close() = 0;
     virtual unique_ptr<Scene> data() = 0;

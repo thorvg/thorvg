@@ -35,6 +35,7 @@ typedef SvgNode* (*FactoryMethod)(SvgLoaderData* loader, SvgNode* parent, const 
 typedef SvgStyleGradient* (*GradientFactoryMethod)(SvgLoaderData* loader, const char* buf, unsigned bufLength);
 static void _freeNode(SvgNode* node);
 
+
 static char* _skipSpace(const char* str, const char* end)
 {
     while (((end != nullptr && str < end) || (end == nullptr && *str != '\0')) && isspace(*str))
@@ -2280,6 +2281,40 @@ SvgLoader::~SvgLoader()
 }
 
 
+bool SvgLoader::header()
+{
+    //For valid check, only <svg> tag is parsed first.
+    //If the <svg> tag is found, the loaded file is valid and stores viewbox information.
+    //After that, the remaining content data is parsed in order with async.
+    loaderData.svgParse = (SvgParser*)malloc(sizeof(SvgParser));
+    if (!loaderData.svgParse) return false;
+
+    simpleXmlParse(content, size, true, _svgLoaderParserForValidCheck, &(loaderData));
+
+    if (loaderData.doc && loaderData.doc->type == SvgNodeType::Doc) {
+        //Return the brief resource info such as viewbox:
+        this->vx = loaderData.doc->node.doc.vx;
+        this->vy = loaderData.doc->node.doc.vy;
+        this->vw = loaderData.doc->node.doc.vw;
+        this->vh = loaderData.doc->node.doc.vh;
+    } else {
+        cout << "ERROR : No SVG File. There is no <svg/>" <<endl;
+        return false;
+    }
+
+    return true;
+}
+
+
+bool SvgLoader::open(const char* data, uint32_t size)
+{
+    this->content = data;
+    this->size = size;
+
+    return header();
+}
+
+
 bool SvgLoader::open(const char* path)
 {
     ifstream f;
@@ -2290,39 +2325,22 @@ bool SvgLoader::open(const char* path)
         cout << "ERROR: Failed to open file = " << path;
         return false;
     } else {
-        getline(f, content, '\0');
+        getline(f, filePath, '\0');
         f.close();
 
-        if (content.empty()) return false;
+        if (filePath.empty()) return false;
+
+        this->content = filePath.c_str();
+        this->size = filePath.size();
     }
 
-    //For valid check, only <svg> tag is parsed first.
-    //If the <svg> tag is found, the loaded file is valid and stores viewbox information.
-    //After that, the remaining content data is parsed in order with async.
-    loaderData.svgParse = (SvgParser*)malloc(sizeof(SvgParser));
-    if (!loaderData.svgParse) return false;
-
-    simpleXmlParse(content.c_str(), content.size(), true, _svgLoaderParserForValidCheck, &(loaderData));
-
-    if (loaderData.doc && loaderData.doc->type == SvgNodeType::Doc) {
-        //Return the brief resource info such as viewbox:
-        this->vx = loaderData.doc->node.doc.vx;
-        this->vy = loaderData.doc->node.doc.vy;
-        this->vw = loaderData.doc->node.doc.vw;
-        this->vh = loaderData.doc->node.doc.vh;
-
-    } else {
-        cout << "ERROR : No SVG File. There is no <svg/>" <<endl;
-        return false;
-    }
-
-    return true;
+    return header();
 }
 
 
 bool SvgLoader::read()
 {
-    if (content.empty()) return false;
+    if (!content || size == 0) return false;
 
     loaderData = {vector<SvgNode*>(),
         nullptr,
@@ -2335,7 +2353,7 @@ bool SvgLoader::read()
 
     loaderData.svgParse = (SvgParser*)malloc(sizeof(SvgParser));
 
-    if (!simpleXmlParse(content.c_str(), content.size(), true, _svgLoaderParser, &loaderData)) return false;
+    if (!simpleXmlParse(content, size, true, _svgLoaderParser, &loaderData)) return false;
 
     if (loaderData.doc) {
         _updateStyle(loaderData.doc, nullptr);

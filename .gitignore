@@ -19,6 +19,7 @@ testLinearGradient
 testRadialGradient
 testGradientTransform
 testSvg
+testSvg2
 testAsync
 testCapi
 testArc

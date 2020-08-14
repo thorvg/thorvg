@@ -53,6 +53,14 @@ Result Picture::load(const std::string& path) noexcept
 }
 
 
+Result Picture::load(const char* data, uint32_t size) noexcept
+{
+    if (!data || size <= 0) return Result::InvalidArguments;
+
+    return IMPL->load(data, size);
+}
+
+
 Result Picture::viewbox(float* x, float* y, float* w, float* h) const noexcept
 {
     if (IMPL->viewbox(x, y, w, h)) return Result::Success;

@@ -84,8 +84,23 @@ struct Picture::Impl
     Result load(const string& path)
     {
         if (loader) loader->close();
-        loader = LoaderMgr::loader(path.c_str());
-        if (!loader || !loader->open(path.c_str())) return Result::NonSupport;
+        loader = LoaderMgr::loader();
+        if (!loader || !loader->open(path.c_str())) {
+            cout << "Non supported format: " << path.c_str() << endl;
+            return Result::NonSupport;
+        }
+        if (!loader->read()) return Result::Unknown;
+        return Result::Success;
+    }
+
+    Result load(const char* data, uint32_t size)
+    {
+        if (loader) loader->close();
+        loader = LoaderMgr::loader();
+        if (!loader || !loader->open(data, size)) {
+            cout << "Non supported load data" << endl;
+            return Result::NonSupport;
+        }
         if (!loader->read()) return Result::Unknown;
         return Result::Success;
     }
