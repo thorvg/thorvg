@@ -1,7 +1,7 @@
 option('engines',
    type: 'array',
    choices: ['sw', 'gl'],
-   value: ['sw', 'gl'],
+   value: ['sw'],
    description: 'Enable Rasterizer Engine in thorvg')
 
 option('loaders',
