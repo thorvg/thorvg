@@ -38,6 +38,8 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
+static uint32_t threadCnt = 0;
+
 /************************************************************************/
 /* External Class Implementation                                        */
 /************************************************************************/
@@ -91,6 +93,20 @@ Result Initializer::term(CanvasEngine engine) noexcept
     if (!LoaderMgr::term()) return Result::Unknown;
 
     return Result::Success;
+}
+
+
+Result Initializer::threads(uint32_t cnt) noexcept
+{
+    threadCnt = cnt;
+
+    return Result::Success;
+}
+
+
+uint32_t Initializer::threads() noexcept
+{
+    return threadCnt;
 }
 
 #endif /* _TVG_INITIALIZER_CPP_ */
