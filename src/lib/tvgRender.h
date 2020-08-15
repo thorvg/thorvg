@@ -31,6 +31,7 @@ struct Surface
     uint32_t* buffer;
     uint32_t stride;
     uint32_t w, h;
+    uint32_t cs;
 };
 
 enum RenderUpdateFlag {None = 0, Path = 1, Color = 2, Gradient = 4, Stroke = 8, Transform = 16, All = 32};

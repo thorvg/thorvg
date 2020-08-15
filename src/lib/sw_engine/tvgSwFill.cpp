@@ -34,7 +34,7 @@
 #define FIXPT_SIZE (1<<FIXPT_BITS)
 
 
-static bool _updateColorTable(SwFill* fill, const Fill* fdata)
+static bool _updateColorTable(SwFill* fill, const Fill* fdata, uint32_t cs)
 {
     assert(fill && fdata);
 
@@ -51,11 +51,11 @@ static bool _updateColorTable(SwFill* fill, const Fill* fdata)
 
     if (pColors->a < 255) fill->translucent = true;
 
-    auto r = COLOR_ALPHA_MULTIPLY(pColors->r, pColors->a);
-    auto g = COLOR_ALPHA_MULTIPLY(pColors->g, pColors->a);
-    auto b = COLOR_ALPHA_MULTIPLY(pColors->b, pColors->a);
+    auto r = ALPHA_MULTIPLY(pColors->r, pColors->a);
+    auto g = ALPHA_MULTIPLY(pColors->g, pColors->a);
+    auto b = ALPHA_MULTIPLY(pColors->b, pColors->a);
 
-    auto rgba = COLOR_ARGB_JOIN(r, g, b, pColors->a);
+    auto rgba = (cs == SwCanvas::RGBA8888) ? RGBA_JOIN(r, g, b, pColors->a) : ARGB_JOIN(r, g, b, pColors->a);
     auto inc = 1.0f / static_cast<float>(GRADIENT_STOP_SIZE);
     auto pos = 1.5f * inc;
     uint32_t i = 0;
@@ -75,17 +75,17 @@ static bool _updateColorTable(SwFill* fill, const Fill* fdata)
         auto delta = 1.0f / (next->offset - curr->offset);
         if (next->a < 255) fill->translucent = true;
 
-        auto r = COLOR_ALPHA_MULTIPLY(next->r, next->a);
-        auto g = COLOR_ALPHA_MULTIPLY(next->g, next->a);
-        auto b = COLOR_ALPHA_MULTIPLY(next->b, next->a);
+        auto r = ALPHA_MULTIPLY(next->r, next->a);
+        auto g = ALPHA_MULTIPLY(next->g, next->a);
+        auto b = ALPHA_MULTIPLY(next->b, next->a);
 
-        auto rgba2 = COLOR_ARGB_JOIN(r, g, b, next->a);
+        auto rgba2 = (cs == SwCanvas::RGBA8888) ? RGBA_JOIN(r, g, b, next->a) : ARGB_JOIN(r, g, b, next->a);
 
         while (pos < next->offset && i < GRADIENT_STOP_SIZE) {
             auto t = (pos - curr->offset) * delta;
             auto dist = static_cast<int32_t>(256 * t);
             auto dist2 = 256 - dist;
-            fill->ctable[i] = COLOR_INTERPOLATE(rgba, dist2, rgba2, dist);
+            fill->ctable[i] = RGBA_INTERPOLATE(rgba, dist2, rgba2, dist);
             ++i;
             pos += inc;
         }
@@ -252,7 +252,7 @@ void fillFetchLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, 
 
     if (fabsf(inc) < FLT_EPSILON) {
         auto color = _fixedPixel(fill, static_cast<int32_t>(t * FIXPT_SIZE));
-        rasterARGB32(dst, color, offset, len);
+        rasterRGBA32(dst, color, offset, len);
         return;
     }
 
@@ -282,7 +282,7 @@ void fillFetchLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, 
 }
 
 
-bool fillGenColorTable(SwFill* fill, const Fill* fdata, const Matrix* transform, bool ctable)
+bool fillGenColorTable(SwFill* fill, const Fill* fdata, const Matrix* transform, uint32_t cs, bool ctable)
 {
     if (!fill) return false;
 
@@ -291,7 +291,7 @@ bool fillGenColorTable(SwFill* fill, const Fill* fdata, const Matrix* transform,
     fill->spread = fdata->spread();
 
     if (ctable) {
-        if (!_updateColorTable(fill, fdata)) return false;
+        if (!_updateColorTable(fill, fdata, cs)) return false;
     }
 
     if (fdata->id() == FILL_ID_LINEAR) {

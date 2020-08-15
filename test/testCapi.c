@@ -16,7 +16,7 @@ void testCapi()
     tvg_engine_init(TVG_ENGINE_SW | TVG_ENGINE_GL);
 
     Tvg_Canvas* canvas = tvg_swcanvas_create();
-    tvg_swcanvas_set_target(canvas, buffer, WIDTH, WIDTH, HEIGHT);
+    tvg_swcanvas_set_target(canvas, buffer, WIDTH, WIDTH, HEIGHT, TVG_COLORSPACE_ARGB8888);
 
     Tvg_Paint* shape = tvg_shape_new();
     tvg_shape_append_rect(shape, 0, 0, 200, 200, 0, 0);

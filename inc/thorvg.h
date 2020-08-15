@@ -311,7 +311,9 @@ class TVG_EXPORT SwCanvas final : public Canvas
 public:
     ~SwCanvas();
 
-    Result target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h) noexcept;
+    enum Colorspace { RGBA8888 = 0, ARGB8888 };
+
+    Result target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h, Colorspace cs) noexcept;
 
     static std::unique_ptr<SwCanvas> gen() noexcept;
 

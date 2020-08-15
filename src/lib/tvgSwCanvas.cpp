@@ -62,14 +62,14 @@ SwCanvas::~SwCanvas()
 }
 
 
-Result SwCanvas::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h) noexcept
+Result SwCanvas::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h, Colorspace cs) noexcept
 {
 #ifdef THORVG_SW_RASTER_SUPPORT
     //We know renderer type, avoid dynamic_cast for performance.
     auto renderer = static_cast<SwRenderer*>(Canvas::pImpl.get()->renderer);
     if (!renderer) return Result::MemoryCorruption;
 
-    if (!renderer->target(buffer, stride, w, h)) return Result::InvalidArguments;
+    if (!renderer->target(buffer, stride, w, h, cs)) return Result::InvalidArguments;
 
     return Result::Success;
 #endif

@@ -23,6 +23,8 @@ typedef struct _Tvg_Gradient Tvg_Gradient;
 #define TVG_ENGINE_SW (1 << 1)
 #define TVG_ENGINE_GL (1 << 2)
 
+#define TVG_COLORSPACE_RGBA8888 0
+#define TVG_COLORSPACE_ARGB8888 1
 
 typedef enum {
     TVG_RESULT_SUCCESS = 0,
@@ -94,7 +96,7 @@ TVG_EXPORT Tvg_Result tvg_engine_term(unsigned engine_method);
 /* SwCanvas API                                                         */
 /************************************************************************/
 TVG_EXPORT Tvg_Canvas* tvg_swcanvas_create();
-TVG_EXPORT Tvg_Result tvg_swcanvas_set_target(Tvg_Canvas* canvas, uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h);
+TVG_EXPORT Tvg_Result tvg_swcanvas_set_target(Tvg_Canvas* canvas, uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h, uint32_t cs);
 
 
 /************************************************************************/

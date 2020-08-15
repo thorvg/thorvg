@@ -40,7 +40,7 @@ SwRenderer::~SwRenderer()
 }
 
 
-bool SwRenderer::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h)
+bool SwRenderer::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h, uint32_t cs)
 {
     if (!buffer || stride == 0 || w == 0 || h == 0) return false;
 
@@ -48,6 +48,7 @@ bool SwRenderer::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t 
     surface.stride = stride;
     surface.w = w;
     surface.h = h;
+    surface.cs = cs;
 
     return true;
 }
@@ -129,7 +130,7 @@ void* SwRenderer::prepare(const Shape& sdata, void* data, const RenderTransform*
             if (fill) {
                 auto ctable = (flags & RenderUpdateFlag::Gradient) ? true : false;
                 if (ctable) shapeResetFill(shape);
-                if (!shapeGenFillColors(shape, fill, matrix, ctable)) return shape;
+                if (!shapeGenFillColors(shape, fill, matrix, surface.cs, ctable)) return shape;
             } else {
                 shapeDelFill(shape);
             }

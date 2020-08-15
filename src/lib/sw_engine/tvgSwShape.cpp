@@ -672,9 +672,9 @@ bool shapeGenStrokeRle(SwShape* shape, const Shape* sdata, const Matrix* transfo
 }
 
 
-bool shapeGenFillColors(SwShape* shape, const Fill* fill, const Matrix* transform, bool ctable)
+bool shapeGenFillColors(SwShape* shape, const Fill* fill, const Matrix* transform, uint32_t cs, bool ctable)
 {
-    return fillGenColorTable(shape->fill, fill, transform, ctable);
+    return fillGenColorTable(shape->fill, fill, transform, cs, ctable);
 }
 
 

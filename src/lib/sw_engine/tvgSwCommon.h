@@ -222,20 +222,26 @@ static inline SwCoord TO_SWCOORD(float val)
 }
 
 
-static inline uint32_t COLOR_ALPHA(uint32_t rgba)
+static inline uint32_t RGBA_ALPHA(uint32_t rgba)
 {
-  return (rgba >> 24) & 0xff;
+  return rgba & 0x000000ff;
 }
 
 
-static inline uint32_t COLOR_ALPHA_BLEND(uint32_t rgba, uint32_t alpha)
+static inline uint32_t ARGB_ALPHA(uint32_t argb)
+{
+  return (argb >> 24) & 0xff;
+}
+
+
+static inline uint32_t RGBA_ALPHA_BLEND(uint32_t rgba, uint32_t alpha)
 {
   return (((((rgba >> 8) & 0x00ff00ff) * alpha) & 0xff00ff00) +
           ((((rgba & 0x00ff00ff) * alpha) >> 8) & 0x00ff00ff));
 }
 
 
-static inline uint32_t COLOR_INTERPOLATE(uint32_t rgba1, uint32_t a, uint32_t rgba2, uint32_t b)
+static inline uint32_t RGBA_INTERPOLATE(uint32_t rgba1, uint32_t a, uint32_t rgba2, uint32_t b)
 {
    auto t = (((rgba1 & 0xff00ff) * a + (rgba2 & 0xff00ff) * b) >> 8) & 0xff00ff;
    rgba1 = (((rgba1 >> 8) & 0xff00ff) * a + ((rgba2 >> 8) & 0xff00ff) * b) & 0xff00ff00;
@@ -243,13 +249,19 @@ static inline uint32_t COLOR_INTERPOLATE(uint32_t rgba1, uint32_t a, uint32_t rg
 }
 
 
-static inline uint32_t COLOR_ARGB_JOIN(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
+static inline uint32_t RGBA_JOIN(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
+{
+  return (r << 24 | g << 16 | b << 8 | a);
+}
+
+
+static inline uint32_t ARGB_JOIN(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 {
   return (a << 24 | r << 16 | g << 8 | b);
 }
 
 
-static inline uint8_t COLOR_ALPHA_MULTIPLY(uint32_t c, uint32_t a)
+static inline uint8_t ALPHA_MULTIPLY(uint32_t c, uint32_t a)
 {
     return (c * a) >> 8;
 }
@@ -278,7 +290,7 @@ void shapeResetStroke(SwShape* shape, const Shape* sdata, const Matrix* transfor
 bool shapeGenStrokeRle(SwShape* shape, const Shape* sdata, const Matrix* transform, const SwSize& clip);
 void shapeFree(SwShape* shape);
 void shapeDelStroke(SwShape* shape);
-bool shapeGenFillColors(SwShape* shape, const Fill* fill, const Matrix* transform, bool ctable);
+bool shapeGenFillColors(SwShape* shape, const Fill* fill, const Matrix* transform, uint32_t cs, bool ctable);
 void shapeResetFill(SwShape* shape);
 void shapeDelFill(SwShape* shape);
 
@@ -287,7 +299,7 @@ bool strokeParseOutline(SwStroke* stroke, const SwOutline& outline);
 SwOutline* strokeExportOutline(SwStroke* stroke);
 void strokeFree(SwStroke* stroke);
 
-bool fillGenColorTable(SwFill* fill, const Fill* fdata, const Matrix* transform, bool ctable);
+bool fillGenColorTable(SwFill* fill, const Fill* fdata, const Matrix* transform, uint32_t cs, bool ctable);
 void fillReset(SwFill* fill);
 void fillFree(SwFill* fill);
 void fillFetchLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t offset, uint32_t len);
@@ -302,7 +314,7 @@ bool rasterStroke(Surface& surface, SwShape* shape, uint8_t r, uint8_t g, uint8_
 bool rasterClear(Surface& surface);
 
 
-static inline void rasterARGB32(uint32_t *dst, uint32_t val, uint32_t offset, int32_t len)
+static inline void rasterRGBA32(uint32_t *dst, uint32_t val, uint32_t offset, int32_t len)
 {
 #ifdef THORVG_AVX_VECTOR_SUPPORT
     int32_t align = (8 - (offset % 8)) % 8;

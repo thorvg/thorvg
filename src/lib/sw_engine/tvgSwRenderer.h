@@ -34,7 +34,7 @@ public:
     bool dispose(const Shape& shape, void *data) override;
     bool preRender() override;
     bool render(const Shape& shape, void *data) override;
-    bool target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h);
+    bool target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h, uint32_t cs);
     uint32_t ref() override;
     uint32_t unref() override;
 
