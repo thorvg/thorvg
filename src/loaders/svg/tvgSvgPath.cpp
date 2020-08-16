@@ -239,7 +239,9 @@ static int _numberCount(char cmd)
         case 'M':
         case 'm':
         case 'L':
-        case 'l': {
+        case 'l':
+        case 'T':
+        case 't': {
             count = 2;
             break;
         }
@@ -260,9 +262,7 @@ static int _numberCount(char cmd)
         case 'S':
         case 's':
         case 'Q':
-        case 'q':
-        case 'T':
-        case 't': {
+        case 'q': {
             count = 4;
             break;
         }
@@ -278,7 +278,7 @@ static int _numberCount(char cmd)
 }
 
 
-static void _processCommand(vector<PathCommand>* cmds, vector<Point>* pts, char cmd, float* arr, int count, Point* cur, Point* curCtl)
+static void _processCommand(vector<PathCommand>* cmds, vector<Point>* pts, char cmd, float* arr, int count, Point* cur, Point* curCtl, bool *isQuadratic)
 {
     int i;
     switch (cmd) {
@@ -341,12 +341,14 @@ static void _processCommand(vector<PathCommand>* cmds, vector<Point>* pts, char 
             pts->push_back(p[2]);
             *curCtl = p[1];
             *cur = p[2];
+            *isQuadratic = false;
             break;
         }
         case 's':
         case 'S': {
             Point p[3], ctrl;
-            if ((cmds->size() > 1) && (cmds->at(cmds->size() - 1) == PathCommand::CubicTo)) {
+            if ((cmds->size() > 1) && (cmds->at(cmds->size() - 1) == PathCommand::CubicTo) &&
+                !(*isQuadratic)) {
                 ctrl.x = 2 * cur->x - curCtl->x;
                 ctrl.y = 2 * cur->y - curCtl->y;
             } else {
@@ -361,6 +363,7 @@ static void _processCommand(vector<PathCommand>* cmds, vector<Point>* pts, char 
             pts->push_back(p[2]);
             *curCtl = p[1];
             *cur = p[2];
+            *isQuadratic = false;
             break;
         }
         case 'q':
@@ -377,16 +380,35 @@ static void _processCommand(vector<PathCommand>* cmds, vector<Point>* pts, char 
             pts->push_back(p[0]);
             pts->push_back(p[1]);
             pts->push_back(p[2]);
-            *curCtl = p[1];
+            *curCtl = {arr[0], arr[1]};
             *cur = p[2];
+            *isQuadratic = true;
             break;
         }
         case 't':
         case 'T': {
-            Point p = {arr[0], arr[1]};
-            cmds->push_back(PathCommand::MoveTo);
-            pts->push_back(p);
-            *cur = {arr[0] ,arr[1]};
+            Point p[3], ctrl;
+            if ((cmds->size() > 1) && (cmds->at(cmds->size() - 1) == PathCommand::CubicTo) &&
+                *isQuadratic) {
+                ctrl.x = 2 * cur->x - curCtl->x;
+                ctrl.y = 2 * cur->y - curCtl->y;
+            } else {
+                ctrl = *cur;
+            }
+            float ctrl_x0 = (cur->x + 2 * ctrl.x) * (1.0 / 3.0);
+            float ctrl_y0 = (cur->y + 2 * ctrl.y) * (1.0 / 3.0);
+            float ctrl_x1 = (arr[0] + 2 * ctrl.x) * (1.0 / 3.0);
+            float ctrl_y1 = (arr[1] + 2 * ctrl.y) * (1.0 / 3.0);
+            cmds->push_back(PathCommand::CubicTo);
+            p[0] = {ctrl_x0, ctrl_y0};
+            p[1] = {ctrl_x1, ctrl_y1};
+            p[2] = {arr[0], arr[1]};
+            pts->push_back(p[0]);
+            pts->push_back(p[1]);
+            pts->push_back(p[2]);
+            *curCtl = {ctrl.x, ctrl.y};
+            *cur = p[2];
+            *isQuadratic = true;
             break;
         }
         case 'h':
@@ -479,6 +501,7 @@ tuple<vector<PathCommand>, vector<Point>> svgPathToTvgPath(const char* svgPath)
     Point cur = { 0, 0 };
     Point curCtl = { 0, 0 };
     char cmd = 0;
+    bool isQuadratic = false;
     char* path = (char*)svgPath;
     char* curLocale;
 
@@ -489,7 +512,7 @@ tuple<vector<PathCommand>, vector<Point>> svgPathToTvgPath(const char* svgPath)
     while ((path[0] != '\0')) {
         path = _nextCommand(path, &cmd, numberArray, &numberCount);
         if (!path) break;
-        _processCommand(&cmds, &pts, cmd, numberArray, numberCount, &cur, &curCtl);
+        _processCommand(&cmds, &pts, cmd, numberArray, numberCount, &cur, &curCtl, &isQuadratic);
     }
 
     setlocale(LC_NUMERIC, curLocale);
