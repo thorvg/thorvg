@@ -22,10 +22,10 @@
 #ifndef _TVG_SW_RENDERER_H_
 #define _TVG_SW_RENDERER_H_
 
+struct SwSurface;
+
 namespace tvg
 {
-
-struct SwTask;
 
 class SwRenderer : public RenderMethod
 {
@@ -43,7 +43,7 @@ public:
     static int term();
 
 private:
-    Surface surface = {nullptr, 0, 0, 0};
+    SwSurface* surface = nullptr;
 
     SwRenderer(){};
     ~SwRenderer();

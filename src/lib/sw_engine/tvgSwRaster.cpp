@@ -28,27 +28,51 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-static SwBBox _clipRegion(Surface& surface, SwBBox& in)
+static uint32_t _rgbaAlpha(uint32_t rgba)
+{
+    return rgba & 0x000000ff;
+}
+
+
+static uint32_t _argbAlpha(uint32_t argb)
+{
+    return (argb >> 24) & 0xff;
+}
+
+
+static uint32_t _rgbaJoin(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
+{
+    return (r << 24 | g << 16 | b << 8 | a);
+}
+
+
+static uint32_t _argbJoin(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
+{
+    return (a << 24 | r << 16 | g << 8 | b);
+}
+
+
+static SwBBox _clipRegion(Surface* surface, SwBBox& in)
 {
     auto bbox = in;
 
     if (bbox.min.x < 0) bbox.min.x = 0;
     if (bbox.min.y < 0) bbox.min.y = 0;
-    if (bbox.max.x > static_cast<SwCoord>(surface.w)) bbox.max.x = surface.w;
-    if (bbox.max.y > static_cast<SwCoord>(surface.h)) bbox.max.y = surface.h;
+    if (bbox.max.x > static_cast<SwCoord>(surface->w)) bbox.max.x = surface->w;
+    if (bbox.max.y > static_cast<SwCoord>(surface->h)) bbox.max.y = surface->h;
 
     return bbox;
 }
 
-static bool _rasterTranslucentRect(Surface& surface, const SwBBox& region, uint32_t color)
+static bool _rasterTranslucentRect(SwSurface* surface, const SwBBox& region, uint32_t color)
 {
-    auto buffer = surface.buffer + (region.min.y * surface.stride) + region.min.x;
+    auto buffer = surface->buffer + (region.min.y * surface->stride) + region.min.x;
     auto h = static_cast<uint32_t>(region.max.y - region.min.y);
     auto w = static_cast<uint32_t>(region.max.x - region.min.x);
-    auto ialpha = 255 - (surface.cs == SwCanvas::RGBA8888)? RGBA_ALPHA(color) : ARGB_ALPHA(color);
+    auto ialpha = 255 - surface->comp.alpha(color);
 
     for (uint32_t y = 0; y < h; ++y) {
-        auto dst = &buffer[y * surface.stride];
+        auto dst = &buffer[y * surface->stride];
         for (uint32_t x = 0; x < w; ++x) {
             dst[x] = color + RGBA_ALPHA_BLEND(dst[x], ialpha);
         }
@@ -57,20 +81,20 @@ static bool _rasterTranslucentRect(Surface& surface, const SwBBox& region, uint3
 }
 
 
-static bool _rasterSolidRect(Surface& surface, const SwBBox& region, uint32_t color)
+static bool _rasterSolidRect(SwSurface* surface, const SwBBox& region, uint32_t color)
 {
-    auto buffer = surface.buffer + (region.min.y * surface.stride);
+    auto buffer = surface->buffer + (region.min.y * surface->stride);
     auto w = static_cast<uint32_t>(region.max.x - region.min.x);
     auto h = static_cast<uint32_t>(region.max.y - region.min.y);
 
     for (uint32_t y = 0; y < h; ++y) {
-        rasterRGBA32(buffer + y * surface.stride, color, region.min.x, w);
+        rasterRGBA32(buffer + y * surface->stride, color, region.min.x, w);
     }
     return true;
 }
 
 
-static bool _rasterTranslucentRle(Surface& surface, SwRleData* rle, uint32_t color)
+static bool _rasterTranslucentRle(SwSurface* surface, SwRleData* rle, uint32_t color)
 {
     if (!rle) return false;
 
@@ -78,10 +102,10 @@ static bool _rasterTranslucentRle(Surface& surface, SwRleData* rle, uint32_t col
     uint32_t src;
 
     for (uint32_t i = 0; i < rle->size; ++i) {
-        auto dst = &surface.buffer[span->y * surface.stride + span->x];
+        auto dst = &surface->buffer[span->y * surface->stride + span->x];
         if (span->coverage < 255) src = RGBA_ALPHA_BLEND(color, span->coverage);
         else src = color;
-        auto ialpha = 255 - ((surface.cs == SwCanvas::RGBA8888)? RGBA_ALPHA(src) : ARGB_ALPHA(src));
+        auto ialpha = 255 - surface->comp.alpha(src);
         for (uint32_t i = 0; i < span->len; ++i) {
             dst[i] = src + RGBA_ALPHA_BLEND(dst[i], ialpha);
         }
@@ -91,7 +115,7 @@ static bool _rasterTranslucentRle(Surface& surface, SwRleData* rle, uint32_t col
 }
 
 
-static bool _rasterSolidRle(Surface& surface, SwRleData* rle, uint32_t color)
+static bool _rasterSolidRle(SwSurface* surface, SwRleData* rle, uint32_t color)
 {
     if (!rle) return false;
 
@@ -99,9 +123,9 @@ static bool _rasterSolidRle(Surface& surface, SwRleData* rle, uint32_t color)
 
     for (uint32_t i = 0; i < rle->size; ++i) {
         if (span->coverage == 255) {
-            rasterRGBA32(surface.buffer + span->y * surface.stride, color, span->x, span->len);
+            rasterRGBA32(surface->buffer + span->y * surface->stride, color, span->x, span->len);
         } else {
-            auto dst = &surface.buffer[span->y * surface.stride + span->x];
+            auto dst = &surface->buffer[span->y * surface->stride + span->x];
             auto src = RGBA_ALPHA_BLEND(color, span->coverage);
             auto ialpha = 255 - span->coverage;
             for (uint32_t i = 0; i < span->len; ++i) {
@@ -114,74 +138,62 @@ static bool _rasterSolidRle(Surface& surface, SwRleData* rle, uint32_t color)
 }
 
 
-static bool _rasterLinearGradientRect(Surface& surface, const SwBBox& region, const SwFill* fill)
+static bool _rasterLinearGradientRect(SwSurface* surface, const SwBBox& region, const SwFill* fill)
 {
     if (!fill) return false;
 
-    auto buffer = surface.buffer + (region.min.y * surface.stride) + region.min.x;
+    auto buffer = surface->buffer + (region.min.y * surface->stride) + region.min.x;
     auto h = static_cast<uint32_t>(region.max.y - region.min.y);
     auto w = static_cast<uint32_t>(region.max.x - region.min.x);
 
     //Translucent Gradient
     if (fill->translucent) {
 
-        auto tmpBuf = static_cast<uint32_t*>(alloca(surface.w * sizeof(uint32_t)));
+        auto tmpBuf = static_cast<uint32_t*>(alloca(surface->w * sizeof(uint32_t)));
         if (!tmpBuf) return false;
 
         for (uint32_t y = 0; y < h; ++y) {
-            auto dst = &buffer[y * surface.stride];
+            auto dst = &buffer[y * surface->stride];
             fillFetchLinear(fill, tmpBuf, region.min.y + y, region.min.x, 0, w);
-            if (surface.cs == SwCanvas::RGBA8888) {
-                for (uint32_t x = 0; x < w; ++x) {
-                    dst[x] = tmpBuf[x] + RGBA_ALPHA_BLEND(dst[x], 255 - RGBA_ALPHA(tmpBuf[x]));
-                }
-            } else {
-                for (uint32_t x = 0; x < w; ++x) {
-                    dst[x] = tmpBuf[x] + RGBA_ALPHA_BLEND(dst[x], 255 - ARGB_ALPHA(tmpBuf[x]));
-                }
+            for (uint32_t x = 0; x < w; ++x) {
+                dst[x] = tmpBuf[x] + RGBA_ALPHA_BLEND(dst[x], 255 - surface->comp.alpha(tmpBuf[x]));
             }
         }
     //Opaque Gradient
     } else {
         for (uint32_t y = 0; y < h; ++y) {
-            fillFetchLinear(fill, buffer + y * surface.stride, region.min.y + y, region.min.x, 0, w);
+            fillFetchLinear(fill, buffer + y * surface->stride, region.min.y + y, region.min.x, 0, w);
         }
     }
     return true;
 }
 
 
-static bool _rasterRadialGradientRect(Surface& surface, const SwBBox& region, const SwFill* fill)
+static bool _rasterRadialGradientRect(SwSurface* surface, const SwBBox& region, const SwFill* fill)
 {
     if (!fill) return false;
 
-    auto buffer = surface.buffer + (region.min.y * surface.stride) + region.min.x;
+    auto buffer = surface->buffer + (region.min.y * surface->stride) + region.min.x;
     auto h = static_cast<uint32_t>(region.max.y - region.min.y);
     auto w = static_cast<uint32_t>(region.max.x - region.min.x);
 
     //Translucent Gradient
     if (fill->translucent) {
 
-        auto tmpBuf = static_cast<uint32_t*>(alloca(surface.w * sizeof(uint32_t)));
+        auto tmpBuf = static_cast<uint32_t*>(alloca(surface->w * sizeof(uint32_t)));
         if (!tmpBuf) return false;
 
         for (uint32_t y = 0; y < h; ++y) {
-            auto dst = &buffer[y * surface.stride];
+            auto dst = &buffer[y * surface->stride];
             fillFetchRadial(fill, tmpBuf, region.min.y + y, region.min.x, w);
-            if (surface.cs == SwCanvas::RGBA8888) {
-                for (uint32_t x = 0; x < w; ++x) {
-                    dst[x] = tmpBuf[x] + RGBA_ALPHA_BLEND(dst[x], 255 - RGBA_ALPHA(tmpBuf[x]));
-                }
-            } else {
-                for (uint32_t x = 0; x < w; ++x) {
-                    dst[x] = tmpBuf[x] + RGBA_ALPHA_BLEND(dst[x], 255 - ARGB_ALPHA(tmpBuf[x]));
-                }
+            for (uint32_t x = 0; x < w; ++x) {
+                dst[x] = tmpBuf[x] + RGBA_ALPHA_BLEND(dst[x], 255 - surface->comp.alpha(tmpBuf[x]));
             }
         }
     //Opaque Gradient
     } else {
         for (uint32_t y = 0; y < h; ++y) {
-            auto dst = &buffer[y * surface.stride];
+            auto dst = &buffer[y * surface->stride];
             fillFetchRadial(fill, dst, region.min.y + y, region.min.x, w);
         }
     }
@@ -189,11 +201,11 @@ static bool _rasterRadialGradientRect(Surface& surface, const SwBBox& region, co
 }
 
 
-static bool _rasterLinearGradientRle(Surface& surface, SwRleData* rle, const SwFill* fill)
+static bool _rasterLinearGradientRle(SwSurface* surface, SwRleData* rle, const SwFill* fill)
 {
     if (!rle || !fill) return false;
 
-    auto buf = static_cast<uint32_t*>(alloca(surface.w * sizeof(uint32_t)));
+    auto buf = static_cast<uint32_t*>(alloca(surface->w * sizeof(uint32_t)));
     if (!buf) return false;
 
     auto span = rle->spans;
@@ -201,29 +213,16 @@ static bool _rasterLinearGradientRle(Surface& surface, SwRleData* rle, const SwF
     //Translucent Gradient
     if (fill->translucent) {
         for (uint32_t i = 0; i < rle->size; ++i) {
-            auto dst = &surface.buffer[span->y * surface.stride + span->x];
+            auto dst = &surface->buffer[span->y * surface->stride + span->x];
             fillFetchLinear(fill, buf, span->y, span->x, 0, span->len);
-            if (surface.cs == SwCanvas::RGBA8888) {
-                if (span->coverage == 255) {
-                    for (uint32_t i = 0; i < span->len; ++i) {
-                        dst[i] = buf[i] + RGBA_ALPHA_BLEND(dst[i], 255 - RGBA_ALPHA(buf[i]));
-                    }
-                } else {
-                    for (uint32_t i = 0; i < span->len; ++i) {
-                        auto tmp = RGBA_ALPHA_BLEND(buf[i], span->coverage);
-                        dst[i] = tmp + RGBA_ALPHA_BLEND(dst[i], 255 - RGBA_ALPHA(tmp));
-                    }
+            if (span->coverage == 255) {
+                for (uint32_t i = 0; i < span->len; ++i) {
+                    dst[i] = buf[i] + RGBA_ALPHA_BLEND(dst[i], 255 - surface->comp.alpha(buf[i]));
                 }
             } else {
-                if (span->coverage == 255) {
-                    for (uint32_t i = 0; i < span->len; ++i) {
-                        dst[i] = buf[i] + RGBA_ALPHA_BLEND(dst[i], 255 - ARGB_ALPHA(buf[i]));
-                    }
-                } else {
-                    for (uint32_t i = 0; i < span->len; ++i) {
-                        auto tmp = RGBA_ALPHA_BLEND(buf[i], span->coverage);
-                        dst[i] = tmp + RGBA_ALPHA_BLEND(dst[i], 255 - ARGB_ALPHA(tmp));
-                    }
+                for (uint32_t i = 0; i < span->len; ++i) {
+                    auto tmp = RGBA_ALPHA_BLEND(buf[i], span->coverage);
+                    dst[i] = tmp + RGBA_ALPHA_BLEND(dst[i], 255 - surface->comp.alpha(tmp));
                 }
             }
             ++span;
@@ -232,9 +231,9 @@ static bool _rasterLinearGradientRle(Surface& surface, SwRleData* rle, const SwF
     } else {
         for (uint32_t i = 0; i < rle->size; ++i) {
             if (span->coverage == 255) {
-                fillFetchLinear(fill, surface.buffer + span->y * surface.stride, span->y, span->x, span->x, span->len);
+                fillFetchLinear(fill, surface->buffer + span->y * surface->stride, span->y, span->x, span->x, span->len);
             } else {
-                auto dst = &surface.buffer[span->y * surface.stride + span->x];
+                auto dst = &surface->buffer[span->y * surface->stride + span->x];
                 fillFetchLinear(fill, buf, span->y, span->x, 0, span->len);
                 auto ialpha = 255 - span->coverage;
                 for (uint32_t i = 0; i < span->len; ++i) {
@@ -248,11 +247,11 @@ static bool _rasterLinearGradientRle(Surface& surface, SwRleData* rle, const SwF
 }
 
 
-static bool _rasterRadialGradientRle(Surface& surface, SwRleData* rle, const SwFill* fill)
+static bool _rasterRadialGradientRle(SwSurface* surface, SwRleData* rle, const SwFill* fill)
 {
     if (!rle || !fill) return false;
 
-    auto buf = static_cast<uint32_t*>(alloca(surface.w * sizeof(uint32_t)));
+    auto buf = static_cast<uint32_t*>(alloca(surface->w * sizeof(uint32_t)));
     if (!buf) return false;
 
     auto span = rle->spans;
@@ -260,29 +259,16 @@ static bool _rasterRadialGradientRle(Surface& surface, SwRleData* rle, const SwF
     //Translucent Gradient
     if (fill->translucent) {
         for (uint32_t i = 0; i < rle->size; ++i) {
-            auto dst = &surface.buffer[span->y * surface.stride + span->x];
+            auto dst = &surface->buffer[span->y * surface->stride + span->x];
             fillFetchRadial(fill, buf, span->y, span->x, span->len);
-            if (surface.cs == SwCanvas::RGBA8888) {
-                if (span->coverage == 255) {
-                    for (uint32_t i = 0; i < span->len; ++i) {
-                        dst[i] = buf[i] + RGBA_ALPHA_BLEND(dst[i], 255 - RGBA_ALPHA(buf[i]));
-                    }
-                } else {
-                    for (uint32_t i = 0; i < span->len; ++i) {
-                        auto tmp = RGBA_ALPHA_BLEND(buf[i], span->coverage);
-                        dst[i] = tmp + RGBA_ALPHA_BLEND(dst[i], 255 - RGBA_ALPHA(tmp));
-                    }
+            if (span->coverage == 255) {
+                for (uint32_t i = 0; i < span->len; ++i) {
+                    dst[i] = buf[i] + RGBA_ALPHA_BLEND(dst[i], 255 - surface->comp.alpha(buf[i]));
                 }
             } else {
-                if (span->coverage == 255) {
-                    for (uint32_t i = 0; i < span->len; ++i) {
-                        dst[i] = buf[i] + RGBA_ALPHA_BLEND(dst[i], 255 - ARGB_ALPHA(buf[i]));
-                    }
-                } else {
-                    for (uint32_t i = 0; i < span->len; ++i) {
-                        auto tmp = RGBA_ALPHA_BLEND(buf[i], span->coverage);
-                        dst[i] = tmp + RGBA_ALPHA_BLEND(dst[i], 255 - ARGB_ALPHA(tmp));
-                    }
+                for (uint32_t i = 0; i < span->len; ++i) {
+                    auto tmp = RGBA_ALPHA_BLEND(buf[i], span->coverage);
+                    dst[i] = tmp + RGBA_ALPHA_BLEND(dst[i], 255 - surface->comp.alpha(tmp));
                 }
             }
             ++span;
@@ -290,7 +276,7 @@ static bool _rasterRadialGradientRle(Surface& surface, SwRleData* rle, const SwF
     //Opaque Gradient
     } else {
         for (uint32_t i = 0; i < rle->size; ++i) {
-            auto dst = &surface.buffer[span->y * surface.stride + span->x];
+            auto dst = &surface->buffer[span->y * surface->stride + span->x];
             if (span->coverage == 255) {
                 fillFetchRadial(fill, dst, span->y, span->x, span->len);
             } else {
@@ -311,7 +297,24 @@ static bool _rasterRadialGradientRle(Surface& surface, SwRleData* rle, const SwF
 /* External Class Implementation                                        */
 /************************************************************************/
 
-bool rasterGradientShape(Surface& surface, SwShape* shape, unsigned id)
+bool rasterCompositor(SwSurface* surface)
+{
+    if (surface->cs == SwCanvas::RGBA8888) {
+        surface->comp.alpha = _rgbaAlpha;
+        surface->comp.join = _rgbaJoin;
+    } else if (surface->cs == SwCanvas::ARGB8888) {
+        surface->comp.alpha = _argbAlpha;
+        surface->comp.join = _argbJoin;
+    } else {
+        //What Color Space ???
+        return false;
+    }
+
+    return true;
+}
+
+
+bool rasterGradientShape(SwSurface* surface, SwShape* shape, unsigned id)
 {
     //Fast Track
     if (shape->rect) {
@@ -326,13 +329,13 @@ bool rasterGradientShape(Surface& surface, SwShape* shape, unsigned id)
 }
 
 
-bool rasterSolidShape(Surface& surface, SwShape* shape, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
+bool rasterSolidShape(SwSurface* surface, SwShape* shape, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 {
     r = ALPHA_MULTIPLY(r, a);
     g = ALPHA_MULTIPLY(g, a);
     b = ALPHA_MULTIPLY(b, a);
 
-    auto color = (surface.cs == SwCanvas::RGBA8888) ? RGBA_JOIN(r, g, b, a) : ARGB_JOIN(r, g, b, a);
+    auto color = surface->comp.join(r, g, b, a);
 
     //Fast Track
     if (shape->rect) {
@@ -347,28 +350,28 @@ bool rasterSolidShape(Surface& surface, SwShape* shape, uint8_t r, uint8_t g, ui
 }
 
 
-bool rasterStroke(Surface& surface, SwShape* shape, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
+bool rasterStroke(SwSurface* surface, SwShape* shape, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 {
     r = ALPHA_MULTIPLY(r, a);
     g = ALPHA_MULTIPLY(g, a);
     b = ALPHA_MULTIPLY(b, a);
 
-    auto color = (surface.cs == SwCanvas::RGBA8888) ? RGBA_JOIN(r, g, b, a) : ARGB_JOIN(r, g, b, a);
+    auto color = surface->comp.join(r, g, b, a);
 
     if (a == 255) return _rasterSolidRle(surface, shape->strokeRle, color);
     return _rasterTranslucentRle(surface, shape->strokeRle, color);
 }
 
 
-bool rasterClear(Surface& surface)
+bool rasterClear(SwSurface* surface)
 {
-    if (!surface.buffer || surface.stride <= 0 || surface.w <= 0 || surface.h <= 0) return false;
+    if (!surface || !surface->buffer || surface->stride <= 0 || surface->w <= 0 || surface->h <= 0) return false;
 
-    if (surface.w == surface.stride) {
-        rasterRGBA32(surface.buffer, 0x00000000, 0, surface.w * surface.h);
+    if (surface->w == surface->stride) {
+        rasterRGBA32(surface->buffer, 0x00000000, 0, surface->w * surface->h);
     } else {
-        for (uint32_t i = 0; i < surface.h; i++) {
-            rasterRGBA32(surface.buffer + surface.stride * i, 0x00000000, 0, surface.w);
+        for (uint32_t i = 0; i < surface->h; i++) {
+            rasterRGBA32(surface->buffer + surface->stride * i, 0x00000000, 0, surface->w);
         }
     }
     return true;

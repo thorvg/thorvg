@@ -37,6 +37,7 @@ static RenderInitializer renderInit;
 
 SwRenderer::~SwRenderer()
 {
+    if (surface) delete(surface);
 }
 
 
@@ -44,13 +45,18 @@ bool SwRenderer::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t 
 {
     if (!buffer || stride == 0 || w == 0 || h == 0) return false;
 
-    surface.buffer = buffer;
-    surface.stride = stride;
-    surface.w = w;
-    surface.h = h;
-    surface.cs = cs;
+    if (!surface) {
+        surface = new SwSurface;
+        if (!surface) return false;
+    }
 
-    return true;
+    surface->buffer = buffer;
+    surface->stride = stride;
+    surface->w = w;
+    surface->h = h;
+    surface->cs = cs;
+
+    return rasterCompositor(surface);
 }
 
 
@@ -100,7 +106,7 @@ void* SwRenderer::prepare(const Shape& sdata, void* data, const RenderTransform*
 
     if (flags == RenderUpdateFlag::None) return shape;
 
-    SwSize clip = {static_cast<SwCoord>(surface.w), static_cast<SwCoord>(surface.h)};
+    SwSize clip = {static_cast<SwCoord>(surface->w), static_cast<SwCoord>(surface->h)};
 
     //Valid Stroking?
     uint8_t strokeAlpha = 0;
@@ -130,7 +136,7 @@ void* SwRenderer::prepare(const Shape& sdata, void* data, const RenderTransform*
             if (fill) {
                 auto ctable = (flags & RenderUpdateFlag::Gradient) ? true : false;
                 if (ctable) shapeResetFill(shape);
-                if (!shapeGenFillColors(shape, fill, matrix, surface.cs, ctable)) return shape;
+                if (!shapeGenFillColors(shape, fill, matrix, surface, ctable)) return shape;
             } else {
                 shapeDelFill(shape);
             }
