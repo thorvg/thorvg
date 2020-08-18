@@ -193,11 +193,11 @@ static void _horizLine(RleWorker& rw, SwCoord x, SwCoord y, SwCoord area, SwCoor
 
     //span has ushort coordinates. check limit overflow
     if (x >= SHRT_MAX) {
-        cout << "x(" << x << ") coordinate overflow!" <<  endl;
+        //LOG: x coordinate overflow!
         x = SHRT_MAX;
     }
     if (y >= SHRT_MAX) {
-        cout << "y(" << y << ") coordinate overflow!" <<  endl;
+        //LOG: y coordinate overflow!
         y = SHRT_MAX;
     }
 
@@ -616,7 +616,7 @@ static bool _decomposeOutline(RleWorker& rw)
     return true;
 
 invalid_outline:
-    cout << "Invalid Outline!" << endl;
+    //LOG: Invalid Outline!
     return false;
 }
 

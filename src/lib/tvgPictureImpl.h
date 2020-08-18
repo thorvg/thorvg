@@ -86,7 +86,7 @@ struct Picture::Impl
         if (loader) loader->close();
         loader = LoaderMgr::loader();
         if (!loader || !loader->open(path.c_str())) {
-            cout << "Non supported format: " << path.c_str() << endl;
+            //LOG: Non supported format
             return Result::NonSupport;
         }
         if (!loader->read()) return Result::Unknown;
@@ -98,7 +98,7 @@ struct Picture::Impl
         if (loader) loader->close();
         loader = LoaderMgr::loader();
         if (!loader || !loader->open(data, size)) {
-            cout << "Non supported load data" << endl;
+            //LOG: Non supported load data
             return Result::NonSupport;
         }
         if (!loader->read()) return Result::Unknown;

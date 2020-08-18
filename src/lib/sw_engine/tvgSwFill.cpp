@@ -300,7 +300,7 @@ bool fillGenColorTable(SwFill* fill, const Fill* fdata, const Matrix* transform,
         return _prepareRadial(fill, static_cast<const RadialGradient*>(fdata), transform);
     }
 
-    cout << "What type of gradient?!" << endl;
+    //LOG: What type of gradient?!
 
     return false;
 }

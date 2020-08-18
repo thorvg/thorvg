@@ -812,7 +812,9 @@ static void _exportBorderOutline(SwStroke& stroke, SwOutline* outline, uint32_t 
 
         if (*src & SW_STROKE_TAG_POINT) *tags = SW_CURVE_TYPE_POINT;
         else if (*src & SW_STROKE_TAG_CUBIC) *tags = SW_CURVE_TYPE_CUBIC;
-        else cout << "what type of stroke outline??" << endl;
+        else {
+            //LOG: What type of stroke outline??
+        }
 
         if (*src & SW_STROKE_TAG_END) {
             *cntrs = idx;

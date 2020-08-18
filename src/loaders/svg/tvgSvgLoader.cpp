@@ -1118,7 +1118,7 @@ static SvgNode* _createEllipseNode(SvgLoaderData* loader, SvgNode* parent, const
 }
 
 
-static void _attrParsePolygonPoints(const char* str, float** points, int* ptCount)
+static bool _attrParsePolygonPoints(const char* str, float** points, int* ptCount)
 {
     float tmp[50];
     int tmpCount = 0;
@@ -1147,11 +1147,11 @@ static void _attrParsePolygonPoints(const char* str, float** points, int* ptCoun
     }
     *ptCount = count;
     *points = pointArray;
-    return;
+    return true;
 
 error_alloc:
-    printf("ERR : allocation for point array failed. out of memory");
-    abort();
+    //LOG: allocation for point array failed. out of memory
+    return false;
 }
 
 
@@ -1168,7 +1168,7 @@ static bool _attrParsePolygonNode(void* data, const char* key, const char* value
     else polygon = &(node->node.polyline);
 
     if (!strcmp(key, "points")) {
-        _attrParsePolygonPoints(value, &polygon->points, &polygon->pointsCount);
+        return _attrParsePolygonPoints(value, &polygon->points, &polygon->pointsCount);
     } else if (!strcmp(key, "style")) {
         return simpleXmlParseW3CAttribute(value, _parseStyleAttr, loader);
     } else if (!strcmp(key, "id")) {
@@ -2298,7 +2298,7 @@ bool SvgLoader::header()
         this->vw = loaderData.doc->node.doc.vw;
         this->vh = loaderData.doc->node.doc.vh;
     } else {
-        cout << "ERROR : No SVG File. There is no <svg/>" <<endl;
+        //LOG: No SVG File. There is no <svg/>
         return false;
     }
 
@@ -2322,7 +2322,7 @@ bool SvgLoader::open(const char* path)
 
     if (!f.is_open())
     {
-        cout << "ERROR: Failed to open file = " << path;
+        //LOG: Failed to open file
         return false;
     } else {
         getline(f, filePath, '\0');
