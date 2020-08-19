@@ -229,17 +229,17 @@ static inline SwCoord TO_SWCOORD(float val)
     return SwCoord(val * 64);
 }
 
-static inline uint32_t RGBA_ALPHA_BLEND(uint32_t rgba, uint32_t alpha)
+static inline uint32_t ALPHA_BLEND(uint32_t c, uint32_t a)
 {
-    return (((((rgba >> 8) & 0x00ff00ff) * alpha) & 0xff00ff00) +
-            ((((rgba & 0x00ff00ff) * alpha) >> 8) & 0x00ff00ff));
+    return (((((c >> 8) & 0x00ff00ff) * a) & 0xff00ff00) +
+            ((((c & 0x00ff00ff) * a) >> 8) & 0x00ff00ff));
 }
 
-static inline uint32_t RGBA_INTERPOLATE(uint32_t rgba1, uint32_t a, uint32_t rgba2, uint32_t b)
+static inline uint32_t COLOR_INTERPOLATE(uint32_t c1, uint32_t a1, uint32_t c2, uint32_t a2)
 {
-    auto t = (((rgba1 & 0xff00ff) * a + (rgba2 & 0xff00ff) * b) >> 8) & 0xff00ff;
-    rgba1 = (((rgba1 >> 8) & 0xff00ff) * a + ((rgba2 >> 8) & 0xff00ff) * b) & 0xff00ff00;
-    return (rgba1 |= t);
+    auto t = (((c1 & 0xff00ff) * a1 + (c2 & 0xff00ff) * a2) >> 8) & 0xff00ff;
+    c1 = (((c1 >> 8) & 0xff00ff) * a1 + ((c2 >> 8) & 0xff00ff) * a2) & 0xff00ff00;
+    return (c1 |= t);
 }
 
 static inline uint8_t ALPHA_MULTIPLY(uint32_t c, uint32_t a)

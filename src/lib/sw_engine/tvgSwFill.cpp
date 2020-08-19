@@ -82,7 +82,7 @@ static bool _updateColorTable(SwFill* fill, const Fill* fdata, SwSurface* surfac
             auto t = (pos - curr->offset) * delta;
             auto dist = static_cast<int32_t>(256 * t);
             auto dist2 = 256 - dist;
-            fill->ctable[i] = RGBA_INTERPOLATE(rgba, dist2, rgba2, dist);
+            fill->ctable[i] = COLOR_INTERPOLATE(rgba, dist2, rgba2, dist);
             ++i;
             pos += inc;
         }

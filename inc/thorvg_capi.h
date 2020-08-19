@@ -23,7 +23,7 @@ typedef struct _Tvg_Gradient Tvg_Gradient;
 #define TVG_ENGINE_SW (1 << 1)
 #define TVG_ENGINE_GL (1 << 2)
 
-#define TVG_COLORSPACE_RGBA8888 0
+#define TVG_COLORSPACE_ABGR8888 0
 #define TVG_COLORSPACE_ARGB8888 1
 
 typedef enum {

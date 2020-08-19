@@ -28,21 +28,15 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-static uint32_t _rgbaAlpha(uint32_t rgba)
+static uint32_t _colorAlpha(uint32_t c)
 {
-    return rgba & 0x000000ff;
+    return (c >> 24) & 0xff;
 }
 
 
-static uint32_t _argbAlpha(uint32_t argb)
+static uint32_t _abgrJoin(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 {
-    return (argb >> 24) & 0xff;
-}
-
-
-static uint32_t _rgbaJoin(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
-{
-    return (r << 24 | g << 16 | b << 8 | a);
+    return (a << 24 | b << 16 | g << 8 | r);
 }
 
 
@@ -74,7 +68,7 @@ static bool _rasterTranslucentRect(SwSurface* surface, const SwBBox& region, uin
     for (uint32_t y = 0; y < h; ++y) {
         auto dst = &buffer[y * surface->stride];
         for (uint32_t x = 0; x < w; ++x) {
-            dst[x] = color + RGBA_ALPHA_BLEND(dst[x], ialpha);
+            dst[x] = color + ALPHA_BLEND(dst[x], ialpha);
         }
     }
     return true;
@@ -103,11 +97,11 @@ static bool _rasterTranslucentRle(SwSurface* surface, SwRleData* rle, uint32_t c
 
     for (uint32_t i = 0; i < rle->size; ++i) {
         auto dst = &surface->buffer[span->y * surface->stride + span->x];
-        if (span->coverage < 255) src = RGBA_ALPHA_BLEND(color, span->coverage);
+        if (span->coverage < 255) src = ALPHA_BLEND(color, span->coverage);
         else src = color;
         auto ialpha = 255 - surface->comp.alpha(src);
         for (uint32_t i = 0; i < span->len; ++i) {
-            dst[i] = src + RGBA_ALPHA_BLEND(dst[i], ialpha);
+            dst[i] = src + ALPHA_BLEND(dst[i], ialpha);
         }
         ++span;
     }
@@ -126,10 +120,10 @@ static bool _rasterSolidRle(SwSurface* surface, SwRleData* rle, uint32_t color)
             rasterRGBA32(surface->buffer + span->y * surface->stride, color, span->x, span->len);
         } else {
             auto dst = &surface->buffer[span->y * surface->stride + span->x];
-            auto src = RGBA_ALPHA_BLEND(color, span->coverage);
+            auto src = ALPHA_BLEND(color, span->coverage);
             auto ialpha = 255 - span->coverage;
             for (uint32_t i = 0; i < span->len; ++i) {
-                dst[i] = src + RGBA_ALPHA_BLEND(dst[i], ialpha);
+                dst[i] = src + ALPHA_BLEND(dst[i], ialpha);
             }
         }
         ++span;
@@ -156,7 +150,7 @@ static bool _rasterLinearGradientRect(SwSurface* surface, const SwBBox& region, 
             auto dst = &buffer[y * surface->stride];
             fillFetchLinear(fill, tmpBuf, region.min.y + y, region.min.x, 0, w);
             for (uint32_t x = 0; x < w; ++x) {
-                dst[x] = tmpBuf[x] + RGBA_ALPHA_BLEND(dst[x], 255 - surface->comp.alpha(tmpBuf[x]));
+                dst[x] = tmpBuf[x] + ALPHA_BLEND(dst[x], 255 - surface->comp.alpha(tmpBuf[x]));
             }
         }
     //Opaque Gradient
@@ -187,7 +181,7 @@ static bool _rasterRadialGradientRect(SwSurface* surface, const SwBBox& region, 
             auto dst = &buffer[y * surface->stride];
             fillFetchRadial(fill, tmpBuf, region.min.y + y, region.min.x, w);
             for (uint32_t x = 0; x < w; ++x) {
-                dst[x] = tmpBuf[x] + RGBA_ALPHA_BLEND(dst[x], 255 - surface->comp.alpha(tmpBuf[x]));
+                dst[x] = tmpBuf[x] + ALPHA_BLEND(dst[x], 255 - surface->comp.alpha(tmpBuf[x]));
             }
         }
     //Opaque Gradient
@@ -217,12 +211,12 @@ static bool _rasterLinearGradientRle(SwSurface* surface, SwRleData* rle, const S
             fillFetchLinear(fill, buf, span->y, span->x, 0, span->len);
             if (span->coverage == 255) {
                 for (uint32_t i = 0; i < span->len; ++i) {
-                    dst[i] = buf[i] + RGBA_ALPHA_BLEND(dst[i], 255 - surface->comp.alpha(buf[i]));
+                    dst[i] = buf[i] + ALPHA_BLEND(dst[i], 255 - surface->comp.alpha(buf[i]));
                 }
             } else {
                 for (uint32_t i = 0; i < span->len; ++i) {
-                    auto tmp = RGBA_ALPHA_BLEND(buf[i], span->coverage);
-                    dst[i] = tmp + RGBA_ALPHA_BLEND(dst[i], 255 - surface->comp.alpha(tmp));
+                    auto tmp = ALPHA_BLEND(buf[i], span->coverage);
+                    dst[i] = tmp + ALPHA_BLEND(dst[i], 255 - surface->comp.alpha(tmp));
                 }
             }
             ++span;
@@ -237,7 +231,7 @@ static bool _rasterLinearGradientRle(SwSurface* surface, SwRleData* rle, const S
                 fillFetchLinear(fill, buf, span->y, span->x, 0, span->len);
                 auto ialpha = 255 - span->coverage;
                 for (uint32_t i = 0; i < span->len; ++i) {
-                    dst[i] = RGBA_ALPHA_BLEND(buf[i], span->coverage) + RGBA_ALPHA_BLEND(dst[i], ialpha);
+                    dst[i] = ALPHA_BLEND(buf[i], span->coverage) + ALPHA_BLEND(dst[i], ialpha);
                 }
             }
             ++span;
@@ -263,12 +257,12 @@ static bool _rasterRadialGradientRle(SwSurface* surface, SwRleData* rle, const S
             fillFetchRadial(fill, buf, span->y, span->x, span->len);
             if (span->coverage == 255) {
                 for (uint32_t i = 0; i < span->len; ++i) {
-                    dst[i] = buf[i] + RGBA_ALPHA_BLEND(dst[i], 255 - surface->comp.alpha(buf[i]));
+                    dst[i] = buf[i] + ALPHA_BLEND(dst[i], 255 - surface->comp.alpha(buf[i]));
                 }
             } else {
                 for (uint32_t i = 0; i < span->len; ++i) {
-                    auto tmp = RGBA_ALPHA_BLEND(buf[i], span->coverage);
-                    dst[i] = tmp + RGBA_ALPHA_BLEND(dst[i], 255 - surface->comp.alpha(tmp));
+                    auto tmp = ALPHA_BLEND(buf[i], span->coverage);
+                    dst[i] = tmp + ALPHA_BLEND(dst[i], 255 - surface->comp.alpha(tmp));
                 }
             }
             ++span;
@@ -283,7 +277,7 @@ static bool _rasterRadialGradientRle(SwSurface* surface, SwRleData* rle, const S
                 fillFetchRadial(fill, buf, span->y, span->x, span->len);
                 auto ialpha = 255 - span->coverage;
                 for (uint32_t i = 0; i < span->len; ++i) {
-                    dst[i] = RGBA_ALPHA_BLEND(buf[i], span->coverage) + RGBA_ALPHA_BLEND(dst[i], ialpha);
+                    dst[i] = ALPHA_BLEND(buf[i], span->coverage) + ALPHA_BLEND(dst[i], ialpha);
                 }
             }
             ++span;
@@ -299,11 +293,11 @@ static bool _rasterRadialGradientRle(SwSurface* surface, SwRleData* rle, const S
 
 bool rasterCompositor(SwSurface* surface)
 {
-    if (surface->cs == SwCanvas::RGBA8888) {
-        surface->comp.alpha = _rgbaAlpha;
-        surface->comp.join = _rgbaJoin;
+    if (surface->cs == SwCanvas::ABGR8888) {
+        surface->comp.alpha = _colorAlpha;
+        surface->comp.join = _abgrJoin;
     } else if (surface->cs == SwCanvas::ARGB8888) {
-        surface->comp.alpha = _argbAlpha;
+        surface->comp.alpha = _colorAlpha;
         surface->comp.join = _argbJoin;
     } else {
         //What Color Space ???

@@ -311,7 +311,7 @@ class TVG_EXPORT SwCanvas final : public Canvas
 public:
     ~SwCanvas();
 
-    enum Colorspace { RGBA8888 = 0, ARGB8888 };
+    enum Colorspace { ABGR8888 = 0, ARGB8888 };
 
     Result target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h, Colorspace cs) noexcept;
 
