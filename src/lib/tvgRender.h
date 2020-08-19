@@ -76,7 +76,6 @@ struct RenderInitializer
 
     static bool init(RenderInitializer& renderInit, RenderMethod* engine)
     {
-        assert(engine);
         if (renderInit.pInst || renderInit.refCnt > 0) return false;
         renderInit.pInst = engine;
         renderInit.refCnt = 0;
@@ -100,7 +99,6 @@ struct RenderInitializer
 
     static uint32_t unref(RenderInitializer& renderInit)
     {
-        assert(renderInit.refCnt > 0);
         --renderInit.refCnt;
 
         //engine has been requested to termination
@@ -115,7 +113,6 @@ struct RenderInitializer
 
     static RenderMethod* inst(RenderInitializer& renderInit)
     {
-        assert(renderInit.pInst);
         return renderInit.pInst;
     }
 

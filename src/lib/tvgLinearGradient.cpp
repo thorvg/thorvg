@@ -76,10 +76,7 @@ Result LinearGradient::linear(float* x1, float* y1, float* x2, float* y2) const 
 
 unique_ptr<LinearGradient> LinearGradient::gen() noexcept
 {
-    auto fill = unique_ptr<LinearGradient>(new LinearGradient);
-    assert(fill);
-
-    return fill;
+    return unique_ptr<LinearGradient>(new LinearGradient);
 }
 
 #endif /* _TVG_LINEAR_GRADIENT_CPP_ */

@@ -145,8 +145,6 @@ static inline SwCoord HYPOT(SwPoint pt)
 
 static void _genSpan(SwRleData* rle, SwSpan* spans, uint32_t count)
 {
-    assert(rle && spans);
-
     auto newSize = rle->size + count;
 
     /* allocate enough memory for new spans */
@@ -155,12 +153,10 @@ static void _genSpan(SwRleData* rle, SwSpan* spans, uint32_t count)
     if (rle->alloc < newSize) {
         rle->alloc = (newSize * 2);
         rle->spans = static_cast<SwSpan*>(realloc(rle->spans, rle->alloc * sizeof(SwSpan)));
-        assert(rle->spans);
     }
 
     //copy the new spans to the allocated memory
     SwSpan* lastSpan = rle->spans + rle->size;
-    assert(lastSpan);
     memcpy(lastSpan, spans, count * sizeof(SwSpan));
 
     rle->size = newSize;
@@ -205,7 +201,6 @@ static void _horizLine(RleWorker& rw, SwCoord x, SwCoord y, SwCoord area, SwCoor
         if (!rw.antiAlias) coverage = 255;
         auto count = rw.spansCnt;
         auto span = rw.spans + count - 1;
-        assert(span);
 
         //see whether we can add this span to the current list
         if ((count > 0) && (rw.ySpan == y) &&
@@ -226,10 +221,8 @@ static void _horizLine(RleWorker& rw, SwCoord x, SwCoord y, SwCoord area, SwCoor
             rw.spansCnt = 0;
             rw.ySpan = 0;
             span = rw.spans;
-            assert(span);
         } else {
             ++span;
-            assert(span);
         }
 
         //Clip x range
@@ -290,7 +283,6 @@ static Cell* _findCell(RleWorker& rw)
     if (x > rw.cellXCnt) x = rw.cellXCnt;
 
     auto pcell = &rw.yCells[rw.cellPos.y];
-    assert(pcell);
 
     while(true) {
         Cell* cell = *pcell;
@@ -302,7 +294,6 @@ static Cell* _findCell(RleWorker& rw)
     if (rw.cellsCnt >= rw.maxCells) longjmp(rw.jmpBuf, 1);
 
     auto cell = rw.cells + rw.cellsCnt++;
-    assert(cell);
     cell->x = x;
     cell->area = 0;
     cell->cover = 0;
@@ -317,7 +308,6 @@ static void _recordCell(RleWorker& rw)
 {
     if (rw.area | rw.cover) {
         auto cell = _findCell(rw);
-        assert(cell);
         cell->area += rw.area;
         cell->cover += rw.cover;
     }
@@ -498,8 +488,6 @@ static void _lineTo(RleWorker& rw, const SwPoint& to)
 static void _cubicTo(RleWorker& rw, const SwPoint& ctrl1, const SwPoint& ctrl2, const SwPoint& to)
 {
     auto arc = rw.bezStack;
-    assert(arc);
-
     arc[0] = to;
     arc[1] = ctrl2;
     arc[2] = ctrl1;
@@ -668,7 +656,6 @@ SwRleData* rleRender(const SwOutline* outline, const SwBBox& bbox, const SwSize&
     rw.clip = clip;
     rw.antiAlias = antiAlias;
     rw.rle = reinterpret_cast<SwRleData*>(calloc(1, sizeof(SwRleData)));
-    assert(rw.rle);
 
     //Generate RLE
     Band bands[BAND_SIZE];

@@ -81,10 +81,7 @@ Result GlCanvas::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t 
 unique_ptr<GlCanvas> GlCanvas::gen() noexcept
 {
 #ifdef THORVG_GL_RASTER_SUPPORT
-    auto canvas = unique_ptr<GlCanvas>(new GlCanvas);
-    assert(canvas);
-
-    return canvas;
+    return unique_ptr<GlCanvas>(new GlCanvas);
 #endif
     return nullptr;
 }

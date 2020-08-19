@@ -101,7 +101,7 @@ void* SwRenderer::prepare(const Shape& sdata, void* data, const RenderTransform*
     auto shape = static_cast<SwShape*>(data);
     if (!shape) {
         shape = static_cast<SwShape*>(calloc(1, sizeof(SwShape)));
-        assert(shape);
+        if (!shape) return nullptr;
     }
 
     if (flags == RenderUpdateFlag::None) return shape;

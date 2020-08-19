@@ -48,8 +48,6 @@ static inline void SCALE(SwStroke& stroke, SwPoint& pt)
 
 static void _growBorder(SwStrokeBorder* border, uint32_t newPts)
 {
-    assert(border);
-
     auto maxOld = border->maxPts;
     auto maxNew = border->ptsCnt + newPts;
 
@@ -61,21 +59,15 @@ static void _growBorder(SwStrokeBorder* border, uint32_t newPts)
         maxCur += (maxCur >> 1) + 16;
 
     border->pts = static_cast<SwPoint*>(realloc(border->pts, maxCur * sizeof(SwPoint)));
-    assert(border->pts);
-
     border->tags = static_cast<uint8_t*>(realloc(border->tags, maxCur * sizeof(uint8_t)));
-    assert(border->tags);
-
     border->maxPts = maxCur;
 }
 
 
 static void _borderClose(SwStrokeBorder* border, bool reverse)
 {
-    assert(border && border->start >= 0);
-
-    uint32_t start = border->start;
-    uint32_t count = border->ptsCnt;
+    auto start = border->start;
+    auto count = border->ptsCnt;
 
     //Don't record empty paths!
     if (count <= start + 1U) {
@@ -123,8 +115,6 @@ static void _borderClose(SwStrokeBorder* border, bool reverse)
 
 static void _borderCubicTo(SwStrokeBorder* border, SwPoint& ctrl1, SwPoint& ctrl2, SwPoint& to)
 {
-    assert(border && border->start >= 0);
-
     _growBorder(border, 3);
 
     auto pt = border->pts + border->ptsCnt;
@@ -199,8 +189,6 @@ static void _borderArcTo(SwStrokeBorder* border, SwPoint& center, SwFixed radius
 
 static void _borderLineTo(SwStrokeBorder* border, SwPoint& to, bool movable)
 {
-    assert(border && border->start >= 0);
-
     if (border->movable) {
         //move last point
         border->pts[border->ptsCnt - 1] = to;
@@ -221,8 +209,6 @@ static void _borderLineTo(SwStrokeBorder* border, SwPoint& to, bool movable)
 
 static void _borderMoveTo(SwStrokeBorder* border, SwPoint& to)
 {
-    assert(border);
-
     //close current open path if any?
     if (border->start >= 0) _borderClose(border, false);
 
@@ -249,10 +235,7 @@ static void _outside(SwStroke& stroke, int32_t side, SwFixed lineLength)
 {
     constexpr SwFixed MITER_LIMIT = 4 * (1 << 16);
 
-    assert(MITER_LIMIT >= 0x10000);
-
     auto border = stroke.borders + side;
-    assert(border);
 
     if (stroke.join == StrokeJoin::Round) {
         _arcTo(stroke, side);
@@ -640,8 +623,6 @@ static void _addReverseLeft(SwStroke& stroke, bool opened)
 {
     auto right = stroke.borders + 0;
     auto left = stroke.borders + 1;
-    assert(left->start >= 0);
-
     auto newPts = left->ptsCnt - left->start;
 
     if (newPts <= 0) return;
@@ -708,7 +689,6 @@ static void _endSubPath(SwStroke& stroke)
 {
     if (stroke.openSubPath) {
         auto right = stroke.borders;
-        assert(right);
 
         /* all right, this is an opened path, we need to add a cap between
            right & left, add the reverse of left, then add a final cap
@@ -756,8 +736,6 @@ static void _endSubPath(SwStroke& stroke)
 
 static void _getCounts(SwStrokeBorder* border, uint32_t& ptsCnt, uint32_t& cntrsCnt)
 {
-    assert(border);
-
     auto count = border->ptsCnt;
     auto tags = border->tags;
     uint32_t _ptsCnt = 0;
@@ -796,7 +774,6 @@ fail:
 static void _exportBorderOutline(SwStroke& stroke, SwOutline* outline, uint32_t side)
 {
     auto border = stroke.borders + side;
-    assert(border);
 
     if (!border->valid) return;
 
@@ -850,8 +827,6 @@ void strokeFree(SwStroke* stroke)
 
 void strokeReset(SwStroke* stroke, const Shape* sdata, const Matrix* transform)
 {
-    assert(sdata);
-
     if (transform) {
         stroke->sx = sqrt(pow(transform->e11, 2) + pow(transform->e21, 2));
         stroke->sy = sqrt(pow(transform->e12, 2) + pow(transform->e22, 2));
@@ -941,16 +916,9 @@ SwOutline* strokeExportOutline(SwStroke* stroke)
     auto cntrsCnt = count2 + count4;
 
     auto outline = static_cast<SwOutline*>(calloc(1, sizeof(SwOutline)));
-    assert(outline);
-
     outline->pts = static_cast<SwPoint*>(malloc(sizeof(SwPoint) * ptsCnt));
-    assert(outline->pts);
-
     outline->types = static_cast<uint8_t*>(malloc(sizeof(uint8_t) * ptsCnt));
-    assert(outline->types);
-
     outline->cntrs = static_cast<uint32_t*>(malloc(sizeof(uint32_t) * cntrsCnt));
-    assert(outline->cntrs);
 
     _exportBorderOutline(*stroke, outline, 0);  //left
     _exportBorderOutline(*stroke, outline, 1);  //right

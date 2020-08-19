@@ -144,8 +144,6 @@ struct Shape::Impl
 
     bool strokeDash(const float* pattern, uint32_t cnt)
     {
-        assert(pattern);
-
        if (!stroke) stroke = new ShapeStroke();
        if (!stroke) return false;
 
@@ -155,7 +153,6 @@ struct Shape::Impl
         }
 
         if (!stroke->dashPattern) stroke->dashPattern = static_cast<float*>(malloc(sizeof(float) * cnt));
-        assert(stroke->dashPattern);
 
         for (uint32_t i = 0; i < cnt; ++i)
             stroke->dashPattern[i] = pattern[i];

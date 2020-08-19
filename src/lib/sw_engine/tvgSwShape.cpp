@@ -76,7 +76,6 @@ static void _growOutlineContour(SwOutline& outline, uint32_t n)
     if (outline.reservedCntrsCnt >= outline.cntrsCnt + n) return;
     outline.reservedCntrsCnt = outline.cntrsCnt + n;
     outline.cntrs = static_cast<uint32_t*>(realloc(outline.cntrs, outline.reservedCntrsCnt * sizeof(uint32_t)));
-    assert(outline.cntrs);
 }
 
 
@@ -85,9 +84,7 @@ static void _growOutlinePoint(SwOutline& outline, uint32_t n)
     if (outline.reservedPtsCnt >= outline.ptsCnt + n) return;
     outline.reservedPtsCnt = outline.ptsCnt + n;
     outline.pts = static_cast<SwPoint*>(realloc(outline.pts, outline.reservedPtsCnt * sizeof(SwPoint)));
-    assert(outline.pts);
     outline.types = static_cast<uint8_t*>(realloc(outline.types, outline.reservedPtsCnt * sizeof(uint8_t)));
-    assert(outline.types);
 }
 
 
@@ -114,8 +111,6 @@ static void _outlineEnd(SwOutline& outline)
 
 static void _outlineMoveTo(SwOutline& outline, const Point* to, const Matrix* transform)
 {
-    assert(to);
-
     _growOutlinePoint(outline, 1);
 
     outline.pts[outline.ptsCnt] = _transform(to, transform);
@@ -134,8 +129,6 @@ static void _outlineMoveTo(SwOutline& outline, const Point* to, const Matrix* tr
 
 static void _outlineLineTo(SwOutline& outline, const Point* to, const Matrix* transform)
 {
-    assert(to);
-
     _growOutlinePoint(outline, 1);
 
     outline.pts[outline.ptsCnt] = _transform(to, transform);
@@ -146,8 +139,6 @@ static void _outlineLineTo(SwOutline& outline, const Point* to, const Matrix* tr
 
 static void _outlineCubicTo(SwOutline& outline, const Point* ctrl1, const Point* ctrl2, const Point* to, const Matrix* transform)
 {
-    assert(ctrl1 && ctrl2 && to);
-
     _growOutlinePoint(outline, 3);
 
     outline.pts[outline.ptsCnt] = _transform(ctrl1, transform);
@@ -203,7 +194,6 @@ static bool _updateBBox(SwOutline* outline, SwBBox& bbox)
     if (!outline) return false;
 
     auto pt = outline->pts;
-    assert(pt);
 
     if (outline->ptsCnt <= 0) {
         _initBBox(bbox);
@@ -236,8 +226,6 @@ static bool _updateBBox(SwOutline* outline, SwBBox& bbox)
 
 static bool _checkValid(const SwOutline* outline, const SwBBox& bbox, const SwSize& clip)
 {
-    assert(outline);
-
     if (outline->ptsCnt == 0 || outline->cntrsCnt <= 0) return false;
 
     //Check boundary
@@ -341,8 +329,6 @@ static void _dashCubicTo(SwDashStroke& dash, const Point* ctrl1, const Point* ct
 
 SwOutline* _genDashOutline(const Shape* sdata, const Matrix* transform)
 {
-    assert(sdata);
-
     const PathCommand* cmds = nullptr;
     auto cmdCnt = sdata->pathCommands(&cmds);
 
@@ -361,12 +347,10 @@ SwOutline* _genDashOutline(const Shape* sdata, const Matrix* transform)
 
     const float* pattern;
     dash.cnt = sdata->strokeDash(&pattern);
-    assert(dash.cnt > 0 && pattern);
 
     //Is it safe to mutual exclusive?
     dash.pattern = const_cast<float*>(pattern);
     dash.outline = static_cast<SwOutline*>(calloc(1, sizeof(SwOutline)));
-    assert(dash.outline);
     dash.outline->opened = true;
 
     //smart reservation
@@ -510,8 +494,6 @@ void shapeReset(SwShape* shape)
 
 bool shapeGenOutline(SwShape* shape, const Shape* sdata, const Matrix* transform)
 {
-    assert(sdata);
-
     const PathCommand* cmds = nullptr;
     auto cmdCnt = sdata->pathCommands(&cmds);
 
@@ -552,7 +534,6 @@ bool shapeGenOutline(SwShape* shape, const Shape* sdata, const Matrix* transform
 
     auto outline = shape->outline;
     if (!outline) outline = static_cast<SwOutline*>(calloc(1, sizeof(SwOutline)));
-    assert(outline);
     outline->opened = true;
 
     _growOutlinePoint(*outline, outlinePtsCnt);
@@ -638,8 +619,6 @@ void shapeResetStroke(SwShape* shape, const Shape* sdata, const Matrix* transfor
 
 bool shapeGenStrokeRle(SwShape* shape, const Shape* sdata, const Matrix* transform, const SwSize& clip)
 {
-    assert(sdata);
-
     SwOutline* shapeOutline = nullptr;
 
     //Dash Style Stroke

@@ -36,11 +36,9 @@
 
 static bool _updateColorTable(SwFill* fill, const Fill* fdata, SwSurface* surface)
 {
-    assert(fill && fdata);
-
     if (!fill->ctable) {
         fill->ctable = static_cast<uint32_t*>(malloc(GRADIENT_STOP_SIZE * sizeof(uint32_t)));
-        assert(fill->ctable);
+        if (!fill->ctable) return false;
     }
 
     const Fill::ColorStop* colors;
@@ -71,7 +69,6 @@ static bool _updateColorTable(SwFill* fill, const Fill* fdata, SwSurface* surfac
     for (uint32_t j = 0; j < cnt - 1; ++j) {
         auto curr = colors + j;
         auto next = curr + 1;
-        assert(curr && next);
         auto delta = 1.0f / (next->offset - curr->offset);
         if (next->a < 255) fill->translucent = true;
 
@@ -104,8 +101,6 @@ static bool _updateColorTable(SwFill* fill, const Fill* fdata, SwSurface* surfac
 
 bool _prepareLinear(SwFill* fill, const LinearGradient* linear, const Matrix* transform)
 {
-    assert(fill && linear);
-
     float x1, x2, y1, y2;
     if (linear->linear(&x1, &y1, &x2, &y2) != Result::Success) return false;
 
@@ -140,8 +135,6 @@ bool _prepareLinear(SwFill* fill, const LinearGradient* linear, const Matrix* tr
 
 bool _prepareRadial(SwFill* fill, const RadialGradient* radial, const Matrix* transform)
 {
-    assert(fill && radial);
-
     float radius;
     if (radial->radial(&fill->radial.cx, &fill->radial.cy, &radius) != Result::Success) return false;
     if (radius < FLT_EPSILON) return true;
@@ -285,8 +278,6 @@ void fillFetchLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, 
 bool fillGenColorTable(SwFill* fill, const Fill* fdata, const Matrix* transform, SwSurface* surface, bool ctable)
 {
     if (!fill) return false;
-
-    assert(fdata);
 
     fill->spread = fdata->spread();
 

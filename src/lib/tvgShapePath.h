@@ -50,7 +50,6 @@ struct ShapePath
         if (cmdCnt <= reservedCmdCnt) return;
         reservedCmdCnt = cmdCnt;
         cmds = static_cast<PathCommand*>(realloc(cmds, sizeof(PathCommand) * reservedCmdCnt));
-        assert(cmds);
     }
 
     void reservePts(uint32_t ptsCnt)
@@ -58,7 +57,6 @@ struct ShapePath
         if (ptsCnt <= reservedPtsCnt) return;
         reservedPtsCnt = ptsCnt;
         pts = static_cast<Point*>(realloc(pts, sizeof(Point) * reservedPtsCnt));
-        assert(pts);
     }
 
     void grow(uint32_t cmdCnt, uint32_t ptsCnt)

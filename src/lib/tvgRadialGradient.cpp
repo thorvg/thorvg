@@ -73,10 +73,7 @@ Result RadialGradient::radial(float* cx, float* cy, float* radius) const noexcep
 
 unique_ptr<RadialGradient> RadialGradient::gen() noexcept
 {
-    auto fill = unique_ptr<RadialGradient>(new RadialGradient);
-    assert(fill);
-
-    return fill;
+    return unique_ptr<RadialGradient>(new RadialGradient);
 }
 
 #endif /* _TVG_RADIAL_GRADIENT_CPP_ */

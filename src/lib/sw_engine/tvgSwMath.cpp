@@ -384,8 +384,6 @@ SwFixed mathLength(SwPoint& pt)
 
 void mathSplitCubic(SwPoint* base)
 {
-    assert(base);
-
     SwCoord a, b, c, d;
 
     base[6].x = base[3].x;

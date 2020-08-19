@@ -25,7 +25,6 @@
 #include "config.h"
 
 #include <iostream>
-#include <cassert>
 #include <vector>
 #include <math.h>
 #include <float.h>
