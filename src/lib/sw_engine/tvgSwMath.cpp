@@ -19,9 +19,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#ifndef _TVG_SW_MATH_H_
-#define _TVG_SW_MATH_H_
-
 #include "tvgSwCommon.h"
 
 
@@ -418,4 +415,3 @@ SwFixed mathDiff(SwFixed angle1, SwFixed angle2)
 
     return delta;
 }
-#endif /* _TVG_SW_MATH_H_ */

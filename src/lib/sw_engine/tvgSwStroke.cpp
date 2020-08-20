@@ -19,9 +19,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#ifndef _TVG_SW_STROKER_H_
-#define _TVG_SW_STROKER_H_
-
 #include "tvgSwCommon.h"
 
 
@@ -925,5 +922,3 @@ SwOutline* strokeExportOutline(SwStroke* stroke)
 
     return outline;
 }
-
-#endif /* _TVG_SW_STROKER_H_ */

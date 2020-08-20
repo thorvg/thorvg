@@ -19,9 +19,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#ifndef _TVG_SHAPE_CPP_
-#define _TVG_SHAPE_CPP_
-
 #include <limits>
 
 #include "tvgShapeImpl.h"
@@ -406,6 +403,3 @@ StrokeJoin Shape::strokeJoin() const noexcept
 
     return IMPL->stroke->join;
 }
-
-
-#endif //_TVG_SHAPE_CPP_

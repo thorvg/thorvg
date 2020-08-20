@@ -19,9 +19,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#ifndef _TVG_SW_FILL_CPP_
-#define _TVG_SW_FILL_CPP_
-
 #include "tvgSwCommon.h"
 
 
@@ -315,5 +312,3 @@ void fillFree(SwFill* fill)
 
     free(fill);
 }
-
-#endif /* _TVG_SW_FILL_CPP_ */

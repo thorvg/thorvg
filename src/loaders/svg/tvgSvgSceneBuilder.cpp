@@ -19,11 +19,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-
-#ifndef _TVG_SVG_SCENE_BUILDER_CPP_
-#define _TVG_SVG_SCENE_BUILDER_CPP_
-
-
 #include "tvgSvgSceneBuilder.h"
 
 unique_ptr<LinearGradient> _applyLinearGradientProperty(SvgStyleGradient* g, Shape* vg, float rx, float ry, float rw, float rh)
@@ -375,6 +370,3 @@ unique_ptr<Scene> SvgSceneBuilder::build(SvgNode* node)
     preserveAspect = node->node.doc.preserveAspect;
     return _sceneBuildHelper(node, viewBox.x, viewBox.y, viewBox.w, viewBox.h, 255);
 }
-
-
-#endif //_TVG_SVG_SCENE_BUILDER_CPP_

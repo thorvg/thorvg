@@ -365,4 +365,3 @@ const char* simpleXmlFindAttributesTag(const char* buf, unsigned bufLength)
 
     return nullptr;
 }
-

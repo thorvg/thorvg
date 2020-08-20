@@ -19,9 +19,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#ifndef _TVG_INITIALIZER_CPP_
-#define _TVG_INITIALIZER_CPP_
-
 #include "tvgCommon.h"
 #include "tvgLoaderMgr.h"
 
@@ -108,5 +105,3 @@ uint32_t Initializer::threads() noexcept
 {
     return threadCnt;
 }
-
-#endif /* _TVG_INITIALIZER_CPP_ */

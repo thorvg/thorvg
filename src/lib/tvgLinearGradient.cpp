@@ -19,9 +19,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#ifndef _TVG_LINEAR_GRADIENT_CPP_
-#define _TVG_LINEAR_GRADIENT_CPP_
-
 #include "tvgCommon.h"
 
 /************************************************************************/
@@ -78,5 +75,3 @@ unique_ptr<LinearGradient> LinearGradient::gen() noexcept
 {
     return unique_ptr<LinearGradient>(new LinearGradient);
 }
-
-#endif /* _TVG_LINEAR_GRADIENT_CPP_ */

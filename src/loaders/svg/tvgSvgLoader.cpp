@@ -19,9 +19,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#ifndef _TVG_SVG_LOADER_CPP_
-#define _TVG_SVG_LOADER_CPP_
-
 #include <stddef.h>
 #include <fstream>
 #include "tvgSvgLoader.h"
@@ -2392,5 +2389,3 @@ unique_ptr<Scene> SvgLoader::data()
 {
     return move(root);
 }
-
-#endif //_TVG_SVG_LOADER_CPP_

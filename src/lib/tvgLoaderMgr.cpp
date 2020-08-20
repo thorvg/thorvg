@@ -19,9 +19,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#ifndef _TVG_LOADER_MGR_CPP_
-#define _TVG_LOADER_MGR_CPP_
-
 #include "tvgCommon.h"
 
 #ifdef THORVG_SVG_LOADER_SUPPORT
@@ -57,5 +54,3 @@ unique_ptr<Loader> LoaderMgr::loader()
 #endif
     return nullptr;
 }
-
-#endif //_TVG_LOADER_MGR_CPP_

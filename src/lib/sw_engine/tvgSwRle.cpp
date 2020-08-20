@@ -19,9 +19,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#ifndef _TVG_SW_RLE_H_
-#define _TVG_SW_RLE_H_
-
 #include <setjmp.h>
 #include <limits.h>
 #include <memory.h>
@@ -755,5 +752,3 @@ void rleFree(SwRleData* rle)
     if (rle->spans) free(rle->spans);
     free(rle);
 }
-
-#endif /* _TVG_SW_RLE_H_ */

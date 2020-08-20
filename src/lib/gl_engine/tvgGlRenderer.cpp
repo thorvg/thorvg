@@ -19,10 +19,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-
-#ifndef _TVG_GL_RENDERER_CPP_
-#define _TVG_GL_RENDERER_CPP_
-
 #include "tvgGlShaderSrc.h"
 #include "tvgGlGpuBuffer.h"
 #include "tvgGlGeometry.h"
@@ -217,5 +213,3 @@ void GlRenderer::drawPrimitive(GlGeometry& geometry, float r, float g, float b, 
     geometry.disableVertex(mVertexAttrLoc);
 
 }
-
-#endif /* _TVG_GL_RENDERER_CPP_ */

@@ -19,9 +19,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#ifndef _TVG_SW_RENDERER_CPP_
-#define _TVG_SW_RENDERER_CPP_
-
 #include "tvgSwCommon.h"
 #include "tvgSwRenderer.h"
 
@@ -186,5 +183,3 @@ SwRenderer* SwRenderer::inst()
     //We know renderer type, avoid dynamic_cast for performance.
     return static_cast<SwRenderer*>(RenderInitializer::inst(renderInit));
 }
-
-#endif /* _TVG_SW_RENDERER_CPP_ */

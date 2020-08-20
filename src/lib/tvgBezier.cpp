@@ -19,9 +19,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#ifndef _TVG_BEZIER_CPP_
-#define _TVG_BEZIER_CPP_
-
 #include "tvgCommon.h"
 
 
@@ -143,7 +140,4 @@ void bezSplitAt(const Bezier& cur, float at, Bezier& left, Bezier& right)
     bezSplitLeft(right, t, left);
 }
 
-
 }
-
-#endif //_TVG_BEZIER_CPP_

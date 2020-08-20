@@ -19,9 +19,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#ifndef _TVG_GLCANVAS_CPP_
-#define _TVG_GLCANVAS_CPP_
-
 #include "tvgCommon.h"
 #include "tvgCanvasImpl.h"
 
@@ -85,6 +82,3 @@ unique_ptr<GlCanvas> GlCanvas::gen() noexcept
 #endif
     return nullptr;
 }
-
-
-#endif /* _TVG_GLCANVAS_CPP_ */

@@ -19,9 +19,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#ifndef _TVG_CANVAS_CPP_
-#define _TVG_CANVAS_CPP_
-
 #include "tvgCommon.h"
 #include "tvgCanvasImpl.h"
 
@@ -76,5 +73,3 @@ Result Canvas::sync() noexcept
 
     return Result::InsufficientCondition;
 }
-
-#endif /* _TVG_CANVAS_CPP_ */

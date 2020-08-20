@@ -19,9 +19,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#ifndef _TVG_RENDER_CPP_
-#define _TVG_RENDER_CPP_
-
 #include "tvgCommon.h"
 
 /************************************************************************/
@@ -119,5 +116,3 @@ RenderTransform::RenderTransform(const RenderTransform* lhs, const RenderTransfo
     m.e32 = lhs->m.e31 * rhs->m.e12 + lhs->m.e32 * rhs->m.e22 + lhs->m.e33 * rhs->m.e32;
     m.e33 = lhs->m.e31 * rhs->m.e13 + lhs->m.e32 * rhs->m.e23 + lhs->m.e33 * rhs->m.e33;
 }
-
-#endif //_TVG_RENDER_CPP_

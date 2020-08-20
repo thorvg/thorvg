@@ -19,10 +19,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-
-#ifndef __TVG_SVG_PATH_CPP_
-#define __TVG_SVG_PATH_CPP_
-
 #include "tvgSvgPath.h"
 
 
@@ -501,5 +497,3 @@ tuple<vector<PathCommand>, vector<Point>> svgPathToTvgPath(const char* svgPath)
 
    return make_tuple(cmds, pts);
 }
-
-#endif //__TVG_SVG_PATH_CPP_

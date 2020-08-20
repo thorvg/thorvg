@@ -19,9 +19,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#ifndef _TVG_SW_RASTER_CPP_
-#define _TVG_SW_RASTER_CPP_
-
 #include "tvgSwCommon.h"
 
 /************************************************************************/
@@ -370,5 +367,3 @@ bool rasterClear(SwSurface* surface)
     }
     return true;
 }
-
-#endif /* _TVG_SW_RASTER_CPP_ */

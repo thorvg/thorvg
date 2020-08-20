@@ -19,9 +19,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#ifndef _TVG_SWCANVAS_CPP_
-#define _TVG_SWCANVAS_CPP_
-
 #include "tvgCommon.h"
 #include "tvgCanvasImpl.h"
 
@@ -84,5 +81,3 @@ unique_ptr<SwCanvas> SwCanvas::gen() noexcept
 #endif
     return nullptr;
 }
-
-#endif /* _TVG_SWCANVAS_CPP_ */

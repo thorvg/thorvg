@@ -19,9 +19,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#ifndef _TVG_RADIAL_GRADIENT_CPP_
-#define _TVG_RADIAL_GRADIENT_CPP_
-
 #include "tvgCommon.h"
 
 /************************************************************************/
@@ -75,5 +72,3 @@ unique_ptr<RadialGradient> RadialGradient::gen() noexcept
 {
     return unique_ptr<RadialGradient>(new RadialGradient);
 }
-
-#endif /* _TVG_RADIAL_GRADIENT_CPP_ */

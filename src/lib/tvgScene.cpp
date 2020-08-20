@@ -19,9 +19,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#ifndef _TVG_SCENE_CPP_
-#define _TVG_SCENE_CPP_
-
 #include "tvgSceneImpl.h"
 
 /************************************************************************/
@@ -61,5 +58,3 @@ Result Scene::reserve(uint32_t size) noexcept
 
     return Result::Success;
 }
-
-#endif /* _TVG_SCENE_CPP_ */

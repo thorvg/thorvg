@@ -19,9 +19,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#ifndef _TVG_SW_SHAPE_H_
-#define _TVG_SW_SHAPE_H_
-
 #include "tvgSwCommon.h"
 
 /************************************************************************/
@@ -673,6 +670,3 @@ void shapeDelFill(SwShape* shape)
     fillFree(shape->fill);
     shape->fill = nullptr;
 }
-
-
-#endif /* _TVG_SW_SHAPE_H_ */

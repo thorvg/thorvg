@@ -19,9 +19,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#ifndef _TVG_PICTURE_CPP_
-#define _TVG_PICTURE_CPP_
-
 #include "tvgPictureImpl.h"
 
 /************************************************************************/
@@ -66,5 +63,3 @@ Result Picture::viewbox(float* x, float* y, float* w, float* h) const noexcept
     if (IMPL->viewbox(x, y, w, h)) return Result::Success;
     return Result::InsufficientCondition;
 }
-
-#endif /* _TVG_PICTURE_CPP_ */

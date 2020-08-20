@@ -19,9 +19,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#ifndef _TVG_FILL_CPP_
-#define _TVG_FILL_CPP_
-
 #include "tvgCommon.h"
 
 
@@ -100,5 +97,3 @@ FillSpread Fill::spread() const noexcept
 {
     return IMPL->spread;
 }
-
-#endif /* _TVG_FILL_CPP_ */

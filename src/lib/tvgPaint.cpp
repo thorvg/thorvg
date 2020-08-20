@@ -19,9 +19,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#ifndef _TVG_PAINT_CPP_
-#define _TVG_PAINT_CPP_
-
 #include "tvgCommon.h"
 
 /************************************************************************/
@@ -75,5 +72,3 @@ Result Paint::bounds(float* x, float* y, float* w, float* h) const noexcept
     if (IMPL->bounds(x, y, w, h)) return Result::Success;
     return Result::InsufficientCondition;
 }
-
-#endif //_TVG_PAINT_CPP_
