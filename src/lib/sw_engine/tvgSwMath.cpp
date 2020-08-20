@@ -29,7 +29,7 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-constexpr SwCoord CORDIC_FACTOR = 0xDBD95B16UL;            //the Cordic shrink factor 0.858785336480436 * 2^32
+constexpr SwFixed CORDIC_FACTOR = 0xDBD95B16UL;       //the Cordic shrink factor 0.858785336480436 * 2^32
 
 //this table was generated for SW_FT_PI = 180L << 16, i.e. degrees
 constexpr static auto ATAN_MAX = 23;
