@@ -88,7 +88,7 @@ typedef struct
 /************************************************************************/
 /* Engine API                                                           */
 /************************************************************************/
-TVG_EXPORT Tvg_Result tvg_engine_init(unsigned engine_method);
+TVG_EXPORT Tvg_Result tvg_engine_init(unsigned engine_method, unsigned threads);
 TVG_EXPORT Tvg_Result tvg_engine_term(unsigned engine_method);
 
 

@@ -366,10 +366,8 @@ public:
      *
      * @see ...
      */
-    static Result init(CanvasEngine engine) noexcept;
+    static Result init(CanvasEngine engine, uint32_t threads) noexcept;
     static Result term(CanvasEngine engine) noexcept;
-    static Result threads(uint32_t cnt) noexcept;
-    static uint32_t threads() noexcept;
 
     _TVG_DISABLE_CTOR(Initializer);
 };

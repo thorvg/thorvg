@@ -50,13 +50,13 @@ struct _Tvg_Gradient
 /* Engine API                                                           */
 /************************************************************************/
 
-TVG_EXPORT Tvg_Result tvg_engine_init(unsigned engine_method) {
+TVG_EXPORT Tvg_Result tvg_engine_init(unsigned engine_method, unsigned threads) {
     Result ret = Result::Success;
 
-    if (engine_method & TVG_ENGINE_SW) ret = tvg::Initializer::init(tvg::CanvasEngine::Sw);
+    if (engine_method & TVG_ENGINE_SW) ret = tvg::Initializer::init(tvg::CanvasEngine::Sw, threads);
     if (ret != Result::Success) return (Tvg_Result) ret;
 
-    if (engine_method & TVG_ENGINE_GL) ret = tvg::Initializer::init(tvg::CanvasEngine::Gl);
+    if (engine_method & TVG_ENGINE_GL) ret = tvg::Initializer::init(tvg::CanvasEngine::Gl, threads);
     return (Tvg_Result) ret;
 }
 
@@ -64,10 +64,10 @@ TVG_EXPORT Tvg_Result tvg_engine_init(unsigned engine_method) {
 TVG_EXPORT Tvg_Result tvg_engine_term(unsigned engine_method) {
     Result ret = Result::Success;
 
-    if (engine_method & TVG_ENGINE_SW) ret = tvg::Initializer::init(tvg::CanvasEngine::Sw);
+    if (engine_method & TVG_ENGINE_SW) ret = tvg::Initializer::term(tvg::CanvasEngine::Sw);
     if (ret != Result::Success) return (Tvg_Result) ret;
 
-    if (engine_method & TVG_ENGINE_GL) ret = tvg::Initializer::init(tvg::CanvasEngine::Gl);
+    if (engine_method & TVG_ENGINE_GL) ret = tvg::Initializer::term(tvg::CanvasEngine::Gl);
     return (Tvg_Result) ret;
 }
 

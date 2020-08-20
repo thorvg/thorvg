@@ -176,8 +176,11 @@ int main(int argc, char **argv)
         cout << "tvg engine: opengl" << endl;
     }
 
+    //Threads Count
+    auto threads = std::thread::hardware_concurrency();
+
     //Initialize ThorVG Engine
-    if (tvg::Initializer::init(tvgEngine) == tvg::Result::Success) {
+    if (tvg::Initializer::init(tvgEngine, threads) == tvg::Result::Success) {
 
         elm_init(argc, argv);
 

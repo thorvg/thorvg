@@ -19,8 +19,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#ifndef _TVG_SHAPE_PATH_CPP_
-#define _TVG_SHAPE_PATH_CPP_
+#ifndef _TVG_SHAPE_PATH_H_
+#define _TVG_SHAPE_PATH_H_
 
 #include "tvgCommon.h"
 
@@ -139,4 +139,4 @@ struct ShapePath
     }
 };
 
-#endif //_TVG_SHAPE_PATH_CPP_
+#endif //_TVG_SHAPE_PATH_H_

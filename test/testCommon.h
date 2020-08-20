@@ -1,4 +1,5 @@
 #include <iostream>
+#include <thread>
 #include <Elementary.h>
 #include <thorvg.h>
 

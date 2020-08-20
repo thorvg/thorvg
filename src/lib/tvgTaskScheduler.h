@@ -19,36 +19,54 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#ifndef _TVG_COMMON_H_
-#define _TVG_COMMON_H_
+#ifndef _TVG_TASK_SCHEDULER_H_
+#define _TVG_TASK_SCHEDULER_H_
 
-#include "config.h"
+#include "tvgCommon.h"
 
-#include <iostream>
-#include <vector>
-#include <math.h>
-#include <float.h>
-#include <string.h>
-#include <memory>
-#include <future>
+namespace tvg
+{
 
-#include "thorvg.h"
+struct Task
+{
+private:
+    std::promise<void> sender;
+    std::future<void>  receiver;
 
-using namespace std;
-using namespace tvg;
+public:
+    virtual ~Task() = default;
 
-#define IMPL pImpl.get()
+    void get()
+    {
+        if (receiver.valid()) receiver.get();
+    }
 
-#define FILL_ID_LINEAR 0
-#define FILL_ID_RADIAL 1
+protected:
+    virtual void run() = 0;
 
-#define TVG_UNUSED __attribute__ ((__unused__))
+private:
+    void operator()()
+    {
+        run();
+        sender.set_value();
+    }
 
-#include "tvgBezier.h"
-#include "tvgLoader.h"
-#include "tvgLoaderMgr.h"
-#include "tvgRender.h"
-#include "tvgPaint.h"
-#include "tvgTaskScheduler.h"
+    void prepare()
+    {
+        sender = std::promise<void>();
+        receiver = sender.get_future();
+    }
 
-#endif //_TVG_COMMON_H_
+    friend class TaskSchedulerImpl;
+};
+
+struct TaskScheduler
+{
+    static void init(unsigned threads);
+    static void term();
+    static void request(shared_ptr<Task> task);
+};
+
+}
+
+#endif //_TVG_TASK_SCHEDULER_H_

@@ -13,7 +13,7 @@ static uint32_t buffer[WIDTH * HEIGHT];
 
 void testCapi()
 {
-    tvg_engine_init(TVG_ENGINE_SW | TVG_ENGINE_GL);
+    tvg_engine_init(TVG_ENGINE_SW | TVG_ENGINE_GL, 0);
 
     Tvg_Canvas* canvas = tvg_swcanvas_create();
     tvg_swcanvas_set_target(canvas, buffer, WIDTH, WIDTH, HEIGHT, TVG_COLORSPACE_ARGB8888);
