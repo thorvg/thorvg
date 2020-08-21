@@ -2263,12 +2263,36 @@ static bool _svgLoaderParserForValidCheck(void* data, SimpleXMLType type, const 
     return res;
 }
 
+
+void SvgTask::run()
+{
+    if (!simpleXmlParse(loader->content, loader->size, true, _svgLoaderParser, &(loader->loaderData))) return;
+
+    if (loader->loaderData.doc) {
+        _updateStyle(loader->loaderData.doc, nullptr);
+        auto defs = loader->loaderData.doc->node.doc.defs;
+        if (defs) _updateGradient(loader->loaderData.doc, defs->node.defs.gradients);
+        else {
+            if (!loader->loaderData.gradients.empty()) {
+                vector<SvgStyleGradient*> gradientList;
+                for (auto gradient : loader->loaderData.gradients) {
+                    gradientList.push_back(gradient);
+                }
+                _updateGradient(loader->loaderData.doc, gradientList);
+                gradientList.clear();
+            }
+        }
+    }
+    loader->root = loader->builder.build(loader->loaderData.doc);
+};
+
 /************************************************************************/
 /* External Class Implementation                                        */
 /************************************************************************/
 
-SvgLoader::SvgLoader()
+SvgLoader::SvgLoader() : task(new SvgTask)
 {
+    task->loader = this;
 }
 
 
@@ -2339,34 +2363,7 @@ bool SvgLoader::read()
 {
     if (!content || size == 0) return false;
 
-    loaderData = {vector<SvgNode*>(),
-        nullptr,
-        nullptr,
-        vector<SvgStyleGradient*>(),
-        nullptr,
-        nullptr,
-        0,
-        false};
-
-    loaderData.svgParse = (SvgParser*)malloc(sizeof(SvgParser));
-
-    if (!simpleXmlParse(content, size, true, _svgLoaderParser, &loaderData)) return false;
-
-    if (loaderData.doc) {
-        _updateStyle(loaderData.doc, nullptr);
-        auto defs = loaderData.doc->node.doc.defs;
-        if (defs) _updateGradient(loaderData.doc, defs->node.defs.gradients);
-        else {
-            if (!loaderData.gradients.empty()) {
-                vector<SvgStyleGradient*> gradientList;
-                std::copy(loaderData.gradients.begin(), loaderData.gradients.end(), gradientList.begin());
-                _updateGradient(loaderData.doc, gradientList);
-                gradientList.clear();
-            }
-        }
-    }
-
-    root = builder.build(loaderData.doc);
+    TaskScheduler::request(task);
 
     return true;
 }
@@ -2374,6 +2371,12 @@ bool SvgLoader::read()
 
 bool SvgLoader::close()
 {
+    if (task) {
+        task->get();
+        delete(task);
+        task = nullptr;
+    }
+
     if (loaderData.svgParse) {
         free(loaderData.svgParse);
         loaderData.svgParse = nullptr;
@@ -2387,5 +2390,7 @@ bool SvgLoader::close()
 
 unique_ptr<Scene> SvgLoader::data()
 {
-    return move(root);
+    if (task) task->get();
+    if (root) return move(root);
+    else return nullptr;
 }

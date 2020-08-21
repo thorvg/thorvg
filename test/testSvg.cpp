@@ -1,3 +1,4 @@
+#include <vector>
 #include "testCommon.h"
 
 /************************************************************************/
@@ -8,6 +9,8 @@
 #define SIZE 200
 
 static int count = 0;
+
+static std::vector<unique_ptr<tvg::Picture>> pictures;
 
 void svgDirCallback(const char* name, const char* path, void* data)
 {
@@ -40,7 +43,7 @@ void svgDirCallback(const char* name, const char* path, void* data)
 
     picture->translate((count % NUM_PER_LINE) * SIZE - x, SIZE * (count / NUM_PER_LINE) - y);
 
-    canvas->push(move(picture));
+    pictures.push_back(move(picture));
 
     cout << "SVG: " << buf << endl;
 
@@ -59,6 +62,16 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     if (canvas->push(move(shape)) != tvg::Result::Success) return;
 
     eina_file_dir_list("./svgs", EINA_TRUE, svgDirCallback, canvas);
+
+    /* This showcase shows you asynchrounous loading of svg.
+       For this, pushing pictures at a certian sync time.
+       This means it earns the time to finish loading svg resources,
+       otherwise you can push pictures immediately. */
+    for (auto& paint : pictures) {
+        canvas->push(move(paint));
+    }
+
+    pictures.clear();
 }
 
 

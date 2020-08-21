@@ -30,27 +30,27 @@
 namespace tvg {
 
 struct TaskQueue {
-    deque<shared_ptr<Task>>  taskDeque;
+    deque<Task*>             taskDeque;
     mutex                    mtx;
     condition_variable       ready;
     bool                     done = false;
 
-    bool tryPop(shared_ptr<Task> &task)
+    bool tryPop(Task** task)
     {
         unique_lock<mutex> lock{mtx, try_to_lock};
         if (!lock || taskDeque.empty()) return false;
-        task = move(taskDeque.front());
+        *task = taskDeque.front();
         taskDeque.pop_front();
 
         return true;
     }
 
-    bool tryPush(shared_ptr<Task> &&task)
+    bool tryPush(Task* task)
     {
         {
             unique_lock<mutex> lock{mtx, try_to_lock};
             if (!lock) return false;
-            taskDeque.push_back(move(task));
+            taskDeque.push_back(task);
         }
 
         ready.notify_one();
@@ -67,7 +67,7 @@ struct TaskQueue {
         ready.notify_all();
     }
 
-    bool pop(shared_ptr<Task> &task)
+    bool pop(Task** task)
     {
         unique_lock<mutex> lock{mtx};
 
@@ -77,17 +77,17 @@ struct TaskQueue {
 
         if (taskDeque.empty()) return false;
 
-        task = move(taskDeque.front());
+        *task = taskDeque.front();
         taskDeque.pop_front();
 
         return true;
     }
 
-    void push(shared_ptr<Task> &&task)
+    void push(Task* task)
     {
         {
             unique_lock<mutex> lock{mtx};
-            taskDeque.push_back(move(task));
+            taskDeque.push_back(task);
         }
 
         ready.notify_one();
@@ -104,9 +104,8 @@ public:
     vector<TaskQueue>              taskQueues;
     atomic<unsigned>               idx{0};
 
-    TaskSchedulerImpl(unsigned count) : taskQueues(count)
+    TaskSchedulerImpl(unsigned threadCnt) : threadCnt(threadCnt), taskQueues(threadCnt)
     {
-        threadCnt = count;
         for (unsigned i = 0; i < threadCnt; ++i) {
             threads.emplace_back([&, i] { run(i); });
         }
@@ -120,37 +119,33 @@ public:
 
     void run(unsigned i)
     {
-        shared_ptr<Task> task;
+        Task* task;
 
         //Thread Loop
         while (true) {
             auto success = false;
-
             for (unsigned i = 0; i < threadCnt * 2; ++i) {
-                if (taskQueues[(i + i) % threadCnt].tryPop(task)) {
+                if (taskQueues[(i + i) % threadCnt].tryPop(&task)) {
                     success = true;
                     break;
                 }
             }
 
-            if (!success && !taskQueues[i].pop(task)) break;
-
+            if (!success && !taskQueues[i].pop(&task)) break;
             (*task)();
         }
     }
 
-    void request(shared_ptr<Task> task)
+    void request(Task* task)
     {
         //Async
         if (threadCnt > 0) {
             task->prepare();
             auto i = idx++;
             for (unsigned n = 0; n < threadCnt; ++n) {
-                if (taskQueues[(i + n) % threadCnt].tryPush(move(task))) return;
+                if (taskQueues[(i + n) % threadCnt].tryPush(task)) return;
             }
-
-            taskQueues[i % threadCnt].push(move(task));
-
+            taskQueues[i % threadCnt].push(task);
         //Sync
         } else {
             task->run();
@@ -181,9 +176,9 @@ void TaskScheduler::term()
 }
 
 
-void TaskScheduler::request(shared_ptr<Task> task)
+void TaskScheduler::request(Task* task)
 {
     if (inst) {
-        inst->request(move(task));
+        inst->request(task);
     }
 }

@@ -25,10 +25,18 @@
 #include "tvgSvgLoaderCommon.h"
 #include "tvgSvgSceneBuilder.h"
 
+class SvgLoader;
+
+struct SvgTask : Task
+{
+    SvgLoader* loader = nullptr;
+    void run() override;
+};
+
 
 class SvgLoader : public Loader
 {
-private:
+public:
     string filePath;
     const char* content = nullptr;
     uint32_t size = 0;
@@ -36,8 +44,8 @@ private:
     SvgLoaderData loaderData;
     SvgSceneBuilder builder;
     unique_ptr<Scene> root;
+    SvgTask* task = nullptr;
 
-public:
     SvgLoader();
     ~SvgLoader();
 

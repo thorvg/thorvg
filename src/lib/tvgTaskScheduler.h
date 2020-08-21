@@ -30,15 +30,17 @@ namespace tvg
 struct Task
 {
 private:
-    std::promise<void> sender;
-    std::future<void>  receiver;
+    promise<void> sender;
+    future<void>  receiver;
 
 public:
     virtual ~Task() = default;
 
     void get()
     {
-        if (receiver.valid()) receiver.get();
+        if (receiver.valid()) {
+            receiver.get();
+        }
     }
 
 protected:
@@ -53,7 +55,7 @@ private:
 
     void prepare()
     {
-        sender = std::promise<void>();
+        sender = promise<void>();
         receiver = sender.get_future();
     }
 
@@ -64,7 +66,7 @@ struct TaskScheduler
 {
     static void init(unsigned threads);
     static void term();
-    static void request(shared_ptr<Task> task);
+    static void request(Task* task);
 };
 
 }
