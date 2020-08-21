@@ -56,7 +56,7 @@ enum class TVG_EXPORT PathCommand { Close = 0, MoveTo, LineTo, CubicTo };
 enum class TVG_EXPORT StrokeCap { Square = 0, Round, Butt };
 enum class TVG_EXPORT StrokeJoin { Bevel = 0, Round, Miter };
 enum class TVG_EXPORT FillSpread { Pad = 0, Reflect, Repeat };
-enum class TVG_EXPORT CanvasEngine { Sw = 0, Gl };
+enum class TVG_EXPORT CanvasEngine { Sw = (1 << 1), Gl = (1 << 2)};
 
 
 struct Point

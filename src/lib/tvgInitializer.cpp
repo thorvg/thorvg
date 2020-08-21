@@ -34,7 +34,7 @@
 /************************************************************************/
 /* Internal Class Implementation                                        */
 /************************************************************************/
-
+static bool initialized = false;
 
 /************************************************************************/
 /* External Class Implementation                                        */
@@ -42,14 +42,16 @@
 
 Result Initializer::init(CanvasEngine engine, uint32_t threads) noexcept
 {
+    if (initialized) return Result::InsufficientCondition;
+
     auto nonSupport = true;
 
-    if (engine == CanvasEngine::Sw) {
+    if (static_cast<uint32_t>(engine) & static_cast<uint32_t>(CanvasEngine::Sw)) {
         #ifdef THORVG_SW_RASTER_SUPPORT
             if (!SwRenderer::init()) return Result::InsufficientCondition;
             nonSupport = false;
         #endif
-    } else if (engine == CanvasEngine::Gl) {
+    } else if (static_cast<uint32_t>(engine) & static_cast<uint32_t>(CanvasEngine::Gl)) {
         #ifdef THORVG_GL_RASTER_SUPPORT
             if (!GlRenderer::init()) return Result::InsufficientCondition;
             nonSupport = false;
@@ -64,20 +66,24 @@ Result Initializer::init(CanvasEngine engine, uint32_t threads) noexcept
 
     TaskScheduler::init(threads);
 
+    initialized = true;
+
     return Result::Success;
 }
 
 
 Result Initializer::term(CanvasEngine engine) noexcept
 {
+    if (!initialized) return Result::InsufficientCondition;
+
     auto nonSupport = true;
 
-    if (engine == CanvasEngine::Sw) {
+    if (static_cast<uint32_t>(engine) & static_cast<uint32_t>(CanvasEngine::Sw)) {
         #ifdef THORVG_SW_RASTER_SUPPORT
             if (!SwRenderer::term()) return Result::InsufficientCondition;
             nonSupport = false;
         #endif
-    } else if (engine == CanvasEngine::Gl) {
+    } else if (static_cast<uint32_t>(engine) & static_cast<uint32_t>(CanvasEngine::Gl)) {
         #ifdef THORVG_GL_RASTER_SUPPORT
             if (!GlRenderer::term()) return Result::InsufficientCondition;
             nonSupport = false;
@@ -91,6 +97,8 @@ Result Initializer::term(CanvasEngine engine) noexcept
     TaskScheduler::term();
 
     if (!LoaderMgr::term()) return Result::Unknown;
+
+    initialized = false;
 
     return Result::Success;
 }
