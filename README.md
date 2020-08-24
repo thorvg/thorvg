@@ -59,4 +59,4 @@ Lastly, you can acquire the rendered image in buffer memory.
 [Back to contents](#contents)
 #
 ## Issues or Feature Requests?
-For immidiate assistant or support please reach us in [Gitter](https://gitter.im/thorvg-dev/community#)
+For immidiate assistant or support please reach us in [Gitter](https://gitter.im/thorvg/community)
