@@ -1,0 +1,23 @@
+option('engines',
+   type: 'array',
+   choices: ['sw', 'gl'],
+   value: ['sw'],
+   description: 'Enable Rasterizer Engine in thorvg')
+
+option('loaders',
+   type: 'array',
+   choices: ['', 'svg'],
+   value: ['svg'],
+   description: 'Enable Vector File Loader in thorvg')
+
+option('vectors',
+   type: 'array',
+   choices: ['', 'avx'],
+   value: [''],
+   description: 'Enable CPU Vectorization(SIMD) in thorvg')
+
+option('bindings',
+   type: 'array',
+   choices: ['', 'capi'],
+   value: ['capi'],
+   description: 'Enable C API binding')
