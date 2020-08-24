@@ -101,11 +101,12 @@ class TaskSchedulerImpl
 public:
     unsigned                       threadCnt;
     vector<thread>                 threads;
-    vector<TaskQueue>              taskQueues{threadCnt};
+    vector<TaskQueue>              taskQueues;
     atomic<unsigned>               idx{0};
 
-    TaskSchedulerImpl()
+    TaskSchedulerImpl(unsigned count) : taskQueues(count)
     {
+        threadCnt = count;
         for (unsigned i = 0; i < threadCnt; ++i) {
             threads.emplace_back([&, i] { run(i); });
         }
@@ -168,8 +169,7 @@ static TaskSchedulerImpl* inst = nullptr;
 void TaskScheduler::init(unsigned threads)
 {
     if (inst) return;
-    inst = new TaskSchedulerImpl;
-    inst->threadCnt = threads;
+    inst = new TaskSchedulerImpl(threads);
 }
 
 
