@@ -127,28 +127,28 @@ void* SwRenderer::prepare(const Shape& sdata, void* data, const RenderTransform*
                 if (!shapeGenRle(shape, &sdata, clip, antiAlias)) return shape;
             }
         }
-        //Fill
-        if (flags & (RenderUpdateFlag::Gradient | RenderUpdateFlag::Transform)) {
-            auto fill = sdata.fill();
-            if (fill) {
-                auto ctable = (flags & RenderUpdateFlag::Gradient) ? true : false;
-                if (ctable) shapeResetFill(shape);
-                if (!shapeGenFillColors(shape, fill, matrix, surface, ctable)) return shape;
-            } else {
-                shapeDelFill(shape);
-            }
-        }
-        //Stroke
-        if (flags & (RenderUpdateFlag::Stroke | RenderUpdateFlag::Transform)) {
-            if (strokeAlpha > 0) {
-                shapeResetStroke(shape, &sdata, matrix);
-                if (!shapeGenStrokeRle(shape, &sdata, matrix, clip)) return shape;
-            } else {
-                shapeDelStroke(shape);
-            }
-        }
-        shapeDelOutline(shape);
     }
+    //Fill
+    if (flags & (RenderUpdateFlag::Gradient | RenderUpdateFlag::Transform)) {
+        auto fill = sdata.fill();
+        if (fill) {
+            auto ctable = (flags & RenderUpdateFlag::Gradient) ? true : false;
+            if (ctable) shapeResetFill(shape);
+            if (!shapeGenFillColors(shape, fill, matrix, surface, ctable)) return shape;
+        } else {
+            shapeDelFill(shape);
+        }
+    }
+    //Stroke
+    if (flags & (RenderUpdateFlag::Stroke | RenderUpdateFlag::Transform)) {
+        if (strokeAlpha > 0) {
+            shapeResetStroke(shape, &sdata, matrix);
+            if (!shapeGenStrokeRle(shape, &sdata, matrix, clip)) return shape;
+        } else {
+            shapeDelStroke(shape);
+        }
+    }
+    shapeDelOutline(shape);
 
     return shape;
 }
