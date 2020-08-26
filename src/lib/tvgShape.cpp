@@ -290,7 +290,7 @@ Result Shape::fill(unique_ptr<Fill> f) noexcept
     auto p = f.release();
     if (!p) return Result::MemoryCorruption;
 
-    if (impl->fill) delete(impl->fill);
+    if (impl->fill && impl->fill != p) delete(impl->fill);
     impl->fill = p;
     impl->flag |= RenderUpdateFlag::Gradient;
 
