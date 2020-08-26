@@ -203,11 +203,11 @@ struct SwFill
 
 struct SwShape
 {
-    SwOutline*   outline;
-    SwStroke*    stroke;
-    SwFill*      fill;
-    SwRleData*   rle;
-    SwRleData*   strokeRle;
+    SwOutline*   outline = nullptr;
+    SwStroke*    stroke = nullptr;
+    SwFill*      fill = nullptr;
+    SwRleData*   rle = nullptr;
+    SwRleData*   strokeRle = nullptr;
     SwBBox       bbox;
 
     bool         rect;   //Fast Track: Othogonal rectangle?

@@ -23,20 +23,23 @@
 #define _TVG_SW_RENDERER_H_
 
 struct SwSurface;
+struct SwTask;
 
 namespace tvg
 {
 
-class SwRenderer : public RenderMethod
+class SwRenderer : public RenderMethod, public Task
 {
 public:
     void* prepare(const Shape& shape, void* data, const RenderTransform* transform, RenderUpdateFlag flags) override;
     bool dispose(const Shape& shape, void *data) override;
     bool preRender() override;
-    bool render(const Shape& shape, void *data) override;
     bool target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h, uint32_t cs);
+    bool clear() override;
+    bool flush() override;
     uint32_t ref() override;
     uint32_t unref() override;
+    void run() override;
 
     static SwRenderer* inst();
     static int init();
@@ -44,6 +47,7 @@ public:
 
 private:
     SwSurface* surface = nullptr;
+    vector<SwTask*> tasks;
 
     SwRenderer(){};
     ~SwRenderer();

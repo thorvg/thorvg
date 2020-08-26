@@ -43,6 +43,11 @@ public:
         }
     }
 
+    bool valid()
+    {
+        return receiver.valid();
+    }
+
 protected:
     virtual void run() = 0;
 
