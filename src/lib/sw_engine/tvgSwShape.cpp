@@ -618,11 +618,13 @@ void shapeResetStroke(SwShape* shape, const Shape* sdata, const Matrix* transfor
 bool shapeGenStrokeRle(SwShape* shape, const Shape* sdata, const Matrix* transform, const SwSize& clip)
 {
     SwOutline* shapeOutline = nullptr;
+    bool freeOutline = false;
 
     //Dash Style Stroke
     if (sdata->strokeDash(nullptr) > 0) {
         shapeOutline = _genDashOutline(sdata, transform);
         if (!shapeOutline) return false;
+        freeOutline = true;
     //Normal Style stroke
     } else {
         if (!shape->outline) {
@@ -643,6 +645,7 @@ bool shapeGenStrokeRle(SwShape* shape, const Shape* sdata, const Matrix* transfo
 
     shape->strokeRle = rleRender(strokeOutline, bbox, clip, true);
 
+    if (freeOutline) _delOutline(shapeOutline);
     _delOutline(strokeOutline);
 
     return true;
