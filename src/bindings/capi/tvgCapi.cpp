@@ -83,7 +83,7 @@ TVG_EXPORT Tvg_Canvas* tvg_swcanvas_create()
 
 TVG_EXPORT Tvg_Result tvg_canvas_destroy(Tvg_Canvas* canvas)
 {
-    delete(canvas);
+    delete(reinterpret_cast<SwCanvas*>(canvas));
     return TVG_RESULT_SUCCESS;
 }
 
