@@ -344,6 +344,7 @@ SwOutline* _genDashOutline(const Shape* sdata, const Matrix* transform)
 
     const float* pattern;
     dash.cnt = sdata->strokeDash(&pattern);
+    if (dash.cnt == 0) return nullptr;
 
     //Is it safe to mutual exclusive?
     dash.pattern = const_cast<float*>(pattern);
