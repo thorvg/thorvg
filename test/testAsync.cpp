@@ -93,7 +93,7 @@ void drawSwView(void* data, Eo* obj)
 
     t4 = ecore_time_get();
 
-    printf("[%5d]: total[%fms] = clear[%fms], update[%fms], render[%fms]\n", ++cnt, t4 - t1, t2 - t1, t3 - t2, t4 - t3);
+    printf("[%5d]: total[%fs] = clear[%fs], update[%fs], render[%fs]\n", ++cnt, t4 - t1, t2 - t1, t3 - t2, t4 - t3);
 }
 
 
