@@ -40,6 +40,7 @@ struct Canvas::Impl
 
     ~Impl()
     {
+        renderer->flush();  //make it sur async engine working finished.
         clear();
         renderer->unref();
     }
