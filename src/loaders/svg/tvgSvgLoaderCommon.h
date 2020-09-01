@@ -116,8 +116,8 @@ enum class SvgParserLengthType
     Other
 };
 
-typedef struct _SvgNode SvgNode;
-typedef struct _SvgStyleGradient SvgStyleGradient;
+struct SvgNode;
+struct SvgStyleGradient;
 
 struct SvgDocNode
 {
@@ -231,7 +231,7 @@ struct SvgDash
     float gap;
 };
 
-struct _SvgStyleGradient
+struct SvgStyleGradient
 {
     SvgGradientType type;
     string *id;
@@ -277,7 +277,7 @@ struct SvgStyleProperty
     uint8_t b;
 };
 
-struct _SvgNode
+struct SvgNode
 {
     SvgNodeType type;
     SvgNode* parent;
