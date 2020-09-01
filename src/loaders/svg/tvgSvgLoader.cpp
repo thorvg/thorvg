@@ -1454,8 +1454,8 @@ static void _cloneNode(SvgNode* from, SvgNode* parent)
     newNode = _createNode(parent, from->type);
     _copyAttr(newNode, from);
 
-    for (vector<SvgNode*>::iterator itrChild = from->child.begin(); itrChild != from->child.end(); itrChild++) {
-        _cloneNode(*itrChild, newNode);
+    for (auto child : from->child) {
+        _cloneNode(child, newNode);
     }
 
     _freeNode(newNode);
@@ -1489,13 +1489,6 @@ static SvgNode* _createUseNode(SvgLoaderData* loader, SvgNode* parent, const cha
     return loader->svgParse->node;
 }
 
-
-#define TAG_DEF(Name, Name1)                        \
-    {                                               \
-#Name, sizeof(#Name), _create##Name1##Node          \
-    }
-
-
 //TODO: Implement 'text' primitive
 static constexpr struct
 {
@@ -1503,14 +1496,14 @@ static constexpr struct
     int sz;
     FactoryMethod tagHandler;
 } graphicsTags[] = {
-    TAG_DEF(use, Use),
-    TAG_DEF(circle, Circle),
-    TAG_DEF(ellipse, Ellipse),
-    TAG_DEF(path, Path),
-    TAG_DEF(polygon, Polygon),
-    TAG_DEF(rect, Rect),
-    TAG_DEF(polyline, Polyline),
-    TAG_DEF(line, Line),
+    {"use", sizeof("use"), _createUseNode},
+    {"circle", sizeof("circle"), _createCircleNode},
+    {"ellipse", sizeof("ellipse"), _createEllipseNode},
+    {"path", sizeof("path"), _createPathNode},
+    {"polygon", sizeof("polygon"), _createPolygonNode},
+    {"rect", sizeof("rect"), _createRectNode},
+    {"polyline", sizeof("polyline"), _createPolylineNode},
+    {"line", sizeof("line"), _createLineNode}
 };
 
 
@@ -1520,9 +1513,9 @@ static constexpr struct
     int sz;
     FactoryMethod tagHandler;
 } groupTags[] = {
-    TAG_DEF(defs, Defs),
-    TAG_DEF(g, G),
-    TAG_DEF(svg, Svg),
+    {"defs", sizeof("defs"), _createDefsNode},
+    {"g", sizeof("g"), _createGNode},
+    {"svg", sizeof("svg"), _createSvgNode}
 };
 
 
@@ -1895,20 +1888,14 @@ static GradientFactoryMethod _findGradientFactory(const char* name)
 }
 
 
-#define POP_TAG(Tag)       \
-    {                      \
-#Tag, sizeof(#Tag) \
-    }
-
-
 static constexpr struct
 {
     const char* tag;
     size_t sz;
 } popArray[] = {
-    POP_TAG(g),
-    POP_TAG(svg),
-    POP_TAG(defs)
+    {"g", sizeof("g")},
+    {"svg", sizeof("svg")},
+    {"defs", sizeof("defs")}
 };
 
 
@@ -2165,8 +2152,8 @@ static void _freeNode(SvgNode* node)
 {
     if (!node) return;
 
-    for(vector<SvgNode*>::iterator itrChild = node->child.begin(); itrChild != node->child.end(); itrChild++) {
-        _freeNode(*itrChild);
+    for(auto child : node->child) {
+        _freeNode(child);
     }
     node->child.clear();
 
@@ -2200,7 +2187,6 @@ static void _freeNode(SvgNode* node)
              break;
          }
     }
-    if (!node->child.empty()) node->child.clear();
     free(node);
 }
 
@@ -2376,7 +2362,6 @@ bool SvgLoader::close()
         delete(task);
         task = nullptr;
     }
-
     if (loaderData.svgParse) {
         free(loaderData.svgParse);
         loaderData.svgParse = nullptr;
