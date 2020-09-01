@@ -119,6 +119,35 @@ enum class SvgParserLengthType
 struct SvgNode;
 struct SvgStyleGradient;
 
+template<class T>
+struct SvgVector
+{
+    T* list;
+    uint32_t cnt;
+    uint32_t reserved;
+
+    void push(T element)
+    {
+        if (cnt + 1 > reserved) {
+            reserved = (cnt + 1) * 2;
+            list = static_cast<T*>(realloc(list, sizeof(T) * reserved));
+        }
+        list[cnt++] = element;
+    }
+
+    void pop()
+    {
+        if (cnt > 0) --cnt;
+    }
+
+    void clear()
+    {
+        if (list) free(list);
+        list = nullptr;
+        cnt = reserved = 0;
+    }
+};
+
 struct SvgDocNode
 {
     float w;
@@ -137,7 +166,7 @@ struct SvgGNode
 
 struct SvgDefsNode
 {
-    vector<SvgStyleGradient *> gradients;
+    SvgVector<SvgStyleGradient*> gradients;
 };
 
 struct SvgArcNode
@@ -240,7 +269,7 @@ struct SvgStyleGradient
     SvgRadialGradient* radial;
     SvgLinearGradient* linear;
     Matrix* transform;
-    vector<Fill::ColorStop *> stops;
+    SvgVector<Fill::ColorStop *> stops;
     bool userSpace;
     bool usePercentage;
 };
@@ -281,7 +310,7 @@ struct SvgNode
 {
     SvgNodeType type;
     SvgNode* parent;
-    vector<SvgNode*> child;
+    SvgVector<SvgNode*> child;
     string *id;
     SvgStyleProperty *style;
     Matrix* transform;
@@ -320,10 +349,10 @@ struct SvgParser
 
 struct SvgLoaderData
 {
-    vector<SvgNode *> stack;
+    SvgVector<SvgNode *> stack = {nullptr, 0, 0};
     SvgNode* doc = nullptr;
     SvgNode* def = nullptr;
-    vector<SvgStyleGradient*> gradients;
+    SvgVector<SvgStyleGradient*> gradients;
     SvgStyleGradient* latestGradient = nullptr; //For stops
     SvgParser* svgParse = nullptr;
     int level = 0;
