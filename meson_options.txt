@@ -21,3 +21,8 @@ option('bindings',
    choices: ['', 'capi'],
    value: ['capi'],
    description: 'Enable C API binding')
+
+option('example',
+   type: 'boolean',
+   value: true,
+   description: 'Enable building examples')

@@ -36,6 +36,10 @@ headers = [include_directories('inc'), include_directories('.')]
 subdir('inc')
 subdir('src')
 
+if get_option('example') == true
+    subdir('example')
+endif
+
 summary = '''
 
 Summary:
