@@ -1963,7 +1963,8 @@ static void _svgLoaderParserXmlOpen(SvgLoaderData* loader, const char* content, 
             loader->stack.push(node);
         }
     } else if ((method = _findGraphicsFactory(tagName))) {
-        parent = loader->stack.list[loader->stack.cnt - 1];
+        if (loader->stack.cnt > 0) parent = loader->stack.list[loader->stack.cnt - 1];
+        else parent = loader->doc;
         node = method(loader, parent, attrs, attrsLength);
     } else if ((gradientMethod = _findGradientFactory(tagName))) {
         SvgStyleGradient* gradient;
