@@ -1955,11 +1955,12 @@ static void _svgLoaderParserXmlOpen(SvgLoaderData* loader, const char* content, 
             if (loader->stack.cnt > 0) parent = loader->stack.list[loader->stack.cnt - 1];
             node = method(loader, parent, attrs, attrsLength);
         }
-        loader->stack.push(node);
 
         if (node->type == SvgNodeType::Defs) {
             loader->doc->node.doc.defs = node;
             loader->def = node;
+        } else {
+            loader->stack.push(node);
         }
     } else if ((method = _findGraphicsFactory(tagName))) {
         parent = loader->stack.list[loader->stack.cnt - 1];
