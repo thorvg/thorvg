@@ -1917,7 +1917,7 @@ static void _svgLoaderParerXmlClose(SvgLoaderData* loader, const char* content)
 }
 
 
-static void _svgLoaderParserXmlOpen(SvgLoaderData* loader, const char* content, unsigned int length)
+static void _svgLoaderParserXmlOpen(SvgLoaderData* loader, const char* content, unsigned int length, bool empty)
 {
     const char* attrs = nullptr;
     int attrsLength = 0;
@@ -1953,12 +1953,14 @@ static void _svgLoaderParserXmlOpen(SvgLoaderData* loader, const char* content, 
         } else {
             if (!strcmp(tagName, "svg")) return; //Already loadded <svg>(SvgNodeType::Doc) tag
             if (loader->stack.cnt > 0) parent = loader->stack.list[loader->stack.cnt - 1];
+            else parent = loader->doc;
             node = method(loader, parent, attrs, attrsLength);
         }
 
         if (node->type == SvgNodeType::Defs) {
             loader->doc->node.doc.defs = node;
             loader->def = node;
+            if (!empty) loader->stack.push(node);
         } else {
             loader->stack.push(node);
         }
@@ -2000,11 +2002,11 @@ static bool _svgLoaderParser(void* data, SimpleXMLType type, const char* content
 
     switch (type) {
         case SimpleXMLType::Open: {
-            _svgLoaderParserXmlOpen(loader, content, length);
+            _svgLoaderParserXmlOpen(loader, content, length, false);
             break;
         }
         case SimpleXMLType::OpenEmpty: {
-            _svgLoaderParserXmlOpen(loader, content, length);
+            _svgLoaderParserXmlOpen(loader, content, length, true);
             break;
         }
         case SimpleXMLType::Close: {
