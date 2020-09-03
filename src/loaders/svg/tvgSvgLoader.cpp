@@ -1458,8 +1458,6 @@ static void _cloneNode(SvgNode* from, SvgNode* parent)
     for (uint32_t i = 0; i < from->child.cnt; ++i, ++child) {
         _cloneNode(*child, newNode);
     }
-
-    _freeNode(newNode);
 }
 
 
