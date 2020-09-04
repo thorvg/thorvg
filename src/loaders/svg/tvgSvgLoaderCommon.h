@@ -122,9 +122,9 @@ struct SvgStyleGradient;
 template<class T>
 struct SvgVector
 {
-    T* list;
-    uint32_t cnt;
-    uint32_t reserved;
+    T* list = nullptr;
+    uint32_t cnt = 0;
+    uint32_t reserved = 0;
 
     void push(T element)
     {
