@@ -30,7 +30,6 @@
 
 typedef SvgNode* (*FactoryMethod)(SvgLoaderData* loader, SvgNode* parent, const char* buf, unsigned bufLength);
 typedef SvgStyleGradient* (*GradientFactoryMethod)(SvgLoaderData* loader, const char* buf, unsigned bufLength);
-static void _freeNode(SvgNode* node);
 
 
 static char* _skipSpace(const char* str, const char* end)
