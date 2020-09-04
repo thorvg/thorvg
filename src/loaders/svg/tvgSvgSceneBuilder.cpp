@@ -235,7 +235,8 @@ void _applyProperty(SvgNode* node, Shape* vg, float vx, float vy, float vw, floa
     vg->stroke(style->stroke.width);
     vg->stroke(style->stroke.cap);
     vg->stroke(style->stroke.join);
-
+    if (style->stroke.dash.array.cnt > 0)
+        vg->stroke(style->stroke.dash.array.list, style->stroke.dash.array.cnt);
 
     //If stroke property is nullptr then do nothing
     if (style->stroke.paint.none) {

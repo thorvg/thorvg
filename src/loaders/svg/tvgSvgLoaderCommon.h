@@ -256,8 +256,7 @@ struct SvgPaint
 
 struct SvgDash
 {
-    float length;
-    float gap;
+    SvgVector<float> array;
 };
 
 struct SvgStyleGradient
@@ -292,7 +291,7 @@ struct SvgStyleStroke
     float centered;
     StrokeCap cap;
     StrokeJoin join;
-    SvgDash* dash;
+    SvgDash dash;
     int dashCount;
 };
 
