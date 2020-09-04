@@ -1002,6 +1002,25 @@ static SvgNode* _createSvgNode(SvgLoaderData* loader, SvgNode* parent, const cha
 }
 
 
+static SvgNode* _createMaskNode(SvgLoaderData* loader, SvgNode* parent, const char* buf, unsigned bufLength)
+{
+    loader->svgParse->node = _createNode(parent, SvgNodeType::Unknown);
+
+    loader->svgParse->node->display = false;
+
+    return loader->svgParse->node;
+}
+
+
+static SvgNode* _createClipPathNode(SvgLoaderData* loader, SvgNode* parent, const char* buf, unsigned bufLength)
+{
+    loader->svgParse->node = _createNode(parent, SvgNodeType::Unknown);
+
+    loader->svgParse->node->display = false;
+
+    return loader->svgParse->node;
+}
+
 static bool _attrParsePathNode(void* data, const char* key, const char* value)
 {
     SvgLoaderData* loader = (SvgLoaderData*)data;
@@ -1538,7 +1557,9 @@ static constexpr struct
 } groupTags[] = {
     {"defs", sizeof("defs"), _createDefsNode},
     {"g", sizeof("g"), _createGNode},
-    {"svg", sizeof("svg"), _createSvgNode}
+    {"svg", sizeof("svg"), _createSvgNode},
+    {"mask", sizeof("mask"), _createMaskNode},
+    {"clipPath", sizeof("clipPath"), _createClipPathNode}
 };
 
 
@@ -1918,7 +1939,9 @@ static constexpr struct
 } popArray[] = {
     {"g", sizeof("g")},
     {"svg", sizeof("svg")},
-    {"defs", sizeof("defs")}
+    {"defs", sizeof("defs")},
+    {"mask", sizeof("mask")},
+    {"clipPath", sizeof("clipPath")}
 };
 
 
