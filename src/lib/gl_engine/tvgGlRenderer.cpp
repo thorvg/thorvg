@@ -24,6 +24,7 @@
 #include "tvgGlGeometry.h"
 #include "tvgGlCommon.h"
 #include "tvgGlRenderer.h"
+#include "tvgGlPropertyInterface.h"
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
@@ -41,6 +42,8 @@ static void _termEngine()
 /************************************************************************/
 /* External Class Implementation                                        */
 /************************************************************************/
+
+#define NOISE_LEVEL 0.5f
 
 bool GlRenderer::clear()
 {
@@ -65,16 +68,21 @@ bool GlRenderer::target(TVG_UNUSED uint32_t* buffer, uint32_t stride, uint32_t w
 bool GlRenderer::flush()
 {
     GL_CHECK(glFinish());
-    mColorProgram->unload();
-
+    GlRenderTask::unload();
     return true;
 }
 
 
 bool GlRenderer::preRender()
 {
-    // Blend function for pre multiplied alpha
-    GL_CHECK(glBlendFuncSeparate(GL_ONE, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA));
+    if (mRenderTasks.size() == 0)
+    {
+        initShaders();
+    }
+    GlRenderTask::unload();
+
+    // Blend function for straight alpha
+    GL_CHECK(glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA));
     GL_CHECK(glEnable(GL_BLEND));
     return true;
 }
@@ -98,19 +106,23 @@ bool GlRenderer::render(const Shape& shape, void *data)
 
     GL_CHECK(glViewport(0, 0, sdata->viewWd, sdata->viewHt));
 
-    uint32_t geometryCnt = sdata->geometry->getPrimitiveCount();
-    for (uint32_t i = 0; i < geometryCnt; ++i)
+    uint32_t primitiveCount = sdata->geometry->getPrimitiveCount();
+    for (uint32_t i = 0; i < primitiveCount; ++i)
     {
-        mColorProgram->load();
-        if (flags & RenderUpdateFlag::Color)
+        if (flags & RenderUpdateFlag::Gradient)
+        {
+            const Fill* gradient = shape.fill();
+            drawPrimitive(*sdata, gradient, i, RenderUpdateFlag::Gradient);
+        }
+        else if (flags & RenderUpdateFlag::Color)
         {
             shape.fill(&r, &g, &b, &a);
-            drawPrimitive(*(sdata->geometry), (float)r / 255.0f, (float)g / 255.0f, (float)b / 255.0f, (float)a / 255.0f, i, RenderUpdateFlag::Color);
+            drawPrimitive(*sdata, r, g, b, a, i, RenderUpdateFlag::Color);
         }
         if (flags & RenderUpdateFlag::Stroke)
         {
             shape.strokeColor(&r, &g, &b, &a);
-            drawPrimitive(*(sdata->geometry), (float)r / 255.0f, (float)g / 255.0f, (float)b / 255.0f, (float)a / 255.0f, i, RenderUpdateFlag::Stroke);
+            drawPrimitive(*sdata, r, g, b, a, i, RenderUpdateFlag::Stroke);
         }
     }
 
@@ -143,8 +155,6 @@ void* GlRenderer::prepare(const Shape& shape, void* data, TVG_UNUSED const Rende
 
     if (sdata->updateFlag == RenderUpdateFlag::None) return sdata;
 
-    initShaders();
-
     sdata->geometry = make_unique<GlGeometry>();
 
     //invisible?
@@ -153,9 +163,14 @@ void* GlRenderer::prepare(const Shape& shape, void* data, TVG_UNUSED const Rende
     shape.strokeColor(nullptr, nullptr, nullptr, &alphaS);
     auto strokeWd = shape.strokeWidth();
 
-    if (alphaF == 0 && alphaS == 0) return sdata;
+    if ( ((sdata->updateFlag & RenderUpdateFlag::Gradient) == 0) &&
+         ((sdata->updateFlag & RenderUpdateFlag::Color) && alphaF == 0) &&
+         ((sdata->updateFlag & RenderUpdateFlag::Stroke) && alphaS == 0) )
+    {
+        return sdata;
+    }
 
-    if (sdata->updateFlag & (RenderUpdateFlag::Color | RenderUpdateFlag::Stroke) )
+    if (sdata->updateFlag & (RenderUpdateFlag::Color | RenderUpdateFlag::Stroke | RenderUpdateFlag::Gradient) )
     {
         if (!sdata->geometry->decomposeOutline(shape)) return sdata;
         if (!sdata->geometry->generateAAPoints(shape, static_cast<float>(strokeWd), sdata->updateFlag)) return sdata;
@@ -198,10 +213,7 @@ GlRenderer* GlRenderer::gen()
 
 GlRenderer::~GlRenderer()
 {
-    if (mColorProgram.get())
-    {
-        mColorProgram.reset(nullptr);
-    }
+    mRenderTasks.clear();
 
     --rendererCnt;
     if (!initEngine) _termEngine();
@@ -210,21 +222,85 @@ GlRenderer::~GlRenderer()
 
 void GlRenderer::initShaders()
 {
-    if (!mColorProgram.get())
-    {
-        shared_ptr<GlShader> shader = GlShader::gen(COLOR_VERT_SHADER, COLOR_FRAG_SHADER);
-        mColorProgram = GlProgram::gen(shader);
-    }
-    mColorProgram->load();
-    mColorUniformLoc = mColorProgram->getUniformLocation("uColor");
-    mVertexAttrLoc = mColorProgram->getAttributeLocation("aLocation");
+    // Solid Color Renderer
+    mRenderTasks.push_back(GlColorRenderTask::gen());
+
+    // Linear Gradient Renderer
+    mRenderTasks.push_back(GlLinearGradientRenderTask::gen());
+
+    // Radial Gradient Renderer
+    mRenderTasks.push_back(GlRadialGradientRenderTask::gen());
 }
 
 
-void GlRenderer::drawPrimitive(GlGeometry& geometry, float r, float g, float b, float a, uint32_t primitiveIndex, RenderUpdateFlag flag)
+void GlRenderer::drawPrimitive(GlShape& sdata, uint8_t r, uint8_t g, uint8_t b, uint8_t a, uint32_t primitiveIndex, RenderUpdateFlag flag)
 {
-    mColorProgram->setUniformValue(mColorUniformLoc, r, g, b, a);
-    geometry.draw(mVertexAttrLoc, primitiveIndex, flag);
-    geometry.disableVertex(mVertexAttrLoc);
+    GlColorRenderTask* renderTask = static_cast<GlColorRenderTask*>(mRenderTasks[GlRenderTask::RenderTypes::RT_Color].get());
+    assert(renderTask);
+    renderTask->load();
+    PropertyInterface::clearData(renderTask);
+    renderTask->setColor(r, g, b, a);
+    int32_t vertexLoc = renderTask->getLocationPropertyId();
+    renderTask->uploadValues();
+    sdata.geometry->draw(vertexLoc, primitiveIndex, flag);
+    sdata.geometry->disableVertex(vertexLoc);
 
 }
+
+
+void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, uint32_t primitiveIndex, RenderUpdateFlag flag)
+{
+    const Fill::ColorStop* stops = nullptr;
+    auto stopCnt = fill->colorStops(&stops);
+    if (stopCnt < 2)
+    {
+        return;
+    }
+    GlGradientRenderTask* rTask = nullptr;
+    GlSize size = sdata.geometry->getPrimitiveSize(primitiveIndex);
+    switch (fill->id()) {
+        case FILL_ID_LINEAR: {
+            float x1, y1, x2, y2;
+            GlLinearGradientRenderTask *renderTask = static_cast<GlLinearGradientRenderTask*>(mRenderTasks[GlRenderTask::RenderTypes::RT_LinGradient].get());
+            assert(renderTask);
+            rTask = renderTask;
+            renderTask->load();
+            PropertyInterface::clearData(renderTask);
+            const LinearGradient* grad = static_cast<const LinearGradient*>(fill);
+            grad->linear(&x1, &y1, &x2, &y2);
+            renderTask->setStartPosition(x1, y1);
+            renderTask->setEndPosition(x2, y2);
+            break;
+        }
+        case FILL_ID_RADIAL: {
+            float x1, y1, r1;
+            GlRadialGradientRenderTask *renderTask = static_cast<GlRadialGradientRenderTask*>(mRenderTasks[GlRenderTask::RenderTypes::RT_RadGradient].get());
+            assert(renderTask);
+            rTask = renderTask;
+            renderTask->load();
+            PropertyInterface::clearData(renderTask);
+            const RadialGradient* grad = static_cast<const RadialGradient*>(fill);
+            grad->radial(&x1, &y1, &r1);
+            renderTask->setStartPosition(x1, y1);
+            renderTask->setStartRadius(r1);
+            break;
+        }
+    }
+    if (rTask)
+    {
+        int32_t vertexLoc = rTask->getLocationPropertyId();
+        rTask->setPrimitveSize(size.x, size.y);
+        rTask->setCanvasSize(sdata.viewWd, sdata.viewHt);
+        rTask->setNoise(NOISE_LEVEL);
+        rTask->setStopCount((int)stopCnt);
+        for (uint32_t i = 0; i < stopCnt; ++i)
+        {
+            rTask->setStopColor(i, stops[i].offset, stops[i].r, stops[i].g, stops[i].b, stops[i].a);
+        }
+
+        rTask->uploadValues();
+        sdata.geometry->draw(vertexLoc, primitiveIndex, flag);
+        sdata.geometry->disableVertex(vertexLoc);
+    }
+}
+

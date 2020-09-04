@@ -128,6 +128,8 @@ public:
     }
 };
 
+typedef GlPoint GlSize;
+
 struct SmoothPoint
 {
     GlPoint orgPt;
@@ -174,6 +176,9 @@ struct GlPrimitive
     vector<SmoothPoint> mAAPoints;
     VertexDataArray mFill;
     VertexDataArray mStroke;
+    GlPoint mTopLeft;
+    GlPoint mBottomRight;
+    bool mIsClosed = false;
 };
 
 class GlGpuBuffer;
@@ -183,9 +188,10 @@ class GlGeometry
 public:
 
     uint32_t getPrimitiveCount();
+    const GlSize getPrimitiveSize(const uint32_t primitiveIndex) const;
     bool decomposeOutline(const Shape& shape);
-    bool generateAAPoints(const Shape& shape, float strokeWd, RenderUpdateFlag flag);
-    bool tesselate(const Shape &shape, float viewWd, float viewHt, RenderUpdateFlag flag);
+    bool generateAAPoints(TVG_UNUSED const Shape& shape, float strokeWd, RenderUpdateFlag flag);
+    bool tesselate(TVG_UNUSED const Shape &shape, float viewWd, float viewHt, RenderUpdateFlag flag);
     void disableVertex(uint32_t location);
     void draw(const uint32_t location, const uint32_t primitiveIndex, RenderUpdateFlag flag);
 
@@ -196,11 +202,11 @@ private:
     float dotProduct(const GlPoint &p1, const GlPoint &p2);
     GlPoint extendEdge(const GlPoint &pt, const GlPoint &normal, float scalar);
 
-    void addPoint(GlPrimitive& primitve, const GlPoint &pt);
+    void addPoint(GlPrimitive& primitve, const GlPoint &pt, GlPoint &min, GlPoint &max);
     void addTriangleFanIndices(uint32_t &curPt, vector<uint32_t> &indices);
     void addQuadIndices(uint32_t &curPt, vector<uint32_t> &indices);
     bool isBezierFlat(const GlPoint &p1, const GlPoint &c1, const GlPoint &c2, const GlPoint &p2);
-    void decomposeCubicCurve(GlPrimitive& primitve, const GlPoint &pt1, const GlPoint &cpt1, const GlPoint &cpt2, const GlPoint &pt2);
+    void decomposeCubicCurve(GlPrimitive& primitve, const GlPoint &pt1, const GlPoint &cpt1, const GlPoint &cpt2, const GlPoint &pt2, GlPoint &min, GlPoint &max);
     void updateBuffer(const uint32_t location, const VertexDataArray& vertexArray);
 
     unique_ptr<GlGpuBuffer> mGpuBuffer;

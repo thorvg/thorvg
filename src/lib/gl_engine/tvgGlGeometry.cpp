@@ -33,6 +33,17 @@ uint32_t GlGeometry::getPrimitiveCount()
 }
 
 
+const GlSize GlGeometry::getPrimitiveSize(const uint32_t primitiveIndex) const
+{
+    if (primitiveIndex >= mPrimitives.size())
+    {
+        return GlSize();
+    }
+    GlSize size = mPrimitives[primitiveIndex].mBottomRight - mPrimitives[primitiveIndex].mTopLeft;
+    return size;
+}
+
+
 bool GlGeometry::decomposeOutline(const Shape &shape)
 {
     const PathCommand *cmds = nullptr;
@@ -46,43 +57,63 @@ bool GlGeometry::decomposeOutline(const Shape &shape)
         return false;
 
     GlPrimitive* curPrimitive = nullptr;
+    GlPoint min = { FLT_MAX, FLT_MAX };
+    GlPoint max = { 0.0f, 0.0f };
+
     for (size_t i = 0; i < cmdCnt; ++i)
     {
-        switch (*(cmds + i))
-        {
-            case PathCommand::Close:
-            {
-                if (curPrimitive && curPrimitive->mAAPoints.size() > 0 &&
-                (curPrimitive->mAAPoints[0].orgPt != curPrimitive->mAAPoints.back().orgPt) )
+        switch (*(cmds + i)) {
+            case PathCommand::Close: {
+                if (curPrimitive)
                 {
-                    curPrimitive->mAAPoints.push_back(curPrimitive->mAAPoints[0].orgPt);
+                    if (curPrimitive->mAAPoints.size() > 0 &&
+                        (curPrimitive->mAAPoints[0].orgPt != curPrimitive->mAAPoints.back().orgPt))
+                    {
+                        curPrimitive->mAAPoints.push_back(curPrimitive->mAAPoints[0].orgPt);
+                    }
+                    curPrimitive->mIsClosed = true;
                 }
                 break;
             }
-            case PathCommand::MoveTo:
-                mPrimitives.push_back(GlPrimitive());
-                curPrimitive = &mPrimitives.back();
-                __attribute__ ((fallthrough));
-            case PathCommand::LineTo:
-            {
+            case PathCommand::MoveTo: {
                 if (curPrimitive)
                 {
-                    addPoint(*curPrimitive, pts[0]);
+                    curPrimitive->mTopLeft = min;
+                    curPrimitive->mBottomRight = max;
+                    if (curPrimitive->mAAPoints.size() > 2 &&
+                        (curPrimitive->mAAPoints[0].orgPt == curPrimitive->mAAPoints.back().orgPt))
+                    {
+                        curPrimitive->mIsClosed = true;
+                    }
+                }
+                mPrimitives.push_back(GlPrimitive());
+                curPrimitive = &mPrimitives.back();
+            }
+            __attribute__ ((fallthrough));
+            case PathCommand::LineTo: {
+                if (curPrimitive)
+                {
+                    addPoint(*curPrimitive, pts[0], min, max);
                 }
                 pts++;
                 break;
             }
-            case PathCommand::CubicTo:
-            {
+            case PathCommand::CubicTo: {
                 if (curPrimitive)
                 {
-                    decomposeCubicCurve(*curPrimitive, curPrimitive->mAAPoints.back().orgPt, pts[0], pts[1], pts[2]);
+                    decomposeCubicCurve(*curPrimitive, curPrimitive->mAAPoints.back().orgPt, pts[0], pts[1], pts[2], min, max);
                 }
                 pts += 3;
                 break;
             }
         }
     }
+    if (curPrimitive)
+    {
+        curPrimitive->mTopLeft = min;
+        curPrimitive->mBottomRight = max;
+    }
+
     return true;
 }
 
@@ -107,20 +138,30 @@ bool GlGeometry::generateAAPoints(TVG_UNUSED const Shape &shape, float strokeWd,
 
         size_t fPoint = 0;
         size_t sPoint = 1;
-        for (size_t i = 0; i < nPoints; ++i)
+        for (size_t i = 0; i < nPoints - 1; ++i)
         {
             fPoint = i;
             sPoint = i + 1;
-            if (fPoint == nPoints - 1)
+            if (shapeGeometry.mIsClosed && sPoint == nPoints - 1)
+            {
                 sPoint = 0;
+            }
 
             GlPoint normal = getNormal(aaPts[fPoint].orgPt, aaPts[sPoint].orgPt);
 
             normalInfo[fPoint].normal1 = normal;
             normalInfo[sPoint].normal2 = normal;
         }
-        normalInfo[0].normal2 = normalInfo[0].normal1;
-        normalInfo[nPoints - 1].normal1 = normalInfo[nPoints - 1].normal2;
+        if (shapeGeometry.mIsClosed)
+        {
+            normalInfo[nPoints - 1].normal1 = normalInfo[0].normal1;
+            normalInfo[nPoints - 1].normal2 = normalInfo[0].normal2;
+        }
+        else
+        {
+            normalInfo[nPoints - 1].normal1 = normalInfo[nPoints - 1].normal2;
+            normalInfo[0].normal2 = normalInfo[0].normal1;
+        }
 
         for (uint32_t i = 0; i < nPoints; ++i)
         {
@@ -133,7 +174,7 @@ bool GlGeometry::generateAAPoints(TVG_UNUSED const Shape &shape, float strokeWd,
             else
                 normalInfo[i].normalF = GlPoint(0, 0);
 
-            if (flag & RenderUpdateFlag::Color)
+            if (flag & (RenderUpdateFlag::Color | RenderUpdateFlag::Gradient))
             {
                 aaPts[i].fillOuterBlur = extendEdge(aaPts[i].orgPt, normalInfo[i].normalF, blurDir * stroke);
                 aaPts[i].fillOuter = extendEdge(aaPts[i].fillOuterBlur, normalInfo[i].normalF, blurDir*antiAliasWidth);
@@ -161,7 +202,7 @@ bool GlGeometry::tesselate(TVG_UNUSED const Shape &shape, float viewWd, float vi
         VertexDataArray& fill = shapeGeometry.mFill;
         VertexDataArray& stroke = shapeGeometry.mStroke;
 
-        if (flag & RenderUpdateFlag::Color)
+        if (flag & (RenderUpdateFlag::Color | RenderUpdateFlag::Gradient) )
         {
             uint32_t i = 0;
             for (size_t pt = 0; pt < aaPts.size(); ++pt)
@@ -229,7 +270,7 @@ void GlGeometry::draw(const uint32_t location, const uint32_t primitiveIndex, Re
     {
         return;
     }
-    VertexDataArray& geometry = (flag == RenderUpdateFlag::Color) ? mPrimitives[primitiveIndex].mFill : mPrimitives[primitiveIndex].mStroke;
+    VertexDataArray& geometry = (flag == RenderUpdateFlag::Stroke) ? mPrimitives[primitiveIndex].mStroke : mPrimitives[primitiveIndex].mFill;
 
     updateBuffer(location, geometry);
     GL_CHECK(glDrawElements(GL_TRIANGLES, geometry.indices.size(), GL_UNSIGNED_INT, geometry.indices.data()));
@@ -280,8 +321,12 @@ GlPoint GlGeometry::extendEdge(const GlPoint &pt, const GlPoint &normal, float s
     return (pt + tmp);
 }
 
-void GlGeometry::addPoint(GlPrimitive& primitve, const GlPoint &pt)
+void GlGeometry::addPoint(GlPrimitive& primitve, const GlPoint &pt, GlPoint &min, GlPoint &max)
 {
+    if (pt.x < min.x) min.x = pt.x;
+    if (pt.y < min.y) min.y = pt.y;
+    if (pt.x > max.x) max.x = pt.x;
+    if (pt.y > max.y) max.y = pt.y;
     primitve.mAAPoints.push_back(GlPoint(pt.x, pt.y));
 }
 
@@ -320,11 +365,11 @@ bool GlGeometry::isBezierFlat(const GlPoint &p1, const GlPoint &c1, const GlPoin
     return false;
 }
 
-void GlGeometry::decomposeCubicCurve(GlPrimitive& primitve, const GlPoint &pt1, const GlPoint &cpt1, const GlPoint &cpt2, const GlPoint &pt2)
+void GlGeometry::decomposeCubicCurve(GlPrimitive& primitve, const GlPoint &pt1, const GlPoint &cpt1, const GlPoint &cpt2, const GlPoint &pt2, GlPoint &min, GlPoint &max)
 {
     if (isBezierFlat(pt1, cpt1, cpt2, pt2))
     {
-        addPoint(primitve, pt2);
+        addPoint(primitve, pt2, min, max);
         return;
     }
     GlPoint p12 = (pt1 + cpt1) * 0.5f;
@@ -336,7 +381,7 @@ void GlGeometry::decomposeCubicCurve(GlPrimitive& primitve, const GlPoint &pt1, 
 
     GlPoint p1234 = (p123 + p234) * 0.5f;
 
-    decomposeCubicCurve(primitve, pt1, p12, p123, p1234);
-    decomposeCubicCurve(primitve, p1234, p234, p34, pt2);
+    decomposeCubicCurve(primitve, pt1, p12, p123, p1234, min, max);
+    decomposeCubicCurve(primitve, p1234, p234, p34, pt2, min, max);
 }
 

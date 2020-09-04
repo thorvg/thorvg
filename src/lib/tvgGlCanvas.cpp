@@ -67,7 +67,7 @@ Result GlCanvas::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t 
     auto renderer = static_cast<GlRenderer*>(Canvas::pImpl.get()->renderer);
     if (!renderer) return Result::MemoryCorruption;
 
-    if (!renderer->target(buffer, stride, w, h, 0)) return Result::Unknown;
+    if (!renderer->target(buffer, stride, w, h)) return Result::Unknown;
 
     return Result::Success;
 #endif

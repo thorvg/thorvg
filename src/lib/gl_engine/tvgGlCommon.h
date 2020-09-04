@@ -24,6 +24,7 @@
 #define _TVG_GL_COMMON_H_
 
 #include "tvgCommon.h"
+#include <assert.h>
 
 
 #define GL_CHECK(x) \

@@ -36,10 +36,17 @@ public:
     ~GlProgram();
 
     void load();
-    void unload();
+    static void unload();
     int32_t getAttributeLocation(const char* name);
     int32_t getUniformLocation(const char* name);
-    void setUniformValue(int32_t location, float r, float g, float b, float a);
+    void setUniform1Value(int32_t location, int count, const int* values);
+    void setUniform2Value(int32_t location, int count, const int* values);
+    void setUniform3Value(int32_t location, int count, const int* values);
+    void setUniform4Value(int32_t location, int count, const int* values);
+    void setUniform1Value(int32_t location, int count, const float* values);
+    void setUniform2Value(int32_t location, int count, const float* values);
+    void setUniform3Value(int32_t location, int count, const float* values);
+    void setUniform4Value(int32_t location, int count, const float* values);
 
 private:
 
@@ -47,8 +54,6 @@ private:
     uint32_t mProgramObj;
     static uint32_t mCurrentProgram;
 
-    static std::map<string, int32_t> mAttributeBuffer;
-    static std::map<string, int32_t> mUniformBuffer;
 };
 
 #endif /* _TVG_GL_PROGRAM_H_ */

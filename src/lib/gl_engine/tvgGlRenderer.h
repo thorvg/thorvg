@@ -25,7 +25,7 @@
 
 #include "tvgGlCommon.h"
 #include "tvgGlProgram.h"
-
+#include "tvgGlRenderTask.h"
 
 class GlRenderer : public RenderMethod
 {
@@ -50,11 +50,10 @@ private:
     ~GlRenderer();
 
     void initShaders();
-    void drawPrimitive(GlGeometry& geometry, float r, float g, float b, float a, uint32_t primitiveIndex, RenderUpdateFlag flag);
+    void drawPrimitive(GlShape& sdata, uint8_t r, uint8_t g, uint8_t b, uint8_t a, uint32_t primitiveIndex, RenderUpdateFlag flag);
+    void drawPrimitive(GlShape& sdata, const Fill* fill, uint32_t primitiveIndex, RenderUpdateFlag flag);
 
-    unique_ptr<GlProgram>   mColorProgram = nullptr;
-    int32_t   mColorUniformLoc = 0;
-    uint32_t  mVertexAttrLoc = 0;
+    vector<shared_ptr<GlRenderTask>>  mRenderTasks;
 };
 
 #endif /* _TVG_GL_RENDERER_H_ */

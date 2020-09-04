@@ -26,17 +26,7 @@
 #include <GLES2/gl2.h>
 
 
-static std::vector<string> gStdAttributes = {
-    "aLocation"
-};
-
-static std::vector<string> gStdUniforms = {
-    "uColor"
-};
-
 uint32_t GlProgram::mCurrentProgram = 0;
-map<string, int32_t> GlProgram::mAttributeBuffer;
-map<string, int32_t> GlProgram::mUniformBuffer;
 
 
 unique_ptr<GlProgram> GlProgram::gen(std::shared_ptr<GlShader> shader)
@@ -48,17 +38,6 @@ unique_ptr<GlProgram> GlProgram::gen(std::shared_ptr<GlShader> shader)
 GlProgram::GlProgram(std::shared_ptr<GlShader> shader)
 {
     linkProgram(shader);
-    load();
-
-    for (auto name : gStdAttributes)
-    {
-        getAttributeLocation(name.c_str());
-    }
-    for (auto name : gStdUniforms)
-    {
-        getUniformLocation(name.c_str());
-    }
-
 }
 
 
@@ -93,38 +72,63 @@ void GlProgram::unload()
 
 int32_t GlProgram::getAttributeLocation(const char* name)
 {
-    if (mAttributeBuffer.find(name) != mAttributeBuffer.end())
-    {
-        return mAttributeBuffer[name];
-    }
     GL_CHECK(int32_t location = glGetAttribLocation(mCurrentProgram, name));
-    if (location != -1)
-    {
-        mAttributeBuffer[name] = location;
-    }
     return location;
 }
 
 
 int32_t GlProgram::getUniformLocation(const char* name)
 {
-    if (mUniformBuffer.find(name) != mUniformBuffer.end())
-    {
-        return mUniformBuffer[name];
-    }
     GL_CHECK(int32_t location = glGetUniformLocation(mCurrentProgram, name));
-    if (location != -1)
-    {
-        mUniformBuffer[name] = location;
-    }
     return location;
-
 }
 
 
-void GlProgram::setUniformValue(int32_t location, float r, float g, float b, float a)
+void GlProgram::setUniform1Value(int32_t location, int count, const int* values)
 {
-    glUniform4f(location, r, g, b, a);
+    GL_CHECK(glUniform1iv(location, count, values));
+}
+
+
+void GlProgram::setUniform2Value(int32_t location, int count, const int* values)
+{
+    GL_CHECK(glUniform2iv(location, count, values));
+}
+
+
+void GlProgram::setUniform3Value(int32_t location, int count, const int* values)
+{
+    GL_CHECK(glUniform3iv(location, count, values));
+}
+
+
+void GlProgram::setUniform4Value(int32_t location, int count, const int* values)
+{
+    GL_CHECK(glUniform4iv(location, count, values));
+}
+
+
+void GlProgram::setUniform1Value(int32_t location, int count, const float* values)
+{
+    GL_CHECK(glUniform1fv(location, count, values));
+}
+
+
+void GlProgram::setUniform2Value(int32_t location, int count, const float* values)
+{
+    GL_CHECK(glUniform2fv(location, count, values));
+}
+
+
+void GlProgram::setUniform3Value(int32_t location, int count, const float* values)
+{
+    GL_CHECK(glUniform3fv(location, count, values));
+}
+
+
+void GlProgram::setUniform4Value(int32_t location, int count, const float* values)
+{
+    GL_CHECK(glUniform4fv(location, count, values));
 }
 
 
