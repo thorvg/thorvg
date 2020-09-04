@@ -98,7 +98,8 @@ SwRenderer::~SwRenderer()
 
 bool SwRenderer::clear()
 {
-    if (this->valid() || tasks.size() > 0) return false;
+    for (auto task : tasks) task->get();
+    tasks.clear();
 
     return flush();
 }
@@ -106,8 +107,6 @@ bool SwRenderer::clear()
 
 bool SwRenderer::flush()
 {
-    this->get();   //complete rendering
-
     for (auto task : tasks) task->get();
     tasks.clear();
 
@@ -136,20 +135,12 @@ bool SwRenderer::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t 
 
 bool SwRenderer::preRender()
 {
-    //before we start rendering, we should finish all preparing tasks
-    for (auto task : tasks) task->get();
-
-    TaskScheduler::request(this);
-
-    return true;
-}
-
-
-void SwRenderer::run()
-{
     rasterClear(surface);
 
+    //before we start rendering, we should finish all preparing tasks
     for (auto task : tasks) {
+        task->get();
+
         uint8_t r, g, b, a;
         if (auto fill = task->sdata->fill()) {
             rasterGradientShape(surface, &task->shape, fill->id());
@@ -161,7 +152,9 @@ void SwRenderer::run()
         if (a > 0) rasterStroke(surface, &task->shape, r, g, b, a);
     }
     tasks.clear();
-};
+
+    return true;
+}
 
 
 bool SwRenderer::dispose(TVG_UNUSED const Shape& sdata, void *data)

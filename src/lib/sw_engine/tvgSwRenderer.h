@@ -28,7 +28,7 @@ struct SwTask;
 namespace tvg
 {
 
-class SwRenderer : public RenderMethod, public Task
+class SwRenderer : public RenderMethod
 {
 public:
     void* prepare(const Shape& shape, void* data, const RenderTransform* transform, RenderUpdateFlag flags) override;
@@ -39,7 +39,6 @@ public:
     bool flush() override;
     uint32_t ref() override;
     uint32_t unref() override;
-    void run() override;
 
     static SwRenderer* inst();
     static int init();
