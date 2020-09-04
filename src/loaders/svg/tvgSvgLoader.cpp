@@ -223,6 +223,25 @@ static constexpr struct
 _PARSE_TAG(SvgFillRule, fillRule, FillRule, fillRuleTags, SvgFillRule::Winding)
 
 
+/* parse the dash pattern used during stroking a path.
+ * Value:   none | <dasharray> | inherit
+ * Initial:    none
+ * https://www.w3.org/TR/SVG/painting.html
+ */
+static inline void
+_parseDashArray(const char *str, SvgDash* dash)
+{
+   char *end = nullptr;
+
+   while (*str)
+     {
+        // skip white space, comma
+        str = _skipComma(str);
+        (*dash).array.push(strtof(str, &end));
+        str = _skipComma(end);
+     }
+}
+
 static string* _idFromUrl(const char* url)
 {
     char tmp[50];
@@ -774,6 +793,11 @@ static void _handleStrokeOpacityAttr(TVG_UNUSED SvgLoaderData* loader, SvgNode* 
     node->style->stroke.opacity = _toOpacity(value);
 }
 
+static void _handleStrokeDashArrayAttr(TVG_UNUSED SvgLoaderData* loader, SvgNode* node, const char* value)
+{
+    node->style->stroke.flags = (SvgStrokeFlags)((int)node->style->stroke.flags | (int)SvgStrokeFlags::Dash);
+    _parseDashArray(value, &node->style->stroke.dash);
+}
 
 static void _handleStrokeWidthAttr(SvgLoaderData* loader, SvgNode* node, const char* value)
 {
@@ -858,6 +882,7 @@ static constexpr struct
     STYLE_DEF(stroke-linejoin, StrokeLineJoin),
     STYLE_DEF(stroke-linecap, StrokeLineCap),
     STYLE_DEF(stroke-opacity, StrokeOpacity),
+    STYLE_DEF(stroke-dasharray, StrokeDashArray),
     STYLE_DEF(transform, Transform),
     STYLE_DEF(display, Display)
 };
@@ -2063,6 +2088,14 @@ static void _styleInherit(SvgStyleProperty* child, SvgStyleProperty* parent)
     if (!((int)child->stroke.flags & (int)SvgStrokeFlags::Width)) {
         child->stroke.width = parent->stroke.width;
     }
+    if (!((int)child->stroke.flags & (int)SvgStrokeFlags::Dash)) {
+        if (parent->stroke.dash.array.cnt > 0) {
+            child->stroke.dash.array.clear();
+            for(uint32_t i = 0; i < parent->stroke.dash.array.cnt; ++i) {
+                child->stroke.dash.array.push(parent->stroke.dash.array.list[i]);
+            }
+        }
+    }
     if (!((int)child->stroke.flags & (int)SvgStrokeFlags::Cap)) {
         child->stroke.cap = parent->stroke.cap;
     }
@@ -2156,6 +2189,7 @@ static void _freeNodeStyle(SvgStyleProperty* style)
     _freeGradientStyle(style->fill.paint.gradient);
     delete style->fill.paint.url;
     _freeGradientStyle(style->stroke.paint.gradient);
+    if (style->stroke.dash.array.cnt > 0) style->stroke.dash.array.clear();
     delete style->stroke.paint.url;
     free(style);
 }
