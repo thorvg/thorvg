@@ -1448,7 +1448,7 @@ static void _copyAttr(SvgNode* to, SvgNode* from)
 static void _cloneNode(SvgNode* from, SvgNode* parent)
 {
     SvgNode* newNode;
-    if (!from) return;
+    if (!from || !parent) return;
 
     newNode = _createNode(parent, from->type);
     _copyAttr(newNode, from);
