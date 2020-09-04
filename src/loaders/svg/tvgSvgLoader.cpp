@@ -2377,6 +2377,13 @@ bool SvgLoader::close()
         free(loaderData.svgParse);
         loaderData.svgParse = nullptr;
     }
+    auto gradients = loaderData.gradients.list;
+    for (size_t i = 0; i < loaderData.gradients.cnt; ++i) {
+        _freeGradientStyle(*gradients);
+        ++gradients;
+    }
+    loaderData.gradients.clear();
+
     _freeNode(loaderData.doc);
     loaderData.doc = nullptr;
     loaderData.stack.clear();
