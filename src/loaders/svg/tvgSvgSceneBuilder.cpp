@@ -95,17 +95,14 @@ unique_ptr<LinearGradient> _applyLinearGradientProperty(SvgStyleGradient* g, Sha
     //Update the stops
     stopCount = g->stops.cnt;
     if (stopCount > 0) {
-        float opacity;
-        float fopacity = fillOpacity / 255.0f; //fill opacity if any exists.
         stops = (Fill::ColorStop*)calloc(stopCount, sizeof(Fill::ColorStop));
         for (uint32_t i = 0; i < g->stops.cnt; ++i) {
             auto colorStop = g->stops.list[i];
             //Use premultiplied color
-            opacity = ((float)colorStop->a / 255.0f) * fopacity;
-            stops[i].r = colorStop->r * opacity;
-            stops[i].g = colorStop->g * opacity;
-            stops[i].b = colorStop->b * opacity;
-            stops[i].a = colorStop->a * fopacity;
+            stops[i].r = colorStop->r;
+            stops[i].g = colorStop->g;
+            stops[i].b = colorStop->b;
+            stops[i].a = (colorStop->a * fillOpacity) / 255.0f;
             stops[i].offset = colorStop->offset;
         }
         fillGrad->colorStops(stops, stopCount);
@@ -180,17 +177,14 @@ unique_ptr<RadialGradient> _applyRadialGradientProperty(SvgStyleGradient* g, Sha
     //Update the stops
     stopCount = g->stops.cnt;
     if (stopCount > 0) {
-        float opacity;
-        float fopacity = fillOpacity / 255.0f; //fill opacity if any exists.
         stops = (Fill::ColorStop*)calloc(stopCount, sizeof(Fill::ColorStop));
         for (uint32_t i = 0; i < g->stops.cnt; ++i) {
             auto colorStop = g->stops.list[i];
             //Use premultiplied color
-            opacity = ((float)colorStop->a / 255.0f) * fopacity;
-            stops[i].r = colorStop->r * opacity;
-            stops[i].g = colorStop->g * opacity;
-            stops[i].b = colorStop->b * opacity;
-            stops[i].a = colorStop->a * fopacity;
+            stops[i].r = colorStop->r;
+            stops[i].g = colorStop->g;
+            stops[i].b = colorStop->b;
+            stops[i].a = (colorStop->a * fillOpacity) / 255.0f;
             stops[i].offset = colorStop->offset;
         }
         fillGrad->colorStops(stops, stopCount);
@@ -232,7 +226,7 @@ void _applyProperty(SvgNode* node, Shape* vg, float vx, float vy, float vw, floa
     if (style->opacity < 255) {
         uint8_t r, g, b, a;
         vg->fill(&r, &g, &b, &a);
-        vg->fill(r, g, b, (a * style->opacity) / 255.0);
+        vg->fill(r, g, b, (a * style->opacity) / 255.0f);
     }
 
     if (node->type == SvgNodeType::G) return;
@@ -263,7 +257,7 @@ void _applyProperty(SvgNode* node, Shape* vg, float vx, float vy, float vw, floa
     if (style->opacity < 255) {
         uint8_t r, g, b, a;
         vg->strokeColor(&r, &g, &b, &a);
-        vg->stroke(r, g, b, (a * style->opacity) / 255.0);
+        vg->stroke(r, g, b, (a * style->opacity) / 255.0f);
     }
 }
 
