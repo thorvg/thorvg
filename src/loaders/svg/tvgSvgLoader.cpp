@@ -1974,7 +1974,7 @@ static void _svgLoaderParserXmlOpen(SvgLoaderData* loader, const char* content, 
         //       But finally, the loader has a gradient style list regardless of defs.
         //       This is only to support this when multiple gradients are declared, even if no defs are declared.
         //       refer to: https://developer.mozilla.org/en-US/docs/Web/SVG/Element/defs
-        if (loader->doc->node.doc.defs) {
+        if (loader->def && loader->doc->node.doc.defs) {
             loader->def->node.defs.gradients.push(gradient);
         } else {
             loader->gradients.push(gradient);
