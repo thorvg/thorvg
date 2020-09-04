@@ -222,20 +222,17 @@ void _applyProperty(SvgNode* node, Shape* vg, float vx, float vy, float vw, floa
         }
     } else if (style->fill.paint.curColor) {
         //Apply the current style color
-        float fa = ((float)style->fill.opacity / 255.0);
-        vg->fill(((float)style->r) * fa, ((float)style->g) * fa, ((float)style->b) * fa, style->fill.opacity);
+        vg->fill(style->r, style->g, style->b, style->fill.opacity);
     } else {
         //Apply the fill color
-        float fa = ((float)style->fill.opacity / 255.0);
-        vg->fill(((float)style->fill.paint.r) * fa, ((float)style->fill.paint.g) * fa, ((float)style->fill.paint.b) * fa, style->fill.opacity);
+        vg->fill(style->fill.paint.r, style->fill.paint.g, style->fill.paint.b, style->fill.opacity);
     }
 
     //Apply node opacity
     if (style->opacity < 255) {
         uint8_t r, g, b, a;
         vg->fill(&r, &g, &b, &a);
-        float fa = ((float)style->opacity / 255.0);
-        vg->fill(((float)r) * fa, ((float)g) * fa, ((float)b) * fa, ((float)a) * fa);
+        vg->fill(r, g, b, (a * style->opacity) / 255.0);
     }
 
     if (node->type == SvgNodeType::G) return;
@@ -266,8 +263,7 @@ void _applyProperty(SvgNode* node, Shape* vg, float vx, float vy, float vw, floa
     if (style->opacity < 255) {
         uint8_t r, g, b, a;
         vg->strokeColor(&r, &g, &b, &a);
-        float fa = ((float)style->opacity / 255.0);
-        vg->stroke(((float)r) * fa, ((float)g) * fa, ((float)b) * fa, ((float)a) * fa);
+        vg->stroke(r, g, b, (a * style->opacity) / 255.0);
     }
 }
 
