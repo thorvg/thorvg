@@ -40,16 +40,14 @@ public:
     bool target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h);
     bool flush() override;
     bool clear() override;
-    uint32_t ref() override;
-    uint32_t unref() override;
 
-    static GlRenderer* inst();
+    static GlRenderer* gen();
     static int init();
     static int term();
 
 private:
     GlRenderer(){};
-    ~GlRenderer(){};
+    ~GlRenderer();
 
     void initShaders();
     void drawPrimitive(GlGeometry& geometry, float r, float g, float b, float a, uint32_t primitiveIndex, RenderUpdateFlag flag);

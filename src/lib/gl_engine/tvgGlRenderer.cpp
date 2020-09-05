@@ -28,8 +28,15 @@
 /************************************************************************/
 /* Internal Class Implementation                                        */
 /************************************************************************/
+static bool initEngine = false;
+static uint32_t rendererCnt = 0;
 
-static RenderInitializer renderInit;
+static void _termEngine()
+{
+    if (rendererCnt > 0) return;
+
+    //TODO: Clean up global resources
+}
 
 /************************************************************************/
 /* External Class Implementation                                        */
@@ -160,36 +167,44 @@ void* GlRenderer::prepare(const Shape& shape, void* data, TVG_UNUSED const Rende
 
 int GlRenderer::init()
 {
-    return RenderInitializer::init(renderInit, new GlRenderer);
+    if (rendererCnt > 0) return false;
+    if (initEngine) return true;
+
+    //TODO:
+
+    initEngine = true;
+
+    return true;
 }
 
 
 int GlRenderer::term()
 {
-    if (inst()->mColorProgram.get())
+    if (!initEngine) return true;
+
+    initEngine = false;
+
+   _termEngine();
+
+    return true;
+}
+
+
+GlRenderer* GlRenderer::gen()
+{
+    return new GlRenderer();
+}
+
+
+GlRenderer::~GlRenderer()
+{
+    if (mColorProgram.get())
     {
-        inst()->mColorProgram.reset(nullptr);
+        mColorProgram.reset(nullptr);
     }
-    return RenderInitializer::term(renderInit);
-}
 
-
-uint32_t GlRenderer::unref()
-{
-    return RenderInitializer::unref(renderInit);
-}
-
-
-uint32_t GlRenderer::ref()
-{
-    return RenderInitializer::ref(renderInit);
-}
-
-
-GlRenderer* GlRenderer::inst()
-{
-    //We know renderer type, avoid dynamic_cast for performance.
-    return static_cast<GlRenderer*>(RenderInitializer::inst(renderInit));
+    --rendererCnt;
+    if (!initEngine) _termEngine();
 }
 
 

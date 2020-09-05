@@ -46,7 +46,7 @@ struct GlCanvas::Impl
 /************************************************************************/
 
 #ifdef THORVG_GL_RASTER_SUPPORT
-GlCanvas::GlCanvas() : Canvas(GlRenderer::inst()), pImpl(make_unique<Impl>())
+GlCanvas::GlCanvas() : Canvas(GlRenderer::gen()), pImpl(make_unique<Impl>())
 #else
 GlCanvas::GlCanvas() : Canvas(nullptr), pImpl(make_unique<Impl>())
 #endif
