@@ -2323,30 +2323,13 @@ static bool _svgLoaderParserForValidCheck(void* data, SimpleXMLType type, const 
 }
 
 
-void SvgTask::run()
-{
-    if (!simpleXmlParse(loader->content, loader->size, true, _svgLoaderParser, &(loader->loaderData))) return;
-
-    if (loader->loaderData.doc) {
-        _updateStyle(loader->loaderData.doc, nullptr);
-        auto defs = loader->loaderData.doc->node.doc.defs;
-        if (defs) _updateGradient(loader->loaderData.doc, &defs->node.defs.gradients);
-        else {
-            if (loader->loaderData.gradients.cnt > 0) {
-                _updateGradient(loader->loaderData.doc, &loader->loaderData.gradients);
-            }
-        }
-    }
-    loader->root = loader->builder.build(loader->loaderData.doc);
-};
-
 /************************************************************************/
 /* External Class Implementation                                        */
 /************************************************************************/
 
-SvgLoader::SvgLoader() : task(new SvgTask)
+SvgLoader::SvgLoader()
 {
-    task->loader = this;
+
 }
 
 
@@ -2354,6 +2337,24 @@ SvgLoader::~SvgLoader()
 {
     close();
 }
+
+
+void SvgLoader::run()
+{
+    if (!simpleXmlParse(content, size, true, _svgLoaderParser, &(loaderData))) return;
+
+    if (loaderData.doc) {
+        _updateStyle(loaderData.doc, nullptr);
+        auto defs = loaderData.doc->node.doc.defs;
+        if (defs) _updateGradient(loaderData.doc, &defs->node.defs.gradients);
+        else {
+            if (loaderData.gradients.cnt > 0) {
+                _updateGradient(loaderData.doc, &loaderData.gradients);
+            }
+        }
+    }
+    root = builder.build(loaderData.doc);
+};
 
 
 bool SvgLoader::header()
@@ -2417,7 +2418,7 @@ bool SvgLoader::read()
 {
     if (!content || size == 0) return false;
 
-    TaskScheduler::request(task);
+    TaskScheduler::request(this);
 
     return true;
 }
@@ -2425,11 +2426,8 @@ bool SvgLoader::read()
 
 bool SvgLoader::close()
 {
-    if (task) {
-        task->get();
-        delete(task);
-        task = nullptr;
-    }
+    this->get();
+
     if (loaderData.svgParse) {
         free(loaderData.svgParse);
         loaderData.svgParse = nullptr;
@@ -2451,7 +2449,7 @@ bool SvgLoader::close()
 
 unique_ptr<Scene> SvgLoader::data()
 {
-    if (task) task->get();
+    this->get();
     if (root) return move(root);
     else return nullptr;
 }
