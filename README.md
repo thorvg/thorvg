@@ -30,7 +30,7 @@ ThorVG renders vector shapes on a given canvas buffer.
 
 You can initialize ThorVG engine first:
 ```cpp
-tvg::Initializer::init(tvg::CanvasEngine::Sw);
+tvg::Initializer::init(tvg::CanvasEngine::Sw, 0);   //engine method, thread count
 ```
 You can prepare a empty canvas for drawing on it.
 ```cpp
@@ -54,7 +54,12 @@ Begin rendering & finish it at a particular time.
 canvas->draw();
 canvas->sync();
 ```
-Lastly, you can acquire the rendered image in buffer memory.
+Now you can acquire the rendered image in buffer memory.
+
+Lastly, terminate the engine after usage.
+```cpp
+tvg::Initializer::term(tvg::CanvasEngine::Sw);
+```
 
 [Back to contents](#contents)
 #
