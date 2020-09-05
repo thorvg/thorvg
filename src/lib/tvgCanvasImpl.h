@@ -35,14 +35,12 @@ struct Canvas::Impl
 
     Impl(RenderMethod* pRenderer):renderer(pRenderer)
     {
-        renderer->ref();
     }
 
     ~Impl()
     {
-        renderer->flush();  //make it sur async engine working finished.
         clear();
-        renderer->unref();
+        delete(renderer);
     }
 
     Result push(unique_ptr<Paint> paint)

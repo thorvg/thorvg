@@ -36,13 +36,10 @@ public:
     bool preRender() override;
     bool target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h, uint32_t cs);
     bool clear() override;
-    bool flush() override;
-    uint32_t ref() override;
-    uint32_t unref() override;
 
-    static SwRenderer* inst();
-    static int init();
-    static int term();
+    static SwRenderer* gen();
+    static bool init();
+    static bool term();
 
 private:
     SwSurface* surface = nullptr;

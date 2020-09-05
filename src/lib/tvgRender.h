@@ -64,63 +64,6 @@ public:
     virtual bool postRender() { return true; }
     virtual bool clear() { return true; }
     virtual bool flush() { return true; }
-    virtual uint32_t ref() { return 0; }
-    virtual uint32_t unref() { return 0; }
-};
-
-struct RenderInitializer
-{
-    RenderMethod* pInst = nullptr;
-    uint32_t refCnt = 0;
-    bool initialized = false;
-
-    static bool init(RenderInitializer& renderInit, RenderMethod* engine)
-    {
-        if (renderInit.pInst || renderInit.refCnt > 0) return false;
-        renderInit.pInst = engine;
-        renderInit.refCnt = 0;
-        renderInit.initialized = true;
-        return true;
-    }
-
-    static bool term(RenderInitializer& renderInit)
-    {
-        if (!renderInit.pInst || !renderInit.initialized) return false;
-
-        renderInit.initialized = false;
-
-        //Still it's refered....
-        if (renderInit.refCnt > 0) return  true;
-        delete(renderInit.pInst);
-        renderInit.pInst = nullptr;
-
-        return true;
-    }
-
-    static uint32_t unref(RenderInitializer& renderInit)
-    {
-        --renderInit.refCnt;
-
-        //engine has been requested to termination
-        if (!renderInit.initialized && renderInit.refCnt == 0) {
-            if (renderInit.pInst) {
-                delete(renderInit.pInst);
-                renderInit.pInst = nullptr;
-            }
-        }
-        return renderInit.refCnt;
-    }
-
-    static RenderMethod* inst(RenderInitializer& renderInit)
-    {
-        return renderInit.pInst;
-    }
-
-    static uint32_t ref(RenderInitializer& renderInit)
-    {
-        return ++renderInit.refCnt;
-    }
-
 };
 
 }

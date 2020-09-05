@@ -25,7 +25,8 @@
 /************************************************************************/
 /* Internal Class Implementation                                        */
 /************************************************************************/
-static RenderInitializer renderInit;
+static bool initEngine = false;
+static uint32_t rendererCnt = 0;
 
 struct SwTask : Task
 {
@@ -84,6 +85,13 @@ struct SwTask : Task
     }
 };
 
+static void _termEngine()
+{
+    if (rendererCnt > 0) return;
+
+    //TODO: Clean up global resources
+}
+
 
 /************************************************************************/
 /* External Class Implementation                                        */
@@ -91,21 +99,16 @@ struct SwTask : Task
 
 SwRenderer::~SwRenderer()
 {
-    flush();
+    clear();
+
     if (surface) delete(surface);
+
+    --rendererCnt;
+    if (!initEngine) _termEngine();
 }
 
 
 bool SwRenderer::clear()
-{
-    for (auto task : tasks) task->get();
-    tasks.clear();
-
-    return flush();
-}
-
-
-bool SwRenderer::flush()
 {
     for (auto task : tasks) task->get();
     tasks.clear();
@@ -202,32 +205,32 @@ void* SwRenderer::prepare(const Shape& sdata, void* data, const RenderTransform*
 }
 
 
-int SwRenderer::init()
+bool SwRenderer::init()
 {
-    return RenderInitializer::init(renderInit, new SwRenderer);
+    if (rendererCnt > 0) return false;
+    if (initEngine) return true;
+
+    //TODO:
+
+    initEngine = true;
+
+    return true;
 }
 
 
-int SwRenderer::term()
+bool SwRenderer::term()
 {
-    return RenderInitializer::term(renderInit);
+    if (!initEngine) return true;
+
+    initEngine = false;
+
+   _termEngine();
+
+    return true;
 }
 
-
-uint32_t SwRenderer::unref()
+SwRenderer* SwRenderer::gen()
 {
-    return RenderInitializer::unref(renderInit);
-}
-
-
-uint32_t SwRenderer::ref()
-{
-    return RenderInitializer::ref(renderInit);
-}
-
-
-SwRenderer* SwRenderer::inst()
-{
-    //We know renderer type, avoid dynamic_cast for performance.
-    return static_cast<SwRenderer*>(RenderInitializer::inst(renderInit));
+    ++rendererCnt;
+    return new SwRenderer();
 }
