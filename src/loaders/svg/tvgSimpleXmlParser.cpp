@@ -242,13 +242,7 @@ bool simpleXmlParse(const char* buf, unsigned bufLength, bool strip, simpleXMLCb
                             if (!memcmp(p - 2, "--", 2)) end -= 2;
                             break;
                         }
-                        case SimpleXMLType::OpenEmpty:
-                        case SimpleXMLType::Close:
-                        case SimpleXMLType::Data:
-                        case SimpleXMLType::Error:
-                        case SimpleXMLType::Doctype:
-                        case SimpleXMLType::DoctypeChild:
-                        case SimpleXMLType::Ignored: {
+                        default: {
                             break;
                         }
                     }
