@@ -1,5 +1,9 @@
 # ThorVG
 
+<p align="center">
+  <img width="240" height="240" src="https://github.com/Samsung/thorvg/blob/master/res/logo.png">
+</p>
+
 ThorVG is a platform independent lightweight standalone C++ library for drawing vector-based shapes and SVG.
 
 #
