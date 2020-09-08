@@ -41,7 +41,7 @@ struct SwTask : Task
         //Valid Stroking?
         uint8_t strokeAlpha = 0;
         auto strokeWidth = sdata->strokeWidth();
-        if (strokeWidth > FLT_EPSILON) {
+        if (TO_SWCOORD(strokeWidth * 0.5) > 0) {
             sdata->strokeColor(nullptr, nullptr, nullptr, &strokeAlpha);
         }
 
