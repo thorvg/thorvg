@@ -44,12 +44,12 @@ const GlSize GlGeometry::getPrimitiveSize(const uint32_t primitiveIndex) const
 }
 
 
-bool GlGeometry::decomposeOutline(const Shape &shape)
+bool GlGeometry::decomposeOutline(const Shape& shape)
 {
-    const PathCommand *cmds = nullptr;
+    const PathCommand* cmds = nullptr;
     auto cmdCnt = shape.pathCommands(&cmds);
 
-    Point *pts = nullptr;
+    Point* pts = nullptr;
     auto ptsCnt = shape.pathCoords(const_cast<const Point**>(&pts));
 
     //No actual shape data
@@ -117,11 +117,11 @@ bool GlGeometry::decomposeOutline(const Shape &shape)
     return true;
 }
 
-bool GlGeometry::generateAAPoints(TVG_UNUSED const Shape &shape, float strokeWd, RenderUpdateFlag flag)
+bool GlGeometry::generateAAPoints(TVG_UNUSED const Shape& shape, float strokeWd, RenderUpdateFlag flag)
 {
     for (auto& shapeGeometry : mPrimitives)
     {
-        std::vector<PointNormals> normalInfo;
+        vector<PointNormals> normalInfo;
         constexpr float blurDir = -1.0f;
         float antiAliasWidth = 1.0f;
         vector<SmoothPoint>& aaPts = shapeGeometry.mAAPoints;
@@ -192,7 +192,7 @@ bool GlGeometry::generateAAPoints(TVG_UNUSED const Shape &shape, float strokeWd,
     return true;
 }
 
-bool GlGeometry::tesselate(TVG_UNUSED const Shape &shape, float viewWd, float viewHt, RenderUpdateFlag flag)
+bool GlGeometry::tesselate(TVG_UNUSED const Shape& shape, float viewWd, float viewHt, RenderUpdateFlag flag)
 {
     for (auto& shapeGeometry : mPrimitives)
     {
@@ -289,7 +289,7 @@ void GlGeometry::updateBuffer(uint32_t location, const VertexDataArray& vertexAr
 }
 
 
-GlPoint GlGeometry::normalizePoint(const GlPoint &pt, float viewWd, float viewHt)
+GlPoint GlGeometry::normalizePoint(const GlPoint& pt, float viewWd, float viewHt)
 {
     GlPoint p;
     p.x = (pt.x * 2.0f / viewWd) - 1.0f;
@@ -297,31 +297,31 @@ GlPoint GlGeometry::normalizePoint(const GlPoint &pt, float viewWd, float viewHt
     return p;
 }
 
-void GlGeometry::addGeometryPoint(VertexDataArray &geometry, const GlPoint &pt, float viewWd, float viewHt, float opacity)
+void GlGeometry::addGeometryPoint(VertexDataArray& geometry, const GlPoint &pt, float viewWd, float viewHt, float opacity)
 {
     VertexData tv = { normalizePoint(pt, viewWd, viewHt), opacity};
     geometry.vertices.push_back(tv);
 }
 
-GlPoint GlGeometry::getNormal(const GlPoint &p1, const GlPoint &p2)
+GlPoint GlGeometry::getNormal(const GlPoint& p1, const GlPoint& p2)
 {
     GlPoint normal = p1 - p2;
     normal.normalize();
     return GlPoint(-normal.y, normal.x);
 }
 
-float GlGeometry::dotProduct(const GlPoint &p1, const GlPoint &p2)
+float GlGeometry::dotProduct(const GlPoint& p1, const GlPoint& p2)
 {
     return (p1.x * p2.x + p1.y * p2.y);
 }
 
-GlPoint GlGeometry::extendEdge(const GlPoint &pt, const GlPoint &normal, float scalar)
+GlPoint GlGeometry::extendEdge(const GlPoint& pt, const GlPoint& normal, float scalar)
 {
     GlPoint tmp = (normal * scalar);
     return (pt + tmp);
 }
 
-void GlGeometry::addPoint(GlPrimitive& primitve, const GlPoint &pt, GlPoint &min, GlPoint &max)
+void GlGeometry::addPoint(GlPrimitive& primitve, const GlPoint& pt, GlPoint& min, GlPoint& max)
 {
     if (pt.x < min.x) min.x = pt.x;
     if (pt.y < min.y) min.y = pt.y;
@@ -330,14 +330,14 @@ void GlGeometry::addPoint(GlPrimitive& primitve, const GlPoint &pt, GlPoint &min
     primitve.mAAPoints.push_back(GlPoint(pt.x, pt.y));
 }
 
-void GlGeometry::addTriangleFanIndices(uint32_t &curPt, std::vector<uint32_t> &indices)
+void GlGeometry::addTriangleFanIndices(uint32_t& curPt, vector<uint32_t>& indices)
 {
     indices.push_back(0);
     indices.push_back(curPt - 1);
     indices.push_back(curPt);
 }
 
-void GlGeometry::addQuadIndices(uint32_t &curPt, std::vector<uint32_t> &indices)
+void GlGeometry::addQuadIndices(uint32_t& curPt, vector<uint32_t>& indices)
 {
     indices.push_back(curPt);
     indices.push_back(curPt + 1);
@@ -348,7 +348,7 @@ void GlGeometry::addQuadIndices(uint32_t &curPt, std::vector<uint32_t> &indices)
     curPt += 4;
 }
 
-bool GlGeometry::isBezierFlat(const GlPoint &p1, const GlPoint &c1, const GlPoint &c2, const GlPoint &p2)
+bool GlGeometry::isBezierFlat(const GlPoint& p1, const GlPoint& c1, const GlPoint& c2, const GlPoint& p2)
 {
     GlPoint diff1 = (c1 * 3.0f) - (p1 * 2.0f) - p2;
     GlPoint diff2 = (c2 * 3.0f) - (p2 * 2.0f) - p1;
@@ -365,7 +365,7 @@ bool GlGeometry::isBezierFlat(const GlPoint &p1, const GlPoint &c1, const GlPoin
     return false;
 }
 
-void GlGeometry::decomposeCubicCurve(GlPrimitive& primitve, const GlPoint &pt1, const GlPoint &cpt1, const GlPoint &cpt2, const GlPoint &pt2, GlPoint &min, GlPoint &max)
+void GlGeometry::decomposeCubicCurve(GlPrimitive& primitve, const GlPoint& pt1, const GlPoint& cpt1, const GlPoint& cpt2, const GlPoint& pt2, GlPoint& min, GlPoint& max)
 {
     if (isBezierFlat(pt1, cpt1, cpt2, pt2))
     {

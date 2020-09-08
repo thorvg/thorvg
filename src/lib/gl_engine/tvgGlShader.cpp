@@ -26,7 +26,7 @@
 #include <GLES2/gl2.h>
 
 
-shared_ptr<GlShader> GlShader::gen(const char * vertSrc, const char * fragSrc)
+shared_ptr<GlShader> GlShader::gen(const char* vertSrc, const char* fragSrc)
 {
     shared_ptr<GlShader> shader = make_shared<GlShader>();
     shader->createShader(vertSrc, fragSrc);

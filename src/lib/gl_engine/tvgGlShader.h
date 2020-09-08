@@ -28,7 +28,7 @@
 class GlShader
 {
 public:
-    static std::shared_ptr<GlShader> gen(const char * vertSrc, const char * fragSrc);
+    static std::shared_ptr<GlShader> gen(const char* vertSrc, const char* fragSrc);
     ~GlShader();
 
     uint32_t getVertexShader();

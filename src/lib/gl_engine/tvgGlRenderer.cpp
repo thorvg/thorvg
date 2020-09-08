@@ -96,7 +96,7 @@ bool GlRenderer::postRender()
 }
 
 
-bool GlRenderer::render(const Shape& shape, void *data)
+bool GlRenderer::render(const Shape& shape, void* data)
 {
     GlShape* sdata = static_cast<GlShape*>(data);
     if (!sdata) return false;

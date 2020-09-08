@@ -52,9 +52,9 @@ class GlGeometry;
 
 struct GlShape
 {
-  float             viewWd;
-  float             viewHt;
-  RenderUpdateFlag  updateFlag;
+  float viewWd;
+  float viewHt;
+  RenderUpdateFlag updateFlag;
   unique_ptr<GlGeometry> geometry;
 };
 
