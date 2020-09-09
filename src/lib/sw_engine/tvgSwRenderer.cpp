@@ -138,23 +138,32 @@ bool SwRenderer::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t 
 
 bool SwRenderer::preRender()
 {
-    rasterClear(surface);
+    return rasterClear(surface);
+}
 
-    //before we start rendering, we should finish all preparing tasks
-    for (auto task : tasks) {
-        task->get();
 
-        uint8_t r, g, b, a;
-        if (auto fill = task->sdata->fill()) {
-            rasterGradientShape(surface, &task->shape, fill->id());
-        } else{
-            task->sdata->fill(&r, &g, &b, &a);
-            if (a > 0) rasterSolidShape(surface, &task->shape, r, g, b, a);
-        }
-        task->sdata->strokeColor(&r, &g, &b, &a);
-        if (a > 0) rasterStroke(surface, &task->shape, r, g, b, a);
-    }
+bool SwRenderer::postRender()
+{
     tasks.clear();
+
+    return true;
+}
+
+
+bool SwRenderer::render(const Shape& shape, void *data)
+{
+    auto task = static_cast<SwTask*>(data);
+    task->get();
+
+    uint8_t r, g, b, a;
+    if (auto fill = task->sdata->fill()) {
+        rasterGradientShape(surface, &task->shape, fill->id());
+    } else{
+        task->sdata->fill(&r, &g, &b, &a);
+        if (a > 0) rasterSolidShape(surface, &task->shape, r, g, b, a);
+    }
+    task->sdata->strokeColor(&r, &g, &b, &a);
+    if (a > 0) rasterStroke(surface, &task->shape, r, g, b, a);
 
     return true;
 }
