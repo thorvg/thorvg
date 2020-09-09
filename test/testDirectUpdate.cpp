@@ -9,6 +9,15 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 {
     if (!canvas) return;
 
+    //Shape (for BG)
+    auto bg = tvg::Shape::gen();
+    bg->appendRect(0, 0, WIDTH, HEIGHT, 0, 0);
+
+    //fill property will be retained
+    bg->fill(255, 255, 255, 255);
+
+    if (canvas->push(move(bg)) != tvg::Result::Success) return;
+
     //Shape
     auto shape = tvg::Shape::gen();
 
