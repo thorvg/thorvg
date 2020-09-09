@@ -196,6 +196,8 @@ struct SvgRectNode
     float h;
     float rx;
     float ry;
+    bool hasRx;
+    bool hasRy;
 };
 
 struct SvgLineNode
