@@ -1270,10 +1270,16 @@ static bool _attrParseRectNode(void* data, const char* key, const char* value)
     for (i = 0; i < sizeof(rectTags) / sizeof(rectTags[0]); i++) {
         if (rectTags[i].sz - 1 == sz && !strncmp(rectTags[i].tag, key, sz)) {
             *((float*)(array + rectTags[i].offset)) = _toFloat(loader->svgParse, value, rectTags[i].type);
+
+            //Case if only rx or ry is declared
+            if (!strncmp(rectTags[i].tag, "rx", sz)) rect->hasRx = true;
+            if (!strncmp(rectTags[i].tag, "ry", sz)) rect->hasRy = true;
+
+            if ((rect->rx > FLT_EPSILON) && (rect->ry <= FLT_EPSILON) && rect->hasRx && !rect->hasRy) rect->ry = rect->rx;
+            if ((rect->ry > FLT_EPSILON) && (rect->rx <= FLT_EPSILON) && !rect->hasRx && rect->hasRy) rect->rx = rect->ry;
             return ret;
         }
     }
-
 
     if (!strcmp(key, "id")) {
         node->id = _copyId(value);
@@ -1283,9 +1289,6 @@ static bool _attrParseRectNode(void* data, const char* key, const char* value)
         ret = _parseStyleAttr(loader, key, value);
     }
 
-    if (!(rect->rx - 0 <= FLT_EPSILON) && (rect->ry - 0 <= FLT_EPSILON)) rect->ry = rect->rx;
-    if (!(rect->ry - 0 <= FLT_EPSILON) && (rect->rx - 0 <= FLT_EPSILON)) rect->rx = rect->ry;
-
     return ret;
 }
 
@@ -1293,6 +1296,9 @@ static bool _attrParseRectNode(void* data, const char* key, const char* value)
 static SvgNode* _createRectNode(SvgLoaderData* loader, SvgNode* parent, const char* buf, unsigned bufLength)
 {
     loader->svgParse->node = _createNode(parent, SvgNodeType::Rect);
+    if (loader->svgParse->node) {
+        loader->svgParse->node->node.rect.hasRx = loader->svgParse->node->node.rect.hasRy = false;
+    }
 
     simpleXmlParseAttributes(buf, bufLength, _attrParseRectNode, loader);
     return loader->svgParse->node;
@@ -1459,6 +1465,8 @@ static void _copyAttr(SvgNode* to, SvgNode* from)
             to->node.rect.h = from->node.rect.h;
             to->node.rect.rx = from->node.rect.rx;
             to->node.rect.ry = from->node.rect.ry;
+            to->node.rect.hasRx = from->node.rect.hasRx;
+            to->node.rect.hasRy = from->node.rect.hasRy;
             break;
         }
         case SvgNodeType::Line: {
