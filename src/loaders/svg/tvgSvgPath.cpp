@@ -44,12 +44,14 @@ static bool _parseNumber(char** content, float* number)
 }
 
 
-static bool _parseLong(char** content, int* number)
+static bool _parseFlag(char** content, int* number)
 {
     char* end = NULL;
-    *number = strtol(*content, &end, 10) ? 1 : 0;
-    //If the start of string is not number
-    if ((*content) == end) return false;
+    *number = strtol(*content, &end, 10);
+    //If the start of string is not number or a number was a float
+    if ((*content) == end || *end == '.') return false;
+    //If a flag has a different value than 0 or 1
+    if (*number != 0 && *number != 1) return false;
     *content = _skipComma(end);
     return true;
 }
@@ -463,8 +465,8 @@ static char* _nextCommand(char* path, char* cmd, float* arr, int* count)
         if (_parseNumber(&path, &arr[0])) {
             if (_parseNumber(&path, &arr[1])) {
                 if (_parseNumber(&path, &arr[2])) {
-                    if (_parseLong(&path, &large)) {
-                        if (_parseLong(&path, &sweep)) {
+                    if (_parseFlag(&path, &large)) {
+                        if (_parseFlag(&path, &sweep)) {
                             if (_parseNumber(&path, &arr[5])) {
                                 if (_parseNumber(&path, &arr[6])) {
                                     arr[3] = large;
