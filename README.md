@@ -53,6 +53,15 @@ shape->fill(255, 255, 0, 255);              //r, g, b, a
 
 canvas->push(move(shape));                  //push shape drawing command
 ```
+
+This code snippet shows you how to draw SVG image.
+```cpp
+auto picture = tvg::Picture::gen();         //generate a picture
+picture->load("sample.svg");                //Load SVG file.
+
+canvas->push(move(picture));                //push picture drawing command
+```
+
 Begin rendering & finish it at a particular time.
 ```cpp
 canvas->draw();
