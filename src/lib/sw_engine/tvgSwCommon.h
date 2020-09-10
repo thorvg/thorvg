@@ -247,6 +247,11 @@ static inline uint8_t ALPHA_MULTIPLY(uint32_t c, uint32_t a)
     return (c * a) >> 8;
 }
 
+static inline SwCoord HALF_STROKE(float width)
+{
+    return TO_SWCOORD(width * 0.5);
+}
+
 int64_t mathMultiply(int64_t a, int64_t b);
 int64_t mathDivide(int64_t a, int64_t b);
 int64_t mathMulDiv(int64_t a, int64_t b, int64_t c);

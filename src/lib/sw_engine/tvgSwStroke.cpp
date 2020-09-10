@@ -831,7 +831,7 @@ void strokeReset(SwStroke* stroke, const Shape* sdata, const Matrix* transform)
         stroke->sx = stroke->sy = 1.0f;
     }
 
-    stroke->width = TO_SWCOORD(sdata->strokeWidth() * 0.5);
+    stroke->width = HALF_STROKE(sdata->strokeWidth());
     stroke->cap = sdata->strokeCap();
 
     //Save line join: it can be temporarily changed when stroking curves...
