@@ -69,24 +69,14 @@ unique_ptr<LinearGradient> _applyLinearGradientProperty(SvgStyleGradient* g, Sha
          float cy = ((float) rh) * 0.5 + ry;
          float cx = ((float) rw) * 0.5 + rx;
 
-         //Calc start point
          //= T(x - cx, y - cy) x g->transform x T(cx, cy)
-         g->linear->x1 = cx * (g->transform->e11 + g->transform->e31 * (g->linear->x1 - cx)) +
-                         cx * (g->transform->e12 + g->transform->e32 * (g->linear->x1 - cx)) +
-                         cx * (g->transform->e13 + g->transform->e33 * (g->linear->x1 - cx));
-
-         g->linear->y1 = cy * (g->transform->e21 + g->transform->e31 * (g->linear->y1 - cy)) +
-                         cy * (g->transform->e22 + g->transform->e32 * (g->linear->y1 - cy)) +
-                         cy * (g->transform->e23 + g->transform->e33 * (g->linear->y1 - cy));
+         //Calc start point
+         g->linear->x1 = (g->transform->e11 * cx) + (g->transform->e12 * cy) + g->linear->x1 + g->transform->e13 - cx;
+         g->linear->y1 = (g->transform->e21 * cx) + (g->transform->e22 * cy) + g->linear->y1 + g->transform->e23 - cy;
 
          //Calc end point
-         g->linear->x2 = cx * (g->transform->e11 + g->transform->e31 * (g->linear->x2 - cx)) +
-                         cx * (g->transform->e12 + g->transform->e32 * (g->linear->x2 - cx)) +
-                         cx * (g->transform->e13 + g->transform->e33 * (g->linear->x2 - cx));
-
-         g->linear->y2 = cy * (g->transform->e21 + g->transform->e31 * (g->linear->y2 - cy)) +
-                         cy * (g->transform->e22 + g->transform->e32 * (g->linear->y2 - cy)) +
-                         cy * (g->transform->e23 + g->transform->e33 * (g->linear->y2 - cy));
+         g->linear->x2 = (g->transform->e11 * cx) + (g->transform->e12 * cy) + g->linear->x2 + g->transform->e13 - cx;
+         g->linear->y2 = (g->transform->e21 * cx) + (g->transform->e22 * cy) + g->linear->y2 + g->transform->e23 - cy;
     }
 
     fillGrad->linear(g->linear->x1, g->linear->y1, g->linear->x2, g->linear->y2);
