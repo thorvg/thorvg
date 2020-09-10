@@ -22,7 +22,7 @@ option('bindings',
    value: ['capi'],
    description: 'Enable C API binding')
 
-option('example',
+option('util',
    type: 'boolean',
    value: true,
-   description: 'Enable building examples')
+   description: 'Enable building utils')
