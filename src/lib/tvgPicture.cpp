@@ -63,3 +63,10 @@ Result Picture::viewbox(float* x, float* y, float* w, float* h) const noexcept
     if (IMPL->viewbox(x, y, w, h)) return Result::Success;
     return Result::InsufficientCondition;
 }
+
+
+std::unique_ptr<Paint> Picture::duplicate() const noexcept
+{
+    //TODO: implement
+    return nullptr;
+}

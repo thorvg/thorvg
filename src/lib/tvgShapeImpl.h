@@ -162,6 +162,46 @@ struct Shape::Impl
 
         return true;
     }
+
+    void duplicate(Shape::Impl *s)
+    {
+        if (memcmp(color, s->color, sizeof(color))) {
+            memcpy(color, s->color, sizeof(color));
+            flag = RenderUpdateFlag::Color;
+        }
+
+        if (s->path) {
+            path = new ShapePath();
+
+            path->cmdCnt = s->path->cmdCnt;
+            path->ptsCnt = s->path->ptsCnt;
+            path->reservedCmdCnt = s->path->reservedCmdCnt;
+            path->reservedPtsCnt = s->path->reservedPtsCnt;
+
+            path->cmds = static_cast<PathCommand*>(malloc(sizeof(PathCommand) * path->reservedCmdCnt));
+            path->pts = static_cast<Point*>(malloc(sizeof(Point) * path->reservedPtsCnt));
+
+            memcpy(path->cmds, s->path->cmds, sizeof(PathCommand) * s->path->cmdCnt);
+            memcpy(path->pts, s->path->pts, sizeof(Point) * s->path->ptsCnt);
+
+            flag = RenderUpdateFlag::Path;
+        }
+
+        if (s->stroke) {
+            stroke = new ShapeStroke();
+            strokeCap(s->stroke->cap);
+            strokeColor(s->stroke->color[0], s->stroke->color[1],
+                              s->stroke->color[2], s->stroke->color[3]);
+            strokeJoin(s->stroke->join);
+            strokeWidth(s->stroke->width);
+
+            if (s->stroke->dashPattern && s->stroke->dashCnt > 0) {
+                strokeDash(s->stroke->dashPattern, s->stroke->dashCnt);
+            }
+        }
+
+        //TODO: add fill
+    }
 };
 
 #endif //_TVG_SHAPE_IMPL_H_
