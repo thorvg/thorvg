@@ -210,6 +210,8 @@ class TVG_EXPORT Shape final : public Paint
 public:
     ~Shape();
 
+    Result duplicate(std::unique_ptr<tvg::Shape>& shape);
+    Result duplicate(Shape* from); //For CAPI binding
     Result reset() noexcept;
 
     //Path

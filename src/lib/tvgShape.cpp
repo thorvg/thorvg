@@ -48,6 +48,17 @@ unique_ptr<Shape> Shape::gen() noexcept
     return unique_ptr<Shape>(new Shape);
 }
 
+Result Shape::duplicate(unique_ptr<Shape>& shape)
+{
+    IMPL->duplicate(shape.get());
+    return Result::Success;
+}
+
+Result Shape::duplicate(Shape* from)
+{
+    IMPL->duplicate(from);
+    return Result::Success;
+}
 
 Result Shape::reset() noexcept
 {

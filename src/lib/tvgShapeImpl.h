@@ -162,6 +162,65 @@ struct Shape::Impl
 
         return true;
     }
+
+    bool duplicate(Shape *from) {
+        if (!from || !from->pImpl) return false;
+
+        if (from->pImpl->stroke) {
+            if (stroke) delete(stroke);
+            stroke = nullptr;
+
+            stroke = new ShapeStroke();
+            if (!stroke) return false;
+
+            stroke->cap = from->pImpl->stroke->cap;
+            stroke->join = from->pImpl->stroke->join;
+            stroke->width = from->pImpl->stroke->width;
+
+            memcpy(stroke->color, from->pImpl->stroke->color, sizeof(stroke->color));
+
+            if (from->pImpl->stroke->dashPattern &&
+                from->pImpl->stroke->dashCnt > 0) {
+                stroke->dashCnt = from->pImpl->stroke->dashCnt;
+                stroke->dashPattern = static_cast<float*> (malloc(sizeof(float) * stroke->dashCnt));
+                memcpy(stroke->dashPattern, from->pImpl->stroke->dashPattern,
+                       sizeof(float) * stroke->dashCnt);
+            }
+
+            flag |= RenderUpdateFlag::Stroke;
+        }
+
+        if (from->pImpl->path) {
+            //duplicate override all stored shapes data
+            if (path) delete path;
+            path = nullptr;
+
+            path = new ShapePath();
+            if (!path) return false;
+
+            path->cmdCnt = from->pImpl->path->cmdCnt;
+            path->ptsCnt = from->pImpl->path->ptsCnt;
+
+            path->reservedCmdCnt = from->pImpl->path->reservedCmdCnt;
+            path->reservedPtsCnt = from->pImpl->path->reservedPtsCnt;
+
+            path->cmds = static_cast<PathCommand*>(malloc(sizeof(PathCommand) * path->reservedCmdCnt));
+            path->pts = static_cast<Point*>(malloc(sizeof(Point) * path->reservedPtsCnt));
+
+            memcpy(path->cmds, from->pImpl->path->cmds, sizeof(PathCommand) * path->cmdCnt);
+            memcpy(path->pts, from->pImpl->path->pts, sizeof(Point) * path->ptsCnt);
+
+            flag |= RenderUpdateFlag::Path;
+        }
+
+        if (memcmp(color, from->pImpl->color, sizeof(color)))
+        {
+            memcpy(color, from->pImpl->color, sizeof(color));
+            flag |= RenderUpdateFlag::Color;
+        }
+
+        return true;
+    }
 };
 
 #endif //_TVG_SHAPE_IMPL_H_

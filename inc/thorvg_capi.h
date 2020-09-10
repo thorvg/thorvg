@@ -127,6 +127,7 @@ TVG_EXPORT Tvg_Result tvg_paint_transform(Tvg_Paint* paint, const Tvg_Matrix* m)
 /************************************************************************/
 TVG_EXPORT Tvg_Paint* tvg_shape_new();
 TVG_EXPORT Tvg_Result tvg_shape_reset(Tvg_Paint* paint);
+TVG_EXPORT Tvg_Result tvg_shape_duplicate(Tvg_Paint* paint, Tvg_Paint* from);
 TVG_EXPORT Tvg_Result tvg_shape_move_to(Tvg_Paint* paint, float x, float y);
 TVG_EXPORT Tvg_Result tvg_shape_line_to(Tvg_Paint* paint, float x, float y);
 TVG_EXPORT Tvg_Result tvg_shape_cubic_to(Tvg_Paint* paint, float cx1, float cy1, float cx2, float cy2, float x, float y);

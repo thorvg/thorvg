@@ -195,6 +195,12 @@ TVG_EXPORT Tvg_Paint* tvg_shape_new()
 }
 
 
+TVG_EXPORT Tvg_Result tvg_shape_duplicate(Tvg_Paint* paint, Tvg_Paint* from)
+{
+    if (!paint || !from) return TVG_RESULT_INVALID_ARGUMENT;
+    return (Tvg_Result) reinterpret_cast<Shape*>(paint)->duplicate(reinterpret_cast<Shape*>(from));
+}
+
 TVG_EXPORT Tvg_Result tvg_shape_reset(Tvg_Paint* paint)
 {
     if (!paint) return TVG_RESULT_INVALID_ARGUMENT;

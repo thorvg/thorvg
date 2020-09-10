@@ -21,4 +21,5 @@ all:
 	gcc -o testAsync testAsync.cpp -g -lstdc++ `pkg-config --cflags --libs elementary thorvg`
 	gcc -o testArc testArc.cpp -g -lstdc++ `pkg-config --cflags --libs elementary thorvg`
 	gcc -o testMultiCanvas testMultiCanvas.cpp -g -lstdc++ `pkg-config --cflags --libs elementary thorvg`
+	gcc -o testDuplicate testDuplicate.cpp -g -lstdc++ `pkg-config --cflags --libs elementary thorvg`
 	gcc -o testCapi testCapi.c -g `pkg-config --cflags --libs elementary thorvg`
