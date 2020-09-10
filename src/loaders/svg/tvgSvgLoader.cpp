@@ -2355,11 +2355,8 @@ void SvgLoader::run()
         _updateStyle(loaderData.doc, nullptr);
         auto defs = loaderData.doc->node.doc.defs;
         if (defs) _updateGradient(loaderData.doc, &defs->node.defs.gradients);
-        else {
-            if (loaderData.gradients.cnt > 0) {
-                _updateGradient(loaderData.doc, &loaderData.gradients);
-            }
-        }
+
+        if (loaderData.gradients.cnt > 0) _updateGradient(loaderData.doc, &loaderData.gradients);
     }
     root = builder.build(loaderData.doc);
 };
