@@ -1,3 +1,5 @@
+[![Gitter](https://badges.gitter.im/thorvg/community.svg)](https://gitter.im/thorvg/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
+
 # ThorVG
 
 <p align="center">
