@@ -435,7 +435,8 @@ static void _processCommand(vector<PathCommand>* cmds, vector<Point>* pts, char 
         case 'a':
         case 'A': {
             _pathAppendArcTo(cmds, pts, cur, curCtl, arr[5], arr[6], arr[0], arr[1], arr[2], arr[3], arr[4]);
-            *cur = {arr[5] ,arr[6]};
+            *cur = *curCtl = {arr[5] ,arr[6]};
+            *isQuadratic = false;
             break;
         }
         default: {
