@@ -177,6 +177,14 @@ TVG_EXPORT Tvg_Result tvg_paint_transform(Tvg_Paint* paint, const Tvg_Matrix* m)
 }
 
 
+
+TVG_EXPORT Tvg_Paint* tvg_paint_duplicate(Tvg_Paint* paint)
+{
+    if (!paint) return NULL;
+    return (Tvg_Paint*) reinterpret_cast<Paint*>(paint)->duplicate().release();
+}
+
+
 /************************************************************************/
 /* Shape API                                                            */
 /************************************************************************/

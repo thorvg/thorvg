@@ -38,7 +38,6 @@ struct ShapePath
     uint32_t ptsCnt = 0;
     uint32_t reservedPtsCnt = 0;
 
-
     ~ShapePath()
     {
         if (cmds) free(cmds);
