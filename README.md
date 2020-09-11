@@ -79,4 +79,4 @@ tvg::Initializer::term(tvg::CanvasEngine::Sw);
 [Back to contents](#contents)
 #
 ## Issues or Feature Requests?
-For immidiate assistant or support please reach us in [Gitter](https://gitter.im/thorvg/community)
+For immediate assistant or support please reach us in [Gitter](https://gitter.im/thorvg/community)
