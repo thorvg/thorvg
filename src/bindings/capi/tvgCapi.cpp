@@ -254,6 +254,23 @@ TVG_EXPORT Tvg_Result tvg_shape_append_path(Tvg_Paint* paint, const Tvg_Path_Com
     return (Tvg_Result) reinterpret_cast<Shape*>(paint)->appendPath((PathCommand*)cmds, cmdCnt, (Point*)pts, ptsCnt);
 }
 
+TVG_EXPORT Tvg_Result tvg_shape_get_path_coords(const Tvg_Paint* paint, const Tvg_Point** pts, uint32_t* cnt)
+{
+    if (!paint) return TVG_RESULT_INVALID_ARGUMENT;
+    auto ret = reinterpret_cast<const Shape*>(paint)->pathCoords((const Point**)pts);
+    if (cnt) *cnt = ret;
+    return TVG_RESULT_SUCCESS;
+}
+
+
+TVG_EXPORT Tvg_Result tvg_shape_get_path_commands(const Tvg_Paint* paint, const Tvg_Path_Command** cmds, uint32_t* cnt)
+{
+    if (!paint) return TVG_RESULT_INVALID_ARGUMENT;
+    auto ret = reinterpret_cast<const Shape*>(paint)->pathCommands((const PathCommand**)cmds);
+    if (cnt) *cnt = ret;
+    return TVG_RESULT_SUCCESS;
+}
+
 
 TVG_EXPORT Tvg_Result tvg_shape_set_stroke_width(Tvg_Paint* paint, float width)
 {
