@@ -36,10 +36,6 @@ headers = [include_directories('inc'), include_directories('.')]
 subdir('inc')
 subdir('src')
 
-if get_option('util') == true
-    subdir('util')
-endif
-
 summary = '''
 
 Summary:
