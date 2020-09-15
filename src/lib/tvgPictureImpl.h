@@ -22,6 +22,7 @@
 #ifndef _TVG_PICTURE_IMPL_H_
 #define _TVG_PICTURE_IMPL_H_
 
+#include <string>
 #include "tvgPaint.h"
 #include "tvgLoaderMgr.h"
 

@@ -21,6 +21,8 @@
  */
 #include <string.h>
 #include <math.h>
+#include <ctype.h>
+#include <locale.h>
 #include "tvgSvgPath.h"
 
 static char* _skipComma(const char* content)

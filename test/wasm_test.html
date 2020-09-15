@@ -1,0 +1,25 @@
+<!doctype html>
+<html>
+  <canvas id="thorvg" width="100" height="100"></canvas>
+  <script>
+    var Module = {
+      onRuntimeInitialized: function() {
+
+        class SvgViewer {
+          constructor() {
+             var instance = new Module.ThorvgWasm();
+             this.canvas = document.getElementById("thorvg");
+             var context = this.canvas.getContext('2d');
+             var buffer = instance.render(this.canvas.width, this.canvas.height);
+             var clampedBuffer = Uint8ClampedArray.from(buffer);
+             var imageData = new ImageData(clampedBuffer, this.canvas.width, this.canvas.height);
+             context.putImageData(imageData, 0, 0);
+          }
+        }
+
+        var instance = new SvgViewer();
+      }
+    };
+  </script>
+  <script src="thorvg-wasm.js"></script>
+</html>
