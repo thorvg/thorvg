@@ -99,12 +99,6 @@ static inline SwPoint UPSCALE(const SwPoint& pt)
 }
 
 
-static inline SwPoint DOWNSCALE(const SwPoint& pt)
-{
-    return {pt.x >> (PIXEL_BITS - 6), pt.y >> (PIXEL_BITS - 6)};
-}
-
-
 static inline SwPoint TRUNC(const SwPoint& pt)
 {
     return  {pt.x >> PIXEL_BITS, pt.y >> PIXEL_BITS};
