@@ -160,17 +160,17 @@ namespace tvg
             return inst->bounds(x, y, w, h);
         }
 
-        bool dispose(RenderMethod& renderer)
+        bool dispose(RenderMethod& renderer) override
         {
             return inst->dispose(renderer);
         }
 
-        bool update(RenderMethod& renderer, const RenderTransform* transform, RenderUpdateFlag flag)
+        bool update(RenderMethod& renderer, const RenderTransform* transform, RenderUpdateFlag flag) override
         {
             return inst->update(renderer, transform, flag);
         }
 
-        bool render(RenderMethod& renderer)
+        bool render(RenderMethod& renderer) override
         {
             return inst->render(renderer);
         }
