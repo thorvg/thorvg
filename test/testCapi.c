@@ -71,10 +71,10 @@ void testCapi()
     tvg_gradient_color_stops(grad1, color_stops1, 3);
     tvg_gradient_color_stops(grad2, color_stops2, 2);
     tvg_gradient_color_stops(grad3, color_stops3, 2);
-    tvg_shape_linear_gradient_set(shape, grad);
-    tvg_shape_radial_gradient_set(shape1, grad1);
-    tvg_shape_linear_gradient_set(shape2, grad2);
-    tvg_shape_linear_gradient_set(shape3, grad3);
+    tvg_shape_set_linear_gradient(shape, grad);
+    tvg_shape_set_radial_gradient(shape1, grad1);
+    tvg_shape_set_linear_gradient(shape2, grad2);
+    tvg_shape_set_linear_gradient(shape3, grad3);
 
     tvg_canvas_push(canvas, shape);
     tvg_canvas_push(canvas, shape1);
@@ -91,7 +91,7 @@ void testCapi()
         {.offset=1, .r=0, .g=255, .b=0, .a=255},
     };
     tvg_gradient_color_stops(grad4, color_stops4, 2);
-    tvg_shape_linear_gradient_set(shape4, grad4);
+    tvg_shape_set_linear_gradient(shape4, grad4);
 
     Tvg_Gradient* grad5 = tvg_linear_gradient_new();
     tvg_linear_gradient_set(grad5, 700, 700, 800, 800);
@@ -101,7 +101,7 @@ void testCapi()
         {.offset=1, .r=0, .g=255, .b=255, .a=255},
     };
     tvg_gradient_color_stops(grad5, color_stops5, 2);
-    tvg_shape_linear_gradient_set(shape4, grad5);
+    tvg_shape_set_linear_gradient(shape4, grad5);
     tvg_canvas_push(canvas, shape4);
 
     Tvg_Gradient* grad6 = tvg_radial_gradient_new();
@@ -112,13 +112,28 @@ void testCapi()
         {.offset=1, .r=125, .g=0, .b=125, .a=255},
     };
     tvg_gradient_color_stops(grad6, color_stops6, 2);
-    tvg_shape_radial_gradient_set(shape1, grad6);
+    tvg_shape_set_radial_gradient(shape1, grad6);
     tvg_canvas_update(canvas);
 
     tvg_shape_set_stroke_width(shape,3);
     tvg_shape_set_stroke_color(shape, 125, 0, 125, 255);
     tvg_canvas_update_paint(canvas, shape);
 
+    const Tvg_Path_Command* cmds;
+    uint32_t cmdCnt;
+    const Tvg_Point* pts;
+    uint32_t ptsCnt;
+
+    tvg_shape_get_path_commands(shape, &cmds, &cmdCnt);
+    printf("---- First Shape Commands(%u) ----\n", cmdCnt);
+    for(int i=0; i<cmdCnt; ++i)
+        printf("%d\n", cmds[i]);
+
+    tvg_shape_get_path_coords(shape, &pts, &ptsCnt);
+    printf("---- First Shape Points(%u) ----\n", ptsCnt);
+    for(int i=0; i<ptsCnt; ++i)
+        printf("(%.2lf, %.2lf)\n", pts[i].x, pts[i].y);
+        
     tvg_canvas_draw(canvas);
     tvg_canvas_sync(canvas);
 
