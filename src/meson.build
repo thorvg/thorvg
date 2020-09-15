@@ -34,6 +34,16 @@ thorvg_dep = declare_dependency(
 	link_with : thorvg_lib
 )
 
+if (cc.get_id() == 'emscripten')
+
+  subdir('wasm')
+
+  executable('thorvg-wasm',
+              [],
+              dependencies : [thorvg_dep, thorvg_wasm_dep],
+            )
+endif
+
 pkg_mod = import('pkgconfig')
 
 pkg_mod.generate(

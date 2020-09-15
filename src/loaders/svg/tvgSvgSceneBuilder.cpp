@@ -20,6 +20,7 @@
  * SOFTWARE.
  */
 #include <math.h>
+#include <string>
 #include "tvgSvgSceneBuilder.h"
 #include "tvgSvgPath.h"
 

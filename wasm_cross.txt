@@ -1,0 +1,19 @@
+[binaries]
+c = 'EMSDK:upstream/emscripten/emcc.py'
+cpp = 'EMSDK:upstream/emscripten/em++.py'
+ar = 'EMSDK:upstream/emscripten/emar.py'
+
+[properties]
+root = 'EMSDK:upstream/emscripten/system'
+cpp_args = ['--bind' , '-s' , 'WASM=1' , '-s' , 'ALLOW_MEMORY_GROWTH=1' , '-s' , 'FILESYSTEM=0' , '-O2']
+cpp_link_args = ['--bind' , '-s' , 'WASM=1' , '-s' , 'ALLOW_MEMORY_GROWTH=1' , '-s' , 'FILESYSTEM=0' , '-O2']
+shared_lib_suffix = 'js'
+static_lib_suffix = 'js'
+shared_module_suffix = 'js'
+exe_suffix = 'js'
+
+[host_machine]
+system = 'emscripten'
+cpu_family = 'x86'
+cpu = 'i686'
+endian = 'little'

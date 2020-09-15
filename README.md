@@ -167,6 +167,10 @@ Note that these examples are required EFL `elementary` package for launching. If
 <br />
 <br />
 ## Tools
+### Online Viewer
+Please visit [ThorVG online viewer](https://samsung.github.io/thorvg.viewer)
+
+[ThorVG online viewer](https://samsung.github.io/thorvg.viewer) uses ThorVG wasm library to render the resource locally in your browser. To test your SVG resource drag and drop it to the browser window.
 ### SVG to PNG
 ThorVG provides an executable `svg2png` converter which generate a PNG file from a SVG file.
 
