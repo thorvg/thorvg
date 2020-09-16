@@ -4,7 +4,7 @@
 # ThorVG
 
 <p align="center">
-  <img width="240" height="240" src="https://github.com/Samsung/thorvg/blob/master/res/logo2.png">
+  <img width="360" height="360" src="https://github.com/Samsung/thorvg/blob/master/res/logo2.png">
 </p>
 
 ThorVG is a platform independent lightweight standalone C++ library for drawing vector-based shapes and SVG.
@@ -85,7 +85,7 @@ canvas->push(move(picture));                //push picture drawing command
 ```
 And here is the result.
 <p align="center">
-  <img width="391" height="400" src="https://github.com/Samsung/thorvg/blob/master/res/example_tiger.png">
+  <img width="300" height="300" src="https://github.com/Samsung/thorvg/blob/master/res/example_tiger.png">
 </p>
 
 Begin rendering & finish it at a particular time.
