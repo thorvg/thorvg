@@ -51,7 +51,7 @@ Next you can draw shapes onto the canvas.
 ```cpp
 auto rect = tvg::Shape::gen();               //generate a round rectangle
 rect->appendRect(50, 50, 200, 200, 20, 20);  //round geometry(x, y, w, h, rx, ry)
-rect->fill(255, 255, 0, 255);                //set round rectangle color (r, g, b, a)
+rect->fill(100, 100, 0, 255);                //set round rectangle color (r, g, b, a)
 canvas->push(move(rect));                    //push round rectangle drawing command
 
 auto circle = tvg::Shape::gen();             //generate a circle
@@ -71,14 +71,22 @@ circle->fill(move(fill));                    //set circle color
 canvas->push(move(circle));                  //push circle drawing command
 
 ```
+This code result look like this.
+<p align="center">
+  <img width="416" height="411" src="https://github.com/Samsung/thorvg/blob/master/res/example_shapes.jpg">
+</p>
 
-This code snippet shows you how to draw SVG image.
+Next, this code snippet shows you how to draw SVG image.
 ```cpp
 auto picture = tvg::Picture::gen();         //generate a picture
-picture->load("sample.svg");                //Load SVG file.
+picture->load("tiger.svg");                 //Load SVG file.
 
 canvas->push(move(picture));                //push picture drawing command
 ```
+And here is the result.
+<p align="center">
+  <img width="391" height="400" src="https://github.com/Samsung/thorvg/blob/master/res/example_tiger.jpg">
+</p>
 
 Begin rendering & finish it at a particular time.
 ```cpp
