@@ -21,3 +21,9 @@ option('bindings',
    choices: ['', 'capi'],
    value: ['capi'],
    description: 'Enable C API binding')
+
+option('utility',
+   type: 'array',
+   choices: ['', 'svg2png'],
+   value: ['svg2png'],
+   description: 'Enable building utilities')

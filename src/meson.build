@@ -29,6 +29,8 @@ thorvg_lib = library(
 	gnu_symbol_visibility  : 'hidden',
 )
 
+subdir('bin')
+
 thorvg_dep = declare_dependency(
 	include_directories: headers,
 	link_with : thorvg_lib
