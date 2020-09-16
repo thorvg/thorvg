@@ -77,7 +77,7 @@ canvas->push(move(circle));                  //push circle drawing command
 This code result looks like this.
 
 <p align="center">
-  <img width="416" height="411" src="https://github.com/Samsung/thorvg/blob/master/res/example_shapes.jpg">
+  <img width="416" height="411" src="https://github.com/Samsung/thorvg/blob/master/res/example_shapes.png">
 </p>
 
 Or you can draw pathes with dash stroking.
