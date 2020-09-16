@@ -73,7 +73,7 @@ canvas->push(move(circle));                  //push circle drawing command
 ```
 This code result look like this.
 <p align="center">
-  <img width="416" height="411" src="https://github.com/Samsung/thorvg/blob/master/res/example_shapes.jpg">
+  <img width="416" height="411" src="https://github.com/Samsung/thorvg/blob/master/res/example_shapes.png">
 </p>
 
 Next, this code snippet shows you how to draw SVG image.
@@ -85,7 +85,7 @@ canvas->push(move(picture));                //push picture drawing command
 ```
 And here is the result.
 <p align="center">
-  <img width="391" height="400" src="https://github.com/Samsung/thorvg/blob/master/res/example_tiger.jpg">
+  <img width="391" height="400" src="https://github.com/Samsung/thorvg/blob/master/res/example_tiger.png">
 </p>
 
 Begin rendering & finish it at a particular time.
