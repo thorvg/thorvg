@@ -36,10 +36,13 @@ ninja -C build install
 ThorVG renders vector shapes on a given canvas buffer.
 
 You can initialize ThorVG engine first:
+
 ```cpp
 tvg::Initializer::init(tvg::CanvasEngine::Sw, 0);   //engine method, thread count
 ```
+
 You can prepare a empty canvas for drawing on it.
+
 ```cpp
 static uint32_t buffer[WIDTH * HEIGHT];          //canvas target buffer
 
@@ -47,11 +50,12 @@ auto canvas = tvg::SwCanvas::gen();              //generate a canvas
 canvas->target(buffer, WIDTH, WIDTH, HEIGHT);    //stride, w, h
 ```
 
-Next you can draw shapes onto the canvas.
+Next you can draw multiple shapes onto the canvas.
+
 ```cpp
 auto rect = tvg::Shape::gen();               //generate a round rectangle
 rect->appendRect(50, 50, 200, 200, 20, 20);  //round geometry(x, y, w, h, rx, ry)
-rect->fill(100, 100, 0, 255);                //set round rectangle color (r, g, b, a)
+rect->fill(100, 100, 0, 255);                //round rectangle color (r, g, b, a)
 canvas->push(move(rect));                    //push round rectangle drawing command
 
 auto circle = tvg::Shape::gen();             //generate a circle
@@ -63,39 +67,80 @@ fill->radial(400, 400, 150);                 //radial fill info(cx, cy, radius)
 tvg::Fill::ColorStop colorStops[2];          //gradient color info
 colorStops[0] = {0, 255, 255, 255, 255};     //index, r, g, b, a (1st color value)
 colorStops[1] = {1, 0, 0, 0, 255};           //index, r, g, b, a (2nd color value)
+fill.colorStops(colorStop, 2);               //set fil with gradient color info
 
-fill.colorStops(colorStop, 2);               //set gradient color info
-
-circle->fill(move(fill));                    //set circle color
-
+circle->fill(move(fill));                    //circle color
 canvas->push(move(circle));                  //push circle drawing command
 
 ```
-This code result look like this.
+
+This code result looks like this.
+
 <p align="center">
-  <img width="416" height="411" src="https://github.com/Samsung/thorvg/blob/master/res/example_shapes.png">
+  <img width="416" height="411" src="https://github.com/Samsung/thorvg/blob/master/res/example_shapes.jpg">
+</p>
+
+Or you can draw pathes with dash stroking.
+
+```cpp
+auto path = tvg::Shape::gen();               //generate a path
+path->moveTo(199, 34);                      //set sequential path coordinates
+path->lineTo(253, 143);
+path->lineTo(374, 160);
+path->lineTo(287, 244);
+path->lineTo(307, 365);
+path->lineTo(199, 309);
+path->lineTo(97, 365);
+path->lineTo(112, 245);
+path->lineTo(26, 161);
+path->lineTo(146, 143);
+path->close();
+
+path->fill(150, 150, 255, 255);             //path color
+
+path->stroke(3);                            //stroke width
+path->stroke(0, 0, 255, 255);               //stroke color
+path->stroke(tvg::StrokeJoin::Round);       //stroke join style
+path->stroke(tvg::StrokeCap::Round);        //stroke cap style
+
+float pattern[2] = {10, 10};
+path->stroke(pattern, 2);                   //stroke dash pattern (line, gap)
+
+canvas->push(move(path));                   //push path drawing command
+
+```
+
+This path drawing result shows like this.
+
+<p align="center">
+  <img width="300" height="300" src="https://github.com/Samsung/thorvg/blob/master/res/example_path.png">
 </p>
 
 Next, this code snippet shows you how to draw SVG image.
+
 ```cpp
 auto picture = tvg::Picture::gen();         //generate a picture
 picture->load("tiger.svg");                 //Load SVG file.
-
 canvas->push(move(picture));                //push picture drawing command
 ```
+
 And here is the result.
+
 <p align="center">
   <img width="300" height="300" src="https://github.com/Samsung/thorvg/blob/master/res/example_tiger.png">
 </p>
 
 Begin rendering & finish it at a particular time.
+
 ```cpp
 canvas->draw();
 canvas->sync();
 ```
+
 Now you can acquire the rendered image in buffer memory.
 
 Lastly, terminate the engine after usage.
+
 ```cpp
 tvg::Initializer::term(tvg::CanvasEngine::Sw);
 ```
