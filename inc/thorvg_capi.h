@@ -138,31 +138,31 @@ TVG_EXPORT Tvg_Result tvg_shape_append_path(Tvg_Paint* paint, const Tvg_Path_Com
 TVG_EXPORT Tvg_Result tvg_shape_get_path_coords(const Tvg_Paint* paint, const Tvg_Point** pts, uint32_t* cnt);
 TVG_EXPORT Tvg_Result tvg_shape_get_path_commands(const Tvg_Paint* paint, const Tvg_Path_Command** cmds, uint32_t* cnt);
 TVG_EXPORT Tvg_Result tvg_shape_set_stroke_width(Tvg_Paint* paint, float width);
-TVG_EXPORT Tvg_Result tvg_shape_get_stroke_width(Tvg_Paint* paint, float* width);
+TVG_EXPORT Tvg_Result tvg_shape_get_stroke_width(const Tvg_Paint* paint, float* width);
 TVG_EXPORT Tvg_Result tvg_shape_set_stroke_color(Tvg_Paint* paint, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
-TVG_EXPORT Tvg_Result tvg_shape_get_stroke_color(Tvg_Paint* paint, uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a);
+TVG_EXPORT Tvg_Result tvg_shape_get_stroke_color(const Tvg_Paint* paint, uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a);
 TVG_EXPORT Tvg_Result tvg_shape_set_stroke_dash(Tvg_Paint* paint, const float* dashPattern, uint32_t cnt);
-TVG_EXPORT Tvg_Result tvg_shape_get_stroke_dash(Tvg_Paint* paint, const float** dashPattern, uint32_t* cnt);
+TVG_EXPORT Tvg_Result tvg_shape_get_stroke_dash(const Tvg_Paint* paint, const float** dashPattern, uint32_t* cnt);
 TVG_EXPORT Tvg_Result tvg_shape_set_stroke_cap(Tvg_Paint* paint, Tvg_Stroke_Cap cap);
-TVG_EXPORT Tvg_Result tvg_shape_get_stroke_cap(Tvg_Paint* paint, Tvg_Stroke_Cap* cap);
+TVG_EXPORT Tvg_Result tvg_shape_get_stroke_cap(const Tvg_Paint* paint, Tvg_Stroke_Cap* cap);
 TVG_EXPORT Tvg_Result tvg_shape_set_stroke_join(Tvg_Paint* paint, Tvg_Stroke_Join join);
-TVG_EXPORT Tvg_Result tvg_shape_get_stroke_join(Tvg_Paint* paint, Tvg_Stroke_Join* join);
+TVG_EXPORT Tvg_Result tvg_shape_get_stroke_join(const Tvg_Paint* paint, Tvg_Stroke_Join* join);
 TVG_EXPORT Tvg_Result tvg_shape_set_fill_color(Tvg_Paint* paint, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
-TVG_EXPORT Tvg_Result tvg_shape_get_fill_color(Tvg_Paint* paint, uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a);
+TVG_EXPORT Tvg_Result tvg_shape_get_fill_color(const Tvg_Paint* paint, uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a);
 TVG_EXPORT Tvg_Result tvg_shape_set_linear_gradient(Tvg_Paint* paint, Tvg_Gradient* grad);
 TVG_EXPORT Tvg_Result tvg_shape_set_radial_gradient(Tvg_Paint* paint, Tvg_Gradient* grad);
-TVG_EXPORT Tvg_Result tvg_shape_get_gradient(Tvg_Paint* paint, Tvg_Gradient** grad);
+TVG_EXPORT Tvg_Result tvg_shape_get_gradient(const Tvg_Paint* paint, Tvg_Gradient** grad);
 
 /************************************************************************/
 /* Gradient API                                                         */
 /************************************************************************/
 TVG_EXPORT Tvg_Gradient* tvg_linear_gradient_new();
 TVG_EXPORT Tvg_Gradient* tvg_radial_gradient_new();
-TVG_EXPORT Tvg_Result tvg_gradient_del(Tvg_Gradient* grad);
 TVG_EXPORT Tvg_Result tvg_linear_gradient_set(Tvg_Gradient* grad, float x1, float y1, float x2, float y2);
 TVG_EXPORT Tvg_Result tvg_radial_gradient_set(Tvg_Gradient* grad, float cx, float cy, float radius);
-TVG_EXPORT Tvg_Result tvg_gradient_color_stops(Tvg_Gradient* grad, const Tvg_Color_Stop* color_stop, uint32_t cnt);
-TVG_EXPORT Tvg_Result tvg_gradient_spread(Tvg_Gradient* grad, const Tvg_Stroke_Fill);
+TVG_EXPORT Tvg_Result tvg_gradient_set_color_stops(Tvg_Gradient* grad, const Tvg_Color_Stop* color_stop, uint32_t cnt);
+TVG_EXPORT Tvg_Result tvg_gradient_set_spread(Tvg_Gradient* grad, const Tvg_Stroke_Fill);
+TVG_EXPORT Tvg_Result tvg_gradient_del(Tvg_Gradient* grad);
 
 
 /************************************************************************/
@@ -170,7 +170,7 @@ TVG_EXPORT Tvg_Result tvg_gradient_spread(Tvg_Gradient* grad, const Tvg_Stroke_F
 /************************************************************************/
 TVG_EXPORT Tvg_Paint* tvg_picture_new();
 TVG_EXPORT Tvg_Result tvg_picture_load(Tvg_Paint* paint, const char* path);
-TVG_EXPORT Tvg_Result tvg_picture_get_viewbox(Tvg_Paint* paint, float* x, float* y, float* w, float* h);
+TVG_EXPORT Tvg_Result tvg_picture_get_viewbox(const Tvg_Paint* paint, float* x, float* y, float* w, float* h);
 
 #ifdef __cplusplus
 }
