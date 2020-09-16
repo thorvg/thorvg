@@ -84,7 +84,7 @@ Or you can draw pathes with dash stroking.
 
 ```cpp
 auto path = tvg::Shape::gen();               //generate a path
-path->moveTo(199, 34);                      //set sequential path coordinates
+path->moveTo(199, 34);                       //set sequential path coordinates
 path->lineTo(253, 143);
 path->lineTo(374, 160);
 path->lineTo(287, 244);
@@ -96,17 +96,17 @@ path->lineTo(26, 161);
 path->lineTo(146, 143);
 path->close();
 
-path->fill(150, 150, 255, 255);             //path color
+path->fill(150, 150, 255, 255);              //path color
 
-path->stroke(3);                            //stroke width
-path->stroke(0, 0, 255, 255);               //stroke color
-path->stroke(tvg::StrokeJoin::Round);       //stroke join style
-path->stroke(tvg::StrokeCap::Round);        //stroke cap style
+path->stroke(3);                             //stroke width
+path->stroke(0, 0, 255, 255);                //stroke color
+path->stroke(tvg::StrokeJoin::Round);        //stroke join style
+path->stroke(tvg::StrokeCap::Round);         //stroke cap style
 
 float pattern[2] = {10, 10};
-path->stroke(pattern, 2);                   //stroke dash pattern (line, gap)
+path->stroke(pattern, 2);                    //stroke dash pattern (line, gap)
 
-canvas->push(move(path));                   //push path drawing command
+canvas->push(move(path));                    //push path drawing command
 
 ```
 
