@@ -83,8 +83,8 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     shape5->stroke(tvg::StrokeJoin::Bevel);
     shape5->stroke(tvg::StrokeCap::Butt);
 
-    float dashPattern2[4] = {10, 10};
-    shape5->stroke(dashPattern2, 4);
+    float dashPattern2[2] = {10, 10};
+    shape5->stroke(dashPattern2, 2);
     if (canvas->push(move(shape5)) != tvg::Result::Success) return;
 
     auto shape6 = tvg::Shape::gen();
