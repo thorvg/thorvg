@@ -1,3 +1,25 @@
+/*
+ * Copyright (c) 2020 Samsung Electronics Co., Ltd. All rights reserved.
+
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 #include <iostream>
 #include <thread>
 #include <thorvg.h>
@@ -7,19 +29,14 @@
 using namespace std;
 
 
-class PngBuilder {
-public:
-    ~PngBuilder()
-    {
-    }
+struct PngBuilder {
+
     void build(const std::string &fileName , const uint32_t width, const uint32_t height, uint32_t *buffer)
     {
         std::vector<unsigned char> image;
         image.resize(width * height * 4);
-        for(unsigned y = 0; y < height; y++)
-        {
-            for(unsigned x = 0; x < width; x++)
-            {
+        for(unsigned y = 0; y < height; y++)  {
+            for(unsigned x = 0; x < width; x++) {
                 uint32_t n = buffer[ y * width + x ];
                 image[4 * width * y + 4 * x + 0] = ( n >> 16 ) & 0xff;
                 image[4 * width * y + 4 * x + 1] = ( n >> 8 ) & 0xff;
@@ -35,8 +52,8 @@ public:
 };
 
 
-class App {
-public:
+struct App {
+
     void tvgDrawCmds(tvg::Canvas* canvas, bool useSvgSize)
     {
         if (!canvas) return;
@@ -47,19 +64,16 @@ public:
 
         picture->viewbox(nullptr, nullptr, &fw, &fh);
 
-        if (useSvgSize)
-        {
+        if (useSvgSize) {
             width = fw;
             height = fh;
         }
-        else
-        {
+        else {
             tvg::Matrix m = {width / fw, 0, 0, 0, height / fh, 0, 0, 0, 1};
             picture->transform(m);
         }
 
-        if (bgColor != 0xffffffff)
-        {
+        if (bgColor != 0xffffffff) {
             uint8_t bgColorR = (uint8_t) ((bgColor & 0xff0000) >> 16);
             uint8_t bgColorG = (uint8_t) ((bgColor & 0x00ff00) >> 8);
             uint8_t bgColorB = (uint8_t) ((bgColor & 0x0000ff));
@@ -90,20 +104,18 @@ public:
         if (tvg::Initializer::init(tvgEngine, threads) == tvg::Result::Success) {
 
             //Create a Canvas
-            unique_ptr<tvg::SwCanvas> swCanvas = tvg::SwCanvas::gen();
+            auto swCanvas = tvg::SwCanvas::gen();
             bool useSvgSize = false;
-            if (w == 0 && h == 0)
-            {
+            if (w == 0 && h == 0) {
                 w = h = 200; // Set temporary size
                 useSvgSize = true;
             }
-            else
-            {
+            else {
                 width = w;
                 height = h;
             }
 
-            uint32_t *buffer = (uint32_t*)malloc(sizeof(uint32_t) * w * h);
+            auto buffer = (uint32_t*)malloc(sizeof(uint32_t) * w * h);
             swCanvas->target(buffer, w, w, h, tvg::SwCanvas::ARGB8888);
             /* Push the shape into the Canvas drawing list
                When this shape is into the canvas list, the shape could update & prepare
@@ -111,8 +123,7 @@ public:
                Canvas keeps this shape node unless user call canvas->clear() */
             tvgDrawCmds(swCanvas.get(), useSvgSize);
 
-            if (useSvgSize)
-            {
+            if (useSvgSize) {
                 //Resize target buffer
                 buffer = (uint32_t*)realloc(buffer, sizeof(uint32_t) * width * height);
                 swCanvas->target(buffer, width, width, height, tvg::SwCanvas::ARGB8888);
@@ -185,8 +196,7 @@ private:
 
     bool svgFile() {
         std::string extn = ".svg";
-        if ( fileName.size() <= extn.size() ||
-             fileName.substr(fileName.size()- extn.size()) != extn )
+        if (fileName.size() <= extn.size() || fileName.substr(fileName.size() - extn.size()) != extn)
             return false;
 
         return true;
