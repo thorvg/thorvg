@@ -8,7 +8,8 @@
 </p>
 
 ThorVG is a platform independent lightweight standalone C++ library for drawing vector-based shapes and SVG.
-
+<br />
+<br />
 ## Contents
 - [Building ThorVG](#building-thorvg)
 	- [Meson Build](#meson-build)
@@ -18,7 +19,7 @@ ThorVG is a platform independent lightweight standalone C++ library for drawing 
 
 ## Building ThorVG
 thorvg supports [meson](https://mesonbuild.com/) build system.
-
+<br />
 ### Meson Build
 install [meson](http://mesonbuild.com/Getting-meson.html) and [ninja](https://ninja-build.org/) if not already installed.
 
@@ -31,7 +32,8 @@ Run ninja to build & install ThorVG.
 ninja -C build install
 ```
 [Back to contents](#contents)
-
+<br />
+<br />
 ## Quick Start
 ThorVG renders vector shapes on a given canvas buffer.
 
@@ -145,10 +147,13 @@ Lastly, terminate the engine after usage.
 tvg::Initializer::term(tvg::CanvasEngine::Sw);
 ```
 [Back to contents](#contents)
-
+<br />
+<br />
 ## API Bindings
 Our main development APIs are written in C++ but ThorVG also provides API bindings such as: C.
+<br />
 [Back to contents](#contents)
-
+<br />
+<br />
 ## Issues or Feature Requests?
 For immediate assistant or support please reach us in [Gitter](https://gitter.im/thorvg/community)
