@@ -49,12 +49,27 @@ canvas->target(buffer, WIDTH, WIDTH, HEIGHT);    //stride, w, h
 
 Next you can draw shapes onto the canvas.
 ```cpp
-auto shape = tvg::Shape::gen();             //generate a shape
-shape->appendRect(0, 0, 200, 200, 0, 0);    //x, y, w, h, rx, ry
-shape->appendCircle(400, 400, 100, 100);    //cx, cy, radiusW, radiusH
-shape->fill(255, 255, 0, 255);              //r, g, b, a
+auto rect = tvg::Shape::gen();               //generate a round rectangle
+rect->appendRect(50, 50, 200, 200, 20, 20);  //round geometry(x, y, w, h, rx, ry)
+rect->fill(255, 255, 0, 255);                //set round rectangle color (r, g, b, a)
+canvas->push(move(rect));                    //push round rectangle drawing command
 
-canvas->push(move(shape));                  //push shape drawing command
+auto circle = tvg::Shape::gen();             //generate a circle
+circle->appendCircle(400, 400, 100, 100);    //circle geometry(cx, cy, radiusW, radiusH)
+
+auto fill = tvg::RadialGradient::gen();      //generate radial gradient for circle fill
+fill->radial(400, 400, 150);                 //radial fill info(cx, cy, radius)
+
+tvg::Fill::ColorStop colorStops[2];          //gradient color info
+colorStops[0] = {0, 255, 255, 255, 255};     //index, r, g, b, a (1st color value)
+colorStops[1] = {1, 0, 0, 0, 255};           //index, r, g, b, a (2nd color value)
+
+fill.colorStops(colorStop, 2);               //set gradient color info
+
+circle->fill(move(fill));                    //set circle color
+
+canvas->push(move(circle));                  //push circle drawing command
+
 ```
 
 This code snippet shows you how to draw SVG image.
