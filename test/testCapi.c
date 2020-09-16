@@ -53,7 +53,7 @@ void testCapi()
         {.offset=1, .r=255, .g=0, .b=0, .a=255},
     };
 
-    tvg_gradient_spread(grad2, TVG_STROKE_FILL_REPEAT);
+    tvg_gradient_set_spread(grad2, TVG_STROKE_FILL_REPEAT);
 
     Tvg_Paint* shape3 = tvg_shape_new();
     tvg_shape_append_rect(shape3, 0, 400, 400, 800, 20, 20);
@@ -65,12 +65,12 @@ void testCapi()
         {.offset=1, .r=0, .g=255, .b=0, .a=255},
     };
 
-    tvg_gradient_spread(grad3, TVG_STROKE_FILL_REFLECT);
+    tvg_gradient_set_spread(grad3, TVG_STROKE_FILL_REFLECT);
 
-    tvg_gradient_color_stops(grad, color_stops, 4);
-    tvg_gradient_color_stops(grad1, color_stops1, 3);
-    tvg_gradient_color_stops(grad2, color_stops2, 2);
-    tvg_gradient_color_stops(grad3, color_stops3, 2);
+    tvg_gradient_set_color_stops(grad, color_stops, 4);
+    tvg_gradient_set_color_stops(grad1, color_stops1, 3);
+    tvg_gradient_set_color_stops(grad2, color_stops2, 2);
+    tvg_gradient_set_color_stops(grad3, color_stops3, 2);
     tvg_shape_set_linear_gradient(shape, grad);
     tvg_shape_set_radial_gradient(shape1, grad1);
     tvg_shape_set_linear_gradient(shape2, grad2);
@@ -90,7 +90,7 @@ void testCapi()
         {.offset=0.0, .r=0, .g=0, .b=0, .a=255},
         {.offset=1, .r=0, .g=255, .b=0, .a=255},
     };
-    tvg_gradient_color_stops(grad4, color_stops4, 2);
+    tvg_gradient_set_color_stops(grad4, color_stops4, 2);
     tvg_shape_set_linear_gradient(shape4, grad4);
 
     Tvg_Gradient* grad5 = tvg_linear_gradient_new();
@@ -100,7 +100,7 @@ void testCapi()
         {.offset=0.0, .r=0, .g=0, .b=255, .a=255},
         {.offset=1, .r=0, .g=255, .b=255, .a=255},
     };
-    tvg_gradient_color_stops(grad5, color_stops5, 2);
+    tvg_gradient_set_color_stops(grad5, color_stops5, 2);
     tvg_shape_set_linear_gradient(shape4, grad5);
     tvg_canvas_push(canvas, shape4);
 
@@ -111,7 +111,7 @@ void testCapi()
         {.offset=0.0, .r=0, .g=125, .b=0, .a=255},
         {.offset=1, .r=125, .g=0, .b=125, .a=255},
     };
-    tvg_gradient_color_stops(grad6, color_stops6, 2);
+    tvg_gradient_set_color_stops(grad6, color_stops6, 2);
     tvg_shape_set_radial_gradient(shape1, grad6);
     tvg_canvas_update(canvas);
 
@@ -126,14 +126,16 @@ void testCapi()
 
     tvg_shape_get_path_commands(shape, &cmds, &cmdCnt);
     printf("---- First Shape Commands(%u) ----\n", cmdCnt);
-    for(int i=0; i<cmdCnt; ++i)
+    for(int i=0; i < cmdCnt; ++i) {
         printf("%d\n", cmds[i]);
+    }
 
     tvg_shape_get_path_coords(shape, &pts, &ptsCnt);
     printf("---- First Shape Points(%u) ----\n", ptsCnt);
-    for(int i=0; i<ptsCnt; ++i)
+    for(int i=0; i < ptsCnt; ++i) {
         printf("(%.2lf, %.2lf)\n", pts[i].x, pts[i].y);
-        
+    }
+
     tvg_canvas_draw(canvas);
     tvg_canvas_sync(canvas);
 

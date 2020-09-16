@@ -26,6 +26,8 @@
 using namespace std;
 using namespace tvg;
 
+#define CCP(A) const_cast<Tvg_Paint*>(A)  //Const-Cast-Paint
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -279,10 +281,10 @@ TVG_EXPORT Tvg_Result tvg_shape_set_stroke_width(Tvg_Paint* paint, float width)
 }
 
 
-TVG_EXPORT Tvg_Result tvg_shape_get_stroke_width(Tvg_Paint* paint, float* width)
+TVG_EXPORT Tvg_Result tvg_shape_get_stroke_width(const Tvg_Paint* paint, float* width)
 {
     if (!paint || !width) return TVG_RESULT_INVALID_ARGUMENT;
-    *width = reinterpret_cast<Shape*>(paint)->strokeWidth();
+    *width = reinterpret_cast<Shape*>(CCP(paint))->strokeWidth();
     return TVG_RESULT_SUCCESS;
 }
 
@@ -294,10 +296,10 @@ TVG_EXPORT Tvg_Result tvg_shape_set_stroke_color(Tvg_Paint* paint, uint8_t r, ui
 }
 
 
-TVG_EXPORT Tvg_Result tvg_shape_get_stroke_color(Tvg_Paint* paint, uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a)
+TVG_EXPORT Tvg_Result tvg_shape_get_stroke_color(const Tvg_Paint* paint, uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a)
 {
     if (!paint) return TVG_RESULT_INVALID_ARGUMENT;
-    return (Tvg_Result) reinterpret_cast<Shape*>(paint)->strokeColor(r, g, b, a);
+    return (Tvg_Result) reinterpret_cast<Shape*>(CCP(paint))->strokeColor(r, g, b, a);
 }
 
 
@@ -308,10 +310,10 @@ TVG_EXPORT Tvg_Result tvg_shape_set_stroke_dash(Tvg_Paint* paint, const float* d
 }
 
 
-TVG_EXPORT Tvg_Result tvg_shape_get_stroke_dash(Tvg_Paint* paint, const float** dashPattern, uint32_t* cnt)
+TVG_EXPORT Tvg_Result tvg_shape_get_stroke_dash(const Tvg_Paint* paint, const float** dashPattern, uint32_t* cnt)
 {
     if (!paint || !cnt || !dashPattern) return TVG_RESULT_INVALID_ARGUMENT;
-    *cnt = reinterpret_cast<Shape*>(paint)->strokeDash(dashPattern);
+    *cnt = reinterpret_cast<Shape*>(CCP(paint))->strokeDash(dashPattern);
     return TVG_RESULT_SUCCESS;
 }
 
@@ -323,10 +325,10 @@ TVG_EXPORT Tvg_Result tvg_shape_set_stroke_cap(Tvg_Paint* paint, Tvg_Stroke_Cap 
 }
 
 
-TVG_EXPORT Tvg_Result tvg_shape_get_stroke_cap(Tvg_Paint* paint, Tvg_Stroke_Cap* cap)
+TVG_EXPORT Tvg_Result tvg_shape_get_stroke_cap(const Tvg_Paint* paint, Tvg_Stroke_Cap* cap)
 {
     if (!paint || !cap) return TVG_RESULT_INVALID_ARGUMENT;
-    *cap = (Tvg_Stroke_Cap) reinterpret_cast<Shape*>(paint)->strokeCap();
+    *cap = (Tvg_Stroke_Cap) reinterpret_cast<Shape*>(CCP(paint))->strokeCap();
     return TVG_RESULT_SUCCESS;
 }
 
@@ -337,10 +339,10 @@ TVG_EXPORT Tvg_Result tvg_shape_set_stroke_join(Tvg_Paint* paint, Tvg_Stroke_Joi
 }
 
 
-TVG_EXPORT Tvg_Result tvg_shape_get_stroke_join(Tvg_Paint* paint, Tvg_Stroke_Join* join)
+TVG_EXPORT Tvg_Result tvg_shape_get_stroke_join(const Tvg_Paint* paint, Tvg_Stroke_Join* join)
 {
     if (!paint || !join) return TVG_RESULT_INVALID_ARGUMENT;
-    *join = (Tvg_Stroke_Join) reinterpret_cast<Shape*>(paint)->strokeJoin();
+    *join = (Tvg_Stroke_Join) reinterpret_cast<Shape*>(CCP(paint))->strokeJoin();
     return TVG_RESULT_SUCCESS;
 }
 
@@ -352,10 +354,10 @@ TVG_EXPORT Tvg_Result tvg_shape_set_fill_color(Tvg_Paint* paint, uint8_t r, uint
 }
 
 
-TVG_EXPORT Tvg_Result tvg_shape_get_fill_color(Tvg_Paint* paint, uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a)
+TVG_EXPORT Tvg_Result tvg_shape_get_fill_color(const Tvg_Paint* paint, uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a)
 {
     if (!paint) return TVG_RESULT_INVALID_ARGUMENT;
-    return (Tvg_Result) reinterpret_cast<Shape*>(paint)->fill(r, g, b, a);
+    return (Tvg_Result) reinterpret_cast<Shape*>(CCP(paint))->fill(r, g, b, a);
 }
 
 
@@ -373,10 +375,10 @@ TVG_EXPORT Tvg_Result tvg_shape_set_radial_gradient(Tvg_Paint* paint, Tvg_Gradie
 }
 
 
-TVG_EXPORT Tvg_Result tvg_shape_get_gradient(Tvg_Paint* paint, Tvg_Gradient** gradient)
+TVG_EXPORT Tvg_Result tvg_shape_get_gradient(const Tvg_Paint* paint, Tvg_Gradient** gradient)
 {
    if (!paint || !gradient) return TVG_RESULT_INVALID_ARGUMENT;
-   *gradient = (Tvg_Gradient*)(reinterpret_cast<Shape*>(paint)->fill());
+   *gradient = (Tvg_Gradient*)(reinterpret_cast<Shape*>(CCP(paint))->fill());
    return TVG_RESULT_SUCCESS;
 }
 
@@ -398,10 +400,10 @@ TVG_EXPORT Tvg_Result tvg_picture_load(Tvg_Paint* paint, const char* path)
 }
 
 
-TVG_EXPORT Tvg_Result tvg_picture_get_viewbox(Tvg_Paint* paint, float* x, float* y, float* w, float* h)
+TVG_EXPORT Tvg_Result tvg_picture_get_viewbox(const Tvg_Paint* paint, float* x, float* y, float* w, float* h)
 {
     if (!paint) return TVG_RESULT_INVALID_ARGUMENT;
-    return (Tvg_Result) reinterpret_cast<Picture*>(paint)->viewbox(x, y, w, h);
+    return (Tvg_Result) reinterpret_cast<Picture*>(CCP(paint))->viewbox(x, y, w, h);
 }
 
 
@@ -438,13 +440,13 @@ TVG_EXPORT Tvg_Result tvg_radial_gradient_set(Tvg_Gradient* grad, float cx, floa
     return (Tvg_Result) reinterpret_cast<RadialGradient*>(grad)->radial(cx, cy, radius);
 }
 
-TVG_EXPORT Tvg_Result tvg_gradient_color_stops(Tvg_Gradient* grad, const Tvg_Color_Stop* color_stop, uint32_t cnt)
+TVG_EXPORT Tvg_Result tvg_gradient_set_color_stops(Tvg_Gradient* grad, const Tvg_Color_Stop* color_stop, uint32_t cnt)
 {
     if (!grad) return TVG_RESULT_INVALID_ARGUMENT;
     return (Tvg_Result) reinterpret_cast<Fill*>(grad)->colorStops(reinterpret_cast<const Fill::ColorStop*>(color_stop), cnt);
 }
 
-TVG_EXPORT Tvg_Result tvg_gradient_spread(Tvg_Gradient* grad, const Tvg_Stroke_Fill spread)
+TVG_EXPORT Tvg_Result tvg_gradient_set_spread(Tvg_Gradient* grad, const Tvg_Stroke_Fill spread)
 {
     if (!grad) return TVG_RESULT_INVALID_ARGUMENT;
     return (Tvg_Result) reinterpret_cast<Fill*>(grad)->spread((FillSpread)spread);
