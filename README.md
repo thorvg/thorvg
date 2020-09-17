@@ -14,6 +14,8 @@ ThorVG is a platform independent lightweight standalone C++ library for drawing 
 - [Building ThorVG](#building-thorvg)
 	- [Meson Build](#meson-build)
 - [Quick Start](#quick-start)
+- [Tools](#tools)
+	- [SVG to PNG](#svg-to-png)
 - [API Bindings](#api-bindings)
 - [Issues or Feature Requests?](#issues-or-feature-requests)
 
@@ -36,7 +38,7 @@ ninja -C build install
 [Back to contents](#contents)
 <br />
 <br />
-## Quick Start
+## Examples
 ThorVG renders vector shapes on a given canvas buffer.
 
 You can initialize ThorVG engine first:
@@ -149,18 +151,19 @@ Lastly, terminate the engine after usage.
 tvg::Initializer::term(tvg::CanvasEngine::Sw);
 ```
 [Back to contents](#contents)
-
-
+<br />
+<br />
+# Tools
 ## SVG to PNG
-If you want to preview ThorVG renderer's SVG output, you can use `svg2png` converter which can be used to convert SVG file to PNG file.
+ThorVG provides an executable `svg2png` converter which generate a PNG file from a SVG file.
 
-To build `svg2png`, you need to change the build option.
+To use `svg2png`, you must turn on its feature in the build option.
 ```
-meson -Dutility=svg2png . build
+meson -Dtools=svg2png . build
 ```
-Or you can add `svg2png` value to `utility` option in `meson_option.txt`. Build output is located in `builddir/src/bin/svg2png/`
+Alternatively, you can add `svg2png` value to `tools` option in `meson_option.txt`. Build output will be located in `{builddir}/src/bin/svg2png/`
 
-`svg2png` creates `FILENAME.svg.png` by entering path of svg file, resolution, and background color.
+For more information, see `svg2png` usages:
 ```
 Usage: 
    svg2png [svgFileName] [Resolution] [bgColor]
@@ -172,8 +175,8 @@ Examples:
 ```
 
 [Back to contents](#contents)
-
-
+<br />
+<br />
 ## API Bindings
 Our main development APIs are written in C++ but ThorVG also provides API bindings such as: C.
 <br />
