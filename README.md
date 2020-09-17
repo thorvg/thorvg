@@ -17,6 +17,8 @@ ThorVG is a platform independent lightweight standalone C++ library for drawing 
 - [API Bindings](#api-bindings)
 - [Issues or Feature Requests?](#issues-or-feature-requests)
 
+[](#contents)
+<br />
 ## Building ThorVG
 thorvg supports [meson](https://mesonbuild.com/) build system.
 <br />
@@ -139,7 +141,7 @@ canvas->draw();
 canvas->sync();
 ```
 
-Now you can acquire the rendered image in buffer memory.
+Now you can acquire the rendered image from the buffer memory.
 
 Lastly, terminate the engine after usage.
 
