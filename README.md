@@ -149,8 +149,31 @@ Lastly, terminate the engine after usage.
 tvg::Initializer::term(tvg::CanvasEngine::Sw);
 ```
 [Back to contents](#contents)
-<br />
-<br />
+
+
+## SVG to PNG
+If you want to preview ThorVG renderer's SVG output, you can use `svg2png` converter which can be used to convert SVG file to PNG file.
+
+To build `svg2png`, you need to change the build option.
+```
+meson -Dutility=svg2png . build
+```
+Or you can add `svg2png` value to `utility` option in `meson_option.txt`. Build output is located in `builddir/src/bin/svg2png/`
+
+`svg2png` creates `FILENAME.svg.png` by entering path of svg file, resolution, and background color.
+```
+Usage: 
+   svg2png [svgFileName] [Resolution] [bgColor]
+
+Examples: 
+    $ svg2png input.svg
+    $ svg2png input.svg 200x200
+    $ svg2png input.svg 200x200 ff00ff
+```
+
+[Back to contents](#contents)
+
+
 ## API Bindings
 Our main development APIs are written in C++ but ThorVG also provides API bindings such as: C.
 <br />
