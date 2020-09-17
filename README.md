@@ -153,8 +153,8 @@ tvg::Initializer::term(tvg::CanvasEngine::Sw);
 [Back to contents](#contents)
 <br />
 <br />
-# Tools
-## SVG to PNG
+## Tools
+### SVG to PNG
 ThorVG provides an executable `svg2png` converter which generate a PNG file from a SVG file.
 
 To use `svg2png`, you must turn on its feature in the build option.
