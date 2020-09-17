@@ -52,7 +52,7 @@ unique_ptr<Shape> Shape::gen() noexcept
 unique_ptr<Paint> Shape::duplicate() const noexcept
 {
     auto shape = Shape::gen();
-    shape->pImpl->duplicate(IMPL);
+    if (!shape->pImpl->duplicate(IMPL)) return nullptr;
     return shape;
 }
 
