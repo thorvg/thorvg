@@ -1,4 +1,4 @@
-if get_option('utilities').contains('svg2png') == true
+if get_option('tools').contains('svg2png') == true
    subdir('svg2png')
 endif
 

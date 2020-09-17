@@ -22,8 +22,8 @@ option('bindings',
    value: ['capi'],
    description: 'Enable C API binding')
 
-option('utilities',
+option('tools',
    type: 'array',
    choices: ['', 'svg2png'],
    value: [''],
-   description: 'Enable building utilities')
+   description: 'Enable building ThorVG Tools')
