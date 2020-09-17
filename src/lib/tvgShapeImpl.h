@@ -163,44 +163,42 @@ struct Shape::Impl
         return true;
     }
 
-    void duplicate(Shape::Impl *s)
+    bool duplicate(Shape::Impl *src)
     {
-        if (memcmp(color, s->color, sizeof(color))) {
-            memcpy(color, s->color, sizeof(color));
-            flag = RenderUpdateFlag::Color;
-        }
+        //Color
+        *color = *src->color;
+        flag = RenderUpdateFlag::Color;
 
-        if (s->path) {
+        //Copy Path
+        if (src->path) {
             path = new ShapePath();
-
-            path->cmdCnt = s->path->cmdCnt;
-            path->ptsCnt = s->path->ptsCnt;
-            path->reservedCmdCnt = s->path->reservedCmdCnt;
-            path->reservedPtsCnt = s->path->reservedPtsCnt;
+            if (!path) return false;
+            *path = *src->path;
 
             path->cmds = static_cast<PathCommand*>(malloc(sizeof(PathCommand) * path->reservedCmdCnt));
+            if (!path->cmds) return false;
+            memcpy(path->cmds, src->path->cmds, sizeof(PathCommand) * path->cmdCnt);
+
             path->pts = static_cast<Point*>(malloc(sizeof(Point) * path->reservedPtsCnt));
+            if (!path->pts) return false;
+            memcpy(path->pts, src->path->pts, sizeof(Point) * path->ptsCnt);
 
-            memcpy(path->cmds, s->path->cmds, sizeof(PathCommand) * s->path->cmdCnt);
-            memcpy(path->pts, s->path->pts, sizeof(Point) * s->path->ptsCnt);
-
-            flag = RenderUpdateFlag::Path;
+            flag |= RenderUpdateFlag::Path;
         }
 
-        if (s->stroke) {
+        //Copy Stroke
+        if (src->stroke) {
             stroke = new ShapeStroke();
-            strokeCap(s->stroke->cap);
-            strokeColor(s->stroke->color[0], s->stroke->color[1],
-                              s->stroke->color[2], s->stroke->color[3]);
-            strokeJoin(s->stroke->join);
-            strokeWidth(s->stroke->width);
-
-            if (s->stroke->dashPattern && s->stroke->dashCnt > 0) {
-                strokeDash(s->stroke->dashPattern, s->stroke->dashCnt);
-            }
+            if (!stroke) return false;
+            *stroke = *src->stroke;
+            stroke->dashPattern = static_cast<float*>(malloc(sizeof(float) * stroke->dashCnt));
+            memcpy(stroke->dashPattern,  src->stroke->dashPattern, sizeof(float) * stroke->dashCnt);
+            flag |= RenderUpdateFlag::Stroke;
         }
 
-        //TODO: add fill
+        //TODO: Copy Fill
+
+        return true;
     }
 };
 
