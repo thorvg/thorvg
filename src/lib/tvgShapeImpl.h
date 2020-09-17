@@ -166,7 +166,7 @@ struct Shape::Impl
     bool duplicate(Shape::Impl *src)
     {
         //Color
-        *color = *src->color;
+        memcpy(color, src->color, sizeof(color));
         flag = RenderUpdateFlag::Color;
 
         //Copy Path
