@@ -13,7 +13,7 @@ ThorVG is a platform independent lightweight standalone C++ library for drawing 
 ## Contents
 - [Building ThorVG](#building-thorvg)
 	- [Meson Build](#meson-build)
-- [Quick Start](#quick-start)
+- [Examples](#examples)
 - [Tools](#tools)
 	- [SVG to PNG](#svg-to-png)
 - [API Bindings](#api-bindings)
