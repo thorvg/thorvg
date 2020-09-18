@@ -88,6 +88,12 @@ struct Scene::Impl
 
         return true;
     }
+
+    unique_ptr<Paint> duplicate()
+    {
+        //TODO:
+        return nullptr;
+    }
 };
 
 #endif //_TVG_SCENE_IMPL_H_

@@ -44,6 +44,27 @@ struct ShapePath
         if (pts) free(pts);
     }
 
+    ShapePath() {}
+
+    ShapePath(const ShapePath* src)
+    {
+        cmdCnt = src->cmdCnt;
+        reservedCmdCnt = src->reservedCmdCnt;
+        ptsCnt = src->ptsCnt;
+        reservedPtsCnt = src->reservedPtsCnt;
+
+        cmds = static_cast<PathCommand*>(malloc(sizeof(PathCommand) * reservedCmdCnt));
+        if (!cmds) return;
+        memcpy(cmds, src->cmds, sizeof(PathCommand) * cmdCnt);
+
+        pts = static_cast<Point*>(malloc(sizeof(Point) * reservedPtsCnt));
+        if (!pts) {
+            free(cmds);
+            return;
+        }
+        memcpy(pts, src->pts, sizeof(Point) * ptsCnt);
+    }
+
     void reserveCmd(uint32_t cmdCnt)
     {
         if (cmdCnt <= reservedCmdCnt) return;

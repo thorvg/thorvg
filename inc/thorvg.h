@@ -92,7 +92,7 @@ public:
     Result transform(const Matrix& m) noexcept;
     Result bounds(float* x, float* y, float* w, float* h) const noexcept;
 
-    virtual std::unique_ptr<Paint> duplicate() const noexcept = 0;
+    std::unique_ptr<Paint> duplicate() const noexcept;
 
     _TVG_DECLARE_ACCESSOR();
     _TVG_DECLARE_PRIVATE(Paint);
@@ -250,7 +250,6 @@ public:
     StrokeJoin strokeJoin() const noexcept;
 
     static std::unique_ptr<Shape> gen() noexcept;
-    std::unique_ptr<Paint> duplicate() const noexcept override;
 
     _TVG_DECLARE_PRIVATE(Shape);
 };
@@ -274,7 +273,6 @@ public:
     Result viewbox(float* x, float* y, float* w, float* h) const noexcept;
 
     static std::unique_ptr<Picture> gen() noexcept;
-    std::unique_ptr<Paint> duplicate() const noexcept override;
 
     _TVG_DECLARE_PRIVATE(Picture);
 };
@@ -297,7 +295,6 @@ public:
     Result reserve(uint32_t size) noexcept;
 
     static std::unique_ptr<Scene> gen() noexcept;
-    std::unique_ptr<Paint> duplicate() const noexcept override;
 
     _TVG_DECLARE_PRIVATE(Scene);
 };

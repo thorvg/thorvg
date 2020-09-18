@@ -38,6 +38,19 @@ struct ShapeStroke
     StrokeCap cap = StrokeCap::Square;
     StrokeJoin join = StrokeJoin::Bevel;
 
+    ShapeStroke() {}
+
+    ShapeStroke(const ShapeStroke* src)
+    {
+        width = src->width;
+        dashCnt = src->dashCnt;
+        cap = src->cap;
+        join = src->join;
+        memcpy(color, src->color, sizeof(color));
+        dashPattern = static_cast<float*>(malloc(sizeof(float) * dashCnt));
+        memcpy(dashPattern, src->dashPattern, sizeof(float) * dashCnt);
+    }
+
     ~ShapeStroke()
     {
         if (dashPattern) free(dashPattern);
@@ -163,42 +176,32 @@ struct Shape::Impl
         return true;
     }
 
-    bool duplicate(Shape::Impl *src)
+    unique_ptr<Paint> duplicate()
     {
+        auto ret = Shape::gen();
+        if (!ret) return nullptr;
+
+        auto dup = ret.get()->pImpl.get();
+
         //Color
-        memcpy(color, src->color, sizeof(color));
-        flag = RenderUpdateFlag::Color;
+        memcpy(dup->color, color, sizeof(color));
+        dup->flag = RenderUpdateFlag::Color;
 
-        //Copy Path
-        if (src->path) {
-            path = new ShapePath();
-            if (!path) return false;
-            *path = *src->path;
-
-            path->cmds = static_cast<PathCommand*>(malloc(sizeof(PathCommand) * path->reservedCmdCnt));
-            if (!path->cmds) return false;
-            memcpy(path->cmds, src->path->cmds, sizeof(PathCommand) * path->cmdCnt);
-
-            path->pts = static_cast<Point*>(malloc(sizeof(Point) * path->reservedPtsCnt));
-            if (!path->pts) return false;
-            memcpy(path->pts, src->path->pts, sizeof(Point) * path->ptsCnt);
-
-            flag |= RenderUpdateFlag::Path;
+        //Path
+        if (path) {
+            dup->path = new ShapePath(path);
+            dup->flag |= RenderUpdateFlag::Path;
         }
 
-        //Copy Stroke
-        if (src->stroke) {
-            stroke = new ShapeStroke();
-            if (!stroke) return false;
-            *stroke = *src->stroke;
-            stroke->dashPattern = static_cast<float*>(malloc(sizeof(float) * stroke->dashCnt));
-            memcpy(stroke->dashPattern,  src->stroke->dashPattern, sizeof(float) * stroke->dashCnt);
-            flag |= RenderUpdateFlag::Stroke;
+        //Stroke
+        if (stroke) {
+            dup->stroke = new ShapeStroke(stroke);
+            dup->flag |= RenderUpdateFlag::Stroke;
         }
 
-        //TODO: Copy Fill
+        //TODO: Fill
 
-        return true;
+        return ret;
     }
 };
 
