@@ -129,7 +129,7 @@ TVG_EXPORT Tvg_Result tvg_canvas_sync(Tvg_Canvas* canvas)
 TVG_EXPORT Tvg_Result tvg_paint_del(Tvg_Paint* paint)
 {
     if (!paint) return TVG_RESULT_INVALID_ARGUMENT;
-    delete(reinterpret_cast<tvg::Paint*>(paint));
+    delete(reinterpret_cast<Paint*>(paint));
     return TVG_RESULT_SUCCESS;
 }
 
