@@ -58,10 +58,3 @@ Result Scene::reserve(uint32_t size) noexcept
 
     return Result::Success;
 }
-
-
-std::unique_ptr<Paint> Scene::duplicate() const noexcept
-{
-    //TODO: implement
-    return nullptr;
-}

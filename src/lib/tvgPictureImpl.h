@@ -104,6 +104,12 @@ struct Picture::Impl
         if (!loader->read()) return Result::Unknown;
         return Result::Success;
     }
+
+    unique_ptr<Paint> duplicate()
+    {
+        //TODO:
+        return nullptr;
+    }
 };
 
 #endif //_TVG_PICTURE_IMPL_H_
