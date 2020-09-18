@@ -122,6 +122,7 @@ public:
 
     uint32_t colorStops(const ColorStop** colorStops) const noexcept;
     FillSpread spread() const noexcept;
+    std::unique_ptr<Fill> duplicate() const noexcept;
 
     _TVG_DECALRE_IDENTIFIER();
     _TVG_DECLARE_PRIVATE(Fill);

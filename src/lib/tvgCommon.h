@@ -46,7 +46,6 @@ using namespace tvg;
 #include "tvgLoader.h"
 #include "tvgLoaderMgr.h"
 #include "tvgRender.h"
-#include "tvgPaint.h"
 #include "tvgTaskScheduler.h"
 
 #endif //_TVG_COMMON_H_

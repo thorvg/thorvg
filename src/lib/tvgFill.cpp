@@ -19,24 +19,11 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#include "tvgCommon.h"
-
+#include "tvgFill.h"
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
 /************************************************************************/
-
-struct Fill::Impl
-{
-    ColorStop* colorStops = nullptr;
-    uint32_t cnt = 0;
-    FillSpread spread;
-
-    ~Impl()
-    {
-        if (colorStops) free(colorStops);
-    }
-};
 
 
 /************************************************************************/
@@ -95,4 +82,10 @@ Result Fill::spread(FillSpread s) noexcept
 FillSpread Fill::spread() const noexcept
 {
     return pImpl->spread;
+}
+
+
+unique_ptr<Fill> Fill::duplicate() const noexcept
+{
+    return pImpl->duplicate();
 }

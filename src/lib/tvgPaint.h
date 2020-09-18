@@ -22,6 +22,8 @@
 #ifndef _TVG_PAINT_H_
 #define _TVG_PAINT_H_
 
+#include "tvgCommon.h"
+
 namespace tvg
 {
     struct StrategyMethod
