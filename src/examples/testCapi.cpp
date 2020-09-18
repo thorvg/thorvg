@@ -126,13 +126,13 @@ void testCapi()
 
     tvg_shape_get_path_commands(shape, &cmds, &cmdCnt);
     printf("---- First Shape Commands(%u) ----\n", cmdCnt);
-    for(int i=0; i < cmdCnt; ++i) {
+    for(uint32_t i = 0; i < cmdCnt; ++i) {
         printf("%d\n", cmds[i]);
     }
 
     tvg_shape_get_path_coords(shape, &pts, &ptsCnt);
     printf("---- First Shape Points(%u) ----\n", ptsCnt);
-    for(int i=0; i < ptsCnt; ++i) {
+    for(uint32_t i = 0; i < ptsCnt; ++i) {
         printf("(%.2lf, %.2lf)\n", pts[i].x, pts[i].y);
     }
     

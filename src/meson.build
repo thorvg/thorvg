@@ -29,8 +29,6 @@ thorvg_lib = library(
 	gnu_symbol_visibility  : 'hidden',
 )
 
-subdir('bin')
-
 thorvg_dep = declare_dependency(
 	include_directories: headers,
 	link_with : thorvg_lib
@@ -45,3 +43,10 @@ pkg_mod.generate(
 	filebase     : 'thorvg',
 	description  : 'A Thor library for rendering vector graphics'
 )
+
+subdir('bin')
+
+if get_option('examples') == true
+    message('Enable Examples')
+    subdir('examples')
+endif

@@ -26,4 +26,9 @@ option('tools',
    type: 'array',
    choices: ['', 'svg2png'],
    value: [''],
-   description: 'Enable building ThorVG Tools')
+   description: 'Enable building thorvg tools')
+
+option('examples',
+    type: 'boolean',
+    value: false,
+    description: 'Enable building examples')

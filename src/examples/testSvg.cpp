@@ -14,12 +14,10 @@ static std::vector<unique_ptr<tvg::Picture>> pictures;
 
 void svgDirCallback(const char* name, const char* path, void* data)
 {
-    tvg::Canvas* canvas = static_cast<tvg::Canvas*>(data);
-
     auto picture = tvg::Picture::gen();
 
     char buf[PATH_MAX];
-    sprintf(buf,"%s/%s", path, name);
+    sprintf(buf, "/%s/%s", path, name);
 
     if (picture->load(buf) != tvg::Result::Success) return;
 
@@ -61,7 +59,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     if (canvas->push(move(shape)) != tvg::Result::Success) return;
 
-    eina_file_dir_list("./svgs", EINA_TRUE, svgDirCallback, canvas);
+    eina_file_dir_list(EXAMPLE_DIR, EINA_TRUE, svgDirCallback, canvas);
 
     /* This showcase shows you asynchrounous loading of svg.
        For this, pushing pictures at a certian sync time.
