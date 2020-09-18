@@ -25,7 +25,7 @@
 /* External Class Implementation                                        */
 /************************************************************************/
 
-Scene::Scene() : pImpl(new Impl)
+Scene::Scene() : pImpl(new Impl())
 {
     Paint::pImpl->method(new PaintMethod<Scene::Impl>(pImpl));
 }

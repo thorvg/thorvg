@@ -25,7 +25,7 @@
 /* External Class Implementation                                        */
 /************************************************************************/
 
-Picture::Picture() : pImpl(new Impl)
+Picture::Picture() : pImpl(new Impl())
 {
     Paint::pImpl->method(new PaintMethod<Picture::Impl>(pImpl));
 }

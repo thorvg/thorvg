@@ -25,7 +25,7 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-Paint :: Paint() : pImpl(new Impl)
+Paint :: Paint() : pImpl(new Impl())
 {
 }
 

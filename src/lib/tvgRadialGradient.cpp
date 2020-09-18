@@ -27,7 +27,9 @@
 
 struct RadialGradient::Impl
 {
-    float cx, cy, radius;
+    float cx = 0;
+    float cy = 0;
+    float radius = 0;
 };
 
 
@@ -35,7 +37,7 @@ struct RadialGradient::Impl
 /* External Class Implementation                                        */
 /************************************************************************/
 
-RadialGradient::RadialGradient():pImpl(new Impl)
+RadialGradient::RadialGradient():pImpl(new Impl())
 {
     _id = FILL_ID_RADIAL;
 }

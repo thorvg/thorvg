@@ -27,14 +27,17 @@
 
 struct LinearGradient::Impl
 {
-    float x1, y1, x2, y2;
+    float x1 = 0;
+    float y1 = 0;
+    float x2 = 0;
+    float y2 = 0;
 };
 
 /************************************************************************/
 /* External Class Implementation                                        */
 /************************************************************************/
 
-LinearGradient::LinearGradient():pImpl(new Impl)
+LinearGradient::LinearGradient():pImpl(new Impl())
 {
     _id = FILL_ID_LINEAR;
 }
