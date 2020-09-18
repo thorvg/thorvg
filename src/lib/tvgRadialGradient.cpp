@@ -35,7 +35,7 @@ struct RadialGradient::Impl
 /* External Class Implementation                                        */
 /************************************************************************/
 
-RadialGradient::RadialGradient():pImpl(make_unique<Impl>())
+RadialGradient::RadialGradient():pImpl(new Impl)
 {
     _id = FILL_ID_RADIAL;
 }
@@ -43,6 +43,7 @@ RadialGradient::RadialGradient():pImpl(make_unique<Impl>())
 
 RadialGradient::~RadialGradient()
 {
+    delete(pImpl);
 }
 
 
@@ -50,9 +51,9 @@ Result RadialGradient::radial(float cx, float cy, float radius) noexcept
 {
     if (radius < FLT_EPSILON) return Result::InvalidArguments;
 
-    IMPL->cx = cx;
-    IMPL->cy = cy;
-    IMPL->radius = radius;
+    pImpl->cx = cx;
+    pImpl->cy = cy;
+    pImpl->radius = radius;
 
     return Result::Success;
 }
@@ -60,9 +61,9 @@ Result RadialGradient::radial(float cx, float cy, float radius) noexcept
 
 Result RadialGradient::radial(float* cx, float* cy, float* radius) const noexcept
 {
-    if (cx) *cx = IMPL->cx;
-    if (cy) *cy = IMPL->cy;
-    if (radius) *radius = IMPL->radius;
+    if (cx) *cx = pImpl->cx;
+    if (cy) *cy = pImpl->cy;
+    if (radius) *radius = pImpl->radius;
 
     return Result::Success;
 }

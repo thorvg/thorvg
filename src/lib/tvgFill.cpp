@@ -43,35 +43,34 @@ struct Fill::Impl
 /* External Class Implementation                                        */
 /************************************************************************/
 
-Fill::Fill():pImpl(make_unique<Impl>())
+Fill::Fill():pImpl(new Impl)
 {
 }
 
 
 Fill::~Fill()
 {
+    delete(pImpl);
 }
 
 
 Result Fill::colorStops(const ColorStop* colorStops, uint32_t cnt) noexcept
 {
-    auto impl = pImpl.get();
-
     if (cnt == 0) {
-        if (impl->colorStops) {
-            free(impl->colorStops);
-            impl->colorStops = nullptr;
-            impl->cnt = cnt;
+        if (pImpl->colorStops) {
+            free(pImpl->colorStops);
+            pImpl->colorStops = nullptr;
+            pImpl->cnt = cnt;
         }
         return Result::Success;
     }
 
-    if (impl->cnt != cnt) {
-        impl->colorStops = static_cast<ColorStop*>(realloc(impl->colorStops, cnt * sizeof(ColorStop)));
+    if (pImpl->cnt != cnt) {
+        pImpl->colorStops = static_cast<ColorStop*>(realloc(pImpl->colorStops, cnt * sizeof(ColorStop)));
     }
 
-    impl->cnt = cnt;
-    memcpy(impl->colorStops, colorStops, cnt * sizeof(ColorStop));
+    pImpl->cnt = cnt;
+    memcpy(pImpl->colorStops, colorStops, cnt * sizeof(ColorStop));
 
     return Result::Success;
 }
@@ -79,15 +78,15 @@ Result Fill::colorStops(const ColorStop* colorStops, uint32_t cnt) noexcept
 
 uint32_t Fill::colorStops(const ColorStop** colorStops) const noexcept
 {
-    if (colorStops) *colorStops = IMPL->colorStops;
+    if (colorStops) *colorStops = pImpl->colorStops;
 
-    return IMPL->cnt;
+    return pImpl->cnt;
 }
 
 
 Result Fill::spread(FillSpread s) noexcept
 {
-    IMPL->spread = s;
+    pImpl->spread = s;
 
     return Result::Success;
 }
@@ -95,5 +94,5 @@ Result Fill::spread(FillSpread s) noexcept
 
 FillSpread Fill::spread() const noexcept
 {
-    return IMPL->spread;
+    return pImpl->spread;
 }

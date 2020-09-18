@@ -35,7 +35,7 @@ struct Scene::Impl
     bool dispose(RenderMethod& renderer)
     {
         for (auto paint : paints) {
-            paint->IMPL->dispose(renderer);
+            paint->pImpl->dispose(renderer);
             delete(paint);
         }
         paints.clear();
@@ -46,7 +46,7 @@ struct Scene::Impl
     bool update(RenderMethod &renderer, const RenderTransform* transform, RenderUpdateFlag flag)
     {
         for(auto paint: paints) {
-            if (!paint->IMPL->update(renderer, transform, static_cast<uint32_t>(flag))) return false;
+            if (!paint->pImpl->update(renderer, transform, static_cast<uint32_t>(flag))) return false;
         }
         return true;
     }
@@ -54,7 +54,7 @@ struct Scene::Impl
     bool render(RenderMethod &renderer)
     {
         for(auto paint: paints) {
-            if(!paint->IMPL->render(renderer)) return false;
+            if(!paint->pImpl->render(renderer)) return false;
         }
         return true;
     }
@@ -72,7 +72,7 @@ struct Scene::Impl
             auto w2 = 0.0f;
             auto h2 = 0.0f;
 
-            if (paint->IMPL->bounds(&x2, &y2, &w2, &h2)) return false;
+            if (paint->pImpl->bounds(&x2, &y2, &w2, &h2)) return false;
 
             //Merge regions
             if (x2 < x) x = x2;

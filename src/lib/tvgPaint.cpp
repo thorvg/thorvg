@@ -25,13 +25,14 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-Paint :: Paint() : pImpl(make_unique<Impl>())
+Paint :: Paint() : pImpl(new Impl)
 {
 }
 
 
 Paint :: ~Paint()
 {
+    delete(pImpl);
 }
 
 
@@ -41,39 +42,39 @@ Paint :: ~Paint()
 
 Result Paint::rotate(float degree) noexcept
 {
-    if (IMPL->rotate(degree)) return Result::Success;
+    if (pImpl->rotate(degree)) return Result::Success;
     return Result::FailedAllocation;
 }
 
 
 Result Paint::scale(float factor) noexcept
 {
-    if (IMPL->scale(factor)) return Result::Success;
+    if (pImpl->scale(factor)) return Result::Success;
     return Result::FailedAllocation;
 }
 
 
 Result Paint::translate(float x, float y) noexcept
 {
-    if (IMPL->translate(x, y)) return Result::Success;
+    if (pImpl->translate(x, y)) return Result::Success;
     return Result::FailedAllocation;
 }
 
 
 Result Paint::transform(const Matrix& m) noexcept
 {
-    if (IMPL->transform(m)) return Result::Success;
+    if (pImpl->transform(m)) return Result::Success;
     return Result::FailedAllocation;
 }
 
 
 Result Paint::bounds(float* x, float* y, float* w, float* h) const noexcept
 {
-    if (IMPL->bounds(x, y, w, h)) return Result::Success;
+    if (pImpl->bounds(x, y, w, h)) return Result::Success;
     return Result::InsufficientCondition;
 }
 
 unique_ptr<Paint> Paint::duplicate() const noexcept
 {
-    return IMPL->duplicate();
+    return pImpl->duplicate();
 }

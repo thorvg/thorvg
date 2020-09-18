@@ -37,7 +37,6 @@
 
 struct SwCanvas::Impl
 {
-    Impl() {}
 };
 
 
@@ -46,9 +45,9 @@ struct SwCanvas::Impl
 /************************************************************************/
 
 #ifdef THORVG_SW_RASTER_SUPPORT
-SwCanvas::SwCanvas() : Canvas(SwRenderer::gen()), pImpl(make_unique<Impl>())
+SwCanvas::SwCanvas() : Canvas(SwRenderer::gen()), pImpl(new Impl)
 #else
-SwCanvas::SwCanvas() : Canvas(nullptr), pImpl(make_unique<Impl>())
+SwCanvas::SwCanvas() : Canvas(nullptr), pImpl(new Impl)
 #endif
 {
 }
@@ -56,6 +55,7 @@ SwCanvas::SwCanvas() : Canvas(nullptr), pImpl(make_unique<Impl>())
 
 SwCanvas::~SwCanvas()
 {
+    delete(pImpl);
 }
 
 
@@ -63,7 +63,7 @@ Result SwCanvas::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t 
 {
 #ifdef THORVG_SW_RASTER_SUPPORT
     //We know renderer type, avoid dynamic_cast for performance.
-    auto renderer = static_cast<SwRenderer*>(Canvas::pImpl.get()->renderer);
+    auto renderer = static_cast<SwRenderer*>(Canvas::pImpl->renderer);
     if (!renderer) return Result::MemoryCorruption;
 
     if (!renderer->target(buffer, stride, w, h, cs)) return Result::InvalidArguments;

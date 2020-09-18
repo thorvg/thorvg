@@ -25,14 +25,15 @@
 /* External Class Implementation                                        */
 /************************************************************************/
 
-Scene::Scene() : pImpl(make_unique<Impl>())
+Scene::Scene() : pImpl(new Impl)
 {
-    Paint::IMPL->method(new PaintMethod<Scene::Impl>(IMPL));
+    Paint::pImpl->method(new PaintMethod<Scene::Impl>(pImpl));
 }
 
 
 Scene::~Scene()
 {
+    delete(pImpl);
 }
 
 
@@ -46,7 +47,7 @@ Result Scene::push(unique_ptr<Paint> paint) noexcept
 {
     auto p = paint.release();
     if (!p) return Result::MemoryCorruption;
-    IMPL->paints.push_back(p);
+    pImpl->paints.push_back(p);
 
     return Result::Success;
 }
@@ -54,7 +55,7 @@ Result Scene::push(unique_ptr<Paint> paint) noexcept
 
 Result Scene::reserve(uint32_t size) noexcept
 {
-    IMPL->paints.reserve(size);
+    pImpl->paints.reserve(size);
 
     return Result::Success;
 }

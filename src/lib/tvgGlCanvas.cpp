@@ -37,7 +37,6 @@
 
 struct GlCanvas::Impl
 {
-    Impl() {}
 };
 
 
@@ -46,9 +45,9 @@ struct GlCanvas::Impl
 /************************************************************************/
 
 #ifdef THORVG_GL_RASTER_SUPPORT
-GlCanvas::GlCanvas() : Canvas(GlRenderer::gen()), pImpl(make_unique<Impl>())
+GlCanvas::GlCanvas() : Canvas(GlRenderer::gen()), pImpl(new Impl)
 #else
-GlCanvas::GlCanvas() : Canvas(nullptr), pImpl(make_unique<Impl>())
+GlCanvas::GlCanvas() : Canvas(nullptr), pImpl(new Impl)
 #endif
 {
 }
@@ -57,6 +56,7 @@ GlCanvas::GlCanvas() : Canvas(nullptr), pImpl(make_unique<Impl>())
 
 GlCanvas::~GlCanvas()
 {
+    delete(pImpl);
 }
 
 
@@ -64,7 +64,7 @@ Result GlCanvas::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t 
 {
 #ifdef THORVG_GL_RASTER_SUPPORT
     //We know renderer type, avoid dynamic_cast for performance.
-    auto renderer = static_cast<GlRenderer*>(Canvas::pImpl.get()->renderer);
+    auto renderer = static_cast<GlRenderer*>(Canvas::pImpl->renderer);
     if (!renderer) return Result::MemoryCorruption;
 
     if (!renderer->target(buffer, stride, w, h)) return Result::Unknown;
