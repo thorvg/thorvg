@@ -32,21 +32,6 @@ using namespace tvg;
 extern "C" {
 #endif
 
-struct _Tvg_Canvas
-{
-    //Dummy for Direct Casting
-};
-
-struct _Tvg_Paint
-{
-    //Dummy for Direct Casting
-};
-
-struct _Tvg_Gradient
-{
-    //Dummy for Direct Casting
-};
-
 
 /************************************************************************/
 /* Engine API                                                           */
@@ -144,7 +129,7 @@ TVG_EXPORT Tvg_Result tvg_canvas_sync(Tvg_Canvas* canvas)
 TVG_EXPORT Tvg_Result tvg_paint_del(Tvg_Paint* paint)
 {
     if (!paint) return TVG_RESULT_INVALID_ARGUMENT;
-    delete(paint);
+    delete(reinterpret_cast<Paint*>(paint));
     return TVG_RESULT_SUCCESS;
 }
 
@@ -422,7 +407,7 @@ TVG_EXPORT Tvg_Gradient* tvg_radial_gradient_new()
 TVG_EXPORT Tvg_Result tvg_gradient_del(Tvg_Gradient* grad)
 {
     if (!grad) return TVG_RESULT_INVALID_ARGUMENT;
-    delete(grad);
+    delete(reinterpret_cast<Fill*>(grad));
     return TVG_RESULT_SUCCESS;
 }
 
