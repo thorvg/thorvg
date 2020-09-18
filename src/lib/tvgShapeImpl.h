@@ -181,7 +181,7 @@ struct Shape::Impl
         auto ret = Shape::gen();
         if (!ret) return nullptr;
 
-        auto dup = ret.get()->pImpl.get();
+        auto dup = ret.get()->pImpl;
 
         //Color
         memcpy(dup->color, color, sizeof(color));

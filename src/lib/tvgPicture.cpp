@@ -25,14 +25,15 @@
 /* External Class Implementation                                        */
 /************************************************************************/
 
-Picture::Picture() : pImpl(make_unique<Impl>())
+Picture::Picture() : pImpl(new Impl())
 {
-    Paint::IMPL->method(new PaintMethod<Picture::Impl>(IMPL));
+    Paint::pImpl->method(new PaintMethod<Picture::Impl>(pImpl));
 }
 
 
 Picture::~Picture()
 {
+    delete(pImpl);
 }
 
 
@@ -46,7 +47,7 @@ Result Picture::load(const std::string& path) noexcept
 {
     if (path.empty()) return Result::InvalidArguments;
 
-    return IMPL->load(path);
+    return pImpl->load(path);
 }
 
 
@@ -54,12 +55,12 @@ Result Picture::load(const char* data, uint32_t size) noexcept
 {
     if (!data || size <= 0) return Result::InvalidArguments;
 
-    return IMPL->load(data, size);
+    return pImpl->load(data, size);
 }
 
 
 Result Picture::viewbox(float* x, float* y, float* w, float* h) const noexcept
 {
-    if (IMPL->viewbox(x, y, w, h)) return Result::Success;
+    if (pImpl->viewbox(x, y, w, h)) return Result::Success;
     return Result::InsufficientCondition;
 }

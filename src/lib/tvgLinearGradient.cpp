@@ -27,14 +27,17 @@
 
 struct LinearGradient::Impl
 {
-    float x1, y1, x2, y2;
+    float x1 = 0;
+    float y1 = 0;
+    float x2 = 0;
+    float y2 = 0;
 };
 
 /************************************************************************/
 /* External Class Implementation                                        */
 /************************************************************************/
 
-LinearGradient::LinearGradient():pImpl(make_unique<Impl>())
+LinearGradient::LinearGradient():pImpl(new Impl())
 {
     _id = FILL_ID_LINEAR;
 }
@@ -42,6 +45,7 @@ LinearGradient::LinearGradient():pImpl(make_unique<Impl>())
 
 LinearGradient::~LinearGradient()
 {
+    delete(pImpl);
 }
 
 
@@ -50,10 +54,10 @@ Result LinearGradient::linear(float x1, float y1, float x2, float y2) noexcept
     if (fabsf(x2 - x1) < FLT_EPSILON && fabsf(y2 - y1) < FLT_EPSILON)
         return Result::InvalidArguments;
 
-    IMPL->x1 = x1;
-    IMPL->y1 = y1;
-    IMPL->x2 = x2;
-    IMPL->y2 = y2;
+    pImpl->x1 = x1;
+    pImpl->y1 = y1;
+    pImpl->x2 = x2;
+    pImpl->y2 = y2;
 
     return Result::Success;
 }
@@ -61,10 +65,10 @@ Result LinearGradient::linear(float x1, float y1, float x2, float y2) noexcept
 
 Result LinearGradient::linear(float* x1, float* y1, float* x2, float* y2) const noexcept
 {
-    if (x1) *x1 = IMPL->x1;
-    if (x2) *x2 = IMPL->x2;
-    if (y1) *y1 = IMPL->y1;
-    if (y2) *y2 = IMPL->y2;
+    if (x1) *x1 = pImpl->x1;
+    if (x2) *x2 = pImpl->x2;
+    if (y1) *y1 = pImpl->y1;
+    if (y2) *y2 = pImpl->y2;
 
     return Result::Success;
 }

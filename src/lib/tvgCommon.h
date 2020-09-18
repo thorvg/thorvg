@@ -37,8 +37,6 @@
 using namespace std;
 using namespace tvg;
 
-#define IMPL pImpl.get()
-
 #define FILL_ID_LINEAR 0
 #define FILL_ID_RADIAL 1
 

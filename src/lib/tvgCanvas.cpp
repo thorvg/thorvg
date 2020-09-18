@@ -26,50 +26,51 @@
 /* External Class Implementation                                        */
 /************************************************************************/
 
-Canvas::Canvas(RenderMethod *pRenderer):pImpl(make_unique<Impl>(pRenderer))
+Canvas::Canvas(RenderMethod *pRenderer):pImpl(new Impl(pRenderer))
 {
 }
 
 
 Canvas::~Canvas()
 {
+    delete(pImpl);
 }
 
 
 Result Canvas::reserve(uint32_t n) noexcept
 {
-    IMPL->paints.reserve(n);
+    pImpl->paints.reserve(n);
     return Result::Success;
 }
 
 
 Result Canvas::push(unique_ptr<Paint> paint) noexcept
 {
-    return IMPL->push(move(paint));
+    return pImpl->push(move(paint));
 }
 
 
 Result Canvas::clear() noexcept
 {
-    return IMPL->clear();
+    return pImpl->clear();
 }
 
 
 Result Canvas::draw() noexcept
 {
-    return IMPL->draw();
+    return pImpl->draw();
 }
 
 
 Result Canvas::update(Paint* paint) noexcept
 {
-    return IMPL->update(paint);
+    return pImpl->update(paint);
 }
 
 
 Result Canvas::sync() noexcept
 {
-    if (IMPL->renderer->flush()) return Result::Success;
+    if (pImpl->renderer->flush()) return Result::Success;
 
     return Result::InsufficientCondition;
 }

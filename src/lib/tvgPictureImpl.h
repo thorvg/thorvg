@@ -37,7 +37,7 @@ struct Picture::Impl
     {
         if (!paint) return false;
 
-        paint->IMPL->dispose(renderer);
+        paint->pImpl->dispose(renderer);
         delete(paint);
 
         return true;
@@ -56,13 +56,13 @@ struct Picture::Impl
 
         if (!paint) return false;
 
-        return paint->IMPL->update(renderer, transform, flag);
+        return paint->pImpl->update(renderer, transform, flag);
     }
 
     bool render(RenderMethod &renderer)
     {
         if (!paint) return false;
-        return paint->IMPL->render(renderer);
+        return paint->pImpl->render(renderer);
     }
 
     bool viewbox(float* x, float* y, float* w, float* h)
@@ -78,7 +78,7 @@ struct Picture::Impl
     bool bounds(float* x, float* y, float* w, float* h)
     {
         if (!paint) return false;
-        return paint->IMPL->bounds(x, y, w, h);
+        return paint->pImpl->bounds(x, y, w, h);
     }
 
     Result load(const string& path)
