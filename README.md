@@ -13,6 +13,7 @@ ThorVG is a platform independent lightweight standalone C++ library for drawing 
 ## Contents
 - [Building ThorVG](#building-thorvg)
 	- [Meson Build](#meson-build)
+- [Quick Start](#quick-start)
 - [Examples](#examples)
 - [Tools](#tools)
 	- [SVG to PNG](#svg-to-png)
@@ -22,10 +23,10 @@ ThorVG is a platform independent lightweight standalone C++ library for drawing 
 [](#contents)
 <br />
 ## Building ThorVG
-thorvg supports [meson](https://mesonbuild.com/) build system.
+Basically, ThorVG supports [meson](https://mesonbuild.com/) build system.
 <br />
 ### Meson Build
-install [meson](http://mesonbuild.com/Getting-meson.html) and [ninja](https://ninja-build.org/) if not already installed.
+Install [meson](http://mesonbuild.com/Getting-meson.html) and [ninja](https://ninja-build.org/) if not already installed.
 
 Run meson to configure ThorVG.
 ```
@@ -38,10 +39,10 @@ ninja -C build install
 [Back to contents](#contents)
 <br />
 <br />
-## Examples
-ThorVG renders vector shapes on a given canvas buffer.
+## Quick Start
+ThorVG renders vector shapes on a given canvas buffer. Here shows quick start to learn basic API usages.
 
-You can initialize ThorVG engine first:
+First, You can initialize ThorVG engine.
 
 ```cpp
 tvg::Initializer::init(tvg::CanvasEngine::Sw, 0);   //engine method, thread count
@@ -153,6 +154,18 @@ tvg::Initializer::term(tvg::CanvasEngine::Sw);
 [Back to contents](#contents)
 <br />
 <br />
+## Examples
+There are various examples to understand ThorVG APIs, Please check sample code in `thorvg/src/examples`
+
+To execute examples, you can build them with this meson option.
+```
+meson -Dexamples=true . build
+```
+Note that these examples are required EFL `elementary` package for launching. If you're using Linux-based OS, you could easily install its package from your OS distribution server. Otherwise, please visit the official [EFL page](https://enlightenment.org/) for more information.
+
+[Back to contents](#contents)
+<br />
+<br />
 ## Tools
 ### SVG to PNG
 ThorVG provides an executable `svg2png` converter which generate a PNG file from a SVG file.
@@ -173,13 +186,12 @@ Examples:
     $ svg2png input.svg 200x200
     $ svg2png input.svg 200x200 ff00ff
 ```
-
 [Back to contents](#contents)
 <br />
 <br />
 ## API Bindings
 Our main development APIs are written in C++ but ThorVG also provides API bindings such as: C.
-<br />
+
 [Back to contents](#contents)
 <br />
 <br />
