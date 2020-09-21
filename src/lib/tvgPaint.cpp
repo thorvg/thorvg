@@ -74,7 +74,7 @@ Result Paint::bounds(float* x, float* y, float* w, float* h) const noexcept
     return Result::InsufficientCondition;
 }
 
-unique_ptr<Paint> Paint::duplicate() const noexcept
+Paint* Paint::duplicate() const noexcept
 {
     return pImpl->duplicate();
 }

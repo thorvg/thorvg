@@ -91,7 +91,7 @@ public:
     Result translate(float x, float y) noexcept;
     Result transform(const Matrix& m) noexcept;
     Result bounds(float* x, float* y, float* w, float* h) const noexcept;
-    std::unique_ptr<Paint> duplicate() const noexcept;
+    Paint* duplicate() const noexcept;
 
     _TVG_DECLARE_ACCESSOR();
     _TVG_DECLARE_PRIVATE(Paint);

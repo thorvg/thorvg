@@ -201,6 +201,7 @@ struct Shape::Impl
 
         if (fill) {
             dup->fill = fill->duplicate().release();
+            dup->flag |= RenderUpdateFlag::Gradient;
         }
 
         return ret;

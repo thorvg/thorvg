@@ -148,9 +148,9 @@ namespace tvg
             return smethod->render(renderer);
         }
 
-        unique_ptr<Paint> duplicate()
+        Paint* duplicate()
         {
-            return smethod->duplicate();
+            return smethod->duplicate().release();
         }
     };
 
