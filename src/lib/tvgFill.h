@@ -19,49 +19,62 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+#ifndef _TVG_FILL_H_
+#define _TVG_FILL_H_
 
-#include "tvgPictureImpl.h"
+#include "tvgCommon.h"
 
-/************************************************************************/
-/* External Class Implementation                                        */
-/************************************************************************/
-
-Picture::Picture() : pImpl(new Impl())
+template<typename T>
+struct DuplicateMethod
 {
-    Paint::pImpl->method(new PaintMethod<Picture::Impl>(pImpl));
-}
+    virtual ~DuplicateMethod(){}
+    virtual unique_ptr<T> duplicate() = 0;
+};
 
-
-Picture::~Picture()
+template<class T>
+struct FillDup : DuplicateMethod<Fill>
 {
-    delete(pImpl);
-}
+    T* inst = nullptr;
 
+    FillDup(T* _inst) : inst(_inst) {}
+    ~FillDup(){}
 
-unique_ptr<Picture> Picture::gen() noexcept
+    unique_ptr<Fill> duplicate() override
+    {
+        return inst->duplicate();
+    }
+};
+
+struct Fill::Impl
 {
-    return unique_ptr<Picture>(new Picture);
-}
+    ColorStop* colorStops = nullptr;
+    uint32_t cnt = 0;
+    FillSpread spread;
+    DuplicateMethod<Fill>* dup = nullptr;
 
+    ~Impl()
+    {
+        if (dup) delete(dup);
+        if (colorStops) free(colorStops);
+    }
 
-Result Picture::load(const std::string& path) noexcept
-{
-    if (path.empty()) return Result::InvalidArguments;
+    void method(DuplicateMethod<Fill>* dup)
+    {
+        this->dup = dup;
+    }
 
-    return pImpl->load(path);
-}
+    unique_ptr<Fill> duplicate()
+    {
+        auto ret = dup->duplicate();
+        if (!ret) return nullptr;
 
+        ret->pImpl->cnt = cnt;
+        ret->pImpl->spread = spread;
+        ret->pImpl->colorStops = static_cast<ColorStop*>(malloc(sizeof(ColorStop) * cnt));
+        memcpy(ret->pImpl->colorStops, colorStops, sizeof(ColorStop) * cnt);
 
-Result Picture::load(const char* data, uint32_t size) noexcept
-{
-    if (!data || size <= 0) return Result::InvalidArguments;
+        return ret;
+    }    
+};
 
-    return pImpl->load(data, size);
-}
-
-
-Result Picture::viewbox(float* x, float* y, float* w, float* h) const noexcept
-{
-    if (pImpl->viewbox(x, y, w, h)) return Result::Success;
-    return Result::InsufficientCondition;
-}
+#endif  //_TVG_FILL_H_

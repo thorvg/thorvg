@@ -22,7 +22,7 @@
 #ifndef _TVG_SHAPE_IMPL_H_
 #define _TVG_SHAPE_IMPL_H_
 
-#include "tvgCommon.h"
+#include "tvgPaint.h"
 #include "tvgShapePath.h"
 
 /************************************************************************/
@@ -199,7 +199,10 @@ struct Shape::Impl
             dup->flag |= RenderUpdateFlag::Stroke;
         }
 
-        //TODO: Fill
+        if (fill) {
+            dup->fill = fill->duplicate().release();
+            dup->flag |= RenderUpdateFlag::Gradient;
+        }
 
         return ret;
     }

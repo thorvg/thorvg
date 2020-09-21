@@ -19,7 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#include "tvgCommon.h"
+#include "tvgPaint.h"
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
@@ -74,7 +74,7 @@ Result Paint::bounds(float* x, float* y, float* w, float* h) const noexcept
     return Result::InsufficientCondition;
 }
 
-unique_ptr<Paint> Paint::duplicate() const noexcept
+Paint* Paint::duplicate() const noexcept
 {
     return pImpl->duplicate();
 }

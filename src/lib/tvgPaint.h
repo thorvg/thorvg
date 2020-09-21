@@ -22,6 +22,8 @@
 #ifndef _TVG_PAINT_H_
 #define _TVG_PAINT_H_
 
+#include "tvgCommon.h"
+
 namespace tvg
 {
     struct StrategyMethod
@@ -146,9 +148,9 @@ namespace tvg
             return smethod->render(renderer);
         }
 
-        unique_ptr<Paint> duplicate()
+        Paint* duplicate()
         {
-            return smethod->duplicate();
+            return smethod->duplicate().release();
         }
     };
 

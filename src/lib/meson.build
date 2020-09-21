@@ -14,6 +14,7 @@ source_file = [
    'tvgCanvasImpl.h',
    'tvgCommon.h',
    'tvgBezier.h',
+   'tvgFill.h',
    'tvgLoader.h',
    'tvgLoaderMgr.h',
    'tvgPictureImpl.h',

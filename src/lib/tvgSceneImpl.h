@@ -22,7 +22,7 @@
 #ifndef _TVG_SCENE_IMPL_H_
 #define _TVG_SCENE_IMPL_H_
 
-#include "tvgCommon.h"
+#include "tvgPaint.h"
 
 /************************************************************************/
 /* Internal Class Implementation                                        */

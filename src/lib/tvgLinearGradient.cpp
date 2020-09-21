@@ -19,7 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#include "tvgCommon.h"
+#include "tvgFill.h"
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
@@ -31,6 +31,19 @@ struct LinearGradient::Impl
     float y1 = 0;
     float x2 = 0;
     float y2 = 0;
+
+    unique_ptr<Fill> duplicate()
+    {
+        auto ret = LinearGradient::gen();
+        if (!ret) return nullptr;
+
+        ret->pImpl->x1 = x1;
+        ret->pImpl->y1 = y1;
+        ret->pImpl->x2 = x2;
+        ret->pImpl->y2 = y2;
+
+        return ret;
+    }
 };
 
 /************************************************************************/
@@ -40,6 +53,7 @@ struct LinearGradient::Impl
 LinearGradient::LinearGradient():pImpl(new Impl())
 {
     _id = FILL_ID_LINEAR;
+    Fill::pImpl->method(new FillDup<LinearGradient::Impl>(pImpl));
 }
 
 

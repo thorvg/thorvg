@@ -19,7 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#include "tvgCommon.h"
+#include "tvgFill.h"
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
@@ -30,6 +30,18 @@ struct RadialGradient::Impl
     float cx = 0;
     float cy = 0;
     float radius = 0;
+
+    unique_ptr<Fill> duplicate()
+    {
+        auto ret = RadialGradient::gen();
+        if (!ret) return nullptr;
+
+        ret->pImpl->cx = cx;
+        ret->pImpl->cy = cy;
+        ret->pImpl->radius = radius;
+
+        return ret;
+    }
 };
 
 
@@ -40,6 +52,7 @@ struct RadialGradient::Impl
 RadialGradient::RadialGradient():pImpl(new Impl())
 {
     _id = FILL_ID_RADIAL;
+    Fill::pImpl->method(new FillDup<RadialGradient::Impl>(pImpl));
 }
 
 
