@@ -21,24 +21,39 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     shape1->fill(255, 0, 0, 255);
 
     //Create second shape and duplicate parameters
-    auto shape2 = shape1->duplicate();
+    auto shape2 = unique_ptr<tvg::Shape>(static_cast<tvg::Shape*>(shape1->duplicate()));
 
     //Create third shape, duplicate from first and add some new parameters
-    auto shape3 = shape1->duplicate();
+    auto shape3 = unique_ptr<tvg::Shape>(static_cast<tvg::Shape*>(shape1->duplicate()));
 
-    //Get access to valid derived class type
-    tvg::Shape* shapePtr = reinterpret_cast<tvg::Shape*>(shape3.get());
-
-    //move shape3 to new postion to don't cover second shape
+    //Move shape3 to new postion to don't cover second shape
     shape3->translate(0, 220);
 
-    //append new paths
-    shapePtr->appendRect(340, 10, 100, 100, 0, 0);
-    shapePtr->fill(0, 0, 255, 255);
+    //Append New paths
+    shape3->appendRect(340, 10, 100, 100, 0, 0);
 
-    //TODO: test gradient
+    //Fill shap3 with Linear Gradient
+    auto fill = tvg::LinearGradient::gen();
+    fill->linear(10, 10, 440, 200);
+
+    //Gradient Color Stops
+    tvg::Fill::ColorStop colorStops[2];
+    colorStops[0] = {0, 0, 0, 0, 255};
+    colorStops[1] = {1, 255, 255, 255, 255};
+
+    fill->colorStops(colorStops, 2);
+
+    shape3->fill(move(fill));
+
+    //Create fourth shape, duplicate from third and move position
+    auto shape4 = unique_ptr<tvg::Shape>(static_cast<tvg::Shape*>(shape3->duplicate()));
+
+    //Move shape3 to new postion to don't cover second shape
+    shape4->translate(0, 440);
+
     canvas->push(move(shape2));
     canvas->push(move(shape3));
+    canvas->push(move(shape4));
 }
 
 
