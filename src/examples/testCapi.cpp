@@ -135,7 +135,15 @@ void testCapi()
     for(uint32_t i = 0; i < ptsCnt; ++i) {
         printf("(%.2lf, %.2lf)\n", pts[i].x, pts[i].y);
     }
-    
+
+    uint32_t cnt;
+    const Tvg_Color_Stop* color_stops_get;
+    tvg_gradient_get_color_stops(grad5, &color_stops_get, &cnt);
+    printf("Gradient stops get:\n");
+    for(uint32_t i = 0; i < cnt; i++) {
+        printf("\t[%d] offset: %f, rgb: %d/%d/%d, alpha: %d\n", i, color_stops_get[i].offset, color_stops_get[i].r, color_stops_get[i].g, color_stops_get[i].b, color_stops_get[i].a);
+    }
+
     //Origin paint for duplicated
     Tvg_Paint* org = tvg_shape_new();
     tvg_shape_append_rect(org, 550, 10, 100, 100, 0, 0);
