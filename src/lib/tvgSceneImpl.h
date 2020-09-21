@@ -104,6 +104,33 @@ struct Scene::Impl
 
         return ret.release();
     }
+
+    bool composite(unique_ptr<Paint> comp, CompMethod method)
+    {
+        auto c = comp.release();
+        for(auto paint: paints) {
+            if(!paint->pImpl->composite(c, method)) return false;
+        }
+        return false;
+    }
+
+    bool composite(Paint* comp, CompMethod method)
+    {
+        for(auto paint: paints) {
+            if(!paint->pImpl->composite(comp, method)) return false;
+        }
+        return false;
+    }
+
+    Paint* composite()
+    {
+        return nullptr;
+    }
+
+    CompMethod compositeMethod()
+    {
+        return CompMethod::None;
+    }
 };
 
 #endif //_TVG_SCENE_IMPL_H_

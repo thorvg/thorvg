@@ -67,6 +67,10 @@ Result Paint::transform(const Matrix& m) noexcept
     return Result::FailedAllocation;
 }
 
+Matrix Paint::transform() noexcept
+{
+    return pImpl->transform();
+}
 
 Result Paint::bounds(float* x, float* y, float* w, float* h) const noexcept
 {
@@ -78,3 +82,20 @@ Paint* Paint::duplicate() const noexcept
 {
     return pImpl->duplicate();
 }
+
+Result Paint::composite(std::unique_ptr<Paint> comp, CompMethod method) const noexcept
+{
+    if (pImpl->composite(move(comp), method)) return Result::Success;
+    return Result::InsufficientCondition;
+}
+
+Paint* Paint::composite() const noexcept
+{
+    return pImpl->composite();
+}
+
+CompMethod Paint::compositeMethod() const noexcept
+{
+    return pImpl->compositeMethod();
+}
+

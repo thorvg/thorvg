@@ -124,6 +124,36 @@ struct Picture::Impl
 
         return ret.release();
     }
+
+    bool composite(unique_ptr<Paint> comp, CompMethod method)
+    {
+        if (loader) {
+            auto scene = loader->data();
+            if (scene) {
+                this->paint = scene.release();
+                if (!this->paint) return false;
+                loader->close();
+            }
+        }
+        if (!paint) return false;
+        auto c = comp.release();
+        return paint->pImpl->composite(c, method);
+    }
+
+    bool composite(Paint* comp, CompMethod method)
+    {
+        return paint->pImpl->composite(comp, method);
+    }
+
+    Paint* composite()
+    {
+        return nullptr;//paint->pImpl->composite();
+    }
+
+    CompMethod compositeMethod()
+    {
+        return CompMethod::None;
+    }
 };
 
 #endif //_TVG_PICTURE_IMPL_H_

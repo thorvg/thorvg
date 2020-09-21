@@ -293,6 +293,9 @@ void fillFetchRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, 
 
 SwRleData* rleRender(const SwOutline* outline, const SwBBox& bbox, const SwSize& clip, bool antiAlias);
 void rleFree(SwRleData* rle);
+void rleClipPath(SwRleData *rle, const SwRleData *compRle);
+void rleClipRect(SwRleData *rle, const SwBBox* compBBox);
+
 
 bool rasterCompositor(SwSurface* surface);
 bool rasterGradientShape(SwSurface* surface, SwShape* shape, unsigned id);

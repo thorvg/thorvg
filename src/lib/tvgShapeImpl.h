@@ -200,6 +200,10 @@ struct Shape::Impl
     Shape *shape = nullptr;
     uint32_t flag = RenderUpdateFlag::None;
 
+    Shape* comp = nullptr;
+    void *eCompData = nullptr;              //engine data
+    CompMethod compMethod = CompMethod::None;
+
     Impl(Shape* s) : path(new ShapePath), shape(s)
     {
     }
@@ -213,6 +217,9 @@ struct Shape::Impl
 
     bool dispose(RenderMethod& renderer)
     {
+        if (comp && eCompData) {
+            renderer.dispose(*comp, eCompData);
+        }
         return renderer.dispose(*shape, edata);
     }
 
@@ -223,6 +230,9 @@ struct Shape::Impl
 
     bool update(RenderMethod& renderer, const RenderTransform* transform, RenderUpdateFlag pFlag)
     {
+        if (comp && compMethod == CompMethod::ClipPath) {
+           eCompData = renderer.prepare(*comp, eCompData, transform, static_cast<RenderUpdateFlag>(pFlag | flag));
+        }
         edata = renderer.prepare(*shape, edata, transform, static_cast<RenderUpdateFlag>(pFlag | flag));
 
         flag = RenderUpdateFlag::None;
@@ -235,6 +245,32 @@ struct Shape::Impl
     {
         if (!path) return false;
         return path->bounds(x, y, w, h);
+    }
+
+    bool composite(unique_ptr<Paint> comp, CompMethod method)
+    {
+        this->comp = static_cast<Shape*>(comp.release());
+        this->compMethod = method;
+        if (this->comp) return true;
+        return false;
+    }
+
+    bool composite(Paint* comp, CompMethod method)
+    {
+        this->comp = static_cast<Shape*>(comp);
+        this->compMethod = method;
+        if (this->comp) return true;
+        return false;
+    }
+
+    Paint* composite()
+    {
+        return static_cast<Shape*>(this->comp);
+    }
+
+    CompMethod compositeMethod()
+    {
+        return compMethod;
     }
 
     bool strokeWidth(float width)
