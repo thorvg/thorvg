@@ -280,7 +280,7 @@ static int _numberCount(char cmd)
 }
 
 
-static void _processCommand(vector<PathCommand>* cmds, vector<Point>* pts, char cmd, float* arr, int count, Point* cur, Point* curCtl, bool *isQuadratic)
+static void _processCommand(vector<PathCommand>* cmds, vector<Point>* pts, char cmd, float* arr, int count, Point* cur, Point* curCtl, Point* startPoint, bool *isQuadratic)
 {
     int i;
     switch (cmd) {
@@ -321,6 +321,7 @@ static void _processCommand(vector<PathCommand>* cmds, vector<Point>* pts, char 
             cmds->push_back(PathCommand::MoveTo);
             pts->push_back(p);
             *cur = {arr[0] ,arr[1]};
+            *startPoint = {arr[0] ,arr[1]};
             break;
         }
         case 'l':
@@ -432,6 +433,7 @@ static void _processCommand(vector<PathCommand>* cmds, vector<Point>* pts, char 
         case 'z':
         case 'Z': {
             cmds->push_back(PathCommand::Close);
+            *cur = *startPoint;
             break;
         }
         case 'a':
@@ -503,6 +505,7 @@ tuple<vector<PathCommand>, vector<Point>> svgPathToTvgPath(const char* svgPath)
     int numberCount = 0;
     Point cur = { 0, 0 };
     Point curCtl = { 0, 0 };
+    Point startPoint = { 0, 0 };
     char cmd = 0;
     bool isQuadratic = false;
     char* path = (char*)svgPath;
@@ -515,7 +518,7 @@ tuple<vector<PathCommand>, vector<Point>> svgPathToTvgPath(const char* svgPath)
     while ((path[0] != '\0')) {
         path = _nextCommand(path, &cmd, numberArray, &numberCount);
         if (!path) break;
-        _processCommand(&cmds, &pts, cmd, numberArray, numberCount, &cur, &curCtl, &isQuadratic);
+        _processCommand(&cmds, &pts, cmd, numberArray, numberCount, &cur, &curCtl, &startPoint, &isQuadratic);
     }
 
     setlocale(LC_NUMERIC, curLocale);
