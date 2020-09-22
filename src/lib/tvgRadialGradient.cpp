@@ -31,7 +31,7 @@ struct RadialGradient::Impl
     float cy = 0;
     float radius = 0;
 
-    unique_ptr<Fill> duplicate()
+    Fill* duplicate()
     {
         auto ret = RadialGradient::gen();
         if (!ret) return nullptr;
@@ -40,7 +40,7 @@ struct RadialGradient::Impl
         ret->pImpl->cy = cy;
         ret->pImpl->radius = radius;
 
-        return ret;
+        return ret.release();
     }
 };
 

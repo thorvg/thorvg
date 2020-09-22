@@ -105,7 +105,7 @@ struct Picture::Impl
         return Result::Success;
     }
 
-    unique_ptr<Paint> duplicate()
+    Paint* duplicate()
     {
         //TODO:
         return nullptr;

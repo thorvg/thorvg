@@ -85,7 +85,7 @@ FillSpread Fill::spread() const noexcept
 }
 
 
-unique_ptr<Fill> Fill::duplicate() const noexcept
+Fill* Fill::duplicate() const noexcept
 {
     return pImpl->duplicate();
 }
