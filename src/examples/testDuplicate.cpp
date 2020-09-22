@@ -77,7 +77,19 @@ void tvgDrawCmds(tvg::Canvas* canvas)
         canvas->push(move(scene2));
     }
 
+    //Duplicate Picture
+    {
+        auto picture1 = tvg::Picture::gen();
+        picture1->load(EXAMPLE_DIR"/tiger.svg");
+        picture1->translate(370, 370);
+        picture1->scale(0.25);
 
+        auto picture2 = unique_ptr<tvg::Picture>(static_cast<tvg::Picture*>(picture1->duplicate()));
+        picture2->translate(550, 550);
+
+        canvas->push(move(picture1));
+        canvas->push(move(picture2));
+    }
 }
 
 
