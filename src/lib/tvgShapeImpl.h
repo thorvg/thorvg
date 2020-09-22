@@ -176,7 +176,7 @@ struct Shape::Impl
         return true;
     }
 
-    unique_ptr<Paint> duplicate()
+    Paint* duplicate()
     {
         auto ret = Shape::gen();
         if (!ret) return nullptr;
@@ -200,11 +200,11 @@ struct Shape::Impl
         }
 
         if (fill) {
-            dup->fill = fill->duplicate().release();
+            dup->fill = fill->duplicate();
             dup->flag |= RenderUpdateFlag::Gradient;
         }
 
-        return ret;
+        return ret.release();
     }
 };
 

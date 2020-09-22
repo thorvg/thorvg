@@ -28,7 +28,7 @@ template<typename T>
 struct DuplicateMethod
 {
     virtual ~DuplicateMethod(){}
-    virtual unique_ptr<T> duplicate() = 0;
+    virtual T* duplicate() = 0;
 };
 
 template<class T>
@@ -39,7 +39,7 @@ struct FillDup : DuplicateMethod<Fill>
     FillDup(T* _inst) : inst(_inst) {}
     ~FillDup(){}
 
-    unique_ptr<Fill> duplicate() override
+    Fill* duplicate() override
     {
         return inst->duplicate();
     }
@@ -63,7 +63,7 @@ struct Fill::Impl
         this->dup = dup;
     }
 
-    unique_ptr<Fill> duplicate()
+    Fill* duplicate()
     {
         auto ret = dup->duplicate();
         if (!ret) return nullptr;

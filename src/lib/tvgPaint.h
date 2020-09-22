@@ -34,7 +34,7 @@ namespace tvg
         virtual bool update(RenderMethod& renderer, const RenderTransform* transform, RenderUpdateFlag pFlag) = 0;
         virtual bool render(RenderMethod& renderer) = 0;
         virtual bool bounds(float* x, float* y, float* w, float* h) const = 0;
-        virtual unique_ptr<Paint> duplicate() = 0;
+        virtual Paint* duplicate() = 0;
     };
 
     struct Paint::Impl
@@ -150,7 +150,7 @@ namespace tvg
 
         Paint* duplicate()
         {
-            return smethod->duplicate().release();
+            return smethod->duplicate();
         }
     };
 
@@ -183,7 +183,7 @@ namespace tvg
             return inst->render(renderer);
         }
 
-        unique_ptr<Paint> duplicate() override
+        Paint* duplicate() override
         {
             return inst->duplicate();
         }

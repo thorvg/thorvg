@@ -89,7 +89,7 @@ struct Scene::Impl
         return true;
     }
 
-    unique_ptr<Paint> duplicate()
+    Paint* duplicate()
     {
         //TODO:
         return nullptr;

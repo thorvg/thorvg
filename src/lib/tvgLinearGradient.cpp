@@ -32,7 +32,7 @@ struct LinearGradient::Impl
     float x2 = 0;
     float y2 = 0;
 
-    unique_ptr<Fill> duplicate()
+    Fill* duplicate()
     {
         auto ret = LinearGradient::gen();
         if (!ret) return nullptr;
@@ -42,7 +42,7 @@ struct LinearGradient::Impl
         ret->pImpl->x2 = x2;
         ret->pImpl->y2 = y2;
 
-        return ret;
+        return ret.release();
     }
 };
 
