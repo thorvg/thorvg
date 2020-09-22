@@ -150,7 +150,18 @@ namespace tvg
 
         Paint* duplicate()
         {
-            return smethod->duplicate();
+            auto ret = smethod->duplicate();
+
+            //duplicate Transform
+            if (rTransform) {
+                ret->pImpl->rTransform = new RenderTransform();
+                if (ret->pImpl->rTransform) {
+                    *ret->pImpl->rTransform = *rTransform;
+                    ret->pImpl->flag |= RenderUpdateFlag::Transform;
+                }
+            }
+
+            return ret;
         }
     };
 
