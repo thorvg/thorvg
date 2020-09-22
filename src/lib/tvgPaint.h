@@ -153,7 +153,7 @@ namespace tvg
             auto ret = smethod->duplicate();
 
             //duplicate Transform
-            if (rTransform) {
+            if (ret && rTransform) {
                 ret->pImpl->rTransform = new RenderTransform();
                 if (ret->pImpl->rTransform) {
                     *ret->pImpl->rTransform = *rTransform;

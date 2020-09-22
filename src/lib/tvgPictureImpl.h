@@ -43,16 +43,22 @@ struct Picture::Impl
         return true;
     }
 
-    bool update(RenderMethod &renderer, const RenderTransform* transform, RenderUpdateFlag flag)
+    void reload()
     {
-        if (loader) {
+        if (loader && !paint) {
             auto scene = loader->data();
             if (scene) {
-                this->paint = scene.release();
-                if (!this->paint) return false;
+                paint = scene.release();
+                if (!paint) return;
                 loader->close();
             }
         }
+    }
+
+
+    bool update(RenderMethod &renderer, const RenderTransform* transform, RenderUpdateFlag flag)
+    {
+        reload();
 
         if (!paint) return false;
 
@@ -107,8 +113,15 @@ struct Picture::Impl
 
     Paint* duplicate()
     {
-        //TODO:
-        return nullptr;
+        reload();
+
+        if (!paint) return nullptr;
+        auto ret = Picture::gen();
+        if (!ret) return nullptr;
+        auto dup = ret.get()->pImpl;
+        dup->paint = paint->duplicate();
+
+        return ret.release();
     }
 };
 
