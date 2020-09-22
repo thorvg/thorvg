@@ -466,7 +466,7 @@ bool shapeGenRle(SwShape* shape, TVG_UNUSED const Shape* sdata, const SwSize& cl
     //if (shape.outline->opened) return true;
 
     //Case A: Fast Track Rectangle Drawing
-    if (sdata->compositeMethod() != CompMethod::ClipPath && (shape->rect = _fastTrack(shape->outline))) return true;
+    //if (sdata->pImpl->compMethod != CompMethod::ClipPath && (shape->rect = _fastTrack(shape->outline))) return true;
     //Case B: Normale Shape RLE Drawing
     if ((shape->rle = rleRender(shape->outline, shape->bbox, clip, antiAlias))) return true;
 

@@ -34,7 +34,7 @@ namespace tvg
 class SwRenderer : public RenderMethod
 {
 public:
-    void* prepare(const Shape& shape, void* data, const RenderTransform* transform, RenderUpdateFlag flags) override;
+    void* prepare(const Shape& shape, void* data, const RenderTransform* transform, vector<Composite>& compList, RenderUpdateFlag flags) override;
     bool dispose(const Shape& shape, void *data) override;
     bool preRender() override;
     bool postRender() override;

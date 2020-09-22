@@ -57,13 +57,13 @@ struct Picture::Impl
     }
 
 
-    bool update(RenderMethod &renderer, const RenderTransform* transform, RenderUpdateFlag flag)
+    void* update(RenderMethod &renderer, const RenderTransform* transform, vector<Composite>& compList, RenderUpdateFlag flag)
     {
         reload();
 
-        if (!paint) return false;
+        if (!paint) return nullptr;
 
-        return paint->pImpl->update(renderer, transform, flag);
+        return paint->pImpl->update(renderer, transform, compList, flag);
     }
 
     bool render(RenderMethod &renderer)
@@ -123,36 +123,6 @@ struct Picture::Impl
         dup->paint = paint->duplicate();
 
         return ret.release();
-    }
-
-    bool composite(unique_ptr<Paint> comp, CompMethod method)
-    {
-        if (loader) {
-            auto scene = loader->data();
-            if (scene) {
-                this->paint = scene.release();
-                if (!this->paint) return false;
-                loader->close();
-            }
-        }
-        if (!paint) return false;
-        auto c = comp.release();
-        return paint->pImpl->composite(c, method);
-    }
-
-    bool composite(Paint* comp, CompMethod method)
-    {
-        return paint->pImpl->composite(comp, method);
-    }
-
-    Paint* composite()
-    {
-        return nullptr;//paint->pImpl->composite();
-    }
-
-    CompMethod compositeMethod()
-    {
-        return CompMethod::None;
     }
 };
 

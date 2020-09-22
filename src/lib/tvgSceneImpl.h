@@ -44,12 +44,14 @@ struct Scene::Impl
         return true;
     }
 
-    bool update(RenderMethod &renderer, const RenderTransform* transform, RenderUpdateFlag flag)
+    void* update(RenderMethod &renderer, const RenderTransform* transform, vector<Composite>& compList, RenderUpdateFlag flag)
     {
+        void *edata = nullptr;
         for(auto paint: paints) {
-            if (!paint->pImpl->update(renderer, transform, static_cast<uint32_t>(flag))) return false;
+            edata = paint->pImpl->update(renderer, transform, compList, static_cast<uint32_t>(flag));
+            if (!edata) return nullptr;
         }
-        return true;
+        return edata;
     }
 
     bool render(RenderMethod &renderer)
@@ -103,33 +105,6 @@ struct Scene::Impl
         }
 
         return ret.release();
-    }
-
-    bool composite(unique_ptr<Paint> comp, CompMethod method)
-    {
-        auto c = comp.release();
-        for(auto paint: paints) {
-            if(!paint->pImpl->composite(c, method)) return false;
-        }
-        return false;
-    }
-
-    bool composite(Paint* comp, CompMethod method)
-    {
-        for(auto paint: paints) {
-            if(!paint->pImpl->composite(comp, method)) return false;
-        }
-        return false;
-    }
-
-    Paint* composite()
-    {
-        return nullptr;
-    }
-
-    CompMethod compositeMethod()
-    {
-        return CompMethod::None;
     }
 };
 

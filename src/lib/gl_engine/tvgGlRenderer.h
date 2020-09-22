@@ -30,7 +30,7 @@ class GlRenderer : public RenderMethod
 public:
     Surface surface = {nullptr, 0, 0, 0};
 
-    void* prepare(const Shape& shape, void* data, const RenderTransform* transform, RenderUpdateFlag flags) override;
+    void* prepare(const Shape& shape, void* data, const RenderTransform* transform, vector<Composite>& compList, RenderUpdateFlag flags) override;
     bool dispose(const Shape& shape, void *data) override;
     bool preRender() override;
     bool render(const Shape& shape, void *data) override;

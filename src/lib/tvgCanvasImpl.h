@@ -33,6 +33,7 @@ struct Canvas::Impl
 {
     vector<Paint*> paints;
     RenderMethod*  renderer;
+    vector<Composite> compList;
 
     Impl(RenderMethod* pRenderer):renderer(pRenderer)
     {
@@ -64,6 +65,9 @@ struct Canvas::Impl
             paint->pImpl->dispose(*renderer);
             delete(paint);
         }
+
+        compList.clear();
+
         paints.clear();
 
         return Result::Success;
@@ -73,15 +77,17 @@ struct Canvas::Impl
     {
         if (!renderer) return Result::InsufficientCondition;
 
+        compList.clear();
+
         //Update single paint node
         if (paint) {
-            if (!paint->pImpl->update(*renderer, nullptr, RenderUpdateFlag::None)) {
+            if (!paint->pImpl->update(*renderer, nullptr, compList, RenderUpdateFlag::None)) {
                 return Result::InsufficientCondition;
             }
         //Update retained all paint nodes
         } else {
             for(auto paint: paints) {
-                if (!paint->pImpl->update(*renderer, nullptr, RenderUpdateFlag::None)) {
+                if (!paint->pImpl->update(*renderer, nullptr, compList, RenderUpdateFlag::None)) {
                     return Result::InsufficientCondition;
                 }
             }

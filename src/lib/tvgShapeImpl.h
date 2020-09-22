@@ -228,49 +228,18 @@ struct Shape::Impl
         return renderer.render(*shape, edata);
     }
 
-    bool update(RenderMethod& renderer, const RenderTransform* transform, RenderUpdateFlag pFlag)
+    void* update(RenderMethod& renderer, const RenderTransform* transform, vector<Composite>& compList, RenderUpdateFlag pFlag)
     {
-        if (comp && compMethod == CompMethod::ClipPath) {
-           eCompData = renderer.prepare(*comp, eCompData, transform, static_cast<RenderUpdateFlag>(pFlag | flag));
-        }
-        edata = renderer.prepare(*shape, edata, transform, static_cast<RenderUpdateFlag>(pFlag | flag));
-
+        edata = renderer.prepare(*shape, edata, transform, compList, static_cast<RenderUpdateFlag>(pFlag | flag));
         flag = RenderUpdateFlag::None;
 
-        if (edata) return true;
-        return false;
+        return edata;
     }
 
     bool bounds(float* x, float* y, float* w, float* h)
     {
         if (!path) return false;
         return path->bounds(x, y, w, h);
-    }
-
-    bool composite(unique_ptr<Paint> comp, CompMethod method)
-    {
-        this->comp = static_cast<Shape*>(comp.release());
-        this->compMethod = method;
-        if (this->comp) return true;
-        return false;
-    }
-
-    bool composite(Paint* comp, CompMethod method)
-    {
-        this->comp = static_cast<Shape*>(comp);
-        this->compMethod = method;
-        if (this->comp) return true;
-        return false;
-    }
-
-    Paint* composite()
-    {
-        return static_cast<Shape*>(this->comp);
-    }
-
-    CompMethod compositeMethod()
-    {
-        return compMethod;
     }
 
     bool strokeWidth(float width)
