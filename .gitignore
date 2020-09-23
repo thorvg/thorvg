@@ -25,3 +25,4 @@ testCapi
 testArc
 testMultiCanvas
 testDuplicate
+testStress
