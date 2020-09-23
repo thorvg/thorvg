@@ -65,7 +65,7 @@ RadialGradient::~RadialGradient()
 
 Result RadialGradient::radial(float cx, float cy, float radius) noexcept
 {
-    if (radius < FLT_EPSILON) return Result::InvalidArguments;
+    if (radius < 0) return Result::InvalidArguments;
 
     pImpl->cx = cx;
     pImpl->cy = cy;
