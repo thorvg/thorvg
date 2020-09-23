@@ -20,6 +20,10 @@
  * SOFTWARE.
  */
 
+#include <ctype.h>
+#include <cstring>
+#include <alloca.h>
+
 #include "tvgSimpleXmlParser.h"
 
 static const char* _simpleXmlFindWhiteSpace(const char* itr, const char* itrEnd)

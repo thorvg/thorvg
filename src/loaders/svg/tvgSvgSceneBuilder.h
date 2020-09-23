@@ -24,7 +24,6 @@
 #define _TVG_SVG_SCENE_BUILDER_H_
 
 #include "tvgSvgLoaderCommon.h"
-#include "tvgSvgPath.h"
 
 class SvgSceneBuilder
 {

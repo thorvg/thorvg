@@ -19,7 +19,9 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+#include <math.h>
 #include "tvgSwCommon.h"
+#include "tvgBezier.h"
 
 /************************************************************************/
 /* Internal Class Implementation                                        */

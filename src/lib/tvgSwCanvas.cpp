@@ -19,7 +19,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#include "tvgCommon.h"
 #include "tvgCanvasImpl.h"
 
 #ifdef THORVG_SW_RASTER_SUPPORT

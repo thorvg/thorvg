@@ -19,8 +19,9 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+#include <string.h>
+#include <math.h>
 #include "tvgSvgPath.h"
-
 
 static char* _skipComma(const char* content)
 {

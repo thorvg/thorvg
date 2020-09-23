@@ -23,6 +23,7 @@
 #define _TVG_SW_COMMON_H_
 
 #include "tvgCommon.h"
+#include "tvgRender.h"
 
 #ifdef THORVG_AVX_VECTOR_SUPPORT
     #include <immintrin.h>

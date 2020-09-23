@@ -21,8 +21,12 @@
  */
 #include <stddef.h>
 #include <fstream>
+#include <string.h>
+#include <float.h>
+#include <math.h>
+#include "tvgLoaderMgr.h"
+#include "tvgSimpleXmlParser.h"
 #include "tvgSvgLoader.h"
-
 
 /************************************************************************/
 /* Internal Class Implementation                                        */

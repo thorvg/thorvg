@@ -20,6 +20,7 @@
  * SOFTWARE.
  */
 #include "tvgSwCommon.h"
+#include "tvgTaskScheduler.h"
 #include "tvgSwRenderer.h"
 
 /************************************************************************/
