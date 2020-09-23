@@ -54,6 +54,9 @@ bool tvgUpdateCmds(tvg::Canvas* canvas)
 
     t3 = ecore_time_get();
 
+    //Drawing task can be performed asynchronously.
+    if (canvas->draw() != tvg::Result::Success) return false;
+
     return true;
 }
 
@@ -74,9 +77,6 @@ void tvgSwTest(uint32_t* buffer)
 Eina_Bool animSwCb(void* data)
 {
     if (!tvgUpdateCmds(swCanvas.get())) return ECORE_CALLBACK_RENEW;
-
-    //Drawing task can be performed asynchronously.
-    if (swCanvas->draw() != tvg::Result::Success) return false;
 
     //Update Efl Canvas
     Eo* img = (Eo*) data;

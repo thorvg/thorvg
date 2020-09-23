@@ -19,6 +19,7 @@ source_file = [
     'testScene.cpp',
     'testSceneTransform.cpp',
     'testShape.cpp',
+    'testStress.cpp',
     'testStroke.cpp',
     'testStrokeLine.cpp',
     'testSvg2.cpp',
