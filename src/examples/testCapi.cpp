@@ -135,7 +135,25 @@ void testCapi()
     for(uint32_t i = 0; i < ptsCnt; ++i) {
         printf("(%.2lf, %.2lf)\n", pts[i].x, pts[i].y);
     }
-    
+
+    float x1, y1, x2, y2, radius;
+    tvg_linear_gradient_get(grad, &x1, &y1, &x2, &y2);
+    printf("Gradient linear get: %f/%f/%f/%f\n", x1, y1, x2, y2);
+    tvg_radial_gradient_get(grad6, &x1, &y1, &radius);
+    printf("Gradient radial get: %f/%f, %f\n", x1, y1, radius);
+
+    uint32_t cnt;
+    const Tvg_Color_Stop* color_stops_get;
+    tvg_gradient_get_color_stops(grad5, &color_stops_get, &cnt);
+    printf("Gradient stops get:\n");
+    for(uint32_t i = 0; i < cnt; i++) {
+        printf("\t[%d] offset: %f, rgb: %d/%d/%d, alpha: %d\n", i, color_stops_get[i].offset, color_stops_get[i].r, color_stops_get[i].g, color_stops_get[i].b, color_stops_get[i].a);
+    }
+
+    Tvg_Stroke_Fill spread;
+    tvg_gradient_get_spread(grad, &spread);
+    printf("Gradient spread: %d\n", (int)spread);
+
     //Origin paint for duplicated
     Tvg_Paint* org = tvg_shape_new();
     tvg_shape_append_rect(org, 550, 10, 100, 100, 0, 0);

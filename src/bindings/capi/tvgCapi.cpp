@@ -417,7 +417,19 @@ TVG_EXPORT Tvg_Result tvg_linear_gradient_set(Tvg_Gradient* grad, float x1, floa
     return (Tvg_Result) reinterpret_cast<LinearGradient*>(grad)->linear(x1, y1, x2, y2);
 }
 
+TVG_EXPORT Tvg_Result tvg_linear_gradient_get(Tvg_Gradient* grad, float* x1, float* y1, float* x2, float* y2)
+{
+    if (!grad) return TVG_RESULT_INVALID_ARGUMENT;
+    return (Tvg_Result) reinterpret_cast<LinearGradient*>(grad)->linear(x1, y1, x2, y2);
+}
+
 TVG_EXPORT Tvg_Result tvg_radial_gradient_set(Tvg_Gradient* grad, float cx, float cy, float radius)
+{
+    if (!grad) return TVG_RESULT_INVALID_ARGUMENT;
+    return (Tvg_Result) reinterpret_cast<RadialGradient*>(grad)->radial(cx, cy, radius);
+}
+
+TVG_EXPORT Tvg_Result tvg_radial_gradient_get(Tvg_Gradient* grad, float* cx, float* cy, float* radius)
 {
     if (!grad) return TVG_RESULT_INVALID_ARGUMENT;
     return (Tvg_Result) reinterpret_cast<RadialGradient*>(grad)->radial(cx, cy, radius);
@@ -429,10 +441,24 @@ TVG_EXPORT Tvg_Result tvg_gradient_set_color_stops(Tvg_Gradient* grad, const Tvg
     return (Tvg_Result) reinterpret_cast<Fill*>(grad)->colorStops(reinterpret_cast<const Fill::ColorStop*>(color_stop), cnt);
 }
 
+TVG_EXPORT Tvg_Result tvg_gradient_get_color_stops(Tvg_Gradient* grad, const Tvg_Color_Stop** color_stop, uint32_t* cnt)
+{
+    if (!grad) return TVG_RESULT_INVALID_ARGUMENT;
+    *cnt = reinterpret_cast<Fill*>(grad)->colorStops(reinterpret_cast<const Fill::ColorStop**>(color_stop));
+    return TVG_RESULT_SUCCESS;
+}
+
 TVG_EXPORT Tvg_Result tvg_gradient_set_spread(Tvg_Gradient* grad, const Tvg_Stroke_Fill spread)
 {
     if (!grad) return TVG_RESULT_INVALID_ARGUMENT;
     return (Tvg_Result) reinterpret_cast<Fill*>(grad)->spread((FillSpread)spread);
+}
+
+TVG_EXPORT Tvg_Result tvg_gradient_get_spread(Tvg_Gradient* grad, Tvg_Stroke_Fill* spread)
+{
+    if (!grad) return TVG_RESULT_INVALID_ARGUMENT;
+    *spread = (Tvg_Stroke_Fill) reinterpret_cast<Fill*>(grad)->spread();
+    return TVG_RESULT_SUCCESS;
 }
 
 
