@@ -23,7 +23,6 @@
 #define _TVG_SVG_LOADER_COMMON_H_
 
 #include "tvgCommon.h"
-#include "tvgSimpleXmlParser.h"
 
 enum class SvgNodeType
 {

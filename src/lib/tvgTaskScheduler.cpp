@@ -21,7 +21,8 @@
  */
 #include <deque>
 #include <thread>
-#include "tvgCommon.h"
+#include <vector>
+#include "tvgTaskScheduler.h"
 
 /************************************************************************/
 /* Internal Class Implementation                                        */

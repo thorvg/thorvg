@@ -22,6 +22,8 @@
 #ifndef _TVG_LOADER_H_
 #define _TVG_LOADER_H_
 
+#include "tvgCommon.h"
+
 namespace tvg
 {
 

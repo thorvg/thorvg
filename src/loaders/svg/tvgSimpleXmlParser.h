@@ -23,9 +23,7 @@
 #ifndef _TVG_SIMPLE_XML_PARSER_H_
 #define _TVG_SIMPLE_XML_PARSER_H_
 
-#include <ctype.h>
-#include <cstring>
-#include <alloca.h>
+#include "tvgSvgLoaderCommon.h"
 
 enum class SimpleXMLType
 {

@@ -22,6 +22,8 @@
 #ifndef _TVG_BEZIER_H_
 #define _TVG_BEZIER_H_
 
+#include "tvgCommon.h"
+
 namespace tvg
 {
 

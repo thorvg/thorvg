@@ -22,6 +22,7 @@
 #ifndef _TVG_TASK_SCHEDULER_H_
 #define _TVG_TASK_SCHEDULER_H_
 
+#include <future>
 #include "tvgCommon.h"
 
 namespace tvg

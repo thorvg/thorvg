@@ -22,7 +22,9 @@
 #ifndef _TVG_PAINT_H_
 #define _TVG_PAINT_H_
 
-#include "tvgCommon.h"
+#include <float.h>
+#include <math.h>
+#include "tvgRender.h"
 
 namespace tvg
 {

@@ -19,7 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#include "tvgCommon.h"
+#include "tvgLoaderMgr.h"
 
 #ifdef THORVG_SVG_LOADER_SUPPORT
     #include "tvgSvgLoader.h"
