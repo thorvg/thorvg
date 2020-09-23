@@ -23,15 +23,6 @@
 #define _TVG_COMMON_H_
 
 #include "config.h"
-
-#include <iostream>
-#include <vector>
-#include <math.h>
-#include <float.h>
-#include <string.h>
-#include <memory>
-#include <future>
-
 #include "thorvg.h"
 
 using namespace std;
@@ -41,11 +32,5 @@ using namespace tvg;
 #define FILL_ID_RADIAL 1
 
 #define TVG_UNUSED __attribute__ ((__unused__))
-
-#include "tvgBezier.h"
-#include "tvgLoader.h"
-#include "tvgLoaderMgr.h"
-#include "tvgRender.h"
-#include "tvgTaskScheduler.h"
 
 #endif //_TVG_COMMON_H_

@@ -22,6 +22,7 @@
 #ifndef _TVG_SHAPE_PATH_H_
 #define _TVG_SHAPE_PATH_H_
 
+#include <string.h>
 #include "tvgCommon.h"
 
 /************************************************************************/

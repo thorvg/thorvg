@@ -22,6 +22,7 @@
 #ifndef _TVG_FILL_H_
 #define _TVG_FILL_H_
 
+#include <string.h>
 #include "tvgCommon.h"
 
 template<typename T>

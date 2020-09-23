@@ -20,6 +20,7 @@
  * SOFTWARE.
  */
 #include "tvgCommon.h"
+#include "tvgTaskScheduler.h"
 #include "tvgLoaderMgr.h"
 
 #ifdef THORVG_SW_RASTER_SUPPORT

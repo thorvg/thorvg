@@ -20,6 +20,7 @@
  * SOFTWARE.
  */
 #include "tvgSwCommon.h"
+#include "tvgRender.h"
 
 /************************************************************************/
 /* Internal Class Implementation                                        */

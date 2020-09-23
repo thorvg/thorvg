@@ -22,6 +22,8 @@
 #ifndef _TVG_LOADER_MGR_H_
 #define _TVG_LOADER_MGR_H_
 
+#include "tvgLoader.h"
+
 struct LoaderMgr
 {
     static bool init();

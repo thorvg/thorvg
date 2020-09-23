@@ -22,7 +22,7 @@
 #ifndef _TVG_SVG_LOADER_H_
 #define _TVG_SVG_LOADER_H_
 
-#include "tvgSvgLoaderCommon.h"
+#include "tvgTaskScheduler.h"
 #include "tvgSvgSceneBuilder.h"
 
 class SvgLoader : public Loader, public Task

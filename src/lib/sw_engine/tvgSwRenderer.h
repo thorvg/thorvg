@@ -22,6 +22,9 @@
 #ifndef _TVG_SW_RENDERER_H_
 #define _TVG_SW_RENDERER_H_
 
+#include <vector>
+#include "tvgRender.h"
+
 struct SwSurface;
 struct SwTask;
 

@@ -22,6 +22,7 @@
 #ifndef _TVG_CANVAS_IMPL_H_
 #define _TVG_CANVAS_IMPL_H_
 
+#include <vector>
 #include "tvgPaint.h"
 
 /************************************************************************/
