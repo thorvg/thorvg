@@ -20,7 +20,6 @@ source_file = [
    'tvgPictureImpl.h',
    'tvgRender.h',
    'tvgSceneImpl.h',
-   'tvgShapePath.h',
    'tvgShapeImpl.h',
    'tvgTaskScheduler.h',
    'tvgBezier.cpp',
