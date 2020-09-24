@@ -850,6 +850,14 @@ static void _handleTransformAttr(TVG_UNUSED SvgLoaderData* loader, SvgNode* node
     node->transform = _parseTransformationMatrix(value);
 }
 
+static void _handleClipPathAttr(TVG_UNUSED SvgLoaderData* loader, SvgNode* node, const char* value)
+{
+    SvgStyleProperty* style = node->style;
+    style->comp.flags = (SvgCompositeFlags)((int)style->comp.flags | (int)SvgCompositeFlags::ClipPath);
+
+    int len = strlen(value);
+    if (len >= 3 && !strncmp(value, "url", 3)) style->comp.url = _idFromUrl((const char*)(value + 3));
+}
 
 static void _handleDisplayAttr(TVG_UNUSED SvgLoaderData* loader, SvgNode* node, const char* value)
 {
@@ -889,6 +897,7 @@ static constexpr struct
     STYLE_DEF(stroke-opacity, StrokeOpacity),
     STYLE_DEF(stroke-dasharray, StrokeDashArray),
     STYLE_DEF(transform, Transform),
+    STYLE_DEF(clip-path, ClipPath),
     STYLE_DEF(display, Display)
 };
 
@@ -937,6 +946,26 @@ static bool _attrParseGNode(void* data, const char* key, const char* value)
     return true;
 }
 
+
+/* parse clipPath node
+ * https://www.w3.org/TR/SVG/struct.html#Groups
+ */
+static bool _attrParseClipPathNode(void* data, const char* key, const char* value)
+{
+    SvgLoaderData* loader = (SvgLoaderData*)data;
+    SvgNode* node = loader->svgParse->node;
+
+    if (!strcmp(key, "style")) {
+        return simpleXmlParseW3CAttribute(value, _parseStyleAttr, loader);
+    } else if (!strcmp(key, "transform")) {
+        node->transform = _parseTransformationMatrix(value);
+    } else if (!strcmp(key, "id")) {
+        node->id = _copyId(value);
+    } else {
+        return _parseStyleAttr(loader, key, value);
+    }
+    return true;
+}
 
 static SvgNode* _createNode(SvgNode* parent, SvgNodeType type)
 {
@@ -1019,9 +1048,11 @@ static SvgNode* _createMaskNode(SvgLoaderData* loader, SvgNode* parent, const ch
 
 static SvgNode* _createClipPathNode(SvgLoaderData* loader, SvgNode* parent, const char* buf, unsigned bufLength)
 {
-    loader->svgParse->node = _createNode(parent, SvgNodeType::Unknown);
+    loader->svgParse->node = _createNode(parent, SvgNodeType::ClipPath);
 
     loader->svgParse->node->display = false;
+
+    simpleXmlParseAttributes(buf, bufLength, _attrParseClipPathNode, loader);
 
     return loader->svgParse->node;
 }
@@ -1397,6 +1428,20 @@ static SvgNode* _findChildById(SvgNode* node, const char* id)
     return nullptr;
 }
 
+static SvgNode* _findNodeById(SvgNode *node, string* id)
+{
+    SvgNode* result = nullptr;
+    if ((node->id != nullptr) && !node->id->compare(*id)) return node;
+
+    if (node->child.cnt > 0) {
+        auto child = node->child.list;
+        for (uint32_t i = 0; i < node->child.cnt; ++i, ++child) {
+            result = _findNodeById(*child, id);
+            if (result) break;
+        }
+    }
+    return result;
+}
 
 static void _cloneGradStops(SvgVector<Fill::ColorStop*>* dst, SvgVector<Fill::ColorStop*>* src)
 {
@@ -2200,6 +2245,20 @@ static void _updateGradient(SvgNode* node, SvgVector<SvgStyleGradient*>* gradide
     }
 }
 
+static void _updateComposite(SvgNode* node, SvgNode* root)
+{
+    if (node->style->comp.url && !node->style->comp.node) {
+        SvgNode *findResult = _findNodeById(root, node->style->comp.url);
+        if (findResult) node->style->comp.node = findResult;
+    }
+    if (node->child.cnt > 0) {
+        auto child = node->child.list;
+        for (uint32_t i = 0; i < node->child.cnt; ++i, ++child) {
+            _updateComposite(*child, root);
+        }
+    }
+}
+
 static void _freeGradientStyle(SvgStyleGradient* grad)
 {
     if (!grad) return;
@@ -2362,6 +2421,9 @@ void SvgLoader::run()
         if (defs) _updateGradient(loaderData.doc, &defs->node.defs.gradients);
 
         if (loaderData.gradients.cnt > 0) _updateGradient(loaderData.doc, &loaderData.gradients);
+
+        _updateComposite(loaderData.doc, loaderData.doc);
+        if (defs) _updateComposite(loaderData.doc, defs);
     }
     root = builder.build(loaderData.doc);
 };

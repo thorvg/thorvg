@@ -23,6 +23,14 @@
 #include "tvgSvgSceneBuilder.h"
 #include "tvgSvgPath.h"
 
+void _appendShape(SvgNode* node, Shape* shape, float vx, float vy, float vw, float vh);
+
+bool _isGroupType(SvgNodeType type)
+{
+    if (type == SvgNodeType::Doc || type == SvgNodeType::G || type == SvgNodeType::ClipPath) return true;
+    return false;
+}
+
 unique_ptr<LinearGradient> _applyLinearGradientProperty(SvgStyleGradient* g, Shape* vg, float rx, float ry, float rw, float rh)
 {
     Fill::ColorStop* stops;
@@ -185,6 +193,14 @@ unique_ptr<RadialGradient> _applyRadialGradientProperty(SvgStyleGradient* g, Sha
     return fillGrad;
 }
 
+void _appendChildShape(SvgNode* node, Shape* shape, float vx, float vy, float vw, float vh)
+{
+    _appendShape(node, shape, vx, vy, vw, vh);
+    if (node->child.cnt > 0) {
+        auto child = node->child.list;
+        for (uint32_t i = 0; i < node->child.cnt; ++i, ++child) _appendChildShape(*child, shape, vx, vy, vw, vh);
+    }
+}
 
 void _applyProperty(SvgNode* node, Shape* vg, float vx, float vy, float vw, float vh)
 {
@@ -252,12 +268,31 @@ void _applyProperty(SvgNode* node, Shape* vg, float vx, float vy, float vw, floa
         vg->strokeColor(&r, &g, &b, &a);
         vg->stroke(r, g, b, (a * style->opacity) / 255.0f);
     }
-}
 
+    //Apply composite node
+    if (style->comp.node) {
+        //Composite ClipPath
+        if (((int)style->comp.flags & (int)SvgCompositeFlags::ClipPath)) {
+            auto compNode = style->comp.node;
+            if (compNode->child.cnt > 0) {
+                auto comp = Shape::gen();
+                auto child = compNode->child.list;
+                for (uint32_t i = 0; i < compNode->child.cnt; ++i, ++child) _appendChildShape(*child, comp.get(), vx, vy, vw, vh);
+                vg->composite(move(comp), CompositeMethod::ClipPath);
+            }
+        }
+    }
+}
 
 unique_ptr<Shape> _shapeBuildHelper(SvgNode* node, float vx, float vy, float vw, float vh)
 {
     auto shape = Shape::gen();
+    _appendShape(node, shape.get(), vx, vy, vw, vh);
+    return shape;
+}
+
+void _appendShape(SvgNode* node, Shape* shape, float vx, float vy, float vw, float vh)
+{
     switch (node->type) {
         case SvgNodeType::Path: {
             if (node->node.path.path) {
@@ -304,26 +339,40 @@ unique_ptr<Shape> _shapeBuildHelper(SvgNode* node, float vx, float vy, float vw,
             break;
         }
     }
-    _applyProperty(node, shape.get(), vx, vy, vw, vh);
-    return shape;
-}
 
+    _applyProperty(node, shape, vx, vy, vw, vh);
+}
 
 unique_ptr<Scene> _sceneBuildHelper(SvgNode* node, float vx, float vy, float vw, float vh, int parentOpacity)
 {
-    if (node->type == SvgNodeType::Doc || node->type == SvgNodeType::G) {
+    if (_isGroupType(node->type)) {
         auto scene = Scene::gen();
         if (node->transform) scene->transform(*node->transform);
         node->style->opacity = (node->style->opacity * parentOpacity) / 255.0f;
+
         if (node->display) {
             auto child = node->child.list;
             for (uint32_t i = 0; i < node->child.cnt; ++i, ++child) {
-                if ((*child)->type == SvgNodeType::Doc || (*child)->type == SvgNodeType::G) {
+                if (_isGroupType((*child)->type)) {
                     scene->push(_sceneBuildHelper(*child, vx, vy, vw, vh, node->style->opacity));
                 } else {
                     (*child)->style->opacity = ((*child)->style->opacity * node->style->opacity) / 255.0f;
                     scene->push(_shapeBuildHelper(*child, vx, vy, vw, vh));
                 }
+
+            //Apply composite node
+            if (node->style->comp.node) {
+                 //Composite ClipPath
+                if (((int)node->style->comp.flags & (int)SvgCompositeFlags::ClipPath)) {
+                    auto compNode = node->style->comp.node;
+                    if (compNode->child.cnt > 0) {
+                        auto comp = Shape::gen();
+                        auto child = compNode->child.list;
+                        for (uint32_t i = 0; i < compNode->child.cnt; ++i, ++child) _appendChildShape(*child, comp.get(), vx, vy, vw, vh);
+                        scene->composite(move(comp), CompositeMethod::ClipPath);
+                    }
+                }
+            }
             }
         }
         return scene;

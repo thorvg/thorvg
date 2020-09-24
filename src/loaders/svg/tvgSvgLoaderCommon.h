@@ -45,6 +45,7 @@ enum class SvgNodeType
     Tspan,
     Use,
     Video,
+    ClipPath,
     //Custome_command,   //Not support
     Unknown
 };
@@ -60,12 +61,18 @@ enum class SvgLengthType
     In,
 };
 
+enum class SvgCompositeFlags
+{
+    ClipPath = 0x01,
+};
+
 enum class SvgFillFlags
 {
-    Paint = 0x1,
-    Opacity = 0x2,
-    Gradient = 0x4,
-    FillRule = 0x8
+    Paint = 0x01,
+    Opacity = 0x02,
+    Gradient = 0x04,
+    FillRule = 0x08,
+    ClipPath = 0x16
 };
 
 enum class SvgStrokeFlags
@@ -244,6 +251,13 @@ struct SvgGradientStop
     uint8_t a;
 };
 
+struct SvgComposite
+{
+    SvgCompositeFlags flags;
+    string *url;
+    SvgNode* node;
+};
+
 struct SvgPaint
 {
     SvgStyleGradient* gradient;
@@ -300,6 +314,7 @@ struct SvgStyleProperty
 {
     SvgStyleFill fill;
     SvgStyleStroke stroke;
+    SvgComposite comp;
     int opacity;
     uint8_t r;
     uint8_t g;
