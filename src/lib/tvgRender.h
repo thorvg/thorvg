@@ -23,6 +23,7 @@
 #define _TVG_RENDER_H_
 
 #include "tvgCommon.h"
+#include <vector>
 
 namespace tvg
 {
@@ -34,6 +35,11 @@ struct Surface
     uint32_t stride;
     uint32_t w, h;
     uint32_t cs;
+};
+
+struct Composite {
+    void* compEData;
+    CompMethod method;
 };
 
 enum RenderUpdateFlag {None = 0, Path = 1, Color = 2, Gradient = 4, Stroke = 8, Transform = 16, All = 32};
