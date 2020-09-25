@@ -20,11 +20,13 @@
  * SOFTWARE.
  */
 
-#include "tvgGlCommon.h"
+#include <iostream>
 #include "tvgGlShader.h"
 
-#include <GLES2/gl2.h>
 
+/************************************************************************/
+/* External Class Implementation                                        */
+/************************************************************************/
 
 shared_ptr<GlShader> GlShader::gen(const char* vertSrc, const char* fragSrc)
 {

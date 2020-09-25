@@ -20,9 +20,8 @@
  * SOFTWARE.
  */
 
-#include "tvgGlShaderSrc.h"
-
 #include <string>
+#include "tvgGlShaderSrc.h"
 
 #define TVG_COMPOSE_SHADER(shader) #shader
 

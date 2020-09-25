@@ -23,10 +23,8 @@
 #ifndef _TVG_GL_PROGRAM_H_
 #define _TVG_GL_PROGRAM_H_
 
-#include "tvgGlShader.h"
-
-#include <memory>
 #include <map>
+#include "tvgGlShader.h"
 
 class GlProgram
 {

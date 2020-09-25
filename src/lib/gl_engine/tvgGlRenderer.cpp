@@ -19,11 +19,10 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#include "tvgGlShaderSrc.h"
+
+#include "tvgGlRenderer.h"
 #include "tvgGlGpuBuffer.h"
 #include "tvgGlGeometry.h"
-#include "tvgGlCommon.h"
-#include "tvgGlRenderer.h"
 #include "tvgGlPropertyInterface.h"
 
 /************************************************************************/
@@ -31,6 +30,7 @@
 /************************************************************************/
 static bool initEngine = false;
 static uint32_t rendererCnt = 0;
+
 
 static void _termEngine()
 {

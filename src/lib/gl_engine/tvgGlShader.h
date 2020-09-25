@@ -23,7 +23,7 @@
 #ifndef _TVG_GL_SHADER_H_
 #define _TVG_GL_SHADER_H_
 
-#include <memory>
+#include "tvgGlCommon.h"
 
 class GlShader
 {
