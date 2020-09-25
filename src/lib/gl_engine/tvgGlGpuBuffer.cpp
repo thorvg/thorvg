@@ -20,10 +20,11 @@
  * SOFTWARE.
  */
 
-#include "tvgGlCommon.h"
 #include "tvgGlGpuBuffer.h"
 
-#include <assert.h>
+/************************************************************************/
+/* Internal Class Implementation                                        */
+/************************************************************************/
 
 GlGpuBuffer::GlGpuBuffer()
 {

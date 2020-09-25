@@ -20,14 +20,20 @@
  * SOFTWARE.
  */
 
-#include "tvgGlCommon.h"
+#include <iostream>
 #include "tvgGlProgram.h"
 
-#include <GLES2/gl2.h>
 
+/************************************************************************/
+/* Internal Class Implementation                                        */
+/************************************************************************/
 
 uint32_t GlProgram::mCurrentProgram = 0;
 
+
+/************************************************************************/
+/* External Class Implementation                                        */
+/************************************************************************/
 
 unique_ptr<GlProgram> GlProgram::gen(std::shared_ptr<GlShader> shader)
 {

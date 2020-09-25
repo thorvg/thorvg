@@ -23,8 +23,7 @@
 #ifndef _TVG_GL_GPU_BUFFER_H_
 #define _TVG_GL_GPU_BUFFER_H_
 
-#include <stdlib.h>
-#include <GLES2/gl2.h>
+#include "tvgGlCommon.h"
 
 class GlGpuBuffer
 {

@@ -23,8 +23,6 @@
 #ifndef _TVG_GL_RENDERER_H_
 #define _TVG_GL_RENDERER_H_
 
-#include "tvgGlCommon.h"
-#include "tvgGlProgram.h"
 #include "tvgGlRenderTask.h"
 
 class GlRenderer : public RenderMethod

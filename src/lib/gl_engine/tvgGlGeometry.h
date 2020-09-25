@@ -23,6 +23,8 @@
 #ifndef _TVG_GL_GEOMETRY_H_
 #define _TVG_GL_GEOMETRY_H_
 
+#include <math.h>
+#include <vector>
 #include "tvgGlCommon.h"
 
 class GlPoint

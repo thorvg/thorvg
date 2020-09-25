@@ -20,11 +20,9 @@
  * SOFTWARE.
  */
 
+#include <float.h>
 #include "tvgGlGpuBuffer.h"
 #include "tvgGlGeometry.h"
-#include "tvgGlCommon.h"
-
-#include <GLES2/gl2.h>
 
 
 uint32_t GlGeometry::getPrimitiveCount()
