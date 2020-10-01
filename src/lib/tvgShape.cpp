@@ -170,7 +170,7 @@ Result Shape::appendArc(float cx, float cy, float radius, float startAngle, floa
     if (pie) {
         pImpl->path->moveTo(cx, cy);
         pImpl->path->lineTo(start.x + cx, start.y + cy);
-    }else {
+    } else {
         pImpl->path->moveTo(start.x + cx, start.y + cy);
     }
 
@@ -204,10 +204,7 @@ Result Shape::appendArc(float cx, float cy, float radius, float startAngle, floa
         startAngle = endAngle;
     }
 
-    if (pie) {
-        pImpl->path->moveTo(cx, cy);
-        pImpl->path->close();
-    }
+    if (pie) pImpl->path->close();
 
     pImpl->flag |= RenderUpdateFlag::Path;
 
