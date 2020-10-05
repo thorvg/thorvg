@@ -21,6 +21,7 @@
  */
 #include "tvgSwCommon.h"
 #include "tvgRender.h"
+#include <float.h>
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
@@ -133,6 +134,7 @@ static bool _rasterSolidRle(SwSurface* surface, SwRleData* rle, uint32_t color)
 static bool _rasterLinearGradientRect(SwSurface* surface, const SwBBox& region, const SwFill* fill)
 {
     if (!fill) return false;
+    if (fill->linear.len < FLT_EPSILON) return false;
 
     auto buffer = surface->buffer + (region.min.y * surface->stride) + region.min.x;
     auto h = static_cast<uint32_t>(region.max.y - region.min.y);
@@ -164,6 +166,7 @@ static bool _rasterLinearGradientRect(SwSurface* surface, const SwBBox& region, 
 static bool _rasterRadialGradientRect(SwSurface* surface, const SwBBox& region, const SwFill* fill)
 {
     if (!fill) return false;
+    if (fill->radial.a < FLT_EPSILON) return false;
 
     auto buffer = surface->buffer + (region.min.y * surface->stride) + region.min.x;
     auto h = static_cast<uint32_t>(region.max.y - region.min.y);
@@ -196,6 +199,7 @@ static bool _rasterRadialGradientRect(SwSurface* surface, const SwBBox& region, 
 static bool _rasterLinearGradientRle(SwSurface* surface, SwRleData* rle, const SwFill* fill)
 {
     if (!rle || !fill) return false;
+    if (fill->linear.len < FLT_EPSILON) return false;
 
     auto buf = static_cast<uint32_t*>(alloca(surface->w * sizeof(uint32_t)));
     if (!buf) return false;
@@ -242,6 +246,7 @@ static bool _rasterLinearGradientRle(SwSurface* surface, SwRleData* rle, const S
 static bool _rasterRadialGradientRle(SwSurface* surface, SwRleData* rle, const SwFill* fill)
 {
     if (!rle || !fill) return false;
+    if (fill->radial.a < FLT_EPSILON) return false;
 
     auto buf = static_cast<uint32_t*>(alloca(surface->w * sizeof(uint32_t)));
     if (!buf) return false;
