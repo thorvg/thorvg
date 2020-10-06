@@ -88,7 +88,7 @@ struct SwTask : Task
         //Composite clip-path
         for (auto comp : compList) {
              SwShape *compShape = &static_cast<SwTask*>(comp.edata)->shape;
-             if(comp.method == CompMethod::ClipPath) {
+             if (comp.method == CompMethod::ClipPath) {
                   //Clip to fill(path) rle
                   if (shape.rle && compShape->rect) rleClipRect(shape.rle, &compShape->bbox);
                   else if (shape.rle && compShape->rle) rleClipPath(shape.rle, compShape->rle);

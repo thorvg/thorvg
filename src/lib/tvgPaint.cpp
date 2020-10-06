@@ -80,7 +80,7 @@ Paint* Paint::duplicate() const noexcept
 
 Result Paint::composite(std::unique_ptr<Paint> target, CompMethod method) const noexcept
 {
-    if (pImpl->composite(move(target), method)) return Result::Success;
+    if (pImpl->composite(target.release(), method)) return Result::Success;
     return Result::InsufficientCondition;
 }
 

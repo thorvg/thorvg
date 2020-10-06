@@ -94,7 +94,7 @@ public:
     Result bounds(float* x, float* y, float* w, float* h) const noexcept;
     Paint* duplicate() const noexcept;
 
-    Result composite(std::unique_ptr<Paint> target, CompMethod methd) const noexcept;
+    Result composite(std::unique_ptr<Paint> target, CompMethod method) const noexcept;
 
     _TVG_DECLARE_ACCESSOR();
     _TVG_DECLARE_PRIVATE(Paint);

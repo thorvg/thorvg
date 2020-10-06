@@ -44,14 +44,12 @@ struct Scene::Impl
         return true;
     }
 
-    void* update(RenderMethod &renderer, const RenderTransform* transform, vector<Composite>& compList, RenderUpdateFlag flag)
+    bool update(RenderMethod &renderer, const RenderTransform* transform, vector<Composite>& compList, void** edata, RenderUpdateFlag flag)
     {
-        void *edata = nullptr;
-        for(auto paint: paints) {
-            edata = paint->pImpl->update(renderer, transform, compList, static_cast<uint32_t>(flag));
-            if (!edata) return nullptr;
+        for (auto paint: paints) {
+            if (!paint->pImpl->update(renderer, transform, compList, edata, static_cast<uint32_t>(flag))) return false;
         }
-        return edata;
+        return true;
     }
 
     bool render(RenderMethod &renderer)

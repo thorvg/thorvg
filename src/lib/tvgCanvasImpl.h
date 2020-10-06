@@ -78,13 +78,13 @@ struct Canvas::Impl
 
         //Update single paint node
         if (paint) {
-            if (!paint->pImpl->update(*renderer, nullptr, compList, RenderUpdateFlag::None)) {
+            if (!paint->pImpl->update(*renderer, nullptr, compList, nullptr, RenderUpdateFlag::None)) {
                 return Result::InsufficientCondition;
             }
         //Update retained all paint nodes
         } else {
-            for(auto paint: paints) {
-                if (!paint->pImpl->update(*renderer, nullptr, compList, RenderUpdateFlag::None)) {
+            for (auto paint: paints) {
+                if (!paint->pImpl->update(*renderer, nullptr, compList, nullptr, RenderUpdateFlag::None)) {
                     return Result::InsufficientCondition;
                 }
             }
