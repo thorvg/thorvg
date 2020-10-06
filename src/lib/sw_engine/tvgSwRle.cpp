@@ -613,11 +613,9 @@ static int _genRle(RleWorker& rw)
 }
 
 
-void _intersectSpansRegion(const SwRleData *clip, SwSpan *spans, SwSpan *end, SwSpan **outSpans, uint32_t available)
+uint32_t _intersectSpansRegion(const SwRleData *clip, SwSpan *spans, SwSpan *end, SwSpan **outSpans, uint32_t available)
 {
     SwSpan *out = *outSpans;
-    int16_t sx1, sx2, cx1, cx2, x;
-    uint16_t len;
     const SwSpan *clipSpans = clip->spans;
     const SwSpan *clipEnd = clip->spans + clip->size;
 
@@ -634,10 +632,10 @@ void _intersectSpansRegion(const SwRleData *clip, SwSpan *spans, SwSpan *end, Sw
             ++clipSpans;
             continue;
         }
-        sx1 = spans->x;
-        sx2 = sx1 + spans->len;
-        cx1 = clipSpans->x;
-        cx2 = cx1 + clipSpans->len;
+        auto sx1 = spans->x;
+        auto sx2 = sx1 + spans->len;
+        auto cx1 = clipSpans->x;
+        auto cx2 = cx1 + clipSpans->len;
 
         if (cx1 < sx1 && cx2 < sx1) {
             ++clipSpans;
@@ -647,11 +645,11 @@ void _intersectSpansRegion(const SwRleData *clip, SwSpan *spans, SwSpan *end, Sw
             ++spans;
             continue;
         }
-        x = sx1 > cx1 ? sx1 : cx1;
-        len = (sx2 < cx2 ? sx2 : cx2) - x;
+        auto x = sx1 > cx1 ? sx1 : cx1;
+        auto len = (sx2 < cx2 ? sx2 : cx2) - x;
         if (len) {
-            uint16_t spansCorverage = spans->coverage;
-            uint16_t clipSpansCoverage = clipSpans->coverage;
+            auto spansCorverage = spans->coverage;
+            auto clipSpansCoverage = clipSpans->coverage;
             out->x = sx1 > cx1 ? sx1 : cx1;
             out->len = (sx2 < cx2 ? sx2 : cx2) - out->x;
             out->y = spans->y;
@@ -662,17 +660,16 @@ void _intersectSpansRegion(const SwRleData *clip, SwSpan *spans, SwSpan *end, Sw
         if (sx2 < cx2) ++spans;
         else ++clipSpans;
     }
-    *outSpans = out;
+    return out - *outSpans;
 }
 
-void _intersectSpansRect(const SwBBox *bbox, const SwSpan *spans, const SwSpan *end, SwSpan **outSpans, uint32_t available)
+uint32_t _intersectSpansRect(const SwBBox *bbox, const SwSpan *spans, const SwSpan *end, SwSpan **outSpans, uint32_t available)
 {
     SwSpan *out = *outSpans;
-    int16_t minx, miny, maxx, maxy;
-    minx = bbox->min.x;
-    miny = bbox->min.y;
-    maxx = minx + (bbox->max.x - bbox->min.x) - 1;
-    maxy = miny + (bbox->max.y - bbox->min.y) - 1;
+    auto minx = static_cast<int16_t>(bbox->min.x);
+    auto miny = static_cast<int16_t>(bbox->min.y);
+    auto maxx = minx + static_cast<int16_t>(bbox->max.x - bbox->min.x) - 1;
+    auto maxy = miny + static_cast<int16_t>(bbox->max.y - bbox->min.y) - 1;
 
     while (available && spans < end ) {
         if (spans->y > maxy) {
@@ -699,7 +696,7 @@ void _intersectSpansRect(const SwBBox *bbox, const SwSpan *spans, const SwSpan *
         ++spans;
         --available;
     }
-    *outSpans = out;
+    return out - *outSpans;
 }
 
 /************************************************************************/
@@ -836,14 +833,14 @@ void rleFree(SwRleData* rle)
     free(rle);
 }
 
-void updateRleSpans(SwRleData *rle, SwSpan* currentSpans, uint32_t newSize)
+void updateRleSpans(SwRleData *rle, SwSpan* currentSpans, uint32_t size)
 {
     SwSpan *spans = nullptr;
-    rle->size = newSize;
+    rle->size = size;
     rle->spans = static_cast<SwSpan*>(realloc(rle->spans, rle->size * sizeof(SwSpan)));
 
     spans = rle->spans;
-    for(int i = 0; i < (int)rle->size ; i++)
+    for (int i = 0; i < (int)rle->size ; i++)
     {
        spans[i].x = currentSpans[i].x;
        spans[i].y = currentSpans[i].y;
@@ -852,40 +849,28 @@ void updateRleSpans(SwRleData *rle, SwSpan* currentSpans, uint32_t newSize)
     }
 }
 
-void rleClipPath(SwRleData *rle, const SwRleData *compRle)
+void rleClipPath(SwRleData *rle, const SwRleData *clip)
 {
-    if (rle->size == 0 || compRle->size == 0) return;
-    uint32_t spanCount = rle->size > compRle->size ? rle->size : compRle->size ;
-    SwSpan *clipped = nullptr;
-    SwSpan *spans = rle->spans;
-    SwSpan *end = spans + rle->size;
-    SwSpan *cspans = nullptr;
-
-    cspans = (SwSpan*)malloc(sizeof(SwSpan) * (spanCount));
-    clipped = cspans;
-    _intersectSpansRegion(compRle, spans, end, &clipped, spanCount);
+    if (rle->size == 0 || clip->size == 0) return;
+    auto spanCnt = rle->size > clip->size ? rle->size : clip->size ;
+    auto cspans = static_cast<SwSpan*>(malloc(sizeof(SwSpan) * (spanCnt)));
+    auto outCnt = _intersectSpansRegion(clip, rle->spans, rle->spans + rle->size, &cspans, spanCnt);
 
     //Update Spans
-    updateRleSpans(rle, cspans, clipped - cspans);
+    updateRleSpans(rle, cspans, outCnt);
 
     if (cspans) free(cspans);
 }
 
-void rleClipRect(SwRleData *rle, const SwBBox* compBBox)
+void rleClipRect(SwRleData *rle, const SwBBox* clip)
 {
     if (rle->size == 0) return;
-    uint32_t spanCount = rle->size;
-    SwSpan *clipped = nullptr;
-    SwSpan *spans = rle->spans;
-    SwSpan *end = spans + rle->size;
-    SwSpan *cspans = nullptr;
-
-    cspans = (SwSpan*)malloc(sizeof(SwSpan) * (spanCount));
-    clipped = cspans;
-    _intersectSpansRect(compBBox, spans, end, &clipped, spanCount);
+    auto spanCnt = rle->size;
+    auto cspans = static_cast<SwSpan*>(malloc(sizeof(SwSpan) * (spanCnt)));
+    auto outCnt = _intersectSpansRect(clip, rle->spans, rle->spans + rle->size, &cspans, spanCnt);
 
     //Update Spans
-    updateRleSpans(rle, cspans, clipped - cspans);
+    updateRleSpans(rle, cspans, outCnt);
 
     if (cspans) free(cspans);
 }

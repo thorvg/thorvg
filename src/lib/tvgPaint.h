@@ -45,7 +45,7 @@ namespace tvg
         RenderTransform *rTransform = nullptr;
         uint32_t flag = RenderUpdateFlag::None;
 
-        Paint* comp = nullptr;
+        Paint* compTarget = nullptr;
         CompMethod compMethod = CompMethod::None;
 
         ~Impl() {
@@ -148,13 +148,13 @@ namespace tvg
             auto newFlag = static_cast<RenderUpdateFlag>(pFlag | flag);
             flag = RenderUpdateFlag::None;
             void *edata = nullptr;
-            void *compEData = nullptr;
+            void *compEngineData = nullptr; //composite target paint's engine data.
 
-            if (this->comp && compMethod == CompMethod::ClipPath) {
-                compEData = this->comp->pImpl->update(renderer, pTransform, compList, static_cast<RenderUpdateFlag>(pFlag | flag));
-                if (compEData) {
+            if (this->compTarget && compMethod == CompMethod::ClipPath) {
+                compEngineData = this->compTarget->pImpl->update(renderer, pTransform, compList, static_cast<RenderUpdateFlag>(pFlag | flag));
+                if (compEngineData) {
                     Composite comp;
-                    comp.compEData = compEData;
+                    comp.edata = compEngineData;
                     comp.method = this->compMethod;
                     compList.push_back(comp);
                 }
@@ -168,7 +168,7 @@ namespace tvg
                 edata = smethod->update(renderer, outTransform, compList, newFlag);
             }
 
-            if (compEData) {
+            if (compEngineData) {
                 compList.pop_back();
             }
             return edata;
@@ -195,11 +195,11 @@ namespace tvg
             return ret;
         }
 
-        bool composite(unique_ptr<Paint> comp, CompMethod compMethod)
+        bool composite(unique_ptr<Paint> target, CompMethod compMethod)
         {
-            this->comp = static_cast<Paint*>(comp.release());
+            this->compTarget = static_cast<Paint*>(target.release());
             this->compMethod = compMethod;
-            if (this->comp) return true;
+            if (this->compTarget) return true;
             return false;
         }
     };

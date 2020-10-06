@@ -88,8 +88,6 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     canvas->push(move(star3));
 
-
-
     //////////////////////////////////////////////
     auto picture = tvg::Picture::gen();
     char buf[PATH_MAX];
@@ -110,9 +108,6 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     picture->composite(move(clipPath), tvg::CompMethod::ClipPath);
 
     canvas->push(move(picture));
-
-
-    //canvas->push(move(shape2));
 }
 
 

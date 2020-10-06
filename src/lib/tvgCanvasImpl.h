@@ -33,7 +33,6 @@ struct Canvas::Impl
 {
     vector<Paint*> paints;
     RenderMethod*  renderer;
-    vector<Composite> compList;
 
     Impl(RenderMethod* pRenderer):renderer(pRenderer)
     {
@@ -66,8 +65,6 @@ struct Canvas::Impl
             delete(paint);
         }
 
-        compList.clear();
-
         paints.clear();
 
         return Result::Success;
@@ -77,7 +74,7 @@ struct Canvas::Impl
     {
         if (!renderer) return Result::InsufficientCondition;
 
-        compList.clear();
+        vector<Composite> compList;
 
         //Update single paint node
         if (paint) {

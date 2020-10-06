@@ -33,10 +33,7 @@ struct SwTask : Task
 {
     SwShape shape;
     const Shape* sdata = nullptr;
-    const Shape* compData = nullptr;
-    CompMethod compMethod = CompMethod::None;
     Matrix* transform = nullptr;
-    Matrix* compTransform = nullptr;
     SwSurface* surface = nullptr;
     RenderUpdateFlag flags = RenderUpdateFlag::None;
     vector<Composite> compList;
@@ -62,7 +59,7 @@ struct SwTask : Task
                 if (!shapePrepare(&shape, sdata, clip, transform)) return;
                 if (renderShape) {
                     auto antiAlias = (strokeAlpha > 0 && strokeWidth >= 2) ? false : true;
-                    if (!shapeGenRle(&shape, sdata, clip, antiAlias)) return;
+                    if (!shapeGenRle(&shape, sdata, clip, antiAlias, compList.size() > 0 ? true : false)) return;
                 }
             }
         }
@@ -90,7 +87,7 @@ struct SwTask : Task
 
         //Composite clip-path
         for (auto comp : compList) {
-             SwShape *compShape = &static_cast<SwTask*>(comp.compEData)->shape;
+             SwShape *compShape = &static_cast<SwTask*>(comp.edata)->shape;
              if(comp.method == CompMethod::ClipPath) {
                   //Clip to fill(path) rle
                   if (shape.rle && compShape->rect) rleClipRect(shape.rle, &compShape->bbox);
@@ -197,7 +194,6 @@ bool SwRenderer::dispose(TVG_UNUSED const Shape& sdata, void *data)
     task->get();
     shapeFree(&task->shape);
     if (task->transform) free(task->transform);
-    if (task->compTransform) free(task->compTransform);
     delete(task);
 
     return true;
@@ -217,7 +213,7 @@ void* SwRenderer::prepare(const Shape& sdata, void* data, const RenderTransform*
 
     task->sdata = &sdata;
     if (compList.size() > 0) {
-        for (auto comp : compList)  static_cast<SwTask*>(comp.compEData)->get();
+        for (auto comp : compList)  static_cast<SwTask*>(comp.edata)->get();
         task->compList.assign(compList.begin(), compList.end());
     }
 

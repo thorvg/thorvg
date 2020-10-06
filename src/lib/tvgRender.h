@@ -38,7 +38,7 @@ struct Surface
 };
 
 struct Composite {
-    void* compEData;
+    void* edata;
     CompMethod method;
 };
 
