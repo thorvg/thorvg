@@ -40,7 +40,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     //Shape 4
     auto shape4 = tvg::Shape::gen();
-    shape4->appendCircle(150, 450, 100, 100);
+    shape4->appendCircle(150, 400, 100, 100);
     shape4->fill(50, 50, 50, 255);
     shape4->stroke(255, 255, 255, 255);
     shape4->stroke(1);
@@ -49,7 +49,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     //Shape 5
     auto shape5 = tvg::Shape::gen();
-    shape5->appendCircle(400, 450, 100, 100);
+    shape5->appendCircle(400, 400, 100, 100);
     shape5->fill(50, 50, 50, 255);
     shape5->stroke(255, 255, 255, 255);
     shape5->stroke(2);
@@ -58,12 +58,23 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     //Shape 6
     auto shape6 = tvg::Shape::gen();
-    shape6->appendCircle(650, 450, 100, 100);
+    shape6->appendCircle(650, 400, 100, 100);
     shape6->fill(50, 50, 50, 255);
     shape6->stroke(255, 255, 255, 255);
     shape6->stroke(4);
 
     if (canvas->push(move(shape6)) != tvg::Result::Success) return;
+
+    //Test for Stroke Width
+    for (int i = 0; i < 10; ++i) {
+        auto shape = tvg::Shape::gen();
+        shape->moveTo(50, 550 + (25 * i));
+        shape->lineTo(750, 550 + (25 * i));
+        shape->stroke(255, 255, 255, 255);       //color: r, g, b, a
+        shape->stroke(i + 1);                    //stroke width
+        shape->stroke(tvg::StrokeCap::Round);    //default is Square
+        if (canvas->push(move(shape)) != tvg::Result::Success) return;
+    }
 }
 
 

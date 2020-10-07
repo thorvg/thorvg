@@ -8,24 +8,13 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 {
     if (!canvas) return;
 
-    //Test for Stroke Width
-    for (int i = 0; i < 7; ++i) {
-        auto shape = tvg::Shape::gen();
-        shape->moveTo(50, 50 + (25 * i));
-        shape->lineTo(750, 50 + (25 * i));
-        shape->stroke(255, 255, 255, 255);       //color: r, g, b, a
-        shape->stroke(i + 1);                    //stroke width
-        shape->stroke(tvg::StrokeCap::Round);    //default is Square
-        if (canvas->push(move(shape)) != tvg::Result::Success) return;
-    }
-
     //Test for StrokeJoin & StrokeCap
     auto shape1 = tvg::Shape::gen();
-    shape1->moveTo( 20, 250);
-    shape1->lineTo(250, 250);
-    shape1->lineTo(220, 350);
-    shape1->lineTo( 70, 320);
-    shape1->lineTo( 70, 230);
+    shape1->moveTo( 20, 50);
+    shape1->lineTo(250, 50);
+    shape1->lineTo(220, 200);
+    shape1->lineTo( 70, 170);
+    shape1->lineTo( 70, 30);
     shape1->stroke(255, 0, 0, 255);
     shape1->stroke(10);
     shape1->stroke(tvg::StrokeJoin::Round);
@@ -33,11 +22,11 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     if (canvas->push(move(shape1)) != tvg::Result::Success) return;
 
     auto shape2 = tvg::Shape::gen();
-    shape2->moveTo(270, 250);
-    shape2->lineTo(500, 250);
-    shape2->lineTo(470, 350);
-    shape2->lineTo(320, 320);
-    shape2->lineTo(320, 230);
+    shape2->moveTo(270, 50);
+    shape2->lineTo(500, 50);
+    shape2->lineTo(470, 200);
+    shape2->lineTo(320, 170);
+    shape2->lineTo(320, 30);
     shape2->stroke(255, 255, 0, 255);
     shape2->stroke(10);
     shape2->stroke(tvg::StrokeJoin::Bevel);
@@ -45,11 +34,11 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     if (canvas->push(move(shape2)) != tvg::Result::Success) return;
 
     auto shape3 = tvg::Shape::gen();
-    shape3->moveTo(520, 250);
-    shape3->lineTo(750, 250);
-    shape3->lineTo(720, 350);
-    shape3->lineTo(570, 320);
-    shape3->lineTo(570, 230);
+    shape3->moveTo(520, 50);
+    shape3->lineTo(750, 50);
+    shape3->lineTo(720, 200);
+    shape3->lineTo(570, 170);
+    shape3->lineTo(570, 30);
     shape3->stroke(0, 255, 0, 255);
     shape3->stroke(10);
     shape3->stroke(tvg::StrokeJoin::Miter);
@@ -58,11 +47,11 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     //Test for Stroke Dash
     auto shape4 = tvg::Shape::gen();
-    shape4->moveTo( 20, 380);
-    shape4->lineTo(250, 380);
-    shape4->lineTo(220, 480);
-    shape4->lineTo( 70, 450);
-    shape4->lineTo( 70, 360);
+    shape4->moveTo( 20, 230);
+    shape4->lineTo(250, 230);
+    shape4->lineTo(220, 380);
+    shape4->lineTo( 70, 330);
+    shape4->lineTo( 70, 210);
     shape4->stroke(255, 0, 0, 255);
     shape4->stroke(5);
     shape4->stroke(tvg::StrokeJoin::Round);
@@ -73,11 +62,11 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     if (canvas->push(move(shape4)) != tvg::Result::Success) return;
 
     auto shape5 = tvg::Shape::gen();
-    shape5->moveTo(270, 380);
-    shape5->lineTo(500, 380);
-    shape5->lineTo(470, 480);
-    shape5->lineTo(320, 450);
-    shape5->lineTo(320, 360);
+    shape5->moveTo(270, 230);
+    shape5->lineTo(500, 230);
+    shape5->lineTo(470, 380);
+    shape5->lineTo(320, 330);
+    shape5->lineTo(320, 210);
     shape5->stroke(255, 255, 0, 255);
     shape5->stroke(5);
     shape5->stroke(tvg::StrokeJoin::Bevel);
@@ -88,11 +77,11 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     if (canvas->push(move(shape5)) != tvg::Result::Success) return;
 
     auto shape6 = tvg::Shape::gen();
-    shape6->moveTo(520, 380);
-    shape6->lineTo(750, 380);
-    shape6->lineTo(720, 480);
-    shape6->lineTo(570, 450);
-    shape6->lineTo(570, 360);
+    shape6->moveTo(520, 230);
+    shape6->lineTo(750, 230);
+    shape6->lineTo(720, 380);
+    shape6->lineTo(570, 330);
+    shape6->lineTo(570, 210);
     shape6->stroke(0, 255, 0, 255);
     shape6->stroke(5);
     shape6->stroke(tvg::StrokeJoin::Miter);
@@ -104,7 +93,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     //For a comparison with shapes 10-12
     auto shape7 = tvg::Shape::gen();
-    shape7->appendArc(70, 500, 160, 10, 30, true);
+    shape7->appendArc(70, 400, 160, 10, 70, true);
     shape7->stroke(255, 0, 0, 255);
     shape7->stroke(7);
     shape7->stroke(tvg::StrokeJoin::Round);
@@ -112,7 +101,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     if (canvas->push(move(shape7)) != tvg::Result::Success) return;
 
     auto shape8 = tvg::Shape::gen();
-    shape8->appendArc(320, 500, 160, 10, 30, false);
+    shape8->appendArc(320, 400, 160, 10, 70, false);
     shape8->stroke(255, 255, 0, 255);
     shape8->stroke(7);
     shape8->stroke(tvg::StrokeJoin::Bevel);
@@ -120,7 +109,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     if (canvas->push(move(shape8)) != tvg::Result::Success) return;
 
     auto shape9 = tvg::Shape::gen();
-    shape9->appendArc(570, 500, 160, 10, 30, true);
+    shape9->appendArc(570, 400, 160, 10, 70, true);
     shape9->stroke(0, 255, 0, 255);
     shape9->stroke(7);
     shape9->stroke(tvg::StrokeJoin::Miter);
@@ -129,9 +118,9 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     //Test for Stroke Dash for Arc, Circle, Rect
     auto shape10 = tvg::Shape::gen();
-    shape10->appendArc(70, 620, 160, 10, 30, true);
-    shape10->appendCircle(70, 720, 20, 60);
-    shape10->appendRect(130, 740, 100, 40, 0, 0);
+    shape10->appendArc(70, 600, 160, 10, 30, true);
+    shape10->appendCircle(70, 700, 20, 60);
+    shape10->appendRect(130, 710, 100, 40, 0, 0);
     shape10->stroke(255, 0, 0, 255);
     shape10->stroke(5);
     shape10->stroke(tvg::StrokeJoin::Round);
@@ -140,9 +129,9 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     if (canvas->push(move(shape10)) != tvg::Result::Success) return;
 
     auto shape11 = tvg::Shape::gen();
-    shape11->appendArc(320, 620, 160, 10, 30, false);
-    shape11->appendCircle(320, 720, 20, 60);
-    shape11->appendRect(380, 740, 100, 40, 0, 0);
+    shape11->appendArc(320, 600, 160, 10, 30, false);
+    shape11->appendCircle(320, 700, 20, 60);
+    shape11->appendRect(380, 710, 100, 40, 0, 0);
     shape11->stroke(255, 255, 0, 255);
     shape11->stroke(5);
     shape11->stroke(tvg::StrokeJoin::Bevel);
@@ -151,9 +140,9 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     if (canvas->push(move(shape11)) != tvg::Result::Success) return;
 
     auto shape12 = tvg::Shape::gen();
-    shape12->appendArc(570, 620, 160, 10, 30, true);
-    shape12->appendCircle(570, 720, 20, 60);
-    shape12->appendRect(630, 740, 100, 40, 0, 0);
+    shape12->appendArc(570, 600, 160, 10, 30, true);
+    shape12->appendCircle(570, 700, 20, 60);
+    shape12->appendRect(630, 710, 100, 40, 0, 0);
     shape12->stroke(0, 255, 0, 255);
     shape12->stroke(5);
     shape12->stroke(tvg::StrokeJoin::Miter);
