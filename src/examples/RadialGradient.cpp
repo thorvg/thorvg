@@ -1,4 +1,4 @@
-#include "testCommon.h"
+#include "Common.h"
 
 /************************************************************************/
 /* Drawing Commands                                                     */
@@ -8,73 +8,65 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 {
     if (!canvas) return;
 
-    //Shape 1
-    auto shape1 = tvg::Shape::gen();
-    shape1->appendRect(50, 50, 200, 200, 0, 0);
-    shape1->fill(50, 50, 50, 255);
-    shape1->stroke(255, 255, 255, 255);       //color: r, g, b, a
-    shape1->stroke(tvg::StrokeJoin::Bevel);   //default is Bevel
-    shape1->stroke(10);                       //width: 10px
+    canvas->reserve(3);                          //reserve 3 shape nodes (optional)
 
+    //Prepare Round Rectangle
+    auto shape1 = tvg::Shape::gen();
+    shape1->appendRect(0, 0, 400, 400, 0, 0);    //x, y, w, h, rx, ry
+
+    //RadialGradient
+    auto fill = tvg::RadialGradient::gen();
+    fill->radial(200, 200, 200);
+
+    //Gradient Color Stops
+    tvg::Fill::ColorStop colorStops[2];
+    colorStops[0] = {0, 255, 255, 255, 255};
+    colorStops[1] = {1, 0, 0, 0, 255};
+
+    fill->colorStops(colorStops, 2);
+
+    shape1->fill(move(fill));
     if (canvas->push(move(shape1)) != tvg::Result::Success) return;
 
-    //Shape 2
+    //Prepare Circle
     auto shape2 = tvg::Shape::gen();
-    shape2->appendRect(300, 50, 200, 200, 0, 0);
-    shape2->fill(50, 50, 50, 255);
-    shape2->stroke(255, 255, 255, 255);
-    shape2->stroke(tvg::StrokeJoin::Round);
-    shape2->stroke(10);
+    shape2->appendCircle(400, 400, 200, 200);    //cx, cy, radiusW, radiusH
 
+    //RadialGradient
+    auto fill2 = tvg::RadialGradient::gen();
+    fill2->radial(400, 400, 200);
+
+    //Gradient Color Stops
+    tvg::Fill::ColorStop colorStops2[3];
+    colorStops2[0] = {0, 255, 0, 0, 255};
+    colorStops2[1] = {0.5, 255, 255, 0, 255};
+    colorStops2[2] = {1, 255, 255, 255, 255};
+
+    fill2->colorStops(colorStops2, 3);
+
+    shape2->fill(move(fill2));
     if (canvas->push(move(shape2)) != tvg::Result::Success) return;
 
-    //Shape 3
+
+    //Prepare Ellipse
     auto shape3 = tvg::Shape::gen();
-    shape3->appendRect(550, 50, 200, 200, 0, 0);
-    shape3->fill(50, 50, 50, 255);
-    shape3->stroke(255, 255, 255, 255);
-    shape3->stroke(tvg::StrokeJoin::Miter);
-    shape3->stroke(10);
+    shape3->appendCircle(600, 600, 150, 100);    //cx, cy, radiusW, radiusH
 
+    //RadialGradient
+    auto fill3 = tvg::RadialGradient::gen();
+    fill3->radial(600, 600, 150);
+
+    //Gradient Color Stops
+    tvg::Fill::ColorStop colorStops3[4];
+    colorStops3[0] = {0, 0, 127, 0, 127};
+    colorStops3[1] = {0.25, 0, 170, 170, 170};
+    colorStops3[2] = {0.5, 200, 0, 200, 200};
+    colorStops3[3] = {1, 255, 255, 255, 255};
+
+    fill3->colorStops(colorStops3, 4);
+
+    shape3->fill(move(fill3));
     if (canvas->push(move(shape3)) != tvg::Result::Success) return;
-
-    //Shape 4
-    auto shape4 = tvg::Shape::gen();
-    shape4->appendCircle(150, 400, 100, 100);
-    shape4->fill(50, 50, 50, 255);
-    shape4->stroke(255, 255, 255, 255);
-    shape4->stroke(1);
-
-    if (canvas->push(move(shape4)) != tvg::Result::Success) return;
-
-    //Shape 5
-    auto shape5 = tvg::Shape::gen();
-    shape5->appendCircle(400, 400, 100, 100);
-    shape5->fill(50, 50, 50, 255);
-    shape5->stroke(255, 255, 255, 255);
-    shape5->stroke(2);
-
-    if (canvas->push(move(shape5)) != tvg::Result::Success) return;
-
-    //Shape 6
-    auto shape6 = tvg::Shape::gen();
-    shape6->appendCircle(650, 400, 100, 100);
-    shape6->fill(50, 50, 50, 255);
-    shape6->stroke(255, 255, 255, 255);
-    shape6->stroke(4);
-
-    if (canvas->push(move(shape6)) != tvg::Result::Success) return;
-
-    //Test for Stroke Width
-    for (int i = 0; i < 10; ++i) {
-        auto shape = tvg::Shape::gen();
-        shape->moveTo(50, 550 + (25 * i));
-        shape->lineTo(750, 550 + (25 * i));
-        shape->stroke(255, 255, 255, 255);       //color: r, g, b, a
-        shape->stroke(i + 1);                    //stroke width
-        shape->stroke(tvg::StrokeCap::Round);    //default is Square
-        if (canvas->push(move(shape)) != tvg::Result::Success) return;
-    }
 }
 
 

@@ -1,84 +1,95 @@
-#include "testCommon.h"
+#include "Common.h"
 
 /************************************************************************/
 /* Drawing Commands                                                     */
 /************************************************************************/
-tvg::Shape* pShape = nullptr;
 
 void tvgDrawCmds(tvg::Canvas* canvas)
 {
     if (!canvas) return;
 
-    //Shape1
-    auto shape = tvg::Shape::gen();
+    //Duplicate Shapes
+    {
+        //Original Shape
+        auto shape1 = tvg::Shape::gen();
+        shape1->appendRect(10, 10, 200, 200, 0, 0);
+        shape1->appendRect(220, 10, 100, 100, 0, 0);
 
-    /* Acquire shape pointer to access it again.
-       instead, you should consider not to interrupt this pointer life-cycle. */
-    pShape = shape.get();
+        shape1->stroke(3);
+        shape1->stroke(0, 255, 0, 255);
 
-    shape->moveTo(0, -114.5);
-    shape->lineTo(54, -5.5);
-    shape->lineTo(175, 11.5);
-    shape->lineTo(88, 95.5);
-    shape->lineTo(108, 216.5);
-    shape->lineTo(0, 160.5);
-    shape->lineTo(-102, 216.5);
-    shape->lineTo(-87, 96.5);
-    shape->lineTo(-173, 12.5);
-    shape->lineTo(-53, -5.5);
-    shape->close();
-    shape->fill(0, 0, 255, 255);
-    shape->stroke(3);
-    shape->stroke(255, 255, 255, 255);
-    if (canvas->push(move(shape)) != tvg::Result::Success) return;
-}
+        float dashPattern[2] = {4, 4};
+        shape1->stroke(dashPattern, 2);
+        shape1->fill(255, 0, 0, 255);
 
-void tvgUpdateCmds(tvg::Canvas* canvas, float progress)
-{
-    if (!canvas) return;
+        //Duplicate Shape, Switch fill method
+        auto shape2 = unique_ptr<tvg::Shape>(static_cast<tvg::Shape*>(shape1->duplicate()));
+        shape2->translate(0, 220);
 
-    /* Update shape directly.
-       You can update only necessary properties of this shape,
-       while retaining other properties. */
+        auto fill = tvg::LinearGradient::gen();
+        fill->linear(10, 10, 440, 200);
 
-    //Transform Matrix
-    tvg::Matrix m = {1, 0, 0, 0, 1, 0, 0, 0, 1};
+        tvg::Fill::ColorStop colorStops[2];
+        colorStops[0] = {0, 0, 0, 0, 255};
+        colorStops[1] = {1, 255, 255, 255, 255};
+        fill->colorStops(colorStops, 2);
 
-    //scale x
-    m.e11 = 1 - (progress * 0.5f);
+        shape2->fill(move(fill));
 
-    //scale y
-    m.e22 = 1 + (progress * 2.0f);
+        //Duplicate Shape 2
+        auto shape3 = unique_ptr<tvg::Shape>(static_cast<tvg::Shape*>(shape2->duplicate()));
+        shape3->translate(0, 440);
 
-    //rotation
-    constexpr auto PI = 3.141592f;
-    auto degree = 45.0f;
-    auto radian = degree / 180.0f * PI;
-    auto cosVal = cosf(radian);
-    auto sinVal = sinf(radian);
+        canvas->push(move(shape1));
+        canvas->push(move(shape2));
+        canvas->push(move(shape3));
+    }
 
-    auto t11 = m.e11 * cosVal + m.e12 * sinVal;
-    auto t12 = m.e11 * -sinVal + m.e12 * cosVal;
-    auto t21 = m.e21 * cosVal + m.e22 * sinVal;
-    auto t22 = m.e21 * -sinVal + m.e22 * cosVal;
-    auto t13 = m.e31 * cosVal + m.e32 * sinVal;
-    auto t23 = m.e31 * -sinVal + m.e32 * cosVal;
+    //Duplicate Scene
+    {
+        //Create a Scene1
+        auto scene1 = tvg::Scene::gen();
+        scene1->reserve(3);
 
-    m.e11 = t11;
-    m.e12 = t12;
-    m.e21 = t21;
-    m.e22 = t22;
-    m.e13 = t13;
-    m.e23 = t23;
+        auto shape1 = tvg::Shape::gen();
+        shape1->appendRect(0, 0, 400, 400, 50, 50);
+        shape1->fill(0, 255, 0, 255);
+        scene1->push(move(shape1));
 
-    //translate
-    m.e13 = progress * 300.0f + 300.0f;
-    m.e23 = progress * -100.0f + 300.0f;
+        auto shape2 = tvg::Shape::gen();
+        shape2->appendCircle(400, 400, 200, 200);
+        shape2->fill(255, 255, 0, 255);
+        scene1->push(move(shape2));
 
-    pShape->transform(m);
+        auto shape3 = tvg::Shape::gen();
+        shape3->appendCircle(600, 600, 150, 100);
+        shape3->fill(0, 255, 255, 255);
+        scene1->push(move(shape3));
 
-    //Update shape for drawing (this may work asynchronously)
-    canvas->update(pShape);
+        scene1->scale(0.25);
+        scene1->translate(400, 0);
+
+        //Duplicate Scene1
+        auto scene2 = unique_ptr<tvg::Scene>(static_cast<tvg::Scene*>(scene1->duplicate()));
+        scene2->translate(600, 200);
+
+        canvas->push(move(scene1));
+        canvas->push(move(scene2));
+    }
+
+    //Duplicate Picture
+    {
+        auto picture1 = tvg::Picture::gen();
+        picture1->load(EXAMPLE_DIR"/tiger.svg");
+        picture1->translate(370, 370);
+        picture1->scale(0.25);
+
+        auto picture2 = unique_ptr<tvg::Picture>(static_cast<tvg::Picture*>(picture1->duplicate()));
+        picture2->translate(550, 550);
+
+        canvas->push(move(picture1));
+        canvas->push(move(picture2));
+    }
 }
 
 
@@ -99,16 +110,6 @@ void tvgSwTest(uint32_t* buffer)
        internal data asynchronously for coming rendering.
        Canvas keeps this shape node unless user call canvas->clear() */
     tvgDrawCmds(swCanvas.get());
-}
-
-void transitSwCb(Elm_Transit_Effect *effect, Elm_Transit* transit, double progress)
-{
-    tvgUpdateCmds(swCanvas.get(), progress);
-
-    //Update Efl Canvas
-    Eo* img = (Eo*) effect;
-    evas_object_image_data_update_add(img, 0, 0, WIDTH, HEIGHT);
-    evas_object_image_pixels_dirty_set(img, EINA_TRUE);
 }
 
 void drawSwView(void* data, Eo* obj)
@@ -151,11 +152,6 @@ void drawGLview(Evas_Object *obj)
     }
 }
 
-void transitGlCb(Elm_Transit_Effect *effect, Elm_Transit* transit, double progress)
-{
-    tvgUpdateCmds(glCanvas.get(), progress);
-}
-
 
 /************************************************************************/
 /* Main Code                                                            */
@@ -184,20 +180,11 @@ int main(int argc, char **argv)
 
         elm_init(argc, argv);
 
-        Elm_Transit *transit = elm_transit_add();
-
         if (tvgEngine == tvg::CanvasEngine::Sw) {
-            auto view = createSwView();
-            elm_transit_effect_add(transit, transitSwCb, view, nullptr);
+            createSwView();
         } else {
-            auto view = createGlView();
-            elm_transit_effect_add(transit, transitGlCb, view, nullptr);
+            createGlView();
         }
-
-        elm_transit_duration_set(transit, 2);
-        elm_transit_repeat_times_set(transit, -1);
-        elm_transit_auto_reverse_set(transit, EINA_TRUE);
-        elm_transit_go(transit);
 
         elm_run();
         elm_shutdown();

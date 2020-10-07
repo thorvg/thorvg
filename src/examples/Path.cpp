@@ -1,4 +1,4 @@
-#include "testCommon.h"
+#include "Common.h"
 
 /************************************************************************/
 /* Drawing Commands                                                     */
@@ -8,17 +8,44 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 {
     if (!canvas) return;
 
-    //Prepare a Shape (Rectangle + Rectangle + Circle + Circle)
+    //Star
     auto shape1 = tvg::Shape::gen();
-    shape1->appendRect(0, 0, 200, 200, 0, 0);          //x, y, w, h, rx, ry
-    shape1->appendRect(100, 100, 300, 300, 100, 100);  //x, y, w, h, rx, ry
-    shape1->appendCircle(400, 400, 100, 100);          //cx, cy, radiusW, radiusH
-    shape1->appendCircle(400, 500, 170, 100);          //cx, cy, radiusW, radiusH
-    shape1->fill(255, 255, 0, 255);                    //r, g, b, a
 
-    canvas->push(move(shape1));
+    //Appends Paths
+    shape1->moveTo(199, 34);
+    shape1->lineTo(253, 143);
+    shape1->lineTo(374, 160);
+    shape1->lineTo(287, 244);
+    shape1->lineTo(307, 365);
+    shape1->lineTo(199, 309);
+    shape1->lineTo(97, 365);
+    shape1->lineTo(112, 245);
+    shape1->lineTo(26, 161);
+    shape1->lineTo(146, 143);
+    shape1->close();
+    shape1->fill(0, 0, 255, 255);
+    if (canvas->push(move(shape1)) != tvg::Result::Success) return;
+
+
+    //Circle
+    auto shape2 = tvg::Shape::gen();
+
+    auto cx = 550.0f;
+    auto cy = 550.0f;
+    auto radius = 125.0f;
+    auto halfRadius = radius * 0.552284f;
+
+    //Append Paths
+    shape2->moveTo(cx, cy - radius);
+    shape2->cubicTo(cx + halfRadius, cy - radius, cx + radius, cy - halfRadius, cx + radius, cy);
+    shape2->cubicTo(cx + radius, cy + halfRadius, cx + halfRadius, cy + radius, cx, cy+ radius);
+    shape2->cubicTo(cx - halfRadius, cy + radius, cx - radius, cy + halfRadius, cx - radius, cy);
+    shape2->cubicTo(cx - radius, cy - halfRadius, cx - halfRadius, cy - radius, cx, cy - radius);
+    shape2->close();
+    shape2->fill(255, 0, 0, 255);
+    if (canvas->push(move(shape2)) != tvg::Result::Success) return;
+
 }
-
 
 /************************************************************************/
 /* Sw Engine Test Code                                                  */

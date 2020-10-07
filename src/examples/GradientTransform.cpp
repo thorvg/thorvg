@@ -1,108 +1,112 @@
-#include "testCommon.h"
+#include "Common.h"
 
 /************************************************************************/
 /* Drawing Commands                                                     */
 /************************************************************************/
-tvg::Scene* pScene1 = nullptr;
-tvg::Scene* pScene2 = nullptr;
+tvg::Shape* pShape = nullptr;
+tvg::Shape* pShape2 = nullptr;
+tvg::Shape* pShape3 = nullptr;
 
 void tvgDrawCmds(tvg::Canvas* canvas)
 {
     if (!canvas) return;
 
-    //Create a Scene1
-    auto scene = tvg::Scene::gen();
-    pScene1 = scene.get();
-    scene->reserve(3);   //reserve 3 shape nodes (optional)
+    //Shape1
+    auto shape = tvg::Shape::gen();
 
-    //Prepare Round Rectangle (Scene1)
-    auto shape1 = tvg::Shape::gen();
-    shape1->appendRect(-235, -250, 400, 400, 50, 50);  //x, y, w, h, rx, ry
-    shape1->fill(0, 255, 0, 255);                      //r, g, b, a
-    shape1->stroke(5);                                 //width
-    shape1->stroke(255, 255, 255, 255);                //r, g, b, a
-    scene->push(move(shape1));
+    /* Acquire shape pointer to access it again.
+       instead, you should consider not to interrupt this pointer life-cycle. */
+    pShape = shape.get();
 
-    //Prepare Circle (Scene1)
+    shape->appendRect(-285, -300, 200, 200, 0, 0);
+    shape->appendRect(-185, -200, 300, 300, 100, 100);
+    shape->appendCircle(115, 100, 100, 100);
+    shape->appendCircle(115, 200, 170, 100);
+
+    //LinearGradient
+    auto fill = tvg::LinearGradient::gen();
+    fill->linear(-285, -300, 285, 300);
+
+    //Gradient Color Stops
+    tvg::Fill::ColorStop colorStops[3];
+    colorStops[0] = {0, 255, 0, 0, 255};
+    colorStops[1] = {0.5, 255, 255, 0, 255};
+    colorStops[2] = {1, 255, 255, 255, 255};
+
+    fill->colorStops(colorStops, 3);
+    shape->fill(move(fill));
+    shape->translate(385, 400);
+    if (canvas->push(move(shape)) != tvg::Result::Success) return;
+
+    //Shape2
     auto shape2 = tvg::Shape::gen();
-    shape2->appendCircle(-165, -150, 200, 200);    //cx, cy, radiusW, radiusH
-    shape2->fill(255, 255, 0, 255);                //r, g, b, a
-    scene->push(move(shape2));
+    pShape2 = shape2.get();
+    shape2->appendRect(-50, -50, 100, 100, 0, 0);
+    shape2->translate(400, 400);
 
-    //Prepare Ellipse (Scene1)
+    //LinearGradient
+    auto fill2 = tvg::LinearGradient::gen();
+    fill2->linear(-50, -50, 50, 50);
+
+    //Gradient Color Stops
+    tvg::Fill::ColorStop colorStops2[2];
+    colorStops2[0] = {0, 0, 0, 0, 255};
+    colorStops2[1] = {1, 255, 255, 255, 255};
+
+    fill2->colorStops(colorStops2, 2);
+    shape2->fill(move(fill2));
+    if (canvas->push(move(shape2)) != tvg::Result::Success) return;
+
+    //Shape3
     auto shape3 = tvg::Shape::gen();
-    shape3->appendCircle(265, 250, 150, 100);      //cx, cy, radiusW, radiusH
-    shape3->fill(0, 255, 255, 255);                //r, g, b, a
-    scene->push(move(shape3));
+    pShape3 = shape3.get();
 
-    scene->translate(350, 350);
-    scene->scale(0.5);
+    /* Look, how shape3's origin is different with shape2
+       The center of the shape is the anchor point for transformation. */
+    shape3->appendRect(100, 100, 150, 100, 20, 20);
 
-    //Create Scene2
-    auto scene2 = tvg::Scene::gen();
-    pScene2 = scene2.get();
-    scene2->reserve(2);   //reserve 2 shape nodes (optional)
+    //RadialGradient
+    auto fill3 = tvg::RadialGradient::gen();
+    fill3->radial(175, 150, 75);
 
-    //Star (Scene2)
-    auto shape4 = tvg::Shape::gen();
+    //Gradient Color Stops
+    tvg::Fill::ColorStop colorStops3[4];
+    colorStops3[0] = {0, 0, 127, 0, 127};
+    colorStops3[1] = {0.25, 0, 170, 170, 170};
+    colorStops3[2] = {0.5, 200, 0, 200, 200};
+    colorStops3[3] = {1, 255, 255, 255, 255};
 
-    //Appends Paths
-    shape4->moveTo(0, -114.5);
-    shape4->lineTo(54, -5.5);
-    shape4->lineTo(175, 11.5);
-    shape4->lineTo(88, 95.5);
-    shape4->lineTo(108, 216.5);
-    shape4->lineTo(0, 160.5);
-    shape4->lineTo(-102, 216.5);
-    shape4->lineTo(-87, 96.5);
-    shape4->lineTo(-173, 12.5);
-    shape4->lineTo(-53, -5.5);
-    shape4->close();
-    shape4->fill(0, 0, 255, 127);
-    shape4->stroke(3);                             //width
-    shape4->stroke(0, 0, 255, 255);                //r, g, b, a
-    scene2->push(move(shape4));
+    fill3->colorStops(colorStops3, 4);
 
-    //Circle (Scene2)
-    auto shape5 = tvg::Shape::gen();
-
-    auto cx = -150.0f;
-    auto cy = -150.0f;
-    auto radius = 100.0f;
-    auto halfRadius = radius * 0.552284f;
-
-    //Append Paths
-    shape5->moveTo(cx, cy - radius);
-    shape5->cubicTo(cx + halfRadius, cy - radius, cx + radius, cy - halfRadius, cx + radius, cy);
-    shape5->cubicTo(cx + radius, cy + halfRadius, cx + halfRadius, cy + radius, cx, cy+ radius);
-    shape5->cubicTo(cx - halfRadius, cy + radius, cx - radius, cy + halfRadius, cx - radius, cy);
-    shape5->cubicTo(cx - radius, cy - halfRadius, cx - halfRadius, cy - radius, cx, cy - radius);
-    shape5->close();
-    shape5->fill(255, 0, 0, 127);
-    scene2->push(move(shape5));
-
-    scene2->translate(500, 350);
-
-    //Push scene2 onto the scene
-    scene->push(move(scene2));
-
-    //Draw the Scene onto the Canvas
-    canvas->push(move(scene));
+    shape3->fill(move(fill3));
+    shape3->translate(400, 400);
+    if (canvas->push(move(shape3)) != tvg::Result::Success) return;
 }
 
 void tvgUpdateCmds(tvg::Canvas* canvas, float progress)
 {
     if (!canvas) return;
 
-    /* Update scene directly.
-       You can update only necessary properties of this scene,
+    /* Update shape directly.
+       You can update only necessary properties of this shape,
        while retaining other properties. */
 
-    pScene1->rotate(360 * progress);
-    pScene2->rotate(360 * progress);
+    //Update Shape1
+    pShape->scale(1 - 0.75 * progress);
+    pShape->rotate(360 * progress);
 
     //Update shape for drawing (this may work asynchronously)
-    canvas->update(pScene1);
+    if (canvas->update(pShape) != tvg::Result::Success) return;
+
+    //Update Shape2
+    pShape2->rotate(360 * progress);
+    pShape2->translate(400 + progress * 300, 400);
+    if (canvas->update(pShape2) != tvg::Result::Success) return;
+
+    //Update Shape3
+    pShape3->rotate(-360 * progress);
+    pShape3->scale(0.5 + progress);
+    if (canvas->update(pShape3) != tvg::Result::Success) return;
 }
 
 

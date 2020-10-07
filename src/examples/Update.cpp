@@ -1,4 +1,4 @@
-#include "testCommon.h"
+#include "Common.h"
 
 /************************************************************************/
 /* Drawing Commands                                                     */
@@ -8,72 +8,29 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 {
     if (!canvas) return;
 
-    //Create a Scene
-    auto scene = tvg::Scene::gen();
-    scene->reserve(3);   //reserve 3 shape nodes (optional)
+    //Shape
+    auto shape = tvg::Shape::gen();
+    shape->appendRect(-100, -100, 200, 200, 0, 0);
+    shape->fill(255, 255, 255, 255);
+    canvas->push(move(shape));
+}
 
-    //Prepare Round Rectangle
-    auto shape1 = tvg::Shape::gen();
-    shape1->appendRect(0, 0, 400, 400, 50, 50);  //x, y, w, h, rx, ry
-    shape1->fill(0, 255, 0, 255);                //r, g, b, a
-    scene->push(move(shape1));
+void tvgUpdateCmds(tvg::Canvas* canvas, float progress)
+{
+    if (!canvas) return;
 
-    //Prepare Circle
-    auto shape2 = tvg::Shape::gen();
-    shape2->appendCircle(400, 400, 200, 200);    //cx, cy, radiusW, radiusH
-    shape2->fill(255, 255, 0, 255);              //r, g, b, a
-    scene->push(move(shape2));
+    //Explicitly clear all retained paint nodes.
+    if (canvas->clear() != tvg::Result::Success) return;
 
-    //Prepare Ellipse
-    auto shape3 = tvg::Shape::gen();
-    shape3->appendCircle(600, 600, 150, 100);    //cx, cy, radiusW, radiusH
-    shape3->fill(0, 255, 255, 255);              //r, g, b, a
-    scene->push(move(shape3));
+    //Shape
+    auto shape = tvg::Shape::gen();
+    shape->appendRect(-100, -100, 200, 200, (100 * progress), (100 * progress));
+    shape->fill(rand()%255, rand()%255, rand()%255, 255);
+    shape->translate(800 * progress, 800 * progress);
+    shape->scale(1 - 0.75 * progress);
+    shape->rotate(360 * progress);
 
-    //Create another Scene
-    auto scene2 = tvg::Scene::gen();
-    scene2->reserve(2);   //reserve 2 shape nodes (optional)
-
-    //Star
-    auto shape4 = tvg::Shape::gen();
-
-    //Appends Paths
-    shape4->moveTo(199, 34);
-    shape4->lineTo(253, 143);
-    shape4->lineTo(374, 160);
-    shape4->lineTo(287, 244);
-    shape4->lineTo(307, 365);
-    shape4->lineTo(199, 309);
-    shape4->lineTo(97, 365);
-    shape4->lineTo(112, 245);
-    shape4->lineTo(26, 161);
-    shape4->lineTo(146, 143);
-    shape4->close();
-    shape4->fill(0, 0, 255, 255);
-    scene2->push(move(shape4));
-
-    //Circle
-    auto shape5 = tvg::Shape::gen();
-
-    auto cx = 550.0f;
-    auto cy = 550.0f;
-    auto radius = 125.0f;
-    auto halfRadius = radius * 0.552284f;
-
-    //Append Paths
-    shape5->moveTo(cx, cy - radius);
-    shape5->cubicTo(cx + halfRadius, cy - radius, cx + radius, cy - halfRadius, cx + radius, cy);
-    shape5->cubicTo(cx + radius, cy + halfRadius, cx + halfRadius, cy + radius, cx, cy+ radius);
-    shape5->cubicTo(cx - halfRadius, cy + radius, cx - radius, cy + halfRadius, cx - radius, cy);
-    shape5->cubicTo(cx - radius, cy - halfRadius, cx - halfRadius, cy - radius, cx, cy - radius);
-    shape5->fill(255, 0, 0, 255);
-    scene2->push(move(shape5));
-
-    //Push scene2 onto the scene
-    scene->push(move(scene2));
-
-    //Draw the Scene onto the Canvas
-    canvas->push(move(scene));
+    canvas->push(move(shape));
 }
 
 
@@ -94,6 +51,16 @@ void tvgSwTest(uint32_t* buffer)
        internal data asynchronously for coming rendering.
        Canvas keeps this shape node unless user call canvas->clear() */
     tvgDrawCmds(swCanvas.get());
+}
+
+void transitSwCb(Elm_Transit_Effect *effect, Elm_Transit* transit, double progress)
+{
+    tvgUpdateCmds(swCanvas.get(), progress);
+
+    //Update Efl Canvas
+    Eo* img = (Eo*) effect;
+    evas_object_image_data_update_add(img, 0, 0, WIDTH, HEIGHT);
+    evas_object_image_pixels_dirty_set(img, EINA_TRUE);
 }
 
 void drawSwView(void* data, Eo* obj)
@@ -136,6 +103,11 @@ void drawGLview(Evas_Object *obj)
     }
 }
 
+void transitGlCb(Elm_Transit_Effect *effect, Elm_Transit* transit, double progress)
+{
+    tvgUpdateCmds(glCanvas.get(), progress);
+}
+
 
 /************************************************************************/
 /* Main Code                                                            */
@@ -162,14 +134,22 @@ int main(int argc, char **argv)
     //Initialize ThorVG Engine
     if (tvg::Initializer::init(tvgEngine, threads) == tvg::Result::Success) {
 
-
         elm_init(argc, argv);
 
+        Elm_Transit *transit = elm_transit_add();
+
         if (tvgEngine == tvg::CanvasEngine::Sw) {
-            createSwView();
+            auto view = createSwView();
+            elm_transit_effect_add(transit, transitSwCb, view, nullptr);
         } else {
-            createGlView();
+            auto view = createGlView();
+            elm_transit_effect_add(transit, transitGlCb, view, nullptr);
         }
+
+        elm_transit_duration_set(transit, 2);
+        elm_transit_repeat_times_set(transit, -1);
+        elm_transit_auto_reverse_set(transit, EINA_TRUE);
+        elm_transit_go(transit);
 
         elm_run();
         elm_shutdown();

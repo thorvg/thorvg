@@ -1,86 +1,38 @@
-#include "testCommon.h"
+#include "Common.h"
 
 /************************************************************************/
 /* Drawing Commands                                                     */
 /************************************************************************/
 tvg::Shape* pShape = nullptr;
-tvg::Shape* pShape2 = nullptr;
-tvg::Shape* pShape3 = nullptr;
 
 void tvgDrawCmds(tvg::Canvas* canvas)
 {
     if (!canvas) return;
 
-    //Shape1
+    //Shape (for BG)
+    auto bg = tvg::Shape::gen();
+    bg->appendRect(0, 0, WIDTH, HEIGHT, 0, 0);
+
+    //fill property will be retained
+    bg->fill(255, 255, 255, 255);
+
+    if (canvas->push(move(bg)) != tvg::Result::Success) return;
+
+    //Shape
     auto shape = tvg::Shape::gen();
 
     /* Acquire shape pointer to access it again.
        instead, you should consider not to interrupt this pointer life-cycle. */
     pShape = shape.get();
 
-    shape->appendRect(-285, -300, 200, 200, 0, 0);
-    shape->appendRect(-185, -200, 300, 300, 100, 100);
-    shape->appendCircle(115, 100, 100, 100);
-    shape->appendCircle(115, 200, 170, 100);
+    shape->appendRect(-100, -100, 200, 200, 0, 0);
 
-    //LinearGradient
-    auto fill = tvg::LinearGradient::gen();
-    fill->linear(-285, -300, 285, 300);
+    //fill property will be retained
+    shape->fill(127, 255, 255, 255);
+    shape->stroke(0, 0, 255, 255);
+    shape->stroke(1);
 
-    //Gradient Color Stops
-    tvg::Fill::ColorStop colorStops[3];
-    colorStops[0] = {0, 255, 0, 0, 255};
-    colorStops[1] = {0.5, 255, 255, 0, 255};
-    colorStops[2] = {1, 255, 255, 255, 255};
-
-    fill->colorStops(colorStops, 3);
-    shape->fill(move(fill));
-    shape->translate(385, 400);
     if (canvas->push(move(shape)) != tvg::Result::Success) return;
-
-    //Shape2
-    auto shape2 = tvg::Shape::gen();
-    pShape2 = shape2.get();
-    shape2->appendRect(-50, -50, 100, 100, 0, 0);
-    shape2->translate(400, 400);
-
-    //LinearGradient
-    auto fill2 = tvg::LinearGradient::gen();
-    fill2->linear(-50, -50, 50, 50);
-
-    //Gradient Color Stops
-    tvg::Fill::ColorStop colorStops2[2];
-    colorStops2[0] = {0, 0, 0, 0, 255};
-    colorStops2[1] = {1, 255, 255, 255, 255};
-
-    fill2->colorStops(colorStops2, 2);
-    shape2->fill(move(fill2));
-    if (canvas->push(move(shape2)) != tvg::Result::Success) return;
-
-    //Shape3
-    auto shape3 = tvg::Shape::gen();
-    pShape3 = shape3.get();
-
-    /* Look, how shape3's origin is different with shape2
-       The center of the shape is the anchor point for transformation. */
-    shape3->appendRect(100, 100, 150, 100, 20, 20);
-
-    //RadialGradient
-    auto fill3 = tvg::RadialGradient::gen();
-    fill3->radial(175, 150, 75);
-
-    //Gradient Color Stops
-    tvg::Fill::ColorStop colorStops3[4];
-    colorStops3[0] = {0, 0, 127, 0, 127};
-    colorStops3[1] = {0.25, 0, 170, 170, 170};
-    colorStops3[2] = {0.5, 200, 0, 200, 200};
-    colorStops3[3] = {1, 255, 255, 255, 255};
-
-    fill3->colorStops(colorStops3, 4);
-
-    shape3->fill(move(fill3));
-    shape3->translate(400, 400);
-    if (canvas->push(move(shape3)) != tvg::Result::Success) return;
 }
 
 void tvgUpdateCmds(tvg::Canvas* canvas, float progress)
@@ -91,22 +43,14 @@ void tvgUpdateCmds(tvg::Canvas* canvas, float progress)
        You can update only necessary properties of this shape,
        while retaining other properties. */
 
-    //Update Shape1
-    pShape->scale(1 - 0.75 * progress);
-    pShape->rotate(360 * progress);
+    //Reset Shape
+    if (pShape->reset() == tvg::Result::Success) {
+        pShape->appendRect(-100 + (800 * progress), -100 + (800 * progress), 200, 200, (100 * progress), (100 * progress));
+        pShape->stroke(30 * progress);
 
-    //Update shape for drawing (this may work asynchronously)
-    if (canvas->update(pShape) != tvg::Result::Success) return;
-
-    //Update Shape2
-    pShape2->rotate(360 * progress);
-    pShape2->translate(400 + progress * 300, 400);
-    if (canvas->update(pShape2) != tvg::Result::Success) return;
-
-    //Update Shape3
-    pShape3->rotate(-360 * progress);
-    pShape3->scale(0.5 + progress);
-    if (canvas->update(pShape3) != tvg::Result::Success) return;
+        //Update shape for drawing (this may work asynchronously)
+        canvas->update(pShape);
+    }
 }
 
 

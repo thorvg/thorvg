@@ -1,113 +1,79 @@
-#include "testCommon.h"
+#include "Common.h"
 
 /************************************************************************/
 /* Drawing Commands                                                     */
 /************************************************************************/
 
-void tvgDrawStar(tvg::Shape* star)
-{
-    star->moveTo(199, 34);
-    star->lineTo(253, 143);
-    star->lineTo(374, 160);
-    star->lineTo(287, 244);
-    star->lineTo(307, 365);
-    star->lineTo(199, 309);
-    star->lineTo(97, 365);
-    star->lineTo(112, 245);
-    star->lineTo(26, 161);
-    star->lineTo(146, 143);
-    star->close();
-}
-
 void tvgDrawCmds(tvg::Canvas* canvas)
 {
     if (!canvas) return;
-    //Background
-    auto shape = tvg::Shape::gen();
-    shape->appendRect(0, 0, WIDTH, HEIGHT, 0, 0);
-    shape->fill(255, 255, 255, 255);
-    if (canvas->push(move(shape)) != tvg::Result::Success) return;
 
-    //////////////////////////////////////////////
+    //Create a Scene
     auto scene = tvg::Scene::gen();
-    scene->reserve(2);
+    scene->reserve(3);   //reserve 3 shape nodes (optional)
 
-    auto star1 = tvg::Shape::gen();
-    tvgDrawStar(star1.get());
-    star1->fill(255, 255, 0, 255);
-    star1->stroke(255 ,0, 0, 128);
-    star1->stroke(10);
+    //Prepare Round Rectangle
+    auto shape1 = tvg::Shape::gen();
+    shape1->appendRect(0, 0, 400, 400, 50, 50);  //x, y, w, h, rx, ry
+    shape1->fill(0, 255, 0, 255);                //r, g, b, a
+    scene->push(move(shape1));
 
-    //Move Star1
-    star1->translate(-10, -10);
+    //Prepare Circle
+    auto shape2 = tvg::Shape::gen();
+    shape2->appendCircle(400, 400, 200, 200);    //cx, cy, radiusW, radiusH
+    shape2->fill(255, 255, 0, 255);              //r, g, b, a
+    scene->push(move(shape2));
 
-    auto clipStar = tvg::Shape::gen();
-    clipStar->appendCircle(200, 230, 110, 110);
-    clipStar->fill(255, 255, 255, 255); // clip object must have alpha.
-    clipStar->translate(10, 10);
+    //Prepare Ellipse
+    auto shape3 = tvg::Shape::gen();
+    shape3->appendCircle(600, 600, 150, 100);    //cx, cy, radiusW, radiusH
+    shape3->fill(0, 255, 255, 255);              //r, g, b, a
+    scene->push(move(shape3));
 
-    star1->composite(move(clipStar), tvg::CompMethod::ClipPath);
+    //Create another Scene
+    auto scene2 = tvg::Scene::gen();
+    scene2->reserve(2);   //reserve 2 shape nodes (optional)
 
-    auto star2 = tvg::Shape::gen();
-    tvgDrawStar(star2.get());
-    star2->fill(0, 255, 255, 64);
-    star2->stroke(0 ,255, 0, 128);
-    star2->stroke(10);
+    //Star
+    auto shape4 = tvg::Shape::gen();
 
-    //Move Star2
-    star2->translate(10, 40);
+    //Appends Paths
+    shape4->moveTo(199, 34);
+    shape4->lineTo(253, 143);
+    shape4->lineTo(374, 160);
+    shape4->lineTo(287, 244);
+    shape4->lineTo(307, 365);
+    shape4->lineTo(199, 309);
+    shape4->lineTo(97, 365);
+    shape4->lineTo(112, 245);
+    shape4->lineTo(26, 161);
+    shape4->lineTo(146, 143);
+    shape4->close();
+    shape4->fill(0, 0, 255, 255);
+    scene2->push(move(shape4));
 
-    auto clip = tvg::Shape::gen();
-    clip->appendCircle(200, 230, 130, 130);
-    clip->fill(255, 255, 255, 255); // clip object must have alpha.
-    clip->translate(10, 10);
+    //Circle
+    auto shape5 = tvg::Shape::gen();
 
-    scene->push(move(star1));
-    scene->push(move(star2));
+    auto cx = 550.0f;
+    auto cy = 550.0f;
+    auto radius = 125.0f;
+    auto halfRadius = radius * 0.552284f;
 
-    //Clipping scene to shape
-    scene->composite(move(clip), tvg::CompMethod::ClipPath);
+    //Append Paths
+    shape5->moveTo(cx, cy - radius);
+    shape5->cubicTo(cx + halfRadius, cy - radius, cx + radius, cy - halfRadius, cx + radius, cy);
+    shape5->cubicTo(cx + radius, cy + halfRadius, cx + halfRadius, cy + radius, cx, cy+ radius);
+    shape5->cubicTo(cx - halfRadius, cy + radius, cx - radius, cy + halfRadius, cx - radius, cy);
+    shape5->cubicTo(cx - radius, cy - halfRadius, cx - halfRadius, cy - radius, cx, cy - radius);
+    shape5->fill(255, 0, 0, 255);
+    scene2->push(move(shape5));
 
+    //Push scene2 onto the scene
+    scene->push(move(scene2));
+
+    //Draw the Scene onto the Canvas
     canvas->push(move(scene));
-
-    //////////////////////////////////////////////
-    auto star3 = tvg::Shape::gen();
-    tvgDrawStar(star3.get());
-    star3->translate(400, 0);
-    star3->fill(255, 255, 0, 255);                    //r, g, b, a
-    star3->stroke(255 ,0, 0, 128);
-    star3->stroke(10);
-
-    auto clipRect = tvg::Shape::gen();
-    clipRect->appendRect(480, 110, 200, 200, 0, 0);          //x, y, w, h, rx, ry
-    clipRect->fill(255, 255, 255, 255); // clip object must have alpha.
-    clipRect->translate(20, 20);
-
-    //Clipping scene to rect(shape)
-    star3->composite(move(clipRect), tvg::CompMethod::ClipPath);
-
-    canvas->push(move(star3));
-
-    //////////////////////////////////////////////
-    auto picture = tvg::Picture::gen();
-    char buf[PATH_MAX];
-    sprintf(buf,"%s/cartman.svg", EXAMPLE_DIR);
-
-    if (picture->load(buf) != tvg::Result::Success) return;
-
-    picture->scale(3);
-    picture->translate(200, 400);
-
-    auto clipPath = tvg::Shape::gen();
-    clipPath->appendCircle(350, 510, 110, 110);          //x, y, w, h, rx, ry
-    clipPath->appendCircle(350, 650, 50, 50);          //x, y, w, h, rx, ry
-    clipPath->fill(255, 255, 255, 255); // clip object must have alpha.
-    clipPath->translate(20, 20);
-
-    //Clipping picture to path
-    picture->composite(move(clipPath), tvg::CompMethod::ClipPath);
-
-    canvas->push(move(picture));
 }
 
 
@@ -115,7 +81,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 /* Sw Engine Test Code                                                  */
 /************************************************************************/
 
-unique_ptr<tvg::SwCanvas> swCanvas;
+static unique_ptr<tvg::SwCanvas> swCanvas;
 
 void tvgSwTest(uint32_t* buffer)
 {
@@ -195,6 +161,7 @@ int main(int argc, char **argv)
 
     //Initialize ThorVG Engine
     if (tvg::Initializer::init(tvgEngine, threads) == tvg::Result::Success) {
+
 
         elm_init(argc, argv);
 

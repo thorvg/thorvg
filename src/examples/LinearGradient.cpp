@@ -1,4 +1,4 @@
-#include "testCommon.h"
+#include "Common.h"
 
 /************************************************************************/
 /* Drawing Commands                                                     */
@@ -8,88 +8,65 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 {
     if (!canvas) return;
 
-    //Duplicate Shapes
-    {
-        //Original Shape
-        auto shape1 = tvg::Shape::gen();
-        shape1->appendRect(10, 10, 200, 200, 0, 0);
-        shape1->appendRect(220, 10, 100, 100, 0, 0);
+    canvas->reserve(3);                          //reserve 3 shape nodes (optional)
 
-        shape1->stroke(3);
-        shape1->stroke(0, 255, 0, 255);
+    //Prepare Round Rectangle
+    auto shape1 = tvg::Shape::gen();
+    shape1->appendRect(0, 0, 400, 400, 0, 0);    //x, y, w, h, rx, ry
 
-        float dashPattern[2] = {4, 4};
-        shape1->stroke(dashPattern, 2);
-        shape1->fill(255, 0, 0, 255);
+    //LinearGradient
+    auto fill = tvg::LinearGradient::gen();
+    fill->linear(0, 0, 400, 400);
 
-        //Duplicate Shape, Switch fill method
-        auto shape2 = unique_ptr<tvg::Shape>(static_cast<tvg::Shape*>(shape1->duplicate()));
-        shape2->translate(0, 220);
+    //Gradient Color Stops
+    tvg::Fill::ColorStop colorStops[2];
+    colorStops[0] = {0, 0, 0, 0, 255};
+    colorStops[1] = {1, 255, 255, 255, 255};
 
-        auto fill = tvg::LinearGradient::gen();
-        fill->linear(10, 10, 440, 200);
+    fill->colorStops(colorStops, 2);
 
-        tvg::Fill::ColorStop colorStops[2];
-        colorStops[0] = {0, 0, 0, 0, 255};
-        colorStops[1] = {1, 255, 255, 255, 255};
-        fill->colorStops(colorStops, 2);
+    shape1->fill(move(fill));
+    if (canvas->push(move(shape1)) != tvg::Result::Success) return;
 
-        shape2->fill(move(fill));
+    //Prepare Circle
+    auto shape2 = tvg::Shape::gen();
+    shape2->appendCircle(400, 400, 200, 200);    //cx, cy, radiusW, radiusH
 
-        //Duplicate Shape 2
-        auto shape3 = unique_ptr<tvg::Shape>(static_cast<tvg::Shape*>(shape2->duplicate()));
-        shape3->translate(0, 440);
+    //LinearGradient
+    auto fill2 = tvg::LinearGradient::gen();
+    fill2->linear(400, 200, 400, 600);
 
-        canvas->push(move(shape1));
-        canvas->push(move(shape2));
-        canvas->push(move(shape3));
-    }
+    //Gradient Color Stops
+    tvg::Fill::ColorStop colorStops2[3];
+    colorStops2[0] = {0, 255, 0, 0, 255};
+    colorStops2[1] = {0.5, 255, 255, 0, 255};
+    colorStops2[2] = {1, 255, 255, 255, 255};
 
-    //Duplicate Scene
-    {
-        //Create a Scene1
-        auto scene1 = tvg::Scene::gen();
-        scene1->reserve(3);
+    fill2->colorStops(colorStops2, 3);
 
-        auto shape1 = tvg::Shape::gen();
-        shape1->appendRect(0, 0, 400, 400, 50, 50);
-        shape1->fill(0, 255, 0, 255);
-        scene1->push(move(shape1));
+    shape2->fill(move(fill2));
+    if (canvas->push(move(shape2)) != tvg::Result::Success) return;
 
-        auto shape2 = tvg::Shape::gen();
-        shape2->appendCircle(400, 400, 200, 200);
-        shape2->fill(255, 255, 0, 255);
-        scene1->push(move(shape2));
 
-        auto shape3 = tvg::Shape::gen();
-        shape3->appendCircle(600, 600, 150, 100);
-        shape3->fill(0, 255, 255, 255);
-        scene1->push(move(shape3));
+    //Prepare Ellipse
+    auto shape3 = tvg::Shape::gen();
+    shape3->appendCircle(600, 600, 150, 100);    //cx, cy, radiusW, radiusH
 
-        scene1->scale(0.25);
-        scene1->translate(400, 0);
+    //LinearGradient
+    auto fill3 = tvg::LinearGradient::gen();
+    fill3->linear(450, 600, 750, 600);
 
-        //Duplicate Scene1
-        auto scene2 = unique_ptr<tvg::Scene>(static_cast<tvg::Scene*>(scene1->duplicate()));
-        scene2->translate(600, 200);
+    //Gradient Color Stops
+    tvg::Fill::ColorStop colorStops3[4];
+    colorStops3[0] = {0, 0, 127, 0, 127};
+    colorStops3[1] = {0.25, 0, 170, 170, 170};
+    colorStops3[2] = {0.5, 200, 0, 200, 200};
+    colorStops3[3] = {1, 255, 255, 255, 255};
 
-        canvas->push(move(scene1));
-        canvas->push(move(scene2));
-    }
+    fill3->colorStops(colorStops3, 4);
 
-    //Duplicate Picture
-    {
-        auto picture1 = tvg::Picture::gen();
-        picture1->load(EXAMPLE_DIR"/tiger.svg");
-        picture1->translate(370, 370);
-        picture1->scale(0.25);
-
-        auto picture2 = unique_ptr<tvg::Picture>(static_cast<tvg::Picture*>(picture1->duplicate()));
-        picture2->translate(550, 550);
-
-        canvas->push(move(picture1));
-        canvas->push(move(picture2));
-    }
+    shape3->fill(move(fill3));
+    if (canvas->push(move(shape3)) != tvg::Result::Success) return;
 }
 
 

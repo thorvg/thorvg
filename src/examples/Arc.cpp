@@ -1,4 +1,4 @@
-#include "testCommon.h"
+#include "Common.h"
 
 /************************************************************************/
 /* Drawing Commands                                                     */
@@ -8,80 +8,65 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 {
     if (!canvas) return;
 
-    /* Star */
-
-    //Prepare Path Commands
-    tvg::PathCommand cmds[11];
-    cmds[0] = tvg::PathCommand::MoveTo;
-    cmds[1] = tvg::PathCommand::LineTo;
-    cmds[2] = tvg::PathCommand::LineTo;
-    cmds[3] = tvg::PathCommand::LineTo;
-    cmds[4] = tvg::PathCommand::LineTo;
-    cmds[5] = tvg::PathCommand::LineTo;
-    cmds[6] = tvg::PathCommand::LineTo;
-    cmds[7] = tvg::PathCommand::LineTo;
-    cmds[8] = tvg::PathCommand::LineTo;
-    cmds[9] = tvg::PathCommand::LineTo;
-    cmds[10] = tvg::PathCommand::Close;
-
-    //Prepare Path Points
-    tvg::Point pts[10];
-    pts[0] = {199, 34};    //MoveTo
-    pts[1] = {253, 143};   //LineTo
-    pts[2] = {374, 160};   //LineTo
-    pts[3] = {287, 244};   //LineTo
-    pts[4] = {307, 365};   //LineTo
-    pts[5] = {199, 309};   //LineTo
-    pts[6] = {97, 365};    //LineTo
-    pts[7] = {112, 245};   //LineTo
-    pts[8] = {26, 161};    //LineTo
-    pts[9] = {146, 143};   //LineTo
-
+    //Arc Line
     auto shape1 = tvg::Shape::gen();
-    shape1->appendPath(cmds, 11, pts, 10);     //copy path data
-    shape1->fill(0, 255, 0, 255);
+    shape1->appendArc(150, 150, 80, 10, 180, false);
+    shape1->stroke(255, 255, 255, 255);
+    shape1->stroke(2);
     if (canvas->push(move(shape1)) != tvg::Result::Success) return;
 
-    /* Circle */
-    auto cx = 550.0f;
-    auto cy = 550.0f;
-    auto radius = 125.0f;
-    auto halfRadius = radius * 0.552284f;
-
-    //Prepare Path Commands
-    tvg::PathCommand cmds2[6];
-    cmds2[0] = tvg::PathCommand::MoveTo;
-    cmds2[1] = tvg::PathCommand::CubicTo;
-    cmds2[2] = tvg::PathCommand::CubicTo;
-    cmds2[3] = tvg::PathCommand::CubicTo;
-    cmds2[4] = tvg::PathCommand::CubicTo;
-    cmds2[5] = tvg::PathCommand::Close;
-
-    //Prepare Path Points
-    tvg::Point pts2[13];
-    pts2[0] = {cx, cy - radius};    //MoveTo
-    //CubicTo 1
-    pts2[1] = {cx + halfRadius, cy - radius};      //Ctrl1
-    pts2[2] = {cx + radius, cy - halfRadius};      //Ctrl2
-    pts2[3] = {cx + radius, cy};                   //To
-    //CubicTo 2
-    pts2[4] = {cx + radius, cy + halfRadius};      //Ctrl1
-    pts2[5] = {cx + halfRadius, cy + radius};      //Ctrl2
-    pts2[6] = {cx, cy+ radius};                    //To
-    //CubicTo 3
-    pts2[7] = {cx - halfRadius, cy + radius};      //Ctrl1
-    pts2[8] = {cx - radius, cy + halfRadius};      //Ctrl2
-    pts2[9] = {cx - radius, cy};                   //To
-    //CubicTo 4
-    pts2[10] = {cx - radius, cy - halfRadius};     //Ctrl1
-    pts2[11] = {cx - halfRadius, cy - radius};     //Ctrl2
-    pts2[12] = {cx, cy - radius};                  //To
-
     auto shape2 = tvg::Shape::gen();
-    shape2->appendPath(cmds2, 6, pts2, 13);     //copy path data
-    shape2->fill(255, 255, 0, 255);
+    shape2->appendArc(400, 150, 80, 0, 300, false);
+    shape2->stroke(255, 255, 255, 255);
+    shape2->stroke(2);
     if (canvas->push(move(shape2)) != tvg::Result::Success) return;
 
+    auto shape3 = tvg::Shape::gen();
+    shape3->appendArc(600, 150, 80, 300, 60, false);
+    shape3->stroke(255, 255, 255, 255);
+    shape3->stroke(2);
+    if (canvas->push(move(shape3)) != tvg::Result::Success) return;
+
+    //Pie Line
+    auto shape4 = tvg::Shape::gen();
+    shape4->appendArc(150, 400, 80, 10, 180, true);
+    shape4->stroke(255, 255, 255, 255);
+    shape4->stroke(2);
+    if (canvas->push(move(shape4)) != tvg::Result::Success) return;
+
+    auto shape5 = tvg::Shape::gen();
+    shape5->appendArc(400, 400, 80, 0, 300, true);
+    shape5->stroke(255, 255, 255, 255);
+    shape5->stroke(2);
+    if (canvas->push(move(shape5)) != tvg::Result::Success) return;
+
+    auto shape6 = tvg::Shape::gen();
+    shape6->appendArc(600, 400, 80, 300, 60, true);
+    shape6->stroke(255, 255, 255, 255);
+    shape6->stroke(2);
+    if (canvas->push(move(shape6)) != tvg::Result::Success) return;
+
+    //Pie Fill
+    auto shape7 = tvg::Shape::gen();
+    shape7->appendArc(150, 650, 80, 10, 180, true);
+    shape7->fill(255, 255, 255, 255);
+    shape7->stroke(255, 0, 0, 255);
+    shape7->stroke(2);
+    if (canvas->push(move(shape7)) != tvg::Result::Success) return;
+
+    auto shape8 = tvg::Shape::gen();
+    shape8->appendArc(400, 650, 80, 0, 300, true);
+    shape8->fill(255, 255, 255, 255);
+    shape8->stroke(255, 0, 0, 255);
+    shape8->stroke(2);
+    if (canvas->push(move(shape8)) != tvg::Result::Success) return;
+
+    auto shape9 = tvg::Shape::gen();
+    shape9->appendArc(600, 650, 80, 300, 60, true);
+    shape9->fill(255, 255, 255, 255);
+    shape9->stroke(255, 0, 0, 255);
+    shape9->stroke(2);
+    if (canvas->push(move(shape9)) != tvg::Result::Success) return;
 }
 
 /************************************************************************/

@@ -1,11 +1,52 @@
-#include "testCommon.h"
+#include <vector>
+#include "Common.h"
 
 /************************************************************************/
 /* Drawing Commands                                                     */
 /************************************************************************/
 
-static const char* svg = "<svg xmlns=\"http://www.w3.org/2000/svg\" stroke-linejoin=\"round\" viewBox=\"50 -100 500 500\"><path fill=\"none\" stroke=\"black\" stroke-width=\"10\" d=\"M 212,220 C 197,171 156,153 123,221 109,157 120,109  159,63.6 190,114  234,115  254,89.8 260,82.3 268,69.6 270,60.3 273,66.5 275,71.6 280,75.6 286,79.5 294,79.8 300,79.8 306,79.8 314,79.5 320,75.6 325,71.6 327,66.5 330,60.3 332,69.6 340,82.3 346,89.8 366,115  410,114  441,63.6 480,109  491,157 477,221 444,153 403,171 388,220 366,188 316,200 300,248 284,200 234,188 212,220 Z\"/></svg>";
+#define NUM_PER_LINE 4
+#define SIZE 200
 
+static int count = 0;
+
+static std::vector<unique_ptr<tvg::Picture>> pictures;
+
+void svgDirCallback(const char* name, const char* path, void* data)
+{
+    auto picture = tvg::Picture::gen();
+
+    char buf[PATH_MAX];
+    sprintf(buf, "/%s/%s", path, name);
+
+    if (picture->load(buf) != tvg::Result::Success) return;
+
+    float x, y, w, h;
+    picture->viewbox(&x, &y, &w, &h);
+
+    float rate = (SIZE/(w > h ? w : h));
+    picture->scale(rate);
+
+    x *= rate;
+    y *= rate;
+    w *= rate;
+    h *= rate;
+
+    //Center Align ?
+    if (w > h) {
+         y -= (SIZE - h) * 0.5f;
+    } else {
+         x -= (SIZE - w) * 0.5f;
+    }
+
+    picture->translate((count % NUM_PER_LINE) * SIZE - x, SIZE * (count / NUM_PER_LINE) - y);
+
+    pictures.push_back(move(picture));
+
+    cout << "SVG: " << buf << endl;
+
+    count++;
+}
 
 void tvgDrawCmds(tvg::Canvas* canvas)
 {
@@ -18,30 +59,17 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     if (canvas->push(move(shape)) != tvg::Result::Success) return;
 
-    auto picture = tvg::Picture::gen();
-    if (picture->load(svg, strlen(svg)) != tvg::Result::Success) return;
+    eina_file_dir_list(EXAMPLE_DIR, EINA_TRUE, svgDirCallback, canvas);
 
-    float x, y, w, h;
-    picture->viewbox(&x, &y, &w, &h);
-
-    float rate = (WIDTH/(w > h ? w : h));
-    picture->scale(rate);
-
-    x *= rate;
-    y *= rate;
-    w *= rate;
-    h *= rate;
-
-    //Center Align ?
-    if (w > h) {
-         y -= (WIDTH - h) * 0.5f;
-    } else {
-         x -= (WIDTH - w) * 0.5f;
+    /* This showcase shows you asynchrounous loading of svg.
+       For this, pushing pictures at a certian sync time.
+       This means it earns the time to finish loading svg resources,
+       otherwise you can push pictures immediately. */
+    for (auto& paint : pictures) {
+        canvas->push(move(paint));
     }
 
-    picture->translate(-x, -y);
-
-    canvas->push(move(picture));
+    pictures.clear();
 }
 
 
