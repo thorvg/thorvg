@@ -124,7 +124,7 @@ float bezAt(const Bezier& bz, float at)
         bezSplitLeft(right, t, left);
         len = bezLength(left);
 
-        if (fabs(len - at) < 1e-4 || fabs(smallest - biggest) < FLT_EPSILON) {
+        if (fabs(len - at) < FLT_EPSILON || fabs(smallest - biggest) < FLT_EPSILON) {
             break;
         }
 
