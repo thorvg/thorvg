@@ -16,4 +16,4 @@ script:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then echo FROM jsuya/thorvg-ci-setup > Dockerfile; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then echo ADD . /root >> Dockerfile; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then docker build -t withgit .; fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then docker run withgit /bin/sh -c "cd /root && TRAVIS=true meson builddir && ninja -C builddir install"; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then docker run withgit /bin/sh -c "cd /root && TRAVIS=true meson -Dexamples=true -Dtools=svg2png builddir && ninja -C builddir install"; fi
