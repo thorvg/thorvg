@@ -85,10 +85,10 @@ struct SwTask : Task
             }
         }
 
-        //Composite clip-path
+        //Composition
         for (auto comp : compList) {
              SwShape *compShape = &static_cast<SwTask*>(comp.edata)->shape;
-             if (comp.method == CompMethod::ClipPath) {
+             if (comp.method == CompositeMethod::ClipPath) {
                   //Clip to fill(path) rle
                   if (shape.rle && compShape->rect) rleClipRect(shape.rle, &compShape->bbox);
                   else if (shape.rle && compShape->rle) rleClipPath(shape.rle, compShape->rle);
@@ -212,7 +212,9 @@ void* SwRenderer::prepare(const Shape& sdata, void* data, const RenderTransform*
     if (flags == RenderUpdateFlag::None || task->valid()) return task;
 
     task->sdata = &sdata;
+
     if (compList.size() > 0) {
+        //Gurantee composition targets get ready.
         for (auto comp : compList)  static_cast<SwTask*>(comp.edata)->get();
         task->compList.assign(compList.begin(), compList.end());
     }

@@ -46,7 +46,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     clipStar->fill(255, 255, 255, 255); // clip object must have alpha.
     clipStar->translate(10, 10);
 
-    star1->composite(move(clipStar), tvg::CompMethod::ClipPath);
+    star1->composite(move(clipStar), tvg::CompositeMethod::ClipPath);
 
     auto star2 = tvg::Shape::gen();
     tvgDrawStar(star2.get());
@@ -66,7 +66,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     scene->push(move(star2));
 
     //Clipping scene to shape
-    scene->composite(move(clip), tvg::CompMethod::ClipPath);
+    scene->composite(move(clip), tvg::CompositeMethod::ClipPath);
 
     canvas->push(move(scene));
 
@@ -84,7 +84,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     clipRect->translate(20, 20);
 
     //Clipping scene to rect(shape)
-    star3->composite(move(clipRect), tvg::CompMethod::ClipPath);
+    star3->composite(move(clipRect), tvg::CompositeMethod::ClipPath);
 
     canvas->push(move(star3));
 
@@ -105,7 +105,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     clipPath->translate(20, 20);
 
     //Clipping picture to path
-    picture->composite(move(clipPath), tvg::CompMethod::ClipPath);
+    picture->composite(move(clipPath), tvg::CompositeMethod::ClipPath);
 
     canvas->push(move(picture));
 }

@@ -39,7 +39,7 @@ struct Surface
 
 struct Composite {
     void* edata;
-    CompMethod method;
+    CompositeMethod method;
 };
 
 enum RenderUpdateFlag {None = 0, Path = 1, Color = 2, Gradient = 4, Stroke = 8, Transform = 16, All = 32};
