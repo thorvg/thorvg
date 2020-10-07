@@ -211,8 +211,6 @@ static inline uint32_t _pixel(const SwFill* fill, float pos)
 
 void fillFetchRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len)
 {
-    if (fill->radial.a < FLT_EPSILON) return;
-
     //Rotation
     auto rx = (x + 0.5f - fill->radial.cx) * fill->sy;
     auto ry = (y + 0.5f - fill->radial.cy) * fill->sx;
@@ -234,7 +232,6 @@ void fillFetchRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, 
 
 void fillFetchLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t offset, uint32_t len)
 {
-    if (fill->linear.len < FLT_EPSILON) return;
     //Rotation
     float rx = x + 0.5f;
     float ry = y + 0.5f;
