@@ -56,7 +56,7 @@ enum class TVG_EXPORT PathCommand { Close = 0, MoveTo, LineTo, CubicTo };
 enum class TVG_EXPORT StrokeCap { Square = 0, Round, Butt };
 enum class TVG_EXPORT StrokeJoin { Bevel = 0, Round, Miter };
 enum class TVG_EXPORT FillSpread { Pad = 0, Reflect, Repeat };
-enum class TVG_EXPORT CompMethod { None = 0, ClipPath };
+enum class TVG_EXPORT CompositeMethod { None = 0, ClipPath };
 enum class TVG_EXPORT CanvasEngine { Sw = (1 << 1), Gl = (1 << 2)};
 
 
@@ -94,7 +94,7 @@ public:
     Result bounds(float* x, float* y, float* w, float* h) const noexcept;
     Paint* duplicate() const noexcept;
 
-    Result composite(std::unique_ptr<Paint> target, CompMethod method) const noexcept;
+    Result composite(std::unique_ptr<Paint> target, CompositeMethod method) const noexcept;
 
     _TVG_DECLARE_ACCESSOR();
     _TVG_DECLARE_PRIVATE(Paint);

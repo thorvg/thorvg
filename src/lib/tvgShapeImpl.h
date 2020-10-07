@@ -221,13 +221,11 @@ struct Shape::Impl
         return renderer.render(*shape, edata);
     }
 
-    bool update(RenderMethod& renderer, const RenderTransform* transform, vector<Composite>& compList, void** edata, RenderUpdateFlag pFlag)
+    void* update(RenderMethod& renderer, const RenderTransform* transform, vector<Composite>& compList, RenderUpdateFlag pFlag)
     {
         this->edata = renderer.prepare(*shape, this->edata, transform, compList, static_cast<RenderUpdateFlag>(pFlag | flag));
         flag = RenderUpdateFlag::None;
-        if (edata) *edata = this->edata;
-        if (this->edata) return true;
-        return false;
+        return this->edata;
     }
 
     bool bounds(float* x, float* y, float* w, float* h)

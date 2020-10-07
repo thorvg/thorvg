@@ -33,7 +33,7 @@ namespace tvg
         virtual ~StrategyMethod(){}
 
         virtual bool dispose(RenderMethod& renderer) = 0;
-        virtual bool update(RenderMethod& renderer, const RenderTransform* transform, vector<Composite> compList, void** edata, RenderUpdateFlag pFlag) = 0;
+        virtual void* update(RenderMethod& renderer, const RenderTransform* transform, vector<Composite> compList, RenderUpdateFlag pFlag) = 0;   //Return engine data if it has.
         virtual bool render(RenderMethod& renderer) = 0;
         virtual bool bounds(float* x, float* y, float* w, float* h) const = 0;
         virtual Paint* duplicate() = 0;
@@ -46,7 +46,7 @@ namespace tvg
         uint32_t flag = RenderUpdateFlag::None;
 
         Paint* compTarget = nullptr;
-        CompMethod compMethod = CompMethod::None;
+        CompositeMethod compMethod = CompositeMethod::None;
 
         ~Impl() {
             if (smethod) delete(smethod);
@@ -127,42 +127,38 @@ namespace tvg
             return smethod->dispose(renderer);
         }
 
-        bool update(RenderMethod& renderer, const RenderTransform* pTransform, vector<Composite>& compList, void **edata, uint32_t pFlag)
+        void* update(RenderMethod& renderer, const RenderTransform* pTransform, vector<Composite>& compList, uint32_t pFlag)
         {
             if (flag & RenderUpdateFlag::Transform) {
-                if (!rTransform) return false;
+                if (!rTransform) return nullptr;
                 if (!rTransform->update()) {
                     delete(rTransform);
                     rTransform = nullptr;
                 }
             }
 
+            void *compdata = nullptr;
+
+            if (compTarget && compMethod == CompositeMethod::ClipPath) {
+                compdata = compTarget->pImpl->update(renderer, pTransform, compList, pFlag);
+                if (compdata) compList.push_back({compdata, compMethod});
+            }
+
+            void *edata = nullptr;
             auto newFlag = static_cast<RenderUpdateFlag>(pFlag | flag);
             flag = RenderUpdateFlag::None;
-            bool updated = false;
-            void *compEngineData = nullptr; //composite target paint's engine data.
-
-            if (this->compTarget && compMethod == CompMethod::ClipPath) {
-                if (this->compTarget->pImpl->update(renderer, pTransform, compList, &compEngineData, static_cast<RenderUpdateFlag>(pFlag | flag))) {
-                    Composite comp;
-                    comp.edata = compEngineData;
-                    comp.method = this->compMethod;
-                    compList.push_back(comp);
-                }
-            }
 
             if (rTransform && pTransform) {
                 RenderTransform outTransform(pTransform, rTransform);
-                updated = smethod->update(renderer, &outTransform, compList, edata, newFlag);
+                edata = smethod->update(renderer, &outTransform, compList, newFlag);
             } else {
                 auto outTransform = pTransform ? pTransform : rTransform;
-                updated = smethod->update(renderer, outTransform, compList, edata, newFlag);
+                edata = smethod->update(renderer, outTransform, compList, newFlag);
             }
 
-            if (compEngineData) {
-                compList.pop_back();
-            }
-            return updated;
+            if (compdata) compList.pop_back();
+
+            return edata;
         }
 
         bool render(RenderMethod& renderer)
@@ -186,12 +182,12 @@ namespace tvg
             return ret;
         }
 
-        bool composite(Paint* target, CompMethod compMethod)
+        bool composite(Paint* target, CompositeMethod method)
         {
-            this->compTarget = target;
-            this->compMethod = compMethod;
-            if (this->compTarget) return true;
-            return false;
+            if (!target && method != CompositeMethod::None) return false;
+            compTarget = target;
+            compMethod = method;
+            return true;
         }
     };
 
@@ -214,9 +210,9 @@ namespace tvg
             return inst->dispose(renderer);
         }
 
-        bool update(RenderMethod& renderer, const RenderTransform* transform, vector<Composite> compList, void** edata, RenderUpdateFlag flag) override
+        void* update(RenderMethod& renderer, const RenderTransform* transform, vector<Composite> compList, RenderUpdateFlag flag) override
         {
-            return inst->update(renderer, transform, compList, edata, flag);
+            return inst->update(renderer, transform, compList, flag);
         }
 
         bool render(RenderMethod& renderer) override
