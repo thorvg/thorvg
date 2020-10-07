@@ -1,36 +1,75 @@
-#include "testCommon.h"
+#include "Common.h"
 
 /************************************************************************/
 /* Drawing Commands                                                     */
 /************************************************************************/
+tvg::Shape* pShape = nullptr;
+tvg::Shape* pShape2 = nullptr;
+tvg::Shape* pShape3 = nullptr;
 
 void tvgDrawCmds(tvg::Canvas* canvas)
 {
     if (!canvas) return;
 
-    //Shape
+    //Shape1
     auto shape = tvg::Shape::gen();
-    shape->appendRect(-100, -100, 200, 200, 0, 0);
+
+    /* Acquire shape pointer to access it again.
+       instead, you should consider not to interrupt this pointer life-cycle. */
+    pShape = shape.get();
+
+    shape->appendRect(-285, -300, 200, 200, 0, 0);
+    shape->appendRect(-185, -200, 300, 300, 100, 100);
+    shape->appendCircle(115, 100, 100, 100);
+    shape->appendCircle(115, 200, 170, 100);
     shape->fill(255, 255, 255, 255);
-    canvas->push(move(shape));
+    shape->translate(385, 400);
+    if (canvas->push(move(shape)) != tvg::Result::Success) return;
+
+    //Shape2
+    auto shape2 = tvg::Shape::gen();
+    pShape2 = shape2.get();
+    shape2->appendRect(-50, -50, 100, 100, 0, 0);
+    shape2->fill(0, 255, 255, 255);
+    shape2->translate(400, 400);
+    if (canvas->push(move(shape2)) != tvg::Result::Success) return;
+
+    //Shape3
+    auto shape3 = tvg::Shape::gen();
+    pShape3 = shape3.get();
+
+    /* Look, how shape3's origin is different with shape2
+       The center of the shape is the anchor point for transformation. */
+    shape3->appendRect(100, 100, 150, 50, 20, 20);
+    shape3->fill(255, 0, 255, 255);
+    shape3->translate(400, 400);
+    if (canvas->push(move(shape3)) != tvg::Result::Success) return;
 }
 
 void tvgUpdateCmds(tvg::Canvas* canvas, float progress)
 {
     if (!canvas) return;
 
-    //Explicitly clear all retained paint nodes.
-    if (canvas->clear() != tvg::Result::Success) return;
+    /* Update shape directly.
+       You can update only necessary properties of this shape,
+       while retaining other properties. */
 
-    //Shape
-    auto shape = tvg::Shape::gen();
-    shape->appendRect(-100, -100, 200, 200, (100 * progress), (100 * progress));
-    shape->fill(rand()%255, rand()%255, rand()%255, 255);
-    shape->translate(800 * progress, 800 * progress);
-    shape->scale(1 - 0.75 * progress);
-    shape->rotate(360 * progress);
+    //Update Shape1
+    pShape->scale(1 - 0.75 * progress);
+    pShape->rotate(360 * progress);
 
-    canvas->push(move(shape));
+    //Update shape for drawing (this may work asynchronously)
+    if (canvas->update(pShape) != tvg::Result::Success) return;
+
+    //Update Shape2
+    pShape2->rotate(360 * progress);
+    pShape2->translate(400 + progress * 300, 400);
+    if (canvas->update(pShape2) != tvg::Result::Success) return;
+
+    //Update Shape3
+    pShape3->rotate(-360 * progress);
+    pShape3->scale(0.5 + progress);
+    if (canvas->update(pShape3) != tvg::Result::Success) return;
 }
 
 

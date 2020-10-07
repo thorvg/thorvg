@@ -1,75 +1,47 @@
-#include "testCommon.h"
+#include "Common.h"
 
 /************************************************************************/
 /* Drawing Commands                                                     */
 /************************************************************************/
-tvg::Shape* pShape = nullptr;
-tvg::Shape* pShape2 = nullptr;
-tvg::Shape* pShape3 = nullptr;
+
+static const char* svg = "<svg xmlns=\"http://www.w3.org/2000/svg\" stroke-linejoin=\"round\" viewBox=\"50 -100 500 500\"><path fill=\"none\" stroke=\"black\" stroke-width=\"10\" d=\"M 212,220 C 197,171 156,153 123,221 109,157 120,109  159,63.6 190,114  234,115  254,89.8 260,82.3 268,69.6 270,60.3 273,66.5 275,71.6 280,75.6 286,79.5 294,79.8 300,79.8 306,79.8 314,79.5 320,75.6 325,71.6 327,66.5 330,60.3 332,69.6 340,82.3 346,89.8 366,115  410,114  441,63.6 480,109  491,157 477,221 444,153 403,171 388,220 366,188 316,200 300,248 284,200 234,188 212,220 Z\"/></svg>";
+
 
 void tvgDrawCmds(tvg::Canvas* canvas)
 {
     if (!canvas) return;
 
-    //Shape1
+    //Background
     auto shape = tvg::Shape::gen();
+    shape->appendRect(0, 0, WIDTH, HEIGHT, 0, 0);    //x, y, w, h, rx, ry
+    shape->fill(255, 255, 255, 255);                 //r, g, b, a
 
-    /* Acquire shape pointer to access it again.
-       instead, you should consider not to interrupt this pointer life-cycle. */
-    pShape = shape.get();
-
-    shape->appendRect(-285, -300, 200, 200, 0, 0);
-    shape->appendRect(-185, -200, 300, 300, 100, 100);
-    shape->appendCircle(115, 100, 100, 100);
-    shape->appendCircle(115, 200, 170, 100);
-    shape->fill(255, 255, 255, 255);
-    shape->translate(385, 400);
     if (canvas->push(move(shape)) != tvg::Result::Success) return;
 
-    //Shape2
-    auto shape2 = tvg::Shape::gen();
-    pShape2 = shape2.get();
-    shape2->appendRect(-50, -50, 100, 100, 0, 0);
-    shape2->fill(0, 255, 255, 255);
-    shape2->translate(400, 400);
-    if (canvas->push(move(shape2)) != tvg::Result::Success) return;
+    auto picture = tvg::Picture::gen();
+    if (picture->load(svg, strlen(svg)) != tvg::Result::Success) return;
 
-    //Shape3
-    auto shape3 = tvg::Shape::gen();
-    pShape3 = shape3.get();
+    float x, y, w, h;
+    picture->viewbox(&x, &y, &w, &h);
 
-    /* Look, how shape3's origin is different with shape2
-       The center of the shape is the anchor point for transformation. */
-    shape3->appendRect(100, 100, 150, 50, 20, 20);
-    shape3->fill(255, 0, 255, 255);
-    shape3->translate(400, 400);
-    if (canvas->push(move(shape3)) != tvg::Result::Success) return;
-}
+    float rate = (WIDTH/(w > h ? w : h));
+    picture->scale(rate);
 
-void tvgUpdateCmds(tvg::Canvas* canvas, float progress)
-{
-    if (!canvas) return;
+    x *= rate;
+    y *= rate;
+    w *= rate;
+    h *= rate;
 
-    /* Update shape directly.
-       You can update only necessary properties of this shape,
-       while retaining other properties. */
+    //Center Align ?
+    if (w > h) {
+         y -= (WIDTH - h) * 0.5f;
+    } else {
+         x -= (WIDTH - w) * 0.5f;
+    }
 
-    //Update Shape1
-    pShape->scale(1 - 0.75 * progress);
-    pShape->rotate(360 * progress);
+    picture->translate(-x, -y);
 
-    //Update shape for drawing (this may work asynchronously)
-    if (canvas->update(pShape) != tvg::Result::Success) return;
-
-    //Update Shape2
-    pShape2->rotate(360 * progress);
-    pShape2->translate(400 + progress * 300, 400);
-    if (canvas->update(pShape2) != tvg::Result::Success) return;
-
-    //Update Shape3
-    pShape3->rotate(-360 * progress);
-    pShape3->scale(0.5 + progress);
-    if (canvas->update(pShape3) != tvg::Result::Success) return;
+    canvas->push(move(picture));
 }
 
 
@@ -90,16 +62,6 @@ void tvgSwTest(uint32_t* buffer)
        internal data asynchronously for coming rendering.
        Canvas keeps this shape node unless user call canvas->clear() */
     tvgDrawCmds(swCanvas.get());
-}
-
-void transitSwCb(Elm_Transit_Effect *effect, Elm_Transit* transit, double progress)
-{
-    tvgUpdateCmds(swCanvas.get(), progress);
-
-    //Update Efl Canvas
-    Eo* img = (Eo*) effect;
-    evas_object_image_data_update_add(img, 0, 0, WIDTH, HEIGHT);
-    evas_object_image_pixels_dirty_set(img, EINA_TRUE);
 }
 
 void drawSwView(void* data, Eo* obj)
@@ -142,11 +104,6 @@ void drawGLview(Evas_Object *obj)
     }
 }
 
-void transitGlCb(Elm_Transit_Effect *effect, Elm_Transit* transit, double progress)
-{
-    tvgUpdateCmds(glCanvas.get(), progress);
-}
-
 
 /************************************************************************/
 /* Main Code                                                            */
@@ -175,26 +132,17 @@ int main(int argc, char **argv)
 
         elm_init(argc, argv);
 
-        Elm_Transit *transit = elm_transit_add();
-
         if (tvgEngine == tvg::CanvasEngine::Sw) {
-            auto view = createSwView();
-            elm_transit_effect_add(transit, transitSwCb, view, nullptr);
+            createSwView();
         } else {
-            auto view = createGlView();
-            elm_transit_effect_add(transit, transitGlCb, view, nullptr);
+            createGlView();
         }
-
-        elm_transit_duration_set(transit, 2);
-        elm_transit_repeat_times_set(transit, -1);
-        elm_transit_auto_reverse_set(transit, EINA_TRUE);
-        elm_transit_go(transit);
 
         elm_run();
         elm_shutdown();
 
         //Terminate ThorVG Engine
-        tvg::Initializer::term(tvgEngine);
+        tvg::Initializer::term(tvg::CanvasEngine::Sw);
 
     } else {
         cout << "engine is not supported" << endl;

@@ -110,27 +110,33 @@ float bezAt(const Bezier& bz, float at)
 {
     auto len = bezLength(bz);
     auto biggest = 1.0f;
+    auto smallest = 0.0f;
+    auto t = 0.5f;
+
+    //just in case to prevent an infinite loop
+    if (at <= 0) return 0.0f; 
 
     if (at >= len) return 1.0f;
-
-    at *= 0.5f;
 
     while (true) {
         auto right = bz;
         Bezier left;
-        bezSplitLeft(right, at, left);
-        auto len2 = bezLength(left);
+        bezSplitLeft(right, t, left);
+        len = bezLength(left);
 
-        if (fabs(len2 - len) < FLT_EPSILON) break;
+        if (fabs(len - at) < FLT_EPSILON || fabs(smallest - biggest) < FLT_EPSILON) {
+            break;
+        }
 
-        if (len2 < len) {
-            at += (biggest - at) * 0.5f;
+        if (len < at) {
+            smallest = t;
+            t = (t + biggest) * 0.5f;
         } else {
-            biggest = at;
-            at -= (at * 0.5f);
+            biggest = t;
+            t = (smallest + t) * 0.5f;
         }
     }
-    return at;
+    return t;
 }
 
 

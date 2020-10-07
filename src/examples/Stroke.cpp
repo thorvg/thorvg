@@ -1,4 +1,4 @@
-#include "testCommon.h"
+#include "Common.h"
 
 /************************************************************************/
 /* Drawing Commands                                                     */
@@ -8,44 +8,75 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 {
     if (!canvas) return;
 
-    //Star
+    //Shape 1
     auto shape1 = tvg::Shape::gen();
+    shape1->appendRect(50, 50, 200, 200, 0, 0);
+    shape1->fill(50, 50, 50, 255);
+    shape1->stroke(255, 255, 255, 255);       //color: r, g, b, a
+    shape1->stroke(tvg::StrokeJoin::Bevel);   //default is Bevel
+    shape1->stroke(10);                       //width: 10px
 
-    //Appends Paths
-    shape1->moveTo(199, 34);
-    shape1->lineTo(253, 143);
-    shape1->lineTo(374, 160);
-    shape1->lineTo(287, 244);
-    shape1->lineTo(307, 365);
-    shape1->lineTo(199, 309);
-    shape1->lineTo(97, 365);
-    shape1->lineTo(112, 245);
-    shape1->lineTo(26, 161);
-    shape1->lineTo(146, 143);
-    shape1->close();
-    shape1->fill(0, 0, 255, 255);
     if (canvas->push(move(shape1)) != tvg::Result::Success) return;
 
-
-    //Circle
+    //Shape 2
     auto shape2 = tvg::Shape::gen();
+    shape2->appendRect(300, 50, 200, 200, 0, 0);
+    shape2->fill(50, 50, 50, 255);
+    shape2->stroke(255, 255, 255, 255);
+    shape2->stroke(tvg::StrokeJoin::Round);
+    shape2->stroke(10);
 
-    auto cx = 550.0f;
-    auto cy = 550.0f;
-    auto radius = 125.0f;
-    auto halfRadius = radius * 0.552284f;
-
-    //Append Paths
-    shape2->moveTo(cx, cy - radius);
-    shape2->cubicTo(cx + halfRadius, cy - radius, cx + radius, cy - halfRadius, cx + radius, cy);
-    shape2->cubicTo(cx + radius, cy + halfRadius, cx + halfRadius, cy + radius, cx, cy+ radius);
-    shape2->cubicTo(cx - halfRadius, cy + radius, cx - radius, cy + halfRadius, cx - radius, cy);
-    shape2->cubicTo(cx - radius, cy - halfRadius, cx - halfRadius, cy - radius, cx, cy - radius);
-    shape2->close();
-    shape2->fill(255, 0, 0, 255);
     if (canvas->push(move(shape2)) != tvg::Result::Success) return;
 
+    //Shape 3
+    auto shape3 = tvg::Shape::gen();
+    shape3->appendRect(550, 50, 200, 200, 0, 0);
+    shape3->fill(50, 50, 50, 255);
+    shape3->stroke(255, 255, 255, 255);
+    shape3->stroke(tvg::StrokeJoin::Miter);
+    shape3->stroke(10);
+
+    if (canvas->push(move(shape3)) != tvg::Result::Success) return;
+
+    //Shape 4
+    auto shape4 = tvg::Shape::gen();
+    shape4->appendCircle(150, 400, 100, 100);
+    shape4->fill(50, 50, 50, 255);
+    shape4->stroke(255, 255, 255, 255);
+    shape4->stroke(1);
+
+    if (canvas->push(move(shape4)) != tvg::Result::Success) return;
+
+    //Shape 5
+    auto shape5 = tvg::Shape::gen();
+    shape5->appendCircle(400, 400, 100, 100);
+    shape5->fill(50, 50, 50, 255);
+    shape5->stroke(255, 255, 255, 255);
+    shape5->stroke(2);
+
+    if (canvas->push(move(shape5)) != tvg::Result::Success) return;
+
+    //Shape 6
+    auto shape6 = tvg::Shape::gen();
+    shape6->appendCircle(650, 400, 100, 100);
+    shape6->fill(50, 50, 50, 255);
+    shape6->stroke(255, 255, 255, 255);
+    shape6->stroke(4);
+
+    if (canvas->push(move(shape6)) != tvg::Result::Success) return;
+
+    //Test for Stroke Width
+    for (int i = 0; i < 10; ++i) {
+        auto shape = tvg::Shape::gen();
+        shape->moveTo(50, 550 + (25 * i));
+        shape->lineTo(750, 550 + (25 * i));
+        shape->stroke(255, 255, 255, 255);       //color: r, g, b, a
+        shape->stroke(i + 1);                    //stroke width
+        shape->stroke(tvg::StrokeCap::Round);    //default is Square
+        if (canvas->push(move(shape)) != tvg::Result::Success) return;
+    }
 }
+
 
 /************************************************************************/
 /* Sw Engine Test Code                                                  */

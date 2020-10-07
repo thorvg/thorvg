@@ -1,49 +1,73 @@
-#include "testCommon.h"
+#include "Common.h"
 
 /************************************************************************/
 /* Drawing Commands                                                     */
 /************************************************************************/
 
-static const char* svg = "<svg xmlns=\"http://www.w3.org/2000/svg\" stroke-linejoin=\"round\" viewBox=\"50 -100 500 500\"><path fill=\"none\" stroke=\"black\" stroke-width=\"10\" d=\"M 212,220 C 197,171 156,153 123,221 109,157 120,109  159,63.6 190,114  234,115  254,89.8 260,82.3 268,69.6 270,60.3 273,66.5 275,71.6 280,75.6 286,79.5 294,79.8 300,79.8 306,79.8 314,79.5 320,75.6 325,71.6 327,66.5 330,60.3 332,69.6 340,82.3 346,89.8 366,115  410,114  441,63.6 480,109  491,157 477,221 444,153 403,171 388,220 366,188 316,200 300,248 284,200 234,188 212,220 Z\"/></svg>";
-
-
 void tvgDrawCmds(tvg::Canvas* canvas)
 {
     if (!canvas) return;
 
-    //Background
-    auto shape = tvg::Shape::gen();
-    shape->appendRect(0, 0, WIDTH, HEIGHT, 0, 0);    //x, y, w, h, rx, ry
-    shape->fill(255, 255, 255, 255);                 //r, g, b, a
+    //Arc Line
+    auto shape1 = tvg::Shape::gen();
+    shape1->appendArc(150, 150, 80, 10, 180, false);
+    shape1->stroke(255, 255, 255, 255);
+    shape1->stroke(2);
+    if (canvas->push(move(shape1)) != tvg::Result::Success) return;
 
-    if (canvas->push(move(shape)) != tvg::Result::Success) return;
+    auto shape2 = tvg::Shape::gen();
+    shape2->appendArc(400, 150, 80, 0, 300, false);
+    shape2->stroke(255, 255, 255, 255);
+    shape2->stroke(2);
+    if (canvas->push(move(shape2)) != tvg::Result::Success) return;
 
-    auto picture = tvg::Picture::gen();
-    if (picture->load(svg, strlen(svg)) != tvg::Result::Success) return;
+    auto shape3 = tvg::Shape::gen();
+    shape3->appendArc(600, 150, 80, 300, 60, false);
+    shape3->stroke(255, 255, 255, 255);
+    shape3->stroke(2);
+    if (canvas->push(move(shape3)) != tvg::Result::Success) return;
 
-    float x, y, w, h;
-    picture->viewbox(&x, &y, &w, &h);
+    //Pie Line
+    auto shape4 = tvg::Shape::gen();
+    shape4->appendArc(150, 400, 80, 10, 180, true);
+    shape4->stroke(255, 255, 255, 255);
+    shape4->stroke(2);
+    if (canvas->push(move(shape4)) != tvg::Result::Success) return;
 
-    float rate = (WIDTH/(w > h ? w : h));
-    picture->scale(rate);
+    auto shape5 = tvg::Shape::gen();
+    shape5->appendArc(400, 400, 80, 0, 300, true);
+    shape5->stroke(255, 255, 255, 255);
+    shape5->stroke(2);
+    if (canvas->push(move(shape5)) != tvg::Result::Success) return;
 
-    x *= rate;
-    y *= rate;
-    w *= rate;
-    h *= rate;
+    auto shape6 = tvg::Shape::gen();
+    shape6->appendArc(600, 400, 80, 300, 60, true);
+    shape6->stroke(255, 255, 255, 255);
+    shape6->stroke(2);
+    if (canvas->push(move(shape6)) != tvg::Result::Success) return;
 
-    //Center Align ?
-    if (w > h) {
-         y -= (WIDTH - h) * 0.5f;
-    } else {
-         x -= (WIDTH - w) * 0.5f;
-    }
+    //Pie Fill
+    auto shape7 = tvg::Shape::gen();
+    shape7->appendArc(150, 650, 80, 10, 180, true);
+    shape7->fill(255, 255, 255, 255);
+    shape7->stroke(255, 0, 0, 255);
+    shape7->stroke(2);
+    if (canvas->push(move(shape7)) != tvg::Result::Success) return;
 
-    picture->translate(-x, -y);
+    auto shape8 = tvg::Shape::gen();
+    shape8->appendArc(400, 650, 80, 0, 300, true);
+    shape8->fill(255, 255, 255, 255);
+    shape8->stroke(255, 0, 0, 255);
+    shape8->stroke(2);
+    if (canvas->push(move(shape8)) != tvg::Result::Success) return;
 
-    canvas->push(move(picture));
+    auto shape9 = tvg::Shape::gen();
+    shape9->appendArc(600, 650, 80, 300, 60, true);
+    shape9->fill(255, 255, 255, 255);
+    shape9->stroke(255, 0, 0, 255);
+    shape9->stroke(2);
+    if (canvas->push(move(shape9)) != tvg::Result::Success) return;
 }
-
 
 /************************************************************************/
 /* Sw Engine Test Code                                                  */
@@ -142,7 +166,7 @@ int main(int argc, char **argv)
         elm_shutdown();
 
         //Terminate ThorVG Engine
-        tvg::Initializer::term(tvg::CanvasEngine::Sw);
+        tvg::Initializer::term(tvgEngine);
 
     } else {
         cout << "engine is not supported" << endl;

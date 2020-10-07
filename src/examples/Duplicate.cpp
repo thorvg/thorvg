@@ -1,4 +1,4 @@
-#include "testCommon.h"
+#include "Common.h"
 
 /************************************************************************/
 /* Drawing Commands                                                     */
@@ -8,25 +8,88 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 {
     if (!canvas) return;
 
-    canvas->reserve(3);                          //reserve 3 shape nodes (optional)
+    //Duplicate Shapes
+    {
+        //Original Shape
+        auto shape1 = tvg::Shape::gen();
+        shape1->appendRect(10, 10, 200, 200, 0, 0);
+        shape1->appendRect(220, 10, 100, 100, 0, 0);
 
-    //Prepare Round Rectangle
-    auto shape1 = tvg::Shape::gen();
-    shape1->appendRect(0, 0, 400, 400, 50, 50);  //x, y, w, h, rx, ry
-    shape1->fill(0, 255, 0, 255);                //r, g, b, a
-    if (canvas->push(move(shape1)) != tvg::Result::Success) return;
+        shape1->stroke(3);
+        shape1->stroke(0, 255, 0, 255);
 
-    //Prepare Circle
-    auto shape2 = tvg::Shape::gen();
-    shape2->appendCircle(400, 400, 200, 200);    //cx, cy, radiusW, radiusH
-    shape2->fill(255, 255, 0, 255);              //r, g, b, a
-    if (canvas->push(move(shape2)) != tvg::Result::Success) return;
+        float dashPattern[2] = {4, 4};
+        shape1->stroke(dashPattern, 2);
+        shape1->fill(255, 0, 0, 255);
 
-    //Prepare Ellipse
-    auto shape3 = tvg::Shape::gen();
-    shape3->appendCircle(600, 600, 150, 100);    //cx, cy, radiusW, radiusH
-    shape3->fill(0, 255, 255, 255);              //r, g, b, a
-    if (canvas->push(move(shape3)) != tvg::Result::Success) return;
+        //Duplicate Shape, Switch fill method
+        auto shape2 = unique_ptr<tvg::Shape>(static_cast<tvg::Shape*>(shape1->duplicate()));
+        shape2->translate(0, 220);
+
+        auto fill = tvg::LinearGradient::gen();
+        fill->linear(10, 10, 440, 200);
+
+        tvg::Fill::ColorStop colorStops[2];
+        colorStops[0] = {0, 0, 0, 0, 255};
+        colorStops[1] = {1, 255, 255, 255, 255};
+        fill->colorStops(colorStops, 2);
+
+        shape2->fill(move(fill));
+
+        //Duplicate Shape 2
+        auto shape3 = unique_ptr<tvg::Shape>(static_cast<tvg::Shape*>(shape2->duplicate()));
+        shape3->translate(0, 440);
+
+        canvas->push(move(shape1));
+        canvas->push(move(shape2));
+        canvas->push(move(shape3));
+    }
+
+    //Duplicate Scene
+    {
+        //Create a Scene1
+        auto scene1 = tvg::Scene::gen();
+        scene1->reserve(3);
+
+        auto shape1 = tvg::Shape::gen();
+        shape1->appendRect(0, 0, 400, 400, 50, 50);
+        shape1->fill(0, 255, 0, 255);
+        scene1->push(move(shape1));
+
+        auto shape2 = tvg::Shape::gen();
+        shape2->appendCircle(400, 400, 200, 200);
+        shape2->fill(255, 255, 0, 255);
+        scene1->push(move(shape2));
+
+        auto shape3 = tvg::Shape::gen();
+        shape3->appendCircle(600, 600, 150, 100);
+        shape3->fill(0, 255, 255, 255);
+        scene1->push(move(shape3));
+
+        scene1->scale(0.25);
+        scene1->translate(400, 0);
+
+        //Duplicate Scene1
+        auto scene2 = unique_ptr<tvg::Scene>(static_cast<tvg::Scene*>(scene1->duplicate()));
+        scene2->translate(600, 200);
+
+        canvas->push(move(scene1));
+        canvas->push(move(scene2));
+    }
+
+    //Duplicate Picture
+    {
+        auto picture1 = tvg::Picture::gen();
+        picture1->load(EXAMPLE_DIR"/tiger.svg");
+        picture1->translate(370, 370);
+        picture1->scale(0.25);
+
+        auto picture2 = unique_ptr<tvg::Picture>(static_cast<tvg::Picture*>(picture1->duplicate()));
+        picture2->translate(550, 550);
+
+        canvas->push(move(picture1));
+        canvas->push(move(picture2));
+    }
 }
 
 

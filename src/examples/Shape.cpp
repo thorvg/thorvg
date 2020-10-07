@@ -1,80 +1,22 @@
-#include <vector>
-#include "testCommon.h"
+#include "Common.h"
 
 /************************************************************************/
 /* Drawing Commands                                                     */
 /************************************************************************/
 
-#define NUM_PER_LINE 16
-#define SIZE 50
-
-static int count = 0;
-static int frame = 0;
-static std::vector<tvg::Picture*> pictures;
-static double t1, t2, t3, t4;
-
-void svgDirCallback(const char* name, const char* path, void* data)
-{
-    auto picture = tvg::Picture::gen();
-
-    char buf[PATH_MAX];
-    sprintf(buf, "/%s/%s", path, name);
-
-    if (picture->load(buf) != tvg::Result::Success) return;
-
-    float x, y, w, h;
-    picture->viewbox(&x, &y, &w, &h);
-
-    float rate = (SIZE/(w > h ? w : h));
-    picture->scale(rate);
-
-    x *= rate;
-    y *= rate;
-    w *= rate;
-    h *= rate;
-
-    //Center Align ?
-    if (w > h) {
-         y -= (SIZE - h) * 0.5f;
-    } else {
-         x -= (SIZE - w) * 0.5f;
-    }
-
-    picture->translate((count % NUM_PER_LINE) * SIZE - x, SIZE * (count / NUM_PER_LINE) - y);
-    ++count;
-
-    //Duplicates
-    for (int i = 0; i < NUM_PER_LINE - 1; i++) {
-        tvg::Picture* dup = static_cast<tvg::Picture*>(picture->duplicate());
-        dup->translate((count % NUM_PER_LINE) * SIZE - x, SIZE * (count / NUM_PER_LINE) - y);
-        pictures.push_back(dup);
-        ++count;
-    }
-
-    cout << "SVG: " << buf << endl;
-    pictures.push_back(picture.release());    
-}
-
 void tvgDrawCmds(tvg::Canvas* canvas)
 {
     if (!canvas) return;
 
-    //Background
-    auto shape = tvg::Shape::gen();
-    shape->appendRect(0, 0, WIDTH, HEIGHT, 0, 0);    //x, y, w, h, rx, ry
-    shape->fill(255, 255, 255, 255);                 //r, g, b, a
+    //Prepare a Shape (Rectangle + Rectangle + Circle + Circle)
+    auto shape1 = tvg::Shape::gen();
+    shape1->appendRect(0, 0, 200, 200, 0, 0);          //x, y, w, h, rx, ry
+    shape1->appendRect(100, 100, 300, 300, 100, 100);  //x, y, w, h, rx, ry
+    shape1->appendCircle(400, 400, 100, 100);          //cx, cy, radiusW, radiusH
+    shape1->appendCircle(400, 500, 170, 100);          //cx, cy, radiusW, radiusH
+    shape1->fill(255, 255, 0, 255);                    //r, g, b, a
 
-    if (canvas->push(move(shape)) != tvg::Result::Success) return;
-
-    eina_file_dir_list(EXAMPLE_DIR, EINA_TRUE, svgDirCallback, canvas);
-
-    /* This showcase shows you asynchrounous loading of svg.
-       For this, pushing pictures at a certian sync time.
-       This means it earns the time to finish loading svg resources,
-       otherwise you can push pictures immediately. */
-    for (auto picture : pictures) {
-        canvas->push(unique_ptr<tvg::Picture>(picture));
-    }
+    canvas->push(move(shape1));
 }
 
 
@@ -99,32 +41,9 @@ void tvgSwTest(uint32_t* buffer)
 
 void drawSwView(void* data, Eo* obj)
 {
-    t3 = ecore_time_get();
-
-    //Drawing task can be performed asynchronously.
     if (swCanvas->draw() == tvg::Result::Success) {
         swCanvas->sync();
     }
-
-    t4 = ecore_time_get();
-    printf("[%5d]: total[%fs] update[%fs], render[%fs]\n", ++frame, t4 - t1, t2 - t1, t4 - t3);
-}
-
-void transitSwCb(Elm_Transit_Effect *effect, Elm_Transit* transit, double progress)
-{
-    t1 = ecore_time_get();
-
-    for (auto picture : pictures) {
-        picture->rotate(progress * 360);
-        swCanvas->update(picture);
-    }
-
-    t2 = ecore_time_get();
-
-    //Update Efl Canvas
-    auto img = (Eo*) effect;
-    evas_object_image_pixels_dirty_set(img, EINA_TRUE);
-    evas_object_image_data_update_add(img, 0, 0, WIDTH, HEIGHT);    
 }
 
 
@@ -160,14 +79,6 @@ void drawGLview(Evas_Object *obj)
     }
 }
 
-void transitGlCb(Elm_Transit_Effect *effect, Elm_Transit* transit, double progress)
-{
-    for (auto picture : pictures) {
-        picture->rotate(progress * 360);
-        glCanvas->update(picture);
-    }
-}
-
 
 /************************************************************************/
 /* Main Code                                                            */
@@ -196,25 +107,17 @@ int main(int argc, char **argv)
 
         elm_init(argc, argv);
 
-        Elm_Transit *transit = elm_transit_add();
-
         if (tvgEngine == tvg::CanvasEngine::Sw) {
-            auto view = createSwView();
-            elm_transit_effect_add(transit, transitSwCb, view, nullptr);
+            createSwView();
         } else {
-            auto view = createGlView();
-            elm_transit_effect_add(transit, transitGlCb, view, nullptr);
+            createGlView();
         }
-
-        elm_transit_duration_set(transit, 2);
-        elm_transit_repeat_times_set(transit, -1);
-        elm_transit_go(transit);
 
         elm_run();
         elm_shutdown();
 
         //Terminate ThorVG Engine
-        tvg::Initializer::term(tvg::CanvasEngine::Sw);
+        tvg::Initializer::term(tvgEngine);
 
     } else {
         cout << "engine is not supported" << endl;

@@ -1,75 +1,72 @@
-#include <vector>
-#include "testCommon.h"
+#include "Common.h"
 
 /************************************************************************/
 /* Drawing Commands                                                     */
 /************************************************************************/
 
-#define NUM_PER_LINE 4
-#define SIZE 200
-
-static int count = 0;
-
-static std::vector<unique_ptr<tvg::Picture>> pictures;
-
-void svgDirCallback(const char* name, const char* path, void* data)
-{
-    auto picture = tvg::Picture::gen();
-
-    char buf[PATH_MAX];
-    sprintf(buf, "/%s/%s", path, name);
-
-    if (picture->load(buf) != tvg::Result::Success) return;
-
-    float x, y, w, h;
-    picture->viewbox(&x, &y, &w, &h);
-
-    float rate = (SIZE/(w > h ? w : h));
-    picture->scale(rate);
-
-    x *= rate;
-    y *= rate;
-    w *= rate;
-    h *= rate;
-
-    //Center Align ?
-    if (w > h) {
-         y -= (SIZE - h) * 0.5f;
-    } else {
-         x -= (SIZE - w) * 0.5f;
-    }
-
-    picture->translate((count % NUM_PER_LINE) * SIZE - x, SIZE * (count / NUM_PER_LINE) - y);
-
-    pictures.push_back(move(picture));
-
-    cout << "SVG: " << buf << endl;
-
-    count++;
-}
-
 void tvgDrawCmds(tvg::Canvas* canvas)
 {
     if (!canvas) return;
 
-    //Background
-    auto shape = tvg::Shape::gen();
-    shape->appendRect(0, 0, WIDTH, HEIGHT, 0, 0);    //x, y, w, h, rx, ry
-    shape->fill(255, 255, 255, 255);                 //r, g, b, a
+    canvas->reserve(3);                          //reserve 3 shape nodes (optional)
 
-    if (canvas->push(move(shape)) != tvg::Result::Success) return;
+    //Prepare Round Rectangle
+    auto shape1 = tvg::Shape::gen();
+    shape1->appendRect(0, 0, 400, 400, 0, 0);    //x, y, w, h, rx, ry
 
-    eina_file_dir_list(EXAMPLE_DIR, EINA_TRUE, svgDirCallback, canvas);
+    //LinearGradient
+    auto fill = tvg::LinearGradient::gen();
+    fill->linear(0, 0, 400, 400);
 
-    /* This showcase shows you asynchrounous loading of svg.
-       For this, pushing pictures at a certian sync time.
-       This means it earns the time to finish loading svg resources,
-       otherwise you can push pictures immediately. */
-    for (auto& paint : pictures) {
-        canvas->push(move(paint));
-    }
+    //Gradient Color Stops
+    tvg::Fill::ColorStop colorStops[2];
+    colorStops[0] = {0, 0, 0, 0, 255};
+    colorStops[1] = {1, 255, 255, 255, 255};
 
-    pictures.clear();
+    fill->colorStops(colorStops, 2);
+
+    shape1->fill(move(fill));
+    if (canvas->push(move(shape1)) != tvg::Result::Success) return;
+
+    //Prepare Circle
+    auto shape2 = tvg::Shape::gen();
+    shape2->appendCircle(400, 400, 200, 200);    //cx, cy, radiusW, radiusH
+
+    //LinearGradient
+    auto fill2 = tvg::LinearGradient::gen();
+    fill2->linear(400, 200, 400, 600);
+
+    //Gradient Color Stops
+    tvg::Fill::ColorStop colorStops2[3];
+    colorStops2[0] = {0, 255, 0, 0, 255};
+    colorStops2[1] = {0.5, 255, 255, 0, 255};
+    colorStops2[2] = {1, 255, 255, 255, 255};
+
+    fill2->colorStops(colorStops2, 3);
+
+    shape2->fill(move(fill2));
+    if (canvas->push(move(shape2)) != tvg::Result::Success) return;
+
+
+    //Prepare Ellipse
+    auto shape3 = tvg::Shape::gen();
+    shape3->appendCircle(600, 600, 150, 100);    //cx, cy, radiusW, radiusH
+
+    //LinearGradient
+    auto fill3 = tvg::LinearGradient::gen();
+    fill3->linear(450, 600, 750, 600);
+
+    //Gradient Color Stops
+    tvg::Fill::ColorStop colorStops3[4];
+    colorStops3[0] = {0, 0, 127, 0, 127};
+    colorStops3[1] = {0.25, 0, 170, 170, 170};
+    colorStops3[2] = {0.5, 200, 0, 200, 200};
+    colorStops3[3] = {1, 255, 255, 255, 255};
+
+    fill3->colorStops(colorStops3, 4);
+
+    shape3->fill(move(fill3));
+    if (canvas->push(move(shape3)) != tvg::Result::Success) return;
 }
 
 
@@ -170,7 +167,7 @@ int main(int argc, char **argv)
         elm_shutdown();
 
         //Terminate ThorVG Engine
-        tvg::Initializer::term(tvg::CanvasEngine::Sw);
+        tvg::Initializer::term(tvgEngine);
 
     } else {
         cout << "engine is not supported" << endl;

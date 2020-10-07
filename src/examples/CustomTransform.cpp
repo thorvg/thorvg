@@ -1,4 +1,4 @@
-#include "testCommon.h"
+#include "Common.h"
 
 /************************************************************************/
 /* Drawing Commands                                                     */
@@ -9,29 +9,27 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 {
     if (!canvas) return;
 
-    //Shape (for BG)
-    auto bg = tvg::Shape::gen();
-    bg->appendRect(0, 0, WIDTH, HEIGHT, 0, 0);
-
-    //fill property will be retained
-    bg->fill(255, 255, 255, 255);
-
-    if (canvas->push(move(bg)) != tvg::Result::Success) return;
-
-    //Shape
+    //Shape1
     auto shape = tvg::Shape::gen();
 
     /* Acquire shape pointer to access it again.
        instead, you should consider not to interrupt this pointer life-cycle. */
     pShape = shape.get();
 
-    shape->appendRect(-100, -100, 200, 200, 0, 0);
-
-    //fill property will be retained
-    shape->fill(127, 255, 255, 255);
-    shape->stroke(0, 0, 255, 255);
-    shape->stroke(1);
-
+    shape->moveTo(0, -114.5);
+    shape->lineTo(54, -5.5);
+    shape->lineTo(175, 11.5);
+    shape->lineTo(88, 95.5);
+    shape->lineTo(108, 216.5);
+    shape->lineTo(0, 160.5);
+    shape->lineTo(-102, 216.5);
+    shape->lineTo(-87, 96.5);
+    shape->lineTo(-173, 12.5);
+    shape->lineTo(-53, -5.5);
+    shape->close();
+    shape->fill(0, 0, 255, 255);
+    shape->stroke(3);
+    shape->stroke(255, 255, 255, 255);
     if (canvas->push(move(shape)) != tvg::Result::Success) return;
 }
 
@@ -43,14 +41,44 @@ void tvgUpdateCmds(tvg::Canvas* canvas, float progress)
        You can update only necessary properties of this shape,
        while retaining other properties. */
 
-    //Reset Shape
-    if (pShape->reset() == tvg::Result::Success) {
-        pShape->appendRect(-100 + (800 * progress), -100 + (800 * progress), 200, 200, (100 * progress), (100 * progress));
-        pShape->stroke(30 * progress);
+    //Transform Matrix
+    tvg::Matrix m = {1, 0, 0, 0, 1, 0, 0, 0, 1};
 
-        //Update shape for drawing (this may work asynchronously)
-        canvas->update(pShape);
-    }
+    //scale x
+    m.e11 = 1 - (progress * 0.5f);
+
+    //scale y
+    m.e22 = 1 + (progress * 2.0f);
+
+    //rotation
+    constexpr auto PI = 3.141592f;
+    auto degree = 45.0f;
+    auto radian = degree / 180.0f * PI;
+    auto cosVal = cosf(radian);
+    auto sinVal = sinf(radian);
+
+    auto t11 = m.e11 * cosVal + m.e12 * sinVal;
+    auto t12 = m.e11 * -sinVal + m.e12 * cosVal;
+    auto t21 = m.e21 * cosVal + m.e22 * sinVal;
+    auto t22 = m.e21 * -sinVal + m.e22 * cosVal;
+    auto t13 = m.e31 * cosVal + m.e32 * sinVal;
+    auto t23 = m.e31 * -sinVal + m.e32 * cosVal;
+
+    m.e11 = t11;
+    m.e12 = t12;
+    m.e21 = t21;
+    m.e22 = t22;
+    m.e13 = t13;
+    m.e23 = t23;
+
+    //translate
+    m.e13 = progress * 300.0f + 300.0f;
+    m.e23 = progress * -100.0f + 300.0f;
+
+    pShape->transform(m);
+
+    //Update shape for drawing (this may work asynchronously)
+    canvas->update(pShape);
 }
 
 
