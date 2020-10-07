@@ -44,10 +44,10 @@ struct Scene::Impl
         return true;
     }
 
-    bool update(RenderMethod &renderer, const RenderTransform* transform, RenderUpdateFlag flag)
+    bool update(RenderMethod &renderer, const RenderTransform* transform, vector<Composite>& compList, void** edata, RenderUpdateFlag flag)
     {
-        for(auto paint: paints) {
-            if (!paint->pImpl->update(renderer, transform, static_cast<uint32_t>(flag))) return false;
+        for (auto paint: paints) {
+            if (!paint->pImpl->update(renderer, transform, compList, edata, static_cast<uint32_t>(flag))) return false;
         }
         return true;
     }

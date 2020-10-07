@@ -221,13 +221,12 @@ struct Shape::Impl
         return renderer.render(*shape, edata);
     }
 
-    bool update(RenderMethod& renderer, const RenderTransform* transform, RenderUpdateFlag pFlag)
+    bool update(RenderMethod& renderer, const RenderTransform* transform, vector<Composite>& compList, void** edata, RenderUpdateFlag pFlag)
     {
-        edata = renderer.prepare(*shape, edata, transform, static_cast<RenderUpdateFlag>(pFlag | flag));
-
+        this->edata = renderer.prepare(*shape, this->edata, transform, compList, static_cast<RenderUpdateFlag>(pFlag | flag));
         flag = RenderUpdateFlag::None;
-
-        if (edata) return true;
+        if (edata) *edata = this->edata;
+        if (this->edata) return true;
         return false;
     }
 

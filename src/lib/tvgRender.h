@@ -22,6 +22,7 @@
 #ifndef _TVG_RENDER_H_
 #define _TVG_RENDER_H_
 
+#include <vector>
 #include "tvgCommon.h"
 
 namespace tvg
@@ -34,6 +35,11 @@ struct Surface
     uint32_t stride;
     uint32_t w, h;
     uint32_t cs;
+};
+
+struct Composite {
+    void* edata;
+    CompMethod method;
 };
 
 enum RenderUpdateFlag {None = 0, Path = 1, Color = 2, Gradient = 4, Stroke = 8, Transform = 16, All = 32};
@@ -59,7 +65,7 @@ class RenderMethod
 {
 public:
     virtual ~RenderMethod() {}
-    virtual void* prepare(TVG_UNUSED const Shape& shape, TVG_UNUSED void* data, TVG_UNUSED const RenderTransform* transform, TVG_UNUSED RenderUpdateFlag flags) { return nullptr; }
+    virtual void* prepare(TVG_UNUSED const Shape& shape, TVG_UNUSED void* data, TVG_UNUSED const RenderTransform* transform, TVG_UNUSED vector<Composite>& compList, TVG_UNUSED RenderUpdateFlag flags) { return nullptr; }
     virtual bool dispose(TVG_UNUSED const Shape& shape, TVG_UNUSED void *data) { return true; }
     virtual bool preRender() { return true; }
     virtual bool render(TVG_UNUSED const Shape& shape, TVG_UNUSED void *data) { return true; }

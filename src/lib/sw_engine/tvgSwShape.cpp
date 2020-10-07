@@ -459,14 +459,14 @@ bool shapePrepare(SwShape* shape, const Shape* sdata, const SwSize& clip, const 
 }
 
 
-bool shapeGenRle(SwShape* shape, TVG_UNUSED const Shape* sdata, const SwSize& clip, bool antiAlias)
+bool shapeGenRle(SwShape* shape, TVG_UNUSED const Shape* sdata, const SwSize& clip, bool antiAlias, bool hasComposite)
 {
     //FIXME: Should we draw it?
     //Case: Stroke Line
     //if (shape.outline->opened) return true;
 
     //Case A: Fast Track Rectangle Drawing
-    if ((shape->rect = _fastTrack(shape->outline))) return true;
+    if (!hasComposite && (shape->rect = _fastTrack(shape->outline))) return true;
     //Case B: Normale Shape RLE Drawing
     if ((shape->rle = rleRender(shape->outline, shape->bbox, clip, antiAlias))) return true;
 
