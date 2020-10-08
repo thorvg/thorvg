@@ -40,7 +40,7 @@ struct Canvas::Impl
 
     ~Impl()
     {
-        clear();
+        clear(true);
         delete(renderer);
     }
 
@@ -53,16 +53,19 @@ struct Canvas::Impl
         return update(p);
     }
 
-    Result clear()
+    Result clear(bool free)
     {
         if (!renderer) return Result::InsufficientCondition;
 
         //Clear render target before drawing
         if (!renderer->clear()) return Result::InsufficientCondition;
 
-        for (auto paint : paints) {
-            paint->pImpl->dispose(*renderer);
-            delete(paint);
+        //free paints
+        if (free) {
+            for (auto paint : paints) {
+                paint->pImpl->dispose(*renderer);
+                delete(paint);
+            }
         }
 
         paints.clear();
@@ -79,7 +82,7 @@ struct Canvas::Impl
         //Update single paint node
         if (paint) {
             paint->pImpl->update(*renderer, nullptr, compList, RenderUpdateFlag::None);
-        //Update retained all paint nodes
+        //Update all retained paint nodes
         } else {
             for (auto paint: paints) {
                 paint->pImpl->update(*renderer, nullptr, compList, RenderUpdateFlag::None);

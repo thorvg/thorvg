@@ -123,7 +123,7 @@ namespace tvg
 
         bool dispose(RenderMethod& renderer)
         {
-            if (this->compTarget) this->compTarget->pImpl->dispose(renderer);
+            if (compTarget) compTarget->pImpl->dispose(renderer);
             return smethod->dispose(renderer);
         }
 
