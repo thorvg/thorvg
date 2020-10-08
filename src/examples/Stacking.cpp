@@ -67,7 +67,6 @@ void tvgUpdateCmds(tvg::Canvas* canvas)
 }
 
 
-
 /************************************************************************/
 /* Sw Engine Test Code                                                  */
 /************************************************************************/
@@ -182,7 +181,6 @@ int main(int argc, char **argv)
             auto view = createGlView();
             ecore_timer_add(0.5, timerGlCb, view);
         }
-
 
         elm_run();
         elm_shutdown();
