@@ -148,7 +148,7 @@ public:
 
     Result reserve(uint32_t n) noexcept;
     virtual Result push(std::unique_ptr<Paint> paint) noexcept;
-    virtual Result clear() noexcept;
+    virtual Result clear(bool free = true) noexcept;
     virtual Result update(Paint* paint) noexcept;
     virtual Result draw() noexcept;
     virtual Result sync() noexcept;
