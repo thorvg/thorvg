@@ -51,9 +51,7 @@ unique_ptr<Shape> Shape::gen() noexcept
 
 Result Shape::reset() noexcept
 {
-    pImpl->path->reset();
-
-    pImpl->flag |= RenderUpdateFlag::Path;
+    pImpl->reset();
 
     return Result::Success;
 }

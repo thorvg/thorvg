@@ -305,6 +305,24 @@ struct Shape::Impl
         return true;
     }
 
+    void reset()
+    {
+        path->reset();
+
+        if (fill) {
+            delete(fill);
+            fill = nullptr;
+        }
+        if (stroke) {
+            delete(stroke);
+            stroke = nullptr;
+        }
+
+        color[0] = color[1] = color[2] = color[3] = 0;
+
+        flag = RenderUpdateFlag::All;
+    }
+
     Paint* duplicate()
     {
         auto ret = Shape::gen();
