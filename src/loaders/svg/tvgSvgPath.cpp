@@ -83,11 +83,11 @@ void _pathAppendArcTo(vector<PathCommand>* cmds, vector<Point>* pts, Point* cur,
     sy = cur->y;
 
     //If start and end points are identical, then no arc is drawn
-    if ((fabs(x - sx) < (1.0f / 256.0f)) && (fabs(y - sy) < (1.0f / 256.0f))) return;
+    if ((fabsf(x - sx) < (1.0f / 256.0f)) && (fabsf(y - sy) < (1.0f / 256.0f))) return;
 
     //Correction of out-of-range radii, see F6.6.1 (step 2)
-    rx = fabs(rx);
-    ry = fabs(ry);
+    rx = fabsf(rx);
+    ry = fabsf(ry);
     if ((rx < 0.5f) || (ry < 0.5f)) {
         Point p = {x, y};
         cmds->push_back(PathCommand::LineTo);
@@ -182,7 +182,7 @@ void _pathAppendArcTo(vector<PathCommand>* cmds, vector<Point>* pts, Point* cur,
     //(smaller than 90 degrees)
     //We add one extra segment because we want something
     //Smaller than 90deg (i.e. not 90 itself)
-    segments = (int)(fabs(deltaTheta / M_PI_2)) + 1.0f;
+    segments = (int)(fabsf(deltaTheta / M_PI_2)) + 1.0f;
     delta = deltaTheta / segments;
 
     //http://www.stillhq.com/ctpfaq/2001/comp.text.pdf-faq-2001-04.txt (section 2.13)
