@@ -940,6 +940,8 @@ static bool _attrParseGNode(void* data, const char* key, const char* value)
         node->transform = _parseTransformationMatrix(value);
     } else if (!strcmp(key, "id")) {
         node->id = _copyId(value);
+    } else if (!strcmp(key, "clip-path")) {
+        _handleClipPathAttr(loader, node, value);
     } else {
         return _parseStyleAttr(loader, key, value);
     }
@@ -1068,6 +1070,8 @@ static bool _attrParsePathNode(void* data, const char* key, const char* value)
         path->path = _copyId(value);
     } else if (!strcmp(key, "style")) {
         return simpleXmlParseW3CAttribute(value, _parseStyleAttr, loader);
+    } else if (!strcmp(key, "clip-path")) {
+        _handleClipPathAttr(loader, node, value);
     } else if (!strcmp(key, "id")) {
         node->id = _copyId(value);
     } else {
@@ -1122,6 +1126,8 @@ static bool _attrParseCircleNode(void* data, const char* key, const char* value)
 
     if (!strcmp(key, "style")) {
         return simpleXmlParseW3CAttribute(value, _parseStyleAttr, loader);
+    } else if (!strcmp(key, "clip-path")) {
+        _handleClipPathAttr(loader, node, value);
     } else if (!strcmp(key, "id")) {
         node->id = _copyId(value);
     } else {
@@ -1178,6 +1184,8 @@ static bool _attrParseEllipseNode(void* data, const char* key, const char* value
         node->id = _copyId(value);
     } else if (!strcmp(key, "style")) {
         return simpleXmlParseW3CAttribute(value, _parseStyleAttr, loader);
+    } else if (!strcmp(key, "clip-path")) {
+        _handleClipPathAttr(loader, node, value);
     } else {
         return _parseStyleAttr(loader, key, value);
     }
@@ -1247,6 +1255,8 @@ static bool _attrParsePolygonNode(void* data, const char* key, const char* value
         return _attrParsePolygonPoints(value, &polygon->points, &polygon->pointsCount);
     } else if (!strcmp(key, "style")) {
         return simpleXmlParseW3CAttribute(value, _parseStyleAttr, loader);
+    } else if (!strcmp(key, "clip-path")) {
+        _handleClipPathAttr(loader, node, value);
     } else if (!strcmp(key, "id")) {
         node->id = _copyId(value);
     } else {
@@ -1321,6 +1331,8 @@ static bool _attrParseRectNode(void* data, const char* key, const char* value)
         node->id = _copyId(value);
     } else if (!strcmp(key, "style")) {
         ret = simpleXmlParseW3CAttribute(value, _parseStyleAttr, loader);
+    } else if (!strcmp(key, "clip-path")) {
+        _handleClipPathAttr(loader, node, value);
     } else {
         ret = _parseStyleAttr(loader, key, value);
     }
@@ -1379,6 +1391,8 @@ static bool _attrParseLineNode(void* data, const char* key, const char* value)
         node->id = _copyId(value);
     } else if (!strcmp(key, "style")) {
         return simpleXmlParseW3CAttribute(value, _parseStyleAttr, loader);
+    } else if (!strcmp(key, "clip-path")) {
+        _handleClipPathAttr(loader, node, value);
     } else {
         return _parseStyleAttr(loader, key, value);
     }
@@ -1574,6 +1588,8 @@ static bool _attrParseUseNode(void* data, const char* key, const char* value)
         nodeFrom = _findChildById(defs, id->c_str());
         _cloneNode(nodeFrom, node);
         delete id;
+    } else if (!strcmp(key, "clip-path")) {
+        _handleClipPathAttr(loader, node, value);
     } else {
         _attrParseGNode(data, key, value);
     }
