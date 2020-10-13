@@ -1445,7 +1445,7 @@ static SvgNode* _findChildById(SvgNode* node, const char* id)
 static SvgNode* _findNodeById(SvgNode *node, string* id)
 {
     SvgNode* result = nullptr;
-    if ((node->id != nullptr) && !node->id->compare(*id)) return node;
+    if (node->id && !node->id->compare(*id)) return node;
 
     if (node->child.cnt > 0) {
         auto child = node->child.list;
