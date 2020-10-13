@@ -49,13 +49,17 @@ struct SwTask : Task
 
         SwSize clip = {static_cast<SwCoord>(surface->w), static_cast<SwCoord>(surface->h)};
 
+        //Invisiable shape turned to visible by alpha.
+        auto prepareShape = false;
+        if (!shapePrepared(&shape) && (flags & RenderUpdateFlag::Color)) prepareShape = true;
+
         //Shape
-        if (flags & (RenderUpdateFlag::Path | RenderUpdateFlag::Transform)) {
-            shapeReset(&shape);
+        if (flags & (RenderUpdateFlag::Path | RenderUpdateFlag::Transform) || prepareShape) {
             uint8_t alpha = 0;
             sdata->fill(nullptr, nullptr, nullptr, &alpha);
             bool renderShape = (alpha > 0 || sdata->fill());
             if (renderShape || strokeAlpha) {
+                shapeReset(&shape);
                 if (!shapePrepare(&shape, sdata, clip, transform)) return;
                 if (renderShape) {
                     auto antiAlias = (strokeAlpha > 0 && strokeWidth >= 2) ? false : true;
@@ -209,12 +213,15 @@ void* SwRenderer::prepare(const Shape& sdata, void* data, const RenderTransform*
         if (!task) return nullptr;
     }
 
-    if (flags == RenderUpdateFlag::None || task->valid()) return task;
+    if (flags == RenderUpdateFlag::None) return task;
+
+    //Finish previous task if it has duplicated request.
+    if (task->valid()) task->get();
 
     task->sdata = &sdata;
 
     if (compList.size() > 0) {
-        //Gurantee composition targets get ready.
+        //Guarantee composition targets get ready.
         for (auto comp : compList)  static_cast<SwTask*>(comp.edata)->get();
         task->compList.assign(compList.begin(), compList.end());
     }

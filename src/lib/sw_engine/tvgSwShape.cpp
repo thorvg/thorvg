@@ -459,6 +459,12 @@ bool shapePrepare(SwShape* shape, const Shape* sdata, const SwSize& clip, const 
 }
 
 
+bool shapePrepared(SwShape* shape)
+{
+    return shape->rle ? true : false;
+}
+
+
 bool shapeGenRle(SwShape* shape, TVG_UNUSED const Shape* sdata, const SwSize& clip, bool antiAlias, bool hasComposite)
 {
     //FIXME: Should we draw it?
