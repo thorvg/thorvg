@@ -16,6 +16,7 @@ ThorVG is a platform independent lightweight standalone C++ library for drawing 
 - [Quick Start](#quick-start)
 - [Examples](#examples)
 - [Tools](#tools)
+	- [ThorVG Viewer](#thorvg-viewer)
 	- [SVG to PNG](#svg-to-png)
 - [API Bindings](#api-bindings)
 - [Issues or Feature Requests?](#issues-or-feature-requests)
@@ -167,10 +168,11 @@ Note that these examples are required EFL `elementary` package for launching. If
 <br />
 <br />
 ## Tools
-### Online Viewer
-Please visit [ThorVG online viewer](https://samsung.github.io/thorvg.viewer)
-
-[ThorVG online viewer](https://samsung.github.io/thorvg.viewer) uses ThorVG wasm library to render the resource locally in your browser. To test your SVG resource drag and drop it to the browser window.
+### ThorVG Viewer
+[ThorVG viewer](https://samsung.github.io/thorvg.viewer) supports immediate rendering through your browser. You can drag & drop SVG files on the page, see the rendering result on the spot.
+[Back to contents](#contents)
+<br />
+<br />
 ### SVG to PNG
 ThorVG provides an executable `svg2png` converter which generate a PNG file from a SVG file.
 
