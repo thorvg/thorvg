@@ -359,10 +359,10 @@ unique_ptr<Scene> _sceneBuildHelper(SvgNode* node, float vx, float vy, float vw,
                     (*child)->style->opacity = ((*child)->style->opacity * node->style->opacity) / 255.0f;
                     scene->push(_shapeBuildHelper(*child, vx, vy, vw, vh));
                 }
-
+            }
             //Apply composite node
             if (node->style->comp.node) {
-                 //Composite ClipPath
+                //Composite ClipPath
                 if (((int)node->style->comp.flags & (int)SvgCompositeFlags::ClipPath)) {
                     auto compNode = node->style->comp.node;
                     if (compNode->child.cnt > 0) {
@@ -372,7 +372,6 @@ unique_ptr<Scene> _sceneBuildHelper(SvgNode* node, float vx, float vy, float vw,
                         scene->composite(move(comp), CompositeMethod::ClipPath);
                     }
                 }
-            }
             }
         }
         return scene;
