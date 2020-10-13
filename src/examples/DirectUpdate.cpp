@@ -40,12 +40,13 @@ void tvgUpdateCmds(tvg::Canvas* canvas, float progress)
     if (!canvas) return;
 
     /* Update shape directly.
-       You can update only necessary properties of this shape,
-       while retaining other properties. */
+       You can update necessary properties of this shape. */
 
     //Reset Shape
     if (pShape->reset() == tvg::Result::Success) {
         pShape->appendRect(-100 + (800 * progress), -100 + (800 * progress), 200, 200, (100 * progress), (100 * progress));
+        pShape->fill(127, 255, 255, 255);
+        pShape->stroke(0, 0, 255, 255);
         pShape->stroke(30 * progress);
 
         //Update shape for drawing (this may work asynchronously)
