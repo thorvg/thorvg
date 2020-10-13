@@ -8,6 +8,7 @@
 #define NUM_PER_LINE 16
 #define SIZE 50
 
+static bool rendered = false;
 static int count = 0;
 static int frame = 0;
 static std::vector<tvg::Picture*> pictures;
@@ -108,10 +109,14 @@ void drawSwView(void* data, Eo* obj)
 
     t4 = ecore_time_get();
     printf("[%5d]: total[%fs] update[%fs], render[%fs]\n", ++frame, t4 - t1, t2 - t1, t4 - t3);
+
+    rendered = true;
 }
 
 void transitSwCb(Elm_Transit_Effect *effect, Elm_Transit* transit, double progress)
 {
+    if (!rendered) return;
+
     t1 = ecore_time_get();
 
     for (auto picture : pictures) {
@@ -124,7 +129,9 @@ void transitSwCb(Elm_Transit_Effect *effect, Elm_Transit* transit, double progre
     //Update Efl Canvas
     auto img = (Eo*) effect;
     evas_object_image_pixels_dirty_set(img, EINA_TRUE);
-    evas_object_image_data_update_add(img, 0, 0, WIDTH, HEIGHT);    
+    evas_object_image_data_update_add(img, 0, 0, WIDTH, HEIGHT);
+
+    rendered = false;
 }
 
 
