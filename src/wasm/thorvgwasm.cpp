@@ -28,7 +28,6 @@ public:
 
     bool load(string data, int width, int height)
     {
-        uint32_t pw, ph;
         float w, h;
 
         mErrorMsg = "None";
@@ -60,16 +59,10 @@ public:
 
         /* get default size */
         mPicture->viewbox(nullptr, nullptr, &w, &h);
-
-        pw = mDefaultWidth;
-        ph = mDefaultHeight;
         mDefaultWidth = static_cast<uint32_t>(w);
         mDefaultHeight = static_cast<uint32_t>(h);
 
-        if (pw != mDefaultWidth || ph != mDefaultHeight) {
-            updateScale();
-        }
-
+        updateScale();
         updateSize(width, height);
 
         if (mSwCanvas->push(unique_ptr<Picture>(mPicture)) != Result::Success) {
