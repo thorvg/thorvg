@@ -184,7 +184,7 @@ void _pathAppendArcTo(vector<PathCommand>* cmds, vector<Point>* pts, Point* cur,
     //(smaller than 90 degrees)
     //We add one extra segment because we want something
     //Smaller than 90deg (i.e. not 90 itself)
-    segments = (int)(fabsf(deltaTheta / M_PI_2)) + 1.0f;
+    segments = (int)(fabsf(deltaTheta / float(M_PI_2))) + 1.0f;
     delta = deltaTheta / segments;
 
     //http://www.stillhq.com/ctpfaq/2001/comp.text.pdf-faq-2001-04.txt (section 2.13)
