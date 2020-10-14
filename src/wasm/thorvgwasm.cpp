@@ -21,6 +21,11 @@ public:
         return mErrorMsg;
     }
 
+    string getDefaultData()
+    {
+        return defaultData;
+    }
+
     bool load(string data, int width, int height)
     {
         uint32_t pw, ph;
@@ -182,7 +187,8 @@ EMSCRIPTEN_BINDINGS(thorvg_bindings) {
   class_<ThorvgWasm>("ThorvgWasm")
     .constructor(&ThorvgWasm::create)
     .function("getError", &ThorvgWasm::getError, allow_raw_pointers())
-    .function("load", &ThorvgWasm::load, allow_raw_pointers())
+    .function("getDefaultData", &ThorvgWasm::getDefaultData, allow_raw_pointers())
+    .function("load", &ThorvgWasm::load)
     .function("update", &ThorvgWasm::update)
     .function("render", &ThorvgWasm::render)
     .function("getScale", &ThorvgWasm::getScale);
