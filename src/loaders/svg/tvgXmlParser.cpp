@@ -24,7 +24,7 @@
 #include <cstring>
 #include <alloca.h>
 
-#include "tvgSimpleXmlParser.h"
+#include "tvgXmlParser.h"
 
 static const char* _simpleXmlFindWhiteSpace(const char* itr, const char* itrEnd)
 {

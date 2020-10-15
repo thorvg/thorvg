@@ -1,13 +1,13 @@
 source_file = [
-   'tvgSimpleXmlParser.h',
    'tvgSvgLoader.h',
    'tvgSvgLoaderCommon.h',
    'tvgSvgPath.h',
    'tvgSvgSceneBuilder.h',
-   'tvgSimpleXmlParser.cpp',
+   'tvgXmlParser.h',
    'tvgSvgLoader.cpp',
    'tvgSvgPath.cpp',
    'tvgSvgSceneBuilder.cpp',
+   'tvgXmlParser.cpp'
 ]
 
 subloader_dep += [declare_dependency(
