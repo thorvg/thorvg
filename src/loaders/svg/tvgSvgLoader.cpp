@@ -25,7 +25,7 @@
 #include <float.h>
 #include <math.h>
 #include "tvgLoaderMgr.h"
-#include "tvgSimpleXmlParser.h"
+#include "tvgXmlParser.h"
 #include "tvgSvgLoader.h"
 
 /************************************************************************/
