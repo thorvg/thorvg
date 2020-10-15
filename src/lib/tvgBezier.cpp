@@ -74,7 +74,7 @@ float bezLength(const Bezier& cur)
     auto len = _lineLength(cur.start, cur.ctrl1) + _lineLength(cur.ctrl1, cur.ctrl2) + _lineLength(cur.ctrl2, cur.end);
     auto chord = _lineLength(cur.start, cur.end);
 
-    if (fabs(len - chord) > FLT_EPSILON) {
+    if (fabs(len - chord) > BEZIER_EPSILON) {
         bezSplit(cur, left, right);
         return bezLength(left) + bezLength(right);
     }
@@ -124,7 +124,7 @@ float bezAt(const Bezier& bz, float at)
         bezSplitLeft(right, t, left);
         len = bezLength(left);
 
-        if (fabs(len - at) < FLT_EPSILON || fabs(smallest - biggest) < FLT_EPSILON) {
+        if (fabs(len - at) < BEZIER_EPSILON || fabs(smallest - biggest) < BEZIER_EPSILON) {
             break;
         }
 

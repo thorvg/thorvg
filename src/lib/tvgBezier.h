@@ -27,6 +27,8 @@
 namespace tvg
 {
 
+#define BEZIER_EPSILON 1e-4f
+
 struct Bezier
 {
     Point start;
