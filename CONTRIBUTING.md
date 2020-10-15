@@ -1,7 +1,7 @@
 This page guides a format for your contribution.
 
 ## Commit Message
-[Module][Feature] - [Title]
+[Module][Feature]: [Title]
 
 [Description]
 ##
