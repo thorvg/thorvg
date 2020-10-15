@@ -1,16 +1,17 @@
 <!doctype html>
 <html>
-  <canvas id="thorvg" width="100" height="100"></canvas>
+  <canvas id="thorvg" width="320" height="320"></canvas>
   <script>
     var Module = {
       onRuntimeInitialized: function() {
 
         class SvgViewer {
           constructor() {
-             var instance = new Module.ThorvgWasm();
+             var thorvg = new Module.ThorvgWasm();
              this.canvas = document.getElementById("thorvg");
              var context = this.canvas.getContext('2d');
-             var buffer = instance.render(this.canvas.width, this.canvas.height);
+             thorvg.load("", this.canvas.width, this.canvas.height);
+             var buffer = thorvg.render();
              var clampedBuffer = Uint8ClampedArray.from(buffer);
              var imageData = new ImageData(clampedBuffer, this.canvas.width, this.canvas.height);
              context.putImageData(imageData, 0, 0);
