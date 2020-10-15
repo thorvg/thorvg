@@ -39,7 +39,10 @@ You can keep the file name, but don't please contain any prefix(tvg) nor suffix(
   
   Lastly, please append any issue ticket numbers in this section if any.
   
-  - ex) common composite: newly added path clipping feature
+  
+- Here is a overall commit message what we expect to review:
+  
+  - common composite: newly added path clipping feature
 
     We introduced new method Paint::composite() to support composite behaviors. </br>
     This allows paints to composite with other paints instances. </br>
