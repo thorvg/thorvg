@@ -49,13 +49,13 @@ You can keep the file name, but don't please contain any prefix(tvg) nor suffix(
     Composite behaviors depends on its compoite method type. </br>
     Here we firstly introduced "ClipPath" method to support clipping by path unit of paint.</br>    
     
-    tagetPaint->composite(srcPaint, CompoisiteMethod::ClipPath);</br>
+    tagetPaint->composite(srcPaint, CompositeMethod::ClipPath);</br>
     
     Beaware if the source paint doesn't contain any path info, clipping won't be applied as you expected.
     
     @API Additions:</br>
     enum CompositeMethod {None = 0, ClipPath}; </br>
-    Result Paint::composite(std::unique_ptr<Paint> target, CompMethod method) const noexcept;</br>
+    Result Paint::composite(std::unique_ptr<Paint> target, CompositeMethod method) const noexcept;</br>
 
     @Examples: added ClipPath</br>
 
