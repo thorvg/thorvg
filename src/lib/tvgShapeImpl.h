@@ -196,6 +196,7 @@ struct Shape::Impl
     Fill *fill = nullptr;
     ShapeStroke *stroke = nullptr;
     uint8_t color[4] = {0, 0, 0, 0};    //r, g, b, a
+    FillRule rule = FillRule::Winding;
     void *edata = nullptr;              //engine data
     Shape *shape = nullptr;
     uint32_t flag = RenderUpdateFlag::None;
@@ -329,6 +330,7 @@ struct Shape::Impl
         if (!ret) return nullptr;
 
         auto dup = ret.get()->pImpl;
+        dup->rule = rule;
 
         //Color
         memcpy(dup->color, color, sizeof(color));
@@ -346,6 +348,7 @@ struct Shape::Impl
             dup->flag |= RenderUpdateFlag::Stroke;
         }
 
+        //Fill
         if (fill) {
             dup->fill = fill->duplicate();
             dup->flag |= RenderUpdateFlag::Gradient;

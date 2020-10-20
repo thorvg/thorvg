@@ -384,3 +384,17 @@ StrokeJoin Shape::strokeJoin() const noexcept
 
     return pImpl->stroke->join;
 }
+
+
+Result Shape::fill(FillRule r) noexcept
+{
+    pImpl->rule = r;
+
+    return Result::Success;
+}
+
+
+FillRule Shape::fillRule() const noexcept
+{
+    return pImpl->rule;
+}

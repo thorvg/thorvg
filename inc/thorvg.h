@@ -56,6 +56,7 @@ enum class TVG_EXPORT PathCommand { Close = 0, MoveTo, LineTo, CubicTo };
 enum class TVG_EXPORT StrokeCap { Square = 0, Round, Butt };
 enum class TVG_EXPORT StrokeJoin { Bevel = 0, Round, Miter };
 enum class TVG_EXPORT FillSpread { Pad = 0, Reflect, Repeat };
+enum class TVG_EXPORT FillRule { Winding = 0, EvenOdd };
 enum class TVG_EXPORT CompositeMethod { None = 0, ClipPath };
 enum class TVG_EXPORT CanvasEngine { Sw = (1 << 1), Gl = (1 << 2)};
 
@@ -239,12 +240,14 @@ public:
     //Fill
     Result fill(uint8_t r, uint8_t g, uint8_t b, uint8_t a) noexcept;
     Result fill(std::unique_ptr<Fill> f) noexcept;
+    Result fill(FillRule r) noexcept;
 
     //Getters
     uint32_t pathCommands(const PathCommand** cmds) const noexcept;
     uint32_t pathCoords(const Point** pts) const noexcept;
     Result fill(uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a) const noexcept;
     const Fill* fill() const noexcept;
+    FillRule fillRule() const noexcept;
 
     float strokeWidth() const noexcept;
     Result strokeColor(uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a) const noexcept;
