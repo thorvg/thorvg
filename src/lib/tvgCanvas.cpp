@@ -49,6 +49,12 @@ Result Canvas::push(unique_ptr<Paint> paint) noexcept
 }
 
 
+Result Canvas::remove(Paint *p) noexcept
+{
+    return pImpl->remove(p);
+}
+
+
 Result Canvas::clear(bool free) noexcept
 {
     return pImpl->clear(free);

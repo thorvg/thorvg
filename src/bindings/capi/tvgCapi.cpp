@@ -80,6 +80,13 @@ TVG_EXPORT Tvg_Result tvg_canvas_push(Tvg_Canvas* canvas, Tvg_Paint* paint)
 }
 
 
+TVG_EXPORT Tvg_Result tvg_canvas_remove(Tvg_Canvas* canvas, Tvg_Paint *paint)
+{
+    if (!canvas || !paint) return TVG_RESULT_INVALID_ARGUMENT;
+    return (Tvg_Result) reinterpret_cast<Canvas*>(canvas)->remove((Paint *)paint);
+}
+
+
 TVG_EXPORT Tvg_Result tvg_canvas_reserve(Tvg_Canvas* canvas, uint32_t n)
 {
     if (!canvas) return TVG_RESULT_INVALID_ARGUMENT;

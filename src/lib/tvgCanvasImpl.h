@@ -23,6 +23,7 @@
 #define _TVG_CANVAS_IMPL_H_
 
 #include <vector>
+#include <algorithm>
 #include "tvgPaint.h"
 
 /************************************************************************/
@@ -51,6 +52,15 @@ struct Canvas::Impl
         paints.push_back(p);
 
         return update(p);
+    }
+
+    Result remove(Paint *p)
+    {
+        if (!p) return Result::InvalidArguments;
+        std::vector<Paint*>::iterator it;
+        it = find(paints.begin(), paints.end(), p);
+        if (it != paints.end()) paints.erase(it);
+        return Result::Success;
     }
 
     Result clear(bool free)
