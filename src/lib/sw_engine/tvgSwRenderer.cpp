@@ -56,7 +56,7 @@ struct SwTask : Task
         //Shape
         if (flags & (RenderUpdateFlag::Path | RenderUpdateFlag::Transform) || prepareShape) {
             uint8_t alpha = 0;
-            sdata->fill(nullptr, nullptr, nullptr, &alpha);
+            sdata->fillColor(nullptr, nullptr, nullptr, &alpha);
             bool renderShape = (alpha > 0 || sdata->fill());
             if (renderShape || strokeAlpha) {
                 shapeReset(&shape);
@@ -183,7 +183,7 @@ bool SwRenderer::render(const Shape& shape, void *data)
     if (auto fill = task->sdata->fill()) {
         rasterGradientShape(surface, &task->shape, fill->id());
     } else{
-        task->sdata->fill(&r, &g, &b, &a);
+        task->sdata->fillColor(&r, &g, &b, &a);
         if (a > 0) rasterSolidShape(surface, &task->shape, r, g, b, a);
     }
     task->sdata->strokeColor(&r, &g, &b, &a);
