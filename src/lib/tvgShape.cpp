@@ -339,6 +339,9 @@ Result Shape::stroke(const float* dashPattern, uint32_t cnt) noexcept
 {
     if (cnt < 2 || !dashPattern) return Result::InvalidArguments;
 
+    for (uint32_t i = 0; i < cnt; i++)
+        if (dashPattern[i] < FLT_EPSILON) return Result::InvalidArguments;
+
     if (!pImpl->strokeDash(dashPattern, cnt)) return Result::FailedAllocation;
 
     return Result::Success;
@@ -350,6 +353,7 @@ uint32_t Shape::strokeDash(const float** dashPattern) const noexcept
     if (!pImpl->stroke) return 0;
 
     if (dashPattern) *dashPattern = pImpl->stroke->dashPattern;
+
     return pImpl->stroke->dashCnt;
 }
 
