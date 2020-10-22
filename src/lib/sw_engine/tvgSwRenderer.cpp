@@ -62,7 +62,10 @@ struct SwTask : Task
                 shapeReset(&shape);
                 if (!shapePrepare(&shape, sdata, clip, transform)) return;
                 if (renderShape) {
-                    auto antiAlias = (strokeAlpha > 0 && strokeWidth >= 2) ? false : true;
+                    /* We assume that if stroke width is bigger than 2,
+                       shape outline below stroke could be full covered by stroke drawing.
+                       Thus it turns off antialising in that condition. */
+                    auto antiAlias = (strokeAlpha > 0 && strokeWidth > 2) ? false : true;
                     if (!shapeGenRle(&shape, sdata, clip, antiAlias, compList.size() > 0 ? true : false)) return;
                 }
             }
