@@ -113,7 +113,6 @@ static void _outlineMoveTo(SwOutline& outline, const Point* to, const Matrix* tr
     _growOutlinePoint(outline, 1);
 
     outline.pts[outline.ptsCnt] = _transform(to, transform);
-
     outline.types[outline.ptsCnt] = SW_CURVE_TYPE_POINT;
 
     if (outline.ptsCnt > 0) {
@@ -285,7 +284,7 @@ static void _dashCubicTo(SwDashStroke& dash, const Point* ctrl1, const Point* ct
     _growOutlinePoint(*dash.outline, dash.outline->ptsCnt >> 1);
     _growOutlineContour(*dash.outline, dash.outline->cntrsCnt >> 1);
 
-    Bezier cur = { dash.ptCur, *ctrl1, *ctrl2, *to};
+    Bezier cur = {dash.ptCur, *ctrl1, *ctrl2, *to};
     auto len = bezLength(cur);
 
     if (len < dash.curLen) {

@@ -165,7 +165,7 @@ struct SwStroke
 struct SwDashStroke
 {
     SwOutline* outline;
-    int32_t curLen;
+    float curLen;
     int32_t curIdx;
     Point ptStart;
     Point ptCur;
