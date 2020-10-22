@@ -283,7 +283,7 @@ Result Shape::fill(unique_ptr<Fill> f) noexcept
 }
 
 
-Result Shape::fill(uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a) const noexcept
+Result Shape::fillColor(uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a) const noexcept
 {
     if (r) *r = pImpl->color[0];
     if (g) *g = pImpl->color[1];

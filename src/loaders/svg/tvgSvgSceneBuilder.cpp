@@ -234,7 +234,7 @@ void _applyProperty(SvgNode* node, Shape* vg, float vx, float vy, float vw, floa
     //Apply node opacity
     if (style->opacity < 255) {
         uint8_t r, g, b, a;
-        vg->fill(&r, &g, &b, &a);
+        vg->fillColor(&r, &g, &b, &a);
         vg->fill(r, g, b, (a * style->opacity) / 255.0f);
     }
 
