@@ -9,6 +9,7 @@ source_file = [
     'CustomTransform.cpp',
     'DirectUpdate.cpp',
     'Duplicate.cpp',
+    'FillRule.cpp',
     'GradientTransform.cpp',
     'LinearGradient.cpp',
     'MultiCanvas.cpp',
