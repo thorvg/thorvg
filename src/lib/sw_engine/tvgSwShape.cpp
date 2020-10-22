@@ -578,9 +578,7 @@ bool shapeGenOutline(SwShape* shape, const Shape* sdata, const Matrix* transform
 
     if (closed) outline->opened = false;
 
-    //FIXME:
-    //outline->flags = SwOutline::FillRule::Winding;
-
+    outline->fillRule = sdata->fillRule();
     shape->outline = outline;
 
     return true;
