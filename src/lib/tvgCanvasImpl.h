@@ -57,7 +57,7 @@ struct Canvas::Impl
     Result remove(Paint *p)
     {
         if (!p) return Result::InvalidArguments;
-        std::vector<Paint*>::iterator it;
+        vector<Paint*>::iterator it;
         it = find(paints.begin(), paints.end(), p);
         if (it != paints.end()) paints.erase(it);
         return Result::Success;
