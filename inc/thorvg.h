@@ -245,7 +245,7 @@ public:
     //Getters
     uint32_t pathCommands(const PathCommand** cmds) const noexcept;
     uint32_t pathCoords(const Point** pts) const noexcept;
-    Result fill(uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a) const noexcept;
+    Result fill(uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a) const noexcept;   //TODO: => fillColor
     const Fill* fill() const noexcept;
     FillRule fillRule() const noexcept;
 
