@@ -41,8 +41,6 @@ static double timeStamp()
 
 #define SW_CURVE_TYPE_POINT 0
 #define SW_CURVE_TYPE_CUBIC 1
-#define SW_OUTLINE_FILL_WINDING 0
-#define SW_OUTLINE_FILL_EVEN_ODD 1
 #define SW_ANGLE_PI (180L << 16)
 #define SW_ANGLE_2PI (SW_ANGLE_PI << 1)
 #define SW_ANGLE_PI2 (SW_ANGLE_PI >> 1)
@@ -106,7 +104,7 @@ struct SwOutline
     uint32_t      ptsCnt;           //number of points in the glyph
     uint32_t      reservedPtsCnt;
     uint8_t*      types;            //curve type
-    uint8_t       fillMode;         //outline fill mode
+    FillRule      fillRule;
     bool          opened;           //opened path?
 };
 

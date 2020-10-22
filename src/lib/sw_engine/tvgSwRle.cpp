@@ -170,7 +170,7 @@ static void _horizLine(RleWorker& rw, SwCoord x, SwCoord y, SwCoord area, SwCoor
 
     if (coverage < 0) coverage = -coverage;
 
-    if (rw.outline->fillMode == SW_OUTLINE_FILL_EVEN_ODD) {
+    if (rw.outline->fillRule == FillRule::EvenOdd) {
         coverage &= 511;
         if (coverage > 256) coverage = 512 - coverage;
         else if (coverage == 256) coverage = 255;
