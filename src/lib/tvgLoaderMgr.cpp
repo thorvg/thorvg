@@ -47,10 +47,47 @@ bool LoaderMgr::term()
     return true;
 }
 
-unique_ptr<Loader> LoaderMgr::loader()
+unique_ptr<Loader> findLoaderByType(FileType type)
 {
+    switch (type) {
+        case FileType::Svg :
 #ifdef THORVG_SVG_LOADER_SUPPORT
-    return unique_ptr<SvgLoader>(new SvgLoader);
+            return unique_ptr<SvgLoader>(new SvgLoader);
 #endif
+            break;
+        default:
+            break;
+    }
+    return nullptr;
+}
+
+unique_ptr<Loader> findLoaderByExt(const string& path)
+{
+    string ext = path.substr(path.find_last_of(".") + 1);
+    if (!ext.compare("svg")) {
+        return findLoaderByType(FileType::Svg);
+    }
+    return nullptr;
+}
+
+unique_ptr<Loader> LoaderMgr::loader(const string& path)
+{
+    unique_ptr<Loader> loader = nullptr;
+    loader = findLoaderByExt(path);
+    if (loader && loader->open(path.c_str())) {
+        return loader;
+    }
+    return nullptr;
+}
+
+unique_ptr<Loader> LoaderMgr::loader(const char* data, uint32_t size)
+{
+    unique_ptr<Loader> loader = nullptr;
+    for (int i = 0; i < static_cast<int>(FileType::Unknown); i++) {
+        loader = findLoaderByType(static_cast<FileType>(i));
+        if (loader && loader->open(data, size)) {
+            return loader;
+        }
+    }
     return nullptr;
 }
