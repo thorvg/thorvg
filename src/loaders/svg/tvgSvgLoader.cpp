@@ -2061,6 +2061,7 @@ static void _svgLoaderParserXmlOpen(SvgLoaderData* loader, const char* content, 
         sz = attrs - content;
         attrsLength = length - sz;
         while ((sz > 0) && (isspace(content[sz - 1]))) sz--;
+        if ((unsigned int)sz > sizeof(tagName)) return;
         strncpy(tagName, content, sz);
         tagName[sz] = '\0';
     }
@@ -2375,6 +2376,7 @@ static bool _svgLoaderParserForValidCheckXmlOpen(SvgLoaderData* loader, const ch
         sz = attrs - content;
         attrsLength = length - sz;
         while ((sz > 0) && (isspace(content[sz - 1]))) sz--;
+        if ((unsigned int)sz > sizeof(tagName)) return false;
         strncpy(tagName, content, sz);
         tagName[sz] = '\0';
     }
