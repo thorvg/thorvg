@@ -25,7 +25,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     //Background
     auto shape = tvg::Shape::gen();
     shape->appendRect(0, 0, WIDTH, HEIGHT, 0, 0);
-    shape->fill(255, 255, 255, 255);
+    shape->fill(255, 255, 255);
     if (canvas->push(move(shape)) != tvg::Result::Success) return;
 
     //////////////////////////////////////////////
@@ -34,7 +34,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     auto star1 = tvg::Shape::gen();
     tvgDrawStar(star1.get());
-    star1->fill(255, 255, 0, 255);
+    star1->fill(255, 255, 0);
     star1->stroke(255 ,0, 0, 128);
     star1->stroke(10);
 
@@ -43,14 +43,15 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     auto clipStar = tvg::Shape::gen();
     clipStar->appendCircle(200, 230, 110, 110);
-    clipStar->fill(255, 255, 255, 255); // clip object must have alpha.
+    clipStar->fill(255, 255, 255);     // clip object must have alpha.
     clipStar->translate(10, 10);
 
     star1->composite(move(clipStar), tvg::CompositeMethod::ClipPath);
 
     auto star2 = tvg::Shape::gen();
     tvgDrawStar(star2.get());
-    star2->fill(0, 255, 255, 64);
+    star2->fill(0, 255, 255);
+    star2->opacity(64);
     star2->stroke(0 ,255, 0, 128);
     star2->stroke(10);
 
@@ -59,7 +60,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     auto clip = tvg::Shape::gen();
     clip->appendCircle(200, 230, 130, 130);
-    clip->fill(255, 255, 255, 255); // clip object must have alpha.
+    clip->fill(255, 255, 255);      // clip object must have alpha.
     clip->translate(10, 10);
 
     scene->push(move(star1));
@@ -74,13 +75,13 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     auto star3 = tvg::Shape::gen();
     tvgDrawStar(star3.get());
     star3->translate(400, 0);
-    star3->fill(255, 255, 0, 255);                    //r, g, b, a
-    star3->stroke(255 ,0, 0, 128);
+    star3->fill(255, 255, 0);
+    star3->stroke(255 ,0, 0, 127);
     star3->stroke(10);
 
     auto clipRect = tvg::Shape::gen();
-    clipRect->appendRect(480, 110, 200, 200, 0, 0);          //x, y, w, h, rx, ry
-    clipRect->fill(255, 255, 255, 255); // clip object must have alpha.
+    clipRect->appendRect(480, 110, 200, 200, 0, 0);     //x, y, w, h, rx, ry
+    clipRect->fill(255, 255, 255);                      // clip object must have alpha.
     clipRect->translate(20, 20);
 
     //Clipping scene to rect(shape)
@@ -99,9 +100,9 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     picture->translate(200, 400);
 
     auto clipPath = tvg::Shape::gen();
-    clipPath->appendCircle(350, 510, 110, 110);          //x, y, w, h, rx, ry
-    clipPath->appendCircle(350, 650, 50, 50);          //x, y, w, h, rx, ry
-    clipPath->fill(255, 255, 255, 255); // clip object must have alpha.
+    clipPath->appendCircle(350, 510, 110, 110);     //x, y, w, h, rx, ry
+    clipPath->appendCircle(350, 650, 50, 50);       //x, y, w, h, rx, ry
+    clipPath->fill(255, 255, 255);                  // clip object must have alpha.
     clipPath->translate(20, 20);
 
     //Clipping picture to path

@@ -195,11 +195,11 @@ struct Shape::Impl
     ShapePath *path = nullptr;
     Fill *fill = nullptr;
     ShapeStroke *stroke = nullptr;
-    uint8_t color[4] = {0, 0, 0, 0};    //r, g, b, a
     FillRule rule = FillRule::Winding;
     void *edata = nullptr;              //engine data
     Shape *shape = nullptr;
     uint32_t flag = RenderUpdateFlag::None;
+    uint8_t color[3] = {0, 0, 0};    //r, g, b
 
     Impl(Shape* s) : path(new ShapePath), shape(s)
     {
@@ -319,7 +319,7 @@ struct Shape::Impl
             stroke = nullptr;
         }
 
-        color[0] = color[1] = color[2] = color[3] = 0;
+        color[0] = color[1] = color[2] = 0;
 
         flag = RenderUpdateFlag::All;
     }

@@ -329,18 +329,31 @@ TVG_EXPORT Tvg_Result tvg_shape_get_stroke_join(const Tvg_Paint* paint, Tvg_Stro
     return TVG_RESULT_SUCCESS;
 }
 
-
-TVG_EXPORT Tvg_Result tvg_shape_set_fill_color(Tvg_Paint* paint, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
+TVG_EXPORT Tvg_Result tvg_shape_set_opacity(Tvg_Paint* paint, uint8_t alpha)
 {
     if (!paint) return TVG_RESULT_INVALID_ARGUMENT;
-    return (Tvg_Result) reinterpret_cast<Shape*>(paint)->fill(r, g, b, a);
+    return (Tvg_Result) reinterpret_cast<Shape*>(paint)->opacity(alpha);
 }
 
 
-TVG_EXPORT Tvg_Result tvg_shape_get_fill_color(const Tvg_Paint* paint, uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a)
+TVG_EXPORT Tvg_Result tvg_shape_get_opacity(Tvg_Paint* paint, uint8_t* alpha)
 {
     if (!paint) return TVG_RESULT_INVALID_ARGUMENT;
-    return (Tvg_Result) reinterpret_cast<Shape*>(CCP(paint))->fillColor(r, g, b, a);
+    return (Tvg_Result) reinterpret_cast<Shape*>(CCP(paint))->opacity();
+}
+
+
+TVG_EXPORT Tvg_Result tvg_shape_set_fill_color(Tvg_Paint* paint, uint8_t r, uint8_t g, uint8_t b)
+{
+    if (!paint) return TVG_RESULT_INVALID_ARGUMENT;
+    return (Tvg_Result) reinterpret_cast<Shape*>(paint)->fill(r, g, b);
+}
+
+
+TVG_EXPORT Tvg_Result tvg_shape_get_fill_color(const Tvg_Paint* paint, uint8_t* r, uint8_t* g, uint8_t* b)
+{
+    if (!paint) return TVG_RESULT_INVALID_ARGUMENT;
+    return (Tvg_Result) reinterpret_cast<Shape*>(CCP(paint))->fillColor(r, g, b);
 }
 
 

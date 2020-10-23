@@ -39,7 +39,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     auto shape1 = tvg::Shape::gen();
     shape1->appendPath(cmds, 11, pts, 10);     //copy path data
-    shape1->fill(0, 255, 0, 255);
+    shape1->fill(0, 255, 0);
     if (canvas->push(move(shape1)) != tvg::Result::Success) return;
 
     /* Circle */
@@ -79,7 +79,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     auto shape2 = tvg::Shape::gen();
     shape2->appendPath(cmds2, 6, pts2, 13);     //copy path data
-    shape2->fill(255, 255, 0, 255);
+    shape2->fill(255, 255, 0);
     if (canvas->push(move(shape2)) != tvg::Result::Success) return;
 
 }

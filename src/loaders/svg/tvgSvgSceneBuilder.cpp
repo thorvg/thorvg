@@ -207,8 +207,13 @@ void _applyProperty(SvgNode* node, Shape* vg, float vx, float vy, float vw, floa
 {
     SvgStyleProperty* style = node->style;
 
+    uint8_t opacity = 0;
+
     if (node->transform) vg->transform(*node->transform);
-    if (node->type == SvgNodeType::Doc || !node->display) return;
+    if (node->type == SvgNodeType::Doc || !node->display) {
+        vg->opacity(0);
+        return;
+    }
 
     //If fill property is nullptr then do nothing
     if (style->fill.paint.none) {
@@ -225,18 +230,18 @@ void _applyProperty(SvgNode* node, Shape* vg, float vx, float vy, float vw, floa
         }
     } else if (style->fill.paint.curColor) {
         //Apply the current style color
-        vg->fill(style->r, style->g, style->b, style->fill.opacity);
+        vg->fill(style->r, style->g, style->b);
+        opacity = style->fill.opacity;
     } else {
         //Apply the fill color
-        vg->fill(style->fill.paint.r, style->fill.paint.g, style->fill.paint.b, style->fill.opacity);
+        vg->fill(style->fill.paint.r, style->fill.paint.g, style->fill.paint.b);
+        opacity = style->fill.opacity;
     }
 
     //Apply node opacity
-    if (style->opacity < 255) {
-        uint8_t r, g, b, a;
-        vg->fillColor(&r, &g, &b, &a);
-        vg->fill(r, g, b, (a * style->opacity) / 255.0f);
-    }
+    if (style->opacity < 255) opacity = (opacity * style->opacity) / 255.0f;
+
+    vg->opacity(opacity);
 
     if (node->type == SvgNodeType::G) return;
 

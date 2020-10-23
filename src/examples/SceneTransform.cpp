@@ -18,7 +18,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     //Prepare Round Rectangle (Scene1)
     auto shape1 = tvg::Shape::gen();
     shape1->appendRect(-235, -250, 400, 400, 50, 50);  //x, y, w, h, rx, ry
-    shape1->fill(0, 255, 0, 255);                      //r, g, b, a
+    shape1->fill(0, 255, 0);                           //r, g, b
     shape1->stroke(5);                                 //width
     shape1->stroke(255, 255, 255, 255);                //r, g, b, a
     scene->push(move(shape1));
@@ -26,13 +26,13 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     //Prepare Circle (Scene1)
     auto shape2 = tvg::Shape::gen();
     shape2->appendCircle(-165, -150, 200, 200);    //cx, cy, radiusW, radiusH
-    shape2->fill(255, 255, 0, 255);                //r, g, b, a
+    shape2->fill(255, 255, 0);                     //r, g, b
     scene->push(move(shape2));
 
     //Prepare Ellipse (Scene1)
     auto shape3 = tvg::Shape::gen();
     shape3->appendCircle(265, 250, 150, 100);      //cx, cy, radiusW, radiusH
-    shape3->fill(0, 255, 255, 255);                //r, g, b, a
+    shape3->fill(0, 255, 255);                     //r, g, b
     scene->push(move(shape3));
 
     scene->translate(350, 350);
@@ -58,9 +58,10 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     shape4->lineTo(-173, 12.5);
     shape4->lineTo(-53, -5.5);
     shape4->close();
-    shape4->fill(0, 0, 255, 127);
-    shape4->stroke(3);                             //width
-    shape4->stroke(0, 0, 255, 255);                //r, g, b, a
+    shape4->fill(0, 0, 255);
+    shape4->opacity(127);
+    shape4->stroke(3);
+    shape4->stroke(0, 0, 255, 255);
     scene2->push(move(shape4));
 
     //Circle (Scene2)
@@ -78,7 +79,8 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     shape5->cubicTo(cx - halfRadius, cy + radius, cx - radius, cy + halfRadius, cx - radius, cy);
     shape5->cubicTo(cx - radius, cy - halfRadius, cx - halfRadius, cy - radius, cx, cy - radius);
     shape5->close();
-    shape5->fill(255, 0, 0, 127);
+    shape5->fill(255, 0, 0);
+    shape5->opacity(127);
     scene2->push(move(shape5));
 
     scene2->translate(500, 350);

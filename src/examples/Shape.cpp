@@ -14,7 +14,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     shape1->appendRect(100, 100, 300, 300, 100, 100);  //x, y, w, h, rx, ry
     shape1->appendCircle(400, 400, 100, 100);          //cx, cy, radiusW, radiusH
     shape1->appendCircle(400, 500, 170, 100);          //cx, cy, radiusW, radiusH
-    shape1->fill(255, 255, 0, 255);                    //r, g, b, a
+    shape1->fill(255, 255, 0);                         //r, g, b
 
     canvas->push(move(shape1));
 }

@@ -48,6 +48,8 @@ namespace tvg
         Paint* compTarget = nullptr;
         CompositeMethod compMethod = CompositeMethod::None;
 
+        uint8_t alpha = 255;
+
         ~Impl() {
             if (smethod) delete(smethod);
             if (rTransform) delete(rTransform);
@@ -178,6 +180,8 @@ namespace tvg
                     ret->pImpl->flag |= RenderUpdateFlag::Transform;
                 }
             }
+
+            ret->pImpl->alpha = alpha;
 
             return ret;
         }

@@ -159,7 +159,7 @@ void testCapi()
     tvg_shape_append_rect(org, 550, 10, 100, 100, 0, 0);
     tvg_shape_set_stroke_width(org, 3);
     tvg_shape_set_stroke_color(org, 255, 0, 0, 255);
-    tvg_shape_set_fill_color(org, 0, 255, 0, 255);
+    tvg_shape_set_fill_color(org, 0, 255, 0);
 
     //Duplicated paint test - should copy rectangle parameters from origin
     Tvg_Paint* dup = tvg_paint_duplicate(org);

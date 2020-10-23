@@ -49,21 +49,21 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     //Pie Fill
     auto shape7 = tvg::Shape::gen();
     shape7->appendArc(150, 650, 80, 10, 180, true);
-    shape7->fill(255, 255, 255, 255);
+    shape7->fill(255, 255, 255);
     shape7->stroke(255, 0, 0, 255);
     shape7->stroke(2);
     if (canvas->push(move(shape7)) != tvg::Result::Success) return;
 
     auto shape8 = tvg::Shape::gen();
     shape8->appendArc(400, 650, 80, 0, 300, true);
-    shape8->fill(255, 255, 255, 255);
+    shape8->fill(255, 255, 255);
     shape8->stroke(255, 0, 0, 255);
     shape8->stroke(2);
     if (canvas->push(move(shape8)) != tvg::Result::Success) return;
 
     auto shape9 = tvg::Shape::gen();
     shape9->appendArc(600, 650, 80, 300, 60, true);
-    shape9->fill(255, 255, 255, 255);
+    shape9->fill(255, 255, 255);
     shape9->stroke(255, 0, 0, 255);
     shape9->stroke(2);
     if (canvas->push(move(shape9)) != tvg::Result::Success) return;

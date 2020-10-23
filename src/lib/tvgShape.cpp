@@ -252,12 +252,12 @@ Result Shape::appendRect(float x, float y, float w, float h, float rx, float ry)
 }
 
 
-Result Shape::fill(uint8_t r, uint8_t g, uint8_t b, uint8_t a) noexcept
+Result Shape::fill(uint8_t r, uint8_t g, uint8_t b) noexcept
 {
     pImpl->color[0] = r;
     pImpl->color[1] = g;
     pImpl->color[2] = b;
-    pImpl->color[3] = a;
+
     pImpl->flag |= RenderUpdateFlag::Color;
 
     if (pImpl->fill) {
@@ -283,12 +283,11 @@ Result Shape::fill(unique_ptr<Fill> f) noexcept
 }
 
 
-Result Shape::fillColor(uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a) const noexcept
+Result Shape::fillColor(uint8_t* r, uint8_t* g, uint8_t* b) const noexcept
 {
     if (r) *r = pImpl->color[0];
     if (g) *g = pImpl->color[1];
     if (b) *b = pImpl->color[2];
-    if (a) *a = pImpl->color[3];
 
     return Result::Success;
 }

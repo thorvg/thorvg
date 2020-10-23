@@ -93,9 +93,12 @@ public:
     Result translate(float x, float y) noexcept;
     Result transform(const Matrix& m) noexcept;
     Result bounds(float* x, float* y, float* w, float* h) const noexcept;
+    Result opacity(uint8_t alpha) noexcept;
     Paint* duplicate() const noexcept;
 
     Result composite(std::unique_ptr<Paint> target, CompositeMethod method) const noexcept;
+
+    uint8_t opacity() const noexcept;
 
     _TVG_DECLARE_ACCESSOR();
     _TVG_DECLARE_PRIVATE(Paint);
@@ -238,7 +241,7 @@ public:
     Result stroke(StrokeJoin join) noexcept;
 
     //Fill
-    Result fill(uint8_t r, uint8_t g, uint8_t b, uint8_t a) noexcept;
+    Result fill(uint8_t r, uint8_t g, uint8_t b) noexcept;
     Result fill(std::unique_ptr<Fill> f) noexcept;
     Result fill(FillRule r) noexcept;
 
@@ -246,7 +249,7 @@ public:
     uint32_t pathCommands(const PathCommand** cmds) const noexcept;
     uint32_t pathCoords(const Point** pts) const noexcept;
     const Fill* fill() const noexcept;
-    Result fillColor(uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a) const noexcept;
+    Result fillColor(uint8_t* r, uint8_t* g, uint8_t* b) const noexcept;
     FillRule fillRule() const noexcept;
 
     float strokeWidth() const noexcept;
