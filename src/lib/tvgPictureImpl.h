@@ -58,13 +58,13 @@ struct Picture::Impl
     }
 
 
-    void* update(RenderMethod &renderer, const RenderTransform* transform, vector<Composite>& compList, RenderUpdateFlag flag)
+    void* update(RenderMethod &renderer, const RenderTransform* transform, uint32_t opacity, vector<Composite>& compList, RenderUpdateFlag flag)
     {
         reload();
 
         if (!paint) return nullptr;
 
-        return paint->pImpl->update(renderer, transform, compList, flag);
+        return paint->pImpl->update(renderer, transform, opacity, compList, flag);
     }
 
     bool render(RenderMethod &renderer)

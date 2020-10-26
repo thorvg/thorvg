@@ -140,7 +140,7 @@ bool GlRenderer::dispose(TVG_UNUSED const Shape& shape, void *data)
 }
 
 
-void* GlRenderer::prepare(const Shape& shape, void* data, TVG_UNUSED const RenderTransform* transform, vector<Composite>& compList, RenderUpdateFlag flags)
+void* GlRenderer::prepare(const Shape& shape, void* data, TVG_UNUSED const RenderTransform* transform, TVG_UNUSED uint32_t opacity, vector<Composite>& compList, RenderUpdateFlag flags)
 {
     //prepare shape data
     GlShape* sdata = static_cast<GlShape*>(data);

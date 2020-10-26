@@ -37,9 +37,12 @@ struct SwTask : Task
     SwSurface* surface = nullptr;
     RenderUpdateFlag flags = RenderUpdateFlag::None;
     vector<Composite> compList;
+    uint32_t opacity;
 
     void run() override
     {
+        if (opacity == 0) return;  //Invisible
+
         //Valid Stroking?
         uint8_t strokeAlpha = 0;
         auto strokeWidth = sdata->strokeWidth();
@@ -51,12 +54,13 @@ struct SwTask : Task
 
         //Invisiable shape turned to visible by alpha.
         auto prepareShape = false;
-        if (!shapePrepared(&shape) && (flags & RenderUpdateFlag::Color)) prepareShape = true;
+        if (!shapePrepared(&shape) && ((flags & RenderUpdateFlag::Color) || (opacity > 0))) prepareShape = true;
 
         //Shape
         if (flags & (RenderUpdateFlag::Path | RenderUpdateFlag::Transform) || prepareShape) {
             uint8_t alpha = 0;
             sdata->fillColor(nullptr, nullptr, nullptr, &alpha);
+            alpha = static_cast<uint8_t>(static_cast<uint32_t>(alpha) * opacity / 255);
             bool renderShape = (alpha > 0 || sdata->fill());
             if (renderShape || strokeAlpha) {
                 shapeReset(&shape);
@@ -181,12 +185,15 @@ bool SwRenderer::render(const Shape& shape, void *data)
 
     uint8_t r, g, b, a;
     if (auto fill = task->sdata->fill()) {
+        //FIXME: pass opacity to apply gradient fill?
         rasterGradientShape(surface, &task->shape, fill->id());
     } else{
         task->sdata->fillColor(&r, &g, &b, &a);
+        a = static_cast<uint8_t>((task->opacity * (uint32_t) a) / 255);
         if (a > 0) rasterSolidShape(surface, &task->shape, r, g, b, a);
     }
     task->sdata->strokeColor(&r, &g, &b, &a);
+    a = static_cast<uint8_t>((task->opacity * (uint32_t) a) / 255);
     if (a > 0) rasterStroke(surface, &task->shape, r, g, b, a);
 
     return true;
@@ -207,7 +214,7 @@ bool SwRenderer::dispose(TVG_UNUSED const Shape& sdata, void *data)
 }
 
 
-void* SwRenderer::prepare(const Shape& sdata, void* data, const RenderTransform* transform, vector<Composite>& compList, RenderUpdateFlag flags)
+void* SwRenderer::prepare(const Shape& sdata, void* data, const RenderTransform* transform, uint32_t opacity, vector<Composite>& compList, RenderUpdateFlag flags)
 {
     //prepare task
     auto task = static_cast<SwTask*>(data);
@@ -237,6 +244,7 @@ void* SwRenderer::prepare(const Shape& sdata, void* data, const RenderTransform*
         task->transform = nullptr;
     }
 
+    task->opacity = opacity;
     task->surface = surface;
     task->flags = flags;
 

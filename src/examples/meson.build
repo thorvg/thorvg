@@ -14,6 +14,7 @@ source_file = [
     'LinearGradient.cpp',
     'MultiCanvas.cpp',
     'MultiShapes.cpp',
+    'Opacity.cpp',
     'PathCopy.cpp',
     'Path.cpp',
     'RadialGradient.cpp',

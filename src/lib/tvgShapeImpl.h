@@ -222,9 +222,9 @@ struct Shape::Impl
         return renderer.render(*shape, edata);
     }
 
-    void* update(RenderMethod& renderer, const RenderTransform* transform, vector<Composite>& compList, RenderUpdateFlag pFlag)
+    void* update(RenderMethod& renderer, const RenderTransform* transform, uint32_t opacity, vector<Composite>& compList, RenderUpdateFlag pFlag)
     {
-        this->edata = renderer.prepare(*shape, this->edata, transform, compList, static_cast<RenderUpdateFlag>(pFlag | flag));
+        this->edata = renderer.prepare(*shape, this->edata, transform, opacity, compList, static_cast<RenderUpdateFlag>(pFlag | flag));
         flag = RenderUpdateFlag::None;
         return this->edata;
     }
