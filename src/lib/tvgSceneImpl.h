@@ -44,14 +44,14 @@ struct Scene::Impl
         return true;
     }
 
-    void* update(RenderMethod &renderer, const RenderTransform* transform, vector<Composite>& compList, RenderUpdateFlag flag)
+    void* update(RenderMethod &renderer, const RenderTransform* transform, uint32_t opacity, vector<Composite>& compList, RenderUpdateFlag flag)
     {
         /* FXIME: it requires to return list of childr engine data
            This is necessary for scene composition */
         void* edata = nullptr;
 
         for (auto paint: paints) {
-            edata = paint->pImpl->update(renderer, transform, compList, static_cast<uint32_t>(flag));
+            edata = paint->pImpl->update(renderer, transform, opacity, compList, static_cast<uint32_t>(flag));
         }
         return edata;
     }

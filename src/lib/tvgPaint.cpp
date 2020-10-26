@@ -67,16 +67,19 @@ Result Paint::transform(const Matrix& m) noexcept
     return Result::FailedAllocation;
 }
 
+
 Result Paint::bounds(float* x, float* y, float* w, float* h) const noexcept
 {
     if (pImpl->bounds(x, y, w, h)) return Result::Success;
     return Result::InsufficientCondition;
 }
 
+
 Paint* Paint::duplicate() const noexcept
 {
     return pImpl->duplicate();
 }
+
 
 Result Paint::composite(std::unique_ptr<Paint> target, CompositeMethod method) const noexcept
 {
@@ -84,3 +87,19 @@ Result Paint::composite(std::unique_ptr<Paint> target, CompositeMethod method) c
     return Result::InsufficientCondition;
 }
 
+
+Result Paint::opacity(uint8_t o) noexcept
+{
+    if (pImpl->opacity == o) return Result::Success;
+
+    pImpl->opacity = o;
+    pImpl->flag |= RenderUpdateFlag::Color;
+
+    return Result::Success;
+}
+
+
+uint8_t Paint::opacity() const noexcept
+{
+    return pImpl->opacity;
+}

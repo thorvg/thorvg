@@ -33,7 +33,7 @@ namespace tvg
         virtual ~StrategyMethod(){}
 
         virtual bool dispose(RenderMethod& renderer) = 0;
-        virtual void* update(RenderMethod& renderer, const RenderTransform* transform, vector<Composite> compList, RenderUpdateFlag pFlag) = 0;   //Return engine data if it has.
+        virtual void* update(RenderMethod& renderer, const RenderTransform* transform, uint32_t opacity, vector<Composite> compList, RenderUpdateFlag pFlag) = 0;   //Return engine data if it has.
         virtual bool render(RenderMethod& renderer) = 0;
         virtual bool bounds(float* x, float* y, float* w, float* h) const = 0;
         virtual Paint* duplicate() = 0;
@@ -47,6 +47,8 @@ namespace tvg
 
         Paint* compTarget = nullptr;
         CompositeMethod compMethod = CompositeMethod::None;
+
+        uint8_t opacity = 255;
 
         ~Impl() {
             if (smethod) delete(smethod);
@@ -127,7 +129,7 @@ namespace tvg
             return smethod->dispose(renderer);
         }
 
-        void* update(RenderMethod& renderer, const RenderTransform* pTransform, vector<Composite>& compList, uint32_t pFlag)
+        void* update(RenderMethod& renderer, const RenderTransform* pTransform, uint32_t opacity, vector<Composite>& compList, uint32_t pFlag)
         {
             if (flag & RenderUpdateFlag::Transform) {
                 if (!rTransform) return nullptr;
@@ -140,20 +142,21 @@ namespace tvg
             void *compdata = nullptr;
 
             if (compTarget && compMethod == CompositeMethod::ClipPath) {
-                compdata = compTarget->pImpl->update(renderer, pTransform, compList, pFlag);
+                compdata = compTarget->pImpl->update(renderer, pTransform, opacity, compList, pFlag);
                 if (compdata) compList.push_back({compdata, compMethod});
             }
 
             void *edata = nullptr;
             auto newFlag = static_cast<RenderUpdateFlag>(pFlag | flag);
             flag = RenderUpdateFlag::None;
+            opacity = (opacity * this->opacity) / 255;
 
             if (rTransform && pTransform) {
                 RenderTransform outTransform(pTransform, rTransform);
-                edata = smethod->update(renderer, &outTransform, compList, newFlag);
+                edata = smethod->update(renderer, &outTransform, opacity, compList, newFlag);
             } else {
                 auto outTransform = pTransform ? pTransform : rTransform;
-                edata = smethod->update(renderer, outTransform, compList, newFlag);
+                edata = smethod->update(renderer, outTransform, opacity, compList, newFlag);
             }
 
             if (compdata) compList.pop_back();
@@ -178,6 +181,8 @@ namespace tvg
                     ret->pImpl->flag |= RenderUpdateFlag::Transform;
                 }
             }
+
+            ret->pImpl->opacity = opacity;
 
             return ret;
         }
@@ -210,9 +215,9 @@ namespace tvg
             return inst->dispose(renderer);
         }
 
-        void* update(RenderMethod& renderer, const RenderTransform* transform, vector<Composite> compList, RenderUpdateFlag flag) override
+        void* update(RenderMethod& renderer, const RenderTransform* transform, uint32_t opacity, vector<Composite> compList, RenderUpdateFlag flag) override
         {
-            return inst->update(renderer, transform, compList, flag);
+            return inst->update(renderer, transform, opacity, compList, flag);
         }
 
         bool render(RenderMethod& renderer) override

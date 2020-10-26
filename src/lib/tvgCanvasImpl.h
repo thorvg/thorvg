@@ -81,11 +81,11 @@ struct Canvas::Impl
 
         //Update single paint node
         if (paint) {
-            paint->pImpl->update(*renderer, nullptr, compList, RenderUpdateFlag::None);
+            paint->pImpl->update(*renderer, nullptr, 255, compList, RenderUpdateFlag::None);
         //Update all retained paint nodes
         } else {
             for (auto paint: paints) {
-                paint->pImpl->update(*renderer, nullptr, compList, RenderUpdateFlag::None);
+                paint->pImpl->update(*renderer, nullptr, 255, compList, RenderUpdateFlag::None);
             }
         }
         return Result::Success;

@@ -93,9 +93,12 @@ public:
     Result translate(float x, float y) noexcept;
     Result transform(const Matrix& m) noexcept;
     Result bounds(float* x, float* y, float* w, float* h) const noexcept;
+    Result opacity(uint8_t o) noexcept;
     Paint* duplicate() const noexcept;
 
     Result composite(std::unique_ptr<Paint> target, CompositeMethod method) const noexcept;
+
+    uint8_t opacity() const noexcept;
 
     _TVG_DECLARE_ACCESSOR();
     _TVG_DECLARE_PRIVATE(Paint);
