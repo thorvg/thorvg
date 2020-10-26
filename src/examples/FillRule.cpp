@@ -10,11 +10,11 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     //Star
     auto shape1 = tvg::Shape::gen();
-    shape1->moveTo(186, 34);
-    shape1->lineTo(307, 365);
-    shape1->lineTo(26, 161);
-    shape1->lineTo(374, 160);
-    shape1->lineTo(97, 365);
+    shape1->moveTo(205, 35);
+    shape1->lineTo(330, 355);
+    shape1->lineTo(25, 150);
+    shape1->lineTo(385, 150);
+    shape1->lineTo(80, 355);
     shape1->close();
     shape1->fill(255, 255, 255, 255);
     shape1->fill(tvg::FillRule::Winding);  //Fill all winding shapes
@@ -23,11 +23,11 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     //Star 2
     auto shape2 = tvg::Shape::gen();
-    shape2->moveTo(536, 334);
-    shape2->lineTo(657, 665);
-    shape2->lineTo(376, 461);
-    shape2->lineTo(724, 460);
-    shape2->lineTo(447, 665);
+    shape2->moveTo(535, 335);
+    shape2->lineTo(660, 655);
+    shape2->lineTo(355, 450);
+    shape2->lineTo(715, 450);
+    shape2->lineTo(410, 655);
     shape2->close();
     shape2->fill(255, 255, 255, 255);
     shape2->fill(tvg::FillRule::EvenOdd); //Fill polygons with even odd pattern
