@@ -18,6 +18,7 @@ source_file = [
     'PathCopy.cpp',
     'Path.cpp',
     'RadialGradient.cpp',
+    'Raw.cpp',
     'Scene.cpp',
     'SceneTransform.cpp',
     'Shape.cpp',
