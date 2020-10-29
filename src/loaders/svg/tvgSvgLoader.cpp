@@ -724,7 +724,7 @@ static bool _attrParseSvgNode(void* data, const char* key, const char* value)
     SvgDocNode* doc = &(node->node.doc);
     SvgLengthType type;
 
-    //@TODO handle lenght unit.
+    //TODO: handle length unit.
     if (!strcmp(key, "width")) {
         doc->w = _parseLength(value, &type);
     } else if (!strcmp(key, "height")) {
