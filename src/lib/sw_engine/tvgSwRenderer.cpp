@@ -29,17 +29,26 @@
 static bool initEngine = false;
 static uint32_t rendererCnt = 0;
 
+enum class SwRenderType { Shape, Image };
+
 struct SwTask : Task
 {
+    SwRenderType type;
+
     SwShape shape;
     const Shape* sdata = nullptr;
+
+    SwImage image;
+    const Picture* pdata = nullptr;
+    uint32_t *buffer = nullptr;
+
     Matrix* transform = nullptr;
     SwSurface* surface = nullptr;
     RenderUpdateFlag flags = RenderUpdateFlag::None;
     vector<Composite> compList;
     uint32_t opacity;
 
-    void run(unsigned tid) override
+    void prepareShapeTask(unsigned tid)
     {
         if (opacity == 0) return;  //Invisible
 
@@ -112,6 +121,50 @@ struct SwTask : Task
     end:
         shapeDelOutline(&shape, tid);
     }
+
+
+    void prepareImageTask(unsigned tid)
+    {
+        SwSize clip = {static_cast<SwCoord>(surface->w), static_cast<SwCoord>(surface->h)};
+
+        //Invisiable shape turned to visible by alpha.
+        auto prepareImage = false;
+        if (!imagePrepared(&image) && ((flags & RenderUpdateFlag::Image) || (opacity > 0))) prepareImage = true;
+
+        if (prepareImage) {
+            imageReset(&image);
+            if (!imagePrepare(&image, pdata, clip, transform)) return;
+
+            if (compList.size() > 0) {
+                if (!imageGenRle(&image, pdata, clip, false, true)) return;
+
+                //Composition
+                for (auto comp : compList) {
+                     SwShape *compShape = &static_cast<SwTask*>(comp.edata)->shape;
+                     if (comp.method == CompositeMethod::ClipPath) {
+                          //Clip to fill(path) rle
+                          if (image.rle && compShape->rect) rleClipRect(image.rle, &compShape->bbox);
+                          else if (image.rle && compShape->rle) rleClipPath(image.rle, compShape->rle);
+                     }
+                }
+                imageDelOutline(&image);
+            }
+        }
+
+        if (this->buffer)
+           image.data = this->buffer;
+    }
+
+
+    void run(unsigned tid) override
+    {
+        if (type == SwRenderType::Shape) {
+            prepareShapeTask(tid);
+        }
+        else if (type == SwRenderType::Image) {
+            prepareImageTask(tid);
+        }
+    }
 };
 
 static void _termEngine()
@@ -178,6 +231,15 @@ bool SwRenderer::postRender()
 }
 
 
+bool SwRenderer::render(const Picture& picture, void *data)
+{
+    auto task = static_cast<SwTask*>(data);
+    task->get();
+
+    rasterImage(surface, &task->image, task->opacity, task->transform);
+    return true;
+}
+
 bool SwRenderer::render(const Shape& shape, void *data)
 {
     auto task = static_cast<SwTask*>(data);
@@ -206,13 +268,62 @@ bool SwRenderer::dispose(TVG_UNUSED const Shape& sdata, void *data)
     if (!task) return true;
 
     task->done();
-    shapeFree(&task->shape);
+    switch (task->type) {
+        case SwRenderType::Shape:
+            shapeFree(&task->shape);
+        break;
+        case SwRenderType::Image:
+            imageFree(&task->image);
+        break;
+        default: break;
+    }
     if (task->transform) free(task->transform);
     delete(task);
 
     return true;
 }
 
+void* SwRenderer::prepare(const Picture& pdata, void* data, uint32_t *buffer, const RenderTransform* transform, uint32_t opacity, vector<Composite>& compList, RenderUpdateFlag flags)
+{
+    //prepare task
+    auto task = static_cast<SwTask*>(data);
+    if (!task) {
+        task = new SwTask;
+        if (!task) return nullptr;
+    }
+
+    if (flags == RenderUpdateFlag::None) return task;
+
+    //Finish previous task if it has duplicated request.
+    if (task->valid()) task->get();
+
+    task->pdata = &pdata;
+    task->type = SwRenderType::Image;
+    task->buffer = buffer;
+
+    if (compList.size() > 0) {
+        //Guarantee composition targets get ready.
+        for (auto comp : compList)  static_cast<SwTask*>(comp.edata)->get();
+        task->compList.assign(compList.begin(), compList.end());
+    }
+
+    if (transform) {
+        if (!task->transform) task->transform = static_cast<Matrix*>(malloc(sizeof(Matrix)));
+        *task->transform = transform->m;
+    } else {
+        if (task->transform) free(task->transform);
+        task->transform = nullptr;
+    }
+
+    task->opacity = opacity;
+    task->surface = surface;
+    task->flags = flags;
+
+    tasks.push_back(task);
+    TaskScheduler::request(task);
+
+    return task;
+}
 
 void* SwRenderer::prepare(const Shape& sdata, void* data, const RenderTransform* transform, uint32_t opacity, vector<Composite>& compList, RenderUpdateFlag flags)
 {
@@ -229,6 +340,8 @@ void* SwRenderer::prepare(const Shape& sdata, void* data, const RenderTransform*
     task->done();
 
     task->sdata = &sdata;
+
+    task->type = SwRenderType::Shape;
 
     if (compList.size() > 0) {
         //Guarantee composition targets get ready.

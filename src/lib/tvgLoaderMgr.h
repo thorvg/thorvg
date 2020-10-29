@@ -24,14 +24,15 @@
 
 #include "tvgLoader.h"
 
-enum class FileType { Svg = 0, Unknown};
+enum class FileType { Svg = 0, Raw = 1, Unknown = 2};
 
 struct LoaderMgr
 {
     static bool init();
     static bool term();
     static unique_ptr<Loader> loader(const char* data, uint32_t size);
-    static unique_ptr<Loader> loader(const string& path);
+    static unique_ptr<Loader> loader(uint32_t* data, uint32_t width, uint32_t height, bool isCopy);
+    static unique_ptr<Loader> loader(const string& path, uint32_t width, uint32_t height);
 };
 
 #endif //_TVG_LOADER_MGR_H_

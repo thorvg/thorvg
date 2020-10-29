@@ -6,8 +6,8 @@ option('engines',
 
 option('loaders',
    type: 'array',
-   choices: ['', 'svg'],
-   value: ['svg'],
+   choices: ['', 'svg', 'raw'],
+   value: ['svg', 'raw'],
    description: 'Enable Vector File Loader in thorvg')
 
 option('vectors',

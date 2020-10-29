@@ -42,7 +42,7 @@ struct Composite {
     CompositeMethod method;
 };
 
-enum RenderUpdateFlag {None = 0, Path = 1, Color = 2, Gradient = 4, Stroke = 8, Transform = 16, All = 32};
+enum RenderUpdateFlag {None = 0, Path = 1, Color = 2, Gradient = 4, Stroke = 8, Transform = 16, Image = 32, All = 64};
 
 struct RenderTransform
 {
@@ -66,9 +66,11 @@ class RenderMethod
 public:
     virtual ~RenderMethod() {}
     virtual void* prepare(TVG_UNUSED const Shape& shape, TVG_UNUSED void* data, TVG_UNUSED const RenderTransform* transform, uint32_t opacity, TVG_UNUSED vector<Composite>& compList, TVG_UNUSED RenderUpdateFlag flags) { return nullptr; }
+    virtual void* prepare(TVG_UNUSED const Picture& picture, TVG_UNUSED void* data, TVG_UNUSED uint32_t *buffer, TVG_UNUSED const RenderTransform* transform, TVG_UNUSED uint32_t opacity, TVG_UNUSED vector<Composite>& compList, TVG_UNUSED RenderUpdateFlag flags) { return nullptr; }
     virtual bool dispose(TVG_UNUSED const Shape& shape, TVG_UNUSED void *data) { return true; }
     virtual bool preRender() { return true; }
     virtual bool render(TVG_UNUSED const Shape& shape, TVG_UNUSED void *data) { return true; }
+    virtual bool render(TVG_UNUSED const Picture& picture, TVG_UNUSED void *data) { return true; }
     virtual bool postRender() { return true; }
     virtual bool clear() { return true; }
     virtual bool sync() { return true; }

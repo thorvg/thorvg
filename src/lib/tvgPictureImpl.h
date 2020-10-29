@@ -34,6 +34,13 @@ struct Picture::Impl
 {
     unique_ptr<Loader> loader = nullptr;
     Paint* paint = nullptr;
+    uint32_t *buffer = nullptr;
+    Picture *picture = nullptr;
+    void *edata = nullptr;              //engine data
+
+    Impl(Picture* p) : picture(p)
+    {
+    }
 
     bool dispose(RenderMethod& renderer)
     {
@@ -47,30 +54,45 @@ struct Picture::Impl
 
     void reload()
     {
-        if (loader && !paint) {
-            auto scene = loader->data();
-            if (scene) {
-                paint = scene.release();
-                if (!paint) return;
-                loader->close();
+        if (loader) {
+            if (!paint) {
+                auto scene = loader->root();
+                if (scene) {
+                    paint = scene.release();
+                    if (!paint) return;
+                    loader->close();
+                }
+            }
+            if (!buffer) {
+                buffer = (uint32_t*)loader->data();
             }
         }
     }
 
-
-    void* update(RenderMethod &renderer, const RenderTransform* transform, uint32_t opacity, vector<Composite>& compList, RenderUpdateFlag flag)
+    void* update(RenderMethod &renderer, const RenderTransform* transform, uint32_t opacity, vector<Composite>& compList, uint32_t flag)
     {
         reload();
 
-        if (!paint) return nullptr;
-
-        return paint->pImpl->update(renderer, transform, opacity, compList, flag);
+        if (buffer) {
+            flag |= RenderUpdateFlag::Image;
+            this->edata = renderer.prepare(*picture, this->edata, this->buffer, transform, opacity, compList, static_cast<RenderUpdateFlag>(flag));
+            return this->edata;
+        }
+        else if (paint){
+            return paint->pImpl->update(renderer, transform, opacity, compList, flag);
+        }
+        return nullptr;
     }
 
     bool render(RenderMethod &renderer)
     {
-        if (!paint) return false;
-        return paint->pImpl->render(renderer);
+        if (buffer) {
+            return renderer.render(*picture, edata);
+        }
+        else if (paint){
+            return paint->pImpl->render(renderer);
+        }
+        return false;
     }
 
     bool viewbox(float* x, float* y, float* w, float* h)
@@ -89,10 +111,10 @@ struct Picture::Impl
         return paint->pImpl->bounds(x, y, w, h);
     }
 
-    Result load(const string& path)
+    Result load(const string& path, uint32_t width, uint32_t height)
     {
         if (loader) loader->close();
-        loader = LoaderMgr::loader(path);
+        loader = LoaderMgr::loader(path, width, height);
         if (!loader) return Result::NonSupport;
         if (!loader->read()) return Result::Unknown;
         return Result::Success;
@@ -102,6 +124,15 @@ struct Picture::Impl
     {
         if (loader) loader->close();
         loader = LoaderMgr::loader(data, size);
+        if (!loader) return Result::NonSupport;
+        if (!loader->read()) return Result::Unknown;
+        return Result::Success;
+    }
+
+    Result load(uint32_t* data, uint32_t width, uint32_t height, bool isCopy)
+    {
+        if (loader) loader->close();
+        loader = LoaderMgr::loader(data, width, height, isCopy);
         if (!loader) return Result::NonSupport;
         if (!loader->read()) return Result::Unknown;
         return Result::Success;

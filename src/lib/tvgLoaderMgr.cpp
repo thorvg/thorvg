@@ -24,6 +24,9 @@
 #ifdef THORVG_SVG_LOADER_SUPPORT
     #include "tvgSvgLoader.h"
 #endif
+#ifdef THORVG_RAW_LOADER_SUPPORT
+    #include "tvgRawLoader.h"
+#endif
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
@@ -38,6 +41,11 @@ static Loader* _find(FileType type)
         case FileType::Svg: {
 #ifdef THORVG_SVG_LOADER_SUPPORT
             return new SvgLoader;
+#endif
+            break;
+        case FileType::Raw :
+#ifdef THORVG_RAW_LOADER_SUPPORT
+            return unique_ptr<RawLoader>(new RawLoader);
 #endif
             break;
         }
@@ -84,7 +92,7 @@ bool LoaderMgr::term()
 }
 
 
-unique_ptr<Loader> LoaderMgr::loader(const string& path)
+unique_ptr<Loader> LoaderMgr::loader(const string& path, uint32_t width, uint32_t height)
 {
     auto loader = _find(path);
 
@@ -99,6 +107,16 @@ unique_ptr<Loader> LoaderMgr::loader(const char* data, uint32_t size)
     for (int i = 0; i < static_cast<int>(FileType::Unknown); i++) {
         auto loader = _find(static_cast<FileType>(i));
         if (loader && loader->open(data, size)) return unique_ptr<Loader>(loader);
+    }
+    return nullptr;
+}
+
+
+unique_ptr<Loader> LoaderMgr::loader(uint32_t *data, uint32_t width, uint32_t height, bool isCopy)
+{
+    for (int i = 0; i < static_cast<int>(FileType::Unknown); i++) {
+        auto loader = _find(static_cast<FileType>(i));
+        if (loader && loader->open(data, width, height, isCopy)) return unique_ptr<Loader>(loader);
     }
     return nullptr;
 }

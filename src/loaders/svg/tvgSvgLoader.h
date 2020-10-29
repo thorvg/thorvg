@@ -34,19 +34,21 @@ public:
 
     SvgLoaderData loaderData;
     SvgSceneBuilder builder;
-    unique_ptr<Scene> root;
+    unique_ptr<Scene> rootScene;
 
     SvgLoader();
     ~SvgLoader();
 
-    bool open(const char* path) override;
+    bool open(const string& path, uint32_t width, uint32_t height) override;
     bool open(const char* data, uint32_t size) override;
+    bool open(const uint32_t* data, uint32_t width, uint32_t height, bool isCopy) override;
     bool header();
     bool read() override;
     bool close() override;
     void run(unsigned tid) override;
 
-    unique_ptr<Scene> data() override;
+    unique_ptr<Scene> root() override;
+    const uint32_t* data() override;
 };
 
 
