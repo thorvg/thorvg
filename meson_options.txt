@@ -32,3 +32,8 @@ option('examples',
     type: 'boolean',
     value: false,
     description: 'Enable building examples')
+
+option('test',
+   type: 'boolean',
+   value: false,
+   description: 'Enable building unit tests')
