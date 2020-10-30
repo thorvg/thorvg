@@ -527,5 +527,5 @@ tuple<vector<PathCommand>, vector<Point>> svgPathToTvgPath(const char* svgPath)
     setlocale(LC_NUMERIC, curLocale);
     if (curLocale) free(curLocale);
 
-   return make_tuple(cmds, pts);
+    return make_tuple(cmds, pts);
 }

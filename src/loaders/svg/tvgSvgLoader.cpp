@@ -235,16 +235,16 @@ _PARSE_TAG(SvgFillRule, fillRule, FillRule, fillRuleTags, SvgFillRule::Winding)
 static inline void
 _parseDashArray(const char *str, SvgDash* dash)
 {
-   char *end = nullptr;
+    char *end = nullptr;
 
-   while (*str) {
+    while (*str) {
         // skip white space, comma
         str = _skipComma(str);
         (*dash).array.push(strtof(str, &end));
         str = _skipComma(end);
-   }
-   //If dash array size is 1, it means that dash and gap size are the same.
-   if ((*dash).array.cnt == 1) (*dash).array.push((*dash).array.list[0]);
+    }
+    //If dash array size is 1, it means that dash and gap size are the same.
+    if ((*dash).array.cnt == 1) (*dash).array.push((*dash).array.list[0]);
 }
 
 static string* _idFromUrl(const char* url)
