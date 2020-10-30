@@ -28,7 +28,7 @@
 template<typename T>
 struct DuplicateMethod
 {
-    virtual ~DuplicateMethod(){}
+    virtual ~DuplicateMethod() {}
     virtual T* duplicate() = 0;
 };
 
@@ -38,7 +38,7 @@ struct FillDup : DuplicateMethod<Fill>
     T* inst = nullptr;
 
     FillDup(T* _inst) : inst(_inst) {}
-    ~FillDup(){}
+    ~FillDup() {}
 
     Fill* duplicate() override
     {

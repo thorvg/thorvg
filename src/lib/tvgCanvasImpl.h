@@ -84,7 +84,7 @@ struct Canvas::Impl
             paint->pImpl->update(*renderer, nullptr, 255, compList, RenderUpdateFlag::None);
         //Update all retained paint nodes
         } else {
-            for (auto paint: paints) {
+            for (auto paint : paints) {
                 paint->pImpl->update(*renderer, nullptr, 255, compList, RenderUpdateFlag::None);
             }
         }
@@ -97,8 +97,8 @@ struct Canvas::Impl
 
         if (!renderer->preRender()) return Result::InsufficientCondition;
 
-        for(auto paint: paints) {
-            if(!paint->pImpl->render(*renderer)) return Result::InsufficientCondition;
+        for (auto paint : paints) {
+            if (!paint->pImpl->render(*renderer)) return Result::InsufficientCondition;
         }
 
         if (!renderer->postRender()) return Result::InsufficientCondition;

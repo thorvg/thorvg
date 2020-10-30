@@ -323,8 +323,8 @@ static void _processCommand(vector<PathCommand>* cmds, vector<Point>* pts, char 
             Point p = {arr[0], arr[1]};
             cmds->push_back(PathCommand::MoveTo);
             pts->push_back(p);
-            *cur = {arr[0] ,arr[1]};
-            *startPoint = {arr[0] ,arr[1]};
+            *cur = {arr[0], arr[1]};
+            *startPoint = {arr[0], arr[1]};
             break;
         }
         case 'l':
@@ -332,7 +332,7 @@ static void _processCommand(vector<PathCommand>* cmds, vector<Point>* pts, char 
             Point p = {arr[0], arr[1]};
             cmds->push_back(PathCommand::LineTo);
             pts->push_back(p);
-            *cur = {arr[0] ,arr[1]};
+            *cur = {arr[0], arr[1]};
             break;
         }
         case 'c':
@@ -442,7 +442,7 @@ static void _processCommand(vector<PathCommand>* cmds, vector<Point>* pts, char 
         case 'a':
         case 'A': {
             _pathAppendArcTo(cmds, pts, cur, curCtl, arr[5], arr[6], arr[0], arr[1], arr[2], arr[3], arr[4]);
-            *cur = *curCtl = {arr[5] ,arr[6]};
+            *cur = *curCtl = {arr[5], arr[6]};
             *isQuadratic = false;
             break;
         }

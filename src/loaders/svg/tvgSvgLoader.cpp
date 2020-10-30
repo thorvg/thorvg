@@ -2190,7 +2190,7 @@ static void _styleInherit(SvgStyleProperty* child, SvgStyleProperty* parent)
     if (!((int)child->stroke.flags & (int)SvgStrokeFlags::Dash)) {
         if (parent->stroke.dash.array.cnt > 0) {
             child->stroke.dash.array.clear();
-            for(uint32_t i = 0; i < parent->stroke.dash.array.cnt; ++i) {
+            for (uint32_t i = 0; i < parent->stroke.dash.array.cnt; ++i) {
                 child->stroke.dash.array.push(parent->stroke.dash.array.list[i]);
             }
         }

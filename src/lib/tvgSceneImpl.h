@@ -50,7 +50,7 @@ struct Scene::Impl
            This is necessary for scene composition */
         void* edata = nullptr;
 
-        for (auto paint: paints) {
+        for (auto paint : paints) {
             edata = paint->pImpl->update(renderer, transform, opacity, compList, static_cast<uint32_t>(flag));
         }
         return edata;
@@ -58,8 +58,8 @@ struct Scene::Impl
 
     bool render(RenderMethod &renderer)
     {
-        for(auto paint: paints) {
-            if(!paint->pImpl->render(renderer)) return false;
+        for (auto paint : paints) {
+            if (!paint->pImpl->render(renderer)) return false;
         }
         return true;
     }
@@ -71,7 +71,7 @@ struct Scene::Impl
         auto w = 0.0f;
         auto h = 0.0f;
 
-        for(auto paint: paints) {
+        for (auto paint : paints) {
             auto x2 = FLT_MAX;
             auto y2 = FLT_MAX;
             auto w2 = 0.0f;
@@ -102,7 +102,7 @@ struct Scene::Impl
 
         dup->paints.reserve(paints.size());
 
-        for (auto paint: paints) {
+        for (auto paint : paints) {
             dup->paints.push_back(paint->duplicate());
         }
 
