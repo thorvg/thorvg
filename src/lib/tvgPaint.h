@@ -30,7 +30,7 @@ namespace tvg
 {
     struct StrategyMethod
     {
-        virtual ~StrategyMethod(){}
+        virtual ~StrategyMethod() {}
 
         virtual bool dispose(RenderMethod& renderer) = 0;
         virtual void* update(RenderMethod& renderer, const RenderTransform* transform, uint32_t opacity, vector<Composite> compList, RenderUpdateFlag pFlag) = 0;   //Return engine data if it has.
@@ -203,7 +203,7 @@ namespace tvg
         T* inst = nullptr;
 
         PaintMethod(T* _inst) : inst(_inst) {}
-        ~PaintMethod(){}
+        ~PaintMethod() {}
 
         bool bounds(float* x, float* y, float* w, float* h) const override
         {

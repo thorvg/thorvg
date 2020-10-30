@@ -173,7 +173,7 @@ struct ShapePath
         Point min = { pts[0].x, pts[0].y };
         Point max = { pts[0].x, pts[0].y };
 
-        for(uint32_t i = 1; i < ptsCnt; ++i) {
+        for (uint32_t i = 1; i < ptsCnt; ++i) {
             if (pts[i].x < min.x) min.x = pts[i].x;
             if (pts[i].y < min.y) min.y = pts[i].y;
             if (pts[i].x > max.x) max.x = pts[i].x;
