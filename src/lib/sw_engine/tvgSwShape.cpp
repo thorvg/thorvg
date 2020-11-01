@@ -430,13 +430,14 @@ bool _fastTrack(const SwOutline* outline)
     auto pt3 = outline->pts + 2;
     auto pt4 = outline->pts + 3;
 
-    auto min1 = pt1->y < pt3->y ? pt1 : pt3;
-    auto min2 = pt2->y < pt4->y ? pt2 : pt4;
-    if (min1->y != min2->y) return false;
+    SwPoint a;
+    SwPoint b;
+    a.x = pt1->x;
+    a.y = pt3->y;
+    b.x = pt3->x;
+    b.y = pt1->y;
 
-    SwCoord len1 = pow(pt1->x - pt3->x, 2) + pow(pt1->y - pt3->y, 2);
-    SwCoord len2 = pow(pt2->x - pt4->x, 2) + pow(pt2->y - pt4->y, 2);
-    if (len1 == len2) return true;
+    if ((*pt2 == a && *pt4 == b) || (*pt2 == b && *pt4 == a)) return true;
 
     return false;
 }
