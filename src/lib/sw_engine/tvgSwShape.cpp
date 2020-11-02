@@ -430,12 +430,8 @@ bool _fastTrack(const SwOutline* outline)
     auto pt3 = outline->pts + 2;
     auto pt4 = outline->pts + 3;
 
-    SwPoint a;
-    SwPoint b;
-    a.x = pt1->x;
-    a.y = pt3->y;
-    b.x = pt3->x;
-    b.y = pt1->y;
+    auto a = SwPoint{pt1->x, pt3->y};
+    auto b = SwPoint{pt3->x, pt1->y};
 
     if ((*pt2 == a && *pt4 == b) || (*pt2 == b && *pt4 == a)) return true;
 
