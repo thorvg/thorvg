@@ -120,6 +120,8 @@ TVG_EXPORT Tvg_Result tvg_paint_scale(Tvg_Paint* paint, float factor);
 TVG_EXPORT Tvg_Result tvg_paint_rotate(Tvg_Paint* paint, float degree);
 TVG_EXPORT Tvg_Result tvg_paint_translate(Tvg_Paint* paint, float x, float y);
 TVG_EXPORT Tvg_Result tvg_paint_transform(Tvg_Paint* paint, const Tvg_Matrix* m);
+TVG_EXPORT Tvg_Result tvg_paint_set_opacity(Tvg_Paint* paint, uint8_t opacity);
+TVG_EXPORT Tvg_Result tvg_paint_get_opacity(Tvg_Paint* paint, uint8_t* opacity);
 TVG_EXPORT Tvg_Paint* tvg_paint_duplicate(Tvg_Paint* paint);
 
 /************************************************************************/

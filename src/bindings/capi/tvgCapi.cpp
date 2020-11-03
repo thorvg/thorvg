@@ -162,13 +162,26 @@ TVG_EXPORT Tvg_Result tvg_paint_transform(Tvg_Paint* paint, const Tvg_Matrix* m)
 }
 
 
-
 TVG_EXPORT Tvg_Paint* tvg_paint_duplicate(Tvg_Paint* paint)
 {
     if (!paint) return NULL;
     return (Tvg_Paint*) reinterpret_cast<Paint*>(paint)->duplicate();
 }
 
+
+TVG_EXPORT Tvg_Result tvg_paint_set_opacity(Tvg_Paint* paint, uint8_t opacity)
+{
+    if (!paint) return TVG_RESULT_INVALID_ARGUMENT;
+    return (Tvg_Result) reinterpret_cast<Paint*>(paint)->opacity(opacity);
+}
+
+
+TVG_EXPORT Tvg_Result tvg_paint_get_opacity(Tvg_Paint* paint, uint8_t* opacity)
+{
+    if (!paint || !opacity)  return TVG_RESULT_INVALID_ARGUMENT;
+    *opacity = reinterpret_cast<Paint*>(paint)->opacity();
+    return TVG_RESULT_SUCCESS;
+}
 
 /************************************************************************/
 /* Shape API                                                            */
