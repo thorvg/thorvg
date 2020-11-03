@@ -16,7 +16,7 @@ The next list shows drawing primitives ThorVG providing.<br />
  - Composition: Blending, Masking, Path Clipping, etc
  - Pictures: SVG, Bitmap, ... 
 <p align="center">
-  <img width="980" height="223" src="https://github.com/Samsung/thorvg/blob/master/res/example_primitives.png">
+  <img width="930" height="212" src="https://github.com/Samsung/thorvg/blob/master/res/example_primitives.png">
 </p>
 
 <br />
