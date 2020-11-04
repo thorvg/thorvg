@@ -27,6 +27,7 @@
 /************************************************************************/
 /* Internal Class Implementation                                        */
 /************************************************************************/
+
 static constexpr auto SW_STROKE_TAG_POINT = 1;
 static constexpr auto SW_STROKE_TAG_CUBIC = 2;
 static constexpr auto SW_STROKE_TAG_BEGIN = 4;
@@ -904,7 +905,7 @@ bool strokeParseOutline(SwStroke* stroke, const SwOutline& outline)
 }
 
 
-SwOutline* strokeExportOutline(SwStroke* stroke)
+SwOutline* strokeExportOutline(SwStroke* stroke, unsigned tid)
 {
     uint32_t count1, count2, count3, count4;
 
@@ -914,10 +915,18 @@ SwOutline* strokeExportOutline(SwStroke* stroke)
     auto ptsCnt = count1 + count3;
     auto cntrsCnt = count2 + count4;
 
-    auto outline = static_cast<SwOutline*>(calloc(1, sizeof(SwOutline)));
-    outline->pts = static_cast<SwPoint*>(malloc(sizeof(SwPoint) * ptsCnt));
-    outline->types = static_cast<uint8_t*>(malloc(sizeof(uint8_t) * ptsCnt));
-    outline->cntrs = static_cast<uint32_t*>(malloc(sizeof(uint32_t) * cntrsCnt));
+    auto outline = mpoolReqStrokeOutline(tid);
+    if (outline->reservedPtsCnt < ptsCnt) {
+        outline->pts = static_cast<SwPoint*>(realloc(outline->pts, sizeof(SwPoint) * ptsCnt));
+        outline->types = static_cast<uint8_t*>(realloc(outline->types, sizeof(uint8_t) * ptsCnt));
+        outline->reservedPtsCnt = ptsCnt;
+        printf("pts(%d)\n", sizeof(SwPoint) * ptsCnt);
+    }
+    if (outline->reservedCntrsCnt < cntrsCnt) {
+        outline->cntrs = static_cast<uint32_t*>(realloc(outline->cntrs, sizeof(uint32_t) * cntrsCnt));
+        outline->reservedCntrsCnt = cntrsCnt;
+        printf("cntrs(%d)\n", sizeof(SwPoint) * ptsCnt);
+    }
 
     _exportBorderOutline(*stroke, outline, 0);  //left
     _exportBorderOutline(*stroke, outline, 1);  //right

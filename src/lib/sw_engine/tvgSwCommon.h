@@ -281,7 +281,7 @@ void shapeDelFill(SwShape* shape);
 
 void strokeReset(SwStroke* stroke, const Shape* shape, const Matrix* transform);
 bool strokeParseOutline(SwStroke* stroke, const SwOutline& outline);
-SwOutline* strokeExportOutline(SwStroke* stroke);
+SwOutline* strokeExportOutline(SwStroke* stroke, unsigned tid);
 void strokeFree(SwStroke* stroke);
 
 bool fillGenColorTable(SwFill* fill, const Fill* fdata, const Matrix* transform, SwSurface* surface, bool ctable);
@@ -300,6 +300,8 @@ bool mpoolTerm();
 bool mpoolClear();
 SwOutline* mpoolReqOutline(unsigned idx);
 void mpoolRetOutline(unsigned idx);
+SwOutline* mpoolReqStrokeOutline(unsigned idx);
+void mpoolRetStrokeOutline(unsigned idx);
 
 bool rasterCompositor(SwSurface* surface);
 bool rasterGradientShape(SwSurface* surface, SwShape* shape, unsigned id);
