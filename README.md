@@ -4,7 +4,7 @@
 # ThorVG
 
 <p align="center">
-  <img width="360" height="360" src="https://github.com/Samsung/thorvg/blob/master/res/logo2.png">
+  <img width="500" height="346" src="https://github.com/Samsung/thorvg/blob/master/res/thorvg_card2.png">
 </p>
 
 ThorVG is a platform independent lightweight standalone C++ library for drawing vector-based shapes and SVG.<br />
@@ -23,7 +23,7 @@ The next list shows drawing primitives ThorVG providing.<br />
 Next figure shows you a brief strategy how to use ThorVG in your system.<br />
 <br />
 <p align="center">
-  <img width="900" height="288" src="https://github.com/Samsung/thorvg/blob/master/res/working_flow.png">
+  <img width="900" height="288" src="https://github.com/Samsung/thorvg/blob/master/res/example_flow.png">
 </p>
 <br />
  
