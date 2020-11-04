@@ -7,7 +7,8 @@
   <img width="360" height="360" src="https://github.com/Samsung/thorvg/blob/master/res/logo2.png">
 </p>
 
-ThorVG is a platform independent lightweight standalone C++ library for drawing vector-based shapes and SVG.
+ThorVG is a platform independent lightweight standalone C++ library for drawing vector-based shapes and SVG.<br />
+<br />
 The next list shows drawing primitives ThorVG providing.<br />
  - Paints: Line, Arc, Curve, Path, Shapes, Polygons
  - Filling: Solid, Linear, Radial Gradient
@@ -20,6 +21,7 @@ The next list shows drawing primitives ThorVG providing.<br />
 </p>
 <br />
 Next figure shows you a brief strategy how to use ThorVG in your system.<br />
+<br />
 <p align="center">
   <img width="900" height="288" src="https://github.com/Samsung/thorvg/blob/master/res/working_flow.png">
 </p>
