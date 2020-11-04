@@ -142,7 +142,7 @@ bool SwRenderer::clear()
     for (auto task : tasks) task->get();
     tasks.clear();
 
-    return mpoolClear();
+    return true;
 }
 
 
