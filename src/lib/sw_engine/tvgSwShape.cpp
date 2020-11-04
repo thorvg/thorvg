@@ -87,17 +87,6 @@ static void _growOutlinePoint(SwOutline& outline, uint32_t n)
 }
 
 
-static void _delOutline(SwOutline* outline)
-{
-    if (!outline) return;
-
-    if (outline->cntrs) free(outline->cntrs);
-    if (outline->pts) free(outline->pts);
-    if (outline->types) free(outline->types);
-    free(outline);
-}
-
-
 static void _outlineEnd(SwOutline& outline)
 {
     _growOutlineContour(outline, 1);
@@ -639,7 +628,7 @@ bool shapeGenStrokeRle(SwShape* shape, const Shape* sdata, unsigned tid, const M
         goto fail;
     }
 
-    strokeOutline = strokeExportOutline(shape->stroke);
+    strokeOutline = strokeExportOutline(shape->stroke, tid);
     if (!strokeOutline) {
         ret = false;
         goto fail;
@@ -656,8 +645,12 @@ bool shapeGenStrokeRle(SwShape* shape, const Shape* sdata, unsigned tid, const M
     shape->strokeRle = rleRender(strokeOutline, bbox, clip, true);
 
 fail:
-    if (freeOutline) _delOutline(shapeOutline);
-    _delOutline(strokeOutline);
+    if (freeOutline) {
+        if (shapeOutline->cntrs) free(shapeOutline->cntrs);
+        if (shapeOutline->pts) free(shapeOutline->pts);
+        if (shapeOutline->types) free(shapeOutline->types);
+    }
+    mpoolRetStrokeOutline(tid);
 
     return ret;
 }

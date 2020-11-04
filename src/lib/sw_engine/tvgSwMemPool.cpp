@@ -27,8 +27,8 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-static unsigned threadsCnt = 1;
-static vector<SwOutline> sharedOutline;
+static vector<SwOutline> outline;
+static vector<SwOutline> strokeOutline;
 
 
 /************************************************************************/
@@ -37,25 +37,49 @@ static vector<SwOutline> sharedOutline;
 
 SwOutline* mpoolReqOutline(unsigned idx)
 {
-    return &sharedOutline[idx];
+    return &outline[idx];
 }
 
 
 void mpoolRetOutline(unsigned idx)
 {
-    sharedOutline[idx].cntrsCnt = 0;
-    sharedOutline[idx].ptsCnt = 0;
+    outline[idx].cntrsCnt = 0;
+    outline[idx].ptsCnt = 0;
+}
+
+
+SwOutline* mpoolReqStrokeOutline(unsigned idx)
+{
+    return &strokeOutline[idx];
+}
+
+
+void mpoolRetStrokeOutline(unsigned idx)
+{
+    strokeOutline[idx].cntrsCnt = 0;
+    strokeOutline[idx].ptsCnt = 0;
 }
 
 
 bool mpoolInit(unsigned threads)
 {
     if (threads == 0) threads = 1;
-    sharedOutline.reserve(threads);
-    sharedOutline.resize(threads);
-    threadsCnt = threads;
 
-    for (auto& outline : sharedOutline) {
+    outline.reserve(threads);
+    outline.resize(threads);
+
+    for (auto& outline : outline) {
+        outline.cntrs = nullptr;
+        outline.pts = nullptr;
+        outline.types = nullptr;
+        outline.cntrsCnt = outline.reservedCntrsCnt = 0;
+        outline.ptsCnt = outline.reservedPtsCnt = 0;
+    }
+
+    strokeOutline.reserve(threads);
+    strokeOutline.resize(threads);
+
+    for (auto& outline : strokeOutline) {
         outline.cntrs = nullptr;
         outline.pts = nullptr;
         outline.types = nullptr;
@@ -69,7 +93,7 @@ bool mpoolInit(unsigned threads)
 
 bool mpoolClear()
 {
-    for (auto& outline : sharedOutline) {
+    for (auto& outline : outline) {
         if (outline.cntrs) {
             free(outline.cntrs);
             outline.cntrs = nullptr;
@@ -85,6 +109,24 @@ bool mpoolClear()
         outline.cntrsCnt = outline.reservedCntrsCnt = 0;
         outline.ptsCnt = outline.reservedPtsCnt = 0;
     }
+
+    for (auto& outline : strokeOutline) {
+        if (outline.cntrs) {
+            free(outline.cntrs);
+            outline.cntrs = nullptr;
+        }
+        if (outline.pts) {
+            free(outline.pts);
+            outline.pts = nullptr;
+        }
+        if (outline.types) {
+            free(outline.types);
+            outline.types = nullptr;
+        }
+        outline.cntrsCnt = outline.reservedCntrsCnt = 0;
+        outline.ptsCnt = outline.reservedPtsCnt = 0;
+    }
+
     return true;
 }
 
