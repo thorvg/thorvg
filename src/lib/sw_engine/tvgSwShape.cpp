@@ -443,9 +443,9 @@ bool _fastTrack(const SwOutline* outline)
 /* External Class Implementation                                        */
 /************************************************************************/
 
-bool shapePrepare(SwShape* shape, const Shape* sdata, const SwSize& clip, const Matrix* transform)
+bool shapePrepare(SwShape* shape, const Shape* sdata, unsigned tid, const SwSize& clip, const Matrix* transform)
 {
-    if (!shapeGenOutline(shape, sdata, transform)) return false;
+    if (!shapeGenOutline(shape, sdata, tid, transform)) return false;
 
     if (!_updateBBox(shape->outline, shape->bbox)) return false;
 
@@ -476,17 +476,15 @@ bool shapeGenRle(SwShape* shape, TVG_UNUSED const Shape* sdata, const SwSize& cl
 }
 
 
-void shapeDelOutline(SwShape* shape)
+void shapeDelOutline(SwShape* shape, uint32_t tid)
 {
-    auto outline = shape->outline;
-    _delOutline(outline);
+    resMgrRetrieveOutline(tid);
     shape->outline = nullptr;
 }
 
 
 void shapeReset(SwShape* shape)
 {
-    shapeDelOutline(shape);
     rleFree(shape->rle);
     shape->rle = nullptr;
     shape->rect = false;
@@ -494,7 +492,7 @@ void shapeReset(SwShape* shape)
 }
 
 
-bool shapeGenOutline(SwShape* shape, const Shape* sdata, const Matrix* transform)
+bool shapeGenOutline(SwShape* shape, const Shape* sdata, unsigned tid, const Matrix* transform)
 {
     const PathCommand* cmds = nullptr;
     auto cmdCnt = sdata->pathCommands(&cmds);
@@ -534,8 +532,8 @@ bool shapeGenOutline(SwShape* shape, const Shape* sdata, const Matrix* transform
     ++outlinePtsCnt;    //for close
     ++outlineCntrsCnt;  //for end
 
+    shape->outline = resMgrRequestOutline(tid);
     auto outline = shape->outline;
-    if (!outline) outline = static_cast<SwOutline*>(calloc(1, sizeof(SwOutline)));
     outline->opened = true;
 
     _growOutlinePoint(*outline, outlinePtsCnt);
@@ -583,7 +581,6 @@ bool shapeGenOutline(SwShape* shape, const Shape* sdata, const Matrix* transform
 
 void shapeFree(SwShape* shape)
 {
-    shapeDelOutline(shape);
     rleFree(shape->rle);
     shapeDelFill(shape);
 
@@ -617,7 +614,7 @@ void shapeResetStroke(SwShape* shape, const Shape* sdata, const Matrix* transfor
 }
 
 
-bool shapeGenStrokeRle(SwShape* shape, const Shape* sdata, const Matrix* transform, const SwSize& clip)
+bool shapeGenStrokeRle(SwShape* shape, const Shape* sdata, unsigned tid, const Matrix* transform, const SwSize& clip)
 {
     SwOutline* shapeOutline = nullptr;
     SwOutline* strokeOutline = nullptr;
@@ -632,7 +629,7 @@ bool shapeGenStrokeRle(SwShape* shape, const Shape* sdata, const Matrix* transfo
     //Normal Style stroke
     } else {
         if (!shape->outline) {
-            if (!shapeGenOutline(shape, sdata, transform)) return false;
+            if (!shapeGenOutline(shape, sdata, tid, transform)) return false;
         }
         shapeOutline = shape->outline;
     }

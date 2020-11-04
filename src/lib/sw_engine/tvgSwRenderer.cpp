@@ -39,7 +39,7 @@ struct SwTask : Task
     vector<Composite> compList;
     uint32_t opacity;
 
-    void run() override
+    void run(unsigned tid) override
     {
         if (opacity == 0) return;  //Invisible
 
@@ -64,13 +64,13 @@ struct SwTask : Task
             bool renderShape = (alpha > 0 || sdata->fill());
             if (renderShape || strokeAlpha) {
                 shapeReset(&shape);
-                if (!shapePrepare(&shape, sdata, clip, transform)) return;
+                if (!shapePrepare(&shape, sdata, tid, clip, transform)) goto end;
                 if (renderShape) {
                     /* We assume that if stroke width is bigger than 2,
                        shape outline below stroke could be full covered by stroke drawing.
                        Thus it turns off antialising in that condition. */
                     auto antiAlias = (strokeAlpha > 0 && strokeWidth > 2) ? false : true;
-                    if (!shapeGenRle(&shape, sdata, clip, antiAlias, compList.size() > 0 ? true : false)) return;
+                    if (!shapeGenRle(&shape, sdata, clip, antiAlias, compList.size() > 0 ? true : false)) goto end;
                 }
             }
         }
@@ -81,7 +81,7 @@ struct SwTask : Task
             if (fill) {
                 auto ctable = (flags & RenderUpdateFlag::Gradient) ? true : false;
                 if (ctable) shapeResetFill(&shape);
-                if (!shapeGenFillColors(&shape, fill, transform, surface, ctable)) return;
+                if (!shapeGenFillColors(&shape, fill, transform, surface, ctable)) goto end;
             } else {
                 shapeDelFill(&shape);
             }
@@ -90,7 +90,7 @@ struct SwTask : Task
         if (flags & (RenderUpdateFlag::Stroke | RenderUpdateFlag::Transform)) {
             if (strokeAlpha > 0) {
                 shapeResetStroke(&shape, sdata, transform);
-                if (!shapeGenStrokeRle(&shape, sdata, transform, clip)) return;
+                if (!shapeGenStrokeRle(&shape, sdata, tid, transform, clip)) goto end;
             } else {
                 shapeDelStroke(&shape);
             }
@@ -109,7 +109,8 @@ struct SwTask : Task
                   else if (shape.strokeRle && compShape->rle) rleClipPath(shape.strokeRle, compShape->rle);
              }
         }
-        shapeDelOutline(&shape);
+    end:
+        shapeDelOutline(&shape, tid);
     }
 };
 
@@ -117,7 +118,7 @@ static void _termEngine()
 {
     if (rendererCnt > 0) return;
 
-    //TODO: Clean up global resources
+    resMgrTerm();
 }
 
 
@@ -141,7 +142,7 @@ bool SwRenderer::clear()
     for (auto task : tasks) task->get();
     tasks.clear();
 
-    return true;
+    return resMgrClear();
 }
 
 
@@ -173,7 +174,6 @@ bool SwRenderer::preRender()
 bool SwRenderer::postRender()
 {
     tasks.clear();
-
     return true;
 }
 
@@ -255,12 +255,12 @@ void* SwRenderer::prepare(const Shape& sdata, void* data, const RenderTransform*
 }
 
 
-bool SwRenderer::init()
+bool SwRenderer::init(uint32_t threads)
 {
     if (rendererCnt > 0) return false;
     if (initEngine) return true;
 
-    //TODO:
+    if (!resMgrInit(threads)) return false;
 
     initEngine = true;
 

@@ -180,7 +180,7 @@ void* GlRenderer::prepare(const Shape& shape, void* data, TVG_UNUSED const Rende
 }
 
 
-int GlRenderer::init()
+int GlRenderer::init(uint32_t threads)
 {
     if (rendererCnt > 0) return false;
     if (initEngine) return true;

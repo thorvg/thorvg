@@ -266,13 +266,13 @@ bool mathSmallCubic(SwPoint* base, SwFixed& angleIn, SwFixed& angleMid, SwFixed&
 SwFixed mathMean(SwFixed angle1, SwFixed angle2);
 
 void shapeReset(SwShape* shape);
-bool shapeGenOutline(SwShape* shape, const Shape* sdata, const Matrix* transform);
-bool shapePrepare(SwShape* shape, const Shape* sdata, const SwSize& clip, const Matrix* transform);
+bool shapeGenOutline(SwShape* shape, const Shape* sdata, unsigned tid, const Matrix* transform);
+bool shapePrepare(SwShape* shape, const Shape* sdata, unsigned tid, const SwSize& clip, const Matrix* transform);
 bool shapePrepared(SwShape* shape);
 bool shapeGenRle(SwShape* shape, const Shape* sdata, const SwSize& clip, bool antiAlias, bool hasComposite);
-void shapeDelOutline(SwShape* shape);
+void shapeDelOutline(SwShape* shape, uint32_t tid);
 void shapeResetStroke(SwShape* shape, const Shape* sdata, const Matrix* transform);
-bool shapeGenStrokeRle(SwShape* shape, const Shape* sdata, const Matrix* transform, const SwSize& clip);
+bool shapeGenStrokeRle(SwShape* shape, const Shape* sdata, unsigned tid, const Matrix* transform, const SwSize& clip);
 void shapeFree(SwShape* shape);
 void shapeDelStroke(SwShape* shape);
 bool shapeGenFillColors(SwShape* shape, const Fill* fill, const Matrix* transform, SwSurface* surface, bool ctable);
@@ -295,13 +295,17 @@ void rleFree(SwRleData* rle);
 void rleClipPath(SwRleData *rle, const SwRleData *clip);
 void rleClipRect(SwRleData *rle, const SwBBox* clip);
 
+bool resMgrInit(uint32_t threads);
+bool resMgrTerm();
+bool resMgrClear();
+SwOutline* resMgrRequestOutline(unsigned idx);
+void resMgrRetrieveOutline(unsigned idx);
 
 bool rasterCompositor(SwSurface* surface);
 bool rasterGradientShape(SwSurface* surface, SwShape* shape, unsigned id);
 bool rasterSolidShape(SwSurface* surface, SwShape* shape, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
 bool rasterStroke(SwSurface* surface, SwShape* shape, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
 bool rasterClear(SwSurface* surface);
-
 
 static inline void rasterRGBA32(uint32_t *dst, uint32_t val, uint32_t offset, int32_t len)
 {
