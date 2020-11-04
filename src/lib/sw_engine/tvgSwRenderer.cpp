@@ -118,7 +118,7 @@ static void _termEngine()
 {
     if (rendererCnt > 0) return;
 
-    resMgrTerm();
+    mpoolTerm();
 }
 
 
@@ -142,7 +142,7 @@ bool SwRenderer::clear()
     for (auto task : tasks) task->get();
     tasks.clear();
 
-    return resMgrClear();
+    return mpoolClear();
 }
 
 
@@ -260,7 +260,7 @@ bool SwRenderer::init(uint32_t threads)
     if (rendererCnt > 0) return false;
     if (initEngine) return true;
 
-    if (!resMgrInit(threads)) return false;
+    if (!mpoolInit(threads)) return false;
 
     initEngine = true;
 

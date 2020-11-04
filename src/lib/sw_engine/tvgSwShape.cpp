@@ -478,7 +478,7 @@ bool shapeGenRle(SwShape* shape, TVG_UNUSED const Shape* sdata, const SwSize& cl
 
 void shapeDelOutline(SwShape* shape, uint32_t tid)
 {
-    resMgrRetrieveOutline(tid);
+    mpoolRetOutline(tid);
     shape->outline = nullptr;
 }
 
@@ -532,7 +532,7 @@ bool shapeGenOutline(SwShape* shape, const Shape* sdata, unsigned tid, const Mat
     ++outlinePtsCnt;    //for close
     ++outlineCntrsCnt;  //for end
 
-    shape->outline = resMgrRequestOutline(tid);
+    shape->outline = mpoolReqOutline(tid);
     auto outline = shape->outline;
     outline->opened = true;
 

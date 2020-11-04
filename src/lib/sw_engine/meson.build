@@ -5,7 +5,7 @@ source_file = [
    'tvgSwRenderer.h',
    'tvgSwRaster.cpp',
    'tvgSwRenderer.cpp',
-   'tvgSwResMgr.cpp',
+   'tvgSwMemPool.cpp',
    'tvgSwRle.cpp',
    'tvgSwShape.cpp',
    'tvgSwStroke.cpp',

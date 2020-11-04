@@ -295,11 +295,11 @@ void rleFree(SwRleData* rle);
 void rleClipPath(SwRleData *rle, const SwRleData *clip);
 void rleClipRect(SwRleData *rle, const SwBBox* clip);
 
-bool resMgrInit(uint32_t threads);
-bool resMgrTerm();
-bool resMgrClear();
-SwOutline* resMgrRequestOutline(unsigned idx);
-void resMgrRetrieveOutline(unsigned idx);
+bool mpoolInit(uint32_t threads);
+bool mpoolTerm();
+bool mpoolClear();
+SwOutline* mpoolReqOutline(unsigned idx);
+void mpoolRetOutline(unsigned idx);
 
 bool rasterCompositor(SwSurface* surface);
 bool rasterGradientShape(SwSurface* surface, SwShape* shape, unsigned id);

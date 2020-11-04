@@ -35,20 +35,20 @@ static vector<SwOutline> sharedOutline;
 /* External Class Implementation                                        */
 /************************************************************************/
 
-SwOutline* resMgrRequestOutline(unsigned idx)
+SwOutline* mpoolReqOutline(unsigned idx)
 {
     return &sharedOutline[idx];
 }
 
 
-void resMgrRetrieveOutline(unsigned idx)
+void mpoolRetOutline(unsigned idx)
 {
     sharedOutline[idx].cntrsCnt = 0;
     sharedOutline[idx].ptsCnt = 0;
 }
 
 
-bool resMgrInit(unsigned threads)
+bool mpoolInit(unsigned threads)
 {
     if (threads == 0) threads = 1;
     sharedOutline.reserve(threads);
@@ -67,7 +67,7 @@ bool resMgrInit(unsigned threads)
 }
 
 
-bool resMgrClear()
+bool mpoolClear()
 {
     for (auto& outline : sharedOutline) {
         if (outline.cntrs) {
@@ -89,7 +89,7 @@ bool resMgrClear()
 }
 
 
-bool resMgrTerm()
+bool mpoolTerm()
 {
-    return resMgrClear();
+    return mpoolClear();
 }
