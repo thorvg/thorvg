@@ -18,7 +18,11 @@ The next list shows drawing primitives ThorVG providing.<br />
 <p align="center">
   <img width="930" height="212" src="https://github.com/Samsung/thorvg/blob/master/res/example_primitives.png">
 </p>
-
+<br />
+Next figure shows you a brief strategy how to use ThorVG in your system.<br />
+<p align="center">
+  <img width="900" height="288" src="https://github.com/Samsung/thorvg/blob/master/res/working_flow.png">
+</p>
 <br />
  
 ## Contents
