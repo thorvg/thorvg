@@ -40,7 +40,7 @@ public:
     bool clear() override;
 
     static GlRenderer* gen();
-    static int init();
+    static int init(TVG_UNUSED uint32_t threads);
     static int term();
 
 private:

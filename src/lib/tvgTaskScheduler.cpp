@@ -133,7 +133,7 @@ public:
             }
 
             if (!success && !taskQueues[i].pop(&task)) break;
-            (*task)();
+            (*task)(i);
         }
     }
 
@@ -149,7 +149,7 @@ public:
             taskQueues[i % threadCnt].push(task);
         //Sync
         } else {
-            task->run();
+            task->run(0);
         }
     }
 };

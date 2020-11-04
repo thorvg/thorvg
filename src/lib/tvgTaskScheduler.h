@@ -50,12 +50,12 @@ public:
     }
 
 protected:
-    virtual void run() = 0;
+    virtual void run(unsigned tid) = 0;
 
 private:
-    void operator()()
+    void operator()(unsigned tid)
     {
-        run();
+        run(tid);
         sender.set_value();
     }
 

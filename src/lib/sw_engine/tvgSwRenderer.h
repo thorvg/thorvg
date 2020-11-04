@@ -43,7 +43,7 @@ public:
     bool render(const Shape& shape, void *data) override;
 
     static SwRenderer* gen();
-    static bool init();
+    static bool init(uint32_t threads);
     static bool term();
 
 private:

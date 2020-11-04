@@ -2431,7 +2431,7 @@ SvgLoader::~SvgLoader()
 }
 
 
-void SvgLoader::run()
+void SvgLoader::run(unsigned tid)
 {
     if (!simpleXmlParse(content, size, true, _svgLoaderParser, &(loaderData))) return;
 

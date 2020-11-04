@@ -49,12 +49,12 @@ Result Initializer::init(CanvasEngine engine, uint32_t threads) noexcept
 
     if (static_cast<uint32_t>(engine) & static_cast<uint32_t>(CanvasEngine::Sw)) {
         #ifdef THORVG_SW_RASTER_SUPPORT
-            if (!SwRenderer::init()) return Result::InsufficientCondition;
+            if (!SwRenderer::init(threads)) return Result::InsufficientCondition;
             nonSupport = false;
         #endif
     } else if (static_cast<uint32_t>(engine) & static_cast<uint32_t>(CanvasEngine::Gl)) {
         #ifdef THORVG_GL_RASTER_SUPPORT
-            if (!GlRenderer::init()) return Result::InsufficientCondition;
+            if (!GlRenderer::init(threads)) return Result::InsufficientCondition;
             nonSupport = false;
         #endif
     } else {
