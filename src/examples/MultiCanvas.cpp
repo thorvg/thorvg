@@ -79,6 +79,9 @@ void drawSwView(void* data, Eo* obj)
     if (canvas->draw() == tvg::Result::Success) {
         canvas->sync();
     }
+
+    //Explicitly clear all retained resources.
+    canvas->clear();
 }
 
 
@@ -160,6 +163,9 @@ void drawGLview(Evas_Object *obj)
     if (canvas->draw() == tvg::Result::Success) {
         canvas->sync();
     }
+
+    //Explicitly clear all retained resources.
+    canvas->clear();
 }
 
 

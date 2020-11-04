@@ -50,6 +50,7 @@ void resMgrRetrieveOutline(unsigned idx)
 
 bool resMgrInit(unsigned threads)
 {
+    if (threads == 0) threads = 1;
     sharedOutline.reserve(threads);
     sharedOutline.resize(threads);
     threadsCnt = threads;
