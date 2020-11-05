@@ -707,7 +707,7 @@ SwSpan* _intersectSpansRect(const SwBBox *bbox, const SwRleData *targetRle, SwSp
 /* External Class Implementation                                        */
 /************************************************************************/
 
-SwRleData* rleRender(const SwOutline* outline, const SwBBox& bbox, const SwSize& clip, bool antiAlias)
+SwRleData* rleRender(SwRleData* rle, const SwOutline* outline, const SwBBox& bbox, const SwSize& clip, bool antiAlias)
 {
     constexpr auto RENDER_POOL_SIZE = 16384L;
     constexpr auto BAND_SIZE = 40;
@@ -736,7 +736,9 @@ SwRleData* rleRender(const SwOutline* outline, const SwBBox& bbox, const SwSize&
     rw.bandShoot = 0;
     rw.clip = clip;
     rw.antiAlias = antiAlias;
-    rw.rle = reinterpret_cast<SwRleData*>(calloc(1, sizeof(SwRleData)));
+
+    if (!rle) rw.rle = reinterpret_cast<SwRleData*>(calloc(1, sizeof(SwRleData)));
+    else rw.rle = rle;
 
     //Generate RLE
     Band bands[BAND_SIZE];
@@ -827,6 +829,13 @@ error:
     free(rw.rle);
     rw.rle = nullptr;
     return nullptr;
+}
+
+
+void rleReset(SwRleData* rle)
+{
+    if (!rle) return;
+    rle->size = 0;
 }
 
 

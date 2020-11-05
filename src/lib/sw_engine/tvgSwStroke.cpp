@@ -920,12 +920,10 @@ SwOutline* strokeExportOutline(SwStroke* stroke, unsigned tid)
         outline->pts = static_cast<SwPoint*>(realloc(outline->pts, sizeof(SwPoint) * ptsCnt));
         outline->types = static_cast<uint8_t*>(realloc(outline->types, sizeof(uint8_t) * ptsCnt));
         outline->reservedPtsCnt = ptsCnt;
-        printf("pts(%d)\n", sizeof(SwPoint) * ptsCnt);
     }
     if (outline->reservedCntrsCnt < cntrsCnt) {
         outline->cntrs = static_cast<uint32_t*>(realloc(outline->cntrs, sizeof(uint32_t) * cntrsCnt));
         outline->reservedCntrsCnt = cntrsCnt;
-        printf("cntrs(%d)\n", sizeof(SwPoint) * ptsCnt);
     }
 
     _exportBorderOutline(*stroke, outline, 0);  //left

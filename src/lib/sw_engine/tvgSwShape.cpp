@@ -459,7 +459,7 @@ bool shapeGenRle(SwShape* shape, TVG_UNUSED const Shape* sdata, const SwSize& cl
     //Case A: Fast Track Rectangle Drawing
     if (!hasComposite && (shape->rect = _fastTrack(shape->outline))) return true;
     //Case B: Normale Shape RLE Drawing
-    if ((shape->rle = rleRender(shape->outline, shape->bbox, clip, antiAlias))) return true;
+    if ((shape->rle = rleRender(shape->rle, shape->outline, shape->bbox, clip, antiAlias))) return true;
 
     return false;
 }
@@ -474,8 +474,7 @@ void shapeDelOutline(SwShape* shape, uint32_t tid)
 
 void shapeReset(SwShape* shape)
 {
-    rleFree(shape->rle);
-    shape->rle = nullptr;
+    rleReset(shape->rle);
     shape->rect = false;
     _initBBox(shape->bbox);
 }
@@ -597,9 +596,7 @@ void shapeResetStroke(SwShape* shape, const Shape* sdata, const Matrix* transfor
     if (!stroke) return;
 
     strokeReset(stroke, sdata, transform);
-
-    rleFree(shape->strokeRle);
-    shape->strokeRle = nullptr;
+    rleReset(shape->strokeRle);
 }
 
 
@@ -642,7 +639,7 @@ bool shapeGenStrokeRle(SwShape* shape, const Shape* sdata, unsigned tid, const M
         goto fail;
     }
 
-    shape->strokeRle = rleRender(strokeOutline, bbox, clip, true);
+    shape->strokeRle = rleRender(shape->strokeRle, strokeOutline, bbox, clip, true);
 
 fail:
     if (freeOutline) {
