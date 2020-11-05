@@ -20,6 +20,7 @@
  * SOFTWARE.
  */
 
+#include <string>
 #include <thorvg.h>
 #include "thorvg_capi.h"
 
