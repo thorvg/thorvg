@@ -22,7 +22,11 @@
 
 #include <ctype.h>
 #include <cstring>
-#include <alloca.h>
+#ifdef _WIN32
+# include <malloc.h>
+#else
+# include <alloca.h>
+#endif
 
 #include "tvgXmlParser.h"
 

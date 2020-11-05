@@ -22,7 +22,8 @@
 #ifndef _TVG_FILL_H_
 #define _TVG_FILL_H_
 
-#include <string.h>
+#include <cstdlib>
+#include <cstring>
 #include "tvgCommon.h"
 
 template<typename T>
@@ -75,7 +76,7 @@ struct Fill::Impl
         memcpy(ret->pImpl->colorStops, colorStops, sizeof(ColorStop) * cnt);
 
         return ret;
-    }    
+    }
 };
 
 #endif  //_TVG_FILL_H_
