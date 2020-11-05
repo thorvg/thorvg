@@ -1,4 +1,14 @@
-This page guides a format for your contribution.
+We always appreciate your contribution. This page guides ThorVG contribution format.
+<br />
+## Reviewers
+Hermet Park (hermet) is the lead maintainer but there are designated sub-module maintainers you can request for your pull-requst patches as well.
+
+<b>gl_engine:</b> Prudhvi Raj Vasireddi (prudhvirajv)<br />
+<b>loaders:</b> JunsuChoi (JSUYA) <br />
+<b>wasm:</b> Shinwoo Kim (kimcinoo) <br />
+<b>svg2png:</b> JunsuChoi (JSUYA) <br />
+<br />
+
 
 ## Commit Message
 [Module][Feature]: [Title]
