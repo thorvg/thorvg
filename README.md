@@ -20,8 +20,7 @@ The next list shows drawing primitives ThorVG providing.<br />
   <img width="930" height="212" src="https://github.com/Samsung/thorvg/blob/master/res/example_primitives.png">
 </p>
 <br />
-Basically your program could use this library functions by calling slick and neat apis while switching drawing context (if you have your own drawing engine), ThorVG serializes drawing commands among volatile paints node, performs sync/asynchronous rendering by its decent engines. The engine is suggested to immediate rendering method so that your system could adaptively integrate with it. ThorVG supports vector images such as SVG, also will support coming popular formats by demands. On rendering, it might introduce intermediate frame buffers for compositing vector scenes but only when it's necessary and these are temporarily used for saving memory. <br />
-Next figure shows you a brief strategy how to use ThorVG in your system.<br />
+Basically your program could use this library functions by calling slick and neat apis while switching drawing context (if you have your own drawing engine), ThorVG serializes drawing commands among volatile paints node, performs sync/asynchronous rendering by its decent engines. The engine is suggested to immediate rendering method so that your system could adaptively integrate with it. ThorVG supports vector images such as SVG, also will support coming popular formats by demands. On rendering, it might introduce intermediate frame buffers for compositing vector scenes but only when it's necessary and these are temporarily used for saving memory. Next figure shows you a brief strategy how to use ThorVG in your system.<br />
 <br />
 <p align="center">
   <img width="900" height="288" src="https://github.com/Samsung/thorvg/blob/master/res/example_flow.png">
