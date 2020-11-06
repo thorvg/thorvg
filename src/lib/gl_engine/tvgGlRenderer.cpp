@@ -116,7 +116,7 @@ bool GlRenderer::render(const Shape& shape, void* data)
         }
         else if (flags & RenderUpdateFlag::Color)
         {
-            shape.fill(&r, &g, &b, &a);
+            shape.fillColor(&r, &g, &b, &a);
             drawPrimitive(*sdata, r, g, b, a, i, RenderUpdateFlag::Color);
         }
         if (flags & RenderUpdateFlag::Stroke)
@@ -159,7 +159,7 @@ void* GlRenderer::prepare(const Shape& shape, void* data, TVG_UNUSED const Rende
 
     //invisible?
     uint8_t alphaF, alphaS;
-    shape.fill(nullptr, nullptr, nullptr, &alphaF);
+    shape.fillColor(nullptr, nullptr, nullptr, &alphaF);
     shape.strokeColor(nullptr, nullptr, nullptr, &alphaS);
     auto strokeWd = shape.strokeWidth();
 
