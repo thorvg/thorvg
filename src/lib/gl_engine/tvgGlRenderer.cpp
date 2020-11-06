@@ -65,7 +65,7 @@ bool GlRenderer::target(TVG_UNUSED uint32_t* buffer, uint32_t stride, uint32_t w
 }
 
 
-bool GlRenderer::flush()
+bool GlRenderer::sync()
 {
     GL_CHECK(glFinish());
     GlRenderTask::unload();

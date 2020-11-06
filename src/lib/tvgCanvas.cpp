@@ -69,7 +69,7 @@ Result Canvas::update(Paint* paint) noexcept
 
 Result Canvas::sync() noexcept
 {
-    if (pImpl->renderer->flush()) return Result::Success;
+    if (pImpl->renderer->sync()) return Result::Success;
 
     return Result::InsufficientCondition;
 }
