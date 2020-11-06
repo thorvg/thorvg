@@ -181,7 +181,12 @@ void TaskScheduler::term()
 
 void TaskScheduler::request(Task* task)
 {
-    if (inst) {
-        inst->request(task);
-    }
+    if (inst) inst->request(task);
+}
+
+
+unsigned TaskScheduler::threads()
+{
+    if (inst) return inst->threadCnt;
+    return 0;
 }

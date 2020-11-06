@@ -28,6 +28,16 @@
 namespace tvg
 {
 
+struct Task;
+
+struct TaskScheduler
+{
+    static unsigned threads();
+    static void init(unsigned threads);
+    static void term();
+    static void request(Task* task);
+};
+
 struct Task
 {
 private:
@@ -41,9 +51,11 @@ public:
     {
         if (!working) return;
 
-        mtx.lock();
-        working = false;
-        mtx.unlock();
+        if (TaskScheduler::threads() > 0) {
+            mtx.lock();
+            working = false;
+            mtx.unlock();
+        }
     }
 
 protected:
@@ -53,24 +65,22 @@ private:
     void operator()(unsigned tid)
     {
         run(tid);
-        mtx.unlock();
+
+        if (TaskScheduler::threads() > 0) mtx.unlock();
     }
 
     void prepare()
     {
-        working = true;
-        mtx.lock();
+        if (TaskScheduler::threads() > 0) {
+            working = true;
+            mtx.lock();
+        }
     }
 
     friend class TaskSchedulerImpl;
 };
 
-struct TaskScheduler
-{
-    static void init(unsigned threads);
-    static void term();
-    static void request(Task* task);
-};
+
 
 }
 
