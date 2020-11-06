@@ -22,7 +22,6 @@
 #ifndef _TVG_TASK_SCHEDULER_H_
 #define _TVG_TASK_SCHEDULER_H_
 
-#include <atomic>
 #include <mutex>
 #include "tvgCommon.h"
 

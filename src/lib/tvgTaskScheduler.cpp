@@ -22,6 +22,7 @@
 #include <deque>
 #include <thread>
 #include <vector>
+#include <atomic>
 #include <condition_variable>
 #include "tvgTaskScheduler.h"
 
