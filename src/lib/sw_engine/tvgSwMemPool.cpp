@@ -19,7 +19,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#include <vector>
 #include "tvgSwCommon.h"
 
 
@@ -27,8 +26,9 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-static vector<SwOutline> outline;
-static vector<SwOutline> strokeOutline;
+static SwOutline* outline = nullptr;
+static SwOutline* strokeOutline = nullptr;
+static unsigned allocSize = 0;
 
 
 /************************************************************************/
@@ -63,68 +63,72 @@ void mpoolRetStrokeOutline(unsigned idx)
 
 bool mpoolInit(unsigned threads)
 {
+    if (outline || strokeOutline) return false;
     if (threads == 0) threads = 1;
 
-    outline.reserve(threads);
-    outline.resize(threads);
+    outline = static_cast<SwOutline*>(calloc(1, sizeof(SwOutline) * threads));
+    if (!outline) goto err;
 
-    for (auto& outline : outline) {
-        outline.cntrs = nullptr;
-        outline.pts = nullptr;
-        outline.types = nullptr;
-        outline.cntrsCnt = outline.reservedCntrsCnt = 0;
-        outline.ptsCnt = outline.reservedPtsCnt = 0;
-    }
+    strokeOutline = static_cast<SwOutline*>(calloc(1, sizeof(SwOutline) * threads));
+    if (!strokeOutline) goto err;
 
-    strokeOutline.reserve(threads);
-    strokeOutline.resize(threads);
-
-    for (auto& outline : strokeOutline) {
-        outline.cntrs = nullptr;
-        outline.pts = nullptr;
-        outline.types = nullptr;
-        outline.cntrsCnt = outline.reservedCntrsCnt = 0;
-        outline.ptsCnt = outline.reservedPtsCnt = 0;
-    }
+    allocSize = threads;
 
     return true;
+
+err:
+    if (outline) {
+        free(outline);
+        outline = nullptr;
+    }
+
+    if (strokeOutline) {
+        free(strokeOutline);
+        strokeOutline = nullptr;
+    }
+    return false;
 }
 
 
 bool mpoolClear()
 {
-    for (auto& outline : outline) {
-        if (outline.cntrs) {
-            free(outline.cntrs);
-            outline.cntrs = nullptr;
-        }
-        if (outline.pts) {
-            free(outline.pts);
-            outline.pts = nullptr;
-        }
-        if (outline.types) {
-            free(outline.types);
-            outline.types = nullptr;
-        }
-        outline.cntrsCnt = outline.reservedCntrsCnt = 0;
-        outline.ptsCnt = outline.reservedPtsCnt = 0;
-    }
+    SwOutline* p;
 
-    for (auto& outline : strokeOutline) {
-        if (outline.cntrs) {
-            free(outline.cntrs);
-            outline.cntrs = nullptr;
+    for (unsigned i = 0; i < allocSize; ++i) {
+
+        p = &outline[i];
+
+        if (p->cntrs) {
+            free(p->cntrs);
+            p->cntrs = nullptr;
         }
-        if (outline.pts) {
-            free(outline.pts);
-            outline.pts = nullptr;
+        if (p->pts) {
+            free(p->pts);
+            p->pts = nullptr;
         }
-        if (outline.types) {
-            free(outline.types);
-            outline.types = nullptr;
+        if (p->types) {
+            free(p->types);
+            p->types = nullptr;
         }
-        outline.cntrsCnt = outline.reservedCntrsCnt = 0;
-        outline.ptsCnt = outline.reservedPtsCnt = 0;
+        p->cntrsCnt = p->reservedCntrsCnt = 0;
+        p->ptsCnt = p->reservedPtsCnt = 0;
+
+        p = &strokeOutline[i];
+
+        if (p->cntrs) {
+            free(p->cntrs);
+            p->cntrs = nullptr;
+        }
+        if (p->pts) {
+            free(p->pts);
+            p->pts = nullptr;
+        }
+        if (p->types) {
+            free(p->types);
+            p->types = nullptr;
+        }
+        p->cntrsCnt = p->reservedCntrsCnt = 0;
+        p->ptsCnt = p->reservedPtsCnt = 0;
     }
 
     return true;
@@ -133,5 +137,19 @@ bool mpoolClear()
 
 bool mpoolTerm()
 {
-    return mpoolClear();
+    mpoolClear();
+
+    if (outline) {
+        free(outline);
+        outline = nullptr;
+    }
+
+    if (strokeOutline) {
+        free(strokeOutline);
+        strokeOutline = nullptr;
+    }
+
+    allocSize = 0;
+
+    return true;
 }
