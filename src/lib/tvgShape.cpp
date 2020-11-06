@@ -61,9 +61,9 @@ uint32_t Shape::pathCommands(const PathCommand** cmds) const noexcept
 {
     if (!cmds) return 0;
 
-    *cmds = pImpl->path->cmds;
+    *cmds = pImpl->path.cmds;
 
-    return pImpl->path->cmdCnt;
+    return pImpl->path.cmdCnt;
 }
 
 
@@ -71,9 +71,9 @@ uint32_t Shape::pathCoords(const Point** pts) const noexcept
 {
     if (!pts) return 0;
 
-    *pts = pImpl->path->pts;
+    *pts = pImpl->path.pts;
 
-    return pImpl->path->ptsCnt;
+    return pImpl->path.ptsCnt;
 }
 
 
@@ -81,8 +81,8 @@ Result Shape::appendPath(const PathCommand *cmds, uint32_t cmdCnt, const Point* 
 {
     if (cmdCnt == 0 || ptsCnt == 0 || !pts || !ptsCnt) return Result::InvalidArguments;
 
-    pImpl->path->grow(cmdCnt, ptsCnt);
-    pImpl->path->append(cmds, cmdCnt, pts, ptsCnt);
+    pImpl->path.grow(cmdCnt, ptsCnt);
+    pImpl->path.append(cmds, cmdCnt, pts, ptsCnt);
 
     pImpl->flag |= RenderUpdateFlag::Path;
 
@@ -92,7 +92,7 @@ Result Shape::appendPath(const PathCommand *cmds, uint32_t cmdCnt, const Point* 
 
 Result Shape::moveTo(float x, float y) noexcept
 {
-    pImpl->path->moveTo(x, y);
+    pImpl->path.moveTo(x, y);
 
     pImpl->flag |= RenderUpdateFlag::Path;
 
@@ -102,7 +102,7 @@ Result Shape::moveTo(float x, float y) noexcept
 
 Result Shape::lineTo(float x, float y) noexcept
 {
-    pImpl->path->lineTo(x, y);
+    pImpl->path.lineTo(x, y);
 
     pImpl->flag |= RenderUpdateFlag::Path;
 
@@ -112,7 +112,7 @@ Result Shape::lineTo(float x, float y) noexcept
 
 Result Shape::cubicTo(float cx1, float cy1, float cx2, float cy2, float x, float y) noexcept
 {
-    pImpl->path->cubicTo(cx1, cy1, cx2, cy2, x, y);
+    pImpl->path.cubicTo(cx1, cy1, cx2, cy2, x, y);
 
     pImpl->flag |= RenderUpdateFlag::Path;
 
@@ -122,7 +122,7 @@ Result Shape::cubicTo(float cx1, float cy1, float cx2, float cy2, float x, float
 
 Result Shape::close() noexcept
 {
-    pImpl->path->close();
+    pImpl->path.close();
 
     pImpl->flag |= RenderUpdateFlag::Path;
 
@@ -135,13 +135,13 @@ Result Shape::appendCircle(float cx, float cy, float rx, float ry) noexcept
     auto rxKappa = rx * PATH_KAPPA;
     auto ryKappa = ry * PATH_KAPPA;
 
-    pImpl->path->grow(6, 13);
-    pImpl->path->moveTo(cx, cy - ry);
-    pImpl->path->cubicTo(cx + rxKappa, cy - ry, cx + rx, cy - ryKappa, cx + rx, cy);
-    pImpl->path->cubicTo(cx + rx, cy + ryKappa, cx + rxKappa, cy + ry, cx, cy + ry);
-    pImpl->path->cubicTo(cx - rxKappa, cy + ry, cx - rx, cy + ryKappa, cx - rx, cy);
-    pImpl->path->cubicTo(cx - rx, cy - ryKappa, cx - rxKappa, cy - ry, cx, cy - ry);
-    pImpl->path->close();
+    pImpl->path.grow(6, 13);
+    pImpl->path.moveTo(cx, cy - ry);
+    pImpl->path.cubicTo(cx + rxKappa, cy - ry, cx + rx, cy - ryKappa, cx + rx, cy);
+    pImpl->path.cubicTo(cx + rx, cy + ryKappa, cx + rxKappa, cy + ry, cx, cy + ry);
+    pImpl->path.cubicTo(cx - rxKappa, cy + ry, cx - rx, cy + ryKappa, cx - rx, cy);
+    pImpl->path.cubicTo(cx - rx, cy - ryKappa, cx - rxKappa, cy - ry, cx, cy - ry);
+    pImpl->path.close();
 
     pImpl->flag |= RenderUpdateFlag::Path;
 
@@ -166,10 +166,10 @@ Result Shape::appendArc(float cx, float cy, float radius, float startAngle, floa
     Point start = {radius * cos(startAngle), radius * sin(startAngle)};
 
     if (pie) {
-        pImpl->path->moveTo(cx, cy);
-        pImpl->path->lineTo(start.x + cx, start.y + cy);
+        pImpl->path.moveTo(cx, cy);
+        pImpl->path.lineTo(start.x + cx, start.y + cy);
     } else {
-        pImpl->path->moveTo(start.x + cx, start.y + cy);
+        pImpl->path.moveTo(start.x + cx, start.y + cy);
     }
 
     for (int i = 0; i < nCurves; ++i) {
@@ -197,12 +197,12 @@ Result Shape::appendArc(float cx, float cy, float radius, float startAngle, floa
         Point ctrl1 = {ax - k2 * ay + cx, ay + k2 * ax + cy};
         Point ctrl2 = {bx + k2 * by + cx, by - k2 * bx + cy};
 
-        pImpl->path->cubicTo(ctrl1.x, ctrl1.y, ctrl2.x, ctrl2.y, end.x, end.y);
+        pImpl->path.cubicTo(ctrl1.x, ctrl1.y, ctrl2.x, ctrl2.y, end.x, end.y);
 
         startAngle = endAngle;
     }
 
-    if (pie) pImpl->path->close();
+    if (pie) pImpl->path.close();
 
     pImpl->flag |= RenderUpdateFlag::Path;
 
@@ -221,29 +221,29 @@ Result Shape::appendRect(float x, float y, float w, float h, float rx, float ry)
 
     //rectangle
     if (rx == 0 && ry == 0) {
-        pImpl->path->grow(5, 4);
-        pImpl->path->moveTo(x, y);
-        pImpl->path->lineTo(x + w, y);
-        pImpl->path->lineTo(x + w, y + h);
-        pImpl->path->lineTo(x, y + h);
-        pImpl->path->close();
+        pImpl->path.grow(5, 4);
+        pImpl->path.moveTo(x, y);
+        pImpl->path.lineTo(x + w, y);
+        pImpl->path.lineTo(x + w, y + h);
+        pImpl->path.lineTo(x, y + h);
+        pImpl->path.close();
     //circle
     } else if (fabsf(rx - halfW) < FLT_EPSILON && fabsf(ry - halfH) < FLT_EPSILON) {
         return appendCircle(x + (w * 0.5f), y + (h * 0.5f), rx, ry);
     } else {
         auto hrx = rx * 0.5f;
         auto hry = ry * 0.5f;
-        pImpl->path->grow(10, 17);
-        pImpl->path->moveTo(x + rx, y);
-        pImpl->path->lineTo(x + w - rx, y);
-        pImpl->path->cubicTo(x + w - rx + hrx, y, x + w, y + ry - hry, x + w, y + ry);
-        pImpl->path->lineTo(x + w, y + h - ry);
-        pImpl->path->cubicTo(x + w, y + h - ry + hry, x + w - rx + hrx, y + h, x + w - rx, y + h);
-        pImpl->path->lineTo(x + rx, y + h);
-        pImpl->path->cubicTo(x + rx - hrx, y + h, x, y + h - ry + hry, x, y + h - ry);
-        pImpl->path->lineTo(x, y + ry);
-        pImpl->path->cubicTo(x, y + ry - hry, x + rx - hrx, y, x + rx, y);
-        pImpl->path->close();
+        pImpl->path.grow(10, 17);
+        pImpl->path.moveTo(x + rx, y);
+        pImpl->path.lineTo(x + w - rx, y);
+        pImpl->path.cubicTo(x + w - rx + hrx, y, x + w, y + ry - hry, x + w, y + ry);
+        pImpl->path.lineTo(x + w, y + h - ry);
+        pImpl->path.cubicTo(x + w, y + h - ry + hry, x + w - rx + hrx, y + h, x + w - rx, y + h);
+        pImpl->path.lineTo(x + rx, y + h);
+        pImpl->path.cubicTo(x + rx - hrx, y + h, x, y + h - ry + hry, x, y + h - ry);
+        pImpl->path.lineTo(x, y + ry);
+        pImpl->path.cubicTo(x, y + ry - hry, x + rx - hrx, y, x + rx, y);
+        pImpl->path.close();
     }
 
     pImpl->flag |= RenderUpdateFlag::Path;

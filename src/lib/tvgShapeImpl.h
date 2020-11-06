@@ -74,9 +74,11 @@ struct ShapePath
         if (pts) free(pts);
     }
 
-    ShapePath() {}
+    ShapePath()
+    {
+    }
 
-    ShapePath(const ShapePath* src)
+    void duplicate(const ShapePath* src)
     {
         cmdCnt = src->cmdCnt;
         reservedCmdCnt = src->reservedCmdCnt;
@@ -192,7 +194,7 @@ struct ShapePath
 
 struct Shape::Impl
 {
-    ShapePath *path = nullptr;
+    ShapePath path;
     Fill *fill = nullptr;
     ShapeStroke *stroke = nullptr;
     uint8_t color[4] = {0, 0, 0, 0};    //r, g, b, a
@@ -201,13 +203,12 @@ struct Shape::Impl
     Shape *shape = nullptr;
     uint32_t flag = RenderUpdateFlag::None;
 
-    Impl(Shape* s) : path(new ShapePath), shape(s)
+    Impl(Shape* s) : shape(s)
     {
     }
 
     ~Impl()
     {
-        if (path) delete(path);
         if (fill) delete(fill);
         if (stroke) delete(stroke);
     }
@@ -231,8 +232,7 @@ struct Shape::Impl
 
     bool bounds(float* x, float* y, float* w, float* h)
     {
-        if (!path) return false;
-        return path->bounds(x, y, w, h);
+        return path.bounds(x, y, w, h);
     }
 
     bool strokeWidth(float width)
@@ -308,7 +308,7 @@ struct Shape::Impl
 
     void reset()
     {
-        path->reset();
+        path.reset();
 
         if (fill) {
             delete(fill);
@@ -337,10 +337,8 @@ struct Shape::Impl
         dup->flag = RenderUpdateFlag::Color;
 
         //Path
-        if (path) {
-            dup->path = new ShapePath(path);
-            dup->flag |= RenderUpdateFlag::Path;
-        }
+        dup->path.duplicate(&path);
+        dup->flag |= RenderUpdateFlag::Path;
 
         //Stroke
         if (stroke) {
