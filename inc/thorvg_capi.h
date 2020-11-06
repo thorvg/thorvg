@@ -170,13 +170,20 @@ TVG_EXPORT Tvg_Result tvg_gradient_set_spread(Tvg_Gradient* grad, const Tvg_Stro
 TVG_EXPORT Tvg_Result tvg_gradient_get_spread(Tvg_Gradient* grad, Tvg_Stroke_Fill* spread);
 TVG_EXPORT Tvg_Result tvg_gradient_del(Tvg_Gradient* grad);
 
-
 /************************************************************************/
 /* Picture API                                                          */
 /************************************************************************/
 TVG_EXPORT Tvg_Paint* tvg_picture_new();
 TVG_EXPORT Tvg_Result tvg_picture_load(Tvg_Paint* paint, const char* path);
 TVG_EXPORT Tvg_Result tvg_picture_get_viewbox(const Tvg_Paint* paint, float* x, float* y, float* w, float* h);
+
+/************************************************************************/
+/* Scene API                                                            */
+/************************************************************************/
+TVG_EXPORT Tvg_Paint* tvg_scene_new();
+TVG_EXPORT Tvg_Result tvg_scene_reserve(Tvg_Paint* scene, uint32_t size);
+TVG_EXPORT Tvg_Result tvg_scene_push(Tvg_Paint* scene, Tvg_Paint* paint);
+
 
 #ifdef __cplusplus
 }

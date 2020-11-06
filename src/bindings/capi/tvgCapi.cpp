@@ -475,6 +475,23 @@ TVG_EXPORT Tvg_Result tvg_gradient_get_spread(Tvg_Gradient* grad, Tvg_Stroke_Fil
     return TVG_RESULT_SUCCESS;
 }
 
+TVG_EXPORT Tvg_Paint* tvg_scene_new()
+{
+    return (Tvg_Paint*) Scene::gen().release();
+}
+
+TVG_EXPORT Tvg_Result tvg_scene_reserve(Tvg_Paint* scene, uint32_t size)
+{
+    if (!scene) return TVG_RESULT_INVALID_ARGUMENT;
+    return (Tvg_Result) reinterpret_cast<Scene*>(scene)->reserve(size);
+}
+
+TVG_EXPORT Tvg_Result tvg_scene_push(Tvg_Paint* scene, Tvg_Paint* paint)
+{
+    if (!scene || !paint) return TVG_RESULT_INVALID_ARGUMENT;
+    return (Tvg_Result) reinterpret_cast<Scene*>(scene)->push(unique_ptr<Paint>((Paint*)paint));
+}
+
 
 #ifdef __cplusplus
 }
