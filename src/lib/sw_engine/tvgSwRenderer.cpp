@@ -139,7 +139,7 @@ SwRenderer::~SwRenderer()
 
 bool SwRenderer::clear()
 {
-    for (auto task : tasks) task->get();
+    for (auto task : tasks) task->done();
     tasks.clear();
 
     return true;
@@ -181,7 +181,7 @@ bool SwRenderer::postRender()
 bool SwRenderer::render(const Shape& shape, void *data)
 {
     auto task = static_cast<SwTask*>(data);
-    task->get();
+    task->done();
 
     uint8_t r, g, b, a;
     if (auto fill = task->sdata->fill()) {
@@ -205,7 +205,7 @@ bool SwRenderer::dispose(TVG_UNUSED const Shape& sdata, void *data)
     auto task = static_cast<SwTask*>(data);
     if (!task) return true;
 
-    task->get();
+    task->done();
     shapeFree(&task->shape);
     if (task->transform) free(task->transform);
     delete(task);
@@ -226,13 +226,13 @@ void* SwRenderer::prepare(const Shape& sdata, void* data, const RenderTransform*
     if (flags == RenderUpdateFlag::None) return task;
 
     //Finish previous task if it has duplicated request.
-    if (task->valid()) task->get();
+    task->done();
 
     task->sdata = &sdata;
 
     if (compList.size() > 0) {
         //Guarantee composition targets get ready.
-        for (auto comp : compList)  static_cast<SwTask*>(comp.edata)->get();
+        for (auto comp : compList)  static_cast<SwTask*>(comp.edata)->done();
         task->compList.assign(compList.begin(), compList.end());
     }
 

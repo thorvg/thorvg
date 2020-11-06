@@ -22,7 +22,8 @@
 #ifndef _TVG_TASK_SCHEDULER_H_
 #define _TVG_TASK_SCHEDULER_H_
 
-#include <future>
+#include <atomic>
+#include <mutex>
 #include "tvgCommon.h"
 
 namespace tvg
@@ -31,22 +32,19 @@ namespace tvg
 struct Task
 {
 private:
-    promise<void> sender;
-    future<void>  receiver;
+    mutex mtx;
+    bool working = false;
 
 public:
     virtual ~Task() = default;
 
-    void get()
+    void done()
     {
-        if (receiver.valid()) {
-            receiver.get();
-        }
-    }
+        if (!working) return;
 
-    bool valid()
-    {
-        return receiver.valid();
+        mtx.lock();
+        working = false;
+        mtx.unlock();
     }
 
 protected:
@@ -56,13 +54,13 @@ private:
     void operator()(unsigned tid)
     {
         run(tid);
-        sender.set_value();
+        mtx.unlock();
     }
 
     void prepare()
     {
-        sender = promise<void>();
-        receiver = sender.get_future();
+        working = true;
+        mtx.lock();
     }
 
     friend class TaskSchedulerImpl;
