@@ -36,7 +36,7 @@ public:
     bool render(const Shape& shape, void *data) override;
     bool postRender() override;
     bool target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h);
-    bool flush() override;
+    bool sync() override;
     bool clear() override;
 
     static GlRenderer* gen();

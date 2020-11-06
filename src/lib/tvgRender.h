@@ -71,7 +71,7 @@ public:
     virtual bool render(TVG_UNUSED const Shape& shape, TVG_UNUSED void *data) { return true; }
     virtual bool postRender() { return true; }
     virtual bool clear() { return true; }
-    virtual bool flush() { return true; }
+    virtual bool sync() { return true; }
 };
 
 }
