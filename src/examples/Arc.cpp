@@ -93,7 +93,6 @@ void drawSwView(void* data, Eo* obj)
     if (swCanvas->draw() == tvg::Result::Success) {
         swCanvas->sync();
     }
-    swCanvas->clear();  //Flush out cached resource
 }
 
 

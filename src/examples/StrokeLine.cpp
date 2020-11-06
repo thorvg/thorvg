@@ -176,8 +176,6 @@ void drawSwView(void* data, Eo* obj)
     if (swCanvas->draw() == tvg::Result::Success) {
         swCanvas->sync();
     }
-    //Explicitly clear all retained resources.
-    swCanvas->clear();
 }
 
 
@@ -211,8 +209,6 @@ void drawGLview(Evas_Object *obj)
     if (glCanvas->draw() == tvg::Result::Success) {
         glCanvas->sync();
     }
-    //Explicitly clear all retained resources.
-    glCanvas->clear();
 }
 
 
@@ -240,6 +236,7 @@ int main(int argc, char **argv)
 
     //Initialize ThorVG Engine
     if (tvg::Initializer::init(tvgEngine, threads) == tvg::Result::Success) {
+
 
         elm_init(argc, argv);
 
