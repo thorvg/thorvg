@@ -22,31 +22,40 @@
 #ifndef _TVG_TASK_SCHEDULER_H_
 #define _TVG_TASK_SCHEDULER_H_
 
-#include <future>
+#include <mutex>
 #include "tvgCommon.h"
 
 namespace tvg
 {
 
+struct Task;
+
+struct TaskScheduler
+{
+    static unsigned threads();
+    static void init(unsigned threads);
+    static void term();
+    static void request(Task* task);
+};
+
 struct Task
 {
 private:
-    promise<void> sender;
-    future<void>  receiver;
+    mutex mtx;
+    bool working = false;
 
 public:
     virtual ~Task() = default;
 
-    void get()
+    void done()
     {
-        if (receiver.valid()) {
-            receiver.get();
-        }
-    }
+        if (!working) return;
 
-    bool valid()
-    {
-        return receiver.valid();
+        if (TaskScheduler::threads() > 0) {
+            mtx.lock();
+            working = false;
+            mtx.unlock();
+        }
     }
 
 protected:
@@ -56,24 +65,22 @@ private:
     void operator()(unsigned tid)
     {
         run(tid);
-        sender.set_value();
+
+        if (TaskScheduler::threads() > 0) mtx.unlock();
     }
 
     void prepare()
     {
-        sender = promise<void>();
-        receiver = sender.get_future();
+        if (TaskScheduler::threads() > 0) {
+            working = true;
+            mtx.lock();
+        }
     }
 
     friend class TaskSchedulerImpl;
 };
 
-struct TaskScheduler
-{
-    static void init(unsigned threads);
-    static void term();
-    static void request(Task* task);
-};
+
 
 }
 

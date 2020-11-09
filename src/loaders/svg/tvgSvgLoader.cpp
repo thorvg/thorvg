@@ -2518,7 +2518,7 @@ bool SvgLoader::read()
 
 bool SvgLoader::close()
 {
-    this->get();
+    this->done();
 
     if (loaderData.svgParse) {
         free(loaderData.svgParse);
@@ -2541,7 +2541,7 @@ bool SvgLoader::close()
 
 unique_ptr<Scene> SvgLoader::data()
 {
-    this->get();
+    this->done();
     if (root) return move(root);
     else return nullptr;
 }
