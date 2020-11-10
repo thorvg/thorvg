@@ -152,6 +152,7 @@ public:
         //Sync
         } else {
             task->run(0);
+            task->syncReady();
         }
     }
 };
