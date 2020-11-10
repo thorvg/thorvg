@@ -23,6 +23,7 @@
 #define _TVG_TASK_SCHEDULER_H_
 
 #include <mutex>
+#include <condition_variable>
 #include "tvgCommon.h"
 
 namespace tvg
@@ -41,21 +42,24 @@ struct TaskScheduler
 struct Task
 {
 private:
-    mutex mtx;
-    bool working = false;
+    mutex                   mtx;
+    condition_variable      cv;
+    bool                    ready{true};
+    bool                    pending{false};
 
 public:
     virtual ~Task() = default;
 
     void done()
     {
-        if (!working) return;
+        if (!pending) return;
 
         if (TaskScheduler::threads() > 0) {
-            mtx.lock();
-            working = false;
-            mtx.unlock();
+            unique_lock<mutex> lock(mtx);
+            while (!ready) cv.wait(lock);
         }
+
+        pending = false;
     }
 
 protected:
@@ -66,14 +70,20 @@ private:
     {
         run(tid);
 
-        if (TaskScheduler::threads() > 0) mtx.unlock();
+        if (TaskScheduler::threads() > 0) {
+            {
+                lock_guard<mutex> lock(mtx);
+                ready = true;
+            }
+            cv.notify_one();
+        }
     }
 
     void prepare()
     {
         if (TaskScheduler::threads() > 0) {
-            working = true;
-            mtx.lock();
+            ready = false;
+            pending = true;
         }
     }
 
