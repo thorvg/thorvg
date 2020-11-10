@@ -150,6 +150,22 @@ void testCapi()
     Tvg_Paint* dup = tvg_paint_duplicate(org);
     tvg_canvas_push(canvas, dup);
 
+    //Scene test
+    Tvg_Paint* scene = tvg_scene_new();
+
+    Tvg_Paint* scene_shape_1 = tvg_shape_new();
+    tvg_shape_append_rect(scene_shape_1, 650, 410, 100, 50, 10, 10);
+    tvg_shape_set_fill_color(scene_shape_1, 0, 255, 0, 255);
+
+    Tvg_Paint* scene_shape_2 = tvg_shape_new();
+    tvg_shape_append_rect(scene_shape_2, 650, 470, 100, 50, 10, 10);
+    tvg_shape_set_fill_color(scene_shape_2, 0, 255, 0, 255);
+
+    tvg_scene_push(scene, scene_shape_1);
+    tvg_scene_push(scene, scene_shape_2);
+    tvg_paint_set_opacity(scene, 100);
+
+    tvg_canvas_push(canvas, scene);
     tvg_canvas_draw(canvas);
     tvg_canvas_sync(canvas);
 
