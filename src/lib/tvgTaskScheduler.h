@@ -54,11 +54,8 @@ public:
     {
         if (!pending) return;
 
-        if (TaskScheduler::threads() > 0) {
-            unique_lock<mutex> lock(mtx);
-            while (!ready) cv.wait(lock);
-        }
-
+        unique_lock<mutex> lock(mtx);
+        while (!ready) cv.wait(lock);
         pending = false;
     }
 
@@ -70,21 +67,15 @@ private:
     {
         run(tid);
 
-        if (TaskScheduler::threads() > 0) {
-            {
-                lock_guard<mutex> lock(mtx);
-                ready = true;
-            }
-            cv.notify_one();
-        }
+        lock_guard<mutex> lock(mtx);
+        ready = true;
+        cv.notify_one();
     }
 
     void prepare()
     {
-        if (TaskScheduler::threads() > 0) {
-            ready = false;
-            pending = true;
-        }
+        ready = false;
+        pending = true;
     }
 
     friend class TaskSchedulerImpl;
