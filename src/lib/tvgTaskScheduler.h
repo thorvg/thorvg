@@ -52,7 +52,7 @@ public:
 
     void done()
     {
-        if (!pending || ready) return;
+        if (!pending) return;
 
         unique_lock<mutex> lock(mtx);
         while (!ready) cv.wait(lock);
@@ -63,11 +63,6 @@ protected:
     virtual void run(unsigned tid) = 0;
 
 private:
-    void syncReady()
-    {
-        ready = true;
-    }
-
     void operator()(unsigned tid)
     {
         run(tid);
