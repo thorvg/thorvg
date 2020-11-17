@@ -2445,7 +2445,7 @@ void SvgLoader::run(unsigned tid)
         _updateComposite(loaderData.doc, loaderData.doc);
         if (defs) _updateComposite(loaderData.doc, defs);
     }
-    rootScene = builder.build(loaderData.doc);
+    root = builder.build(loaderData.doc);
 };
 
 
@@ -2480,13 +2480,6 @@ bool SvgLoader::open(const char* data, uint32_t size)
     this->size = size;
 
     return header();
-}
-
-
-bool SvgLoader::open(const uint32_t* data, uint32_t width, uint32_t height, bool copy)
-{
-    /*In SvgLoader, Image data load feature is not supported.*/
-    return false;
 }
 
 
@@ -2546,14 +2539,10 @@ bool SvgLoader::close()
 }
 
 
-unique_ptr<Scene> SvgLoader::root()
+unique_ptr<Scene> SvgLoader::scene()
 {
     this->done();
-    if (rootScene) return move(rootScene);
+    if (root) return move(root);
     else return nullptr;
 }
 
-const uint32_t* SvgLoader::data()
-{
-    return nullptr;
-}

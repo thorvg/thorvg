@@ -59,20 +59,6 @@ bool RawLoader::header()
 }
 
 
-bool RawLoader::open(const string& path)
-{
-    /* RawLoader isn't supported path loding */
-    return false;
-}
-
-
-bool RawLoader::open(const char* data, uint32_t size)
-{
-    //In Raw image loader, char array load is not supported.
-    return false;
-}
-
-
 bool RawLoader::open(const uint32_t* data, uint32_t width, uint32_t height, bool copy)
 {
     if (!data || width == 0 || height == 0) return false;
@@ -109,13 +95,7 @@ bool RawLoader::close()
 }
 
 
-unique_ptr<Scene> RawLoader::root()
-{
-    return nullptr;
-}
-
-
-const uint32_t* RawLoader::data()
+const uint32_t* RawLoader::pixels()
 {
     return this->content;
 }

@@ -56,7 +56,7 @@ struct Picture::Impl
     {
         if (loader) {
             if (!paint) {
-                auto scene = loader->root();
+                auto scene = loader->scene();
                 if (scene) {
                     paint = scene.release();
                     if (!paint) return;
@@ -64,7 +64,7 @@ struct Picture::Impl
                 }
             }
             if (!buffer) {
-                buffer = (uint32_t*)loader->data();
+                buffer = (uint32_t*)loader->pixels();
             }
         }
     }

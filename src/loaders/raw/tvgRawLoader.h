@@ -33,16 +33,15 @@ public:
     RawLoader();
     ~RawLoader();
 
-    bool open(const string& path) override;
-    bool open(const char* data, uint32_t size) override;
+    using Loader::open;
     bool open(const uint32_t* data, uint32_t width, uint32_t height, bool copy) override;
     bool header();
     bool read() override;
     bool close() override;
     void run(unsigned tid) override;
 
-    unique_ptr<Scene> root() override;
-    const uint32_t* data() override;
+    using Loader::scene;
+    const uint32_t* pixels() override;
 };
 
 
