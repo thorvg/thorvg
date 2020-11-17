@@ -109,11 +109,11 @@ unique_ptr<Loader> LoaderMgr::loader(const char* data, uint32_t size)
 }
 
 
-unique_ptr<Loader> LoaderMgr::loader(uint32_t *data, uint32_t width, uint32_t height, bool copy)
+unique_ptr<Loader> LoaderMgr::loader(uint32_t *data, uint32_t w, uint32_t h, bool copy)
 {
     for (int i = 0; i < static_cast<int>(FileType::Unknown); i++) {
         auto loader = _find(static_cast<FileType>(i));
-        if (loader && loader->open(data, width, height, copy)) return unique_ptr<Loader>(loader);
+        if (loader && loader->open(data, w, h, copy)) return unique_ptr<Loader>(loader);
     }
     return nullptr;
 }

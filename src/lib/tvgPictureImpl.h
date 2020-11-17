@@ -129,10 +129,10 @@ struct Picture::Impl
         return Result::Success;
     }
 
-    Result load(uint32_t* data, uint32_t width, uint32_t height, bool copy)
+    Result load(uint32_t* data, uint32_t w, uint32_t h, bool copy)
     {
         if (loader) loader->close();
-        loader = LoaderMgr::loader(data, width, height, copy);
+        loader = LoaderMgr::loader(data, w, h, copy);
         if (!loader) return Result::NonSupport;
         if (!loader->read()) return Result::Unknown;
         return Result::Success;

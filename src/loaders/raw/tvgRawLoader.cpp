@@ -59,15 +59,15 @@ bool RawLoader::header()
 }
 
 
-bool RawLoader::open(const uint32_t* data, uint32_t width, uint32_t height, bool copy)
+bool RawLoader::open(const uint32_t* data, uint32_t w, uint32_t h, bool copy)
 {
-    if (!data || width == 0 || height == 0) return false;
+    if (!data || w == 0 || h == 0) return false;
     content = data;
 
     vx = 0;
     vy = 0;
-    vw = width;
-    vh = height;
+    vw = w;
+    vh = h;
 
     this->copy = copy;
 

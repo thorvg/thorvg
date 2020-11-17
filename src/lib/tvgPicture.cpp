@@ -60,11 +60,11 @@ Result Picture::load(const char* data, uint32_t size) noexcept
 }
 
 
-Result Picture::load(uint32_t* data, uint32_t width, uint32_t height, bool copy) noexcept
+Result Picture::load(uint32_t* data, uint32_t w, uint32_t h, bool copy) noexcept
 {
-    if (!data || width <= 0 || height <= 0) return Result::InvalidArguments;
+    if (!data || w <= 0 || h <= 0) return Result::InvalidArguments;
 
-    return pImpl->load(data, width, height, copy);
+    return pImpl->load(data, w, h, copy);
 }
 
 
