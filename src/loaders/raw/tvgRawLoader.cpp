@@ -40,7 +40,6 @@ RawLoader::RawLoader()
 
 RawLoader::~RawLoader()
 {
-    close();
     if (copy && content) {
         free((void*)content);
         content = nullptr;
@@ -48,49 +47,33 @@ RawLoader::~RawLoader()
 }
 
 
-void RawLoader::run(unsigned tid)
-{
-}
-
-
-bool RawLoader::header()
-{
-    return true;
-}
-
-
 bool RawLoader::open(const uint32_t* data, uint32_t w, uint32_t h, bool copy)
 {
     if (!data || w == 0 || h == 0) return false;
-    content = data;
 
-    vx = 0;
-    vy = 0;
     vw = w;
     vh = h;
 
     this->copy = copy;
+    if (copy) {
+        content = (uint32_t*)malloc(sizeof(uint32_t) * vw * vh);
+        if (!content) return false;
+        memcpy((void*)content, data, sizeof(uint32_t) * vw * vh);
+    }
+    else content = data;
 
-    return header();
+    return true;
 }
 
 
 bool RawLoader::read()
 {
-    if (copy && content) {
-        const uint32_t *origContent = content;
-        content = (uint32_t*)malloc(sizeof(uint32_t) * vw * vh);
-        if (!content) return false;
-        memcpy((void*)content, origContent, sizeof(uint32_t) * vw * vh);
-    }
     return true;
 }
 
 
 bool RawLoader::close()
 {
-    this->done();
-
     return true;
 }
 

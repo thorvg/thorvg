@@ -22,9 +22,7 @@
 #ifndef _TVG_RAW_LOADER_H_
 #define _TVG_RAW_LOADER_H_
 
-#include "tvgTaskScheduler.h"
-
-class RawLoader : public Loader, public Task
+class RawLoader : public Loader
 {
 public:
     const uint32_t* content = nullptr;
@@ -35,10 +33,9 @@ public:
 
     using Loader::open;
     bool open(const uint32_t* data, uint32_t w, uint32_t h, bool copy) override;
-    bool header();
+    using Loader::read;
     bool read() override;
     bool close() override;
-    void run(unsigned tid) override;
 
     using Loader::scene;
     const uint32_t* pixels() override;

@@ -34,7 +34,7 @@ struct Picture::Impl
 {
     unique_ptr<Loader> loader = nullptr;
     Paint* paint = nullptr;
-    uint32_t *buffer = nullptr;
+    uint32_t *pixels = nullptr;
     Picture *picture = nullptr;
     void *edata = nullptr;              //engine data
 
@@ -63,8 +63,8 @@ struct Picture::Impl
                     loader->close();
                 }
             }
-            if (!buffer) {
-                buffer = (uint32_t*)loader->pixels();
+            if (!pixels) {
+                pixels = (uint32_t*)loader->pixels();
             }
         }
     }
@@ -73,9 +73,9 @@ struct Picture::Impl
     {
         reload();
 
-        if (buffer) {
+        if (pixels) {
             flag |= RenderUpdateFlag::Image;
-            this->edata = renderer.prepare(*picture, this->edata, this->buffer, transform, opacity, compList, static_cast<RenderUpdateFlag>(flag));
+            this->edata = renderer.prepare(*picture, this->edata, pixels, transform, opacity, compList, static_cast<RenderUpdateFlag>(flag));
             return this->edata;
         }
         else if (paint){
@@ -86,7 +86,7 @@ struct Picture::Impl
 
     bool render(RenderMethod &renderer)
     {
-        if (buffer) {
+        if (pixels) {
             return renderer.render(*picture, edata);
         }
         else if (paint){
@@ -134,7 +134,6 @@ struct Picture::Impl
         if (loader) loader->close();
         loader = LoaderMgr::loader(data, w, h, copy);
         if (!loader) return Result::NonSupport;
-        if (!loader->read()) return Result::Unknown;
         return Result::Success;
     }
 
