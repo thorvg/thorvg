@@ -38,9 +38,9 @@ public:
 
     virtual ~Loader() {}
 
-    virtual bool open(const string& path, uint32_t width, uint32_t height) = 0;
+    virtual bool open(const string& path) = 0;
     virtual bool open(const char* data, uint32_t size) = 0;
-    virtual bool open(const uint32_t* data, uint32_t width, uint32_t height, bool isCopy) = 0;
+    virtual bool open(const uint32_t* data, uint32_t width, uint32_t height, bool copy) = 0;
     virtual bool read() = 0;
     virtual bool close() = 0;
     virtual const uint32_t* data() = 0;

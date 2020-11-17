@@ -41,7 +41,7 @@ RawLoader::RawLoader()
 RawLoader::~RawLoader()
 {
     close();
-    if (isCopy && content) {
+    if (copy && content) {
         free((void*)content);
         content = nullptr;
     }
@@ -59,29 +59,10 @@ bool RawLoader::header()
 }
 
 
-bool RawLoader::open(const string& path, uint32_t width, uint32_t height)
+bool RawLoader::open(const string& path)
 {
-    ifstream f(path);
-
-    if (!f.is_open() || width == 0 || height == 0)
-    {
-        //LOG: Failed to open file
-        return false;
-    } else {
-
-        content = (uint32_t*)malloc(sizeof(uint32_t) * (width * height));
-        f.read(reinterpret_cast<char *>((uint32_t*)content), sizeof (content) * width * height);
-        f.close();
-
-        vx = 0;
-        vy = 0;
-        vw = width;
-        vh = height;
-
-        this->isCopy = true;
-    }
-
-    return header();
+    /* RawLoader isn't supported path loding */
+    return false;
 }
 
 
@@ -92,7 +73,7 @@ bool RawLoader::open(const char* data, uint32_t size)
 }
 
 
-bool RawLoader::open(const uint32_t* data, uint32_t width, uint32_t height, bool isCopy)
+bool RawLoader::open(const uint32_t* data, uint32_t width, uint32_t height, bool copy)
 {
     if (!data || width == 0 || height == 0) return false;
     content = data;
@@ -102,7 +83,7 @@ bool RawLoader::open(const uint32_t* data, uint32_t width, uint32_t height, bool
     vw = width;
     vh = height;
 
-    this->isCopy = isCopy;
+    this->copy = copy;
 
     return header();
 }
@@ -110,7 +91,7 @@ bool RawLoader::open(const uint32_t* data, uint32_t width, uint32_t height, bool
 
 bool RawLoader::read()
 {
-    if (isCopy && content) {
+    if (copy && content) {
         const uint32_t *origContent = content;
         content = (uint32_t*)malloc(sizeof(uint32_t) * vw * vh);
         if (!content) return false;

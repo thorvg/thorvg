@@ -111,10 +111,10 @@ struct Picture::Impl
         return paint->pImpl->bounds(x, y, w, h);
     }
 
-    Result load(const string& path, uint32_t width, uint32_t height)
+    Result load(const string& path)
     {
         if (loader) loader->close();
-        loader = LoaderMgr::loader(path, width, height);
+        loader = LoaderMgr::loader(path);
         if (!loader) return Result::NonSupport;
         if (!loader->read()) return Result::Unknown;
         return Result::Success;
@@ -129,10 +129,10 @@ struct Picture::Impl
         return Result::Success;
     }
 
-    Result load(uint32_t* data, uint32_t width, uint32_t height, bool isCopy)
+    Result load(uint32_t* data, uint32_t width, uint32_t height, bool copy)
     {
         if (loader) loader->close();
-        loader = LoaderMgr::loader(data, width, height, isCopy);
+        loader = LoaderMgr::loader(data, width, height, copy);
         if (!loader) return Result::NonSupport;
         if (!loader->read()) return Result::Unknown;
         return Result::Success;

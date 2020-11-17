@@ -44,11 +44,11 @@ unique_ptr<Picture> Picture::gen() noexcept
 }
 
 
-Result Picture::load(const std::string& path, uint32_t width, uint32_t height) noexcept
+Result Picture::load(const std::string& path) noexcept
 {
     if (path.empty()) return Result::InvalidArguments;
 
-    return pImpl->load(path, width, height);
+    return pImpl->load(path);
 }
 
 
@@ -60,11 +60,11 @@ Result Picture::load(const char* data, uint32_t size) noexcept
 }
 
 
-Result Picture::load(uint32_t* data, uint32_t width, uint32_t height, bool isCopy) noexcept
+Result Picture::load(uint32_t* data, uint32_t width, uint32_t height, bool copy) noexcept
 {
     if (!data || width <= 0 || height <= 0) return Result::InvalidArguments;
 
-    return pImpl->load(data, width, height, isCopy);
+    return pImpl->load(data, width, height, copy);
 }
 
 

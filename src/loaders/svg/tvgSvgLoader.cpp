@@ -2483,14 +2483,14 @@ bool SvgLoader::open(const char* data, uint32_t size)
 }
 
 
-bool SvgLoader::open(const uint32_t* data, uint32_t width, uint32_t height, bool isCopy)
+bool SvgLoader::open(const uint32_t* data, uint32_t width, uint32_t height, bool copy)
 {
     /*In SvgLoader, Image data load feature is not supported.*/
     return false;
 }
 
 
-bool SvgLoader::open(const string& path, uint32_t width, uint32_t height)
+bool SvgLoader::open(const string& path)
 {
     ifstream f;
     f.open(path);

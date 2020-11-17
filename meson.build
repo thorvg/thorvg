@@ -20,10 +20,6 @@ if get_option('loaders').contains('svg') == true
     config_h.set10('THORVG_SVG_LOADER_SUPPORT', true)
 endif
 
-if get_option('loaders').contains('raw') == true
-    config_h.set10('THORVG_RAW_LOADER_SUPPORT', true)
-endif
-
 if get_option('vectors').contains('avx') == true
     config_h.set10('THORVG_AVX_VECTOR_SUPPORT', true)
 endif

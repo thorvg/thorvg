@@ -277,9 +277,9 @@ class TVG_EXPORT Picture final : public Paint
 public:
     ~Picture();
 
-    Result load(const std::string& path, uint32_t width = 0, uint32_t height = 0) noexcept;
+    Result load(const std::string& path) noexcept;
     Result load(const char* data, uint32_t size) noexcept;
-    Result load(uint32_t* data, uint32_t width, uint32_t height, bool isCopy) noexcept;
+    Result load(uint32_t* data, uint32_t width, uint32_t height, bool copy) noexcept;
     Result viewbox(float* x, float* y, float* w, float* h) const noexcept;
 
     static std::unique_ptr<Picture> gen() noexcept;
