@@ -20,33 +20,32 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     string path(EXAMPLE_DIR"/rawimage_200x300.raw");
 
-/*    auto pictureByPath = tvg::Picture::gen();
-    if (pictureByPath->load(path, 200, 300) != tvg::Result::Success) return;
-    pictureByPath->translate(400, 250);
-    canvas->push(move(pictureByPath));*/
-
-
     ifstream file(path);
     if (!file.is_open()) return ;
     data = (uint32_t*)malloc(sizeof(uint32_t) * (200*300));
     file.read(reinterpret_cast<char *>(data), sizeof (data) * 200 * 300);
     file.close();
 
-    auto pictureByData = tvg::Picture::gen();
-    if (pictureByData->load(data, 200, 300, true) != tvg::Result::Success) return;
+    auto picture = tvg::Picture::gen();
+    if (picture->load(data, 200, 300, true) != tvg::Result::Success) return;
+    picture->translate(400, 250);
+    canvas->push(move(picture));
 
-    pictureByData->translate(400, 200);
-    pictureByData->rotate(47);
-    pictureByData->scale(1.5);
-    pictureByData->opacity(128);
+    auto picture2 = tvg::Picture::gen();
+    if (picture2->load(data, 200, 300, true) != tvg::Result::Success) return;
+
+    picture2->translate(400, 200);
+    picture2->rotate(47);
+    picture2->scale(1.5);
+    picture2->opacity(128);
 
     auto circle = tvg::Shape::gen();
     circle->appendCircle(350, 350, 200,200);
     circle->fill(255, 255, 255, 255);
 
-    pictureByData->composite(move(circle), tvg::CompositeMethod::ClipPath);
+    picture2->composite(move(circle), tvg::CompositeMethod::ClipPath);
 
-    canvas->push(move(pictureByData));
+    canvas->push(move(picture2));
 }
 
 
