@@ -40,7 +40,7 @@ struct SwTask : Task
 
     SwImage image;
     const Picture* pdata = nullptr;
-    uint32_t *buffer = nullptr;
+    uint32_t *pixels = nullptr;
 
     Matrix* transform = nullptr;
     SwSurface* surface = nullptr;
@@ -151,8 +151,7 @@ struct SwTask : Task
             }
         }
 
-        if (this->buffer)
-           image.data = this->buffer;
+        if (this->pixels) image.data = this->pixels;
     }
 
 
@@ -231,16 +230,15 @@ bool SwRenderer::postRender()
 }
 
 
-bool SwRenderer::render(const Picture& picture, void *data)
+bool SwRenderer::render(TVG_UNUSED const Picture& picture, void *data)
 {
     auto task = static_cast<SwTask*>(data);
     task->done();
 
-    rasterImage(surface, &task->image, task->opacity, task->transform);
-    return true;
+    return rasterImage(surface, &task->image, task->opacity, task->transform);
 }
 
-bool SwRenderer::render(const Shape& shape, void *data)
+bool SwRenderer::render(TVG_UNUSED const Shape& shape, void *data)
 {
     auto task = static_cast<SwTask*>(data);
     task->done();
@@ -283,7 +281,7 @@ bool SwRenderer::dispose(TVG_UNUSED const Shape& sdata, void *data)
     return true;
 }
 
-void* SwRenderer::prepare(const Picture& pdata, void* data, uint32_t *buffer, const RenderTransform* transform, uint32_t opacity, vector<Composite>& compList, RenderUpdateFlag flags)
+void* SwRenderer::prepare(const Picture& pdata, void* data, uint32_t *pixels, const RenderTransform* transform, uint32_t opacity, vector<Composite>& compList, RenderUpdateFlag flags)
 {
     //prepare task
     auto task = static_cast<SwTask*>(data);
@@ -299,7 +297,7 @@ void* SwRenderer::prepare(const Picture& pdata, void* data, uint32_t *buffer, co
 
     task->pdata = &pdata;
     task->type = SwRenderType::Image;
-    task->buffer = buffer;
+    task->pixels = pixels;
 
     if (compList.size() > 0) {
         //Guarantee composition targets get ready.
