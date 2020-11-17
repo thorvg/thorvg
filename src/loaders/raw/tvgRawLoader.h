@@ -39,7 +39,7 @@ public:
     bool header();
     bool read() override;
     bool close() override;
-    void run() override;
+    void run(unsigned tid) override;
 
     unique_ptr<Scene> root() override;
     const uint32_t* data() override;

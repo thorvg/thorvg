@@ -132,7 +132,7 @@ bool imagePrepared(SwImage* image)
 
 bool imageGenRle(SwImage* image, TVG_UNUSED const Picture* pdata, const SwSize& clip, bool antiAlias, bool hasComposite)
 {
-    if ((image->rle = rleRender(image->outline, image->bbox, clip, antiAlias))) return true;
+    if ((image->rle = rleRender(image->rle, image->outline, image->bbox, clip, antiAlias))) return true;
 
     return false;
 }

@@ -48,7 +48,7 @@ RawLoader::~RawLoader()
 }
 
 
-void RawLoader::run()
+void RawLoader::run(unsigned tid)
 {
 }
 
@@ -122,7 +122,7 @@ bool RawLoader::read()
 
 bool RawLoader::close()
 {
-    this->get();
+    this->done();
 
     return true;
 }

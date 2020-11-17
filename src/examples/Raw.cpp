@@ -20,10 +20,10 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     string path(EXAMPLE_DIR"/rawimage_200x300.raw");
 
-    auto pictureByPath = tvg::Picture::gen();
+/*    auto pictureByPath = tvg::Picture::gen();
     if (pictureByPath->load(path, 200, 300) != tvg::Result::Success) return;
     pictureByPath->translate(400, 250);
-    canvas->push(move(pictureByPath));
+    canvas->push(move(pictureByPath));*/
 
 
     ifstream file(path);

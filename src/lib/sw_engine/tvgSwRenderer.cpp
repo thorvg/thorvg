@@ -234,7 +234,7 @@ bool SwRenderer::postRender()
 bool SwRenderer::render(const Picture& picture, void *data)
 {
     auto task = static_cast<SwTask*>(data);
-    task->get();
+    task->done();
 
     rasterImage(surface, &task->image, task->opacity, task->transform);
     return true;
@@ -295,7 +295,7 @@ void* SwRenderer::prepare(const Picture& pdata, void* data, uint32_t *buffer, co
     if (flags == RenderUpdateFlag::None) return task;
 
     //Finish previous task if it has duplicated request.
-    if (task->valid()) task->get();
+    task->done();
 
     task->pdata = &pdata;
     task->type = SwRenderType::Image;
@@ -303,7 +303,7 @@ void* SwRenderer::prepare(const Picture& pdata, void* data, uint32_t *buffer, co
 
     if (compList.size() > 0) {
         //Guarantee composition targets get ready.
-        for (auto comp : compList)  static_cast<SwTask*>(comp.edata)->get();
+        for (auto comp : compList)  static_cast<SwTask*>(comp.edata)->done();
         task->compList.assign(compList.begin(), compList.end());
     }
 

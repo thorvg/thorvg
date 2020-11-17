@@ -44,9 +44,7 @@ static Loader* _find(FileType type)
 #endif
             break;
         case FileType::Raw :
-#ifdef THORVG_RAW_LOADER_SUPPORT
-            return unique_ptr<RawLoader>(new RawLoader);
-#endif
+            return new RawLoader;
             break;
         }
         default: {
@@ -96,7 +94,7 @@ unique_ptr<Loader> LoaderMgr::loader(const string& path, uint32_t width, uint32_
 {
     auto loader = _find(path);
 
-    if (loader && loader->open(path.c_str())) return unique_ptr<Loader>(loader);
+    if (loader && loader->open(path, width, height)) return unique_ptr<Loader>(loader);
 
     return nullptr;
 }
