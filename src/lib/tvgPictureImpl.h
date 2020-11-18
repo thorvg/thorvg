@@ -37,6 +37,7 @@ struct Picture::Impl
     uint32_t *pixels = nullptr;
     Picture *picture = nullptr;
     void *edata = nullptr;              //engine data
+    uint32_t flag = RenderUpdateFlag::None;
 
     Impl(Picture* p) : picture(p)
     {
@@ -44,12 +45,16 @@ struct Picture::Impl
 
     bool dispose(RenderMethod& renderer)
     {
-        if (!paint) return false;
+        if (paint) {
+            paint->pImpl->dispose(renderer);
+            delete(paint);
 
-        paint->pImpl->dispose(renderer);
-        delete(paint);
-
-        return true;
+            return true;
+        }
+        else if (pixels) {
+            return renderer.dispose(edata);
+        }
+        return false;
     }
 
     void reload()
@@ -69,17 +74,19 @@ struct Picture::Impl
         }
     }
 
-    void* update(RenderMethod &renderer, const RenderTransform* transform, uint32_t opacity, vector<Composite>& compList, uint32_t flag)
+    void* update(RenderMethod &renderer, const RenderTransform* transform, uint32_t opacity, vector<Composite>& compList, RenderUpdateFlag pFlag)
     {
         reload();
 
         if (pixels) {
-            flag |= RenderUpdateFlag::Image;
-            this->edata = renderer.prepare(*picture, this->edata, pixels, transform, opacity, compList, static_cast<RenderUpdateFlag>(flag));
-            return this->edata;
+            edata = renderer.prepare(*picture, edata, pixels, transform, opacity, compList, static_cast<RenderUpdateFlag>(pFlag | flag));
+            flag = RenderUpdateFlag::None;
+            return edata;
         }
         else if (paint){
-            return paint->pImpl->update(renderer, transform, opacity, compList, flag);
+            edata = paint->pImpl->update(renderer, transform, opacity, compList, static_cast<RenderUpdateFlag>(pFlag | flag));
+            flag = RenderUpdateFlag::None;
+            return edata;
         }
         return nullptr;
     }
@@ -117,6 +124,7 @@ struct Picture::Impl
         loader = LoaderMgr::loader(path);
         if (!loader) return Result::NonSupport;
         if (!loader->read()) return Result::Unknown;
+        flag |= RenderUpdateFlag::All;
         return Result::Success;
     }
 
@@ -126,6 +134,7 @@ struct Picture::Impl
         loader = LoaderMgr::loader(data, size);
         if (!loader) return Result::NonSupport;
         if (!loader->read()) return Result::Unknown;
+        flag |= RenderUpdateFlag::All;
         return Result::Success;
     }
 
@@ -134,6 +143,7 @@ struct Picture::Impl
         if (loader) loader->close();
         loader = LoaderMgr::loader(data, w, h, copy);
         if (!loader) return Result::NonSupport;
+        flag |= RenderUpdateFlag::Image;
         return Result::Success;
     }
 
