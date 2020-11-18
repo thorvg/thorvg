@@ -294,12 +294,12 @@ bool strokeParseOutline(SwStroke* stroke, const SwOutline& outline);
 SwOutline* strokeExportOutline(SwStroke* stroke, unsigned tid);
 void strokeFree(SwStroke* stroke);
 
-bool imagePrepare(SwImage* image, const Picture* pdata, const SwSize& clip, const Matrix* transform);
+bool imagePrepare(SwImage* image, const Picture* pdata, unsigned tid, const SwSize& clip, const Matrix* transform);
 bool imagePrepared(SwImage* image);
 bool imageGenRle(SwImage* image, TVG_UNUSED const Picture* pdata, const SwSize& clip, bool antiAlias, bool hasComposite);
-void imageDelOutline(SwImage* image);
+void imageDelOutline(SwImage* image, uint32_t tid);
 void imageReset(SwImage* image);
-bool imageGenOutline(SwImage* image, const Picture* pdata, const Matrix* transform);
+bool imageGenOutline(SwImage* image, const Picture* pdata, unsigned tid, const Matrix* transform);
 void imageFree(SwImage* image);
 
 bool fillGenColorTable(SwFill* fill, const Fill* fdata, const Matrix* transform, SwSurface* surface, bool ctable);

@@ -153,10 +153,10 @@ struct SwImageTask : SwTask
 
         if (prepareImage) {
             imageReset(&image);
-            if (!imagePrepare(&image, pdata, clip, transform)) return;
+            if (!imagePrepare(&image, pdata, tid, clip, transform)) goto end;
 
             if (compList.size() > 0) {
-                if (!imageGenRle(&image, pdata, clip, false, true)) return;
+                if (!imageGenRle(&image, pdata, clip, false, true)) goto end;
 
                 //Composition
                 for (auto comp : compList) {
@@ -167,11 +167,12 @@ struct SwImageTask : SwTask
                           else if (image.rle && compShape->rle) rleClipPath(image.rle, compShape->rle);
                      }
                 }
-                imageDelOutline(&image);
             }
         }
 
         if (this->pixels) image.data = this->pixels;
+    end:
+        imageDelOutline(&image, tid);
     }
 
     void run(unsigned tid) override

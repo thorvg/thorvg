@@ -27,17 +27,6 @@
 /************************************************************************/
 
 
-static void _delOutline(SwOutline* outline)
-{
-    if (!outline) return;
-
-    if (outline->cntrs) free(outline->cntrs);
-    if (outline->pts) free(outline->pts);
-    if (outline->types) free(outline->types);
-    free(outline);
-}
-
-
 static void _initBBox(SwBBox& bbox)
 {
     bbox.min.x = bbox.min.y = 0;
@@ -101,9 +90,9 @@ static bool _checkValid(const SwOutline* outline, const SwBBox& bbox, const SwSi
 /************************************************************************/
 
 
-bool imagePrepare(SwImage* image, const Picture* pdata, const SwSize& clip, const Matrix* transform)
+bool imagePrepare(SwImage* image, const Picture* pdata, unsigned tid, const SwSize& clip, const Matrix* transform)
 {
-    if (!imageGenOutline(image, pdata, transform)) return false;
+    if (!imageGenOutline(image, pdata, tid, transform)) return false;
 
     if (!_updateBBox(image->outline, image->bbox, clip))  return false;
 
@@ -127,27 +116,25 @@ bool imageGenRle(SwImage* image, TVG_UNUSED const Picture* pdata, const SwSize& 
 }
 
 
-void imageDelOutline(SwImage* image)
+void imageDelOutline(SwImage* image, uint32_t tid)
 {
-    auto outline = image->outline;
-    _delOutline(outline);
+    mpoolRetOutline(tid);
     image->outline = nullptr;
 }
 
 
 void imageReset(SwImage* image)
 {
-    imageDelOutline(image);
-    rleFree(image->rle);
+    rleReset(image->rle);
     image->rle = nullptr;
     _initBBox(image->bbox);
 }
 
 
-bool imageGenOutline(SwImage* image, const Picture* pdata, const Matrix* transform)
+bool imageGenOutline(SwImage* image, const Picture* pdata, unsigned tid, const Matrix* transform)
 {
+    image->outline = mpoolReqOutline(tid);
     auto outline = image->outline;
-    if (!outline) outline = static_cast<SwOutline*>(calloc(1, sizeof(SwOutline)));
 
     float w, h;
     pdata->viewbox(nullptr, nullptr, &w, &h);
@@ -184,6 +171,5 @@ bool imageGenOutline(SwImage* image, const Picture* pdata, const Matrix* transfo
 
 void imageFree(SwImage* image)
 {
-    imageDelOutline(image);
     rleFree(image->rle);
 }
