@@ -295,6 +295,31 @@ bool SwRenderer::dispose(void *data)
 }
 
 
+void SwRenderer::prepareCommon(SwTask* task, const RenderTransform* transform, uint32_t opacity, vector<Composite>& compList, RenderUpdateFlag flags)
+{
+    if (compList.size() > 0) {
+        //Guarantee composition targets get ready.
+        for (auto comp : compList)  static_cast<SwShapeTask*>(comp.edata)->done();
+        task->compList.assign(compList.begin(), compList.end());
+    }
+
+    if (transform) {
+        if (!task->transform) task->transform = static_cast<Matrix*>(malloc(sizeof(Matrix)));
+        *task->transform = transform->m;
+    } else {
+        if (task->transform) free(task->transform);
+        task->transform = nullptr;
+    }
+
+    task->opacity = opacity;
+    task->surface = surface;
+    task->flags = flags;
+
+    tasks.push_back(task);
+    TaskScheduler::request(task);
+}
+
+
 void* SwRenderer::prepare(const Picture& pdata, void* data, uint32_t *pixels, const RenderTransform* transform, uint32_t opacity, vector<Composite>& compList, RenderUpdateFlag flags)
 {
     //prepare task
@@ -312,29 +337,11 @@ void* SwRenderer::prepare(const Picture& pdata, void* data, uint32_t *pixels, co
     task->pdata = &pdata;
     task->pixels = pixels;
 
-    if (compList.size() > 0) {
-        //Guarantee composition targets get ready.
-        for (auto comp : compList)  static_cast<SwShapeTask*>(comp.edata)->done();
-        task->compList.assign(compList.begin(), compList.end());
-    }
-
-    if (transform) {
-        if (!task->transform) task->transform = static_cast<Matrix*>(malloc(sizeof(Matrix)));
-        *task->transform = transform->m;
-    } else {
-        if (task->transform) free(task->transform);
-        task->transform = nullptr;
-    }
-
-    task->opacity = opacity;
-    task->surface = surface;
-    task->flags = flags;
-
-    tasks.push_back(task);
-    TaskScheduler::request(task);
+    prepareCommon(task, transform, opacity, compList, flags);
 
     return task;
 }
+
 
 void* SwRenderer::prepare(const Shape& sdata, void* data, const RenderTransform* transform, uint32_t opacity, vector<Composite>& compList, RenderUpdateFlag flags)
 {
@@ -351,26 +358,7 @@ void* SwRenderer::prepare(const Shape& sdata, void* data, const RenderTransform*
     task->done();
     task->sdata = &sdata;
 
-    if (compList.size() > 0) {
-        //Guarantee composition targets get ready.
-        for (auto comp : compList)  static_cast<SwShapeTask*>(comp.edata)->done();
-        task->compList.assign(compList.begin(), compList.end());
-    }
-
-    if (transform) {
-        if (!task->transform) task->transform = static_cast<Matrix*>(malloc(sizeof(Matrix)));
-        *task->transform = transform->m;
-    } else {
-        if (task->transform) free(task->transform);
-        task->transform = nullptr;
-    }
-
-    task->opacity = opacity;
-    task->surface = surface;
-    task->flags = flags;
-
-    tasks.push_back(task);
-    TaskScheduler::request(task);
+    prepareCommon(task, transform, opacity, compList, flags);
 
     return task;
 }

@@ -54,6 +54,8 @@ private:
 
     SwRenderer(){};
     ~SwRenderer();
+
+    void prepareCommon(SwTask* task, const RenderTransform* transform, uint32_t opacity, vector<Composite>& compList, RenderUpdateFlag flags);
 };
 
 }
