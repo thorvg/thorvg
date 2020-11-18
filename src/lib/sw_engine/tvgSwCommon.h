@@ -354,4 +354,14 @@ static inline void rasterRGBA32(uint32_t *dst, uint32_t val, uint32_t offset, in
 #endif
 }
 
+static inline SwPoint pointTransform(const Point* to, const Matrix* transform)
+{
+    if (!transform) return {TO_SWCOORD(to->x), TO_SWCOORD(to->y)};
+
+    auto tx = ((to->x * transform->e11 + to->y * transform->e12 + transform->e13) + 0.5f);
+    auto ty = ((to->x * transform->e21 + to->y * transform->e22 + transform->e23) + 0.5f);
+
+    return {TO_SWCOORD(tx), TO_SWCOORD(ty)};
+}
+
 #endif /* _TVG_SW_COMMON_H_ */

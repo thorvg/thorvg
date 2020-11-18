@@ -19,7 +19,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#include <math.h>
 #include "tvgSwCommon.h"
 #include "tvgBezier.h"
 
@@ -32,17 +31,6 @@ struct Line
     Point pt1;
     Point pt2;
 };
-
-
-static SwPoint _transform(const Point* to, const Matrix* transform)
-{
-    if (!transform) return {TO_SWCOORD(to->x), TO_SWCOORD(to->y)};
-
-    auto tx = round(to->x * transform->e11 + to->y * transform->e12 + transform->e13);
-    auto ty = round(to->x * transform->e21 + to->y * transform->e22 + transform->e23);
-
-    return {TO_SWCOORD(tx), TO_SWCOORD(ty)};
-}
 
 
 static float _lineLength(const Point& pt1, const Point& pt2)
@@ -101,7 +89,7 @@ static void _outlineMoveTo(SwOutline& outline, const Point* to, const Matrix* tr
 {
     _growOutlinePoint(outline, 1);
 
-    outline.pts[outline.ptsCnt] = _transform(to, transform);
+    outline.pts[outline.ptsCnt] = pointTransform(to, transform);
     outline.types[outline.ptsCnt] = SW_CURVE_TYPE_POINT;
 
     if (outline.ptsCnt > 0) {
@@ -118,7 +106,7 @@ static void _outlineLineTo(SwOutline& outline, const Point* to, const Matrix* tr
 {
     _growOutlinePoint(outline, 1);
 
-    outline.pts[outline.ptsCnt] = _transform(to, transform);
+    outline.pts[outline.ptsCnt] = pointTransform(to, transform);
     outline.types[outline.ptsCnt] = SW_CURVE_TYPE_POINT;
     ++outline.ptsCnt;
 }
@@ -128,15 +116,15 @@ static void _outlineCubicTo(SwOutline& outline, const Point* ctrl1, const Point*
 {
     _growOutlinePoint(outline, 3);
 
-    outline.pts[outline.ptsCnt] = _transform(ctrl1, transform);
+    outline.pts[outline.ptsCnt] = pointTransform(ctrl1, transform);
     outline.types[outline.ptsCnt] = SW_CURVE_TYPE_CUBIC;
     ++outline.ptsCnt;
 
-    outline.pts[outline.ptsCnt] = _transform(ctrl2, transform);
+    outline.pts[outline.ptsCnt] = pointTransform(ctrl2, transform);
     outline.types[outline.ptsCnt] = SW_CURVE_TYPE_CUBIC;
     ++outline.ptsCnt;
 
-    outline.pts[outline.ptsCnt] = _transform(to, transform);
+    outline.pts[outline.ptsCnt] = pointTransform(to, transform);
     outline.types[outline.ptsCnt] = SW_CURVE_TYPE_POINT;
     ++outline.ptsCnt;
 }

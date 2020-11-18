@@ -27,17 +27,6 @@
 /************************************************************************/
 
 
-static SwPoint _transform(const Point* to, const Matrix* transform)
-{
-    if (!transform) return {TO_SWCOORD(to->x), TO_SWCOORD(to->y)};
-
-    auto tx = round(to->x * transform->e11 + to->y * transform->e12 + transform->e13);
-    auto ty = round(to->x * transform->e21 + to->y * transform->e22 + transform->e23);
-
-    return {TO_SWCOORD(tx), TO_SWCOORD(ty)};
-}
-
-
 static void _delOutline(SwOutline* outline)
 {
     if (!outline) return;
@@ -173,7 +162,7 @@ bool imageGenOutline(SwImage* image, const Picture* pdata, const Matrix* transfo
 
     Point to[4] = {{0 ,0}, {w, 0}, {w, h}, {0, h}};
     for (int i = 0; i < 4; i++) {
-        outline->pts[outline->ptsCnt] = _transform(&to[i], transform);
+        outline->pts[outline->ptsCnt] = pointTransform(&to[i], transform);
         outline->types[outline->ptsCnt] = SW_CURVE_TYPE_POINT;
         ++outline->ptsCnt;
     }
