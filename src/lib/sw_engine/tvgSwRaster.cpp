@@ -67,6 +67,17 @@ static void _inverseMatrix(const Matrix* transform, Matrix* invM)
 }
 
 
+bool _identifyMatrix(const Matrix* transform)
+{
+    if (transform->e11 != 1.0f || transform->e12 != 0.0f || transform->e13 != 0.0f ||
+        transform->e21 != 0.0f || transform->e22 != 1.0f || transform->e23 != 0.0f ||
+        transform->e31 != 0.0f || transform->e32 != 0.0f || transform->e33 != 1.0f)
+        return false;
+
+    return true;
+}
+
+
 static SwBBox _clipRegion(Surface* surface, SwBBox& in)
 {
     auto bbox = in;
@@ -211,6 +222,23 @@ static bool _rasterTranslucentImage(SwSurface* surface, uint32_t *data, uint32_t
 }
 
 
+static bool _rasterImageWithoutTransform(SwSurface* surface, uint32_t *data, const SwBBox& bbox, uint32_t width, uint32_t height)
+{
+    for (auto y = bbox.min.y; y < bbox.max.y; y++) {
+        for (auto x = bbox.min.x; x < bbox.max.x; x++) {
+            auto dst = &surface->buffer[y * surface->stride + x];
+            auto index = x + (y * width); //TODO: need to use image's stride
+            if (dst && data && data[index]) {
+                auto src = data[index];
+                auto invAlpha = 255 - surface->comp.alpha(src);
+                *dst = src + ALPHA_BLEND(*dst, invAlpha);
+            }
+        }
+    }
+    return true;
+}
+
+
 static bool _rasterImage(SwSurface* surface, uint32_t *data, const SwBBox& bbox, const Matrix* transform, uint32_t width, uint32_t height)
 {
     Matrix invTransform;
@@ -240,6 +268,10 @@ bool rasterImage(SwSurface* surface, SwImage* image, uint8_t opacity, const Matr
     if (image->rle) {
         if (opacity < 255) return _rasterTranslucentImageWithRle(surface, image->rle, image->data, opacity, image->bbox, transform, image->width, image->height );
         return _rasterImageWithRle(surface, image->rle, image->data, image->bbox, transform, image->width, image->height );
+    }
+    // Fast track
+    else if (!image->rle && (!transform || (transform && _identifyMatrix(transform)))) {
+        return _rasterImageWithoutTransform(surface, image->data, image->bbox, image->width, image->height);
     }
     else {
         if (opacity < 255) return _rasterTranslucentImage(surface, image->data, opacity, image->bbox, transform, image->width, image->height);
