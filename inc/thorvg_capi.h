@@ -1,6 +1,8 @@
 #ifndef __THORVG_CAPI_H__
 #define __THORVG_CAPI_H__
 
+#include <stdbool.h>
+
 #ifdef TVG_EXPORT
     #undef TVG_EXPORT
 #endif
@@ -105,7 +107,7 @@ TVG_EXPORT Tvg_Result tvg_swcanvas_set_target(Tvg_Canvas* canvas, uint32_t* buff
 TVG_EXPORT Tvg_Result tvg_canvas_destroy(Tvg_Canvas* canvas);
 TVG_EXPORT Tvg_Result tvg_canvas_push(Tvg_Canvas* canvas, Tvg_Paint* paint);
 TVG_EXPORT Tvg_Result tvg_canvas_reserve(Tvg_Canvas* canvas, uint32_t n);
-TVG_EXPORT Tvg_Result tvg_canvas_clear(Tvg_Canvas* canvas);
+TVG_EXPORT Tvg_Result tvg_canvas_clear(Tvg_Canvas* canvas, bool free);
 TVG_EXPORT Tvg_Result tvg_canvas_update(Tvg_Canvas* canvas);
 TVG_EXPORT Tvg_Result tvg_canvas_update_paint(Tvg_Canvas* canvas, Tvg_Paint* paint);
 TVG_EXPORT Tvg_Result tvg_canvas_draw(Tvg_Canvas* canvas);
