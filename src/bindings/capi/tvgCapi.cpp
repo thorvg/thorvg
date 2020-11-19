@@ -88,10 +88,10 @@ TVG_EXPORT Tvg_Result tvg_canvas_reserve(Tvg_Canvas* canvas, uint32_t n)
 }
 
 
-TVG_EXPORT Tvg_Result tvg_canvas_clear(Tvg_Canvas* canvas)
+TVG_EXPORT Tvg_Result tvg_canvas_clear(Tvg_Canvas* canvas, bool free)
 {
     if (!canvas) return TVG_RESULT_INVALID_ARGUMENT;
-    return (Tvg_Result) reinterpret_cast<Canvas*>(canvas)->clear();
+    return (Tvg_Result) reinterpret_cast<Canvas*>(canvas)->clear(free);
 }
 
 
