@@ -358,6 +358,21 @@ TVG_EXPORT Tvg_Result tvg_shape_get_fill_color(const Tvg_Paint* paint, uint8_t* 
 }
 
 
+TVG_EXPORT Tvg_Result tvg_shape_set_fill_rule(Tvg_Paint* paint, Tvg_Fill_Rule rule)
+{
+    if (!paint) return TVG_RESULT_INVALID_ARGUMENT;
+    return (Tvg_Result) reinterpret_cast<Shape*>(paint)->fill((FillRule)rule);
+}
+
+
+TVG_EXPORT Tvg_Result tvg_shape_get_fill_rule(const Tvg_Paint* paint, Tvg_Fill_Rule* rule)
+{
+    if (!paint || !rule) return TVG_RESULT_INVALID_ARGUMENT;
+    *rule = (Tvg_Fill_Rule) reinterpret_cast<Shape*>(CCP(paint))->fillRule();
+    return TVG_RESULT_SUCCESS;
+}
+
+
 TVG_EXPORT Tvg_Result tvg_shape_set_linear_gradient(Tvg_Paint* paint, Tvg_Gradient* gradient)
 {
     if (!paint) return TVG_RESULT_INVALID_ARGUMENT;
