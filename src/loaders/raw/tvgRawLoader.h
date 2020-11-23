@@ -33,11 +33,10 @@ public:
 
     using Loader::open;
     bool open(const uint32_t* data, uint32_t w, uint32_t h, bool copy) override;
-    using Loader::read;
     bool read() override;
     bool close() override;
 
-    using Loader::scene;
+
     const uint32_t* pixels() override;
 };
 

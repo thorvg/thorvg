@@ -49,7 +49,6 @@ public:
     void run(unsigned tid) override;
 
     unique_ptr<Scene> scene() override;
-    using Loader::pixels;
 };
 
 
