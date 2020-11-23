@@ -279,6 +279,7 @@ public:
 
     Result load(const std::string& path) noexcept;
     Result load(const char* data, uint32_t size) noexcept;
+    Result load(uint32_t* data, uint32_t w, uint32_t h, bool copy) noexcept;
     Result viewbox(float* x, float* y, float* w, float* h) const noexcept;
 
     static std::unique_ptr<Picture> gen() noexcept;

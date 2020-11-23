@@ -19,20 +19,25 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#ifndef _TVG_LOADER_MGR_H_
-#define _TVG_LOADER_MGR_H_
+#ifndef _TVG_RAW_LOADER_H_
+#define _TVG_RAW_LOADER_H_
 
-#include "tvgLoader.h"
-
-enum class FileType { Svg = 0, Raw, Unknown };
-
-struct LoaderMgr
+class RawLoader : public Loader
 {
-    static bool init();
-    static bool term();
-    static unique_ptr<Loader> loader(const string& path);
-    static unique_ptr<Loader> loader(const char* data, uint32_t size);
-    static unique_ptr<Loader> loader(uint32_t* data, uint32_t w, uint32_t h, bool copy);
+public:
+    const uint32_t* content = nullptr;
+    bool copy;
+
+    RawLoader();
+    ~RawLoader();
+
+    using Loader::open;
+    bool open(const uint32_t* data, uint32_t w, uint32_t h, bool copy) override;
+    bool read() override;
+    bool close() override;
+
+    const uint32_t* pixels() override;
 };
 
-#endif //_TVG_LOADER_MGR_H_
+
+#endif //_TVG_RAW_LOADER_H_

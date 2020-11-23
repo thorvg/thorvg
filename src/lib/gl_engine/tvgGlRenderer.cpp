@@ -130,7 +130,7 @@ bool GlRenderer::render(const Shape& shape, void* data)
 }
 
 
-bool GlRenderer::dispose(TVG_UNUSED const Shape& shape, void *data)
+bool GlRenderer::dispose(void *data)
 {
     GlShape* sdata = static_cast<GlShape*>(data);
     if (!sdata) return false;

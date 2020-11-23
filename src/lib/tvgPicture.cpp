@@ -26,7 +26,7 @@
 /* External Class Implementation                                        */
 /************************************************************************/
 
-Picture::Picture() : pImpl(new Impl())
+Picture::Picture() : pImpl(new Impl(this))
 {
     Paint::pImpl->method(new PaintMethod<Picture::Impl>(pImpl));
 }
@@ -57,6 +57,14 @@ Result Picture::load(const char* data, uint32_t size) noexcept
     if (!data || size <= 0) return Result::InvalidArguments;
 
     return pImpl->load(data, size);
+}
+
+
+Result Picture::load(uint32_t* data, uint32_t w, uint32_t h, bool copy) noexcept
+{
+    if (!data || w <= 0 || h <= 0) return Result::InvalidArguments;
+
+    return pImpl->load(data, w, h, copy);
 }
 
 

@@ -22,6 +22,7 @@
 #include "tvgSwCommon.h"
 #include "tvgRender.h"
 #include <float.h>
+#include <math.h>
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
@@ -42,6 +43,39 @@ static uint32_t _abgrJoin(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 static uint32_t _argbJoin(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 {
     return (a << 24 | r << 16 | g << 8 | b);
+}
+
+
+static void _inverse(const Matrix* transform, Matrix* invM)
+{
+    // computes the inverse of a matrix m
+    auto det = transform->e11 * (transform->e22 * transform->e33 - transform->e32 * transform->e23) -
+               transform->e12 * (transform->e21 * transform->e33 - transform->e23 * transform->e31) +
+               transform->e13 * (transform->e21 * transform->e32 - transform->e22 * transform->e31);
+
+    auto invDet = 1 / det;
+
+    invM->e11 = (transform->e22 * transform->e33 - transform->e32 * transform->e23) * invDet;
+    invM->e12 = (transform->e13 * transform->e32 - transform->e12 * transform->e33) * invDet;
+    invM->e13 = (transform->e12 * transform->e23 - transform->e13 * transform->e22) * invDet;
+    invM->e21 = (transform->e23 * transform->e31 - transform->e21 * transform->e33) * invDet;
+    invM->e22 = (transform->e11 * transform->e33 - transform->e13 * transform->e31) * invDet;
+    invM->e23 = (transform->e21 * transform->e13 - transform->e11 * transform->e23) * invDet;
+    invM->e31 = (transform->e21 * transform->e32 - transform->e31 * transform->e22) * invDet;
+    invM->e32 = (transform->e31 * transform->e12 - transform->e11 * transform->e32) * invDet;
+    invM->e33 = (transform->e11 * transform->e22 - transform->e21 * transform->e12) * invDet;
+}
+
+
+static bool _identify(const Matrix* transform)
+{
+    if (!transform ||
+        transform->e11 != 1.0f || transform->e12 != 0.0f || transform->e13 != 0.0f ||
+        transform->e21 != 0.0f || transform->e22 != 1.0f || transform->e23 != 0.0f ||
+        transform->e31 != 0.0f || transform->e32 != 0.0f || transform->e33 != 1.0f)
+        return false;
+
+    return true;
 }
 
 
@@ -105,6 +139,141 @@ static bool _rasterTranslucentRle(SwSurface* surface, SwRleData* rle, uint32_t c
         ++span;
     }
     return true;
+}
+
+
+static bool _rasterTranslucentImageRle(SwSurface* surface, SwRleData* rle, uint32_t *img, uint32_t opacity, const Matrix* invTransform, uint32_t w, uint32_t h)
+{
+    auto span = rle->spans;
+
+    for (uint32_t i = 0; i < rle->size; ++i) {
+        for (uint32_t x = 0; x < span->len; ++x) {
+            auto rX = static_cast<uint32_t>(roundf((span->x + x) * invTransform->e11 + span->y * invTransform->e12 + invTransform->e13));
+            auto rY = static_cast<uint32_t>(roundf((span->x + x) * invTransform->e21 + span->y * invTransform->e22 + invTransform->e23));
+
+            if (rX < 0 || rX >= w || rY < 0 || rY >= h) continue;
+
+            auto dst = &surface->buffer[span->y * surface->stride + span->x + x];
+            auto index = rY * w + rX;        //TODO: need to use image's stride
+            if (dst && img && img[index]) {
+                auto alpha = ALPHA_MULTIPLY(span->coverage, opacity);
+                auto src = ALPHA_BLEND(img[index], alpha);
+                auto invAlpha = 255 - surface->comp.alpha(src);
+                *dst = src + ALPHA_BLEND(*dst, invAlpha);
+            }
+        }
+        ++span;
+    }
+    return true;
+}
+
+
+static bool _rasterImageRle(SwSurface* surface, SwRleData* rle, uint32_t *img, const Matrix* invTransform, uint32_t w, uint32_t h)
+{
+    if (!rle) return false;
+
+    auto span = rle->spans;
+
+    for (uint32_t i = 0; i < rle->size; ++i) {
+        for (uint32_t x = 0; x < span->len; ++x) {
+            auto rX = static_cast<uint32_t>(roundf((span->x + x) * invTransform->e11 + span->y * invTransform->e12 + invTransform->e13));
+            auto rY = static_cast<uint32_t>(roundf((span->x + x) * invTransform->e21 + span->y * invTransform->e22 + invTransform->e23));
+
+            if (rX < 0 || rX >= w || rY < 0 || rY >= h) continue;
+
+            auto dst = &surface->buffer[span->y * surface->stride + span->x + x];
+            auto index = rY * w + rX;        //TODO: need to use image's stride
+            if (dst && img && img[index]) {
+                auto src = ALPHA_BLEND(img[index], span->coverage);
+                auto invAlpha = 255 - surface->comp.alpha(src);
+                *dst = src + ALPHA_BLEND(*dst, invAlpha);
+            }
+        }
+        ++span;
+    }
+    return true;
+}
+
+
+static bool _rasterTranslucentImage(SwSurface* surface, uint32_t *img, uint32_t opacity,const SwBBox& region, const Matrix* invTransform, uint32_t w, uint32_t h)
+{
+    for (auto y = region.min.y; y < region.max.y; y++) {
+        for (auto x = region.min.x; x < region.max.x; x++) {
+            auto rX = static_cast<uint32_t>(roundf(x * invTransform->e11 + y * invTransform->e12 + invTransform->e13));
+            auto rY = static_cast<uint32_t>(roundf(x * invTransform->e21 + y * invTransform->e22 + invTransform->e23));
+
+            if (rX < 0 || rX >= w || rY < 0 || rY >= h) continue;
+
+            auto dst = &surface->buffer[y * surface->stride + x];
+            auto index = rX + (rY * w); //TODO: need to use image's stride
+            if (dst && img && img[index]) {
+                auto src = ALPHA_BLEND(img[index], opacity);
+                auto invAlpha = 255 - surface->comp.alpha(src);
+                *dst = src + ALPHA_BLEND(*dst, invAlpha);
+            }
+        }
+    }
+    return true;
+}
+
+
+static bool _rasterImage(SwSurface* surface, uint32_t *img, const SwBBox& region, uint32_t w, uint32_t h)
+{
+    for (auto y = region.min.y; y < region.max.y; y++) {
+        for (auto x = region.min.x; x < region.max.x; x++) {
+            auto dst = &surface->buffer[y * surface->stride + x];
+            auto index = x + (y * w); //TODO: need to use image's stride
+            if (dst && img && img[index]) {
+                auto src = img[index];
+                auto invAlpha = 255 - surface->comp.alpha(src);
+                *dst = src + ALPHA_BLEND(*dst, invAlpha);
+            }
+        }
+    }
+    return true;
+}
+
+
+static bool _rasterImage(SwSurface* surface, uint32_t *img, const SwBBox& region, const Matrix* invTransform, uint32_t w, uint32_t h)
+{
+    for (auto y = region.min.y; y < region.max.y; y++) {
+        for (auto x = region.min.x; x < region.max.x; x++) {
+            auto rX = static_cast<uint32_t>(roundf(x * invTransform->e11 + y * invTransform->e12 + invTransform->e13));
+            auto rY = static_cast<uint32_t>(roundf(x * invTransform->e21 + y * invTransform->e22 + invTransform->e23));
+
+            if (rX < 0 || rX >= w || rY < 0 || rY >= h) continue;
+
+            auto dst = &surface->buffer[y * surface->stride + x];
+            auto index = rX + (rY * w); //TODO: need to use image's stride
+            if (dst && img && img[index]) {
+                auto src = img[index];
+                auto invAlpha = 255 - surface->comp.alpha(src);
+                *dst = src + ALPHA_BLEND(*dst, invAlpha);
+            }
+        }
+    }
+    return true;
+}
+
+
+bool rasterImage(SwSurface* surface, SwImage* image, uint8_t opacity, const Matrix* transform)
+{
+    Matrix invTransform;
+    _inverse(transform, &invTransform);
+    if (image->rle) {
+        if (opacity < 255) return _rasterTranslucentImageRle(surface, image->rle, image->data, opacity, &invTransform, image->width, image->height );
+        return _rasterImageRle(surface, image->rle, image->data, &invTransform, image->width, image->height );
+    }
+    else {
+        // Fast track
+        if (_identify(transform)) {
+            return _rasterImage(surface, image->data, image->bbox, image->width, image->height);
+        }
+        else {
+            if (opacity < 255) return _rasterTranslucentImage(surface, image->data, opacity, image->bbox, &invTransform, image->width, image->height);
+            return _rasterImage(surface, image->data, image->bbox, &invTransform, image->width, image->height);
+        }
+    }
 }
 
 

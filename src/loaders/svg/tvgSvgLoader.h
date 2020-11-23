@@ -39,14 +39,16 @@ public:
     SvgLoader();
     ~SvgLoader();
 
-    bool open(const char* path) override;
+    using Loader::open;
+    bool open(const string& path) override;
     bool open(const char* data, uint32_t size) override;
+
     bool header();
     bool read() override;
     bool close() override;
     void run(unsigned tid) override;
 
-    unique_ptr<Scene> data() override;
+    unique_ptr<Scene> scene() override;
 };
 
 

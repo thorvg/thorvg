@@ -212,6 +212,16 @@ struct SwShape
     bool         rect;   //Fast Track: Othogonal rectangle?
 };
 
+struct SwImage
+{
+    SwOutline*   outline = nullptr;
+    SwRleData*   rle = nullptr;
+    uint32_t*    data = nullptr;
+    SwBBox       bbox;
+    uint32_t     width;
+    uint32_t     height;
+};
+
 struct SwCompositor
 {
     uint32_t (*join)(uint8_t r, uint8_t g, uint8_t b, uint8_t a);
@@ -284,6 +294,14 @@ bool strokeParseOutline(SwStroke* stroke, const SwOutline& outline);
 SwOutline* strokeExportOutline(SwStroke* stroke, unsigned tid);
 void strokeFree(SwStroke* stroke);
 
+bool imagePrepare(SwImage* image, const Picture* pdata, unsigned tid, const SwSize& clip, const Matrix* transform);
+bool imagePrepared(SwImage* image);
+bool imageGenRle(SwImage* image, TVG_UNUSED const Picture* pdata, const SwSize& clip, bool antiAlias, bool hasComposite);
+void imageDelOutline(SwImage* image, uint32_t tid);
+void imageReset(SwImage* image);
+bool imageGenOutline(SwImage* image, const Picture* pdata, unsigned tid, const Matrix* transform);
+void imageFree(SwImage* image);
+
 bool fillGenColorTable(SwFill* fill, const Fill* fdata, const Matrix* transform, SwSurface* surface, bool ctable);
 void fillReset(SwFill* fill);
 void fillFree(SwFill* fill);
@@ -307,6 +325,7 @@ void mpoolRetStrokeOutline(unsigned idx);
 bool rasterCompositor(SwSurface* surface);
 bool rasterGradientShape(SwSurface* surface, SwShape* shape, unsigned id);
 bool rasterSolidShape(SwSurface* surface, SwShape* shape, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
+bool rasterImage(SwSurface* surface, SwImage* image, uint8_t opacity, const Matrix* transform);
 bool rasterStroke(SwSurface* surface, SwShape* shape, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
 bool rasterClear(SwSurface* surface);
 
@@ -333,6 +352,16 @@ static inline void rasterRGBA32(uint32_t *dst, uint32_t val, uint32_t offset, in
     dst += offset;
     while (len--) *dst++ = val;
 #endif
+}
+
+static inline SwPoint mathTransform(const Point* to, const Matrix* transform)
+{
+    if (!transform) return {TO_SWCOORD(to->x), TO_SWCOORD(to->y)};
+
+    auto tx = ((to->x * transform->e11 + to->y * transform->e12 + transform->e13) + 0.5f);
+    auto ty = ((to->x * transform->e21 + to->y * transform->e22 + transform->e23) + 0.5f);
+
+    return {TO_SWCOORD(tx), TO_SWCOORD(ty)};
 }
 
 #endif /* _TVG_SW_COMMON_H_ */

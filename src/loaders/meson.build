@@ -5,6 +5,8 @@ if get_option('loaders').contains('svg') == true
     message('Enable SVG Loader')
 endif
 
+subdir('raw')
+
 loader_dep = declare_dependency(
    dependencies: subloader_dep,
    include_directories : include_directories('.'),

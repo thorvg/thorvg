@@ -2483,7 +2483,7 @@ bool SvgLoader::open(const char* data, uint32_t size)
 }
 
 
-bool SvgLoader::open(const char* path)
+bool SvgLoader::open(const string& path)
 {
     ifstream f;
     f.open(path);
@@ -2539,9 +2539,10 @@ bool SvgLoader::close()
 }
 
 
-unique_ptr<Scene> SvgLoader::data()
+unique_ptr<Scene> SvgLoader::scene()
 {
     this->done();
     if (root) return move(root);
     else return nullptr;
 }
+

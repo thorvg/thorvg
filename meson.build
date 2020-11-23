@@ -6,7 +6,7 @@ project('thorvg',
 
 config_h = configuration_data()
 
-add_project_arguments('-DEXAMPLE_DIR="@0@/src/examples/svgs"'.format(meson.current_source_dir()), language : 'cpp')
+add_project_arguments('-DEXAMPLE_DIR="@0@/src/examples/images"'.format(meson.current_source_dir()), language : 'cpp')
 
 if get_option('engines').contains('sw') == true
     config_h.set10('THORVG_SW_RASTER_SUPPORT', true)

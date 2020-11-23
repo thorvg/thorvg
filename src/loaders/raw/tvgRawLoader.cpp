@@ -19,101 +19,66 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+#include <fstream>
+#include <string.h>
 #include "tvgLoaderMgr.h"
-
-#ifdef THORVG_SVG_LOADER_SUPPORT
-    #include "tvgSvgLoader.h"
-#endif
 #include "tvgRawLoader.h"
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-static int initCnt = 0;
-
-
-static Loader* _find(FileType type)
-{
-    switch(type) {
-        case FileType::Svg: {
-#ifdef THORVG_SVG_LOADER_SUPPORT
-            return new SvgLoader;
-#endif
-            break;
-        }
-        case FileType::Raw: {
-            return new RawLoader;
-            break;
-        }
-        default: {
-            break;
-        }
-    }
-    return nullptr;
-}
-
-
-static Loader* _find(const string& path)
-{
-    auto ext = path.substr(path.find_last_of(".") + 1);
-    if (!ext.compare("svg")) return _find(FileType::Svg);
-    return nullptr;
-}
-
-
 /************************************************************************/
 /* External Class Implementation                                        */
 /************************************************************************/
 
-
-bool LoaderMgr::init()
+RawLoader::RawLoader()
 {
-    if (initCnt > 0) return true;
-    ++initCnt;
 
-    //TODO:
+}
+
+
+RawLoader::~RawLoader()
+{
+    if (copy && content) {
+        free((void*)content);
+        content = nullptr;
+    }
+}
+
+
+bool RawLoader::open(const uint32_t* data, uint32_t w, uint32_t h, bool copy)
+{
+    if (!data || w == 0 || h == 0) return false;
+
+    vw = w;
+    vh = h;
+
+    this->copy = copy;
+    if (copy) {
+        content = (uint32_t*)malloc(sizeof(uint32_t) * vw * vh);
+        if (!content) return false;
+        memcpy((void*)content, data, sizeof(uint32_t) * vw * vh);
+    }
+    else content = data;
 
     return true;
 }
 
 
-bool LoaderMgr::term()
+bool RawLoader::read()
 {
-    --initCnt;
-    if (initCnt > 0) return true;
-
-    //TODO:
-
     return true;
 }
 
 
-unique_ptr<Loader> LoaderMgr::loader(const string& path)
+bool RawLoader::close()
 {
-    auto loader = _find(path);
-
-    if (loader && loader->open(path)) return unique_ptr<Loader>(loader);
-
-    return nullptr;
+    return true;
 }
 
 
-unique_ptr<Loader> LoaderMgr::loader(const char* data, uint32_t size)
+const uint32_t* RawLoader::pixels()
 {
-    for (int i = 0; i < static_cast<int>(FileType::Unknown); i++) {
-        auto loader = _find(static_cast<FileType>(i));
-        if (loader && loader->open(data, size)) return unique_ptr<Loader>(loader);
-    }
-    return nullptr;
-}
-
-
-unique_ptr<Loader> LoaderMgr::loader(uint32_t *data, uint32_t w, uint32_t h, bool copy)
-{
-    for (int i = 0; i < static_cast<int>(FileType::Unknown); i++) {
-        auto loader = _find(static_cast<FileType>(i));
-        if (loader && loader->open(data, w, h, copy)) return unique_ptr<Loader>(loader);
-    }
-    return nullptr;
+    return this->content;
 }

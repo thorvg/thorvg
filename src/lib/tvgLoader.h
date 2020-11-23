@@ -38,11 +38,13 @@ public:
 
     virtual ~Loader() {}
 
-    virtual bool open(const char* path) = 0;
-    virtual bool open(const char* data, uint32_t size) = 0;
+    virtual bool open(const string& path) { /* Not supported */ return false; };
+    virtual bool open(const char* data, uint32_t size) { /* Not supported */ return false; };
+    virtual bool open(const uint32_t* data, uint32_t w, uint32_t h, bool copy) { /* Not supported */ return false; };
     virtual bool read() = 0;
     virtual bool close() = 0;
-    virtual unique_ptr<Scene> data() = 0;
+    virtual const uint32_t* pixels() { return nullptr; };
+    virtual unique_ptr<Scene> scene() { return nullptr; };
 };
 
 }

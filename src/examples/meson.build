@@ -17,6 +17,7 @@ source_file = [
     'Opacity.cpp',
     'PathCopy.cpp',
     'Path.cpp',
+    'PixelImage.cpp',
     'RadialGradient.cpp',
     'Scene.cpp',
     'SceneTransform.cpp',
