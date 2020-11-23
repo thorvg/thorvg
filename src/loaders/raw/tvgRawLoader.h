@@ -36,7 +36,6 @@ public:
     bool read() override;
     bool close() override;
 
-
     const uint32_t* pixels() override;
 };
 
