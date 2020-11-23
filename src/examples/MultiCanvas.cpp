@@ -84,6 +84,10 @@ void drawSwView(void* data, Eo* obj)
 
 void tvgSwTest(const char* name, const char* path, void* data)
 {
+    //ignore if not svgs.
+    const char *ext = name + strlen(name) - 3;
+    if (strcmp(ext, "svg")) return;
+
     Eo* win = (Eo*) data;
 
     uint32_t* buffer = (uint32_t*) calloc(sizeof(uint32_t), SIZE * SIZE);
@@ -106,7 +110,7 @@ void tvgSwTest(const char* name, const char* path, void* data)
 
     tvgDrawCmds(canvas.get(), path, name);
 
-    canvases.push_back(move(canvas));    
+    canvases.push_back(move(canvas));
 }
 
 

@@ -14,6 +14,10 @@ static std::vector<unique_ptr<tvg::Picture>> pictures;
 
 void svgDirCallback(const char* name, const char* path, void* data)
 {
+    //ignore if not svgs.
+    const char *ext = name + strlen(name) - 3;
+    if (strcmp(ext, "svg")) return;
+
     auto picture = tvg::Picture::gen();
 
     char buf[PATH_MAX];
