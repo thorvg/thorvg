@@ -142,7 +142,7 @@ static bool _rasterTranslucentRle(SwSurface* surface, SwRleData* rle, uint32_t c
 }
 
 
-static bool _rasterTranslucentImageWithRle(SwSurface* surface, SwRleData* rle, uint32_t *img, uint32_t opacity, const Matrix* invTransform, uint32_t w, uint32_t h)
+static bool _rasterTranslucentImageRle(SwSurface* surface, SwRleData* rle, uint32_t *img, uint32_t opacity, const Matrix* invTransform, uint32_t w, uint32_t h)
 {
     auto span = rle->spans;
 
@@ -168,7 +168,7 @@ static bool _rasterTranslucentImageWithRle(SwSurface* surface, SwRleData* rle, u
 }
 
 
-static bool _rasterImageWithRle(SwSurface* surface, SwRleData* rle, uint32_t *img, const Matrix* invTransform, uint32_t w, uint32_t h)
+static bool _rasterImageRle(SwSurface* surface, SwRleData* rle, uint32_t *img, const Matrix* invTransform, uint32_t w, uint32_t h)
 {
     if (!rle) return false;
 
@@ -261,8 +261,8 @@ bool rasterImage(SwSurface* surface, SwImage* image, uint8_t opacity, const Matr
     Matrix invTransform;
     _inverse(transform, &invTransform);
     if (image->rle) {
-        if (opacity < 255) return _rasterTranslucentImageWithRle(surface, image->rle, image->data, opacity, &invTransform, image->width, image->height );
-        return _rasterImageWithRle(surface, image->rle, image->data, &invTransform, image->width, image->height );
+        if (opacity < 255) return _rasterTranslucentImageRle(surface, image->rle, image->data, opacity, &invTransform, image->width, image->height );
+        return _rasterImageRle(surface, image->rle, image->data, &invTransform, image->width, image->height );
     }
     else {
         // Fast track
