@@ -216,7 +216,7 @@ struct SwImage
 {
     SwOutline*   outline = nullptr;
     SwRleData*   rle = nullptr;
-    uint32_t     *data = nullptr;
+    uint32_t*    data = nullptr;
     SwBBox       bbox;
     uint32_t     width;
     uint32_t     height;
@@ -354,7 +354,7 @@ static inline void rasterRGBA32(uint32_t *dst, uint32_t val, uint32_t offset, in
 #endif
 }
 
-static inline SwPoint pointTransform(const Point* to, const Matrix* transform)
+static inline SwPoint mathTransform(const Point* to, const Matrix* transform)
 {
     if (!transform) return {TO_SWCOORD(to->x), TO_SWCOORD(to->y)};
 

@@ -149,7 +149,7 @@ bool imageGenOutline(SwImage* image, const Picture* pdata, unsigned tid, const M
 
     Point to[4] = {{0 ,0}, {w, 0}, {w, h}, {0, h}};
     for (int i = 0; i < 4; i++) {
-        outline->pts[outline->ptsCnt] = pointTransform(&to[i], transform);
+        outline->pts[outline->ptsCnt] = mathTransform(&to[i], transform);
         outline->types[outline->ptsCnt] = SW_CURVE_TYPE_POINT;
         ++outline->ptsCnt;
     }

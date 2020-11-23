@@ -29,12 +29,8 @@
 static bool initEngine = false;
 static uint32_t rendererCnt = 0;
 
-enum class SwRenderType { Shape, Image };
-
 struct SwTask : Task
 {
-    SwRenderType type;
-
     Matrix* transform = nullptr;
     SwSurface* surface = nullptr;
     RenderUpdateFlag flags = RenderUpdateFlag::None;
@@ -50,7 +46,7 @@ struct SwShapeTask : SwTask
     SwShape shape;
     const Shape* sdata = nullptr;
 
-    void prepareTask(unsigned tid)
+    void run(unsigned tid) override
     {
         if (opacity == 0) return;  //Invisible
 
@@ -63,7 +59,7 @@ struct SwShapeTask : SwTask
 
         SwSize clip = {static_cast<SwCoord>(surface->w), static_cast<SwCoord>(surface->h)};
 
-        //Invisiable shape turned to visible by alpha.
+        //invisible shape turned to visible by alpha.
         auto prepareShape = false;
         if (!shapePrepared(&shape) && ((flags & RenderUpdateFlag::Color) || (opacity > 0))) prepareShape = true;
 
@@ -124,11 +120,6 @@ struct SwShapeTask : SwTask
         shapeDelOutline(&shape, tid);
     }
 
-    void run(unsigned tid) override
-    {
-       prepareTask(tid);
-    }
-
     bool dispose() override
     {
        shapeFree(&shape);
@@ -143,7 +134,7 @@ struct SwImageTask : SwTask
     const Picture* pdata = nullptr;
     uint32_t *pixels = nullptr;
 
-    void prepareTask(unsigned tid)
+    void run(unsigned tid) override
     {
         SwSize clip = {static_cast<SwCoord>(surface->w), static_cast<SwCoord>(surface->h)};
 
@@ -173,11 +164,6 @@ struct SwImageTask : SwTask
         if (this->pixels) image.data = this->pixels;
     end:
         imageDelOutline(&image, tid);
-    }
-
-    void run(unsigned tid) override
-    {
-        prepareTask(tid);
     }
 
     bool dispose() override

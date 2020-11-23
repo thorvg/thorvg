@@ -89,7 +89,7 @@ static void _outlineMoveTo(SwOutline& outline, const Point* to, const Matrix* tr
 {
     _growOutlinePoint(outline, 1);
 
-    outline.pts[outline.ptsCnt] = pointTransform(to, transform);
+    outline.pts[outline.ptsCnt] = mathTransform(to, transform);
     outline.types[outline.ptsCnt] = SW_CURVE_TYPE_POINT;
 
     if (outline.ptsCnt > 0) {
@@ -106,7 +106,7 @@ static void _outlineLineTo(SwOutline& outline, const Point* to, const Matrix* tr
 {
     _growOutlinePoint(outline, 1);
 
-    outline.pts[outline.ptsCnt] = pointTransform(to, transform);
+    outline.pts[outline.ptsCnt] = mathTransform(to, transform);
     outline.types[outline.ptsCnt] = SW_CURVE_TYPE_POINT;
     ++outline.ptsCnt;
 }
@@ -116,15 +116,15 @@ static void _outlineCubicTo(SwOutline& outline, const Point* ctrl1, const Point*
 {
     _growOutlinePoint(outline, 3);
 
-    outline.pts[outline.ptsCnt] = pointTransform(ctrl1, transform);
+    outline.pts[outline.ptsCnt] = mathTransform(ctrl1, transform);
     outline.types[outline.ptsCnt] = SW_CURVE_TYPE_CUBIC;
     ++outline.ptsCnt;
 
-    outline.pts[outline.ptsCnt] = pointTransform(ctrl2, transform);
+    outline.pts[outline.ptsCnt] = mathTransform(ctrl2, transform);
     outline.types[outline.ptsCnt] = SW_CURVE_TYPE_CUBIC;
     ++outline.ptsCnt;
 
-    outline.pts[outline.ptsCnt] = pointTransform(to, transform);
+    outline.pts[outline.ptsCnt] = mathTransform(to, transform);
     outline.types[outline.ptsCnt] = SW_CURVE_TYPE_POINT;
     ++outline.ptsCnt;
 }
