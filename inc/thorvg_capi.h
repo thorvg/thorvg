@@ -184,6 +184,7 @@ TVG_EXPORT Tvg_Result tvg_gradient_del(Tvg_Gradient* grad);
 /************************************************************************/
 TVG_EXPORT Tvg_Paint* tvg_picture_new();
 TVG_EXPORT Tvg_Result tvg_picture_load(Tvg_Paint* paint, const char* path);
+TVG_EXPORT Tvg_Result tvg_picture_load_raw(Tvg_Paint* paint, uint32_t *data, uint32_t w, uint32_t h, bool copy);
 TVG_EXPORT Tvg_Result tvg_picture_get_viewbox(const Tvg_Paint* paint, float* x, float* y, float* w, float* h);
 
 /************************************************************************/
