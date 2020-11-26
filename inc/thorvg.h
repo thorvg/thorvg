@@ -303,6 +303,7 @@ public:
 
     Result push(std::unique_ptr<Paint> paint) noexcept;
     Result reserve(uint32_t size) noexcept;
+    Result clear() noexcept;
 
     static std::unique_ptr<Scene> gen() noexcept;
 

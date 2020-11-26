@@ -514,6 +514,12 @@ TVG_EXPORT Tvg_Result tvg_scene_push(Tvg_Paint* scene, Tvg_Paint* paint)
     return (Tvg_Result) reinterpret_cast<Scene*>(scene)->push(unique_ptr<Paint>((Paint*)paint));
 }
 
+TVG_EXPORT Tvg_Result tvg_scene_clear(Tvg_Paint* scene)
+{
+    if (!scene) return TVG_RESULT_INVALID_ARGUMENT;
+    return (Tvg_Result) reinterpret_cast<Scene*>(scene)->clear();
+}
+
 
 #ifdef __cplusplus
 }
