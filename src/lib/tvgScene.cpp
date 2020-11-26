@@ -59,3 +59,11 @@ Result Scene::reserve(uint32_t size) noexcept
 
     return Result::Success;
 }
+
+
+Result Scene::clear() noexcept
+{
+    pImpl->paints.clear();
+
+    return Result::Success;
+}

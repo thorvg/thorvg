@@ -185,6 +185,7 @@ TVG_EXPORT Tvg_Result tvg_picture_get_viewbox(const Tvg_Paint* paint, float* x, 
 TVG_EXPORT Tvg_Paint* tvg_scene_new();
 TVG_EXPORT Tvg_Result tvg_scene_reserve(Tvg_Paint* scene, uint32_t size);
 TVG_EXPORT Tvg_Result tvg_scene_push(Tvg_Paint* scene, Tvg_Paint* paint);
+TVG_EXPORT Tvg_Result tvg_scene_clear(Tvg_Paint* scene);
 
 
 #ifdef __cplusplus
