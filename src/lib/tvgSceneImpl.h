@@ -77,12 +77,12 @@ struct Scene::Impl
             auto w2 = 0.0f;
             auto h2 = 0.0f;
 
-            if (paint->pImpl->bounds(&x2, &y2, &w2, &h2)) return false;
+            if (!paint->pImpl->bounds(&x2, &y2, &w2, &h2)) continue;
 
             //Merge regions
             if (x2 < x) x = x2;
             if (x + w < x2 + w2) w = (x2 + w2) - x;
-            if (y2 < y) y = x2;
+            if (y2 < y) y = y2;
             if (y + h < y2 + h2) h = (y2 + h2) - y;
         }
 
