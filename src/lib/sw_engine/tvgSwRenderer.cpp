@@ -114,6 +114,10 @@ struct SwShapeTask : SwTask
                   //Clip to stroke rle
                   if (shape.strokeRle && compShape->rect) rleClipRect(shape.strokeRle, &compShape->bbox);
                   else if (shape.strokeRle && compShape->rle) rleClipPath(shape.strokeRle, compShape->rle);
+             } else if (comp.method == CompositeMethod::AlphaMask) {
+                  rleAlphaMask(shape.rle, compShape->rle);
+             } else if (comp.method == CompositeMethod::InvAlphaMask) {
+                  // TODO
              }
         }
     end:
@@ -156,6 +160,10 @@ struct SwImageTask : SwTask
                           //Clip to fill(path) rle
                           if (image.rle && compShape->rect) rleClipRect(image.rle, &compShape->bbox);
                           else if (image.rle && compShape->rle) rleClipPath(image.rle, compShape->rle);
+                     } else if (comp.method == CompositeMethod::AlphaMask) {
+                         rleAlphaMask(image.rle, compShape->rle);
+                     } else if (comp.method == CompositeMethod::InvAlphaMask) {
+                        // TODO
                      }
                 }
             }
