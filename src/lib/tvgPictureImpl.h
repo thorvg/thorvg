@@ -38,6 +38,8 @@ struct Picture::Impl
     Picture *picture = nullptr;
     void *edata = nullptr;              //engine data
 
+    uint32_t w = 0, h = 0;
+
     Impl(Picture* p) : picture(p)
     {
     }
@@ -98,6 +100,20 @@ struct Picture::Impl
         if (y) *y = loader->vy;
         if (w) *w = loader->vw;
         if (h) *h = loader->vh;
+        return true;
+    }
+
+    bool size(uint32_t w, uint32_t h)
+    {
+        this->w = w;
+        this->h = h;
+        return true;
+    }
+
+    bool size(uint32_t* w, uint32_t* h)
+    {
+        if (w) *w = this->w;
+        if (h) *h = this->h;
         return true;
     }
 
