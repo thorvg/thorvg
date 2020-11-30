@@ -36,6 +36,10 @@ public:
     float vw = 0;
     float vh = 0;
 
+    uint32_t w;
+    uint32_t h;
+    bool preserveAspect;
+
     virtual ~Loader() {}
 
     virtual bool open(const string& path) { /* Not supported */ return false; };

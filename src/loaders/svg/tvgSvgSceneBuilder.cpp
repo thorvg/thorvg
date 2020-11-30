@@ -395,10 +395,5 @@ unique_ptr<Scene> SvgSceneBuilder::build(SvgNode* node)
 {
     if (!node || (node->type != SvgNodeType::Doc)) return nullptr;
 
-    viewBox.x = node->node.doc.vx;
-    viewBox.y = node->node.doc.vy;
-    viewBox.w = node->node.doc.vw;
-    viewBox.h = node->node.doc.vh;
-    preserveAspect = node->node.doc.preserveAspect;
-    return _sceneBuildHelper(node, viewBox.x, viewBox.y, viewBox.w, viewBox.h, 255);
+    return _sceneBuildHelper(node, node->node.doc.vx, node->node.doc.vy, node->node.doc.vw, node->node.doc.vh, 255);
 }

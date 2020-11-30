@@ -2461,10 +2461,15 @@ bool SvgLoader::header()
 
     if (loaderData.doc && loaderData.doc->type == SvgNodeType::Doc) {
         //Return the brief resource info such as viewbox:
-        this->vx = loaderData.doc->node.doc.vx;
-        this->vy = loaderData.doc->node.doc.vy;
-        this->vw = loaderData.doc->node.doc.vw;
-        this->vh = loaderData.doc->node.doc.vh;
+        vx = loaderData.doc->node.doc.vx;
+        vy = loaderData.doc->node.doc.vy;
+        vw = loaderData.doc->node.doc.vw;
+        vh = loaderData.doc->node.doc.vh;
+
+        w = loaderData.doc->node.doc.w;
+        h = loaderData.doc->node.doc.h;
+
+        preserveAspect = loaderData.doc->node.doc.preserveAspect;
     } else {
         //LOG: No SVG File. There is no <svg/>
         return false;
