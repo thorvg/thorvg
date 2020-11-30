@@ -258,8 +258,8 @@ static bool _rasterImage(SwSurface* surface, uint32_t *img, const SwBBox& region
 
 bool rasterImage(SwSurface* surface, SwImage* image, uint8_t opacity, const Matrix* transform)
 {
-    Matrix invTransform;
-    _inverse(transform, &invTransform);
+    Matrix invTransform = { 1, 0, 0, 0, 1, 0, 0, 0, 1 };
+    if (transform) _inverse(transform, &invTransform);
     if (image->rle) {
         if (opacity < 255) return _rasterTranslucentImageRle(surface, image->rle, image->data, opacity, &invTransform, image->width, image->height );
         return _rasterImageRle(surface, image->rle, image->data, &invTransform, image->width, image->height );
