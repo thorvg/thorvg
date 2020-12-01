@@ -31,7 +31,7 @@ public:
     Surface surface = {nullptr, 0, 0, 0};
 
     void* prepare(const Shape& shape, void* data, const RenderTransform* transform, uint32_t opacity, vector<Composite>& compList, RenderUpdateFlag flags) override;
-    bool dispose(const Shape& shape, void *data) override;
+    bool dispose(void *data) override;
     bool preRender() override;
     bool render(const Shape& shape, void *data) override;
     bool postRender() override;
