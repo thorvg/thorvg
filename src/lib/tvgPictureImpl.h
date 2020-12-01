@@ -58,6 +58,35 @@ struct Picture::Impl
         return false;
     }
 
+    void updateLocalTransform()
+    {
+        uint32_t w = 0, h = 0;
+        if (this->w != 0 && this->h != 0) {
+            w = this->w;
+            h = this->h;
+        }
+        else if (loader->w != 0 && loader->h != 0) {
+            w = loader->w;
+            h = loader->h;
+        }
+        if (w != 0 && h != 0) {
+            auto sx = w / (loader->vw + (loader->vx > 0 ? loader->vx : -1 * loader->vx));
+            auto sy = h / (loader->vh + (loader->vy > 0 ? loader->vy : -1 * loader->vy));
+            if (!loader->preserveAspect) {
+                Matrix m = {sx,  0, -loader->vx,
+                             0, sy, -loader->vy,
+                             0,  0, 1};
+                paint->transform(m);
+            }
+            else {
+                auto scale = sx < sy ? sx : sy;
+                paint->translate(((w - loader->vw) * scale)/2.0, ((h - loader->vh) * scale)/2.0);
+                paint->scale(scale);
+                paint->translate(-loader->vx, -loader->vy);
+            }
+        }
+    }
+
     uint32_t reload()
     {
         if (loader) {
@@ -65,6 +94,7 @@ struct Picture::Impl
                 auto scene = loader->scene();
                 if (scene) {
                     paint = scene.release();
+                    updateLocalTransform();
                     loader->close();
                     if (paint) return RenderUpdateFlag::None;
                 }
