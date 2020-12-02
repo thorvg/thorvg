@@ -218,8 +218,7 @@ struct SwImage
     SwRleData*   rle = nullptr;
     uint32_t*    data = nullptr;
     SwBBox       bbox;
-    uint32_t     width;
-    uint32_t     height;
+    uint32_t     w, h;
 };
 
 struct SwCompositor
@@ -325,7 +324,7 @@ void mpoolRetStrokeOutline(unsigned idx);
 bool rasterCompositor(SwSurface* surface);
 bool rasterGradientShape(SwSurface* surface, SwShape* shape, unsigned id);
 bool rasterSolidShape(SwSurface* surface, SwShape* shape, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
-bool rasterImage(SwSurface* surface, SwImage* image, uint8_t opacity, const Matrix* transform);
+bool rasterImage(SwSurface* surface, SwImage* image, const Matrix* transform, uint8_t opacity);
 bool rasterStroke(SwSurface* surface, SwShape* shape, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
 bool rasterClear(SwSurface* surface);
 
