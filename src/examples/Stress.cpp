@@ -53,7 +53,7 @@ void svgDirCallback(const char* name, const char* path, void* data)
     }
 
     cout << "SVG: " << buf << endl;
-    pictures.push_back(picture.release());    
+    pictures.push_back(picture.release());
 }
 
 void tvgDrawCmds(tvg::Canvas* canvas)

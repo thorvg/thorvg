@@ -49,7 +49,8 @@ public:
     static bool term();
 
 private:
-    SwSurface* surface = nullptr;
+    SwSurface* mainSurface = nullptr;
+    SwSurface* compSurface = nullptr;   //Composition Surface to use temporarily in the intermediate rendering
     vector<SwTask*> tasks;
 
     SwRenderer(){};
