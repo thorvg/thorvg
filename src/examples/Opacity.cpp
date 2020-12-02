@@ -35,6 +35,10 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     shape2->lineTo(146, 143);
     shape2->close();
     shape2->fill(0, 0, 255, 255);
+    shape2->stroke(10);
+    shape2->stroke(255, 255, 255, 255);
+    shape2->opacity(127);
+
     scene->push(move(shape2));
 
     //Circle
@@ -52,6 +56,9 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     shape3->cubicTo(cx - halfRadius, cy + radius, cx - radius, cy + halfRadius, cx - radius, cy);
     shape3->cubicTo(cx - radius, cy - halfRadius, cx - halfRadius, cy - radius, cx, cy - radius);
     shape3->fill(255, 0, 0, 255);
+    shape3->stroke(10);
+    shape3->stroke(0, 0, 255, 255);
+    shape3->opacity(200);
     scene->push(move(shape3));
 
     //Draw the Scene onto the Canvas
