@@ -150,14 +150,13 @@ static bool _rasterTranslucentImageRle(SwSurface* surface, SwRleData* rle, uint3
         auto ey1 = span->y * invTransform->e12 + invTransform->e13;
         auto ey2 = span->y * invTransform->e22 + invTransform->e23;
         auto dst = &surface->buffer[span->y * surface->stride + span->x];
-        for (uint32_t x = 0; x < span->len; ++x) {
+        for (uint32_t x = 0; x < span->len; ++x, ++dst) {
             auto rX = static_cast<uint32_t>(roundf((span->x + x) * invTransform->e11 + ey1));
             auto rY = static_cast<uint32_t>(roundf((span->x + x) * invTransform->e21 + ey2));
             if (rX < 0 || rX >= w || rY < 0 || rY >= h) continue;
             auto alpha = ALPHA_MULTIPLY(span->coverage, opacity);
             auto src = ALPHA_BLEND(img[rY * w + rX], alpha);     //TODO: need to use image's stride
             *dst = src + ALPHA_BLEND(*dst, 255 - surface->comp.alpha(src));
-            ++dst;
         }
         ++span;
     }
@@ -173,13 +172,12 @@ static bool _rasterImageRle(SwSurface* surface, SwRleData* rle, uint32_t *img, u
         auto ey1 = span->y * invTransform->e12 + invTransform->e13;
         auto ey2 = span->y * invTransform->e22 + invTransform->e23;
         auto dst = &surface->buffer[span->y * surface->stride + span->x];
-        for (uint32_t x = 0; x < span->len; ++x) {
+        for (uint32_t x = 0; x < span->len; ++x, ++dst) {
             auto rX = static_cast<uint32_t>(roundf((span->x + x) * invTransform->e11 + ey1));
             auto rY = static_cast<uint32_t>(roundf((span->x + x) * invTransform->e21 + ey2));
             if (rX < 0 || rX >= w || rY < 0 || rY >= h) continue;
             auto src = ALPHA_BLEND(img[rY * w + rX], span->coverage);    //TODO: need to use image's stride
             *dst = src + ALPHA_BLEND(*dst, 255 - surface->comp.alpha(src));
-            ++dst;
         }
         ++span;
     }
@@ -189,17 +187,16 @@ static bool _rasterImageRle(SwSurface* surface, SwRleData* rle, uint32_t *img, u
 
 static bool _rasterTranslucentImage(SwSurface* surface, uint32_t *img, uint32_t w, uint32_t h, uint32_t opacity, const SwBBox& region, const Matrix* invTransform)
 {
-    for (auto y = region.min.y; y < region.max.y; y++) {
+    for (auto y = region.min.y; y < region.max.y; ++y) {
         auto dst = &surface->buffer[y * surface->stride + region.min.x];
         auto ey1 = y * invTransform->e12 + invTransform->e13;
         auto ey2 = y * invTransform->e22 + invTransform->e23;
-        for (auto x = region.min.x; x < region.max.x; x++) {
+        for (auto x = region.min.x; x < region.max.x; ++x, ++dst) {
             auto rX = static_cast<uint32_t>(roundf(x * invTransform->e11 + ey1));
             auto rY = static_cast<uint32_t>(roundf(x * invTransform->e21 + ey2));
             if (rX < 0 || rX >= w || rY < 0 || rY >= h) continue;
             auto src = ALPHA_BLEND(img[rX + (rY * w)], opacity);    //TODO: need to use image's stride
             *dst = src + ALPHA_BLEND(*dst, 255 - surface->comp.alpha(src));
-            ++dst;
         }
     }
     return true;
@@ -208,13 +205,11 @@ static bool _rasterTranslucentImage(SwSurface* surface, uint32_t *img, uint32_t 
 
 static bool _rasterImage(SwSurface* surface, uint32_t *img, uint32_t w, uint32_t h, const SwBBox& region)
 {
-    for (auto y = region.min.y; y < region.max.y; y++) {
+    for (auto y = region.min.y; y < region.max.y; ++y) {
         auto dst = &surface->buffer[y * surface->stride + region.min.x];
         auto src = img + region.min.x + (y * w);    //TODO: need to use image's stride
-        for (auto x = region.min.x; x < region.max.x; x++) {
+        for (auto x = region.min.x; x < region.max.x; x++, dst++, src++) {
             *dst = *src + ALPHA_BLEND(*dst, 255 - surface->comp.alpha(*src));
-            ++dst;
-            ++src;
         }
     }
     return true;
@@ -223,17 +218,16 @@ static bool _rasterImage(SwSurface* surface, uint32_t *img, uint32_t w, uint32_t
 
 static bool _rasterImage(SwSurface* surface, uint32_t *img, uint32_t w, uint32_t h, const SwBBox& region, const Matrix* invTransform)
 {
-    for (auto y = region.min.y; y < region.max.y; y++) {
+    for (auto y = region.min.y; y < region.max.y; ++y) {
         auto dst = &surface->buffer[y * surface->stride + region.min.x];
         auto ey1 = y * invTransform->e12 + invTransform->e13;
         auto ey2 = y * invTransform->e22 + invTransform->e23;
-        for (auto x = region.min.x; x < region.max.x; x++) {
+        for (auto x = region.min.x; x < region.max.x; ++x, ++dst) {
             auto rX = static_cast<uint32_t>(roundf(x * invTransform->e11 + ey1));
             auto rY = static_cast<uint32_t>(roundf(x * invTransform->e21 + ey2));
             if (rX < 0 || rX >= w || rY < 0 || rY >= h) continue;
             auto src = img[rX + (rY * w)];    //TODO: need to use image's stride
             *dst = src + ALPHA_BLEND(*dst, 255 - surface->comp.alpha(src));
-            ++dst;
         }
     }
     return true;
