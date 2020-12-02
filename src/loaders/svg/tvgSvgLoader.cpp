@@ -923,7 +923,7 @@ static bool _parseStyleAttr(void* data, const char* key, const char* value)
         }
     }
 
-    return true;
+    return false;
 }
 
 /* parse g node
@@ -1593,7 +1593,7 @@ static bool _attrParseUseNode(void* data, const char* key, const char* value)
     } else if (!strcmp(key, "clip-path")) {
         _handleClipPathAttr(loader, node, value);
     } else {
-        _attrParseGNode(data, key, value);
+        return _attrParseGNode(data, key, value);
     }
     return true;
 }
@@ -1784,6 +1784,8 @@ static bool _attrParseRadialGradientNode(void* data, const char* key, const char
         grad->ref = _idFromHref(value);
     } else if (!strcmp(key, "gradientUnits") && !strcmp(value, "userSpaceOnUse")) {
         grad->userSpace = true;
+    } else {
+        return false;
     }
 
     return true;
@@ -1835,8 +1837,9 @@ static bool _attrParseStops(void* data, const char* key, const char* value)
     } else if (!strcmp(key, "stop-color")) {
         _toColor(value, &stop->r, &stop->g, &stop->b, nullptr);
     } else if (!strcmp(key, "style")) {
-        simpleXmlParseW3CAttribute(value,
-            _attrParseStops, data);
+        simpleXmlParseW3CAttribute(value, _attrParseStops, data);
+    } else {
+        return false;
     }
 
     return true;
@@ -1940,6 +1943,8 @@ static bool _attrParseLinearGradientNode(void* data, const char* key, const char
         grad->userSpace = true;
     } else if (!strcmp(key, "gradientTransform")) {
         grad->transform = _parseTransformationMatrix(value);
+    } else {
+        return false;
     }
 
     return true;
