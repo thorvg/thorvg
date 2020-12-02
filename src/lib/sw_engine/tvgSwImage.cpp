@@ -133,12 +133,12 @@ void imageReset(SwImage* image)
 
 bool imageGenOutline(SwImage* image, const Picture* pdata, unsigned tid, const Matrix* transform)
 {
-    image->outline = mpoolReqOutline(tid);
-    auto outline = image->outline;
-
     float w, h;
     pdata->viewbox(nullptr, nullptr, &w, &h);
     if (w == 0 || h == 0) return false;
+
+    image->outline = mpoolReqOutline(tid);
+    auto outline = image->outline;
 
     outline->reservedPtsCnt = 5;
     outline->pts = static_cast<SwPoint*>(realloc(outline->pts, outline->reservedPtsCnt * sizeof(SwPoint)));
@@ -162,10 +162,11 @@ bool imageGenOutline(SwImage* image, const Picture* pdata, unsigned tid, const M
     ++outline->cntrsCnt;
 
     outline->opened = false;
-    image->outline = outline;
 
-    image->width = w;
-    image->height = h;
+    image->outline = outline;
+    image->w = w;
+    image->h = h;
+
     return true;
 }
 

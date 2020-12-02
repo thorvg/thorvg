@@ -243,7 +243,7 @@ bool SwRenderer::render(TVG_UNUSED const Picture& picture, void *data)
     auto task = static_cast<SwImageTask*>(data);
     task->done();
 
-    return rasterImage(surface, &task->image, task->opacity, task->transform);
+    return rasterImage(surface, &task->image, task->transform, task->opacity);
 }
 
 bool SwRenderer::render(TVG_UNUSED const Shape& shape, void *data)
