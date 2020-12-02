@@ -152,7 +152,7 @@ bool simpleXmlParseAttributes(const char* buf, unsigned bufLength, simpleXMLAttr
         memcpy(tval, value, valueEnd - value);
         tval[valueEnd - value] = '\0';
 
-        if (!func((void*)data, tmpBuf, tval)) return false;
+        func((void*)data, tmpBuf, tval);
 
         itr = valueEnd + 1;
     }
