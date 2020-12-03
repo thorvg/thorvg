@@ -232,11 +232,7 @@ void _applyProperty(SvgNode* node, Shape* vg, float vx, float vy, float vw, floa
     }
 
     //Apply node opacity
-    if (style->opacity < 255) {
-        uint8_t r, g, b, a;
-        vg->fillColor(&r, &g, &b, &a);
-        vg->fill(r, g, b, (a * style->opacity) / 255.0f);
-    }
+    if (style->opacity < 255) vg->opacity(style->opacity);
 
     if (node->type == SvgNodeType::G) return;
 
@@ -261,13 +257,6 @@ void _applyProperty(SvgNode* node, Shape* vg, float vx, float vy, float vw, floa
     } else {
         //Apply the stroke color
         vg->stroke(style->stroke.paint.r, style->stroke.paint.g, style->stroke.paint.b, style->stroke.opacity);
-    }
-
-    //Apply node opacity to stroke color
-    if (style->opacity < 255) {
-        uint8_t r, g, b, a;
-        vg->strokeColor(&r, &g, &b, &a);
-        vg->stroke(r, g, b, (a * style->opacity) / 255.0f);
     }
 
     //Apply composite node
