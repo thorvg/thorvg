@@ -19,6 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+#include <math.h>
 #include "tvgSwCommon.h"
 
 
@@ -414,4 +415,15 @@ SwFixed mathDiff(SwFixed angle1, SwFixed angle2)
     if (delta > SW_ANGLE_PI) delta -= SW_ANGLE_2PI;
 
     return delta;
+}
+
+
+SwPoint mathTransform(const Point* to, const Matrix* transform)
+{
+    if (!transform) return {TO_SWCOORD(to->x), TO_SWCOORD(to->y)};
+
+    auto tx = round(to->x * transform->e11 + to->y * transform->e12 + transform->e13);
+    auto ty = round(to->x * transform->e21 + to->y * transform->e22 + transform->e23);
+
+    return {TO_SWCOORD(tx), TO_SWCOORD(ty)};
 }

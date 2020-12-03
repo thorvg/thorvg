@@ -273,6 +273,7 @@ SwFixed mathDiff(SwFixed angle1, SwFixed angle2);
 SwFixed mathLength(SwPoint& pt);
 bool mathSmallCubic(SwPoint* base, SwFixed& angleIn, SwFixed& angleMid, SwFixed& angleOut);
 SwFixed mathMean(SwFixed angle1, SwFixed angle2);
+SwPoint mathTransform(const Point* to, const Matrix* transform);
 
 void shapeReset(SwShape* shape);
 bool shapeGenOutline(SwShape* shape, const Shape* sdata, unsigned tid, const Matrix* transform);
@@ -351,16 +352,6 @@ static inline void rasterRGBA32(uint32_t *dst, uint32_t val, uint32_t offset, in
     dst += offset;
     while (len--) *dst++ = val;
 #endif
-}
-
-static inline SwPoint mathTransform(const Point* to, const Matrix* transform)
-{
-    if (!transform) return {TO_SWCOORD(to->x), TO_SWCOORD(to->y)};
-
-    auto tx = ((to->x * transform->e11 + to->y * transform->e12 + transform->e13) + 0.5f);
-    auto ty = ((to->x * transform->e21 + to->y * transform->e22 + transform->e23) + 0.5f);
-
-    return {TO_SWCOORD(tx), TO_SWCOORD(ty)};
 }
 
 #endif /* _TVG_SW_COMMON_H_ */
