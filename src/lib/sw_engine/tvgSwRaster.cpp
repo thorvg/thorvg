@@ -91,6 +91,7 @@ static SwBBox _clipRegion(Surface* surface, SwBBox& in)
     return bbox;
 }
 
+
 static bool _rasterTranslucentRect(SwSurface* surface, const SwBBox& region, uint32_t color)
 {
     auto buffer = surface->buffer + (region.min.y * surface->stride) + region.min.x;
@@ -502,7 +503,7 @@ bool rasterImage(SwSurface* surface, SwImage* image, const Matrix* transform, ui
     Matrix invTransform;
 
     if (transform) _inverse(transform, &invTransform);
-    else invTransform = { 1, 0, 0, 0, 1, 0, 0, 0, 1 };
+    else invTransform = {1, 0, 0, 0, 1, 0, 0, 0, 1};
 
     if (image->rle) {
         if (opacity < 255) return _rasterTranslucentImageRle(surface, image->rle, image->data, image->w, image->h, opacity, &invTransform);
