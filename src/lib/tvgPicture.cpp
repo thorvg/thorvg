@@ -84,7 +84,8 @@ Result Picture::size(uint32_t w, uint32_t h) noexcept
 
 Result Picture::size(uint32_t* w, uint32_t* h) const noexcept
 {
-    if (pImpl->size(w, h)) return Result::Success;
-    return Result::InsufficientCondition;
+    if (w) *w = pImpl->w;
+    if (h) *h = pImpl->h;
+    return Result::Success;
 }
 

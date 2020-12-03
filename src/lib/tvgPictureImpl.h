@@ -39,6 +39,7 @@ struct Picture::Impl
     void *edata = nullptr;              //engine data
 
     uint32_t w = 0, h = 0;
+    bool resizing = false;
 
     Impl(Picture* p) : picture(p)
     {
@@ -58,7 +59,7 @@ struct Picture::Impl
         return false;
     }
 
-    void updateLocalTransform()
+    void resize()
     {
         uint32_t w = 0, h = 0;
         if (this->w != 0 && this->h != 0) {
@@ -80,10 +81,11 @@ struct Picture::Impl
             }
             else {
                 auto scale = sx < sy ? sx : sy;
-                paint->translate(((w - loader->vw) * scale)/2.0, ((h - loader->vh) * scale)/2.0);
+                paint->translate(((w - loader->vw) * scale) / 2.0, ((h - loader->vh) * scale) / 2.0);
                 paint->scale(scale);
                 paint->translate(-loader->vx, -loader->vy);
             }
+            resizing = false;
         }
     }
 
@@ -94,7 +96,7 @@ struct Picture::Impl
                 auto scene = loader->scene();
                 if (scene) {
                     paint = scene.release();
-                    updateLocalTransform();
+                    resizing = true;
                     loader->close();
                     if (paint) return RenderUpdateFlag::None;
                 }
@@ -112,7 +114,10 @@ struct Picture::Impl
         uint32_t flag = reload();
 
         if (pixels) edata = renderer.prepare(*picture, edata, pixels, transform, opacity, compList, static_cast<RenderUpdateFlag>(pFlag | flag));
-        else if (paint) edata = paint->pImpl->update(renderer, transform, opacity, compList, static_cast<RenderUpdateFlag>(pFlag | flag));
+        else if (paint) {
+            if (resizing) resize();
+            edata = paint->pImpl->update(renderer, transform, opacity, compList, static_cast<RenderUpdateFlag>(pFlag | flag));
+        }
         return edata;
     }
 
@@ -137,13 +142,7 @@ struct Picture::Impl
     {
         this->w = w;
         this->h = h;
-        return true;
-    }
-
-    bool size(uint32_t* w, uint32_t* h)
-    {
-        if (w) *w = this->w;
-        if (h) *h = this->h;
+        resizing = true;
         return true;
     }
 
