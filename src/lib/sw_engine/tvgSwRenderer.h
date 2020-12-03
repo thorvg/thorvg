@@ -27,6 +27,8 @@
 
 struct SwSurface;
 struct SwTask;
+struct SwShapeTask;
+struct SwImage;
 
 namespace tvg
 {
@@ -56,6 +58,7 @@ private:
     SwRenderer(){};
     ~SwRenderer();
 
+    bool prepareComposite(const SwShapeTask* task, SwImage* image);
     void prepareCommon(SwTask* task, const RenderTransform* transform, uint32_t opacity, vector<Composite>& compList, RenderUpdateFlag flags);
 };
 

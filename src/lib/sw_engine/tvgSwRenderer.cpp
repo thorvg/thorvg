@@ -268,6 +268,54 @@ bool SwRenderer::render(TVG_UNUSED const Picture& picture, void *data)
 }
 
 
+bool SwRenderer::prepareComposite(const SwShapeTask* task, SwImage* image)
+{
+    if (!compSurface) {
+        compSurface = new SwSurface;
+        if (!compSurface) return false;
+        *compSurface = *mainSurface;
+        compSurface->buffer = (uint32_t*) malloc(sizeof(uint32_t) * mainSurface->w * mainSurface->h);
+        if (!compSurface->buffer) {
+            delete(compSurface);
+            compSurface = nullptr;
+            return false;
+        }
+    }
+
+    //Setup SwImage to return
+    image->data = compSurface->buffer;
+    image->w = compSurface->w;
+    image->h = compSurface->h;
+    image->rle = nullptr;
+
+    //Add stroke size to bounding box.
+    auto strokeWidth = static_cast<SwCoord>(ceilf(task->sdata->strokeWidth() * 0.5f));
+    image->bbox.min.x = task->shape.bbox.min.x - strokeWidth;
+    image->bbox.min.y = task->shape.bbox.min.y - strokeWidth;
+    image->bbox.max.x = task->shape.bbox.max.x + strokeWidth;
+    image->bbox.max.y = task->shape.bbox.max.y + strokeWidth;
+
+    if (image->bbox.min.x < 0) image->bbox.min.x = 0;
+    if (image->bbox.min.y < 0) image->bbox.min.y = 0;
+    if (image->bbox.max.x > image->w) image->bbox.max.x = image->w;
+    if (image->bbox.max.y > image->h) image->bbox.max.y = image->h;
+
+    //We know partial clear region
+    compSurface->buffer = compSurface->buffer + (compSurface->stride * image->bbox.min.y) + image->bbox.min.x;
+    compSurface->w = image->bbox.max.x - image->bbox.min.x;
+    compSurface->h = image->bbox.max.y - image->bbox.min.y;
+
+    rasterClear(compSurface);
+
+    //Recover context
+    compSurface->buffer = image->data;
+    compSurface->w = image->w;
+    compSurface->h = image->h;
+
+    return true;
+}
+
+
 bool SwRenderer::render(TVG_UNUSED const Shape& shape, void *data)
 {
     auto task = static_cast<SwShapeTask*>(data);
@@ -276,32 +324,18 @@ bool SwRenderer::render(TVG_UNUSED const Shape& shape, void *data)
     if (task->opacity == 0) return true;
 
     SwSurface* renderTarget;
+    SwImage image;
     uint32_t opacity;
-    bool composite;
 
     //Do Composition
     if (task->compStroking) {
-        //Setup Composition Surface
-        if (!compSurface) {
-            compSurface = new SwSurface;
-            if (!compSurface) return false;
-            *compSurface = *mainSurface;
-            compSurface->buffer = (uint32_t*) malloc(sizeof(uint32_t) * mainSurface->stride * mainSurface->h);
-            if (!compSurface->buffer) {
-                delete(compSurface);
-                compSurface = nullptr;
-                return false;
-            }
-        }
-        rasterClear(compSurface);
+        if (!prepareComposite(task, &image)) return false;
         renderTarget = compSurface;
         opacity = 255;
-        composite = true;
     //No Composition
     } else {
         renderTarget = mainSurface;
         opacity = task->opacity;
-        composite = false;
     }
 
     //Main raster stage
@@ -321,26 +355,7 @@ bool SwRenderer::render(TVG_UNUSED const Shape& shape, void *data)
     if (a > 0) rasterStroke(renderTarget, &task->shape, r, g, b, a);
 
     //Composition (Shape + Stroke) stage
-    if (composite) {
-        SwImage image;
-        image.data = compSurface->buffer;
-        image.w = compSurface->w;
-        image.h = compSurface->h;
-        image.rle = nullptr;
-
-        //Add stroke size to bounding box.
-        auto strokeWidth = static_cast<SwCoord>(ceilf(task->sdata->strokeWidth() * 0.5f));
-        image.bbox.min.x = task->shape.bbox.min.x - strokeWidth;
-        image.bbox.min.y = task->shape.bbox.min.y - strokeWidth;
-        image.bbox.max.x = task->shape.bbox.max.x + strokeWidth;
-        image.bbox.max.y = task->shape.bbox.max.y + strokeWidth;
-        if (image.bbox.min.x < 0) image.bbox.min.x = 0;
-        if (image.bbox.min.y < 0) image.bbox.min.y = 0;
-        if (image.bbox.max.x > compSurface->w) image.bbox.max.x = compSurface->w;
-        if (image.bbox.max.y > compSurface->h) image.bbox.max.y = compSurface->h;
-
-        rasterImage(mainSurface, &image, nullptr, task->opacity);
-    }
+    if (task->compStroking) rasterImage(mainSurface, &image, nullptr, task->opacity);
 
     return true;
 }
