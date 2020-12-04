@@ -71,7 +71,15 @@ struct Scene::Impl
         //Half translucent. This requires intermediate composition.
         if (opacity < 255 && opacity > 0) {
             float x, y, w, h;
-            bounds(&x, &y, &w, &h);
+            if (!bounds(&x, &y, &w, &h)) return false;
+            if (x < 0) {
+                w += x;
+                x = 0;
+            }
+            if (y < 0) {
+                h += y;
+                y = 0;
+            }
             ctx = renderer.beginComposite(roundf(x), roundf(y), roundf(w), roundf(h));
         }
 
@@ -86,6 +94,8 @@ struct Scene::Impl
 
     bool bounds(float* px, float* py, float* pw, float* ph)
     {
+        if (paints.size() == 0) return false;
+
         auto x1 = FLT_MAX;
         auto y1 = FLT_MAX;
         auto x2 = 0.0f;
