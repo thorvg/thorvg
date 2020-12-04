@@ -27,13 +27,6 @@
 
 class SvgSceneBuilder
 {
-private:
-    struct {
-        int x, y;
-        uint32_t w, h;
-    } viewBox = {0, 0, 0, 0};
-    bool     preserveAspect = false;
-
 public:
     SvgSceneBuilder();
     ~SvgSceneBuilder();
