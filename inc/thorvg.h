@@ -280,6 +280,7 @@ public:
     Result load(const std::string& path) noexcept;
     Result load(const char* data, uint32_t size) noexcept;
     Result load(uint32_t* data, uint32_t w, uint32_t h, bool copy) noexcept;
+    //TODO: Replace with size(). Remove API
     Result viewbox(float* x, float* y, float* w, float* h) const noexcept;
 
     Result size(uint32_t w, uint32_t h) noexcept;
