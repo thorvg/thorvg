@@ -96,6 +96,28 @@ bool GlRenderer::postRender()
 }
 
 
+void* GlRenderer::beginComposite(uint32_t x, uint32_t y, uint32_t w, uint32_t h)
+{
+    //TODO: Prepare frameBuffer & Setup render target for composition
+    return nullptr;
+}
+
+
+bool GlRenderer::endComposite(void* ctx, uint32_t opacity)
+{
+    //TODO: Composite Framebuffer to main surface
+    return false;
+}
+
+
+bool GlRenderer::render(const Picture& picture, void *data)
+{
+    //TODO Draw Bitmap Image
+
+    return true;
+}
+
+
 bool GlRenderer::render(const Shape& shape, void* data)
 {
     GlShape* sdata = static_cast<GlShape*>(data);
@@ -137,6 +159,13 @@ bool GlRenderer::dispose(void *data)
 
     delete sdata;
     return true;
+}
+
+
+void* GlRenderer::prepare(TVG_UNUSED const Picture& picture, TVG_UNUSED void* data, TVG_UNUSED uint32_t *buffer, TVG_UNUSED const RenderTransform* transform, TVG_UNUSED uint32_t opacity, TVG_UNUSED vector<Composite>& compList, TVG_UNUSED RenderUpdateFlag flags)
+{
+    //TODO:
+    return nullptr;
 }
 
 

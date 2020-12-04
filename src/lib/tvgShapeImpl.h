@@ -232,7 +232,16 @@ struct Shape::Impl
 
     bool bounds(float* x, float* y, float* w, float* h)
     {
-        return path.bounds(x, y, w, h);
+        auto ret = path.bounds(x, y, w, h);
+
+        //Stroke feathering
+        if (stroke) {
+            if (x) *x -= stroke->width * 0.5f;
+            if (y) *y -= stroke->width * 0.5f;
+            if (w) *w += stroke->width;
+            if (h) *h += stroke->width;
+        }
+        return ret;
     }
 
     bool strokeWidth(float width)
