@@ -61,32 +61,34 @@ struct Picture::Impl
 
     void resize()
     {
-        uint32_t w = 0, h = 0;
-        if (this->w != 0 && this->h != 0) {
-            w = this->w;
-            h = this->h;
+        auto sx = float(w) / loader->vw;
+        auto sy = float(h) / loader->vh;
+
+        if (loader->preserveAspect) {
+            //Scale
+            auto scale = sx < sy ? sx : sy;
+            paint->scale(scale);
+            //Align
+            auto vx = loader->vx * scale;
+            auto vy = loader->vy * scale;
+            auto vw = loader->vw * scale;
+            auto vh = loader->vh * scale;
+            if (vw > vh) vy -= (float(h) - vh) * 0.5f;
+            else vx -= (float(w) - vw) * 0.5f;
+            paint->translate(-vx, -vy);
+        } else {
+            //Align
+            auto vx = loader->vx * sx;
+            auto vy = loader->vy * sy;
+            auto vw = loader->vw * sx;
+            auto vh = loader->vh * sy;
+            if (vw > vh) vy -= (float(h) - vh) * 0.5f;
+            else vx -= (float(w) - vw) * 0.5f;
+
+            Matrix m = {sx, 0, -vx, 0, sy, -vy, 0, 0, 1};
+            paint->transform(m);
         }
-        else if (loader->w != 0 && loader->h != 0) {
-            w = loader->w;
-            h = loader->h;
-        }
-        if (w != 0 && h != 0) {
-            auto sx = w / (loader->vw + (loader->vx > 0 ? loader->vx : -1 * loader->vx));
-            auto sy = h / (loader->vh + (loader->vy > 0 ? loader->vy : -1 * loader->vy));
-            if (!loader->preserveAspect) {
-                Matrix m = {sx,  0, -loader->vx,
-                             0, sy, -loader->vy,
-                             0,  0, 1};
-                paint->transform(m);
-            }
-            else {
-                auto scale = sx < sy ? sx : sy;
-                paint->translate(((w - loader->vw) * scale) / 2.0, ((h - loader->vh) * scale) / 2.0);
-                paint->scale(scale);
-                paint->translate(-loader->vx, -loader->vy);
-            }
-            resizing = false;
-        }
+        resizing = false;
     }
 
     uint32_t reload()
@@ -96,8 +98,15 @@ struct Picture::Impl
                 auto scene = loader->scene();
                 if (scene) {
                     paint = scene.release();
-                    resizing = true;
                     loader->close();
+
+                    if (w == 0 && h == 0) {
+                        w = loader->w;
+                        h = loader->h;
+                    } else {
+                        resize();
+                    }
+
                     if (paint) return RenderUpdateFlag::None;
                 }
             }

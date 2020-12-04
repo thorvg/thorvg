@@ -33,24 +33,7 @@ void tvgDrawCmds(tvg::Canvas* canvas, const char* path, const char* name)
 
     if (picture->load(buf) != tvg::Result::Success) return;
 
-    float x, y, w, h;
-    picture->viewbox(&x, &y, &w, &h);
-
-    float rate = (SIZE/(w > h ? w : h));
-    picture->scale(rate);
-
-    x *= rate;
-    y *= rate;
-    w *= rate;
-    h *= rate;
-
-    //Center Align ?
-    if (w > h) {
-        y -= (SIZE - h) * 0.5f;
-    } else {
-        x -= (SIZE - w) * 0.5f;
-    }
-    picture->translate(-x, -y);
+    picture->size(SIZE, SIZE);
 
     if (canvas->push(move(picture)) != tvg::Result::Success) return;
 
