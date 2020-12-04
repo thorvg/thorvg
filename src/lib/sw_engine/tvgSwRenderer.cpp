@@ -30,6 +30,14 @@
 static bool initEngine = false;
 static uint32_t rendererCnt = 0;
 
+struct CompositeCtx
+{
+    SwSurface surface;
+    SwSurface* recover;
+    SwImage image;
+};
+
+
 struct SwTask : Task
 {
     Matrix* transform = nullptr;
@@ -274,18 +282,8 @@ bool SwRenderer::render(TVG_UNUSED const Picture& picture, void *data)
 }
 
 
-struct CompositeCtx
-{
-    SwSurface surface;
-    SwSurface* recover;
-    SwImage image;
-};
-
-
 void* SwRenderer::beginComposite(uint32_t x, uint32_t y, uint32_t w, uint32_t h)
 {
-    printf("%d %d %d %d\n", x, y, w, h);
-
     auto ctx = new CompositeCtx;
     if (!ctx) return nullptr;
 
