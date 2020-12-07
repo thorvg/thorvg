@@ -99,14 +99,7 @@ struct Picture::Impl
                 if (scene) {
                     paint = scene.release();
                     loader->close();
-
-                    if (w == 0 && h == 0) {
-                        w = loader->w;
-                        h = loader->h;
-                    } else {
-                        resize();
-                    }
-
+                    if (w != loader->w && h != loader->w) resize();
                     if (paint) return RenderUpdateFlag::None;
                 }
             }
@@ -167,6 +160,8 @@ struct Picture::Impl
         loader = LoaderMgr::loader(path);
         if (!loader) return Result::NonSupport;
         if (!loader->read()) return Result::Unknown;
+        w = loader->w;
+        h = loader->h;
         return Result::Success;
     }
 
@@ -176,6 +171,8 @@ struct Picture::Impl
         loader = LoaderMgr::loader(data, size);
         if (!loader) return Result::NonSupport;
         if (!loader->read()) return Result::Unknown;
+        w = loader->w;
+        h = loader->h;
         return Result::Success;
     }
 

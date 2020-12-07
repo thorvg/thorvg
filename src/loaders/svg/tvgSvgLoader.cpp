@@ -2471,8 +2471,11 @@ bool SvgLoader::header()
         vw = loaderData.doc->node.doc.vw;
         vh = loaderData.doc->node.doc.vh;
 
-        w = loaderData.doc->node.doc.w;
-        h = loaderData.doc->node.doc.h;
+        //Use viewbox size as image size
+        w = static_cast<uint32_t>(loaderData.doc->node.doc.vw);
+        h = static_cast<uint32_t>(loaderData.doc->node.doc.vh);
+        //w = loaderData.doc->node.doc.w;
+        //h = loaderData.doc->node.doc.h;
 
         preserveAspect = loaderData.doc->node.doc.preserveAspect;
     } else {
