@@ -30,6 +30,14 @@
 static bool initEngine = false;
 static uint32_t rendererCnt = 0;
 
+struct CompositeCtx
+{
+    SwSurface surface;
+    SwSurface* recover;
+    SwImage image;
+};
+
+
 struct SwTask : Task
 {
     Matrix* transform = nullptr;
@@ -219,6 +227,12 @@ bool SwRenderer::clear()
 }
 
 
+bool SwRenderer::sync()
+{
+    return true;
+}
+
+
 bool SwRenderer::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h, uint32_t cs)
 {
     if (!buffer || stride == 0 || w == 0 || h == 0) return false;
@@ -265,6 +279,80 @@ bool SwRenderer::render(TVG_UNUSED const Picture& picture, void *data)
     task->done();
 
     return rasterImage(mainSurface, &task->image, task->transform, task->opacity);
+}
+
+
+void* SwRenderer::beginComposite(uint32_t x, uint32_t y, uint32_t w, uint32_t h)
+{
+    auto ctx = new CompositeCtx;
+    if (!ctx) return nullptr;
+
+    //SwImage, Optimize Me: Surface size from MainSurface(WxH) to Parameter W x H
+    ctx->image.data = (uint32_t*) malloc(sizeof(uint32_t) * mainSurface->w * mainSurface->h);
+    if (!ctx->image.data) {
+        delete(ctx);
+        return nullptr;
+    }
+
+    //Boundary Check
+    if (x < 0) x = 0;
+    if (y < 0) y = 0;
+    if (x + w > mainSurface->w) w = (mainSurface->w - x);
+    if (y + h > mainSurface->h) h = (mainSurface->h - y);
+
+    //FIXME: Should be removed if xywh is proper.
+    x = 0;
+    y = 0;
+    w = mainSurface->w;
+    h = mainSurface->h;
+
+    ctx->image.bbox.min.x = x;
+    ctx->image.bbox.min.y = y;
+    ctx->image.bbox.max.x = x + w;
+    ctx->image.bbox.max.y = y + h;
+    ctx->image.w = mainSurface->w;
+    ctx->image.h = mainSurface->h;
+
+    //Inherits attributes from main surface
+    ctx->surface.comp = mainSurface->comp;
+    ctx->surface.stride = mainSurface->w;
+    ctx->surface.cs = mainSurface->cs;
+
+    //We know partial clear region
+    ctx->surface.buffer = ctx->image.data + (ctx->surface.stride * y + x);
+    ctx->surface.w = w;
+    ctx->surface.h = h;
+
+    rasterClear(&ctx->surface);
+
+    //Recover context
+    ctx->surface.buffer = ctx->image.data;
+    ctx->surface.w = ctx->image.w;
+    ctx->surface.h = ctx->image.h;
+
+    //Switch render target
+    ctx->recover = mainSurface;
+    mainSurface = &ctx->surface;
+
+    return ctx;
+}
+
+
+bool SwRenderer::endComposite(void* p, uint32_t opacity)
+{
+    if (!p) return false;
+    auto ctx = static_cast<CompositeCtx*>(p);
+
+    //Recover render target
+    mainSurface = ctx->recover;
+
+    auto ret = rasterImage(mainSurface, &ctx->image, nullptr, opacity);
+
+    //Free resources
+    free(ctx->image.data);
+    delete(ctx);
+
+    return ret;
 }
 
 

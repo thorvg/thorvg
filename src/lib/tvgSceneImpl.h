@@ -32,6 +32,7 @@
 struct Scene::Impl
 {
     vector<Paint*> paints;
+    uint32_t opacity;
 
     bool dispose(RenderMethod& renderer)
     {
@@ -46,6 +47,12 @@ struct Scene::Impl
 
     void* update(RenderMethod &renderer, const RenderTransform* transform, uint32_t opacity, vector<Composite>& compList, RenderUpdateFlag flag)
     {
+        this->opacity = opacity;
+
+        /* Overriding opacity value. If this scene is half-translucent,
+           It must do intermeidate composition with that opacity value. */
+        if (opacity < 255 && opacity > 0) opacity = 255;
+
         /* FXIME: it requires to return list of children engine data
            This is necessary for scene composition */
         void* edata = nullptr;
@@ -59,45 +66,54 @@ struct Scene::Impl
 
     bool render(RenderMethod &renderer)
     {
-        //TODO: composition begin
-        //auto data = renderer.beginComp();
+        void* ctx = nullptr;
+
+        //Half translucent. This requires intermediate composition.
+        if (opacity < 255 && opacity > 0) {
+            //FIXME: Get Render Boundary of Shapes.
+            //float x, y, w, h;
+            //if (!bounds(&x, &y, &w, &h)) return false;
+            //ctx = renderer.beginComposite(roundf(x), roundf(y), roundf(w), roundf(h));
+            ctx = renderer.beginComposite(0, 0, 0, 0);
+        }
 
         for (auto paint : paints) {
             if (!paint->pImpl->render(renderer)) return false;
-        }     
+        }
 
-        //TODO: composition end
-        //renderer.endComp(edata);
+        if (ctx) return renderer.endComposite(ctx, opacity);
 
         return true;
     }
 
     bool bounds(float* px, float* py, float* pw, float* ph)
     {
-        auto x = FLT_MAX;
-        auto y = FLT_MAX;
-        auto w = 0.0f;
-        auto h = 0.0f;
+        if (paints.size() == 0) return false;
+
+        auto x1 = FLT_MAX;
+        auto y1 = FLT_MAX;
+        auto x2 = 0.0f;
+        auto y2 = 0.0f;
 
         for (auto paint : paints) {
-            auto x2 = FLT_MAX;
-            auto y2 = FLT_MAX;
-            auto w2 = 0.0f;
-            auto h2 = 0.0f;
+            auto x = FLT_MAX;
+            auto y = FLT_MAX;
+            auto w = 0.0f;
+            auto h = 0.0f;
 
-            if (!paint->pImpl->bounds(&x2, &y2, &w2, &h2)) continue;
+            if (!paint->pImpl->bounds(&x, &y, &w, &h)) continue;
 
             //Merge regions
-            if (x2 < x) x = x2;
-            if (x + w < x2 + w2) w = (x2 + w2) - x;
-            if (y2 < y) y = y2;
-            if (y + h < y2 + h2) h = (y2 + h2) - y;
+            if (x < x1) x1 = x;
+            if (x2 < x + w) x2 = (x + w);
+            if (y < y1) y1 = y;
+            if (y2 < y + h) y2 = (y + h);
         }
 
-        if (px) *px = x;
-        if (py) *py = y;
-        if (pw) *pw = w;
-        if (ph) *ph = h;
+        if (px) *px = x1;
+        if (py) *py = y1;
+        if (pw) *pw = (x2 - x1);
+        if (ph) *ph = (y2 - y1);
 
         return true;
     }
