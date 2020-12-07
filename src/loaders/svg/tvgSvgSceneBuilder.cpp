@@ -24,7 +24,7 @@
 #include "tvgSvgSceneBuilder.h"
 #include "tvgSvgPath.h"
 
-void _appendShape(SvgNode* node, Shape* shape, float vx, float vy, float vw, float vh);
+bool _appendShape(SvgNode* node, Shape* shape, float vx, float vy, float vw, float vh);
 
 bool _isGroupType(SvgNodeType type)
 {
@@ -277,11 +277,11 @@ void _applyProperty(SvgNode* node, Shape* vg, float vx, float vy, float vw, floa
 unique_ptr<Shape> _shapeBuildHelper(SvgNode* node, float vx, float vy, float vw, float vh)
 {
     auto shape = Shape::gen();
-    _appendShape(node, shape.get(), vx, vy, vw, vh);
-    return shape;
+    if (_appendShape(node, shape.get(), vx, vy, vw, vh)) return shape;
+    else return nullptr;
 }
 
-void _appendShape(SvgNode* node, Shape* shape, float vx, float vy, float vw, float vh)
+bool _appendShape(SvgNode* node, Shape* shape, float vx, float vy, float vw, float vh)
 {
     switch (node->type) {
         case SvgNodeType::Path: {
@@ -326,28 +326,28 @@ void _appendShape(SvgNode* node, Shape* shape, float vx, float vy, float vw, flo
             break;
         }
         default: {
-            break;
+            return false;
         }
     }
 
     _applyProperty(node, shape, vx, vy, vw, vh);
+    return true;
 }
 
-unique_ptr<Scene> _sceneBuildHelper(SvgNode* node, float vx, float vy, float vw, float vh, int parentOpacity)
+unique_ptr<Scene> _sceneBuildHelper(SvgNode* node, float vx, float vy, float vw, float vh)
 {
     if (_isGroupType(node->type)) {
         auto scene = Scene::gen();
         if (node->transform) scene->transform(*node->transform);
-        node->style->opacity = (node->style->opacity * parentOpacity) / 255.0f;
 
-        if (node->display) {
+        if (node->display && node->style->opacity != 0) {
             auto child = node->child.list;
             for (uint32_t i = 0; i < node->child.cnt; ++i, ++child) {
                 if (_isGroupType((*child)->type)) {
-                    scene->push(_sceneBuildHelper(*child, vx, vy, vw, vh, node->style->opacity));
+                    scene->push(_sceneBuildHelper(*child, vx, vy, vw, vh));
                 } else {
-                    (*child)->style->opacity = ((*child)->style->opacity * node->style->opacity) / 255.0f;
-                    scene->push(_shapeBuildHelper(*child, vx, vy, vw, vh));
+                    auto shape = _shapeBuildHelper(*child, vx, vy, vw, vh);
+                    if (shape) scene->push(move(shape));
                 }
             }
             //Apply composite node
@@ -363,6 +363,7 @@ unique_ptr<Scene> _sceneBuildHelper(SvgNode* node, float vx, float vy, float vw,
                     }
                 }
             }
+            scene->opacity(node->style->opacity);
         }
         return scene;
     }
@@ -384,5 +385,5 @@ unique_ptr<Scene> SvgSceneBuilder::build(SvgNode* node)
 {
     if (!node || (node->type != SvgNodeType::Doc)) return nullptr;
 
-    return _sceneBuildHelper(node, node->node.doc.vx, node->node.doc.vy, node->node.doc.vw, node->node.doc.vh, 255);
+    return _sceneBuildHelper(node, node->node.doc.vx, node->node.doc.vy, node->node.doc.vw, node->node.doc.vh);
 }
