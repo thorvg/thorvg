@@ -34,6 +34,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     //Create a Scene 2
     auto scene2 = tvg::Scene::gen();
     scene2->opacity(127);              //Apply opacity to scene (0 - 255)
+    scene2->scale(1.2);
     scene2->reserve(2);
 
     //Star

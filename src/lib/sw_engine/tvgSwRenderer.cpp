@@ -294,6 +294,18 @@ void* SwRenderer::beginComposite(uint32_t x, uint32_t y, uint32_t w, uint32_t h)
         return nullptr;
     }
 
+    //Boundary Check
+    if (x < 0) x = 0;
+    if (y < 0) y = 0;
+    if (x + w > mainSurface->w) w = (mainSurface->w - x);
+    if (y + h > mainSurface->h) h = (mainSurface->h - y);
+
+    //FIXME: Should be removed if xywh is proper.
+    x = 0;
+    y = 0;
+    w = mainSurface->w;
+    h = mainSurface->h;
+
     ctx->image.bbox.min.x = x;
     ctx->image.bbox.min.y = y;
     ctx->image.bbox.max.x = x + w;
@@ -307,7 +319,7 @@ void* SwRenderer::beginComposite(uint32_t x, uint32_t y, uint32_t w, uint32_t h)
     ctx->surface.cs = mainSurface->cs;
 
     //We know partial clear region
-    ctx->surface.buffer = ctx->image.data + (w * y + x);
+    ctx->surface.buffer = ctx->image.data + (ctx->surface.stride * y + x);
     ctx->surface.w = w;
     ctx->surface.h = h;
 

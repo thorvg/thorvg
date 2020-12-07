@@ -70,22 +70,16 @@ struct Scene::Impl
 
         //Half translucent. This requires intermediate composition.
         if (opacity < 255 && opacity > 0) {
-            float x, y, w, h;
-            if (!bounds(&x, &y, &w, &h)) return false;
-            if (x < 0) {
-                w += x;
-                x = 0;
-            }
-            if (y < 0) {
-                h += y;
-                y = 0;
-            }
-            ctx = renderer.beginComposite(roundf(x), roundf(y), roundf(w), roundf(h));
+            //FIXME: Get Render Boundary of Shapes.
+            //float x, y, w, h;
+            //if (!bounds(&x, &y, &w, &h)) return false;
+            //ctx = renderer.beginComposite(roundf(x), roundf(y), roundf(w), roundf(h));
+            ctx = renderer.beginComposite(0, 0, 0, 0);
         }
 
         for (auto paint : paints) {
             if (!paint->pImpl->render(renderer)) return false;
-        }     
+        }
 
         if (ctx) return renderer.endComposite(ctx, opacity);
 
