@@ -37,8 +37,7 @@ struct Picture::Impl
     uint32_t *pixels = nullptr;
     Picture *picture = nullptr;
     void *edata = nullptr;              //engine data
-
-    uint32_t w = 0, h = 0;
+    float w = 0, h = 0;
     bool resizing = false;
 
     Impl(Picture* p) : picture(p)
@@ -61,8 +60,8 @@ struct Picture::Impl
 
     void resize()
     {
-        auto sx = float(w) / loader->vw;
-        auto sy = float(h) / loader->vh;
+        auto sx = w / loader->vw;
+        auto sy = h / loader->vh;
 
         if (loader->preserveAspect) {
             //Scale
@@ -73,8 +72,8 @@ struct Picture::Impl
             auto vy = loader->vy * scale;
             auto vw = loader->vw * scale;
             auto vh = loader->vh * scale;
-            if (vw > vh) vy -= (float(h) - vh) * 0.5f;
-            else vx -= (float(w) - vw) * 0.5f;
+            if (vw > vh) vy -= (h - vh) * 0.5f;
+            else vx -= (w - vw) * 0.5f;
             paint->translate(-vx, -vy);
         } else {
             //Align
@@ -82,8 +81,8 @@ struct Picture::Impl
             auto vy = loader->vy * sy;
             auto vw = loader->vw * sx;
             auto vh = loader->vh * sy;
-            if (vw > vh) vy -= (float(h) - vh) * 0.5f;
-            else vx -= (float(w) - vw) * 0.5f;
+            if (vw > vh) vy -= (h - vh) * 0.5f;
+            else vx -= (w - vw) * 0.5f;
 
             Matrix m = {sx, 0, -vx, 0, sy, -vy, 0, 0, 1};
             paint->transform(m);
@@ -99,7 +98,7 @@ struct Picture::Impl
                 if (scene) {
                     paint = scene.release();
                     loader->close();
-                    if (w != loader->w && h != loader->w) resize();
+                    if (w != loader->vw && h != loader->vw) resize();
                     if (paint) return RenderUpdateFlag::None;
                 }
             }
@@ -160,8 +159,8 @@ struct Picture::Impl
         loader = LoaderMgr::loader(path);
         if (!loader) return Result::NonSupport;
         if (!loader->read()) return Result::Unknown;
-        w = loader->w;
-        h = loader->h;
+        w = loader->vw;
+        h = loader->vh;
         return Result::Success;
     }
 
@@ -171,8 +170,8 @@ struct Picture::Impl
         loader = LoaderMgr::loader(data, size);
         if (!loader) return Result::NonSupport;
         if (!loader->read()) return Result::Unknown;
-        w = loader->w;
-        h = loader->h;
+        w = loader->vw;
+        h = loader->vh;
         return Result::Success;
     }
 

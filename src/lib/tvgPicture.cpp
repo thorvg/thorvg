@@ -75,14 +75,14 @@ Result Picture::viewbox(float* x, float* y, float* w, float* h) const noexcept
 }
 
 
-Result Picture::size(uint32_t w, uint32_t h) noexcept
+Result Picture::size(float w, float h) noexcept
 {
     if (pImpl->size(w, h)) return Result::Success;
     return Result::InsufficientCondition;
 }
 
 
-Result Picture::size(uint32_t* w, uint32_t* h) const noexcept
+Result Picture::size(float* w, float* h) const noexcept
 {
     if (w) *w = pImpl->w;
     if (h) *h = pImpl->h;

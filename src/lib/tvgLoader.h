@@ -35,9 +35,6 @@ public:
     float vy = 0;
     float vw = 0;
     float vh = 0;
-
-    uint32_t w = 0; //default size
-    uint32_t h = 0; //default size
     bool preserveAspect = true; //keep aspect ratio by default.
 
     virtual ~Loader() {}
