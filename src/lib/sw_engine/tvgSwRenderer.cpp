@@ -136,10 +136,10 @@ struct SwShapeTask : SwTask
                 }
             }
         }
-        if (addStroking == 2 && opacity < 255) compStroking = true;
-        else compStroking = false;
     end:
         shapeDelOutline(&shape, tid);
+        if (addStroking == 2 && opacity < 255) compStroking = true;
+        else compStroking = false;
     }
 
     bool dispose() override
