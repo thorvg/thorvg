@@ -58,11 +58,10 @@ public:
         }
 
         /* get default size */
-        mPicture->viewbox(nullptr, nullptr, &w, &h);
+        mPicture->size(&w, &h);
         mDefaultWidth = static_cast<uint32_t>(w);
         mDefaultHeight = static_cast<uint32_t>(h);
 
-        updateScale();
         updateSize(width, height);
 
         if (mSwCanvas->push(unique_ptr<Picture>(mPicture)) != Result::Success) {
@@ -148,18 +147,7 @@ private:
         mBuffer = make_unique<uint8_t[]>(mWidth * mHeight * 4);
         mSwCanvas->target((uint32_t *)mBuffer.get(), mWidth, mWidth, mHeight, SwCanvas::ABGR8888);
 
-        updateScale();
-    }
-
-    void updateScale()
-    {
-        if (!mPicture) return;
-
-        float scaleX = static_cast<float>(mWidth) / static_cast<float>(mDefaultWidth);
-        float scaleY = static_cast<float>(mHeight) / static_cast<float>(mDefaultHeight);
-        mScale = scaleX < scaleY ? scaleX : scaleY;
-
-        mPicture->scale(mScale);
+        if (mPicture) mPicture->resize(static_cast<float>(width), static_cast<float>(height));
     }
 
 private:
