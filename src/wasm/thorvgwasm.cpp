@@ -28,8 +28,6 @@ public:
 
     bool load(string data, int width, int height)
     {
-        float w, h;
-
         mErrorMsg = "None";
 
         if (!mSwCanvas) {
@@ -57,12 +55,6 @@ public:
             return false;
         }
 
-        /* get default size */
-        mPicture->viewbox(nullptr, nullptr, &w, &h);
-        mDefaultWidth = static_cast<uint32_t>(w);
-        mDefaultHeight = static_cast<uint32_t>(h);
-
-        updateScale();
         updateSize(width, height);
 
         if (mSwCanvas->push(unique_ptr<Picture>(mPicture)) != Result::Success) {
@@ -120,11 +112,6 @@ public:
         return val(typed_memory_view(mWidth * mHeight * 4, mBuffer.get()));
     }
 
-    float getScale()
-    {
-        return mScale;
-    }
-
 private:
     explicit ThorvgWasm()
     {
@@ -148,18 +135,7 @@ private:
         mBuffer = make_unique<uint8_t[]>(mWidth * mHeight * 4);
         mSwCanvas->target((uint32_t *)mBuffer.get(), mWidth, mWidth, mHeight, SwCanvas::ABGR8888);
 
-        updateScale();
-    }
-
-    void updateScale()
-    {
-        if (!mPicture) return;
-
-        float scaleX = static_cast<float>(mWidth) / static_cast<float>(mDefaultWidth);
-        float scaleY = static_cast<float>(mHeight) / static_cast<float>(mDefaultHeight);
-        mScale = scaleX < scaleY ? scaleX : scaleY;
-
-        mPicture->scale(mScale);
+        if (mPicture) mPicture->size(width, height);
     }
 
 private:
@@ -170,9 +146,6 @@ private:
 
     uint32_t               mWidth{0};
     uint32_t               mHeight{0};
-    uint32_t               mDefaultWidth{0};
-    uint32_t               mDefaultHeight{0};
-    float                  mScale{0};
 };
 
 // Binding code
@@ -183,6 +156,5 @@ EMSCRIPTEN_BINDINGS(thorvg_bindings) {
     .function("getDefaultData", &ThorvgWasm::getDefaultData, allow_raw_pointers())
     .function("load", &ThorvgWasm::load)
     .function("update", &ThorvgWasm::update)
-    .function("render", &ThorvgWasm::render)
-    .function("getScale", &ThorvgWasm::getScale);
+    .function("render", &ThorvgWasm::render);
 }
