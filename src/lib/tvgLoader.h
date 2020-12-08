@@ -35,9 +35,7 @@ public:
     float vy = 0;
     float vw = 0;
     float vh = 0;
-
-    uint32_t w = 0; //default size
-    uint32_t h = 0; //default size
+    float w = 0, h = 0;         //default image size
     bool preserveAspect = true; //keep aspect ratio by default.
 
     virtual ~Loader() {}

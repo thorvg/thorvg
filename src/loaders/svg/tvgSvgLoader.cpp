@@ -2468,11 +2468,12 @@ bool SvgLoader::header()
         //Return the brief resource info such as viewbox:
         vx = loaderData.doc->node.doc.vx;
         vy = loaderData.doc->node.doc.vy;
-        vw = loaderData.doc->node.doc.vw;
-        vh = loaderData.doc->node.doc.vh;
+        w = vw = loaderData.doc->node.doc.vw;
+        h = vh = loaderData.doc->node.doc.vh;
 
-        w = loaderData.doc->node.doc.w;
-        h = loaderData.doc->node.doc.h;
+        //Override size
+        if (loaderData.doc->node.doc.w > 0) w = loaderData.doc->node.doc.w;
+        if (loaderData.doc->node.doc.h > 0) h = loaderData.doc->node.doc.h;
 
         preserveAspect = loaderData.doc->node.doc.preserveAspect;
     } else {

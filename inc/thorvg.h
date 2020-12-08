@@ -283,8 +283,8 @@ public:
     //TODO: Replace with size(). Remove API
     Result viewbox(float* x, float* y, float* w, float* h) const noexcept;
 
-    Result size(uint32_t w, uint32_t h) noexcept;
-    Result size(uint32_t* w, uint32_t* h) const noexcept;
+    Result size(float w, float h) noexcept;
+    Result size(float* w, float* h) const noexcept;
 
     static std::unique_ptr<Picture> gen() noexcept;
 
