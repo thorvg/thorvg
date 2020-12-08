@@ -62,9 +62,9 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     //Circle
     auto shape4 = tvg::Shape::gen();
 
-    auto cx = 550.0f;
-    auto cy = 550.0f;
-    auto radius = 125.0f;
+    auto cx = 150.0f;
+    auto cy = 150.0f;
+    auto radius = 50.0f;
     auto halfRadius = radius * 0.552284f;
 
     //Append Paths
@@ -77,6 +77,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     shape4->stroke(10);
     shape4->stroke(0, 0, 255, 255);
     shape4->opacity(200);
+    shape4->scale(3);
     scene2->push(move(shape4));
 
     //Draw the Scene onto the Canvas
