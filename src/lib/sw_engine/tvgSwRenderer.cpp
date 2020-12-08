@@ -211,7 +211,7 @@ SwRenderer::~SwRenderer()
 {
     clear();
 
-    if (mainSurface) delete(mainSurface);
+    if (surface) delete(surface);
 
     --rendererCnt;
     if (!initEngine) _termEngine();
@@ -237,37 +237,30 @@ bool SwRenderer::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t 
 {
     if (!buffer || stride == 0 || w == 0 || h == 0) return false;
 
-    if (!mainSurface) {
-        mainSurface = new SwSurface;
-        if (!mainSurface) return false;
+    if (!surface) {
+        surface = new SwSurface;
+        if (!surface) return false;
     }
 
-    mainSurface->buffer = buffer;
-    mainSurface->stride = stride;
-    mainSurface->w = w;
-    mainSurface->h = h;
-    mainSurface->cs = cs;
+    surface->buffer = buffer;
+    surface->stride = stride;
+    surface->w = w;
+    surface->h = h;
+    surface->cs = cs;
 
-    return rasterCompositor(mainSurface);
+    return rasterCompositor(surface);
 }
 
 
 bool SwRenderer::preRender()
 {
-    return rasterClear(mainSurface);
+    return rasterClear(surface);
 }
 
 
 bool SwRenderer::postRender()
 {
     tasks.clear();
-
-    //Clear Composite Surface
-    if (compSurface) {
-        if (compSurface->buffer) free(compSurface->buffer);
-        delete(compSurface);
-    }
-    compSurface = nullptr;
 
     return true;
 }
@@ -278,7 +271,7 @@ bool SwRenderer::render(TVG_UNUSED const Picture& picture, void *data)
     auto task = static_cast<SwImageTask*>(data);
     task->done();
 
-    return rasterImage(mainSurface, &task->image, task->transform, task->opacity);
+    return rasterImage(surface, &task->image, task->transform, task->opacity);
 }
 
 
@@ -288,7 +281,7 @@ void* SwRenderer::beginComposite(uint32_t x, uint32_t y, uint32_t w, uint32_t h)
     if (!ctx) return nullptr;
 
     //SwImage, Optimize Me: Surface size from MainSurface(WxH) to Parameter W x H
-    ctx->image.data = (uint32_t*) malloc(sizeof(uint32_t) * mainSurface->w * mainSurface->h);
+    ctx->image.data = (uint32_t*) malloc(sizeof(uint32_t) * surface->w * surface->h);
     if (!ctx->image.data) {
         delete(ctx);
         return nullptr;
@@ -297,26 +290,26 @@ void* SwRenderer::beginComposite(uint32_t x, uint32_t y, uint32_t w, uint32_t h)
     //Boundary Check
     if (x < 0) x = 0;
     if (y < 0) y = 0;
-    if (x + w > mainSurface->w) w = (mainSurface->w - x);
-    if (y + h > mainSurface->h) h = (mainSurface->h - y);
+    if (x + w > surface->w) w = (surface->w - x);
+    if (y + h > surface->h) h = (surface->h - y);
 
     //FIXME: Should be removed if xywh is proper.
     x = 0;
     y = 0;
-    w = mainSurface->w;
-    h = mainSurface->h;
+    w = surface->w;
+    h = surface->h;
 
     ctx->image.bbox.min.x = x;
     ctx->image.bbox.min.y = y;
     ctx->image.bbox.max.x = x + w;
     ctx->image.bbox.max.y = y + h;
-    ctx->image.w = mainSurface->w;
-    ctx->image.h = mainSurface->h;
+    ctx->image.w = surface->w;
+    ctx->image.h = surface->h;
 
     //Inherits attributes from main surface
-    ctx->surface.comp = mainSurface->comp;
-    ctx->surface.stride = mainSurface->w;
-    ctx->surface.cs = mainSurface->cs;
+    ctx->surface.comp = surface->comp;
+    ctx->surface.stride = surface->w;
+    ctx->surface.cs = surface->cs;
 
     //We know partial clear region
     ctx->surface.buffer = ctx->image.data + (ctx->surface.stride * y + x);
@@ -331,8 +324,8 @@ void* SwRenderer::beginComposite(uint32_t x, uint32_t y, uint32_t w, uint32_t h)
     ctx->surface.h = ctx->image.h;
 
     //Switch render target
-    ctx->recover = mainSurface;
-    mainSurface = &ctx->surface;
+    ctx->recover = surface;
+    surface = &ctx->surface;
 
     return ctx;
 }
@@ -344,63 +337,15 @@ bool SwRenderer::endComposite(void* p, uint32_t opacity)
     auto ctx = static_cast<CompositeCtx*>(p);
 
     //Recover render target
-    mainSurface = ctx->recover;
+    surface = ctx->recover;
 
-    auto ret = rasterImage(mainSurface, &ctx->image, nullptr, opacity);
+    auto ret = rasterImage(surface, &ctx->image, nullptr, opacity);
 
     //Free resources
     free(ctx->image.data);
     delete(ctx);
 
     return ret;
-}
-
-
-bool SwRenderer::prepareComposite(const SwShapeTask* task, SwImage* image)
-{
-    if (!compSurface) {
-        compSurface = new SwSurface;
-        if (!compSurface) return false;
-        *compSurface = *mainSurface;
-        compSurface->buffer = (uint32_t*) malloc(sizeof(uint32_t) * mainSurface->w * mainSurface->h);
-        if (!compSurface->buffer) {
-            delete(compSurface);
-            compSurface = nullptr;
-            return false;
-        }
-    }
-
-    //Setup SwImage to return
-    image->data = compSurface->buffer;
-    image->w = compSurface->w;
-    image->h = compSurface->h;
-    image->rle = nullptr;
-
-    //Add stroke size to bounding box.
-    auto strokeWidth = static_cast<SwCoord>(ceilf(task->sdata->strokeWidth() * 0.5f));
-    image->bbox.min.x = task->shape.bbox.min.x - strokeWidth;
-    image->bbox.min.y = task->shape.bbox.min.y - strokeWidth;
-    image->bbox.max.x = task->shape.bbox.max.x + strokeWidth;
-    image->bbox.max.y = task->shape.bbox.max.y + strokeWidth;
-
-    if (image->bbox.min.x < 0) image->bbox.min.x = 0;
-    if (image->bbox.min.y < 0) image->bbox.min.y = 0;
-    if (image->bbox.max.x > image->w) image->bbox.max.x = image->w;
-    if (image->bbox.max.y > image->h) image->bbox.max.y = image->h;
-
-    //We know partial clear region
-    compSurface->buffer = compSurface->buffer + (compSurface->stride * image->bbox.min.y) + image->bbox.min.x;
-    compSurface->w = image->bbox.max.x - image->bbox.min.x;
-    compSurface->h = image->bbox.max.y - image->bbox.min.y;
-
-    rasterClear(compSurface);
-
-    //Recover context
-    compSurface->buffer = image->data;
-    compSurface->w = image->w;
-    compSurface->h = image->h;
-
-    return true;
 }
 
 
@@ -411,18 +356,21 @@ bool SwRenderer::render(TVG_UNUSED const Shape& shape, void *data)
     
     if (task->opacity == 0) return true;
 
-    SwSurface* renderTarget;
-    SwImage image;
     uint32_t opacity;
+    void *ctx = nullptr;
 
     //Do Composition
     if (task->compStroking) {
-        if (!prepareComposite(task, &image)) return false;
-        renderTarget = compSurface;
+        //Add stroke size to bounding box.
+        auto strokeWidth = static_cast<SwCoord>(ceilf(task->sdata->strokeWidth() * 0.5f));
+        auto x = task->shape.bbox.min.x - strokeWidth;
+        auto y = task->shape.bbox.min.y - strokeWidth;
+        auto w = task->shape.bbox.max.x + strokeWidth - x;
+        auto h = task->shape.bbox.max.y + strokeWidth - y;
+        ctx = beginComposite(x, y, w, h);
         opacity = 255;
     //No Composition
     } else {
-        renderTarget = mainSurface;
         opacity = task->opacity;
     }
 
@@ -431,19 +379,19 @@ bool SwRenderer::render(TVG_UNUSED const Shape& shape, void *data)
 
     if (auto fill = task->sdata->fill()) {
         //FIXME: pass opacity to apply gradient fill?
-        rasterGradientShape(renderTarget, &task->shape, fill->id());
+        rasterGradientShape(surface, &task->shape, fill->id());
     } else{
         task->sdata->fillColor(&r, &g, &b, &a);
         a = static_cast<uint8_t>((opacity * (uint32_t) a) / 255);
-        if (a > 0) rasterSolidShape(renderTarget, &task->shape, r, g, b, a);
+        if (a > 0) rasterSolidShape(surface, &task->shape, r, g, b, a);
     }
 
     task->sdata->strokeColor(&r, &g, &b, &a);
     a = static_cast<uint8_t>((opacity * (uint32_t) a) / 255);
-    if (a > 0) rasterStroke(renderTarget, &task->shape, r, g, b, a);
+    if (a > 0) rasterStroke(surface, &task->shape, r, g, b, a);
 
     //Composition (Shape + Stroke) stage
-    if (task->compStroking) rasterImage(mainSurface, &image, nullptr, task->opacity);
+    if (task->compStroking) endComposite(ctx, task->opacity);
 
     return true;
 }
@@ -480,7 +428,7 @@ void SwRenderer::prepareCommon(SwTask* task, const RenderTransform* transform, u
     }
 
     task->opacity = opacity;
-    task->surface = mainSurface;
+    task->surface = surface;
     task->flags = flags;
 
     tasks.push_back(task);

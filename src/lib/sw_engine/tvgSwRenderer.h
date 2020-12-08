@@ -54,14 +54,12 @@ public:
     static bool term();
 
 private:
-    SwSurface* mainSurface = nullptr;
-    SwSurface* compSurface = nullptr;   //Composition Surface to use temporarily in the intermediate rendering
+    SwSurface*    surface = nullptr;
     vector<SwTask*> tasks;
 
     SwRenderer(){};
     ~SwRenderer();
 
-    bool prepareComposite(const SwShapeTask* task, SwImage* image);
     void prepareCommon(SwTask* task, const RenderTransform* transform, uint32_t opacity, vector<Composite>& compList, RenderUpdateFlag flags);
 };
 
