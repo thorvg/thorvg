@@ -110,7 +110,7 @@ struct Picture::Impl
         return RenderUpdateFlag::None;
     }
 
-    void* update(RenderMethod &renderer, const RenderTransform* transform, uint32_t opacity, vector<Composite>& compList, RenderUpdateFlag pFlag)
+    void* update(RenderMethod &renderer, const RenderTransform* transform, uint32_t opacity, Array<Composite>& compList, RenderUpdateFlag pFlag)
     {
         uint32_t flag = reload();
 

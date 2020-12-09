@@ -621,7 +621,7 @@ SwSpan* _intersectSpansRegion(const SwRleData *clip, const SwRleData *targetRle,
     auto clipSpans = clip->spans;
     auto clipEnd = clip->spans + clip->size;
 
-    while (spanCnt && spans < end ) {
+    while (spanCnt > 0 && spans < end ) {
         if (clipSpans > clipEnd) {
             spans = end;
             break;

@@ -25,6 +25,7 @@
 #include <float.h>
 #include <math.h>
 #include "tvgRender.h"
+#include "tvgArray.h"
 
 namespace tvg
 {
@@ -33,7 +34,7 @@ namespace tvg
         virtual ~StrategyMethod() {}
 
         virtual bool dispose(RenderMethod& renderer) = 0;
-        virtual void* update(RenderMethod& renderer, const RenderTransform* transform, uint32_t opacity, vector<Composite> compList, RenderUpdateFlag pFlag) = 0;   //Return engine data if it has.
+        virtual void* update(RenderMethod& renderer, const RenderTransform* transform, uint32_t opacity, Array<Composite>& compList, RenderUpdateFlag pFlag) = 0;   //Return engine data if it has.
         virtual bool render(RenderMethod& renderer) = 0;
         virtual bool bounds(float* x, float* y, float* w, float* h) const = 0;
         virtual Paint* duplicate() = 0;
@@ -51,6 +52,7 @@ namespace tvg
         uint8_t opacity = 255;
 
         ~Impl() {
+            if (compTarget) delete(compTarget);
             if (smethod) delete(smethod);
             if (rTransform) delete(rTransform);
         }
@@ -129,7 +131,7 @@ namespace tvg
             return smethod->dispose(renderer);
         }
 
-        void* update(RenderMethod& renderer, const RenderTransform* pTransform, uint32_t opacity, vector<Composite>& compList, uint32_t pFlag)
+        void* update(RenderMethod& renderer, const RenderTransform* pTransform, uint32_t opacity, Array<Composite>& compList, uint32_t pFlag)
         {
             if (flag & RenderUpdateFlag::Transform) {
                 if (!rTransform) return nullptr;
@@ -143,7 +145,7 @@ namespace tvg
 
             if (compTarget && compMethod == CompositeMethod::ClipPath) {
                 compdata = compTarget->pImpl->update(renderer, pTransform, opacity, compList, pFlag);
-                if (compdata) compList.push_back({compdata, compMethod});
+                if (compdata) compList.push({compdata, compMethod});
             }
 
             void *edata = nullptr;
@@ -159,7 +161,7 @@ namespace tvg
                 edata = smethod->update(renderer, outTransform, opacity, compList, newFlag);
             }
 
-            if (compdata) compList.pop_back();
+            if (compdata) compList.pop();
 
             return edata;
         }
@@ -215,7 +217,7 @@ namespace tvg
             return inst->dispose(renderer);
         }
 
-        void* update(RenderMethod& renderer, const RenderTransform* transform, uint32_t opacity, vector<Composite> compList, RenderUpdateFlag flag) override
+        void* update(RenderMethod& renderer, const RenderTransform* transform, uint32_t opacity, Array<Composite>& compList, RenderUpdateFlag flag) override
         {
             return inst->update(renderer, transform, opacity, compList, flag);
         }

@@ -22,7 +22,6 @@
 #ifndef _TVG_CANVAS_IMPL_H_
 #define _TVG_CANVAS_IMPL_H_
 
-#include <vector>
 #include "tvgPaint.h"
 
 /************************************************************************/
@@ -31,7 +30,7 @@
 
 struct Canvas::Impl
 {
-    vector<Paint*> paints;
+    Array<Paint*> paints;
     RenderMethod*  renderer;
 
     Impl(RenderMethod* pRenderer):renderer(pRenderer)
@@ -48,7 +47,7 @@ struct Canvas::Impl
     {
         auto p = paint.release();
         if (!p) return Result::MemoryCorruption;
-        paints.push_back(p);
+        paints.push(p);
 
         return update(p);
     }
@@ -62,9 +61,9 @@ struct Canvas::Impl
 
         //free paints
         if (free) {
-            for (auto paint : paints) {
-                paint->pImpl->dispose(*renderer);
-                delete(paint);
+            for (auto paint = paints.data; paint < (paints.data + paints.count); ++paint) {
+                (*paint)->pImpl->dispose(*renderer);
+                delete(*paint);
             }
         }
 
@@ -77,15 +76,15 @@ struct Canvas::Impl
     {
         if (!renderer) return Result::InsufficientCondition;
 
-        vector<Composite> compList;
+        Array<Composite> compList;
 
         //Update single paint node
         if (paint) {
             paint->pImpl->update(*renderer, nullptr, 255, compList, RenderUpdateFlag::None);
         //Update all retained paint nodes
         } else {
-            for (auto paint : paints) {
-                paint->pImpl->update(*renderer, nullptr, 255, compList, RenderUpdateFlag::None);
+            for (auto paint = paints.data; paint < (paints.data + paints.count); ++paint) {
+                (*paint)->pImpl->update(*renderer, nullptr, 255, compList, RenderUpdateFlag::None);
             }
         }
         return Result::Success;
@@ -97,8 +96,8 @@ struct Canvas::Impl
 
         if (!renderer->preRender()) return Result::InsufficientCondition;
 
-        for (auto paint : paints) {
-            if (!paint->pImpl->render(*renderer)) return Result::InsufficientCondition;
+            for (auto paint = paints.data; paint < (paints.data + paints.count); ++paint) {
+            if (!(*paint)->pImpl->render(*renderer)) return Result::InsufficientCondition;
         }
 
         if (!renderer->postRender()) return Result::InsufficientCondition;
