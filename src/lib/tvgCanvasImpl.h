@@ -96,7 +96,7 @@ struct Canvas::Impl
 
         if (!renderer->preRender()) return Result::InsufficientCondition;
 
-            for (auto paint = paints.data; paint < (paints.data + paints.count); ++paint) {
+        for (auto paint = paints.data; paint < (paints.data + paints.count); ++paint) {
             if (!(*paint)->pImpl->render(*renderer)) return Result::InsufficientCondition;
         }
 
