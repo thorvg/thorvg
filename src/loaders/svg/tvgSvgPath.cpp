@@ -59,7 +59,7 @@ static bool _parseFlag(char** content, int* number)
     return true;
 }
 
-void _pathAppendArcTo(SvgVector<PathCommand>* cmds, SvgVector<Point>* pts, Point* cur, Point* curCtl, float x, float y, float rx, float ry, float angle, bool largeArc, bool sweep)
+void _pathAppendArcTo(Array<PathCommand>* cmds, Array<Point>* pts, Point* cur, Point* curCtl, float x, float y, float rx, float ry, float angle, bool largeArc, bool sweep)
 {
     float cxp, cyp, cx, cy;
     float sx, sy;
@@ -283,7 +283,7 @@ static int _numberCount(char cmd)
 }
 
 
-static void _processCommand(SvgVector<PathCommand>* cmds, SvgVector<Point>* pts, char cmd, float* arr, int count, Point* cur, Point* curCtl, Point* startPoint, bool *isQuadratic)
+static void _processCommand(Array<PathCommand>* cmds, Array<Point>* pts, char cmd, float* arr, int count, Point* cur, Point* curCtl, Point* startPoint, bool *isQuadratic)
 {
     int i;
     switch (cmd) {
@@ -353,7 +353,7 @@ static void _processCommand(SvgVector<PathCommand>* cmds, SvgVector<Point>* pts,
         case 's':
         case 'S': {
             Point p[3], ctrl;
-            if ((cmds->cnt > 1) && (cmds->list[cmds->cnt - 1] == PathCommand::CubicTo) &&
+            if ((cmds->count > 1) && (cmds->data[cmds->count - 1] == PathCommand::CubicTo) &&
                 !(*isQuadratic)) {
                 ctrl.x = 2 * cur->x - curCtl->x;
                 ctrl.y = 2 * cur->y - curCtl->y;
@@ -394,7 +394,7 @@ static void _processCommand(SvgVector<PathCommand>* cmds, SvgVector<Point>* pts,
         case 't':
         case 'T': {
             Point p[3], ctrl;
-            if ((cmds->cnt > 1) && (cmds->list[cmds->cnt - 1] == PathCommand::CubicTo) &&
+            if ((cmds->count > 1) && (cmds->data[cmds->count - 1] == PathCommand::CubicTo) &&
                 *isQuadratic) {
                 ctrl.x = 2 * cur->x - curCtl->x;
                 ctrl.y = 2 * cur->y - curCtl->y;
@@ -499,7 +499,7 @@ static char* _nextCommand(char* path, char* cmd, float* arr, int* count)
 }
 
 
-bool svgPathToTvgPath(const char* svgPath, SvgVector<PathCommand>& cmds, SvgVector<Point>& pts)
+bool svgPathToTvgPath(const char* svgPath, Array<PathCommand>& cmds, Array<Point>& pts)
 {
     float numberArray[7];
     int numberCount = 0;

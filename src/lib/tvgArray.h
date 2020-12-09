@@ -19,12 +19,49 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+#ifndef _TVG_ARRAY_H_
+#define _TVG_ARRAY_H_
 
-#ifndef _TVG_SVG_PATH_H_
-#define _TVG_SVG_PATH_H_
 
-#include "tvgSvgLoaderCommon.h"
+namespace tvg
+{
 
-bool svgPathToTvgPath(const char* svgPath, Array<PathCommand>& cmds, Array<Point>& pts);
+template<class T>
+struct Array
+{
+    T* data = nullptr;
+    uint32_t count = 0;
+    uint32_t reserved = 0;
 
-#endif //_TVG_SVG_PATH_H_
+    void push(T element)
+    {
+        if (count + 1 > reserved) {
+            reserved = (count + 1) * 2;
+            data = static_cast<T*>(realloc(data, sizeof(T) * reserved));
+        }
+        data[count++] = element;
+    }
+
+    void pop()
+    {
+        if (count > 0) --count;
+    }
+
+    void clear()
+    {
+        if (data) {
+            free(data);
+            data = nullptr;
+        }
+        count = reserved = 0;
+    }
+
+    ~Array()
+    {
+        if (data) free(data);
+    }
+};
+
+}
+
+#endif //_TVG_ARRAY_H_
