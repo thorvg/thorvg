@@ -36,7 +36,10 @@ struct Array
 
     void push(T element)
     {
-        reserve((count + 1) * 2);
+        if (count + 1 > reserved) {
+            reserved = (count + 1) * 2;
+            data = static_cast<T*>(realloc(data, sizeof(T) * reserved));
+        }
         data[count++] = element;
     }
 
