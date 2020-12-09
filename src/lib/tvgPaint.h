@@ -25,7 +25,7 @@
 #include <float.h>
 #include <math.h>
 #include "tvgRender.h"
-#include "tvgArray.h"
+
 
 namespace tvg
 {
