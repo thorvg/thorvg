@@ -94,11 +94,11 @@ unique_ptr<LinearGradient> _applyLinearGradientProperty(SvgStyleGradient* g, Sha
     fillGrad->spread(g->spread);
 
     //Update the stops
-    stopCount = g->stops.cnt;
+    stopCount = g->stops.count;
     if (stopCount > 0) {
         stops = (Fill::ColorStop*)calloc(stopCount, sizeof(Fill::ColorStop));
-        for (uint32_t i = 0; i < g->stops.cnt; ++i) {
-            auto colorStop = g->stops.list[i];
+        for (uint32_t i = 0; i < g->stops.count; ++i) {
+            auto colorStop = g->stops.data[i];
             //Use premultiplied color
             stops[i].r = colorStop->r;
             stops[i].g = colorStop->g;
@@ -176,11 +176,11 @@ unique_ptr<RadialGradient> _applyRadialGradientProperty(SvgStyleGradient* g, Sha
     fillGrad->spread(g->spread);
 
     //Update the stops
-    stopCount = g->stops.cnt;
+    stopCount = g->stops.count;
     if (stopCount > 0) {
         stops = (Fill::ColorStop*)calloc(stopCount, sizeof(Fill::ColorStop));
-        for (uint32_t i = 0; i < g->stops.cnt; ++i) {
-            auto colorStop = g->stops.list[i];
+        for (uint32_t i = 0; i < g->stops.count; ++i) {
+            auto colorStop = g->stops.data[i];
             //Use premultiplied color
             stops[i].r = colorStop->r;
             stops[i].g = colorStop->g;
@@ -197,9 +197,9 @@ unique_ptr<RadialGradient> _applyRadialGradientProperty(SvgStyleGradient* g, Sha
 void _appendChildShape(SvgNode* node, Shape* shape, float vx, float vy, float vw, float vh)
 {
     _appendShape(node, shape, vx, vy, vw, vh);
-    if (node->child.cnt > 0) {
-        auto child = node->child.list;
-        for (uint32_t i = 0; i < node->child.cnt; ++i, ++child) _appendChildShape(*child, shape, vx, vy, vw, vh);
+    if (node->child.count > 0) {
+        auto child = node->child.data;
+        for (uint32_t i = 0; i < node->child.count; ++i, ++child) _appendChildShape(*child, shape, vx, vy, vw, vh);
     }
 }
 
@@ -240,8 +240,8 @@ void _applyProperty(SvgNode* node, Shape* vg, float vx, float vy, float vw, floa
     vg->stroke(style->stroke.width);
     vg->stroke(style->stroke.cap);
     vg->stroke(style->stroke.join);
-    if (style->stroke.dash.array.cnt > 0)
-        vg->stroke(style->stroke.dash.array.list, style->stroke.dash.array.cnt);
+    if (style->stroke.dash.array.count > 0)
+        vg->stroke(style->stroke.dash.array.data, style->stroke.dash.array.count);
 
     //If stroke property is nullptr then do nothing
     if (style->stroke.paint.none) {
@@ -264,10 +264,10 @@ void _applyProperty(SvgNode* node, Shape* vg, float vx, float vy, float vw, floa
         //Composite ClipPath
         if (((int)style->comp.flags & (int)SvgCompositeFlags::ClipPath)) {
             auto compNode = style->comp.node;
-            if (compNode->child.cnt > 0) {
+            if (compNode->child.count > 0) {
                 auto comp = Shape::gen();
-                auto child = compNode->child.list;
-                for (uint32_t i = 0; i < compNode->child.cnt; ++i, ++child) _appendChildShape(*child, comp.get(), vx, vy, vw, vh);
+                auto child = compNode->child.data;
+                for (uint32_t i = 0; i < compNode->child.count; ++i, ++child) _appendChildShape(*child, comp.get(), vx, vy, vw, vh);
                 vg->composite(move(comp), CompositeMethod::ClipPath);
             }
         }
@@ -283,14 +283,14 @@ unique_ptr<Shape> _shapeBuildHelper(SvgNode* node, float vx, float vy, float vw,
 
 bool _appendShape(SvgNode* node, Shape* shape, float vx, float vy, float vw, float vh)
 {
-    SvgVector<PathCommand> cmds;
-    SvgVector<Point> pts;
+    Array<PathCommand> cmds;
+    Array<Point> pts;
 
     switch (node->type) {
         case SvgNodeType::Path: {
             if (node->node.path.path) {
                 if (svgPathToTvgPath(node->node.path.path->c_str(), cmds, pts))
-                    shape->appendPath(cmds.list, cmds.cnt, pts.list, pts.cnt);
+                    shape->appendPath(cmds.data, cmds.count, pts.data, pts.count);
             }
             break;
         }
@@ -344,8 +344,8 @@ unique_ptr<Scene> _sceneBuildHelper(SvgNode* node, float vx, float vy, float vw,
         if (node->transform) scene->transform(*node->transform);
 
         if (node->display && node->style->opacity != 0) {
-            auto child = node->child.list;
-            for (uint32_t i = 0; i < node->child.cnt; ++i, ++child) {
+            auto child = node->child.data;
+            for (uint32_t i = 0; i < node->child.count; ++i, ++child) {
                 if (_isGroupType((*child)->type)) {
                     scene->push(_sceneBuildHelper(*child, vx, vy, vw, vh));
                 } else {
@@ -358,10 +358,10 @@ unique_ptr<Scene> _sceneBuildHelper(SvgNode* node, float vx, float vy, float vw,
                 //Composite ClipPath
                 if (((int)node->style->comp.flags & (int)SvgCompositeFlags::ClipPath)) {
                     auto compNode = node->style->comp.node;
-                    if (compNode->child.cnt > 0) {
+                    if (compNode->child.count > 0) {
                         auto comp = Shape::gen();
-                        auto child = compNode->child.list;
-                        for (uint32_t i = 0; i < compNode->child.cnt; ++i, ++child) _appendChildShape(*child, comp.get(), vx, vy, vw, vh);
+                        auto child = compNode->child.data;
+                        for (uint32_t i = 0; i < compNode->child.count; ++i, ++child) _appendChildShape(*child, comp.get(), vx, vy, vw, vh);
                         scene->composite(move(comp), CompositeMethod::ClipPath);
                     }
                 }
