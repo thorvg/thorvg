@@ -2196,6 +2196,7 @@ static void _styleInherit(SvgStyleProperty* child, SvgStyleProperty* parent)
     if (!((int)child->stroke.flags & (int)SvgStrokeFlags::Dash)) {
         if (parent->stroke.dash.array.count > 0) {
             child->stroke.dash.array.clear();
+            child->stroke.dash.array.reserve(parent->stroke.dash.array.count);
             for (uint32_t i = 0; i < parent->stroke.dash.array.count; ++i) {
                 child->stroke.dash.array.push(parent->stroke.dash.array.data[i]);
             }
@@ -2297,7 +2298,7 @@ static void _freeGradientStyle(SvgStyleGradient* grad)
         auto colorStop = grad->stops.data[i];
         free(colorStop);
     }
-    grad->stops.clear();
+    grad->stops.reset();
     free(grad);
 }
 
@@ -2308,7 +2309,7 @@ static void _freeNodeStyle(SvgStyleProperty* style)
     _freeGradientStyle(style->fill.paint.gradient);
     delete style->fill.paint.url;
     _freeGradientStyle(style->stroke.paint.gradient);
-    if (style->stroke.dash.array.count > 0) style->stroke.dash.array.clear();
+    if (style->stroke.dash.array.count > 0) style->stroke.dash.array.reset();
     delete style->stroke.paint.url;
     free(style);
 }
@@ -2321,7 +2322,7 @@ static void _freeNode(SvgNode* node)
     for (uint32_t i = 0; i < node->child.count; ++i, ++child) {
         _freeNode(*child);
     }
-    node->child.clear();
+    node->child.reset();
 
     delete node->id;
     free(node->transform);
@@ -2349,7 +2350,7 @@ static void _freeNode(SvgNode* node)
                  _freeGradientStyle(*gradients);
                  ++gradients;
              }
-             node->node.defs.gradients.clear();
+             node->node.defs.gradients.reset();
              break;
          }
          default: {
@@ -2540,11 +2541,11 @@ bool SvgLoader::close()
         _freeGradientStyle(*gradients);
         ++gradients;
     }
-    loaderData.gradients.clear();
+    loaderData.gradients.reset();
 
     _freeNode(loaderData.doc);
     loaderData.doc = nullptr;
-    loaderData.stack.clear();
+    loaderData.stack.reset();
 
     return true;
 }

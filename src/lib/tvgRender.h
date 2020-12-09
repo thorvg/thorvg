@@ -22,8 +22,8 @@
 #ifndef _TVG_RENDER_H_
 #define _TVG_RENDER_H_
 
-#include <vector>
 #include "tvgCommon.h"
+#include "tvgArray.h"
 
 namespace tvg
 {
@@ -65,8 +65,8 @@ class RenderMethod
 {
 public:
     virtual ~RenderMethod() {}
-    virtual void* prepare(const Shape& shape, void* data, const RenderTransform* transform, uint32_t opacity, vector<Composite>& compList, RenderUpdateFlag flags) = 0;
-    virtual void* prepare(const Picture& picture, void* data, uint32_t *buffer, const RenderTransform* transform, uint32_t opacity, vector<Composite>& compList, RenderUpdateFlag flags) = 0;
+    virtual void* prepare(const Shape& shape, void* data, const RenderTransform* transform, uint32_t opacity, Array<Composite>& compList, RenderUpdateFlag flags) = 0;
+    virtual void* prepare(const Picture& picture, void* data, uint32_t *buffer, const RenderTransform* transform, uint32_t opacity, Array<Composite>& compList, RenderUpdateFlag flags) = 0;
     virtual void* beginComposite(uint32_t x, uint32_t y, uint32_t w, uint32_t h) = 0;
     virtual bool endComposite(void* ctx, uint32_t opacity) = 0;
     virtual bool dispose(void *data) = 0;

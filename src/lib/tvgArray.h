@@ -22,6 +22,7 @@
 #ifndef _TVG_ARRAY_H_
 #define _TVG_ARRAY_H_
 
+#include <memory.h>
 
 namespace tvg
 {
@@ -42,18 +43,38 @@ struct Array
         data[count++] = element;
     }
 
+    void reserve(uint32_t size)
+    {
+        if (size > reserved) {
+            reserved = size;
+            data = static_cast<T*>(realloc(data, sizeof(T) * reserved));
+        }
+    }
+
     void pop()
     {
         if (count > 0) --count;
     }
 
-    void clear()
+    void reset()
     {
         if (data) {
             free(data);
             data = nullptr;
         }
         count = reserved = 0;
+    }
+
+    void clear()
+    {
+        count = 0;
+    }
+
+    void operator=(const Array& rhs)
+    {
+        reserve(rhs.count);
+        memcpy(data, rhs.data, sizeof(T) * reserved);
+        count = rhs.count;
     }
 
     ~Array()

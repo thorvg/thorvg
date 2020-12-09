@@ -22,7 +22,6 @@
 #ifndef _TVG_SCENE_IMPL_H_
 #define _TVG_SCENE_IMPL_H_
 
-#include <vector>
 #include "tvgPaint.h"
 
 /************************************************************************/
@@ -31,21 +30,21 @@
 
 struct Scene::Impl
 {
-    vector<Paint*> paints;
+    Array<Paint*> paints;
     uint32_t opacity;
 
     bool dispose(RenderMethod& renderer)
     {
-        for (auto paint : paints) {
-            paint->pImpl->dispose(renderer);
-            delete(paint);
+        for (auto paint = paints.data; paint < (paints.data + paints.count); ++paint) {
+            (*paint)->pImpl->dispose(renderer);
+            delete(*paint);
         }
         paints.clear();
 
         return true;
     }
 
-    void* update(RenderMethod &renderer, const RenderTransform* transform, uint32_t opacity, vector<Composite>& compList, RenderUpdateFlag flag)
+    void* update(RenderMethod &renderer, const RenderTransform* transform, uint32_t opacity, Array<Composite>& compList, RenderUpdateFlag flag)
     {
         this->opacity = opacity;
 
@@ -57,8 +56,8 @@ struct Scene::Impl
            This is necessary for scene composition */
         void* edata = nullptr;
 
-        for (auto paint : paints) {
-            edata = paint->pImpl->update(renderer, transform, opacity, compList, static_cast<uint32_t>(flag));
+        for (auto paint = paints.data; paint < (paints.data + paints.count); ++paint) {
+            edata = (*paint)->pImpl->update(renderer, transform, opacity, compList, static_cast<uint32_t>(flag));
         }
 
         return edata;
@@ -77,8 +76,8 @@ struct Scene::Impl
             ctx = renderer.beginComposite(0, 0, 0, 0);
         }
 
-        for (auto paint : paints) {
-            if (!paint->pImpl->render(renderer)) return false;
+        for (auto paint = paints.data; paint < (paints.data + paints.count); ++paint) {
+            if (!(*paint)->pImpl->render(renderer)) return false;
         }
 
         if (ctx) return renderer.endComposite(ctx, opacity);
@@ -88,20 +87,20 @@ struct Scene::Impl
 
     bool bounds(float* px, float* py, float* pw, float* ph)
     {
-        if (paints.size() == 0) return false;
+        if (paints.count == 0) return false;
 
         auto x1 = FLT_MAX;
         auto y1 = FLT_MAX;
         auto x2 = 0.0f;
         auto y2 = 0.0f;
 
-        for (auto paint : paints) {
+        for (auto paint = paints.data; paint < (paints.data + paints.count); ++paint) {
             auto x = FLT_MAX;
             auto y = FLT_MAX;
             auto w = 0.0f;
             auto h = 0.0f;
 
-            if (!paint->pImpl->bounds(&x, &y, &w, &h)) continue;
+            if (!(*paint)->pImpl->bounds(&x, &y, &w, &h)) continue;
 
             //Merge regions
             if (x < x1) x1 = x;
@@ -124,10 +123,10 @@ struct Scene::Impl
         if (!ret) return nullptr;
         auto dup = ret.get()->pImpl;
 
-        dup->paints.reserve(paints.size());
+        dup->paints.reserve(paints.count);
 
-        for (auto paint : paints) {
-            dup->paints.push_back(paint->duplicate());
+        for (auto paint = paints.data; paint < (paints.data + paints.count); ++paint) {
+            dup->paints.push((*paint)->duplicate());
         }
 
         return ret.release();
