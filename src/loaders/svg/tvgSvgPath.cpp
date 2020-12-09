@@ -59,7 +59,7 @@ static bool _parseFlag(char** content, int* number)
     return true;
 }
 
-void _pathAppendArcTo(vector<PathCommand>* cmds, vector<Point>* pts, Point* cur, Point* curCtl, float x, float y, float rx, float ry, float angle, bool largeArc, bool sweep)
+void _pathAppendArcTo(SvgVector<PathCommand>* cmds, SvgVector<Point>* pts, Point* cur, Point* curCtl, float x, float y, float rx, float ry, float angle, bool largeArc, bool sweep)
 {
     float cxp, cyp, cx, cy;
     float sx, sy;
@@ -92,8 +92,8 @@ void _pathAppendArcTo(vector<PathCommand>* cmds, vector<Point>* pts, Point* cur,
     ry = fabsf(ry);
     if ((rx < 0.5f) || (ry < 0.5f)) {
         Point p = {x, y};
-        cmds->push_back(PathCommand::LineTo);
-        pts->push_back(p);
+        cmds->push(PathCommand::LineTo);
+        pts->push(p);
         *cur = p;
         return;
     }
@@ -217,13 +217,13 @@ void _pathAppendArcTo(vector<PathCommand>* cmds, vector<Point>* pts, Point* cur,
         //Second control point (based on end point ex,ey)
         c2x = ex + bcp * (cosPhiRx * sinTheta2 + sinPhiRy * cosTheta2);
         c2y = ey + bcp * (sinPhiRx * sinTheta2 - cosPhiRy * cosTheta2);
-        cmds->push_back(PathCommand::CubicTo);
+        cmds->push(PathCommand::CubicTo);
         p[0] = {c1x, c1y};
         p[1] = {c2x, c2y};
         p[2] = {ex, ey};
-        pts->push_back(p[0]);
-        pts->push_back(p[1]);
-        pts->push_back(p[2]);
+        pts->push(p[0]);
+        pts->push(p[1]);
+        pts->push(p[2]);
         *curCtl = p[1];
         *cur = p[2];
 
@@ -283,7 +283,7 @@ static int _numberCount(char cmd)
 }
 
 
-static void _processCommand(vector<PathCommand>* cmds, vector<Point>* pts, char cmd, float* arr, int count, Point* cur, Point* curCtl, Point* startPoint, bool *isQuadratic)
+static void _processCommand(SvgVector<PathCommand>* cmds, SvgVector<Point>* pts, char cmd, float* arr, int count, Point* cur, Point* curCtl, Point* startPoint, bool *isQuadratic)
 {
     int i;
     switch (cmd) {
@@ -321,8 +321,8 @@ static void _processCommand(vector<PathCommand>* cmds, vector<Point>* pts, char 
         case 'm':
         case 'M': {
             Point p = {arr[0], arr[1]};
-            cmds->push_back(PathCommand::MoveTo);
-            pts->push_back(p);
+            cmds->push(PathCommand::MoveTo);
+            pts->push(p);
             *cur = {arr[0], arr[1]};
             *startPoint = {arr[0], arr[1]};
             break;
@@ -330,21 +330,21 @@ static void _processCommand(vector<PathCommand>* cmds, vector<Point>* pts, char 
         case 'l':
         case 'L': {
             Point p = {arr[0], arr[1]};
-            cmds->push_back(PathCommand::LineTo);
-            pts->push_back(p);
+            cmds->push(PathCommand::LineTo);
+            pts->push(p);
             *cur = {arr[0], arr[1]};
             break;
         }
         case 'c':
         case 'C': {
             Point p[3];
-            cmds->push_back(PathCommand::CubicTo);
+            cmds->push(PathCommand::CubicTo);
             p[0] = {arr[0], arr[1]};
             p[1] = {arr[2], arr[3]};
             p[2] = {arr[4], arr[5]};
-            pts->push_back(p[0]);
-            pts->push_back(p[1]);
-            pts->push_back(p[2]);
+            pts->push(p[0]);
+            pts->push(p[1]);
+            pts->push(p[2]);
             *curCtl = p[1];
             *cur = p[2];
             *isQuadratic = false;
@@ -353,20 +353,20 @@ static void _processCommand(vector<PathCommand>* cmds, vector<Point>* pts, char 
         case 's':
         case 'S': {
             Point p[3], ctrl;
-            if ((cmds->size() > 1) && (cmds->at(cmds->size() - 1) == PathCommand::CubicTo) &&
+            if ((cmds->cnt > 1) && (cmds->list[cmds->cnt - 1] == PathCommand::CubicTo) &&
                 !(*isQuadratic)) {
                 ctrl.x = 2 * cur->x - curCtl->x;
                 ctrl.y = 2 * cur->y - curCtl->y;
             } else {
                 ctrl = *cur;
             }
-            cmds->push_back(PathCommand::CubicTo);
+            cmds->push(PathCommand::CubicTo);
             p[0] = ctrl;
             p[1] = {arr[0], arr[1]};
             p[2] = {arr[2], arr[3]};
-            pts->push_back(p[0]);
-            pts->push_back(p[1]);
-            pts->push_back(p[2]);
+            pts->push(p[0]);
+            pts->push(p[1]);
+            pts->push(p[2]);
             *curCtl = p[1];
             *cur = p[2];
             *isQuadratic = false;
@@ -379,13 +379,13 @@ static void _processCommand(vector<PathCommand>* cmds, vector<Point>* pts, char 
             float ctrl_y0 = (cur->y + 2 * arr[1]) * (1.0 / 3.0);
             float ctrl_x1 = (arr[2] + 2 * arr[0]) * (1.0 / 3.0);
             float ctrl_y1 = (arr[3] + 2 * arr[1]) * (1.0 / 3.0);
-            cmds->push_back(PathCommand::CubicTo);
+            cmds->push(PathCommand::CubicTo);
             p[0] = {ctrl_x0, ctrl_y0};
             p[1] = {ctrl_x1, ctrl_y1};
             p[2] = {arr[2], arr[3]};
-            pts->push_back(p[0]);
-            pts->push_back(p[1]);
-            pts->push_back(p[2]);
+            pts->push(p[0]);
+            pts->push(p[1]);
+            pts->push(p[2]);
             *curCtl = {arr[0], arr[1]};
             *cur = p[2];
             *isQuadratic = true;
@@ -394,7 +394,7 @@ static void _processCommand(vector<PathCommand>* cmds, vector<Point>* pts, char 
         case 't':
         case 'T': {
             Point p[3], ctrl;
-            if ((cmds->size() > 1) && (cmds->at(cmds->size() - 1) == PathCommand::CubicTo) &&
+            if ((cmds->cnt > 1) && (cmds->list[cmds->cnt - 1] == PathCommand::CubicTo) &&
                 *isQuadratic) {
                 ctrl.x = 2 * cur->x - curCtl->x;
                 ctrl.y = 2 * cur->y - curCtl->y;
@@ -405,13 +405,13 @@ static void _processCommand(vector<PathCommand>* cmds, vector<Point>* pts, char 
             float ctrl_y0 = (cur->y + 2 * ctrl.y) * (1.0 / 3.0);
             float ctrl_x1 = (arr[0] + 2 * ctrl.x) * (1.0 / 3.0);
             float ctrl_y1 = (arr[1] + 2 * ctrl.y) * (1.0 / 3.0);
-            cmds->push_back(PathCommand::CubicTo);
+            cmds->push(PathCommand::CubicTo);
             p[0] = {ctrl_x0, ctrl_y0};
             p[1] = {ctrl_x1, ctrl_y1};
             p[2] = {arr[0], arr[1]};
-            pts->push_back(p[0]);
-            pts->push_back(p[1]);
-            pts->push_back(p[2]);
+            pts->push(p[0]);
+            pts->push(p[1]);
+            pts->push(p[2]);
             *curCtl = {ctrl.x, ctrl.y};
             *cur = p[2];
             *isQuadratic = true;
@@ -420,22 +420,22 @@ static void _processCommand(vector<PathCommand>* cmds, vector<Point>* pts, char 
         case 'h':
         case 'H': {
             Point p = {arr[0], cur->y};
-            cmds->push_back(PathCommand::LineTo);
-            pts->push_back(p);
+            cmds->push(PathCommand::LineTo);
+            pts->push(p);
             cur->x = arr[0];
             break;
         }
         case 'v':
         case 'V': {
             Point p = {cur->x, arr[0]};
-            cmds->push_back(PathCommand::LineTo);
-            pts->push_back(p);
+            cmds->push(PathCommand::LineTo);
+            pts->push(p);
             cur->y = arr[0];
             break;
         }
         case 'z':
         case 'Z': {
-            cmds->push_back(PathCommand::Close);
+            cmds->push(PathCommand::Close);
             *cur = *startPoint;
             break;
         }
@@ -499,11 +499,8 @@ static char* _nextCommand(char* path, char* cmd, float* arr, int* count)
 }
 
 
-tuple<vector<PathCommand>, vector<Point>> svgPathToTvgPath(const char* svgPath)
+bool svgPathToTvgPath(const char* svgPath, SvgVector<PathCommand>& cmds, SvgVector<Point>& pts)
 {
-    vector<PathCommand> cmds;
-    vector<Point> pts;
-
     float numberArray[7];
     int numberCount = 0;
     Point cur = { 0, 0 };
@@ -527,5 +524,5 @@ tuple<vector<PathCommand>, vector<Point>> svgPathToTvgPath(const char* svgPath)
     setlocale(LC_NUMERIC, curLocale);
     if (curLocale) free(curLocale);
 
-    return make_tuple(cmds, pts);
+    return true;
 }

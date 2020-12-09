@@ -148,9 +148,16 @@ struct SvgVector
 
     void clear()
     {
-        if (list) free(list);
-        list = nullptr;
+        if (list) {
+            free(list);
+            list = nullptr;
+        }
         cnt = reserved = 0;
+    }
+
+    ~SvgVector()
+    {
+        if (list) free(list);
     }
 };
 
