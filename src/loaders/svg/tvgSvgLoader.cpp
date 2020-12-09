@@ -2255,7 +2255,7 @@ static SvgStyleGradient* _gradientDup(Array<SvgStyleGradient*>* gradients, strin
 
 static void _updateGradient(SvgNode* node, Array<SvgStyleGradient*>* gradidents)
 {
-    if (node->child.data > 0) {
+    if (node->child.count > 0) {
         auto child = node->child.data;
         for (uint32_t i = 0; i < node->child.count; ++i, ++child) {
             _updateGradient(*child, gradidents);
