@@ -283,11 +283,14 @@ unique_ptr<Shape> _shapeBuildHelper(SvgNode* node, float vx, float vy, float vw,
 
 bool _appendShape(SvgNode* node, Shape* shape, float vx, float vy, float vw, float vh)
 {
+    SvgVector<PathCommand> cmds;
+    SvgVector<Point> pts;
+
     switch (node->type) {
         case SvgNodeType::Path: {
             if (node->node.path.path) {
-                auto pathResult = svgPathToTvgPath(node->node.path.path->c_str());
-                shape->appendPath(get<0>(pathResult).data(), get<0>(pathResult).size(), get<1>(pathResult).data(), get<1>(pathResult).size());
+                if (svgPathToTvgPath(node->node.path.path->c_str(), cmds, pts))
+                    shape->appendPath(cmds.list, cmds.cnt, pts.list, pts.cnt);
             }
             break;
         }
