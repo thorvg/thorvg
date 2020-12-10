@@ -28,6 +28,7 @@ struct SwSurface;
 struct SwTask;
 struct SwShapeTask;
 struct SwImage;
+struct SwComposite;
 
 namespace tvg
 {
@@ -53,8 +54,9 @@ public:
     static bool term();
 
 private:
-    SwSurface*     surface = nullptr;
-    Array<SwTask*> tasks;
+    SwSurface*          surface = nullptr;
+    Array<SwTask*>      tasks;
+    Array<SwComposite*> composites;
 
     SwRenderer(){};
     ~SwRenderer();

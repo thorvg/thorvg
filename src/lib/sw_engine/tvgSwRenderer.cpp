@@ -30,11 +30,12 @@
 static bool initEngine = false;
 static uint32_t rendererCnt = 0;
 
-struct CompositeCtx
+struct SwComposite
 {
     SwSurface surface;
     SwSurface* recover;
     SwImage image;
+    bool valid;
 };
 
 
@@ -262,6 +263,13 @@ bool SwRenderer::postRender()
 {
     tasks.clear();
 
+    //Free Composite Caches
+    for (auto comp = composites.data; comp < (composites.data + composites.count); ++comp) {
+        free((*comp)->image.data);
+        delete(*comp);
+    }
+    composites.reset();
+
     return true;
 }
 
@@ -277,15 +285,30 @@ bool SwRenderer::render(TVG_UNUSED const Picture& picture, void *data)
 
 void* SwRenderer::beginComposite(uint32_t x, uint32_t y, uint32_t w, uint32_t h)
 {
-    auto ctx = new CompositeCtx;
-    if (!ctx) return nullptr;
+    SwComposite* comp = nullptr;
 
-    //SwImage, Optimize Me: Surface size from MainSurface(WxH) to Parameter W x H
-    ctx->image.data = (uint32_t*) malloc(sizeof(uint32_t) * surface->w * surface->h);
-    if (!ctx->image.data) {
-        delete(ctx);
-        return nullptr;
+    //Use cached data
+    for (auto p = composites.data; p < (composites.data + composites.count); ++p) {
+        if ((*p)->valid) {
+            comp = *p;
+            break;
+        }
     }
+
+    //New Composition
+    if (!comp) {
+        comp = new SwComposite;
+        if (!comp) return nullptr;
+        //SwImage, Optimize Me: Surface size from MainSurface(WxH) to Parameter W x H
+        comp->image.data = (uint32_t*) malloc(sizeof(uint32_t) * surface->w * surface->h);
+        if (!comp->image.data) {
+            delete(comp);
+            return nullptr;
+        }
+        composites.push(comp);
+    }
+
+    comp->valid = false;
 
     //Boundary Check
     if (x < 0) x = 0;
@@ -299,51 +322,49 @@ void* SwRenderer::beginComposite(uint32_t x, uint32_t y, uint32_t w, uint32_t h)
     w = surface->w;
     h = surface->h;
 
-    ctx->image.bbox.min.x = x;
-    ctx->image.bbox.min.y = y;
-    ctx->image.bbox.max.x = x + w;
-    ctx->image.bbox.max.y = y + h;
-    ctx->image.w = surface->w;
-    ctx->image.h = surface->h;
+    comp->image.bbox.min.x = x;
+    comp->image.bbox.min.y = y;
+    comp->image.bbox.max.x = x + w;
+    comp->image.bbox.max.y = y + h;
+    comp->image.w = surface->w;
+    comp->image.h = surface->h;
 
     //Inherits attributes from main surface
-    ctx->surface.comp = surface->comp;
-    ctx->surface.stride = surface->w;
-    ctx->surface.cs = surface->cs;
+    comp->surface.comp = surface->comp;
+    comp->surface.stride = surface->w;
+    comp->surface.cs = surface->cs;
 
     //We know partial clear region
-    ctx->surface.buffer = ctx->image.data + (ctx->surface.stride * y + x);
-    ctx->surface.w = w;
-    ctx->surface.h = h;
+    comp->surface.buffer = comp->image.data + (comp->surface.stride * y + x);
+    comp->surface.w = w;
+    comp->surface.h = h;
 
-    rasterClear(&ctx->surface);
+    rasterClear(&comp->surface);
 
     //Recover context
-    ctx->surface.buffer = ctx->image.data;
-    ctx->surface.w = ctx->image.w;
-    ctx->surface.h = ctx->image.h;
+    comp->surface.buffer = comp->image.data;
+    comp->surface.w = comp->image.w;
+    comp->surface.h = comp->image.h;
 
     //Switch render target
-    ctx->recover = surface;
-    surface = &ctx->surface;
+    comp->recover = surface;
+    surface = &comp->surface;
 
-    return ctx;
+    return comp;
 }
 
 
 bool SwRenderer::endComposite(void* p, uint32_t opacity)
 {
     if (!p) return false;
-    auto ctx = static_cast<CompositeCtx*>(p);
+    auto comp = static_cast<SwComposite*>(p);
 
     //Recover render target
-    surface = ctx->recover;
+    surface = comp->recover;
 
-    auto ret = rasterImage(surface, &ctx->image, nullptr, opacity);
+    auto ret = rasterImage(surface, &comp->image, nullptr, opacity);
 
-    //Free resources
-    free(ctx->image.data);
-    delete(ctx);
+    comp->valid = true;
 
     return ret;
 }
