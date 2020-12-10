@@ -324,7 +324,7 @@ SwOutline* _genDashOutline(const Shape* sdata, const Matrix* transform)
     dash.cnt = sdata->strokeDash(&pattern);
     if (dash.cnt == 0) return nullptr;
 
-    //Is it safe to mutual exclusive?
+    //OPTMIZE ME: Use mempool???
     dash.pattern = const_cast<float*>(pattern);
     dash.outline = static_cast<SwOutline*>(calloc(1, sizeof(SwOutline)));
     dash.outline->opened = true;
@@ -634,6 +634,7 @@ fail:
         if (shapeOutline->cntrs) free(shapeOutline->cntrs);
         if (shapeOutline->pts) free(shapeOutline->pts);
         if (shapeOutline->types) free(shapeOutline->types);
+        free(shapeOutline);
     }
     mpoolRetStrokeOutline(tid);
 
