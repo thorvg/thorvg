@@ -2427,7 +2427,6 @@ static bool _svgLoaderParserForValidCheck(void* data, SimpleXMLType type, const 
 
 SvgLoader::SvgLoader()
 {
-
 }
 
 
