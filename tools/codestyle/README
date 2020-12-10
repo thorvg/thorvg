@@ -1,0 +1,13 @@
+    [Tools] Added scripts for code style validation and auto fixing
+
+    These tools are based on:
+    https://review.tizen.org/gerrit/gitweb?p=platform/core/api/webapi-plugins.git;a=tree;f=tools/codestyle;h=8a8bd7adfcfe7ed144e8937fda00ae4e3793c33a;hb=refs/heads/tizen
+
+    [Features]
+      - tools/codestyle/code_formatter.sh - formatter for C/C++ (changes files)
+      - tools/codestyle/c++_clang_formatter.sh - for auto formating C++ files
+      - tools/codestyle/cpplint_tizen_160919.py and tools/codestyle/cpplint_tizen_dir.sh
+        scripts for C++ code style validation, provided by HQ
+      - code_format - link to script for easier access
+
+    [Help] You can check usage for code_format using '-h' option
