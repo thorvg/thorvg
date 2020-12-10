@@ -150,6 +150,8 @@ void testCapi()
     Tvg_Paint* dup = tvg_paint_duplicate(org);
     tvg_canvas_push(canvas, dup);
 
+    tvg_paint_del(org);
+
     //Scene test
     Tvg_Paint* scene = tvg_scene_new();
 
