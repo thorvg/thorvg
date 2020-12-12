@@ -498,7 +498,7 @@ bool rasterClear(SwSurface* surface)
 }
 
 
-bool rasterImage(SwSurface* surface, SwImage* image, const Matrix* transform, uint8_t opacity)
+bool rasterImage(SwSurface* surface, SwImage* image, const Matrix* transform, SwBBox& bbox, uint8_t opacity)
 {
     Matrix invTransform;
 
@@ -512,11 +512,11 @@ bool rasterImage(SwSurface* surface, SwImage* image, const Matrix* transform, ui
     else {
         // Fast track
         if (_identify(transform)) {
-            return _rasterImage(surface, image->data, image->w, image->h, image->bbox);
+            return _rasterImage(surface, image->data, image->w, image->h, bbox);
         }
         else {
-            if (opacity < 255) return _rasterTranslucentImage(surface, image->data, image->w, image->h, opacity, image->bbox, &invTransform);
-            return _rasterImage(surface, image->data, image->w, image->h, image->bbox, &invTransform);
+            if (opacity < 255) return _rasterTranslucentImage(surface, image->data, image->w, image->h, opacity, bbox, &invTransform);
+            return _rasterImage(surface, image->data, image->w, image->h, bbox, &invTransform);
         }
     }
 }

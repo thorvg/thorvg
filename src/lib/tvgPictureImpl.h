@@ -153,6 +153,13 @@ struct Picture::Impl
         return paint->pImpl->bounds(x, y, w, h);
     }
 
+    bool bounds(RenderMethod& renderer, uint32_t* x, uint32_t* y, uint32_t* w, uint32_t* h)
+    {
+        if (edata) return renderer.renderRegion(edata, x, y, w, h);
+        if (paint) paint->pImpl->bounds(renderer, x, y, w, h);
+        return false;
+    }
+
     Result load(const string& path)
     {
         if (loader) loader->close();
