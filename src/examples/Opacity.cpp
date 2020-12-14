@@ -73,6 +73,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     shape4->cubicTo(cx + radius, cy + halfRadius, cx + halfRadius, cy + radius, cx, cy+ radius);
     shape4->cubicTo(cx - halfRadius, cy + radius, cx - radius, cy + halfRadius, cx - radius, cy);
     shape4->cubicTo(cx - radius, cy - halfRadius, cx - halfRadius, cy - radius, cx, cy - radius);
+    shape4->close();
     shape4->fill(255, 0, 0, 255);
     shape4->stroke(10);
     shape4->stroke(0, 0, 255, 255);
