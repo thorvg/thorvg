@@ -90,13 +90,13 @@ static bool _checkValid(const SwOutline* outline, const SwBBox& bbox, const SwSi
 /************************************************************************/
 
 
-bool imagePrepare(SwImage* image, const Picture* pdata, unsigned tid, const SwSize& clip, const Matrix* transform)
+bool imagePrepare(SwImage* image, const Picture* pdata, unsigned tid, const SwSize& clip, const Matrix* transform, SwBBox& bbox)
 {
     if (!imageGenOutline(image, pdata, tid, transform)) return false;
 
-    if (!_updateBBox(image->outline, image->bbox, clip))  return false;
+    if (!_updateBBox(image->outline, bbox, clip))  return false;
 
-    if (!_checkValid(image->outline, image->bbox, clip)) return false;
+    if (!_checkValid(image->outline, bbox, clip)) return false;
 
     return true;
 }
@@ -108,9 +108,9 @@ bool imagePrepared(SwImage* image)
 }
 
 
-bool imageGenRle(SwImage* image, TVG_UNUSED const Picture* pdata, const SwSize& clip, bool antiAlias, bool hasComposite)
+bool imageGenRle(SwImage* image, TVG_UNUSED const Picture* pdata, const SwSize& clip, SwBBox& bbox, bool antiAlias, bool hasComposite)
 {
-    if ((image->rle = rleRender(image->rle, image->outline, image->bbox, clip, antiAlias))) return true;
+    if ((image->rle = rleRender(image->rle, image->outline, bbox, clip, antiAlias))) return true;
 
     return false;
 }
@@ -127,7 +127,6 @@ void imageReset(SwImage* image)
 {
     rleReset(image->rle);
     image->rle = nullptr;
-    _initBBox(image->bbox);
 }
 
 

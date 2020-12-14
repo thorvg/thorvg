@@ -74,6 +74,7 @@ public:
     virtual bool render(const Shape& shape, void *data) = 0;
     virtual bool render(const Picture& picture, void *data) = 0;
     virtual bool postRender() = 0;
+    virtual bool renderRegion(void* data, uint32_t* x, uint32_t* y, uint32_t* w, uint32_t* h) = 0;
     virtual bool clear() = 0;
     virtual bool sync() = 0;
 };

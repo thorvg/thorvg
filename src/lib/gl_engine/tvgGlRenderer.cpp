@@ -73,6 +73,12 @@ bool GlRenderer::sync()
 }
 
 
+bool GlRenderer::renderRegion(void* data, uint32_t* x, uint32_t* y, uint32_t* w, uint32_t* h)
+{
+    return true;
+}
+
+
 bool GlRenderer::preRender()
 {
     if (mRenderTasks.size() == 0)

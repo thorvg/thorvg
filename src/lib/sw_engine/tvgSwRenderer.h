@@ -43,6 +43,7 @@ public:
     bool dispose(void *data) override;
     bool preRender() override;
     bool postRender() override;
+    bool renderRegion(void* data, uint32_t* x, uint32_t* y, uint32_t* w, uint32_t* h) override;
     bool clear() override;
     bool render(const Shape& shape, void *data) override;
     bool render(const Picture& picture, void *data) override;

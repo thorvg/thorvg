@@ -35,6 +35,7 @@ struct SwComposite
     SwSurface surface;
     SwSurface* recover;
     SwImage image;
+    SwBBox bbox;
     bool valid;
 };
 
@@ -46,6 +47,15 @@ struct SwTask : Task
     RenderUpdateFlag flags = RenderUpdateFlag::None;
     Array<Composite> compList;
     uint32_t opacity;
+    SwBBox bbox = {{0, 0}, {0, 0}};       //Whole Rendering Region
+
+    void bounds(uint32_t* x, uint32_t* y, uint32_t* w, uint32_t* h)
+    {
+        if (x) *x = bbox.min.x;
+        if (y) *y = bbox.min.y;
+        if (w) *w = bbox.max.x - bbox.min.x;
+        if (h) *h = bbox.max.y - bbox.min.y;
+    }
 
     virtual bool dispose() = 0;
 };
@@ -86,7 +96,7 @@ struct SwShapeTask : SwTask
             bool renderShape = (alpha > 0 || sdata->fill());
             if (renderShape || strokeAlpha) {
                 shapeReset(&shape);
-                if (!shapePrepare(&shape, sdata, tid, clip, transform)) goto end;
+                if (!shapePrepare(&shape, sdata, tid, clip, transform, bbox)) goto end;
                 if (renderShape) {
                     /* We assume that if stroke width is bigger than 2,
                        shape outline below stroke could be full covered by stroke drawing.
@@ -114,7 +124,7 @@ struct SwShapeTask : SwTask
         if (flags & (RenderUpdateFlag::Stroke | RenderUpdateFlag::Transform)) {
             if (strokeAlpha > 0) {
                 shapeResetStroke(&shape, sdata, transform);
-                if (!shapeGenStrokeRle(&shape, sdata, tid, transform, clip)) goto end;
+                if (!shapeGenStrokeRle(&shape, sdata, tid, transform, clip, bbox)) goto end;
                 ++addStroking;
             } else {
                 shapeDelStroke(&shape);
@@ -167,11 +177,11 @@ struct SwImageTask : SwTask
 
         if (prepareImage) {
             imageReset(&image);
-            if (!imagePrepare(&image, pdata, tid, clip, transform)) goto end;
+            if (!imagePrepare(&image, pdata, tid, clip, transform, bbox)) goto end;
 
             //Composition?
             if (compList.count > 0) {
-                if (!imageGenRle(&image, pdata, clip, false, true)) goto end;
+                if (!imageGenRle(&image, pdata, clip, bbox, false, true)) goto end;
                 if (image.rle) {
                     for (auto comp = compList.data; comp < (compList.data + compList.count); ++comp) {
                         if ((*comp).method == CompositeMethod::ClipPath) {
@@ -274,12 +284,21 @@ bool SwRenderer::postRender()
 }
 
 
+bool SwRenderer::renderRegion(void* data, uint32_t* x, uint32_t* y, uint32_t* w, uint32_t* h)
+{
+    static_cast<SwTask*>(data)->bounds(x, y, w, h);
+
+    return true;
+}
+
+
+
 bool SwRenderer::render(TVG_UNUSED const Picture& picture, void *data)
 {
     auto task = static_cast<SwImageTask*>(data);
     task->done();
 
-    return rasterImage(surface, &task->image, task->transform, task->opacity);
+    return rasterImage(surface, &task->image, task->transform, task->bbox, task->opacity);
 }
 
 
@@ -316,16 +335,10 @@ void* SwRenderer::beginComposite(uint32_t x, uint32_t y, uint32_t w, uint32_t h)
     if (x + w > surface->w) w = (surface->w - x);
     if (y + h > surface->h) h = (surface->h - y);
 
-    //FIXME: Should be removed if xywh is proper.
-    x = 0;
-    y = 0;
-    w = surface->w;
-    h = surface->h;
-
-    comp->image.bbox.min.x = x;
-    comp->image.bbox.min.y = y;
-    comp->image.bbox.max.x = x + w;
-    comp->image.bbox.max.y = y + h;
+    comp->bbox.min.x = x;
+    comp->bbox.min.y = y;
+    comp->bbox.max.x = x + w;
+    comp->bbox.max.y = y + h;
     comp->image.w = surface->w;
     comp->image.h = surface->h;
 
@@ -362,7 +375,7 @@ bool SwRenderer::endComposite(void* p, uint32_t opacity)
     //Recover render target
     surface = comp->recover;
 
-    auto ret = rasterImage(surface, &comp->image, nullptr, opacity);
+    auto ret = rasterImage(surface, &comp->image, nullptr, comp->bbox, opacity);
 
     comp->valid = true;
 
@@ -382,12 +395,8 @@ bool SwRenderer::render(TVG_UNUSED const Shape& shape, void *data)
 
     //Do Composition
     if (task->compStroking) {
-        //Add stroke size to bounding box.
-        auto strokeWidth = static_cast<SwCoord>(ceilf(task->sdata->strokeWidth() * 0.5f));
-        auto x = task->shape.bbox.min.x - strokeWidth;
-        auto y = task->shape.bbox.min.y - strokeWidth;
-        auto w = task->shape.bbox.max.x + strokeWidth - x;
-        auto h = task->shape.bbox.max.y + strokeWidth - y;
+        uint32_t x, y, w, h;
+        task->bounds(&x, &y, &w, &h);
         ctx = beginComposite(x, y, w, h);
         opacity = 255;
     //No Composition

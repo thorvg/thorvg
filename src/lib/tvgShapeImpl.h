@@ -230,6 +230,11 @@ struct Shape::Impl
         return this->edata;
     }
 
+    bool bounds(RenderMethod& renderer, uint32_t* x, uint32_t* y, uint32_t* w, uint32_t* h)
+    {
+        return renderer.renderRegion(edata, x, y, w, h);
+    }
+
     bool bounds(float* x, float* y, float* w, float* h)
     {
         auto ret = path.bounds(x, y, w, h);

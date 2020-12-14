@@ -63,17 +63,15 @@ struct Scene::Impl
         return edata;
     }
 
-    bool render(RenderMethod &renderer)
+    bool render(RenderMethod& renderer)
     {
         void* ctx = nullptr;
 
         //Half translucent. This requires intermediate composition.
         if (opacity < 255 && opacity > 0) {
-            //FIXME: Get Render Boundary of Shapes.
-            //float x, y, w, h;
-            //if (!bounds(&x, &y, &w, &h)) return false;
-            //ctx = renderer.beginComposite(roundf(x), roundf(y), roundf(w), roundf(h));
-            ctx = renderer.beginComposite(0, 0, 0, 0);
+            uint32_t x, y, w, h;
+            if (!bounds(renderer, &x, &y, &w, &h)) return false;
+            ctx = renderer.beginComposite(x, y, w, h);
         }
 
         for (auto paint = paints.data; paint < (paints.data + paints.count); ++paint) {
@@ -81,6 +79,38 @@ struct Scene::Impl
         }
 
         if (ctx) return renderer.endComposite(ctx, opacity);
+
+        return true;
+    }
+
+    bool bounds(RenderMethod& renderer, uint32_t* px, uint32_t* py, uint32_t* pw, uint32_t* ph)
+    {
+        if (paints.count == 0) return false;
+
+        uint32_t x1 = UINT32_MAX;
+        uint32_t y1 = UINT32_MAX;
+        uint32_t x2 = 0;
+        uint32_t y2 = 0;
+
+        for (auto paint = paints.data; paint < (paints.data + paints.count); ++paint) {
+            uint32_t x = UINT32_MAX;
+            uint32_t y = UINT32_MAX;
+            uint32_t w = 0;
+            uint32_t h = 0;
+
+            if (!(*paint)->pImpl->bounds(renderer, &x, &y, &w, &h)) continue;
+
+            //Merge regions
+            if (x < x1) x1 = x;
+            if (x2 < x + w) x2 = (x + w);
+            if (y < y1) y1 = y;
+            if (y2 < y + h) y2 = (y + h);
+        }
+
+        if (px) *px = x1;
+        if (py) *py = y1;
+        if (pw) *pw = (x2 - x1);
+        if (ph) *ph = (y2 - y1);
 
         return true;
     }

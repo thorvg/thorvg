@@ -37,6 +37,7 @@ namespace tvg
         virtual void* update(RenderMethod& renderer, const RenderTransform* transform, uint32_t opacity, Array<Composite>& compList, RenderUpdateFlag pFlag) = 0;   //Return engine data if it has.
         virtual bool render(RenderMethod& renderer) = 0;
         virtual bool bounds(float* x, float* y, float* w, float* h) const = 0;
+        virtual bool bounds(RenderMethod& renderer, uint32_t* x, uint32_t* y, uint32_t* w, uint32_t* h) const = 0;
         virtual Paint* duplicate() = 0;
     };
 
@@ -125,6 +126,11 @@ namespace tvg
             return smethod->bounds(x, y, w, h);
         }
 
+        bool bounds(RenderMethod& renderer, uint32_t* x, uint32_t* y, uint32_t* w, uint32_t* h) const
+        {
+            return smethod->bounds(renderer, x, y, w, h);
+        }
+
         bool dispose(RenderMethod& renderer)
         {
             if (compTarget) compTarget->pImpl->dispose(renderer);
@@ -210,6 +216,11 @@ namespace tvg
         bool bounds(float* x, float* y, float* w, float* h) const override
         {
             return inst->bounds(x, y, w, h);
+        }
+
+        bool bounds(RenderMethod& renderer, uint32_t* x, uint32_t* y, uint32_t* w, uint32_t* h) const override
+        {
+            return inst->bounds(renderer, x, y, w, h);
         }
 
         bool dispose(RenderMethod& renderer) override
