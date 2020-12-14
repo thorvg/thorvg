@@ -28,7 +28,40 @@
     #include <alloca.h>
 #endif
 
+#ifdef THORVG_LOG_ENABLED
+    #include <stdio.h>
+#endif
+
 #include "tvgXmlParser.h"
+
+#ifdef THORVG_LOG_ENABLED
+static string nodeTypeToString(SvgNodeType type)
+{
+    switch (type) {
+        case SvgNodeType::Doc: return "Doc";
+        case SvgNodeType::G: return "G";
+        case SvgNodeType::Defs: return "Defs";
+        case SvgNodeType::Animation: return "Animation";
+        case SvgNodeType::Arc: return "Arc";
+        case SvgNodeType::Circle: return "Circle";
+        case SvgNodeType::Ellipse: return "Ellipse";
+        case SvgNodeType::Image: return "Image";
+        case SvgNodeType::Line: return "Line";
+        case SvgNodeType::Path: return "Path";
+        case SvgNodeType::Polygon: return "Polygon";
+        case SvgNodeType::Polyline: return "Polyline";
+        case SvgNodeType::Rect: return "Rect";
+        case SvgNodeType::Text: return "Text";
+        case SvgNodeType::TextArea: return "TextArea";
+        case SvgNodeType::Tspan: return "Tspan";
+        case SvgNodeType::Use: return "Use";
+        case SvgNodeType::Video: return "Video";
+        case SvgNodeType::ClipPath: return "ClipPath";
+        default: return "Unknown";
+    }
+    return "Unknown";
+}
+#endif
 
 static const char* _simpleXmlFindWhiteSpace(const char* itr, const char* itrEnd)
 {
@@ -152,7 +185,11 @@ bool simpleXmlParseAttributes(const char* buf, unsigned bufLength, simpleXMLAttr
         memcpy(tval, value, valueEnd - value);
         tval[valueEnd - value] = '\0';
 
+#ifdef THORVG_LOG_ENABLED
+        if (!func((void*)data, tmpBuf, tval)) printf("[SVG] Unsuppoted attributes used [Elements type: %s][Attribute: %s]\n", nodeTypeToString(((SvgLoaderData*)data)->svgParse->node->type).c_str(), tmpBuf);
+#else
         func((void*)data, tmpBuf, tval);
+#endif
 
         itr = valueEnd + 1;
     }

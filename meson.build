@@ -28,6 +28,10 @@ if get_option('bindings').contains('capi') == true
     config_h.set10('THORVG_CAPI_BINDING_SUPPORT', true)
 endif
 
+if get_option('log') == true
+    config_h.set10('THORVG_LOG_ENABLED', true)
+endif
+
 configure_file(
     output: 'config.h',
     configuration: config_h

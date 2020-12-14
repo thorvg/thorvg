@@ -745,7 +745,13 @@ static bool _attrParseSvgNode(void* data, const char* key, const char* value)
         if (!strcmp(value, "none")) doc->preserveAspect = false;
     } else if (!strcmp(key, "style")) {
         return simpleXmlParseW3CAttribute(value, _parseStyleAttr, loader);
-    } else {
+    } 
+#ifdef THORVG_LOG_ENABLED
+    else if (!strcmp(key, "xmlns") || !strcmp(key, "xmlns:xlink") || strcmp (key, "xmlns:svg")) {
+        //No action
+    }
+#endif
+    else {
         return _parseStyleAttr(loader, key, value);
     }
     return true;
@@ -1043,6 +1049,9 @@ static SvgNode* _createMaskNode(SvgLoaderData* loader, SvgNode* parent, const ch
     loader->svgParse->node = _createNode(parent, SvgNodeType::Unknown);
 
     loader->svgParse->node->display = false;
+#ifdef THORVG_LOG_ENABLED
+    printf("[SVG] Unsuppoted elements used [Elements: mask]\n");
+#endif
 
     return loader->svgParse->node;
 }
@@ -2120,6 +2129,11 @@ static void _svgLoaderParserXmlOpen(SvgLoaderData* loader, const char* content, 
             loader->latestGradient->stops.push(stop);
         }
     }
+#ifdef THORVG_LOG_ENABLED
+    else {
+        printf("[SVG] Unsuppoted elements used [Elements: %s]\n", tagName);
+    }
+#endif
 }
 
 
