@@ -1050,7 +1050,7 @@ static SvgNode* _createMaskNode(SvgLoaderData* loader, SvgNode* parent, const ch
 
     loader->svgParse->node->display = false;
 #ifdef THORVG_LOG_ENABLED
-    printf("[SVG] Unsuppoted elements used [Elements: mask]\n");
+    printf("SVG: Unsuppoted elements used [Elements: mask]\n");
 #endif
 
     return loader->svgParse->node;
@@ -2131,7 +2131,7 @@ static void _svgLoaderParserXmlOpen(SvgLoaderData* loader, const char* content, 
     }
 #ifdef THORVG_LOG_ENABLED
     else {
-        printf("[SVG] Unsuppoted elements used [Elements: %s]\n", tagName);
+        printf("SVG: Unsuppoted elements used [Elements: %s]\n", tagName);
     }
 #endif
 }

@@ -335,6 +335,10 @@ void* SwRenderer::beginComposite(uint32_t x, uint32_t y, uint32_t w, uint32_t h)
     if (x + w > surface->w) w = (surface->w - x);
     if (y + h > surface->h) h = (surface->h - y);
 
+#ifdef THORVG_LOG_ENABLED
+    printf("SW_ENGINE: Using intermediate opacity composition [Region: %d %d %d %d]\n", x, y, w, h);
+#endif
+
     comp->bbox.min.x = x;
     comp->bbox.min.y = y;
     comp->bbox.max.x = x + w;
