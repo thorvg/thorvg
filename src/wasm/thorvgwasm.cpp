@@ -55,6 +55,11 @@ public:
             return false;
         }
 
+        /* need to reset size to calculate scale in Picture.size internally
+           before calling updateSize */
+        mWidth = 0;
+        mHeight = 0;
+
         updateSize(width, height);
 
         if (mSwCanvas->push(unique_ptr<Picture>(mPicture)) != Result::Success) {
