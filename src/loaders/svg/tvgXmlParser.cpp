@@ -21,7 +21,7 @@
  */
 
 #include <ctype.h>
-#include <cstring>
+#include <string>
 #ifdef _WIN32
     #include <malloc.h>
 #else
