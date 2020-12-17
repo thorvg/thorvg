@@ -30,6 +30,7 @@ endif
 
 if get_option('log') == true
     config_h.set10('THORVG_LOG_ENABLED', true)
+    message('Enable Log')
 endif
 
 configure_file(

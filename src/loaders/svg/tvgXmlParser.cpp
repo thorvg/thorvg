@@ -28,14 +28,13 @@
     #include <alloca.h>
 #endif
 
-#ifdef THORVG_LOG_ENABLED
-    #include <stdio.h>
-#endif
-
 #include "tvgXmlParser.h"
 
 #ifdef THORVG_LOG_ENABLED
-string _nodeTypeToString(SvgNodeType type)
+
+#include <stdio.h>
+
+string simpleXmlNodeTypeToString(SvgNodeType type)
 {
     switch (type) {
         case SvgNodeType::Doc: return "Doc";
@@ -186,7 +185,7 @@ bool simpleXmlParseAttributes(const char* buf, unsigned bufLength, simpleXMLAttr
         tval[valueEnd - value] = '\0';
 
 #ifdef THORVG_LOG_ENABLED
-        if (!func((void*)data, tmpBuf, tval)) printf("SVG: Unsupported attributes used [Elements type: %s][Attribute: %s]\n", _nodeTypeToString(((SvgLoaderData*)data)->svgParse->node->type).c_str(), tmpBuf);
+        if (!func((void*)data, tmpBuf, tval)) printf("SVG: Unsupported attributes used [Elements type: %s][Attribute: %s]\n", simpleXmlNodeTypeToString(((SvgLoaderData*)data)->svgParse->node->type).c_str(), tmpBuf);
 #else
         func((void*)data, tmpBuf, tval);
 #endif
