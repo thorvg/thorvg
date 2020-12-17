@@ -347,4 +347,8 @@ struct SvgLoaderData
     bool result = false;
 };
 
+#ifdef THORVG_LOG_ENABLED
+string _nodeTypeToString(SvgNodeType type);
+#endif
+
 #endif
