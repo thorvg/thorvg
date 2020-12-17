@@ -35,7 +35,7 @@
 #include "tvgXmlParser.h"
 
 #ifdef THORVG_LOG_ENABLED
-static string nodeTypeToString(SvgNodeType type)
+string _nodeTypeToString(SvgNodeType type)
 {
     switch (type) {
         case SvgNodeType::Doc: return "Doc";
@@ -186,7 +186,7 @@ bool simpleXmlParseAttributes(const char* buf, unsigned bufLength, simpleXMLAttr
         tval[valueEnd - value] = '\0';
 
 #ifdef THORVG_LOG_ENABLED
-        if (!func((void*)data, tmpBuf, tval)) printf("SVG: Unsupported attributes used [Elements type: %s][Attribute: %s]\n", nodeTypeToString(((SvgLoaderData*)data)->svgParse->node->type).c_str(), tmpBuf);
+        if (!func((void*)data, tmpBuf, tval)) printf("SVG: Unsupported attributes used [Elements type: %s][Attribute: %s]\n", _nodeTypeToString(((SvgLoaderData*)data)->svgParse->node->type).c_str(), tmpBuf);
 #else
         func((void*)data, tmpBuf, tval);
 #endif
