@@ -11,36 +11,63 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 {
     if (!canvas) return;
 
-    //Background
+    //Mask Target 2
+    auto scene = tvg::Scene::gen();
+    scene->opacity(127);
+    scene->scale(1.2);
+    scene->reserve(2);
+
+    //Star
     auto shape = tvg::Shape::gen();
-    shape->appendRect(0, 0, WIDTH, HEIGHT, 0, 0);
-    shape->fill(255, 255, 255, 255);
 
-    if (canvas->push(move(shape)) != tvg::Result::Success) return;
+    //Appends Paths
+    shape->moveTo(199, 34);
+    shape->lineTo(253, 143);
+    shape->lineTo(374, 160);
+    shape->lineTo(287, 244);
+    shape->lineTo(307, 365);
+    shape->lineTo(199, 309);
+    shape->lineTo(97, 365);
+    shape->lineTo(112, 245);
+    shape->lineTo(26, 161);
+    shape->lineTo(146, 143);
+    shape->close();
+    shape->fill(0, 0, 255, 255);
+    shape->stroke(10);
+    shape->stroke(255, 255, 255, 255);
+    shape->opacity(127);
 
-    string path(EXAMPLE_DIR"/rawimage_200x300.raw");
+    scene->push(move(shape));
 
-    ifstream file(path);
-    if (!file.is_open()) return ;
-    data = (uint32_t*)malloc(sizeof(uint32_t) * (200*300));
+    //Alpha Mask
+    auto mask2 = tvg::Shape::gen();
+    mask2->appendCircle(200, 200, 125, 125);
+    mask2->fill(255, 255, 255, 100);
+
+    scene->composite(move(mask2), tvg::CompositeMethod::AlphaMask);
+    if (canvas->push(move(scene)) != tvg::Result::Success) return;
+
+
+    ifstream file(EXAMPLE_DIR"/rawimage_200x300.raw");
+    if (!file.is_open()) return;
+    data = (uint32_t*) malloc(sizeof(uint32_t) * (200 * 300));
     file.read(reinterpret_cast<char *>(data), sizeof (data) * 200 * 300);
     file.close();
 
+    //Mask Target 1
     auto picture = tvg::Picture::gen();
     if (picture->load(data, 200, 300, true) != tvg::Result::Success) return;
-    picture->translate(400, 250);
+    picture->translate(500, 400);
 
-    //Alpha mask
+    //Alpha Mask
     auto mask = tvg::Shape::gen();
-    mask->appendCircle(500, 350, 75, 75);
-    mask->fill(0, 0, 0, 50);
+    mask->appendCircle(500, 500, 125, 125);
+    mask->fill(255, 255, 255, 100);
+
+    picture->composite(move(mask), tvg::CompositeMethod::AlphaMask);
     if (canvas->push(move(picture)) != tvg::Result::Success) return;
 
-    auto cover = tvg::Shape::gen();
-    cover->appendRect(400, 250, 200, 300, 0, 0);
-    cover->fill(255, 255, 0, 255);
-    cover->composite(move(mask), tvg::CompositeMethod::AlphaMask);
-    if (canvas->push(move(cover)) != tvg::Result::Success) return;
+
 
 }
 
