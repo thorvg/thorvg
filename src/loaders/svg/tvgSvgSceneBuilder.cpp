@@ -97,6 +97,7 @@ unique_ptr<LinearGradient> _applyLinearGradientProperty(SvgStyleGradient* g, Sha
     stopCount = g->stops.count;
     if (stopCount > 0) {
         stops = (Fill::ColorStop*)calloc(stopCount, sizeof(Fill::ColorStop));
+        if (!stops) return fillGrad;
         for (uint32_t i = 0; i < g->stops.count; ++i) {
             auto colorStop = g->stops.data[i];
             //Use premultiplied color
@@ -179,6 +180,7 @@ unique_ptr<RadialGradient> _applyRadialGradientProperty(SvgStyleGradient* g, Sha
     stopCount = g->stops.count;
     if (stopCount > 0) {
         stops = (Fill::ColorStop*)calloc(stopCount, sizeof(Fill::ColorStop));
+        if (!stops) return fillGrad;
         for (uint32_t i = 0; i < g->stops.count; ++i) {
             auto colorStop = g->stops.data[i];
             //Use premultiplied color
