@@ -19,19 +19,70 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+#ifndef _TVG_ARRAY_H_
+#define _TVG_ARRAY_H_
 
-#ifndef _TVG_SVG_SCENE_BUILDER_H_
-#define _TVG_SVG_SCENE_BUILDER_H_
+#include <memory.h>
 
-#include "tvgSvgLoaderCommon.h"
-
-class SvgSceneBuilder
+namespace tvg
 {
-public:
-    SvgSceneBuilder();
-    ~SvgSceneBuilder();
 
-    unique_ptr<Scene> build(SvgNode* node);
+template<class T>
+struct Array
+{
+    T* data = nullptr;
+    uint32_t count = 0;
+    uint32_t reserved = 0;
+
+    void push(T element)
+    {
+        if (count + 1 > reserved) {
+            reserved = (count + 1) * 2;
+            data = static_cast<T*>(realloc(data, sizeof(T) * reserved));
+        }
+        data[count++] = element;
+    }
+
+    void reserve(uint32_t size)
+    {
+        if (size > reserved) {
+            reserved = size;
+            data = static_cast<T*>(realloc(data, sizeof(T) * reserved));
+        }
+    }
+
+    void pop()
+    {
+        if (count > 0) --count;
+    }
+
+    void reset()
+    {
+        if (data) {
+            free(data);
+            data = nullptr;
+        }
+        count = reserved = 0;
+    }
+
+    void clear()
+    {
+        count = 0;
+    }
+
+    void operator=(const Array& rhs)
+    {
+        reserve(rhs.count);
+        memcpy(data, rhs.data, sizeof(T) * reserved);
+        count = rhs.count;
+    }
+
+    ~Array()
+    {
+        if (data) free(data);
+    }
 };
 
-#endif //_TVG_SVG_SCENE_BUILDER_H_
+}
+
+#endif //_TVG_ARRAY_H_

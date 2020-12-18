@@ -22,8 +22,8 @@
 #ifndef _TVG_RENDER_H_
 #define _TVG_RENDER_H_
 
-#include <vector>
 #include "tvgCommon.h"
+#include "tvgArray.h"
 
 namespace tvg
 {
@@ -65,15 +65,18 @@ class RenderMethod
 {
 public:
     virtual ~RenderMethod() {}
-    virtual void* prepare(TVG_UNUSED const Shape& shape, TVG_UNUSED void* data, TVG_UNUSED const RenderTransform* transform, uint32_t opacity, TVG_UNUSED vector<Composite>& compList, TVG_UNUSED RenderUpdateFlag flags) { return nullptr; }
-    virtual void* prepare(TVG_UNUSED const Picture& picture, TVG_UNUSED void* data, TVG_UNUSED uint32_t *buffer, TVG_UNUSED const RenderTransform* transform, TVG_UNUSED uint32_t opacity, TVG_UNUSED vector<Composite>& compList, TVG_UNUSED RenderUpdateFlag flags) { return nullptr; }
-    virtual bool dispose(TVG_UNUSED void *data) { return true; }
-    virtual bool preRender() { return true; }
-    virtual bool render(TVG_UNUSED const Shape& shape, TVG_UNUSED void *data) { return true; }
-    virtual bool render(TVG_UNUSED const Picture& picture, TVG_UNUSED void *data) { return true; }
-    virtual bool postRender() { return true; }
-    virtual bool clear() { return true; }
-    virtual bool sync() { return true; }
+    virtual void* prepare(const Shape& shape, void* data, const RenderTransform* transform, uint32_t opacity, Array<Composite>& compList, RenderUpdateFlag flags) = 0;
+    virtual void* prepare(const Picture& picture, void* data, uint32_t *buffer, const RenderTransform* transform, uint32_t opacity, Array<Composite>& compList, RenderUpdateFlag flags) = 0;
+    virtual void* beginComposite(uint32_t x, uint32_t y, uint32_t w, uint32_t h) = 0;
+    virtual bool endComposite(void* ctx, uint32_t opacity) = 0;
+    virtual bool dispose(void *data) = 0;
+    virtual bool preRender() = 0;
+    virtual bool render(const Shape& shape, void *data) = 0;
+    virtual bool render(const Picture& picture, void *data) = 0;
+    virtual bool postRender() = 0;
+    virtual bool renderRegion(void* data, uint32_t* x, uint32_t* y, uint32_t* w, uint32_t* h) = 0;
+    virtual bool clear() = 0;
+    virtual bool sync() = 0;
 };
 
 }

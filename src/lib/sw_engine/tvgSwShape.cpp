@@ -324,7 +324,7 @@ SwOutline* _genDashOutline(const Shape* sdata, const Matrix* transform)
     dash.cnt = sdata->strokeDash(&pattern);
     if (dash.cnt == 0) return nullptr;
 
-    //Is it safe to mutual exclusive?
+    //OPTMIZE ME: Use mempool???
     dash.pattern = const_cast<float*>(pattern);
     dash.outline = static_cast<SwOutline*>(calloc(1, sizeof(SwOutline)));
     dash.outline->opened = true;
@@ -420,13 +420,15 @@ bool _fastTrack(const SwOutline* outline)
 /* External Class Implementation                                        */
 /************************************************************************/
 
-bool shapePrepare(SwShape* shape, const Shape* sdata, unsigned tid, const SwSize& clip, const Matrix* transform)
+bool shapePrepare(SwShape* shape, const Shape* sdata, unsigned tid, const SwSize& clip, const Matrix* transform, SwBBox& bbox)
 {
     if (!shapeGenOutline(shape, sdata, tid, transform)) return false;
 
     if (!_updateBBox(shape->outline, shape->bbox)) return false;
 
     if (!_checkValid(shape->outline, shape->bbox, clip)) return false;
+
+    bbox = shape->bbox;
 
     return true;
 }
@@ -588,7 +590,7 @@ void shapeResetStroke(SwShape* shape, const Shape* sdata, const Matrix* transfor
 }
 
 
-bool shapeGenStrokeRle(SwShape* shape, const Shape* sdata, unsigned tid, const Matrix* transform, const SwSize& clip)
+bool shapeGenStrokeRle(SwShape* shape, const Shape* sdata, unsigned tid, const Matrix* transform, const SwSize& clip, SwBBox& bbox)
 {
     SwOutline* shapeOutline = nullptr;
     SwOutline* strokeOutline = nullptr;
@@ -619,7 +621,6 @@ bool shapeGenStrokeRle(SwShape* shape, const Shape* sdata, unsigned tid, const M
         goto fail;
     }
 
-    SwBBox bbox;
     _updateBBox(strokeOutline, bbox);
 
     if (!_checkValid(strokeOutline, bbox, clip)) {
@@ -634,6 +635,7 @@ fail:
         if (shapeOutline->cntrs) free(shapeOutline->cntrs);
         if (shapeOutline->pts) free(shapeOutline->pts);
         if (shapeOutline->types) free(shapeOutline->types);
+        free(shapeOutline);
     }
     mpoolRetStrokeOutline(tid);
 

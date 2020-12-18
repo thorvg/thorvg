@@ -19,7 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#include <math.h>
+#include <algorithm>
 #include "tvgSwCommon.h"
 
 /************************************************************************/
@@ -90,13 +90,13 @@ static bool _checkValid(const SwOutline* outline, const SwBBox& bbox, const SwSi
 /************************************************************************/
 
 
-bool imagePrepare(SwImage* image, const Picture* pdata, unsigned tid, const SwSize& clip, const Matrix* transform)
+bool imagePrepare(SwImage* image, const Picture* pdata, unsigned tid, const SwSize& clip, const Matrix* transform, SwBBox& bbox)
 {
     if (!imageGenOutline(image, pdata, tid, transform)) return false;
 
-    if (!_updateBBox(image->outline, image->bbox, clip))  return false;
+    if (!_updateBBox(image->outline, bbox, clip))  return false;
 
-    if (!_checkValid(image->outline, image->bbox, clip)) return false;
+    if (!_checkValid(image->outline, bbox, clip)) return false;
 
     return true;
 }
@@ -108,9 +108,9 @@ bool imagePrepared(SwImage* image)
 }
 
 
-bool imageGenRle(SwImage* image, TVG_UNUSED const Picture* pdata, const SwSize& clip, bool antiAlias, bool hasComposite)
+bool imageGenRle(SwImage* image, TVG_UNUSED const Picture* pdata, const SwSize& clip, SwBBox& bbox, bool antiAlias, bool hasComposite)
 {
-    if ((image->rle = rleRender(image->rle, image->outline, image->bbox, clip, antiAlias))) return true;
+    if ((image->rle = rleRender(image->rle, image->outline, bbox, clip, antiAlias))) return true;
 
     return false;
 }
@@ -127,18 +127,17 @@ void imageReset(SwImage* image)
 {
     rleReset(image->rle);
     image->rle = nullptr;
-    _initBBox(image->bbox);
 }
 
 
 bool imageGenOutline(SwImage* image, const Picture* pdata, unsigned tid, const Matrix* transform)
 {
-    image->outline = mpoolReqOutline(tid);
-    auto outline = image->outline;
-
     float w, h;
     pdata->viewbox(nullptr, nullptr, &w, &h);
     if (w == 0 || h == 0) return false;
+
+    image->outline = mpoolReqOutline(tid);
+    auto outline = image->outline;
 
     outline->reservedPtsCnt = 5;
     outline->pts = static_cast<SwPoint*>(realloc(outline->pts, outline->reservedPtsCnt * sizeof(SwPoint)));
@@ -162,10 +161,11 @@ bool imageGenOutline(SwImage* image, const Picture* pdata, unsigned tid, const M
     ++outline->cntrsCnt;
 
     outline->opened = false;
-    image->outline = outline;
 
-    image->width = w;
-    image->height = h;
+    image->outline = outline;
+    image->w = w;
+    image->h = h;
+
     return true;
 }
 

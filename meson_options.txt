@@ -37,3 +37,8 @@ option('test',
    type: 'boolean',
    value: false,
    description: 'Enable building unit tests')
+
+option('log',
+    type: 'boolean',
+    value: false,
+    description: 'Enable log message')

@@ -73,6 +73,12 @@ bool GlRenderer::sync()
 }
 
 
+bool GlRenderer::renderRegion(void* data, uint32_t* x, uint32_t* y, uint32_t* w, uint32_t* h)
+{
+    return true;
+}
+
+
 bool GlRenderer::preRender()
 {
     if (mRenderTasks.size() == 0)
@@ -91,6 +97,28 @@ bool GlRenderer::preRender()
 bool GlRenderer::postRender()
 {
     //TODO: called just after render()
+
+    return true;
+}
+
+
+void* GlRenderer::beginComposite(uint32_t x, uint32_t y, uint32_t w, uint32_t h)
+{
+    //TODO: Prepare frameBuffer & Setup render target for composition
+    return nullptr;
+}
+
+
+bool GlRenderer::endComposite(void* ctx, uint32_t opacity)
+{
+    //TODO: Composite Framebuffer to main surface
+    return false;
+}
+
+
+bool GlRenderer::render(const Picture& picture, void *data)
+{
+    //TODO Draw Bitmap Image
 
     return true;
 }
@@ -140,7 +168,14 @@ bool GlRenderer::dispose(void *data)
 }
 
 
-void* GlRenderer::prepare(const Shape& shape, void* data, TVG_UNUSED const RenderTransform* transform, TVG_UNUSED uint32_t opacity, vector<Composite>& compList, RenderUpdateFlag flags)
+void* GlRenderer::prepare(TVG_UNUSED const Picture& picture, TVG_UNUSED void* data, TVG_UNUSED uint32_t *buffer, TVG_UNUSED const RenderTransform* transform, TVG_UNUSED uint32_t opacity, TVG_UNUSED Array<Composite>& compList, TVG_UNUSED RenderUpdateFlag flags)
+{
+    //TODO:
+    return nullptr;
+}
+
+
+void* GlRenderer::prepare(const Shape& shape, void* data, TVG_UNUSED const RenderTransform* transform, TVG_UNUSED uint32_t opacity, Array<Composite>& compList, RenderUpdateFlag flags)
 {
     //prepare shape data
     GlShape* sdata = static_cast<GlShape*>(data);

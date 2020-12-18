@@ -48,4 +48,8 @@ bool simpleXmlParse(const char* buf, unsigned buflen, bool strip, simpleXMLCb fu
 bool simpleXmlParseW3CAttribute(const char* buf, simpleXMLAttributeCb func, const void* data);
 const char *simpleXmlFindAttributesTag(const char* buf, unsigned buflen);
 
+#ifdef THORVG_LOG_ENABLED
+string simpleXmlNodeTypeToString(SvgNodeType type);
+#endif
+
 #endif //_TVG_SIMPLE_XML_PARSER_H_

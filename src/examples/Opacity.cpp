@@ -8,54 +8,81 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 {
     if (!canvas) return;
 
+    //Create a Scene
+    auto scene = tvg::Scene::gen();
+    scene->opacity(175);              //Apply opacity to scene (0 - 255)
+    scene->reserve(2);
+
     //Prepare Circle
     auto shape1 = tvg::Shape::gen();
     shape1->appendCircle(400, 400, 250, 250);
     shape1->fill(255, 255, 0, 255);
-    canvas->push(move(shape1));
+    scene->push(move(shape1));
 
-    //Create a Scene
-    auto scene = tvg::Scene::gen();
-    scene->opacity(127);              //Apply opacity to scene (0 - 255)
-    scene->reserve(2);
-
-    //Star
+    //Round rectangle
     auto shape2 = tvg::Shape::gen();
-
-    //Appends Paths
-    shape2->moveTo(199, 34);
-    shape2->lineTo(253, 143);
-    shape2->lineTo(374, 160);
-    shape2->lineTo(287, 244);
-    shape2->lineTo(307, 365);
-    shape2->lineTo(199, 309);
-    shape2->lineTo(97, 365);
-    shape2->lineTo(112, 245);
-    shape2->lineTo(26, 161);
-    shape2->lineTo(146, 143);
-    shape2->close();
-    shape2->fill(0, 0, 255, 255);
+    shape2->appendRect(450, 100, 200, 200, 50, 50);
+    shape2->fill(0, 255, 0, 255);
+    shape2->stroke(10);
+    shape2->stroke(255, 255, 255, 255);
     scene->push(move(shape2));
 
-    //Circle
-    auto shape3 = tvg::Shape::gen();
-
-    auto cx = 550.0f;
-    auto cy = 550.0f;
-    auto radius = 125.0f;
-    auto halfRadius = radius * 0.552284f;
-
-    //Append Paths
-    shape3->moveTo(cx, cy - radius);
-    shape3->cubicTo(cx + halfRadius, cy - radius, cx + radius, cy - halfRadius, cx + radius, cy);
-    shape3->cubicTo(cx + radius, cy + halfRadius, cx + halfRadius, cy + radius, cx, cy+ radius);
-    shape3->cubicTo(cx - halfRadius, cy + radius, cx - radius, cy + halfRadius, cx - radius, cy);
-    shape3->cubicTo(cx - radius, cy - halfRadius, cx - halfRadius, cy - radius, cx, cy - radius);
-    shape3->fill(255, 0, 0, 255);
-    scene->push(move(shape3));
 
     //Draw the Scene onto the Canvas
     canvas->push(move(scene));
+
+    //Create a Scene 2
+    auto scene2 = tvg::Scene::gen();
+    scene2->opacity(127);              //Apply opacity to scene (0 - 255)
+    scene2->scale(1.2);
+    scene2->reserve(2);
+
+    //Star
+    auto shape3 = tvg::Shape::gen();
+
+    //Appends Paths
+    shape3->moveTo(199, 34);
+    shape3->lineTo(253, 143);
+    shape3->lineTo(374, 160);
+    shape3->lineTo(287, 244);
+    shape3->lineTo(307, 365);
+    shape3->lineTo(199, 309);
+    shape3->lineTo(97, 365);
+    shape3->lineTo(112, 245);
+    shape3->lineTo(26, 161);
+    shape3->lineTo(146, 143);
+    shape3->close();
+    shape3->fill(0, 0, 255, 255);
+    shape3->stroke(10);
+    shape3->stroke(255, 255, 255, 255);
+    shape3->opacity(127);
+
+    scene2->push(move(shape3));
+
+    //Circle
+    auto shape4 = tvg::Shape::gen();
+
+    auto cx = 150.0f;
+    auto cy = 150.0f;
+    auto radius = 50.0f;
+    auto halfRadius = radius * 0.552284f;
+
+    //Append Paths
+    shape4->moveTo(cx, cy - radius);
+    shape4->cubicTo(cx + halfRadius, cy - radius, cx + radius, cy - halfRadius, cx + radius, cy);
+    shape4->cubicTo(cx + radius, cy + halfRadius, cx + halfRadius, cy + radius, cx, cy+ radius);
+    shape4->cubicTo(cx - halfRadius, cy + radius, cx - radius, cy + halfRadius, cx - radius, cy);
+    shape4->cubicTo(cx - radius, cy - halfRadius, cx - halfRadius, cy - radius, cx, cy - radius);
+    shape4->close();
+    shape4->fill(255, 0, 0, 255);
+    shape4->stroke(10);
+    shape4->stroke(0, 0, 255, 255);
+    shape4->opacity(200);
+    shape4->scale(3);
+    scene2->push(move(shape4));
+
+    //Draw the Scene onto the Canvas
+    canvas->push(move(scene2));
 }
 
 

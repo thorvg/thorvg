@@ -358,6 +358,21 @@ TVG_EXPORT Tvg_Result tvg_shape_get_fill_color(const Tvg_Paint* paint, uint8_t* 
 }
 
 
+TVG_EXPORT Tvg_Result tvg_shape_set_fill_rule(Tvg_Paint* paint, Tvg_Fill_Rule rule)
+{
+    if (!paint) return TVG_RESULT_INVALID_ARGUMENT;
+    return (Tvg_Result) reinterpret_cast<Shape*>(paint)->fill((FillRule)rule);
+}
+
+
+TVG_EXPORT Tvg_Result tvg_shape_get_fill_rule(const Tvg_Paint* paint, Tvg_Fill_Rule* rule)
+{
+    if (!paint || !rule) return TVG_RESULT_INVALID_ARGUMENT;
+    *rule = (Tvg_Fill_Rule) reinterpret_cast<Shape*>(CCP(paint))->fillRule();
+    return TVG_RESULT_SUCCESS;
+}
+
+
 TVG_EXPORT Tvg_Result tvg_shape_set_linear_gradient(Tvg_Paint* paint, Tvg_Gradient* gradient)
 {
     if (!paint) return TVG_RESULT_INVALID_ARGUMENT;
@@ -394,6 +409,13 @@ TVG_EXPORT Tvg_Result tvg_picture_load(Tvg_Paint* paint, const char* path)
 {
     if (!paint) return TVG_RESULT_INVALID_ARGUMENT;
     return (Tvg_Result) reinterpret_cast<Picture*>(paint)->load(path);
+}
+
+
+TVG_EXPORT Tvg_Result tvg_picture_load_raw(Tvg_Paint* paint, uint32_t *data, uint32_t w, uint32_t h, bool copy)
+{
+    if (!paint) return TVG_RESULT_INVALID_ARGUMENT;
+    return (Tvg_Result) reinterpret_cast<Picture*>(paint)->load(data, w, h, copy);
 }
 
 
@@ -490,6 +512,12 @@ TVG_EXPORT Tvg_Result tvg_scene_push(Tvg_Paint* scene, Tvg_Paint* paint)
 {
     if (!scene || !paint) return TVG_RESULT_INVALID_ARGUMENT;
     return (Tvg_Result) reinterpret_cast<Scene*>(scene)->push(unique_ptr<Paint>((Paint*)paint));
+}
+
+TVG_EXPORT Tvg_Result tvg_scene_clear(Tvg_Paint* scene)
+{
+    if (!scene) return TVG_RESULT_INVALID_ARGUMENT;
+    return (Tvg_Result) reinterpret_cast<Scene*>(scene)->clear();
 }
 
 

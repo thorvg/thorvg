@@ -47,7 +47,7 @@ Result Scene::push(unique_ptr<Paint> paint) noexcept
 {
     auto p = paint.release();
     if (!p) return Result::MemoryCorruption;
-    pImpl->paints.push_back(p);
+    pImpl->paints.push(p);
 
     return Result::Success;
 }
@@ -56,6 +56,14 @@ Result Scene::push(unique_ptr<Paint> paint) noexcept
 Result Scene::reserve(uint32_t size) noexcept
 {
     pImpl->paints.reserve(size);
+
+    return Result::Success;
+}
+
+
+Result Scene::clear() noexcept
+{
+    pImpl->paints.clear();
 
     return Result::Success;
 }

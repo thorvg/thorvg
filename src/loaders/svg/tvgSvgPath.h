@@ -23,9 +23,8 @@
 #ifndef _TVG_SVG_PATH_H_
 #define _TVG_SVG_PATH_H_
 
-#include <vector>
 #include "tvgSvgLoaderCommon.h"
 
-tuple<vector<tvg::PathCommand>, vector<tvg::Point>> svgPathToTvgPath(const char* svg_path_data);
+bool svgPathToTvgPath(const char* svgPath, Array<PathCommand>& cmds, Array<Point>& pts);
 
 #endif //_TVG_SVG_PATH_H_

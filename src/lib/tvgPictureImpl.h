@@ -37,6 +37,8 @@ struct Picture::Impl
     uint32_t *pixels = nullptr;
     Picture *picture = nullptr;
     void *edata = nullptr;              //engine data
+    float w = 0, h = 0;
+    bool resizing = false;
 
     Impl(Picture* p) : picture(p)
     {
@@ -56,6 +58,38 @@ struct Picture::Impl
         return false;
     }
 
+    void resize()
+    {
+        auto sx = w / loader->vw;
+        auto sy = h / loader->vh;
+
+        if (loader->preserveAspect) {
+            //Scale
+            auto scale = sx < sy ? sx : sy;
+            paint->scale(scale);
+            //Align
+            auto vx = loader->vx * scale;
+            auto vy = loader->vy * scale;
+            auto vw = loader->vw * scale;
+            auto vh = loader->vh * scale;
+            if (vw > vh) vy -= (h - vh) * 0.5f;
+            else vx -= (w - vw) * 0.5f;
+            paint->translate(-vx, -vy);
+        } else {
+            //Align
+            auto vx = loader->vx * sx;
+            auto vy = loader->vy * sy;
+            auto vw = loader->vw * sx;
+            auto vh = loader->vh * sy;
+            if (vw > vh) vy -= (h - vh) * 0.5f;
+            else vx -= (w - vw) * 0.5f;
+
+            Matrix m = {sx, 0, -vx, 0, sy, -vy, 0, 0, 1};
+            paint->transform(m);
+        }
+        resizing = false;
+    }
+
     uint32_t reload()
     {
         if (loader) {
@@ -64,6 +98,7 @@ struct Picture::Impl
                 if (scene) {
                     paint = scene.release();
                     loader->close();
+                    if (w != loader->w && h != loader->h) resize();
                     if (paint) return RenderUpdateFlag::None;
                 }
             }
@@ -75,12 +110,15 @@ struct Picture::Impl
         return RenderUpdateFlag::None;
     }
 
-    void* update(RenderMethod &renderer, const RenderTransform* transform, uint32_t opacity, vector<Composite>& compList, RenderUpdateFlag pFlag)
+    void* update(RenderMethod &renderer, const RenderTransform* transform, uint32_t opacity, Array<Composite>& compList, RenderUpdateFlag pFlag)
     {
         uint32_t flag = reload();
 
         if (pixels) edata = renderer.prepare(*picture, edata, pixels, transform, opacity, compList, static_cast<RenderUpdateFlag>(pFlag | flag));
-        else if (paint) edata = paint->pImpl->update(renderer, transform, opacity, compList, static_cast<RenderUpdateFlag>(pFlag | flag));
+        else if (paint) {
+            if (resizing) resize();
+            edata = paint->pImpl->update(renderer, transform, opacity, compList, static_cast<RenderUpdateFlag>(pFlag | flag));
+        }
         return edata;
     }
 
@@ -101,10 +139,25 @@ struct Picture::Impl
         return true;
     }
 
+    bool size(uint32_t w, uint32_t h)
+    {
+        this->w = w;
+        this->h = h;
+        resizing = true;
+        return true;
+    }
+
     bool bounds(float* x, float* y, float* w, float* h)
     {
         if (!paint) return false;
         return paint->pImpl->bounds(x, y, w, h);
+    }
+
+    bool bounds(RenderMethod& renderer, uint32_t* x, uint32_t* y, uint32_t* w, uint32_t* h)
+    {
+        if (edata) return renderer.renderRegion(edata, x, y, w, h);
+        if (paint) paint->pImpl->bounds(renderer, x, y, w, h);
+        return false;
     }
 
     Result load(const string& path)
@@ -113,6 +166,8 @@ struct Picture::Impl
         loader = LoaderMgr::loader(path);
         if (!loader) return Result::NonSupport;
         if (!loader->read()) return Result::Unknown;
+        w = loader->w;
+        h = loader->h;
         return Result::Success;
     }
 
@@ -122,6 +177,8 @@ struct Picture::Impl
         loader = LoaderMgr::loader(data, size);
         if (!loader) return Result::NonSupport;
         if (!loader->read()) return Result::Unknown;
+        w = loader->w;
+        h = loader->h;
         return Result::Success;
     }
 

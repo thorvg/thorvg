@@ -25,25 +25,8 @@ void svgDirCallback(const char* name, const char* path, void* data)
 
     if (picture->load(buf) != tvg::Result::Success) return;
 
-    float x, y, w, h;
-    picture->viewbox(&x, &y, &w, &h);
-
-    float rate = (SIZE/(w > h ? w : h));
-    picture->scale(rate);
-
-    x *= rate;
-    y *= rate;
-    w *= rate;
-    h *= rate;
-
-    //Center Align ?
-    if (w > h) {
-         y -= (SIZE - h) * 0.5f;
-    } else {
-         x -= (SIZE - w) * 0.5f;
-    }
-
-    picture->translate((count % NUM_PER_LINE) * SIZE - x, SIZE * (count / NUM_PER_LINE) - y);
+    picture->size(SIZE, SIZE);
+    picture->translate((count % NUM_PER_LINE) * SIZE, SIZE * (count / NUM_PER_LINE));
 
     pictures.push_back(move(picture));
 

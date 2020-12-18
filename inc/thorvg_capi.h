@@ -68,6 +68,11 @@ typedef enum {
 } Tvg_Stroke_Fill;
 
 
+typedef enum {
+    TVG_FILL_RULE_WINDING = 0,
+    TVG_FILL_RULE_EVEN_ODD
+} Tvg_Fill_Rule;
+
 typedef struct
 {
     float x, y;
@@ -153,6 +158,8 @@ TVG_EXPORT Tvg_Result tvg_shape_set_stroke_join(Tvg_Paint* paint, Tvg_Stroke_Joi
 TVG_EXPORT Tvg_Result tvg_shape_get_stroke_join(const Tvg_Paint* paint, Tvg_Stroke_Join* join);
 TVG_EXPORT Tvg_Result tvg_shape_set_fill_color(Tvg_Paint* paint, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
 TVG_EXPORT Tvg_Result tvg_shape_get_fill_color(const Tvg_Paint* paint, uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a);
+TVG_EXPORT Tvg_Result tvg_shape_set_fill_rule(Tvg_Paint* paint, Tvg_Fill_Rule rule);
+TVG_EXPORT Tvg_Result tvg_shape_get_fill_rule(const Tvg_Paint* paint, Tvg_Fill_Rule* rule);
 TVG_EXPORT Tvg_Result tvg_shape_set_linear_gradient(Tvg_Paint* paint, Tvg_Gradient* grad);
 TVG_EXPORT Tvg_Result tvg_shape_set_radial_gradient(Tvg_Paint* paint, Tvg_Gradient* grad);
 TVG_EXPORT Tvg_Result tvg_shape_get_gradient(const Tvg_Paint* paint, Tvg_Gradient** grad);
@@ -177,6 +184,7 @@ TVG_EXPORT Tvg_Result tvg_gradient_del(Tvg_Gradient* grad);
 /************************************************************************/
 TVG_EXPORT Tvg_Paint* tvg_picture_new();
 TVG_EXPORT Tvg_Result tvg_picture_load(Tvg_Paint* paint, const char* path);
+TVG_EXPORT Tvg_Result tvg_picture_load_raw(Tvg_Paint* paint, uint32_t *data, uint32_t w, uint32_t h, bool copy);
 TVG_EXPORT Tvg_Result tvg_picture_get_viewbox(const Tvg_Paint* paint, float* x, float* y, float* w, float* h);
 
 /************************************************************************/
@@ -185,6 +193,7 @@ TVG_EXPORT Tvg_Result tvg_picture_get_viewbox(const Tvg_Paint* paint, float* x, 
 TVG_EXPORT Tvg_Paint* tvg_scene_new();
 TVG_EXPORT Tvg_Result tvg_scene_reserve(Tvg_Paint* scene, uint32_t size);
 TVG_EXPORT Tvg_Result tvg_scene_push(Tvg_Paint* scene, Tvg_Paint* paint);
+TVG_EXPORT Tvg_Result tvg_scene_clear(Tvg_Paint* scene);
 
 
 #ifdef __cplusplus

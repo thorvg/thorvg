@@ -280,7 +280,11 @@ public:
     Result load(const std::string& path) noexcept;
     Result load(const char* data, uint32_t size) noexcept;
     Result load(uint32_t* data, uint32_t w, uint32_t h, bool copy) noexcept;
+    //TODO: Replace with size(). Remove API
     Result viewbox(float* x, float* y, float* w, float* h) const noexcept;
+
+    Result size(float w, float h) noexcept;
+    Result size(float* w, float* h) const noexcept;
 
     static std::unique_ptr<Picture> gen() noexcept;
 
@@ -303,6 +307,7 @@ public:
 
     Result push(std::unique_ptr<Paint> paint) noexcept;
     Result reserve(uint32_t size) noexcept;
+    Result clear() noexcept;
 
     static std::unique_ptr<Scene> gen() noexcept;
 

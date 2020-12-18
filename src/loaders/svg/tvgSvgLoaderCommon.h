@@ -23,6 +23,7 @@
 #define _TVG_SVG_LOADER_COMMON_H_
 
 #include "tvgCommon.h"
+#include "tvgArray.h"
 
 enum class SvgNodeType
 {
@@ -125,34 +126,6 @@ enum class SvgParserLengthType
 struct SvgNode;
 struct SvgStyleGradient;
 
-template<class T>
-struct SvgVector
-{
-    T* list = nullptr;
-    uint32_t cnt = 0;
-    uint32_t reserved = 0;
-
-    void push(T element)
-    {
-        if (cnt + 1 > reserved) {
-            reserved = (cnt + 1) * 2;
-            list = static_cast<T*>(realloc(list, sizeof(T) * reserved));
-        }
-        list[cnt++] = element;
-    }
-
-    void pop()
-    {
-        if (cnt > 0) --cnt;
-    }
-
-    void clear()
-    {
-        if (list) free(list);
-        list = nullptr;
-        cnt = reserved = 0;
-    }
-};
 
 struct SvgDocNode
 {
@@ -172,7 +145,7 @@ struct SvgGNode
 
 struct SvgDefsNode
 {
-    SvgVector<SvgStyleGradient*> gradients;
+    Array<SvgStyleGradient*> gradients;
 };
 
 struct SvgArcNode
@@ -271,7 +244,7 @@ struct SvgPaint
 
 struct SvgDash
 {
-    SvgVector<float> array;
+    Array<float> array;
 };
 
 struct SvgStyleGradient
@@ -283,7 +256,7 @@ struct SvgStyleGradient
     SvgRadialGradient* radial;
     SvgLinearGradient* linear;
     Matrix* transform;
-    SvgVector<Fill::ColorStop *> stops;
+    Array<Fill::ColorStop *> stops;
     bool userSpace;
     bool usePercentage;
 };
@@ -325,7 +298,7 @@ struct SvgNode
 {
     SvgNodeType type;
     SvgNode* parent;
-    SvgVector<SvgNode*> child;
+    Array<SvgNode*> child;
     string *id;
     SvgStyleProperty *style;
     Matrix* transform;
@@ -364,10 +337,10 @@ struct SvgParser
 
 struct SvgLoaderData
 {
-    SvgVector<SvgNode *> stack = {nullptr, 0, 0};
+    Array<SvgNode *> stack = {nullptr, 0, 0};
     SvgNode* doc = nullptr;
     SvgNode* def = nullptr;
-    SvgVector<SvgStyleGradient*> gradients;
+    Array<SvgStyleGradient*> gradients;
     SvgStyleGradient* latestGradient = nullptr; //For stops
     SvgParser* svgParse = nullptr;
     int level = 0;

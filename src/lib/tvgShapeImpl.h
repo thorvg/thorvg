@@ -223,16 +223,30 @@ struct Shape::Impl
         return renderer.render(*shape, edata);
     }
 
-    void* update(RenderMethod& renderer, const RenderTransform* transform, uint32_t opacity, vector<Composite>& compList, RenderUpdateFlag pFlag)
+    void* update(RenderMethod& renderer, const RenderTransform* transform, uint32_t opacity, Array<Composite>& compList, RenderUpdateFlag pFlag)
     {
         this->edata = renderer.prepare(*shape, this->edata, transform, opacity, compList, static_cast<RenderUpdateFlag>(pFlag | flag));
         flag = RenderUpdateFlag::None;
         return this->edata;
     }
 
+    bool bounds(RenderMethod& renderer, uint32_t* x, uint32_t* y, uint32_t* w, uint32_t* h)
+    {
+        return renderer.renderRegion(edata, x, y, w, h);
+    }
+
     bool bounds(float* x, float* y, float* w, float* h)
     {
-        return path.bounds(x, y, w, h);
+        auto ret = path.bounds(x, y, w, h);
+
+        //Stroke feathering
+        if (stroke) {
+            if (x) *x -= stroke->width * 0.5f;
+            if (y) *y -= stroke->width * 0.5f;
+            if (w) *w += stroke->width;
+            if (h) *h += stroke->width;
+        }
+        return ret;
     }
 
     bool strokeWidth(float width)
