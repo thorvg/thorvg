@@ -133,8 +133,8 @@ struct SwShapeTask : SwTask
 
         //Composition
         for (auto comp = compList.data; comp < (compList.data + compList.count); ++comp) {
+            auto compShape = &static_cast<SwShapeTask*>((*comp).edata)->shape;
             if ((*comp).method == CompositeMethod::ClipPath) {
-                auto compShape = &static_cast<SwShapeTask*>((*comp).edata)->shape;
                 //Clip shape rle
                 if (shape.rle) {
                     if (compShape->rect) rleClipRect(shape.rle, &compShape->bbox);
@@ -147,8 +147,6 @@ struct SwShapeTask : SwTask
                 }                
             } else if ((*comp).method == CompositeMethod::AlphaMask) {
                 rleAlphaMask(shape.rle, compShape->rle);
-            } else if (comp.method == CompositeMethod::InvAlphaMask) {
-                // TODO
             }
         }
     end:
@@ -188,14 +186,12 @@ struct SwImageTask : SwTask
                 if (!imageGenRle(&image, pdata, clip, bbox, false, true)) goto end;
                 if (image.rle) {
                     for (auto comp = compList.data; comp < (compList.data + compList.count); ++comp) {
+                        auto compShape = &static_cast<SwShapeTask*>((*comp).edata)->shape;
                         if ((*comp).method == CompositeMethod::ClipPath) {
-                            auto compShape = &static_cast<SwShapeTask*>((*comp).edata)->shape;
                             if (compShape->rect) rleClipRect(image.rle, &compShape->bbox);
                             else if (compShape->rle) rleClipPath(image.rle, compShape->rle);
                         } else if ((*comp).method == CompositeMethod::AlphaMask) {
                             rleAlphaMask(image.rle, compShape->rle);
-                        } else if ((*comp).method == CompositeMethod::InvAlphaMask) {
-                            // TODO
                         }
                     }
                 }
