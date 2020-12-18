@@ -26,7 +26,7 @@ class RawLoader : public Loader
 {
 public:
     const uint32_t* content = nullptr;
-    bool copy;
+    bool copy = false;
 
     RawLoader();
     ~RawLoader();
