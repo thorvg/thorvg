@@ -9,12 +9,6 @@
     #define TVG_EXPORT
 #endif
 
-#ifdef  LOG_TAG
-#undef  LOG_TAG
-#endif
-#define LOG_TAG "TVG"
-
-
 #ifdef __cplusplus
 extern "C" {
 #endif
