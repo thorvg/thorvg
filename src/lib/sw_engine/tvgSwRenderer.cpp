@@ -144,7 +144,11 @@ struct SwShapeTask : SwTask
                 if (shape.strokeRle) {
                     if (compShape->rect) rleClipRect(shape.strokeRle, &compShape->bbox);
                     else if (compShape->rle) rleClipPath(shape.strokeRle, compShape->rle);
-                }
+                }                
+            } else if ((*comp).method == CompositeMethod::AlphaMask) {
+                rleAlphaMask(shape.rle, compShape->rle);
+            } else if (comp.method == CompositeMethod::InvAlphaMask) {
+                // TODO
             }
         }
     end:
@@ -188,8 +192,12 @@ struct SwImageTask : SwTask
                             auto compShape = &static_cast<SwShapeTask*>((*comp).edata)->shape;
                             if (compShape->rect) rleClipRect(image.rle, &compShape->bbox);
                             else if (compShape->rle) rleClipPath(image.rle, compShape->rle);
+                        } else if ((*comp).method == CompositeMethod::AlphaMask) {
+                            rleAlphaMask(image.rle, compShape->rle);
+                        } else if ((*comp).method == CompositeMethod::InvAlphaMask) {
+                            // TODO
                         }
-                     }
+                    }
                 }
             }
         }

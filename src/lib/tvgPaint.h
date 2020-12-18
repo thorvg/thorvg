@@ -149,7 +149,7 @@ namespace tvg
 
             void *compdata = nullptr;
 
-            if (compTarget && compMethod == CompositeMethod::ClipPath) {
+            if (compTarget && (compMethod != CompositeMethod::None)) {
                 compdata = compTarget->pImpl->update(renderer, pTransform, opacity, compList, pFlag);
                 if (compdata) compList.push({compdata, compMethod});
             }
