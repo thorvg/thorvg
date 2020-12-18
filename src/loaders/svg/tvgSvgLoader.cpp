@@ -599,6 +599,7 @@ static Matrix* _parseTransformationMatrix(const char* value)
     char* str = (char*)value;
     char* end = str + strlen(str);
 
+    if (!matrix) return nullptr;
     *matrix = { 1, 0, 0, 0, 1, 0, 0, 0, 1 };
     while (str < end) {
         if (isspace(*str) || (*str == ',')) {
@@ -979,8 +980,15 @@ static SvgNode* _createNode(SvgNode* parent, SvgNodeType type)
 {
     SvgNode* node = (SvgNode*)calloc(1, sizeof(SvgNode));
 
+    if (!node) return nullptr;
+
     //Default fill property
     node->style = (SvgStyleProperty*)calloc(1, sizeof(SvgStyleProperty));
+
+    if (!node->style) {
+        free(node);
+        return nullptr;
+    }
 
     //Update the default value of stroke and fill
     //https://www.w3.org/TR/SVGTiny12/painting.html#SpecifyingPaint
@@ -1018,6 +1026,7 @@ static SvgNode* _createNode(SvgNode* parent, SvgNodeType type)
 static SvgNode* _createDefsNode(TVG_UNUSED SvgLoaderData* loader, TVG_UNUSED SvgNode* parent, const char* buf, unsigned bufLength)
 {
     SvgNode* node = _createNode(nullptr, SvgNodeType::Defs);
+    if (!node) return nullptr;
     simpleXmlParseAttributes(buf, bufLength, nullptr, node);
     return node;
 }
@@ -1026,6 +1035,7 @@ static SvgNode* _createDefsNode(TVG_UNUSED SvgLoaderData* loader, TVG_UNUSED Svg
 static SvgNode* _createGNode(TVG_UNUSED SvgLoaderData* loader, SvgNode* parent, const char* buf, unsigned bufLength)
 {
     loader->svgParse->node = _createNode(parent, SvgNodeType::G);
+    if (!loader->svgParse->node) return nullptr;
 
     simpleXmlParseAttributes(buf, bufLength, _attrParseGNode, loader);
     return loader->svgParse->node;
@@ -1035,6 +1045,7 @@ static SvgNode* _createGNode(TVG_UNUSED SvgLoaderData* loader, SvgNode* parent, 
 static SvgNode* _createSvgNode(SvgLoaderData* loader, SvgNode* parent, const char* buf, unsigned bufLength)
 {
     loader->svgParse->node = _createNode(parent, SvgNodeType::Doc);
+    if (!loader->svgParse->node) return nullptr;
     SvgDocNode* doc = &(loader->svgParse->node->node.doc);
 
     doc->preserveAspect = true;
@@ -1047,6 +1058,7 @@ static SvgNode* _createSvgNode(SvgLoaderData* loader, SvgNode* parent, const cha
 static SvgNode* _createMaskNode(SvgLoaderData* loader, SvgNode* parent, const char* buf, unsigned bufLength)
 {
     loader->svgParse->node = _createNode(parent, SvgNodeType::Unknown);
+    if (!loader->svgParse->node) return nullptr;
 
     loader->svgParse->node->display = false;
 #ifdef THORVG_LOG_ENABLED
@@ -1060,6 +1072,8 @@ static SvgNode* _createMaskNode(SvgLoaderData* loader, SvgNode* parent, const ch
 static SvgNode* _createClipPathNode(SvgLoaderData* loader, SvgNode* parent, const char* buf, unsigned bufLength)
 {
     loader->svgParse->node = _createNode(parent, SvgNodeType::ClipPath);
+
+    if (!loader->svgParse->node) return nullptr;
 
     loader->svgParse->node->display = false;
 
@@ -1093,6 +1107,8 @@ static bool _attrParsePathNode(void* data, const char* key, const char* value)
 static SvgNode* _createPathNode(SvgLoaderData* loader, SvgNode* parent, const char* buf, unsigned bufLength)
 {
     loader->svgParse->node = _createNode(parent, SvgNodeType::Path);
+
+    if (!loader->svgParse->node) return nullptr;
 
     simpleXmlParseAttributes(buf, bufLength, _attrParsePathNode, loader);
 
@@ -1150,6 +1166,8 @@ static SvgNode* _createCircleNode(SvgLoaderData* loader, SvgNode* parent, const 
 {
     loader->svgParse->node = _createNode(parent, SvgNodeType::Circle);
 
+    if (!loader->svgParse->node) return nullptr;
+
     simpleXmlParseAttributes(buf, bufLength, _attrParseCircleNode, loader);
     return loader->svgParse->node;
 }
@@ -1205,6 +1223,8 @@ static bool _attrParseEllipseNode(void* data, const char* key, const char* value
 static SvgNode* _createEllipseNode(SvgLoaderData* loader, SvgNode* parent, const char* buf, unsigned bufLength)
 {
     loader->svgParse->node = _createNode(parent, SvgNodeType::Ellipse);
+
+    if (!loader->svgParse->node) return nullptr;
 
     simpleXmlParseAttributes(buf, bufLength, _attrParseEllipseNode, loader);
     return loader->svgParse->node;
@@ -1279,6 +1299,8 @@ static SvgNode* _createPolygonNode(SvgLoaderData* loader, SvgNode* parent, const
 {
     loader->svgParse->node = _createNode(parent, SvgNodeType::Polygon);
 
+    if (!loader->svgParse->node) return nullptr;
+
     simpleXmlParseAttributes(buf, bufLength, _attrParsePolygonNode, loader);
     return loader->svgParse->node;
 }
@@ -1287,6 +1309,8 @@ static SvgNode* _createPolygonNode(SvgLoaderData* loader, SvgNode* parent, const
 static SvgNode* _createPolylineNode(SvgLoaderData* loader, SvgNode* parent, const char* buf, unsigned bufLength)
 {
     loader->svgParse->node = _createNode(parent, SvgNodeType::Polyline);
+
+    if (!loader->svgParse->node) return nullptr;
 
     simpleXmlParseAttributes(buf, bufLength, _attrParsePolygonNode, loader);
     return loader->svgParse->node;
@@ -1353,9 +1377,10 @@ static bool _attrParseRectNode(void* data, const char* key, const char* value)
 static SvgNode* _createRectNode(SvgLoaderData* loader, SvgNode* parent, const char* buf, unsigned bufLength)
 {
     loader->svgParse->node = _createNode(parent, SvgNodeType::Rect);
-    if (loader->svgParse->node) {
-        loader->svgParse->node->node.rect.hasRx = loader->svgParse->node->node.rect.hasRy = false;
-    }
+
+    if (!loader->svgParse->node) return nullptr;
+
+    loader->svgParse->node->node.rect.hasRx = loader->svgParse->node->node.rect.hasRy = false;
 
     simpleXmlParseAttributes(buf, bufLength, _attrParseRectNode, loader);
     return loader->svgParse->node;
@@ -1412,6 +1437,8 @@ static bool _attrParseLineNode(void* data, const char* key, const char* value)
 static SvgNode* _createLineNode(SvgLoaderData* loader, SvgNode* parent, const char* buf, unsigned bufLength)
 {
     loader->svgParse->node = _createNode(parent, SvgNodeType::Line);
+
+    if (!loader->svgParse->node) return nullptr;
 
     simpleXmlParseAttributes(buf, bufLength, _attrParseLineNode, loader);
     return loader->svgParse->node;
@@ -1483,6 +1510,7 @@ static SvgStyleGradient* _cloneGradient(SvgStyleGradient* from)
     if (!from) return nullptr;
 
     grad = (SvgStyleGradient*)calloc(1, sizeof(SvgStyleGradient));
+    if (!grad) return nullptr;
     grad->type = from->type;
     grad->id = from->id ? _copyId(from->id->c_str()) : nullptr;
     grad->ref = from->ref ? _copyId(from->ref->c_str()) : nullptr;
@@ -1491,18 +1519,24 @@ static SvgStyleGradient* _cloneGradient(SvgStyleGradient* from)
     grad->userSpace = from->userSpace;
     if (from->transform) {
         grad->transform = (Matrix*)calloc(1, sizeof(Matrix));
-        memcpy(grad->transform, from->transform, sizeof(Matrix));
+        if (grad->transform) memcpy(grad->transform, from->transform, sizeof(Matrix));
     }
     if (grad->type == SvgGradientType::Linear) {
         grad->linear = (SvgLinearGradient*)calloc(1, sizeof(SvgLinearGradient));
+        if (!grad->linear) goto error_grad_alloc;
         memcpy(grad->linear, from->linear, sizeof(SvgLinearGradient));
     } else if (grad->type == SvgGradientType::Radial) {
         grad->radial = (SvgRadialGradient*)calloc(1, sizeof(SvgRadialGradient));
+        if (!grad->radial) goto error_grad_alloc;
         memcpy(grad->radial, from->radial, sizeof(SvgRadialGradient));
     }
 
     _cloneGradStops(&grad->stops, &from->stops);
     return grad;
+error_grad_alloc:
+    //LOG: allocation failed. out of memory
+    if (grad) free(grad);
+    return nullptr;
 }
 
 
@@ -1511,7 +1545,7 @@ static void _copyAttr(SvgNode* to, SvgNode* from)
     //Copy matrix attribute
     if (from->transform) {
         to->transform = (Matrix*)calloc(1, sizeof(Matrix));
-        memcpy(to->transform, from->transform, sizeof(Matrix));
+        if (to->transform) memcpy(to->transform, from->transform, sizeof(Matrix));
     }
     //Copy style attribute;
     memcpy(to->style, from->style, sizeof(SvgStyleProperty));
@@ -1578,6 +1612,9 @@ static void _cloneNode(SvgNode* from, SvgNode* parent)
     if (!from || !parent) return;
 
     newNode = _createNode(parent, from->type);
+
+    if (!newNode) return;
+
     _copyAttr(newNode, from);
 
     auto child = from->child.data;
@@ -1611,6 +1648,8 @@ static bool _attrParseUseNode(void* data, const char* key, const char* value)
 static SvgNode* _createUseNode(SvgLoaderData* loader, SvgNode* parent, const char* buf, unsigned bufLength)
 {
     loader->svgParse->node = _createNode(parent, SvgNodeType::G);
+
+    if (!loader->svgParse->node) return nullptr;
 
     simpleXmlParseAttributes(buf, bufLength, _attrParseUseNode, loader);
     return loader->svgParse->node;
@@ -1805,11 +1844,16 @@ static SvgStyleGradient* _createRadialGradient(SvgLoaderData* loader, const char
 {
     unsigned int i = 0;
     SvgStyleGradient* grad = (SvgStyleGradient*)calloc(1, sizeof(SvgStyleGradient));
+    if (!grad) return nullptr;
     loader->svgParse->styleGrad = grad;
 
     grad->type = SvgGradientType::Radial;
     grad->userSpace = false;
     grad->radial = (SvgRadialGradient*)calloc(1, sizeof(SvgRadialGradient));
+    if (!grad->radial) {
+        free(grad);
+        return nullptr;
+    }
     /**
     * Default values of gradient
     */
@@ -1963,12 +2007,17 @@ static bool _attrParseLinearGradientNode(void* data, const char* key, const char
 static SvgStyleGradient* _createLinearGradient(SvgLoaderData* loader, const char* buf, unsigned bufLength)
 {
     SvgStyleGradient* grad = (SvgStyleGradient*)calloc(1, sizeof(SvgStyleGradient));
+    if (!grad) return nullptr;
     loader->svgParse->styleGrad = grad;
     unsigned int i;
 
     grad->type = SvgGradientType::Linear;
     grad->userSpace = false;
     grad->linear = (SvgLinearGradient*)calloc(1, sizeof(SvgLinearGradient));
+    if (!grad->linear) {
+        free(grad);
+        return nullptr;
+    }
     /**
     * Default value of x2 is 100%
     */
@@ -2121,6 +2170,7 @@ static void _svgLoaderParserXmlOpen(SvgLoaderData* loader, const char* content, 
         loader->latestGradient = gradient;
     } else if (!strcmp(tagName, "stop")) {
         auto stop = static_cast<Fill::ColorStop*>(calloc(1, sizeof(Fill::ColorStop)));
+        if (!stop) return;
         loader->svgParse->gradStop = stop;
         /* default value for opacity */
         stop->a = 255;
