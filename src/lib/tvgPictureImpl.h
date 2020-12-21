@@ -110,14 +110,14 @@ struct Picture::Impl
         return RenderUpdateFlag::None;
     }
 
-    void* update(RenderMethod &renderer, const RenderTransform* transform, uint32_t opacity, Array<Composite>& compList, RenderUpdateFlag pFlag)
+    void* update(RenderMethod &renderer, const RenderTransform* transform, uint32_t opacity, Array<ClipPath>& clips, RenderUpdateFlag pFlag)
     {
         uint32_t flag = reload();
 
-        if (pixels) edata = renderer.prepare(*picture, edata, pixels, transform, opacity, compList, static_cast<RenderUpdateFlag>(pFlag | flag));
+        if (pixels) edata = renderer.prepare(*picture, edata, pixels, transform, opacity, clips, static_cast<RenderUpdateFlag>(pFlag | flag));
         else if (paint) {
             if (resizing) resize();
-            edata = paint->pImpl->update(renderer, transform, opacity, compList, static_cast<RenderUpdateFlag>(pFlag | flag));
+            edata = paint->pImpl->update(renderer, transform, opacity, clips, static_cast<RenderUpdateFlag>(pFlag | flag));
         }
         return edata;
     }

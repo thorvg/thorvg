@@ -44,7 +44,7 @@ struct Scene::Impl
         return true;
     }
 
-    void* update(RenderMethod &renderer, const RenderTransform* transform, uint32_t opacity, Array<Composite>& compList, RenderUpdateFlag flag)
+    void* update(RenderMethod &renderer, const RenderTransform* transform, uint32_t opacity, Array<ClipPath>& clips, RenderUpdateFlag flag)
     {
         this->opacity = opacity;
 
@@ -52,15 +52,13 @@ struct Scene::Impl
            It must do intermeidate composition with that opacity value. */
         if (opacity < 255 && opacity > 0) opacity = 255;
 
-        /* FXIME: it requires to return list of children engine data
-           This is necessary for scene composition */
-        void* edata = nullptr;
-
         for (auto paint = paints.data; paint < (paints.data + paints.count); ++paint) {
-            edata = (*paint)->pImpl->update(renderer, transform, opacity, compList, static_cast<uint32_t>(flag));
+            (*paint)->pImpl->update(renderer, transform, opacity, clips, static_cast<uint32_t>(flag));
         }
 
-        return edata;
+        /* FXIME: it requires to return list of children engine data
+           This is necessary for scene composition */
+        return nullptr;
     }
 
     bool render(RenderMethod& renderer)

@@ -36,8 +36,8 @@ namespace tvg
 class SwRenderer : public RenderMethod
 {
 public:
-    void* prepare(const Shape& shape, void* data, const RenderTransform* transform, uint32_t opacity, Array<Composite>& compList, RenderUpdateFlag flags) override;
-    void* prepare(const Picture& picture, void* data, uint32_t *buffer, const RenderTransform* transform, uint32_t opacity, Array<Composite>& compList, RenderUpdateFlag flags) override;
+    void* prepare(const Shape& shape, void* data, const RenderTransform* transform, uint32_t opacity, Array<ClipPath>& clips, RenderUpdateFlag flags) override;
+    void* prepare(const Picture& picture, void* data, uint32_t *buffer, const RenderTransform* transform, uint32_t opacity, Array<ClipPath>& clips, RenderUpdateFlag flags) override;
     void* beginComposite(uint32_t x, uint32_t y, uint32_t w, uint32_t h) override;
     bool endComposite(void* ctx, uint32_t opacity) override;
     bool dispose(void *data) override;
@@ -62,7 +62,7 @@ private:
     SwRenderer(){};
     ~SwRenderer();
 
-    void prepareCommon(SwTask* task, const RenderTransform* transform, uint32_t opacity, Array<Composite>& compList, RenderUpdateFlag flags);
+    void prepareCommon(SwTask* task, const RenderTransform* transform, uint32_t opacity, Array<ClipPath>& clips, RenderUpdateFlag flags);
 };
 
 }

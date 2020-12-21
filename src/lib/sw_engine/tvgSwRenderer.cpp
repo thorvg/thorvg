@@ -45,7 +45,7 @@ struct SwTask : Task
     Matrix* transform = nullptr;
     SwSurface* surface = nullptr;
     RenderUpdateFlag flags = RenderUpdateFlag::None;
-    Array<Composite> compList;
+    Array<ClipPath> clips;
     uint32_t opacity;
     SwBBox bbox = {{0, 0}, {0, 0}};       //Whole Rendering Region
 
@@ -102,7 +102,7 @@ struct SwShapeTask : SwTask
                        shape outline below stroke could be full covered by stroke drawing.
                        Thus it turns off antialising in that condition. */
                     auto antiAlias = (strokeAlpha == 255 && strokeWidth > 2) ? false : true;
-                    if (!shapeGenRle(&shape, sdata, clip, antiAlias, compList.count > 0 ? true : false)) goto end;
+                    if (!shapeGenRle(&shape, sdata, clip, antiAlias, clips.count > 0 ? true : false)) goto end;
                     ++addStroking;
                 }
             }
@@ -131,22 +131,18 @@ struct SwShapeTask : SwTask
             }
         }
 
-        //Composition
-        for (auto comp = compList.data; comp < (compList.data + compList.count); ++comp) {
+        //Clip Path
+        for (auto comp = clips.data; comp < (clips.data + clips.count); ++comp) {
             auto compShape = &static_cast<SwShapeTask*>((*comp).edata)->shape;
-            if ((*comp).method == CompositeMethod::ClipPath) {
-                //Clip shape rle
-                if (shape.rle) {
-                    if (compShape->rect) rleClipRect(shape.rle, &compShape->bbox);
-                    else if (compShape->rle) rleClipPath(shape.rle, compShape->rle);
-                }
-                //Clip stroke rle
-                if (shape.strokeRle) {
-                    if (compShape->rect) rleClipRect(shape.strokeRle, &compShape->bbox);
-                    else if (compShape->rle) rleClipPath(shape.strokeRle, compShape->rle);
-                }                
-            } else if ((*comp).method == CompositeMethod::AlphaMask) {
-                rleAlphaMask(shape.rle, compShape->rle);
+            //Clip shape rle
+            if (shape.rle) {
+                if (compShape->rect) rleClipRect(shape.rle, &compShape->bbox);
+                else if (compShape->rle) rleClipPath(shape.rle, compShape->rle);
+            }
+            //Clip stroke rle
+            if (shape.strokeRle) {
+                if (compShape->rect) rleClipRect(shape.strokeRle, &compShape->bbox);
+                else if (compShape->rle) rleClipPath(shape.strokeRle, compShape->rle);
             }
         }
     end:
@@ -181,18 +177,14 @@ struct SwImageTask : SwTask
             imageReset(&image);
             if (!imagePrepare(&image, pdata, tid, clip, transform, bbox)) goto end;
 
-            //Composition?
-            if (compList.count > 0) {
+            //Clip Path?
+            if (clips.count > 0) {
                 if (!imageGenRle(&image, pdata, clip, bbox, false, true)) goto end;
                 if (image.rle) {
-                    for (auto comp = compList.data; comp < (compList.data + compList.count); ++comp) {
+                    for (auto comp = clips.data; comp < (clips.data + clips.count); ++comp) {
                         auto compShape = &static_cast<SwShapeTask*>((*comp).edata)->shape;
-                        if ((*comp).method == CompositeMethod::ClipPath) {
-                            if (compShape->rect) rleClipRect(image.rle, &compShape->bbox);
-                            else if (compShape->rle) rleClipPath(image.rle, compShape->rle);
-                        } else if ((*comp).method == CompositeMethod::AlphaMask) {
-                            rleAlphaMask(image.rle, compShape->rle);
-                        }
+                        if (compShape->rect) rleClipRect(image.rle, &compShape->bbox);
+                        else if (compShape->rle) rleClipPath(image.rle, compShape->rle);
                     }
                 }
             }
@@ -449,14 +441,14 @@ bool SwRenderer::dispose(void *data)
 }
 
 
-void SwRenderer::prepareCommon(SwTask* task, const RenderTransform* transform, uint32_t opacity, Array<Composite>& compList, RenderUpdateFlag flags)
+void SwRenderer::prepareCommon(SwTask* task, const RenderTransform* transform, uint32_t opacity, Array<ClipPath>& clips, RenderUpdateFlag flags)
 {
-    if (compList.count > 0) {
+    if (clips.count > 0) {
         //Guarantee composition targets get ready.
-        for (auto comp = compList.data; comp < (compList.data + compList.count); ++comp) {
+        for (auto comp = clips.data; comp < (clips.data + clips.count); ++comp) {
             static_cast<SwShapeTask*>((*comp).edata)->done();
         }
-        task->compList = compList;
+        task->clips = clips;
     }
 
     if (transform) {
@@ -476,7 +468,7 @@ void SwRenderer::prepareCommon(SwTask* task, const RenderTransform* transform, u
 }
 
 
-void* SwRenderer::prepare(const Picture& pdata, void* data, uint32_t *pixels, const RenderTransform* transform, uint32_t opacity, Array<Composite>& compList, RenderUpdateFlag flags)
+void* SwRenderer::prepare(const Picture& pdata, void* data, uint32_t *pixels, const RenderTransform* transform, uint32_t opacity, Array<ClipPath>& clips, RenderUpdateFlag flags)
 {
     //prepare task
     auto task = static_cast<SwImageTask*>(data);
@@ -493,13 +485,13 @@ void* SwRenderer::prepare(const Picture& pdata, void* data, uint32_t *pixels, co
     task->pdata = &pdata;
     task->pixels = pixels;
 
-    prepareCommon(task, transform, opacity, compList, flags);
+    prepareCommon(task, transform, opacity, clips, flags);
 
     return task;
 }
 
 
-void* SwRenderer::prepare(const Shape& sdata, void* data, const RenderTransform* transform, uint32_t opacity, Array<Composite>& compList, RenderUpdateFlag flags)
+void* SwRenderer::prepare(const Shape& sdata, void* data, const RenderTransform* transform, uint32_t opacity, Array<ClipPath>& clips, RenderUpdateFlag flags)
 {
     //prepare task
     auto task = static_cast<SwShapeTask*>(data);
@@ -514,7 +506,7 @@ void* SwRenderer::prepare(const Shape& sdata, void* data, const RenderTransform*
     task->done();
     task->sdata = &sdata;
 
-    prepareCommon(task, transform, opacity, compList, flags);
+    prepareCommon(task, transform, opacity, clips, flags);
 
     return task;
 }

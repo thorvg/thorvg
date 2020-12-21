@@ -168,14 +168,14 @@ bool GlRenderer::dispose(void *data)
 }
 
 
-void* GlRenderer::prepare(TVG_UNUSED const Picture& picture, TVG_UNUSED void* data, TVG_UNUSED uint32_t *buffer, TVG_UNUSED const RenderTransform* transform, TVG_UNUSED uint32_t opacity, TVG_UNUSED Array<Composite>& compList, TVG_UNUSED RenderUpdateFlag flags)
+void* GlRenderer::prepare(TVG_UNUSED const Picture& picture, TVG_UNUSED void* data, TVG_UNUSED uint32_t *buffer, TVG_UNUSED const RenderTransform* transform, TVG_UNUSED uint32_t opacity, TVG_UNUSED Array<ClipPath>& clips, TVG_UNUSED RenderUpdateFlag flags)
 {
     //TODO:
     return nullptr;
 }
 
 
-void* GlRenderer::prepare(const Shape& shape, void* data, TVG_UNUSED const RenderTransform* transform, TVG_UNUSED uint32_t opacity, Array<Composite>& compList, RenderUpdateFlag flags)
+void* GlRenderer::prepare(const Shape& shape, void* data, TVG_UNUSED const RenderTransform* transform, TVG_UNUSED uint32_t opacity, Array<ClipPath>& clips, RenderUpdateFlag flags)
 {
     //prepare shape data
     GlShape* sdata = static_cast<GlShape*>(data);
