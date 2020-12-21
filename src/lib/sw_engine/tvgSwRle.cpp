@@ -944,6 +944,10 @@ void rleClipPath(SwRleData *rle, const SwRleData *clip)
     updateRleSpans(rle, spans, spansEnd - spans);
 
     if (spans) free(spans);
+
+#ifdef THORVG_LOG_ENABLED
+    printf("SW_ENGINE: Using ClipPath!");
+#endif
 }
 
 void rleClipRect(SwRleData *rle, const SwBBox* clip)
@@ -957,6 +961,10 @@ void rleClipRect(SwRleData *rle, const SwBBox* clip)
     updateRleSpans(rle, spans, spansEnd - spans);
 
     if (spans) free(spans);
+
+#ifdef THORVG_LOG_ENABLED
+    printf("SW_ENGINE: Using ClipRect!");
+#endif
 }
 
 
