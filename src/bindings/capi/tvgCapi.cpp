@@ -395,6 +395,13 @@ TVG_EXPORT Tvg_Result tvg_shape_get_gradient(const Tvg_Paint* paint, Tvg_Gradien
 }
 
 
+TVG_EXPORT Tvg_Result tvg_shape_get_bounds(Tvg_Paint* paint, float* x, float* y, float* w, float* h)
+{
+   if (!paint) return TVG_RESULT_INVALID_ARGUMENT;
+   return (Tvg_Result) reinterpret_cast<Shape*>(paint)->bounds(x, y, w, h);
+}
+
+
 /************************************************************************/
 /* Picture API                                                          */
 /************************************************************************/

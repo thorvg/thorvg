@@ -163,6 +163,7 @@ TVG_EXPORT Tvg_Result tvg_shape_get_fill_rule(const Tvg_Paint* paint, Tvg_Fill_R
 TVG_EXPORT Tvg_Result tvg_shape_set_linear_gradient(Tvg_Paint* paint, Tvg_Gradient* grad);
 TVG_EXPORT Tvg_Result tvg_shape_set_radial_gradient(Tvg_Paint* paint, Tvg_Gradient* grad);
 TVG_EXPORT Tvg_Result tvg_shape_get_gradient(const Tvg_Paint* paint, Tvg_Gradient** grad);
+TVG_EXPORT Tvg_Result tvg_shape_get_bounds(Tvg_Paint* paint, float* x, float* y, float* w, float* h);
 
 /************************************************************************/
 /* Gradient API                                                         */
