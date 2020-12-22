@@ -334,8 +334,6 @@ void* SwRenderer::beginComposite(uint32_t x, uint32_t y, uint32_t w, uint32_t h)
     comp->valid = false;
 
     //Boundary Check
-    if (x < 0) x = 0;
-    if (y < 0) y = 0;
     if (x + w > surface->w) w = (surface->w - x);
     if (y + h > surface->h) h = (surface->h - y);
 
