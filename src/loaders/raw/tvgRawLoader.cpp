@@ -32,11 +32,6 @@
 /* External Class Implementation                                        */
 /************************************************************************/
 
-RawLoader::RawLoader()
-{
-}
-
-
 RawLoader::~RawLoader()
 {
     if (copy && content) {

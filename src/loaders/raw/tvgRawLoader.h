@@ -28,7 +28,6 @@ public:
     const uint32_t* content = nullptr;
     bool copy = false;
 
-    RawLoader();
     ~RawLoader();
 
     using Loader::open;
