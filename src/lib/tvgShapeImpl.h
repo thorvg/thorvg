@@ -309,7 +309,10 @@ struct Shape::Impl
             stroke->dashPattern = nullptr;
         }
 
-        if (!stroke->dashPattern) stroke->dashPattern = static_cast<float*>(malloc(sizeof(float) * cnt));
+        if (!stroke->dashPattern) {
+            stroke->dashPattern = static_cast<float*>(malloc(sizeof(float) * cnt));
+            if (!stroke->dashPattern) return false;
+        }
 
         for (uint32_t i = 0; i < cnt; ++i)
             stroke->dashPattern[i] = pattern[i];
