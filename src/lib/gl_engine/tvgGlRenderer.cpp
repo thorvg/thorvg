@@ -137,20 +137,31 @@ bool GlRenderer::render(const Shape& shape, void* data)
     uint32_t primitiveCount = sdata->geometry->getPrimitiveCount();
     for (uint32_t i = 0; i < primitiveCount; ++i)
     {
-        if (flags & RenderUpdateFlag::Gradient)
+        if (flags & (RenderUpdateFlag::Gradient | RenderUpdateFlag::Transform))
         {
             const Fill* gradient = shape.fill();
-            drawPrimitive(*sdata, gradient, i, RenderUpdateFlag::Gradient);
+            if (gradient != nullptr)
+            {
+                drawPrimitive(*sdata, gradient, i, RenderUpdateFlag::Gradient);
+            }
         }
-        else if (flags & RenderUpdateFlag::Color)
+
+        if(flags & (RenderUpdateFlag::Color | RenderUpdateFlag::Transform))
         {
             shape.fillColor(&r, &g, &b, &a);
-            drawPrimitive(*sdata, r, g, b, a, i, RenderUpdateFlag::Color);
+            if (a > 0)
+            {
+                drawPrimitive(*sdata, r, g, b, a, i, RenderUpdateFlag::Color);
+            }
         }
-        if (flags & RenderUpdateFlag::Stroke)
+
+        if (flags & (RenderUpdateFlag::Stroke | RenderUpdateFlag::Transform))
         {
             shape.strokeColor(&r, &g, &b, &a);
-            drawPrimitive(*sdata, r, g, b, a, i, RenderUpdateFlag::Stroke);
+            if (a > 0)
+            {
+                drawPrimitive(*sdata, r, g, b, a, i, RenderUpdateFlag::Stroke);
+            }
         }
     }
 
@@ -175,7 +186,7 @@ void* GlRenderer::prepare(TVG_UNUSED const Picture& picture, TVG_UNUSED void* da
 }
 
 
-void* GlRenderer::prepare(const Shape& shape, void* data, TVG_UNUSED const RenderTransform* transform, TVG_UNUSED uint32_t opacity, Array<Composite>& compList, RenderUpdateFlag flags)
+void* GlRenderer::prepare(const Shape& shape, void* data, const RenderTransform* transform, TVG_UNUSED uint32_t opacity, Array<Composite>& compList, RenderUpdateFlag flags)
 {
     //prepare shape data
     GlShape* sdata = static_cast<GlShape*>(data);
@@ -205,7 +216,12 @@ void* GlRenderer::prepare(const Shape& shape, void* data, TVG_UNUSED const Rende
         return sdata;
     }
 
-    if (sdata->updateFlag & (RenderUpdateFlag::Color | RenderUpdateFlag::Stroke | RenderUpdateFlag::Gradient) )
+    if (transform) 
+    {
+        sdata->geometry->updateTransform(transform, sdata->viewWd, sdata->viewHt);
+    }
+
+    if (sdata->updateFlag & (RenderUpdateFlag::Color | RenderUpdateFlag::Stroke | RenderUpdateFlag::Gradient | RenderUpdateFlag::Transform) )
     {
         if (!sdata->geometry->decomposeOutline(shape)) return sdata;
         if (!sdata->geometry->generateAAPoints(shape, static_cast<float>(strokeWd), sdata->updateFlag)) return sdata;
@@ -273,8 +289,10 @@ void GlRenderer::drawPrimitive(GlShape& sdata, uint8_t r, uint8_t g, uint8_t b, 
     GlColorRenderTask* renderTask = static_cast<GlColorRenderTask*>(mRenderTasks[GlRenderTask::RenderTypes::RT_Color].get());
     assert(renderTask);
     renderTask->load();
+    float* matrix = sdata.geometry->getTransforMatrix();
     PropertyInterface::clearData(renderTask);
     renderTask->setColor(r, g, b, a);
+    renderTask->setTransform(FORMAT_SIZE_MAT_4x4, matrix);
     int32_t vertexLoc = renderTask->getLocationPropertyId();
     renderTask->uploadValues();
     sdata.geometry->draw(vertexLoc, primitiveIndex, flag);
@@ -293,6 +311,8 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, uint32_t primit
     }
     GlGradientRenderTask* rTask = nullptr;
     GlSize size = sdata.geometry->getPrimitiveSize(primitiveIndex);
+    float* matrix = sdata.geometry->getTransforMatrix();
+
     switch (fill->id()) {
         case FILL_ID_LINEAR: {
             float x1, y1, x2, y2;
@@ -328,6 +348,7 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, uint32_t primit
         rTask->setCanvasSize(sdata.viewWd, sdata.viewHt);
         rTask->setNoise(NOISE_LEVEL);
         rTask->setStopCount((int)stopCnt);
+        rTask->setTransform(FORMAT_SIZE_MAT_4x4, matrix);
         for (uint32_t i = 0; i < stopCnt; ++i)
         {
             rTask->setStopColor(i, stops[i].offset, stops[i].r, stops[i].g, stops[i].b, stops[i].a);

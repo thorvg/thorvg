@@ -137,6 +137,10 @@ void GlProgram::setUniform4Value(int32_t location, int count, const float* value
     GL_CHECK(glUniform4fv(location, count, values));
 }
 
+void GlProgram::setUniform4x4Value(int32_t location, int count, const float* values)
+{
+    GL_CHECK(glUniformMatrix4fv(location, count, GL_FALSE, &values[0]));
+}
 
 void GlProgram::linkProgram(std::shared_ptr<GlShader> shader)
 {

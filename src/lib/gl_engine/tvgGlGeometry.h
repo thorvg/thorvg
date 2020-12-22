@@ -27,6 +27,44 @@
 #include <vector>
 #include "tvgGlCommon.h"
 
+#define PI 3.1415926535897932384626433832795f
+
+#define MVP_MATRIX() \
+    float mvp[4*4] = { \
+        mTransform.scale, 0.0, 0.0f, 0.0f, \
+        0.0, mTransform.scale, 0.0f, 0.0f, \
+        0.0f, 0.0f, mTransform.scale, 0.0f, \
+        (mTransform.x * 2.0f) * (mTransform.scale / mTransform.w), -(mTransform.y * 2.0f) * (mTransform.scale / mTransform.h), 0.0f, 1.0f \
+    };
+
+#define ROTATION_MATRIX(xPivot, yPivot) \
+    auto radian = mTransform.angle / 180.0f * PI;	\
+    auto cosVal = cosf(radian);  \
+    auto sinVal = sinf(radian); \
+    float rotate[4*4] = { \
+        cosVal, -sinVal, 0.0f, 0.0f,	\
+        sinVal, cosVal, 0.0f, 0.0f,\
+        0.0f, 0.0f, 1.0f, 0.0f,			\
+        (xPivot * (1.0f - cosVal)) - (yPivot * sinVal), (yPivot *(1.0f - cosVal)) + (xPivot * sinVal), 0.0f, 1.0f \
+    };
+
+#define MULTIPLY_MATRIX(A, B, transform) \
+    for(auto i = 0; i < 4; ++i) \
+    {	\
+        for(auto j = 0; j < 4; ++j) \
+        {	\
+            float sum = 0.0;	\
+            for (auto k = 0; k < 4; ++k)	\
+                sum += A[k*4+i] * B[j*4+k]; \
+            transform[j*4+i] = sum; \
+        }	\
+    }
+
+#define GET_TRANSFORMATION(xPivot, yPivot, transform)	\
+    MVP_MATRIX();	\
+    ROTATION_MATRIX(xPivot, yPivot);	\
+    MULTIPLY_MATRIX(mvp, rotate, transform);	
+
 class GlPoint
 {
 public:
@@ -183,6 +221,18 @@ struct GlPrimitive
     bool mIsClosed = false;
 };
 
+struct GlTransform
+{
+    float x = 0.0f;
+    float y = 0.0f;
+    float angle = 0.0f;
+    float scale = 1.0f;
+    float w;
+    float h;
+    
+    float matrix[16];
+};
+
 class GlGpuBuffer;
 
 class GlGeometry
@@ -196,6 +246,8 @@ public:
     bool tesselate(TVG_UNUSED const Shape &shape, float viewWd, float viewHt, RenderUpdateFlag flag);
     void disableVertex(uint32_t location);
     void draw(const uint32_t location, const uint32_t primitiveIndex, RenderUpdateFlag flag);
+    void updateTransform(const RenderTransform* transform, float w, float h);
+    float* getTransforMatrix();
 
 private:
     GlPoint normalizePoint(const GlPoint &pt, float viewWd, float viewHt);
@@ -213,6 +265,7 @@ private:
 
     unique_ptr<GlGpuBuffer> mGpuBuffer;
     vector<GlPrimitive>     mPrimitives;
+    GlTransform	            mTransform;
 };
 
 #endif /* _TVG_GL_GEOMETRY_H_ */

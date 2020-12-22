@@ -24,6 +24,10 @@
 #include "tvgGlGpuBuffer.h"
 #include "tvgGlGeometry.h"
 
+#define NORMALIZED_TOP_3D			1.0f
+#define NORMALIZED_BOTTOM_3D		-1.0f
+#define NORMALIZED_LEFT_3D			-1.0f
+#define NORMALIZED_RIGHT_3D			1.0f
 
 uint32_t GlGeometry::getPrimitiveCount()
 {
@@ -172,7 +176,7 @@ bool GlGeometry::generateAAPoints(TVG_UNUSED const Shape& shape, float strokeWd,
             else
                 normalInfo[i].normalF = GlPoint(0, 0);
 
-            if (flag & (RenderUpdateFlag::Color | RenderUpdateFlag::Gradient))
+            if (flag & (RenderUpdateFlag::Color | RenderUpdateFlag::Gradient | RenderUpdateFlag::Transform))
             {
                 aaPts[i].fillOuterBlur = extendEdge(aaPts[i].orgPt, normalInfo[i].normalF, blurDir * stroke);
                 aaPts[i].fillOuter = extendEdge(aaPts[i].fillOuterBlur, normalInfo[i].normalF, blurDir*antiAliasWidth);
@@ -200,7 +204,7 @@ bool GlGeometry::tesselate(TVG_UNUSED const Shape& shape, float viewWd, float vi
         VertexDataArray& fill = shapeGeometry.mFill;
         VertexDataArray& stroke = shapeGeometry.mStroke;
 
-        if (flag & (RenderUpdateFlag::Color | RenderUpdateFlag::Gradient) )
+        if (flag & (RenderUpdateFlag::Color | RenderUpdateFlag::Gradient | RenderUpdateFlag::Transform) )
         {
             uint32_t i = 0;
             for (size_t pt = 0; pt < aaPts.size(); ++pt)
@@ -383,3 +387,19 @@ void GlGeometry::decomposeCubicCurve(GlPrimitive& primitve, const GlPoint& pt1, 
     decomposeCubicCurve(primitve, p1234, p234, p34, pt2, min, max);
 }
 
+
+void GlGeometry::updateTransform(const RenderTransform* transform, float w, float h)
+{
+    mTransform.x = transform->x;
+    mTransform.y = transform->y;
+    mTransform.angle = transform->degree;
+    mTransform.scale = transform->scale;   
+    mTransform.w = w;
+    mTransform.h = h;
+    GET_TRANSFORMATION(NORMALIZED_LEFT_3D, NORMALIZED_TOP_3D, mTransform.matrix);
+}
+
+float* GlGeometry::getTransforMatrix()
+{
+    return mTransform.matrix;
+}
