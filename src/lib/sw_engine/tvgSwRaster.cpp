@@ -154,7 +154,7 @@ static bool _rasterTranslucentImageRle(SwSurface* surface, SwRleData* rle, uint3
         for (uint32_t x = 0; x < span->len; ++x, ++dst) {
             auto rX = static_cast<uint32_t>(roundf((span->x + x) * invTransform->e11 + ey1));
             auto rY = static_cast<uint32_t>(roundf((span->x + x) * invTransform->e21 + ey2));
-            if (rX < 0 || rX >= w || rY < 0 || rY >= h) continue;
+            if (rX >= w || rY >= h) continue;
             auto alpha = ALPHA_MULTIPLY(span->coverage, opacity);
             auto src = ALPHA_BLEND(img[rY * w + rX], alpha);     //TODO: need to use image's stride
             *dst = src + ALPHA_BLEND(*dst, 255 - surface->comp.alpha(src));
@@ -176,7 +176,7 @@ static bool _rasterImageRle(SwSurface* surface, SwRleData* rle, uint32_t *img, u
         for (uint32_t x = 0; x < span->len; ++x, ++dst) {
             auto rX = static_cast<uint32_t>(roundf((span->x + x) * invTransform->e11 + ey1));
             auto rY = static_cast<uint32_t>(roundf((span->x + x) * invTransform->e21 + ey2));
-            if (rX < 0 || rX >= w || rY < 0 || rY >= h) continue;
+            if (rX >= w || rY >= h) continue;
             auto src = ALPHA_BLEND(img[rY * w + rX], span->coverage);    //TODO: need to use image's stride
             *dst = src + ALPHA_BLEND(*dst, 255 - surface->comp.alpha(src));
         }
@@ -195,7 +195,7 @@ static bool _rasterTranslucentImage(SwSurface* surface, uint32_t *img, uint32_t 
         for (auto x = region.min.x; x < region.max.x; ++x, ++dst) {
             auto rX = static_cast<uint32_t>(roundf(x * invTransform->e11 + ey1));
             auto rY = static_cast<uint32_t>(roundf(x * invTransform->e21 + ey2));
-            if (rX < 0 || rX >= w || rY < 0 || rY >= h) continue;
+            if (rX >= w || rY >= h) continue;
             auto src = ALPHA_BLEND(img[rX + (rY * w)], opacity);    //TODO: need to use image's stride
             *dst = src + ALPHA_BLEND(*dst, 255 - surface->comp.alpha(src));
         }
@@ -226,7 +226,7 @@ static bool _rasterImage(SwSurface* surface, uint32_t *img, uint32_t w, uint32_t
         for (auto x = region.min.x; x < region.max.x; ++x, ++dst) {
             auto rX = static_cast<uint32_t>(roundf(x * invTransform->e11 + ey1));
             auto rY = static_cast<uint32_t>(roundf(x * invTransform->e21 + ey2));
-            if (rX < 0 || rX >= w || rY < 0 || rY >= h) continue;
+            if (rX >= w || rY >= h) continue;
             auto src = img[rX + (rY * w)];    //TODO: need to use image's stride
             *dst = src + ALPHA_BLEND(*dst, 255 - surface->comp.alpha(src));
         }
