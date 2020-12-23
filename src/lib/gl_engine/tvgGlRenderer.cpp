@@ -73,7 +73,7 @@ bool GlRenderer::sync()
 }
 
 
-bool GlRenderer::renderRegion(void* data, uint32_t* x, uint32_t* y, uint32_t* w, uint32_t* h)
+bool GlRenderer::renderRegion(TVG_UNUSED void* data, TVG_UNUSED uint32_t* x, TVG_UNUSED uint32_t* y, TVG_UNUSED uint32_t* w, TVG_UNUSED uint32_t* h)
 {
     return true;
 }
@@ -102,21 +102,28 @@ bool GlRenderer::postRender()
 }
 
 
-void* GlRenderer::beginComposite(uint32_t x, uint32_t y, uint32_t w, uint32_t h)
+void* GlRenderer::addCompositor(TVG_UNUSED CompositeMethod method, TVG_UNUSED uint32_t x, TVG_UNUSED uint32_t y, TVG_UNUSED uint32_t w, TVG_UNUSED uint32_t h)
 {
     //TODO: Prepare frameBuffer & Setup render target for composition
     return nullptr;
 }
 
 
-bool GlRenderer::endComposite(void* ctx, uint32_t opacity)
+bool GlRenderer::composite(TVG_UNUSED void* ctx, TVG_UNUSED uint32_t opacity)
+{
+    //TODO: Apply Composite framebuffer
+    return false;
+}
+
+
+bool GlRenderer::delCompositor(TVG_UNUSED void* ctx)
 {
     //TODO: Composite Framebuffer to main surface
     return false;
 }
 
 
-bool GlRenderer::render(const Picture& picture, void *data)
+bool GlRenderer::render(TVG_UNUSED const Picture& picture, TVG_UNUSED void *data)
 {
     //TODO Draw Bitmap Image
 

@@ -12,11 +12,12 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     if (!canvas) return;
 
     //Mask Target 2
+#if 0
     auto scene = tvg::Scene::gen();
     scene->opacity(127);
     scene->scale(1.2);
     scene->reserve(2);
-
+#endif
     //Star
     auto shape = tvg::Shape::gen();
 
@@ -33,17 +34,20 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     shape->lineTo(146, 143);
     shape->close();
     shape->fill(0, 0, 255, 255);
-    shape->stroke(10);
-    shape->stroke(255, 255, 255, 255);
-    shape->opacity(127);
+//    shape->stroke(10);
+//    shape->stroke(255, 255, 255, 255);
+    //shape->opacity(127);
 
-    scene->push(move(shape));
+//    scene->push(move(shape));
 
     //Alpha Mask
-    auto mask2 = tvg::Shape::gen();
-    mask2->appendCircle(200, 200, 125, 125);
-    mask2->fill(255, 255, 255, 100);
+    auto mask = tvg::Shape::gen();
+    mask->appendCircle(200, 200, 125, 125);
+    mask->fill(255, 255, 255, 255);
+    shape->composite(move(mask), tvg::CompositeMethod::AlphaMask);
+    canvas->push(move(shape));
 
+#if 0
     scene->composite(move(mask2), tvg::CompositeMethod::AlphaMask);
     if (canvas->push(move(scene)) != tvg::Result::Success) return;
 
@@ -66,9 +70,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     picture->composite(move(mask), tvg::CompositeMethod::AlphaMask);
     if (canvas->push(move(picture)) != tvg::Result::Success) return;
-
-
-
+#endif
 }
 
 

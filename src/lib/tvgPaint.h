@@ -150,7 +150,7 @@ namespace tvg
             void *compdata = nullptr;
 
             if (compTarget) {
-                if (compdata = compTarget->pImpl->update(renderer, pTransform, opacity, clips, pFlag)) {
+                if ((compdata = compTarget->pImpl->update(renderer, pTransform, opacity, clips, pFlag))) {
                     if (compMethod == CompositeMethod::ClipPath) clips.push({compdata, compMethod});
                     else compdata = nullptr;
                 }
@@ -176,7 +176,23 @@ namespace tvg
 
         bool render(RenderMethod& renderer)
         {
-            return smethod->render(renderer);
+            void* ctx = nullptr;
+
+            /* Note: only ClipPath is processed in update() step */
+            if (compTarget && compMethod != CompositeMethod::ClipPath) {
+                uint32_t x, y, w, h;
+                if (!compTarget->pImpl->bounds(renderer, &x, &y, &w, &h)) return false;
+                ctx = renderer.addCompositor(compMethod, x, y, w, h);
+                compTarget->pImpl->render(renderer);
+            }
+
+            if (ctx) renderer.composite(ctx, 255);
+
+            auto ret = smethod->render(renderer);
+
+            if (ctx) renderer.delCompositor(ctx);
+
+            return ret;
         }
 
         Paint* duplicate()

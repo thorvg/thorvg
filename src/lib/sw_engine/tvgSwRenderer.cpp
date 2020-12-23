@@ -33,9 +33,10 @@ static uint32_t rendererCnt = 0;
 struct SwComposite
 {
     SwSurface surface;
-    SwSurface* recover;
+    SwComposite* recover;
     SwImage image;
     SwBBox bbox;
+    CompositeMethod method;
     bool valid;
 };
 
@@ -247,6 +248,7 @@ bool SwRenderer::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t 
     if (!surface) {
         surface = new SwSurface;
         if (!surface) return false;
+        mainSurface = surface;
     }
 
     surface->buffer = buffer;
@@ -270,11 +272,11 @@ bool SwRenderer::postRender()
     tasks.clear();
 
     //Free Composite Caches
-    for (auto comp = composites.data; comp < (composites.data + composites.count); ++comp) {
+    for (auto comp = compositors.data; comp < (compositors.data + compositors.count); ++comp) {
         free((*comp)->image.data);
         delete(*comp);
     }
-    composites.reset();
+    compositors.reset();
 
     return true;
 }
@@ -298,12 +300,12 @@ bool SwRenderer::render(TVG_UNUSED const Picture& picture, void *data)
 }
 
 
-void* SwRenderer::beginComposite(uint32_t x, uint32_t y, uint32_t w, uint32_t h)
+void* SwRenderer::addCompositor(CompositeMethod method, uint32_t x, uint32_t y, uint32_t w, uint32_t h)
 {
     SwComposite* comp = nullptr;
 
     //Use cached data
-    for (auto p = composites.data; p < (composites.data + composites.count); ++p) {
+    for (auto p = compositors.data; p < (compositors.data + compositors.count); ++p) {
         if ((*p)->valid) {
             comp = *p;
             break;
@@ -320,10 +322,11 @@ void* SwRenderer::beginComposite(uint32_t x, uint32_t y, uint32_t w, uint32_t h)
             delete(comp);
             return nullptr;
         }
-        composites.push(comp);
+        compositors.push(comp);
     }
 
     comp->valid = false;
+    comp->method = method;
 
     //Boundary Check
     if (x < 0) x = 0;
@@ -332,7 +335,7 @@ void* SwRenderer::beginComposite(uint32_t x, uint32_t y, uint32_t w, uint32_t h)
     if (y + h > surface->h) h = (surface->h - y);
 
 #ifdef THORVG_LOG_ENABLED
-    printf("SW_ENGINE: Using intermediate opacity composition [Region: %d %d %d %d]\n", x, y, w, h);
+    printf("SW_ENGINE: Using intermediate composition [Method: %d][Region: %d %d %d %d]\n", (int)method, x, y, w, h);
 #endif
 
     comp->bbox.min.x = x;
@@ -359,27 +362,46 @@ void* SwRenderer::beginComposite(uint32_t x, uint32_t y, uint32_t w, uint32_t h)
     comp->surface.w = comp->image.w;
     comp->surface.h = comp->image.h;
 
+    //Switch active compositor
+    comp->recover = compositor;   //Backup current compositor
+    compositor = comp;
+
     //Switch render target
-    comp->recover = surface;
     surface = &comp->surface;
 
     return comp;
 }
 
 
-bool SwRenderer::endComposite(void* p, uint32_t opacity)
+bool SwRenderer::delCompositor(void* ctx)
 {
-    if (!p) return false;
-    auto comp = static_cast<SwComposite*>(p);
+    if (!ctx) return false;
 
-    //Recover render target
-    surface = comp->recover;
-
-    auto ret = rasterImage(surface, &comp->image, nullptr, comp->bbox, opacity);
-
+    auto comp = static_cast<SwComposite*>(ctx);
     comp->valid = true;
 
-    return ret;
+    /* Recover compositor. we eariler switched this in composite() step only in None method */
+    if (comp->method != CompositeMethod::None) compositor = comp->recover;
+
+    return true;
+}
+
+
+bool SwRenderer::composite(void* ctx, uint32_t opacity)
+{
+    if (!ctx) return false;
+    auto comp = static_cast<SwComposite*>(ctx);
+
+    //Recover Render Target
+    surface = comp->recover ? &comp->recover->surface : mainSurface;
+
+    //Default is alpha blending
+    if (comp->method == CompositeMethod::None) {
+        compositor = comp->recover;    //Recover compositor
+        return rasterImage(surface, &comp->image, nullptr, comp->bbox, opacity);
+    }
+
+    return true;
 }
 
 
@@ -397,7 +419,8 @@ bool SwRenderer::render(TVG_UNUSED const Shape& shape, void *data)
     if (task->compStroking) {
         uint32_t x, y, w, h;
         task->bounds(&x, &y, &w, &h);
-        ctx = beginComposite(x, y, w, h);
+        //CompositeMethod::None is used for a default alpha blending
+        ctx = addCompositor(CompositeMethod::None, x, y, w, h);
         opacity = 255;
     //No Composition
     } else {
@@ -421,7 +444,10 @@ bool SwRenderer::render(TVG_UNUSED const Shape& shape, void *data)
     if (a > 0) rasterStroke(surface, &task->shape, r, g, b, a);
 
     //Composition (Shape + Stroke) stage
-    if (task->compStroking) endComposite(ctx, task->opacity);
+    if (task->compStroking) {
+        composite(ctx, task->opacity);
+        delCompositor(ctx);
+    }
 
     return true;
 }

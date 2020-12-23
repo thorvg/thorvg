@@ -33,8 +33,9 @@ public:
     void* prepare(const Shape& shape, void* data, const RenderTransform* transform, uint32_t opacity, Array<ClipPath>& clips, RenderUpdateFlag flags) override;
     void* prepare(const Picture& picture, void* data, uint32_t *buffer, const RenderTransform* transform, uint32_t opacity, Array<ClipPath>& clips, RenderUpdateFlag flags) override;
     bool dispose(void *data) override;
-    void* beginComposite(uint32_t x, uint32_t y, uint32_t w, uint32_t h) override;
-    bool endComposite(void* ctx, uint32_t opacity) override;
+    void* addCompositor(CompositeMethod method, uint32_t x, uint32_t y, uint32_t w, uint32_t h) override;
+    bool delCompositor(void* ctx) override;
+    bool composite(void* ctx, uint32_t opacity) override;
     bool preRender() override;
     bool render(const Shape& shape, void *data) override;
     bool render(const Picture& picture, void *data) override;
