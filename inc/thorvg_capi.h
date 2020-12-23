@@ -130,6 +130,7 @@ TVG_EXPORT Tvg_Result tvg_paint_transform(Tvg_Paint* paint, const Tvg_Matrix* m)
 TVG_EXPORT Tvg_Result tvg_paint_set_opacity(Tvg_Paint* paint, uint8_t opacity);
 TVG_EXPORT Tvg_Result tvg_paint_get_opacity(Tvg_Paint* paint, uint8_t* opacity);
 TVG_EXPORT Tvg_Paint* tvg_paint_duplicate(Tvg_Paint* paint);
+TVG_EXPORT Tvg_Result tvg_paint_get_bounds(Tvg_Paint* paint, float* x, float* y, float* w, float* h);
 
 /************************************************************************/
 /* Shape API                                                            */
@@ -163,7 +164,6 @@ TVG_EXPORT Tvg_Result tvg_shape_get_fill_rule(const Tvg_Paint* paint, Tvg_Fill_R
 TVG_EXPORT Tvg_Result tvg_shape_set_linear_gradient(Tvg_Paint* paint, Tvg_Gradient* grad);
 TVG_EXPORT Tvg_Result tvg_shape_set_radial_gradient(Tvg_Paint* paint, Tvg_Gradient* grad);
 TVG_EXPORT Tvg_Result tvg_shape_get_gradient(const Tvg_Paint* paint, Tvg_Gradient** grad);
-TVG_EXPORT Tvg_Result tvg_shape_get_bounds(Tvg_Paint* paint, float* x, float* y, float* w, float* h);
 
 /************************************************************************/
 /* Gradient API                                                         */

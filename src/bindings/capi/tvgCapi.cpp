@@ -184,6 +184,13 @@ TVG_EXPORT Tvg_Result tvg_paint_get_opacity(Tvg_Paint* paint, uint8_t* opacity)
     return TVG_RESULT_SUCCESS;
 }
 
+
+TVG_EXPORT Tvg_Result tvg_paint_get_bounds(Tvg_Paint* paint, float* x, float* y, float* w, float* h)
+{
+   if (!paint) return TVG_RESULT_INVALID_ARGUMENT;
+   return (Tvg_Result) reinterpret_cast<Paint*>(paint)->bounds(x, y, w, h);
+}
+
 /************************************************************************/
 /* Shape API                                                            */
 /************************************************************************/
@@ -392,13 +399,6 @@ TVG_EXPORT Tvg_Result tvg_shape_get_gradient(const Tvg_Paint* paint, Tvg_Gradien
    if (!paint || !gradient) return TVG_RESULT_INVALID_ARGUMENT;
    *gradient = (Tvg_Gradient*)(reinterpret_cast<Shape*>(CCP(paint))->fill());
    return TVG_RESULT_SUCCESS;
-}
-
-
-TVG_EXPORT Tvg_Result tvg_shape_get_bounds(Tvg_Paint* paint, float* x, float* y, float* w, float* h)
-{
-   if (!paint) return TVG_RESULT_INVALID_ARGUMENT;
-   return (Tvg_Result) reinterpret_cast<Shape*>(paint)->bounds(x, y, w, h);
 }
 
 
