@@ -34,7 +34,7 @@ namespace tvg
         virtual ~StrategyMethod() {}
 
         virtual bool dispose(RenderMethod& renderer) = 0;
-        virtual void* update(RenderMethod& renderer, const RenderTransform* transform, uint32_t opacity, Array<ClipPath>& clips, RenderUpdateFlag pFlag) = 0;   //Return engine data if it has.
+        virtual void* update(RenderMethod& renderer, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag pFlag) = 0;   //Return engine data if it has.
         virtual bool render(RenderMethod& renderer) = 0;
         virtual bool bounds(float* x, float* y, float* w, float* h) const = 0;
         virtual bool bounds(RenderMethod& renderer, uint32_t* x, uint32_t* y, uint32_t* w, uint32_t* h) const = 0;
@@ -137,7 +137,7 @@ namespace tvg
             return smethod->dispose(renderer);
         }
 
-        void* update(RenderMethod& renderer, const RenderTransform* pTransform, uint32_t opacity, Array<ClipPath>& clips, uint32_t pFlag)
+        void* update(RenderMethod& renderer, const RenderTransform* pTransform, uint32_t opacity, Array<RenderData>& clips, uint32_t pFlag)
         {
             if (flag & RenderUpdateFlag::Transform) {
                 if (!rTransform) return nullptr;
@@ -151,7 +151,7 @@ namespace tvg
 
             if (compTarget) {
                 if ((compdata = compTarget->pImpl->update(renderer, pTransform, opacity, clips, pFlag))) {
-                    if (compMethod == CompositeMethod::ClipPath) clips.push({compdata, compMethod});
+                    if (compMethod == CompositeMethod::ClipPath) clips.push(compdata);
                     else compdata = nullptr;
                 }
             }
@@ -176,18 +176,21 @@ namespace tvg
 
         bool render(RenderMethod& renderer)
         {
-            void* ctx = nullptr;
+            void* cmp = nullptr;
 
             /* Note: only ClipPath is processed in update() step */
             if (compTarget && compMethod != CompositeMethod::ClipPath) {
                 uint32_t x, y, w, h;
                 if (!compTarget->pImpl->bounds(renderer, &x, &y, &w, &h)) return false;
-                ctx = renderer.addCompositor(compMethod, x, y, w, h, 255);
+                cmp = renderer.addCompositor(compMethod, x, y, w, h, 255);
                 compTarget->pImpl->render(renderer);
-                if (!renderer.delCompositor(ctx)) return false;
             }
 
-            return smethod->render(renderer);
+            auto ret = smethod->render(renderer);
+
+            renderer.delCompositor(cmp);
+
+            return ret;
         }
 
         Paint* duplicate()
@@ -242,7 +245,7 @@ namespace tvg
             return inst->dispose(renderer);
         }
 
-        void* update(RenderMethod& renderer, const RenderTransform* transform, uint32_t opacity, Array<ClipPath>& clips, RenderUpdateFlag flag) override
+        void* update(RenderMethod& renderer, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flag) override
         {
             return inst->update(renderer, transform, opacity, clips, flag);
         }

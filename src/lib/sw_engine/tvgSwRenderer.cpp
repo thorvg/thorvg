@@ -47,7 +47,7 @@ struct SwTask : Task
     Matrix* transform = nullptr;
     SwSurface* surface = nullptr;
     RenderUpdateFlag flags = RenderUpdateFlag::None;
-    Array<ClipPath> clips;
+    Array<RenderData> clips;
     uint32_t opacity;
     SwBBox bbox = {{0, 0}, {0, 0}};       //Whole Rendering Region
 
@@ -135,7 +135,7 @@ struct SwShapeTask : SwTask
 
         //Clip Path
         for (auto comp = clips.data; comp < (clips.data + clips.count); ++comp) {
-            auto compShape = &static_cast<SwShapeTask*>((*comp).edata)->shape;
+            auto compShape = &static_cast<SwShapeTask*>(*comp)->shape;
             //Clip shape rle
             if (shape.rle) {
                 if (compShape->rect) rleClipRect(shape.rle, &compShape->bbox);
@@ -183,7 +183,7 @@ struct SwImageTask : SwTask
                 if (!imageGenRle(&image, pdata, clip, bbox, false, true)) goto end;
                 if (image.rle) {
                     for (auto comp = clips.data; comp < (clips.data + clips.count); ++comp) {
-                        auto compShape = &static_cast<SwShapeTask*>((*comp).edata)->shape;
+                        auto compShape = &static_cast<SwShapeTask*>(*comp)->shape;
                         if (compShape->rect) rleClipRect(image.rle, &compShape->bbox);
                         else if (compShape->rle) rleClipPath(image.rle, compShape->rle);
                     }
@@ -282,7 +282,7 @@ bool SwRenderer::postRender()
 }
 
 
-bool SwRenderer::renderImage(void* data, TVG_UNUSED void* cmp)
+bool SwRenderer::renderImage(RenderData data, TVG_UNUSED void* cmp)
 {
     auto task = static_cast<SwImageTask*>(data);
     task->done();
@@ -293,7 +293,7 @@ bool SwRenderer::renderImage(void* data, TVG_UNUSED void* cmp)
 }
 
 
-bool SwRenderer::renderShape(void* data, TVG_UNUSED void* cmp)
+bool SwRenderer::renderShape(RenderData data, TVG_UNUSED void* cmp)
 {
     auto task = static_cast<SwShapeTask*>(data);
     task->done();
@@ -301,7 +301,7 @@ bool SwRenderer::renderShape(void* data, TVG_UNUSED void* cmp)
     if (task->opacity == 0) return true;
 
     uint32_t opacity;
-    void *ctx = nullptr;
+    void *cmp2 = nullptr;
 
     //Do Composition
     if (task->compStroking) {
@@ -309,7 +309,7 @@ bool SwRenderer::renderShape(void* data, TVG_UNUSED void* cmp)
         task->bounds(&x, &y, &w, &h);
         opacity = 255;
         //CompositeMethod::None is used for a default alpha blending
-        ctx = addCompositor(CompositeMethod::None, x, y, w, h, opacity);
+        cmp2 = addCompositor(CompositeMethod::None, x, y, w, h, opacity);
     //No Composition
     } else {
         opacity = task->opacity;
@@ -332,12 +332,12 @@ bool SwRenderer::renderShape(void* data, TVG_UNUSED void* cmp)
     if (a > 0) rasterStroke(surface, &task->shape, r, g, b, a);
 
     //Composition (Shape + Stroke) stage
-    if (task->compStroking) delCompositor(ctx);
+    if (task->compStroking) delCompositor(cmp2);
 
     return true;
 }
 
-bool SwRenderer::renderRegion(void* data, uint32_t* x, uint32_t* y, uint32_t* w, uint32_t* h)
+bool SwRenderer::renderRegion(RenderData data, uint32_t* x, uint32_t* y, uint32_t* w, uint32_t* h)
 {
     static_cast<SwTask*>(data)->bounds(x, y, w, h);
 
@@ -439,7 +439,7 @@ bool SwRenderer::delCompositor(void* ctx)
 }
 
 
-bool SwRenderer::dispose(void *data)
+bool SwRenderer::dispose(RenderData data)
 {
     auto task = static_cast<SwTask*>(data);
     if (!task) return true;
@@ -453,9 +453,9 @@ bool SwRenderer::dispose(void *data)
 }
 
 
-void SwRenderer::prepareCommon(SwTask* task, const RenderTransform* transform, uint32_t opacity, Array<ClipPath>& clips, RenderUpdateFlag flags)
+void* SwRenderer::prepareCommon(SwTask* task, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flags)
 {
-    if (flags == RenderUpdateFlag::None) return;
+    if (flags == RenderUpdateFlag::None) return task;
 
     //Finish previous task if it has duplicated request.
     task->done();
@@ -463,7 +463,7 @@ void SwRenderer::prepareCommon(SwTask* task, const RenderTransform* transform, u
     if (clips.count > 0) {
         //Guarantee composition targets get ready.
         for (auto comp = clips.data; comp < (clips.data + clips.count); ++comp) {
-            static_cast<SwShapeTask*>((*comp).edata)->done();
+            static_cast<SwShapeTask*>(*comp)->done();
         }
         task->clips = clips;
     }
@@ -482,10 +482,12 @@ void SwRenderer::prepareCommon(SwTask* task, const RenderTransform* transform, u
 
     tasks.push(task);
     TaskScheduler::request(task);
+
+    return task;
 }
 
 
-void* SwRenderer::prepare(const Picture& pdata, void* data, const RenderTransform* transform, uint32_t opacity, Array<ClipPath>& clips, RenderUpdateFlag flags)
+RenderData SwRenderer::prepare(const Picture& pdata, RenderData data, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flags)
 {
     //prepare task
     auto task = static_cast<SwImageTask*>(data);
@@ -494,12 +496,11 @@ void* SwRenderer::prepare(const Picture& pdata, void* data, const RenderTransfor
         if (!task) return nullptr;
         task->pdata = &pdata;
     }
-    prepareCommon(task, transform, opacity, clips, flags);
-    return task;
+    return prepareCommon(task, transform, opacity, clips, flags);
 }
 
 
-void* SwRenderer::prepare(const Shape& sdata, void* data, const RenderTransform* transform, uint32_t opacity, Array<ClipPath>& clips, RenderUpdateFlag flags)
+RenderData SwRenderer::prepare(const Shape& sdata, RenderData data, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flags)
 {
     //prepare task
     auto task = static_cast<SwShapeTask*>(data);
@@ -508,8 +509,7 @@ void* SwRenderer::prepare(const Shape& sdata, void* data, const RenderTransform*
         if (!task) return nullptr;
         task->sdata = &sdata;
     }
-    prepareCommon(task, transform, opacity, clips, flags);
-    return task;
+    return prepareCommon(task, transform, opacity, clips, flags);
 }
 
 

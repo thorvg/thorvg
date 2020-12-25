@@ -76,7 +76,7 @@ struct Canvas::Impl
     {
         if (!renderer) return Result::InsufficientCondition;
 
-        Array<ClipPath> clips;
+        Array<RenderData> clips;
 
         //Update single paint node
         if (paint) {

@@ -199,7 +199,7 @@ struct Shape::Impl
     ShapeStroke *stroke = nullptr;
     uint8_t color[4] = {0, 0, 0, 0};    //r, g, b, a
     FillRule rule = FillRule::Winding;
-    void *edata = nullptr;              //engine data
+    RenderData rdata = nullptr;         //engine data
     Shape *shape = nullptr;
     uint32_t flag = RenderUpdateFlag::None;
 
@@ -215,24 +215,24 @@ struct Shape::Impl
 
     bool dispose(RenderMethod& renderer)
     {
-        return renderer.dispose(edata);
+        return renderer.dispose(rdata);
     }
 
     bool render(RenderMethod& renderer)
     {
-        return renderer.renderShape(edata, nullptr);
+        return renderer.renderShape(rdata, nullptr);
     }
 
-    void* update(RenderMethod& renderer, const RenderTransform* transform, uint32_t opacity, Array<ClipPath>& clips, RenderUpdateFlag pFlag)
+    void* update(RenderMethod& renderer, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag pFlag)
     {
-        this->edata = renderer.prepare(*shape, this->edata, transform, opacity, clips, static_cast<RenderUpdateFlag>(pFlag | flag));
+        this->rdata = renderer.prepare(*shape, this->rdata, transform, opacity, clips, static_cast<RenderUpdateFlag>(pFlag | flag));
         flag = RenderUpdateFlag::None;
-        return this->edata;
+        return this->rdata;
     }
 
     bool bounds(RenderMethod& renderer, uint32_t* x, uint32_t* y, uint32_t* w, uint32_t* h)
     {
-        return renderer.renderRegion(edata, x, y, w, h);
+        return renderer.renderRegion(rdata, x, y, w, h);
     }
 
     bool bounds(float* x, float* y, float* w, float* h)

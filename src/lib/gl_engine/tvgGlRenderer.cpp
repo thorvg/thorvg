@@ -73,7 +73,7 @@ bool GlRenderer::sync()
 }
 
 
-bool GlRenderer::renderRegion(TVG_UNUSED void* data, TVG_UNUSED uint32_t* x, TVG_UNUSED uint32_t* y, TVG_UNUSED uint32_t* w, TVG_UNUSED uint32_t* h)
+bool GlRenderer::renderRegion(TVG_UNUSED RenderData data, TVG_UNUSED uint32_t* x, TVG_UNUSED uint32_t* y, TVG_UNUSED uint32_t* w, TVG_UNUSED uint32_t* h)
 {
     return true;
 }
@@ -122,9 +122,9 @@ bool GlRenderer::renderImage(TVG_UNUSED void* data, TVG_UNUSED void* cmp)
 }
 
 
-bool GlRenderer::renderShape(void* data, TVG_UNUSED void* cmp)
+bool GlRenderer::renderShape(RenderData data, TVG_UNUSED void* cmp)
 {
-    GlShape* sdata = static_cast<GlShape*>(data);
+    auto sdata = static_cast<GlShape*>(data);
     if (!sdata) return false;
 
     uint8_t r, g, b, a;
@@ -156,9 +156,9 @@ bool GlRenderer::renderShape(void* data, TVG_UNUSED void* cmp)
 }
 
 
-bool GlRenderer::dispose(void *data)
+bool GlRenderer::dispose(RenderData data)
 {
-    GlShape* sdata = static_cast<GlShape*>(data);
+    auto sdata = static_cast<GlShape*>(data);
     if (!sdata) return false;
 
     delete sdata;
@@ -166,14 +166,14 @@ bool GlRenderer::dispose(void *data)
 }
 
 
-void* GlRenderer::prepare(TVG_UNUSED const Picture& picture, TVG_UNUSED void* data, TVG_UNUSED const RenderTransform* transform, TVG_UNUSED uint32_t opacity, TVG_UNUSED Array<ClipPath>& clips, TVG_UNUSED RenderUpdateFlag flags)
+RenderData GlRenderer::prepare(TVG_UNUSED const Picture& picture, TVG_UNUSED RenderData data, TVG_UNUSED const RenderTransform* transform, TVG_UNUSED uint32_t opacity, TVG_UNUSED Array<RenderData>& clips, TVG_UNUSED RenderUpdateFlag flags)
 {
     //TODO:
     return nullptr;
 }
 
 
-void* GlRenderer::prepare(const Shape& shape, void* data, TVG_UNUSED const RenderTransform* transform, TVG_UNUSED uint32_t opacity, Array<ClipPath>& clips, RenderUpdateFlag flags)
+RenderData GlRenderer::prepare(const Shape& shape, RenderData data, TVG_UNUSED const RenderTransform* transform, TVG_UNUSED uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flags)
 {
     //prepare shape data
     GlShape* sdata = static_cast<GlShape*>(data);

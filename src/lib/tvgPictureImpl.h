@@ -36,7 +36,7 @@ struct Picture::Impl
     Paint* paint = nullptr;
     uint32_t *pixels = nullptr;
     Picture *picture = nullptr;
-    void *edata = nullptr;              //engine data
+    void *rdata = nullptr;              //engine data
     float w = 0, h = 0;
     bool resizing = false;
 
@@ -53,7 +53,7 @@ struct Picture::Impl
             return true;
         }
         else if (pixels) {
-            return renderer.dispose(edata);
+            return renderer.dispose(rdata);
         }
         return false;
     }
@@ -110,21 +110,21 @@ struct Picture::Impl
         return RenderUpdateFlag::None;
     }
 
-    void* update(RenderMethod &renderer, const RenderTransform* transform, uint32_t opacity, Array<ClipPath>& clips, RenderUpdateFlag pFlag)
+    void* update(RenderMethod &renderer, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag pFlag)
     {
         auto flag = reload();
 
-        if (pixels) edata = renderer.prepare(*picture, edata, transform, opacity, clips, static_cast<RenderUpdateFlag>(pFlag | flag));
+        if (pixels) rdata = renderer.prepare(*picture, rdata, transform, opacity, clips, static_cast<RenderUpdateFlag>(pFlag | flag));
         else if (paint) {
             if (resizing) resize();
-            edata = paint->pImpl->update(renderer, transform, opacity, clips, static_cast<RenderUpdateFlag>(pFlag | flag));
+            rdata = paint->pImpl->update(renderer, transform, opacity, clips, static_cast<RenderUpdateFlag>(pFlag | flag));
         }
-        return edata;
+        return rdata;
     }
 
     bool render(RenderMethod &renderer)
     {
-        if (pixels) return renderer.renderImage(edata, nullptr);
+        if (pixels) return renderer.renderImage(rdata, nullptr);
         else if (paint) return paint->pImpl->render(renderer);
         return false;
     }
@@ -155,8 +155,8 @@ struct Picture::Impl
 
     bool bounds(RenderMethod& renderer, uint32_t* x, uint32_t* y, uint32_t* w, uint32_t* h)
     {
-        if (edata) return renderer.renderRegion(edata, x, y, w, h);
-        if (paint) paint->pImpl->bounds(renderer, x, y, w, h);
+        if (rdata) return renderer.renderRegion(rdata, x, y, w, h);
+        if (paint) return paint->pImpl->bounds(renderer, x, y, w, h);
         return false;
     }
 
