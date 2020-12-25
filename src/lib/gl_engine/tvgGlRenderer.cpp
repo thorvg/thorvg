@@ -102,36 +102,27 @@ bool GlRenderer::postRender()
 }
 
 
-void* GlRenderer::addCompositor(TVG_UNUSED CompositeMethod method, TVG_UNUSED uint32_t x, TVG_UNUSED uint32_t y, TVG_UNUSED uint32_t w, TVG_UNUSED uint32_t h)
+void* GlRenderer::addCompositor(TVG_UNUSED CompositeMethod method, TVG_UNUSED uint32_t x, TVG_UNUSED uint32_t y, TVG_UNUSED uint32_t w, TVG_UNUSED uint32_t h, TVG_UNUSED uint32_t opacity)
 {
     //TODO: Prepare frameBuffer & Setup render target for composition
     return nullptr;
 }
 
 
-bool GlRenderer::composite(TVG_UNUSED void* ctx, TVG_UNUSED uint32_t opacity)
+bool GlRenderer::delCompositor(TVG_UNUSED void* cmp)
 {
-    //TODO: Apply Composite framebuffer
+    //TODO: delete the given compositor and restore the context
     return false;
 }
 
 
-bool GlRenderer::delCompositor(TVG_UNUSED void* ctx)
+bool GlRenderer::renderImage(TVG_UNUSED void* data, TVG_UNUSED void* cmp)
 {
-    //TODO: Composite Framebuffer to main surface
     return false;
 }
 
 
-bool GlRenderer::render(TVG_UNUSED const Picture& picture, TVG_UNUSED void *data)
-{
-    //TODO Draw Bitmap Image
-
-    return true;
-}
-
-
-bool GlRenderer::render(const Shape& shape, void* data)
+bool GlRenderer::renderShape(void* data, TVG_UNUSED void* cmp)
 {
     GlShape* sdata = static_cast<GlShape*>(data);
     if (!sdata) return false;
@@ -146,17 +137,17 @@ bool GlRenderer::render(const Shape& shape, void* data)
     {
         if (flags & RenderUpdateFlag::Gradient)
         {
-            const Fill* gradient = shape.fill();
+            const Fill* gradient = sdata->shape->fill();
             drawPrimitive(*sdata, gradient, i, RenderUpdateFlag::Gradient);
         }
         else if (flags & RenderUpdateFlag::Color)
         {
-            shape.fillColor(&r, &g, &b, &a);
+            sdata->shape->fillColor(&r, &g, &b, &a);
             drawPrimitive(*sdata, r, g, b, a, i, RenderUpdateFlag::Color);
         }
         if (flags & RenderUpdateFlag::Stroke)
         {
-            shape.strokeColor(&r, &g, &b, &a);
+            sdata->shape->strokeColor(&r, &g, &b, &a);
             drawPrimitive(*sdata, r, g, b, a, i, RenderUpdateFlag::Stroke);
         }
     }
@@ -175,7 +166,7 @@ bool GlRenderer::dispose(void *data)
 }
 
 
-void* GlRenderer::prepare(TVG_UNUSED const Picture& picture, TVG_UNUSED void* data, TVG_UNUSED uint32_t *buffer, TVG_UNUSED const RenderTransform* transform, TVG_UNUSED uint32_t opacity, TVG_UNUSED Array<ClipPath>& clips, TVG_UNUSED RenderUpdateFlag flags)
+void* GlRenderer::prepare(TVG_UNUSED const Picture& picture, TVG_UNUSED void* data, TVG_UNUSED const RenderTransform* transform, TVG_UNUSED uint32_t opacity, TVG_UNUSED Array<ClipPath>& clips, TVG_UNUSED RenderUpdateFlag flags)
 {
     //TODO:
     return nullptr;
@@ -189,6 +180,7 @@ void* GlRenderer::prepare(const Shape& shape, void* data, TVG_UNUSED const Rende
     if (!sdata) {
         sdata = new GlShape;
         if (!sdata) return nullptr;
+        sdata->shape = &shape;
     }
 
     sdata->viewWd = static_cast<float>(surface.w);

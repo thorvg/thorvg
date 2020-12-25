@@ -50,7 +50,7 @@ struct Scene::Impl
 
         /* Overriding opacity value. If this scene is half-translucent,
            It must do intermeidate composition with that opacity value. */
-        if (opacity < 255 && opacity > 0) opacity = 255;
+        if (opacity > 0) opacity = 255;
 
         for (auto paint = paints.data; paint < (paints.data + paints.count); ++paint) {
             (*paint)->pImpl->update(renderer, transform, opacity, clips, static_cast<uint32_t>(flag));
@@ -70,17 +70,14 @@ struct Scene::Impl
             uint32_t x, y, w, h;
             if (!bounds(renderer, &x, &y, &w, &h)) return false;
             //CompositeMethod::None is used for a default alpha blending
-            ctx = renderer.addCompositor(CompositeMethod::None, x, y, w, h);
+            ctx = renderer.addCompositor(CompositeMethod::None, x, y, w, h, opacity);
         }
 
         for (auto paint = paints.data; paint < (paints.data + paints.count); ++paint) {
             if (!(*paint)->pImpl->render(renderer)) return false;
         }
 
-        if (ctx) {
-            renderer.composite(ctx, opacity);
-            renderer.delCompositor(ctx);
-        }
+        if (ctx) renderer.delCompositor(ctx);
 
         return true;
     }

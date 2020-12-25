@@ -220,7 +220,7 @@ struct Shape::Impl
 
     bool render(RenderMethod& renderer)
     {
-        return renderer.render(*shape, edata);
+        return renderer.renderShape(edata, nullptr);
     }
 
     void* update(RenderMethod& renderer, const RenderTransform* transform, uint32_t opacity, Array<ClipPath>& clips, RenderUpdateFlag pFlag)

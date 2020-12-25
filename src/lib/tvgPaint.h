@@ -182,17 +182,12 @@ namespace tvg
             if (compTarget && compMethod != CompositeMethod::ClipPath) {
                 uint32_t x, y, w, h;
                 if (!compTarget->pImpl->bounds(renderer, &x, &y, &w, &h)) return false;
-                ctx = renderer.addCompositor(compMethod, x, y, w, h);
+                ctx = renderer.addCompositor(compMethod, x, y, w, h, 255);
                 compTarget->pImpl->render(renderer);
+                if (!renderer.delCompositor(ctx)) return false;
             }
 
-            if (ctx) renderer.composite(ctx, 255);
-
-            auto ret = smethod->render(renderer);
-
-            if (ctx) renderer.delCompositor(ctx);
-
-            return ret;
+            return smethod->render(renderer);
         }
 
         Paint* duplicate()

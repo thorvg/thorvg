@@ -103,7 +103,7 @@ struct Picture::Impl
                 }
             }
             if (!pixels) {
-                pixels = (uint32_t*)loader->pixels();
+                pixels = const_cast<uint32_t*>(loader->pixels());
                 if (pixels) return RenderUpdateFlag::Image;
             }
         }
@@ -112,9 +112,9 @@ struct Picture::Impl
 
     void* update(RenderMethod &renderer, const RenderTransform* transform, uint32_t opacity, Array<ClipPath>& clips, RenderUpdateFlag pFlag)
     {
-        uint32_t flag = reload();
+        auto flag = reload();
 
-        if (pixels) edata = renderer.prepare(*picture, edata, pixels, transform, opacity, clips, static_cast<RenderUpdateFlag>(pFlag | flag));
+        if (pixels) edata = renderer.prepare(*picture, edata, transform, opacity, clips, static_cast<RenderUpdateFlag>(pFlag | flag));
         else if (paint) {
             if (resizing) resize();
             edata = paint->pImpl->update(renderer, transform, opacity, clips, static_cast<RenderUpdateFlag>(pFlag | flag));
@@ -124,7 +124,7 @@ struct Picture::Impl
 
     bool render(RenderMethod &renderer)
     {
-        if (pixels) return renderer.render(*picture, edata);
+        if (pixels) return renderer.renderImage(edata, nullptr);
         else if (paint) return paint->pImpl->render(renderer);
         return false;
     }
