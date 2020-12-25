@@ -26,8 +26,6 @@
 
 struct SwSurface;
 struct SwTask;
-struct SwShapeTask;
-struct SwImage;
 struct SwComposite;
 
 namespace tvg
@@ -36,17 +34,17 @@ namespace tvg
 class SwRenderer : public RenderMethod
 {
 public:
-    void* prepare(const Shape& shape, void* data, const RenderTransform* transform, uint32_t opacity, Array<Composite>& compList, RenderUpdateFlag flags) override;
-    void* prepare(const Picture& picture, void* data, uint32_t *buffer, const RenderTransform* transform, uint32_t opacity, Array<Composite>& compList, RenderUpdateFlag flags) override;
-    void* beginComposite(uint32_t x, uint32_t y, uint32_t w, uint32_t h) override;
-    bool endComposite(void* ctx, uint32_t opacity) override;
-    bool dispose(void *data) override;
+    RenderData prepare(const Shape& shape, RenderData data, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flags) override;
+    RenderData prepare(const Picture& picture, RenderData data, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flags) override;
+    void* addCompositor(CompositeMethod method, uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint32_t opacity) override;
+    bool delCompositor(void* cmp) override;
+    bool dispose(RenderData data) override;
     bool preRender() override;
     bool postRender() override;
-    bool renderRegion(void* data, uint32_t* x, uint32_t* y, uint32_t* w, uint32_t* h) override;
+    bool renderRegion(RenderData data, uint32_t* x, uint32_t* y, uint32_t* w, uint32_t* h) override;
     bool clear() override;
-    bool render(const Shape& shape, void *data) override;
-    bool render(const Picture& picture, void *data) override;
+    bool renderShape(RenderData data, void* cmp) override;
+    bool renderImage(RenderData data, void* cmp) override;
     bool sync() override;
     bool target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h, uint32_t cs);
 
@@ -55,14 +53,16 @@ public:
     static bool term();
 
 private:
-    SwSurface*          surface = nullptr;
-    Array<SwTask*>      tasks;
-    Array<SwComposite*> composites;
+    SwSurface*          surface = nullptr;           //active surface
+    SwComposite*        compositor = nullptr;        //active compositor
+    SwSurface*          mainSurface = nullptr;       //main (default) surface
+    Array<SwTask*>      tasks;                       //async task list
+    Array<SwComposite*> compositors;                 //compositor cache list
 
     SwRenderer(){};
     ~SwRenderer();
 
-    void prepareCommon(SwTask* task, const RenderTransform* transform, uint32_t opacity, Array<Composite>& compList, RenderUpdateFlag flags);
+    RenderData prepareCommon(SwTask* task, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flags);
 };
 
 }

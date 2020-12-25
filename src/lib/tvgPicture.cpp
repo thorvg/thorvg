@@ -89,3 +89,11 @@ Result Picture::size(float* w, float* h) const noexcept
     return Result::Success;
 }
 
+
+const uint32_t* Picture::data() const noexcept
+{
+    //Try it, If not loaded yet.
+    if (pImpl->loader) return pImpl->loader->pixels();
+
+    return pImpl->pixels;
+}

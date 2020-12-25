@@ -279,6 +279,7 @@ public:
 
     Result size(float w, float h) noexcept;
     Result size(float* w, float* h) const noexcept;
+    const uint32_t* data() const noexcept;
 
     static std::unique_ptr<Picture> gen() noexcept;
 

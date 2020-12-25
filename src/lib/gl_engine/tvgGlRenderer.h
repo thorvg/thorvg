@@ -30,16 +30,16 @@ class GlRenderer : public RenderMethod
 public:
     Surface surface = {nullptr, 0, 0, 0};
 
-    void* prepare(const Shape& shape, void* data, const RenderTransform* transform, uint32_t opacity, Array<Composite>& compList, RenderUpdateFlag flags) override;
-    void* prepare(const Picture& picture, void* data, uint32_t *buffer, const RenderTransform* transform, uint32_t opacity, Array<Composite>& compList, RenderUpdateFlag flags) override;
-    bool dispose(void *data) override;
-    void* beginComposite(uint32_t x, uint32_t y, uint32_t w, uint32_t h) override;
-    bool endComposite(void* ctx, uint32_t opacity) override;
+    RenderData prepare(const Shape& shape, RenderData data, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flags) override;
+    RenderData prepare(const Picture& picture, RenderData data, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flags) override;
+    bool dispose(RenderData data) override;
+    void* addCompositor(CompositeMethod method, uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint32_t opacity) override;
+    bool delCompositor(void* cmp) override;
     bool preRender() override;
-    bool render(const Shape& shape, void *data) override;
-    bool render(const Picture& picture, void *data) override;
+    bool renderShape(RenderData data, void* cmp) override;
+    bool renderImage(RenderData data, void* cmp) override;
     bool postRender() override;
-    bool renderRegion(void* data, uint32_t* x, uint32_t* y, uint32_t* w, uint32_t* h) override;
+    bool renderRegion(RenderData data, uint32_t* x, uint32_t* y, uint32_t* w, uint32_t* h) override;
     bool target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h);
     bool sync() override;
     bool clear() override;
