@@ -102,27 +102,27 @@ bool GlRenderer::postRender()
 }
 
 
-void* GlRenderer::addCompositor(TVG_UNUSED CompositeMethod method, TVG_UNUSED uint32_t x, TVG_UNUSED uint32_t y, TVG_UNUSED uint32_t w, TVG_UNUSED uint32_t h, TVG_UNUSED uint32_t opacity)
+Compositor* GlRenderer::addCompositor(TVG_UNUSED uint32_t x, TVG_UNUSED uint32_t y, TVG_UNUSED uint32_t w, TVG_UNUSED uint32_t h)
 {
     //TODO: Prepare frameBuffer & Setup render target for composition
     return nullptr;
 }
 
 
-bool GlRenderer::delCompositor(TVG_UNUSED void* cmp)
+bool GlRenderer::delCompositor(TVG_UNUSED Compositor* cmp)
 {
     //TODO: delete the given compositor and restore the context
     return false;
 }
 
 
-bool GlRenderer::renderImage(TVG_UNUSED void* data, TVG_UNUSED void* cmp)
+bool GlRenderer::renderImage(TVG_UNUSED void* data, TVG_UNUSED Compositor* cmp)
 {
     return false;
 }
 
 
-bool GlRenderer::renderShape(RenderData data, TVG_UNUSED void* cmp)
+bool GlRenderer::renderShape(RenderData data, TVG_UNUSED Compositor* cmp)
 {
     auto sdata = static_cast<GlShape*>(data);
     if (!sdata) return false;

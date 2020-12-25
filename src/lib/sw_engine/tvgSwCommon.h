@@ -220,7 +220,7 @@ struct SwImage
     uint32_t     w, h;
 };
 
-struct SwCompositor
+struct SwBlender
 {
     uint32_t (*join)(uint8_t r, uint8_t g, uint8_t b, uint8_t a);
     uint32_t (*alpha)(uint32_t rgba);
@@ -228,7 +228,7 @@ struct SwCompositor
 
 struct SwSurface : Surface
 {
-    SwCompositor comp;
+    SwBlender blender;
 };
 
 static inline SwCoord TO_SWCOORD(float val)

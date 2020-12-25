@@ -47,13 +47,13 @@ namespace tvg
         RenderTransform *rTransform = nullptr;
         uint32_t flag = RenderUpdateFlag::None;
 
-        Paint* compTarget = nullptr;
-        CompositeMethod compMethod = CompositeMethod::None;
+        Paint* cmpTarget = nullptr;
+        CompositeMethod cmpMethod = CompositeMethod::None;
 
         uint8_t opacity = 255;
 
         ~Impl() {
-            if (compTarget) delete(compTarget);
+            if (cmpTarget) delete(cmpTarget);
             if (smethod) delete(smethod);
             if (rTransform) delete(rTransform);
         }
@@ -133,7 +133,7 @@ namespace tvg
 
         bool dispose(RenderMethod& renderer)
         {
-            if (compTarget) compTarget->pImpl->dispose(renderer);
+            if (cmpTarget) cmpTarget->pImpl->dispose(renderer);
             return smethod->dispose(renderer);
         }
 
@@ -147,11 +147,11 @@ namespace tvg
                 }
             }
 
-            void *compdata = nullptr;
+            void *cmpData = nullptr;
 
-            if (compTarget) {
-                compdata = compTarget->pImpl->update(renderer, pTransform, opacity, clips, pFlag);
-                if (compMethod == CompositeMethod::ClipPath) clips.push(compdata);
+            if (cmpTarget) {
+                cmpData = cmpTarget->pImpl->update(renderer, pTransform, opacity, clips, pFlag);
+                if (cmpMethod == CompositeMethod::ClipPath) clips.push(cmpData);
             }
 
             void *edata = nullptr;
@@ -167,21 +167,23 @@ namespace tvg
                 edata = smethod->update(renderer, outTransform, opacity, clips, newFlag);
             }
 
-            if (compdata) clips.pop();
+            if (cmpData) clips.pop();
 
             return edata;
         }
 
         bool render(RenderMethod& renderer)
         {
-            void* cmp = nullptr;
+            Compositor* cmp = nullptr;
 
             /* Note: only ClipPath is processed in update() step */
-            if (compTarget && compMethod != CompositeMethod::ClipPath) {
+            if (cmpTarget && cmpMethod != CompositeMethod::ClipPath) {
                 uint32_t x, y, w, h;
-                if (!compTarget->pImpl->bounds(renderer, &x, &y, &w, &h)) return false;
-                cmp = renderer.addCompositor(compMethod, x, y, w, h, 255);
-                compTarget->pImpl->render(renderer);
+                if (!cmpTarget->pImpl->bounds(renderer, &x, &y, &w, &h)) return false;
+                cmp = renderer.addCompositor(x, y, w, h);
+                cmp->method = CompositeMethod::None;
+                cmp->opacity = 255;
+                cmpTarget->pImpl->render(renderer);
             }
 
             auto ret = smethod->render(renderer);
@@ -213,8 +215,8 @@ namespace tvg
         {
             if (!target && method != CompositeMethod::None) return false;
             if (target && method == CompositeMethod::None) return false;
-            compTarget = target;
-            compMethod = method;
+            cmpTarget = target;
+            cmpMethod = method;
             return true;
         }
     };
