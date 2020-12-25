@@ -33,11 +33,11 @@ public:
     RenderData prepare(const Shape& shape, RenderData data, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flags) override;
     RenderData prepare(const Picture& picture, RenderData data, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flags) override;
     bool dispose(RenderData data) override;
-    void* addCompositor(CompositeMethod method, uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint32_t opacity) override;
-    bool delCompositor(void* cmp) override;
+    Compositor* addCompositor(uint32_t x, uint32_t y, uint32_t w, uint32_t h) override;
+    bool delCompositor(Compositor* cmp) override;
     bool preRender() override;
-    bool renderShape(RenderData data, void* cmp) override;
-    bool renderImage(RenderData data, void* cmp) override;
+    bool renderShape(RenderData data, Compositor* cmp) override;
+    bool renderImage(RenderData data, Compositor* cmp) override;
     bool postRender() override;
     bool renderRegion(RenderData data, uint32_t* x, uint32_t* y, uint32_t* w, uint32_t* h) override;
     bool target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h);

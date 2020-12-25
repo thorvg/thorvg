@@ -97,7 +97,7 @@ static bool _rasterTranslucentRect(SwSurface* surface, const SwBBox& region, uin
     auto buffer = surface->buffer + (region.min.y * surface->stride) + region.min.x;
     auto h = static_cast<uint32_t>(region.max.y - region.min.y);
     auto w = static_cast<uint32_t>(region.max.x - region.min.x);
-    auto ialpha = 255 - surface->comp.alpha(color);
+    auto ialpha = 255 - surface->blender.alpha(color);
 
     for (uint32_t y = 0; y < h; ++y) {
         auto dst = &buffer[y * surface->stride];
@@ -133,7 +133,7 @@ static bool _rasterTranslucentRle(SwSurface* surface, SwRleData* rle, uint32_t c
         auto dst = &surface->buffer[span->y * surface->stride + span->x];
         if (span->coverage < 255) src = ALPHA_BLEND(color, span->coverage);
         else src = color;
-        auto ialpha = 255 - surface->comp.alpha(src);
+        auto ialpha = 255 - surface->blender.alpha(src);
         for (uint32_t i = 0; i < span->len; ++i) {
             dst[i] = src + ALPHA_BLEND(dst[i], ialpha);
         }
@@ -157,7 +157,7 @@ static bool _rasterTranslucentImageRle(SwSurface* surface, SwRleData* rle, uint3
             if (rX >= w || rY >= h) continue;
             auto alpha = ALPHA_MULTIPLY(span->coverage, opacity);
             auto src = ALPHA_BLEND(img[rY * w + rX], alpha);     //TODO: need to use image's stride
-            *dst = src + ALPHA_BLEND(*dst, 255 - surface->comp.alpha(src));
+            *dst = src + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(src));
         }
         ++span;
     }
@@ -178,7 +178,7 @@ static bool _rasterImageRle(SwSurface* surface, SwRleData* rle, uint32_t *img, u
             auto rY = static_cast<uint32_t>(roundf((span->x + x) * invTransform->e21 + ey2));
             if (rX >= w || rY >= h) continue;
             auto src = ALPHA_BLEND(img[rY * w + rX], span->coverage);    //TODO: need to use image's stride
-            *dst = src + ALPHA_BLEND(*dst, 255 - surface->comp.alpha(src));
+            *dst = src + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(src));
         }
         ++span;
     }
@@ -197,7 +197,7 @@ static bool _rasterTranslucentImage(SwSurface* surface, uint32_t *img, uint32_t 
             auto rY = static_cast<uint32_t>(roundf(x * invTransform->e21 + ey2));
             if (rX >= w || rY >= h) continue;
             auto src = ALPHA_BLEND(img[rX + (rY * w)], opacity);    //TODO: need to use image's stride
-            *dst = src + ALPHA_BLEND(*dst, 255 - surface->comp.alpha(src));
+            *dst = src + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(src));
         }
     }
     return true;
@@ -210,7 +210,7 @@ static bool _rasterImage(SwSurface* surface, uint32_t *img, uint32_t w, uint32_t
         auto dst = &surface->buffer[y * surface->stride + region.min.x];
         auto src = img + region.min.x + (y * w);    //TODO: need to use image's stride
         for (auto x = region.min.x; x < region.max.x; x++, dst++, src++) {
-            *dst = *src + ALPHA_BLEND(*dst, 255 - surface->comp.alpha(*src));
+            *dst = *src + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(*src));
         }
     }
     return true;
@@ -228,7 +228,7 @@ static bool _rasterImage(SwSurface* surface, uint32_t *img, uint32_t w, uint32_t
             auto rY = static_cast<uint32_t>(roundf(x * invTransform->e21 + ey2));
             if (rX >= w || rY >= h) continue;
             auto src = img[rX + (rY * w)];    //TODO: need to use image's stride
-            *dst = src + ALPHA_BLEND(*dst, 255 - surface->comp.alpha(src));
+            *dst = src + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(src));
         }
     }
     return true;
@@ -276,7 +276,7 @@ static bool _rasterLinearGradientRect(SwSurface* surface, const SwBBox& region, 
             auto dst = &buffer[y * surface->stride];
             fillFetchLinear(fill, tmpBuf, region.min.y + y, region.min.x, 0, w);
             for (uint32_t x = 0; x < w; ++x) {
-                dst[x] = tmpBuf[x] + ALPHA_BLEND(dst[x], 255 - surface->comp.alpha(tmpBuf[x]));
+                dst[x] = tmpBuf[x] + ALPHA_BLEND(dst[x], 255 - surface->blender.alpha(tmpBuf[x]));
             }
         }
     //Opaque Gradient
@@ -307,7 +307,7 @@ static bool _rasterRadialGradientRect(SwSurface* surface, const SwBBox& region, 
             auto dst = &buffer[y * surface->stride];
             fillFetchRadial(fill, tmpBuf, region.min.y + y, region.min.x, w);
             for (uint32_t x = 0; x < w; ++x) {
-                dst[x] = tmpBuf[x] + ALPHA_BLEND(dst[x], 255 - surface->comp.alpha(tmpBuf[x]));
+                dst[x] = tmpBuf[x] + ALPHA_BLEND(dst[x], 255 - surface->blender.alpha(tmpBuf[x]));
             }
         }
     //Opaque Gradient
@@ -337,12 +337,12 @@ static bool _rasterLinearGradientRle(SwSurface* surface, SwRleData* rle, const S
             fillFetchLinear(fill, buf, span->y, span->x, 0, span->len);
             if (span->coverage == 255) {
                 for (uint32_t i = 0; i < span->len; ++i) {
-                    dst[i] = buf[i] + ALPHA_BLEND(dst[i], 255 - surface->comp.alpha(buf[i]));
+                    dst[i] = buf[i] + ALPHA_BLEND(dst[i], 255 - surface->blender.alpha(buf[i]));
                 }
             } else {
                 for (uint32_t i = 0; i < span->len; ++i) {
                     auto tmp = ALPHA_BLEND(buf[i], span->coverage);
-                    dst[i] = tmp + ALPHA_BLEND(dst[i], 255 - surface->comp.alpha(tmp));
+                    dst[i] = tmp + ALPHA_BLEND(dst[i], 255 - surface->blender.alpha(tmp));
                 }
             }
             ++span;
@@ -383,12 +383,12 @@ static bool _rasterRadialGradientRle(SwSurface* surface, SwRleData* rle, const S
             fillFetchRadial(fill, buf, span->y, span->x, span->len);
             if (span->coverage == 255) {
                 for (uint32_t i = 0; i < span->len; ++i) {
-                    dst[i] = buf[i] + ALPHA_BLEND(dst[i], 255 - surface->comp.alpha(buf[i]));
+                    dst[i] = buf[i] + ALPHA_BLEND(dst[i], 255 - surface->blender.alpha(buf[i]));
                 }
             } else {
                 for (uint32_t i = 0; i < span->len; ++i) {
                     auto tmp = ALPHA_BLEND(buf[i], span->coverage);
-                    dst[i] = tmp + ALPHA_BLEND(dst[i], 255 - surface->comp.alpha(tmp));
+                    dst[i] = tmp + ALPHA_BLEND(dst[i], 255 - surface->blender.alpha(tmp));
                 }
             }
             ++span;
@@ -420,11 +420,11 @@ static bool _rasterRadialGradientRle(SwSurface* surface, SwRleData* rle, const S
 bool rasterCompositor(SwSurface* surface)
 {
     if (surface->cs == SwCanvas::ABGR8888) {
-        surface->comp.alpha = _colorAlpha;
-        surface->comp.join = _abgrJoin;
+        surface->blender.alpha = _colorAlpha;
+        surface->blender.join = _abgrJoin;
     } else if (surface->cs == SwCanvas::ARGB8888) {
-        surface->comp.alpha = _colorAlpha;
-        surface->comp.join = _argbJoin;
+        surface->blender.alpha = _colorAlpha;
+        surface->blender.join = _argbJoin;
     } else {
         //What Color Space ???
         return false;
@@ -455,7 +455,7 @@ bool rasterSolidShape(SwSurface* surface, SwShape* shape, uint8_t r, uint8_t g, 
     g = ALPHA_MULTIPLY(g, a);
     b = ALPHA_MULTIPLY(b, a);
 
-    auto color = surface->comp.join(r, g, b, a);
+    auto color = surface->blender.join(r, g, b, a);
 
     //Fast Track
     if (shape->rect) {
@@ -476,7 +476,7 @@ bool rasterStroke(SwSurface* surface, SwShape* shape, uint8_t r, uint8_t g, uint
     g = ALPHA_MULTIPLY(g, a);
     b = ALPHA_MULTIPLY(b, a);
 
-    auto color = surface->comp.join(r, g, b, a);
+    auto color = surface->blender.join(r, g, b, a);
 
     if (a == 255) return _rasterSolidRle(surface, shape->strokeRle, color);
     return _rasterTranslucentRle(surface, shape->strokeRle, color);

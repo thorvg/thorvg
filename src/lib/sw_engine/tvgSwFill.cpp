@@ -52,7 +52,7 @@ static bool _updateColorTable(SwFill* fill, const Fill* fdata, SwSurface* surfac
     auto g = ALPHA_MULTIPLY(pColors->g, pColors->a);
     auto b = ALPHA_MULTIPLY(pColors->b, pColors->a);
 
-    auto rgba = surface->comp.join(r, g, b, pColors->a);
+    auto rgba = surface->blender.join(r, g, b, pColors->a);
     auto inc = 1.0f / static_cast<float>(GRADIENT_STOP_SIZE);
     auto pos = 1.5f * inc;
     uint32_t i = 0;
@@ -75,7 +75,7 @@ static bool _updateColorTable(SwFill* fill, const Fill* fdata, SwSurface* surfac
         auto g = ALPHA_MULTIPLY(next->g, next->a);
         auto b = ALPHA_MULTIPLY(next->b, next->a);
 
-        auto rgba2 = surface->comp.join(r, g, b, next->a);
+        auto rgba2 = surface->blender.join(r, g, b, next->a);
 
         while (pos < next->offset && i < GRADIENT_STOP_SIZE) {
             auto t = (pos - curr->offset) * delta;

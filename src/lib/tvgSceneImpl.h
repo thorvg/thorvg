@@ -63,14 +63,16 @@ struct Scene::Impl
 
     bool render(RenderMethod& renderer)
     {
-        void* cmp = nullptr;
+        Compositor* cmp = nullptr;
 
         //Half translucent. This condition requires intermediate composition.
         if (opacity < 255 && opacity > 0 && (paints.count > 1)) {
             uint32_t x, y, w, h;
             if (!bounds(renderer, &x, &y, &w, &h)) return false;
             //CompositeMethod::None is used for a default alpha blending
-            cmp = renderer.addCompositor(CompositeMethod::None, x, y, w, h, opacity);
+            cmp = renderer.addCompositor(x, y, w, h);
+            cmp->method = CompositeMethod::None;
+            cmp->opacity = opacity;
         }
 
         for (auto paint = paints.data; paint < (paints.data + paints.count); ++paint) {

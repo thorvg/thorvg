@@ -39,6 +39,11 @@ struct Surface
 
 using RenderData = void*;
 
+struct Compositor {
+    CompositeMethod method;
+    uint32_t        opacity;
+};
+
 enum RenderUpdateFlag {None = 0, Path = 1, Color = 2, Gradient = 4, Stroke = 8, Transform = 16, Image = 32, All = 64};
 
 struct RenderTransform
@@ -57,18 +62,17 @@ struct RenderTransform
     RenderTransform(const RenderTransform* lhs, const RenderTransform* rhs);
 };
 
-class RenderMethod
+struct RenderMethod
 {
-public:
     virtual ~RenderMethod() {}
     virtual RenderData prepare(const Shape& shape, RenderData data, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flags) = 0;
     virtual RenderData prepare(const Picture& picture, RenderData data, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flags) = 0;
-    virtual void* addCompositor(CompositeMethod method, uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint32_t opacity) = 0;
-    virtual bool delCompositor(void* cmp) = 0;
+    virtual Compositor* addCompositor(uint32_t x, uint32_t y, uint32_t w, uint32_t h) = 0;
+    virtual bool delCompositor(Compositor* cmp) = 0;
     virtual bool dispose(RenderData data) = 0;
     virtual bool preRender() = 0;
-    virtual bool renderShape(RenderData data, void* cmp) = 0;
-    virtual bool renderImage(RenderData data, void* cmp) = 0;
+    virtual bool renderShape(RenderData data, Compositor* cmp) = 0;
+    virtual bool renderImage(RenderData data, Compositor* cmp) = 0;
     virtual bool postRender() = 0;
     virtual bool renderRegion(RenderData data, uint32_t* x, uint32_t* y, uint32_t* w, uint32_t* h) = 0;
     virtual bool clear() = 0;

@@ -26,7 +26,7 @@
 
 struct SwSurface;
 struct SwTask;
-struct SwComposite;
+struct SwCompositor;
 
 namespace tvg
 {
@@ -36,15 +36,15 @@ class SwRenderer : public RenderMethod
 public:
     RenderData prepare(const Shape& shape, RenderData data, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flags) override;
     RenderData prepare(const Picture& picture, RenderData data, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flags) override;
-    void* addCompositor(CompositeMethod method, uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint32_t opacity) override;
-    bool delCompositor(void* cmp) override;
+    Compositor* addCompositor(uint32_t x, uint32_t y, uint32_t w, uint32_t h) override;
+    bool delCompositor(Compositor* cmp) override;
     bool dispose(RenderData data) override;
     bool preRender() override;
     bool postRender() override;
     bool renderRegion(RenderData data, uint32_t* x, uint32_t* y, uint32_t* w, uint32_t* h) override;
     bool clear() override;
-    bool renderShape(RenderData data, void* cmp) override;
-    bool renderImage(RenderData data, void* cmp) override;
+    bool renderShape(RenderData data, Compositor* cmp) override;
+    bool renderImage(RenderData data, Compositor* cmp) override;
     bool sync() override;
     bool target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h, uint32_t cs);
 
@@ -53,11 +53,11 @@ public:
     static bool term();
 
 private:
-    SwSurface*          surface = nullptr;           //active surface
-    SwComposite*        compositor = nullptr;        //active compositor
-    SwSurface*          mainSurface = nullptr;       //main (default) surface
-    Array<SwTask*>      tasks;                       //async task list
-    Array<SwComposite*> compositors;                 //compositor cache list
+    SwSurface*           surface = nullptr;           //active surface
+    SwCompositor*        compositor = nullptr;        //active compositor
+    SwSurface*           mainSurface = nullptr;       //main (default) surface
+    Array<SwTask*>       tasks;                       //async task list
+    Array<SwCompositor*> compositors;                 //compositor cache list
 
     SwRenderer(){};
     ~SwRenderer();
