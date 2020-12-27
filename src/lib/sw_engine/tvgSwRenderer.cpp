@@ -309,7 +309,7 @@ bool SwRenderer::renderShape(RenderData data, TVG_UNUSED Compositor* cmp)
         //CompositeMethod::None is used for a default alpha blending
         cmp2 = addCompositor(x, y, w, h);
         cmp2->method = CompositeMethod::None;
-        cmp2->opacity = opacity;
+        cmp2->opacity = task->opacity;
     //No Composition
     } else {
         opacity = task->opacity;
