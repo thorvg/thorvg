@@ -35,7 +35,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     auto star1 = tvg::Shape::gen();
     tvgDrawStar(star1.get());
     star1->fill(255, 255, 0, 255);
-    star1->stroke(255 ,0, 0, 128);
+    star1->stroke(255 ,0, 0, 255);
     star1->stroke(10);
 
     //Move Star1
@@ -50,9 +50,10 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     auto star2 = tvg::Shape::gen();
     tvgDrawStar(star2.get());
-    star2->fill(0, 255, 255, 64);
-    star2->stroke(0 ,255, 0, 128);
+    star2->fill(0, 255, 255, 255);
+    star2->stroke(0 ,255, 0, 255);
     star2->stroke(10);
+    star2->opacity(100);
 
     //Move Star2
     star2->translate(10, 40);
@@ -73,10 +74,19 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     //////////////////////////////////////////////
     auto star3 = tvg::Shape::gen();
     tvgDrawStar(star3.get());
-    star3->translate(400, 0);
-    star3->fill(255, 255, 0, 255);                    //r, g, b, a
-    star3->stroke(255 ,0, 0, 128);
+
+    //Fill Gradient
+    auto fill = tvg::LinearGradient::gen();
+    fill->linear(100, 100, 300, 300);
+    tvg::Fill::ColorStop colorStops[2];
+    colorStops[0] = {0, 0, 0, 0, 255};
+    colorStops[1] = {1, 255, 255, 255, 255};
+    fill->colorStops(colorStops, 2);
+    star3->fill(move(fill));
+
+    star3->stroke(255 ,0, 0, 255);
     star3->stroke(10);
+    star3->translate(400, 0);
 
     auto clipRect = tvg::Shape::gen();
     clipRect->appendRect(480, 110, 200, 200, 0, 0);          //x, y, w, h, rx, ry
