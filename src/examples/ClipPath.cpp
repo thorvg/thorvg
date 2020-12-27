@@ -100,10 +100,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     //////////////////////////////////////////////
     auto picture = tvg::Picture::gen();
-    char buf[PATH_MAX];
-    sprintf(buf,"%s/cartman.svg", EXAMPLE_DIR);
-
-    if (picture->load(buf) != tvg::Result::Success) return;
+    if (picture->load(EXAMPLE_DIR"/cartman.svg") != tvg::Result::Success) return;
 
     picture->scale(3);
     picture->translate(200, 400);

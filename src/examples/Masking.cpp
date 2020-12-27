@@ -11,16 +11,37 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 {
     if (!canvas) return;
 
-    //Mask Target 2
-#if 0
-    auto scene = tvg::Scene::gen();
-    scene->opacity(127);
-    scene->scale(1.2);
-    scene->reserve(2);
-#endif
-    //Star
+    //Solid Rectangle
     auto shape = tvg::Shape::gen();
+    shape->appendRect(0, 0, 400, 400, 0, 0);
+    shape->fill(0, 0, 255, 255);
 
+    //Mask
+    auto mask = tvg::Shape::gen();
+    mask->appendCircle(200, 200, 125, 125);
+    mask->fill(255, 0, 0, 255);
+    shape->composite(move(mask), tvg::CompositeMethod::AlphaMask);
+    canvas->push(move(shape));
+
+
+    //SVG
+    auto svg = tvg::Picture::gen();
+    if (svg->load(EXAMPLE_DIR"/cartman.svg") != tvg::Result::Success) return;
+    svg->scale(3);
+    svg->translate(50, 400);
+#if 0
+    //Mask
+    auto mask = tvg::Shape::gen();
+    mask->appendCircle(200, 200, 125, 125);
+    mask->fill(255, 0, 0, 255);
+    shape->composite(move(mask), tvg::CompositeMethod::AlphaMask);
+#endif
+    canvas->push(move(svg));
+
+
+    //Star
+
+#if 0
     //Appends Paths
     shape->moveTo(199, 34);
     shape->lineTo(253, 143);
@@ -33,19 +54,11 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     shape->lineTo(26, 161);
     shape->lineTo(146, 143);
     shape->close();
-    shape->fill(0, 0, 255, 255);
-//    shape->stroke(10);
-//    shape->stroke(255, 255, 255, 255);
+#endif
+
     //shape->opacity(127);
 
 //    scene->push(move(shape));
-
-    //Alpha Mask
-    auto mask = tvg::Shape::gen();
-    mask->appendCircle(200, 200, 125, 125);
-    mask->fill(255, 255, 255, 255);
-    shape->composite(move(mask), tvg::CompositeMethod::AlphaMask);
-    canvas->push(move(shape));
 
 #if 0
     scene->composite(move(mask2), tvg::CompositeMethod::AlphaMask);

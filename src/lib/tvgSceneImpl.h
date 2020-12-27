@@ -70,16 +70,15 @@ struct Scene::Impl
             uint32_t x, y, w, h;
             if (!bounds(renderer, &x, &y, &w, &h)) return false;
             //CompositeMethod::None is used for a default alpha blending
-            cmp = renderer.addCompositor(x, y, w, h);
-            cmp->method = CompositeMethod::None;
-            cmp->opacity = opacity;
+            cmp = renderer.target(x, y, w, h);
+            renderer.beginComposite(cmp, CompositeMethod::None, opacity);
         }
 
         for (auto paint = paints.data; paint < (paints.data + paints.count); ++paint) {
             if (!(*paint)->pImpl->render(renderer)) return false;
         }
 
-        if (cmp) renderer.delCompositor(cmp);
+        if (cmp) renderer.endComposite(cmp);
 
         return true;
     }

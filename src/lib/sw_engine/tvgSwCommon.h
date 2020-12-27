@@ -226,9 +226,21 @@ struct SwBlender
     uint32_t (*alpha)(uint32_t rgba);
 };
 
+struct SwCompositor;
+
 struct SwSurface : Surface
 {
-    SwBlender blender;
+    SwBlender blender;                    //mandatory
+    SwCompositor* compositor = nullptr;   //compositor (optional)
+};
+
+struct SwCompositor : Compositor
+{
+    SwSurface* recoverSfc;                  //Recover surface when composition is started
+    SwCompositor* recoverCmp;               //Recover compositor when composition is done
+    SwImage image;
+    SwBBox bbox;
+    bool valid;
 };
 
 static inline SwCoord TO_SWCOORD(float val)

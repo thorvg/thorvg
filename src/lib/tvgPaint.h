@@ -176,19 +176,21 @@ namespace tvg
         {
             Compositor* cmp = nullptr;
 
-            /* Note: only ClipPath is processed in update() step */
+            /* Note: only ClipPath is processed in update() step.
+               Create a composition image. */
             if (cmpTarget && cmpMethod != CompositeMethod::ClipPath) {
                 uint32_t x, y, w, h;
                 if (!cmpTarget->pImpl->bounds(renderer, &x, &y, &w, &h)) return false;
-                cmp = renderer.addCompositor(x, y, w, h);
-                cmp->method = CompositeMethod::None;
-                cmp->opacity = 255;
+                cmp = renderer.target(x, y, w, h);
+                renderer.beginComposite(cmp, CompositeMethod::None, 255);
                 cmpTarget->pImpl->render(renderer);
             }
 
+            if (cmp) renderer.beginComposite(cmp, CompositeMethod::AlphaMask, cmpTarget->pImpl->opacity);
+
             auto ret = smethod->render(renderer);
 
-            renderer.delCompositor(cmp);
+            if (cmp) renderer.endComposite(cmp);
 
             return ret;
         }

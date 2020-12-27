@@ -220,7 +220,7 @@ struct Shape::Impl
 
     bool render(RenderMethod& renderer)
     {
-        return renderer.renderShape(rdata, nullptr);
+        return renderer.renderShape(rdata);
     }
 
     void* update(RenderMethod& renderer, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag pFlag)
@@ -232,7 +232,7 @@ struct Shape::Impl
 
     bool bounds(RenderMethod& renderer, uint32_t* x, uint32_t* y, uint32_t* w, uint32_t* h)
     {
-        return renderer.renderRegion(rdata, x, y, w, h);
+        return renderer.region(rdata, x, y, w, h);
     }
 
     bool bounds(float* x, float* y, float* w, float* h)
