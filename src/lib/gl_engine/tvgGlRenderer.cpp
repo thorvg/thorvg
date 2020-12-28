@@ -216,10 +216,7 @@ void* GlRenderer::prepare(const Shape& shape, void* data, const RenderTransform*
         return sdata;
     }
 
-    if (transform) 
-    {
-        sdata->geometry->updateTransform(transform, sdata->viewWd, sdata->viewHt);
-    }
+    sdata->geometry->updateTransform(transform, sdata->viewWd, sdata->viewHt);
 
     if (sdata->updateFlag & (RenderUpdateFlag::Color | RenderUpdateFlag::Stroke | RenderUpdateFlag::Gradient | RenderUpdateFlag::Transform) )
     {

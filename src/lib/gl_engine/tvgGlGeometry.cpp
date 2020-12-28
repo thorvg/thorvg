@@ -181,7 +181,7 @@ bool GlGeometry::generateAAPoints(TVG_UNUSED const Shape& shape, float strokeWd,
                 aaPts[i].fillOuterBlur = extendEdge(aaPts[i].orgPt, normalInfo[i].normalF, blurDir * stroke);
                 aaPts[i].fillOuter = extendEdge(aaPts[i].fillOuterBlur, normalInfo[i].normalF, blurDir*antiAliasWidth);
             }
-            if (flag & RenderUpdateFlag::Stroke)
+            if (flag & (RenderUpdateFlag::Stroke | RenderUpdateFlag::Transform))
             {
                 aaPts[i].strokeOuterBlur = aaPts[i].orgPt;
                 aaPts[i].strokeOuter = extendEdge(aaPts[i].strokeOuterBlur, normalInfo[i].normalF, blurDir*antiAliasWidth);
@@ -225,7 +225,7 @@ bool GlGeometry::tesselate(TVG_UNUSED const Shape& shape, float viewWd, float vi
                 addQuadIndices(i, fill.indices);
             }
         }
-        if (flag & RenderUpdateFlag::Stroke)
+        if (flag & (RenderUpdateFlag::Stroke | RenderUpdateFlag::Transform))
         {
             uint32_t i = 0;
             for (size_t pt = 1; pt < aaPts.size(); ++pt)
@@ -390,10 +390,14 @@ void GlGeometry::decomposeCubicCurve(GlPrimitive& primitve, const GlPoint& pt1, 
 
 void GlGeometry::updateTransform(const RenderTransform* transform, float w, float h)
 {
-    mTransform.x = transform->x;
-    mTransform.y = transform->y;
-    mTransform.angle = transform->degree;
-    mTransform.scale = transform->scale;   
+    if (transform)
+    {
+        mTransform.x = transform->x;
+        mTransform.y = transform->y;
+        mTransform.angle = transform->degree;
+        mTransform.scale = transform->scale;
+    }
+
     mTransform.w = w;
     mTransform.h = h;
     GET_TRANSFORMATION(NORMALIZED_LEFT_3D, NORMALIZED_TOP_3D, mTransform.matrix);
