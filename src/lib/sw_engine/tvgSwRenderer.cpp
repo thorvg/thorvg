@@ -30,10 +30,10 @@
 static bool initEngine = false;
 static uint32_t rendererCnt = 0;
 
-struct SwComposite
+struct SwCompositor : Compositor
 {
     SwSurface surface;
-    SwSurface* recover;
+    SwCompositor* recover;
     SwImage image;
     SwBBox bbox;
     bool valid;
@@ -45,7 +45,7 @@ struct SwTask : Task
     Matrix* transform = nullptr;
     SwSurface* surface = nullptr;
     RenderUpdateFlag flags = RenderUpdateFlag::None;
-    Array<Composite> compList;
+    Array<RenderData> clips;
     uint32_t opacity;
     SwBBox bbox = {{0, 0}, {0, 0}};       //Whole Rendering Region
 
@@ -65,7 +65,7 @@ struct SwShapeTask : SwTask
 {
     SwShape shape;
     const Shape* sdata = nullptr;
-    bool compStroking;
+    bool cmpStroking;
 
     void run(unsigned tid) override
     {
@@ -102,7 +102,7 @@ struct SwShapeTask : SwTask
                        shape outline below stroke could be full covered by stroke drawing.
                        Thus it turns off antialising in that condition. */
                     auto antiAlias = (strokeAlpha == 255 && strokeWidth > 2) ? false : true;
-                    if (!shapeGenRle(&shape, sdata, clip, antiAlias, compList.count > 0 ? true : false)) goto end;
+                    if (!shapeGenRle(&shape, sdata, clip, antiAlias, clips.count > 0 ? true : false)) goto end;
                     ++addStroking;
                 }
             }
@@ -131,28 +131,24 @@ struct SwShapeTask : SwTask
             }
         }
 
-        //Composition
-        for (auto comp = compList.data; comp < (compList.data + compList.count); ++comp) {
-            auto compShape = &static_cast<SwShapeTask*>((*comp).edata)->shape;
-            if ((*comp).method == CompositeMethod::ClipPath) {
-                //Clip shape rle
-                if (shape.rle) {
-                    if (compShape->rect) rleClipRect(shape.rle, &compShape->bbox);
-                    else if (compShape->rle) rleClipPath(shape.rle, compShape->rle);
-                }
-                //Clip stroke rle
-                if (shape.strokeRle) {
-                    if (compShape->rect) rleClipRect(shape.strokeRle, &compShape->bbox);
-                    else if (compShape->rle) rleClipPath(shape.strokeRle, compShape->rle);
-                }                
-            } else if ((*comp).method == CompositeMethod::AlphaMask) {
-                rleAlphaMask(shape.rle, compShape->rle);
+        //Clip Path
+        for (auto clip = clips.data; clip < (clips.data + clips.count); ++clip) {
+            auto clipper = &static_cast<SwShapeTask*>(*clip)->shape;
+            //Clip shape rle
+            if (shape.rle) {
+                if (clipper->rect) rleClipRect(shape.rle, &clipper->bbox);
+                else if (clipper->rle) rleClipPath(shape.rle, clipper->rle);
+            }
+            //Clip stroke rle
+            if (shape.strokeRle) {
+                if (clipper->rect) rleClipRect(shape.strokeRle, &clipper->bbox);
+                else if (clipper->rle) rleClipPath(shape.strokeRle, clipper->rle);
             }
         }
     end:
         shapeDelOutline(&shape, tid);
-        if (addStroking == 2 && opacity < 255) compStroking = true;
-        else compStroking = false;
+        if (addStroking == 2 && opacity < 255) cmpStroking = true;
+        else cmpStroking = false;
     }
 
     bool dispose() override
@@ -167,7 +163,6 @@ struct SwImageTask : SwTask
 {
     SwImage image;
     const Picture* pdata = nullptr;
-    uint32_t* pixels = nullptr;
 
     void run(unsigned tid) override
     {
@@ -181,23 +176,19 @@ struct SwImageTask : SwTask
             imageReset(&image);
             if (!imagePrepare(&image, pdata, tid, clip, transform, bbox)) goto end;
 
-            //Composition?
-            if (compList.count > 0) {
+            //Clip Path?
+            if (clips.count > 0) {
                 if (!imageGenRle(&image, pdata, clip, bbox, false, true)) goto end;
                 if (image.rle) {
-                    for (auto comp = compList.data; comp < (compList.data + compList.count); ++comp) {
-                        auto compShape = &static_cast<SwShapeTask*>((*comp).edata)->shape;
-                        if ((*comp).method == CompositeMethod::ClipPath) {
-                            if (compShape->rect) rleClipRect(image.rle, &compShape->bbox);
-                            else if (compShape->rle) rleClipPath(image.rle, compShape->rle);
-                        } else if ((*comp).method == CompositeMethod::AlphaMask) {
-                            rleAlphaMask(image.rle, compShape->rle);
-                        }
+                    for (auto clip = clips.data; clip < (clips.data + clips.count); ++clip) {
+                        auto clipper = &static_cast<SwShapeTask*>(*clip)->shape;
+                        if (clipper->rect) rleClipRect(image.rle, &clipper->bbox);
+                        else if (clipper->rle) rleClipPath(image.rle, clipper->rle);
                     }
                 }
             }
         }
-        if (pixels) image.data = pixels;
+        image.data = const_cast<uint32_t*>(pdata->data());
     end:
         imageDelOutline(&image, tid);
     }
@@ -255,6 +246,7 @@ bool SwRenderer::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t 
     if (!surface) {
         surface = new SwSurface;
         if (!surface) return false;
+        mainSurface = surface;
     }
 
     surface->buffer = buffer;
@@ -278,133 +270,46 @@ bool SwRenderer::postRender()
     tasks.clear();
 
     //Free Composite Caches
-    for (auto comp = composites.data; comp < (composites.data + composites.count); ++comp) {
+    for (auto comp = compositors.data; comp < (compositors.data + compositors.count); ++comp) {
         free((*comp)->image.data);
         delete(*comp);
     }
-    composites.reset();
+    compositors.reset();
 
     return true;
 }
 
 
-bool SwRenderer::renderRegion(void* data, uint32_t* x, uint32_t* y, uint32_t* w, uint32_t* h)
-{
-    static_cast<SwTask*>(data)->bounds(x, y, w, h);
-
-    return true;
-}
-
-
-
-bool SwRenderer::render(TVG_UNUSED const Picture& picture, void *data)
+bool SwRenderer::renderImage(RenderData data, TVG_UNUSED Compositor* cmp)
 {
     auto task = static_cast<SwImageTask*>(data);
     task->done();
+
+    if (task->opacity == 0) return true;
 
     return rasterImage(surface, &task->image, task->transform, task->bbox, task->opacity);
 }
 
 
-void* SwRenderer::beginComposite(uint32_t x, uint32_t y, uint32_t w, uint32_t h)
-{
-    SwComposite* comp = nullptr;
-
-    //Use cached data
-    for (auto p = composites.data; p < (composites.data + composites.count); ++p) {
-        if ((*p)->valid) {
-            comp = *p;
-            break;
-        }
-    }
-
-    //New Composition
-    if (!comp) {
-        comp = new SwComposite;
-        if (!comp) return nullptr;
-        //SwImage, Optimize Me: Surface size from MainSurface(WxH) to Parameter W x H
-        comp->image.data = (uint32_t*) malloc(sizeof(uint32_t) * surface->w * surface->h);
-        if (!comp->image.data) {
-            delete(comp);
-            return nullptr;
-        }
-        composites.push(comp);
-    }
-
-    comp->valid = false;
-
-    //Boundary Check
-    if (x + w > surface->w) w = (surface->w - x);
-    if (y + h > surface->h) h = (surface->h - y);
-
-#ifdef THORVG_LOG_ENABLED
-    printf("SW_ENGINE: Using intermediate opacity composition [Region: %d %d %d %d]\n", x, y, w, h);
-#endif
-
-    comp->bbox.min.x = x;
-    comp->bbox.min.y = y;
-    comp->bbox.max.x = x + w;
-    comp->bbox.max.y = y + h;
-    comp->image.w = surface->w;
-    comp->image.h = surface->h;
-
-    //Inherits attributes from main surface
-    comp->surface.comp = surface->comp;
-    comp->surface.stride = surface->w;
-    comp->surface.cs = surface->cs;
-
-    //We know partial clear region
-    comp->surface.buffer = comp->image.data + (comp->surface.stride * y + x);
-    comp->surface.w = w;
-    comp->surface.h = h;
-
-    rasterClear(&comp->surface);
-
-    //Recover context
-    comp->surface.buffer = comp->image.data;
-    comp->surface.w = comp->image.w;
-    comp->surface.h = comp->image.h;
-
-    //Switch render target
-    comp->recover = surface;
-    surface = &comp->surface;
-
-    return comp;
-}
-
-
-bool SwRenderer::endComposite(void* p, uint32_t opacity)
-{
-    if (!p) return false;
-    auto comp = static_cast<SwComposite*>(p);
-
-    //Recover render target
-    surface = comp->recover;
-
-    auto ret = rasterImage(surface, &comp->image, nullptr, comp->bbox, opacity);
-
-    comp->valid = true;
-
-    return ret;
-}
-
-
-bool SwRenderer::render(TVG_UNUSED const Shape& shape, void *data)
+bool SwRenderer::renderShape(RenderData data, TVG_UNUSED Compositor* cmp)
 {
     auto task = static_cast<SwShapeTask*>(data);
     task->done();
-    
+
     if (task->opacity == 0) return true;
 
     uint32_t opacity;
-    void *ctx = nullptr;
+    Compositor* cmp2 = nullptr;
 
     //Do Composition
-    if (task->compStroking) {
+    if (task->cmpStroking) {
         uint32_t x, y, w, h;
         task->bounds(&x, &y, &w, &h);
-        ctx = beginComposite(x, y, w, h);
         opacity = 255;
+        //CompositeMethod::None is used for a default alpha blending
+        cmp2 = addCompositor(x, y, w, h);
+        cmp2->method = CompositeMethod::None;
+        cmp2->opacity = opacity;
     //No Composition
     } else {
         opacity = task->opacity;
@@ -427,13 +332,110 @@ bool SwRenderer::render(TVG_UNUSED const Shape& shape, void *data)
     if (a > 0) rasterStroke(surface, &task->shape, r, g, b, a);
 
     //Composition (Shape + Stroke) stage
-    if (task->compStroking) endComposite(ctx, task->opacity);
+    if (task->cmpStroking) delCompositor(cmp2);
+
+    return true;
+}
+
+bool SwRenderer::renderRegion(RenderData data, uint32_t* x, uint32_t* y, uint32_t* w, uint32_t* h)
+{
+    static_cast<SwTask*>(data)->bounds(x, y, w, h);
 
     return true;
 }
 
 
-bool SwRenderer::dispose(void *data)
+Compositor* SwRenderer::addCompositor(uint32_t x, uint32_t y, uint32_t w, uint32_t h)
+{
+    SwCompositor* cmp = nullptr;
+
+    //Use cached data
+    for (auto p = compositors.data; p < (compositors.data + compositors.count); ++p) {
+        if ((*p)->valid) {
+            cmp = *p;
+            break;
+        }
+    }
+
+    //New Composition
+    if (!cmp) {
+        cmp = new SwCompositor;
+        if (!cmp) return nullptr;
+        //SwImage, Optimize Me: Surface size from MainSurface(WxH) to Parameter W x H
+        cmp->image.data = (uint32_t*) malloc(sizeof(uint32_t) * surface->w * surface->h);
+        if (!cmp->image.data) {
+            delete(cmp);
+            return nullptr;
+        }
+        compositors.push(cmp);
+    }
+
+    cmp->valid = false;
+
+    //Boundary Check
+    if (x + w > surface->w) w = (surface->w - x);
+    if (y + h > surface->h) h = (surface->h - y);
+
+#ifdef THORVG_LOG_ENABLED
+    printf("SW_ENGINE: Using intermediate composition [Region: %d %d %d %d]\n", x, y, w, h);
+#endif
+
+    cmp->bbox.min.x = x;
+    cmp->bbox.min.y = y;
+    cmp->bbox.max.x = x + w;
+    cmp->bbox.max.y = y + h;
+    cmp->image.w = surface->w;
+    cmp->image.h = surface->h;
+
+    //Inherits attributes from main surface
+    cmp->surface.blender = surface->blender;
+    cmp->surface.stride = surface->w;
+    cmp->surface.cs = surface->cs;
+
+    //We know partial clear region
+    cmp->surface.buffer = cmp->image.data + (cmp->surface.stride * y + x);
+    cmp->surface.w = w;
+    cmp->surface.h = h;
+
+    rasterClear(&cmp->surface);
+
+    //Recover context
+    cmp->surface.buffer = cmp->image.data;
+    cmp->surface.w = cmp->image.w;
+    cmp->surface.h = cmp->image.h;
+
+    //Switch active compositor
+    cmp->recover = compositor;   //Backup current compositor
+    compositor = cmp;
+
+    //Switch render target
+    surface = &cmp->surface;
+
+    return cmp;
+}
+
+
+bool SwRenderer::delCompositor(Compositor* cmp)
+{
+    if (!cmp) return false;
+
+    auto p = static_cast<SwCompositor*>(cmp);
+    p->valid = true;
+
+    //Recover Context
+    compositor = p->recover;
+    surface = compositor ? &compositor->surface : mainSurface;
+
+    //Default is alpha blending
+    if (p->method == CompositeMethod::None) {
+        return rasterImage(surface, &p->image, nullptr, p->bbox, p->opacity);
+    }
+
+    return true;
+}
+
+
+bool SwRenderer::dispose(RenderData data)
 {
     auto task = static_cast<SwTask*>(data);
     if (!task) return true;
@@ -447,14 +449,19 @@ bool SwRenderer::dispose(void *data)
 }
 
 
-void SwRenderer::prepareCommon(SwTask* task, const RenderTransform* transform, uint32_t opacity, Array<Composite>& compList, RenderUpdateFlag flags)
+void* SwRenderer::prepareCommon(SwTask* task, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flags)
 {
-    if (compList.count > 0) {
+    if (flags == RenderUpdateFlag::None) return task;
+
+    //Finish previous task if it has duplicated request.
+    task->done();
+
+    if (clips.count > 0) {
         //Guarantee composition targets get ready.
-        for (auto comp = compList.data; comp < (compList.data + compList.count); ++comp) {
-            static_cast<SwShapeTask*>((*comp).edata)->done();
+        for (auto clip = clips.data; clip < (clips.data + clips.count); ++clip) {
+            static_cast<SwShapeTask*>(*clip)->done();
         }
-        task->compList = compList;
+        task->clips = clips;
     }
 
     if (transform) {
@@ -471,50 +478,34 @@ void SwRenderer::prepareCommon(SwTask* task, const RenderTransform* transform, u
 
     tasks.push(task);
     TaskScheduler::request(task);
+
+    return task;
 }
 
 
-void* SwRenderer::prepare(const Picture& pdata, void* data, uint32_t *pixels, const RenderTransform* transform, uint32_t opacity, Array<Composite>& compList, RenderUpdateFlag flags)
+RenderData SwRenderer::prepare(const Picture& pdata, RenderData data, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flags)
 {
     //prepare task
     auto task = static_cast<SwImageTask*>(data);
     if (!task) {
         task = new SwImageTask;
         if (!task) return nullptr;
+        task->pdata = &pdata;
     }
-
-    if (flags == RenderUpdateFlag::None) return task;
-
-    //Finish previous task if it has duplicated request.
-    task->done();
-
-    task->pdata = &pdata;
-    task->pixels = pixels;
-
-    prepareCommon(task, transform, opacity, compList, flags);
-
-    return task;
+    return prepareCommon(task, transform, opacity, clips, flags);
 }
 
 
-void* SwRenderer::prepare(const Shape& sdata, void* data, const RenderTransform* transform, uint32_t opacity, Array<Composite>& compList, RenderUpdateFlag flags)
+RenderData SwRenderer::prepare(const Shape& sdata, RenderData data, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flags)
 {
     //prepare task
     auto task = static_cast<SwShapeTask*>(data);
     if (!task) {
         task = new SwShapeTask;
         if (!task) return nullptr;
+        task->sdata = &sdata;
     }
-
-    if (flags == RenderUpdateFlag::None) return task;
-
-    //Finish previous task if it has duplicated request.
-    task->done();
-    task->sdata = &sdata;
-
-    prepareCommon(task, transform, opacity, compList, flags);
-
-    return task;
+    return prepareCommon(task, transform, opacity, clips, flags);
 }
 
 

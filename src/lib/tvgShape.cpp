@@ -153,14 +153,15 @@ Result Shape::appendArc(float cx, float cy, float radius, float startAngle, floa
     const float M_PI_HALF = M_PI * 0.5f;
 
     //just circle
-    if (sweep >= 360) return appendCircle(cx, cy, radius, radius);
+    if (sweep >= 360 || sweep <= -360) return appendCircle(cx, cy, radius, radius);
 
     startAngle = (startAngle * M_PI) / 180;
     sweep = sweep * M_PI / 180;
 
     auto nCurves = ceil(abs(sweep / M_PI_HALF));
-    auto fract = fmod(sweep, M_PI_HALF);
-    fract = (fract < std::numeric_limits<float>::epsilon()) ? M_PI_HALF : fract;
+    auto sweepSign = (sweep < 0 ? -1 : 1);
+    auto fract = fmodf(sweep, M_PI_HALF);
+    fract = (fabsf(fract) < std::numeric_limits<float>::epsilon()) ? M_PI_HALF : fract;
 
     //Start from here
     Point start = {radius * cos(startAngle), radius * sin(startAngle)};
@@ -173,8 +174,7 @@ Result Shape::appendArc(float cx, float cy, float radius, float startAngle, floa
     }
 
     for (int i = 0; i < nCurves; ++i) {
-
-        auto endAngle = startAngle + ((i != nCurves - 1) ? M_PI_HALF : fract);
+        auto endAngle = startAngle + ((i != nCurves - 1) ? M_PI_HALF * sweepSign : fract);
         Point end = {radius * cos(endAngle), radius * sin(endAngle)};
 
         //variables needed to calculate bezier control points

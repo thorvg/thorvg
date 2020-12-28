@@ -54,6 +54,7 @@ class GlGeometry;
 
 struct GlShape
 {
+  const Shape* shape = nullptr;
   float viewWd;
   float viewHt;
   RenderUpdateFlag updateFlag = None;

@@ -76,15 +76,15 @@ struct Canvas::Impl
     {
         if (!renderer) return Result::InsufficientCondition;
 
-        Array<Composite> compList;
+        Array<RenderData> clips;
 
         //Update single paint node
         if (paint) {
-            paint->pImpl->update(*renderer, nullptr, 255, compList, RenderUpdateFlag::None);
+            paint->pImpl->update(*renderer, nullptr, 255, clips, RenderUpdateFlag::None);
         //Update all retained paint nodes
         } else {
             for (auto paint = paints.data; paint < (paints.data + paints.count); ++paint) {
-                (*paint)->pImpl->update(*renderer, nullptr, 255, compList, RenderUpdateFlag::None);
+                (*paint)->pImpl->update(*renderer, nullptr, 255, clips, RenderUpdateFlag::None);
             }
         }
         return Result::Success;

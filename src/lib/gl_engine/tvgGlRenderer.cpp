@@ -73,7 +73,7 @@ bool GlRenderer::sync()
 }
 
 
-bool GlRenderer::renderRegion(void* data, uint32_t* x, uint32_t* y, uint32_t* w, uint32_t* h)
+bool GlRenderer::renderRegion(TVG_UNUSED RenderData data, TVG_UNUSED uint32_t* x, TVG_UNUSED uint32_t* y, TVG_UNUSED uint32_t* w, TVG_UNUSED uint32_t* h)
 {
     return true;
 }
@@ -102,31 +102,29 @@ bool GlRenderer::postRender()
 }
 
 
-void* GlRenderer::beginComposite(uint32_t x, uint32_t y, uint32_t w, uint32_t h)
+Compositor* GlRenderer::addCompositor(TVG_UNUSED uint32_t x, TVG_UNUSED uint32_t y, TVG_UNUSED uint32_t w, TVG_UNUSED uint32_t h)
 {
     //TODO: Prepare frameBuffer & Setup render target for composition
     return nullptr;
 }
 
 
-bool GlRenderer::endComposite(void* ctx, uint32_t opacity)
+bool GlRenderer::delCompositor(TVG_UNUSED Compositor* cmp)
 {
-    //TODO: Composite Framebuffer to main surface
+    //TODO: delete the given compositor and restore the context
     return false;
 }
 
 
-bool GlRenderer::render(const Picture& picture, void *data)
+bool GlRenderer::renderImage(TVG_UNUSED void* data, TVG_UNUSED Compositor* cmp)
 {
-    //TODO Draw Bitmap Image
-
-    return true;
+    return false;
 }
 
 
-bool GlRenderer::render(const Shape& shape, void* data)
+bool GlRenderer::renderShape(RenderData data, TVG_UNUSED Compositor* cmp)
 {
-    GlShape* sdata = static_cast<GlShape*>(data);
+    auto sdata = static_cast<GlShape*>(data);
     if (!sdata) return false;
 
     uint8_t r, g, b, a;
@@ -139,16 +137,16 @@ bool GlRenderer::render(const Shape& shape, void* data)
     {
         if (flags & (RenderUpdateFlag::Gradient | RenderUpdateFlag::Transform))
         {
-            const Fill* gradient = shape.fill();
+            const Fill* gradient = sdata->shape->fill();
             if (gradient != nullptr)
             {
-                drawPrimitive(*sdata, gradient, i, RenderUpdateFlag::Gradient);
-            }
+		drawPrimitive(*sdata, gradient, i, RenderUpdateFlag::Gradient);
+	    }
         }
 
         if(flags & (RenderUpdateFlag::Color | RenderUpdateFlag::Transform))
         {
-            shape.fillColor(&r, &g, &b, &a);
+            sdata->shape->fillColor(&r, &g, &b, &a);
             if (a > 0)
             {
                 drawPrimitive(*sdata, r, g, b, a, i, RenderUpdateFlag::Color);
@@ -157,7 +155,7 @@ bool GlRenderer::render(const Shape& shape, void* data)
 
         if (flags & (RenderUpdateFlag::Stroke | RenderUpdateFlag::Transform))
         {
-            shape.strokeColor(&r, &g, &b, &a);
+            sdata->shape->strokeColor(&r, &g, &b, &a);
             if (a > 0)
             {
                 drawPrimitive(*sdata, r, g, b, a, i, RenderUpdateFlag::Stroke);
@@ -169,9 +167,9 @@ bool GlRenderer::render(const Shape& shape, void* data)
 }
 
 
-bool GlRenderer::dispose(void *data)
+bool GlRenderer::dispose(RenderData data)
 {
-    GlShape* sdata = static_cast<GlShape*>(data);
+    auto sdata = static_cast<GlShape*>(data);
     if (!sdata) return false;
 
     delete sdata;
@@ -179,20 +177,21 @@ bool GlRenderer::dispose(void *data)
 }
 
 
-void* GlRenderer::prepare(TVG_UNUSED const Picture& picture, TVG_UNUSED void* data, TVG_UNUSED uint32_t *buffer, TVG_UNUSED const RenderTransform* transform, TVG_UNUSED uint32_t opacity, TVG_UNUSED Array<Composite>& compList, TVG_UNUSED RenderUpdateFlag flags)
+RenderData GlRenderer::prepare(TVG_UNUSED const Picture& picture, TVG_UNUSED RenderData data, TVG_UNUSED const RenderTransform* transform, TVG_UNUSED uint32_t opacity, TVG_UNUSED Array<RenderData>& clips, TVG_UNUSED RenderUpdateFlag flags)
 {
     //TODO:
     return nullptr;
 }
 
 
-void* GlRenderer::prepare(const Shape& shape, void* data, const RenderTransform* transform, TVG_UNUSED uint32_t opacity, Array<Composite>& compList, RenderUpdateFlag flags)
+RenderData GlRenderer::prepare(const Shape& shape, RenderData data, const RenderTransform* transform, TVG_UNUSED uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flags)
 {
     //prepare shape data
     GlShape* sdata = static_cast<GlShape*>(data);
     if (!sdata) {
         sdata = new GlShape;
         if (!sdata) return nullptr;
+        sdata->shape = &shape;
     }
 
     sdata->viewWd = static_cast<float>(surface.w);

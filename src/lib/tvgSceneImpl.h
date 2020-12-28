@@ -44,41 +44,42 @@ struct Scene::Impl
         return true;
     }
 
-    void* update(RenderMethod &renderer, const RenderTransform* transform, uint32_t opacity, Array<Composite>& compList, RenderUpdateFlag flag)
+    void* update(RenderMethod &renderer, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flag)
     {
         this->opacity = opacity;
 
         /* Overriding opacity value. If this scene is half-translucent,
            It must do intermeidate composition with that opacity value. */
-        if (opacity < 255 && opacity > 0) opacity = 255;
+        if (opacity > 0) opacity = 255;
+
+        for (auto paint = paints.data; paint < (paints.data + paints.count); ++paint) {
+            (*paint)->pImpl->update(renderer, transform, opacity, clips, static_cast<uint32_t>(flag));
+        }
 
         /* FXIME: it requires to return list of children engine data
            This is necessary for scene composition */
-        void* edata = nullptr;
-
-        for (auto paint = paints.data; paint < (paints.data + paints.count); ++paint) {
-            edata = (*paint)->pImpl->update(renderer, transform, opacity, compList, static_cast<uint32_t>(flag));
-        }
-
-        return edata;
+        return nullptr;
     }
 
     bool render(RenderMethod& renderer)
     {
-        void* ctx = nullptr;
+        Compositor* cmp = nullptr;
 
-        //Half translucent. This requires intermediate composition.
-        if (opacity < 255 && opacity > 0) {
+        //Half translucent. This condition requires intermediate composition.
+        if (opacity < 255 && opacity > 0 && (paints.count > 1)) {
             uint32_t x, y, w, h;
             if (!bounds(renderer, &x, &y, &w, &h)) return false;
-            ctx = renderer.beginComposite(x, y, w, h);
+            //CompositeMethod::None is used for a default alpha blending
+            cmp = renderer.addCompositor(x, y, w, h);
+            cmp->method = CompositeMethod::None;
+            cmp->opacity = opacity;
         }
 
         for (auto paint = paints.data; paint < (paints.data + paints.count); ++paint) {
             if (!(*paint)->pImpl->render(renderer)) return false;
         }
 
-        if (ctx) return renderer.endComposite(ctx, opacity);
+        if (cmp) renderer.delCompositor(cmp);
 
         return true;
     }
