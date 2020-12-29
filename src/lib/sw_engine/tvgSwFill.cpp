@@ -33,7 +33,7 @@
 #define FIXPT_SIZE (1<<FIXPT_BITS)
 
 
-static bool _updateColorTable(SwFill* fill, const Fill* fdata, SwSurface* surface)
+static bool _updateColorTable(SwFill* fill, const Fill* fdata, SwSurface* surface, uint32_t opacity)
 {
     if (!fill->ctable) {
         fill->ctable = static_cast<uint32_t*>(malloc(GRADIENT_STOP_SIZE * sizeof(uint32_t)));
@@ -46,13 +46,14 @@ static bool _updateColorTable(SwFill* fill, const Fill* fdata, SwSurface* surfac
 
     auto pColors = colors;
 
-    if (pColors->a < 255) fill->translucent = true;
+    auto a = (pColors->a * opacity) / 255;
+    if (a < 255) fill->translucent = true;
 
-    auto r = ALPHA_MULTIPLY(pColors->r, pColors->a);
-    auto g = ALPHA_MULTIPLY(pColors->g, pColors->a);
-    auto b = ALPHA_MULTIPLY(pColors->b, pColors->a);
+    auto r = ALPHA_MULTIPLY(pColors->r, a);
+    auto g = ALPHA_MULTIPLY(pColors->g, a);
+    auto b = ALPHA_MULTIPLY(pColors->b, a);
 
-    auto rgba = surface->blender.join(r, g, b, pColors->a);
+    auto rgba = surface->blender.join(r, g, b, a);
     auto inc = 1.0f / static_cast<float>(GRADIENT_STOP_SIZE);
     auto pos = 1.5f * inc;
     uint32_t i = 0;
@@ -69,13 +70,14 @@ static bool _updateColorTable(SwFill* fill, const Fill* fdata, SwSurface* surfac
         auto curr = colors + j;
         auto next = curr + 1;
         auto delta = 1.0f / (next->offset - curr->offset);
-        if (next->a < 255) fill->translucent = true;
+        a = (next->a * opacity) / 255;
+        if (!fill->translucent && a < 255) fill->translucent = true;
 
-        auto r = ALPHA_MULTIPLY(next->r, next->a);
-        auto g = ALPHA_MULTIPLY(next->g, next->a);
-        auto b = ALPHA_MULTIPLY(next->b, next->a);
+        auto r = ALPHA_MULTIPLY(next->r, a);
+        auto g = ALPHA_MULTIPLY(next->g, a);
+        auto b = ALPHA_MULTIPLY(next->b, a);
 
-        auto rgba2 = surface->blender.join(r, g, b, next->a);
+        auto rgba2 = surface->blender.join(r, g, b, a);
 
         while (pos < next->offset && i < GRADIENT_STOP_SIZE) {
             auto t = (pos - curr->offset) * delta;
@@ -270,14 +272,14 @@ void fillFetchLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, 
 }
 
 
-bool fillGenColorTable(SwFill* fill, const Fill* fdata, const Matrix* transform, SwSurface* surface, bool ctable)
+bool fillGenColorTable(SwFill* fill, const Fill* fdata, const Matrix* transform, SwSurface* surface, uint32_t opacity, bool ctable)
 {
     if (!fill) return false;
 
     fill->spread = fdata->spread();
 
     if (ctable) {
-        if (!_updateColorTable(fill, fdata, surface)) return false;
+        if (!_updateColorTable(fill, fdata, surface, opacity)) return false;
     }
 
     if (fdata->id() == FILL_ID_LINEAR) {

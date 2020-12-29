@@ -44,7 +44,7 @@ struct Compositor {
     uint32_t        opacity;
 };
 
-enum RenderUpdateFlag {None = 0, Path = 1, Color = 2, Gradient = 4, Stroke = 8, Transform = 16, Image = 32, All = 64};
+enum RenderUpdateFlag {None = 0, Path = 1, Color = 2, Gradient = 4, Stroke = 8, Transform = 16, Image = 32, Opacity = 64, All = 64};
 
 struct RenderTransform
 {
