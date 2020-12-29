@@ -191,6 +191,7 @@ TVG_EXPORT Tvg_Result tvg_paint_get_bounds(const Tvg_Paint* paint, float* x, flo
    return (Tvg_Result) reinterpret_cast<const Paint*>(paint)->bounds(x, y, w, h);
 }
 
+
 /************************************************************************/
 /* Shape API                                                            */
 /************************************************************************/
