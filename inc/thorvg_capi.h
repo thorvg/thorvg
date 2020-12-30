@@ -130,6 +130,7 @@ TVG_EXPORT Tvg_Result tvg_paint_transform(Tvg_Paint* paint, const Tvg_Matrix* m)
 TVG_EXPORT Tvg_Result tvg_paint_set_opacity(Tvg_Paint* paint, uint8_t opacity);
 TVG_EXPORT Tvg_Result tvg_paint_get_opacity(Tvg_Paint* paint, uint8_t* opacity);
 TVG_EXPORT Tvg_Paint* tvg_paint_duplicate(Tvg_Paint* paint);
+TVG_EXPORT Tvg_Result tvg_paint_get_bounds(const Tvg_Paint* paint, float* x, float* y, float* w, float* h);
 
 /************************************************************************/
 /* Shape API                                                            */
