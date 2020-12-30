@@ -109,12 +109,13 @@ struct SwShapeTask : SwTask
         }
 
         //Fill
-        if (flags & (RenderUpdateFlag::Gradient | RenderUpdateFlag::Transform)) {
+        if (flags & (RenderUpdateFlag::Gradient | RenderUpdateFlag::Transform | RenderUpdateFlag::Color)) {
             auto fill = sdata->fill();
             if (fill) {
                 auto ctable = (flags & RenderUpdateFlag::Gradient) ? true : false;
                 if (ctable) shapeResetFill(&shape);
-                if (!shapeGenFillColors(&shape, fill, transform, surface, ctable)) goto end;
+                if (!shapeGenFillColors(&shape, fill, transform, surface, opacity, ctable)) goto end;
+                ++addStroking;
             } else {
                 shapeDelFill(&shape);
             }
@@ -147,7 +148,7 @@ struct SwShapeTask : SwTask
         }
     end:
         shapeDelOutline(&shape, tid);
-        if (addStroking == 2 && opacity < 255) cmpStroking = true;
+        if (addStroking > 1 && opacity < 255) cmpStroking = true;
         else cmpStroking = false;
     }
 
@@ -319,7 +320,6 @@ bool SwRenderer::renderShape(RenderData data, TVG_UNUSED Compositor* cmp)
     uint8_t r, g, b, a;
 
     if (auto fill = task->sdata->fill()) {
-        //FIXME: pass opacity to apply gradient fill?
         rasterGradientShape(surface, &task->shape, fill->id());
     } else{
         task->sdata->fillColor(&r, &g, &b, &a);

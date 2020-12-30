@@ -643,9 +643,9 @@ fail:
 }
 
 
-bool shapeGenFillColors(SwShape* shape, const Fill* fill, const Matrix* transform, SwSurface* surface, bool ctable)
+bool shapeGenFillColors(SwShape* shape, const Fill* fill, const Matrix* transform, SwSurface* surface, uint32_t opacity, bool ctable)
 {
-    return fillGenColorTable(shape->fill, fill, transform, surface, ctable);
+    return fillGenColorTable(shape->fill, fill, transform, surface, opacity, ctable);
 }
 
 
