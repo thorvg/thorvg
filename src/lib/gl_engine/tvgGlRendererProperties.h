@@ -91,7 +91,8 @@ public:
     enum class DataType
     {
         INT = 0,
-        FLOAT
+        FLOAT,
+        MATRIX
     };
     enum class PropertyType
     {

@@ -48,6 +48,8 @@ public:
     std::map<int32_t, VertexProperty>& getAttributeVertexProperty();
     std::map<int32_t, VertexProperty>& getUniformVertexProperty();
     int32_t getLocationPropertyId() const;
+    int32_t getTransformLocationPropertyId() const;
+    void setTransform(int count, float* transform_matrix);
     void uploadValues();
 
 private:
@@ -58,7 +60,8 @@ private:
     std::map<int32_t, VertexProperty> mAttributePropertyBuffer;
     std::map<int32_t, VertexProperty> mUniformPropertyBuffer;
 
-    int32_t mLocVertexAttribute;
+    int32_t mLocVertexAttribute = -1;
+    int32_t mLocTransform = -1;
 };
 
 class GlColorRenderTask : public GlRenderTask
@@ -81,14 +84,14 @@ public:
     void setNoise(float noise);
     void setStopCount(int32_t count);
     void setStopColor(int index, float stopVal, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
-
+    int32_t getTransformLocationPropertyId() const;
 private:
     int32_t mLocPrimitiveSize = -1;
     int32_t mLocCanvasSize = -1;
     int32_t mLocNoise = -1;
     int32_t mLocStopCnt = -1;
-    int32_t mLocStops;
-    int32_t mLocStopColors;
+    int32_t mLocStops = -1;
+    int32_t mLocStopColors = -1;
 };
 
 class GlLinearGradientRenderTask : public GlGradientRenderTask

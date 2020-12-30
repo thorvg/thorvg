@@ -36,15 +36,21 @@
     if (var->propertyId != -1) \
         location = var->propertyId
 
+#define ADD_UNIFORM_PROPERTY_2(var, rtask, prog, varName, formatSize, location, datatype) \
+    var = &PropertyInterface::addProperty(rtask, prog, varName, formatSize, VertexProperty::PropertyType::UNIFORM, datatype); \
+    if (var->propertyId != -1) \
+        location = var->propertyId
+
 #define FORMAT_SIZE_FLOAT   1
 #define FORMAT_SIZE_VEC_2   2
 #define FORMAT_SIZE_VEC_3   3
 #define FORMAT_SIZE_VEC_4   4
+#define FORMAT_SIZE_MAT_4x4   16
 
 class PropertyInterface
 {
 public:
-    static VertexProperty& addProperty(GlRenderTask* rTask, std::shared_ptr<GlProgram> prog, std::string name, uint32_t propFormatSize, VertexProperty::PropertyType propType);
+    static VertexProperty& addProperty(GlRenderTask* rTask, std::shared_ptr<GlProgram> prog, std::string name, uint32_t propFormatSize, VertexProperty::PropertyType propType, VertexProperty::DataType dataType = VertexProperty::DataType::FLOAT);
     template<typename... Args>
     static void setProperty(GlRenderTask* rTask, std::string name, float first, Args... args)
     {
@@ -65,9 +71,10 @@ public:
         }
         VertexProperty& prop = itr->second;
 
-        prop.dataType = VertexProperty::DataType::FLOAT;
         prop.propertyValues.set(first, args...);
     }
+
+    static void setProperty(GlRenderTask* rTask, int32_t propId, int32_t count, float* data);
     static int32_t getPropertyId(GlRenderTask* rTask, std::string name);
     static VertexProperty& getProperty(GlRenderTask* rTask, std::string name);
     static VertexProperty& getProperty(GlRenderTask* rTask, int32_t propId);

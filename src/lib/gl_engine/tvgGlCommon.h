@@ -57,7 +57,7 @@ struct GlShape
   const Shape* shape = nullptr;
   float viewWd;
   float viewHt;
-  RenderUpdateFlag updateFlag;
+  RenderUpdateFlag updateFlag = None;
   unique_ptr<GlGeometry> geometry;
 };
 

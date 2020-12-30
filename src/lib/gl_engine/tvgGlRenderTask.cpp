@@ -37,6 +37,7 @@ GlRenderTask::GlRenderTask(RenderTypes renderType, shared_ptr<GlShader> shader)
 
     VertexProperty* prop = nullptr;
     ADD_ATTRIBUTE_PROPERTY(prop, this, mProgram, "aLocation", FORMAT_SIZE_VEC_4, mLocVertexAttribute);
+    ADD_UNIFORM_PROPERTY_2(prop, this, mProgram, "uTransform", FORMAT_SIZE_MAT_4x4, mLocTransform, VertexProperty::DataType::MATRIX);
 }
 
 
@@ -82,6 +83,20 @@ int32_t GlRenderTask::getLocationPropertyId() const
 }
 
 
+int32_t GlRenderTask::getTransformLocationPropertyId() const
+{
+    return mLocTransform;
+}
+
+
+void GlRenderTask::setTransform(int count, float* transform)
+{
+    if (mLocTransform != -1)
+    {
+        PropertyInterface::setProperty(this, mLocTransform, count, transform);
+    }
+}
+
 void GlRenderTask::uploadValues()
 {
     for (auto& property : mUniformPropertyBuffer)
@@ -120,6 +135,10 @@ void GlRenderTask::uploadValues()
                         mProgram->setUniform4Value(property.second.propertyId, propertyVal.getCount(), propertyVal.getData());
                     default: break;
                 }
+                break;
+            }
+            case VertexProperty::DataType::MATRIX: {
+                mProgram->setUniform4x4Value(property.second.propertyId, propertyVal.getCount(), propertyVal.getData());
                 break;
             }
         }

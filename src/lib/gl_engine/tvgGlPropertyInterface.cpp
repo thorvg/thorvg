@@ -33,7 +33,7 @@ VertexProperty  PropertyInterface::mEmptyProperty;
 /* External Class Implementation                                        */
 /************************************************************************/
 
-VertexProperty& PropertyInterface::addProperty(GlRenderTask* rTask, std::shared_ptr<GlProgram> prog, std::string name, uint32_t propFormatSize, VertexProperty::PropertyType propType)
+VertexProperty& PropertyInterface::addProperty(GlRenderTask* rTask, std::shared_ptr<GlProgram> prog, std::string name, uint32_t propFormatSize, VertexProperty::PropertyType propType, VertexProperty::DataType dataType)
 {
     std::map<int32_t, VertexProperty>* vertexProperty = nullptr;
     int32_t id;
@@ -52,7 +52,7 @@ VertexProperty& PropertyInterface::addProperty(GlRenderTask* rTask, std::shared_
     }
     if (id != -1)
     {
-        VertexProperty property = { id, name, propType, VertexProperty::DataType::FLOAT };
+        VertexProperty property = { id, name, propType, dataType };
         property.propertyValues.setStride(propFormatSize);
         if (vertexProperty)
         {
@@ -63,6 +63,21 @@ VertexProperty& PropertyInterface::addProperty(GlRenderTask* rTask, std::shared_
     return mEmptyProperty;
 }
 
+
+void PropertyInterface::setProperty(GlRenderTask* rTask, int32_t propId, int32_t count, float* data)
+{
+    std::map<int32_t, VertexProperty>::iterator itr = rTask->getUniformVertexProperty().find(propId);
+    if (itr->second.propertyId == -1)
+    {
+        return;
+    }
+    VertexProperty& prop = itr->second;
+
+    for (int i = 0; i < count; ++i)
+    {
+        prop.propertyValues.set(data[i]);
+    }
+}
 
 int32_t PropertyInterface::getPropertyId(GlRenderTask* rTask, std::string name)
 {
