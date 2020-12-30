@@ -74,10 +74,12 @@ public:
     GlPoint() = default;
 
     GlPoint(float pX, float pY):x(pX), y(pY)
-    {}
+    {
+    }
 
     GlPoint(const Point& rhs):GlPoint(rhs.x, rhs.y)
-    {}
+    {
+    }
 
     GlPoint(const GlPoint& rhs) = default;
     GlPoint(GlPoint&& rhs) = default;
@@ -94,19 +96,15 @@ public:
 
     bool operator== (const GlPoint& rhs)
     {
-        if (&rhs == this)
-            return true;
-        if (rhs.x == this->x && rhs.y == this->y)
-            return true;
+        if (&rhs == this) return true; 
+        if (rhs.x == this->x && rhs.y == this->y) return true;
         return false;
     }
 
     bool operator!= (const GlPoint& rhs)
     {
-        if (&rhs == this)
-            return true;
-        if (rhs.x != this->x || rhs.y != this->y)
-            return true;
+        if (&rhs == this) return true;
+        if (rhs.x != this->x || rhs.y != this->y) return true;
         return false;
     }
 
@@ -158,9 +156,8 @@ public:
 
     void normalize()
     {
-        auto length = sqrtf( (x * x) + (y * y) );
-        if (length != 0.0f)
-        {
+        auto length = sqrtf((x * x) + (y * y));
+        if (length != 0.0f) {
             const auto inverseLen = 1.0f / length;
             x *= inverseLen;
             y *= inverseLen;
@@ -228,8 +225,7 @@ struct GlTransform
     float angle = 0.0f;
     float scale = 1.0f;
     float w;
-    float h;
-    
+    float h;    
     float matrix[16];
 };
 
