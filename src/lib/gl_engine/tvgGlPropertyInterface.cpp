@@ -67,14 +67,11 @@ VertexProperty& PropertyInterface::addProperty(GlRenderTask* rTask, std::shared_
 void PropertyInterface::setProperty(GlRenderTask* rTask, int32_t propId, int32_t count, float* data)
 {
     std::map<int32_t, VertexProperty>::iterator itr = rTask->getUniformVertexProperty().find(propId);
-    if (itr->second.propertyId == -1)
-    {
-        return;
-    }
+    if (itr->second.propertyId == -1) return;
+
     VertexProperty& prop = itr->second;
 
-    for (int i = 0; i < count; ++i)
-    {
+    for (int i = 0; i < count; ++i) {
         prop.propertyValues.set(data[i]);
     }
 }
@@ -82,12 +79,8 @@ void PropertyInterface::setProperty(GlRenderTask* rTask, int32_t propId, int32_t
 int32_t PropertyInterface::getPropertyId(GlRenderTask* rTask, std::string name)
 {
     std::map<int32_t, VertexProperty>& vertexProperty = rTask->getUniformVertexProperty();
-    for (auto& property : vertexProperty)
-    {
-        if (property.second.propertyName == name)
-        {
-            return property.second.propertyId;
-        }
+    for (auto& property : vertexProperty) {
+        if (property.second.propertyName == name) return property.second.propertyId;
     }
     return -1;
 }
@@ -96,12 +89,8 @@ int32_t PropertyInterface::getPropertyId(GlRenderTask* rTask, std::string name)
 VertexProperty& PropertyInterface::getProperty(GlRenderTask* rTask, std::string name)
 {
     std::map<int32_t, VertexProperty>& vertexProperty = rTask->getUniformVertexProperty();
-    for (auto& property : vertexProperty)
-    {
-        if (property.second.propertyName == name)
-        {
-            return property.second;
-        }
+    for (auto& property : vertexProperty) {
+        if (property.second.propertyName == name) return property.second;
     }
     return mEmptyProperty;
 }
@@ -110,10 +99,7 @@ VertexProperty& PropertyInterface::getProperty(GlRenderTask* rTask, std::string 
 VertexProperty& PropertyInterface::getProperty(GlRenderTask* rTask, int32_t propId)
 {
     std::map<int32_t, VertexProperty>& vertexProperty = rTask->getUniformVertexProperty();
-    if (vertexProperty.find(propId) != vertexProperty.end())
-    {
-        return vertexProperty[propId];
-    }
+    if (vertexProperty.find(propId) != vertexProperty.end()) return vertexProperty[propId];
     return mEmptyProperty;
 }
 
@@ -121,8 +107,7 @@ VertexProperty& PropertyInterface::getProperty(GlRenderTask* rTask, int32_t prop
 void PropertyInterface::clearData(GlRenderTask* rTask)
 {
     std::map<int32_t, VertexProperty>& vertexProperty = rTask->getUniformVertexProperty();
-    for (auto& prop : vertexProperty)
-    {
+    for (auto& prop : vertexProperty) {
         prop.second.propertyValues.clear();
     }
 }
