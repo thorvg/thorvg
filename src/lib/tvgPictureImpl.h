@@ -122,10 +122,10 @@ struct Picture::Impl
         return rdata;
     }
 
-    bool render(RenderMethod &renderer)
+    bool render(RenderMethod &renderer, uint32_t opacity)
     {
         if (pixels) return renderer.renderImage(rdata);
-        else if (paint) return paint->pImpl->render(renderer);
+        else if (paint) return paint->pImpl->render(renderer, opacity);
         return false;
     }
 

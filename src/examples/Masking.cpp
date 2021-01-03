@@ -23,21 +23,19 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     shape->composite(move(mask), tvg::CompositeMethod::AlphaMask);
     canvas->push(move(shape));
 
-
     //SVG
     auto svg = tvg::Picture::gen();
     if (svg->load(EXAMPLE_DIR"/cartman.svg") != tvg::Result::Success) return;
     svg->scale(3);
     svg->translate(50, 400);
-#if 0
-    //Mask
-    auto mask = tvg::Shape::gen();
-    mask->appendCircle(200, 200, 125, 125);
-    mask->fill(255, 0, 0, 255);
-    shape->composite(move(mask), tvg::CompositeMethod::AlphaMask);
-#endif
-    canvas->push(move(svg));
 
+    //Mask2
+    auto mask2 = tvg::Shape::gen();
+    mask2->appendCircle(150, 500, 75, 75);
+    mask2->appendRect(150, 500, 200, 200, 30, 30);
+    mask2->fill(255, 255, 255, 255);
+    svg->composite(move(mask2), tvg::CompositeMethod::AlphaMask);
+    canvas->push(move(svg));
 
     //Star
 
