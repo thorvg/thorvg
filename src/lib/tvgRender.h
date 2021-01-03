@@ -67,16 +67,19 @@ struct RenderMethod
     virtual ~RenderMethod() {}
     virtual RenderData prepare(const Shape& shape, RenderData data, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flags) = 0;
     virtual RenderData prepare(const Picture& picture, RenderData data, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flags) = 0;
-    virtual Compositor* addCompositor(uint32_t x, uint32_t y, uint32_t w, uint32_t h) = 0;
-    virtual bool delCompositor(Compositor* cmp) = 0;
-    virtual bool dispose(RenderData data) = 0;
     virtual bool preRender() = 0;
-    virtual bool renderShape(RenderData data, Compositor* cmp) = 0;
-    virtual bool renderImage(RenderData data, Compositor* cmp) = 0;
+    virtual bool renderShape(RenderData data) = 0;
+    virtual bool renderImage(RenderData data) = 0;
     virtual bool postRender() = 0;
-    virtual bool renderRegion(RenderData data, uint32_t* x, uint32_t* y, uint32_t* w, uint32_t* h) = 0;
+    virtual bool dispose(RenderData data) = 0;
+    virtual bool region(RenderData data, uint32_t* x, uint32_t* y, uint32_t* w, uint32_t* h) = 0;
+
     virtual bool clear() = 0;
     virtual bool sync() = 0;
+
+    virtual Compositor* target(uint32_t x, uint32_t y, uint32_t w, uint32_t h) = 0;
+    virtual bool beginComposite(Compositor* cmp, CompositeMethod method, uint32_t opacity) = 0;
+    virtual bool endComposite(Compositor* cmp) = 0;
 };
 
 }

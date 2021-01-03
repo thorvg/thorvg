@@ -92,7 +92,14 @@ static SwBBox _clipRegion(Surface* surface, SwBBox& in)
 }
 
 
-static bool _rasterTranslucentRect(SwSurface* surface, const SwBBox& region, uint32_t color)
+static bool _translucent(SwSurface* surface, uint8_t a)
+{
+    if (a < 255) return true;
+    if (!surface->compositor || surface->compositor->method == CompositeMethod::None) return false;
+    return true;
+}
+
+static bool _translucentRect(SwSurface* surface, const SwBBox& region, uint32_t color)
 {
     auto buffer = surface->buffer + (region.min.y * surface->stride) + region.min.x;
     auto h = static_cast<uint32_t>(region.max.y - region.min.y);
@@ -109,6 +116,46 @@ static bool _rasterTranslucentRect(SwSurface* surface, const SwBBox& region, uin
 }
 
 
+static bool _translucentRectAlphaMask(SwSurface* surface, const SwBBox& region, uint32_t color)
+{
+    auto buffer = surface->buffer + (region.min.y * surface->stride) + region.min.x;
+    auto h = static_cast<uint32_t>(region.max.y - region.min.y);
+    auto w = static_cast<uint32_t>(region.max.x - region.min.x);
+
+#ifdef THORVG_LOG_ENABLED
+    printf("SW_ENGINE: Rectangle Alpha Mask Composition\n");
+#endif
+
+    auto cbuffer = surface->compositor->image.data + (region.min.y * surface->stride) + region.min.x;   //compositor buffer
+    auto tbuffer = static_cast<uint32_t*>(alloca(sizeof(uint32_t) * w));                                //temp buffer for intermediate processing
+
+    for (uint32_t y = 0; y < h; ++y) {
+        auto dst = &buffer[y * surface->stride];
+        auto cmp = &cbuffer[y * surface->stride];
+        auto tmp = tbuffer;
+        //Composition
+        for (uint32_t x = 0; x < w; ++x) {
+            *tmp = ALPHA_BLEND(color, surface->blender.alpha(*cmp));
+            dst[x] = *tmp + ALPHA_BLEND(dst[x], 255 - surface->blender.alpha(*tmp));
+            ++tmp;
+            ++cmp;
+        }
+    }
+    return true;
+}
+
+
+static bool _rasterTranslucentRect(SwSurface* surface, const SwBBox& region, uint32_t color)
+{
+    if (surface->compositor) {
+        if (surface->compositor->method == CompositeMethod::AlphaMask) {
+            return _translucentRectAlphaMask(surface, region, color);
+        }
+    }
+    return _translucentRect(surface, region, color);
+}
+
+
 static bool _rasterSolidRect(SwSurface* surface, const SwBBox& region, uint32_t color)
 {
     auto buffer = surface->buffer + (region.min.y * surface->stride);
@@ -122,10 +169,8 @@ static bool _rasterSolidRect(SwSurface* surface, const SwBBox& region, uint32_t 
 }
 
 
-static bool _rasterTranslucentRle(SwSurface* surface, SwRleData* rle, uint32_t color)
+static bool _translucentRle(SwSurface* surface, SwRleData* rle, uint32_t color)
 {
-    if (!rle) return false;
-
     auto span = rle->spans;
     uint32_t src;
 
@@ -134,12 +179,53 @@ static bool _rasterTranslucentRle(SwSurface* surface, SwRleData* rle, uint32_t c
         if (span->coverage < 255) src = ALPHA_BLEND(color, span->coverage);
         else src = color;
         auto ialpha = 255 - surface->blender.alpha(src);
-        for (uint32_t i = 0; i < span->len; ++i) {
-            dst[i] = src + ALPHA_BLEND(dst[i], ialpha);
+        for (uint32_t x = 0; x < span->len; ++x) {
+            dst[x] = src + ALPHA_BLEND(dst[x], ialpha);
         }
         ++span;
     }
     return true;
+}
+
+
+static bool _translucentRleAlphaMask(SwSurface* surface, SwRleData* rle, uint32_t color)
+{
+#ifdef THORVG_LOG_ENABLED
+    printf("SW_ENGINE: Rle Alpha Mask Composition\n");
+#endif
+    auto span = rle->spans;
+    uint32_t src;
+    auto tbuffer = static_cast<uint32_t*>(alloca(sizeof(uint32_t) * surface->w));  //temp buffer for intermediate processing
+    auto cbuffer = surface->compositor->image.data;
+
+    for (uint32_t i = 0; i < rle->size; ++i) {
+        auto dst = &surface->buffer[span->y * surface->stride + span->x];
+        auto cmp = &cbuffer[span->y * surface->stride + span->x];
+        auto tmp = tbuffer;
+        if (span->coverage < 255) src = ALPHA_BLEND(color, span->coverage);
+        else src = color;
+        for (uint32_t x = 0; x < span->len; ++x) {
+            *tmp = ALPHA_BLEND(src, surface->blender.alpha(*cmp));
+            dst[x] = *tmp + ALPHA_BLEND(dst[x], 255 - surface->blender.alpha(*tmp));
+            ++tmp;
+            ++cmp;
+        }
+        ++span;
+    }
+    return true;
+}
+
+
+static bool _rasterTranslucentRle(SwSurface* surface, SwRleData* rle, uint32_t color)
+{
+    if (!rle) return false;
+
+    if (surface->compositor) {
+        if (surface->compositor->method == CompositeMethod::AlphaMask) {
+            return _translucentRleAlphaMask(surface, rle, color);
+        }
+    }
+    return _translucentRle(surface, rle, color);
 }
 
 
@@ -456,17 +542,18 @@ bool rasterSolidShape(SwSurface* surface, SwShape* shape, uint8_t r, uint8_t g, 
     b = ALPHA_MULTIPLY(b, a);
 
     auto color = surface->blender.join(r, g, b, a);
+    auto translucent = _translucent(surface, a);
 
     //Fast Track
     if (shape->rect) {
         auto region = _clipRegion(surface, shape->bbox);
-        if (a == 255) return _rasterSolidRect(surface, region, color);
-        return _rasterTranslucentRect(surface, region, color);
-    } else{
-        if (a == 255) return _rasterSolidRle(surface, shape->rle, color);
+        if (translucent) return _rasterTranslucentRect(surface, region, color);
+        return _rasterSolidRect(surface, region, color);
+    }
+    if (translucent) {
         return _rasterTranslucentRle(surface, shape->rle, color);
     }
-    return false;
+    return _rasterSolidRle(surface, shape->rle, color);
 }
 
 
@@ -477,9 +564,10 @@ bool rasterStroke(SwSurface* surface, SwShape* shape, uint8_t r, uint8_t g, uint
     b = ALPHA_MULTIPLY(b, a);
 
     auto color = surface->blender.join(r, g, b, a);
+    auto translucent = _translucent(surface, a);
 
-    if (a == 255) return _rasterSolidRle(surface, shape->strokeRle, color);
-    return _rasterTranslucentRle(surface, shape->strokeRle, color);
+    if (translucent) return _rasterTranslucentRle(surface, shape->strokeRle, color);
+    return _rasterSolidRle(surface, shape->strokeRle, color);
 }
 
 

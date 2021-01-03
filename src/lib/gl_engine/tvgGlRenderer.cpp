@@ -73,7 +73,7 @@ bool GlRenderer::sync()
 }
 
 
-bool GlRenderer::renderRegion(TVG_UNUSED RenderData data, TVG_UNUSED uint32_t* x, TVG_UNUSED uint32_t* y, TVG_UNUSED uint32_t* w, TVG_UNUSED uint32_t* h)
+bool GlRenderer::region(TVG_UNUSED RenderData data, TVG_UNUSED uint32_t* x, TVG_UNUSED uint32_t* y, TVG_UNUSED uint32_t* w, TVG_UNUSED uint32_t* h)
 {
     return true;
 }
@@ -102,27 +102,34 @@ bool GlRenderer::postRender()
 }
 
 
-Compositor* GlRenderer::addCompositor(TVG_UNUSED uint32_t x, TVG_UNUSED uint32_t y, TVG_UNUSED uint32_t w, TVG_UNUSED uint32_t h)
+Compositor* GlRenderer::target(TVG_UNUSED uint32_t x, TVG_UNUSED uint32_t y, TVG_UNUSED uint32_t w, TVG_UNUSED uint32_t h)
 {
     //TODO: Prepare frameBuffer & Setup render target for composition
     return nullptr;
 }
 
 
-bool GlRenderer::delCompositor(TVG_UNUSED Compositor* cmp)
+bool GlRenderer::beginComposite(TVG_UNUSED Compositor* cmp, CompositeMethod method, uint32_t opacity)
 {
     //TODO: delete the given compositor and restore the context
     return false;
 }
 
 
-bool GlRenderer::renderImage(TVG_UNUSED void* data, TVG_UNUSED Compositor* cmp)
+bool GlRenderer::endComposite(TVG_UNUSED Compositor* cmp)
+{
+    //TODO: delete the given compositor and restore the context
+    return false;
+}
+
+
+bool GlRenderer::renderImage(TVG_UNUSED void* data)
 {
     return false;
 }
 
 
-bool GlRenderer::renderShape(RenderData data, TVG_UNUSED Compositor* cmp)
+bool GlRenderer::renderShape(RenderData data)
 {
     auto sdata = static_cast<GlShape*>(data);
     if (!sdata) return false;

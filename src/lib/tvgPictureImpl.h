@@ -122,10 +122,10 @@ struct Picture::Impl
         return rdata;
     }
 
-    bool render(RenderMethod &renderer)
+    bool render(RenderMethod &renderer, uint32_t opacity)
     {
-        if (pixels) return renderer.renderImage(rdata, nullptr);
-        else if (paint) return paint->pImpl->render(renderer);
+        if (pixels) return renderer.renderImage(rdata);
+        else if (paint) return paint->pImpl->render(renderer, opacity);
         return false;
     }
 
@@ -155,7 +155,7 @@ struct Picture::Impl
 
     bool bounds(RenderMethod& renderer, uint32_t* x, uint32_t* y, uint32_t* w, uint32_t* h)
     {
-        if (rdata) return renderer.renderRegion(rdata, x, y, w, h);
+        if (rdata) return renderer.region(rdata, x, y, w, h);
         if (paint) return paint->pImpl->bounds(renderer, x, y, w, h);
         return false;
     }

@@ -35,7 +35,7 @@ namespace tvg
 
         virtual bool dispose(RenderMethod& renderer) = 0;
         virtual void* update(RenderMethod& renderer, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag pFlag) = 0;   //Return engine data if it has.
-        virtual bool render(RenderMethod& renderer) = 0;
+        virtual bool render(RenderMethod& renderer, uint32_t opacity) = 0;
         virtual bool bounds(float* x, float* y, float* w, float* h) const = 0;
         virtual bool bounds(RenderMethod& renderer, uint32_t* x, uint32_t* y, uint32_t* w, uint32_t* h) const = 0;
         virtual Paint* duplicate() = 0;
@@ -150,7 +150,7 @@ namespace tvg
             void *cmpData = nullptr;
 
             if (cmpTarget) {
-                cmpData = cmpTarget->pImpl->update(renderer, pTransform, opacity, clips, pFlag);
+                cmpData = cmpTarget->pImpl->update(renderer, pTransform, 255, clips, pFlag);
                 if (cmpMethod == CompositeMethod::ClipPath) clips.push(cmpData);
             }
 
@@ -172,23 +172,25 @@ namespace tvg
             return edata;
         }
 
-        bool render(RenderMethod& renderer)
+        bool render(RenderMethod& renderer, uint32_t opacity)
         {
             Compositor* cmp = nullptr;
 
-            /* Note: only ClipPath is processed in update() step */
+            /* Note: only ClipPath is processed in update() step.
+               Create a composition image. */
             if (cmpTarget && cmpMethod != CompositeMethod::ClipPath) {
                 uint32_t x, y, w, h;
                 if (!cmpTarget->pImpl->bounds(renderer, &x, &y, &w, &h)) return false;
-                cmp = renderer.addCompositor(x, y, w, h);
-                cmp->method = CompositeMethod::None;
-                cmp->opacity = 255;
-                cmpTarget->pImpl->render(renderer);
+                cmp = renderer.target(x, y, w, h);
+                renderer.beginComposite(cmp, CompositeMethod::None, 255);
+                cmpTarget->pImpl->render(renderer, 255);
             }
 
-            auto ret = smethod->render(renderer);
+            if (cmp) renderer.beginComposite(cmp, CompositeMethod::AlphaMask, cmpTarget->pImpl->opacity);
 
-            renderer.delCompositor(cmp);
+            auto ret = smethod->render(renderer, ((opacity * this->opacity) / 255));
+
+            if (cmp) renderer.endComposite(cmp);
 
             return ret;
         }
@@ -250,9 +252,9 @@ namespace tvg
             return inst->update(renderer, transform, opacity, clips, flag);
         }
 
-        bool render(RenderMethod& renderer) override
+        bool render(RenderMethod& renderer, uint32_t opacity) override
         {
-            return inst->render(renderer);
+            return inst->render(renderer, opacity);
         }
 
         Paint* duplicate() override

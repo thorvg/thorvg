@@ -30,15 +30,6 @@
 static bool initEngine = false;
 static uint32_t rendererCnt = 0;
 
-struct SwCompositor : Compositor
-{
-    SwSurface surface;
-    SwCompositor* recover;
-    SwImage image;
-    SwBBox bbox;
-    bool valid;
-};
-
 
 struct SwTask : Task
 {
@@ -51,10 +42,14 @@ struct SwTask : Task
 
     void bounds(uint32_t* x, uint32_t* y, uint32_t* w, uint32_t* h)
     {
-        if (x) *x = bbox.min.x;
-        if (y) *y = bbox.min.y;
-        if (w) *w = bbox.max.x - bbox.min.x;
-        if (h) *h = bbox.max.y - bbox.min.y;
+        //Range over?
+        auto xx = bbox.min.x > 0 ? bbox.min.x : 0;
+        auto yy = bbox.min.y > 0 ? bbox.min.y : 0;
+
+        if (x) *x = xx;
+        if (y) *y = yy;
+        if (w) *w = bbox.max.x - xx;
+        if (h) *h = bbox.max.y - yy;
     }
 
     virtual bool dispose() = 0;
@@ -247,7 +242,6 @@ bool SwRenderer::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t 
     if (!surface) {
         surface = new SwSurface;
         if (!surface) return false;
-        mainSurface = surface;
     }
 
     surface->buffer = buffer;
@@ -272,7 +266,8 @@ bool SwRenderer::postRender()
 
     //Free Composite Caches
     for (auto comp = compositors.data; comp < (compositors.data + compositors.count); ++comp) {
-        free((*comp)->image.data);
+        free((*comp)->compositor->image.data);
+        delete((*comp)->compositor);
         delete(*comp);
     }
     compositors.reset();
@@ -281,7 +276,7 @@ bool SwRenderer::postRender()
 }
 
 
-bool SwRenderer::renderImage(RenderData data, TVG_UNUSED Compositor* cmp)
+bool SwRenderer::renderImage(RenderData data)
 {
     auto task = static_cast<SwImageTask*>(data);
     task->done();
@@ -292,7 +287,7 @@ bool SwRenderer::renderImage(RenderData data, TVG_UNUSED Compositor* cmp)
 }
 
 
-bool SwRenderer::renderShape(RenderData data, TVG_UNUSED Compositor* cmp)
+bool SwRenderer::renderShape(RenderData data)
 {
     auto task = static_cast<SwShapeTask*>(data);
     task->done();
@@ -300,18 +295,16 @@ bool SwRenderer::renderShape(RenderData data, TVG_UNUSED Compositor* cmp)
     if (task->opacity == 0) return true;
 
     uint32_t opacity;
-    Compositor* cmp2 = nullptr;
+    Compositor* cmp = nullptr;
 
-    //Do Composition
+    //Do Stroking Composition
     if (task->cmpStroking) {
         uint32_t x, y, w, h;
         task->bounds(&x, &y, &w, &h);
         opacity = 255;
-        //CompositeMethod::None is used for a default alpha blending
-        cmp2 = addCompositor(x, y, w, h);
-        cmp2->method = CompositeMethod::None;
-        cmp2->opacity = task->opacity;
-    //No Composition
+        cmp = target(x, y, w, h);
+        beginComposite(cmp, CompositeMethod::None, task->opacity);
+    //No Stroking Composition
     } else {
         opacity = task->opacity;
     }
@@ -331,13 +324,12 @@ bool SwRenderer::renderShape(RenderData data, TVG_UNUSED Compositor* cmp)
     a = static_cast<uint8_t>((opacity * (uint32_t) a) / 255);
     if (a > 0) rasterStroke(surface, &task->shape, r, g, b, a);
 
-    //Composition (Shape + Stroke) stage
-    if (task->cmpStroking) delCompositor(cmp2);
+    if (task->cmpStroking) endComposite(cmp);
 
     return true;
 }
 
-bool SwRenderer::renderRegion(RenderData data, uint32_t* x, uint32_t* y, uint32_t* w, uint32_t* h)
+bool SwRenderer::region(RenderData data, uint32_t* x, uint32_t* y, uint32_t* w, uint32_t* h)
 {
     static_cast<SwTask*>(data)->bounds(x, y, w, h);
 
@@ -345,13 +337,31 @@ bool SwRenderer::renderRegion(RenderData data, uint32_t* x, uint32_t* y, uint32_
 }
 
 
-Compositor* SwRenderer::addCompositor(uint32_t x, uint32_t y, uint32_t w, uint32_t h)
+bool SwRenderer::beginComposite(Compositor* cmp, CompositeMethod method, uint32_t opacity)
 {
-    SwCompositor* cmp = nullptr;
+    if (!cmp) return false;
+    auto p = static_cast<SwCompositor*>(cmp);
+
+    p->method = method;
+    p->opacity = opacity;
+
+    //Current Context?
+    if (p->method != CompositeMethod::None) {
+        surface = p->recoverSfc;
+        surface->compositor = p;
+    }
+
+    return true;
+}
+
+
+Compositor* SwRenderer::target(uint32_t x, uint32_t y, uint32_t w, uint32_t h)
+{
+    SwSurface* cmp = nullptr;
 
     //Use cached data
     for (auto p = compositors.data; p < (compositors.data + compositors.count); ++p) {
-        if ((*p)->valid) {
+        if ((*p)->compositor->valid) {
             cmp = *p;
             break;
         }
@@ -359,18 +369,20 @@ Compositor* SwRenderer::addCompositor(uint32_t x, uint32_t y, uint32_t w, uint32
 
     //New Composition
     if (!cmp) {
-        cmp = new SwCompositor;
-        if (!cmp) return nullptr;
+        cmp = new SwSurface;
+        if (!cmp) goto err;
+
+        //Inherits attributes from main surface
+        *cmp = *surface;
+
+        cmp->compositor = new SwCompositor;
+        if (!cmp->compositor) goto err;
+
         //SwImage, Optimize Me: Surface size from MainSurface(WxH) to Parameter W x H
-        cmp->image.data = (uint32_t*) malloc(sizeof(uint32_t) * surface->w * surface->h);
-        if (!cmp->image.data) {
-            delete(cmp);
-            return nullptr;
-        }
+        cmp->compositor->image.data = (uint32_t*) malloc(sizeof(uint32_t) * surface->w * surface->h);
+        if (!cmp->compositor->image.data) goto err;
         compositors.push(cmp);
     }
-
-    cmp->valid = false;
 
     //Boundary Check
     if (x + w > surface->w) w = (surface->w - x);
@@ -380,42 +392,44 @@ Compositor* SwRenderer::addCompositor(uint32_t x, uint32_t y, uint32_t w, uint32
     printf("SW_ENGINE: Using intermediate composition [Region: %d %d %d %d]\n", x, y, w, h);
 #endif
 
-    cmp->bbox.min.x = x;
-    cmp->bbox.min.y = y;
-    cmp->bbox.max.x = x + w;
-    cmp->bbox.max.y = y + h;
-    cmp->image.w = surface->w;
-    cmp->image.h = surface->h;
-
-    //Inherits attributes from main surface
-    cmp->surface.blender = surface->blender;
-    cmp->surface.stride = surface->w;
-    cmp->surface.cs = surface->cs;
+    cmp->compositor->recoverSfc = surface;
+    cmp->compositor->recoverCmp = surface->compositor;
+    cmp->compositor->valid = false;
+    cmp->compositor->bbox.min.x = x;
+    cmp->compositor->bbox.min.y = y;
+    cmp->compositor->bbox.max.x = x + w;
+    cmp->compositor->bbox.max.y = y + h;
+    cmp->compositor->image.w = surface->w;
+    cmp->compositor->image.h = surface->h;
 
     //We know partial clear region
-    cmp->surface.buffer = cmp->image.data + (cmp->surface.stride * y + x);
-    cmp->surface.w = w;
-    cmp->surface.h = h;
+    cmp->buffer = cmp->compositor->image.data + (cmp->stride * y + x);
+    cmp->w = w;
+    cmp->h = h;
 
-    rasterClear(&cmp->surface);
+    rasterClear(cmp);
 
     //Recover context
-    cmp->surface.buffer = cmp->image.data;
-    cmp->surface.w = cmp->image.w;
-    cmp->surface.h = cmp->image.h;
-
-    //Switch active compositor
-    cmp->recover = compositor;   //Backup current compositor
-    compositor = cmp;
+    cmp->buffer = cmp->compositor->image.data;
+    cmp->w = cmp->compositor->image.w;
+    cmp->h = cmp->compositor->image.h;
 
     //Switch render target
-    surface = &cmp->surface;
+    surface = cmp;
 
-    return cmp;
+    return cmp->compositor;
+
+err:
+    if (cmp) {
+        if (cmp->compositor) delete(cmp->compositor);
+        delete(cmp);
+    }
+
+    return nullptr;
 }
 
 
-bool SwRenderer::delCompositor(Compositor* cmp)
+bool SwRenderer::endComposite(Compositor* cmp)
 {
     if (!cmp) return false;
 
@@ -423,8 +437,8 @@ bool SwRenderer::delCompositor(Compositor* cmp)
     p->valid = true;
 
     //Recover Context
-    compositor = p->recover;
-    surface = compositor ? &compositor->surface : mainSurface;
+    surface = p->recoverSfc;
+    surface->compositor = p->recoverCmp;
 
     //Default is alpha blending
     if (p->method == CompositeMethod::None) {
