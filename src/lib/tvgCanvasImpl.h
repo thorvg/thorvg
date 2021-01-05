@@ -104,6 +104,15 @@ struct Canvas::Impl
 
         return Result::Success;
     }
+
+    Result invalidate()
+    {
+        for (auto paint = paints.data; paint < (paints.data + paints.count); ++paint) {
+            (*paint)->pImpl->flag = RenderUpdateFlag::All;
+        }
+
+        return Result::Success;
+    }
 };
 
 #endif /* _TVG_CANVAS_IMPL_H_ */

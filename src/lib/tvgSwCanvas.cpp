@@ -66,6 +66,7 @@ Result SwCanvas::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t 
     if (!renderer) return Result::MemoryCorruption;
 
     if (!renderer->target(buffer, stride, w, h, cs)) return Result::InvalidArguments;
+    Canvas::pImpl->invalidate();
 
     return Result::Success;
 #endif
