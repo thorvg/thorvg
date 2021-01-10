@@ -91,13 +91,13 @@ struct SwShapeTask : SwTask
             bool renderShape = (alpha > 0 || sdata->fill());
             if (renderShape || strokeAlpha) {
                 shapeReset(&shape);
-                if (!shapePrepare(&shape, sdata, tid, clip, transform, bbox)) goto end;
+                if (!shapePrepare(&shape, sdata, tid, clip, transform, bbox)) goto err;
                 if (renderShape) {
                     /* We assume that if stroke width is bigger than 2,
                        shape outline below stroke could be full covered by stroke drawing.
                        Thus it turns off antialising in that condition. */
                     auto antiAlias = (strokeAlpha == 255 && strokeWidth > 2) ? false : true;
-                    if (!shapeGenRle(&shape, sdata, clip, antiAlias, clips.count > 0 ? true : false)) goto end;
+                    if (!shapeGenRle(&shape, sdata, clip, antiAlias, clips.count > 0 ? true : false)) goto err;
                     ++addStroking;
                 }
             }
@@ -109,7 +109,7 @@ struct SwShapeTask : SwTask
             if (fill) {
                 auto ctable = (flags & RenderUpdateFlag::Gradient) ? true : false;
                 if (ctable) shapeResetFill(&shape);
-                if (!shapeGenFillColors(&shape, fill, transform, surface, opacity, ctable)) goto end;
+                if (!shapeGenFillColors(&shape, fill, transform, surface, opacity, ctable)) goto err;
                 ++addStroking;
             } else {
                 shapeDelFill(&shape);
@@ -120,7 +120,7 @@ struct SwShapeTask : SwTask
         if (flags & (RenderUpdateFlag::Stroke | RenderUpdateFlag::Transform)) {
             if (strokeAlpha > 0) {
                 shapeResetStroke(&shape, sdata, transform);
-                if (!shapeGenStrokeRle(&shape, sdata, tid, transform, clip, bbox)) goto end;
+                if (!shapeGenStrokeRle(&shape, sdata, tid, transform, clip, bbox)) goto err;
                 ++addStroking;
             } else {
                 shapeDelStroke(&shape);
@@ -141,6 +141,10 @@ struct SwShapeTask : SwTask
                 else if (clipper->rle) rleClipPath(shape.strokeRle, clipper->rle);
             }
         }
+        goto end;
+
+    err:
+        shapeReset(&shape);
     end:
         shapeDelOutline(&shape, tid);
         if (addStroking > 1 && opacity < 255) cmpStroking = true;
