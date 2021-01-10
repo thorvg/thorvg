@@ -69,11 +69,13 @@ static void _inverse(const Matrix* transform, Matrix* invM)
 
 static bool _identify(const Matrix* transform)
 {
-    if (!transform ||
-        transform->e11 != 1.0f || transform->e12 != 0.0f || transform->e13 != 0.0f ||
-        transform->e21 != 0.0f || transform->e22 != 1.0f || transform->e23 != 0.0f ||
-        transform->e31 != 0.0f || transform->e32 != 0.0f || transform->e33 != 1.0f)
-        return false;
+    if (transform) {
+        if (transform->e11 != 1.0f || transform->e12 != 0.0f || transform->e13 != 0.0f ||
+            transform->e21 != 0.0f || transform->e22 != 1.0f || transform->e23 != 0.0f ||
+            transform->e31 != 0.0f || transform->e32 != 0.0f || transform->e33 != 1.0f) {
+            return false;
+        }
+    }
 
     return true;
 }
@@ -284,6 +286,20 @@ static bool _rasterTranslucentImage(SwSurface* surface, uint32_t *img, uint32_t 
             if (rX >= w || rY >= h) continue;
             auto src = ALPHA_BLEND(img[rX + (rY * w)], opacity);    //TODO: need to use image's stride
             *dst = src + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(src));
+        }
+    }
+    return true;
+}
+
+
+static bool _rasterTranslucentImage(SwSurface* surface, uint32_t *img, uint32_t w, uint32_t h, uint32_t opacity, const SwBBox& region)
+{
+    for (auto y = region.min.y; y < region.max.y; ++y) {
+        auto dst = &surface->buffer[y * surface->stride + region.min.x];
+        auto src = img + region.min.x + (y * w);    //TODO: need to use image's stride
+        for (auto x = region.min.x; x < region.max.x; x++, dst++, src++) {
+            auto p = ALPHA_BLEND(*src, opacity);
+            *dst = p + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(p));
         }
     }
     return true;
@@ -586,7 +602,7 @@ bool rasterClear(SwSurface* surface)
 }
 
 
-bool rasterImage(SwSurface* surface, SwImage* image, const Matrix* transform, SwBBox& bbox, uint8_t opacity)
+bool rasterImage(SwSurface* surface, SwImage* image, const Matrix* transform, SwBBox& bbox, uint32_t opacity)
 {
     Matrix invTransform;
 
@@ -594,17 +610,29 @@ bool rasterImage(SwSurface* surface, SwImage* image, const Matrix* transform, Sw
     else invTransform = {1, 0, 0, 0, 1, 0, 0, 0, 1};
 
     if (image->rle) {
-        if (opacity < 255) return _rasterTranslucentImageRle(surface, image->rle, image->data, image->w, image->h, opacity, &invTransform);
-        return _rasterImageRle(surface, image->rle, image->data, image->w, image->h, &invTransform);
+        //Fast track
+        if (_identify(transform)) {
+            //OPTIMIZE ME: Support non transformed image. Only shifted image can use these routines.
+#ifdef THORVG_LOG_ENABLED
+            printf("SW_ENGINE: implementation is missing!\n");
+#endif
+            //if (opacity < 255) return _rasterTranslucentImageRle(surface, image->rle, image->data, image->w, image->h, opacity);
+            //return _rasterImageRle(surface, image->rle, image->data, image->w, image->h);
+            return false;
+        } else {
+            if (opacity < 255) return _rasterTranslucentImageRle(surface, image->rle, image->data, image->w, image->h, opacity, &invTransform);
+            return _rasterImageRle(surface, image->rle, image->data, image->w, image->h, &invTransform);
+        }
     }
     else {
-        // Fast track
+        //Fast track
         if (_identify(transform)) {
-            return _rasterImage(surface, image->data, image->w, image->h, bbox);
-        }
-        else {
+            //OPTIMIZE ME: Support non transformed image. Only shifted image can use these routines.
+            if (opacity < 255) return _rasterTranslucentImage(surface, image->data, image->w, image->h, opacity, bbox);
+            else return _rasterImage(surface, image->data, image->w, image->h, bbox);
+        } else {
             if (opacity < 255) return _rasterTranslucentImage(surface, image->data, image->w, image->h, opacity, bbox, &invTransform);
-            return _rasterImage(surface, image->data, image->w, image->h, bbox, &invTransform);
+            else return _rasterImage(surface, image->data, image->w, image->h, bbox, &invTransform);
         }
     }
 }
