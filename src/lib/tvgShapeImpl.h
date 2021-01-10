@@ -218,7 +218,7 @@ struct Shape::Impl
         return renderer.dispose(rdata);
     }
 
-    bool render(RenderMethod& renderer, TVG_UNUSED uint32_t opacity)
+    bool render(RenderMethod& renderer)
     {
         return renderer.renderShape(rdata);
     }

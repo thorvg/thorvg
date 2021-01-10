@@ -31,6 +31,7 @@
 struct Scene::Impl
 {
     Array<Paint*> paints;
+    uint8_t opacity;            //for composition
 
     bool dispose(RenderMethod& renderer)
     {
@@ -47,6 +48,7 @@ struct Scene::Impl
     {
         /* Overriding opacity value. If this scene is half-translucent,
            It must do intermeidate composition with that opacity value. */
+        this->opacity = static_cast<uint8_t>(opacity);
         if (opacity > 0) opacity = 255;
 
         for (auto paint = paints.data; paint < (paints.data + paints.count); ++paint) {
@@ -58,7 +60,7 @@ struct Scene::Impl
         return nullptr;
     }
 
-    bool render(RenderMethod& renderer, uint32_t opacity)
+    bool render(RenderMethod& renderer)
     {
         Compositor* cmp = nullptr;
 
@@ -71,7 +73,7 @@ struct Scene::Impl
         }
 
         for (auto paint = paints.data; paint < (paints.data + paints.count); ++paint) {
-            if (!(*paint)->pImpl->render(renderer, opacity)) return false;
+            if (!(*paint)->pImpl->render(renderer)) return false;
         }
 
         if (cmp) renderer.endComposite(cmp);
