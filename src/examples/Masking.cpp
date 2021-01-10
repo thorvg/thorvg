@@ -26,6 +26,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     //SVG
     auto svg = tvg::Picture::gen();
     if (svg->load(EXAMPLE_DIR"/cartman.svg") != tvg::Result::Success) return;
+    svg->opacity(100);
     svg->scale(3);
     svg->translate(50, 400);
 
@@ -35,53 +36,59 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     mask2->appendRect(150, 500, 200, 200, 30, 30);
     mask2->fill(255, 255, 255, 255);
     svg->composite(move(mask2), tvg::CompositeMethod::AlphaMask);
-    canvas->push(move(svg));
+    if (canvas->push(move(svg)) != tvg::Result::Success) return;
 
     //Star
+    auto star = tvg::Shape::gen();
+    star->fill(80, 80, 80, 255);
+    star->moveTo(599, 34);
+    star->lineTo(653, 143);
+    star->lineTo(774, 160);
+    star->lineTo(687, 244);
+    star->lineTo(707, 365);
+    star->lineTo(599, 309);
+    star->lineTo(497, 365);
+    star->lineTo(512, 245);
+    star->lineTo(426, 161);
+    star->lineTo(546, 143);
+    star->close();
+    star->stroke(10);
+    star->stroke(255, 255, 255, 255);
 
-#if 0
-    //Appends Paths
-    shape->moveTo(199, 34);
-    shape->lineTo(253, 143);
-    shape->lineTo(374, 160);
-    shape->lineTo(287, 244);
-    shape->lineTo(307, 365);
-    shape->lineTo(199, 309);
-    shape->lineTo(97, 365);
-    shape->lineTo(112, 245);
-    shape->lineTo(26, 161);
-    shape->lineTo(146, 143);
-    shape->close();
-#endif
+    //Mask3
+    auto mask3 = tvg::Shape::gen();
+    mask3->appendCircle(600, 200, 125, 125);
+    mask3->fill(255, 255, 255, 255);
+    star->composite(move(mask3), tvg::CompositeMethod::AlphaMask);
+    if (canvas->push(move(star)) != tvg::Result::Success) return;
 
-    //shape->opacity(127);
-
-//    scene->push(move(shape));
-
-#if 0
-    scene->composite(move(mask2), tvg::CompositeMethod::AlphaMask);
-    if (canvas->push(move(scene)) != tvg::Result::Success) return;
-
-
+    //Image
     ifstream file(EXAMPLE_DIR"/rawimage_200x300.raw");
     if (!file.is_open()) return;
     data = (uint32_t*) malloc(sizeof(uint32_t) * (200 * 300));
     file.read(reinterpret_cast<char *>(data), sizeof (data) * 200 * 300);
     file.close();
 
-    //Mask Target 1
-    auto picture = tvg::Picture::gen();
-    if (picture->load(data, 200, 300, true) != tvg::Result::Success) return;
-    picture->translate(500, 400);
+    auto image = tvg::Picture::gen();
+    if (image->load(data, 200, 300, true) != tvg::Result::Success) return;
+    image->translate(500, 400);
 
-    //Alpha Mask
-    auto mask = tvg::Shape::gen();
-    mask->appendCircle(500, 500, 125, 125);
-    mask->fill(255, 255, 255, 100);
-
-    picture->composite(move(mask), tvg::CompositeMethod::AlphaMask);
-    if (canvas->push(move(picture)) != tvg::Result::Success) return;
-#endif
+    //Mask4
+    auto mask4 = tvg::Shape::gen();
+    mask4->moveTo(599, 384);
+    mask4->lineTo(653, 493);
+    mask4->lineTo(774, 510);
+    mask4->lineTo(687, 594);
+    mask4->lineTo(707, 715);
+    mask4->lineTo(599, 659);
+    mask4->lineTo(497, 715);
+    mask4->lineTo(512, 595);
+    mask4->lineTo(426, 511);
+    mask4->lineTo(546, 493);
+    mask4->close();
+    mask4->fill(255, 255, 255, 70);
+    image->composite(move(mask4), tvg::CompositeMethod::AlphaMask);
+    if (canvas->push(move(image)) != tvg::Result::Success) return;
 }
 
 
