@@ -101,6 +101,11 @@ static bool _translucent(SwSurface* surface, uint8_t a)
     return true;
 }
 
+
+/************************************************************************/
+/* Rect                                                                 */
+/************************************************************************/
+
 static bool _translucentRect(SwSurface* surface, const SwBBox& region, uint32_t color)
 {
     auto buffer = surface->buffer + (region.min.y * surface->stride) + region.min.x;
@@ -129,17 +134,13 @@ static bool _translucentRectAlphaMask(SwSurface* surface, const SwBBox& region, 
 #endif
 
     auto cbuffer = surface->compositor->image.data + (region.min.y * surface->stride) + region.min.x;   //compositor buffer
-    auto tbuffer = static_cast<uint32_t*>(alloca(sizeof(uint32_t) * w));                                //temp buffer for intermediate processing
 
     for (uint32_t y = 0; y < h; ++y) {
         auto dst = &buffer[y * surface->stride];
         auto cmp = &cbuffer[y * surface->stride];
-        auto tmp = tbuffer;
-        //Composition
         for (uint32_t x = 0; x < w; ++x) {
-            *tmp = ALPHA_BLEND(color, surface->blender.alpha(*cmp));
-            dst[x] = *tmp + ALPHA_BLEND(dst[x], 255 - surface->blender.alpha(*tmp));
-            ++tmp;
+            auto tmp = ALPHA_BLEND(color, surface->blender.alpha(*cmp));
+            dst[x] = tmp + ALPHA_BLEND(dst[x], 255 - surface->blender.alpha(tmp));
             ++cmp;
         }
     }
@@ -169,6 +170,11 @@ static bool _rasterSolidRect(SwSurface* surface, const SwBBox& region, uint32_t 
     }
     return true;
 }
+
+
+/************************************************************************/
+/* Rle                                                                  */
+/************************************************************************/
 
 
 static bool _translucentRle(SwSurface* surface, SwRleData* rle, uint32_t color)
@@ -231,6 +237,34 @@ static bool _rasterTranslucentRle(SwSurface* surface, SwRleData* rle, uint32_t c
 }
 
 
+static bool _rasterSolidRle(SwSurface* surface, SwRleData* rle, uint32_t color)
+{
+    if (!rle) return false;
+
+    auto span = rle->spans;
+
+    for (uint32_t i = 0; i < rle->size; ++i) {
+        if (span->coverage == 255) {
+            rasterRGBA32(surface->buffer + span->y * surface->stride, color, span->x, span->len);
+        } else {
+            auto dst = &surface->buffer[span->y * surface->stride + span->x];
+            auto src = ALPHA_BLEND(color, span->coverage);
+            auto ialpha = 255 - span->coverage;
+            for (uint32_t i = 0; i < span->len; ++i) {
+                dst[i] = src + ALPHA_BLEND(dst[i], ialpha);
+            }
+        }
+        ++span;
+    }
+    return true;
+}
+
+
+/************************************************************************/
+/* Image                                                                */
+/************************************************************************/
+
+
 static bool _rasterTranslucentImageRle(SwSurface* surface, SwRleData* rle, uint32_t *img, uint32_t w, uint32_t h, uint32_t opacity, const Matrix* invTransform)
 {
     auto span = rle->spans;
@@ -274,7 +308,7 @@ static bool _rasterImageRle(SwSurface* surface, SwRleData* rle, uint32_t *img, u
 }
 
 
-static bool _rasterTranslucentImage(SwSurface* surface, uint32_t *img, uint32_t w, uint32_t h, uint32_t opacity, const SwBBox& region, const Matrix* invTransform)
+static bool _translucentImage(SwSurface* surface, uint32_t *img, uint32_t w, uint32_t h, uint32_t opacity, const SwBBox& region, const Matrix* invTransform)
 {
     for (auto y = region.min.y; y < region.max.y; ++y) {
         auto dst = &surface->buffer[y * surface->stride + region.min.x];
@@ -292,17 +326,87 @@ static bool _rasterTranslucentImage(SwSurface* surface, uint32_t *img, uint32_t 
 }
 
 
-static bool _rasterTranslucentImage(SwSurface* surface, uint32_t *img, uint32_t w, uint32_t h, uint32_t opacity, const SwBBox& region)
+static bool _translucentImageAlphaMask(SwSurface* surface, uint32_t *img, uint32_t w, uint32_t h, uint32_t opacity, const SwBBox& region, const Matrix* invTransform)
+{
+#ifdef THORVG_LOG_ENABLED
+    printf("SW_ENGINE: Transformed Image Alpha Mask Composition\n");
+#endif
+    for (auto y = region.min.y; y < region.max.y; ++y) {
+        auto dst = &surface->buffer[y * surface->stride + region.min.x];
+        auto cmp = &surface->compositor->image.data[y * surface->stride + region.min.x];
+        float ey1 = y * invTransform->e12 + invTransform->e13;
+        float ey2 = y * invTransform->e22 + invTransform->e23;
+        for (auto x = region.min.x; x < region.max.x; ++x, ++dst, ++cmp) {
+            auto rX = static_cast<uint32_t>(roundf(x * invTransform->e11 + ey1));
+            auto rY = static_cast<uint32_t>(roundf(x * invTransform->e21 + ey2));
+            if (rX >= w || rY >= h) continue;
+            auto tmp = ALPHA_BLEND(img[rX + (rY * w)], ALPHA_MULTIPLY(opacity, surface->blender.alpha(*cmp)));  //TODO: need to use image's stride
+            *dst = tmp + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(tmp));
+        }
+    }
+    return true;
+}
+
+
+static bool _rasterTranslucentImage(SwSurface* surface, uint32_t *img, uint32_t w, uint32_t h, uint32_t opacity, const SwBBox& region, const Matrix* invTransform)
+{
+    if (surface->compositor) {
+        if (surface->compositor->method == CompositeMethod::AlphaMask) {
+            return _translucentImageAlphaMask(surface, img, w, h, opacity, region, invTransform);
+        }
+    }
+    return _translucentImage(surface, img, w, h, opacity, region, invTransform);
+}
+
+
+static bool _translucentImage(SwSurface* surface, uint32_t *img, uint32_t w, uint32_t h, uint32_t opacity, const SwBBox& region)
 {
     for (auto y = region.min.y; y < region.max.y; ++y) {
         auto dst = &surface->buffer[y * surface->stride + region.min.x];
         auto src = img + region.min.x + (y * w);    //TODO: need to use image's stride
-        for (auto x = region.min.x; x < region.max.x; x++, dst++, src++) {
+        for (auto x = region.min.x; x < region.max.x; ++x, ++dst, ++src) {
             auto p = ALPHA_BLEND(*src, opacity);
             *dst = p + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(p));
         }
     }
     return true;
+}
+
+
+static bool _translucentImageAlphaMask(SwSurface* surface, uint32_t *img, uint32_t w, uint32_t h, uint32_t opacity, const SwBBox& region)
+{
+    auto buffer = surface->buffer + (region.min.y * surface->stride) + region.min.x;
+    auto h2 = static_cast<uint32_t>(region.max.y - region.min.y);
+    auto w2 = static_cast<uint32_t>(region.max.x - region.min.x);
+
+#ifdef THORVG_LOG_ENABLED
+    printf("SW_ENGINE: Image Alpha Mask Composition\n");
+#endif
+
+    auto sbuffer = img + (region.min.y * w) + region.min.x;
+    auto cbuffer = surface->compositor->image.data + (region.min.y * surface->stride) + region.min.x;   //compositor buffer
+
+    for (uint32_t y = 0; y < h2; ++y) {
+        auto dst = &buffer[y * surface->stride];
+        auto cmp = &cbuffer[y * surface->stride];
+        auto src = &sbuffer[y * w];   //TODO: need to use image's stride
+        for (uint32_t x = 0; x < w2; ++x, ++dst, ++src, ++cmp) {
+            auto tmp = ALPHA_BLEND(*src, ALPHA_MULTIPLY(opacity, surface->blender.alpha(*cmp)));
+            *dst = tmp + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(tmp));
+        }
+    }
+    return true;
+}
+
+
+static bool _rasterTranslucentImage(SwSurface* surface, uint32_t *img, uint32_t w, uint32_t h, uint32_t opacity, const SwBBox& region)
+{
+    if (surface->compositor) {
+        if (surface->compositor->method == CompositeMethod::AlphaMask) {
+            return _translucentImageAlphaMask(surface, img, w, h, opacity, region);
+        }
+    }
+    return _translucentImage(surface, img, w, h, opacity, region);
 }
 
 
@@ -337,28 +441,9 @@ static bool _rasterImage(SwSurface* surface, uint32_t *img, uint32_t w, uint32_t
 }
 
 
-static bool _rasterSolidRle(SwSurface* surface, SwRleData* rle, uint32_t color)
-{
-    if (!rle) return false;
-
-    auto span = rle->spans;
-
-    for (uint32_t i = 0; i < rle->size; ++i) {
-        if (span->coverage == 255) {
-            rasterRGBA32(surface->buffer + span->y * surface->stride, color, span->x, span->len);
-        } else {
-            auto dst = &surface->buffer[span->y * surface->stride + span->x];
-            auto src = ALPHA_BLEND(color, span->coverage);
-            auto ialpha = 255 - span->coverage;
-            for (uint32_t i = 0; i < span->len; ++i) {
-                dst[i] = src + ALPHA_BLEND(dst[i], ialpha);
-            }
-        }
-        ++span;
-    }
-    return true;
-}
-
+/************************************************************************/
+/* Gradient                                                             */
+/************************************************************************/
 
 static bool _rasterLinearGradientRect(SwSurface* surface, const SwBBox& region, const SwFill* fill)
 {
@@ -609,6 +694,8 @@ bool rasterImage(SwSurface* surface, SwImage* image, const Matrix* transform, Sw
     if (transform) _inverse(transform, &invTransform);
     else invTransform = {1, 0, 0, 0, 1, 0, 0, 0, 1};
 
+    auto translucent = _translucent(surface, opacity);
+
     if (image->rle) {
         //Fast track
         if (_identify(transform)) {
@@ -616,11 +703,11 @@ bool rasterImage(SwSurface* surface, SwImage* image, const Matrix* transform, Sw
 #ifdef THORVG_LOG_ENABLED
             printf("SW_ENGINE: implementation is missing!\n");
 #endif
-            //if (opacity < 255) return _rasterTranslucentImageRle(surface, image->rle, image->data, image->w, image->h, opacity);
+            //if (translucent) return _rasterTranslucentImageRle(surface, image->rle, image->data, image->w, image->h, opacity);
             //return _rasterImageRle(surface, image->rle, image->data, image->w, image->h);
             return false;
         } else {
-            if (opacity < 255) return _rasterTranslucentImageRle(surface, image->rle, image->data, image->w, image->h, opacity, &invTransform);
+            if (translucent) return _rasterTranslucentImageRle(surface, image->rle, image->data, image->w, image->h, opacity, &invTransform);
             return _rasterImageRle(surface, image->rle, image->data, image->w, image->h, &invTransform);
         }
     }
@@ -628,10 +715,10 @@ bool rasterImage(SwSurface* surface, SwImage* image, const Matrix* transform, Sw
         //Fast track
         if (_identify(transform)) {
             //OPTIMIZE ME: Support non transformed image. Only shifted image can use these routines.
-            if (opacity < 255) return _rasterTranslucentImage(surface, image->data, image->w, image->h, opacity, bbox);
+            if (translucent) return _rasterTranslucentImage(surface, image->data, image->w, image->h, opacity, bbox);
             else return _rasterImage(surface, image->data, image->w, image->h, bbox);
         } else {
-            if (opacity < 255) return _rasterTranslucentImage(surface, image->data, image->w, image->h, opacity, bbox, &invTransform);
+            if (translucent) return _rasterTranslucentImage(surface, image->data, image->w, image->h, opacity, bbox, &invTransform);
             else return _rasterImage(surface, image->data, image->w, image->h, bbox, &invTransform);
         }
     }
