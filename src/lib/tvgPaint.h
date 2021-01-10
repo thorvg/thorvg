@@ -198,9 +198,10 @@ namespace tvg
         Paint* duplicate()
         {
             auto ret = smethod->duplicate();
+            if (!ret) return nullptr;
 
             //duplicate Transform
-            if (ret && rTransform) {
+            if (rTransform) {
                 ret->pImpl->rTransform = new RenderTransform();
                 if (ret->pImpl->rTransform) {
                     *ret->pImpl->rTransform = *rTransform;
@@ -209,6 +210,10 @@ namespace tvg
             }
 
             ret->pImpl->opacity = opacity;
+
+            if (cmpTarget) ret->pImpl->cmpTarget = cmpTarget->duplicate();
+
+            ret->pImpl->cmpMethod = cmpMethod;
 
             return ret;
         }
