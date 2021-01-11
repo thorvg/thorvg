@@ -108,7 +108,7 @@ struct Canvas::Impl
     Result invalidate()
     {
         for (auto paint = paints.data; paint < (paints.data + paints.count); ++paint) {
-            (*paint)->pImpl->flag = RenderUpdateFlag::All;
+            (*paint)->pImpl->flag = RenderUpdateFlag::All ^ RenderUpdateFlag::Transform;
         }
 
         return Result::Success;
