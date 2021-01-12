@@ -1,15 +1,20 @@
-# This is a basic workflow that is manually triggered
+name: PR_check
 
-name: Commit_CPP_Style_Check
+# Controls when the action will run. Workflow runs when manually triggered using the UI
+# or API.
 on:
   pull_request:
     branches:
-    - master
-     
-  
-jobs:      
-  - name: C/C++ code linter (clang-tidy, clang-format, and cppcheck)
-    # You may pin to the exact commit or the version.
-    # uses: ArtificialAmateur/cpp-linter-action@6281cc1ef3abe25ee492f19f7d8b184ca873db34
-    uses: ArtificialAmateur/cpp-linter-action@0.01
-    
+      - master
+
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "greet"
+  build:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    steps:      
+      - name: C++ code linter (clang-tidy and cppcheck)
+        uses: smay1613/cpp-linter-action@0.0.2
