@@ -1,0 +1,15 @@
+# This is a basic workflow that is manually triggered
+
+name: Commit_CPP_Style_Check
+on:
+  pull_request:
+    branches:
+    - master
+     
+  
+jobs:      
+  - name: C/C++ code linter (clang-tidy, clang-format, and cppcheck)
+    # You may pin to the exact commit or the version.
+    # uses: ArtificialAmateur/cpp-linter-action@6281cc1ef3abe25ee492f19f7d8b184ca873db34
+    uses: ArtificialAmateur/cpp-linter-action@0.01:
+    
