@@ -12,7 +12,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     if (!canvas) return;
 
     //Solid Rectangle
-    auto shape = tvg::Shape::gen();
+  auto shape = tvg::Shape::gen();
     shape->appendRect(0, 0, 400, 400, 0, 0);
     shape->fill(0, 0, 255, 255);
 
