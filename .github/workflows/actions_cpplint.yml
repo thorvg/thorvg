@@ -1,0 +1,33 @@
+name: PullRequest_Checker
+
+on:
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: true
+
+    - name: Install Packages
+      run: |
+        sudo apt-get update
+        sudo apt-get install curl
+        sudo apt-get install cmake jq clang
+        sudo apt-get install software-properties-common
+        sudo apt-get install python3-pip
+        pip3 install wheel --user
+        pip3 install cpplint --user
+
+    - name: Run Cpplint Script
+      run: |
+        export PATH=$PATH:~/.local/bin/
+        chmod +x "${GITHUB_WORKSPACE}/.github/workflows/cpp_lint_check.sh"
+        "${GITHUB_WORKSPACE}/.github/workflows/cpp_lint_check.sh"
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
