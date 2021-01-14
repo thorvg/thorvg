@@ -230,6 +230,7 @@ public:
     //Stroke
     Result stroke(float width) noexcept;
     Result stroke(uint8_t r, uint8_t g, uint8_t b, uint8_t a) noexcept;
+    Result stroke(std::unique_ptr<Fill> f) noexcept;
     Result stroke(const float* dashPattern, uint32_t cnt) noexcept;
     Result stroke(StrokeCap cap) noexcept;
     Result stroke(StrokeJoin join) noexcept;
@@ -248,6 +249,7 @@ public:
 
     float strokeWidth() const noexcept;
     Result strokeColor(uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a) const noexcept;
+    const Fill* strokeFill() const noexcept;
     uint32_t strokeDash(const float** dashPattern) const noexcept;
     StrokeCap strokeCap() const noexcept;
     StrokeJoin strokeJoin() const noexcept;

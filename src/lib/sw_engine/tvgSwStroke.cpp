@@ -23,7 +23,6 @@
 #include <math.h>
 #include "tvgSwCommon.h"
 
-
 /************************************************************************/
 /* Internal Class Implementation                                        */
 /************************************************************************/
@@ -820,6 +819,9 @@ void strokeFree(SwStroke* stroke)
     if (stroke->borders[0].tags) free(stroke->borders[0].tags);
     if (stroke->borders[1].pts) free(stroke->borders[1].pts);
     if (stroke->borders[1].tags) free(stroke->borders[1].tags);
+
+    fillFree(stroke->fill);
+    stroke->fill = nullptr;
 
     free(stroke);
 }

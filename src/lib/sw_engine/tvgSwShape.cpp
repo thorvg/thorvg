@@ -649,6 +649,12 @@ bool shapeGenFillColors(SwShape* shape, const Fill* fill, const Matrix* transfor
 }
 
 
+bool shapeGenStrokeFillColors(SwShape* shape, const Fill* fill, const Matrix* transform, SwSurface* surface, uint32_t opacity, bool ctable)
+{
+    return fillGenColorTable(shape->stroke->fill, fill, transform, surface, opacity, ctable);
+}
+
+
 void shapeResetFill(SwShape* shape)
 {
     if (!shape->fill) {
@@ -659,9 +665,28 @@ void shapeResetFill(SwShape* shape)
 }
 
 
+void shapeResetStrokeFill(SwShape* shape)
+{
+    if (!shape->stroke->fill) {
+        shape->stroke->fill = static_cast<SwFill*>(calloc(1, sizeof(SwFill)));
+        if (!shape->stroke->fill) return;
+    }
+    fillReset(shape->stroke->fill);
+}
+
+
 void shapeDelFill(SwShape* shape)
 {
     if (!shape->fill) return;
     fillFree(shape->fill);
     shape->fill = nullptr;
 }
+
+
+void shapeDelStrokeFill(SwShape* shape)
+{
+    if (!shape->stroke->fill) return;
+    fillFree(shape->stroke->fill);
+    shape->stroke->fill = nullptr;
+}
+

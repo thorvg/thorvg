@@ -335,6 +335,20 @@ Result Shape::strokeColor(uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a) const 
 }
 
 
+Result Shape::stroke(unique_ptr<Fill> f) noexcept
+{
+    return pImpl->strokeFill(move(f));
+}
+
+
+const Fill* Shape::strokeFill() const noexcept
+{
+    if (!pImpl->stroke) return nullptr;
+
+    return pImpl->stroke->fill;
+}
+
+
 Result Shape::stroke(const float* dashPattern, uint32_t cnt) noexcept
 {
     if (cnt < 2 || !dashPattern) return Result::InvalidArguments;

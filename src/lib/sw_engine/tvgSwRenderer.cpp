@@ -76,6 +76,7 @@ struct SwShapeTask : SwTask
         if (HALF_STROKE(strokeWidth) > 0) {
             sdata->strokeColor(nullptr, nullptr, nullptr, &strokeAlpha);
         }
+        bool validStroke = (strokeAlpha > 0) || sdata->strokeFill();
 
         SwSize clip = {static_cast<SwCoord>(surface->w), static_cast<SwCoord>(surface->h)};
 
@@ -89,7 +90,7 @@ struct SwShapeTask : SwTask
             sdata->fillColor(nullptr, nullptr, nullptr, &alpha);
             alpha = static_cast<uint8_t>(static_cast<uint32_t>(alpha) * opacity / 255);
             bool renderShape = (alpha > 0 || sdata->fill());
-            if (renderShape || strokeAlpha) {
+            if (renderShape || validStroke) {
                 shapeReset(&shape);
                 if (!shapePrepare(&shape, sdata, tid, clip, transform, bbox)) goto err;
                 if (renderShape) {
@@ -118,10 +119,18 @@ struct SwShapeTask : SwTask
 
         //Stroke
         if (flags & (RenderUpdateFlag::Stroke | RenderUpdateFlag::Transform)) {
-            if (strokeAlpha > 0) {
+            if (validStroke) {
                 shapeResetStroke(&shape, sdata, transform);
                 if (!shapeGenStrokeRle(&shape, sdata, tid, transform, clip, bbox)) goto err;
                 ++addStroking;
+
+                if (auto fill = sdata->strokeFill()) {
+                    auto ctable = (flags & RenderUpdateFlag::GradientStroke) ? true : false;
+                    if (ctable) shapeResetStrokeFill(&shape);
+                    if (!shapeGenStrokeFillColors(&shape, fill, transform, surface, opacity, ctable)) goto err;
+                } else {
+                    shapeDelStrokeFill(&shape);
+                }
             } else {
                 shapeDelStroke(&shape);
             }
@@ -318,15 +327,19 @@ bool SwRenderer::renderShape(RenderData data)
 
     if (auto fill = task->sdata->fill()) {
         rasterGradientShape(surface, &task->shape, fill->id());
-    } else{
+    } else {
         task->sdata->fillColor(&r, &g, &b, &a);
         a = static_cast<uint8_t>((opacity * (uint32_t) a) / 255);
         if (a > 0) rasterSolidShape(surface, &task->shape, r, g, b, a);
     }
 
-    task->sdata->strokeColor(&r, &g, &b, &a);
-    a = static_cast<uint8_t>((opacity * (uint32_t) a) / 255);
-    if (a > 0) rasterStroke(surface, &task->shape, r, g, b, a);
+    if (auto strokeFill = task->sdata->strokeFill()) {
+        rasterGradientStroke(surface, &task->shape, strokeFill->id());
+    } else {
+        task->sdata->strokeColor(&r, &g, &b, &a);
+        a = static_cast<uint8_t>((opacity * (uint32_t) a) / 255);
+        if (a > 0) rasterStroke(surface, &task->shape, r, g, b, a);
+    }
 
     if (task->cmpStroking) endComposite(cmp);
 

@@ -127,6 +127,32 @@ struct SwBBox
     SwPoint min, max;
 };
 
+struct SwFill
+{
+    struct SwLinear {
+        float dx, dy;
+        float len;
+        float offset;
+    };
+
+    struct SwRadial {
+        float cx, cy;
+        float a;
+        float inv2a;
+    };
+
+    union {
+        SwLinear linear;
+        SwRadial radial;
+    };
+
+    uint32_t* ctable;
+    FillSpread spread;
+    float sx, sy;
+
+    bool translucent;
+};
+
 struct SwStrokeBorder
 {
     uint32_t ptsCnt;
@@ -152,6 +178,7 @@ struct SwStroke
     StrokeCap cap;
     StrokeJoin join;
     StrokeJoin joinSaved;
+    SwFill* fill = nullptr;
 
     SwStrokeBorder borders[2];
 
@@ -172,32 +199,6 @@ struct SwDashStroke
     float* pattern;
     uint32_t cnt;
     bool curOpGap;
-};
-
-struct SwFill
-{
-    struct SwLinear {
-        float dx, dy;
-        float len;
-        float offset;
-    };
-
-    struct SwRadial {
-        float cx, cy;
-        float a;
-        float inv2a;
-    };
-
-    union {
-        SwLinear linear;
-        SwRadial radial;
-    };
-
-    uint32_t* ctable;
-    FillSpread spread;
-    float sx, sy;
-
-    bool translucent;
 };
 
 struct SwShape
@@ -297,8 +298,11 @@ bool shapeGenStrokeRle(SwShape* shape, const Shape* sdata, unsigned tid, const M
 void shapeFree(SwShape* shape);
 void shapeDelStroke(SwShape* shape);
 bool shapeGenFillColors(SwShape* shape, const Fill* fill, const Matrix* transform, SwSurface* surface, uint32_t opacity, bool ctable);
+bool shapeGenStrokeFillColors(SwShape* shape, const Fill* fill, const Matrix* transform, SwSurface* surface, uint32_t opacity, bool ctable);
 void shapeResetFill(SwShape* shape);
+void shapeResetStrokeFill(SwShape* shape);
 void shapeDelFill(SwShape* shape);
+void shapeDelStrokeFill(SwShape* shape);
 
 void strokeReset(SwStroke* stroke, const Shape* shape, const Matrix* transform);
 bool strokeParseOutline(SwStroke* stroke, const SwOutline& outline);
@@ -339,6 +343,7 @@ bool rasterGradientShape(SwSurface* surface, SwShape* shape, unsigned id);
 bool rasterSolidShape(SwSurface* surface, SwShape* shape, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
 bool rasterImage(SwSurface* surface, SwImage* image, const Matrix* transform, SwBBox& bbox, uint32_t opacity);
 bool rasterStroke(SwSurface* surface, SwShape* shape, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
+bool rasterGradientStroke(SwSurface* surface, SwShape* shape, unsigned id);
 bool rasterClear(SwSurface* surface);
 
 static inline void rasterRGBA32(uint32_t *dst, uint32_t val, uint32_t offset, int32_t len)
