@@ -32,6 +32,7 @@ source_file = [
     'Update.cpp',
     'ClipPath.cpp',
     'Masking.cpp',
+    'InvMasking.cpp',
 ]
 
 foreach current_file : source_file
