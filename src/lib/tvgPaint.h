@@ -186,7 +186,7 @@ namespace tvg
                 cmpTarget->pImpl->render(renderer);
             }
 
-            if (cmp) renderer.beginComposite(cmp, CompositeMethod::AlphaMask, cmpTarget->pImpl->opacity);
+            if (cmp) renderer.beginComposite(cmp, cmpMethod, cmpTarget->pImpl->opacity);
 
             auto ret = smethod->render(renderer);
 
