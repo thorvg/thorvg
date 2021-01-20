@@ -46,17 +46,17 @@ struct Picture::Impl
 
     bool dispose(RenderMethod& renderer)
     {
+	bool ret = true;
         if (paint) {
-            paint->pImpl->dispose(renderer);
+            ret = paint->pImpl->dispose(renderer);
             delete(paint);
-            return true;
+	    paint = nullptr;
         }
         else if (pixels) {
-            auto ret =  renderer.dispose(rdata);
+            ret =  renderer.dispose(rdata);
             rdata = nullptr;
-            return ret;
         }
-        return true;
+        return ret;
     }
 
     void resize()
