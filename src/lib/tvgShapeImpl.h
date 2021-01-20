@@ -215,7 +215,9 @@ struct Shape::Impl
 
     bool dispose(RenderMethod& renderer)
     {
-        return renderer.dispose(rdata);
+        auto ret = renderer.dispose(rdata);
+        rdata = nullptr;
+        return ret;
     }
 
     bool render(RenderMethod& renderer)

@@ -49,13 +49,14 @@ struct Picture::Impl
         if (paint) {
             paint->pImpl->dispose(renderer);
             delete(paint);
-
             return true;
         }
         else if (pixels) {
-            return renderer.dispose(rdata);
+            auto ret =  renderer.dispose(rdata);
+            rdata = nullptr;
+            return ret;
         }
-        return false;
+        return true;
     }
 
     void resize()
