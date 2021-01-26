@@ -105,6 +105,12 @@ typedef enum {
     TVG_FILL_RULE_EVEN_ODD
 } Tvg_Fill_Rule;
 
+typedef enum {
+    TVG_COMPOSITE_METHOD_NONE = 0,
+    TVG_COMPOSITE_METHOD_CLIP_PATH,
+    TVG_COMPOSITE_METHOD_ALPHA_MASK
+} Tvg_Composite_Method;
+
 typedef struct
 {
     float x, y;
@@ -571,6 +577,17 @@ TVG_EXPORT Tvg_Paint* tvg_paint_duplicate(Tvg_Paint* paint);
 * - TVG_RESULT_INVALID_PARAMETERS: if paint is invalid
 */
 TVG_EXPORT Tvg_Result tvg_paint_get_bounds(const Tvg_Paint* paint, float* x, float* y, float* w, float* h);
+
+/*!
+* \fn TVG_EXPORT Tvg_Result tvg_paint_set_composite_method(const Tvg_Paint* paint, Tvg_Composite_Method method)
+* \brief The function set composition method
+* \param[in] paint Tvg_Paint pointer
+* \param[in] method Tvg_Composite_Method used composite method
+* \return Tvg_Result return value
+* - TVG_RESULT_SUCCESS: if ok.
+* - TVG_RESULT_INVALID_PARAMETERS: if paint is invalid
+*/
+TVG_EXPORT Tvg_Result tvg_paint_set_composite_method(const Tvg_Paint* paint, Tvg_Composite_Method method);
 
 /************************************************************************/
 /* Shape API                                                            */
