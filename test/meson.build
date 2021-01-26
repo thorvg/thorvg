@@ -1,6 +1,5 @@
 
-#TODO:Need to change warning level to 3
-override_default = ['warning_level=0', 'werror=false']
+override_default = ['werror=false']
 
 gtest_dep  = dependency('gtest')
 
