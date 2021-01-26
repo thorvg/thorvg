@@ -318,15 +318,16 @@ bool SwRenderer::renderShape(RenderData data)
 
     if (auto fill = task->sdata->fill()) {
         rasterGradientShape(surface, &task->shape, fill->id());
-    } else{
+    } else {
         task->sdata->fillColor(&r, &g, &b, &a);
         a = static_cast<uint8_t>((opacity * (uint32_t) a) / 255);
         if (a > 0) rasterSolidShape(surface, &task->shape, r, g, b, a);
     }
 
-    task->sdata->strokeColor(&r, &g, &b, &a);
-    a = static_cast<uint8_t>((opacity * (uint32_t) a) / 255);
-    if (a > 0) rasterStroke(surface, &task->shape, r, g, b, a);
+    if (task->sdata->strokeColor(&r, &g, &b, &a) == Result::Success) {
+        a = static_cast<uint8_t>((opacity * (uint32_t) a) / 255);
+        if (a > 0) rasterStroke(surface, &task->shape, r, g, b, a);
+    }
 
     if (task->cmpStroking) endComposite(cmp);
 
