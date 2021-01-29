@@ -113,7 +113,7 @@ void testCapi()
     };
     tvg_gradient_set_color_stops(grad6, color_stops6, 2);
     tvg_shape_set_radial_gradient(shape1, grad6);
-    tvg_canvas_update(canvas);
+    tvg_canvas_update(canvas, false);
 
     tvg_shape_set_stroke_width(shape,3);
     tvg_shape_set_stroke_color(shape, 125, 0, 125, 255);

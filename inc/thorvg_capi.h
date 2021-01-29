@@ -398,7 +398,7 @@ TVG_EXPORT Tvg_Result tvg_canvas_clear(Tvg_Canvas* canvas, bool free);
 * - TVG_RESULT_SUCCESS: if ok.
 * - TVG_RESULT_INVALID_PARAMETERS: if canvas is invalid]
 */
-TVG_EXPORT Tvg_Result tvg_canvas_update(Tvg_Canvas* canvas);
+TVG_EXPORT Tvg_Result tvg_canvas_update(Tvg_Canvas* canvas, bool force);
 
 
 /*!

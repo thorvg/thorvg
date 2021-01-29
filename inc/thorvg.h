@@ -148,6 +148,7 @@ public:
     virtual Result push(std::unique_ptr<Paint> paint) noexcept;
     virtual Result clear(bool free = true) noexcept;
     virtual Result update(Paint* paint) noexcept;
+    virtual Result update(Paint* paint, bool force) noexcept;
     virtual Result draw() noexcept;
     virtual Result sync() noexcept;
 

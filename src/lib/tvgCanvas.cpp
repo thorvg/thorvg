@@ -67,6 +67,12 @@ Result Canvas::update(Paint* paint) noexcept
 }
 
 
+Result Canvas::update(Paint* paint, bool force) noexcept
+{
+    return pImpl->update(paint, force);
+}
+
+
 Result Canvas::sync() noexcept
 {
     if (pImpl->renderer->sync()) return Result::Success;
