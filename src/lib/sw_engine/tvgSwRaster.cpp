@@ -30,7 +30,7 @@
 
 static uint32_t _colorAlpha(uint32_t c)
 {
-    return (c >> 24) & 0xff;
+    return (c >> 24);
 }
 
 
