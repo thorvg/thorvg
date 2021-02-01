@@ -68,8 +68,8 @@ bool RenderTransform::update()
     m.e33 = 1.0f;
 
     //scale
-    m.e11 *= scale;
-    m.e22 *= scale;
+    m.e11 = scale;
+    m.e22 = scale;
 
     //rotation
     if (fabsf(degree) > FLT_EPSILON) {
@@ -77,23 +77,14 @@ bool RenderTransform::update()
         auto cosVal = cosf(radian);
         auto sinVal = sinf(radian);
 
-        auto t11 = m.e11 * cosVal + m.e12 * sinVal;
-        auto t12 = m.e11 * -sinVal + m.e12 * cosVal;
-        auto t21 = m.e21 * cosVal + m.e22 * sinVal;
-        auto t22 = m.e21 * -sinVal + m.e22 * cosVal;
-        auto t13 = m.e13 * cosVal + m.e23 * sinVal;
-        auto t23 = m.e13 * -sinVal + m.e23 * cosVal;
-
-        m.e11 = t11;
-        m.e12 = t12;
-        m.e21 = t21;
-        m.e22 = t22;
-        m.e13 = t13;
-        m.e23 = t23;
+        m.e12 = m.e11 * -sinVal;
+        m.e11 *= cosVal;
+        m.e21 = m.e22 * sinVal;
+        m.e22 *= cosVal;
     }
 
-    m.e13 += x;
-    m.e23 += y;
+    m.e13 = x;
+    m.e23 = y;
 
     return true;
 }
