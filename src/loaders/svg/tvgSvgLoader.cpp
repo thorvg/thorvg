@@ -1535,6 +1535,9 @@ static SvgStyleGradient* _cloneGradient(SvgStyleGradient* from)
     return grad;
 error_grad_alloc:
     //LOG: allocation failed. out of memory
+    if (grad->transform) free(grad->transform);
+    if (grad->ref) delete grad->ref;
+    if (grad->id) delete grad->id;
     if (grad) free(grad);
     return nullptr;
 }
