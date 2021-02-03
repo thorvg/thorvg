@@ -46,12 +46,14 @@ static uint32_t _argbJoin(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 }
 
 
-static void _inverse(const Matrix* transform, Matrix* invM)
+static bool _inverse(const Matrix* transform, Matrix* invM)
 {
     // computes the inverse of a matrix m
     auto det = transform->e11 * (transform->e22 * transform->e33 - transform->e32 * transform->e23) -
                transform->e12 * (transform->e21 * transform->e33 - transform->e23 * transform->e31) +
                transform->e13 * (transform->e21 * transform->e32 - transform->e22 * transform->e31);
+
+    if (fabsf(det) < FLT_EPSILON) return false;
 
     auto invDet = 1 / det;
 
@@ -64,6 +66,8 @@ static void _inverse(const Matrix* transform, Matrix* invM)
     invM->e31 = (transform->e21 * transform->e32 - transform->e31 * transform->e22) * invDet;
     invM->e32 = (transform->e31 * transform->e12 - transform->e11 * transform->e32) * invDet;
     invM->e33 = (transform->e11 * transform->e22 - transform->e21 * transform->e12) * invDet;
+
+    return true;
 }
 
 
@@ -800,7 +804,9 @@ bool rasterImage(SwSurface* surface, SwImage* image, const Matrix* transform, Sw
 {
     Matrix invTransform;
 
-    if (transform) _inverse(transform, &invTransform);
+    if (transform) {
+        if (!_inverse(transform, &invTransform)) return false;
+    }
     else invTransform = {1, 0, 0, 0, 1, 0, 0, 0, 1};
 
     auto translucent = _translucent(surface, opacity);
