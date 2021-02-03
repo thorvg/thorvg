@@ -261,8 +261,13 @@ static inline SwCoord TO_SWCOORD(float val)
 
 static inline uint32_t ALPHA_BLEND(uint32_t c, uint32_t a)
 {
-    return (((((c >> 8) & 0x00ff00ff) * a) & 0xff00ff00) +
-            ((((c & 0x00ff00ff) * a) >> 8) & 0x00ff00ff));
+    uint32_t ag = ((c >> 8) & 0x00ff00ff) * a;
+    ag = ((ag + ((ag >> 8) & 0x00ff00ff) + 0x00800080)) & 0xff00ff00;
+
+    uint32_t rb = (c & 0x00ff00ff) * a;
+    rb = ((rb + ((rb >> 8) & 0x00ff00ff) + 0x00800080) >> 8) & 0x00ff00ff;
+
+    return ag | rb;
 }
 
 static inline uint32_t COLOR_INTERPOLATE(uint32_t c1, uint32_t a1, uint32_t c2, uint32_t a2)
