@@ -43,6 +43,7 @@ class RenderMethod;
 class Scene;
 class Picture;
 class Canvas;
+class SwClass;
 
 
 enum class TVG_EXPORT Result { Success = 0, InvalidArguments, InsufficientCondition, FailedAllocation, MemoryCorruption, NonSupport, Unknown };
@@ -152,6 +153,8 @@ public:
     virtual Result sync() noexcept;
 
     _TVG_DECLARE_PRIVATE(Canvas);
+
+    friend class SwCanvas;
 };
 
 

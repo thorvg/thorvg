@@ -32,6 +32,7 @@ struct Canvas::Impl
 {
     Array<Paint*> paints;
     RenderMethod* renderer;
+    bool forceUpdateAll;
 
     Impl(RenderMethod* pRenderer):renderer(pRenderer)
     {
@@ -77,7 +78,10 @@ struct Canvas::Impl
         if (!renderer) return Result::InsufficientCondition;
 
         Array<RenderData> clips;
-	auto flag = force ? RenderUpdateFlag::All : RenderUpdateFlag::None;
+        if (forceUpdateAll) force = true;
+        auto flag = force ? RenderUpdateFlag::All : RenderUpdateFlag::None;
+
+        printf("[%s:%d][flag: %d]\n",__FILE__, __LINE__, flag);
 
         //Update single paint node
         if (paint) {
@@ -88,6 +92,7 @@ struct Canvas::Impl
                 (*paint)->pImpl->update(*renderer, nullptr, 255, clips, flag);
             }
         }
+
         return Result::Success;
     }
 
@@ -102,6 +107,8 @@ struct Canvas::Impl
         }
 
         if (!renderer->postRender()) return Result::InsufficientCondition;
+
+        if (forceUpdateAll) forceUpdateAll = false;
 
         return Result::Success;
     }
