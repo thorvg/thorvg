@@ -81,8 +81,6 @@ struct Canvas::Impl
         if (forceUpdateAll) force = true;
         auto flag = force ? RenderUpdateFlag::All : RenderUpdateFlag::None;
 
-        printf("[%s:%d][flag: %d]\n",__FILE__, __LINE__, flag);
-
         //Update single paint node
         if (paint) {
             paint->pImpl->update(*renderer, nullptr, 255, clips, flag);
