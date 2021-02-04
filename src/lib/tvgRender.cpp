@@ -36,9 +36,9 @@ void RenderTransform::override(const Matrix& m)
 {
     this->m = m;
 
-    if (m.e11 == 0.0f && m.e12 == 0.0f && m.e13 == 0.0f &&
-        m.e21 == 0.0f && m.e22 == 0.0f && m.e23 == 0.0f &&
-        m.e31 == 0.0f && m.e32 == 0.0f && m.e33 == 0.0f) {
+    if (fabsf(m.e11) < FLT_EPSILON && fabsf(m.e12) < FLT_EPSILON && fabsf(m.e13) < FLT_EPSILON &&
+        fabsf(m.e21) < FLT_EPSILON && fabsf(m.e22) < FLT_EPSILON && fabsf(m.e23) < FLT_EPSILON &&
+        fabsf(m.e31) < FLT_EPSILON && fabsf(m.e32) < FLT_EPSILON && fabsf(m.e33) < FLT_EPSILON ) {
         overriding = false;
     } else overriding = true;
 }

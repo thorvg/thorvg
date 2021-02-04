@@ -67,12 +67,12 @@ static void _inverse(const Matrix* transform, Matrix* invM)
 }
 
 
-static bool _identify(const Matrix* transform)
+static bool _identify(const Matrix* m)
 {
-    if (transform) {
-        if (transform->e11 != 1.0f || transform->e12 != 0.0f || transform->e13 != 0.0f ||
-            transform->e21 != 0.0f || transform->e22 != 1.0f || transform->e23 != 0.0f ||
-            transform->e31 != 0.0f || transform->e32 != 0.0f || transform->e33 != 1.0f) {
+    if (m) {
+        if (fabsf(m->e11 - 1) > FLT_EPSILON || fabsf(m->e12) > FLT_EPSILON || fabsf(m->e13) > FLT_EPSILON ||
+            fabsf(m->e21) > FLT_EPSILON || fabsf(m->e22 - 1) > FLT_EPSILON || fabsf(m->e23) > FLT_EPSILON ||
+            fabsf(m->e31) > FLT_EPSILON || fabsf(m->e32) > FLT_EPSILON || fabsf(m->e33 - 1) > FLT_EPSILON) {
             return false;
         }
     }
