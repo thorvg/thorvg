@@ -65,7 +65,7 @@ struct Scene::Impl
         Compositor* cmp = nullptr;
 
         //Half translucent. This condition requires intermediate composition.
-        if ((opacity < 255 && opacity > 0) && (paints.count > 1)) {
+        if ((opacity < 255 && opacity > 0) && (paints.count > 0)) {
             uint32_t x, y, w, h;
             if (!bounds(renderer, &x, &y, &w, &h)) return false;
             cmp = renderer.target(x, y, w, h);
