@@ -321,6 +321,22 @@ static bool _rasterSolidRle(SwSurface* surface, SwRleData* rle, uint32_t color)
 /* Image                                                                */
 /************************************************************************/
 
+static bool _rasterTranslucentImageRle(SwSurface* surface, SwRleData* rle, uint32_t *img, uint32_t w, uint32_t h, uint32_t opacity)
+{
+    auto span = rle->spans;
+
+    for (uint32_t i = 0; i < rle->size; ++i, ++span) {
+        auto dst = &surface->buffer[span->y * surface->stride + span->x];
+        auto src = img + span->x + span->y * w;    //TODO: need to use image's stride
+        for (uint32_t x = 0; x < span->len; ++x, ++dst, ++src) {
+            auto alpha = ALPHA_MULTIPLY(span->coverage, opacity);
+            *src = ALPHA_BLEND(*src, alpha);
+            *dst = *src + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(*src));
+        }
+    }
+    return true;
+}
+
 
 static bool _rasterTranslucentImageRle(SwSurface* surface, SwRleData* rle, uint32_t *img, uint32_t w, uint32_t h, uint32_t opacity, const Matrix* invTransform)
 {
@@ -339,6 +355,22 @@ static bool _rasterTranslucentImageRle(SwSurface* surface, SwRleData* rle, uint3
             *dst = src + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(src));
         }
         ++span;
+    }
+    return true;
+}
+
+
+static bool _rasterImageRle(SwSurface* surface, SwRleData* rle, uint32_t *img, uint32_t w, uint32_t h)
+{
+    auto span = rle->spans;
+
+    for (uint32_t i = 0; i < rle->size; ++i, ++span) {
+        auto dst = &surface->buffer[span->y * surface->stride + span->x];
+        auto src = img + span->x + span->y * w;    //TODO: need to use image's stride
+        for (uint32_t x = 0; x < span->len; ++x, ++dst, ++src) {
+            *src = ALPHA_BLEND(*src, span->coverage);
+            *dst = *src + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(*src));
+        }
     }
     return true;
 }
@@ -809,12 +841,8 @@ bool rasterImage(SwSurface* surface, SwImage* image, const Matrix* transform, Sw
         //Fast track
         if (_identify(transform)) {
             //OPTIMIZE ME: Support non transformed image. Only shifted image can use these routines.
-#ifdef THORVG_LOG_ENABLED
-            printf("SW_ENGINE: implementation is missing!\n");
-#endif
-            //if (translucent) return _rasterTranslucentImageRle(surface, image->rle, image->data, image->w, image->h, opacity);
-            //return _rasterImageRle(surface, image->rle, image->data, image->w, image->h);
-            return false;
+            if (translucent) return _rasterTranslucentImageRle(surface, image->rle, image->data, image->w, image->h, opacity);
+            return _rasterImageRle(surface, image->rle, image->data, image->w, image->h);
         } else {
             if (translucent) return _rasterTranslucentImageRle(surface, image->rle, image->data, image->w, image->h, opacity, &invTransform);
             return _rasterImageRle(surface, image->rle, image->data, image->w, image->h, &invTransform);
