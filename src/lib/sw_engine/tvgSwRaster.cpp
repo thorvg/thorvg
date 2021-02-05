@@ -418,7 +418,8 @@ static bool _translucentImageInvAlphaMask(SwSurface* surface, uint32_t *img, uin
             auto rX = static_cast<uint32_t>(roundf(x * invTransform->e11 + ey1));
             auto rY = static_cast<uint32_t>(roundf(x * invTransform->e21 + ey2));
             if (rX >= w || rY >= h) continue;
-            auto tmp = ALPHA_BLEND(img[rX + (rY * w)], ALPHA_MULTIPLY(opacity, surface->blender.alpha(*cmp)));  //TODO: need to use image's stride
+            auto ialpha = 255 - surface->blender.alpha(*cmp);
+            auto tmp = ALPHA_BLEND(img[rX + (rY * w)], ALPHA_MULTIPLY(opacity, ialpha));  //TODO: need to use image's stride
             *dst = tmp + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(tmp));
         }
     }
@@ -498,7 +499,7 @@ static bool _translucentImageInvAlphaMask(SwSurface* surface, uint32_t *img, uin
         auto src = &sbuffer[y * w];   //TODO: need to use image's stride
         for (uint32_t x = 0; x < w2; ++x, ++dst, ++src, ++cmp) {
             auto ialpha = 255 - surface->blender.alpha(*cmp);
-            auto tmp = ALPHA_BLEND(*src, ialpha);
+            auto tmp = ALPHA_BLEND(*src, ALPHA_MULTIPLY(opacity, ialpha));
             *dst = tmp + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(tmp));
         }
     }
