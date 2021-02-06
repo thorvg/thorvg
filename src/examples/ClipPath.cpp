@@ -103,11 +103,11 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     if (picture->load(EXAMPLE_DIR"/cartman.svg") != tvg::Result::Success) return;
 
     picture->scale(3);
-    picture->translate(200, 400);
+    picture->translate(50, 400);
 
     auto clipPath = tvg::Shape::gen();
-    clipPath->appendCircle(350, 510, 110, 110);          //x, y, w, h, rx, ry
-    clipPath->appendCircle(350, 650, 50, 50);          //x, y, w, h, rx, ry
+    clipPath->appendCircle(200, 510, 50, 50);          //x, y, w, h, rx, ry
+    clipPath->appendCircle(200, 650, 50, 50);          //x, y, w, h, rx, ry
     clipPath->fill(255, 255, 255, 255); // clip object must have alpha.
     clipPath->translate(20, 20);
 
@@ -115,6 +115,20 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     picture->composite(move(clipPath), tvg::CompositeMethod::ClipPath);
 
     canvas->push(move(picture));
+
+    //////////////////////////////////////////////
+    auto shape1 = tvg::Shape::gen();
+    shape1->appendRect(500, 420, 100, 100, 20, 20);
+    shape1->fill(255, 0, 255, 160);
+
+    auto clipShape = tvg::Shape::gen();
+    clipShape->appendRect(600, 420, 100, 100, 0, 0);
+    clipShape->fill(255, 0, 255, 150);
+
+    //Clipping shape1 to clipShape
+    shape1->composite(move(clipShape), tvg::CompositeMethod::ClipPath);
+
+    canvas->push(move(shape1));
 }
 
 
