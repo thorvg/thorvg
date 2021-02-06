@@ -917,7 +917,12 @@ void rleFree(SwRleData* rle)
 
 void updateRleSpans(SwRleData *rle, SwSpan* curSpans, uint32_t size)
 {
-    if (!rle->spans || !curSpans || size == 0) return;
+    if (size == 0) {
+        rle->size = 0;
+        return;
+    }
+
+    if (!rle->spans || !curSpans) return;
     rle->size = size;
     rle->spans = static_cast<SwSpan*>(realloc(rle->spans, rle->size * sizeof(SwSpan)));
 
