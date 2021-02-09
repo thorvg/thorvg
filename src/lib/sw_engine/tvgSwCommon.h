@@ -204,9 +204,11 @@ struct SwShape
 {
     SwOutline*   outline = nullptr;
     SwStroke*    stroke = nullptr;
+    uint8_t*     stencil = nullptr;
     SwFill*      fill = nullptr;
     SwRleData*   rle = nullptr;
     SwRleData*   strokeRle = nullptr;
+    SwRleData*   stencilRle = nullptr;
     SwBBox       bbox;   //keep it boundary without stroke region. Using for optimal filling.
 
     bool         rect;   //Fast Track: Othogonal rectangle?
@@ -294,8 +296,11 @@ bool shapeGenRle(SwShape* shape, const Shape* sdata, const SwSize& clip, bool an
 void shapeDelOutline(SwShape* shape, uint32_t tid);
 void shapeResetStroke(SwShape* shape, const Shape* sdata, const Matrix* transform);
 bool shapeGenStrokeRle(SwShape* shape, const Shape* sdata, unsigned tid, const Matrix* transform, const SwSize& clip, SwBBox& bbox);
+bool shapeGenStencilRle(SwShape* shape, const Shape* sdata, unsigned tid, const Matrix* transform, const SwSize& clip, SwBBox& bbox);
 void shapeFree(SwShape* shape);
 void shapeDelStroke(SwShape* shape);
+void shapeDelStencil(SwShape* shape);
+void shapeResetStencil(SwShape* shape);
 bool shapeGenFillColors(SwShape* shape, const Fill* fill, const Matrix* transform, SwSurface* surface, uint32_t opacity, bool ctable);
 void shapeResetFill(SwShape* shape);
 void shapeDelFill(SwShape* shape);
@@ -340,6 +345,7 @@ bool rasterSolidShape(SwSurface* surface, SwShape* shape, uint8_t r, uint8_t g, 
 bool rasterImage(SwSurface* surface, SwImage* image, const Matrix* transform, SwBBox& bbox, uint32_t opacity);
 bool rasterStroke(SwSurface* surface, SwShape* shape, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
 bool rasterClear(SwSurface* surface);
+bool rasterStencil(SwSurface* surface, SwShape* shape);
 
 static inline void rasterRGBA32(uint32_t *dst, uint32_t val, uint32_t offset, int32_t len)
 {

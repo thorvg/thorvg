@@ -579,6 +579,14 @@ void shapeDelStroke(SwShape* shape)
     shape->stroke = nullptr;
 }
 
+void shapeDelStencil(SwShape* shape)
+{
+    rleFree(shape->stencilRle);
+    shape->stencilRle = nullptr;
+    if (!shape->stencil) return;
+    free(shape->stencil);
+}
+
 
 void shapeResetStroke(SwShape* shape, const Shape* sdata, const Matrix* transform)
 {
@@ -643,6 +651,72 @@ fail:
     return ret;
 }
 
+bool shapeGenStencilRle(SwShape* shape, const Shape* sdata, unsigned tid, const Matrix* transform, const SwSize& clip, SwBBox& bbox)
+{
+    SwOutline stencilOutline;
+    SwOutline* shapeOutline = nullptr;
+    SwStrokeBorder border;
+    if (!shape->outline) {
+        if (!shapeGenOutline(shape, sdata, tid, transform)) return false;
+    }
+    shapeOutline = shape->outline;
+
+    if (!shape->stroke->borders) return false;
+    border = shape->stroke->borders[0];
+    
+    // Create outline for stencil using inner border from stroke
+    stencilOutline.cntrsCnt = shapeOutline->cntrsCnt;
+    stencilOutline.reservedCntrsCnt = stencilOutline.cntrsCnt;
+    stencilOutline.cntrs = static_cast<uint32_t*>(alloca(sizeof(uint32_t) * stencilOutline.cntrsCnt));
+
+    stencilOutline.ptsCnt = border.ptsCnt + shapeOutline->cntrsCnt;
+    stencilOutline.reservedPtsCnt = stencilOutline.ptsCnt;
+    stencilOutline.pts = static_cast<SwPoint*>(alloca(sizeof(SwPoint) * stencilOutline.ptsCnt));
+    stencilOutline.types = static_cast<uint8_t*>(alloca(sizeof(uint8_t) * stencilOutline.ptsCnt));
+    stencilOutline.opened = shapeOutline->opened;
+    stencilOutline.fillRule = shapeOutline->fillRule;
+
+    uint32_t i, i_pts, end_cnt;
+    i = i_pts = end_cnt = 0;
+    auto stencilCntrs = stencilOutline.cntrs;
+    SwPoint begin;
+    while (i < border.ptsCnt) {
+        auto tag = border.tags[i];
+        auto borderPoint = border.pts[i];
+        if ((tag & 1) > 0) {    //Point
+            stencilOutline.pts[i_pts] = borderPoint;
+            stencilOutline.types[i_pts] = 0;
+        }
+        if ((tag & 2) > 0) {    //Cubic
+            stencilOutline.pts[i_pts] = borderPoint;
+            stencilOutline.types[i_pts] = 1;
+        }
+        if ((tag & 4) > 0) {    //Begin
+            begin = borderPoint;
+        }
+        if ((tag & 8) > 0) {    //End
+            ++end_cnt;
+            ++i_pts;
+            *(stencilCntrs++) = i_pts;
+            stencilOutline.pts[i_pts] = begin;
+            stencilOutline.types[i_pts] = 0;
+        }
+        ++i; ++i_pts;
+    }
+
+    if (i_pts != stencilOutline.ptsCnt) {
+        stencilOutline.cntrsCnt = end_cnt;
+        stencilOutline.ptsCnt = i_pts;
+    }
+
+    shape->stencilRle = rleRender(shape->stencilRle, &stencilOutline, bbox, clip, true);
+    return true;
+}
+
+void shapeResetStencil(SwShape* shape)
+{
+    rleReset(shape->stencilRle);
+}
 
 bool shapeGenFillColors(SwShape* shape, const Fill* fill, const Matrix* transform, SwSurface* surface, uint32_t opacity, bool ctable)
 {

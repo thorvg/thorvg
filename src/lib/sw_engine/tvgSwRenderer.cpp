@@ -122,6 +122,15 @@ struct SwShapeTask : SwTask
                 shapeResetStroke(&shape, sdata, transform);
                 if (!shapeGenStrokeRle(&shape, sdata, tid, transform, clip, bbox)) goto err;
                 ++addStroking;
+
+                //Stroke stencil
+                if (!shape.rect) {
+                    shapeResetStencil(&shape);
+                    if (!shapeGenStencilRle(&shape, sdata, tid, transform, clip, bbox)) goto err;
+                    if (!rasterStencil(surface, &shape)) goto err;
+                } else {
+                    shapeDelStencil(&shape);
+                }
             } else {
                 shapeDelStroke(&shape);
             }

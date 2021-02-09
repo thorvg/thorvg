@@ -320,6 +320,88 @@ static bool _rasterSolidRle(SwSurface* surface, SwRleData* rle, uint32_t color)
     return true;
 }
 
+static bool _rasterSolidStrokeRle(SwSurface* surface, SwRleData* rle, uint8_t* stencil, uint32_t color)
+{
+    if (!rle) return false;
+
+    auto span = rle->spans;
+    
+    for (uint32_t i = 0; i < rle->size; ++i) {
+        if (span->coverage == 255) {
+            auto dst_i = span->y * surface->stride + span->x;
+            auto len = span->len;
+            while (len--) {
+                if (!stencil[dst_i]) surface->buffer[dst_i] = color;
+                ++dst_i;
+            }
+        } else {
+            auto dst_i = span->y * surface->stride + span->x;
+            auto src = ALPHA_BLEND(color, span->coverage);
+            auto ialpha = 255 - span->coverage;
+            for (uint32_t j = 0; j < span->len; ++j) {
+                if (!stencil[dst_i +j]) surface->buffer[dst_i + j] = src + ALPHA_BLEND(surface->buffer[dst_i + j], ialpha);
+            }
+        }
+        ++span;
+    }
+
+    return true;  
+}
+
+static bool _translucentStencilRleAlphaMask(SwSurface* surface, SwRleData* rle, uint8_t* stencil, uint32_t color)
+{
+    auto span = rle->spans;
+    uint32_t src;
+    auto tbuffer = static_cast<uint32_t*>(alloca(sizeof(uint32_t) * surface->w));
+    auto cbuffer = surface->compositor->image.data;
+
+    for (uint32_t i = 0; i < rle->size; ++i) {
+        auto dst_i = span->y * surface->stride + span->x;
+        auto tmp = tbuffer;
+        if (span->coverage < 255) src = ALPHA_BLEND(color, span->coverage);
+        else src = color;
+        for (uint32_t x = 0; x < span->len; ++x) {
+            if (!stencil[dst_i + x]) {
+                tmp[x] = ALPHA_BLEND(src, surface->blender.alpha(cbuffer[dst_i + x]));
+                surface->buffer[dst_i + x] = tmp[x] + ALPHA_BLEND(surface->buffer[dst_i + x], 255 - surface->blender.alpha(tmp[x]));
+            }
+        }
+        ++span;
+    }
+    return true;
+}
+
+static bool _translucentStencilRle(SwSurface* surface, SwRleData* rle, uint8_t* stencil, uint32_t color)
+{
+    auto span = rle->spans;
+    uint32_t src;
+
+    for (uint32_t i = 0; i < rle->size; ++i) {
+        auto dst_i = span->y * surface->stride + span->x;
+        if (span->coverage < 255) src = ALPHA_BLEND(color, span->coverage);
+        else src = color;
+        auto ialpha = 255 - surface->blender.alpha(src);
+        for (uint32_t x = 0; x < span->len; ++x) {
+            if (!stencil[dst_i + x])
+                surface->buffer[dst_i + x] = src + ALPHA_BLEND(surface->buffer[dst_i + x], ialpha);
+        }
+        ++span;
+    }
+    return true;
+}
+
+static bool _rasterTranslucentStrokeRle(SwSurface* surface, SwRleData* rle, uint8_t* stencil, uint32_t color)
+{
+    if (!rle) return false;
+
+    if (surface->compositor) {
+        if (surface->compositor->method == CompositeMethod::AlphaMask) {
+            return _translucentStencilRleAlphaMask(surface, rle, stencil, color);
+        }
+    }
+    return _translucentStencilRle(surface, rle, stencil, color);
+}
+
 
 /************************************************************************/
 /* Image                                                                */
@@ -811,11 +893,40 @@ bool rasterStroke(SwSurface* surface, SwShape* shape, uint8_t r, uint8_t g, uint
 
     auto color = surface->blender.join(r, g, b, a);
     auto translucent = _translucent(surface, a);
+    auto stencil = shape->stencil;
 
-    if (translucent) return _rasterTranslucentRle(surface, shape->strokeRle, color);
-    return _rasterSolidRle(surface, shape->strokeRle, color);
+    if (stencil) {
+        if (translucent) return _rasterTranslucentStrokeRle(surface, shape->strokeRle, stencil, color);
+        return _rasterSolidStrokeRle(surface, shape->strokeRle, stencil, color);
+    } else {
+        if (translucent) return _rasterTranslucentRle(surface, shape->strokeRle, color);
+        return _rasterSolidRle(surface, shape->strokeRle, color);
+    }
 }
 
+bool rasterStencil(SwSurface* surface, SwShape* shape)
+{
+    if (!shape->stencilRle) return false;
+    auto rle = shape->stencilRle;
+    auto span = rle->spans;
+    auto w = surface->w;
+    auto h = surface->h;
+
+    shape->stencil = static_cast<uint8_t*>(calloc(w*h, sizeof(uint8_t)));
+    auto stencil = shape->stencil;
+
+    for (uint32_t i = 0; i < rle->size; ++i) {
+        if (span->coverage == 255) {
+            auto dst = stencil + span->y * w;
+            auto len = span->len;
+            dst += span->x;
+            while (len--) *dst++ = 1;
+        }
+        ++span;
+    }
+
+    return true;
+}
 
 bool rasterClear(SwSurface* surface)
 {
