@@ -65,6 +65,7 @@ enum class SvgLengthType
 enum class SvgCompositeFlags
 {
     ClipPath = 0x01,
+    AlphaMask = 0x02,
 };
 
 enum class SvgFillFlags

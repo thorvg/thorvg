@@ -864,6 +864,15 @@ static void _handleClipPathAttr(TVG_UNUSED SvgLoaderData* loader, SvgNode* node,
     if (len >= 3 && !strncmp(value, "url", 3)) style->comp.url = _idFromUrl((const char*)(value + 3));
 }
 
+static void _handleMaskAttr(TVG_UNUSED SvgLoaderData* loader, SvgNode* node, const char* value)
+{
+    SvgStyleProperty* style = node->style;
+    style->comp.flags = (SvgCompositeFlags)((int)style->comp.flags | (int)SvgCompositeFlags::AlphaMask);
+
+    int len = strlen(value);
+    if (len >= 3 && !strncmp(value, "url", 3)) style->comp.url = _idFromUrl((const char*)(value + 3));
+}
+
 static void _handleDisplayAttr(TVG_UNUSED SvgLoaderData* loader, SvgNode* node, const char* value)
 {
     //TODO : The display attribute can have various values as well as "none".
@@ -903,6 +912,7 @@ static constexpr struct
     STYLE_DEF(stroke-dasharray, StrokeDashArray),
     STYLE_DEF(transform, Transform),
     STYLE_DEF(clip-path, ClipPath),
+    STYLE_DEF(mask, Mask),
     STYLE_DEF(display, Display)
 };
 
@@ -946,6 +956,8 @@ static bool _attrParseGNode(void* data, const char* key, const char* value)
         node->id = _copyId(value);
     } else if (!strcmp(key, "clip-path")) {
         _handleClipPathAttr(loader, node, value);
+    } else if (!strcmp(key, "mask")) {
+        _handleMaskAttr(loader, node, value);
     } else {
         return _parseStyleAttr(loader, key, value);
     }
@@ -972,6 +984,25 @@ static bool _attrParseClipPathNode(void* data, const char* key, const char* valu
     }
     return true;
 }
+
+
+static bool _attrParseMaskNode(void* data, const char* key, const char* value)
+{
+    SvgLoaderData* loader = (SvgLoaderData*)data;
+    SvgNode* node = loader->svgParse->node;
+
+    if (!strcmp(key, "style")) {
+        return simpleXmlParseW3CAttribute(value, _parseStyleAttr, loader);
+    } else if (!strcmp(key, "transform")) {
+        node->transform = _parseTransformationMatrix(value);
+    } else if (!strcmp(key, "id")) {
+        node->id = _copyId(value);
+    } else {
+        return _parseStyleAttr(loader, key, value);
+    }
+    return true;
+}
+
 
 static SvgNode* _createNode(SvgNode* parent, SvgNodeType type)
 {
@@ -1057,10 +1088,7 @@ static SvgNode* _createMaskNode(SvgLoaderData* loader, SvgNode* parent, TVG_UNUS
     loader->svgParse->node = _createNode(parent, SvgNodeType::Unknown);
     if (!loader->svgParse->node) return nullptr;
 
-    loader->svgParse->node->display = false;
-#ifdef THORVG_LOG_ENABLED
-    printf("SVG: Unsupported elements used [Elements: mask]\n");
-#endif
+    simpleXmlParseAttributes(buf, bufLength, _attrParseMaskNode, loader);
 
     return loader->svgParse->node;
 }
@@ -1092,6 +1120,8 @@ static bool _attrParsePathNode(void* data, const char* key, const char* value)
         return simpleXmlParseW3CAttribute(value, _parseStyleAttr, loader);
     } else if (!strcmp(key, "clip-path")) {
         _handleClipPathAttr(loader, node, value);
+    } else if (!strcmp(key, "mask")) {
+        _handleMaskAttr(loader, node, value);
     } else if (!strcmp(key, "id")) {
         node->id = _copyId(value);
     } else {
@@ -1149,6 +1179,8 @@ static bool _attrParseCircleNode(void* data, const char* key, const char* value)
         return simpleXmlParseW3CAttribute(value, _parseStyleAttr, loader);
     } else if (!strcmp(key, "clip-path")) {
         _handleClipPathAttr(loader, node, value);
+    } else if (!strcmp(key, "mask")) {
+        _handleMaskAttr(loader, node, value);
     } else if (!strcmp(key, "id")) {
         node->id = _copyId(value);
     } else {
@@ -1208,6 +1240,8 @@ static bool _attrParseEllipseNode(void* data, const char* key, const char* value
         return simpleXmlParseW3CAttribute(value, _parseStyleAttr, loader);
     } else if (!strcmp(key, "clip-path")) {
         _handleClipPathAttr(loader, node, value);
+    } else if (!strcmp(key, "mask")) {
+        _handleMaskAttr(loader, node, value);
     } else {
         return _parseStyleAttr(loader, key, value);
     }
@@ -1281,6 +1315,8 @@ static bool _attrParsePolygonNode(void* data, const char* key, const char* value
         return simpleXmlParseW3CAttribute(value, _parseStyleAttr, loader);
     } else if (!strcmp(key, "clip-path")) {
         _handleClipPathAttr(loader, node, value);
+    } else if (!strcmp(key, "mask")) {
+        _handleMaskAttr(loader, node, value);
     } else if (!strcmp(key, "id")) {
         node->id = _copyId(value);
     } else {
@@ -1360,6 +1396,8 @@ static bool _attrParseRectNode(void* data, const char* key, const char* value)
         ret = simpleXmlParseW3CAttribute(value, _parseStyleAttr, loader);
     } else if (!strcmp(key, "clip-path")) {
         _handleClipPathAttr(loader, node, value);
+    } else if (!strcmp(key, "mask")) {
+        _handleMaskAttr(loader, node, value);
     } else {
         ret = _parseStyleAttr(loader, key, value);
     }
@@ -1420,6 +1458,8 @@ static bool _attrParseLineNode(void* data, const char* key, const char* value)
         return simpleXmlParseW3CAttribute(value, _parseStyleAttr, loader);
     } else if (!strcmp(key, "clip-path")) {
         _handleClipPathAttr(loader, node, value);
+    } else if (!strcmp(key, "mask")) {
+        _handleMaskAttr(loader, node, value);
     } else {
         return _parseStyleAttr(loader, key, value);
     }
@@ -1634,6 +1674,8 @@ static bool _attrParseUseNode(void* data, const char* key, const char* value)
         delete id;
     } else if (!strcmp(key, "clip-path")) {
         _handleClipPathAttr(loader, node, value);
+    } else if (!strcmp(key, "mask")) {
+        _handleMaskAttr(loader, node, value);
     } else {
         return _attrParseGNode(data, key, value);
     }
