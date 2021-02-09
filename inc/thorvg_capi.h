@@ -578,16 +578,18 @@ TVG_EXPORT Tvg_Paint* tvg_paint_duplicate(Tvg_Paint* paint);
 */
 TVG_EXPORT Tvg_Result tvg_paint_get_bounds(const Tvg_Paint* paint, float* x, float* y, float* w, float* h);
 
+
 /*!
-* \fn TVG_EXPORT Tvg_Result tvg_paint_set_composite_method(const Tvg_Paint* paint, Tvg_Composite_Method method)
+* \fn TVG_EXPORT Tvg_Result tvg_paint_set_composite_method(Tvg_Paint* paint, Tvg_Paint* target, Tvg_Composite_Method method)
 * \brief The function set composition method
 * \param[in] paint Tvg_Paint pointer
+* \param[in] target Tvg_Paint pointer to composition object
 * \param[in] method Tvg_Composite_Method used composite method
 * \return Tvg_Result return value
 * - TVG_RESULT_SUCCESS: if ok.
 * - TVG_RESULT_INVALID_PARAMETERS: if paint is invalid
 */
-TVG_EXPORT Tvg_Result tvg_paint_set_composite_method(const Tvg_Paint* paint, Tvg_Composite_Method method);
+TVG_EXPORT Tvg_Result tvg_paint_set_composite_method(Tvg_Paint* paint, Tvg_Paint* target, Tvg_Composite_Method method);
 
 /************************************************************************/
 /* Shape API                                                            */
