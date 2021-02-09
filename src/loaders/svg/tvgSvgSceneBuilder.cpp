@@ -273,6 +273,16 @@ void _applyProperty(SvgNode* node, Shape* vg, float vx, float vy, float vw, floa
                 vg->composite(move(comp), CompositeMethod::ClipPath);
             }
         }
+        //Composite Alpha Mask 
+        if (((int)style->comp.flags & (int)SvgCompositeFlags::AlphaMask)) {
+            auto compNode = style->comp.node;
+            if (compNode->child.count > 0) {
+                auto comp = Shape::gen();
+                auto child = compNode->child.data;
+                for (uint32_t i = 0; i < compNode->child.count; ++i, ++child) _appendChildShape(*child, comp.get(), vx, vy, vw, vh);
+                vg->composite(move(comp), CompositeMethod::AlphaMask);
+            }
+        }
     }
 }
 
