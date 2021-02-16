@@ -220,8 +220,7 @@ namespace tvg
 
         bool composite(Paint* target, CompositeMethod method)
         {
-            if (!target && method != CompositeMethod::None) return false;
-            if (target && method == CompositeMethod::None) return false;
+            if ((!target && method != CompositeMethod::None) || (target && method == CompositeMethod::None)) return false;
             cmpTarget = target;
             cmpMethod = method;
             return true;

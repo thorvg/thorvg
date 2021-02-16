@@ -54,10 +54,8 @@ struct Canvas::Impl
 
     Result clear(bool free)
     {
-        if (!renderer) return Result::InsufficientCondition;
-
         //Clear render target before drawing
-        if (!renderer->clear()) return Result::InsufficientCondition;
+        if (!renderer || !renderer->clear()) return Result::InsufficientCondition;
 
         //free paints
         if (free) {
@@ -77,7 +75,7 @@ struct Canvas::Impl
         if (!renderer) return Result::InsufficientCondition;
 
         Array<RenderData> clips;
-	auto flag = force ? RenderUpdateFlag::All : RenderUpdateFlag::None;
+        auto flag = force ? RenderUpdateFlag::All : RenderUpdateFlag::None;
 
         //Update single paint node
         if (paint) {
@@ -93,9 +91,7 @@ struct Canvas::Impl
 
     Result draw()
     {
-        if (!renderer) return Result::InsufficientCondition;
-
-        if (!renderer->preRender()) return Result::InsufficientCondition;
+        if (!renderer || !renderer->preRender()) return Result::InsufficientCondition;
 
         for (auto paint = paints.data; paint < (paints.data + paints.count); ++paint) {
             if (!(*paint)->pImpl->render(*renderer)) return Result::InsufficientCondition;
