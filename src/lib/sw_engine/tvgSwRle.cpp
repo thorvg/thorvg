@@ -778,7 +778,8 @@ SwSpan* _intersectSpansRect(const SwBBox *bbox, const SwRleData *targetRle, SwSp
 
 SwRleData* rleRender(SwRleData* rle, const SwOutline* outline, const SwBBox& bbox, const SwSize& clip, bool antiAlias)
 {
-    constexpr auto RENDER_POOL_SIZE = 16384L;
+    //NOTE: The static analyzer recommends using a stack memory of single local variable as 10000 bytes.
+    constexpr auto RENDER_POOL_SIZE = 10000L;
     constexpr auto BAND_SIZE = 40;
 
     //TODO: We can preserve several static workers in advance
