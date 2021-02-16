@@ -74,6 +74,7 @@ private:
 
     void prepare()
     {
+        lock_guard<mutex> lock(mtx);
         ready = false;
         pending = true;
     }
