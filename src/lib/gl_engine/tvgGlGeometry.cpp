@@ -24,10 +24,10 @@
 #include "tvgGlGpuBuffer.h"
 #include "tvgGlGeometry.h"
 
-#define NORMALIZED_TOP_3D			1.0f
-#define NORMALIZED_BOTTOM_3D	   -1.0f
-#define NORMALIZED_LEFT_3D		   -1.0f
-#define NORMALIZED_RIGHT_3D			1.0f
+#define NORMALIZED_TOP_3D 1.0f
+#define NORMALIZED_BOTTOM_3D -1.0f
+#define NORMALIZED_LEFT_3D -1.0f
+#define NORMALIZED_RIGHT_3D 1.0f
 
 uint32_t GlGeometry::getPrimitiveCount()
 {
