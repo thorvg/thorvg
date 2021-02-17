@@ -349,22 +349,26 @@ bool rasterClear(SwSurface* surface);
 static inline void rasterRGBA32(uint32_t *dst, uint32_t val, uint32_t offset, int32_t len)
 {
 #ifdef THORVG_AVX_VECTOR_SUPPORT
-    int32_t align = (8 - (offset % 8)) % 8;
-    //Vectorization
-    auto avxDst = (__m256i*)(dst + offset + align);
-    int32_t i = (len - align);
-    for (;i > 7; i -= 8, ++avxDst) {
-       *avxDst = _mm256_set1_epi32(val);
+    //1. calculate how many iterations we need to cover length
+    uint32_t iterations = len / 8;
+    uint32_t avxFilled = iterations * 8;
+    int32_t leftovers = 0;
+
+    //2. set beginning of the array
+    dst+=offset;
+    __m256i_u* avxDst = (__m256i_u*) dst;
+
+    //3. fill octets
+    for (uint32_t i = 0; i < iterations; ++i) {
+        *avxDst = _mm256_set1_epi32(val);
+        avxDst++;
     }
-    //Alignment
-    if (align > 0) {
-        if (align > len) align -= (align - len);
-        auto tmp = dst + offset;
-        for (; align > 0; --align, ++tmp) *tmp = val;
-    }
-    //Pack Leftovers
-    dst += offset + (len - i);
-    while (i-- > 0) *(dst++) = val;
+
+    //4. fill leftovers (in first step we have to set pointer to place where avx job is done)
+    leftovers = len - avxFilled;
+    dst+= avxFilled;
+
+    while (leftovers--) *dst++ = val;
 #else
     dst += offset;
     while (len--) *dst++ = val;
