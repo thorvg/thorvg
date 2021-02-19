@@ -33,6 +33,7 @@ struct ShapeStroke
 {
     float width = 0;
     uint8_t color[4] = {0, 0, 0, 0};
+    Fill *fill = nullptr;
     float* dashPattern = nullptr;
     uint32_t dashCnt = 0;
     StrokeCap cap = StrokeCap::Square;
@@ -49,11 +50,14 @@ struct ShapeStroke
         memcpy(color, src->color, sizeof(color));
         dashPattern = static_cast<float*>(malloc(sizeof(float) * dashCnt));
         memcpy(dashPattern, src->dashPattern, sizeof(float) * dashCnt);
+        if (src->fill)
+            fill = src->fill->duplicate();
     }
 
     ~ShapeStroke()
     {
         if (dashPattern) free(dashPattern);
+        if (fill) delete(fill);
     }
 };
 
@@ -291,6 +295,12 @@ struct Shape::Impl
         if (!stroke) stroke = new ShapeStroke();
         if (!stroke) return false;
 
+        if (stroke->fill) {
+            delete(stroke->fill);
+            stroke->fill = nullptr;
+            flag |= RenderUpdateFlag::GradientStroke;
+        }
+
         stroke->color[0] = r;
         stroke->color[1] = g;
         stroke->color[2] = b;
@@ -299,6 +309,23 @@ struct Shape::Impl
         flag |= RenderUpdateFlag::Stroke;
 
         return true;
+    }
+
+    Result strokeFill(unique_ptr<Fill> f)
+    {
+        auto p = f.release();
+        if (!p) return Result::MemoryCorruption;
+
+        if (!stroke) stroke = new ShapeStroke();
+        if (!stroke) return Result::FailedAllocation;
+
+        if (stroke->fill && stroke->fill != p) delete(stroke->fill);
+        stroke->fill = p;
+
+        flag |= RenderUpdateFlag::Stroke;
+        flag |= RenderUpdateFlag::GradientStroke;
+
+        return Result::Success;
     }
 
     bool strokeDash(const float* pattern, uint32_t cnt)
@@ -363,6 +390,9 @@ struct Shape::Impl
         if (stroke) {
             dup->stroke = new ShapeStroke(stroke);
             dup->flag |= RenderUpdateFlag::Stroke;
+
+            if (stroke->fill)
+                dup->flag |= RenderUpdateFlag::GradientStroke;
         }
 
         //Fill
