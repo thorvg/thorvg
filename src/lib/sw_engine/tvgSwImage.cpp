@@ -34,7 +34,7 @@ static void _initBBox(SwBBox& bbox)
 }
 
 
-static bool _updateBBox(SwOutline* outline, SwBBox& bbox, const SwSize& clip)
+static bool _updateBBox(const SwOutline* outline, SwBBox& bbox, const SwSize& clip)
 {
     if (!outline) return false;
 
@@ -102,13 +102,13 @@ bool imagePrepare(SwImage* image, const Picture* pdata, unsigned tid, const SwSi
 }
 
 
-bool imagePrepared(SwImage* image)
+bool imagePrepared(const SwImage* image)
 {
     return image->rle ? true : false;
 }
 
 
-bool imageGenRle(SwImage* image, TVG_UNUSED const Picture* pdata, const SwSize& clip, SwBBox& bbox, bool antiAlias, bool hasComposite)
+bool imageGenRle(SwImage* image, TVG_UNUSED const Picture* pdata, const SwSize& clip, const SwBBox& bbox, bool antiAlias, bool hasComposite)
 {
     if ((image->rle = rleRender(image->rle, image->outline, bbox, clip, antiAlias))) return true;
 

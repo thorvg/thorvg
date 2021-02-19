@@ -32,7 +32,7 @@ bool _isGroupType(SvgNodeType type)
     return false;
 }
 
-unique_ptr<LinearGradient> _applyLinearGradientProperty(SvgStyleGradient* g, Shape* vg, float rx, float ry, float rw, float rh)
+unique_ptr<LinearGradient> _applyLinearGradientProperty(SvgStyleGradient* g, const Shape* vg, float rx, float ry, float rw, float rh)
 {
     Fill::ColorStop* stops;
     int stopCount = 0;
@@ -114,7 +114,7 @@ unique_ptr<LinearGradient> _applyLinearGradientProperty(SvgStyleGradient* g, Sha
 }
 
 
-unique_ptr<RadialGradient> _applyRadialGradientProperty(SvgStyleGradient* g, Shape* vg, float rx, float ry, float rw, float rh)
+unique_ptr<RadialGradient> _applyRadialGradientProperty(SvgStyleGradient* g, const Shape* vg, float rx, float ry, float rw, float rh)
 {
     Fill::ColorStop *stops;
     int stopCount = 0;
@@ -339,7 +339,7 @@ bool _appendShape(SvgNode* node, Shape* shape, float vx, float vy, float vw, flo
     return true;
 }
 
-unique_ptr<Scene> _sceneBuildHelper(SvgNode* node, float vx, float vy, float vw, float vh)
+unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, float vx, float vy, float vw, float vh)
 {
     if (_isGroupType(node->type)) {
         auto scene = Scene::gen();

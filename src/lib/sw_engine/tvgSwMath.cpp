@@ -194,7 +194,7 @@ SwFixed mathMean(SwFixed angle1, SwFixed angle2)
 }
 
 
-bool mathSmallCubic(SwPoint* base, SwFixed& angleIn, SwFixed& angleMid, SwFixed& angleOut)
+bool mathSmallCubic(const SwPoint* base, SwFixed& angleIn, SwFixed& angleMid, SwFixed& angleOut)
 {
     auto d1 = base[2] - base[3];
     auto d2 = base[1] - base[2];
@@ -362,7 +362,7 @@ SwFixed mathCos(SwFixed angle)
 }
 
 
-SwFixed mathLength(SwPoint& pt)
+SwFixed mathLength(const SwPoint& pt)
 {
     auto v = pt;
 
