@@ -77,7 +77,7 @@ void _pathAppendArcTo(Array<PathCommand>* cmds, Array<Point>* pts, Point* cur, P
     float cosPhiRx, cosPhiRy;
     float sinPhiRx, sinPhiRy;
     float cosTheta1, sinTheta1;
-    int segments, i;
+    int segments;
 
     //Some helpful stuff is available here:
     //http://www.w3.org/TR/SVG/implnote.html#ArcImplementationNotes
@@ -198,7 +198,7 @@ void _pathAppendArcTo(Array<PathCommand>* cmds, Array<Point>* pts, Point* cur, P
     cosTheta1 = cos(theta1);
     sinTheta1 = sin(theta1);
 
-    for (i = 0; i < segments; ++i) {
+    for (int i = 0; i < segments; ++i) {
         //End angle (for this segment) = current + delta
         float c1x, c1y, ex, ey, c2x, c2y;
         float theta2 = theta1 + delta;
@@ -285,7 +285,6 @@ static int _numberCount(char cmd)
 
 static void _processCommand(Array<PathCommand>* cmds, Array<Point>* pts, char cmd, float* arr, int count, Point* cur, Point* curCtl, Point* startPoint, bool *isQuadratic)
 {
-    int i;
     switch (cmd) {
         case 'm':
         case 'l':
@@ -293,7 +292,7 @@ static void _processCommand(Array<PathCommand>* cmds, Array<Point>* pts, char cm
         case 's':
         case 'q':
         case 't': {
-            for (i = 0; i < count - 1; i += 2) {
+            for (int i = 0; i < count - 1; i += 2) {
                 arr[i] = arr[i] + cur->x;
                 arr[i + 1] = arr[i + 1] + cur->y;
             }
@@ -455,7 +454,7 @@ static void _processCommand(Array<PathCommand>* cmds, Array<Point>* pts, char cm
 
 static char* _nextCommand(char* path, char* cmd, float* arr, int* count)
 {
-    int i = 0, large, sweep;
+    int large, sweep;
 
     path = _skipComma(path);
     if (isalpha(*path)) {
@@ -488,7 +487,7 @@ static char* _nextCommand(char* path, char* cmd, float* arr, int* count)
         *count = 0;
         return NULL;
     }
-    for (i = 0; i < *count; i++) {
+    for (int i = 0; i < *count; i++) {
         if (!_parseNumber(&path, &arr[i])) {
             *count = 0;
             return NULL;
