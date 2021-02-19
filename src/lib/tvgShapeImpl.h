@@ -41,11 +41,11 @@ struct ShapeStroke
     ShapeStroke() {}
 
     ShapeStroke(const ShapeStroke* src)
+     : width(src->width),
+       dashCnt(src->dashCnt),
+       cap(src->cap),
+       join(src->join)
     {
-        width = src->width;
-        dashCnt = src->dashCnt;
-        cap = src->cap;
-        join = src->join;
         memcpy(color, src->color, sizeof(color));
         dashPattern = static_cast<float*>(malloc(sizeof(float) * dashCnt));
         memcpy(dashPattern, src->dashPattern, sizeof(float) * dashCnt);
