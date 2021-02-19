@@ -42,11 +42,11 @@ struct ShapeStroke
     ShapeStroke() {}
 
     ShapeStroke(const ShapeStroke* src)
+     : width(src->width),
+       dashCnt(src->dashCnt),
+       cap(src->cap),
+       join(src->join)
     {
-        width = src->width;
-        dashCnt = src->dashCnt;
-        cap = src->cap;
-        join = src->join;
         memcpy(color, src->color, sizeof(color));
         dashPattern = static_cast<float*>(malloc(sizeof(float) * dashCnt));
         memcpy(dashPattern, src->dashPattern, sizeof(float) * dashCnt);
@@ -172,7 +172,7 @@ struct ShapePath
         cmds[cmdCnt++] = PathCommand::Close;
     }
 
-    bool bounds(float* x, float* y, float* w, float* h)
+    bool bounds(float* x, float* y, float* w, float* h) const
     {
         if (ptsCnt == 0) return false;
 
@@ -219,7 +219,9 @@ struct Shape::Impl
 
     bool dispose(RenderMethod& renderer)
     {
-        return renderer.dispose(rdata);
+        auto ret = renderer.dispose(rdata);
+        rdata = nullptr;
+        return ret;
     }
 
     bool render(RenderMethod& renderer)

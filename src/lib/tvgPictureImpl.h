@@ -46,16 +46,17 @@ struct Picture::Impl
 
     bool dispose(RenderMethod& renderer)
     {
+        bool ret = true;
         if (paint) {
-            paint->pImpl->dispose(renderer);
+            ret = paint->pImpl->dispose(renderer);
             delete(paint);
-
-            return true;
+            paint = nullptr;
         }
         else if (pixels) {
-            return renderer.dispose(rdata);
+            ret =  renderer.dispose(rdata);
+            rdata = nullptr;
         }
-        return false;
+        return ret;
     }
 
     void resize()
@@ -129,7 +130,7 @@ struct Picture::Impl
         return false;
     }
 
-    bool viewbox(float* x, float* y, float* w, float* h)
+    bool viewbox(float* x, float* y, float* w, float* h) const
     {
         if (!loader) return false;
         if (x) *x = loader->vx;
@@ -147,7 +148,7 @@ struct Picture::Impl
         return true;
     }
 
-    bool bounds(float* x, float* y, float* w, float* h)
+    bool bounds(float* x, float* y, float* w, float* h) const
     {
         if (!paint) return false;
         return paint->pImpl->bounds(x, y, w, h);

@@ -33,7 +33,7 @@
 #define FIXPT_SIZE (1<<FIXPT_BITS)
 
 
-static bool _updateColorTable(SwFill* fill, const Fill* fdata, SwSurface* surface, uint32_t opacity)
+static bool _updateColorTable(SwFill* fill, const Fill* fdata, const SwSurface* surface, uint32_t opacity)
 {
     if (!fill->ctable) {
         fill->ctable = static_cast<uint32_t*>(malloc(GRADIENT_STOP_SIZE * sizeof(uint32_t)));

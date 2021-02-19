@@ -165,7 +165,7 @@ TVG_EXPORT Tvg_Result tvg_paint_transform(Tvg_Paint* paint, const Tvg_Matrix* m)
 
 TVG_EXPORT Tvg_Paint* tvg_paint_duplicate(Tvg_Paint* paint)
 {
-    if (!paint) return NULL;
+    if (!paint) return nullptr;
     return (Tvg_Paint*) reinterpret_cast<Paint*>(paint)->duplicate();
 }
 
@@ -191,6 +191,11 @@ TVG_EXPORT Tvg_Result tvg_paint_get_bounds(const Tvg_Paint* paint, float* x, flo
    return (Tvg_Result) reinterpret_cast<const Paint*>(paint)->bounds(x, y, w, h);
 }
 
+TVG_EXPORT Tvg_Result tvg_paint_set_composite_method(const Tvg_Paint* paint, Tvg_Composite_Method method)
+{
+   if (!paint) return TVG_RESULT_INVALID_ARGUMENT;
+   return (Tvg_Result) reinterpret_cast<const Paint*>(paint)->composite(unique_ptr<Paint>((Paint*)(paint)), (CompositeMethod)method);
+}
 
 /************************************************************************/
 /* Shape API                                                            */
@@ -258,7 +263,7 @@ TVG_EXPORT Tvg_Result tvg_shape_append_circle(Tvg_Paint* paint, float cx, float 
 TVG_EXPORT Tvg_Result tvg_shape_append_path(Tvg_Paint* paint, const Tvg_Path_Command* cmds, uint32_t cmdCnt, const Tvg_Point* pts, uint32_t ptsCnt)
 {
     if (!paint) return TVG_RESULT_INVALID_ARGUMENT;
-    return (Tvg_Result) reinterpret_cast<Shape*>(paint)->appendPath((PathCommand*)cmds, cmdCnt, (Point*)pts, ptsCnt);
+    return (Tvg_Result) reinterpret_cast<Shape*>(paint)->appendPath((const PathCommand*)cmds, cmdCnt, (const Point*)pts, ptsCnt);
 }
 
 TVG_EXPORT Tvg_Result tvg_shape_get_path_coords(const Tvg_Paint* paint, const Tvg_Point** pts, uint32_t* cnt)

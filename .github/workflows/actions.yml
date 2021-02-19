@@ -1,0 +1,70 @@
+name: Continuous-integration
+
+on:
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-18.04
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: true
+
+    - name: Install Packages
+      run: |
+        sudo apt-get update
+        sudo apt-get install ninja-build gcc-multilib g++-multilib meson
+
+    - name: Build
+      run: |
+        meson . build
+        cd build
+        sudo ninja -C . install
+
+  example_build:
+    runs-on: ubuntu-18.04
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: true
+
+    - name: Install Packages
+      run: |
+        sudo apt-get update
+        sudo add-apt-repository ppa:niko2040/e19
+        sudo apt-get install ninja-build gcc-multilib g++-multilib meson
+        sudo apt-get install libefl-dev
+
+    - name: Build
+      run: |
+        meson . build -Dexamples=true
+        cd build
+        sudo ninja -C . install
+
+  test_build:
+    runs-on: ubuntu-18.04
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: true
+
+    - name: Install Packages
+      run: |
+        sudo apt-get update
+        sudo apt-get install ninja-build gcc-multilib g++-multilib libgtest-dev meson cmake cmake-data
+    - name: Install-ThorVG
+      run: |
+        meson . build
+        cd build
+        sudo ninja -C . install
+        cd ..
+        sudo rm -rf ./build
+
+    - name: Build
+      run: |
+        meson . build -Dtest=true --errorlogs
+        cd build
+        sudo ninja -C . install test

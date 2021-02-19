@@ -7,6 +7,7 @@ Hermet Park (hermet) is the lead maintainer but there are designated sub-module 
 <b>loaders:</b> JunsuChoi (JSUYA) <br />
 <b>wasm:</b> Shinwoo Kim (kimcinoo) <br />
 <b>svg2png:</b> JunsuChoi (JSUYA) <br />
+<b>capi:</b> Michal Szczecinski (mihashco) <br />
 <br />
 
 

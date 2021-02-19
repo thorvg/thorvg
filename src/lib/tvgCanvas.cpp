@@ -63,7 +63,7 @@ Result Canvas::draw() noexcept
 
 Result Canvas::update(Paint* paint) noexcept
 {
-    return pImpl->update(paint);
+    return pImpl->update(paint, false);
 }
 
 

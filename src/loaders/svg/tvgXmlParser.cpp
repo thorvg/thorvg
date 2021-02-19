@@ -141,8 +141,7 @@ bool simpleXmlParseAttributes(const char* buf, unsigned bufLength, simpleXMLAttr
     const char *itr = buf, *itrEnd = buf + bufLength;
     char* tmpBuf = (char*)alloca(bufLength + 1);
 
-    if (!buf) return false;
-    if (!func) return false;
+    if (!buf || !func) return false;
 
     while (itr < itrEnd) {
         const char* p = _simpleXmlSkipWhiteSpace(itr, itrEnd);
@@ -200,8 +199,7 @@ bool simpleXmlParse(const char* buf, unsigned bufLength, bool strip, simpleXMLCb
 {
     const char *itr = buf, *itrEnd = buf + bufLength;
 
-    if (!buf) return false;
-    if (!func) return false;
+    if (!buf || !func) return false;
 
 #define CB(type, start, end)                                     \
     do {                                                         \

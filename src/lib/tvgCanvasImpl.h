@@ -31,7 +31,7 @@
 struct Canvas::Impl
 {
     Array<Paint*> paints;
-    RenderMethod*  renderer;
+    RenderMethod* renderer;
 
     Impl(RenderMethod* pRenderer):renderer(pRenderer)
     {
@@ -49,15 +49,13 @@ struct Canvas::Impl
         if (!p) return Result::MemoryCorruption;
         paints.push(p);
 
-        return update(p);
+        return update(p, true);
     }
 
     Result clear(bool free)
     {
-        if (!renderer) return Result::InsufficientCondition;
-
         //Clear render target before drawing
-        if (!renderer->clear()) return Result::InsufficientCondition;
+        if (!renderer || !renderer->clear()) return Result::InsufficientCondition;
 
         //free paints
         if (free) {
@@ -72,19 +70,20 @@ struct Canvas::Impl
         return Result::Success;
     }
 
-    Result update(Paint* paint)
+    Result update(Paint* paint, bool force)
     {
         if (!renderer) return Result::InsufficientCondition;
 
         Array<RenderData> clips;
+        auto flag = force ? RenderUpdateFlag::All : RenderUpdateFlag::None;
 
         //Update single paint node
         if (paint) {
-            paint->pImpl->update(*renderer, nullptr, 255, clips, RenderUpdateFlag::None);
+            paint->pImpl->update(*renderer, nullptr, 255, clips, flag);
         //Update all retained paint nodes
         } else {
             for (auto paint = paints.data; paint < (paints.data + paints.count); ++paint) {
-                (*paint)->pImpl->update(*renderer, nullptr, 255, clips, RenderUpdateFlag::None);
+                (*paint)->pImpl->update(*renderer, nullptr, 255, clips, flag);
             }
         }
         return Result::Success;
@@ -92,9 +91,7 @@ struct Canvas::Impl
 
     Result draw()
     {
-        if (!renderer) return Result::InsufficientCondition;
-
-        if (!renderer->preRender()) return Result::InsufficientCondition;
+        if (!renderer || !renderer->preRender()) return Result::InsufficientCondition;
 
         for (auto paint = paints.data; paint < (paints.data + paints.count); ++paint) {
             if (!(*paint)->pImpl->render(*renderer)) return Result::InsufficientCondition;

@@ -186,7 +186,7 @@ namespace tvg
                 cmpTarget->pImpl->render(renderer);
             }
 
-            if (cmp) renderer.beginComposite(cmp, CompositeMethod::AlphaMask, cmpTarget->pImpl->opacity);
+            if (cmp) renderer.beginComposite(cmp, cmpMethod, cmpTarget->pImpl->opacity);
 
             auto ret = smethod->render(renderer);
 
@@ -220,8 +220,7 @@ namespace tvg
 
         bool composite(Paint* target, CompositeMethod method)
         {
-            if (!target && method != CompositeMethod::None) return false;
-            if (target && method == CompositeMethod::None) return false;
+            if ((!target && method != CompositeMethod::None) || (target && method == CompositeMethod::None)) return false;
             cmpTarget = target;
             cmpMethod = method;
             return true;

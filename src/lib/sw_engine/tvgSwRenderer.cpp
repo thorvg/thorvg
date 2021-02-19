@@ -40,7 +40,7 @@ struct SwTask : Task
     uint32_t opacity;
     SwBBox bbox = {{0, 0}, {0, 0}};       //Whole Rendering Region
 
-    void bounds(uint32_t* x, uint32_t* y, uint32_t* w, uint32_t* h)
+    void bounds(uint32_t* x, uint32_t* y, uint32_t* w, uint32_t* h) const
     {
         //Range over?
         auto xx = bbox.min.x > 0 ? bbox.min.x : 0;
@@ -336,7 +336,7 @@ bool SwRenderer::renderShape(RenderData data)
     if (auto strokeFill = task->sdata->strokeFill()) {
         rasterGradientStroke(surface, &task->shape, strokeFill->id());
     } else {
-        task->sdata->strokeColor(&r, &g, &b, &a);
+    if (task->sdata->strokeColor(&r, &g, &b, &a) == Result::Success) {
         a = static_cast<uint8_t>((opacity * (uint32_t) a) / 255);
         if (a > 0) rasterStroke(surface, &task->shape, r, g, b, a);
     }
@@ -480,7 +480,7 @@ bool SwRenderer::dispose(RenderData data)
 }
 
 
-void* SwRenderer::prepareCommon(SwTask* task, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flags)
+void* SwRenderer::prepareCommon(SwTask* task, const RenderTransform* transform, uint32_t opacity, const Array<RenderData>& clips, RenderUpdateFlag flags)
 {
     if (flags == RenderUpdateFlag::None) return task;
 

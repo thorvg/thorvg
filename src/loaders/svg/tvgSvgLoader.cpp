@@ -79,7 +79,7 @@ static bool _parseNumber(const char** content, float* number)
  * Since this documentation is not obvious, more clean recalculation with dpi
  * is required, but for now default w3 constants would be used
  */
-static float _toFloat(SvgParser* svgParse, const char* str, SvgParserLengthType type)
+static float _toFloat(const SvgParser* svgParse, const char* str, SvgParserLengthType type)
 {
     float parsedValue = strtof(str, nullptr);
 
@@ -106,7 +106,7 @@ static float _toFloat(SvgParser* svgParse, const char* str, SvgParserLengthType 
 }
 
 
-static float _gradientToFloat(SvgParser* svgParse, const char* str, SvgParserLengthType type)
+static float _gradientToFloat(const SvgParser* svgParse, const char* str, SvgParserLengthType type)
 {
     char* end = nullptr;
 
@@ -445,7 +445,7 @@ static constexpr struct
 
 static void _toColor(const char* str, uint8_t* r, uint8_t* g, uint8_t* b, string** ref)
 {
-    unsigned int i, len = strlen(str);
+    unsigned int len = strlen(str);
     char *red, *green, *blue;
     unsigned char tr, tg, tb;
 
@@ -493,7 +493,7 @@ static void _toColor(const char* str, uint8_t* r, uint8_t* g, uint8_t* b, string
         *ref = _idFromUrl((const char*)(str + 3));
     } else {
         //Handle named color
-        for (i = 0; i < (sizeof(colors) / sizeof(colors[0])); i++) {
+        for (unsigned int i = 0; i < (sizeof(colors) / sizeof(colors[0])); i++) {
             if (!strcasecmp(colors[i].name, str)) {
                 *r = (((uint8_t*)(&(colors[i].value)))[2]);
                 *g = (((uint8_t*)(&(colors[i].value)))[1]);
@@ -590,7 +590,6 @@ static void _matrixCompose(const Matrix* m1,
  */
 static Matrix* _parseTransformationMatrix(const char* value)
 {
-    unsigned int i;
     float points[8];
     int ptCount = 0;
     float sx, sy;
@@ -606,7 +605,7 @@ static Matrix* _parseTransformationMatrix(const char* value)
             ++str;
             continue;
         }
-        for (i = 0; i < sizeof(matrixTags) / sizeof(matrixTags[0]); i++) {
+        for (unsigned int i = 0; i < sizeof(matrixTags) / sizeof(matrixTags[0]); i++) {
             if (!strncmp(matrixTags[i].tag, str, matrixTags[i].sz - 1)) {
                 state = matrixTags[i].state;
                 str += (matrixTags[i].sz - 1);
@@ -702,12 +701,11 @@ static constexpr struct
 
 static float _parseLength(const char* str, SvgLengthType* type)
 {
-    unsigned int i;
     float value;
     int sz = strlen(str);
 
     *type = SvgLengthType::Px;
-    for (i = 0; i < sizeof(lengthTags) / sizeof(lengthTags[0]); i++) {
+    for (unsigned int i = 0; i < sizeof(lengthTags) / sizeof(lengthTags[0]); i++) {
         if (lengthTags[i].sz - 1 == sz && !strncmp(lengthTags[i].tag, str, sz)) *type = lengthTags[i].type;
     }
     value = strtof(str, nullptr);
@@ -913,7 +911,6 @@ static bool _parseStyleAttr(void* data, const char* key, const char* value)
 {
     SvgLoaderData* loader = (SvgLoaderData*)data;
     SvgNode* node = loader->svgParse->node;
-    unsigned int i;
     int sz;
     if (!key || !value) return false;
 
@@ -923,7 +920,7 @@ static bool _parseStyleAttr(void* data, const char* key, const char* value)
     value = _skipSpace(value, nullptr);
 
     sz = strlen(key);
-    for (i = 0; i < sizeof(styleTags) / sizeof(styleTags[0]); i++) {
+    for (unsigned int i = 0; i < sizeof(styleTags) / sizeof(styleTags[0]); i++) {
         if (styleTags[i].sz - 1 == sz && !strncmp(styleTags[i].tag, key, sz)) {
             styleTags[i].tagHandler(loader, node, value);
             return true;
@@ -1055,7 +1052,7 @@ static SvgNode* _createSvgNode(SvgLoaderData* loader, SvgNode* parent, const cha
 }
 
 
-static SvgNode* _createMaskNode(SvgLoaderData* loader, SvgNode* parent, const char* buf, unsigned bufLength)
+static SvgNode* _createMaskNode(SvgLoaderData* loader, SvgNode* parent, TVG_UNUSED const char* buf, TVG_UNUSED unsigned bufLength)
 {
     loader->svgParse->node = _createNode(parent, SvgNodeType::Unknown);
     if (!loader->svgParse->node) return nullptr;
@@ -1137,12 +1134,11 @@ static bool _attrParseCircleNode(void* data, const char* key, const char* value)
     SvgLoaderData* loader = (SvgLoaderData*)data;
     SvgNode* node = loader->svgParse->node;
     SvgCircleNode* circle = &(node->node.circle);
-    unsigned int i;
     unsigned char* array;
     int sz = strlen(key);
 
     array = (unsigned char*)circle;
-    for (i = 0; i < sizeof(circleTags) / sizeof(circleTags[0]); i++) {
+    for (unsigned int i = 0; i < sizeof(circleTags) / sizeof(circleTags[0]); i++) {
         if (circleTags[i].sz - 1 == sz && !strncmp(circleTags[i].tag, key, sz)) {
             *((float*)(array + circleTags[i].offset)) = _toFloat(loader->svgParse, value, circleTags[i].type);
             return true;
@@ -1195,12 +1191,11 @@ static bool _attrParseEllipseNode(void* data, const char* key, const char* value
     SvgLoaderData* loader = (SvgLoaderData*)data;
     SvgNode* node = loader->svgParse->node;
     SvgEllipseNode* ellipse = &(node->node.ellipse);
-    unsigned int i;
     unsigned char* array;
     int sz = strlen(key);
 
     array = (unsigned char*)ellipse;
-    for (i = 0; i < sizeof(ellipseTags) / sizeof(ellipseTags[0]); i++) {
+    for (unsigned int i = 0; i < sizeof(ellipseTags) / sizeof(ellipseTags[0]); i++) {
         if (ellipseTags[i].sz - 1 == sz && !strncmp(ellipseTags[i].tag, key, sz)) {
             *((float*)(array + ellipseTags[i].offset)) = _toFloat(loader->svgParse, value, ellipseTags[i].type);
             return true;
@@ -1340,13 +1335,12 @@ static bool _attrParseRectNode(void* data, const char* key, const char* value)
     SvgLoaderData* loader = (SvgLoaderData*)data;
     SvgNode* node = loader->svgParse->node;
     SvgRectNode* rect = &(node->node.rect);
-    unsigned int i;
     unsigned char* array;
     bool ret = true;
     int sz = strlen(key);
 
     array = (unsigned char*)rect;
-    for (i = 0; i < sizeof(rectTags) / sizeof(rectTags[0]); i++) {
+    for (unsigned int i = 0; i < sizeof(rectTags) / sizeof(rectTags[0]); i++) {
         if (rectTags[i].sz - 1 == sz && !strncmp(rectTags[i].tag, key, sz)) {
             *((float*)(array + rectTags[i].offset)) = _toFloat(loader->svgParse, value, rectTags[i].type);
 
@@ -1409,12 +1403,11 @@ static bool _attrParseLineNode(void* data, const char* key, const char* value)
     SvgLoaderData* loader = (SvgLoaderData*)data;
     SvgNode* node = loader->svgParse->node;
     SvgLineNode* line = &(node->node.line);
-    unsigned int i;
     unsigned char* array;
     int sz = strlen(key);
 
     array = (unsigned char*)line;
-    for (i = 0; i < sizeof(lineTags) / sizeof(lineTags[0]); i++) {
+    for (unsigned int i = 0; i < sizeof(lineTags) / sizeof(lineTags[0]); i++) {
         if (lineTags[i].sz - 1 == sz && !strncmp(lineTags[i].tag, key, sz)) {
             *((float*)(array + lineTags[i].offset)) = _toFloat(loader->svgParse, value, lineTags[i].type);
             return true;
@@ -1467,7 +1460,7 @@ static SvgNode* _getDefsNode(SvgNode* node)
 }
 
 
-static SvgNode* _findChildById(SvgNode* node, const char* id)
+static SvgNode* _findChildById(const SvgNode* node, const char* id)
 {
     if (!node) return nullptr;
 
@@ -1493,7 +1486,7 @@ static SvgNode* _findNodeById(SvgNode *node, string* id)
     return result;
 }
 
-static void _cloneGradStops(Array<Fill::ColorStop*>* dst, Array<Fill::ColorStop*>* src)
+static void _cloneGradStops(Array<Fill::ColorStop*>* dst, const Array<Fill::ColorStop*>* src)
 {
     for (uint32_t i = 0; i < src->count; ++i) {
         auto stop = static_cast<Fill::ColorStop *>(malloc(sizeof(Fill::ColorStop)));
@@ -1535,12 +1528,15 @@ static SvgStyleGradient* _cloneGradient(SvgStyleGradient* from)
     return grad;
 error_grad_alloc:
     //LOG: allocation failed. out of memory
+    if (grad->transform) free(grad->transform);
+    if (grad->ref) delete grad->ref;
+    if (grad->id) delete grad->id;
     if (grad) free(grad);
     return nullptr;
 }
 
 
-static void _copyAttr(SvgNode* to, SvgNode* from)
+static void _copyAttr(SvgNode* to, const SvgNode* from)
 {
     //Copy matrix attribute
     if (from->transform) {
@@ -1814,10 +1810,9 @@ static bool _attrParseRadialGradientNode(void* data, const char* key, const char
     SvgLoaderData* loader = (SvgLoaderData*)data;
     SvgStyleGradient* grad = loader->svgParse->styleGrad;
     SvgRadialGradient* radial = grad->radial;
-    unsigned int i;
     int sz = strlen(key);
 
-    for (i = 0; i < sizeof(radialTags) / sizeof(radialTags[0]); i++) {
+    for (unsigned int i = 0; i < sizeof(radialTags) / sizeof(radialTags[0]); i++) {
         if (radialTags[i].sz - 1 == sz && !strncmp(radialTags[i].tag, key, sz)) {
             radialTags[i].tagHandler(loader, radial, value);
             return true;
@@ -1842,7 +1837,6 @@ static bool _attrParseRadialGradientNode(void* data, const char* key, const char
 
 static SvgStyleGradient* _createRadialGradient(SvgLoaderData* loader, const char* buf, unsigned bufLength)
 {
-    unsigned int i = 0;
     SvgStyleGradient* grad = (SvgStyleGradient*)calloc(1, sizeof(SvgStyleGradient));
     if (!grad) return nullptr;
     loader->svgParse->styleGrad = grad;
@@ -1868,7 +1862,7 @@ static SvgStyleGradient* _createRadialGradient(SvgLoaderData* loader, const char
     simpleXmlParseAttributes(buf, bufLength,
         _attrParseRadialGradientNode, loader);
 
-    for (i = 0; i < sizeof(radialTags) / sizeof(radialTags[0]); i++) {
+    for (unsigned int i = 0; i < sizeof(radialTags) / sizeof(radialTags[0]); i++) {
         radialTags[i].tagRecalc(loader, grad->radial, grad->userSpace);
     }
 
@@ -1976,10 +1970,9 @@ static bool _attrParseLinearGradientNode(void* data, const char* key, const char
     SvgLoaderData* loader = (SvgLoaderData*)data;
     SvgStyleGradient* grad = loader->svgParse->styleGrad;
     SvgLinearGradient* linear = grad->linear;
-    unsigned int i;
     int sz = strlen(key);
 
-    for (i = 0; i < sizeof(linear_tags) / sizeof(linear_tags[0]); i++) {
+    for (unsigned int i = 0; i < sizeof(linear_tags) / sizeof(linear_tags[0]); i++) {
         if (linear_tags[i].sz - 1 == sz && !strncmp(linear_tags[i].tag, key, sz)) {
             linear_tags[i].tagHandler(loader, linear, value);
             return true;
@@ -2009,7 +2002,6 @@ static SvgStyleGradient* _createLinearGradient(SvgLoaderData* loader, const char
     SvgStyleGradient* grad = (SvgStyleGradient*)calloc(1, sizeof(SvgStyleGradient));
     if (!grad) return nullptr;
     loader->svgParse->styleGrad = grad;
-    unsigned int i;
 
     grad->type = SvgGradientType::Linear;
     grad->userSpace = false;
@@ -2024,7 +2016,7 @@ static SvgStyleGradient* _createLinearGradient(SvgLoaderData* loader, const char
     grad->linear->x2 = 1;
     simpleXmlParseAttributes(buf, bufLength, _attrParseLinearGradientNode, loader);
 
-    for (i = 0; i < sizeof(linear_tags) / sizeof(linear_tags[0]); i++) {
+    for (unsigned int i = 0; i < sizeof(linear_tags) / sizeof(linear_tags[0]); i++) {
         linear_tags[i].tagRecalc(loader, grad->linear, grad->userSpace);
     }
 
@@ -2059,10 +2051,9 @@ static constexpr struct
 
 static GradientFactoryMethod _findGradientFactory(const char* name)
 {
-    unsigned int i;
     int sz = strlen(name);
 
-    for (i = 0; i < sizeof(gradientTags) / sizeof(gradientTags[0]); i++) {
+    for (unsigned int i = 0; i < sizeof(gradientTags) / sizeof(gradientTags[0]); i++) {
         if (gradientTags[i].sz - 1 == sz && !strncmp(gradientTags[i].tag, name, sz)) {
             return gradientTags[i].tagHandler;
         }
@@ -2086,11 +2077,9 @@ static constexpr struct
 
 static void _svgLoaderParerXmlClose(SvgLoaderData* loader, const char* content)
 {
-    unsigned int i;
-
     content = _skipSpace(content, nullptr);
 
-    for (i = 0; i < sizeof(popArray) / sizeof(popArray[0]); i++) {
+    for (unsigned int i = 0; i < sizeof(popArray) / sizeof(popArray[0]); i++) {
         if (!strncmp(content, popArray[i].tag, popArray[i].sz - 1)) {
             loader->stack.pop();
             break;
@@ -2223,7 +2212,7 @@ static bool _svgLoaderParser(void* data, SimpleXMLType type, const char* content
 }
 
 
-static void _styleInherit(SvgStyleProperty* child, SvgStyleProperty* parent)
+static void _styleInherit(SvgStyleProperty* child, const SvgStyleProperty* parent)
 {
     if (parent == nullptr) return;
     //Inherit the property of parent if not present in child.
@@ -2326,7 +2315,7 @@ static void _updateStyle(SvgNode* node, SvgStyleProperty* parentStyle)
 }
 
 
-static SvgStyleGradient* _gradientDup(Array<SvgStyleGradient*>* gradients, string* id)
+static SvgStyleGradient* _gradientDup(Array<SvgStyleGradient*>* gradients, const string* id)
 {
     SvgStyleGradient* result = nullptr;
 

@@ -38,32 +38,32 @@
     };
 
 #define ROTATION_MATRIX(xPivot, yPivot) \
-    auto radian = mTransform.angle / 180.0f * PI;	\
+    auto radian = mTransform.angle / 180.0f * PI; \
     auto cosVal = cosf(radian);  \
     auto sinVal = sinf(radian); \
     float rotate[4*4] = { \
-        cosVal, -sinVal, 0.0f, 0.0f,	\
-        sinVal, cosVal, 0.0f, 0.0f,\
-        0.0f, 0.0f, 1.0f, 0.0f,			\
+        cosVal, -sinVal, 0.0f, 0.0f, \
+        sinVal, cosVal, 0.0f, 0.0f, \
+        0.0f, 0.0f, 1.0f, 0.0f, \
         (xPivot * (1.0f - cosVal)) - (yPivot * sinVal), (yPivot *(1.0f - cosVal)) + (xPivot * sinVal), 0.0f, 1.0f \
     };
 
 #define MULTIPLY_MATRIX(A, B, transform) \
     for(auto i = 0; i < 4; ++i) \
-    {	\
+    { \
         for(auto j = 0; j < 4; ++j) \
-        {	\
-            float sum = 0.0;	\
-            for (auto k = 0; k < 4; ++k)	\
+        { \
+            float sum = 0.0; \
+            for (auto k = 0; k < 4; ++k) \
                 sum += A[k*4+i] * B[j*4+k]; \
             transform[j*4+i] = sum; \
-        }	\
+        } \
     }
 
-#define GET_TRANSFORMATION(xPivot, yPivot, transform)	\
-    MVP_MATRIX();	\
-    ROTATION_MATRIX(xPivot, yPivot);	\
-    MULTIPLY_MATRIX(mvp, rotate, transform);	
+#define GET_TRANSFORMATION(xPivot, yPivot, transform) \
+    MVP_MATRIX(); \
+    ROTATION_MATRIX(xPivot, yPivot); \
+    MULTIPLY_MATRIX(mvp, rotate, transform);
 
 class GlPoint
 {
@@ -225,7 +225,7 @@ struct GlTransform
     float angle = 0.0f;
     float scale = 1.0f;
     float w;
-    float h;    
+    float h;
     float matrix[16];
 };
 
@@ -261,7 +261,7 @@ private:
 
     unique_ptr<GlGpuBuffer> mGpuBuffer;
     vector<GlPrimitive>     mPrimitives;
-    GlTransform	            mTransform;
+    GlTransform             mTransform;
 };
 
 #endif /* _TVG_GL_GEOMETRY_H_ */
