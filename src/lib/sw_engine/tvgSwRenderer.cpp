@@ -336,9 +336,10 @@ bool SwRenderer::renderShape(RenderData data)
     if (auto strokeFill = task->sdata->strokeFill()) {
         rasterGradientStroke(surface, &task->shape, strokeFill->id());
     } else {
-    if (task->sdata->strokeColor(&r, &g, &b, &a) == Result::Success) {
-        a = static_cast<uint8_t>((opacity * (uint32_t) a) / 255);
-        if (a > 0) rasterStroke(surface, &task->shape, r, g, b, a);
+        if (task->sdata->strokeColor(&r, &g, &b, &a) == Result::Success) {
+            a = static_cast<uint8_t>((opacity * (uint32_t) a) / 255);
+            if (a > 0) rasterStroke(surface, &task->shape, r, g, b, a);
+        }
     }
 
     if (task->cmpStroking) endComposite(cmp);
