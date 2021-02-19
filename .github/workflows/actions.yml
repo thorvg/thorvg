@@ -7,11 +7,11 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
     steps:
     - uses: actions/checkout@v2
       with:
-        submodules: false
+        submodules: true
 
     - name: Install Packages
       run: |
@@ -25,17 +25,16 @@ jobs:
         sudo ninja -C . install
 
   example_build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
     steps:
     - uses: actions/checkout@v2
       with:
-        submodules: false
+        submodules: true
 
     - name: Install Packages
       run: |
         sudo apt-get update
         sudo add-apt-repository ppa:niko2040/e19
-        sudo apt-get update
         sudo apt-get install ninja-build gcc-multilib g++-multilib meson
         sudo apt-get install libefl-dev
 
@@ -46,11 +45,11 @@ jobs:
         sudo ninja -C . install
 
   test_build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
     steps:
     - uses: actions/checkout@v2
       with:
-        submodules: false
+        submodules: true
 
     - name: Install Packages
       run: |
