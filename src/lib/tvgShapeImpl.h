@@ -168,7 +168,7 @@ struct ShapePath
         cmds[cmdCnt++] = PathCommand::Close;
     }
 
-    bool bounds(float* x, float* y, float* w, float* h)
+    bool bounds(float* x, float* y, float* w, float* h) const
     {
         if (ptsCnt == 0) return false;
 

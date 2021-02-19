@@ -81,7 +81,7 @@ struct Scene::Impl
         return true;
     }
 
-    bool bounds(RenderMethod& renderer, uint32_t* px, uint32_t* py, uint32_t* pw, uint32_t* ph)
+    bool bounds(RenderMethod& renderer, uint32_t* px, uint32_t* py, uint32_t* pw, uint32_t* ph) const
     {
         if (paints.count == 0) return false;
 
@@ -113,7 +113,7 @@ struct Scene::Impl
         return true;
     }
 
-    bool bounds(float* px, float* py, float* pw, float* ph)
+    bool bounds(float* px, float* py, float* pw, float* ph) const
     {
         if (paints.count == 0) return false;
 
