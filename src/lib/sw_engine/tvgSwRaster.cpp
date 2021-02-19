@@ -85,7 +85,7 @@ static bool _identify(const Matrix* transform)
 }
 
 
-static SwBBox _clipRegion(Surface* surface, SwBBox& in)
+static SwBBox _clipRegion(const Surface* surface, const SwBBox& in)
 {
     auto bbox = in;
 
@@ -98,7 +98,7 @@ static SwBBox _clipRegion(Surface* surface, SwBBox& in)
 }
 
 
-static bool _translucent(SwSurface* surface, uint8_t a)
+static bool _translucent(const SwSurface* surface, uint8_t a)
 {
     if (a < 255) return true;
     if (!surface->compositor || surface->compositor->method == CompositeMethod::None) return false;
@@ -208,7 +208,7 @@ static bool _rasterSolidRect(SwSurface* surface, const SwBBox& region, uint32_t 
 /************************************************************************/
 
 
-static bool _translucentRle(SwSurface* surface, SwRleData* rle, uint32_t color)
+static bool _translucentRle(SwSurface* surface, const SwRleData* rle, uint32_t color)
 {
     auto span = rle->spans;
     uint32_t src;
@@ -227,7 +227,7 @@ static bool _translucentRle(SwSurface* surface, SwRleData* rle, uint32_t color)
 }
 
 
-static bool _translucentRleAlphaMask(SwSurface* surface, SwRleData* rle, uint32_t color)
+static bool _translucentRleAlphaMask(SwSurface* surface, const SwRleData* rle, uint32_t color)
 {
 #ifdef THORVG_LOG_ENABLED
     printf("SW_ENGINE: Rle Alpha Mask Composition\n");
@@ -298,7 +298,7 @@ static bool _rasterTranslucentRle(SwSurface* surface, SwRleData* rle, uint32_t c
 }
 
 
-static bool _rasterSolidRle(SwSurface* surface, SwRleData* rle, uint32_t color)
+static bool _rasterSolidRle(SwSurface* surface, const SwRleData* rle, uint32_t color)
 {
     if (!rle) return false;
 
@@ -325,7 +325,7 @@ static bool _rasterSolidRle(SwSurface* surface, SwRleData* rle, uint32_t color)
 /* Image                                                                */
 /************************************************************************/
 
-static bool _rasterTranslucentImageRle(SwSurface* surface, SwRleData* rle, uint32_t *img, uint32_t w, uint32_t h, uint32_t opacity)
+static bool _rasterTranslucentImageRle(SwSurface* surface, const SwRleData* rle, uint32_t *img, uint32_t w, uint32_t h, uint32_t opacity)
 {
     auto span = rle->spans;
 
@@ -342,7 +342,7 @@ static bool _rasterTranslucentImageRle(SwSurface* surface, SwRleData* rle, uint3
 }
 
 
-static bool _rasterTranslucentImageRle(SwSurface* surface, SwRleData* rle, uint32_t *img, uint32_t w, uint32_t h, uint32_t opacity, const Matrix* invTransform)
+static bool _rasterTranslucentImageRle(SwSurface* surface, const SwRleData* rle, uint32_t *img, uint32_t w, uint32_t h, uint32_t opacity, const Matrix* invTransform)
 {
     auto span = rle->spans;
 
@@ -401,7 +401,7 @@ static bool _rasterImageRle(SwSurface* surface, SwRleData* rle, uint32_t *img, u
 }
 
 
-static bool _translucentImage(SwSurface* surface, uint32_t *img, uint32_t w, uint32_t h, uint32_t opacity, const SwBBox& region, const Matrix* invTransform)
+static bool _translucentImage(SwSurface* surface, const uint32_t *img, uint32_t w, uint32_t h, uint32_t opacity, const SwBBox& region, const Matrix* invTransform)
 {
     for (auto y = region.min.y; y < region.max.y; ++y) {
         auto dst = &surface->buffer[y * surface->stride + region.min.x];
@@ -419,7 +419,7 @@ static bool _translucentImage(SwSurface* surface, uint32_t *img, uint32_t w, uin
 }
 
 
-static bool _translucentImageAlphaMask(SwSurface* surface, uint32_t *img, uint32_t w, uint32_t h, uint32_t opacity, const SwBBox& region, const Matrix* invTransform)
+static bool _translucentImageAlphaMask(SwSurface* surface, const uint32_t *img, uint32_t w, uint32_t h, uint32_t opacity, const SwBBox& region, const Matrix* invTransform)
 {
 #ifdef THORVG_LOG_ENABLED
     printf("SW_ENGINE: Transformed Image Alpha Mask Composition\n");
@@ -440,7 +440,7 @@ static bool _translucentImageAlphaMask(SwSurface* surface, uint32_t *img, uint32
     return true;
 }
 
-static bool _translucentImageInvAlphaMask(SwSurface* surface, uint32_t *img, uint32_t w, uint32_t h, uint32_t opacity, const SwBBox& region, const Matrix* invTransform)
+static bool _translucentImageInvAlphaMask(SwSurface* surface, const uint32_t *img, uint32_t w, uint32_t h, uint32_t opacity, const SwBBox& region, const Matrix* invTransform)
 {
 #ifdef THORVG_LOG_ENABLED
     printf("SW_ENGINE: Transformed Image Alpha Mask Composition\n");
@@ -461,7 +461,7 @@ static bool _translucentImageInvAlphaMask(SwSurface* surface, uint32_t *img, uin
     return true;
 }
 
-static bool _rasterTranslucentImage(SwSurface* surface, uint32_t *img, uint32_t w, uint32_t h, uint32_t opacity, const SwBBox& region, const Matrix* invTransform)
+static bool _rasterTranslucentImage(SwSurface* surface, const uint32_t *img, uint32_t w, uint32_t h, uint32_t opacity, const SwBBox& region, const Matrix* invTransform)
 {
     if (surface->compositor) {
         if (surface->compositor->method == CompositeMethod::AlphaMask) {
@@ -568,7 +568,7 @@ static bool _rasterImage(SwSurface* surface, uint32_t *img, uint32_t w, uint32_t
 }
 
 
-static bool _rasterImage(SwSurface* surface, uint32_t *img, uint32_t w, uint32_t h, const SwBBox& region, const Matrix* invTransform)
+static bool _rasterImage(SwSurface* surface, const uint32_t *img, uint32_t w, uint32_t h, const SwBBox& region, const Matrix* invTransform)
 {
     for (auto y = region.min.y; y < region.max.y; ++y) {
         auto dst = &surface->buffer[y * surface->stride + region.min.x];
@@ -653,7 +653,7 @@ static bool _rasterRadialGradientRect(SwSurface* surface, const SwBBox& region, 
 }
 
 
-static bool _rasterLinearGradientRle(SwSurface* surface, SwRleData* rle, const SwFill* fill)
+static bool _rasterLinearGradientRle(SwSurface* surface, const SwRleData* rle, const SwFill* fill)
 {
     if (!rle || !fill || fill->linear.len < FLT_EPSILON) return false;
 
@@ -699,7 +699,7 @@ static bool _rasterLinearGradientRle(SwSurface* surface, SwRleData* rle, const S
 }
 
 
-static bool _rasterRadialGradientRle(SwSurface* surface, SwRleData* rle, const SwFill* fill)
+static bool _rasterRadialGradientRle(SwSurface* surface, const SwRleData* rle, const SwFill* fill)
 {
     if (!rle || !fill || fill->radial.a < FLT_EPSILON) return false;
 
@@ -832,7 +832,7 @@ bool rasterClear(SwSurface* surface)
 }
 
 
-bool rasterImage(SwSurface* surface, SwImage* image, const Matrix* transform, SwBBox& bbox, uint32_t opacity)
+bool rasterImage(SwSurface* surface, SwImage* image, const Matrix* transform, const SwBBox& bbox, uint32_t opacity)
 {
     Matrix invTransform;
 

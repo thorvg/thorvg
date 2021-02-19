@@ -79,7 +79,7 @@ static bool _parseNumber(const char** content, float* number)
  * Since this documentation is not obvious, more clean recalculation with dpi
  * is required, but for now default w3 constants would be used
  */
-static float _toFloat(SvgParser* svgParse, const char* str, SvgParserLengthType type)
+static float _toFloat(const SvgParser* svgParse, const char* str, SvgParserLengthType type)
 {
     float parsedValue = strtof(str, nullptr);
 
@@ -106,7 +106,7 @@ static float _toFloat(SvgParser* svgParse, const char* str, SvgParserLengthType 
 }
 
 
-static float _gradientToFloat(SvgParser* svgParse, const char* str, SvgParserLengthType type)
+static float _gradientToFloat(const SvgParser* svgParse, const char* str, SvgParserLengthType type)
 {
     char* end = nullptr;
 
@@ -1467,7 +1467,7 @@ static SvgNode* _getDefsNode(SvgNode* node)
 }
 
 
-static SvgNode* _findChildById(SvgNode* node, const char* id)
+static SvgNode* _findChildById(const SvgNode* node, const char* id)
 {
     if (!node) return nullptr;
 
@@ -1493,7 +1493,7 @@ static SvgNode* _findNodeById(SvgNode *node, string* id)
     return result;
 }
 
-static void _cloneGradStops(Array<Fill::ColorStop*>* dst, Array<Fill::ColorStop*>* src)
+static void _cloneGradStops(Array<Fill::ColorStop*>* dst, const Array<Fill::ColorStop*>* src)
 {
     for (uint32_t i = 0; i < src->count; ++i) {
         auto stop = static_cast<Fill::ColorStop *>(malloc(sizeof(Fill::ColorStop)));
@@ -1543,7 +1543,7 @@ error_grad_alloc:
 }
 
 
-static void _copyAttr(SvgNode* to, SvgNode* from)
+static void _copyAttr(SvgNode* to, const SvgNode* from)
 {
     //Copy matrix attribute
     if (from->transform) {
@@ -2226,7 +2226,7 @@ static bool _svgLoaderParser(void* data, SimpleXMLType type, const char* content
 }
 
 
-static void _styleInherit(SvgStyleProperty* child, SvgStyleProperty* parent)
+static void _styleInherit(SvgStyleProperty* child, const SvgStyleProperty* parent)
 {
     if (parent == nullptr) return;
     //Inherit the property of parent if not present in child.
@@ -2329,7 +2329,7 @@ static void _updateStyle(SvgNode* node, SvgStyleProperty* parentStyle)
 }
 
 
-static SvgStyleGradient* _gradientDup(Array<SvgStyleGradient*>* gradients, string* id)
+static SvgStyleGradient* _gradientDup(Array<SvgStyleGradient*>* gradients, const string* id)
 {
     SvgStyleGradient* result = nullptr;
 

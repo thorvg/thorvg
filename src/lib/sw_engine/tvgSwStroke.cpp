@@ -39,7 +39,7 @@ static inline SwFixed SIDE_TO_ROTATE(const int32_t s)
 }
 
 
-static inline void SCALE(SwStroke& stroke, SwPoint& pt)
+static inline void SCALE(const SwStroke& stroke, SwPoint& pt)
 {
     pt.x *= stroke.sx;
     pt.y *= stroke.sy;
@@ -113,7 +113,7 @@ static void _borderClose(SwStrokeBorder* border, bool reverse)
 }
 
 
-static void _borderCubicTo(SwStrokeBorder* border, SwPoint& ctrl1, SwPoint& ctrl2, SwPoint& to)
+static void _borderCubicTo(SwStrokeBorder* border, const SwPoint& ctrl1, const SwPoint& ctrl2, const SwPoint& to)
 {
     _growBorder(border, 3);
 
@@ -134,7 +134,7 @@ static void _borderCubicTo(SwStrokeBorder* border, SwPoint& ctrl1, SwPoint& ctrl
 }
 
 
-static void _borderArcTo(SwStrokeBorder* border, SwPoint& center, SwFixed radius, SwFixed angleStart, SwFixed angleDiff, SwStroke& stroke)
+static void _borderArcTo(SwStrokeBorder* border, const SwPoint& center, SwFixed radius, SwFixed angleStart, SwFixed angleDiff, SwStroke& stroke)
 {
     constexpr SwFixed ARC_CUBIC_ANGLE = SW_ANGLE_PI / 2;
     SwPoint a = {static_cast<SwCoord>(radius), 0};
@@ -187,7 +187,7 @@ static void _borderArcTo(SwStrokeBorder* border, SwPoint& center, SwFixed radius
 }
 
 
-static void _borderLineTo(SwStrokeBorder* border, SwPoint& to, bool movable)
+static void _borderLineTo(SwStrokeBorder* border, const SwPoint& to, bool movable)
 {
     if (border->movable) {
         //move last point
@@ -660,7 +660,7 @@ static void _addReverseLeft(SwStroke& stroke, bool opened)
 }
 
 
-static void _beginSubPath(SwStroke& stroke, SwPoint& to, bool opened)
+static void _beginSubPath(SwStroke& stroke, const SwPoint& to, bool opened)
 {
     /* We cannot process the first point because there is not enough
        information regarding its corner/cap. Later, it will be processed
@@ -771,7 +771,7 @@ fail:
 }
 
 
-static void _exportBorderOutline(SwStroke& stroke, SwOutline* outline, uint32_t side)
+static void _exportBorderOutline(const SwStroke& stroke, SwOutline* outline, uint32_t side)
 {
     auto border = stroke.borders + side;
 

@@ -164,7 +164,7 @@ static void _initBBox(SwBBox& bbox)
 }
 
 
-static bool _updateBBox(SwOutline* outline, SwBBox& bbox)
+static bool _updateBBox(const SwOutline* outline, SwBBox& bbox)
 {
     if (!outline) return false;
 
@@ -434,7 +434,7 @@ bool shapePrepare(SwShape* shape, const Shape* sdata, unsigned tid, const SwSize
 }
 
 
-bool shapePrepared(SwShape* shape)
+bool shapePrepared(const SwShape* shape)
 {
     return shape->rle ? true : false;
 }

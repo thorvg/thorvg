@@ -135,7 +135,7 @@ static inline SwCoord HYPOT(SwPoint pt)
     return ((pt.x > pt.y) ? (pt.x + (3 * pt.y >> 3)) : (pt.y + (3 * pt.x >> 3)));
 }
 
-static void _genSpan(SwRleData* rle, SwSpan* spans, uint32_t count)
+static void _genSpan(SwRleData* rle, const SwSpan* spans, uint32_t count)
 {
     auto newSize = rle->size + count;
 
@@ -915,7 +915,7 @@ void rleFree(SwRleData* rle)
     free(rle);
 }
 
-void updateRleSpans(SwRleData *rle, SwSpan* curSpans, uint32_t size)
+void updateRleSpans(SwRleData *rle, const SwSpan* curSpans, uint32_t size)
 {
     if (!rle->spans || !curSpans || size == 0) return;
     rle->size = size;

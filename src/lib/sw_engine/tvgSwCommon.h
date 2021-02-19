@@ -281,15 +281,15 @@ SwFixed mathCos(SwFixed angle);
 SwFixed mathSin(SwFixed angle);
 void mathSplitCubic(SwPoint* base);
 SwFixed mathDiff(SwFixed angle1, SwFixed angle2);
-SwFixed mathLength(SwPoint& pt);
-bool mathSmallCubic(SwPoint* base, SwFixed& angleIn, SwFixed& angleMid, SwFixed& angleOut);
+SwFixed mathLength(const SwPoint& pt);
+bool mathSmallCubic(const SwPoint* base, SwFixed& angleIn, SwFixed& angleMid, SwFixed& angleOut);
 SwFixed mathMean(SwFixed angle1, SwFixed angle2);
 SwPoint mathTransform(const Point* to, const Matrix* transform);
 
 void shapeReset(SwShape* shape);
 bool shapeGenOutline(SwShape* shape, const Shape* sdata, unsigned tid, const Matrix* transform);
 bool shapePrepare(SwShape* shape, const Shape* sdata, unsigned tid, const SwSize& clip, const Matrix* transform, SwBBox& bbox);
-bool shapePrepared(SwShape* shape);
+bool shapePrepared(const SwShape* shape);
 bool shapeGenRle(SwShape* shape, const Shape* sdata, const SwSize& clip, bool antiAlias, bool hasComposite);
 void shapeDelOutline(SwShape* shape, uint32_t tid);
 void shapeResetStroke(SwShape* shape, const Shape* sdata, const Matrix* transform);
@@ -306,8 +306,8 @@ SwOutline* strokeExportOutline(SwStroke* stroke, unsigned tid);
 void strokeFree(SwStroke* stroke);
 
 bool imagePrepare(SwImage* image, const Picture* pdata, unsigned tid, const SwSize& clip, const Matrix* transform, SwBBox& bbox);
-bool imagePrepared(SwImage* image);
-bool imageGenRle(SwImage* image, TVG_UNUSED const Picture* pdata, const SwSize& clip, SwBBox& bbox, bool antiAlias, bool hasComposite);
+bool imagePrepared(const SwImage* image);
+bool imageGenRle(SwImage* image, TVG_UNUSED const Picture* pdata, const SwSize& clip, const SwBBox& bbox, bool antiAlias, bool hasComposite);
 void imageDelOutline(SwImage* image, uint32_t tid);
 void imageReset(SwImage* image);
 bool imageGenOutline(SwImage* image, const Picture* pdata, unsigned tid, const Matrix* transform);
@@ -337,7 +337,7 @@ void mpoolRetStrokeOutline(unsigned idx);
 bool rasterCompositor(SwSurface* surface);
 bool rasterGradientShape(SwSurface* surface, SwShape* shape, unsigned id);
 bool rasterSolidShape(SwSurface* surface, SwShape* shape, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
-bool rasterImage(SwSurface* surface, SwImage* image, const Matrix* transform, SwBBox& bbox, uint32_t opacity);
+bool rasterImage(SwSurface* surface, SwImage* image, const Matrix* transform, const SwBBox& bbox, uint32_t opacity);
 bool rasterStroke(SwSurface* surface, SwShape* shape, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
 bool rasterClear(SwSurface* surface);
 

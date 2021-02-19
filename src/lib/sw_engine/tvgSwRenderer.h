@@ -63,7 +63,7 @@ private:
     SwRenderer(){};
     ~SwRenderer();
 
-    RenderData prepareCommon(SwTask* task, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flags);
+    RenderData prepareCommon(SwTask* task, const RenderTransform* transform, uint32_t opacity, const Array<RenderData>& clips, RenderUpdateFlag flags);
 };
 
 }
