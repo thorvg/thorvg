@@ -75,13 +75,13 @@ struct SwPoint
         return (x != rhs.x || y != rhs.y);
     }
 
-    bool zero()
+    bool zero() const
     {
         if (x == 0 && y == 0) return true;
         else return false;
     }
 
-    bool small()
+    bool small() const
     {
         //2 is epsilon...
         if (abs(x) < 2 && abs(y) < 2) return true;

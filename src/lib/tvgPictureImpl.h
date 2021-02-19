@@ -130,7 +130,7 @@ struct Picture::Impl
         return false;
     }
 
-    bool viewbox(float* x, float* y, float* w, float* h)
+    bool viewbox(float* x, float* y, float* w, float* h) const
     {
         if (!loader) return false;
         if (x) *x = loader->vx;
@@ -148,7 +148,7 @@ struct Picture::Impl
         return true;
     }
 
-    bool bounds(float* x, float* y, float* w, float* h)
+    bool bounds(float* x, float* y, float* w, float* h) const
     {
         if (!paint) return false;
         return paint->pImpl->bounds(x, y, w, h);

@@ -40,7 +40,7 @@ struct SwTask : Task
     uint32_t opacity;
     SwBBox bbox = {{0, 0}, {0, 0}};       //Whole Rendering Region
 
-    void bounds(uint32_t* x, uint32_t* y, uint32_t* w, uint32_t* h)
+    void bounds(uint32_t* x, uint32_t* y, uint32_t* w, uint32_t* h) const
     {
         //Range over?
         auto xx = bbox.min.x > 0 ? bbox.min.x : 0;
