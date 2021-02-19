@@ -108,7 +108,7 @@ bool imagePrepared(const SwImage* image)
 }
 
 
-bool imageGenRle(SwImage* image, TVG_UNUSED const Picture* pdata, const SwSize& clip, const SwBBox& bbox, bool antiAlias, bool hasComposite)
+bool imageGenRle(SwImage* image, TVG_UNUSED const Picture* pdata, const SwSize& clip, const SwBBox& bbox, bool antiAlias, TVG_UNUSED bool hasComposite)
 {
     if ((image->rle = rleRender(image->rle, image->outline, bbox, clip, antiAlias))) return true;
 

@@ -1052,7 +1052,7 @@ static SvgNode* _createSvgNode(SvgLoaderData* loader, SvgNode* parent, const cha
 }
 
 
-static SvgNode* _createMaskNode(SvgLoaderData* loader, SvgNode* parent, const char* buf, unsigned bufLength)
+static SvgNode* _createMaskNode(SvgLoaderData* loader, SvgNode* parent, TVG_UNUSED const char* buf, TVG_UNUSED unsigned bufLength)
 {
     loader->svgParse->node = _createNode(parent, SvgNodeType::Unknown);
     if (!loader->svgParse->node) return nullptr;
