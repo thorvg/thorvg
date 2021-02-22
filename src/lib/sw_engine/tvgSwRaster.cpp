@@ -332,8 +332,8 @@ static bool _rasterTranslucentImageRle(SwSurface* surface, const SwRleData* rle,
     for (uint32_t i = 0; i < rle->size; ++i, ++span) {
         auto dst = &surface->buffer[span->y * surface->stride + span->x];
         auto src = img + span->x + span->y * w;    //TODO: need to use image's stride
+        auto alpha = ALPHA_MULTIPLY(span->coverage, opacity);
         for (uint32_t x = 0; x < span->len; ++x, ++dst, ++src) {
-            auto alpha = ALPHA_MULTIPLY(span->coverage, opacity);
             *src = ALPHA_BLEND(*src, alpha);
             *dst = *src + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(*src));
         }
@@ -346,19 +346,18 @@ static bool _rasterTranslucentImageRle(SwSurface* surface, const SwRleData* rle,
 {
     auto span = rle->spans;
 
-    for (uint32_t i = 0; i < rle->size; ++i) {
+    for (uint32_t i = 0; i < rle->size; ++i, ++span) {
         auto ey1 = span->y * invTransform->e12 + invTransform->e13;
         auto ey2 = span->y * invTransform->e22 + invTransform->e23;
         auto dst = &surface->buffer[span->y * surface->stride + span->x];
+        auto alpha = ALPHA_MULTIPLY(span->coverage, opacity);
         for (uint32_t x = 0; x < span->len; ++x, ++dst) {
             auto rX = static_cast<uint32_t>(roundf((span->x + x) * invTransform->e11 + ey1));
             auto rY = static_cast<uint32_t>(roundf((span->x + x) * invTransform->e21 + ey2));
             if (rX >= w || rY >= h) continue;
-            auto alpha = ALPHA_MULTIPLY(span->coverage, opacity);
             auto src = ALPHA_BLEND(img[rY * w + rX], alpha);     //TODO: need to use image's stride
             *dst = src + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(src));
         }
-        ++span;
     }
     return true;
 }
@@ -384,7 +383,7 @@ static bool _rasterImageRle(SwSurface* surface, SwRleData* rle, uint32_t *img, u
 {
     auto span = rle->spans;
 
-    for (uint32_t i = 0; i < rle->size; ++i) {
+    for (uint32_t i = 0; i < rle->size; ++i, ++span) {
         auto ey1 = span->y * invTransform->e12 + invTransform->e13;
         auto ey2 = span->y * invTransform->e22 + invTransform->e23;
         auto dst = &surface->buffer[span->y * surface->stride + span->x];
@@ -395,7 +394,6 @@ static bool _rasterImageRle(SwSurface* surface, SwRleData* rle, uint32_t *img, u
             auto src = ALPHA_BLEND(img[rY * w + rX], span->coverage);    //TODO: need to use image's stride
             *dst = src + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(src));
         }
-        ++span;
     }
     return true;
 }
@@ -403,8 +401,10 @@ static bool _rasterImageRle(SwSurface* surface, SwRleData* rle, uint32_t *img, u
 
 static bool _translucentImage(SwSurface* surface, const uint32_t *img, uint32_t w, TVG_UNUSED uint32_t h, uint32_t opacity, const SwBBox& region, const Matrix* invTransform)
 {
+    auto dbuffer = &surface->buffer[region.min.y * surface->stride + region.min.x];
+
     for (auto y = region.min.y; y < region.max.y; ++y) {
-        auto dst = &surface->buffer[y * surface->stride + region.min.x];
+        auto dst = dbuffer;
         auto ey1 = y * invTransform->e12 + invTransform->e13;
         auto ey2 = y * invTransform->e22 + invTransform->e23;
         for (auto x = region.min.x; x < region.max.x; ++x, ++dst) {
@@ -414,6 +414,7 @@ static bool _translucentImage(SwSurface* surface, const uint32_t *img, uint32_t 
             auto src = ALPHA_BLEND(img[rX + (rY * w)], opacity);    //TODO: need to use image's stride
             *dst = src + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(src));
         }
+        dbuffer += surface->stride;
     }
     return true;
 }
@@ -424,9 +425,12 @@ static bool _translucentImageAlphaMask(SwSurface* surface, const uint32_t *img, 
 #ifdef THORVG_LOG_ENABLED
     printf("SW_ENGINE: Transformed Image Alpha Mask Composition\n");
 #endif
+    auto dbuffer = &surface->buffer[region.min.y * surface->stride + region.min.x];
+    auto cbuffer = &surface->compositor->image.data[region.min.y * surface->stride + region.min.x];
+
     for (auto y = region.min.y; y < region.max.y; ++y) {
-        auto dst = &surface->buffer[y * surface->stride + region.min.x];
-        auto cmp = &surface->compositor->image.data[y * surface->stride + region.min.x];
+        auto dst = dbuffer;
+        auto cmp = cbuffer;
         float ey1 = y * invTransform->e12 + invTransform->e13;
         float ey2 = y * invTransform->e22 + invTransform->e23;
         for (auto x = region.min.x; x < region.max.x; ++x, ++dst, ++cmp) {
@@ -436,6 +440,8 @@ static bool _translucentImageAlphaMask(SwSurface* surface, const uint32_t *img, 
             auto tmp = ALPHA_BLEND(img[rX + (rY * w)], ALPHA_MULTIPLY(opacity, surface->blender.alpha(*cmp)));  //TODO: need to use image's stride
             *dst = tmp + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(tmp));
         }
+        dbuffer += surface->stride;
+        cbuffer += surface->stride;
     }
     return true;
 }
@@ -445,9 +451,12 @@ static bool _translucentImageInvAlphaMask(SwSurface* surface, const uint32_t *im
 #ifdef THORVG_LOG_ENABLED
     printf("SW_ENGINE: Transformed Image Inverse Alpha Mask Composition\n");
 #endif
+    auto dbuffer = &surface->buffer[region.min.y * surface->stride + region.min.x];
+    auto cbuffer = &surface->compositor->image.data[region.min.y * surface->stride + region.min.x];
+
     for (auto y = region.min.y; y < region.max.y; ++y) {
-        auto dst = &surface->buffer[y * surface->stride + region.min.x];
-        auto cmp = &surface->compositor->image.data[y * surface->stride + region.min.x];
+        auto dst = dbuffer;
+        auto cmp = cbuffer;
         float ey1 = y * invTransform->e12 + invTransform->e13;
         float ey2 = y * invTransform->e22 + invTransform->e23;
         for (auto x = region.min.x; x < region.max.x; ++x, ++dst, ++cmp) {
@@ -458,6 +467,8 @@ static bool _translucentImageInvAlphaMask(SwSurface* surface, const uint32_t *im
             auto tmp = ALPHA_BLEND(img[rX + (rY * w)], ALPHA_MULTIPLY(opacity, ialpha));  //TODO: need to use image's stride
             *dst = tmp + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(tmp));
         }
+        dbuffer += surface->stride;
+        cbuffer += surface->stride;
     }
     return true;
 }
@@ -478,13 +489,18 @@ static bool _rasterTranslucentImage(SwSurface* surface, const uint32_t *img, uin
 
 static bool _translucentImage(SwSurface* surface, uint32_t *img, uint32_t w, uint32_t h, uint32_t opacity, const SwBBox& region)
 {
+    auto dbuffer = &surface->buffer[region.min.y * surface->stride + region.min.x];
+    auto sbuffer = img + region.min.x + region.min.y * w;    //TODO: need to use image's stride
+
     for (auto y = region.min.y; y < region.max.y; ++y) {
-        auto dst = &surface->buffer[y * surface->stride + region.min.x];
-        auto src = img + region.min.x + (y * w);    //TODO: need to use image's stride
+        auto dst = dbuffer;
+        auto src = sbuffer;
         for (auto x = region.min.x; x < region.max.x; ++x, ++dst, ++src) {
             auto p = ALPHA_BLEND(*src, opacity);
             *dst = p + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(p));
         }
+        dbuffer += surface->stride;
+        sbuffer += w;    //TODO: need to use image's stride
     }
     return true;
 }
@@ -504,13 +520,16 @@ static bool _translucentImageAlphaMask(SwSurface* surface, uint32_t *img, uint32
     auto cbuffer = surface->compositor->image.data + (region.min.y * surface->stride) + region.min.x;   //compositor buffer
 
     for (uint32_t y = 0; y < h2; ++y) {
-        auto dst = &buffer[y * surface->stride];
-        auto cmp = &cbuffer[y * surface->stride];
-        auto src = &sbuffer[y * w];   //TODO: need to use image's stride
+        auto dst = buffer;
+        auto cmp = cbuffer;
+        auto src = sbuffer;
         for (uint32_t x = 0; x < w2; ++x, ++dst, ++src, ++cmp) {
             auto tmp = ALPHA_BLEND(*src, ALPHA_MULTIPLY(opacity, surface->blender.alpha(*cmp)));
             *dst = tmp + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(tmp));
         }
+        buffer += surface->stride;
+        cbuffer += surface->stride;
+        sbuffer += w;   //TODO: need to use image's stride
     }
     return true;
 }
@@ -530,14 +549,17 @@ static bool _translucentImageInvAlphaMask(SwSurface* surface, uint32_t *img, uin
     auto cbuffer = surface->compositor->image.data + (region.min.y * surface->stride) + region.min.x;   //compositor buffer
 
     for (uint32_t y = 0; y < h2; ++y) {
-        auto dst = &buffer[y * surface->stride];
-        auto cmp = &cbuffer[y * surface->stride];
-        auto src = &sbuffer[y * w];   //TODO: need to use image's stride
+        auto dst = buffer;
+        auto cmp = cbuffer;
+        auto src = sbuffer;
         for (uint32_t x = 0; x < w2; ++x, ++dst, ++src, ++cmp) {
             auto ialpha = 255 - surface->blender.alpha(*cmp);
             auto tmp = ALPHA_BLEND(*src, ALPHA_MULTIPLY(opacity, ialpha));
             *dst = tmp + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(tmp));
         }
+        buffer += surface->stride;
+        cbuffer += surface->stride;
+        sbuffer += w;   //TODO: need to use image's stride
     }
     return true;
 }
@@ -558,12 +580,17 @@ static bool _rasterTranslucentImage(SwSurface* surface, uint32_t *img, uint32_t 
 
 static bool _rasterImage(SwSurface* surface, uint32_t *img, uint32_t w, TVG_UNUSED uint32_t h, const SwBBox& region)
 {
+    auto dbuffer = &surface->buffer[region.min.y * surface->stride + region.min.x];
+    auto sbuffer = img + region.min.x + region.min.y * w;   //TODO: need to use image's stride
+
     for (auto y = region.min.y; y < region.max.y; ++y) {
-        auto dst = &surface->buffer[y * surface->stride + region.min.x];
-        auto src = img + region.min.x + (y * w);    //TODO: need to use image's stride
+        auto dst = dbuffer;
+        auto src = sbuffer;
         for (auto x = region.min.x; x < region.max.x; x++, dst++, src++) {
             *dst = *src + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(*src));
         }
+        dbuffer += surface->stride;
+        sbuffer += w;    //TODO: need to use image's stride
     }
     return true;
 }
