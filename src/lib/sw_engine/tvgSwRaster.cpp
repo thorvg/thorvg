@@ -399,94 +399,6 @@ static bool _rasterImageRle(SwSurface* surface, SwRleData* rle, uint32_t *img, u
 }
 
 
-static bool _translucentImage(SwSurface* surface, const uint32_t *img, uint32_t w, TVG_UNUSED uint32_t h, uint32_t opacity, const SwBBox& region, const Matrix* invTransform)
-{
-    auto dbuffer = &surface->buffer[region.min.y * surface->stride + region.min.x];
-
-    for (auto y = region.min.y; y < region.max.y; ++y) {
-        auto dst = dbuffer;
-        auto ey1 = y * invTransform->e12 + invTransform->e13;
-        auto ey2 = y * invTransform->e22 + invTransform->e23;
-        for (auto x = region.min.x; x < region.max.x; ++x, ++dst) {
-            auto rX = static_cast<uint32_t>(roundf(x * invTransform->e11 + ey1));
-            auto rY = static_cast<uint32_t>(roundf(x * invTransform->e21 + ey2));
-            if (rX >= w || rY >= h) continue;
-            auto src = ALPHA_BLEND(img[rX + (rY * w)], opacity);    //TODO: need to use image's stride
-            *dst = src + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(src));
-        }
-        dbuffer += surface->stride;
-    }
-    return true;
-}
-
-
-static bool _translucentImageAlphaMask(SwSurface* surface, const uint32_t *img, uint32_t w, TVG_UNUSED uint32_t h, uint32_t opacity, const SwBBox& region, const Matrix* invTransform)
-{
-#ifdef THORVG_LOG_ENABLED
-    printf("SW_ENGINE: Transformed Image Alpha Mask Composition\n");
-#endif
-    auto dbuffer = &surface->buffer[region.min.y * surface->stride + region.min.x];
-    auto cbuffer = &surface->compositor->image.data[region.min.y * surface->stride + region.min.x];
-
-    for (auto y = region.min.y; y < region.max.y; ++y) {
-        auto dst = dbuffer;
-        auto cmp = cbuffer;
-        float ey1 = y * invTransform->e12 + invTransform->e13;
-        float ey2 = y * invTransform->e22 + invTransform->e23;
-        for (auto x = region.min.x; x < region.max.x; ++x, ++dst, ++cmp) {
-            auto rX = static_cast<uint32_t>(roundf(x * invTransform->e11 + ey1));
-            auto rY = static_cast<uint32_t>(roundf(x * invTransform->e21 + ey2));
-            if (rX >= w || rY >= h) continue;
-            auto tmp = ALPHA_BLEND(img[rX + (rY * w)], ALPHA_MULTIPLY(opacity, surface->blender.alpha(*cmp)));  //TODO: need to use image's stride
-            *dst = tmp + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(tmp));
-        }
-        dbuffer += surface->stride;
-        cbuffer += surface->stride;
-    }
-    return true;
-}
-
-static bool _translucentImageInvAlphaMask(SwSurface* surface, const uint32_t *img, uint32_t w, uint32_t h, uint32_t opacity, const SwBBox& region, const Matrix* invTransform)
-{
-#ifdef THORVG_LOG_ENABLED
-    printf("SW_ENGINE: Transformed Image Inverse Alpha Mask Composition\n");
-#endif
-    auto dbuffer = &surface->buffer[region.min.y * surface->stride + region.min.x];
-    auto cbuffer = &surface->compositor->image.data[region.min.y * surface->stride + region.min.x];
-
-    for (auto y = region.min.y; y < region.max.y; ++y) {
-        auto dst = dbuffer;
-        auto cmp = cbuffer;
-        float ey1 = y * invTransform->e12 + invTransform->e13;
-        float ey2 = y * invTransform->e22 + invTransform->e23;
-        for (auto x = region.min.x; x < region.max.x; ++x, ++dst, ++cmp) {
-            auto rX = static_cast<uint32_t>(roundf(x * invTransform->e11 + ey1));
-            auto rY = static_cast<uint32_t>(roundf(x * invTransform->e21 + ey2));
-            if (rX >= w || rY >= h) continue;
-            auto ialpha = 255 - surface->blender.alpha(*cmp);
-            auto tmp = ALPHA_BLEND(img[rX + (rY * w)], ALPHA_MULTIPLY(opacity, ialpha));  //TODO: need to use image's stride
-            *dst = tmp + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(tmp));
-        }
-        dbuffer += surface->stride;
-        cbuffer += surface->stride;
-    }
-    return true;
-}
-
-static bool _rasterTranslucentImage(SwSurface* surface, const uint32_t *img, uint32_t w, uint32_t h, uint32_t opacity, const SwBBox& region, const Matrix* invTransform)
-{
-    if (surface->compositor) {
-        if (surface->compositor->method == CompositeMethod::AlphaMask) {
-            return _translucentImageAlphaMask(surface, img, w, h, opacity, region, invTransform);
-        }
-        if (surface->compositor->method == CompositeMethod::InvAlphaMask) {
-            return _translucentImageInvAlphaMask(surface, img, w, h, opacity, region, invTransform);
-        }
-    }
-    return _translucentImage(surface, img, w, h, opacity, region, invTransform);
-}
-
-
 static bool _translucentImage(SwSurface* surface, uint32_t *img, uint32_t w, uint32_t h, uint32_t opacity, const SwBBox& region)
 {
     auto dbuffer = &surface->buffer[region.min.y * surface->stride + region.min.x];
@@ -575,6 +487,94 @@ static bool _rasterTranslucentImage(SwSurface* surface, uint32_t *img, uint32_t 
         }
     }
     return _translucentImage(surface, img, w, h, opacity, region);
+}
+
+
+static bool _translucentImage(SwSurface* surface, const uint32_t *img, uint32_t w, TVG_UNUSED uint32_t h, uint32_t opacity, const SwBBox& region, const Matrix* invTransform)
+{
+    auto dbuffer = &surface->buffer[region.min.y * surface->stride + region.min.x];
+
+    for (auto y = region.min.y; y < region.max.y; ++y) {
+        auto dst = dbuffer;
+        auto ey1 = y * invTransform->e12 + invTransform->e13;
+        auto ey2 = y * invTransform->e22 + invTransform->e23;
+        for (auto x = region.min.x; x < region.max.x; ++x, ++dst) {
+            auto rX = static_cast<uint32_t>(roundf(x * invTransform->e11 + ey1));
+            auto rY = static_cast<uint32_t>(roundf(x * invTransform->e21 + ey2));
+            if (rX >= w || rY >= h) continue;
+            auto src = ALPHA_BLEND(img[rX + (rY * w)], opacity);    //TODO: need to use image's stride
+            *dst = src + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(src));
+        }
+        dbuffer += surface->stride;
+    }
+    return true;
+}
+
+
+static bool _translucentImageAlphaMask(SwSurface* surface, const uint32_t *img, uint32_t w, TVG_UNUSED uint32_t h, uint32_t opacity, const SwBBox& region, const Matrix* invTransform)
+{
+#ifdef THORVG_LOG_ENABLED
+    printf("SW_ENGINE: Transformed Image Alpha Mask Composition\n");
+#endif
+    auto dbuffer = &surface->buffer[region.min.y * surface->stride + region.min.x];
+    auto cbuffer = &surface->compositor->image.data[region.min.y * surface->stride + region.min.x];
+
+    for (auto y = region.min.y; y < region.max.y; ++y) {
+        auto dst = dbuffer;
+        auto cmp = cbuffer;
+        float ey1 = y * invTransform->e12 + invTransform->e13;
+        float ey2 = y * invTransform->e22 + invTransform->e23;
+        for (auto x = region.min.x; x < region.max.x; ++x, ++dst, ++cmp) {
+            auto rX = static_cast<uint32_t>(roundf(x * invTransform->e11 + ey1));
+            auto rY = static_cast<uint32_t>(roundf(x * invTransform->e21 + ey2));
+            if (rX >= w || rY >= h) continue;
+            auto tmp = ALPHA_BLEND(img[rX + (rY * w)], ALPHA_MULTIPLY(opacity, surface->blender.alpha(*cmp)));  //TODO: need to use image's stride
+            *dst = tmp + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(tmp));
+        }
+        dbuffer += surface->stride;
+        cbuffer += surface->stride;
+    }
+    return true;
+}
+
+static bool _translucentImageInvAlphaMask(SwSurface* surface, const uint32_t *img, uint32_t w, uint32_t h, uint32_t opacity, const SwBBox& region, const Matrix* invTransform)
+{
+#ifdef THORVG_LOG_ENABLED
+    printf("SW_ENGINE: Transformed Image Inverse Alpha Mask Composition\n");
+#endif
+    auto dbuffer = &surface->buffer[region.min.y * surface->stride + region.min.x];
+    auto cbuffer = &surface->compositor->image.data[region.min.y * surface->stride + region.min.x];
+
+    for (auto y = region.min.y; y < region.max.y; ++y) {
+        auto dst = dbuffer;
+        auto cmp = cbuffer;
+        float ey1 = y * invTransform->e12 + invTransform->e13;
+        float ey2 = y * invTransform->e22 + invTransform->e23;
+        for (auto x = region.min.x; x < region.max.x; ++x, ++dst, ++cmp) {
+            auto rX = static_cast<uint32_t>(roundf(x * invTransform->e11 + ey1));
+            auto rY = static_cast<uint32_t>(roundf(x * invTransform->e21 + ey2));
+            if (rX >= w || rY >= h) continue;
+            auto ialpha = 255 - surface->blender.alpha(*cmp);
+            auto tmp = ALPHA_BLEND(img[rX + (rY * w)], ALPHA_MULTIPLY(opacity, ialpha));  //TODO: need to use image's stride
+            *dst = tmp + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(tmp));
+        }
+        dbuffer += surface->stride;
+        cbuffer += surface->stride;
+    }
+    return true;
+}
+
+static bool _rasterTranslucentImage(SwSurface* surface, const uint32_t *img, uint32_t w, uint32_t h, uint32_t opacity, const SwBBox& region, const Matrix* invTransform)
+{
+    if (surface->compositor) {
+        if (surface->compositor->method == CompositeMethod::AlphaMask) {
+            return _translucentImageAlphaMask(surface, img, w, h, opacity, region, invTransform);
+        }
+        if (surface->compositor->method == CompositeMethod::InvAlphaMask) {
+            return _translucentImageInvAlphaMask(surface, img, w, h, opacity, region, invTransform);
+        }
+    }
+    return _translucentImage(surface, img, w, h, opacity, region, invTransform);
 }
 
 
