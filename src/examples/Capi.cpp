@@ -9,13 +9,14 @@
 /* Capi Test Code                                                       */
 /************************************************************************/
 
-static uint32_t buffer[WIDTH * HEIGHT];
+static uint32_t* buffer = NULL;
+static Tvg_Canvas* canvas = NULL;
+static Eo* view = NULL;
 
 void testCapi()
 {
-    tvg_engine_init(TVG_ENGINE_SW | TVG_ENGINE_GL, 0);
 
-    Tvg_Canvas* canvas = tvg_swcanvas_create();
+    canvas = tvg_swcanvas_create();
     tvg_swcanvas_set_target(canvas, buffer, WIDTH, WIDTH, HEIGHT, TVG_COLORSPACE_ARGB8888);
 
     Tvg_Paint* shape = tvg_shape_new();
@@ -170,10 +171,6 @@ void testCapi()
     tvg_canvas_push(canvas, scene);
     tvg_canvas_draw(canvas);
     tvg_canvas_sync(canvas);
-
-    tvg_canvas_destroy(canvas);
-
-    tvg_engine_term(TVG_ENGINE_SW | TVG_ENGINE_GL);
 }
 
 
@@ -186,15 +183,41 @@ void win_del(void *data, Evas_Object *o, void *ev)
    elm_exit();
 }
 
+void resize_cb(void *data, Evas *e, Evas_Object *obj, void *event_info)
+{
+    int w = 0, h = 0;
+    evas_object_geometry_get(obj, NULL, NULL, &w, &h);
+
+    if ((w != WIDTH || h != HEIGHT) && (w != 0 && h != 0))
+    {
+        evas_object_image_data_set(view, NULL); //prevent evas scale on invalid buffer by rendering thread
+        buffer = (uint32_t*) realloc(buffer, sizeof(uint32_t) * w * h);
+        tvg_swcanvas_set_target(canvas, buffer, w, w, h, TVG_COLORSPACE_ARGB8888);
+
+        tvg_canvas_update(canvas);
+        tvg_canvas_draw(canvas);
+        tvg_canvas_sync(canvas);
+
+        evas_object_image_size_set(view, w, h);
+        evas_object_image_data_set(view, buffer);
+        evas_object_image_pixels_dirty_set(view, EINA_TRUE);
+        evas_object_image_data_update_add(view, 0, 0, w, h);
+    }
+}
 
 int main(int argc, char **argv)
 {
     elm_init(argc, argv);
+    tvg_engine_init(TVG_ENGINE_SW | TVG_ENGINE_GL, 0);
+
+    buffer = (uint32_t*) malloc(sizeof(uint32_t) * WIDTH * HEIGHT);
 
     Eo* win = elm_win_util_standard_add(NULL, "ThorVG Test");
-    evas_object_smart_callback_add(win, "delete,request", win_del, 0);
 
-    Eo* view = evas_object_image_filled_add(evas_object_evas_get(win));
+    evas_object_smart_callback_add(win, "delete,request", win_del, 0);
+    evas_object_event_callback_add(win, EVAS_CALLBACK_RESIZE, resize_cb, 0);
+
+    view = evas_object_image_filled_add(evas_object_evas_get(win));
     evas_object_image_size_set(view, WIDTH, HEIGHT);
     evas_object_image_data_set(view, buffer);
     evas_object_image_pixels_dirty_set(view, EINA_TRUE);
@@ -209,6 +232,7 @@ int main(int argc, char **argv)
     testCapi();
 
     elm_run();
+    tvg_engine_term(TVG_ENGINE_SW | TVG_ENGINE_GL);
     elm_shutdown();
 
     return 0;
