@@ -62,8 +62,9 @@ struct RenderTransform
     RenderTransform(const RenderTransform* lhs, const RenderTransform* rhs);
 };
 
-struct RenderMethod
+class RenderMethod
 {
+public:
     virtual ~RenderMethod() {}
     virtual RenderData prepare(const Shape& shape, RenderData data, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flags) = 0;
     virtual RenderData prepare(const Picture& picture, RenderData data, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flags) = 0;

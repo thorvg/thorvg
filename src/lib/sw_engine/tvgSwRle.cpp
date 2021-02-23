@@ -22,7 +22,7 @@
 #include <setjmp.h>
 #include <limits.h>
 #include <memory.h>
-
+#include <iostream>
 #include "tvgSwCommon.h"
 
 /************************************************************************/
@@ -951,7 +951,7 @@ void rleClipPath(SwRleData *rle, const SwRleData *clip)
     if (spans) free(spans);
 
 #ifdef THORVG_LOG_ENABLED
-    printf("SW_ENGINE: Using ClipPath!\n");
+    cout << "SW_ENGINE: Using ClipPath!" << endl;
 #endif
 }
 
@@ -968,7 +968,7 @@ void rleClipRect(SwRleData *rle, const SwBBox* clip)
     if (spans) free(spans);
 
 #ifdef THORVG_LOG_ENABLED
-    printf("SW_ENGINE: Using ClipRect!\n");
+    cout <<"SW_ENGINE: Using ClipRect!" << endl;
 #endif
 }
 
