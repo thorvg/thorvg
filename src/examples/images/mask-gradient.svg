@@ -1,0 +1,13 @@
+<svg version="1.1" id="Layer_1" viewBox="0 0 64 64" enable-background="new 0 0 64 64" xml:space="preserve"
+  xmlns="http://www.w3.org/2000/svg">
+  <defs>
+        <linearGradient x1="29%" y1="36%" x2="77%" y2="63%" id="linearGradient">
+            <stop stop-color="#0000FF" offset="0%"></stop>
+            <stop stop-color="#FF0000" offset="100%"></stop>
+        </linearGradient>
+    <mask id="myMask">
+      <circle id="maskID" cx="40" cy="40" r="10" fill="white" fill-opacity="1" />
+    </mask>
+  </defs>
+  <rect x="0" y="0" width="64" height="64" fill="url(#linearGradient)" mask="url(#myMask)"/>
+</svg>
