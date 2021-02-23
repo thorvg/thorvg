@@ -1,62 +1,47 @@
-#include <vector>
 #include "Common.h"
 
 /************************************************************************/
 /* Drawing Commands                                                     */
 /************************************************************************/
 
-#define NUM_PER_LINE 5
-#define SIZE 160
+tvg::Shape *pMaskShape = nullptr;
+tvg::Shape *pMask = nullptr;
 
-static int count = 0;
-
-static std::vector<unique_ptr<tvg::Picture>> pictures;
-
-void svgDirCallback(const char* name, const char* path, void* data)
-{
-    //ignore if not svgs.
-    const char *ext = name + strlen(name) - 3;
-    if (strcmp(ext, "svg")) return;
-
-    auto picture = tvg::Picture::gen();
-
-    char buf[PATH_MAX];
-    sprintf(buf, "/%s/%s", path, name);
-
-    if (picture->load(buf) != tvg::Result::Success) return;
-
-    picture->size(SIZE, SIZE);
-    picture->translate((count % NUM_PER_LINE) * SIZE, SIZE * (count / NUM_PER_LINE));
-
-    pictures.push_back(move(picture));
-
-    cout << "SVG: " << buf << endl;
-
-    count++;
-}
 
 void tvgDrawCmds(tvg::Canvas* canvas)
 {
     if (!canvas) return;
 
-    //Background
-    auto shape = tvg::Shape::gen();
-    shape->appendRect(0, 0, WIDTH, HEIGHT, 0, 0);    //x, y, w, h, rx, ry
-    shape->fill(255, 255, 255, 255);                 //r, g, b, a
+    // background
+    auto bg = tvg::Shape::gen();
+    bg->appendRect(0,0,WIDTH, HEIGHT,0, 0);
+    bg->fill(255, 255, 255, 255);
+    canvas->push(move(bg));
 
-    if (canvas->push(move(shape)) != tvg::Result::Success) return;
+    // image
+    auto picture1 = tvg::Picture::gen();
+    picture1->load(EXAMPLE_DIR"/human.svg");
+    auto picture2 = tvg::Picture::gen();
+    picture2->load(EXAMPLE_DIR"/bones.svg");
+    canvas->push(move(picture1));
 
-    eina_file_dir_list(EXAMPLE_DIR, EINA_TRUE, svgDirCallback, canvas);
+    //mask
+    auto maskShape = tvg::Shape::gen();
+    pMaskShape = maskShape.get();
+    maskShape->appendCircle(180, 180, 125, 125);
+    maskShape->fill(0, 0, 0, 125);
+    maskShape->stroke(25, 25, 25, 255);
+    maskShape->stroke(tvg::StrokeJoin::Round);
+    maskShape->stroke(10);
+    canvas->push(move(maskShape));
 
-    /* This showcase shows you asynchrounous loading of svg.
-       For this, pushing pictures at a certian sync time.
-       This means it earns the time to finish loading svg resources,
-       otherwise you can push pictures immediately. */
-    for (auto& paint : pictures) {
-        canvas->push(move(paint));
-    }
+    auto mask = tvg::Shape::gen();
+    pMask = mask.get();
+    mask->appendCircle(180, 180, 125, 125);
+    mask->fill(255, 0, 0, 255);
 
-    pictures.clear();
+    picture2->composite(move(mask), tvg::CompositeMethod::AlphaMask);
+    if (canvas->push(move(picture2)) != tvg::Result::Success) return;
 }
 
 
@@ -86,6 +71,29 @@ void drawSwView(void* data, Eo* obj)
     }
 }
 
+void tvgUpdateCmds(tvg::Canvas* canvas, float progress)
+{
+    if (!canvas) return;
+
+    /* Update shape directly.
+       You can update only necessary properties of this shape,
+       while retaining other properties. */
+
+    // Translate mask object with its stroke & update 
+    pMaskShape->translate(0 , progress * 300);
+    pMask->translate(0 , progress * 300);
+    canvas->update(pMaskShape);
+    canvas->update(pMask);
+}
+
+void transitSwCb(Elm_Transit_Effect *effect, Elm_Transit* transit, double progress)
+{
+    tvgUpdateCmds(swCanvas.get(), progress);
+
+    Eo* img = (Eo*) effect;
+    evas_object_image_data_update_add(img, 0, 0, WIDTH, HEIGHT);
+    evas_object_image_pixels_dirty_set(img, EINA_TRUE);
+}
 
 /************************************************************************/
 /* GL Engine Test Code                                                  */
@@ -119,6 +127,9 @@ void drawGLview(Evas_Object *obj)
     }
 }
 
+void transitGlCb(Elm_Transit_Effect *effect, Elm_Transit* transit, double progress)
+{
+}
 
 /************************************************************************/
 /* Main Code                                                            */
@@ -147,17 +158,26 @@ int main(int argc, char **argv)
 
         elm_init(argc, argv);
 
+        Elm_Transit *transit = elm_transit_add();
+
         if (tvgEngine == tvg::CanvasEngine::Sw) {
-            createSwView();
+            auto view = createSwView();
+            elm_transit_effect_add(transit, transitSwCb, view, nullptr);
         } else {
-            createGlView();
+            auto view = createGlView();
+            elm_transit_effect_add(transit, transitGlCb, view, nullptr);
         }
+
+        elm_transit_duration_set(transit, 5);
+        elm_transit_repeat_times_set(transit, -1);
+        elm_transit_auto_reverse_set(transit, EINA_TRUE);
+        elm_transit_go(transit);
 
         elm_run();
         elm_shutdown();
 
         //Terminate ThorVG Engine
-        tvg::Initializer::term(tvg::CanvasEngine::Sw);
+        tvg::Initializer::term(tvgEngine);
 
     } else {
         cout << "engine is not supported" << endl;
