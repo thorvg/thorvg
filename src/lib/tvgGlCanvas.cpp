@@ -68,6 +68,9 @@ Result GlCanvas::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t 
 
     if (!renderer->target(buffer, stride, w, h)) return Result::Unknown;
 
+    //Paints must be updated again with this new target.
+    Canvas::pImpl->needRefresh();
+
     return Result::Success;
 #endif
     return Result::NonSupport;
