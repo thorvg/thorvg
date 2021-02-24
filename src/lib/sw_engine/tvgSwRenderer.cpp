@@ -375,6 +375,9 @@ bool SwRenderer::beginComposite(Compositor* cmp, CompositeMethod method, uint32_
 
 Compositor* SwRenderer::target(uint32_t x, uint32_t y, uint32_t w, uint32_t h)
 {
+    //Out of boundary
+    if (x > surface->w || y > surface->h) return nullptr;
+
     SwSurface* cmp = nullptr;
 
     //Use cached data
