@@ -32,6 +32,7 @@ struct Canvas::Impl
 {
     Array<Paint*> paints;
     RenderMethod* renderer;
+    bool refresh;   //if all paints should be updated by force.
 
     Impl(RenderMethod* pRenderer):renderer(pRenderer)
     {
@@ -70,12 +71,18 @@ struct Canvas::Impl
         return Result::Success;
     }
 
+    void needRefresh()
+    {
+        refresh = true;
+    }
+
     Result update(Paint* paint, bool force)
     {
         if (!renderer) return Result::InsufficientCondition;
 
         Array<RenderData> clips;
-        auto flag = force ? RenderUpdateFlag::All : RenderUpdateFlag::None;
+        auto flag = RenderUpdateFlag::None;
+        if (refresh | force) flag = RenderUpdateFlag::All;
 
         //Update single paint node
         if (paint) {
@@ -86,6 +93,9 @@ struct Canvas::Impl
                 (*paint)->pImpl->update(*renderer, nullptr, 255, clips, flag);
             }
         }
+
+        refresh = false;
+
         return Result::Success;
     }
 
