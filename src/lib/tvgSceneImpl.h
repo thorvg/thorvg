@@ -44,12 +44,23 @@ struct Scene::Impl
         return true;
     }
 
+    bool needComposition(uint32_t opacity)
+    {
+        //Half translucent requires intermediate composition.
+        if (opacity == 255 || opacity == 0) return false;
+
+        //If scene has several children or only scene, it may require composition.
+        if (paints.count > 1) return true;
+        if (paints.count == 1 && (*paints.data)->pImpl->type == PaintType::Scene) return true;
+        return false;
+    }
+
     void* update(RenderMethod &renderer, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flag)
     {
         /* Overriding opacity value. If this scene is half-translucent,
            It must do intermeidate composition with that opacity value. */
         this->opacity = static_cast<uint8_t>(opacity);
-        if (opacity > 0) opacity = 255;
+        if (needComposition(opacity)) opacity = 255;
 
         for (auto paint = paints.data; paint < (paints.data + paints.count); ++paint) {
             (*paint)->pImpl->update(renderer, transform, opacity, clips, static_cast<uint32_t>(flag));
@@ -64,14 +75,7 @@ struct Scene::Impl
     {
         Compositor* cmp = nullptr;
 
-        //If scene has several children or only scene, it may require composition.
-        auto condition = false;
-        if ((paints.count > 1) || (paints.count == 1 && (*paints.data)->pImpl->type == PaintType::Scene)) {
-            condition = true;
-        }
-
-        //Half translucent. This condition requires intermediate composition.
-        if ((opacity < 255 && opacity > 0) && condition) {
+        if (needComposition(opacity)) {
             uint32_t x, y, w, h;
             if (!bounds(renderer, &x, &y, &w, &h)) return false;
             cmp = renderer.target(x, y, w, h);
