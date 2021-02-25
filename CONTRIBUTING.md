@@ -58,7 +58,7 @@ You can keep the file name, but don't please contain any prefix(tvg) nor suffix(
 
     We introduced new method Paint::composite() to support composite behaviors. </br>
     This allows paints to composite with other paints instances. </br>
-    Composite behaviors depends on its compoite method type. </br>
+    Composite behaviors depend on its composite method type. </br>
     Here we firstly introduced "ClipPath" method to support clipping by path unit of paint.</br>    
     
     tagetPaint->composite(srcPaint, CompositeMethod::ClipPath);</br>
