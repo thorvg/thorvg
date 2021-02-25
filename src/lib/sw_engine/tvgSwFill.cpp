@@ -257,7 +257,8 @@ void fillFetchLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, 
         }
     //we have to fallback to float math
     } else {
-        while (dst < dst + len) {
+        uint32_t counter = 0;
+        while (counter++ < len) {
             *dst = _pixel(fill, t / GRADIENT_STOP_SIZE);
             ++dst;
             t += inc;
