@@ -64,8 +64,14 @@ struct Scene::Impl
     {
         Compositor* cmp = nullptr;
 
+        //If scene has several children or only scene, it may require composition.
+        auto condition = false;
+        if ((paints.count > 1) || (paints.count == 1 && (*paints.data)->pImpl->type == PaintType::Scene)) {
+            condition = true;
+        }
+
         //Half translucent. This condition requires intermediate composition.
-        if ((opacity < 255 && opacity > 0) && (paints.count > 0)) {
+        if ((opacity < 255 && opacity > 0) && condition) {
             uint32_t x, y, w, h;
             if (!bounds(renderer, &x, &y, &w, &h)) return false;
             cmp = renderer.target(x, y, w, h);

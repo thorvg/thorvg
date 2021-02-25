@@ -33,6 +33,7 @@ constexpr auto PATH_KAPPA = 0.552284f;
 
 Shape :: Shape() : pImpl(new Impl(this))
 {
+    Paint::pImpl->type = PaintType::Shape;
     Paint::pImpl->method(new PaintMethod<Shape::Impl>(pImpl));
 }
 
