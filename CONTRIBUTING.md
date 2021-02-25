@@ -3,6 +3,7 @@ We always appreciate your contribution. This page guides ThorVG contribution for
 ## Reviewers
 Hermet Park (hermet) is the lead maintainer but there are designated sub-module maintainers you can request for your pull-requst patches as well.
 
+<b>common:</b> JunsuChoi (JSUYA) <br />
 <b>gl_engine:</b> Prudhvi Raj Vasireddi (prudhvirajv)<br />
 <b>loaders:</b> JunsuChoi (JSUYA) <br />
 <b>wasm:</b> Shinwoo Kim (kimcinoo) <br />
