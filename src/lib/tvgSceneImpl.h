@@ -66,7 +66,7 @@ struct Scene::Impl
 
         //If scene has several children or only scene, it may require composition.
         auto condition = false;
-        if ((paints.count > 1) && (paints.count == 1 && (*paints.data)->pImpl->type == PaintType::Scene)) {
+        if ((paints.count > 1) || (paints.count == 1 && (*paints.data)->pImpl->type == PaintType::Scene)) {
             condition = true;
         }
 
