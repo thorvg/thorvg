@@ -78,7 +78,7 @@ You can keep the file name, but don't please contain any prefix(tvg) nor suffix(
   
   Once you submitted a pull request(PR), please make it sure below check list.
    -  Reviewers: Check Reviewers List
-   -  Assginees: You
+   -  Assignees: You
    -  Labels: Patch Purpose
    -  CODING STYLE CHECK: Must be perfect
   <p align="center">
