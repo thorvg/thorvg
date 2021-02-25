@@ -27,6 +27,7 @@
 
 Scene::Scene() : pImpl(new Impl())
 {
+    Paint::pImpl->type = PaintType::Scene;
     Paint::pImpl->method(new PaintMethod<Scene::Impl>(pImpl));
 }
 

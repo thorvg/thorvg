@@ -26,9 +26,10 @@
 #include <math.h>
 #include "tvgRender.h"
 
-
 namespace tvg
 {
+    enum class PaintType { Shape = 0, Scene, Picture };
+
     struct StrategyMethod
     {
         virtual ~StrategyMethod() {}
@@ -51,6 +52,8 @@ namespace tvg
         CompositeMethod cmpMethod = CompositeMethod::None;
 
         uint8_t opacity = 255;
+
+        PaintType type;
 
         ~Impl() {
             if (cmpTarget) delete(cmpTarget);
