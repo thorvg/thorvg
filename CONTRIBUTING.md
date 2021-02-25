@@ -72,5 +72,16 @@ You can keep the file name, but don't please contain any prefix(tvg) nor suffix(
     @Examples: added ClipPath</br>
 
     @Issues: 49
+  <br />
   
+  ## Pull Request
+  
+  Once you submitted a pull request(PR), please make it sure below check list.
+   -  Reviewers: Check Reviewers List
+   -  Assginees: You
+   -  Labels: Patch Purpose
+   -  CODING STYLE CHECK: Must be perfect
+  <p align="center">
+  <img width="1000" height="733" src="https://github.com/Samsung/thorvg/blob/master/res/contribution.png">
+  </p>
   
