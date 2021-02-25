@@ -108,16 +108,14 @@ bool _prepareLinear(SwFill* fill, const LinearGradient* linear, const Matrix* tr
     if (transform) {
         auto sx = sqrt(pow(transform->e11, 2) + pow(transform->e21, 2));
         auto sy = sqrt(pow(transform->e12, 2) + pow(transform->e22, 2));
-        auto cx = (x2 - x1) * 0.5f + x1;
-        auto cy = (y2 - y1) * 0.5f + y1;
-        auto dx = x1 - cx;
-        auto dy = y1 - cy;
-        x1 = dx * transform->e11 + dy * transform->e12 + transform->e13 + (cx * sx);
-        y1 = dx * transform->e21 + dy * transform->e22 + transform->e23 + (cy * sy);
-        dx = x2 - cx;
-        dy = y2 - cy;
-        x2 = dx * transform->e11 + dy * transform->e12 + transform->e13 + (cx * sx);
-        y2 = dx * transform->e21 + dy * transform->e22 + transform->e23 + (cy * sy);
+        auto dx = x1;
+        auto dy = y1;
+        x1 = x1 * transform->e11 + dy * transform->e12 + transform->e13 + sx;
+        y1 = dx * transform->e21 + dy * transform->e22 + transform->e23 + sy;
+        dx = x2;
+        dy = y2;
+        x2 = dx * transform->e11 + dy * transform->e12 + transform->e13 + sx;
+        y2 = dx * transform->e21 + dy * transform->e22 + transform->e23 + sy;
     }
 
     fill->linear.dx = x2 - x1;
