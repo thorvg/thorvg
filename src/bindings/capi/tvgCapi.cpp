@@ -235,6 +235,13 @@ TVG_EXPORT Tvg_Result tvg_shape_cubic_to(Tvg_Paint* paint, float cx1, float cy1,
 }
 
 
+TVG_EXPORT Tvg_Result tvg_shape_quadratic_to(Tvg_Paint* paint, float cx, float cy, float x, float y)
+{
+    if (!paint) return TVG_RESULT_INVALID_ARGUMENT;
+    return (Tvg_Result) reinterpret_cast<Shape*>(paint)->quadraticTo(cx, cy, x, y);
+}
+
+
 TVG_EXPORT Tvg_Result tvg_shape_close(Tvg_Paint* paint)
 {
     if (!paint) return TVG_RESULT_INVALID_ARGUMENT;

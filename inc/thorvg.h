@@ -219,6 +219,7 @@ public:
     Result moveTo(float x, float y) noexcept;
     Result lineTo(float x, float y) noexcept;
     Result cubicTo(float cx1, float cy1, float cx2, float cy2, float x, float y) noexcept;
+    Result quadraticTo(float cx, float cy, float x, float y) noexcept;
     Result close() noexcept;
 
     //Shape

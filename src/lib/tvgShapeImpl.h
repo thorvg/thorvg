@@ -164,6 +164,25 @@ struct ShapePath
         pts[ptsCnt++] = {x, y};
     }
 
+    void quadraticTo(float cx, float cy, float x, float y)
+    {
+        if (ptsCnt < 1) return;
+
+        if (cmdCnt + 1 > reservedCmdCnt) reserveCmd((cmdCnt + 1) * 2);
+        if (ptsCnt + 3 > reservedPtsCnt) reservePts((ptsCnt + 3) * 2);
+
+        cmds[cmdCnt++] = PathCommand::CubicTo;
+
+        float cx1 = (pts[ptsCnt - 1].x + 2 * cx) / 3;
+        float cy1 = (pts[ptsCnt - 1].y + 2 * cy) / 3;
+        float cx2 = (x + 2 * cx) / 3;
+        float cy2 = (y + 2 * cy) / 3;
+
+        pts[ptsCnt++] = {cx1, cy1};
+        pts[ptsCnt++] = {cx2, cy2};
+        pts[ptsCnt++] = {x, y};
+    }
+
     void close()
     {
         if (cmdCnt > 0 && cmds[cmdCnt - 1] == PathCommand::Close) return;

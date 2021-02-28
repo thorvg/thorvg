@@ -121,6 +121,16 @@ Result Shape::cubicTo(float cx1, float cy1, float cx2, float cy2, float x, float
 }
 
 
+Result Shape::quadraticTo(float cx, float cy, float x, float y) noexcept
+{
+    pImpl->path.quadraticTo(cx, cy, x, y);
+
+    pImpl->flag |= RenderUpdateFlag::Path;
+
+    return Result::Success;
+}
+
+
 Result Shape::close() noexcept
 {
     pImpl->path.close();
