@@ -82,7 +82,7 @@ struct Canvas::Impl
 
         Array<RenderData> clips;
         auto flag = RenderUpdateFlag::None;
-        if (refresh | force) flag = RenderUpdateFlag::All;
+        if (refresh || force) flag = RenderUpdateFlag::All;
 
         //Update single paint node
         if (paint) {
