@@ -233,6 +233,9 @@ void _applyProperty(SvgNode* node, Shape* vg, float vx, float vy, float vw, floa
         vg->fill(style->fill.paint.r, style->fill.paint.g, style->fill.paint.b, style->fill.opacity);
     }
 
+    //Apply the fill rule
+    vg->fill((tvg::FillRule)style->fill.fillRule);
+
     //Apply node opacity
     if (style->opacity < 255) vg->opacity(style->opacity);
 
