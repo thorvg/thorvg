@@ -106,16 +106,12 @@ bool _prepareLinear(SwFill* fill, const LinearGradient* linear, const Matrix* tr
     if (linear->linear(&x1, &y1, &x2, &y2) != Result::Success) return false;
 
     if (transform) {
-        auto sx = sqrt(pow(transform->e11, 2) + pow(transform->e21, 2));
-        auto sy = sqrt(pow(transform->e12, 2) + pow(transform->e22, 2));
-        auto dx = x1;
-        auto dy = y1;
-        x1 = x1 * transform->e11 + dy * transform->e12 + transform->e13 + sx;
-        y1 = dx * transform->e21 + dy * transform->e22 + transform->e23 + sy;
-        dx = x2;
-        dy = y2;
-        x2 = dx * transform->e11 + dy * transform->e12 + transform->e13 + sx;
-        y2 = dx * transform->e21 + dy * transform->e22 + transform->e23 + sy;
+        auto t1 = x1;
+        x1 = t1 * transform->e11 + y1 * transform->e12 + transform->e13;
+        y1 = t1 * transform->e21 + y1 * transform->e22 + transform->e23;
+        auto t2 = x2;
+        x2 = t2 * transform->e11 + y2 * transform->e12 + transform->e13;
+        y2 = t2 * transform->e21 + y2 * transform->e22 + transform->e23;
     }
 
     fill->linear.dx = x2 - x1;
