@@ -77,17 +77,15 @@ unique_ptr<LinearGradient> _applyLinearGradientProperty(SvgStyleGradient* g, con
     }
 
     if (g->transform) {
-         float cy = ((float) rh) * 0.5 + ry;
-         float cx = ((float) rw) * 0.5 + rx;
+        //Calc start point
+        auto x = g->linear->x1;
+        g->linear->x1 = x * g->transform->e11 + g->linear->y1 * g->transform->e12 + g->transform->e13;
+        g->linear->y1 = x * g->transform->e21 + g->linear->y1 * g->transform->e22 + g->transform->e23;
 
-         //= T(x - cx, y - cy) x g->transform x T(cx, cy)
-         //Calc start point
-         g->linear->x1 = (g->transform->e11 * cx) + (g->transform->e12 * cy) + g->linear->x1 + g->transform->e13 - cx;
-         g->linear->y1 = (g->transform->e21 * cx) + (g->transform->e22 * cy) + g->linear->y1 + g->transform->e23 - cy;
-
-         //Calc end point
-         g->linear->x2 = (g->transform->e11 * cx) + (g->transform->e12 * cy) + g->linear->x2 + g->transform->e13 - cx;
-         g->linear->y2 = (g->transform->e21 * cx) + (g->transform->e22 * cy) + g->linear->y2 + g->transform->e23 - cy;
+        //Calc end point
+        x = g->linear->x2;
+        g->linear->x2 = x * g->transform->e11 + g->linear->y2 * g->transform->e12 + g->transform->e13;
+        g->linear->y2 = x * g->transform->e21 + g->linear->y2 * g->transform->e22 + g->transform->e23;
     }
 
     fillGrad->linear(g->linear->x1, g->linear->y1, g->linear->x2, g->linear->y2);
@@ -276,7 +274,7 @@ void _applyProperty(SvgNode* node, Shape* vg, float vx, float vy, float vw, floa
                 vg->composite(move(comp), CompositeMethod::ClipPath);
             }
         }
-        //Composite Alpha Mask 
+        //Composite Alpha Mask
         if (((int)style->comp.flags & (int)SvgCompositeFlags::AlphaMask)) {
             auto compNode = style->comp.node;
             if (compNode->child.count > 0) {
