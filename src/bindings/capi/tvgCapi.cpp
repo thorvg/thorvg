@@ -191,10 +191,10 @@ TVG_EXPORT Tvg_Result tvg_paint_get_bounds(const Tvg_Paint* paint, float* x, flo
    return (Tvg_Result) reinterpret_cast<const Paint*>(paint)->bounds(x, y, w, h);
 }
 
-TVG_EXPORT Tvg_Result tvg_paint_set_composite_method(const Tvg_Paint* paint, Tvg_Composite_Method method)
+TVG_EXPORT Tvg_Result tvg_paint_set_composite_method(Tvg_Paint* paint, Tvg_Paint* target, Tvg_Composite_Method method)
 {
    if (!paint) return TVG_RESULT_INVALID_ARGUMENT;
-   return (Tvg_Result) reinterpret_cast<const Paint*>(paint)->composite(unique_ptr<Paint>((Paint*)(paint)), (CompositeMethod)method);
+   return (Tvg_Result) reinterpret_cast<const Paint*>(paint)->composite(unique_ptr<Paint>((Paint*)(target)), (CompositeMethod)method);
 }
 
 /************************************************************************/
