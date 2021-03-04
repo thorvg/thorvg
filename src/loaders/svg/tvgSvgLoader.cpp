@@ -744,7 +744,7 @@ static bool _attrParseSvgNode(void* data, const char* key, const char* value)
         if (!strcmp(value, "none")) doc->preserveAspect = false;
     } else if (!strcmp(key, "style")) {
         return simpleXmlParseW3CAttribute(value, _parseStyleAttr, loader);
-    } 
+    }
 #ifdef THORVG_LOG_ENABLED
     else if (!strcmp(key, "xmlns") || !strcmp(key, "xmlns:xlink") || !strcmp (key, "xmlns:svg")) {
         //No action
@@ -2607,8 +2607,14 @@ bool SvgLoader::header()
         h = vh = loaderData.doc->node.doc.vh;
 
         //Override size
-        if (loaderData.doc->node.doc.w > 0) w = loaderData.doc->node.doc.w;
-        if (loaderData.doc->node.doc.h > 0) h = loaderData.doc->node.doc.h;
+        if (loaderData.doc->node.doc.w > 0) {
+            w = loaderData.doc->node.doc.w;
+            if (vw < FLT_EPSILON) vw = w;
+        }
+        if (loaderData.doc->node.doc.h > 0) {
+            h = loaderData.doc->node.doc.h;
+            if (vh < FLT_EPSILON) vh = h;
+        }
 
         preserveAspect = loaderData.doc->node.doc.preserveAspect;
     } else {
