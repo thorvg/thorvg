@@ -90,13 +90,6 @@ void _pathAppendArcTo(Array<PathCommand>* cmds, Array<Point>* pts, Point* cur, P
     //Correction of out-of-range radii, see F6.6.1 (step 2)
     rx = fabsf(rx);
     ry = fabsf(ry);
-    if ((rx < 0.5f) || (ry < 0.5f)) {
-        Point p = {x, y};
-        cmds->push(PathCommand::LineTo);
-        pts->push(p);
-        *cur = p;
-        return;
-    }
 
     angle = angle * M_PI / 180.0f;
     cosPhi = cosf(angle);
