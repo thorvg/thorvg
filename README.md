@@ -31,6 +31,7 @@ Basically your program could use this library functions by calling slick and nea
 - [Building ThorVG](#building-thorvg)
 	- [Meson Build](#meson-build)
 - [Quick Start](#quick-start)
+- [SVG](#svg)
 - [Examples](#examples)
 - [Tools](#tools)
 	- [ThorVG Viewer](#thorvg-viewer)
@@ -141,9 +142,26 @@ This path drawing result shows like this.
   <img width="300" height="300" src="https://github.com/Samsung/thorvg/blob/master/res/example_path.png">
 </p>
 
-## SVG (Scalable Vector Graphics)
+Now begin rendering & finish it at a particular time.
 
-ThorVG supports SVG rendering through its own SVG interpreter. It basically aims to satisfy with [SVG Tiny Specification](https://www.w3.org/TR/SVGTiny12/) for the lightweight system such as embeded. Most cases ThorVG supports the SVG spec fully but some partial SVG features were not supported officially yet. Next list shows the unsupported features by ThorVG.
+```cpp
+canvas->draw();
+canvas->sync();
+```
+
+Then you can acquire the rendered image from the buffer memory.
+
+Lastly, terminate the engine after usage.
+
+```cpp
+tvg::Initializer::term(tvg::CanvasEngine::Sw);
+```
+[Back to contents](#contents)
+<br />
+<br />
+## SVG
+
+ThorVG supports SVG(Scalable Vector Graphics) rendering through its own SVG interpreter. It basically aims to satisfy with [SVG Tiny Specification](https://www.w3.org/TR/SVGTiny12/) for the lightweight system such as embeded. Most cases ThorVG supports the SVG spec fully but some partial SVG features were not supported officially yet. Next list shows the unsupported features by ThorVG.
 
  - CSS Styles
  - Filters
@@ -163,20 +181,6 @@ And here is the result.
   <img width="300" height="300" src="https://github.com/Samsung/thorvg/blob/master/res/example_tiger.png">
 </p>
 
-Begin rendering & finish it at a particular time.
-
-```cpp
-canvas->draw();
-canvas->sync();
-```
-
-Now you can acquire the rendered image from the buffer memory.
-
-Lastly, terminate the engine after usage.
-
-```cpp
-tvg::Initializer::term(tvg::CanvasEngine::Sw);
-```
 [Back to contents](#contents)
 <br />
 <br />
