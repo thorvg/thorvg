@@ -68,7 +68,7 @@ static bool _updateBBox(const SwOutline* outline, SwBBox& bbox, const SwSize& cl
     bbox.max.x = min(bbox.max.x, clip.w);
     bbox.max.y = min(bbox.max.y, clip.h);
 
-    if (xMax - xMin < 1 && yMax - yMin < 1) return false;
+    if (xMax - xMin < 1 || yMax - yMin < 1) return false;
 
     return true;
 }
