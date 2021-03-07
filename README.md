@@ -141,7 +141,15 @@ This path drawing result shows like this.
   <img width="300" height="300" src="https://github.com/Samsung/thorvg/blob/master/res/example_path.png">
 </p>
 
-Next, this code snippet shows you how to draw SVG image.
+## SVG (Scalable Vector Graphics)
+
+ThorVG supports SVG rendering through its own SVG interpreter. It basically aims to satisfy with [SVG Tiny Specification](https://www.w3.org/TR/SVGTiny12/) for the lightweight system such as embeded. Most cases ThorVG supports the SVG spec fully but some partial SVG features were not supported officially yet. Next list shows the unsupported features by ThorVG.
+
+ - CSS Styles
+ - Filters
+ - Images
+
+Next code snippet shows you how to draw SVG image using ThorVG.
 
 ```cpp
 auto picture = tvg::Picture::gen();         //generate a picture
