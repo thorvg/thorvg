@@ -363,7 +363,14 @@ unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, float vx, float vy, flo
                     scene->push(_sceneBuildHelper(*child, vx, vy, vw, vh));
                 } else {
                     auto shape = _shapeBuildHelper(*child, vx, vy, vw, vh);
-                    if (shape) scene->push(move(shape));
+                    // clipping the viewBox
+                    if (shape) {
+                        auto viewBoxClip = Shape::gen();
+                        viewBoxClip->appendRect(vx, vy, vw, vh, 0, 0);
+                        viewBoxClip->fill(0, 0, 0, 255);
+                        shape->composite(move(viewBoxClip), tvg::CompositeMethod::ClipPath);
+                        scene->push(move(shape));
+                    }
                 }
             }
             //Apply composite node
