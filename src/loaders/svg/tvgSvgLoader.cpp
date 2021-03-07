@@ -36,6 +36,18 @@ typedef SvgNode* (*FactoryMethod)(SvgLoaderData* loader, SvgNode* parent, const 
 typedef SvgStyleGradient* (*GradientFactoryMethod)(SvgLoaderData* loader, const char* buf, unsigned bufLength);
 
 
+static void _ommitXMLEntities(string& filePath)
+{
+    string entity = "&quot;";
+    size_t entitySize = entity.size();
+    size_t pos = 0;
+
+    while ((pos = filePath.find(entity)) != string::npos) {
+        filePath.erase(pos++, entitySize);
+    }
+}
+
+
 static char* _skipSpace(const char* str, const char* end)
 {
     while (((end != nullptr && str < end) || (end == nullptr && *str != '\0')) && isspace(*str))
@@ -2649,6 +2661,8 @@ bool SvgLoader::open(const string& path)
         f.close();
 
         if (filePath.empty()) return false;
+
+        _ommitXMLEntities(filePath);
 
         this->content = filePath.c_str();
         this->size = filePath.size();
