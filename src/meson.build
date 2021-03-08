@@ -19,6 +19,12 @@ subdir('bindings')
 thread_dep = meson.get_compiler('cpp').find_library('pthread')
 thorvg_lib_dep = [common_dep, loader_dep, binding_dep, thread_dep]
 
+if get_option('png') == true
+    message('Enable libpng based png loading')
+    png_dep = meson.get_compiler('cpp').find_library('libpng')
+    thorvg_lib_dep += png_dep
+endif
+
 thorvg_lib = library(
 	'thorvg',
 	include_directories    : headers,
