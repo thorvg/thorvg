@@ -33,6 +33,10 @@ if get_option('log') == true
     message('Enable Log')
 endif
 
+if get_option('png') == true
+    config_h.set10('THORVG_PNG_LOADER_SUPPORT', true)
+endif
+
 configure_file(
     output: 'config.h',
     configuration: config_h

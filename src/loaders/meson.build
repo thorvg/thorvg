@@ -5,6 +5,10 @@ if get_option('loaders').contains('svg') == true
     message('Enable SVG Loader')
 endif
 
+if get_option('png') == true
+    subdir('png')
+endif
+
 subdir('raw')
 
 loader_dep = declare_dependency(

@@ -33,6 +33,11 @@ option('examples',
     value: false,
     description: 'Enable building examples')
 
+option('png',
+   type: 'boolean',
+   value: false,
+   description: 'Enable libpng based png loading')
+
 option('test',
    type: 'boolean',
    value: false,
