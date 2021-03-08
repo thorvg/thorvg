@@ -39,6 +39,7 @@ struct Picture::Impl
     void *rdata = nullptr;              //engine data
     float w = 0, h = 0;
     bool resizing = false;
+    Matrix transform = { 1, 0, 0 , 0, 1, 0, 0, 0, 1 };
 
     Impl(Picture* p) : picture(p)
     {
@@ -115,6 +116,8 @@ struct Picture::Impl
     {
         auto flag = reload();
 
+        if (transform) this->transform = (Matrix)(transform->m);
+
         if (pixels) rdata = renderer.prepare(*picture, rdata, transform, opacity, clips, static_cast<RenderUpdateFlag>(pFlag | flag));
         else if (paint) {
             if (resizing) resize();
@@ -123,10 +126,58 @@ struct Picture::Impl
         return rdata;
     }
 
+    void calcTargetRegion(uint32_t* x, uint32_t* y, uint32_t* w, uint32_t* h)
+    {
+        Matrix m;
+
+        //Resize based on picture's size
+        auto sx = this->w / loader->vw;
+        auto sy = this->h / loader->vh;
+
+        if (loader->preserveAspect){
+            sx = sx < sy ? sx : sy;
+            sy = sx < sy ? sx : sy;
+        }
+
+        auto vx = loader->vx * sx;
+        auto vy = loader->vy * sy;
+        auto vw = loader->vw * sx;
+        auto vh = loader->vh * sy;
+
+        if (vw > vh) vy -= (this->h - vh) * 0.5f;
+        else vx -= (this->w - vw) * 0.5f;
+
+        //Calc transformed matrix of picture's size.
+        //{Picture's Matrix} X {Resized size}
+        m.e11 = transform.e11 * sx;
+        m.e13 = transform.e11 * (-vx) + transform.e13;
+
+        m.e22 = transform.e22 * sy;
+        m.e23 = transform.e22 * (-vy) + transform.e23;
+
+        //Recalculate size of viewbox to be displayed.
+        *x = loader->vx * m.e11 + m.e13;
+        *y = loader->vy * m.e22 + m.e23;
+        *w = loader->vw * m.e11;
+        *h = loader->vh * m.e22;
+    }
+
     bool render(RenderMethod &renderer)
     {
         if (pixels) return renderer.renderImage(rdata);
-        else if (paint) return paint->pImpl->render(renderer);
+        else if (paint){
+            Compositor* cmp = nullptr;
+            uint32_t x = 0, y = 0, w = 0, h = 0;
+            calcTargetRegion(&x, &y, &w, &h);
+            if (x != loader->vx || y != loader->vy || w != loader->vw || h != loader->vh){
+                cmp = renderer.target(x, y, w, h);
+            }
+            if (cmp) renderer.beginComposite(cmp, CompositeMethod::None, 255);
+            bool result =  paint->pImpl->render(renderer);
+            if (cmp) renderer.endComposite(cmp);
+
+            return result;
+        }
         return false;
     }
 
