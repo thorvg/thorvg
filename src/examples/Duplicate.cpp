@@ -1,4 +1,5 @@
 #include "Common.h"
+#include <fstream>
 
 /************************************************************************/
 /* Drawing Commands                                                     */
@@ -71,21 +72,44 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
         //Duplicate Scene1
         auto scene2 = unique_ptr<tvg::Scene>(static_cast<tvg::Scene*>(scene1->duplicate()));
-        scene2->translate(600, 200);
+        scene2->translate(600, 0);
 
         canvas->push(move(scene1));
         canvas->push(move(scene2));
     }
 
-    //Duplicate Picture
+    //Duplicate Picture - svg
     {
         auto picture1 = tvg::Picture::gen();
         picture1->load(EXAMPLE_DIR"/tiger.svg");
-        picture1->translate(370, 370);
+        picture1->translate(350, 200);
         picture1->scale(0.25);
 
         auto picture2 = unique_ptr<tvg::Picture>(static_cast<tvg::Picture*>(picture1->duplicate()));
-        picture2->translate(550, 550);
+        picture2->translate(550, 250);
+
+        canvas->push(move(picture1));
+        canvas->push(move(picture2));
+    }
+
+    //Duplicate Picture - raw
+    {
+        string path(EXAMPLE_DIR"/rawimage_200x300.raw");
+        ifstream file(path);
+        if (!file.is_open()) return ;
+        uint32_t* data = (uint32_t*)malloc(sizeof(uint32_t) * 200 * 300);
+        file.read(reinterpret_cast<char*>(data), sizeof(uint32_t) * 200 * 300);
+        file.close();
+
+        auto picture1 = tvg::Picture::gen();
+        if (picture1->load(data, 200, 300, true) != tvg::Result::Success) return;
+        picture1->scale(0.8);
+        picture1->translate(400, 450);
+
+        auto picture2 = unique_ptr<tvg::Picture>(static_cast<tvg::Picture*>(picture1->duplicate()));
+        picture2->translate(600, 550);
+        picture2->scale(0.7);
+        picture2->rotate(8);
 
         canvas->push(move(picture1));
         canvas->push(move(picture2));
