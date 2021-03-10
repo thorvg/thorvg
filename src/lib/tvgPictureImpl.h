@@ -39,6 +39,8 @@ struct Picture::Impl
     void *rdata = nullptr;              //engine data
     float w = 0, h = 0;
     bool resizing = false;
+    float vw = 0, vh = 0, vx = 0, vy = 0;  //viewbox parameters
+    bool preserveAspect = true;
 
     Impl(Picture* p) : picture(p)
     {
@@ -61,27 +63,27 @@ struct Picture::Impl
 
     void resize()
     {
-        auto sx = w / loader->vw;
-        auto sy = h / loader->vh;
+        auto sx = w / this->vw;
+        auto sy = h / this->vh;
 
-        if (loader->preserveAspect) {
+        if (this->preserveAspect) {
             //Scale
             auto scale = sx < sy ? sx : sy;
             paint->scale(scale);
             //Align
-            auto vx = loader->vx * scale;
-            auto vy = loader->vy * scale;
-            auto vw = loader->vw * scale;
-            auto vh = loader->vh * scale;
+            auto vx = this->vx * scale;
+            auto vy = this->vy * scale;
+            auto vw = this->vw * scale;
+            auto vh = this->vh * scale;
             if (vw > vh) vy -= (h - vh) * 0.5f;
             else vx -= (w - vw) * 0.5f;
             paint->translate(-vx, -vy);
         } else {
             //Align
-            auto vx = loader->vx * sx;
-            auto vy = loader->vy * sy;
-            auto vw = loader->vw * sx;
-            auto vh = loader->vh * sy;
+            auto vx = this->vx * sx;
+            auto vy = this->vy * sy;
+            auto vw = this->vw * sx;
+            auto vh = this->vh * sy;
             if (vw > vh) vy -= (h - vh) * 0.5f;
             else vx -= (w - vw) * 0.5f;
 
@@ -132,11 +134,10 @@ struct Picture::Impl
 
     bool viewbox(float* x, float* y, float* w, float* h) const
     {
-        if (!loader) return false;
-        if (x) *x = loader->vx;
-        if (y) *y = loader->vy;
-        if (w) *w = loader->vw;
-        if (h) *h = loader->vh;
+        if (x) *x = this->vx;
+        if (y) *y = this->vy;
+        if (w) *w = this->vw;
+        if (h) *h = this->vh;
         return true;
     }
 
@@ -169,6 +170,11 @@ struct Picture::Impl
         if (!loader->read()) return Result::Unknown;
         w = loader->w;
         h = loader->h;
+        vx = loader->vx;
+        vy = loader->vy;
+        vw = loader->vw;
+        vh = loader->vh;
+        preserveAspect = loader->preserveAspect;
         return Result::Success;
     }
 
@@ -180,6 +186,11 @@ struct Picture::Impl
         if (!loader->read()) return Result::Unknown;
         w = loader->w;
         h = loader->h;
+        vx = loader->vx;
+        vy = loader->vy;
+        vw = loader->vw;
+        vh = loader->vh;
+        preserveAspect = loader->preserveAspect;
         return Result::Success;
     }
 
@@ -188,6 +199,10 @@ struct Picture::Impl
         if (loader) loader->close();
         loader = LoaderMgr::loader(data, w, h, copy);
         if (!loader) return Result::NonSupport;
+        w = loader->w;
+        h = loader->h;
+        vw = loader->vw;
+        vh = loader->vh;
         return Result::Success;
     }
 
@@ -199,7 +214,15 @@ struct Picture::Impl
         auto ret = Picture::gen();
         if (!ret) return nullptr;
         auto dup = ret.get()->pImpl;
+
         dup->paint = paint->duplicate();
+        dup->w = w;
+        dup->h = h;
+        dup->vw = vw;
+        dup->vh = vh;
+        dup->vx = vx;
+        dup->vy = vy;
+        dup->preserveAspect = preserveAspect;
 
         return ret.release();
     }
