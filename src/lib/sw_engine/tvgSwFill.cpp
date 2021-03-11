@@ -248,8 +248,8 @@ void fillFetchLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, 
 
     //we can use fixed point math
     if (v < vMax && v > vMin) {
-        auto t2 = static_cast<uint32_t>(t * FIXPT_SIZE);
-        auto inc2 = static_cast<uint32_t>(inc * FIXPT_SIZE);
+        auto t2 = static_cast<int32_t>(t * FIXPT_SIZE);
+        auto inc2 = static_cast<int32_t>(inc * FIXPT_SIZE);
         for (uint32_t j = 0; j < len; ++j) {
             *dst = _fixedPixel(fill, t2);
             ++dst;
