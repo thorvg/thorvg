@@ -378,6 +378,16 @@ unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, float vx, float vy, flo
                         scene->composite(move(comp), CompositeMethod::ClipPath);
                     }
                 }
+                //Composite AlphaMask
+                if (((int)node->style->comp.flags & (int)SvgCompositeFlags::AlphaMask)) {
+                    auto compNode = node->style->comp.node;
+                    if (compNode->child.count > 0) {
+                        auto comp = Shape::gen();
+                        auto child = compNode->child.data;
+                        for (uint32_t i = 0; i < compNode->child.count; ++i, ++child) _appendChildShape(*child, comp.get(), vx, vy, vw, vh);
+                        scene->composite(move(comp), CompositeMethod::AlphaMask);
+                    }
+                }
             }
             scene->opacity(node->style->opacity);
         }
