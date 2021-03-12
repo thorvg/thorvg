@@ -32,7 +32,7 @@ struct Canvas::Impl
 {
     Array<Paint*> paints;
     RenderMethod* renderer;
-    bool refresh;   //if all paints should be updated by force.
+    bool refresh = false;   //if all paints should be updated by force.
 
     Impl(RenderMethod* pRenderer):renderer(pRenderer)
     {
