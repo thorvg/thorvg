@@ -68,6 +68,7 @@ struct Picture::Impl
             //Scale
             auto scale = sx < sy ? sx : sy;
             paint->scale(scale);
+            if (paint->pImpl->cmpTarget) paint->pImpl->cmpTarget->scale(scale);
             //Align
             auto vx = loader->vx * scale;
             auto vy = loader->vy * scale;
@@ -76,6 +77,7 @@ struct Picture::Impl
             if (vw > vh) vy -= (h - vh) * 0.5f;
             else vx -= (w - vw) * 0.5f;
             paint->translate(-vx, -vy);
+            if (paint->pImpl->cmpTarget) paint->pImpl->cmpTarget->translate(-vx, -vy);
         } else {
             //Align
             auto vx = loader->vx * sx;
@@ -87,6 +89,7 @@ struct Picture::Impl
 
             Matrix m = {sx, 0, -vx, 0, sy, -vy, 0, 0, 1};
             paint->transform(m);
+            if (paint->pImpl->cmpTarget) paint->pImpl->cmpTarget->transform(m);
         }
         resizing = false;
     }
