@@ -170,7 +170,7 @@ namespace tvg
                 edata = smethod->update(renderer, outTransform, opacity, clips, newFlag);
             }
 
-            if (cmpData) clips.pop();
+            if (cmpData && cmpMethod == CompositeMethod::ClipPath) clips.pop();
 
             return edata;
         }
