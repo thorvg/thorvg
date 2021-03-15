@@ -923,8 +923,9 @@ void updateRleSpans(SwRleData *rle, const SwSpan* curSpans, uint32_t size)
     }
 
     if (!rle->spans || !curSpans) return;
+    rle->alloc = size * 2;
+    rle->spans = static_cast<SwSpan*>(realloc(rle->spans, rle->alloc * sizeof(SwSpan)));
     rle->size = size;
-    rle->spans = static_cast<SwSpan*>(realloc(rle->spans, rle->size * sizeof(SwSpan)));
 
     if (!rle->spans) return;
 
