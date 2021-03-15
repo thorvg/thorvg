@@ -386,6 +386,32 @@ unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, float vx, float vy, flo
     return nullptr;
 }
 
+unique_ptr<Scene> _buildRoot(const SvgNode* node, float vx, float vy, float vw, float vh)
+{
+    unique_ptr<Scene> root;
+    auto docNode = move(_sceneBuildHelper(node, vx, vy, vw, vh));
+    float x, y, w, h;
+
+    if (docNode->bounds(&x, &y, &w, &h) != Result::Success) return nullptr;
+
+    if (x < vx || y < vy || w > vh || h > vh) {
+        auto viewBoxClip = Shape::gen();
+        viewBoxClip->appendRect(vx, vy ,vw, vh, 0, 0);
+        viewBoxClip->fill(0, 0, 0, 255);
+
+        auto compositeLayer = Scene::gen();
+        compositeLayer->composite(move(viewBoxClip), tvg::CompositeMethod::ClipPath);
+        compositeLayer->push(move(docNode));
+
+        root = Scene::gen();
+        root->push(move(compositeLayer));
+    }
+    else
+    {
+        root = move(docNode);
+    }
+    return root;
+}
 
 SvgSceneBuilder::SvgSceneBuilder()
 {
@@ -401,5 +427,5 @@ unique_ptr<Scene> SvgSceneBuilder::build(SvgNode* node)
 {
     if (!node || (node->type != SvgNodeType::Doc)) return nullptr;
 
-    return _sceneBuildHelper(node, node->node.doc.vx, node->node.doc.vy, node->node.doc.vw, node->node.doc.vh);
+    return _buildRoot(node, node->node.doc.vx, node->node.doc.vy, node->node.doc.vw, node->node.doc.vh);
 }
