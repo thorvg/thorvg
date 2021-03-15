@@ -465,7 +465,6 @@ void shapeDelOutline(SwShape* shape, uint32_t tid)
 void shapeReset(SwShape* shape)
 {
     rleReset(shape->rle);
-    rleReset(shape->strokeRle);
     shape->rect = false;
     _initBBox(shape->bbox);
 }
