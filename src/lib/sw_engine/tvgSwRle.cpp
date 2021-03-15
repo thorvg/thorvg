@@ -773,10 +773,10 @@ SwSpan* _intersectSpansRect(const SwBBox *bbox, const SwRleData *targetRle, SwSp
 }
 
 
-void _replaceClipSpan(SwRleData *rle, SwSpan* curSpans, uint32_t size)
+void _replaceClipSpan(SwRleData *rle, SwSpan* clippedSpans, uint32_t size)
 {
     free(rle->spans);
-    rle->spans = curSpans;
+    rle->spans = clippedSpans;
     rle->size = rle->alloc = size;
 }
 
