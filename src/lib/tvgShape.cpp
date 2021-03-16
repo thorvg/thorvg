@@ -163,7 +163,7 @@ Result Shape::appendArc(float cx, float cy, float radius, float startAngle, floa
     auto nCurves = ceil(abs(sweep / M_PI_HALF));
     auto sweepSign = (sweep < 0 ? -1 : 1);
     auto fract = fmodf(sweep, M_PI_HALF);
-    fract = (fabsf(fract) < std::numeric_limits<float>::epsilon()) ? M_PI_HALF : fract;
+    fract = (fabsf(fract) < std::numeric_limits<float>::epsilon()) ? M_PI_HALF * sweepSign : fract;
 
     //Start from here
     Point start = {radius * cos(startAngle), radius * sin(startAngle)};
