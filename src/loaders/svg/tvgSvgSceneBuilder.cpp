@@ -389,7 +389,7 @@ unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, float vx, float vy, flo
 unique_ptr<Scene> _buildRoot(const SvgNode* node, float vx, float vy, float vw, float vh)
 {
     unique_ptr<Scene> root;
-    auto docNode = move(_sceneBuildHelper(node, vx, vy, vw, vh));
+    auto docNode = _sceneBuildHelper(node, vx, vy, vw, vh);
     float x, y, w, h;
 
     if (docNode->bounds(&x, &y, &w, &h) != Result::Success) return nullptr;
