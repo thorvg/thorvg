@@ -772,6 +772,15 @@ SwSpan* _intersectSpansRect(const SwBBox *bbox, const SwRleData *targetRle, SwSp
     return out;
 }
 
+
+void _replaceClipSpan(SwRleData *rle, SwSpan* clippedSpans, uint32_t size)
+{
+    free(rle->spans);
+    rle->spans = clippedSpans;
+    rle->size = rle->alloc = size;
+}
+
+
 /************************************************************************/
 /* External Class Implementation                                        */
 /************************************************************************/
@@ -915,28 +924,6 @@ void rleFree(SwRleData* rle)
     free(rle);
 }
 
-void updateRleSpans(SwRleData *rle, const SwSpan* curSpans, uint32_t size)
-{
-    if (size == 0) {
-        rle->size = 0;
-        return;
-    }
-
-    if (!rle->spans || !curSpans) return;
-    rle->alloc = size * 2;
-    rle->spans = static_cast<SwSpan*>(realloc(rle->spans, rle->alloc * sizeof(SwSpan)));
-    rle->size = size;
-
-    if (!rle->spans) return;
-
-    for (int i = 0; i < (int)rle->size ; i++)
-    {
-       rle->spans[i].x = curSpans[i].x;
-       rle->spans[i].y = curSpans[i].y;
-       rle->spans[i].len = curSpans[i].len;
-       rle->spans[i].coverage = curSpans[i].coverage;
-    }
-}
 
 void rleClipPath(SwRleData *rle, const SwRleData *clip)
 {
@@ -946,15 +933,13 @@ void rleClipPath(SwRleData *rle, const SwRleData *clip)
     if (!spans) return;
     auto spansEnd = _intersectSpansRegion(clip, rle, spans, spanCnt);
 
-    //Update Spans
-    updateRleSpans(rle, spans, spansEnd - spans);
-
-    if (spans) free(spans);
+    _replaceClipSpan(rle, spans, spansEnd - spans);
 
 #ifdef THORVG_LOG_ENABLED
     cout << "SW_ENGINE: Using ClipPath!" << endl;
 #endif
 }
+
 
 void rleClipRect(SwRleData *rle, const SwBBox* clip)
 {
@@ -963,10 +948,7 @@ void rleClipRect(SwRleData *rle, const SwBBox* clip)
     if (!spans) return;
     auto spansEnd = _intersectSpansRect(clip, rle, spans, rle->size);
 
-    //Update Spans
-    updateRleSpans(rle, spans, spansEnd - spans);
-
-    if (spans) free(spans);
+    _replaceClipSpan(rle, spans, spansEnd - spans);
 
 #ifdef THORVG_LOG_ENABLED
     cout <<"SW_ENGINE: Using ClipRect!" << endl;
@@ -984,9 +966,6 @@ void rleAlphaMask(SwRleData *rle, const SwRleData *clip)
     if (!spans) return;
     auto spansEnd = _intersectMaskRegion(clip, rle, spans, spanCnt);
 
-    //Update Spans
-    updateRleSpans(rle, spans, spansEnd - spans);
-
-    if (spans) free(spans);
+    _replaceClipSpan(rle, spans, spansEnd - spans);
 }
 
