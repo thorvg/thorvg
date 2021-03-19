@@ -30,9 +30,9 @@ struct LoaderMgr
 {
     static bool init();
     static bool term();
-    static unique_ptr<Loader> loader(const string& path);
-    static unique_ptr<Loader> loader(const char* data, uint32_t size);
-    static unique_ptr<Loader> loader(const uint32_t* data, uint32_t w, uint32_t h, bool copy);
+    static shared_ptr<Loader> loader(const string& path);
+    static shared_ptr<Loader> loader(const char* data, uint32_t size);
+    static shared_ptr<Loader> loader(const uint32_t* data, uint32_t w, uint32_t h, bool copy);
 };
 
 #endif //_TVG_LOADER_MGR_H_

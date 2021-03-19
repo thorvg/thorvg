@@ -32,7 +32,7 @@
 
 struct Picture::Impl
 {
-    unique_ptr<Loader> loader = nullptr;
+    shared_ptr<Loader> loader = nullptr;
     Paint* paint = nullptr;
     uint32_t *pixels = nullptr;
     Picture *picture = nullptr;
@@ -105,6 +105,7 @@ struct Picture::Impl
             }
             if (!pixels) {
                 pixels = const_cast<uint32_t*>(loader->pixels());
+                loader->close();
                 if (pixels) return RenderUpdateFlag::Image;
             }
         }
@@ -195,11 +196,17 @@ struct Picture::Impl
     {
         reload();
 
-        if (!paint) return nullptr;
         auto ret = Picture::gen();
         if (!ret) return nullptr;
+
         auto dup = ret.get()->pImpl;
-        dup->paint = paint->duplicate();
+        if (paint) dup->paint = paint->duplicate();
+
+        dup->loader = loader;
+        dup->pixels = pixels;
+        dup->w = w;
+        dup->h = h;
+        dup->resizing = resizing;
 
         return ret.release();
     }

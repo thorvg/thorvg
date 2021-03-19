@@ -113,6 +113,8 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
         canvas->push(move(picture1));
         canvas->push(move(picture2));
+
+        free(data);
     }
 }
 

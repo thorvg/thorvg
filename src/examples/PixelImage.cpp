@@ -46,6 +46,8 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     picture2->composite(move(circle), tvg::CompositeMethod::ClipPath);
 
     canvas->push(move(picture2));
+
+    free(data);
 }
 
 
@@ -147,8 +149,6 @@ int main(int argc, char **argv)
 
         //Terminate ThorVG Engine
         tvg::Initializer::term(tvg::CanvasEngine::Sw);
-
-        if (data) free(data);
 
     } else {
         cout << "engine is not supported" << endl;
