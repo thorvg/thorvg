@@ -35,7 +35,7 @@
 /************************************************************************/
 /* Internal Class Implementation                                        */
 /************************************************************************/
-static bool initialized = false;
+
 
 /************************************************************************/
 /* External Class Implementation                                        */
@@ -43,8 +43,6 @@ static bool initialized = false;
 
 Result Initializer::init(CanvasEngine engine, uint32_t threads) noexcept
 {
-    if (initialized) return Result::InsufficientCondition;
-
     auto nonSupport = true;
 
     if (static_cast<uint32_t>(engine) & static_cast<uint32_t>(CanvasEngine::Sw)) {
@@ -67,16 +65,12 @@ Result Initializer::init(CanvasEngine engine, uint32_t threads) noexcept
 
     TaskScheduler::init(threads);
 
-    initialized = true;
-
     return Result::Success;
 }
 
 
 Result Initializer::term(CanvasEngine engine) noexcept
 {
-    if (!initialized) return Result::InsufficientCondition;
-
     auto nonSupport = true;
 
     if (static_cast<uint32_t>(engine) & static_cast<uint32_t>(CanvasEngine::Sw)) {
@@ -98,8 +92,6 @@ Result Initializer::term(CanvasEngine engine) noexcept
     TaskScheduler::term();
 
     if (!LoaderMgr::term()) return Result::Unknown;
-
-    initialized = false;
 
     return Result::Success;
 }

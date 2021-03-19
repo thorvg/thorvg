@@ -28,8 +28,8 @@
 /************************************************************************/
 /* Internal Class Implementation                                        */
 /************************************************************************/
-static bool initEngine = false;
-static uint32_t rendererCnt = 0;
+static int32_t initEngineCnt = false;
+static int32_t rendererCnt = 0;
 
 
 static void _termEngine()
@@ -236,12 +236,9 @@ RenderData GlRenderer::prepare(const Shape& shape, RenderData data, const Render
 
 int GlRenderer::init(uint32_t threads)
 {
-    if (rendererCnt > 0) return false;
-    if (initEngine) return true;
+    if ((initEngineCnt++) > 0) return true;
 
     //TODO:
-
-    initEngine = true;
 
     return true;
 }
@@ -249,9 +246,9 @@ int GlRenderer::init(uint32_t threads)
 
 int GlRenderer::term()
 {
-    if (!initEngine) return true;
+    if ((--initEngineCnt) > 0) return true;
 
-    initEngine = false;
+    initEngineCnt = 0;
 
    _termEngine();
 
@@ -270,7 +267,8 @@ GlRenderer::~GlRenderer()
     mRenderTasks.clear();
 
     --rendererCnt;
-    if (!initEngine) _termEngine();
+
+    if (rendererCnt == 0 && initEngineCnt == 0) _termEngine();
 }
 
 
@@ -308,13 +306,11 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, uint32_t primit
 {
     const Fill::ColorStop* stops = nullptr;
     auto stopCnt = fill->colorStops(&stops);
-    if (stopCnt < 2)
-    {
-        return;
-    }
+    if (stopCnt < 2) return;
+
     GlGradientRenderTask* rTask = nullptr;
-    GlSize size = sdata.geometry->getPrimitiveSize(primitiveIndex);
-    float* matrix = sdata.geometry->getTransforMatrix();
+    auto size = sdata.geometry->getPrimitiveSize(primitiveIndex);
+    auto matrix = sdata.geometry->getTransforMatrix();
 
     switch (fill->id()) {
         case FILL_ID_LINEAR: {
@@ -344,16 +340,15 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, uint32_t primit
             break;
         }
     }
-    if (rTask)
-    {
-        int32_t vertexLoc = rTask->getLocationPropertyId();
+    if (rTask) {
+        auto vertexLoc = rTask->getLocationPropertyId();
         rTask->setPrimitveSize(size.x, size.y);
         rTask->setCanvasSize(sdata.viewWd, sdata.viewHt);
         rTask->setNoise(NOISE_LEVEL);
         rTask->setStopCount((int)stopCnt);
         rTask->setTransform(FORMAT_SIZE_MAT_4x4, matrix);
-        for (uint32_t i = 0; i < stopCnt; ++i)
-        {
+
+        for (uint32_t i = 0; i < stopCnt; ++i) {
             rTask->setStopColor(i, stops[i].offset, stops[i].r, stops[i].g, stops[i].b, stops[i].a);
         }
 

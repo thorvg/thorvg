@@ -27,8 +27,8 @@
 /************************************************************************/
 /* Internal Class Implementation                                        */
 /************************************************************************/
-static bool initEngine = false;
-static uint32_t rendererCnt = 0;
+static int32_t initEngineCnt = false;
+static int32_t rendererCnt = 0;
 
 
 struct SwTask : Task
@@ -229,7 +229,8 @@ SwRenderer::~SwRenderer()
     if (surface) delete(surface);
 
     --rendererCnt;
-    if (!initEngine) _termEngine();
+
+    if (rendererCnt == 0 && initEngineCnt == 0) _termEngine();
 }
 
 
@@ -546,12 +547,9 @@ RenderData SwRenderer::prepare(const Shape& sdata, RenderData data, const Render
 
 bool SwRenderer::init(uint32_t threads)
 {
-    if (rendererCnt > 0) return false;
-    if (initEngine) return true;
+    if ((initEngineCnt++) > 0) return true;
 
     if (!mpoolInit(threads)) return false;
-
-    initEngine = true;
 
     return true;
 }
@@ -559,9 +557,9 @@ bool SwRenderer::init(uint32_t threads)
 
 bool SwRenderer::term()
 {
-    if (!initEngine) return true;
+    if ((--initEngineCnt) > 0) return true;
 
-    initEngine = false;
+    initEngineCnt = 0;
 
    _termEngine();
 
