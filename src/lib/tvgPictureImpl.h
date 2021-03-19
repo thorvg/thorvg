@@ -138,7 +138,6 @@ struct Picture::Impl
         if (y) *y = loader->vy;
         if (w) *w = loader->vw;
         if (h) *h = loader->vh;
-
         return true;
     }
 
@@ -196,8 +195,6 @@ struct Picture::Impl
     Paint* duplicate()
     {
         reload();
-
-        if (!paint && !pixels) return nullptr;
 
         auto ret = Picture::gen();
         if (!ret) return nullptr;
