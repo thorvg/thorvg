@@ -89,22 +89,22 @@ bool LoaderMgr::term()
 }
 
 
-unique_ptr<Loader> LoaderMgr::loader(const string& path)
+shared_ptr<Loader> LoaderMgr::loader(const string& path)
 {
     if (auto loader = _find(path)) {
-        if (loader->open(path)) return unique_ptr<Loader>(loader);
+        if (loader->open(path)) return shared_ptr<Loader>(loader);
         else delete(loader);
     }
     return nullptr;
 }
 
 
-unique_ptr<Loader> LoaderMgr::loader(const char* data, uint32_t size)
+shared_ptr<Loader> LoaderMgr::loader(const char* data, uint32_t size)
 {
     for (int i = 0; i < static_cast<int>(FileType::Unknown); i++) {
         auto loader = _find(static_cast<FileType>(i));
         if (loader) {
-            if (loader->open(data, size)) return unique_ptr<Loader>(loader);
+            if (loader->open(data, size)) return shared_ptr<Loader>(loader);
             else delete(loader);
         }
     }
@@ -112,12 +112,12 @@ unique_ptr<Loader> LoaderMgr::loader(const char* data, uint32_t size)
 }
 
 
-unique_ptr<Loader> LoaderMgr::loader(const uint32_t *data, uint32_t w, uint32_t h, bool copy)
+shared_ptr<Loader> LoaderMgr::loader(const uint32_t *data, uint32_t w, uint32_t h, bool copy)
 {
     for (int i = 0; i < static_cast<int>(FileType::Unknown); i++) {
         auto loader = _find(static_cast<FileType>(i));
         if (loader) {
-            if (loader->open(data, w, h, copy)) return unique_ptr<Loader>(loader);
+            if (loader->open(data, w, h, copy)) return shared_ptr<Loader>(loader);
             else delete(loader);
         }
     }
