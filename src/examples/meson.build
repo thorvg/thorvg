@@ -34,6 +34,7 @@ source_file = [
     'ClipPath.cpp',
     'Masking.cpp',
     'InvMasking.cpp',
+    'GradientMasking.cpp',
     'AnimateMasking.cpp',
 ]
 
