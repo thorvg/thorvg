@@ -415,9 +415,7 @@ unique_ptr<Scene> _buildRoot(const SvgNode* node, float vx, float vy, float vw, 
 
         root = Scene::gen();
         root->push(move(compositeLayer));
-    }
-    else
-    {
+    } else {
         root = move(docNode);
     }
     return root;
