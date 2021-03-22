@@ -1,5 +1,4 @@
 #include "Common.h"
-#include <fstream>
 /************************************************************************/
 /* Drawing Commands                                                     */
 /************************************************************************/
@@ -10,12 +9,11 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     for (int i = 0; i < 40; ++i) {
         auto png = tvg::Picture::gen();
-        if (png->load(EXAMPLE_DIR"/../pngs/samsung.png") != tvg::Result::Success) return;
+        if (png->load(EXAMPLE_DIR"/samsung.png") != tvg::Result::Success) return;
         png->translate(i* 5, i * 10);
         png->rotate(10 * i);
         if (canvas->push(move(png)) != tvg::Result::Success) return;
     }
-    // if (canvas->push(move(png3)) != tvg::Result::Success) return;
 }
 
 
