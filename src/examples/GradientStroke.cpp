@@ -45,12 +45,12 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     shape1->stroke(tvg::StrokeCap::Butt);
 
     auto fillStroke1 = tvg::LinearGradient::gen();
-    fillStroke1->linear(150, 150, 250, 250);
+    fillStroke1->linear(100, 100, 250, 250);
     fillStroke1->colorStops(colorStops1, 3);
     shape1->stroke(move(fillStroke1));
 
     auto fill1 = tvg::LinearGradient::gen();
-    fill1->linear(50, 50, 200, 200);
+    fill1->linear(100, 100, 250, 250);
     fill1->colorStops(colorStops1, 3);
     shape1->fill(move(fill1));
 
