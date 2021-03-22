@@ -26,30 +26,31 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     // linear gradient stroke + linear gradient fill
     auto shape1 = tvg::Shape::gen();
-    shape1->moveTo(100, 50);
-    shape1->lineTo(150, 50);
-    shape1->lineTo(150, 100);
-    shape1->lineTo(250, 100);
+    shape1->moveTo(150, 100);
+    shape1->lineTo(200, 100);
     shape1->lineTo(200, 150);
-    shape1->lineTo(150, 150);
+    shape1->lineTo(300, 150);
+    shape1->lineTo(250, 200);
+    shape1->lineTo(200, 200);
+    shape1->lineTo(200, 250);
+    shape1->lineTo(150, 300);
     shape1->lineTo(150, 200);
-    shape1->lineTo(100, 250);
+    shape1->lineTo(100, 200);
     shape1->lineTo(100, 150);
-    shape1->lineTo(50, 150);
-    shape1->lineTo(50, 100);
     shape1->close();
 
     shape1->stroke(0, 255, 0, 255);
     shape1->stroke(20);
     shape1->stroke(tvg::StrokeJoin::Miter);
     shape1->stroke(tvg::StrokeCap::Butt);
+
     auto fillStroke1 = tvg::LinearGradient::gen();
-    fillStroke1->linear(50, 50, 200, 200);
+    fillStroke1->linear(100, 100, 250, 250);
     fillStroke1->colorStops(colorStops1, 3);
     shape1->stroke(move(fillStroke1));
 
     auto fill1 = tvg::LinearGradient::gen();
-    fill1->linear(50, 50, 200, 200);
+    fill1->linear(100, 100, 250, 250);
     fill1->colorStops(colorStops1, 3);
     shape1->fill(move(fill1));
 
@@ -57,24 +58,24 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     // radial gradient stroke + duplicate 
     auto shape2 = tvg::Shape::gen();
-    shape2->appendCircle(500, 125, 100, 60);
-
+    shape2->appendCircle(600, 175, 100, 60);
     shape2->stroke(80);
+
     auto fillStroke2 = tvg::RadialGradient::gen();
-    fillStroke2->radial(500, 125, 100);
+    fillStroke2->radial(600, 175, 100);
     fillStroke2->colorStops(colorStops2, 2);
     shape2->stroke(move(fillStroke2));
 
     auto shape3 = unique_ptr<tvg::Shape>(static_cast<tvg::Shape*>(shape2->duplicate()));
-    shape3->translate(50, 200);
+    shape3->translate(0, 200);
 
     auto fillStroke3 = tvg::LinearGradient::gen();
-    fillStroke3->linear(400, 60, 600, 180);
+    fillStroke3->linear(500, 115, 700, 235);
     fillStroke3->colorStops(colorStops3, 2);
     shape3->stroke(move(fillStroke3));
 
     auto shape4 = unique_ptr<tvg::Shape>(static_cast<tvg::Shape*>(shape2->duplicate()));
-    shape4->translate(100, 400);
+    shape4->translate(0, 400);
 
     if (canvas->push(move(shape2)) != tvg::Result::Success) return;
     if (canvas->push(move(shape3)) != tvg::Result::Success) return;
@@ -82,7 +83,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     // dashed gradient stroke
     auto shape5 = tvg::Shape::gen();
-    shape5->appendRect(150, 450, 300, 300, 50, 80);
+    shape5->appendRect(100, 500, 300, 300, 50, 80);
 
     shape5->stroke(20);
     shape5->stroke(dashPattern1, 2);
