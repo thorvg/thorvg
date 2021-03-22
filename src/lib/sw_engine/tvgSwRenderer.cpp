@@ -78,7 +78,7 @@ struct SwShapeTask : SwTask
         }
         bool validStroke = (strokeAlpha > 0) || sdata->strokeFill();
 
-        SwSize clip = {static_cast<SwCoord>(surface->w), static_cast<SwCoord>(surface->h)};
+        auto viewport = mathMin(this->viewport, {0, 0, static_cast<SwCoord>(surface->w), static_cast<SwCoord>(surface->h)});
 
         //invisible shape turned to visible by alpha.
         auto prepareShape = false;
@@ -92,13 +92,13 @@ struct SwShapeTask : SwTask
             bool renderShape = (alpha > 0 || sdata->fill());
             if (renderShape || validStroke) {
                 shapeReset(&shape);
-                if (!shapePrepare(&shape, sdata, tid, clip, transform, bbox)) goto err;
+                if (!shapePrepare(&shape, sdata, tid, viewport, transform, bbox)) goto err;
                 if (renderShape) {
                     /* We assume that if stroke width is bigger than 2,
                        shape outline below stroke could be full covered by stroke drawing.
                        Thus it turns off antialising in that condition. */
                     auto antiAlias = (strokeAlpha == 255 && strokeWidth > 2) ? false : true;
-                    if (!shapeGenRle(&shape, sdata, clip, antiAlias, clips.count > 0 ? true : false)) goto err;
+                    if (!shapeGenRle(&shape, sdata, viewport, antiAlias, clips.count > 0 ? true : false)) goto err;
                     ++addStroking;
                 }
             }
@@ -121,7 +121,7 @@ struct SwShapeTask : SwTask
         if (flags & (RenderUpdateFlag::Stroke | RenderUpdateFlag::Transform)) {
             if (validStroke) {
                 shapeResetStroke(&shape, sdata, transform);
-                if (!shapeGenStrokeRle(&shape, sdata, tid, transform, clip, bbox)) goto err;
+                if (!shapeGenStrokeRle(&shape, sdata, tid, transform, viewport, bbox)) goto err;
                 ++addStroking;
 
                 if (auto fill = sdata->strokeFill()) {
@@ -175,7 +175,7 @@ struct SwImageTask : SwTask
 
     void run(unsigned tid) override
     {
-        SwSize clip = {static_cast<SwCoord>(surface->w), static_cast<SwCoord>(surface->h)};
+        auto viewport = mathMin(this->viewport, {0, 0, static_cast<SwCoord>(surface->w), static_cast<SwCoord>(surface->h)});
 
         //Invisible shape turned to visible by alpha.
         auto prepareImage = false;
@@ -183,11 +183,11 @@ struct SwImageTask : SwTask
 
         if (prepareImage) {
             imageReset(&image);
-            if (!imagePrepare(&image, pdata, tid, clip, transform, bbox)) goto end;
+            if (!imagePrepare(&image, pdata, tid, viewport, transform, bbox)) goto end;
 
             //Clip Path?
             if (clips.count > 0) {
-                if (!imageGenRle(&image, pdata, clip, bbox, false, true)) goto end;
+                if (!imageGenRle(&image, pdata, viewport, bbox, false, true)) goto end;
                 if (image.rle) {
                     for (auto clip = clips.data; clip < (clips.data + clips.count); ++clip) {
                         auto clipper = &static_cast<SwShapeTask*>(*clip)->shape;
@@ -466,6 +466,28 @@ bool SwRenderer::endComposite(Compositor* cmp)
     if (p->method == CompositeMethod::None) {
         return rasterImage(surface, &p->image, nullptr, p->bbox, p->opacity);
     }
+
+    return true;
+}
+
+
+bool SwRenderer::viewport(uint32_t x, uint32_t y, uint32_t w, uint32_t h)
+{
+    vx = x;
+    vy = y;
+    vw = w;
+    vh = h;
+
+    return true;
+}
+
+
+bool SwRenderer::viewport(uint32_t* x, uint32_t* y, uint32_t* w, uint32_t* h)
+{
+    if (x) *x = vx;
+    if (y) *y = vy;
+    if (w) *w = vw;
+    if (h) *h = vh;
 
     return true;
 }

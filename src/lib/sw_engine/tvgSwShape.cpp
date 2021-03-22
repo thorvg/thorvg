@@ -199,12 +199,12 @@ static bool _updateBBox(const SwOutline* outline, SwBBox& bbox)
 }
 
 
-static bool _checkValid(const SwOutline* outline, const SwBBox& bbox, const SwSize& clip)
+static bool _checkValid(const SwOutline* outline, const SwBBox& bbox, const SwBBox& viewport)
 {
     if (outline->ptsCnt == 0 || outline->cntrsCnt <= 0) return false;
 
     //Check boundary
-    if (bbox.min.x >= clip.w || bbox.min.y >= clip.h || bbox.max.x <= 0 || bbox.max.y <= 0) return false;
+    if (bbox.min.x >= viewport.max.x || bbox.min.y >= viewport.max.y || bbox.max.x <= viewport.min.x || bbox.max.y <= viewport.min.y) return false;
 
     return true;
 }
@@ -420,13 +420,13 @@ bool _fastTrack(const SwOutline* outline)
 /* External Class Implementation                                        */
 /************************************************************************/
 
-bool shapePrepare(SwShape* shape, const Shape* sdata, unsigned tid, const SwSize& clip, const Matrix* transform, SwBBox& bbox)
+bool shapePrepare(SwShape* shape, const Shape* sdata, unsigned tid, const SwBBox& viewport, const Matrix* transform, SwBBox& bbox)
 {
     if (!shapeGenOutline(shape, sdata, tid, transform)) return false;
 
     if (!_updateBBox(shape->outline, shape->bbox)) return false;
 
-    if (!_checkValid(shape->outline, shape->bbox, clip)) return false;
+    if (!_checkValid(shape->outline, shape->bbox, viewport)) return false;
 
     bbox = shape->bbox;
 
@@ -440,7 +440,7 @@ bool shapePrepared(const SwShape* shape)
 }
 
 
-bool shapeGenRle(SwShape* shape, TVG_UNUSED const Shape* sdata, const SwSize& clip, bool antiAlias, bool hasComposite)
+bool shapeGenRle(SwShape* shape, TVG_UNUSED const Shape* sdata, const SwBBox& viewport, bool antiAlias, bool hasComposite)
 {
     //FIXME: Should we draw it?
     //Case: Stroke Line
@@ -449,7 +449,7 @@ bool shapeGenRle(SwShape* shape, TVG_UNUSED const Shape* sdata, const SwSize& cl
     //Case A: Fast Track Rectangle Drawing
     if (!hasComposite && (shape->rect = _fastTrack(shape->outline))) return true;
     //Case B: Normale Shape RLE Drawing
-    if ((shape->rle = rleRender(shape->rle, shape->outline, shape->bbox, clip, antiAlias))) return true;
+    if ((shape->rle = rleRender(shape->rle, shape->outline, shape->bbox, viewport, antiAlias))) return true;
 
     return false;
 }
@@ -591,7 +591,7 @@ void shapeResetStroke(SwShape* shape, const Shape* sdata, const Matrix* transfor
 }
 
 
-bool shapeGenStrokeRle(SwShape* shape, const Shape* sdata, unsigned tid, const Matrix* transform, const SwSize& clip, SwBBox& bbox)
+bool shapeGenStrokeRle(SwShape* shape, const Shape* sdata, unsigned tid, const Matrix* transform, const SwBBox& viewport, SwBBox& bbox)
 {
     SwOutline* shapeOutline = nullptr;
     SwOutline* strokeOutline = nullptr;
@@ -624,12 +624,12 @@ bool shapeGenStrokeRle(SwShape* shape, const Shape* sdata, unsigned tid, const M
 
     _updateBBox(strokeOutline, bbox);
 
-    if (!_checkValid(strokeOutline, bbox, clip)) {
+    if (!_checkValid(strokeOutline, bbox, viewport)) {
         ret = false;
         goto fail;
     }
 
-    shape->strokeRle = rleRender(shape->strokeRle, strokeOutline, bbox, clip, true);
+    shape->strokeRle = rleRender(shape->strokeRle, strokeOutline, bbox, viewport, true);
 
 fail:
     if (freeOutline) {

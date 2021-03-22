@@ -42,6 +42,8 @@ public:
     bool postRender() override;
     bool dispose(RenderData data) override;
     bool region(RenderData data, uint32_t* x, uint32_t* y, uint32_t* w, uint32_t* h) override;
+    bool viewport(uint32_t x, uint32_t y, uint32_t w, uint32_t h) override;
+    bool viewport(uint32_t* x, uint32_t* y, uint32_t* w, uint32_t* h) override;
 
     bool clear() override;
     bool sync() override;
@@ -59,6 +61,7 @@ private:
     SwSurface*           surface = nullptr;           //active surface
     Array<SwTask*>       tasks;                       //async task list
     Array<SwSurface*>    compositors;                 //render targets cache list
+    uint32_t vx = 0, vy = 0, vw = -1, vh  = -1;       //viewport
 
     SwRenderer(){};
     ~SwRenderer();

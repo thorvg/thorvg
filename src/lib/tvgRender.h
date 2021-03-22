@@ -74,6 +74,8 @@ public:
     virtual bool postRender() = 0;
     virtual bool dispose(RenderData data) = 0;
     virtual bool region(RenderData data, uint32_t* x, uint32_t* y, uint32_t* w, uint32_t* h) = 0;
+    virtual bool viewport(uint32_t x, uint32_t y, uint32_t w, uint32_t h) = 0;
+    virtual bool viewport(uint32_t* x, uint32_t* y, uint32_t* w, uint32_t* h) = 0;
 
     virtual bool clear() = 0;
     virtual bool sync() = 0;

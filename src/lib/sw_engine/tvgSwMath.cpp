@@ -427,3 +427,8 @@ SwPoint mathTransform(const Point* to, const Matrix* transform)
 
     return {TO_SWCOORD(tx), TO_SWCOORD(ty)};
 }
+
+SwBBox mathMin(const SwBBox& a, const SwBBox& b)
+{
+    return {max(a.min.x, b.min.x), max(a.min.y, b.min.y), min(a.max.x, b.max.x), min(a.max.y, b.max.y)};
+}

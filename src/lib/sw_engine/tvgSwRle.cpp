@@ -785,7 +785,7 @@ void _replaceClipSpan(SwRleData *rle, SwSpan* clippedSpans, uint32_t size)
 /* External Class Implementation                                        */
 /************************************************************************/
 
-SwRleData* rleRender(SwRleData* rle, const SwOutline* outline, const SwBBox& bbox, const SwSize& clip, bool antiAlias)
+SwRleData* rleRender(SwRleData* rle, const SwOutline* outline, const SwBBox& bbox, const SwBBox& viewport, bool antiAlias)
 {
     constexpr auto RENDER_POOL_SIZE = 16384L;
     constexpr auto BAND_SIZE = 40;
@@ -804,6 +804,7 @@ SwRleData* rleRender(SwRleData* rle, const SwOutline* outline, const SwBBox& bbo
     rw.area = 0;
     rw.cover = 0;
     rw.invalid = true;
+    //FIXME: REARRANGE BOUNDARY
     rw.cellMin = bbox.min;
     rw.cellMax = bbox.max;
     rw.cellXCnt = rw.cellMax.x - rw.cellMin.x;
@@ -812,7 +813,7 @@ SwRleData* rleRender(SwRleData* rle, const SwOutline* outline, const SwBBox& bbo
     rw.outline = const_cast<SwOutline*>(outline);
     rw.bandSize = rw.bufferSize / (sizeof(Cell) * 8);  //bandSize: 64
     rw.bandShoot = 0;
-    rw.clip = clip;
+    rw.clip = {viewport.max.x - viewport.min.x, viewport.max.y - viewport.min.y};
     rw.antiAlias = antiAlias;
 
     if (!rle) rw.rle = reinterpret_cast<SwRleData*>(calloc(1, sizeof(SwRleData)));
@@ -968,4 +969,3 @@ void rleAlphaMask(SwRleData *rle, const SwRleData *clip)
 
     _replaceClipSpan(rle, spans, spansEnd - spans);
 }
-

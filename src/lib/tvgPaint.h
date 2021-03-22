@@ -153,6 +153,8 @@ namespace tvg
             void *cmpData = nullptr;
 
             if (cmpTarget) {
+                /* OPTIMIZE ME: If transform has no rotation fact && ClipPath is a rectangle,
+                   we can avoid regular ClipPath sequence but clip targets by simple clipping. */
                 cmpData = cmpTarget->pImpl->update(renderer, pTransform, 255, clips, pFlag);
                 if (cmpMethod == CompositeMethod::ClipPath) clips.push(cmpData);
             }

@@ -234,6 +234,18 @@ RenderData GlRenderer::prepare(const Shape& shape, RenderData data, const Render
 }
 
 
+bool GlRenderer::viewport(TVG_UNUSED uint32_t x, TVG_UNUSED uint32_t y, TVG_UNUSED uint32_t w, TVG_UNUSED uint32_t h)
+{
+    return true;
+}
+
+
+bool GlRenderer::viewport(TVG_UNUSED uint32_t* x, TVG_UNUSED uint32_t* y, TVG_UNUSED uint32_t* w, TVG_UNUSED uint32_t* h)
+{
+    return true;
+}
+
+
 int GlRenderer::init(uint32_t threads)
 {
     if ((initEngineCnt++) > 0) return true;

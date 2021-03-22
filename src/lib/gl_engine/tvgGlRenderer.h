@@ -38,6 +38,8 @@ public:
     bool postRender() override;
     bool dispose(RenderData data) override;;
     bool region(RenderData data, uint32_t* x, uint32_t* y, uint32_t* w, uint32_t* h) override;
+    bool viewport(uint32_t x, uint32_t y, uint32_t w, uint32_t h) override;
+    bool viewport(uint32_t* x, uint32_t* y, uint32_t* w, uint32_t* h) override;
 
     bool target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h);
     bool sync() override;
