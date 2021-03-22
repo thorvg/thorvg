@@ -207,11 +207,10 @@ bool simpleXmlParseAttributes(const char* buf, unsigned bufLength, simpleXMLAttr
     if (!buf || !func) return false;
 
     while (itr < itrEnd) {
-        const char* p = itr;
+        const char* p = _skipWhiteSpacesAndXmlEntities(itr, itrEnd);
         const char *key, *keyEnd, *value, *valueEnd;
         char* tval;
 
-        p = _skipWhiteSpacesAndXmlEntities(p, itrEnd);
         if (p == itrEnd) return true;
 
         key = p;
