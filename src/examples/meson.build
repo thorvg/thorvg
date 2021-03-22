@@ -13,6 +13,7 @@ source_file = [
     'GradientStroke.cpp',
     'GradientTransform.cpp',
     'LinearGradient.cpp',
+    'LoadPng.cpp',
     'MultiCanvas.cpp',
     'MultiShapes.cpp',
     'Opacity.cpp',
@@ -36,7 +37,6 @@ source_file = [
     'InvMasking.cpp',
     'GradientMasking.cpp',
     'AnimateMasking.cpp',
-    'LoadPng.cpp',
 ]
 
 foreach current_file : source_file
