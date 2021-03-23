@@ -25,6 +25,10 @@
 
 #include "tvgSvgLoaderCommon.h"
 
+#define NUMBER_OF_XML_ENTITIES 8
+const char* const xmlEntity[] = {"&quot;", "&nbsp;", "&apos;", "&amp;", "&lt;", "&gt;", "&#035;", "&#039;"};
+const int xmlEntityLength[] = {6, 6, 6, 5, 4, 4, 6, 6};
+
 enum class SimpleXMLType
 {
     Open = 0,     //!< \<tag attribute="value"\>

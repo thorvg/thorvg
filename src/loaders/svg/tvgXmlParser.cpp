@@ -89,6 +89,69 @@ static const char* _simpleXmlUnskipWhiteSpace(const char* itr, const char* itrSt
 }
 
 
+static const char* _simpleXmlSkipXmlEntities(const char* itr, const char* itrEnd)
+{
+    auto p = itr;
+    while (*itr == '&' && itr < itrEnd) {
+        for (int i = 0; i < NUMBER_OF_XML_ENTITIES; ++i) {
+            if (strncmp(itr, xmlEntity[i], xmlEntityLength[i]) == 0) {
+                itr += xmlEntityLength[i];
+                break;
+            }
+        }
+        if (itr == p) break;
+        p = itr;
+    }
+    return itr;
+}
+
+
+static const char* _simpleXmlUnskipXmlEntities(const char* itr, const char* itrStart)
+{
+    auto p = itr;
+    while (*(itr - 1) == ';' && itr > itrStart) {
+        for (int i = 0; i < NUMBER_OF_XML_ENTITIES; ++i) {
+            if (itr - xmlEntityLength[i] > itrStart &&
+                strncmp(itr - xmlEntityLength[i], xmlEntity[i], xmlEntityLength[i]) == 0) {
+                itr -= xmlEntityLength[i];
+                break;
+            }
+        }
+        if (itr == p) break;
+        p = itr;
+    }
+    return itr;
+}
+
+
+static const char* _skipWhiteSpacesAndXmlEntities(const char* itr, const char* itrEnd)
+{
+    itr = _simpleXmlSkipWhiteSpace(itr, itrEnd);
+    auto p = itr;
+    while (true) {
+        if (p != (itr = _simpleXmlSkipXmlEntities(itr, itrEnd))) p = itr;
+        else break;
+        if (p != (itr = _simpleXmlSkipWhiteSpace(itr, itrEnd))) p = itr;
+        else break;
+    }
+    return itr;
+}
+
+
+static const char* _unskipWhiteSpacesAndXmlEntities(const char* itr, const char* itrStart)
+{
+    itr = _simpleXmlUnskipWhiteSpace(itr, itrStart);
+    auto p = itr;
+    while (true) {
+        if (p != (itr = _simpleXmlUnskipXmlEntities(itr, itrStart))) p = itr;
+        else break;
+        if (p != (itr = _simpleXmlUnskipWhiteSpace(itr, itrStart))) p = itr;
+        else break;
+    }
+    return itr;
+}
+
+
 static const char* _simpleXmlFindStartTag(const char* itr, const char* itrEnd)
 {
     return (const char*)memchr(itr, '<', itrEnd - itr);
@@ -144,7 +207,7 @@ bool simpleXmlParseAttributes(const char* buf, unsigned bufLength, simpleXMLAttr
     if (!buf || !func) return false;
 
     while (itr < itrEnd) {
-        const char* p = _simpleXmlSkipWhiteSpace(itr, itrEnd);
+        const char* p = _skipWhiteSpacesAndXmlEntities(itr, itrEnd);
         const char *key, *keyEnd, *value, *valueEnd;
         char* tval;
 
@@ -163,9 +226,9 @@ bool simpleXmlParseAttributes(const char* buf, unsigned bufLength, simpleXMLAttr
             if (!value) return false;
             value++;
         }
-        for (; value < itrEnd; value++) {
-            if (!isspace((unsigned char)*value)) break;
-        }
+        keyEnd = _simpleXmlUnskipXmlEntities(keyEnd, key);
+
+        value = _skipWhiteSpacesAndXmlEntities(value, itrEnd);
         if (value == itrEnd) return false;
 
         if ((*value == '"') || (*value == '\'')) {
@@ -176,20 +239,28 @@ bool simpleXmlParseAttributes(const char* buf, unsigned bufLength, simpleXMLAttr
             valueEnd = _simpleXmlFindWhiteSpace(value, itrEnd);
         }
 
+        itr = valueEnd + 1;
+
+        value = _skipWhiteSpacesAndXmlEntities(value, itrEnd);
+        valueEnd = _unskipWhiteSpacesAndXmlEntities(valueEnd, value);
+
         memcpy(tmpBuf, key, keyEnd - key);
         tmpBuf[keyEnd - key] = '\0';
 
         tval = tmpBuf + (keyEnd - key) + 1;
-        memcpy(tval, value, valueEnd - value);
-        tval[valueEnd - value] = '\0';
+        int i = 0;
+        while (value < valueEnd) {
+            value = _simpleXmlSkipXmlEntities(value, valueEnd);
+            tval[i++] = *value;
+            value++;
+        }
+        tval[i] = '\0';
 
 #ifdef THORVG_LOG_ENABLED
         if (!func((void*)data, tmpBuf, tval)) printf("SVG: Unsupported attributes used [Elements type: %s][Attribute: %s]\n", simpleXmlNodeTypeToString(((SvgLoaderData*)data)->svgParse->node->type).c_str(), tmpBuf);
 #else
         func((void*)data, tmpBuf, tval);
 #endif
-
-        itr = valueEnd + 1;
     }
     return true;
 }
@@ -290,8 +361,8 @@ bool simpleXmlParse(const char* buf, unsigned bufLength, bool strip, simpleXMLCb
                     }
 
                     if ((strip) && (type != SimpleXMLType::Error) && (type != SimpleXMLType::CData)) {
-                        start = _simpleXmlSkipWhiteSpace(start, end);
-                        end = _simpleXmlUnskipWhiteSpace(end, start + 1);
+                        start = _skipWhiteSpacesAndXmlEntities(start, end);
+                        end = _unskipWhiteSpacesAndXmlEntities(end, start);
                     }
 
                     CB(type, start, end);
@@ -307,7 +378,8 @@ bool simpleXmlParse(const char* buf, unsigned bufLength, bool strip, simpleXMLCb
             const char *p, *end;
 
             if (strip) {
-                p = _simpleXmlSkipWhiteSpace(itr, itrEnd);
+                p = itr;
+                p = _skipWhiteSpacesAndXmlEntities(p, itrEnd);
                 if (p) {
                     CB(SimpleXMLType::Ignored, itr, p);
                     itr = p;
@@ -318,7 +390,7 @@ bool simpleXmlParse(const char* buf, unsigned bufLength, bool strip, simpleXMLCb
             if (!p) p = itrEnd;
 
             end = p;
-            if (strip) end = _simpleXmlUnskipWhiteSpace(end, itr);
+            if (strip) end = _unskipWhiteSpacesAndXmlEntities(end, itr);
 
             if (itr != end) CB(SimpleXMLType::Data, itr, end);
 
@@ -393,7 +465,7 @@ const char* simpleXmlFindAttributesTag(const char* buf, unsigned bufLength)
             //User skip tagname and already gave it the attributes.
             if (*itr == '=') return buf;
         } else {
-            itr = _simpleXmlSkipWhiteSpace(itr + 1, itrEnd);
+            itr = _simpleXmlUnskipXmlEntities(itr, buf);
             if (itr == itrEnd) return nullptr;
             return itr;
         }
