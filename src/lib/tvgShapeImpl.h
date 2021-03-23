@@ -236,9 +236,9 @@ struct Shape::Impl
         return this->rdata;
     }
 
-    bool bounds(RenderMethod& renderer, uint32_t* x, uint32_t* y, uint32_t* w, uint32_t* h)
+    RenderRegion bounds(RenderMethod& renderer)
     {
-        return renderer.region(rdata, x, y, w, h);
+        return renderer.region(rdata);
     }
 
     bool bounds(float* x, float* y, float* w, float* h)

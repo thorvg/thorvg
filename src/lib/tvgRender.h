@@ -28,6 +28,8 @@
 namespace tvg
 {
 
+enum RenderUpdateFlag {None = 0, Path = 1, Color = 2, Gradient = 4, Stroke = 8, Transform = 16, Image = 32, GradientStroke = 64, All = 127};
+
 struct Surface
 {
     //TODO: Union for multiple types
@@ -44,7 +46,9 @@ struct Compositor {
     uint32_t        opacity;
 };
 
-enum RenderUpdateFlag {None = 0, Path = 1, Color = 2, Gradient = 4, Stroke = 8, Transform = 16, Image = 32, GradientStroke = 64, All = 127};
+struct RenderRegion {
+    uint32_t x, y, w, h;
+};
 
 struct RenderTransform
 {
@@ -73,12 +77,12 @@ public:
     virtual bool renderImage(RenderData data) = 0;
     virtual bool postRender() = 0;
     virtual bool dispose(RenderData data) = 0;
-    virtual bool region(RenderData data, uint32_t* x, uint32_t* y, uint32_t* w, uint32_t* h) = 0;
+    virtual RenderRegion region(RenderData data) = 0;
 
     virtual bool clear() = 0;
     virtual bool sync() = 0;
 
-    virtual Compositor* target(uint32_t x, uint32_t y, uint32_t w, uint32_t h) = 0;
+    virtual Compositor* target(const RenderRegion& region) = 0;
     virtual bool beginComposite(Compositor* cmp, CompositeMethod method, uint32_t opacity) = 0;
     virtual bool endComposite(Compositor* cmp) = 0;
 };

@@ -155,11 +155,11 @@ struct Picture::Impl
         return paint->pImpl->bounds(x, y, w, h);
     }
 
-    bool bounds(RenderMethod& renderer, uint32_t* x, uint32_t* y, uint32_t* w, uint32_t* h)
+    RenderRegion bounds(RenderMethod& renderer)
     {
-        if (rdata) return renderer.region(rdata, x, y, w, h);
-        if (paint) return paint->pImpl->bounds(renderer, x, y, w, h);
-        return false;
+        if (rdata) return renderer.region(rdata);
+        if (paint) return paint->pImpl->bounds(renderer);
+        return {0, 0, 0, 0};
     }
 
     Result load(const string& path)
