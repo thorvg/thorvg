@@ -38,7 +38,7 @@ namespace tvg
         virtual void* update(RenderMethod& renderer, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag pFlag) = 0;   //Return engine data if it has.
         virtual bool render(RenderMethod& renderer) = 0;
         virtual bool bounds(float* x, float* y, float* w, float* h) const = 0;
-        virtual bool bounds(RenderMethod& renderer, uint32_t* x, uint32_t* y, uint32_t* w, uint32_t* h) const = 0;
+        virtual RenderRegion bounds(RenderMethod& renderer) const = 0;
         virtual Paint* duplicate() = 0;
     };
 
@@ -129,9 +129,9 @@ namespace tvg
             return smethod->bounds(x, y, w, h);
         }
 
-        bool bounds(RenderMethod& renderer, uint32_t* x, uint32_t* y, uint32_t* w, uint32_t* h) const
+        RenderRegion bounds(RenderMethod& renderer) const
         {
-            return smethod->bounds(renderer, x, y, w, h);
+            return smethod->bounds(renderer);
         }
 
         bool dispose(RenderMethod& renderer)
@@ -182,9 +182,9 @@ namespace tvg
             /* Note: only ClipPath is processed in update() step.
                Create a composition image. */
             if (cmpTarget && cmpMethod != CompositeMethod::ClipPath) {
-                uint32_t x, y, w, h;
-                if (!cmpTarget->pImpl->bounds(renderer, &x, &y, &w, &h)) return false;
-                cmp = renderer.target(x, y, w, h);
+                auto region = cmpTarget->pImpl->bounds(renderer);
+                if (region.w == 0 || region.h == 0) return false;
+                cmp = renderer.target(region);
                 renderer.beginComposite(cmp, CompositeMethod::None, 255);
                 cmpTarget->pImpl->render(renderer);
             }
@@ -244,9 +244,9 @@ namespace tvg
             return inst->bounds(x, y, w, h);
         }
 
-        bool bounds(RenderMethod& renderer, uint32_t* x, uint32_t* y, uint32_t* w, uint32_t* h) const override
+        RenderRegion bounds(RenderMethod& renderer) const override
         {
-            return inst->bounds(renderer, x, y, w, h);
+            return inst->bounds(renderer);
         }
 
         bool dispose(RenderMethod& renderer) override

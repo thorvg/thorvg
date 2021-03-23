@@ -40,16 +40,18 @@ struct SwTask : Task
     uint32_t opacity;
     SwBBox bbox = {{0, 0}, {0, 0}};       //Whole Rendering Region
 
-    void bounds(uint32_t* x, uint32_t* y, uint32_t* w, uint32_t* h) const
+    RenderRegion bounds() const
     {
-        //Range over?
-        auto xx = bbox.min.x > 0 ? bbox.min.x : 0;
-        auto yy = bbox.min.y > 0 ? bbox.min.y : 0;
+        RenderRegion region;
 
-        if (x) *x = xx;
-        if (y) *y = yy;
-        if (w) *w = bbox.max.x - xx;
-        if (h) *h = bbox.max.y - yy;
+        //Range over?
+        region.x = bbox.min.x > 0 ? bbox.min.x : 0;
+        region.y = bbox.min.y > 0 ? bbox.min.y : 0;
+
+        region.w = bbox.max.x - region.x;
+        region.h = bbox.max.y - region.y;
+
+        return region;
     }
 
     virtual bool dispose() = 0;
@@ -313,10 +315,9 @@ bool SwRenderer::renderShape(RenderData data)
 
     //Do Stroking Composition
     if (task->cmpStroking) {
-        uint32_t x, y, w, h;
-        task->bounds(&x, &y, &w, &h);
+        auto region = task->bounds();
         opacity = 255;
-        cmp = target(x, y, w, h);
+        cmp = target(region);
         beginComposite(cmp, CompositeMethod::None, task->opacity);
     //No Stroking Composition
     } else {
@@ -348,11 +349,9 @@ bool SwRenderer::renderShape(RenderData data)
     return true;
 }
 
-bool SwRenderer::region(RenderData data, uint32_t* x, uint32_t* y, uint32_t* w, uint32_t* h)
+RenderRegion SwRenderer::region(RenderData data)
 {
-    static_cast<SwTask*>(data)->bounds(x, y, w, h);
-
-    return true;
+    return static_cast<SwTask*>(data)->bounds();
 }
 
 
@@ -374,8 +373,13 @@ bool SwRenderer::beginComposite(Compositor* cmp, CompositeMethod method, uint32_
 }
 
 
-Compositor* SwRenderer::target(uint32_t x, uint32_t y, uint32_t w, uint32_t h)
+Compositor* SwRenderer::target(const RenderRegion& region)
 {
+    auto x = region.x;
+    auto y = region.y;
+    auto w = region.w;
+    auto h = region.h;
+
     //Out of boundary
     if (x > surface->w || y > surface->h) return nullptr;
 

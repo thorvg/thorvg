@@ -76,9 +76,7 @@ struct Scene::Impl
         Compositor* cmp = nullptr;
 
         if (needComposition(opacity)) {
-            uint32_t x, y, w, h;
-            if (!bounds(renderer, &x, &y, &w, &h)) return false;
-            cmp = renderer.target(x, y, w, h);
+            cmp = renderer.target(bounds(renderer));
             renderer.beginComposite(cmp, CompositeMethod::None, opacity);
         }
 
@@ -91,9 +89,9 @@ struct Scene::Impl
         return true;
     }
 
-    bool bounds(RenderMethod& renderer, uint32_t* px, uint32_t* py, uint32_t* pw, uint32_t* ph) const
+    RenderRegion bounds(RenderMethod& renderer) const
     {
-        if (paints.count == 0) return false;
+        if (paints.count == 0) return {0, 0, 0, 0};
 
         uint32_t x1 = UINT32_MAX;
         uint32_t y1 = UINT32_MAX;
@@ -101,26 +99,17 @@ struct Scene::Impl
         uint32_t y2 = 0;
 
         for (auto paint = paints.data; paint < (paints.data + paints.count); ++paint) {
-            uint32_t x = UINT32_MAX;
-            uint32_t y = UINT32_MAX;
-            uint32_t w = 0;
-            uint32_t h = 0;
 
-            if (!(*paint)->pImpl->bounds(renderer, &x, &y, &w, &h)) continue;
+            auto region = (*paint)->pImpl->bounds(renderer);
 
             //Merge regions
-            if (x < x1) x1 = x;
-            if (x2 < x + w) x2 = (x + w);
-            if (y < y1) y1 = y;
-            if (y2 < y + h) y2 = (y + h);
+            if (region.x < x1) x1 = region.x;
+            if (x2 < region.x + region.w) x2 = (region.x + region.w);
+            if (region.y < y1) y1 = region.y;
+            if (y2 < region.y + region.h) y2 = (region.y + region.h);
         }
 
-        if (px) *px = x1;
-        if (py) *py = y1;
-        if (pw) *pw = (x2 - x1);
-        if (ph) *ph = (y2 - y1);
-
-        return true;
+        return {x1, y1, (x2 - x1), (y2 - y1)};
     }
 
     bool bounds(float* px, float* py, float* pw, float* ph) const

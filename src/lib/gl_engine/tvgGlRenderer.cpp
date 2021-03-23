@@ -73,9 +73,9 @@ bool GlRenderer::sync()
 }
 
 
-bool GlRenderer::region(TVG_UNUSED RenderData data, TVG_UNUSED uint32_t* x, TVG_UNUSED uint32_t* y, TVG_UNUSED uint32_t* w, TVG_UNUSED uint32_t* h)
+RenderRegion GlRenderer::region(TVG_UNUSED RenderData data)
 {
-    return true;
+    return {0, 0, 0, 0};
 }
 
 
@@ -102,7 +102,7 @@ bool GlRenderer::postRender()
 }
 
 
-Compositor* GlRenderer::target(TVG_UNUSED uint32_t x, TVG_UNUSED uint32_t y, TVG_UNUSED uint32_t w, TVG_UNUSED uint32_t h)
+Compositor* GlRenderer::target(TVG_UNUSED const RenderRegion& region)
 {
     //TODO: Prepare frameBuffer & Setup render target for composition
     return nullptr;
