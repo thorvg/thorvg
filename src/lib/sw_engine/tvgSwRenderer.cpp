@@ -315,9 +315,8 @@ bool SwRenderer::renderShape(RenderData data)
 
     //Do Stroking Composition
     if (task->cmpStroking) {
-        auto region = task->bounds();
         opacity = 255;
-        cmp = target(region);
+        cmp = target(task->bounds());
         beginComposite(cmp, CompositeMethod::None, task->opacity);
     //No Stroking Composition
     } else {
