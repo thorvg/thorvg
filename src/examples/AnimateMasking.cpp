@@ -176,6 +176,7 @@ int main(int argc, char **argv)
 
     //Threads Count
     auto threads = std::thread::hardware_concurrency();
+    if (threads > 0) --threads;    //Allow the designated main thread capacity
 
     //Initialize ThorVG Engine
     if (tvg::Initializer::init(tvgEngine, threads) == tvg::Result::Success) {
