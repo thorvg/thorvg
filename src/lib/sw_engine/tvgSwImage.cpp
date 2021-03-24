@@ -38,7 +38,7 @@ bool imagePrepare(SwImage* image, const Picture* pdata, unsigned tid, const SwSi
     if (!imageGenOutline(image, pdata, tid, transform)) return false;
     if (!mathUpdateOutlineBBox(image->outline, bbox, clip))  return false;
 
-    //Subclassing UpdateOutlineBBox(): Gurantee boundary
+    //Guarantee boundary from mathUpdateOutlineBBox()
     bbox.min.x = max(bbox.min.x, TO_SWCOORD(0));
     bbox.min.y = max(bbox.min.y, TO_SWCOORD(0));
 

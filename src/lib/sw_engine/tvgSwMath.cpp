@@ -458,7 +458,7 @@ bool mathUpdateOutlineBBox(const SwOutline* outline, SwBBox& bbox, const SwSize&
     bbox.min.y = yMin >> 6;
     bbox.max.y = (yMax + 63) >> 6;
 
-    //Gurantee surface boundary
+    //Guarantee surface boundary
     bbox.max.x = min(bbox.max.x, clip.w);
     bbox.max.y = min(bbox.max.y, clip.h);
 
