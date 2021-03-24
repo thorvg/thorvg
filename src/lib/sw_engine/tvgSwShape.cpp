@@ -157,59 +157,6 @@ static void _outlineClose(SwOutline& outline)
 }
 
 
-static void _initBBox(SwBBox& bbox)
-{
-    bbox.min.x = bbox.min.y = 0;
-    bbox.max.x = bbox.max.y = 0;
-}
-
-
-static bool _updateBBox(const SwOutline* outline, SwBBox& bbox)
-{
-    if (!outline) return false;
-
-    auto pt = outline->pts;
-
-    if (outline->ptsCnt <= 0) {
-        _initBBox(bbox);
-        return false;
-    }
-
-    auto xMin = pt->x;
-    auto xMax = pt->x;
-    auto yMin = pt->y;
-    auto yMax = pt->y;
-
-    ++pt;
-
-    for(uint32_t i = 1; i < outline->ptsCnt; ++i, ++pt) {
-        if (xMin > pt->x) xMin = pt->x;
-        if (xMax < pt->x) xMax = pt->x;
-        if (yMin > pt->y) yMin = pt->y;
-        if (yMax < pt->y) yMax = pt->y;
-    }
-    bbox.min.x = xMin >> 6;
-    bbox.max.x = (xMax + 63) >> 6;
-    bbox.min.y = yMin >> 6;
-    bbox.max.y = (yMax + 63) >> 6;
-
-    if (xMax - xMin < 1 && yMax - yMin < 1) return false;
-
-    return true;
-}
-
-
-static bool _checkValid(const SwOutline* outline, const SwBBox& bbox, const SwSize& clip)
-{
-    if (outline->ptsCnt == 0 || outline->cntrsCnt <= 0) return false;
-
-    //Check boundary
-    if (bbox.min.x >= clip.w || bbox.min.y >= clip.h || bbox.max.x <= 0 || bbox.max.y <= 0) return false;
-
-    return true;
-}
-
-
 static void _dashLineTo(SwDashStroke& dash, const Point* to, const Matrix* transform)
 {
     _growOutlinePoint(*dash.outline, dash.outline->ptsCnt >> 1);
@@ -423,10 +370,7 @@ bool _fastTrack(const SwOutline* outline)
 bool shapePrepare(SwShape* shape, const Shape* sdata, unsigned tid, const SwSize& clip, const Matrix* transform, SwBBox& bbox)
 {
     if (!shapeGenOutline(shape, sdata, tid, transform)) return false;
-
-    if (!_updateBBox(shape->outline, shape->bbox)) return false;
-
-    if (!_checkValid(shape->outline, shape->bbox, clip)) return false;
+    if (!mathUpdateOutlineBBox(shape->outline, shape->bbox, clip)) return false;
 
     bbox = shape->bbox;
 
@@ -440,7 +384,7 @@ bool shapePrepared(const SwShape* shape)
 }
 
 
-bool shapeGenRle(SwShape* shape, TVG_UNUSED const Shape* sdata, const SwSize& clip, bool antiAlias, bool hasComposite)
+bool shapeGenRle(SwShape* shape, TVG_UNUSED const Shape* sdata, bool antiAlias, bool hasComposite)
 {
     //FIXME: Should we draw it?
     //Case: Stroke Line
@@ -449,7 +393,7 @@ bool shapeGenRle(SwShape* shape, TVG_UNUSED const Shape* sdata, const SwSize& cl
     //Case A: Fast Track Rectangle Drawing
     if (!hasComposite && (shape->rect = _fastTrack(shape->outline))) return true;
     //Case B: Normale Shape RLE Drawing
-    if ((shape->rle = rleRender(shape->rle, shape->outline, shape->bbox, clip, antiAlias))) return true;
+    if ((shape->rle = rleRender(shape->rle, shape->outline, shape->bbox, antiAlias))) return true;
 
     return false;
 }
@@ -467,7 +411,7 @@ void shapeReset(SwShape* shape)
     rleReset(shape->rle);
     rleReset(shape->strokeRle);
     shape->rect = false;
-    _initBBox(shape->bbox);
+    shape->bbox.reset();
 }
 
 
@@ -622,14 +566,12 @@ bool shapeGenStrokeRle(SwShape* shape, const Shape* sdata, unsigned tid, const M
         goto fail;
     }
 
-    _updateBBox(strokeOutline, bbox);
-
-    if (!_checkValid(strokeOutline, bbox, clip)) {
+    if (!mathUpdateOutlineBBox(strokeOutline, bbox, clip)) {
         ret = false;
         goto fail;
     }
 
-    shape->strokeRle = rleRender(shape->strokeRle, strokeOutline, bbox, clip, true);
+    shape->strokeRle = rleRender(shape->strokeRle, strokeOutline, bbox, true);
 
 fail:
     if (freeOutline) {
@@ -690,4 +632,3 @@ void shapeDelStrokeFill(SwShape* shape)
     fillFree(shape->stroke->fill);
     shape->stroke->fill = nullptr;
 }
-

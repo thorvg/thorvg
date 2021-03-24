@@ -427,3 +427,46 @@ SwPoint mathTransform(const Point* to, const Matrix* transform)
 
     return {TO_SWCOORD(tx), TO_SWCOORD(ty)};
 }
+
+
+bool mathUpdateOutlineBBox(const SwOutline* outline, SwBBox& bbox, const SwSize& clip)
+{
+    if (!outline) return false;
+
+    auto pt = outline->pts;
+
+    if (outline->ptsCnt == 0 || outline->cntrsCnt <= 0) {
+        bbox.reset();
+        return false;
+    }
+
+    auto xMin = pt->x;
+    auto xMax = pt->x;
+    auto yMin = pt->y;
+    auto yMax = pt->y;
+
+    ++pt;
+
+    for(uint32_t i = 1; i < outline->ptsCnt; ++i, ++pt) {
+        if (xMin > pt->x) xMin = pt->x;
+        if (xMax < pt->x) xMax = pt->x;
+        if (yMin > pt->y) yMin = pt->y;
+        if (yMax < pt->y) yMax = pt->y;
+    }
+    bbox.min.x = xMin >> 6;
+    bbox.max.x = (xMax + 63) >> 6;
+    bbox.min.y = yMin >> 6;
+    bbox.max.y = (yMax + 63) >> 6;
+
+    //Gurantee surface boundary
+    bbox.max.x = min(bbox.max.x, clip.w);
+    bbox.max.y = min(bbox.max.y, clip.h);
+
+    //Check valid region
+    if (bbox.max.x - bbox.min.x < 1 && bbox.max.y - bbox.min.y < 1) return false;
+
+    //Check boundary
+    if (bbox.min.x >= clip.w || bbox.min.y >= clip.h || bbox.max.x <= 0 || bbox.max.y <= 0) return false;
+
+    return true;
+}

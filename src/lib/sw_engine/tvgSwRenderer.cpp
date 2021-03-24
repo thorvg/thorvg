@@ -100,7 +100,7 @@ struct SwShapeTask : SwTask
                        shape outline below stroke could be full covered by stroke drawing.
                        Thus it turns off antialising in that condition. */
                     auto antiAlias = (strokeAlpha == 255 && strokeWidth > 2) ? false : true;
-                    if (!shapeGenRle(&shape, sdata, clip, antiAlias, clips.count > 0 ? true : false)) goto err;
+                    if (!shapeGenRle(&shape, sdata, antiAlias, clips.count > 0 ? true : false)) goto err;
                     ++addStroking;
                 }
             }
@@ -189,7 +189,7 @@ struct SwImageTask : SwTask
 
             //Clip Path?
             if (clips.count > 0) {
-                if (!imageGenRle(&image, pdata, clip, bbox, false, true)) goto end;
+                if (!imageGenRle(&image, pdata, bbox, false, true)) goto end;
                 if (image.rle) {
                     for (auto clip = clips.data; clip < (clips.data + clips.count); ++clip) {
                         auto clipper = &static_cast<SwShapeTask*>(*clip)->shape;
