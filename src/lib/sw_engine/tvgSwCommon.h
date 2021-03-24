@@ -53,25 +53,30 @@ struct SwPoint
 {
     SwCoord x, y;
 
-    SwPoint& operator+=(const SwPoint& rhs) {
+    SwPoint& operator+=(const SwPoint& rhs)
+    {
         x += rhs.x;
         y += rhs.y;
         return *this;
     }
 
-    SwPoint operator+(const SwPoint& rhs) const {
+    SwPoint operator+(const SwPoint& rhs) const
+    {
         return {x + rhs.x, y + rhs.y};
     }
 
-    SwPoint operator-(const SwPoint& rhs) const {
+    SwPoint operator-(const SwPoint& rhs) const
+    {
         return {x - rhs.x, y - rhs.y};
     }
 
-    bool operator==(const SwPoint& rhs ) const {
+    bool operator==(const SwPoint& rhs ) const
+    {
         return (x == rhs.x && y == rhs.y);
     }
 
-    bool operator!=(const SwPoint& rhs) const {
+    bool operator!=(const SwPoint& rhs) const
+    {
         return (x != rhs.x || y != rhs.y);
     }
 
@@ -125,6 +130,11 @@ struct SwRleData
 struct SwBBox
 {
     SwPoint min, max;
+
+    void reset()
+    {
+        min.x = min.y = max.x = max.y = 0;
+    }
 };
 
 struct SwFill
@@ -286,12 +296,13 @@ SwFixed mathLength(const SwPoint& pt);
 bool mathSmallCubic(const SwPoint* base, SwFixed& angleIn, SwFixed& angleMid, SwFixed& angleOut);
 SwFixed mathMean(SwFixed angle1, SwFixed angle2);
 SwPoint mathTransform(const Point* to, const Matrix* transform);
+bool mathUpdateOutlineBBox(const SwOutline* outline, SwBBox& bbox, const SwSize& clip);
 
 void shapeReset(SwShape* shape);
 bool shapeGenOutline(SwShape* shape, const Shape* sdata, unsigned tid, const Matrix* transform);
 bool shapePrepare(SwShape* shape, const Shape* sdata, unsigned tid, const SwSize& clip, const Matrix* transform, SwBBox& bbox);
 bool shapePrepared(const SwShape* shape);
-bool shapeGenRle(SwShape* shape, const Shape* sdata, const SwSize& clip, bool antiAlias, bool hasComposite);
+bool shapeGenRle(SwShape* shape, const Shape* sdata, bool antiAlias, bool hasComposite);
 void shapeDelOutline(SwShape* shape, uint32_t tid);
 void shapeResetStroke(SwShape* shape, const Shape* sdata, const Matrix* transform);
 bool shapeGenStrokeRle(SwShape* shape, const Shape* sdata, unsigned tid, const Matrix* transform, const SwSize& clip, SwBBox& bbox);
@@ -311,7 +322,7 @@ void strokeFree(SwStroke* stroke);
 
 bool imagePrepare(SwImage* image, const Picture* pdata, unsigned tid, const SwSize& clip, const Matrix* transform, SwBBox& bbox);
 bool imagePrepared(const SwImage* image);
-bool imageGenRle(SwImage* image, TVG_UNUSED const Picture* pdata, const SwSize& clip, const SwBBox& bbox, bool antiAlias, bool hasComposite);
+bool imageGenRle(SwImage* image, TVG_UNUSED const Picture* pdata, const SwBBox& bbox, bool antiAlias, bool hasComposite);
 void imageDelOutline(SwImage* image, uint32_t tid);
 void imageReset(SwImage* image);
 bool imageGenOutline(SwImage* image, const Picture* pdata, unsigned tid, const Matrix* transform);
@@ -323,7 +334,7 @@ void fillFree(SwFill* fill);
 void fillFetchLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t offset, uint32_t len);
 void fillFetchRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len);
 
-SwRleData* rleRender(SwRleData* rle, const SwOutline* outline, const SwBBox& bbox, const SwSize& clip, bool antiAlias);
+SwRleData* rleRender(SwRleData* rle, const SwOutline* outline, const SwBBox& bbox, bool antiAlias);
 void rleFree(SwRleData* rle);
 void rleReset(SwRleData* rle);
 void rleClipPath(SwRleData *rle, const SwRleData *clip);

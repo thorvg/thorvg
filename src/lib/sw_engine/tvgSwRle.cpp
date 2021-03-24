@@ -87,8 +87,6 @@ struct RleWorker
     Cell** yCells;
     SwCoord yCnt;
 
-    SwSize clip;
-
     bool invalid;
     bool antiAlias;
 };
@@ -161,8 +159,7 @@ static void _horizLine(RleWorker& rw, SwCoord x, SwCoord y, SwCoord area, SwCoor
     y += rw.cellMin.y;
 
     //Clip Y range
-    if (y < 0) return;
-    if (y >= rw.clip.h) return;
+    if (y < 0 || y >= rw.cellMax.y) return;
 
     /* compute the coverage line's coverage, depending on the outline fill rule */
     /* the coverage percentage is area/(PIXEL_BITS*PIXEL_BITS*2) */
@@ -200,7 +197,7 @@ static void _horizLine(RleWorker& rw, SwCoord x, SwCoord y, SwCoord area, SwCoor
 
             //Clip x range
             SwCoord xOver = 0;
-            if (x + acount >= rw.clip.w) xOver -= (x + acount - rw.clip.w);
+            if (x + acount >= rw.cellMax.x) xOver -= (x + acount - rw.cellMax.x);
             if (x < 0) xOver += x;
 
             //span->len += (acount + xOver) - 1;
@@ -219,7 +216,7 @@ static void _horizLine(RleWorker& rw, SwCoord x, SwCoord y, SwCoord area, SwCoor
 
         //Clip x range
         SwCoord xOver = 0;
-        if (x + acount >= rw.clip.w) xOver -= (x + acount - rw.clip.w);
+        if (x + acount >= rw.cellMax.x) xOver -= (x + acount - rw.cellMax.x);
         if (x < 0) {
             xOver += x;
             x = 0;
@@ -785,7 +782,7 @@ void _replaceClipSpan(SwRleData *rle, SwSpan* clippedSpans, uint32_t size)
 /* External Class Implementation                                        */
 /************************************************************************/
 
-SwRleData* rleRender(SwRleData* rle, const SwOutline* outline, const SwBBox& bbox, const SwSize& clip, bool antiAlias)
+SwRleData* rleRender(SwRleData* rle, const SwOutline* outline, const SwBBox& bbox, bool antiAlias)
 {
     constexpr auto RENDER_POOL_SIZE = 16384L;
     constexpr auto BAND_SIZE = 40;
@@ -812,7 +809,6 @@ SwRleData* rleRender(SwRleData* rle, const SwOutline* outline, const SwBBox& bbo
     rw.outline = const_cast<SwOutline*>(outline);
     rw.bandSize = rw.bufferSize / (sizeof(Cell) * 8);  //bandSize: 64
     rw.bandShoot = 0;
-    rw.clip = clip;
     rw.antiAlias = antiAlias;
 
     if (!rle) rw.rle = reinterpret_cast<SwRleData*>(calloc(1, sizeof(SwRleData)));

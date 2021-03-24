@@ -27,63 +27,6 @@
 /************************************************************************/
 
 
-static void _initBBox(SwBBox& bbox)
-{
-    bbox.min.x = bbox.min.y = 0;
-    bbox.max.x = bbox.max.y = 0;
-}
-
-
-static bool _updateBBox(const SwOutline* outline, SwBBox& bbox, const SwSize& clip)
-{
-    if (!outline) return false;
-
-    auto pt = outline->pts;
-
-    if (outline->ptsCnt <= 0) {
-        _initBBox(bbox);
-        return false;
-    }
-
-    auto xMin = pt->x;
-    auto xMax = pt->x;
-    auto yMin = pt->y;
-    auto yMax = pt->y;
-
-    ++pt;
-
-    for(uint32_t i = 1; i < outline->ptsCnt; ++i, ++pt) {
-        if (xMin > pt->x) xMin = pt->x;
-        if (xMax < pt->x) xMax = pt->x;
-        if (yMin > pt->y) yMin = pt->y;
-        if (yMax < pt->y) yMax = pt->y;
-    }
-    bbox.min.x = xMin >> 6;
-    bbox.max.x = (xMax + 63) >> 6;
-    bbox.min.y = yMin >> 6;
-    bbox.max.y = (yMax + 63) >> 6;
-
-    bbox.min.x = max(bbox.min.x, TO_SWCOORD(0));
-    bbox.min.y = max(bbox.min.y, TO_SWCOORD(0));
-    bbox.max.x = min(bbox.max.x, clip.w);
-    bbox.max.y = min(bbox.max.y, clip.h);
-
-    if (xMax - xMin < 1 && yMax - yMin < 1) return false;
-
-    return true;
-}
-
-
-static bool _checkValid(const SwOutline* outline, const SwBBox& bbox, const SwSize& clip)
-{
-    if (outline->ptsCnt == 0 || outline->cntrsCnt <= 0) return false;
-
-    //Check boundary
-    if (bbox.min.x >= clip.w || bbox.min.y >= clip.h || bbox.max.x <= 0 || bbox.max.y <= 0) return false;
-
-    return true;
-}
-
 
 /************************************************************************/
 /* External Class Implementation                                        */
@@ -93,10 +36,11 @@ static bool _checkValid(const SwOutline* outline, const SwBBox& bbox, const SwSi
 bool imagePrepare(SwImage* image, const Picture* pdata, unsigned tid, const SwSize& clip, const Matrix* transform, SwBBox& bbox)
 {
     if (!imageGenOutline(image, pdata, tid, transform)) return false;
+    if (!mathUpdateOutlineBBox(image->outline, bbox, clip))  return false;
 
-    if (!_updateBBox(image->outline, bbox, clip))  return false;
-
-    if (!_checkValid(image->outline, bbox, clip)) return false;
+    //Guarantee boundary from mathUpdateOutlineBBox()
+    bbox.min.x = max(bbox.min.x, TO_SWCOORD(0));
+    bbox.min.y = max(bbox.min.y, TO_SWCOORD(0));
 
     return true;
 }
@@ -108,9 +52,9 @@ bool imagePrepared(const SwImage* image)
 }
 
 
-bool imageGenRle(SwImage* image, TVG_UNUSED const Picture* pdata, const SwSize& clip, const SwBBox& bbox, bool antiAlias, TVG_UNUSED bool hasComposite)
+bool imageGenRle(SwImage* image, TVG_UNUSED const Picture* pdata, const SwBBox& bbox, bool antiAlias, TVG_UNUSED bool hasComposite)
 {
-    if ((image->rle = rleRender(image->rle, image->outline, bbox, clip, antiAlias))) return true;
+    if ((image->rle = rleRender(image->rle, image->outline, bbox, antiAlias))) return true;
 
     return false;
 }
