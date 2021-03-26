@@ -42,6 +42,8 @@ public:
     bool postRender() override;
     bool dispose(RenderData data) override;
     RenderRegion region(RenderData data) override;
+    RenderRegion viewport() override;
+    bool viewport(const RenderRegion& vp) override;
 
     bool clear() override;
     bool sync() override;
@@ -59,6 +61,7 @@ private:
     SwSurface*           surface = nullptr;           //active surface
     Array<SwTask*>       tasks;                       //async task list
     Array<SwSurface*>    compositors;                 //render targets cache list
+    RenderRegion         vport;                       //viewport
 
     SwRenderer(){};
     ~SwRenderer();

@@ -33,16 +33,10 @@
 /************************************************************************/
 
 
-bool imagePrepare(SwImage* image, const Picture* pdata, unsigned tid, const SwSize& clip, const Matrix* transform, SwBBox& bbox)
+bool imagePrepare(SwImage* image, const Picture* pdata, unsigned tid, const Matrix* transform, const SwBBox& clipRegion, SwBBox& renderRegion)
 {
     if (!imageGenOutline(image, pdata, tid, transform)) return false;
-    if (!mathUpdateOutlineBBox(image->outline, bbox, clip))  return false;
-
-    //Guarantee boundary from mathUpdateOutlineBBox()
-    bbox.min.x = max(bbox.min.x, TO_SWCOORD(0));
-    bbox.min.y = max(bbox.min.y, TO_SWCOORD(0));
-
-    return true;
+    return mathUpdateOutlineBBox(image->outline, clipRegion, renderRegion);
 }
 
 
@@ -52,9 +46,9 @@ bool imagePrepared(const SwImage* image)
 }
 
 
-bool imageGenRle(SwImage* image, TVG_UNUSED const Picture* pdata, const SwBBox& bbox, bool antiAlias, TVG_UNUSED bool hasComposite)
+bool imageGenRle(SwImage* image, TVG_UNUSED const Picture* pdata, const SwBBox& renderRegion, bool antiAlias)
 {
-    if ((image->rle = rleRender(image->rle, image->outline, bbox, antiAlias))) return true;
+    if ((image->rle = rleRender(image->rle, image->outline, renderRegion, antiAlias))) return true;
 
     return false;
 }

@@ -429,14 +429,14 @@ SwPoint mathTransform(const Point* to, const Matrix* transform)
 }
 
 
-bool mathUpdateOutlineBBox(const SwOutline* outline, SwBBox& bbox, const SwSize& clip)
+bool mathUpdateOutlineBBox(const SwOutline* outline, const SwBBox& clipRegion, SwBBox& renderRegion)
 {
     if (!outline) return false;
 
     auto pt = outline->pts;
 
     if (outline->ptsCnt == 0 || outline->cntrsCnt <= 0) {
-        bbox.reset();
+        renderRegion.reset();
         return false;
     }
 
@@ -453,20 +453,22 @@ bool mathUpdateOutlineBBox(const SwOutline* outline, SwBBox& bbox, const SwSize&
         if (yMin > pt->y) yMin = pt->y;
         if (yMax < pt->y) yMax = pt->y;
     }
-    bbox.min.x = xMin >> 6;
-    bbox.max.x = (xMax + 63) >> 6;
-    bbox.min.y = yMin >> 6;
-    bbox.max.y = (yMax + 63) >> 6;
+    renderRegion.min.x = xMin >> 6;
+    renderRegion.max.x = (xMax + 63) >> 6;
+    renderRegion.min.y = yMin >> 6;
+    renderRegion.max.y = (yMax + 63) >> 6;
 
-    //Guarantee surface boundary
-    bbox.max.x = min(bbox.max.x, clip.w);
-    bbox.max.y = min(bbox.max.y, clip.h);
+    renderRegion.max.x = min(renderRegion.max.x, clipRegion.max.x);
+    renderRegion.max.y = min(renderRegion.max.y, clipRegion.max.y);
+    renderRegion.min.x = max(renderRegion.min.x, clipRegion.min.x);
+    renderRegion.min.y = max(renderRegion.min.y, clipRegion.min.y);
 
     //Check valid region
-    if (bbox.max.x - bbox.min.x < 1 && bbox.max.y - bbox.min.y < 1) return false;
+    if (renderRegion.max.x - renderRegion.min.x < 1 && renderRegion.max.y - renderRegion.min.y < 1) return false;
 
     //Check boundary
-    if (bbox.min.x >= clip.w || bbox.min.y >= clip.h || bbox.max.x <= 0 || bbox.max.y <= 0) return false;
+    if (renderRegion.min.x >= clipRegion.max.x || renderRegion.min.y >= clipRegion.max.y ||
+        renderRegion.max.x <= clipRegion.min.x || renderRegion.max.y <= clipRegion.min.y) return false;
 
     return true;
 }

@@ -111,7 +111,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     star3->translate(400, 0);
 
     auto clipRect = tvg::Shape::gen();
-    clipRect->appendRect(480, 110, 200, 200, 0, 0);          //x, y, w, h, rx, ry
+    clipRect->appendRect(500, 120, 200, 200, 0, 0);          //x, y, w, h, rx, ry
     clipRect->fill(255, 255, 255, 255); // clip object must have alpha.
     clipRect->translate(20, 20);
 

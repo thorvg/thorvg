@@ -34,9 +34,9 @@ struct Surface
 {
     //TODO: Union for multiple types
     uint32_t* buffer;
-    uint32_t stride;
-    uint32_t w, h;
-    uint32_t cs;
+    uint32_t  stride;
+    uint32_t  w, h;
+    uint32_t  cs;
 };
 
 using RenderData = void*;
@@ -78,6 +78,8 @@ public:
     virtual bool postRender() = 0;
     virtual bool dispose(RenderData data) = 0;
     virtual RenderRegion region(RenderData data) = 0;
+    virtual RenderRegion viewport() = 0;
+    virtual bool viewport(const RenderRegion& vp) = 0;
 
     virtual bool clear() = 0;
     virtual bool sync() = 0;

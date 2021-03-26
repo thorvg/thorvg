@@ -26,6 +26,58 @@
 #include <math.h>
 #include "tvgRender.h"
 
+static inline bool FLT_SAME(float a, float b)
+{
+    return (fabsf(a - b) < FLT_EPSILON);
+}
+
+static bool _clipPathFastTrack(Paint* cmpTarget, const RenderTransform* transform, RenderRegion& viewport)
+{
+    /* Access Shape class by Paint is bad... but it's ok still it's an internal usage. */
+    auto shape = static_cast<Shape*>(cmpTarget);
+
+    //Rectangle Candidates?
+    const Point* pts;
+     if (shape->pathCoords(&pts) != 4) return false;
+
+    //No Rotation?
+    if (transform) {
+        if (transform->m.e12 != 0 || transform->m.e21 != 0 || transform->m.e11 != transform->m.e22) return false;
+    }
+
+    //Othogonal Rectangle?
+    auto pt1 = pts + 0;
+    auto pt2 = pts + 1;
+    auto pt3 = pts + 2;
+    auto pt4 = pts + 3;
+
+    if ((FLT_SAME(pt1->x, pt2->x) && FLT_SAME(pt2->y, pt3->y) && FLT_SAME(pt3->x, pt4->x) && FLT_SAME(pt1->y, pt4->y)) ||
+        (FLT_SAME(pt2->x, pt3->x) && FLT_SAME(pt1->y, pt2->y) && FLT_SAME(pt1->x, pt4->x) && FLT_SAME(pt3->y, pt4->y))) {
+
+        auto x1 = pt1->x;
+        auto y1 = pt1->y;
+        auto x2 = pt3->x;
+        auto y2 = pt3->y;
+
+        if (transform) {
+            x1 = x1 * transform->m.e11 + transform->m.e13;
+            y1 = y1 * transform->m.e22 + transform->m.e23;
+            x2 = x2 * transform->m.e11 + transform->m.e13;
+            y2 = y2 * transform->m.e22 + transform->m.e23;
+        }
+
+        viewport.x = static_cast<uint32_t>(x1);
+        viewport.y = static_cast<uint32_t>(y1);
+        viewport.w = static_cast<uint32_t>(roundf(x2 - x1 + 0.5f));
+        viewport.h = static_cast<uint32_t>(roundf(y2 - y1 + 0.5f));
+
+        return true;
+    }
+
+    return false;
+}
+
+
 namespace tvg
 {
     enum class PaintType { Shape = 0, Scene, Picture };
@@ -150,13 +202,29 @@ namespace tvg
                 }
             }
 
+            /* 1. Composition Pre Processing */
             void *cmpData = nullptr;
+            RenderRegion viewport;
+            bool cmpFastTrack = false;
 
             if (cmpTarget) {
-                cmpData = cmpTarget->pImpl->update(renderer, pTransform, 255, clips, pFlag);
-                if (cmpMethod == CompositeMethod::ClipPath) clips.push(cmpData);
+                /* If transform has no rotation factors && ClipPath is a simple rectangle,
+                   we can avoid regular ClipPath sequence but use viewport for performance */
+                if (cmpMethod == CompositeMethod::ClipPath) {
+                    RenderRegion viewport2;
+                    if ((cmpFastTrack = _clipPathFastTrack(cmpTarget, pTransform, viewport2))) {
+                        viewport = renderer.viewport();
+                        renderer.viewport(viewport2);
+                    }
+                }
+
+                if (!cmpFastTrack) {
+                    cmpData = cmpTarget->pImpl->update(renderer, pTransform, 255, clips, pFlag);
+                    if (cmpMethod == CompositeMethod::ClipPath) clips.push(cmpData);
+                }
             }
 
+            /* 2. Main Update */
             void *edata = nullptr;
             auto newFlag = static_cast<RenderUpdateFlag>(pFlag | flag);
             flag = RenderUpdateFlag::None;
@@ -170,7 +238,9 @@ namespace tvg
                 edata = smethod->update(renderer, outTransform, opacity, clips, newFlag);
             }
 
-            if (cmpData && cmpMethod == CompositeMethod::ClipPath) clips.pop();
+            /* 3. Composition Post Processing */
+            if (cmpFastTrack) renderer.viewport(viewport);
+            else if (cmpData && cmpMethod == CompositeMethod::ClipPath) clips.pop();
 
             return edata;
         }
