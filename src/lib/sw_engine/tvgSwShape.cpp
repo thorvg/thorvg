@@ -367,12 +367,20 @@ bool _fastTrack(const SwOutline* outline)
 /* External Class Implementation                                        */
 /************************************************************************/
 
-bool shapePrepare(SwShape* shape, const Shape* sdata, unsigned tid, const SwSize& clip, const Matrix* transform, SwBBox& bbox)
+bool shapePrepare(SwShape* shape, const Shape* sdata, unsigned tid, const Matrix* transform,  const SwBBox& clipRegion, SwBBox& renderRegion)
 {
     if (!shapeGenOutline(shape, sdata, tid, transform)) return false;
-    if (!mathUpdateOutlineBBox(shape->outline, shape->bbox, clip)) return false;
+    if (!mathUpdateOutlineBBox(shape->outline, clipRegion, renderRegion)) return false;
 
-    bbox = shape->bbox;
+    //Keep it for Rasterization Region
+    shape->bbox = renderRegion;
+
+    //Check valid region
+    if (renderRegion.max.x - renderRegion.min.x < 1 && renderRegion.max.y - renderRegion.min.y < 1) return false;
+
+    //Check boundary
+    if (renderRegion.min.x >= clipRegion.max.x || renderRegion.min.y >= clipRegion.max.y ||
+        renderRegion.max.x <= clipRegion.min.x || renderRegion.max.y <= clipRegion.min.y) return false;
 
     return true;
 }
@@ -393,7 +401,7 @@ bool shapeGenRle(SwShape* shape, TVG_UNUSED const Shape* sdata, bool antiAlias, 
     //Case A: Fast Track Rectangle Drawing
     if (!hasComposite && (shape->rect = _fastTrack(shape->outline))) return true;
     //Case B: Normale Shape RLE Drawing
-    if ((shape->rle = rleRender(shape->rle, shape->outline, shape->bbox, antiAlias))) return true;
+    if ((shape->rle = rleRender(shape->rle, shape->outline, shape->bbox,antiAlias))) return true;
 
     return false;
 }
@@ -535,7 +543,7 @@ void shapeResetStroke(SwShape* shape, const Shape* sdata, const Matrix* transfor
 }
 
 
-bool shapeGenStrokeRle(SwShape* shape, const Shape* sdata, unsigned tid, const Matrix* transform, const SwSize& clip, SwBBox& bbox)
+bool shapeGenStrokeRle(SwShape* shape, const Shape* sdata, unsigned tid, const Matrix* transform, const SwBBox& clipRegion, SwBBox& renderRegion)
 {
     SwOutline* shapeOutline = nullptr;
     SwOutline* strokeOutline = nullptr;
@@ -566,12 +574,12 @@ bool shapeGenStrokeRle(SwShape* shape, const Shape* sdata, unsigned tid, const M
         goto fail;
     }
 
-    if (!mathUpdateOutlineBBox(strokeOutline, bbox, clip)) {
+    if (!mathUpdateOutlineBBox(strokeOutline, clipRegion, renderRegion)) {
         ret = false;
         goto fail;
     }
 
-    shape->strokeRle = rleRender(shape->strokeRle, strokeOutline, bbox, true);
+    shape->strokeRle = rleRender(shape->strokeRle, strokeOutline, renderRegion, true);
 
 fail:
     if (freeOutline) {

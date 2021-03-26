@@ -159,7 +159,7 @@ static void _horizLine(RleWorker& rw, SwCoord x, SwCoord y, SwCoord area, SwCoor
     y += rw.cellMin.y;
 
     //Clip Y range
-    if (y < 0 || y >= rw.cellMax.y) return;
+    if (y < rw.cellMin.y || y >= rw.cellMax.y) return;
 
     /* compute the coverage line's coverage, depending on the outline fill rule */
     /* the coverage percentage is area/(PIXEL_BITS*PIXEL_BITS*2) */
@@ -198,14 +198,14 @@ static void _horizLine(RleWorker& rw, SwCoord x, SwCoord y, SwCoord area, SwCoor
             //Clip x range
             SwCoord xOver = 0;
             if (x + acount >= rw.cellMax.x) xOver -= (x + acount - rw.cellMax.x);
-            if (x < 0) xOver += x;
+            if (x < rw.cellMin.x) xOver -= (rw.cellMin.x - x);
 
             //span->len += (acount + xOver) - 1;
             span->len += (acount + xOver);
             return;
         }
 
-        if (count >=  MAX_SPANS) {
+        if (count >= MAX_SPANS) {
             _genSpan(rw.rle, rw.spans, count);
             rw.spansCnt = 0;
             rw.ySpan = 0;
@@ -217,9 +217,9 @@ static void _horizLine(RleWorker& rw, SwCoord x, SwCoord y, SwCoord area, SwCoor
         //Clip x range
         SwCoord xOver = 0;
         if (x + acount >= rw.cellMax.x) xOver -= (x + acount - rw.cellMax.x);
-        if (x < 0) {
-            xOver += x;
-            x = 0;
+        if (x < rw.cellMin.x) {
+            xOver -= (rw.cellMin.x - x);
+            x = rw.cellMin.x;
         }
 
         //Nothing to draw
@@ -317,11 +317,10 @@ static void _setCell(RleWorker& rw, SwPoint pos)
 
     /* All cells that are on the left of the clipping region go to the
        min_ex - 1 horizontal position. */
+    pos.x -= rw.cellMin.x;
     pos.y -= rw.cellMin.y;
 
     if (pos.x > rw.cellMax.x) pos.x = rw.cellMax.x;
-    pos.x -= rw.cellMin.x;
-    if (pos.x < 0) pos.x = -1;
 
     //Are we moving to a different cell?
     if (pos != rw.cellPos) {
@@ -340,7 +339,6 @@ static void _startCell(RleWorker& rw, SwPoint pos)
 {
     if (pos.x > rw.cellMax.x) pos.x = rw.cellMax.x;
     if (pos.x < rw.cellMin.x) pos.x = rw.cellMin.x;
-    //if (pos.x < rw.cellMin.x) pos.x = (rw.cellMin.x - 1);
 
     rw.area = 0;
     rw.cover = 0;
@@ -373,10 +371,9 @@ static void _lineTo(RleWorker& rw, const SwPoint& to)
     auto e2 = TRUNC(to);
 
     //vertical clipping
-    if ((e1.y >= rw.cellMax.y && e2.y >= rw.cellMax.y) ||
-        (e1.y < rw.cellMin.y && e2.y < rw.cellMin.y)) {
-            rw.pos = to;
-            return;
+    if ((e1.y >= rw.cellMax.y && e2.y >= rw.cellMax.y) || (e1.y < rw.cellMin.y && e2.y < rw.cellMin.y)) {
+        rw.pos = to;
+        return;
     }
 
     auto diff = to - rw.pos;
@@ -782,7 +779,7 @@ void _replaceClipSpan(SwRleData *rle, SwSpan* clippedSpans, uint32_t size)
 /* External Class Implementation                                        */
 /************************************************************************/
 
-SwRleData* rleRender(SwRleData* rle, const SwOutline* outline, const SwBBox& bbox, bool antiAlias)
+SwRleData* rleRender(SwRleData* rle, const SwOutline* outline, const SwBBox& renderRegion, bool antiAlias)
 {
     constexpr auto RENDER_POOL_SIZE = 16384L;
     constexpr auto BAND_SIZE = 40;
@@ -801,8 +798,8 @@ SwRleData* rleRender(SwRleData* rle, const SwOutline* outline, const SwBBox& bbo
     rw.area = 0;
     rw.cover = 0;
     rw.invalid = true;
-    rw.cellMin = bbox.min;
-    rw.cellMax = bbox.max;
+    rw.cellMin = renderRegion.min;
+    rw.cellMax = renderRegion.max;
     rw.cellXCnt = rw.cellMax.x - rw.cellMin.x;
     rw.cellYCnt = rw.cellMax.y - rw.cellMin.y;
     rw.ySpan = 0;

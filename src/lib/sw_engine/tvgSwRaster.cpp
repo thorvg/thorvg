@@ -86,19 +86,6 @@ static bool _identify(const Matrix* transform)
 }
 
 
-static SwBBox _clipRegion(const Surface* surface, const SwBBox& in)
-{
-    auto bbox = in;
-
-    if (bbox.min.x < 0) bbox.min.x = 0;
-    if (bbox.min.y < 0) bbox.min.y = 0;
-    if (bbox.max.x > static_cast<SwCoord>(surface->w)) bbox.max.x = surface->w;
-    if (bbox.max.y > static_cast<SwCoord>(surface->h)) bbox.max.y = surface->h;
-
-    return bbox;
-}
-
-
 static bool _translucent(const SwSurface* surface, uint8_t a)
 {
     if (a < 255) return true;
@@ -799,9 +786,8 @@ bool rasterGradientShape(SwSurface* surface, SwShape* shape, unsigned id)
 {
     //Fast Track
     if (shape->rect) {
-        auto region = _clipRegion(surface, shape->bbox);
-        if (id == FILL_ID_LINEAR) return _rasterLinearGradientRect(surface, region, shape->fill);
-        return _rasterRadialGradientRect(surface, region, shape->fill);
+        if (id == FILL_ID_LINEAR) return _rasterLinearGradientRect(surface, shape->bbox, shape->fill);
+        return _rasterRadialGradientRect(surface, shape->bbox, shape->fill);
     } else {
         if (id == FILL_ID_LINEAR) return _rasterLinearGradientRle(surface, shape->rle, shape->fill);
         return _rasterRadialGradientRle(surface, shape->rle, shape->fill);
@@ -821,9 +807,8 @@ bool rasterSolidShape(SwSurface* surface, SwShape* shape, uint8_t r, uint8_t g, 
 
     //Fast Track
     if (shape->rect) {
-        auto region = _clipRegion(surface, shape->bbox);
-        if (translucent) return _rasterTranslucentRect(surface, region, color);
-        return _rasterSolidRect(surface, region, color);
+        if (translucent) return _rasterTranslucentRect(surface, shape->bbox, color);
+        return _rasterSolidRect(surface, shape->bbox, color);
     }
     if (translucent) {
         return _rasterTranslucentRle(surface, shape->rle, color);

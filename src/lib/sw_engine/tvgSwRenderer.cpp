@@ -47,7 +47,6 @@ struct SwTask : Task
         //Range over?
         region.x = bbox.min.x > 0 ? bbox.min.x : 0;
         region.y = bbox.min.y > 0 ? bbox.min.y : 0;
-
         region.w = bbox.max.x - region.x;
         region.h = bbox.max.y - region.y;
 
@@ -79,8 +78,7 @@ struct SwShapeTask : SwTask
             sdata->strokeColor(nullptr, nullptr, nullptr, &strokeAlpha);
         }
         bool validStroke = (strokeAlpha > 0) || sdata->strokeFill();
-
-        SwSize clip = {static_cast<SwCoord>(surface->w), static_cast<SwCoord>(surface->h)};
+        auto clipRegion = bbox;
 
         //invisible shape turned to visible by alpha.
         auto prepareShape = false;
@@ -94,7 +92,7 @@ struct SwShapeTask : SwTask
             bool renderShape = (alpha > 0 || sdata->fill());
             if (renderShape || validStroke) {
                 shapeReset(&shape);
-                if (!shapePrepare(&shape, sdata, tid, clip, transform, bbox)) goto err;
+                if (!shapePrepare(&shape, sdata, tid, transform, clipRegion, bbox)) goto err;
                 if (renderShape) {
                     /* We assume that if stroke width is bigger than 2,
                        shape outline below stroke could be full covered by stroke drawing.
@@ -123,7 +121,7 @@ struct SwShapeTask : SwTask
         if (flags & (RenderUpdateFlag::Stroke | RenderUpdateFlag::Transform)) {
             if (validStroke) {
                 shapeResetStroke(&shape, sdata, transform);
-                if (!shapeGenStrokeRle(&shape, sdata, tid, transform, clip, bbox)) goto err;
+                if (!shapeGenStrokeRle(&shape, sdata, tid, transform, clipRegion, bbox)) goto err;
                 ++addStroking;
 
                 if (auto fill = sdata->strokeFill()) {
@@ -177,7 +175,7 @@ struct SwImageTask : SwTask
 
     void run(unsigned tid) override
     {
-        SwSize clip = {static_cast<SwCoord>(surface->w), static_cast<SwCoord>(surface->h)};
+        auto clipRegion = bbox;
 
         //Invisible shape turned to visible by alpha.
         auto prepareImage = false;
@@ -185,11 +183,11 @@ struct SwImageTask : SwTask
 
         if (prepareImage) {
             imageReset(&image);
-            if (!imagePrepare(&image, pdata, tid, clip, transform, bbox)) goto end;
+            if (!imagePrepare(&image, pdata, tid, transform, clipRegion, bbox)) goto end;
 
             //Clip Path?
             if (clips.count > 0) {
-                if (!imageGenRle(&image, pdata, bbox, false, true)) goto end;
+                if (!imageGenRle(&image, pdata, bbox, false)) goto end;
                 if (image.rle) {
                     for (auto clip = clips.data; clip < (clips.data + clips.count); ++clip) {
                         auto clipper = &static_cast<SwShapeTask*>(*clip)->shape;
@@ -241,12 +239,32 @@ bool SwRenderer::clear()
     for (auto task = tasks.data; task < (tasks.data + tasks.count); ++task) (*task)->done();
     tasks.clear();
 
+    if (surface) {
+        vport.x = vport.y = 0;
+        vport.w = surface->w;
+        vport.h = surface->h;
+    }
+
     return true;
 }
 
 
 bool SwRenderer::sync()
 {
+    return true;
+}
+
+
+RenderRegion SwRenderer::viewport()
+{
+    return vport;
+}
+
+
+bool SwRenderer::viewport(const RenderRegion& vp)
+{
+    this->vport = vp;
+
     return true;
 }
 
@@ -265,6 +283,10 @@ bool SwRenderer::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t 
     surface->w = w;
     surface->h = h;
     surface->cs = cs;
+
+    vport.x = vport.y = 0;
+    vport.w = surface->w;
+    vport.h = surface->h;
 
     return rasterCompositor(surface);
 }
@@ -347,6 +369,7 @@ bool SwRenderer::renderShape(RenderData data)
 
     return true;
 }
+
 
 RenderRegion SwRenderer::region(RenderData data)
 {
@@ -514,6 +537,10 @@ void* SwRenderer::prepareCommon(SwTask* task, const RenderTransform* transform, 
     task->opacity = opacity;
     task->surface = surface;
     task->flags = flags;
+    task->bbox.min.x = max(static_cast<SwCoord>(0), static_cast<SwCoord>(vport.x));
+    task->bbox.min.y = max(static_cast<SwCoord>(0), static_cast<SwCoord>(vport.y));
+    task->bbox.max.x = min(static_cast<SwCoord>(surface->w), static_cast<SwCoord>(vport.x + vport.w));
+    task->bbox.max.y = min(static_cast<SwCoord>(surface->h), static_cast<SwCoord>(vport.y + vport.h));
 
     tasks.push(task);
     TaskScheduler::request(task);
