@@ -48,6 +48,19 @@ struct Compositor {
 
 struct RenderRegion {
     uint32_t x, y, w, h;
+
+    void merge(const RenderRegion& rhs)
+    {
+        auto x1 = x + w;
+        auto y1 = y + h;
+        auto x2 = rhs.x + rhs.w;
+        auto y2 = rhs.y + rhs.h;
+
+        x = max(x, rhs.x);
+        y = max(y, rhs.y);
+        w = min(x1, x2) - x;
+        h = min(y1, y2) - y;
+    }
 };
 
 struct RenderTransform

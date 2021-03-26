@@ -401,7 +401,7 @@ bool shapeGenRle(SwShape* shape, TVG_UNUSED const Shape* sdata, bool antiAlias, 
     //Case A: Fast Track Rectangle Drawing
     if (!hasComposite && (shape->rect = _fastTrack(shape->outline))) return true;
     //Case B: Normale Shape RLE Drawing
-    if ((shape->rle = rleRender(shape->rle, shape->outline, shape->bbox,antiAlias))) return true;
+    if ((shape->rle = rleRender(shape->rle, shape->outline, shape->bbox, antiAlias))) return true;
 
     return false;
 }

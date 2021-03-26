@@ -214,6 +214,7 @@ namespace tvg
                     RenderRegion viewport2;
                     if ((cmpFastTrack = _clipPathFastTrack(cmpTarget, pTransform, viewport2))) {
                         viewport = renderer.viewport();
+                        viewport2.merge(viewport);
                         renderer.viewport(viewport2);
                     }
                 }
