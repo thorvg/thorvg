@@ -327,7 +327,7 @@ TVG_EXPORT Tvg_Result tvg_shape_set_stroke_radial_gradient(Tvg_Paint* paint, Tvg
 }
 
 
-TVG_EXPORT Tvg_Result tvg_shape_stroke_get_gradient(const Tvg_Paint* paint, Tvg_Gradient** gradient)
+TVG_EXPORT Tvg_Result tvg_shape_get_stroke_gradient(const Tvg_Paint* paint, Tvg_Gradient** gradient)
 {
    if (!paint || !gradient) return TVG_RESULT_INVALID_ARGUMENT;
    *gradient = (Tvg_Gradient*)(reinterpret_cast<Shape*>(CCP(paint))->strokeFill());
