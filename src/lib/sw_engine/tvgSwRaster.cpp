@@ -155,8 +155,7 @@ static bool _translucentRectInvAlphaMask(SwSurface* surface, const SwBBox& regio
         auto dst = &buffer[y * surface->stride];
         auto cmp = &cbuffer[y * surface->stride];
         for (uint32_t x = 0; x < w; ++x) {
-            auto ialpha = 255 - surface->blender.alpha(*cmp);
-            auto tmp = ALPHA_BLEND(color, ialpha);
+            auto tmp = ALPHA_BLEND(color, 255 - surface->blender.alpha(*cmp));
             dst[x] = tmp + ALPHA_BLEND(dst[x], 255 - surface->blender.alpha(tmp));
             ++cmp;
         }
@@ -222,19 +221,16 @@ static bool _translucentRleAlphaMask(SwSurface* surface, const SwRleData* rle, u
 #endif
     auto span = rle->spans;
     uint32_t src;
-    auto tbuffer = static_cast<uint32_t*>(alloca(sizeof(uint32_t) * surface->w));  //temp buffer for intermediate processing
     auto cbuffer = surface->compositor->image.data;
 
     for (uint32_t i = 0; i < rle->size; ++i) {
         auto dst = &surface->buffer[span->y * surface->stride + span->x];
         auto cmp = &cbuffer[span->y * surface->stride + span->x];
-        auto tmp = tbuffer;
         if (span->coverage < 255) src = ALPHA_BLEND(color, span->coverage);
         else src = color;
         for (uint32_t x = 0; x < span->len; ++x) {
-            *tmp = ALPHA_BLEND(src, surface->blender.alpha(*cmp));
-            dst[x] = *tmp + ALPHA_BLEND(dst[x], 255 - surface->blender.alpha(*tmp));
-            ++tmp;
+            auto tmp = ALPHA_BLEND(src, surface->blender.alpha(*cmp));
+            dst[x] = tmp + ALPHA_BLEND(dst[x], 255 - surface->blender.alpha(tmp));
             ++cmp;
         }
         ++span;
@@ -249,20 +245,16 @@ static bool _translucentRleInvAlphaMask(SwSurface* surface, SwRleData* rle, uint
 #endif
     auto span = rle->spans;
     uint32_t src;
-    auto tbuffer = static_cast<uint32_t*>(alloca(sizeof(uint32_t) * surface->w));  //temp buffer for intermediate processing
     auto cbuffer = surface->compositor->image.data;
 
     for (uint32_t i = 0; i < rle->size; ++i) {
         auto dst = &surface->buffer[span->y * surface->stride + span->x];
         auto cmp = &cbuffer[span->y * surface->stride + span->x];
-        auto tmp = tbuffer;
         if (span->coverage < 255) src = ALPHA_BLEND(color, span->coverage);
         else src = color;
         for (uint32_t x = 0; x < span->len; ++x) {
-            auto ialpha = 255 - surface->blender.alpha(*cmp);
-            *tmp = ALPHA_BLEND(src, ialpha);
-            dst[x] = *tmp + ALPHA_BLEND(dst[x], 255 - surface->blender.alpha(*tmp));
-            ++tmp;
+            auto tmp = ALPHA_BLEND(src, 255 - surface->blender.alpha(*cmp));
+            dst[x] = tmp + ALPHA_BLEND(dst[x], 255 - surface->blender.alpha(tmp));
             ++cmp;
         }
         ++span;
@@ -451,8 +443,7 @@ static bool _translucentImageInvAlphaMask(SwSurface* surface, const uint32_t *im
             auto rX = static_cast<uint32_t>(roundf(x * invTransform->e11 + ey1));
             auto rY = static_cast<uint32_t>(roundf(x * invTransform->e21 + ey2));
             if (rX >= w || rY >= h) continue;
-            auto ialpha = 255 - surface->blender.alpha(*cmp);
-            auto tmp = ALPHA_BLEND(img[rX + (rY * w)], ALPHA_MULTIPLY(opacity, ialpha));  //TODO: need to use image's stride
+            auto tmp = ALPHA_BLEND(img[rX + (rY * w)], ALPHA_MULTIPLY(opacity, 255 - surface->blender.alpha(*cmp)));  //TODO: need to use image's stride
             *dst = tmp + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(tmp));
         }
         dbuffer += surface->stride;
@@ -541,8 +532,7 @@ static bool _translucentImageInvAlphaMask(SwSurface* surface, uint32_t *img, uin
         auto cmp = cbuffer;
         auto src = sbuffer;
         for (uint32_t x = 0; x < w2; ++x, ++dst, ++src, ++cmp) {
-            auto ialpha = 255 - surface->blender.alpha(*cmp);
-            auto tmp = ALPHA_BLEND(*src, ALPHA_MULTIPLY(opacity, ialpha));
+            auto tmp = ALPHA_BLEND(*src, ALPHA_MULTIPLY(opacity, 255 - surface->blender.alpha(*cmp)));
             *dst = tmp + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(tmp));
         }
         buffer += surface->stride;
