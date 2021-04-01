@@ -6,7 +6,7 @@ option('engines',
 
 option('loaders',
    type: 'array',
-   choices: ['', 'svg'],
+   choices: ['', 'svg', 'png'],
    value: ['svg'],
    description: 'Enable Vector File Loader in thorvg')
 
@@ -32,11 +32,6 @@ option('examples',
     type: 'boolean',
     value: false,
     description: 'Enable building examples')
-
-option('png',
-   type: 'boolean',
-   value: false,
-   description: 'Enable libpng based png loading')
 
 option('test',
    type: 'boolean',
