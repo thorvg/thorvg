@@ -8,7 +8,7 @@ option('loaders',
    type: 'array',
    choices: ['', 'svg', 'png'],
    value: ['svg'],
-   description: 'Enable Vector File Loader in thorvg')
+   description: 'Enable File Loaders in thorvg')
 
 option('vectors',
    type: 'array',
