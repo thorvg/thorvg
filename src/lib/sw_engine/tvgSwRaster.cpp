@@ -611,7 +611,7 @@ static bool _rasterLinearGradientRect(SwSurface* surface, const SwBBox& region, 
 
         for (uint32_t y = 0; y < h; ++y) {
             auto dst = &buffer[y * surface->stride];
-            fillFetchLinear(fill, tmpBuf, region.min.y + y, region.min.x, 0, w);
+            fillFetchLinear(fill, tmpBuf, region.min.y + y, region.min.x, w);
             for (uint32_t x = 0; x < w; ++x) {
                 dst[x] = tmpBuf[x] + ALPHA_BLEND(dst[x], 255 - surface->blender.alpha(tmpBuf[x]));
             }
@@ -626,7 +626,7 @@ static bool _rasterLinearGradientRect(SwSurface* surface, const SwBBox& region, 
 
             if (method == CompositeMethod::AlphaMask) {
                 for (uint32_t y = 0; y < h; ++y) {
-                    fillFetchLinear(fill, sbuffer, region.min.y + y, region.min.x, 0, w);
+                    fillFetchLinear(fill, sbuffer, region.min.y + y, region.min.x, w);
                     auto dst = buffer;
                     auto cmp = cbuffer;
                     auto src = sbuffer;
@@ -639,7 +639,7 @@ static bool _rasterLinearGradientRect(SwSurface* surface, const SwBBox& region, 
                 }
             } else if (method == CompositeMethod::InvAlphaMask) {
                 for (uint32_t y = 0; y < h; ++y) {
-                    fillFetchLinear(fill, sbuffer, region.min.y + y, region.min.x, 0, w);
+                    fillFetchLinear(fill, sbuffer, region.min.y + y, region.min.x, w);
                     auto dst = buffer;
                     auto cmp = cbuffer;
                     auto src = sbuffer;
@@ -653,7 +653,7 @@ static bool _rasterLinearGradientRect(SwSurface* surface, const SwBBox& region, 
             }
         } else {
             for (uint32_t y = 0; y < h; ++y) {
-                fillFetchLinear(fill, buffer + y * surface->stride, region.min.y + y, region.min.x, 0, w);
+                fillFetchLinear(fill, buffer + y * surface->stride, region.min.y + y, region.min.x, w);
             }
         }
     }
@@ -706,7 +706,7 @@ static bool _rasterLinearGradientRle(SwSurface* surface, const SwRleData* rle, c
     if (fill->translucent) {
         for (uint32_t i = 0; i < rle->size; ++i) {
             auto dst = &surface->buffer[span->y * surface->stride + span->x];
-            fillFetchLinear(fill, buf, span->y, span->x, 0, span->len);
+            fillFetchLinear(fill, buf, span->y, span->x, span->len);
             if (span->coverage == 255) {
                 for (uint32_t i = 0; i < span->len; ++i) {
                     dst[i] = buf[i] + ALPHA_BLEND(dst[i], 255 - surface->blender.alpha(buf[i]));
@@ -727,7 +727,7 @@ static bool _rasterLinearGradientRle(SwSurface* surface, const SwRleData* rle, c
 
             if (method == CompositeMethod::AlphaMask) {
                 for (uint32_t i = 0; i < rle->size; ++i, ++span) {
-                    fillFetchLinear(fill, buf, span->y, span->x, 0, span->len);
+                    fillFetchLinear(fill, buf, span->y, span->x, span->len);
                     auto dst = &surface->buffer[span->y * surface->stride + span->x];
                     auto cmp = &cbuffer[span->y * surface->stride + span->x];
                     auto src = buf;
@@ -738,7 +738,7 @@ static bool _rasterLinearGradientRle(SwSurface* surface, const SwRleData* rle, c
                 }
             } else if (method == CompositeMethod::InvAlphaMask) {
                 for (uint32_t i = 0; i < rle->size; ++i, ++span) {
-                    fillFetchLinear(fill, buf, span->y, span->x, 0, span->len);
+                    fillFetchLinear(fill, buf, span->y, span->x, span->len);
                     auto dst = &surface->buffer[span->y * surface->stride + span->x];
                     auto cmp = &cbuffer[span->y * surface->stride + span->x];
                     auto src = buf;
@@ -751,9 +751,9 @@ static bool _rasterLinearGradientRle(SwSurface* surface, const SwRleData* rle, c
         } else {
             for (uint32_t i = 0; i < rle->size; ++i) {
                 if (span->coverage == 255) {
-                    fillFetchLinear(fill, surface->buffer + span->y * surface->stride, span->y, span->x, span->x, span->len);
+                    fillFetchLinear(fill, surface->buffer + span->y * surface->stride + span->x, span->y, span->x, span->len);
                 } else {
-                    fillFetchLinear(fill, buf, span->y, span->x, 0, span->len);
+                    fillFetchLinear(fill, buf, span->y, span->x, span->len);
                     auto ialpha = 255 - span->coverage;
                     auto dst = &surface->buffer[span->y * surface->stride + span->x];
                     for (uint32_t i = 0; i < span->len; ++i) {
