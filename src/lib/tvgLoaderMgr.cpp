@@ -61,6 +61,29 @@ static Loader* _find(FileType type)
             break;
         }
     }
+
+#ifdef THORVG_LOG_ENABLED
+    const char *format;
+    switch(type) {
+        case FileType::Svg: {
+            format = "SVG";
+            break;
+        }
+        case FileType::Png: {
+            format = "PNG";
+            break;
+        }
+        case FileType::Raw: {
+            format = "RAW";
+        }
+        default: {
+            format = "???";
+            break;
+        }
+    }
+    printf("LOADER: %s format is not supported\n", format);
+#endif
+
     return nullptr;
 }
 
