@@ -226,7 +226,7 @@ void fillFetchRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, 
 }
 
 
-void fillFetchLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t offset, uint32_t len)
+void fillFetchLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len)
 {
     //Rotation
     float rx = x + 0.5f;
@@ -236,11 +236,9 @@ void fillFetchLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, 
 
     if (abs(inc) < FLT_EPSILON) {
         auto color = _fixedPixel(fill, static_cast<int32_t>(t * FIXPT_SIZE));
-        rasterRGBA32(dst, color, offset, len);
+        rasterRGBA32(dst, color, 0, len);
         return;
     }
-
-    dst += offset;
 
     auto vMax = static_cast<float>(INT32_MAX >> (FIXPT_BITS + 1));
     auto vMin = -vMax;
