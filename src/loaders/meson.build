@@ -5,8 +5,9 @@ if get_option('loaders').contains('svg') == true
     message('Enable SVG Loader')
 endif
 
-if get_option('png') == true
+if get_option('loaders').contains('png') == true
     subdir('png')
+    message('Enable PNG Loader')
 endif
 
 subdir('raw')

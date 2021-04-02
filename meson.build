@@ -20,6 +20,10 @@ if get_option('loaders').contains('svg') == true
     config_h.set10('THORVG_SVG_LOADER_SUPPORT', true)
 endif
 
+if get_option('loaders').contains('png') == true
+    config_h.set10('THORVG_PNG_LOADER_SUPPORT', true)
+endif
+
 if get_option('vectors').contains('avx') == true
     config_h.set10('THORVG_AVX_VECTOR_SUPPORT', true)
 endif
@@ -31,10 +35,6 @@ endif
 if get_option('log') == true
     config_h.set10('THORVG_LOG_ENABLED', true)
     message('Enable Log')
-endif
-
-if get_option('png') == true
-    config_h.set10('THORVG_PNG_LOADER_SUPPORT', true)
 endif
 
 configure_file(
