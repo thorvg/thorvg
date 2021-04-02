@@ -4,11 +4,12 @@ We always appreciate your contribution. This page guides ThorVG contribution for
 Hermet Park (hermet) is the lead maintainer but there are designated sub-module maintainers you can request for your pull-requst patches as well.
 
 <b>common:</b> JunsuChoi (JSUYA) <br />
+<b>sw_engine:</b> Mira Grudzinska (mgrudzinska) <br />
 <b>gl_engine:</b> Prudhvi Raj Vasireddi (prudhvirajv)<br />
-<b>loaders:</b> JunsuChoi (JSUYA) <br />
+<b>loaders:</b> JunsuChoi (JSUYA), Mira Grudzinska (mgrudzinska) <br />
 <b>wasm:</b> Shinwoo Kim (kimcinoo) <br />
 <b>svg2png:</b> JunsuChoi (JSUYA) <br />
-<b>capi:</b> Michal Szczecinski (mihashco) <br />
+<b>capi:</b> Michal Szczecinski (mihashco), Mira Grudzinska (mgrudzinska) <br />
 <br />
 
 
