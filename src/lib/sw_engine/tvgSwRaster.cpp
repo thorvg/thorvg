@@ -596,9 +596,9 @@ static bool _rasterImage(SwSurface* surface, const uint32_t *img, uint32_t w, ui
 /* Gradient                                                             */
 /************************************************************************/
 
-static bool _rasterLinearGradientRect(SwSurface* surface, const SwBBox& region, const SwFill* fill)
+static bool _rasterGradientRect(SwSurface* surface, const SwBBox& region, const SwFill* fill, void (*fillFetch)(const SwFill*, uint32_t*, uint32_t, uint32_t, uint32_t))
 {
-    if (!fill || fill->linear.len < FLT_EPSILON) return false;
+    if (!fill) return false;
 
     auto buffer = surface->buffer + (region.min.y * surface->stride) + region.min.x;
     auto h = static_cast<uint32_t>(region.max.y - region.min.y);
@@ -611,7 +611,7 @@ static bool _rasterLinearGradientRect(SwSurface* surface, const SwBBox& region, 
 
         for (uint32_t y = 0; y < h; ++y) {
             auto dst = &buffer[y * surface->stride];
-            fillFetchLinear(fill, tmpBuf, region.min.y + y, region.min.x, 0, w);
+            fillFetch(fill, tmpBuf, region.min.y + y, region.min.x, w);
             for (uint32_t x = 0; x < w; ++x) {
                 dst[x] = tmpBuf[x] + ALPHA_BLEND(dst[x], 255 - surface->blender.alpha(tmpBuf[x]));
             }
@@ -626,7 +626,7 @@ static bool _rasterLinearGradientRect(SwSurface* surface, const SwBBox& region, 
 
             if (method == CompositeMethod::AlphaMask) {
                 for (uint32_t y = 0; y < h; ++y) {
-                    fillFetchLinear(fill, sbuffer, region.min.y + y, region.min.x, 0, w);
+                    fillFetch(fill, sbuffer, region.min.y + y, region.min.x, w);
                     auto dst = buffer;
                     auto cmp = cbuffer;
                     auto src = sbuffer;
@@ -639,7 +639,7 @@ static bool _rasterLinearGradientRect(SwSurface* surface, const SwBBox& region, 
                 }
             } else if (method == CompositeMethod::InvAlphaMask) {
                 for (uint32_t y = 0; y < h; ++y) {
-                    fillFetchLinear(fill, sbuffer, region.min.y + y, region.min.x, 0, w);
+                    fillFetch(fill, sbuffer, region.min.y + y, region.min.x, w);
                     auto dst = buffer;
                     auto cmp = cbuffer;
                     auto src = sbuffer;
@@ -653,7 +653,7 @@ static bool _rasterLinearGradientRect(SwSurface* surface, const SwBBox& region, 
             }
         } else {
             for (uint32_t y = 0; y < h; ++y) {
-                fillFetchLinear(fill, buffer + y * surface->stride, region.min.y + y, region.min.x, 0, w);
+                fillFetch(fill, buffer + y * surface->stride, region.min.y + y, region.min.x, w);
             }
         }
     }
@@ -661,41 +661,9 @@ static bool _rasterLinearGradientRect(SwSurface* surface, const SwBBox& region, 
 }
 
 
-static bool _rasterRadialGradientRect(SwSurface* surface, const SwBBox& region, const SwFill* fill)
+static bool _rasterGradientRle(SwSurface* surface, const SwRleData* rle, const SwFill* fill, void (*fillFetch)(const SwFill*, uint32_t*, uint32_t, uint32_t, uint32_t))
 {
-    if (!fill || fill->radial.a < FLT_EPSILON) return false;
-
-    auto buffer = surface->buffer + (region.min.y * surface->stride) + region.min.x;
-    auto h = static_cast<uint32_t>(region.max.y - region.min.y);
-    auto w = static_cast<uint32_t>(region.max.x - region.min.x);
-
-    //Translucent Gradient
-    if (fill->translucent) {
-
-        auto tmpBuf = static_cast<uint32_t*>(alloca(surface->w * sizeof(uint32_t)));
-        if (!tmpBuf) return false;
-
-        for (uint32_t y = 0; y < h; ++y) {
-            auto dst = &buffer[y * surface->stride];
-            fillFetchRadial(fill, tmpBuf, region.min.y + y, region.min.x, w);
-            for (uint32_t x = 0; x < w; ++x) {
-                dst[x] = tmpBuf[x] + ALPHA_BLEND(dst[x], 255 - surface->blender.alpha(tmpBuf[x]));
-            }
-        }
-    //Opaque Gradient
-    } else {
-        for (uint32_t y = 0; y < h; ++y) {
-            auto dst = &buffer[y * surface->stride];
-            fillFetchRadial(fill, dst, region.min.y + y, region.min.x, w);
-        }
-    }
-    return true;
-}
-
-
-static bool _rasterLinearGradientRle(SwSurface* surface, const SwRleData* rle, const SwFill* fill)
-{
-    if (!rle || !fill || fill->linear.len < FLT_EPSILON) return false;
+    if (!rle || !fill) return false;
 
     auto buf = static_cast<uint32_t*>(alloca(surface->w * sizeof(uint32_t)));
     if (!buf) return false;
@@ -706,7 +674,7 @@ static bool _rasterLinearGradientRle(SwSurface* surface, const SwRleData* rle, c
     if (fill->translucent) {
         for (uint32_t i = 0; i < rle->size; ++i) {
             auto dst = &surface->buffer[span->y * surface->stride + span->x];
-            fillFetchLinear(fill, buf, span->y, span->x, 0, span->len);
+            fillFetch(fill, buf, span->y, span->x, span->len);
             if (span->coverage == 255) {
                 for (uint32_t i = 0; i < span->len; ++i) {
                     dst[i] = buf[i] + ALPHA_BLEND(dst[i], 255 - surface->blender.alpha(buf[i]));
@@ -727,7 +695,7 @@ static bool _rasterLinearGradientRle(SwSurface* surface, const SwRleData* rle, c
 
             if (method == CompositeMethod::AlphaMask) {
                 for (uint32_t i = 0; i < rle->size; ++i, ++span) {
-                    fillFetchLinear(fill, buf, span->y, span->x, 0, span->len);
+                    fillFetch(fill, buf, span->y, span->x, span->len);
                     auto dst = &surface->buffer[span->y * surface->stride + span->x];
                     auto cmp = &cbuffer[span->y * surface->stride + span->x];
                     auto src = buf;
@@ -738,7 +706,7 @@ static bool _rasterLinearGradientRle(SwSurface* surface, const SwRleData* rle, c
                 }
             } else if (method == CompositeMethod::InvAlphaMask) {
                 for (uint32_t i = 0; i < rle->size; ++i, ++span) {
-                    fillFetchLinear(fill, buf, span->y, span->x, 0, span->len);
+                    fillFetch(fill, buf, span->y, span->x, span->len);
                     auto dst = &surface->buffer[span->y * surface->stride + span->x];
                     auto cmp = &cbuffer[span->y * surface->stride + span->x];
                     auto src = buf;
@@ -751,9 +719,9 @@ static bool _rasterLinearGradientRle(SwSurface* surface, const SwRleData* rle, c
         } else {
             for (uint32_t i = 0; i < rle->size; ++i) {
                 if (span->coverage == 255) {
-                    fillFetchLinear(fill, surface->buffer + span->y * surface->stride, span->y, span->x, span->x, span->len);
+                    fillFetch(fill, surface->buffer + span->y * surface->stride + span->x, span->y, span->x, span->len);
                 } else {
-                    fillFetchLinear(fill, buf, span->y, span->x, 0, span->len);
+                    fillFetch(fill, buf, span->y, span->x, span->len);
                     auto ialpha = 255 - span->coverage;
                     auto dst = &surface->buffer[span->y * surface->stride + span->x];
                     for (uint32_t i = 0; i < span->len; ++i) {
@@ -762,52 +730,6 @@ static bool _rasterLinearGradientRle(SwSurface* surface, const SwRleData* rle, c
                 }
                 ++span;
             }
-        }
-    }
-    return true;
-}
-
-
-static bool _rasterRadialGradientRle(SwSurface* surface, const SwRleData* rle, const SwFill* fill)
-{
-    if (!rle || !fill || fill->radial.a < FLT_EPSILON) return false;
-
-    auto buf = static_cast<uint32_t*>(alloca(surface->w * sizeof(uint32_t)));
-    if (!buf) return false;
-
-    auto span = rle->spans;
-
-    //Translucent Gradient
-    if (fill->translucent) {
-        for (uint32_t i = 0; i < rle->size; ++i) {
-            auto dst = &surface->buffer[span->y * surface->stride + span->x];
-            fillFetchRadial(fill, buf, span->y, span->x, span->len);
-            if (span->coverage == 255) {
-                for (uint32_t i = 0; i < span->len; ++i) {
-                    dst[i] = buf[i] + ALPHA_BLEND(dst[i], 255 - surface->blender.alpha(buf[i]));
-                }
-            } else {
-                for (uint32_t i = 0; i < span->len; ++i) {
-                    auto tmp = ALPHA_BLEND(buf[i], span->coverage);
-                    dst[i] = tmp + ALPHA_BLEND(dst[i], 255 - surface->blender.alpha(tmp));
-                }
-            }
-            ++span;
-        }
-    //Opaque Gradient
-    } else {
-        for (uint32_t i = 0; i < rle->size; ++i) {
-            auto dst = &surface->buffer[span->y * surface->stride + span->x];
-            if (span->coverage == 255) {
-                fillFetchRadial(fill, dst, span->y, span->x, span->len);
-            } else {
-                fillFetchRadial(fill, buf, span->y, span->x, span->len);
-                auto ialpha = 255 - span->coverage;
-                for (uint32_t i = 0; i < span->len; ++i) {
-                    dst[i] = ALPHA_BLEND(buf[i], span->coverage) + ALPHA_BLEND(dst[i], ialpha);
-                }
-            }
-            ++span;
         }
     }
     return true;
@@ -837,15 +759,18 @@ bool rasterCompositor(SwSurface* surface)
 
 bool rasterGradientShape(SwSurface* surface, SwShape* shape, unsigned id)
 {
-    //Fast Track
-    if (shape->rect) {
-        if (id == FILL_ID_LINEAR) return _rasterLinearGradientRect(surface, shape->bbox, shape->fill);
-        return _rasterRadialGradientRect(surface, shape->bbox, shape->fill);
+    void (*fillFetch)(const SwFill*, uint32_t*, uint32_t, uint32_t, uint32_t);
+    if (id == FILL_ID_LINEAR) {
+        if (!shape->fill || shape->fill->linear.len < FLT_EPSILON) return false;
+        fillFetch = &fillFetchLinear;
     } else {
-        if (id == FILL_ID_LINEAR) return _rasterLinearGradientRle(surface, shape->rle, shape->fill);
-        return _rasterRadialGradientRle(surface, shape->rle, shape->fill);
+        if (!shape->fill || shape->fill->radial.a < FLT_EPSILON) return false;
+        fillFetch = &fillFetchRadial;
     }
-    return false;
+
+    //Fast Track
+    if (shape->rect) return _rasterGradientRect(surface, shape->bbox, shape->fill, fillFetch);
+    return _rasterGradientRle(surface, shape->rle, shape->fill, fillFetch);
 }
 
 
@@ -886,10 +811,16 @@ bool rasterStroke(SwSurface* surface, SwShape* shape, uint8_t r, uint8_t g, uint
 
 bool rasterGradientStroke(SwSurface* surface, SwShape* shape, unsigned id)
 {
-    if (id == FILL_ID_LINEAR) return _rasterLinearGradientRle(surface, shape->strokeRle, shape->stroke->fill);
-    return _rasterRadialGradientRle(surface, shape->strokeRle, shape->stroke->fill);
+    void (*fillFetch)(const SwFill*, uint32_t*, uint32_t, uint32_t, uint32_t);
+    if (id == FILL_ID_LINEAR) {
+        if (!shape->stroke->fill || shape->stroke->fill->linear.len < FLT_EPSILON) return false;
+        fillFetch = &fillFetchLinear;
+    } else {
+        if (!shape->stroke->fill || shape->stroke->fill->radial.a < FLT_EPSILON) return false;
+        fillFetch = &fillFetchRadial;
+    }
 
-    return false;
+    return _rasterGradientRle(surface, shape->strokeRle, shape->stroke->fill, fillFetch);
 }
 
 
