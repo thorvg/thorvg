@@ -851,9 +851,11 @@ bool rasterGradientShape(SwSurface* surface, SwShape* shape, unsigned id)
 
 bool rasterSolidShape(SwSurface* surface, SwShape* shape, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 {
-    r = ALPHA_MULTIPLY(r, a);
-    g = ALPHA_MULTIPLY(g, a);
-    b = ALPHA_MULTIPLY(b, a);
+    if (a < 255) {
+        r = ALPHA_MULTIPLY(r, a);
+        g = ALPHA_MULTIPLY(g, a);
+        b = ALPHA_MULTIPLY(b, a);
+    }
 
     auto color = surface->blender.join(r, g, b, a);
     auto translucent = _translucent(surface, a);
@@ -872,9 +874,11 @@ bool rasterSolidShape(SwSurface* surface, SwShape* shape, uint8_t r, uint8_t g, 
 
 bool rasterStroke(SwSurface* surface, SwShape* shape, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 {
-    r = ALPHA_MULTIPLY(r, a);
-    g = ALPHA_MULTIPLY(g, a);
-    b = ALPHA_MULTIPLY(b, a);
+    if (a < 255) {
+        r = ALPHA_MULTIPLY(r, a);
+        g = ALPHA_MULTIPLY(g, a);
+        b = ALPHA_MULTIPLY(b, a);
+    }
 
     auto color = surface->blender.join(r, g, b, a);
     auto translucent = _translucent(surface, a);
