@@ -15,7 +15,7 @@ The next list shows drawing primitives ThorVG providing.<br />
  - Scene Graph & Affine Transformation (translation, rotation, scale ...)
  - Stroking: Width, Join, Cap, Dash
  - Composition: Blending, Masking, Path Clipping, etc
- - Pictures: SVG, Bitmap, ... 
+ - Pictures: SVG, PNG, Bitmap, ... 
 <p align="center">
   <img width="930" height="473" src="https://github.com/Samsung/thorvg/blob/master/res/example_primitives.png">
 </p>
