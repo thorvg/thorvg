@@ -31,7 +31,7 @@ static inline bool FLT_SAME(float a, float b)
     return (fabsf(a - b) < FLT_EPSILON);
 }
 
-static bool _clipPathFastTrack(Paint* cmpTarget, const RenderTransform* transform, RenderRegion& viewport)
+static bool _clipPathFastTrack(Paint* cmpTarget, const RenderTransform* pTransform, RenderTransform* rTransform, RenderRegion& viewport)
 {
     /* Access Shape class by Paint is bad... but it's ok still it's an internal usage. */
     auto shape = static_cast<Shape*>(cmpTarget);
@@ -40,10 +40,11 @@ static bool _clipPathFastTrack(Paint* cmpTarget, const RenderTransform* transfor
     const Point* pts;
      if (shape->pathCoords(&pts) != 4) return false;
 
+    if (rTransform) rTransform->update();
+
     //No Rotation?
-    if (transform) {
-        if (transform->m.e12 != 0 || transform->m.e21 != 0 || transform->m.e11 != transform->m.e22) return false;
-    }
+    if (pTransform && (pTransform->m.e12 != 0 || pTransform->m.e21 != 0 || pTransform->m.e11 != pTransform->m.e22)) return false;
+    if (rTransform && (rTransform->m.e12 != 0 || rTransform->m.e21 != 0 || rTransform->m.e11 != rTransform->m.e22)) return false;
 
     //Othogonal Rectangle?
     auto pt1 = pts + 0;
@@ -59,11 +60,18 @@ static bool _clipPathFastTrack(Paint* cmpTarget, const RenderTransform* transfor
         auto x2 = pt3->x;
         auto y2 = pt3->y;
 
-        if (transform) {
-            x1 = x1 * transform->m.e11 + transform->m.e13;
-            y1 = y1 * transform->m.e22 + transform->m.e23;
-            x2 = x2 * transform->m.e11 + transform->m.e13;
-            y2 = y2 * transform->m.e22 + transform->m.e23;
+        if (rTransform) {
+            x1 = x1 * rTransform->m.e11 + rTransform->m.e13;
+            y1 = y1 * rTransform->m.e22 + rTransform->m.e23;
+            x2 = x2 * rTransform->m.e11 + rTransform->m.e13;
+            y2 = y2 * rTransform->m.e22 + rTransform->m.e23;
+        }
+
+        if (pTransform) {
+            x1 = x1 * pTransform->m.e11 + pTransform->m.e13;
+            y1 = y1 * pTransform->m.e22 + pTransform->m.e23;
+            x2 = x2 * pTransform->m.e11 + pTransform->m.e13;
+            y2 = y2 * pTransform->m.e22 + pTransform->m.e23;
         }
 
         viewport.x = static_cast<uint32_t>(x1);
@@ -212,7 +220,7 @@ namespace tvg
                    we can avoid regular ClipPath sequence but use viewport for performance */
                 if (cmpMethod == CompositeMethod::ClipPath) {
                     RenderRegion viewport2;
-                    if ((cmpFastTrack = _clipPathFastTrack(cmpTarget, pTransform, viewport2))) {
+                    if ((cmpFastTrack = _clipPathFastTrack(cmpTarget, pTransform, cmpTarget->pImpl->rTransform, viewport2))) {
                         viewport = renderer.viewport();
                         viewport2.merge(viewport);
                         renderer.viewport(viewport2);
