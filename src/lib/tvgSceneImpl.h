@@ -22,6 +22,7 @@
 #ifndef _TVG_SCENE_IMPL_H_
 #define _TVG_SCENE_IMPL_H_
 
+#include <float.h>
 #include "tvgPaint.h"
 
 /************************************************************************/
