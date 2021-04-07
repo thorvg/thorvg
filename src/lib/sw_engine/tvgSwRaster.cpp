@@ -754,7 +754,7 @@ static bool _rasterTranslucentLinearGradientRle(SwSurface* surface, const SwRleD
     for (uint32_t i = 0; i < rle->size; ++i) {
         auto dst = &surface->buffer[span->y * surface->stride + span->x];
         fillFetchLinear(fill, buf, span->y, span->x, span->len);
-        if (span->coverage == 255) { 
+        if (span->coverage == 255) {
             for (uint32_t i = 0; i < span->len; ++i) {
                 dst[i] = buf[i] + ALPHA_BLEND(dst[i], 255 - surface->blender.alpha(buf[i]));
             }
@@ -789,9 +789,18 @@ static bool _rasterOpaqueLinearGradientRle(SwSurface* surface, const SwRleData* 
                 auto dst = &surface->buffer[span->y * surface->stride + span->x];
                 auto cmp = &cbuffer[span->y * surface->stride + span->x];
                 auto src = buf;
-                for (uint32_t x = 0; x < span->len; ++x, ++dst, ++cmp, ++src) {
-                    auto tmp = ALPHA_BLEND(*src, surface->blender.alpha(*cmp));
-                    *dst = tmp + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(tmp));
+                if (span->coverage == 255) {
+                    for (uint32_t x = 0; x < span->len; ++x, ++dst, ++cmp, ++src) {
+                        auto tmp = ALPHA_BLEND(*src, surface->blender.alpha(*cmp));
+                        *dst = tmp + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(tmp));
+                    }
+                } else {
+                    auto ialpha = 255 - span->coverage;
+                    for (uint32_t x = 0; x < span->len; ++x, ++dst, ++cmp, ++src) {
+                        auto tmp = ALPHA_BLEND(*src, surface->blender.alpha(*cmp));
+                        tmp = ALPHA_BLEND(tmp, span->coverage) + ALPHA_BLEND(*dst, ialpha);
+                        *dst = tmp + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(tmp));
+                    }
                 }
             }
         } else if (method == CompositeMethod::InvAlphaMask) {
@@ -800,9 +809,18 @@ static bool _rasterOpaqueLinearGradientRle(SwSurface* surface, const SwRleData* 
                 auto dst = &surface->buffer[span->y * surface->stride + span->x];
                 auto cmp = &cbuffer[span->y * surface->stride + span->x];
                 auto src = buf;
-                for (uint32_t x = 0; x < span->len; ++x, ++dst, ++cmp, ++src) {
-                    auto tmp = ALPHA_BLEND(*src, 255 - surface->blender.alpha(*cmp));
-                    *dst = tmp + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(tmp));
+                if (span->coverage == 255) {
+                   for (uint32_t x = 0; x < span->len; ++x, ++dst, ++cmp, ++src) {
+                        auto tmp = ALPHA_BLEND(*src, 255 - surface->blender.alpha(*cmp));
+                        *dst = tmp + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(tmp));
+                    }
+                } else {
+                    auto ialpha = 255 - span->coverage;
+                    for (uint32_t x = 0; x < span->len; ++x, ++dst, ++cmp, ++src) {
+                        auto tmp = ALPHA_BLEND(*src, 255 - surface->blender.alpha(*cmp));
+                        tmp = ALPHA_BLEND(tmp, span->coverage) + ALPHA_BLEND(*dst, ialpha);
+                        *dst = tmp + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(tmp));
+                    }
                 }
             }
         }
@@ -872,9 +890,18 @@ static bool _rasterOpaqueRadialGradientRle(SwSurface* surface, const SwRleData* 
                 auto dst = &surface->buffer[span->y * surface->stride + span->x];
                 auto cmp = &cbuffer[span->y * surface->stride + span->x];
                 auto src = buf;
-                for (uint32_t x = 0; x < span->len; ++x, ++dst, ++cmp, ++src) {
-                    auto tmp = ALPHA_BLEND(*src, surface->blender.alpha(*cmp));
-                    *dst = tmp + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(tmp));
+                if (span->coverage == 255) {
+                    for (uint32_t x = 0; x < span->len; ++x, ++dst, ++cmp, ++src) {
+                        auto tmp = ALPHA_BLEND(*src, surface->blender.alpha(*cmp));
+                        *dst = tmp + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(tmp));
+                    }
+                } else {
+                    auto ialpha = 255 - span->coverage;
+                    for (uint32_t x = 0; x < span->len; ++x, ++dst, ++cmp, ++src) {
+                        auto tmp = ALPHA_BLEND(*src, surface->blender.alpha(*cmp));
+                        tmp = ALPHA_BLEND(tmp, span->coverage) + ALPHA_BLEND(*dst, ialpha);
+                        *dst = tmp + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(tmp));
+                    }
                 }
             }
         } else if (method == CompositeMethod::InvAlphaMask) {
@@ -883,9 +910,18 @@ static bool _rasterOpaqueRadialGradientRle(SwSurface* surface, const SwRleData* 
                 auto dst = &surface->buffer[span->y * surface->stride + span->x];
                 auto cmp = &cbuffer[span->y * surface->stride + span->x];
                 auto src = buf;
-                for (uint32_t x = 0; x < span->len; ++x, ++dst, ++cmp, ++src) {
-                    auto tmp = ALPHA_BLEND(*src, 255 - surface->blender.alpha(*cmp));
-                    *dst = tmp + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(tmp));
+                if (span->coverage == 255) {
+                   for (uint32_t x = 0; x < span->len; ++x, ++dst, ++cmp, ++src) {
+                        auto tmp = ALPHA_BLEND(*src, 255 - surface->blender.alpha(*cmp));
+                        *dst = tmp + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(tmp));
+                    }
+                } else {
+                    auto ialpha = 255 - span->coverage;
+                    for (uint32_t x = 0; x < span->len; ++x, ++dst, ++cmp, ++src) {
+                        auto tmp = ALPHA_BLEND(*src, 255 - surface->blender.alpha(*cmp));
+                        tmp = ALPHA_BLEND(tmp, span->coverage) + ALPHA_BLEND(*dst, ialpha);
+                        *dst = tmp + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(tmp));
+                    }
                 }
             }
         }
