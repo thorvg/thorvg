@@ -22,68 +22,7 @@
 #ifndef _TVG_PAINT_H_
 #define _TVG_PAINT_H_
 
-#include <float.h>
-#include <math.h>
 #include "tvgRender.h"
-
-static inline bool FLT_SAME(float a, float b)
-{
-    return (fabsf(a - b) < FLT_EPSILON);
-}
-
-static bool _clipPathFastTrack(Paint* cmpTarget, const RenderTransform* pTransform, RenderTransform* rTransform, RenderRegion& viewport)
-{
-    /* Access Shape class by Paint is bad... but it's ok still it's an internal usage. */
-    auto shape = static_cast<Shape*>(cmpTarget);
-
-    //Rectangle Candidates?
-    const Point* pts;
-     if (shape->pathCoords(&pts) != 4) return false;
-
-    if (rTransform) rTransform->update();
-
-    //No Rotation?
-    if (pTransform && (pTransform->m.e12 != 0 || pTransform->m.e21 != 0 || pTransform->m.e11 != pTransform->m.e22)) return false;
-    if (rTransform && (rTransform->m.e12 != 0 || rTransform->m.e21 != 0 || rTransform->m.e11 != rTransform->m.e22)) return false;
-
-    //Othogonal Rectangle?
-    auto pt1 = pts + 0;
-    auto pt2 = pts + 1;
-    auto pt3 = pts + 2;
-    auto pt4 = pts + 3;
-
-    if ((FLT_SAME(pt1->x, pt2->x) && FLT_SAME(pt2->y, pt3->y) && FLT_SAME(pt3->x, pt4->x) && FLT_SAME(pt1->y, pt4->y)) ||
-        (FLT_SAME(pt2->x, pt3->x) && FLT_SAME(pt1->y, pt2->y) && FLT_SAME(pt1->x, pt4->x) && FLT_SAME(pt3->y, pt4->y))) {
-
-        auto x1 = pt1->x;
-        auto y1 = pt1->y;
-        auto x2 = pt3->x;
-        auto y2 = pt3->y;
-
-        if (rTransform) {
-            x1 = x1 * rTransform->m.e11 + rTransform->m.e13;
-            y1 = y1 * rTransform->m.e22 + rTransform->m.e23;
-            x2 = x2 * rTransform->m.e11 + rTransform->m.e13;
-            y2 = y2 * rTransform->m.e22 + rTransform->m.e23;
-        }
-
-        if (pTransform) {
-            x1 = x1 * pTransform->m.e11 + pTransform->m.e13;
-            y1 = y1 * pTransform->m.e22 + pTransform->m.e23;
-            x2 = x2 * pTransform->m.e11 + pTransform->m.e13;
-            y2 = y2 * pTransform->m.e22 + pTransform->m.e23;
-        }
-
-        viewport.x = static_cast<uint32_t>(x1);
-        viewport.y = static_cast<uint32_t>(y1);
-        viewport.w = static_cast<uint32_t>(roundf(x2 - x1 + 0.5f));
-        viewport.h = static_cast<uint32_t>(roundf(y2 - y1 + 0.5f));
-
-        return true;
-    }
-
-    return false;
-}
 
 
 namespace tvg
@@ -107,12 +46,9 @@ namespace tvg
         StrategyMethod* smethod = nullptr;
         RenderTransform *rTransform = nullptr;
         uint32_t flag = RenderUpdateFlag::None;
-
         Paint* cmpTarget = nullptr;
         CompositeMethod cmpMethod = CompositeMethod::None;
-
         uint8_t opacity = 255;
-
         PaintType type;
 
         ~Impl() {
@@ -124,52 +60,6 @@ namespace tvg
         void method(StrategyMethod* method)
         {
             smethod = method;
-        }
-
-        bool rotate(float degree)
-        {
-            if (rTransform) {
-                if (fabsf(degree - rTransform->degree) <= FLT_EPSILON) return true;
-            } else {
-                if (fabsf(degree) <= FLT_EPSILON) return true;
-                rTransform = new RenderTransform();
-                if (!rTransform) return false;
-            }
-            rTransform->degree = degree;
-            if (!rTransform->overriding) flag |= RenderUpdateFlag::Transform;
-
-            return true;
-        }
-
-        bool scale(float factor)
-        {
-            if (rTransform) {
-                if (fabsf(factor - rTransform->scale) <= FLT_EPSILON) return true;
-            } else {
-                if (fabsf(factor) <= FLT_EPSILON) return true;
-                rTransform = new RenderTransform();
-                if (!rTransform) return false;
-            }
-            rTransform->scale = factor;
-            if (!rTransform->overriding) flag |= RenderUpdateFlag::Transform;
-
-            return true;
-        }
-
-        bool translate(float x, float y)
-        {
-            if (rTransform) {
-                if (fabsf(x - rTransform->x) <= FLT_EPSILON && fabsf(y - rTransform->y) <= FLT_EPSILON) return true;
-            } else {
-                if (fabsf(x) <= FLT_EPSILON && fabsf(y) <= FLT_EPSILON) return true;
-                rTransform = new RenderTransform();
-                if (!rTransform) return false;
-            }
-            rTransform->x = x;
-            rTransform->y = y;
-            if (!rTransform->overriding) flag |= RenderUpdateFlag::Transform;
-
-            return true;
         }
 
         bool transform(const Matrix& m)
@@ -200,106 +90,6 @@ namespace tvg
             return smethod->dispose(renderer);
         }
 
-        void* update(RenderMethod& renderer, const RenderTransform* pTransform, uint32_t opacity, Array<RenderData>& clips, uint32_t pFlag)
-        {
-            if (flag & RenderUpdateFlag::Transform) {
-                if (!rTransform) return nullptr;
-                if (!rTransform->update()) {
-                    delete(rTransform);
-                    rTransform = nullptr;
-                }
-            }
-
-            /* 1. Composition Pre Processing */
-            void *cmpData = nullptr;
-            RenderRegion viewport;
-            bool cmpFastTrack = false;
-
-            if (cmpTarget) {
-                /* If transform has no rotation factors && ClipPath is a simple rectangle,
-                   we can avoid regular ClipPath sequence but use viewport for performance */
-                if (cmpMethod == CompositeMethod::ClipPath) {
-                    RenderRegion viewport2;
-                    if ((cmpFastTrack = _clipPathFastTrack(cmpTarget, pTransform, cmpTarget->pImpl->rTransform, viewport2))) {
-                        viewport = renderer.viewport();
-                        viewport2.merge(viewport);
-                        renderer.viewport(viewport2);
-                    }
-                }
-
-                if (!cmpFastTrack) {
-                    cmpData = cmpTarget->pImpl->update(renderer, pTransform, 255, clips, pFlag);
-                    if (cmpMethod == CompositeMethod::ClipPath) clips.push(cmpData);
-                }
-            }
-
-            /* 2. Main Update */
-            void *edata = nullptr;
-            auto newFlag = static_cast<RenderUpdateFlag>(pFlag | flag);
-            flag = RenderUpdateFlag::None;
-            opacity = (opacity * this->opacity) / 255;
-
-            if (rTransform && pTransform) {
-                RenderTransform outTransform(pTransform, rTransform);
-                edata = smethod->update(renderer, &outTransform, opacity, clips, newFlag);
-            } else {
-                auto outTransform = pTransform ? pTransform : rTransform;
-                edata = smethod->update(renderer, outTransform, opacity, clips, newFlag);
-            }
-
-            /* 3. Composition Post Processing */
-            if (cmpFastTrack) renderer.viewport(viewport);
-            else if (cmpData && cmpMethod == CompositeMethod::ClipPath) clips.pop();
-
-            return edata;
-        }
-
-        bool render(RenderMethod& renderer)
-        {
-            Compositor* cmp = nullptr;
-
-            /* Note: only ClipPath is processed in update() step.
-               Create a composition image. */
-            if (cmpTarget && cmpMethod != CompositeMethod::ClipPath) {
-                auto region = cmpTarget->pImpl->bounds(renderer);
-                if (region.w == 0 || region.h == 0) return false;
-                cmp = renderer.target(region);
-                renderer.beginComposite(cmp, CompositeMethod::None, 255);
-                cmpTarget->pImpl->render(renderer);
-            }
-
-            if (cmp) renderer.beginComposite(cmp, cmpMethod, cmpTarget->pImpl->opacity);
-
-            auto ret = smethod->render(renderer);
-
-            if (cmp) renderer.endComposite(cmp);
-
-            return ret;
-        }
-
-        Paint* duplicate()
-        {
-            auto ret = smethod->duplicate();
-            if (!ret) return nullptr;
-
-            //duplicate Transform
-            if (rTransform) {
-                ret->pImpl->rTransform = new RenderTransform();
-                if (ret->pImpl->rTransform) {
-                    *ret->pImpl->rTransform = *rTransform;
-                    ret->pImpl->flag |= RenderUpdateFlag::Transform;
-                }
-            }
-
-            ret->pImpl->opacity = opacity;
-
-            if (cmpTarget) ret->pImpl->cmpTarget = cmpTarget->duplicate();
-
-            ret->pImpl->cmpMethod = cmpMethod;
-
-            return ret;
-        }
-
         bool composite(Paint* target, CompositeMethod method)
         {
             if ((!target && method != CompositeMethod::None) || (target && method == CompositeMethod::None)) return false;
@@ -308,6 +98,13 @@ namespace tvg
             cmpMethod = method;
             return true;
         }
+
+        bool rotate(float degree);
+        bool scale(float factor);
+        bool translate(float x, float y);
+        void* update(RenderMethod& renderer, const RenderTransform* pTransform, uint32_t opacity, Array<RenderData>& clips, uint32_t pFlag);
+        bool render(RenderMethod& renderer);
+        Paint* duplicate();
     };
 
 

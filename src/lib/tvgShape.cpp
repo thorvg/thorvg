@@ -20,6 +20,8 @@
  * SOFTWARE.
  */
 #include <limits>
+#include <float.h>
+#include <math.h>
 #include "tvgShapeImpl.h"
 
 /************************************************************************/
