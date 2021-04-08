@@ -271,6 +271,7 @@ void _applyProperty(SvgNode* node, Shape* vg, float vx, float vy, float vw, floa
                 auto comp = Shape::gen();
                 auto child = compNode->child.data;
                 for (uint32_t i = 0; i < compNode->child.count; ++i, ++child) _appendChildShape(*child, comp.get(), vx, vy, vw, vh);
+                comp->fill(0, 0, 0, 255);
                 vg->composite(move(comp), CompositeMethod::ClipPath);
             }
         }
@@ -375,6 +376,7 @@ unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, float vx, float vy, flo
                         auto comp = Shape::gen();
                         auto child = compNode->child.data;
                         for (uint32_t i = 0; i < compNode->child.count; ++i, ++child) _appendChildShape(*child, comp.get(), vx, vy, vw, vh);
+                        comp->fill(0, 0, 0, 255);
                         scene->composite(move(comp), CompositeMethod::ClipPath);
                     }
                 }
