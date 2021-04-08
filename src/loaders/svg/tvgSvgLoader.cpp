@@ -858,8 +858,7 @@ static void _handleTransformAttr(TVG_UNUSED SvgLoaderData* loader, SvgNode* node
 static void _handleClipPathAttr(TVG_UNUSED SvgLoaderData* loader, SvgNode* node, const char* value)
 {
     SvgStyleProperty* style = node->style;
-    style->comp.flags = (SvgCompositeFlags)((int)style->comp.flags | (int)SvgCompositeFlags::ClipPath);
-
+    style->comp.method = CompositeMethod::ClipPath;
     int len = strlen(value);
     if (len >= 3 && !strncmp(value, "url", 3)) style->comp.url = _idFromUrl((const char*)(value + 3));
 }
@@ -867,8 +866,7 @@ static void _handleClipPathAttr(TVG_UNUSED SvgLoaderData* loader, SvgNode* node,
 static void _handleMaskAttr(TVG_UNUSED SvgLoaderData* loader, SvgNode* node, const char* value)
 {
     SvgStyleProperty* style = node->style;
-    style->comp.flags = (SvgCompositeFlags)((int)style->comp.flags | (int)SvgCompositeFlags::AlphaMask);
-
+    style->comp.method = CompositeMethod::AlphaMask;
     int len = strlen(value);
     if (len >= 3 && !strncmp(value, "url", 3)) style->comp.url = _idFromUrl((const char*)(value + 3));
 }
