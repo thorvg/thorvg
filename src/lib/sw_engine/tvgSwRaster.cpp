@@ -598,7 +598,7 @@ static bool _rasterImage(SwSurface* surface, const uint32_t *img, uint32_t w, ui
 
 static bool _rasterTranslucentLinearGradientRect(SwSurface* surface, const SwBBox& region, const SwFill* fill)
 {
-    if (!fill || fill->linear.len < FLT_EPSILON) return false;
+    if (fill->linear.len < FLT_EPSILON) return false;
 
     auto buffer = surface->buffer + (region.min.y * surface->stride) + region.min.x;
     auto h = static_cast<uint32_t>(region.max.y - region.min.y);
@@ -620,7 +620,7 @@ static bool _rasterTranslucentLinearGradientRect(SwSurface* surface, const SwBBo
 
 static bool _rasterOpaqueLinearGradientRect(SwSurface* surface, const SwBBox& region, const SwFill* fill)
 {
-    if (!fill || fill->linear.len < FLT_EPSILON) return false;
+    if (fill->linear.len < FLT_EPSILON) return false;
 
     auto buffer = surface->buffer + (region.min.y * surface->stride) + region.min.x;
     auto h = static_cast<uint32_t>(region.max.y - region.min.y);
@@ -670,7 +670,7 @@ static bool _rasterOpaqueLinearGradientRect(SwSurface* surface, const SwBBox& re
 
 static bool _rasterTranslucentRadialGradientRect(SwSurface* surface, const SwBBox& region, const SwFill* fill)
 {
-    if (!fill || fill->radial.a < FLT_EPSILON) return false;
+    if (fill->radial.a < FLT_EPSILON) return false;
 
     auto buffer = surface->buffer + (region.min.y * surface->stride) + region.min.x;
     auto h = static_cast<uint32_t>(region.max.y - region.min.y);
@@ -692,7 +692,7 @@ static bool _rasterTranslucentRadialGradientRect(SwSurface* surface, const SwBBo
 
 static bool _rasterOpaqueRadialGradientRect(SwSurface* surface, const SwBBox& region, const SwFill* fill)
 {
-    if (!fill || fill->radial.a < FLT_EPSILON) return false;
+    if (fill->radial.a < FLT_EPSILON) return false;
 
     auto buffer = surface->buffer + (region.min.y * surface->stride) + region.min.x;
     auto h = static_cast<uint32_t>(region.max.y - region.min.y);
@@ -744,7 +744,7 @@ static bool _rasterOpaqueRadialGradientRect(SwSurface* surface, const SwBBox& re
 
 static bool _rasterTranslucentLinearGradientRle(SwSurface* surface, const SwRleData* rle, const SwFill* fill)
 {
-    if (!rle || !fill || fill->linear.len < FLT_EPSILON) return false;
+    if (fill->linear.len < FLT_EPSILON) return false;
 
     auto buf = static_cast<uint32_t*>(alloca(surface->w * sizeof(uint32_t)));
     if (!buf) return false;
@@ -772,7 +772,7 @@ static bool _rasterTranslucentLinearGradientRle(SwSurface* surface, const SwRleD
 
 static bool _rasterOpaqueLinearGradientRle(SwSurface* surface, const SwRleData* rle, const SwFill* fill)
 {
-    if (!rle || !fill || fill->linear.len < FLT_EPSILON) return false;
+    if (fill->linear.len < FLT_EPSILON) return false;
 
     auto buf = static_cast<uint32_t*>(alloca(surface->w * sizeof(uint32_t)));
     if (!buf) return false;
@@ -845,7 +845,7 @@ static bool _rasterOpaqueLinearGradientRle(SwSurface* surface, const SwRleData* 
 
 static bool _rasterTranslucentRadialGradientRle(SwSurface* surface, const SwRleData* rle, const SwFill* fill)
 {
-    if (!rle || !fill || fill->radial.a < FLT_EPSILON) return false;
+    if (fill->radial.a < FLT_EPSILON) return false;
 
     auto buf = static_cast<uint32_t*>(alloca(surface->w * sizeof(uint32_t)));
     if (!buf) return false;
@@ -873,7 +873,7 @@ static bool _rasterTranslucentRadialGradientRle(SwSurface* surface, const SwRleD
 
 static bool _rasterOpaqueRadialGradientRle(SwSurface* surface, const SwRleData* rle, const SwFill* fill)
 {
-    if (!rle || !fill || fill->radial.a < FLT_EPSILON) return false;
+    if (fill->radial.a < FLT_EPSILON) return false;
 
     auto buf = static_cast<uint32_t*>(alloca(surface->w * sizeof(uint32_t)));
     if (!buf) return false;
@@ -967,6 +967,8 @@ bool rasterCompositor(SwSurface* surface)
 
 bool rasterGradientShape(SwSurface* surface, SwShape* shape, unsigned id)
 {
+    if (!shape->fill) return false;
+
     //Fast Track
     if (shape->rect) {
         if (id == FILL_ID_LINEAR) {
@@ -977,6 +979,7 @@ bool rasterGradientShape(SwSurface* surface, SwShape* shape, unsigned id)
             return _rasterOpaqueRadialGradientRect(surface, shape->bbox, shape->fill);
         }
     } else {
+        if (!shape->rle) return false;
         if (id == FILL_ID_LINEAR) {
             if (shape->fill->translucent) return _rasterTranslucentLinearGradientRle(surface, shape->rle, shape->fill);
             return _rasterOpaqueLinearGradientRle(surface, shape->rle, shape->fill);
@@ -1030,11 +1033,13 @@ bool rasterStroke(SwSurface* surface, SwShape* shape, uint8_t r, uint8_t g, uint
 
 bool rasterGradientStroke(SwSurface* surface, SwShape* shape, unsigned id)
 {
+    if (!shape->stroke->fill || !shape->strokeRle) return false;
+
     if (id == FILL_ID_LINEAR) {
-        if (shape->fill->translucent) return _rasterTranslucentLinearGradientRle(surface, shape->strokeRle, shape->stroke->fill);
+        if (shape->fill && shape->fill->translucent) return _rasterTranslucentLinearGradientRle(surface, shape->strokeRle, shape->stroke->fill);
         return _rasterOpaqueLinearGradientRle(surface, shape->strokeRle, shape->stroke->fill);
     } else {
-        if (shape->fill->translucent) return _rasterTranslucentRadialGradientRle(surface, shape->strokeRle, shape->stroke->fill);
+        if (shape->fill && shape->fill->translucent) return _rasterTranslucentRadialGradientRle(surface, shape->strokeRle, shape->stroke->fill);
         return _rasterOpaqueRadialGradientRle(surface, shape->strokeRle, shape->stroke->fill);
     }
 
