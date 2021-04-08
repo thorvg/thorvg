@@ -62,11 +62,6 @@ enum class SvgLengthType
     In,
 };
 
-enum class SvgCompositeFlags
-{
-    ClipPath = 0x01,
-    AlphaMask = 0x02,
-};
 
 enum class SvgFillFlags
 {
@@ -227,7 +222,7 @@ struct SvgGradientStop
 
 struct SvgComposite
 {
-    SvgCompositeFlags flags;
+    CompositeMethod method;     //TODO: Currently support either one method
     string *url;
     SvgNode* node;
 };
