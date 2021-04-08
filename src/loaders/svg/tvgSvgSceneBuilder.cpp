@@ -203,6 +203,7 @@ void _appendChildShape(SvgNode* node, Shape* shape, float vx, float vy, float vw
     }
 }
 
+
 void _applyProperty(SvgNode* node, Shape* vg, float vx, float vy, float vw, float vh)
 {
     SvgStyleProperty* style = node->style;
@@ -243,8 +244,9 @@ void _applyProperty(SvgNode* node, Shape* vg, float vx, float vy, float vw, floa
     vg->stroke(style->stroke.width);
     vg->stroke(style->stroke.cap);
     vg->stroke(style->stroke.join);
-    if (style->stroke.dash.array.count > 0)
+    if (style->stroke.dash.array.count > 0) {
         vg->stroke(style->stroke.dash.array.data, style->stroke.dash.array.count);
+    }
 
     //If stroke property is nullptr then do nothing
     if (style->stroke.paint.none) {
@@ -256,34 +258,20 @@ void _applyProperty(SvgNode* node, Shape* vg, float vx, float vy, float vw, floa
     } else if (style->stroke.paint.curColor) {
         //Apply the current style color
         vg->stroke(style->r, style->g, style->b, style->stroke.opacity);
-
     } else {
         //Apply the stroke color
         vg->stroke(style->stroke.paint.r, style->stroke.paint.g, style->stroke.paint.b, style->stroke.opacity);
     }
 
     //Apply composite node
-    if (style->comp.node) {
-        //Composite ClipPath
-        if (((int)style->comp.flags & (int)SvgCompositeFlags::ClipPath)) {
-            auto compNode = style->comp.node;
-            if (compNode->child.count > 0) {
-                auto comp = Shape::gen();
-                auto child = compNode->child.data;
-                for (uint32_t i = 0; i < compNode->child.count; ++i, ++child) _appendChildShape(*child, comp.get(), vx, vy, vw, vh);
-                comp->fill(0, 0, 0, 255);
-                vg->composite(move(comp), CompositeMethod::ClipPath);
-            }
-        }
-        //Composite Alpha Mask
-        if (((int)style->comp.flags & (int)SvgCompositeFlags::AlphaMask)) {
-            auto compNode = style->comp.node;
-            if (compNode->child.count > 0) {
-                auto comp = Shape::gen();
-                auto child = compNode->child.data;
-                for (uint32_t i = 0; i < compNode->child.count; ++i, ++child) _appendChildShape(*child, comp.get(), vx, vy, vw, vh);
-                vg->composite(move(comp), CompositeMethod::AlphaMask);
-            }
+    if (style->comp.node && (style->comp.method != CompositeMethod::None)) {
+        auto compNode = style->comp.node;
+        if (compNode->child.count > 0) {
+            auto comp = Shape::gen();
+            auto child = compNode->child.data;
+            for (uint32_t i = 0; i < compNode->child.count; ++i, ++child) _appendChildShape(*child, comp.get(), vx, vy, vw, vh);
+            if (style->comp.method == CompositeMethod::ClipPath) comp->fill(0, 0, 0, 255);
+            vg->composite(move(comp), style->comp.method);
         }
     }
 }
@@ -303,8 +291,9 @@ bool _appendShape(SvgNode* node, Shape* shape, float vx, float vy, float vw, flo
     switch (node->type) {
         case SvgNodeType::Path: {
             if (node->node.path.path) {
-                if (svgPathToTvgPath(node->node.path.path->c_str(), cmds, pts))
+                if (svgPathToTvgPath(node->node.path.path->c_str(), cmds, pts)) {
                     shape->appendPath(cmds.data, cmds.count, pts.data, pts.count);
+                }
             }
             break;
         }
@@ -368,27 +357,14 @@ unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, float vx, float vy, flo
                 }
             }
             //Apply composite node
-            if (node->style->comp.node) {
-                //Composite ClipPath
-                if (((int)node->style->comp.flags & (int)SvgCompositeFlags::ClipPath)) {
-                    auto compNode = node->style->comp.node;
-                    if (compNode->child.count > 0) {
-                        auto comp = Shape::gen();
-                        auto child = compNode->child.data;
-                        for (uint32_t i = 0; i < compNode->child.count; ++i, ++child) _appendChildShape(*child, comp.get(), vx, vy, vw, vh);
-                        comp->fill(0, 0, 0, 255);
-                        scene->composite(move(comp), CompositeMethod::ClipPath);
-                    }
-                }
-                //Composite AlphaMask
-                if (((int)node->style->comp.flags & (int)SvgCompositeFlags::AlphaMask)) {
-                    auto compNode = node->style->comp.node;
-                    if (compNode->child.count > 0) {
-                        auto comp = Shape::gen();
-                        auto child = compNode->child.data;
-                        for (uint32_t i = 0; i < compNode->child.count; ++i, ++child) _appendChildShape(*child, comp.get(), vx, vy, vw, vh);
-                        scene->composite(move(comp), CompositeMethod::AlphaMask);
-                    }
+            if (node->style->comp.node && (node->style->comp.method != CompositeMethod::None)) {
+                auto compNode = node->style->comp.node;
+                if (compNode->child.count > 0) {
+                    auto comp = Shape::gen();
+                    auto child = compNode->child.data;
+                    for (uint32_t i = 0; i < compNode->child.count; ++i, ++child) _appendChildShape(*child, comp.get(), vx, vy, vw, vh);
+                    if (node->style->comp.method == CompositeMethod::ClipPath) comp->fill(0, 0, 0, 255);
+                    scene->composite(move(comp), node->style->comp.method);
                 }
             }
             scene->opacity(node->style->opacity);
@@ -412,7 +388,7 @@ unique_ptr<Scene> _buildRoot(const SvgNode* node, float vx, float vy, float vw, 
         viewBoxClip->fill(0, 0, 0, 255);
 
         auto compositeLayer = Scene::gen();
-        compositeLayer->composite(move(viewBoxClip), tvg::CompositeMethod::ClipPath);
+        compositeLayer->composite(move(viewBoxClip), CompositeMethod::ClipPath);
         compositeLayer->push(move(docNode));
 
         root = Scene::gen();
