@@ -1,6 +1,6 @@
 Name:       thorvg
 Summary:    Thor Vector Graphics Library
-Version:    0.0.1
+Version:    0.1.0
 Release:    1
 Group:      Graphics System/Rendering Engine
 License:    MIT
