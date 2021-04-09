@@ -200,13 +200,20 @@ static unique_ptr<RadialGradient> _applyRadialGradientProperty(SvgStyleGradient*
 }
 
 
-static void _appendChildShape(SvgNode* node, Shape* shape, float vx, float vy, float vw, float vh)
+static bool _appendChildShape(SvgNode* node, Shape* shape, float vx, float vy, float vw, float vh)
 {
-    _appendShape(node, shape, vx, vy, vw, vh);
+    auto valid = false;
+
+    if (_appendShape(node, shape, vx, vy, vw, vh)) valid = true;
+
     if (node->child.count > 0) {
         auto child = node->child.data;
-        for (uint32_t i = 0; i < node->child.count; ++i, ++child) _appendChildShape(*child, shape, vx, vy, vw, vh);
+        for (uint32_t i = 0; i < node->child.count; ++i, ++child) {
+            if (_appendChildShape(*child, shape, vx, vy, vw, vh)) valid = true;
+        }
     }
+
+    return valid;
 }
 
 
@@ -275,9 +282,14 @@ static void _applyProperty(SvgNode* node, Shape* vg, float vx, float vy, float v
         if (compNode->child.count > 0) {
             auto comp = Shape::gen();
             auto child = compNode->child.data;
-            for (uint32_t i = 0; i < compNode->child.count; ++i, ++child) _appendChildShape(*child, comp.get(), vx, vy, vw, vh);
-            if (style->comp.method == CompositeMethod::ClipPath) comp->fill(0, 0, 0, 255);
-            vg->composite(move(comp), style->comp.method);
+            auto valid = false;    //Composite only when valid shapes are existed
+            for (uint32_t i = 0; i < compNode->child.count; ++i, ++child) {
+                if (_appendChildShape(*child, comp.get(), vx, vy, vw, vh)) valid = true;
+            }
+            if (valid) {
+                if (style->comp.method == CompositeMethod::ClipPath) comp->fill(0, 0, 0, 255);
+                vg->composite(move(comp), style->comp.method);
+            }
         }
     }
 }
@@ -371,9 +383,14 @@ static unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, float vx, float 
                 if (compNode->child.count > 0) {
                     auto comp = Shape::gen();
                     auto child = compNode->child.data;
-                    for (uint32_t i = 0; i < compNode->child.count; ++i, ++child) _appendChildShape(*child, comp.get(), vx, vy, vw, vh);
-                    if (node->style->comp.method == CompositeMethod::ClipPath) comp->fill(0, 0, 0, 255);
-                    scene->composite(move(comp), node->style->comp.method);
+                    auto valid = false;      //Composite only when valid shapes are existed
+                    for (uint32_t i = 0; i < compNode->child.count; ++i, ++child) {
+                        if (_appendChildShape(*child, comp.get(), vx, vy, vw, vh)) valid = true;
+                    }
+                    if (valid) {
+                        if (node->style->comp.method == CompositeMethod::ClipPath) comp->fill(0, 0, 0, 255);
+                        scene->composite(move(comp), node->style->comp.method);
+                    }
                 }
             }
             scene->opacity(node->style->opacity);
