@@ -56,10 +56,10 @@ struct RenderRegion {
         auto x2 = rhs.x + rhs.w;
         auto y2 = rhs.y + rhs.h;
 
-        x = max(x, rhs.x);
-        y = max(y, rhs.y);
-        w = min(x1, x2) - x;
-        h = min(y1, y2) - y;
+        x = (x > rhs.x) ? x : rhs.x;
+        y = (y > rhs.y) ? y : rhs.y;
+        w = ((x1 < x2) ? x1 : x2) - x;
+        h = ((y1 < y2) ? y1 : y2) - y;
     }
 };
 

@@ -20,6 +20,8 @@
  * SOFTWARE.
  */
 #include <math.h>
+#include <clocale>
+#include <ctype.h>
 #include "tvgSvgLoaderCommon.h"
 #include "tvgSvgPath.h"
 

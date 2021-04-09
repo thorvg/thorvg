@@ -458,10 +458,10 @@ bool mathUpdateOutlineBBox(const SwOutline* outline, const SwBBox& clipRegion, S
     renderRegion.min.y = yMin >> 6;
     renderRegion.max.y = (yMax + 63) >> 6;
 
-    renderRegion.max.x = min(renderRegion.max.x, clipRegion.max.x);
-    renderRegion.max.y = min(renderRegion.max.y, clipRegion.max.y);
-    renderRegion.min.x = max(renderRegion.min.x, clipRegion.min.x);
-    renderRegion.min.y = max(renderRegion.min.y, clipRegion.min.y);
+    renderRegion.max.x = (renderRegion.max.x < clipRegion.max.x) ? renderRegion.max.x : clipRegion.max.x;
+    renderRegion.max.y = (renderRegion.max.y < clipRegion.max.y) ? renderRegion.max.y : clipRegion.max.y;
+    renderRegion.min.x = (renderRegion.min.x > clipRegion.min.x) ? renderRegion.min.x : clipRegion.min.x;
+    renderRegion.min.y = (renderRegion.min.y > clipRegion.min.y) ? renderRegion.min.y : clipRegion.min.y;
 
     //Check valid region
     if (renderRegion.max.x - renderRegion.min.x < 1 && renderRegion.max.y - renderRegion.min.y < 1) return false;
