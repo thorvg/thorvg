@@ -23,15 +23,8 @@
 #ifndef _TVG_SVG_SCENE_BUILDER_H_
 #define _TVG_SVG_SCENE_BUILDER_H_
 
-#include "tvgSvgLoaderCommon.h"
+#include "tvgCommon.h"
 
-class SvgSceneBuilder
-{
-public:
-    SvgSceneBuilder();
-    ~SvgSceneBuilder();
-
-    unique_ptr<Scene> build(SvgNode* node);
-};
+unique_ptr<Scene> svgSceneBuild(SvgNode* node);
 
 #endif //_TVG_SVG_SCENE_BUILDER_H_

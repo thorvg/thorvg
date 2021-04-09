@@ -23,7 +23,7 @@
 #ifndef _TVG_SVG_PATH_H_
 #define _TVG_SVG_PATH_H_
 
-#include "tvgSvgLoaderCommon.h"
+#include <tvgCommon.h>
 
 bool svgPathToTvgPath(const char* svgPath, Array<PathCommand>& cmds, Array<Point>& pts);
 

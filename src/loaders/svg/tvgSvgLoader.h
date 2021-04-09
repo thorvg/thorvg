@@ -23,7 +23,7 @@
 #define _TVG_SVG_LOADER_H_
 
 #include "tvgTaskScheduler.h"
-#include "tvgSvgSceneBuilder.h"
+#include "tvgSvgLoaderCommon.h"
 
 class SvgLoader : public Loader, public Task
 {
@@ -33,7 +33,6 @@ public:
     uint32_t size = 0;
 
     SvgLoaderData loaderData;
-    SvgSceneBuilder builder;
     unique_ptr<Scene> root;
 
     SvgLoader();

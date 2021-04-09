@@ -19,14 +19,13 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#include <stddef.h>
 #include <fstream>
-#include <string.h>
 #include <float.h>
 #include <math.h>
 #include "tvgLoaderMgr.h"
 #include "tvgXmlParser.h"
 #include "tvgSvgLoader.h"
+#include "tvgSvgSceneBuilder.h"
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
@@ -855,6 +854,7 @@ static void _handleTransformAttr(TVG_UNUSED SvgLoaderData* loader, SvgNode* node
     node->transform = _parseTransformationMatrix(value);
 }
 
+
 static void _handleClipPathAttr(TVG_UNUSED SvgLoaderData* loader, SvgNode* node, const char* value)
 {
     SvgStyleProperty* style = node->style;
@@ -866,6 +866,7 @@ static void _handleClipPathAttr(TVG_UNUSED SvgLoaderData* loader, SvgNode* node,
     if (len >= 3 && !strncmp(value, "url", 3)) style->comp.url = _idFromUrl((const char*)(value + 3));
 }
 
+
 static void _handleMaskAttr(TVG_UNUSED SvgLoaderData* loader, SvgNode* node, const char* value)
 {
     SvgStyleProperty* style = node->style;
@@ -876,6 +877,7 @@ static void _handleMaskAttr(TVG_UNUSED SvgLoaderData* loader, SvgNode* node, con
     int len = strlen(value);
     if (len >= 3 && !strncmp(value, "url", 3)) style->comp.url = _idFromUrl((const char*)(value + 3));
 }
+
 
 static void _handleDisplayAttr(TVG_UNUSED SvgLoaderData* loader, SvgNode* node, const char* value)
 {
@@ -890,12 +892,7 @@ static void _handleDisplayAttr(TVG_UNUSED SvgLoaderData* loader, SvgNode* node, 
 
 typedef void (*styleMethod)(SvgLoaderData* loader, SvgNode* node, const char* value);
 
-
-#define STYLE_DEF(Name, Name1)                       \
-    {                                                \
-#Name, sizeof(#Name), _handle##Name1##Attr \
-    }
-
+#define STYLE_DEF(Name, Name1) { #Name, sizeof(#Name), _handle##Name1##Attr }
 
 static constexpr struct
 {
@@ -2589,7 +2586,7 @@ void SvgLoader::run(unsigned tid)
         _updateComposite(loaderData.doc, loaderData.doc);
         if (defs) _updateComposite(loaderData.doc, defs);
     }
-    root = builder.build(loaderData.doc);
+    root = svgSceneBuild(loaderData.doc);
 };
 
 

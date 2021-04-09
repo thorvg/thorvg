@@ -19,11 +19,13 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#include <string.h>
 #include <math.h>
-#include <ctype.h>
-#include <locale.h>
+#include "tvgSvgLoaderCommon.h"
 #include "tvgSvgPath.h"
+
+/************************************************************************/
+/* Internal Class Implementation                                        */
+/************************************************************************/
 
 static char* _skipComma(const char* content)
 {
@@ -489,6 +491,11 @@ static char* _nextCommand(char* path, char* cmd, float* arr, int* count)
     }
     return path;
 }
+
+
+/************************************************************************/
+/* External Class Implementation                                        */
+/************************************************************************/
 
 
 bool svgPathToTvgPath(const char* svgPath, Array<PathCommand>& cmds, Array<Point>& pts)
