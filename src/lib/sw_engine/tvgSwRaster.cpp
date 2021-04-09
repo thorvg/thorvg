@@ -1036,10 +1036,10 @@ bool rasterGradientStroke(SwSurface* surface, SwShape* shape, unsigned id)
     if (!shape->stroke->fill || !shape->strokeRle) return false;
 
     if (id == FILL_ID_LINEAR) {
-        if (shape->fill && shape->fill->translucent) return _rasterTranslucentLinearGradientRle(surface, shape->strokeRle, shape->stroke->fill);
+        if (shape->stroke->fill->translucent) return _rasterTranslucentLinearGradientRle(surface, shape->strokeRle, shape->stroke->fill);
         return _rasterOpaqueLinearGradientRle(surface, shape->strokeRle, shape->stroke->fill);
     } else {
-        if (shape->fill && shape->fill->translucent) return _rasterTranslucentRadialGradientRle(surface, shape->strokeRle, shape->stroke->fill);
+        if (shape->stroke->fill->translucent) return _rasterTranslucentRadialGradientRle(surface, shape->strokeRle, shape->stroke->fill);
         return _rasterOpaqueRadialGradientRle(surface, shape->strokeRle, shape->stroke->fill);
     }
 
