@@ -22,6 +22,7 @@
 
 #include <ctype.h>
 #include <string>
+
 #ifdef _WIN32
     #include <malloc.h>
 #else
@@ -29,6 +30,10 @@
 #endif
 
 #include "tvgXmlParser.h"
+
+/************************************************************************/
+/* Internal Class Implementation                                        */
+/************************************************************************/
 
 #ifdef THORVG_LOG_ENABLED
 
@@ -197,6 +202,11 @@ static const char* _simpleXmlFindDoctypeChildEndTag(const char* itr, const char*
     }
     return nullptr;
 }
+
+
+/************************************************************************/
+/* External Class Implementation                                        */
+/************************************************************************/
 
 
 bool simpleXmlParseAttributes(const char* buf, unsigned bufLength, simpleXMLAttributeCb func, const void* data)

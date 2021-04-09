@@ -20,19 +20,24 @@
  * SOFTWARE.
  */
 #include <math.h>
-#include <string>
+#include "tvgSvgLoaderCommon.h"
 #include "tvgSvgSceneBuilder.h"
 #include "tvgSvgPath.h"
 
-bool _appendShape(SvgNode* node, Shape* shape, float vx, float vy, float vw, float vh);
+static bool _appendShape(SvgNode* node, Shape* shape, float vx, float vy, float vw, float vh);
 
-bool _isGroupType(SvgNodeType type)
+/************************************************************************/
+/* Internal Class Implementation                                        */
+/************************************************************************/
+
+static inline bool _isGroupType(SvgNodeType type)
 {
     if (type == SvgNodeType::Doc || type == SvgNodeType::G || type == SvgNodeType::ClipPath) return true;
     return false;
 }
 
-unique_ptr<LinearGradient> _applyLinearGradientProperty(SvgStyleGradient* g, const Shape* vg, float rx, float ry, float rw, float rh)
+
+static unique_ptr<LinearGradient> _applyLinearGradientProperty(SvgStyleGradient* g, const Shape* vg, float rx, float ry, float rw, float rh)
 {
     Fill::ColorStop* stops;
     int stopCount = 0;
@@ -112,7 +117,7 @@ unique_ptr<LinearGradient> _applyLinearGradientProperty(SvgStyleGradient* g, con
 }
 
 
-unique_ptr<RadialGradient> _applyRadialGradientProperty(SvgStyleGradient* g, const Shape* vg, float rx, float ry, float rw, float rh)
+static unique_ptr<RadialGradient> _applyRadialGradientProperty(SvgStyleGradient* g, const Shape* vg, float rx, float ry, float rw, float rh)
 {
     Fill::ColorStop *stops;
     int stopCount = 0;
@@ -194,7 +199,8 @@ unique_ptr<RadialGradient> _applyRadialGradientProperty(SvgStyleGradient* g, con
     return fillGrad;
 }
 
-void _appendChildShape(SvgNode* node, Shape* shape, float vx, float vy, float vw, float vh)
+
+static void _appendChildShape(SvgNode* node, Shape* shape, float vx, float vy, float vw, float vh)
 {
     _appendShape(node, shape, vx, vy, vw, vh);
     if (node->child.count > 0) {
@@ -204,7 +210,7 @@ void _appendChildShape(SvgNode* node, Shape* shape, float vx, float vy, float vw
 }
 
 
-void _applyProperty(SvgNode* node, Shape* vg, float vx, float vy, float vw, float vh)
+static void _applyProperty(SvgNode* node, Shape* vg, float vx, float vy, float vw, float vh)
 {
     SvgStyleProperty* style = node->style;
 
@@ -276,14 +282,16 @@ void _applyProperty(SvgNode* node, Shape* vg, float vx, float vy, float vw, floa
     }
 }
 
-unique_ptr<Shape> _shapeBuildHelper(SvgNode* node, float vx, float vy, float vw, float vh)
+
+static unique_ptr<Shape> _shapeBuildHelper(SvgNode* node, float vx, float vy, float vw, float vh)
 {
     auto shape = Shape::gen();
     if (_appendShape(node, shape.get(), vx, vy, vw, vh)) return shape;
     else return nullptr;
 }
 
-bool _appendShape(SvgNode* node, Shape* shape, float vx, float vy, float vw, float vh)
+
+static bool _appendShape(SvgNode* node, Shape* shape, float vx, float vy, float vw, float vh)
 {
     Array<PathCommand> cmds;
     Array<Point> pts;
@@ -340,7 +348,8 @@ bool _appendShape(SvgNode* node, Shape* shape, float vx, float vy, float vw, flo
     return true;
 }
 
-unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, float vx, float vy, float vw, float vh)
+
+static unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, float vx, float vy, float vw, float vh)
 {
     if (_isGroupType(node->type)) {
         auto scene = Scene::gen();
@@ -374,8 +383,20 @@ unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, float vx, float vy, flo
     return nullptr;
 }
 
-unique_ptr<Scene> _buildRoot(const SvgNode* node, float vx, float vy, float vw, float vh)
+
+/************************************************************************/
+/* External Class Implementation                                        */
+/************************************************************************/
+
+unique_ptr<Scene> svgSceneBuild(SvgNode* node)
 {
+    if (!node || (node->type != SvgNodeType::Doc)) return nullptr;
+
+    auto vx = node->node.doc.vx;
+    auto vy = node->node.doc.vy;
+    auto vw = node->node.doc.vw;
+    auto vh = node->node.doc.vh;
+
     unique_ptr<Scene> root;
     auto docNode = _sceneBuildHelper(node, vx, vy, vw, vh);
     float x, y, w, h;
@@ -397,21 +418,4 @@ unique_ptr<Scene> _buildRoot(const SvgNode* node, float vx, float vy, float vw, 
         root = move(docNode);
     }
     return root;
-}
-
-SvgSceneBuilder::SvgSceneBuilder()
-{
-}
-
-
-SvgSceneBuilder::~SvgSceneBuilder()
-{
-}
-
-
-unique_ptr<Scene> SvgSceneBuilder::build(SvgNode* node)
-{
-    if (!node || (node->type != SvgNodeType::Doc)) return nullptr;
-
-    return _buildRoot(node, node->node.doc.vx, node->node.doc.vy, node->node.doc.vw, node->node.doc.vh);
 }
