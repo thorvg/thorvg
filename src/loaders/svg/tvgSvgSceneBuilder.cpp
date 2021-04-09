@@ -217,6 +217,28 @@ static bool _appendChildShape(SvgNode* node, Shape* shape, float vx, float vy, f
 }
 
 
+static void _applyComposition(Paint* paint, const SvgNode* node, float vx, float vy, float vw, float vh)
+{
+    if (node->style->comp.method == CompositeMethod::None) return;
+
+    auto compNode = node->style->comp.node;
+    if (!compNode || compNode->child.count == 0) return;
+
+    auto comp = Shape::gen();
+    comp->fill(255, 255, 255, 255);
+    if (node->transform) comp->transform(*node->transform);
+
+    auto child = compNode->child.data;
+    auto valid = false;      //Composite only when valid shapes are existed
+
+    for (uint32_t i = 0; i < compNode->child.count; ++i, ++child) {
+        if (_appendChildShape(*child, comp.get(), vx, vy, vw, vh)) valid = true;
+    }
+
+    if (valid) paint->composite(move(comp), node->style->comp.method);
+}
+
+
 static void _applyProperty(SvgNode* node, Shape* vg, float vx, float vy, float vw, float vh)
 {
     SvgStyleProperty* style = node->style;
@@ -276,20 +298,7 @@ static void _applyProperty(SvgNode* node, Shape* vg, float vx, float vy, float v
         vg->stroke(style->stroke.paint.r, style->stroke.paint.g, style->stroke.paint.b, style->stroke.opacity);
     }
 
-    //Apply composite node
-    if (style->comp.node && (style->comp.method != CompositeMethod::None)) {
-        auto compNode = style->comp.node;
-        if (compNode->child.count > 0) {
-            auto comp = Shape::gen();
-            comp->fill(255, 255, 255, 255);
-            auto child = compNode->child.data;
-            auto valid = false;    //Composite only when valid shapes are existed
-            for (uint32_t i = 0; i < compNode->child.count; ++i, ++child) {
-                if (_appendChildShape(*child, comp.get(), vx, vy, vw, vh)) valid = true;
-            }
-            if (valid) vg->composite(move(comp), style->comp.method);
-        }
-    }
+    _applyComposition(vg, node, vx, vy, vw, vh);
 }
 
 
@@ -375,20 +384,7 @@ static unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, float vx, float 
                     if (shape) scene->push(move(shape));
                 }
             }
-            //Apply composite node
-            if (node->style->comp.node && (node->style->comp.method != CompositeMethod::None)) {
-                auto compNode = node->style->comp.node;
-                if (compNode->child.count > 0) {
-                    auto comp = Shape::gen();
-                    comp->fill(255, 255, 255, 255);
-                    auto child = compNode->child.data;
-                    auto valid = false;      //Composite only when valid shapes are existed
-                    for (uint32_t i = 0; i < compNode->child.count; ++i, ++child) {
-                        if (_appendChildShape(*child, comp.get(), vx, vy, vw, vh)) valid = true;
-                    }
-                    if (valid) scene->composite(move(comp), node->style->comp.method);
-                }
-            }
+            _applyComposition(scene.get(), node, vx, vy, vw, vh);
             scene->opacity(node->style->opacity);
         }
         return scene;
