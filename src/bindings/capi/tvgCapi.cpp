@@ -24,6 +24,9 @@
 #include <thorvg.h>
 #include "thorvg_capi.h"
 
+#include "tvgSvgLoaderCommon.h"
+#include "tvgSvgPath.h"
+
 using namespace std;
 using namespace tvg;
 
@@ -553,6 +556,23 @@ TVG_EXPORT Tvg_Result tvg_scene_clear(Tvg_Paint* scene)
 {
     if (!scene) return TVG_RESULT_INVALID_ARGUMENT;
     return (Tvg_Result) reinterpret_cast<Scene*>(scene)->clear();
+}
+
+/************************************************************************/
+/* SVG Loader                                                           */
+/************************************************************************/
+TVG_EXPORT Tvg_Result tvg_svg_path_append_to_shape(Tvg_Paint* paint, const char* svgPath)
+{
+   Array<PathCommand> cmds;
+   Array<Point> pts;
+
+   if (!paint) return TVG_RESULT_INVALID_ARGUMENT;
+
+   if (svgPathToTvgPath(svgPath, cmds, pts))
+      {
+         return (Tvg_Result) reinterpret_cast<Shape*>(paint)->appendPath(cmds.data, cmds.count, pts.data, pts.count);
+      }
+   return TVG_RESULT_INVALID_ARGUMENT;
 }
 
 

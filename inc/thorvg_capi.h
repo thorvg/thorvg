@@ -1289,7 +1289,7 @@ TVG_EXPORT Tvg_Result tvg_scene_push(Tvg_Paint* scene, Tvg_Paint* paint);
 
 /*!
 * \fn TVG_EXPORT Tvg_Result tvg_scene_clear(Tvg_Paint* scene)
-* \brief The function claers paints inserted in scene
+* \brief The function clears paints inserted in scene
 * \see tvg_canvas_clear
 * \param scene Tvg_Paint pointer
 * \return Tvg_Result return value
@@ -1297,6 +1297,18 @@ TVG_EXPORT Tvg_Result tvg_scene_push(Tvg_Paint* scene, Tvg_Paint* paint);
 * - TVG_RESULT_INVALID_PARAMETERS: if paint is invalid
 */
 TVG_EXPORT Tvg_Result tvg_scene_clear(Tvg_Paint* scene);
+
+
+/*!
+* \fn TVG_EXPORT Tvg_Result tvg_svg_path_append_to_shape(Tvg_Paint* paint, const char* svgPath)
+* \brief The function parse and append SVG path specified by svgPath into paint
+* \param[in] paint Tvg_Paint pointer
+* \param[in] svgPath char pointer
+* \return Tvg_Result return value
+* - TVG_RESULT_SUCCESS: if ok.
+* - TVG_RESULT_INVALID_PARAMETERS: if paint is invalid
+*/
+TVG_EXPORT Tvg_Result tvg_svg_path_append_to_shape(Tvg_Paint* paint, const char* svgPath);
 
 
 #ifdef __cplusplus
