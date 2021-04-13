@@ -596,7 +596,6 @@ static Matrix* _parseTransformationMatrix(const char* value)
     char* end = str + strlen(str);
 
     while (str < end) {
-
         auto state = MatrixState::Unknown;
 
         if (isspace(*str) || (*str == ',')) {
@@ -735,7 +734,7 @@ static bool _attrParseSvgNode(void* data, const char* key, const char* value)
         return simpleXmlParseW3CAttribute(value, _parseStyleAttr, loader);
     }
 #ifdef THORVG_LOG_ENABLED
-    else if (!strcmp(key, "xmlns") || !strcmp(key, "xmlns:xlink") || !strcmp (key, "xmlns:svg")) {
+    else if (!strcmp(key, "xmlns") || !strcmp(key, "xmlns:xlink") || !strcmp(key, "xmlns:svg")) {
         //No action
     }
 #endif
