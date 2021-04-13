@@ -2575,7 +2575,7 @@ void SvgLoader::run(unsigned tid)
         _updateComposite(loaderData.doc, loaderData.doc);
         if (defs) _updateComposite(loaderData.doc, defs);
     }
-    root = svgSceneBuild(loaderData.doc);
+    root = svgSceneBuild(loaderData.doc, vx, vy, vw, vh);
 };
 
 
