@@ -588,16 +588,17 @@ static Matrix* _parseTransformationMatrix(const char* value)
 {
     auto matrix = (Matrix*)malloc(sizeof(Matrix));
     if (!matrix) return nullptr;
-    *matrix = { 1, 0, 0, 0, 1, 0, 0, 0, 1 };
+    *matrix = {1, 0, 0, 0, 1, 0, 0, 0, 1};
 
     float points[8];
     int ptCount = 0;
-    float sx, sy;
-    MatrixState state = MatrixState::Unknown;
     char* str = (char*)value;
     char* end = str + strlen(str);
 
     while (str < end) {
+
+        auto state = MatrixState::Unknown;
+
         if (isspace(*str) || (*str == ',')) {
             ++str;
             continue;
@@ -606,6 +607,7 @@ static Matrix* _parseTransformationMatrix(const char* value)
             if (!strncmp(matrixTags[i].tag, str, matrixTags[i].sz - 1)) {
                 state = matrixTags[i].state;
                 str += (matrixTags[i].sz - 1);
+                break;
             }
         }
         if (state == MatrixState::Unknown) goto error;
@@ -650,8 +652,8 @@ static Matrix* _parseTransformationMatrix(const char* value)
             }
         } else if (state == MatrixState::Scale) {
             if (ptCount < 1 || ptCount > 2) goto error;
-            sx = points[0];
-            sy = sx;
+            auto sx = points[0];
+            auto sy = sx;
             if (ptCount == 2) sy = points[1];
             Matrix tmp = { sx, 0, 0, 0, sy, 0, 0, 0, 1 };
             _matrixCompose(matrix, &tmp, matrix);
