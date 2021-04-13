@@ -37,15 +37,16 @@ typedef SvgStyleGradient* (*GradientFactoryMethod)(SvgLoaderData* loader, const 
 
 static char* _skipSpace(const char* str, const char* end)
 {
-    while (((end != nullptr && str < end) || (end == nullptr && *str != '\0')) && isspace(*str))
+    while (((end && str < end) || (!end && *str != '\0')) && isspace(*str)) {
         ++str;
-    return (char*)str;
+    }
+    return (char*) str;
 }
 
 
 static string* _copyId(const char* str)
 {
-    if (str == nullptr) return nullptr;
+    if (!str) return nullptr;
 
     return new string(str);
 }
@@ -554,23 +555,19 @@ static constexpr struct
 };
 
 
-static void _matrixCompose(const Matrix* m1,
-                            const Matrix* m2,
-                            Matrix* dst)
+static void _matrixCompose(const Matrix* m1, const Matrix* m2, Matrix* dst)
 {
-    float a11, a12, a13, a21, a22, a23, a31, a32, a33;
+    auto a11 = (m1->e11 * m2->e11) + (m1->e12 * m2->e21) + (m1->e13 * m2->e31);
+    auto a12 = (m1->e11 * m2->e12) + (m1->e12 * m2->e22) + (m1->e13 * m2->e32);
+    auto a13 = (m1->e11 * m2->e13) + (m1->e12 * m2->e23) + (m1->e13 * m2->e33);
 
-    a11 = (m1->e11 * m2->e11) + (m1->e12 * m2->e21) + (m1->e13 * m2->e31);
-    a12 = (m1->e11 * m2->e12) + (m1->e12 * m2->e22) + (m1->e13 * m2->e32);
-    a13 = (m1->e11 * m2->e13) + (m1->e12 * m2->e23) + (m1->e13 * m2->e33);
+    auto a21 = (m1->e21 * m2->e11) + (m1->e22 * m2->e21) + (m1->e23 * m2->e31);
+    auto a22 = (m1->e21 * m2->e12) + (m1->e22 * m2->e22) + (m1->e23 * m2->e32);
+    auto a23 = (m1->e21 * m2->e13) + (m1->e22 * m2->e23) + (m1->e23 * m2->e33);
 
-    a21 = (m1->e21 * m2->e11) + (m1->e22 * m2->e21) + (m1->e23 * m2->e31);
-    a22 = (m1->e21 * m2->e12) + (m1->e22 * m2->e22) + (m1->e23 * m2->e32);
-    a23 = (m1->e21 * m2->e13) + (m1->e22 * m2->e23) + (m1->e23 * m2->e33);
-
-    a31 = (m1->e31 * m2->e11) + (m1->e32 * m2->e21) + (m1->e33 * m2->e31);
-    a32 = (m1->e31 * m2->e12) + (m1->e32 * m2->e22) + (m1->e33 * m2->e32);
-    a33 = (m1->e31 * m2->e13) + (m1->e32 * m2->e23) + (m1->e33 * m2->e33);
+    auto a31 = (m1->e31 * m2->e11) + (m1->e32 * m2->e21) + (m1->e33 * m2->e31);
+    auto a32 = (m1->e31 * m2->e12) + (m1->e32 * m2->e22) + (m1->e33 * m2->e32);
+    auto a33 = (m1->e31 * m2->e13) + (m1->e32 * m2->e23) + (m1->e33 * m2->e33);
 
     dst->e11 = a11;
     dst->e12 = a12;
@@ -589,16 +586,17 @@ static void _matrixCompose(const Matrix* m1,
  */
 static Matrix* _parseTransformationMatrix(const char* value)
 {
+    auto matrix = (Matrix*)malloc(sizeof(Matrix));
+    if (!matrix) return nullptr;
+    *matrix = { 1, 0, 0, 0, 1, 0, 0, 0, 1 };
+
     float points[8];
     int ptCount = 0;
     float sx, sy;
     MatrixState state = MatrixState::Unknown;
-    Matrix* matrix = (Matrix*)calloc(1, sizeof(Matrix));
     char* str = (char*)value;
     char* end = str + strlen(str);
 
-    if (!matrix) return nullptr;
-    *matrix = { 1, 0, 0, 0, 1, 0, 0, 0, 1 };
     while (str < end) {
         if (isspace(*str) || (*str == ',')) {
             ++str;
@@ -620,54 +618,42 @@ static Matrix* _parseTransformationMatrix(const char* value)
         ++str;
 
         if (state == MatrixState::Matrix) {
-            Matrix tmp;
-
             if (ptCount != 6) goto error;
-
-            tmp = { points[0], points[2], points[4], points[1], points[3], points[5], 0, 0, 1 };
+            Matrix tmp = {points[0], points[2], points[4], points[1], points[3], points[5], 0, 0, 1};
             _matrixCompose(matrix, &tmp, matrix);
         } else if (state == MatrixState::Translate) {
-            Matrix tmp;
-
             if (ptCount == 1) {
-                tmp = { 1, 0, points[0], 0, 1, 0, 0, 0, 1 };
+                Matrix tmp = {1, 0, points[0], 0, 1, 0, 0, 0, 1};
                 _matrixCompose(matrix, &tmp, matrix);
             } else if (ptCount == 2) {
-                tmp = { 1, 0, points[0], 0, 1, points[1], 0, 0, 1 };
+                Matrix tmp = {1, 0, points[0], 0, 1, points[1], 0, 0, 1};
                 _matrixCompose(matrix, &tmp, matrix);
             } else goto error;
         } else if (state == MatrixState::Rotate) {
-            Matrix tmp;
-            float c, s;
             //Transform to signed.
             points[0] = fmod(points[0], 360);
             if (points[0] < 0) points[0] += 360;
-
-            c = cosf(points[0] * (M_PI / 180.0));
-            s = sinf(points[0] * (M_PI / 180.0));
+            auto c = cosf(points[0] * (M_PI / 180.0));
+            auto s = sinf(points[0] * (M_PI / 180.0));
             if (ptCount == 1) {
-                tmp = { c, -s, 0, s, c, 0, 0, 0, 1 };
+                Matrix tmp = { c, -s, 0, s, c, 0, 0, 0, 1 };
                 _matrixCompose(matrix, &tmp, matrix);
             } else if (ptCount == 3) {
-                tmp = { 1, 0, points[1], 0, 1, points[2], 0, 0, 1 };
+                Matrix tmp = { 1, 0, points[1], 0, 1, points[2], 0, 0, 1 };
                 _matrixCompose(matrix, &tmp, matrix);
-
                 tmp = { c, -s, 0, s, c, 0, 0, 0, 1 };
                 _matrixCompose(matrix, &tmp, matrix);
-
                 tmp = { 1, 0, -points[1], 0, 1, -points[2], 0, 0, 1 };
                 _matrixCompose(matrix, &tmp, matrix);
             } else {
                 goto error;
             }
         } else if (state == MatrixState::Scale) {
-            Matrix tmp;
             if (ptCount < 1 || ptCount > 2) goto error;
-
             sx = points[0];
             sy = sx;
             if (ptCount == 2) sy = points[1];
-            tmp = { sx, 0, 0, 0, sy, 0, 0, 0, 1 };
+            Matrix tmp = { sx, 0, 0, 0, sy, 0, 0, 0, 1 };
             _matrixCompose(matrix, &tmp, matrix);
         }
     }
