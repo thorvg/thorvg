@@ -77,7 +77,7 @@ struct Scene::Impl
         Compositor* cmp = nullptr;
 
         if (needComposition(opacity)) {
-            cmp = renderer.target(bounds(renderer));
+            cmp = renderer.target(bounds(renderer), nullptr, 0);
             renderer.beginComposite(cmp, CompositeMethod::None, opacity);
         }
 

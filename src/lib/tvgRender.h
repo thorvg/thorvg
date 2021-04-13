@@ -97,7 +97,7 @@ public:
     virtual bool clear() = 0;
     virtual bool sync() = 0;
 
-    virtual Compositor* target(const RenderRegion& region) = 0;
+    virtual Compositor* target(const RenderRegion& region, const RenderRegion* fillRegion, uint8_t fillValue) = 0;
     virtual bool beginComposite(Compositor* cmp, CompositeMethod method, uint32_t opacity) = 0;
     virtual bool endComposite(Compositor* cmp) = 0;
 };

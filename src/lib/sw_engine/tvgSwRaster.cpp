@@ -1047,15 +1047,15 @@ bool rasterGradientStroke(SwSurface* surface, SwShape* shape, unsigned id)
 }
 
 
-bool rasterClear(SwSurface* surface)
+bool rasterSetValue(SwSurface* surface, uint32_t value)
 {
     if (!surface || !surface->buffer || surface->stride <= 0 || surface->w <= 0 || surface->h <= 0) return false;
 
     if (surface->w == surface->stride) {
-        rasterRGBA32(surface->buffer, 0x00000000, 0, surface->w * surface->h);
+        rasterRGBA32(surface->buffer, value, 0, surface->w * surface->h);
     } else {
         for (uint32_t i = 0; i < surface->h; i++) {
-            rasterRGBA32(surface->buffer + surface->stride * i, 0x00000000, 0, surface->w);
+            rasterRGBA32(surface->buffer + surface->stride * i, value, 0, surface->w);
         }
     }
     return true;

@@ -102,6 +102,7 @@ Paint* Paint::Impl::duplicate()
     }
 
     ret->pImpl->opacity = opacity;
+    ret->pImpl->cmpOpacity = cmpOpacity;
 
     if (cmpTarget) ret->pImpl->cmpTarget = cmpTarget->duplicate();
 
@@ -169,7 +170,8 @@ bool Paint::Impl::render(RenderMethod& renderer)
     if (cmpTarget && cmpMethod != CompositeMethod::ClipPath) {
         auto region = cmpTarget->pImpl->bounds(renderer);
         if (region.w == 0 || region.h == 0) return false;
-        cmp = renderer.target(region);
+        auto fillRegion = smethod->bounds(renderer);
+        cmp = renderer.target(region, &fillRegion, cmpTarget->pImpl->cmpOpacity);
         renderer.beginComposite(cmp, CompositeMethod::None, 255);
         cmpTarget->pImpl->render(renderer);
     }

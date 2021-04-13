@@ -49,6 +49,7 @@ namespace tvg
         Paint* cmpTarget = nullptr;
         CompositeMethod cmpMethod = CompositeMethod::None;
         uint8_t opacity = 255;
+        uint8_t cmpOpacity = 0;
         PaintType type;
 
         ~Impl() {
@@ -96,6 +97,20 @@ namespace tvg
             if (cmpTarget) delete(cmpTarget);
             cmpTarget = target;
             cmpMethod = method;
+
+            if (cmpMethod == CompositeMethod::AlphaMask) {
+                cmpTarget->pImpl->cmpOpacity = cmpTarget->pImpl->opacity;
+                cmpTarget->pImpl->opacity  = 255;
+                if (cmpTarget->pImpl->type == PaintType::Shape)
+                {
+                    uint8_t o;
+                    static_cast<Shape*>(cmpTarget)->fillColor(nullptr, nullptr, nullptr, &o);
+                    static_cast<Shape*>(cmpTarget)->fill(0, 0, 0, 255);
+                    cmpTarget->pImpl->cmpOpacity = o * cmpTarget->pImpl->cmpOpacity / 255;
+                }
+                cmpTarget->pImpl->cmpOpacity = 255 - cmpTarget->pImpl->cmpOpacity;
+            }
+
             return true;
         }
 

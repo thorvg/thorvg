@@ -294,7 +294,7 @@ bool SwRenderer::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t 
 
 bool SwRenderer::preRender()
 {
-    return rasterClear(surface);
+    return rasterSetValue(surface, 0);
 }
 
 
@@ -338,7 +338,7 @@ bool SwRenderer::renderShape(RenderData data)
     //Do Stroking Composition
     if (task->cmpStroking) {
         opacity = 255;
-        cmp = target(task->bounds());
+        cmp = target(task->bounds(), nullptr, 0);
         beginComposite(cmp, CompositeMethod::None, task->opacity);
     //No Stroking Composition
     } else {
@@ -395,7 +395,7 @@ bool SwRenderer::beginComposite(Compositor* cmp, CompositeMethod method, uint32_
 }
 
 
-Compositor* SwRenderer::target(const RenderRegion& region)
+Compositor* SwRenderer::target(const RenderRegion& region, const RenderRegion* fillRegion, uint8_t fillValue)
 {
     auto x = region.x;
     auto y = region.y;
@@ -451,11 +451,17 @@ Compositor* SwRenderer::target(const RenderRegion& region)
     cmp->compositor->image.h = surface->h;
 
     //We know partial clear region
-    cmp->buffer = cmp->compositor->image.data + (cmp->stride * y + x);
-    cmp->w = w;
-    cmp->h = h;
+    if (fillRegion) {
+        cmp->buffer = cmp->compositor->image.data + (cmp->stride * fillRegion->y + fillRegion->x);
+        cmp->w = fillRegion->w;
+        cmp->h = fillRegion->h;
+    } else {
+        cmp->buffer = cmp->compositor->image.data + (cmp->stride * y + x);
+        cmp->w = w;
+        cmp->h = h;
+    }
 
-    rasterClear(cmp);
+    rasterSetValue(cmp, fillValue << 24);
 
     //Recover context
     cmp->buffer = cmp->compositor->image.data;

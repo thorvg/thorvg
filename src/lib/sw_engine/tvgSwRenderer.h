@@ -49,7 +49,7 @@ public:
     bool sync() override;
     bool target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h, uint32_t cs);
 
-    Compositor* target(const RenderRegion& region) override;
+    Compositor* target(const RenderRegion& region, const RenderRegion* fillRegion, uint8_t fillValue) override;
     bool beginComposite(Compositor* cmp, CompositeMethod method, uint32_t opacity) override;
     bool endComposite(Compositor* cmp) override;
 
