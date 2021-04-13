@@ -659,8 +659,10 @@ static Matrix* _parseTransformationMatrix(const char* value)
             _matrixCompose(matrix, &tmp, matrix);
         }
     }
-error:
     return matrix;
+error:
+    if (matrix) free(matrix);
+    return nullptr;
 }
 
 
