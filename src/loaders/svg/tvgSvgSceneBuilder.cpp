@@ -398,14 +398,9 @@ static unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, float vx, float 
 /* External Class Implementation                                        */
 /************************************************************************/
 
-unique_ptr<Scene> svgSceneBuild(SvgNode* node)
+unique_ptr<Scene> svgSceneBuild(SvgNode* node, float vx, float vy, float vw, float vh)
 {
     if (!node || (node->type != SvgNodeType::Doc)) return nullptr;
-
-    auto vx = node->node.doc.vx;
-    auto vy = node->node.doc.vy;
-    auto vw = node->node.doc.vw;
-    auto vh = node->node.doc.vh;
 
     unique_ptr<Scene> root;
     auto docNode = _sceneBuildHelper(node, vx, vy, vw, vh);
