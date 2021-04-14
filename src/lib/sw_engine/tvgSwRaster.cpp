@@ -1033,7 +1033,7 @@ bool rasterStroke(SwSurface* surface, SwShape* shape, uint8_t r, uint8_t g, uint
 
 bool rasterGradientStroke(SwSurface* surface, SwShape* shape, unsigned id)
 {
-    if (!shape->stroke->fill || !shape->strokeRle) return false;
+    if (!shape->stroke || !shape->stroke->fill || !shape->strokeRle) return false;
 
     if (id == FILL_ID_LINEAR) {
         if (shape->stroke->fill->translucent) return _rasterTranslucentLinearGradientRle(surface, shape->strokeRle, shape->stroke->fill);
