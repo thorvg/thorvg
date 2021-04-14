@@ -36,6 +36,8 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
+static int _initCnt = 0;
+
 
 /************************************************************************/
 /* External Class Implementation                                        */
@@ -61,6 +63,9 @@ Result Initializer::init(CanvasEngine engine, uint32_t threads) noexcept
 
     if (nonSupport) return Result::NonSupport;
 
+    if (_initCnt > 0) return Result::Success;
+    ++_initCnt;
+
     if (!LoaderMgr::init()) return Result::Unknown;
 
     TaskScheduler::init(threads);
@@ -71,6 +76,8 @@ Result Initializer::init(CanvasEngine engine, uint32_t threads) noexcept
 
 Result Initializer::term(CanvasEngine engine) noexcept
 {
+    if (_initCnt == 0) return Result::InsufficientCondition;
+
     auto nonSupport = true;
 
     if (static_cast<uint32_t>(engine) & static_cast<uint32_t>(CanvasEngine::Sw)) {
@@ -88,6 +95,9 @@ Result Initializer::term(CanvasEngine engine) noexcept
     }
 
     if (nonSupport) return Result::NonSupport;
+
+    --_initCnt;
+    if (_initCnt > 0) return Result::Success;
 
     TaskScheduler::term();
 

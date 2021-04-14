@@ -35,9 +35,6 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-static int initCnt = 0;
-
-
 static Loader* _find(FileType type)
 {
     switch(type) {
@@ -104,9 +101,6 @@ static Loader* _find(const string& path)
 
 bool LoaderMgr::init()
 {
-    if (initCnt > 0) return true;
-    ++initCnt;
-
     //TODO:
 
     return true;
@@ -115,9 +109,6 @@ bool LoaderMgr::init()
 
 bool LoaderMgr::term()
 {
-    --initCnt;
-    if (initCnt > 0) return true;
-
     //TODO:
 
     return true;
