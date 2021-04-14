@@ -206,6 +206,7 @@ struct Shape::Impl
     RenderData rdata = nullptr;         //engine data
     Shape *shape = nullptr;
     uint32_t flag = RenderUpdateFlag::None;
+    RenderMethod *renderer = nullptr;
 
     Impl(Shape* s) : shape(s)
     {
@@ -213,8 +214,10 @@ struct Shape::Impl
 
     ~Impl()
     {
+        if (renderer && rdata) renderer->dispose(rdata);
         if (fill) delete(fill);
         if (stroke) delete(stroke);
+        rdata = nullptr;
     }
 
     bool dispose(RenderMethod& renderer)
@@ -226,6 +229,7 @@ struct Shape::Impl
 
     bool render(RenderMethod& renderer)
     {
+        this->renderer = &renderer;
         return renderer.renderShape(rdata);
     }
 
