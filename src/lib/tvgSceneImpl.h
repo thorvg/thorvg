@@ -34,13 +34,18 @@ struct Scene::Impl
     Array<Paint*> paints;
     uint8_t opacity;            //for composition
 
+    ~Impl()
+    {
+        for (auto paint = paints.data; paint < (paints.data + paints.count); ++paint) {
+            delete(*paint);
+        }
+    }
+
     bool dispose(RenderMethod& renderer)
     {
         for (auto paint = paints.data; paint < (paints.data + paints.count); ++paint) {
             (*paint)->pImpl->dispose(renderer);
-            delete(*paint);
         }
-        paints.clear();
 
         return true;
     }
