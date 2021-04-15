@@ -167,7 +167,9 @@ static bool _rasterTranslucentRect(SwSurface* surface, const SwBBox& region, uin
 {
     if (surface->compositor) {
         if (surface->compositor->method == CompositeMethod::AlphaMask) {
-            return _translucentRectAlphaMask(surface, region, color);
+            auto intersected = region;
+            intersected.intersect(surface->compositor->bbox);
+            return _translucentRectAlphaMask(surface, intersected, color);
         }
         if (surface->compositor->method == CompositeMethod::InvAlphaMask) {
             return _translucentRectInvAlphaMask(surface, region, color);
@@ -456,7 +458,9 @@ static bool _rasterTranslucentImage(SwSurface* surface, const uint32_t *img, uin
 {
     if (surface->compositor) {
         if (surface->compositor->method == CompositeMethod::AlphaMask) {
-            return _translucentImageAlphaMask(surface, img, w, h, opacity, region, invTransform);
+            auto intersected = region;
+            intersected.intersect(surface->compositor->bbox);
+            return _translucentImageAlphaMask(surface, img, w, h, opacity, intersected, invTransform);
         }
         if (surface->compositor->method == CompositeMethod::InvAlphaMask) {
             return _translucentImageInvAlphaMask(surface, img, w, h, opacity, region, invTransform);
@@ -546,7 +550,9 @@ static bool _rasterTranslucentImage(SwSurface* surface, uint32_t *img, uint32_t 
 {
     if (surface->compositor) {
         if (surface->compositor->method == CompositeMethod::AlphaMask) {
-            return _translucentImageAlphaMask(surface, img, w, h, opacity, region);
+            auto intersected = region;
+            intersected.intersect(surface->compositor->bbox);
+            return _translucentImageAlphaMask(surface, img, w, h, opacity, intersected);
         }
         if (surface->compositor->method == CompositeMethod::InvAlphaMask) {
             return _translucentImageInvAlphaMask(surface, img, w, h, opacity, region);

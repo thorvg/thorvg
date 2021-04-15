@@ -135,6 +135,14 @@ struct SwBBox
     {
         min.x = min.y = max.x = max.y = 0;
     }
+
+    void intersect(const SwBBox& rhs)
+    {
+        min.x = (min.x > rhs.min.x) ? min.x : rhs.min.x;
+        min.y = (min.y > rhs.min.y) ? min.y : rhs.min.y;
+        max.x = (max.x < rhs.max.x) ? max.x : rhs.max.x;
+        max.y = (max.y < rhs.max.y) ? max.y : rhs.max.y;
+    }
 };
 
 struct SwFill
