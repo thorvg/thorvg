@@ -33,7 +33,7 @@ static bool _appendShape(SvgNode* node, Shape* shape, float vx, float vy, float 
 
 static inline bool _isGroupType(SvgNodeType type)
 {
-    if (type == SvgNodeType::Doc || type == SvgNodeType::G || type == SvgNodeType::ClipPath) return true;
+    if (type == SvgNodeType::Doc || type == SvgNodeType::G || type == SvgNodeType::Use || type == SvgNodeType::ClipPath) return true;
     return false;
 }
 
@@ -274,7 +274,7 @@ static void _applyProperty(SvgNode* node, Shape* vg, float vx, float vy, float v
     //Apply node opacity
     if (style->opacity < 255) vg->opacity(style->opacity);
 
-    if (node->type == SvgNodeType::G) return;
+    if (node->type == SvgNodeType::G || node->type == SvgNodeType::Use) return;
 
     //Apply the stroke style property
     vg->stroke(style->stroke.width);
