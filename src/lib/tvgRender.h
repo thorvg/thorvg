@@ -49,7 +49,7 @@ struct Compositor {
 struct RenderRegion {
     uint32_t x, y, w, h;
 
-    void merge(const RenderRegion& rhs)
+    void intersect(const RenderRegion& rhs)
     {
         auto x1 = x + w;
         auto y1 = y + h;

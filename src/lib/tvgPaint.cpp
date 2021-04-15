@@ -206,7 +206,7 @@ void* Paint::Impl::update(RenderMethod& renderer, const RenderTransform* pTransf
             RenderRegion viewport2;
             if ((cmpFastTrack = _clipPathFastTrack(cmpTarget, pTransform, cmpTarget->pImpl->rTransform, viewport2))) {
                 viewport = renderer.viewport();
-                viewport2.merge(viewport);
+                viewport2.intersect(viewport);
                 renderer.viewport(viewport2);
             }
         }
