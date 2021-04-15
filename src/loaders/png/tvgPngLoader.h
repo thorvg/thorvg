@@ -23,9 +23,9 @@
 #define _TVG_PNG_LOADER_H_
 
 #include <png.h>
+#include "tvgTaskScheduler.h"
 
-//OPTIMIZE ME: Use Task?
-class PngLoader : public Loader
+class PngLoader : public Loader, public Task
 {
 public:
     png_imagep image = nullptr;
@@ -38,6 +38,7 @@ public:
     bool open(const string& path) override;
     bool read() override;
     bool close() override;
+    void run(unsigned tid) override;
 
     const uint32_t* pixels() override;
 };

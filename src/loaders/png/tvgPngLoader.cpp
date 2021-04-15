@@ -27,8 +27,8 @@ PngLoader::PngLoader()
 {
     image = static_cast<png_imagep>(calloc(1, sizeof(png_image)));
     image->version = PNG_IMAGE_VERSION;
-    image->opaque = NULL;
 }
+
 
 PngLoader::~PngLoader()
 {
@@ -38,6 +38,22 @@ PngLoader::~PngLoader()
     }
     free(image);
 }
+
+
+void PngLoader::run(unsigned tid)
+{
+    png_bytep buffer;
+    image->format = PNG_FORMAT_BGRA;
+    buffer = static_cast<png_bytep>(malloc(PNG_IMAGE_SIZE((*image))));
+    if (!buffer) {
+        png_image_free(image);
+        return;
+    }
+    if (!png_image_finish_read(image, NULL, buffer, 0, NULL)) return;
+
+    content = reinterpret_cast<uint32_t*>(buffer);
+};
+
 
 bool PngLoader::open(const string& path)
 {
@@ -51,29 +67,27 @@ bool PngLoader::open(const string& path)
     return true;
 }
 
+
 bool PngLoader::read()
 {
-    png_bytep buffer;
-    image->format = PNG_FORMAT_BGRA;
-    buffer = static_cast<png_bytep>(malloc(PNG_IMAGE_SIZE((*image))));
-    if (!buffer) {
-        // out of memory, only time when libpng doesnt free its data
-        png_image_free(image);
-        return false;
-    }
-    if (!png_image_finish_read(image, NULL, buffer, 0, NULL)) return false;
-    content = reinterpret_cast<uint32_t*>(buffer);
+    if (image->width == 0 || image->height == 0) return false;
+
+    TaskScheduler::request(this);
 
     return true;
 }
 
+
 bool PngLoader::close()
 {
+    this->done();
     png_image_free(image);
     return true;
 }
 
+
 const uint32_t* PngLoader::pixels()
 {
+    this->done();
     return this->content;
 }
