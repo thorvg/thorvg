@@ -24,6 +24,7 @@
 #include <ctype.h>
 #include "tvgSvgLoaderCommon.h"
 #include "tvgSvgPath.h"
+#include "tvgSvgUtil.h"
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
@@ -42,7 +43,7 @@ static char* _skipComma(const char* content)
 static bool _parseNumber(char** content, float* number)
 {
     char* end = NULL;
-    *number = customStrtof(*content, &end);
+    *number = svgUtilStrtof(*content, &end);
     //If the start of string is not number
     if ((*content) == end) return false;
     //Skip comma if any

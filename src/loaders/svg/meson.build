@@ -3,10 +3,12 @@ source_file = [
    'tvgSvgLoaderCommon.h',
    'tvgSvgPath.h',
    'tvgSvgSceneBuilder.h',
+   'tvgSvgUtil.h',
    'tvgXmlParser.h',
    'tvgSvgLoader.cpp',
    'tvgSvgPath.cpp',
    'tvgSvgSceneBuilder.cpp',
+   'tvgSvgUtil.cpp',
    'tvgXmlParser.cpp'
 ]
 
