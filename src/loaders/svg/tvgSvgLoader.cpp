@@ -504,13 +504,13 @@ static void _toColor(const char* str, uint8_t* r, uint8_t* g, uint8_t* b, string
 }
 
 
-static char* _parseNumbersArray(char* str, float* points, int* ptCount)
+static char* _parseNumbersArray(char* str, float* points, int* ptCount, int len)
 {
     int count = 0;
     char* end = nullptr;
 
     str = _skipSpace(str, nullptr);
-    while (isdigit(*str) || *str == '-' || *str == '+' || *str == '.') {
+    while ((count < len) && (isdigit(*str) || *str == '-' || *str == '+' || *str == '.')) {
         points[count++] = strtof(str, &end);
         str = end;
         str = _skipSpace(str, nullptr);
@@ -586,11 +586,13 @@ static void _matrixCompose(const Matrix* m1, const Matrix* m2, Matrix* dst)
  */
 static Matrix* _parseTransformationMatrix(const char* value)
 {
+    const int POINT_CNT = 8;
+
     auto matrix = (Matrix*)malloc(sizeof(Matrix));
     if (!matrix) return nullptr;
     *matrix = {1, 0, 0, 0, 1, 0, 0, 0, 1};
 
-    float points[8];
+    float points[POINT_CNT];
     int ptCount = 0;
     char* str = (char*)value;
     char* end = str + strlen(str);
@@ -614,7 +616,7 @@ static Matrix* _parseTransformationMatrix(const char* value)
         str = _skipSpace(str, end);
         if (*str != '(') goto error;
         ++str;
-        str = _parseNumbersArray(str, points, &ptCount);
+        str = _parseNumbersArray(str, points, &ptCount, POINT_CNT);
         if (*str != ')') goto error;
         ++str;
 
