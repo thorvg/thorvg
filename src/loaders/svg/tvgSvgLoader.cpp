@@ -35,6 +35,208 @@ typedef SvgNode* (*FactoryMethod)(SvgLoaderData* loader, SvgNode* parent, const 
 typedef SvgStyleGradient* (*GradientFactoryMethod)(SvgLoaderData* loader, const char* buf, unsigned bufLength);
 
 
+/*
+ * https://docs.microsoft.com/en-us/cpp/c-runtime-library/reference/strtof-strtof-l-wcstof-wcstof-l?view=msvc-160
+ *
+ * src should be one of the following form :
+ *
+ * [whitespace] [sign] {digits [radix digits] | radix digits} [{e | E} [sign] digits]
+ * [whitespace] [sign] {INF | INFINITY}
+ * [whitespace] [sign] NAN [sequence]
+ *
+ * No hexadecimal form supported
+ * no sequence supported after NAN
+ */
+static bool floatExact(float a, float b)
+{
+    return memcmp(&a, &b, sizeof (float)) == 0;
+}
+
+
+float customStrtof(const char *nPtr, char **endPtr)
+{
+    const char *iter;
+    const char *a;
+    float val;
+    unsigned long long integerPart;
+    int minus;
+
+    if (endPtr) *endPtr = (char*)nPtr;
+    if (!nPtr) return 0.0f;
+
+    a = iter = nPtr;
+
+    //ignore leading whitespaces
+    while (isspace(*iter)) iter++;
+
+    //signed or not
+    minus = 1;
+    if (*iter == '-')
+    {
+        minus = -1;
+        iter++;
+    }
+    else if (*iter == '+') iter++;
+
+    if (tolower(*iter) == 'i')
+    {
+        if ((tolower(*(iter + 1)) == 'n') && (tolower(*(iter + 2)) == 'f'))
+        {
+            iter += 3;
+        }
+        else goto on_error;
+
+        if (tolower(*(iter + 3)) == 'i')
+        {
+            if ((tolower(*(iter + 4)) == 'n') &&
+                (tolower(*(iter + 5)) == 'i') &&
+                (tolower(*(iter + 6)) == 't') &&
+                (tolower(*(iter + 7)) == 'y'))
+            {
+               iter += 5;
+            }
+            else goto on_error;
+         }
+         if (endPtr) *endPtr = (char *)iter;
+         return (minus == -1) ? -INFINITY : INFINITY;
+    }
+
+    if (tolower(*iter) == 'n')
+    {
+         if ((tolower(*(iter + 1)) == 'a') && (tolower(*(iter + 2)) == 'n')) iter += 3;
+         else goto on_error;
+
+         if (endPtr) *endPtr = (char *)iter;
+         return (minus == -1) ? -NAN : NAN;
+    }
+
+    integerPart = 0;
+
+    //(optional) integer part before dot
+    if (isdigit(*iter))
+    {
+        for (; isdigit(*iter); iter++) integerPart = integerPart * 10ULL + (unsigned long long)(*iter - '0');
+
+        a = iter;
+    }
+    else if (*iter != '.')
+    {
+        val = 0.0;
+        goto on_success;
+    }
+
+    val = (float)integerPart;
+
+    //(optional) decimal part after dot
+    if (*iter == '.')
+    {
+        unsigned long long decimalPart;
+        unsigned long long pow10;
+        int count;
+
+        iter++;
+
+        decimalPart = 0;
+        count = 0;
+        pow10 = 1;
+
+        if (isdigit(*iter))
+        {
+            for (; isdigit(*iter); iter++, count++)
+            {
+                if (count < 19)
+                {
+                    decimalPart = decimalPart * 10ULL +  + (unsigned long long)(*iter - '0');
+                    pow10 *= 10ULL;
+                }
+            }
+        }
+        val += (float)decimalPart / (float)pow10;
+        a = iter;
+    }
+
+    //(optional) exponent
+    if ((*iter == 'e') || (*iter == 'E'))
+    {
+        float scale = 1.0f;
+        unsigned int expo_part;
+        int minus_e;
+
+        iter++;
+
+        //signed or not
+        minus_e = 1;
+        if (*iter == '-')
+        {
+            minus_e = -1;
+            iter++;
+        }
+        else if (*iter == '+') iter++;
+
+        //exponential part
+        expo_part = 0;
+        if (isdigit(*iter))
+        {
+            while (*iter == 0) iter++;
+
+            for (; isdigit(*iter); iter++)
+            {
+                expo_part = expo_part * 10U + (unsigned int)(*iter - '0');
+            }
+        }
+        else if (!isdigit(*(a - 1)))
+        {
+            a = nPtr;
+            goto on_success;
+        }
+        else if (*iter == 0) goto on_success;
+
+        if ((floatExact(val, 2.2250738585072011)) && ((minus_e * (int)expo_part) == -308))
+        {
+            val *= 1.0e-308;
+            a = iter;
+            errno = ERANGE;
+            goto on_success;
+        }
+
+        if ((floatExact(val, 2.2250738585072012)) && ((minus_e * (int)expo_part) <= -308))
+        {
+            val *= 1.0e-308;
+            a = iter;
+            goto on_success;
+        }
+
+        a = iter;
+
+        while (expo_part >= 8U)
+        {
+            scale *= 1E8;
+            expo_part -= 8U;
+        }
+        while (expo_part > 0U)
+        {
+            scale *= 10.0f;
+            expo_part--;
+        }
+
+        val = (minus_e == -1) ? (val / scale) : (val * scale);
+    }
+    else if ((iter > nPtr) && !isdigit(*(iter - 1)))
+    {
+        a = nPtr;
+        goto on_success;
+    }
+
+on_success:
+    if (endPtr) *endPtr = (char *)a;
+    return minus * val;
+
+on_error:
+    if (endPtr) *endPtr = (char *)nPtr;
+    return 0.0f;
+}
+
+
 static char* _skipSpace(const char* str, const char* end)
 {
     while (((end && str < end) || (!end && *str != '\0')) && isspace(*str)) {
@@ -64,7 +266,7 @@ static bool _parseNumber(const char** content, float* number)
 {
     char* end = nullptr;
 
-    *number = strtof(*content, &end);
+    *number = customStrtof(*content, &end);
     //If the start of string is not number
     if ((*content) == end) return false;
     //Skip comma if any
@@ -81,7 +283,7 @@ static bool _parseNumber(const char** content, float* number)
  */
 static float _toFloat(const SvgParser* svgParse, const char* str, SvgParserLengthType type)
 {
-    float parsedValue = strtof(str, nullptr);
+    float parsedValue = customStrtof(str, nullptr);
 
     if (strstr(str, "cm")) parsedValue = parsedValue * 35.43307;
     else if (strstr(str, "mm")) parsedValue = parsedValue * 3.543307;
@@ -110,7 +312,7 @@ static float _gradientToFloat(const SvgParser* svgParse, const char* str, SvgPar
 {
     char* end = nullptr;
 
-    float parsedValue = strtof(str, &end);
+    float parsedValue = customStrtof(str, &end);
     float max = 1;
 
     /**
@@ -141,7 +343,7 @@ static float _toOffset(const char* str)
 {
     char* end = nullptr;
 
-    float parsedValue = strtof(str, &end);
+    float parsedValue = customStrtof(str, &end);
 
     if (strstr(str, "%")) parsedValue = parsedValue / 100.0;
 
@@ -153,7 +355,7 @@ static int _toOpacity(const char* str)
 {
     char* end = nullptr;
     int a = 0;
-    float opacity = strtof(str, &end);
+    float opacity = customStrtof(str, &end);
 
     if (end && (*end == '\0')) a = lrint(opacity * 255);
     return a;
@@ -240,7 +442,7 @@ _parseDashArray(const char *str, SvgDash* dash)
     while (*str) {
         // skip white space, comma
         str = _skipComma(str);
-        (*dash).array.push(strtof(str, &end));
+        (*dash).array.push(customStrtof(str, &end));
         str = _skipComma(end);
     }
     //If dash array size is 1, it means that dash and gap size are the same.
@@ -274,7 +476,7 @@ static unsigned char _parserColor(const char* value, char** end)
 {
     float r;
 
-    r = strtof(value + 4, end);
+    r = customStrtof(value + 4, end);
     *end = _skipSpace(*end, nullptr);
     if (**end == '%') r = 255 * r / 100;
     *end = _skipSpace(*end, nullptr);
@@ -511,7 +713,7 @@ static char* _parseNumbersArray(char* str, float* points, int* ptCount, int len)
 
     str = _skipSpace(str, nullptr);
     while ((count < len) && (isdigit(*str) || *str == '-' || *str == '+' || *str == '.')) {
-        points[count++] = strtof(str, &end);
+        points[count++] = customStrtof(str, &end);
         str = end;
         str = _skipSpace(str, nullptr);
         if (*str == ',') ++str;
@@ -698,7 +900,7 @@ static float _parseLength(const char* str, SvgLengthType* type)
     for (unsigned int i = 0; i < sizeof(lengthTags) / sizeof(lengthTags[0]); i++) {
         if (lengthTags[i].sz - 1 == sz && !strncmp(lengthTags[i].tag, str, sz)) *type = lengthTags[i].type;
     }
-    value = strtof(str, nullptr);
+    value = customStrtof(str, nullptr);
     return value;
 }
 
