@@ -298,7 +298,7 @@ Paint* Paint::duplicate() const noexcept
 Result Paint::composite(std::unique_ptr<Paint> target, CompositeMethod method) const noexcept
 {
     if (pImpl->composite(target.release(), method)) return Result::Success;
-    return Result::InsufficientCondition;
+    return Result::InvalidArguments;
 }
 
 
