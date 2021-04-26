@@ -1,5 +1,5 @@
 /*!
-* \file thorvg.h
+* @file thorvg.h
 */
 
 
@@ -67,7 +67,8 @@ enum class TVG_EXPORT Result
 /**
  * @brief Enumeration specifying the values of the path commands accepted by ThorVG.
  *
- * Not to be confused with the path commands from the svg path element.
+ * Not to be confused with the path commands from the svg path element (like M, L, Q, H and many others).
+ * ThorVG interprets all of them and translates to the ones from the PathCommand values.
  */
 enum class TVG_EXPORT PathCommand
 {
@@ -162,7 +163,9 @@ struct Matrix
  *
  * @ingroup ThorVG
  *
- * @brief A class for drawing a vector primitive.
+ * @brief A class for managing graphic elements.
+ *
+ * It enables duplication, transformation and composition.
  *
  */
 class TVG_EXPORT Paint
@@ -332,8 +335,9 @@ public:
  *
  * @ingroup ThorVG
  *
- * @brief CanvasView is a class for displaying an vector primitives.
+ * @brief A class for drawing graphic elements.
  *
+ * It stores all Paint objects (Shape, Scene, Picture) and creates the buffer, which can be drawn on the screen.
  */
 class TVG_EXPORT Canvas
 {
@@ -341,35 +345,63 @@ public:
     Canvas(RenderMethod*);
     virtual ~Canvas();
 
-    Result reserve(uint32_t n) noexcept;
     /**
-     * @brief Add paint object to the canvas
-     * This method is similar to registration. The added paint is drawn on the inner canvas.
-     * return
+     * @brief Sets the size of the container, where all the paints pushed into the scene are stored.
+     *
+     * If the number of objects pushed into the Canvas is known in advance, calling the function
+     * prevents multiple memory reallocation, thus improving the performance.
+     *
+     * @param[in] n The number of objects for which the memory is to be reserved.
+     * @return Result::Success.
+     */
+    Result reserve(uint32_t n) noexcept;
+
+    /**
+     * @brief Passes the Paint object to the Canvas.
+     *
+     * The function may be called many times and all passed objects will be rendered.
+     * Calling it initializes the data preparation of the chosen engine type.
+     *
+     * @param[in] paint A unique pointer to the Paint object.
+     * @retval Result::Success When succeeded.
+     * @retval Result::MemoryCorruption In case a @c nullptr is passed as the argument.
+     * @retval Result::InsufficientCondition An internal error.
      */
     virtual Result push(std::unique_ptr<Paint> paint) noexcept;
 
     /**
-     * @brief
-     * @param[in]
+     * @brief Sets the total number of the paints pushed into the scene to be zero.
+     * Depending on the value of the given argument, the memory is free or not.
+     *
+     * @param[in] free If @c then true the memory occupied by paints is deallocated, otherwise it is not.
      * return Result::Success when succeeded, Result::InsufficientCondition otherwise.
      */
     virtual Result clear(bool free = true) noexcept;
 
     /**
-     * @brief ...
-     * @param[in]
-     * return
+     * @brief Updates the chosen Paint object or all objects from the Canvas object.
+     *
+     * If a @c nullptr is passed all objects from the Canvas are updated.
+     * Otherwise only the paint to which the given argument points.
+     *
+     * @param[in] paint A pointer to the Paint object or @c nullptr.
+     * return Result::Success when succeeded, Result::InsufficientCondition otherwise.
      */
     virtual Result update(Paint* paint) noexcept;
 
     /**
-     * @brief Draw target buffer added to the canvas.
+     * @brief Draws all objects from the Canvas object.
+     * return Result::Success when succeeded, Result::InsufficientCondition otherwise.
      */
     virtual Result draw() noexcept;
 
     /**
-     * @brief ...
+     * @brief Guaranties that all Paint objects from the Canvas object are already rendered.
+     *
+     * The Canvas components can be rendered asynchronously. To make sure, that all of them
+     * are ready, the sync API should be called after the draw API.
+     *
+     * return Result::Success when succeeded, Result::InsufficientCondition otherwise.
      */
     virtual Result sync() noexcept;
 
@@ -479,7 +511,6 @@ public:
 
     _TVG_DECLARE_PRIVATE(RadialGradient);
 };
-
 
 
 /**
@@ -666,8 +697,10 @@ public:
 
     /**
      * @brief Sets the gradient fill of the stroke for all of the figures from the path..
-     * @param[in] f The unique pointer to the gradient fill.
-     * @return Result::Success when succeeded, Result::FailedAllocation or Result::MemoryCorruption otherwise.
+     * @param[in] The unique pointer to the gradient fill.
+     * @retval Result::Success When succeeded.
+     * @retval Result::FailedAllocation An internal error with a memory allocation for an object to be filled.
+     * @retval Result::MemoryCorruption In case a @c nullptr is passed as the argument.
      */
     Result stroke(std::unique_ptr<Fill> f) noexcept;
 
@@ -678,7 +711,10 @@ public:
      *
      * @param[in] dashPattern The array of consecutive pair values of the dash length and the gap length.
      * @param[in] cnt The length of the @p dashPattern array.
-     * @return Result::Success when succeeded, Result::FailedAllocation or Result::InvalidArguments otherwise.
+     * @retval Result::Success When succeeded.
+     * @retval Result::FailedAllocation An internal error with a memory allocation for an object to be dashed.
+     * @retval Result::InvalidArguments In case a @c nullptr is passed as the @p dashPattern,
+     *         the given length of the array is less than two or any of the @p dashPattern values is zero or less.
      */
     Result stroke(const float* dashPattern, uint32_t cnt) noexcept;
 
@@ -835,10 +871,10 @@ public:
      * The direct loading from a file is available for the svg and png files.
      *
      * @param[in] path A path to the picture file.
-     * @return Result::Success when succeeded, otherwise the returned value depends on the problem type:
-     * Result::InvalidArguments - in case the @p path is empty,
-     * Result::NonSupport - when trying to load a file with an unknown extension,
-     * Result::Unknown - if an error occurs at a later stage.
+     * @retval Result::Success When succeeded.
+     * @retval Result::InvalidArguments In case the @p path is empty.
+     * @retval Result::NonSupport When trying to load a file with an unknown extension.
+     * @retval Result::Unknown If an error occurs at a later stage.
      */
     Result load(const std::string& path) noexcept;
 
@@ -849,10 +885,10 @@ public:
      *
      * @param[in] data A pointer to a memory location where the content of the svg file is stored.
      * @param[in] size The size in bytes of the memory occupied by the @p data.
-     * @return Result::Success when succeeded, otherwise the returned value depends on the problem type:
-     * Result::InvalidArguments - in case no data are provided or the @p size is zero or less,
-     * Result::NonSupport - when trying to load a file with an unknown extension,
-     * Result::Unknown - if an error occurs at a later stage.
+     * @retval Result::Success When succeeded.
+     * @retval Result::InvalidArguments In case no data are provided or the @p size is zero or less.
+     * @retval Result::NonSupport When trying to load a file with an unknown extension.
+     * @retval Result::Unknown If an error occurs at a later stage.
      */
     Result load(const char* data, uint32_t size) noexcept;
 
@@ -865,19 +901,24 @@ public:
      * @param[in] w The width of the image in pixels.
      * @param[in] h The height of the image in pixels.
      * @param[in] copy Specifies the method of copying the @p data - shallow if @c false and deep id @c true.
-     * @return Result::Success when succeeded, otherwise the returned value depends on the problem type:
-     * Result::InvalidArguments - in case no data is provided or the width or the height of the picture is zero or less,
-     * Result::NonSupport - when trying to load a file with an unknown extension.
+     * @retval Result::Success When succeeded.
+     * @retval Result::InvalidArguments In case no data is provided or the width or the height of the picture is zero or less.
+     * @retval Result::NonSupport When trying to load a file with an unknown extension.
      */
     Result load(uint32_t* data, uint32_t w, uint32_t h, bool copy) noexcept;
 
     /**
-     * @brief ...
-     * @param[out] x
-     * @param[out] y
-     * @param[out] w
-     * @param[out] h
-     * @return Result::Success when succeeded, ... otherwise.
+     * @brief Gets the position and the size of the loaded picture.
+     *
+     * For the svg file the returned values are specified in the viewBox attribute.
+     * For the png and raw files, @p x and @p y are zeros and @p w and @p h indicate the width
+     * and the height of the picture, respectively.
+     *
+     * @param[out] x The horizontal coordinate of the upper left corner of the picture.
+     * @param[out] y The vertical coordinate of the upper left corner of the picture.
+     * @param[out] w The picture width.
+     * @param[out] h The picture height.
+     * @return Result::Success when succeeded, Result::InsufficientCondition otherwise.
      */
     //TODO: Replace with size(). Remove API
     Result viewbox(float* x, float* y, float* w, float* h) const noexcept;
@@ -951,7 +992,7 @@ public:
     Result push(std::unique_ptr<Paint> paint) noexcept;
 
     /**
-     * @brief Sets the size of the memory block, where all the paints pushed into the scene are stored.
+     * @brief Sets the size of the container, where all the paints pushed into the scene are stored.
      *
      * If the number of objects pushed into the scene is known in advance, calling the function
      * prevents multiple memory reallocation, thus improving the performance.
@@ -985,7 +1026,7 @@ public:
  *
  * @ingroup ThorVG
  *
-  @brief description...
+ * @brief A class for the rasterisation of graphic elements with a software engine.
  *
  */
 class TVG_EXPORT SwCanvas final : public Canvas
@@ -998,24 +1039,30 @@ public:
      */
     enum Colorspace
     {
-        ABGR8888 = 0, ///<
-        ARGB8888      ///<
+        ABGR8888 = 0, ///< The channels are joined in the order: alpha, blue, green, red.
+        ARGB8888      ///< The channels are joined in the order: alpha, red, green, blue.
     };
 
     /**
-     * @brief ...
-     * @param[in]
-     * @param[in]
-     * @param[in]
-     * @param[in]
-     * @param[in]
-     * @return Result::Success when succeeded, ... otherwise.
+     * @brief Sets the target of the rasterisation.
+     *
+     * The buffer of a desirable size should be already allocated.
+     *
+     * @param[in] buffer A pointer to a memory block of the size @p w x @p h, where the raster data are stored.
+     * @param[in] stride The stride of the raster image - greater than or equal to @p w.
+     * @param[in] w The width of the raster image.
+     * @param[in] h The height of the raster image.
+     * @param[in] cs The value specifying the way the 32-bits colors should be read/written.
+     * @retval Result::Success when succeeded.
+     * @retval Result::MemoryCorruption When casting in the internal function implementation failed.
+     * @retval Result::InvalidArguments In case no valid pointer is provided or the width, or the height or the stride is zero.
+     * @retval Result::NonSupport In case the software engine is not enabled in the 'meson_options.txt' file.
      */
     Result target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h, Colorspace cs) noexcept;
 
     /**
-     * @brief ...
-     * @return Result::Success when succeeded, ... otherwise.
+     * @brief Creates a new SwCanvas object.
+     * @return A unique pointer to the new SwCanvas object when succeeded, @c nullptr if the software engine is not enabled in the 'meson_options.txt' file.
      */
     static std::unique_ptr<SwCanvas> gen() noexcept;
 
@@ -1028,7 +1075,7 @@ public:
  *
  * @ingroup ThorVG
  *
- * @brief description...
+ * @brief A class for the rasterisation of graphic elements with the OpenGL engine.
  *
  */
 class TVG_EXPORT GlCanvas final : public Canvas
@@ -1037,19 +1084,14 @@ public:
     ~GlCanvas();
 
     /**
-     * @brief ...
-     * @param[in]
-     * @param[in]
-     * @param[in]
-     * @param[in]
-     * @return Result::Success when succeeded, ... otherwise.
+     * @brief Sets the target of the rasterisation.
      */
     //TODO: Gl Specific methods. Need gl backend configuration methods as well.
     Result target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h) noexcept;
 
     /**
-     * @brief ...
-     * @return
+     * @brief Creates a new GlCanvas object.
+     * @return A unique pointer to the new GlCanvas object when succeeded, @c nullptr if the OpenGL engine is not enabled in the 'meson_options.txt' file.
      */
     static std::unique_ptr<GlCanvas> gen() noexcept;
 
@@ -1058,33 +1100,36 @@ public:
 
 
 /**
- * @class Engine
+ * @class Initializer
  *
  * @ingroup ThorVG
  *
- * @brief description...
+ * @brief A class that enables initialization and termination of the ThorVG engine.
  *
  */
 class TVG_EXPORT Initializer final
 {
 public:
     /**
-     * @brief ...
-     *
-     * @param[in] arg ...
-     *
-     * @note ...
-     *
-     * @return ...
-     *
-     * @see ...
+     * @brief Initializes the ThorVG engine.
+     * @param[in] engine The engine type - the same as specified in the 'meson_options.txt' file.
+     * @param[in] threads The number of threads - zero is treated as one.
+     * @retval Result::Success When succeeded.
+     * @retval Result::InsufficientCondition An internal error possibly with memory allocation.
+     * @retval Result::InvalidArguments If unknown engine type chosen.
+     * @retval Result::NonSupport In case the engine type in the 'meson_options.txt' differs from the one specified in the @p engine argument.
+     * @retval Result::Unknown Other.
      */
     static Result init(CanvasEngine engine, uint32_t threads) noexcept;
 
     /**
-     * @brief ...
-     * @param[in] arg ...
-     * @return ...
+     * @brief Terminates the ThorVG engine.
+     * @param[in] engine The engine type - the same as specified in the 'meson_options.txt' file.
+     * @retval Result::Success When succeeded.
+     * @retval Result::InsufficientCondition In case there is nothing to be terminated.
+     * @retval Result::InvalidArguments If unknown engine type chosen.
+     * @retval Result::NonSupport In case the engine type in the 'meson_options.txt' differs from the one specified in the @p engine argument.
+     * @retval Result::Unknown Other.
      */
     static Result term(CanvasEngine engine) noexcept;
 
