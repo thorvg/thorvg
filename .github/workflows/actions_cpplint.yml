@@ -1,4 +1,4 @@
-name: PullRequest_Checker
+name: Check Commit
 
 on:
   pull_request:
@@ -6,7 +6,7 @@ on:
       - master
 
 jobs:
-  build:
+  coding-style:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
