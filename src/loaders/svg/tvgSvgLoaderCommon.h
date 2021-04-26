@@ -47,6 +47,7 @@ enum class SvgNodeType
     Use,
     Video,
     ClipPath,
+    Mask,
     //Custome_command,   //Not support
     Unknown
 };

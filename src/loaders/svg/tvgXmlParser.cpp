@@ -42,7 +42,7 @@
 string simpleXmlNodeTypeToString(SvgNodeType type)
 {
     switch (type) {
-        case SvgNodeType::Doc: return "Doc";
+        case SvgNodeType::Doc: return "Svg";
         case SvgNodeType::G: return "G";
         case SvgNodeType::Defs: return "Defs";
         case SvgNodeType::Animation: return "Animation";
@@ -61,10 +61,55 @@ string simpleXmlNodeTypeToString(SvgNodeType type)
         case SvgNodeType::Use: return "Use";
         case SvgNodeType::Video: return "Video";
         case SvgNodeType::ClipPath: return "ClipPath";
+        case SvgNodeType::Mask: return "Mask";
         default: return "Unknown";
     }
     return "Unknown";
 }
+
+bool isIgnoreUnsupportedLogElements(const char* tagName)
+{
+    const auto elementsNum = 1;
+    const char* const elements[] = { "title" };
+
+    for (unsigned int i = 0; i < elementsNum; ++i) {
+        if (!strncmp(tagName, elements[i], strlen(tagName))) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool _isIgnoreUnsupportedLogAttributes(const char* tagAttribute, const char* tagValue)
+{
+    const auto attributesNum = 6;
+    const struct
+    {
+        const char* tag;
+        bool tagWildcard; //If true, it is assumed that a wildcard is used after the tag. (ex: tagName*)
+        const char* value;
+    } attributes[] = {
+        {"id", false, nullptr},
+        {"data-name", false, nullptr},
+        {"overflow", false, "visible"},
+        {"version", false, nullptr},
+        {"xmlns", true, nullptr},
+        {"xml:space", false, nullptr},
+    };
+
+    for (unsigned int i = 0; i < attributesNum; ++i) {
+        if (!strncmp(tagAttribute, attributes[i].tag, attributes[i].tagWildcard ? strlen(attributes[i].tag) : strlen(tagAttribute))) {
+            if (attributes[i].value && tagValue) {
+                if (!strncmp(tagValue, attributes[i].value, strlen(tagValue))) {
+                    return true;
+                } else continue;
+            }
+            return true;
+        }
+    }
+    return false;
+}
+
 #endif
 
 static const char* _simpleXmlFindWhiteSpace(const char* itr, const char* itrEnd)
@@ -267,7 +312,9 @@ bool simpleXmlParseAttributes(const char* buf, unsigned bufLength, simpleXMLAttr
         tval[i] = '\0';
 
 #ifdef THORVG_LOG_ENABLED
-        if (!func((void*)data, tmpBuf, tval)) printf("SVG: Unsupported attributes used [Elements type: %s][Attribute: %s]\n", simpleXmlNodeTypeToString(((SvgLoaderData*)data)->svgParse->node->type).c_str(), tmpBuf);
+        if (!func((void*)data, tmpBuf, tval)) {
+            if (!_isIgnoreUnsupportedLogAttributes(tmpBuf, tval)) printf("SVG: Unsupported attributes used [Elements type: %s][Id : %s][Attribute: %s][Value: %s]\n", simpleXmlNodeTypeToString(((SvgLoaderData*)data)->svgParse->node->type).c_str(), ((SvgLoaderData*)data)->svgParse->node->id ? ((SvgLoaderData*)data)->svgParse->node->id->c_str() : "NO_ID", tmpBuf, tval ? tval : "NONE");
+        }
 #else
         func((void*)data, tmpBuf, tval);
 #endif
