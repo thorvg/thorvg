@@ -36,8 +36,6 @@ typedef SvgNode* (*FactoryMethod)(SvgLoaderData* loader, SvgNode* parent, const 
 typedef SvgStyleGradient* (*GradientFactoryMethod)(SvgLoaderData* loader, const char* buf, unsigned bufLength);
 
 
-
-
 static char* _skipSpace(const char* str, const char* end)
 {
     while (((end && str < end) || (!end && *str != '\0')) && isspace(*str)) {
@@ -739,8 +737,8 @@ static bool _attrParseSvgNode(void* data, const char* key, const char* value)
         return simpleXmlParseW3CAttribute(value, _parseStyleAttr, loader);
     }
 #ifdef THORVG_LOG_ENABLED
-    else if (!strcmp(key, "xmlns") || !strcmp(key, "xmlns:xlink") || !strcmp(key, "xmlns:svg")) {
-        //No action
+    else if (!strcmp(key, "x") || !strcmp(key, "y")) {
+        if (0.0f == _parseLength(value, &type)) printf("SVG: Unsupported attributes used [Elements type: Svg][Attribute: %s][Value: %s]\n", key, value);
     }
 #endif
     else {
@@ -1080,7 +1078,7 @@ static SvgNode* _createSvgNode(SvgLoaderData* loader, SvgNode* parent, const cha
 
 static SvgNode* _createMaskNode(SvgLoaderData* loader, SvgNode* parent, TVG_UNUSED const char* buf, TVG_UNUSED unsigned bufLength)
 {
-    loader->svgParse->node = _createNode(parent, SvgNodeType::Unknown);
+    loader->svgParse->node = _createNode(parent, SvgNodeType::Mask);
     if (!loader->svgParse->node) return nullptr;
 
     simpleXmlParseAttributes(buf, bufLength, _attrParseMaskNode, loader);
@@ -2207,7 +2205,7 @@ static void _svgLoaderParserXmlOpen(SvgLoaderData* loader, const char* content, 
     }
 #ifdef THORVG_LOG_ENABLED
     else {
-        printf("SVG: Unsupported elements used [Elements: %s]\n", tagName);
+        if (!isIgnoreUnsupportedLogElements(tagName)) printf("SVG: Unsupported elements used [Elements: %s]\n", tagName);
     }
 #endif
 }
