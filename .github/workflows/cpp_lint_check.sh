@@ -37,7 +37,7 @@ cpplint --filter=-,\
 
 PAYLOAD_CPPLINT=`cat cpp-report.txt`
 COMMENTS_URL=$(cat $GITHUB_EVENT_PATH | jq -r .pull_request.comments_url)
-  
+
 echo $COMMENTS_URL
 echo "Cppcheck errors:"
 echo $PAYLOAD_CPPLINT
@@ -47,13 +47,8 @@ if [[ $PAYLOAD_CPPLINT == *"Total errors found: "* ]]; then
   OUTPUT+=$'\n```\n'
   OUTPUT+="$PAYLOAD_CPPLINT"
   OUTPUT+=$'\n```\n' 
-
-else
-  OUTPUT+=$'\n**CODING STYLE CHECK**:\n'
-  OUTPUT+=$'\n```\n'
-  OUTPUT+="Perfect."
-  OUTPUT+=$'\n```\n' 
 fi
+
 PAYLOAD=$(echo '{}' | jq --arg body "$OUTPUT" '.body = $body')
 
 curl -s -S -H "Authorization: token $GITHUB_TOKEN" --header "Content-Type: application/vnd.github.VERSION.text+json" --data "$PAYLOAD" "$COMMENTS_URL"
