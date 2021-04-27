@@ -835,10 +835,10 @@ public:
      * The direct loading from a file is available for the svg and png files.
      *
      * @param[in] path A path to the picture file.
-     * @return Result::Success when succeeded, otherwise the returned value depends on the problem type:
-     * Result::InvalidArguments - in case the @p path is empty,
-     * Result::NonSupport - when trying to load a file with an unknown extension,
-     * Result::Unknown - if an error occurs at a later stage.
+     * @return Result::Success when succeeded, otherwise the returned value depends on the problem type.
+     * @retval Result::InvalidArguments In case the @p path is empty.
+     * @retval Result::NonSupport When trying to load a file with an unknown extension.
+     * @retval Result::Unknown If an error occurs at a later stage.
      */
     Result load(const std::string& path) noexcept;
 
@@ -849,10 +849,10 @@ public:
      *
      * @param[in] data A pointer to a memory location where the content of the svg file is stored.
      * @param[in] size The size in bytes of the memory occupied by the @p data.
-     * @return Result::Success when succeeded, otherwise the returned value depends on the problem type:
-     * Result::InvalidArguments - in case no data are provided or the @p size is zero or less,
-     * Result::NonSupport - when trying to load a file with an unknown extension,
-     * Result::Unknown - if an error occurs at a later stage.
+     * @return Result::Success when succeeded, otherwise the returned value depends on the problem type.
+     * @retval Result::InvalidArguments In case no data are provided or the @p size is zero or less.
+     * @retval Result::NonSupport When trying to load a file with an unknown extension.
+     * @retval Result::Unknown If an error occurs at a later stage.
      */
     Result load(const char* data, uint32_t size) noexcept;
 
@@ -865,9 +865,9 @@ public:
      * @param[in] w The width of the image in pixels.
      * @param[in] h The height of the image in pixels.
      * @param[in] copy Specifies the method of copying the @p data - shallow if @c false and deep id @c true.
-     * @return Result::Success when succeeded, otherwise the returned value depends on the problem type:
-     * Result::InvalidArguments - in case no data is provided or the width or the height of the picture is zero or less,
-     * Result::NonSupport - when trying to load a file with an unknown extension.
+     * @return Result::Success when succeeded, otherwise the returned value depends on the problem type.
+     * @retval Result::InvalidArguments In case no data is provided or the width or the height of the picture is zero or less.
+     * @retval Result::NonSupport When trying to load a file with an unknown extension.
      */
     Result load(uint32_t* data, uint32_t w, uint32_t h, bool copy) noexcept;
 
