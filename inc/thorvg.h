@@ -514,7 +514,7 @@ public:
      * Corresponds to the M command from the svg path commands.
      *
      * @param[in] x The horizontal coordinate of the initial point of the sub-path.
-     * @param[in] t The vertical coordinate of the initial point of the sub-path.
+     * @param[in] y The vertical coordinate of the initial point of the sub-path.
      * @return Result::Success.
      */
     Result moveTo(float x, float y) noexcept;
@@ -528,7 +528,7 @@ public:
      * In case this is the first command in the path, it corresponds to the moveTo command.
      *
      * @param[in] x The horizontal coordinate of the endpoint of the line.
-     * @param[in] t The vertical coordinate of the endpoint of the line.
+     * @param[in] y The vertical coordinate of the endpoint of the line.
      * @return Result::Success.
      */
     Result lineTo(float x, float y) noexcept;
@@ -547,7 +547,7 @@ public:
      * @param[in] cx2 The horizontal coordinate of the 2nd control point.
      * @param[in] cy2 The vertical coordinate of the 2nd control point.
      * @param[in] x The horizontal coordinate of the endpoint of the curve.
-     * @param[in] t The vertical coordinate of the endpoint of the curve.
+     * @param[in] y The vertical coordinate of the endpoint of the curve.
      * @return Result::Success.
      */
     Result cubicTo(float cx1, float cy1, float cx2, float cy2, float x, float y) noexcept;
@@ -666,7 +666,7 @@ public:
 
     /**
      * @brief Sets the gradient fill of the stroke for all of the figures from the path..
-     * @param[in] The unique pointer to the gradient fill.
+     * @param[in] f The unique pointer to the gradient fill.
      * @return Result::Success when succeeded, Result::FailedAllocation or Result::MemoryCorruption otherwise.
      */
     Result stroke(std::unique_ptr<Fill> f) noexcept;
@@ -715,7 +715,7 @@ public:
      *
      * The parts of the shape defined as inner are filled.
      *
-     * @param[in] The unique pointer to the gradient fill.
+     * @param[in] f The unique pointer to the gradient fill.
      * @return Result::Success when succeeded, Result::MemoryCorruption otherwise.
      */
     Result fill(std::unique_ptr<Fill> f) noexcept;
