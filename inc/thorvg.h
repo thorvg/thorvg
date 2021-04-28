@@ -227,7 +227,7 @@ public:
      * @brief Sets the composition target object and the composition method.
      * @param[in] target The pointer to the target object.
      * @param[in] method The method used to composite the source object with the target.
-     * @return Result::Success when succeeded, Result::InsufficientCondition otherwise.
+     * @return Result::Success when succeeded, Result::InvalidArguments otherwise.
      */
     Result composite(std::unique_ptr<Paint> target, CompositeMethod method) const noexcept;
 
