@@ -167,7 +167,7 @@ bool Paint::Impl::render(RenderMethod& renderer)
     /* Note: only ClipPath is processed in update() step.
         Create a composition image. */
     if (cmpTarget && cmpMethod != CompositeMethod::ClipPath) {
-        auto region = cmpTarget->pImpl->bounds(renderer);
+        auto region = smethod->bounds(renderer);
         if (region.w == 0 || region.h == 0) return false;
         cmp = renderer.target(region);
         renderer.beginComposite(cmp, CompositeMethod::None, 255);
