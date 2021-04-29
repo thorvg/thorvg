@@ -49,6 +49,11 @@ class Scene;
 class Picture;
 class Canvas;
 
+/**
+ * @defgroup ThorVG C++ APIs
+ */
+
+/**@{*/
 
 /**
  * @brief Enumeration specifying the result from the APIs.
@@ -161,8 +166,6 @@ struct Matrix
 /**
  * @class Paint
  *
- * @ingroup ThorVG
- *
  * @brief A class for managing graphic elements.
  *
  * It enables duplication, transformation and composition.
@@ -264,8 +267,6 @@ public:
 /**
  * @class Fill
  *
- * @ingroup ThorVG
- *
  * @brief A class representing the gradient fill of the Shape object.
  *
  * It contains the information about the gradient colors and their arrangement
@@ -332,8 +333,6 @@ public:
 
 /**
  * @class Canvas
- *
- * @ingroup ThorVG
  *
  * @brief A class for drawing graphic elements.
  *
@@ -412,8 +411,6 @@ public:
 /**
  * @class LinearGradient
  *
- * @ingroup ThorVG
- *
  * @brief A class representing the linear gradient fill of the Shape object.
  *
  * Besides the APIs inherited from the Fill class, it enables setting and getting the linear gradient bounds.
@@ -467,8 +464,6 @@ public:
 /**
  * @class RadialGradient
  *
- * @ingroup ThorVG
- *
  * @brief A class representing the radial gradient fill of the Shape object.
  *
  */
@@ -515,8 +510,6 @@ public:
 
 /**
  * @class Shape
- *
- * @ingroup ThorVG
  *
  * @brief A class representing two-dimensional figures and their properties.
  *
@@ -853,8 +846,6 @@ public:
 /**
  * @class Picture
  *
- * @ingroup ThorVG
- *
  * @brief A class representing an image read in one of the supported formats: svg, png and raw.
  * Besides the methods inherited from the Paint, it provides methods to load the image,
  * to change its size and to get the basic information.
@@ -968,8 +959,6 @@ public:
 /**
  * @class Scene
  *
- * @ingroup ThorVG
- *
  * @brief A class enabling to hold many Paint objects.
  *
  * As a whole they can be transformed, their transparency can be changed, or the composition
@@ -1024,8 +1013,6 @@ public:
 /**
  * @class SwCanvas
  *
- * @ingroup ThorVG
- *
  * @brief A class for the rasterisation of graphic elements with a software engine.
  *
  */
@@ -1073,8 +1060,6 @@ public:
 /**
  * @class GlCanvas
  *
- * @ingroup ThorVG
- *
  * @brief A class for the rasterisation of graphic elements with the OpenGL engine.
  *
  */
@@ -1101,8 +1086,6 @@ public:
 
 /**
  * @class Initializer
- *
- * @ingroup ThorVG
  *
  * @brief A class that enables initialization and termination of the ThorVG engine.
  *
@@ -1135,6 +1118,8 @@ public:
 
     _TVG_DISABLE_CTOR(Initializer);
 };
+
+/** @}*/
 
 } //namespace
 

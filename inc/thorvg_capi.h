@@ -38,6 +38,12 @@ typedef struct _Tvg_Canvas Tvg_Canvas;
 typedef struct _Tvg_Paint Tvg_Paint;
 typedef struct _Tvg_Gradient Tvg_Gradient;
 
+/**
+ * \defgroup ThorVGCapi C APIs
+ */
+
+/**@{*/
+
 /*!
 * \def TVG_ENGINE_SW
 * Software raster engine type.
@@ -1299,6 +1305,7 @@ TVG_EXPORT Tvg_Result tvg_scene_push(Tvg_Paint* scene, Tvg_Paint* paint);
 */
 TVG_EXPORT Tvg_Result tvg_scene_clear(Tvg_Paint* scene);
 
+/** \}*/
 
 #ifdef __cplusplus
 }
