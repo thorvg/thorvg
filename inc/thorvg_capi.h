@@ -83,80 +83,38 @@ typedef struct _Tvg_Gradient Tvg_Gradient;
 #define TVG_COLORSPACE_ARGB8888 1
 
 
+/**
+ * @brief Enumeration specifying the result from the APIs.
+ */
 typedef enum {
-    TVG_RESULT_SUCCESS = 0,
-    TVG_RESULT_INVALID_ARGUMENT,
-    TVG_RESULT_INSUFFICIENT_CONDITION,
-    TVG_RESULT_FAILED_ALLOCATION,
-    TVG_RESULT_MEMORY_CORRUPTION,
-    TVG_RESULT_NOT_SUPPORTED,
-    TVG_RESULT_UNKNOWN
+    TVG_RESULT_SUCCESS = 0,            ///< The value returned in case of the correct request execution.
+    TVG_RESULT_INVALID_ARGUMENT,       ///< The value returned in the event of a problem with the arguments given to the API - e.g. empty paths or null pointers.
+    TVG_RESULT_INSUFFICIENT_CONDITION, ///< The value returned in case the request cannot be processed - e.g. asking for properties of an object, which does not exist.
+    TVG_RESULT_FAILED_ALLOCATION,      ///< The value returned in case of unsuccessful memory allocation.
+    TVG_RESULT_MEMORY_CORRUPTION,      ///< The value returned in the event of bad memory handling - e.g. failing in pointer releasing or casting
+    TVG_RESULT_NOT_SUPPORTED,          ///< The value returned in case of choosing unsupported options.
+    TVG_RESULT_UNKNOWN                 ///< The value returned in all other cases.
 } Tvg_Result;
 
 
-typedef enum {
-    TVG_PATH_COMMAND_CLOSE = 0,
-    TVG_PATH_COMMAND_MOVE_TO,
-    TVG_PATH_COMMAND_LINE_TO,
-    TVG_PATH_COMMAND_CUBIC_TO
-} Tvg_Path_Command;
-
-
-typedef enum {
-    TVG_STROKE_CAP_SQUARE = 0,
-    TVG_STROKE_CAP_ROUND,
-    TVG_STROKE_CAP_BUTT
-} Tvg_Stroke_Cap;
-
-
-typedef enum {
-    TVG_STROKE_JOIN_BEVEL = 0,
-    TVG_STROKE_JOIN_ROUND,
-    TVG_STROKE_JOIN_MITER
-} Tvg_Stroke_Join;
-
-
-typedef enum {
-    TVG_STROKE_FILL_PAD = 0,
-    TVG_STROKE_FILL_REFLECT,
-    TVG_STROKE_FILL_REPEAT
-} Tvg_Stroke_Fill;
-
-
-typedef enum {
-    TVG_FILL_RULE_WINDING = 0,
-    TVG_FILL_RULE_EVEN_ODD
-} Tvg_Fill_Rule;
-
-
-typedef enum {
-    TVG_COMPOSITE_METHOD_NONE = 0,
-    TVG_COMPOSITE_METHOD_CLIP_PATH,
-    TVG_COMPOSITE_METHOD_ALPHA_MASK,
-    TVG_COMPOSITE_METHOD_INVERSE_ALPHA_MASK,
-} Tvg_Composite_Method;
-
-
+/**
+ * @brief A data structure representing a point in two-dimensional space.
+ */
 typedef struct
 {
     float x, y;
 } Tvg_Point;
 
 
+/**
+ * @brief A data structure representing a three-dimensional matrix.
+ */
 typedef struct
 {
     float e11, e12, e13;
     float e21, e22, e23;
     float e31, e32, e33;
 } Tvg_Matrix;
-
-
-typedef struct
-{
-    float offset;
-    uint8_t r, g, b, a;
-} Tvg_Color_Stop;
-
 
 /************************************************************************/
 /* Engine API                                                           */
@@ -504,6 +462,16 @@ TVG_EXPORT Tvg_Result tvg_canvas_sync(Tvg_Canvas* canvas);
 /************************************************************************/
 /* Paint API                                                            */
 /************************************************************************/
+/**
+ * @brief Enumeration indicating the method used in the composition of two objects - the target and the source.
+ */
+typedef enum {
+    TVG_COMPOSITE_METHOD_NONE = 0,           ///< No composition is applied.
+    TVG_COMPOSITE_METHOD_CLIP_PATH,          ///< The intersection of the source and the target is determined and only the resulting pixels from the source are rendered.
+    TVG_COMPOSITE_METHOD_ALPHA_MASK,         ///< The pixels of the source and the target are alpha blended. As a result, only the part of the source, which intersects with the target is visible.
+    TVG_COMPOSITE_METHOD_INVERSE_ALPHA_MASK, ///< The pixels of the source and the complement to the target's pixels are alpha blended. As a result, only the part of the source which is not covered by the target is visible.
+} Tvg_Composite_Method;
+
 /*!
 * \fn TVG_EXPORT Tvg_Result tvg_paint_del(Tvg_Paint* paint)
 * \brief The function releases given paint object. The tvg_canvas_clear(canvas, true) or tvg_canvas_del(canvas)
@@ -657,10 +625,62 @@ TVG_EXPORT Tvg_Result tvg_paint_set_composite_method(Tvg_Paint* paint, Tvg_Paint
 * \{
 */
 
-
 /************************************************************************/
 /* Shape API                                                            */
 /************************************************************************/
+
+/**
+ * @brief Enumeration specifying the values of the path commands accepted by ThorVG.
+ *
+ * Not to be confused with the path commands from the svg path element (like M, L, Q, H and many others).
+ * ThorVG interprets all of them and translates to the ones from the PathCommand values.
+ */
+typedef enum {
+    TVG_PATH_COMMAND_CLOSE = 0, ///< Ends the current sub-path and connects it with its initial point - corresponds to Z command in the svg path commands.
+    TVG_PATH_COMMAND_MOVE_TO,   ///< Sets a new initial point of the sub-path and a new current point - corresponds to M command in the svg path commands.
+    TVG_PATH_COMMAND_LINE_TO,   ///< Draws a line from the current point to the given point and sets a new value of the current point - corresponds to L command in the svg path commands.
+    TVG_PATH_COMMAND_CUBIC_TO   ///< Draws a cubic Bezier curve from the current point to the given point using two given control points and sets a new value of the current point - corresponds to C command in the svg path commands.
+} Tvg_Path_Command;
+
+
+/**
+ * @brief Enumeration determining the ending type of a stroke in the open sub-paths.
+ */
+typedef enum {
+    TVG_STROKE_CAP_SQUARE = 0, ///< The stroke is extended in both endpoints of a sub-path by a rectangle, with the width equal to the stroke width and the length equal to the half of the stroke width. For zero length sub-paths the square is rendered with the size of the stroke width.
+    TVG_STROKE_CAP_ROUND,      ///< The stroke is extended in both endpoints of a sub-path by a half circle, with a radius equal to the half of a stroke width. For zero length sub-paths a full circle is rendered.
+    TVG_STROKE_CAP_BUTT        ///< The stroke ends exactly at each of the two endpoints of a sub-path. For zero length sub-paths no stroke is rendered.
+} Tvg_Stroke_Cap;
+
+
+/**
+ * @brief Enumeration specifying how to fill the area outside the gradient bounds.
+ */
+typedef enum {
+    TVG_STROKE_JOIN_BEVEL = 0, ///< The outer corner of the joined path segments is bevelled at the join point. The triangular region of the corner is enclosed by a straight line between the outer corners of each stroke.
+    TVG_STROKE_JOIN_ROUND,     ///< The outer corner of the joined path segments is rounded. The circular region is centered at the join point.
+    TVG_STROKE_JOIN_MITER      ///< The outer corner of the joined path segments is spiked. The spike is created by extension beyond the join point of the outer edges of the stroke until they intersect. In case the extension goes beyond the limit, the join style is converted to the Bevel style.
+} Tvg_Stroke_Join;
+
+
+/**
+ * @brief Enumeration specifying how to fill the area outside the gradient bounds.
+ */
+typedef enum {
+    TVG_STROKE_FILL_PAD = 0, ///< The remaining area is filled with the closest stop color.
+    TVG_STROKE_FILL_REFLECT, ///< The gradient pattern is reflected outside the gradient area until the expected region is filled.
+    TVG_STROKE_FILL_REPEAT   ///< The gradient pattern is repeated continuously beyond the gradient area until the expected region is filled.
+} Tvg_Stroke_Fill;
+
+
+/**
+ * @brief Enumeration specifying the algorithm used to establish which parts of the shape are treated as the inside of the shape.
+ */
+typedef enum {
+    TVG_FILL_RULE_WINDING = 0, ///< A line from the point to a location outside the shape is drawn. The intersections of the line with the path segment of the shape are counted. Starting from zero, if the path segment of the shape crosses the line clockwise, one is added, otherwise one is subtracted. If the resulting sum is non zero, the point is inside the shape.
+    TVG_FILL_RULE_EVEN_ODD     ///< A line from the point to a location outside the shape is drawn and its intersections with the path segments of the shape are counted. If the number of intersections is an odd number, the point is inside the shape.
+} Tvg_Fill_Rule;
+
 /*!
 * \fn TVG_EXPORT Tvg_Paint* tvg_shape_new()
 * \brief The function creates a new shape
@@ -1143,6 +1163,20 @@ TVG_EXPORT Tvg_Result tvg_shape_get_gradient(const Tvg_Paint* paint, Tvg_Gradien
 *
 * \{
 */
+
+/*!
+* \struct Tvg_Color_Stop
+* \brief A data structure storing the information about the color and its relative position inside the gradient bounds.
+*/
+typedef struct
+{
+    float offset; /**< The relative position of the color. */
+    uint8_t r;    /**< The red color channel value in the range [0 ~ 255]. */
+    uint8_t g;    /**< The green color channel value in the range [0 ~ 255]. */
+    uint8_t b;    /**< The blue color channel value in the range [0 ~ 255]. */
+    uint8_t a;    /**< The alpha channel value in the range [0 ~ 255], where 0 is completely transparent and 255 is opaque. */
+} Tvg_Color_Stop;
+
 
 /************************************************************************/
 /* Gradient API                                                         */
