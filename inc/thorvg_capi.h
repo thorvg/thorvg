@@ -39,32 +39,49 @@ typedef struct _Tvg_Paint Tvg_Paint;
 typedef struct _Tvg_Gradient Tvg_Gradient;
 
 /**
- * \defgroup ThorVGCapi C APIs
- */
+* \defgroup ThorVGCapi C APIs
+* \brief ThorVG provides C interface.
+*
+* \{
+*/
 
-/**@{*/
+/**
+* \defgroup ThorVGCapi_Initializer Initializer
+* \brief Enables initialization and termination of the ThorVG engine.
+*
+* \{
+*/
 
 /*!
 * \def TVG_ENGINE_SW
 * Software raster engine type.
 */
 #define TVG_ENGINE_SW (1 << 1)
+
+
 /*!
 * \def TVG_ENGINE_GL
 * GL raster engine type.
 */
 #define TVG_ENGINE_GL (1 << 2)
 
+/*\}*/
+
 /*!
+* \ingroup ThorVGCapi_Canvas
 * \def TVG_COLORSPACE_ABGR8888
 * Colorspace used to fill buffer.
 */
 #define TVG_COLORSPACE_ABGR8888 0
+
+
 /*!
+* \ingroup ThorVGCapi_Canvas
 * \def TVG_COLORSPACE_ARGB8888
 * Colorspace used to fill buffer.
 */
 #define TVG_COLORSPACE_ARGB8888 1
+
 
 typedef enum {
     TVG_RESULT_SUCCESS = 0,
@@ -111,12 +128,14 @@ typedef enum {
     TVG_FILL_RULE_EVEN_ODD
 } Tvg_Fill_Rule;
 
+
 typedef enum {
     TVG_COMPOSITE_METHOD_NONE = 0,
     TVG_COMPOSITE_METHOD_CLIP_PATH,
     TVG_COMPOSITE_METHOD_ALPHA_MASK,
     TVG_COMPOSITE_METHOD_INVERSE_ALPHA_MASK,
 } Tvg_Composite_Method;
+
 
 typedef struct
 {
@@ -146,6 +165,7 @@ typedef struct
 * \fn Tvg_Result tvg_engine_init(unsigned engine_method, unsigned threads)
 * \brief The funciton initialises thorvg library. It must be called before the
 * other functions at the beggining of thorvg client.
+* \ingroup ThorVGCapi_Initializer Initializer
 * \code
 * tvg_engine_init(TVG_ENGINE_SW, 0); //Initialize software renderer and use 1 thread
 * \endcode
@@ -169,6 +189,7 @@ TVG_EXPORT Tvg_Result tvg_engine_init(unsigned engine_method, unsigned threads);
 * \brief The funciton termiates renderer tasks. Used for cleanup.
 * It should be called in case of termination of the thorvg library with same
 * renderer types as it was passed in tvg_engine_init()
+* \ingroup ThorVGCapi_Initializer Initializer
 * \code
 * tvg_engine_init(TVG_ENGINE_SW, 0);
 * //define canvas and shapes, update shapes, general rendering calls
@@ -186,6 +207,22 @@ TVG_EXPORT Tvg_Result tvg_engine_init(unsigned engine_method, unsigned threads);
 */
 TVG_EXPORT Tvg_Result tvg_engine_term(unsigned engine_method);
 
+
+/**
+* \defgroup ThorVGCapi_Canvas Canvas
+* \brief Functions for drawing graphic elements.
+* It stores all Paint objects (Shape, Scene, Picture) and creates the buffer, which can be drawn on the screen.
+*
+* \{
+*/
+
+/**
+* \defgroup ThorVGCapi_SwCanvas SwCanvas
+* \ingroup ThorVGCapi_Canvas
+* \brief Functions for the rasterisation of graphic elements with a software engine.
+*
+* \{
+*/
 
 /************************************************************************/
 /* SwCanvas API                                                         */
@@ -236,6 +273,9 @@ TVG_EXPORT Tvg_Canvas* tvg_swcanvas_create();
 * - TVG_RESULT_INVALID_ARGUMENTS: invalid buffer, stride = 0, w or h = 0
 */
 TVG_EXPORT Tvg_Result tvg_swcanvas_set_target(Tvg_Canvas* canvas, uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h, uint32_t cs);
+
+
+/* \} */
 
 
 /************************************************************************/
@@ -452,6 +492,15 @@ TVG_EXPORT Tvg_Result tvg_canvas_draw(Tvg_Canvas* canvas);
 */
 TVG_EXPORT Tvg_Result tvg_canvas_sync(Tvg_Canvas* canvas);
 
+/* \} */
+
+/**
+* \defgroup ThorVGCapi_Paint Paint
+* \brief Functions for managing graphic elements. It enables duplication, transformation and composition.
+*
+* \{
+*/
+
 /************************************************************************/
 /* Paint API                                                            */
 /************************************************************************/
@@ -596,6 +645,18 @@ TVG_EXPORT Tvg_Result tvg_paint_get_bounds(const Tvg_Paint* paint, float* x, flo
 * - TVG_RESULT_INVALID_PARAMETERS: if paint is invalid
 */
 TVG_EXPORT Tvg_Result tvg_paint_set_composite_method(Tvg_Paint* paint, Tvg_Paint* target, Tvg_Composite_Method method);
+
+/** \}*/
+
+/**
+* \defgroup ThorVGCapi_Shape Shape
+* \brief Functions representing two-dimensional figures and their properties.
+* The shapes of the figures in the Shape object are stored as the sub-paths in the path.
+* The data to be saved in the path can be read directly from the svg file or through the provided APIs.
+*
+* \{
+*/
+
 
 /************************************************************************/
 /* Shape API                                                            */
@@ -837,8 +898,41 @@ TVG_EXPORT Tvg_Result tvg_shape_set_stroke_color(Tvg_Paint* paint, uint8_t r, ui
 */
 TVG_EXPORT Tvg_Result tvg_shape_get_stroke_color(const Tvg_Paint* paint, uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a);
 
+
+/*!
+* \fn TVG_EXPORT Tvg_Result tvg_shape_set_stroke_linear_gradient(Tvg_Paint* paint, Tvg_Gradient* grad)
+* \brief The function inserts linear gradient object as an shape stroke.
+* \param[in] paint Tvg_Paint pointer
+* \param[in] grad Tvg_Gradient pointer (linear)
+* \return Tvg_Result return value
+* - TVG_RESULT_SUCCESS: if ok.
+* - TVG_RESULT_INVALID_PARAMETERS: if paint is invalid
+*/
 TVG_EXPORT Tvg_Result tvg_shape_set_stroke_linear_gradient(Tvg_Paint* paint, Tvg_Gradient* grad);
+
+
+/*!
+* \fn TVG_EXPORT Tvg_Result tvg_shape_set_stroke_radial_gradient(Tvg_Paint* paint, Tvg_Gradient* grad)
+* \brief The function inserts radial gradient object as an shape stroke.
+* \param[in] paint Tvg_Paint pointer
+* \param[in] grad Tvg_Gradient pointer
+* \return Tvg_Result return value
+* - TVG_RESULT_SUCCESS: if ok.
+* - TVG_RESULT_INVALID_PARAMETERS: if paint is invalid
+*/
 TVG_EXPORT Tvg_Result tvg_shape_set_stroke_radial_gradient(Tvg_Paint* paint, Tvg_Gradient* grad);
+
+
+/*!
+* \fn TVG_EXPORT Tvg_Result tvg_shape_get_stroke_gradient(const Tvg_Paint* paint, Tvg_Gradient** grad)
+* \brief The function returns gradient previously inserted to given shape stroke. Function deos not
+* allocate any data.
+* \param[in] paint Tvg_Paint pointer
+* \param[out] grad Tvg_Gradient pointer
+* \return Tvg_Result return value
+* - TVG_RESULT_SUCCESS: if ok.
+* - TVG_RESULT_INVALID_PARAMETERS: if paint is invalid
+*/
 TVG_EXPORT Tvg_Result tvg_shape_get_stroke_gradient(const Tvg_Paint* paint, Tvg_Gradient** grad);
 
 
@@ -1035,6 +1129,21 @@ TVG_EXPORT Tvg_Result tvg_shape_set_radial_gradient(Tvg_Paint* paint, Tvg_Gradie
 */
 TVG_EXPORT Tvg_Result tvg_shape_get_gradient(const Tvg_Paint* paint, Tvg_Gradient** grad);
 
+/** \}*/
+
+/**
+* \defgroup ThorVGCapi_Gradient Gradient
+* \brief Functions representing the gradient fill of the Shape object.
+*
+* It contains the information about the gradient colors and their arrangement
+* inside the gradient bounds. The gradients bounds are defined in the LinearGradient
+* or RadialGradient class, depending on the type of the gradient to be used.
+* It specifies the gradient behavior in case the area defined by the gradient bounds
+* is smaller than the area to be filled.
+*
+* \{
+*/
+
 /************************************************************************/
 /* Gradient API                                                         */
 /************************************************************************/
@@ -1202,6 +1311,18 @@ TVG_EXPORT Tvg_Result tvg_gradient_get_spread(Tvg_Gradient* grad, Tvg_Stroke_Fil
 */
 TVG_EXPORT Tvg_Result tvg_gradient_del(Tvg_Gradient* grad);
 
+/** \}*/
+
+/**
+* \defgroup ThorVGCapi_Picture Picture
+* \brief Functions class representing an image read in one of the supported formats: svg, png and raw.
+* Besides the methods inherited from the Paint, it provides methods to load the image,
+* to change its size and to get the basic information.
+*
+* \{
+*/
+
+
 /************************************************************************/
 /* Picture API                                                          */
 /************************************************************************/
@@ -1256,6 +1377,18 @@ TVG_EXPORT Tvg_Result tvg_picture_load_raw(Tvg_Paint* paint, uint32_t *data, uin
 */
 TVG_EXPORT Tvg_Result tvg_picture_get_viewbox(const Tvg_Paint* paint, float* x, float* y, float* w, float* h);
 
+/** \}*/
+
+/**
+* \defgroup ThorVGCapi_Scene Scene
+* \brief Functions enabling to hold many Paint objects.
+*
+* As a whole they can be transformed, their transparency can be changed, or the composition
+* methods may be used to all of them at once.
+*
+* \{
+*/
+
 /************************************************************************/
 /* Scene API                                                            */
 /************************************************************************/
@@ -1304,6 +1437,7 @@ TVG_EXPORT Tvg_Result tvg_scene_push(Tvg_Paint* scene, Tvg_Paint* paint);
 * - TVG_RESULT_INVALID_PARAMETERS: if paint is invalid
 */
 TVG_EXPORT Tvg_Result tvg_scene_clear(Tvg_Paint* scene);
+/** \}*/
 
 /** \}*/
 
