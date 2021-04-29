@@ -1,6 +1,6 @@
 /*!
 * \file thorvg_capi.h
-* \brief Function provides C bindings for thorvg library.
+* \brief Function provides C bindings for thorvg library. (BETA version)
 * Please refer to src/examples/Capi.cpp to find thorvg_capi examples.
 *
 * thorvg_capi module provides a set of functionality that allows to
@@ -39,7 +39,7 @@ typedef struct _Tvg_Paint Tvg_Paint;
 typedef struct _Tvg_Gradient Tvg_Gradient;
 
 /**
- * \defgroup ThorVGCapi C APIs
+ * \defgroup ThorVG_CAPI (BETA version)
  */
 
 /**@{*/
