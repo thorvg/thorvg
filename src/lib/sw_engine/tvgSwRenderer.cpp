@@ -328,6 +328,8 @@ bool SwRenderer::renderImage(RenderData data)
 bool SwRenderer::renderShape(RenderData data)
 {
     auto task = static_cast<SwShapeTask*>(data);
+    if (!task) return false;
+
     task->done();
 
     if (task->opacity == 0) return true;
@@ -513,6 +515,7 @@ bool SwRenderer::dispose(RenderData data)
 
 void* SwRenderer::prepareCommon(SwTask* task, const RenderTransform* transform, uint32_t opacity, const Array<RenderData>& clips, RenderUpdateFlag flags)
 {
+    if (!surface) return task;
     if (flags == RenderUpdateFlag::None) return task;
 
     //Finish previous task if it has duplicated request.
