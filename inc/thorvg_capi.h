@@ -39,105 +39,82 @@ typedef struct _Tvg_Paint Tvg_Paint;
 typedef struct _Tvg_Gradient Tvg_Gradient;
 
 /**
- * \defgroup ThorVG_CAPI (BETA version)
- */
+* \defgroup ThorVG_CAPI (BETA version)
+* \brief ThorVG C Language Binding APIs.
+*
+* \{
+*/
 
-/**@{*/
+/**
+* \defgroup ThorVGCapi_Initializer Initializer
+* \brief Enables initialization and termination of the ThorVG engine.
+*
+* \{
+*/
 
 /*!
 * \def TVG_ENGINE_SW
 * Software raster engine type.
 */
 #define TVG_ENGINE_SW (1 << 1)
+
+
 /*!
 * \def TVG_ENGINE_GL
 * GL raster engine type.
 */
 #define TVG_ENGINE_GL (1 << 2)
 
+/*\}*/
+
 /*!
+* \ingroup ThorVGCapi_Canvas
 * \def TVG_COLORSPACE_ABGR8888
 * Colorspace used to fill buffer.
 */
 #define TVG_COLORSPACE_ABGR8888 0
+
+
 /*!
+* \ingroup ThorVGCapi_Canvas
 * \def TVG_COLORSPACE_ARGB8888
 * Colorspace used to fill buffer.
 */
 #define TVG_COLORSPACE_ARGB8888 1
 
+
+/**
+ * @brief Enumeration specifying the result from the APIs.
+ */
 typedef enum {
-    TVG_RESULT_SUCCESS = 0,
-    TVG_RESULT_INVALID_ARGUMENT,
-    TVG_RESULT_INSUFFICIENT_CONDITION,
-    TVG_RESULT_FAILED_ALLOCATION,
-    TVG_RESULT_MEMORY_CORRUPTION,
-    TVG_RESULT_NOT_SUPPORTED,
-    TVG_RESULT_UNKNOWN
+    TVG_RESULT_SUCCESS = 0,            ///< The value returned in case of the correct request execution.
+    TVG_RESULT_INVALID_ARGUMENT,       ///< The value returned in the event of a problem with the arguments given to the API - e.g. empty paths or null pointers.
+    TVG_RESULT_INSUFFICIENT_CONDITION, ///< The value returned in case the request cannot be processed - e.g. asking for properties of an object, which does not exist.
+    TVG_RESULT_FAILED_ALLOCATION,      ///< The value returned in case of unsuccessful memory allocation.
+    TVG_RESULT_MEMORY_CORRUPTION,      ///< The value returned in the event of bad memory handling - e.g. failing in pointer releasing or casting
+    TVG_RESULT_NOT_SUPPORTED,          ///< The value returned in case of choosing unsupported options.
+    TVG_RESULT_UNKNOWN                 ///< The value returned in all other cases.
 } Tvg_Result;
 
 
-typedef enum {
-    TVG_PATH_COMMAND_CLOSE = 0,
-    TVG_PATH_COMMAND_MOVE_TO,
-    TVG_PATH_COMMAND_LINE_TO,
-    TVG_PATH_COMMAND_CUBIC_TO
-} Tvg_Path_Command;
-
-
-typedef enum {
-    TVG_STROKE_CAP_SQUARE = 0,
-    TVG_STROKE_CAP_ROUND,
-    TVG_STROKE_CAP_BUTT
-} Tvg_Stroke_Cap;
-
-
-typedef enum {
-    TVG_STROKE_JOIN_BEVEL = 0,
-    TVG_STROKE_JOIN_ROUND,
-    TVG_STROKE_JOIN_MITER
-} Tvg_Stroke_Join;
-
-
-typedef enum {
-    TVG_STROKE_FILL_PAD = 0,
-    TVG_STROKE_FILL_REFLECT,
-    TVG_STROKE_FILL_REPEAT
-} Tvg_Stroke_Fill;
-
-
-typedef enum {
-    TVG_FILL_RULE_WINDING = 0,
-    TVG_FILL_RULE_EVEN_ODD
-} Tvg_Fill_Rule;
-
-typedef enum {
-    TVG_COMPOSITE_METHOD_NONE = 0,
-    TVG_COMPOSITE_METHOD_CLIP_PATH,
-    TVG_COMPOSITE_METHOD_ALPHA_MASK,
-    TVG_COMPOSITE_METHOD_INVERSE_ALPHA_MASK,
-} Tvg_Composite_Method;
-
+/**
+ * @brief A data structure representing a point in two-dimensional space.
+ */
 typedef struct
 {
     float x, y;
 } Tvg_Point;
 
 
+/**
+ * @brief A data structure representing a three-dimensional matrix.
+ */
 typedef struct
 {
     float e11, e12, e13;
     float e21, e22, e23;
     float e31, e32, e33;
 } Tvg_Matrix;
-
-
-typedef struct
-{
-    float offset;
-    uint8_t r, g, b, a;
-} Tvg_Color_Stop;
-
 
 /************************************************************************/
 /* Engine API                                                           */
@@ -146,6 +123,7 @@ typedef struct
 * \fn Tvg_Result tvg_engine_init(unsigned engine_method, unsigned threads)
 * \brief The funciton initialises thorvg library. It must be called before the
 * other functions at the beggining of thorvg client.
+* \ingroup ThorVGCapi_Initializer Initializer
 * \code
 * tvg_engine_init(TVG_ENGINE_SW, 0); //Initialize software renderer and use 1 thread
 * \endcode
@@ -169,6 +147,7 @@ TVG_EXPORT Tvg_Result tvg_engine_init(unsigned engine_method, unsigned threads);
 * \brief The funciton termiates renderer tasks. Used for cleanup.
 * It should be called in case of termination of the thorvg library with same
 * renderer types as it was passed in tvg_engine_init()
+* \ingroup ThorVGCapi_Initializer Initializer
 * \code
 * tvg_engine_init(TVG_ENGINE_SW, 0);
 * //define canvas and shapes, update shapes, general rendering calls
@@ -186,6 +165,22 @@ TVG_EXPORT Tvg_Result tvg_engine_init(unsigned engine_method, unsigned threads);
 */
 TVG_EXPORT Tvg_Result tvg_engine_term(unsigned engine_method);
 
+
+/**
+* \defgroup ThorVGCapi_Canvas Canvas
+* \brief Functions for drawing graphic elements.
+* It stores all Paint objects (Shape, Scene, Picture) and creates the buffer, which can be drawn on the screen.
+*
+* \{
+*/
+
+/**
+* \defgroup ThorVGCapi_SwCanvas SwCanvas
+* \ingroup ThorVGCapi_Canvas
+* \brief Functions for the rasterisation of graphic elements with a software engine.
+*
+* \{
+*/
 
 /************************************************************************/
 /* SwCanvas API                                                         */
@@ -236,6 +231,9 @@ TVG_EXPORT Tvg_Canvas* tvg_swcanvas_create();
 * - TVG_RESULT_INVALID_ARGUMENTS: invalid buffer, stride = 0, w or h = 0
 */
 TVG_EXPORT Tvg_Result tvg_swcanvas_set_target(Tvg_Canvas* canvas, uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h, uint32_t cs);
+
+
+/* \} */
 
 
 /************************************************************************/
@@ -452,9 +450,28 @@ TVG_EXPORT Tvg_Result tvg_canvas_draw(Tvg_Canvas* canvas);
 */
 TVG_EXPORT Tvg_Result tvg_canvas_sync(Tvg_Canvas* canvas);
 
+/* \} */
+
+/**
+* \defgroup ThorVGCapi_Paint Paint
+* \brief Functions for managing graphic elements. It enables duplication, transformation and composition.
+*
+* \{
+*/
+
 /************************************************************************/
 /* Paint API                                                            */
 /************************************************************************/
+/**
+ * @brief Enumeration indicating the method used in the composition of two objects - the target and the source.
+ */
+typedef enum {
+    TVG_COMPOSITE_METHOD_NONE = 0,           ///< No composition is applied.
+    TVG_COMPOSITE_METHOD_CLIP_PATH,          ///< The intersection of the source and the target is determined and only the resulting pixels from the source are rendered.
+    TVG_COMPOSITE_METHOD_ALPHA_MASK,         ///< The pixels of the source and the target are alpha blended. As a result, only the part of the source, which intersects with the target is visible.
+    TVG_COMPOSITE_METHOD_INVERSE_ALPHA_MASK, ///< The pixels of the source and the complement to the target's pixels are alpha blended. As a result, only the part of the source which is not covered by the target is visible.
+} Tvg_Composite_Method;
+
 /*!
 * \fn TVG_EXPORT Tvg_Result tvg_paint_del(Tvg_Paint* paint)
 * \brief The function releases given paint object. The tvg_canvas_clear(canvas, true) or tvg_canvas_del(canvas)
@@ -597,9 +614,73 @@ TVG_EXPORT Tvg_Result tvg_paint_get_bounds(const Tvg_Paint* paint, float* x, flo
 */
 TVG_EXPORT Tvg_Result tvg_paint_set_composite_method(Tvg_Paint* paint, Tvg_Paint* target, Tvg_Composite_Method method);
 
+/** \}*/
+
+/**
+* \defgroup ThorVGCapi_Shape Shape
+* \brief Functions representing two-dimensional figures and their properties.
+* The shapes of the figures in the Shape object are stored as the sub-paths in the path.
+* The data to be saved in the path can be read directly from the svg file or through the provided APIs.
+*
+* \{
+*/
+
 /************************************************************************/
 /* Shape API                                                            */
 /************************************************************************/
+
+/**
+ * @brief Enumeration specifying the values of the path commands accepted by ThorVG.
+ *
+ * Not to be confused with the path commands from the svg path element (like M, L, Q, H and many others).
+ * ThorVG interprets all of them and translates to the ones from the PathCommand values.
+ */
+typedef enum {
+    TVG_PATH_COMMAND_CLOSE = 0, ///< Ends the current sub-path and connects it with its initial point - corresponds to Z command in the svg path commands.
+    TVG_PATH_COMMAND_MOVE_TO,   ///< Sets a new initial point of the sub-path and a new current point - corresponds to M command in the svg path commands.
+    TVG_PATH_COMMAND_LINE_TO,   ///< Draws a line from the current point to the given point and sets a new value of the current point - corresponds to L command in the svg path commands.
+    TVG_PATH_COMMAND_CUBIC_TO   ///< Draws a cubic Bezier curve from the current point to the given point using two given control points and sets a new value of the current point - corresponds to C command in the svg path commands.
+} Tvg_Path_Command;
+
+
+/**
+ * @brief Enumeration determining the ending type of a stroke in the open sub-paths.
+ */
+typedef enum {
+    TVG_STROKE_CAP_SQUARE = 0, ///< The stroke is extended in both endpoints of a sub-path by a rectangle, with the width equal to the stroke width and the length equal to the half of the stroke width. For zero length sub-paths the square is rendered with the size of the stroke width.
+    TVG_STROKE_CAP_ROUND,      ///< The stroke is extended in both endpoints of a sub-path by a half circle, with a radius equal to the half of a stroke width. For zero length sub-paths a full circle is rendered.
+    TVG_STROKE_CAP_BUTT        ///< The stroke ends exactly at each of the two endpoints of a sub-path. For zero length sub-paths no stroke is rendered.
+} Tvg_Stroke_Cap;
+
+
+/**
+ * @brief Enumeration specifying how to fill the area outside the gradient bounds.
+ */
+typedef enum {
+    TVG_STROKE_JOIN_BEVEL = 0, ///< The outer corner of the joined path segments is bevelled at the join point. The triangular region of the corner is enclosed by a straight line between the outer corners of each stroke.
+    TVG_STROKE_JOIN_ROUND,     ///< The outer corner of the joined path segments is rounded. The circular region is centered at the join point.
+    TVG_STROKE_JOIN_MITER      ///< The outer corner of the joined path segments is spiked. The spike is created by extension beyond the join point of the outer edges of the stroke until they intersect. In case the extension goes beyond the limit, the join style is converted to the Bevel style.
+} Tvg_Stroke_Join;
+
+
+/**
+ * @brief Enumeration specifying how to fill the area outside the gradient bounds.
+ */
+typedef enum {
+    TVG_STROKE_FILL_PAD = 0, ///< The remaining area is filled with the closest stop color.
+    TVG_STROKE_FILL_REFLECT, ///< The gradient pattern is reflected outside the gradient area until the expected region is filled.
+    TVG_STROKE_FILL_REPEAT   ///< The gradient pattern is repeated continuously beyond the gradient area until the expected region is filled.
+} Tvg_Stroke_Fill;
+
+
+/**
+ * @brief Enumeration specifying the algorithm used to establish which parts of the shape are treated as the inside of the shape.
+ */
+typedef enum {
+    TVG_FILL_RULE_WINDING = 0, ///< A line from the point to a location outside the shape is drawn. The intersections of the line with the path segment of the shape are counted. Starting from zero, if the path segment of the shape crosses the line clockwise, one is added, otherwise one is subtracted. If the resulting sum is non zero, the point is inside the shape.
+    TVG_FILL_RULE_EVEN_ODD     ///< A line from the point to a location outside the shape is drawn and its intersections with the path segments of the shape are counted. If the number of intersections is an odd number, the point is inside the shape.
+} Tvg_Fill_Rule;
+
 /*!
 * \fn TVG_EXPORT Tvg_Paint* tvg_shape_new()
 * \brief The function creates a new shape
@@ -837,8 +918,41 @@ TVG_EXPORT Tvg_Result tvg_shape_set_stroke_color(Tvg_Paint* paint, uint8_t r, ui
 */
 TVG_EXPORT Tvg_Result tvg_shape_get_stroke_color(const Tvg_Paint* paint, uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a);
 
+
+/*!
+* \fn TVG_EXPORT Tvg_Result tvg_shape_set_stroke_linear_gradient(Tvg_Paint* paint, Tvg_Gradient* grad)
+* \brief The function inserts linear gradient object as an shape stroke.
+* \param[in] paint Tvg_Paint pointer
+* \param[in] grad Tvg_Gradient pointer (linear)
+* \return Tvg_Result return value
+* - TVG_RESULT_SUCCESS: if ok.
+* - TVG_RESULT_INVALID_PARAMETERS: if paint is invalid
+*/
 TVG_EXPORT Tvg_Result tvg_shape_set_stroke_linear_gradient(Tvg_Paint* paint, Tvg_Gradient* grad);
+
+
+/*!
+* \fn TVG_EXPORT Tvg_Result tvg_shape_set_stroke_radial_gradient(Tvg_Paint* paint, Tvg_Gradient* grad)
+* \brief The function inserts radial gradient object as an shape stroke.
+* \param[in] paint Tvg_Paint pointer
+* \param[in] grad Tvg_Gradient pointer
+* \return Tvg_Result return value
+* - TVG_RESULT_SUCCESS: if ok.
+* - TVG_RESULT_INVALID_PARAMETERS: if paint is invalid
+*/
 TVG_EXPORT Tvg_Result tvg_shape_set_stroke_radial_gradient(Tvg_Paint* paint, Tvg_Gradient* grad);
+
+
+/*!
+* \fn TVG_EXPORT Tvg_Result tvg_shape_get_stroke_gradient(const Tvg_Paint* paint, Tvg_Gradient** grad)
+* \brief The function returns gradient previously inserted to given shape stroke. Function deos not
+* allocate any data.
+* \param[in] paint Tvg_Paint pointer
+* \param[out] grad Tvg_Gradient pointer
+* \return Tvg_Result return value
+* - TVG_RESULT_SUCCESS: if ok.
+* - TVG_RESULT_INVALID_PARAMETERS: if paint is invalid
+*/
 TVG_EXPORT Tvg_Result tvg_shape_get_stroke_gradient(const Tvg_Paint* paint, Tvg_Gradient** grad);
 
 
@@ -1035,6 +1149,35 @@ TVG_EXPORT Tvg_Result tvg_shape_set_radial_gradient(Tvg_Paint* paint, Tvg_Gradie
 */
 TVG_EXPORT Tvg_Result tvg_shape_get_gradient(const Tvg_Paint* paint, Tvg_Gradient** grad);
 
+/** \}*/
+
+/**
+* \defgroup ThorVGCapi_Gradient Gradient
+* \brief Functions representing the gradient fill of the Shape object.
+*
+* It contains the information about the gradient colors and their arrangement
+* inside the gradient bounds. The gradients bounds are defined in the LinearGradient
+* or RadialGradient class, depending on the type of the gradient to be used.
+* It specifies the gradient behavior in case the area defined by the gradient bounds
+* is smaller than the area to be filled.
+*
+* \{
+*/
+
+/*!
+* \struct Tvg_Color_Stop
+* \brief A data structure storing the information about the color and its relative position inside the gradient bounds.
+*/
+typedef struct
+{
+    float offset; /**< The relative position of the color. */
+    uint8_t r;    /**< The red color channel value in the range [0 ~ 255]. */
+    uint8_t g;    /**< The green color channel value in the range [0 ~ 255]. */
+    uint8_t b;    /**< The blue color channel value in the range [0 ~ 255]. */
+    uint8_t a;    /**< The alpha channel value in the range [0 ~ 255], where 0 is completely transparent and 255 is opaque. */
+} Tvg_Color_Stop;
+
+
 /************************************************************************/
 /* Gradient API                                                         */
 /************************************************************************/
@@ -1202,6 +1345,18 @@ TVG_EXPORT Tvg_Result tvg_gradient_get_spread(Tvg_Gradient* grad, Tvg_Stroke_Fil
 */
 TVG_EXPORT Tvg_Result tvg_gradient_del(Tvg_Gradient* grad);
 
+/** \}*/
+
+/**
+* \defgroup ThorVGCapi_Picture Picture
+* \brief Functions class representing an image read in one of the supported formats: svg, png and raw.
+* Besides the methods inherited from the Paint, it provides methods to load the image,
+* to change its size and to get the basic information.
+*
+* \{
+*/
+
+
 /************************************************************************/
 /* Picture API                                                          */
 /************************************************************************/
@@ -1256,6 +1411,18 @@ TVG_EXPORT Tvg_Result tvg_picture_load_raw(Tvg_Paint* paint, uint32_t *data, uin
 */
 TVG_EXPORT Tvg_Result tvg_picture_get_viewbox(const Tvg_Paint* paint, float* x, float* y, float* w, float* h);
 
+/** \}*/
+
+/**
+* \defgroup ThorVGCapi_Scene Scene
+* \brief Functions enabling to hold many Paint objects.
+*
+* As a whole they can be transformed, their transparency can be changed, or the composition
+* methods may be used to all of them at once.
+*
+* \{
+*/
+
 /************************************************************************/
 /* Scene API                                                            */
 /************************************************************************/
@@ -1304,6 +1471,7 @@ TVG_EXPORT Tvg_Result tvg_scene_push(Tvg_Paint* scene, Tvg_Paint* paint);
 * - TVG_RESULT_INVALID_PARAMETERS: if paint is invalid
 */
 TVG_EXPORT Tvg_Result tvg_scene_clear(Tvg_Paint* scene);
+/** \}*/
 
 /** \}*/
 
