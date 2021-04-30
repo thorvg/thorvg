@@ -19,7 +19,7 @@ option('vectors',
 option('bindings',
    type: 'array',
    choices: ['', 'capi'],
-   value: ['capi'],
+   value: [''],
    description: 'Enable C API binding')
 
 option('tools',

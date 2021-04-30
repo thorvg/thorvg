@@ -5,7 +5,6 @@ source_file = [
     'Async.cpp',
     'Blending.cpp',
     'Boundary.cpp',
-    'Capi.cpp',
     'CustomTransform.cpp',
     'DirectUpdate.cpp',
     'Duplicate.cpp',
@@ -42,7 +41,22 @@ source_file = [
 foreach current_file : source_file
     name = current_file.split('.')[0]
     executable(name, current_file,
-           include_directories : headers,
-           link_with : thorvg_lib,
-           dependencies : examples_dep)
+        include_directories : headers,
+        link_with : thorvg_lib,
+        dependencies : examples_dep)
 endforeach
+
+
+if get_option('bindings').contains('capi') == true
+    capi_source_file = [
+        'Capi.cpp'
+    ]
+
+    foreach current_file : capi_source_file
+        name = current_file.split('.')[0]
+        executable(name, current_file,
+            include_directories : headers,
+            link_with : thorvg_lib,
+            dependencies : examples_dep)
+    endforeach
+endif
