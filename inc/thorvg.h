@@ -50,7 +50,7 @@ class Picture;
 class Canvas;
 
 /**
- * @defgroup ThorVG C++ APIs
+ * @defgroup ThorVG
  */
 
 /**@{*/
@@ -70,17 +70,17 @@ enum class TVG_EXPORT Result
 };
 
 /**
- * @brief Enumeration specifying the values of the path commands accepted by ThorVG.
+ * @brief Enumeration specifying the values of the path commands accepted by TVG.
  *
  * Not to be confused with the path commands from the svg path element (like M, L, Q, H and many others).
- * ThorVG interprets all of them and translates to the ones from the PathCommand values.
+ * TVG interprets all of them and translates to the ones from the PathCommand values.
  */
 enum class TVG_EXPORT PathCommand
 {
-    Close = 0, ///< Ends the current sub-path and connects it with its initial point - corresponds to Z command in the svg path commands.
-    MoveTo,    ///< Sets a new initial point of the sub-path and a new current point - corresponds to M command in the svg path commands.
-    LineTo,    ///< Draws a line from the current point to the given point and sets a new value of the current point - corresponds to L command in the svg path commands.
-    CubicTo    ///< Draws a cubic Bezier curve from the current point to the given point using two given control points and sets a new value of the current point - corresponds to C command in the svg path commands.
+    Close = 0, ///< Ends the current sub-path and connects it with its initial point. This command expects 1 point: close position.
+    MoveTo,    ///< Sets a new initial point of the sub-path and a new current point. This command expects 1 point: moving position.
+    LineTo,    ///< Draws a line from the current point to the given point and sets a new value of the current point. This command expects 1 point: end position of the line.
+    CubicTo    ///< Draws a cubic Bezier curve from the current point to the given point using two given control points and sets a new value of the current point. This command expects 3 points: control 1, control 2, end.
 };
 
 /**
@@ -88,9 +88,9 @@ enum class TVG_EXPORT PathCommand
  */
 enum class TVG_EXPORT StrokeCap
 {
-    Square = 0, ///< The stroke is extended in both endpoints of a sub-path by a rectangle, with the width equal to the stroke width and the length equal to the half of the stroke width. For zero length sub-paths the square is rendered with the size of the stroke width.
-    Round,      ///< The stroke is extended in both endpoints of a sub-path by a half circle, with a radius equal to the half of a stroke width. For zero length sub-paths a full circle is rendered.
-    Butt        ///< The stroke ends exactly at each of the two endpoints of a sub-path. For zero length sub-paths no stroke is rendered.
+    Square = 0, ///< The stroke is extended in both end-points of a sub-path by a rectangle, with the width equal to the stroke width and the length equal to the half of the stroke width. For zero length sub-paths the square is rendered with the size of the stroke width.
+    Round,      ///< The stroke is extended in both end-points of a sub-path by a half circle, with a radius equal to the half of a stroke width. For zero length sub-paths a full circle is rendered.
+    Butt        ///< The stroke ends exactly at each of the two end-points of a sub-path. For zero length sub-paths no stroke is rendered.
 };
 
 /**
@@ -134,12 +134,12 @@ enum class TVG_EXPORT CompositeMethod
 };
 
 /**
- * @brief Enumeration specifying the engine type used for the graphic rendering.
+ * @brief Enumeration specifying the engine type used for the graphics backend. For multiple backeneds, Bitwise operation is allowed.
  */
 enum class TVG_EXPORT CanvasEngine
 {
-    Sw = (1 << 1), ///< CPU rendering.
-    Gl = (1 << 2)  ///< OpenGL rendering.
+    Sw = (1 << 1), ///< CPU rasterizer.
+    Gl = (1 << 2)  ///< OpenGL rasterizer.
 };
 
 
@@ -154,6 +154,10 @@ struct Point
 
 /**
  * @brief A data structure representing a three-dimensional matrix.
+ *
+ * The elements e11, e12, e21 and e22 represent the rotation matrix, including the scaling factor.
+ * The elements e13 and e23 determine the translation of the object along the x and y-axis, respectively.
+ * The elements e31 and e32 are set to 0, e33 is set to 1.
  */
 struct Matrix
 {
@@ -166,9 +170,11 @@ struct Matrix
 /**
  * @class Paint
  *
- * @brief A class for managing graphic elements.
+ * @brief A abstract class for managing graphical elements.
  *
- * It enables duplication, transformation and composition.
+ * Basically a graphical elements in TVG is composed as an object in a scene (Canvas).
+ * Paint represents a graphical object, suggest common behaviors such as duplication, transformation and composition, etc.
+ * TVG recommends user to regard a paint as a pack of volatile commands, they can prepare a paint then request Canvas to run it.
  *
  */
 class TVG_EXPORT Paint
@@ -177,20 +183,23 @@ public:
     virtual ~Paint();
 
     /**
-     * @brief Sets the angle by which the object is rotated.
+     * @brief Sets the angle by which object is rotated.
      *
      * The angle in measured clockwise from the horizontal axis.
      * The rotational axis passes through the point on the object with zero coordinates.
      *
      * @param[in] degree The value of the angle in degrees.
-     * @return Result::Success when succeeded, Result::FailedAllocation otherwise.
+     *
+     * @return @c Result::Success when succeed, @c Result::FailedAllocation otherwise.
      */
     Result rotate(float degree) noexcept;
 
     /**
      * @brief Sets the scale value of the object.
-     * @param[in] factor The value of the scaling factor.
-     * @return Result::Success when succeeded, Result::FailedAllocation otherwise.
+     *
+     * @param[in] factor The value of the scaling factor. Default value is 1.
+     *
+     * @return @c Result::Success when succeed, @c Result::FailedAllocation otherwise.
      */
     Result scale(float factor) noexcept;
 
@@ -198,11 +207,12 @@ public:
      * @brief Sets the values by which the object is moved in a two-dimensional space.
      *
      * The origin of the coordinate system is in the upper left corner of the canvas.
-     * The horizontal and vertical axes point to the right and down, respectively.
+     * The horizontal and vertical axes points to the right and down, respectively.
      *
      * @param[in] x The value of the horizontal shift.
      * @param[in] y The value of the vertical shift.
-     * @return Result::Success when succeeded, Result::FailedAllocation otherwise.
+     *
+     * @return @c Result::Success when succeed, @c Result::FailedAllocation otherwise.
      */
     Result translate(float x, float y) noexcept;
 
@@ -210,51 +220,62 @@ public:
      * @brief Sets the matrix of the affine transformation for the object.
      *
      * The augmented matrix of the transformation is expected to be given.
-     * The elements e11, e12, e21 and e22 represent the rotation matrix, including the scaling factor.
-     * The elements e13 and e23 determine the translation of the object along the x and y-axis, respectively.
-     * The element e31 and e32 are set to 0, e33 is set to 1.
      *
      * @param[in] m The 3x3 augmented matrix.
-     * @return Result::Success when succeeded, Result::FailedAllocation otherwise.
+     *
+     * @return @c Result::Success when succeed, @c Result::FailedAllocation otherwise.
+     *
      */
     Result transform(const Matrix& m) noexcept;
 
     /**
      * @brief Sets the opacity of the object.
+     *
      * @param[in] o The opacity value in the range [0 ~ 255], where 0 is completely transparent and 255 is opaque.
-     * @return Result::Success.
+     *
+     * @return @c Result::Success.
+     *
+     * @note A half-translucent paint by opacity may require multiple render pass for composition, TVG recommends to avoid opacity change as possible.
      */
     Result opacity(uint8_t o) noexcept;
 
     /**
      * @brief Sets the composition target object and the composition method.
-     * @param[in] target The pointer to the target object.
+     *
+     * @param[in] target The paint to the target object.
      * @param[in] method The method used to composite the source object with the target.
-     * @return Result::Success when succeeded, Result::InvalidArguments otherwise.
+     *
+     * @return @c Result::Success when succeed, @c Result::InvalidArguments otherwise.
+     *
      */
     Result composite(std::unique_ptr<Paint> target, CompositeMethod method) const noexcept;
 
     /**
-     * @brief Gets the bounding box of the object before any transformation.
+     * @brief Gets the bounding box of the paint object before any transformation.
+     *
      * @param[out] x The x coordinate of the upper left corner of the object.
      * @param[out] y The y coordinate of the upper left corner of the object.
      * @param[out] w The width of the object.
      * @param[out] h The height of the object.
-     * @return Result::Success when succeeded, Result::InsufficientCondition otherwise.
+     *
+     * @return @c Result::Success when succeed, @c Result::InsufficientCondition otherwise.
+     *
+     * @note bounding box doesn't indicate the rendering region in the result but primitive region of the object.
      */
     Result bounds(float* x, float* y, float* w, float* h) const noexcept;
 
     /**
      * @brief Duplicates the object.
      *
-     * Creates a new object and sets all its properties as in the original object.
+     * Creates a new object and sets all properties as in the original object.
      *
-     * @return The pointer to the created object when succeeded, @c nullptr otherwise.
+     * @return The created object when succeed, @c nullptr otherwise.
      */
     Paint* duplicate() const noexcept;
 
     /**
      * @brief Gets the opacity value of the object.
+     *
      * @return The opacity value in the range [0 ~ 255], where 0 is completely transparent and 255 is opaque.
      */
     uint8_t opacity() const noexcept;
@@ -267,7 +288,7 @@ public:
 /**
  * @class Fill
  *
- * @brief A class representing the gradient fill of the Shape object.
+ * @brief A abstract class representing the gradient fill of the Shape object.
  *
  * It contains the information about the gradient colors and their arrangement
  * inside the gradient bounds. The gradients bounds are defined in the LinearGradient
@@ -294,35 +315,45 @@ public:
 
     /**
      * @brief Sets the parameters of the colors of the gradient and their position.
-     * @param[in] colorStops An array of the ColorStop objects.
-     * @param[in] cnt The size of the @p colorStops array equal to the colors number used in the gradient.
-     * @return Result::Success.
+     *
+     * @param[in] colorStops An array of ColorStop data structure.
+     * @param[in] cnt The count of the @p colorStops array equal to the colors number used in the gradient.
+     *
+     * @return @c Result::Success when succeed.
      */
     Result colorStops(const ColorStop* colorStops, uint32_t cnt) noexcept;
 
     /**
      * @brief Sets the FillSpread value, which specifies how to fill the area outside the gradient bounds.
+     *
      * @param[in] s The FillSpread value.
-     * @return Result::Success.
+     *
+     * @return @c Result::Success when succeed.
      */
     Result spread(FillSpread s) noexcept;
 
     /**
-     * @brief Gets the parameters of the colors of the gradient, their position and their number.
-     * @param[in] colorStops A pointer to the memory location, where the array of the gradient's ColorStop objects is stored.
+     * @brief Gets the parameters of the colors of the gradient, their position and number.
+     *
+     * @param[in] colorStops A pointer to the memory location, where the array of the gradient's ColorStop is stored.
+     *
      * @return The number of colors used in the gradient. This value corresponds to the length of the @p colorStops array.
      */
     uint32_t colorStops(const ColorStop** colorStops) const noexcept;
 
     /**
      * @brief Gets the FillSpread value of the fill.
-     * @return The set FillSpread enumeration values.
+     *
+     * @return The FillSpread value of this Fill.
      */
     FillSpread spread() const noexcept;
 
     /**
      * @brief Creates a copy of the Fill object.
-     * @return A pointer to a newly created Fill object with the properties copied from the original. Fill object when succeeded, @c nullptr otherwise.
+     *
+     * Return a newly created Fill object with the properties copied from the original.
+     *
+     * @return A copied Fill object when succeed, @c nullptr otherwise.
      */
     Fill* duplicate() const noexcept;
 
@@ -334,9 +365,12 @@ public:
 /**
  * @class Canvas
  *
- * @brief A class for drawing graphic elements.
+ * @brief A abstract class for drawing graphical elements.
  *
- * It stores all Paint objects (Shape, Scene, Picture) and creates the buffer, which can be drawn on the screen.
+ * A canvas is a unit to a drawing target. It sets up drawing engine and buffer, which can be drawn on the screen, it also manages given Paint objects.
+ *
+ * @note Canvas behavior depends on the raster engine though its drawing result is expected to be identical.
+ * @warning Paints are belongs to a Canvas, they can't be shared among multiple Canvases.
  */
 class TVG_EXPORT Canvas
 {
@@ -351,56 +385,74 @@ public:
      * prevents multiple memory reallocation, thus improving the performance.
      *
      * @param[in] n The number of objects for which the memory is to be reserved.
+     *
      * @return Result::Success.
      */
     Result reserve(uint32_t n) noexcept;
 
     /**
-     * @brief Passes the Paint object to the Canvas.
+     * @brief Passes drawing elements to the Canvas using Paint objects.
      *
-     * The function may be called many times and all passed objects will be rendered.
-     * Calling it initializes the data preparation of the chosen engine type.
+     * Only pushed paints in the canvas will be drawing targets.
+     * They are retained by the canvas until you call Canvas::clear().
+     * If you know the count of push() in the advance, please call reserve().
      *
-     * @param[in] paint A unique pointer to the Paint object.
-     * @retval Result::Success When succeeded.
-     * @retval Result::MemoryCorruption In case a @c nullptr is passed as the argument.
-     * @retval Result::InsufficientCondition An internal error.
+     * @param[in] paint A Paint object to be drawn.
+     *
+     * @retval @c Result::Success when succeed.
+     * @retval @c Result::MemoryCorruption In case a @c nullptr is passed as the argument.
+     * @retval @c Result::InsufficientCondition An internal error.
+     *
+     * @note Rendering order of the paints are in the order of the push. Thus if you mind a layering, sorting the paints before pushing them.
+     * @see Canvas::reserve()
+     * @see Canvas::clear()
      */
     virtual Result push(std::unique_ptr<Paint> paint) noexcept;
 
     /**
-     * @brief Sets the total number of the paints pushed into the scene to be zero.
-     * Depending on the value of the given argument, the memory is free or not.
+     * @brief Sets the total number of the paints pushed into the canvas to be zero.
+     * Depending on the value of the given argument @p free, the Paints were free or not.
      *
      * @param[in] free If @c then true the memory occupied by paints is deallocated, otherwise it is not.
-     * return Result::Success when succeeded, Result::InsufficientCondition otherwise.
+     *
+     * @return @c Result::Success when succeed, @c Result::InsufficientCondition otherwise.
+     *
+     * @warning If you don't free the paints, they are totally dangled, they are supposed to be reused otherwise you are responsible for their lives. Thus please use that @p free option when you know how it works, otherwise it's not recommended.
      */
     virtual Result clear(bool free = true) noexcept;
 
     /**
-     * @brief Updates the chosen Paint object or all objects from the Canvas object.
+     * @brief Request the canvas to update the paint objects.
      *
-     * If a @c nullptr is passed all objects from the Canvas are updated.
-     * Otherwise only the paint to which the given argument points.
+     * If a @c nullptr is passed all paint objects retained by the Canvas are updated, otherwise only the paint to which the given @p paint.
      *
      * @param[in] paint A pointer to the Paint object or @c nullptr.
-     * return Result::Success when succeeded, Result::InsufficientCondition otherwise.
+     *
+     * @return @c Result::Success when succeed, @c Result::InsufficientCondition otherwise.
+     *
+     * @note Updation behavior could be asynchronous by thread option.
      */
     virtual Result update(Paint* paint) noexcept;
 
     /**
-     * @brief Draws all objects from the Canvas object.
-     * return Result::Success when succeeded, Result::InsufficientCondition otherwise.
+     * @brief Request the canvas to draw paint objects.
+     *
+     * @return @c Result::Success when succeed, @c Result::InsufficientCondition otherwise.
+     *
+     * @note Drawing could be asynchronous by thread option. To guarantee the done of drawing job, call sync().
+     * @see Canvas::sync()
      */
     virtual Result draw() noexcept;
 
     /**
-     * @brief Guaranties that all Paint objects from the Canvas object are already rendered.
+     * @brief Guarantees that drawing task is finished.
      *
-     * The Canvas components can be rendered asynchronously. To make sure, that all of them
-     * are ready, the sync API should be called after the draw API.
+     * The Canvas rendering can be performed asynchronously. To make sure that rendering is finished, 
+     * the sync() should be called after the draw().
      *
-     * return Result::Success when succeeded, Result::InsufficientCondition otherwise.
+     * @return @c Result::Success when succeed, @c Result::InsufficientCondition otherwise.
+     *
+     * @see Canvas::draw()
      */
     virtual Result sync() noexcept;
 
@@ -432,7 +484,8 @@ public:
      * @param[in] y1 The vertical coordinate of the first point used to determine the gradient bounds.
      * @param[in] x2 The horizontal coordinate of the second point used to determine the gradient bounds.
      * @param[in] y2 The vertical coordinate of the second point used to determine the gradient bounds.
-     * @return Result::Success when succeeded, Result::InvalidArguments otherwise.
+     *
+     * @return @c Result::Success when succeed, @c Result::InvalidArguments otherwise.
      */
     Result linear(float x1, float y1, float x2, float y2) noexcept;
 
@@ -447,13 +500,15 @@ public:
      * @param[out] y1 The vertical coordinate of the first point used to determine the gradient bounds.
      * @param[out] x2 The horizontal coordinate of the second point used to determine the gradient bounds.
      * @param[out] y2 The vertical coordinate of the second point used to determine the gradient bounds.
-     * @return Result::Success.
+     *
+     * @return @c Result::Success when succeed.
      */
     Result linear(float* x1, float* y1, float* x2, float* y2) const noexcept;
 
     /**
      * @brief Creates a new LinearGradient object.
-     * @return A unique pointer to the new LinearGradient object.
+     *
+     * @return A new LinearGradient object.
      */
     static std::unique_ptr<LinearGradient> gen() noexcept;
 
@@ -475,32 +530,33 @@ public:
     /**
      * @brief Sets the radial gradient bounds.
      *
-     * The radial gradient bounds are defined as a circle centered in a given
-     * point (cx, cy) of a given radius.
+     * The radial gradient bounds are defined as a circle centered in a given point (cx, cy) of a given radius.
      *
      * @param[in] cx The horizontal coordinate of the center of the bounding circle.
      * @param[in] cy The vertical coordinate of the center of the bounding circle.
      * @param[in] radius The radius of the bounding circle.
-     * @return Result::Success when succeeded, Result::InvalidArguments otherwise.
+     *
+     * @return @c Result::Success when succeed, @c Result::InvalidArguments otherwise.
      */
     Result radial(float cx, float cy, float radius) noexcept;
 
     /**
      * @brief Gets the radial gradient bounds.
      *
-     * The radial gradient bounds are defined as a circle centered in a given
-     * point (cx, cy) of a given radius.
+     * The radial gradient bounds are defined as a circle centered in a given point (cx, cy) of a given radius.
      *
      * @param[out] cx The horizontal coordinate of the center of the bounding circle.
      * @param[out] cy The vertical coordinate of the center of the bounding circle.
      * @param[out] radius The radius of the bounding circle.
-     * @return Result::Success.
+     *
+     * @return @c Result::Success when succeed.
      */
     Result radial(float* cx, float* cy, float* radius) const noexcept;
 
     /**
      * @brief Creates a new RadialGradient object.
-     * @return A unique pointer to the new RadialGradient object.
+     *
+     * @return A new RadialGradient object.
      */
     static std::unique_ptr<RadialGradient> gen() noexcept;
 
@@ -513,8 +569,12 @@ public:
  *
  * @brief A class representing two-dimensional figures and their properties.
  *
- * The shapes of the figures in the Shape object are stored as the sub-paths in the path.
- * The data to be saved in the path can be read directly from the svg file or through the provided APIs.
+ * A shape is consisted of major 3 properties: shape outline, stroking, filling. The outline in the Shape is retained as the pathe.
+ * Path can be composed by accumulating primitive commands such as moveTo(), lineTo(), curbicTo(), or complete shape interfaces such as appendRect(), appendCircle(), etc.
+ * Path could be consisten of sub-pathes, one sub-path is determined by close commoand.
+ *
+ * Stroke of Shape is an optional property in a certain case if the shape needs to be represented with/without outline borders.
+ * It's efficient since the shape path and the stroking path can be shared with each other. It's also convenient when controlling both in one context.
  */
 class TVG_EXPORT Shape final : public Paint
 {
@@ -522,12 +582,13 @@ public:
     ~Shape();
 
     /**
-     * @brief Resets the information about the shape's path.
+     * @brief Resets the properties of shape path.
      *
-     * The information about the color, the fill and the stroke is kept.
-     * The memory, where the path data is stored, is not deallocated at this stage.
+     * The properties of the color, fill and the stroke is kept.
      *
-     * @return Result::Success.
+     * @return @c Result::Success when succeed.
+     *
+     * @note The memory, where the path data is stored, is not deallocated at this stage for caching effect.
      */
     Result reset() noexcept;
 
@@ -535,36 +596,33 @@ public:
      * @brief Sets the initial point of the sub-path.
      *
      * The value of the current point is set to the given point.
-     * Corresponds to the M command from the svg path commands.
      *
      * @param[in] x The horizontal coordinate of the initial point of the sub-path.
      * @param[in] y The vertical coordinate of the initial point of the sub-path.
-     * @return Result::Success.
+     *
+     * @return @c Result::Success when succeed.
      */
     Result moveTo(float x, float y) noexcept;
 
     /**
-     * @brief Adds a new point to the sub-path, which results in drawing a line from the current
-     * point to the given endpoint.
+     * @brief Adds a new point to the sub-path, which results in drawing a line from the current point to the given end-point.
      *
-     * The value of the current point is set to the given endpoint.
-     * Corresponds to the L command from the svg path commands.
-     * In case this is the first command in the path, it corresponds to the moveTo command.
+     * The value of the current point is set to the given end-point.
      *
      * @param[in] x The horizontal coordinate of the endpoint of the line.
      * @param[in] y The vertical coordinate of the endpoint of the line.
-     * @return Result::Success.
+     *
+     * @return @c Result::Success when succeed.
+     *
+     * @note In case this is the first command in the path, it corresponds to the moveTo command.
      */
     Result lineTo(float x, float y) noexcept;
 
     /**
      * @brief Adds new points to the sub-path, which results in drawing a cubic Bezier curve starting
-     * at the current point and ending at the given endpoint (x, y) using the control points (cx1, cy1)
-     * and (cx2, cy2).
+     * at the current point and ending at the given end-point (@p x, @p y) using the control points (@p cx1, @p cy1) and (@p cx2, @p cy2).
      *
-     * The value of the current point is set to the given endpoint.
-     * Corresponds to the C command from the svg path commands.
-     * In case this is the first command in the path, no data from the path are rendered.
+     * The value of the current point is set to the given end-point.
      *
      * @param[in] cx1 The horizontal coordinate of the 1st control point.
      * @param[in] cy1 The vertical coordinate of the 1st control point.
@@ -572,33 +630,32 @@ public:
      * @param[in] cy2 The vertical coordinate of the 2nd control point.
      * @param[in] x The horizontal coordinate of the endpoint of the curve.
      * @param[in] y The vertical coordinate of the endpoint of the curve.
-     * @return Result::Success.
+     *
+     * @return @c Result::Success when succeed.
+     *
+     * @note In case this is the first command in the path, no data from the path are rendered.
      */
     Result cubicTo(float cx1, float cy1, float cx2, float cy2, float x, float y) noexcept;
 
     /**
-     * @brief Closes the current sub-path by drawing a line from the current point to the initial point
-     * of the sub-path.
+     * @brief Closes the current sub-path by drawing a line from the current point to the initial point of the sub-path.
      *
      * The value of the current point is set to the initial point of the closed sub-path.
-     * Corresponds to the Z command from the svg path commands.
-     * In case the sub-path does not contain any points, this function has no effect.
      *
-     * @return Result::Success.
+     * @return @c Result::Success when succeed.
+     *
+     * @note In case the sub-path does not contain any points, this function has no effect.
      */
     Result close() noexcept;
 
     /**
      * @brief Appends a rectangle to the path.
      *
-     * The rectangle with rounded corners can be achieved by setting non-zero values to the @p rx
-     * and @p ry arguments. The @p rx and @p ry values specify the radii of the ellipse defining
-     * the rounding of the corners.
-     * For the @p rx and @p ry values greater than the half of the width and the half of the height,
-     * respectively, an ellipse is drawn.
+     * The rectangle with rounded corners can be achieved by setting non-zero values to @p rx and @p ry arguments.
+     * The @p rx and @p ry values specify the radius of the ellipse defining the rounding of the corners.
+     * For the @p rx and @p ry values less than the half of the width and the half of the height of respectively, an ellipse is drawn.
      *
-     * The position of the rectangle is specified by the coordinates of its upper left
-     * corner - the @p x and the @p y arguments.
+     * The position of the rectangle is specified by the coordinates of its upper left corner -  @p x and @p y arguments.
      *
      * The rectangle is treated as a new sub-path - it is not connected with the previous sub-path.
      *
@@ -611,15 +668,17 @@ public:
      * @param[in] h The height of the rectangle.
      * @param[in] rx The x-axis radius of the ellipse defining the rounded corners of the rectangle.
      * @param[in] ry The y-axis radius of the ellipse defining the rounded corners of the rectangle.
-     * @return Result::Success.
+     *
+     * @return @c Result::Success when succeed.
+     *
+     * @note if @p rx and @p ry is greater than half of @p w and half of @p h, the shape becomes to a circle.
      */
     Result appendRect(float x, float y, float w, float h, float rx, float ry) noexcept;
 
     /**
      * @brief Appends an ellipse to the path.
      *
-     * The position of the ellipse is specified by the coordinates of its center - the @p cx and
-     * the @p cy arguments.
+     * The position of the ellipse is specified by the coordinates of its center - @p cx and @p cy arguments.
      *
      * The ellipse is treated as a new sub-path - it is not connected with the previous sub-path.
      *
@@ -629,7 +688,8 @@ public:
      * @param[in] cy The vertical coordinate of the center of the ellipse.
      * @param[in] rx The x-axis radius of the ellipse.
      * @param[in] ry The y-axis radius of the ellipse.
-     * @return Result::Success.
+     *
+     * @return @c Result::Success when succeed.
      */
     Result appendCircle(float cx, float cy, float rx, float ry) noexcept;
 
@@ -637,21 +697,18 @@ public:
      * @brief Appends a circular arc to the path.
      *
      * The arc is treated as a new sub-path - it is not connected with the previous sub-path.
-     *
-     * The current point value is set to the endpoint of the arc in case @p pie is @c false,
-     * and to the center of the arc otherwise.
-     *
-     * Setting @p sweep value greater than 360 degrees, is equivalent to calling appendCircle(cx, cy, radius, radius).
+     * The current point value is set to the end-point of the arc in case @p pie is @c false and to the center of the arc otherwise.
      *
      * @param[in] cx The horizontal coordinate of the center of the arc.
      * @param[in] cy The vertical coordinate of the center of the arc.
      * @param[in] radius The radius of the arc.
-     * @param[in] startAngle The start angle of the arc given in degrees, measured
-     *                       counterclockwise from the horizontal line.
-     * @param[in] sweep The central angle of the arc given in degrees, measured
-     *                  counterclockwise from the @p startAngle.
-     * @param[in] pie Specifies whether to draw radii from the arc's center to both of its endpoints - drawn if @c true.
-     * @return Result::Success.
+     * @param[in] startAngle The start angle of the arc given in degrees, measured counter clockwise from the horizontal line.
+     * @param[in] sweep The central angle of the arc given in degrees, measured counter clock-wise from @p startAngle.
+     * @param[in] pie Specifies whether to draw radius from the arc's center to both of its end-point - drawn if @c true.
+     *
+     * @return @c Result::Success when succeed.
+     * 
+     * @note Setting @p sweep value greater than 360 degrees, is equivalent to calling appendCircle(cx, cy, radius, radius).
      */
     Result appendArc(float cx, float cy, float radius, float startAngle, float sweep, bool pie) noexcept;
 
@@ -659,83 +716,99 @@ public:
      * @brief Appends a given sub-path to the path.
      *
      * The current point value is set to the last point from the sub-path.
-     *
-     * For each command from the @p cmds array, an appropriate number of points in @p pts array should be specified,
-     * as defined for the svg commands.
+     * For each command from the @p cmds array, an appropriate number of points in @p pts array should be specified.
      *
      * @param[in] cmds The array of the commands in the sub-path.
      * @param[in] cmdCnt The number of the sub-path's commands.
      * @param[in] pts The array of the two-dimensional points.
      * @param[in] ptsCnt The number of the points in the @p pts array.
-     * @return Result::Success when succeeded, Result::InvalidArguments otherwise.
+     *
+     * @return @c Result::Success when succeed, @c Result::InvalidArguments otherwise.
+     *
+     * @note This interface is designed for optimal path setting if the caller has a completed path commands already.
      */
     Result appendPath(const PathCommand* cmds, uint32_t cmdCnt, const Point* pts, uint32_t ptsCnt) noexcept;
 
     /**
      * @brief Sets the stroke width for all of the figures from the path.
-     * @param[in] width The width of the stroke.
-     * @return Result::Success when succeeded, Result::FailedAllocation otherwise.
+     *
+     * @param[in] width The width of the stroke. The default value is 0.
+     *
+     * @return @c Result::Success when succeed, @c Result::FailedAllocation otherwise.
      */
     Result stroke(float width) noexcept;
 
     /**
      * @brief Sets the color of the stroke for all of the figures from the path.
-     * @param[in] r The red color channel value in the range [0 ~ 255].
-     * @param[in] g The green color channel value in the range [0 ~ 255].
-     * @param[in] b The blue color channel value in the range [0 ~ 255].
-     * @param[in] a The alpha channel value in the range [0 ~ 255], where 0 is completely transparent and 255 is opaque.
-     * @return Result::Success when succeeded, Result::FailedAllocation otherwise.
+     *
+     * @param[in] r The red color channel value in the range [0 ~ 255]. The default value is 0.
+     * @param[in] g The green color channel value in the range [0 ~ 255]. The default value is 0.
+     * @param[in] b The blue color channel value in the range [0 ~ 255]. The default value is 0.
+     * @param[in] a The alpha channel value in the range [0 ~ 255], where 0 is completely transparent and 255 is opaque. The default value is 0.
+     *
+     * @return @c Result::Success when succeed, @c Result::FailedAllocation otherwise.
      */
     Result stroke(uint8_t r, uint8_t g, uint8_t b, uint8_t a) noexcept;
 
     /**
      * @brief Sets the gradient fill of the stroke for all of the figures from the path..
-     * @param[in] The unique pointer to the gradient fill.
-     * @retval Result::Success When succeeded.
-     * @retval Result::FailedAllocation An internal error with a memory allocation for an object to be filled.
-     * @retval Result::MemoryCorruption In case a @c nullptr is passed as the argument.
+     *
+     * @param[in] The gradient fill.
+     *
+     * @retval @c Result::Success When succeed.
+     * @retval @c Result::FailedAllocation An internal error with a memory allocation for an object to be filled.
+     * @retval @c Result::MemoryCorruption In case a @c nullptr is passed as the argument.
      */
     Result stroke(std::unique_ptr<Fill> f) noexcept;
 
     /**
      * @brief Sets the dash pattern of the stroke.
      *
-     * If any of the dash pattern values is zero, this function has no effect.
-     *
      * @param[in] dashPattern The array of consecutive pair values of the dash length and the gap length.
-     * @param[in] cnt The length of the @p dashPattern array.
-     * @retval Result::Success When succeeded.
-     * @retval Result::FailedAllocation An internal error with a memory allocation for an object to be dashed.
-     * @retval Result::InvalidArguments In case a @c nullptr is passed as the @p dashPattern,
+     * @param[in] cnt The length of @p dashPattern array.
+     *
+     * @retval @c Result::Success when succeed.
+     * @retval @c Result::FailedAllocation An internal error with a memory allocation for an object to be dashed.
+     * @retval @c Result::InvalidArguments In case a @c nullptr is passed as the @p dashPattern,
      *         the given length of the array is less than two or any of the @p dashPattern values is zero or less.
+     *
+     * @note If any of the dash pattern values is zero, this function has no effect.
      */
     Result stroke(const float* dashPattern, uint32_t cnt) noexcept;
 
     /**
      * @brief Sets the cap style of the stroke in the open sub-paths.
-     * @param[in] cap The cap style value.
-     * @return Result::Success when succeeded, Result::FailedAllocation otherwise.
+     *
+     * @param[in] cap The cap style value. The default value is @c StrokeCap::Square.
+     *
+     * @return @c Result::Success when succeed, @c Result::FailedAllocation otherwise.
      */
     Result stroke(StrokeCap cap) noexcept;
 
     /**
      * @brief Sets the join style for stroked path segments.
+     *
      * The join style will be used for joining the two line segment while stroking the path.
-     * @param[in] join The join style value.
-     * @return Result::Success when succeeded, Result::FailedAllocation otherwise.
+     *
+     * @param[in] join The join style value. The default value is @c StrokeJoin::Bevel.
+     *
+     * @return @c Result::Success when succeed, @c Result::FailedAllocation otherwise.
      */
     Result stroke(StrokeJoin join) noexcept;
 
     /**
-     * @brief Sets the color of the fill for all of the figures from the path.
+     * @brief Sets the solid color for all of the figures from the path.
      *
      * The parts of the shape defined as inner are colored.
      *
-     * @param[in] r The red color channel value in the range [0 ~ 255].
-     * @param[in] g The green color channel value in the range [0 ~ 255].
-     * @param[in] b The blue color channel value in the range [0 ~ 255].
-     * @param[in] a The alpha channel value in the range [0 ~ 255], where 0 is completely transparent and 255 is opaque.
-     * @return Result::Success.
+     * @param[in] r The red color channel value in the range [0 ~ 255]. The default value is 0.
+     * @param[in] g The green color channel value in the range [0 ~ 255]. The default value is 0.
+     * @param[in] b The blue color channel value in the range [0 ~ 255]. The default value is 0.
+     * @param[in] a The alpha channel value in the range [0 ~ 255], where 0 is completely transparent and 255 is opaque. The default value is 0.
+     *
+     * @return @c Result::Success when succeed.
+     *
+     * @note Either solid color or gradient fill which is lastly set will be applied.
      */
     Result fill(uint8_t r, uint8_t g, uint8_t b, uint8_t a) noexcept;
 
@@ -745,97 +818,119 @@ public:
      * The parts of the shape defined as inner are filled.
      *
      * @param[in] f The unique pointer to the gradient fill.
-     * @return Result::Success when succeeded, Result::MemoryCorruption otherwise.
+     *
+     * @return @c Result::Success when succeed, @c Result::MemoryCorruption otherwise.
+     *
+     * @note Either solid color or gradient fill which is lastly set will be applied.
      */
     Result fill(std::unique_ptr<Fill> f) noexcept;
 
     /**
      * @brief Sets the fill rule for the Shape object.
+     *
      * @param[in] r The fill rule value.
-     * @return Result::Success.
+     *
+     * @return @c Result::Success when succeed.
      */
     Result fill(FillRule r) noexcept;
 
     /**
      * @brief Gets the commands data of the path.
+     *
      * @param[out] cmds The pointer to the array of the commands from the path.
-     * @return The length of the @p cmds array when succeeded, zero otherwise.
+     *
+     * @return The length of the @p cmds array when succeed, zero otherwise.
      */
     uint32_t pathCommands(const PathCommand** cmds) const noexcept;
 
     /**
      * @brief Gets the points values of the path.
+     *
      * @param[out] pts The pointer to the array of the two-dimensional points from the path.
-     * @return The length of the @p pts array when succeeded, zero otherwise.
+     *
+     * @return The length of the @p pts array when succeed, zero otherwise.
      */
     uint32_t pathCoords(const Point** pts) const noexcept;
 
     /**
      * @brief Gets the pointer to the gradient fill of the shape.
-     * @return The pointer to the gradient fill of the stroke when succeeded, @c nullptr in case no fill was set.
+     *
+     * @return The pointer to the gradient fill of the stroke when succeed, @c nullptr in case no fill was set.
      */
     const Fill* fill() const noexcept;
 
     /**
-     * @brief Gets the color of the shape's fill.
+     * @brief Gets the solid color of the shape.
+     *
      * @param[out] r The red color channel value in the range [0 ~ 255].
      * @param[out] g The green color channel value in the range [0 ~ 255].
      * @param[out] b The blue color channel value in the range [0 ~ 255].
      * @param[out] a The alpha channel value in the range [0 ~ 255], where 0 is completely transparent and 255 is opaque.
-     * @return Result::Success.
+     *
+     * @return @c Result::Success when succeed.
      */
     Result fillColor(uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a) const noexcept;
 
     /**
      * @brief Gets the fill rule value.
+     *
      * @return The fill rule value of the shape.
      */
     FillRule fillRule() const noexcept;
 
     /**
      * @brief Gets the stroke width.
-     * @return The stroke width value when succeeded, zero if no stroke was set.
+     *
+     * @return The stroke width value when succeed, zero if no stroke was set.
      */
     float strokeWidth() const noexcept;
 
     /**
      * @brief Gets the color of the shape's stroke.
+     *
      * @param[out] r The red color channel value in the range [0 ~ 255].
      * @param[out] g The green color channel value in the range [0 ~ 255].
      * @param[out] b The blue color channel value in the range [0 ~ 255].
      * @param[out] a The alpha channel value in the range [0 ~ 255], where 0 is completely transparent and 255 is opaque.
-     * @return Result::Success when succeeded, Result::InsufficientCondition otherwise.
+     *
+     * @return @c Result::Success when succeed, @c Result::InsufficientCondition otherwise.
      */
     Result strokeColor(uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a) const noexcept;
 
     /**
      * @brief Gets the pointer to the gradient fill of the stroke.
-     * @return The pointer to the gradient fill of the stroke when succeeded, @c nullptr otherwise.
+     *
+     * @return The pointer to the gradient fill of the stroke when succeed, @c nullptr otherwise.
      */
     const Fill* strokeFill() const noexcept;
 
     /**
      * @brief Gets the dash pattern of the stroke.
+     *
      * @param[out] dashPattern The pointer to the memory, where the dash pattern array is stored.
+     *
      * @return The length of dash pattern array.
      */
     uint32_t strokeDash(const float** dashPattern) const noexcept;
 
     /**
      * @brief Gets the cap style used for stroking the path.
+     *
      * @return The cap style value of the stroke.
      */
     StrokeCap strokeCap() const noexcept;
 
     /**
      * @brief Gets the join style value used for stroking the path.
+     *
      * @return The join style value of the stroke.
      */
     StrokeJoin strokeJoin() const noexcept;
 
     /**
      * @brief Creates a new Shape object.
-     * @return A unique pointer to the new Shape object.
+     *
+     * @return A new Shape object.
      */
     static std::unique_ptr<Shape> gen() noexcept;
 
@@ -846,10 +941,10 @@ public:
 /**
  * @class Picture
  *
- * @brief A class representing an image read in one of the supported formats: svg, png and raw.
- * Besides the methods inherited from the Paint, it provides methods to load the image,
- * to change its size and to get the basic information.
+ * @brief A class representing an image read in one of the supported formats: raw, svg, png and etc.
+ * Besides the methods inherited from the Paint, it provides eaiser methods to load & draw images on the canvas.
  *
+ * @note Supported formats are depended on the available TVG loaders.
  */
 class TVG_EXPORT Picture final : public Paint
 {
@@ -857,75 +952,44 @@ public:
     ~Picture();
 
     /**
-     * @brief Loads a picture data from a file.
-     *
-     * The direct loading from a file is available for the svg and png files.
+     * @brief Loads a picture data from a file directly.
      *
      * @param[in] path A path to the picture file.
-     * @retval Result::Success When succeeded.
-     * @retval Result::InvalidArguments In case the @p path is empty.
-     * @retval Result::NonSupport When trying to load a file with an unknown extension.
-     * @retval Result::Unknown If an error occurs at a later stage.
+     *
+     * @retval @c Result::Success when succeed.
+     * @retval @c Result::InvalidArguments In case the @p path is empty.
+     * @retval @c Result::NonSupport When trying to load a file with an unknown extension.
+     * @retval @c Result::Unknown If an error occurs at a later stage.
+     *
+     * @note loading behavior could be asynchronous by thread option.
      */
     Result load(const std::string& path) noexcept;
 
     /**
      * @brief Loads a picture data from a memory block of a given size.
      *
-     * This method of data loading is supported only for the svg files.
-     *
-     * @param[in] data A pointer to a memory location where the content of the svg file is stored.
+     * @param[in] data A pointer to a memory location where the content of the picture file is stored.
      * @param[in] size The size in bytes of the memory occupied by the @p data.
-     * @retval Result::Success When succeeded.
-     * @retval Result::InvalidArguments In case no data are provided or the @p size is zero or less.
-     * @retval Result::NonSupport When trying to load a file with an unknown extension.
-     * @retval Result::Unknown If an error occurs at a later stage.
+     *
+     * @retval @c Result::Success when succeed.
+     * @retval @c Result::InvalidArguments In case no data are provided or the @p size is zero or less.
+     * @retval @c Result::NonSupport When trying to load a file with an unknown extension.
+     * @retval @c Result::Unknown If an error occurs at a later stage.
+     *
+     * @note: This api supports only SVG format
      */
     Result load(const char* data, uint32_t size) noexcept;
 
     /**
-     * @brief Loads a picture data from a memory block of a given size.
+     * @brief Resize the picture content with the given width and height.
      *
-     * This method of data loading is supported only for the raw image format.
-     *
-     * @param[in] data The contiguous memory block of a size of w x h with the pixels information.
-     * @param[in] w The width of the image in pixels.
-     * @param[in] h The height of the image in pixels.
-     * @param[in] copy Specifies the method of copying the @p data - shallow if @c false and deep id @c true.
-     * @retval Result::Success When succeeded.
-     * @retval Result::InvalidArguments In case no data is provided or the width or the height of the picture is zero or less.
-     * @retval Result::NonSupport When trying to load a file with an unknown extension.
-     */
-    Result load(uint32_t* data, uint32_t w, uint32_t h, bool copy) noexcept;
-
-    /**
-     * @brief Gets the position and the size of the loaded picture.
-     *
-     * For the svg file the returned values are specified in the viewBox attribute.
-     * For the png and raw files, @p x and @p y are zeros and @p w and @p h indicate the width
-     * and the height of the picture, respectively.
-     *
-     * @param[out] x The horizontal coordinate of the upper left corner of the picture.
-     * @param[out] y The vertical coordinate of the upper left corner of the picture.
-     * @param[out] w The picture width.
-     * @param[out] h The picture height.
-     * @return Result::Success when succeeded, Result::InsufficientCondition otherwise.
-     */
-    //TODO: Replace with size(). Remove API
-    Result viewbox(float* x, float* y, float* w, float* h) const noexcept;
-
-    /**
-     * @brief Sets a new size of the image.
-     *
-     * The functionality works only for the images loaded from svg files.
-     * The preserveAspectRatio attribute specified in the svg file determines whether the aspect ratio is preserved during the resizing.
-     * In case the preserving needs to be forced,
-     * the scaling factor is established for each of the-dimensions and the smaller value is applied
-     * to both of them.
+     * Resize the picture content while keeping the default size aspect ratio.
+     * The scaling factor is established for each of dimensions and the smaller value is applied to both of them.
      *
      * @param[in] w A new width of the image in pixels.
      * @param[in] h A new height of the image in pixels.
-     * @return Result::Success when succeeded, Result::InsufficientCondition otherwise.
+     *
+     * @return @c Result::Success when succeed, @c Result::InsufficientCondition otherwise.
      */
     Result size(float w, float h) noexcept;
 
@@ -933,22 +997,36 @@ public:
      * @brief Gets the size of the image.
      * @param[out] w The width of the image in pixels.
      * @param[out] h The height of the image in pixels.
-     * @return Result::Success.
+     *
+     * @return @c Result::Success when succeed.
      */
     Result size(float* w, float* h) const noexcept;
 
     /**
-     * @brief Gets the pixels information of the image.
+     * @brief Gets the pixels information of the picture. (BETA version)
      *
-     * The option is available for png and raw file formats.
-     *
-     * @return A pointer to the memory location where the image data are stored when succeeded, @p nullptr otherwise.
+     * @warning Please do not use it, this API is not official one. It could be modified in the next version.
      */
     const uint32_t* data() const noexcept;
 
     /**
+     * @brief Loads a raw data from a memory block with a given size. (BETA version)
+     *
+     * @warning Please do not use it, this API is not official one. It could be modified in the next version.
+     */
+    Result load(uint32_t* data, uint32_t w, uint32_t h, bool copy) noexcept;
+
+    /**
+     * @brief Gets the position and the size of the loaded picture. (BETA version)
+     *
+     * @warning Please do not use it, this API is not official one. It could be modified in the next version.
+     */
+    Result viewbox(float* x, float* y, float* w, float* h) const noexcept;
+
+    /**
      * @brief Creates a new Picture object.
-     * @return A unique pointer to the new Picture object.
+     *
+     * @return A new Picture object.
      */
     static std::unique_ptr<Picture> gen() noexcept;
 
@@ -959,11 +1037,13 @@ public:
 /**
  * @class Scene
  *
- * @brief A class enabling to hold many Paint objects.
+ * @brief A class to composite children paints.
  *
- * As a whole they can be transformed, their transparency can be changed, or the composition
- * methods may be used to all of them at once.
+ * As the traditional graphics rendering method, TVG also enables scene-graph mechanism,
+ * This feature supports an array function for managing the multiple paints as one group paint.
  *
+ * As a group, scene can be transformed, translucent, composited with other target paints,
+ * its children will be affected by the scene world.
  */
 class TVG_EXPORT Scene final : public Paint
 {
@@ -971,12 +1051,17 @@ public:
     ~Scene();
 
     /**
-     * @brief Passes the Paint object to the Scene.
+     * @brief Passes drawing elements to the Scene using Paint objects.
      *
-     * The function may be called many times and all passed objects will be rendered.
+     * Only pushed paints in the scene will be drawing targets.
+     * They are retained by the scene until you call Scene::clear().
+     * If you know the count of push() in the advance, please call Scene::reserve().
      *
-     * @param[in] paint A unique pointer to the Paint object.
-     * @return Result::Success when succeeded, Result::MemoryCorruption otherwise.
+     * @param[in] paint A Paint object to be drawn.
+     *
+     * @return @c Result::Success when succeed, @c Result::MemoryCorruption otherwise.
+     *
+     * @note Rendering order of the paints are in the order of the push. Thus if you mind a layering, sorting the paints before pushing them.
      */
     Result push(std::unique_ptr<Paint> paint) noexcept;
 
@@ -987,22 +1072,22 @@ public:
      * prevents multiple memory reallocation, thus improving the performance.
      *
      * @param[in] size The number of objects for which the memory is to be reserved.
-     * @return Result::Success.
+     *
+     * @return @c Result::Success.
      */
     Result reserve(uint32_t size) noexcept;
 
     /**
-     * @brief Sets the total number of the paints pushed into the scene to be zero.
+     * @brief Sets the total number of the paints pushed into the scene to be zero. (BETA version)
      *
-     * The memory is not deallocated at this stage.
-     *
-     * @return Result::Success.
+     * @warning Please do not use it, this API is not official one. It could be modified in the next version.
      */
     Result clear() noexcept;
 
     /**
      * @brief Creates a new Scene object.
-     * @return A unique pointer to the new Scene object.
+     *
+     * @return A new Scene object.
      */
     static std::unique_ptr<Scene> gen() noexcept;
 
@@ -1013,8 +1098,7 @@ public:
 /**
  * @class SwCanvas
  *
- * @brief A class for the rasterisation of graphic elements with a software engine.
- *
+ * @brief A class for the rendering graphic elements with a software raster engine.
  */
 class TVG_EXPORT SwCanvas final : public Canvas
 {
@@ -1031,25 +1115,28 @@ public:
     };
 
     /**
-     * @brief Sets the target of the rasterisation.
+     * @brief Sets the target buffer for the rasterization.
      *
-     * The buffer of a desirable size should be already allocated.
+     * The buffer of a desirable size should be allocated and owned by the caller.
      *
      * @param[in] buffer A pointer to a memory block of the size @p w x @p h, where the raster data are stored.
      * @param[in] stride The stride of the raster image - greater than or equal to @p w.
      * @param[in] w The width of the raster image.
      * @param[in] h The height of the raster image.
      * @param[in] cs The value specifying the way the 32-bits colors should be read/written.
-     * @retval Result::Success when succeeded.
-     * @retval Result::MemoryCorruption When casting in the internal function implementation failed.
-     * @retval Result::InvalidArguments In case no valid pointer is provided or the width, or the height or the stride is zero.
-     * @retval Result::NonSupport In case the software engine is not enabled in the 'meson_options.txt' file.
-     */
+     *
+     * @retval @c Result::Success when succeed.
+     * @retval @c Result::MemoryCorruption When casting in the internal function implementation failed.
+     * @retval @c Result::InvalidArguments In case no valid pointer is provided or the width, or the height or the stride is zero.
+     * @retval @c Result::NonSupport In case the software engine is not supported.
+     *
+     * @warning Do not access @p buffer during Canvas::draw() - Canvas::sync(). It should not be accessed while TVG is writing on it. 
+    */
     Result target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h, Colorspace cs) noexcept;
 
     /**
      * @brief Creates a new SwCanvas object.
-     * @return A unique pointer to the new SwCanvas object when succeeded, @c nullptr if the software engine is not enabled in the 'meson_options.txt' file.
+     * @return A new SwCanvas object when succeed, otherwise @c nullptr
      */
     static std::unique_ptr<SwCanvas> gen() noexcept;
 
@@ -1058,10 +1145,11 @@ public:
 
 
 /**
- * @class GlCanvas
+ * @class GlCanvas (BETA version)
  *
- * @brief A class for the rasterisation of graphic elements with the OpenGL engine.
+ * @brief A class for the rendering graphic elements with a GL raster engine.
  *
+ * @warning Please do not use it, This class is not fully supported yet.
  */
 class TVG_EXPORT GlCanvas final : public Canvas
 {
@@ -1069,14 +1157,16 @@ public:
     ~GlCanvas();
 
     /**
-     * @brief Sets the target of the rasterisation.
+     * @brief Sets the target buffer for the rasterization. (BETA version)
+     *
+     * @warning Please do not use it, this API is not official one. It could be modified in the next version.
      */
-    //TODO: Gl Specific methods. Need gl backend configuration methods as well.
     Result target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h) noexcept;
 
     /**
-     * @brief Creates a new GlCanvas object.
-     * @return A unique pointer to the new GlCanvas object when succeeded, @c nullptr if the OpenGL engine is not enabled in the 'meson_options.txt' file.
+     * @brief Creates a new GlCanvas object.(BETA version)
+     *
+     * @return A new GlCanvas object when succeed, otherwise @c nullptr
      */
     static std::unique_ptr<GlCanvas> gen() noexcept;
 
@@ -1087,32 +1177,46 @@ public:
 /**
  * @class Initializer
  *
- * @brief A class that enables initialization and termination of the ThorVG engine.
- *
+ * @brief A class that enables initialization and termination of the TVG engines.
  */
 class TVG_EXPORT Initializer final
 {
 public:
     /**
-     * @brief Initializes the ThorVG engine.
-     * @param[in] engine The engine type - the same as specified in the 'meson_options.txt' file.
-     * @param[in] threads The number of threads - zero is treated as one.
-     * @retval Result::Success When succeeded.
-     * @retval Result::InsufficientCondition An internal error possibly with memory allocation.
-     * @retval Result::InvalidArguments If unknown engine type chosen.
-     * @retval Result::NonSupport In case the engine type in the 'meson_options.txt' differs from the one specified in the @p engine argument.
-     * @retval Result::Unknown Other.
+     * @brief Initializes TVG engines.
+     *
+     * TVG requires the running-engine environment.
+     * Basically TVG runs its own task-scheduler for parallelizing rendering tasks efficiently.
+     * For the benefits, you can indicates threads numbers which count is designated TVG threads.
+     * In the initialization step, TVG will generate/spawn the threads by @p threads count.
+     *
+     * @param[in] engine The engine types to initialize. This is relative to Canvas types which will be used in. For multiple backeneds, Bitwise operation is allowed
+     * @param[in] threads The number of additional threads. Zero indiciates the main thread.
+     *
+     * @retval @c Result::Success when succeed.
+     * @retval @c Result::InsufficientCondition An internal error possibly with memory allocation.
+     * @retval @c Result::InvalidArguments If unknown engine type chosen.
+     * @retval @c Result::NonSupport In case the engine type is not supported on the system.
+     * @retval @c Result::Unknown Others.
+     *
+     * @note Initialilzer does own reference counting for multiple calls. Threads count will be fixed at the first init() call.
+     * @see Initializer::term()
      */
     static Result init(CanvasEngine engine, uint32_t threads) noexcept;
 
     /**
-     * @brief Terminates the ThorVG engine.
-     * @param[in] engine The engine type - the same as specified in the 'meson_options.txt' file.
-     * @retval Result::Success When succeeded.
-     * @retval Result::InsufficientCondition In case there is nothing to be terminated.
-     * @retval Result::InvalidArguments If unknown engine type chosen.
-     * @retval Result::NonSupport In case the engine type in the 'meson_options.txt' differs from the one specified in the @p engine argument.
-     * @retval Result::Unknown Other.
+     * @brief Terminates TVG engines.
+     *
+     * @param[in] engine The engine types to terminate. This is relative to Canvas types which will be used in. For multiple backeneds, Bitwise operation is allowed
+     *
+     * @retval @c Result::Success when succeed.
+     * @retval @c Result::InsufficientCondition In case there is nothing to be terminated.
+     * @retval @c Result::InvalidArguments If unknown engine type chosen.
+     * @retval @c Result::NonSupportt In case the engine type is not supported on the system.
+     * @retval @c Result::Unknown Others.
+     *
+     * @note Initialilzer does own reference counting for multiple calls.
+     * @see Initializer::init()
      */
     static Result term(CanvasEngine engine) noexcept;
 
