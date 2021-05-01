@@ -2303,7 +2303,7 @@ static void _styleInherit(SvgStyleProperty* child, const SvgStyleProperty* paren
 
 #ifdef THORVG_LOG_ENABLED
 static void _inefficientNodeCheck(SvgNode* node){
-    if (!node->display && node->type != SvgNodeType:ClipPath) printf("SVG: Inefficient elements used [Display is none][Node Type : %s]\n", simpleXmlNodeTypeToString(node->type).c_str());
+    if (!node->display && node->type != SvgNodeType::ClipPath) printf("SVG: Inefficient elements used [Display is none][Node Type : %s]\n", simpleXmlNodeTypeToString(node->type).c_str());
     if (node->style->opacity == 0) printf("SVG: Inefficient elements used [Opacity is zero][Node Type : %s]\n", simpleXmlNodeTypeToString(node->type).c_str());
     if (node->style->fill.opacity == 0 && node->style->stroke.opacity == 0) printf("SVG: Inefficient elements used [Fill opacity and stroke opacity are zero][Node Type : %s]\n", simpleXmlNodeTypeToString(node->type).c_str());
 
