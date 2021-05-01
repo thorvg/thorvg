@@ -184,6 +184,27 @@ And here is the result.
 [Back to contents](#contents)
 <br />
 <br />
+## Practices
+### Tizen
+ThorVG is integrated in [Tizen](https://www.tizen.org) platform as the vector graphics engine, it's being used for vector primitive drawings and scalable image contents such as SVG, Lottie Animation among the Tizen powered products.
+
+<p align="center">
+  <img width="798" height="285" src="https://github.com/Samsung/thorvg/blob/master/res/example_tizen.png">
+</p>
+
+[Back to contents](#contents)
+<br />
+<br />
+### Rive
+We're also building a [Rive](https://rive.app/) port which supports Rive Animation run through ThorVG backend. Rive is a new modern animation platform that supports fancy user interactive vector animation. See project [Rive-Tizen](https://github.com/rive-app/rive-tizen) at [Github](https://github.com/rive-app/)
+ 
+<p align="center">
+  <img width="600" height="324" src="https://github.com/Samsung/thorvg/blob/master/res/example_rive.gif">
+</p>
+
+[Back to contents](#contents)
+<br />
+<br />
 ## Examples
 There are various examples to understand ThorVG APIs, Please check sample code in `thorvg/src/examples`
 
