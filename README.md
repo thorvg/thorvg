@@ -10,7 +10,7 @@
 ThorVG is a platform-independent portable library for drawing vector-based shapes and images. It's written in C++, no dependencies and keeps super compact size. <br />
 <br />
 The next list shows drawing primitives ThorVG providing.<br />
- - Paints: Line, Arc, Curve, Path, Shapes, Polygons
+ - Shapes: Line, Arc, Curve, Path, Polygon, etc
  - Filling: Solid, Linear, Radial Gradient
  - Scene Graph & Affine Transformation (translation, rotation, scale ...)
  - Stroking: Width, Join, Cap, Dash
