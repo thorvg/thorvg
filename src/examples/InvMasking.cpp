@@ -88,7 +88,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     ifstream file(EXAMPLE_DIR"/rawimage_200x300.raw");
     if (!file.is_open()) return;
     data = (uint32_t*) malloc(sizeof(uint32_t) * (200 * 300));
-    file.read(reinterpret_cast<char *>(data), sizeof (data) * 200 * 300);
+    file.read(reinterpret_cast<char *>(data), sizeof (uint32_t) * 200 * 300);
     file.close();
 
     auto image = tvg::Picture::gen();
