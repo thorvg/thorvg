@@ -27,8 +27,6 @@
 /* Drawing Commands                                                     */
 /************************************************************************/
 
-uint32_t *data = nullptr;
-
 void tvgDrawCmds(tvg::Canvas* canvas)
 {
     if (!canvas) return;
@@ -44,8 +42,8 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     ifstream file(path);
     if (!file.is_open()) return ;
-    data = (uint32_t*)malloc(sizeof(uint32_t) * (200*300));
-    file.read(reinterpret_cast<char *>(data), sizeof (data) * 200 * 300);
+    auto data = (uint32_t*)malloc(sizeof(uint32_t) * (200*300));
+    file.read(reinterpret_cast<char *>(data), sizeof (uint32_t) * 200 * 300);
     file.close();
 
     auto picture = tvg::Picture::gen();
