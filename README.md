@@ -7,26 +7,30 @@
   <img width="500" height="346" src="https://github.com/Samsung/thorvg/blob/master/res/thorvg_card2.png">
 </p>
 
-ThorVG is a platform-independent portable library for drawing vector-based shapes and images. It's written in C++, no dependencies and keeps super compact size. <br />
+ThorVG is a platform-independent portable library for drawing vector-based shapes and images. It's written in C++ without any dependencies and keeps a super compact size. <br />
 <br />
-The next list shows drawing primitives ThorVG providing.<br />
- - Shapes: Line, Arc, Curve, Path, Polygon, etc
- - Filling: Solid, Linear, Radial Gradient
- - Scene Graph & Affine Transformation (translation, rotation, scale ...)
+The following list shows primitives that are supported by ThorVG: <br />
+ - Shapes: Line, Arc, Curve, Path, Polygon, ...
+ - Filling: Solid, Linear and Radial Gradient
+ - Scene Graph & Affine Transformation (translation, rotation, scale, ...)
  - Stroking: Width, Join, Cap, Dash
- - Composition: Blending, Masking, Path Clipping, etc
- - Pictures: SVG, PNG, Bitmap, ... 
+ - Composition: Blending, Masking, Path Clipping, ...
+ - Pictures: SVG, PNG, Bitmap, ...
 <p align="center">
   <img width="930" height="473" src="https://github.com/Samsung/thorvg/blob/master/res/example_primitives.png">
 </p>
 <br />
-Basically your program could use this library functions by calling slick and neat apis while switching drawing context (if you have your own drawing engine), ThorVG serializes drawing commands among volatile paints node, performs sync/asynchronous rendering by its decent engines. The engine is suggested to immediate rendering method so that your system could adaptively integrate with it. ThorVG supports vector images such as SVG, also will support coming popular formats by demands. On rendering, it might introduce intermediate frame buffers for compositing vector scenes but only when it's necessary and these are temporarily used for saving memory. Next figure shows you a brief strategy how to use ThorVG in your system.<br />
+Basically your program could use this library functions by calling slick and neat APIs while switching drawing context (if you have your own drawing engine).
+ThorVG serializes drawing commands among volatile paints' nodes and performs sync/asynchronous rendering by its engines. ThorVG supports vector images such as SVG,
+and also will support other popular formats in the future, on demand. On rendering, it can spawn intermediate frame buffers for compositing vector scenes but only
+when it's necessary.
+The next figure shows you a brief strategy on how to use ThorVG on your system.<br />
 <br />
 <p align="center">
   <img width="900" height="288" src="https://github.com/Samsung/thorvg/blob/master/res/example_flow.png">
 </p>
 <br />
- 
+
 ## Contents
 - [Building ThorVG](#building-thorvg)
 	- [Meson Build](#meson-build)
@@ -40,21 +44,21 @@ Basically your program could use this library functions by calling slick and nea
 	- [ThorVG Viewer](#thorvg-viewer)
 	- [SVG to PNG](#svg-to-png)
 - [API Bindings](#api-bindings)
-- [Issues or Feature Requests?](#issues-or-feature-requests)
+- [Issues or Feature Requests](#issues-or-feature-requests)
 
 [](#contents)
 <br />
 ## Building ThorVG
-Basically, ThorVG supports [meson](https://mesonbuild.com/) build system.
+ThorVG supports [meson](https://mesonbuild.com/) build system.
 <br />
 ### Meson Build
 Install [meson](http://mesonbuild.com/Getting-meson.html) and [ninja](https://ninja-build.org/) if not already installed.
 
-Run meson to configure ThorVG.
+Run meson to configure ThorVG:
 ```
 meson build
 ```
-Run ninja to build & install ThorVG.
+Run ninja to build & install ThorVG:
 ```
 ninja -C build install
 ```
@@ -62,54 +66,54 @@ ninja -C build install
 <br />
 <br />
 ## Quick Start
-ThorVG renders vector shapes on a given canvas buffer. Here shows quick start to learn basic API usages.
+ThorVG renders vector shapes to a given canvas buffer. The following is a quick start to show you how to use the basic APIs.
 
-First, You can initialize ThorVG engine.
+First, you should initialize the ThorVG engine:
 
 ```cpp
 tvg::Initializer::init(tvg::CanvasEngine::Sw, 0);   //engine method, thread count
 ```
 
-You can prepare a empty canvas for drawing on it.
+Then you should prepare an empty canvas for drawing on it:
 
 ```cpp
-static uint32_t buffer[WIDTH * HEIGHT];          //canvas target buffer
+static uint32_t buffer[WIDTH * HEIGHT];                                 //canvas target buffer
 
-auto canvas = tvg::SwCanvas::gen();              //generate a canvas
-canvas->target(buffer, WIDTH, WIDTH, HEIGHT);    //stride, w, h
+auto canvas = tvg::SwCanvas::gen();                                     //generate a canvas
+canvas->target(buffer, WIDTH, WIDTH, HEIGHT, tvg::SwCanvas::ARGB8888);  //buffer, stride, w, h, Colorspace
 ```
 
-Next you can draw multiple shapes onto the canvas.
+Next you can draw multiple shapes on the canvas:
 
 ```cpp
-auto rect = tvg::Shape::gen();               //generate a round rectangle
-rect->appendRect(50, 50, 200, 200, 20, 20);  //round geometry(x, y, w, h, rx, ry)
-rect->fill(100, 100, 0, 255);                //round rectangle color (r, g, b, a)
-canvas->push(move(rect));                    //push round rectangle drawing command
+auto rect = tvg::Shape::gen();               //generate a shape
+rect->appendRect(50, 50, 200, 200, 20, 20);  //define it as a rounded rectangle (x, y, w, h, rx, ry)
+rect->fill(100, 100, 100, 255);              //set its color (r, g, b, a)
+canvas->push(move(rect));                    //push the rectangle into the canvas
 
-auto circle = tvg::Shape::gen();             //generate a circle
-circle->appendCircle(400, 400, 100, 100);    //circle geometry(cx, cy, radiusW, radiusH)
+auto circle = tvg::Shape::gen();             //generate a shape
+circle->appendCircle(400, 400, 100, 100);    //define it as a circle (cx, cy, rx, ry)
 
-auto fill = tvg::RadialGradient::gen();      //generate radial gradient for circle fill
-fill->radial(400, 400, 150);                 //radial fill info(cx, cy, radius)
+auto fill = tvg::RadialGradient::gen();      //generate a radial gradient
+fill->radial(400, 400, 150);                 //set the radial gradient geometry info (cx, cy, radius)
 
-tvg::Fill::ColorStop colorStops[2];          //gradient color info
-colorStops[0] = {0, 255, 255, 255, 255};     //index, r, g, b, a (1st color value)
-colorStops[1] = {1, 0, 0, 0, 255};           //index, r, g, b, a (2nd color value)
-fill.colorStops(colorStop, 2);               //set fil with gradient color info
+tvg::Fill::ColorStop colorStops[2];          //gradient colors
+colorStops[0] = {0.0, 255, 255, 255, 255};   //1st color values (offset, r, g, b, a)
+colorStops[1] = {1.0, 0, 0, 0, 255};         //2nd color values (offset, r, g, b, a)
+fill->colorStops(colorStops, 2);             //set the gradient colors info
 
-circle->fill(move(fill));                    //circle color
-canvas->push(move(circle));                  //push circle drawing command
+circle->fill(move(fill));                    //set the circle fill
+canvas->push(move(circle));                  //push the circle into the canvas
 
 ```
 
-This code result looks like this.
+This code generates the following result:
 
 <p align="center">
   <img width="416" height="411" src="https://github.com/Samsung/thorvg/blob/master/res/example_shapes.png">
 </p>
 
-Or you can draw pathes with dash stroking.
+You can also draw you own shapes and use dashed stroking:
 
 ```cpp
 auto path = tvg::Shape::gen();               //generate a path
@@ -132,20 +136,20 @@ path->stroke(0, 0, 255, 255);                //stroke color
 path->stroke(tvg::StrokeJoin::Round);        //stroke join style
 path->stroke(tvg::StrokeCap::Round);         //stroke cap style
 
-float pattern[2] = {10, 10};
-path->stroke(pattern, 2);                    //stroke dash pattern (line, gap)
+float pattern[2] = {10, 10};                 //stroke dash pattern (line, gap)
+path->stroke(pattern, 2);                    //set the stroke pattern
 
-canvas->push(move(path));                    //push path drawing command
+canvas->push(move(path));                    //push the path into the canvas
 
 ```
 
-This path drawing result shows like this.
+The code generates the following result:
 
 <p align="center">
   <img width="300" height="300" src="https://github.com/Samsung/thorvg/blob/master/res/example_path.png">
 </p>
 
-Now begin rendering & finish it at a particular time.
+Now begin rendering & finish it at a particular time:
 
 ```cpp
 canvas->draw();
@@ -154,7 +158,7 @@ canvas->sync();
 
 Then you can acquire the rendered image from the buffer memory.
 
-Lastly, terminate the engine after usage.
+Lastly, terminate the engine after its usage:
 
 ```cpp
 tvg::Initializer::term(tvg::CanvasEngine::Sw);
@@ -164,21 +168,23 @@ tvg::Initializer::term(tvg::CanvasEngine::Sw);
 <br />
 ## SVG
 
-ThorVG supports SVG(Scalable Vector Graphics) rendering through its own SVG interpreter. It basically aims to satisfy with [SVG Tiny Specification](https://www.w3.org/TR/SVGTiny12/) for the lightweight system such as embeded. Most cases ThorVG supports the SVG spec fully but some partial SVG features were not supported officially yet. Next list shows the unsupported features by ThorVG.
+ThorVG supports SVG (Scalable Vector Graphics) rendering through its own SVG interpreter. It satisfies the [SVG Tiny Specification](https://www.w3.org/TR/SVGTiny12/)
+in order to keep it lightweight, so it can be used in embeded systems, as an example.
+Among the yet unsupported SVG specs are the following features:
 
  - CSS Styles
  - Filters
  - Images
 
-Next code snippet shows you how to draw SVG image using ThorVG.
+The following code snippet shows how to draw SVG image using ThorVG:
 
 ```cpp
 auto picture = tvg::Picture::gen();         //generate a picture
-picture->load("tiger.svg");                 //Load SVG file.
-canvas->push(move(picture));                //push picture drawing command
+picture->load("tiger.svg");                 //load SVG file
+canvas->push(move(picture));                //push the picture into the canvas
 ```
 
-And here is the result.
+The result:
 
 <p align="center">
   <img width="300" height="300" src="https://github.com/Samsung/thorvg/blob/master/res/example_tiger.png">
@@ -189,7 +195,8 @@ And here is the result.
 <br />
 ## Practices
 ### Tizen
-ThorVG is integrated in [Tizen](https://www.tizen.org) platform as the vector graphics engine, it's being used for vector primitive drawings and scalable image contents such as SVG, Lottie Animation among the Tizen powered products.
+ThorVG is integrated into the [Tizen](https://www.tizen.org) platform as the vector graphics engine. It's being used for vector primitive drawings
+and scalable image contents such as SVG and Lottie Animation among the Tizen powered products.
 
 <p align="center">
   <img width="798" height="285" src="https://github.com/Samsung/thorvg/blob/master/res/example_tizen.png">
@@ -199,8 +206,9 @@ ThorVG is integrated in [Tizen](https://www.tizen.org) platform as the vector gr
 <br />
 <br />
 ### Rive
-We're also building a [Rive](https://rive.app/) port which supports Rive Animation run through ThorVG backend. Rive is a new modern animation platform that supports fancy user interactive vector animation. See project [Rive-Tizen](https://github.com/rive-app/rive-tizen) at [Github](https://github.com/rive-app/)
- 
+We're also building a [Rive](https://rive.app/) port which supports Rive Animation run through the ThorVG backend. Rive is a new modern animation platform
+that supports fancy, user interactive vector animations. For more details see [Rive-Tizen](https://github.com/rive-app/rive-tizen) on [Github](https://github.com/rive-app/).
+
 <p align="center">
   <img width="600" height="324" src="https://github.com/Samsung/thorvg/blob/master/res/example_rive.gif">
 </p>
@@ -209,39 +217,41 @@ We're also building a [Rive](https://rive.app/) port which supports Rive Animati
 <br />
 <br />
 ## Examples
-There are various examples to understand ThorVG APIs, Please check sample code in `thorvg/src/examples`
+There are various examples available in `thorvg/src/examples`, to help you understand ThorVG APIs.
 
-To execute examples, you can build them with this meson option.
+To execute these examples, you can build them with the following meson option:
 ```
 meson -Dexamples=true . build
 ```
-Note that these examples are required EFL `elementary` package for launching. If you're using Linux-based OS, you could easily install its package from your OS distribution server. Otherwise, please visit the official [EFL page](https://enlightenment.org/) for more information.
+Note that these examples require the EFL `elementary` package for launching. If you're using Linux-based OS, you can easily
+install this package from your OS distribution server. Otherwise, please visit the official [EFL page](https://enlightenment.org/) for more information.
 
 [Back to contents](#contents)
 <br />
 <br />
 ## Tools
 ### ThorVG Viewer
-[ThorVG viewer](https://samsung.github.io/thorvg.viewer) supports immediate rendering through your browser. You can drag & drop SVG files on the page, see the rendering result on the spot.
+[ThorVG viewer](https://samsung.github.io/thorvg.viewer) supports immediate rendering through your browser. You can drag & drop SVG files on the page
+and see the rendering result on the spot.
 
 [Back to contents](#contents)
 <br />
 <br />
 ### SVG to PNG
-ThorVG provides an executable `svg2png` converter which generate a PNG file from a SVG file.
+ThorVG provides an executable `svg2png` converter which generates a PNG file from an SVG file.
 
-To use `svg2png`, you must turn on its feature in the build option.
+To use `svg2png`, you must turn on this feature in the build option:
 ```
 meson -Dtools=svg2png . build
 ```
-Alternatively, you can add `svg2png` value to `tools` option in `meson_option.txt`. Build output will be located in `{builddir}/src/bin/svg2png/`
+Alternatively, you can add the `svg2png` value to the `tools` option in `meson_option.txt`. The build output will be located in `{builddir}/src/bin/svg2png/`.
 
-For more information, see `svg2png` usages:
+Examples of the usage of the `svg2png`:
 ```
-Usage: 
+Usage:
    svg2png [svgFileName] [Resolution] [bgColor]
 
-Examples: 
+Examples:
     $ svg2png input.svg
     $ svg2png input.svg 200x200
     $ svg2png input.svg 200x200 ff00ff
@@ -250,10 +260,10 @@ Examples:
 <br />
 <br />
 ## API Bindings
-Our main development APIs are written in C++ but ThorVG also provides API bindings such as: C.
+Our main development APIs are written in C++ but ThorVG also provides API bindings for C.
 
 [Back to contents](#contents)
 <br />
 <br />
-## Issues or Feature Requests?
-For immediate assistant or support please reach us in [Gitter](https://gitter.im/thorvg/community)
+## Issues or Feature Requests
+For support please reach us in [Gitter](https://gitter.im/thorvg/community).
