@@ -20,7 +20,7 @@ The following list shows primitives that are supported by ThorVG: <br />
   <img width="930" height="473" src="https://github.com/Samsung/thorvg/blob/master/res/example_primitives.png">
 </p>
 <br />
-Basically your program could use this library functions by calling slick and neat APIs while switching drawing context (if you have your own drawing engine).
+Basically your program could use this library functions by calling neat TVG APIs while switching drawing context (if you have your own drawing engine).
 ThorVG serializes drawing commands among volatile paints' nodes and performs sync/asynchronous rendering by its engines. ThorVG supports vector images such as SVG,
 and also will support other popular formats in the future, on demand. On rendering, it can spawn intermediate frame buffers for compositing vector scenes but only
 when it's necessary.
@@ -206,7 +206,7 @@ and scalable image contents such as SVG and Lottie Animation among the Tizen pow
 <br />
 <br />
 ### Rive
-We're also building a [Rive](https://rive.app/) port which supports Rive Animation run through the ThorVG backend. Rive is a new modern animation platform
+We're also building a [Rive](https://rive.app/) port which supports Rive Animation run through the ThorVG backend. Rive is a brand new animation platform
 that supports fancy, user interactive vector animations. For more details see [Rive-Tizen](https://github.com/rive-app/rive-tizen) on [Github](https://github.com/rive-app/).
 
 <p align="center">
