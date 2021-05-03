@@ -2436,6 +2436,9 @@ static void _freeNodeStyle(SvgStyleProperty* style)
 {
     if (!style) return;
 
+    //style->comp.node has only the addresses of node. Therefore, style->comp.node is released from _freeNode.
+    delete style->comp.url;
+
     _freeGradientStyle(style->fill.paint.gradient);
     delete style->fill.paint.url;
     _freeGradientStyle(style->stroke.paint.gradient);
