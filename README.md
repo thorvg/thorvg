@@ -170,7 +170,7 @@ tvg::Initializer::term(tvg::CanvasEngine::Sw);
 
 ThorVG supports SVG (Scalable Vector Graphics) rendering through its own SVG interpreter. It satisfies the [SVG Tiny Specification](https://www.w3.org/TR/SVGTiny12/)
 in order to keep it lightweight, so it can be used in embeded systems, as an example.
-Among the yet unsupported SVG specs are the following features:
+Among the SVG Tiny specs, unsupported features in the ThorVG are the following:
 
  - CSS Styles
  - Filters
