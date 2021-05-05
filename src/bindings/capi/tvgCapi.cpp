@@ -122,7 +122,6 @@ TVG_EXPORT Tvg_Result tvg_canvas_sync(Tvg_Canvas* canvas)
     return (Tvg_Result) reinterpret_cast<Canvas*>(canvas)->sync();
 }
 
-
 /************************************************************************/
 /* Paint API                                                            */
 /************************************************************************/
@@ -191,6 +190,7 @@ TVG_EXPORT Tvg_Result tvg_paint_get_bounds(const Tvg_Paint* paint, float* x, flo
    return (Tvg_Result) reinterpret_cast<const Paint*>(paint)->bounds(x, y, w, h);
 }
 
+
 TVG_EXPORT Tvg_Result tvg_paint_set_composite_method(Tvg_Paint* paint, Tvg_Paint* target, Tvg_Composite_Method method)
 {
    if (!paint) return TVG_RESULT_INVALID_ARGUMENT;
@@ -248,11 +248,13 @@ TVG_EXPORT Tvg_Result tvg_shape_append_rect(Tvg_Paint* paint, float x, float y, 
     return (Tvg_Result) reinterpret_cast<Shape*>(paint)->appendRect(x, y, w, h, rx, ry);
 }
 
+
 TVG_EXPORT Tvg_Result tvg_shape_append_arc(Tvg_Paint* paint, float cx, float cy, float radius, float startAngle, float sweep, uint8_t pie)
 {
     if (!paint) return TVG_RESULT_INVALID_ARGUMENT;
     return (Tvg_Result) reinterpret_cast<Shape*>(paint)->appendArc(cx, cy, radius, startAngle, sweep, pie);
 }
+
 
 TVG_EXPORT Tvg_Result tvg_shape_append_circle(Tvg_Paint* paint, float cx, float cy, float rx, float ry)
 {
@@ -266,20 +268,19 @@ TVG_EXPORT Tvg_Result tvg_shape_append_path(Tvg_Paint* paint, const Tvg_Path_Com
     return (Tvg_Result) reinterpret_cast<Shape*>(paint)->appendPath((const PathCommand*)cmds, cmdCnt, (const Point*)pts, ptsCnt);
 }
 
+
 TVG_EXPORT Tvg_Result tvg_shape_get_path_coords(const Tvg_Paint* paint, const Tvg_Point** pts, uint32_t* cnt)
 {
-    if (!paint) return TVG_RESULT_INVALID_ARGUMENT;
-    auto ret = reinterpret_cast<const Shape*>(paint)->pathCoords((const Point**)pts);
-    if (cnt) *cnt = ret;
+    if (!paint || !pts || !cnt) return TVG_RESULT_INVALID_ARGUMENT;
+    *cnt = reinterpret_cast<const Shape*>(paint)->pathCoords((const Point**)pts);
     return TVG_RESULT_SUCCESS;
 }
 
 
 TVG_EXPORT Tvg_Result tvg_shape_get_path_commands(const Tvg_Paint* paint, const Tvg_Path_Command** cmds, uint32_t* cnt)
 {
-    if (!paint) return TVG_RESULT_INVALID_ARGUMENT;
-    auto ret = reinterpret_cast<const Shape*>(paint)->pathCommands((const PathCommand**)cmds);
-    if (cnt) *cnt = ret;
+    if (!paint || !cmds || !cnt) return TVG_RESULT_INVALID_ARGUMENT;
+    *cnt = reinterpret_cast<const Shape*>(paint)->pathCommands((const PathCommand**)cmds);
     return TVG_RESULT_SUCCESS;
 }
 
@@ -364,6 +365,7 @@ TVG_EXPORT Tvg_Result tvg_shape_get_stroke_cap(const Tvg_Paint* paint, Tvg_Strok
     return TVG_RESULT_SUCCESS;
 }
 
+
 TVG_EXPORT Tvg_Result tvg_shape_set_stroke_join(Tvg_Paint* paint, Tvg_Stroke_Join join)
 {
     if (!paint) return TVG_RESULT_INVALID_ARGUMENT;
@@ -429,7 +431,6 @@ TVG_EXPORT Tvg_Result tvg_shape_get_gradient(const Tvg_Paint* paint, Tvg_Gradien
    return TVG_RESULT_SUCCESS;
 }
 
-
 /************************************************************************/
 /* Picture API                                                          */
 /************************************************************************/
@@ -460,20 +461,22 @@ TVG_EXPORT Tvg_Result tvg_picture_get_viewbox(const Tvg_Paint* paint, float* x, 
     return (Tvg_Result) reinterpret_cast<Picture*>(CCP(paint))->viewbox(x, y, w, h);
 }
 
-
 /************************************************************************/
 /* Gradient API                                                         */
 /************************************************************************/
+
 TVG_EXPORT Tvg_Gradient* tvg_linear_gradient_new()
 {
     return (Tvg_Gradient*)LinearGradient::gen().release();
 }
+
 
 TVG_EXPORT Tvg_Gradient* tvg_radial_gradient_new()
 {
     return (Tvg_Gradient*)RadialGradient::gen().release();
 
 }
+
 
 TVG_EXPORT Tvg_Result tvg_gradient_del(Tvg_Gradient* grad)
 {
@@ -482,11 +485,13 @@ TVG_EXPORT Tvg_Result tvg_gradient_del(Tvg_Gradient* grad)
     return TVG_RESULT_SUCCESS;
 }
 
+
 TVG_EXPORT Tvg_Result tvg_linear_gradient_set(Tvg_Gradient* grad, float x1, float y1, float x2, float y2)
 {
     if (!grad) return TVG_RESULT_INVALID_ARGUMENT;
     return (Tvg_Result) reinterpret_cast<LinearGradient*>(grad)->linear(x1, y1, x2, y2);
 }
+
 
 TVG_EXPORT Tvg_Result tvg_linear_gradient_get(Tvg_Gradient* grad, float* x1, float* y1, float* x2, float* y2)
 {
@@ -494,11 +499,13 @@ TVG_EXPORT Tvg_Result tvg_linear_gradient_get(Tvg_Gradient* grad, float* x1, flo
     return (Tvg_Result) reinterpret_cast<LinearGradient*>(grad)->linear(x1, y1, x2, y2);
 }
 
+
 TVG_EXPORT Tvg_Result tvg_radial_gradient_set(Tvg_Gradient* grad, float cx, float cy, float radius)
 {
     if (!grad) return TVG_RESULT_INVALID_ARGUMENT;
     return (Tvg_Result) reinterpret_cast<RadialGradient*>(grad)->radial(cx, cy, radius);
 }
+
 
 TVG_EXPORT Tvg_Result tvg_radial_gradient_get(Tvg_Gradient* grad, float* cx, float* cy, float* radius)
 {
@@ -506,18 +513,21 @@ TVG_EXPORT Tvg_Result tvg_radial_gradient_get(Tvg_Gradient* grad, float* cx, flo
     return (Tvg_Result) reinterpret_cast<RadialGradient*>(grad)->radial(cx, cy, radius);
 }
 
+
 TVG_EXPORT Tvg_Result tvg_gradient_set_color_stops(Tvg_Gradient* grad, const Tvg_Color_Stop* color_stop, uint32_t cnt)
 {
     if (!grad) return TVG_RESULT_INVALID_ARGUMENT;
     return (Tvg_Result) reinterpret_cast<Fill*>(grad)->colorStops(reinterpret_cast<const Fill::ColorStop*>(color_stop), cnt);
 }
 
+
 TVG_EXPORT Tvg_Result tvg_gradient_get_color_stops(Tvg_Gradient* grad, const Tvg_Color_Stop** color_stop, uint32_t* cnt)
 {
-    if (!grad) return TVG_RESULT_INVALID_ARGUMENT;
+    if (!grad || !color_stop || !cnt) return TVG_RESULT_INVALID_ARGUMENT;
     *cnt = reinterpret_cast<Fill*>(grad)->colorStops(reinterpret_cast<const Fill::ColorStop**>(color_stop));
     return TVG_RESULT_SUCCESS;
 }
+
 
 TVG_EXPORT Tvg_Result tvg_gradient_set_spread(Tvg_Gradient* grad, const Tvg_Stroke_Fill spread)
 {
@@ -525,17 +535,20 @@ TVG_EXPORT Tvg_Result tvg_gradient_set_spread(Tvg_Gradient* grad, const Tvg_Stro
     return (Tvg_Result) reinterpret_cast<Fill*>(grad)->spread((FillSpread)spread);
 }
 
+
 TVG_EXPORT Tvg_Result tvg_gradient_get_spread(Tvg_Gradient* grad, Tvg_Stroke_Fill* spread)
 {
-    if (!grad) return TVG_RESULT_INVALID_ARGUMENT;
+    if (!grad || !spread) return TVG_RESULT_INVALID_ARGUMENT;
     *spread = (Tvg_Stroke_Fill) reinterpret_cast<Fill*>(grad)->spread();
     return TVG_RESULT_SUCCESS;
 }
+
 
 TVG_EXPORT Tvg_Paint* tvg_scene_new()
 {
     return (Tvg_Paint*) Scene::gen().release();
 }
+
 
 TVG_EXPORT Tvg_Result tvg_scene_reserve(Tvg_Paint* scene, uint32_t size)
 {
@@ -543,11 +556,13 @@ TVG_EXPORT Tvg_Result tvg_scene_reserve(Tvg_Paint* scene, uint32_t size)
     return (Tvg_Result) reinterpret_cast<Scene*>(scene)->reserve(size);
 }
 
+
 TVG_EXPORT Tvg_Result tvg_scene_push(Tvg_Paint* scene, Tvg_Paint* paint)
 {
     if (!scene || !paint) return TVG_RESULT_INVALID_ARGUMENT;
     return (Tvg_Result) reinterpret_cast<Scene*>(scene)->push(unique_ptr<Paint>((Paint*)paint));
 }
+
 
 TVG_EXPORT Tvg_Result tvg_scene_clear(Tvg_Paint* scene)
 {
