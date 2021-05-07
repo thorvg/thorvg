@@ -26,55 +26,13 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-
-
-/************************************************************************/
-/* External Class Implementation                                        */
-/************************************************************************/
-
-
-bool imagePrepare(SwImage* image, const Picture* pdata, unsigned tid, const Matrix* transform, const SwBBox& clipRegion, SwBBox& renderRegion)
-{
-    if (!imageGenOutline(image, pdata, tid, transform)) return false;
-    return mathUpdateOutlineBBox(image->outline, clipRegion, renderRegion);
-}
-
-
-bool imagePrepared(const SwImage* image)
-{
-    return image->rle ? true : false;
-}
-
-
-bool imageGenRle(SwImage* image, TVG_UNUSED const Picture* pdata, const SwBBox& renderRegion, bool antiAlias)
-{
-    if ((image->rle = rleRender(image->rle, image->outline, renderRegion, antiAlias))) return true;
-
-    return false;
-}
-
-
-void imageDelOutline(SwImage* image, uint32_t tid)
-{
-    mpoolRetOutline(tid);
-    image->outline = nullptr;
-}
-
-
-void imageReset(SwImage* image)
-{
-    rleReset(image->rle);
-    image->rle = nullptr;
-}
-
-
-bool imageGenOutline(SwImage* image, const Picture* pdata, unsigned tid, const Matrix* transform)
+static bool _genOutline(SwImage* image, const Picture* pdata, const Matrix* transform, SwMpool* mpool,  unsigned tid)
 {
     float w, h;
     pdata->viewbox(nullptr, nullptr, &w, &h);
     if (w == 0 || h == 0) return false;
 
-    image->outline = mpoolReqOutline(tid);
+    image->outline = mpoolReqOutline(mpool, tid);
     auto outline = image->outline;
 
     outline->reservedPtsCnt = 5;
@@ -106,6 +64,47 @@ bool imageGenOutline(SwImage* image, const Picture* pdata, unsigned tid, const M
 
     return true;
 }
+
+
+/************************************************************************/
+/* External Class Implementation                                        */
+/************************************************************************/
+
+
+bool imagePrepare(SwImage* image, const Picture* pdata, const Matrix* transform, const SwBBox& clipRegion, SwBBox& renderRegion, SwMpool* mpool, unsigned tid)
+{
+    if (!_genOutline(image, pdata, transform, mpool, tid)) return false;
+    return mathUpdateOutlineBBox(image->outline, clipRegion, renderRegion);
+}
+
+
+bool imagePrepared(const SwImage* image)
+{
+    return image->rle ? true : false;
+}
+
+
+bool imageGenRle(SwImage* image, TVG_UNUSED const Picture* pdata, const SwBBox& renderRegion, bool antiAlias)
+{
+    if ((image->rle = rleRender(image->rle, image->outline, renderRegion, antiAlias))) return true;
+
+    return false;
+}
+
+
+void imageDelOutline(SwImage* image, SwMpool* mpool, uint32_t tid)
+{
+    mpoolRetOutline(mpool, tid);
+    image->outline = nullptr;
+}
+
+
+void imageReset(SwImage* image)
+{
+    rleReset(image->rle);
+    image->rle = nullptr;
+}
+
 
 void imageFree(SwImage* image)
 {

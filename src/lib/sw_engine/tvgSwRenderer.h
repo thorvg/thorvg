@@ -27,6 +27,7 @@
 struct SwSurface;
 struct SwTask;
 struct SwCompositor;
+struct SwMpool;
 
 namespace tvg
 {
@@ -48,6 +49,7 @@ public:
     bool clear() override;
     bool sync() override;
     bool target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h, uint32_t cs);
+    bool mempool(bool shared);
 
     Compositor* target(const RenderRegion& region) override;
     bool beginComposite(Compositor* cmp, CompositeMethod method, uint32_t opacity) override;
@@ -61,9 +63,12 @@ private:
     SwSurface*           surface = nullptr;           //active surface
     Array<SwTask*>       tasks;                       //async task list
     Array<SwSurface*>    compositors;                 //render targets cache list
+    SwMpool*             mpool;                       //private memory pool
     RenderRegion         vport;                       //viewport
 
-    SwRenderer(){};
+    bool                 sharedMpool = true;          //memory-pool behavior policy
+
+    SwRenderer();
     ~SwRenderer();
 
     RenderData prepareCommon(SwTask* task, const RenderTransform* transform, uint32_t opacity, const Array<RenderData>& clips, RenderUpdateFlag flags);

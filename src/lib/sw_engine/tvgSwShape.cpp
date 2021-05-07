@@ -249,7 +249,7 @@ static void _dashCubicTo(SwDashStroke& dash, const Point* ctrl1, const Point* ct
 }
 
 
-SwOutline* _genDashOutline(const Shape* sdata, const Matrix* transform)
+static SwOutline* _genDashOutline(const Shape* sdata, const Matrix* transform)
 {
     const PathCommand* cmds = nullptr;
     auto cmdCnt = sdata->pathCommands(&cmds);
@@ -344,7 +344,7 @@ SwOutline* _genDashOutline(const Shape* sdata, const Matrix* transform)
 }
 
 
-bool _fastTrack(const SwOutline* outline)
+static bool _fastTrack(const SwOutline* outline)
 {
     //Fast Track: Othogonal rectangle?
     if (outline->ptsCnt != 5) return false;
@@ -363,67 +363,8 @@ bool _fastTrack(const SwOutline* outline)
 }
 
 
-/************************************************************************/
-/* External Class Implementation                                        */
-/************************************************************************/
 
-bool shapePrepare(SwShape* shape, const Shape* sdata, unsigned tid, const Matrix* transform,  const SwBBox& clipRegion, SwBBox& renderRegion)
-{
-    if (!shapeGenOutline(shape, sdata, tid, transform)) return false;
-    if (!mathUpdateOutlineBBox(shape->outline, clipRegion, renderRegion)) return false;
-
-    //Keep it for Rasterization Region
-    shape->bbox = renderRegion;
-
-    //Check valid region
-    if (renderRegion.max.x - renderRegion.min.x < 1 && renderRegion.max.y - renderRegion.min.y < 1) return false;
-
-    //Check boundary
-    if (renderRegion.min.x >= clipRegion.max.x || renderRegion.min.y >= clipRegion.max.y ||
-        renderRegion.max.x <= clipRegion.min.x || renderRegion.max.y <= clipRegion.min.y) return false;
-
-    return true;
-}
-
-
-bool shapePrepared(const SwShape* shape)
-{
-    return shape->rle ? true : false;
-}
-
-
-bool shapeGenRle(SwShape* shape, TVG_UNUSED const Shape* sdata, bool antiAlias, bool hasComposite)
-{
-    //FIXME: Should we draw it?
-    //Case: Stroke Line
-    //if (shape.outline->opened) return true;
-
-    //Case A: Fast Track Rectangle Drawing
-    if (!hasComposite && (shape->rect = _fastTrack(shape->outline))) return true;
-    //Case B: Normale Shape RLE Drawing
-    if ((shape->rle = rleRender(shape->rle, shape->outline, shape->bbox, antiAlias))) return true;
-
-    return false;
-}
-
-
-void shapeDelOutline(SwShape* shape, uint32_t tid)
-{
-    mpoolRetOutline(tid);
-    shape->outline = nullptr;
-}
-
-
-void shapeReset(SwShape* shape)
-{
-    rleReset(shape->rle);
-    rleReset(shape->strokeRle);
-    shape->rect = false;
-    shape->bbox.reset();
-}
-
-
-bool shapeGenOutline(SwShape* shape, const Shape* sdata, unsigned tid, const Matrix* transform)
+static bool _genOutline(SwShape* shape, const Shape* sdata, const Matrix* transform, SwMpool* mpool, unsigned tid)
 {
     const PathCommand* cmds = nullptr;
     auto cmdCnt = sdata->pathCommands(&cmds);
@@ -463,7 +404,7 @@ bool shapeGenOutline(SwShape* shape, const Shape* sdata, unsigned tid, const Mat
     ++outlinePtsCnt;    //for close
     ++outlineCntrsCnt;  //for end
 
-    shape->outline = mpoolReqOutline(tid);
+    shape->outline = mpoolReqOutline(mpool, tid);
     auto outline = shape->outline;
     outline->opened = true;
 
@@ -510,6 +451,66 @@ bool shapeGenOutline(SwShape* shape, const Shape* sdata, unsigned tid, const Mat
 }
 
 
+/************************************************************************/
+/* External Class Implementation                                        */
+/************************************************************************/
+
+bool shapePrepare(SwShape* shape, const Shape* sdata, const Matrix* transform,  const SwBBox& clipRegion, SwBBox& renderRegion, SwMpool* mpool, unsigned tid)
+{
+    if (!_genOutline(shape, sdata, transform, mpool, tid)) return false;
+    if (!mathUpdateOutlineBBox(shape->outline, clipRegion, renderRegion)) return false;
+
+    //Keep it for Rasterization Region
+    shape->bbox = renderRegion;
+
+    //Check valid region
+    if (renderRegion.max.x - renderRegion.min.x < 1 && renderRegion.max.y - renderRegion.min.y < 1) return false;
+
+    //Check boundary
+    if (renderRegion.min.x >= clipRegion.max.x || renderRegion.min.y >= clipRegion.max.y ||
+        renderRegion.max.x <= clipRegion.min.x || renderRegion.max.y <= clipRegion.min.y) return false;
+
+    return true;
+}
+
+
+bool shapePrepared(const SwShape* shape)
+{
+    return shape->rle ? true : false;
+}
+
+
+bool shapeGenRle(SwShape* shape, TVG_UNUSED const Shape* sdata, bool antiAlias, bool hasComposite)
+{
+    //FIXME: Should we draw it?
+    //Case: Stroke Line
+    //if (shape.outline->opened) return true;
+
+    //Case A: Fast Track Rectangle Drawing
+    if (!hasComposite && (shape->rect = _fastTrack(shape->outline))) return true;
+    //Case B: Normale Shape RLE Drawing
+    if ((shape->rle = rleRender(shape->rle, shape->outline, shape->bbox, antiAlias))) return true;
+
+    return false;
+}
+
+
+void shapeDelOutline(SwShape* shape, SwMpool* mpool, uint32_t tid)
+{
+    mpoolRetOutline(mpool, tid);
+    shape->outline = nullptr;
+}
+
+
+void shapeReset(SwShape* shape)
+{
+    rleReset(shape->rle);
+    rleReset(shape->strokeRle);
+    shape->rect = false;
+    shape->bbox.reset();
+}
+
+
 void shapeFree(SwShape* shape)
 {
     rleFree(shape->rle);
@@ -543,7 +544,7 @@ void shapeResetStroke(SwShape* shape, const Shape* sdata, const Matrix* transfor
 }
 
 
-bool shapeGenStrokeRle(SwShape* shape, const Shape* sdata, unsigned tid, const Matrix* transform, const SwBBox& clipRegion, SwBBox& renderRegion)
+bool shapeGenStrokeRle(SwShape* shape, const Shape* sdata, const Matrix* transform, const SwBBox& clipRegion, SwBBox& renderRegion, SwMpool* mpool, unsigned tid)
 {
     SwOutline* shapeOutline = nullptr;
     SwOutline* strokeOutline = nullptr;
@@ -558,7 +559,7 @@ bool shapeGenStrokeRle(SwShape* shape, const Shape* sdata, unsigned tid, const M
     //Normal Style stroke
     } else {
         if (!shape->outline) {
-            if (!shapeGenOutline(shape, sdata, tid, transform)) return false;
+            if (!_genOutline(shape, sdata, transform, mpool, tid)) return false;
         }
         shapeOutline = shape->outline;
     }
@@ -568,7 +569,7 @@ bool shapeGenStrokeRle(SwShape* shape, const Shape* sdata, unsigned tid, const M
         goto fail;
     }
 
-    strokeOutline = strokeExportOutline(shape->stroke, tid);
+    strokeOutline = strokeExportOutline(shape->stroke, mpool, tid);
     if (!strokeOutline) {
         ret = false;
         goto fail;
@@ -588,7 +589,7 @@ fail:
         if (shapeOutline->types) free(shapeOutline->types);
         free(shapeOutline);
     }
-    mpoolRetStrokeOutline(tid);
+    mpoolRetStrokeOutline(mpool, tid);
 
     return ret;
 }

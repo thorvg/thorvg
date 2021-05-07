@@ -254,6 +254,13 @@ struct SwCompositor : Compositor
     bool valid;
 };
 
+struct SwMpool
+{
+    SwOutline* outline = nullptr;
+    SwOutline* strokeOutline = nullptr;
+    unsigned allocSize = 0;
+};
+
 static inline SwCoord TO_SWCOORD(float val)
 {
     return SwCoord(val * 64);
@@ -299,13 +306,12 @@ SwPoint mathTransform(const Point* to, const Matrix* transform);
 bool mathUpdateOutlineBBox(const SwOutline* outline, const SwBBox& clipRegion, SwBBox& renderRegion);
 
 void shapeReset(SwShape* shape);
-bool shapeGenOutline(SwShape* shape, const Shape* sdata, unsigned tid, const Matrix* transform);
-bool shapePrepare(SwShape* shape, const Shape* sdata, unsigned tid, const Matrix* transform, const SwBBox& clipRegion, SwBBox& renderRegion);
+bool shapePrepare(SwShape* shape, const Shape* sdata, const Matrix* transform, const SwBBox& clipRegion, SwBBox& renderRegion, SwMpool* mpool, unsigned tid);
 bool shapePrepared(const SwShape* shape);
 bool shapeGenRle(SwShape* shape, const Shape* sdata, bool antiAlias, bool hasComposite);
-void shapeDelOutline(SwShape* shape, uint32_t tid);
+void shapeDelOutline(SwShape* shape, SwMpool* mpool, uint32_t tid);
 void shapeResetStroke(SwShape* shape, const Shape* sdata, const Matrix* transform);
-bool shapeGenStrokeRle(SwShape* shape, const Shape* sdata, unsigned tid, const Matrix* transform, const SwBBox& clipRegion, SwBBox& renderRegion);
+bool shapeGenStrokeRle(SwShape* shape, const Shape* sdata, const Matrix* transform, const SwBBox& clipRegion, SwBBox& renderRegion, SwMpool* mpool, unsigned tid);
 void shapeFree(SwShape* shape);
 void shapeDelStroke(SwShape* shape);
 bool shapeGenFillColors(SwShape* shape, const Fill* fill, const Matrix* transform, SwSurface* surface, uint32_t opacity, bool ctable);
@@ -317,15 +323,14 @@ void shapeDelStrokeFill(SwShape* shape);
 
 void strokeReset(SwStroke* stroke, const Shape* shape, const Matrix* transform);
 bool strokeParseOutline(SwStroke* stroke, const SwOutline& outline);
-SwOutline* strokeExportOutline(SwStroke* stroke, unsigned tid);
+SwOutline* strokeExportOutline(SwStroke* stroke, SwMpool* mpool, unsigned tid);
 void strokeFree(SwStroke* stroke);
 
-bool imagePrepare(SwImage* image, const Picture* pdata, unsigned tid, const Matrix* transform, const SwBBox& clipRegion, SwBBox& renderRegion);
+bool imagePrepare(SwImage* image, const Picture* pdata, const Matrix* transform, const SwBBox& clipRegion, SwBBox& renderRegion, SwMpool* mpool, unsigned tid);
 bool imagePrepared(const SwImage* image);
 bool imageGenRle(SwImage* image, TVG_UNUSED const Picture* pdata, const SwBBox& renderRegion, bool antiAlias);
-void imageDelOutline(SwImage* image, uint32_t tid);
+void imageDelOutline(SwImage* image, SwMpool* mpool, uint32_t tid);
 void imageReset(SwImage* image);
-bool imageGenOutline(SwImage* image, const Picture* pdata, unsigned tid, const Matrix* transform);
 void imageFree(SwImage* image);
 
 bool fillGenColorTable(SwFill* fill, const Fill* fdata, const Matrix* transform, SwSurface* surface, uint32_t opacity, bool ctable);
@@ -341,13 +346,13 @@ void rleClipPath(SwRleData *rle, const SwRleData *clip);
 void rleClipRect(SwRleData *rle, const SwBBox* clip);
 void rleAlphaMask(SwRleData *rle, const SwRleData *clip);
 
-bool mpoolInit(uint32_t threads);
-bool mpoolTerm();
-bool mpoolClear();
-SwOutline* mpoolReqOutline(unsigned idx);
-void mpoolRetOutline(unsigned idx);
-SwOutline* mpoolReqStrokeOutline(unsigned idx);
-void mpoolRetStrokeOutline(unsigned idx);
+SwMpool* mpoolInit(uint32_t threads);
+bool mpoolTerm(SwMpool* mpool);
+bool mpoolClear(SwMpool* mpool);
+SwOutline* mpoolReqOutline(SwMpool* mpool, unsigned idx);
+void mpoolRetOutline(SwMpool* mpool, unsigned idx);
+SwOutline* mpoolReqStrokeOutline(SwMpool* mpool, unsigned idx);
+void mpoolRetStrokeOutline(SwMpool* mpool, unsigned idx);
 
 bool rasterCompositor(SwSurface* surface);
 bool rasterGradientShape(SwSurface* surface, SwShape* shape, unsigned id);
