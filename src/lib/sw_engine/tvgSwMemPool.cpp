@@ -26,77 +26,76 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-static SwOutline* outline = nullptr;
-static SwOutline* strokeOutline = nullptr;
-static unsigned allocSize = 0;
-
 
 /************************************************************************/
 /* External Class Implementation                                        */
 /************************************************************************/
 
-SwOutline* mpoolReqOutline(unsigned idx)
+SwOutline* mpoolReqOutline(SwMpool* mpool, unsigned idx)
 {
-    return &outline[idx];
+    return &mpool->outline[idx];
 }
 
 
-void mpoolRetOutline(unsigned idx)
+void mpoolRetOutline(SwMpool* mpool, unsigned idx)
 {
-    outline[idx].cntrsCnt = 0;
-    outline[idx].ptsCnt = 0;
+    mpool->outline[idx].cntrsCnt = 0;
+    mpool->outline[idx].ptsCnt = 0;
 }
 
 
-SwOutline* mpoolReqStrokeOutline(unsigned idx)
+SwOutline* mpoolReqStrokeOutline(SwMpool* mpool, unsigned idx)
 {
-    return &strokeOutline[idx];
+    return &mpool->strokeOutline[idx];
 }
 
 
-void mpoolRetStrokeOutline(unsigned idx)
+void mpoolRetStrokeOutline(SwMpool* mpool, unsigned idx)
 {
-    strokeOutline[idx].cntrsCnt = 0;
-    strokeOutline[idx].ptsCnt = 0;
+    mpool->strokeOutline[idx].cntrsCnt = 0;
+    mpool->strokeOutline[idx].ptsCnt = 0;
 }
 
 
-bool mpoolInit(unsigned threads)
+SwMpool* mpoolInit(unsigned threads)
 {
-    if (outline || strokeOutline) return false;
+    auto mpool = new SwMpool;
+    if (!mpool) return nullptr;
+
     if (threads == 0) threads = 1;
 
-    outline = static_cast<SwOutline*>(calloc(1, sizeof(SwOutline) * threads));
-    if (!outline) goto err;
+    mpool->outline = static_cast<SwOutline*>(calloc(1, sizeof(SwOutline) * threads));
+    if (!mpool->outline) goto err;
 
-    strokeOutline = static_cast<SwOutline*>(calloc(1, sizeof(SwOutline) * threads));
-    if (!strokeOutline) goto err;
+    mpool->strokeOutline = static_cast<SwOutline*>(calloc(1, sizeof(SwOutline) * threads));
+    if (!mpool->strokeOutline) goto err;
 
-    allocSize = threads;
+    mpool->allocSize = threads;
 
-    return true;
+    return mpool;
 
 err:
-    if (outline) {
-        free(outline);
-        outline = nullptr;
+    if (mpool->outline) {
+        free(mpool->outline);
+        mpool->outline = nullptr;
     }
 
-    if (strokeOutline) {
-        free(strokeOutline);
-        strokeOutline = nullptr;
+    if (mpool->strokeOutline) {
+        free(mpool->strokeOutline);
+        mpool->strokeOutline = nullptr;
     }
-    return false;
+    delete(mpool);
+    return nullptr;
 }
 
 
-bool mpoolClear()
+bool mpoolClear(SwMpool* mpool)
 {
     SwOutline* p;
 
-    for (unsigned i = 0; i < allocSize; ++i) {
+    for (unsigned i = 0; i < mpool->allocSize; ++i) {
 
-        p = &outline[i];
+        p = &mpool->outline[i];
 
         if (p->cntrs) {
             free(p->cntrs);
@@ -113,7 +112,7 @@ bool mpoolClear()
         p->cntrsCnt = p->reservedCntrsCnt = 0;
         p->ptsCnt = p->reservedPtsCnt = 0;
 
-        p = &strokeOutline[i];
+        p = &mpool->strokeOutline[i];
 
         if (p->cntrs) {
             free(p->cntrs);
@@ -135,21 +134,23 @@ bool mpoolClear()
 }
 
 
-bool mpoolTerm()
+bool mpoolTerm(SwMpool* mpool)
 {
-    mpoolClear();
+    if (!mpool) return false;
 
-    if (outline) {
-        free(outline);
-        outline = nullptr;
+    mpoolClear(mpool);
+
+    if (mpool->outline) {
+        free(mpool->outline);
+        mpool->outline = nullptr;
     }
 
-    if (strokeOutline) {
-        free(strokeOutline);
-        strokeOutline = nullptr;
+    if (mpool->strokeOutline) {
+        free(mpool->strokeOutline);
+        mpool->strokeOutline = nullptr;
     }
 
-    allocSize = 0;
+    delete(mpool);
 
     return true;
 }

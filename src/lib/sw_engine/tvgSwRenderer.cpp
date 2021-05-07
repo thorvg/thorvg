@@ -29,12 +29,14 @@
 /************************************************************************/
 static int32_t initEngineCnt = false;
 static int32_t rendererCnt = 0;
-
+static SwMpool* globalMpool = nullptr;
+static uint32_t threadsCnt = 0;
 
 struct SwTask : Task
 {
     Matrix* transform = nullptr;
     SwSurface* surface = nullptr;
+    SwMpool* mpool = nullptr;
     RenderUpdateFlag flags = RenderUpdateFlag::None;
     Array<RenderData> clips;
     uint32_t opacity;
@@ -92,7 +94,7 @@ struct SwShapeTask : SwTask
             bool renderShape = (alpha > 0 || sdata->fill());
             if (renderShape || validStroke) {
                 shapeReset(&shape);
-                if (!shapePrepare(&shape, sdata, tid, transform, clipRegion, bbox)) goto err;
+                if (!shapePrepare(&shape, sdata, transform, clipRegion, bbox, mpool, tid)) goto err;
                 if (renderShape) {
                     /* We assume that if stroke width is bigger than 2,
                        shape outline below stroke could be full covered by stroke drawing.
@@ -121,7 +123,7 @@ struct SwShapeTask : SwTask
         if (flags & (RenderUpdateFlag::Stroke | RenderUpdateFlag::Transform)) {
             if (validStroke) {
                 shapeResetStroke(&shape, sdata, transform);
-                if (!shapeGenStrokeRle(&shape, sdata, tid, transform, clipRegion, bbox)) goto err;
+                if (!shapeGenStrokeRle(&shape, sdata, transform, clipRegion, bbox, mpool, tid)) goto err;
                 ++addStroking;
 
                 if (auto fill = sdata->strokeFill()) {
@@ -155,7 +157,7 @@ struct SwShapeTask : SwTask
     err:
         shapeReset(&shape);
     end:
-        shapeDelOutline(&shape, tid);
+        shapeDelOutline(&shape, mpool, tid);
         if (addStroking > 1 && opacity < 255) cmpStroking = true;
         else cmpStroking = false;
     }
@@ -183,7 +185,7 @@ struct SwImageTask : SwTask
 
         if (prepareImage) {
             imageReset(&image);
-            if (!imagePrepare(&image, pdata, tid, transform, clipRegion, bbox)) goto end;
+            if (!imagePrepare(&image, pdata, transform, clipRegion, bbox, mpool, tid)) goto end;
 
             //Clip Path?
             if (clips.count > 0) {
@@ -199,7 +201,7 @@ struct SwImageTask : SwTask
         }
         image.data = const_cast<uint32_t*>(pdata->data());
     end:
-        imageDelOutline(&image, tid);
+        imageDelOutline(&image, mpool, tid);
     }
 
     bool dispose() override
@@ -214,7 +216,8 @@ static void _termEngine()
 {
     if (rendererCnt > 0) return;
 
-    mpoolTerm();
+    mpoolTerm(globalMpool);
+    globalMpool = nullptr;
 }
 
 
@@ -227,6 +230,8 @@ SwRenderer::~SwRenderer()
     clear();
 
     if (surface) delete(surface);
+
+    if (!sharedMpool) mpoolTerm(mpool);
 
     --rendererCnt;
 
@@ -397,6 +402,24 @@ bool SwRenderer::beginComposite(Compositor* cmp, CompositeMethod method, uint32_
 }
 
 
+bool SwRenderer::mempool(bool shared)
+{
+    if (shared) {
+        if (!sharedMpool) {
+            if (!mpoolTerm(mpool)) return false;
+            mpool = globalMpool;
+        }
+    } else {
+        if (sharedMpool) mpool = mpoolInit(threadsCnt);
+    }
+
+    sharedMpool = shared;
+
+    if (mpool) return true;
+    return false;
+}
+
+
 Compositor* SwRenderer::target(const RenderRegion& region)
 {
     auto x = region.x;
@@ -539,6 +562,7 @@ void* SwRenderer::prepareCommon(SwTask* task, const RenderTransform* transform, 
 
     task->opacity = opacity;
     task->surface = surface;
+    task->mpool = mpool;
     task->flags = flags;
     task->bbox.min.x = max(static_cast<SwCoord>(0), static_cast<SwCoord>(vport.x));
     task->bbox.min.y = max(static_cast<SwCoord>(0), static_cast<SwCoord>(vport.y));
@@ -578,11 +602,20 @@ RenderData SwRenderer::prepare(const Shape& sdata, RenderData data, const Render
 }
 
 
+SwRenderer::SwRenderer():mpool(globalMpool)
+{
+}
+
+
 bool SwRenderer::init(uint32_t threads)
 {
     if ((initEngineCnt++) > 0) return true;
 
-    if (!mpoolInit(threads)) return false;
+    threadsCnt = threads;
+
+    //Share the memory pool among the renderer
+    globalMpool = mpoolInit(threads);
+    if (!globalMpool) return false;
 
     return true;
 }

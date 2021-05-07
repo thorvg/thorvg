@@ -907,7 +907,7 @@ bool strokeParseOutline(SwStroke* stroke, const SwOutline& outline)
 }
 
 
-SwOutline* strokeExportOutline(SwStroke* stroke, unsigned tid)
+SwOutline* strokeExportOutline(SwStroke* stroke, SwMpool* mpool, unsigned tid)
 {
     uint32_t count1, count2, count3, count4;
 
@@ -917,7 +917,7 @@ SwOutline* strokeExportOutline(SwStroke* stroke, unsigned tid)
     auto ptsCnt = count1 + count3;
     auto cntrsCnt = count2 + count4;
 
-    auto outline = mpoolReqStrokeOutline(tid);
+    auto outline = mpoolReqStrokeOutline(mpool, tid);
     if (outline->reservedPtsCnt < ptsCnt) {
         outline->pts = static_cast<SwPoint*>(realloc(outline->pts, sizeof(SwPoint) * ptsCnt));
         outline->types = static_cast<uint8_t*>(realloc(outline->types, sizeof(uint8_t) * ptsCnt));

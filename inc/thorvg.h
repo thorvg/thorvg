@@ -1115,6 +1115,18 @@ public:
     };
 
     /**
+     * @brief Enumeration specifying the methods of Memory Pool behavior policy.
+     *
+     * @BETA_API
+     */
+    enum MempoolPolicy
+    {
+        Default = 0, ///< Default behavior that ThorVG is designed to.
+        Shareable,   ///< Memory Pool is shared among the SwCanvases.
+        Individual   ///< Allocate designated memory pool that is only used by current instance.
+    };
+
+    /**
      * @brief Sets the target buffer for the rasterization.
      *
      * The buffer of a desirable size should be allocated and owned by the caller.
@@ -1133,6 +1145,31 @@ public:
      * @warning Do not access @p buffer during Canvas::draw() - Canvas::sync(). It should not be accessed while TVG is writing on it. 
     */
     Result target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h, Colorspace cs) noexcept;
+
+    /**
+     * @brief Set sw engine memory pool behavior policy.
+     *
+     * Basically ThorVG draws a lot of shapes, it allocates/deallocates a few chunk of memory
+     * while processing rendering. It internally uses one shared memory pool
+     * which can be reused among the canvases in order to avoid memory overhead.
+     *
+     * Thus ThorVG suggests memory pool policy to satisfy user demands,
+     * if it needs to guarantee the thread-safety of the internal data access.
+     *
+     * @param[in] policy Use the shared cache memory. The default value is @c true
+     *
+     * @retval Result::Success When succeed.
+     * @retval Result::InsufficientCondition If the canvas has any paints.
+     * @retval Result::NonSupport In case the software engine is not supported.
+     *
+     * @note When @c policy is set as @c MempoolPolicy::Individual, current instance of canvas uses its own individual
+     *       memory data that is not shared with others. This is necessary when the canvas is accessed on a worker-thread.
+     *
+     * @warning It's not allowed after pushing any paints.
+     *
+     * @BETA_API
+    */
+    Result mempool(MempoolPolicy policy) noexcept;
 
     /**
      * @brief Creates a new SwCanvas object.
