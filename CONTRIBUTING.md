@@ -71,6 +71,8 @@ You can keep the file name, but don't please contain any prefix(tvg) nor suffix(
     Result Paint::composite(std::unique_ptr<Paint> target, CompositeMethod method) const noexcept;</br>
 
     @Examples: added ClipPath</br>
+    
+    @References: any links to the references such as screenshot images.
 
     @Issues: 49
   <br />
