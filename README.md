@@ -172,10 +172,11 @@ ThorVG supports SVG (Scalable Vector Graphics) rendering through its own SVG int
 in order to keep it lightweight, so it can be used in embeded systems, as an example.
 Among the SVG Tiny specs, unsupported features in the ThorVG are the following:
 
- - CSS Styles
- - Filters
- - Fonts
- - Images
+ - Animation
+ - Fonts & Text 
+ - Interactivity
+ - Multimedia
+ - Scripting
 
 The following code snippet shows how to draw SVG image using ThorVG:
 
