@@ -174,6 +174,7 @@ Among the SVG Tiny specs, unsupported features in the ThorVG are the following:
 
  - CSS Styles
  - Filters
+ - Fonts
  - Images
 
 The following code snippet shows how to draw SVG image using ThorVG:
