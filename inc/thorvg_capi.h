@@ -1,7 +1,7 @@
 /*!
 * \file thorvg_capi.h
 *
-* \brief The module provides C bindings for the ThorVG library. (BETA version)
+* \brief The module provides C bindings for the ThorVG library.
 * Please refer to src/examples/Capi.cpp to find the thorvg_capi usage examples.
 *
 * The thorvg_capi module allows to implement the ThorVG client and provides
@@ -12,6 +12,8 @@
 * - stroking: width, join, cap, dash
 * - composition: blending, masking, path clipping
 * - pictures: SVG, PNG, bitmap
+*
+* @BETA_API
 */
 
 #ifndef __THORVG_CAPI_H__

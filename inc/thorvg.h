@@ -1012,23 +1012,29 @@ public:
     Result size(float* w, float* h) const noexcept;
 
     /**
-     * @brief Gets the pixels information of the picture. (BETA version)
+     * @brief Gets the pixels information of the picture.
      *
      * @warning Please do not use it, this API is not official one. It could be modified in the next version.
+     *
+     * @BETA_API
      */
     const uint32_t* data() const noexcept;
 
     /**
-     * @brief Loads a raw data from a memory block with a given size. (BETA version)
+     * @brief Loads a raw data from a memory block with a given size.
      *
      * @warning Please do not use it, this API is not official one. It could be modified in the next version.
+     *
+     * @BETA_API
      */
     Result load(uint32_t* data, uint32_t w, uint32_t h, bool copy) noexcept;
 
     /**
-     * @brief Gets the position and the size of the loaded picture. (BETA version)
+     * @brief Gets the position and the size of the loaded picture.
      *
      * @warning Please do not use it, this API is not official one. It could be modified in the next version.
+     *
+     * @BETA_API
      */
     Result viewbox(float* x, float* y, float* w, float* h) const noexcept;
 
@@ -1088,9 +1094,11 @@ public:
     Result reserve(uint32_t size) noexcept;
 
     /**
-     * @brief Sets the total number of the paints pushed into the scene to be zero. (BETA version)
+     * @brief Sets the total number of the paints pushed into the scene to be zero.
      *
      * @warning Please do not use it, this API is not official one. It could be modified in the next version.
+     *
+     * @BETA_API
      */
     Result clear() noexcept;
 
@@ -1192,11 +1200,13 @@ public:
 
 
 /**
- * @class GlCanvas (BETA version)
+ * @class GlCanvas
  *
  * @brief A class for the rendering graphic elements with a GL raster engine.
  *
  * @warning Please do not use it. This class is not fully supported yet.
+ *
+ * @BETA_API
  */
 class TVG_EXPORT GlCanvas final : public Canvas
 {
@@ -1204,16 +1214,20 @@ public:
     ~GlCanvas();
 
     /**
-     * @brief Sets the target buffer for the rasterization. (BETA version)
+     * @brief Sets the target buffer for the rasterization.
      *
      * @warning Please do not use it, this API is not official one. It could be modified in the next version.
+     *
+     * @BETA_API
      */
     Result target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h) noexcept;
 
     /**
-     * @brief Creates a new GlCanvas object.(BETA version)
+     * @brief Creates a new GlCanvas object.
      *
      * @return A new GlCanvas object.
+     *
+     * @BETA_API
      */
     static std::unique_ptr<GlCanvas> gen() noexcept;
 
