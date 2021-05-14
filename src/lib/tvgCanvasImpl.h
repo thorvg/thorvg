@@ -59,11 +59,9 @@ struct Canvas::Impl
         if (!renderer || !renderer->clear()) return Result::InsufficientCondition;
 
         //free paints
-        if (free) {
-            for (auto paint = paints.data; paint < (paints.data + paints.count); ++paint) {
-                (*paint)->pImpl->dispose(*renderer);
-                delete(*paint);
-            }
+        for (auto paint = paints.data; paint < (paints.data + paints.count); ++paint) {
+            (*paint)->pImpl->dispose(*renderer);
+            if (free) delete(*paint);
         }
 
         paints.clear();

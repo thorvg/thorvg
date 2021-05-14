@@ -33,14 +33,22 @@ struct Scene::Impl
 {
     Array<Paint*> paints;
     uint8_t opacity;            //for composition
+    RenderMethod* renderer = nullptr;    //keep it for explicit clear
+
+    ~Impl()
+    {
+        for (auto paint = paints.data; paint < (paints.data + paints.count); ++paint) {
+            delete(*paint);
+        }
+    }
 
     bool dispose(RenderMethod& renderer)
     {
         for (auto paint = paints.data; paint < (paints.data + paints.count); ++paint) {
             (*paint)->pImpl->dispose(renderer);
-            delete(*paint);
         }
-        paints.clear();
+
+        this->renderer = nullptr;
 
         return true;
     }
@@ -69,6 +77,9 @@ struct Scene::Impl
 
         /* FXIME: it requires to return list of children engine data
            This is necessary for scene composition */
+
+        this->renderer = &renderer;
+
         return nullptr;
     }
 
@@ -158,6 +169,22 @@ struct Scene::Impl
         }
 
         return ret.release();
+    }
+
+    void clear(bool free)
+    {
+        //Clear render target before drawing
+        if (!renderer || !renderer->clear()) {
+            paints.clear();
+            return;
+        }
+        //free paints
+        for (auto paint = paints.data; paint < (paints.data + paints.count); ++paint) {
+            (*paint)->pImpl->dispose(*renderer);
+            if (free) delete(*paint);
+        }
+        paints.clear();
+        renderer = nullptr;
     }
 };
 

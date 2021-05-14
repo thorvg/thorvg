@@ -44,15 +44,17 @@ struct Picture::Impl
     {
     }
 
+    ~Impl()
+    {
+        if (paint) delete(paint);
+    }
+
     bool dispose(RenderMethod& renderer)
     {
         bool ret = true;
         if (paint) {
             ret = paint->pImpl->dispose(renderer);
-            delete(paint);
-            paint = nullptr;
-        }
-        else if (pixels) {
+        } else if (pixels) {
             ret =  renderer.dispose(rdata);
             rdata = nullptr;
         }

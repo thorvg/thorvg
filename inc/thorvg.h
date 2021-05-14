@@ -1095,12 +1095,18 @@ public:
 
     /**
      * @brief Sets the total number of the paints pushed into the scene to be zero.
+     * Depending on the value of the @p free argument, the paints are freed or not.
      *
+     * @param[in] free If @c true, the memory occupied by paints is deallocated, otherwise it is not.
+     *
+     * @return Result::Success when succeed
+     *
+     * @warning If you don't free the paints they become dangled. They are supposed to be reused, otherwise you are responsible for their lives. Thus please use the @p free argument only when you know how it works, otherwise it's not recommended.
      * @warning Please do not use it, this API is not official one. It could be modified in the next version.
      *
      * @BETA_API
      */
-    Result clear() noexcept;
+    Result clear(bool free = true) noexcept;
 
     /**
      * @brief Creates a new Scene object.
