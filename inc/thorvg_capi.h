@@ -1724,12 +1724,21 @@ TVG_EXPORT Tvg_Result tvg_scene_push(Tvg_Paint* scene, Tvg_Paint* paint);
 
 
 /*!
-* \brief Sets the total number of the paints pushed into the scene to be zero. (BETA version)
+* \brief Clears a Tvg_Scene objects from pushed paints.
 *
-* \warning Please do not use it, this API is not official one. It could be modified in the next version.
+* Tvg_Paint objects stored in the scene are released if @p free is set to @c true, otherwise the memory is not deallocated and
+* all paints should be released manually in order to avoid memory leaks.
+*
+* \param[in] scene The Tvg_Scene object to be cleared.
+* \param[in] free If @c true the memory occupied by paints is deallocated, otherwise it is not.
+*
+* \return Tvg_Result enumeration.
+* \retval TVG_RESULT_SUCCESS Succeed.
+* \retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Canvas pointer.
+*
+* \warning Please use the @p free argument only when you know how it works, otherwise it's not recommended.
 */
-TVG_EXPORT Tvg_Result tvg_scene_clear(Tvg_Paint* scene);
-
+TVG_EXPORT Tvg_Result tvg_scene_clear(Tvg_Paint* scene, bool free);
 
 /** \} */   // end defgroup ThorVGCapi_Scene
 
