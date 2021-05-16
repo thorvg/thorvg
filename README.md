@@ -7,7 +7,7 @@
   <img width="500" height="346" src="https://github.com/Samsung/thorvg/blob/master/res/thorvg_card2.png">
 </p>
 
-ThorVG is a platform-independent portable library for drawing vector-based scene and animation. It's an open-source software that is freely used by a variety of software platforms and applications. ThorVG provides neat and easy APIs, its library has no dependencies and keeps super compact size. It serves as the vector graphics engine for Tizen OS that powers many products. <br />
+ThorVG is a platform-independent portable library for drawing vector-based scene and animation. It's an open-source software that is freely used by a variety of software platforms and applications. ThorVG provides neat and easy APIs, its library has no dependencies and keeps cheat and super compact size. It serves as the vector graphics engine for Tizen OS that powers many products. <br />
 <br />
 The following list shows primitives that are supported by ThorVG: <br />
  - Shapes: Line, Arc, Curve, Path, Polygon, ...
@@ -20,11 +20,7 @@ The following list shows primitives that are supported by ThorVG: <br />
   <img width="930" height="473" src="https://github.com/Samsung/thorvg/blob/master/res/example_primitives.png">
 </p>
 <br />
-Basically your program could use this library functions by calling neat TVG APIs while switching drawing context (if you have your own drawing engine).
-ThorVG serializes drawing commands among volatile paints' nodes and performs sync/asynchronous rendering by its engines. ThorVG supports vector images such as SVG,
-and also will support other popular formats in the future, on demand. On rendering, it can spawn intermediate frame buffers for compositing vector scenes but only
-when it's necessary.
-The next figure shows you a brief strategy on how to use ThorVG on your system.<br />
+Your program could call neat TVG APIs while switching drawing context If you have your own drawing engine. During the API calls, ThorVG serializes drawing commands among the volatile paints' nodes then performs synchronous/asynchronous rendering using own backend raster engines. ThorVG supports vector images such as SVG, also expand supporting other popular formats on demand. On the rendering, it could spawn intermediate frame-buffers for compositing scenes only when it's necessary. The next figure shows you a brief strategy on how to use ThorVG on your system.<br />
 <br />
 <p align="center">
   <img width="900" height="288" src="https://github.com/Samsung/thorvg/blob/master/res/example_flow.png">
