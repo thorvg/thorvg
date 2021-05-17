@@ -148,7 +148,7 @@ struct SwFill
     struct SwRadial {
         float cx, cy;
         float a;
-        float inv2a;
+        float inva;
     };
 
     union {

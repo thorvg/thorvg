@@ -156,7 +156,7 @@ bool _prepareRadial(SwFill* fill, const RadialGradient* radial, const Matrix* tr
     }
 
     fill->radial.a = radius * radius;
-    fill->radial.inv2a = pow(1 / (2 * fill->radial.a), 2);
+    fill->radial.inva = 1.0 / fill->radial.a;
 
     return true;
 }
@@ -210,12 +210,12 @@ void fillFetchRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, 
     //Rotation
     auto rx = (x + 0.5f - fill->radial.cx) * fill->sy;
     auto ry = (y + 0.5f - fill->radial.cy) * fill->sx;
-    auto inv2a = fill->radial.inv2a;
     auto rxy = rx * rx + ry * ry;
     auto rxryPlus = 2 * rx;
-    auto det = (-4 * fill->radial.a * -rxy) * inv2a;
-    auto detDelta = (4 * fill->radial.a * (rxryPlus + 1.0f)) * inv2a;
-    auto detDelta2 = (4 * fill->radial.a * 2.0f) * inv2a;
+    auto inva = fill->radial.inva;
+    auto det = rxy * inva;
+    auto detDelta = (rxryPlus + 1.0f) * inva;
+    auto detDelta2 = 2.0f * inva;
 
    for (uint32_t i = 0 ; i < len ; ++i) {
         *dst = _pixel(fill, sqrt(det));
