@@ -169,18 +169,18 @@ struct Picture::Impl
         if (loader) loader->close();
         loader = LoaderMgr::loader(path);
         if (!loader) return Result::NonSupport;
-        if (!loader->read()) return Result::Unknown;
+        if (!loader->read(true)) return Result::Unknown;
         w = loader->w;
         h = loader->h;
         return Result::Success;
     }
 
-    Result load(const char* data, uint32_t size)
+    Result load(const char* data, uint32_t size, bool async)
     {
         if (loader) loader->close();
         loader = LoaderMgr::loader(data, size);
         if (!loader) return Result::NonSupport;
-        if (!loader->read()) return Result::Unknown;
+        if (!loader->read(async)) return Result::Unknown;
         w = loader->w;
         h = loader->h;
         return Result::Success;

@@ -60,7 +60,7 @@ bool RawLoader::open(const uint32_t* data, uint32_t w, uint32_t h, bool copy)
 }
 
 
-bool RawLoader::read()
+bool RawLoader::read(bool async)
 {
     return true;
 }

@@ -31,6 +31,7 @@ public:
     char* buffer = nullptr;
     const char* pointer = nullptr;
     uint32_t size = 0;
+    bool async = false;
 
     unique_ptr<Scene> root = nullptr;
 
@@ -39,7 +40,8 @@ public:
     using Loader::open;
     bool open(const string &path) override;
     bool open(const char *data, uint32_t size) override;
-    bool read() override;
+
+    bool read(bool async) override;
     bool close() override;
 
     void run(unsigned tid) override;

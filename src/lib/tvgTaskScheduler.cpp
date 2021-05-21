@@ -139,10 +139,10 @@ public:
         }
     }
 
-    void request(Task* task)
+    void request(Task* task, bool async)
     {
         //Async
-        if (threadCnt > 0) {
+        if (async && threadCnt > 0) {
             task->prepare();
             auto i = idx++;
             for (unsigned n = 0; n < threadCnt; ++n) {
@@ -179,9 +179,9 @@ void TaskScheduler::term()
 }
 
 
-void TaskScheduler::request(Task* task)
+void TaskScheduler::request(Task* task, bool async)
 {
-    if (inst) inst->request(task);
+    if (inst) inst->request(task, async);
 }
 
 

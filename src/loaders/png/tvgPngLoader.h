@@ -36,7 +36,7 @@ public:
 
     using Loader::open;
     bool open(const string& path) override;
-    bool read() override;
+    bool read(bool async) override;
     bool close() override;
 
     const uint32_t* pixels() override;

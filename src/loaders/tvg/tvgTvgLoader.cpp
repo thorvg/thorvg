@@ -96,18 +96,19 @@ bool TvgLoader::open(const char *data, uint32_t size)
     return true;
 }
 
-bool TvgLoader::read()
+bool TvgLoader::read(bool async)
 {
     if (!pointer || size == 0) return false;
 
-    TaskScheduler::request(this);
+    this->async = async;
+    TaskScheduler::request(this, async);
 
     return true;
 }
 
 bool TvgLoader::close()
 {
-    this->done();
+    if (async) this->done();
     clearBuffer();
     return true;
 }
@@ -121,7 +122,7 @@ void TvgLoader::run(unsigned tid)
 
 unique_ptr<Scene> TvgLoader::scene()
 {
-    this->done();
+    if (async) this->done();
     if (root) return move(root);
     return nullptr;
 }

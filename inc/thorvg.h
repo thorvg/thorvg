@@ -986,6 +986,7 @@ public:
 
     /**
      * @brief Loads a picture data from a memory block of a given size.
+     * Function allows to choose whether the loading should be asynchronous (default) or synchronous.
      *
      * @param[in] data A pointer to a memory location where the content of the picture file is stored.
      * @param[in] size The size in bytes of the memory occupied by the @p data.
@@ -997,7 +998,7 @@ public:
      *
      * @note: This api supports only SVG format
      */
-    Result load(const char* data, uint32_t size) noexcept;
+    Result load(const char* data, uint32_t size, bool async = true) noexcept;
 
     /**
      * @brief Resize the picture content with the given width and height.

@@ -51,7 +51,7 @@ bool PngLoader::open(const string& path)
     return true;
 }
 
-bool PngLoader::read()
+bool PngLoader::read(bool async)
 {
     png_bytep buffer;
     image->format = PNG_FORMAT_BGRA;

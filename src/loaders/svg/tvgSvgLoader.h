@@ -31,6 +31,7 @@ public:
     string filePath;
     const char* content = nullptr;
     uint32_t size = 0;
+    bool async = false;
 
     SvgLoaderData loaderData;
     unique_ptr<Scene> root;
@@ -43,7 +44,7 @@ public:
     bool open(const char* data, uint32_t size) override;
 
     bool header();
-    bool read() override;
+    bool read(bool async) override;
     bool close() override;
     void run(unsigned tid) override;
 

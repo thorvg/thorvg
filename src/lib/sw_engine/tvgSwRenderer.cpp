@@ -573,7 +573,7 @@ void* SwRenderer::prepareCommon(SwTask* task, const RenderTransform* transform, 
     task->bbox.max.y = min(static_cast<SwCoord>(surface->h), static_cast<SwCoord>(vport.y + vport.h));
 
     tasks.push(task);
-    TaskScheduler::request(task);
+    TaskScheduler::request(task, true);
 
     return task;
 }
