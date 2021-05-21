@@ -117,7 +117,7 @@ struct SwSpan
 {
     int16_t x, y;
     uint16_t len;
-    uint8_t coverage;
+    uint16_t coverage;
 };
 
 struct SwRleData
@@ -279,9 +279,9 @@ static inline uint32_t COLOR_INTERPOLATE(uint32_t c1, uint32_t a1, uint32_t c2, 
     return (c1 |= t);
 }
 
-static inline uint8_t ALPHA_MULTIPLY(uint32_t c, uint32_t a)
+static inline uint32_t ALPHA_MULTIPLY(uint32_t c, uint32_t a)
 {
-    return ((c * a + 0xff) >> 8);
+    return ((c * a) >> 8);
 }
 
 static inline SwCoord HALF_STROKE(float width)

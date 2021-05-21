@@ -170,10 +170,9 @@ static void _horizLine(RleWorker& rw, SwCoord x, SwCoord y, SwCoord area, SwCoor
     if (rw.outline->fillRule == FillRule::EvenOdd) {
         coverage &= 511;
         if (coverage > 256) coverage = 512 - coverage;
-        else if (coverage == 256) coverage = 255;
     } else {
         //normal non-zero winding rule
-        if (coverage >= 256) coverage = 255;
+        if (coverage > 256) coverage = 256;
     }
 
     //span has ushort coordinates. check limit overflow
@@ -187,7 +186,7 @@ static void _horizLine(RleWorker& rw, SwCoord x, SwCoord y, SwCoord area, SwCoor
     }
 
     if (coverage > 0) {
-        if (!rw.antiAlias) coverage = 255;
+        if (!rw.antiAlias) coverage = 256;
         auto count = rw.spansCnt;
         auto span = rw.spans + count - 1;
 
@@ -649,7 +648,7 @@ SwSpan* _intersectSpansRegion(const SwRleData *clip, const SwRleData *targetRle,
             out->x = sx1 > cx1 ? sx1 : cx1;
             out->len = (sx2 < cx2 ? sx2 : cx2) - out->x;
             out->y = spans->y;
-            out->coverage = (uint8_t)(((spansCorverage * clipSpansCoverage) + 0xff) >> 8);
+            out->coverage = (uint16_t)((spansCorverage * clipSpansCoverage) >> 8);
             ++out;
             --spanCnt;
         }
