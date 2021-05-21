@@ -649,7 +649,7 @@ SwSpan* _intersectSpansRegion(const SwRleData *clip, const SwRleData *targetRle,
             out->x = sx1 > cx1 ? sx1 : cx1;
             out->len = (sx2 < cx2 ? sx2 : cx2) - out->x;
             out->y = spans->y;
-            out->coverage = (uint8_t)((spansCorverage * clipSpansCoverage) >> 8);
+            out->coverage = (uint8_t)(((spansCorverage * clipSpansCoverage) + 0xff) >> 8);
             ++out;
             --spanCnt;
         }
