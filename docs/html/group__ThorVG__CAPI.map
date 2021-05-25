@@ -1,0 +1,9 @@
+<map id="ThorVG_CAPI (BETA version)" name="ThorVG_CAPI (BETA version)">
+<area shape="rect" id="node2" href="$group__ThorVGCapi__Paint.html" title="A module for managing graphical elements. It enables duplication, transformation and composition..." alt="" coords="263,5,315,32"/>
+<area shape="rect" id="node3" href="$group__ThorVGCapi__Shape.html" title="A module for managing two&#45;dimensional figures and their properties. " alt="" coords="260,56,319,83"/>
+<area shape="rect" id="node4" href="$group__ThorVGCapi__Scene.html" title="A module managing the multiple paints as one group paint. " alt="" coords="260,107,319,133"/>
+<area shape="rect" id="node5" href="$group__ThorVGCapi__Initializer.html" title="A module enabling initialization and termination of the TVG engines. " alt="" coords="252,157,327,184"/>
+<area shape="rect" id="node6" href="$group__ThorVGCapi__Canvas.html" title="A module for managing and drawing graphical elements. " alt="" coords="256,208,323,235"/>
+<area shape="rect" id="node7" href="$group__ThorVGCapi__Picture.html" title="A module enabling to create and to load an image in one of the supported formats: svg..." alt="" coords="258,259,321,285"/>
+<area shape="rect" id="node8" href="$group__ThorVGCapi__Gradient.html" title="A module managing the gradient fill of objects. " alt="" coords="254,309,325,336"/>
+</map>
