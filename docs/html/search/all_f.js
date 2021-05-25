@@ -1,5 +1,6 @@
 var searchData=
 [
+  ['thorvg_20api_20documentation',['ThorVG API Documentation',['../index.html',1,'']]],
   ['target',['target',['../classtvg_1_1SwCanvas.html#a2d4c80a0ba45465b073ee0c279e8c8dc',1,'tvg::SwCanvas::target()'],['../classtvg_1_1GlCanvas.html#aad369f9a4a762338d0ef4a16265a0f29',1,'tvg::GlCanvas::target()']]],
   ['term',['term',['../classtvg_1_1Initializer.html#ace5ab49a2678becae6e7230420a003df',1,'tvg::Initializer']]],
   ['thorvg',['ThorVG',['../group__ThorVG.html',1,'']]],
