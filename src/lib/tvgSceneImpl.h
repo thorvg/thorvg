@@ -100,7 +100,6 @@ struct Scene::Impl
         uint32_t y2 = 0;
 
         for (auto paint = paints.data; paint < (paints.data + paints.count); ++paint) {
-
             auto region = (*paint)->pImpl->bounds(renderer);
 
             //Merge regions
@@ -119,8 +118,8 @@ struct Scene::Impl
 
         auto x1 = FLT_MAX;
         auto y1 = FLT_MAX;
-        auto x2 = 0.0f;
-        auto y2 = 0.0f;
+        auto x2 = -FLT_MAX;
+        auto y2 = -FLT_MAX;
 
         for (auto paint = paints.data; paint < (paints.data + paints.count); ++paint) {
             auto x = FLT_MAX;
