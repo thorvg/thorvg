@@ -402,25 +402,18 @@ unique_ptr<Scene> svgSceneBuild(SvgNode* node, float vx, float vy, float vw, flo
 {
     if (!node || (node->type != SvgNodeType::Doc)) return nullptr;
 
-    unique_ptr<Scene> root;
     auto docNode = _sceneBuildHelper(node, vx, vy, vw, vh);
-    float x, y, w, h;
 
-    if (docNode->bounds(&x, &y, &w, &h) != Result::Success) return nullptr;
+    auto viewBoxClip = Shape::gen();
+    viewBoxClip->appendRect(vx, vy ,vw, vh, 0, 0);
+    viewBoxClip->fill(0, 0, 0, 255);
 
-    if (x < vx || y < vy || w > vh || h > vh) {
-        auto viewBoxClip = Shape::gen();
-        viewBoxClip->appendRect(vx, vy ,vw, vh, 0, 0);
-        viewBoxClip->fill(0, 0, 0, 255);
+    auto compositeLayer = Scene::gen();
+    compositeLayer->composite(move(viewBoxClip), CompositeMethod::ClipPath);
+    compositeLayer->push(move(docNode));
 
-        auto compositeLayer = Scene::gen();
-        compositeLayer->composite(move(viewBoxClip), CompositeMethod::ClipPath);
-        compositeLayer->push(move(docNode));
+    auto root = Scene::gen();
+    root->push(move(compositeLayer));
 
-        root = Scene::gen();
-        root->push(move(compositeLayer));
-    } else {
-        root = move(docNode);
-    }
     return root;
 }
