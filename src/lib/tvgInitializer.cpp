@@ -63,8 +63,7 @@ Result Initializer::init(CanvasEngine engine, uint32_t threads) noexcept
 
     if (nonSupport) return Result::NonSupport;
 
-    if (_initCnt > 0) return Result::Success;
-    ++_initCnt;
+    if (_initCnt++ > 0) return Result::Success;
 
     if (!LoaderMgr::init()) return Result::Unknown;
 
@@ -96,8 +95,7 @@ Result Initializer::term(CanvasEngine engine) noexcept
 
     if (nonSupport) return Result::NonSupport;
 
-    --_initCnt;
-    if (_initCnt > 0) return Result::Success;
+    if (--_initCnt > 0) return Result::Success;
 
     TaskScheduler::term();
 
