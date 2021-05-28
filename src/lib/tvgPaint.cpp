@@ -281,6 +281,12 @@ Result Paint::transform(const Matrix& m) noexcept
     return Result::FailedAllocation;
 }
 
+Matrix Paint::transform() noexcept
+{
+    auto pTransform = pImpl->transform();
+    if (pTransform) return *pTransform;
+    return {1, 0, 0, 0, 1, 0, 0, 0, 1};
+}
 
 Result Paint::bounds(float* x, float* y, float* w, float* h) const noexcept
 {

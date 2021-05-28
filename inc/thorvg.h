@@ -232,9 +232,20 @@ public:
      * @param[in] m The 3x3 augmented matrix.
      *
      * @return Result::Success when succeed, Result::FailedAllocation otherwise.
-     *
      */
     Result transform(const Matrix& m) noexcept;
+
+    /**
+     * @brief Gets the matrix of the affine transformation of the object.
+     *
+     * The values of the matrix can be set by the transform() API, as well by the translate(),
+     * scale() and rotate(). In case no transformation was applied, the identity matrix is returned.
+     *
+     * @retval The augmented transformation matrix.
+     *
+     * @BETA_API
+     */
+    Matrix transform() noexcept;
 
     /**
      * @brief Sets the opacity of the object.
