@@ -30,13 +30,13 @@ source_file = [
     'Svg2.cpp',
     'Svg.cpp',
     'Transform.cpp',
+    'TvgLoader.cpp',
     'Update.cpp',
     'ClipPath.cpp',
     'Masking.cpp',
     'InvMasking.cpp',
     'GradientMasking.cpp',
     'AnimateMasking.cpp',
-    'TvgLoader.cpp',
 ]
 
 foreach current_file : source_file
