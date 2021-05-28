@@ -74,6 +74,15 @@ namespace tvg
             return true;
         }
 
+        Matrix* transform()
+        {
+            if (rTransform) {
+                rTransform->update();
+                return &rTransform->m;
+            }
+            return nullptr;
+        }
+
         bool bounds(float* x, float* y, float* w, float* h) const
         {
             return smethod->bounds(x, y, w, h);
