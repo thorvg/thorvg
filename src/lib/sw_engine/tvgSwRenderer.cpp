@@ -98,8 +98,9 @@ struct SwShapeTask : SwTask
                 if (renderShape) {
                     /* We assume that if stroke width is bigger than 2,
                        shape outline below stroke could be full covered by stroke drawing.
-                       Thus it turns off antialising in that condition. */
-                    auto antiAlias = (strokeAlpha == 255 && strokeWidth > 2) ? false : true;
+                       Thus it turns off antialising in that condition.
+                       Also, it shouldn't be dash style. */
+                    auto antiAlias = (strokeAlpha == 255 && strokeWidth > 2 && sdata->strokeDash(nullptr) == 0) ? false : true;
                     if (!shapeGenRle(&shape, sdata, antiAlias, clips.count > 0 ? true : false)) goto err;
                     ++addStroking;
                 }
