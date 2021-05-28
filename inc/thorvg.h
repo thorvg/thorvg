@@ -1104,7 +1104,7 @@ public:
      * @warning If you don't free the paints they become dangled. They are supposed to be reused, otherwise you are responsible for their lives. Thus please use the @p free argument only when you know how it works, otherwise it's not recommended.
      * @warning Please do not use it, this API is not official one. It could be modified in the next version.
      *
-     * @BETA_API
+     * @since 0.2
      */
     Result clear(bool free = true) noexcept;
 
