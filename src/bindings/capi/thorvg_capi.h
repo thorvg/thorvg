@@ -1661,9 +1661,29 @@ TVG_EXPORT Tvg_Result tvg_picture_load(Tvg_Paint* paint, const char* path);
 /*!
 * \brief Loads a picture data from a memory block of a given size. (BETA version)
 *
+* \return Tvg_Result return value
+* \retval TVG_RESULT_SUCCESS: if ok.
+* \retval TVG_RESULT_INVALID_PARAMETERS: if paint is invalid
+*
 * \warning Please do not use it, this API is not official one. It can be modified in the next version.
 */
 TVG_EXPORT Tvg_Result tvg_picture_load_raw(Tvg_Paint* paint, uint32_t *data, uint32_t w, uint32_t h, bool copy);
+
+
+/*!
+* \brief The function loads data into given paint object. (BETA version)
+*
+* \param[in] paint Tvg_Paint pointer
+* \param[in] data raw data pointer
+* \param[in] size of data
+*
+* \return Tvg_Result return value
+* \retval TVG_RESULT_SUCCESS: if ok.
+* \retval TVG_RESULT_INVALID_PARAMETERS: if paint is invalid
+*
+* \warning Please do not use it, this API is not official one. It can be modified in the next version.
+*/
+TVG_EXPORT Tvg_Result tvg_picture_load_data(Tvg_Paint* paint, const char *data, uint32_t size);
 
 
 /*!
