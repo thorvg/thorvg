@@ -299,6 +299,41 @@ public:
      */
     uint8_t opacity() const noexcept;
 
+    /**
+     * @brief
+     *
+     * @return
+     */
+    class Iterator
+    {
+        public:
+        const Paint* parent;
+        const Paint* child;
+
+            Iterator (Paint* p = nullptr, Paint* c = nullptr);
+            const Paint& operator*() const;
+            Iterator& operator++();
+            Iterator operator++(int);
+            friend bool operator!=(const Iterator& it1, const Iterator& it2)
+            {
+                return it1.child != it2.child;
+            };
+    };
+
+    /**
+     * @brief
+     *
+     * @return
+     */
+    Iterator begin() const noexcept;
+
+    /**
+     * @brief
+     *
+     * @return
+     */
+    Iterator end() const noexcept;
+
     _TVG_DECLARE_ACCESSOR();
     _TVG_DECALRE_IDENTIFIER();
     _TVG_DECLARE_PRIVATE(Paint);

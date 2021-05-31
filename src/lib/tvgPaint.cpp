@@ -323,3 +323,52 @@ uint8_t Paint::opacity() const noexcept
 {
     return pImpl->opacity;
 }
+
+
+Paint::Iterator Paint::begin() const noexcept
+{
+    return pImpl->begin();
+}
+
+
+Paint::Iterator Paint::end() const noexcept
+{
+    return Paint::Iterator();
+}
+
+
+Paint::Iterator::Iterator(Paint* p, Paint* c) : parent{p}, child{c}
+{
+}
+
+
+const Paint& Paint::Iterator::operator*() const
+{
+    return *child;
+}
+
+
+Paint::Iterator& Paint::Iterator::operator++() //prefix
+{
+    const Paint* nextChild = nullptr;
+    if (parent) nextChild = parent->pImpl->next(child);
+    child = nextChild;
+
+    return *this;
+}
+
+
+Paint::Iterator Paint::Iterator::operator++(int) //postfix
+{
+    Iterator tmp = *this;
+    ++*this;
+    return tmp;
+}
+
+/*
+//TODO - does not work for now, it has to be in thorvg.h
+bool operator!=(const Paint::Iterator& it1, const Paint::Iterator& it2)
+{
+    return it1.child != it2.child;
+}
+*/
