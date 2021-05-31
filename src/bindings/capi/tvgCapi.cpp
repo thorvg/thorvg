@@ -462,6 +462,13 @@ TVG_EXPORT Tvg_Result tvg_picture_load_raw(Tvg_Paint* paint, uint32_t *data, uin
 }
 
 
+TVG_EXPORT Tvg_Result tvg_picture_load_data(Tvg_Paint* paint, const char *data, uint32_t size)
+{
+    if (!paint) return TVG_RESULT_INVALID_ARGUMENT;
+    return (Tvg_Result) reinterpret_cast<Picture*>(paint)->load(data, size);
+}
+
+
 TVG_EXPORT Tvg_Result tvg_picture_get_viewbox(const Tvg_Paint* paint, float* x, float* y, float* w, float* h)
 {
     if (!paint) return TVG_RESULT_INVALID_ARGUMENT;
