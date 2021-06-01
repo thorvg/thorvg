@@ -120,13 +120,13 @@ static uint32_t _blendLayers(uint32_t src, uint32_t dst, uint8_t alpha, uint8_t 
         case BlendingMode::Overlay:
         {
             // Overlay: B<=0.5: 2*A*B or B>0.5: 1-2*(1-A)*(1-B)
-            uint32_t result = (((dst >> 16) & 0xff) <= 0x80)
+            uint32_t result = ((dst & 0xff0000) <= 0x800000)
                         ? ((2 * ((src >> 16) & 0xff) * ((dst >> 16) & 0xff)) >> 8) << 16 // multiply
                         : (0xff - (2*(0xff - ((src >> 16) & 0xff))*(0xff - ((dst >> 16) & 0xff)) >> 8)) << 16; // screen
-            result |= (((dst >> 8) & 0xff) <= 0x80)
+            result |= ((dst & 0x00ff00) <= 0x008000)
                         ? ((2 * ((src >> 8) & 0xff) * ((dst >> 8) & 0xff)) >> 8) << 8 // multiply
                         : (0xff - (2*(0xff - ((src >> 8) & 0xff))*(0xff - ((dst >> 8) & 0xff)) >> 8)) << 8; // screen
-            result |= ((dst & 0xff) <= 0x80)
+            result |= ((dst & 0x0000ff) <= 0x000080)
                         ? ((2 * (src & 0xff) * (dst & 0xff)) >> 8) // multiply
                         : (0xff - (2*(0xff - (src & 0xff))*(0xff - (dst & 0xff)) >> 8)); // screen
             return BLEND_COLORS(result, dst, alpha, ialpha);
@@ -134,26 +134,26 @@ static uint32_t _blendLayers(uint32_t src, uint32_t dst, uint8_t alpha, uint8_t 
         case BlendingMode::Darken:
         {
             // Darken: min(A, B)
-            uint32_t result = (min((src >> 16) & 0xff, (dst >> 16) & 0xff) << 16)
-                    | (min((src >> 8) & 0xff, (dst >> 8) & 0xff) << 8)
-                    | (min(src & 0xff, dst & 0xff));
+            uint32_t result = min(src & 0xff0000, dst & 0xff0000)
+                    | min(src & 0x00ff00, dst & 0x00ff00)
+                    | min(src & 0x0000ff, dst & 0x0000ff);
             return BLEND_COLORS(result, dst, alpha, ialpha);
         }
         case BlendingMode::Lighten:
         {
             // Lighten: max(A, B)
-            uint32_t result = (max((src >> 16) & 0xff, (dst >> 16) & 0xff) << 16)
-                    | (max((src >> 8) & 0xff, (dst >> 8) & 0xff) << 8)
-                    | (max(src & 0xff, dst & 0xff));
+            uint32_t result = max(src & 0xff0000, dst & 0xff0000)
+                    | max(src & 0x00ff00, dst & 0x00ff00)
+                    | max(src & 0x0000ff, dst & 0x0000ff);
             return BLEND_COLORS(result, dst, alpha, ialpha);
         }
         case BlendingMode::ColorDodge:
         {
             // ColorDodge: B / (1-A)
             uint32_t src_inverted = 0xffffffff - src;
-            uint32_t result = (((src_inverted >> 16) & 0xff) == 0) ? (dst & 0xff0000) : (LIMIT_BYTE(((dst >> 8) & 0xff00) / ((src_inverted >> 16) & 0xff)) << 16);
-            result |= (((src_inverted >> 8) & 0xff) == 0) ? (dst & 0xff00) : (LIMIT_BYTE((dst & 0xff00) / ((src_inverted >> 8) & 0xff)) << 8);
-            result |= ((src_inverted & 0xff) == 0) ? (dst & 0xff) : LIMIT_BYTE(((dst & 0xff) << 8) / (src_inverted & 0xff));
+            uint32_t result = ((src_inverted & 0xff0000) == 0) ? (dst & 0xff0000) : (LIMIT_BYTE(((dst >> 8) & 0xff00) / ((src_inverted >> 16) & 0xff)) << 16);
+            result |= ((src_inverted & 0x00ff00) == 0) ? (dst & 0x00ff00) : (LIMIT_BYTE((dst & 0xff00) / ((src_inverted >> 8) & 0xff)) << 8);
+            result |= ((src_inverted & 0x0000ff) == 0) ? (dst & 0x0000ff) : LIMIT_BYTE(((dst & 0xff) << 8) / (src_inverted & 0xff));
             return BLEND_COLORS(result, dst, alpha, ialpha);
         }
         case BlendingMode::ColorBurn:
@@ -167,14 +167,14 @@ static uint32_t _blendLayers(uint32_t src, uint32_t dst, uint8_t alpha, uint8_t 
         }
         case BlendingMode::HardLight:
         {
-            // HardLight Layers-inverted overlay
-            uint32_t result = (((src >> 16) & 0xff) <= 0x80)
+            // HardLight: Layers-inverted overlay
+            uint32_t result = ((src & 0xff0000) <= 0x800000)
                         ? ((2 * ((dst >> 16) & 0xff) * ((src >> 16) & 0xff)) >> 8) << 16 // multiply
                         : (0xff - (2*(0xff - ((dst >> 16) & 0xff))*(0xff - ((src >> 16) & 0xff)) >> 8)) << 16; // screen
-            result |= (((src >> 8) & 0xff) <= 0x80)
+            result |= ((src & 0x00ff00) <= 0x008000)
                         ? ((2 * ((dst >> 8) & 0xff) * ((src >> 8) & 0xff)) >> 8) << 8 // multiply
                         : (0xff - (2*(0xff - ((dst >> 8) & 0xff))*(0xff - ((src >> 8) & 0xff)) >> 8)) << 8; // screen
-            result |= ((src & 0xff) <= 0x80)
+            result |= ((src & 0x0000ff) <= 0x000080)
                         ? ((2 * (dst & 0xff) * (src & 0xff)) >> 8) // multiply
                         : (0xff - (2*(0xff - (dst & 0xff))*(0xff - (src & 0xff)) >> 8)); // screen
             return BLEND_COLORS(result, dst, alpha, ialpha);
@@ -193,10 +193,10 @@ static uint32_t _blendLayers(uint32_t src, uint32_t dst, uint8_t alpha, uint8_t 
         }
         case BlendingMode::Difference:
         {
-            // Difference: |Target - Blend|
-            uint32_t result = (ABS_DIFFERENCE((src >> 16) & 0xff, (dst >> 16) & 0xff) << 16)
-                    | (ABS_DIFFERENCE((src >> 8) & 0xff, (dst >> 8) & 0xff) << 8)
-                    | (ABS_DIFFERENCE(src & 0xff, dst & 0xff));
+            // Difference: |A - B|
+            uint32_t result = ABS_DIFFERENCE(src & 0xff0000, dst & 0xff0000)
+                | ABS_DIFFERENCE(src & 0x00ff00, dst & 0x00ff00)
+                | ABS_DIFFERENCE(src & 0x0000ff, dst & 0x0000ff);
             return BLEND_COLORS(result, dst, alpha, ialpha);
         }
         case BlendingMode::Exclusion:
