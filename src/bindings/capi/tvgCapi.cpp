@@ -162,6 +162,17 @@ TVG_EXPORT Tvg_Result tvg_paint_transform(Tvg_Paint* paint, const Tvg_Matrix* m)
 }
 
 
+TVG_EXPORT Tvg_Result tvg_paint_get_transform(Tvg_Paint* paint, Tvg_Matrix* m)
+{
+    if (!paint || !m) return TVG_RESULT_INVALID_ARGUMENT;
+    tvg::Matrix mTranfs = reinterpret_cast<Paint*>(paint)->transform();
+    m->e11 = mTranfs.e11; m->e12 = mTranfs.e12; m->e13 = mTranfs.e13;
+    m->e21 = mTranfs.e21; m->e22 = mTranfs.e22; m->e23 = mTranfs.e23;
+    m->e31 = mTranfs.e31; m->e32 = mTranfs.e32; m->e33 = mTranfs.e33;
+    return TVG_RESULT_SUCCESS;
+}
+
+
 TVG_EXPORT Tvg_Paint* tvg_paint_duplicate(Tvg_Paint* paint)
 {
     if (!paint) return nullptr;
