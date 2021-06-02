@@ -256,7 +256,7 @@ public:
      * @return Result::Success when succeed, Result::InvalidArguments otherwise.
      *
      */
-    Result composite(std::unique_ptr<Paint> target, CompositeMethod method) const noexcept;
+    Result composite(std::unique_ptr<Paint> target, CompositeMethod method) noexcept;
 
     /**
      * @brief Gets the bounding box of the paint object before any transformation.
