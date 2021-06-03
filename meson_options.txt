@@ -33,11 +33,6 @@ option('examples',
     value: false,
     description: 'Enable building examples')
 
-option('test',
-   type: 'boolean',
-   value: false,
-   description: 'Enable building unit tests')
-
 option('log',
     type: 'boolean',
     value: false,

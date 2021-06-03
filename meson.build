@@ -47,22 +47,16 @@ headers = [include_directories('inc'), include_directories('.')]
 subdir('inc')
 subdir('src')
 
-if get_option('test') == true
-   subdir('test')
-endif
-
 summary = '''
 
 Summary:
     thorvg version :        @0@
     Build type      :       @1@
     Prefix          :       @2@
-    Test            :       @3@
 '''.format(
         meson.project_version(),
         get_option('buildtype'),
         get_option('prefix'),
-        get_option('test'),
     )
 
 message(summary)
