@@ -1272,7 +1272,7 @@ public:
      * @param[in] threads The number of additional threads. Zero indicates only the main thread is to be used.
      *
      * @retval Result::Success When succeed.
-     * @retval Result::InsufficientCondition An internal error possibly with memory allocation.
+     * @retval Result::FailedAllocation An internal error possibly with memory allocation.
      * @retval Result::InvalidArguments If unknown engine type chosen.
      * @retval Result::NonSupport In case the engine type is not supported on the system.
      * @retval Result::Unknown Others.
