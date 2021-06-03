@@ -722,6 +722,19 @@ TVG_EXPORT Tvg_Result tvg_paint_transform(Tvg_Paint* paint, const Tvg_Matrix* m)
 
 
 /*!
+* \brief Gets the matrix of the affine transformation of the given Tvg_Paint object.
+*
+* \param[in] paint The Tvg_Paint object of which to get the transformation matrix.
+* \param[out] m The 3x3 augmented matrix.
+*
+* \return Tvg_Result enumeration.
+* \retval TVG_RESULT_SUCCESS Succeed.
+* \retval TVG_RESULT_INVALID_ARGUMENT A @c nullptr is passed as the argument.
+*/
+TVG_EXPORT Tvg_Result tvg_paint_get_transform(Tvg_Paint* paint, Tvg_Matrix* m);
+
+
+/*!
 * \brief Sets the opacity of the given Tvg_Paint.
 *
 * \param[in] paint The Tvg_Paint object of which the opacity value is to be set.
