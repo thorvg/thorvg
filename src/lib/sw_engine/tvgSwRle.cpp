@@ -169,11 +169,10 @@ static void _horizLine(RleWorker& rw, SwCoord x, SwCoord y, SwCoord area, SwCoor
 
     if (rw.outline->fillRule == FillRule::EvenOdd) {
         coverage &= 511;
-        if (coverage > 256) coverage = 512 - coverage;
-        else if (coverage == 256) coverage = 255;
+        if (coverage > 255) coverage = 511 - coverage;
     } else {
         //normal non-zero winding rule
-        if (coverage >= 256) coverage = 255;
+        if (coverage > 255) coverage = 255;
     }
 
     //span has ushort coordinates. check limit overflow
