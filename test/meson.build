@@ -3,6 +3,7 @@ test_file = [
     'testInitializer.cpp',
     'testSwCanvas.cpp',
     'testSwCanvasBase.cpp',
+    'capi/testFill.cpp',
 ]
 
 tests = executable('tvgUnitTests',
