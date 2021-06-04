@@ -13,7 +13,7 @@ Hermet Park (hermet) is the lead maintainer but there are designated sub-module 
 <br />
 
 ## Self Test & Verification
-After updated ThorVG code, please verify your change doesn't break the library. We suggests a unit-tests using Catch2 frameworks. You can easily run the Unit Tests with build commands as the following: <br />
+After updating ThorVG code, please verify your change doesn't break the library. We suggest unit-tests using the Catch2 framework. You can easily run it with build commands as the following: <br />
 <br/>
 `
 $meson . build -Dtests=true
@@ -24,7 +24,7 @@ $ninja -C build test
 `
 <br/>
 <br/>
-Please make it sure running all tests and no any Fail cases.<br/>
+Please make it sure running all tests and no any fail case.<br/>
 <br/>
 Expected Fail:      0<br/>
 Fail:               0<br/>
