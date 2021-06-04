@@ -3,6 +3,13 @@ test_file = [
     'testInitializer.cpp',
 ]
 
+if get_option('bindings').contains('capi') == true
+	capi_test_file = [
+	    'capi/testBasic.cpp',
+	]
+	test_file += capi_test_file
+endif
+
 tests = executable('tvgUnitTests',
     test_file,
     include_directories : headers,
