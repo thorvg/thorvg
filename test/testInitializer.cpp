@@ -28,33 +28,33 @@ using namespace tvg;
 
 TEST_CASE("Basic initialization", "[tvgInitializer]")
 {
-   REQUIRE(Initializer::init(CanvasEngine::Sw, 0) == Result::Success);
-   REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
+    REQUIRE(Initializer::init(CanvasEngine::Sw, 0) == Result::Success);
+    REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
 }
 
 TEST_CASE("Multiple initialization", "[tvgInitializer]")
 {
-   REQUIRE(Initializer::init(CanvasEngine::Sw, 0) == Result::Success);
-   REQUIRE(Initializer::init(CanvasEngine::Sw, 0) == Result::Success);
-   REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
+    REQUIRE(Initializer::init(CanvasEngine::Sw, 0) == Result::Success);
+    REQUIRE(Initializer::init(CanvasEngine::Sw, 0) == Result::Success);
+    REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
 
-   REQUIRE(Initializer::init(CanvasEngine::Sw, 0) == Result::Success);
-   REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
-   REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
+    REQUIRE(Initializer::init(CanvasEngine::Sw, 0) == Result::Success);
+    REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
+    REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
 }
 
 TEST_CASE("Negative termination", "[tvgInitializer]")
 {
-   REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::InsufficientCondition);
+    REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::InsufficientCondition);
 }
 
 TEST_CASE("Many threads", "[tvgInitializer]")
 {
-   REQUIRE(Initializer::init(CanvasEngine::Sw, -1) == Result::FailedAllocation);
-   REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::InsufficientCondition);
+    REQUIRE(Initializer::init(CanvasEngine::Sw, -1) == Result::FailedAllocation);
+    REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::InsufficientCondition);
 }
 
-TEST_CASE("Non supported engine", "[tvgInitializer]")
+TEST_CASE("Invalid engine", "[tvgInitializer]")
 {
-   REQUIRE(Initializer::init(CanvasEngine(0), 0) == Result::InvalidArguments);
+    REQUIRE(Initializer::init(CanvasEngine(0), 0) == Result::InvalidArguments);
 }

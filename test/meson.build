@@ -3,7 +3,9 @@ test_file = [
     'testInitializer.cpp',
 ]
 
-executable('tvgUnitTests',
-           test_file,
-           include_directories : headers,
-           link_with : thorvg_lib)
+tests = executable('tvgUnitTests',
+    test_file,
+    include_directories : headers,
+    link_with : thorvg_lib)
+
+test('Unit Tests', tests)
