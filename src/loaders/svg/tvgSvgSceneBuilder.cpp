@@ -43,7 +43,6 @@ static unique_ptr<LinearGradient> _applyLinearGradientProperty(SvgStyleGradient*
     Fill::ColorStop* stops;
     int stopCount = 0;
     float fillOpacity = 255.0f;
-    float gx, gy, gw, gh;
 
     auto fillGrad = LinearGradient::gen();
 
@@ -52,34 +51,6 @@ static unique_ptr<LinearGradient> _applyLinearGradientProperty(SvgStyleGradient*
         g->linear->y1 = g->linear->y1 * rh + ry;
         g->linear->x2 = g->linear->x2 * rw + rx;
         g->linear->y2 = g->linear->y2 * rh + ry;
-    }
-
-    //In case of objectBoundingBox it need proper scaling
-    if (!g->userSpace) {
-        float scaleX = 1.0, scaleReversedX = 1.0;
-        float scaleY = 1.0, scaleReversedY = 1.0;
-
-        //Check the smallest size, find the scale value
-        if (rh > rw) {
-            scaleY = ((float)rw) / rh;
-            scaleReversedY = ((float)rh) / rw;
-        } else {
-            scaleX = ((float)rh) / rw;
-            scaleReversedX = ((float)rw) / rh;
-        }
-
-        vg->bounds(&gx, &gy, &gw, &gh);
-
-        float cy = ((float)gh) * 0.5 + gy;
-        float cy_scaled = (((float)gh) * 0.5) * scaleReversedY;
-        float cx = ((float)gw) * 0.5 + gx;
-        float cx_scaled = (((float)gw) * 0.5) * scaleReversedX;
-
-        //= T(gx, gy) x S(scaleX, scaleY) x T(cx_scaled - cx, cy_scaled - cy) x (radial->x, radial->y)
-        g->linear->x1 = g->linear->x1 * scaleX + scaleX * (cx_scaled - cx) + gx;
-        g->linear->y1 = g->linear->y1 * scaleY + scaleY * (cy_scaled - cy) + gy;
-        g->linear->x2 = g->linear->x2 * scaleX + scaleX * (cx_scaled - cx) + gx;
-        g->linear->y2 = g->linear->y2 * scaleY + scaleY * (cy_scaled - cy) + gy;
     }
 
     if (g->transform) {
