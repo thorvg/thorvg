@@ -19,6 +19,7 @@
 #ifndef __THORVG_CAPI_H__
 #define __THORVG_CAPI_H__
 
+#include <stdint.h>
 #include <stdbool.h>
 
 #ifdef TVG_EXPORT
