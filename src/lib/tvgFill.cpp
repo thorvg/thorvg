@@ -43,11 +43,13 @@ Fill::~Fill()
 
 Result Fill::colorStops(const ColorStop* colorStops, uint32_t cnt) noexcept
 {
+    if ((!colorStops && cnt > 0) || (colorStops && cnt == 0)) return Result::InvalidArguments;
+
     if (cnt == 0) {
         if (pImpl->colorStops) {
             free(pImpl->colorStops);
             pImpl->colorStops = nullptr;
-            pImpl->cnt = cnt;
+            pImpl->cnt = 0;
         }
         return Result::Success;
     }
