@@ -12,12 +12,30 @@ Hermet Park (hermet) is the lead maintainer but there are designated sub-module 
 <b>capi:</b> Michal Szczecinski (mihashco), Mira Grudzinska (mgrudzinska) <br />
 <br />
 
-
+## Self Test & Verification
+After updated ThorVG code, please verify your change doesn't break the library. We suggests a unit-tests using Catch2 frameworks. You can easily run the Unit Tests with build commands as the following: <br />
+<br/>
+`
+$meson . build -Dtests=true
+`
+<br />
+`
+$ninja -C build test
+`
+<br/>
+<br/>
+Please make it sure running all tests and no any Fail cases.<br/>
+<br/>
+Expected Fail:      0<br/>
+Fail:               0<br/>
+Unexpected Pass:    0<br/>
+Skipped:            0<br/>
+Timeout:            0<br/>
+<br/>
 ## Commit Message
 [Module][Feature]: [Title]
 
 [Description]
-##
 
 - [Module] is a sub module majorly affected by your change. Most of times this indicates a sub folder name.
 This indicates whom need to review your patch as well.
@@ -75,16 +93,13 @@ You can keep the file name, but don't please contain any prefix(tvg) nor suffix(
     @References: any links to the references such as screenshot images.
 
     @Issues: 49
-  <br />
+<br />
+
+## Pull Request
   
-  ## Pull Request
-  
-  Once you submitted a pull request(PR), please make it sure below check list.
-   -  Reviewers: Check Reviewers List
-   -  Assignees: You
-   -  Labels: Patch Purpose
-   -  CODING STYLE CHECK: Must be perfect
-  <p align="center">
-  <img width="1000" height="733" src="https://github.com/Samsung/thorvg/blob/master/res/contribution.png">
-  </p>
-  
+Once you submitted a pull request(PR), please make it sure below check list.
+-  Reviewers: Check Reviewers List
+-  Assignees: You
+-  Labels: Patch Purpose
+-  CODING STYLE CHECK: Must be perfect
+<p align="center"><img width="1000" height="733" src="https://github.com/Samsung/thorvg/blob/master/res/contribution.png"></p>
