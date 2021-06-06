@@ -1069,8 +1069,14 @@ static SvgNode* _createSvgNode(SvgLoaderData* loader, SvgNode* parent, const cha
     if (!loader->svgParse->node) return nullptr;
     SvgDocNode* doc = &(loader->svgParse->node->node.doc);
 
+    loader->svgParse->global.w = 0;
+    loader->svgParse->global.h = 0;
+
     doc->preserveAspect = true;
     simpleXmlParseAttributes(buf, bufLength, _attrParseSvgNode, loader);
+
+    if (loader->svgParse->global.w == 0) loader->svgParse->global.w = loader->svgParse->node->node.doc.w;
+    if (loader->svgParse->global.h == 0) loader->svgParse->global.h = loader->svgParse->node->node.doc.h;
 
     return loader->svgParse->node;
 }
