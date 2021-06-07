@@ -257,6 +257,12 @@ int GlRenderer::init(uint32_t threads)
 }
 
 
+int32_t GlRenderer::init()
+{
+    return initEngineCnt;
+}
+
+
 int GlRenderer::term()
 {
     if ((--initEngineCnt) > 0) return true;
