@@ -616,7 +616,10 @@ bool SwRenderer::init(uint32_t threads)
 
     //Share the memory pool among the renderer
     globalMpool = mpoolInit(threads);
-    if (!globalMpool) return false;
+    if (!globalMpool) {
+        --initEngineCnt;
+        return false;
+    }
 
     return true;
 }
