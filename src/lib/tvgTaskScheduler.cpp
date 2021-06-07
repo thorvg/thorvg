@@ -127,8 +127,8 @@ public:
         //Thread Loop
         while (true) {
             auto success = false;
-            for (unsigned i = 0; i < threadCnt * 2; ++i) {
-                if (taskQueues[(i + i) % threadCnt].tryPop(&task)) {
+            for (unsigned x = 0; x < threadCnt * 2; ++x) {
+                if (taskQueues[(i + x) % threadCnt].tryPop(&task)) {
                     success = true;
                     break;
                 }
