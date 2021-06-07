@@ -2,6 +2,7 @@ test_file = [
     'testMain.cpp',
     'testInitializer.cpp',
     'testSwCanvas.cpp',
+    'testSwCanvasBase.cpp',
 ]
 
 tests = executable('tvgUnitTests',

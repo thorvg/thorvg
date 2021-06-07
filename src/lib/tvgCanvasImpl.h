@@ -90,7 +90,14 @@ struct Canvas::Impl
 
         //Update single paint node
         if (paint) {
-            paint->pImpl->update(*renderer, nullptr, 255, clips, flag);
+            //Optimize Me: Can we skip the searching?
+            for (auto paint2 = paints.data; paint2 < (paints.data + paints.count); ++paint2) {
+                if ((*paint2) == paint) {
+                    paint->pImpl->update(*renderer, nullptr, 255, clips, flag);
+                    return Result::Success;
+                }
+            }
+            return Result::InvalidArguments;
         //Update all retained paint nodes
         } else {
             for (auto paint = paints.data; paint < (paints.data + paints.count); ++paint) {
