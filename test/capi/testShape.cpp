@@ -23,129 +23,7 @@
 #include <thorvg_capi.h>
 #include "catch.hpp"
 
-TEST_CASE("Capi: Basic initialization", "[capiInitializer]")
-{
-    REQUIRE(tvg_engine_init(TVG_ENGINE_SW | TVG_ENGINE_GL, 0) == TVG_RESULT_SUCCESS);
-    REQUIRE(tvg_engine_term(TVG_ENGINE_SW | TVG_ENGINE_GL) == TVG_RESULT_SUCCESS);
-}
-
-TEST_CASE("Capi: Canvas initialization", "[capiCanvas]")
-{
-    static uint32_t width = 200;
-    static uint32_t height = 200;
-
-    uint32_t * buffer = NULL;
-    Tvg_Canvas* canvas = NULL;
-
-    buffer = (uint32_t*) malloc(sizeof(uint32_t) * width * height);
-    REQUIRE(buffer != NULL);
-
-    REQUIRE(tvg_engine_init(TVG_ENGINE_SW, 0) == TVG_RESULT_SUCCESS);
-
-    canvas = tvg_swcanvas_create();
-    REQUIRE(canvas != NULL);
-
-    REQUIRE(tvg_swcanvas_set_target(canvas, buffer, width, width, height, TVG_COLORSPACE_ARGB8888) == TVG_RESULT_SUCCESS);
-
-    REQUIRE(tvg_canvas_draw(canvas) == TVG_RESULT_SUCCESS);
-    REQUIRE(tvg_canvas_sync(canvas) == TVG_RESULT_SUCCESS);
-
-    REQUIRE(tvg_canvas_clear(canvas, true) == TVG_RESULT_SUCCESS);
-    REQUIRE(tvg_canvas_destroy(canvas) == TVG_RESULT_SUCCESS);
-
-    REQUIRE(tvg_engine_term(TVG_ENGINE_SW) == TVG_RESULT_SUCCESS);
-}
-
-TEST_CASE("Capi: Paint Transformation", "[capiPaintTransformation]")
-{
-    Tvg_Paint *paint = NULL;
-    Tvg_Matrix matrix_set = {1, 0, 0, 0, 1, 0, 0, 0, 1}, matrix_get;
-
-    paint = tvg_shape_new();
-    REQUIRE(paint != NULL);
-
-    REQUIRE(tvg_paint_transform(paint, &matrix_set) == TVG_RESULT_SUCCESS);
-
-    REQUIRE(tvg_paint_scale(paint, 2.0f) == TVG_RESULT_SUCCESS);
-    REQUIRE(tvg_paint_scale(paint, 0.5f) == TVG_RESULT_SUCCESS);
-    REQUIRE(tvg_paint_rotate(paint, 180.0f) == TVG_RESULT_SUCCESS);
-    REQUIRE(tvg_paint_rotate(paint, 180.0f) == TVG_RESULT_SUCCESS);
-    REQUIRE(tvg_paint_translate(paint, 10.0f, 10.0f) == TVG_RESULT_SUCCESS);
-    REQUIRE(tvg_paint_translate(paint, -10.0f, -10.0f) == TVG_RESULT_SUCCESS);
-
-    REQUIRE(tvg_paint_get_transform(paint, &matrix_get) == TVG_RESULT_SUCCESS);
-
-    REQUIRE(matrix_get.e11 == matrix_set.e11);
-    REQUIRE(matrix_get.e12 == matrix_set.e12);
-    REQUIRE(matrix_get.e13 == matrix_set.e13);
-    REQUIRE(matrix_get.e21 == matrix_set.e21);
-    REQUIRE(matrix_get.e22 == matrix_set.e22);
-    REQUIRE(matrix_get.e23 == matrix_set.e23);
-    REQUIRE(matrix_get.e31 == matrix_set.e31);
-    REQUIRE(matrix_get.e32 == matrix_set.e32);
-    REQUIRE(matrix_get.e33 == matrix_set.e33);
-
-    REQUIRE(tvg_paint_del(paint) == TVG_RESULT_SUCCESS);
-}
-
-TEST_CASE("Capi: Paint Opacity", "[capiPaintOpacity]")
-{
-    Tvg_Paint *paint = NULL;
-    uint8_t opacity_set, opacity_get;
-
-    paint = tvg_shape_new();
-    REQUIRE(paint != NULL);
-
-    opacity_set = 0;
-    REQUIRE(tvg_paint_set_opacity(paint, opacity_set) == TVG_RESULT_SUCCESS);
-    REQUIRE(tvg_paint_get_opacity(paint, &opacity_get) == TVG_RESULT_SUCCESS);
-    REQUIRE(opacity_get == opacity_get);
-
-    opacity_set = 128;
-    REQUIRE(tvg_paint_set_opacity(paint, opacity_set) == TVG_RESULT_SUCCESS);
-    REQUIRE(tvg_paint_get_opacity(paint, &opacity_get) == TVG_RESULT_SUCCESS);
-    REQUIRE(opacity_get == opacity_get);
-
-    opacity_set = 255;
-    REQUIRE(tvg_paint_set_opacity(paint, opacity_set) == TVG_RESULT_SUCCESS);
-    REQUIRE(tvg_paint_get_opacity(paint, &opacity_get) == TVG_RESULT_SUCCESS);
-    REQUIRE(opacity_get == opacity_get);
-
-    REQUIRE(tvg_paint_del(paint) == TVG_RESULT_SUCCESS);
-}
-
-TEST_CASE("Capi: Paint Bounds", "[capiPaintBounds]")
-{
-    Tvg_Paint *paint = NULL;
-    float x = 0, y = 10, w = 100, h = 100;
-    float x_get, y_get, w_get, h_get;
-
-    paint = tvg_shape_new();
-    REQUIRE(paint != NULL);
-
-    REQUIRE(tvg_shape_append_rect(paint, x, y, w, h, 0, 0) == TVG_RESULT_SUCCESS);
-    REQUIRE(tvg_paint_get_bounds(paint, &x_get, &y_get, &w_get, &h_get) == TVG_RESULT_SUCCESS);
-
-    REQUIRE(x == x_get);
-    REQUIRE(y == y_get);
-    REQUIRE(w == w_get);
-    REQUIRE(h == h_get);
-
-    REQUIRE(tvg_shape_reset(paint) == TVG_RESULT_SUCCESS);
-
-    REQUIRE(tvg_shape_move_to(paint, x, y) == TVG_RESULT_SUCCESS);
-    REQUIRE(tvg_shape_line_to(paint, x + w, y + h) == TVG_RESULT_SUCCESS);
-    REQUIRE(tvg_paint_get_bounds(paint, &x_get, &y_get, &w_get, &h_get) == TVG_RESULT_SUCCESS);
-
-    REQUIRE(x == x_get);
-    REQUIRE(y == y_get);
-    REQUIRE(w == w_get);
-    REQUIRE(h == h_get);
-
-    REQUIRE(tvg_paint_del(paint) == TVG_RESULT_SUCCESS);
-}
-
-TEST_CASE("Capi: Multiple shapes", "[capiShapes]")
+TEST_CASE("Multiple shapes", "[capiShapes]")
 {
     Tvg_Paint *paint = NULL;
 
@@ -162,7 +40,7 @@ TEST_CASE("Capi: Multiple shapes", "[capiShapes]")
     REQUIRE(tvg_paint_del(paint) == TVG_RESULT_SUCCESS);
 }
 
-TEST_CASE("Capi: Shape path", "[capiShapePath]")
+TEST_CASE("Shape path", "[capiShapePath]")
 {
     Tvg_Paint *paint = NULL;
     Tvg_Path_Command * cmds_get;
@@ -216,7 +94,7 @@ TEST_CASE("Capi: Shape path", "[capiShapePath]")
     REQUIRE(tvg_paint_del(paint) == TVG_RESULT_SUCCESS);
 }
 
-TEST_CASE("Capi: Stroke width", "[capiStrokeWidth]")
+TEST_CASE("Stroke width", "[capiStrokeWidth]")
 {
     Tvg_Paint *paint = NULL;
     float stroke_set, stroke_get;
@@ -237,7 +115,7 @@ TEST_CASE("Capi: Stroke width", "[capiStrokeWidth]")
     REQUIRE(tvg_paint_del(paint) == TVG_RESULT_SUCCESS);
 }
 
-TEST_CASE("Capi: Stroke color", "[capiStrokeColor]")
+TEST_CASE("Stroke color", "[capiStrokeColor]")
 {
     Tvg_Paint *paint = NULL;
     uint8_t r = 255, g = 255, b = 255, a = 255;
@@ -256,7 +134,7 @@ TEST_CASE("Capi: Stroke color", "[capiStrokeColor]")
     REQUIRE(tvg_paint_del(paint) == TVG_RESULT_SUCCESS);
 }
 
-TEST_CASE("Capi: Stroke dash", "[capiStrokeDash]")
+TEST_CASE("Stroke dash", "[capiStrokeDash]")
 {
     Tvg_Paint *paint = NULL;
     float dashPattern[2] = {20, 10};
@@ -277,7 +155,7 @@ TEST_CASE("Capi: Stroke dash", "[capiStrokeDash]")
     REQUIRE(tvg_paint_del(paint) == TVG_RESULT_SUCCESS);
 }
 
-TEST_CASE("Capi: Stroke cap", "[capiStrokeCap]")
+TEST_CASE("Stroke cap", "[capiStrokeCap]")
 {
     Tvg_Paint *paint = NULL;
     Tvg_Stroke_Cap cap;
@@ -299,7 +177,7 @@ TEST_CASE("Capi: Stroke cap", "[capiStrokeCap]")
     REQUIRE(tvg_paint_del(paint) == TVG_RESULT_SUCCESS);
 }
 
-TEST_CASE("Capi: Stroke join", "[capiStrokeJoin]")
+TEST_CASE("Stroke join", "[capiStrokeJoin]")
 {
     Tvg_Paint *paint = NULL;
     Tvg_Stroke_Join join;
@@ -321,7 +199,7 @@ TEST_CASE("Capi: Stroke join", "[capiStrokeJoin]")
     REQUIRE(tvg_paint_del(paint) == TVG_RESULT_SUCCESS);
 }
 
-TEST_CASE("Capi: Fill color", "[capiFillColor]")
+TEST_CASE("Fill color", "[capiFillColor]")
 {
     Tvg_Paint *paint = NULL;
     uint8_t r = 255, g = 255, b = 255, a = 255;
@@ -340,7 +218,7 @@ TEST_CASE("Capi: Fill color", "[capiFillColor]")
     REQUIRE(tvg_paint_del(paint) == TVG_RESULT_SUCCESS);
 }
 
-TEST_CASE("Capi: Fill rule", "[capiFillRule]")
+TEST_CASE("Fill rule", "[capiFillRule]")
 {
     Tvg_Paint *paint = NULL;
     Tvg_Fill_Rule rule;

@@ -5,7 +5,10 @@ test_file = [
 
 if get_option('bindings').contains('capi') == true
 	capi_test_file = [
-	    'capi/testBasic.cpp',
+	    'capi/testInitializer.cpp',
+	    'capi/testSwCanvas.cpp',
+	    'capi/testPaint.cpp',
+	    'capi/testShape.cpp',
 	]
 	test_file += capi_test_file
 endif
