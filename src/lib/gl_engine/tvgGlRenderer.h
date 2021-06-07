@@ -51,6 +51,7 @@ public:
 
     static GlRenderer* gen();
     static int init(TVG_UNUSED uint32_t threads);
+    static int32_t init();
     static int term();
 
 private:

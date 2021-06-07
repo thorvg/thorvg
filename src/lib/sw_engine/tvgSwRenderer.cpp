@@ -622,6 +622,12 @@ bool SwRenderer::init(uint32_t threads)
 }
 
 
+int32_t SwRenderer::init()
+{
+    return initEngineCnt;
+}
+
+
 bool SwRenderer::term()
 {
     if ((--initEngineCnt) > 0) return true;

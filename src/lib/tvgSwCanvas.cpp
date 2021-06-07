@@ -98,6 +98,7 @@ Result SwCanvas::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t 
 unique_ptr<SwCanvas> SwCanvas::gen() noexcept
 {
 #ifdef THORVG_SW_RASTER_SUPPORT
+    if (SwRenderer::init() <= 0) return nullptr;
     return unique_ptr<SwCanvas>(new SwCanvas);
 #endif
     return nullptr;
