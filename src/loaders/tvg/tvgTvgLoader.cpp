@@ -33,13 +33,10 @@ TvgLoader::~TvgLoader()
 
 void TvgLoader::clearBuffer()
 {
-    this->size = 0;
-    if (this->buffer)
-    {
-        free(this->buffer);
-        this->buffer = nullptr;
-    }
-    this->pointer = nullptr;
+    size = 0;
+    free(buffer);
+    buffer = nullptr;
+    pointer = nullptr;
 }
 
 bool TvgLoader::open(const string &path)
@@ -53,19 +50,19 @@ bool TvgLoader::open(const string &path)
         return false;
     }
 
-    this->size = f.tellg();
+    size = f.tellg();
     f.seekg(0, ifstream::beg);
 
-    this->buffer = (char*) malloc(this->size);
-    if (!this->buffer)
+    buffer = (char*) malloc(size);
+    if (!buffer)
     {
         // LOG: Failed to alloc buffer
-        this->size = 0;
+        size = 0;
         f.close();
         return false;
     }
 
-    if (!f.read(this->buffer, size))
+    if (!f.read(buffer, size))
     {
         clearBuffer();
         f.close();
@@ -74,21 +71,21 @@ bool TvgLoader::open(const string &path)
 
     f.close();
 
-    this->pointer = this->buffer;
+    pointer = buffer;
 
     return true;
 }
 
 bool TvgLoader::open(const char *data, uint32_t size)
 {
-    this->pointer = data;
-    this->size = size;
+    pointer = data;
+    size = size;
     return true;
 }
 
 bool TvgLoader::read()
 {
-    if (!this->pointer || this->size == 0) return false;
+    if (!pointer || size == 0) return false;
 
     TaskScheduler::request(this);
 
@@ -105,9 +102,9 @@ bool TvgLoader::close()
 void TvgLoader::run(unsigned tid)
 {
     root = Scene::gen();
-    if (!this->root) return;
+    if (!root) return;
 
-    if (!tvgParseTvgFile(this->pointer, this->size, this->root.get()))
+    if (!tvgParseTvgFile(pointer, size, root.get()))
     {
 #ifdef THORVG_LOG_ENABLED
         printf("TVG_LOADER: File parsing error\n");
