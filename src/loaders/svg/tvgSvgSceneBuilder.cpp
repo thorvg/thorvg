@@ -93,7 +93,6 @@ static unique_ptr<RadialGradient> _applyRadialGradientProperty(SvgStyleGradient*
 {
     Fill::ColorStop *stops;
     int stopCount = 0;
-    float gx, gy, gw, gh;
     int radius;
     float fillOpacity = 255.0f;
 
@@ -113,32 +112,6 @@ static unique_ptr<RadialGradient> _applyRadialGradientProperty(SvgStyleGradient*
         g->radial->r = g->radial->r * radius;
         g->radial->fx = g->radial->fx * rw + rx;
         g->radial->fy = g->radial->fy * rh + ry;
-    }
-
-    //In case of objectBoundingBox it need proper scaling
-    if (!g->userSpace) {
-        float scaleX = 1.0, scaleReversedX = 1.0;
-        float scaleY = 1.0, scaleReversedY = 1.0;
-
-        //Check the smallest size, find the scale value
-        if (rh > rw) {
-            scaleY = ((float)rw) / rh;
-            scaleReversedY = ((float)rh) / rw;
-        } else {
-            scaleX = ((float)rh) / rw;
-            scaleReversedX = ((float)rw) / rh;
-        }
-
-        vg->bounds(&gx, &gy, &gw, &gh);
-
-        float cy = ((float)gh) * 0.5 + gy;
-        float cy_scaled = (((float)gh) * 0.5) * scaleReversedY;
-        float cx = ((float)gw) * 0.5 + gx;
-        float cx_scaled = (((float)gw) * 0.5) * scaleReversedX;
-
-         //= T(gx, gy) x S(scaleX, scaleY) x T(cx_scaled - cx, cy_scaled - cy) x (radial->x, radial->y)
-        g->radial->cx = g->radial->cx * scaleX + scaleX * (cx_scaled - cx) + gx;
-        g->radial->cy = g->radial->cy * scaleY + scaleY * (cy_scaled - cy) + gy;
     }
 
     //TODO: Radial gradient transformation is not yet supported.
