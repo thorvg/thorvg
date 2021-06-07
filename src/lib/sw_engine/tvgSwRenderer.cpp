@@ -453,7 +453,7 @@ Compositor* SwRenderer::target(const RenderRegion& region)
         if (!cmp->compositor) goto err;
 
         //SwImage, Optimize Me: Surface size from MainSurface(WxH) to Parameter W x H
-        cmp->compositor->image.data = (uint32_t*) malloc(sizeof(uint32_t) * surface->w * surface->h);
+        cmp->compositor->image.data = (uint32_t*) malloc(sizeof(uint32_t) * surface->stride * surface->h);
         if (!cmp->compositor->image.data) goto err;
         compositors.push(cmp);
     }
@@ -473,7 +473,7 @@ Compositor* SwRenderer::target(const RenderRegion& region)
     cmp->compositor->bbox.min.y = y;
     cmp->compositor->bbox.max.x = x + w;
     cmp->compositor->bbox.max.y = y + h;
-    cmp->compositor->image.w = surface->w;
+    cmp->compositor->image.w = surface->stride;
     cmp->compositor->image.h = surface->h;
 
     //We know partial clear region
