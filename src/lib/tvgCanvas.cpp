@@ -38,7 +38,7 @@ Canvas::~Canvas()
 
 Result Canvas::reserve(uint32_t n) noexcept
 {
-    pImpl->paints.reserve(n);
+    if (!pImpl->paints.reserve(n)) return Result::FailedAllocation;
     return Result::Success;
 }
 
