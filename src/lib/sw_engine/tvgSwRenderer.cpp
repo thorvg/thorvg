@@ -405,6 +405,8 @@ bool SwRenderer::beginComposite(Compositor* cmp, CompositeMethod method, uint32_
 
 bool SwRenderer::mempool(bool shared)
 {
+    if (shared == sharedMpool) return true;
+
     if (shared) {
         if (!sharedMpool) {
             if (!mpoolTerm(mpool)) return false;
