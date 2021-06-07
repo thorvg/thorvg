@@ -37,7 +37,7 @@ using TvgFlag = uint8_t;
 struct tvgBlock
 {
     TvgIndicator type;
-    ByteCounter lenght;
+    ByteCounter length;
     const char* data;
     const char* blockEnd;
 };
