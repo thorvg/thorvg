@@ -57,6 +57,7 @@ public:
 
     static SwRenderer* gen();
     static bool init(uint32_t threads);
+    static int32_t init();
     static bool term();
 
 private:
