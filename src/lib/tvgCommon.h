@@ -31,6 +31,10 @@ using namespace tvg;
 #define FILL_ID_LINEAR 0
 #define FILL_ID_RADIAL 1
 
+#define PAINT_ID_SHAPE   0
+#define PAINT_ID_SCENE   1
+#define PAINT_ID_PICTURE 2
+
 #define TVG_UNUSED __attribute__ ((__unused__))
 
 #endif //_TVG_COMMON_H_

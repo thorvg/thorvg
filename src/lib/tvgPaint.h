@@ -27,8 +27,6 @@
 
 namespace tvg
 {
-    enum class PaintType { Shape = 0, Scene, Picture };
-
     struct StrategyMethod
     {
         virtual ~StrategyMethod() {}
@@ -49,7 +47,6 @@ namespace tvg
         Paint* cmpTarget = nullptr;
         CompositeMethod cmpMethod = CompositeMethod::None;
         uint8_t opacity = 255;
-        PaintType type;
 
         ~Impl() {
             if (cmpTarget) delete(cmpTarget);
