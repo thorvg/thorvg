@@ -62,6 +62,7 @@ TEST_CASE("Target Buffer", "[tvgSwCanvas]")
     REQUIRE(canvas->target(nullptr, 100, 100, 100, SwCanvas::Colorspace::ARGB8888) == Result::InvalidArguments);
     REQUIRE(canvas->target(buffer, 0, 100, 100, SwCanvas::Colorspace::ARGB8888) == Result::InvalidArguments);
     REQUIRE(canvas->target(buffer, 100, 0, 100, SwCanvas::Colorspace::ARGB8888) == Result::InvalidArguments);
+    REQUIRE(canvas->target(buffer, 100, 200, 100, SwCanvas::Colorspace::ARGB8888) == Result::InvalidArguments);
     REQUIRE(canvas->target(buffer, 100, 100, 0, SwCanvas::Colorspace::ARGB8888) == Result::InvalidArguments);
     REQUIRE(canvas->target(buffer, 100, 100, 100, (SwCanvas::Colorspace)-1) == Result::InvalidArguments);
 
