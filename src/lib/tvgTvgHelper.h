@@ -46,6 +46,7 @@ struct tvgBlock
 #define TVG_HEADER_TVG_VERSION_CODE "000"
 #define TVG_HEADER_TVG_SIGN_CODE_LENGTH 3
 #define TVG_HEADER_TVG_VERSION_CODE_LENGTH 3
+#define TVG_HEADER_TVG_DATA_LENGTH 2
 
 #define TVG_SCENE_BEGIN_INDICATOR     (TvgIndicator)0xfe // Scene indicator
 #define TVG_SHAPE_BEGIN_INDICATOR     (TvgIndicator)0xfd // Shape indicator
@@ -57,9 +58,9 @@ struct tvgBlock
 #define TVG_PAINT_CMP_TARGET_INDICATOR       (TvgIndicator)0x12 // Paint composite
 
 #define TVG_PAINT_CMP_METHOD_INDICATOR     (TvgIndicator)0x20 // Paint composite method
-#define TVG_PAINT_CMP_METHOD_CLIPPATH_FLAG      (TvgFlag)0x01 // CompositeMethod::ClipPath
-#define TVG_PAINT_CMP_METHOD_ALPHAMASK_FLAG     (TvgFlag)0x02 // CompositeMethod::AlphaMask
-#define TVG_PAINT_CMP_METHOD_INV_ALPHAMASK_FLAG (TvgFlag)0x03 // CompositeMethod::InvAlphaMask
+#define TVG_PAINT_CMP_METHOD_CLIPPATH_FLAG      (TvgFlag)0x01 // CompositeMethod::ClipPath     // to be removed
+#define TVG_PAINT_CMP_METHOD_ALPHAMASK_FLAG     (TvgFlag)0x02 // CompositeMethod::AlphaMask    // to be removed
+#define TVG_PAINT_CMP_METHOD_INV_ALPHAMASK_FLAG (TvgFlag)0x03 // CompositeMethod::InvAlphaMask // to be removed
 
 // Scene
 #define TVG_SCENE_FLAG_RESERVEDCNT           (TvgIndicator)0x30 // Scene reserved count
@@ -71,18 +72,18 @@ struct tvgBlock
 #define TVG_SHAPE_COLOR_INDICATOR   (TvgIndicator)0x43 // Shape has color
 
 #define TVG_SHAPE_FILLRULE_INDICATOR    (TvgIndicator)0x44 // Shape FillRule
-#define TVG_SHAPE_FILLRULE_WINDING_FLAG      (TvgFlag)0x01 // FillRule::Winding
-#define TVG_SHAPE_FILLRULE_EVENODD_FLAG      (TvgFlag)0x02 // FillRule::EvenOdd
+#define TVG_SHAPE_FILLRULE_WINDING_FLAG      (TvgFlag)0x00 // FillRule::Winding // to be removed
+#define TVG_SHAPE_FILLRULE_EVENODD_FLAG      (TvgFlag)0x01 // FillRule::EvenOdd // to be removed
 
 #define TVG_SHAPE_STROKE_CAP_INDICATOR  (TvgIndicator)0x50 // Stroke StrokeCap
-#define TVG_SHAPE_STROKE_CAP_SQUARE_FLAG     (TvgFlag)0x01 // StrokeCap::Square
-#define TVG_SHAPE_STROKE_CAP_ROUND_FLAG      (TvgFlag)0x02 // StrokeCap::Round
-#define TVG_SHAPE_STROKE_CAP_BUTT_FLAG       (TvgFlag)0x03 // StrokeCap::Butt
+#define TVG_SHAPE_STROKE_CAP_SQUARE_FLAG     (TvgFlag)0x00 // StrokeCap::Square // to be removed
+#define TVG_SHAPE_STROKE_CAP_ROUND_FLAG      (TvgFlag)0x01 // StrokeCap::Round  // to be removed
+#define TVG_SHAPE_STROKE_CAP_BUTT_FLAG       (TvgFlag)0x02 // StrokeCap::Butt   // to be removed
 
 #define TVG_SHAPE_STROKE_JOIN_INDICATOR (TvgIndicator)0x51 // Stroke StrokeJoin
-#define TVG_SHAPE_STROKE_JOIN_BEVEL_FLAG     (TvgFlag)0x01 // StrokeJoin::Bevel
-#define TVG_SHAPE_STROKE_JOIN_ROUND_FLAG     (TvgFlag)0x02 // StrokeJoin::Round
-#define TVG_SHAPE_STROKE_JOIN_MITER_FLAG     (TvgFlag)0x03 // StrokeJoin::Miter
+#define TVG_SHAPE_STROKE_JOIN_BEVEL_FLAG     (TvgFlag)0x00 // StrokeJoin::Bevel // to be removed
+#define TVG_SHAPE_STROKE_JOIN_ROUND_FLAG     (TvgFlag)0x01 // StrokeJoin::Round // to be removed
+#define TVG_SHAPE_STROKE_JOIN_MITER_FLAG     (TvgFlag)0x02 // StrokeJoin::Miter // to be removed
 
 #define TVG_SHAPE_STROKE_WIDTH_INDICATOR    (TvgIndicator)0x52 // Stroke width
 #define TVG_SHAPE_STROKE_COLOR_INDICATOR    (TvgIndicator)0x53 // Stroke color
@@ -93,9 +94,9 @@ struct tvgBlock
 #define TVG_FILL_RADIAL_GRADIENT_INDICATOR  (TvgIndicator)0x61 // Radial gradient
 #define TVG_FILL_COLORSTOPS_INDICATOR       (TvgIndicator)0x62 // Gradient color stops
 #define TVG_FILL_FILLSPREAD_INDICATOR       (TvgIndicator)0x63 // Gradient fill spread
-#define TVG_FILL_FILLSPREAD_PAD_FLAG             (TvgFlag)0x01 // FillSpread::Pad
-#define TVG_FILL_FILLSPREAD_REFLECT_FLAG         (TvgFlag)0x02 // FillSpread::Reflect
-#define TVG_FILL_FILLSPREAD_REPEAT_FLAG          (TvgFlag)0x03 // FillSpread::Repeat
+#define TVG_FILL_FILLSPREAD_PAD_FLAG             (TvgFlag)0x00 // FillSpread::Pad     // to be removed
+#define TVG_FILL_FILLSPREAD_REFLECT_FLAG         (TvgFlag)0x01 // FillSpread::Reflect // to be removed
+#define TVG_FILL_FILLSPREAD_REPEAT_FLAG          (TvgFlag)0x02 // FillSpread::Repeat  // to be removed
 
 // Picture
 #define TVG_RAW_IMAGE_BEGIN_INDICATOR (TvgIndicator)0x70 // Picture raw data

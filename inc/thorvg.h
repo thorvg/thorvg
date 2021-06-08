@@ -306,10 +306,10 @@ public:
      */
     class Iterator
     {
-        public:
         const Paint* parent;
         const Paint* child;
 
+        public:
             Iterator (Paint* p = nullptr, Paint* c = nullptr);
             const Paint& operator*() const;
             Iterator& operator++();
@@ -1336,6 +1336,31 @@ public:
 
     _TVG_DISABLE_CTOR(Initializer);
 };
+
+
+/**
+ * @class Saver
+ *
+ * @brief
+ */
+class TVG_EXPORT Saver
+{
+public:
+    ~Saver();
+
+    /**
+     * @brief
+     *
+     * @param[in]
+     * @param[in]
+     *
+     * @return
+     */
+    static Result save(std::unique_ptr<Paint> paint, const std::string& path) noexcept;
+
+    _TVG_DECLARE_PRIVATE(Saver);
+};
+
 
 /** @}*/
 
