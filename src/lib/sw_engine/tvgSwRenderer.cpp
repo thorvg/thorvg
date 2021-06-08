@@ -277,7 +277,7 @@ bool SwRenderer::viewport(const RenderRegion& vp)
 
 bool SwRenderer::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h, uint32_t cs)
 {
-    if (!buffer || stride == 0 || w == 0 || h == 0) return false;
+    if (!buffer || stride == 0 || w == 0 || h == 0 || w > stride) return false;
 
     if (!surface) {
         surface = new SwSurface;
