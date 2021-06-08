@@ -148,7 +148,7 @@ TEST_CASE("Paint Opacity", "[capiPaintOpacity]")
 TEST_CASE("Paint Bounds", "[capiPaintBounds]")
 {
     Tvg_Paint *paint = NULL;
-    float x = 0, y = 10, w = 100, h = 100;
+    float x = 0, y = 10, w = 20, h = 100;
     float x_get, y_get, w_get, h_get;
 
     paint = tvg_shape_new();
