@@ -468,7 +468,7 @@ public:
      * @brief Guarantees that drawing task is finished.
      *
      * The Canvas rendering can be performed asynchronously. To make sure that rendering is finished,
-     * the sync() should be called after the draw().
+     * the sync() must be called after the draw() regardless of threading.
      *
      * @return Result::Success when succeed, Result::InsufficientCondition otherwise.
      * @see Canvas::draw()
