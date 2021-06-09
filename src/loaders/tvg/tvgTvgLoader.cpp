@@ -101,10 +101,10 @@ bool TvgLoader::close()
 
 void TvgLoader::run(unsigned tid)
 {
-    root = Scene::gen();
-    if (!root) return;
+    if (root) root.reset();
+    root = tvgParseTvgFile(pointer, size);
 
-    if (!tvgParseTvgFile(pointer, size, root.get()))
+    if (!root)
     {
 #ifdef THORVG_LOG_ENABLED
         printf("TVG_LOADER: File parsing error\n");

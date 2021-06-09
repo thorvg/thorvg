@@ -639,7 +639,7 @@ static LoaderResult _parsePaint(tvgBlock base_block, Paint **paint)
 }
 
 // Load .tvg file to pointed scene
-bool tvgParseTvgFile(const char *pointer, uint32_t size, Scene *scene)
+unique_ptr<Scene> tvgParseTvgFile(const char *pointer, uint32_t size)
 {
     const char* end = pointer + size;
     if (!_readTvgHeader(&pointer) || pointer >= end)
@@ -648,20 +648,23 @@ bool tvgParseTvgFile(const char *pointer, uint32_t size, Scene *scene)
 #ifdef THORVG_LOG_ENABLED
         printf("TVG_LOADER: Header is improper.\n");
 #endif
-        return false;
+        return nullptr;
     }
+
+    auto scene = Scene::gen();
+    if (!scene) return nullptr;
 
     Paint* paint;
     while (pointer < end)
     {
         auto block = _readTvgBlock(pointer);
-        if (block.blockEnd > end) return false;
+        if (block.blockEnd > end) return nullptr;
 
         auto result = _parsePaint(block, &paint);
-        if (result > LoaderResult::Success) return false;
+        if (result > LoaderResult::Success) return nullptr;
         if (result == LoaderResult::Success) {
             if (scene->push(unique_ptr<Paint>(paint)) != Result::Success) {
-                return false;
+                return nullptr;
             }
         }
 
@@ -672,5 +675,5 @@ bool tvgParseTvgFile(const char *pointer, uint32_t size, Scene *scene)
 #ifdef THORVG_LOG_ENABLED
     printf("TVG_LOADER: File parsed correctly.\n");
 #endif
-    return true;
+    return move(scene);
 }
