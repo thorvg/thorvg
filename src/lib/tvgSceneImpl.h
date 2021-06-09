@@ -34,6 +34,11 @@ struct Scene::Impl
     Array<Paint*> paints;
     uint8_t opacity;            //for composition
     RenderMethod* renderer = nullptr;    //keep it for explicit clear
+    Scene* scene = nullptr;
+
+    Impl(Scene* s) : scene(s)
+    {
+    }
 
     ~Impl()
     {
@@ -184,6 +189,26 @@ struct Scene::Impl
         }
         paints.clear();
         renderer = nullptr;
+    }
+
+    ByteCounter serialize(TvgSaver* tvgSaver)
+    {
+        if (!tvgSaver) return 0;
+
+        ByteCounter sceneDataByteCnt = 0;
+
+        tvgSaver->saveMemberIndicator(TVG_SCENE_BEGIN_INDICATOR);
+        tvgSaver->skipMemberDataSize();
+
+        for (auto paint = paints.data; paint < (paints.data + paints.count); ++paint) {
+            sceneDataByteCnt += (*paint)->pImpl->serialize(tvgSaver);
+        }
+
+        sceneDataByteCnt += scene->Paint::pImpl->serializePaint(tvgSaver);
+
+        tvgSaver->saveMemberDataSizeAt(sceneDataByteCnt);
+
+        return sizeof(TvgIndicator) + sizeof(ByteCounter) + sceneDataByteCnt;
     }
 };
 

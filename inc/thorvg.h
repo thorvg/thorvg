@@ -299,6 +299,20 @@ public:
      */
     uint8_t opacity() const noexcept;
 
+    /**
+     * @brief
+     *
+     * @return
+     */
+    Result save(const std::string& path) noexcept;
+
+    /**
+     * @brief
+     *
+     * @return
+     */
+    std::unique_ptr<char[]> serialize(int* size) noexcept;
+
     _TVG_DECLARE_ACCESSOR();
     _TVG_DECLARE_PRIVATE(Paint);
 };

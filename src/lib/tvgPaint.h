@@ -23,7 +23,7 @@
 #define _TVG_PAINT_H_
 
 #include "tvgRender.h"
-
+#include "tvgTvgSaver.h"
 
 namespace tvg
 {
@@ -39,6 +39,7 @@ namespace tvg
         virtual bool bounds(float* x, float* y, float* w, float* h) const = 0;
         virtual RenderRegion bounds(RenderMethod& renderer) const = 0;
         virtual Paint* duplicate() = 0;
+        virtual ByteCounter serialize(TvgSaver* tvgSaver) = 0;
     };
 
     struct Paint::Impl
@@ -50,6 +51,7 @@ namespace tvg
         CompositeMethod cmpMethod = CompositeMethod::None;
         PaintType type;
         uint8_t opacity = 255;
+        unique_ptr<Saver> saver = nullptr;
 
         ~Impl() {
             if (cmpTarget) delete(cmpTarget);
@@ -114,6 +116,56 @@ namespace tvg
         void* update(RenderMethod& renderer, const RenderTransform* pTransform, uint32_t opacity, Array<RenderData>& clips, uint32_t pFlag);
         bool render(RenderMethod& renderer);
         Paint* duplicate();
+
+        ByteCounter serializePaint(TvgSaver* tvgSaver)
+        {
+            if (!tvgSaver) return 0;
+            ByteCounter paintDataByteCnt = 0;
+
+            if (opacity < 255) {
+                paintDataByteCnt += tvgSaver->saveMember(TVG_PAINT_OPACITY_INDICATOR,
+                                                         sizeof(opacity), &opacity);
+            }
+
+            if (rTransform) {
+                rTransform->update(); 
+                paintDataByteCnt += tvgSaver->saveMember(TVG_PAINT_TRANSFORM_MATRIX_INDICATOR,
+                                                         sizeof(rTransform->m), &rTransform->m);
+            }
+
+            if (cmpTarget) {
+                ByteCounter cmpDataByteCnt = 0;
+
+                tvgSaver->saveMemberIndicator(TVG_PAINT_CMP_TARGET_INDICATOR);
+                tvgSaver->skipMemberDataSize();
+
+                auto cmpMethodTvgFlag = static_cast<TvgFlag>(cmpMethod);
+                cmpDataByteCnt += tvgSaver->saveMember(TVG_PAINT_CMP_METHOD_INDICATOR, sizeof(TvgFlag), &cmpMethodTvgFlag);
+
+                cmpDataByteCnt += cmpTarget->pImpl->serialize(tvgSaver);
+
+                tvgSaver->saveMemberDataSizeAt(cmpDataByteCnt);
+                paintDataByteCnt += sizeof(TvgIndicator) + sizeof(ByteCounter) + cmpDataByteCnt;
+            }
+
+            return paintDataByteCnt;
+        }
+
+        ByteCounter serialize(TvgSaver* tvgSaver)
+        {
+            return smethod->serialize(tvgSaver);
+        }
+
+        Result save(const std::string& path, Paint *paint)
+        {
+            if (saver) saver->close();
+            saver = SaverMgr::saver(path, paint);
+            if (!saver) return Result::NonSupport;
+
+            if (!saver->write()) return Result::Unknown;
+
+            return Result::Success;
+        }
     };
 
 
@@ -153,6 +205,11 @@ namespace tvg
         Paint* duplicate() override
         {
             return inst->duplicate();
+        }
+
+        ByteCounter serialize(TvgSaver* tvgSaver) override
+        {
+             return inst->serialize(tvgSaver);
         }
     };
 }

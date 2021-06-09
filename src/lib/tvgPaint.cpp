@@ -323,3 +323,21 @@ uint8_t Paint::opacity() const noexcept
 {
     return pImpl->opacity;
 }
+
+
+Result Paint::save(const std::string& path) noexcept
+{
+    if (path.empty()) return Result::InvalidArguments;
+    return pImpl->save(path, this);
+}
+
+
+std::unique_ptr<char[]> Paint::serialize(int *size) noexcept
+{
+    auto tvgSaver = static_cast<TvgSaver*>(pImpl->saver.get());
+    if (!tvgSaver) tvgSaver = new TvgSaver(this);
+
+    if (size) *size = pImpl->serialize(tvgSaver);
+
+    return unique_ptr<char[]>(tvgSaver->buffer); //TODO - buffer public?
+}

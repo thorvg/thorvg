@@ -212,6 +212,42 @@ struct Picture::Impl
 
         return ret.release();
     }
+
+    ByteCounter serialize(TvgSaver* tvgSaver)
+    {
+        if (!tvgSaver) return 0;
+        reload();
+
+        ByteCounter pictureDataByteCnt = 0;
+
+        tvgSaver->saveMemberIndicator(TVG_PICTURE_BEGIN_INDICATOR);
+        tvgSaver->skipMemberDataSize();
+
+        if (paint) {
+            pictureDataByteCnt += paint->Paint::pImpl->serialize(tvgSaver);
+        }
+        else if (pixels) {
+            float vw, vh;
+            picture->viewbox(nullptr, nullptr, &vw, &vh);
+            uint32_t w = static_cast<uint32_t>(vw);
+            uint32_t h = static_cast<uint32_t>(vh);
+            ByteCounter wByteCnt = sizeof(w); // same as h size
+            ByteCounter pixelsByteCnt = w * h * sizeof(pixels[0]);
+
+            tvgSaver->saveMemberIndicator(TVG_RAW_IMAGE_BEGIN_INDICATOR);
+            tvgSaver->saveMemberDataSize(2 * wByteCnt + pixelsByteCnt);
+            pictureDataByteCnt += tvgSaver->saveMemberData(&w, wByteCnt);
+            pictureDataByteCnt += tvgSaver->saveMemberData(&h, wByteCnt);
+            pictureDataByteCnt += tvgSaver->saveMemberData(pixels, pixelsByteCnt);
+            pictureDataByteCnt += TVG_INDICATOR_SIZE + BYTE_COUNTER_SIZE;
+        }
+
+        pictureDataByteCnt += picture->Paint::pImpl->serializePaint(tvgSaver);
+
+        tvgSaver->saveMemberDataSizeAt(pictureDataByteCnt);
+
+        return TVG_INDICATOR_SIZE + BYTE_COUNTER_SIZE + pictureDataByteCnt;
+    }
 };
 
 #endif //_TVG_PICTURE_IMPL_H_

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2021 Samsung Electronics Co., Ltd. All rights reserved.
+ * Copyright (c) 2021 Samsung Electronics Co., Ltd. All rights reserved.
 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -19,52 +19,25 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#include "tvgSceneImpl.h"
+#ifndef _TVG_SAVER_H_
+#define _TVG_SAVER_H_
 
-/************************************************************************/
-/* External Class Implementation                                        */
-/************************************************************************/
+#include "tvgCommon.h"
+#include "tvgTvgHelper.h" // TODO - move
 
-Scene::Scene() : pImpl(new Impl(this))
+namespace tvg
 {
-    Paint::pImpl->type = PaintType::Scene;
-    Paint::pImpl->method(new PaintMethod<Scene::Impl>(pImpl));
+
+class Saver
+{
+public:
+    virtual ~Saver() {}
+
+    virtual bool open(const string& path) { /* Not supported */ return false; };
+    virtual bool write() = 0;
+    virtual bool close() = 0;
+};
+
 }
 
-
-Scene::~Scene()
-{
-    delete(pImpl);
-}
-
-
-unique_ptr<Scene> Scene::gen() noexcept
-{
-    return unique_ptr<Scene>(new Scene);
-}
-
-
-Result Scene::push(unique_ptr<Paint> paint) noexcept
-{
-    auto p = paint.release();
-    if (!p) return Result::MemoryCorruption;
-    pImpl->paints.push(p);
-
-    return Result::Success;
-}
-
-
-Result Scene::reserve(uint32_t size) noexcept
-{
-    pImpl->paints.reserve(size);
-
-    return Result::Success;
-}
-
-
-Result Scene::clear(bool free) noexcept
-{
-    pImpl->clear(free);
-
-    return Result::Success;
-}
+#endif //_TVG_SAVER_H_

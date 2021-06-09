@@ -385,6 +385,140 @@ struct Shape::Impl
 
         return ret.release();
     }
+
+    ByteCounter serializeFill(TvgSaver* tvgSaver, Fill* f, TvgIndicator fillTvgFlag)
+    {
+        if (!tvgSaver) return 0;
+
+        ByteCounter fillDataByteCnt = 0;
+        const Fill::ColorStop* stops = nullptr;
+        auto stopsCnt = f->colorStops(&stops);
+        if (!stops || stopsCnt == 0) return 0;
+
+        tvgSaver->saveMemberIndicator(fillTvgFlag);
+        tvgSaver->skipMemberDataSize();
+
+        if (f->id() == FILL_ID_RADIAL) {
+            float argRadial[3];
+            auto radGrad = static_cast<RadialGradient*>(f);
+            if (radGrad->radial(argRadial, argRadial + 1,argRadial + 2) != Result::Success) {
+                tvgSaver->rewindBuffer(sizeof(TvgFlag) + sizeof(ByteCounter));
+                return 0;
+            }
+            fillDataByteCnt += tvgSaver->saveMember(TVG_FILL_RADIAL_GRADIENT_INDICATOR, sizeof(argRadial), argRadial);
+        }
+        else {
+            float argLinear[4];
+            auto linGrad = static_cast<LinearGradient*>(f);
+            if (linGrad->linear(argLinear, argLinear + 1, argLinear + 2, argLinear + 3) != Result::Success) {
+                tvgSaver->rewindBuffer(sizeof(TvgFlag) + sizeof(ByteCounter));
+                return 0;
+            }
+            fillDataByteCnt += tvgSaver->saveMember(TVG_FILL_LINEAR_GRADIENT_INDICATOR, sizeof(argLinear), argLinear);
+        }
+
+        auto flag = static_cast<TvgFlag>(f->spread());
+        fillDataByteCnt += tvgSaver->saveMember(TVG_FILL_FILLSPREAD_INDICATOR, sizeof(TvgFlag), &flag);
+
+        fillDataByteCnt += tvgSaver->saveMember(TVG_FILL_COLORSTOPS_INDICATOR, stopsCnt * sizeof(stops), stops);
+
+        tvgSaver->saveMemberDataSizeAt(fillDataByteCnt);
+
+        return sizeof(TvgIndicator) + sizeof(ByteCounter) + fillDataByteCnt;
+    }
+
+    ByteCounter serializeStroke(TvgSaver* tvgSaver)
+    {
+        if (!tvgSaver) return 0;
+
+        ByteCounter strokeDataByteCnt = 0;
+        TvgFlag flag;
+
+        tvgSaver->saveMemberIndicator(TVG_SHAPE_STROKE_INDICATOR);
+        tvgSaver->skipMemberDataSize();
+
+        flag = static_cast<TvgFlag>(stroke->cap);
+        strokeDataByteCnt += tvgSaver->saveMember(TVG_SHAPE_STROKE_CAP_INDICATOR, sizeof(TvgFlag), &flag);
+
+        flag = static_cast<TvgFlag>(stroke->join);
+        strokeDataByteCnt += tvgSaver->saveMember(TVG_SHAPE_STROKE_JOIN_INDICATOR, sizeof(TvgFlag), &flag);
+
+        strokeDataByteCnt += tvgSaver->saveMember(TVG_SHAPE_STROKE_WIDTH_INDICATOR, sizeof(stroke->width), &stroke->width);
+
+        if (stroke->fill) {
+            strokeDataByteCnt += serializeFill(tvgSaver, stroke->fill, TVG_SHAPE_STROKE_FILL_INDICATOR);
+        } else {
+            strokeDataByteCnt += tvgSaver->saveMember(TVG_SHAPE_STROKE_COLOR_INDICATOR, sizeof(stroke->color), &stroke->color);
+        }
+
+        if (stroke->dashPattern && stroke->dashCnt > 0) {
+            ByteCounter dashCntByteCnt = sizeof(stroke->dashCnt);
+            ByteCounter dashPtrnByteCnt = stroke->dashCnt * sizeof(stroke->dashPattern[0]);
+
+            tvgSaver->saveMemberIndicator(TVG_SHAPE_STROKE_DASHPTRN_INDICATOR);
+            tvgSaver->saveMemberDataSize(dashCntByteCnt + dashPtrnByteCnt);
+            strokeDataByteCnt += tvgSaver->saveMemberData(&stroke->dashCnt, dashCntByteCnt);
+            strokeDataByteCnt += tvgSaver->saveMemberData(stroke->dashPattern, dashPtrnByteCnt);
+            strokeDataByteCnt += sizeof(TvgIndicator) + sizeof(ByteCounter);
+        }
+
+        tvgSaver->saveMemberDataSizeAt(strokeDataByteCnt);
+
+        return sizeof(TvgIndicator) + sizeof(ByteCounter) + strokeDataByteCnt;
+    }
+
+    ByteCounter serializePath(TvgSaver* tvgSaver)
+    {
+        if (!tvgSaver) return 0;
+        if (!path.cmds || !path.pts || !path.cmdCnt || !path.ptsCnt) return 0;  // MGS - double check - do we need this ?
+
+        ByteCounter pathDataByteCnt = 0;
+
+        tvgSaver->saveMemberIndicator(TVG_SHAPE_PATH_INDICATOR);
+        tvgSaver->skipMemberDataSize();
+
+        pathDataByteCnt += tvgSaver->saveMemberData(&path.cmdCnt, sizeof(path.cmdCnt));
+        pathDataByteCnt += tvgSaver->saveMemberData(&path.ptsCnt, sizeof(path.ptsCnt));
+        pathDataByteCnt += tvgSaver->saveMemberData(path.cmds, path.cmdCnt * sizeof(path.cmds[0]));
+        pathDataByteCnt += tvgSaver->saveMemberData(path.pts, path.ptsCnt * sizeof(path.pts[0]));
+
+        tvgSaver->saveMemberDataSizeAt(pathDataByteCnt);
+
+        return sizeof(TvgIndicator) + sizeof(ByteCounter) + pathDataByteCnt;
+    }
+
+    ByteCounter serialize(TvgSaver* tvgSaver)
+    {
+        if (!tvgSaver) return 0;
+
+        ByteCounter shapeDataByteCnt = 0;
+
+        tvgSaver->saveMemberIndicator(TVG_SHAPE_BEGIN_INDICATOR);
+        tvgSaver->skipMemberDataSize();
+
+        TvgFlag ruleTvgFlag = (rule == FillRule::EvenOdd) ? TVG_SHAPE_FILLRULE_EVENODD_FLAG : TVG_SHAPE_FILLRULE_WINDING_FLAG;
+        shapeDataByteCnt += tvgSaver->saveMember(TVG_SHAPE_FILLRULE_INDICATOR, sizeof(TvgFlag), &ruleTvgFlag);
+
+        if (stroke) {
+            shapeDataByteCnt += serializeStroke(tvgSaver);
+        }
+
+        if (fill) {
+            shapeDataByteCnt += serializeFill(tvgSaver, fill, TVG_SHAPE_FILL_INDICATOR);
+        } else {
+            shapeDataByteCnt += tvgSaver->saveMember(TVG_SHAPE_COLOR_INDICATOR, sizeof(color), color);
+        }
+
+        if (path.cmds && path.pts) {
+            shapeDataByteCnt += serializePath(tvgSaver);
+        }
+
+        shapeDataByteCnt += shape->Paint::pImpl->serializePaint(tvgSaver);
+
+        tvgSaver->saveMemberDataSizeAt(shapeDataByteCnt);
+
+        return sizeof(TvgIndicator) + sizeof(ByteCounter) + shapeDataByteCnt;
+    }
 };
 
 #endif //_TVG_SHAPE_IMPL_H_
