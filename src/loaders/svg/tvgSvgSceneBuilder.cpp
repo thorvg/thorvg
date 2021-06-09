@@ -195,7 +195,7 @@ static void _applyProperty(SvgNode* node, Shape* vg, float vx, float vy, float v
     if (style->fill.paint.none) {
         //Do nothing
     } else if (style->fill.paint.gradient) {
-         if (!style->fill.paint.gradient->userSpace) vg->bounds(&vx, &vy, &vw, &vh);
+        if (!style->fill.paint.gradient->userSpace) vg->bounds(&vx, &vy, &vw, &vh);
 
         if (style->fill.paint.gradient->type == SvgGradientType::Linear) {
              auto linear = _applyLinearGradientProperty(style->fill.paint.gradient, vg, vx, vy, vw, vh);
@@ -232,7 +232,15 @@ static void _applyProperty(SvgNode* node, Shape* vg, float vx, float vy, float v
     if (style->stroke.paint.none) {
         //Do nothing
     } else if (style->stroke.paint.gradient) {
-        //TODO: Support gradient style
+        if (!style->stroke.paint.gradient->userSpace) vg->bounds(&vx, &vy, &vw, &vh);
+
+        if (style->stroke.paint.gradient->type == SvgGradientType::Linear) {
+             auto linear = _applyLinearGradientProperty(style->stroke.paint.gradient, vg, vx, vy, vw, vh);
+             vg->stroke(move(linear));
+        } else if (style->stroke.paint.gradient->type == SvgGradientType::Radial) {
+             auto radial = _applyRadialGradientProperty(style->stroke.paint.gradient, vg, vx, vy, vw, vh);
+             vg->stroke(move(radial));
+        }
     } else if (style->stroke.paint.url) {
         //TODO: Apply the color pointed by url
     } else if (style->stroke.paint.curColor) {

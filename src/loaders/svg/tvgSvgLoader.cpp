@@ -2388,18 +2388,18 @@ static SvgStyleGradient* _gradientDup(Array<SvgStyleGradient*>* gradients, const
 }
 
 
-static void _updateGradient(SvgNode* node, Array<SvgStyleGradient*>* gradidents)
+static void _updateGradient(SvgNode* node, Array<SvgStyleGradient*>* gradients)
 {
     if (node->child.count > 0) {
         auto child = node->child.data;
         for (uint32_t i = 0; i < node->child.count; ++i, ++child) {
-            _updateGradient(*child, gradidents);
+            _updateGradient(*child, gradients);
         }
     } else {
         if (node->style->fill.paint.url) {
-            node->style->fill.paint.gradient = _gradientDup(gradidents, node->style->fill.paint.url);
+            node->style->fill.paint.gradient = _gradientDup(gradients, node->style->fill.paint.url);
         } else if (node->style->stroke.paint.url) {
-            //node->style->stroke.paint.gradient = _gradientDup(gradList, node->style->stroke.paint.url);
+            node->style->stroke.paint.gradient = _gradientDup(gradients, node->style->stroke.paint.url);
         }
     }
 }
