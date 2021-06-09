@@ -35,15 +35,15 @@ TEST_CASE("Paint Transform", "[capiPaintTransform]")
 
     REQUIRE(tvg_paint_transform(paint, &matrix_set) == TVG_RESULT_SUCCESS);
     REQUIRE(tvg_paint_get_transform(paint, &matrix_get) == TVG_RESULT_SUCCESS);
-    REQUIRE(matrix_get.e11 == matrix_set.e11);
-    REQUIRE(matrix_get.e12 == matrix_set.e12);
-    REQUIRE(matrix_get.e13 == matrix_set.e13);
-    REQUIRE(matrix_get.e21 == matrix_set.e21);
-    REQUIRE(matrix_get.e22 == matrix_set.e22);
-    REQUIRE(matrix_get.e23 == matrix_set.e23);
-    REQUIRE(matrix_get.e31 == matrix_set.e31);
-    REQUIRE(matrix_get.e32 == matrix_set.e32);
-    REQUIRE(matrix_get.e33 == matrix_set.e33);
+    REQUIRE(fabs(matrix_get.e11 - matrix_set.e11) < UTC_EPSILON);
+    REQUIRE(fabs(matrix_get.e12 - matrix_set.e12) < UTC_EPSILON);
+    REQUIRE(fabs(matrix_get.e13 - matrix_set.e13) < UTC_EPSILON);
+    REQUIRE(fabs(matrix_get.e21 - matrix_set.e21) < UTC_EPSILON);
+    REQUIRE(fabs(matrix_get.e22 - matrix_set.e22) < UTC_EPSILON);
+    REQUIRE(fabs(matrix_get.e23 - matrix_set.e23) < UTC_EPSILON);
+    REQUIRE(fabs(matrix_get.e31 - matrix_set.e31) < UTC_EPSILON);
+    REQUIRE(fabs(matrix_get.e32 - matrix_set.e32) < UTC_EPSILON);
+    REQUIRE(fabs(matrix_get.e33 - matrix_set.e33) < UTC_EPSILON);
 
     REQUIRE(tvg_paint_del(paint) == TVG_RESULT_SUCCESS);
 }
