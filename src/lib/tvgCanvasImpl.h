@@ -33,6 +33,7 @@ struct Canvas::Impl
     Array<Paint*> paints;
     RenderMethod* renderer;
     bool refresh = false;   //if all paints should be updated by force.
+    bool drawing = false;   //on drawing condition?
 
     Impl(RenderMethod* pRenderer):renderer(pRenderer)
     {
@@ -46,6 +47,9 @@ struct Canvas::Impl
 
     Result push(unique_ptr<Paint> paint)
     {
+        //You can not push paints during rendering.
+        if (drawing) return Result::InsufficientCondition;
+
         auto p = paint.release();
         if (!p) return Result::MemoryCorruption;
         paints.push(p);
@@ -65,6 +69,8 @@ struct Canvas::Impl
         }
 
         paints.clear();
+
+        drawing = false;
 
         return Result::Success;
     }
@@ -99,7 +105,7 @@ struct Canvas::Impl
 
     Result draw()
     {
-        if (!renderer || !renderer->preRender()) return Result::InsufficientCondition;
+        if (drawing || paints.count == 0 || !renderer || !renderer->preRender()) return Result::InsufficientCondition;
 
         for (auto paint = paints.data; paint < (paints.data + paints.count); ++paint) {
             if (!(*paint)->pImpl->render(*renderer)) return Result::InsufficientCondition;
@@ -107,7 +113,20 @@ struct Canvas::Impl
 
         if (!renderer->postRender()) return Result::InsufficientCondition;
 
+        drawing = true;
+
         return Result::Success;
+    }
+
+    Result sync()
+    {
+        if (!drawing) return Result::InsufficientCondition;
+        if (renderer->sync()) {
+            drawing = false;
+            return Result::Success;
+        }
+
+        return Result::InsufficientCondition;
     }
 };
 
