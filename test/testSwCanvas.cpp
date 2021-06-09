@@ -34,7 +34,7 @@ TEST_CASE("Missing Initialization", "[tvgSwCanvas]")
 
 TEST_CASE("Basic Creation", "[tvgSwCanvas]")
 {
-    Initializer::init(CanvasEngine::Sw, 0);
+    REQUIRE(Initializer::init(CanvasEngine::Sw, 0) == Result::Success);
 
     auto canvas = SwCanvas::gen();
     REQUIRE(canvas);
@@ -45,12 +45,12 @@ TEST_CASE("Basic Creation", "[tvgSwCanvas]")
     auto canvas3 = SwCanvas::gen();
     REQUIRE(canvas3);
 
-    Initializer::term(CanvasEngine::Sw);
+    REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
 }
 
 TEST_CASE("Target Buffer", "[tvgSwCanvas]")
 {
-    Initializer::init(CanvasEngine::Sw, 0);
+    REQUIRE(Initializer::init(CanvasEngine::Sw, 0) == Result::Success);
 
     auto canvas = SwCanvas::gen();
     REQUIRE(canvas);
@@ -65,12 +65,12 @@ TEST_CASE("Target Buffer", "[tvgSwCanvas]")
     REQUIRE(canvas->target(buffer, 100, 200, 100, SwCanvas::Colorspace::ARGB8888) == Result::InvalidArguments);
     REQUIRE(canvas->target(buffer, 100, 100, 0, SwCanvas::Colorspace::ARGB8888) == Result::InvalidArguments);
 
-    Initializer::term(CanvasEngine::Sw);
+    REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
 }
 
 TEST_CASE("Memory Pool", "[tvgSwCanvas]")
 {
-    Initializer::init(CanvasEngine::Sw, 0);
+    REQUIRE(Initializer::init(CanvasEngine::Sw, 0) == Result::Success);
 
     auto canvas = SwCanvas::gen();
     REQUIRE(canvas);
@@ -81,14 +81,15 @@ TEST_CASE("Memory Pool", "[tvgSwCanvas]")
     REQUIRE(canvas->mempool(SwCanvas::MempoolPolicy::Default) == Result::Success);
 
     auto canvas2 = SwCanvas::gen();
+    REQUIRE(canvas);
+
     REQUIRE(canvas2->mempool(SwCanvas::MempoolPolicy::Default) == Result::Success);
     REQUIRE(canvas2->mempool(SwCanvas::MempoolPolicy::Individual) == Result::Success);
     REQUIRE(canvas2->mempool(SwCanvas::MempoolPolicy::Shareable) == Result::Success);
     REQUIRE(canvas2->mempool(SwCanvas::MempoolPolicy::Shareable) == Result::Success);
 
-    auto shape = Shape::gen();
-    canvas2->push(move(shape));
+    REQUIRE(canvas2->push(move(Shape::gen())) == Result::Success);
     REQUIRE(canvas2->mempool(SwCanvas::MempoolPolicy::Individual) == Result::InsufficientCondition);
 
-    Initializer::term(CanvasEngine::Sw);
+    REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
 }
