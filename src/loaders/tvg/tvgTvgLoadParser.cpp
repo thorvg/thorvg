@@ -86,7 +86,7 @@ static bool _readTvgHeader(const char **pointer)
  */
 static LoaderResult _parseCmpTarget(const char *pointer, const char *end, Paint *paint)
 {
-    tvgBlock block = _readTvgBlock(pointer);
+    auto block = _readTvgBlock(pointer);
     if (block.blockEnd > end) return LoaderResult::SizeCorruption;
 
     CompositeMethod cmpMethod;
@@ -108,11 +108,11 @@ static LoaderResult _parseCmpTarget(const char *pointer, const char *end, Paint 
     }
 
     pointer = block.blockEnd;
-    tvgBlock block_paint = _readTvgBlock(pointer);
+    auto block_paint = _readTvgBlock(pointer);
     if (block_paint.blockEnd > end) return LoaderResult::SizeCorruption;
 
     Paint* cmpTarget;
-    LoaderResult result = _parsePaint(block_paint, &cmpTarget);
+    auto result = _parsePaint(block_paint, &cmpTarget);
     if (result != LoaderResult::Success) return result;
 
     if (paint->composite(unique_ptr<Paint>(cmpTarget), cmpMethod) != Result::Success) return LoaderResult::MemoryCorruption;
@@ -179,7 +179,7 @@ static LoaderResult _parseScene(tvgBlock block, Scene *scene)
     }
 
     Paint* paint;
-    LoaderResult result = _parsePaint(block, &paint);
+    auto result = _parsePaint(block, &paint);
     if (result == LoaderResult::Success) {
         if (scene->push(unique_ptr<Paint>(paint)) != Result::Success) {
             return LoaderResult::MemoryCorruption;
@@ -237,7 +237,7 @@ static LoaderResult _parseShapeFill(const char *pointer, const char *end, Fill *
 
     while (pointer < end)
     {
-        tvgBlock block = _readTvgBlock(pointer);
+        auto block = _readTvgBlock(pointer);
         if (block.blockEnd > end) return LoaderResult::SizeCorruption;
 
         switch (block.type)
@@ -365,7 +365,7 @@ static LoaderResult _parseShapeStroke(const char *pointer, const char *end, Shap
 {
     while (pointer < end)
     {
-        tvgBlock block = _readTvgBlock(pointer);
+        auto block = _readTvgBlock(pointer);
         if (block.blockEnd > end) return LoaderResult::SizeCorruption;
 
         switch (block.type)
@@ -421,14 +421,14 @@ static LoaderResult _parseShapeStroke(const char *pointer, const char *end, Shap
             case TVG_SHAPE_STROKE_FILL_INDICATOR:
             { // stroke fill
                 Fill* fill;
-                LoaderResult result = _parseShapeFill(block.data, block.blockEnd, &fill);
+                auto result = _parseShapeFill(block.data, block.blockEnd, &fill);
                 if (result != LoaderResult::Success) return result;
                 shape->stroke(unique_ptr < Fill > (fill));
                 break;
             }
             case TVG_SHAPE_STROKE_DASHPTRN_INDICATOR:
             { // dashed stroke
-                LoaderResult result = _parseShapeStrokeDashPattern(block.data, block.blockEnd, shape);
+                auto result = _parseShapeStrokeDashPattern(block.data, block.blockEnd, shape);
                 if (result != LoaderResult::Success) return result;
                 break;
             }
@@ -457,20 +457,20 @@ static LoaderResult _parseShape(tvgBlock block, Shape *shape)
     {
         case TVG_SHAPE_PATH_INDICATOR:
         { // path
-            LoaderResult result = _parseShapePath(block.data, block.blockEnd, shape);
+            auto result = _parseShapePath(block.data, block.blockEnd, shape);
             if (result != LoaderResult::Success) return result;
             break;
         }
         case TVG_SHAPE_STROKE_INDICATOR:
         { // stroke section
-            LoaderResult result = _parseShapeStroke(block.data, block.blockEnd, shape);
+            auto result = _parseShapeStroke(block.data, block.blockEnd, shape);
             if (result != LoaderResult::Success) return result;
             break;
         }
         case TVG_SHAPE_FILL_INDICATOR:
         { // fill (gradient)
             Fill* fill;
-            LoaderResult result = _parseShapeFill(block.data, block.blockEnd, &fill);
+            auto result = _parseShapeFill(block.data, block.blockEnd, &fill);
             if (result != LoaderResult::Success) return result;
             shape->fill(unique_ptr < Fill > (fill));
             break;
@@ -539,7 +539,7 @@ static LoaderResult _parsePicture(tvgBlock block, Picture *picture)
     }
 
     Paint* paint;
-    LoaderResult result = _parsePaint(block, &paint);
+    auto result = _parsePaint(block, &paint);
     if (result == LoaderResult::Success) {
         if (picture->paint(unique_ptr<Paint>(paint)) != Result::Success) {
             return LoaderResult::LogicalCorruption;
@@ -563,10 +563,10 @@ static LoaderResult _parsePaint(tvgBlock base_block, Paint **paint)
             const char* pointer = base_block.data;
             while (pointer < base_block.blockEnd)
             {
-                tvgBlock block = _readTvgBlock(pointer);
+                auto block = _readTvgBlock(pointer);
                 if (block.blockEnd > base_block.blockEnd) return LoaderResult::SizeCorruption;
 
-                LoaderResult result = _parseScene(block, s.get());
+                auto result = _parseScene(block, s.get());
                 if (result == LoaderResult::InvalidType) result = _parsePaint(block, s.get());
 
                 if (result > LoaderResult::Success)
@@ -588,10 +588,10 @@ static LoaderResult _parsePaint(tvgBlock base_block, Paint **paint)
             const char* pointer = base_block.data;
             while (pointer < base_block.blockEnd)
             {
-                tvgBlock block = _readTvgBlock(pointer);
+                auto block = _readTvgBlock(pointer);
                 if (block.blockEnd > base_block.blockEnd) return LoaderResult::SizeCorruption;
 
-                LoaderResult result = _parseShape(block, s.get());
+                auto result = _parseShape(block, s.get());
                 if (result == LoaderResult::InvalidType) result = _parsePaint(block, s.get());
 
                 if (result > LoaderResult::Success)
@@ -613,10 +613,10 @@ static LoaderResult _parsePaint(tvgBlock base_block, Paint **paint)
             const char* pointer = base_block.data;
             while (pointer < base_block.blockEnd)
             {
-                tvgBlock block = _readTvgBlock(pointer);
+                auto block = _readTvgBlock(pointer);
                 if (block.blockEnd > base_block.blockEnd) return LoaderResult::SizeCorruption;
 
-                LoaderResult result = _parsePicture(block, s.get());
+                auto result = _parsePicture(block, s.get());
                 if (result == LoaderResult::InvalidType) result = _parsePaint(block, s.get());
 
                 if (result > LoaderResult::Success)
@@ -654,10 +654,10 @@ bool tvgParseTvgFile(const char *pointer, uint32_t size, Scene *scene)
     Paint* paint;
     while (pointer < end)
     {
-        tvgBlock block = _readTvgBlock(pointer);
+        auto block = _readTvgBlock(pointer);
         if (block.blockEnd > end) return false;
 
-        LoaderResult result = _parsePaint(block, &paint);
+        auto result = _parsePaint(block, &paint);
         if (result > LoaderResult::Success) return false;
         if (result == LoaderResult::Success) {
             if (scene->push(unique_ptr<Paint>(paint)) != Result::Success) {
