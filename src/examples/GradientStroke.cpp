@@ -25,7 +25,6 @@
 /************************************************************************/
 /* Drawing Commands                                                     */
 /************************************************************************/
-tvg::Shape* pShape = nullptr;
 
 void tvgDrawCmds(tvg::Canvas* canvas)
 {
@@ -119,11 +118,9 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     fill5->linear(150, 450, 450, 750);
     fill5->colorStops(colorStops3, 2);
     shape5->fill(move(fill5));
-    pShape = shape5.get();
+    shape5->scale(0.8);
 
     if (canvas->push(move(shape5)) != tvg::Result::Success) return;
-    pShape->scale(0.8);
-    if (canvas->update(pShape) != tvg::Result::Success) return;
 }
 
 
