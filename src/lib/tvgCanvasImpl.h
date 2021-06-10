@@ -62,7 +62,7 @@ struct Canvas::Impl
         //Clear render target before drawing
         if (!renderer || !renderer->clear()) return Result::InsufficientCondition;
 
-        //free paints
+        //Free paints
         for (auto paint = paints.data; paint < (paints.data + paints.count); ++paint) {
             (*paint)->pImpl->dispose(*renderer);
             if (free) delete(*paint);
@@ -90,7 +90,14 @@ struct Canvas::Impl
 
         //Update single paint node
         if (paint) {
-            paint->pImpl->update(*renderer, nullptr, 255, clips, flag);
+            //Optimize Me: Can we skip the searching?
+            for (auto paint2 = paints.data; paint2 < (paints.data + paints.count); ++paint2) {
+                if ((*paint2) == paint) {
+                    paint->pImpl->update(*renderer, nullptr, 255, clips, flag);
+                    return Result::Success;
+                }
+            }
+            return Result::InsufficientCondition;
         //Update all retained paint nodes
         } else {
             for (auto paint = paints.data; paint < (paints.data + paints.count); ++paint) {
@@ -121,6 +128,7 @@ struct Canvas::Impl
     Result sync()
     {
         if (!drawing) return Result::InsufficientCondition;
+
         if (renderer->sync()) {
             drawing = false;
             return Result::Success;
