@@ -82,7 +82,7 @@ struct Canvas::Impl
 
     Result update(Paint* paint, bool force)
     {
-        if (!renderer) return Result::InsufficientCondition;
+        if (paints.count == 0 || drawing || !renderer) return Result::InsufficientCondition;
 
         Array<RenderData> clips;
         auto flag = RenderUpdateFlag::None;
