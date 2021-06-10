@@ -137,12 +137,11 @@ TEST_CASE("Stroke dash", "[capiStrokeDash]")
     float dashPattern[2] = {20, 10};
     float* dashPattern_get;
     uint32_t cnt;
-    uint32_t i;
 
     REQUIRE(tvg_shape_set_stroke_dash(paint, dashPattern, 2) == TVG_RESULT_SUCCESS);
     REQUIRE(tvg_shape_get_stroke_dash(paint, (const float**) &dashPattern_get, &cnt) == TVG_RESULT_SUCCESS);
     REQUIRE(cnt == 2);
-    for (i = 0; i < cnt; i++) {
+    for (uint32_t i = 0; i < cnt; i++) {
         REQUIRE(dashPattern_get[i] == dashPattern[i]);
     }
 
