@@ -128,7 +128,7 @@ static LoaderResult _parseCmpTarget(const char *pointer, const char *end, Paint 
  * [TVG_PAINT_TRANSFORM_MATRIX_INDICATOR][36][Matrix]
  * [TVG_PAINT_CMP_TARGET_INDICATOR] - see _parseCmpTarget()
  */
-static LoaderResult _parsePaint(tvgBlock block, Paint *paint)
+static LoaderResult _parsePaintProperty(tvgBlock block, Paint *paint)
 {
     switch (block.type)
     {
@@ -567,7 +567,7 @@ static LoaderResult _parsePaint(tvgBlock base_block, Paint **paint)
                 if (block.blockEnd > base_block.blockEnd) return LoaderResult::SizeCorruption;
 
                 auto result = _parseScene(block, s.get());
-                if (result == LoaderResult::InvalidType) result = _parsePaint(block, s.get());
+                if (result == LoaderResult::InvalidType) result = _parsePaintProperty(block, s.get());
 
                 if (result > LoaderResult::Success)
                 {
@@ -592,7 +592,7 @@ static LoaderResult _parsePaint(tvgBlock base_block, Paint **paint)
                 if (block.blockEnd > base_block.blockEnd) return LoaderResult::SizeCorruption;
 
                 auto result = _parseShape(block, s.get());
-                if (result == LoaderResult::InvalidType) result = _parsePaint(block, s.get());
+                if (result == LoaderResult::InvalidType) result = _parsePaintProperty(block, s.get());
 
                 if (result > LoaderResult::Success)
                 {
@@ -617,7 +617,7 @@ static LoaderResult _parsePaint(tvgBlock base_block, Paint **paint)
                 if (block.blockEnd > base_block.blockEnd) return LoaderResult::SizeCorruption;
 
                 auto result = _parsePicture(block, s.get());
-                if (result == LoaderResult::InvalidType) result = _parsePaint(block, s.get());
+                if (result == LoaderResult::InvalidType) result = _parsePaintProperty(block, s.get());
 
                 if (result > LoaderResult::Success)
                 {
