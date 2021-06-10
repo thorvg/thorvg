@@ -110,7 +110,6 @@ void tvgUpdateCmds(tvg::Canvas* canvas)
             canvas->push(unique_ptr<tvg::Shape>((tvg::Shape*)paints[1]));
             canvas->push(unique_ptr<tvg::Shape>((tvg::Shape*)paints[2]));
             break;
-
     }
 
     ++order;

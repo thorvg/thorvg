@@ -25,18 +25,15 @@
 /************************************************************************/
 /* Drawing Commands                                                     */
 /************************************************************************/
-tvg::Shape* pShape = nullptr;
 
-void tvgDrawCmds(tvg::Canvas* canvas)
+void tvgUpdateCmds(tvg::Canvas* canvas, float progress)
 {
     if (!canvas) return;
 
-    //Shape1
-    auto shape = tvg::Shape::gen();
+    if (canvas->clear() != tvg::Result::Success) return;
 
-    /* Acquire shape pointer to access it again.
-       instead, you should consider not to interrupt this pointer life-cycle. */
-    pShape = shape.get();
+    //Shape
+    auto shape = tvg::Shape::gen();
 
     shape->moveTo(0, -114.5);
     shape->lineTo(54, -5.5);
@@ -52,16 +49,6 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     shape->fill(0, 0, 255, 255);
     shape->stroke(3);
     shape->stroke(255, 255, 255, 255);
-    if (canvas->push(move(shape)) != tvg::Result::Success) return;
-}
-
-void tvgUpdateCmds(tvg::Canvas* canvas, float progress)
-{
-    if (!canvas) return;
-
-    /* Update shape directly.
-       You can update only necessary properties of this shape,
-       while retaining other properties. */
 
     //Transform Matrix
     tvg::Matrix m = {1, 0, 0, 0, 1, 0, 0, 0, 1};
@@ -97,10 +84,9 @@ void tvgUpdateCmds(tvg::Canvas* canvas, float progress)
     m.e13 = progress * 300.0f + 300.0f;
     m.e23 = progress * -100.0f + 300.0f;
 
-    pShape->transform(m);
+    shape->transform(m);
 
-    //Update shape for drawing (this may work asynchronously)
-    canvas->update(pShape);
+    canvas->push(move(shape));
 }
 
 
@@ -120,7 +106,7 @@ void tvgSwTest(uint32_t* buffer)
        When this shape is into the canvas list, the shape could update & prepare
        internal data asynchronously for coming rendering.
        Canvas keeps this shape node unless user call canvas->clear() */
-    tvgDrawCmds(swCanvas.get());
+    tvgUpdateCmds(swCanvas.get(), 0);
 }
 
 void transitSwCb(Elm_Transit_Effect *effect, Elm_Transit* transit, double progress)
@@ -159,7 +145,7 @@ void initGLview(Evas_Object *obj)
        When this shape is into the canvas list, the shape could update & prepare
        internal data asynchronously for coming rendering.
        Canvas keeps this shape node unless user call canvas->clear() */
-    tvgDrawCmds(glCanvas.get());
+    tvgUpdateCmds(glCanvas.get(), 0);
 }
 
 void drawGLview(Evas_Object *obj)

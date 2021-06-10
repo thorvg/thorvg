@@ -25,16 +25,15 @@
 /************************************************************************/
 /* Drawing Commands                                                     */
 /************************************************************************/
-tvg::Scene* pScene1 = nullptr;
-tvg::Scene* pScene2 = nullptr;
 
-void tvgDrawCmds(tvg::Canvas* canvas)
+void tvgUpdateCmds(tvg::Canvas* canvas, float progress)
 {
     if (!canvas) return;
 
+    if (canvas->clear() != tvg::Result::Success) return;
+
     //Create a Scene1
     auto scene = tvg::Scene::gen();
-    pScene1 = scene.get();
     scene->reserve(3);   //reserve 3 shape nodes (optional)
 
     //Prepare Round Rectangle (Scene1)
@@ -59,10 +58,10 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     scene->translate(350, 350);
     scene->scale(0.5);
+    scene->rotate(360 * progress);
 
     //Create Scene2
     auto scene2 = tvg::Scene::gen();
-    pScene2 = scene2.get();
     scene2->reserve(2);   //reserve 2 shape nodes (optional)
 
     //Star (Scene2)
@@ -104,27 +103,13 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     scene2->push(move(shape5));
 
     scene2->translate(500, 350);
+    scene2->rotate(360 * progress);
 
     //Push scene2 onto the scene
     scene->push(move(scene2));
 
     //Draw the Scene onto the Canvas
     canvas->push(move(scene));
-}
-
-void tvgUpdateCmds(tvg::Canvas* canvas, float progress)
-{
-    if (!canvas) return;
-
-    /* Update scene directly.
-       You can update only necessary properties of this scene,
-       while retaining other properties. */
-
-    pScene1->rotate(360 * progress);
-    pScene2->rotate(360 * progress);
-
-    //Update shape for drawing (this may work asynchronously)
-    canvas->update(pScene1);
 }
 
 
@@ -144,7 +129,7 @@ void tvgSwTest(uint32_t* buffer)
        When this shape is into the canvas list, the shape could update & prepare
        internal data asynchronously for coming rendering.
        Canvas keeps this shape node unless user call canvas->clear() */
-    tvgDrawCmds(swCanvas.get());
+    tvgUpdateCmds(swCanvas.get(), 0);
 }
 
 void transitSwCb(Elm_Transit_Effect *effect, Elm_Transit* transit, double progress)
@@ -183,7 +168,7 @@ void initGLview(Evas_Object *obj)
        When this shape is into the canvas list, the shape could update & prepare
        internal data asynchronously for coming rendering.
        Canvas keeps this shape node unless user call canvas->clear() */
-    tvgDrawCmds(glCanvas.get());
+    tvgUpdateCmds(glCanvas.get(), 0);
 }
 
 void drawGLview(Evas_Object *obj)
