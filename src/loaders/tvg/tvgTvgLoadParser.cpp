@@ -127,7 +127,7 @@ static LoaderResult _parsePaintProperty(tvgBlock block, Paint *paint)
 }
 
 // Scene
-static LoaderResult _parseScene(tvgBlock block, Scene *scene)
+static LoaderResult _parseSceneProperty(tvgBlock block, Scene *scene)
 {
     switch (block.type)
     {
@@ -360,7 +360,7 @@ static LoaderResult _parseShapeStroke(const char *pointer, const char *end, Shap
     return LoaderResult::Success;
 }
 
-static LoaderResult _parseShape(tvgBlock block, Shape *shape)
+static LoaderResult _parseShapeProperty(tvgBlock block, Shape *shape)
 {
     switch (block.type)
     {
@@ -463,7 +463,7 @@ static LoaderResult _parsePaint(tvgBlock base_block, Paint **paint)
                 auto block = _readTvgBlock(pointer);
                 if (block.blockEnd > base_block.blockEnd) return LoaderResult::SizeCorruption;
 
-                auto result = _parseScene(block, s.get());
+                auto result = _parseSceneProperty(block, s.get());
                 if (result == LoaderResult::InvalidType) result = _parsePaintProperty(block, s.get());
 
                 if (result > LoaderResult::Success)
@@ -488,7 +488,7 @@ static LoaderResult _parsePaint(tvgBlock base_block, Paint **paint)
                 auto block = _readTvgBlock(pointer);
                 if (block.blockEnd > base_block.blockEnd) return LoaderResult::SizeCorruption;
 
-                auto result = _parseShape(block, s.get());
+                auto result = _parseShapeProperty(block, s.get());
                 if (result == LoaderResult::InvalidType) result = _parsePaintProperty(block, s.get());
 
                 if (result > LoaderResult::Success)
