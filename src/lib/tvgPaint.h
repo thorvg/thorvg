@@ -48,8 +48,8 @@ namespace tvg
         uint32_t flag = RenderUpdateFlag::None;
         Paint* cmpTarget = nullptr;
         CompositeMethod cmpMethod = CompositeMethod::None;
-        uint8_t opacity = 255;
         PaintType type;
+        uint8_t opacity = 255;
 
         ~Impl() {
             if (cmpTarget) delete(cmpTarget);

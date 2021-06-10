@@ -27,8 +27,8 @@
 /* Drawing Commands                                                     */
 /************************************************************************/
 
-#define NUM_PER_LINE 4
-#define SIZE 200
+#define NUM_PER_LINE 5
+#define SIZE (WIDTH/NUM_PER_LINE)
 
 static int count = 0;
 

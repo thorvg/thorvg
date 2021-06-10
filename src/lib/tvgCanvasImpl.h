@@ -62,7 +62,7 @@ struct Canvas::Impl
         //Clear render target before drawing
         if (!renderer || !renderer->clear()) return Result::InsufficientCondition;
 
-        //free paints
+        //Free paints
         for (auto paint = paints.data; paint < (paints.data + paints.count); ++paint) {
             (*paint)->pImpl->dispose(*renderer);
             if (free) delete(*paint);
@@ -82,7 +82,7 @@ struct Canvas::Impl
 
     Result update(Paint* paint, bool force)
     {
-        if (!renderer) return Result::InsufficientCondition;
+        if (paints.count == 0 || drawing || !renderer) return Result::InsufficientCondition;
 
         Array<RenderData> clips;
         auto flag = RenderUpdateFlag::None;
@@ -128,6 +128,7 @@ struct Canvas::Impl
     Result sync()
     {
         if (!drawing) return Result::InsufficientCondition;
+
         if (renderer->sync()) {
             drawing = false;
             return Result::Success;
