@@ -33,8 +33,8 @@ using namespace std;
 /************************************************************************/
 #define WIDTH 800
 #define HEIGHT 800
-#define NUM_PER_LINE 4
-#define SIZE 200
+#define NUM_PER_LINE 5
+#define SIZE (WIDTH/NUM_PER_LINE)
 
 static size_t count = 0;
 static std::vector<unique_ptr<tvg::Canvas>> canvases;
