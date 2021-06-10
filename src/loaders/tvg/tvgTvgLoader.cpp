@@ -46,7 +46,9 @@ bool TvgLoader::open(const string &path)
 
     if (!f.is_open())
     {
-        // LOG: Failed to open file
+#ifdef THORVG_LOG_ENABLED
+        printf("TVG_LOADER: Failed to open file\n");
+#endif
         return false;
     }
 
@@ -56,9 +58,11 @@ bool TvgLoader::open(const string &path)
     buffer = (char*) malloc(size);
     if (!buffer)
     {
-        // LOG: Failed to alloc buffer
         size = 0;
         f.close();
+#ifdef THORVG_LOG_ENABLED
+        printf("TVG_LOADER: Failed to alloc buffer\n");
+#endif
         return false;
     }
 
