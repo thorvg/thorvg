@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2021 Samsung Electronics Co., Ltd. All rights reserved.
+ * Copyright (c) 2021 Samsung Electronics Co., Ltd. All rights reserved.
 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -27,11 +27,10 @@
 
 TEST_CASE("Paint Transform", "[capiPaintTransform]")
 {
-    Tvg_Paint *paint = NULL;
-    Tvg_Matrix matrix_set = {1, 0, 0, 0, 1, 0, 0, 0, 1}, matrix_get;
+    Tvg_Paint* paint = tvg_shape_new();
+    REQUIRE(paint);
 
-    paint = tvg_shape_new();
-    REQUIRE(paint != NULL);
+    Tvg_Matrix matrix_set = {1, 0, 0, 0, 1, 0, 0, 0, 1}, matrix_get;
 
     REQUIRE(tvg_paint_transform(paint, &matrix_set) == TVG_RESULT_SUCCESS);
     REQUIRE(tvg_paint_get_transform(paint, &matrix_get) == TVG_RESULT_SUCCESS);
@@ -50,12 +49,11 @@ TEST_CASE("Paint Transform", "[capiPaintTransform]")
 
 TEST_CASE("Paint Translate", "[capiPaintTranslate]")
 {
-    Tvg_Paint *paint = NULL;
+    Tvg_Paint* paint = tvg_shape_new();
+    REQUIRE(paint);
+
     Tvg_Matrix matrix_get;
     float tx = 20, ty = 30;
-
-    paint = tvg_shape_new();
-    REQUIRE(paint != NULL);
 
     REQUIRE(tvg_paint_translate(paint, tx, ty) == TVG_RESULT_SUCCESS);
     REQUIRE(tvg_paint_get_transform(paint, &matrix_get) == TVG_RESULT_SUCCESS);
@@ -74,12 +72,11 @@ TEST_CASE("Paint Translate", "[capiPaintTranslate]")
 
 TEST_CASE("Paint Scale", "[capiPaintScale]")
 {
-    Tvg_Paint *paint = NULL;
+    Tvg_Paint* paint = tvg_shape_new();
+    REQUIRE(paint);
+
     Tvg_Matrix matrix_get;
     float scale = 2.5f;
-
-    paint = tvg_shape_new();
-    REQUIRE(paint != NULL);
 
     REQUIRE(tvg_paint_scale(paint, scale) == TVG_RESULT_SUCCESS);
     REQUIRE(tvg_paint_get_transform(paint, &matrix_get) == TVG_RESULT_SUCCESS);
@@ -98,12 +95,11 @@ TEST_CASE("Paint Scale", "[capiPaintScale]")
 
 TEST_CASE("Paint Rotate", "[capiPaintRotate]")
 {
-    Tvg_Paint *paint = NULL;
+    Tvg_Paint* paint = tvg_shape_new();
+    REQUIRE(paint);
+
     Tvg_Matrix matrix_get;
     float degree = 180.0f;
-
-    paint = tvg_shape_new();
-    REQUIRE(paint != NULL);
 
     REQUIRE(tvg_paint_rotate(paint, degree) == TVG_RESULT_SUCCESS);
     REQUIRE(tvg_paint_get_transform(paint, &matrix_get) == TVG_RESULT_SUCCESS);
@@ -122,11 +118,10 @@ TEST_CASE("Paint Rotate", "[capiPaintRotate]")
 
 TEST_CASE("Paint Opacity", "[capiPaintOpacity]")
 {
-    Tvg_Paint *paint = NULL;
-    uint8_t opacity_set, opacity_get;
+    Tvg_Paint* paint = tvg_shape_new();
+    REQUIRE(paint);
 
-    paint = tvg_shape_new();
-    REQUIRE(paint != NULL);
+    uint8_t opacity_set, opacity_get;
 
     opacity_set = 0;
     REQUIRE(tvg_paint_set_opacity(paint, opacity_set) == TVG_RESULT_SUCCESS);
@@ -148,12 +143,11 @@ TEST_CASE("Paint Opacity", "[capiPaintOpacity]")
 
 TEST_CASE("Paint Bounds", "[capiPaintBounds]")
 {
-    Tvg_Paint *paint = NULL;
+    Tvg_Paint* paint = tvg_shape_new();
+    REQUIRE(paint);
+
     float x = 0, y = 10, w = 20, h = 100;
     float x_get, y_get, w_get, h_get;
-
-    paint = tvg_shape_new();
-    REQUIRE(paint != NULL);
 
     REQUIRE(tvg_shape_append_rect(paint, x, y, w, h, 0, 0) == TVG_RESULT_SUCCESS);
     REQUIRE(tvg_paint_get_bounds(paint, &x_get, &y_get, &w_get, &h_get) == TVG_RESULT_SUCCESS);

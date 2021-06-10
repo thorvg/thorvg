@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2021 Samsung Electronics Co., Ltd. All rights reserved.
+ * Copyright (c) 2021 Samsung Electronics Co., Ltd. All rights reserved.
 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -28,16 +28,13 @@ TEST_CASE("Canvas initialization", "[capiCanvas]")
     static uint32_t width = 200;
     static uint32_t height = 200;
 
-    uint32_t * buffer = NULL;
-    Tvg_Canvas* canvas = NULL;
-
-    buffer = (uint32_t*) malloc(sizeof(uint32_t) * width * height);
-    REQUIRE(buffer != NULL);
+    uint32_t* buffer = (uint32_t*) malloc(sizeof(uint32_t) * width * height);
+    REQUIRE(buffer);
 
     REQUIRE(tvg_engine_init(TVG_ENGINE_SW, 0) == TVG_RESULT_SUCCESS);
 
-    canvas = tvg_swcanvas_create();
-    REQUIRE(canvas != NULL);
+    Tvg_Canvas* canvas = tvg_swcanvas_create();
+    REQUIRE(canvas);
 
     REQUIRE(tvg_swcanvas_set_target(canvas, buffer, width, width, height, TVG_COLORSPACE_ARGB8888) == TVG_RESULT_SUCCESS);
 

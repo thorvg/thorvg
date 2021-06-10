@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2021 Samsung Electronics Co., Ltd. All rights reserved.
+ * Copyright (c) 2021 Samsung Electronics Co., Ltd. All rights reserved.
 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -25,10 +25,8 @@
 
 TEST_CASE("Multiple shapes", "[capiShapes]")
 {
-    Tvg_Paint *paint = NULL;
-
-    paint = tvg_shape_new();
-    REQUIRE(paint != NULL);
+    Tvg_Paint* paint = tvg_shape_new();
+    REQUIRE(paint);
 
     REQUIRE(tvg_shape_append_rect(paint, 0, 0, 100, 100, 0, 0) == TVG_RESULT_SUCCESS);
     REQUIRE(tvg_shape_append_rect(paint, 0, 0, 100, 100, 50, 50) == TVG_RESULT_SUCCESS);
@@ -42,14 +40,13 @@ TEST_CASE("Multiple shapes", "[capiShapes]")
 
 TEST_CASE("Shape path", "[capiShapePath]")
 {
-    Tvg_Paint *paint = NULL;
-    Tvg_Path_Command * cmds_get;
-    Tvg_Point * pts_get;
+    Tvg_Paint* paint = tvg_shape_new();
+    REQUIRE(paint);
+
+    Tvg_Path_Command* cmds_get;
+    Tvg_Point* pts_get;
     uint32_t cnt;
     uint32_t i;
-
-    paint = tvg_shape_new();
-    REQUIRE(paint != NULL);
 
     Tvg_Path_Command cmds[11];
     cmds[0] = TVG_PATH_COMMAND_MOVE_TO;
@@ -96,11 +93,10 @@ TEST_CASE("Shape path", "[capiShapePath]")
 
 TEST_CASE("Stroke width", "[capiStrokeWidth]")
 {
-    Tvg_Paint *paint = NULL;
-    float stroke_set, stroke_get;
+    Tvg_Paint* paint = tvg_shape_new();
+    REQUIRE(paint);
 
-    paint = tvg_shape_new();
-    REQUIRE(paint != NULL);
+    float stroke_set, stroke_get;
 
     stroke_set = 0.0f;
     REQUIRE(tvg_shape_set_stroke_width(paint, stroke_set) == TVG_RESULT_SUCCESS);
@@ -117,12 +113,11 @@ TEST_CASE("Stroke width", "[capiStrokeWidth]")
 
 TEST_CASE("Stroke color", "[capiStrokeColor]")
 {
-    Tvg_Paint *paint = NULL;
+    Tvg_Paint* paint = tvg_shape_new();
+    REQUIRE(paint);
+
     uint8_t r = 255, g = 255, b = 255, a = 255;
     uint8_t r_get, g_get, b_get, a_get;
-
-    paint = tvg_shape_new();
-    REQUIRE(paint != NULL);
 
     REQUIRE(tvg_shape_set_stroke_color(paint, r, g, b, a) == TVG_RESULT_SUCCESS);
     REQUIRE(tvg_shape_get_stroke_color(paint, &r_get, &g_get, &b_get, &a_get) == TVG_RESULT_SUCCESS);
@@ -136,14 +131,13 @@ TEST_CASE("Stroke color", "[capiStrokeColor]")
 
 TEST_CASE("Stroke dash", "[capiStrokeDash]")
 {
-    Tvg_Paint *paint = NULL;
+    Tvg_Paint* paint = tvg_shape_new();
+    REQUIRE(paint);
+
     float dashPattern[2] = {20, 10};
-    float * dashPattern_get;
+    float* dashPattern_get;
     uint32_t cnt;
     uint32_t i;
-
-    paint = tvg_shape_new();
-    REQUIRE(paint != NULL);
 
     REQUIRE(tvg_shape_set_stroke_dash(paint, dashPattern, 2) == TVG_RESULT_SUCCESS);
     REQUIRE(tvg_shape_get_stroke_dash(paint, (const float**) &dashPattern_get, &cnt) == TVG_RESULT_SUCCESS);
@@ -157,12 +151,10 @@ TEST_CASE("Stroke dash", "[capiStrokeDash]")
 
 TEST_CASE("Stroke cap", "[capiStrokeCap]")
 {
-    Tvg_Paint *paint = NULL;
-    Tvg_Stroke_Cap cap;
-    Tvg_Stroke_Cap cap_get;
+    Tvg_Paint* paint = tvg_shape_new();
+    REQUIRE(paint);
 
-    paint = tvg_shape_new();
-    REQUIRE(paint != NULL);
+    Tvg_Stroke_Cap cap, cap_get;
 
     cap = TVG_STROKE_CAP_ROUND;
     REQUIRE(tvg_shape_set_stroke_cap(paint, cap) == TVG_RESULT_SUCCESS);
@@ -179,12 +171,10 @@ TEST_CASE("Stroke cap", "[capiStrokeCap]")
 
 TEST_CASE("Stroke join", "[capiStrokeJoin]")
 {
-    Tvg_Paint *paint = NULL;
-    Tvg_Stroke_Join join;
-    Tvg_Stroke_Join join_get;
+    Tvg_Paint* paint = tvg_shape_new();
+    REQUIRE(paint);
 
-    paint = tvg_shape_new();
-    REQUIRE(paint != NULL);
+    Tvg_Stroke_Join join, join_get;
 
     join = TVG_STROKE_JOIN_BEVEL;
     REQUIRE(tvg_shape_set_stroke_join(paint, join) == TVG_RESULT_SUCCESS);
@@ -201,12 +191,11 @@ TEST_CASE("Stroke join", "[capiStrokeJoin]")
 
 TEST_CASE("Fill color", "[capiFillColor]")
 {
-    Tvg_Paint *paint = NULL;
+    Tvg_Paint* paint = tvg_shape_new();
+    REQUIRE(paint);
+
     uint8_t r = 255, g = 255, b = 255, a = 255;
     uint8_t r_get, g_get, b_get, a_get;
-
-    paint = tvg_shape_new();
-    REQUIRE(paint != NULL);
 
     REQUIRE(tvg_shape_set_fill_color(paint, r, g, b, a) == TVG_RESULT_SUCCESS);
     REQUIRE(tvg_shape_get_fill_color(paint, &r_get, &g_get, &b_get, &a_get) == TVG_RESULT_SUCCESS);
@@ -220,14 +209,17 @@ TEST_CASE("Fill color", "[capiFillColor]")
 
 TEST_CASE("Fill rule", "[capiFillRule]")
 {
-    Tvg_Paint *paint = NULL;
-    Tvg_Fill_Rule rule;
-    Tvg_Fill_Rule rule_get;
+    Tvg_Paint* paint = tvg_shape_new();
+    REQUIRE(paint);
 
-    paint = tvg_shape_new();
-    REQUIRE(paint != NULL);
+    Tvg_Fill_Rule rule, rule_get;
 
     rule = TVG_FILL_RULE_EVEN_ODD;
+    REQUIRE(tvg_shape_set_fill_rule(paint, rule) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_shape_get_fill_rule(paint, &rule_get) == TVG_RESULT_SUCCESS);
+    REQUIRE(rule == rule_get);
+
+    rule = TVG_FILL_RULE_WINDING;
     REQUIRE(tvg_shape_set_fill_rule(paint, rule) == TVG_RESULT_SUCCESS);
     REQUIRE(tvg_shape_get_fill_rule(paint, &rule_get) == TVG_RESULT_SUCCESS);
     REQUIRE(rule == rule_get);
