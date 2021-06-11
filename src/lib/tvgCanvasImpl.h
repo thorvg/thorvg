@@ -97,7 +97,7 @@ struct Canvas::Impl
                     return Result::Success;
                 }
             }
-            return Result::InsufficientCondition;
+            return Result::InvalidArguments;
         //Update all retained paint nodes
         } else {
             for (auto paint = paints.data; paint < (paints.data + paints.count); ++paint) {
