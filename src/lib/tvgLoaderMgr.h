@@ -24,7 +24,7 @@
 
 #include "tvgLoader.h"
 
-enum class FileType { Svg = 0, Raw, Png, Tvg, Unknown };
+enum class FileType { Tvg = 0, Svg, Raw, Png, Unknown };
 
 struct LoaderMgr
 {
