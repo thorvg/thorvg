@@ -11,6 +11,7 @@ if get_option('loaders').contains('png') == true
 endif
 
 subdir('raw')
+subdir('tvg')
 
 loader_dep = declare_dependency(
    dependencies: subloader_dep,

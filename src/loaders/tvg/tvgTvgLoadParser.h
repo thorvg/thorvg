@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2021 Samsung Electronics Co., Ltd. All rights reserved.
+ * Copyright (c) 2021 Samsung Electronics Co., Ltd. All rights reserved.
 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -19,20 +19,13 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#ifndef _TVG_LOADER_MGR_H_
-#define _TVG_LOADER_MGR_H_
 
-#include "tvgLoader.h"
+#ifndef _TVG_TVG_LOAD_PARSER_H_
+#define _TVG_TVG_LOAD_PARSER_H_
 
-enum class FileType { Svg = 0, Raw, Png, Tvg, Unknown };
+#include "tvgCommon.h"
+#include "tvgTvgHelper.h"
 
-struct LoaderMgr
-{
-    static bool init();
-    static bool term();
-    static shared_ptr<Loader> loader(const string& path);
-    static shared_ptr<Loader> loader(const char* data, uint32_t size);
-    static shared_ptr<Loader> loader(const uint32_t* data, uint32_t w, uint32_t h, bool copy);
-};
+unique_ptr<Scene> tvgParseTvgFile(const char *pointer, uint32_t size);
 
-#endif //_TVG_LOADER_MGR_H_
+#endif //_TVG_TVG_LOAD_PARSER_H_
