@@ -20,6 +20,10 @@ if get_option('loaders').contains('svg') == true
     config_h.set10('THORVG_SVG_LOADER_SUPPORT', true)
 endif
 
+if get_option('loaders').contains('tvg') == true
+    config_h.set10('THORVG_TVG_LOADER_SUPPORT', true)
+endif
+
 if get_option('loaders').contains('png') == true
     config_h.set10('THORVG_PNG_LOADER_SUPPORT', true)
 endif
