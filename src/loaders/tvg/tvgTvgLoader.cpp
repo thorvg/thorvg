@@ -79,9 +79,7 @@ bool TvgLoader::open(const string &path)
 
     pointer = buffer;
 
-    //FIXME: verify TVG format here.
-
-    return true;
+    return tvgValidateTvgHeader(pointer, size);
 }
 
 bool TvgLoader::open(const char *data, uint32_t size)
@@ -91,9 +89,7 @@ bool TvgLoader::open(const char *data, uint32_t size)
     pointer = data;
     size = size;
 
-    //FIXME: verify TVG format here.
-
-    return true;
+    return tvgValidateTvgHeader(pointer, size);
 }
 
 bool TvgLoader::read()
