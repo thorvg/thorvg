@@ -30,6 +30,7 @@ source_file = [
     'Svg2.cpp',
     'Svg.cpp',
     'Transform.cpp',
+    'TvgLoader.cpp',
     'Update.cpp',
     'ClipPath.cpp',
     'Masking.cpp',
