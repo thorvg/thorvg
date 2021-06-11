@@ -88,8 +88,8 @@ bool TvgLoader::open(const char *data, uint32_t size)
 {
     //TODO: verify memory leak if open() is called multiple times.
 
-    pointer = data;
-    size = size;
+    this->pointer = data;
+    this->size = size;
 
     //FIXME: verify TVG format here.
 
