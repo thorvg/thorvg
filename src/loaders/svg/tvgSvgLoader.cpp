@@ -2630,6 +2630,8 @@ bool SvgLoader::header()
 
 bool SvgLoader::open(const char* data, uint32_t size)
 {
+    //TODO: verify memory leak if open() is called multiple times.
+
     this->content = data;
     this->size = size;
 
@@ -2639,22 +2641,20 @@ bool SvgLoader::open(const char* data, uint32_t size)
 
 bool SvgLoader::open(const string& path)
 {
+    //TODO: verify memory leak if open() is called multiple times.
+
     ifstream f;
     f.open(path);
 
-    if (!f.is_open())
-    {
-        //LOG: Failed to open file
-        return false;
-    } else {
-        getline(f, filePath, '\0');
-        f.close();
+    if (!f.is_open()) return false;
 
-        if (filePath.empty()) return false;
+    getline(f, filePath, '\0');
+    f.close();
 
-        this->content = filePath.c_str();
-        this->size = filePath.size();
-    }
+    if (filePath.empty()) return false;
+
+    content = filePath.c_str();
+    size = filePath.size();
 
     return header();
 }

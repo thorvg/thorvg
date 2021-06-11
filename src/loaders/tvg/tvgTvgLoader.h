@@ -23,7 +23,6 @@
 #ifndef _TVG_TVG_LOADER_H_
 #define _TVG_TVG_LOADER_H_
 
-#include "tvgLoader.h"
 #include "tvgTaskScheduler.h"
 
 class TvgLoader : public Loader, public Task
@@ -33,14 +32,13 @@ public:
     const char* pointer = nullptr;
     uint32_t size = 0;
 
-    unique_ptr<Scene> root;
+    unique_ptr<Scene> root = nullptr;
 
     ~TvgLoader();
 
     using Loader::open;
     bool open(const string &path) override;
     bool open(const char *data, uint32_t size) override;
-
     bool read() override;
     bool close() override;
 
