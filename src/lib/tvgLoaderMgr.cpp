@@ -29,7 +29,10 @@
     #include "tvgPngLoader.h"
 #endif
 
-#include "tvgTvgLoader.h"
+#ifdef THORVG_TVG_LOADER_SUPPORT
+    #include "tvgTvgLoader.h"
+#endif
+
 #include "tvgRawLoader.h"
 
 /************************************************************************/
@@ -56,7 +59,9 @@ static Loader* _find(FileType type)
             break;
         }
         case FileType::Tvg: {
+#ifdef THORVG_TVG_LOADER_SUPPORT
             return new TvgLoader;
+#endif
             break;
         }
         default: {
