@@ -21,48 +21,50 @@
  */
 
 #include <fstream>
-#include <string.h>
 #include "tvgLoaderMgr.h"
 #include "tvgTvgLoader.h"
 #include "tvgTvgLoadParser.h"
+
+
+/************************************************************************/
+/* Internal Class Implementation                                        */
+/************************************************************************/
+
+void TvgLoader::clearBuffer()
+{
+    free(buffer);
+    size = 0;
+    buffer = nullptr;
+    pointer = nullptr;
+}
+
+
+/************************************************************************/
+/* External Class Implementation                                        */
+/************************************************************************/
 
 TvgLoader::~TvgLoader()
 {
     close();
 }
 
-void TvgLoader::clearBuffer()
-{
-    size = 0;
-    free(buffer);
-    buffer = nullptr;
-    pointer = nullptr;
-}
 
 bool TvgLoader::open(const string &path)
 {
+    //TODO: verify memory leak if open() is called multiple times.
+
     ifstream f;
     f.open(path, ifstream::in | ifstream::binary | ifstream::ate);
 
-    if (!f.is_open())
-    {
-#ifdef THORVG_LOG_ENABLED
-        printf("TVG_LOADER: Failed to open file\n");
-#endif
-        return false;
-    }
+    if (!f.is_open()) return false;
 
     size = f.tellg();
     f.seekg(0, ifstream::beg);
 
-    buffer = (char*) malloc(size);
-    if (!buffer)
-    {
+    buffer = (char*)malloc(size);
+    if (!buffer) {
         size = 0;
         f.close();
-#ifdef THORVG_LOG_ENABLED
-        printf("TVG_LOADER: Failed to alloc buffer\n");
-#endif
         return false;
     }
 
@@ -77,13 +79,20 @@ bool TvgLoader::open(const string &path)
 
     pointer = buffer;
 
+    //FIXME: verify TVG format here.
+
     return true;
 }
 
 bool TvgLoader::open(const char *data, uint32_t size)
 {
+    //TODO: verify memory leak if open() is called multiple times.
+
     pointer = data;
     size = size;
+
+    //FIXME: verify TVG format here.
+
     return true;
 }
 
@@ -106,15 +115,8 @@ bool TvgLoader::close()
 void TvgLoader::run(unsigned tid)
 {
     if (root) root.reset();
-    root = tvgParseTvgFile(pointer, size);
-
-    if (!root)
-    {
-#ifdef THORVG_LOG_ENABLED
-        printf("TVG_LOADER: File parsing error\n");
-#endif
-        clearBuffer();
-    }
+    root = tvgLoadTvgData(pointer, size);
+    if (!root) clearBuffer();
 }
 
 unique_ptr<Scene> TvgLoader::scene()

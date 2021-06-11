@@ -19,8 +19,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#ifndef _TVG_TVG_HELPER_H_
-#define _TVG_TVG_HELPER_H_
+#ifndef _TVG_BINARY_DESC_H_
+#define _TVG_BINARY_DESC_H_
 
 // now only little endian
 #define _read_tvg_ui16(dst, src) memcpy(dst, (src), sizeof(uint16_t))
@@ -30,6 +30,7 @@
 using TvgIndicator = uint8_t;
 using ByteCounter = uint32_t;
 using TvgFlag = uint8_t;
+
 #define TVG_INDICATOR_SIZE sizeof(TvgIndicator)
 #define BYTE_COUNTER_SIZE sizeof(ByteCounter)
 #define TVG_FLAG_SIZE sizeof(TvgFlag)
@@ -39,17 +40,25 @@ struct tvgBlock
     TvgIndicator type;
     ByteCounter length;
     const char* data;
-    const char* blockEnd;
+    const char* end;
 };
 
-#define TVG_HEADER_TVG_SIGN_CODE "TVG"
-#define TVG_HEADER_TVG_VERSION_CODE "000"
-#define TVG_HEADER_TVG_SIGN_CODE_LENGTH 3
-#define TVG_HEADER_TVG_VERSION_CODE_LENGTH 3
+//TODO: replace it when this feature is completed.
+#if 0
+    #define TVG_BIN_HEADER_SIGNATURE "ThorVG"
+    #define TVG_BIN_HEADER_SIGNATURE_LENGTH 6
+    #define TVG_BIN_HEADER_VERSION "000200"
+    #define TVG_BIN_HEADER_VERSION_LENGTH 6
+#else
+    #define TVG_BIN_HEADER_SIGNATURE "TVG"
+    #define TVG_BIN_HEADER_SIGNATURE_LENGTH 3
+    #define TVG_BIN_HEADER_VERSION "000"
+    #define TVG_BIN_HEADER_VERSION_LENGTH 3
+#endif
 
-#define TVG_SCENE_BEGIN_INDICATOR     (TvgIndicator)0xfe // Scene indicator
-#define TVG_SHAPE_BEGIN_INDICATOR     (TvgIndicator)0xfd // Shape indicator
-#define TVG_PICTURE_BEGIN_INDICATOR   (TvgIndicator)0xfc // Picture indicator
+#define TVG_SCENE_BEGIN_INDICATOR     (TvgIndicator)0xfe
+#define TVG_SHAPE_BEGIN_INDICATOR     (TvgIndicator)0xfd
+#define TVG_PICTURE_BEGIN_INDICATOR   (TvgIndicator)0xfc
 
 // Paint
 #define TVG_PAINT_OPACITY_INDICATOR          (TvgIndicator)0x10 // Paint opacity
@@ -100,4 +109,4 @@ struct tvgBlock
 // Picture
 #define TVG_RAW_IMAGE_BEGIN_INDICATOR (TvgIndicator)0x70 // Picture raw data
 
-#endif //_TVG_TVG_HELPER_H_
+#endif //_TVG_BINARY_DESC_H_
