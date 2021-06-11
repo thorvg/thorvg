@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2021 Samsung Electronics Co., Ltd. All rights reserved.
+ * Copyright (c) 2021 Samsung Electronics Co., Ltd. All rights reserved.
 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,61 +21,53 @@
  */
 
 #include <thorvg_capi.h>
-#include "catch.hpp"
+#include "../catch.hpp"
 
-#define TEST_R 120
-#define TEST_G 154
-#define TEST_B 180
-#define TEST_A 100
 
-TEST_CASE("Set/Get fill color", "[tvgCapiShapeFill]")
+TEST_CASE("Set/Get fill color", "[capiShapeFill]")
 {   
-    Tvg_Paint *paint = NULL;
-    paint = tvg_shape_new();
+    Tvg_Paint *paint = tvg_shape_new();
+    REQUIRE(paint);
+
+    REQUIRE(tvg_shape_set_fill_color(paint, 120, 154, 180, 100) == TVG_RESULT_SUCCESS);
 
     uint8_t r = 0, g = 0, b = 0, a = 0;
-    
-    REQUIRE(paint != NULL);
-    REQUIRE(tvg_shape_set_fill_color(paint, TEST_R, TEST_G, TEST_B, TEST_A) == TVG_RESULT_SUCCESS);
-
     REQUIRE(tvg_shape_get_fill_color(paint, &r, &g, &b, &a) == TVG_RESULT_SUCCESS);
-    REQUIRE(r == TEST_R);
-    REQUIRE(g == TEST_G);
-    REQUIRE(b == TEST_B);
-    REQUIRE(a == TEST_A);
+
+    REQUIRE(r == 120);
+    REQUIRE(g == 154);
+    REQUIRE(b == 180);
+    REQUIRE(a == 100);
 
     REQUIRE(tvg_paint_del(paint) == TVG_RESULT_SUCCESS);
 }
 
-TEST_CASE("Set/Get fill color on invalid shape", "[tvgCapiShapeFill]")
+TEST_CASE("Set/Get fill color on invalid shape", "[capiShapeFill]")
 {   
-    Tvg_Paint *paint = NULL;
-    
-    uint8_t r = 0, g = 0, b = 0, a = 0;
+    REQUIRE(tvg_shape_set_fill_color(NULL, 120, 154, 180, 100) == TVG_RESULT_INVALID_ARGUMENT);
 
-    REQUIRE(tvg_shape_set_fill_color(paint, TEST_R, TEST_G, TEST_B, TEST_A) == TVG_RESULT_INVALID_ARGUMENT);
-    REQUIRE(tvg_shape_get_fill_color(paint, &r, &g, &b, &a) == TVG_RESULT_INVALID_ARGUMENT);
+    uint8_t r, g, b, a;
+    REQUIRE(tvg_shape_get_fill_color(NULL, &r, &g, &b, &a) == TVG_RESULT_INVALID_ARGUMENT);
 }
 
-TEST_CASE("Set/Get shape fill rule", "[tvgCapiShapeFill]")
+TEST_CASE("Set/Get shape fill rule", "[capiShapeFill]")
 {   
-    Tvg_Paint *paint = NULL;
-    Tvg_Fill_Rule rule = TVG_FILL_RULE_WINDING;
+    Tvg_Paint *paint = tvg_shape_new();
+    REQUIRE(paint);
 
-    paint = tvg_shape_new();
-    
-    REQUIRE(paint != NULL);
     REQUIRE(tvg_shape_set_fill_rule(paint, TVG_FILL_RULE_EVEN_ODD) == TVG_RESULT_SUCCESS);
+
+    Tvg_Fill_Rule rule = TVG_FILL_RULE_WINDING;
     REQUIRE(tvg_shape_get_fill_rule(paint, &rule) == TVG_RESULT_SUCCESS);
     REQUIRE(rule == TVG_FILL_RULE_EVEN_ODD);
+
     REQUIRE(tvg_paint_del(paint) == TVG_RESULT_SUCCESS);
 }
 
-TEST_CASE("Set/Get shape fill rule on invalid object", "[tvgCapiShapeFill]")
+TEST_CASE("Set/Get shape fill rule on invalid object", "[capiShapeFill]")
 {   
-    Tvg_Paint *paint = NULL;
-    Tvg_Fill_Rule rule = TVG_FILL_RULE_WINDING;
+    REQUIRE(tvg_shape_set_fill_rule(NULL, TVG_FILL_RULE_EVEN_ODD) == TVG_RESULT_INVALID_ARGUMENT);
 
-    REQUIRE(tvg_shape_set_fill_rule(paint, TVG_FILL_RULE_EVEN_ODD) == TVG_RESULT_INVALID_ARGUMENT);
-    REQUIRE(tvg_shape_get_fill_rule(paint, &rule) == TVG_RESULT_INVALID_ARGUMENT);
+    Tvg_Fill_Rule rule;
+    REQUIRE(tvg_shape_get_fill_rule(NULL, &rule) == TVG_RESULT_INVALID_ARGUMENT);
 }

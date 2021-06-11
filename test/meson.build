@@ -3,7 +3,6 @@ test_file = [
     'testInitializer.cpp',
     'testSwCanvas.cpp',
     'testSwCanvasBase.cpp',
-    'capi/testFill.cpp',
 ]
 
 tests = executable('tvgUnitTests',
@@ -12,3 +11,8 @@ tests = executable('tvgUnitTests',
     link_with : thorvg_lib)
 
 test('Unit Tests', tests)
+
+if get_option('bindings').contains('capi') == true
+    subdir('capi')
+endif
+
