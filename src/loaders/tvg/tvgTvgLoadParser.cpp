@@ -507,10 +507,8 @@ static LoaderResult _parsePaint(tvgBlock base_block, Paint **paint)
 bool tvgValidateTvgHeader(const char *ptr, uint32_t size)
 {
     auto end = ptr + size;
-    if (_readTvgHeader(&ptr) && ptr < end) {
-        return true;
-    }
-    return false;
+    if (!_readTvgHeader(&ptr) || ptr >= end) return false;
+    return true;
 }
 
 unique_ptr<Scene> tvgLoadTvgData(const char *ptr, uint32_t size)
