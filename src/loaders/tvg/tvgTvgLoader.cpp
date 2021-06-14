@@ -79,7 +79,7 @@ bool TvgLoader::open(const string &path)
 
     pointer = buffer;
 
-    return tvgValidateTvgHeader(pointer, size);
+    return tvgValidateData(pointer, size);
 }
 
 bool TvgLoader::open(const char *data, uint32_t size)
@@ -89,7 +89,7 @@ bool TvgLoader::open(const char *data, uint32_t size)
     this->pointer = data;
     this->size = size;
 
-    return tvgValidateTvgHeader(pointer, size);
+    return tvgValidateData(pointer, size);
 }
 
 bool TvgLoader::read()
@@ -111,7 +111,7 @@ bool TvgLoader::close()
 void TvgLoader::run(unsigned tid)
 {
     if (root) root.reset();
-    root = tvgLoadTvgData(pointer, size);
+    root = tvgLoadData(pointer, size);
     if (!root) clearBuffer();
 }
 

@@ -504,14 +504,14 @@ static LoaderResult _parsePaint(tvgBlock base_block, Paint **paint)
 /* External Class Implementation                                        */
 /************************************************************************/
 
-bool tvgValidateTvgHeader(const char *ptr, uint32_t size)
+bool tvgValidateData(const char *ptr, uint32_t size)
 {
     auto end = ptr + size;
     if (!_readTvgHeader(&ptr) || ptr >= end) return false;
     return true;
 }
 
-unique_ptr<Scene> tvgLoadTvgData(const char *ptr, uint32_t size)
+unique_ptr<Scene> tvgLoadData(const char *ptr, uint32_t size)
 {
     auto end = ptr + size;
 
