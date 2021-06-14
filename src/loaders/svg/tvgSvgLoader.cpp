@@ -2398,7 +2398,8 @@ static void _updateGradient(SvgNode* node, Array<SvgStyleGradient*>* gradients)
     } else {
         if (node->style->fill.paint.url) {
             node->style->fill.paint.gradient = _gradientDup(gradients, node->style->fill.paint.url);
-        } else if (node->style->stroke.paint.url) {
+        }
+        if (node->style->stroke.paint.url) {
             node->style->stroke.paint.gradient = _gradientDup(gradients, node->style->stroke.paint.url);
         }
     }
