@@ -44,6 +44,8 @@ static tvgBlock _readTvgBlock(const char *ptr)
 
 static bool _readTvgHeader(const char **ptr)
 {
+    if (!*ptr) return false;
+
     //Sign phase, always TVG_BIN_HEADER_SIGNATURE is declared
     if (memcmp(*ptr, TVG_BIN_HEADER_SIGNATURE, TVG_BIN_HEADER_SIGNATURE_LENGTH)) return false;
     *ptr += TVG_BIN_HEADER_SIGNATURE_LENGTH;
@@ -52,7 +54,7 @@ static bool _readTvgHeader(const char **ptr)
     if (memcmp(*ptr, TVG_BIN_HEADER_VERSION, TVG_BIN_HEADER_VERSION_LENGTH)) return false;
     *ptr += TVG_BIN_HEADER_VERSION_LENGTH;
 
-    //Mata data for proof?
+    //Meta data for proof?
     uint16_t metaLen;
     _read_tvg_ui16(&metaLen, *ptr);
     *ptr += 2;
@@ -501,6 +503,13 @@ static LoaderResult _parsePaint(tvgBlock base_block, Paint **paint)
 /************************************************************************/
 /* External Class Implementation                                        */
 /************************************************************************/
+
+bool tvgValidateTvgHeader(const char *ptr, uint32_t size)
+{
+    auto end = ptr + size;
+    if (!_readTvgHeader(&ptr) || ptr >= end) return false;
+    return true;
+}
 
 unique_ptr<Scene> tvgLoadTvgData(const char *ptr, uint32_t size)
 {
