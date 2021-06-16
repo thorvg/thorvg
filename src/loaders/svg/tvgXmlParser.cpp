@@ -503,7 +503,18 @@ bool simpleXmlParseW3CAttribute(const char* buf, simpleXMLAttributeCb func, cons
         }
 
         if (key[0]) {
-            if (!func((void*)data, key, val)) return false;
+            key = const_cast<char*>(_simpleXmlSkipWhiteSpace(key, key + strlen(key)));
+            key[_simpleXmlUnskipWhiteSpace(key + strlen(key) , key) - key] = '\0';
+            val = const_cast<char*>(_simpleXmlSkipWhiteSpace(val, val + strlen(val)));
+            val[_simpleXmlUnskipWhiteSpace(val + strlen(val) , val) - val] = '\0';
+
+#ifdef THORVG_LOG_ENABLED
+            if (!func((void*)data, key, val)) {
+                if (!_isIgnoreUnsupportedLogAttributes(key, val)) printf("SVG: Unsupported attributes used [Elements type: %s][Id : %s][Attribute: %s][Value: %s]\n", simpleXmlNodeTypeToString(((SvgLoaderData*)data)->svgParse->node->type).c_str(), ((SvgLoaderData*)data)->svgParse->node->id ? ((SvgLoaderData*)data)->svgParse->node->id->c_str() : "NO_ID", key, val ? val : "NONE");
+            }
+#else
+            func((void*)data, key, val);
+#endif
         }
 
         buf = next + 1;
