@@ -1,7 +1,7 @@
 project('thorvg',
         'cpp',
         default_options : ['buildtype=debugoptimized', 'werror=false', 'optimization=s'],
-        version : '0.1.0',
+        version : '0.2.99',
         license : 'MIT')
 
 config_h = configuration_data()
@@ -18,6 +18,10 @@ endif
 
 if get_option('loaders').contains('svg') == true
     config_h.set10('THORVG_SVG_LOADER_SUPPORT', true)
+endif
+
+if get_option('loaders').contains('tvg') == true
+    config_h.set10('THORVG_TVG_LOADER_SUPPORT', true)
 endif
 
 if get_option('loaders').contains('png') == true

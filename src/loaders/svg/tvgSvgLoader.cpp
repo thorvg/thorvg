@@ -1069,8 +1069,14 @@ static SvgNode* _createSvgNode(SvgLoaderData* loader, SvgNode* parent, const cha
     if (!loader->svgParse->node) return nullptr;
     SvgDocNode* doc = &(loader->svgParse->node->node.doc);
 
+    loader->svgParse->global.w = 0;
+    loader->svgParse->global.h = 0;
+
     doc->preserveAspect = true;
     simpleXmlParseAttributes(buf, bufLength, _attrParseSvgNode, loader);
+
+    if (loader->svgParse->global.w == 0) loader->svgParse->global.w = loader->svgParse->node->node.doc.w;
+    if (loader->svgParse->global.h == 0) loader->svgParse->global.h = loader->svgParse->node->node.doc.h;
 
     return loader->svgParse->node;
 }
@@ -2382,18 +2388,19 @@ static SvgStyleGradient* _gradientDup(Array<SvgStyleGradient*>* gradients, const
 }
 
 
-static void _updateGradient(SvgNode* node, Array<SvgStyleGradient*>* gradidents)
+static void _updateGradient(SvgNode* node, Array<SvgStyleGradient*>* gradients)
 {
     if (node->child.count > 0) {
         auto child = node->child.data;
         for (uint32_t i = 0; i < node->child.count; ++i, ++child) {
-            _updateGradient(*child, gradidents);
+            _updateGradient(*child, gradients);
         }
     } else {
         if (node->style->fill.paint.url) {
-            node->style->fill.paint.gradient = _gradientDup(gradidents, node->style->fill.paint.url);
-        } else if (node->style->stroke.paint.url) {
-            //node->style->stroke.paint.gradient = _gradientDup(gradList, node->style->stroke.paint.url);
+            node->style->fill.paint.gradient = _gradientDup(gradients, node->style->fill.paint.url);
+        }
+        if (node->style->stroke.paint.url) {
+            node->style->stroke.paint.gradient = _gradientDup(gradients, node->style->stroke.paint.url);
         }
     }
 }
@@ -2624,6 +2631,8 @@ bool SvgLoader::header()
 
 bool SvgLoader::open(const char* data, uint32_t size)
 {
+    //TODO: verify memory leak if open() is called multiple times.
+
     this->content = data;
     this->size = size;
 
@@ -2633,22 +2642,20 @@ bool SvgLoader::open(const char* data, uint32_t size)
 
 bool SvgLoader::open(const string& path)
 {
+    //TODO: verify memory leak if open() is called multiple times.
+
     ifstream f;
     f.open(path);
 
-    if (!f.is_open())
-    {
-        //LOG: Failed to open file
-        return false;
-    } else {
-        getline(f, filePath, '\0');
-        f.close();
+    if (!f.is_open()) return false;
 
-        if (filePath.empty()) return false;
+    getline(f, filePath, '\0');
+    f.close();
 
-        this->content = filePath.c_str();
-        this->size = filePath.size();
-    }
+    if (filePath.empty()) return false;
+
+    content = filePath.c_str();
+    size = filePath.size();
 
     return header();
 }

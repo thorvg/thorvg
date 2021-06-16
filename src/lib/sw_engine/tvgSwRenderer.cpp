@@ -277,7 +277,7 @@ bool SwRenderer::viewport(const RenderRegion& vp)
 
 bool SwRenderer::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h, uint32_t cs)
 {
-    if (!buffer || stride == 0 || w == 0 || h == 0) return false;
+    if (!buffer || stride == 0 || w == 0 || h == 0 || w > stride) return false;
 
     if (!surface) {
         surface = new SwSurface;
@@ -405,6 +405,8 @@ bool SwRenderer::beginComposite(Compositor* cmp, CompositeMethod method, uint32_
 
 bool SwRenderer::mempool(bool shared)
 {
+    if (shared == sharedMpool) return true;
+
     if (shared) {
         if (!sharedMpool) {
             if (!mpoolTerm(mpool)) return false;
@@ -453,7 +455,7 @@ Compositor* SwRenderer::target(const RenderRegion& region)
         if (!cmp->compositor) goto err;
 
         //SwImage, Optimize Me: Surface size from MainSurface(WxH) to Parameter W x H
-        cmp->compositor->image.data = (uint32_t*) malloc(sizeof(uint32_t) * surface->w * surface->h);
+        cmp->compositor->image.data = (uint32_t*) malloc(sizeof(uint32_t) * surface->stride * surface->h);
         if (!cmp->compositor->image.data) goto err;
         compositors.push(cmp);
     }
@@ -473,7 +475,7 @@ Compositor* SwRenderer::target(const RenderRegion& region)
     cmp->compositor->bbox.min.y = y;
     cmp->compositor->bbox.max.x = x + w;
     cmp->compositor->bbox.max.y = y + h;
-    cmp->compositor->image.w = surface->w;
+    cmp->compositor->image.w = surface->stride;
     cmp->compositor->image.h = surface->h;
 
     //We know partial clear region
@@ -616,9 +618,18 @@ bool SwRenderer::init(uint32_t threads)
 
     //Share the memory pool among the renderer
     globalMpool = mpoolInit(threads);
-    if (!globalMpool) return false;
+    if (!globalMpool) {
+        --initEngineCnt;
+        return false;
+    }
 
     return true;
+}
+
+
+int32_t SwRenderer::init()
+{
+    return initEngineCnt;
 }
 
 

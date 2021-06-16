@@ -33,6 +33,7 @@ struct Canvas::Impl
     Array<Paint*> paints;
     RenderMethod* renderer;
     bool refresh = false;   //if all paints should be updated by force.
+    bool drawing = false;   //on drawing condition?
 
     Impl(RenderMethod* pRenderer):renderer(pRenderer)
     {
@@ -46,6 +47,9 @@ struct Canvas::Impl
 
     Result push(unique_ptr<Paint> paint)
     {
+        //You can not push paints during rendering.
+        if (drawing) return Result::InsufficientCondition;
+
         auto p = paint.release();
         if (!p) return Result::MemoryCorruption;
         paints.push(p);
@@ -58,13 +62,15 @@ struct Canvas::Impl
         //Clear render target before drawing
         if (!renderer || !renderer->clear()) return Result::InsufficientCondition;
 
-        //free paints
+        //Free paints
         for (auto paint = paints.data; paint < (paints.data + paints.count); ++paint) {
             (*paint)->pImpl->dispose(*renderer);
             if (free) delete(*paint);
         }
 
         paints.clear();
+
+        drawing = false;
 
         return Result::Success;
     }
@@ -76,7 +82,7 @@ struct Canvas::Impl
 
     Result update(Paint* paint, bool force)
     {
-        if (!renderer) return Result::InsufficientCondition;
+        if (paints.count == 0 || drawing || !renderer) return Result::InsufficientCondition;
 
         Array<RenderData> clips;
         auto flag = RenderUpdateFlag::None;
@@ -84,7 +90,14 @@ struct Canvas::Impl
 
         //Update single paint node
         if (paint) {
-            paint->pImpl->update(*renderer, nullptr, 255, clips, flag);
+            //Optimize Me: Can we skip the searching?
+            for (auto paint2 = paints.data; paint2 < (paints.data + paints.count); ++paint2) {
+                if ((*paint2) == paint) {
+                    paint->pImpl->update(*renderer, nullptr, 255, clips, flag);
+                    return Result::Success;
+                }
+            }
+            return Result::InvalidArguments;
         //Update all retained paint nodes
         } else {
             for (auto paint = paints.data; paint < (paints.data + paints.count); ++paint) {
@@ -99,7 +112,7 @@ struct Canvas::Impl
 
     Result draw()
     {
-        if (!renderer || !renderer->preRender()) return Result::InsufficientCondition;
+        if (drawing || paints.count == 0 || !renderer || !renderer->preRender()) return Result::InsufficientCondition;
 
         for (auto paint = paints.data; paint < (paints.data + paints.count); ++paint) {
             if (!(*paint)->pImpl->render(*renderer)) return Result::InsufficientCondition;
@@ -107,7 +120,21 @@ struct Canvas::Impl
 
         if (!renderer->postRender()) return Result::InsufficientCondition;
 
+        drawing = true;
+
         return Result::Success;
+    }
+
+    Result sync()
+    {
+        if (!drawing) return Result::InsufficientCondition;
+
+        if (renderer->sync()) {
+            drawing = false;
+            return Result::Success;
+        }
+
+        return Result::InsufficientCondition;
     }
 };
 

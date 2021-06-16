@@ -25,21 +25,15 @@
 /************************************************************************/
 /* Drawing Commands                                                     */
 /************************************************************************/
-tvg::Shape* pShape = nullptr;
-tvg::Shape* pShape2 = nullptr;
-tvg::Shape* pShape3 = nullptr;
 
-void tvgDrawCmds(tvg::Canvas* canvas)
+void tvgUpdateCmds(tvg::Canvas* canvas, float progress)
 {
     if (!canvas) return;
 
+    if (canvas->clear() != tvg::Result::Success) return;
+
     //Shape1
     auto shape = tvg::Shape::gen();
-
-    /* Acquire shape pointer to access it again.
-       instead, you should consider not to interrupt this pointer life-cycle. */
-    pShape = shape.get();
-
     shape->appendRect(-285, -300, 200, 200, 0, 0);
     shape->appendRect(-185, -200, 300, 300, 100, 100);
     shape->appendCircle(115, 100, 100, 100);
@@ -58,11 +52,15 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     fill->colorStops(colorStops, 3);
     shape->fill(move(fill));
     shape->translate(385, 400);
+
+    //Update Shape1
+    shape->scale(1 - 0.75 * progress);
+    shape->rotate(360 * progress);
+
     if (canvas->push(move(shape)) != tvg::Result::Success) return;
 
     //Shape2
     auto shape2 = tvg::Shape::gen();
-    pShape2 = shape2.get();
     shape2->appendRect(-50, -50, 100, 100, 0, 0);
     shape2->translate(400, 400);
 
@@ -77,12 +75,14 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     fill2->colorStops(colorStops2, 2);
     shape2->fill(move(fill2));
+
+    shape2->rotate(360 * progress);
+    shape2->translate(400 + progress * 300, 400);
+
     if (canvas->push(move(shape2)) != tvg::Result::Success) return;
 
     //Shape3
     auto shape3 = tvg::Shape::gen();
-    pShape3 = shape3.get();
-
     /* Look, how shape3's origin is different with shape2
        The center of the shape is the anchor point for transformation. */
     shape3->appendRect(100, 100, 150, 100, 20, 20);
@@ -102,33 +102,12 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     shape3->fill(move(fill3));
     shape3->translate(400, 400);
-    if (canvas->push(move(shape3)) != tvg::Result::Success) return;
-}
-
-void tvgUpdateCmds(tvg::Canvas* canvas, float progress)
-{
-    if (!canvas) return;
-
-    /* Update shape directly.
-       You can update only necessary properties of this shape,
-       while retaining other properties. */
-
-    //Update Shape1
-    pShape->scale(1 - 0.75 * progress);
-    pShape->rotate(360 * progress);
-
-    //Update shape for drawing (this may work asynchronously)
-    if (canvas->update(pShape) != tvg::Result::Success) return;
-
-    //Update Shape2
-    pShape2->rotate(360 * progress);
-    pShape2->translate(400 + progress * 300, 400);
-    if (canvas->update(pShape2) != tvg::Result::Success) return;
 
     //Update Shape3
-    pShape3->rotate(-360 * progress);
-    pShape3->scale(0.5 + progress);
-    if (canvas->update(pShape3) != tvg::Result::Success) return;
+    shape3->rotate(-360 * progress);
+    shape3->scale(0.5 + progress);
+
+    if (canvas->push(move(shape3)) != tvg::Result::Success) return;
 }
 
 
@@ -148,7 +127,7 @@ void tvgSwTest(uint32_t* buffer)
        When this shape is into the canvas list, the shape could update & prepare
        internal data asynchronously for coming rendering.
        Canvas keeps this shape node unless user call canvas->clear() */
-    tvgDrawCmds(swCanvas.get());
+   tvgUpdateCmds(swCanvas.get(), 0);
 }
 
 void transitSwCb(Elm_Transit_Effect *effect, Elm_Transit* transit, double progress)
@@ -187,7 +166,7 @@ void initGLview(Evas_Object *obj)
        When this shape is into the canvas list, the shape could update & prepare
        internal data asynchronously for coming rendering.
        Canvas keeps this shape node unless user call canvas->clear() */
-    tvgDrawCmds(glCanvas.get());
+    tvgUpdateCmds(glCanvas.get(), 0);
 }
 
 void drawGLview(Evas_Object *obj)

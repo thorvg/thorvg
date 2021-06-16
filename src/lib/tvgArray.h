@@ -43,12 +43,14 @@ struct Array
         data[count++] = element;
     }
 
-    void reserve(uint32_t size)
+    bool reserve(uint32_t size)
     {
         if (size > reserved) {
             reserved = size;
             data = static_cast<T*>(realloc(data, sizeof(T) * reserved));
+            if (!data) return false;
         }
+        return true;
     }
 
     void pop()

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2021 Samsung Electronics Co., Ltd. All rights reserved.
+ * Copyright (c) 2021 Samsung Electronics Co., Ltd. All rights reserved.
 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -19,69 +19,105 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#include "tvgCanvasImpl.h"
 
-#ifdef THORVG_GL_RASTER_SUPPORT
-    #include "tvgGlRenderer.h"
-#else
-    class GlRenderer : public RenderMethod
-    {
-        //Non Supported. Dummy Class */
-    };
-#endif
+#include <fstream>
+#include "tvgLoaderMgr.h"
+#include "tvgTvgLoader.h"
+#include "tvgTvgLoadParser.h"
+
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-struct GlCanvas::Impl
+void TvgLoader::clearBuffer()
 {
-};
+    free(buffer);
+    size = 0;
+    buffer = nullptr;
+    pointer = nullptr;
+}
 
 
 /************************************************************************/
 /* External Class Implementation                                        */
 /************************************************************************/
 
-#ifdef THORVG_GL_RASTER_SUPPORT
-GlCanvas::GlCanvas() : Canvas(GlRenderer::gen()), pImpl(new Impl)
-#else
-GlCanvas::GlCanvas() : Canvas(nullptr), pImpl(new Impl)
-#endif
+TvgLoader::~TvgLoader()
 {
+    close();
 }
 
 
-
-GlCanvas::~GlCanvas()
+bool TvgLoader::open(const string &path)
 {
-    delete(pImpl);
+    //TODO: verify memory leak if open() is called multiple times.
+
+    ifstream f;
+    f.open(path, ifstream::in | ifstream::binary | ifstream::ate);
+
+    if (!f.is_open()) return false;
+
+    size = f.tellg();
+    f.seekg(0, ifstream::beg);
+
+    buffer = (char*)malloc(size);
+    if (!buffer) {
+        size = 0;
+        f.close();
+        return false;
+    }
+
+    if (!f.read(buffer, size))
+    {
+        clearBuffer();
+        f.close();
+        return false;
+    }
+
+    f.close();
+
+    pointer = buffer;
+
+    return tvgValidateData(pointer, size);
 }
 
-
-Result GlCanvas::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h) noexcept
+bool TvgLoader::open(const char *data, uint32_t size)
 {
-#ifdef THORVG_GL_RASTER_SUPPORT
-    //We know renderer type, avoid dynamic_cast for performance.
-    auto renderer = static_cast<GlRenderer*>(Canvas::pImpl->renderer);
-    if (!renderer) return Result::MemoryCorruption;
+    //TODO: verify memory leak if open() is called multiple times.
 
-    if (!renderer->target(buffer, stride, w, h)) return Result::Unknown;
+    this->pointer = data;
+    this->size = size;
 
-    //Paints must be updated again with this new target.
-    Canvas::pImpl->needRefresh();
-
-    return Result::Success;
-#endif
-    return Result::NonSupport;
+    return tvgValidateData(pointer, size);
 }
 
-
-unique_ptr<GlCanvas> GlCanvas::gen() noexcept
+bool TvgLoader::read()
 {
-#ifdef THORVG_GL_RASTER_SUPPORT
-    if (GlRenderer::init() <= 0) return nullptr;
-    return unique_ptr<GlCanvas>(new GlCanvas);
-#endif
+    if (!pointer || size == 0) return false;
+
+    TaskScheduler::request(this);
+
+    return true;
+}
+
+bool TvgLoader::close()
+{
+    this->done();
+    clearBuffer();
+    return true;
+}
+
+void TvgLoader::run(unsigned tid)
+{
+    if (root) root.reset();
+    root = tvgLoadData(pointer, size);
+    if (!root) clearBuffer();
+}
+
+unique_ptr<Scene> TvgLoader::scene()
+{
+    this->done();
+    if (root) return move(root);
     return nullptr;
 }

@@ -43,7 +43,6 @@ static unique_ptr<LinearGradient> _applyLinearGradientProperty(SvgStyleGradient*
     Fill::ColorStop* stops;
     int stopCount = 0;
     float fillOpacity = 255.0f;
-    float gx, gy, gw, gh;
 
     auto fillGrad = LinearGradient::gen();
 
@@ -52,34 +51,6 @@ static unique_ptr<LinearGradient> _applyLinearGradientProperty(SvgStyleGradient*
         g->linear->y1 = g->linear->y1 * rh + ry;
         g->linear->x2 = g->linear->x2 * rw + rx;
         g->linear->y2 = g->linear->y2 * rh + ry;
-    }
-
-    //In case of objectBoundingBox it need proper scaling
-    if (!g->userSpace) {
-        float scaleX = 1.0, scaleReversedX = 1.0;
-        float scaleY = 1.0, scaleReversedY = 1.0;
-
-        //Check the smallest size, find the scale value
-        if (rh > rw) {
-            scaleY = ((float)rw) / rh;
-            scaleReversedY = ((float)rh) / rw;
-        } else {
-            scaleX = ((float)rh) / rw;
-            scaleReversedX = ((float)rw) / rh;
-        }
-
-        vg->bounds(&gx, &gy, &gw, &gh);
-
-        float cy = ((float)gh) * 0.5 + gy;
-        float cy_scaled = (((float)gh) * 0.5) * scaleReversedY;
-        float cx = ((float)gw) * 0.5 + gx;
-        float cx_scaled = (((float)gw) * 0.5) * scaleReversedX;
-
-        //= T(gx, gy) x S(scaleX, scaleY) x T(cx_scaled - cx, cy_scaled - cy) x (radial->x, radial->y)
-        g->linear->x1 = g->linear->x1 * scaleX + scaleX * (cx_scaled - cx) + gx;
-        g->linear->y1 = g->linear->y1 * scaleY + scaleY * (cy_scaled - cy) + gy;
-        g->linear->x2 = g->linear->x2 * scaleX + scaleX * (cx_scaled - cx) + gx;
-        g->linear->y2 = g->linear->y2 * scaleY + scaleY * (cy_scaled - cy) + gy;
     }
 
     if (g->transform) {
@@ -122,7 +93,6 @@ static unique_ptr<RadialGradient> _applyRadialGradientProperty(SvgStyleGradient*
 {
     Fill::ColorStop *stops;
     int stopCount = 0;
-    float gx, gy, gw, gh;
     int radius;
     float fillOpacity = 255.0f;
 
@@ -142,32 +112,6 @@ static unique_ptr<RadialGradient> _applyRadialGradientProperty(SvgStyleGradient*
         g->radial->r = g->radial->r * radius;
         g->radial->fx = g->radial->fx * rw + rx;
         g->radial->fy = g->radial->fy * rh + ry;
-    }
-
-    //In case of objectBoundingBox it need proper scaling
-    if (!g->userSpace) {
-        float scaleX = 1.0, scaleReversedX = 1.0;
-        float scaleY = 1.0, scaleReversedY = 1.0;
-
-        //Check the smallest size, find the scale value
-        if (rh > rw) {
-            scaleY = ((float)rw) / rh;
-            scaleReversedY = ((float)rh) / rw;
-        } else {
-            scaleX = ((float)rh) / rw;
-            scaleReversedX = ((float)rw) / rh;
-        }
-
-        vg->bounds(&gx, &gy, &gw, &gh);
-
-        float cy = ((float)gh) * 0.5 + gy;
-        float cy_scaled = (((float)gh) * 0.5) * scaleReversedY;
-        float cx = ((float)gw) * 0.5 + gx;
-        float cx_scaled = (((float)gw) * 0.5) * scaleReversedX;
-
-         //= T(gx, gy) x S(scaleX, scaleY) x T(cx_scaled - cx, cy_scaled - cy) x (radial->x, radial->y)
-        g->radial->cx = g->radial->cx * scaleX + scaleX * (cx_scaled - cx) + gx;
-        g->radial->cy = g->radial->cy * scaleY + scaleY * (cy_scaled - cy) + gy;
     }
 
     //TODO: Radial gradient transformation is not yet supported.
@@ -251,7 +195,7 @@ static void _applyProperty(SvgNode* node, Shape* vg, float vx, float vy, float v
     if (style->fill.paint.none) {
         //Do nothing
     } else if (style->fill.paint.gradient) {
-         if (!style->fill.paint.gradient->userSpace) vg->bounds(&vx, &vy, &vw, &vh);
+        if (!style->fill.paint.gradient->userSpace) vg->bounds(&vx, &vy, &vw, &vh);
 
         if (style->fill.paint.gradient->type == SvgGradientType::Linear) {
              auto linear = _applyLinearGradientProperty(style->fill.paint.gradient, vg, vx, vy, vw, vh);
@@ -288,7 +232,15 @@ static void _applyProperty(SvgNode* node, Shape* vg, float vx, float vy, float v
     if (style->stroke.paint.none) {
         //Do nothing
     } else if (style->stroke.paint.gradient) {
-        //TODO: Support gradient style
+        if (!style->stroke.paint.gradient->userSpace) vg->bounds(&vx, &vy, &vw, &vh);
+
+        if (style->stroke.paint.gradient->type == SvgGradientType::Linear) {
+             auto linear = _applyLinearGradientProperty(style->stroke.paint.gradient, vg, vx, vy, vw, vh);
+             vg->stroke(move(linear));
+        } else if (style->stroke.paint.gradient->type == SvgGradientType::Radial) {
+             auto radial = _applyRadialGradientProperty(style->stroke.paint.gradient, vg, vx, vy, vw, vh);
+             vg->stroke(move(radial));
+        }
     } else if (style->stroke.paint.url) {
         //TODO: Apply the color pointed by url
     } else if (style->stroke.paint.curColor) {
