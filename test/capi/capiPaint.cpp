@@ -21,7 +21,7 @@
  */
 
 #include <thorvg_capi.h>
-#include "catch.hpp"
+#include "../catch.hpp"
 
 #define UTC_EPSILON 1e-6f
 

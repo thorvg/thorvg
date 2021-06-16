@@ -21,7 +21,7 @@
  */
 
 #include <thorvg_capi.h>
-#include "catch.hpp"
+#include "../catch.hpp"
 
 TEST_CASE("Multiple shapes", "[capiShapes]")
 {

@@ -1,6 +1,10 @@
 test_file = [
-    'capiMain.cpp',
-    'capiFill.cpp',
+   'capiInitializer.cpp',
+   'capiFill.cpp',
+   'capiMain.cpp',
+   'capiPaint.cpp',
+   'capiShape.cpp',
+   'capiSwCanvas.cpp',
 ]
 
 tests = executable('capiUnitTests',
