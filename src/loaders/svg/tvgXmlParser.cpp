@@ -503,6 +503,10 @@ bool simpleXmlParseW3CAttribute(const char* buf, simpleXMLAttributeCb func, cons
         }
 
         if (key[0]) {
+            key = const_cast<char*>(_simpleXmlSkipWhiteSpace(key, key + strlen(key)));
+            key[_simpleXmlUnskipWhiteSpace(key + strlen(key) , key) - key] = '\0';
+            val = const_cast<char*>(_simpleXmlSkipWhiteSpace(val, val + strlen(val)));
+            val[_simpleXmlUnskipWhiteSpace(val + strlen(val) , val) - val] = '\0';
 
 #ifdef THORVG_LOG_ENABLED
             if (!func((void*)data, key, val)) {
