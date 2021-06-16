@@ -236,6 +236,8 @@ _PARSE_TAG(SvgFillRule, fillRule, FillRule, fillRuleTags, SvgFillRule::Winding)
 static inline void
 _parseDashArray(const char *str, SvgDash* dash)
 {
+    if (!strncmp(str, "none", 4)) return;
+
     char *end = nullptr;
 
     while (*str) {
