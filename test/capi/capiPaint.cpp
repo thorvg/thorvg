@@ -52,20 +52,19 @@ TEST_CASE("Paint Translate", "[capiPaintTranslate]")
     Tvg_Paint* paint = tvg_shape_new();
     REQUIRE(paint);
 
-    Tvg_Matrix matrix_get;
-    float tx = 20, ty = 30;
+    Tvg_Matrix matrix;
 
-    REQUIRE(tvg_paint_translate(paint, tx, ty) == TVG_RESULT_SUCCESS);
-    REQUIRE(tvg_paint_get_transform(paint, &matrix_get) == TVG_RESULT_SUCCESS);
-    REQUIRE(fabs(matrix_get.e11 - 1.0f) < UTC_EPSILON);
-    REQUIRE(fabs(matrix_get.e12 - 0.0f) < UTC_EPSILON);
-    REQUIRE(fabs(matrix_get.e13 - tx) < UTC_EPSILON);
-    REQUIRE(fabs(matrix_get.e21 - 0.0f) < UTC_EPSILON);
-    REQUIRE(fabs(matrix_get.e22 - 1.0f) < UTC_EPSILON);
-    REQUIRE(fabs(matrix_get.e23 - ty) < UTC_EPSILON);
-    REQUIRE(fabs(matrix_get.e31 - 0.0f) < UTC_EPSILON);
-    REQUIRE(fabs(matrix_get.e32 - 0.0f) < UTC_EPSILON);
-    REQUIRE(fabs(matrix_get.e33 - 1.0f) < UTC_EPSILON);
+    REQUIRE(tvg_paint_translate(paint, 20, 30) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_paint_get_transform(paint, &matrix) == TVG_RESULT_SUCCESS);
+    REQUIRE(fabs(matrix.e11 - 1.0f) < UTC_EPSILON);
+    REQUIRE(fabs(matrix.e12 - 0.0f) < UTC_EPSILON);
+    REQUIRE(fabs(matrix.e13 - 20) < UTC_EPSILON);
+    REQUIRE(fabs(matrix.e21 - 0.0f) < UTC_EPSILON);
+    REQUIRE(fabs(matrix.e22 - 1.0f) < UTC_EPSILON);
+    REQUIRE(fabs(matrix.e23 - 30) < UTC_EPSILON);
+    REQUIRE(fabs(matrix.e31 - 0.0f) < UTC_EPSILON);
+    REQUIRE(fabs(matrix.e32 - 0.0f) < UTC_EPSILON);
+    REQUIRE(fabs(matrix.e33 - 1.0f) < UTC_EPSILON);
 
     REQUIRE(tvg_paint_del(paint) == TVG_RESULT_SUCCESS);
 }
@@ -75,20 +74,19 @@ TEST_CASE("Paint Scale", "[capiPaintScale]")
     Tvg_Paint* paint = tvg_shape_new();
     REQUIRE(paint);
 
-    Tvg_Matrix matrix_get;
-    float scale = 2.5f;
+    Tvg_Matrix matrix;
 
-    REQUIRE(tvg_paint_scale(paint, scale) == TVG_RESULT_SUCCESS);
-    REQUIRE(tvg_paint_get_transform(paint, &matrix_get) == TVG_RESULT_SUCCESS);
-    REQUIRE(fabs(matrix_get.e11 - scale) < UTC_EPSILON);
-    REQUIRE(fabs(matrix_get.e12 - 0.0f) < UTC_EPSILON);
-    REQUIRE(fabs(matrix_get.e13 - 0.0f) < UTC_EPSILON);
-    REQUIRE(fabs(matrix_get.e21 - 0.0f) < UTC_EPSILON);
-    REQUIRE(fabs(matrix_get.e22 - scale) < UTC_EPSILON);
-    REQUIRE(fabs(matrix_get.e23 - 0.0f) < UTC_EPSILON);
-    REQUIRE(fabs(matrix_get.e31 - 0.0f) < UTC_EPSILON);
-    REQUIRE(fabs(matrix_get.e32 - 0.0f) < UTC_EPSILON);
-    REQUIRE(fabs(matrix_get.e33 - 1.0f) < UTC_EPSILON);
+    REQUIRE(tvg_paint_scale(paint, 2.5f) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_paint_get_transform(paint, &matrix) == TVG_RESULT_SUCCESS);
+    REQUIRE(fabs(matrix.e11 - 2.5f) < UTC_EPSILON);
+    REQUIRE(fabs(matrix.e12 - 0.0f) < UTC_EPSILON);
+    REQUIRE(fabs(matrix.e13 - 0.0f) < UTC_EPSILON);
+    REQUIRE(fabs(matrix.e21 - 0.0f) < UTC_EPSILON);
+    REQUIRE(fabs(matrix.e22 - 2.5f) < UTC_EPSILON);
+    REQUIRE(fabs(matrix.e23 - 0.0f) < UTC_EPSILON);
+    REQUIRE(fabs(matrix.e31 - 0.0f) < UTC_EPSILON);
+    REQUIRE(fabs(matrix.e32 - 0.0f) < UTC_EPSILON);
+    REQUIRE(fabs(matrix.e33 - 1.0f) < UTC_EPSILON);
 
     REQUIRE(tvg_paint_del(paint) == TVG_RESULT_SUCCESS);
 }
@@ -98,20 +96,19 @@ TEST_CASE("Paint Rotate", "[capiPaintRotate]")
     Tvg_Paint* paint = tvg_shape_new();
     REQUIRE(paint);
 
-    Tvg_Matrix matrix_get;
-    float degree = 180.0f;
+    Tvg_Matrix matrix;
 
-    REQUIRE(tvg_paint_rotate(paint, degree) == TVG_RESULT_SUCCESS);
-    REQUIRE(tvg_paint_get_transform(paint, &matrix_get) == TVG_RESULT_SUCCESS);
-    REQUIRE(fabs(matrix_get.e11 - -1.0f) < UTC_EPSILON);
-    REQUIRE(fabs(matrix_get.e12 - 0.0f) < UTC_EPSILON);
-    REQUIRE(fabs(matrix_get.e13 - 0.0f) < UTC_EPSILON);
-    REQUIRE(fabs(matrix_get.e21 - 0.0f) < UTC_EPSILON);
-    REQUIRE(fabs(matrix_get.e22 - -1.0f) < UTC_EPSILON);
-    REQUIRE(fabs(matrix_get.e23 - 0.0f) < UTC_EPSILON);
-    REQUIRE(fabs(matrix_get.e31 - 0.0f) < UTC_EPSILON);
-    REQUIRE(fabs(matrix_get.e32 - 0.0f) < UTC_EPSILON);
-    REQUIRE(fabs(matrix_get.e33 - 1.0f) < UTC_EPSILON);
+    REQUIRE(tvg_paint_rotate(paint, 180.0f) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_paint_get_transform(paint, &matrix) == TVG_RESULT_SUCCESS);
+    REQUIRE(fabs(matrix.e11 - -1.0f) < UTC_EPSILON);
+    REQUIRE(fabs(matrix.e12 - 0.0f) < UTC_EPSILON);
+    REQUIRE(fabs(matrix.e13 - 0.0f) < UTC_EPSILON);
+    REQUIRE(fabs(matrix.e21 - 0.0f) < UTC_EPSILON);
+    REQUIRE(fabs(matrix.e22 - -1.0f) < UTC_EPSILON);
+    REQUIRE(fabs(matrix.e23 - 0.0f) < UTC_EPSILON);
+    REQUIRE(fabs(matrix.e31 - 0.0f) < UTC_EPSILON);
+    REQUIRE(fabs(matrix.e32 - 0.0f) < UTC_EPSILON);
+    REQUIRE(fabs(matrix.e33 - 1.0f) < UTC_EPSILON);
 
     REQUIRE(tvg_paint_del(paint) == TVG_RESULT_SUCCESS);
 }
@@ -121,22 +118,19 @@ TEST_CASE("Paint Opacity", "[capiPaintOpacity]")
     Tvg_Paint* paint = tvg_shape_new();
     REQUIRE(paint);
 
-    uint8_t opacity_set, opacity_get;
+    uint8_t opacity;
 
-    opacity_set = 0;
-    REQUIRE(tvg_paint_set_opacity(paint, opacity_set) == TVG_RESULT_SUCCESS);
-    REQUIRE(tvg_paint_get_opacity(paint, &opacity_get) == TVG_RESULT_SUCCESS);
-    REQUIRE(opacity_get == opacity_get);
+    REQUIRE(tvg_paint_set_opacity(paint, 0) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_paint_get_opacity(paint, &opacity) == TVG_RESULT_SUCCESS);
+    REQUIRE(0 == opacity);
 
-    opacity_set = 128;
-    REQUIRE(tvg_paint_set_opacity(paint, opacity_set) == TVG_RESULT_SUCCESS);
-    REQUIRE(tvg_paint_get_opacity(paint, &opacity_get) == TVG_RESULT_SUCCESS);
-    REQUIRE(opacity_get == opacity_get);
+    REQUIRE(tvg_paint_set_opacity(paint, 128) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_paint_get_opacity(paint, &opacity) == TVG_RESULT_SUCCESS);
+    REQUIRE(128 == opacity);
 
-    opacity_set = 255;
-    REQUIRE(tvg_paint_set_opacity(paint, opacity_set) == TVG_RESULT_SUCCESS);
-    REQUIRE(tvg_paint_get_opacity(paint, &opacity_get) == TVG_RESULT_SUCCESS);
-    REQUIRE(opacity_get == opacity_get);
+    REQUIRE(tvg_paint_set_opacity(paint, 255) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_paint_get_opacity(paint, &opacity) == TVG_RESULT_SUCCESS);
+    REQUIRE(255 == opacity);
 
     REQUIRE(tvg_paint_del(paint) == TVG_RESULT_SUCCESS);
 }
@@ -146,27 +140,26 @@ TEST_CASE("Paint Bounds", "[capiPaintBounds]")
     Tvg_Paint* paint = tvg_shape_new();
     REQUIRE(paint);
 
-    float x = 0, y = 10, w = 20, h = 100;
-    float x_get, y_get, w_get, h_get;
+    float x, y, w, h;
 
-    REQUIRE(tvg_shape_append_rect(paint, x, y, w, h, 0, 0) == TVG_RESULT_SUCCESS);
-    REQUIRE(tvg_paint_get_bounds(paint, &x_get, &y_get, &w_get, &h_get) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_shape_append_rect(paint, 0, 10, 20, 100, 0, 0) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_paint_get_bounds(paint, &x, &y, &w, &h) == TVG_RESULT_SUCCESS);
 
-    REQUIRE(x == x_get);
-    REQUIRE(y == y_get);
-    REQUIRE(w == w_get);
-    REQUIRE(h == h_get);
+    REQUIRE(x == 0);
+    REQUIRE(y == 10);
+    REQUIRE(w == 20);
+    REQUIRE(h == 100);
 
     REQUIRE(tvg_shape_reset(paint) == TVG_RESULT_SUCCESS);
 
-    REQUIRE(tvg_shape_move_to(paint, x, y) == TVG_RESULT_SUCCESS);
-    REQUIRE(tvg_shape_line_to(paint, x + w, y + h) == TVG_RESULT_SUCCESS);
-    REQUIRE(tvg_paint_get_bounds(paint, &x_get, &y_get, &w_get, &h_get) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_shape_move_to(paint, 0, 10) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_shape_line_to(paint, 20, 110) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_paint_get_bounds(paint, &x, &y, &w, &h) == TVG_RESULT_SUCCESS);
 
-    REQUIRE(x == x_get);
-    REQUIRE(y == y_get);
-    REQUIRE(w == w_get);
-    REQUIRE(h == h_get);
+    REQUIRE(x == 0);
+    REQUIRE(y == 10);
+    REQUIRE(w == 20);
+    REQUIRE(h == 100);
 
     REQUIRE(tvg_paint_del(paint) == TVG_RESULT_SUCCESS);
 }

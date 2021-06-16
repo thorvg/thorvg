@@ -25,10 +25,7 @@
 
 TEST_CASE("Canvas initialization", "[capiCanvas]")
 {
-    static uint32_t width = 200;
-    static uint32_t height = 200;
-
-    uint32_t* buffer = (uint32_t*) malloc(sizeof(uint32_t) * width * height);
+    uint32_t* buffer = (uint32_t*) malloc(sizeof(uint32_t) * 200 * 200);
     REQUIRE(buffer);
 
     REQUIRE(tvg_engine_init(TVG_ENGINE_SW, 0) == TVG_RESULT_SUCCESS);
@@ -36,13 +33,11 @@ TEST_CASE("Canvas initialization", "[capiCanvas]")
     Tvg_Canvas* canvas = tvg_swcanvas_create();
     REQUIRE(canvas);
 
-    REQUIRE(tvg_swcanvas_set_target(canvas, buffer, width, width, height, TVG_COLORSPACE_ARGB8888) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_swcanvas_set_target(canvas, buffer, 200, 200, 200, TVG_COLORSPACE_ARGB8888) == TVG_RESULT_SUCCESS);
 
-    REQUIRE(tvg_canvas_draw(canvas) == TVG_RESULT_SUCCESS);
-    REQUIRE(tvg_canvas_sync(canvas) == TVG_RESULT_SUCCESS);
-
-    REQUIRE(tvg_canvas_clear(canvas, true) == TVG_RESULT_SUCCESS);
     REQUIRE(tvg_canvas_destroy(canvas) == TVG_RESULT_SUCCESS);
 
     REQUIRE(tvg_engine_term(TVG_ENGINE_SW) == TVG_RESULT_SUCCESS);
 }
+
+//TODO: ++ more apis verification.

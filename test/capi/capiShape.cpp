@@ -96,17 +96,15 @@ TEST_CASE("Stroke width", "[capiStrokeWidth]")
     Tvg_Paint* paint = tvg_shape_new();
     REQUIRE(paint);
 
-    float stroke_set, stroke_get;
+    float stroke;
 
-    stroke_set = 0.0f;
-    REQUIRE(tvg_shape_set_stroke_width(paint, stroke_set) == TVG_RESULT_SUCCESS);
-    REQUIRE(tvg_shape_get_stroke_width(paint, &stroke_get) == TVG_RESULT_SUCCESS);
-    REQUIRE(stroke_get == stroke_get);
+    REQUIRE(tvg_shape_set_stroke_width(paint, 0.0f) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_shape_get_stroke_width(paint, &stroke) == TVG_RESULT_SUCCESS);
+    REQUIRE(stroke == 0.0f);
 
-    stroke_set = 5.0f;
-    REQUIRE(tvg_shape_set_stroke_width(paint, stroke_set) == TVG_RESULT_SUCCESS);
-    REQUIRE(tvg_shape_get_stroke_width(paint, &stroke_get) == TVG_RESULT_SUCCESS);
-    REQUIRE(stroke_get == stroke_get);
+    REQUIRE(tvg_shape_set_stroke_width(paint, 5.0f) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_shape_get_stroke_width(paint, &stroke) == TVG_RESULT_SUCCESS);
+    REQUIRE(stroke == 5.0f);
 
     REQUIRE(tvg_paint_del(paint) == TVG_RESULT_SUCCESS);
 }
@@ -116,15 +114,14 @@ TEST_CASE("Stroke color", "[capiStrokeColor]")
     Tvg_Paint* paint = tvg_shape_new();
     REQUIRE(paint);
 
-    uint8_t r = 255, g = 255, b = 255, a = 255;
-    uint8_t r_get, g_get, b_get, a_get;
+    uint8_t r, g, b, a;
 
-    REQUIRE(tvg_shape_set_stroke_color(paint, r, g, b, a) == TVG_RESULT_SUCCESS);
-    REQUIRE(tvg_shape_get_stroke_color(paint, &r_get, &g_get, &b_get, &a_get) == TVG_RESULT_SUCCESS);
-    REQUIRE(r == r_get);
-    REQUIRE(g == g_get);
-    REQUIRE(b == b_get);
-    REQUIRE(a == a_get);
+    REQUIRE(tvg_shape_set_stroke_color(paint, 100, 200, 50, 1) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_shape_get_stroke_color(paint, &r, &g, &b, &a) == TVG_RESULT_SUCCESS);
+    REQUIRE(r == 100);
+    REQUIRE(g == 200);
+    REQUIRE(b == 50);
+    REQUIRE(a == 1);
 
     REQUIRE(tvg_paint_del(paint) == TVG_RESULT_SUCCESS);
 }
@@ -134,15 +131,15 @@ TEST_CASE("Stroke dash", "[capiStrokeDash]")
     Tvg_Paint* paint = tvg_shape_new();
     REQUIRE(paint);
 
-    float dashPattern[2] = {20, 10};
-    float* dashPattern_get;
+    float dash[2] = {20, 10};
+    float* dash_get;
     uint32_t cnt;
 
-    REQUIRE(tvg_shape_set_stroke_dash(paint, dashPattern, 2) == TVG_RESULT_SUCCESS);
-    REQUIRE(tvg_shape_get_stroke_dash(paint, (const float**) &dashPattern_get, &cnt) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_shape_set_stroke_dash(paint, dash, 2) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_shape_get_stroke_dash(paint, (const float**) &dash_get, &cnt) == TVG_RESULT_SUCCESS);
     REQUIRE(cnt == 2);
     for (uint32_t i = 0; i < cnt; i++) {
-        REQUIRE(dashPattern_get[i] == dashPattern[i]);
+        REQUIRE(dash_get[i] == dash[i]);
     }
 
     REQUIRE(tvg_paint_del(paint) == TVG_RESULT_SUCCESS);
@@ -153,17 +150,15 @@ TEST_CASE("Stroke cap", "[capiStrokeCap]")
     Tvg_Paint* paint = tvg_shape_new();
     REQUIRE(paint);
 
-    Tvg_Stroke_Cap cap, cap_get;
+    Tvg_Stroke_Cap cap;
 
-    cap = TVG_STROKE_CAP_ROUND;
-    REQUIRE(tvg_shape_set_stroke_cap(paint, cap) == TVG_RESULT_SUCCESS);
-    REQUIRE(tvg_shape_get_stroke_cap(paint, &cap_get) == TVG_RESULT_SUCCESS);
-    REQUIRE(cap == cap_get);
+    REQUIRE(tvg_shape_set_stroke_cap(paint, TVG_STROKE_CAP_ROUND) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_shape_get_stroke_cap(paint, &cap) == TVG_RESULT_SUCCESS);
+    REQUIRE(cap == TVG_STROKE_CAP_ROUND);
 
-    cap = TVG_STROKE_CAP_BUTT;
-    REQUIRE(tvg_shape_set_stroke_cap(paint, cap) == TVG_RESULT_SUCCESS);
-    REQUIRE(tvg_shape_get_stroke_cap(paint, &cap_get) == TVG_RESULT_SUCCESS);
-    REQUIRE(cap == cap_get);
+    REQUIRE(tvg_shape_set_stroke_cap(paint, TVG_STROKE_CAP_BUTT) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_shape_get_stroke_cap(paint, &cap) == TVG_RESULT_SUCCESS);
+    REQUIRE(cap == TVG_STROKE_CAP_BUTT);
 
     REQUIRE(tvg_paint_del(paint) == TVG_RESULT_SUCCESS);
 }
@@ -173,17 +168,15 @@ TEST_CASE("Stroke join", "[capiStrokeJoin]")
     Tvg_Paint* paint = tvg_shape_new();
     REQUIRE(paint);
 
-    Tvg_Stroke_Join join, join_get;
+    Tvg_Stroke_Join join;
 
-    join = TVG_STROKE_JOIN_BEVEL;
-    REQUIRE(tvg_shape_set_stroke_join(paint, join) == TVG_RESULT_SUCCESS);
-    REQUIRE(tvg_shape_get_stroke_join(paint, &join_get) == TVG_RESULT_SUCCESS);
-    REQUIRE(join == join_get);
+    REQUIRE(tvg_shape_set_stroke_join(paint, TVG_STROKE_JOIN_BEVEL) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_shape_get_stroke_join(paint, &join) == TVG_RESULT_SUCCESS);
+    REQUIRE(join == TVG_STROKE_JOIN_BEVEL);
 
-    join = TVG_STROKE_JOIN_MITER;
-    REQUIRE(tvg_shape_set_stroke_join(paint, join) == TVG_RESULT_SUCCESS);
-    REQUIRE(tvg_shape_get_stroke_join(paint, &join_get) == TVG_RESULT_SUCCESS);
-    REQUIRE(join == join_get);
+    REQUIRE(tvg_shape_set_stroke_join(paint, TVG_STROKE_JOIN_MITER) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_shape_get_stroke_join(paint, &join) == TVG_RESULT_SUCCESS);
+    REQUIRE(join == TVG_STROKE_JOIN_MITER);
 
     REQUIRE(tvg_paint_del(paint) == TVG_RESULT_SUCCESS);
 }
@@ -193,15 +186,14 @@ TEST_CASE("Fill color", "[capiFillColor]")
     Tvg_Paint* paint = tvg_shape_new();
     REQUIRE(paint);
 
-    uint8_t r = 255, g = 255, b = 255, a = 255;
-    uint8_t r_get, g_get, b_get, a_get;
+    uint8_t r, g, b, a;
 
-    REQUIRE(tvg_shape_set_fill_color(paint, r, g, b, a) == TVG_RESULT_SUCCESS);
-    REQUIRE(tvg_shape_get_fill_color(paint, &r_get, &g_get, &b_get, &a_get) == TVG_RESULT_SUCCESS);
-    REQUIRE(r == r_get);
-    REQUIRE(g == g_get);
-    REQUIRE(b == b_get);
-    REQUIRE(a == a_get);
+    REQUIRE(tvg_shape_set_fill_color(paint, 129, 190, 57, 20) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_shape_get_fill_color(paint, &r, &g, &b, &a) == TVG_RESULT_SUCCESS);
+    REQUIRE(r == 129);
+    REQUIRE(g == 190);
+    REQUIRE(b == 57);
+    REQUIRE(a == 20);
 
     REQUIRE(tvg_paint_del(paint) == TVG_RESULT_SUCCESS);
 }
@@ -225,4 +217,3 @@ TEST_CASE("Fill rule", "[capiFillRule]")
 
     REQUIRE(tvg_paint_del(paint) == TVG_RESULT_SUCCESS);
 }
-

@@ -25,6 +25,6 @@
 
 TEST_CASE("Basic capi initialization", "[capiInitializer]")
 {
-    REQUIRE(tvg_engine_init(TVG_ENGINE_SW | TVG_ENGINE_GL, 0) == TVG_RESULT_SUCCESS);
-    REQUIRE(tvg_engine_term(TVG_ENGINE_SW | TVG_ENGINE_GL) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_engine_init(TVG_ENGINE_SW, 0) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_engine_term(TVG_ENGINE_SW) == TVG_RESULT_SUCCESS);
 }
