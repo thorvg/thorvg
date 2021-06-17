@@ -1,6 +1,7 @@
 test_file = [
    'capiInitializer.cpp',
    'capiFill.cpp',
+   'capiLinearGradient.cpp',
    'capiMain.cpp',
    'capiPaint.cpp',
    'capiRadialGradient.cpp',
