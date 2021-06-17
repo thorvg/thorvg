@@ -3,6 +3,7 @@ test_file = [
    'capiFill.cpp',
    'capiMain.cpp',
    'capiPaint.cpp',
+   'capiRadialGradient.cpp',
    'capiShape.cpp',
    'capiSwCanvas.cpp',
 ]

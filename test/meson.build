@@ -3,7 +3,6 @@ test_file = [
     'testInitializer.cpp',
     'testSwCanvas.cpp',
     'testSwCanvasBase.cpp',
-    'capi/testRadialGradient.cpp'
 ]
 
 tests = executable('tvgUnitTests',
