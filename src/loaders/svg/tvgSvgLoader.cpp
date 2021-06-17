@@ -1870,6 +1870,8 @@ static bool _attrParseRadialGradientNode(void* data, const char* key, const char
         grad->ref = _idFromHref(value);
     } else if (!strcmp(key, "gradientUnits") && !strcmp(value, "userSpaceOnUse")) {
         grad->userSpace = true;
+    } else if (!strcmp(key, "gradientTransform")) {
+        grad->transform = _parseTransformationMatrix(value);
     } else {
         return false;
     }
