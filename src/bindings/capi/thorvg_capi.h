@@ -1676,6 +1676,7 @@ TVG_EXPORT Tvg_Result tvg_picture_load_raw(Tvg_Paint* paint, uint32_t *data, uin
 * \param[in] paint Tvg_Paint pointer
 * \param[in] data raw data pointer
 * \param[in] size of data
+* \param[in] copy Decides whether the data should be copied into the local buffer
 *
 * \return Tvg_Result return value
 * \retval TVG_RESULT_SUCCESS: if ok.
@@ -1683,7 +1684,7 @@ TVG_EXPORT Tvg_Result tvg_picture_load_raw(Tvg_Paint* paint, uint32_t *data, uin
 *
 * \warning Please do not use it, this API is not official one. It can be modified in the next version.
 */
-TVG_EXPORT Tvg_Result tvg_picture_load_data(Tvg_Paint* paint, const char *data, uint32_t size);
+TVG_EXPORT Tvg_Result tvg_picture_load_data(Tvg_Paint* paint, const char *data, uint32_t size, bool copy);
 
 
 /*!

@@ -38,7 +38,7 @@ public:
 
     using Loader::open;
     bool open(const string &path) override;
-    bool open(const char *data, uint32_t size) override;
+    bool open(const char *data, uint32_t size, bool copy) override;
     bool read() override;
     bool close() override;
 

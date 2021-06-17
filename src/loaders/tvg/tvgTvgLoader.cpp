@@ -21,6 +21,7 @@
  */
 
 #include <fstream>
+#include <memory.h>
 #include "tvgLoaderMgr.h"
 #include "tvgTvgLoader.h"
 #include "tvgTvgLoadParser.h"
@@ -82,11 +83,18 @@ bool TvgLoader::open(const string &path)
     return tvgValidateData(pointer, size);
 }
 
-bool TvgLoader::open(const char *data, uint32_t size)
+bool TvgLoader::open(const char *data, uint32_t size, bool copy)
 {
-    //TODO: verify memory leak if open() is called multiple times.
+    if (copy) {
+        if (buffer) clearBuffer();
+        buffer = (char*)malloc(size);
+        if (!buffer) return false;
+        memcpy(buffer, data, size);
+        this->pointer = buffer;
+    } else {
+        this->pointer = data;
+    }
 
-    this->pointer = data;
     this->size = size;
 
     return tvgValidateData(pointer, size);

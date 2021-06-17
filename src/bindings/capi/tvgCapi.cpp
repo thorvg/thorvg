@@ -462,10 +462,10 @@ TVG_EXPORT Tvg_Result tvg_picture_load_raw(Tvg_Paint* paint, uint32_t *data, uin
 }
 
 
-TVG_EXPORT Tvg_Result tvg_picture_load_data(Tvg_Paint* paint, const char *data, uint32_t size)
+TVG_EXPORT Tvg_Result tvg_picture_load_data(Tvg_Paint* paint, const char *data, uint32_t size, bool copy)
 {
     if (!paint) return TVG_RESULT_INVALID_ARGUMENT;
-    return (Tvg_Result) reinterpret_cast<Picture*>(paint)->load(data, size);
+    return (Tvg_Result) reinterpret_cast<Picture*>(paint)->load(data, size, copy);
 }
 
 

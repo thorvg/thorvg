@@ -29,6 +29,7 @@ class SvgLoader : public Loader, public Task
 {
 public:
     string filePath;
+    char* buffer = nullptr;
     const char* content = nullptr;
     uint32_t size = 0;
 
@@ -40,7 +41,7 @@ public:
 
     using Loader::open;
     bool open(const string& path) override;
-    bool open(const char* data, uint32_t size) override;
+    bool open(const char* data, uint32_t size, bool copy) override;
 
     bool header();
     bool read() override;
@@ -48,6 +49,9 @@ public:
     void run(unsigned tid) override;
 
     unique_ptr<Scene> scene() override;
+
+private:
+    void clearBuffer();
 };
 
 

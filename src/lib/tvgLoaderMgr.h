@@ -31,7 +31,7 @@ struct LoaderMgr
     static bool init();
     static bool term();
     static shared_ptr<Loader> loader(const string& path);
-    static shared_ptr<Loader> loader(const char* data, uint32_t size);
+    static shared_ptr<Loader> loader(const char* data, uint32_t size, bool copy);
     static shared_ptr<Loader> loader(const uint32_t* data, uint32_t w, uint32_t h, bool copy);
 };
 

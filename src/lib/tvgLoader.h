@@ -41,7 +41,7 @@ public:
     virtual ~Loader() {}
 
     virtual bool open(const string& path) { /* Not supported */ return false; };
-    virtual bool open(const char* data, uint32_t size) { /* Not supported */ return false; };
+    virtual bool open(const char* data, uint32_t size, bool copy) { /* Not supported */ return false; };
     virtual bool open(const uint32_t* data, uint32_t w, uint32_t h, bool copy) { /* Not supported */ return false; };
     virtual bool read() = 0;
     virtual bool close() = 0;

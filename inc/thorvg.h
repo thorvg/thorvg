@@ -989,6 +989,7 @@ public:
      *
      * @param[in] data A pointer to a memory location where the content of the picture file is stored.
      * @param[in] size The size in bytes of the memory occupied by the @p data.
+     * @param[in] copy Decides whether the data should be copied into the local buffer.
      *
      * @retval Result::Success When succeed.
      * @retval Result::InvalidArguments In case no data are provided or the @p size is zero or less.
@@ -997,7 +998,7 @@ public:
      *
      * @note: This api supports only SVG format
      */
-    Result load(const char* data, uint32_t size) noexcept;
+    Result load(const char* data, uint32_t size, bool copy = false) noexcept;
 
     /**
      * @brief Resize the picture content with the given width and height.
