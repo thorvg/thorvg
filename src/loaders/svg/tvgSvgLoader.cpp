@@ -236,6 +236,8 @@ _PARSE_TAG(SvgFillRule, fillRule, FillRule, fillRuleTags, SvgFillRule::Winding)
 static inline void
 _parseDashArray(const char *str, SvgDash* dash)
 {
+    if (!strncmp(str, "none", 4)) return;
+
     char *end = nullptr;
 
     while (*str) {
@@ -275,7 +277,7 @@ static unsigned char _parserColor(const char* value, char** end)
 {
     float r;
 
-    r = svgUtilStrtof(value + 4, end);
+    r = svgUtilStrtof(value, end);
     *end = _skipSpace(*end, nullptr);
     if (**end == '%') r = 255 * r / 100;
     *end = _skipSpace(*end, nullptr);
