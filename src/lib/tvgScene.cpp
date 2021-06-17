@@ -56,7 +56,7 @@ Result Scene::push(unique_ptr<Paint> paint) noexcept
 
 Result Scene::reserve(uint32_t size) noexcept
 {
-    pImpl->paints.reserve(size);
+    if (!pImpl->paints.reserve(size)) return Result::FailedAllocation;
 
     return Result::Success;
 }
