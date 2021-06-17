@@ -10,7 +10,7 @@ tests = executable('tvgUnitTests',
     include_directories : headers,
     link_with : thorvg_lib)
 
-test('Unit Tests', tests)
+test('Unit Tests', tests, args : ['--success'])
 
 if get_option('bindings').contains('capi') == true
     subdir('capi')

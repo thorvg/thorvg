@@ -24,7 +24,7 @@ jobs:
         cd build
         sudo ninja -C . install
 
-  example_build:
+  examples:
     runs-on: ubuntu-18.04
     steps:
     - uses: actions/checkout@v2
@@ -44,7 +44,7 @@ jobs:
         cd build
         sudo ninja -C . install
 
-  test_build:
+  unit_test:
     runs-on: ubuntu-18.04
     steps:
     - uses: actions/checkout@v2
@@ -68,3 +68,8 @@ jobs:
         meson . build -Dtests=true --errorlogs
         cd build
         sudo ninja -C . install test
+
+    - uses: actions/upload-artifact@v2
+      with:
+        name: UnitTestReport
+        path: build/meson-logs/testlog.txt
