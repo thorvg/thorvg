@@ -114,8 +114,15 @@ static unique_ptr<RadialGradient> _applyRadialGradientProperty(SvgStyleGradient*
         g->radial->fy = g->radial->fy * rh + ry;
     }
 
-    //TODO: Radial gradient transformation is not yet supported.
-    //if (g->transform) {}
+    //TODO: Radial gradient transformation - all tests possible after rx/ry implementation
+    if (g->transform) {
+        auto cx = g->radial->cx * g->transform->e11 + g->radial->cy * g->transform->e12 + g->transform->e13;
+        g->radial->cy = g->radial->cx * g->transform->e21 + g->radial->cy * g->transform->e22 + g->transform->e23;
+        g->radial->cx = cx;
+
+        auto sx = sqrt(pow(g->transform->e11, 2) + pow(g->transform->e21, 2));
+        g->radial->r *= sx;
+    }
 
     //TODO: Tvg is not support to focal
     //if (g->radial->fx != 0 && g->radial->fy != 0) {
