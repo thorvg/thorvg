@@ -65,6 +65,6 @@ jobs:
 
     - name: Build
       run: |
-        meson . build -Dtest=true --errorlogs
+        meson . build -Dtests=true --errorlogs
         cd build
         sudo ninja -C . install test
