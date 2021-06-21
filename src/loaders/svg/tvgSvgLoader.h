@@ -29,12 +29,13 @@ class SvgLoader : public Loader, public Task
 {
 public:
     string filePath;
-    char* buffer = nullptr;
     const char* content = nullptr;
     uint32_t size = 0;
 
     SvgLoaderData loaderData;
     unique_ptr<Scene> root;
+
+    bool copy = false;
 
     SvgLoader();
     ~SvgLoader();
@@ -51,7 +52,7 @@ public:
     unique_ptr<Scene> scene() override;
 
 private:
-    void clearBuffer();
+    void clear();
 };
 
 

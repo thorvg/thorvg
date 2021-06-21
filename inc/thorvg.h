@@ -989,7 +989,7 @@ public:
      *
      * @param[in] data A pointer to a memory location where the content of the picture file is stored.
      * @param[in] size The size in bytes of the memory occupied by the @p data.
-     * @param[in] copy Decides whether the data should be copied into the local buffer.
+     * @param[in] copy Decides whether the data should be copied into the engine local buffer.
      *
      * @retval Result::Success When succeed.
      * @retval Result::InvalidArguments In case no data are provided or the @p size is zero or less.
@@ -997,6 +997,8 @@ public:
      * @retval Result::Unknown If an error occurs at a later stage.
      *
      * @note: This api supports only SVG format
+     *
+     * @warning: you have responsibility to release the @p data memory if the @p copy is true
      */
     Result load(const char* data, uint32_t size, bool copy = false) noexcept;
 

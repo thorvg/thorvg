@@ -28,11 +28,13 @@
 class TvgLoader : public Loader, public Task
 {
 public:
-    char* buffer = nullptr;
+    const char* data = nullptr;
     const char* pointer = nullptr;
     uint32_t size = 0;
 
     unique_ptr<Scene> root = nullptr;
+
+    bool copy = false;
 
     ~TvgLoader();
 
@@ -46,7 +48,7 @@ public:
     unique_ptr<Scene> scene() override;
 
 private:
-    void clearBuffer();
+    void clear();
 };
 
 #endif //_TVG_TVG_LOADER_H_
