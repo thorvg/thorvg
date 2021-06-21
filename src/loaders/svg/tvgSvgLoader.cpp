@@ -2563,12 +2563,12 @@ static bool _svgLoaderParserForValidCheck(void* data, SimpleXMLType type, const 
 }
 
 
-void SvgLoader::clearBuffer()
+void SvgLoader::clear()
 {
-    free(buffer);
+    if (copy) free((char*)content);
     size = 0;
-    buffer = nullptr;
     content = nullptr;
+    copy = false;
 }
 
 
@@ -2644,17 +2644,16 @@ bool SvgLoader::header()
 
 bool SvgLoader::open(const char* data, uint32_t size, bool copy)
 {
-    clearBuffer();
+    clear();
+
     if (copy) {
-        buffer = (char*)malloc(size);
-        if (!buffer) return false;
-        memcpy(buffer, data, size);
-        this->content = buffer;
-    } else {
-        this->content = data;
-    }
+        content = (char*)malloc(size);
+        if (!content) return false;
+        memcpy((char*)content, data, size);
+    } else content = data;
 
     this->size = size;
+    this->copy = copy;
 
     return header();
 }
@@ -2662,8 +2661,7 @@ bool SvgLoader::open(const char* data, uint32_t size, bool copy)
 
 bool SvgLoader::open(const string& path)
 {
-    //TODO: verify memory leak if open() is called multiple times.
-    clearBuffer();
+    clear();
 
     ifstream f;
     f.open(path);
@@ -2711,7 +2709,7 @@ bool SvgLoader::close()
     loaderData.doc = nullptr;
     loaderData.stack.reset();
 
-    clearBuffer();
+    clear();
 
     return true;
 }

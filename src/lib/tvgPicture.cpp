@@ -53,7 +53,7 @@ Result Picture::load(const std::string& path) noexcept
 }
 
 
-Result Picture::load(const char* data, uint32_t size, bool copy /*=false*/) noexcept
+Result Picture::load(const char* data, uint32_t size, bool copy) noexcept
 {
     if (!data || size <= 0) return Result::InvalidArguments;
 

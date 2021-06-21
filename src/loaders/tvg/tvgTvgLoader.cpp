@@ -31,12 +31,13 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-void TvgLoader::clearBuffer()
+void TvgLoader::clear()
 {
-    free(buffer);
-    size = 0;
-    buffer = nullptr;
+    if (copy) free((char*)data);
+    data = nullptr;
     pointer = nullptr;
+    size = 0;
+    copy = false;
 }
 
 
@@ -52,7 +53,7 @@ TvgLoader::~TvgLoader()
 
 bool TvgLoader::open(const string &path)
 {
-    //TODO: verify memory leak if open() is called multiple times.
+    clear();
 
     ifstream f;
     f.open(path, ifstream::in | ifstream::binary | ifstream::ate);
@@ -62,40 +63,41 @@ bool TvgLoader::open(const string &path)
     size = f.tellg();
     f.seekg(0, ifstream::beg);
 
-    buffer = (char*)malloc(size);
-    if (!buffer) {
-        size = 0;
+    copy = true;
+    data = (char*)malloc(size);
+    if (!data) {
+        clear();
         f.close();
         return false;
     }
 
-    if (!f.read(buffer, size))
+    if (!f.read((char*)data, size))
     {
-        clearBuffer();
+        clear();
         f.close();
         return false;
     }
 
     f.close();
 
-    pointer = buffer;
+    pointer = data;
 
     return tvgValidateData(pointer, size);
 }
 
 bool TvgLoader::open(const char *data, uint32_t size, bool copy)
 {
-    if (copy) {
-        if (buffer) clearBuffer();
-        buffer = (char*)malloc(size);
-        if (!buffer) return false;
-        memcpy(buffer, data, size);
-        this->pointer = buffer;
-    } else {
-        this->pointer = data;
-    }
+    clear();
 
+    if (copy) {
+        this->data = (char*)malloc(size);
+        if (!this->data) return false;
+        memcpy((char*)this->data, data, size);
+    } else this->data = data;
+
+    this->pointer = this->data;
     this->size = size;
+    this->copy = copy;
 
     return tvgValidateData(pointer, size);
 }
@@ -112,7 +114,7 @@ bool TvgLoader::read()
 bool TvgLoader::close()
 {
     this->done();
-    clearBuffer();
+    clear();
     return true;
 }
 
@@ -120,7 +122,7 @@ void TvgLoader::run(unsigned tid)
 {
     if (root) root.reset();
     root = tvgLoadData(pointer, size);
-    if (!root) clearBuffer();
+    if (!root) clear();
 }
 
 unique_ptr<Scene> TvgLoader::scene()
