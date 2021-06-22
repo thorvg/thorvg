@@ -177,9 +177,9 @@ struct Scene::Impl
         for (auto paint = paints.data; paint < (paints.data + paints.count); ++paint) {
             if (dispose) (*paint)->pImpl->dispose(*renderer);
             if (free) delete(*paint);
-            renderer = nullptr;
         }
         paints.clear();
+        renderer = nullptr;
     }
 };
 
