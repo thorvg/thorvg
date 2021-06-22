@@ -172,18 +172,12 @@ struct Scene::Impl
 
     void clear(bool free)
     {
-        //Clear render target before drawing
-        if (renderer && renderer->clear()) {
-            for (auto paint = paints.data; paint < (paints.data + paints.count); ++paint) {
-                (*paint)->pImpl->dispose(*renderer);
-            }
+        auto dispose = renderer ? true : false;
+
+        for (auto paint = paints.data; paint < (paints.data + paints.count); ++paint) {
+            if (dispose) (*paint)->pImpl->dispose(*renderer);
+            if (free) delete(*paint);
             renderer = nullptr;
-        }
-        //free paints
-        if (free) {
-            for (auto paint = paints.data; paint < (paints.data + paints.count); ++paint) {
-                delete(*paint);
-            }
         }
         paints.clear();
     }
