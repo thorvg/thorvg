@@ -30,9 +30,22 @@
 
 enum class LoaderResult { Success = 0, InvalidType, SizeCorruption, MemoryCorruption, LogicalCorruption };
 
-static LoaderResult _parsePaint(tvgBlock block, Paint ** paint);
+static Paint* _parsePaint(tvgBlock block);
 
-static tvgBlock _readTvgBlock(const char *ptr)
+
+static bool _paintProperty(tvgBlock block)
+{
+    switch (block.type) {
+        case TVG_PAINT_OPACITY_INDICATOR:
+        case TVG_PAINT_TRANSFORM_MATRIX_INDICATOR:
+        case TVG_PAINT_CMP_TARGET_INDICATOR:
+        return true;
+    }
+    return false;
+}
+
+
+static tvgBlock _readBlock(const char *ptr)
 {
     tvgBlock block;
     block.type = *ptr;
@@ -72,12 +85,14 @@ static bool _readTvgHeader(const char **ptr)
 
 static LoaderResult _parseCmpTarget(const char *ptr, const char *end, Paint *paint)
 {
-    auto block = _readTvgBlock(ptr);
+    auto block = _readBlock(ptr);
     if (block.end > end) return LoaderResult::SizeCorruption;
 
-    CompositeMethod cmpMethod;
     if (block.type != TVG_PAINT_CMP_METHOD_INDICATOR) return LoaderResult::LogicalCorruption;
     if (block.length != sizeof(TvgFlag)) return LoaderResult::SizeCorruption;
+
+    CompositeMethod cmpMethod;
+
     switch (*block.data) {
         case TVG_PAINT_CMP_METHOD_CLIPPATH_FLAG: {
             cmpMethod = CompositeMethod::ClipPath;
@@ -95,14 +110,14 @@ static LoaderResult _parseCmpTarget(const char *ptr, const char *end, Paint *pai
     }
 
     ptr = block.end;
-    auto block_paint = _readTvgBlock(ptr);
-    if (block_paint.end > end) return LoaderResult::SizeCorruption;
 
-    Paint* cmpTarget;
-    auto result = _parsePaint(block_paint, &cmpTarget);
-    if (result != LoaderResult::Success) return result;
+    auto cmpBlock = _readBlock(ptr);
+    if (cmpBlock.end > end) return LoaderResult::SizeCorruption;
 
-    if (paint->composite(unique_ptr<Paint>(cmpTarget), cmpMethod) != Result::Success) return LoaderResult::MemoryCorruption;
+    if (paint->composite(unique_ptr<Paint>(_parsePaint(cmpBlock)), cmpMethod) != Result::Success) {
+        return LoaderResult::MemoryCorruption;
+    }
+
     return LoaderResult::Success;
 }
 
@@ -131,8 +146,10 @@ static LoaderResult _parsePaintProperty(tvgBlock block, Paint *paint)
 }
 
 
-static LoaderResult _parseSceneProperty(tvgBlock block, Scene *scene)
+static LoaderResult _parseScene(tvgBlock block, Paint *paint)
 {
+    auto scene = static_cast<Scene*>(paint);
+
     switch (block.type) {
         case TVG_SCENE_FLAG_RESERVEDCNT: {
             if (block.length != sizeof(uint32_t)) return LoaderResult::SizeCorruption;
@@ -143,14 +160,13 @@ static LoaderResult _parseSceneProperty(tvgBlock block, Scene *scene)
         }
     }
 
-    Paint* paint;
-    auto result = _parsePaint(block, &paint);
-    if (result == LoaderResult::Success) {
-        if (scene->push(unique_ptr<Paint>(paint)) != Result::Success) {
-            return LoaderResult::MemoryCorruption;
-        }
+    if (_paintProperty(block)) return _parsePaintProperty(block, scene);
+
+    if (scene->push(unique_ptr<Paint>(_parsePaint(block))) != Result::Success) {
+        return LoaderResult::MemoryCorruption;
     }
-    return result;
+
+    return LoaderResult::Success;
 }
 
 
@@ -180,7 +196,7 @@ static LoaderResult _parseShapeFill(const char *ptr, const char *end, Fill **fil
     unique_ptr<Fill> fillGrad;
 
     while (ptr < end) {
-        auto block = _readTvgBlock(ptr);
+        auto block = _readBlock(ptr);
         if (block.end > end) return LoaderResult::SizeCorruption;
 
         switch (block.type) {
@@ -282,7 +298,7 @@ static LoaderResult _parseShapeStrokeDashPattern(const char *ptr, const char *en
 static LoaderResult _parseShapeStroke(const char *ptr, const char *end, Shape *shape)
 {
     while (ptr < end) {
-        auto block = _readTvgBlock(ptr);
+        auto block = _readBlock(ptr);
         if (block.end > end) return LoaderResult::SizeCorruption;
 
         switch (block.type) {
@@ -347,8 +363,10 @@ static LoaderResult _parseShapeStroke(const char *ptr, const char *end, Shape *s
 }
 
 
-static LoaderResult _parseShapeProperty(tvgBlock block, Shape *shape)
+static LoaderResult _parseShape(tvgBlock block, Paint* paint)
 {
+    auto shape = static_cast<Shape*>(paint);
+
     switch (block.type) {
         case TVG_SHAPE_PATH_INDICATOR: {
             auto result = _parseShapePath(block.data, block.end, shape);
@@ -384,19 +402,21 @@ static LoaderResult _parseShapeProperty(tvgBlock block, Shape *shape)
             }
             break;
         }
-        default: return LoaderResult::InvalidType;
+        default: return _parsePaintProperty(block, shape);
     }
     return LoaderResult::Success;
 }
 
 
-static LoaderResult _parsePicture(tvgBlock block, Picture *picture)
+static LoaderResult _parsePicture(tvgBlock block, Paint* paint)
 {
+    auto picture = static_cast<Picture*>(paint);
+
     switch (block.type) {
         case TVG_RAW_IMAGE_BEGIN_INDICATOR: {
-            if (block.length < 2*sizeof(uint32_t)) return LoaderResult::SizeCorruption;
+            if (block.length < 2 * sizeof(uint32_t)) return LoaderResult::SizeCorruption;
 
-            const char* ptr = block.data;
+            auto ptr = block.data;
             uint32_t w, h;
 
             _read_tvg_ui32(&w, ptr);
@@ -404,78 +424,58 @@ static LoaderResult _parsePicture(tvgBlock block, Picture *picture)
             _read_tvg_ui32(&h, ptr);
             ptr += sizeof(uint32_t);
 
-            uint32_t size = w * h * sizeof(uint32_t);
-            if (block.length != 2*sizeof(uint32_t) + size) return LoaderResult::SizeCorruption;
+            auto size = w * h * sizeof(uint32_t);
+            if (block.length != 2 * sizeof(uint32_t) + size) return LoaderResult::SizeCorruption;
 
-            uint32_t* pixels = (uint32_t*) ptr;
+            auto pixels = (uint32_t*) ptr;
             picture->load(pixels, w, h, true);
             return LoaderResult::Success;
         }
     }
 
-    Paint* paint;
-    auto result = _parsePaint(block, &paint);
-    if (result == LoaderResult::Success) {
-        if (picture->paint(unique_ptr<Paint>(paint)) != Result::Success) {
-            return LoaderResult::LogicalCorruption;
-        }
+    if (_paintProperty(block)) return _parsePaintProperty(block, picture);
+
+    if (picture->paint(unique_ptr<Paint>(_parsePaint(block))) != Result::Success) {
+        return LoaderResult::LogicalCorruption;
     }
-    return result;
+
+    return LoaderResult::Success;
 }
 
 
-static LoaderResult _parsePaint(tvgBlock base_block, Paint **paint)
+static Paint* _parsePaint(tvgBlock baseBlock)
 {
-    switch (base_block.type) {
+    LoaderResult (*parser)(tvgBlock, Paint*);
+    Paint *paint = nullptr;
+
+    switch (baseBlock.type) {
         case TVG_SCENE_BEGIN_INDICATOR: {
-            auto s = Scene::gen();
-            auto ptr = base_block.data;
-            while (ptr < base_block.end) {
-                auto block = _readTvgBlock(ptr);
-                if (block.end > base_block.end) return LoaderResult::SizeCorruption;
-
-                auto result = _parseSceneProperty(block, s.get());
-                if (result == LoaderResult::InvalidType) result = _parsePaintProperty(block, s.get());
-                if (result > LoaderResult::Success) return result;
-
-                ptr = block.end;
-            }
-            *paint = s.release();
+            paint = Scene::gen().release();
+            parser = _parseScene;
             break;
         }
         case TVG_SHAPE_BEGIN_INDICATOR: {
-            auto s = Shape::gen();
-            auto ptr = base_block.data;
-            while (ptr < base_block.end) {
-                auto block = _readTvgBlock(ptr);
-                if (block.end > base_block.end) return LoaderResult::SizeCorruption;
-
-                auto result = _parseShapeProperty(block, s.get());
-                if (result == LoaderResult::InvalidType) result = _parsePaintProperty(block, s.get());
-                if (result > LoaderResult::Success) return result;
-                ptr = block.end;
-            }
-            *paint = s.release();
+            paint = Shape::gen().release();
+            parser = _parseShape;
             break;
         }
         case TVG_PICTURE_BEGIN_INDICATOR: {
-            auto s = Picture::gen();
-            auto ptr = base_block.data;
-            while (ptr < base_block.end) {
-                auto block = _readTvgBlock(ptr);
-                if (block.end > base_block.end) return LoaderResult::SizeCorruption;
-
-                auto result = _parsePicture(block, s.get());
-                if (result == LoaderResult::InvalidType) result = _parsePaintProperty(block, s.get());
-                if (result > LoaderResult::Success) return result;
-                ptr = block.end;
-            }
-            *paint = s.release();
+            paint = Picture::gen().release();
+            parser = _parsePicture;
             break;
         }
-        default: return LoaderResult::InvalidType;
+        default: return nullptr;
     }
-    return LoaderResult::Success;
+
+    auto ptr = baseBlock.data;
+
+    while (ptr < baseBlock.end) {
+        auto block = _readBlock(ptr);
+        if (block.end > baseBlock.end) return paint;
+        if (parser(block, paint) != LoaderResult::Success) return paint;
+        ptr = block.end;
+    }
+    return paint;
 }
 
 
@@ -504,19 +504,10 @@ unique_ptr<Scene> tvgLoadData(const char *ptr, uint32_t size)
     auto scene = Scene::gen();
     if (!scene) return nullptr;
 
-    Paint* paint;
-
     while (ptr < end) {
-        auto block = _readTvgBlock(ptr);
+        auto block = _readBlock(ptr);
         if (block.end > end) return nullptr;
-
-        auto result = _parsePaint(block, &paint);
-        if (result > LoaderResult::Success) return nullptr;
-        if (result == LoaderResult::Success) {
-            if (scene->push(unique_ptr<Paint>(paint)) != Result::Success) {
-                return nullptr;
-            }
-        }
+        scene->push(unique_ptr<Paint>(_parsePaint(block)));
         ptr = block.end;
     }
 
