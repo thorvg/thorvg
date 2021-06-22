@@ -28,7 +28,7 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-enum class LoaderResult { InvalidType, Success, SizeCorruption, MemoryCorruption, LogicalCorruption };
+enum class LoaderResult { Success = 0, InvalidType, SizeCorruption, MemoryCorruption, LogicalCorruption };
 
 static LoaderResult _parsePaint(tvgBlock block, Paint ** paint);
 
@@ -59,14 +59,10 @@ static bool _readTvgHeader(const char **ptr)
     _read_tvg_ui16(&metaLen, *ptr);
     *ptr += 2;
 
-
-//Meta data... Necessary?
-#ifdef THORVG_LOG_ENABLED
-    char metadata[metaLen + 1];
-    memcpy(metadata, *ptr, metaLen);
-    metadata[metaLen] = '\0';
-    printf("TVG_LOADER: Header is valid, metadata[%d]: %s.\n", metaLen, metadata);
-#endif
+    //Meta data... Need to replace checksum way.
+    //char metadata[metaLen + 1];
+    //memcpy(metadata, *ptr, metaLen);
+    //metadata[metaLen] = '\0';
 
     *ptr += metaLen;
 
@@ -440,13 +436,8 @@ static LoaderResult _parsePaint(tvgBlock base_block, Paint **paint)
 
                 auto result = _parseSceneProperty(block, s.get());
                 if (result == LoaderResult::InvalidType) result = _parsePaintProperty(block, s.get());
+                if (result > LoaderResult::Success) return result;
 
-                if (result > LoaderResult::Success) {
-#ifdef THORVG_LOG_ENABLED
-                    printf("TVG_LOADER: Loading scene error[type: 0x%02x]: %d\n", (int) block.type, (int) result);
-#endif
-                    return result;
-                }
                 ptr = block.end;
             }
             *paint = s.release();
@@ -461,13 +452,7 @@ static LoaderResult _parsePaint(tvgBlock base_block, Paint **paint)
 
                 auto result = _parseShapeProperty(block, s.get());
                 if (result == LoaderResult::InvalidType) result = _parsePaintProperty(block, s.get());
-
-                if (result > LoaderResult::Success) {
-#ifdef THORVG_LOG_ENABLED
-                    printf("TVG_LOADER: Loading shape error[type: 0x%02x]: %d\n", (int) block.type, (int) result);
-#endif
-                    return result;
-                }
+                if (result > LoaderResult::Success) return result;
                 ptr = block.end;
             }
             *paint = s.release();
@@ -482,13 +467,7 @@ static LoaderResult _parsePaint(tvgBlock base_block, Paint **paint)
 
                 auto result = _parsePicture(block, s.get());
                 if (result == LoaderResult::InvalidType) result = _parsePaintProperty(block, s.get());
-
-                if (result > LoaderResult::Success) {
-#ifdef THORVG_LOG_ENABLED
-                    printf("TVG_LOADER: Loading picture error[type: 0x%02x]: %d\n", (int) block.type, (int) result);
-#endif
-                    return result;
-                }
+                if (result > LoaderResult::Success) return result;
                 ptr = block.end;
             }
             *paint = s.release();
