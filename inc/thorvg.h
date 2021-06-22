@@ -15,6 +15,7 @@
 #define _THORVG_H_
 
 #include <memory>
+#include <string>
 
 #ifdef TVG_BUILD
     #define TVG_EXPORT __attribute__ ((visibility ("default")))
