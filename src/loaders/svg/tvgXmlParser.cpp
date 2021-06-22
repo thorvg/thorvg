@@ -142,7 +142,7 @@ static const char* _simpleXmlUnskipWhiteSpace(const char* itr, const char* itrSt
 static const char* _simpleXmlSkipXmlEntities(const char* itr, const char* itrEnd)
 {
     auto p = itr;
-    while (*itr == '&' && itr < itrEnd) {
+    while (itr < itrEnd && *itr == '&') {
         for (int i = 0; i < NUMBER_OF_XML_ENTITIES; ++i) {
             if (strncmp(itr, xmlEntity[i], xmlEntityLength[i]) == 0) {
                 itr += xmlEntityLength[i];
@@ -159,7 +159,7 @@ static const char* _simpleXmlSkipXmlEntities(const char* itr, const char* itrEnd
 static const char* _simpleXmlUnskipXmlEntities(const char* itr, const char* itrStart)
 {
     auto p = itr;
-    while (*(itr - 1) == ';' && itr > itrStart) {
+    while (itr > itrStart && *(itr - 1) == ';') {
         for (int i = 0; i < NUMBER_OF_XML_ENTITIES; ++i) {
             if (itr - xmlEntityLength[i] > itrStart &&
                 strncmp(itr - xmlEntityLength[i], xmlEntity[i], xmlEntityLength[i]) == 0) {
