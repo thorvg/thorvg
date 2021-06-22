@@ -171,8 +171,8 @@ static inline uint32_t _clamp(const SwFill* fill, int32_t pos)
             break;
         }
         case FillSpread::Repeat: {
-            if (pos < 0) pos = GRADIENT_STOP_SIZE + pos;
             pos = pos % GRADIENT_STOP_SIZE;
+            if (pos < 0) pos = GRADIENT_STOP_SIZE + pos;
             break;
         }
         case FillSpread::Reflect: {
@@ -217,7 +217,7 @@ void fillFetchRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, 
     auto detDelta = (rxryPlus + 1.0f) * inva;
     auto detDelta2 = 2.0f * inva;
 
-   for (uint32_t i = 0 ; i < len ; ++i) {
+    for (uint32_t i = 0 ; i < len ; ++i) {
         *dst = _pixel(fill, sqrt(det));
         ++dst;
         det += detDelta;
