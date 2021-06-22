@@ -1587,6 +1587,9 @@ static void _copyAttr(SvgNode* to, const SvgNode* from)
     //Copy style attribute;
     memcpy(to->style, from->style, sizeof(SvgStyleProperty));
 
+    //Copy style composite attribute (clip-path, mask, ...)
+    if (from->style->comp.url) to->style->comp.url = new string(from->style->comp.url->c_str());
+
     //Copy node attribute
     switch (from->type) {
         case SvgNodeType::Circle: {
