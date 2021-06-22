@@ -73,6 +73,7 @@ static unique_ptr<LinearGradient> _applyLinearGradientProperty(SvgStyleGradient*
     if (stopCount > 0) {
         stops = (Fill::ColorStop*)calloc(stopCount, sizeof(Fill::ColorStop));
         if (!stops) return fillGrad;
+        auto prevOffset = 0.0f;
         for (uint32_t i = 0; i < g->stops.count; ++i) {
             auto colorStop = g->stops.data[i];
             //Use premultiplied color
@@ -81,6 +82,10 @@ static unique_ptr<LinearGradient> _applyLinearGradientProperty(SvgStyleGradient*
             stops[i].b = colorStop->b;
             stops[i].a = (colorStop->a * fillOpacity) / 255.0f;
             stops[i].offset = colorStop->offset;
+            // check the offset corner cases - refer to: https://svgwg.org/svg2-draft/pservers.html#StopNotes
+            if (colorStop->offset < prevOffset) stops[i].offset = prevOffset;
+            else if (colorStop->offset > 1) stops[i].offset = 1;
+            prevOffset = stops[i].offset;
         }
         fillGrad->colorStops(stops, stopCount);
         free(stops);
@@ -136,6 +141,7 @@ static unique_ptr<RadialGradient> _applyRadialGradientProperty(SvgStyleGradient*
     if (stopCount > 0) {
         stops = (Fill::ColorStop*)calloc(stopCount, sizeof(Fill::ColorStop));
         if (!stops) return fillGrad;
+        auto prevOffset = 0.0f;
         for (uint32_t i = 0; i < g->stops.count; ++i) {
             auto colorStop = g->stops.data[i];
             //Use premultiplied color
@@ -144,6 +150,10 @@ static unique_ptr<RadialGradient> _applyRadialGradientProperty(SvgStyleGradient*
             stops[i].b = colorStop->b;
             stops[i].a = (colorStop->a * fillOpacity) / 255.0f;
             stops[i].offset = colorStop->offset;
+            // check the offset corner cases - refer to: https://svgwg.org/svg2-draft/pservers.html#StopNotes
+            if (colorStop->offset < prevOffset) stops[i].offset = prevOffset;
+            else if (colorStop->offset > 1) stops[i].offset = 1;
+            prevOffset = stops[i].offset;
         }
         fillGrad->colorStops(stops, stopCount);
         free(stops);
