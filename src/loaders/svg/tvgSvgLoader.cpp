@@ -141,10 +141,17 @@ static float _gradientToFloat(const SvgParser* svgParse, const char* str, SvgPar
 static float _toOffset(const char* str)
 {
     char* end = nullptr;
+    auto strEnd = str + strlen(str);
 
     float parsedValue = svgUtilStrtof(str, &end);
 
-    if (strstr(str, "%")) parsedValue = parsedValue / 100.0;
+    end = _skipSpace(end, nullptr);
+    auto ptr = strstr(str, "%");
+
+    if (ptr) {
+        parsedValue = parsedValue / 100.0;
+        if (end != ptr || (end + 1) != strEnd) return 0;
+    } else if (end != strEnd) return 0;
 
     return parsedValue;
 }
