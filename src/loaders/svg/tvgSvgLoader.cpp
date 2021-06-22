@@ -1621,7 +1621,7 @@ static void _copyAttr(SvgNode* to, const SvgNode* from)
             break;
         }
         case SvgNodeType::Path: {
-            to->node.path.path = new string(from->node.path.path->c_str());
+            if (from->node.path.path) to->node.path.path = new string(from->node.path.path->c_str());
             break;
         }
         case SvgNodeType::Polygon: {
