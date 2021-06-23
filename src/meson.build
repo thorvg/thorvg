@@ -6,9 +6,11 @@ if (cc.get_id() != 'msvc')
         compiler_flags += ['-mavx']
         message('Enable Advanced Vector Extension')
     endif
-    compiler_flags += ['-fno-exceptions', '-fno-rtti',
-                       '-fno-unwind-tables' , '-fno-asynchronous-unwind-tables',
-                       '-Woverloaded-virtual', '-Wno-unused-parameter']
+    if get_option('b_sanitize') == 'none'
+        compiler_flags += ['-fno-exceptions', '-fno-rtti',
+                           '-fno-unwind-tables' , '-fno-asynchronous-unwind-tables',
+                           '-Woverloaded-virtual', '-Wno-unused-parameter']
+    endif
 endif
 
 
