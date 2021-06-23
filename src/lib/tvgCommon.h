@@ -31,8 +31,12 @@ using namespace tvg;
 #define FILL_ID_LINEAR 0
 #define FILL_ID_RADIAL 1
 
+
+//for MSVC Compat
 #ifdef _MSC_VER
     #define TVG_UNUSED
+    #define strncasecmp _strnicmp
+    #define strcasecmp _stricmp
 #else
     #define TVG_UNUSED __attribute__ ((__unused__))
 #endif
