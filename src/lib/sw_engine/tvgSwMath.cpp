@@ -36,7 +36,6 @@
         if (_BitScanReverse(&leadingZero, value)) return 31 - leadingZero;
         else return 32;
     }
-}
 #else
     #define _clz(x) __builtin_clz((x))
 #endif
