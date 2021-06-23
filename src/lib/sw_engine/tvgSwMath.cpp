@@ -27,6 +27,21 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
+//clz: count leading zero’s
+#ifdef _MSC_VER
+    #include <intrin.h>
+    static uint32_t __inline _clz(uint32_t value)
+    {
+        unsigned long leadingZero = 0;
+        if (_BitScanReverse(&leadingZero, value)) return 31 - leadingZero;
+        else return 32;
+    }
+}
+#else
+    #define _clz(x) __builtin_clz((x))
+#endif
+
+
 constexpr SwFixed CORDIC_FACTOR = 0xDBD95B16UL;       //the Cordic shrink factor 0.858785336480436 * 2^32
 
 //this table was generated for SW_FT_PI = 180L << 16, i.e. degrees
@@ -68,8 +83,7 @@ static int32_t _normalize(SwPoint& pt)
     auto v = pt;
 
     //High order bit(MSB)
-    //clz: count leading zero’s
-    auto shift = 31 - __builtin_clz(abs(v.x) | abs(v.y));
+    auto shift = 31 - _clz(abs(v.x) | abs(v.y));
 
     if (shift <= SAFE_MSB) {
         shift = SAFE_MSB - shift;
