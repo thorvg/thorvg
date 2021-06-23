@@ -52,48 +52,9 @@ struct PngBuilder {
 };
 
 
-struct App {
-
-    void tvgDrawCmds(tvg::Canvas* canvas, bool useSvgSize)
-    {
-        if (!canvas) return;
-
-        auto picture = tvg::Picture::gen();
-        float fw, fh;
-        if (picture->load(fileName) != tvg::Result::Success) return;
-
-        picture->viewbox(nullptr, nullptr, &fw, &fh);
-
-        if (useSvgSize) {
-            width = fw;
-            height = fh;
-        }
-        else {
-            tvg::Matrix m = {width / fw, 0, 0, 0, height / fh, 0, 0, 0, 1};
-            picture->transform(m);
-        }
-
-        if (bgColor != 0xffffffff) {
-            uint8_t bgColorR = (uint8_t) ((bgColor & 0xff0000) >> 16);
-            uint8_t bgColorG = (uint8_t) ((bgColor & 0x00ff00) >> 8);
-            uint8_t bgColorB = (uint8_t) ((bgColor & 0x0000ff));
-
-            //Background
-            auto shape = tvg::Shape::gen();
-            shape->appendRect(0, 0, width, height, 0, 0);    //x, y, w, h, rx, ry
-            shape->fill(bgColorR, bgColorG, bgColorB, 255);                 //r, g, b, a
-
-            if (canvas->push(move(shape)) != tvg::Result::Success) return;
-        }
-
-        /* This showcase shows you asynchrounous loading of svg.
-           For this, pushing pictures at a certian sync time.
-           This means it earns the time to finish loading svg resources,
-           otherwise you can push pictures immediately. */
-        canvas->push(move(picture));
-    }
-
-    int tvgRender(int w, int h)
+struct App
+{
+    void tvgRender(int w, int h)
     {
         tvg::CanvasEngine tvgEngine = tvg::CanvasEngine::Sw;
 
@@ -104,36 +65,49 @@ struct App {
         if (tvg::Initializer::init(tvgEngine, threads) == tvg::Result::Success) {
 
             //Create a Canvas
-            auto swCanvas = tvg::SwCanvas::gen();
-            bool useSvgSize = false;
-            if (w == 0 && h == 0) {
-                w = h = 200; // Set temporary size
-                useSvgSize = true;
-            }
-            else {
+            auto canvas = tvg::SwCanvas::gen();
+
+            //Create a Picture
+            auto picture = tvg::Picture::gen();
+            if (picture->load(fileName) != tvg::Result::Success) return;
+
+            float fw, fh;
+            picture->size(&fw, &fh);
+
+            //Proper size is not specified, Get default size.
+            if (w == 0 || h == 0) {
+                width = static_cast<uint32_t>(fw);
+                height = static_cast<uint32_t>(fh);
+            //Otherwise, transform size to keep aspect ratio
+            } else {
                 width = w;
                 height = h;
+                picture->size(w, h);
             }
 
-            auto buffer = (uint32_t*)malloc(sizeof(uint32_t) * w * h);
-            swCanvas->target(buffer, w, w, h, tvg::SwCanvas::ARGB8888);
-            /* Push the shape into the Canvas drawing list
-               When this shape is into the canvas list, the shape could update & prepare
-               internal data asynchronously for coming rendering.
-               Canvas keeps this shape node unless user call canvas->clear() */
-            tvgDrawCmds(swCanvas.get(), useSvgSize);
+            //Setup the canvas
+            auto buffer = (uint32_t*)malloc(sizeof(uint32_t) * width * height);
+            canvas->target(buffer, width, width, height, tvg::SwCanvas::ARGB8888);
 
-            if (useSvgSize) {
-                //Resize target buffer
-                buffer = (uint32_t*)realloc(buffer, sizeof(uint32_t) * width * height);
-                swCanvas->target(buffer, width, width, height, tvg::SwCanvas::ARGB8888);
+            //Background color?
+            if (bgColor != 0xffffffff) {
+                 uint8_t bgColorR = (uint8_t) ((bgColor & 0xff0000) >> 16);
+                 uint8_t bgColorG = (uint8_t) ((bgColor & 0x00ff00) >> 8);
+                 uint8_t bgColorB = (uint8_t) ((bgColor & 0x0000ff));
+
+                 auto shape = tvg::Shape::gen();
+                 shape->appendRect(0, 0, width, height, 0, 0);
+                 shape->fill(bgColorR, bgColorG, bgColorB, 255);
+
+                 if (canvas->push(move(shape)) != tvg::Result::Success) return;
             }
 
+            //Drawing
+            canvas->push(move(picture));
+            canvas->draw();
+            canvas->sync();
 
-            if (swCanvas->draw() == tvg::Result::Success) {
-                swCanvas->sync();
-            }
-
+            //Build Png
             PngBuilder builder;
             builder.build(pngName.data(), width, height, buffer);
 
@@ -145,8 +119,6 @@ struct App {
         } else {
             cout << "engine is not supported" << endl;
         }
-
-        return result();
     }
 
     int setup(int argc, char **argv, size_t *w, size_t *h)
@@ -220,8 +192,7 @@ private:
     std::string pngName;
 };
 
-int
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
     App app;
     size_t w, h;
