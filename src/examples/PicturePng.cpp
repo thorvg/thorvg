@@ -32,7 +32,10 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     for (int i = 0; i < 5; ++i) {
         auto picture = tvg::Picture::gen();
-        if (picture->load(EXAMPLE_DIR"/logo.png") != tvg::Result::Success) return;
+        if (picture->load(EXAMPLE_DIR"/logo.png") != tvg::Result::Success) {
+             cout << "PNG is not supported, Did you enable PNG Loader??" << endl;
+             return;
+        }
         picture->translate(i* 150, i * 150);
         picture->rotate(30 * i);
         picture->scale(0.25);

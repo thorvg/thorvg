@@ -31,7 +31,10 @@ void tvgDrawCmds(tvg::Canvas* canvas)
    if (!canvas) return;
 
    auto picture = tvg::Picture::gen();
-   picture->load(EXAMPLE_DIR"/test.tvg");
+   if (picture->load(EXAMPLE_DIR"/test.tvg") != tvg::Result::Success) {
+        cout << "TVG is not supported, Did you enable TVG Loader??" << endl;
+        return;
+   }
    canvas->push(move(picture));
 }
 
