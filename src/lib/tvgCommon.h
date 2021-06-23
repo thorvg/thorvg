@@ -31,6 +31,10 @@ using namespace tvg;
 #define FILL_ID_LINEAR 0
 #define FILL_ID_RADIAL 1
 
-#define TVG_UNUSED __attribute__ ((__unused__))
+#ifdef _MSC_VER
+    #define TVG_UNUSED
+#else
+    #define TVG_UNUSED __attribute__ ((__unused__))
+#endif
 
 #endif //_TVG_COMMON_H_
