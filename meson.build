@@ -1,6 +1,6 @@
 project('thorvg',
         'cpp',
-        default_options : ['buildtype=debugoptimized', 'werror=false', 'optimization=s'],
+        default_options : ['buildtype=debugoptimized', 'b_sanitize=none', 'werror=false', 'optimization=s'],
         version : '0.2.99',
         license : 'MIT')
 
