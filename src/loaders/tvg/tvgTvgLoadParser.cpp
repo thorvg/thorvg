@@ -114,7 +114,7 @@ static LoaderResult _parseCmpTarget(const char *ptr, const char *end, Paint *pai
     auto cmpBlock = _readBlock(ptr);
     if (cmpBlock.end > end) return LoaderResult::SizeCorruption;
 
-    paint->composite(unique_ptr<Paint>(), cmpMethod);
+    paint->composite(unique_ptr<Paint>(_parsePaint(cmpBlock)), cmpMethod);
 
     return LoaderResult::Success;
 }
