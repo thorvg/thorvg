@@ -19,6 +19,9 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+
+#define _USE_MATH_DEFINES       //Math Constants are not defined in Standard C/C++.
+
 #include <fstream>
 #include <float.h>
 #include <math.h>
