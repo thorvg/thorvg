@@ -82,9 +82,11 @@ static Loader* _find(FileType type)
         }
         case FileType::Raw: {
             format = "RAW";
+            break;
         }
         case FileType::Tvg: {
             format = "TVG";
+            break;
         }
         default: {
             format = "???";
