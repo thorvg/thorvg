@@ -212,6 +212,16 @@ struct Picture::Impl
 
         return ret.release();
     }
+
+    Paint::Iterator begin()
+    {
+        return Paint::Iterator(picture, paint);
+    }
+
+    const Paint* next(const Paint* p)
+    {
+        return nullptr;
+    }
 };
 
 #endif //_TVG_PICTURE_IMPL_H_

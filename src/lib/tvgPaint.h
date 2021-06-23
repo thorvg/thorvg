@@ -39,6 +39,8 @@ namespace tvg
         virtual bool bounds(float* x, float* y, float* w, float* h) const = 0;
         virtual RenderRegion bounds(RenderMethod& renderer) const = 0;
         virtual Paint* duplicate() = 0;
+        virtual Paint::Iterator begin() = 0;
+        virtual const Paint* next(const Paint* p) = 0;
     };
 
     struct Paint::Impl
@@ -114,6 +116,17 @@ namespace tvg
         void* update(RenderMethod& renderer, const RenderTransform* pTransform, uint32_t opacity, Array<RenderData>& clips, uint32_t pFlag);
         bool render(RenderMethod& renderer);
         Paint* duplicate();
+
+        Paint::Iterator begin()
+        {
+            return smethod->begin();
+        }
+
+        const Paint* next(const Paint* p)
+        {
+            return smethod->next(p);
+        }
+
     };
 
 
@@ -154,6 +167,17 @@ namespace tvg
         {
             return inst->duplicate();
         }
+
+        Paint::Iterator begin() override
+        {
+            return inst->begin();
+        }
+
+        const Paint* next(const Paint* p) override
+        {
+            return inst->next(p);
+        }
+
     };
 }
 
