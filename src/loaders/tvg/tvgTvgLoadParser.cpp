@@ -114,9 +114,7 @@ static LoaderResult _parseCmpTarget(const char *ptr, const char *end, Paint *pai
     auto cmpBlock = _readBlock(ptr);
     if (cmpBlock.end > end) return LoaderResult::SizeCorruption;
 
-    if (paint->composite(unique_ptr<Paint>(_parsePaint(cmpBlock)), cmpMethod) != Result::Success) {
-        return LoaderResult::MemoryCorruption;
-    }
+    paint->composite(unique_ptr<Paint>(), cmpMethod);
 
     return LoaderResult::Success;
 }
@@ -162,11 +160,12 @@ static LoaderResult _parseScene(tvgBlock block, Paint *paint)
 
     if (_paintProperty(block)) return _parsePaintProperty(block, scene);
 
-    if (scene->push(unique_ptr<Paint>(_parsePaint(block))) != Result::Success) {
-        return LoaderResult::MemoryCorruption;
+    if (auto paint = _parsePaint(block)) {
+        scene->push(unique_ptr<Paint>(paint));
+        return LoaderResult::Success;
     }
 
-    return LoaderResult::Success;
+    return LoaderResult::InvalidType;
 }
 
 
@@ -435,11 +434,12 @@ static LoaderResult _parsePicture(tvgBlock block, Paint* paint)
 
     if (_paintProperty(block)) return _parsePaintProperty(block, picture);
 
-    if (picture->paint(unique_ptr<Paint>(_parsePaint(block))) != Result::Success) {
-        return LoaderResult::LogicalCorruption;
+    if (auto paint = _parsePaint(block)) {
+        picture->paint(unique_ptr<Paint>(paint));
+        return LoaderResult::Success;
     }
 
-    return LoaderResult::Success;
+    return LoaderResult::InvalidType;
 }
 
 
@@ -472,7 +472,8 @@ static Paint* _parsePaint(tvgBlock baseBlock)
     while (ptr < baseBlock.end) {
         auto block = _readBlock(ptr);
         if (block.end > baseBlock.end) return paint;
-        if (parser(block, paint) != LoaderResult::Success) return paint;
+        auto result = parser(block, paint);
+        if (result != LoaderResult::Success && result != LoaderResult::InvalidType) return paint;
         ptr = block.end;
     }
     return paint;
