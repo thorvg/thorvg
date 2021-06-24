@@ -742,7 +742,6 @@ static void _getCounts(SwStrokeBorder* border, uint32_t& ptsCnt, uint32_t& cntrs
     bool inCntr = false;
 
     while (count > 0) {
-
         if (tags[0] & SW_STROKE_TAG_BEGIN) {
             if (inCntr) goto fail;
             inCntr = true;
@@ -758,7 +757,7 @@ static void _getCounts(SwStrokeBorder* border, uint32_t& ptsCnt, uint32_t& cntrs
     }
 
     if (inCntr) goto fail;
-    border->valid = true;
+
     ptsCnt = _ptsCnt;
     cntrsCnt = _cntrsCnt;
 
@@ -774,7 +773,7 @@ static void _exportBorderOutline(const SwStroke& stroke, SwOutline* outline, uin
 {
     auto border = stroke.borders + side;
 
-    if (!border->valid) return;
+    if (border->ptsCnt == 0) return;  //invalid border
 
     memcpy(outline->pts + outline->ptsCnt, border->pts, border->ptsCnt * sizeof(SwPoint));
 
@@ -844,11 +843,8 @@ void strokeReset(SwStroke* stroke, const Shape* sdata, const Matrix* transform)
 
     stroke->borders[0].ptsCnt = 0;
     stroke->borders[0].start = -1;
-    stroke->borders[0].valid = false;
-
     stroke->borders[1].ptsCnt = 0;
     stroke->borders[1].start = -1;
-    stroke->borders[1].valid = false;
 }
 
 
