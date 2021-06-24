@@ -28,7 +28,7 @@
 
 Picture::Picture() : pImpl(new Impl(this))
 {
-    Paint::pImpl->type = PaintType::Picture;
+    _id = PAINT_ID_PICTURE;
     Paint::pImpl->method(new PaintMethod<Picture::Impl>(pImpl));
 }
 
