@@ -171,7 +171,6 @@ struct SwStrokeBorder
     uint8_t* tags;
     int32_t start;     //index of current sub-path start point
     bool movable;      //true: for ends of lineto borders
-    bool valid;
 };
 
 struct SwStroke
