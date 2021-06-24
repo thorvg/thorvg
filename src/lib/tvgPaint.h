@@ -27,8 +27,6 @@
 
 namespace tvg
 {
-    enum class PaintType { Shape = 0, Scene, Picture };
-
     struct StrategyMethod
     {
         virtual ~StrategyMethod() {}
@@ -48,7 +46,6 @@ namespace tvg
         uint32_t flag = RenderUpdateFlag::None;
         Paint* cmpTarget = nullptr;
         CompositeMethod cmpMethod = CompositeMethod::None;
-        PaintType type;
         uint8_t opacity = 255;
 
         ~Impl() {
