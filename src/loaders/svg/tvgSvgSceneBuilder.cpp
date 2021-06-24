@@ -291,7 +291,7 @@ static bool _appendShape(SvgNode* node, Shape* shape, float vx, float vy, float 
         case SvgNodeType::Polygon: {
             if (node->node.polygon.pointsCount < 2) break;
             shape->moveTo(node->node.polygon.points[0], node->node.polygon.points[1]);
-            for (int i = 2; i < node->node.polygon.pointsCount; i += 2) {
+            for (int i = 2; i < node->node.polygon.pointsCount - 1; i += 2) {
                 shape->lineTo(node->node.polygon.points[i], node->node.polygon.points[i + 1]);
             }
             shape->close();
@@ -300,7 +300,7 @@ static bool _appendShape(SvgNode* node, Shape* shape, float vx, float vy, float 
         case SvgNodeType::Polyline: {
             if (node->node.polygon.pointsCount < 2) break;
             shape->moveTo(node->node.polygon.points[0], node->node.polygon.points[1]);
-            for (int i = 2; i < node->node.polygon.pointsCount; i += 2) {
+            for (int i = 2; i < node->node.polygon.pointsCount - 1; i += 2) {
                 shape->lineTo(node->node.polygon.points[i], node->node.polygon.points[i + 1]);
             }
             break;
