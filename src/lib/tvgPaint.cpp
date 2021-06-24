@@ -308,6 +308,14 @@ Result Paint::composite(std::unique_ptr<Paint> target, CompositeMethod method) n
 }
 
 
+CompositeMethod Paint::composite(const Paint** target) const noexcept
+{
+    if (target) *target = pImpl->cmpTarget;
+
+    return pImpl->cmpMethod;
+}
+
+
 Result Paint::opacity(uint8_t o) noexcept
 {
     if (pImpl->opacity == o) return Result::Success;
