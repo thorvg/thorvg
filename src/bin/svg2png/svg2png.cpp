@@ -29,25 +29,25 @@
 using namespace std;
 
 
-struct PngBuilder {
-
+struct PngBuilder
+{
     void build(const std::string &fileName , const uint32_t width, const uint32_t height, uint32_t *buffer)
     {
         std::vector<unsigned char> image;
         image.resize(width * height * 4);
-        for(unsigned y = 0; y < height; y++)  {
-            for(unsigned x = 0; x < width; x++) {
+        for (unsigned y = 0; y < height; y++) {
+            for (unsigned x = 0; x < width; x++) {
                 uint32_t n = buffer[ y * width + x ];
-                image[4 * width * y + 4 * x + 0] = ( n >> 16 ) & 0xff;
-                image[4 * width * y + 4 * x + 1] = ( n >> 8 ) & 0xff;
+                image[4 * width * y + 4 * x + 0] = (n >> 16) & 0xff;
+                image[4 * width * y + 4 * x + 1] = (n >> 8) & 0xff;
                 image[4 * width * y + 4 * x + 2] = n & 0xff;
-                image[4 * width * y + 4 * x + 3] = ( n >> 24 ) & 0xff;
+                image[4 * width * y + 4 * x + 3] = (n >> 24) & 0xff;
             }
         }
         unsigned error = lodepng::encode(fileName, image, width, height);
 
         //if there's an error, display it
-        if(error) std::cout << "encoder error " << error << ": "<< lodepng_error_text(error) << std::endl;
+        if (error) std::cout << "encoder error " << error << ": "<< lodepng_error_text(error) << std::endl;
     }
 };
 
@@ -63,7 +63,6 @@ struct App
 
         //Initialize ThorVG Engine
         if (tvg::Initializer::init(tvgEngine, threads) == tvg::Result::Success) {
-
             //Create a Canvas
             auto canvas = tvg::SwCanvas::gen();
 
