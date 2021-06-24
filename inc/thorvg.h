@@ -266,7 +266,6 @@ public:
      * @param[in] method The method used to composite the source object with the target.
      *
      * @return Result::Success when succeed, Result::InvalidArguments otherwise.
-     *
      */
     Result composite(std::unique_ptr<Paint> target, CompositeMethod method) noexcept;
 
@@ -299,6 +298,17 @@ public:
      * @return The opacity value in the range [0 ~ 255], where 0 is completely transparent and 255 is opaque.
      */
     uint8_t opacity() const noexcept;
+
+    /**
+     * @brief Gets the composition target object and the composition method.
+     *
+     * @param[out] target The paint of the target object.
+     *
+     * @return The method used to composite the source object with the target.
+     *
+     * @BETA_API
+     */
+    CompositeMethod composite(const Paint** target) const noexcept;
 
     _TVG_DECLARE_ACCESSOR();
     _TVG_DECALRE_IDENTIFIER();
