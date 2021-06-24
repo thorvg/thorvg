@@ -879,7 +879,11 @@ static void _handleMaskAttr(TVG_UNUSED SvgLoaderData* loader, SvgNode* node, con
 #endif
     style->comp.method = CompositeMethod::AlphaMask;
     int len = strlen(value);
-    if (len >= 3 && !strncmp(value, "url", 3)) style->comp.url = _idFromUrl((const char*)(value + 3));
+    if (len >= 3 && !strncmp(value, "url", 3)) {
+        //FIXME: Support multiple composition.
+        if (style->comp.url) delete(style->comp.url);
+        style->comp.url = _idFromUrl((const char*)(value + 3));
+    }
 }
 
 
@@ -1596,6 +1600,8 @@ static void _copyAttr(SvgNode* to, const SvgNode* from)
     }
     //Copy style attribute;
     memcpy(to->style, from->style, sizeof(SvgStyleProperty));
+    if (from->style->fill.paint.url) to->style->fill.paint.url = new string(from->style->fill.paint.url->c_str());
+    if (from->style->stroke.paint.url) to->style->stroke.paint.url = new string(from->style->stroke.paint.url->c_str());
 
     //Copy style composite attribute (clip-path, mask, ...)
     if (from->style->comp.url) to->style->comp.url = new string(from->style->comp.url->c_str());
