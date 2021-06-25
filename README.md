@@ -20,7 +20,7 @@ The following list shows primitives that are supported by ThorVG: <br />
   <img width="930" height="473" src="https://github.com/Samsung/thorvg/blob/master/res/example_primitives.png">
 </p>
 <br />
-Your program could call neat TVG APIs while switching drawing context. If you have your drawing engine. During the API calls, ThorVG serializes drawing commands among the volatile paints' nodes then performs synchronous/asynchronous rendering using its backend raster engines. ThorVG supports vector images such as SVG, also expands, supporting other popular formats on demand. On the rendering, it could spawn intermediate frame-buffers for compositing scenes only when it's necessary. The next figure shows you a brief strategy on how to use ThorVG on your system.<br />
+If your program has the main renderer, your program could call ThorVG APIs while switching drawing contexts between the main renderer and ThorVG. During the API calls, ThorVG serializes drawing commands among the volatile paints' nodes then performs synchronous/asynchronous rendering using its backend raster engines. ThorVG supports vector images such as SVG, also expands, supporting other popular formats on demand. On the rendering, it could spawn intermediate frame-buffers for compositing scenes only when it's necessary. The next figure shows you a brief strategy on how to use ThorVG on your system.<br />
 <br />
 <p align="center">
   <img width="900" height="288" src="https://github.com/Samsung/thorvg/blob/master/res/example_flow.png">
