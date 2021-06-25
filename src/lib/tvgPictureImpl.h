@@ -215,6 +215,7 @@ struct Picture::Impl
 
     Paint::Iterator begin()
     {
+        reload();
         return Paint::Iterator(picture, paint);
     }
 

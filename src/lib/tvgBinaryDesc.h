@@ -54,6 +54,7 @@ struct tvgBlock
     #define TVG_BIN_HEADER_SIGNATURE_LENGTH 3
     #define TVG_BIN_HEADER_VERSION "000"
     #define TVG_BIN_HEADER_VERSION_LENGTH 3
+    #define TVG_BIN_HEADER_DATA_LENGTH 2
 #endif
 
 #define TVG_SCENE_BEGIN_INDICATOR     (TvgIndicator)0xfe

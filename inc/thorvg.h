@@ -1376,6 +1376,39 @@ public:
     _TVG_DISABLE_CTOR(Initializer);
 };
 
+
+/**
+ * @class Saver
+ *
+ * @brief A class enabling saving a paint in a binary format.
+ *
+ * @BETA_API
+ */
+class TVG_EXPORT Saver
+{
+public:
+    ~Saver();
+
+    /**
+     * @brief Saves all the paints from the tree in a binary format.
+     *
+     * @param[in] paint The root paint to be saved with all its nodes.
+     * @param[in] path A path to the file, in which the data is to be saved.
+     *
+     * @retval Result::Success When succeed.
+     * @retval Result::InvalidArguments the @p path is empty or @c nullptr is passed as the @p paint.
+     * @retval Result::FailedAllocation An internal error with a memory allocation for the Saver object.
+     * @retval Result::MemoryCorruption When casting in the internal function implementation failed.
+     * @retval Result::Unknown Others.
+     *
+     * @BETA_API
+     */
+    static Result save(std::unique_ptr<Paint> paint, const std::string& path) noexcept;
+
+    _TVG_DECLARE_PRIVATE(Saver);
+};
+
+
 /** @}*/
 
 } //namespace
