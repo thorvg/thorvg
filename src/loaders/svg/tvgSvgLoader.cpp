@@ -1096,8 +1096,14 @@ static SvgNode* _createSvgNode(SvgLoaderData* loader, SvgNode* parent, const cha
     doc->preserveAspect = true;
     simpleXmlParseAttributes(buf, bufLength, _attrParseSvgNode, loader);
 
-    if (loader->svgParse->global.w == 0) loader->svgParse->global.w = loader->svgParse->node->node.doc.w;
-    if (loader->svgParse->global.h == 0) loader->svgParse->global.h = loader->svgParse->node->node.doc.h;
+    if (loader->svgParse->global.w == 0) {
+        if (doc->w < FLT_EPSILON) loader->svgParse->global.w = 1;
+        else loader->svgParse->global.w = doc->w;
+    }
+    if (loader->svgParse->global.h == 0) {
+        if (doc->h < FLT_EPSILON) loader->svgParse->global.h = 1;
+        else loader->svgParse->global.h =doc->h;
+    }
 
     return loader->svgParse->node;
 }
@@ -1916,13 +1922,13 @@ static SvgStyleGradient* _createRadialGradient(SvgLoaderData* loader, const char
         return nullptr;
     }
     /**
-    * Default values of gradient
+    * Default values of gradient transformed into global percentage
     */
-    grad->radial->cx = 0.5;
-    grad->radial->cy = 0.5;
-    grad->radial->fx = 0.5;
-    grad->radial->fy = 0.5;
-    grad->radial->r = 0.5;
+    grad->radial->cx = 0.5f / loader->svgParse->global.w;
+    grad->radial->cy = 0.5f / loader->svgParse->global.h;
+    grad->radial->fx = 0.5f / loader->svgParse->global.w;
+    grad->radial->fy = 0.5f / loader->svgParse->global.h;
+    grad->radial->r = 0.5f / (sqrt(pow(loader->svgParse->global.h, 2) + pow(loader->svgParse->global.w, 2)) / sqrt(2.0f));
 
     loader->svgParse->gradient.parsedFx = false;
     loader->svgParse->gradient.parsedFy = false;
@@ -2078,9 +2084,9 @@ static SvgStyleGradient* _createLinearGradient(SvgLoaderData* loader, const char
         return nullptr;
     }
     /**
-    * Default value of x2 is 100%
+    * Default value of x2 is 100% - transformed to the global percentage
     */
-    grad->linear->x2 = 1;
+    grad->linear->x2 = 1.0f / loader->svgParse->global.w;
     simpleXmlParseAttributes(buf, bufLength, _attrParseLinearGradientNode, loader);
 
     for (unsigned int i = 0; i < sizeof(linear_tags) / sizeof(linear_tags[0]); i++) {
