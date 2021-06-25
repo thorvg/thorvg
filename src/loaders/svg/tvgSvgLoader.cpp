@@ -2174,11 +2174,11 @@ static void _svgLoaderParserXmlOpen(SvgLoaderData* loader, const char* content, 
     if (attrs) {
         //Find out the tag name starting from content till sz length
         sz = attrs - content;
-        attrsLength = length - sz;
         while ((sz > 0) && (isspace(content[sz - 1]))) sz--;
         if ((unsigned)sz >= sizeof(tagName)) return;
         strncpy(tagName, content, sz);
         tagName[sz] = '\0';
+        attrsLength = length - sz;
     }
 
     if ((method = _findGroupFactory(tagName))) {
@@ -2540,11 +2540,11 @@ static bool _svgLoaderParserForValidCheckXmlOpen(SvgLoaderData* loader, const ch
 
     if (attrs) {
         sz = attrs - content;
-        attrsLength = length - sz;
         while ((sz > 0) && (isspace(content[sz - 1]))) sz--;
         if ((unsigned)sz >= sizeof(tagName)) return false;
         strncpy(tagName, content, sz);
         tagName[sz] = '\0';
+        attrsLength = length - sz;
     }
 
     if ((method = _findGroupFactory(tagName))) {
