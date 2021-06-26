@@ -33,7 +33,7 @@
 #define FIXPT_SIZE (1<<FIXPT_BITS)
 
 
-static bool _updateColorTable(SwFill* fill, const Fill* fdata, const SwSurface* surface, uint32_t opacity)
+static bool _updateColorTable(SwFill* fill, const Fill* fdata, const SwSurface* surface)
 {
     if (!fill->ctable) {
         fill->ctable = static_cast<uint32_t*>(malloc(GRADIENT_STOP_SIZE * sizeof(uint32_t)));
@@ -46,7 +46,7 @@ static bool _updateColorTable(SwFill* fill, const Fill* fdata, const SwSurface* 
 
     auto pColors = colors;
 
-    auto a = (pColors->a * opacity) / 255;
+    auto a = pColors->a;
     if (a < 255) fill->translucent = true;
 
     auto r = ALPHA_MULTIPLY(pColors->r, a);
@@ -70,7 +70,7 @@ static bool _updateColorTable(SwFill* fill, const Fill* fdata, const SwSurface* 
         auto curr = colors + j;
         auto next = curr + 1;
         auto delta = 1.0f / (next->offset - curr->offset);
-        a = (next->a * opacity) / 255;
+        a = next->a;
         if (!fill->translucent && a < 255) fill->translucent = true;
 
         auto r = ALPHA_MULTIPLY(next->r, a);
@@ -265,14 +265,14 @@ void fillFetchLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, 
 }
 
 
-bool fillGenColorTable(SwFill* fill, const Fill* fdata, const Matrix* transform, SwSurface* surface, uint32_t opacity, bool ctable)
+bool fillGenColorTable(SwFill* fill, const Fill* fdata, const Matrix* transform, SwSurface* surface, bool ctable)
 {
     if (!fill) return false;
 
     fill->spread = fdata->spread();
 
     if (ctable) {
-        if (!_updateColorTable(fill, fdata, surface, opacity)) return false;
+        if (!_updateColorTable(fill, fdata, surface)) return false;
     }
 
     if (fdata->id() == FILL_ID_LINEAR) {

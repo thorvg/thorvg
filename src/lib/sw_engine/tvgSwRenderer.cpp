@@ -113,7 +113,7 @@ struct SwShapeTask : SwTask
             if (fill) {
                 auto ctable = (flags & RenderUpdateFlag::Gradient) ? true : false;
                 if (ctable) shapeResetFill(&shape);
-                if (!shapeGenFillColors(&shape, fill, transform, surface, opacity, ctable)) goto err;
+                if (!shapeGenFillColors(&shape, fill, transform, surface, ctable)) goto err;
                 ++addStroking;
             } else {
                 shapeDelFill(&shape);
@@ -130,7 +130,7 @@ struct SwShapeTask : SwTask
                 if (auto fill = sdata->strokeFill()) {
                     auto ctable = (flags & RenderUpdateFlag::GradientStroke) ? true : false;
                     if (ctable) shapeResetStrokeFill(&shape);
-                    if (!shapeGenStrokeFillColors(&shape, fill, transform, surface, opacity, ctable)) goto err;
+                    if (!shapeGenStrokeFillColors(&shape, fill, transform, surface, ctable)) goto err;
                 } else {
                     shapeDelStrokeFill(&shape);
                 }

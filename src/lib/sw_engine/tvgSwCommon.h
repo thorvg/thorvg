@@ -313,8 +313,8 @@ void shapeResetStroke(SwShape* shape, const Shape* sdata, const Matrix* transfor
 bool shapeGenStrokeRle(SwShape* shape, const Shape* sdata, const Matrix* transform, const SwBBox& clipRegion, SwBBox& renderRegion, SwMpool* mpool, unsigned tid);
 void shapeFree(SwShape* shape);
 void shapeDelStroke(SwShape* shape);
-bool shapeGenFillColors(SwShape* shape, const Fill* fill, const Matrix* transform, SwSurface* surface, uint32_t opacity, bool ctable);
-bool shapeGenStrokeFillColors(SwShape* shape, const Fill* fill, const Matrix* transform, SwSurface* surface, uint32_t opacity, bool ctable);
+bool shapeGenFillColors(SwShape* shape, const Fill* fill, const Matrix* transform, SwSurface* surface, bool ctable);
+bool shapeGenStrokeFillColors(SwShape* shape, const Fill* fill, const Matrix* transform, SwSurface* surface, bool ctable);
 void shapeResetFill(SwShape* shape);
 void shapeResetStrokeFill(SwShape* shape);
 void shapeDelFill(SwShape* shape);
@@ -332,7 +332,7 @@ void imageDelOutline(SwImage* image, SwMpool* mpool, uint32_t tid);
 void imageReset(SwImage* image);
 void imageFree(SwImage* image);
 
-bool fillGenColorTable(SwFill* fill, const Fill* fdata, const Matrix* transform, SwSurface* surface, uint32_t opacity, bool ctable);
+bool fillGenColorTable(SwFill* fill, const Fill* fdata, const Matrix* transform, SwSurface* surface, bool ctable);
 void fillReset(SwFill* fill);
 void fillFree(SwFill* fill);
 void fillFetchLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len);
