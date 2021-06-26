@@ -38,12 +38,10 @@ static inline bool _isGroupType(SvgNodeType type)
 }
 
 
-static unique_ptr<LinearGradient> _applyLinearGradientProperty(SvgStyleGradient* g, const Shape* vg, float rx, float ry, float rw, float rh)
+static unique_ptr<LinearGradient> _applyLinearGradientProperty(SvgStyleGradient* g, const Shape* vg, float rx, float ry, float rw, float rh, int opacity)
 {
     Fill::ColorStop* stops;
     int stopCount = 0;
-    float fillOpacity = 255.0f;
-
     auto fillGrad = LinearGradient::gen();
 
     if (g->usePercentage) {
@@ -80,7 +78,7 @@ static unique_ptr<LinearGradient> _applyLinearGradientProperty(SvgStyleGradient*
             stops[i].r = colorStop->r;
             stops[i].g = colorStop->g;
             stops[i].b = colorStop->b;
-            stops[i].a = (colorStop->a * fillOpacity) / 255.0f;
+            stops[i].a = (colorStop->a * opacity) / 255.0f;
             stops[i].offset = colorStop->offset;
             // check the offset corner cases - refer to: https://svgwg.org/svg2-draft/pservers.html#StopNotes
             if (colorStop->offset < prevOffset) stops[i].offset = prevOffset;
@@ -94,13 +92,11 @@ static unique_ptr<LinearGradient> _applyLinearGradientProperty(SvgStyleGradient*
 }
 
 
-static unique_ptr<RadialGradient> _applyRadialGradientProperty(SvgStyleGradient* g, const Shape* vg, float rx, float ry, float rw, float rh)
+static unique_ptr<RadialGradient> _applyRadialGradientProperty(SvgStyleGradient* g, const Shape* vg, float rx, float ry, float rw, float rh, int opacity)
 {
     Fill::ColorStop *stops;
     int stopCount = 0;
     int radius;
-    float fillOpacity = 255.0f;
-
     auto fillGrad = RadialGradient::gen();
 
     radius = sqrt(pow(rw, 2) + pow(rh, 2)) / sqrt(2.0);
@@ -148,7 +144,7 @@ static unique_ptr<RadialGradient> _applyRadialGradientProperty(SvgStyleGradient*
             stops[i].r = colorStop->r;
             stops[i].g = colorStop->g;
             stops[i].b = colorStop->b;
-            stops[i].a = (colorStop->a * fillOpacity) / 255.0f;
+            stops[i].a = (colorStop->a * opacity) / 255.0f;
             stops[i].offset = colorStop->offset;
             // check the offset corner cases - refer to: https://svgwg.org/svg2-draft/pservers.html#StopNotes
             if (colorStop->offset < prevOffset) stops[i].offset = prevOffset;
@@ -215,10 +211,10 @@ static void _applyProperty(SvgNode* node, Shape* vg, float vx, float vy, float v
         if (!style->fill.paint.gradient->userSpace) vg->bounds(&vx, &vy, &vw, &vh);
 
         if (style->fill.paint.gradient->type == SvgGradientType::Linear) {
-             auto linear = _applyLinearGradientProperty(style->fill.paint.gradient, vg, vx, vy, vw, vh);
+             auto linear = _applyLinearGradientProperty(style->fill.paint.gradient, vg, vx, vy, vw, vh, style->fill.opacity);
              vg->fill(move(linear));
         } else if (style->fill.paint.gradient->type == SvgGradientType::Radial) {
-             auto radial = _applyRadialGradientProperty(style->fill.paint.gradient, vg, vx, vy, vw, vh);
+             auto radial = _applyRadialGradientProperty(style->fill.paint.gradient, vg, vx, vy, vw, vh, style->fill.opacity);
              vg->fill(move(radial));
         }
     } else if (style->fill.paint.curColor) {
@@ -252,10 +248,10 @@ static void _applyProperty(SvgNode* node, Shape* vg, float vx, float vy, float v
         if (!style->stroke.paint.gradient->userSpace) vg->bounds(&vx, &vy, &vw, &vh);
 
         if (style->stroke.paint.gradient->type == SvgGradientType::Linear) {
-             auto linear = _applyLinearGradientProperty(style->stroke.paint.gradient, vg, vx, vy, vw, vh);
+             auto linear = _applyLinearGradientProperty(style->stroke.paint.gradient, vg, vx, vy, vw, vh, style->stroke.opacity);
              vg->stroke(move(linear));
         } else if (style->stroke.paint.gradient->type == SvgGradientType::Radial) {
-             auto radial = _applyRadialGradientProperty(style->stroke.paint.gradient, vg, vx, vy, vw, vh);
+             auto radial = _applyRadialGradientProperty(style->stroke.paint.gradient, vg, vx, vy, vw, vh, style->stroke.opacity);
              vg->stroke(move(radial));
         }
     } else if (style->stroke.paint.url) {
