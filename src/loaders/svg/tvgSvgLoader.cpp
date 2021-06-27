@@ -780,6 +780,7 @@ static void _handlePaintAttr(SvgPaint* paint, const char* value)
 static void _handleColorAttr(TVG_UNUSED SvgLoaderData* loader, SvgNode* node, const char* value)
 {
     SvgStyleProperty* style = node->style;
+    style->curColorSet = true;
     _toColor(value, &style->r, &style->g, &style->b, nullptr);
 }
 
@@ -1033,7 +1034,9 @@ static SvgNode* _createNode(SvgNode* parent, SvgNodeType type)
     //Default fill opacity is 1
     node->style->fill.opacity = 255;
     node->style->opacity = 255;
-
+    //Default current color is not set
+    node->style->fill.paint.curColor = false;
+    node->style->curColorSet = false;
     //Default fill rule is nonzero
     node->style->fill.fillRule = SvgFillRule::Winding;
 
@@ -1041,6 +1044,8 @@ static SvgNode* _createNode(SvgNode* parent, SvgNodeType type)
     node->style->stroke.paint.none = true;
     //Default stroke opacity is 1
     node->style->stroke.opacity = 255;
+    //Default stroke current color is not set
+    node->style->stroke.paint.curColor = false;
     //Default stroke width is 1
     node->style->stroke.width = 1;
     //Default line cap is butt
@@ -2288,6 +2293,10 @@ static void _styleInherit(SvgStyleProperty* child, const SvgStyleProperty* paren
         child->fill.paint.none = parent->fill.paint.none;
         child->fill.paint.curColor = parent->fill.paint.curColor;
         if (parent->fill.paint.url) child->fill.paint.url = _copyId(parent->fill.paint.url->c_str());
+    } else if (child->fill.paint.curColor && !child->curColorSet) {
+        child->r = parent->r;
+        child->g = parent->g;
+        child->b = parent->b;
     }
     if (!((int)child->fill.flags & (int)SvgFillFlags::Opacity)) {
         child->fill.opacity = parent->fill.opacity;
@@ -2303,6 +2312,10 @@ static void _styleInherit(SvgStyleProperty* child, const SvgStyleProperty* paren
         child->stroke.paint.none = parent->stroke.paint.none;
         child->stroke.paint.curColor = parent->stroke.paint.curColor;
         child->stroke.paint.url = parent->stroke.paint.url ? _copyId(parent->stroke.paint.url->c_str()) : nullptr;
+    } else if (child->stroke.paint.curColor && !child->curColorSet) {
+        child->r = parent->r;
+        child->g = parent->g;
+        child->b = parent->b;
     }
     if (!((int)child->stroke.flags & (int)SvgStrokeFlags::Opacity)) {
         child->stroke.opacity = parent->stroke.opacity;
