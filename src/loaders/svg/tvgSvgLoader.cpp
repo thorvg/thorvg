@@ -511,6 +511,7 @@ static void _toColor(const char* str, uint8_t* r, uint8_t* g, uint8_t* b, string
                 *r = (((uint8_t*)(&(colors[i].value)))[2]);
                 *g = (((uint8_t*)(&(colors[i].value)))[1]);
                 *b = (((uint8_t*)(&(colors[i].value)))[0]);
+                return;
             }
         }
     }
