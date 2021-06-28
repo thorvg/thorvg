@@ -1596,15 +1596,13 @@ static void _copyAttr(SvgNode* to, const SvgNode* from)
 {
     //Copy matrix attribute
     if (from->transform) {
-        to->transform = (Matrix*)calloc(1, sizeof(Matrix));
-        if (to->transform) memcpy(to->transform, from->transform, sizeof(Matrix));
+        to->transform = (Matrix*)malloc(sizeof(Matrix));
+        if (to->transform) *to->transform = *from->transform;
     }
-    //Copy style attribute;
-    memcpy(to->style, from->style, sizeof(SvgStyleProperty));
+    //Copy style attribute
+    *to->style = *from->style;
     if (from->style->fill.paint.url) to->style->fill.paint.url = new string(from->style->fill.paint.url->c_str());
     if (from->style->stroke.paint.url) to->style->stroke.paint.url = new string(from->style->stroke.paint.url->c_str());
-
-    //Copy style composite attribute (clip-path, mask, ...)
     if (from->style->comp.url) to->style->comp.url = new string(from->style->comp.url->c_str());
 
     //Copy node attribute
