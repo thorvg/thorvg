@@ -110,6 +110,12 @@ enum class SvgStyleFlags
     Display = 0x4000
 };
 
+enum class SvgStopStyleFlags
+{
+    StopOpacity = 0x01,
+    StopColor = 0x02
+};
+
 enum class SvgFillRule
 {
     Winding = 0,
@@ -314,6 +320,7 @@ struct SvgParser
     SvgNode* node;
     SvgStyleGradient* styleGrad;
     Fill::ColorStop* gradStop;
+    SvgStopStyleFlags flags;
     struct
     {
         int x, y;

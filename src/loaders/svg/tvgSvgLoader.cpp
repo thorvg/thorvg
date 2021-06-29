@@ -723,6 +723,7 @@ static float _parseLength(const char* str, SvgLengthType* type)
 }
 
 
+static bool _parseStyleAttr(void* data, const char* key, const char* value);
 static bool _parseStyleAttr(void* data, const char* key, const char* value, bool style);
 
 
@@ -949,7 +950,6 @@ static bool _parseStyleAttr(void* data, const char* key, const char* value, bool
 
     //Trim the white space
     key = _skipSpace(key, nullptr);
-
     value = _skipSpace(value, nullptr);
 
     sz = strlen(key);
@@ -958,7 +958,7 @@ static bool _parseStyleAttr(void* data, const char* key, const char* value, bool
             if (style) {
                 styleTags[i].tagHandler(loader, node, value);
                 node->style->flags = (SvgStyleFlags)((int)node->style->flags | (int)styleTags[i].flag);
-            } else if (!((int)node->style->flags && (int)styleTags[i].flag)) {
+            } else if (!((int)node->style->flags & (int)styleTags[i].flag)) {
                 styleTags[i].tagHandler(loader, node, value);
             }
             return true;
@@ -967,6 +967,13 @@ static bool _parseStyleAttr(void* data, const char* key, const char* value, bool
 
     return false;
 }
+
+
+static bool _parseStyleAttr(void* data, const char* key, const char* value)
+{
+    return _parseStyleAttr(data, key, value, true);
+}
+
 
 /* parse g node
  * https://www.w3.org/TR/SVG/struct.html#Groups
@@ -1962,19 +1969,17 @@ static SvgStyleGradient* _createRadialGradient(SvgLoaderData* loader, const char
 }
 
 
-static bool _attrParseStops(void* data, const char* key, const char* value, bool style)
+static bool _attrParseStopsStyle(void* data, const char* key, const char* value)
 {
     SvgLoaderData* loader = (SvgLoaderData*)data;
     auto stop = loader->svgParse->gradStop;
 
-    if (!strcmp(key, "offset")) {
-        stop->offset = _toOffset(value);
-    } else if (!strcmp(key, "stop-opacity")) {
+    if (!strcmp(key, "stop-opacity")) {
         stop->a = _toOpacity(value);
+        loader->svgParse->flags = (SvgStopStyleFlags)((int)loader->svgParse->flags | (int)SvgStopStyleFlags::StopOpacity);
     } else if (!strcmp(key, "stop-color")) {
         _toColor(value, &stop->r, &stop->g, &stop->b, nullptr);
-    } else if (!strcmp(key, "style")) {
-        simpleXmlParseW3CAttribute(value, _attrParseStops, data);
+        loader->svgParse->flags = (SvgStopStyleFlags)((int)loader->svgParse->flags | (int)SvgStopStyleFlags::StopColor);
     } else {
         return false;
     }
@@ -1985,7 +1990,26 @@ static bool _attrParseStops(void* data, const char* key, const char* value, bool
 
 static bool _attrParseStops(void* data, const char* key, const char* value)
 {
-    return _attrParseStops(data, key, value, false);
+    SvgLoaderData* loader = (SvgLoaderData*)data;
+    auto stop = loader->svgParse->gradStop;
+
+    if (!strcmp(key, "offset")) {
+        stop->offset = _toOffset(value);
+    } else if (!strcmp(key, "stop-opacity")) {
+        if (!((int)loader->svgParse->flags & (int)SvgStopStyleFlags::StopOpacity)) {
+            stop->a = _toOpacity(value);
+        }
+    } else if (!strcmp(key, "stop-color")) {
+        if (!((int)loader->svgParse->flags & (int)SvgStopStyleFlags::StopColor)) {
+            _toColor(value, &stop->r, &stop->g, &stop->b, nullptr);
+        }
+    } else if (!strcmp(key, "style")) {
+        simpleXmlParseW3CAttribute(value, _attrParseStopsStyle, data);
+    } else {
+        return false;
+    }
+
+    return true;
 }
 
 
