@@ -46,11 +46,10 @@ enum class SimpleXMLType
 
 typedef bool (*simpleXMLCb)(void* data, SimpleXMLType type, const char* content, unsigned length);
 typedef bool (*simpleXMLAttributeCb)(void* data, const char* key, const char* value);
-typedef bool (*simpleXMLW3CAttributeCb)(void* data, const char* key, const char* value, bool style);
 
 bool simpleXmlParseAttributes(const char* buf, unsigned buflen, simpleXMLAttributeCb func, const void* data);
 bool simpleXmlParse(const char* buf, unsigned buflen, bool strip, simpleXMLCb func, const void* data);
-bool simpleXmlParseW3CAttribute(const char* buf, simpleXMLW3CAttributeCb func, const void* data);
+bool simpleXmlParseW3CAttribute(const char* buf, simpleXMLAttributeCb func, const void* data);
 const char *simpleXmlFindAttributesTag(const char* buf, unsigned buflen);
 
 #ifdef THORVG_LOG_ENABLED
