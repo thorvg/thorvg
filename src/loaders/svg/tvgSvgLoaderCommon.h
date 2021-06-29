@@ -91,6 +91,31 @@ enum class SvgGradientType
     Radial
 };
 
+enum class SvgStyleFlags
+{
+    Color = 0x01,
+    Fill = 0x02,
+    FillRule = 0x04,
+    FillOpacity = 0x08,
+    Opacity = 0x010,
+    Stroke = 0x20,
+    StrokeWidth = 0x40,
+    StrokeLineJoin = 0x80,
+    StrokeLineCap = 0x100,
+    StrokeOpacity = 0x200,
+    StrokeDashArray = 0x400,
+    Transform = 0x800,
+    ClipPath = 0x1000,
+    Mask = 0x2000,
+    Display = 0x4000
+};
+
+enum class SvgFillRule
+{
+    Winding = 0,
+    OddEven = 1
+};
+
 //Length type to recalculate %, pt, pc, mm, cm etc
 enum class SvgParserLengthType
 {
@@ -258,6 +283,7 @@ struct SvgStyleProperty
     int opacity;
     SvgColor color;
     bool curColorSet;
+    SvgStyleFlags flags;
 };
 
 struct SvgNode
