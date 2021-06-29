@@ -2200,9 +2200,14 @@ static void _svgLoaderParserXmlOpen(SvgLoaderData* loader, const char* content, 
         }
 
         if (node->type == SvgNodeType::Defs) {
-            loader->doc->node.doc.defs = node;
-            loader->def = node;
-            if (!empty) loader->stack.push(node);
+            if (loader->def && loader->doc->node.doc.defs) {
+                free(node->style);
+                free(node);
+            } else {
+                loader->doc->node.doc.defs = node;
+                loader->def = node;
+                if (!empty) loader->stack.push(node);
+            }
         } else {
             loader->stack.push(node);
         }
