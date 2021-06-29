@@ -94,7 +94,7 @@ struct RleWorker
 
 static inline SwPoint UPSCALE(const SwPoint& pt)
 {
-    return {pt.x << (PIXEL_BITS - 6), pt.y << (PIXEL_BITS - 6)};
+    return {SwCoord(ulong(pt.x) << (PIXEL_BITS - 6)), SwCoord(ulong(pt.y) << (PIXEL_BITS - 6))};
 }
 
 
@@ -112,13 +112,13 @@ static inline SwCoord TRUNC(const SwCoord x)
 
 static inline SwPoint SUBPIXELS(const SwPoint& pt)
 {
-    return {pt.x << PIXEL_BITS, pt.y << PIXEL_BITS};
+    return {SwCoord(ulong(pt.x) << PIXEL_BITS), SwCoord(ulong(pt.y) << PIXEL_BITS)};
 }
 
 
 static inline SwCoord SUBPIXELS(const SwCoord x)
 {
-    return (x << PIXEL_BITS);
+    return SwCoord(ulong(x) << PIXEL_BITS);
 }
 
 /*
