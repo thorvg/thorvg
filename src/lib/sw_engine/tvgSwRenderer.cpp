@@ -71,7 +71,8 @@ struct SwShapeTask : SwTask
 
         /* Valid filling & stroking each increases the value by 1.
            This value is referenced for compositing shape & stroking. */
-        uint32_t addStroking = 0;
+        bool stroking = false;
+        bool filling = false;
 
         //Valid Stroking?
         uint8_t strokeAlpha = 0;
@@ -102,7 +103,7 @@ struct SwShapeTask : SwTask
                        Also, it shouldn't be dash style. */
                     auto antiAlias = (strokeAlpha == 255 && strokeWidth > 2 && sdata->strokeDash(nullptr) == 0) ? false : true;
                     if (!shapeGenRle(&shape, sdata, antiAlias, clips.count > 0 ? true : false)) goto err;
-                    ++addStroking;
+                    filling = true;
                 }
             }
         }
@@ -114,7 +115,7 @@ struct SwShapeTask : SwTask
                 auto ctable = (flags & RenderUpdateFlag::Gradient) ? true : false;
                 if (ctable) shapeResetFill(&shape);
                 if (!shapeGenFillColors(&shape, fill, transform, surface, opacity, ctable)) goto err;
-                ++addStroking;
+                filling = true;
             } else {
                 shapeDelFill(&shape);
             }
@@ -125,7 +126,7 @@ struct SwShapeTask : SwTask
             if (validStroke) {
                 shapeResetStroke(&shape, sdata, transform);
                 if (!shapeGenStrokeRle(&shape, sdata, transform, clipRegion, bbox, mpool, tid)) goto err;
-                ++addStroking;
+                stroking = true;
 
                 if (auto fill = sdata->strokeFill()) {
                     auto ctable = (flags & RenderUpdateFlag::GradientStroke) ? true : false;
@@ -159,7 +160,7 @@ struct SwShapeTask : SwTask
         shapeReset(&shape);
     end:
         shapeDelOutline(&shape, mpool, tid);
-        if (addStroking > 1 && opacity < 255) cmpStroking = true;
+        if (stroking && filling && opacity < 255) cmpStroking = true;
         else cmpStroking = false;
     }
 
