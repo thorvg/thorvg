@@ -24,6 +24,7 @@
 #include "tvgSvgLoaderCommon.h"
 #include "tvgSvgSceneBuilder.h"
 #include "tvgSvgPath.h"
+#include "tvgSvgUtil.h"
 
 static bool _appendShape(SvgNode* node, Shape* shape, float vx, float vy, float vw, float vh);
 
@@ -80,7 +81,7 @@ static unique_ptr<LinearGradient> _applyLinearGradientProperty(SvgStyleGradient*
             stops[i].b = colorStop->b;
             stops[i].a = (colorStop->a * opacity) / 255.0f;
             stops[i].offset = colorStop->offset;
-            // check the offset corner cases - refer to: https://svgwg.org/svg2-draft/pservers.html#StopNotes
+            //check the offset corner cases - refer to: https://svgwg.org/svg2-draft/pservers.html#StopNotes
             if (colorStop->offset < prevOffset) stops[i].offset = prevOffset;
             else if (colorStop->offset > 1) stops[i].offset = 1;
             prevOffset = stops[i].offset;
@@ -146,7 +147,7 @@ static unique_ptr<RadialGradient> _applyRadialGradientProperty(SvgStyleGradient*
             stops[i].b = colorStop->b;
             stops[i].a = (colorStop->a * opacity) / 255.0f;
             stops[i].offset = colorStop->offset;
-            // check the offset corner cases - refer to: https://svgwg.org/svg2-draft/pservers.html#StopNotes
+            //check the offset corner cases - refer to: https://svgwg.org/svg2-draft/pservers.html#StopNotes
             if (colorStop->offset < prevOffset) stops[i].offset = prevOffset;
             else if (colorStop->offset > 1) stops[i].offset = 1;
             prevOffset = stops[i].offset;
@@ -346,6 +347,113 @@ static bool _appendShape(SvgNode* node, Shape* shape, float vx, float vy, float 
     return true;
 }
 
+enum class imageMimeTypeEncoding
+{
+    base64 = 0x1,
+    utf8 = 0x2
+};
+constexpr imageMimeTypeEncoding operator|(imageMimeTypeEncoding a, imageMimeTypeEncoding b) {
+    return static_cast<imageMimeTypeEncoding>(static_cast<int>(a) | static_cast<int>(b));
+}
+constexpr bool operator&(imageMimeTypeEncoding a, imageMimeTypeEncoding b) {
+    return (static_cast<int>(a) & static_cast<int>(b));
+}
+
+static constexpr struct
+{
+    const char* name;
+    int sz;
+    imageMimeTypeEncoding encoding;
+} imageMimeTypes[] = {
+#ifdef THORVG_JPG_LOADER_SUPPORT
+    {"jpeg", sizeof("jpeg"), imageMimeTypeEncoding::base64},
+#endif
+#ifdef THORVG_PNG_LOADER_SUPPORT
+    {"png", sizeof("png"), imageMimeTypeEncoding::base64},
+#endif
+    {"svg+xml", sizeof("svg+xml"), imageMimeTypeEncoding::base64 | imageMimeTypeEncoding::utf8},
+};
+
+static bool _isValidImageMimeTypeAndEncoding(const char** href, imageMimeTypeEncoding* encoding) {
+    if (strncmp(*href, "image/", sizeof("image/") - 1)) return false; //not allowed mime type
+    *href += sizeof("image/") - 1;
+
+    //RFC2397 data:[<mediatype>][;base64],<data>
+    //mediatype  := [ type "/" subtype ] *( ";" parameter )
+    //parameter  := attribute "=" value
+    for (unsigned int i = 0; i < sizeof(imageMimeTypes) / sizeof(imageMimeTypes[0]); i++) {
+        if (!strncmp(*href, imageMimeTypes[i].name, imageMimeTypes[i].sz - 1)) {
+            *href += imageMimeTypes[i].sz  - 1;
+
+            while (**href && **href != ',') {
+                while (**href && **href != ';') ++(*href);
+                if (!**href) return false;
+                ++(*href);
+
+                if (imageMimeTypes[i].encoding & imageMimeTypeEncoding::base64) {
+                    if (!strncmp(*href, "base64,", sizeof("base64,") - 1)) {
+                        *href += sizeof("base64,") - 1;
+                        *encoding = imageMimeTypeEncoding::base64;
+                        return true; //valid base64
+                    }
+                }
+                if (imageMimeTypes[i].encoding & imageMimeTypeEncoding::utf8) {
+                    if (!strncmp(*href, "utf8,", sizeof("utf8,") - 1)) {
+                        *href += sizeof("utf8,") - 1;
+                        *encoding = imageMimeTypeEncoding::utf8;
+                        return true; //valid utf8
+                    }
+                }
+            }
+            //no encoding defined
+            if (**href == ',' && (imageMimeTypes[i].encoding & imageMimeTypeEncoding::utf8)) {
+                ++(*href);
+                *encoding = imageMimeTypeEncoding::utf8;
+                return true; //allow no encoding defined if utf8 expected
+            }
+            return false;
+        }
+    }
+    return false;
+}
+
+static unique_ptr<Picture> _imageBuildHelper(SvgNode* node, float vx, float vy, float vw, float vh)
+{
+    if (!node->node.image.href) return nullptr;
+    auto picture = Picture::gen();
+
+    const char* href = (*node->node.image.href).c_str();
+    if (!strncmp(href, "data:", sizeof("data:") - 1)) {
+        href += sizeof("data:") - 1;
+        imageMimeTypeEncoding encoding;
+        if (!_isValidImageMimeTypeAndEncoding(&href, &encoding)) return nullptr; //not allowed mime type or encoding
+        if (encoding == imageMimeTypeEncoding::base64) {
+            string decoded = svgUtilBase64Decode(href);
+            if (picture->load(decoded.c_str(), decoded.size(), true) != Result::Success) return nullptr;
+        } else {
+            string decoded = svgUtilURLDecode(href);
+            if (picture->load(decoded.c_str(), decoded.size(), true) != Result::Success) return nullptr;
+        }
+
+    } else {
+        //TODO: protect against recursive svg image loading
+        if (picture->load(href) != Result::Success) return nullptr;
+        picture->size(node->node.image.w, node->node.image.h);
+    }
+
+    float x, y, w, h;
+    if (picture->viewbox(&x, &y, &w, &h) == Result::Success && vw && vh) {
+        auto sx = node->node.image.w / w;
+        auto sy = node->node.image.h / h;
+        auto sxt = x * sx;
+        auto syt = y * sy;
+        Matrix m = {sx, 0, node->node.image.x - sxt, 0, sy, node->node.image.y - syt, 0, 0, 1};
+        picture->transform(m);
+    }
+
+    return picture;
+}
+
 
 static unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, float vx, float vy, float vw, float vh)
 {
@@ -358,6 +466,9 @@ static unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, float vx, float 
             for (uint32_t i = 0; i < node->child.count; ++i, ++child) {
                 if (_isGroupType((*child)->type)) {
                     scene->push(_sceneBuildHelper(*child, vx, vy, vw, vh));
+                } else if ((*child)->type == SvgNodeType::Image) {
+                    auto image = _imageBuildHelper(*child, vx, vy, vw, vh);
+                    if (image) scene->push(move(image));
                 } else {
                     auto shape = _shapeBuildHelper(*child, vx, vy, vw, vh);
                     if (shape) scene->push(move(shape));

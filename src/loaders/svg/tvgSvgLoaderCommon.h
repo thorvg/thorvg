@@ -188,6 +188,15 @@ struct SvgLineNode
     float y2;
 };
 
+struct SvgImageNode
+{
+    float x;
+    float y;
+    float w;
+    float h;
+    string *href;
+};
+
 struct SvgPathNode
 {
     string* path;
@@ -321,6 +330,7 @@ struct SvgNode
         SvgRectNode rect;
         SvgPathNode path;
         SvgLineNode line;
+        SvgImageNode image;
     } node;
     bool display;
 };
