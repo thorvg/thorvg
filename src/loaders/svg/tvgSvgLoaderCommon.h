@@ -212,15 +212,6 @@ struct SvgRadialGradient
     float r;
 };
 
-struct SvgGradientStop
-{
-    float offset;
-    uint8_t r;
-    uint8_t g;
-    uint8_t b;
-    uint8_t a;
-};
-
 struct SvgComposite
 {
     CompositeMethod method;     //TODO: Currently support either one method
