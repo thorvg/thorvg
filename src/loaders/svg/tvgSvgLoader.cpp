@@ -774,7 +774,7 @@ static void _handlePaintAttr(SvgPaint* paint, const char* value)
         paint->curColor = true;
         return;
     }
-    _toColor(value, &paint->r, &paint->g, &paint->b, &paint->url);
+    _toColor(value, &paint->color.r, &paint->color.g, &paint->color.b, &paint->url);
 }
 
 
@@ -782,7 +782,7 @@ static void _handleColorAttr(TVG_UNUSED SvgLoaderData* loader, SvgNode* node, co
 {
     SvgStyleProperty* style = node->style;
     style->curColorSet = true;
-    _toColor(value, &style->r, &style->g, &style->b, nullptr);
+    _toColor(value, &style->color.r, &style->color.g, &style->color.b, nullptr);
 }
 
 
@@ -2286,16 +2286,12 @@ static void _styleInherit(SvgStyleProperty* child, const SvgStyleProperty* paren
     //Inherit the property of parent if not present in child.
     //Fill
     if (!((int)child->fill.flags & (int)SvgFillFlags::Paint)) {
-        child->fill.paint.r = parent->fill.paint.r;
-        child->fill.paint.g = parent->fill.paint.g;
-        child->fill.paint.b = parent->fill.paint.b;
+        child->fill.paint.color = parent->fill.paint.color;
         child->fill.paint.none = parent->fill.paint.none;
         child->fill.paint.curColor = parent->fill.paint.curColor;
         if (parent->fill.paint.url) child->fill.paint.url = _copyId(parent->fill.paint.url->c_str());
     } else if (child->fill.paint.curColor && !child->curColorSet) {
-        child->r = parent->r;
-        child->g = parent->g;
-        child->b = parent->b;
+        child->color = parent->color;
     }
     if (!((int)child->fill.flags & (int)SvgFillFlags::Opacity)) {
         child->fill.opacity = parent->fill.opacity;
@@ -2305,16 +2301,12 @@ static void _styleInherit(SvgStyleProperty* child, const SvgStyleProperty* paren
     }
     //Stroke
     if (!((int)child->stroke.flags & (int)SvgStrokeFlags::Paint)) {
-        child->stroke.paint.r = parent->stroke.paint.r;
-        child->stroke.paint.g = parent->stroke.paint.g;
-        child->stroke.paint.b = parent->stroke.paint.b;
+        child->stroke.paint.color = parent->stroke.paint.color;
         child->stroke.paint.none = parent->stroke.paint.none;
         child->stroke.paint.curColor = parent->stroke.paint.curColor;
         child->stroke.paint.url = parent->stroke.paint.url ? _copyId(parent->stroke.paint.url->c_str()) : nullptr;
     } else if (child->stroke.paint.curColor && !child->curColorSet) {
-        child->r = parent->r;
-        child->g = parent->g;
-        child->b = parent->b;
+        child->color = parent->color;
     }
     if (!((int)child->stroke.flags & (int)SvgStrokeFlags::Opacity)) {
         child->stroke.opacity = parent->stroke.opacity;
