@@ -1068,9 +1068,8 @@ static SvgNode* _createNode(SvgNode* parent, SvgNodeType type)
 
 static SvgNode* _createDefsNode(TVG_UNUSED SvgLoaderData* loader, TVG_UNUSED SvgNode* parent, const char* buf, unsigned bufLength)
 {
+    if (loader->def && loader->doc->node.doc.defs) return nullptr;
     SvgNode* node = _createNode(nullptr, SvgNodeType::Defs);
-    if (!node) return nullptr;
-    simpleXmlParseAttributes(buf, bufLength, nullptr, node);
     return node;
 }
 
@@ -2199,6 +2198,7 @@ static void _svgLoaderParserXmlOpen(SvgLoaderData* loader, const char* content, 
             node = method(loader, parent, attrs, attrsLength);
         }
 
+        if (!node) return;
         if (node->type == SvgNodeType::Defs) {
             loader->doc->node.doc.defs = node;
             loader->def = node;
