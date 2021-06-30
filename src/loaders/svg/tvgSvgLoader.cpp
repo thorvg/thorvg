@@ -1459,7 +1459,7 @@ static constexpr struct
 };
 
 
-/* parse the attributes for a rect element.
+/* parse the attributes for a line element.
  * https://www.w3.org/TR/SVG/shapes.html#LineElement
  */
 static bool _attrParseLineNode(void* data, const char* key, const char* value)
@@ -1508,7 +1508,69 @@ static string* _idFromHref(const char* href)
 {
     href = _skipSpace(href, nullptr);
     if ((*href) == '#') href++;
+    if(!strncmp(href, "file://", sizeof("file://") - 1)) href += sizeof("file://") - 1;
     return new string(href);
+}
+
+
+static constexpr struct
+{
+    const char* tag;
+    SvgParserLengthType type;
+    int sz;
+    size_t offset;
+} imageTags[] = {
+    {"x", SvgParserLengthType::Horizontal, sizeof("x"), offsetof(SvgRectNode, x)},
+    {"y", SvgParserLengthType::Vertical, sizeof("y"), offsetof(SvgRectNode, y)},
+    {"width", SvgParserLengthType::Horizontal, sizeof("width"), offsetof(SvgRectNode, w)},
+    {"height", SvgParserLengthType::Vertical, sizeof("height"), offsetof(SvgRectNode, h)},
+};
+
+
+/* parse the attributes for a image element.
+ * https://www.w3.org/TR/SVG/embedded.html#ImageElement
+ */
+static bool _attrParseImageNode(void* data, const char* key, const char* value)
+{
+    SvgLoaderData* loader = (SvgLoaderData*)data;
+    SvgNode* node = loader->svgParse->node;
+    SvgImageNode* image = &(node->node.image);
+    unsigned char* array;
+    int sz = strlen(key);
+
+    array = (unsigned char*)image;
+    for (unsigned int i = 0; i < sizeof(imageTags) / sizeof(imageTags[0]); i++) {
+        if (imageTags[i].sz - 1 == sz && !strncmp(imageTags[i].tag, key, sz)) {
+            *((float*)(array + imageTags[i].offset)) = _toFloat(loader->svgParse, value, imageTags[i].type);
+            return true;
+        }
+    }
+
+    if (!strcmp(key, "href") || !strcmp(key, "xlink:href")) {
+        image->href = _idFromHref(value);
+    } else if (!strcmp(key, "id")) {
+        node->id = _copyId(value);
+    } else if (!strcmp(key, "style")) {
+        return simpleXmlParseW3CAttribute(value, _parseStyleAttr, loader);
+    } else if (!strcmp(key, "clip-path")) {
+        _handleClipPathAttr(loader, node, value);
+    } else if (!strcmp(key, "mask")) {
+        _handleMaskAttr(loader, node, value);
+    } else {
+        return _parseStyleAttr(loader, key, value);
+    }
+    return true;
+}
+
+
+static SvgNode* _createImageNode(SvgLoaderData* loader, SvgNode* parent, const char* buf, unsigned bufLength)
+{
+    loader->svgParse->node = _createNode(parent, SvgNodeType::Image);
+
+    if (!loader->svgParse->node) return nullptr;
+
+    simpleXmlParseAttributes(buf, bufLength, _attrParseImageNode, loader);
+    return loader->svgParse->node;
 }
 
 
@@ -1736,7 +1798,8 @@ static constexpr struct
     {"polygon", sizeof("polygon"), _createPolygonNode},
     {"rect", sizeof("rect"), _createRectNode},
     {"polyline", sizeof("polyline"), _createPolylineNode},
-    {"line", sizeof("line"), _createLineNode}
+    {"line", sizeof("line"), _createLineNode},
+    {"image", sizeof("image"), _createImageNode}
 };
 
 
