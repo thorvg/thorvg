@@ -219,10 +219,10 @@ static void _applyProperty(SvgNode* node, Shape* vg, float vx, float vy, float v
         }
     } else if (style->fill.paint.curColor) {
         //Apply the current style color
-        vg->fill(style->r, style->g, style->b, style->fill.opacity);
+        vg->fill(style->color.r, style->color.g, style->color.b, style->fill.opacity);
     } else {
         //Apply the fill color
-        vg->fill(style->fill.paint.r, style->fill.paint.g, style->fill.paint.b, style->fill.opacity);
+        vg->fill(style->fill.paint.color.r, style->fill.paint.color.g, style->fill.paint.color.b, style->fill.opacity);
     }
 
     //Apply the fill rule
@@ -258,10 +258,10 @@ static void _applyProperty(SvgNode* node, Shape* vg, float vx, float vy, float v
         //TODO: Apply the color pointed by url
     } else if (style->stroke.paint.curColor) {
         //Apply the current style color
-        vg->stroke(style->r, style->g, style->b, style->stroke.opacity);
+        vg->stroke(style->color.r, style->color.g, style->color.b, style->stroke.opacity);
     } else {
         //Apply the stroke color
-        vg->stroke(style->stroke.paint.r, style->stroke.paint.g, style->stroke.paint.b, style->stroke.opacity);
+        vg->stroke(style->stroke.paint.color.r, style->stroke.paint.color.g, style->stroke.paint.color.b, style->stroke.opacity);
     }
 
     _applyComposition(vg, node, vx, vy, vw, vh);

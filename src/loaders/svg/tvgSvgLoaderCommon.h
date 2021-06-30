@@ -219,13 +219,18 @@ struct SvgComposite
     SvgNode* node;
 };
 
+struct SvgColor
+{
+    uint8_t r;
+    uint8_t g;
+    uint8_t b;
+};
+
 struct SvgPaint
 {
     SvgStyleGradient* gradient;
     string *url;
-    uint8_t r;
-    uint8_t g;
-    uint8_t b;
+    SvgColor color;
     bool none;
     bool curColor;
 };
@@ -277,9 +282,7 @@ struct SvgStyleProperty
     SvgStyleStroke stroke;
     SvgComposite comp;
     int opacity;
-    uint8_t r;
-    uint8_t g;
-    uint8_t b;
+    SvgColor color;
     bool curColorSet;
 };
 
