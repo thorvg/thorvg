@@ -105,12 +105,6 @@ enum class SvgStyleType
     CompOp
 };
 
-enum class SvgFillRule
-{
-    Winding = 0,
-    OddEven = 1
-};
-
 //Length type to recalculate %, pt, pc, mm, cm etc
 enum class SvgParserLengthType
 {
@@ -254,7 +248,7 @@ struct SvgStyleFill
     SvgFillFlags flags;
     SvgPaint paint;
     int opacity;
-    SvgFillRule fillRule;
+    FillRule fillRule;
 };
 
 struct SvgStyleStroke
