@@ -179,8 +179,19 @@ static void _applyComposition(Paint* paint, const SvgNode* node, float vx, float
 {
     if (node->style->comp.method == CompositeMethod::None) return;
 
+    /* Do not drop in Circular Dependency.
+       Composition can be applied recursively if its children nodes have composition target to this one. */
+    if (node->style->comp.applying) {
+#ifdef THORVG_LOG_ENABLED
+    printf("SVG: Multiple Composition Tried! Check out Circular dependency?\n");
+#endif
+        return;
+    }
+
     auto compNode = node->style->comp.node;
     if (!compNode || compNode->child.count == 0) return;
+
+    node->style->comp.applying = true;
 
     auto comp = Shape::gen();
     comp->fill(255, 255, 255, 255);
@@ -194,6 +205,8 @@ static void _applyComposition(Paint* paint, const SvgNode* node, float vx, float
     }
 
     if (valid) paint->composite(move(comp), node->style->comp.method);
+
+    node->style->comp.applying = false;
 }
 
 
