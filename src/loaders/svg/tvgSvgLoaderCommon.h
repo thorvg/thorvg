@@ -190,6 +190,7 @@ struct SvgComposite
     CompositeMethod method;     //TODO: Currently support either one method
     string *url;
     SvgNode* node;
+    bool applying;              //flag for checking circualr dependency.
 };
 
 struct SvgColor
