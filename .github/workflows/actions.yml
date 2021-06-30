@@ -20,7 +20,7 @@ jobs:
 
     - name: Build
       run: |
-        meson . build
+        meson . build -Dlog=true
         cd build
         sudo ninja -C . install
 
