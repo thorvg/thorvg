@@ -25,30 +25,24 @@
 #include "tvgCommon.h"
 #include "tvgArray.h"
 
+struct SvgNode;
+struct SvgStyleGradient;
+
 enum class SvgNodeType
 {
     Doc,
     G,
     Defs,
-    //Switch,  //Not support
-    Animation,
-    Arc,
     Circle,
     Ellipse,
-    Image,
     Line,
     Path,
     Polygon,
     Polyline,
     Rect,
-    Text,
-    TextArea,
-    Tspan,
     Use,
-    Video,
     ClipPath,
     Mask,
-    //Custome_command,   //Not support
     Unknown
 };
 
@@ -62,7 +56,6 @@ enum class SvgLengthType
     Cm,
     In,
 };
-
 
 enum class SvgFillFlags
 {
@@ -91,20 +84,6 @@ enum class SvgGradientType
     Radial
 };
 
-enum class SvgStyleType
-{
-    Quality,
-    Fill,
-    ViewportFill,
-    Font,
-    Stroke,
-    SolidColor,
-    Gradient,
-    Transform,
-    Opacity,
-    CompOp
-};
-
 enum class SvgFillRule
 {
     Winding = 0,
@@ -119,10 +98,6 @@ enum class SvgParserLengthType
     //In case of, for example, radius of radial gradient
     Other
 };
-
-struct SvgNode;
-struct SvgStyleGradient;
-
 
 struct SvgDocNode
 {
@@ -145,9 +120,6 @@ struct SvgDefsNode
     Array<SvgStyleGradient*> gradients;
 };
 
-struct SvgArcNode
-{
-};
 
 struct SvgEllipseNode
 {
@@ -298,7 +270,6 @@ struct SvgNode
         SvgGNode g;
         SvgDocNode doc;
         SvgDefsNode defs;
-        SvgArcNode arc;
         SvgCircleNode circle;
         SvgEllipseNode ellipse;
         SvgPolygonNode polygon;
