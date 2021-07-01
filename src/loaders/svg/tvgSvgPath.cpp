@@ -57,14 +57,15 @@ static bool _parseNumber(char** content, float* number)
 
 static bool _parseFlag(char** content, int* number)
 {
-    if (*(*content) != '0' && *(*content) != '1') return false;
-    *number = *(*content) - '0';
-    *content = _skipComma(*content + 1);
-    if (*(*content) == '.') return false;
-
+    char* end = NULL;
+    *number = strtol(*content, &end, 10);
+    //If the start of string is not number or a number was a float
+    if ((*content) == end || *end == '.') return false;
+    //If a flag has a different value than 0 or 1
+    if (*number != 0 && *number != 1) return false;
+    *content = _skipComma(end);
     return true;
 }
-
 
 void _pathAppendArcTo(Array<PathCommand>* cmds, Array<Point>* pts, Point* cur, Point* curCtl, float x, float y, float rx, float ry, float angle, bool largeArc, bool sweep)
 {
