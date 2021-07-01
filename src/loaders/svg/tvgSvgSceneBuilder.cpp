@@ -438,7 +438,7 @@ static unique_ptr<Picture> _imageBuildHelper(SvgNode* node, float vx, float vy, 
     }
 
     float x, y, w, h;
-    if (picture->viewbox(&x, &y, &w, &h) == Result::Success && vw && vh) {
+    if (picture->viewbox(&x, &y, &w, &h) == Result::Success && w && h) {
         auto sx = node->node.image.w / w;
         auto sy = node->node.image.h / h;
         auto sxt = x * sx;
