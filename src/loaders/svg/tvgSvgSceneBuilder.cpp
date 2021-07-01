@@ -365,12 +365,8 @@ static constexpr struct
     int sz;
     imageMimeTypeEncoding encoding;
 } imageMimeTypes[] = {
-#ifdef THORVG_JPG_LOADER_SUPPORT
     {"jpeg", sizeof("jpeg"), imageMimeTypeEncoding::base64},
-#endif
-#ifdef THORVG_PNG_LOADER_SUPPORT
     {"png", sizeof("png"), imageMimeTypeEncoding::base64},
-#endif
     {"svg+xml", sizeof("svg+xml"), imageMimeTypeEncoding::base64 | imageMimeTypeEncoding::utf8},
 };
 
