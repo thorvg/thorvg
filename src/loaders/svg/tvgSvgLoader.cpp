@@ -869,7 +869,11 @@ static void _handleClipPathAttr(TVG_UNUSED SvgLoaderData* loader, SvgNode* node,
 #endif
     style->comp.method = CompositeMethod::ClipPath;
     int len = strlen(value);
-    if (len >= 3 && !strncmp(value, "url", 3)) style->comp.url = _idFromUrl((const char*)(value + 3));
+    if (len >= 3 && !strncmp(value, "url", 3)) {
+        //FIXME: Support multiple composition.
+        if (style->comp.url) delete(style->comp.url);
+        style->comp.url = _idFromUrl((const char*)(value + 3));
+    }
 }
 
 
