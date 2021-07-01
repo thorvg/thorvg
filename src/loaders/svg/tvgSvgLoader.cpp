@@ -2587,6 +2587,10 @@ static void _freeNode(SvgNode* node)
              node->node.defs.gradients.reset();
              break;
          }
+         case SvgNodeType::Image: {
+             delete node->node.image.href;
+             break;
+         }
          default: {
              break;
          }
