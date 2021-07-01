@@ -29,6 +29,7 @@ source_file = [
     'StrokeLine.cpp',
     'Svg.cpp',
     'Svg2.cpp',
+    'Svg3.cpp',
     'Transform.cpp',
     'Tvg.cpp',
     'Update.cpp',
