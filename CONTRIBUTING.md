@@ -1,4 +1,4 @@
-We always appreciate your contribution. This page guides ThorVG contribution format.
+We always appreciate your contribution. ThorVG doesn't expect perfect patch contributions, instead we expect contributions if your patch makes thorvg better than before. This page guides the ThorVG contribution format.<br />
 <br />
 ## Reviewers
 Hermet Park (hermet) is the lead maintainer but there are designated sub-module maintainers you can request for your pull-requst patches as well.
