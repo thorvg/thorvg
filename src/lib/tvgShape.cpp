@@ -358,7 +358,9 @@ const Fill* Shape::strokeFill() const noexcept
 
 Result Shape::stroke(const float* dashPattern, uint32_t cnt) noexcept
 {
-    if (cnt < 2 || !dashPattern) return Result::InvalidArguments;
+    if ((cnt == 1) || (!dashPattern && cnt > 0) || (dashPattern && cnt == 0)) {
+        return Result::InvalidArguments;
+    }
 
     for (uint32_t i = 0; i < cnt; i++)
         if (dashPattern[i] < FLT_EPSILON) return Result::InvalidArguments;
