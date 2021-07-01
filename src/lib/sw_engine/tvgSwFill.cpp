@@ -49,11 +49,11 @@ static bool _updateColorTable(SwFill* fill, const Fill* fdata, const SwSurface* 
     auto a = (pColors->a * opacity) / 255;
     if (a < 255) fill->translucent = true;
 
-    auto r = pColors->r;
-    auto g = pColors->g;
-    auto b = pColors->b;
-    auto rgba = surface->blender.join(r, g, b, a);
+    auto r = ALPHA_MULTIPLY(pColors->r, a);
+    auto g = ALPHA_MULTIPLY(pColors->g, a);
+    auto b = ALPHA_MULTIPLY(pColors->b, a);
 
+    auto rgba = surface->blender.join(r, g, b, a);
     auto inc = 1.0f / static_cast<float>(GRADIENT_STOP_SIZE);
     auto pos = 1.5f * inc;
     uint32_t i = 0;
@@ -70,32 +70,30 @@ static bool _updateColorTable(SwFill* fill, const Fill* fdata, const SwSurface* 
         auto curr = colors + j;
         auto next = curr + 1;
         auto delta = 1.0f / (next->offset - curr->offset);
-        auto a2 = (next->a * opacity) / 255;
+        a = (next->a * opacity) / 255;
         if (!fill->translucent && a < 255) fill->translucent = true;
 
-        auto rgba2 = surface->blender.join(next->r, next->g, next->b, a2);
+        auto r = ALPHA_MULTIPLY(next->r, a);
+        auto g = ALPHA_MULTIPLY(next->g, a);
+        auto b = ALPHA_MULTIPLY(next->b, a);
+
+        auto rgba2 = surface->blender.join(r, g, b, a);
 
         while (pos < next->offset && i < GRADIENT_STOP_SIZE) {
             auto t = (pos - curr->offset) * delta;
             auto dist = static_cast<int32_t>(256 * t);
             auto dist2 = 256 - dist;
-
-            auto color = COLOR_INTERPOLATE(rgba, dist2, rgba2, dist);
-            uint8_t a = color >> 24;
-            fill->ctable[i] = ALPHA_BLEND(color | 0xff000000, a);
-
+            fill->ctable[i] = COLOR_INTERPOLATE(rgba, dist2, rgba2, dist);
             ++i;
             pos += inc;
         }
         rgba = rgba2;
-        a = a2;
     }
-    rgba = ALPHA_BLEND(rgba | 0xff000000, a);
 
     for (; i < GRADIENT_STOP_SIZE; ++i)
         fill->ctable[i] = rgba;
 
-    //Make sure the last color stop is represented at the end of the table
+    //Make sure the lat color stop is represented at the end of the table
     fill->ctable[GRADIENT_STOP_SIZE - 1] = rgba;
 
     return true;
