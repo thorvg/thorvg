@@ -447,6 +447,7 @@ static unique_ptr<Picture> _imageBuildHelper(SvgNode* node, float vx, float vy, 
         picture->transform(m);
     }
 
+    _applyComposition(picture.get(), node, vx, vy, vw, vh);
     return picture;
 }
 
