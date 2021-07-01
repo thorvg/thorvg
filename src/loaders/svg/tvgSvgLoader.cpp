@@ -2232,15 +2232,19 @@ static void _svgLoaderParserXmlOpen(SvgLoaderData* loader, const char* content, 
         }
         loader->latestGradient = gradient;
     } else if (!strcmp(tagName, "stop")) {
+        if (!loader->latestGradient) {
+#ifdef THORVG_LOG_ENABLED
+            printf("SVG: Gradient stop but no gradient in the scope\n");
+#endif
+            return;
+        }
         auto stop = static_cast<Fill::ColorStop*>(calloc(1, sizeof(Fill::ColorStop)));
         if (!stop) return;
         loader->svgParse->gradStop = stop;
         /* default value for opacity */
         stop->a = 255;
         simpleXmlParseAttributes(attrs, attrsLength, _attrParseStops, loader);
-        if (loader->latestGradient) {
-            loader->latestGradient->stops.push(stop);
-        }
+        loader->latestGradient->stops.push(stop);
     }
 #ifdef THORVG_LOG_ENABLED
     else {
