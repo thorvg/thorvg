@@ -799,10 +799,11 @@ public:
      *
      * @retval Result::Success When succeed.
      * @retval Result::FailedAllocation An internal error with a memory allocation for an object to be dashed.
-     * @retval Result::InvalidArguments In case a @c nullptr is passed as the @p dashPattern,
-     *         the given length of the array is less than two or any of the @p dashPattern values is zero or less.
+     * @retval Result::InvalidArguments In case that either @p dashPattern is @c nullptr or @p cnt is zero.
      *
      * @note If any of the dash pattern values is zero, this function has no effect.
+     * @note To reset the stroke dash pattern, pass @c nullptr to @p dashPattern and zero to @p cnt.
+     * @warning @p cnt must be greater than 1 if the dash pattern is valid.
      */
     Result stroke(const float* dashPattern, uint32_t cnt) noexcept;
 

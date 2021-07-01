@@ -330,22 +330,26 @@ struct Shape::Impl
 
     bool strokeDash(const float* pattern, uint32_t cnt)
     {
-       if (!stroke) stroke = new ShapeStroke();
-       if (!stroke) return false;
-
-        if (stroke->dashCnt != cnt) {
-            if (stroke->dashPattern) free(stroke->dashPattern);
+        //Reset dash
+        if (!pattern && cnt == 0) {
+            free(stroke->dashPattern);
             stroke->dashPattern = nullptr;
+        } else {
+            if (!stroke) stroke = new ShapeStroke();
+            if (!stroke) return false;
+
+            if (stroke->dashCnt != cnt) {
+                free(stroke->dashPattern);
+                stroke->dashPattern = nullptr;
+            }
+            if (!stroke->dashPattern) {
+                stroke->dashPattern = static_cast<float*>(malloc(sizeof(float) * cnt));
+                if (!stroke->dashPattern) return false;
+            }
+            for (uint32_t i = 0; i < cnt; ++i) {
+                stroke->dashPattern[i] = pattern[i];
+            }
         }
-
-        if (!stroke->dashPattern) {
-            stroke->dashPattern = static_cast<float*>(malloc(sizeof(float) * cnt));
-            if (!stroke->dashPattern) return false;
-        }
-
-        for (uint32_t i = 0; i < cnt; ++i)
-            stroke->dashPattern[i] = pattern[i];
-
         stroke->dashCnt = cnt;
         flag |= RenderUpdateFlag::Stroke;
 
