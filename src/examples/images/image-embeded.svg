@@ -1,6 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+    <defs>
+        <clipPath id="circleView">
+            <circle cx="100" cy="100" r="40" fill="#FFFFFF" />
+        </clipPath>
+    </defs>
 	<image href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='none' stroke='%23000'/%3E%3Cpath d='M50,2a48,48 0 1 1 0,96a24 24 0 1 1 0-48a24 24 0 1 0 0-48'/%3E%3Ccircle cx='50' cy='26' r='6'/%3E%3Ccircle cx='50' cy='74' r='6' fill='%23FFF'/%3E%3C/svg%3E%0A" height="100" width="100" x="0" y="0" />
 	<image href="data:image/svg+xml;utf8,%3Csvg+xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27+viewBox%3D%270+0+100+100%27%3E%3Ccircle+cx%3D%2750%27+cy%3D%2750%27+r%3D%2748%27+fill%3D%27none%27+stroke%3D%27%23000%27%2F%3E%3Cpath+d%3D%27M50%2C2a48%2C48+0+1+1+0%2C96a24+24+0+1+1+0-48a24+24+0+1+0+0-48%27%2F%3E%3Ccircle+cx%3D%2750%27+cy%3D%2726%27+r%3D%276%27%2F%3E%3Ccircle+cx%3D%2750%27+cy%3D%2774%27+r%3D%276%27+fill%3D%27%23FFF%27%2F%3E%3C%2Fsvg%3E%0D%0A" height="100" width="100" x="100" y="0" />
 	<image href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCAxMDAgMTAwJz48Y2lyY2xlIGN4PSc1MCcgY3k9JzUwJyByPSc0OCcgZmlsbD0nbm9uZScgc3Ryb2tlPScjMDAwJy8+PHBhdGggZD0nTTUwLDJhNDgsNDggMCAxIDEgMCw5NmEyNCAyNCAwIDEgMSAwLTQ4YTI0IDI0IDAgMSAwIDAtNDgnLz48Y2lyY2xlIGN4PSc1MCcgY3k9JzI2JyByPSc2Jy8+PGNpcmNsZSBjeD0nNTAnIGN5PSc3NCcgcj0nNicgZmlsbD0nI0ZGRicvPjwvc3ZnPg0K" height="100" width="100" x="0" y="100" />
 	<image href="src/examples/images/yinyang.svg" height="100" width="100" x="100" y="100" />
+	<image href="src/examples/images/logo.png" height="80" width="80" x="60" y="60" clip-path="url(#circleView)" />
 </svg>
