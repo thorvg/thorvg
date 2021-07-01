@@ -35,6 +35,7 @@ TEST_CASE("Pushing Paints Into Scene", "[tvgScene]")
 {
     auto scene = Scene::gen();
     REQUIRE(scene);
+
     SECTION("Pushing Paints") {
         REQUIRE(scene->push(move(Shape::gen())) == Result::Success);
         REQUIRE(scene->push(move(Picture::gen())) == Result::Success);
