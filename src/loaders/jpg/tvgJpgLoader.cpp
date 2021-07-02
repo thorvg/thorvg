@@ -20,8 +20,25 @@
  * SOFTWARE.
  */
 
+#include <memory.h>
 #include "tvgLoaderMgr.h"
 #include "tvgJpgLoader.h"
+
+/************************************************************************/
+/* Internal Class Implementation                                        */
+/************************************************************************/
+
+void JpgLoader::clear()
+{
+    tjFree(data);
+    data = NULL;
+    pointer = NULL;
+    size = 0;
+}
+
+/************************************************************************/
+/* External Class Implementation                                        */
+/************************************************************************/
 
 JpgLoader::JpgLoader()
 {
@@ -37,6 +54,8 @@ JpgLoader::~JpgLoader()
 
 bool JpgLoader::open(const string& path)
 {
+    clear();
+
     bool success = false;
     FILE *jpegFile = NULL;
     if ((jpegFile = fopen(path.c_str(), "rb")) == NULL) return false;
@@ -46,22 +65,38 @@ bool JpgLoader::open(const string& path)
     if (((size = ftell(jpegFile)) < 1)) goto finalize;
     if (fseek(jpegFile, 0, SEEK_SET)) goto finalize;
 
-    if (data) tjFree(data);
     data = (unsigned char *) tjAlloc(size);
     if (!data) goto finalize;
 
     if (fread(data, size, 1, jpegFile) < 1) goto failure;
 
+    pointer = data;
     success = true;
     goto finalize;
 
 failure:
-    tjFree(data);
-    data = NULL;
+    clear();
 
 finalize:
     fclose(jpegFile);
     return success;
+}
+
+bool JpgLoader::open(const char* data, uint32_t size, bool copy)
+{
+    clear();
+
+    if (copy) {
+        this->data = (unsigned char *) malloc(size);
+        if (!this->data) return false;
+        memcpy((unsigned char *)this->data, data, size);
+        this->pointer = this->data;
+    } else {
+        this->pointer = (unsigned char *)data;
+    }
+
+    this->size = size;
+    return true;
 }
 
 bool JpgLoader::read()
@@ -80,7 +115,7 @@ bool JpgLoader::read()
     //decompress jpg image
     if (tjDecompress2(jpegDecompressor, data, size, image, width, 0, height, TJPF_BGRX, 0) < 0) {
         tjFree(image);
-        data = NULL;
+        image = NULL;
         return false;
     }
 
@@ -91,8 +126,7 @@ bool JpgLoader::read()
 
 bool JpgLoader::close()
 {
-    tjFree(data);
-    data = NULL;
+    clear();
     return true;
 }
 
