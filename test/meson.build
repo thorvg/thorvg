@@ -1,6 +1,7 @@
 test_file = [
     'testMain.cpp',
     'testInitializer.cpp',
+    'testPicture.cpp',
     'testScene.cpp',
     'testShape.cpp',
     'testSwCanvas.cpp',
