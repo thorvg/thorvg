@@ -28,18 +28,20 @@
 class PngLoader : public Loader
 {
 public:
-    png_imagep image = nullptr;
-    const uint32_t* content = nullptr;
-
     PngLoader();
     ~PngLoader();
 
     using Loader::open;
     bool open(const string& path) override;
+    bool open(const char* data, uint32_t size, bool copy) override;
     bool read() override;
     bool close() override;
 
     const uint32_t* pixels() override;
+
+private:
+    png_imagep image = nullptr;
+    const uint32_t* content = nullptr;
 };
 
 #endif //_TVG_PNG_LOADER_H_
