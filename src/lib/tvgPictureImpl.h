@@ -167,8 +167,12 @@ struct Picture::Impl
     Result load(const string& path)
     {
         if (loader) loader->close();
-        loader = LoaderMgr::loader(path);
-        if (!loader) return Result::NonSupport;
+        bool invalid;  //Invalid Path
+        loader = LoaderMgr::loader(path, &invalid);
+        if (!loader) {
+            if (invalid) return Result::InvalidArguments;
+            return Result::NonSupport;
+        }
         if (!loader->read()) return Result::Unknown;
         w = loader->w;
         h = loader->h;
