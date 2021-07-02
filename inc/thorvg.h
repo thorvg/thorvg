@@ -988,7 +988,7 @@ public:
      * @param[in] path A path to the picture file.
      *
      * @retval Result::Success When succeed.
-     * @retval Result::InvalidArguments In case the @p path is empty.
+     * @retval Result::InvalidArguments In case the @p path is invalid.
      * @retval Result::NonSupport When trying to load a file with an unknown extension.
      * @retval Result::Unknown If an error occurs at a later stage.
      *

@@ -131,11 +131,14 @@ bool LoaderMgr::term()
 }
 
 
-shared_ptr<Loader> LoaderMgr::loader(const string& path)
+shared_ptr<Loader> LoaderMgr::loader(const string& path, bool* invalid)
 {
+    *invalid = false;
+
     if (auto loader = _find(path)) {
         if (loader->open(path)) return shared_ptr<Loader>(loader);
         else delete(loader);
+        *invalid = true;
     }
     return nullptr;
 }
