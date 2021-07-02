@@ -2234,7 +2234,7 @@ static void _svgLoaderParserXmlOpen(SvgLoaderData* loader, const char* content, 
     } else if (!strcmp(tagName, "stop")) {
         if (!loader->latestGradient) {
 #ifdef THORVG_LOG_ENABLED
-            printf("SVG: Gradient stop but no gradient in the scope\n");
+            printf("SVG: Stop element is used outside of the Gradient element\n");
 #endif
             return;
         }
