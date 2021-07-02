@@ -432,6 +432,7 @@ static unique_ptr<Picture> _imageBuildHelper(SvgNode* node, float vx, float vy, 
         }
 
     } else {
+        if(!strncmp(href, "file://", sizeof("file://") - 1)) href += sizeof("file://") - 1;
         //TODO: protect against recursive svg image loading
         if (picture->load(href) != Result::Success) return nullptr;
         picture->size(node->node.image.w, node->node.image.h);

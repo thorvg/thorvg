@@ -1534,7 +1534,6 @@ static string* _idFromHref(const char* href)
 {
     href = _skipSpace(href, nullptr);
     if ((*href) == '#') href++;
-    if(!strncmp(href, "file://", sizeof("file://") - 1)) href += sizeof("file://") - 1;
     return new string(href);
 }
 
