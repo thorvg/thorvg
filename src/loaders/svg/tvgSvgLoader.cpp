@@ -1689,6 +1689,30 @@ static void _cloneNode(SvgNode* from, SvgNode* parent)
 }
 
 
+static bool _postponeCloneNode(SvgLoaderData* loader, SvgNode *node, string* id) {
+    SvgNodeIdPair* nodeIdPair = (SvgNodeIdPair*)malloc(sizeof(SvgNodeIdPair));
+    if (!nodeIdPair) return false;
+
+    nodeIdPair->node = node;
+    nodeIdPair->id = id;
+
+    loader->cloneNodes.push(nodeIdPair);
+    return true;
+}
+
+
+static void _clonePostponedNodes(Array<SvgNodeIdPair*>* cloneNodes) {
+    for (uint32_t i = 0; i < cloneNodes->count; ++i) {
+        SvgNodeIdPair *nodeIdPair = cloneNodes->data[i];
+        SvgNode *defs = _getDefsNode(nodeIdPair->node);
+        SvgNode *nodeFrom = _findChildById(defs, nodeIdPair->id->c_str());
+        _cloneNode(nodeFrom, nodeIdPair->node);
+        delete nodeIdPair->id;
+        delete nodeIdPair;
+    }
+}
+
+
 static bool _attrParseUseNode(void* data, const char* key, const char* value)
 {
     SvgLoaderData* loader = (SvgLoaderData*)data;
@@ -1699,8 +1723,15 @@ static bool _attrParseUseNode(void* data, const char* key, const char* value)
         id = _idFromHref(value);
         defs = _getDefsNode(node);
         nodeFrom = _findChildById(defs, id->c_str());
-        _cloneNode(nodeFrom, node);
-        delete id;
+        if (nodeFrom) {
+            _cloneNode(nodeFrom, node);
+            delete id;
+        } else {
+            //some svg export software include <defs> element at the end of the file
+            //if so the 'from' element won't be found now and we have to repeat finding
+            //after the whole file is parsed
+            if (!_postponeCloneNode(loader, node, id)) delete id;
+        }
     } else if (!strcmp(key, "clip-path")) {
         _handleClipPathAttr(loader, node, value);
     } else if (!strcmp(key, "mask")) {
@@ -2629,6 +2660,8 @@ void SvgLoader::run(unsigned tid)
 
         _updateComposite(loaderData.doc, loaderData.doc);
         if (defs) _updateComposite(loaderData.doc, defs);
+
+        if (loaderData.cloneNodes.count > 0) _clonePostponedNodes(&loaderData.cloneNodes);
     }
     root = svgSceneBuild(loaderData.doc, vx, vy, vw, vh);
 };
