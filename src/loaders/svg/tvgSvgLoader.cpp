@@ -1749,6 +1749,14 @@ static void _copyAttr(SvgNode* to, const SvgNode* from)
             memcpy(to->node.polyline.points, from->node.polyline.points, to->node.polyline.pointsCount * sizeof(float));
             break;
         }
+        case SvgNodeType::Image: {
+            to->node.image.x = from->node.image.x;
+            to->node.image.y = from->node.image.y;
+            to->node.image.w = from->node.image.w;
+            to->node.image.h = from->node.image.h;
+            if (from->node.image.href) to->node.image.href = new string(from->node.image.href->c_str());
+            break;
+        }
         default: {
             break;
         }
