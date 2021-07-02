@@ -250,8 +250,8 @@ _parseDashArray(const char *str, SvgDash* dash)
 
     char *end = nullptr;
 
-    str = _skipComma(str);
     while (*str) {
+        str = _skipComma(str);
         float parsedValue = svgUtilStrtof(str, &end);
         if (str == end) break;
         if (*end == '%') {
@@ -259,7 +259,7 @@ _parseDashArray(const char *str, SvgDash* dash)
             //TODO: multiply percentage value
         }
         (*dash).array.push(parsedValue);
-        str = _skipComma(end);
+        str = end;
     }
     //If dash array size is 1, it means that dash and gap size are the same.
     if ((*dash).array.count == 1) (*dash).array.push((*dash).array.data[0]);
