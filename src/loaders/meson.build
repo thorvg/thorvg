@@ -12,6 +12,11 @@ if get_option('loaders').contains('tvg') == true
     subdir('tvg')
 endif
 
+if get_option('loaders').contains('jpg') == true
+    subdir('jpg')
+    message('Enable JPG Loader')
+endif
+
 subdir('raw')
 
 loader_dep = declare_dependency(
