@@ -32,14 +32,18 @@ public:
 
     using Loader::open;
     bool open(const string& path) override;
+    bool open(const char* data, uint32_t size, bool copy) override;
     bool read() override;
     bool close() override;
 
     const uint32_t* pixels() override;
 
 private:
+    void clear();
+
     tjhandle jpegDecompressor;
     unsigned char* data = nullptr;
+    const unsigned char* pointer = nullptr;
     unsigned long size = 0;
     unsigned char *image = nullptr;
 };
