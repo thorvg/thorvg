@@ -28,6 +28,10 @@ if get_option('loaders').contains('png') == true
     config_h.set10('THORVG_PNG_LOADER_SUPPORT', true)
 endif
 
+if get_option('loaders').contains('jpg') == true
+    config_h.set10('THORVG_JPG_LOADER_SUPPORT', true)
+endif
+
 if get_option('vectors').contains('avx') == true
     config_h.set10('THORVG_AVX_VECTOR_SUPPORT', true)
 endif
