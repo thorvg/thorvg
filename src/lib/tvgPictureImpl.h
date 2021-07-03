@@ -195,6 +195,8 @@ struct Picture::Impl
         if (loader) loader->close();
         loader = LoaderMgr::loader(data, w, h, copy);
         if (!loader) return Result::NonSupport;
+        this->w = loader->w;
+        this->h = loader->h;
         return Result::Success;
     }
 

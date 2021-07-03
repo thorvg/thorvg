@@ -45,10 +45,10 @@ bool RawLoader::open(const uint32_t* data, uint32_t w, uint32_t h, bool copy)
 {
     if (!data || w == 0 || h == 0) return false;
 
-    vw = w;
-    vh = h;
-
+    this->w = vw = w;
+    this->h = vh = h;
     this->copy = copy;
+
     if (copy) {
         content = (uint32_t*)malloc(sizeof(uint32_t) * vw * vh);
         if (!content) return false;
