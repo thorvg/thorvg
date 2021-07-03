@@ -38,7 +38,6 @@ endif
 
 if get_option('log') == true
     config_h.set10('THORVG_LOG_ENABLED', true)
-    message('Enable Log')
 endif
 
 configure_file(
@@ -58,17 +57,36 @@ endif
 summary = '''
 
 Summary:
-    ThorVG version  :       @0@
-    Build Type      :       @1@
-    Prefix          :       @2@
-    Tests           :       @3@
-    Examples        :       @4@
+    ThorVG version:        @0@
+    Build Type:            @1@
+    Prefix:                @2@
+    Raster Engine (SW):    @3@
+    Raster Engine (GL):    @4@
+    AVX SIMD Instruction:  @5@
+    Loader (TVG):          @6@
+    Loader (SVG):          @7@
+    Loader (PNG):          @8@
+    CAPI Binding:          @9@
+    Log Message:           @10@
+    Tests:                 @11@
+    Examples:              @12@
+    Tool (Svg2Png):        @13@
+
 '''.format(
         meson.project_version(),
         get_option('buildtype'),
         get_option('prefix'),
+        get_option('engines').contains('sw'),
+        get_option('engines').contains('gl'),
+        get_option('vectors').contains('avx'),
+        get_option('loaders').contains('tvg'),
+        get_option('loaders').contains('svg'),
+        get_option('loaders').contains('png'),
+        get_option('bindings').contains('capi'),
+        get_option('log'),
         get_option('tests'),
         get_option('examples'),
+        get_option('tools').contains('svg2png'),
     )
 
 message(summary)
