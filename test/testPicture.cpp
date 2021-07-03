@@ -63,7 +63,7 @@ TEST_CASE("Load SVG Data", "[tvgPicture]")
     REQUIRE(h == Approx(1000).epsilon(0.0000001));
 }
 
-TEST_CASE("Load Raw Data", "[tvgPicture]")
+TEST_CASE("Load RAW Data", "[tvgPicture]")
 {
     auto picture = Picture::gen();
     REQUIRE(picture);
