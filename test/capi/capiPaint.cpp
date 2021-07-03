@@ -23,7 +23,6 @@
 #include <thorvg_capi.h>
 #include "../catch.hpp"
 
-#define UTC_EPSILON 1e-6f
 
 TEST_CASE("Paint Transform", "[capiPaintTransform]")
 {
@@ -34,15 +33,15 @@ TEST_CASE("Paint Transform", "[capiPaintTransform]")
 
     REQUIRE(tvg_paint_transform(paint, &matrix_set) == TVG_RESULT_SUCCESS);
     REQUIRE(tvg_paint_get_transform(paint, &matrix_get) == TVG_RESULT_SUCCESS);
-    REQUIRE(fabs(matrix_get.e11 - matrix_set.e11) < UTC_EPSILON);
-    REQUIRE(fabs(matrix_get.e12 - matrix_set.e12) < UTC_EPSILON);
-    REQUIRE(fabs(matrix_get.e13 - matrix_set.e13) < UTC_EPSILON);
-    REQUIRE(fabs(matrix_get.e21 - matrix_set.e21) < UTC_EPSILON);
-    REQUIRE(fabs(matrix_get.e22 - matrix_set.e22) < UTC_EPSILON);
-    REQUIRE(fabs(matrix_get.e23 - matrix_set.e23) < UTC_EPSILON);
-    REQUIRE(fabs(matrix_get.e31 - matrix_set.e31) < UTC_EPSILON);
-    REQUIRE(fabs(matrix_get.e32 - matrix_set.e32) < UTC_EPSILON);
-    REQUIRE(fabs(matrix_get.e33 - matrix_set.e33) < UTC_EPSILON);
+    REQUIRE(matrix_get.e11 == Approx(matrix_set.e11).margin(0.000001));
+    REQUIRE(matrix_get.e12 == Approx(matrix_set.e12).margin(0.000001));
+    REQUIRE(matrix_get.e13 == Approx(matrix_set.e13).margin(0.000001));
+    REQUIRE(matrix_get.e21 == Approx(matrix_set.e21).margin(0.000001));
+    REQUIRE(matrix_get.e22 == Approx(matrix_set.e22).margin(0.000001));
+    REQUIRE(matrix_get.e23 == Approx(matrix_set.e23).margin(0.000001));
+    REQUIRE(matrix_get.e31 == Approx(matrix_set.e31).margin(0.000001));
+    REQUIRE(matrix_get.e32 == Approx(matrix_set.e32).margin(0.000001));
+    REQUIRE(matrix_get.e33 == Approx(matrix_set.e33).margin(0.000001));
 
     REQUIRE(tvg_paint_del(paint) == TVG_RESULT_SUCCESS);
 }
@@ -56,15 +55,15 @@ TEST_CASE("Paint Translate", "[capiPaintTranslate]")
 
     REQUIRE(tvg_paint_translate(paint, 20, 30) == TVG_RESULT_SUCCESS);
     REQUIRE(tvg_paint_get_transform(paint, &matrix) == TVG_RESULT_SUCCESS);
-    REQUIRE(fabs(matrix.e11 - 1.0f) < UTC_EPSILON);
-    REQUIRE(fabs(matrix.e12 - 0.0f) < UTC_EPSILON);
-    REQUIRE(fabs(matrix.e13 - 20) < UTC_EPSILON);
-    REQUIRE(fabs(matrix.e21 - 0.0f) < UTC_EPSILON);
-    REQUIRE(fabs(matrix.e22 - 1.0f) < UTC_EPSILON);
-    REQUIRE(fabs(matrix.e23 - 30) < UTC_EPSILON);
-    REQUIRE(fabs(matrix.e31 - 0.0f) < UTC_EPSILON);
-    REQUIRE(fabs(matrix.e32 - 0.0f) < UTC_EPSILON);
-    REQUIRE(fabs(matrix.e33 - 1.0f) < UTC_EPSILON);
+    REQUIRE(matrix.e11 == Approx(1).margin(0.000001));
+    REQUIRE(matrix.e12 == Approx(0).margin(0.000001));
+    REQUIRE(matrix.e13 == Approx(20).margin(0.000001));
+    REQUIRE(matrix.e21 == Approx(0).margin(0.000001));
+    REQUIRE(matrix.e22 == Approx(1).margin(0.000001));
+    REQUIRE(matrix.e23 == Approx(30).margin(0.000001));
+    REQUIRE(matrix.e31 == Approx(0).margin(0.000001));
+    REQUIRE(matrix.e32 == Approx(0).margin(0.000001));
+    REQUIRE(matrix.e33 == Approx(1).margin(0.000001));
 
     REQUIRE(tvg_paint_del(paint) == TVG_RESULT_SUCCESS);
 }
@@ -78,15 +77,15 @@ TEST_CASE("Paint Scale", "[capiPaintScale]")
 
     REQUIRE(tvg_paint_scale(paint, 2.5f) == TVG_RESULT_SUCCESS);
     REQUIRE(tvg_paint_get_transform(paint, &matrix) == TVG_RESULT_SUCCESS);
-    REQUIRE(fabs(matrix.e11 - 2.5f) < UTC_EPSILON);
-    REQUIRE(fabs(matrix.e12 - 0.0f) < UTC_EPSILON);
-    REQUIRE(fabs(matrix.e13 - 0.0f) < UTC_EPSILON);
-    REQUIRE(fabs(matrix.e21 - 0.0f) < UTC_EPSILON);
-    REQUIRE(fabs(matrix.e22 - 2.5f) < UTC_EPSILON);
-    REQUIRE(fabs(matrix.e23 - 0.0f) < UTC_EPSILON);
-    REQUIRE(fabs(matrix.e31 - 0.0f) < UTC_EPSILON);
-    REQUIRE(fabs(matrix.e32 - 0.0f) < UTC_EPSILON);
-    REQUIRE(fabs(matrix.e33 - 1.0f) < UTC_EPSILON);
+    REQUIRE(matrix.e11 == Approx(2.5).margin(0.000001));
+    REQUIRE(matrix.e12 == Approx(0).margin(0.000001));
+    REQUIRE(matrix.e13 == Approx(0).margin(0.000001));
+    REQUIRE(matrix.e21 == Approx(0).margin(0.000001));
+    REQUIRE(matrix.e22 == Approx(2.5).margin(0.000001));
+    REQUIRE(matrix.e23 == Approx(0).margin(0.000001));
+    REQUIRE(matrix.e31 == Approx(0).margin(0.000001));
+    REQUIRE(matrix.e32 == Approx(0).margin(0.000001));
+    REQUIRE(matrix.e33 == Approx(1).margin(0.000001));
 
     REQUIRE(tvg_paint_del(paint) == TVG_RESULT_SUCCESS);
 }
@@ -100,15 +99,15 @@ TEST_CASE("Paint Rotate", "[capiPaintRotate]")
 
     REQUIRE(tvg_paint_rotate(paint, 180.0f) == TVG_RESULT_SUCCESS);
     REQUIRE(tvg_paint_get_transform(paint, &matrix) == TVG_RESULT_SUCCESS);
-    REQUIRE(fabs(matrix.e11 - -1.0f) < UTC_EPSILON);
-    REQUIRE(fabs(matrix.e12 - 0.0f) < UTC_EPSILON);
-    REQUIRE(fabs(matrix.e13 - 0.0f) < UTC_EPSILON);
-    REQUIRE(fabs(matrix.e21 - 0.0f) < UTC_EPSILON);
-    REQUIRE(fabs(matrix.e22 - -1.0f) < UTC_EPSILON);
-    REQUIRE(fabs(matrix.e23 - 0.0f) < UTC_EPSILON);
-    REQUIRE(fabs(matrix.e31 - 0.0f) < UTC_EPSILON);
-    REQUIRE(fabs(matrix.e32 - 0.0f) < UTC_EPSILON);
-    REQUIRE(fabs(matrix.e33 - 1.0f) < UTC_EPSILON);
+    REQUIRE(matrix.e11 == Approx(-1).margin(0.000001));
+    REQUIRE(matrix.e12 == Approx(0).margin(0.000001));
+    REQUIRE(matrix.e13 == Approx(0).margin(0.000001));
+    REQUIRE(matrix.e21 == Approx(-0).margin(0.000001));
+    REQUIRE(matrix.e22 == Approx(-1).margin(0.000001));
+    REQUIRE(matrix.e23 == Approx(0).margin(0.000001));
+    REQUIRE(matrix.e31 == Approx(0).margin(0.000001));
+    REQUIRE(matrix.e32 == Approx(0).margin(0.000001));
+    REQUIRE(matrix.e33 == Approx(1).margin(0.000001));
 
     REQUIRE(tvg_paint_del(paint) == TVG_RESULT_SUCCESS);
 }
