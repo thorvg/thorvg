@@ -57,7 +57,7 @@ jobs:
         sudo apt-get install ninja-build gcc-multilib g++-multilib libgtest-dev meson cmake cmake-data
     - name: Install-ThorVG
       run: |
-        meson . build -Dloaders="svg, png"
+        meson . build -Dloaders="svg, png" -Dbindings="capi"
         cd build
         sudo ninja -C . install
         cd ..
@@ -65,7 +65,7 @@ jobs:
 
     - name: Build
       run: |
-        meson . build -Dtests=true -Dloaders="svg, png" --errorlogs
+        meson . build -Dtests=true -Dloaders="svg, png" -Dbindings="capi" --errorlogs
         cd build
         sudo ninja -C . install test
 
