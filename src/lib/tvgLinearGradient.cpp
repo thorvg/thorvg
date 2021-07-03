@@ -67,9 +67,6 @@ LinearGradient::~LinearGradient()
 
 Result LinearGradient::linear(float x1, float y1, float x2, float y2) noexcept
 {
-    if (fabsf(x2 - x1) < FLT_EPSILON && fabsf(y2 - y1) < FLT_EPSILON)
-        return Result::InvalidArguments;
-
     pImpl->x1 = x1;
     pImpl->y1 = y1;
     pImpl->x2 = x2;
