@@ -59,8 +59,8 @@ TEST_CASE("Load SVG Data", "[tvgPicture]")
 
     float w, h;
     REQUIRE(picture->size(&w, &h) == Result::Success);
-    REQUIRE(w == Approx(1000).epsilon(0.0000001));
-    REQUIRE(h == Approx(1000).epsilon(0.0000001));
+    REQUIRE(w == 1000);
+    REQUIRE(h == 1000);
 }
 
 TEST_CASE("Load RAW Data", "[tvgPicture]")
@@ -89,8 +89,8 @@ TEST_CASE("Load RAW Data", "[tvgPicture]")
     float w, h;
     REQUIRE(picture->size(&w, &h) == Result::Success);
 
-    REQUIRE(w == Approx(200).epsilon(0.0000001));
-    REQUIRE(h == Approx(300).epsilon(0.0000001));
+    REQUIRE(w == 200);
+    REQUIRE(h == 300);
 
     free(data);
 }
@@ -124,8 +124,8 @@ TEST_CASE("Picture Size", "[tvgPicture]")
     REQUIRE(picture->size(nullptr, nullptr) == Result::Success);
     REQUIRE(picture->size(100, 100) == Result::Success);
     REQUIRE(picture->size(&w, &h) == Result::Success);
-    REQUIRE(w == Approx(100).epsilon(0.0000001));
-    REQUIRE(h == Approx(100).epsilon(0.0000001));
+    REQUIRE(w == 100);
+    REQUIRE(h == 100);
 
     REQUIRE(picture->load(EXAMPLE_DIR"/tiger.svg") == Result::Success);
     REQUIRE(picture->size(&w, &h) == Result::Success);
