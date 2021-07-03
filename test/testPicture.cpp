@@ -22,11 +22,13 @@
 
 #include <thorvg.h>
 #include <string.h>
+#include <fstream>
 #include "catch.hpp"
 
 using namespace tvg;
+using namespace std;
 
-TEST_CASE("Load SVG data", "[tvgPicture]")
+TEST_CASE("Load SVG file", "[tvgPicture]")
 {
     auto picture = Picture::gen();
     REQUIRE(picture);
@@ -41,7 +43,7 @@ TEST_CASE("Load SVG data", "[tvgPicture]")
     REQUIRE(picture->size(&w, &h) == Result::Success);
 }
 
-TEST_CASE("Load RAW Data", "[tvgPicture]")
+TEST_CASE("Load SVG Data", "[tvgPicture]")
 {
     static const char* svg = "<svg height=\"1000\" viewBox=\"0 0 1000 1000\" width=\"1000\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M.10681413.09784845 1000.0527.01592069V1000.0851L.06005738 999.9983Z\" fill=\"#ffffff\" stroke-width=\"3.910218\"/><g fill=\"#252f35\"><g stroke-width=\"3.864492\"><path d=\"M256.61221 100.51736H752.8963V386.99554H256.61221Z\"/><path d=\"M201.875 100.51736H238.366478V386.99554H201.875Z\"/><path d=\"M771.14203 100.51736H807.633508V386.99554H771.14203Z\"/></g><path d=\"M420.82388 380H588.68467V422.805317H420.82388Z\" stroke-width=\"3.227\"/><path d=\"m420.82403 440.7101v63.94623l167.86079 25.5782V440.7101Z\"/><path d=\"M420.82403 523.07258V673.47362L588.68482 612.59701V548.13942Z\"/></g><g fill=\"#222f35\"><path d=\"M420.82403 691.37851 588.68482 630.5019 589 834H421Z\"/><path d=\"m420.82403 852.52249h167.86079v28.64782H420.82403v-28.64782 0 0\"/><path d=\"m439.06977 879.17031c0 0-14.90282 8.49429-18.24574 15.8161-4.3792 9.59153 0 31.63185 0 31.63185h167.86079c0 0 4.3792-22.04032 0-31.63185-3.34292-7.32181-18.24574-15.8161-18.24574-15.8161z\"/></g><g fill=\"#ffffff\"><path d=\"m280 140h15v55l8 10 8-10v-55h15v60l-23 25-23-25z\"/><path d=\"m335 140v80h45v-50h-25v10h10v30h-15v-57h18v-13z\"/></g></svg>";
 
@@ -61,7 +63,40 @@ TEST_CASE("Load RAW Data", "[tvgPicture]")
     REQUIRE(h == Approx(1000).epsilon(0.0000001));
 }
 
-TEST_CASE("Load PNG Data", "[tvgPicture]")
+TEST_CASE("Load Raw Data", "[tvgPicture]")
+{
+    auto picture = Picture::gen();
+    REQUIRE(picture);
+
+    string path(EXAMPLE_DIR"/rawimage_200x300.raw");
+
+    ifstream file(path);
+    if (!file.is_open()) return;
+    auto data = (uint32_t*)malloc(sizeof(uint32_t) * (200*300));
+    file.read(reinterpret_cast<char *>(data), sizeof (uint32_t) * 200 * 300);
+    file.close();
+
+    //Negative cases
+    REQUIRE(picture->load(nullptr, 200, 300, false) == Result::InvalidArguments);
+    REQUIRE(picture->load(data, 0, 0, false) == Result::InvalidArguments);
+    REQUIRE(picture->load(data, 200, 0, false) == Result::InvalidArguments);
+    REQUIRE(picture->load(data, 0, 300, false) == Result::InvalidArguments);
+
+    //Positive cases
+    REQUIRE(picture->load(data, 200, 300, false) == Result::Success);
+    REQUIRE(picture->load(data, 200, 300, true) == Result::Success);
+
+    float w, h;
+    REQUIRE(picture->size(&w, &h) == Result::Success);
+
+    REQUIRE(w == Approx(200).epsilon(0.0000001));
+    REQUIRE(h == Approx(300).epsilon(0.0000001));
+
+    free(data);
+}
+
+
+TEST_CASE("Load PNG file", "[tvgPicture]")
 {
     auto picture = Picture::gen();
     REQUIRE(picture);
