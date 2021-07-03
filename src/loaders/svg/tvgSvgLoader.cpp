@@ -254,6 +254,7 @@ _parseDashArray(const char *str, SvgDash* dash)
         str = _skipComma(str);
         float parsedValue = svgUtilStrtof(str, &end);
         if (str == end) break;
+        if (parsedValue <= 0.0f) break;
         if (*end == '%') {
             ++end;
             //TODO: multiply percentage value
