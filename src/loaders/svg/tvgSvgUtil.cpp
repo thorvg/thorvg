@@ -24,7 +24,6 @@
 #include <memory.h>
 #include <ctype.h>
 #include <errno.h>
-#include <stdint.h>
 #include "tvgSvgUtil.h"
 
 /************************************************************************/
@@ -36,13 +35,15 @@ static inline bool _floatExact(float a, float b)
     return memcmp(&a, &b, sizeof (float)) == 0;
 }
 
-static uint8_t _hexCharToDec(const char c) {
+static uint8_t _hexCharToDec(const char c)
+{
     if (c >= 'a') return c - 'a' + 10;
     else if (c >= 'A') return c - 'A' + 10;
     else return c - '0';
 }
 
-static uint8_t _base64Value(const char chr) {
+static uint8_t _base64Value(const char chr)
+{
     if (chr >= 'A' && chr <= 'Z') return chr - 'A';
     else if (chr >= 'a' && chr <= 'z') return chr - 'a' + ('Z' - 'A') + 1;
     else if (chr >= '0' && chr <= '9') return chr - '0' + ('Z' - 'A') + ('z' - 'a') + 2;
@@ -258,9 +259,10 @@ on_error:
     return 0.0f;
 }
 
-string svgUtilURLDecode(const char *src) {
-    unsigned int length = strlen(src);
-    if (!src || !length) return nullptr;
+string svgUtilURLDecode(const char *src)
+{
+    auto length = strlen(src);
+    if (!src || length == 0) return nullptr;
 
     string decoded;
     decoded.reserve(length);
@@ -282,24 +284,25 @@ string svgUtilURLDecode(const char *src) {
     return decoded;
 }
 
-string svgUtilBase64Decode(const char *src) {
-    unsigned int length = strlen(src);
-    if (!src || !length) return nullptr;
+string svgUtilBase64Decode(const char *src)
+{
+    auto length = strlen(src);
+    if (!src || length == 0) return nullptr;
 
     string decoded;
     decoded.reserve(3*(1+(length >> 2)));
 
     while (*src && *(src+1)) {
-        uint8_t value1 = _base64Value(src[0]);
-        uint8_t value2 = _base64Value(src[1]);
+        auto value1 = _base64Value(src[0]);
+        auto value2 = _base64Value(src[1]);
         decoded += (value1 << 2) + ((value2 & 0x30) >> 4);
 
         if (!src[2] || src[2] == '=' || src[2] == '.') break;
-        uint8_t value3 = _base64Value(src[2]);
+        auto value3 = _base64Value(src[2]);
         decoded += ((value2 & 0x0f) << 4) + ((value3 & 0x3c) >> 2);
 
         if (!src[3] || src[3] == '=' || src[3] == '.') break;
-        uint8_t value4 = _base64Value(src[3]);
+        auto value4 = _base64Value(src[3]);
         decoded += ((value3 & 0x03) << 6) + value4;
         src += 4;
     }
