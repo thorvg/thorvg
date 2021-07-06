@@ -77,12 +77,11 @@ static bool _updateColorTable(SwFill* fill, const Fill* fdata, const SwSurface* 
 
         while (pos < next->offset && i < GRADIENT_STOP_SIZE) {
             auto t = (pos - curr->offset) * delta;
-            auto dist = static_cast<int32_t>(256 * t);
-            auto dist2 = 256 - dist;
+            auto dist = static_cast<int32_t>(255 * t);
+            auto dist2 = 255 - dist;
 
             auto color = COLOR_INTERPOLATE(rgba, dist2, rgba2, dist);
-            uint8_t a = color >> 24;
-            fill->ctable[i] = ALPHA_BLEND(color | 0xff000000, a);
+            fill->ctable[i] = ALPHA_BLEND((color | 0xff000000), (color >> 24));
 
             ++i;
             pos += inc;
@@ -90,7 +89,7 @@ static bool _updateColorTable(SwFill* fill, const Fill* fdata, const SwSurface* 
         rgba = rgba2;
         a = a2;
     }
-    rgba = ALPHA_BLEND(rgba | 0xff000000, a);
+    rgba = ALPHA_BLEND((rgba | 0xff000000), a);
 
     for (; i < GRADIENT_STOP_SIZE; ++i)
         fill->ctable[i] = rgba;
