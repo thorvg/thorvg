@@ -347,6 +347,7 @@ static bool _appendShape(SvgNode* node, Shape* shape, float vx, float vy, float 
     return true;
 }
 
+
 enum class imageMimeTypeEncoding
 {
     base64 = 0x1,
@@ -359,6 +360,7 @@ constexpr bool operator&(imageMimeTypeEncoding a, imageMimeTypeEncoding b) {
     return (static_cast<int>(a) & static_cast<int>(b));
 }
 
+
 static constexpr struct
 {
     const char* name;
@@ -369,6 +371,7 @@ static constexpr struct
     {"png", sizeof("png"), imageMimeTypeEncoding::base64},
     {"svg+xml", sizeof("svg+xml"), imageMimeTypeEncoding::base64 | imageMimeTypeEncoding::utf8},
 };
+
 
 static bool _isValidImageMimeTypeAndEncoding(const char** href, imageMimeTypeEncoding* encoding) {
     if (strncmp(*href, "image/", sizeof("image/") - 1)) return false; //not allowed mime type
@@ -413,6 +416,7 @@ static bool _isValidImageMimeTypeAndEncoding(const char** href, imageMimeTypeEnc
     return false;
 }
 
+
 static unique_ptr<Picture> _imageBuildHelper(SvgNode* node, float vx, float vy, float vw, float vh)
 {
     if (!node->node.image.href) return nullptr;
@@ -432,8 +436,17 @@ static unique_ptr<Picture> _imageBuildHelper(SvgNode* node, float vx, float vy, 
         }
 
     } else {
-        if(!strncmp(href, "file://", sizeof("file://") - 1)) href += sizeof("file://") - 1;
+        if (!strncmp(href, "file://", sizeof("file://") - 1)) href += sizeof("file://") - 1;
         //TODO: protect against recursive svg image loading
+        //Temporarily disable embedded svg:
+        const char *dot = strrchr(href, '.');
+        if (dot && !strcmp(dot, ".svg")) {
+#ifdef THORVG_LOG_ENABLED
+            printf("SVG: Embedded svg file is disabled.\n");
+#endif
+            return nullptr;
+        }
+
         if (picture->load(href) != Result::Success) return nullptr;
         picture->size(node->node.image.w, node->node.image.h);
     }
