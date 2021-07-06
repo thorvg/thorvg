@@ -244,7 +244,7 @@ _PARSE_TAG(FillRule, fillRule, FillRule, fillRuleTags, FillRule::Winding)
  * https://www.w3.org/TR/SVG/painting.html
  */
 static inline void
-_parseDashArray(const char *str, SvgDash* dash)
+_parseDashArray(SvgLoaderData* loader, const char *str, SvgDash* dash)
 {
     if (!strncmp(str, "none", 4)) return;
 
@@ -257,7 +257,9 @@ _parseDashArray(const char *str, SvgDash* dash)
         if (parsedValue <= 0.0f) break;
         if (*end == '%') {
             ++end;
-            //TODO: multiply percentage value
+            //Refers to the diagonal length of the viewport.
+            //https://www.w3.org/TR/SVG2/coords.html#Units
+            parsedValue = (sqrt(pow(loader->svgParse->global.w, 2) + pow(loader->svgParse->global.h, 2)) / sqrt(2.0f)) * (parsedValue / 100.0f);
         }
         (*dash).array.push(parsedValue);
         str = end;
@@ -814,10 +816,10 @@ static void _handleStrokeOpacityAttr(TVG_UNUSED SvgLoaderData* loader, SvgNode* 
     node->style->stroke.opacity = _toOpacity(value);
 }
 
-static void _handleStrokeDashArrayAttr(TVG_UNUSED SvgLoaderData* loader, SvgNode* node, const char* value)
+static void _handleStrokeDashArrayAttr(SvgLoaderData* loader, SvgNode* node, const char* value)
 {
     node->style->stroke.flags = (SvgStrokeFlags)((int)node->style->stroke.flags | (int)SvgStrokeFlags::Dash);
-    _parseDashArray(value, &node->style->stroke.dash);
+    _parseDashArray(loader, value, &node->style->stroke.dash);
 }
 
 static void _handleStrokeWidthAttr(SvgLoaderData* loader, SvgNode* node, const char* value)
