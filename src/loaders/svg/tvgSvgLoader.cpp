@@ -1689,26 +1689,21 @@ static void _cloneNode(SvgNode* from, SvgNode* parent)
 }
 
 
-static bool _postponeCloneNode(SvgLoaderData* loader, SvgNode *node, string* id) {
-    SvgNodeIdPair* nodeIdPair = (SvgNodeIdPair*)malloc(sizeof(SvgNodeIdPair));
-    if (!nodeIdPair) return false;
-
-    nodeIdPair->node = node;
-    nodeIdPair->id = id;
-
+static void _postponeCloneNode(SvgLoaderData* loader, SvgNode *node, string* id) {
+    SvgNodeIdPair nodeIdPair;
+    nodeIdPair.node = node;
+    nodeIdPair.id = id;
     loader->cloneNodes.push(nodeIdPair);
-    return true;
 }
 
 
-static void _clonePostponedNodes(Array<SvgNodeIdPair*>* cloneNodes) {
+static void _clonePostponedNodes(Array<SvgNodeIdPair>* cloneNodes) {
     for (uint32_t i = 0; i < cloneNodes->count; ++i) {
-        SvgNodeIdPair *nodeIdPair = cloneNodes->data[i];
-        SvgNode *defs = _getDefsNode(nodeIdPair->node);
-        SvgNode *nodeFrom = _findChildById(defs, nodeIdPair->id->c_str());
-        _cloneNode(nodeFrom, nodeIdPair->node);
-        delete nodeIdPair->id;
-        delete nodeIdPair;
+        SvgNodeIdPair nodeIdPair = cloneNodes->data[i];
+        SvgNode *defs = _getDefsNode(nodeIdPair.node);
+        SvgNode *nodeFrom = _findChildById(defs, nodeIdPair.id->c_str());
+        _cloneNode(nodeFrom, nodeIdPair.node);
+        delete nodeIdPair.id;
     }
 }
 
@@ -1730,7 +1725,7 @@ static bool _attrParseUseNode(void* data, const char* key, const char* value)
             //some svg export software include <defs> element at the end of the file
             //if so the 'from' element won't be found now and we have to repeat finding
             //after the whole file is parsed
-            if (!_postponeCloneNode(loader, node, id)) delete id;
+            _postponeCloneNode(loader, node, id);
         }
     } else if (!strcmp(key, "clip-path")) {
         _handleClipPathAttr(loader, node, value);
