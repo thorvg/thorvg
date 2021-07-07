@@ -70,11 +70,12 @@ Summary:
     Loader (TVG):          @6@
     Loader (SVG):          @7@
     Loader (PNG):          @8@
-    CAPI Binding:          @9@
-    Log Message:           @10@
-    Tests:                 @11@
-    Examples:              @12@
-    Tool (Svg2Png):        @13@
+    Loader (JPG):          @9@
+    CAPI Binding:          @10@
+    Log Message:           @11@
+    Tests:                 @12@
+    Examples:              @13@
+    Tool (Svg2Png):        @14@
 
 '''.format(
         meson.project_version(),
@@ -86,6 +87,7 @@ Summary:
         get_option('loaders').contains('tvg'),
         get_option('loaders').contains('svg'),
         get_option('loaders').contains('png'),
+        get_option('loaders').contains('jpg'),
         get_option('bindings').contains('capi'),
         get_option('log'),
         get_option('tests'),
