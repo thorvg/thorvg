@@ -333,6 +333,12 @@ struct SvgParser
     } gradient;
 };
 
+struct SvgNodeIdPair
+{
+    SvgNode* node;
+    string *id;
+};
+
 struct SvgLoaderData
 {
     Array<SvgNode *> stack = {nullptr, 0, 0};
@@ -341,6 +347,7 @@ struct SvgLoaderData
     Array<SvgStyleGradient*> gradients;
     SvgStyleGradient* latestGradient = nullptr; //For stops
     SvgParser* svgParse = nullptr;
+    Array<SvgNodeIdPair> cloneNodes;
     int level = 0;
     bool result = false;
 };
