@@ -254,7 +254,7 @@ struct SvgStyleGradient
     SvgRadialGradient* radial;
     SvgLinearGradient* linear;
     Matrix* transform;
-    Array<Fill::ColorStop *> stops;
+    Array<Fill::ColorStop> stops;
     bool userSpace;
     bool usePercentage;
 };
@@ -319,7 +319,7 @@ struct SvgParser
 {
     SvgNode* node;
     SvgStyleGradient* styleGrad;
-    Fill::ColorStop* gradStop;
+    Fill::ColorStop   gradStop;
     SvgStopStyleFlags flags;
     struct
     {
