@@ -54,6 +54,7 @@ public:
     Compositor* target(const RenderRegion& region) override;
     bool beginComposite(Compositor* cmp, CompositeMethod method, uint32_t opacity) override;
     bool endComposite(Compositor* cmp) override;
+    void clearCompositors();
 
     static SwRenderer* gen();
     static bool init(uint32_t threads);
