@@ -1574,12 +1574,10 @@ static SvgNode* _findNodeById(SvgNode *node, string* id)
     return result;
 }
 
-static void _cloneGradStops(Array<Fill::ColorStop*>* dst, const Array<Fill::ColorStop*>* src)
+static void _cloneGradStops(Array<Fill::ColorStop>& dst, const Array<Fill::ColorStop>& src)
 {
-    for (uint32_t i = 0; i < src->count; ++i) {
-        auto stop = static_cast<Fill::ColorStop *>(malloc(sizeof(Fill::ColorStop)));
-        *stop = *src->data[i];
-        dst->push(stop);
+    for (uint32_t i = 0; i < src.count; ++i) {
+        dst.push(src.data[i]);
     }
 }
 
@@ -1612,7 +1610,7 @@ static SvgStyleGradient* _cloneGradient(SvgStyleGradient* from)
         memcpy(grad->radial, from->radial, sizeof(SvgRadialGradient));
     }
 
-    _cloneGradStops(&grad->stops, &from->stops);
+    _cloneGradStops(grad->stops, from->stops);
     return grad;
 error_grad_alloc:
     //LOG: allocation failed. out of memory
@@ -1996,7 +1994,7 @@ static SvgStyleGradient* _createRadialGradient(SvgLoaderData* loader, const char
 static bool _attrParseStopsStyle(void* data, const char* key, const char* value)
 {
     SvgLoaderData* loader = (SvgLoaderData*)data;
-    auto stop = loader->svgParse->gradStop;
+    auto stop = &loader->svgParse->gradStop;
 
     if (!strcmp(key, "stop-opacity")) {
         stop->a = _toOpacity(value);
@@ -2015,7 +2013,7 @@ static bool _attrParseStopsStyle(void* data, const char* key, const char* value)
 static bool _attrParseStops(void* data, const char* key, const char* value)
 {
     SvgLoaderData* loader = (SvgLoaderData*)data;
-    auto stop = loader->svgParse->gradStop;
+    auto stop = &loader->svgParse->gradStop;
 
     if (!strcmp(key, "offset")) {
         stop->offset = _toOffset(value);
@@ -2309,13 +2307,10 @@ static void _svgLoaderParserXmlOpen(SvgLoaderData* loader, const char* content, 
 #endif
             return;
         }
-        auto stop = static_cast<Fill::ColorStop*>(calloc(1, sizeof(Fill::ColorStop)));
-        if (!stop) return;
-        loader->svgParse->gradStop = stop;
         /* default value for opacity */
-        stop->a = 255;
+        loader->svgParse->gradStop = {0.0f, 0, 0, 0, 255};
         simpleXmlParseAttributes(attrs, attrsLength, _attrParseStops, loader);
-        loader->latestGradient->stops.push(stop);
+        loader->latestGradient->stops.push(loader->svgParse->gradStop);
     }
 #ifdef THORVG_LOG_ENABLED
     else {
@@ -2483,7 +2478,7 @@ static SvgStyleGradient* _gradientDup(Array<SvgStyleGradient*>* gradients, const
         for (uint32_t i = 0; i < gradients->count; ++i) {
             if (!((*gradList)->id->compare(*result->ref))) {
                 if (result->stops.count == 0) {
-                    _cloneGradStops(&result->stops, &(*gradList)->stops);
+                    _cloneGradStops(result->stops, (*gradList)->stops);
                 }
                 //TODO: Properly inherit other property
                 break;
@@ -2536,11 +2531,6 @@ static void _freeGradientStyle(SvgStyleGradient* grad)
     free(grad->radial);
     free(grad->linear);
     if (grad->transform) free(grad->transform);
-
-    for (uint32_t i = 0; i < grad->stops.count; ++i) {
-        auto colorStop = grad->stops.data[i];
-        free(colorStop);
-    }
     grad->stops.reset();
     free(grad);
 }
