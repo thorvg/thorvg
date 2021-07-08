@@ -230,6 +230,7 @@ static void _termEngine()
 SwRenderer::~SwRenderer()
 {
     clear();
+    clearCompositors();
 
     if (surface) delete(surface);
 
@@ -304,11 +305,8 @@ bool SwRenderer::preRender()
     return rasterClear(surface);
 }
 
-
-bool SwRenderer::postRender()
+void SwRenderer::clearCompositors()
 {
-    tasks.clear();
-
     //Free Composite Caches
     for (auto comp = compositors.data; comp < (compositors.data + compositors.count); ++comp) {
         free((*comp)->compositor->image.data);
@@ -316,7 +314,13 @@ bool SwRenderer::postRender()
         delete(*comp);
     }
     compositors.reset();
+}
 
+
+bool SwRenderer::postRender()
+{
+    tasks.clear();
+    clearCompositors();
     return true;
 }
 
