@@ -44,7 +44,7 @@ TEST_CASE("Pushing Paints Into Scene", "[tvgScene]")
     //Pushing Null Pointer
     REQUIRE(scene->push(nullptr) == Result::MemoryCorruption);
 
-    //Pushing Invalid Object
+    //Pushing Invalid Paint
     std::unique_ptr<Shape> shape = nullptr;
     REQUIRE(scene->push(move(shape)) == Result::MemoryCorruption);
 }

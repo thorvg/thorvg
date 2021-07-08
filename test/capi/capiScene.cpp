@@ -23,42 +23,89 @@
 #include <thorvg_capi.h>
 #include "../catch.hpp"
 
-TEST_CASE("Scene Creation", "[capiScene]")
+TEST_CASE("Create a Scene", "[capiScene]")
 {
     Tvg_Paint* scene = tvg_scene_new();
     REQUIRE(scene);
-    
 
+    REQUIRE(tvg_paint_del(scene) == TVG_RESULT_SUCCESS);
 }
 
-TEST_CASE("Pushing Paints Into Scene", "[capiScene]")
+TEST_CASE("Paints Into a Scene", "[capiScene]")
 {
     Tvg_Paint* scene = tvg_scene_new();
     REQUIRE(scene);
-    Tvg_Paint* paint = tvg_picture_new();
-    REQUIRE(paint);
-    
-    REQUIRE(tvg_scene_push(scene, paint) == TVG_RESULT_SUCCESS);
-    
-    
+
+    //Pushing Paints
+    REQUIRE(tvg_scene_push(scene,  tvg_shape_new()) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_scene_push(scene,  tvg_picture_new()) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_scene_push(scene,  tvg_scene_new()) == TVG_RESULT_SUCCESS);
+
+    //Pusing Null Pointer
+    REQUIRE(tvg_scene_push(scene, NULL) == TVG_RESULT_INVALID_ARGUMENT);
+
+    REQUIRE(tvg_paint_del(scene) == TVG_RESULT_SUCCESS);
 }
 
-TEST_CASE("Scene Memory Reservation", "[capiScene]")
+TEST_CASE("Scene Reservation", "[capiScene]")
 {
     Tvg_Paint* scene = tvg_scene_new();
     REQUIRE(scene);
-    
-    REQUIRE(tvg_scene_reserve(scene,100) == TVG_RESULT_SUCCESS):
-    
+
+    //Check Growth / Reduction
+    REQUIRE(tvg_scene_reserve(scene, 100) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_scene_reserve(scene, 1000) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_scene_reserve(scene, 100) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_scene_reserve(scene, 0) == TVG_RESULT_SUCCESS);
+
+    //Too big size
+    REQUIRE(tvg_scene_reserve(scene, -1) == TVG_RESULT_FAILED_ALLOCATION);
+
+    REQUIRE(tvg_paint_del(scene) == TVG_RESULT_SUCCESS);
 }
 
-TEST_CASE("Scene Clear", "[capiScene]")
+TEST_CASE("Clear the Scene", "[capiScene]")
 {
-     Tvg_Paint* scene = tvg_scene_new();
-     REQUIRE(scene);
-     
-     REQUIRE(tvg_scene_clear(scene,1) == TVG_RESULT_SUCCESS) ;
-    
+    Tvg_Paint* scene = tvg_scene_new();
+    REQUIRE(scene);
+
+    REQUIRE(tvg_scene_push(scene,  tvg_shape_new()) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_scene_clear(scene, true) == TVG_RESULT_SUCCESS);
+
+    REQUIRE(tvg_paint_del(scene) == TVG_RESULT_SUCCESS);
 }
 
+TEST_CASE("Scene reusing paints", "[capiScene]")
+{
+    REQUIRE(tvg_engine_init(TVG_ENGINE_SW, 0) == TVG_RESULT_SUCCESS);
 
+    Tvg_Canvas* canvas = tvg_swcanvas_create();
+    REQUIRE(canvas);
+
+    uint32_t* buffer = (uint32_t*) malloc(sizeof(uint32_t) * 200 * 200);
+    REQUIRE(buffer);
+
+    REQUIRE(tvg_swcanvas_set_target(canvas, buffer, 200, 200, 200, TVG_COLORSPACE_ARGB8888) == TVG_RESULT_SUCCESS);
+
+    Tvg_Paint* scene = tvg_scene_new();
+    REQUIRE(scene);
+
+    Tvg_Paint* shape = tvg_shape_new();
+    REQUIRE(shape);
+
+    REQUIRE(tvg_scene_push(scene,  shape) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_canvas_push(canvas, scene) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_canvas_update(canvas) == TVG_RESULT_SUCCESS);
+
+    //No deallocate shape.
+    REQUIRE(tvg_scene_clear(scene, false) == TVG_RESULT_SUCCESS);
+
+    //Reuse shape.
+    REQUIRE(tvg_scene_push(scene,  shape) == TVG_RESULT_SUCCESS);
+
+    REQUIRE(tvg_canvas_destroy(canvas) == TVG_RESULT_SUCCESS);
+
+    REQUIRE(tvg_engine_term(TVG_ENGINE_SW) == TVG_RESULT_SUCCESS);
+
+    free(buffer);
+}
