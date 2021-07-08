@@ -552,7 +552,7 @@ static bool _rasterImage(SwSurface* surface, uint32_t *img, uint32_t w, TVG_UNUS
         auto dst = dbuffer;
         auto src = sbuffer;
         for (auto x = region.min.x; x < region.max.x; x++, dst++, src++) {
-            *dst = *src + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(*src));
+            *dst = ALPHA_BLEND(*src, surface->blender.alpha(*src)) + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(*src));
         }
         dbuffer += surface->stride;
         sbuffer += w;    //TODO: need to use image's stride
@@ -571,8 +571,8 @@ static bool _rasterImage(SwSurface* surface, const uint32_t *img, uint32_t w, ui
             auto rX = static_cast<uint32_t>(roundf(x * invTransform->e11 + ey1));
             auto rY = static_cast<uint32_t>(roundf(x * invTransform->e21 + ey2));
             if (rX >= w || rY >= h) continue;
-            auto src = img[rX + (rY * w)];    //TODO: need to use image's stride
-            *dst = src + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(src));
+            auto src = img[rX + (rY * w)]; //TODO: need to use image's stride
+            *dst = ALPHA_BLEND(src, surface->blender.alpha(src)) + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(src));
         }
     }
     return true;
