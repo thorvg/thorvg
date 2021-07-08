@@ -17,6 +17,7 @@ source_file = [
     'Opacity.cpp',
     'PathCopy.cpp',
     'Path.cpp',
+    'PictureJpg.cpp',
     'PicturePng.cpp',
     'PictureRaw.cpp',
     'RadialGradient.cpp',
