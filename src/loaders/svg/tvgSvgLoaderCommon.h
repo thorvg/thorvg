@@ -247,16 +247,26 @@ struct SvgDash
 
 struct SvgStyleGradient
 {
-    SvgGradientType type;
-    string *id;
-    string *ref;
-    FillSpread spread;
-    SvgRadialGradient* radial;
-    SvgLinearGradient* linear;
-    Matrix* transform;
+    SvgGradientType type = SvgGradientType::Linear;
+    string *id = nullptr;
+    string *ref = nullptr;
+    FillSpread spread = FillSpread::Pad;
+    SvgRadialGradient* radial = nullptr;
+    SvgLinearGradient* linear = nullptr;
+    Matrix* transform = nullptr;
     Array<Fill::ColorStop> stops;
-    bool userSpace;
-    bool usePercentage;
+    bool userSpace = false;
+    bool usePercentage = false;
+
+    ~SvgStyleGradient()
+    {
+        stops.reset();
+        free(transform);
+        free(radial);
+        free(linear);
+        delete(ref);
+        delete(id);
+    }
 };
 
 struct SvgStyleFill
@@ -319,7 +329,7 @@ struct SvgParser
 {
     SvgNode* node;
     SvgStyleGradient* styleGrad;
-    Fill::ColorStop   gradStop;
+    Fill::ColorStop gradStop;
     SvgStopStyleFlags flags;
     struct
     {
