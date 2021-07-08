@@ -159,10 +159,7 @@ struct SvgLineNode
 
 struct SvgImageNode
 {
-    float x;
-    float y;
-    float w;
-    float h;
+    float x, y, w, h;
     string *href;
 };
 
