@@ -269,6 +269,11 @@ string svgUtilURLDecode(const char *src)
 
     char a, b;
     while (*src) {
+        if (*src <= 0x20) {
+            ++src;
+            continue;
+        }
+
         if (*src == '%' &&
             ((a = src[1]) && (b = src[2])) &&
             (isxdigit(a) && isxdigit(b))) {
@@ -293,6 +298,11 @@ string svgUtilBase64Decode(const char *src)
     decoded.reserve(3*(1+(length >> 2)));
 
     while (*src && *(src+1)) {
+        if (*src <= 0x20) {
+            ++src;
+            continue;
+        }
+
         auto value1 = _base64Value(src[0]);
         auto value2 = _base64Value(src[1]);
         decoded += (value1 << 2) + ((value2 & 0x30) >> 4);
