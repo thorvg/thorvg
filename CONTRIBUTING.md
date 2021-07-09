@@ -1,14 +1,16 @@
 We always appreciate your contribution. ThorVG doesn't expect perfect patch contributions, instead we expect contributions if your patch makes thorvg better than before. This page guides the ThorVG contribution format.<br />
 <br />
 ## Reviewers
-Hermet Park (hermet) is the lead maintainer but there are designated sub-module maintainers you can request for your pull-requst patches as well.
+Hermet Park (hermet) is the lead maintainer. Also there are designated maintainers you can request your pull-request for separate modules.
 
-<b>common:</b> JunsuChoi (JSUYA) <br />
+<b>common:</b> Junsu Choi (JSUYA) <br />
 <b>sw_engine:</b> Mira Grudzinska (mgrudzinska) <br />
-<b>gl_engine:</b> Prudhvi Raj Vasireddi (prudhvirajv)<br />
-<b>loaders:</b> JunsuChoi (JSUYA), Mira Grudzinska (mgrudzinska) <br />
+<b>gl_engine:</b> Prudhvi Raj Vasireddi (prudhvirajv) <br />
+<b>svg_loader:</b> Junsu Choi (JSUYA), Mira Grudzinska (mgrudzinska), Michal Maciola (mmaciola) <br />
+<b>jpg_loader:</b> Michal Maciola (mmaciola) <br />
+<b>tvg_loader:</b> Michal Maciola (mmaciola) <br />
 <b>wasm:</b> Shinwoo Kim (kimcinoo) <br />
-<b>svg2png:</b> JunsuChoi (JSUYA) <br />
+<b>svg2png:</b> Junsu Choi (JSUYA) <br />
 <b>capi:</b> Michal Szczecinski (mihashco), Mira Grudzinska (mgrudzinska) <br />
 <br />
 
