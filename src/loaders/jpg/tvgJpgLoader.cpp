@@ -47,6 +47,7 @@ JpgLoader::JpgLoader()
 
 JpgLoader::~JpgLoader()
 {
+    if (data) tjFree(data);
     tjDestroy(jpegDecompressor);
     tjFree(image);
     image = NULL;
