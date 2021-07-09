@@ -22,8 +22,9 @@
 #ifndef _TVG_JPG_LOADER_H_
 #define _TVG_JPG_LOADER_H_
 
-#include <turbojpeg.h>
+using tjhandle = void*;
 
+//TODO: Use Task?
 class JpgLoader : public Loader
 {
 public:
@@ -43,9 +44,9 @@ private:
 
     tjhandle jpegDecompressor;
     unsigned char* data = nullptr;
-    const unsigned char* pointer = nullptr;
-    unsigned long size = 0;
     unsigned char *image = nullptr;
+    unsigned long size = 0;
+    bool freeData = false;
 };
 
 #endif //_TVG_JPG_LOADER_H_
