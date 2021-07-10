@@ -48,10 +48,11 @@ struct ShapeStroke
        join(src->join)
     {
         memcpy(color, src->color, sizeof(color));
-        dashPattern = static_cast<float*>(malloc(sizeof(float) * dashCnt));
-        memcpy(dashPattern, src->dashPattern, sizeof(float) * dashCnt);
-        if (src->fill)
-            fill = src->fill->duplicate();
+        if (dashCnt > 0) {
+            dashPattern = static_cast<float*>(malloc(sizeof(float) * dashCnt));
+            memcpy(dashPattern, src->dashPattern, sizeof(float) * dashCnt);
+        }
+        if (src->fill) fill = src->fill->duplicate();
     }
 
     ~ShapeStroke()
