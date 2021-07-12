@@ -261,8 +261,10 @@ on_error:
 
 string svgUtilURLDecode(const char *src)
 {
+    if (!src) return nullptr;
+
     auto length = strlen(src);
-    if (!src || length == 0) return nullptr;
+    if (length == 0) return nullptr;
 
     string decoded;
     decoded.reserve(length);
@@ -291,8 +293,10 @@ string svgUtilURLDecode(const char *src)
 
 string svgUtilBase64Decode(const char *src)
 {
+    if (!src) return nullptr;
+
     auto length = strlen(src);
-    if (!src || length == 0) return nullptr;
+    if (length == 0) return nullptr;
 
     string decoded;
     decoded.reserve(3*(1+(length >> 2)));
