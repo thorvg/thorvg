@@ -242,3 +242,69 @@ on_error:
     if (endPtr) *endPtr = (char *)nPtr;
     return 0.0f;
 }
+
+string svgUtilURLDecode(const char *src)
+{
+    if (!src) return nullptr;
+
+    auto length = strlen(src);
+    if (length == 0) return nullptr;
+
+    string decoded;
+    decoded.reserve(length);
+
+    char a, b;
+    while (*src) {
+        if (*src <= 0x20) {
+            ++src;
+            continue;
+        }
+
+        if (*src == '%' &&
+            ((a = src[1]) && (b = src[2])) &&
+            (isxdigit(a) && isxdigit(b))) {
+            decoded += (_hexCharToDec(a) << 4) + _hexCharToDec(b);
+            src+=3;
+        } else if (*src == '+') {
+            decoded += ' ';
+            src++;
+        } else {
+            decoded += *src++;
+        }
+    }
+    return decoded;
+}
+
+string svgUtilBase64Decode(const char *src)
+{
+    if (!src) return nullptr;
+
+    auto length = strlen(src);
+    if (length == 0) return nullptr;
+
+    string decoded;
+    decoded.reserve(3*(1+(length >> 2)));
+
+    while (*src && *(src+1)) {
+        if (*src <= 0x20) {
+            ++src;
+            continue;
+        }
+
+        auto value1 = _base64Value(src[0]);
+        auto value2 = _base64Value(src[1]);
+        decoded += (value1 << 2) + ((value2 & 0x30) >> 4);
+
+        if (!src[2] || src[2] == '=' || src[2] == '.') break;
+        auto value3 = _base64Value(src[2]);
+        decoded += ((value2 & 0x0f) << 4) + ((value3 & 0x3c) >> 2);
+
+        if (!src[3] || src[3] == '=' || src[3] == '.') break;
+        auto value4 = _base64Value(src[3]);
+        decoded += ((value3 & 0x03) << 6) + value4;
+        src += 4;
+    }
+    return decoded;
+}
+
+>>>>>>> bbc0fbb... svg_loader SvgUtil: Move nullcheck to before use
