@@ -112,6 +112,7 @@ enum class SvgStyleFlags
 
 enum class SvgStopStyleFlags
 {
+    StopDefault = 0x0,
     StopOpacity = 0x01,
     StopColor = 0x02
 };

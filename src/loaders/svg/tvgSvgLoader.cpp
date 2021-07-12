@@ -2774,6 +2774,8 @@ bool SvgLoader::header()
     loaderData.svgParse = (SvgParser*)malloc(sizeof(SvgParser));
     if (!loaderData.svgParse) return false;
 
+    loaderData.svgParse->flags = SvgStopStyleFlags::StopDefault;
+
     simpleXmlParse(content, size, true, _svgLoaderParserForValidCheck, &(loaderData));
 
     if (loaderData.doc && loaderData.doc->type == SvgNodeType::Doc) {
