@@ -286,7 +286,7 @@ static int _numberCount(char cmd)
 }
 
 
-static void _processCommand(Array<PathCommand>* cmds, Array<Point>* pts, char cmd, float* arr, int count, Point* cur, Point* curCtl, Point* startPoint, bool *isQuadratic)
+static bool _processCommand(Array<PathCommand>* cmds, Array<Point>* pts, char cmd, float* arr, int count, Point* cur, Point* curCtl, Point* startPoint, bool *isQuadratic)
 {
     switch (cmd) {
         case 'm':
@@ -449,9 +449,10 @@ static void _processCommand(Array<PathCommand>* cmds, Array<Point>* pts, char cm
             break;
         }
         default: {
-            break;
+            return false;
         }
     }
+    return true;
 }
 
 
@@ -525,7 +526,7 @@ bool svgPathToTvgPath(const char* svgPath, Array<PathCommand>& cmds, Array<Point
     while ((path[0] != '\0')) {
         path = _nextCommand(path, &cmd, numberArray, &numberCount);
         if (!path) break;
-        _processCommand(&cmds, &pts, cmd, numberArray, numberCount, &cur, &curCtl, &startPoint, &isQuadratic);
+        if (!_processCommand(&cmds, &pts, cmd, numberArray, numberCount, &cur, &curCtl, &startPoint, &isQuadratic)) break;
     }
 
     setlocale(LC_NUMERIC, curLocale);
