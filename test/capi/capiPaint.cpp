@@ -24,7 +24,7 @@
 #include "../catch.hpp"
 
 
-TEST_CASE("Paint Transform", "[capiPaintTransform]")
+TEST_CASE("Paint Transform", "[capiPaint]")
 {
     Tvg_Paint* paint = tvg_shape_new();
     REQUIRE(paint);
@@ -46,7 +46,7 @@ TEST_CASE("Paint Transform", "[capiPaintTransform]")
     REQUIRE(tvg_paint_del(paint) == TVG_RESULT_SUCCESS);
 }
 
-TEST_CASE("Paint Translate", "[capiPaintTranslate]")
+TEST_CASE("Paint Translate", "[capiPaint]")
 {
     Tvg_Paint* paint = tvg_shape_new();
     REQUIRE(paint);
@@ -68,7 +68,7 @@ TEST_CASE("Paint Translate", "[capiPaintTranslate]")
     REQUIRE(tvg_paint_del(paint) == TVG_RESULT_SUCCESS);
 }
 
-TEST_CASE("Paint Scale", "[capiPaintScale]")
+TEST_CASE("Paint Scale", "[capiPaint]")
 {
     Tvg_Paint* paint = tvg_shape_new();
     REQUIRE(paint);
@@ -90,7 +90,7 @@ TEST_CASE("Paint Scale", "[capiPaintScale]")
     REQUIRE(tvg_paint_del(paint) == TVG_RESULT_SUCCESS);
 }
 
-TEST_CASE("Paint Rotate", "[capiPaintRotate]")
+TEST_CASE("Paint Rotate", "[capiPaint]")
 {
     Tvg_Paint* paint = tvg_shape_new();
     REQUIRE(paint);
@@ -112,7 +112,7 @@ TEST_CASE("Paint Rotate", "[capiPaintRotate]")
     REQUIRE(tvg_paint_del(paint) == TVG_RESULT_SUCCESS);
 }
 
-TEST_CASE("Paint Opacity", "[capiPaintOpacity]")
+TEST_CASE("Paint Opacity", "[capiPaint]")
 {
     Tvg_Paint* paint = tvg_shape_new();
     REQUIRE(paint);
@@ -134,7 +134,7 @@ TEST_CASE("Paint Opacity", "[capiPaintOpacity]")
     REQUIRE(tvg_paint_del(paint) == TVG_RESULT_SUCCESS);
 }
 
-TEST_CASE("Paint Bounds", "[capiPaintBounds]")
+TEST_CASE("Paint Bounds", "[capiPaint]")
 {
     Tvg_Paint* paint = tvg_shape_new();
     REQUIRE(paint);
@@ -159,6 +159,35 @@ TEST_CASE("Paint Bounds", "[capiPaintBounds]")
     REQUIRE(y == 10);
     REQUIRE(w == 20);
     REQUIRE(h == 100);
+
+    REQUIRE(tvg_paint_del(paint) == TVG_RESULT_SUCCESS);
+}
+
+TEST_CASE("Paint Dupliction", "[capiPaint]")
+{
+    Tvg_Paint* paint = tvg_shape_new();
+    REQUIRE(paint);
+
+    Tvg_Paint* paint_copy = tvg_paint_duplicate(paint);
+    REQUIRE(paint_copy);
+
+    REQUIRE(tvg_paint_del(paint) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_paint_del(paint_copy) == TVG_RESULT_SUCCESS);
+}
+
+TEST_CASE("Paint Clip Path Composite Method", "[capiPaint]")
+{
+    Tvg_Paint* paint = tvg_shape_new();
+    REQUIRE(paint);
+
+    Tvg_Paint* target = tvg_shape_new();
+    REQUIRE(target);
+
+    REQUIRE(tvg_paint_set_composite_method(paint, NULL, TVG_COMPOSITE_METHOD_NONE) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_paint_set_composite_method(paint, target, TVG_COMPOSITE_METHOD_NONE) == TVG_RESULT_INVALID_ARGUMENT);
+
+    REQUIRE(tvg_paint_set_composite_method(paint, target, TVG_COMPOSITE_METHOD_CLIP_PATH) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_paint_set_composite_method(paint, NULL, TVG_COMPOSITE_METHOD_CLIP_PATH) == TVG_RESULT_INVALID_ARGUMENT);
 
     REQUIRE(tvg_paint_del(paint) == TVG_RESULT_SUCCESS);
 }

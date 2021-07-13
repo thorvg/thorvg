@@ -88,6 +88,17 @@ TEST_CASE("Shape path", "[capiShapePath]")
         REQUIRE(pts_get[i].y == pts[i].y);
     }
 
+    REQUIRE(tvg_shape_reset(paint) == TVG_RESULT_SUCCESS);
+
+    REQUIRE(tvg_shape_move_to(paint, 0, 10) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_shape_line_to(paint, 100, 110) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_shape_line_to(paint, 100, 10) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_shape_close(paint) == TVG_RESULT_SUCCESS);
+
+    REQUIRE(tvg_shape_move_to(paint, 100, 0) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_shape_cubic_to(paint, 150, 0, 200, 50, 200, 100) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_shape_close(paint) == TVG_RESULT_SUCCESS);
+
     REQUIRE(tvg_paint_del(paint) == TVG_RESULT_SUCCESS);
 }
 
