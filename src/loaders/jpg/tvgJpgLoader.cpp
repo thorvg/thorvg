@@ -76,7 +76,6 @@ bool JpgLoader::open(const string& path)
 
     if (fread(data, size, 1, jpegFile) < 1) goto failure;
 
-    //decompress header
     if (tjDecompressHeader3(jpegDecompressor, data, size, &width, &height, &inSubsamp, &inColorspace) < 0) goto failure;
 
     ret = true;
@@ -97,7 +96,6 @@ bool JpgLoader::open(const char* data, uint32_t size, bool copy)
 {
     clear();
 
-    //decompress header
     if (tjDecompressHeader3(jpegDecompressor, (unsigned char *) data, size, &width, &height, &inSubsamp, &inColorspace) < 0) return false;
 
     if (copy) {
