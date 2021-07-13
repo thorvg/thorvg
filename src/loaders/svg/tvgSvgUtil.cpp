@@ -271,11 +271,6 @@ string svgUtilURLDecode(const char *src)
 
     char a, b;
     while (*src) {
-        if (*src <= 0x20) {
-            ++src;
-            continue;
-        }
-
         if (*src == '%' &&
             ((a = src[1]) && (b = src[2])) &&
             (isxdigit(a) && isxdigit(b))) {
