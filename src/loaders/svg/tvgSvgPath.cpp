@@ -207,7 +207,7 @@ void _pathAppendArcTo(Array<PathCommand>* cmds, Array<Point>* pts, Point* cur, P
         float theta2 = theta1 + delta;
         float cosTheta2 = cos(theta2);
         float sinTheta2 = sin(theta2);
-        static Point p[3];
+        Point p[3];
 
         //First control point (based on start point sx,sy)
         c1x = sx - bcp * (cosPhiRx * sinTheta1 + sinPhiRy * cosTheta1);
