@@ -80,7 +80,7 @@ struct SwShapeTask : SwTask
         if (HALF_STROKE(strokeWidth) > 0) {
             sdata->strokeColor(nullptr, nullptr, nullptr, &strokeAlpha);
         }
-        bool validStroke = (strokeAlpha > 0) || sdata->strokeFill();
+        bool validStroke = (static_cast<uint32_t>(strokeAlpha * opacity / 255) > 0) || sdata->strokeFill();
         auto clipRegion = bbox;
 
         //invisible shape turned to visible by alpha.
