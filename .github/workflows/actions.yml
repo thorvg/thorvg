@@ -17,6 +17,9 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install ninja-build gcc-multilib g++-multilib meson
+        
+    - name: Install TurboJPEG library
+      run: sudo apt-get install libturbojpeg0-dev libjpeg8-dev
 
     - name: Build
       run: |
@@ -37,6 +40,9 @@ jobs:
         sudo add-apt-repository ppa:niko2040/e19
         sudo apt-get install ninja-build gcc-multilib g++-multilib meson
         sudo apt-get install libefl-dev
+        
+    - name: Install TurboJPEG library
+      run: sudo apt-get install libturbojpeg0-dev libjpeg8-dev
 
     - name: Build
       run: |
@@ -55,6 +61,10 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install ninja-build gcc-multilib g++-multilib libgtest-dev meson cmake cmake-data
+        
+    - name: Install TurboJPEG library
+      run: sudo apt-get install libturbojpeg0-dev libjpeg8-dev
+      
     - name: Install-ThorVG
       run: |
         meson . build -Dloaders="svg, tvg, png, jpg" -Dbindings="capi"
