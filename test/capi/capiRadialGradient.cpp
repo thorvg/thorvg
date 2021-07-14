@@ -38,9 +38,9 @@ TEST_CASE("Set gradient center point and radius", "[capiRadialGradient]")
 
     float cx, cy, radius;
     REQUIRE(tvg_radial_gradient_get(gradient, &cx, &cy, &radius) == TVG_RESULT_SUCCESS);
-    REQUIRE(cx == 10.0);
-    REQUIRE(cy == 15.0);
-    REQUIRE(radius == 30.0);
+    REQUIRE(cx == Approx(10.0).margin(0.000001));
+    REQUIRE(cy == Approx(15.0).margin(0.000001));
+    REQUIRE(radius == Approx(30.0).margin(0.000001));
 
     REQUIRE(tvg_gradient_del(gradient) == TVG_RESULT_SUCCESS);
 }
@@ -141,10 +141,10 @@ TEST_CASE("Set/Get gradient spread", "[capiRadialGradient]")
 TEST_CASE("Stroke Radial Gradient", "[capiRadialGradient]")
 {
     Tvg_Paint *shape = tvg_shape_new();
-    REQUIRE(shape != NULL);
+    REQUIRE(shape);
 
     Tvg_Gradient *gradient = tvg_radial_gradient_new();
-    REQUIRE(gradient != NULL);
+    REQUIRE(gradient);
 
     REQUIRE(tvg_radial_gradient_set(gradient, 10.0, 15.0, 30.0) == TVG_RESULT_SUCCESS);
 
@@ -173,9 +173,9 @@ TEST_CASE("Stroke Radial Gradient", "[capiRadialGradient]")
 
     float cx, cy, radius;
     REQUIRE(tvg_radial_gradient_get(gradient_ret, &cx, &cy, &radius) == TVG_RESULT_SUCCESS);
-    REQUIRE(cx == 10.0);
-    REQUIRE(cy == 15.0);
-    REQUIRE(radius == 30.0);
+    REQUIRE(cx == Approx(10.0).margin(0.000001));
+    REQUIRE(cy == Approx(15.0).margin(0.000001));
+    REQUIRE(radius == Approx(30.0).margin(0.000001));
 
     REQUIRE(tvg_paint_del(shape) == TVG_RESULT_SUCCESS);
 }
