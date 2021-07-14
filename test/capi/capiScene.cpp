@@ -37,12 +37,13 @@ TEST_CASE("Paints Into a Scene", "[capiScene]")
     REQUIRE(scene);
 
     //Pushing Paints
-    REQUIRE(tvg_scene_push(scene,  tvg_shape_new()) == TVG_RESULT_SUCCESS);
-    REQUIRE(tvg_scene_push(scene,  tvg_picture_new()) == TVG_RESULT_SUCCESS);
-    REQUIRE(tvg_scene_push(scene,  tvg_scene_new()) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_scene_push(scene, tvg_shape_new()) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_scene_push(scene, tvg_picture_new()) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_scene_push(scene, tvg_scene_new()) == TVG_RESULT_SUCCESS);
 
-    //Pusing Null Pointer
+    //Pushing Null Pointer
     REQUIRE(tvg_scene_push(scene, NULL) == TVG_RESULT_INVALID_ARGUMENT);
+    REQUIRE(tvg_scene_push(NULL, NULL) == TVG_RESULT_INVALID_ARGUMENT);
 
     REQUIRE(tvg_paint_del(scene) == TVG_RESULT_SUCCESS);
 }
@@ -61,6 +62,9 @@ TEST_CASE("Scene Reservation", "[capiScene]")
     //Too big size
     REQUIRE(tvg_scene_reserve(scene, -1) == TVG_RESULT_FAILED_ALLOCATION);
 
+    //Invalid scene
+    REQUIRE(tvg_scene_reserve(NULL, 1) == TVG_RESULT_INVALID_ARGUMENT);
+
     REQUIRE(tvg_paint_del(scene) == TVG_RESULT_SUCCESS);
 }
 
@@ -69,8 +73,11 @@ TEST_CASE("Clear the Scene", "[capiScene]")
     Tvg_Paint* scene = tvg_scene_new();
     REQUIRE(scene);
 
-    REQUIRE(tvg_scene_push(scene,  tvg_shape_new()) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_scene_push(scene, tvg_shape_new()) == TVG_RESULT_SUCCESS);
     REQUIRE(tvg_scene_clear(scene, true) == TVG_RESULT_SUCCESS);
+
+    //Invalid scene
+    REQUIRE(tvg_scene_clear(NULL, false) == TVG_RESULT_INVALID_ARGUMENT);
 
     REQUIRE(tvg_paint_del(scene) == TVG_RESULT_SUCCESS);
 }
@@ -93,7 +100,7 @@ TEST_CASE("Scene reusing paints", "[capiScene]")
     Tvg_Paint* shape = tvg_shape_new();
     REQUIRE(shape);
 
-    REQUIRE(tvg_scene_push(scene,  shape) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_scene_push(scene, shape) == TVG_RESULT_SUCCESS);
     REQUIRE(tvg_canvas_push(canvas, scene) == TVG_RESULT_SUCCESS);
     REQUIRE(tvg_canvas_update(canvas) == TVG_RESULT_SUCCESS);
 
@@ -101,7 +108,7 @@ TEST_CASE("Scene reusing paints", "[capiScene]")
     REQUIRE(tvg_scene_clear(scene, false) == TVG_RESULT_SUCCESS);
 
     //Reuse shape.
-    REQUIRE(tvg_scene_push(scene,  shape) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_scene_push(scene, shape) == TVG_RESULT_SUCCESS);
 
     REQUIRE(tvg_canvas_destroy(canvas) == TVG_RESULT_SUCCESS);
 
