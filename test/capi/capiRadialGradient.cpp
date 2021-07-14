@@ -134,3 +134,45 @@ TEST_CASE("Set/Get gradient spread", "[capiRadialGradient]")
     REQUIRE(tvg_gradient_del(gradient) == TVG_RESULT_SUCCESS);
     REQUIRE(tvg_gradient_del(NULL) == TVG_RESULT_INVALID_ARGUMENT);
 }
+
+TEST_CASE("Stroke Radial Gradient", "[capiRadialGradient]")
+{
+    Tvg_Paint *shape = tvg_shape_new();
+    REQUIRE(shape != NULL);
+
+    Tvg_Gradient *gradient = tvg_radial_gradient_new();
+    REQUIRE(gradient != NULL);
+
+    REQUIRE(tvg_radial_gradient_set(gradient, 10.0, 15.0, 30.0) == TVG_RESULT_SUCCESS);
+
+    Tvg_Color_Stop color_stops[2] =
+    {
+        {.offset=0.0, .r=0, .g=0,   .b=0, .a=255},
+        {.offset=1,   .r=0, .g=255, .b=0, .a=255},
+    };
+
+    Tvg_Gradient *gradient_ret = NULL;
+    const Tvg_Color_Stop *color_stops_ret = NULL;
+    uint32_t color_stops_count_ret = 0;
+
+    REQUIRE(tvg_gradient_set_color_stops(gradient, color_stops, 2) == TVG_RESULT_SUCCESS);
+
+    REQUIRE(tvg_shape_set_stroke_radial_gradient(NULL, NULL) == TVG_RESULT_INVALID_ARGUMENT);
+    REQUIRE(tvg_shape_set_stroke_radial_gradient(NULL, gradient) == TVG_RESULT_INVALID_ARGUMENT);
+    REQUIRE(tvg_shape_set_stroke_radial_gradient(shape, gradient) == TVG_RESULT_SUCCESS);
+
+    REQUIRE(tvg_shape_get_stroke_gradient(shape, &gradient_ret) == TVG_RESULT_SUCCESS);
+    REQUIRE(gradient_ret);
+
+    REQUIRE(tvg_gradient_get_color_stops(gradient_ret, &color_stops_ret,  &color_stops_count_ret) == TVG_RESULT_SUCCESS);
+    REQUIRE(color_stops_ret);
+    REQUIRE(color_stops_count_ret == 2);
+
+    float cx, cy, radius;
+    REQUIRE(tvg_radial_gradient_get(gradient_ret, &cx, &cy, &radius) == TVG_RESULT_SUCCESS);
+    REQUIRE(cx == 10.0);
+    REQUIRE(cy == 15.0);
+    REQUIRE(radius == 30.0);
+
+    REQUIRE(tvg_paint_del(shape) == TVG_RESULT_SUCCESS);
+}
