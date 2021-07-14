@@ -49,15 +49,18 @@ TEST_CASE("Set gradient in shape", "[capiRadialGradient]")
 {
     REQUIRE(tvg_shape_set_radial_gradient(NULL, NULL) == TVG_RESULT_INVALID_ARGUMENT);
 
-    Tvg_Paint *shape = tvg_shape_new();
-    REQUIRE(shape);
-
     Tvg_Gradient *gradient = tvg_radial_gradient_new();
     REQUIRE(gradient);
 
-    REQUIRE(tvg_shape_set_radial_gradient(NULL, gradient) == TVG_RESULT_INVALID_ARGUMENT);
+    Tvg_Paint *shape = tvg_shape_new();
+    REQUIRE(shape);
 
-    REQUIRE(tvg_gradient_del(gradient) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_shape_set_radial_gradient(NULL, gradient) == TVG_RESULT_INVALID_ARGUMENT);
+    REQUIRE(tvg_shape_set_radial_gradient(shape, gradient) == TVG_RESULT_SUCCESS);
+
+    Tvg_Gradient *gradient_ret = NULL;
+    REQUIRE(tvg_shape_get_gradient(shape, &gradient_ret) == TVG_RESULT_SUCCESS);
+    REQUIRE(gradient_ret);
 
     REQUIRE(tvg_shape_set_radial_gradient(shape, NULL) == TVG_RESULT_MEMORY_CORRUPTION);
     REQUIRE(tvg_paint_del(shape) == TVG_RESULT_SUCCESS);
