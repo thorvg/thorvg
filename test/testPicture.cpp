@@ -108,6 +108,27 @@ TEST_CASE("Load PNG file", "[tvgPicture]")
 
     float w, h;
     REQUIRE(picture->size(&w, &h) == Result::Success);
+
+    REQUIRE(w == 1000);
+    REQUIRE(h == 1000);
+}
+
+
+TEST_CASE("Load JPG file", "[tvgPicture]")
+{
+    auto picture = Picture::gen();
+    REQUIRE(picture);
+
+    //Invalid file
+    REQUIRE(picture->load("invalid.jpg") == Result::InvalidArguments);
+
+    REQUIRE(picture->load(EXAMPLE_DIR"/logo.jpg") == Result::Success);
+
+    float w, h;
+    REQUIRE(picture->size(&w, &h) == Result::Success);
+
+    REQUIRE(w == 1000);
+    REQUIRE(h == 1000);
 }
 
 
