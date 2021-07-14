@@ -98,10 +98,10 @@ TEST_CASE("Linear Gradient color stops", "[capiLinearGradient]")
 TEST_CASE("Linear Gradient clear data", "[capiLinearGradient]")
 {
     Tvg_Paint *shape = tvg_shape_new();
-    REQUIRE(shape != NULL);
+    REQUIRE(shape);
 
     Tvg_Gradient *gradient = tvg_linear_gradient_new();
-    REQUIRE(gradient != NULL);
+    REQUIRE(gradient);
 
     Tvg_Color_Stop color_stops[2] =
     {
@@ -143,10 +143,10 @@ TEST_CASE("Linear Gradient spread", "[capiLinearGradient]")
 TEST_CASE("Stroke Linear Gradient", "[capiLinearGradient]")
 {
     Tvg_Paint *shape = tvg_shape_new();
-    REQUIRE(shape != NULL);
+    REQUIRE(shape);
 
     Tvg_Gradient *gradient = tvg_linear_gradient_new();
-    REQUIRE(gradient != NULL);
+    REQUIRE(gradient);
 
     Tvg_Color_Stop color_stops[2] =
     {
