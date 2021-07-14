@@ -131,3 +131,23 @@ TEST_CASE("Picture Size", "[tvgPicture]")
     REQUIRE(picture->size(&w, &h) == Result::Success);
     REQUIRE(picture->size(w, h) == Result::Success);
 }
+
+TEST_CASE("Load SVG file and render", "[tvgPicture]")
+{
+    REQUIRE(Initializer::init(CanvasEngine::Sw, 0) == Result::Success);
+
+    auto canvas = SwCanvas::gen();
+    REQUIRE(canvas);
+
+    uint32_t buffer[100*100];
+    REQUIRE(canvas->target(buffer, 100, 100, 100, SwCanvas::Colorspace::ABGR8888) == Result::Success);
+
+    auto picture = Picture::gen();
+    REQUIRE(picture);
+
+    REQUIRE(picture->load(EXAMPLE_DIR"/logo_test.svg") == Result::Success);
+
+    REQUIRE(canvas->push(move(picture)) == Result::Success);
+
+    REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
+}
