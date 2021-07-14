@@ -60,6 +60,10 @@ TEST_CASE("Linear Gradient in shape", "[capiLinearGradient]")
 
     REQUIRE(tvg_shape_set_linear_gradient(shape, gradient) == TVG_RESULT_SUCCESS);
 
+    Tvg_Gradient *gradient_ret = NULL;
+    REQUIRE(tvg_shape_get_gradient(shape, &gradient_ret) == TVG_RESULT_SUCCESS);
+    REQUIRE(gradient_ret);
+
     REQUIRE(tvg_shape_set_linear_gradient(shape, NULL) == TVG_RESULT_MEMORY_CORRUPTION);
     REQUIRE(tvg_paint_del(shape) == TVG_RESULT_SUCCESS);
 }
