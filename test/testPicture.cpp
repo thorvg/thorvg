@@ -95,8 +95,7 @@ TEST_CASE("Load RAW Data", "[tvgPicture]")
     free(data);
 }
 
-
-TEST_CASE("Load PNG file", "[tvgPicture]")
+TEST_CASE("Load PNG file from path", "[tvgPicture]")
 {
     auto picture = Picture::gen();
     REQUIRE(picture);
@@ -108,8 +107,75 @@ TEST_CASE("Load PNG file", "[tvgPicture]")
 
     float w, h;
     REQUIRE(picture->size(&w, &h) == Result::Success);
+
+    REQUIRE(w == 1000);
+    REQUIRE(h == 1000);
 }
 
+TEST_CASE("Load PNG file from data", "[tvgPicture]")
+{
+    auto picture = Picture::gen();
+    REQUIRE(picture);
+
+    //Open file
+    ifstream file(EXAMPLE_DIR"/logo.png");
+    REQUIRE(file.is_open());
+    auto size = sizeof(uint32_t) * (1000*1000);
+    auto data = (char*)malloc(size);
+    file.read(data, size);
+    file.close();
+
+    REQUIRE(picture->load(data, size, false) == Result::Success);
+    REQUIRE(picture->load(data, size, true) == Result::Success);
+
+    float w, h;
+    REQUIRE(picture->size(&w, &h) == Result::Success);
+    REQUIRE(w == 1000);
+    REQUIRE(h == 1000);
+
+    free(data);
+}
+
+TEST_CASE("Load JPG file from path", "[tvgPicture]")
+{
+    auto picture = Picture::gen();
+    REQUIRE(picture);
+
+    //Invalid file
+    REQUIRE(picture->load("invalid.jpg") == Result::InvalidArguments);
+
+    REQUIRE(picture->load(EXAMPLE_DIR"/logo.jpg") == Result::Success);
+
+    float w, h;
+    REQUIRE(picture->size(&w, &h) == Result::Success);
+
+    REQUIRE(w == 1000);
+    REQUIRE(h == 1000);
+}
+
+TEST_CASE("Load JPG file from data", "[tvgPicture]")
+{
+    auto picture = Picture::gen();
+    REQUIRE(picture);
+
+    //Open file
+    ifstream file(EXAMPLE_DIR"/logo.jpg");
+    REQUIRE(file.is_open());
+    auto size = sizeof(uint32_t) * (1000*1000);
+    auto data = (char*)malloc(size);
+    file.read(data, size);
+    file.close();
+
+    REQUIRE(picture->load(data, size, false) == Result::Success);
+    REQUIRE(picture->load(data, size, true) == Result::Success);
+
+    float w, h;
+    REQUIRE(picture->size(&w, &h) == Result::Success);
+    REQUIRE(w == 1000);
+    REQUIRE(h == 1000);
+
+    free(data);
+}
 
 TEST_CASE("Picture Size", "[tvgPicture]")
 {
