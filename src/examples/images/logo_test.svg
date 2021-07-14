@@ -1,0 +1,48 @@
+<svg width="1000" height="1000" viewBox="0 0 1000 1000"
+	xmlns="http://www.w3.org/2000/svg">
+	<g fill="url(#grad1)" mask="url(#vg)" transform="rotate(0 50% 50%) scale(1.0)">
+		<path d="M420.82388 380H588.68467V422.805317H420.82388Z" stroke-width="0" stroke-dasharray="100%" stroke-dashoffset="0" />
+		<path d="m420.82403 440.7101v63.94623l167.86079 25.5782V440.7101Z"/>
+		<path d="M420.82403 523.07258V673.47362L588.68482 612.59701V548.13942Z"/>
+		<g stroke-width="3.864492">
+			<path d="M256.61221 100.51736H752.8963V386.99554H256.61221Z"/>
+			<path d="M201.875 100.51736H238.366478V386.99554H201.875Z"/>
+			<path d="M771.14203 100.51736H807.633508V386.99554H771.14203Z"/>
+		</g>
+	</g>
+	<g fill="url(#grad2)" clip-path="url(#clip)">
+		<path d="M420.82403 691.37851 588.68482 630.5019 589 834H421Z"/>
+		<path d="m420.82403 852.52249h167.86079v28.64782H420.82403v-28.64782 0 0"/>
+		<path d="m439.06977 879.17031c0 0-14.90282 8.49429-18.24574 15.8161-4.3792 9.59153 0 31.63185 0 31.63185h167.86079c0 0 4.3792-22.04032 0-31.63185-3.34292-7.32181-18.24574-15.8161-18.24574-15.8161z"/>
+	</g>
+	<g>
+		<g></g>
+		<polyline fill="none" stroke-width="10" 
+            points="0,0 1000,0 1000,1000 0,1000" />
+		<line x1="0" y1="0" x2="1000" y2="0" stroke="" />
+	</g>
+	<image href="data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgNTAgNTAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBmaWxsPSIjMjIyZjM1IiBjeD0iNTAlIiBjeT0iNTAlIiByPSI1MCUiLz48L3N2Zz4=" height="50" width="50" x="650" y="875" />
+	<image href="data:image/svg+xml;utf8,%3Csvg viewBox='0 0 50 50' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle fill='%23222f35' cx='50%25' cy='50%25' r='50%25'/%3E%3C/svg%3E" height="50" width="50" x="725" y="875" />
+	<image href="data:image/svg+xml,%3Csvg%20viewBox%3D%220%200%2050%2050%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Ccircle%20fill%3D%22%23222f35%22%20cx%3D%2250%25%22%20cy%3D%2250%25%22%20r%3D%2250%25%22%2F%3E%3C%2Fsvg%3E" height="50" width="50" x="800" y="875" />
+	<defs>
+		<linearGradient id="grad1">
+			<stop offset="0%" stop-color="#50585d"/>
+			<stop offset="100%" stop-color="#252f35"/>
+		</linearGradient>
+		<radialGradient id="grad2" cx="100%" cy="0.25" r="1.5">
+			<stop offset="0%" stop-color="#50585d"/>
+			<stop offset="100%" stop-color="#252f35"/>
+		</radialGradient>
+		<mask id="vg">
+			<circle style="stroke: black;" cx="50%" cy="50%" r="50%" />
+			<rect fill="white" x="0" y="0" width="100%" height="100%" />
+			<path fill="black" d="m280 140h15v55l8 10 8-10v-55h15v60l-23 25-23-25z"/>
+			<path fill="rgb(0,0,0)" d="m335 140v80h45v-50h-25v10h10v30h-15v-57h18v-13z"/>
+		</mask>
+		<clipPath id="clip">
+			<ellipse cx="50%" cy="50%" rx="50%" ry="50%" />
+			<rect x="0%" y="0%" width="1000" height="1000" />
+			<polygon points="0,0 1000,0 1000,1000 0,1000" />
+		</clipPath>
+	</defs>
+</svg>
