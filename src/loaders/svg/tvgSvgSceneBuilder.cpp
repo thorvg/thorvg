@@ -448,7 +448,6 @@ static unique_ptr<Picture> _imageBuildHelper(SvgNode* node, float vx, float vy, 
         }
 
         if (picture->load(href) != Result::Success) return nullptr;
-        picture->size(node->node.image.w, node->node.image.h);
     }
 
     float x, y, w, h;
@@ -459,7 +458,6 @@ static unique_ptr<Picture> _imageBuildHelper(SvgNode* node, float vx, float vy, 
         auto syt = y * sy;
         Matrix m = {sx, 0, node->node.image.x - sxt, 0, sy, node->node.image.y - syt, 0, 0, 1};
         picture->transform(m);
-        picture->size(w, h);
     }
 
     _applyComposition(picture.get(), node, vx, vy, vw, vh);
