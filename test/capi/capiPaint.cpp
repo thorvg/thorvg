@@ -168,8 +168,30 @@ TEST_CASE("Paint Dupliction", "[capiPaint]")
     Tvg_Paint* paint = tvg_shape_new();
     REQUIRE(paint);
 
+    REQUIRE(tvg_paint_set_opacity(paint, 0) == TVG_RESULT_SUCCESS);
+
+    REQUIRE(tvg_paint_translate(paint, 200, 100) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_paint_scale(paint, 2.2f) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_paint_rotate(paint, 90.0f) == TVG_RESULT_SUCCESS);
+
     Tvg_Paint* paint_copy = tvg_paint_duplicate(paint);
     REQUIRE(paint_copy);
+
+    uint8_t opacity;
+    REQUIRE(tvg_paint_get_opacity(paint_copy, &opacity) == TVG_RESULT_SUCCESS);
+    REQUIRE(0 == opacity);
+
+    Tvg_Matrix matrix;
+    REQUIRE(tvg_paint_get_transform(paint, &matrix) == TVG_RESULT_SUCCESS);
+    REQUIRE(matrix.e11 == Approx(0.0f).margin(0.000001));
+    REQUIRE(matrix.e12 == Approx(-2.2f).margin(0.000001));
+    REQUIRE(matrix.e13 == Approx(200.0f).margin(0.000001));
+    REQUIRE(matrix.e21 == Approx(2.2f).margin(0.000001));
+    REQUIRE(matrix.e22 == Approx(0.0f).margin(0.000001));
+    REQUIRE(matrix.e23 == Approx(100.0f).margin(0.000001));
+    REQUIRE(matrix.e31 == Approx(0.0f).margin(0.000001));
+    REQUIRE(matrix.e32 == Approx(0.0f).margin(0.000001));
+    REQUIRE(matrix.e33 == Approx(1.0f).margin(0.000001));
 
     REQUIRE(tvg_paint_del(paint) == TVG_RESULT_SUCCESS);
     REQUIRE(tvg_paint_del(paint_copy) == TVG_RESULT_SUCCESS);
