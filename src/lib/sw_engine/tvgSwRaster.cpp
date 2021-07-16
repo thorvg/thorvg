@@ -305,7 +305,7 @@ static bool _rasterSolidRle(SwSurface* surface, const SwRleData* rle, uint32_t c
 /* Image                                                                */
 /************************************************************************/
 
-static bool _rasterTranslucentImageRle(SwSurface* surface, const SwRleData* rle, uint32_t *img, uint32_t w, uint32_t h, uint32_t opacity)
+static bool _translucentImageRle(SwSurface* surface, const SwRleData* rle, uint32_t *img, uint32_t w, uint32_t h, uint32_t opacity)
 {
     auto span = rle->spans;
 
@@ -322,7 +322,23 @@ static bool _rasterTranslucentImageRle(SwSurface* surface, const SwRleData* rle,
 }
 
 
-static bool _rasterTranslucentImageRle(SwSurface* surface, const SwRleData* rle, uint32_t *img, uint32_t w, uint32_t h, uint32_t opacity, const Matrix* invTransform)
+static bool _rasterTranslucentImageRle(SwSurface* surface, const SwRleData* rle, uint32_t *img, uint32_t w, uint32_t h, uint32_t opacity)
+{
+    if (surface->compositor) {
+        if (surface->compositor->method == CompositeMethod::AlphaMask) {
+//TODO
+//            return _translucentImageRleAlphaMask(surface, rle, img, w, h, opacity);
+        }
+        if (surface->compositor->method == CompositeMethod::InvAlphaMask) {
+//TODO
+//            return _translucentImageRleInvAlphaMask(surface, rle, img, w, h, opacity);
+        }
+    }
+    return _translucentImageRle(surface, rle, img, w, h, opacity);
+}
+
+
+static bool _translucentImageRle(SwSurface* surface, const SwRleData* rle, uint32_t *img, uint32_t w, uint32_t h, uint32_t opacity, const Matrix* invTransform)
 {
     auto span = rle->spans;
 
@@ -340,6 +356,22 @@ static bool _rasterTranslucentImageRle(SwSurface* surface, const SwRleData* rle,
         }
     }
     return true;
+}
+
+
+static bool _rasterTranslucentImageRle(SwSurface* surface, const SwRleData* rle, uint32_t *img, uint32_t w, uint32_t h, uint32_t opacity, const Matrix* invTransform)
+{
+    if (surface->compositor) {
+        if (surface->compositor->method == CompositeMethod::AlphaMask) {
+//TODO
+//            return _translucentImageRleAlphaMask(surface, rle, img, w, h, opacity, invTransform);
+        }
+        if (surface->compositor->method == CompositeMethod::InvAlphaMask) {
+//TODO
+//            return _translucentImageRleInvAlphaMask(surface, rle, img, w, h, opacity, invTransform);
+        }
+    }
+    return _translucentImageRle(surface, rle, img, w, h, opacity, invTransform);
 }
 
 
