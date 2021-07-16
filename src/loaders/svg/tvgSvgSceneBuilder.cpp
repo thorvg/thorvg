@@ -448,7 +448,6 @@ static unique_ptr<Picture> _imageBuildHelper(SvgNode* node, float vx, float vy, 
         }
 
         if (picture->load(href) != Result::Success) return nullptr;
-        picture->size(node->node.image.w, node->node.image.h);
     }
 
     float x, y, w, h;
