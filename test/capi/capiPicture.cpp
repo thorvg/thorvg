@@ -31,13 +31,13 @@ TEST_CASE("Load Svg file in Picture", "[capiPicture]")
     REQUIRE(picture);
 
     //Negative
-    REQUIRE(tvg_picture_load(nullptr, EXAMPLE_DIR"/logo.svg") == TVG_RESULT_INVALID_ARGUMENT);
+    REQUIRE(tvg_picture_load(nullptr, TEST_DIR"/logo.svg") == TVG_RESULT_INVALID_ARGUMENT);
 
     //Invalid file
     REQUIRE(tvg_picture_load(picture, "invalid.svg") == TVG_RESULT_INVALID_ARGUMENT);
 
     //Load Svg file
-    REQUIRE(tvg_picture_load(picture, EXAMPLE_DIR"/logo.svg") == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_picture_load(picture, TEST_DIR"/logo.svg") == TVG_RESULT_SUCCESS);
 
     float x, y, w, h;
     REQUIRE(tvg_picture_get_viewbox(picture, &x, &y, &w, &h) == TVG_RESULT_SUCCESS);
@@ -75,7 +75,7 @@ TEST_CASE("Load Raw file in Picture", "[capiPicture]")
     REQUIRE(picture);
 
     //Load Raw Data
-    FILE* fp = fopen(EXAMPLE_DIR"/rawimage_200x300.raw", "r");
+    FILE* fp = fopen(TEST_DIR"/rawimage_200x300.raw", "r");
     if (!fp) return;
 
     uint32_t* data = (uint32_t*)malloc(sizeof(uint32_t) * (200*300));
@@ -112,7 +112,7 @@ TEST_CASE("Load Png file in Picture", "[capiPicture]")
     REQUIRE(tvg_picture_load(picture, "invalid.png") == TVG_RESULT_INVALID_ARGUMENT);
 
     //Load Png file
-    REQUIRE(tvg_picture_load(picture, EXAMPLE_DIR"/logo.png") == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_picture_load(picture, TEST_DIR"/logo.png") == TVG_RESULT_SUCCESS);
 
     //Verify Size
     float w, h;
