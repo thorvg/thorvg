@@ -300,6 +300,51 @@ public:
     uint8_t opacity() const noexcept;
 
     /**
+     * @brief Const forward iterator-like class enabling the iteration over the children nodes of the given paint.
+     *
+     * For the Scene-type Paint the children nodes represent the paints pushed into the Scene - the order of the children nodes is the same as the order as they were pushed. For the Picture-type Paint the child node is the read image in one of the supported formats. The Shape-type Paint doesn't have any child nodes.
+     *
+     * @BETA_API
+     */
+    class Iterator
+    {
+        const Paint* parent;
+        const Paint* child;
+
+        public:
+            Iterator (Paint* p = nullptr, Paint* c = nullptr);
+            const Paint& operator*() const;
+            Iterator& operator++();
+            Iterator operator++(int);
+            friend bool operator!=(const Iterator& it1, const Iterator& it2)
+            {
+                return it1.child != it2.child;
+            };
+            friend bool operator==(const Iterator& it1, const Iterator& it2)
+            {
+                return it1.child == it2.child;
+            };
+    };
+
+    /**
+     * @brief Gets the iterator to the first child node.
+     *
+     * @return The iterator pointing to the first element of the children nodes of the given paint object.
+     *
+     * @BETA_API
+     */
+    Iterator begin() const noexcept;
+
+    /**
+     * @brief Gets the iterator to the past-the end child node.
+     *
+     * @return The iterator referring to the past-the-end element of the children nodes of the given paint object.
+     *
+     * @BETA_API
+     */
+    Iterator end() const noexcept;
+
+    /**
      * @brief Gets the composition target object and the composition method.
      *
      * @param[out] target The paint of the target object.
@@ -685,7 +730,7 @@ public:
      * The rectangle with rounded corners can be achieved by setting non-zero values to @p rx and @p ry arguments.
      * The @p rx and @p ry values specify the radii of the ellipse defining the rounding of the corners.
      *
-     * The position of the rectangle is specified by the coordinates of its upper left corner -  @p x and @p y arguments.
+     * The position of the rectangle is specified by the coordinates of its upper left corner - @p x and @p y arguments.
      *
      * The rectangle is treated as a new sub-path - it is not connected with the previous sub-path.
      *
@@ -973,7 +1018,7 @@ public:
  * @class Picture
  *
  * @brief A class representing an image read in one of the supported formats: raw, svg, png and etc.
- * Besides the methods inherited from the Paint, it provides  methods to load & draw images on the canvas.
+ * Besides the methods inherited from the Paint, it provides methods to load & draw images on the canvas.
  *
  * @note Supported formats are depended on the available TVG loaders.
  */
