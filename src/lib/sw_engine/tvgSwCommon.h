@@ -217,9 +217,9 @@ struct SwShape
     SwFill*      fill = nullptr;
     SwRleData*   rle = nullptr;
     SwRleData*   strokeRle = nullptr;
-    SwBBox       bbox;   //keep it boundary without stroke region. Using for optimal filling.
+    SwBBox       bbox;           //Keep it boundary without stroke region. Using for optimal filling.
 
-    bool         rect;   //Fast Track: Othogonal rectangle?
+    bool         rect = false;   //Fast Track: Othogonal rectangle?
 };
 
 struct SwImage

@@ -7,7 +7,7 @@
   <img width="500" height="346" src="https://github.com/Samsung/thorvg/blob/master/res/thorvg_card2.png">
 </p>
 
-ThorVG is a platform-independent portable library for drawing vector-based scene and animation. It's an open-source software that is freely used by a variety of software platforms and applications. ThorVG provides neat and easy APIs, its library has no dependencies and keeps super compact size. It serves as the vector graphics engine for Tizen OS that powers many products. <br />
+ThorVG is a platform-independent portable library for drawing vector-based scenes and animation. It's open-source software that is freely used by a variety of software platforms and applications. ThorVG provides neat and easy APIs. Its library has no dependencies and keeps a super compact size. It serves as the vector graphics engine for Tizen OS that powers many products. <br />
 <br />
 The following list shows primitives that are supported by ThorVG: <br />
  - Shapes: Line, Arc, Curve, Path, Polygon, ...
@@ -15,12 +15,12 @@ The following list shows primitives that are supported by ThorVG: <br />
  - Scene Graph & Affine Transformation (translation, rotation, scale, ...)
  - Stroking: Width, Join, Cap, Dash
  - Composition: Blending, Masking, Path Clipping, ...
- - Pictures: SVG, PNG, Bitmap, ...
+ - Pictures: SVG, JPG, PNG, Bitmap, ...
 <p align="center">
   <img width="930" height="473" src="https://github.com/Samsung/thorvg/blob/master/res/example_primitives.png">
 </p>
 <br />
-Your program could call neat TVG APIs while switching drawing context If you have your own drawing engine. During the API calls, ThorVG serializes drawing commands among the volatile paints' nodes then performs synchronous/asynchronous rendering using own backend raster engines. ThorVG supports vector images such as SVG, also expand supporting other popular formats on demand. On the rendering, it could spawn intermediate frame-buffers for compositing scenes only when it's necessary. The next figure shows you a brief strategy on how to use ThorVG on your system.<br />
+If your program has the main renderer, your program could call ThorVG APIs while switching drawing contexts between the main renderer and ThorVG. During the API calls, ThorVG serializes drawing commands among the volatile paints' nodes then performs synchronous/asynchronous rendering using its backend raster engines. ThorVG supports vector images such as SVG, also expands, supporting other popular formats on demand. On the rendering, it could spawn intermediate frame-buffers for compositing scenes only when it's necessary. The next figure shows you a brief strategy on how to use ThorVG on your system.<br />
 <br />
 <p align="center">
   <img width="900" height="288" src="https://github.com/Samsung/thorvg/blob/master/res/example_flow.png">
@@ -62,7 +62,7 @@ ninja -C build install
 <br />
 <br />
 ## Quick Start
-ThorVG renders vector shapes to a given canvas buffer. The following is a quick start to show you how to use the basic APIs.
+ThorVG renders vector shapes to a given canvas buffer. The following is a quick start to show you how to use the essential APIs.
 
 First, you should initialize the ThorVG engine:
 
@@ -70,7 +70,7 @@ First, you should initialize the ThorVG engine:
 tvg::Initializer::init(tvg::CanvasEngine::Sw, 0);   //engine method, thread count
 ```
 
-Then you should prepare an empty canvas for drawing on it:
+Then it would be best if you prepared an empty canvas for drawing on it:
 
 ```cpp
 static uint32_t buffer[WIDTH * HEIGHT];                                 //canvas target buffer
@@ -164,8 +164,8 @@ tvg::Initializer::term(tvg::CanvasEngine::Sw);
 <br />
 ## SVG
 
-ThorVG supports SVG (Scalable Vector Graphics) rendering through its own SVG interpreter. It satisfies the [SVG Tiny Specification](https://www.w3.org/TR/SVGTiny12/)
-in order to keep it lightweight, so it's useful for the embedded systems. Among the SVG Tiny specs, unsupported features in the ThorVG are the following:
+ThorVG supports SVG (Scalable Vector Graphics) rendering through its SVG interpreter. It satisfies the [SVG Tiny Specification](https://www.w3.org/TR/SVGTiny12/)
+to keep it lightweight, so it's useful for the embedded systems. Among the SVG Tiny specs, unsupported features in the ThorVG are the following:
 
  - Animation
  - Fonts & Text 
@@ -203,8 +203,8 @@ and scalable image contents such as SVG and Lottie Animation among the Tizen pow
 <br />
 <br />
 ### Rive
-We're also building a [Rive](https://rive.app/) port which supports Rive Animation run through the ThorVG backend. Rive is a brand new animation platform
-that supports fancy, user interactive vector animations. For more details see [Rive-Tizen](https://github.com/rive-app/rive-tizen) on [Github](https://github.com/rive-app/).
+We're also building a [Rive](https://rive.app/) port that supports Rive Animation run through the ThorVG backend. Rive is a brand new animation platform
+that supports fancy, user-interactive vector animations. For more details see [Rive-Tizen](https://github.com/rive-app/rive-tizen) on [Github](https://github.com/rive-app/).
 
 <p align="center">
   <img width="600" height="324" src="https://github.com/Samsung/thorvg/blob/master/res/example_rive.gif">
@@ -214,7 +214,7 @@ that supports fancy, user interactive vector animations. For more details see [R
 <br />
 <br />
 ## Examples
-There are various examples available in `thorvg/src/examples`, to help you understand ThorVG APIs.
+There are various examples available in `thorvg/src/examples` to help you understand ThorVG APIs.
 
 To execute these examples, you can build them with the following meson option:
 ```
@@ -235,7 +235,7 @@ and see the rendering result on the spot.
 <br />
 <br />
 ### SVG to PNG
-ThorVG provides an executable `svg2png` converter which generates a PNG file from an SVG file.
+ThorVG provides an executable `svg2png` converter that generates a PNG file from an SVG file.
 
 To use `svg2png`, you must turn on this feature in the build option:
 ```
@@ -257,10 +257,10 @@ Examples:
 <br />
 <br />
 ## API Bindings
-Our main development APIs are written in C++ but ThorVG also provides API bindings for C.
+Our main development APIs are written in C++, but ThorVG also provides API bindings for C.
 
 [Back to contents](#contents)
 <br />
 <br />
 ## Issues or Feature Requests
-For support please reach us in [Gitter](https://gitter.im/thorvg/community).
+For support, please reach us in [Gitter](https://gitter.im/thorvg/community).

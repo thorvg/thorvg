@@ -2,12 +2,10 @@ engine_dep = []
 
 if get_option('engines').contains('sw') == true
     subdir('sw_engine')
-    message('Enable SW Raster Engine')
 endif
 
 if get_option('engines').contains('gl') == true
     subdir('gl_engine')
-    message('Enable GL Raster Engine')
 endif
 
 source_file = [

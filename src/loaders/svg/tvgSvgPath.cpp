@@ -57,10 +57,13 @@ static bool _parseNumber(char** content, float* number)
 
 static bool _parseFlag(char** content, int* number)
 {
+    char* end = NULL;
     if (*(*content) != '0' && *(*content) != '1') return false;
     *number = *(*content) - '0';
-    *content = _skipComma(*content + 1);
-    if (*(*content) == '.') return false;
+    *content += 1;
+    end = *content;
+    if (end && *end == '.') return false;
+    *content = _skipComma(end);
 
     return true;
 }
@@ -204,7 +207,7 @@ void _pathAppendArcTo(Array<PathCommand>* cmds, Array<Point>* pts, Point* cur, P
         float theta2 = theta1 + delta;
         float cosTheta2 = cos(theta2);
         float sinTheta2 = sin(theta2);
-        static Point p[3];
+        Point p[3];
 
         //First control point (based on start point sx,sy)
         c1x = sx - bcp * (cosPhiRx * sinTheta1 + sinPhiRy * cosTheta1);
@@ -283,7 +286,7 @@ static int _numberCount(char cmd)
 }
 
 
-static void _processCommand(Array<PathCommand>* cmds, Array<Point>* pts, char cmd, float* arr, int count, Point* cur, Point* curCtl, Point* startPoint, bool *isQuadratic)
+static bool _processCommand(Array<PathCommand>* cmds, Array<Point>* pts, char cmd, float* arr, int count, Point* cur, Point* curCtl, Point* startPoint, bool *isQuadratic)
 {
     switch (cmd) {
         case 'm':
@@ -446,9 +449,10 @@ static void _processCommand(Array<PathCommand>* cmds, Array<Point>* pts, char cm
             break;
         }
         default: {
-            break;
+            return false;
         }
     }
+    return true;
 }
 
 
@@ -522,7 +526,7 @@ bool svgPathToTvgPath(const char* svgPath, Array<PathCommand>& cmds, Array<Point
     while ((path[0] != '\0')) {
         path = _nextCommand(path, &cmd, numberArray, &numberCount);
         if (!path) break;
-        _processCommand(&cmds, &pts, cmd, numberArray, numberCount, &cur, &curCtl, &startPoint, &isQuadratic);
+        if (!_processCommand(&cmds, &pts, cmd, numberArray, numberCount, &cur, &curCtl, &startPoint, &isQuadratic)) break;
     }
 
     setlocale(LC_NUMERIC, curLocale);

@@ -35,20 +35,18 @@ TEST_CASE("Pushing Paints Into Scene", "[tvgScene]")
 {
     auto scene = Scene::gen();
     REQUIRE(scene);
-    SECTION("Pushing Paints") {
-        REQUIRE(scene->push(move(Shape::gen())) == Result::Success);
-        REQUIRE(scene->push(move(Picture::gen())) == Result::Success);
-        REQUIRE(scene->push(move(Scene::gen())) == Result::Success);
-    }
 
-    SECTION("Pushing Null Pointer") {
-        REQUIRE(scene->push(nullptr) == Result::MemoryCorruption);
-    }
+    //Pushing Paints
+    REQUIRE(scene->push(move(Shape::gen())) == Result::Success);
+    REQUIRE(scene->push(move(Picture::gen())) == Result::Success);
+    REQUIRE(scene->push(move(Scene::gen())) == Result::Success);
 
-    SECTION("Pushing Invalid Object") {
-        std::unique_ptr<Shape> shape = nullptr;
-        REQUIRE(scene->push(move(shape)) == Result::MemoryCorruption);
-    }
+    //Pushing Null Pointer
+    REQUIRE(scene->push(nullptr) == Result::MemoryCorruption);
+
+    //Pushing Invalid Paint
+    std::unique_ptr<Shape> shape = nullptr;
+    REQUIRE(scene->push(move(shape)) == Result::MemoryCorruption);
 }
 
 TEST_CASE("Scene Memory Reservation", "[tvgScene]")
@@ -56,16 +54,14 @@ TEST_CASE("Scene Memory Reservation", "[tvgScene]")
     auto scene = Scene::gen();
     REQUIRE(scene);
 
-    SECTION("Check Growth / Reduction") {
-        REQUIRE(scene->reserve(10) == Result::Success);
-        REQUIRE(scene->reserve(1000) == Result::Success);
-        REQUIRE(scene->reserve(100) == Result::Success);
-        REQUIRE(scene->reserve(0) == Result::Success);
-    }
+    //Check Growth / Reduction
+    REQUIRE(scene->reserve(10) == Result::Success);
+    REQUIRE(scene->reserve(1000) == Result::Success);
+    REQUIRE(scene->reserve(100) == Result::Success);
+    REQUIRE(scene->reserve(0) == Result::Success);
 
-    SECTION("Too Big Size") {
-        REQUIRE(scene->reserve(-1) == Result::FailedAllocation);
-    }
+    //Too Big Size
+    REQUIRE(scene->reserve(-1) == Result::FailedAllocation);
 }
 
 TEST_CASE("Scene Clear", "[tvgScene]")

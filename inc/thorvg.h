@@ -300,17 +300,6 @@ public:
     uint8_t opacity() const noexcept;
 
     /**
-     * @brief Gets the composition target object and the composition method.
-     *
-     * @param[out] target The paint of the target object.
-     *
-     * @return The method used to composite the source object with the target.
-     *
-     * @BETA_API
-     */
-    CompositeMethod composite(const Paint** target) const noexcept;
-
-    /**
      * @brief Const forward iterator-like class enabling the iteration over the children nodes of the given paint.
      *
      * For the Scene-type Paint the children nodes represent the paints pushed into the Scene - the order of the children nodes is the same as the order as they were pushed. For the Picture-type Paint the child node is the read image in one of the supported formats. The Shape-type Paint doesn't have any child nodes.
@@ -354,6 +343,17 @@ public:
      * @BETA_API
      */
     Iterator end() const noexcept;
+
+    /**
+     * @brief Gets the composition target object and the composition method.
+     *
+     * @param[out] target The paint of the target object.
+     *
+     * @return The method used to composite the source object with the target.
+     *
+     * @BETA_API
+     */
+    CompositeMethod composite(const Paint** target) const noexcept;
 
     _TVG_DECLARE_ACCESSOR();
     _TVG_DECALRE_IDENTIFIER();
@@ -844,10 +844,11 @@ public:
      *
      * @retval Result::Success When succeed.
      * @retval Result::FailedAllocation An internal error with a memory allocation for an object to be dashed.
-     * @retval Result::InvalidArguments In case a @c nullptr is passed as the @p dashPattern,
-     *         the given length of the array is less than two or any of the @p dashPattern values is zero or less.
+     * @retval Result::InvalidArguments In case that either @p dashPattern is @c nullptr or @p cnt is zero.
      *
      * @note If any of the dash pattern values is zero, this function has no effect.
+     * @note To reset the stroke dash pattern, pass @c nullptr to @p dashPattern and zero to @p cnt.
+     * @warning @p cnt must be greater than 1 if the dash pattern is valid.
      */
     Result stroke(const float* dashPattern, uint32_t cnt) noexcept;
 
@@ -1032,7 +1033,7 @@ public:
      * @param[in] path A path to the picture file.
      *
      * @retval Result::Success When succeed.
-     * @retval Result::InvalidArguments In case the @p path is empty.
+     * @retval Result::InvalidArguments In case the @p path is invalid.
      * @retval Result::NonSupport When trying to load a file with an unknown extension.
      * @retval Result::Unknown If an error occurs at a later stage.
      *

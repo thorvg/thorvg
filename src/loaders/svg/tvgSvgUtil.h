@@ -23,6 +23,11 @@
 #ifndef _TVG_SVG_UTIL_H_
 #define _TVG_SVG_UTIL_H_
 
+#include "tvgCommon.h"
+
 float svgUtilStrtof(const char *nPtr, char **endPtr);
+
+string svgUtilURLDecode(const char *src);
+string svgUtilBase64Decode(const char *src);
 
 #endif //_TVG_SVG_UTIL_H_

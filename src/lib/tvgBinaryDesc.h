@@ -57,57 +57,57 @@ struct tvgBlock
     #define TVG_BIN_HEADER_DATA_LENGTH 2
 #endif
 
-#define TVG_SCENE_BEGIN_INDICATOR     (TvgIndicator)0xfe
-#define TVG_SHAPE_BEGIN_INDICATOR     (TvgIndicator)0xfd
 #define TVG_PICTURE_BEGIN_INDICATOR   (TvgIndicator)0xfc
+#define TVG_SHAPE_BEGIN_INDICATOR     (TvgIndicator)0xfd
+#define TVG_SCENE_BEGIN_INDICATOR     (TvgIndicator)0xfe
 
 // Paint
-#define TVG_PAINT_OPACITY_INDICATOR          (TvgIndicator)0x10 // Paint opacity
-#define TVG_PAINT_TRANSFORM_MATRIX_INDICATOR (TvgIndicator)0x11 // Paint transformation matrix
-#define TVG_PAINT_CMP_TARGET_INDICATOR       (TvgIndicator)0x12 // Paint composite
+#define TVG_PAINT_OPACITY_INDICATOR          (TvgIndicator)0x10
+#define TVG_PAINT_TRANSFORM_MATRIX_INDICATOR (TvgIndicator)0x11
+#define TVG_PAINT_CMP_TARGET_INDICATOR       (TvgIndicator)0x1
 
-#define TVG_PAINT_CMP_METHOD_INDICATOR     (TvgIndicator)0x20 // Paint composite method
-#define TVG_PAINT_CMP_METHOD_CLIPPATH_FLAG      (TvgFlag)0x01 // CompositeMethod::ClipPath
-#define TVG_PAINT_CMP_METHOD_ALPHAMASK_FLAG     (TvgFlag)0x02 // CompositeMethod::AlphaMask
-#define TVG_PAINT_CMP_METHOD_INV_ALPHAMASK_FLAG (TvgFlag)0x03 // CompositeMethod::InvAlphaMask
+#define TVG_PAINT_CMP_METHOD_INDICATOR     (TvgIndicator)0x20
+#define TVG_PAINT_CMP_METHOD_CLIPPATH_FLAG      (TvgFlag)0x01
+#define TVG_PAINT_CMP_METHOD_ALPHAMASK_FLAG     (TvgFlag)0x02
+#define TVG_PAINT_CMP_METHOD_INV_ALPHAMASK_FLAG (TvgFlag)0x03
 
 // Scene
-#define TVG_SCENE_FLAG_RESERVEDCNT           (TvgIndicator)0x30 // Scene reserved count
+#define TVG_SCENE_FLAG_RESERVEDCNT           (TvgIndicator)0x30
 
 // Shape
-#define TVG_SHAPE_PATH_INDICATOR    (TvgIndicator)0x40 // Shape has path section
-#define TVG_SHAPE_STROKE_INDICATOR  (TvgIndicator)0x41 // Shape has stroke section
-#define TVG_SHAPE_FILL_INDICATOR    (TvgIndicator)0x42 // Shape has fill section
-#define TVG_SHAPE_COLOR_INDICATOR   (TvgIndicator)0x43 // Shape has color
+#define TVG_SHAPE_PATH_INDICATOR    (TvgIndicator)0x40
+#define TVG_SHAPE_STROKE_INDICATOR  (TvgIndicator)0x41
+#define TVG_SHAPE_FILL_INDICATOR    (TvgIndicator)0x42
+#define TVG_SHAPE_COLOR_INDICATOR   (TvgIndicator)0x43
 
-#define TVG_SHAPE_FILLRULE_INDICATOR    (TvgIndicator)0x44 // Shape FillRule
-#define TVG_SHAPE_FILLRULE_WINDING_FLAG      (TvgFlag)0x00 // FillRule::Winding
-#define TVG_SHAPE_FILLRULE_EVENODD_FLAG      (TvgFlag)0x01 // FillRule::EvenOdd
+#define TVG_SHAPE_FILLRULE_INDICATOR    (TvgIndicator)0x44
+#define TVG_SHAPE_FILLRULE_WINDING_FLAG      (TvgFlag)0x00
+#define TVG_SHAPE_FILLRULE_EVENODD_FLAG      (TvgFlag)0x01
 
-#define TVG_SHAPE_STROKE_CAP_INDICATOR  (TvgIndicator)0x50 // Stroke StrokeCap
-#define TVG_SHAPE_STROKE_CAP_SQUARE_FLAG     (TvgFlag)0x00 // StrokeCap::Square
-#define TVG_SHAPE_STROKE_CAP_ROUND_FLAG      (TvgFlag)0x01 // StrokeCap::Round
-#define TVG_SHAPE_STROKE_CAP_BUTT_FLAG       (TvgFlag)0x02 // StrokeCap::Butt
+#define TVG_SHAPE_STROKE_CAP_INDICATOR  (TvgIndicator)0x50
+#define TVG_SHAPE_STROKE_CAP_SQUARE_FLAG     (TvgFlag)0x00
+#define TVG_SHAPE_STROKE_CAP_ROUND_FLAG      (TvgFlag)0x01
+#define TVG_SHAPE_STROKE_CAP_BUTT_FLAG       (TvgFlag)0x02
 
-#define TVG_SHAPE_STROKE_JOIN_INDICATOR (TvgIndicator)0x51 // Stroke StrokeJoin
-#define TVG_SHAPE_STROKE_JOIN_BEVEL_FLAG     (TvgFlag)0x00 // StrokeJoin::Bevel
-#define TVG_SHAPE_STROKE_JOIN_ROUND_FLAG     (TvgFlag)0x01 // StrokeJoin::Round
-#define TVG_SHAPE_STROKE_JOIN_MITER_FLAG     (TvgFlag)0x02 // StrokeJoin::Miter
+#define TVG_SHAPE_STROKE_JOIN_INDICATOR (TvgIndicator)0x51
+#define TVG_SHAPE_STROKE_JOIN_BEVEL_FLAG     (TvgFlag)0x00
+#define TVG_SHAPE_STROKE_JOIN_ROUND_FLAG     (TvgFlag)0x01
+#define TVG_SHAPE_STROKE_JOIN_MITER_FLAG     (TvgFlag)0x02
 
-#define TVG_SHAPE_STROKE_WIDTH_INDICATOR    (TvgIndicator)0x52 // Stroke width
-#define TVG_SHAPE_STROKE_COLOR_INDICATOR    (TvgIndicator)0x53 // Stroke color
-#define TVG_SHAPE_STROKE_FILL_INDICATOR     (TvgIndicator)0x54 // Stroke fill
-#define TVG_SHAPE_STROKE_DASHPTRN_INDICATOR (TvgIndicator)0x55 // Stroke dashed stroke
+#define TVG_SHAPE_STROKE_WIDTH_INDICATOR    (TvgIndicator)0x52
+#define TVG_SHAPE_STROKE_COLOR_INDICATOR    (TvgIndicator)0x53
+#define TVG_SHAPE_STROKE_FILL_INDICATOR     (TvgIndicator)0x54
+#define TVG_SHAPE_STROKE_DASHPTRN_INDICATOR (TvgIndicator)0x55
 
-#define TVG_FILL_LINEAR_GRADIENT_INDICATOR  (TvgIndicator)0x60 // Linear gradient
-#define TVG_FILL_RADIAL_GRADIENT_INDICATOR  (TvgIndicator)0x61 // Radial gradient
-#define TVG_FILL_COLORSTOPS_INDICATOR       (TvgIndicator)0x62 // Gradient color stops
-#define TVG_FILL_FILLSPREAD_INDICATOR       (TvgIndicator)0x63 // Gradient fill spread
-#define TVG_FILL_FILLSPREAD_PAD_FLAG             (TvgFlag)0x00 // FillSpread::Pad
-#define TVG_FILL_FILLSPREAD_REFLECT_FLAG         (TvgFlag)0x01 // FillSpread::Reflect
-#define TVG_FILL_FILLSPREAD_REPEAT_FLAG          (TvgFlag)0x02 // FillSpread::Repeat
+#define TVG_FILL_LINEAR_GRADIENT_INDICATOR  (TvgIndicator)0x60
+#define TVG_FILL_RADIAL_GRADIENT_INDICATOR  (TvgIndicator)0x61
+#define TVG_FILL_COLORSTOPS_INDICATOR       (TvgIndicator)0x62
+#define TVG_FILL_FILLSPREAD_INDICATOR       (TvgIndicator)0x63
+#define TVG_FILL_FILLSPREAD_PAD_FLAG             (TvgFlag)0x00
+#define TVG_FILL_FILLSPREAD_REFLECT_FLAG         (TvgFlag)0x01
+#define TVG_FILL_FILLSPREAD_REPEAT_FLAG          (TvgFlag)0x02
 
 // Picture
-#define TVG_RAW_IMAGE_BEGIN_INDICATOR (TvgIndicator)0x70 // Picture raw data
+#define TVG_RAW_IMAGE_BEGIN_INDICATOR (TvgIndicator)0x70
 
 #endif //_TVG_BINARY_DESC_H_
