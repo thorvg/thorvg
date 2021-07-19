@@ -69,19 +69,19 @@ struct SwShapeTask : SwTask
     {
         if (opacity == 0) return;  //Invisible
 
-        //Valid Stroking?
         uint8_t strokeAlpha = 0;
-        auto strokeWidth = sdata->strokeWidth();
-        if (HALF_STROKE(strokeWidth) > 0) {
-            sdata->strokeColor(nullptr, nullptr, nullptr, &strokeAlpha);
-        }
-        bool visibleStroke = (static_cast<uint32_t>(strokeAlpha * opacity / 255) > 0) || sdata->strokeFill();
+        auto visibleStroke = false;
         bool visibleFill = false;
         auto clipRegion = bbox;
 
-        //invisible shape turned to visible by alpha.
+        if (HALF_STROKE(sdata->strokeWidth()) > 0) {
+            sdata->strokeColor(nullptr, nullptr, nullptr, &strokeAlpha);
+            visibleStroke = sdata->strokeFill() || (static_cast<uint32_t>(strokeAlpha * opacity / 255) > 0);
+        }
+
+        //This checks also for the case, if the invisible shape turned to visible by alpha.
         auto prepareShape = false;
-        if (!shapePrepared(&shape) && ((flags & RenderUpdateFlag::Color) || (opacity > 0))) prepareShape = true;
+        if (!shapePrepared(&shape) && (flags & RenderUpdateFlag::Color)) prepareShape = true;
 
         //Shape
         if (flags & (RenderUpdateFlag::Path | RenderUpdateFlag::Transform) || prepareShape) {
@@ -95,6 +95,10 @@ struct SwShapeTask : SwTask
             }
         }
 
+        //Decide Stroking Composition
+        if (visibleStroke && visibleFill && opacity < 255) cmpStroking = true;
+        else cmpStroking = false;
+
         //Fill
         if (flags & (RenderUpdateFlag::Gradient | RenderUpdateFlag::Transform | RenderUpdateFlag::Color)) {
             if (visibleFill) {
@@ -102,14 +106,13 @@ struct SwShapeTask : SwTask
                    shape outline below stroke could be full covered by stroke drawing.
                    Thus it turns off antialising in that condition.
                    Also, it shouldn't be dash style. */
-                auto antiAlias = (strokeAlpha == 255 && strokeWidth > 2 && sdata->strokeDash(nullptr) == 0) ? false : true;
+                auto antiAlias = (strokeAlpha == 255 && sdata->strokeWidth() > 2 && sdata->strokeDash(nullptr) == 0) ? false : true;
                 if (!shapeGenRle(&shape, sdata, antiAlias, clips.count > 0 ? true : false)) goto err;
             }
-
             if (auto fill = sdata->fill()) {
                 auto ctable = (flags & RenderUpdateFlag::Gradient) ? true : false;
                 if (ctable) shapeResetFill(&shape);
-                if (!shapeGenFillColors(&shape, fill, transform, surface, visibleStroke ? 255 : opacity, ctable)) goto err;
+                if (!shapeGenFillColors(&shape, fill, transform, surface, cmpStroking ? 255 : opacity, ctable)) goto err;
             } else {
                 shapeDelFill(&shape);
             }
@@ -124,7 +127,7 @@ struct SwShapeTask : SwTask
                 if (auto fill = sdata->strokeFill()) {
                     auto ctable = (flags & RenderUpdateFlag::GradientStroke) ? true : false;
                     if (ctable) shapeResetStrokeFill(&shape);
-                    if (!shapeGenStrokeFillColors(&shape, fill, transform, surface, visibleFill ? 255 : opacity, ctable)) goto err;
+                    if (!shapeGenStrokeFillColors(&shape, fill, transform, surface, cmpStroking ? 255 : opacity, ctable)) goto err;
                 } else {
                     shapeDelStrokeFill(&shape);
                 }
@@ -153,8 +156,6 @@ struct SwShapeTask : SwTask
         shapeReset(&shape);
     end:
         shapeDelOutline(&shape, mpool, tid);
-        if (visibleStroke && visibleFill && opacity < 255) cmpStroking = true;
-        else cmpStroking = false;
     }
 
     bool dispose() override
