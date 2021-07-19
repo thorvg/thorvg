@@ -27,7 +27,7 @@
 
 Scene::Scene() : pImpl(new Impl(this))
 {
-    Paint::pImpl->type = PaintType::Scene;
+    _id = PAINT_ID_SCENE;
     Paint::pImpl->method(new PaintMethod<Scene::Impl>(pImpl));
 }
 

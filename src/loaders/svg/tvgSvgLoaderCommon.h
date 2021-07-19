@@ -25,12 +25,14 @@
 #include "tvgCommon.h"
 #include "tvgArray.h"
 
+struct SvgNode;
+struct SvgStyleGradient;
+
 enum class SvgNodeType
 {
     Doc,
     G,
     Defs,
-    //Switch,  //Not support
     Animation,
     Arc,
     Circle,
@@ -48,7 +50,6 @@ enum class SvgNodeType
     Video,
     ClipPath,
     Mask,
-    //Custome_command,   //Not support
     Unknown
 };
 
@@ -62,7 +63,6 @@ enum class SvgLengthType
     Cm,
     In,
 };
-
 
 enum class SvgFillFlags
 {
@@ -91,18 +91,30 @@ enum class SvgGradientType
     Radial
 };
 
-enum class SvgStyleType
+enum class SvgStyleFlags
 {
-    Quality,
-    Fill,
-    ViewportFill,
-    Font,
-    Stroke,
-    SolidColor,
-    Gradient,
-    Transform,
-    Opacity,
-    CompOp
+    Color = 0x01,
+    Fill = 0x02,
+    FillRule = 0x04,
+    FillOpacity = 0x08,
+    Opacity = 0x010,
+    Stroke = 0x20,
+    StrokeWidth = 0x40,
+    StrokeLineJoin = 0x80,
+    StrokeLineCap = 0x100,
+    StrokeOpacity = 0x200,
+    StrokeDashArray = 0x400,
+    Transform = 0x800,
+    ClipPath = 0x1000,
+    Mask = 0x2000,
+    Display = 0x4000
+};
+
+enum class SvgStopStyleFlags
+{
+    StopDefault = 0x0,
+    StopOpacity = 0x01,
+    StopColor = 0x02
 };
 
 enum class SvgFillRule
@@ -119,10 +131,6 @@ enum class SvgParserLengthType
     //In case of, for example, radius of radial gradient
     Other
 };
-
-struct SvgNode;
-struct SvgStyleGradient;
-
 
 struct SvgDocNode
 {
@@ -145,9 +153,6 @@ struct SvgDefsNode
     Array<SvgStyleGradient*> gradients;
 };
 
-struct SvgArcNode
-{
-};
 
 struct SvgEllipseNode
 {
@@ -184,6 +189,12 @@ struct SvgLineNode
     float y2;
 };
 
+struct SvgImageNode
+{
+    float x, y, w, h;
+    string *href;
+};
+
 struct SvgPathNode
 {
     string* path;
@@ -212,29 +223,26 @@ struct SvgRadialGradient
     float r;
 };
 
-struct SvgGradientStop
-{
-    float offset;
-    uint8_t r;
-    uint8_t g;
-    uint8_t b;
-    uint8_t a;
-};
-
 struct SvgComposite
 {
     CompositeMethod method;     //TODO: Currently support either one method
     string *url;
     SvgNode* node;
+    bool applying;              //flag for checking circualr dependency.
+};
+
+struct SvgColor
+{
+    uint8_t r;
+    uint8_t g;
+    uint8_t b;
 };
 
 struct SvgPaint
 {
     SvgStyleGradient* gradient;
     string *url;
-    uint8_t r;
-    uint8_t g;
-    uint8_t b;
+    SvgColor color;
     bool none;
     bool curColor;
 };
@@ -246,16 +254,26 @@ struct SvgDash
 
 struct SvgStyleGradient
 {
-    SvgGradientType type;
-    string *id;
-    string *ref;
-    FillSpread spread;
-    SvgRadialGradient* radial;
-    SvgLinearGradient* linear;
-    Matrix* transform;
-    Array<Fill::ColorStop *> stops;
-    bool userSpace;
-    bool usePercentage;
+    SvgGradientType type = SvgGradientType::Linear;
+    string *id = nullptr;
+    string *ref = nullptr;
+    FillSpread spread = FillSpread::Pad;
+    SvgRadialGradient* radial = nullptr;
+    SvgLinearGradient* linear = nullptr;
+    Matrix* transform = nullptr;
+    Array<Fill::ColorStop> stops;
+    bool userSpace = false;
+    bool usePercentage = false;
+
+    ~SvgStyleGradient()
+    {
+        stops.reset();
+        free(transform);
+        free(radial);
+        free(linear);
+        delete(ref);
+        delete(id);
+    }
 };
 
 struct SvgStyleFill
@@ -263,7 +281,7 @@ struct SvgStyleFill
     SvgFillFlags flags;
     SvgPaint paint;
     int opacity;
-    SvgFillRule fillRule;
+    FillRule fillRule;
 };
 
 struct SvgStyleStroke
@@ -286,9 +304,9 @@ struct SvgStyleProperty
     SvgStyleStroke stroke;
     SvgComposite comp;
     int opacity;
-    uint8_t r;
-    uint8_t g;
-    uint8_t b;
+    SvgColor color;
+    bool curColorSet;
+    SvgStyleFlags flags;
 };
 
 struct SvgNode
@@ -303,7 +321,6 @@ struct SvgNode
         SvgGNode g;
         SvgDocNode doc;
         SvgDefsNode defs;
-        SvgArcNode arc;
         SvgCircleNode circle;
         SvgEllipseNode ellipse;
         SvgPolygonNode polygon;
@@ -311,6 +328,7 @@ struct SvgNode
         SvgRectNode rect;
         SvgPathNode path;
         SvgLineNode line;
+        SvgImageNode image;
     } node;
     bool display;
 };
@@ -319,7 +337,8 @@ struct SvgParser
 {
     SvgNode* node;
     SvgStyleGradient* styleGrad;
-    Fill::ColorStop* gradStop;
+    Fill::ColorStop gradStop;
+    SvgStopStyleFlags flags;
     struct
     {
         int x, y;
@@ -332,6 +351,12 @@ struct SvgParser
     } gradient;
 };
 
+struct SvgNodeIdPair
+{
+    SvgNode* node;
+    string *id;
+};
+
 struct SvgLoaderData
 {
     Array<SvgNode *> stack = {nullptr, 0, 0};
@@ -340,6 +365,7 @@ struct SvgLoaderData
     Array<SvgStyleGradient*> gradients;
     SvgStyleGradient* latestGradient = nullptr; //For stops
     SvgParser* svgParse = nullptr;
+    Array<SvgNodeIdPair> cloneNodes;
     int level = 0;
     bool result = false;
 };

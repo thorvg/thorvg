@@ -4,7 +4,6 @@ cc = meson.get_compiler('cpp')
 if (cc.get_id() != 'msvc')
     if get_option('vectors').contains('avx')
         compiler_flags += ['-mavx']
-        message('Enable Advanced Vector Extension')
     endif
     if get_option('b_sanitize') == 'none'
         compiler_flags += ['-fno-exceptions', '-fno-rtti',
@@ -59,6 +58,5 @@ pkg_mod.generate(
 subdir('bin')
 
 if get_option('examples') == true
-    message('Enable Examples')
     subdir('examples')
 endif

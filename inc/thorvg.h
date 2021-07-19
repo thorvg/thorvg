@@ -266,7 +266,6 @@ public:
      * @param[in] method The method used to composite the source object with the target.
      *
      * @return Result::Success when succeed, Result::InvalidArguments otherwise.
-     *
      */
     Result composite(std::unique_ptr<Paint> target, CompositeMethod method) noexcept;
 
@@ -345,7 +344,19 @@ public:
      */
     Iterator end() const noexcept;
 
+    /**
+     * @brief Gets the composition target object and the composition method.
+     *
+     * @param[out] target The paint of the target object.
+     *
+     * @return The method used to composite the source object with the target.
+     *
+     * @BETA_API
+     */
+    CompositeMethod composite(const Paint** target) const noexcept;
+
     _TVG_DECLARE_ACCESSOR();
+    _TVG_DECALRE_IDENTIFIER();
     _TVG_DECLARE_PRIVATE(Paint);
 };
 
@@ -833,10 +844,11 @@ public:
      *
      * @retval Result::Success When succeed.
      * @retval Result::FailedAllocation An internal error with a memory allocation for an object to be dashed.
-     * @retval Result::InvalidArguments In case a @c nullptr is passed as the @p dashPattern,
-     *         the given length of the array is less than two or any of the @p dashPattern values is zero or less.
+     * @retval Result::InvalidArguments In case that either @p dashPattern is @c nullptr or @p cnt is zero.
      *
      * @note If any of the dash pattern values is zero, this function has no effect.
+     * @note To reset the stroke dash pattern, pass @c nullptr to @p dashPattern and zero to @p cnt.
+     * @warning @p cnt must be greater than 1 if the dash pattern is valid.
      */
     Result stroke(const float* dashPattern, uint32_t cnt) noexcept;
 
@@ -1021,7 +1033,7 @@ public:
      * @param[in] path A path to the picture file.
      *
      * @retval Result::Success When succeed.
-     * @retval Result::InvalidArguments In case the @p path is empty.
+     * @retval Result::InvalidArguments In case the @p path is invalid.
      * @retval Result::NonSupport When trying to load a file with an unknown extension.
      * @retval Result::Unknown If an error occurs at a later stage.
      *

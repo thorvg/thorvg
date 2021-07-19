@@ -4,7 +4,9 @@ test_file = [
    'capiLinearGradient.cpp',
    'capiMain.cpp',
    'capiPaint.cpp',
+   'capiPicture.cpp',
    'capiRadialGradient.cpp',
+   'capiScene.cpp',
    'capiShape.cpp',
    'capiSwCanvas.cpp',
 ]

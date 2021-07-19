@@ -33,6 +33,10 @@
     #include "tvgTvgLoader.h"
 #endif
 
+#ifdef THORVG_JPG_LOADER_SUPPORT
+    #include "tvgJpgLoader.h"
+#endif
+
 #include "tvgRawLoader.h"
 
 /************************************************************************/
@@ -64,6 +68,12 @@ static Loader* _find(FileType type)
 #endif
             break;
         }
+        case FileType::Jpg: {
+#ifdef THORVG_JPG_LOADER_SUPPORT
+            return new JpgLoader;
+#endif
+            break;
+        }
         default: {
             break;
         }
@@ -88,6 +98,10 @@ static Loader* _find(FileType type)
             format = "TVG";
             break;
         }
+        case FileType::Jpg: {
+            format = "JPG";
+            break;
+        }
         default: {
             format = "???";
             break;
@@ -106,6 +120,7 @@ static Loader* _find(const string& path)
     if (!ext.compare("svg")) return _find(FileType::Svg);
     if (!ext.compare("png")) return _find(FileType::Png);
     if (!ext.compare("tvg")) return _find(FileType::Tvg);
+    if (!ext.compare("jpg")) return _find(FileType::Jpg);
     return nullptr;
 }
 
@@ -131,11 +146,14 @@ bool LoaderMgr::term()
 }
 
 
-shared_ptr<Loader> LoaderMgr::loader(const string& path)
+shared_ptr<Loader> LoaderMgr::loader(const string& path, bool* invalid)
 {
+    *invalid = false;
+
     if (auto loader = _find(path)) {
         if (loader->open(path)) return shared_ptr<Loader>(loader);
         else delete(loader);
+        *invalid = true;
     }
     return nullptr;
 }

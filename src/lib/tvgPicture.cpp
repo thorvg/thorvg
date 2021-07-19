@@ -28,7 +28,7 @@
 
 Picture::Picture() : pImpl(new Impl(this))
 {
-    Paint::pImpl->type = PaintType::Picture;
+    _id = PAINT_ID_PICTURE;
     Paint::pImpl->method(new PaintMethod<Picture::Impl>(pImpl));
 }
 
@@ -85,6 +85,7 @@ Result Picture::size(float w, float h) noexcept
 
 Result Picture::size(float* w, float* h) const noexcept
 {
+    if (!pImpl->loader) return Result::InsufficientCondition;
     if (w) *w = pImpl->w;
     if (h) *h = pImpl->h;
     return Result::Success;

@@ -24,6 +24,7 @@
 #include "tvgSvgLoaderCommon.h"
 #include "tvgSvgSceneBuilder.h"
 #include "tvgSvgPath.h"
+#include "tvgSvgUtil.h"
 
 static bool _appendShape(SvgNode* node, Shape* shape, float vx, float vy, float vw, float vh);
 
@@ -38,12 +39,10 @@ static inline bool _isGroupType(SvgNodeType type)
 }
 
 
-static unique_ptr<LinearGradient> _applyLinearGradientProperty(SvgStyleGradient* g, const Shape* vg, float rx, float ry, float rw, float rh)
+static unique_ptr<LinearGradient> _applyLinearGradientProperty(SvgStyleGradient* g, const Shape* vg, float rx, float ry, float rw, float rh, int opacity)
 {
     Fill::ColorStop* stops;
     int stopCount = 0;
-    float fillOpacity = 255.0f;
-
     auto fillGrad = LinearGradient::gen();
 
     if (g->usePercentage) {
@@ -75,14 +74,14 @@ static unique_ptr<LinearGradient> _applyLinearGradientProperty(SvgStyleGradient*
         if (!stops) return fillGrad;
         auto prevOffset = 0.0f;
         for (uint32_t i = 0; i < g->stops.count; ++i) {
-            auto colorStop = g->stops.data[i];
+            auto colorStop = &g->stops.data[i];
             //Use premultiplied color
             stops[i].r = colorStop->r;
             stops[i].g = colorStop->g;
             stops[i].b = colorStop->b;
-            stops[i].a = (colorStop->a * fillOpacity) / 255.0f;
+            stops[i].a = (colorStop->a * opacity) / 255.0f;
             stops[i].offset = colorStop->offset;
-            // check the offset corner cases - refer to: https://svgwg.org/svg2-draft/pservers.html#StopNotes
+            //check the offset corner cases - refer to: https://svgwg.org/svg2-draft/pservers.html#StopNotes
             if (colorStop->offset < prevOffset) stops[i].offset = prevOffset;
             else if (colorStop->offset > 1) stops[i].offset = 1;
             prevOffset = stops[i].offset;
@@ -94,13 +93,11 @@ static unique_ptr<LinearGradient> _applyLinearGradientProperty(SvgStyleGradient*
 }
 
 
-static unique_ptr<RadialGradient> _applyRadialGradientProperty(SvgStyleGradient* g, const Shape* vg, float rx, float ry, float rw, float rh)
+static unique_ptr<RadialGradient> _applyRadialGradientProperty(SvgStyleGradient* g, const Shape* vg, float rx, float ry, float rw, float rh, int opacity)
 {
     Fill::ColorStop *stops;
     int stopCount = 0;
     int radius;
-    float fillOpacity = 255.0f;
-
     auto fillGrad = RadialGradient::gen();
 
     radius = sqrt(pow(rw, 2) + pow(rh, 2)) / sqrt(2.0);
@@ -143,14 +140,14 @@ static unique_ptr<RadialGradient> _applyRadialGradientProperty(SvgStyleGradient*
         if (!stops) return fillGrad;
         auto prevOffset = 0.0f;
         for (uint32_t i = 0; i < g->stops.count; ++i) {
-            auto colorStop = g->stops.data[i];
+            auto colorStop = &g->stops.data[i];
             //Use premultiplied color
             stops[i].r = colorStop->r;
             stops[i].g = colorStop->g;
             stops[i].b = colorStop->b;
-            stops[i].a = (colorStop->a * fillOpacity) / 255.0f;
+            stops[i].a = (colorStop->a * opacity) / 255.0f;
             stops[i].offset = colorStop->offset;
-            // check the offset corner cases - refer to: https://svgwg.org/svg2-draft/pservers.html#StopNotes
+            //check the offset corner cases - refer to: https://svgwg.org/svg2-draft/pservers.html#StopNotes
             if (colorStop->offset < prevOffset) stops[i].offset = prevOffset;
             else if (colorStop->offset > 1) stops[i].offset = 1;
             prevOffset = stops[i].offset;
@@ -183,8 +180,19 @@ static void _applyComposition(Paint* paint, const SvgNode* node, float vx, float
 {
     if (node->style->comp.method == CompositeMethod::None) return;
 
+    /* Do not drop in Circular Dependency.
+       Composition can be applied recursively if its children nodes have composition target to this one. */
+    if (node->style->comp.applying) {
+#ifdef THORVG_LOG_ENABLED
+    printf("SVG: Multiple Composition Tried! Check out Circular dependency?\n");
+#endif
+        return;
+    }
+
     auto compNode = node->style->comp.node;
     if (!compNode || compNode->child.count == 0) return;
+
+    node->style->comp.applying = true;
 
     auto comp = Shape::gen();
     comp->fill(255, 255, 255, 255);
@@ -198,6 +206,8 @@ static void _applyComposition(Paint* paint, const SvgNode* node, float vx, float
     }
 
     if (valid) paint->composite(move(comp), node->style->comp.method);
+
+    node->style->comp.applying = false;
 }
 
 
@@ -215,18 +225,18 @@ static void _applyProperty(SvgNode* node, Shape* vg, float vx, float vy, float v
         if (!style->fill.paint.gradient->userSpace) vg->bounds(&vx, &vy, &vw, &vh);
 
         if (style->fill.paint.gradient->type == SvgGradientType::Linear) {
-             auto linear = _applyLinearGradientProperty(style->fill.paint.gradient, vg, vx, vy, vw, vh);
+             auto linear = _applyLinearGradientProperty(style->fill.paint.gradient, vg, vx, vy, vw, vh, style->fill.opacity);
              vg->fill(move(linear));
         } else if (style->fill.paint.gradient->type == SvgGradientType::Radial) {
-             auto radial = _applyRadialGradientProperty(style->fill.paint.gradient, vg, vx, vy, vw, vh);
+             auto radial = _applyRadialGradientProperty(style->fill.paint.gradient, vg, vx, vy, vw, vh, style->fill.opacity);
              vg->fill(move(radial));
         }
     } else if (style->fill.paint.curColor) {
         //Apply the current style color
-        vg->fill(style->r, style->g, style->b, style->fill.opacity);
+        vg->fill(style->color.r, style->color.g, style->color.b, style->fill.opacity);
     } else {
         //Apply the fill color
-        vg->fill(style->fill.paint.r, style->fill.paint.g, style->fill.paint.b, style->fill.opacity);
+        vg->fill(style->fill.paint.color.r, style->fill.paint.color.g, style->fill.paint.color.b, style->fill.opacity);
     }
 
     //Apply the fill rule
@@ -252,20 +262,20 @@ static void _applyProperty(SvgNode* node, Shape* vg, float vx, float vy, float v
         if (!style->stroke.paint.gradient->userSpace) vg->bounds(&vx, &vy, &vw, &vh);
 
         if (style->stroke.paint.gradient->type == SvgGradientType::Linear) {
-             auto linear = _applyLinearGradientProperty(style->stroke.paint.gradient, vg, vx, vy, vw, vh);
+             auto linear = _applyLinearGradientProperty(style->stroke.paint.gradient, vg, vx, vy, vw, vh, style->stroke.opacity);
              vg->stroke(move(linear));
         } else if (style->stroke.paint.gradient->type == SvgGradientType::Radial) {
-             auto radial = _applyRadialGradientProperty(style->stroke.paint.gradient, vg, vx, vy, vw, vh);
+             auto radial = _applyRadialGradientProperty(style->stroke.paint.gradient, vg, vx, vy, vw, vh, style->stroke.opacity);
              vg->stroke(move(radial));
         }
     } else if (style->stroke.paint.url) {
         //TODO: Apply the color pointed by url
     } else if (style->stroke.paint.curColor) {
         //Apply the current style color
-        vg->stroke(style->r, style->g, style->b, style->stroke.opacity);
+        vg->stroke(style->color.r, style->color.g, style->color.b, style->stroke.opacity);
     } else {
         //Apply the stroke color
-        vg->stroke(style->stroke.paint.r, style->stroke.paint.g, style->stroke.paint.b, style->stroke.opacity);
+        vg->stroke(style->stroke.paint.color.r, style->stroke.paint.color.g, style->stroke.paint.color.b, style->stroke.opacity);
     }
 
     _applyComposition(vg, node, vx, vy, vw, vh);
@@ -338,6 +348,123 @@ static bool _appendShape(SvgNode* node, Shape* shape, float vx, float vy, float 
 }
 
 
+enum class imageMimeTypeEncoding
+{
+    base64 = 0x1,
+    utf8 = 0x2
+};
+constexpr imageMimeTypeEncoding operator|(imageMimeTypeEncoding a, imageMimeTypeEncoding b) {
+    return static_cast<imageMimeTypeEncoding>(static_cast<int>(a) | static_cast<int>(b));
+}
+constexpr bool operator&(imageMimeTypeEncoding a, imageMimeTypeEncoding b) {
+    return (static_cast<int>(a) & static_cast<int>(b));
+}
+
+
+static constexpr struct
+{
+    const char* name;
+    int sz;
+    imageMimeTypeEncoding encoding;
+} imageMimeTypes[] = {
+    {"jpeg", sizeof("jpeg"), imageMimeTypeEncoding::base64},
+    {"png", sizeof("png"), imageMimeTypeEncoding::base64},
+    {"svg+xml", sizeof("svg+xml"), imageMimeTypeEncoding::base64 | imageMimeTypeEncoding::utf8},
+};
+
+
+static bool _isValidImageMimeTypeAndEncoding(const char** href, imageMimeTypeEncoding* encoding) {
+    if (strncmp(*href, "image/", sizeof("image/") - 1)) return false; //not allowed mime type
+    *href += sizeof("image/") - 1;
+
+    //RFC2397 data:[<mediatype>][;base64],<data>
+    //mediatype  := [ type "/" subtype ] *( ";" parameter )
+    //parameter  := attribute "=" value
+    for (unsigned int i = 0; i < sizeof(imageMimeTypes) / sizeof(imageMimeTypes[0]); i++) {
+        if (!strncmp(*href, imageMimeTypes[i].name, imageMimeTypes[i].sz - 1)) {
+            *href += imageMimeTypes[i].sz  - 1;
+
+            while (**href && **href != ',') {
+                while (**href && **href != ';') ++(*href);
+                if (!**href) return false;
+                ++(*href);
+
+                if (imageMimeTypes[i].encoding & imageMimeTypeEncoding::base64) {
+                    if (!strncmp(*href, "base64,", sizeof("base64,") - 1)) {
+                        *href += sizeof("base64,") - 1;
+                        *encoding = imageMimeTypeEncoding::base64;
+                        return true; //valid base64
+                    }
+                }
+                if (imageMimeTypes[i].encoding & imageMimeTypeEncoding::utf8) {
+                    if (!strncmp(*href, "utf8,", sizeof("utf8,") - 1)) {
+                        *href += sizeof("utf8,") - 1;
+                        *encoding = imageMimeTypeEncoding::utf8;
+                        return true; //valid utf8
+                    }
+                }
+            }
+            //no encoding defined
+            if (**href == ',' && (imageMimeTypes[i].encoding & imageMimeTypeEncoding::utf8)) {
+                ++(*href);
+                *encoding = imageMimeTypeEncoding::utf8;
+                return true; //allow no encoding defined if utf8 expected
+            }
+            return false;
+        }
+    }
+    return false;
+}
+
+
+static unique_ptr<Picture> _imageBuildHelper(SvgNode* node, float vx, float vy, float vw, float vh)
+{
+    if (!node->node.image.href) return nullptr;
+    auto picture = Picture::gen();
+
+    const char* href = (*node->node.image.href).c_str();
+    if (!strncmp(href, "data:", sizeof("data:") - 1)) {
+        href += sizeof("data:") - 1;
+        imageMimeTypeEncoding encoding;
+        if (!_isValidImageMimeTypeAndEncoding(&href, &encoding)) return nullptr; //not allowed mime type or encoding
+        if (encoding == imageMimeTypeEncoding::base64) {
+            string decoded = svgUtilBase64Decode(href);
+            if (picture->load(decoded.c_str(), decoded.size(), true) != Result::Success) return nullptr;
+        } else {
+            string decoded = svgUtilURLDecode(href);
+            if (picture->load(decoded.c_str(), decoded.size(), true) != Result::Success) return nullptr;
+        }
+
+    } else {
+        if (!strncmp(href, "file://", sizeof("file://") - 1)) href += sizeof("file://") - 1;
+        //TODO: protect against recursive svg image loading
+        //Temporarily disable embedded svg:
+        const char *dot = strrchr(href, '.');
+        if (dot && !strcmp(dot, ".svg")) {
+#ifdef THORVG_LOG_ENABLED
+            printf("SVG: Embedded svg file is disabled.\n");
+#endif
+            return nullptr;
+        }
+
+        if (picture->load(href) != Result::Success) return nullptr;
+    }
+
+    float x, y, w, h;
+    if (picture->viewbox(&x, &y, &w, &h) == Result::Success && w && h) {
+        auto sx = node->node.image.w / w;
+        auto sy = node->node.image.h / h;
+        auto sxt = x * sx;
+        auto syt = y * sy;
+        Matrix m = {sx, 0, node->node.image.x - sxt, 0, sy, node->node.image.y - syt, 0, 0, 1};
+        picture->transform(m);
+    }
+
+    _applyComposition(picture.get(), node, vx, vy, vw, vh);
+    return picture;
+}
+
+
 static unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, float vx, float vy, float vw, float vh)
 {
     if (_isGroupType(node->type)) {
@@ -349,6 +476,9 @@ static unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, float vx, float 
             for (uint32_t i = 0; i < node->child.count; ++i, ++child) {
                 if (_isGroupType((*child)->type)) {
                     scene->push(_sceneBuildHelper(*child, vx, vy, vw, vh));
+                } else if ((*child)->type == SvgNodeType::Image) {
+                    auto image = _imageBuildHelper(*child, vx, vy, vw, vh);
+                    if (image) scene->push(move(image));
                 } else {
                     auto shape = _shapeBuildHelper(*child, vx, vy, vw, vh);
                     if (shape) scene->push(move(shape));

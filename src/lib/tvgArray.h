@@ -75,7 +75,7 @@ struct Array
     void operator=(const Array& rhs)
     {
         reserve(rhs.count);
-        memcpy(data, rhs.data, sizeof(T) * reserved);
+        if (rhs.count > 0) memcpy(data, rhs.data, sizeof(T) * reserved);
         count = rhs.count;
     }
 
