@@ -37,7 +37,7 @@ TEST_CASE("Load SVG file", "[tvgPicture]")
     REQUIRE(picture->load("invalid.svg") == Result::InvalidArguments);
 
     //Load Svg file
-    REQUIRE(picture->load(EXAMPLE_DIR"/logo.svg") == Result::Success);
+    REQUIRE(picture->load(TEST_DIR"/logo.svg") == Result::Success);
 
     float w, h;
     REQUIRE(picture->size(&w, &h) == Result::Success);
@@ -68,7 +68,7 @@ TEST_CASE("Load RAW Data", "[tvgPicture]")
     auto picture = Picture::gen();
     REQUIRE(picture);
 
-    string path(EXAMPLE_DIR"/rawimage_200x300.raw");
+    string path(TEST_DIR"/rawimage_200x300.raw");
 
     ifstream file(path);
     if (!file.is_open()) return;
@@ -103,7 +103,7 @@ TEST_CASE("Load PNG file from path", "[tvgPicture]")
     //Invalid file
     REQUIRE(picture->load("invalid.png") == Result::InvalidArguments);
 
-    REQUIRE(picture->load(EXAMPLE_DIR"/logo.png") == Result::Success);
+    REQUIRE(picture->load(TEST_DIR"/logo.png") == Result::Success);
 
     float w, h;
     REQUIRE(picture->size(&w, &h) == Result::Success);
@@ -118,7 +118,7 @@ TEST_CASE("Load PNG file from data", "[tvgPicture]")
     REQUIRE(picture);
 
     //Open file
-    ifstream file(EXAMPLE_DIR"/logo.png");
+    ifstream file(TEST_DIR"/logo.png");
     REQUIRE(file.is_open());
     auto size = sizeof(uint32_t) * (1000*1000);
     auto data = (char*)malloc(size);
@@ -144,7 +144,7 @@ TEST_CASE("Load JPG file from path", "[tvgPicture]")
     //Invalid file
     REQUIRE(picture->load("invalid.jpg") == Result::InvalidArguments);
 
-    REQUIRE(picture->load(EXAMPLE_DIR"/logo.jpg") == Result::Success);
+    REQUIRE(picture->load(TEST_DIR"/logo.jpg") == Result::Success);
 
     float w, h;
     REQUIRE(picture->size(&w, &h) == Result::Success);
@@ -159,7 +159,7 @@ TEST_CASE("Load JPG file from data", "[tvgPicture]")
     REQUIRE(picture);
 
     //Open file
-    ifstream file(EXAMPLE_DIR"/logo.jpg");
+    ifstream file(TEST_DIR"/logo.jpg");
     REQUIRE(file.is_open());
     auto size = sizeof(uint32_t) * (1000*1000);
     auto data = (char*)malloc(size);
@@ -185,7 +185,7 @@ TEST_CASE("Picture Size", "[tvgPicture]")
     float w, h;
     REQUIRE(picture->size(&w, &h) == Result::InsufficientCondition);
 
-    REQUIRE(picture->load(EXAMPLE_DIR"/logo.svg") == Result::Success);
+    REQUIRE(picture->load(TEST_DIR"/logo.svg") == Result::Success);
 
     REQUIRE(picture->size(nullptr, nullptr) == Result::Success);
     REQUIRE(picture->size(100, 100) == Result::Success);
@@ -193,7 +193,7 @@ TEST_CASE("Picture Size", "[tvgPicture]")
     REQUIRE(w == 100);
     REQUIRE(h == 100);
 
-    REQUIRE(picture->load(EXAMPLE_DIR"/tiger.svg") == Result::Success);
+    REQUIRE(picture->load(TEST_DIR"/tiger.svg") == Result::Success);
     REQUIRE(picture->size(&w, &h) == Result::Success);
     REQUIRE(picture->size(w, h) == Result::Success);
 }
@@ -211,7 +211,7 @@ TEST_CASE("Load SVG file and render", "[tvgPicture]")
     auto picture = Picture::gen();
     REQUIRE(picture);
 
-    REQUIRE(picture->load(EXAMPLE_DIR"/logo_test.svg") == Result::Success);
+    REQUIRE(picture->load(TEST_DIR"/tag.svg") == Result::Success);
 
     REQUIRE(canvas->push(move(picture)) == Result::Success);
 
@@ -231,7 +231,7 @@ TEST_CASE("Load PNG file and render", "[tvgPicture]")
     auto picture = Picture::gen();
     REQUIRE(picture);
 
-    REQUIRE(picture->load(EXAMPLE_DIR"/logo.png") == Result::Success);
+    REQUIRE(picture->load(TEST_DIR"/logo.png") == Result::Success);
 
     REQUIRE(canvas->push(move(picture)) == Result::Success);
 
@@ -251,7 +251,7 @@ TEST_CASE("Load JPG file and render", "[tvgPicture]")
     auto picture = Picture::gen();
     REQUIRE(picture);
 
-    REQUIRE(picture->load(EXAMPLE_DIR"/logo.jpg") == Result::Success);
+    REQUIRE(picture->load(TEST_DIR"/logo.jpg") == Result::Success);
 
     REQUIRE(canvas->push(move(picture)) == Result::Success);
 
