@@ -76,7 +76,7 @@ bool JpgLoader::open(const string& path)
 
     if (fread(data, size, 1, jpegFile) < 1) goto failure;
 
-    //FIXME: Decompress header here
+    if (tjDecompressHeader3(jpegDecompressor, data, size, &width, &height, &inSubsamp, &inColorspace) < 0) goto failure;
 
     ret = true;
     freeData = true;
@@ -96,6 +96,8 @@ bool JpgLoader::open(const char* data, uint32_t size, bool copy)
 {
     clear();
 
+    if (tjDecompressHeader3(jpegDecompressor, (unsigned char *) data, size, &width, &height, &inSubsamp, &inColorspace) < 0) return false;
+
     if (copy) {
         this->data = (unsigned char *) malloc(size);
         if (!this->data) return false;
@@ -107,19 +109,12 @@ bool JpgLoader::open(const char* data, uint32_t size, bool copy)
 
     this->size = size;
 
-    //FIXME: Decompress header here
-
     return true;
 }
 
 
 bool JpgLoader::read()
 {
-    //decompress header
-    int width, height;
-    int inSubsamp, inColorspace;
-    if (tjDecompressHeader3(jpegDecompressor, data, size, &width, &height, &inSubsamp, &inColorspace) < 0) return false;
-
     if (image) tjFree(image);
     image = (unsigned char *)tjAlloc(width * height * tjPixelSize[TJPF_BGRX]);
     if (!image) return false;

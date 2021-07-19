@@ -47,6 +47,9 @@ private:
     unsigned char *image = nullptr;
     unsigned long size = 0;
     bool freeData = false;
+
+    int width, height;
+    int inSubsamp, inColorspace;
 };
 
 #endif //_TVG_JPG_LOADER_H_
