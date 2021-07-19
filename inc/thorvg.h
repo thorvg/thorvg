@@ -1402,9 +1402,11 @@ public:
      * @retval Result::MemoryCorruption When casting in the internal function implementation failed.
      * @retval Result::Unknown Others.
      *
-     * @BETA_API
      */
-    static Result save(std::unique_ptr<Paint> paint, const std::string& path) noexcept;
+    Result save(std::unique_ptr<Paint> paint, const std::string& path) noexcept;
+    Result sync() noexcept;
+
+    static std::unique_ptr<Saver> gen() noexcept;
 
     _TVG_DECLARE_PRIVATE(Saver);
 };

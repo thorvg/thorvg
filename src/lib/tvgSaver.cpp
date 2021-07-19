@@ -59,3 +59,16 @@ Result Saver::save(std::unique_ptr<Paint> paint, const std::string& path) noexce
     delete p;
     return Result::Unknown;
 }
+
+
+Result Saver::sync() noexcept
+{
+    //TODO:
+    return Result::Success;
+}
+
+
+unique_ptr<Saver> Saver::gen() noexcept
+{
+    return unique_ptr<Saver>(new Saver);
+}
