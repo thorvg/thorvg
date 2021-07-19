@@ -54,7 +54,7 @@ struct LinearGradient::Impl
 
 LinearGradient::LinearGradient():pImpl(new Impl())
 {
-    _id = FILL_ID_LINEAR;
+    _id = TVG_CLASS_ID_LINEAR;
     Fill::pImpl->method(new FillDup<LinearGradient::Impl>(pImpl));
 }
 
