@@ -1104,7 +1104,7 @@ bool rasterGradientShape(SwSurface* surface, SwShape* shape, unsigned id)
 
     //Fast Track
     if (shape->rect) {
-        if (id == FILL_ID_LINEAR) {
+        if (id == TVG_CLASS_ID_LINEAR) {
             if (translucent) return _rasterTranslucentLinearGradientRect(surface, shape->bbox, shape->fill);
             return _rasterOpaqueLinearGradientRect(surface, shape->bbox, shape->fill);
         } else {
@@ -1113,7 +1113,7 @@ bool rasterGradientShape(SwSurface* surface, SwShape* shape, unsigned id)
         }
     } else {
         if (!shape->rle) return false;
-        if (id == FILL_ID_LINEAR) {
+        if (id == TVG_CLASS_ID_LINEAR) {
             if (translucent) return _rasterTranslucentLinearGradientRle(surface, shape->rle, shape->fill);
             return _rasterOpaqueLinearGradientRle(surface, shape->rle, shape->fill);
         } else {
@@ -1170,7 +1170,7 @@ bool rasterGradientStroke(SwSurface* surface, SwShape* shape, unsigned id)
 
     auto translucent = shape->stroke->fill->translucent || (surface->compositor && surface->compositor->method != CompositeMethod::None);
 
-    if (id == FILL_ID_LINEAR) {
+    if (id == TVG_CLASS_ID_LINEAR) {
         if (translucent) return _rasterTranslucentLinearGradientRle(surface, shape->strokeRle, shape->stroke->fill);
         return _rasterOpaqueLinearGradientRle(surface, shape->strokeRle, shape->stroke->fill);
     } else {

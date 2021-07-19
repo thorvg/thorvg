@@ -248,7 +248,7 @@ struct Saver::Impl
         writeMemberIndicator(fillTvgFlag);
         skipInBufferMemberDataSize();
 
-        if (f->id() == FILL_ID_RADIAL) {
+        if (f->id() == TVG_CLASS_ID_RADIAL) {
             float argRadial[3];
             auto radGrad = static_cast<const RadialGradient*>(f);
             if (radGrad->radial(argRadial, argRadial + 1,argRadial + 2) != Result::Success) {
@@ -459,15 +459,15 @@ struct Saver::Impl
         ByteCounter dataByteCnt = 0;
 
         switch (paint->id()) {
-            case PAINT_ID_SHAPE: {
+            case TVG_CLASS_ID_SHAPE: {
                 dataByteCnt += serializeShape(paint);
                 break;
             }
-            case PAINT_ID_SCENE: {
+            case TVG_CLASS_ID_SCENE: {
                 dataByteCnt += serializeScene(paint);
                 break;
             }
-            case PAINT_ID_PICTURE: {
+            case TVG_CLASS_ID_PICTURE: {
                 dataByteCnt += serializePicture(paint);
                 break;
             }

@@ -276,9 +276,9 @@ bool fillGenColorTable(SwFill* fill, const Fill* fdata, const Matrix* transform,
         if (!_updateColorTable(fill, fdata, surface, opacity)) return false;
     }
 
-    if (fdata->id() == FILL_ID_LINEAR) {
+    if (fdata->id() == TVG_CLASS_ID_LINEAR) {
         return _prepareLinear(fill, static_cast<const LinearGradient*>(fdata), transform);
-    } else if (fdata->id() == FILL_ID_RADIAL) {
+    } else if (fdata->id() == TVG_CLASS_ID_RADIAL) {
         return _prepareRadial(fill, static_cast<const RadialGradient*>(fdata), transform);
     }
 
