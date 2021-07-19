@@ -76,8 +76,11 @@ bool JpgLoader::open(const string& path)
 
     if (fread(data, size, 1, jpegFile) < 1) goto failure;
 
-    if (tjDecompressHeader3(jpegDecompressor, data, size, &width, &height, &inSubsamp, &inColorspace) < 0) goto failure;
+    int width, height, subSample, colorSpace;
+    if (tjDecompressHeader3(jpegDecompressor, data, size, &width, &height, &subSample, &colorSpace) < 0) goto failure;
 
+    vw = w = static_cast<float>(width);
+    vh = h = static_cast<float>(height);
     ret = true;
     freeData = true;
 
@@ -96,7 +99,8 @@ bool JpgLoader::open(const char* data, uint32_t size, bool copy)
 {
     clear();
 
-    if (tjDecompressHeader3(jpegDecompressor, (unsigned char *) data, size, &width, &height, &inSubsamp, &inColorspace) < 0) return false;
+    int width, height, subSample, colorSpace;
+    if (tjDecompressHeader3(jpegDecompressor, (unsigned char *) data, size, &width, &height, &subSample, &colorSpace) < 0) return false;
 
     if (copy) {
         this->data = (unsigned char *) malloc(size);
@@ -107,6 +111,8 @@ bool JpgLoader::open(const char* data, uint32_t size, bool copy)
         this->data = (unsigned char *) data;
     }
 
+    vw = w = static_cast<float>(width);
+    vh = h = static_cast<float>(height);
     this->size = size;
 
     return true;
@@ -116,18 +122,15 @@ bool JpgLoader::open(const char* data, uint32_t size, bool copy)
 bool JpgLoader::read()
 {
     if (image) tjFree(image);
-    image = (unsigned char *)tjAlloc(width * height * tjPixelSize[TJPF_BGRX]);
+    image = (unsigned char *)tjAlloc(static_cast<int>(w) * static_cast<int>(h) * tjPixelSize[TJPF_BGRX]);
     if (!image) return false;
 
     //decompress jpg image
-    if (tjDecompress2(jpegDecompressor, data, size, image, width, 0, height, TJPF_BGRX, 0) < 0) {
+    if (tjDecompress2(jpegDecompressor, data, size, image, static_cast<int>(w), 0, static_cast<int>(h), TJPF_BGRX, 0) < 0) {
         tjFree(image);
         image = nullptr;
         return false;
     }
-
-    vw = w = width;
-    vh = h = height;
 
     return true;
 }
