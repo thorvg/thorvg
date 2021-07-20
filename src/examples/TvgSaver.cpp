@@ -20,8 +20,13 @@
  * SOFTWARE.
  */
 
-#include "Common.h"
+#include <iostream>
 #include <fstream>
+#include <thread>
+#include <string.h>
+#include <thorvg.h>
+
+using namespace std;
 
 /************************************************************************/
 /* Drawing Commands                                                     */
@@ -42,10 +47,8 @@ void tvgDrawStar(tvg::Shape* star)
     star->close();
 }
 
-void tvgDrawCmds(tvg::Canvas* canvas)
+void exportTvg()
 {
-    if (!canvas) return;
-
     //prepare the main scene
     auto scene = tvg::Scene::gen();
 
@@ -175,78 +178,13 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     scene->composite(move(mask), tvg::CompositeMethod::InvAlphaMask);
 
     //save the tvg file
-    if (tvg::Saver::save(move(scene), EXAMPLE_DIR"/test.tvg") != tvg::Result::Success) {
+    auto saver = tvg::Saver::gen();
+    if (saver->save(move(scene), EXAMPLE_DIR"/test.tvg") != tvg::Result::Success) {
         cout << "Problem with saving the test.tvg file." << endl;
         return;
     }
 
-    //load the tvg file
-    auto picture = tvg::Picture::gen();
-    if (picture->load(EXAMPLE_DIR"/test.tvg") != tvg::Result::Success) {
-        cout << "Problem with loading the test.tvg file." << endl;
-        return;
-    }
-    canvas->push(move(picture));
-}
-
-
-/************************************************************************/
-/* Sw Engine Test Code                                                  */
-/************************************************************************/
-
-static unique_ptr<tvg::SwCanvas> swCanvas;
-
-void tvgSwTest(uint32_t* buffer)
-{
-    //Create a Canvas
-    swCanvas = tvg::SwCanvas::gen();
-    swCanvas->target(buffer, WIDTH, WIDTH, HEIGHT, tvg::SwCanvas::ARGB8888);
-
-    /* Push the shape into the Canvas drawing list
-       When this shape is into the canvas list, the shape could update & prepare
-       internal data asynchronously for coming rendering.
-       Canvas keeps this shape node unless user call canvas->clear() */
-    tvgDrawCmds(swCanvas.get());
-}
-
-void drawSwView(void* data, Eo* obj)
-{
-    if (swCanvas->draw() == tvg::Result::Success) {
-        swCanvas->sync();
-    }
-}
-
-
-/************************************************************************/
-/* GL Engine Test Code                                                  */
-/************************************************************************/
-
-static unique_ptr<tvg::GlCanvas> glCanvas;
-
-void initGLview(Evas_Object *obj)
-{
-    static constexpr auto BPP = 4;
-
-    //Create a Canvas
-    glCanvas = tvg::GlCanvas::gen();
-    glCanvas->target(nullptr, WIDTH * BPP, WIDTH, HEIGHT);
-
-    /* Push the shape into the Canvas drawing list
-       When this shape is into the canvas list, the shape could update & prepare
-       internal data asynchronously for coming rendering.
-       Canvas keeps this shape node unless user call canvas->clear() */
-    tvgDrawCmds(glCanvas.get());
-}
-
-void drawGLview(Evas_Object *obj)
-{
-    auto gl = elm_glview_gl_api_get(obj);
-    gl->glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    gl->glClear(GL_COLOR_BUFFER_BIT);
-
-    if (glCanvas->draw() == tvg::Result::Success) {
-        glCanvas->sync();
-    }
+    cout << "Successfully exported to test.tvg, Please check the result using PictureTvg!" << endl;
 }
 
 
@@ -275,16 +213,7 @@ int main(int argc, char **argv)
     //Initialize ThorVG Engine
     if (tvg::Initializer::init(tvgEngine, threads) == tvg::Result::Success) {
 
-        elm_init(argc, argv);
-
-        if (tvgEngine == tvg::CanvasEngine::Sw) {
-            createSwView();
-        } else {
-            createGlView();
-        }
-
-        elm_run();
-        elm_shutdown();
+        exportTvg();
 
         //Terminate ThorVG Engine
         tvg::Initializer::term(tvgEngine);
