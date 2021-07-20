@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2021 Samsung Electronics Co., Ltd. All rights reserved.
+ * Copyright (c) 2021 Samsung Electronics Co., Ltd. All rights reserved.
 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,47 +21,22 @@
  */
 
 #include "Common.h"
-#include <fstream>
 
 /************************************************************************/
 /* Drawing Commands                                                     */
 /************************************************************************/
 
+
 void tvgDrawCmds(tvg::Canvas* canvas)
 {
     if (!canvas) return;
 
-    //Load jpg file from path
-    for (int i = 0; i < 5; ++i) {
-        auto picture = tvg::Picture::gen();
-        if (picture->load(EXAMPLE_DIR"/logo.jpg") != tvg::Result::Success) {
-             cout << "JPG is not supported. Did you enable JPG Loader?" << endl;
-             return;
-        }
-        picture->translate(i* 150, i * 150);
-        picture->rotate(30 * i);
-        picture->scale(0.25);
-        if (canvas->push(move(picture)) != tvg::Result::Success) return;
-    }
-
-    //Open file manually
-    ifstream file(EXAMPLE_DIR"/logo.jpg");
-    if (!file.is_open()) return;
-    auto size = sizeof(uint32_t) * (1000*1000);
-    auto data = (char*)malloc(size);
-    if (!data) return;
-    file.read(data, size);
-    file.close();
-
+    //load the tvg file
     auto picture = tvg::Picture::gen();
-    if (picture->load(data, size, true) != tvg::Result::Success) {
-        cout << "Couldnt load JPG file from data." << endl;
+    if (picture->load(EXAMPLE_DIR"/test.tvg") != tvg::Result::Success) {
+        cout << "TVG is not supported. Did you enable TVG Loader?" << endl;
         return;
     }
-
-    free(data);
-    picture->translate(400, 0);
-    picture->scale(0.4);
     canvas->push(move(picture));
 }
 
@@ -163,8 +138,7 @@ int main(int argc, char **argv)
         elm_shutdown();
 
         //Terminate ThorVG Engine
-        tvg::Initializer::term(tvg::CanvasEngine::Sw);
-
+        tvg::Initializer::term(tvgEngine);
 
     } else {
         cout << "engine is not supported" << endl;

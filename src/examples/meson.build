@@ -25,6 +25,7 @@ source_file = [
     'PictureJpg.cpp',
     'PicturePng.cpp',
     'PictureRaw.cpp',
+    'PictureTvg.cpp',
     'RadialGradient.cpp',
     'Scene.cpp',
     'SceneTransform.cpp',
@@ -36,7 +37,7 @@ source_file = [
     'Svg.cpp',
     'Svg2.cpp',
     'Transform.cpp',
-    'Tvg.cpp',
+    'TvgSaver.cpp',
     'Update.cpp',
 ]
 
