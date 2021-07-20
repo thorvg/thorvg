@@ -43,7 +43,9 @@ protected: \
 #define _TVG_DECLARE_ACCESSOR() \
     friend Canvas; \
     friend Scene; \
-    friend Picture
+    friend Picture; \
+    friend Saver;
+
 
 #define _TVG_DECALRE_IDENTIFIER() \
     auto id() const { return _id; } \
@@ -57,6 +59,7 @@ class RenderMethod;
 class Scene;
 class Picture;
 class Canvas;
+class Saver;
 
 /**
  * @defgroup ThorVG ThorVG
@@ -298,51 +301,6 @@ public:
      * @return The opacity value in the range [0 ~ 255], where 0 is completely transparent and 255 is opaque.
      */
     uint8_t opacity() const noexcept;
-
-    /**
-     * @brief Const forward iterator-like class enabling the iteration over the children nodes of the given paint.
-     *
-     * For the Scene-type Paint the children nodes represent the paints pushed into the Scene - the order of the children nodes is the same as the order as they were pushed. For the Picture-type Paint the child node is the read image in one of the supported formats. The Shape-type Paint doesn't have any child nodes.
-     *
-     * @BETA_API
-     */
-    class Iterator
-    {
-        const Paint* parent;
-        const Paint* child;
-
-        public:
-            Iterator (Paint* p = nullptr, Paint* c = nullptr);
-            const Paint& operator*() const;
-            Iterator& operator++();
-            Iterator operator++(int);
-            friend bool operator!=(const Iterator& it1, const Iterator& it2)
-            {
-                return it1.child != it2.child;
-            };
-            friend bool operator==(const Iterator& it1, const Iterator& it2)
-            {
-                return it1.child == it2.child;
-            };
-    };
-
-    /**
-     * @brief Gets the iterator to the first child node.
-     *
-     * @return The iterator pointing to the first element of the children nodes of the given paint object.
-     *
-     * @BETA_API
-     */
-    Iterator begin() const noexcept;
-
-    /**
-     * @brief Gets the iterator to the past-the end child node.
-     *
-     * @return The iterator referring to the past-the-end element of the children nodes of the given paint object.
-     *
-     * @BETA_API
-     */
-    Iterator end() const noexcept;
 
     /**
      * @brief Gets the composition target object and the composition method.

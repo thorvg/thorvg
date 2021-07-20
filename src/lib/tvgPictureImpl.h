@@ -30,6 +30,23 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
+struct PictureIterator : Iterator
+{
+    Paint* paint = nullptr;
+
+    PictureIterator(Paint* p) : paint(p)
+    {
+    }
+
+    const Paint* next() override
+    {
+        auto ret = paint;
+        paint = nullptr;
+        return ret;
+    }
+};
+
+
 struct Picture::Impl
 {
     shared_ptr<Loader> loader = nullptr;
@@ -219,15 +236,10 @@ struct Picture::Impl
         return ret.release();
     }
 
-    Paint::Iterator begin()
+    Iterator* iterator()
     {
         reload();
-        return Paint::Iterator(picture, paint);
-    }
-
-    const Paint* next(const Paint* p)
-    {
-        return nullptr;
+        return new PictureIterator(paint);
     }
 };
 

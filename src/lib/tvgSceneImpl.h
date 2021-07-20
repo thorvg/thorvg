@@ -29,11 +29,26 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
+struct SceneIterator : Iterator
+{
+    Array<Paint*>* paints;
+    uint32_t idx = 0;
+
+    SceneIterator(Array<Paint*>* p) : paints(p)
+    {
+    }
+
+    const Paint* next() override
+    {
+        if (idx >= paints->count) return nullptr;
+        return paints->data[idx++];
+    }
+};
+
 struct Scene::Impl
 {
     Array<Paint*> paints;
-    Scene* scene = nullptr;
-    uint8_t opacity;            //for composition
+    uint8_t opacity;                     //for composition
     RenderMethod* renderer = nullptr;    //keep it for explicit clear
 
     ~Impl()
@@ -41,10 +56,6 @@ struct Scene::Impl
         for (auto paint = paints.data; paint < (paints.data + paints.count); ++paint) {
             delete(*paint);
         }
-    }
-
-    Impl(Scene* s) : scene(s)
-    {
     }
 
     bool dispose(RenderMethod& renderer)
@@ -187,21 +198,9 @@ struct Scene::Impl
         renderer = nullptr;
     }
 
-    Paint::Iterator begin()
+    Iterator* iterator()
     {
-        if (paints.count > 0) return Paint::Iterator(scene, *(paints.data));
-        return Paint::Iterator();
-    }
-
-    const Paint* next(const Paint* p)
-    {
-        for (auto paint = paints.data; paint < (paints.data + paints.count); ++paint) {
-            auto tmp = paint;
-            if (*paint == p && ++tmp < (paints.data + paints.count)) {
-                return *tmp;
-            }
-        }
-        return nullptr;
+        return new SceneIterator(&paints);
     }
 };
 

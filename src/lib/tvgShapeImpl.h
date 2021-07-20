@@ -391,12 +391,7 @@ struct Shape::Impl
         return ret.release();
     }
 
-    Paint::Iterator begin()
-    {
-        return Paint::Iterator();
-    }
-
-    const Paint* next(const Paint* p)
+    Iterator* iterator()
     {
         return nullptr;
     }
