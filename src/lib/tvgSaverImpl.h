@@ -347,12 +347,15 @@ struct Saver::Impl
 
     ByteCounter serializeChildren(const Paint* paint)
     {
-        if (!paint) return 0;
         ByteCounter dataByteCnt = 0;
 
-        for (auto it = paint->begin(); it != paint->end(); ++it) {
-            dataByteCnt += serialize(&(*it));
+        auto it = paint->pImpl->iterator();
+
+        while (auto p = it->next()) {
+            dataByteCnt += serialize(p);
         }
+
+        delete(it);
 
         return dataByteCnt;
     }

@@ -25,7 +25,7 @@
 /* External Class Implementation                                        */
 /************************************************************************/
 
-Scene::Scene() : pImpl(new Impl(this))
+Scene::Scene() : pImpl(new Impl())
 {
     _id = TVG_CLASS_ID_SCENE;
     Paint::pImpl->method(new PaintMethod<Scene::Impl>(pImpl));
