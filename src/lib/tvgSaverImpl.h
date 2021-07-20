@@ -26,7 +26,7 @@
 #include "tvgBinaryDesc.h"
 #include <float.h>
 #include <math.h>
-#include <fstream>
+#include <stdio.h>
 
 struct Saver::Impl
 {
@@ -47,13 +47,14 @@ struct Saver::Impl
         return true;
     }
 
-    bool saveBufferToFile(const std::string& path)
+    bool bufferToFile(const std::string& path)
     {
-        ofstream outFile;
-        outFile.open(path, ios::out | ios::trunc | ios::binary);
-        if (!outFile.is_open()) return false;
-        outFile.write(buffer.data, buffer.count);
-        outFile.close();
+        FILE* fp = fopen(path.c_str(), "w+");
+        if (!fp) return false;
+
+        if (fwrite(buffer.data, sizeof(char), buffer.count, fp) == 0) return false;
+
+        fclose(fp);
 
         return true;
     }
@@ -405,7 +406,7 @@ struct Saver::Impl
 
         if (!writeHeader()) return false;
         if (serialize(paint) == 0) return false;
-        if (!saveBufferToFile(path)) return false;
+        if (!bufferToFile(path)) return false;
 
         return true;
     }
