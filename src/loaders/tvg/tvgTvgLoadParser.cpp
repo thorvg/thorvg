@@ -67,18 +67,6 @@ static bool _readTvgHeader(const char **ptr)
     if (memcmp(*ptr, TVG_BIN_HEADER_VERSION, TVG_BIN_HEADER_VERSION_LENGTH)) return false;
     *ptr += TVG_BIN_HEADER_VERSION_LENGTH;
 
-    //Meta data for proof?
-    uint16_t metaLen;
-    _read_tvg_ui16(&metaLen, *ptr);
-    *ptr += 2;
-
-    //Meta data... Need to replace checksum way.
-    //char metadata[metaLen + 1];
-    //memcpy(metadata, *ptr, metaLen);
-    //metadata[metaLen] = '\0';
-
-    *ptr += metaLen;
-
     return true;
 }
 

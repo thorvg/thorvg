@@ -43,28 +43,19 @@ Saver::~Saver()
 
 Result Saver::save(std::unique_ptr<Paint> paint, const std::string& path) noexcept
 {
-    if (!paint || path.empty()) return Result::InvalidArguments;
-
-    auto saver = unique_ptr<Saver>(new Saver());
-    if (!saver) return Result::FailedAllocation;
-
     auto p = paint.release();
     if (!p) return Result::MemoryCorruption;
 
-    if (saver->pImpl->save(p, path)) {
-        delete p;
-        return Result::Success;
-    }
+    if (this->pImpl->save(p, path)) return Result::Success;
 
-    delete p;
     return Result::Unknown;
 }
 
 
 Result Saver::sync() noexcept
 {
-    //TODO:
-    return Result::Success;
+    if (this->pImpl->sync()) return Result::Success;
+    return Result::Unknown;
 }
 
 

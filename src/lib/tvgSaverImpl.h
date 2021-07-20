@@ -31,35 +31,29 @@
 struct Saver::Impl
 {
     Saver* saver;
+    Paint* paint = nullptr;        //TODO: replace with Array
     char* buffer = nullptr;
     char* pointer = nullptr;
     uint32_t size = 0;
     uint32_t reserved = 0;
 
-
     Impl(Saver* s) : saver(s)
     {
     }
 
-
     ~Impl()
     {
-        clearBuffer();
+        sync();
     }
 
-
-    bool prepareBuffer()
+    bool sync()
     {
-        reserved = TVG_BIN_HEADER_SIGNATURE_LENGTH + TVG_BIN_HEADER_VERSION_LENGTH + TVG_BIN_HEADER_DATA_LENGTH;
-        buffer = static_cast<char*>(malloc(reserved));
-        if (!buffer) {
-            reserved = 0;
-            return false;
-        }
-        pointer = buffer;
+        if (paint) delete(paint);
+
+        clearBuffer();
+
         return true;
     }
-
 
     void resizeBuffer(uint32_t newSize)
     {
@@ -75,7 +69,6 @@ struct Saver::Impl
             pointer = buffer + (pointer - bufferOld);
     }
 
-
     void rewindBuffer(ByteCounter bytesNum)
     {
         if (pointer - bytesNum < buffer) return;
@@ -83,7 +76,6 @@ struct Saver::Impl
         pointer -= bytesNum;
         size -= bytesNum;
     }
-
 
     void clearBuffer()
     {
@@ -93,7 +85,6 @@ struct Saver::Impl
         size = 0;
         reserved = 0;
     }
-
 
     bool saveBufferToFile(const std::string& path)
     {
@@ -106,27 +97,24 @@ struct Saver::Impl
         return true;
     }
 
-
     bool writeHeader()
     {
-        const char *tvg = TVG_BIN_HEADER_SIGNATURE;
-        const char *version = TVG_BIN_HEADER_VERSION;
-        //TODO  - unused header data
-        uint16_t dataByteCnt = 0;
-        ByteCounter headerByteCnt = TVG_BIN_HEADER_SIGNATURE_LENGTH + TVG_BIN_HEADER_VERSION_LENGTH + TVG_BIN_HEADER_DATA_LENGTH;
-        if (size + headerByteCnt > reserved) resizeBuffer(headerByteCnt);
+        reserved = TVG_BIN_HEADER_SIGNATURE_LENGTH + TVG_BIN_HEADER_VERSION_LENGTH;
 
-        memcpy(pointer, tvg, TVG_BIN_HEADER_SIGNATURE_LENGTH);
+        buffer = static_cast<char*>(malloc(reserved));
+        if (!buffer) return false;
+
+        pointer = buffer;
+
+        memcpy(pointer, TVG_BIN_HEADER_SIGNATURE, TVG_BIN_HEADER_SIGNATURE_LENGTH);
         pointer += TVG_BIN_HEADER_SIGNATURE_LENGTH;
-        memcpy(pointer, version, TVG_BIN_HEADER_VERSION_LENGTH);
+        memcpy(pointer, TVG_BIN_HEADER_VERSION, TVG_BIN_HEADER_VERSION_LENGTH);
         pointer += TVG_BIN_HEADER_VERSION_LENGTH;
-        memcpy(pointer, &dataByteCnt, TVG_BIN_HEADER_DATA_LENGTH);
-        pointer += TVG_BIN_HEADER_DATA_LENGTH;
 
-        size += headerByteCnt;
+        size += (TVG_BIN_HEADER_SIGNATURE_LENGTH + TVG_BIN_HEADER_VERSION_LENGTH);
+
         return true;
     }
-
 
     void writeMemberIndicator(TvgIndicator ind)
     {
@@ -137,7 +125,6 @@ struct Saver::Impl
         size += TVG_INDICATOR_SIZE;
     }
 
-
     void writeMemberDataSize(ByteCounter byteCnt)
     {
         if (size + BYTE_COUNTER_SIZE > reserved) resizeBuffer(size + BYTE_COUNTER_SIZE);
@@ -147,12 +134,10 @@ struct Saver::Impl
         size += BYTE_COUNTER_SIZE;
     }
 
-
     void writeMemberDataSizeAt(ByteCounter byteCnt)
     {
         memcpy(pointer - byteCnt - BYTE_COUNTER_SIZE, &byteCnt, BYTE_COUNTER_SIZE);
     }
-
 
     void skipInBufferMemberDataSize()
     {
@@ -160,7 +145,6 @@ struct Saver::Impl
         pointer += BYTE_COUNTER_SIZE;
         size += BYTE_COUNTER_SIZE;
     }
-
 
     ByteCounter writeMemberData(const void* data, ByteCounter byteCnt)
     {
@@ -477,15 +461,18 @@ struct Saver::Impl
     }
 
 
-    bool save(const Paint* paint, const std::string& path)
+    bool save(Paint* paint, const std::string& path)
     {
-        if (!prepareBuffer()) return false;
+        //FIXME: use Array and remove sync() here
+        sync();
+
+        //TODO: Validate path
+
+        this->paint = paint;
+
         if (!writeHeader()) return false;
-
         if (serialize(paint) == 0) return false;
-
         if (!saveBufferToFile(path)) return false;
-        clearBuffer();
 
         return true;
     }

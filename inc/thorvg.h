@@ -1397,7 +1397,7 @@ public:
      * @param[in] path A path to the file, in which the data is to be saved.
      *
      * @retval Result::Success When succeed.
-     * @retval Result::InvalidArguments the @p path is empty or @c nullptr is passed as the @p paint.
+     * @retval Result::InvalidArguments the @p path is invalid.
      * @retval Result::FailedAllocation An internal error with a memory allocation for the Saver object.
      * @retval Result::MemoryCorruption When casting in the internal function implementation failed.
      * @retval Result::Unknown Others.

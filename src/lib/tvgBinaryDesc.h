@@ -43,19 +43,12 @@ struct tvgBlock
     const char* end;
 };
 
-//TODO: replace it when this feature is completed.
-#if 0
-    #define TVG_BIN_HEADER_SIGNATURE "ThorVG"
-    #define TVG_BIN_HEADER_SIGNATURE_LENGTH 6
-    #define TVG_BIN_HEADER_VERSION "000200"
-    #define TVG_BIN_HEADER_VERSION_LENGTH 6
-#else
-    #define TVG_BIN_HEADER_SIGNATURE "TVG"
-    #define TVG_BIN_HEADER_SIGNATURE_LENGTH 3
-    #define TVG_BIN_HEADER_VERSION "000"
-    #define TVG_BIN_HEADER_VERSION_LENGTH 3
-    #define TVG_BIN_HEADER_DATA_LENGTH 2
-#endif
+
+// HEADER
+#define TVG_BIN_HEADER_SIGNATURE "ThorVG"
+#define TVG_BIN_HEADER_SIGNATURE_LENGTH 6
+#define TVG_BIN_HEADER_VERSION "000200"
+#define TVG_BIN_HEADER_VERSION_LENGTH 6
 
 #define TVG_PICTURE_BEGIN_INDICATOR   (TvgIndicator)0xfc
 #define TVG_SHAPE_BEGIN_INDICATOR     (TvgIndicator)0xfd
