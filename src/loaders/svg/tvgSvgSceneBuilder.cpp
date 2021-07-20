@@ -176,69 +176,65 @@ static bool _appendChildShape(SvgNode* node, Shape* shape, float vx, float vy, f
 }
 
 
-static void _applyClipPathComposition(Paint* paint, const SvgNode* node, float vx, float vy, float vw, float vh)
+static void _applyComposition(Paint* paint, const SvgNode* node, float vx, float vy, float vw, float vh)
 {
-    /* Do not drop in Circular Dependency.
+    /* ClipPath */
+    /* Do not drop in Circular Dependency for ClipPath.
        Composition can be applied recursively if its children nodes have composition target to this one. */
     if (node->style->clipPath.applying) {
 #ifdef THORVG_LOG_ENABLED
     printf("SVG: Multiple Composition Tried! Check out Circular dependency?\n");
 #endif
-        return;
+    } else {
+        auto compNode = node->style->clipPath.node;
+        if (compNode && compNode->child.count > 0) {
+            node->style->clipPath.applying = true;
+
+            auto comp = Shape::gen();
+            comp->fill(255, 255, 255, 255);
+            if (node->transform) comp->transform(*node->transform);
+
+            auto child = compNode->child.data;
+            auto valid = false; //Composite only when valid shapes are existed
+
+            for (uint32_t i = 0; i < compNode->child.count; ++i, ++child) {
+                if (_appendChildShape(*child, comp.get(), vx, vy, vw, vh)) valid = true;
+            }
+
+            if (valid) paint->composite(move(comp), CompositeMethod::ClipPath);
+
+            node->style->clipPath.applying = false;
+        }
     }
 
-    auto compNode = node->style->clipPath.node;
-    if (!compNode || compNode->child.count == 0) return;
-
-    node->style->clipPath.applying = true;
-
-    auto comp = Shape::gen();
-    comp->fill(255, 255, 255, 255);
-    if (node->transform) comp->transform(*node->transform);
-
-    auto child = compNode->child.data;
-    auto valid = false; //Composite only when valid shapes are existed
-
-    for (uint32_t i = 0; i < compNode->child.count; ++i, ++child) {
-        if (_appendChildShape(*child, comp.get(), vx, vy, vw, vh)) valid = true;
-    }
-
-    if (valid) paint->composite(move(comp), CompositeMethod::ClipPath);
-
-    node->style->clipPath.applying = false;
-}
-
-
-static void _applyMaskComposition(Paint* paint, const SvgNode* node, float vx, float vy, float vw, float vh)
-{
-    /* Do not drop in Circular Dependency.
+    /* Mask */
+    /* Do not drop in Circular Dependency for Mask.
        Composition can be applied recursively if its children nodes have composition target to this one. */
     if (node->style->mask.applying) {
 #ifdef THORVG_LOG_ENABLED
     printf("SVG: Multiple Composition Tried! Check out Circular dependency?\n");
 #endif
-        return;
+    } else  {
+        auto compNode = node->style->mask.node;
+        if (compNode && compNode->child.count > 0) {
+            node->style->mask.applying = true;
+
+            auto comp = Shape::gen();
+            comp->fill(255, 255, 255, 255);
+            if (node->transform) comp->transform(*node->transform);
+
+            auto child = compNode->child.data;
+            auto valid = false; //Composite only when valid shapes are existed
+
+            for (uint32_t i = 0; i < compNode->child.count; ++i, ++child) {
+                if (_appendChildShape(*child, comp.get(), vx, vy, vw, vh)) valid = true;
+            }
+
+            if (valid) paint->composite(move(comp), CompositeMethod::AlphaMask);
+
+            node->style->mask.applying = false;
+        }
     }
-
-    auto compNode = node->style->mask.node;
-    if (!compNode || compNode->child.count == 0) return;
-
-    node->style->mask.applying = true;
-
-    auto comp = Shape::gen();
-    comp->fill(255, 255, 255, 255);
-    if (node->transform) comp->transform(*node->transform);
-
-    auto child = compNode->child.data;
-    auto valid = false; //Composite only when valid shapes are existed
-
-    for (uint32_t i = 0; i < compNode->child.count; ++i, ++child) {
-        if (_appendChildShape(*child, comp.get(), vx, vy, vw, vh)) valid = true;
-    }
-
-    if (valid) paint->composite(move(comp), CompositeMethod::AlphaMask);
-
-    node->style->mask.applying = false;
 }
 
 
@@ -309,8 +305,7 @@ static void _applyProperty(SvgNode* node, Shape* vg, float vx, float vy, float v
         vg->stroke(style->stroke.paint.color.r, style->stroke.paint.color.g, style->stroke.paint.color.b, style->stroke.opacity);
     }
 
-    _applyClipPathComposition(vg, node, vx, vy, vw, vh);
-    _applyMaskComposition(vg, node, vx, vy, vw, vh);
+    _applyComposition(vg, node, vx, vy, vw, vh);
 }
 
 
@@ -492,8 +487,7 @@ static unique_ptr<Picture> _imageBuildHelper(SvgNode* node, float vx, float vy, 
         picture->transform(m);
     }
 
-    _applyClipPathComposition(picture.get(), node, vx, vy, vw, vh);
-    _applyMaskComposition(picture.get(), node, vx, vy, vw, vh);
+    _applyComposition(picture.get(), node, vx, vy, vw, vh);
     return picture;
 }
 
@@ -517,8 +511,7 @@ static unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, float vx, float 
                     if (shape) scene->push(move(shape));
                 }
             }
-            _applyClipPathComposition(scene.get(), node, vx, vy, vw, vh);
-            _applyMaskComposition(scene.get(), node, vx, vy, vw, vh);
+            _applyComposition(scene.get(), node, vx, vy, vw, vh);
             scene->opacity(node->style->opacity);
         }
         return scene;
