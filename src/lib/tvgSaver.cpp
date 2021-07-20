@@ -30,7 +30,7 @@
 /* External Class Implementation                                        */
 /************************************************************************/
 
-Saver::Saver() : pImpl(new Impl(this))
+Saver::Saver() : pImpl(new Impl())
 {
 }
 

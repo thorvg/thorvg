@@ -30,13 +30,8 @@
 
 struct Saver::Impl
 {
-    Saver* saver;
     Paint* paint = nullptr;        //TODO: replace with Array
     Array<char> buffer;
-
-    Impl(Saver* s) : saver(s)
-    {
-    }
 
     ~Impl()
     {
