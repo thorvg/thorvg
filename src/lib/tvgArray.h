@@ -53,6 +53,16 @@ struct Array
         return true;
     }
 
+    bool grow(uint32_t size)
+    {
+        return reserve(count + size);
+    }
+
+    T* ptr()
+    {
+        return data + count;
+    }
+
     void pop()
     {
         if (count > 0) --count;

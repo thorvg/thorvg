@@ -32,10 +32,7 @@ struct Saver::Impl
 {
     Saver* saver;
     Paint* paint = nullptr;        //TODO: replace with Array
-    char* buffer = nullptr;
-    char* pointer = nullptr;
-    uint32_t size = 0;
-    uint32_t reserved = 0;
+    Array<char> buffer;
 
     Impl(Saver* s) : saver(s)
     {
@@ -50,40 +47,9 @@ struct Saver::Impl
     {
         if (paint) delete(paint);
 
-        clearBuffer();
+        buffer.reset();
 
         return true;
-    }
-
-    void resizeBuffer(uint32_t newSize)
-    {
-        //OPTIMIZE ME: find more optimal alg ? "*2" is not opt when raw/png is used
-        reserved += 100;
-        if (newSize > reserved) reserved = newSize + 100;
-
-        auto bufferOld = buffer;
-
-        buffer = static_cast<char*>(realloc(buffer, reserved));
-
-        if (buffer != bufferOld)
-            pointer = buffer + (pointer - bufferOld);
-    }
-
-    void rewindBuffer(ByteCounter bytesNum)
-    {
-        if (pointer - bytesNum < buffer) return;
-
-        pointer -= bytesNum;
-        size -= bytesNum;
-    }
-
-    void clearBuffer()
-    {
-        if (buffer) free(buffer);
-        buffer = nullptr;
-        pointer = nullptr;
-        size = 0;
-        reserved = 0;
     }
 
     bool saveBufferToFile(const std::string& path)
@@ -91,7 +57,7 @@ struct Saver::Impl
         ofstream outFile;
         outFile.open(path, ios::out | ios::trunc | ios::binary);
         if (!outFile.is_open()) return false;
-        outFile.write(buffer, size);
+        outFile.write(buffer.data, buffer.count);
         outFile.close();
 
         return true;
@@ -99,83 +65,72 @@ struct Saver::Impl
 
     bool writeHeader()
     {
-        reserved = TVG_BIN_HEADER_SIGNATURE_LENGTH + TVG_BIN_HEADER_VERSION_LENGTH;
+        buffer.grow(TVG_BIN_HEADER_SIGNATURE_LENGTH + TVG_BIN_HEADER_VERSION_LENGTH);
 
-        buffer = static_cast<char*>(malloc(reserved));
-        if (!buffer) return false;
+        auto ptr = buffer.ptr();
+        memcpy(ptr, TVG_BIN_HEADER_SIGNATURE, TVG_BIN_HEADER_SIGNATURE_LENGTH);
+        ptr += TVG_BIN_HEADER_SIGNATURE_LENGTH;
+        memcpy(ptr, TVG_BIN_HEADER_VERSION, TVG_BIN_HEADER_VERSION_LENGTH);
+        ptr += TVG_BIN_HEADER_VERSION_LENGTH;
 
-        pointer = buffer;
-
-        memcpy(pointer, TVG_BIN_HEADER_SIGNATURE, TVG_BIN_HEADER_SIGNATURE_LENGTH);
-        pointer += TVG_BIN_HEADER_SIGNATURE_LENGTH;
-        memcpy(pointer, TVG_BIN_HEADER_VERSION, TVG_BIN_HEADER_VERSION_LENGTH);
-        pointer += TVG_BIN_HEADER_VERSION_LENGTH;
-
-        size += (TVG_BIN_HEADER_SIGNATURE_LENGTH + TVG_BIN_HEADER_VERSION_LENGTH);
+        buffer.count += (TVG_BIN_HEADER_SIGNATURE_LENGTH + TVG_BIN_HEADER_VERSION_LENGTH);
 
         return true;
     }
 
     void writeMemberIndicator(TvgIndicator ind)
     {
-        if (size + TVG_INDICATOR_SIZE > reserved) resizeBuffer(size + TVG_INDICATOR_SIZE);
-
-        memcpy(pointer, &ind, TVG_INDICATOR_SIZE);
-        pointer += TVG_INDICATOR_SIZE;
-        size += TVG_INDICATOR_SIZE;
+        buffer.grow(TVG_INDICATOR_SIZE);
+        memcpy(buffer.ptr(), &ind, TVG_INDICATOR_SIZE);
+        buffer.count += TVG_INDICATOR_SIZE;
     }
 
     void writeMemberDataSize(ByteCounter byteCnt)
     {
-        if (size + BYTE_COUNTER_SIZE > reserved) resizeBuffer(size + BYTE_COUNTER_SIZE);
-
-        memcpy(pointer, &byteCnt, BYTE_COUNTER_SIZE);
-        pointer += BYTE_COUNTER_SIZE;
-        size += BYTE_COUNTER_SIZE;
+        buffer.grow(BYTE_COUNTER_SIZE);
+        memcpy(buffer.ptr(), &byteCnt, BYTE_COUNTER_SIZE);
+        buffer.count += BYTE_COUNTER_SIZE;
     }
 
     void writeMemberDataSizeAt(ByteCounter byteCnt)
     {
-        memcpy(pointer - byteCnt - BYTE_COUNTER_SIZE, &byteCnt, BYTE_COUNTER_SIZE);
+        memcpy(buffer.ptr() - byteCnt - BYTE_COUNTER_SIZE, &byteCnt, BYTE_COUNTER_SIZE);
     }
 
     void skipInBufferMemberDataSize()
     {
-        if (size + BYTE_COUNTER_SIZE > reserved) resizeBuffer(size + BYTE_COUNTER_SIZE);
-        pointer += BYTE_COUNTER_SIZE;
-        size += BYTE_COUNTER_SIZE;
+        buffer.grow(BYTE_COUNTER_SIZE);
+        buffer.count += BYTE_COUNTER_SIZE;
     }
 
     ByteCounter writeMemberData(const void* data, ByteCounter byteCnt)
     {
-        if (size + byteCnt > reserved) resizeBuffer(size + byteCnt);
-
-        memcpy(pointer, data, byteCnt);
-        pointer += byteCnt;
-        size += byteCnt;
+        buffer.grow(byteCnt);
+        memcpy(buffer.ptr(), data, byteCnt);
+        buffer.count += byteCnt;
 
         return byteCnt;
     }
-
 
     ByteCounter writeMember(TvgIndicator ind, ByteCounter byteCnt, const void* data)
     {
         ByteCounter blockByteCnt = TVG_INDICATOR_SIZE + BYTE_COUNTER_SIZE + byteCnt;
 
-        if (size + blockByteCnt > reserved) resizeBuffer(size + blockByteCnt);
+        buffer.grow(blockByteCnt);
 
-        memcpy(pointer, &ind, TVG_INDICATOR_SIZE);
-        pointer += TVG_INDICATOR_SIZE;
-        memcpy(pointer, &byteCnt, BYTE_COUNTER_SIZE);
-        pointer += BYTE_COUNTER_SIZE;
-        memcpy(pointer, data, byteCnt);
-        pointer += byteCnt;
+        auto ptr = buffer.ptr();
 
-        size += blockByteCnt;
+        memcpy(ptr, &ind, TVG_INDICATOR_SIZE);
+        ptr += TVG_INDICATOR_SIZE;
+        memcpy(ptr, &byteCnt, BYTE_COUNTER_SIZE);
+        ptr += BYTE_COUNTER_SIZE;
+        memcpy(ptr, data, byteCnt);
+        ptr += byteCnt;
+
+        buffer.count += blockByteCnt;
 
         return blockByteCnt;
     }
-
 
     ByteCounter serializePaint(const Paint* paint)
     {
@@ -202,7 +157,6 @@ struct Saver::Impl
         return paintDataByteCnt;
     }
 
-
     ByteCounter serializeScene(const Paint* paint)
     {
         auto scene = static_cast<const Scene*>(paint);
@@ -221,7 +175,6 @@ struct Saver::Impl
         return TVG_INDICATOR_SIZE + BYTE_COUNTER_SIZE + sceneDataByteCnt;
     }
 
-
     ByteCounter serializeShapeFill(const Fill* f, TvgIndicator fillTvgFlag)
     {
         ByteCounter fillDataByteCnt = 0;
@@ -235,32 +188,24 @@ struct Saver::Impl
         if (f->id() == TVG_CLASS_ID_RADIAL) {
             float argRadial[3];
             auto radGrad = static_cast<const RadialGradient*>(f);
-            if (radGrad->radial(argRadial, argRadial + 1,argRadial + 2) != Result::Success) {
-                rewindBuffer(TVG_FLAG_SIZE + BYTE_COUNTER_SIZE);
-                return 0;
-            }
+            radGrad->radial(argRadial, argRadial + 1,argRadial + 2);
             fillDataByteCnt += writeMember(TVG_FILL_RADIAL_GRADIENT_INDICATOR, sizeof(argRadial), argRadial);
         }
         else {
             float argLinear[4];
             auto linGrad = static_cast<const LinearGradient*>(f);
-            if (linGrad->linear(argLinear, argLinear + 1, argLinear + 2, argLinear + 3) != Result::Success) {
-                rewindBuffer(TVG_FLAG_SIZE + BYTE_COUNTER_SIZE);
-                return 0;
-            }
+            linGrad->linear(argLinear, argLinear + 1, argLinear + 2, argLinear + 3);
             fillDataByteCnt += writeMember(TVG_FILL_LINEAR_GRADIENT_INDICATOR, sizeof(argLinear), argLinear);
         }
 
         auto flag = static_cast<TvgFlag>(f->spread());
         fillDataByteCnt += writeMember(TVG_FILL_FILLSPREAD_INDICATOR, TVG_FLAG_SIZE, &flag);
-
         fillDataByteCnt += writeMember(TVG_FILL_COLORSTOPS_INDICATOR, stopsCnt * sizeof(stops), stops);
 
         writeMemberDataSizeAt(fillDataByteCnt);
 
         return TVG_INDICATOR_SIZE + BYTE_COUNTER_SIZE + fillDataByteCnt;
     }
-
 
     ByteCounter serializeShapeStroke(const Shape* shape)
     {
@@ -305,7 +250,6 @@ struct Saver::Impl
         return TVG_INDICATOR_SIZE + BYTE_COUNTER_SIZE + strokeDataByteCnt;
     }
 
-
     ByteCounter serializeShapePath(const Shape* shape)
     {
         const PathCommand* cmds = nullptr;
@@ -329,7 +273,6 @@ struct Saver::Impl
 
         return TVG_INDICATOR_SIZE + BYTE_COUNTER_SIZE + pathDataByteCnt;
     }
-
 
     ByteCounter serializeShape(const Paint* paint)
     {
@@ -365,7 +308,6 @@ struct Saver::Impl
 
         return TVG_INDICATOR_SIZE + BYTE_COUNTER_SIZE + shapeDataByteCnt;
     }
-
 
     ByteCounter serializePicture(const Paint* paint)
     {
@@ -405,7 +347,6 @@ struct Saver::Impl
         return TVG_INDICATOR_SIZE + BYTE_COUNTER_SIZE + pictureDataByteCnt;
     }
 
-
     ByteCounter serializeComposite(const Paint* cmpTarget, CompositeMethod cmpMethod)
     {
         ByteCounter cmpDataByteCnt = 0;
@@ -423,7 +364,6 @@ struct Saver::Impl
         return TVG_INDICATOR_SIZE + BYTE_COUNTER_SIZE + cmpDataByteCnt;
     }
 
-
     ByteCounter serializeChildren(const Paint* paint)
     {
         if (!paint) return 0;
@@ -435,7 +375,6 @@ struct Saver::Impl
 
         return dataByteCnt;
     }
-
 
     ByteCounter serialize(const Paint* paint)
     {
@@ -459,7 +398,6 @@ struct Saver::Impl
 
         return dataByteCnt;
     }
-
 
     bool save(Paint* paint, const std::string& path)
     {
