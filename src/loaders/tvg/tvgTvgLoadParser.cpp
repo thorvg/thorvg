@@ -39,10 +39,7 @@ struct TvgBinBlock
 #define _read_tvg_ui32(dst, src) memcpy(dst, (src), sizeof(uint32_t))
 #define _read_tvg_float(dst, src) memcpy(dst, (src), sizeof(float))
 
-enum class LoaderResult { Success = 0, InvalidType, SizeCorruption, MemoryCorruption, LogicalCorruption };
-
 static Paint* _parsePaint(TvgBinBlock block);
-
 
 static bool _paintProperty(TvgBinBlock block)
 {
@@ -82,13 +79,13 @@ static bool _readTvgHeader(const char **ptr)
 }
 
 
-static LoaderResult _parseCmpTarget(const char *ptr, const char *end, Paint *paint)
+static bool _parseCmpTarget(const char *ptr, const char *end, Paint *paint)
 {
     auto block = _readBlock(ptr);
-    if (block.end > end) return LoaderResult::SizeCorruption;
+    if (block.end > end) return false;
 
-    if (block.type != TVG_PAINT_CMP_METHOD_INDICATOR) return LoaderResult::LogicalCorruption;
-    if (block.length != sizeof(TvgFlag)) return LoaderResult::SizeCorruption;
+    if (block.type != TVG_PAINT_CMP_METHOD_INDICATOR) return false;
+    if (block.length != sizeof(TvgFlag)) return false;
 
     CompositeMethod cmpMethod;
 
@@ -105,55 +102,55 @@ static LoaderResult _parseCmpTarget(const char *ptr, const char *end, Paint *pai
             cmpMethod = CompositeMethod::InvAlphaMask;
             break;
         }
-        default: return LoaderResult::LogicalCorruption;
+        default: return false;
     }
 
     ptr = block.end;
 
     auto cmpBlock = _readBlock(ptr);
-    if (cmpBlock.end > end) return LoaderResult::SizeCorruption;
+    if (cmpBlock.end > end) return false;
 
     paint->composite(unique_ptr<Paint>(_parsePaint(cmpBlock)), cmpMethod);
 
-    return LoaderResult::Success;
+    return true;
 }
 
 
-static LoaderResult _parsePaintProperty(TvgBinBlock block, Paint *paint)
+static bool _parsePaintProperty(TvgBinBlock block, Paint *paint)
 {
     switch (block.type) {
         case TVG_PAINT_OPACITY_INDICATOR: {
-            if (block.length != sizeof(uint8_t)) return LoaderResult::SizeCorruption;
+            if (block.length != sizeof(uint8_t)) return false;
             paint->opacity(*block.data);
-            return LoaderResult::Success;
+            return true;
         }
         case TVG_PAINT_TRANSFORM_MATRIX_INDICATOR: {
-            if (block.length != sizeof(Matrix)) return LoaderResult::SizeCorruption;
+            if (block.length != sizeof(Matrix)) return false;
             Matrix matrix;
             memcpy(&matrix, block.data, sizeof(Matrix));
-            if (paint->transform(matrix) != Result::Success) return LoaderResult::MemoryCorruption;
-            return LoaderResult::Success;
+            if (paint->transform(matrix) != Result::Success) return false;
+            return true;
         }
         case TVG_PAINT_CMP_TARGET_INDICATOR: {
-            if (block.length < TVG_INDICATOR_SIZE + BYTE_COUNTER_SIZE) return LoaderResult::SizeCorruption;
+            if (block.length < TVG_INDICATOR_SIZE + BYTE_COUNTER_SIZE) return false;
             return _parseCmpTarget(block.data, block.end, paint);
         }
     }
-    return LoaderResult::InvalidType;
+    return false;
 }
 
 
-static LoaderResult _parseScene(TvgBinBlock block, Paint *paint)
+static bool _parseScene(TvgBinBlock block, Paint *paint)
 {
     auto scene = static_cast<Scene*>(paint);
 
     switch (block.type) {
         case TVG_SCENE_FLAG_RESERVEDCNT: {
-            if (block.length != sizeof(uint32_t)) return LoaderResult::SizeCorruption;
+            if (block.length != sizeof(uint32_t)) return false;
             uint32_t reservedCnt;
             _read_tvg_ui32(&reservedCnt, block.data);
             scene->reserve(reservedCnt);
-            return LoaderResult::Success;
+            return true;
         }
     }
 
@@ -161,14 +158,14 @@ static LoaderResult _parseScene(TvgBinBlock block, Paint *paint)
 
     if (auto paint = _parsePaint(block)) {
         scene->push(unique_ptr<Paint>(paint));
-        return LoaderResult::Success;
+        return true;
     }
 
-    return LoaderResult::InvalidType;
+    return false;
 }
 
 
-static LoaderResult _parseShapePath(const char *ptr, const char *end, Shape *shape)
+static bool _parseShapePath(const char *ptr, const char *end, Shape *shape)
 {
     //Shape Path
     uint32_t cmdCnt, ptsCnt;
@@ -182,24 +179,24 @@ static LoaderResult _parseShapePath(const char *ptr, const char *end, Shape *sha
     const Point* pts = (Point*) ptr;
     ptr += sizeof(Point) * ptsCnt;
 
-    if (ptr > end) return LoaderResult::SizeCorruption;
+    if (ptr > end) return false;
 
     shape->appendPath(cmds, cmdCnt, pts, ptsCnt);
-    return LoaderResult::Success;
+    return true;
 }
 
 
-static LoaderResult _parseShapeFill(const char *ptr, const char *end, Fill **fillOutside)
+static bool _parseShapeFill(const char *ptr, const char *end, Fill **fillOutside)
 {
     unique_ptr<Fill> fillGrad;
 
     while (ptr < end) {
         auto block = _readBlock(ptr);
-        if (block.end > end) return LoaderResult::SizeCorruption;
+        if (block.end > end) return false;
 
         switch (block.type) {
             case TVG_FILL_RADIAL_GRADIENT_INDICATOR: {
-                if (block.length != 3 * sizeof(float)) return LoaderResult::SizeCorruption;
+                if (block.length != 3 * sizeof(float)) return false;
 
                 auto ptr = block.data;
                 float x, y, radius;
@@ -216,7 +213,7 @@ static LoaderResult _parseShapeFill(const char *ptr, const char *end, Fill **fil
                 break;
             }
             case TVG_FILL_LINEAR_GRADIENT_INDICATOR: {
-                if (block.length != 4 * sizeof(float)) return LoaderResult::SizeCorruption;
+                if (block.length != 4 * sizeof(float)) return false;
 
                 auto ptr = block.data;
                 float x1, y1, x2, y2;
@@ -235,8 +232,8 @@ static LoaderResult _parseShapeFill(const char *ptr, const char *end, Fill **fil
                 break;
             }
             case TVG_FILL_FILLSPREAD_INDICATOR: {
-                if (!fillGrad) return LoaderResult::LogicalCorruption;
-                if (block.length != sizeof(TvgFlag)) return LoaderResult::SizeCorruption;
+                if (!fillGrad) return false;
+                if (block.length != sizeof(TvgFlag)) return false;
                 switch (*block.data) {
                     case TVG_FILL_FILLSPREAD_PAD_FLAG: {
                         fillGrad->spread(FillSpread::Pad);
@@ -254,10 +251,10 @@ static LoaderResult _parseShapeFill(const char *ptr, const char *end, Fill **fil
                 break;
             }
             case TVG_FILL_COLORSTOPS_INDICATOR: {
-                if (!fillGrad) return LoaderResult::LogicalCorruption;
-                if (block.length == 0 || block.length & 0x07) return LoaderResult::SizeCorruption;
+                if (!fillGrad) return false;
+                if (block.length == 0 || block.length & 0x07) return false;
                 uint32_t stopsCnt = block.length >> 3; // 8 bytes per ColorStop
-                if (stopsCnt > 1023) return LoaderResult::SizeCorruption;
+                if (stopsCnt > 1023) return false;
                 Fill::ColorStop stops[stopsCnt];
                 auto p = block.data;
                 for (uint32_t i = 0; i < stopsCnt; i++, p += 8) {
@@ -274,11 +271,11 @@ static LoaderResult _parseShapeFill(const char *ptr, const char *end, Fill **fil
         ptr = block.end;
     }
     *fillOutside = fillGrad.release();
-    return LoaderResult::Success;
+    return true;
 }
 
 
-static LoaderResult _parseShapeStrokeDashPattern(const char *ptr, const char *end, Shape *shape)
+static bool _parseShapeStrokeDashPattern(const char *ptr, const char *end, Shape *shape)
 {
     uint32_t dashPatternCnt;
     _read_tvg_ui32(&dashPatternCnt, ptr);
@@ -286,22 +283,22 @@ static LoaderResult _parseShapeStrokeDashPattern(const char *ptr, const char *en
     const float* dashPattern = (float*) ptr;
     ptr += sizeof(float) * dashPatternCnt;
 
-    if (ptr > end) return LoaderResult::SizeCorruption;
+    if (ptr > end) return false;
 
     shape->stroke(dashPattern, dashPatternCnt);
-    return LoaderResult::Success;
+    return true;
 }
 
 
-static LoaderResult _parseShapeStroke(const char *ptr, const char *end, Shape *shape)
+static bool _parseShapeStroke(const char *ptr, const char *end, Shape *shape)
 {
     while (ptr < end) {
         auto block = _readBlock(ptr);
-        if (block.end > end) return LoaderResult::SizeCorruption;
+        if (block.end > end) return false;
 
         switch (block.type) {
             case TVG_SHAPE_STROKE_CAP_INDICATOR: {
-                if (block.length != sizeof(TvgFlag)) return LoaderResult::SizeCorruption;
+                if (block.length != sizeof(TvgFlag)) return false;
                 switch (*block.data) {
                     case TVG_SHAPE_STROKE_CAP_SQUARE_FLAG:
                         shape->stroke(StrokeCap::Square);
@@ -316,7 +313,7 @@ static LoaderResult _parseShapeStroke(const char *ptr, const char *end, Shape *s
                 break;
             }
             case TVG_SHAPE_STROKE_JOIN_INDICATOR: {
-                if (block.length != sizeof(TvgFlag)) return LoaderResult::SizeCorruption;
+                if (block.length != sizeof(TvgFlag)) return false;
                 switch (*block.data) {
                     case TVG_SHAPE_STROKE_JOIN_BEVEL_FLAG:
                         shape->stroke(StrokeJoin::Bevel);
@@ -331,65 +328,60 @@ static LoaderResult _parseShapeStroke(const char *ptr, const char *end, Shape *s
                 break;
             }
             case TVG_SHAPE_STROKE_WIDTH_INDICATOR: {
-                if (block.length != sizeof(float)) return LoaderResult::SizeCorruption;
+                if (block.length != sizeof(float)) return false;
                 float width;
                 _read_tvg_float(&width, block.data);
                 shape->stroke(width);
                 break;
             }
             case TVG_SHAPE_STROKE_COLOR_INDICATOR: {
-                if (block.length != 4) return LoaderResult::SizeCorruption;
+                if (block.length != 4) return false;
                 shape->stroke(block.data[0], block.data[1], block.data[2], block.data[3]);
                 break;
             }
             case TVG_SHAPE_STROKE_FILL_INDICATOR: {
                 Fill* fill;
-                auto result = _parseShapeFill(block.data, block.end, &fill);
-                if (result != LoaderResult::Success) return result;
+                if (!_parseShapeFill(block.data, block.end, &fill)) return false;
                 shape->stroke(unique_ptr < Fill > (fill));
                 break;
             }
             case TVG_SHAPE_STROKE_DASHPTRN_INDICATOR: {
-                auto result = _parseShapeStrokeDashPattern(block.data, block.end, shape);
-                if (result != LoaderResult::Success) return result;
+                if (!_parseShapeStrokeDashPattern(block.data, block.end, shape)) return false;
                 break;
             }
         }
         ptr = block.end;
     }
-    return LoaderResult::Success;
+    return true;
 }
 
 
-static LoaderResult _parseShape(TvgBinBlock block, Paint* paint)
+static bool _parseShape(TvgBinBlock block, Paint* paint)
 {
     auto shape = static_cast<Shape*>(paint);
 
     switch (block.type) {
         case TVG_SHAPE_PATH_INDICATOR: {
-            auto result = _parseShapePath(block.data, block.end, shape);
-            if (result != LoaderResult::Success) return result;
+            if (!_parseShapePath(block.data, block.end, shape)) return false;
             break;
         }
         case TVG_SHAPE_STROKE_INDICATOR: {
-            auto result = _parseShapeStroke(block.data, block.end, shape);
-            if (result != LoaderResult::Success) return result;
+            if (!_parseShapeStroke(block.data, block.end, shape)) return false;
             break;
         }
         case TVG_SHAPE_FILL_INDICATOR: {
             Fill* fill;
-            auto result = _parseShapeFill(block.data, block.end, &fill);
-            if (result != LoaderResult::Success) return result;
+            if (!_parseShapeFill(block.data, block.end, &fill)) return false;
             shape->fill(unique_ptr < Fill > (fill));
             break;
         }
         case TVG_SHAPE_COLOR_INDICATOR: {
-            if (block.length != 4) return LoaderResult::SizeCorruption;
+            if (block.length != 4) return false;
             shape->fill(block.data[0], block.data[1], block.data[2], block.data[3]);
             break;
         }
         case TVG_SHAPE_FILLRULE_INDICATOR: {
-            if (block.length != sizeof(TvgFlag)) return LoaderResult::SizeCorruption;
+            if (block.length != sizeof(TvgFlag)) return false;
             switch (*block.data) {
                 case TVG_SHAPE_FILLRULE_WINDING_FLAG:
                     shape->fill(FillRule::Winding);
@@ -402,17 +394,17 @@ static LoaderResult _parseShape(TvgBinBlock block, Paint* paint)
         }
         default: return _parsePaintProperty(block, shape);
     }
-    return LoaderResult::Success;
+    return true;
 }
 
 
-static LoaderResult _parsePicture(TvgBinBlock block, Paint* paint)
+static bool _parsePicture(TvgBinBlock block, Paint* paint)
 {
     auto picture = static_cast<Picture*>(paint);
 
     switch (block.type) {
         case TVG_RAW_IMAGE_BEGIN_INDICATOR: {
-            if (block.length < 2 * sizeof(uint32_t)) return LoaderResult::SizeCorruption;
+            if (block.length < 2 * sizeof(uint32_t)) return false;
 
             auto ptr = block.data;
             uint32_t w, h;
@@ -423,11 +415,10 @@ static LoaderResult _parsePicture(TvgBinBlock block, Paint* paint)
             ptr += sizeof(uint32_t);
 
             auto size = w * h * sizeof(uint32_t);
-            if (block.length != 2 * sizeof(uint32_t) + size) return LoaderResult::SizeCorruption;
+            if (block.length != 2 * sizeof(uint32_t) + size) return false;
 
-            auto pixels = (uint32_t*) ptr;
-            picture->load(pixels, w, h, true);
-            return LoaderResult::Success;
+            picture->load((uint32_t*) ptr, w, h, true);
+            return true;
         }
     }
 
@@ -435,16 +426,16 @@ static LoaderResult _parsePicture(TvgBinBlock block, Paint* paint)
 
     if (auto paint = _parsePaint(block)) {
         picture->paint(unique_ptr<Paint>(paint));
-        return LoaderResult::Success;
+        return true;
     }
 
-    return LoaderResult::InvalidType;
+    return false;
 }
 
 
 static Paint* _parsePaint(TvgBinBlock baseBlock)
 {
-    LoaderResult (*parser)(TvgBinBlock, Paint*);
+    bool (*parser)(TvgBinBlock, Paint*);
     Paint *paint = nullptr;
 
     switch (baseBlock.type) {
@@ -471,8 +462,8 @@ static Paint* _parsePaint(TvgBinBlock baseBlock)
     while (ptr < baseBlock.end) {
         auto block = _readBlock(ptr);
         if (block.end > baseBlock.end) return paint;
-        auto result = parser(block, paint);
-        if (result != LoaderResult::Success && result != LoaderResult::InvalidType) return paint;
+        //TODO: Do we need to clarify an invalid type case from the parsing failure?
+        if (!parser(block, paint)) return paint;
         ptr = block.end;
     }
     return paint;
