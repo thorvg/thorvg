@@ -28,12 +28,23 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
+struct TvgBinBlock
+{
+    TvgIndicator type;
+    ByteCounter length;
+    const char* data;
+    const char* end;
+};
+
+#define _read_tvg_ui32(dst, src) memcpy(dst, (src), sizeof(uint32_t))
+#define _read_tvg_float(dst, src) memcpy(dst, (src), sizeof(float))
+
 enum class LoaderResult { Success = 0, InvalidType, SizeCorruption, MemoryCorruption, LogicalCorruption };
 
-static Paint* _parsePaint(tvgBlock block);
+static Paint* _parsePaint(TvgBinBlock block);
 
 
-static bool _paintProperty(tvgBlock block)
+static bool _paintProperty(TvgBinBlock block)
 {
     switch (block.type) {
         case TVG_PAINT_OPACITY_INDICATOR:
@@ -45,9 +56,9 @@ static bool _paintProperty(tvgBlock block)
 }
 
 
-static tvgBlock _readBlock(const char *ptr)
+static TvgBinBlock _readBlock(const char *ptr)
 {
-    tvgBlock block;
+    TvgBinBlock block;
     block.type = *ptr;
     _read_tvg_ui32(&block.length, ptr + TVG_INDICATOR_SIZE);
     block.data = ptr + TVG_INDICATOR_SIZE + BYTE_COUNTER_SIZE;
@@ -108,7 +119,7 @@ static LoaderResult _parseCmpTarget(const char *ptr, const char *end, Paint *pai
 }
 
 
-static LoaderResult _parsePaintProperty(tvgBlock block, Paint *paint)
+static LoaderResult _parsePaintProperty(TvgBinBlock block, Paint *paint)
 {
     switch (block.type) {
         case TVG_PAINT_OPACITY_INDICATOR: {
@@ -132,7 +143,7 @@ static LoaderResult _parsePaintProperty(tvgBlock block, Paint *paint)
 }
 
 
-static LoaderResult _parseScene(tvgBlock block, Paint *paint)
+static LoaderResult _parseScene(TvgBinBlock block, Paint *paint)
 {
     auto scene = static_cast<Scene*>(paint);
 
@@ -350,7 +361,7 @@ static LoaderResult _parseShapeStroke(const char *ptr, const char *end, Shape *s
 }
 
 
-static LoaderResult _parseShape(tvgBlock block, Paint* paint)
+static LoaderResult _parseShape(TvgBinBlock block, Paint* paint)
 {
     auto shape = static_cast<Shape*>(paint);
 
@@ -395,7 +406,7 @@ static LoaderResult _parseShape(tvgBlock block, Paint* paint)
 }
 
 
-static LoaderResult _parsePicture(tvgBlock block, Paint* paint)
+static LoaderResult _parsePicture(TvgBinBlock block, Paint* paint)
 {
     auto picture = static_cast<Picture*>(paint);
 
@@ -431,9 +442,9 @@ static LoaderResult _parsePicture(tvgBlock block, Paint* paint)
 }
 
 
-static Paint* _parsePaint(tvgBlock baseBlock)
+static Paint* _parsePaint(TvgBinBlock baseBlock)
 {
-    LoaderResult (*parser)(tvgBlock, Paint*);
+    LoaderResult (*parser)(TvgBinBlock, Paint*);
     Paint *paint = nullptr;
 
     switch (baseBlock.type) {

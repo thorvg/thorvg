@@ -22,16 +22,17 @@
 #ifndef _TVG_SAVER_IMPL_H_
 #define _TVG_SAVER_IMPL_H_
 
-#include "tvgPaint.h"
-#include "tvgBinaryDesc.h"
 #include <float.h>
 #include <math.h>
 #include <stdio.h>
+#include "tvgPaint.h"
+#include "tvgBinaryDesc.h"
+
 
 struct Saver::Impl
 {
     Paint* paint = nullptr;        //TODO: replace with Array
-    Array<char> buffer;
+    Array<TvgBinByte> buffer;
 
     ~Impl()
     {
@@ -132,12 +133,12 @@ struct Saver::Impl
     {
         ByteCounter paintDataByteCnt = 0;
 
-        uint8_t opacity = paint->opacity();
+        auto opacity = paint->opacity();
         if (opacity < 255) {
             paintDataByteCnt += writeMember(TVG_PAINT_OPACITY_INDICATOR, sizeof(opacity), &opacity);
         }
 
-        Matrix m = const_cast<Paint*>(paint)->transform();
+        auto m = const_cast<Paint*>(paint)->transform();
         if (fabs(m.e11 - 1) > FLT_EPSILON || fabs(m.e12) > FLT_EPSILON || fabs(m.e13) > FLT_EPSILON ||
             fabs(m.e21) > FLT_EPSILON || fabs(m.e22 - 1) > FLT_EPSILON || fabs(m.e23) > FLT_EPSILON ||
             fabs(m.e31) > FLT_EPSILON || fabs(m.e32) > FLT_EPSILON || fabs(m.e33 - 1) > FLT_EPSILON) {
@@ -153,17 +154,12 @@ struct Saver::Impl
         return paintDataByteCnt;
     }
 
-    ByteCounter serializeScene(const Paint* paint)
+    ByteCounter serializeScene(const Scene* scene)
     {
-        auto scene = static_cast<const Scene*>(paint);
-        if (!scene) return 0;
-
-        ByteCounter sceneDataByteCnt = 0;
-
         writeMemberIndicator(TVG_SCENE_BEGIN_INDICATOR);
         skipInBufferMemberDataSize();
 
-        sceneDataByteCnt += serializeChildren(paint);
+        auto sceneDataByteCnt = serializeChildren(scene);
         sceneDataByteCnt += serializePaint(scene);
 
         writeMemberDataSizeAt(sceneDataByteCnt);
@@ -270,22 +266,15 @@ struct Saver::Impl
         return TVG_INDICATOR_SIZE + BYTE_COUNTER_SIZE + pathDataByteCnt;
     }
 
-    ByteCounter serializeShape(const Paint* paint)
+    ByteCounter serializeShape(const Shape* shape)
     {
-        auto shape = static_cast<const Shape*>(paint);
-        if (!shape) return 0;
-
-        ByteCounter shapeDataByteCnt = 0;
-
         writeMemberIndicator(TVG_SHAPE_BEGIN_INDICATOR);
         skipInBufferMemberDataSize();
 
-        TvgFlag ruleTvgFlag = (shape->fillRule() == FillRule::EvenOdd) ? TVG_SHAPE_FILLRULE_EVENODD_FLAG : TVG_SHAPE_FILLRULE_WINDING_FLAG;
-        shapeDataByteCnt += writeMember(TVG_SHAPE_FILLRULE_INDICATOR, TVG_FLAG_SIZE, &ruleTvgFlag);
+        auto ruleTvgFlag = (shape->fillRule() == FillRule::EvenOdd) ? TVG_SHAPE_FILLRULE_EVENODD_FLAG : TVG_SHAPE_FILLRULE_WINDING_FLAG;
+        auto shapeDataByteCnt = writeMember(TVG_SHAPE_FILLRULE_INDICATOR, TVG_FLAG_SIZE, &ruleTvgFlag);
 
-        if (shape->strokeWidth() > 0) {
-            shapeDataByteCnt += serializeShapeStroke(shape);
-        }
+        if (shape->strokeWidth() > 0) shapeDataByteCnt += serializeShapeStroke(shape);
 
         if (auto fill = shape->fill()) {
             shapeDataByteCnt += serializeShapeFill(fill, TVG_SHAPE_FILL_INDICATOR);
@@ -296,8 +285,6 @@ struct Saver::Impl
         }
 
         shapeDataByteCnt += serializeShapePath(shape);
-
-        shapeDataByteCnt += serializeChildren(paint);
         shapeDataByteCnt += serializePaint(shape);
 
         writeMemberDataSizeAt(shapeDataByteCnt);
@@ -305,10 +292,8 @@ struct Saver::Impl
         return TVG_INDICATOR_SIZE + BYTE_COUNTER_SIZE + shapeDataByteCnt;
     }
 
-    ByteCounter serializePicture(const Paint* paint)
+    ByteCounter serializePicture(const Picture* picture)
     {
-        auto picture = static_cast<const Picture*>(paint);
-        if (!picture) return 0;
         auto pixels = picture->data();
 
         ByteCounter pictureDataByteCnt = 0;
@@ -333,7 +318,7 @@ struct Saver::Impl
             pictureDataByteCnt += writeMemberData(pixels, pixelsByteCnt);
             pictureDataByteCnt += TVG_INDICATOR_SIZE + BYTE_COUNTER_SIZE;
         } else {
-            pictureDataByteCnt += serializeChildren(paint);
+            pictureDataByteCnt += serializeChildren(picture);
         }
 
         pictureDataByteCnt += serializePaint(picture);
@@ -375,24 +360,14 @@ struct Saver::Impl
     ByteCounter serialize(const Paint* paint)
     {
         if (!paint) return 0;
-        ByteCounter dataByteCnt = 0;
 
         switch (paint->id()) {
-            case TVG_CLASS_ID_SHAPE: {
-                dataByteCnt += serializeShape(paint);
-                break;
-            }
-            case TVG_CLASS_ID_SCENE: {
-                dataByteCnt += serializeScene(paint);
-                break;
-            }
-            case TVG_CLASS_ID_PICTURE: {
-                dataByteCnt += serializePicture(paint);
-                break;
-            }
+            case TVG_CLASS_ID_SHAPE: return serializeShape(static_cast<const Shape*>(paint));
+            case TVG_CLASS_ID_SCENE: return serializeScene(static_cast<const Scene*>(paint));
+            case TVG_CLASS_ID_PICTURE: return serializePicture(static_cast<const Picture*>(paint));
         }
 
-        return dataByteCnt;
+        return 0;
     }
 
     bool save(Paint* paint, const std::string& path)
