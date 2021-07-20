@@ -560,6 +560,66 @@ static bool _rasterImage(SwSurface* surface, uint32_t *img, uint32_t w, TVG_UNUS
     return true;
 }
 
+static uint32_t _applyBilinearInterpolation(const uint32_t *img, uint32_t w, uint32_t h, uint32_t rX, uint32_t rY, float fX, float fY)
+{
+    auto dX = fX - rX;
+    auto dY = fY - rY;
+
+    //0.0039f is a condition for the interpolation ratio to be at least 1.
+    if (abs(dX) > 0.0039f && abs(dY) > 0.0039f) {
+        float w1, w2, h1, h2;
+        uint32_t p1, p2, p3, p4;
+        w1 = w2 = dX;
+        h1 = h2 = dY;
+        p1 = p2 = p3 = p4 = 0;
+        if (dX >= 0 && dY >= 0) {
+            w2 = 1.0 - w1;
+            h2 = 1.0 - h1;
+
+            p1 = img[rX + ((rY + 1) * w)];
+            p2 = img[rX + (rY * w)];
+            p3 = img[(rX + 1) + (rY * w)];
+            p4 = img[(rX + 1) + ((rY + 1) * w)];
+        } else if (dX >= 0 && dY < 0) {
+            w2 = 1.0 - w1;
+            h2 *= -1;
+            h1 = 1.0 - h2;
+
+            p1 = img[rX + (rY * w)];
+            p2 = img[rX + ((rY - 1) * w)];
+            p3 = img[(rX + 1) + ((rY - 1) * w)];
+            p4 = img[(rX + 1) + (rY * w)];
+        } else if (dX < 0 && dY < 0) {
+            w2 *= -1;
+            w1 = 1.0 - w2;
+            h2 *= -1;
+            h1 = 1.0 - h2;
+
+            p1 = img[(rX - 1) + (rY * w)];
+            p2 = img[(rX - 1) + ((rY - 1) * w)];
+            p3 = img[rX + ((rY - 1) * w)];
+            p4 = img[rX + (rY * w)];
+        } else if (dX < 0 && dY >= 0) {
+            w2 *= -1;
+            w1 = 1.0 - w2;
+            h2 = 1.0 - h1;
+
+            p1 = img[(rX - 1) + ((rY + 1) * w)];
+            p2 = img[(rX - 1) + (rY * w)];
+            p3 = img[rX + (rY * w)];
+            p4 = img[rX + ((rY + 1) * w)];
+        }
+
+        if (p1 == p2 && p1 == p3 && p1 == p4) {
+            return img[rX + (rY * w)];
+        } else {
+            auto c1 = COLOR_INTERPOLATE(p1, static_cast<uint32_t>(h1 * 255), p2, static_cast<uint32_t>(h2 * 255));
+            auto c2 = COLOR_INTERPOLATE(p4, static_cast<uint32_t>(h1 * 255), p3, static_cast<uint32_t>(h2 * 255));
+            return COLOR_INTERPOLATE(c1, static_cast<uint32_t>(w2 * 255), c2, static_cast<uint32_t>(w1 * 255));
+        }
+    }
+    return img[rX + (rY * w)];
+}
 
 static bool _rasterImage(SwSurface* surface, const uint32_t *img, uint32_t w, uint32_t h, const SwBBox& region, const Matrix* invTransform)
 {
@@ -568,11 +628,22 @@ static bool _rasterImage(SwSurface* surface, const uint32_t *img, uint32_t w, ui
         auto ey1 = y * invTransform->e12 + invTransform->e13;
         auto ey2 = y * invTransform->e22 + invTransform->e23;
         for (auto x = region.min.x; x < region.max.x; ++x, ++dst) {
-            auto rX = static_cast<uint32_t>(roundf(x * invTransform->e11 + ey1));
-            auto rY = static_cast<uint32_t>(roundf(x * invTransform->e21 + ey2));
+            auto fX = x * invTransform->e11 + ey1;
+            auto fY = x * invTransform->e21 + ey2;
+            auto rX = static_cast<uint32_t>(roundf(fX));
+            auto rY = static_cast<uint32_t>(roundf(fY));
+            uint32_t src = 0;
+
             if (rX >= w || rY >= h) continue;
-            auto src = img[rX + (rY * w)];    //TODO: need to use image's stride
+            //Bilinear interpolation is not suitable for scale down cases.
+            //(https://stackoverflow.com/questions/64841719/how-bilinear-interpolation-works-when-down-scaling)
+            if (rX == 0 || rY == 0 || rX == w - 1 || rY == h - 1 || invTransform->e11 < 0 || invTransform->e22 < 0) {
+                src = img[rX + (rY * w)];
+            } else {
+                src = _applyBilinearInterpolation(img, w, h, rX, rY, fX, fY);
+            }
             *dst = src + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(src));
+
         }
     }
     return true;
