@@ -28,6 +28,8 @@
 #include "tvgPaint.h"
 #include "tvgBinaryDesc.h"
 
+#define SIZE(A) sizeof(A)
+
 
 struct Saver::Impl
 {
@@ -62,45 +64,45 @@ struct Saver::Impl
 
     bool writeHeader()
     {
-        buffer.grow(TVG_BIN_HEADER_SIGNATURE_LENGTH + TVG_BIN_HEADER_VERSION_LENGTH);
+        buffer.grow(TVG_HEADER_SIGNATURE_LENGTH + TVG_HEADER_VERSION_LENGTH);
 
         auto ptr = buffer.ptr();
-        memcpy(ptr, TVG_BIN_HEADER_SIGNATURE, TVG_BIN_HEADER_SIGNATURE_LENGTH);
-        ptr += TVG_BIN_HEADER_SIGNATURE_LENGTH;
-        memcpy(ptr, TVG_BIN_HEADER_VERSION, TVG_BIN_HEADER_VERSION_LENGTH);
-        ptr += TVG_BIN_HEADER_VERSION_LENGTH;
+        memcpy(ptr, TVG_HEADER_SIGNATURE, TVG_HEADER_SIGNATURE_LENGTH);
+        ptr += TVG_HEADER_SIGNATURE_LENGTH;
+        memcpy(ptr, TVG_HEADER_VERSION, TVG_HEADER_VERSION_LENGTH);
+        ptr += TVG_HEADER_VERSION_LENGTH;
 
-        buffer.count += (TVG_BIN_HEADER_SIGNATURE_LENGTH + TVG_BIN_HEADER_VERSION_LENGTH);
+        buffer.count += (TVG_HEADER_SIGNATURE_LENGTH + TVG_HEADER_VERSION_LENGTH);
 
         return true;
     }
 
-    void writeMemberIndicator(TvgIndicator ind)
+    void writeMemberIndicator(TvgBinTag ind)
     {
-        buffer.grow(TVG_INDICATOR_SIZE);
-        memcpy(buffer.ptr(), &ind, TVG_INDICATOR_SIZE);
-        buffer.count += TVG_INDICATOR_SIZE;
+        buffer.grow(SIZE(TvgBinTag));
+        memcpy(buffer.ptr(), &ind, SIZE(TvgBinTag));
+        buffer.count += SIZE(TvgBinTag);
     }
 
-    void writeMemberDataSize(ByteCounter byteCnt)
+    void writeMemberDataSize(TvgBinCounter byteCnt)
     {
-        buffer.grow(BYTE_COUNTER_SIZE);
-        memcpy(buffer.ptr(), &byteCnt, BYTE_COUNTER_SIZE);
-        buffer.count += BYTE_COUNTER_SIZE;
+        buffer.grow(SIZE(TvgBinCounter));
+        memcpy(buffer.ptr(), &byteCnt, SIZE(TvgBinCounter));
+        buffer.count += SIZE(TvgBinCounter);
     }
 
-    void writeMemberDataSizeAt(ByteCounter byteCnt)
+    void writeMemberDataSizeAt(TvgBinCounter byteCnt)
     {
-        memcpy(buffer.ptr() - byteCnt - BYTE_COUNTER_SIZE, &byteCnt, BYTE_COUNTER_SIZE);
+        memcpy(buffer.ptr() - byteCnt - SIZE(TvgBinCounter), &byteCnt, SIZE(TvgBinCounter));
     }
 
     void skipInBufferMemberDataSize()
     {
-        buffer.grow(BYTE_COUNTER_SIZE);
-        buffer.count += BYTE_COUNTER_SIZE;
+        buffer.grow(SIZE(TvgBinCounter));
+        buffer.count += SIZE(TvgBinCounter);
     }
 
-    ByteCounter writeMemberData(const void* data, ByteCounter byteCnt)
+    TvgBinCounter writeMemberData(const void* data, TvgBinCounter byteCnt)
     {
         buffer.grow(byteCnt);
         memcpy(buffer.ptr(), data, byteCnt);
@@ -109,18 +111,18 @@ struct Saver::Impl
         return byteCnt;
     }
 
-    ByteCounter writeMember(TvgIndicator ind, ByteCounter byteCnt, const void* data)
+    TvgBinCounter writeMember(TvgBinTag ind, TvgBinCounter byteCnt, const void* data)
     {
-        ByteCounter blockByteCnt = TVG_INDICATOR_SIZE + BYTE_COUNTER_SIZE + byteCnt;
+        TvgBinCounter blockByteCnt = SIZE(TvgBinTag) + SIZE(TvgBinCounter) + byteCnt;
 
         buffer.grow(blockByteCnt);
 
         auto ptr = buffer.ptr();
 
-        memcpy(ptr, &ind, TVG_INDICATOR_SIZE);
-        ptr += TVG_INDICATOR_SIZE;
-        memcpy(ptr, &byteCnt, BYTE_COUNTER_SIZE);
-        ptr += BYTE_COUNTER_SIZE;
+        memcpy(ptr, &ind, SIZE(TvgBinTag));
+        ptr += SIZE(TvgBinTag);
+        memcpy(ptr, &byteCnt, SIZE(TvgBinCounter));
+        ptr += SIZE(TvgBinCounter);
         memcpy(ptr, data, byteCnt);
         ptr += byteCnt;
 
@@ -129,20 +131,20 @@ struct Saver::Impl
         return blockByteCnt;
     }
 
-    ByteCounter serializePaint(const Paint* paint)
+    TvgBinCounter serializePaint(const Paint* paint)
     {
-        ByteCounter paintDataByteCnt = 0;
+        TvgBinCounter paintDataByteCnt = 0;
 
         auto opacity = paint->opacity();
         if (opacity < 255) {
-            paintDataByteCnt += writeMember(TVG_PAINT_OPACITY_INDICATOR, sizeof(opacity), &opacity);
+            paintDataByteCnt += writeMember(TVG_TAG_PAINT_OPACITY, sizeof(opacity), &opacity);
         }
 
         auto m = const_cast<Paint*>(paint)->transform();
         if (fabs(m.e11 - 1) > FLT_EPSILON || fabs(m.e12) > FLT_EPSILON || fabs(m.e13) > FLT_EPSILON ||
             fabs(m.e21) > FLT_EPSILON || fabs(m.e22 - 1) > FLT_EPSILON || fabs(m.e23) > FLT_EPSILON ||
             fabs(m.e31) > FLT_EPSILON || fabs(m.e32) > FLT_EPSILON || fabs(m.e33 - 1) > FLT_EPSILON) {
-            paintDataByteCnt += writeMember(TVG_PAINT_TRANSFORM_MATRIX_INDICATOR, sizeof(m), &m);
+            paintDataByteCnt += writeMember(TVG_TAG_PAINT_TRANSFORM, sizeof(m), &m);
         }
 
         const Paint* cmpTarget = nullptr;
@@ -154,9 +156,9 @@ struct Saver::Impl
         return paintDataByteCnt;
     }
 
-    ByteCounter serializeScene(const Scene* scene)
+    TvgBinCounter serialize(const Scene* scene)
     {
-        writeMemberIndicator(TVG_SCENE_BEGIN_INDICATOR);
+        writeMemberIndicator(TVG_TAG_CLASS_SCENE);
         skipInBufferMemberDataSize();
 
         auto sceneDataByteCnt = serializeChildren(scene);
@@ -164,85 +166,85 @@ struct Saver::Impl
 
         writeMemberDataSizeAt(sceneDataByteCnt);
 
-        return TVG_INDICATOR_SIZE + BYTE_COUNTER_SIZE + sceneDataByteCnt;
+        return SIZE(TvgBinTag) + SIZE(TvgBinCounter) + sceneDataByteCnt;
     }
 
-    ByteCounter serializeShapeFill(const Fill* f, TvgIndicator fillTvgFlag)
+    TvgBinCounter serializeShapeFill(const Fill* f, TvgBinTag fillTvgBinFlag)
     {
-        ByteCounter fillDataByteCnt = 0;
+        TvgBinCounter fillDataByteCnt = 0;
         const Fill::ColorStop* stops = nullptr;
         auto stopsCnt = f->colorStops(&stops);
         if (!stops || stopsCnt == 0) return 0;
 
-        writeMemberIndicator(fillTvgFlag);
+        writeMemberIndicator(fillTvgBinFlag);
         skipInBufferMemberDataSize();
 
         if (f->id() == TVG_CLASS_ID_RADIAL) {
             float argRadial[3];
             auto radGrad = static_cast<const RadialGradient*>(f);
             radGrad->radial(argRadial, argRadial + 1,argRadial + 2);
-            fillDataByteCnt += writeMember(TVG_FILL_RADIAL_GRADIENT_INDICATOR, sizeof(argRadial), argRadial);
+            fillDataByteCnt += writeMember(TVG_TAG_FILL_RADIAL_GRADIENT, sizeof(argRadial), argRadial);
         }
         else {
             float argLinear[4];
             auto linGrad = static_cast<const LinearGradient*>(f);
             linGrad->linear(argLinear, argLinear + 1, argLinear + 2, argLinear + 3);
-            fillDataByteCnt += writeMember(TVG_FILL_LINEAR_GRADIENT_INDICATOR, sizeof(argLinear), argLinear);
+            fillDataByteCnt += writeMember(TVG_TAG_FILL_LINEAR_GRADIENT, sizeof(argLinear), argLinear);
         }
 
-        auto flag = static_cast<TvgFlag>(f->spread());
-        fillDataByteCnt += writeMember(TVG_FILL_FILLSPREAD_INDICATOR, TVG_FLAG_SIZE, &flag);
-        fillDataByteCnt += writeMember(TVG_FILL_COLORSTOPS_INDICATOR, stopsCnt * sizeof(stops), stops);
+        auto flag = static_cast<TvgBinFlag>(f->spread());
+        fillDataByteCnt += writeMember(TVG_TAG_FILL_FILLSPREAD, SIZE(TvgBinFlag), &flag);
+        fillDataByteCnt += writeMember(TVG_TAG_FILL_COLORSTOPS, stopsCnt * sizeof(stops), stops);
 
         writeMemberDataSizeAt(fillDataByteCnt);
 
-        return TVG_INDICATOR_SIZE + BYTE_COUNTER_SIZE + fillDataByteCnt;
+        return SIZE(TvgBinTag) + SIZE(TvgBinCounter) + fillDataByteCnt;
     }
 
-    ByteCounter serializeShapeStroke(const Shape* shape)
+    TvgBinCounter serializeShapeStroke(const Shape* shape)
     {
-        ByteCounter strokeDataByteCnt = 0;
-        TvgFlag flag;
+        TvgBinCounter strokeDataByteCnt = 0;
+        TvgBinFlag flag;
 
-        writeMemberIndicator(TVG_SHAPE_STROKE_INDICATOR);
+        writeMemberIndicator(TVG_TAG_SHAPE_STROKE);
         skipInBufferMemberDataSize();
 
-        flag = static_cast<TvgFlag>(shape->strokeCap());
-        strokeDataByteCnt += writeMember(TVG_SHAPE_STROKE_CAP_INDICATOR, TVG_FLAG_SIZE, &flag);
+        flag = static_cast<TvgBinFlag>(shape->strokeCap());
+        strokeDataByteCnt += writeMember(TVG_TAG_SHAPE_STROKE_CAP, SIZE(TvgBinFlag), &flag);
 
-        flag = static_cast<TvgFlag>(shape->strokeJoin());
-        strokeDataByteCnt += writeMember(TVG_SHAPE_STROKE_JOIN_INDICATOR, TVG_FLAG_SIZE, &flag);
+        flag = static_cast<TvgBinFlag>(shape->strokeJoin());
+        strokeDataByteCnt += writeMember(TVG_TAG_SHAPE_STROKE_JOIN, SIZE(TvgBinFlag), &flag);
 
         float width = shape->strokeWidth();
-        strokeDataByteCnt += writeMember(TVG_SHAPE_STROKE_WIDTH_INDICATOR, sizeof(width), &width);
+        strokeDataByteCnt += writeMember(TVG_TAG_SHAPE_STROKE_WIDTH, sizeof(width), &width);
 
         if (auto fill = shape->strokeFill()) {
-            strokeDataByteCnt += serializeShapeFill(fill, TVG_SHAPE_STROKE_FILL_INDICATOR);
+            strokeDataByteCnt += serializeShapeFill(fill, TVG_TAG_SHAPE_STROKE_FILL);
         } else {
             uint8_t color[4] = {0, 0, 0, 0};
             shape->strokeColor(color, color + 1, color + 2, color + 3);
-            strokeDataByteCnt += writeMember(TVG_SHAPE_STROKE_COLOR_INDICATOR, sizeof(color), &color);
+            strokeDataByteCnt += writeMember(TVG_TAG_SHAPE_STROKE_COLOR, sizeof(color), &color);
         }
 
         const float* dashPattern = nullptr;
         uint32_t dashCnt = shape->strokeDash(&dashPattern);
         if (dashPattern && dashCnt > 0) {
-            ByteCounter dashCntByteCnt = sizeof(dashCnt);
-            ByteCounter dashPtrnByteCnt = dashCnt * sizeof(dashPattern[0]);
+            TvgBinCounter dashCntByteCnt = sizeof(dashCnt);
+            TvgBinCounter dashPtrnByteCnt = dashCnt * sizeof(dashPattern[0]);
 
-            writeMemberIndicator(TVG_SHAPE_STROKE_DASHPTRN_INDICATOR);
+            writeMemberIndicator(TVG_TAG_SHAPE_STROKE_DASHPTRN);
             writeMemberDataSize(dashCntByteCnt + dashPtrnByteCnt);
             strokeDataByteCnt += writeMemberData(&dashCnt, dashCntByteCnt);
             strokeDataByteCnt += writeMemberData(dashPattern, dashPtrnByteCnt);
-            strokeDataByteCnt += TVG_INDICATOR_SIZE + BYTE_COUNTER_SIZE;
+            strokeDataByteCnt += SIZE(TvgBinTag) + SIZE(TvgBinCounter);
         }
 
         writeMemberDataSizeAt(strokeDataByteCnt);
 
-        return TVG_INDICATOR_SIZE + BYTE_COUNTER_SIZE + strokeDataByteCnt;
+        return SIZE(TvgBinTag) + SIZE(TvgBinCounter) + strokeDataByteCnt;
     }
 
-    ByteCounter serializeShapePath(const Shape* shape)
+    TvgBinCounter serializeShapePath(const Shape* shape)
     {
         const PathCommand* cmds = nullptr;
         uint32_t cmdCnt = shape->pathCommands(&cmds);
@@ -251,9 +253,9 @@ struct Saver::Impl
 
         if (!cmds || !pts || !cmdCnt || !ptsCnt) return 0;
 
-        ByteCounter pathDataByteCnt = 0;
+        TvgBinCounter pathDataByteCnt = 0;
 
-        writeMemberIndicator(TVG_SHAPE_PATH_INDICATOR);
+        writeMemberIndicator(TVG_TAG_SHAPE_PATH);
         skipInBufferMemberDataSize();
 
         pathDataByteCnt += writeMemberData(&cmdCnt, sizeof(cmdCnt));
@@ -263,25 +265,25 @@ struct Saver::Impl
 
         writeMemberDataSizeAt(pathDataByteCnt);
 
-        return TVG_INDICATOR_SIZE + BYTE_COUNTER_SIZE + pathDataByteCnt;
+        return SIZE(TvgBinTag) + SIZE(TvgBinCounter) + pathDataByteCnt;
     }
 
-    ByteCounter serializeShape(const Shape* shape)
+    TvgBinCounter serialize(const Shape* shape)
     {
-        writeMemberIndicator(TVG_SHAPE_BEGIN_INDICATOR);
+        writeMemberIndicator(TVG_TAG_CLASS_SHAPE);
         skipInBufferMemberDataSize();
 
-        auto ruleTvgFlag = (shape->fillRule() == FillRule::EvenOdd) ? TVG_SHAPE_FILLRULE_EVENODD_FLAG : TVG_SHAPE_FILLRULE_WINDING_FLAG;
-        auto shapeDataByteCnt = writeMember(TVG_SHAPE_FILLRULE_INDICATOR, TVG_FLAG_SIZE, &ruleTvgFlag);
+        auto ruleTvgBinFlag = (shape->fillRule() == FillRule::EvenOdd) ? TVG_FLAG_SHAPE_FILLRULE_EVENODD : TVG_FLAG_SHAPE_FILLRULE_WINDING;
+        auto shapeDataByteCnt = writeMember(TVG_TAG_SHAPE_FILLRULE, SIZE(TvgBinFlag), &ruleTvgBinFlag);
 
         if (shape->strokeWidth() > 0) shapeDataByteCnt += serializeShapeStroke(shape);
 
         if (auto fill = shape->fill()) {
-            shapeDataByteCnt += serializeShapeFill(fill, TVG_SHAPE_FILL_INDICATOR);
+            shapeDataByteCnt += serializeShapeFill(fill, TVG_TAG_SHAPE_FILL);
         } else {
             uint8_t color[4] = {0, 0, 0, 0};
             shape->fillColor(color, color + 1, color + 2, color + 3);
-            shapeDataByteCnt += writeMember(TVG_SHAPE_COLOR_INDICATOR, sizeof(color), color);
+            shapeDataByteCnt += writeMember(TVG_TAG_SHAPE_COLOR, sizeof(color), color);
         }
 
         shapeDataByteCnt += serializeShapePath(shape);
@@ -289,16 +291,16 @@ struct Saver::Impl
 
         writeMemberDataSizeAt(shapeDataByteCnt);
 
-        return TVG_INDICATOR_SIZE + BYTE_COUNTER_SIZE + shapeDataByteCnt;
+        return SIZE(TvgBinTag) + SIZE(TvgBinCounter) + shapeDataByteCnt;
     }
 
-    ByteCounter serializePicture(const Picture* picture)
+    TvgBinCounter serialize(const Picture* picture)
     {
         auto pixels = picture->data();
 
-        ByteCounter pictureDataByteCnt = 0;
+        TvgBinCounter pictureDataByteCnt = 0;
 
-        writeMemberIndicator(TVG_PICTURE_BEGIN_INDICATOR);
+        writeMemberIndicator(TVG_TAG_CLASS_PICTURE);
         skipInBufferMemberDataSize();
 
         if (pixels) {
@@ -308,15 +310,15 @@ struct Saver::Impl
 
             uint32_t w = static_cast<uint32_t>(vw);
             uint32_t h = static_cast<uint32_t>(vh);
-            ByteCounter wByteCnt = sizeof(w); // same as h size
-            ByteCounter pixelsByteCnt = w * h * sizeof(pixels[0]);
+            TvgBinCounter wByteCnt = sizeof(w); // same as h size
+            TvgBinCounter pixelsByteCnt = w * h * sizeof(pixels[0]);
 
-            writeMemberIndicator(TVG_RAW_IMAGE_BEGIN_INDICATOR);
+            writeMemberIndicator(TVG_TAG_PICTURE_RAW_IMAGE);
             writeMemberDataSize(2 * wByteCnt + pixelsByteCnt);
             pictureDataByteCnt += writeMemberData(&w, wByteCnt);
             pictureDataByteCnt += writeMemberData(&h, wByteCnt);
             pictureDataByteCnt += writeMemberData(pixels, pixelsByteCnt);
-            pictureDataByteCnt += TVG_INDICATOR_SIZE + BYTE_COUNTER_SIZE;
+            pictureDataByteCnt += SIZE(TvgBinTag) + SIZE(TvgBinCounter);
         } else {
             pictureDataByteCnt += serializeChildren(picture);
         }
@@ -325,29 +327,29 @@ struct Saver::Impl
 
         writeMemberDataSizeAt(pictureDataByteCnt);
 
-        return TVG_INDICATOR_SIZE + BYTE_COUNTER_SIZE + pictureDataByteCnt;
+        return SIZE(TvgBinTag) + SIZE(TvgBinCounter) + pictureDataByteCnt;
     }
 
-    ByteCounter serializeComposite(const Paint* cmpTarget, CompositeMethod cmpMethod)
+    TvgBinCounter serializeComposite(const Paint* cmpTarget, CompositeMethod cmpMethod)
     {
-        ByteCounter cmpDataByteCnt = 0;
+        TvgBinCounter cmpDataByteCnt = 0;
 
-        writeMemberIndicator(TVG_PAINT_CMP_TARGET_INDICATOR);
+        writeMemberIndicator(TVG_TAG_PAINT_CMP_TARGET);
         skipInBufferMemberDataSize();
 
-        auto cmpMethodTvgFlag = static_cast<TvgFlag>(cmpMethod);
-        cmpDataByteCnt += writeMember(TVG_PAINT_CMP_METHOD_INDICATOR, TVG_FLAG_SIZE, &cmpMethodTvgFlag);
+        auto cmpMethodTvgBinFlag = static_cast<TvgBinFlag>(cmpMethod);
+        cmpDataByteCnt += writeMember(TVG_TAG_PAINT_CMP_METHOD, SIZE(TvgBinFlag), &cmpMethodTvgBinFlag);
 
         cmpDataByteCnt += serialize(cmpTarget);
 
         writeMemberDataSizeAt(cmpDataByteCnt);
 
-        return TVG_INDICATOR_SIZE + BYTE_COUNTER_SIZE + cmpDataByteCnt;
+        return SIZE(TvgBinTag) + SIZE(TvgBinCounter) + cmpDataByteCnt;
     }
 
-    ByteCounter serializeChildren(const Paint* paint)
+    TvgBinCounter serializeChildren(const Paint* paint)
     {
-        ByteCounter dataByteCnt = 0;
+        TvgBinCounter dataByteCnt = 0;
 
         auto it = paint->pImpl->iterator();
 
@@ -360,14 +362,14 @@ struct Saver::Impl
         return dataByteCnt;
     }
 
-    ByteCounter serialize(const Paint* paint)
+    TvgBinCounter serialize(const Paint* paint)
     {
         if (!paint) return 0;
 
         switch (paint->id()) {
-            case TVG_CLASS_ID_SHAPE: return serializeShape(static_cast<const Shape*>(paint));
-            case TVG_CLASS_ID_SCENE: return serializeScene(static_cast<const Scene*>(paint));
-            case TVG_CLASS_ID_PICTURE: return serializePicture(static_cast<const Picture*>(paint));
+            case TVG_CLASS_ID_SHAPE: return serialize(static_cast<const Shape*>(paint));
+            case TVG_CLASS_ID_SCENE: return serialize(static_cast<const Scene*>(paint));
+            case TVG_CLASS_ID_PICTURE: return serialize(static_cast<const Picture*>(paint));
         }
 
         return 0;
