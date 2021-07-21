@@ -27,6 +27,8 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
+
+
 static inline bool FLT_SAME(float a, float b)
 {
     return (fabsf(a - b) < FLT_EPSILON);

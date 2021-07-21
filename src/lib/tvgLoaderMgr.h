@@ -24,8 +24,6 @@
 
 #include "tvgLoader.h"
 
-enum class FileType { Tvg = 0, Svg, Raw, Png, Jpg, Unknown };
-
 struct LoaderMgr
 {
     static bool init();

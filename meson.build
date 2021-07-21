@@ -34,6 +34,10 @@ if get_option('loaders').contains('jpg') == true
     config_h.set10('THORVG_JPG_LOADER_SUPPORT', true)
 endif
 
+if get_option('savers').contains('tvg') == true
+    config_h.set10('THORVG_TVG_SAVER_SUPPORT', true)
+endif
+
 if get_option('vectors').contains('avx') == true
     config_h.set10('THORVG_AVX_VECTOR_SUPPORT', true)
 endif
@@ -73,11 +77,12 @@ Summary:
     Loader (SVG):          @7@
     Loader (PNG):          @8@
     Loader (JPG):          @9@
-    CAPI Binding:          @10@
-    Log Message:           @11@
-    Tests:                 @12@
-    Examples:              @13@
-    Tool (Svg2Png):        @14@
+    Saver (TVG):           @10@
+    CAPI Binding:          @11@
+    Log Message:           @12@
+    Tests:                 @13@
+    Examples:              @14@
+    Tool (Svg2Png):        @15@
 
 '''.format(
         meson.project_version(),
@@ -90,6 +95,7 @@ Summary:
         get_option('loaders').contains('svg'),
         get_option('loaders').contains('png'),
         get_option('loaders').contains('jpg'),
+        get_option('savers').contains('tvg'),
         get_option('bindings').contains('capi'),
         get_option('log'),
         get_option('tests'),

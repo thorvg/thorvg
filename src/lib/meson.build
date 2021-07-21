@@ -18,7 +18,7 @@ source_file = [
    'tvgLoaderMgr.h',
    'tvgPictureImpl.h',
    'tvgRender.h',
-   'tvgSaverImpl.h',
+   'tvgSaver.h',
    'tvgSceneImpl.h',
    'tvgShapeImpl.h',
    'tvgTaskScheduler.h',

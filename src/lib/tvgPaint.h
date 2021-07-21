@@ -27,6 +27,7 @@
 
 namespace tvg
 {
+
     struct Iterator
     {
         virtual ~Iterator() {}

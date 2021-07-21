@@ -34,9 +34,7 @@ struct PictureIterator : Iterator
 {
     Paint* paint = nullptr;
 
-    PictureIterator(Paint* p) : paint(p)
-    {
-    }
+    PictureIterator(Paint* p) : paint(p) {}
 
     const Paint* next() override
     {
