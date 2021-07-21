@@ -28,10 +28,13 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
+#define SIZE(A) sizeof(A)
+
+
 struct TvgBinBlock
 {
-    TvgIndicator type;
-    ByteCounter length;
+    TvgBinTag type;
+    TvgBinCounter length;
     const char* data;
     const char* end;
 };
@@ -44,9 +47,9 @@ static Paint* _parsePaint(TvgBinBlock block);
 static bool _paintProperty(TvgBinBlock block)
 {
     switch (block.type) {
-        case TVG_PAINT_OPACITY_INDICATOR:
-        case TVG_PAINT_TRANSFORM_MATRIX_INDICATOR:
-        case TVG_PAINT_CMP_TARGET_INDICATOR:
+        case TVG_TAG_PAINT_OPACITY:
+        case TVG_TAG_PAINT_TRANSFORM:
+        case TVG_TAG_PAINT_CMP_TARGET:
         return true;
     }
     return false;
@@ -57,8 +60,8 @@ static TvgBinBlock _readBlock(const char *ptr)
 {
     TvgBinBlock block;
     block.type = *ptr;
-    _read_tvg_ui32(&block.length, ptr + TVG_INDICATOR_SIZE);
-    block.data = ptr + TVG_INDICATOR_SIZE + BYTE_COUNTER_SIZE;
+    _read_tvg_ui32(&block.length, ptr + SIZE(TvgBinTag));
+    block.data = ptr + SIZE(TvgBinTag) + SIZE(TvgBinCounter);
     block.end = block.data + block.length;
     return block;
 }
@@ -67,13 +70,13 @@ static bool _readTvgHeader(const char **ptr)
 {
     if (!*ptr) return false;
 
-    //Sign phase, always TVG_BIN_HEADER_SIGNATURE is declared
-    if (memcmp(*ptr, TVG_BIN_HEADER_SIGNATURE, TVG_BIN_HEADER_SIGNATURE_LENGTH)) return false;
-    *ptr += TVG_BIN_HEADER_SIGNATURE_LENGTH;
+    //Sign phase, always TVG_HEADER_SIGNATURE is declared
+    if (memcmp(*ptr, TVG_HEADER_SIGNATURE, TVG_HEADER_SIGNATURE_LENGTH)) return false;
+    *ptr += TVG_HEADER_SIGNATURE_LENGTH;
 
-    //Version number, declared in TVG_BIN_HEADER_VERSION
-    if (memcmp(*ptr, TVG_BIN_HEADER_VERSION, TVG_BIN_HEADER_VERSION_LENGTH)) return false;
-    *ptr += TVG_BIN_HEADER_VERSION_LENGTH;
+    //Version number, declared in TVG_HEADER_VERSION
+    if (memcmp(*ptr, TVG_HEADER_VERSION, TVG_HEADER_VERSION_LENGTH)) return false;
+    *ptr += TVG_HEADER_VERSION_LENGTH;
 
     return true;
 }
@@ -84,21 +87,21 @@ static bool _parseCmpTarget(const char *ptr, const char *end, Paint *paint)
     auto block = _readBlock(ptr);
     if (block.end > end) return false;
 
-    if (block.type != TVG_PAINT_CMP_METHOD_INDICATOR) return false;
-    if (block.length != sizeof(TvgFlag)) return false;
+    if (block.type != TVG_TAG_PAINT_CMP_METHOD) return false;
+    if (block.length != sizeof(TvgBinFlag)) return false;
 
     CompositeMethod cmpMethod;
 
     switch (*block.data) {
-        case TVG_PAINT_CMP_METHOD_CLIPPATH_FLAG: {
+        case TVG_FLAG_PAINT_CMP_METHOD_CLIPPATH: {
             cmpMethod = CompositeMethod::ClipPath;
             break;
         }
-        case TVG_PAINT_CMP_METHOD_ALPHAMASK_FLAG: {
+        case TVG_FLAG_PAINT_CMP_METHOD_ALPHAMASK: {
             cmpMethod = CompositeMethod::AlphaMask;
             break;
         }
-        case TVG_PAINT_CMP_METHOD_INV_ALPHAMASK_FLAG: {
+        case TVG_FLAG_PAINT_CMP_METHOD_IALPHAMASK: {
             cmpMethod = CompositeMethod::InvAlphaMask;
             break;
         }
@@ -119,20 +122,20 @@ static bool _parseCmpTarget(const char *ptr, const char *end, Paint *paint)
 static bool _parsePaintProperty(TvgBinBlock block, Paint *paint)
 {
     switch (block.type) {
-        case TVG_PAINT_OPACITY_INDICATOR: {
+        case TVG_TAG_PAINT_OPACITY: {
             if (block.length != sizeof(uint8_t)) return false;
             paint->opacity(*block.data);
             return true;
         }
-        case TVG_PAINT_TRANSFORM_MATRIX_INDICATOR: {
+        case TVG_TAG_PAINT_TRANSFORM: {
             if (block.length != sizeof(Matrix)) return false;
             Matrix matrix;
             memcpy(&matrix, block.data, sizeof(Matrix));
             if (paint->transform(matrix) != Result::Success) return false;
             return true;
         }
-        case TVG_PAINT_CMP_TARGET_INDICATOR: {
-            if (block.length < TVG_INDICATOR_SIZE + BYTE_COUNTER_SIZE) return false;
+        case TVG_TAG_PAINT_CMP_TARGET: {
+            if (block.length < SIZE(TvgBinTag) + SIZE(TvgBinCounter)) return false;
             return _parseCmpTarget(block.data, block.end, paint);
         }
     }
@@ -145,7 +148,7 @@ static bool _parseScene(TvgBinBlock block, Paint *paint)
     auto scene = static_cast<Scene*>(paint);
 
     switch (block.type) {
-        case TVG_SCENE_FLAG_RESERVEDCNT: {
+        case TVG_FLAG_SCENE_RESERVEDCNT: {
             if (block.length != sizeof(uint32_t)) return false;
             uint32_t reservedCnt;
             _read_tvg_ui32(&reservedCnt, block.data);
@@ -195,7 +198,7 @@ static bool _parseShapeFill(const char *ptr, const char *end, Fill **fillOutside
         if (block.end > end) return false;
 
         switch (block.type) {
-            case TVG_FILL_RADIAL_GRADIENT_INDICATOR: {
+            case TVG_TAG_FILL_RADIAL_GRADIENT: {
                 if (block.length != 3 * sizeof(float)) return false;
 
                 auto ptr = block.data;
@@ -212,7 +215,7 @@ static bool _parseShapeFill(const char *ptr, const char *end, Fill **fillOutside
                 fillGrad = move(fillGradRadial);
                 break;
             }
-            case TVG_FILL_LINEAR_GRADIENT_INDICATOR: {
+            case TVG_TAG_FILL_LINEAR_GRADIENT: {
                 if (block.length != 4 * sizeof(float)) return false;
 
                 auto ptr = block.data;
@@ -231,26 +234,26 @@ static bool _parseShapeFill(const char *ptr, const char *end, Fill **fillOutside
                 fillGrad = move(fillGradLinear);
                 break;
             }
-            case TVG_FILL_FILLSPREAD_INDICATOR: {
+            case TVG_TAG_FILL_FILLSPREAD: {
                 if (!fillGrad) return false;
-                if (block.length != sizeof(TvgFlag)) return false;
+                if (block.length != sizeof(TvgBinFlag)) return false;
                 switch (*block.data) {
-                    case TVG_FILL_FILLSPREAD_PAD_FLAG: {
+                    case TVG_FLAG_FILL_FILLSPREAD_PAD: {
                         fillGrad->spread(FillSpread::Pad);
                         break;
                     }
-                    case TVG_FILL_FILLSPREAD_REFLECT_FLAG: {
+                    case TVG_FLAG_FILL_FILLSPREAD_REFLECT: {
                         fillGrad->spread(FillSpread::Reflect);
                         break;
                     }
-                    case TVG_FILL_FILLSPREAD_REPEAT_FLAG: {
+                    case TVG_FLAG_FILL_FILLSPREAD_REPEAT: {
                         fillGrad->spread(FillSpread::Repeat);
                         break;
                     }
                 }
                 break;
             }
-            case TVG_FILL_COLORSTOPS_INDICATOR: {
+            case TVG_TAG_FILL_COLORSTOPS: {
                 if (!fillGrad) return false;
                 if (block.length == 0 || block.length & 0x07) return false;
                 uint32_t stopsCnt = block.length >> 3; // 8 bytes per ColorStop
@@ -297,55 +300,55 @@ static bool _parseShapeStroke(const char *ptr, const char *end, Shape *shape)
         if (block.end > end) return false;
 
         switch (block.type) {
-            case TVG_SHAPE_STROKE_CAP_INDICATOR: {
-                if (block.length != sizeof(TvgFlag)) return false;
+            case TVG_TAG_SHAPE_STROKE_CAP: {
+                if (block.length != sizeof(TvgBinFlag)) return false;
                 switch (*block.data) {
-                    case TVG_SHAPE_STROKE_CAP_SQUARE_FLAG:
+                    case TVG_FLAG_SHAPE_STROKE_CAP_SQUARE:
                         shape->stroke(StrokeCap::Square);
                         break;
-                    case TVG_SHAPE_STROKE_CAP_ROUND_FLAG:
+                    case TVG_FLAG_SHAPE_STROKE_CAP_ROUND:
                         shape->stroke(StrokeCap::Round);
                         break;
-                    case TVG_SHAPE_STROKE_CAP_BUTT_FLAG:
+                    case TVG_FLAG_SHAPE_STROKE_CAP_BUTT:
                         shape->stroke(StrokeCap::Butt);
                         break;
                 }
                 break;
             }
-            case TVG_SHAPE_STROKE_JOIN_INDICATOR: {
-                if (block.length != sizeof(TvgFlag)) return false;
+            case TVG_TAG_SHAPE_STROKE_JOIN: {
+                if (block.length != sizeof(TvgBinFlag)) return false;
                 switch (*block.data) {
-                    case TVG_SHAPE_STROKE_JOIN_BEVEL_FLAG:
+                    case TVG_FLAG_SHAPE_STROKE_JOIN_BEVEL:
                         shape->stroke(StrokeJoin::Bevel);
                         break;
-                    case TVG_SHAPE_STROKE_JOIN_ROUND_FLAG:
+                    case TVG_FLAG_SHAPE_STROKE_JOIN_ROUND:
                         shape->stroke(StrokeJoin::Round);
                         break;
-                    case TVG_SHAPE_STROKE_JOIN_MITER_FLAG:
+                    case TVG_FLAG_SHAPE_STROKE_JOIN_MITER:
                         shape->stroke(StrokeJoin::Miter);
                         break;
                 }
                 break;
             }
-            case TVG_SHAPE_STROKE_WIDTH_INDICATOR: {
+            case TVG_TAG_SHAPE_STROKE_WIDTH: {
                 if (block.length != sizeof(float)) return false;
                 float width;
                 _read_tvg_float(&width, block.data);
                 shape->stroke(width);
                 break;
             }
-            case TVG_SHAPE_STROKE_COLOR_INDICATOR: {
+            case TVG_TAG_SHAPE_STROKE_COLOR: {
                 if (block.length != 4) return false;
                 shape->stroke(block.data[0], block.data[1], block.data[2], block.data[3]);
                 break;
             }
-            case TVG_SHAPE_STROKE_FILL_INDICATOR: {
+            case TVG_TAG_SHAPE_STROKE_FILL: {
                 Fill* fill;
                 if (!_parseShapeFill(block.data, block.end, &fill)) return false;
                 shape->stroke(unique_ptr < Fill > (fill));
                 break;
             }
-            case TVG_SHAPE_STROKE_DASHPTRN_INDICATOR: {
+            case TVG_TAG_SHAPE_STROKE_DASHPTRN: {
                 if (!_parseShapeStrokeDashPattern(block.data, block.end, shape)) return false;
                 break;
             }
@@ -361,32 +364,32 @@ static bool _parseShape(TvgBinBlock block, Paint* paint)
     auto shape = static_cast<Shape*>(paint);
 
     switch (block.type) {
-        case TVG_SHAPE_PATH_INDICATOR: {
+        case TVG_TAG_SHAPE_PATH: {
             if (!_parseShapePath(block.data, block.end, shape)) return false;
             break;
         }
-        case TVG_SHAPE_STROKE_INDICATOR: {
+        case TVG_TAG_SHAPE_STROKE: {
             if (!_parseShapeStroke(block.data, block.end, shape)) return false;
             break;
         }
-        case TVG_SHAPE_FILL_INDICATOR: {
+        case TVG_TAG_SHAPE_FILL: {
             Fill* fill;
             if (!_parseShapeFill(block.data, block.end, &fill)) return false;
             shape->fill(unique_ptr < Fill > (fill));
             break;
         }
-        case TVG_SHAPE_COLOR_INDICATOR: {
+        case TVG_TAG_SHAPE_COLOR: {
             if (block.length != 4) return false;
             shape->fill(block.data[0], block.data[1], block.data[2], block.data[3]);
             break;
         }
-        case TVG_SHAPE_FILLRULE_INDICATOR: {
-            if (block.length != sizeof(TvgFlag)) return false;
+        case TVG_TAG_SHAPE_FILLRULE: {
+            if (block.length != sizeof(TvgBinFlag)) return false;
             switch (*block.data) {
-                case TVG_SHAPE_FILLRULE_WINDING_FLAG:
+                case TVG_FLAG_SHAPE_FILLRULE_WINDING:
                     shape->fill(FillRule::Winding);
                     break;
-                case TVG_SHAPE_FILLRULE_EVENODD_FLAG:
+                case TVG_FLAG_SHAPE_FILLRULE_EVENODD:
                     shape->fill(FillRule::EvenOdd);
                     break;
             }
@@ -403,7 +406,7 @@ static bool _parsePicture(TvgBinBlock block, Paint* paint)
     auto picture = static_cast<Picture*>(paint);
 
     switch (block.type) {
-        case TVG_RAW_IMAGE_BEGIN_INDICATOR: {
+        case TVG_TAG_PICTURE_RAW_IMAGE: {
             if (block.length < 2 * sizeof(uint32_t)) return false;
 
             auto ptr = block.data;
@@ -439,17 +442,17 @@ static Paint* _parsePaint(TvgBinBlock baseBlock)
     Paint *paint = nullptr;
 
     switch (baseBlock.type) {
-        case TVG_SCENE_BEGIN_INDICATOR: {
+        case TVG_TAG_CLASS_SCENE: {
             paint = Scene::gen().release();
             parser = _parseScene;
             break;
         }
-        case TVG_SHAPE_BEGIN_INDICATOR: {
+        case TVG_TAG_CLASS_SHAPE: {
             paint = Shape::gen().release();
             parser = _parseShape;
             break;
         }
-        case TVG_PICTURE_BEGIN_INDICATOR: {
+        case TVG_TAG_CLASS_PICTURE: {
             paint = Picture::gen().release();
             parser = _parsePicture;
             break;
