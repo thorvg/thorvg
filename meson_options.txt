@@ -10,6 +10,12 @@ option('loaders',
    value: ['svg'],
    description: 'Enable File Loaders in thorvg')
 
+option('savers',
+   type: 'array',
+   choices: ['', 'tvg'],
+   value: [''],
+   description: 'Enable File Savers in thorvg')
+
 option('vectors',
    type: 'array',
    choices: ['', 'avx'],

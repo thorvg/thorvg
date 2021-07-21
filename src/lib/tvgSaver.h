@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2021 Samsung Electronics Co., Ltd. All rights reserved.
+ * Copyright (c) 2021 Samsung Electronics Co., Ltd. All rights reserved.
 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -19,33 +19,29 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#ifndef _TVG_COMMON_H_
-#define _TVG_COMMON_H_
+#ifndef _TVG_SAVER_H_
+#define _TVG_SAVER_H_
 
-#include "config.h"
-#include "thorvg.h"
+#include "tvgPaint.h"
 
-using namespace std;
-using namespace tvg;
+namespace tvg
+{
 
-//TVG class identifier values
-#define TVG_CLASS_ID_UNDEFINED 0
-#define TVG_CLASS_ID_SHAPE     1
-#define TVG_CLASS_ID_SCENE     2
-#define TVG_CLASS_ID_PICTURE   3
-#define TVG_CLASS_ID_LINEAR    4
-#define TVG_CLASS_ID_RADIAL    5
+class SaveModule
+{
+public:
+    virtual ~SaveModule() {}
 
-enum class FileType { Tvg = 0, Svg, Raw, Png, Jpg, Unknown };
+    virtual bool save(Paint* paint, const string& path) = 0;
+    virtual bool close() = 0;
 
-//for MSVC Compat
-#ifdef _MSC_VER
-    #define TVG_UNUSED
-    #define strncasecmp _strnicmp
-    #define strcasecmp _stricmp
-#else
-    #define TVG_UNUSED __attribute__ ((__unused__))
-#endif
+    //Utility Method: Iterator Delegator
+    Iterator* iterator(const Paint* paint)
+    {
+        return paint->pImpl->iterator();
+    }
+};
 
+}
 
-#endif //_TVG_COMMON_H_
+#endif //_TVG_SAVER_H_

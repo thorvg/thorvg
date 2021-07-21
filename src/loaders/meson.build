@@ -14,7 +14,6 @@ endif
 
 if get_option('loaders').contains('jpg') == true
     subdir('jpg')
-    message('Enable JPG Loader')
 endif
 
 subdir('raw')

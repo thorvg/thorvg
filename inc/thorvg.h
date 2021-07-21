@@ -44,7 +44,7 @@ protected: \
     friend Canvas; \
     friend Scene; \
     friend Picture; \
-    friend Saver;
+    friend SaveModule; \
 
 
 #define _TVG_DECALRE_IDENTIFIER() \
@@ -56,10 +56,10 @@ namespace tvg
 {
 
 class RenderMethod;
+class SaveModule;
 class Scene;
 class Picture;
 class Canvas;
-class Saver;
 
 /**
  * @defgroup ThorVG ThorVG
@@ -1368,7 +1368,6 @@ public:
 
     _TVG_DECLARE_PRIVATE(Saver);
 };
-
 
 /** @}*/
 

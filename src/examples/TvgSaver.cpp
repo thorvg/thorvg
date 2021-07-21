@@ -179,12 +179,12 @@ void exportTvg()
 
     //save the tvg file
     auto saver = tvg::Saver::gen();
-    if (saver->save(move(scene), EXAMPLE_DIR"/test.tvg") != tvg::Result::Success) {
-        cout << "Problem with saving the test.tvg file." << endl;
+    if (saver->save(move(scene), EXAMPLE_DIR"/test.tvg") == tvg::Result::Success) {
+        saver->sync();
+        cout << "Successfully exported to test.tvg, Please check the result using PictureTvg!" << endl;
         return;
     }
-
-    cout << "Successfully exported to test.tvg, Please check the result using PictureTvg!" << endl;
+    cout << "Problem with saving the test.tvg file. Did you enable TVG Saver?" << endl;
 }
 
 

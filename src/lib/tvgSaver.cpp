@@ -19,12 +19,68 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#include "tvgSaverImpl.h"
-#include <iostream>
+#include "tvgCommon.h"
+#include "tvgSaver.h"
+
+#ifdef THORVG_TVG_SAVER_SUPPORT
+    #include "tvgTvgSaver.h"
+#endif
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
 /************************************************************************/
+
+struct Saver::Impl
+{
+    SaveModule* saveModule = nullptr;
+    ~Impl()
+    {
+        if (saveModule) delete(saveModule);
+    }
+};
+
+
+static SaveModule* _find(FileType type)
+{
+    switch(type) {
+        case FileType::Tvg: {
+#ifdef THORVG_TVG_SAVER_SUPPORT
+            return new TvgSaver;
+#endif
+            break;
+        }
+        default: {
+            break;
+        }
+    }
+
+#ifdef THORVG_LOG_ENABLED
+    const char *format;
+    switch(type) {
+        case FileType::Tvg: {
+            format = "TVG";
+            break;
+        }
+        default: {
+            format = "???";
+            break;
+        }
+    }
+    printf("SAVER: %s format is not supported\n", format);
+#endif
+    return nullptr;
+}
+
+
+static SaveModule* _find(const string& path)
+{
+    auto ext = path.substr(path.find_last_of(".") + 1);
+    if (!ext.compare("tvg")) {
+        return _find(FileType::Tvg);
+    }
+    return nullptr;
+}
+
 
 /************************************************************************/
 /* External Class Implementation                                        */
@@ -41,21 +97,34 @@ Saver::~Saver()
 }
 
 
-Result Saver::save(std::unique_ptr<Paint> paint, const std::string& path) noexcept
+Result Saver::save(std::unique_ptr<Paint> paint, const string& path) noexcept
 {
+    //Already on saving an other resource.
+    if (pImpl->saveModule) return Result::InsufficientCondition;
+
     auto p = paint.release();
     if (!p) return Result::MemoryCorruption;
 
-    if (this->pImpl->save(p, path)) return Result::Success;
-
-    return Result::Unknown;
+    if (auto saveModule = _find(path)) {
+        if (saveModule->save(p, path)) {
+            pImpl->saveModule = saveModule;
+            return Result::Success;
+        } else {
+            return Result::Unknown;
+        }
+    }
+    return Result::NonSupport;
 }
 
 
 Result Saver::sync() noexcept
 {
-    if (this->pImpl->sync()) return Result::Success;
-    return Result::Unknown;
+    if (!pImpl->saveModule) return Result::InsufficientCondition;
+    pImpl->saveModule->close();
+    delete(pImpl->saveModule);
+    pImpl->saveModule = nullptr;
+
+    return Result::Success;
 }
 
 
