@@ -22,14 +22,17 @@
 #ifndef _TVG_BINARY_DESC_H_
 #define _TVG_BINARY_DESC_H_
 
-//TODO: Need to consider whether uin8_t is enough size for extension...
+/* TODO: Need to consider whether uin8_t is enough size for extension...
+   Rather than optimal data, we can use enough size and data compress? */
 
 /* Data types, do not change data types once Tvg Format is officially released,
    That would occur the abi break. */
+
 using TvgBinByte = uint8_t;
-using TvgBinTag = uint8_t;
 using TvgBinCounter = uint32_t;
-using TvgBinFlag = uint8_t;
+using TvgBinTag = TvgBinByte;
+using TvgBinFlag = TvgBinByte;
+
 
 //Header
 #define TVG_HEADER_SIGNATURE "ThorVG"
