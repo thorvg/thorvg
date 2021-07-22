@@ -19,7 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#include "tvgLoaderMgr.h"
+#include "tvgLoader.h"
 
 #ifdef THORVG_SVG_LOADER_SUPPORT
     #include "tvgSvgLoader.h"
@@ -43,7 +43,7 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-static Loader* _find(FileType type)
+static LoadModule* _find(FileType type)
 {
     switch(type) {
         case FileType::Svg: {
@@ -114,7 +114,7 @@ static Loader* _find(FileType type)
 }
 
 
-static Loader* _find(const string& path)
+static LoadModule* _find(const string& path)
 {
     auto ext = path.substr(path.find_last_of(".") + 1);
     if (!ext.compare("svg")) return _find(FileType::Svg);
@@ -146,12 +146,12 @@ bool LoaderMgr::term()
 }
 
 
-shared_ptr<Loader> LoaderMgr::loader(const string& path, bool* invalid)
+shared_ptr<LoadModule> LoaderMgr::loader(const string& path, bool* invalid)
 {
     *invalid = false;
 
     if (auto loader = _find(path)) {
-        if (loader->open(path)) return shared_ptr<Loader>(loader);
+        if (loader->open(path)) return shared_ptr<LoadModule>(loader);
         else delete(loader);
         *invalid = true;
     }
@@ -159,12 +159,12 @@ shared_ptr<Loader> LoaderMgr::loader(const string& path, bool* invalid)
 }
 
 
-shared_ptr<Loader> LoaderMgr::loader(const char* data, uint32_t size, bool copy)
+shared_ptr<LoadModule> LoaderMgr::loader(const char* data, uint32_t size, bool copy)
 {
     for (int i = 0; i < static_cast<int>(FileType::Unknown); i++) {
         auto loader = _find(static_cast<FileType>(i));
         if (loader) {
-            if (loader->open(data, size, copy)) return shared_ptr<Loader>(loader);
+            if (loader->open(data, size, copy)) return shared_ptr<LoadModule>(loader);
             else delete(loader);
         }
     }
@@ -172,12 +172,12 @@ shared_ptr<Loader> LoaderMgr::loader(const char* data, uint32_t size, bool copy)
 }
 
 
-shared_ptr<Loader> LoaderMgr::loader(const uint32_t *data, uint32_t w, uint32_t h, bool copy)
+shared_ptr<LoadModule> LoaderMgr::loader(const uint32_t *data, uint32_t w, uint32_t h, bool copy)
 {
     for (int i = 0; i < static_cast<int>(FileType::Unknown); i++) {
         auto loader = _find(static_cast<FileType>(i));
         if (loader) {
-            if (loader->open(data, w, h, copy)) return shared_ptr<Loader>(loader);
+            if (loader->open(data, w, h, copy)) return shared_ptr<LoadModule>(loader);
             else delete(loader);
         }
     }

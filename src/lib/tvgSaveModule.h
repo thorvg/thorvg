@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2021 Samsung Electronics Co., Ltd. All rights reserved.
+ * Copyright (c) 2021 Samsung Electronics Co., Ltd. All rights reserved.
 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -19,18 +19,29 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#ifndef _TVG_LOADER_MGR_H_
-#define _TVG_LOADER_MGR_H_
+#ifndef _TVG_SAVE_MODULE_H_
+#define _TVG_SAVE_MODULE_H_
 
-#include "tvgLoader.h"
+#include "tvgPaint.h"
 
-struct LoaderMgr
+namespace tvg
 {
-    static bool init();
-    static bool term();
-    static shared_ptr<Loader> loader(const string& path, bool* invalid);
-    static shared_ptr<Loader> loader(const char* data, uint32_t size, bool copy);
-    static shared_ptr<Loader> loader(const uint32_t* data, uint32_t w, uint32_t h, bool copy);
+
+class SaveModule
+{
+public:
+    virtual ~SaveModule() {}
+
+    virtual bool save(Paint* paint, const string& path) = 0;
+    virtual bool close() = 0;
+
+    //Utility Method: Iterator Delegator
+    Iterator* iterator(const Paint* paint)
+    {
+        return paint->pImpl->iterator();
+    }
 };
 
-#endif //_TVG_LOADER_MGR_H_
+}
+
+#endif //_TVG_SAVE_MODULE_H_

@@ -24,7 +24,7 @@
 
 #include <string>
 #include "tvgPaint.h"
-#include "tvgLoaderMgr.h"
+#include "tvgLoader.h"
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
@@ -47,7 +47,7 @@ struct PictureIterator : Iterator
 
 struct Picture::Impl
 {
-    shared_ptr<Loader> loader = nullptr;
+    shared_ptr<LoadModule> loader = nullptr;
     Paint* paint = nullptr;
     uint32_t *pixels = nullptr;
     Picture *picture = nullptr;

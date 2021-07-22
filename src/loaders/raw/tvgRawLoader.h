@@ -22,7 +22,7 @@
 #ifndef _TVG_RAW_LOADER_H_
 #define _TVG_RAW_LOADER_H_
 
-class RawLoader : public Loader
+class RawLoader : public LoadModule
 {
 public:
     const uint32_t* content = nullptr;
@@ -30,7 +30,7 @@ public:
 
     ~RawLoader();
 
-    using Loader::open;
+    using LoadModule::open;
     bool open(const uint32_t* data, uint32_t w, uint32_t h, bool copy) override;
     bool read() override;
     bool close() override;

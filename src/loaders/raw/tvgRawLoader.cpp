@@ -21,7 +21,7 @@
  */
 #include <fstream>
 #include <string.h>
-#include "tvgLoaderMgr.h"
+#include "tvgLoader.h"
 #include "tvgRawLoader.h"
 
 /************************************************************************/
