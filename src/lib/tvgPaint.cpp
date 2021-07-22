@@ -215,7 +215,7 @@ void* Paint::Impl::update(RenderMethod& renderer, const RenderTransform* pTransf
 
         if (!cmpFastTrack) {
             cmpData = cmpTarget->pImpl->update(renderer, pTransform, 255, clips, pFlag);
-            if (cmpMethod == CompositeMethod::ClipPath) clips.push(cmpData);
+            if (cmpData && cmpMethod == CompositeMethod::ClipPath) clips.push(cmpData);
         }
     }
 
