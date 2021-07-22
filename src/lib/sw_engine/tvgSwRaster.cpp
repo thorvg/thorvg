@@ -121,9 +121,7 @@ static bool _translucentRectAlphaMask(SwSurface* surface, const SwBBox& region, 
     auto h = static_cast<uint32_t>(region.max.y - region.min.y);
     auto w = static_cast<uint32_t>(region.max.x - region.min.x);
 
-#ifdef THORVG_LOG_ENABLED
-    cout <<"SW_ENGINE: Rectangle Alpha Mask Composition" << endl;
-#endif
+    TVGLOG("SW_ENGINE: Rectangle Alpha Mask Composition");
 
     auto cbuffer = surface->compositor->image.data + (region.min.y * surface->stride) + region.min.x;   //compositor buffer
 
@@ -145,9 +143,7 @@ static bool _translucentRectInvAlphaMask(SwSurface* surface, const SwBBox& regio
     auto h = static_cast<uint32_t>(region.max.y - region.min.y);
     auto w = static_cast<uint32_t>(region.max.x - region.min.x);
 
-#ifdef THORVG_LOG_ENABLED
-    cout <<"SW_ENGINE: Rectangle Inverse Alpha Mask Composition" << endl;
-#endif
+    TVGLOG("SW_ENGINE: Rectangle Inverse Alpha Mask Composition");
 
     auto cbuffer = surface->compositor->image.data + (region.min.y * surface->stride) + region.min.x;   //compositor buffer
 
@@ -216,9 +212,8 @@ static bool _translucentRle(SwSurface* surface, const SwRleData* rle, uint32_t c
 
 static bool _translucentRleAlphaMask(SwSurface* surface, const SwRleData* rle, uint32_t color)
 {
-#ifdef THORVG_LOG_ENABLED
-    cout <<"SW_ENGINE: Rle Alpha Mask Composition" << endl;
-#endif
+    TVGLOG("SW_ENGINE: Rle Alpha Mask Composition");
+
     auto span = rle->spans;
     uint32_t src;
     auto cbuffer = surface->compositor->image.data;
@@ -240,9 +235,8 @@ static bool _translucentRleAlphaMask(SwSurface* surface, const SwRleData* rle, u
 
 static bool _translucentRleInvAlphaMask(SwSurface* surface, SwRleData* rle, uint32_t color)
 {
-#ifdef THORVG_LOG_ENABLED
-    cout <<"SW_ENGINE: Rle Inverse Alpha Mask Composition" << endl;
-#endif
+    TVGLOG("SW_ENGINE: Rle Inverse Alpha Mask Composition");
+
     auto span = rle->spans;
     uint32_t src;
     auto cbuffer = surface->compositor->image.data;
@@ -402,9 +396,8 @@ static bool _translucentImage(SwSurface* surface, const uint32_t *img, uint32_t 
 
 static bool _translucentImageAlphaMask(SwSurface* surface, const uint32_t *img, uint32_t w, TVG_UNUSED uint32_t h, uint32_t opacity, const SwBBox& region, const Matrix* invTransform)
 {
-#ifdef THORVG_LOG_ENABLED
-    cout <<"SW_ENGINE: Transformed Image Alpha Mask Composition" << endl;
-#endif
+    TVGLOG("SW_ENGINE: Transformed Image Alpha Mask Composition");
+
     auto dbuffer = &surface->buffer[region.min.y * surface->stride + region.min.x];
     auto cbuffer = &surface->compositor->image.data[region.min.y * surface->stride + region.min.x];
 
@@ -428,9 +421,8 @@ static bool _translucentImageAlphaMask(SwSurface* surface, const uint32_t *img, 
 
 static bool _translucentImageInvAlphaMask(SwSurface* surface, const uint32_t *img, uint32_t w, uint32_t h, uint32_t opacity, const SwBBox& region, const Matrix* invTransform)
 {
-#ifdef THORVG_LOG_ENABLED
-    cout <<"SW_ENGINE: Transformed Image Inverse Alpha Mask Composition" << endl;
-#endif
+    TVGLOG("SW_ENGINE: Transformed Image Inverse Alpha Mask Composition");
+
     auto dbuffer = &surface->buffer[region.min.y * surface->stride + region.min.x];
     auto cbuffer = &surface->compositor->image.data[region.min.y * surface->stride + region.min.x];
 
@@ -491,9 +483,7 @@ static bool _translucentImageAlphaMask(SwSurface* surface, uint32_t *img, uint32
     auto h2 = static_cast<uint32_t>(region.max.y - region.min.y);
     auto w2 = static_cast<uint32_t>(region.max.x - region.min.x);
 
-#ifdef THORVG_LOG_ENABLED
-    cout <<"SW_ENGINE: Image Alpha Mask Composition" << endl;
-#endif
+    TVGLOG("SW_ENGINE: Image Alpha Mask Composition");
 
     auto sbuffer = img + (region.min.y * w) + region.min.x;
     auto cbuffer = surface->compositor->image.data + (region.min.y * surface->stride) + region.min.x;   //compositor buffer
@@ -520,9 +510,7 @@ static bool _translucentImageInvAlphaMask(SwSurface* surface, uint32_t *img, uin
     auto h2 = static_cast<uint32_t>(region.max.y - region.min.y);
     auto w2 = static_cast<uint32_t>(region.max.x - region.min.x);
 
-#ifdef THORVG_LOG_ENABLED
-    cout <<"SW_ENGINE: Image Inverse Alpha Mask Composition" << endl;
-#endif
+    TVGLOG("SW_ENGINE: Image Inverse Alpha Mask Composition");
 
     auto sbuffer = img + (region.min.y * w) + region.min.x;
     auto cbuffer = surface->compositor->image.data + (region.min.y * surface->stride) + region.min.x;   //compositor buffer

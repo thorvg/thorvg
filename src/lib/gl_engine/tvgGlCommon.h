@@ -34,7 +34,7 @@
         do { \
           GLenum glError = glGetError(); \
           if(glError != GL_NO_ERROR) { \
-            printf("glGetError() = %i (0x%.8x) at line %s : %i\n", glError, glError, __FILE__, __LINE__); \
+            TVGERR("GL_ENGINE: glGetError() = %i (0x%.8x)", glError, glError); \
             assert(0); \
           } \
         } while(0)
@@ -44,7 +44,7 @@
     do { \
         EGLint eglError = eglGetError(); \
         if(eglError != EGL_SUCCESS) { \
-            printf("eglGetError() = %i (0x%.8x) at line %s : %i\n", eglError, eglError, __FILE__, __LINE__); \
+            TVGERR("GL_ENGINE: eglGetError() = %i (0x%.8x)", eglError, eglError); \
             assert(0); \
         } \
     } while(0)

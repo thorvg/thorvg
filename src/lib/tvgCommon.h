@@ -28,6 +28,33 @@
 using namespace std;
 using namespace tvg;
 
+//for MSVC Compat
+#ifdef _MSC_VER
+    #define TVG_UNUSED
+    #define strncasecmp _strnicmp
+    #define strcasecmp _stricmp
+#else
+    #define TVG_UNUSED __attribute__ ((__unused__))
+#endif
+
+//Log Message for notifying user some useful hints
+#ifdef THORVG_LOG_ENABLED
+    #define TVGLOG(...) \
+        fprintf(stdout, __VA_ARGS__); \
+        fprintf(stdout, "\n")
+#else
+    #define TVGLOG(...)
+#endif
+
+//Error Message for us to fix it
+#ifdef THORVG_LOG_ENABLED
+    #define TVGERR(...) \
+        fprintf(stdout, __VA_ARGS__); \
+        fprintf(stdout, "\n")
+#else
+    #define TVGERR(...)
+#endif
+
 //TVG class identifier values
 #define TVG_CLASS_ID_UNDEFINED 0
 #define TVG_CLASS_ID_SHAPE     1
@@ -37,15 +64,6 @@ using namespace tvg;
 #define TVG_CLASS_ID_RADIAL    5
 
 enum class FileType { Tvg = 0, Svg, Raw, Png, Jpg, Unknown };
-
-//for MSVC Compat
-#ifdef _MSC_VER
-    #define TVG_UNUSED
-    #define strncasecmp _strnicmp
-    #define strcasecmp _stricmp
-#else
-    #define TVG_UNUSED __attribute__ ((__unused__))
-#endif
 
 
 #endif //_TVG_COMMON_H_

@@ -332,7 +332,7 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, uint32_t primit
     auto matrix = sdata.geometry->getTransforMatrix();
 
     switch (fill->id()) {
-        case FILL_ID_LINEAR: {
+        case TVG_CLASS_ID_LINEAR: {
             float x1, y1, x2, y2;
             GlLinearGradientRenderTask *renderTask = static_cast<GlLinearGradientRenderTask*>(mRenderTasks[GlRenderTask::RenderTypes::RT_LinGradient].get());
             assert(renderTask);
@@ -345,7 +345,7 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, uint32_t primit
             renderTask->setEndPosition(x2, y2);
             break;
         }
-        case FILL_ID_RADIAL: {
+        case TVG_CLASS_ID_RADIAL: {
             float x1, y1, r1;
             GlRadialGradientRenderTask *renderTask = static_cast<GlRadialGradientRenderTask*>(mRenderTasks[GlRenderTask::RenderTypes::RT_RadGradient].get());
             assert(renderTask);

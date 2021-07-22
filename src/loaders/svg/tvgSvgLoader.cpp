@@ -760,7 +760,7 @@ static bool _attrParseSvgNode(void* data, const char* key, const char* value)
     }
 #ifdef THORVG_LOG_ENABLED
     else if (!strcmp(key, "x") || !strcmp(key, "y")) {
-        if (0.0f == _parseLength(value, &type)) printf("SVG: Unsupported attributes used [Elements type: Svg][Attribute: %s][Value: %s]\n", key, value);
+        if (0.0f == _parseLength(value, &type)) TVGLOG("SVG: Unsupported attributes used [Elements type: Svg][Attribute: %s][Value: %s]", key, value);
     }
 #endif
     else {
@@ -1340,7 +1340,6 @@ static bool _attrParsePolygonPoints(const char* str, float** points, int* ptCoun
     return true;
 
 error_alloc:
-    //LOG: allocation for point array failed. out of memory
     return false;
 }
 
@@ -2378,21 +2377,16 @@ static void _svgLoaderParserXmlOpen(SvgLoaderData* loader, const char* content, 
         loader->latestGradient = gradient;
     } else if (!strcmp(tagName, "stop")) {
         if (!loader->latestGradient) {
-#ifdef THORVG_LOG_ENABLED
-            printf("SVG: Stop element is used outside of the Gradient element\n");
-#endif
+            TVGLOG("SVG: Stop element is used outside of the Gradient element");
             return;
         }
         /* default value for opacity */
         loader->svgParse->gradStop = {0.0f, 0, 0, 0, 255};
         simpleXmlParseAttributes(attrs, attrsLength, _attrParseStops, loader);
         loader->latestGradient->stops.push(loader->svgParse->gradStop);
+    } else {
+        if (!isIgnoreUnsupportedLogElements(tagName)) TVGLOG("SVG: Unsupported elements used [Elements: %s]", tagName);
     }
-#ifdef THORVG_LOG_ENABLED
-    else {
-        if (!isIgnoreUnsupportedLogElements(tagName)) printf("SVG: Unsupported elements used [Elements: %s]\n", tagName);
-    }
-#endif
 }
 
 
@@ -2484,49 +2478,50 @@ static void _styleInherit(SvgStyleProperty* child, const SvgStyleProperty* paren
 }
 
 
+static void _inefficientNodeCheck(TVG_UNUSED SvgNode* node){
 #ifdef THORVG_LOG_ENABLED
-static void _inefficientNodeCheck(SvgNode* node){
-    if (!node->display && node->type != SvgNodeType::ClipPath) printf("SVG: Inefficient elements used [Display is none][Node Type : %s]\n", simpleXmlNodeTypeToString(node->type).c_str());
-    if (node->style->opacity == 0) printf("SVG: Inefficient elements used [Opacity is zero][Node Type : %s]\n", simpleXmlNodeTypeToString(node->type).c_str());
-    if (node->style->fill.opacity == 0 && node->style->stroke.opacity == 0) printf("SVG: Inefficient elements used [Fill opacity and stroke opacity are zero][Node Type : %s]\n", simpleXmlNodeTypeToString(node->type).c_str());
+    auto type = simpleXmlNodeTypeToString(node->type);
+
+    if (!node->display && node->type != SvgNodeType::ClipPath) TVGLOG("SVG: Inefficient elements used [Display is none][Node Type : %s]", type);
+    if (node->style->opacity == 0) TVGLOG("SVG: Inefficient elements used [Opacity is zero][Node Type : %s]", type);
+    if (node->style->fill.opacity == 0 && node->style->stroke.opacity == 0) TVGLOG("SVG: Inefficient elements used [Fill opacity and stroke opacity are zero][Node Type : %s]", type);
 
     switch (node->type) {
         case SvgNodeType::Path: {
-            if (!node->node.path.path || node->node.path.path->empty()) printf("SVG: Inefficient elements used [Empty path][Node Type : %s]\n", simpleXmlNodeTypeToString(node->type).c_str());
+            if (!node->node.path.path || node->node.path.path->empty()) TVGLOG("SVG: Inefficient elements used [Empty path][Node Type : %s]", type);
             break;
         }
         case SvgNodeType::Ellipse: {
-            if (node->node.ellipse.rx == 0 && node->node.ellipse.ry == 0) printf("SVG: Inefficient elements used [Size is zero][Node Type : %s]\n", simpleXmlNodeTypeToString(node->type).c_str());
+            if (node->node.ellipse.rx == 0 && node->node.ellipse.ry == 0) TVGLOG("SVG: Inefficient elements used [Size is zero][Node Type : %s]", type);
             break;
         }
         case SvgNodeType::Polygon:
         case SvgNodeType::Polyline: {
-            if (node->node.polygon.pointsCount < 2) printf("SVG: Inefficient elements used [Invalid Polygon][Node Type : %s]\n", simpleXmlNodeTypeToString(node->type).c_str());
+            if (node->node.polygon.pointsCount < 2) TVGLOG("SVG: Inefficient elements used [Invalid Polygon][Node Type : %s]", type);
             break;
         }
         case SvgNodeType::Circle: {
-            if (node->node.circle.r == 0) printf("SVG: Inefficient elements used [Size is zero][Node Type : %s]\n", simpleXmlNodeTypeToString(node->type).c_str());
+            if (node->node.circle.r == 0) TVGLOG("SVG: Inefficient elements used [Size is zero][Node Type : %s]", type);
             break;
         }
         case SvgNodeType::Rect: {
-            if (node->node.rect.w == 0 && node->node.rect.h) printf("SVG: Inefficient elements used [Size is zero][Node Type : %s]\n", simpleXmlNodeTypeToString(node->type).c_str());
+            if (node->node.rect.w == 0 && node->node.rect.h) TVGLOG("SVG: Inefficient elements used [Size is zero][Node Type : %s]", type);
             break;
         }
         case SvgNodeType::Line: {
-            if (node->node.line.x1 == node->node.line.x2 && node->node.line.y1 == node->node.line.y2) printf("SVG: Inefficient elements used [Size is zero][Node Type : %s]\n", simpleXmlNodeTypeToString(node->type).c_str());
+            if (node->node.line.x1 == node->node.line.x2 && node->node.line.y1 == node->node.line.y2) TVGLOG("SVG: Inefficient elements used [Size is zero][Node Type : %s]", type);
             break;
         }
         default: break;
     }
-}
 #endif
+}
+
 
 static void _updateStyle(SvgNode* node, SvgStyleProperty* parentStyle)
 {
     _styleInherit(node->style, parentStyle);
-#ifdef THORVG_LOG_ENABLED
     _inefficientNodeCheck(node);
-#endif
 
     auto child = node->child.data;
     for (uint32_t i = 0; i < node->child.count; ++i, ++child) {
@@ -2809,7 +2804,7 @@ bool SvgLoader::header()
 
         preserveAspect = loaderData.doc->node.doc.preserveAspect;
     } else {
-        //LOG: No SVG File. There is no <svg/>
+        TVGLOG("SVG: No Svg File. There is no <svg/>");
         return false;
     }
 

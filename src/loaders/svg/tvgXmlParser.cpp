@@ -35,53 +35,9 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-#ifdef THORVG_LOG_ENABLED
-
-#include <stdio.h>
-
-string simpleXmlNodeTypeToString(SvgNodeType type)
-{
-    switch (type) {
-        case SvgNodeType::Doc: return "Svg";
-        case SvgNodeType::G: return "G";
-        case SvgNodeType::Defs: return "Defs";
-        case SvgNodeType::Animation: return "Animation";
-        case SvgNodeType::Arc: return "Arc";
-        case SvgNodeType::Circle: return "Circle";
-        case SvgNodeType::Ellipse: return "Ellipse";
-        case SvgNodeType::Image: return "Image";
-        case SvgNodeType::Line: return "Line";
-        case SvgNodeType::Path: return "Path";
-        case SvgNodeType::Polygon: return "Polygon";
-        case SvgNodeType::Polyline: return "Polyline";
-        case SvgNodeType::Rect: return "Rect";
-        case SvgNodeType::Text: return "Text";
-        case SvgNodeType::TextArea: return "TextArea";
-        case SvgNodeType::Tspan: return "Tspan";
-        case SvgNodeType::Use: return "Use";
-        case SvgNodeType::Video: return "Video";
-        case SvgNodeType::ClipPath: return "ClipPath";
-        case SvgNodeType::Mask: return "Mask";
-        default: return "Unknown";
-    }
-    return "Unknown";
-}
-
-bool isIgnoreUnsupportedLogElements(const char* tagName)
-{
-    const auto elementsNum = 1;
-    const char* const elements[] = { "title" };
-
-    for (unsigned int i = 0; i < elementsNum; ++i) {
-        if (!strncmp(tagName, elements[i], strlen(tagName))) {
-            return true;
-        }
-    }
-    return false;
-}
-
 bool _isIgnoreUnsupportedLogAttributes(const char* tagAttribute, const char* tagValue)
 {
+#ifdef THORVG_LOG_ENABLED
     const auto attributesNum = 6;
     const struct
     {
@@ -108,9 +64,65 @@ bool _isIgnoreUnsupportedLogAttributes(const char* tagAttribute, const char* tag
         }
     }
     return false;
+#else
+    return true;
+#endif
 }
 
+
+/************************************************************************/
+/* External Class Implementation                                        */
+/************************************************************************/
+
+const char* simpleXmlNodeTypeToString(SvgNodeType type)
+{
+#ifdef THORVG_LOG_ENABLED
+    static const char* TYPE_NAMES[] = {
+        "Svg",
+        "G",
+        "Defs",
+        "Animation",
+        "Arc",
+        "Circle",
+        "Ellipse",
+        "Image",
+        "Line",
+        "Path",
+        "Polygon",
+        "Polyline",
+        "Rect",
+        "Text",
+        "TextArea",
+        "Tspan",
+        "Use",
+        "Video",
+        "ClipPath",
+        "Mask",
+        "Unknown",
+    };
+    return TYPE_NAMES[(int) type];
 #endif
+    return nullptr;
+}
+
+
+bool isIgnoreUnsupportedLogElements(const char* tagName)
+{
+#ifdef THORVG_LOG_ENABLED
+    const auto elementsNum = 1;
+    const char* const elements[] = { "title" };
+
+    for (unsigned int i = 0; i < elementsNum; ++i) {
+        if (!strncmp(tagName, elements[i], strlen(tagName))) {
+            return true;
+        }
+    }
+    return false;
+#else
+    return true;
+#endif
+}
+
 
 static const char* _simpleXmlFindWhiteSpace(const char* itr, const char* itrEnd)
 {
@@ -311,13 +323,9 @@ bool simpleXmlParseAttributes(const char* buf, unsigned bufLength, simpleXMLAttr
         }
         tval[i] = '\0';
 
-#ifdef THORVG_LOG_ENABLED
         if (!func((void*)data, tmpBuf, tval)) {
-            if (!_isIgnoreUnsupportedLogAttributes(tmpBuf, tval)) printf("SVG: Unsupported attributes used [Elements type: %s][Id : %s][Attribute: %s][Value: %s]\n", simpleXmlNodeTypeToString(((SvgLoaderData*)data)->svgParse->node->type).c_str(), ((SvgLoaderData*)data)->svgParse->node->id ? ((SvgLoaderData*)data)->svgParse->node->id->c_str() : "NO_ID", tmpBuf, tval ? tval : "NONE");
+            if (!_isIgnoreUnsupportedLogAttributes(tmpBuf, tval)) TVGLOG("SVG: Unsupported attributes used [Elements type: %s][Id : %s][Attribute: %s][Value: %s]", simpleXmlNodeTypeToString(((SvgLoaderData*)data)->svgParse->node->type), ((SvgLoaderData*)data)->svgParse->node->id ? ((SvgLoaderData*)data)->svgParse->node->id->c_str() : "NO_ID", tmpBuf, tval ? tval : "NONE");
         }
-#else
-        func((void*)data, tmpBuf, tval);
-#endif
     }
     return true;
 }
@@ -508,13 +516,9 @@ bool simpleXmlParseW3CAttribute(const char* buf, simpleXMLAttributeCb func, cons
             val = const_cast<char*>(_simpleXmlSkipWhiteSpace(val, val + strlen(val)));
             val[_simpleXmlUnskipWhiteSpace(val + strlen(val) , val) - val] = '\0';
 
-#ifdef THORVG_LOG_ENABLED
             if (!func((void*)data, key, val)) {
-                if (!_isIgnoreUnsupportedLogAttributes(key, val)) printf("SVG: Unsupported attributes used [Elements type: %s][Id : %s][Attribute: %s][Value: %s]\n", simpleXmlNodeTypeToString(((SvgLoaderData*)data)->svgParse->node->type).c_str(), ((SvgLoaderData*)data)->svgParse->node->id ? ((SvgLoaderData*)data)->svgParse->node->id->c_str() : "NO_ID", key, val ? val : "NONE");
+                if (!_isIgnoreUnsupportedLogAttributes(key, val)) TVGLOG("SVG: Unsupported attributes used [Elements type: %s][Id : %s][Attribute: %s][Value: %s]", simpleXmlNodeTypeToString(((SvgLoaderData*)data)->svgParse->node->type), ((SvgLoaderData*)data)->svgParse->node->id ? ((SvgLoaderData*)data)->svgParse->node->id->c_str() : "NO_ID", key, val ? val : "NONE");
             }
-#else
-            func((void*)data, key, val);
-#endif
         }
 
         buf = next + 1;
