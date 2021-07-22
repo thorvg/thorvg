@@ -350,7 +350,7 @@ static bool _rasterTranslucentImageRle(SwSurface* surface, const SwRleData* rle,
             auto rY = static_cast<uint32_t>(roundf(fY));
             if (rX >= w || rY >= h) continue;
             uint32_t src;
-            if (rX == w - 1 || rY == h - 1 || invTransform->e11 < 0 || invTransform->e22 < 0) {
+            if (rX == w - 1 || rY == h - 1 || (invTransform->e11 * invTransform->e11) + (invTransform->e21 * invTransform->e21) > 1) {
                 src = ALPHA_BLEND(img[rY * w + rX], alpha);     //TODO: need to use image's stride
             } else {
                 src = ALPHA_BLEND(_applyBilinearInterpolation(img, w, h, fX, fY), alpha);     //TODO: need to use image's stride
@@ -393,7 +393,7 @@ static bool _rasterImageRle(SwSurface* surface, SwRleData* rle, uint32_t *img, u
             auto rY = static_cast<uint32_t>(roundf(fY));
             if (rX >= w || rY >= h) continue;
             uint32_t src;
-            if (rX == w - 1 || rY == h - 1 || invTransform->e11 < 0 || invTransform->e22 < 0) {
+            if (rX == w - 1 || rY == h - 1 || (invTransform->e11 * invTransform->e11) + (invTransform->e21 * invTransform->e21) > 1) {
                 src = ALPHA_BLEND(img[rY * w + rX], span->coverage);    //TODO: need to use image's stride
             } else {
                 src = ALPHA_BLEND(_applyBilinearInterpolation(img, w, h, fX, fY), span->coverage);    //TODO: need to use image's stride
@@ -420,7 +420,7 @@ static bool _translucentImage(SwSurface* surface, const uint32_t *img, uint32_t 
             auto rY = static_cast<uint32_t>(roundf(fY));
             if (rX >= w || rY >= h) continue;
             uint32_t src;
-            if (rX == w - 1 || rY == h - 1 || invTransform->e11 < 0 || invTransform->e22 < 0) {
+            if (rX == w - 1 || rY == h - 1 || (invTransform->e11 * invTransform->e11) + (invTransform->e21 * invTransform->e21) > 1) {
                 src = ALPHA_BLEND(img[rX + (rY * w)], opacity);    //TODO: need to use image's stride
             } else {
                 src = ALPHA_BLEND(_applyBilinearInterpolation(img, w, h, fX, fY), opacity);    //TODO: need to use image's stride
@@ -452,7 +452,7 @@ static bool _translucentImageAlphaMask(SwSurface* surface, const uint32_t *img, 
             auto rY = static_cast<uint32_t>(roundf(fY));
             if (rX >= w || rY >= h) continue;
             uint32_t src;
-            if (rX == w - 1 || rY == h - 1 || invTransform->e11 < 0 || invTransform->e22 < 0) {
+            if (rX == w - 1 || rY == h - 1 || (invTransform->e11 * invTransform->e11) + (invTransform->e21 * invTransform->e21) > 1) {
                 src = ALPHA_BLEND(img[rX + (rY * w)], ALPHA_MULTIPLY(opacity, surface->blender.alpha(*cmp)));  //TODO: need to use image's stride
             } else {
                 src = ALPHA_BLEND(_applyBilinearInterpolation(img, w, h, fX, fY), ALPHA_MULTIPLY(opacity, surface->blender.alpha(*cmp)));  //TODO: need to use image's stride
@@ -484,7 +484,7 @@ static bool _translucentImageInvAlphaMask(SwSurface* surface, const uint32_t *im
             auto rY = static_cast<uint32_t>(roundf(fY));
             if (rX >= w || rY >= h) continue;
             uint32_t src;
-            if (rX == w - 1 || rY == h - 1 || invTransform->e11 < 0 || invTransform->e22 < 0) {
+            if (rX == w - 1 || rY == h - 1 || (invTransform->e11 * invTransform->e11) + (invTransform->e21 * invTransform->e21) > 1) {
                 src = ALPHA_BLEND(img[rX + (rY * w)], ALPHA_MULTIPLY(opacity, 255 - surface->blender.alpha(*cmp)));  //TODO: need to use image's stride
             } else {
                 src = ALPHA_BLEND(_applyBilinearInterpolation(img, w, h, fX, fY), ALPHA_MULTIPLY(opacity, 255 - surface->blender.alpha(*cmp)));  //TODO: need to use image's stride
@@ -627,7 +627,7 @@ static bool _rasterImage(SwSurface* surface, const uint32_t *img, uint32_t w, ui
             auto rY = static_cast<uint32_t>(roundf(fY));
             if (rX >= w || rY >= h) continue;
             uint32_t src;
-            if (rX == w - 1 || rY == h - 1 || invTransform->e11 < 0 || invTransform->e22 < 0) {
+            if (rX == w - 1 || rY == h - 1 || (invTransform->e11 * invTransform->e11) + (invTransform->e21 * invTransform->e21) > 1) {
                 src = img[rX + (rY * w)];
             } else {
                 src = _applyBilinearInterpolation(img, w, h, fX, fY);

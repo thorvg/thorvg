@@ -291,10 +291,7 @@ static inline uint32_t COLOR_INTERPOLATE(uint32_t c1, uint32_t a1, uint32_t c2, 
 //c4 ------a1-- c3
 static inline uint32_t COLOR_BILINEAR_INTERPOLATE(uint32_t c1, uint32_t c2, uint32_t c3, uint32_t c4, uint32_t a1, uint32_t a2)
 {
-    return COLOR_INTERPOLATE(COLOR_INTERPOLATE(c1, 255 - a1, c2, a1),
-                             255 - a2,
-                             COLOR_INTERPOLATE(c4, 255 - a1, c3, a1),
-                             a2);
+    return COLOR_INTERPOLATE(COLOR_INTERPOLATE(c1, 255 - a1, c2, a1), 255 - a2, COLOR_INTERPOLATE(c4, 255 - a1, c3, a1), a2);
 }
 
 static inline uint32_t ALPHA_MULTIPLY(uint32_t c, uint32_t a)
