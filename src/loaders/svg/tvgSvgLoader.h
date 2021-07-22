@@ -25,7 +25,7 @@
 #include "tvgTaskScheduler.h"
 #include "tvgSvgLoaderCommon.h"
 
-class SvgLoader : public Loader, public Task
+class SvgLoader : public LoadModule, public Task
 {
 public:
     string filePath;
@@ -40,7 +40,7 @@ public:
     SvgLoader();
     ~SvgLoader();
 
-    using Loader::open;
+    using LoadModule::open;
     bool open(const string& path) override;
     bool open(const char* data, uint32_t size, bool copy) override;
 

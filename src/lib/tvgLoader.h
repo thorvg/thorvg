@@ -22,33 +22,15 @@
 #ifndef _TVG_LOADER_H_
 #define _TVG_LOADER_H_
 
-#include "tvgCommon.h"
+#include "tvgLoadModule.h"
 
-namespace tvg
+struct LoaderMgr
 {
-
-class Loader
-{
-public:
-    //default view box, if any.
-    float vx = 0;
-    float vy = 0;
-    float vw = 0;
-    float vh = 0;
-    float w = 0, h = 0;         //default image size
-    bool preserveAspect = true; //keep aspect ratio by default.
-
-    virtual ~Loader() {}
-
-    virtual bool open(const string& path) { /* Not supported */ return false; };
-    virtual bool open(const char* data, uint32_t size, bool copy) { /* Not supported */ return false; };
-    virtual bool open(const uint32_t* data, uint32_t w, uint32_t h, bool copy) { /* Not supported */ return false; };
-    virtual bool read() = 0;
-    virtual bool close() = 0;
-    virtual const uint32_t* pixels() { return nullptr; };
-    virtual unique_ptr<Scene> scene() { return nullptr; };
+    static bool init();
+    static bool term();
+    static shared_ptr<LoadModule> loader(const string& path, bool* invalid);
+    static shared_ptr<LoadModule> loader(const char* data, uint32_t size, bool copy);
+    static shared_ptr<LoadModule> loader(const uint32_t* data, uint32_t w, uint32_t h, bool copy);
 };
-
-}
 
 #endif //_TVG_LOADER_H_

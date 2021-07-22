@@ -25,7 +25,7 @@
 
 #include "tvgTaskScheduler.h"
 
-class TvgLoader : public Loader, public Task
+class TvgLoader : public LoadModule, public Task
 {
 public:
     const char* data = nullptr;
@@ -38,7 +38,7 @@ public:
 
     ~TvgLoader();
 
-    using Loader::open;
+    using LoadModule::open;
     bool open(const string &path) override;
     bool open(const char *data, uint32_t size, bool copy) override;
     bool read() override;

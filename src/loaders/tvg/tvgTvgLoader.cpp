@@ -22,7 +22,7 @@
 
 #include <fstream>
 #include <memory.h>
-#include "tvgLoaderMgr.h"
+#include "tvgLoader.h"
 #include "tvgTvgLoader.h"
 #include "tvgTvgLoadParser.h"
 

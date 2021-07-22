@@ -24,14 +24,13 @@
 
 #include <png.h>
 
-//OPTIMIZE ME: Use Task?
-class PngLoader : public Loader
+class PngLoader : public LoadModule
 {
 public:
     PngLoader();
     ~PngLoader();
 
-    using Loader::open;
+    using LoadModule::open;
     bool open(const string& path) override;
     bool open(const char* data, uint32_t size, bool copy) override;
     bool read() override;

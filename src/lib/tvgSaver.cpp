@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 #include "tvgCommon.h"
-#include "tvgSaver.h"
+#include "tvgSaveModule.h"
 
 #ifdef THORVG_TVG_SAVER_SUPPORT
     #include "tvgTvgSaver.h"

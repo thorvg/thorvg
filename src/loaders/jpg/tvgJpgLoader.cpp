@@ -22,7 +22,7 @@
 
 #include <memory.h>
 #include <turbojpeg.h>
-#include "tvgLoaderMgr.h"
+#include "tvgLoader.h"
 #include "tvgJpgLoader.h"
 
 /************************************************************************/
