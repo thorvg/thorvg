@@ -43,7 +43,7 @@ void svgDirCallback(const char* name, const char* path, void* data)
     auto picture = tvg::Picture::gen();
 
     char buf[PATH_MAX];
-    sprintf(buf, "/%s/%s", path, name);
+    snprintf(buf, sizeof(buf), "/%s/%s", path, name);
 
     if (picture->load(buf) != tvg::Result::Success) return;
 
