@@ -49,7 +49,7 @@ static uint32_t _argbJoin(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 
 static bool _inverse(const Matrix* transform, Matrix* invM)
 {
-    // computes the inverse of a matrix m
+    //computes the inverse of a matrix m
     auto det = transform->e11 * (transform->e22 * transform->e33 - transform->e32 * transform->e23) -
                transform->e12 * (transform->e21 * transform->e33 - transform->e23 * transform->e31) +
                transform->e13 * (transform->e21 * transform->e32 - transform->e22 * transform->e31);

@@ -69,7 +69,7 @@ bool PngLoader::read()
     image->format = PNG_FORMAT_BGRA;
     buffer = static_cast<png_bytep>(malloc(PNG_IMAGE_SIZE((*image))));
     if (!buffer) {
-        // out of memory, only time when libpng doesnt free its data
+        //out of memory, only time when libpng doesnt free its data
         png_image_free(image);
         return false;
     }

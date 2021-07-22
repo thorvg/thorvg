@@ -614,7 +614,7 @@ SwSpan* _intersectSpansRegion(const SwRleData *clip, const SwRleData *targetRle,
     auto clipSpans = clip->spans;
     auto clipEnd = clip->spans + clip->size;
 
-    while (spanCnt > 0 && spans < end ) {
+    while (spanCnt > 0 && spans < end) {
         if (clipSpans == clipEnd) {
             spans = end;
             break;
@@ -680,7 +680,7 @@ SwSpan* _intersectMaskRegion(const SwRleData *clip, const SwRleData *targetRle, 
         clipSpans1++;
     }
 
-    while (spanCnt && spans < end ) {
+    while (spanCnt && spans < end) {
         if (clipSpans > clipEnd) {
             spans = end;
             break;
@@ -737,7 +737,7 @@ SwSpan* _intersectSpansRect(const SwBBox *bbox, const SwRleData *targetRle, SwSp
     auto maxx = minx + static_cast<int16_t>(bbox->max.x - bbox->min.x) - 1;
     auto maxy = miny + static_cast<int16_t>(bbox->max.y - bbox->min.y) - 1;
 
-    while (spanCnt && spans < end ) {
+    while (spanCnt && spans < end) {
         if (spans->y > maxy) {
             spans = end;
             break;
