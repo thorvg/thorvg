@@ -87,16 +87,19 @@ struct Scene::Impl
         this->opacity = static_cast<uint8_t>(opacity);
         if (needComposition(opacity)) opacity = 255;
 
+        Array<RenderData>* array = new Array<RenderData>();
         for (auto paint = paints.data; paint < (paints.data + paints.count); ++paint) {
-            (*paint)->pImpl->update(renderer, transform, opacity, clips, static_cast<uint32_t>(flag));
+            void* data = (*paint)->pImpl->update(renderer, transform, opacity, clips, static_cast<uint32_t>(flag));
+            if ((*paint)->id() == TVG_CLASS_ID_SCENE) {
+                array->push(static_cast<Array<RenderData>*>(data));
+            } else {
+                array->push(data);
+            }
         }
-
-        /* FXIME: it requires to return list of children engine data
-           This is necessary for scene composition */
 
         this->renderer = &renderer;
 
-        return nullptr;
+        return array;
     }
 
     bool render(RenderMethod& renderer)

@@ -215,7 +215,13 @@ void* Paint::Impl::update(RenderMethod& renderer, const RenderTransform* pTransf
 
         if (!cmpFastTrack) {
             cmpData = cmpTarget->pImpl->update(renderer, pTransform, 255, clips, pFlag);
-            if (cmpMethod == CompositeMethod::ClipPath) clips.push(cmpData);
+            if (cmpMethod == CompositeMethod::ClipPath) {
+                if (cmpTarget->id() == TVG_CLASS_ID_SCENE) {
+                    clips.push(static_cast<Array<RenderData>*>(cmpData));
+                } else {
+                    clips.push(cmpData);
+                }
+            }
         }
     }
 

@@ -43,6 +43,18 @@ struct Array
         data[count++] = element;
     }
 
+    void push(Array<T>* array)
+    {
+        if (count + array->count > reserved) {
+            reserved = count + array->count;
+            data = static_cast<T*>(realloc(data, sizeof(T) * reserved));
+        }
+        for (auto element = array->data; element < (array->data + array->count); ++element) {
+            if (*element) data[count++] = *element;
+        }
+        delete(array);
+    }
+
     bool reserve(uint32_t size)
     {
         if (size > reserved) {
