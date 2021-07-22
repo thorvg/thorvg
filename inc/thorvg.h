@@ -247,7 +247,7 @@ public:
      *
      * @retval The augmented transformation matrix.
      *
-     * @BETA_API
+     * @since 0.4
      */
     Matrix transform() noexcept;
 
@@ -1185,8 +1185,7 @@ public:
 
     /**
      * @brief Enumeration specifying the methods of Memory Pool behavior policy.
-     *
-     * @BETA_API
+     * @since 0.4
      */
     enum MempoolPolicy
     {
@@ -1236,7 +1235,7 @@ public:
      *
      * @warning It's not allowed after pushing any paints.
      *
-     * @BETA_API
+     * @since 0.4
     */
     Result mempool(MempoolPolicy policy) noexcept;
 
