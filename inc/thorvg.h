@@ -1339,15 +1339,15 @@ public:
 /**
  * @class Saver
  *
- * @brief A class exporting a paint in a specified file data to recover the paint scene later.
+ * @brief A class for exporting a paint object into a specified file, from which to recover the paint data later.
  *
- * ThorVG provides a feature for exporting & importing paint data, the Saver has a role to export it to a file.
- * Basically, this feature is useful when you need to save the composed scene or image from a paint object and replay it later.
+ * ThorVG provides a feature for exporting & importing paint data. The purpose of the Saver is to export the data to a file.
+ * Basically, this feature is useful when you need to save the composed scene or image from a paint object and recreate it later.
  *
  * The file format is decided by the extension name(i.e. "*.tvg") while the supported formats depend on the TVG packaging environment.
  * If it doesn't support the file format, it will return the @c NonSuppport result by the save() method.
  *
- * Once you export a paint to the file successfully, you can replay it using the Picture class.
+ * Once you export a paint to the file successfully, you can recreate it using the Picture class.
  *
  * @see Picture::load()
  *
@@ -1365,7 +1365,7 @@ public:
      * @param[in] path A path to the file, in which the paint data is to be saved.
      *
      * @retval Result::Success When succeed.
-     * @retval Result::NonSupport When trying to save a file with an unknown extension nor non supported format.
+     * @retval Result::NonSupport When trying to save a file with an unknown extension or a non-supported format, the @c NonSuppport result is returned by the save() method.
      * @retval Result::Unknown Others.
      *
      * @note Saving can be asynchronous if the assigned thread number is greater than zero. To guarantee the saving is done, call sync() afterwards.
@@ -1385,7 +1385,7 @@ public:
      * @return Result::Success when succeed.
      * @return Result::InsufficientCondition otherwise.
      *
-     * @note the asynchronous tasking is depend on the saver module implementation.
+     * @note The asynchronous tasking is depend on the saver module implementation.
      * @see Saver::save()
      *
      * @BETA_API
