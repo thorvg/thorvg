@@ -271,7 +271,7 @@ int64_t mathMultiply(int64_t a, int64_t b)
         b = -b;
         s = -s;
     }
-    int64_t c = (a * b + 0x8000L ) >> 16;
+    int64_t c = (a * b + 0x8000L) >> 16;
     return (s > 0) ? c : -c;
 }
 

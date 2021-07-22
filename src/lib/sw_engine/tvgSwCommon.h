@@ -70,7 +70,7 @@ struct SwPoint
         return {x - rhs.x, y - rhs.y};
     }
 
-    bool operator==(const SwPoint& rhs ) const
+    bool operator==(const SwPoint& rhs) const
     {
         return (x == rhs.x && y == rhs.y);
     }

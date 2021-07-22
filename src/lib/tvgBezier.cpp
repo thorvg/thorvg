@@ -89,8 +89,8 @@ void bezSplitLeft(Bezier& cur, float at, Bezier& left)
     left.ctrl1.x = cur.start.x + at * (cur.ctrl1.x - cur.start.x);
     left.ctrl1.y = cur.start.y + at * (cur.ctrl1.y - cur.start.y);
 
-    left.ctrl2.x = cur.ctrl1.x + at * (cur.ctrl2.x - cur.ctrl1.x); // temporary holding spot
-    left.ctrl2.y = cur.ctrl1.y + at * (cur.ctrl2.y - cur.ctrl1.y); // temporary holding spot
+    left.ctrl2.x = cur.ctrl1.x + at * (cur.ctrl2.x - cur.ctrl1.x); //temporary holding spot
+    left.ctrl2.y = cur.ctrl1.y + at * (cur.ctrl2.y - cur.ctrl1.y); //temporary holding spot
 
     cur.ctrl2.x = cur.ctrl2.x + at * (cur.end.x - cur.ctrl2.x);
     cur.ctrl2.y = cur.ctrl2.y + at * (cur.end.y - cur.ctrl2.y);
