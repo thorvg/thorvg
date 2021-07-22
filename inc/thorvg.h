@@ -1339,7 +1339,17 @@ public:
 /**
  * @class Saver
  *
- * @brief A class enabling saving a paint in a binary format.
+ * @brief A class exporting a paint in a specified file data to recover the paint scene later.
+ *
+ * ThorVG provides a feature for exporting & importing paint data, the Saver has a role to export it to a file.
+ * Basically, this feature is useful when you need to save the composed scene or image from a paint object and replay it later.
+ *
+ * The file format is decided by the extension name(i.e. "*.tvg") while the supported formats depend on the TVG packaging environment.
+ * If it doesn't support the file format, it will return the @c NonSuppport result by the save() method.
+ *
+ * Once you export a paint to the file successfully, you can replay it using the Picture class.
+ *
+ * @see Picture::load()
  *
  * @BETA_API
  */
@@ -1349,21 +1359,46 @@ public:
     ~Saver();
 
     /**
-     * @brief Saves all the paints from the tree in a binary format.
+     * @brief Export the given @p paint data to the given @p path
      *
-     * @param[in] paint The root paint to be saved with all its nodes.
-     * @param[in] path A path to the file, in which the data is to be saved.
+     * @param[in] paint The paint to be saved with all its associated properties.
+     * @param[in] path A path to the file, in which the paint data is to be saved.
      *
      * @retval Result::Success When succeed.
-     * @retval Result::InvalidArguments the @p path is invalid.
-     * @retval Result::FailedAllocation An internal error with a memory allocation for the Saver object.
-     * @retval Result::MemoryCorruption When casting in the internal function implementation failed.
+     * @retval Result::NonSupport When trying to save a file with an unknown extension nor non supported format.
      * @retval Result::Unknown Others.
      *
+     * @note Saving can be asynchronous if the assigned thread number is greater than zero. To guarantee the saving is done, call sync() afterwards.
+     * @see Saver::sync()
+     *
+     * @BETA_API
      */
     Result save(std::unique_ptr<Paint> paint, const std::string& path) noexcept;
+
+    /**
+     * @brief Guarantees that the saving task is finished.
+     *
+     * The behavior of the saver will work on sync/async based on the threading setting of the initializer.
+     * Thus if you wish to have a benefit of it, you must call sync() after the save() in the proper delayed time.
+     * Otherwise, you can call sync() immediately.
+     *
+     * @return Result::Success when succeed.
+     * @return Result::InsufficientCondition otherwise.
+     *
+     * @note the asynchronous tasking is depend on the saver module implementation.
+     * @see Saver::save()
+     *
+     * @BETA_API
+     */
     Result sync() noexcept;
 
+    /**
+     * @brief Creates a new Saver object.
+     *
+     * @return A new Saver object.
+     *
+     * @BETA_API
+     */
     static std::unique_ptr<Saver> gen() noexcept;
 
     _TVG_DECLARE_PRIVATE(Saver);
