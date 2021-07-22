@@ -127,7 +127,7 @@ TvgBinCounter TvgSaver::writeTagProperty(TvgBinTag tag, TvgBinCounter cnt, const
     return growCnt;
 }
 
- 
+
 TvgBinCounter TvgSaver::serializePaint(const Paint* paint)
 {
     TvgBinCounter cnt = 0;
@@ -193,8 +193,8 @@ TvgBinCounter TvgSaver::serializeFill(const Fill* fill, TvgBinTag tag)
         cnt += writeTagProperty(TVG_TAG_FILL_LINEAR_GRADIENT, sizeof(args), args);
     }
 
-    auto flag = static_cast<TvgBinFlag>(fill->spread());
-    cnt += writeTagProperty(TVG_TAG_FILL_FILLSPREAD, SIZE(TvgBinFlag), &flag);
+    if (auto flag = static_cast<TvgBinFlag>(fill->spread()))
+        cnt += writeTagProperty(TVG_TAG_FILL_FILLSPREAD, SIZE(TvgBinFlag), &flag);
     cnt += writeTagProperty(TVG_TAG_FILL_COLORSTOPS, stopsCnt * sizeof(stops), stops);
 
     writeReservedCount(cnt);
@@ -208,17 +208,17 @@ TvgBinCounter TvgSaver::serializeStroke(const Shape* shape)
     writeTag(TVG_TAG_SHAPE_STROKE);
     reserveCount();
 
-    //cap
-    auto flag = static_cast<TvgBinFlag>(shape->strokeCap());
-    auto cnt = writeTagProperty(TVG_TAG_SHAPE_STROKE_CAP, SIZE(TvgBinFlag), &flag);
-
-    //join
-    flag = static_cast<TvgBinFlag>(shape->strokeJoin());
-    cnt += writeTagProperty(TVG_TAG_SHAPE_STROKE_JOIN, SIZE(TvgBinFlag), &flag);
-
     //width
     auto width = shape->strokeWidth();
-    cnt += writeTagProperty(TVG_TAG_SHAPE_STROKE_WIDTH, sizeof(width), &width);
+    auto cnt = writeTagProperty(TVG_TAG_SHAPE_STROKE_WIDTH, sizeof(width), &width);
+
+    //cap
+    if (auto flag = static_cast<TvgBinFlag>(shape->strokeCap()))
+        cnt += writeTagProperty(TVG_TAG_SHAPE_STROKE_CAP, SIZE(TvgBinFlag), &flag);
+
+    //join
+    if (auto flag = static_cast<TvgBinFlag>(shape->strokeJoin()))
+        cnt += writeTagProperty(TVG_TAG_SHAPE_STROKE_JOIN, SIZE(TvgBinFlag), &flag);
 
     //fill
     if (auto fill = shape->strokeFill()) {
@@ -276,13 +276,19 @@ TvgBinCounter TvgSaver::serializeShape(const Shape* shape)
 {
     writeTag(TVG_TAG_CLASS_SHAPE);
     reserveCount();
+    TvgBinCounter cnt = 0;
 
     //fill rule
-    auto flag = (shape->fillRule() == FillRule::EvenOdd) ? TVG_FLAG_SHAPE_FILLRULE_EVENODD : TVG_FLAG_SHAPE_FILLRULE_WINDING;
-    auto cnt = writeTagProperty(TVG_TAG_SHAPE_FILLRULE, SIZE(TvgBinFlag), &flag);
+    if (auto flag = static_cast<TvgBinFlag>(shape->fillRule()))
+        cnt = writeTagProperty(TVG_TAG_SHAPE_FILLRULE, SIZE(TvgBinFlag), &flag);
 
     //stroke
-    if (shape->strokeWidth() > 0) cnt += serializeStroke(shape);
+    if (shape->strokeWidth() > 0) {
+        uint8_t color[4] = {0, 0, 0, 0};
+        shape->strokeColor(color, color + 1, color + 2, color + 3);
+        auto fill = shape->strokeFill();
+        if (fill || color[3] > 0) cnt += serializeStroke(shape);
+    }
 
     //fill
     if (auto fill = shape->fill()) {
@@ -290,7 +296,7 @@ TvgBinCounter TvgSaver::serializeShape(const Shape* shape)
     } else {
         uint8_t color[4] = {0, 0, 0, 0};
         shape->fillColor(color, color + 1, color + 2, color + 3);
-        cnt += writeTagProperty(TVG_TAG_SHAPE_COLOR, sizeof(color), color);
+        if (color[3] > 0) cnt += writeTagProperty(TVG_TAG_SHAPE_COLOR, sizeof(color), color);
     }
 
     cnt += serializePath(shape);
