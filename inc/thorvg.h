@@ -1221,17 +1221,17 @@ public:
      * while processing rendering. It internally uses one shared memory pool
      * which can be reused among the canvases in order to avoid memory overhead.
      *
-     * Thus ThorVG suggests memory pool policy to satisfy user demands,
+     * Thus ThorVG suggests using a memory pool policy to satisfy user demands,
      * if it needs to guarantee the thread-safety of the internal data access.
      *
-     * @param[in] policy Use the shared cache memory. The default value is @c true
+     * @param[in] policy The method specifying the Memory Pool behavior. The default value is @c MempoolPolicy::Default.
      *
      * @retval Result::Success When succeed.
-     * @retval Result::InsufficientCondition If the canvas has any paints.
+     * @retval Result::InsufficientCondition If the canvas has no paints.
      * @retval Result::NonSupport In case the software engine is not supported.
      *
-     * @note When @c policy is set as @c MempoolPolicy::Individual, current instance of canvas uses its own individual
-     *       memory data that is not shared with others. This is necessary when the canvas is accessed on a worker-thread.
+     * @note When @c policy is set as @c MempoolPolicy::Individual, the current instance of canvas uses its own individual
+     *       memory data, which is not shared with others. This is necessary when the canvas is accessed on a worker-thread.
      *
      * @warning It's not allowed after pushing any paints.
      *
