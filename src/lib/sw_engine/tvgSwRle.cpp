@@ -658,74 +658,6 @@ SwSpan* _intersectSpansRegion(const SwRleData *clip, const SwRleData *targetRle,
     return out;
 }
 
-SwSpan* _intersectMaskRegion(const SwRleData *clip, const SwRleData *targetRle, SwSpan *outSpans, uint32_t spanCnt)
-{
-
-    auto out = outSpans;
-    auto spans = targetRle->spans;
-    auto end = targetRle->spans + targetRle->size;
-    auto clipSpans = clip->spans;
-    auto clipSpans1 = clip->spans;
-    auto clipEnd = clip->spans + clip->size;
-
-    auto maskClipMin = clipSpans1->y;
-    auto maskClipMax = clipSpans1->y;
-
-    while (clipSpans1->y) {
-        if (clipSpans1->y > maskClipMax)
-            maskClipMax = clipSpans1->y;
-
-        if (clipSpans1->y < maskClipMax)
-            maskClipMin = clipSpans1->y;
-        clipSpans1++;
-    }
-
-    while (spanCnt && spans < end) {
-        if (clipSpans > clipEnd) {
-            spans = end;
-            break;
-        }
-
-
-        if (spans->y < maskClipMin || spans->y > maskClipMax) {
-            out->x = spans->x;
-            out->y = spans->y;
-            out->len = spans->len;
-            out->coverage = spans->coverage;
-            ++out;
-        } 
-        else {
-            while (clipSpans->y) {
-                auto sx1 = spans->x;
-                auto sx2 = sx1 + spans->len;
-                auto cx1 = clipSpans->x;
-                auto cx2 = cx1 + clipSpans->len;
-                auto x = sx1 > cx1 ? sx1 : cx1;
-                auto len = (sx2 < cx2 ? sx2 : cx2) - x;
-
-                if (len > 1) {
-                    out->x = sx1;
-                    out->y = clipSpans->y;
-                    out->len = cx1-sx1;
-                    out->coverage = spans->coverage;
-                    ++out;
-
-                    out->x = cx2;
-                    out->y = clipSpans->y;
-                    out->len = sx2 - cx2;
-                    out->coverage = spans->coverage;
-                    ++out;
-                }
-                clipSpans++; 
-            }
-        }
-        --spanCnt;
-        ++spans;
-    }
-
-    return out;
-}
-
 
 SwSpan* _intersectSpansRect(const SwBBox *bbox, const SwRleData *targetRle, SwSpan *outSpans, uint32_t spanCnt)
 {
@@ -941,18 +873,4 @@ void rleClipRect(SwRleData *rle, const SwBBox* clip)
     _replaceClipSpan(rle, spans, spansEnd - spans);
 
     TVGLOG("SW_ENGINE", "Using ClipRect!");
-}
-
-
-void rleAlphaMask(SwRleData *rle, const SwRleData *clip)
-{
-    if (rle->size == 0 || clip->size == 0) return;
-    auto spanCnt = rle->size + clip->size;
-
-    auto spans = static_cast<SwSpan*>(malloc(sizeof(SwSpan) * (spanCnt)));
-
-    if (!spans) return;
-    auto spansEnd = _intersectMaskRegion(clip, rle, spans, spanCnt);
-
-    _replaceClipSpan(rle, spans, spansEnd - spans);
 }
