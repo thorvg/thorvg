@@ -489,9 +489,7 @@ unique_ptr<Scene> tvgLoadData(const char *ptr, uint32_t size)
     auto end = ptr + size;
 
     if (!_readTvgHeader(&ptr) || ptr >= end) {
-#ifdef THORVG_LOG_ENABLED
-        printf("TVG_LOADER: Invalid TVG Data!\n");
-#endif
+        TVGLOG("TVG: Invalid TVG Data!");
         return nullptr;
     }
 

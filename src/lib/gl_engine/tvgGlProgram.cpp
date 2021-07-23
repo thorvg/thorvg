@@ -20,9 +20,7 @@
  * SOFTWARE.
  */
 
-#include <iostream>
 #include "tvgGlProgram.h"
-
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
@@ -167,7 +165,7 @@ void GlProgram::linkProgram(std::shared_ptr<GlShader> shader)
         {
             char* infoLog = new char[infoLen];
             glGetProgramInfoLog(progObj, infoLen, NULL, infoLog);
-            std::cout << "Error linking shader: " << infoLog << std::endl;
+            TVGERR("GL_ENGINE: Error linking shader: %s", infoLog);
             delete[] infoLog;
 
         }

@@ -463,9 +463,7 @@ Compositor* SwRenderer::target(const RenderRegion& region)
     if (x + w > surface->w) w = (surface->w - x);
     if (y + h > surface->h) h = (surface->h - y);
 
-#ifdef THORVG_LOG_ENABLED
-    printf("SW_ENGINE: Using intermediate composition [Region: %d %d %d %d]\n", x, y, w, h);
-#endif
+    TVGLOG("SW_ENGINE: Using intermediate composition [Region: %d %d %d %d]", x, y, w, h);
 
     cmp->compositor->recoverSfc = surface;
     cmp->compositor->recoverCmp = surface->compositor;
