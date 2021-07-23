@@ -182,9 +182,7 @@ static void _applyComposition(Paint* paint, const SvgNode* node, float vx, float
     /* Do not drop in Circular Dependency for ClipPath.
        Composition can be applied recursively if its children nodes have composition target to this one. */
     if (node->style->clipPath.applying) {
-#ifdef THORVG_LOG_ENABLED
-    printf("SVG: Multiple Composition Tried! Check out Circular dependency?\n");
-#endif
+        TVGLOG("SVG", "Multiple Composition Tried! Check out Circular dependency?");
     } else {
         auto compNode = node->style->clipPath.node;
         if (compNode && compNode->child.count > 0) {
@@ -211,9 +209,7 @@ static void _applyComposition(Paint* paint, const SvgNode* node, float vx, float
     /* Do not drop in Circular Dependency for Mask.
        Composition can be applied recursively if its children nodes have composition target to this one. */
     if (node->style->mask.applying) {
-#ifdef THORVG_LOG_ENABLED
-    printf("SVG: Multiple Composition Tried! Check out Circular dependency?\n");
-#endif
+        TVGLOG("SVG", "Multiple Composition Tried! Check out Circular dependency?");
     } else  {
         auto compNode = node->style->mask.node;
         if (compNode && compNode->child.count > 0) {
@@ -468,9 +464,7 @@ static unique_ptr<Picture> _imageBuildHelper(SvgNode* node, float vx, float vy, 
         //Temporarily disable embedded svg:
         const char *dot = strrchr(href, '.');
         if (dot && !strcmp(dot, ".svg")) {
-#ifdef THORVG_LOG_ENABLED
-            printf("SVG: Embedded svg file is disabled.\n");
-#endif
+            TVGLOG("SVG", "Embedded svg file is disabled.");
             return nullptr;
         }
 

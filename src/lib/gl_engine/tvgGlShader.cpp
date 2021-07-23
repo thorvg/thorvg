@@ -20,9 +20,7 @@
  * SOFTWARE.
  */
 
-#include <iostream>
 #include "tvgGlShader.h"
-
 
 /************************************************************************/
 /* External Class Implementation                                        */
@@ -68,7 +66,6 @@ uint32_t GlShader::complileShader(uint32_t type, char* shaderSrc)
 
     // Create the shader object
     shader = glCreateShader(type);
-    assert(shader);
 
     // Load the shader source
     glShaderSource(shader, 1, &shaderSrc, NULL);
@@ -89,11 +86,10 @@ uint32_t GlShader::complileShader(uint32_t type, char* shaderSrc)
         {
             char* infoLog = new char[infoLen];
             glGetShaderInfoLog(shader, infoLen, NULL, infoLog);
-            std::cout << "Error compiling shader: " << infoLog << std::endl;
+            TVGERR("GL_ENGINE", "Error compiling shader: %s", infoLog);
             delete[] infoLog;
         }
         glDeleteShader(shader);
-        assert(0);
     }
 
     return shader;
