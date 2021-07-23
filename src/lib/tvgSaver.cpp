@@ -66,7 +66,7 @@ static SaveModule* _find(FileType type)
             break;
         }
     }
-    printf("SAVER: %s format is not supported\n", format);
+    TVGLOG("SAVER", "%s format is not supported", format);
 #endif
     return nullptr;
 }

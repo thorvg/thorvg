@@ -177,11 +177,11 @@ static void _horizLine(RleWorker& rw, SwCoord x, SwCoord y, SwCoord area, SwCoor
 
     //span has ushort coordinates. check limit overflow
     if (x >= SHRT_MAX) {
-        //LOG: x coordinate overflow!
+        TVGERR("SW_ENGINE", "X-coordiante overflow!");
         x = SHRT_MAX;
     }
     if (y >= SHRT_MAX) {
-        //LOG: y coordinate overflow!
+        TVGERR("SW_ENGINE", "Y Coordiante overflow!");
         y = SHRT_MAX;
     }
 
@@ -589,7 +589,7 @@ static bool _decomposeOutline(RleWorker& rw)
     return true;
 
 invalid_outline:
-    //LOG: Invalid Outline!
+    TVGERR("SW_ENGINE", "Invalid Outline!");
     return false;
 }
 
@@ -859,9 +859,7 @@ void rleClipPath(SwRleData *rle, const SwRleData *clip)
 
     _replaceClipSpan(rle, spans, spansEnd - spans);
 
-#ifdef THORVG_LOG_ENABLED
-    cout << "SW_ENGINE: Using ClipPath!" << endl;
-#endif
+    TVGLOG("SW_ENGINE", "Using ClipPath!");
 }
 
 
@@ -874,8 +872,5 @@ void rleClipRect(SwRleData *rle, const SwBBox* clip)
 
     _replaceClipSpan(rle, spans, spansEnd - spans);
 
-#ifdef THORVG_LOG_ENABLED
-    cout <<"SW_ENGINE: Using ClipRect!" << endl;
-#endif
+    TVGLOG("SW_ENGINE", "Using ClipRect!");
 }
-
