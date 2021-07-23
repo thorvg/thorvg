@@ -35,9 +35,9 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-#ifdef THORVG_LOG_ENABLED
-bool _isIgnoreUnsupportedLogAttributes(const char* tagAttribute, const char* tagValue)
+bool _isIgnoreUnsupportedLogAttributes(TVG_UNUSED const char* tagAttribute, TVG_UNUSED const char* tagValue)
 {
+#ifdef THORVG_LOG_ENABLED
     const auto attributesNum = 6;
     const struct
     {
@@ -64,8 +64,10 @@ bool _isIgnoreUnsupportedLogAttributes(const char* tagAttribute, const char* tag
         }
     }
     return false;
-}
 #endif
+    return true;
+}
+
 
 
 static const char* _simpleXmlFindWhiteSpace(const char* itr, const char* itrEnd)
@@ -316,17 +318,11 @@ bool simpleXmlParseAttributes(const char* buf, unsigned bufLength, simpleXMLAttr
         }
         tval[i] = '\0';
 
-#ifdef THORVG_LOG_ENABLED
         if (!func((void*)data, tmpBuf, tval)) {
             if (!_isIgnoreUnsupportedLogAttributes(tmpBuf, tval)) {
-                auto type = simpleXmlNodeTypeToString(((SvgLoaderData*)data)->svgParse->node->type);
-                auto id = ((SvgLoaderData*)data)->svgParse->node->id ? ((SvgLoaderData*)data)->svgParse->node->id->c_str() : "NO_ID";
-                printf("SVG: Unsupported attributes used [Elements type: %s][Id : %s][Attribute: %s][Value: %s]\n", type, id, tmpBuf, tval ? tval : "NONE");
+                TVGLOG("SVG", "Unsupported attributes used [Elements type: %s][Id : %s][Attribute: %s][Value: %s]", simpleXmlNodeTypeToString(((SvgLoaderData*)data)->svgParse->node->type), ((SvgLoaderData*)data)->svgParse->node->id ? ((SvgLoaderData*)data)->svgParse->node->id->c_str() : "NO_ID", tmpBuf, tval ? tval : "NONE");
             }
         }
-#else
-        func((void*)data, tmpBuf, tval);
-#endif
     }
     return true;
 }
@@ -517,17 +513,11 @@ bool simpleXmlParseW3CAttribute(const char* buf, simpleXMLAttributeCb func, cons
             val = const_cast<char*>(_simpleXmlSkipWhiteSpace(val, val + strlen(val)));
             val[_simpleXmlUnskipWhiteSpace(val + strlen(val) , val) - val] = '\0';
 
-#ifdef THORVG_LOG_ENABLED
             if (!func((void*)data, key, val)) {
                 if (!_isIgnoreUnsupportedLogAttributes(key, val)) {
-                    auto type = simpleXmlNodeTypeToString(((SvgLoaderData*)data)->svgParse->node->type);
-                    auto id = ((SvgLoaderData*)data)->svgParse->node->id ? ((SvgLoaderData*)data)->svgParse->node->id->c_str() : "NO_ID";
-                    printf("SVG: Unsupported attributes used [Elements type: %s][Id : %s][Attribute: %s][Value: %s]\n", type, id, key, val ? val : "NONE");
+                    TVGLOG("SVG", "Unsupported attributes used [Elements type: %s][Id : %s][Attribute: %s][Value: %s]", simpleXmlNodeTypeToString(((SvgLoaderData*)data)->svgParse->node->type), ((SvgLoaderData*)data)->svgParse->node->id ? ((SvgLoaderData*)data)->svgParse->node->id->c_str() : "NO_ID", key, val ? val : "NONE");
                 }
             }
-#else
-            func((void*)data, key, val);
-#endif
         }
 
         buf = next + 1;

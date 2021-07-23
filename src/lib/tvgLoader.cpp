@@ -107,9 +107,8 @@ static LoadModule* _find(FileType type)
             break;
         }
     }
-    printf("LOADER: %s format is not supported\n", format);
+    TVGLOG("LOADER", "%s format is not supported", format);
 #endif
-
     return nullptr;
 }
 
