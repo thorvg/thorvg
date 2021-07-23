@@ -2484,49 +2484,50 @@ static void _styleInherit(SvgStyleProperty* child, const SvgStyleProperty* paren
 }
 
 
+static void _inefficientNodeCheck(TVG_UNUSED SvgNode* node){
 #ifdef THORVG_LOG_ENABLED
-static void _inefficientNodeCheck(SvgNode* node){
-    if (!node->display && node->type != SvgNodeType::ClipPath) printf("SVG: Inefficient elements used [Display is none][Node Type : %s]\n", simpleXmlNodeTypeToString(node->type).c_str());
-    if (node->style->opacity == 0) printf("SVG: Inefficient elements used [Opacity is zero][Node Type : %s]\n", simpleXmlNodeTypeToString(node->type).c_str());
-    if (node->style->fill.opacity == 0 && node->style->stroke.opacity == 0) printf("SVG: Inefficient elements used [Fill opacity and stroke opacity are zero][Node Type : %s]\n", simpleXmlNodeTypeToString(node->type).c_str());
+    auto type = simpleXmlNodeTypeToString(node->type);
+
+    if (!node->display && node->type != SvgNodeType::ClipPath) printf("SVG: Inefficient elements used [Display is none][Node Type : %s]\n", type);
+    if (node->style->opacity == 0) printf("SVG: Inefficient elements used [Opacity is zero][Node Type : %s]\n", type);
+    if (node->style->fill.opacity == 0 && node->style->stroke.opacity == 0) printf("SVG: Inefficient elements used [Fill opacity and stroke opacity are zero][Node Type : %s]\n", type);
 
     switch (node->type) {
         case SvgNodeType::Path: {
-            if (!node->node.path.path || node->node.path.path->empty()) printf("SVG: Inefficient elements used [Empty path][Node Type : %s]\n", simpleXmlNodeTypeToString(node->type).c_str());
+            if (!node->node.path.path || node->node.path.path->empty()) printf("SVG: Inefficient elements used [Empty path][Node Type : %s]\n", type);
             break;
         }
         case SvgNodeType::Ellipse: {
-            if (node->node.ellipse.rx == 0 && node->node.ellipse.ry == 0) printf("SVG: Inefficient elements used [Size is zero][Node Type : %s]\n", simpleXmlNodeTypeToString(node->type).c_str());
+            if (node->node.ellipse.rx == 0 && node->node.ellipse.ry == 0) printf("SVG: Inefficient elements used [Size is zero][Node Type : %s]\n", type);
             break;
         }
         case SvgNodeType::Polygon:
         case SvgNodeType::Polyline: {
-            if (node->node.polygon.pointsCount < 2) printf("SVG: Inefficient elements used [Invalid Polygon][Node Type : %s]\n", simpleXmlNodeTypeToString(node->type).c_str());
+            if (node->node.polygon.pointsCount < 2) printf("SVG: Inefficient elements used [Invalid Polygon][Node Type : %s]\n", type);
             break;
         }
         case SvgNodeType::Circle: {
-            if (node->node.circle.r == 0) printf("SVG: Inefficient elements used [Size is zero][Node Type : %s]\n", simpleXmlNodeTypeToString(node->type).c_str());
+            if (node->node.circle.r == 0) printf("SVG: Inefficient elements used [Size is zero][Node Type : %s]\n", type);
             break;
         }
         case SvgNodeType::Rect: {
-            if (node->node.rect.w == 0 && node->node.rect.h) printf("SVG: Inefficient elements used [Size is zero][Node Type : %s]\n", simpleXmlNodeTypeToString(node->type).c_str());
+            if (node->node.rect.w == 0 && node->node.rect.h) printf("SVG: Inefficient elements used [Size is zero][Node Type : %s]\n", type);
             break;
         }
         case SvgNodeType::Line: {
-            if (node->node.line.x1 == node->node.line.x2 && node->node.line.y1 == node->node.line.y2) printf("SVG: Inefficient elements used [Size is zero][Node Type : %s]\n", simpleXmlNodeTypeToString(node->type).c_str());
+            if (node->node.line.x1 == node->node.line.x2 && node->node.line.y1 == node->node.line.y2) printf("SVG: Inefficient elements used [Size is zero][Node Type : %s]\n", type);
             break;
         }
         default: break;
     }
-}
 #endif
+}
+
 
 static void _updateStyle(SvgNode* node, SvgStyleProperty* parentStyle)
 {
     _styleInherit(node->style, parentStyle);
-#ifdef THORVG_LOG_ENABLED
     _inefficientNodeCheck(node);
-#endif
 
     auto child = node->child.data;
     for (uint32_t i = 0; i < node->child.count; ++i, ++child) {
