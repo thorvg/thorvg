@@ -1051,16 +1051,7 @@ public:
     const uint32_t* data() const noexcept;
 
     /**
-     * @brief Set paint for the picture.
-     *
-     * @param[in] paint A Paint object to be drawn.
-     *
-     * @return Result::Success when succeed.
-     * @return Result::InsufficientCondition if paint already set.
-     * @return Result::MemoryCorruption when bad memory handling.
-     *
-     * @warning Please do not use it, this API is not official one. It could be modified in the next version.
-     *
+     * Must remove it!
      * @BETA_API
      */
     Result paint(std::unique_ptr<Paint> paint) noexcept;
