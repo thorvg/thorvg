@@ -341,8 +341,11 @@ void fillFetchRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, 
 SwRleData* rleRender(SwRleData* rle, const SwOutline* outline, const SwBBox& renderRegion, bool antiAlias);
 void rleFree(SwRleData* rle);
 void rleReset(SwRleData* rle);
+
+SwRleData* rleRectRender(const SwBBox* bbox);
 void rleClipPath(SwRleData *rle, const SwRleData *clip);
 void rleClipRect(SwRleData *rle, const SwBBox* clip);
+void rleUnionSpans(SwRleData *rle, SwRleData *clip1, const SwRleData *clip2);
 
 SwMpool* mpoolInit(uint32_t threads);
 bool mpoolTerm(SwMpool* mpool);

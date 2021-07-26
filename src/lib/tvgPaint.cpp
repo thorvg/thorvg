@@ -36,6 +36,8 @@ static inline bool FLT_SAME(float a, float b)
 
 static bool _clipPathFastTrack(Paint* cmpTarget, const RenderTransform* pTransform, RenderTransform* rTransform, RenderRegion& viewport)
 {
+    if (cmpTarget->id() != TVG_CLASS_ID_SHAPE) return false;
+
     /* Access Shape class by Paint is bad... but it's ok still it's an internal usage. */
     auto shape = static_cast<Shape*>(cmpTarget);
 

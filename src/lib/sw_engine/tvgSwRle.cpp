@@ -659,6 +659,38 @@ SwSpan* _intersectSpansRegion(const SwRleData *clip, const SwRleData *targetRle,
 }
 
 
+SwSpan* _unionSpansRegion(const SwRleData *clip1, const SwRleData *clip2, SwSpan *outSpans, uint32_t spanCnt)
+{
+    auto out = outSpans;
+    auto spans1 = clip1->spans;
+    auto end1 = clip1->spans + clip1->size;
+    auto spans2 = clip2->spans;
+    auto end2 = clip2->spans + clip2->size;
+
+    while (spanCnt > 0 && (spans1 < end1 || spans2 < end2)) {
+        if (spans2 >= end2 || (spans1->y < spans2->y && spans1 < end1)) {
+            out->x = spans1->x;
+            out->y = spans1->y;
+            out->len = spans1->len;
+            out->coverage = spans1->coverage;
+            ++out;
+            --spanCnt;
+            ++spans1;
+
+        } else {
+            out->x = spans2->x;
+            out->y = spans2->y;
+            out->len = spans2->len;
+            out->coverage = spans2->coverage;
+            ++out;
+            --spanCnt;
+            ++spans2;
+        }
+    }
+    return out;
+}
+
+
 SwSpan* _intersectSpansRect(const SwBBox *bbox, const SwRleData *targetRle, SwSpan *outSpans, uint32_t spanCnt)
 {
     auto out = outSpans;
@@ -698,11 +730,12 @@ SwSpan* _intersectSpansRect(const SwBBox *bbox, const SwRleData *targetRle, SwSp
 }
 
 
-void _replaceClipSpan(SwRleData *rle, SwSpan* clippedSpans, uint32_t size)
+void _replaceClipSpan(SwRleData *rle, SwSpan* clippedSpans, uint32_t size, uint32_t alloc)
 {
     free(rle->spans);
     rle->spans = clippedSpans;
-    rle->size = rle->alloc = size;
+    rle->size = size;
+    rle->alloc = alloc;
 }
 
 
@@ -849,15 +882,41 @@ void rleFree(SwRleData* rle)
 }
 
 
+SwRleData* rleRectRender(const SwBBox* bbox)
+{
+    auto width = static_cast<uint16_t>(bbox->max.x - bbox->min.x);
+    auto height = static_cast<uint16_t>(bbox->max.y - bbox->min.y);
+
+    auto spanCnt = height;
+    auto rle = reinterpret_cast<SwRleData*>(calloc(1, sizeof(SwRleData)));
+    if (!rle) return nullptr;
+
+    rle->spans = static_cast<SwSpan*>(malloc(sizeof(SwSpan) * spanCnt));
+    rle->size = spanCnt;
+    rle->alloc = spanCnt;
+
+    auto span = rle->spans;
+    for (uint16_t i = 0; i < height; ++i, ++span) {
+        span->x = bbox->min.x;
+        span->y = bbox->min.y + i;
+        span->len = width;
+        span->coverage = 255;
+    }
+
+    return rle;
+}
+
+
 void rleClipPath(SwRleData *rle, const SwRleData *clip)
 {
-    if (rle->size == 0 || clip->size == 0) return;
+    if (!rle || !clip || rle->size == 0 || clip->size == 0) return;
     auto spanCnt = rle->size > clip->size ? rle->size : clip->size;
-    auto spans = static_cast<SwSpan*>(malloc(sizeof(SwSpan) * (spanCnt)));
+    auto spanSize = sizeof(SwSpan) * spanCnt;
+    auto spans = static_cast<SwSpan*>(malloc(spanSize));
     if (!spans) return;
     auto spansEnd = _intersectSpansRegion(clip, rle, spans, spanCnt);
 
-    _replaceClipSpan(rle, spans, spansEnd - spans);
+    _replaceClipSpan(rle, spans, spansEnd - spans, spanSize);
 
     TVGLOG("SW_ENGINE", "Using ClipPath!");
 }
@@ -865,12 +924,29 @@ void rleClipPath(SwRleData *rle, const SwRleData *clip)
 
 void rleClipRect(SwRleData *rle, const SwBBox* clip)
 {
-    if (rle->size == 0) return;
-    auto spans = static_cast<SwSpan*>(malloc(sizeof(SwSpan) * (rle->size)));
+    if (!rle || !clip || rle->size == 0) return;
+    auto spanSize = sizeof(SwSpan) * rle->size;
+    auto spans = static_cast<SwSpan*>(malloc(spanSize));
     if (!spans) return;
     auto spansEnd = _intersectSpansRect(clip, rle, spans, rle->size);
 
-    _replaceClipSpan(rle, spans, spansEnd - spans);
+    _replaceClipSpan(rle, spans, spansEnd - spans, spanSize);
 
     TVGLOG("SW_ENGINE", "Using ClipRect!");
+}
+
+
+void rleUnionSpans(SwRleData *rle, SwRleData *clip1, const SwRleData *clip2)
+{
+    if (!rle || !clip1 || !clip2 || clip1->size == 0 || clip2->size == 0) return;
+
+    auto spanCnt = clip1->size + clip2->size;
+    auto spanSize = sizeof(SwSpan) * spanCnt;
+    auto spans = static_cast<SwSpan*>(malloc(spanSize));
+    if (!spans) return;
+
+    auto spansEnd = _unionSpansRegion(clip1, clip2, spans, spanCnt);
+    _replaceClipSpan(rle, spans, spansEnd - spans, spanSize);
+
+    TVGLOG("SW_ENGINE", "Using rleUnionSpans!");
 }

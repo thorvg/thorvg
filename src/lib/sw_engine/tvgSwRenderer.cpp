@@ -56,8 +56,55 @@ struct SwTask : Task
     }
 
     virtual bool dispose() = 0;
+    virtual SwRleData* innerRle() = 0;
+    virtual bool innerRect() = 0;
+    virtual SwBBox* innerBBox() = 0;
 };
 
+
+struct SwSceneTask : SwTask
+{
+    Array<RenderData> array;
+    SwRleData* rle = nullptr;
+
+    void run(unsigned tid) override
+    {
+        SwRleData* paintRle = nullptr; //rle of the first paint in scene
+        for (auto paint = array.data; paint < (array.data + array.count); ++paint) {
+            auto task = static_cast<SwTask*>(*paint);
+            task->done();
+
+            if (rle) {
+                rleUnionSpans(rle, rle, task->innerRle());
+            } else if (paintRle) {
+                rle = reinterpret_cast<SwRleData*>(calloc(1, sizeof(SwRleData)));
+                rleUnionSpans(rle, paintRle, task->innerRle());
+            } else {
+                paintRle = task->innerRle();
+            }
+        }
+    }
+
+    bool dispose() override
+    {
+        rleFree(rle);
+        return true;
+    }
+
+    SwRleData* innerRle() {
+        if (rle) return rle;
+        if (array.count > 0) return static_cast<SwTask*>(*array.data)->innerRle();
+        return nullptr;
+    }
+
+    bool innerRect() {
+        return false;
+    }
+
+    SwBBox* innerBBox() {
+        return nullptr;
+    }
+};
 
 struct SwShapeTask : SwTask
 {
@@ -138,16 +185,20 @@ struct SwShapeTask : SwTask
 
         //Clip Path
         for (auto clip = clips.data; clip < (clips.data + clips.count); ++clip) {
-            auto clipper = &static_cast<SwShapeTask*>(*clip)->shape;
-            //Clip shape rle
-            if (shape.rle) {
-                if (clipper->rect) rleClipRect(shape.rle, &clipper->bbox);
-                else if (clipper->rle) rleClipPath(shape.rle, clipper->rle);
-            }
-            //Clip stroke rle
-            if (shape.strokeRle) {
-                if (clipper->rect) rleClipRect(shape.strokeRle, &clipper->bbox);
-                else if (clipper->rle) rleClipPath(shape.strokeRle, clipper->rle);
+            auto task = static_cast<SwTask*>(*clip);
+
+            if (task->innerRect()) {
+                auto bbox = task->innerBBox();
+                //Clip shape rle
+                if (shape.rle) rleClipRect(shape.rle, bbox);
+                //Clip stroke rle
+                if (shape.strokeRle) rleClipRect(shape.strokeRle, bbox);
+            } else {
+                auto rle = task->innerRle();
+                //Clip shape rle
+                if (shape.rle) rleClipPath(shape.rle, rle);
+                //Clip stroke rle
+                if (shape.strokeRle) rleClipPath(shape.strokeRle, rle);
             }
         }
         goto end;
@@ -162,6 +213,21 @@ struct SwShapeTask : SwTask
     {
        shapeFree(&shape);
        return true;
+    }
+
+    SwRleData* innerRle() {
+        if (!shape.rle && shape.rect) {
+            shape.rle = rleRectRender(&shape.bbox);
+        }
+        return shape.rle;
+    }
+
+    bool innerRect() {
+        return shape.rect;
+    }
+
+    SwBBox* innerBBox() {
+        return &shape.bbox;
     }
 };
 
@@ -188,9 +254,14 @@ struct SwImageTask : SwTask
                 if (!imageGenRle(&image, pdata, bbox, false)) goto end;
                 if (image.rle) {
                     for (auto clip = clips.data; clip < (clips.data + clips.count); ++clip) {
-                        auto clipper = &static_cast<SwShapeTask*>(*clip)->shape;
-                        if (clipper->rect) rleClipRect(image.rle, &clipper->bbox);
-                        else if (clipper->rle) rleClipPath(image.rle, clipper->rle);
+                        auto task = static_cast<SwTask*>(*clip);
+                        if (task->innerRect()) {
+                            auto bbox = task->innerBBox();
+                            rleClipRect(image.rle, bbox);
+                        } else {
+                            auto rle = task->innerRle();
+                            rleClipPath(image.rle, rle);
+                        }
                     }
                 }
             }
@@ -204,6 +275,18 @@ struct SwImageTask : SwTask
     {
        imageFree(&image);
        return true;
+    }
+
+    SwRleData* innerRle() {
+        return nullptr;
+    }
+
+    bool innerRect() {
+        return false;
+    }
+
+    SwBBox* innerBBox() {
+        return nullptr;
     }
 };
 
@@ -547,7 +630,7 @@ void* SwRenderer::prepareCommon(SwTask* task, const RenderTransform* transform, 
     if (clips.count > 0) {
         //Guarantee composition targets get ready.
         for (auto clip = clips.data; clip < (clips.data + clips.count); ++clip) {
-            static_cast<SwShapeTask*>(*clip)->done();
+            static_cast<SwTask*>(*clip)->done();
         }
         task->clips = clips;
     }
@@ -597,6 +680,19 @@ RenderData SwRenderer::prepare(const Shape& sdata, RenderData data, const Render
         task = new SwShapeTask;
         if (!task) return nullptr;
         task->sdata = &sdata;
+    }
+    return prepareCommon(task, transform, opacity, clips, flags);
+}
+
+
+RenderData SwRenderer::prepare(Array<RenderData>& array, RenderData data, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flags)
+{
+    //prepare task
+    auto task = static_cast<SwSceneTask*>(data);
+    if (!task) {
+        task = new SwSceneTask;
+        if (!task) return nullptr;
+        task->array = array;
     }
     return prepareCommon(task, transform, opacity, clips, flags);
 }

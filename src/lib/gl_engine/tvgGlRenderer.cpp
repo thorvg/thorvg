@@ -234,6 +234,13 @@ RenderData GlRenderer::prepare(const Shape& shape, RenderData data, const Render
 }
 
 
+RenderData GlRenderer::prepare(Array<RenderData>& array, RenderData data, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flags)
+{
+    //TODO:
+    return nullptr;
+}
+
+
 RenderRegion GlRenderer::viewport()
 {
     return {0, 0, UINT32_MAX, UINT32_MAX};
