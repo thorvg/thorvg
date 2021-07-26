@@ -2,6 +2,7 @@ test_file = [
     'testFill.cpp',
     'testInitializer.cpp',
     'testMain.cpp',
+    'testPaint.cpp',
     'testPicture.cpp',
     'testScene.cpp',
     'testShape.cpp',
