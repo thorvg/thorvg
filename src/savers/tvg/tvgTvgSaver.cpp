@@ -42,7 +42,10 @@ bool TvgSaver::flushTo(const std::string& path)
     FILE* fp = fopen(path.c_str(), "w+");
     if (!fp) return false;
 
-    if (fwrite(buffer.data, sizeof(char), buffer.count, fp) == 0) return false;
+    if (fwrite(buffer.data, sizeof(char), buffer.count, fp) == 0) {
+        fclose(fp);
+        return false;
+    }
 
     fclose(fp);
 
