@@ -195,7 +195,7 @@ TvgBinCounter TvgSaver::serializeFill(const Fill* fill, TvgBinTag tag)
 
     if (auto flag = static_cast<TvgBinFlag>(fill->spread()))
         cnt += writeTagProperty(TVG_TAG_FILL_FILLSPREAD, SIZE(TvgBinFlag), &flag);
-    cnt += writeTagProperty(TVG_TAG_FILL_COLORSTOPS, stopsCnt * sizeof(stops), stops);
+    cnt += writeTagProperty(TVG_TAG_FILL_COLORSTOPS, stopsCnt * sizeof(Fill::ColorStop), stops);
 
     writeReservedCount(cnt);
 
