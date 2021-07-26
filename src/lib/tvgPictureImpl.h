@@ -148,16 +148,6 @@ struct Picture::Impl
         return false;
     }
 
-    bool viewbox(float* x, float* y, float* w, float* h) const
-    {
-        if (!loader) return false;
-        if (x) *x = loader->vx;
-        if (y) *y = loader->vy;
-        if (w) *w = loader->vw;
-        if (h) *h = loader->vh;
-        return true;
-    }
-
     bool size(uint32_t w, uint32_t h)
     {
         this->w = w;
