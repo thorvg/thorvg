@@ -63,7 +63,7 @@ struct SwShapeTask : SwTask
 {
     SwShape shape;
     const Shape* sdata = nullptr;
-    bool cmpStroking;
+    bool cmpStroking = false;
 
     void run(unsigned tid) override
     {
