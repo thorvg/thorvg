@@ -39,8 +39,8 @@ TEST_CASE("Load Svg file in Picture", "[capiPicture]")
     //Load Svg file
     REQUIRE(tvg_picture_load(picture, TEST_DIR"/logo.svg") == TVG_RESULT_SUCCESS);
 
-    float x, y, w, h;
-    REQUIRE(tvg_picture_get_viewbox(picture, &x, &y, &w, &h) == TVG_RESULT_SUCCESS);
+    float w, h;
+    REQUIRE(tvg_picture_get_size(picture, &w, &h) == TVG_RESULT_SUCCESS);
 
     REQUIRE(tvg_paint_del(picture) == TVG_RESULT_SUCCESS);
 }
@@ -62,7 +62,7 @@ TEST_CASE("Load Svg Data in Picture", "[capiPicture]")
 
     //Verify Size
     float w, h;
-    REQUIRE(tvg_picture_get_viewbox(picture, nullptr, nullptr, &w, &h) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_picture_get_size(picture, &w, &h) == TVG_RESULT_SUCCESS);
     REQUIRE(w == Approx(1000).epsilon(0.0000001));
     REQUIRE(h == Approx(1000).epsilon(0.0000001));
 
@@ -92,7 +92,7 @@ TEST_CASE("Load Raw file in Picture", "[capiPicture]")
 
         //Verify Size
         float w, h;
-        REQUIRE(tvg_picture_get_viewbox(picture, nullptr, nullptr, &w, &h) == TVG_RESULT_SUCCESS);
+        REQUIRE(tvg_picture_get_size(picture, &w, &h) == TVG_RESULT_SUCCESS);
         REQUIRE(w == Approx(200).epsilon(0.0000001));
         REQUIRE(h == Approx(300).epsilon(0.0000001));
     }
@@ -116,7 +116,7 @@ TEST_CASE("Load Png file in Picture", "[capiPicture]")
 
     //Verify Size
     float w, h;
-    REQUIRE(tvg_picture_get_viewbox(picture, nullptr, nullptr, &w, &h) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_picture_get_size(picture, &w, &h) == TVG_RESULT_SUCCESS);
 
     REQUIRE(tvg_paint_del(picture) == TVG_RESULT_SUCCESS);
 }

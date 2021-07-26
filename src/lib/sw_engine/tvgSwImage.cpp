@@ -29,7 +29,7 @@
 static bool _genOutline(SwImage* image, const Picture* pdata, const Matrix* transform, SwMpool* mpool,  unsigned tid)
 {
     float w, h;
-    pdata->viewbox(nullptr, nullptr, &w, &h);
+    pdata->size(&w, &h);
     if (w == 0 || h == 0) return false;
 
     image->outline = mpoolReqOutline(mpool, tid);

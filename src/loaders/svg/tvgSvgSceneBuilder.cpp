@@ -457,7 +457,6 @@ static unique_ptr<Picture> _imageBuildHelper(SvgNode* node, float vx, float vy, 
             string decoded = svgUtilURLDecode(href);
             if (picture->load(decoded.c_str(), decoded.size(), true) != Result::Success) return nullptr;
         }
-
     } else {
         if (!strncmp(href, "file://", sizeof("file://") - 1)) href += sizeof("file://") - 1;
         //TODO: protect against recursive svg image loading
@@ -467,17 +466,14 @@ static unique_ptr<Picture> _imageBuildHelper(SvgNode* node, float vx, float vy, 
             TVGLOG("SVG", "Embedded svg file is disabled.");
             return nullptr;
         }
-
         if (picture->load(href) != Result::Success) return nullptr;
     }
 
-    float x, y, w, h;
-    if (picture->viewbox(&x, &y, &w, &h) == Result::Success && w && h) {
+    float w, h;
+    if (picture->size(&w, &h) == Result::Success && w  > 0 && h > 0) {
         auto sx = node->node.image.w / w;
         auto sy = node->node.image.h / h;
-        auto sxt = x * sx;
-        auto syt = y * sy;
-        Matrix m = {sx, 0, node->node.image.x - sxt, 0, sy, node->node.image.y - syt, 0, 0, 1};
+        Matrix m = {sx, 0, node->node.image.x, 0, sy, node->node.image.y, 0, 0, 1};
         picture->transform(m);
     }
 
