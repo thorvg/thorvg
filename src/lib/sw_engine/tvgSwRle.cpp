@@ -911,12 +911,11 @@ void rleClipPath(SwRleData *rle, const SwRleData *clip)
 {
     if (!rle || !clip || rle->size == 0 || clip->size == 0) return;
     auto spanCnt = rle->size > clip->size ? rle->size : clip->size;
-    auto spanSize = sizeof(SwSpan) * spanCnt;
-    auto spans = static_cast<SwSpan*>(malloc(spanSize));
+    auto spans = static_cast<SwSpan*>(malloc(sizeof(SwSpan) * spanCnt));
     if (!spans) return;
     auto spansEnd = _intersectSpansRegion(clip, rle, spans, spanCnt);
 
-    _replaceClipSpan(rle, spans, spansEnd - spans, spanSize);
+    _replaceClipSpan(rle, spans, spansEnd - spans, spanCnt);
 
     TVGLOG("SW_ENGINE", "Using ClipPath!");
 }
@@ -925,12 +924,11 @@ void rleClipPath(SwRleData *rle, const SwRleData *clip)
 void rleClipRect(SwRleData *rle, const SwBBox* clip)
 {
     if (!rle || !clip || rle->size == 0) return;
-    auto spanSize = sizeof(SwSpan) * rle->size;
-    auto spans = static_cast<SwSpan*>(malloc(spanSize));
+    auto spans = static_cast<SwSpan*>(malloc(sizeof(SwSpan) * rle->size));
     if (!spans) return;
     auto spansEnd = _intersectSpansRect(clip, rle, spans, rle->size);
 
-    _replaceClipSpan(rle, spans, spansEnd - spans, spanSize);
+    _replaceClipSpan(rle, spans, spansEnd - spans, rle->size);
 
     TVGLOG("SW_ENGINE", "Using ClipRect!");
 }
@@ -941,12 +939,11 @@ void rleUnionSpans(SwRleData *rle, SwRleData *clip1, const SwRleData *clip2)
     if (!rle || !clip1 || !clip2 || clip1->size == 0 || clip2->size == 0) return;
 
     auto spanCnt = clip1->size + clip2->size;
-    auto spanSize = sizeof(SwSpan) * spanCnt;
-    auto spans = static_cast<SwSpan*>(malloc(spanSize));
+    auto spans = static_cast<SwSpan*>(malloc(sizeof(SwSpan) * spanCnt));
     if (!spans) return;
 
     auto spansEnd = _unionSpansRegion(clip1, clip2, spans, spanCnt);
-    _replaceClipSpan(rle, spans, spansEnd - spans, spanSize);
+    _replaceClipSpan(rle, spans, spansEnd - spans, spanCnt);
 
     TVGLOG("SW_ENGINE", "Using rleUnionSpans!");
 }
