@@ -69,19 +69,9 @@ struct SwSceneTask : SwTask
 
     void run(unsigned tid) override
     {
-        SwRleData* paintRle = nullptr; //rle of the first paint in scene
         for (auto paint = array.data; paint < (array.data + array.count); ++paint) {
             auto task = static_cast<SwTask*>(*paint);
             task->done();
-
-            if (rle) {
-                rleUnionSpans(rle, rle, task->innerRle());
-            } else if (paintRle) {
-                rle = reinterpret_cast<SwRleData*>(calloc(1, sizeof(SwRleData)));
-                rleUnionSpans(rle, paintRle, task->innerRle());
-            } else {
-                paintRle = task->innerRle();
-            }
         }
     }
 
@@ -93,8 +83,22 @@ struct SwSceneTask : SwTask
 
     SwRleData* innerRle() {
         if (rle) return rle;
-        if (array.count > 0) return static_cast<SwTask*>(*array.data)->innerRle();
-        return nullptr;
+
+        SwRleData* paintRle = nullptr; //rle of the first paint in scene
+        for (auto paint = array.data; paint < (array.data + array.count); ++paint) {
+            auto task = static_cast<SwTask*>(*paint);
+            if (rle) {
+                rleUnionSpans(rle, rle, task->innerRle());
+            } else if (paintRle) {
+                rle = reinterpret_cast<SwRleData*>(calloc(1, sizeof(SwRleData)));
+                rleUnionSpans(rle, paintRle, task->innerRle());
+            } else {
+                paintRle = task->innerRle();
+            }
+        }
+
+        if (rle) return rle;
+        return paintRle;
     }
 
     bool innerRect() {
