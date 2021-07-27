@@ -5,6 +5,9 @@ if (cc.get_id() != 'msvc')
     if get_option('vectors').contains('avx')
         compiler_flags += ['-mavx']
     endif
+    if get_option('vectors').contains('neon')
+        compiler_flags += ['-mfpu=neon-vfpv4']
+    endif
     if get_option('b_sanitize') == 'none'
         compiler_flags += ['-fno-exceptions', '-fno-rtti',
                            '-fno-unwind-tables' , '-fno-asynchronous-unwind-tables',
