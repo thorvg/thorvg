@@ -22,7 +22,6 @@
 #include <setjmp.h>
 #include <limits.h>
 #include <memory.h>
-#include <iostream>
 #include "tvgSwCommon.h"
 
 /************************************************************************/

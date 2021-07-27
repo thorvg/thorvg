@@ -21,7 +21,6 @@
  */
 #include "tvgSwCommon.h"
 #include "tvgRender.h"
-#include <iostream>
 #include <float.h>
 #include <math.h>
 
