@@ -28,6 +28,7 @@
 
 static tvg::Picture* pPicture = nullptr;
 static double updateTime = 0;
+static double accumulateTime = 0;
 static uint cnt = 0;
 
 void tvgDrawCmds(tvg::Canvas* canvas)
@@ -99,7 +100,11 @@ void drawSwView(void* data, Eo* obj)
 
     auto rasterTime = after - before;
 
-    printf("[%5d]: rendering = %fs\n", ++cnt, updateTime + rasterTime);
+    ++cnt;
+
+    accumulateTime += (updateTime + rasterTime);
+
+    printf("[%5d]: rendering = %fs,  average = %fs\n", cnt, updateTime + rasterTime, accumulateTime / cnt);
 }
 
 
