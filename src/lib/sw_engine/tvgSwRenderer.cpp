@@ -102,10 +102,18 @@ struct SwSceneTask : SwTask
     }
 
     bool innerRect() {
+        if (array.count == 1) {
+            auto task = static_cast<SwTask*>(*array.data);
+            return task->innerRect();
+        }
         return false;
     }
 
     SwBBox* innerBBox() {
+        if (array.count == 1) {
+            auto task = static_cast<SwTask*>(*array.data);
+            return task->innerBBox();
+        }
         return nullptr;
     }
 };

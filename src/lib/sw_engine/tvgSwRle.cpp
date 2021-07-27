@@ -668,16 +668,8 @@ SwSpan* _unionSpansRegion(const SwRleData *clip1, const SwRleData *clip2, SwSpan
     auto end2 = clip2->spans + clip2->size;
 
     while (spanCnt > 0 && (spans1 < end1 || spans2 < end2)) {
-        if (spans2 >= end2 || (spans1->y < spans2->y && spans1 < end1)) {
-            out->x = spans1->x;
-            out->y = spans1->y;
-            out->len = spans1->len;
-            out->coverage = spans1->coverage;
-            ++out;
-            --spanCnt;
-            ++spans1;
-
-        } else {
+        //TODO: Create better union algorithm
+        if (spans1 >= end1 || (spans1->y > spans2->y && spans2 < end2)) {
             out->x = spans2->x;
             out->y = spans2->y;
             out->len = spans2->len;
@@ -685,6 +677,15 @@ SwSpan* _unionSpansRegion(const SwRleData *clip1, const SwRleData *clip2, SwSpan
             ++out;
             --spanCnt;
             ++spans2;
+
+        } else {
+            out->x = spans1->x;
+            out->y = spans1->y;
+            out->len = spans1->len;
+            out->coverage = spans1->coverage;
+            ++out;
+            --spanCnt;
+            ++spans1;
         }
     }
     return out;
