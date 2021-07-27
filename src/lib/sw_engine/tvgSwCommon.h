@@ -29,6 +29,10 @@
     #include <immintrin.h>
 #endif
 
+#ifdef THORVG_NEON_VECTOR_SUPPORT
+    #include <arm_neon.h>
+#endif
+
 #if 0
 #include <sys/time.h>
 static double timeStamp()
@@ -362,7 +366,7 @@ bool rasterClear(SwSurface* surface);
 
 static inline void rasterRGBA32(uint32_t *dst, uint32_t val, uint32_t offset, int32_t len)
 {
-#ifdef THORVG_AVX_VECTOR_SUPPORT
+#if defined(THORVG_AVX_VECTOR_SUPPORT)
     //1. calculate how many iterations we need to cover length
     uint32_t iterations = len / 8;
     uint32_t avxFilled = iterations * 8;
@@ -382,6 +386,21 @@ static inline void rasterRGBA32(uint32_t *dst, uint32_t val, uint32_t offset, in
     leftovers = len - avxFilled;
     dst+= avxFilled;
 
+    while (leftovers--) *dst++ = val;
+#elif defined(THORVG_NEON_VECTOR_SUPPORT)
+    uint32_t iterations = len / 4;
+    uint32_t neonFilled = iterations * 4;
+    int32_t leftovers = 0;
+
+    dst+=offset;
+    uint32x4_t vectorVal = { val, val, val, val };
+
+    for (uint32_t i = 0; i < iterations; ++i) {
+        vst1q_u32(dst, vectorVal);
+        dst += 4;
+    }
+
+    leftovers = len - neonFilled;
     while (leftovers--) *dst++ = val;
 #else
     dst += offset;

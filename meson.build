@@ -42,6 +42,10 @@ if get_option('vectors').contains('avx') == true
     config_h.set10('THORVG_AVX_VECTOR_SUPPORT', true)
 endif
 
+if get_option('vectors').contains('neon') == true
+    config_h.set10('THORVG_NEON_VECTOR_SUPPORT', true)
+endif
+
 if get_option('bindings').contains('capi') == true
     config_h.set10('THORVG_CAPI_BINDING_SUPPORT', true)
 endif

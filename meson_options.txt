@@ -17,9 +17,9 @@ option('savers',
    description: 'Enable File Savers in thorvg')
 
 option('vectors',
-   type: 'array',
-   choices: ['', 'avx'],
-   value: [''],
+   type: 'combo',
+   choices: ['', 'avx', 'neon'],
+   value: '',
    description: 'Enable CPU Vectorization(SIMD) in thorvg')
 
 option('bindings',
