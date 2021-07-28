@@ -112,9 +112,8 @@ struct Picture::Impl
     {
         if (loader) {
             if (!paint) {
-                auto scene = loader->scene();
-                if (scene) {
-                    paint = scene.release();
+                if (auto p = loader->paint()) {
+                    paint = p.release();
                     loader->close();
                     if (w != loader->w && h != loader->h) resize();
                     if (paint) return RenderUpdateFlag::None;

@@ -2885,7 +2885,7 @@ bool SvgLoader::close()
 }
 
 
-unique_ptr<Scene> SvgLoader::scene()
+unique_ptr<Paint> SvgLoader::paint()
 {
     this->done();
     if (root) return move(root);
