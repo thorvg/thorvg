@@ -363,49 +363,6 @@ bool rasterImage(SwSurface* surface, SwImage* image, const Matrix* transform, co
 bool rasterStroke(SwSurface* surface, SwShape* shape, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
 bool rasterGradientStroke(SwSurface* surface, SwShape* shape, unsigned id);
 bool rasterClear(SwSurface* surface);
-
-static inline void rasterRGBA32(uint32_t *dst, uint32_t val, uint32_t offset, int32_t len)
-{
-#if defined(THORVG_AVX_VECTOR_SUPPORT)
-    //1. calculate how many iterations we need to cover length
-    uint32_t iterations = len / 8;
-    uint32_t avxFilled = iterations * 8;
-    int32_t leftovers = 0;
-
-    //2. set beginning of the array
-    dst+=offset;
-    __m256i_u* avxDst = (__m256i_u*) dst;
-
-    //3. fill octets
-    for (uint32_t i = 0; i < iterations; ++i) {
-        *avxDst = _mm256_set1_epi32(val);
-        avxDst++;
-    }
-
-    //4. fill leftovers (in first step we have to set pointer to place where avx job is done)
-    leftovers = len - avxFilled;
-    dst+= avxFilled;
-
-    while (leftovers--) *dst++ = val;
-#elif defined(THORVG_NEON_VECTOR_SUPPORT)
-    uint32_t iterations = len / 4;
-    uint32_t neonFilled = iterations * 4;
-    int32_t leftovers = 0;
-
-    dst+=offset;
-    uint32x4_t vectorVal = { val, val, val, val };
-
-    for (uint32_t i = 0; i < iterations; ++i) {
-        vst1q_u32(dst, vectorVal);
-        dst += 4;
-    }
-
-    leftovers = len - neonFilled;
-    while (leftovers--) *dst++ = val;
-#else
-    dst += offset;
-    while (len--) *dst++ = val;
-#endif
-}
+void rasterRGBA32(uint32_t *dst, uint32_t val, uint32_t offset, int32_t len);
 
 #endif /* _TVG_SW_COMMON_H_ */
