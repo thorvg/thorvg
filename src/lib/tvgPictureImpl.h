@@ -76,7 +76,6 @@ struct Picture::Impl
         return ret;
     }
 
-
     uint32_t reload()
     {
         if (loader) {
@@ -100,17 +99,33 @@ struct Picture::Impl
         return RenderUpdateFlag::None;
     }
 
-    void* update(RenderMethod &renderer, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag pFlag)
+    RenderTransform resizeTransform(const RenderTransform* pTransform)
+    {
+        //Overriding Transformation by the desired image size
+        auto sx = w / loader->w;
+        auto sy = h / loader->h;
+        auto scale = sx < sy ? sx : sy;
+
+        RenderTransform tmp;
+        tmp.m = {scale, 0, 0, 0, scale, 0, 0, 0, 1};
+
+        if (!pTransform) return tmp;
+        else return RenderTransform(pTransform, &tmp);
+    }
+
+    void* update(RenderMethod &renderer, const RenderTransform* pTransform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag pFlag)
     {
         auto flag = reload();
 
-        if (pixels) rdata = renderer.prepare(*picture, rdata, transform, opacity, clips, static_cast<RenderUpdateFlag>(pFlag | flag));
-        else if (paint) {
+        if (pixels) {
+            auto transform = resizeTransform(pTransform);
+            rdata = renderer.prepare(*picture, rdata, &transform, opacity, clips, static_cast<RenderUpdateFlag>(pFlag | flag));
+        } else if (paint) {
             if (resizing) {
                 loader->resize(paint, w, h);
                 resizing = false;
             }
-            rdata = paint->pImpl->update(renderer, transform, opacity, clips, static_cast<RenderUpdateFlag>(pFlag | flag));
+            rdata = paint->pImpl->update(renderer, pTransform, opacity, clips, static_cast<RenderUpdateFlag>(pFlag | flag));
         }
         return rdata;
     }

@@ -85,11 +85,18 @@ Result Picture::size(float* w, float* h) const noexcept
 }
 
 
-const uint32_t* Picture::data() const noexcept
+const uint32_t* Picture::data(uint32_t* w, uint32_t* h) const noexcept
 {
     //Try it, If not loaded yet.
-    if (pImpl->loader) return pImpl->loader->pixels();
+    pImpl->reload();
 
+    if (pImpl->loader) {
+        if (w) *w = static_cast<uint32_t>(pImpl->loader->w);
+        if (h) *h = static_cast<uint32_t>(pImpl->loader->h);
+    } else {
+        if (w) *w = 0;
+        if (h) *h = 0;
+    }
     return pImpl->pixels;
 }
 

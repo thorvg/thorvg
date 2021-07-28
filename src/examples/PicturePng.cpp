@@ -38,7 +38,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
         }
         picture->translate(i* 150, i * 150);
         picture->rotate(30 * i);
-        picture->scale(0.25);
+        picture->size(200, 200);
         if (canvas->push(move(picture)) != tvg::Result::Success) return;
     }
 }

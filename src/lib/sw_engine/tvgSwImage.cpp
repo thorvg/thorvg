@@ -26,12 +26,8 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-static bool _genOutline(SwImage* image, const Picture* pdata, const Matrix* transform, SwMpool* mpool,  unsigned tid)
+static bool _genOutline(SwImage* image, const Matrix* transform, SwMpool* mpool,  unsigned tid)
 {
-    float w, h;
-    pdata->size(&w, &h);
-    if (w == 0 || h == 0) return false;
-
     image->outline = mpoolReqOutline(mpool, tid);
     auto outline = image->outline;
 
@@ -41,6 +37,9 @@ static bool _genOutline(SwImage* image, const Picture* pdata, const Matrix* tran
 
     outline->reservedCntrsCnt = 1;
     outline->cntrs = static_cast<uint32_t*>(realloc(outline->cntrs, outline->reservedCntrsCnt * sizeof(uint32_t)));
+
+    auto w = static_cast<float>(image->w);
+    auto h = static_cast<float>(image->h);
 
     Point to[4] = {{0 ,0}, {w, 0}, {w, h}, {0, h}};
     for (int i = 0; i < 4; i++) {
@@ -59,8 +58,6 @@ static bool _genOutline(SwImage* image, const Picture* pdata, const Matrix* tran
     outline->opened = false;
 
     image->outline = outline;
-    image->w = w;
-    image->h = h;
 
     return true;
 }
@@ -71,9 +68,9 @@ static bool _genOutline(SwImage* image, const Picture* pdata, const Matrix* tran
 /************************************************************************/
 
 
-bool imagePrepare(SwImage* image, const Picture* pdata, const Matrix* transform, const SwBBox& clipRegion, SwBBox& renderRegion, SwMpool* mpool, unsigned tid)
+bool imagePrepare(SwImage* image, const Matrix* transform, const SwBBox& clipRegion, SwBBox& renderRegion, SwMpool* mpool, unsigned tid)
 {
-    if (!_genOutline(image, pdata, transform, mpool, tid)) return false;
+    if (!_genOutline(image, transform, mpool, tid)) return false;
     return mathUpdateOutlineBBox(image->outline, clipRegion, renderRegion);
 }
 
