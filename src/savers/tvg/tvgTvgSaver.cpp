@@ -319,13 +319,9 @@ TvgBinCounter TvgSaver::serializePicture(const Picture* picture)
     TvgBinCounter cnt = 0;
 
     //Bitmap Image
-    if (auto pixels = picture->data()) {
-        //TODO: Loader expects uints
-        float fw, fh;
-        picture->size(&fw, &fh);
+    uint32_t w, h;
 
-        auto w = static_cast<uint32_t>(fw);
-        auto h = static_cast<uint32_t>(fh);
+    if (auto pixels = picture->data(&w, &h)) {
         TvgBinCounter sizeCnt = sizeof(w);
         TvgBinCounter imgSize = w * h * sizeof(pixels[0]);
 

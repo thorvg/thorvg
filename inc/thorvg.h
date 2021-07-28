@@ -1048,7 +1048,7 @@ public:
      *
      * @BETA_API
      */
-    const uint32_t* data() const noexcept;
+    const uint32_t* data(uint32_t* w, uint32_t* h) const noexcept;
 
     /**
      * Must remove it!

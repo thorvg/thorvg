@@ -266,7 +266,7 @@ struct SwMpool
 
 static inline SwCoord TO_SWCOORD(float val)
 {
-    return SwCoord(val * 64);
+    return SwCoord(val * 64.0f);
 }
 
 static inline uint32_t ALPHA_BLEND(uint32_t c, uint32_t a)
@@ -289,7 +289,7 @@ static inline uint32_t ALPHA_MULTIPLY(uint32_t c, uint32_t a)
 
 static inline SwCoord HALF_STROKE(float width)
 {
-    return TO_SWCOORD(width * 0.5);
+    return TO_SWCOORD(width * 0.5f);
 }
 
 int64_t mathMultiply(int64_t a, int64_t b);
@@ -329,7 +329,7 @@ bool strokeParseOutline(SwStroke* stroke, const SwOutline& outline);
 SwOutline* strokeExportOutline(SwStroke* stroke, SwMpool* mpool, unsigned tid);
 void strokeFree(SwStroke* stroke);
 
-bool imagePrepare(SwImage* image, const Picture* pdata, const Matrix* transform, const SwBBox& clipRegion, SwBBox& renderRegion, SwMpool* mpool, unsigned tid);
+bool imagePrepare(SwImage* image, const Matrix* transform, const SwBBox& clipRegion, SwBBox& renderRegion, SwMpool* mpool, unsigned tid);
 bool imagePrepared(const SwImage* image);
 bool imageGenRle(SwImage* image, TVG_UNUSED const Picture* pdata, const SwBBox& renderRegion, bool antiAlias);
 void imageDelOutline(SwImage* image, SwMpool* mpool, uint32_t tid);

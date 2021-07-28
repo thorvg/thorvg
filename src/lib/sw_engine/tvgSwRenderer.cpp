@@ -181,7 +181,11 @@ struct SwImageTask : SwTask
 
         if (prepareImage) {
             imageReset(&image);
-            if (!imagePrepare(&image, pdata, transform, clipRegion, bbox, mpool, tid)) goto end;
+
+            image.data = const_cast<uint32_t*>(pdata->data(&image.w, &image.h));
+            if (!image.data || image.w == 0 || image.h == 0) goto end;            
+
+            if (!imagePrepare(&image, transform, clipRegion, bbox, mpool, tid)) goto end;
 
             //Clip Path?
             if (clips.count > 0) {
@@ -194,8 +198,7 @@ struct SwImageTask : SwTask
                     }
                 }
             }
-        }
-        image.data = const_cast<uint32_t*>(pdata->data());
+        }        
     end:
         imageDelOutline(&image, mpool, tid);
     }
