@@ -125,7 +125,7 @@ void TvgLoader::run(unsigned tid)
     if (!root) clear();
 }
 
-unique_ptr<Scene> TvgLoader::scene()
+unique_ptr<Paint> TvgLoader::paint()
 {
     this->done();
     if (root) return move(root);

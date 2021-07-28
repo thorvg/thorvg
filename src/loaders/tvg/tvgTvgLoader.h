@@ -45,7 +45,7 @@ public:
     bool close() override;
 
     void run(unsigned tid) override;
-    unique_ptr<Scene> scene() override;
+    unique_ptr<Paint> paint() override;
 
 private:
     void clear();
