@@ -141,6 +141,7 @@ static void _genSpan(SwRleData* rle, const SwSpan* spans, uint32_t count)
     /* when the rle needs to be regenerated because of attribute change. */
     if (rle->alloc < newSize) {
         rle->alloc = (newSize * 2);
+        //OPTIMIZE: use mempool!
         rle->spans = static_cast<SwSpan*>(realloc(rle->spans, rle->alloc * sizeof(SwSpan)));
     }
 
@@ -162,7 +163,7 @@ static void _horizLine(RleWorker& rw, SwCoord x, SwCoord y, SwCoord area, SwCoor
 
     /* compute the coverage line's coverage, depending on the outline fill rule */
     /* the coverage percentage is area/(PIXEL_BITS*PIXEL_BITS*2) */
-    auto coverage = static_cast<int>(area >> (PIXEL_BITS * 2 + 1 - 8));    //range 0 - 256
+    auto coverage = static_cast<int>(area >> (PIXEL_BITS * 2 + 1 - 8));    //range 0 - 255
 
     if (coverage < 0) coverage = -coverage;
 
@@ -247,12 +248,10 @@ static void _sweep(RleWorker& rw)
         auto cell = rw.yCells[y];
 
         while (cell) {
-
             if (cell->x > x && cover != 0) _horizLine(rw, x, y, cover * (ONE_PIXEL * 2), cell->x - x);
             cover += cell->cover;
             auto area = cover * (ONE_PIXEL * 2) - cell->area;
             if (area != 0 && cell->x >= 0) _horizLine(rw, cell->x, y, area, 1);
-
             x = cell->x + 1;
             cell = cell->next;
         }
