@@ -1089,6 +1089,9 @@ static SvgNode* _createDefsNode(TVG_UNUSED SvgLoaderData* loader, TVG_UNUSED Svg
 {
     if (loader->def && loader->doc->node.doc.defs) return loader->def;
     SvgNode* node = _createNode(nullptr, SvgNodeType::Defs);
+
+    loader->def = node;
+    loader->doc->node.doc.defs = node;
     return node;
 }
 
@@ -2349,10 +2352,6 @@ static void _svgLoaderParserXmlOpen(SvgLoaderData* loader, const char* content, 
         }
 
         if (!node) return;
-        if (node->type == SvgNodeType::Defs && !loader->def) {
-            loader->doc->node.doc.defs = node;
-            loader->def = node;
-        }
         if (node->type != SvgNodeType::Defs || !empty) {
             loader->stack.push(node);
         }
