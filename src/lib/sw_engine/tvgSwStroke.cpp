@@ -56,7 +56,7 @@ static void _growBorder(SwStrokeBorder* border, uint32_t newPts)
 
     while (maxCur < maxNew)
         maxCur += (maxCur >> 1) + 16;
-
+    //OPTIMIZE: use mempool!
     border->pts = static_cast<SwPoint*>(realloc(border->pts, maxCur * sizeof(SwPoint)));
     border->tags = static_cast<uint8_t*>(realloc(border->tags, maxCur * sizeof(uint8_t)));
     border->maxPts = maxCur;

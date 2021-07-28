@@ -95,37 +95,33 @@ bool mpoolClear(SwMpool* mpool)
 
     for (unsigned i = 0; i < mpool->allocSize; ++i) {
 
+        //Outline
         p = &mpool->outline[i];
 
-        if (p->cntrs) {
-            free(p->cntrs);
-            p->cntrs = nullptr;
-        }
-        if (p->pts) {
-            free(p->pts);
-            p->pts = nullptr;
-        }
-        if (p->types) {
-            free(p->types);
-            p->types = nullptr;
-        }
+        free(p->cntrs);
+        p->cntrs = nullptr;
+
+        free(p->pts);
+        p->pts = nullptr;
+
+        free(p->types);
+        p->types = nullptr;
+
         p->cntrsCnt = p->reservedCntrsCnt = 0;
         p->ptsCnt = p->reservedPtsCnt = 0;
 
+        //StrokeOutline
         p = &mpool->strokeOutline[i];
 
-        if (p->cntrs) {
-            free(p->cntrs);
-            p->cntrs = nullptr;
-        }
-        if (p->pts) {
-            free(p->pts);
-            p->pts = nullptr;
-        }
-        if (p->types) {
-            free(p->types);
-            p->types = nullptr;
-        }
+        free(p->cntrs);
+        p->cntrs = nullptr;
+
+        free(p->pts);
+        p->pts = nullptr;
+
+        free(p->types);
+        p->types = nullptr;
+
         p->cntrsCnt = p->reservedCntrsCnt = 0;
         p->ptsCnt = p->reservedPtsCnt = 0;
     }

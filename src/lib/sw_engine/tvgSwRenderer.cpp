@@ -223,7 +223,6 @@ static void _termEngine()
 
 SwRenderer::~SwRenderer()
 {
-    clear();
     clearCompositors();
 
     if (surface) delete(surface);
@@ -240,6 +239,8 @@ bool SwRenderer::clear()
 {
     for (auto task = tasks.data; task < (tasks.data + tasks.count); ++task) (*task)->done();
     tasks.clear();
+
+    if (!sharedMpool) mpoolClear(mpool);
 
     if (surface) {
         vport.x = vport.y = 0;
