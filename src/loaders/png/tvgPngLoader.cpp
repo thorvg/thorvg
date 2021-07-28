@@ -45,8 +45,8 @@ bool PngLoader::open(const string& path)
 
     if (!png_image_begin_read_from_file(image, path.c_str())) return false;
 
-    vw = w = image->width;
-    vh = h = image->height;
+    w = image->width;
+    h = image->height;
 
     return true;
 }
@@ -57,8 +57,8 @@ bool PngLoader::open(const char* data, uint32_t size, bool copy)
 
     if (!png_image_begin_read_from_memory(image, data, size)) return false;
 
-    vw = w = image->width;
-    vh = h = image->height;
+    w = image->width;
+    h = image->height;
 
     return true;
 }

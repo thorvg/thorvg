@@ -76,37 +76,6 @@ struct Picture::Impl
         return ret;
     }
 
-    void resize()
-    {
-        auto sx = w / loader->vw;
-        auto sy = h / loader->vh;
-
-        if (loader->preserveAspect) {
-            //Scale
-            auto scale = sx < sy ? sx : sy;
-            paint->scale(scale);
-            //Align
-            auto vx = loader->vx * scale;
-            auto vy = loader->vy * scale;
-            auto vw = loader->vw * scale;
-            auto vh = loader->vh * scale;
-            if (vw > vh) vy -= (h - vh) * 0.5f;
-            else vx -= (w - vw) * 0.5f;
-            paint->translate(-vx, -vy);
-        } else {
-            //Align
-            auto vx = loader->vx * sx;
-            auto vy = loader->vy * sy;
-            auto vw = loader->vw * sx;
-            auto vh = loader->vh * sy;
-            if (vw > vh) vy -= (h - vh) * 0.5f;
-            else vx -= (w - vw) * 0.5f;
-
-            Matrix m = {sx, 0, -vx, 0, sy, -vy, 0, 0, 1};
-            paint->transform(m);
-        }
-        resizing = false;
-    }
 
     uint32_t reload()
     {
@@ -115,7 +84,10 @@ struct Picture::Impl
                 if (auto p = loader->paint()) {
                     paint = p.release();
                     loader->close();
-                    if (w != loader->w && h != loader->h) resize();
+                    if (w != loader->w && h != loader->h) {
+                        loader->resize(paint, w, h);
+                        resizing = false;
+                    }
                     if (paint) return RenderUpdateFlag::None;
                 }
             }
@@ -134,7 +106,10 @@ struct Picture::Impl
 
         if (pixels) rdata = renderer.prepare(*picture, rdata, transform, opacity, clips, static_cast<RenderUpdateFlag>(pFlag | flag));
         else if (paint) {
-            if (resizing) resize();
+            if (resizing) {
+                loader->resize(paint, w, h);
+                resizing = false;
+            }
             rdata = paint->pImpl->update(renderer, transform, opacity, clips, static_cast<RenderUpdateFlag>(pFlag | flag));
         }
         return rdata;

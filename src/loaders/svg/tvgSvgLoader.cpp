@@ -2850,6 +2850,41 @@ bool SvgLoader::open(const string& path)
 }
 
 
+bool SvgLoader::resize(Paint* paint, float w, float h)
+{
+    if (!paint) return false;
+
+    auto sx = w / vw;
+    auto sy = h / vh;
+
+    if (preserveAspect) {
+        //Scale
+        auto scale = sx < sy ? sx : sy;
+        paint->scale(scale);
+        //Align
+        auto vx = this->vx * scale;
+        auto vy = this->vy * scale;
+        auto vw = this->vw * scale;
+        auto vh = this->vh * scale;
+        if (vw > vh) vy -= (h - vh) * 0.5f;
+        else vx -= (w - vw) * 0.5f;
+        paint->translate(-vx, -vy);
+    } else {
+        //Align
+        auto vx = this->vx * sx;
+        auto vy = this->vy * sy;
+        auto vw = this->vw * sx;
+        auto vh = this->vh * sy;
+        if (vw > vh) vy -= (h - vh) * 0.5f;
+        else vx -= (w - vw) * 0.5f;
+
+        Matrix m = {sx, 0, -vx, 0, sy, -vy, 0, 0, 1};
+        paint->transform(m);
+    }
+    return true;
+}
+
+
 bool SvgLoader::read()
 {
     if (!content || size == 0) return false;

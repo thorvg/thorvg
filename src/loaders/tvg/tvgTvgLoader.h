@@ -31,9 +31,7 @@ public:
     const char* data = nullptr;
     const char* pointer = nullptr;
     uint32_t size = 0;
-
     unique_ptr<Scene> root = nullptr;
-
     bool copy = false;
 
     ~TvgLoader();
@@ -43,11 +41,11 @@ public:
     bool open(const char *data, uint32_t size, bool copy) override;
     bool read() override;
     bool close() override;
-
-    void run(unsigned tid) override;
+    bool resize(Paint* paint, float w, float h) override;
     unique_ptr<Paint> paint() override;
 
 private:
+    void run(unsigned tid) override;
     void clear();
 };
 

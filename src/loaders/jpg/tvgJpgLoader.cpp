@@ -79,8 +79,8 @@ bool JpgLoader::open(const string& path)
     int width, height, subSample, colorSpace;
     if (tjDecompressHeader3(jpegDecompressor, data, size, &width, &height, &subSample, &colorSpace) < 0) goto failure;
 
-    vw = w = static_cast<float>(width);
-    vh = h = static_cast<float>(height);
+    w = static_cast<float>(width);
+    h = static_cast<float>(height);
     ret = true;
     freeData = true;
 
@@ -111,8 +111,8 @@ bool JpgLoader::open(const char* data, uint32_t size, bool copy)
         this->data = (unsigned char *) data;
     }
 
-    vw = w = static_cast<float>(width);
-    vh = h = static_cast<float>(height);
+    w = static_cast<float>(width);
+    h = static_cast<float>(height);
     this->size = size;
 
     return true;

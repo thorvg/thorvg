@@ -85,6 +85,7 @@ bool TvgLoader::open(const string &path)
     return tvgValidateData(pointer, size);
 }
 
+
 bool TvgLoader::open(const char *data, uint32_t size, bool copy)
 {
     clear();
@@ -102,6 +103,30 @@ bool TvgLoader::open(const char *data, uint32_t size, bool copy)
     return tvgValidateData(pointer, size);
 }
 
+
+bool TvgLoader::resize(Paint* paint, float w, float h)
+{
+    if (!paint) return false;
+
+    auto sx = w / this->w;
+    auto sy = h / this->h;
+
+    //Scale
+    auto scale = sx < sy ? sx : sy;
+    paint->scale(scale);
+
+    //Align
+    float tx = 0, ty = 0;
+    auto sw = this->w * scale;
+    auto sh = this->h * scale;
+    if (sw > sh) ty -= (h - sh) * 0.5f;
+    else tx -= (w - sw) * 0.5f;
+    paint->translate(-tx, -ty);
+
+    return true;
+}
+
+
 bool TvgLoader::read()
 {
     if (!pointer || size == 0) return false;
@@ -111,6 +136,7 @@ bool TvgLoader::read()
     return true;
 }
 
+
 bool TvgLoader::close()
 {
     this->done();
@@ -118,12 +144,14 @@ bool TvgLoader::close()
     return true;
 }
 
+
 void TvgLoader::run(unsigned tid)
 {
     if (root) root.reset();
     root = tvgLoadData(pointer, size);
     if (!root) clear();
 }
+
 
 unique_ptr<Paint> TvgLoader::paint()
 {
