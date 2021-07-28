@@ -35,7 +35,14 @@ public:
     SvgLoaderData loaderData;
     unique_ptr<Scene> root;
 
+    //default view box, if any.
+    float vx = 0;
+    float vy = 0;
+    float vw = 0;
+    float vh = 0;
+
     bool copy = false;
+    bool preserveAspect = true;      //aspect ratio option
 
     SvgLoader();
     ~SvgLoader();
@@ -43,16 +50,15 @@ public:
     using LoadModule::open;
     bool open(const string& path) override;
     bool open(const char* data, uint32_t size, bool copy) override;
-
-    bool header();
+    bool resize(Paint* paint, float w, float h) override;
     bool read() override;
     bool close() override;
-    void run(unsigned tid) override;
-
     unique_ptr<Paint> paint() override;
 
 private:
+    bool header();
     void clear();
+    void run(unsigned tid) override;
 };
 
 
