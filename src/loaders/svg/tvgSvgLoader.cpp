@@ -1087,7 +1087,7 @@ static SvgNode* _createNode(SvgNode* parent, SvgNodeType type)
 
 static SvgNode* _createDefsNode(TVG_UNUSED SvgLoaderData* loader, TVG_UNUSED SvgNode* parent, const char* buf, unsigned bufLength)
 {
-    if (loader->def && loader->doc->node.doc.defs) return nullptr;
+    if (loader->def && loader->doc->node.doc.defs) return loader->def;
     SvgNode* node = _createNode(nullptr, SvgNodeType::Defs);
     return node;
 }
@@ -2342,18 +2342,18 @@ static void _svgLoaderParserXmlOpen(SvgLoaderData* loader, const char* content, 
             node = method(loader, nullptr, attrs, attrsLength);
             loader->doc = node;
         } else {
-            if (!strcmp(tagName, "svg")) return; //Already loadded <svg>(SvgNodeType::Doc) tag
+            if (!strcmp(tagName, "svg")) return; //Already loaded <svg>(SvgNodeType::Doc) tag
             if (loader->stack.count > 0) parent = loader->stack.data[loader->stack.count - 1];
             else parent = loader->doc;
             node = method(loader, parent, attrs, attrsLength);
         }
 
         if (!node) return;
-        if (node->type == SvgNodeType::Defs) {
+        if (node->type == SvgNodeType::Defs && !loader->def) {
             loader->doc->node.doc.defs = node;
             loader->def = node;
-            if (!empty) loader->stack.push(node);
-        } else {
+        }
+        if (node->type != SvgNodeType::Defs || !empty) {
             loader->stack.push(node);
         }
     } else if ((method = _findGraphicsFactory(tagName))) {
