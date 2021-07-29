@@ -21,7 +21,6 @@
  */
 #include <float.h>
 #include <math.h>
-#include <stdio.h>
 #include "tvgSaveModule.h"
 #include "tvgTvgSaver.h"
 
