@@ -273,9 +273,16 @@ TvgBinCounter TvgSaver::serializePath(const Shape* shape)
     writeTag(TVG_TAG_SHAPE_PATH);
     reserveCount();
 
+    /* Reduce the binary size.
+       Convert PathCommand(4 bytes) to TvgBinFlag(1 byte) */
+    TvgBinFlag outCmds[cmdCnt];
+    for (uint32_t i = 0; i < cmdCnt; ++i) {
+        outCmds[i] = static_cast<TvgBinFlag>(cmds[i]);
+    }
+
     auto cnt = writeData(&cmdCnt, SIZE(cmdCnt));
     cnt += writeData(&ptsCnt, SIZE(ptsCnt));
-    cnt += writeData(cmds, cmdCnt * SIZE(cmds[0]));
+    cnt += writeData(outCmds, SIZE(outCmds));
     cnt += writeData(pts, ptsCnt * SIZE(pts[0]));
 
     writeReservedCount(cnt);

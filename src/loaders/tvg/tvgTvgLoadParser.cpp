@@ -176,21 +176,30 @@ static bool _parseScene(TvgBinBlock block, Paint *paint)
 
 static bool _parseShapePath(const char *ptr, const char *end, Shape *shape)
 {
-    //Shape Path
     uint32_t cmdCnt, ptsCnt;
-    READ_UI32(&cmdCnt, ptr);
-    ptr += SIZE(uint32_t);
-    READ_UI32(&ptsCnt, ptr);
-    ptr += SIZE(uint32_t);
 
-    const PathCommand* cmds = (PathCommand*) ptr;
-    ptr += SIZE(PathCommand) * cmdCnt;
-    const Point* pts = (Point*) ptr;
+    READ_UI32(&cmdCnt, ptr);
+    ptr += SIZE(cmdCnt);
+
+    READ_UI32(&ptsCnt, ptr);
+    ptr += SIZE(ptsCnt);
+
+    auto cmds = (TvgBinFlag*) ptr;
+    ptr += SIZE(TvgBinFlag) * cmdCnt;
+
+    auto pts = (Point*) ptr;
     ptr += SIZE(Point) * ptsCnt;
 
     if (ptr > end) return false;
 
-    shape->appendPath(cmds, cmdCnt, pts, ptsCnt);
+    /* Recover to PathCommand(4 bytes) from TvgBinFlag(1 byte) */
+    PathCommand inCmds[cmdCnt];
+    for (uint32_t i = 0; i < cmdCnt; ++i) {
+        inCmds[i] = static_cast<PathCommand>(cmds[i]);
+    }
+
+    shape->appendPath(inCmds, cmdCnt, pts, ptsCnt);
+
     return true;
 }
 
