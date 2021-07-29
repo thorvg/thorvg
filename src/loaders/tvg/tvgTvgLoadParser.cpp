@@ -66,7 +66,7 @@ static TvgBinBlock _readBlock(const char *ptr)
     return block;
 }
 
-static bool _readTvgHeader(const char **ptr)
+static bool _readTvgHeader(const char **ptr, float* w, float* h)
 {
     if (!*ptr) return false;
 
@@ -77,6 +77,14 @@ static bool _readTvgHeader(const char **ptr)
     //Version number, declared in TVG_HEADER_VERSION
     if (memcmp(*ptr, TVG_HEADER_VERSION, TVG_HEADER_VERSION_LENGTH)) return false;
     *ptr += TVG_HEADER_VERSION_LENGTH;
+
+    //View width
+    if (w) _read_tvg_float(w, *ptr);
+    *ptr += sizeof(float);
+
+    //View height
+    if (h) _read_tvg_float(h, *ptr);
+    *ptr += sizeof(float);
 
     return true;
 }
@@ -477,10 +485,10 @@ static Paint* _parsePaint(TvgBinBlock baseBlock)
 /* External Class Implementation                                        */
 /************************************************************************/
 
-bool tvgValidateData(const char *ptr, uint32_t size)
+bool tvgValidateData(const char *ptr, uint32_t size, float* w, float* h)
 {
     auto end = ptr + size;
-    if (!_readTvgHeader(&ptr) || ptr >= end) return false;
+    if (!_readTvgHeader(&ptr, w, h) || ptr >= end) return false;
     return true;
 }
 
@@ -488,7 +496,7 @@ unique_ptr<Scene> tvgLoadData(const char *ptr, uint32_t size)
 {
     auto end = ptr + size;
 
-    if (!_readTvgHeader(&ptr) || ptr >= end) {
+    if (!_readTvgHeader(&ptr, nullptr, nullptr) || ptr >= end) {
         TVGLOG("TVG", "Invalid TVG Data!");
         return nullptr;
     }
