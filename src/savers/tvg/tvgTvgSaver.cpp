@@ -69,6 +69,16 @@ bool TvgSaver::writeHeader()
 }
 
 
+bool TvgSaver::writeViewSize()
+{
+    float var[2];
+    paint->bounds(nullptr, nullptr, &var[0], &var[1]);
+    writeData(var, sizeof(var));
+
+    return true;
+}
+
+
 void TvgSaver::writeTag(TvgBinTag tag)
 {
     buffer.grow(SIZE(TvgBinTag));
@@ -393,6 +403,7 @@ TvgBinCounter TvgSaver::serialize(const Paint* paint)
 void TvgSaver::run(unsigned tid)
 {
     if (!writeHeader()) return;
+    if (!writeViewSize()) return;
     if (serialize(paint) == 0) return;
     if (!flushTo(path)) return;
 }

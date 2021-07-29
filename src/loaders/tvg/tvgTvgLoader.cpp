@@ -82,7 +82,7 @@ bool TvgLoader::open(const string &path)
 
     pointer = data;
 
-    return tvgValidateData(pointer, size);
+    return tvgValidateData(pointer, size, &w, &h);
 }
 
 
@@ -100,7 +100,7 @@ bool TvgLoader::open(const char *data, uint32_t size, bool copy)
     this->size = size;
     this->copy = copy;
 
-    return tvgValidateData(pointer, size);
+    return tvgValidateData(pointer, size, &w, &h);
 }
 
 

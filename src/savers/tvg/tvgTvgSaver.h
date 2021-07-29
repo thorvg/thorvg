@@ -40,6 +40,7 @@ private:
     void reserveCount();
 
     bool writeHeader();
+    bool writeViewSize();
     void writeTag(TvgBinTag tag);
     void writeCount(TvgBinCounter cnt);
     void writeReservedCount(TvgBinCounter cnt);

@@ -37,6 +37,11 @@ void tvgDrawCmds(tvg::Canvas* canvas)
         cout << "TVG is not supported. Did you enable TVG Loader?" << endl;
         return;
     }
+
+    float w, h;
+    picture->size(&w, &h);
+    cout << "default tvg view size = " << w << " x " << h << endl;
+
     canvas->push(move(picture));
 }
 

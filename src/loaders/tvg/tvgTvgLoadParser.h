@@ -26,7 +26,7 @@
 #include "tvgCommon.h"
 #include "tvgBinaryDesc.h"
 
-bool tvgValidateData(const char *ptr, uint32_t size);
+bool tvgValidateData(const char *ptr, uint32_t size, float* w, float* h);
 unique_ptr<Scene> tvgLoadData(const char *ptr, uint32_t size);
 
 #endif //_TVG_TVG_LOAD_PARSER_H_
