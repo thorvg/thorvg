@@ -67,13 +67,8 @@ struct SwSceneTask : SwTask
     Array<RenderData> array;
     SwRleData* rle = nullptr;
 
-    void run(unsigned tid) override
-    {
-        for (auto paint = array.data; paint < (array.data + array.count); ++paint) {
-            auto task = static_cast<SwTask*>(*paint);
-            task->done();
-        }
-    }
+    //nothing to do on the thread
+    void run(unsigned tid) override {}
 
     bool dispose() override
     {
