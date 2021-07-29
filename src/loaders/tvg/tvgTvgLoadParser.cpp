@@ -29,7 +29,8 @@
 /************************************************************************/
 
 #define SIZE(A) sizeof(A)
-
+#define READ_UI32(dst, src) memcpy(dst, (src), sizeof(uint32_t))
+#define READ_FLOAT(dst, src) memcpy(dst, (src), sizeof(float))
 
 struct TvgBinBlock
 {
@@ -38,9 +39,6 @@ struct TvgBinBlock
     const char* data;
     const char* end;
 };
-
-#define _read_tvg_ui32(dst, src) memcpy(dst, (src), sizeof(uint32_t))
-#define _read_tvg_float(dst, src) memcpy(dst, (src), sizeof(float))
 
 static Paint* _parsePaint(TvgBinBlock block);
 
@@ -60,7 +58,7 @@ static TvgBinBlock _readBlock(const char *ptr)
 {
     TvgBinBlock block;
     block.type = *ptr;
-    _read_tvg_ui32(&block.length, ptr + SIZE(TvgBinTag));
+    READ_UI32(&block.length, ptr + SIZE(TvgBinTag));
     block.data = ptr + SIZE(TvgBinTag) + SIZE(TvgBinCounter);
     block.end = block.data + block.length;
     return block;
@@ -79,12 +77,12 @@ static bool _readTvgHeader(const char **ptr, float* w, float* h)
     *ptr += TVG_HEADER_VERSION_LENGTH;
 
     //View width
-    if (w) _read_tvg_float(w, *ptr);
-    *ptr += sizeof(float);
+    if (w) READ_FLOAT(w, *ptr);
+    *ptr += SIZE(float);
 
     //View height
-    if (h) _read_tvg_float(h, *ptr);
-    *ptr += sizeof(float);
+    if (h) READ_FLOAT(h, *ptr);
+    *ptr += SIZE(float);
 
     return true;
 }
@@ -96,7 +94,7 @@ static bool _parseCmpTarget(const char *ptr, const char *end, Paint *paint)
     if (block.end > end) return false;
 
     if (block.type != TVG_TAG_PAINT_CMP_METHOD) return false;
-    if (block.length != sizeof(TvgBinFlag)) return false;
+    if (block.length != SIZE(TvgBinFlag)) return false;
 
     CompositeMethod cmpMethod;
 
@@ -131,14 +129,14 @@ static bool _parsePaintProperty(TvgBinBlock block, Paint *paint)
 {
     switch (block.type) {
         case TVG_TAG_PAINT_OPACITY: {
-            if (block.length != sizeof(uint8_t)) return false;
+            if (block.length != SIZE(uint8_t)) return false;
             paint->opacity(*block.data);
             return true;
         }
         case TVG_TAG_PAINT_TRANSFORM: {
-            if (block.length != sizeof(Matrix)) return false;
+            if (block.length != SIZE(Matrix)) return false;
             Matrix matrix;
-            memcpy(&matrix, block.data, sizeof(Matrix));
+            memcpy(&matrix, block.data, SIZE(Matrix));
             if (paint->transform(matrix) != Result::Success) return false;
             return true;
         }
@@ -157,9 +155,9 @@ static bool _parseScene(TvgBinBlock block, Paint *paint)
 
     switch (block.type) {
         case TVG_FLAG_SCENE_RESERVEDCNT: {
-            if (block.length != sizeof(uint32_t)) return false;
+            if (block.length != SIZE(uint32_t)) return false;
             uint32_t reservedCnt;
-            _read_tvg_ui32(&reservedCnt, block.data);
+            READ_UI32(&reservedCnt, block.data);
             scene->reserve(reservedCnt);
             return true;
         }
@@ -180,15 +178,15 @@ static bool _parseShapePath(const char *ptr, const char *end, Shape *shape)
 {
     //Shape Path
     uint32_t cmdCnt, ptsCnt;
-    _read_tvg_ui32(&cmdCnt, ptr);
-    ptr += sizeof(uint32_t);
-    _read_tvg_ui32(&ptsCnt, ptr);
-    ptr += sizeof(uint32_t);
+    READ_UI32(&cmdCnt, ptr);
+    ptr += SIZE(uint32_t);
+    READ_UI32(&ptsCnt, ptr);
+    ptr += SIZE(uint32_t);
 
     const PathCommand* cmds = (PathCommand*) ptr;
-    ptr += sizeof(PathCommand) * cmdCnt;
+    ptr += SIZE(PathCommand) * cmdCnt;
     const Point* pts = (Point*) ptr;
-    ptr += sizeof(Point) * ptsCnt;
+    ptr += SIZE(Point) * ptsCnt;
 
     if (ptr > end) return false;
 
@@ -207,16 +205,16 @@ static bool _parseShapeFill(const char *ptr, const char *end, Fill **fillOutside
 
         switch (block.type) {
             case TVG_TAG_FILL_RADIAL_GRADIENT: {
-                if (block.length != 3 * sizeof(float)) return false;
+                if (block.length != 3 * SIZE(float)) return false;
 
                 auto ptr = block.data;
                 float x, y, radius;
 
-                _read_tvg_float(&x, ptr);
-                ptr += sizeof(float);
-                _read_tvg_float(&y, ptr);
-                ptr += sizeof(float);
-                _read_tvg_float(&radius, ptr);
+                READ_FLOAT(&x, ptr);
+                ptr += SIZE(float);
+                READ_FLOAT(&y, ptr);
+                ptr += SIZE(float);
+                READ_FLOAT(&radius, ptr);
 
                 auto fillGradRadial = RadialGradient::gen();
                 fillGradRadial->radial(x, y, radius);
@@ -224,18 +222,18 @@ static bool _parseShapeFill(const char *ptr, const char *end, Fill **fillOutside
                 break;
             }
             case TVG_TAG_FILL_LINEAR_GRADIENT: {
-                if (block.length != 4 * sizeof(float)) return false;
+                if (block.length != 4 * SIZE(float)) return false;
 
                 auto ptr = block.data;
                 float x1, y1, x2, y2;
 
-                _read_tvg_float(&x1, ptr);
-                ptr += sizeof(float);
-                _read_tvg_float(&y1, ptr);
-                ptr += sizeof(float);
-                _read_tvg_float(&x2, ptr);
-                ptr += sizeof(float);
-                _read_tvg_float(&y2, ptr);
+                READ_FLOAT(&x1, ptr);
+                ptr += SIZE(float);
+                READ_FLOAT(&y1, ptr);
+                ptr += SIZE(float);
+                READ_FLOAT(&x2, ptr);
+                ptr += SIZE(float);
+                READ_FLOAT(&y2, ptr);
 
                 auto fillGradLinear = LinearGradient::gen();
                 fillGradLinear->linear(x1, y1, x2, y2);
@@ -244,7 +242,7 @@ static bool _parseShapeFill(const char *ptr, const char *end, Fill **fillOutside
             }
             case TVG_TAG_FILL_FILLSPREAD: {
                 if (!fillGrad) return false;
-                if (block.length != sizeof(TvgBinFlag)) return false;
+                if (block.length != SIZE(TvgBinFlag)) return false;
                 switch (*block.data) {
                     case TVG_FLAG_FILL_FILLSPREAD_PAD: {
                         fillGrad->spread(FillSpread::Pad);
@@ -269,7 +267,7 @@ static bool _parseShapeFill(const char *ptr, const char *end, Fill **fillOutside
                 Fill::ColorStop stops[stopsCnt];
                 auto p = block.data;
                 for (uint32_t i = 0; i < stopsCnt; i++, p += 8) {
-                    _read_tvg_float(&stops[i].offset, p);
+                    READ_FLOAT(&stops[i].offset, p);
                     stops[i].r = p[4];
                     stops[i].g = p[5];
                     stops[i].b = p[6];
@@ -289,10 +287,10 @@ static bool _parseShapeFill(const char *ptr, const char *end, Fill **fillOutside
 static bool _parseShapeStrokeDashPattern(const char *ptr, const char *end, Shape *shape)
 {
     uint32_t dashPatternCnt;
-    _read_tvg_ui32(&dashPatternCnt, ptr);
-    ptr += sizeof(uint32_t);
+    READ_UI32(&dashPatternCnt, ptr);
+    ptr += SIZE(uint32_t);
     const float* dashPattern = (float*) ptr;
-    ptr += sizeof(float) * dashPatternCnt;
+    ptr += SIZE(float) * dashPatternCnt;
 
     if (ptr > end) return false;
 
@@ -309,7 +307,7 @@ static bool _parseShapeStroke(const char *ptr, const char *end, Shape *shape)
 
         switch (block.type) {
             case TVG_TAG_SHAPE_STROKE_CAP: {
-                if (block.length != sizeof(TvgBinFlag)) return false;
+                if (block.length != SIZE(TvgBinFlag)) return false;
                 switch (*block.data) {
                     case TVG_FLAG_SHAPE_STROKE_CAP_SQUARE:
                         shape->stroke(StrokeCap::Square);
@@ -324,7 +322,7 @@ static bool _parseShapeStroke(const char *ptr, const char *end, Shape *shape)
                 break;
             }
             case TVG_TAG_SHAPE_STROKE_JOIN: {
-                if (block.length != sizeof(TvgBinFlag)) return false;
+                if (block.length != SIZE(TvgBinFlag)) return false;
                 switch (*block.data) {
                     case TVG_FLAG_SHAPE_STROKE_JOIN_BEVEL:
                         shape->stroke(StrokeJoin::Bevel);
@@ -339,9 +337,9 @@ static bool _parseShapeStroke(const char *ptr, const char *end, Shape *shape)
                 break;
             }
             case TVG_TAG_SHAPE_STROKE_WIDTH: {
-                if (block.length != sizeof(float)) return false;
+                if (block.length != SIZE(float)) return false;
                 float width;
-                _read_tvg_float(&width, block.data);
+                READ_FLOAT(&width, block.data);
                 shape->stroke(width);
                 break;
             }
@@ -392,7 +390,7 @@ static bool _parseShape(TvgBinBlock block, Paint* paint)
             break;
         }
         case TVG_TAG_SHAPE_FILLRULE: {
-            if (block.length != sizeof(TvgBinFlag)) return false;
+            if (block.length != SIZE(TvgBinFlag)) return false;
             switch (*block.data) {
                 case TVG_FLAG_SHAPE_FILLRULE_WINDING:
                     shape->fill(FillRule::Winding);
@@ -415,18 +413,18 @@ static bool _parsePicture(TvgBinBlock block, Paint* paint)
 
     switch (block.type) {
         case TVG_TAG_PICTURE_RAW_IMAGE: {
-            if (block.length < 2 * sizeof(uint32_t)) return false;
+            if (block.length < 2 * SIZE(uint32_t)) return false;
 
             auto ptr = block.data;
             uint32_t w, h;
 
-            _read_tvg_ui32(&w, ptr);
-            ptr += sizeof(uint32_t);
-            _read_tvg_ui32(&h, ptr);
-            ptr += sizeof(uint32_t);
+            READ_UI32(&w, ptr);
+            ptr += SIZE(uint32_t);
+            READ_UI32(&h, ptr);
+            ptr += SIZE(uint32_t);
 
-            auto size = w * h * sizeof(uint32_t);
-            if (block.length != 2 * sizeof(uint32_t) + size) return false;
+            auto size = w * h * SIZE(uint32_t);
+            if (block.length != 2 * SIZE(uint32_t) + size) return false;
 
             picture->load((uint32_t*) ptr, w, h, true);
             return true;

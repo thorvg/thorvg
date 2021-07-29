@@ -34,6 +34,7 @@ using TvgBinTag = TvgBinByte;
 using TvgBinFlag = TvgBinByte;
 
 
+
 //Header
 #define TVG_HEADER_SIGNATURE "ThorVG"
 #define TVG_HEADER_SIGNATURE_LENGTH 6
