@@ -29,7 +29,8 @@
 /************************************************************************/
 
 #define SIZE(A) sizeof(A)
-
+#define READ_UI32(dst, src) memcpy(dst, (src), sizeof(uint32_t))
+#define READ_FLOAT(dst, src) memcpy(dst, (src), sizeof(float))
 
 struct TvgBinBlock
 {
@@ -38,10 +39,6 @@ struct TvgBinBlock
     const char* data;
     const char* end;
 };
-
-#define _read_tvg_ui32(dst, src) memcpy(dst, (src), sizeof(uint32_t))
-#define _read_tvg_float(dst, src) memcpy(dst, (src), sizeof(float))
-
 
 static Paint* _parsePaint(TvgBinBlock block);
 
@@ -61,7 +58,7 @@ static TvgBinBlock _readBlock(const char *ptr)
 {
     TvgBinBlock block;
     block.type = *ptr;
-    _read_tvg_ui32(&block.length, ptr + SIZE(TvgBinTag));
+    READ_UI32(&block.length, ptr + SIZE(TvgBinTag));
     block.data = ptr + SIZE(TvgBinTag) + SIZE(TvgBinCounter);
     block.end = block.data + block.length;
     return block;
@@ -80,11 +77,11 @@ static bool _readTvgHeader(const char **ptr, float* w, float* h)
     *ptr += TVG_HEADER_VERSION_LENGTH;
 
     //View width
-    if (w) _read_tvg_float(w, *ptr);
+    if (w) READ_FLOAT(w, *ptr);
     *ptr += SIZE(float);
 
     //View height
-    if (h) _read_tvg_float(h, *ptr);
+    if (h) READ_FLOAT(h, *ptr);
     *ptr += SIZE(float);
 
     return true;
@@ -160,7 +157,7 @@ static bool _parseScene(TvgBinBlock block, Paint *paint)
         case TVG_FLAG_SCENE_RESERVEDCNT: {
             if (block.length != SIZE(uint32_t)) return false;
             uint32_t reservedCnt;
-            _read_tvg_ui32(&reservedCnt, block.data);
+            READ_UI32(&reservedCnt, block.data);
             scene->reserve(reservedCnt);
             return true;
         }
@@ -181,9 +178,9 @@ static bool _parseShapePath(const char *ptr, const char *end, Shape *shape)
 {
     //Shape Path
     uint32_t cmdCnt, ptsCnt;
-    _read_tvg_ui32(&cmdCnt, ptr);
+    READ_UI32(&cmdCnt, ptr);
     ptr += SIZE(uint32_t);
-    _read_tvg_ui32(&ptsCnt, ptr);
+    READ_UI32(&ptsCnt, ptr);
     ptr += SIZE(uint32_t);
 
     const PathCommand* cmds = (PathCommand*) ptr;
@@ -213,11 +210,11 @@ static bool _parseShapeFill(const char *ptr, const char *end, Fill **fillOutside
                 auto ptr = block.data;
                 float x, y, radius;
 
-                _read_tvg_float(&x, ptr);
+                READ_FLOAT(&x, ptr);
                 ptr += SIZE(float);
-                _read_tvg_float(&y, ptr);
+                READ_FLOAT(&y, ptr);
                 ptr += SIZE(float);
-                _read_tvg_float(&radius, ptr);
+                READ_FLOAT(&radius, ptr);
 
                 auto fillGradRadial = RadialGradient::gen();
                 fillGradRadial->radial(x, y, radius);
@@ -230,13 +227,13 @@ static bool _parseShapeFill(const char *ptr, const char *end, Fill **fillOutside
                 auto ptr = block.data;
                 float x1, y1, x2, y2;
 
-                _read_tvg_float(&x1, ptr);
+                READ_FLOAT(&x1, ptr);
                 ptr += SIZE(float);
-                _read_tvg_float(&y1, ptr);
+                READ_FLOAT(&y1, ptr);
                 ptr += SIZE(float);
-                _read_tvg_float(&x2, ptr);
+                READ_FLOAT(&x2, ptr);
                 ptr += SIZE(float);
-                _read_tvg_float(&y2, ptr);
+                READ_FLOAT(&y2, ptr);
 
                 auto fillGradLinear = LinearGradient::gen();
                 fillGradLinear->linear(x1, y1, x2, y2);
@@ -270,7 +267,7 @@ static bool _parseShapeFill(const char *ptr, const char *end, Fill **fillOutside
                 Fill::ColorStop stops[stopsCnt];
                 auto p = block.data;
                 for (uint32_t i = 0; i < stopsCnt; i++, p += 8) {
-                    _read_tvg_float(&stops[i].offset, p);
+                    READ_FLOAT(&stops[i].offset, p);
                     stops[i].r = p[4];
                     stops[i].g = p[5];
                     stops[i].b = p[6];
@@ -290,7 +287,7 @@ static bool _parseShapeFill(const char *ptr, const char *end, Fill **fillOutside
 static bool _parseShapeStrokeDashPattern(const char *ptr, const char *end, Shape *shape)
 {
     uint32_t dashPatternCnt;
-    _read_tvg_ui32(&dashPatternCnt, ptr);
+    READ_UI32(&dashPatternCnt, ptr);
     ptr += SIZE(uint32_t);
     const float* dashPattern = (float*) ptr;
     ptr += SIZE(float) * dashPatternCnt;
@@ -342,7 +339,7 @@ static bool _parseShapeStroke(const char *ptr, const char *end, Shape *shape)
             case TVG_TAG_SHAPE_STROKE_WIDTH: {
                 if (block.length != SIZE(float)) return false;
                 float width;
-                _read_tvg_float(&width, block.data);
+                READ_FLOAT(&width, block.data);
                 shape->stroke(width);
                 break;
             }
@@ -421,9 +418,9 @@ static bool _parsePicture(TvgBinBlock block, Paint* paint)
             auto ptr = block.data;
             uint32_t w, h;
 
-            _read_tvg_ui32(&w, ptr);
+            READ_UI32(&w, ptr);
             ptr += SIZE(uint32_t);
-            _read_tvg_ui32(&h, ptr);
+            READ_UI32(&h, ptr);
             ptr += SIZE(uint32_t);
 
             auto size = w * h * SIZE(uint32_t);
