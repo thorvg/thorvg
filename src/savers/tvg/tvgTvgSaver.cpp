@@ -41,7 +41,7 @@ bool TvgSaver::flushTo(const std::string& path)
     FILE* fp = fopen(path.c_str(), "w+");
     if (!fp) return false;
 
-    if (fwrite(buffer.data, sizeof(char), buffer.count, fp) == 0) {
+    if (fwrite(buffer.data, SIZE(char), buffer.count, fp) == 0) {
         fclose(fp);
         return false;
     }
@@ -72,7 +72,7 @@ bool TvgSaver::writeViewSize()
 {
     float var[2];
     paint->bounds(nullptr, nullptr, &var[0], &var[1]);
-    writeData(var, sizeof(var));
+    writeData(var, SIZE(var));
 
     return true;
 }
@@ -147,7 +147,7 @@ TvgBinCounter TvgSaver::serializePaint(const Paint* paint)
     //opacity
     auto opacity = paint->opacity();
     if (opacity < 255) {
-        cnt += writeTagProperty(TVG_TAG_PAINT_OPACITY, sizeof(opacity), &opacity);
+        cnt += writeTagProperty(TVG_TAG_PAINT_OPACITY, SIZE(opacity), &opacity);
     }
 
     //transform
@@ -155,7 +155,7 @@ TvgBinCounter TvgSaver::serializePaint(const Paint* paint)
     if (fabs(m.e11 - 1) > FLT_EPSILON || fabs(m.e12) > FLT_EPSILON || fabs(m.e13) > FLT_EPSILON ||
         fabs(m.e21) > FLT_EPSILON || fabs(m.e22 - 1) > FLT_EPSILON || fabs(m.e23) > FLT_EPSILON ||
         fabs(m.e31) > FLT_EPSILON || fabs(m.e32) > FLT_EPSILON || fabs(m.e33 - 1) > FLT_EPSILON) {
-        cnt += writeTagProperty(TVG_TAG_PAINT_TRANSFORM, sizeof(m), &m);
+        cnt += writeTagProperty(TVG_TAG_PAINT_TRANSFORM, SIZE(m), &m);
     }
 
     //composite
@@ -197,17 +197,17 @@ TvgBinCounter TvgSaver::serializeFill(const Fill* fill, TvgBinTag tag)
     if (fill->id() == TVG_CLASS_ID_RADIAL) {
         float args[3];
         static_cast<const RadialGradient*>(fill)->radial(args, args + 1,args + 2);
-        cnt += writeTagProperty(TVG_TAG_FILL_RADIAL_GRADIENT, sizeof(args), args);
+        cnt += writeTagProperty(TVG_TAG_FILL_RADIAL_GRADIENT, SIZE(args), args);
     //linear fill
     } else {
         float args[4];
         static_cast<const LinearGradient*>(fill)->linear(args, args + 1, args + 2, args + 3);
-        cnt += writeTagProperty(TVG_TAG_FILL_LINEAR_GRADIENT, sizeof(args), args);
+        cnt += writeTagProperty(TVG_TAG_FILL_LINEAR_GRADIENT, SIZE(args), args);
     }
 
     if (auto flag = static_cast<TvgBinFlag>(fill->spread()))
         cnt += writeTagProperty(TVG_TAG_FILL_FILLSPREAD, SIZE(TvgBinFlag), &flag);
-    cnt += writeTagProperty(TVG_TAG_FILL_COLORSTOPS, stopsCnt * sizeof(Fill::ColorStop), stops);
+    cnt += writeTagProperty(TVG_TAG_FILL_COLORSTOPS, stopsCnt * SIZE(Fill::ColorStop), stops);
 
     writeReservedCount(cnt);
 
@@ -222,7 +222,7 @@ TvgBinCounter TvgSaver::serializeStroke(const Shape* shape)
 
     //width
     auto width = shape->strokeWidth();
-    auto cnt = writeTagProperty(TVG_TAG_SHAPE_STROKE_WIDTH, sizeof(width), &width);
+    auto cnt = writeTagProperty(TVG_TAG_SHAPE_STROKE_WIDTH, SIZE(width), &width);
 
     //cap
     if (auto flag = static_cast<TvgBinFlag>(shape->strokeCap()))
@@ -238,15 +238,15 @@ TvgBinCounter TvgSaver::serializeStroke(const Shape* shape)
     } else {
         uint8_t color[4] = {0, 0, 0, 0};
         shape->strokeColor(color, color + 1, color + 2, color + 3);
-        cnt += writeTagProperty(TVG_TAG_SHAPE_STROKE_COLOR, sizeof(color), &color);
+        cnt += writeTagProperty(TVG_TAG_SHAPE_STROKE_COLOR, SIZE(color), &color);
     }
 
     //dash
     const float* dashPattern = nullptr;
     auto dashCnt = shape->strokeDash(&dashPattern);
     if (dashPattern && dashCnt > 0) {
-        TvgBinCounter dashCntSize = sizeof(dashCnt);
-        TvgBinCounter dashPtrnSize = dashCnt * sizeof(dashPattern[0]);
+        TvgBinCounter dashCntSize = SIZE(dashCnt);
+        TvgBinCounter dashPtrnSize = dashCnt * SIZE(dashPattern[0]);
 
         writeTag(TVG_TAG_SHAPE_STROKE_DASHPTRN);
         writeCount(dashCntSize + dashPtrnSize);
@@ -273,10 +273,10 @@ TvgBinCounter TvgSaver::serializePath(const Shape* shape)
     writeTag(TVG_TAG_SHAPE_PATH);
     reserveCount();
 
-    auto cnt = writeData(&cmdCnt, sizeof(cmdCnt));
-    cnt += writeData(&ptsCnt, sizeof(ptsCnt));
-    cnt += writeData(cmds, cmdCnt * sizeof(cmds[0]));
-    cnt += writeData(pts, ptsCnt * sizeof(pts[0]));
+    auto cnt = writeData(&cmdCnt, SIZE(cmdCnt));
+    cnt += writeData(&ptsCnt, SIZE(ptsCnt));
+    cnt += writeData(cmds, cmdCnt * SIZE(cmds[0]));
+    cnt += writeData(pts, ptsCnt * SIZE(pts[0]));
 
     writeReservedCount(cnt);
 
@@ -308,7 +308,7 @@ TvgBinCounter TvgSaver::serializeShape(const Shape* shape)
     } else {
         uint8_t color[4] = {0, 0, 0, 0};
         shape->fillColor(color, color + 1, color + 2, color + 3);
-        if (color[3] > 0) cnt += writeTagProperty(TVG_TAG_SHAPE_COLOR, sizeof(color), color);
+        if (color[3] > 0) cnt += writeTagProperty(TVG_TAG_SHAPE_COLOR, SIZE(color), color);
     }
 
     cnt += serializePath(shape);
@@ -331,8 +331,8 @@ TvgBinCounter TvgSaver::serializePicture(const Picture* picture)
     uint32_t w, h;
 
     if (auto pixels = picture->data(&w, &h)) {
-        TvgBinCounter sizeCnt = sizeof(w);
-        TvgBinCounter imgSize = w * h * sizeof(pixels[0]);
+        TvgBinCounter sizeCnt = SIZE(w);
+        TvgBinCounter imgSize = w * h * SIZE(pixels[0]);
 
         writeTag(TVG_TAG_PICTURE_RAW_IMAGE);
         writeCount(2 * sizeCnt + imgSize);
@@ -399,6 +399,7 @@ TvgBinCounter TvgSaver::serialize(const Paint* paint)
     return 0;
 }
 
+
 void TvgSaver::run(unsigned tid)
 {
     if (!writeHeader()) return;
@@ -416,6 +417,7 @@ TvgSaver::~TvgSaver()
 {
     close();
 }
+
 
 bool TvgSaver::close()
 {
