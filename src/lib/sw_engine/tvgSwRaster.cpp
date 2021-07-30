@@ -93,6 +93,24 @@ static bool _translucent(const SwSurface* surface, uint8_t a)
 }
 
 
+static uint32_t _applyBilinearInterpolation(const uint32_t *img, uint32_t w, uint32_t h, float fX, float fY)
+{
+    auto rX = static_cast<uint32_t>(fX);
+    auto rY = static_cast<uint32_t>(fY);
+
+    auto dX = static_cast<uint32_t>((fX - rX) * 255.0);
+    auto dY = static_cast<uint32_t>((fY - rY) * 255.0);
+
+    auto c1 = img[rX + (rY * w)];
+    auto c2 = img[(rX + 1) + (rY * w)];
+    auto c3 = img[(rX + 1) + ((rY + 1) * w)];
+    auto c4 = img[rX + ((rY + 1) * w)];
+
+    if (c1 == c2 && c1 == c3 && c1 == c4) return img[rX + (rY * w)];
+    return COLOR_INTERPOLATE(COLOR_INTERPOLATE(c1, 255 - dX, c2, dX), 255 - dY, COLOR_INTERPOLATE(c4, 255 - dX, c3, dX), dY);
+}
+
+
 /************************************************************************/
 /* Rect                                                                 */
 /************************************************************************/
@@ -335,6 +353,29 @@ static bool _rasterTranslucentImageRle(SwSurface* surface, const SwRleData* rle,
     return true;
 }
 
+static bool _rasterTranslucentUpScaleImageRle(SwSurface* surface, const SwRleData* rle, uint32_t *img, uint32_t w, uint32_t h, uint32_t opacity, const Matrix* invTransform)
+{
+    auto span = rle->spans;
+    for (uint32_t i = 0; i < rle->size; ++i, ++span) {
+        auto ey1 = span->y * invTransform->e12 + invTransform->e13;
+        auto ey2 = span->y * invTransform->e22 + invTransform->e23;
+        auto dst = &surface->buffer[span->y * surface->stride + span->x];
+        auto alpha = ALPHA_MULTIPLY(span->coverage, opacity);
+        for (uint32_t x = 0; x < span->len; ++x, ++dst) {
+            auto fX = (span->x + x) * invTransform->e11 + ey1;
+            auto fY = (span->x + x) * invTransform->e21 + ey2;
+            auto rX = static_cast<uint32_t>(roundf(fX));
+            auto rY = static_cast<uint32_t>(roundf(fY));
+            if (rX >= w || rY >= h) continue;
+            uint32_t src;
+            if (rX == w - 1 || rY == h - 1) src = ALPHA_BLEND(img[rY * w + rX], alpha);     //TODO: need to use image's stride
+            else src = ALPHA_BLEND(_applyBilinearInterpolation(img, w, h, fX, fY), alpha);     //TODO: need to use image's stride
+            *dst = src + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(src));
+        }
+    }
+    return true;
+}
+
 
 static bool _rasterImageRle(SwSurface* surface, SwRleData* rle, uint32_t *img, uint32_t w, uint32_t h)
 {
@@ -365,6 +406,30 @@ static bool _rasterImageRle(SwSurface* surface, SwRleData* rle, uint32_t *img, u
             auto rY = static_cast<uint32_t>(roundf((span->x + x) * invTransform->e21 + ey2));
             if (rX >= w || rY >= h) continue;
             auto src = ALPHA_BLEND(img[rY * w + rX], span->coverage);    //TODO: need to use image's stride
+            *dst = src + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(src));
+        }
+    }
+    return true;
+}
+
+
+static bool _rasterUpScaleImageRle(SwSurface* surface, SwRleData* rle, uint32_t *img, uint32_t w, uint32_t h, const Matrix* invTransform)
+{
+    auto span = rle->spans;
+
+    for (uint32_t i = 0; i < rle->size; ++i, ++span) {
+        auto ey1 = span->y * invTransform->e12 + invTransform->e13;
+        auto ey2 = span->y * invTransform->e22 + invTransform->e23;
+        auto dst = &surface->buffer[span->y * surface->stride + span->x];
+        for (uint32_t x = 0; x < span->len; ++x, ++dst) {
+            auto fX = (span->x + x) * invTransform->e11 + ey1;
+            auto fY = (span->x + x) * invTransform->e21 + ey2;
+            auto rX = static_cast<uint32_t>(roundf(fX));
+            auto rY = static_cast<uint32_t>(roundf(fY));
+            if (rX >= w || rY >= h) continue;
+            uint32_t src;
+            if (rX == w - 1 || rY == h - 1) src = ALPHA_BLEND(img[rY * w + rX], span->coverage);    //TODO: need to use image's stride
+            else src = ALPHA_BLEND(_applyBilinearInterpolation(img, w, h, fX, fY), span->coverage);    //TODO: need to use image's stride
             *dst = src + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(src));
         }
     }
@@ -409,8 +474,8 @@ static bool _translucentImageAlphaMask(SwSurface* surface, const uint32_t *img, 
             auto rX = static_cast<uint32_t>(roundf(x * invTransform->e11 + ey1));
             auto rY = static_cast<uint32_t>(roundf(x * invTransform->e21 + ey2));
             if (rX >= w || rY >= h) continue;
-            auto tmp = ALPHA_BLEND(img[rX + (rY * w)], ALPHA_MULTIPLY(opacity, surface->blender.alpha(*cmp)));  //TODO: need to use image's stride
-            *dst = tmp + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(tmp));
+            auto src = ALPHA_BLEND(img[rX + (rY * w)], ALPHA_MULTIPLY(opacity, surface->blender.alpha(*cmp)));  //TODO: need to use image's stride
+            *dst = src + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(src));
         }
         dbuffer += surface->stride;
         cbuffer += surface->stride;
@@ -434,14 +499,15 @@ static bool _translucentImageInvAlphaMask(SwSurface* surface, const uint32_t *im
             auto rX = static_cast<uint32_t>(roundf(x * invTransform->e11 + ey1));
             auto rY = static_cast<uint32_t>(roundf(x * invTransform->e21 + ey2));
             if (rX >= w || rY >= h) continue;
-            auto tmp = ALPHA_BLEND(img[rX + (rY * w)], ALPHA_MULTIPLY(opacity, 255 - surface->blender.alpha(*cmp)));  //TODO: need to use image's stride
-            *dst = tmp + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(tmp));
+            auto src = ALPHA_BLEND(img[rX + (rY * w)], ALPHA_MULTIPLY(opacity, 255 - surface->blender.alpha(*cmp)));  //TODO: need to use image's stride
+            *dst = src + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(src));
         }
         dbuffer += surface->stride;
         cbuffer += surface->stride;
     }
     return true;
 }
+
 
 static bool _rasterTranslucentImage(SwSurface* surface, const uint32_t *img, uint32_t w, uint32_t h, uint32_t opacity, const SwBBox& region, const Matrix* invTransform)
 {
@@ -454,6 +520,105 @@ static bool _rasterTranslucentImage(SwSurface* surface, const uint32_t *img, uin
         }
     }
     return _translucentImage(surface, img, w, h, opacity, region, invTransform);
+}
+
+
+static bool _translucentUpScaleImage(SwSurface* surface, const uint32_t *img, uint32_t w, TVG_UNUSED uint32_t h, uint32_t opacity, const SwBBox& region, const Matrix* invTransform)
+{
+    auto dbuffer = &surface->buffer[region.min.y * surface->stride + region.min.x];
+
+    for (auto y = region.min.y; y < region.max.y; ++y) {
+        auto dst = dbuffer;
+        auto ey1 = y * invTransform->e12 + invTransform->e13;
+        auto ey2 = y * invTransform->e22 + invTransform->e23;
+        for (auto x = region.min.x; x < region.max.x; ++x, ++dst) {
+            auto fX = x * invTransform->e11 + ey1;
+            auto fY = x * invTransform->e21 + ey2;
+            auto rX = static_cast<uint32_t>(roundf(fX));
+            auto rY = static_cast<uint32_t>(roundf(fY));
+            if (rX >= w || rY >= h) continue;
+            uint32_t src;
+            if (rX == w - 1 || rY == h - 1) src = ALPHA_BLEND(img[rX + (rY * w)], opacity);    //TODO: need to use image's stride
+            else src = ALPHA_BLEND(_applyBilinearInterpolation(img, w, h, fX, fY), opacity);    //TODO: need to use image's stride
+            *dst = src + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(src));
+        }
+        dbuffer += surface->stride;
+    }
+    return true;
+}
+
+
+static bool _translucentUpScaleImageAlphaMask(SwSurface* surface, const uint32_t *img, uint32_t w, TVG_UNUSED uint32_t h, uint32_t opacity, const SwBBox& region, const Matrix* invTransform)
+{
+    TVGLOG("SW_ENGINE", "Transformed Image Alpha Mask Composition");
+
+    auto dbuffer = &surface->buffer[region.min.y * surface->stride + region.min.x];
+    auto cbuffer = &surface->compositor->image.data[region.min.y * surface->stride + region.min.x];
+
+    for (auto y = region.min.y; y < region.max.y; ++y) {
+        auto dst = dbuffer;
+        auto cmp = cbuffer;
+        float ey1 = y * invTransform->e12 + invTransform->e13;
+        float ey2 = y * invTransform->e22 + invTransform->e23;
+        for (auto x = region.min.x; x < region.max.x; ++x, ++dst, ++cmp) {
+            auto fX = x * invTransform->e11 + ey1;
+            auto fY = x * invTransform->e21 + ey2;
+            auto rX = static_cast<uint32_t>(roundf(fX));
+            auto rY = static_cast<uint32_t>(roundf(fY));
+            if (rX >= w || rY >= h) continue;
+            uint32_t src;
+            if (rX == w - 1 || rY == h - 1) src = ALPHA_BLEND(img[rX + (rY * w)], ALPHA_MULTIPLY(opacity, surface->blender.alpha(*cmp)));  //TODO: need to use image's stride
+            else src = ALPHA_BLEND(_applyBilinearInterpolation(img, w, h, fX, fY), ALPHA_MULTIPLY(opacity, surface->blender.alpha(*cmp)));  //TODO: need to use image's stride
+            *dst = src + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(src));
+        }
+        dbuffer += surface->stride;
+        cbuffer += surface->stride;
+    }
+    return true;
+}
+
+
+static bool _translucentUpScaleImageInvAlphaMask(SwSurface* surface, const uint32_t *img, uint32_t w, uint32_t h, uint32_t opacity, const SwBBox& region, const Matrix* invTransform)
+{
+    TVGLOG("SW_ENGINE", "Transformed Image Inverse Alpha Mask Composition");
+
+    auto dbuffer = &surface->buffer[region.min.y * surface->stride + region.min.x];
+    auto cbuffer = &surface->compositor->image.data[region.min.y * surface->stride + region.min.x];
+
+    for (auto y = region.min.y; y < region.max.y; ++y) {
+        auto dst = dbuffer;
+        auto cmp = cbuffer;
+        float ey1 = y * invTransform->e12 + invTransform->e13;
+        float ey2 = y * invTransform->e22 + invTransform->e23;
+        for (auto x = region.min.x; x < region.max.x; ++x, ++dst, ++cmp) {
+            auto fX = x * invTransform->e11 + ey1;
+            auto fY = x * invTransform->e21 + ey2;
+            auto rX = static_cast<uint32_t>(roundf(fX));
+            auto rY = static_cast<uint32_t>(roundf(fY));
+            if (rX >= w || rY >= h) continue;
+            uint32_t src;
+            if (rX == w - 1 || rY == h - 1) src = ALPHA_BLEND(img[rX + (rY * w)], ALPHA_MULTIPLY(opacity, 255 - surface->blender.alpha(*cmp)));  //TODO: need to use image's stride
+            else src = ALPHA_BLEND(_applyBilinearInterpolation(img, w, h, fX, fY), ALPHA_MULTIPLY(opacity, 255 - surface->blender.alpha(*cmp)));  //TODO: need to use image's stride
+            *dst = src + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(src));
+        }
+        dbuffer += surface->stride;
+        cbuffer += surface->stride;
+    }
+    return true;
+}
+
+
+static bool _rasterTranslucentUpScaleImage(SwSurface* surface, const uint32_t *img, uint32_t w, uint32_t h, uint32_t opacity, const SwBBox& region, const Matrix* invTransform)
+{
+    if (surface->compositor) {
+        if (surface->compositor->method == CompositeMethod::AlphaMask) {
+            return _translucentUpScaleImageAlphaMask(surface, img, w, h, opacity, region, invTransform);
+        }
+        if (surface->compositor->method == CompositeMethod::InvAlphaMask) {
+            return _translucentUpScaleImageInvAlphaMask(surface, img, w, h, opacity, region, invTransform);
+        }
+    }
+    return _translucentUpScaleImage(surface, img, w, h, opacity, region, invTransform);
 }
 
 
@@ -529,6 +694,7 @@ static bool _translucentImageInvAlphaMask(SwSurface* surface, uint32_t *img, uin
     return true;
 }
 
+
 static bool _rasterTranslucentImage(SwSurface* surface, uint32_t *img, uint32_t w, uint32_t h, uint32_t opacity, const SwBBox& region)
 {
     if (surface->compositor) {
@@ -579,6 +745,26 @@ static bool _rasterImage(SwSurface* surface, const uint32_t *img, uint32_t w, ui
 }
 
 
+static bool _rasterUpScaleImage(SwSurface* surface, const uint32_t *img, uint32_t w, uint32_t h, const SwBBox& region, const Matrix* invTransform)
+{
+    for (auto y = region.min.y; y < region.max.y; ++y) {
+        auto dst = &surface->buffer[y * surface->stride + region.min.x];
+        auto ey1 = y * invTransform->e12 + invTransform->e13;
+        auto ey2 = y * invTransform->e22 + invTransform->e23;
+        for (auto x = region.min.x; x < region.max.x; ++x, ++dst) {
+            auto fX = x * invTransform->e11 + ey1;
+            auto fY = x * invTransform->e21 + ey2;
+            auto rX = static_cast<uint32_t>(roundf(fX));
+            auto rY = static_cast<uint32_t>(roundf(fY));
+            if (rX >= w || rY >= h) continue;
+            uint32_t src;
+            if (rX == w - 1 || rY == h - 1) src = img[rX + (rY * w)];
+            else src = _applyBilinearInterpolation(img, w, h, fX, fY);
+            *dst = src + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(src));
+        }
+    }
+    return true;
+}
 /************************************************************************/
 /* Gradient                                                             */
 /************************************************************************/
@@ -1230,9 +1416,11 @@ bool rasterClear(SwSurface* surface)
 bool rasterImage(SwSurface* surface, SwImage* image, const Matrix* transform, const SwBBox& bbox, uint32_t opacity)
 {
     Matrix invTransform;
+    auto isUpScaling = false;
 
     if (transform) {
         if (!_inverse(transform, &invTransform)) return false;
+        isUpScaling = (transform->e11 * transform->e11) + (transform->e21 * transform->e21) > 1 ? true : false;
     }
     else invTransform = {1, 0, 0, 0, 1, 0, 0, 0, 1};
 
@@ -1245,7 +1433,11 @@ bool rasterImage(SwSurface* surface, SwImage* image, const Matrix* transform, co
             if (translucent) return _rasterTranslucentImageRle(surface, image->rle, image->data, image->w, image->h, opacity);
             return _rasterImageRle(surface, image->rle, image->data, image->w, image->h);
         } else {
-            if (translucent) return _rasterTranslucentImageRle(surface, image->rle, image->data, image->w, image->h, opacity, &invTransform);
+            if (translucent) {
+                if (isUpScaling) return _rasterTranslucentUpScaleImageRle(surface, image->rle, image->data, image->w, image->h, opacity, &invTransform);
+                return _rasterTranslucentImageRle(surface, image->rle, image->data, image->w, image->h, opacity, &invTransform);
+            }
+            if (isUpScaling) return _rasterUpScaleImageRle(surface, image->rle, image->data, image->w, image->h, &invTransform);
             return _rasterImageRle(surface, image->rle, image->data, image->w, image->h, &invTransform);
         }
     }
@@ -1254,10 +1446,14 @@ bool rasterImage(SwSurface* surface, SwImage* image, const Matrix* transform, co
         if (_identify(transform)) {
             //OPTIMIZE ME: Support non transformed image. Only shifted image can use these routines.
             if (translucent) return _rasterTranslucentImage(surface, image->data, image->w, image->h, opacity, bbox);
-            else return _rasterImage(surface, image->data, image->w, image->h, bbox);
+            return _rasterImage(surface, image->data, image->w, image->h, bbox);
         } else {
-            if (translucent) return _rasterTranslucentImage(surface, image->data, image->w, image->h, opacity, bbox, &invTransform);
-            else return _rasterImage(surface, image->data, image->w, image->h, bbox, &invTransform);
+            if (translucent) {
+                if (isUpScaling) return _rasterTranslucentUpScaleImage(surface, image->data, image->w, image->h, opacity, bbox, &invTransform);
+                return _rasterTranslucentImage(surface, image->data, image->w, image->h, opacity, bbox, &invTransform);
+            }
+            if (isUpScaling) return _rasterUpScaleImage(surface, image->data, image->w, image->h, bbox, &invTransform);
+            return _rasterImage(surface, image->data, image->w, image->h, bbox, &invTransform);
         }
     }
 }
