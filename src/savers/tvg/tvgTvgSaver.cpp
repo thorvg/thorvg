@@ -72,6 +72,9 @@ bool TvgSaver::writeViewSize()
 {
     float var[2];
     paint->bounds(nullptr, nullptr, &var[0], &var[1]);
+
+    if (var[0] <= 0.0f || var[1] <= 0.0f) return false;
+
     writeData(var, SIZE(var));
 
     return true;
