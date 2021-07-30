@@ -1809,7 +1809,7 @@ static bool _attrParseUseNode(void* data, const char* key, const char* value)
     SvgNode *defs, *nodeFrom, *node = loader->svgParse->node;
     string* id;
 
-    if (!strcmp(key, "xlink:href")) {
+    if (!strcmp(key, "href") || !strcmp(key, "xlink:href")) {
         id = _idFromHref(value);
         defs = _getDefsNode(node);
         nodeFrom = _findChildById(defs, id->c_str());
@@ -2016,7 +2016,7 @@ static bool _attrParseRadialGradientNode(void* data, const char* key, const char
         grad->id = _copyId(value);
     } else if (!strcmp(key, "spreadMethod")) {
         grad->spread = _parseSpreadValue(value);
-    } else if (!strcmp(key, "xlink:href")) {
+    } else if (!strcmp(key, "href") || !strcmp(key, "xlink:href")) {
         grad->ref = _idFromHref(value);
     } else if (!strcmp(key, "gradientUnits") && !strcmp(value, "userSpaceOnUse")) {
         grad->userSpace = true;
@@ -2202,7 +2202,7 @@ static bool _attrParseLinearGradientNode(void* data, const char* key, const char
         grad->id = _copyId(value);
     } else if (!strcmp(key, "spreadMethod")) {
         grad->spread = _parseSpreadValue(value);
-    } else if (!strcmp(key, "xlink:href")) {
+    } else if (!strcmp(key, "href") || !strcmp(key, "xlink:href")) {
         grad->ref = _idFromHref(value);
     } else if (!strcmp(key, "gradientUnits") && !strcmp(value, "userSpaceOnUse")) {
         grad->userSpace = true;
