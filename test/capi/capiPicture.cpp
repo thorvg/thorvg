@@ -112,7 +112,7 @@ TEST_CASE("Load Png file in Picture", "[capiPicture]")
     REQUIRE(tvg_picture_load(picture, "invalid.png") == TVG_RESULT_INVALID_ARGUMENT);
 
     //Load Png file
-    REQUIRE(tvg_picture_load(picture, TEST_DIR"/logo.png") == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_picture_load(picture, TEST_DIR"/test.png") == TVG_RESULT_SUCCESS);
 
     //Verify Size
     float w, h;

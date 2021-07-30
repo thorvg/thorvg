@@ -103,13 +103,13 @@ TEST_CASE("Load PNG file from path", "[tvgPicture]")
     //Invalid file
     REQUIRE(picture->load("invalid.png") == Result::InvalidArguments);
 
-    REQUIRE(picture->load(TEST_DIR"/logo.png") == Result::Success);
+    REQUIRE(picture->load(TEST_DIR"/test.png") == Result::Success);
 
     float w, h;
     REQUIRE(picture->size(&w, &h) == Result::Success);
 
-    REQUIRE(w == 1000);
-    REQUIRE(h == 1000);
+    REQUIRE(w == 512);
+    REQUIRE(h == 512);
 }
 
 TEST_CASE("Load PNG file from data", "[tvgPicture]")
@@ -118,7 +118,7 @@ TEST_CASE("Load PNG file from data", "[tvgPicture]")
     REQUIRE(picture);
 
     //Open file
-    ifstream file(TEST_DIR"/logo.png");
+    ifstream file(TEST_DIR"/test.png");
     REQUIRE(file.is_open());
     auto size = sizeof(uint32_t) * (1000*1000);
     auto data = (char*)malloc(size);
@@ -130,8 +130,8 @@ TEST_CASE("Load PNG file from data", "[tvgPicture]")
 
     float w, h;
     REQUIRE(picture->size(&w, &h) == Result::Success);
-    REQUIRE(w == 1000);
-    REQUIRE(h == 1000);
+    REQUIRE(w == 512);
+    REQUIRE(h == 512);
 
     free(data);
 }
@@ -144,13 +144,13 @@ TEST_CASE("Load JPG file from path", "[tvgPicture]")
     //Invalid file
     REQUIRE(picture->load("invalid.jpg") == Result::InvalidArguments);
 
-    REQUIRE(picture->load(TEST_DIR"/logo.jpg") == Result::Success);
+    REQUIRE(picture->load(TEST_DIR"/test.jpg") == Result::Success);
 
     float w, h;
     REQUIRE(picture->size(&w, &h) == Result::Success);
 
-    REQUIRE(w == 1000);
-    REQUIRE(h == 1000);
+    REQUIRE(w == 512);
+    REQUIRE(h == 512);
 }
 
 TEST_CASE("Load JPG file from data", "[tvgPicture]")
@@ -159,10 +159,13 @@ TEST_CASE("Load JPG file from data", "[tvgPicture]")
     REQUIRE(picture);
 
     //Open file
-    ifstream file(TEST_DIR"/logo.jpg");
+    ifstream file(TEST_DIR"/test.jpg");
     REQUIRE(file.is_open());
-    auto size = sizeof(uint32_t) * (1000*1000);
+    auto begin = file.tellg();
+    file.seekg(0, std::ios::end);
+    auto size = file.tellg() - begin;
     auto data = (char*)malloc(size);
+    file.seekg(0, std::ios::beg);
     file.read(data, size);
     file.close();
 
@@ -171,8 +174,8 @@ TEST_CASE("Load JPG file from data", "[tvgPicture]")
 
     float w, h;
     REQUIRE(picture->size(&w, &h) == Result::Success);
-    REQUIRE(w == 1000);
-    REQUIRE(h == 1000);
+    REQUIRE(w == 512);
+    REQUIRE(h == 512);
 
     free(data);
 }
@@ -231,7 +234,7 @@ TEST_CASE("Load PNG file and render", "[tvgPicture]")
     auto picture = Picture::gen();
     REQUIRE(picture);
 
-    REQUIRE(picture->load(TEST_DIR"/logo.png") == Result::Success);
+    REQUIRE(picture->load(TEST_DIR"/test.png") == Result::Success);
 
     REQUIRE(canvas->push(move(picture)) == Result::Success);
 
@@ -251,7 +254,7 @@ TEST_CASE("Load JPG file and render", "[tvgPicture]")
     auto picture = Picture::gen();
     REQUIRE(picture);
 
-    REQUIRE(picture->load(TEST_DIR"/logo.jpg") == Result::Success);
+    REQUIRE(picture->load(TEST_DIR"/test.jpg") == Result::Success);
 
     REQUIRE(canvas->push(move(picture)) == Result::Success);
 

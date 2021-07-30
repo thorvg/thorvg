@@ -20,6 +20,7 @@
  * SOFTWARE.
  */
 
+#include <fstream>
 #include "Common.h"
 
 /************************************************************************/
@@ -30,10 +31,11 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 {
     if (!canvas) return;
 
+    //Load png file from path
     for (int i = 0; i < 5; ++i) {
         auto picture = tvg::Picture::gen();
-        if (picture->load(EXAMPLE_DIR"/logo.png") != tvg::Result::Success) {
-             cout << "PNG is not supported, Did you enable PNG Loader??" << endl;
+        if (picture->load(EXAMPLE_DIR"/test.png") != tvg::Result::Success) {
+             cout << "PNG is not supported. Did you enable PNG Loader?" << endl;
              return;
         }
         picture->translate(i* 150, i * 150);
@@ -41,6 +43,29 @@ void tvgDrawCmds(tvg::Canvas* canvas)
         picture->size(200, 200);
         if (canvas->push(move(picture)) != tvg::Result::Success) return;
     }
+
+    //Open file manually
+    ifstream file(EXAMPLE_DIR"/test.png");
+    if (!file.is_open()) return;
+    auto begin = file.tellg();
+    file.seekg(0, std::ios::end);
+    auto size = file.tellg() - begin;
+    auto data = (char*)malloc(size);
+    if (!data) return;
+    file.seekg(0, std::ios::beg);
+    file.read(data, size);
+    file.close();
+
+    auto picture = tvg::Picture::gen();
+    if (picture->load(data, size, true) != tvg::Result::Success) {
+        cout << "Couldnt load PNG file from data." << endl;
+        return;
+    }
+
+    free(data);
+    picture->translate(400, 0);
+    picture->scale(0.8);
+    canvas->push(move(picture));
 }
 
 
