@@ -20,8 +20,8 @@
  * SOFTWARE.
  */
 
-#include "Common.h"
 #include <fstream>
+#include "Common.h"
 
 /************************************************************************/
 /* Drawing Commands                                                     */
@@ -34,7 +34,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     //Load jpg file from path
     for (int i = 0; i < 5; ++i) {
         auto picture = tvg::Picture::gen();
-        if (picture->load(EXAMPLE_DIR"/logo.jpg") != tvg::Result::Success) {
+        if (picture->load(EXAMPLE_DIR"/test.jpg") != tvg::Result::Success) {
              cout << "JPG is not supported. Did you enable JPG Loader?" << endl;
              return;
         }
@@ -45,11 +45,14 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     }
 
     //Open file manually
-    ifstream file(EXAMPLE_DIR"/logo.jpg");
+    ifstream file(EXAMPLE_DIR"/test.jpg");
     if (!file.is_open()) return;
-    auto size = sizeof(uint32_t) * (1000*1000);
+    auto begin = file.tellg();
+    file.seekg(0, std::ios::end);
+    auto size = file.tellg() - begin;
     auto data = (char*)malloc(size);
     if (!data) return;
+    file.seekg(0, std::ios::beg);
     file.read(data, size);
     file.close();
 
@@ -61,7 +64,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     free(data);
     picture->translate(400, 0);
-    picture->scale(0.4);
+    picture->scale(0.8);
     canvas->push(move(picture));
 }
 
