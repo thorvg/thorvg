@@ -29,8 +29,9 @@ class TvgLoader : public LoadModule, public Task
 {
 public:
     const char* data = nullptr;
-    const char* pointer = nullptr;
+    const char* ptr = nullptr;
     uint32_t size = 0;
+    uint16_t version = 0;
     unique_ptr<Scene> root = nullptr;
     bool copy = false;
 
@@ -45,6 +46,7 @@ public:
     unique_ptr<Paint> paint() override;
 
 private:
+    bool readHeader();
     void run(unsigned tid) override;
     void clear();
 };

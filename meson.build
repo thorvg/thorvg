@@ -10,6 +10,8 @@ add_project_arguments('-DEXAMPLE_DIR="@0@/src/examples/images"'.format(meson.cur
                       '-DTEST_DIR="@0@/test/images"'.format(meson.current_source_dir()),
                       language : 'cpp')
 
+config_h.set_quoted('THORVG_VERSION_STRING', meson.project_version())
+
 if get_option('engines').contains('sw') == true
     config_h.set10('THORVG_SW_RASTER_SUPPORT', true)
 endif

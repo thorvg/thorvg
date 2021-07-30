@@ -37,6 +37,39 @@
 /************************************************************************/
 
 static int _initCnt = 0;
+static uint16_t _version = 0;
+
+
+static bool _buildVersionInfo()
+{
+    auto SRC = THORVG_VERSION_STRING;   //ex) 0.3.99
+    auto p = SRC;
+    const char* x;
+
+    char major[3];
+    x = strchr(p, '.');
+    if (!x) return false;
+    strncpy(major, p, x - p);
+    p = x + 1;
+
+    char minor[3];
+    x = strchr(p, '.');
+    if (!x) return false;
+    strncpy(minor, p, x - p);
+    p = x + 1;
+
+    char micro[3];
+    x = SRC + strlen(THORVG_VERSION_STRING);
+    if (!x) return false;
+    strncpy(micro, p, x - p);
+
+    char sum[7];
+    snprintf(sum, sizeof(sum), "%s%s%s", major, minor, micro);
+
+    _version = atoi(sum);
+
+    return true;
+}
 
 
 /************************************************************************/
@@ -64,6 +97,8 @@ Result Initializer::init(CanvasEngine engine, uint32_t threads) noexcept
     if (nonSupport) return Result::NonSupport;
 
     if (_initCnt++ > 0) return Result::Success;
+
+    if (!_buildVersionInfo()) return Result::Unknown;
 
     if (!LoaderMgr::init()) return Result::Unknown;
 
@@ -102,4 +137,10 @@ Result Initializer::term(CanvasEngine engine) noexcept
     if (!LoaderMgr::term()) return Result::Unknown;
 
     return Result::Success;
+}
+
+
+uint16_t THORVG_VERSION_NUMBER()
+{
+    return _version;
 }

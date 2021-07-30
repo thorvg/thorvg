@@ -52,29 +52,26 @@ bool TvgSaver::flushTo(const std::string& path)
 }
 
 
+/* WARNING: Header format shall not changed! */
 bool TvgSaver::writeHeader()
 {
     buffer.grow(TVG_HEADER_SIGNATURE_LENGTH + TVG_HEADER_VERSION_LENGTH);
 
+    //1. Signature
     auto ptr = buffer.ptr();
     memcpy(ptr, TVG_HEADER_SIGNATURE, TVG_HEADER_SIGNATURE_LENGTH);
     ptr += TVG_HEADER_SIGNATURE_LENGTH;
+
+    //2. Version
     memcpy(ptr, TVG_HEADER_VERSION, TVG_HEADER_VERSION_LENGTH);
     ptr += TVG_HEADER_VERSION_LENGTH;
 
     buffer.count += (TVG_HEADER_SIGNATURE_LENGTH + TVG_HEADER_VERSION_LENGTH);
 
-    return true;
-}
-
-
-bool TvgSaver::writeViewSize()
-{
+    //3. View Size
     float var[2];
     paint->bounds(nullptr, nullptr, &var[0], &var[1]);
-
     if (var[0] <= 0.0f || var[1] <= 0.0f) return false;
-
     writeData(var, SIZE(var));
 
     return true;
@@ -413,7 +410,6 @@ TvgBinCounter TvgSaver::serialize(const Paint* paint)
 void TvgSaver::run(unsigned tid)
 {
     if (!writeHeader()) return;
-    if (!writeViewSize()) return;
     if (serialize(paint) == 0) return;
     if (!flushTo(path)) return;
 }
