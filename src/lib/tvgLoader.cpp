@@ -46,15 +46,15 @@
 static LoadModule* _find(FileType type)
 {
     switch(type) {
-        case FileType::Svg: {
-#ifdef THORVG_SVG_LOADER_SUPPORT
-            return new SvgLoader;
+        case FileType::Tvg: {
+#ifdef THORVG_TVG_LOADER_SUPPORT
+            return new TvgLoader;
 #endif
             break;
         }
-        case FileType::Png: {
-#ifdef THORVG_PNG_LOADER_SUPPORT
-            return new PngLoader;
+        case FileType::Svg: {
+#ifdef THORVG_SVG_LOADER_SUPPORT
+            return new SvgLoader;
 #endif
             break;
         }
@@ -62,9 +62,9 @@ static LoadModule* _find(FileType type)
             return new RawLoader;
             break;
         }
-        case FileType::Tvg: {
-#ifdef THORVG_TVG_LOADER_SUPPORT
-            return new TvgLoader;
+        case FileType::Png: {
+#ifdef THORVG_PNG_LOADER_SUPPORT
+            return new PngLoader;
 #endif
             break;
         }
@@ -82,20 +82,20 @@ static LoadModule* _find(FileType type)
 #ifdef THORVG_LOG_ENABLED
     const char *format;
     switch(type) {
-        case FileType::Svg: {
-            format = "SVG";
+        case FileType::Tvg: {
+            format = "TVG";
             break;
         }
-        case FileType::Png: {
-            format = "PNG";
+        case FileType::Svg: {
+            format = "SVG";
             break;
         }
         case FileType::Raw: {
             format = "RAW";
             break;
         }
-        case FileType::Tvg: {
-            format = "TVG";
+        case FileType::Png: {
+            format = "PNG";
             break;
         }
         case FileType::Jpg: {
@@ -116,9 +116,9 @@ static LoadModule* _find(FileType type)
 static LoadModule* _find(const string& path)
 {
     auto ext = path.substr(path.find_last_of(".") + 1);
+    if (!ext.compare("tvg")) return _find(FileType::Tvg);
     if (!ext.compare("svg")) return _find(FileType::Svg);
     if (!ext.compare("png")) return _find(FileType::Png);
-    if (!ext.compare("tvg")) return _find(FileType::Tvg);
     if (!ext.compare("jpg")) return _find(FileType::Jpg);
     return nullptr;
 }
