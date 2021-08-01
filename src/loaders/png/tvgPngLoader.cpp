@@ -66,7 +66,6 @@ bool PngLoader::open(const char* data, uint32_t size, bool copy)
 bool PngLoader::read()
 {
     png_bytep buffer;
-    image->format = PNG_FORMAT_BGRA;
     buffer = static_cast<png_bytep>(malloc(PNG_IMAGE_SIZE((*image))));
     if (!buffer) {
         //out of memory, only time when libpng doesnt free its data
@@ -77,6 +76,15 @@ bool PngLoader::read()
     content = reinterpret_cast<uint32_t*>(buffer);
 
     return true;
+}
+
+void PngLoader::setColorSpace(uint32_t cs)
+{
+    // colorspaces naming convention need to be re-condifered
+    if (cs == tvg::SwCanvas::ABGR8888)
+        image->format = PNG_FORMAT_RGBA;
+    else
+        image->format = PNG_FORMAT_BGRA;
 }
 
 bool PngLoader::close()

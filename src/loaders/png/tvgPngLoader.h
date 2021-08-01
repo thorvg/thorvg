@@ -36,6 +36,7 @@ public:
     bool read() override;
     bool close() override;
 
+    void setColorSpace(uint32_t cs);
     const uint32_t* pixels() override;
 
 private:

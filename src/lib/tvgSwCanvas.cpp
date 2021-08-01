@@ -89,6 +89,9 @@ Result SwCanvas::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t 
     //Paints must be updated again with this new target.
     Canvas::pImpl->needRefresh();
 
+    //Set colorspace
+    Canvas::pImpl->setColorSpace(cs);
+
     return Result::Success;
 #endif
     return Result::NonSupport;

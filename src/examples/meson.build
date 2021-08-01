@@ -25,6 +25,7 @@ source_file = [
     'Performance.cpp',
     'PictureJpg.cpp',
     'PicturePng.cpp',
+    'PicturePngColorspace.cpp',
     'PictureRaw.cpp',
     'PictureTvg.cpp',
     'RadialGradient.cpp',

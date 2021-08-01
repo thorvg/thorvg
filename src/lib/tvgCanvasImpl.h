@@ -34,6 +34,7 @@ struct Canvas::Impl
     RenderMethod* renderer;
     bool refresh = false;   //if all paints should be updated by force.
     bool drawing = false;   //on drawing condition?
+    uint32_t cs = 0;
 
     Impl(RenderMethod* pRenderer):renderer(pRenderer)
     {
@@ -73,6 +74,11 @@ struct Canvas::Impl
         drawing = false;
 
         return Result::Success;
+    }
+
+    void setColorSpace(uint32_t colorSpace)
+    {
+        cs = colorSpace;
     }
 
     void needRefresh()

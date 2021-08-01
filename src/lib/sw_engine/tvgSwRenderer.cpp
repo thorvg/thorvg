@@ -274,6 +274,10 @@ bool SwRenderer::viewport(const RenderRegion& vp)
     return true;
 }
 
+uint32_t SwRenderer::getColorSpace()
+{
+    return surface->cs;
+}
 
 bool SwRenderer::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h, uint32_t cs)
 {

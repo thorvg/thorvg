@@ -43,6 +43,7 @@ public:
 
     virtual bool read() = 0;
     virtual bool close() = 0;
+    virtual void setColorSpace(uint32_t cs) { /*Not supported */ };
     virtual const uint32_t* pixels() { return nullptr; };
     virtual unique_ptr<Paint> paint() { return nullptr; };
 };

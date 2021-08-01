@@ -54,6 +54,7 @@ struct Picture::Impl
     void *rdata = nullptr;              //engine data
     float w = 0, h = 0;
     bool resizing = false;
+    uint32_t colorSpace = 0;
 
     Impl(Picture* p) : picture(p)
     {
@@ -115,6 +116,10 @@ struct Picture::Impl
 
     void* update(RenderMethod &renderer, const RenderTransform* pTransform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag pFlag)
     {
+        if (loader) {
+            loader->setColorSpace(renderer.getColorSpace());
+            if (!loader->read()) return NULL;
+	}
         auto flag = reload();
 
         if (pixels) {
@@ -145,6 +150,11 @@ struct Picture::Impl
         return true;
     }
 
+    void setColorSpace(uint32_t cs)
+    {
+        this->colorSpace = cs;
+    }
+
     bool bounds(float* x, float* y, float* w, float* h) const
     {
         if (!paint) return false;
@@ -167,7 +177,6 @@ struct Picture::Impl
             if (invalid) return Result::InvalidArguments;
             return Result::NonSupport;
         }
-        if (!loader->read()) return Result::Unknown;
         w = loader->w;
         h = loader->h;
         return Result::Success;
@@ -178,7 +187,6 @@ struct Picture::Impl
         if (loader) loader->close();
         loader = LoaderMgr::loader(data, size, copy);
         if (!loader) return Result::NonSupport;
-        if (!loader->read()) return Result::Unknown;
         w = loader->w;
         h = loader->h;
         return Result::Success;

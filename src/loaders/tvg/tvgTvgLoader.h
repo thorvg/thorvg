@@ -43,6 +43,7 @@ public:
     bool close() override;
     bool resize(Paint* paint, float w, float h) override;
     unique_ptr<Paint> paint() override;
+    void setColorSpace(uint32_t cs);
 
 private:
     void run(unsigned tid) override;

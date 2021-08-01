@@ -126,6 +126,11 @@ bool TvgLoader::resize(Paint* paint, float w, float h)
     return true;
 }
 
+void TvgLoader::setColorSpace(uint32_t cs)
+{
+    return;
+}
+
 
 bool TvgLoader::read()
 {
