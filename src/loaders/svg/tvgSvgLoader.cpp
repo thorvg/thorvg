@@ -980,7 +980,6 @@ static bool _attrParseGNode(void* data, const char* key, const char* value)
     } else if (!strcmp(key, "transform")) {
         node->transform = _parseTransformationMatrix(value);
     } else if (!strcmp(key, "id")) {
-        if (node->id && value) delete node->id;
         node->id = _copyId(value);
     } else if (!strcmp(key, "clip-path")) {
         _handleClipPathAttr(loader, node, value);
@@ -1006,7 +1005,6 @@ static bool _attrParseClipPathNode(void* data, const char* key, const char* valu
     } else if (!strcmp(key, "transform")) {
         node->transform = _parseTransformationMatrix(value);
     } else if (!strcmp(key, "id")) {
-        if (node->id && value) delete node->id;
         node->id = _copyId(value);
     } else {
         return _parseStyleAttr(loader, key, value, false);
@@ -1025,7 +1023,6 @@ static bool _attrParseMaskNode(void* data, const char* key, const char* value)
     } else if (!strcmp(key, "transform")) {
         node->transform = _parseTransformationMatrix(value);
     } else if (!strcmp(key, "id")) {
-        if (node->id && value) delete node->id;
         node->id = _copyId(value);
     } else {
         return _parseStyleAttr(loader, key, value, false);
@@ -1171,7 +1168,6 @@ static bool _attrParsePathNode(void* data, const char* key, const char* value)
     } else if (!strcmp(key, "mask")) {
         _handleMaskAttr(loader, node, value);
     } else if (!strcmp(key, "id")) {
-        if (node->id && value) delete node->id;
         node->id = _copyId(value);
     } else {
         return _parseStyleAttr(loader, key, value, false);
@@ -1231,7 +1227,6 @@ static bool _attrParseCircleNode(void* data, const char* key, const char* value)
     } else if (!strcmp(key, "mask")) {
         _handleMaskAttr(loader, node, value);
     } else if (!strcmp(key, "id")) {
-        if (node->id && value) delete node->id;
         node->id = _copyId(value);
     } else {
         return _parseStyleAttr(loader, key, value, false);
@@ -1285,7 +1280,6 @@ static bool _attrParseEllipseNode(void* data, const char* key, const char* value
     }
 
     if (!strcmp(key, "id")) {
-        if (node->id && value) delete node->id;
         node->id = _copyId(value);
     } else if (!strcmp(key, "style")) {
         return simpleXmlParseW3CAttribute(value, _parseStyleAttr, loader);
@@ -1369,7 +1363,6 @@ static bool _attrParsePolygonNode(void* data, const char* key, const char* value
     } else if (!strcmp(key, "mask")) {
         _handleMaskAttr(loader, node, value);
     } else if (!strcmp(key, "id")) {
-        if (node->id && value) delete node->id;
         node->id = _copyId(value);
     } else {
         return _parseStyleAttr(loader, key, value, false);
@@ -1443,7 +1436,6 @@ static bool _attrParseRectNode(void* data, const char* key, const char* value)
     }
 
     if (!strcmp(key, "id")) {
-        if (node->id && value) delete node->id;
         node->id = _copyId(value);
     } else if (!strcmp(key, "style")) {
         ret = simpleXmlParseW3CAttribute(value, _parseStyleAttr, loader);
@@ -1506,7 +1498,6 @@ static bool _attrParseLineNode(void* data, const char* key, const char* value)
     }
 
     if (!strcmp(key, "id")) {
-        if (node->id && value) delete node->id;
         node->id = _copyId(value);
     } else if (!strcmp(key, "style")) {
         return simpleXmlParseW3CAttribute(value, _parseStyleAttr, loader);
@@ -1540,69 +1531,6 @@ static string* _idFromHref(const char* href)
 }
 
 
-static constexpr struct
-{
-    const char* tag;
-    SvgParserLengthType type;
-    int sz;
-    size_t offset;
-} imageTags[] = {
-    {"x", SvgParserLengthType::Horizontal, sizeof("x"), offsetof(SvgRectNode, x)},
-    {"y", SvgParserLengthType::Vertical, sizeof("y"), offsetof(SvgRectNode, y)},
-    {"width", SvgParserLengthType::Horizontal, sizeof("width"), offsetof(SvgRectNode, w)},
-    {"height", SvgParserLengthType::Vertical, sizeof("height"), offsetof(SvgRectNode, h)},
-};
-
-
-/* parse the attributes for a image element.
- * https://www.w3.org/TR/SVG/embedded.html#ImageElement
- */
-static bool _attrParseImageNode(void* data, const char* key, const char* value)
-{
-    SvgLoaderData* loader = (SvgLoaderData*)data;
-    SvgNode* node = loader->svgParse->node;
-    SvgImageNode* image = &(node->node.image);
-    unsigned char* array;
-    int sz = strlen(key);
-
-    array = (unsigned char*)image;
-    for (unsigned int i = 0; i < sizeof(imageTags) / sizeof(imageTags[0]); i++) {
-        if (imageTags[i].sz - 1 == sz && !strncmp(imageTags[i].tag, key, sz)) {
-            *((float*)(array + imageTags[i].offset)) = _toFloat(loader->svgParse, value, imageTags[i].type);
-            return true;
-        }
-    }
-
-    if (!strcmp(key, "href") || !strcmp(key, "xlink:href")) {
-        image->href = _idFromHref(value);
-    } else if (!strcmp(key, "id")) {
-        if (node->id && value) delete node->id;
-        node->id = _copyId(value);
-    } else if (!strcmp(key, "style")) {
-        return simpleXmlParseW3CAttribute(value, _parseStyleAttr, loader);
-    } else if (!strcmp(key, "clip-path")) {
-        _handleClipPathAttr(loader, node, value);
-    } else if (!strcmp(key, "mask")) {
-        _handleMaskAttr(loader, node, value);
-    } else {
-        return _parseStyleAttr(loader, key, value);
-    }
-    return true;
-}
-
-
-static SvgNode* _createImageNode(SvgLoaderData* loader, SvgNode* parent, const char* buf, unsigned bufLength)
-{
-    loader->svgParse->node = _createNode(parent, SvgNodeType::Image);
-
-    if (!loader->svgParse->node) return nullptr;
-
-    simpleXmlParseAttributes(buf, bufLength, _attrParseImageNode, loader);
-    return loader->svgParse->node;
-}
-
-
->>>>>>> f9d82c2... svg_loader SvgLoader: Fix memory leak of duplicate declared id
 static SvgNode* _getDefsNode(SvgNode* node)
 {
     if (!node) return nullptr;
