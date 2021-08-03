@@ -173,12 +173,11 @@ shared_ptr<LoadModule> LoaderMgr::loader(const char* data, uint32_t size, bool c
 
 shared_ptr<LoadModule> LoaderMgr::loader(const uint32_t *data, uint32_t w, uint32_t h, bool copy)
 {
-    for (int i = 0; i < static_cast<int>(FileType::Unknown); i++) {
-        auto loader = _find(static_cast<FileType>(i));
-        if (loader) {
-            if (loader->open(data, w, h, copy)) return shared_ptr<LoadModule>(loader);
-            else delete(loader);
-        }
+    //function is dedicated for raw images only
+    auto loader = _find(static_cast<FileType>(FileType::Raw));
+    if (loader) {
+        if (loader->open(data, w, h, copy)) return shared_ptr<LoadModule>(loader);
+        else delete(loader);
     }
     return nullptr;
 }
