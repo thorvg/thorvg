@@ -51,11 +51,11 @@ TEST_CASE("Load SVG Data", "[tvgPicture]")
     REQUIRE(picture);
 
     //Negative cases
-    REQUIRE(picture->load(nullptr, 100) == Result::InvalidArguments);
-    REQUIRE(picture->load(svg, 0) == Result::InvalidArguments);
+    REQUIRE(picture->load(nullptr, 100, "") == Result::InvalidArguments);
+    REQUIRE(picture->load(svg, 0, "") == Result::InvalidArguments);
 
     //Positive cases
-    REQUIRE(picture->load(svg, strlen(svg)) == Result::Success);
+    REQUIRE(picture->load(svg, strlen(svg), "svg") == Result::Success);
 
     float w, h;
     REQUIRE(picture->size(&w, &h) == Result::Success);
@@ -125,8 +125,8 @@ TEST_CASE("Load PNG file from data", "[tvgPicture]")
     file.read(data, size);
     file.close();
 
-    REQUIRE(picture->load(data, size, false) == Result::Success);
-    REQUIRE(picture->load(data, size, true) == Result::Success);
+    REQUIRE(picture->load(data, size, "", false) == Result::Success);
+    REQUIRE(picture->load(data, size, "png", true) == Result::Success);
 
     float w, h;
     REQUIRE(picture->size(&w, &h) == Result::Success);
@@ -169,8 +169,8 @@ TEST_CASE("Load JPG file from data", "[tvgPicture]")
     file.read(data, size);
     file.close();
 
-    REQUIRE(picture->load(data, size, false) == Result::Success);
-    REQUIRE(picture->load(data, size, true) == Result::Success);
+    REQUIRE(picture->load(data, size, "", false) == Result::Success);
+    REQUIRE(picture->load(data, size, "jpg", true) == Result::Success);
 
     float w, h;
     REQUIRE(picture->size(&w, &h) == Result::Success);

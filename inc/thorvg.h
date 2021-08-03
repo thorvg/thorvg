@@ -1005,6 +1005,7 @@ public:
      *
      * @param[in] data A pointer to a memory location where the content of the picture file is stored.
      * @param[in] size The size in bytes of the memory occupied by the @p data.
+     * @param[in] mimetype Mimetype of data. If null or unknown loaders will be tried one by one.
      * @param[in] copy Decides whether the data should be copied into the engine local buffer.
      *
      * @retval Result::Success When succeed.
@@ -1016,7 +1017,7 @@ public:
      *
      * @warning: you have responsibility to release the @p data memory if the @p copy is true
      */
-    Result load(const char* data, uint32_t size, bool copy = false) noexcept;
+    Result load(const char* data, uint32_t size, const std::string& mimeType, bool copy = false) noexcept;
 
     /**
      * @brief Resize the picture content with the given width and height.
