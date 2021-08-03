@@ -275,6 +275,14 @@ static inline uint32_t ALPHA_BLEND(uint32_t c, uint32_t a)
             ((((c & 0x00ff00ff) * a + 0x00ff00ff) >> 8) & 0x00ff00ff));
 }
 
+#if defined(THORVG_NEON_VECTOR_SUPPORT)
+static inline uint8x8_t ALPHA_BLEND_NEON(uint8x8_t c, uint8x8_t a)
+{
+	uint16x8_t t = vmull_u8(c, a);
+	return vshrn_n_u16(t, 8);
+}
+#endif
+
 static inline uint32_t COLOR_INTERPOLATE(uint32_t c1, uint32_t a1, uint32_t c2, uint32_t a2)
 {
     auto t = (((c1 & 0xff00ff) * a1 + (c2 & 0xff00ff) * a2) >> 8) & 0xff00ff;
