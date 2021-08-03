@@ -215,12 +215,35 @@ static bool _translucentRle(SwSurface* surface, const SwRleData* rle, uint32_t c
 
     for (uint32_t i = 0; i < rle->size; ++i) {
         auto dst = &surface->buffer[span->y * surface->stride + span->x];
+
+#if defined(THORVG_NEON_VECTOR_SUPPORT)
+        uint8x8_t *vDst = (uint8x8_t*) dst;
+#endif
+
         if (span->coverage < 255) src = ALPHA_BLEND(color, span->coverage);
         else src = color;
         auto ialpha = 255 - surface->blender.alpha(src);
+
+#if defined(THORVG_NEON_VECTOR_SUPPORT)
+        uint8x8_t vSrc = (uint8x8_t) vdup_n_u32(src);
+        uint8x8_t vIalpha = (uint8x8_t) vdup_n_u32(ialpha);
+
+        uint32_t iterations = span->len / 2;
+        uint32_t left = span->len % 2;
+
+        for (uint32_t x = 0; x < iterations; x+=2) {
+            vDst[x] = vadd_u8(vSrc, ALPHA_BLEND_NEON(vDst[x], vIalpha));
+        }
+
+        if (left) {
+            dst[span->len] = src + ALPHA_BLEND(dst[span->len], ialpha);
+        }
+#else
+
         for (uint32_t x = 0; x < span->len; ++x) {
             dst[x] = src + ALPHA_BLEND(dst[x], ialpha);
         }
+#endif
         ++span;
     }
     return true;
