@@ -19,17 +19,16 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-
-#include <fstream>
 #include <memory.h>
+#include <fstream>
 #include "tvgLoader.h"
 #include "tvgTvgLoader.h"
-#include "tvgTvgLoadParser.h"
 
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
 /************************************************************************/
+
 
 void TvgLoader::clear()
 {
@@ -37,6 +36,11 @@ void TvgLoader::clear()
     ptr = data = nullptr;
     size = 0;
     copy = false;
+
+    if (interpreter) {
+        delete(interpreter);
+        interpreter = nullptr;
+    }
 }
 
 
@@ -63,6 +67,9 @@ bool TvgLoader::readHeader()
     ptr += SIZE(float);
     READ_FLOAT(&h, ptr);
     ptr += SIZE(float);
+
+    //Decide the proper Tvg Binary Interpreter based on the current file version
+    if (this->version >= 0) interpreter = new TvgBinInterpreter;
 
     return true;
 }
@@ -175,7 +182,9 @@ bool TvgLoader::close()
 void TvgLoader::run(unsigned tid)
 {
     if (root) root.reset();
-    root = tvgLoadData(ptr, data + size);
+
+    root = interpreter->run(ptr, data + size);
+
     if (!root) clear();
 }
 

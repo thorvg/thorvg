@@ -1,8 +1,8 @@
 source_file = [
    'tvgTvgLoader.h',
+   'tvgTvgCommon.h',
    'tvgTvgLoader.cpp',
-   'tvgTvgLoadParser.h',
-   'tvgTvgLoadParser.cpp',
+   'tvgTvgBinInterpreter.cpp',
 ]
 
 subloader_dep += [declare_dependency(
