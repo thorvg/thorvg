@@ -79,16 +79,18 @@ Summary:
     Raster Engine (SW):    @3@
     Raster Engine (GL):    @4@
     AVX SIMD Instruction:  @5@
-    Loader (TVG):          @6@
-    Loader (SVG):          @7@
-    Loader (PNG):          @8@
-    Loader (JPG):          @9@
-    Saver (TVG):           @10@
-    CAPI Binding:          @11@
-    Log Message:           @12@
-    Tests:                 @13@
-    Examples:              @14@
-    Tool (Svg2Png):        @15@
+    Neon SIMD Instruction: @6@
+    Loader (TVG):          @7@
+    Loader (SVG):          @8@
+    Loader (PNG):          @9@
+    Loader (JPG):          @10@
+    Saver (TVG):           @11@
+    CAPI Binding:          @12@
+    Log Message:           @13@
+    Tests:                 @14@
+    Examples:              @15@
+    Tool (Svg2Tvg):        @16@
+    Tool (Svg2Png):        @17@
 
 '''.format(
         meson.project_version(),
@@ -97,6 +99,7 @@ Summary:
         get_option('engines').contains('sw'),
         get_option('engines').contains('gl'),
         get_option('vectors').contains('avx'),
+        get_option('vectors').contains('neon'),
         get_option('loaders').contains('tvg'),
         get_option('loaders').contains('svg'),
         get_option('loaders').contains('png'),
@@ -106,6 +109,7 @@ Summary:
         get_option('log'),
         get_option('tests'),
         get_option('examples'),
+        get_option('tools').contains('svg2tvg'),
         get_option('tools').contains('svg2png'),
     )
 
