@@ -19,10 +19,13 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#include "tvgSwCommon.h"
-#include "tvgRender.h"
 #include <float.h>
 #include <math.h>
+#include "tvgSwCommon.h"
+#include "tvgRender.h"
+#include "tvgSwRasterC.h"
+#include "tvgSwRasterAvx.h"
+#include "tvgSwRasterNeon.h"
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
@@ -208,48 +211,6 @@ static bool _rasterSolidRect(SwSurface* surface, const SwBBox& region, uint32_t 
 /************************************************************************/
 
 
-static bool _translucentRle(SwSurface* surface, const SwRleData* rle, uint32_t color)
-{
-    auto span = rle->spans;
-    uint32_t src;
-
-    for (uint32_t i = 0; i < rle->size; ++i) {
-        auto dst = &surface->buffer[span->y * surface->stride + span->x];
-
-#if defined(THORVG_NEON_VECTOR_SUPPORT)
-        uint8x8_t *vDst = (uint8x8_t*) dst;
-#endif
-
-        if (span->coverage < 255) src = ALPHA_BLEND(color, span->coverage);
-        else src = color;
-        auto ialpha = 255 - surface->blender.alpha(src);
-
-#if defined(THORVG_NEON_VECTOR_SUPPORT)
-        uint8x8_t vSrc = (uint8x8_t) vdup_n_u32(src);
-        uint8x8_t vIalpha = (uint8x8_t) vdup_n_u32(ialpha);
-
-        uint32_t iterations = span->len / 2;
-        uint32_t left = span->len % 2;
-
-        for (uint32_t x = 0; x < iterations; x+=2) {
-            vDst[x] = vadd_u8(vSrc, ALPHA_BLEND_NEON(vDst[x], vIalpha));
-        }
-
-        if (left) {
-            dst[span->len] = src + ALPHA_BLEND(dst[span->len], ialpha);
-        }
-#else
-
-        for (uint32_t x = 0; x < span->len; ++x) {
-            dst[x] = src + ALPHA_BLEND(dst[x], ialpha);
-        }
-#endif
-        ++span;
-    }
-    return true;
-}
-
-
 static bool _translucentRleAlphaMask(SwSurface* surface, const SwRleData* rle, uint32_t color)
 {
     TVGLOG("SW_ENGINE", "Rle Alpha Mask Composition");
@@ -308,7 +269,12 @@ static bool _rasterTranslucentRle(SwSurface* surface, SwRleData* rle, uint32_t c
             return _translucentRleInvAlphaMask(surface, rle, color);
         }
     }
-    return _translucentRle(surface, rle, color);
+
+#if defined(THORVG_NEON_VECTOR_SUPPORT)
+    return neonRasterTranslucentRle(surface, rle, color);
+#else
+    return cRasterTranslucentRle(surface, rle, color);
+#endif
 }
 
 
@@ -1278,42 +1244,11 @@ static bool _rasterOpaqueRadialGradientRle(SwSurface* surface, const SwRleData* 
 void rasterRGBA32(uint32_t *dst, uint32_t val, uint32_t offset, int32_t len)
 {
 #if defined(THORVG_AVX_VECTOR_SUPPORT)
-    //1. calculate how many iterations we need to cover length
-    uint32_t iterations = len / 8;
-    uint32_t avxFilled = iterations * 8;
-
-    //2. set beginning of the array
-    dst += offset;
-    __m256i_u* avxDst = (__m256i_u*) dst;
-
-    //3. fill octets
-    for (uint32_t i = 0; i < iterations; ++i) {
-        *avxDst = _mm256_set1_epi32(val);
-        avxDst++;
-    }
-
-    //4. fill leftovers (in first step we have to set pointer to place where avx job is done)
-    int32_t leftovers = len - avxFilled;
-    dst += avxFilled;
-
-    while (leftovers--) *dst++ = val;
+    avxRasterRGBA32(dst, val, offset, len);
 #elif defined(THORVG_NEON_VECTOR_SUPPORT)
-    uint32_t iterations = len / 4;
-    uint32_t neonFilled = iterations * 4;
-
-    dst += offset;
-    uint32x4_t vectorVal = {val, val, val, val};
-
-    for (uint32_t i = 0; i < iterations; ++i) {
-        vst1q_u32(dst, vectorVal);
-        dst += 4;
-    }
-
-    int32_t leftovers = len - neonFilled;
-    while (leftovers--) *dst++ = val;
+    neonRasterRGBA32(dst, val, offset, len);
 #else
-    dst += offset;
-    while (len--) *dst++ = val;
+    cRasterRGBA32(dst, val, offset, len);
 #endif
 }
 

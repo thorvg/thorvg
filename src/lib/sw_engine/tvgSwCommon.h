@@ -25,14 +25,6 @@
 #include "tvgCommon.h"
 #include "tvgRender.h"
 
-#ifdef THORVG_AVX_VECTOR_SUPPORT
-    #include <immintrin.h>
-#endif
-
-#ifdef THORVG_NEON_VECTOR_SUPPORT
-    #include <arm_neon.h>
-#endif
-
 #if 0
 #include <sys/time.h>
 static double timeStamp()
