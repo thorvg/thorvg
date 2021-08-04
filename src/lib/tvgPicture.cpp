@@ -60,6 +60,11 @@ Result Picture::load(const char* data, uint32_t size, const string& mimeType, bo
     return pImpl->load(data, size, mimeType, copy);
 }
 
+Result Picture::load(const char* data, uint32_t size, bool copy) noexcept
+{
+    return load(data, size, "", copy);
+}
+
 
 Result Picture::load(uint32_t* data, uint32_t w, uint32_t h, bool copy) noexcept
 {

@@ -1005,7 +1005,6 @@ public:
      *
      * @param[in] data A pointer to a memory location where the content of the picture file is stored.
      * @param[in] size The size in bytes of the memory occupied by the @p data.
-     * @param[in] mimetype Mimetype of data. If null or unknown loaders will be tried one by one.
      * @param[in] copy Decides whether the data should be copied into the engine local buffer.
      *
      * @retval Result::Success When succeed.
@@ -1013,7 +1012,25 @@ public:
      * @retval Result::NonSupport When trying to load a file with an unknown extension.
      * @retval Result::Unknown If an error occurs at a later stage.
      *
-     * @note: This api supports only SVG format
+     * @warning: you have responsibility to release the @p data memory if the @p copy is true
+     *
+     * @deprecated This method will go away next release.
+     * @see load(data, size, mimeType, copy)
+     */
+    Result load(const char* data, uint32_t size, bool copy = false) noexcept;
+
+    /**
+     * @brief Loads a picture data from a memory block of a given size.
+     *
+     * @param[in] data A pointer to a memory location where the content of the picture file is stored.
+     * @param[in] size The size in bytes of the memory occupied by the @p data.
+     * @param[in] mimetype Mimetype or extension of data such as "jpg", "jpeg", "svg", "svg+xml", "png", etc. If empty string or unknown, loaders will be tried one by one.
+     * @param[in] copy Decides whether the data should be copied into the engine local buffer.
+     *
+     * @retval Result::Success When succeed.
+     * @retval Result::InvalidArguments In case no data are provided or the @p size is zero or less.
+     * @retval Result::NonSupport When trying to load a file with an unknown extension.
+     * @retval Result::Unknown If an error occurs at a later stage.
      *
      * @warning: you have responsibility to release the @p data memory if the @p copy is true
      */
