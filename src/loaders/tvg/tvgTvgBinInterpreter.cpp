@@ -19,9 +19,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-
 #include <memory.h>
-#include "tvgTvgLoadParser.h"
+#include "tvgTvgCommon.h"
 
 
 /************************************************************************/
@@ -465,7 +464,7 @@ static Paint* _parsePaint(TvgBinBlock baseBlock)
 /* External Class Implementation                                        */
 /************************************************************************/
 
-unique_ptr<Scene> tvgLoadData(const char *ptr, const char* end)
+unique_ptr<Scene> TvgBinInterpreter::run(const char *ptr, const char* end)
 {
     auto scene = Scene::gen();
     if (!scene) return nullptr;

@@ -20,8 +20,8 @@
  * SOFTWARE.
  */
 
-#ifndef _TVG_TVG_LOAD_PARSER_H_
-#define _TVG_TVG_LOAD_PARSER_H_
+#ifndef _TVG_TVG_COMMON_H_
+#define _TVG_TVG_COMMON_H_
 
 #include "tvgCommon.h"
 #include "tvgBinaryDesc.h"
@@ -30,6 +30,25 @@
 #define READ_UI32(dst, src) memcpy(dst, (src), sizeof(uint32_t))
 #define READ_FLOAT(dst, src) memcpy(dst, (src), sizeof(float))
 
-unique_ptr<Scene> tvgLoadData(const char* ptr, const char* end);
 
-#endif //_TVG_TVG_LOAD_PARSER_H_
+/* Interface for Tvg Binary Interpreter */
+class TvgBinInterpreterBase
+{
+public:
+    virtual ~TvgBinInterpreterBase() {}
+
+    /* ptr: points the tvg binary body (after header)
+       end: end of the tvg binary data */
+    virtual unique_ptr<Scene> run(const char* ptr, const char* end) = 0;
+};
+
+
+/* Version 0 */
+class TvgBinInterpreter : public TvgBinInterpreterBase
+{
+public:
+    unique_ptr<Scene> run(const char* ptr, const char* end) override;
+};
+
+
+#endif  //_TVG_TVG_COMMON_H_

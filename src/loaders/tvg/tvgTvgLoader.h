@@ -24,6 +24,8 @@
 #define _TVG_TVG_LOADER_H_
 
 #include "tvgTaskScheduler.h"
+#include "tvgTvgCommon.h"
+
 
 class TvgLoader : public LoadModule, public Task
 {
@@ -33,6 +35,7 @@ public:
     uint32_t size = 0;
     uint16_t version = 0;
     unique_ptr<Scene> root = nullptr;
+    TvgBinInterpreterBase* interpreter = nullptr;
     bool copy = false;
 
     ~TvgLoader();
