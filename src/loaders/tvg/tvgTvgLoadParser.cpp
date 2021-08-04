@@ -28,10 +28,6 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-#define SIZE(A) sizeof(A)
-#define READ_UI32(dst, src) memcpy(dst, (src), sizeof(uint32_t))
-#define READ_FLOAT(dst, src) memcpy(dst, (src), sizeof(float))
-
 struct TvgBinBlock
 {
     TvgBinTag type;
@@ -62,29 +58,6 @@ static TvgBinBlock _readBlock(const char *ptr)
     block.data = ptr + SIZE(TvgBinTag) + SIZE(TvgBinCounter);
     block.end = block.data + block.length;
     return block;
-}
-
-static bool _readTvgHeader(const char **ptr, float* w, float* h)
-{
-    if (!*ptr) return false;
-
-    //Sign phase, always TVG_HEADER_SIGNATURE is declared
-    if (memcmp(*ptr, TVG_HEADER_SIGNATURE, TVG_HEADER_SIGNATURE_LENGTH)) return false;
-    *ptr += TVG_HEADER_SIGNATURE_LENGTH;
-
-    //Version number, declared in TVG_HEADER_VERSION
-    if (memcmp(*ptr, TVG_HEADER_VERSION, TVG_HEADER_VERSION_LENGTH)) return false;
-    *ptr += TVG_HEADER_VERSION_LENGTH;
-
-    //View width
-    if (w) READ_FLOAT(w, *ptr);
-    *ptr += SIZE(float);
-
-    //View height
-    if (h) READ_FLOAT(h, *ptr);
-    *ptr += SIZE(float);
-
-    return true;
 }
 
 
@@ -492,22 +465,8 @@ static Paint* _parsePaint(TvgBinBlock baseBlock)
 /* External Class Implementation                                        */
 /************************************************************************/
 
-bool tvgValidateData(const char *ptr, uint32_t size, float* w, float* h)
+unique_ptr<Scene> tvgLoadData(const char *ptr, const char* end)
 {
-    auto end = ptr + size;
-    if (!_readTvgHeader(&ptr, w, h) || ptr >= end) return false;
-    return true;
-}
-
-unique_ptr<Scene> tvgLoadData(const char *ptr, uint32_t size)
-{
-    auto end = ptr + size;
-
-    if (!_readTvgHeader(&ptr, nullptr, nullptr) || ptr >= end) {
-        TVGLOG("TVG", "Invalid TVG Data!");
-        return nullptr;
-    }
-
     auto scene = Scene::gen();
     if (!scene) return nullptr;
 

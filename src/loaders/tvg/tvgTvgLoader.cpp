@@ -34,10 +34,37 @@
 void TvgLoader::clear()
 {
     if (copy) free((char*)data);
-    data = nullptr;
-    pointer = nullptr;
+    ptr = data = nullptr;
     size = 0;
     copy = false;
+}
+
+
+/* WARNING: Header format shall not change! */
+bool TvgLoader::readHeader()
+{
+    if (!ptr) return false;
+
+    //1. Signature
+    if (memcmp(ptr, TVG_HEADER_SIGNATURE, TVG_HEADER_SIGNATURE_LENGTH)) return false;
+    ptr += TVG_HEADER_SIGNATURE_LENGTH;
+
+    //2. Version
+    char version[TVG_HEADER_VERSION_LENGTH];
+    memcpy(version, ptr, TVG_HEADER_VERSION_LENGTH);
+    ptr += TVG_HEADER_VERSION_LENGTH;
+    this->version = atoi(version);
+    if (this->version > THORVG_VERSION_NUMBER()) {
+        TVGLOG("TVG", "This TVG file expects a higher version(%d) of ThorVG symbol!, Current ThorVG(%d)", this->version, THORVG_VERSION_NUMBER());
+    }
+
+    //3. View Size
+    READ_FLOAT(&w, ptr);
+    ptr += SIZE(float);
+    READ_FLOAT(&h, ptr);
+    ptr += SIZE(float);
+
+    return true;
 }
 
 
@@ -80,9 +107,9 @@ bool TvgLoader::open(const string &path)
 
     f.close();
 
-    pointer = data;
+    ptr = data;
 
-    return tvgValidateData(pointer, size, &w, &h);
+    return readHeader();
 }
 
 
@@ -96,11 +123,11 @@ bool TvgLoader::open(const char *data, uint32_t size, bool copy)
         memcpy((char*)this->data, data, size);
     } else this->data = data;
 
-    this->pointer = this->data;
+    this->ptr = this->data;
     this->size = size;
     this->copy = copy;
 
-    return tvgValidateData(pointer, size, &w, &h);
+    return readHeader();
 }
 
 
@@ -129,7 +156,7 @@ bool TvgLoader::resize(Paint* paint, float w, float h)
 
 bool TvgLoader::read()
 {
-    if (!pointer || size == 0) return false;
+    if (!ptr || size == 0) return false;
 
     TaskScheduler::request(this);
 
@@ -148,7 +175,7 @@ bool TvgLoader::close()
 void TvgLoader::run(unsigned tid)
 {
     if (root) root.reset();
-    root = tvgLoadData(pointer, size);
+    root = tvgLoadData(ptr, data + size);
     if (!root) clear();
 }
 

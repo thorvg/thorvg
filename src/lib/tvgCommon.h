@@ -56,4 +56,6 @@ enum class FileType { Tvg = 0, Svg, Raw, Png, Jpg, Unknown };
     #define TVGLOG(...)
 #endif
 
+uint16_t THORVG_VERSION_NUMBER();
+
 #endif //_TVG_COMMON_H_

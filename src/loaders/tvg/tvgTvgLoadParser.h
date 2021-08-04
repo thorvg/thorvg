@@ -26,7 +26,10 @@
 #include "tvgCommon.h"
 #include "tvgBinaryDesc.h"
 
-bool tvgValidateData(const char *ptr, uint32_t size, float* w, float* h);
-unique_ptr<Scene> tvgLoadData(const char *ptr, uint32_t size);
+#define SIZE(A) sizeof(A)
+#define READ_UI32(dst, src) memcpy(dst, (src), sizeof(uint32_t))
+#define READ_FLOAT(dst, src) memcpy(dst, (src), sizeof(float))
+
+unique_ptr<Scene> tvgLoadData(const char* ptr, const char* end);
 
 #endif //_TVG_TVG_LOAD_PARSER_H_
