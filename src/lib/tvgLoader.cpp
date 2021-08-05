@@ -158,9 +158,33 @@ shared_ptr<LoadModule> LoaderMgr::loader(const string& path, bool* invalid)
 }
 
 
-shared_ptr<LoadModule> LoaderMgr::loader(const char* data, uint32_t size, bool copy)
+shared_ptr<LoadModule> LoaderMgr::loader(const char* data, uint32_t size, const string& mimeType, bool copy)
 {
+    FileType filetype = FileType::Unknown;
+    if (!mimeType.empty()) {
+        if (mimeType == "tvg") filetype = FileType::Tvg;
+        else if (mimeType == "svg") filetype = FileType::Svg;
+        else if (mimeType == "svg+xml") filetype = FileType::Svg;
+        else if (mimeType == "raw") filetype = FileType::Raw;
+        else if (mimeType == "png") filetype = FileType::Png;
+        else if (mimeType == "jpg") filetype = FileType::Jpg;
+        else if (mimeType == "jpeg") filetype = FileType::Jpg;
+        else TVGLOG("LOADER", "Provided unknown mimetype \"%s\".", mimeType.c_str());
+
+        if (filetype != FileType::Unknown) {
+            auto loader = _find(static_cast<FileType>(filetype));
+            if (loader) {
+                if (loader->open(data, size, copy)) return shared_ptr<LoadModule>(loader);
+                else {
+                    TVGLOG("LOADER", "Provided mimetype \"%s\" (filetype=%d) seems incorrect. Will try other types.", mimeType.c_str(), static_cast<int>(filetype));
+                    delete(loader);
+                }
+            }
+        }
+    }
+
     for (int i = 0; i < static_cast<int>(FileType::Unknown); i++) {
+        if (static_cast<FileType>(i) == filetype) continue;
         auto loader = _find(static_cast<FileType>(i));
         if (loader) {
             if (loader->open(data, size, copy)) return shared_ptr<LoadModule>(loader);

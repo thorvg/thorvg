@@ -396,7 +396,7 @@ static constexpr struct
 };
 
 
-static bool _isValidImageMimeTypeAndEncoding(const char** href, imageMimeTypeEncoding* encoding) {
+static bool _isValidImageMimeTypeAndEncoding(const char** href, const char** mimetype, imageMimeTypeEncoding* encoding) {
     if (strncmp(*href, "image/", sizeof("image/") - 1)) return false; //not allowed mime type
     *href += sizeof("image/") - 1;
 
@@ -406,6 +406,7 @@ static bool _isValidImageMimeTypeAndEncoding(const char** href, imageMimeTypeEnc
     for (unsigned int i = 0; i < sizeof(imageMimeTypes) / sizeof(imageMimeTypes[0]); i++) {
         if (!strncmp(*href, imageMimeTypes[i].name, imageMimeTypes[i].sz - 1)) {
             *href += imageMimeTypes[i].sz  - 1;
+            *mimetype = imageMimeTypes[i].name;
 
             while (**href && **href != ',') {
                 while (**href && **href != ';') ++(*href);
@@ -448,14 +449,15 @@ static unique_ptr<Picture> _imageBuildHelper(SvgNode* node, float vx, float vy, 
     const char* href = (*node->node.image.href).c_str();
     if (!strncmp(href, "data:", sizeof("data:") - 1)) {
         href += sizeof("data:") - 1;
+        const char* mimetype;
         imageMimeTypeEncoding encoding;
-        if (!_isValidImageMimeTypeAndEncoding(&href, &encoding)) return nullptr; //not allowed mime type or encoding
+        if (!_isValidImageMimeTypeAndEncoding(&href, &mimetype, &encoding)) return nullptr; //not allowed mime type or encoding
         if (encoding == imageMimeTypeEncoding::base64) {
             string decoded = svgUtilBase64Decode(href);
-            if (picture->load(decoded.c_str(), decoded.size(), true) != Result::Success) return nullptr;
+            if (picture->load(decoded.c_str(), decoded.size(), mimetype, true) != Result::Success) return nullptr;
         } else {
             string decoded = svgUtilURLDecode(href);
-            if (picture->load(decoded.c_str(), decoded.size(), true) != Result::Success) return nullptr;
+            if (picture->load(decoded.c_str(), decoded.size(), mimetype, true) != Result::Success) return nullptr;
         }
     } else {
         if (!strncmp(href, "file://", sizeof("file://") - 1)) href += sizeof("file://") - 1;
