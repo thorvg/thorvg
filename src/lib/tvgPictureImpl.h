@@ -147,8 +147,10 @@ struct Picture::Impl
 
     bool bounds(float* x, float* y, float* w, float* h) const
     {
-        if (!paint) return false;
-        return paint->pImpl->bounds(x, y, w, h);
+        if (paint) return paint->pImpl->bounds(x, y, w, h);
+        if (w) *w = this->w;
+        if (h) *h = this->h;
+        return true;
     }
 
     RenderRegion bounds(RenderMethod& renderer)
