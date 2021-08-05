@@ -18,15 +18,21 @@
 #include <string>
 
 #ifdef TVG_BUILD
-    #define TVG_EXPORT __attribute__ ((visibility ("default")))
+    #ifdef _MSC_VER
+        #define TVG_EXPORT __declspec(dllexport)
+        #define TVG_DEPRECATED __declspec(deprecated)
+    #else
+        #define TVG_EXPORT __attribute__ ((visibility ("default")))
+        #define TVG_DEPRECATED __attribute__ ((__deprecated__))
+    #endif
 #else
     #define TVG_EXPORT
+    #define TVG_DEPRECATED
 #endif
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
 
 #define _TVG_DECLARE_PRIVATE(A) \
 protected: \
@@ -1013,11 +1019,10 @@ public:
      * @retval Result::Unknown If an error occurs at a later stage.
      *
      * @warning: you have responsibility to release the @p data memory if the @p copy is true
-     *
-     * @deprecated This method will go away next release.
-     * @see load(data, size, mimeType, copy)
+     * @deprecated Use load(const char* data, uint32_t size, const std::string& mimeType, bool copy) instead.
+     * @see Result load(const char* data, uint32_t size, const std::string& mimeType, bool copy = false) noexcept
      */
-    Result load(const char* data, uint32_t size, bool copy = false) noexcept;
+    TVG_DEPRECATED Result load(const char* data, uint32_t size, bool copy = false) noexcept;
 
     /**
      * @brief Loads a picture data from a memory block of a given size.
@@ -1033,6 +1038,8 @@ public:
      * @retval Result::Unknown If an error occurs at a later stage.
      *
      * @warning: you have responsibility to release the @p data memory if the @p copy is true
+     *
+     * @BETA_API
      */
     Result load(const char* data, uint32_t size, const std::string& mimeType, bool copy = false) noexcept;
 
