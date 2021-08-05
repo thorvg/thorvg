@@ -113,7 +113,7 @@ static LoadModule* _find(FileType type)
 }
 
 
-static LoadModule* _find(const string& path)
+static LoadModule* _findByPath(const string& path)
 {
     auto ext = path.substr(path.find_last_of(".") + 1);
     if (!ext.compare("tvg")) return _find(FileType::Tvg);
@@ -121,6 +121,26 @@ static LoadModule* _find(const string& path)
     if (!ext.compare("png")) return _find(FileType::Png);
     if (!ext.compare("jpg")) return _find(FileType::Jpg);
     return nullptr;
+}
+
+
+static LoadModule* _findByType(const string& mimeType)
+{
+    if (mimeType.empty()) return nullptr;
+
+    auto type = FileType::Unknown;
+
+    if (mimeType == "tvg") type = FileType::Tvg;
+    else if (mimeType == "svg" || mimeType == "svg+xml") type = FileType::Svg;
+    else if (mimeType == "raw") type = FileType::Raw;
+    else if (mimeType == "png") type = FileType::Png;
+    else if (mimeType == "jpg" || mimeType == "jpeg") type = FileType::Jpg;
+    else {
+        TVGLOG("LOADER", "Given mimetype is unknown = \"%s\".", mimeType.c_str());
+        return nullptr;
+    }
+
+    return _find(type);
 }
 
 
@@ -149,7 +169,7 @@ shared_ptr<LoadModule> LoaderMgr::loader(const string& path, bool* invalid)
 {
     *invalid = false;
 
-    if (auto loader = _find(path)) {
+    if (auto loader = _findByPath(path)) {
         if (loader->open(path)) return shared_ptr<LoadModule>(loader);
         else delete(loader);
         *invalid = true;
@@ -160,31 +180,18 @@ shared_ptr<LoadModule> LoaderMgr::loader(const string& path, bool* invalid)
 
 shared_ptr<LoadModule> LoaderMgr::loader(const char* data, uint32_t size, const string& mimeType, bool copy)
 {
-    FileType filetype = FileType::Unknown;
-    if (!mimeType.empty()) {
-        if (mimeType == "tvg") filetype = FileType::Tvg;
-        else if (mimeType == "svg") filetype = FileType::Svg;
-        else if (mimeType == "svg+xml") filetype = FileType::Svg;
-        else if (mimeType == "raw") filetype = FileType::Raw;
-        else if (mimeType == "png") filetype = FileType::Png;
-        else if (mimeType == "jpg") filetype = FileType::Jpg;
-        else if (mimeType == "jpeg") filetype = FileType::Jpg;
-        else TVGLOG("LOADER", "Provided unknown mimetype \"%s\".", mimeType.c_str());
-
-        if (filetype != FileType::Unknown) {
-            auto loader = _find(static_cast<FileType>(filetype));
-            if (loader) {
-                if (loader->open(data, size, copy)) return shared_ptr<LoadModule>(loader);
-                else {
-                    TVGLOG("LOADER", "Provided mimetype \"%s\" (filetype=%d) seems incorrect. Will try other types.", mimeType.c_str(), static_cast<int>(filetype));
-                    delete(loader);
-                }
-            }
+    //Try first with the given MimeType
+    if (auto loader = _findByType(mimeType)) {
+        if (loader->open(data, size, copy)) {
+            return shared_ptr<LoadModule>(loader);
+        } else {
+            TVGLOG("LOADER", "Given mimetype \"%s\" seems incorrect or not supported. Will try again with other types.", mimeType.c_str());
+            delete(loader);
         }
     }
 
+    //Abnormal MimeType. Try with the candidates in the order
     for (int i = 0; i < static_cast<int>(FileType::Unknown); i++) {
-        if (static_cast<FileType>(i) == filetype) continue;
         auto loader = _find(static_cast<FileType>(i));
         if (loader) {
             if (loader->open(data, size, copy)) return shared_ptr<LoadModule>(loader);
