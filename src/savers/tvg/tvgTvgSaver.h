@@ -35,6 +35,7 @@ private:
     Array<TvgBinByte> buffer;
     Paint* paint = nullptr;
     char *path = nullptr;
+    float vsize[2] = {0.0f, 0.0f};
 
     bool flushTo(const std::string& path);
     void reserveCount();

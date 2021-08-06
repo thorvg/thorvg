@@ -69,10 +69,7 @@ bool TvgSaver::writeHeader()
     buffer.count += (TVG_HEADER_SIGNATURE_LENGTH + TVG_HEADER_VERSION_LENGTH);
 
     //3. View Size
-    float var[2];
-    paint->bounds(nullptr, nullptr, &var[0], &var[1]);
-    if (var[0] <= FLT_EPSILON || var[1] <= FLT_EPSILON) return false;
-    writeData(var, SIZE(var));
+    writeData(vsize, SIZE(vsize));
 
     return true;
 }
@@ -448,6 +445,12 @@ bool TvgSaver::save(Paint* paint, const string& path)
 
     this->path = strdup(path.c_str());
     if (!this->path) return false;
+
+    paint->bounds(nullptr, nullptr, &vsize[0], &vsize[1]);
+    if (vsize[0] <= FLT_EPSILON || vsize[1] <= FLT_EPSILON) {
+        TVGLOG("TVG_SAVER", "Saving paint(%p) has zero view size.", paint);
+        return false;
+    }
 
     this->paint = paint;
 
