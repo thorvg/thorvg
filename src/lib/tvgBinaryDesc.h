@@ -40,7 +40,7 @@ using TvgBinFlag = TvgBinByte;
 #define TVG_HEADER_SIGNATURE_LENGTH 6
 #define TVG_HEADER_VERSION "000400"       //Major 00, Minor 04, Micro 00
 #define TVG_HEADER_VERSION_LENGTH 6
-
+#define TVG_HEADER_RESERVED_LENGTH 4      //Storing flags for extensions
 
 //Paint Type
 #define TVG_TAG_CLASS_PICTURE                       (TvgBinTag)0xfc

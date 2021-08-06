@@ -55,7 +55,8 @@ bool TvgSaver::flushTo(const std::string& path)
 /* WARNING: Header format shall not changed! */
 bool TvgSaver::writeHeader()
 {
-    buffer.grow(TVG_HEADER_SIGNATURE_LENGTH + TVG_HEADER_VERSION_LENGTH);
+    auto headerSize = TVG_HEADER_SIGNATURE_LENGTH + TVG_HEADER_VERSION_LENGTH + TVG_HEADER_RESERVED_LENGTH + SIZE(vsize);
+    buffer.grow(headerSize);
 
     //1. Signature
     auto ptr = buffer.ptr();
@@ -66,7 +67,7 @@ bool TvgSaver::writeHeader()
     memcpy(ptr, TVG_HEADER_VERSION, TVG_HEADER_VERSION_LENGTH);
     ptr += TVG_HEADER_VERSION_LENGTH;
 
-    buffer.count += (TVG_HEADER_SIGNATURE_LENGTH + TVG_HEADER_VERSION_LENGTH);
+    buffer.count += (TVG_HEADER_SIGNATURE_LENGTH + TVG_HEADER_VERSION_LENGTH + TVG_HEADER_RESERVED_LENGTH);
 
     //3. View Size
     writeData(vsize, SIZE(vsize));

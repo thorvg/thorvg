@@ -59,10 +59,13 @@ bool TvgLoader::readHeader()
     ptr += TVG_HEADER_VERSION_LENGTH;
     this->version = atoi(version);
     if (this->version > THORVG_VERSION_NUMBER()) {
-        TVGLOG("TVG", "This TVG file expects a higher version(%d) of ThorVG symbol!, Current ThorVG(%d)", this->version, THORVG_VERSION_NUMBER());
+        TVGLOG("TVG", "This TVG file expects a higher version(%d) of ThorVG symbol(%d)", this->version, THORVG_VERSION_NUMBER());
     }
 
-    //3. View Size
+    //3. Reserved
+    ptr += TVG_HEADER_RESERVED_LENGTH;
+
+    //4. View Size
     READ_FLOAT(&w, ptr);
     ptr += SIZE(float);
     READ_FLOAT(&h, ptr);
