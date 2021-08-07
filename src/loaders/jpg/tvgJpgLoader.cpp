@@ -77,7 +77,10 @@ bool JpgLoader::open(const string& path)
     if (fread(data, size, 1, jpegFile) < 1) goto failure;
 
     int width, height, subSample, colorSpace;
-    if (tjDecompressHeader3(jpegDecompressor, data, size, &width, &height, &subSample, &colorSpace) < 0) goto failure;
+    if (tjDecompressHeader3(jpegDecompressor, data, size, &width, &height, &subSample, &colorSpace) < 0) {
+        TVGERR("JPG LOADER", "%s", tjGetErrorStr());
+        goto failure;
+    }
 
     w = static_cast<float>(width);
     h = static_cast<float>(height);
@@ -127,6 +130,7 @@ bool JpgLoader::read()
 
     //decompress jpg image
     if (tjDecompress2(jpegDecompressor, data, size, image, static_cast<int>(w), 0, static_cast<int>(h), TJPF_BGRX, 0) < 0) {
+        TVGERR("JPG LOADER", "%s", tjGetErrorStr());
         tjFree(image);
         image = nullptr;
         return false;
