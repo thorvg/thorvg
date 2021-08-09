@@ -62,7 +62,6 @@ static bool _buildVersionInfo()
 
     char micro[3];
     x = SRC + strlen(THORVG_VERSION_STRING);
-    if (!x) return false;
     strncpy(micro, p, x - p);
     micro[x - p] = '\0';
 
