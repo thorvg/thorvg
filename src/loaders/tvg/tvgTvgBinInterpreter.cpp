@@ -476,5 +476,5 @@ unique_ptr<Scene> TvgBinInterpreter::run(const char *ptr, const char* end)
         ptr = block.end;
     }
 
-    return move(scene);
+    return scene;
 }

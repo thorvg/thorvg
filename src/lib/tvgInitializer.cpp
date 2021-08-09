@@ -49,20 +49,20 @@ static bool _buildVersionInfo()
     char major[3];
     x = strchr(p, '.');
     if (!x) return false;
-    strncpy(major, p, x - p);
+    memcpy(major, p, x - p);
     major[x - p] = '\0';
     p = x + 1;
 
     char minor[3];
     x = strchr(p, '.');
     if (!x) return false;
-    strncpy(minor, p, x - p);
+    memcpy(minor, p, x - p);
     minor[x - p] = '\0';
     p = x + 1;
 
     char micro[3];
     x = SRC + strlen(THORVG_VERSION_STRING);
-    strncpy(micro, p, x - p);
+    memcpy(micro, p, x - p);
     micro[x - p] = '\0';
 
     char sum[7];
