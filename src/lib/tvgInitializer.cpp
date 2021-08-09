@@ -50,18 +50,21 @@ static bool _buildVersionInfo()
     x = strchr(p, '.');
     if (!x) return false;
     strncpy(major, p, x - p);
+    major[x - p] = '\0';
     p = x + 1;
 
     char minor[3];
     x = strchr(p, '.');
     if (!x) return false;
     strncpy(minor, p, x - p);
+    minor[x - p] = '\0';
     p = x + 1;
 
     char micro[3];
     x = SRC + strlen(THORVG_VERSION_STRING);
     if (!x) return false;
     strncpy(micro, p, x - p);
+    micro[x - p] = '\0';
 
     char sum[7];
     snprintf(sum, sizeof(sum), "%s%s%s", major, minor, micro);
