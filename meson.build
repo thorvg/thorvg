@@ -24,7 +24,7 @@ if get_option('loaders').contains('svg') == true
     config_h.set10('THORVG_SVG_LOADER_SUPPORT', true)
 endif
 
-if get_option('loaders').contains('tvg') == true
+if get_option('loaders').contains('tvg_beta') == true
     config_h.set10('THORVG_TVG_LOADER_SUPPORT', true)
 endif
 
@@ -36,7 +36,7 @@ if get_option('loaders').contains('jpg') == true
     config_h.set10('THORVG_JPG_LOADER_SUPPORT', true)
 endif
 
-if get_option('savers').contains('tvg') == true
+if get_option('savers').contains('tvg_beta') == true
     config_h.set10('THORVG_TVG_SAVER_SUPPORT', true)
 endif
 
@@ -100,11 +100,11 @@ Summary:
         get_option('engines').contains('gl'),
         get_option('vectors').contains('avx'),
         get_option('vectors').contains('neon'),
-        get_option('loaders').contains('tvg'),
+        get_option('loaders').contains('tvg_beta'),
         get_option('loaders').contains('svg'),
         get_option('loaders').contains('png'),
         get_option('loaders').contains('jpg'),
-        get_option('savers').contains('tvg'),
+        get_option('savers').contains('tvg_beta'),
         get_option('bindings').contains('capi'),
         get_option('log'),
         get_option('tests'),
