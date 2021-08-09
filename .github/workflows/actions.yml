@@ -23,7 +23,7 @@ jobs:
 
     - name: Build
       run: |
-        meson . build -Dlog=true -Dloaders="svg, tvg, png, jpg" -Dsavers="tvg"
+        meson . build -Dlog=true -Dloaders="svg, tvg_beta, png, jpg" -Dsavers="tvg_beta"
         cd build
         sudo ninja -C . install
 
@@ -46,7 +46,7 @@ jobs:
 
     - name: Build
       run: |
-        meson . build -Dexamples=true -Dloaders="svg, tvg, png, jpg" -Dsavers="tvg"
+        meson . build -Dexamples=true -Dloaders="svg, tvg_beta, png, jpg" -Dsavers="tvg_beta"
         cd build
         sudo ninja -C . install
 
@@ -67,7 +67,7 @@ jobs:
 
     - name: Install-ThorVG
       run: |
-        meson . build -Dloaders="svg, tvg, png, jpg" -Dsavers="tvg" -Dbindings="capi"
+        meson . build -Dloaders="svg, tvg_beta, png, jpg" -Dsavers="tvg_beta" -Dbindings="capi"
         cd build
         sudo ninja -C . install
         cd ..
@@ -75,7 +75,7 @@ jobs:
 
     - name: Build
       run: |
-        meson . build -Dtests=true -Dloaders="svg, tvg, png, jpg" -Dsavers="tvg" -Dbindings="capi" --errorlogs
+        meson . build -Dtests=true -Dloaders="svg, tvg_beta, png, jpg" -Dsavers="tvg_beta" -Dbindings="capi" --errorlogs
         cd build
         sudo ninja -C . install test
 
