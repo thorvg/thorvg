@@ -1696,6 +1696,14 @@ TVG_EXPORT Tvg_Result tvg_picture_load_data(Tvg_Paint* paint, const char *data, 
 TVG_EXPORT Tvg_Result tvg_picture_get_size(const Tvg_Paint* paint, float* w, float* h);
 
 
+/*!
+* \brief Gets the position and the size of the loaded picture. (BETA version)
+*
+* \warning Please do not use it, this API is not official one. It can be modified in the next version.
+*/
+TVG_EXPORT Tvg_Result tvg_picture_get_viewbox(const Tvg_Paint* paint, float* x, float* y, float* w, float* h);
+
+
 /** \} */   // end defgroup ThorVGCapi_Picture
 
 

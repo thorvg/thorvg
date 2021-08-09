@@ -35,14 +35,7 @@ public:
     SvgLoaderData loaderData;
     unique_ptr<Scene> root;
 
-    //default view box, if any.
-    float vx = 0;
-    float vy = 0;
-    float vw = 0;
-    float vh = 0;
-
     bool copy = false;
-    bool preserveAspect = true;      //aspect ratio option
 
     SvgLoader();
     ~SvgLoader();
