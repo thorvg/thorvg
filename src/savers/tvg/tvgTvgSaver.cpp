@@ -412,7 +412,7 @@ TvgBinCounter TvgSaver::serializeComposite(const Paint* cmpTarget, CompositeMeth
     auto flag = static_cast<TvgBinFlag>(cmpMethod);
     auto cnt = writeTagProperty(TVG_TAG_PAINT_CMP_METHOD, SIZE(TvgBinFlag), &flag);
 
-    cnt += serialize(cmpTarget, nullptr);
+    cnt += serialize(cmpTarget, nullptr, true);
 
     writeReservedCount(cnt);
 
@@ -436,9 +436,12 @@ TvgBinCounter TvgSaver::serializeChildren(const Paint* paint, const Matrix* tran
 }
 
 
-TvgBinCounter TvgSaver::serialize(const Paint* paint, const Matrix* transform)
+TvgBinCounter TvgSaver::serialize(const Paint* paint, const Matrix* transform, bool compTarget)
 {
     if (!paint) return 0;
+
+    //Invisible paint, no point to save it if the paint is not the composition target...
+    if (!compTarget && paint->opacity() == 0) return 0;
 
     auto m = const_cast<Paint*>(paint)->transform();
     if (transform) m = _multiply(transform, &m);
