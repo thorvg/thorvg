@@ -6,13 +6,13 @@ option('engines',
 
 option('loaders',
    type: 'array',
-   choices: ['', 'svg', 'tvg', 'png', 'jpg'],
+   choices: ['', 'svg', 'png', 'jpg', 'tvg_beta'],
    value: ['svg'],
    description: 'Enable File Loaders in thorvg')
 
 option('savers',
    type: 'array',
-   choices: ['', 'tvg'],
+   choices: ['', 'tvg_beta'],
    value: [''],
    description: 'Enable File Savers in thorvg')
 
