@@ -24,6 +24,12 @@
 
 #include <arm_neon.h>
 
+static inline uint8x8_t ALPHA_BLEND_NEON(uint8x8_t c, uint8x8_t a)
+{
+	uint16x8_t t = vmull_u8(c, a);
+	return vshrn_n_u16(t, 8);
+}
+
 
 static inline void neonRasterRGBA32(uint32_t *dst, uint32_t val, uint32_t offset, int32_t len)
 {
