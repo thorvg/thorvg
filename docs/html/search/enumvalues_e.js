@@ -1,29 +1,4 @@
 var searchData=
 [
-  ['tvg_5fcomposite_5fmethod_5falpha_5fmask',['TVG_COMPOSITE_METHOD_ALPHA_MASK',['../group__ThorVGCapi__Paint.html#gga1ec9193ca6959f9d91a80cc61cd0df3aae536c237d654d73f306f2d346fc3c86a',1,'thorvg_capi.h']]],
-  ['tvg_5fcomposite_5fmethod_5fclip_5fpath',['TVG_COMPOSITE_METHOD_CLIP_PATH',['../group__ThorVGCapi__Paint.html#gga1ec9193ca6959f9d91a80cc61cd0df3aa517f996a4e50e88727607b959ce52852',1,'thorvg_capi.h']]],
-  ['tvg_5fcomposite_5fmethod_5finverse_5falpha_5fmask',['TVG_COMPOSITE_METHOD_INVERSE_ALPHA_MASK',['../group__ThorVGCapi__Paint.html#gga1ec9193ca6959f9d91a80cc61cd0df3aaf5b9626da41b4a50070f97139062c759',1,'thorvg_capi.h']]],
-  ['tvg_5fcomposite_5fmethod_5fnone',['TVG_COMPOSITE_METHOD_NONE',['../group__ThorVGCapi__Paint.html#gga1ec9193ca6959f9d91a80cc61cd0df3aa9122090fc6c074e22fa0964effa1b375',1,'thorvg_capi.h']]],
-  ['tvg_5ffill_5frule_5feven_5fodd',['TVG_FILL_RULE_EVEN_ODD',['../group__ThorVGCapi__Shape.html#ggaffafa3cd9dc4bc90a7ef3c763add2695abed5f43e043f8f277310ac6765cd4d88',1,'thorvg_capi.h']]],
-  ['tvg_5ffill_5frule_5fwinding',['TVG_FILL_RULE_WINDING',['../group__ThorVGCapi__Shape.html#ggaffafa3cd9dc4bc90a7ef3c763add2695ad241fa1df1af5a66c711414462ff1190',1,'thorvg_capi.h']]],
-  ['tvg_5fpath_5fcommand_5fclose',['TVG_PATH_COMMAND_CLOSE',['../group__ThorVGCapi__Shape.html#gga08e05d64247332603a624cea6597be77a6d66fea8e74674015ebb98d53f3f1fb1',1,'thorvg_capi.h']]],
-  ['tvg_5fpath_5fcommand_5fcubic_5fto',['TVG_PATH_COMMAND_CUBIC_TO',['../group__ThorVGCapi__Shape.html#gga08e05d64247332603a624cea6597be77a411110736873e7f995446761ab927a26',1,'thorvg_capi.h']]],
-  ['tvg_5fpath_5fcommand_5fline_5fto',['TVG_PATH_COMMAND_LINE_TO',['../group__ThorVGCapi__Shape.html#gga08e05d64247332603a624cea6597be77ae77bc11698c492057df630321cab5536',1,'thorvg_capi.h']]],
-  ['tvg_5fpath_5fcommand_5fmove_5fto',['TVG_PATH_COMMAND_MOVE_TO',['../group__ThorVGCapi__Shape.html#gga08e05d64247332603a624cea6597be77a8fcafa6e4f0b512e2a09a711c74aa821',1,'thorvg_capi.h']]],
-  ['tvg_5fresult_5ffailed_5fallocation',['TVG_RESULT_FAILED_ALLOCATION',['../group__ThorVG__CAPI.html#ggad980f552658dcbbe42a0168f35c27781a30ea1fee167bdc1fc70005fb6d2d1b59',1,'thorvg_capi.h']]],
-  ['tvg_5fresult_5finsufficient_5fcondition',['TVG_RESULT_INSUFFICIENT_CONDITION',['../group__ThorVG__CAPI.html#ggad980f552658dcbbe42a0168f35c27781a6ac2425d9e8afeff9d6d847cb6fc44b3',1,'thorvg_capi.h']]],
-  ['tvg_5fresult_5finvalid_5fargument',['TVG_RESULT_INVALID_ARGUMENT',['../group__ThorVG__CAPI.html#ggad980f552658dcbbe42a0168f35c27781a1cf3b50869745c98ef4f59079aed3a6e',1,'thorvg_capi.h']]],
-  ['tvg_5fresult_5fmemory_5fcorruption',['TVG_RESULT_MEMORY_CORRUPTION',['../group__ThorVG__CAPI.html#ggad980f552658dcbbe42a0168f35c27781a7e0e245d6bf67c84e0b74838e765d98b',1,'thorvg_capi.h']]],
-  ['tvg_5fresult_5fnot_5fsupported',['TVG_RESULT_NOT_SUPPORTED',['../group__ThorVG__CAPI.html#ggad980f552658dcbbe42a0168f35c27781a24cd3c83f47655b8987281f4cbc1dd24',1,'thorvg_capi.h']]],
-  ['tvg_5fresult_5fsuccess',['TVG_RESULT_SUCCESS',['../group__ThorVG__CAPI.html#ggad980f552658dcbbe42a0168f35c27781ab3840b5bbade03c076caa5a32fe5ee47',1,'thorvg_capi.h']]],
-  ['tvg_5fresult_5funknown',['TVG_RESULT_UNKNOWN',['../group__ThorVG__CAPI.html#ggad980f552658dcbbe42a0168f35c27781a1820972547d1ef01782d7e8f60266109',1,'thorvg_capi.h']]],
-  ['tvg_5fstroke_5fcap_5fbutt',['TVG_STROKE_CAP_BUTT',['../group__ThorVGCapi__Shape.html#gga3bcc39b01d899a7e82a6c939740208d3aefc7710297416d48b660aeeebdd9c796',1,'thorvg_capi.h']]],
-  ['tvg_5fstroke_5fcap_5fround',['TVG_STROKE_CAP_ROUND',['../group__ThorVGCapi__Shape.html#gga3bcc39b01d899a7e82a6c939740208d3a23c1fc3f65e3389a5d5dc404f9353d08',1,'thorvg_capi.h']]],
-  ['tvg_5fstroke_5fcap_5fsquare',['TVG_STROKE_CAP_SQUARE',['../group__ThorVGCapi__Shape.html#gga3bcc39b01d899a7e82a6c939740208d3adcc12b6372824aacc98ce242452680f4',1,'thorvg_capi.h']]],
-  ['tvg_5fstroke_5ffill_5fpad',['TVG_STROKE_FILL_PAD',['../group__ThorVGCapi__Shape.html#gga9ac44e712782a9b2a5a36a49b2ae52c7aa9c76cb4d947723ba270108f401f13ce',1,'thorvg_capi.h']]],
-  ['tvg_5fstroke_5ffill_5freflect',['TVG_STROKE_FILL_REFLECT',['../group__ThorVGCapi__Shape.html#gga9ac44e712782a9b2a5a36a49b2ae52c7a1cd7fd72e3ba1df2ccfbc683d81d1038',1,'thorvg_capi.h']]],
-  ['tvg_5fstroke_5ffill_5frepeat',['TVG_STROKE_FILL_REPEAT',['../group__ThorVGCapi__Shape.html#gga9ac44e712782a9b2a5a36a49b2ae52c7ab6191afa65b90f78dcd2261d058e8ed2',1,'thorvg_capi.h']]],
-  ['tvg_5fstroke_5fjoin_5fbevel',['TVG_STROKE_JOIN_BEVEL',['../group__ThorVGCapi__Shape.html#ggaf2cbac2c9164a782b96a8cd94f32e1eda05cffd5ebeeb548afaee19ae77257168',1,'thorvg_capi.h']]],
-  ['tvg_5fstroke_5fjoin_5fmiter',['TVG_STROKE_JOIN_MITER',['../group__ThorVGCapi__Shape.html#ggaf2cbac2c9164a782b96a8cd94f32e1eda2b2f5ccaa98b8f535c86c52aae82da4d',1,'thorvg_capi.h']]],
-  ['tvg_5fstroke_5fjoin_5fround',['TVG_STROKE_JOIN_ROUND',['../group__ThorVGCapi__Shape.html#ggaf2cbac2c9164a782b96a8cd94f32e1eda6568aef8eba70b2dac2e901b6a7198ee',1,'thorvg_capi.h']]]
+  ['unknown',['Unknown',['../group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a88183b946cc5f0e8c96b2e66e1c74a7e',1,'tvg']]]
 ];

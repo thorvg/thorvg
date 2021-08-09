@@ -1,5 +1,6 @@
 var searchData=
 [
+  ['save',['save',['../classtvg_1_1Saver.html#a4bb29e6a836958b4e26fd5f8189c63cf',1,'tvg::Saver']]],
   ['scale',['scale',['../classtvg_1_1Paint.html#a5c057876185525c5723215f95a3984f2',1,'tvg::Paint']]],
   ['size',['size',['../classtvg_1_1Picture.html#a065e47b46c791ee4d93ed3252d581a40',1,'tvg::Picture::size(float w, float h) noexcept'],['../classtvg_1_1Picture.html#af80639ef3460a5cf06278fdc03c13aad',1,'tvg::Picture::size(float *w, float *h) const noexcept']]],
   ['spread',['spread',['../classtvg_1_1Fill.html#aed49d00ca09e69fdf97aaae235f8e950',1,'tvg::Fill::spread(FillSpread s) noexcept'],['../classtvg_1_1Fill.html#a55f6de063e5ac8023243c9cef5cb9a12',1,'tvg::Fill::spread() const noexcept']]],
@@ -10,5 +11,5 @@ var searchData=
   ['strokefill',['strokeFill',['../classtvg_1_1Shape.html#a08ce41b2d01d2d43980e5c26f4df111e',1,'tvg::Shape']]],
   ['strokejoin',['strokeJoin',['../classtvg_1_1Shape.html#aac0235df4172e9c079689e5291c7ad5a',1,'tvg::Shape']]],
   ['strokewidth',['strokeWidth',['../classtvg_1_1Shape.html#a1536ec32e91c29dd8300b0d4354773f9',1,'tvg::Shape']]],
-  ['sync',['sync',['../classtvg_1_1Canvas.html#adbca600af79f9a0b8e8366e3be7450e9',1,'tvg::Canvas']]]
+  ['sync',['sync',['../classtvg_1_1Canvas.html#adbca600af79f9a0b8e8366e3be7450e9',1,'tvg::Canvas::sync()'],['../classtvg_1_1Saver.html#a2fdf9b2208358ea10f912b1877733778',1,'tvg::Saver::sync()']]]
 ];

@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['r',['r',['../structtvg_1_1Fill_1_1ColorStop.html#a4c5c6ceb8ed33456261fa907136e0c3a',1,'tvg::Fill::ColorStop::r()'],['../structTvg__Color__Stop.html#a4c5c6ceb8ed33456261fa907136e0c3a',1,'Tvg_Color_Stop::r()']]],
+  ['r',['r',['../structtvg_1_1Fill_1_1ColorStop.html#a4c5c6ceb8ed33456261fa907136e0c3a',1,'tvg::Fill::ColorStop']]],
   ['radial',['radial',['../classtvg_1_1RadialGradient.html#a3688387d86ebd5003ee98d90f24a6030',1,'tvg::RadialGradient::radial(float cx, float cy, float radius) noexcept'],['../classtvg_1_1RadialGradient.html#a706e9ec51bf12483b1d59f99c6fe045e',1,'tvg::RadialGradient::radial(float *cx, float *cy, float *radius) const noexcept']]],
   ['radialgradient',['RadialGradient',['../classtvg_1_1RadialGradient.html',1,'tvg']]],
   ['reflect',['Reflect',['../group__ThorVG.html#gga0cfa2c92260cca776292cc9e8964f2daa74de3e45e4491e956e8dc18d841d9b00',1,'tvg']]],

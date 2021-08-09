@@ -5,6 +5,5 @@ var searchData=
   ['initializer',['Initializer',['../classtvg_1_1Initializer.html',1,'tvg']]],
   ['insufficientcondition',['InsufficientCondition',['../group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a119732ff568bf103d744e930ae2404f1',1,'tvg']]],
   ['invalidarguments',['InvalidArguments',['../group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066ae73a2e92f1c87086c838b442552a4775',1,'tvg']]],
-  ['invalphamask',['InvAlphaMask',['../group__ThorVG.html#ggaabdf94ada64e69d06deabc5aa6576f87a59cc48dcf714e3a3c2492f4dce1fe134',1,'tvg']]],
-  ['initializer',['Initializer',['../group__ThorVGCapi__Initializer.html',1,'']]]
+  ['invalphamask',['InvAlphaMask',['../group__ThorVG.html#ggaabdf94ada64e69d06deabc5aa6576f87a59cc48dcf714e3a3c2492f4dce1fe134',1,'tvg']]]
 ];

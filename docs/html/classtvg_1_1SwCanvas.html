@@ -172,6 +172,7 @@ Static Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Enumeration specifying the methods of Memory Pool behavior policy. </p>
+<dl class="section since"><dt>Since</dt><dd>0.4 </dd></dl>
 <table class="fieldtable">
 <tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a9b9770837f0171b15f0cd86f94e8e22ba79935518a3889663d8688b6b01fff051"></a>Default&#160;</td><td class="fielddoc"><p>Default behavior that ThorVG is designed to. </p>
 </td></tr>
@@ -238,23 +239,24 @@ Static Public Member Functions</h2></td></tr>
 
 <p>Set sw engine memory pool behavior policy. </p>
 <p>Basically ThorVG draws a lot of shapes, it allocates/deallocates a few chunk of memory while processing rendering. It internally uses one shared memory pool which can be reused among the canvases in order to avoid memory overhead.</p>
-<p>Thus ThorVG suggests memory pool policy to satisfy user demands, if it needs to guarantee the thread-safety of the internal data access.</p>
+<p>Thus ThorVG suggests using a memory pool policy to satisfy user demands, if it needs to guarantee the thread-safety of the internal data access.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">policy</td><td>Use the shared cache memory. The default value is <code>true</code> </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">policy</td><td>The method specifying the Memory Pool behavior. The default value is <code>MempoolPolicy::Default</code>.</td></tr>
   </table>
   </dd>
 </dl>
 <dl class="retval"><dt>Return values</dt><dd>
   <table class="retval">
     <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a505a83f220c02df2f85c3810cd9ceb38" title="The value returned in case of a correct request execution. ">Result::Success</a></td><td>When succeed. </td></tr>
-    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a119732ff568bf103d744e930ae2404f1" title="The value returned in case the request cannot be processed - e.g. asking for properties of an object...">Result::InsufficientCondition</a></td><td>If the canvas has any paints. </td></tr>
+    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a119732ff568bf103d744e930ae2404f1" title="The value returned in case the request cannot be processed - e.g. asking for properties of an object...">Result::InsufficientCondition</a></td><td>If the canvas has no paints. </td></tr>
     <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066aa0cfd518e4385f31d38720579321ed29" title="The value returned in case of choosing unsupported options. ">Result::NonSupport</a></td><td>In case the software engine is not supported.</td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section note"><dt>Note</dt><dd>When <code>policy</code> is set as <code>MempoolPolicy::Individual</code>, current instance of canvas uses its own individual memory data that is not shared with others. This is necessary when the canvas is accessed on a worker-thread.</dd></dl>
+<dl class="section note"><dt>Note</dt><dd>When <code>policy</code> is set as <code>MempoolPolicy::Individual</code>, the current instance of canvas uses its own individual memory data, which is not shared with others. This is necessary when the canvas is accessed on a worker-thread.</dd></dl>
 <dl class="section warning"><dt>Warning</dt><dd>It's not allowed after pushing any paints.</dd></dl>
+<dl class="section since"><dt>Since</dt><dd>0.4 </dd></dl>
 
 </div>
 </div>

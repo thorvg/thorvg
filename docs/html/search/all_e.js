@@ -1,5 +1,7 @@
 var searchData=
 [
+  ['save',['save',['../classtvg_1_1Saver.html#a4bb29e6a836958b4e26fd5f8189c63cf',1,'tvg::Saver']]],
+  ['saver',['Saver',['../classtvg_1_1Saver.html',1,'tvg']]],
   ['scale',['scale',['../classtvg_1_1Paint.html#a5c057876185525c5723215f95a3984f2',1,'tvg::Paint']]],
   ['scene',['Scene',['../classtvg_1_1Scene.html',1,'tvg']]],
   ['shape',['Shape',['../classtvg_1_1Shape.html',1,'tvg']]],
@@ -17,8 +19,5 @@ var searchData=
   ['success',['Success',['../group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a505a83f220c02df2f85c3810cd9ceb38',1,'tvg']]],
   ['sw',['Sw',['../group__ThorVG.html#gga3dfc0651e85484b1011772dd9f8300dfa1f030517f6d25e8607a2a9a7f6227ebc',1,'tvg']]],
   ['swcanvas',['SwCanvas',['../classtvg_1_1SwCanvas.html',1,'tvg']]],
-  ['sync',['sync',['../classtvg_1_1Canvas.html#adbca600af79f9a0b8e8366e3be7450e9',1,'tvg::Canvas']]],
-  ['scene',['Scene',['../group__ThorVGCapi__Scene.html',1,'']]],
-  ['shape',['Shape',['../group__ThorVGCapi__Shape.html',1,'']]],
-  ['swcanvas',['SwCanvas',['../group__ThorVGCapi__SwCanvas.html',1,'']]]
+  ['sync',['sync',['../classtvg_1_1Canvas.html#adbca600af79f9a0b8e8366e3be7450e9',1,'tvg::Canvas::sync()'],['../classtvg_1_1Saver.html#a2fdf9b2208358ea10f912b1877733778',1,'tvg::Saver::sync()']]]
 ];
