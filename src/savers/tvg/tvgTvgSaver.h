@@ -49,7 +49,7 @@ private:
     TvgBinCounter writeTagProperty(TvgBinTag tag, TvgBinCounter cnt, const void* data);
     TvgBinCounter writeTransform(const Matrix* transform);
 
-    TvgBinCounter serialize(const Paint* paint, const Matrix* transform);
+    TvgBinCounter serialize(const Paint* paint, const Matrix* transform, bool compTarget = false);
     TvgBinCounter serializeScene(const Scene* scene, const Matrix* transform);
     TvgBinCounter serializeShape(const Shape* shape, const Matrix* transform);
     TvgBinCounter serializePicture(const Picture* picture, const Matrix* transform);
