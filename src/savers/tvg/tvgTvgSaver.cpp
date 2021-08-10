@@ -473,12 +473,96 @@ TvgBinCounter TvgSaver::serializeComposite(const Paint* cmpTarget, CompositeMeth
 }
 
 
+/* if the properties are identical, we can merge the shapes. */
+static bool _merge(Shape* from, Shape* to)
+{
+    uint8_t r, g, b, a;
+    uint8_t r2, g2, b2, a2;
+
+    //fill
+    if (from->fill() || to->fill()) return false;
+
+    r = g = b = a = r2 = g2 = b2 = a2 = 0;
+
+    from->fillColor(&r, &g, &b, &a);
+    to->fillColor(&r2, &g2, &b2, &a2);
+
+    if (r != r2 || g != g2 || b != b2 || a != a2) return false;
+
+    //composition
+    if (from->composite(nullptr) != CompositeMethod::None) return false;
+    if (to->composite(nullptr) != CompositeMethod::None) return false;
+
+    //opacity
+    if (from->opacity() != to->opacity()) return false;
+
+    //transform
+    auto t1 = from->transform();
+    auto t2 = to->transform();
+
+    if (fabs(t1.e11 - t2.e11) > FLT_EPSILON || fabs(t1.e12 - t2.e12) > FLT_EPSILON || fabs(t1.e13 - t2.e13) > FLT_EPSILON ||
+        fabs(t1.e21 - t2.e21) > FLT_EPSILON || fabs(t1.e22 - t2.e22) > FLT_EPSILON || fabs(t1.e23 - t2.e23) > FLT_EPSILON ||
+        fabs(t1.e31 - t2.e31) > FLT_EPSILON || fabs(t1.e32 - t2.e32) > FLT_EPSILON || fabs(t1.e33 - t2.e33) > FLT_EPSILON) {
+       return false;
+    }
+
+    //stroke
+    r = g = b = a = r2 = g2 = b2 = a2 = 0;
+
+    from->strokeColor(&r, &g, &b, &a);
+    to->strokeColor(&r2, &g2, &b2, &a2);
+
+    if (r != r2 || g != g2 || b != b2 || a != a2) return false;
+
+    if (fabs(from->strokeWidth() - to->strokeWidth()) > FLT_EPSILON) return false;
+    if (from->strokeCap() != to->strokeCap()) return false;
+    if (from->strokeJoin() != to->strokeJoin()) return false;
+    if (from->strokeDash(nullptr) > 0 || to->strokeDash(nullptr) > 0) return false;
+    if (from->strokeFill() || to->strokeFill()) return false;
+
+    //fill rule
+    if (from->fillRule() != to->fillRule()) return false;
+
+    //Good, identical shapes, we can merge them.
+    const PathCommand* cmds = nullptr;
+    auto cmdCnt = from->pathCommands(&cmds);
+
+    const Point* pts = nullptr;
+    auto ptsCnt = from->pathCoords(&pts);
+
+    to->appendPath(cmds, cmdCnt, pts, ptsCnt);
+
+    return true;
+}
+
+
 TvgBinCounter TvgSaver::serializeChildren(Iterator* it, const Matrix* transform)
 {
     TvgBinCounter cnt = 0;
 
-    while (auto p = it->next()) {
-        cnt += serialize(p, transform);
+    //Mering shapes. the result is written in the children.
+    Array<const Paint*> children;
+    children.reserve(it->count());
+    children.push(it->next());
+
+    while (auto child = it->next()) {
+        if (child->id() == TVG_CLASS_ID_SHAPE) {
+            //only possible if the previous child is a shape.
+            auto target = children.ptr() - 1;
+            if ((*target)->id() == TVG_CLASS_ID_SHAPE) {
+                if (_merge((Shape*)child, (Shape*)*target)) {
+                    printf("merge!\n");
+                    continue;
+                }
+            }
+        }
+        children.push(child);
+    }
+
+    //Serialize merged children.
+    auto child = children.data;
+    for (uint32_t i = 0; i < children.count; ++i, ++child) {
+        cnt += serialize(*child, transform);
     }
 
     return cnt;
