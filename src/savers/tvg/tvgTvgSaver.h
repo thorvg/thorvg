@@ -59,6 +59,7 @@ private:
     TvgBinCounter serializePath(const Shape* shape, const Matrix* transform);
     TvgBinCounter serializeComposite(const Paint* cmpTarget, CompositeMethod cmpMethod);
     TvgBinCounter serializeChildren(const Paint* paint, const Matrix* transform);
+    TvgBinCounter serializeOnlyChild(const Scene* scene, const Paint* paint, const Matrix* transform);
 
 public:
     ~TvgSaver();

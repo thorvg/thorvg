@@ -200,8 +200,46 @@ TvgBinCounter TvgSaver::serializePaint(const Paint* paint)
 }
 
 
+TvgBinCounter TvgSaver::serializeOnlyChild(const Scene* scene, const Paint* paint, const Matrix* transform)
+{
+    const Paint* compTarget = nullptr;
+    auto compMethod = scene->composite(&compTarget);
+
+    //If the scene & the only child have composition, we can't skip the scene....
+    if (compMethod != CompositeMethod::None && paint->composite(nullptr) != CompositeMethod::None) return 0;
+
+    //propagate opacity
+    uint32_t opacity = scene->opacity();
+
+    if (opacity < 255) {
+        uint32_t tmp = (paint->opacity() * opacity);
+        if (tmp > 0) tmp /= 255;
+        const_cast<Paint*>(paint)->opacity(tmp);
+    }
+
+    //propagate composition
+    if (compTarget) const_cast<Paint*>(paint)->composite(unique_ptr<Paint>(compTarget->duplicate()), compMethod);
+
+    return serialize(paint, transform);
+}
+
+
 TvgBinCounter TvgSaver::serializeScene(const Scene* scene, const Matrix* transform)
 {
+    auto it = this->iterator(scene);
+    if (!it) return 0;
+
+    //Skip saving this scene if the scene has the only child
+    if (it->count() == 1) {
+        auto cnt = serializeOnlyChild(scene, it->next(), transform);
+        if (cnt > 0) {
+            delete(it);
+            return cnt;
+        }
+    }
+
+    delete(it);
+
     writeTag(TVG_TAG_CLASS_SCENE);
     reserveCount();
 
