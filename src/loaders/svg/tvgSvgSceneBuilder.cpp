@@ -523,7 +523,7 @@ unique_ptr<Scene> svgSceneBuild(SvgNode* node, float vx, float vy, float vw, flo
     auto docNode = _sceneBuildHelper(node, vx, vy, vw, vh);
 
     auto viewBoxClip = Shape::gen();
-    viewBoxClip->appendRect(vx, vy ,vw, vh, 0, 0);
+    viewBoxClip->appendRect(vx, vy, vw, vh, 0, 0);
     viewBoxClip->fill(0, 0, 0, 255);
 
     auto compositeLayer = Scene::gen();
