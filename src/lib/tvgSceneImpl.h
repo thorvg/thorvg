@@ -43,6 +43,11 @@ struct SceneIterator : Iterator
         if (idx >= paints->count) return nullptr;
         return paints->data[idx++];
     }
+
+    uint32_t count() override
+    {
+        return paints->count;
+    }
 };
 
 struct Scene::Impl
