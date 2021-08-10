@@ -95,7 +95,7 @@ struct Picture::Impl
                 if (auto p = loader->paint()) {
                     paint = p.release();
                     loader->close();
-                    if (w != loader->w && h != loader->h) {
+                    if (w != loader->w || h != loader->h) {
                         loader->resize(paint, w, h);
                         resizing = false;
                     }

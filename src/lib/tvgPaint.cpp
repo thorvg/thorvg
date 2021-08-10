@@ -77,6 +77,9 @@ static bool _clipPathFastTrack(Paint* cmpTarget, const RenderTransform* pTransfo
             y2 = y2 * pTransform->m.e22 + pTransform->m.e23;
         }
 
+        if (x1 < 0.0f) x1 = 0.0f;
+        if (y1 < 0.0f) y1 = 0.0f;
+
         viewport.x = static_cast<uint32_t>(x1);
         viewport.y = static_cast<uint32_t>(y1);
         viewport.w = static_cast<uint32_t>(roundf(x2 - x1 + 0.5f));
