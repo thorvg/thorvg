@@ -48,6 +48,11 @@ struct SceneIterator : Iterator
     {
         return paints->count;
     }
+
+    void begin() override
+    {
+        idx = 0;
+    }
 };
 
 struct Scene::Impl

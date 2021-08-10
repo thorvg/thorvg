@@ -200,12 +200,59 @@ TvgBinCounter TvgSaver::serializePaint(const Paint* paint)
 }
 
 
+/* Propagate parents properties to the child so that we can skip saving the parent. */
+TvgBinCounter TvgSaver::serializeChild(const Paint* parent, const Paint* child, const Matrix* transform)
+{
+    const Paint* compTarget = nullptr;
+    auto compMethod = parent->composite(&compTarget);
+
+    //If the parent & the only child have composition, we can't skip the parent....
+    if (compMethod != CompositeMethod::None && child->composite(nullptr) != CompositeMethod::None) return 0;
+
+    //propagate opacity
+    uint32_t opacity = parent->opacity();
+
+    if (opacity < 255) {
+        uint32_t tmp = (child->opacity() * opacity);
+        if (tmp > 0) tmp /= 255;
+        const_cast<Paint*>(child)->opacity(tmp);
+    }
+
+    //propagate composition
+    if (compTarget) const_cast<Paint*>(child)->composite(unique_ptr<Paint>(compTarget->duplicate()), compMethod);
+
+    return serialize(child, transform);
+}
+
+
 TvgBinCounter TvgSaver::serializeScene(const Scene* scene, const Matrix* transform)
 {
+    auto it = this->iterator(scene);
+    if (it->count() == 0) return 0;
+
+    //Case - Only Child: Skip saving this scene.
+    if (it->count() == 1) {
+        auto cnt = serializeChild(scene, it->next(), transform);
+        if (cnt > 0) {
+            delete(it);
+            return cnt;
+        }
+    }
+
+    it->begin();
+
+    //Case - Delegator Scene: This scene is just a delegator, we can skip this:
+    if (scene->composite(nullptr) == CompositeMethod::None && scene->opacity() == 255) {
+        return serializeChildren(it, transform);
+    }
+
+    //Case - Serialize Scene & its children
     writeTag(TVG_TAG_CLASS_SCENE);
     reserveCount();
 
-    auto cnt = serializeChildren(scene, transform) + serializePaint(scene);
+    auto cnt = serializeChildren(it, transform) + serializePaint(scene);
+
+    delete(it);
 
     writeReservedCount(cnt);
 
@@ -367,34 +414,40 @@ TvgBinCounter TvgSaver::serializeShape(const Shape* shape, const Matrix* transfo
 }
 
 
+/* Picture has either a vector scene or a bitmap. */
 TvgBinCounter TvgSaver::serializePicture(const Picture* picture, const Matrix* transform)
 {
+    //Case - Vector Scene: Only child, Skip to save Picture...
+    auto it = this->iterator(picture);
+    if (it->count() == 1) {
+        auto cnt = serializeChild(picture, it->next(), transform);
+        delete(it);
+        return cnt;
+    }
+    delete(it);
+
+    //Case - Bitmap Image:
+    uint32_t w, h;
+    auto pixels = picture->data(&w, &h);
+    if (!pixels) return 0;
+
     writeTag(TVG_TAG_CLASS_PICTURE);
     reserveCount();
 
     TvgBinCounter cnt = 0;
+    TvgBinCounter sizeCnt = SIZE(w);
+    TvgBinCounter imgSize = w * h * SIZE(pixels[0]);
 
-    //Bitmap Image
-    uint32_t w, h;
+    writeTag(TVG_TAG_PICTURE_RAW_IMAGE);
+    writeCount(2 * sizeCnt + imgSize);
 
-    if (auto pixels = picture->data(&w, &h)) {
-        TvgBinCounter sizeCnt = SIZE(w);
-        TvgBinCounter imgSize = w * h * SIZE(pixels[0]);
+    cnt += writeData(&w, sizeCnt);
+    cnt += writeData(&h, sizeCnt);
+    cnt += writeData(pixels, imgSize);
+    cnt += SIZE(TvgBinTag) + SIZE(TvgBinCounter);
 
-        writeTag(TVG_TAG_PICTURE_RAW_IMAGE);
-        writeCount(2 * sizeCnt + imgSize);
-
-        cnt += writeData(&w, sizeCnt);
-        cnt += writeData(&h, sizeCnt);
-        cnt += writeData(pixels, imgSize);
-        cnt += SIZE(TvgBinTag) + SIZE(TvgBinCounter);
-
-        //Only Bitmap picture needs the transform info.
-        cnt += writeTransform(transform);
-    //Vector Image
-    } else {
-        cnt += serializeChildren(picture, transform);
-    }
+    //Bitmap picture needs the transform info.
+    cnt += writeTransform(transform);
 
     cnt += serializePaint(picture);
 
@@ -420,17 +473,13 @@ TvgBinCounter TvgSaver::serializeComposite(const Paint* cmpTarget, CompositeMeth
 }
 
 
-TvgBinCounter TvgSaver::serializeChildren(const Paint* paint, const Matrix* transform)
+TvgBinCounter TvgSaver::serializeChildren(Iterator* it, const Matrix* transform)
 {
-    auto it = this->iterator(paint);
-    if (!it) return 0;
-
     TvgBinCounter cnt = 0;
 
-    while (auto p = it->next())
+    while (auto p = it->next()) {
         cnt += serialize(p, transform);
-
-    delete(it);
+    }
 
     return cnt;
 }

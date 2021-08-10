@@ -33,20 +33,26 @@
 struct PictureIterator : Iterator
 {
     Paint* paint = nullptr;
+    Paint* ptr = nullptr;
 
     PictureIterator(Paint* p) : paint(p) {}
 
     const Paint* next() override
     {
-        auto ret = paint;
-        paint = nullptr;
-        return ret;
+        if (!ptr) ptr = paint;
+        else ptr = nullptr;
+        return ptr;
     }
 
     uint32_t count() override
     {
         if (paint) return 1;
         else return 0;
+    }
+
+    void begin() override
+    {
+        ptr = nullptr;
     }
 };
 
