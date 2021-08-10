@@ -31,6 +31,7 @@ namespace tvg
     {
         virtual ~Iterator() {}
         virtual const Paint* next() = 0;
+        virtual uint32_t count() = 0;
     };
 
     struct StrategyMethod

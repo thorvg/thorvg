@@ -42,6 +42,12 @@ struct PictureIterator : Iterator
         paint = nullptr;
         return ret;
     }
+
+    uint32_t count() override
+    {
+        if (paint) return 1;
+        else return 0;
+    }
 };
 
 
