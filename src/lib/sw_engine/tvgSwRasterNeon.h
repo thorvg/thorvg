@@ -53,33 +53,44 @@ static inline bool neonRasterTranslucentRle(SwSurface* surface, const SwRleData*
 {
     auto span = rle->spans;
     uint32_t src;
+    uint32_t align = 0;
 
     for (uint32_t i = 0; i < rle->size; ++i) {
+        uint8x8_t *vDst = NULL;
         auto dst = &surface->buffer[span->y * surface->stride + span->x];
 
-        uint8x8_t *vDst = (uint8x8_t*) dst;
+        if ((((uint32_t) dst) & 0x7) != 0) {
+            vDst = (uint8x8_t*)(dst+1);
+            align = 1;
+        } else {
+            vDst = (uint8x8_t*) dst;
+        }
 
         if (span->coverage < 255) src = ALPHA_BLEND(color, span->coverage);
         else src = color;
         auto ialpha = 255 - surface->blender.alpha(src);
 
         uint8x8_t vSrc = (uint8x8_t) vdup_n_u32(src);
-        uint8x8_t vIalpha = (uint8x8_t) vdup_n_u32(ialpha);
+        uint8x8_t vIalpha = vdup_n_u8((uint8_t) ialpha);
 
-        uint32_t iterations = span->len / 2;
-        uint32_t left = span->len % 2;
+        uint32_t iterations = (span->len - align) / 2;
+        uint32_t left = (span->len - align) % 2;
 
-        for (uint32_t x = 0; x < iterations; x+=2) {
+        //Fill not aligned byte
+        if (align) {
+            *dst = src + ALPHA_BLEND(*dst, ialpha);
+        }
+
+        for (uint32_t x = 0; x < iterations; ++x) {
             vDst[x] = vadd_u8(vSrc, ALPHA_BLEND_NEON(vDst[x], vIalpha));
         }
 
+        //Fill leftovers
         if (left) {
-            dst[span->len] = src + ALPHA_BLEND(dst[span->len], ialpha);
+            dst[span->len-1] = src + ALPHA_BLEND(dst[span->len-1], ialpha);
         }
         ++span;
     }
-    return true;
 }
-
 
 #endif
