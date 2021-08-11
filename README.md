@@ -32,6 +32,7 @@ If your program has the main renderer, your program could call ThorVG APIs while
 	- [Meson Build](#meson-build)
 - [Quick Start](#quick-start)
 - [SVG](#svg)
+- [TVG Picture](#tvg-picture)
 - [Practices](#practices)
 	- [Tizen](#tizen)
 	- [Rive](#rive)
@@ -186,6 +187,28 @@ The result:
 <p align="center">
   <img width="300" height="300" src="https://github.com/Samsung/thorvg/blob/master/res/example_tiger.png">
 </p>
+
+[Back to contents](#contents)
+<br />
+<br />
+## TVG Picture
+
+ThorVG provides the designated vector data format which is called TVG Picture. TVG Picture stores the list of properties of the Paint nodes of the scene in the binary form after processing data optimization through the scene-tree nodes.
+
+In that processing, the TVG Saver tries to filter out the unused information, compromise the duplicated properties, merge shapes, compress the data if doable while keeping them compatible with ThorVG behavior policy so that it can reduce the binary size without any breakage. This helps not only keep the application resource size less than any text-based vector formats such as SVG, but also reduces the file I/O operations and the memory bandwidth. Thus this is effective if your program uses a big amount of the vector resources.
+
+Aside from the binary size pros, the TVG data format helps to reduce the resource loading time since it can skip interpreting the data stage. Additionally, its performance can be increased by reducing the amount of the runtime memory as well as reducing the rendering tasks burden. On average, TVG Picture is more than 30% better than SVG in both file size and loading time. Note that the amount of the performance rate is up to the resource size and its complexity.
+
+<p align="center">
+  <img width="913" height="165" src="https://github.com/Samsung/thorvg/blob/master/res/example_tvgsize.png">
+</p>
+
+TVG Saver exports the TVG Pictures to the files whose file extension name is "tvg", TVG Loader imports them, and restores them to the TVG Pictures. You can quickly use the ThorVG Viewer to convert from SVG to TVG files (Coming soon).
+
+<p align="center">
+  <img width="649" height="283" src="https://github.com/Samsung/thorvg/blob/master/res/example_tvg.png">
+</p>
+
 
 [Back to contents](#contents)
 <br />
