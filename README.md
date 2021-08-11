@@ -200,7 +200,7 @@ In that processing, the TVG Saver tries to filter out the unused information, co
 Aside from the binary size pros, the TVG data format helps to reduce the resource loading time since it can skip interpreting the data stage. Additionally, its performance can be increased by reducing the amount of the runtime memory as well as reducing the rendering tasks burden. On average, TVG Picture is more than 30% better than SVG in both file size and loading time. Note that the amount of the performance rate is up to the resource size and its complexity.
 
 <p align="center">
-  <img width="913" height="165" src="https://github.com/Samsung/thorvg/blob/master/res/example_tvgsize.png">
+  <img width="910" height="260" src="https://github.com/Samsung/thorvg/blob/master/res/example_tvgsize.png">
 </p>
 
 TVG Saver exports the TVG Pictures to the files whose file extension name is "tvg", TVG Loader imports them, and restores them to the TVG Pictures. You can quickly use the ThorVG Viewer to convert from SVG to TVG files (Coming soon).
