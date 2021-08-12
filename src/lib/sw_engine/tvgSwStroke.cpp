@@ -659,7 +659,7 @@ static void _addReverseLeft(SwStroke& stroke, bool opened)
 }
 
 
-static void _beginSubPath(SwStroke& stroke, const SwPoint& to, bool opened)
+static void _beginSubPath(SwStroke& stroke, const SwPoint& to, bool closed)
 {
     /* We cannot process the first point because there is not enough
        information regarding its corner/cap. Later, it will be processed
@@ -667,14 +667,14 @@ static void _beginSubPath(SwStroke& stroke, const SwPoint& to, bool opened)
 
     stroke.firstPt = true;
     stroke.center = to;
-    stroke.openSubPath = opened;
+    stroke.closedSubPath = closed;
 
     /* Determine if we need to check whether the border radius is greater
        than the radius of curvature of a curve, to handle this case specially.
        This is only required if bevel joins or butt caps may be created because
        round & miter joins and round & square caps cover the nagative sector
        created with wide strokes. */
-    if ((stroke.join != StrokeJoin::Round) || (stroke.openSubPath && stroke.cap == StrokeCap::Butt))
+    if ((stroke.join != StrokeJoin::Round) || (!stroke.closedSubPath && stroke.cap == StrokeCap::Butt))
         stroke.handleWideStrokes = true;
     else
         stroke.handleWideStrokes = false;
@@ -686,26 +686,7 @@ static void _beginSubPath(SwStroke& stroke, const SwPoint& to, bool opened)
 
 static void _endSubPath(SwStroke& stroke)
 {
-    if (stroke.openSubPath) {
-        auto right = stroke.borders;
-
-        /* all right, this is an opened path, we need to add a cap between
-           right & left, add the reverse of left, then add a final cap
-           between left & right */
-        _addCap(stroke, stroke.angleIn, 0);
-
-        //add reversed points from 'left' to 'right'
-        _addReverseLeft(stroke, true);
-
-        //now add the final cap
-        stroke.center = stroke.ptStartSubPath;
-        _addCap(stroke, stroke.subPathAngle + SW_ANGLE_PI, 0);
-
-        /* now end the right subpath accordingly. The left one is rewind
-           and deosn't need further processing */
-        _borderClose(right, false);
-    } else {
-
+    if (stroke.closedSubPath) {
         //close the path if needed
         if (stroke.center != stroke.ptStartSubPath)
             _lineTo(stroke, stroke.ptStartSubPath);
@@ -729,6 +710,24 @@ static void _endSubPath(SwStroke& stroke)
 
         _borderClose(stroke.borders + 0, false);
         _borderClose(stroke.borders + 1, true);
+    } else {
+        auto right = stroke.borders;
+
+        /* all right, this is an opened path, we need to add a cap between
+           right & left, add the reverse of left, then add a final cap
+           between left & right */
+        _addCap(stroke, stroke.angleIn, 0);
+
+        //add reversed points from 'left' to 'right'
+        _addReverseLeft(stroke, true);
+
+        //now add the final cap
+        stroke.center = stroke.ptStartSubPath;
+        _addCap(stroke, stroke.subPathAngle + SW_ANGLE_PI, 0);
+
+        /* now end the right subpath accordingly. The left one is rewind
+           and deosn't need further processing */
+        _borderClose(right, false);
     }
 }
 
@@ -870,7 +869,9 @@ bool strokeParseOutline(SwStroke* stroke, const SwOutline& outline)
         //A contour cannot start with a cubic control point
         if (type == SW_CURVE_TYPE_CUBIC) return false;
 
-        _beginSubPath(*stroke, start, outline.opened);
+        auto closed =  outline.closed ? outline.closed[i]: false;
+
+        _beginSubPath(*stroke, start, closed);
 
         while (pt < limit) {
             ++pt;

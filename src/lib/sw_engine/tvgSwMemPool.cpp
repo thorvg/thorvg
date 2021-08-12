@@ -107,6 +107,9 @@ bool mpoolClear(SwMpool* mpool)
         free(p->types);
         p->types = nullptr;
 
+        free(p->closed);
+        p->closed = nullptr;
+
         p->cntrsCnt = p->reservedCntrsCnt = 0;
         p->ptsCnt = p->reservedPtsCnt = 0;
 
@@ -121,6 +124,9 @@ bool mpoolClear(SwMpool* mpool)
 
         free(p->types);
         p->types = nullptr;
+
+        free(p->closed);
+        p->closed = nullptr;
 
         p->cntrsCnt = p->reservedCntrsCnt = 0;
         p->ptsCnt = p->reservedPtsCnt = 0;
