@@ -67,11 +67,18 @@ static bool _growOutlineContour(SwOutline& outline, uint32_t n)
 }
 
 
-static void _growOutlineClose(SwOutline& outline)
+static void _reserveOutlineClose(SwOutline& outline)
 {
     //Dash outlines are always opened.
     //Only normal outlines use this information, it sholud be same to their contour counts.
-    outline.closed = static_cast<bool*>(realloc(outline.closed, outline.reservedCntrsCnt * sizeof(bool)));
+    if (outline.closed) free(outline.closed);
+    outline.closed = static_cast<bool*>(calloc(outline.reservedCntrsCnt, sizeof(bool)));
+}
+
+
+static void _resetOutlineClose(SwOutline& outline)
+{
+    memset(outline.closed, 0x0, outline.reservedCntrsCnt * sizeof(bool));
 }
 
 
@@ -86,16 +93,11 @@ static void _growOutlinePoint(SwOutline& outline, uint32_t n)
 
 static void _outlineEnd(SwOutline& outline)
 {
+    if (outline.ptsCnt == 0) return;
+
     _growOutlineContour(outline, 1);
-
-    if (outline.closed) {
-        outline.closed[outline.cntrsCnt] = false;
-    }
-
-    if (outline.ptsCnt > 0) {
-        outline.cntrs[outline.cntrsCnt] = outline.ptsCnt - 1;
-        ++outline.cntrsCnt;
-    }
+    outline.cntrs[outline.cntrsCnt] = outline.ptsCnt - 1;
+    ++outline.cntrsCnt;
 }
 
 
@@ -155,10 +157,7 @@ static void _outlineClose(SwOutline& outline)
     }
 
     //Make sure there is at least one point in the current path
-    if (outline.ptsCnt == i) {
-        outline.closed[outline.cntrsCnt] = false;
-        return;
-    }
+    if (outline.ptsCnt == i) return;
 
     //Close the path
     _growOutlinePoint(outline, 1);
@@ -166,7 +165,6 @@ static void _outlineClose(SwOutline& outline)
     outline.pts[outline.ptsCnt] = outline.pts[i];
     outline.types[outline.ptsCnt] = SW_CURVE_TYPE_POINT;
     ++outline.ptsCnt;
-
     outline.closed[outline.cntrsCnt] = true;
 }
 
@@ -423,7 +421,9 @@ static bool _genOutline(SwShape* shape, const Shape* sdata, const Matrix* transf
     _growOutlinePoint(*outline, outlinePtsCnt);
 
      if (_growOutlineContour(*outline, outlineCntrsCnt)) {
-        _growOutlineClose(*outline);
+        _reserveOutlineClose(*outline);
+    } else {
+        _resetOutlineClose(*outline);
     }
 
     //Generate Outlines
