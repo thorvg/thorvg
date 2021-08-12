@@ -31,12 +31,18 @@ static bool _genOutline(SwImage* image, const Matrix* transform, SwMpool* mpool,
     image->outline = mpoolReqOutline(mpool, tid);
     auto outline = image->outline;
 
-    outline->reservedPtsCnt = 5;
-    outline->pts = static_cast<SwPoint*>(realloc(outline->pts, outline->reservedPtsCnt * sizeof(SwPoint)));
-    outline->types = static_cast<uint8_t*>(realloc(outline->types, outline->reservedPtsCnt * sizeof(uint8_t)));
+     if (outline->reservedPtsCnt < 5) {
+        outline->reservedPtsCnt = 5;
+        outline->pts = static_cast<SwPoint*>(realloc(outline->pts, outline->reservedPtsCnt * sizeof(SwPoint)));
+        outline->types = static_cast<uint8_t*>(realloc(outline->types, outline->reservedPtsCnt * sizeof(uint8_t)));
+     }
 
-    outline->reservedCntrsCnt = 1;
-    outline->cntrs = static_cast<uint32_t*>(realloc(outline->cntrs, outline->reservedCntrsCnt * sizeof(uint32_t)));
+    if (outline->reservedCntrsCnt < 1) {
+        outline->reservedCntrsCnt = 1;
+        outline->cntrs = static_cast<uint32_t*>(realloc(outline->cntrs, outline->reservedCntrsCnt * sizeof(uint32_t)));
+        outline->closed = static_cast<bool*>(realloc(outline->closed, outline->reservedCntrsCnt * sizeof(bool)));
+        outline->closed[0] = true;
+    }
 
     auto w = static_cast<float>(image->w);
     auto h = static_cast<float>(image->h);
@@ -54,8 +60,6 @@ static bool _genOutline(SwImage* image, const Matrix* transform, SwMpool* mpool,
 
     outline->cntrs[outline->cntrsCnt] = outline->ptsCnt - 1;
     ++outline->cntrsCnt;
-
-    outline->opened = false;
 
     image->outline = outline;
 
