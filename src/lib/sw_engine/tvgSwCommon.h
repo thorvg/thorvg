@@ -98,12 +98,12 @@ struct SwSize
 
 struct SwOutline
 {
-    uint32_t*     cntrs;            //the contour end points
-    uint32_t      cntrsCnt;         //number of contours in glyph
-    uint32_t      reservedCntrsCnt;
     SwPoint*      pts;              //the outline's points
-    uint32_t      ptsCnt;           //number of points in the glyph
-    uint32_t      reservedPtsCnt;
+    uint16_t      ptsCnt;           //number of points in the glyph
+    uint16_t      reservedPtsCnt;
+    uint16_t*     cntrs;            //the contour end points
+    uint16_t      cntrsCnt;         //number of contours in glyph
+    uint16_t      reservedCntrsCnt;
     uint8_t*      types;            //curve type
     bool*         closed;           //opened or closed path?
     FillRule      fillRule;
