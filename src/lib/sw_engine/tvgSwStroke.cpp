@@ -921,7 +921,7 @@ SwOutline* strokeExportOutline(SwStroke* stroke, SwMpool* mpool, unsigned tid)
         outline->reservedPtsCnt = ptsCnt;
     }
     if (outline->reservedCntrsCnt < cntrsCnt) {
-        outline->cntrs = static_cast<uint32_t*>(realloc(outline->cntrs, sizeof(uint32_t) * cntrsCnt));
+        outline->cntrs = static_cast<uint16_t*>(realloc(outline->cntrs, sizeof(uint16_t) * cntrsCnt));
         outline->reservedCntrsCnt = cntrsCnt;
     }
 
