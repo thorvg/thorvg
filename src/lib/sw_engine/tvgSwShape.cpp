@@ -58,11 +58,20 @@ static void _lineSplitAt(const Line& cur, float at, Line& left, Line& right)
 }
 
 
-static void _growOutlineContour(SwOutline& outline, uint32_t n)
+static bool _growOutlineContour(SwOutline& outline, uint32_t n)
 {
-    if (outline.reservedCntrsCnt >= outline.cntrsCnt + n) return;
+    if (outline.reservedCntrsCnt >= outline.cntrsCnt + n) return false;
     outline.reservedCntrsCnt = outline.cntrsCnt + n;
     outline.cntrs = static_cast<uint32_t*>(realloc(outline.cntrs, outline.reservedCntrsCnt * sizeof(uint32_t)));
+    return true;
+}
+
+
+static void _growOutlineClose(SwOutline& outline)
+{
+    //Dash outlines are always opened.
+    //Only normal outlines use this information, it sholud be same to their contour counts.
+    outline.closed = static_cast<bool*>(realloc(outline.closed, outline.reservedCntrsCnt * sizeof(bool)));
 }
 
 
@@ -78,6 +87,11 @@ static void _growOutlinePoint(SwOutline& outline, uint32_t n)
 static void _outlineEnd(SwOutline& outline)
 {
     _growOutlineContour(outline, 1);
+
+    if (outline.closed) {
+        outline.closed[outline.cntrsCnt] = false;
+    }
+
     if (outline.ptsCnt > 0) {
         outline.cntrs[outline.cntrsCnt] = outline.ptsCnt - 1;
         ++outline.cntrsCnt;
@@ -142,7 +156,7 @@ static void _outlineClose(SwOutline& outline)
 
     //Make sure there is at least one point in the current path
     if (outline.ptsCnt == i) {
-        outline.opened = true;
+        outline.closed[outline.cntrsCnt] = false;
         return;
     }
 
@@ -153,7 +167,7 @@ static void _outlineClose(SwOutline& outline)
     outline.types[outline.ptsCnt] = SW_CURVE_TYPE_POINT;
     ++outline.ptsCnt;
 
-    outline.opened = false;
+    outline.closed[outline.cntrsCnt] = true;
 }
 
 
@@ -274,7 +288,6 @@ static SwOutline* _genDashOutline(const Shape* sdata, const Matrix* transform)
     //OPTMIZE ME: Use mempool???
     dash.pattern = const_cast<float*>(pattern);
     dash.outline = static_cast<SwOutline*>(calloc(1, sizeof(SwOutline)));
-    dash.outline->opened = true;
 
     //smart reservation
     auto outlinePtsCnt = 0;
@@ -305,7 +318,7 @@ static SwOutline* _genDashOutline(const Shape* sdata, const Matrix* transform)
     ++outlinePtsCnt;    //for close
     ++outlineCntrsCnt;  //for end
 
-    //Reserve Approximitely 20x...
+    //No idea exact count.... Reserve Approximitely 20x...
     _growOutlinePoint(*dash.outline, outlinePtsCnt * 20);
     _growOutlineContour(*dash.outline, outlineCntrsCnt * 20);
 
@@ -406,19 +419,18 @@ static bool _genOutline(SwShape* shape, const Shape* sdata, const Matrix* transf
 
     shape->outline = mpoolReqOutline(mpool, tid);
     auto outline = shape->outline;
-    outline->opened = true;
 
     _growOutlinePoint(*outline, outlinePtsCnt);
-    _growOutlineContour(*outline, outlineCntrsCnt);
 
-    auto closed = false;
+     if (_growOutlineContour(*outline, outlineCntrsCnt)) {
+        _growOutlineClose(*outline);
+    }
 
     //Generate Outlines
     while (cmdCnt-- > 0) {
         switch(*cmds) {
             case PathCommand::Close: {
                 _outlineClose(*outline);
-                closed = true;
                 break;
             }
             case PathCommand::MoveTo: {
@@ -441,8 +453,6 @@ static bool _genOutline(SwShape* shape, const Shape* sdata, const Matrix* transf
     }
 
     _outlineEnd(*outline);
-
-    if (closed) outline->opened = false;
 
     outline->fillRule = sdata->fillRule();
     shape->outline = outline;
@@ -587,6 +597,7 @@ fail:
         if (shapeOutline->cntrs) free(shapeOutline->cntrs);
         if (shapeOutline->pts) free(shapeOutline->pts);
         if (shapeOutline->types) free(shapeOutline->types);
+        if (shapeOutline->closed) free(shapeOutline->closed);
         free(shapeOutline);
     }
     mpoolRetStrokeOutline(mpool, tid);

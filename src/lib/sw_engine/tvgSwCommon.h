@@ -105,8 +105,8 @@ struct SwOutline
     uint32_t      ptsCnt;           //number of points in the glyph
     uint32_t      reservedPtsCnt;
     uint8_t*      types;            //curve type
+    bool*         closed;           //opened or closed path?
     FillRule      fillRule;
-    bool          opened;           //opened path?
 };
 
 struct SwSpan
@@ -190,7 +190,7 @@ struct SwStroke
     float sx, sy;
 
     bool firstPt;
-    bool openSubPath;
+    bool closedSubPath;
     bool handleWideStrokes;
 };
 
