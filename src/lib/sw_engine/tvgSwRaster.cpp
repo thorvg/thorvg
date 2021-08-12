@@ -120,18 +120,13 @@ static uint32_t _applyBilinearInterpolation(const uint32_t *img, uint32_t w, uin
 
 static bool _translucentRect(SwSurface* surface, const SwBBox& region, uint32_t color)
 {
-    auto buffer = surface->buffer + (region.min.y * surface->stride) + region.min.x;
-    auto h = static_cast<uint32_t>(region.max.y - region.min.y);
-    auto w = static_cast<uint32_t>(region.max.x - region.min.x);
-    auto ialpha = 255 - surface->blender.alpha(color);
-
-    for (uint32_t y = 0; y < h; ++y) {
-        auto dst = &buffer[y * surface->stride];
-        for (uint32_t x = 0; x < w; ++x) {
-            dst[x] = color + ALPHA_BLEND(dst[x], ialpha);
-        }
-    }
-    return true;
+    #if defined(THORVG_AVX_VECTOR_SUPPORT)
+        return cRasterTranslucentRect(surface, region, color);
+    #elif defined(THORVG_NEON_VECTOR_SUPPORT)
+        return neonRasterTranslucentRect(surface, region, color);
+    #else
+        return cRasterTranslucentRect(surface, region, color);
+    #endif
 }
 
 
