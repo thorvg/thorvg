@@ -31,35 +31,24 @@
 
 using namespace std;
 
-#define FLAG_PARSE_DIRECTORY (1)
-#define FLAG_PARSE_RECURSIVE (1 << 1)
-#define FLAG_USE_ABGR8888_COLORSPACE (1 << 2)
-#define FLAG_DO_NOT_SAVE_PNG (1 << 3)
-
 struct PngBuilder
 {
-    void build(const string& fileName, const uint32_t width, const uint32_t height, uint32_t* buffer, bool altColorspace)
+    void build(const string& fileName, const uint32_t width, const uint32_t height, uint32_t* buffer)
     {
         unsigned error = 0;
-        if (!altColorspace) {
-            //Used ARGB8888 so have to move pixels now
-            vector<unsigned char> image;
-            image.resize(width * height * 4);
-            for (unsigned y = 0; y < height; y++) {
-                for (unsigned x = 0; x < width; x++) {
-                    uint32_t n = buffer[y * width + x];
-                    image[4 * width * y + 4 * x + 0] = (n >> 16) & 0xff;
-                    image[4 * width * y + 4 * x + 1] = (n >> 8) & 0xff;
-                    image[4 * width * y + 4 * x + 2] = n & 0xff;
-                    image[4 * width * y + 4 * x + 3] = (n >> 24) & 0xff;
-                }
+        //Used ARGB8888 so have to move pixels now
+        vector<unsigned char> image;
+        image.resize(width * height * 4);
+        for (unsigned y = 0; y < height; y++) {
+            for (unsigned x = 0; x < width; x++) {
+                uint32_t n = buffer[y * width + x];
+                image[4 * width * y + 4 * x + 0] = (n >> 16) & 0xff;
+                image[4 * width * y + 4 * x + 1] = (n >> 8) & 0xff;
+                image[4 * width * y + 4 * x + 2] = n & 0xff;
+                image[4 * width * y + 4 * x + 3] = (n >> 24) & 0xff;
             }
-            error = lodepng::encode(fileName, image, width, height);
-
-        } else {
-            //Used ABGR8888 so no need to move pixels
-            error = lodepng::encode(fileName, (const unsigned char*) buffer, width, height);
         }
+        error = lodepng::encode(fileName, image, width, height);
 
         //if there's an error, display it
         if (error) cout << "encoder error " << error << ": " << lodepng_error_text(error) << endl;
@@ -69,7 +58,7 @@ struct PngBuilder
 struct Renderer
 {
 public:
-    int render(const char* path, int w, int h, const string& dst, uint32_t bgColor, bool altColorspace, bool dontSavePng)
+    int render(const char* path, int w, int h, const string& dst, uint32_t bgColor)
     {
         //Canvas
         if (!canvas) createCanvas();
@@ -101,7 +90,7 @@ public:
             return 1;
         }
 
-        if (canvas->target(buffer, w, w, h, altColorspace ? tvg::SwCanvas::ABGR8888 : tvg::SwCanvas::ARGB8888) != tvg::Result::Success) {
+        if (canvas->target(buffer, w, w, h, tvg::SwCanvas::ARGB8888) != tvg::Result::Success) {
             cout << "Error: Canvas target failure" << endl;
             return 1;
         }
@@ -125,14 +114,10 @@ public:
         canvas->sync();
 
         //Build Png
-        if (!dontSavePng) {
-            PngBuilder builder;
-            builder.build(dst, w, h, buffer, altColorspace);
+        PngBuilder builder;
+        builder.build(dst, w, h, buffer);
 
-            cout << "Generated PNG file: " << dst << endl;
-        } else {
-            cout << "Rendered: " << path << endl;
-        }
+        cout << "Generated PNG file: " << dst << endl;
 
         //Clear canvas
         canvas->clear(true);
@@ -223,19 +208,6 @@ public:
                     if (*p_arg == '#') ++p_arg;
                     bgColor = (uint32_t) strtol(p, NULL, 16);
 
-                } else if (p[1] == 'd') {
-                    //directory parsing
-                    flags |= FLAG_PARSE_DIRECTORY;
-                    if (p[2] == 'r') flags |= FLAG_PARSE_RECURSIVE;
-
-                } else if (p[1] == 'c') {
-                    //use ABGR8888 colorspace
-                    flags |= FLAG_USE_ABGR8888_COLORSPACE;
-
-                } else if (p[1] == 's') {
-                    //do not save png file. Useful for testing memory leaks
-                    flags |= FLAG_DO_NOT_SAVE_PNG;
-
                 } else {
                     cout << "Warning: Unknown flag (" << p << ")." << endl;
                 }
@@ -246,21 +218,32 @@ public:
         }
 
         int ret = 0;
-        if (flags & FLAG_PARSE_DIRECTORY) {
-            const char * path = paths.empty()?nullptr:paths.front();
-            ret = handleDirectoryBase(path);
-
-        } else if (!paths.empty()) {
-            for (auto path : paths) {
-                if (!svgFile(path)) {
-                    cout << "Warning: File \"" << path << "\" is not a proper svg file." << endl;
-                    continue;
-                }
-                if ((ret = renderFile(path))) break;
-            }
-
-        } else {
+        if (paths.empty()) {
+            //no attributes - print help
             return help();
+            
+        } else {
+            for (auto path : paths) {
+                auto real_path = realFile(path);
+                if (!real_path) {
+                    DIR* dir = opendir(real_path);
+                    if (dir) {
+                        //parse directory
+                        cout << "Trying parse directory \"" << real_path << "\"." << endl;
+                        if ((ret = handleDirectory(real_path, dir))) break;
+                        
+                    } else if (svgFile(path)) {
+                        //parse file
+                        if ((ret = renderFile(real_path))) break;
+                    } else {
+                        //not a directory and not .svg file
+                        cout << "Warning: File \"" << path << "\" is not a proper svg file." << endl;
+                    }
+                    
+                } else {
+                    cout << "Warning: File \"" << path << "\" is invalid." << endl;
+                }
+            }
         }
 
         //Terminate renderer
@@ -274,31 +257,34 @@ private:
     uint32_t bgColor = 0xffffffff;
     uint32_t width = 0;
     uint32_t height = 0;
-    uint32_t flags = 0;
+    char full[PATH_MAX];
 
 private:
     int help()
     {
-        cout << "Usage:\n   svg2png [svgFileName] [-r resolution] [-b bgColor] [flags]\n\nFlags:\n    -r set output image resolution.\n    -b set output image background color.\n    -d parse whole directory. If no directory specified, parse working directory.\n    -dr recursive. Same as -d, but include subdirectories.\n    -c Use ABGR8888 colorspace. Default is ARGB8888.\n    -s Don't save png file. Useful for testing memory leaks.\n\nExamples:\n    $ svg2png input.svg\n    $ svg2png input.svg -r 200x200\n    $ svg2png input.svg -r 200x200 -b ff00ff\n    $ svg2png input1.svg input2.svg -r 200x200 -b ff00ff\n    $ svg2png . -d\n    $ svg2png -dr\n    $ svg2png -d -c -s\n\n";
+        cout << "Usage:\n   svg2png [svgFileName] [-r resolution] [-b bgColor]\n\nFlags:\n    -r set output image resolution.\n    -b set output image background color.\n\nExamples:\n    $ svg2png input.svg\n    $ svg2png input.svg -r 200x200\n    $ svg2png input.svg -r 200x200 -b ff00ff\n    $ svg2png input1.svg input2.svg -r 200x200 -b ff00ff\n    $ svg2png . -r 200x200\n\n";
         return 1;
     }
-
+    
     bool svgFile(const char* path)
     {
         size_t length = strlen(path);
         return length > 4 && (strcmp(&path[length - 4], ".svg") == 0);
     }
-
-    int renderFile(const char* path)
+    
+    const char* realFile(const char* path)
     {
         //real path
-        char full[PATH_MAX];
 #ifdef _WIN32
         path = fullpath(full, path, PATH_MAX);
 #else
         path = realpath(path, full);
 #endif
+        return path;
+    }
 
+    int renderFile(const char* path)
+    {
         if (!path) return 1;
 
         //destination png file
@@ -307,25 +293,26 @@ private:
         string dst(path, dot - path);
         dst += ".png";
 
-        return renderer.render(path, width, height, dst, bgColor, (flags & FLAG_USE_ABGR8888_COLORSPACE), (flags & FLAG_DO_NOT_SAVE_PNG));
+        return renderer.render(path, width, height, dst, bgColor);
     }
-
-    int handleDirectory(const string& path)
+    
+    int handleDirectory(const string& path, DIR* dir)
     {
         //open directory
-        DIR* dir = opendir(path.c_str());
         if (!dir) {
-            cout << "Couldn't open directory \"" << path.c_str() << "\"." << endl;
-            return 1;
+            dir = opendir(path.c_str());
+            if (!dir) {
+                cout << "Couldn't open directory \"" << path.c_str() << "\"." << endl;
+                return 1;
+            }
         }
-
+        
         //list directory
         int ret = 0;
         struct dirent* entry;
         while ((entry = readdir(dir)) != NULL) {
             if (*entry->d_name == '.' || *entry->d_name == '$') continue;
             if (entry->d_type == DT_DIR) {
-                if (!(flags & FLAG_PARSE_RECURSIVE)) continue;
                 string subpath = string(path);
 #ifdef _WIN32
                 subpath += '\\';
@@ -333,7 +320,7 @@ private:
                 subpath += '/';
 #endif
                 subpath += entry->d_name;
-                ret = handleDirectory(subpath);
+                ret = handleDirectory(subpath, nullptr);
                 if (ret) break;
 
             } else {
@@ -351,27 +338,6 @@ private:
         }
         closedir(dir);
         return ret;
-    }
-
-    int handleDirectoryBase(const char* path)
-    {
-        //create base path
-        string basepath;
-        if (path) {
-            //copy path to basepath
-            basepath = string(path);
-
-        } else {
-            //copy working directory into basepath
-            char cwd[PATH_MAX];
-            if (getcwd(cwd, sizeof(cwd)) != NULL) {
-                basepath = string(cwd);
-            } else {
-                cout << "Error: Couldn't get working directory" << endl;
-            }
-        }
-
-        return handleDirectory(basepath);
     }
 };
 
