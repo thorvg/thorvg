@@ -61,9 +61,9 @@ struct Picture::Impl
 {
     shared_ptr<LoadModule> loader = nullptr;
     Paint* paint = nullptr;
-    uint32_t *pixels = nullptr;
-    Picture *picture = nullptr;
-    void *rdata = nullptr;              //engine data
+    uint32_t* pixels = nullptr;
+    Picture* picture = nullptr;
+    void* rdata = nullptr;            //engine data
     float w = 0, h = 0;
     bool resizing = false;
 
@@ -184,6 +184,7 @@ struct Picture::Impl
 
     Result load(const string& path)
     {
+        if (paint || pixels) return Result::InsufficientCondition;
         if (loader) loader->close();
         bool invalid;  //Invalid Path
         loader = LoaderMgr::loader(path, &invalid);
@@ -199,6 +200,7 @@ struct Picture::Impl
 
     Result load(const char* data, uint32_t size, const string& mimeType, bool copy)
     {
+        if (paint || pixels) return Result::InsufficientCondition;
         if (loader) loader->close();
         loader = LoaderMgr::loader(data, size, mimeType, copy);
         if (!loader) return Result::NonSupport;
@@ -210,6 +212,7 @@ struct Picture::Impl
 
     Result load(uint32_t* data, uint32_t w, uint32_t h, bool copy)
     {
+        if (paint || pixels) return Result::InsufficientCondition;
         if (loader) loader->close();
         loader = LoaderMgr::loader(data, w, h, copy);
         if (!loader) return Result::NonSupport;
