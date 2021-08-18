@@ -35,7 +35,6 @@ struct PngBuilder
 {
     void build(const string& fileName, const uint32_t width, const uint32_t height, uint32_t* buffer)
     {
-        unsigned error = 0;
         //Used ARGB8888 so have to move pixels now
         vector<unsigned char> image;
         image.resize(width * height * 4);
@@ -48,7 +47,8 @@ struct PngBuilder
                 image[4 * width * y + 4 * x + 3] = (n >> 24) & 0xff;
             }
         }
-        error = lodepng::encode(fileName, image, width, height);
+
+        unsigned error = lodepng::encode(fileName, image, width, height);
 
         //if there's an error, display it
         if (error) cout << "encoder error " << error << ": " << lodepng_error_text(error) << endl;
@@ -119,7 +119,6 @@ public:
 
         cout << "Generated PNG file: " << dst << endl;
 
-        //Clear canvas
         canvas->clear(true);
 
         return 0;
@@ -129,8 +128,6 @@ public:
     {
         //Terminate ThorVG Engine
         tvg::Initializer::term(tvg::CanvasEngine::Sw);
-
-        //Free buffer
         free(buffer);
     }
 
@@ -156,17 +153,17 @@ private:
     {
         uint32_t size = w * h;
         //Reuse old buffer if size is enough
-        if (buffer && buffer_size >= size) return;
+        if (buffer && bufferSize >= size) return;
 
         //Alloc or realloc buffer
         buffer = (uint32_t*) realloc(buffer, sizeof(uint32_t) * size);
-        buffer_size = size;
+        bufferSize = size;
     }
 
 private:
     unique_ptr<tvg::SwCanvas> canvas = nullptr;
     uint32_t* buffer = nullptr;
-    uint32_t buffer_size = 0;
+    uint32_t bufferSize = 0;
 };
 
 struct App
@@ -225,15 +222,15 @@ public:
         } else {
             for (auto path : paths) {
                 auto real_path = realFile(path);
-                if (!real_path) {
+                if (real_path) {
                     DIR* dir = opendir(real_path);
                     if (dir) {
-                        //parse directory
-                        cout << "Trying parse directory \"" << real_path << "\"." << endl;
+                        //load from directory
+                        cout << "Trying load from directory \"" << real_path << "\"." << endl;
                         if ((ret = handleDirectory(real_path, dir))) break;
                         
                     } else if (svgFile(path)) {
-                        //parse file
+                        //load single file
                         if ((ret = renderFile(real_path))) break;
                     } else {
                         //not a directory and not .svg file
