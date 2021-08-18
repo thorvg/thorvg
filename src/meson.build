@@ -2,11 +2,11 @@ compiler_flags = ['-DTVG_BUILD']
 
 cc = meson.get_compiler('cpp')
 if (cc.get_id() != 'msvc')
-    if get_option('vectors').contains('avx')
+    if cpu_avx
         compiler_flags += ['-mavx']
     endif
-    if get_option('vectors').contains('neon')
-        compiler_flags += ['-mfpu=neon-vfpv4']
+    if cpu_neon
+        compiler_flags += ['-mfpu=neon']
     endif
     if get_option('b_sanitize') == 'none'
         compiler_flags += ['-fno-exceptions', '-fno-rtti',

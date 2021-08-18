@@ -40,12 +40,17 @@ if get_option('savers').contains('tvg_beta') == true
     config_h.set10('THORVG_TVG_SAVER_SUPPORT', true)
 endif
 
-if get_option('vectors').contains('avx') == true
-    config_h.set10('THORVG_AVX_VECTOR_SUPPORT', true)
-endif
+cpu_avx = false
+cpu_neon = false
 
-if get_option('vectors').contains('neon') == true
+if get_option('use_simd') == true
+  if host_machine.cpu_family() == 'x86' or host_machine.cpu_family() == 'x86_64'
+    config_h.set10('THORVG_AVX_VECTOR_SUPPORT', true)
+    cpu_avx = true
+  elif host_machine.cpu_family() == 'arm'
     config_h.set10('THORVG_NEON_VECTOR_SUPPORT', true)
+    cpu_neon = true
+  endif
 endif
 
 if get_option('bindings').contains('capi') == true
@@ -98,8 +103,8 @@ Summary:
         get_option('prefix'),
         get_option('engines').contains('sw'),
         get_option('engines').contains('gl'),
-        get_option('vectors').contains('avx'),
-        get_option('vectors').contains('neon'),
+        cpu_avx,
+        cpu_neon,
         get_option('loaders').contains('tvg_beta'),
         get_option('loaders').contains('svg'),
         get_option('loaders').contains('png'),
