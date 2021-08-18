@@ -40,16 +40,15 @@ if get_option('savers').contains('tvg_beta') == true
     config_h.set10('THORVG_TVG_SAVER_SUPPORT', true)
 endif
 
-cpu_avx = false
-cpu_neon = false
+simd_type = 'none'
 
 if get_option('vector') == true
   if host_machine.cpu_family() == 'x86' or host_machine.cpu_family() == 'x86_64'
     config_h.set10('THORVG_AVX_VECTOR_SUPPORT', true)
-    cpu_avx = true
+    simd_type = 'avx'
   elif host_machine.cpu_family() == 'arm'
     config_h.set10('THORVG_NEON_VECTOR_SUPPORT', true)
-    cpu_neon = true
+    simd_type = 'neon'
   endif
 endif
 
@@ -81,30 +80,28 @@ Summary:
     ThorVG version:        @0@
     Build Type:            @1@
     Prefix:                @2@
-    Raster Engine (SW):    @3@
-    Raster Engine (GL):    @4@
-    AVX SIMD Instruction:  @5@
-    Neon SIMD Instruction: @6@
-    Loader (TVG):          @7@
-    Loader (SVG):          @8@
-    Loader (PNG):          @9@
-    Loader (JPG):          @10@
-    Saver (TVG):           @11@
-    CAPI Binding:          @12@
-    Log Message:           @13@
-    Tests:                 @14@
-    Examples:              @15@
-    Tool (Svg2Tvg):        @16@
-    Tool (Svg2Png):        @17@
+    SIMD Instruction:      @3@
+    Raster Engine (SW):    @4@
+    Raster Engine (GL):    @5@
+    Loader (TVG):          @6@
+    Loader (SVG):          @7@
+    Loader (PNG):          @8@
+    Loader (JPG):          @9@
+    Saver (TVG):           @10@
+    CAPI Binding:          @11@
+    Log Message:           @12@
+    Tests:                 @13@
+    Examples:              @14@
+    Tool (Svg2Tvg):        @15@
+    Tool (Svg2Png):        @16@
 
 '''.format(
         meson.project_version(),
         get_option('buildtype'),
         get_option('prefix'),
+        simd_type,
         get_option('engines').contains('sw'),
         get_option('engines').contains('gl'),
-        cpu_avx,
-        cpu_neon,
         get_option('loaders').contains('tvg_beta'),
         get_option('loaders').contains('svg'),
         get_option('loaders').contains('png'),

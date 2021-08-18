@@ -2,10 +2,10 @@ compiler_flags = ['-DTVG_BUILD']
 
 cc = meson.get_compiler('cpp')
 if (cc.get_id() != 'msvc')
-    if cpu_avx
+    if simd_type == 'avx'
         compiler_flags += ['-mavx']
     endif
-    if cpu_neon
+    if simd_type == 'neon'
         compiler_flags += ['-mfpu=neon']
     endif
     if get_option('b_sanitize') == 'none'
