@@ -16,7 +16,7 @@ option('savers',
    value: [''],
    description: 'Enable File Savers in thorvg')
 
-option('use_simd',
+option('vector',
    type: 'boolean',
    value: true,
    description: 'Enable CPU Vectorization(SIMD) in thorvg')

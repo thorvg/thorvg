@@ -43,7 +43,7 @@ endif
 cpu_avx = false
 cpu_neon = false
 
-if get_option('use_simd') == true
+if get_option('vector') == true
   if host_machine.cpu_family() == 'x86' or host_machine.cpu_family() == 'x86_64'
     config_h.set10('THORVG_AVX_VECTOR_SUPPORT', true)
     cpu_avx = true
