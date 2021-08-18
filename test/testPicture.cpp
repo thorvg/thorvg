@@ -217,6 +217,8 @@ TEST_CASE("Load SVG file and render", "[tvgPicture]")
     REQUIRE(picture->load(TEST_DIR"/tag.svg") == Result::Success);
 
     REQUIRE(canvas->push(move(picture)) == Result::Success);
+    REQUIRE(canvas->draw() == Result::Success);
+    REQUIRE(canvas->sync() == Result::Success);
 
     REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
 }
@@ -235,6 +237,8 @@ TEST_CASE("Load PNG file and render", "[tvgPicture]")
     REQUIRE(picture);
 
     REQUIRE(picture->load(TEST_DIR"/test.png") == Result::Success);
+    REQUIRE(picture->opacity(192) == Result::Success);
+    REQUIRE(picture->scale(5.0) == Result::Success);
 
     REQUIRE(canvas->push(move(picture)) == Result::Success);
 

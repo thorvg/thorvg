@@ -34,7 +34,7 @@
 			<stop offset="100%" stop-color="#252f35"/>
 		</linearGradient>
 		<radialGradient id="grad2" cx="100%" cy="0.25" r="1.5" gradientTransform="scale(1)">
-			<stop offset="0%" stop-color="#50585d"/>
+			<stop offset="0%" stop-color="#252f35" stop-opacity="80%"/>
 			<stop offset="100%" stop-color="#252f35"/>
 		</radialGradient>
 		<mask id="vg">
