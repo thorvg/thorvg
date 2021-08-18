@@ -208,8 +208,8 @@ TEST_CASE("Load SVG file and render", "[tvgPicture]")
     auto canvas = SwCanvas::gen();
     REQUIRE(canvas);
 
-    uint32_t buffer[100*100];
-    REQUIRE(canvas->target(buffer, 100, 100, 100, SwCanvas::Colorspace::ABGR8888) == Result::Success);
+    uint32_t buffer[1000*1000];
+    REQUIRE(canvas->target(buffer, 1000, 1000, 1000, SwCanvas::Colorspace::ABGR8888) == Result::Success);
 
     auto picture = Picture::gen();
     REQUIRE(picture);
@@ -259,4 +259,34 @@ TEST_CASE("Load JPG file and render", "[tvgPicture]")
     REQUIRE(canvas->push(move(picture)) == Result::Success);
 
     REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
+}
+
+TEST_CASE("Load RAW file and render", "[tvgPicture]")
+{
+    REQUIRE(Initializer::init(CanvasEngine::Sw, 0) == Result::Success);
+
+    auto canvas = SwCanvas::gen();
+    REQUIRE(canvas);
+
+    uint32_t buffer[100*100];
+    REQUIRE(canvas->target(buffer, 100, 100, 100, SwCanvas::Colorspace::ABGR8888) == Result::Success);
+
+    auto picture = Picture::gen();
+    REQUIRE(picture);
+
+    string path(TEST_DIR"/rawimage_200x300.raw");
+
+    ifstream file(path);
+    if (!file.is_open()) return;
+    auto data = (uint32_t*)malloc(sizeof(uint32_t) * (200*300));
+    file.read(reinterpret_cast<char *>(data), sizeof (uint32_t) * 200 * 300);
+    file.close();
+
+    REQUIRE(picture->load(data, 200, 300, false) == Result::Success);
+
+    REQUIRE(canvas->push(move(picture)) == Result::Success);
+
+    REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
+
+    free(data);
 }
