@@ -25,180 +25,321 @@
 #include <thorvg.h>
 #include <vector>
 #include "lodepng.h"
+#include <dirent.h>
+#include <unistd.h>
+#include <limits.h>
 
 using namespace std;
 
-
 struct PngBuilder
 {
-    void build(const std::string &fileName , const uint32_t width, const uint32_t height, uint32_t *buffer)
+    void build(const string& fileName, const uint32_t width, const uint32_t height, uint32_t* buffer)
     {
-        std::vector<unsigned char> image;
+        //Used ARGB8888 so have to move pixels now
+        vector<unsigned char> image;
         image.resize(width * height * 4);
         for (unsigned y = 0; y < height; y++) {
             for (unsigned x = 0; x < width; x++) {
-                uint32_t n = buffer[ y * width + x ];
+                uint32_t n = buffer[y * width + x];
                 image[4 * width * y + 4 * x + 0] = (n >> 16) & 0xff;
                 image[4 * width * y + 4 * x + 1] = (n >> 8) & 0xff;
                 image[4 * width * y + 4 * x + 2] = n & 0xff;
                 image[4 * width * y + 4 * x + 3] = (n >> 24) & 0xff;
             }
         }
+
         unsigned error = lodepng::encode(fileName, image, width, height);
 
         //if there's an error, display it
-        if (error) std::cout << "encoder error " << error << ": "<< lodepng_error_text(error) << std::endl;
+        if (error) cout << "encoder error " << error << ": " << lodepng_error_text(error) << endl;
     }
 };
 
-
-struct App
+struct Renderer
 {
-    void tvgRender(int w, int h)
+public:
+    int render(const char* path, int w, int h, const string& dst, uint32_t bgColor)
     {
+        //Canvas
+        if (!canvas) createCanvas();
+        if (!canvas) {
+            cout << "Error: Canvas failure" << endl;
+            return 1;
+        }
+
+        //Picture
+        auto picture = tvg::Picture::gen();
+        if (picture->load(path) != tvg::Result::Success) {
+            cout << "Error: Couldn't load image " << path << endl;
+            return 1;
+        }
+
+        if (w == 0 || h == 0) {
+            float fw, fh;
+            picture->size(&fw, &fh);
+            w = static_cast<uint32_t>(fw);
+            h = static_cast<uint32_t>(fh);
+        } else {
+            picture->size(w, h);
+        }
+
+        //Buffer
+        createBuffer(w, h);
+        if (!buffer) {
+            cout << "Error: Buffer failure" << endl;
+            return 1;
+        }
+
+        if (canvas->target(buffer, w, w, h, tvg::SwCanvas::ARGB8888) != tvg::Result::Success) {
+            cout << "Error: Canvas target failure" << endl;
+            return 1;
+        }
+
+        //Background color if needed
+        if (bgColor != 0xffffffff) {
+            uint8_t r = (uint8_t)((bgColor & 0xff0000) >> 16);
+            uint8_t g = (uint8_t)((bgColor & 0x00ff00) >> 8);
+            uint8_t b = (uint8_t)((bgColor & 0x0000ff));
+
+            auto shape = tvg::Shape::gen();
+            shape->appendRect(0, 0, w, h, 0, 0);
+            shape->fill(r, g, b, 255);
+
+            if (canvas->push(move(shape)) != tvg::Result::Success) return 1;
+        }
+
+        //Drawing
+        canvas->push(move(picture));
+        canvas->draw();
+        canvas->sync();
+
+        //Build Png
+        PngBuilder builder;
+        builder.build(dst, w, h, buffer);
+
+        cout << "Generated PNG file: " << dst << endl;
+
+        canvas->clear(true);
+
+        return 0;
+    }
+
+    void terminate()
+    {
+        //Terminate ThorVG Engine
+        tvg::Initializer::term(tvg::CanvasEngine::Sw);
+        free(buffer);
+    }
+
+private:
+    void createCanvas()
+    {
+        //Canvas Engine
         tvg::CanvasEngine tvgEngine = tvg::CanvasEngine::Sw;
 
         //Threads Count
-        auto threads = std::thread::hardware_concurrency();
+        auto threads = thread::hardware_concurrency();
 
         //Initialize ThorVG Engine
-        if (tvg::Initializer::init(tvgEngine, threads) == tvg::Result::Success) {
-            //Create a Canvas
-            auto canvas = tvg::SwCanvas::gen();
+        if (tvg::Initializer::init(tvgEngine, threads) != tvg::Result::Success) {
+            cout << "Error: Engine is not supported" << endl;
+        }
 
-            //Create a Picture
-            auto picture = tvg::Picture::gen();
-            if (picture->load(fileName) != tvg::Result::Success) return;
+        //Create a Canvas
+        canvas = tvg::SwCanvas::gen();
+    }
 
-            float fw, fh;
-            picture->size(&fw, &fh);
+    void createBuffer(int w, int h)
+    {
+        uint32_t size = w * h;
+        //Reuse old buffer if size is enough
+        if (buffer && bufferSize >= size) return;
 
-            //Proper size is not specified, Get default size.
-            if (w == 0 || h == 0) {
-                width = static_cast<uint32_t>(fw);
-                height = static_cast<uint32_t>(fh);
-            //Otherwise, transform size to keep aspect ratio
+        //Alloc or realloc buffer
+        buffer = (uint32_t*) realloc(buffer, sizeof(uint32_t) * size);
+        bufferSize = size;
+    }
+
+private:
+    unique_ptr<tvg::SwCanvas> canvas = nullptr;
+    uint32_t* buffer = nullptr;
+    uint32_t bufferSize = 0;
+};
+
+struct App
+{
+public:
+    int setup(int argc, char** argv)
+    {
+        vector<const char*> paths;
+
+        for (int i = 1; i < argc; i++) {
+            const char* p = argv[i];
+            if (*p == '-') {
+                //flags
+                const char* p_arg = (i + 1 < argc) ? argv[i] : nullptr;
+                if (p[1] == 'r') {
+                    //image resolution
+                    if (!p_arg) {
+                        cout << "Error: Missing resolution attribute. Expected eg. -r 200x200." << endl;
+                        return 1;
+                    }
+
+                    const char* x = strchr(p_arg, 'x');
+                    if (x) {
+                        width = atoi(p_arg);
+                        height = atoi(x + 1);
+                    }
+                    if (!x || width <= 0 || height <= 0) {
+                        cout << "Error: Resolution (" << p_arg << ") is corrupted. Expected eg. -r 200x200." << endl;
+                        return 1;
+                    }
+
+                } else if (p[1] == 'b') {
+                    //image background color
+                    if (!p_arg) {
+                        cout << "Error: Missing background color attribute. Expected eg. -b #fa7410." << endl;
+                        return 1;
+                    }
+
+                    if (*p_arg == '#') ++p_arg;
+                    bgColor = (uint32_t) strtol(p, NULL, 16);
+
+                } else {
+                    cout << "Warning: Unknown flag (" << p << ")." << endl;
+                }
             } else {
-                width = w;
-                height = h;
-                picture->size(w, h);
+                //arguments
+                paths.push_back(p);
             }
+        }
 
-            //Setup the canvas
-            auto buffer = (uint32_t*)malloc(sizeof(uint32_t) * width * height);
-            canvas->target(buffer, width, width, height, tvg::SwCanvas::ARGB8888);
-
-            //Background color?
-            if (bgColor != 0xffffffff) {
-                 uint8_t bgColorR = (uint8_t) ((bgColor & 0xff0000) >> 16);
-                 uint8_t bgColorG = (uint8_t) ((bgColor & 0x00ff00) >> 8);
-                 uint8_t bgColorB = (uint8_t) ((bgColor & 0x0000ff));
-
-                 auto shape = tvg::Shape::gen();
-                 shape->appendRect(0, 0, width, height, 0, 0);
-                 shape->fill(bgColorR, bgColorG, bgColorB, 255);
-
-                 if (canvas->push(move(shape)) != tvg::Result::Success) return;
-            }
-
-            //Drawing
-            canvas->push(move(picture));
-            canvas->draw();
-            canvas->sync();
-
-            //Build Png
-            PngBuilder builder;
-            builder.build(pngName.data(), width, height, buffer);
-
-            //Terminate ThorVG Engine
-            tvg::Initializer::term(tvg::CanvasEngine::Sw);
-
-            free(buffer);
-
+        int ret = 0;
+        if (paths.empty()) {
+            //no attributes - print help
+            return help();
+            
         } else {
-            cout << "engine is not supported" << endl;
-        }
-    }
-
-    int setup(int argc, char **argv, size_t *w, size_t *h)
-    {
-        char *path{nullptr};
-
-        *w = *h = 0;
-
-        if (argc > 1) path = argv[1];
-        if (argc > 2) {
-            char tmp[20];
-            char *x = strstr(argv[2], "x");
-            if (x) {
-                snprintf(tmp, x - argv[2] + 1, "%s", argv[2]);
-                *w = atoi(tmp);
-                snprintf(tmp, sizeof(tmp), "%s", x + 1);
-                *h = atoi(tmp);
+            for (auto path : paths) {
+                auto real_path = realFile(path);
+                if (real_path) {
+                    DIR* dir = opendir(real_path);
+                    if (dir) {
+                        //load from directory
+                        cout << "Trying load from directory \"" << real_path << "\"." << endl;
+                        if ((ret = handleDirectory(real_path, dir))) break;
+                        
+                    } else if (svgFile(path)) {
+                        //load single file
+                        if ((ret = renderFile(real_path))) break;
+                    } else {
+                        //not a directory and not .svg file
+                        cout << "Warning: File \"" << path << "\" is not a proper svg file." << endl;
+                    }
+                    
+                } else {
+                    cout << "Warning: File \"" << path << "\" is invalid." << endl;
+                }
             }
         }
-        if (argc > 3) bgColor = strtol(argv[3], NULL, 16);
 
-        if (!path) return help();
+        //Terminate renderer
+        renderer.terminate();
 
-        std::array<char, 5000> memory;
-
-#ifdef _WIN32
-        path = _fullpath(memory.data(), path, memory.size());
-#else
-        path = realpath(path, memory.data());
-#endif
-        if (!path) return help();
-
-        fileName = std::string(path);
-
-        if (!svgFile()) return help();
-
-        pngName = basename(fileName);
-        pngName.append(".png");
-        return 0;
+        return ret;
     }
 
 private:
-    std::string basename(const std::string &str)
-    {
-        return str.substr(str.find_last_of("/\\") + 1);
-    }
-
-    bool svgFile() {
-        std::string extn = ".svg";
-        if (fileName.size() <= extn.size() || fileName.substr(fileName.size() - extn.size()) != extn)
-            return false;
-
-        return true;
-    }
-
-    int result() {
-        std::cout<<"Generated PNG file : "<<pngName<<std::endl;
-        return 0;
-    }
-
-    int help() {
-        std::cout<<"Usage: \n   svg2png [svgFileName] [Resolution] [bgColor]\n\nExamples: \n    $ svg2png input.svg\n    $ svg2png input.svg 200x200\n    $ svg2png input.svg 200x200 ff00ff\n\n";
-        return 1;
-    }
-
-private:
+    Renderer renderer;
     uint32_t bgColor = 0xffffffff;
     uint32_t width = 0;
     uint32_t height = 0;
-    std::string fileName;
-    std::string pngName;
+    char full[PATH_MAX];
+
+private:
+    int help()
+    {
+        cout << "Usage:\n   svg2png [svgFileName] [-r resolution] [-b bgColor]\n\nFlags:\n    -r set output image resolution.\n    -b set output image background color.\n\nExamples:\n    $ svg2png input.svg\n    $ svg2png input.svg -r 200x200\n    $ svg2png input.svg -r 200x200 -b ff00ff\n    $ svg2png input1.svg input2.svg -r 200x200 -b ff00ff\n    $ svg2png . -r 200x200\n\n";
+        return 1;
+    }
+    
+    bool svgFile(const char* path)
+    {
+        size_t length = strlen(path);
+        return length > 4 && (strcmp(&path[length - 4], ".svg") == 0);
+    }
+    
+    const char* realFile(const char* path)
+    {
+        //real path
+#ifdef _WIN32
+        path = fullpath(full, path, PATH_MAX);
+#else
+        path = realpath(path, full);
+#endif
+        return path;
+    }
+
+    int renderFile(const char* path)
+    {
+        if (!path) return 1;
+
+        //destination png file
+        const char* dot = strrchr(path, '.');
+        if (!dot) return 1;
+        string dst(path, dot - path);
+        dst += ".png";
+
+        return renderer.render(path, width, height, dst, bgColor);
+    }
+    
+    int handleDirectory(const string& path, DIR* dir)
+    {
+        //open directory
+        if (!dir) {
+            dir = opendir(path.c_str());
+            if (!dir) {
+                cout << "Couldn't open directory \"" << path.c_str() << "\"." << endl;
+                return 1;
+            }
+        }
+        
+        //list directory
+        int ret = 0;
+        struct dirent* entry;
+        while ((entry = readdir(dir)) != NULL) {
+            if (*entry->d_name == '.' || *entry->d_name == '$') continue;
+            if (entry->d_type == DT_DIR) {
+                string subpath = string(path);
+#ifdef _WIN32
+                subpath += '\\';
+#else
+                subpath += '/';
+#endif
+                subpath += entry->d_name;
+                ret = handleDirectory(subpath, nullptr);
+                if (ret) break;
+
+            } else {
+                if (!svgFile(entry->d_name)) continue;
+                string fullpath = string(path);
+#ifdef _WIN32
+                fullpath += '\\';
+#else
+                fullpath += '/';
+#endif
+                fullpath += entry->d_name;
+                ret = renderFile(fullpath.c_str());
+                if (ret) break;
+            }
+        }
+        closedir(dir);
+        return ret;
+    }
 };
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
     App app;
-    size_t w, h;
-
-    if (app.setup(argc, argv, &w, &h)) return 1;
-
-    app.tvgRender(w, h);
-
-    return 0;
+    return app.setup(argc, argv);
 }
