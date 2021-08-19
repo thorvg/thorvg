@@ -23,6 +23,7 @@
 #include <fstream>
 #include "tvgLoader.h"
 #include "tvgTvgLoader.h"
+#include "tvgLzw.h"
 
 
 /************************************************************************/
@@ -62,14 +63,33 @@ bool TvgLoader::readHeader()
         TVGLOG("TVG", "This TVG file expects a higher version(%d) of ThorVG symbol(%d)", this->version, THORVG_VERSION_NUMBER());
     }
 
-    //3. Reserved
-    ptr += TVG_HEADER_RESERVED_LENGTH;
-
-    //4. View Size
+    //3. View Size
     READ_FLOAT(&w, ptr);
     ptr += SIZE(float);
     READ_FLOAT(&h, ptr);
     ptr += SIZE(float);
+
+    //4. Reserved
+    if (*ptr & TVG_HEAD_FLAG_COMPRESSED) compressed = true;
+    ptr += TVG_HEADER_RESERVED_LENGTH;
+
+    //5. Compressed Size if any
+    if (compressed) {
+        auto p = reinterpret_cast<TvgBinCounter*>(const_cast<char*>(ptr));
+
+        //TVG_HEADER_UNCOMPRESSED_SIZE
+        uncompressedSize = *static_cast<uint32_t*>(p);
+        ++p;
+
+        //TVG_HEADER_COMPRESSED_SIZE
+        compressedSize = *static_cast<uint32_t*>(p);
+        ++p;
+
+        //TVG_HEADER_COMPRESSED_SIZE_BITS
+        compressedSizeBits = *static_cast<uint32_t*>(p);
+    }
+
+    ptr += TVG_HEADER_COMPRESS_SIZE;
 
     //Decide the proper Tvg Binary Interpreter based on the current file version
     if (this->version >= 0) interpreter = new TvgBinInterpreter;
@@ -186,7 +206,15 @@ void TvgLoader::run(unsigned tid)
 {
     if (root) root.reset();
 
-    root = interpreter->run(ptr, data + size);
+    auto data = const_cast<char*>(ptr);
+
+    if (compressed) {
+        data = (char*) lzwDecode((uint8_t*) data, compressedSize, compressedSizeBits, uncompressedSize);
+    }
+
+    root = interpreter->run(data, data + uncompressedSize);
+
+    if (compressed) delete(data);
 
     if (!root) clear();
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Samsung Electronics Co., Ltd. All rights reserved.
+ * Copyright (c) 2020-2021 Samsung Electronics Co., Ltd. All rights reserved.
 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -19,29 +19,13 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#ifndef _TVG_SAVE_MODULE_H_
-#define _TVG_SAVE_MODULE_H_
-
-#include "tvgPaint.h"
+#ifndef _TVG_LZW_H_
+#define _TVG_LZW_H_
 
 namespace tvg
 {
-
-class SaveModule
-{
-public:
-    virtual ~SaveModule() {}
-
-    virtual bool save(Paint* paint, const string& path, bool compress) = 0;
-    virtual bool close() = 0;
-
-    //Utility Method: Iterator Delegator
-    Iterator* iterator(const Paint* paint)
-    {
-        return paint->pImpl->iterator();
-    }
-};
-
+    uint8_t* lzwEncode(const uint8_t* uncompressed, uint32_t uncompressedSizeBytes, uint32_t* compressedSizeBytes, uint32_t* compressedSizeBits);
+    uint8_t* lzwDecode(const uint8_t* compressed, uint32_t compressedSizeBytes, uint32_t compressedSizeBits, uint32_t uncompressedSizeBytes);
 }
 
-#endif //_TVG_SAVE_MODULE_H_
+#endif  //_TVG_LZW_H

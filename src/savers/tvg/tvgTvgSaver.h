@@ -35,9 +35,12 @@ private:
     Array<TvgBinByte> buffer;
     Paint* paint = nullptr;
     char *path = nullptr;
+    uint32_t headerSize;
     float vsize[2] = {0.0f, 0.0f};
+    bool compress;
 
     bool flushTo(const std::string& path);
+    bool saveEncoding(const std::string& path);
     void reserveCount();
 
     bool writeHeader();
@@ -64,7 +67,7 @@ private:
 public:
     ~TvgSaver();
 
-    bool save(Paint* paint, const string& path) override;
+    bool save(Paint* paint, const string& path, bool compress) override;
     bool close() override;
     void run(unsigned tid) override;
 };

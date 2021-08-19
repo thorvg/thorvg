@@ -23,6 +23,7 @@
 #include <math.h>
 #include "tvgSaveModule.h"
 #include "tvgTvgSaver.h"
+#include "tvgLzw.h"
 
 #define SIZE(A) sizeof(A)
 
@@ -128,12 +129,75 @@ static bool _merge(Shape* from, Shape* to)
 }
 
 
+bool TvgSaver::saveEncoding(const std::string& path)
+{
+    if (!compress) return flushTo(path);
+
+    //Try encoding
+    auto uncompressed = buffer.data + headerSize;
+    auto uncompressedSize = buffer.count - headerSize;
+
+    uint32_t compressedSize, compressedSizeBits;
+
+    auto compressed = lzwEncode(uncompressed, uncompressedSize, &compressedSize, &compressedSizeBits);
+
+    //Failed compression.
+    if (!compressed) return flushTo(path);
+
+    //Optimization is ineffective.
+    if (compressedSize >= uncompressedSize) {
+        free(compressed);
+        return flushTo(path);
+    }
+
+    TVGLOG("TVG_SAVER", "%s, compressed: %d -> %d, saved rate: %3.2f%%", path.c_str(), uncompressedSize, compressedSize, (1 - ((float) compressedSize / (float) uncompressedSize)) * 100);
+
+    //Update compress size in the header.
+    uncompressed -= (TVG_HEADER_COMPRESS_SIZE + TVG_HEADER_RESERVED_LENGTH);
+
+    //Compression Flag
+    *uncompressed |= TVG_HEAD_FLAG_COMPRESSED;
+    uncompressed += TVG_HEADER_RESERVED_LENGTH;
+
+    //Uncompressed Size
+    *reinterpret_cast<TvgBinCounter*>(uncompressed) = uncompressedSize;
+    uncompressed += TVG_HEADER_UNCOMPRESSED_SIZE;
+
+    //Comprssed Size
+    *reinterpret_cast<TvgBinCounter*>(uncompressed) = compressedSize;
+    uncompressed += TVG_HEADER_COMPRESSED_SIZE;
+
+    //Compressed Size Bits
+    *reinterpret_cast<TvgBinCounter*>(uncompressed) = compressedSizeBits;
+
+    //Good optimization, flush to file.
+    auto fp = fopen(path.c_str(), "w+");
+    if (!fp) goto fail;
+
+    //write header
+    if (fwrite(buffer.data, SIZE(uint8_t), headerSize, fp) == 0) goto fail;
+
+    //write compressed data
+    if (fwrite(compressed, SIZE(uint8_t), compressedSize, fp) == 0) goto fail;
+
+    fclose(fp);
+    free(compressed);
+
+    return true;
+
+fail:
+    if (fp) fclose(fp);
+    if (compressed) free(compressed);
+    return false;
+}
+
+
 bool TvgSaver::flushTo(const std::string& path)
 {
-    FILE* fp = fopen(path.c_str(), "w+");
+    auto fp = fopen(path.c_str(), "w+");
     if (!fp) return false;
 
-    if (fwrite(buffer.data, SIZE(char), buffer.count, fp) == 0) {
+    if (fwrite(buffer.data, SIZE(uint8_t), buffer.count, fp) == 0) {
         fclose(fp);
         return false;
     }
@@ -146,7 +210,8 @@ bool TvgSaver::flushTo(const std::string& path)
 /* WARNING: Header format shall not changed! */
 bool TvgSaver::writeHeader()
 {
-    auto headerSize = TVG_HEADER_SIGNATURE_LENGTH + TVG_HEADER_VERSION_LENGTH + TVG_HEADER_RESERVED_LENGTH + SIZE(vsize);
+    headerSize = TVG_HEADER_SIGNATURE_LENGTH + TVG_HEADER_VERSION_LENGTH + SIZE(vsize) + TVG_HEADER_RESERVED_LENGTH + TVG_HEADER_COMPRESS_SIZE;
+
     buffer.grow(headerSize);
 
     //1. Signature
@@ -158,10 +223,13 @@ bool TvgSaver::writeHeader()
     memcpy(ptr, TVG_HEADER_VERSION, TVG_HEADER_VERSION_LENGTH);
     ptr += TVG_HEADER_VERSION_LENGTH;
 
-    buffer.count += (TVG_HEADER_SIGNATURE_LENGTH + TVG_HEADER_VERSION_LENGTH + TVG_HEADER_RESERVED_LENGTH);
+    buffer.count += (TVG_HEADER_SIGNATURE_LENGTH + TVG_HEADER_VERSION_LENGTH);
 
     //3. View Size
     writeData(vsize, SIZE(vsize));
+
+    //4. Reserved data + Compress size
+    buffer.count += TVG_HEADER_RESERVED_LENGTH + TVG_HEADER_COMPRESS_SIZE;
 
     return true;
 }
@@ -592,7 +660,7 @@ void TvgSaver::run(unsigned tid)
 {
     if (!writeHeader()) return;
     if (serialize(paint, nullptr) == 0) return;
-    if (!flushTo(path)) return;
+    if (!saveEncoding(path)) return;
 }
 
 
@@ -623,7 +691,7 @@ bool TvgSaver::close()
 }
 
 
-bool TvgSaver::save(Paint* paint, const string& path)
+bool TvgSaver::save(Paint* paint, const string& path, bool compress)
 {
     close();
 
@@ -637,6 +705,7 @@ bool TvgSaver::save(Paint* paint, const string& path)
     }
 
     this->paint = paint;
+    this->compress = compress;
 
     TaskScheduler::request(this);
 
