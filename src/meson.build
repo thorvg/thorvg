@@ -40,12 +40,12 @@ thorvg_dep = declare_dependency(
 )
 
 if (cc.get_id() == 'emscripten')
-
   subdir('wasm')
 
   executable('thorvg-wasm',
-              [],
-              dependencies : [thorvg_dep, thorvg_wasm_dep],
+             [],
+             include_directories : headers,
+             dependencies : [thorvg_lib_dep, thorvg_wasm_dep],
             )
 endif
 
