@@ -8,6 +8,7 @@ test_file = [
     'testShape.cpp',
     'testSwCanvas.cpp',
     'testSwCanvasBase.cpp',
+    'testSwEngine.cpp',
 ]
 
 tests = executable('tvgUnitTests',
