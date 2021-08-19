@@ -163,11 +163,13 @@ static float _toOffset(const char* str)
 static int _toOpacity(const char* str)
 {
     char* end = nullptr;
-    int a = 0;
     float opacity = svgUtilStrtof(str, &end);
 
-    if (end && (*end == '\0')) a = lrint(opacity * 255);
-    return a;
+    if (end) {
+        if (end[0] == '%' && end[1] == '\0') return lrint(opacity * 2.55f);
+        else if (*end == '\0') return lrint(opacity * 255);
+    }
+    return 255;
 }
 
 
