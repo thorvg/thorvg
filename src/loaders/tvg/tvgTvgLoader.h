@@ -36,7 +36,11 @@ public:
     uint16_t version = 0;
     unique_ptr<Scene> root = nullptr;
     TvgBinInterpreterBase* interpreter = nullptr;
+    uint32_t uncompressedSize = 0;
+    uint32_t compressedSize = 0;
+    uint32_t compressedSizeBits = 0;
     bool copy = false;
+    bool compressed = false;
 
     ~TvgLoader();
 

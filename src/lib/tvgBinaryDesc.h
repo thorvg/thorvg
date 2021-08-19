@@ -34,13 +34,19 @@ using TvgBinTag = TvgBinByte;
 using TvgBinFlag = TvgBinByte;
 
 
-
 //Header
 #define TVG_HEADER_SIGNATURE "ThorVG"
 #define TVG_HEADER_SIGNATURE_LENGTH 6
 #define TVG_HEADER_VERSION "000400"       //Major 00, Minor 04, Micro 00
 #define TVG_HEADER_VERSION_LENGTH 6
-#define TVG_HEADER_RESERVED_LENGTH 4      //Storing flags for extensions
+#define TVG_HEADER_RESERVED_LENGTH 1      //Storing flags for extensions
+#define TVG_HEADER_COMPRESS_SIZE 12       //TVG_HEADER_UNCOMPRESSED_SIZE + TVG_HEADER_COMPRESSED_SIZE + TVG_HEADER_COMPRESSED_SIZE_BITS
+//Compress Size 
+#define TVG_HEADER_UNCOMPRESSED_SIZE 4     //SIZE (TvgBinCounter)
+#define TVG_HEADER_COMPRESSED_SIZE 4       //SIZE (TvgBinCounter)
+#define TVG_HEADER_COMPRESSED_SIZE_BITS 4  //SIZE (TvgBinCounter)
+//Reserved Flag
+#define TVG_HEAD_FLAG_COMPRESSED                    0x01
 
 //Paint Type
 #define TVG_TAG_CLASS_PICTURE                       (TvgBinTag)0xfc

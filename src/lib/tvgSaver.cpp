@@ -97,7 +97,7 @@ Saver::~Saver()
 }
 
 
-Result Saver::save(std::unique_ptr<Paint> paint, const string& path) noexcept
+Result Saver::save(std::unique_ptr<Paint> paint, const string& path, bool compress) noexcept
 {
     //Already on saving an other resource.
     if (pImpl->saveModule) return Result::InsufficientCondition;
@@ -106,7 +106,7 @@ Result Saver::save(std::unique_ptr<Paint> paint, const string& path) noexcept
     if (!p) return Result::MemoryCorruption;
 
     if (auto saveModule = _find(path)) {
-        if (saveModule->save(p, path)) {
+        if (saveModule->save(p, path, compress)) {
             pImpl->saveModule = saveModule;
             return Result::Success;
         } else {

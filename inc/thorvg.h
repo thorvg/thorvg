@@ -1376,8 +1376,13 @@ public:
     /**
      * @brief Export the given @p paint data to the given @p path
      *
+     * If the saver module supports any compression mechanism, it will optmize the data size.
+     * This might affect the encoding/decoding time slow down in cases, You can turn off the compression
+     * if your system whole focuse on the speed.
+     *
      * @param[in] paint The paint to be saved with all its associated properties.
      * @param[in] path A path to the file, in which the paint data is to be saved.
+     * @param[in] compress Use data compression if it's available.
      *
      * @retval Result::Success When succeed.
      * @retval Result::NonSupport When trying to save a file with an unknown extension nor non supported format.
@@ -1388,7 +1393,7 @@ public:
      *
      * @BETA_API
      */
-    Result save(std::unique_ptr<Paint> paint, const std::string& path) noexcept;
+    Result save(std::unique_ptr<Paint> paint, const std::string& path, bool compress = true) noexcept;
 
     /**
      * @brief Guarantees that the saving task is finished.
