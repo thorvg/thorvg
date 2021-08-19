@@ -201,6 +201,23 @@ TEST_CASE("Picture Size", "[tvgPicture]")
     REQUIRE(picture->size(w, h) == Result::Success);
 }
 
+TEST_CASE("Picture Duplication", "[tvgPicture]")
+{
+    auto picture = Picture::gen();
+    REQUIRE(picture);
+
+    REQUIRE(picture->load(TEST_DIR"/logo.svg") == Result::Success);
+    REQUIRE(picture->size(100, 100) == Result::Success);
+
+    auto dup = picture->duplicate();
+    REQUIRE(dup);
+
+    float w, h;
+    REQUIRE(picture->size(&w, &h) == Result::Success);
+    REQUIRE(w == 100);
+    REQUIRE(h == 100);
+}
+
 TEST_CASE("Load SVG file and render", "[tvgPicture]")
 {
     REQUIRE(Initializer::init(CanvasEngine::Sw, 0) == Result::Success);
@@ -287,6 +304,7 @@ TEST_CASE("Load RAW file and render", "[tvgPicture]")
     file.close();
 
     REQUIRE(picture->load(data, 200, 300, false) == Result::Success);
+    REQUIRE(picture->size(100, 150) == Result::Success);
 
     REQUIRE(canvas->push(move(picture)) == Result::Success);
 

@@ -124,7 +124,48 @@ TEST_CASE("Radial Filling", "[tvgFill]")
     REQUIRE(radius == 0.0f);
 }
 
-TEST_CASE("Filling Dupliction", "[tvgFill]")
+TEST_CASE("Linear Filling Dupliction", "[tvgFill]")
+{
+    auto fill = LinearGradient::gen();
+    REQUIRE(fill);
+
+    //Setup
+    Fill::ColorStop cs[4] = {
+        {0.0f, 0, 0, 0, 0},
+        {0.2f, 50, 25, 50, 25},
+        {0.5f, 100, 100, 100, 125},
+        {1.0f, 255, 255, 255, 255}
+    };
+
+    REQUIRE(fill->colorStops(cs, 4) == Result::Success);
+    REQUIRE(fill->spread(FillSpread::Reflect) == Result::Success);
+    REQUIRE(fill->linear(-10.0f, 10.0f, 100.0f, 120.0f) == Result::Success);
+
+    //Duplication
+    auto dup = unique_ptr<LinearGradient>(static_cast<LinearGradient*>(fill->duplicate()));
+    REQUIRE(dup);
+
+    REQUIRE(dup->spread() == FillSpread::Reflect);
+
+    float x1, y1, x2, y2;
+    REQUIRE(fill->linear(&x1, &y1, &x2, &y2) == Result::Success);
+    REQUIRE(x1 == -10.0f);
+    REQUIRE(y1 == 10.0f);
+    REQUIRE(x2 == 100.0f);
+    REQUIRE(y2 == 120.0f);
+
+    const Fill::ColorStop* cs2 = nullptr;
+    REQUIRE(fill->colorStops(&cs2) == 4);
+
+    for (int i = 0; i < 4; ++i) {
+        REQUIRE(cs[i].offset == cs2[i].offset);
+        REQUIRE(cs[i].r == cs2[i].r);
+        REQUIRE(cs[i].g == cs2[i].g);
+        REQUIRE(cs[i].b == cs2[i].b);
+    };
+}
+
+TEST_CASE("Radial Filling Dupliction", "[tvgFill]")
 {
     auto fill = RadialGradient::gen();
     REQUIRE(fill);
