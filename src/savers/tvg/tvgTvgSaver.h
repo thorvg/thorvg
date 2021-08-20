@@ -35,6 +35,7 @@ private:
     Array<TvgBinByte> buffer;
     Paint* paint = nullptr;
     char *path = nullptr;
+    bool saveToPath = true;
     float vsize[2] = {0.0f, 0.0f};
 
     bool flushTo(const std::string& path);
@@ -65,6 +66,7 @@ public:
     ~TvgSaver();
 
     bool save(Paint* paint, const string& path) override;
+    bool save(Paint* paint, uint8_t** buffer, uint32_t* size) override;
     bool close() override;
     void run(unsigned tid) override;
 };

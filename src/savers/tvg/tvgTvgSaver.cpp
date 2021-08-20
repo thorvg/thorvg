@@ -592,7 +592,7 @@ void TvgSaver::run(unsigned tid)
 {
     if (!writeHeader()) return;
     if (serialize(paint, nullptr) == 0) return;
-    if (!flushTo(path)) return;
+    if (saveToPath && !flushTo(path)) return;
 }
 
 
@@ -618,7 +618,9 @@ bool TvgSaver::close()
         free(path);
         path = nullptr;
     }
-    buffer.reset();
+    if (saveToPath) {
+        buffer.reset();
+    }
     return true;
 }
 
@@ -629,6 +631,7 @@ bool TvgSaver::save(Paint* paint, const string& path)
 
     this->path = strdup(path.c_str());
     if (!this->path) return false;
+    saveToPath = true;
 
     paint->bounds(nullptr, nullptr, &vsize[0], &vsize[1]);
     if (vsize[0] <= FLT_EPSILON || vsize[1] <= FLT_EPSILON) {
@@ -639,6 +642,32 @@ bool TvgSaver::save(Paint* paint, const string& path)
     this->paint = paint;
 
     TaskScheduler::request(this);
+
+    return true;
+}
+
+
+bool TvgSaver::save(Paint* paint, uint8_t** buffer, uint32_t* size)
+{
+    close();
+    path = nullptr;
+    saveToPath = false;
+
+    paint->bounds(nullptr, nullptr, &vsize[0], &vsize[1]);
+    if (vsize[0] <= FLT_EPSILON || vsize[1] <= FLT_EPSILON) {
+        TVGLOG("TVG_SAVER", "Saving paint(%p) has zero view size.", paint);
+        return false;
+    }
+
+    this->paint = paint;
+
+    TaskScheduler::request(this);
+    close();
+
+    *buffer = this->buffer.data;
+    *size = this->buffer.count;
+    this->buffer.data = nullptr;
+    this->buffer.count = this->buffer.reserved = 0;
 
     return true;
 }

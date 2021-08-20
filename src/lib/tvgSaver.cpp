@@ -74,6 +74,7 @@ static SaveModule* _find(FileType type)
 
 static SaveModule* _find(const string& path)
 {
+    //find extension. If dot is not found, will compare whole path string.
     auto ext = path.substr(path.find_last_of(".") + 1);
     if (!ext.compare("tvg")) {
         return _find(FileType::Tvg);
@@ -108,6 +109,26 @@ Result Saver::save(std::unique_ptr<Paint> paint, const string& path) noexcept
     if (auto saveModule = _find(path)) {
         if (saveModule->save(p, path)) {
             pImpl->saveModule = saveModule;
+            return Result::Success;
+        } else {
+            return Result::Unknown;
+        }
+    }
+    return Result::NonSupport;
+}
+
+
+Result Saver::save(std::unique_ptr<Paint> paint, const std::string& mimeType, uint8_t** buffer, uint32_t* size) noexcept
+{
+    //Already on saving an other resource.
+    if (pImpl->saveModule) return Result::InsufficientCondition;
+
+    auto p = paint.release();
+    if (!p) return Result::MemoryCorruption;
+
+    if (auto saveModule = _find(mimeType)) {
+        if (saveModule->save(p, buffer, size)) {
+            delete(saveModule);
             return Result::Success;
         } else {
             return Result::Unknown;

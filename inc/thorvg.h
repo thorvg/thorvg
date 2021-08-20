@@ -1391,6 +1391,24 @@ public:
     Result save(std::unique_ptr<Paint> paint, const std::string& path) noexcept;
 
     /**
+     * @brief Export the given @p paint data to the given @p buffer.
+     * If export success, buffer size is returned in @p size.
+     *
+     * @param[in] paint The paint to be saved with all its associated properties.
+     * @param[in] mimeType Mimetype of a data, eg. "tvg".
+     * @param[out] buffer An empty buffer, in which the paint data is to be saved.
+     * @param[out] size Size of a buffer.
+     *
+     * @retval Result::Success When succeed.
+     * @retval Result::Unknown Others.
+     *
+     * @note Saving into a buffer is synchronous. No need to call sync().
+     *
+     * @BETA_API
+     */
+    Result save(std::unique_ptr<Paint> paint, const std::string& mimeType, uint8_t** buffer, uint32_t* size) noexcept;
+
+    /**
      * @brief Guarantees that the saving task is finished.
      *
      * The behavior of the saver will work on a sync/async basis, depending on the threading setting of the Initializer.

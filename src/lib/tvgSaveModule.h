@@ -33,6 +33,7 @@ public:
     virtual ~SaveModule() {}
 
     virtual bool save(Paint* paint, const string& path) = 0;
+    virtual bool save(Paint* paint, uint8_t** buffer, uint32_t* size) = 0;
     virtual bool close() = 0;
 
     //Utility Method: Iterator Delegator
