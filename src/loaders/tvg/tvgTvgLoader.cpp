@@ -21,6 +21,7 @@
  */
 #include <memory.h>
 #include <fstream>
+#include <float.h>
 #include "tvgLoader.h"
 #include "tvgTvgLoader.h"
 
@@ -70,6 +71,8 @@ bool TvgLoader::readHeader()
     ptr += SIZE(float);
     READ_FLOAT(&h, ptr);
     ptr += SIZE(float);
+    
+    if (w < FLT_EPSILON || h < FLT_EPSILON) return false;
 
     //Decide the proper Tvg Binary Interpreter based on the current file version
     if (this->version >= 0) interpreter = new TvgBinInterpreter;
