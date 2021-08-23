@@ -320,7 +320,7 @@ static SwOutline* _genDashOutline(const Shape* sdata, const Matrix* transform)
     _growOutlinePoint(*dash.outline, outlinePtsCnt * 20);
     _growOutlineContour(*dash.outline, outlineCntrsCnt * 20);
 
-    while (cmdCnt-- > 0) {
+    while (cmdCnt-- > 0 && ptsCnt > 0) {
         switch(*cmds) {
             case PathCommand::Close: {
                 _dashLineTo(dash, &dash.ptStart, transform);
@@ -333,16 +333,19 @@ static SwOutline* _genDashOutline(const Shape* sdata, const Matrix* transform)
                 dash.curOpGap = false;
                 dash.ptStart = dash.ptCur = *pts;
                 ++pts;
+                --ptsCnt;
                 break;
             }
             case PathCommand::LineTo: {
                 _dashLineTo(dash, pts, transform);
                 ++pts;
+                --ptsCnt;
                 break;
             }
             case PathCommand::CubicTo: {
                 _dashCubicTo(dash, pts, pts + 1, pts + 2, transform);
                 pts += 3;
+                ptsCnt -= 3;
                 break;
             }
         }
@@ -427,7 +430,7 @@ static bool _genOutline(SwShape* shape, const Shape* sdata, const Matrix* transf
     }
 
     //Generate Outlines
-    while (cmdCnt-- > 0) {
+    while (cmdCnt-- > 0 && ptsCnt > 0) {
         switch(*cmds) {
             case PathCommand::Close: {
                 _outlineClose(*outline);
@@ -436,16 +439,19 @@ static bool _genOutline(SwShape* shape, const Shape* sdata, const Matrix* transf
             case PathCommand::MoveTo: {
                 _outlineMoveTo(*outline, pts, transform);
                 ++pts;
+                --ptsCnt;
                 break;
             }
             case PathCommand::LineTo: {
                 _outlineLineTo(*outline, pts, transform);
                 ++pts;
+                --ptsCnt;
                 break;
             }
             case PathCommand::CubicTo: {
                 _outlineCubicTo(*outline, pts, pts + 1, pts + 2, transform);
                 pts += 3;
+                ptsCnt -= 3;
                 break;
             }
         }
