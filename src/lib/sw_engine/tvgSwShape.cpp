@@ -389,11 +389,13 @@ static bool _genOutline(SwShape* shape, const Shape* sdata, const Matrix* transf
     //smart reservation
     auto outlinePtsCnt = 0;
     auto outlineCntrsCnt = 0;
+    auto closeCnt = 0;
 
     for (uint32_t i = 0; i < cmdCnt; ++i) {
         switch(*(cmds + i)) {
             case PathCommand::Close: {
                 ++outlinePtsCnt;
+                ++closeCnt;
                 break;
             }
             case PathCommand::MoveTo: {
@@ -410,6 +412,11 @@ static bool _genOutline(SwShape* shape, const Shape* sdata, const Matrix* transf
                 break;
             }
         }
+    }
+
+    if (static_cast<uint32_t>(outlinePtsCnt - closeCnt) > ptsCnt) {
+        TVGERR("SW_ENGINE", "Wrong a pair of the commands & points - required(%d), current(%d)", outlinePtsCnt - closeCnt, ptsCnt);
+        return false;
     }
 
     ++outlinePtsCnt;    //for close
