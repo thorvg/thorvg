@@ -195,22 +195,22 @@ The result:
 
 ThorVG provides the designated vector data format which is called TVG Picture. TVG Picture stores a list of properties of the Paint nodes of a scene in binary form. The data saved in a TVG Picture is optimized beforehand, keeping the resulting file small and the data loading process fast and efficient.
 
-To save data in a TVG Picture format, ThorVG uses a dedicated module - TVG Saver. It is responsible for optimizing the data of all the scene-tree nodes and saving them in binary format. In the optimization process, the TVG Saver filters out unused information, removing the duplicated properties, merges the overlapping shapes and compresses the data if possible, but keeping the TVG Pictures compatible with the later version of ThorVG libraries.
+To save data in a TVG Picture format, ThorVG uses a dedicated module - TVG Saver. It is responsible for optimizing the data of all the scene-tree nodes and saving them in binary format. In the optimization process, the TVG Saver filters out unused information, removing the duplicated properties, merges the overlapping shapes and compresses the data if possible, but keeping the TVG Pictures compatible with the later version of ThorVG libraries. In case of compression, it uses [Lempel-Ziv-Welchi](https://en.wikipedia.org/wiki/Lempel%E2%80%93Ziv%E2%80%93Welch) data compression algorithm.
 
 The final data size is smaller in comparison to any other text-based vector data format, such as SVG, which in turn decreases the required application resources. This helps not only reduce the number of I/O operations but also reduces the memory bandwidth while loading the data. Thus this is effective if your program uses a big amount of the vector resources.
 
 Additionally, TVG Picture helps to reduce the resource loading tasks since it can skip interpreting the data stage. That brings the reduced amount of the required runtime memory and rendering tasks that increases the performance.
 
-Utilizing the TVG Picture allows you to reduce the data size and loading time by more than 30%, on average. Note that the charge in the performance rate depends on the resource size and its complexity.
+Utilizing the TVG Picture allows you to reduce the data size and loading time by more than 30%, on average ([See More](https://github.com/Samsung/thorvg/wiki/TVG-Picture-Binary-Size)). Note that the charge in the performance rate depends on the resource size and its complexity.
 
 <p align="center">
-  <img width="910" height="260" src="https://github.com/Samsung/thorvg/blob/master/res/example_tvgsize.png">
+  <img width="909" height="314" src="https://github.com/Samsung/thorvg/blob/master/res/example_tvgsize.png">
 </p>
 
 While TVG Saver exports the scene-tree to the TVG Picture data files(TVG), the TVG Loader imports and restores it to the programmable instances. You can quickly use the ThorVG Viewer to convert files from SVG to TVG(Coming soon).
 
 <p align="center">
-  <img width="649" height="283" src="https://github.com/Samsung/thorvg/blob/master/res/example_tvg.png">
+  <img width="679" height="188" src="https://github.com/Samsung/thorvg/blob/master/res/example_tvg.png">
 </p>
 
 
