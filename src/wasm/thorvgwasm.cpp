@@ -66,9 +66,7 @@ public:
         mSwCanvas->clear();
 
         if (data.empty()) data = defaultData;
-        const char *cdata = data.c_str();
-        if (mPicture->load(cdata, strlen(cdata)) != Result::Success) {
-
+        if (mPicture->load(data.c_str(), data.size()) != Result::Success) {
             /* mPicture is not handled as unique_ptr yet, so delete here */
             delete(mPicture);
             mPicture = nullptr;
