@@ -33,6 +33,13 @@ struct Line
 };
 
 
+static const Point _getPointIndexOf(const Point* pts, unsigned int ptsCnt, unsigned int index)
+{
+   if (ptsCnt >= index) return pts[index];
+   else return {0, 0};
+}
+
+
 static float _lineLength(const Point& pt1, const Point& pt2)
 {
     /* approximate sqrt(x*x + y*y) using alpha max plus beta min algorithm.
@@ -320,7 +327,10 @@ static SwOutline* _genDashOutline(const Shape* sdata, const Matrix* transform)
     _growOutlinePoint(*dash.outline, outlinePtsCnt * 20);
     _growOutlineContour(*dash.outline, outlineCntrsCnt * 20);
 
+    auto ptsIndex = 0;
+
     while (cmdCnt-- > 0) {
+        const Point p = _getPointIndexOf(pts, ptsCnt, ptsIndex);
         switch(*cmds) {
             case PathCommand::Close: {
                 _dashLineTo(dash, &dash.ptStart, transform);
@@ -331,18 +341,20 @@ static SwOutline* _genDashOutline(const Shape* sdata, const Matrix* transform)
                 dash.curIdx = 0;
                 dash.curLen = *dash.pattern;
                 dash.curOpGap = false;
-                dash.ptStart = dash.ptCur = *pts;
-                ++pts;
+                dash.ptStart = dash.ptCur = p;
+                ++ptsIndex;
                 break;
             }
             case PathCommand::LineTo: {
-                _dashLineTo(dash, pts, transform);
-                ++pts;
+                _dashLineTo(dash, &p, transform);
+                ++ptsIndex;
                 break;
             }
             case PathCommand::CubicTo: {
-                _dashCubicTo(dash, pts, pts + 1, pts + 2, transform);
-                pts += 3;
+                const Point p2 = _getPointIndexOf(pts, ptsCnt, ptsIndex + 1);
+                const Point p3 = _getPointIndexOf(pts, ptsCnt, ptsIndex + 2);
+                _dashCubicTo(dash, &p, &p2, &p3, transform);
+                ptsIndex += 3;
                 break;
             }
         }
@@ -426,26 +438,31 @@ static bool _genOutline(SwShape* shape, const Shape* sdata, const Matrix* transf
         _resetOutlineClose(*outline);
     }
 
+    auto ptsIndex = 0;
+
     //Generate Outlines
     while (cmdCnt-- > 0) {
+        const Point p = _getPointIndexOf(pts, ptsCnt, ptsIndex);
         switch(*cmds) {
             case PathCommand::Close: {
                 _outlineClose(*outline);
                 break;
             }
             case PathCommand::MoveTo: {
-                _outlineMoveTo(*outline, pts, transform);
-                ++pts;
+                _outlineMoveTo(*outline, &p, transform);
+                ++ptsIndex;
                 break;
             }
             case PathCommand::LineTo: {
-                _outlineLineTo(*outline, pts, transform);
-                ++pts;
+                _outlineLineTo(*outline, &p, transform);
+                ++ptsIndex;
                 break;
             }
             case PathCommand::CubicTo: {
-                _outlineCubicTo(*outline, pts, pts + 1, pts + 2, transform);
-                pts += 3;
+                const Point p2 = _getPointIndexOf(pts, ptsCnt, ptsIndex + 1);
+                const Point p3 = _getPointIndexOf(pts, ptsCnt, ptsIndex + 2);
+                _outlineCubicTo(*outline, &p, &p2, &p3, transform);
+                ptsIndex += 3;
                 break;
             }
         }
