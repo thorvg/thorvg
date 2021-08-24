@@ -121,7 +121,7 @@ static uint32_t _applyBilinearInterpolation(const uint32_t *img, uint32_t w, uin
 static bool _translucentRect(SwSurface* surface, const SwBBox& region, uint32_t color)
 {
     #if defined(THORVG_AVX_VECTOR_SUPPORT)
-        return cRasterTranslucentRect(surface, region, color);
+        return avxRasterTranslucentRect(surface, region, color);
     #elif defined(THORVG_NEON_VECTOR_SUPPORT)
         return neonRasterTranslucentRect(surface, region, color);
     #else
