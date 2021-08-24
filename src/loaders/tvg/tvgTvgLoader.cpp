@@ -50,6 +50,9 @@ bool TvgLoader::readHeader()
 {
     if (!ptr) return false;
 
+    //Make sure the size is large enough to hold the header
+    if (size < TVG_HEADER_SIZE) return false;
+
     //1. Signature
     if (memcmp(ptr, TVG_HEADER_SIGNATURE, TVG_HEADER_SIGNATURE_LENGTH)) return false;
     ptr += TVG_HEADER_SIGNATURE_LENGTH;
