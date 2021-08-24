@@ -53,35 +53,35 @@ static inline bool neonRasterTranslucentRle(SwSurface* surface, const SwRleData*
 {
     auto span = rle->spans;
     uint32_t src;
-    uint8x8_t *vDst = NULL;
+    uint8x8_t *vDst = nullptr;
+    uint16_t align;
 
     for (uint32_t i = 0; i < rle->size; ++i) {
         auto dst = &surface->buffer[span->y * surface->stride + span->x];
-        uint32_t align = 0;
 
         if ((((uint32_t) dst) & 0x7) != 0) {
-            vDst = (uint8x8_t*)(dst+1);
+            vDst = (uint8x8_t*)(dst + 1);
             align = 1;
         } else {
             vDst = (uint8x8_t*) dst;
+            align = 0;
         }
 
         if (span->coverage < 255) src = ALPHA_BLEND(color, span->coverage);
         else src = color;
-        auto ialpha = 255 - surface->blender.alpha(src);
 
+        auto ialpha = 255 - surface->blender.alpha(src);
         uint8x8_t vSrc = (uint8x8_t) vdup_n_u32(src);
         uint8x8_t vIalpha = vdup_n_u8((uint8_t) ialpha);
 
-        uint32_t iterations = (span->len - align) / 2;
-        uint32_t left = (span->len - align) % 2;
+        //fill not aligned byte
+        if (align > 0) *dst = src + ALPHA_BLEND(*dst, ialpha);
 
-        //Fill not aligned byte
-        if (align) *dst = src + ALPHA_BLEND(*dst, ialpha);
+        for (uint32_t x = 0; x < (span->len - align) / 2; ++x)
+            vDst[x] = vadd_u8(vSrc, ALPHA_BLEND_NEON(vDst[x], vIalpha));
 
-        for (uint32_t x = 0; x < iterations; ++x) vDst[x] = vadd_u8(vSrc, ALPHA_BLEND_NEON(vDst[x], vIalpha));
-
-        if (left) dst[span->len - 1] = src + ALPHA_BLEND(dst[span->len - 1], ialpha);
+        auto leftovers = (span->len - align) % 2;
+        if (leftovers > 0) dst[span->len - 1] = src + ALPHA_BLEND(dst[span->len - 1], ialpha);
 
         ++span;
     }
@@ -91,36 +91,32 @@ static inline bool neonRasterTranslucentRle(SwSurface* surface, const SwRleData*
 
 static inline bool neonRasterTranslucentRect(SwSurface* surface, const SwBBox& region, uint32_t color)
 {
-    uint32_t *buffer = surface->buffer + (region.min.y * surface->stride) + region.min.x;
-    uint32_t h = (uint32_t)(region.max.y - region.min.y);
-    uint32_t w = (uint32_t)(region.max.x - region.min.x);
+    auto buffer = surface->buffer + (region.min.y * surface->stride) + region.min.x;
+    auto h = static_cast<uint32_t>(region.max.y - region.min.y);
+    auto w = static_cast<uint32_t>(region.max.x - region.min.x);
+    auto ialpha = 255 - surface->blender.alpha(color);
 
-    uint32_t ialpha = 255 - surface->blender.alpha(color);
-
-    uint8x8_t vColor = (uint8x8_t) vdup_n_u32(color);
-    uint8x8_t vIalpha = (uint8x8_t) vdup_n_u8((uint8_t) ialpha);
-
-    uint8x8_t *vDst = NULL;
+    auto vColor = static_cast<uint8x8_t>(vdup_n_u32(color));
+    auto vIalpha = static_cast<uint8x8_t>(vdup_n_u8((uint8_t) ialpha));
+    uint8x8_t* vDst = nullptr;
 
     for (uint32_t y = 0; y < h; ++y) {
-        uint32_t align = 0;
-        uint32_t *dst = &buffer[y * surface->stride];
+
+        auto dst = &buffer[y * surface->stride];
 
         if ((((uint32_t) dst) & 0x7) != 0) {
-            vDst = (uint8x8_t*)(dst+1);
-            align = 1;
+            //fill not aligned byte
+            *dst = color + ALPHA_BLEND(*dst, ialpha);
+            vDst = (uint8x8_t*) (dst + 1);
         } else {
             vDst = (uint8x8_t*) dst;
         }
 
-        uint32_t iterations = w / 2;
-        uint32_t left = w % 2;
-
-        if (align) *dst = color + ALPHA_BLEND(*dst, ialpha);
-
-        for (uint32_t x = 0; x < iterations; ++x) vDst[x] = vadd_u8(vColor, ALPHA_BLEND_NEON(vDst[x], vIalpha));
+        for (uint32_t x = 0; x <  w / 2; ++x)
+            vDst[x] = vadd_u8(vColor, ALPHA_BLEND_NEON(vDst[x], vIalpha));
         
-        if (left) dst[w] = color + ALPHA_BLEND(dst[w], ialpha);
+        auto leftovers = w % 2;
+        if (leftovers > 0) dst[w - 1] = color + ALPHA_BLEND(dst[w - 1], ialpha);
     }
     return true;
 }

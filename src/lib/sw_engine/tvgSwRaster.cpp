@@ -118,18 +118,6 @@ static uint32_t _applyBilinearInterpolation(const uint32_t *img, uint32_t w, uin
 /* Rect                                                                 */
 /************************************************************************/
 
-static bool _translucentRect(SwSurface* surface, const SwBBox& region, uint32_t color)
-{
-    #if defined(THORVG_AVX_VECTOR_SUPPORT)
-        return cRasterTranslucentRect(surface, region, color);
-    #elif defined(THORVG_NEON_VECTOR_SUPPORT)
-        return neonRasterTranslucentRect(surface, region, color);
-    #else
-        return cRasterTranslucentRect(surface, region, color);
-    #endif
-}
-
-
 static bool _translucentRectAlphaMask(SwSurface* surface, const SwBBox& region, uint32_t color)
 {
     auto buffer = surface->buffer + (region.min.y * surface->stride) + region.min.x;
@@ -184,7 +172,14 @@ static bool _rasterTranslucentRect(SwSurface* surface, const SwBBox& region, uin
             return _translucentRectInvAlphaMask(surface, region, color);
         }
     }
-    return _translucentRect(surface, region, color);
+
+#if defined(THORVG_AVX_VECTOR_SUPPORT)
+    return cRasterTranslucentRect(surface, region, color);
+#elif defined(THORVG_NEON_VECTOR_SUPPORT)
+    return neonRasterTranslucentRect(surface, region, color);
+#else
+    return cRasterTranslucentRect(surface, region, color);
+#endif
 }
 
 
