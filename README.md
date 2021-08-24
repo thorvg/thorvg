@@ -15,7 +15,7 @@ The following list shows primitives that are supported by ThorVG: <br />
  - Scene Graph & Affine Transformation (translation, rotation, scale, ...)
  - Stroking: Width, Join, Cap, Dash
  - Composition: Blending, Masking, Path Clipping, ...
- - Pictures: SVG, JPG, PNG, Bitmap, ...
+ - Pictures: TVG, SVG, JPG, PNG, Bitmap
 <p align="center">
   <img width="930" height="473" src="https://github.com/Samsung/thorvg/blob/master/res/example_primitives.png">
 </p>
