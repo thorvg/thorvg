@@ -99,23 +99,25 @@ static inline bool neonRasterTranslucentRect(SwSurface* surface, const SwBBox& r
     auto vColor = static_cast<uint8x8_t>(vdup_n_u32(color));
     auto vIalpha = static_cast<uint8x8_t>(vdup_n_u8((uint8_t) ialpha));
     uint8x8_t* vDst = nullptr;
+    uint32_t align;
 
     for (uint32_t y = 0; y < h; ++y) {
-
         auto dst = &buffer[y * surface->stride];
 
         if ((((uint32_t) dst) & 0x7) != 0) {
             //fill not aligned byte
             *dst = color + ALPHA_BLEND(*dst, ialpha);
             vDst = (uint8x8_t*) (dst + 1);
+            align = 1;
         } else {
             vDst = (uint8x8_t*) dst;
+            align = 0;
         }
 
-        for (uint32_t x = 0; x <  w / 2; ++x)
+        for (uint32_t x = 0; x <  (w - align) / 2; ++x)
             vDst[x] = vadd_u8(vColor, ALPHA_BLEND_NEON(vDst[x], vIalpha));
         
-        auto leftovers = w % 2;
+        auto leftovers = (w - align) % 2;
         if (leftovers > 0) dst[w - 1] = color + ALPHA_BLEND(dst[w - 1], ialpha);
     }
     return true;
