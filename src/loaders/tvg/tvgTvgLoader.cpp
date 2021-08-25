@@ -210,11 +210,11 @@ void TvgLoader::run(unsigned tid)
 
     if (compressed) {
         data = (char*) lzwDecode((uint8_t*) data, compressedSize, compressedSizeBits, uncompressedSize);
+        root = interpreter->run(data, data + uncompressedSize);
+        delete(data);
+    } else {
+        root = interpreter->run(data, this->data + size);
     }
-
-    root = interpreter->run(data, data + uncompressedSize);
-
-    if (compressed) delete(data);
 
     if (!root) clear();
 }
