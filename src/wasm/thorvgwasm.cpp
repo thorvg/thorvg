@@ -139,6 +139,25 @@ public:
         return val(typed_memory_view(mWidth * mHeight * 4, mBuffer.get()));
     }
 
+    bool saveTvg()
+    {
+        mErrorMsg = "None";
+
+        auto saver = tvg::Saver::gen();
+        auto duplicate = unique_ptr<tvg::Picture>(static_cast<tvg::Picture*>(mPicture->duplicate()));
+        if (!saver || !duplicate) {
+            mErrorMsg = "Saving initialization failed";
+            return false;
+        }
+        if (saver->save(move(duplicate), "file.tvg") != tvg::Result::Success) {
+            mErrorMsg = "Tvg saving failed";
+            return false;
+        }
+        saver->sync();
+
+        return true;
+    }
+
 private:
     explicit ThorvgWasm()
     {
@@ -183,5 +202,7 @@ EMSCRIPTEN_BINDINGS(thorvg_bindings) {
     .function("getDefaultData", &ThorvgWasm::getDefaultData, allow_raw_pointers())
     .function("load", &ThorvgWasm::load)
     .function("update", &ThorvgWasm::update)
-    .function("render", &ThorvgWasm::render);
+    .function("render", &ThorvgWasm::render)
+
+    .function("saveTvg", &ThorvgWasm::saveTvg);
 }
