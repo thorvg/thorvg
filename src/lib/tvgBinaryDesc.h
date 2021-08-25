@@ -46,6 +46,7 @@ using TvgBinFlag = TvgBinByte;
 #define TVG_HEADER_COMPRESSED_SIZE 4       //SIZE (TvgBinCounter)
 #define TVG_HEADER_COMPRESSED_SIZE_BITS 4  //SIZE (TvgBinCounter)
 //Reserved Flag
+#define TVG_HEAD_FLAG_VALIDATION                    0x80 //Validation flag always set
 #define TVG_HEAD_FLAG_COMPRESSED                    0x01
 
 //Paint Type

@@ -70,6 +70,7 @@ bool TvgLoader::readHeader()
     ptr += SIZE(float);
 
     //4. Reserved
+    if (!(*ptr & TVG_HEAD_FLAG_VALIDATION)) return false;
     if (*ptr & TVG_HEAD_FLAG_COMPRESSED) compressed = true;
     ptr += TVG_HEADER_RESERVED_LENGTH;
 

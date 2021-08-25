@@ -231,6 +231,7 @@ bool TvgSaver::writeHeader()
 
     //4. Reserved data + Compress size
     memset(ptr, 0x00, TVG_HEADER_RESERVED_LENGTH + TVG_HEADER_COMPRESS_SIZE);
+    *(buffer.ptr()) = TVG_HEAD_FLAG_VALIDATION;
     buffer.count += (TVG_HEADER_RESERVED_LENGTH + TVG_HEADER_COMPRESS_SIZE);
 
     return true;
