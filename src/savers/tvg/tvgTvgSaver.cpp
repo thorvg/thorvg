@@ -227,9 +227,11 @@ bool TvgSaver::writeHeader()
 
     //3. View Size
     writeData(vsize, SIZE(vsize));
+    ptr += SIZE(vsize);
 
     //4. Reserved data + Compress size
-    buffer.count += TVG_HEADER_RESERVED_LENGTH + TVG_HEADER_COMPRESS_SIZE;
+    memset(ptr, 0x00, TVG_HEADER_RESERVED_LENGTH + TVG_HEADER_COMPRESS_SIZE);
+    buffer.count += (TVG_HEADER_RESERVED_LENGTH + TVG_HEADER_COMPRESS_SIZE);
 
     return true;
 }
