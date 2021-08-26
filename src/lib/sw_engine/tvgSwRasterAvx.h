@@ -25,6 +25,7 @@
 #include <immintrin.h>
 
 #define N_32BITS_IN_128REG 4
+#define N_32BITS_IN_256REG 8
 
 static inline __m128i ALPHA_BLEND(__m128i c, __m128i a)
 {
@@ -63,24 +64,31 @@ static inline __m128i ALPHA_BLEND(__m128i c, __m128i a)
 
 static inline void avxRasterRGBA32(uint32_t *dst, uint32_t val, uint32_t offset, int32_t len)
 {
-    //1. calculate how many iterations we need to cover the length
-    uint32_t iterations = len / 8;
-    uint32_t avxFilled = iterations * 8;
-
-    //2. set the beginning of the array
+    //1. set the beginning of the array
     dst += offset;
-    __m256i_u* avxDst = (__m256i_u*) dst;
 
-    //3. fill the octets
+    //2. fill the not aligned memory (for a 256-bit register a 32-bytes alignment is required)
+    uint32_t notAligned = ((uintptr_t)dst & 0x1f) / 4;
+    if (notAligned) {
+        notAligned = (N_32BITS_IN_256REG - notAligned > (uint32_t)len ? (uint32_t)len : N_32BITS_IN_256REG - notAligned);
+        for (uint32_t x = 0; x < notAligned; ++x) *dst++ = val;
+    }
+
+    //3. calculate how many iterations we need to cover the length
+    uint32_t iterations = (len - notAligned) / N_32BITS_IN_256REG;
+    uint32_t avxFilled = iterations * N_32BITS_IN_256REG;
+
+    //4. fill the octets
+    __m256i avxVal = _mm256_set1_epi32(val);
+    auto avxDst = (__m256i*)dst;
     for (uint32_t i = 0; i < iterations; ++i) {
-        *avxDst = _mm256_set1_epi32(val);
+        *avxDst = avxVal;
         avxDst++;
     }
 
-    //4. fill leftovers (in the first step we have to set the pointer to the place where the avx job is done)
-    int32_t leftovers = len - avxFilled;
+    //4. fill leftovers (in the first step set the pointer to the place where the avx job is done)
+    int32_t leftovers = len - notAligned - avxFilled;
     dst += avxFilled;
-
     while (leftovers--) *dst++ = val;
 }
 
