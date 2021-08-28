@@ -171,14 +171,9 @@ struct Picture::Impl
     {
         if (x) *x = 0;
         if (y) *y = 0;
-        if (w) {
-            if (loader) *w = loader->w;
-            else *w = 0;
-        }
-        if (h) {
-            if (loader) *h = loader->h;
-            else *h = 0;
-        }
+        if (w) *w = this->w;
+        if (h) *h = this->h;
+ 
         return true;
     }
 
