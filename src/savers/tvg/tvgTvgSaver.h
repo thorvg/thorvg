@@ -57,8 +57,8 @@ private:
     TvgBinCounter serializeShape(const Shape* shape, const Matrix* pTransform);
     TvgBinCounter serializePicture(const Picture* picture, const Matrix* pTransform);
     TvgBinCounter serializePaint(const Paint* paint, const Matrix* pTransform);
-    TvgBinCounter serializeFill(const Fill* fill, TvgBinTag tag);
-    TvgBinCounter serializeStroke(const Shape* shape);
+    TvgBinCounter serializeFill(const Fill* fill, TvgBinTag tag, const Matrix* pTransform);
+    TvgBinCounter serializeStroke(const Shape* shape, const Matrix* pTransform);
     TvgBinCounter serializePath(const Shape* shape, const Matrix* pTransform);
     TvgBinCounter serializeComposite(const Paint* cmpTarget, CompositeMethod cmpMethod, const Matrix* pTransform);
     TvgBinCounter serializeChildren(Iterator* it, const Matrix* transform);

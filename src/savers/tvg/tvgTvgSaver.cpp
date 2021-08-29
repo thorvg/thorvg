@@ -397,7 +397,7 @@ TvgBinCounter TvgSaver::serializeScene(const Scene* scene, const Matrix* pTransf
 }
 
 
-TvgBinCounter TvgSaver::serializeFill(const Fill* fill, TvgBinTag tag)
+TvgBinCounter TvgSaver::serializeFill(const Fill* fill, TvgBinTag tag, const Matrix* pTransform)
 {
     const Fill::ColorStop* stops = nullptr;
     auto stopsCnt = fill->colorStops(&stops);
@@ -411,12 +411,26 @@ TvgBinCounter TvgSaver::serializeFill(const Fill* fill, TvgBinTag tag)
     //radial fill
     if (fill->id() == TVG_CLASS_ID_RADIAL) {
         float args[3];
-        static_cast<const RadialGradient*>(fill)->radial(args, args + 1,args + 2);
+        static_cast<const RadialGradient*>(fill)->radial(args, args + 1, args + 2);
+        if (pTransform) {
+            auto cx = args[0] * pTransform->e11 + args[1] * pTransform->e12 + pTransform->e13;
+            args[1] = args[0] * pTransform->e21 + args[1] * pTransform->e22 + pTransform->e23;
+            args[0] = cx;
+            args[2] *= sqrt(pow(pTransform->e11, 2) + pow(pTransform->e21, 2));
+        }
         cnt += writeTagProperty(TVG_TAG_FILL_RADIAL_GRADIENT, SIZE(args), args);
     //linear fill
     } else {
         float args[4];
         static_cast<const LinearGradient*>(fill)->linear(args, args + 1, args + 2, args + 3);
+        if (pTransform) {
+            auto x1 = args[0];
+            args[0] = x1 * pTransform->e11 + args[1] * pTransform->e12 + pTransform->e13;
+            args[1] = x1 * pTransform->e21 + args[1] * pTransform->e22 + pTransform->e23;
+            auto x2 = args[2];
+            args[2] = x2 * pTransform->e11 + args[3] * pTransform->e12 + pTransform->e13;
+            args[3] = x2 * pTransform->e21 + args[3] * pTransform->e22 + pTransform->e23;
+        }
         cnt += writeTagProperty(TVG_TAG_FILL_LINEAR_GRADIENT, SIZE(args), args);
     }
 
@@ -430,7 +444,7 @@ TvgBinCounter TvgSaver::serializeFill(const Fill* fill, TvgBinTag tag)
 }
 
 
-TvgBinCounter TvgSaver::serializeStroke(const Shape* shape)
+TvgBinCounter TvgSaver::serializeStroke(const Shape* shape, const Matrix* pTransform)
 {
     writeTag(TVG_TAG_SHAPE_STROKE);
     reserveCount();
@@ -449,7 +463,7 @@ TvgBinCounter TvgSaver::serializeStroke(const Shape* shape)
 
     //fill
     if (auto fill = shape->strokeFill()) {
-        cnt += serializeFill(fill, TVG_TAG_SHAPE_STROKE_FILL);
+        cnt += serializeFill(fill, TVG_TAG_SHAPE_STROKE_FILL, pTransform);
     } else {
         uint8_t color[4] = {0, 0, 0, 0};
         shape->strokeColor(color, color + 1, color + 2, color + 3);
@@ -524,6 +538,9 @@ TvgBinCounter TvgSaver::serializeShape(const Shape* shape, const Matrix* pTransf
     reserveCount();
     TvgBinCounter cnt = 0;
 
+    auto transform = const_cast<Shape*>(shape)->transform();
+    if (pTransform) transform = _multiply(pTransform, &transform);
+
     //fill rule
     if (auto flag = static_cast<TvgBinFlag>(shape->fillRule()))
         cnt = writeTagProperty(TVG_TAG_SHAPE_FILLRULE, SIZE(TvgBinFlag), &flag);
@@ -533,12 +550,12 @@ TvgBinCounter TvgSaver::serializeShape(const Shape* shape, const Matrix* pTransf
         uint8_t color[4] = {0, 0, 0, 0};
         shape->strokeColor(color, color + 1, color + 2, color + 3);
         auto fill = shape->strokeFill();
-        if (fill || color[3] > 0) cnt += serializeStroke(shape);
+        if (fill || color[3] > 0) cnt += serializeStroke(shape, &transform);
     }
 
     //fill
     if (auto fill = shape->fill()) {
-        cnt += serializeFill(fill, TVG_TAG_SHAPE_FILL);
+        cnt += serializeFill(fill, TVG_TAG_SHAPE_FILL, &transform);
     } else {
         uint8_t color[4] = {0, 0, 0, 0};
         shape->fillColor(color, color + 1, color + 2, color + 3);
