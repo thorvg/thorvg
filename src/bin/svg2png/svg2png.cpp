@@ -177,7 +177,7 @@ public:
             const char* p = argv[i];
             if (*p == '-') {
                 //flags
-                const char* p_arg = (i + 1 < argc) ? argv[i] : nullptr;
+                const char* p_arg = (i + 1 < argc) ? argv[++i] : nullptr;
                 if (p[1] == 'r') {
                     //image resolution
                     if (!p_arg) {
@@ -198,12 +198,11 @@ public:
                 } else if (p[1] == 'b') {
                     //image background color
                     if (!p_arg) {
-                        cout << "Error: Missing background color attribute. Expected eg. -b #fa7410." << endl;
+                        cout << "Error: Missing background color attribute. Expected eg. -b fa7410." << endl;
                         return 1;
                     }
 
-                    if (*p_arg == '#') ++p_arg;
-                    bgColor = (uint32_t) strtol(p, NULL, 16);
+                    bgColor = (uint32_t) strtol(p_arg, NULL, 16);
 
                 } else {
                     cout << "Warning: Unknown flag (" << p << ")." << endl;
@@ -218,7 +217,7 @@ public:
         if (paths.empty()) {
             //no attributes - print help
             return help();
-            
+
         } else {
             for (auto path : paths) {
                 auto real_path = realFile(path);
@@ -228,7 +227,7 @@ public:
                         //load from directory
                         cout << "Trying load from directory \"" << real_path << "\"." << endl;
                         if ((ret = handleDirectory(real_path, dir))) break;
-                        
+
                     } else if (svgFile(path)) {
                         //load single file
                         if ((ret = renderFile(real_path))) break;
@@ -236,7 +235,7 @@ public:
                         //not a directory and not .svg file
                         cout << "Warning: File \"" << path << "\" is not a proper svg file." << endl;
                     }
-                    
+
                 } else {
                     cout << "Warning: File \"" << path << "\" is invalid." << endl;
                 }
@@ -262,13 +261,13 @@ private:
         cout << "Usage:\n   svg2png [svgFileName] [-r resolution] [-b bgColor]\n\nFlags:\n    -r set output image resolution.\n    -b set output image background color.\n\nExamples:\n    $ svg2png input.svg\n    $ svg2png input.svg -r 200x200\n    $ svg2png input.svg -r 200x200 -b ff00ff\n    $ svg2png input1.svg input2.svg -r 200x200 -b ff00ff\n    $ svg2png . -r 200x200\n\n";
         return 1;
     }
-    
+
     bool svgFile(const char* path)
     {
         size_t length = strlen(path);
         return length > 4 && (strcmp(&path[length - 4], ".svg") == 0);
     }
-    
+
     const char* realFile(const char* path)
     {
         //real path
@@ -292,7 +291,7 @@ private:
 
         return renderer.render(path, width, height, dst, bgColor);
     }
-    
+
     int handleDirectory(const string& path, DIR* dir)
     {
         //open directory
@@ -303,7 +302,7 @@ private:
                 return 1;
             }
         }
-        
+
         //list directory
         int ret = 0;
         struct dirent* entry;
