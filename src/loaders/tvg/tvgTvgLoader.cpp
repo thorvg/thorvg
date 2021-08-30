@@ -58,8 +58,9 @@ bool TvgLoader::readHeader()
     ptr += TVG_HEADER_SIGNATURE_LENGTH;
 
     //2. Version
-    char version[TVG_HEADER_VERSION_LENGTH];
+    char version[TVG_HEADER_VERSION_LENGTH + 1];
     memcpy(version, ptr, TVG_HEADER_VERSION_LENGTH);
+    version[TVG_HEADER_VERSION_LENGTH - 1] = '\0';
     ptr += TVG_HEADER_VERSION_LENGTH;
     this->version = atoi(version);
     if (this->version > THORVG_VERSION_NUMBER()) {
