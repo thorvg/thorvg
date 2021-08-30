@@ -40,6 +40,7 @@ If your program has the main renderer, your program could call ThorVG APIs while
 - [Tools](#tools)
 	- [ThorVG Viewer](#thorvg-viewer)
 	- [SVG to PNG](#svg-to-png)
+	- [SVG to TVG](#svg-to-tvg)
 - [API Bindings](#api-bindings)
 - [Issues or Feature Requests](#issues-or-feature-requests)
 
@@ -255,8 +256,7 @@ install this package from your OS distribution server. Otherwise, please visit t
 <br />
 ## Tools
 ### ThorVG Viewer
-[ThorVG viewer](https://samsung.github.io/thorvg.viewer) supports immediate rendering through your browser. You can drag & drop SVG files on the page
-and see the rendering result on the spot.
+ThorVG provides the resource verification tool for the ThorVG Engine. [ThorVG viewer](https://samsung.github.io/thorvg.viewer) does immediate rendering via web browser running on the ThorVG web-assembly binary, allowing real-time editing of the vector elements on it. It doesn't upload your resources to any external server while allowing to export to TVG files, so the designer resource copyright is protected.
 
 [Back to contents](#contents)
 <br />
@@ -279,6 +279,26 @@ Examples:
     $ svg2png input.svg
     $ svg2png input.svg 200x200
     $ svg2png input.svg 200x200 ff00ff
+```
+[Back to contents](#contents)
+<br />
+<br />
+### SVG to TVG
+ThorVG provides an executable `svg2tvg` converter that generates a TVG file from an SVG file.
+
+To use `svg2tvg`, you must turn on this feature in the build option:
+```
+meson -Dtools=svg2tvg . build
+```
+Alternatively, you can add the `svg2tvg` value to the `tools` option in `meson_option.txt`. The build output will be located in `{builddir}/src/bin/svg2tvg/`.
+
+Examples of the usage of the `svg2tvg`:
+```
+Usage:
+   svg2tvg [SVG file]
+
+Examples:
+    $ svg2tvg input.svg
 ```
 [Back to contents](#contents)
 <br />
