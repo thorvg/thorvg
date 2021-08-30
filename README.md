@@ -273,13 +273,24 @@ Alternatively, you can add the `svg2png` value to the `tools` option in `meson_o
 Examples of the usage of the `svg2png`:
 ```
 Usage:
-   svg2png [svgFileName] [Resolution] [bgColor]
+    svg2png [svgFileName] [-r resolution] [-b bgColor]
+
+Flags:
+    -r set output image resolution.
+    -b set output image background color.
 
 Examples:
     $ svg2png input.svg
-    $ svg2png input.svg 200x200
-    $ svg2png input.svg 200x200 ff00ff
+    $ svg2png input.svg -r 200x200
+    $ svg2png input.svg -r 200x200 -b ff00ff
+    $ svg2png input1.svg input2.svg -r 200x200 -b ff00ff
+    $ svg2png . -r 200x200
 ```
+Multiple files or directories are accepted for `svgFileName`. If a directory is applied, subdirectories are also searched. Looking for `.svg` file extension.
+<br />
+Background color `bgColor` is three-bytes hexadecimal color value. Hash character can be skipped (both `#ffffff` and `ffffff` are accepted). Default background is transparent.
+<br />
+<br />
 [Back to contents](#contents)
 <br />
 <br />
