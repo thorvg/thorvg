@@ -42,6 +42,9 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     picture->size(&w, &h);
     cout << "default tvg view size = " << w << " x " << h << endl;
 
+    picture->translate(w * 0.1f, h * 0.1f);
+    picture->size(w * 0.8f, h * 0.8f);
+
     canvas->push(move(picture));
 }
 

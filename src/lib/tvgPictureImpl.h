@@ -169,9 +169,11 @@ struct Picture::Impl
 
     bool bounds(float* x, float* y, float* w, float* h) const
     {
-        if (paint) return paint->pImpl->bounds(x, y, w, h);
+        if (x) *x = 0;
+        if (y) *y = 0;
         if (w) *w = this->w;
         if (h) *h = this->h;
+ 
         return true;
     }
 

@@ -50,19 +50,19 @@ private:
     void writeReservedCount(TvgBinCounter cnt);
     TvgBinCounter writeData(const void* data, TvgBinCounter cnt);
     TvgBinCounter writeTagProperty(TvgBinTag tag, TvgBinCounter cnt, const void* data);
-    TvgBinCounter writeTransform(const Matrix* transform);
+    TvgBinCounter writeTransform(const Matrix& transform);
 
-    TvgBinCounter serialize(const Paint* paint, const Matrix* transform, bool compTarget = false);
-    TvgBinCounter serializeScene(const Scene* scene, const Matrix* transform);
-    TvgBinCounter serializeShape(const Shape* shape, const Matrix* transform);
-    TvgBinCounter serializePicture(const Picture* picture, const Matrix* transform);
-    TvgBinCounter serializePaint(const Paint* paint);
-    TvgBinCounter serializeFill(const Fill* fill, TvgBinTag tag);
-    TvgBinCounter serializeStroke(const Shape* shape);
-    TvgBinCounter serializePath(const Shape* shape, const Matrix* transform);
-    TvgBinCounter serializeComposite(const Paint* cmpTarget, CompositeMethod cmpMethod);
+    TvgBinCounter serialize(const Paint* paint, const Matrix* pTransform, bool compTarget = false);
+    TvgBinCounter serializeScene(const Scene* scene, const Matrix* pTransform);
+    TvgBinCounter serializeShape(const Shape* shape, const Matrix* pTransform);
+    TvgBinCounter serializePicture(const Picture* picture, const Matrix* pTransform);
+    TvgBinCounter serializePaint(const Paint* paint, const Matrix* pTransform);
+    TvgBinCounter serializeFill(const Fill* fill, TvgBinTag tag, const Matrix* pTransform);
+    TvgBinCounter serializeStroke(const Shape* shape, const Matrix* pTransform);
+    TvgBinCounter serializePath(const Shape* shape, const Matrix* pTransform);
+    TvgBinCounter serializeComposite(const Paint* cmpTarget, CompositeMethod cmpMethod, const Matrix* pTransform);
     TvgBinCounter serializeChildren(Iterator* it, const Matrix* transform);
-    TvgBinCounter serializeChild(const Paint* parent, const Paint* child, const Matrix* transform);
+    TvgBinCounter serializeChild(const Paint* parent, const Paint* child, const Matrix* pTransform);
 
 public:
     ~TvgSaver();

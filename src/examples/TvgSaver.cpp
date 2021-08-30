@@ -108,15 +108,20 @@ void exportTvg()
     free(data);
 
     //nested paints
-    auto scene1 = tvg::Scene::gen();
+    auto scene2 = tvg::Scene::gen();
+    scene2->translate(100, 100);
+
+    auto scene3 = tvg::Scene::gen();
+    scene3->rotate(10);
+    scene3->scale(2);
+    scene3->translate(400,400);
 
     auto shape2 = tvg::Shape::gen();
     shape2->appendRect(50, 0, 50, 100, 10, 40);
     shape2->fill(0, 0, 255, 125);
-    scene1->push(move(shape2));
-    scene1->rotate(10);
-    scene1->scale(2);
-    scene1->translate(400,400);
+    scene3->push(move(shape2));
+
+    scene2->push(move(scene3));
 
     auto shape3 = tvg::Shape::gen();
     shape3->appendRect(0, 0, 50, 100, 10, 40);
@@ -127,11 +132,7 @@ void exportTvg()
     shape3->scale(2);
     shape3->opacity(200);
     shape3->translate(400, 400);
-
-    auto scene2 = tvg::Scene::gen();
-    scene2->push(move(scene1));
     scene2->push(move(shape3));
-    scene2->translate(100, 100);
 
     if (scene->push(move(scene2)) != tvg::Result::Success) return;
 
@@ -141,6 +142,7 @@ void exportTvg()
     svg->opacity(200);
     svg->scale(0.3);
     svg->translate(50, 450);
+
     auto svgMask = tvg::Shape::gen();
     tvgDrawStar(svgMask.get());
     svgMask->fill(0, 0, 0, 255);
