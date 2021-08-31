@@ -174,7 +174,7 @@ static bool _rasterTranslucentRect(SwSurface* surface, const SwBBox& region, uin
     }
 
 #if defined(THORVG_AVX_VECTOR_SUPPORT)
-    return cRasterTranslucentRect(surface, region, color);
+    return avxRasterTranslucentRect(surface, region, color);
 #elif defined(THORVG_NEON_VECTOR_SUPPORT)
     return neonRasterTranslucentRect(surface, region, color);
 #else
