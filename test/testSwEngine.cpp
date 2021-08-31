@@ -45,7 +45,7 @@ TEST_CASE("Basic draw", "[tvgSwEngine]")
     REQUIRE(shape1->stroke(2) == Result::Success);
     REQUIRE(canvas->push(move(shape1)) == Result::Success);
 
-    //Cubic Line
+    //Cubic
     auto shape2 = tvg::Shape::gen();
     REQUIRE(shape2);
 
@@ -54,6 +54,18 @@ TEST_CASE("Basic draw", "[tvgSwEngine]")
     REQUIRE(shape2->close() == Result::Success);
     REQUIRE(shape2->stroke(1) == Result::Success);
     REQUIRE(canvas->push(move(shape2)) == Result::Success);
+
+    //Line
+    auto shape3 = tvg::Shape::gen();
+    REQUIRE(shape3);
+
+    REQUIRE(shape3->moveTo(0, 0) == Result::Success);
+    REQUIRE(shape3->lineTo(20, 0) == Result::Success);
+    REQUIRE(shape3->lineTo(20, 20) == Result::Success);
+    REQUIRE(shape3->lineTo(0, 20) == Result::Success);
+    REQUIRE(shape3->close() == Result::Success);
+    REQUIRE(shape3->fill(255, 255, 255, 255) == Result::Success);
+    REQUIRE(canvas->push(move(shape3)) == Result::Success);
 
     //Draw
     REQUIRE(canvas->draw() == Result::Success);
@@ -269,7 +281,7 @@ TEST_CASE("Rect Draw", "[tvgSwEngine]")
     REQUIRE(basicMask);
     REQUIRE(basicShape->appendRect(0, 0, 50, 50, 0, 0) == Result::Success);
     REQUIRE(basicMask->appendRect(10, 10, 30, 30, 0, 0) == Result::Success);
-    REQUIRE(basicShape->fill(255, 255, 255, 255) == Result::Success);
+    REQUIRE(basicShape->fill(255, 255, 255, 155) == Result::Success);
 
     auto basicShape2 = std::unique_ptr<Shape>(static_cast<Shape*>(basicShape->duplicate()));
     REQUIRE(basicShape2);
@@ -303,7 +315,7 @@ TEST_CASE("Rect Draw", "[tvgSwEngine]")
 }
 
 
-TEST_CASE("RLE Rect Draw", "[tvgSwEngine]")
+TEST_CASE("RLE Draw", "[tvgSwEngine]")
 {
     REQUIRE(Initializer::init(CanvasEngine::Sw, 0) == Result::Success);
 
