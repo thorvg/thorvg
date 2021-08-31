@@ -258,7 +258,7 @@ private:
 private:
     int help()
     {
-        cout << "Usage:\n   svg2png [svgFileName] [-r resolution] [-b bgColor]\n\nFlags:\n    -r set output image resolution.\n    -b set output image background color.\n\nExamples:\n    $ svg2png input.svg\n    $ svg2png input.svg -r 200x200\n    $ svg2png input.svg -r 200x200 -b ff00ff\n    $ svg2png input1.svg input2.svg -r 200x200 -b ff00ff\n    $ svg2png . -r 200x200\n\n";
+        cout << "Usage:\n   svg2png [SVG files] [-r resolution] [-b bgColor]\n\nFlags:\n    -r set the output image resolution.\n    -b set the output image background color.\n\nExamples:\n    $ svg2png input.svg\n    $ svg2png input.svg -r 200x200\n    $ svg2png input.svg -r 200x200 -b ff00ff\n    $ svg2png input1.svg input2.svg -r 200x200 -b ff00ff\n    $ svg2png . -r 200x200\n\n";
         return 1;
     }
 
