@@ -63,6 +63,195 @@ TEST_CASE("Basic draw", "[tvgSwEngine]")
 }
 
 
+TEST_CASE("Image Draw", "[tvgSwEngine]")
+{
+    REQUIRE(Initializer::init(CanvasEngine::Sw, 0) == Result::Success);
+
+    auto canvas = SwCanvas::gen();
+    REQUIRE(canvas);
+
+    uint32_t buffer[100*100];
+    REQUIRE(canvas->target(buffer, 100, 100, 100, SwCanvas::Colorspace::ABGR8888) == Result::Success);
+
+
+    //Not transformed images
+    auto basicPicture = Picture::gen();
+    REQUIRE(basicPicture);
+    REQUIRE(basicPicture->load(TEST_DIR"/test.png") == Result::Success);
+    auto rectMask = tvg::Shape::gen();
+    REQUIRE(rectMask);
+    REQUIRE(rectMask->appendRect(10, 10, 30, 30, 0, 0) == Result::Success);
+    auto rleMask = tvg::Shape::gen();
+    REQUIRE(rleMask);
+    REQUIRE(rleMask->appendRect(0, 10, 20, 30, 5, 5) == Result::Success);
+
+    // Rect images
+    auto basicPicture2 = std::unique_ptr<Picture>(static_cast<Picture*>(basicPicture->duplicate()));
+    REQUIRE(basicPicture2);
+    auto rectMask2 = std::unique_ptr<Shape>(static_cast<Shape*>(rectMask->duplicate()));
+    REQUIRE(rectMask2);
+
+    auto basicPicture3 = std::unique_ptr<Picture>(static_cast<Picture*>(basicPicture->duplicate()));
+    REQUIRE(basicPicture3);
+    auto rectMask3 = std::unique_ptr<Shape>(static_cast<Shape*>(rectMask->duplicate()));
+    REQUIRE(rectMask3);
+
+    auto basicPicture4 = std::unique_ptr<Picture>(static_cast<Picture*>(basicPicture->duplicate()));
+    REQUIRE(basicPicture4);
+
+    // Rle images
+    auto basicPicture5 = std::unique_ptr<Picture>(static_cast<Picture*>(basicPicture->duplicate()));
+    REQUIRE(basicPicture5);
+
+    auto basicPicture6 = std::unique_ptr<Picture>(static_cast<Picture*>(basicPicture->duplicate()));
+    REQUIRE(basicPicture6);
+    auto rleMask6 = std::unique_ptr<Shape>(static_cast<Shape*>(rleMask->duplicate()));
+    REQUIRE(rleMask6);
+
+    // Rect
+    REQUIRE(basicPicture->composite(move(rectMask), tvg::CompositeMethod::AlphaMask) == Result::Success);
+    REQUIRE(canvas->push(move(basicPicture)) == Result::Success);
+
+    REQUIRE(basicPicture2->composite(move(rectMask2), tvg::CompositeMethod::InvAlphaMask) == Result::Success);
+    REQUIRE(canvas->push(move(basicPicture2)) == Result::Success);
+
+    REQUIRE(basicPicture3->composite(move(rectMask3), tvg::CompositeMethod::ClipPath) == Result::Success);
+    REQUIRE(canvas->push(move(basicPicture3)) == Result::Success);
+
+    REQUIRE(basicPicture4->opacity(100) == Result::Success);
+    REQUIRE(canvas->push(move(basicPicture4)) == Result::Success);
+
+    // Rle 
+    REQUIRE(basicPicture5->composite(move(rleMask), tvg::CompositeMethod::ClipPath) == Result::Success);
+    REQUIRE(canvas->push(move(basicPicture5)) == Result::Success);
+
+    REQUIRE(basicPicture6->composite(move(rleMask6), tvg::CompositeMethod::ClipPath) == Result::Success);
+    REQUIRE(basicPicture6->opacity(100) == Result::Success);
+    REQUIRE(canvas->push(move(basicPicture6)) == Result::Success);
+
+
+    // Transformed images
+    basicPicture = Picture::gen();
+    REQUIRE(basicPicture);
+    REQUIRE(basicPicture->load(TEST_DIR"/test.png") == Result::Success);
+    REQUIRE(basicPicture->rotate(45) == Result::Success);
+    rectMask = tvg::Shape::gen();
+    REQUIRE(rectMask);
+    REQUIRE(rectMask->appendRect(10, 10, 30, 30, 0, 0) == Result::Success);
+    rleMask = tvg::Shape::gen();
+    REQUIRE(rleMask);
+    REQUIRE(rleMask->appendRect(0, 10, 20, 30, 5, 5) == Result::Success);
+
+    // Rect images
+    basicPicture2 = std::unique_ptr<Picture>(static_cast<Picture*>(basicPicture->duplicate()));
+    REQUIRE(basicPicture2);
+    rectMask2 = std::unique_ptr<Shape>(static_cast<Shape*>(rectMask->duplicate()));
+    REQUIRE(rectMask2);
+
+    basicPicture3 = std::unique_ptr<Picture>(static_cast<Picture*>(basicPicture->duplicate()));
+    REQUIRE(basicPicture3);
+    rectMask3 = std::unique_ptr<Shape>(static_cast<Shape*>(rectMask->duplicate()));
+    REQUIRE(rectMask3);
+
+    basicPicture4 = std::unique_ptr<Picture>(static_cast<Picture*>(basicPicture->duplicate()));
+    REQUIRE(basicPicture4);
+
+    // Rle images
+    basicPicture5 = std::unique_ptr<Picture>(static_cast<Picture*>(basicPicture->duplicate()));
+    REQUIRE(basicPicture5);
+
+    basicPicture6 = std::unique_ptr<Picture>(static_cast<Picture*>(basicPicture->duplicate()));
+    REQUIRE(basicPicture6);
+    rleMask6 = std::unique_ptr<Shape>(static_cast<Shape*>(rleMask->duplicate()));
+    REQUIRE(rleMask6);
+
+    // Rect
+    REQUIRE(basicPicture->composite(move(rectMask), tvg::CompositeMethod::AlphaMask) == Result::Success);
+    REQUIRE(canvas->push(move(basicPicture)) == Result::Success);
+
+    REQUIRE(basicPicture2->composite(move(rectMask2), tvg::CompositeMethod::InvAlphaMask) == Result::Success);
+    REQUIRE(canvas->push(move(basicPicture2)) == Result::Success);
+
+    REQUIRE(basicPicture3->composite(move(rectMask3), tvg::CompositeMethod::ClipPath) == Result::Success);
+    REQUIRE(canvas->push(move(basicPicture3)) == Result::Success);
+
+    REQUIRE(basicPicture4->opacity(100) == Result::Success);
+    REQUIRE(canvas->push(move(basicPicture4)) == Result::Success);
+
+    // Rle 
+    REQUIRE(basicPicture5->composite(move(rleMask), tvg::CompositeMethod::ClipPath) == Result::Success);
+    REQUIRE(canvas->push(move(basicPicture5)) == Result::Success);
+
+    REQUIRE(basicPicture6->composite(move(rleMask6), tvg::CompositeMethod::ClipPath) == Result::Success);
+    REQUIRE(basicPicture6->opacity(100) == Result::Success);
+    REQUIRE(canvas->push(move(basicPicture6)) == Result::Success);
+
+
+    // Upscaled images
+    basicPicture = Picture::gen();
+    REQUIRE(basicPicture);
+    REQUIRE(basicPicture->load(TEST_DIR"/test.png") == Result::Success);
+    REQUIRE(basicPicture->scale(2) == Result::Success);
+    rectMask = tvg::Shape::gen();
+    REQUIRE(rectMask);
+    REQUIRE(rectMask->appendRect(10, 10, 30, 30, 0, 0) == Result::Success);
+    rleMask = tvg::Shape::gen();
+    REQUIRE(rleMask);
+    REQUIRE(rleMask->appendRect(0, 10, 20, 30, 5, 5) == Result::Success);
+
+    // Rect images
+    basicPicture2 = std::unique_ptr<Picture>(static_cast<Picture*>(basicPicture->duplicate()));
+    REQUIRE(basicPicture2);
+    rectMask2 = std::unique_ptr<Shape>(static_cast<Shape*>(rectMask->duplicate()));
+    REQUIRE(rectMask2);
+
+    basicPicture3 = std::unique_ptr<Picture>(static_cast<Picture*>(basicPicture->duplicate()));
+    REQUIRE(basicPicture3);
+    rectMask3 = std::unique_ptr<Shape>(static_cast<Shape*>(rectMask->duplicate()));
+    REQUIRE(rectMask3);
+
+    basicPicture4 = std::unique_ptr<Picture>(static_cast<Picture*>(basicPicture->duplicate()));
+    REQUIRE(basicPicture4);
+
+    // Rle images
+    basicPicture5 = std::unique_ptr<Picture>(static_cast<Picture*>(basicPicture->duplicate()));
+    REQUIRE(basicPicture5);
+
+    basicPicture6 = std::unique_ptr<Picture>(static_cast<Picture*>(basicPicture->duplicate()));
+    REQUIRE(basicPicture6);
+    rleMask6 = std::unique_ptr<Shape>(static_cast<Shape*>(rleMask->duplicate()));
+    REQUIRE(rleMask6); 
+
+    // Rect
+    REQUIRE(basicPicture->composite(move(rectMask), tvg::CompositeMethod::AlphaMask) == Result::Success);
+    REQUIRE(canvas->push(move(basicPicture)) == Result::Success);
+
+    REQUIRE(basicPicture2->composite(move(rectMask2), tvg::CompositeMethod::InvAlphaMask) == Result::Success);
+    REQUIRE(canvas->push(move(basicPicture2)) == Result::Success);
+
+    REQUIRE(basicPicture3->composite(move(rectMask3), tvg::CompositeMethod::ClipPath) == Result::Success);
+    REQUIRE(canvas->push(move(basicPicture3)) == Result::Success);
+
+    REQUIRE(basicPicture4->opacity(100) == Result::Success);
+    REQUIRE(canvas->push(move(basicPicture4)) == Result::Success);
+
+    // Rle 
+    REQUIRE(basicPicture5->composite(move(rleMask), tvg::CompositeMethod::ClipPath) == Result::Success);
+    REQUIRE(canvas->push(move(basicPicture5)) == Result::Success);
+
+    REQUIRE(basicPicture6->composite(move(rleMask6), tvg::CompositeMethod::ClipPath) == Result::Success);
+    REQUIRE(basicPicture6->opacity(100) == Result::Success);
+    REQUIRE(canvas->push(move(basicPicture6)) == Result::Success);
+
+
+    //Draw
+    REQUIRE(canvas->draw() == Result::Success);
+    REQUIRE(canvas->sync() == Result::Success);
+
+    REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
+}
+
+
 TEST_CASE("Rect Draw", "[tvgSwEngine]")
 {
     REQUIRE(Initializer::init(CanvasEngine::Sw, 0) == Result::Success);
