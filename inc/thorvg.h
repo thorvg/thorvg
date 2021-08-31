@@ -756,7 +756,7 @@ public:
      *
      * The current point value is set to the last point from the sub-path.
      * For each command from the @p cmds array, an appropriate number of points in @p pts array should be specified.
-     * If the number of points array is different from the number required by commands array, the shape with this path added is not displayed on the screen.
+     * If the number of points in the @p pts array is different than the number required by the @p cmds array, the shape with this sub-path will not be displayed on the screen.
      *
      * @param[in] cmds The array of the commands in the sub-path.
      * @param[in] cmdCnt The number of the sub-path's commands.
@@ -1375,11 +1375,11 @@ public:
     ~Saver();
 
     /**
-     * @brief Export the given @p paint data to the given @p path
+     * @brief Exports the given @p paint data to the given @p path
      *
-     * If the saver module supports any compression mechanism, it will optmize the data size.
+     * If the saver module supports any compression mechanism, it will optimize the data size.
      * This might affect the encoding/decoding time slow down in cases, You can turn off the compression
-     * if your system whole focuse on the speed.
+     * if your system whole focus on the speed.
      *
      * @param[in] paint The paint to be saved with all its associated properties.
      * @param[in] path A path to the file, in which the paint data is to be saved.

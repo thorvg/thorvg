@@ -170,7 +170,7 @@ ThorVG supports SVG (Scalable Vector Graphics) rendering through its SVG interpr
 to keep it lightweight, so it's useful for the embedded systems. Among the SVG Tiny specs, unsupported features in the ThorVG are the following:
 
  - Animation
- - Fonts & Text 
+ - Fonts & Text
  - Interactivity
  - Multimedia
  - Scripting
@@ -264,20 +264,29 @@ ThorVG provides the resource verification tool for the ThorVG Engine. [ThorVG vi
 ### SVG to PNG
 ThorVG provides an executable `svg2png` converter that generates a PNG file from an SVG file.
 
-To use `svg2png`, you must turn on this feature in the build option:
+To use the `svg2png`, you must turn on this feature in the build option:
 ```
 meson -Dtools=svg2png . build
 ```
 Alternatively, you can add the `svg2png` value to the `tools` option in `meson_option.txt`. The build output will be located in `{builddir}/src/bin/svg2png/`.
+<br />
 
-Examples of the usage of the `svg2png`:
+To use the `svg2png` converter you have to pass the `SVG files` parameter. It can be a file name with the `.svg` extension or a directory name. Multiple files or directories separated by a space are also accepted. If a directory is passed, the `.svg` file extension is searched inside it and in all of its subdirectories.
+
+Optionally, the image resolution can be provided in the `WxH` format (two numbers separated by an `x` sign) following the `-r` flag.
+<br />
+The background color can be set with the `-b` flag. The `bgColor` parameter should be passed as a three-bytes hexadecimal value in the `ffffff` format. The default background is transparent.
+<br />
+Both flags, if provided, are applied to all of the `.svg` files.
+
+The usage examples of the `svg2png`:
 ```
 Usage:
-    svg2png [svgFileName] [-r resolution] [-b bgColor]
+    svg2png [SVG files] [-r resolution] [-b bgColor]
 
 Flags:
-    -r set output image resolution.
-    -b set output image background color.
+    -r set the output image resolution.
+    -b set the output image background color.
 
 Examples:
     $ svg2png input.svg
@@ -286,11 +295,6 @@ Examples:
     $ svg2png input1.svg input2.svg -r 200x200 -b ff00ff
     $ svg2png . -r 200x200
 ```
-Multiple files or directories are accepted for `svgFileName`. If a directory is applied, subdirectories are also searched. Looking for `.svg` file extension.
-<br />
-Background color `bgColor` is three-bytes hexadecimal color value. Hash character can be skipped (both `#ffffff` and `ffffff` are accepted). Default background is transparent.
-<br />
-<br />
 [Back to contents](#contents)
 <br />
 <br />
