@@ -180,6 +180,50 @@ TEST_CASE("Load JPG file from data", "[tvgPicture]")
     free(data);
 }
 
+TEST_CASE("Load TVG file from path", "[tvgPicture]")
+{
+    auto picture = Picture::gen();
+    REQUIRE(picture);
+
+    //Invalid file
+    REQUIRE(picture->load("invalid.tvg") == Result::InvalidArguments);
+
+    REQUIRE(picture->load(TEST_DIR"/tag.tvg") == Result::Success);
+
+    float w, h;
+    REQUIRE(picture->size(&w, &h) == Result::Success);
+
+    REQUIRE(w == 1000);
+    REQUIRE(h == 1000);
+}
+
+TEST_CASE("Load TVG file from data", "[tvgPicture]")
+{
+    auto picture = Picture::gen();
+    REQUIRE(picture);
+
+    //Open file
+    ifstream file(TEST_DIR"/tag.tvg");
+    REQUIRE(file.is_open());
+    auto begin = file.tellg();
+    file.seekg(0, std::ios::end);
+    auto size = file.tellg() - begin;
+    auto data = (char*)malloc(size);
+    file.seekg(0, std::ios::beg);
+    file.read(data, size);
+    file.close();
+
+    REQUIRE(picture->load(data, size, "", false) == Result::Success);
+    REQUIRE(picture->load(data, size, "tvg", true) == Result::Success);
+
+    float w, h;
+    REQUIRE(picture->size(&w, &h) == Result::Success);
+    REQUIRE(w == 1000);
+    REQUIRE(h == 1000);
+
+    free(data);
+}
+
 TEST_CASE("Picture Size", "[tvgPicture]")
 {
     auto picture = Picture::gen();
@@ -278,6 +322,29 @@ TEST_CASE("Load JPG file and render", "[tvgPicture]")
     REQUIRE(picture->load(TEST_DIR"/test.jpg") == Result::Success);
 
     REQUIRE(canvas->push(move(picture)) == Result::Success);
+
+    REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
+}
+
+TEST_CASE("Load TVG file and render", "[tvgPicture]")
+{
+    REQUIRE(Initializer::init(CanvasEngine::Sw, 0) == Result::Success);
+
+    auto canvas = SwCanvas::gen();
+    REQUIRE(canvas);
+
+    uint32_t buffer[1000*1000];
+    REQUIRE(canvas->target(buffer, 1000, 1000, 1000, SwCanvas::Colorspace::ABGR8888) == Result::Success);
+
+    auto pictureTag = Picture::gen();
+    REQUIRE(pictureTag);
+    REQUIRE(pictureTag->load(TEST_DIR"/tag.tvg") == Result::Success);
+    REQUIRE(canvas->push(move(pictureTag)) == Result::Success);
+
+    auto pictureTest = Picture::gen();
+    REQUIRE(pictureTest);
+    REQUIRE(pictureTest->load(TEST_DIR"/test.tvg") == Result::Success);
+    REQUIRE(canvas->push(move(pictureTest)) == Result::Success);
 
     REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
 }

@@ -4,6 +4,7 @@ test_file = [
     'testMain.cpp',
     'testPaint.cpp',
     'testPicture.cpp',
+    'testSavers.cpp',
     'testScene.cpp',
     'testShape.cpp',
     'testSwCanvas.cpp',

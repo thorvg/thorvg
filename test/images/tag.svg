@@ -20,8 +20,8 @@
 		<polyline fill="none" stroke-width="10" 
             points="0,0 1000,0 1000,1000 0,1000" />
 		<line x1="0" y1="0" x2="1000" y2="0" stroke="" />
-		<path d="M647.5 800C692.5 786 730 786 775 800S857.5 814 902.5 800" stroke="#222f35" stroke-width="2" fill="transparent"/>
-		<path d="M647.5 800Q711.25 786 775 800T902.5 800" stroke="#222f35" stroke-width="2" fill="transparent"/>
+		<path d="M647.5 800C692.5 786 730 786 775 800S857.5 814 902.5 800" stroke="#222f35" stroke="url(#grad1)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="white"/>
+		<path d="M647.5 800Q711.25 786 775 800T902.5 800" stroke="#222f35" stroke="url(#grad2)" stroke-width="2" stroke-dasharray="20 10" stroke-linecap="square" stroke-linejoin="bevel" fill="white"/>
 	</g>
 	<image href="data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgNTAgNTAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBmaWxsPSIjMjIyZjM1IiBjeD0iNTAlIiBjeT0iNTAlIiByPSI1MCUiLz48L3N2Zz4=" height="50" width="50" x="650" y="875" />
 	<image href="data:image/svg+xml;utf8,%3Csvg viewBox='0 0 50 50' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle fill='%23222f35' cx='50%25' cy='50%25' r='50%25'/%3E%3C/svg%3E" height="50" width="50" x="725" y="875" />
