@@ -143,11 +143,13 @@ struct SwShapeTask : SwTask
             if (shape.rle) {
                 if (clipper->rect) rleClipRect(shape.rle, &clipper->bbox);
                 else if (clipper->rle) rleClipPath(shape.rle, clipper->rle);
+                else goto err;
             }
             //Clip stroke rle
             if (shape.strokeRle) {
                 if (clipper->rect) rleClipRect(shape.strokeRle, &clipper->bbox);
                 else if (clipper->rle) rleClipPath(shape.strokeRle, clipper->rle);
+                else goto err;
             }
         }
         goto end;
@@ -183,7 +185,7 @@ struct SwImageTask : SwTask
             imageReset(&image);
 
             image.data = const_cast<uint32_t*>(pdata->data(&image.w, &image.h));
-            if (!image.data || image.w == 0 || image.h == 0) goto end;            
+            if (!image.data || image.w == 0 || image.h == 0) goto end;
 
             if (!imagePrepare(&image, transform, clipRegion, bbox, mpool, tid)) goto end;
 
@@ -195,10 +197,15 @@ struct SwImageTask : SwTask
                         auto clipper = &static_cast<SwShapeTask*>(*clip)->shape;
                         if (clipper->rect) rleClipRect(image.rle, &clipper->bbox);
                         else if (clipper->rle) rleClipPath(image.rle, clipper->rle);
+                        else goto err;
                     }
                 }
             }
-        }        
+        }
+        goto end;
+
+    err:
+        rleReset(image.rle);
     end:
         imageDelOutline(&image, mpool, tid);
     }
