@@ -67,7 +67,7 @@ using TvgBinFlag = TvgBinByte;
 
 
 //Scene
-#define TVG_FLAG_SCENE_RESERVEDCNT                  (TvgBinTag)0x30
+#define TVG_TAG_SCENE_RESERVEDCNT                   (TvgBinTag)0x30
 
 
 //Shape
