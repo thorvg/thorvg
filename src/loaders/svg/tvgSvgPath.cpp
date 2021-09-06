@@ -62,7 +62,6 @@ static bool _parseFlag(char** content, int* number)
     *number = *(*content) - '0';
     *content += 1;
     end = *content;
-    if (end && *end == '.') return false;
     *content = _skipComma(end);
 
     return true;
