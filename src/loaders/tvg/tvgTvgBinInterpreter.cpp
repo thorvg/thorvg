@@ -68,23 +68,7 @@ static bool _parseCmpTarget(const char *ptr, const char *end, Paint *paint)
     if (block.type != TVG_TAG_PAINT_CMP_METHOD) return false;
     if (block.length != SIZE(TvgBinFlag)) return false;
 
-    CompositeMethod cmpMethod;
-
-    switch (*block.data) {
-        case TVG_FLAG_PAINT_CMP_METHOD_CLIPPATH: {
-            cmpMethod = CompositeMethod::ClipPath;
-            break;
-        }
-        case TVG_FLAG_PAINT_CMP_METHOD_ALPHAMASK: {
-            cmpMethod = CompositeMethod::AlphaMask;
-            break;
-        }
-        case TVG_FLAG_PAINT_CMP_METHOD_IALPHAMASK: {
-            cmpMethod = CompositeMethod::InvAlphaMask;
-            break;
-        }
-        default: return false;
-    }
+    auto cmpMethod = static_cast<CompositeMethod>(*block.data);
 
     ptr = block.end;
 
@@ -224,20 +208,7 @@ static bool _parseShapeFill(const char *ptr, const char *end, Fill **fillOutside
             case TVG_TAG_FILL_FILLSPREAD: {
                 if (!fillGrad) return false;
                 if (block.length != SIZE(TvgBinFlag)) return false;
-                switch (*block.data) {
-                    case TVG_FLAG_FILL_FILLSPREAD_PAD: {
-                        fillGrad->spread(FillSpread::Pad);
-                        break;
-                    }
-                    case TVG_FLAG_FILL_FILLSPREAD_REFLECT: {
-                        fillGrad->spread(FillSpread::Reflect);
-                        break;
-                    }
-                    case TVG_FLAG_FILL_FILLSPREAD_REPEAT: {
-                        fillGrad->spread(FillSpread::Repeat);
-                        break;
-                    }
-                }
+                fillGrad->spread((FillSpread) *block.data);
                 break;
             }
             case TVG_TAG_FILL_COLORSTOPS: {
@@ -289,32 +260,12 @@ static bool _parseShapeStroke(const char *ptr, const char *end, Shape *shape)
         switch (block.type) {
             case TVG_TAG_SHAPE_STROKE_CAP: {
                 if (block.length != SIZE(TvgBinFlag)) return false;
-                switch (*block.data) {
-                    case TVG_FLAG_SHAPE_STROKE_CAP_SQUARE:
-                        shape->stroke(StrokeCap::Square);
-                        break;
-                    case TVG_FLAG_SHAPE_STROKE_CAP_ROUND:
-                        shape->stroke(StrokeCap::Round);
-                        break;
-                    case TVG_FLAG_SHAPE_STROKE_CAP_BUTT:
-                        shape->stroke(StrokeCap::Butt);
-                        break;
-                }
+                shape->stroke((StrokeCap) *block.data);
                 break;
             }
             case TVG_TAG_SHAPE_STROKE_JOIN: {
                 if (block.length != SIZE(TvgBinFlag)) return false;
-                switch (*block.data) {
-                    case TVG_FLAG_SHAPE_STROKE_JOIN_BEVEL:
-                        shape->stroke(StrokeJoin::Bevel);
-                        break;
-                    case TVG_FLAG_SHAPE_STROKE_JOIN_ROUND:
-                        shape->stroke(StrokeJoin::Round);
-                        break;
-                    case TVG_FLAG_SHAPE_STROKE_JOIN_MITER:
-                        shape->stroke(StrokeJoin::Miter);
-                        break;
-                }
+                shape->stroke((StrokeJoin) *block.data);
                 break;
             }
             case TVG_TAG_SHAPE_STROKE_WIDTH: {
@@ -372,14 +323,7 @@ static bool _parseShape(TvgBinBlock block, Paint* paint)
         }
         case TVG_TAG_SHAPE_FILLRULE: {
             if (block.length != SIZE(TvgBinFlag)) return false;
-            switch (*block.data) {
-                case TVG_FLAG_SHAPE_FILLRULE_WINDING:
-                    shape->fill(FillRule::Winding);
-                    break;
-                case TVG_FLAG_SHAPE_FILLRULE_EVENODD:
-                    shape->fill(FillRule::EvenOdd);
-                    break;
-            }
+            shape->fill((FillRule)*block.data);
             break;
         }
         default: return _parsePaintProperty(block, shape);

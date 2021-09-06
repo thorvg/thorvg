@@ -59,11 +59,7 @@ using TvgBinFlag = TvgBinByte;
 #define TVG_TAG_PAINT_OPACITY                       (TvgBinTag)0x10
 #define TVG_TAG_PAINT_TRANSFORM                     (TvgBinTag)0x11
 #define TVG_TAG_PAINT_CMP_TARGET                    (TvgBinTag)0x01
-//Composition
 #define TVG_TAG_PAINT_CMP_METHOD                    (TvgBinTag)0x20
-#define TVG_FLAG_PAINT_CMP_METHOD_CLIPPATH          (TvgBinFlag)0x01
-#define TVG_FLAG_PAINT_CMP_METHOD_ALPHAMASK         (TvgBinFlag)0x02
-#define TVG_FLAG_PAINT_CMP_METHOD_IALPHAMASK        (TvgBinFlag)0x03
 
 
 //Scene
@@ -75,20 +71,10 @@ using TvgBinFlag = TvgBinByte;
 #define TVG_TAG_SHAPE_STROKE                        (TvgBinTag)0x41
 #define TVG_TAG_SHAPE_FILL                          (TvgBinTag)0x42
 #define TVG_TAG_SHAPE_COLOR                         (TvgBinTag)0x43
-//Fill Rule
 #define TVG_TAG_SHAPE_FILLRULE                      (TvgBinTag)0x44
-#define TVG_FLAG_SHAPE_FILLRULE_WINDING             (TvgBinFlag)0x00
-#define TVG_FLAG_SHAPE_FILLRULE_EVENODD             (TvgBinFlag)0x01
-//Stroke Cap
 #define TVG_TAG_SHAPE_STROKE_CAP                    (TvgBinTag)0x50
-#define TVG_FLAG_SHAPE_STROKE_CAP_SQUARE            (TvgBinFlag)0x00
-#define TVG_FLAG_SHAPE_STROKE_CAP_ROUND             (TvgBinFlag)0x01
-#define TVG_FLAG_SHAPE_STROKE_CAP_BUTT              (TvgBinFlag)0x02
-//Stroke Join
 #define TVG_TAG_SHAPE_STROKE_JOIN                   (TvgBinTag)0x51
-#define TVG_FLAG_SHAPE_STROKE_JOIN_BEVEL            (TvgBinFlag)0x00
-#define TVG_FLAG_SHAPE_STROKE_JOIN_ROUND            (TvgBinFlag)0x01
-#define TVG_FLAG_SHAPE_STROKE_JOIN_MITER            (TvgBinFlag)0x02
+
 //Stroke
 #define TVG_TAG_SHAPE_STROKE_WIDTH                  (TvgBinTag)0x52
 #define TVG_TAG_SHAPE_STROKE_COLOR                  (TvgBinTag)0x53
@@ -101,9 +87,6 @@ using TvgBinFlag = TvgBinByte;
 #define TVG_TAG_FILL_RADIAL_GRADIENT                (TvgBinTag)0x61
 #define TVG_TAG_FILL_COLORSTOPS                     (TvgBinTag)0x62
 #define TVG_TAG_FILL_FILLSPREAD                     (TvgBinTag)0x63
-#define TVG_FLAG_FILL_FILLSPREAD_PAD                (TvgBinFlag)0x00
-#define TVG_FLAG_FILL_FILLSPREAD_REFLECT            (TvgBinFlag)0x01
-#define TVG_FLAG_FILL_FILLSPREAD_REPEAT             (TvgBinFlag)0x02
 
 
 //Picture
