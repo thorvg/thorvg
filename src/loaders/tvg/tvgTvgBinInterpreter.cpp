@@ -109,14 +109,12 @@ static bool _parseScene(TvgBinBlock block, Paint *paint)
 {
     auto scene = static_cast<Scene*>(paint);
 
-    switch (block.type) {
-        case TVG_FLAG_SCENE_RESERVEDCNT: {
-            if (block.length != SIZE(uint32_t)) return false;
-            uint32_t reservedCnt;
-            READ_UI32(&reservedCnt, block.data);
-            scene->reserve(reservedCnt);
-            return true;
-        }
+    if (block.type == TVG_TAG_SCENE_RESERVEDCNT) {
+        if (block.length != SIZE(uint32_t)) return false;
+        uint32_t reservedCnt;
+        READ_UI32(&reservedCnt, block.data);
+        scene->reserve(reservedCnt);
+        return true;
     }
 
     if (_paintProperty(block)) return _parsePaintProperty(block, scene);

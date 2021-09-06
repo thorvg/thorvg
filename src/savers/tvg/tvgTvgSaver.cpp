@@ -380,14 +380,14 @@ TvgBinCounter TvgSaver::serializeScene(const Scene* scene, const Matrix* pTransf
 
     //Case - Delegator Scene: This scene is just a delegator, we can skip this:
     if (scene->composite(nullptr) == CompositeMethod::None && scene->opacity() == 255) {
-        return serializeChildren(it, &transform);
+        return serializeChildren(it, &transform, false);
     }
 
     //Case - Serialize Scene & its children
     writeTag(TVG_TAG_CLASS_SCENE);
     reserveCount();
 
-    auto cnt = serializeChildren(it, &transform) + serializePaint(scene, pTransform);
+    auto cnt = serializeChildren(it, &transform, true) + serializePaint(scene, pTransform);
 
     delete(it);
 
@@ -592,7 +592,7 @@ TvgBinCounter TvgSaver::serializePicture(const Picture* picture, const Matrix* p
         } else {
             writeTag(TVG_TAG_CLASS_SCENE);
             reserveCount();
-            auto cnt = serializeChildren(it, &transform) + serializePaint(picture, pTransform);
+            auto cnt = serializeChildren(it, &transform, true) + serializePaint(picture, pTransform);
             writeReservedCount(cnt);
         }
         delete(it);
@@ -647,7 +647,7 @@ TvgBinCounter TvgSaver::serializeComposite(const Paint* cmpTarget, CompositeMeth
 }
 
 
-TvgBinCounter TvgSaver::serializeChildren(Iterator* it, const Matrix* pTransform)
+TvgBinCounter TvgSaver::serializeChildren(Iterator* it, const Matrix* pTransform, bool reserved)
 {
     TvgBinCounter cnt = 0;
 
@@ -667,6 +667,11 @@ TvgBinCounter TvgSaver::serializeChildren(Iterator* it, const Matrix* pTransform
             }
         }
         children.push(child);
+    }
+
+    //The children of a reserved scene
+    if (reserved && children.count > 1) {
+        cnt += writeTagProperty(TVG_TAG_SCENE_RESERVEDCNT, SIZE(children.count), &children.count);
     }
 
     //Serialize merged children.
