@@ -35,18 +35,7 @@ struct TvgBinBlock
     const char* end;
 };
 
-static Paint* _parsePaint(TvgBinBlock block);
-
-static bool _paintProperty(TvgBinBlock block)
-{
-    switch (block.type) {
-        case TVG_TAG_PAINT_OPACITY:
-        case TVG_TAG_PAINT_TRANSFORM:
-        case TVG_TAG_PAINT_CMP_TARGET:
-        return true;
-    }
-    return false;
-}
+static Paint* _parsePaint(TvgBinBlock baseBlock);
 
 
 static TvgBinBlock _readBlock(const char *ptr)
@@ -93,7 +82,7 @@ static bool _parsePaintProperty(TvgBinBlock block, Paint *paint)
             if (block.length != SIZE(Matrix)) return false;
             Matrix matrix;
             memcpy(&matrix, block.data, SIZE(Matrix));
-            if (paint->transform(matrix) != Result::Success) return false;
+            paint->transform(matrix);
             return true;
         }
         case TVG_TAG_PAINT_CMP_TARGET: {
@@ -109,6 +98,7 @@ static bool _parseScene(TvgBinBlock block, Paint *paint)
 {
     auto scene = static_cast<Scene*>(paint);
 
+    //Case1: scene reserve count
     if (block.type == TVG_TAG_SCENE_RESERVEDCNT) {
         if (block.length != SIZE(uint32_t)) return false;
         uint32_t reservedCnt;
@@ -117,8 +107,10 @@ static bool _parseScene(TvgBinBlock block, Paint *paint)
         return true;
     }
 
-    if (_paintProperty(block)) return _parsePaintProperty(block, scene);
+    //Case2: Base Paint Properties
+    if (_parsePaintProperty(block, scene)) return true;
 
+    //Case3: A Child paint
     if (auto paint = _parsePaint(block)) {
         scene->push(unique_ptr<Paint>(paint));
         return true;
@@ -158,17 +150,17 @@ static bool _parseShapePath(const char *ptr, const char *end, Shape *shape)
 }
 
 
-static bool _parseShapeFill(const char *ptr, const char *end, Fill **fillOutside)
+static unique_ptr<Fill> _parseShapeFill(const char *ptr, const char *end)
 {
     unique_ptr<Fill> fillGrad;
 
     while (ptr < end) {
         auto block = _readBlock(ptr);
-        if (block.end > end) return false;
+        if (block.end > end) return nullptr;
 
         switch (block.type) {
             case TVG_TAG_FILL_RADIAL_GRADIENT: {
-                if (block.length != 3 * SIZE(float)) return false;
+                if (block.length != 3 * SIZE(float)) return nullptr;
 
                 auto ptr = block.data;
                 float x, y, radius;
@@ -185,7 +177,7 @@ static bool _parseShapeFill(const char *ptr, const char *end, Fill **fillOutside
                 break;
             }
             case TVG_TAG_FILL_LINEAR_GRADIENT: {
-                if (block.length != 4 * SIZE(float)) return false;
+                if (block.length != 4 * SIZE(float)) return nullptr;
 
                 auto ptr = block.data;
                 float x1, y1, x2, y2;
@@ -204,16 +196,16 @@ static bool _parseShapeFill(const char *ptr, const char *end, Fill **fillOutside
                 break;
             }
             case TVG_TAG_FILL_FILLSPREAD: {
-                if (!fillGrad) return false;
-                if (block.length != SIZE(TvgBinFlag)) return false;
+                if (!fillGrad) return nullptr;
+                if (block.length != SIZE(TvgBinFlag)) return nullptr;
                 fillGrad->spread((FillSpread) *block.data);
                 break;
             }
             case TVG_TAG_FILL_COLORSTOPS: {
-                if (!fillGrad) return false;
-                if (block.length == 0 || block.length & 0x07) return false;
+                if (!fillGrad) return nullptr;
+                if (block.length == 0 || block.length & 0x07) return nullptr;
                 uint32_t stopsCnt = block.length >> 3; // 8 bytes per ColorStop
-                if (stopsCnt > 1023) return false;
+                if (stopsCnt > 1023) return nullptr;
                 Fill::ColorStop stops[stopsCnt];
                 auto p = block.data;
                 for (uint32_t i = 0; i < stopsCnt; i++, p += 8) {
@@ -229,8 +221,7 @@ static bool _parseShapeFill(const char *ptr, const char *end, Fill **fillOutside
         }
         ptr = block.end;
     }
-    *fillOutside = fillGrad.release();
-    return true;
+    return fillGrad;
 }
 
 
@@ -279,9 +270,9 @@ static bool _parseShapeStroke(const char *ptr, const char *end, Shape *shape)
                 break;
             }
             case TVG_TAG_SHAPE_STROKE_FILL: {
-                Fill* fill;
-                if (!_parseShapeFill(block.data, block.end, &fill)) return false;
-                shape->stroke(unique_ptr < Fill > (fill));
+                auto fill = _parseShapeFill(block.data, block.end);
+                if (!fill) return false;
+                shape->stroke(move(move(fill)));
                 break;
             }
             case TVG_TAG_SHAPE_STROKE_DASHPTRN: {
@@ -299,34 +290,34 @@ static bool _parseShape(TvgBinBlock block, Paint* paint)
 {
     auto shape = static_cast<Shape*>(paint);
 
+    //Case1: Shape specific properties
     switch (block.type) {
         case TVG_TAG_SHAPE_PATH: {
-            if (!_parseShapePath(block.data, block.end, shape)) return false;
-            break;
+            return _parseShapePath(block.data, block.end, shape);
         }
         case TVG_TAG_SHAPE_STROKE: {
-            if (!_parseShapeStroke(block.data, block.end, shape)) return false;
-            break;
+            return _parseShapeStroke(block.data, block.end, shape);
         }
         case TVG_TAG_SHAPE_FILL: {
-            Fill* fill;
-            if (!_parseShapeFill(block.data, block.end, &fill)) return false;
-            shape->fill(unique_ptr < Fill > (fill));
-            break;
+            auto fill = _parseShapeFill(block.data, block.end);
+            if (!fill) return false;
+            shape->fill(move(fill));
+            return true;
         }
         case TVG_TAG_SHAPE_COLOR: {
             if (block.length != 4) return false;
             shape->fill(block.data[0], block.data[1], block.data[2], block.data[3]);
-            break;
+            return true;
         }
         case TVG_TAG_SHAPE_FILLRULE: {
             if (block.length != SIZE(TvgBinFlag)) return false;
             shape->fill((FillRule)*block.data);
-            break;
+            return true;
         }
-        default: return _parsePaintProperty(block, shape);
     }
-    return true;
+
+    //Case2: Base Paint Properties
+    return _parsePaintProperty(block, shape);
 }
 
 
@@ -334,28 +325,29 @@ static bool _parsePicture(TvgBinBlock block, Paint* paint)
 {
     auto picture = static_cast<Picture*>(paint);
 
-    switch (block.type) {
-        case TVG_TAG_PICTURE_RAW_IMAGE: {
-            if (block.length < 2 * SIZE(uint32_t)) return false;
+    //Case1: Image Picture
+    if (block.type == TVG_TAG_PICTURE_RAW_IMAGE) {
+        if (block.length < 2 * SIZE(uint32_t)) return false;
 
-            auto ptr = block.data;
-            uint32_t w, h;
+        auto ptr = block.data;
+        uint32_t w, h;
 
-            READ_UI32(&w, ptr);
-            ptr += SIZE(uint32_t);
-            READ_UI32(&h, ptr);
-            ptr += SIZE(uint32_t);
+        READ_UI32(&w, ptr);
+        ptr += SIZE(uint32_t);
+        READ_UI32(&h, ptr);
+        ptr += SIZE(uint32_t);
 
-            auto size = w * h * SIZE(uint32_t);
-            if (block.length != 2 * SIZE(uint32_t) + size) return false;
+        auto size = w * h * SIZE(uint32_t);
+        if (block.length != 2 * SIZE(uint32_t) + size) return false;
 
-            picture->load((uint32_t*) ptr, w, h, true);
-            return true;
-        }
+        picture->load((uint32_t*) ptr, w, h, true);
+        return true;
     }
 
-    if (_paintProperty(block)) return _parsePaintProperty(block, picture);
+    //Case2: Base Paint Properties
+    if (_parsePaintProperty(block, picture)) return true;
 
+    //Case3: Vector Picture
     if (auto paint = _parsePaint(block)) {
         picture->paint(unique_ptr<Paint>(paint));
         return true;
@@ -368,8 +360,9 @@ static bool _parsePicture(TvgBinBlock block, Paint* paint)
 static Paint* _parsePaint(TvgBinBlock baseBlock)
 {
     bool (*parser)(TvgBinBlock, Paint*);
-    Paint *paint = nullptr;
+    Paint *paint;
 
+    //1. Decide the type of paint.
     switch (baseBlock.type) {
         case TVG_TAG_CLASS_SCENE: {
             paint = Scene::gen().release();
@@ -386,16 +379,22 @@ static Paint* _parsePaint(TvgBinBlock baseBlock)
             parser = _parsePicture;
             break;
         }
-        default: return nullptr;
+        default: {
+            TVGERR("TVG", "Invalid Paint Type (%d)", baseBlock.type);
+            return nullptr;
+        }
     }
 
     auto ptr = baseBlock.data;
 
+    //2. Read Subsquent properties of the current paint.
     while (ptr < baseBlock.end) {
         auto block = _readBlock(ptr);
         if (block.end > baseBlock.end) return paint;
-        //TODO: Do we need to clarify an invalid type case from the parsing failure?
-        if (!parser(block, paint)) return paint;
+        if (!parser(block, paint)) {
+            TVGERR("TVG", "Encountered the wrong paint properties... Paint Class (%d)", baseBlock.type);
+            return paint;
+        }
         ptr = block.end;
     }
     return paint;
@@ -414,7 +413,10 @@ unique_ptr<Scene> TvgBinInterpreter::run(const char *ptr, const char* end)
 
     while (ptr < end) {
         auto block = _readBlock(ptr);
-        if (block.end > end) return nullptr;
+        if (block.end > end) {
+            TVGERR("TVG", "Corrupted tvg file.");
+            return nullptr;
+        }
         scene->push(unique_ptr<Paint>(_parsePaint(block)));
         ptr = block.end;
     }
