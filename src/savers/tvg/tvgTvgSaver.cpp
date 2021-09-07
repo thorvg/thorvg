@@ -444,13 +444,14 @@ TvgBinCounter TvgSaver::serializeFill(const Fill* fill, TvgBinTag tag, const Mat
 }
 
 
-TvgBinCounter TvgSaver::serializeStroke(const Shape* shape, const Matrix* pTransform)
+TvgBinCounter TvgSaver::serializeStroke(const Shape* shape, const Matrix* pTransform, bool preTransform)
 {
     writeTag(TVG_TAG_SHAPE_STROKE);
     reserveCount();
 
     //width
     auto width = shape->strokeWidth();
+    if (preTransform) width *= pTransform->e11;  //we know x/y scaling factors are same.
     auto cnt = writeTagProperty(TVG_TAG_SHAPE_STROKE_WIDTH, SIZE(width), &width);
 
     //cap
@@ -490,7 +491,7 @@ TvgBinCounter TvgSaver::serializeStroke(const Shape* shape, const Matrix* pTrans
 }
 
 
-TvgBinCounter TvgSaver::serializePath(const Shape* shape, const Matrix* pTransform)
+TvgBinCounter TvgSaver::serializePath(const Shape* shape, const Matrix& transform, bool preTransform)
 {
     const PathCommand* cmds = nullptr;
     auto cmdCnt = shape->pathCommands(&cmds);
@@ -514,14 +515,13 @@ TvgBinCounter TvgSaver::serializePath(const Shape* shape, const Matrix* pTransfo
     cnt += writeData(outCmds, SIZE(outCmds));
 
     //transform?
-    auto transform = const_cast<Shape*>(shape)->transform();
-    if (pTransform) transform = _multiply(pTransform, &transform);
-
-    if (fabs(transform.e11 - 1) > FLT_EPSILON || fabs(transform.e12) > FLT_EPSILON || fabs(transform.e13) > FLT_EPSILON ||
-        fabs(transform.e21) > FLT_EPSILON || fabs(transform.e22 - 1) > FLT_EPSILON || fabs(transform.e23) > FLT_EPSILON ||
-        fabs(transform.e31) > FLT_EPSILON || fabs(transform.e32) > FLT_EPSILON || fabs(transform.e33 - 1) > FLT_EPSILON) {
-        auto p = const_cast<Point*>(pts);
-        for (uint32_t i = 0; i < ptsCnt; ++i) _multiply(p++, transform);
+    if (preTransform) {
+        if (fabs(transform.e11 - 1) > FLT_EPSILON || fabs(transform.e12) > FLT_EPSILON || fabs(transform.e13) > FLT_EPSILON ||
+            fabs(transform.e21) > FLT_EPSILON || fabs(transform.e22 - 1) > FLT_EPSILON || fabs(transform.e23) > FLT_EPSILON ||
+            fabs(transform.e31) > FLT_EPSILON || fabs(transform.e32) > FLT_EPSILON || fabs(transform.e33 - 1) > FLT_EPSILON) {
+            auto p = const_cast<Point*>(pts);
+            for (uint32_t i = 0; i < ptsCnt; ++i) _multiply(p++, transform);
+        }
     }
 
     cnt += writeData(pts, ptsCnt * SIZE(pts[0]));
@@ -545,12 +545,18 @@ TvgBinCounter TvgSaver::serializeShape(const Shape* shape, const Matrix* pTransf
     if (auto flag = static_cast<TvgBinFlag>(shape->fillRule()))
         cnt = writeTagProperty(TVG_TAG_SHAPE_FILLRULE, SIZE(TvgBinFlag), &flag);
 
+
+    bool preTransform = true;
+
     //stroke
     if (shape->strokeWidth() > 0) {
+        //We can't apply pre-transformation if the stroke has the irregular scaling per directions or it has dash.
+        if (abs(transform.e11 - transform.e22) > FLT_EPSILON || shape->strokeDash(nullptr) > 0) preTransform = false;
+
         uint8_t color[4] = {0, 0, 0, 0};
         shape->strokeColor(color, color + 1, color + 2, color + 3);
         auto fill = shape->strokeFill();
-        if (fill || color[3] > 0) cnt += serializeStroke(shape, &transform);
+        if (fill || color[3] > 0) cnt += serializeStroke(shape, &transform, preTransform);
     }
 
     //fill
@@ -562,7 +568,9 @@ TvgBinCounter TvgSaver::serializeShape(const Shape* shape, const Matrix* pTransf
         if (color[3] > 0) cnt += writeTagProperty(TVG_TAG_SHAPE_COLOR, SIZE(color), color);
     }
 
-    cnt += serializePath(shape, pTransform);
+    cnt += serializePath(shape, transform, preTransform);
+
+    if (!preTransform) cnt += writeTransform(transform);
     cnt += serializePaint(shape, pTransform);
 
     writeReservedCount(cnt);
