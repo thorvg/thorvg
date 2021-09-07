@@ -542,9 +542,9 @@ TvgBinCounter TvgSaver::serializeShape(const Shape* shape, const Matrix* pTransf
     if (pTransform) transform = _multiply(pTransform, &transform);
 
     //fill rule
-    if (auto flag = static_cast<TvgBinFlag>(shape->fillRule()))
+    if (auto flag = static_cast<TvgBinFlag>(shape->fillRule())) {
         cnt = writeTagProperty(TVG_TAG_SHAPE_FILLRULE, SIZE(TvgBinFlag), &flag);
-
+    }
 
     bool preTransform = true;
 
@@ -602,9 +602,9 @@ TvgBinCounter TvgSaver::serializePicture(const Picture* picture, const Matrix* p
             reserveCount();
             auto cnt = serializeChildren(it, &transform, true) + serializePaint(picture, pTransform);
             writeReservedCount(cnt);
+            delete(it);
+            return SERIAL_DONE(cnt);
         }
-        delete(it);
-        return SERIAL_DONE(cnt);
     }
     delete(it);
 
