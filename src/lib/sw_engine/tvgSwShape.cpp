@@ -21,6 +21,7 @@
  */
 #include "tvgSwCommon.h"
 #include "tvgBezier.h"
+#include <float.h>
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
@@ -234,11 +235,14 @@ static void _dashCubicTo(SwDashStroke& dash, const Point* ctrl1, const Point* ct
             Bezier left, right;
             len -= dash.curLen;
             bezSplitAt(cur, dash.curLen, left, right);
-            dash.curIdx = (dash.curIdx + 1) % dash.cnt;
             if (!dash.curOpGap) {
-                _outlineMoveTo(*dash.outline, &left.start, transform);
+                // leftovers from a previous command don't require moveTo
+                if (dash.pattern[dash.curIdx] - dash.curLen < FLT_EPSILON) {
+                    _outlineMoveTo(*dash.outline, &left.start, transform);
+                }
                 _outlineCubicTo(*dash.outline, &left.ctrl1, &left.ctrl2, &left.end, transform);
             }
+            dash.curIdx = (dash.curIdx + 1) % dash.cnt;
             dash.curLen = dash.pattern[dash.curIdx];
             dash.curOpGap = !dash.curOpGap;
             cur = right;
