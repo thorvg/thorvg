@@ -38,6 +38,7 @@ source_file = [
     'Svg.cpp',
     'Svg2.cpp',
     'Transform.cpp',
+    'Tvg.cpp',
     'TvgSaver.cpp',
     'Update.cpp',
 ]
