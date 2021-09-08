@@ -178,10 +178,7 @@ struct SwImageTask : SwTask
         auto clipRegion = bbox;
 
         //Invisible shape turned to visible by alpha.
-        auto prepareImage = false;
-        if (!imagePrepared(&image) && ((flags & RenderUpdateFlag::Image) || (opacity > 0))) prepareImage = true;
-
-        if (prepareImage) {
+        if ((flags & (RenderUpdateFlag::Image | RenderUpdateFlag::Transform | RenderUpdateFlag::Color)) && (opacity > 0)) {
             imageReset(&image);
 
             image.data = const_cast<uint32_t*>(pdata->data(&image.w, &image.h));
