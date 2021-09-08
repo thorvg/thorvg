@@ -157,6 +157,47 @@ public:
         return true;
     }
 
+    val layers()
+    {
+        //returns an array of a structure Layer: [id] [depth] [type] [composite]
+        mLayers.reset();
+        sublayers(&mLayers, mPicture, 0);
+
+        return val(typed_memory_view(mLayers.count * sizeof(Layer) / sizeof(uint32_t), (uint32_t *)(mLayers.data)));
+    }
+
+    bool setOpacity(uint32_t paintId, uint8_t opacity)
+    {
+        const Paint* paint = findPaintById(mPicture, paintId, nullptr);
+        if (!paint) return false;
+        const_cast<Paint*>(paint)->opacity(opacity);
+        return true;
+    }
+
+    val bounds(uint32_t paintId)
+    {
+        Array<const Paint *> parents;
+        const Paint* paint = findPaintById(mPicture, paintId, &parents);
+        if (!paint) return val(typed_memory_view<float>(0, nullptr));
+        paint->bounds(&mBounds[0], &mBounds[1], &mBounds[2], &mBounds[3]);
+
+        mBounds[2] += mBounds[0];
+        mBounds[3] += mBounds[1];
+
+        for (auto paint = parents.data; paint < (parents.data + parents.count); ++paint) {
+           auto m = const_cast<Paint*>(*paint)->transform();
+           mBounds[0] = mBounds[0] * m.e11 + m.e13;
+           mBounds[1] = mBounds[1] * m.e22 + m.e23;
+           mBounds[2] = mBounds[2] * m.e11 + m.e13;
+           mBounds[3] = mBounds[3] * m.e22 + m.e23;
+        }
+
+        mBounds[2] -= mBounds[0];
+        mBounds[3] -= mBounds[1];
+
+        return val(typed_memory_view(4, mBounds));
+    }
+
 private:
     explicit ThorvgWasm()
     {
@@ -183,6 +224,69 @@ private:
         if (mPicture) mPicture->size(width, height);
     }
 
+    struct Layer
+    {
+        uint32_t paint; //cast of a paint pointer
+        uint32_t depth;
+        uint32_t type;
+        uint32_t composite;
+    };
+    void sublayers(Array<Layer>* layers, const Paint* paint, uint32_t depth)
+    {
+        //paint
+        if (paint->id() != TVG_CLASS_ID_SHAPE) {
+            auto it = this->iterator(paint);
+            if (it->count() > 0) {
+                layers->reserve(layers->count + it->count());
+                it->begin();
+                while (auto child = it->next()) {
+                    uint32_t type = child->id();
+                    layers->push({.paint = reinterpret_cast<uint32_t>(child), .depth = depth + 1, .type = type, .composite = static_cast<uint32_t>(CompositeMethod::None)});
+                    sublayers(layers, child, depth + 1);
+                }
+            }
+        }
+        //composite
+        const Paint* compositeTarget = nullptr;
+        CompositeMethod composite = paint->composite(&compositeTarget);
+        if (compositeTarget && composite != CompositeMethod::None) {
+            uint32_t type = compositeTarget->id();
+            layers->push({.paint = reinterpret_cast<uint32_t>(compositeTarget), .depth = depth, .type = type, .composite = static_cast<uint32_t>(composite)});
+            sublayers(layers, compositeTarget, depth);
+        }
+    }
+
+    const Paint* findPaintById(const Paint* parent, uint32_t paintId, Array<const Paint *>* parents) {
+        //validate paintId is correct and exists in the picture
+        if (reinterpret_cast<uint32_t>(parent) == paintId) {
+            if (parents) parents->push(parent);
+            return parent;
+        }
+        //paint
+        if (parent->id() != TVG_CLASS_ID_SHAPE) {
+            auto it = this->iterator(parent);
+            if (it->count() > 0) {
+                it->begin();
+                while (auto child = it->next()) {
+                    if (auto paint = findPaintById(child, paintId, parents)) {
+                        if (parents) parents->push(parent);
+                        return paint;
+                    }
+                }
+            }
+        }
+        //composite
+        const Paint* compositeTarget = nullptr;
+        CompositeMethod composite = parent->composite(&compositeTarget);
+        if (compositeTarget && composite != CompositeMethod::None) {
+            if (auto paint = findPaintById(compositeTarget, paintId, parents)) {
+                if (parents) parents->push(parent);
+                return paint;
+            }
+        }
+        return nullptr;
+    }
+
 private:
     string                 mErrorMsg;
     unique_ptr< SwCanvas > mSwCanvas = nullptr;
@@ -191,6 +295,9 @@ private:
 
     uint32_t               mWidth{0};
     uint32_t               mHeight{0};
+
+    Array<Layer>           mLayers;
+    float                  mBounds[4];
 };
 
 // Binding code
@@ -203,5 +310,9 @@ EMSCRIPTEN_BINDINGS(thorvg_bindings) {
     .function("update", &ThorvgWasm::update)
     .function("render", &ThorvgWasm::render)
 
-    .function("saveTvg", &ThorvgWasm::saveTvg);
+    .function("saveTvg", &ThorvgWasm::saveTvg)
+
+    .function("layers", &ThorvgWasm::layers)
+    .function("bounds", &ThorvgWasm::bounds)
+    .function("setOpacity", &ThorvgWasm::setOpacity);
 }
