@@ -48,7 +48,7 @@ public:
         return defaultData;
     }
 
-    bool load(string data, int width, int height)
+    bool load(string data, string mimetype, int width, int height)
     {
         mErrorMsg = "None";
 
@@ -66,7 +66,7 @@ public:
         mSwCanvas->clear();
 
         if (data.empty()) data = defaultData;
-        if (mPicture->load(data.c_str(), data.size()) != Result::Success) {
+        if (mPicture->load(data.c_str(), data.size(), mimetype, false) != Result::Success) {
             /* mPicture is not handled as unique_ptr yet, so delete here */
             delete(mPicture);
             mPicture = nullptr;
@@ -74,6 +74,8 @@ public:
             mErrorMsg = "Load failed";
             return false;
         }
+
+        mPicture->size(&mOriginalSize[0], &mOriginalSize[1]);
 
         /* need to reset size to calculate scale in Picture.size internally
            before calling updateSize */
@@ -137,6 +139,11 @@ public:
         return val(typed_memory_view(mWidth * mHeight * 4, mBuffer.get()));
     }
 
+    val originalSize()
+    {
+        return val(typed_memory_view(2, mOriginalSize));
+    }
+
     bool saveTvg()
     {
         mErrorMsg = "None";
@@ -190,6 +197,7 @@ private:
 
     uint32_t               mWidth{0};
     uint32_t               mHeight{0};
+    float                  mOriginalSize[2];
 };
 
 // Binding code
@@ -201,6 +209,7 @@ EMSCRIPTEN_BINDINGS(thorvg_bindings) {
     .function("load", &ThorvgWasm::load)
     .function("update", &ThorvgWasm::update)
     .function("render", &ThorvgWasm::render)
+    .function("originalSize", &ThorvgWasm::originalSize)
 
     .function("saveTvg", &ThorvgWasm::saveTvg);
 }
