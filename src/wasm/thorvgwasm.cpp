@@ -90,32 +90,26 @@ public:
         return true;
     }
 
-    void update(int width, int height)
+    bool update(int width, int height, bool force)
     {
         mErrorMsg = "None";
 
-        if (!mSwCanvas) {
-            mErrorMsg = "Canvas is NULL";
-            return;
+        if (!mSwCanvas || !mPicture) {
+            mErrorMsg = "Invalid Conditions";
+            return false;
         }
 
-        if (!mPicture) {
-            mErrorMsg = "Picture is NULL";
-            return;
-        }
-
-        if (mWidth == width && mHeight == height) {
-            return;
+        if (!force && mWidth == width && mHeight == height) {
+            return true;
         }
 
         updateSize(width, height);
 
         if (mSwCanvas->update(mPicture) != Result::Success) {
             mErrorMsg = "Update failed";
-            return;
+            return false;
         }
-
-        return;
+        return true;
     }
 
     val render()
