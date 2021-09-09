@@ -19,23 +19,24 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#ifndef _TVG_SAVE_MODULE_H_
-#define _TVG_SAVE_MODULE_H_
+#ifndef _TVG_ITERATOR_MODULE_H_
+#define _TVG_ITERATOR_MODULE_H_
 
-#include "tvgIteratorModule.h"
+#include "tvgPaint.h"
 
 namespace tvg
 {
 
-class SaveModule : public IteratorModule
+class IteratorModule
 {
 public:
-    virtual ~SaveModule() {}
-
-    virtual bool save(Paint* paint, const string& path, bool compress) = 0;
-    virtual bool close() = 0;
+    //Utility Method: Iterator Delegator
+    Iterator* iterator(const Paint* paint)
+    {
+        return paint->pImpl->iterator();
+    }
 };
 
 }
 
-#endif //_TVG_SAVE_MODULE_H_
+#endif //_TVG_ITERATOR_MODULE_H_
