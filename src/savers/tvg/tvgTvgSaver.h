@@ -37,6 +37,7 @@ private:
     char *path = nullptr;
     uint32_t headerSize;
     float vsize[2] = {0.0f, 0.0f};
+    float vstart[2] = {0.0f, 0.0f}; //top left corner of the paint's bbox
     bool compress;
 
     bool flushTo(const std::string& path);

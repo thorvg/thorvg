@@ -712,7 +712,12 @@ TvgBinCounter TvgSaver::serialize(const Paint* paint, const Matrix* pTransform, 
 void TvgSaver::run(unsigned tid)
 {
     if (!writeHeader()) return;
-    if (serialize(paint, nullptr) == 0) return;
+    if (fabsf(vstart[0]) > FLT_EPSILON || fabsf(vstart[1]) > FLT_EPSILON) {
+       Matrix transform = {1, 0, -vstart[0], 0, 1, -vstart[1], 0, 0, 1};
+       if (serialize(paint, &transform) == 0) return;
+    } else {
+       if (serialize(paint, nullptr) == 0) return;
+    }
     if (!saveEncoding(path)) return;
 }
 
@@ -751,7 +756,7 @@ bool TvgSaver::save(Paint* paint, const string& path, bool compress)
     this->path = strdup(path.c_str());
     if (!this->path) return false;
 
-    paint->bounds(nullptr, nullptr, &vsize[0], &vsize[1]);
+    paint->bounds(&vstart[0], &vstart[1], &vsize[0], &vsize[1]);
     if (vsize[0] <= FLT_EPSILON || vsize[1] <= FLT_EPSILON) {
         TVGLOG("TVG_SAVER", "Saving paint(%p) has zero view size.", paint);
         return false;
