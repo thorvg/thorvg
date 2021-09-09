@@ -47,7 +47,12 @@ public:
         mErrorMsg = "None";
 
         if (!mSwCanvas) {
-            mErrorMsg = "Canvas is NULL";
+             mErrorMsg = "Canvas is NULL";
+             return false;
+        }
+
+        if (data.empty()) {
+            mErrorMsg = "Data is empty";
             return false;
         }
 
