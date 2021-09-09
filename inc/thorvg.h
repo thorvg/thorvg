@@ -63,7 +63,6 @@ namespace tvg
 
 class RenderMethod;
 class IteratorModule;
-class SaveModule;
 class Scene;
 class Picture;
 class Canvas;
