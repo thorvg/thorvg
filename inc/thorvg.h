@@ -473,7 +473,7 @@ public:
      *
      * @note The Update behavior can be asynchronous if the assigned thread number is greater than zero.
      */
-    virtual Result update(Paint* paint) noexcept;
+    virtual Result update(Paint* paint = nullptr) noexcept;
 
     /**
      * @brief Request the canvas to draw the Paint objects.

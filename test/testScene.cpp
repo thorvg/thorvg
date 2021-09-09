@@ -90,7 +90,7 @@ TEST_CASE("Scene Clear And Reuse Shape", "[tvgScene]")
 
     REQUIRE(scene->push(move(shape)) == Result::Success);
     REQUIRE(canvas->push(move(scene)) == Result::Success);
-    REQUIRE(canvas->update(nullptr) == Result::Success);
+    REQUIRE(canvas->update() == Result::Success);
 
     //No deallocate shape.
     REQUIRE(pScene->clear(false) == Result::Success);
