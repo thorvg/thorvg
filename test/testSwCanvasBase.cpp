@@ -61,7 +61,7 @@ TEST_CASE("Pushing Paints", "[tvgSwCanvasBase]")
     REQUIRE(canvas->push(move(Scene::gen())) == Result::Success);
 
     //Cases by contexts.
-    REQUIRE(canvas->update(nullptr) == Result::Success);
+    REQUIRE(canvas->update() == Result::Success);
 
     REQUIRE(canvas->push(move(Shape::gen())) == Result::Success);
     REQUIRE(canvas->push(move(Shape::gen())) == Result::Success);
@@ -135,11 +135,11 @@ TEST_CASE("Clear", "[tvgSwCanvasBase]")
         REQUIRE(canvas2->push(move(shape2)) == Result::Success);
     }
 
-    REQUIRE(canvas->update(nullptr) == Result::Success);
+    REQUIRE(canvas->update() == Result::Success);
     REQUIRE(canvas->clear() == Result::Success);
     REQUIRE(canvas->clear(false) == Result::Success);
 
-    REQUIRE(canvas2->update(nullptr) == Result::Success);
+    REQUIRE(canvas2->update() == Result::Success);
     REQUIRE(canvas2->clear(false) == Result::Success);
     REQUIRE(canvas2->clear() == Result::Success);
 
@@ -158,7 +158,7 @@ TEST_CASE("Update", "[tvgSwCanvasBase]")
     uint32_t buffer[100*100];
     REQUIRE(canvas->target(buffer, 100, 100, 100, SwCanvas::Colorspace::ARGB8888) == Result::Success);
 
-    REQUIRE(canvas->update(nullptr) == Result::InsufficientCondition);
+    REQUIRE(canvas->update() == Result::InsufficientCondition);
 
     REQUIRE(canvas->push(move(Shape::gen())) == Result::Success);
 
@@ -170,9 +170,9 @@ TEST_CASE("Update", "[tvgSwCanvasBase]")
     auto ptr = shape.get();
     REQUIRE(canvas->push(move(shape)) == Result::Success);
     REQUIRE(canvas->update(ptr) == Result::Success);
-    REQUIRE(canvas->update(nullptr) == Result::Success);
+    REQUIRE(canvas->update() == Result::Success);
     REQUIRE(canvas->draw() == Result::Success);
-    REQUIRE(canvas->update(nullptr) == Result::InsufficientCondition);
+    REQUIRE(canvas->update() == Result::InsufficientCondition);
 
     REQUIRE(canvas->clear() == Result::Success);
 
