@@ -152,10 +152,10 @@ struct Picture::Impl
     bool viewbox(float* x, float* y, float* w, float* h) const
     {
         if (!loader) return false;
-        if (x) *x = loader->vx;
-        if (y) *y = loader->vy;
-        if (w) *w = loader->vw;
-        if (h) *h = loader->vh;
+        if (x) *x = loader->x;
+        if (y) *y = loader->y;
+        if (w) *w = loader->w;
+        if (h) *h = loader->h;
         return true;
     }
 

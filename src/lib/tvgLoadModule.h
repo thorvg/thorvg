@@ -30,11 +30,7 @@ namespace tvg
 class LoadModule
 {
 public:
-    //default view box, if any.
-    float vx = 0;
-    float vy = 0;
-    float vw = 0;
-    float vh = 0;
+    float x = 0, y = 0;         //default top left corner of the image
     float w = 0, h = 0;         //default image size
     bool preserveAspect = true; //keep aspect ratio by default.
 

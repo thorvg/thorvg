@@ -31,6 +31,7 @@ public:
     string filePath;
     const char* content = nullptr;
     uint32_t size = 0;
+    float width = 0.0f, height = 0.0f; //svg tag attributes
 
     SvgLoaderData loaderData;
     unique_ptr<Scene> root;

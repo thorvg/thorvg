@@ -2770,7 +2770,7 @@ void SvgLoader::run(unsigned tid)
 
         if (loaderData.cloneNodes.count > 0) _clonePostponedNodes(&loaderData.cloneNodes);
     }
-    root = svgSceneBuild(loaderData.doc, vx, vy, vw, vh);
+    root = svgSceneBuild(loaderData.doc, x, y, w, h);
 };
 
 
@@ -2788,19 +2788,19 @@ bool SvgLoader::header()
 
     if (loaderData.doc && loaderData.doc->type == SvgNodeType::Doc) {
         //Return the brief resource info such as viewbox:
-        vx = loaderData.doc->node.doc.vx;
-        vy = loaderData.doc->node.doc.vy;
-        w = vw = loaderData.doc->node.doc.vw;
-        h = vh = loaderData.doc->node.doc.vh;
+        x = loaderData.doc->node.doc.vx;
+        y = loaderData.doc->node.doc.vy;
+        w = width = loaderData.doc->node.doc.vw;
+        h = height = loaderData.doc->node.doc.vh;
 
         //Override size
         if (loaderData.doc->node.doc.w > 0) {
-            w = loaderData.doc->node.doc.w;
-            if (vw < FLT_EPSILON) vw = w;
+            width = loaderData.doc->node.doc.w;
+            if (w < FLT_EPSILON) w = width;
         }
         if (loaderData.doc->node.doc.h > 0) {
-            h = loaderData.doc->node.doc.h;
-            if (vh < FLT_EPSILON) vh = h;
+            height = loaderData.doc->node.doc.h;
+            if (h < FLT_EPSILON) h = height;
         }
 
         preserveAspect = loaderData.doc->node.doc.preserveAspect;
@@ -2855,27 +2855,27 @@ bool SvgLoader::resize(Paint* paint, float w, float h)
 {
     if (!paint) return false;
 
-    auto sx = w / vw;
-    auto sy = h / vh;
+    auto sx = w / this->w;
+    auto sy = h / this->h;
 
     if (preserveAspect) {
         //Scale
         auto scale = sx < sy ? sx : sy;
         paint->scale(scale);
         //Align
-        auto vx = this->vx * scale;
-        auto vy = this->vy * scale;
-        auto vw = this->vw * scale;
-        auto vh = this->vh * scale;
+        auto vx = this->x * scale;
+        auto vy = this->y * scale;
+        auto vw = this->w * scale;
+        auto vh = this->h * scale;
         if (vw > vh) vy -= (h - vh) * 0.5f;
         else vx -= (w - vw) * 0.5f;
         paint->translate(-vx, -vy);
     } else {
         //Align
-        auto vx = this->vx * sx;
-        auto vy = this->vy * sy;
-        auto vw = this->vw * sx;
-        auto vh = this->vh * sy;
+        auto vx = this->x * sx;
+        auto vy = this->y * sy;
+        auto vw = this->w * sx;
+        auto vh = this->h * sy;
         if (vw > vh) vy -= (h - vh) * 0.5f;
         else vx -= (w - vw) * 0.5f;
 
