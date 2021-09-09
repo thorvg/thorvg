@@ -49,7 +49,7 @@ public:
         return defaultData;
     }
 
-    bool load(string data, int width, int height)
+    bool load(string data, string mimetype, int width, int height)
     {
         mErrorMsg = "None";
 
@@ -67,7 +67,7 @@ public:
         mSwCanvas->clear();
 
         if (data.empty()) data = defaultData;
-        if (mPicture->load(data.c_str(), data.size()) != Result::Success) {
+        if (mPicture->load(data.c_str(), data.size(), mimetype, false) != Result::Success) {
             /* mPicture is not handled as unique_ptr yet, so delete here */
             delete(mPicture);
             mPicture = nullptr;
@@ -75,6 +75,8 @@ public:
             mErrorMsg = "Load failed";
             return false;
         }
+
+        mPicture->size(&mOriginalSize[0], &mOriginalSize[1]);
 
         /* need to reset size to calculate scale in Picture.size internally
            before calling updateSize */
@@ -91,32 +93,26 @@ public:
         return true;
     }
 
-    void update(int width, int height)
+    bool update(int width, int height, bool force)
     {
         mErrorMsg = "None";
 
-        if (!mSwCanvas) {
-            mErrorMsg = "Canvas is NULL";
-            return;
+        if (!mSwCanvas || !mPicture) {
+            mErrorMsg = "Invalid Conditions";
+            return false;
         }
 
-        if (!mPicture) {
-            mErrorMsg = "Picture is NULL";
-            return;
-        }
-
-        if (mWidth == width && mHeight == height) {
-            return;
+        if (!force && mWidth == width && mHeight == height) {
+            return true;
         }
 
         updateSize(width, height);
 
         if (mSwCanvas->update(mPicture) != Result::Success) {
             mErrorMsg = "Update failed";
-            return;
+            return false;
         }
-
-        return;
+        return true;
     }
 
     val render()
@@ -136,6 +132,11 @@ public:
         mSwCanvas->sync();
 
         return val(typed_memory_view(mWidth * mHeight * 4, mBuffer.get()));
+    }
+
+    val originalSize()
+    {
+        return val(typed_memory_view(2, mOriginalSize));
     }
 
     bool saveTvg()
@@ -298,6 +299,7 @@ private:
 
     Array<Layer>           mLayers;
     float                  mBounds[4];
+    float                  mOriginalSize[2];
 };
 
 // Binding code
@@ -309,6 +311,7 @@ EMSCRIPTEN_BINDINGS(thorvg_bindings) {
     .function("load", &ThorvgWasm::load)
     .function("update", &ThorvgWasm::update)
     .function("render", &ThorvgWasm::render)
+    .function("originalSize", &ThorvgWasm::originalSize)
 
     .function("saveTvg", &ThorvgWasm::saveTvg)
 

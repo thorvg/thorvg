@@ -107,7 +107,7 @@ void tvgUpdateCmds(tvg::Canvas* canvas, float progress)
     pMaskShape->translate(0 , progress * 300);
     pMask->translate(0 , progress * 300);
 
-    canvas->update(nullptr);
+    canvas->update();
 }
 
 void transitSwCb(Elm_Transit_Effect *effect, Elm_Transit* transit, double progress)
