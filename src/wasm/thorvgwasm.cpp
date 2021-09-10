@@ -178,20 +178,27 @@ public:
         const Paint* paint = findPaintById(mPicture, paintId, &parents);
         if (!paint) return val(typed_memory_view<float>(0, nullptr));
         paint->bounds(&mBounds[0], &mBounds[1], &mBounds[2], &mBounds[3]);
-
-        mBounds[2] += mBounds[0];
-        mBounds[3] += mBounds[1];
-
+        
+        float points[8] = { //clockwise points
+            mBounds[0], mBounds[1], //(x1, y1)
+            mBounds[0] + mBounds[2], mBounds[1], //(x2, y1)
+            mBounds[0] + mBounds[2], mBounds[1] + mBounds[3], //(x2, y2)
+            mBounds[0], mBounds[1] + mBounds[3], //(x1, y2)
+        };
+        
         for (auto paint = parents.data; paint < (parents.data + parents.count); ++paint) {
-           auto m = const_cast<Paint*>(*paint)->transform();
-           mBounds[0] = mBounds[0] * m.e11 + m.e13;
-           mBounds[1] = mBounds[1] * m.e22 + m.e23;
-           mBounds[2] = mBounds[2] * m.e11 + m.e13;
-           mBounds[3] = mBounds[3] * m.e22 + m.e23;
+            auto m = const_cast<Paint*>(*paint)->transform();
+            for (int i = 0; i<8; i += 2) {
+                float x = points[i] * m.e11 + points[i+1] * m.e12 + m.e13;
+                points[i+1] = points[i] * m.e21 + points[i+1] * m.e22 + m.e23;
+                points[i] = x;
+            }
         }
-
-        mBounds[2] -= mBounds[0];
-        mBounds[3] -= mBounds[1];
+        
+        mBounds[0] = points[0];//x(p1)
+        mBounds[1] = points[3];//y(p2)
+        mBounds[2] = points[4] - mBounds[0];//x(p3)
+        mBounds[3] = points[7] - mBounds[1];//y(p4)
 
         return val(typed_memory_view(4, mBounds));
     }
@@ -299,7 +306,7 @@ private:
     float                  mOriginalSize[2];
 };
 
-// Binding code
+//Binding code
 EMSCRIPTEN_BINDINGS(thorvg_bindings) {
   class_<ThorvgWasm>("ThorvgWasm")
     .constructor(&ThorvgWasm::create)
