@@ -550,13 +550,15 @@ TvgBinCounter TvgSaver::serializeShape(const Shape* shape, const Matrix* pTransf
 
     //stroke
     if (shape->strokeWidth() > 0) {
-        //We can't apply pre-transformation if the stroke has the irregular scaling per directions or it has dash.
-        if (abs(transform.e11 - transform.e22) > FLT_EPSILON || shape->strokeDash(nullptr) > 0) preTransform = false;
-
         uint8_t color[4] = {0, 0, 0, 0};
         shape->strokeColor(color, color + 1, color + 2, color + 3);
         auto fill = shape->strokeFill();
-        if (fill || color[3] > 0) cnt += serializeStroke(shape, &transform, preTransform);
+        if (fill || color[3] > 0) {
+            //We can't apply pre-transformation if the stroke has the irregular scaling per directions or it has dash.
+            if (abs(transform.e11 - transform.e22) > FLT_EPSILON || shape->strokeDash(nullptr) > 0) preTransform = false;
+
+            cnt += serializeStroke(shape, &transform, preTransform);
+        }
     }
 
     //fill
