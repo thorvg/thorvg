@@ -173,7 +173,7 @@ struct Picture::Impl
         if (y) *y = 0;
         if (w) *w = this->w;
         if (h) *h = this->h;
- 
+
         return true;
     }
 
@@ -197,6 +197,7 @@ struct Picture::Impl
         if (!loader->read()) return Result::Unknown;
         w = loader->w;
         h = loader->h;
+        if (w != loader->vw || h != loader->vh) resizing = true;
         return Result::Success;
     }
 
@@ -209,6 +210,7 @@ struct Picture::Impl
         if (!loader->read()) return Result::Unknown;
         w = loader->w;
         h = loader->h;
+        if (w != loader->vw || h != loader->vh) resizing = true;
         return Result::Success;
     }
 
