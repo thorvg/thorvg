@@ -2771,6 +2771,11 @@ void SvgLoader::run(unsigned tid)
         if (loaderData.cloneNodes.count > 0) _clonePostponedNodes(&loaderData.cloneNodes);
     }
     root = svgSceneBuild(loaderData.doc, vx, vy, vw, vh);
+
+    //Transform the size in default.
+    if (abs(this->w - this->vw) > FLT_EPSILON || abs(this->h - this->vh) > FLT_EPSILON) {
+        resize(root.get(), this->w, this->h);
+    }
 };
 
 
