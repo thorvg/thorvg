@@ -25,6 +25,7 @@
 #include "tvgSvgSceneBuilder.h"
 #include "tvgSvgPath.h"
 #include "tvgSvgUtil.h"
+#include <float.h>
 
 static bool _appendShape(SvgNode* node, Shape* shape, float vx, float vy, float vw, float vh);
 
@@ -516,14 +517,45 @@ static unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, float vx, float 
 /* External Class Implementation                                        */
 /************************************************************************/
 
-unique_ptr<Scene> svgSceneBuild(SvgNode* node, float vx, float vy, float vw, float vh)
+unique_ptr<Scene> svgSceneBuild(SvgNode* node, float vx, float vy, float vw, float vh, float w, float h, bool preserveAspect)
 {
     if (!node || (node->type != SvgNodeType::Doc)) return nullptr;
 
     auto docNode = _sceneBuildHelper(node, vx, vy, vw, vh);
 
+    if (fabsf(w - vw) > FLT_EPSILON || fabsf(h - vh) > FLT_EPSILON) {
+        auto sx = w / vw;
+        auto sy = h / vh;
+
+        if (preserveAspect) {
+            //Scale
+            auto scale = sx < sy ? sx : sy;
+            docNode->scale(scale);
+            //Align
+            auto tvx = vx * scale;
+            auto tvy = vy * scale;
+            auto tvw = vw * scale;
+            auto tvh = vh * scale;
+            if (vw > vh) tvy -= (h - tvh) * 0.5f;
+            else  tvx -= (w - tvw) * 0.5f;
+            docNode->translate(-tvx, -tvy);
+        } else {
+            //Align
+            auto tvx = vx * sx;
+            auto tvy = vy * sy;
+            auto tvw = vw * sx;
+            auto tvh = vh * sy;
+            if (tvw > tvh) tvy -= (h - tvh) * 0.5f;
+            else tvx -= (w - tvw) * 0.5f;
+            Matrix m = {sx, 0, -tvx, 0, sy, -tvy, 0, 0, 1};
+            docNode->transform(m);
+        }
+    } else if (vx < 0 || vy < 0) {
+        docNode->translate(-vx, -vy);
+    }
+
     auto viewBoxClip = Shape::gen();
-    viewBoxClip->appendRect(vx, vy, vw, vh, 0, 0);
+    viewBoxClip->appendRect(0, 0, w, h, 0, 0);
     viewBoxClip->fill(0, 0, 0, 255);
 
     auto compositeLayer = Scene::gen();
