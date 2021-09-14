@@ -25,6 +25,6 @@
 
 #include "tvgCommon.h"
 
-unique_ptr<Scene> svgSceneBuild(SvgNode* node, float vx, float vy, float vw, float vh);
+unique_ptr<Scene> svgSceneBuild(SvgNode* node, float vx, float vy, float vw, float vh, float w, float h, bool preserveAspect);
 
 #endif //_TVG_SVG_SCENE_BUILDER_H_

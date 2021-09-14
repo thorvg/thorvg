@@ -2770,7 +2770,7 @@ void SvgLoader::run(unsigned tid)
 
         if (loaderData.cloneNodes.count > 0) _clonePostponedNodes(&loaderData.cloneNodes);
     }
-    root = svgSceneBuild(loaderData.doc, vx, vy, vw, vh);
+    root = svgSceneBuild(loaderData.doc, vx, vy, vw, vh, w, h, preserveAspect);
 };
 
 
@@ -2855,31 +2855,31 @@ bool SvgLoader::resize(Paint* paint, float w, float h)
 {
     if (!paint) return false;
 
-    auto sx = w / vw;
-    auto sy = h / vh;
+    auto sx = w / this->w;
+    auto sy = h / this->h;
 
     if (preserveAspect) {
         //Scale
         auto scale = sx < sy ? sx : sy;
         paint->scale(scale);
         //Align
-        auto vx = this->vx * scale;
-        auto vy = this->vy * scale;
-        auto vw = this->vw * scale;
-        auto vh = this->vh * scale;
-        if (vw > vh) vy -= (h - vh) * 0.5f;
-        else vx -= (w - vw) * 0.5f;
-        paint->translate(-vx, -vy);
+        auto tx = 0.0f;
+        auto ty = 0.0f;
+        auto tw = this->w * scale;
+        auto th = this->h * scale;
+        if (tw > th) ty -= (h - th) * 0.5f;
+        else tx -= (w - tw) * 0.5f;
+        paint->translate(-tx, -ty);
     } else {
         //Align
-        auto vx = this->vx * sx;
-        auto vy = this->vy * sy;
-        auto vw = this->vw * sx;
-        auto vh = this->vh * sy;
-        if (vw > vh) vy -= (h - vh) * 0.5f;
-        else vx -= (w - vw) * 0.5f;
+        auto tx = 0.0f;
+        auto ty = 0.0f;
+        auto tw = this->w * sx;
+        auto th = this->h * sy;
+        if (tw > th) ty -= (h - th) * 0.5f;
+        else tx -= (w - tw) * 0.5f;
 
-        Matrix m = {sx, 0, -vx, 0, sy, -vy, 0, 0, 1};
+        Matrix m = {sx, 0, -tx, 0, sy, -ty, 0, 0, 1};
         paint->transform(m);
     }
     return true;
