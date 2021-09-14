@@ -90,7 +90,7 @@ public:
             return 1;
         }
 
-        if (canvas->target(buffer, w, w, h, tvg::SwCanvas::ARGB8888) != tvg::Result::Success) {
+        if (canvas->target(buffer, w, w, h, tvg::SwCanvas::ARGB8888_STRAIGHT) != tvg::Result::Success) {
             cout << "Error: Canvas target failure" << endl;
             return 1;
         }

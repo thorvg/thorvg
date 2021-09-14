@@ -318,6 +318,11 @@ void SwRenderer::clearCompositors()
 
 bool SwRenderer::postRender()
 {
+    //Unmultiply alpha if needed
+    if (surface->cs == SwCanvas::ABGR8888_STRAIGHT || surface->cs == SwCanvas::ARGB8888_STRAIGHT) {
+        rasterUnpremultiply(surface);
+    }
+
     tasks.clear();
     clearCompositors();
     return true;

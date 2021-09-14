@@ -1399,10 +1399,10 @@ void rasterRGBA32(uint32_t *dst, uint32_t val, uint32_t offset, int32_t len)
 
 bool rasterCompositor(SwSurface* surface)
 {
-    if (surface->cs == SwCanvas::ABGR8888) {
+    if (surface->cs == SwCanvas::ABGR8888 || surface->cs == SwCanvas::ABGR8888_STRAIGHT) {
         surface->blender.alpha = _colorAlpha;
         surface->blender.join = _abgrJoin;
-    } else if (surface->cs == SwCanvas::ARGB8888) {
+    } else if (surface->cs == SwCanvas::ARGB8888 || surface->cs == SwCanvas::ARGB8888_STRAIGHT) {
         surface->blender.alpha = _colorAlpha;
         surface->blender.join = _argbJoin;
     } else {
@@ -1512,6 +1512,31 @@ bool rasterClear(SwSurface* surface)
         }
     }
     return true;
+}
+
+
+void rasterUnpremultiply(SwSurface* surface)
+{
+    //TODO: Create simd avx and neon version
+    for (uint32_t y = 0; y < surface->h; y++) {
+        auto buffer = surface->buffer + surface->stride * y;
+        for (uint32_t x = 0; x < surface->w; ++x) {
+            uint8_t a = buffer[x] >> 24;
+            if (a == 255) {
+                continue;
+            } else if (a == 0) {
+                buffer[x] = 0x00ffffff;
+            } else {
+                uint16_t r = ((buffer[x] >> 8) & 0xff00) / a;
+                uint16_t g = ((buffer[x]) & 0xff00) / a;
+                uint16_t b = ((buffer[x] << 8) & 0xff00) / a;
+                if (r > 0xff) r = 0xff;
+                if (g > 0xff) g = 0xff;
+                if (b > 0xff) b = 0xff;
+                buffer[x] = (a << 24) | (r << 16) | (g << 8) | (b);
+            }
+        }
+    }
 }
 
 
