@@ -235,6 +235,7 @@ private:
         uint32_t depth;
         uint32_t type;
         uint32_t composite;
+        uint32_t opacity;
     };
     void sublayers(Array<Layer>* layers, const Paint* paint, uint32_t depth)
     {
@@ -246,7 +247,8 @@ private:
                 it->begin();
                 while (auto child = it->next()) {
                     uint32_t type = child->id();
-                    layers->push({.paint = reinterpret_cast<uint32_t>(child), .depth = depth + 1, .type = type, .composite = static_cast<uint32_t>(CompositeMethod::None)});
+                    uint32_t opacity = child->opacity();
+                    layers->push({.paint = reinterpret_cast<uint32_t>(child), .depth = depth + 1, .type = type, .composite = static_cast<uint32_t>(CompositeMethod::None), .opacity = opacity});
                     sublayers(layers, child, depth + 1);
                 }
             }
@@ -256,7 +258,8 @@ private:
         CompositeMethod composite = paint->composite(&compositeTarget);
         if (compositeTarget && composite != CompositeMethod::None) {
             uint32_t type = compositeTarget->id();
-            layers->push({.paint = reinterpret_cast<uint32_t>(compositeTarget), .depth = depth, .type = type, .composite = static_cast<uint32_t>(composite)});
+            uint32_t opacity = compositeTarget->opacity();
+            layers->push({.paint = reinterpret_cast<uint32_t>(compositeTarget), .depth = depth, .type = type, .composite = static_cast<uint32_t>(composite), .opacity = opacity});
             sublayers(layers, compositeTarget, depth);
         }
     }
