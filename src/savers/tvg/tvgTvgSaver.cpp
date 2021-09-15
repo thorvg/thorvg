@@ -108,6 +108,10 @@ static bool _merge(Shape* from, Shape* to)
     if (r != r2 || g != g2 || b != b2 || a != a2) return false;
 
     if (fabs(from->strokeWidth() - to->strokeWidth()) > FLT_EPSILON) return false;
+
+    //OPTIMIZE: Yet we can't merge outlining shapes unless we can support merging shapes feature.
+    if (from->strokeWidth() > 0 || to->strokeWidth() > 0) return false;
+
     if (from->strokeCap() != to->strokeCap()) return false;
     if (from->strokeJoin() != to->strokeJoin()) return false;
     if (from->strokeDash(nullptr) > 0 || to->strokeDash(nullptr) > 0) return false;
