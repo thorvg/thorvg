@@ -61,6 +61,7 @@ static inline bool neonRasterTranslucentRle(SwSurface* surface, const SwRleData*
         else src = color;
 
         auto dst = &surface->buffer[span->y * surface->stride + span->x];
+        auto ialpha = 255 - surface->blender.alpha(src);
 
         if ((((uint32_t) dst) & 0x7) != 0) {
             //fill not aligned byte
@@ -72,7 +73,6 @@ static inline bool neonRasterTranslucentRle(SwSurface* surface, const SwRleData*
             align = 0;
         }
 
-        auto ialpha = 255 - surface->blender.alpha(src);
         uint8x8_t vSrc = (uint8x8_t) vdup_n_u32(src);
         uint8x8_t vIalpha = vdup_n_u8((uint8_t) ialpha);
 
@@ -95,8 +95,9 @@ static inline bool neonRasterTranslucentRect(SwSurface* surface, const SwBBox& r
     auto w = static_cast<uint32_t>(region.max.x - region.min.x);
     auto ialpha = 255 - surface->blender.alpha(color);
 
-    auto vColor = static_cast<uint8x8_t>(vdup_n_u32(color));
-    auto vIalpha = static_cast<uint8x8_t>(vdup_n_u8((uint8_t) ialpha));
+    auto vColor = vdup_n_u32(color);
+    auto vIalpha = vdup_n_u8((uint8_t) ialpha);
+
     uint8x8_t* vDst = nullptr;
     uint32_t align;
 
@@ -114,7 +115,7 @@ static inline bool neonRasterTranslucentRect(SwSurface* surface, const SwBBox& r
         }
 
         for (uint32_t x = 0; x <  (w - align) / 2; ++x)
-            vDst[x] = vadd_u8(vColor, ALPHA_BLEND_NEON(vDst[x], vIalpha));
+            vDst[x] = vadd_u8((uint8x8_t)vColor, ALPHA_BLEND_NEON(vDst[x], vIalpha));
         
         auto leftovers = (w - align) % 2;
         if (leftovers > 0) dst[w - 1] = color + ALPHA_BLEND(dst[w - 1], ialpha);
