@@ -8,7 +8,7 @@ if get_option('loaders').contains('png') == true
     subdir('png')
 endif
 
-if get_option('loaders').contains('tvg_beta') == true
+if get_option('loaders').contains('tvg') == true
     subdir('tvg')
 endif
 
