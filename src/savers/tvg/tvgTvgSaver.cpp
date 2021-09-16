@@ -57,10 +57,10 @@ static Matrix _multiply(const Matrix* lhs, const Matrix* rhs)
 }
 
 
-static void _multiply(Point* pt, const Matrix& transform)
+static void _multiply(Point* pt, const Matrix* transform)
 {
-    auto tx = pt->x * transform.e11 + pt->y * transform.e12 + transform.e13;
-    auto ty = pt->x * transform.e21 + pt->y * transform.e22 + transform.e23;
+    auto tx = pt->x * transform->e11 + pt->y * transform->e12 + transform->e13;
+    auto ty = pt->x * transform->e21 + pt->y * transform->e22 + transform->e23;
     pt->x = tx;
     pt->y = ty;
 }
@@ -303,12 +303,12 @@ TvgBinCounter TvgSaver::writeTagProperty(TvgBinTag tag, TvgBinCounter cnt, const
 }
 
 
-TvgBinCounter TvgSaver::writeTransform(const Matrix& transform)
+TvgBinCounter TvgSaver::writeTransform(const Matrix* transform)
 {
-    if (fabs(transform.e11 - 1) > FLT_EPSILON || fabs(transform.e12) > FLT_EPSILON || fabs(transform.e13) > FLT_EPSILON ||
-        fabs(transform.e21) > FLT_EPSILON || fabs(transform.e22 - 1) > FLT_EPSILON || fabs(transform.e23) > FLT_EPSILON ||
-        fabs(transform.e31) > FLT_EPSILON || fabs(transform.e32) > FLT_EPSILON || fabs(transform.e33 - 1) > FLT_EPSILON) {
-        return writeTagProperty(TVG_TAG_PAINT_TRANSFORM, SIZE(Matrix), &transform);
+    if (fabs(transform->e11 - 1) > FLT_EPSILON || fabs(transform->e12) > FLT_EPSILON || fabs(transform->e13) > FLT_EPSILON ||
+        fabs(transform->e21) > FLT_EPSILON || fabs(transform->e22 - 1) > FLT_EPSILON || fabs(transform->e23) > FLT_EPSILON ||
+        fabs(transform->e31) > FLT_EPSILON || fabs(transform->e32) > FLT_EPSILON || fabs(transform->e33 - 1) > FLT_EPSILON) {
+        return writeTagProperty(TVG_TAG_PAINT_TRANSFORM, SIZE(Matrix), transform);
     }
     return 0;
 }
@@ -363,17 +363,14 @@ TvgBinCounter TvgSaver::serializeChild(const Paint* parent, const Paint* child, 
 }
 
 
-TvgBinCounter TvgSaver::serializeScene(const Scene* scene, const Matrix* pTransform)
+TvgBinCounter TvgSaver::serializeScene(const Scene* scene, const Matrix* pTransform, const Matrix* cTransform)
 {
     auto it = this->iterator(scene);
     if (it->count() == 0) return 0;
 
-    auto transform = const_cast<Scene*>(scene)->transform();
-    if (pTransform) transform = _multiply(pTransform, &transform);
-
     //Case - Only Child: Skip saving this scene.
     if (it->count() == 1) {
-        auto cnt = serializeChild(scene, it->next(), &transform);
+        auto cnt = serializeChild(scene, it->next(), cTransform);
         if (cnt > 0) {
             delete(it);
             return cnt;
@@ -384,14 +381,14 @@ TvgBinCounter TvgSaver::serializeScene(const Scene* scene, const Matrix* pTransf
 
     //Case - Delegator Scene: This scene is just a delegator, we can skip this:
     if (scene->composite(nullptr) == CompositeMethod::None && scene->opacity() == 255) {
-        return serializeChildren(it, &transform, false);
+        return serializeChildren(it, cTransform, false);
     }
 
     //Case - Serialize Scene & its children
     writeTag(TVG_TAG_CLASS_SCENE);
     reserveCount();
 
-    auto cnt = serializeChildren(it, &transform, true) + serializePaint(scene, pTransform);
+    auto cnt = serializeChildren(it, cTransform, true) + serializePaint(scene, pTransform);
 
     delete(it);
 
@@ -481,7 +478,7 @@ TvgBinCounter TvgSaver::serializeStroke(const Shape* shape, const Matrix* pTrans
 }
 
 
-TvgBinCounter TvgSaver::serializePath(const Shape* shape, const Matrix& transform, bool preTransform)
+TvgBinCounter TvgSaver::serializePath(const Shape* shape, const Matrix* transform, bool preTransform)
 {
     const PathCommand* cmds = nullptr;
     auto cmdCnt = shape->pathCommands(&cmds);
@@ -506,9 +503,9 @@ TvgBinCounter TvgSaver::serializePath(const Shape* shape, const Matrix& transfor
 
     //transform?
     if (preTransform) {
-        if (fabs(transform.e11 - 1) > FLT_EPSILON || fabs(transform.e12) > FLT_EPSILON || fabs(transform.e13) > FLT_EPSILON ||
-            fabs(transform.e21) > FLT_EPSILON || fabs(transform.e22 - 1) > FLT_EPSILON || fabs(transform.e23) > FLT_EPSILON ||
-            fabs(transform.e31) > FLT_EPSILON || fabs(transform.e32) > FLT_EPSILON || fabs(transform.e33 - 1) > FLT_EPSILON) {
+        if (fabs(transform->e11 - 1) > FLT_EPSILON || fabs(transform->e12) > FLT_EPSILON || fabs(transform->e13) > FLT_EPSILON ||
+            fabs(transform->e21) > FLT_EPSILON || fabs(transform->e22 - 1) > FLT_EPSILON || fabs(transform->e23) > FLT_EPSILON ||
+            fabs(transform->e31) > FLT_EPSILON || fabs(transform->e32) > FLT_EPSILON || fabs(transform->e33 - 1) > FLT_EPSILON) {
             auto p = const_cast<Point*>(pts);
             for (uint32_t i = 0; i < ptsCnt; ++i) _multiply(p++, transform);
         }
@@ -522,14 +519,11 @@ TvgBinCounter TvgSaver::serializePath(const Shape* shape, const Matrix& transfor
 }
 
 
-TvgBinCounter TvgSaver::serializeShape(const Shape* shape, const Matrix* pTransform)
+TvgBinCounter TvgSaver::serializeShape(const Shape* shape, const Matrix* pTransform, const Matrix* cTransform)
 {
     writeTag(TVG_TAG_CLASS_SHAPE);
     reserveCount();
     TvgBinCounter cnt = 0;
-
-    auto transform = const_cast<Shape*>(shape)->transform();
-    if (pTransform) transform = _multiply(pTransform, &transform);
 
     //fill rule
     if (auto flag = static_cast<TvgBinFlag>(shape->fillRule())) {
@@ -555,14 +549,14 @@ TvgBinCounter TvgSaver::serializeShape(const Shape* shape, const Matrix* pTransf
         shape->strokeColor(color, color + 1, color + 2, color + 3);
         auto fill = shape->strokeFill();
         if (fill || color[3] > 0) {
-            if (fill || abs(transform.e11 - transform.e22) > FLT_EPSILON || shape->strokeDash(nullptr) > 0) preTransform = false;
-            cnt += serializeStroke(shape, &transform, preTransform);
+            if (fill || abs(cTransform->e11 - cTransform->e22) > FLT_EPSILON || shape->strokeDash(nullptr) > 0) preTransform = false;
+            cnt += serializeStroke(shape, cTransform, preTransform);
         }
     }
 
-    cnt += serializePath(shape, transform, preTransform);
+    cnt += serializePath(shape, cTransform, preTransform);
 
-    if (!preTransform) cnt += writeTransform(transform);
+    if (!preTransform) cnt += writeTransform(cTransform);
     cnt += serializePaint(shape, pTransform);
 
     writeReservedCount(cnt);
@@ -572,17 +566,13 @@ TvgBinCounter TvgSaver::serializeShape(const Shape* shape, const Matrix* pTransf
 
 
 /* Picture has either a vector scene or a bitmap. */
-TvgBinCounter TvgSaver::serializePicture(const Picture* picture, const Matrix* pTransform)
+TvgBinCounter TvgSaver::serializePicture(const Picture* picture, const Matrix* pTransform, const Matrix* cTransform)
 {
-    //transform
-    auto transform = const_cast<Picture*>(picture)->transform();
-    if (pTransform) transform = _multiply(pTransform, &transform);
-
     auto it = this->iterator(picture);
 
     //Case - Vector Scene:
     if (it->count() == 1) {
-        auto cnt = serializeChild(picture, it->next(), &transform);
+        auto cnt = serializeChild(picture, it->next(), cTransform);
         //Only child, Skip to save Picture...
         if (cnt > 0) {
             delete(it);
@@ -592,7 +582,7 @@ TvgBinCounter TvgSaver::serializePicture(const Picture* picture, const Matrix* p
         } else {
             writeTag(TVG_TAG_CLASS_SCENE);
             reserveCount();
-            auto cnt = serializeChildren(it, &transform, true) + serializePaint(picture, pTransform);
+            auto cnt = serializeChildren(it, cTransform, true) + serializePaint(picture, pTransform);
             writeReservedCount(cnt);
             delete(it);
             return SERIAL_DONE(cnt);
@@ -621,7 +611,7 @@ TvgBinCounter TvgSaver::serializePicture(const Picture* picture, const Matrix* p
     cnt += SIZE(TvgBinTag) + SIZE(TvgBinCounter);
 
     //Bitmap picture needs the transform info.
-    cnt += writeTransform(transform);
+    cnt += writeTransform(cTransform);
 
     cnt += serializePaint(picture, pTransform);
 
@@ -691,10 +681,13 @@ TvgBinCounter TvgSaver::serialize(const Paint* paint, const Matrix* pTransform, 
     //Invisible paint, no point to save it if the paint is not the composition target...
     if (!compTarget && paint->opacity() == 0) return 0;
 
+    auto transform = const_cast<Paint*>(paint)->transform();
+    if (pTransform) transform = _multiply(pTransform, &transform);
+
     switch (paint->id()) {
-        case TVG_CLASS_ID_SHAPE: return serializeShape(static_cast<const Shape*>(paint), pTransform);
-        case TVG_CLASS_ID_SCENE: return serializeScene(static_cast<const Scene*>(paint), pTransform);
-        case TVG_CLASS_ID_PICTURE: return serializePicture(static_cast<const Picture*>(paint), pTransform);
+        case TVG_CLASS_ID_SHAPE: return serializeShape(static_cast<const Shape*>(paint), pTransform, &transform);
+        case TVG_CLASS_ID_SCENE: return serializeScene(static_cast<const Scene*>(paint), pTransform, &transform);
+        case TVG_CLASS_ID_PICTURE: return serializePicture(static_cast<const Picture*>(paint), pTransform, &transform);
     }
 
     return 0;
@@ -744,6 +737,7 @@ bool TvgSaver::save(Paint* paint, const string& path, bool compress)
     if (!this->path) return false;
 
     paint->bounds(nullptr, nullptr, &vsize[0], &vsize[1]);
+
     if (vsize[0] <= FLT_EPSILON || vsize[1] <= FLT_EPSILON) {
         TVGLOG("TVG_SAVER", "Saving paint(%p) has zero view size.", paint);
         return false;
