@@ -697,7 +697,27 @@ TvgBinCounter TvgSaver::serialize(const Paint* paint, const Matrix* pTransform, 
 void TvgSaver::run(unsigned tid)
 {
     if (!writeHeader()) return;
-    if (serialize(paint, nullptr) == 0) return;
+
+    //Serialize Root Paint, without its transform.
+    Matrix transform = {1, 0, 0, 0, 1, 0, 0, 0, 1};
+
+    if (paint->opacity() > 0) {
+        switch (paint->id()) {
+            case TVG_CLASS_ID_SHAPE: {
+                serializeShape(static_cast<const Shape*>(paint), nullptr, &transform);
+                break;
+            }
+            case TVG_CLASS_ID_SCENE: {
+                serializeScene(static_cast<const Scene*>(paint), nullptr, &transform);
+                break;
+            }
+            case TVG_CLASS_ID_PICTURE: {
+                serializePicture(static_cast<const Picture*>(paint), nullptr, &transform);
+                break;
+            }
+        }
+    }
+
     if (!saveEncoding(path)) return;
 }
 
@@ -736,7 +756,12 @@ bool TvgSaver::save(Paint* paint, const string& path, bool compress)
     this->path = strdup(path.c_str());
     if (!this->path) return false;
 
-    paint->bounds(nullptr, nullptr, &vsize[0], &vsize[1]);
+    float x, y;
+    paint->bounds(&x, &y, &vsize[0], &vsize[1], false);
+
+    //cut off the negative space
+    if (x < 0) vsize[0] += x;
+    if (y < 0) vsize[1] += y;
 
     if (vsize[0] <= FLT_EPSILON || vsize[1] <= FLT_EPSILON) {
         TVGLOG("TVG_SAVER", "Saving paint(%p) has zero view size.", paint);
