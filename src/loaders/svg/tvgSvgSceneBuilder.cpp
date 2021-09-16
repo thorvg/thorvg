@@ -246,7 +246,7 @@ static void _applyProperty(SvgNode* node, Shape* vg, float vx, float vy, float v
     if (style->fill.paint.none) {
         //Do nothing
     } else if (style->fill.paint.gradient) {
-        if (!style->fill.paint.gradient->userSpace) vg->bounds(&vx, &vy, &vw, &vh);
+        if (!style->fill.paint.gradient->userSpace) vg->bounds(&vx, &vy, &vw, &vh, false);
 
         if (style->fill.paint.gradient->type == SvgGradientType::Linear) {
              auto linear = _applyLinearGradientProperty(style->fill.paint.gradient, vg, vx, vy, vw, vh, style->fill.opacity);
@@ -285,7 +285,7 @@ static void _applyProperty(SvgNode* node, Shape* vg, float vx, float vy, float v
     if (style->stroke.paint.none) {
         //Do nothing
     } else if (style->stroke.paint.gradient) {
-        if (!style->stroke.paint.gradient->userSpace) vg->bounds(&vx, &vy, &vw, &vh);
+        if (!style->stroke.paint.gradient->userSpace) vg->bounds(&vx, &vy, &vw, &vh, false);
 
         if (style->stroke.paint.gradient->type == SvgGradientType::Linear) {
              auto linear = _applyLinearGradientProperty(style->stroke.paint.gradient, vg, vx, vy, vw, vh, style->stroke.opacity);

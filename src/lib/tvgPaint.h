@@ -42,7 +42,7 @@ namespace tvg
         virtual bool dispose(RenderMethod& renderer) = 0;
         virtual void* update(RenderMethod& renderer, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag pFlag) = 0;   //Return engine data if it has.
         virtual bool render(RenderMethod& renderer) = 0;
-        virtual bool bounds(float* x, float* y, float* w, float* h) const = 0;
+        virtual bool bounds(float* x, float* y, float* w, float* h) = 0;
         virtual RenderRegion bounds(RenderMethod& renderer) const = 0;
         virtual Paint* duplicate() = 0;
         virtual Iterator* iterator() = 0;
@@ -89,11 +89,6 @@ namespace tvg
             return nullptr;
         }
 
-        bool bounds(float* x, float* y, float* w, float* h) const
-        {
-            return smethod->bounds(x, y, w, h);
-        }
-
         RenderRegion bounds(RenderMethod& renderer) const
         {
             return smethod->bounds(renderer);
@@ -122,6 +117,7 @@ namespace tvg
         bool rotate(float degree);
         bool scale(float factor);
         bool translate(float x, float y);
+        bool bounds(float* x, float* y, float* w, float* h, bool transformed);
         void* update(RenderMethod& renderer, const RenderTransform* pTransform, uint32_t opacity, Array<RenderData>& clips, uint32_t pFlag);
         bool render(RenderMethod& renderer);
         Paint* duplicate();
@@ -136,7 +132,7 @@ namespace tvg
         PaintMethod(T* _inst) : inst(_inst) {}
         ~PaintMethod() {}
 
-        bool bounds(float* x, float* y, float* w, float* h) const override
+        bool bounds(float* x, float* y, float* w, float* h) override
         {
             return inst->bounds(x, y, w, h);
         }

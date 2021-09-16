@@ -60,7 +60,8 @@ Result Picture::load(const char* data, uint32_t size, const string& mimeType, bo
     return pImpl->load(data, size, mimeType, copy);
 }
 
-Result Picture::load(const char* data, uint32_t size, bool copy) noexcept
+
+TVG_DEPRECATED Result Picture::load(const char* data, uint32_t size, bool copy) noexcept
 {
     return load(data, size, "", copy);
 }

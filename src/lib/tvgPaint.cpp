@@ -27,12 +27,11 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-
-
 static inline bool FLT_SAME(float a, float b)
 {
     return (fabsf(a - b) < FLT_EPSILON);
 }
+
 
 static bool _clipPathFastTrack(Paint* cmpTarget, const RenderTransform* pTransform, RenderTransform* rTransform, RenderRegion& viewport)
 {
@@ -243,6 +242,60 @@ void* Paint::Impl::update(RenderMethod& renderer, const RenderTransform* pTransf
     return edata;
 }
 
+bool Paint::Impl::bounds(float* x, float* y, float* w, float* h, bool transformed)
+{
+    Matrix* m = nullptr;
+
+    //Case: No transformed, quick return!
+    if (!transformed || !(m = this->transform())) return smethod->bounds(x, y, w, h);
+
+    //Case: Transformed
+    auto tx = 0.0f;
+    auto ty = 0.0f;
+    auto tw = 0.0f;
+    auto th = 0.0f;
+
+    auto ret = smethod->bounds(&tx, &ty, &tw, &th);
+
+    //Get vertices
+    Point pt[4] = {{tx, ty}, {tx + tw, ty}, {tx + tw, ty + th}, {tx, ty + th}};
+
+    //New bounding box
+    auto x1 = FLT_MAX;
+    auto y1 = FLT_MAX;
+    auto x2 = -FLT_MAX;
+    auto y2 = -FLT_MAX;
+
+    //function = Point * Matrix
+    auto multiply = [&](Point* pt, const Matrix* transform) {
+        auto tx = pt->x * transform->e11 + pt->y * transform->e12 + transform->e13;
+        auto ty = pt->x * transform->e21 + pt->y * transform->e22 + transform->e23;
+        pt->x = tx;
+        pt->y = ty;
+    };
+
+    //Compute the AABB after transformation
+    for (int i = 0; i < 4; i++) {
+        multiply(&pt[i], m);
+
+        if (pt[i].x < x1) x1 = pt[i].x;
+        if (pt[i].x > x2) x2 = pt[i].x;
+        if (pt[i].y < y1) y1 = pt[i].y;
+        if (pt[i].y > y2) y2 = pt[i].y;
+    }
+
+    if (x) *x = x1;
+    if (y) *y = y1;
+    if (w) *w = x2 - x1;
+    if (h) *h = y2 - y1;
+
+    return ret;
+}
+
+
+/************************************************************************/
+/* External Class Implementation                                        */
+/************************************************************************/
 
 Paint :: Paint() : pImpl(new Impl())
 {
@@ -254,10 +307,6 @@ Paint :: ~Paint()
     delete(pImpl);
 }
 
-
-/************************************************************************/
-/* External Class Implementation                                        */
-/************************************************************************/
 
 Result Paint::rotate(float degree) noexcept
 {
@@ -286,6 +335,7 @@ Result Paint::transform(const Matrix& m) noexcept
     return Result::FailedAllocation;
 }
 
+
 Matrix Paint::transform() noexcept
 {
     auto pTransform = pImpl->transform();
@@ -293,9 +343,16 @@ Matrix Paint::transform() noexcept
     return {1, 0, 0, 0, 1, 0, 0, 0, 1};
 }
 
-Result Paint::bounds(float* x, float* y, float* w, float* h) const noexcept
+
+TVG_DEPRECATED Result Paint::bounds(float* x, float* y, float* w, float* h) const noexcept
 {
-    if (pImpl->bounds(x, y, w, h)) return Result::Success;
+    return this->bounds(x, y, w, h, false);
+}
+
+
+Result Paint::bounds(float* x, float* y, float* w, float* h, bool transform) const noexcept
+{
+    if (pImpl->bounds(x, y, w, h, transform)) return Result::Success;
     return Result::InsufficientCondition;
 }
 
