@@ -388,8 +388,8 @@ static bool _rasterTranslucentDownScaleImageRle(SwSurface* surface, const SwRleD
         auto dst = &surface->buffer[span->y * surface->stride + span->x];
         auto alpha = ALPHA_MULTIPLY(span->coverage, opacity);
         for (uint32_t x = 0; x < span->len; ++x, ++dst) {
-            auto rX = static_cast<uint32_t>(roundf(x * invTransform->e11 + ey1));
-            auto rY = static_cast<uint32_t>(roundf(x * invTransform->e21 + ey2));
+            auto rX = static_cast<uint32_t>(roundf((span->x + x) * invTransform->e11 + ey1));
+            auto rY = static_cast<uint32_t>(roundf((span->x + x) * invTransform->e21 + ey2));
             if (rX >= w || rY >= h) continue;
             uint32_t src;
             if (rX < halfScaling || rY < halfScaling || rX >= w - halfScaling || rY >= h - halfScaling) src = ALPHA_BLEND(img[rY * w + rX], alpha);     //TODO: need to use image's stride
@@ -472,8 +472,8 @@ static bool _rasterDownScaleImageRle(SwSurface* surface, SwRleData* rle, uint32_
         auto ey2 = span->y * invTransform->e22 + invTransform->e23;
         auto dst = &surface->buffer[span->y * surface->stride + span->x];
         for (uint32_t x = 0; x < span->len; ++x, ++dst) {
-            auto rX = static_cast<uint32_t>(roundf(x * invTransform->e11 + ey1));
-            auto rY = static_cast<uint32_t>(roundf(x * invTransform->e21 + ey2));
+            auto rX = static_cast<uint32_t>(roundf((span->x + x) * invTransform->e11 + ey1));
+            auto rY = static_cast<uint32_t>(roundf((span->x + x) * invTransform->e21 + ey2));
             if (rX >= w || rY >= h) continue;
             uint32_t src;
             if (rX < halfScaling || rY < halfScaling || rX >= w - halfScaling || rY >= h - halfScaling) src = ALPHA_BLEND(img[rY * w + rX], span->coverage);    //TODO: need to use image's stride
@@ -917,8 +917,8 @@ static bool _rasterUpScaleImage(SwSurface* surface, const uint32_t *img, uint32_
 static bool _rasterDownScaleImage(SwSurface* surface, const uint32_t *img, uint32_t w, uint32_t h, const SwBBox& region, const Matrix* invTransform, float scaling)
 {
     uint32_t halfScaling = static_cast<uint32_t>(0.5f / scaling);
-    if (halfScaling == 0) halfScaling = 1;
 
+    if (halfScaling == 0) halfScaling = 1;
     for (auto y = region.min.y; y < region.max.y; ++y) {
         auto dst = &surface->buffer[y * surface->stride + region.min.x];
         auto ey1 = y * invTransform->e12 + invTransform->e13;
@@ -1569,6 +1569,7 @@ bool rasterImage(SwSurface* surface, SwImage* image, const Matrix* transform, co
     else invTransform = {1, 0, 0, 0, 1, 0, 0, 0, 1};
 
     auto translucent = _translucent(surface, opacity);
+    const float downScalingFactor = 0.5f;
 
     if (image->rle) {
         //Fast track
@@ -1579,11 +1580,11 @@ bool rasterImage(SwSurface* surface, SwImage* image, const Matrix* transform, co
         } else {
             if (translucent) {
                 if (fabsf(scaling - 1.0f) <= FLT_EPSILON) return _rasterTranslucentImageRle(surface, image->rle, image->data, image->w, image->h, opacity, &invTransform);
-                else if (scaling < 0.25) return _rasterTranslucentDownScaleImageRle(surface, image->rle, image->data, image->w, image->h, opacity, &invTransform, scaling);
+                else if (scaling < downScalingFactor) return _rasterTranslucentDownScaleImageRle(surface, image->rle, image->data, image->w, image->h, opacity, &invTransform, scaling);
                 else return _rasterTranslucentUpScaleImageRle(surface, image->rle, image->data, image->w, image->h, opacity, &invTransform);
             }
             if (fabsf(scaling - 1.0f) <= FLT_EPSILON) return _rasterImageRle(surface, image->rle, image->data, image->w, image->h, &invTransform);
-            else if (scaling < 0.25f) return _rasterDownScaleImageRle(surface, image->rle, image->data, image->w, image->h, &invTransform, scaling);
+            else if (scaling < downScalingFactor) return _rasterDownScaleImageRle(surface, image->rle, image->data, image->w, image->h, &invTransform, scaling);
             else return _rasterUpScaleImageRle(surface, image->rle, image->data, image->w, image->h, &invTransform);
         }
     }
@@ -1596,11 +1597,11 @@ bool rasterImage(SwSurface* surface, SwImage* image, const Matrix* transform, co
         } else {
             if (translucent) {
                 if (fabsf(scaling - 1.0f) <= FLT_EPSILON) return _rasterTranslucentImage(surface, image->data, image->w, image->h, opacity, bbox, &invTransform);
-                else if (scaling < 0.25f) return _rasterTranslucentDownScaleImage(surface, image->data, image->w, image->h, opacity, bbox, &invTransform, scaling);
+                else if (scaling < downScalingFactor) return _rasterTranslucentDownScaleImage(surface, image->data, image->w, image->h, opacity, bbox, &invTransform, scaling);
                 else return _rasterTranslucentUpScaleImage(surface, image->data, image->w, image->h, opacity, bbox, &invTransform);
             }
             if (fabsf(scaling - 1.0f) <= FLT_EPSILON) return _rasterImage(surface, image->data, image->w, image->h, bbox, &invTransform);
-            else if (scaling  < 0.25f) return _rasterDownScaleImage(surface, image->data, image->w, image->h, bbox, &invTransform, scaling);
+            else if (scaling  < downScalingFactor) return _rasterDownScaleImage(surface, image->data, image->w, image->h, bbox, &invTransform, scaling);
             else return _rasterUpScaleImage(surface, image->data, image->w, image->h, bbox, &invTransform);
         }
     }
