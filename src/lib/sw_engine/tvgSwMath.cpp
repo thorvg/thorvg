@@ -20,6 +20,7 @@
  * SOFTWARE.
  */
 #include <math.h>
+#include <float.h>
 #include "tvgSwCommon.h"
 
 
@@ -482,6 +483,30 @@ bool mathUpdateOutlineBBox(const SwOutline* outline, const SwBBox& clipRegion, S
     //Check boundary
     if (renderRegion.min.x >= clipRegion.max.x || renderRegion.min.y >= clipRegion.max.y ||
         renderRegion.max.x <= clipRegion.min.x || renderRegion.max.y <= clipRegion.min.y) return false;
+
+    return true;
+}
+
+
+bool mathInverse(const Matrix* m, Matrix* invM)
+{
+    auto det = m->e11 * (m->e22 * m->e33 - m->e32 * m->e23) -
+               m->e12 * (m->e21 * m->e33 - m->e23 * m->e31) +
+               m->e13 * (m->e21 * m->e32 - m->e22 * m->e31);
+
+    if (fabsf(det) < FLT_EPSILON) return false;
+
+    auto invDet = 1 / det;
+
+    invM->e11 = (m->e22 * m->e33 - m->e32 * m->e23) * invDet;
+    invM->e12 = (m->e13 * m->e32 - m->e12 * m->e33) * invDet;
+    invM->e13 = (m->e12 * m->e23 - m->e13 * m->e22) * invDet;
+    invM->e21 = (m->e23 * m->e31 - m->e21 * m->e33) * invDet;
+    invM->e22 = (m->e11 * m->e33 - m->e13 * m->e31) * invDet;
+    invM->e23 = (m->e21 * m->e13 - m->e11 * m->e23) * invDet;
+    invM->e31 = (m->e21 * m->e32 - m->e31 * m->e22) * invDet;
+    invM->e32 = (m->e31 * m->e12 - m->e11 * m->e32) * invDet;
+    invM->e33 = (m->e11 * m->e22 - m->e21 * m->e12) * invDet;
 
     return true;
 }

@@ -49,31 +49,6 @@ static uint32_t _argbJoin(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 }
 
 
-static bool _inverse(const Matrix* transform, Matrix* invM)
-{
-    //computes the inverse of a matrix m
-    auto det = transform->e11 * (transform->e22 * transform->e33 - transform->e32 * transform->e23) -
-               transform->e12 * (transform->e21 * transform->e33 - transform->e23 * transform->e31) +
-               transform->e13 * (transform->e21 * transform->e32 - transform->e22 * transform->e31);
-
-    if (fabsf(det) < FLT_EPSILON) return false;
-
-    auto invDet = 1 / det;
-
-    invM->e11 = (transform->e22 * transform->e33 - transform->e32 * transform->e23) * invDet;
-    invM->e12 = (transform->e13 * transform->e32 - transform->e12 * transform->e33) * invDet;
-    invM->e13 = (transform->e12 * transform->e23 - transform->e13 * transform->e22) * invDet;
-    invM->e21 = (transform->e23 * transform->e31 - transform->e21 * transform->e33) * invDet;
-    invM->e22 = (transform->e11 * transform->e33 - transform->e13 * transform->e31) * invDet;
-    invM->e23 = (transform->e21 * transform->e13 - transform->e11 * transform->e23) * invDet;
-    invM->e31 = (transform->e21 * transform->e32 - transform->e31 * transform->e22) * invDet;
-    invM->e32 = (transform->e31 * transform->e12 - transform->e11 * transform->e32) * invDet;
-    invM->e33 = (transform->e11 * transform->e22 - transform->e21 * transform->e12) * invDet;
-
-    return true;
-}
-
-
 static bool _identify(const Matrix* transform)
 {
     if (transform) {
@@ -1560,7 +1535,7 @@ bool rasterImage(SwSurface* surface, SwImage* image, const Matrix* transform, co
     float scaling = 1.0f;
 
     if (transform) {
-        if (!_inverse(transform, &invTransform)) return false;
+        if (!mathInverse(transform, &invTransform)) return false;
         scaling = sqrtf((transform->e11 * transform->e11) + (transform->e21 * transform->e21));
         auto scalingY = sqrtf((transform->e22 * transform->e22) + (transform->e12 * transform->e12));
         //TODO:If the x and y axis scaling is different, a separate algorithm for each axis should be applied.
