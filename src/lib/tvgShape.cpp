@@ -171,7 +171,7 @@ Result Shape::appendArc(float cx, float cy, float radius, float startAngle, floa
     fract = (fabsf(fract) < std::numeric_limits<float>::epsilon()) ? M_PI_HALF * sweepSign : fract;
 
     //Start from here
-    Point start = {radius * cos(startAngle), radius * sin(startAngle)};
+    Point start = {radius * cosf(startAngle), radius * sinf(startAngle)};
 
     if (pie) {
         pImpl->path.moveTo(cx, cy);
@@ -182,7 +182,7 @@ Result Shape::appendArc(float cx, float cy, float radius, float startAngle, floa
 
     for (int i = 0; i < nCurves; ++i) {
         auto endAngle = startAngle + ((i != nCurves - 1) ? M_PI_HALF * sweepSign : fract);
-        Point end = {radius * cos(endAngle), radius * sin(endAngle)};
+        Point end = {radius * cosf(endAngle), radius * sinf(endAngle)};
 
         //variables needed to calculate bezier control points
 
@@ -194,7 +194,7 @@ Result Shape::appendArc(float cx, float cy, float radius, float startAngle, floa
         auto by = end.y;
         auto q1 = ax * ax + ay * ay;
         auto q2 = ax * bx + ay * by + q1;
-        auto k2 = static_cast<float> (4.0/3.0) * ((sqrt(2 * q1 * q2) - q2) / (ax * by - ay * bx));
+        auto k2 = static_cast<float> (4.0/3.0) * ((sqrtf(2 * q1 * q2) - q2) / (ax * by - ay * bx));
 
         start = end; //Next start point is the current end point
 
