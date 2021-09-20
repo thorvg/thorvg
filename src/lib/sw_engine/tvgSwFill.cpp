@@ -146,33 +146,35 @@ bool _prepareLinear(SwFill* fill, const LinearGradient* linear, const Matrix* tr
 
 bool _prepareRadial(SwFill* fill, const RadialGradient* radial, const Matrix* transform)
 {
-    float radius;
-    if (radial->radial(&fill->radial.cx, &fill->radial.cy, &radius) != Result::Success) return false;
+    float radius, cx, cy;
+    if (radial->radial(&cx, &cy, &radius) != Result::Success) return false;
     if (radius < FLT_EPSILON) return true;
 
-    fill->sx = 1.0f;
-    fill->sy = 1.0f;
+    float invR = 1.0f / radius;
+    fill->radial.shiftX = -cx;
+    fill->radial.shiftY = -cy;
+    fill->radial.a = radius;
 
     if (transform) {
-        auto tx = fill->radial.cx * transform->e11 + fill->radial.cy * transform->e12 + transform->e13;
-        auto ty = fill->radial.cx * transform->e21 + fill->radial.cy * transform->e22 + transform->e23;
-        fill->radial.cx = tx;
-        fill->radial.cy = ty;
+        Matrix invTransform;
+        if (!mathInverse(transform, &invTransform)) return false;
 
-        auto sx = sqrtf(powf(transform->e11, 2.0f) + powf(transform->e21, 2.0f));
-        auto sy = sqrtf(powf(transform->e12, 2.0f) + powf(transform->e22, 2.0f));
+        fill->radial.a11 = invTransform.e11 * invR;
+        fill->radial.a12 = invTransform.e12 * invR;
+        fill->radial.shiftX += invTransform.e13;
+        fill->radial.a21 = invTransform.e21 * invR;
+        fill->radial.a22 = invTransform.e22 * invR;
+        fill->radial.shiftY += invTransform.e23;
+        fill->radial.ddDet = 2.0f * fill->radial.a11 * fill->radial.a11 + 2 * fill->radial.a21 * fill->radial.a21;
 
-        //FIXME; Scale + Rotation is not working properly
-        radius *= sx;
-
-        if (fabsf(sx - sy) > FLT_EPSILON) {
-            fill->sx = sx;
-            fill->sy = sy;
-        }
+        fill->radial.a *= sqrt(pow(transform->e11, 2) + pow(transform->e21, 2));
+    } else {
+        fill->radial.a11 = fill->radial.a22 = invR;
+        fill->radial.a12 = fill->radial.a21 = 0.0f;
+        fill->radial.ddDet = 2.0f * invR * invR;
     }
-
-    fill->radial.a = radius * radius;
-    fill->radial.inva = 1.0 / fill->radial.a;
+    fill->radial.shiftX *= invR;
+    fill->radial.shiftY *= invR;
 
     return true;
 }
@@ -223,15 +225,12 @@ static inline uint32_t _pixel(const SwFill* fill, float pos)
 
 void fillFetchRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len)
 {
-    //Rotation
-    auto rx = (x + 0.5f - fill->radial.cx) * fill->sy;
-    auto ry = (y + 0.5f - fill->radial.cy) * fill->sx;
-    auto rxy = rx * rx + ry * ry;
-    auto rxryPlus = 2 * rx;
-    auto inva = fill->radial.inva;
-    auto det = rxy * inva;
-    auto detDelta = (rxryPlus + 1.0f) * inva;
-    auto detDelta2 = 2.0f * inva;
+    auto rx = (x + 0.5f) * fill->radial.a11 + (y + 0.5f) * fill->radial.a12 + fill->radial.shiftX;
+    auto ry = (x + 0.5f) * fill->radial.a21 + (y + 0.5f) * fill->radial.a22 + fill->radial.shiftY;
+
+    auto detDelta2 = fill->radial.ddDet;
+    auto detDelta = 2.0f * (fill->radial.a11 * rx + fill->radial.a21 * ry) + 0.5f * detDelta2;
+    auto det = rx * rx + ry * ry;
 
     for (uint32_t i = 0 ; i < len ; ++i) {
         *dst = _pixel(fill, sqrtf(det));
