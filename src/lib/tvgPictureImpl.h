@@ -159,7 +159,7 @@ struct Picture::Impl
         return true;
     }
 
-    bool size(uint32_t w, uint32_t h)
+    bool size(float w, float h)
     {
         this->w = w;
         this->h = h;
