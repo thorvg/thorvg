@@ -142,9 +142,10 @@ struct SwFill
     };
 
     struct SwRadial {
-        float cx, cy;
+        float a11, a12, shiftX;
+        float a21, a22, shiftY;
+        float ddDet;
         float a;
-        float inva;
     };
 
     union {
@@ -154,7 +155,6 @@ struct SwFill
 
     uint32_t* ctable;
     FillSpread spread;
-    float sx, sy;
 
     bool translucent;
 };
