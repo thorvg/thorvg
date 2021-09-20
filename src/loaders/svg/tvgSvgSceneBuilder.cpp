@@ -80,7 +80,7 @@ static unique_ptr<LinearGradient> _applyLinearGradientProperty(SvgStyleGradient*
             stops[i].r = colorStop->r;
             stops[i].g = colorStop->g;
             stops[i].b = colorStop->b;
-            stops[i].a = (colorStop->a * opacity) / 255.0f;
+            stops[i].a = static_cast<uint8_t>((colorStop->a * opacity) / 255);
             stops[i].offset = colorStop->offset;
             //check the offset corner cases - refer to: https://svgwg.org/svg2-draft/pservers.html#StopNotes
             if (colorStop->offset < prevOffset) stops[i].offset = prevOffset;
@@ -101,12 +101,12 @@ static unique_ptr<RadialGradient> _applyRadialGradientProperty(SvgStyleGradient*
     int radius;
     auto fillGrad = RadialGradient::gen();
 
-    radius = sqrt(pow(rw, 2) + pow(rh, 2)) / sqrt(2.0);
+    radius = static_cast<int>(sqrtf(pow(rw, 2) + pow(rh, 2)) / sqrtf(2.0));
     if (!g->userSpace) {
          //That is according to Units in here
          //https://www.w3.org/TR/2015/WD-SVG2-20150915/coords.html
-        int min = (rh > rw) ? rw : rh;
-        radius = sqrt(pow(min, 2) + pow(min, 2)) / sqrt(2.0);
+        int min = static_cast<int>((rh > rw) ? rw : rh);
+        radius = static_cast<int>(sqrtf(pow(min, 2) + pow(min, 2)) / sqrtf(2.0));
     }
 
     if (g->usePercentage) {
@@ -123,7 +123,7 @@ static unique_ptr<RadialGradient> _applyRadialGradientProperty(SvgStyleGradient*
         g->radial->cy = g->radial->cx * g->transform->e21 + g->radial->cy * g->transform->e22 + g->transform->e23;
         g->radial->cx = cx;
 
-        auto sx = sqrt(pow(g->transform->e11, 2) + pow(g->transform->e21, 2));
+        auto sx = sqrtf(pow(g->transform->e11, 2) + pow(g->transform->e21, 2));
         g->radial->r *= sx;
     }
 
@@ -146,7 +146,7 @@ static unique_ptr<RadialGradient> _applyRadialGradientProperty(SvgStyleGradient*
             stops[i].r = colorStop->r;
             stops[i].g = colorStop->g;
             stops[i].b = colorStop->b;
-            stops[i].a = (colorStop->a * opacity) / 255.0f;
+            stops[i].a = static_cast<uint8_t>((colorStop->a * opacity) / 255);
             stops[i].offset = colorStop->offset;
             //check the offset corner cases - refer to: https://svgwg.org/svg2-draft/pservers.html#StopNotes
             if (colorStop->offset < prevOffset) stops[i].offset = prevOffset;

@@ -116,7 +116,7 @@ void _pathAppendArcTo(Array<PathCommand>* cmds, Array<Point>* pts, Point* cur, P
     //Correction of out-of-range radii, see F6.6.2 (step 4)
     if (lambda > 1.0f) {
         //See F6.6.3
-        float lambdaRoot = sqrt(lambda);
+        float lambdaRoot = sqrtf(lambda);
 
         rx *= lambdaRoot;
         ry *= lambdaRoot;
@@ -132,7 +132,7 @@ void _pathAppendArcTo(Array<PathCommand>* cmds, Array<Point>* pts, Point* cur, P
     if (c < 0.0f) {
         //Scale uniformly until we have a single solution
         //(see F6.2) i.e. when c == 0.0
-        float scale = sqrt(1.0f - c / (rx2 * ry2));
+        float scale = sqrtf(1.0f - c / (rx2 * ry2));
         rx *= scale;
         ry *= scale;
         //Update rx2 and ry2
@@ -147,7 +147,7 @@ void _pathAppendArcTo(Array<PathCommand>* cmds, Array<Point>* pts, Point* cur, P
         cy = 0.0f;
     } else {
         //Complete c calculation
-        c = sqrt(c / ((rx2 * y1p2) + (ry2 * x1p2)));
+        c = sqrtf(c / ((rx2 * y1p2) + (ry2 * x1p2)));
         //Inverse sign if Fa == Fs
         if (largeArc == sweep) c = -c;
 
@@ -186,26 +186,26 @@ void _pathAppendArcTo(Array<PathCommand>* cmds, Array<Point>* pts, Point* cur, P
     //(smaller than 90 degrees)
     //We add one extra segment because we want something
     //Smaller than 90deg (i.e. not 90 itself)
-    segments = (int)(fabsf(deltaTheta / float(M_PI_2))) + 1.0f;
+    segments = static_cast<int>(fabsf(deltaTheta / float(M_PI_2)) + 1.0f);
     delta = deltaTheta / segments;
 
     //http://www.stillhq.com/ctpfaq/2001/comp.text.pdf-faq-2001-04.txt (section 2.13)
-    bcp = 4.0f / 3.0f * (1.0f - cos(delta / 2.0f)) / sin(delta / 2.0f);
+    bcp = 4.0f / 3.0f * (1.0f - cosf(delta / 2.0f)) / sinf(delta / 2.0f);
 
     cosPhiRx = cosPhi * rx;
     cosPhiRy = cosPhi * ry;
     sinPhiRx = sinPhi * rx;
     sinPhiRy = sinPhi * ry;
 
-    cosTheta1 = cos(theta1);
-    sinTheta1 = sin(theta1);
+    cosTheta1 = cosf(theta1);
+    sinTheta1 = sinf(theta1);
 
     for (int i = 0; i < segments; ++i) {
         //End angle (for this segment) = current + delta
         float c1x, c1y, ex, ey, c2x, c2y;
         float theta2 = theta1 + delta;
-        float cosTheta2 = cos(theta2);
-        float sinTheta2 = sin(theta2);
+        float cosTheta2 = cosf(theta2);
+        float sinTheta2 = sinf(theta2);
         Point p[3];
 
         //First control point (based on start point sx,sy)
