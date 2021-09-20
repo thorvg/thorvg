@@ -150,7 +150,7 @@ bool _prepareRadial(SwFill* fill, const RadialGradient* radial, const Matrix* tr
         //FIXME; Scale + Rotation is not working properly
         radius *= sx;
 
-        if (abs(sx - sy) > FLT_EPSILON) {
+        if (fabsf(sx - sy) > FLT_EPSILON) {
             fill->sx = sx;
             fill->sy = sy;
         }
@@ -235,7 +235,7 @@ void fillFetchLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, 
     float t = (fill->linear.dx * rx + fill->linear.dy * ry + fill->linear.offset) * (GRADIENT_STOP_SIZE - 1);
     float inc = (fill->linear.dx) * (GRADIENT_STOP_SIZE - 1);
 
-    if (abs(inc) < FLT_EPSILON) {
+    if (fabsf(inc) < FLT_EPSILON) {
         auto color = _fixedPixel(fill, static_cast<int32_t>(t * FIXPT_SIZE));
         rasterRGBA32(dst, color, 0, len);
         return;

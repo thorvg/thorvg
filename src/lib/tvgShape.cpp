@@ -165,7 +165,7 @@ Result Shape::appendArc(float cx, float cy, float radius, float startAngle, floa
     startAngle = (startAngle * M_PI) / 180;
     sweep = sweep * M_PI / 180;
 
-    auto nCurves = ceil(abs(sweep / M_PI_HALF));
+    auto nCurves = ceil(fabsf(sweep / M_PI_HALF));
     auto sweepSign = (sweep < 0 ? -1 : 1);
     auto fract = fmodf(sweep, M_PI_HALF);
     fract = (fabsf(fract) < std::numeric_limits<float>::epsilon()) ? M_PI_HALF * sweepSign : fract;
@@ -194,7 +194,7 @@ Result Shape::appendArc(float cx, float cy, float radius, float startAngle, floa
         auto by = end.y;
         auto q1 = ax * ax + ay * ay;
         auto q2 = ax * bx + ay * by + q1;
-        auto k2 = static_cast<float> (4.0/3.0) * ((sqrtf(2 * q1 * q2) - q2) / (ax * by - ay * bx));
+        auto k2 = (4.0f/3.0f) * ((sqrtf(2 * q1 * q2) - q2) / (ax * by - ay * bx));
 
         start = end; //Next start point is the current end point
 

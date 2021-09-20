@@ -40,8 +40,8 @@ static inline SwFixed SIDE_TO_ROTATE(const int32_t s)
 
 static inline void SCALE(const SwStroke& stroke, SwPoint& pt)
 {
-    pt.x *= stroke.sx;
-    pt.y *= stroke.sy;
+    pt.x = static_cast<SwCoord>(pt.x * stroke.sx);
+    pt.y = static_cast<SwCoord>(pt.y * stroke.sy);
 }
 
 
