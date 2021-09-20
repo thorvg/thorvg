@@ -25,6 +25,7 @@
 #include <immintrin.h>
 
 #define N_32BITS_IN_128REG 4
+#define N_32BITS_IN_256REG 8
 
 static inline __m128i ALPHA_BLEND(__m128i c, __m128i a)
 {
@@ -64,23 +65,19 @@ static inline __m128i ALPHA_BLEND(__m128i c, __m128i a)
 static inline void avxRasterRGBA32(uint32_t *dst, uint32_t val, uint32_t offset, int32_t len)
 {
     //1. calculate how many iterations we need to cover the length
-    uint32_t iterations = len / 8;
-    uint32_t avxFilled = iterations * 8;
+    uint32_t iterations = len / N_32BITS_IN_256REG;
+    uint32_t avxFilled = iterations * N_32BITS_IN_256REG;
 
     //2. set the beginning of the array
     dst += offset;
-    __m256i_u* avxDst = (__m256i_u*) dst;
 
     //3. fill the octets
-    for (uint32_t i = 0; i < iterations; ++i) {
-        *avxDst = _mm256_set1_epi32(val);
-        avxDst++;
+    for (uint32_t i = 0; i < iterations; ++i, dst += N_32BITS_IN_256REG) {
+        _mm256_storeu_si256((__m256i*)dst, _mm256_set1_epi32(val));
     }
 
     //4. fill leftovers (in the first step we have to set the pointer to the place where the avx job is done)
     int32_t leftovers = len - avxFilled;
-    dst += avxFilled;
-
     while (leftovers--) *dst++ = val;
 }
 
