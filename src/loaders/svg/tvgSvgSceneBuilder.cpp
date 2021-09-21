@@ -469,7 +469,7 @@ static bool _isValidImageMimeTypeAndEncoding(const char** href, const char** mim
 }
 
 
-static unique_ptr<Picture> _imageBuildHelper(SvgNode* node, float vx, float vy, float vw, float vh)
+static unique_ptr<Picture> _imageBuildHelper(SvgNode* node, float vx, float vy, float vw, float vh, const string& svgPath)
 {
     if (!node->node.image.href) return nullptr;
     auto picture = Picture::gen();
@@ -496,7 +496,12 @@ static unique_ptr<Picture> _imageBuildHelper(SvgNode* node, float vx, float vy, 
             TVGLOG("SVG", "Embedded svg file is disabled.");
             return nullptr;
         }
-        if (picture->load(href) != Result::Success) return nullptr;
+        string imagePath = href;
+        if (strncmp(href, "/", 1)) {
+            auto last = svgPath.find_last_of("/");
+            imagePath = svgPath.substr(0, (last == string::npos ? 0 : last + 1 )) + imagePath;
+        }
+        if (picture->load(imagePath) != Result::Success) return nullptr;
     }
 
     float w, h;
@@ -512,7 +517,7 @@ static unique_ptr<Picture> _imageBuildHelper(SvgNode* node, float vx, float vy, 
 }
 
 
-static unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, float vx, float vy, float vw, float vh)
+static unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, float vx, float vy, float vw, float vh, const string& svgPath)
 {
     if (_isGroupType(node->type)) {
         auto scene = Scene::gen();
@@ -522,9 +527,9 @@ static unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, float vx, float 
             auto child = node->child.data;
             for (uint32_t i = 0; i < node->child.count; ++i, ++child) {
                 if (_isGroupType((*child)->type)) {
-                    scene->push(_sceneBuildHelper(*child, vx, vy, vw, vh));
+                    scene->push(_sceneBuildHelper(*child, vx, vy, vw, vh, svgPath));
                 } else if ((*child)->type == SvgNodeType::Image) {
-                    auto image = _imageBuildHelper(*child, vx, vy, vw, vh);
+                    auto image = _imageBuildHelper(*child, vx, vy, vw, vh, svgPath);
                     if (image) scene->push(move(image));
                 } else {
                     auto shape = _shapeBuildHelper(*child, vx, vy, vw, vh);
@@ -544,11 +549,11 @@ static unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, float vx, float 
 /* External Class Implementation                                        */
 /************************************************************************/
 
-unique_ptr<Scene> svgSceneBuild(SvgNode* node, float vx, float vy, float vw, float vh, float w, float h, bool preserveAspect)
+unique_ptr<Scene> svgSceneBuild(SvgNode* node, float vx, float vy, float vw, float vh, float w, float h, bool preserveAspect, const string& svgPath)
 {
     if (!node || (node->type != SvgNodeType::Doc)) return nullptr;
 
-    auto docNode = _sceneBuildHelper(node, vx, vy, vw, vh);
+    auto docNode = _sceneBuildHelper(node, vx, vy, vw, vh, svgPath);
 
     if (fabsf(w - vw) > FLT_EPSILON || fabsf(h - vh) > FLT_EPSILON) {
         auto sx = w / vw;

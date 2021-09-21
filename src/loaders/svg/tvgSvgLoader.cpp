@@ -2788,7 +2788,7 @@ void SvgLoader::run(unsigned tid)
 
         if (loaderData.cloneNodes.count > 0) _clonePostponedNodes(&loaderData.cloneNodes);
     }
-    root = svgSceneBuild(loaderData.doc, vx, vy, vw, vh, w, h, preserveAspect);
+    root = svgSceneBuild(loaderData.doc, vx, vy, vw, vh, w, h, preserveAspect, svgPath);
 }
 
 
@@ -2857,6 +2857,7 @@ bool SvgLoader::open(const string& path)
 
     if (!f.is_open()) return false;
 
+    svgPath = path;
     getline(f, filePath, '\0');
     f.close();
 

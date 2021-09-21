@@ -29,6 +29,7 @@ class SvgLoader : public LoadModule, public Task
 {
 public:
     string filePath;
+    string svgPath = "";
     const char* content = nullptr;
     uint32_t size = 0;
 
