@@ -5,8 +5,6 @@
 /* Drawing Commands                                                     */
 /************************************************************************/
 
-uint32_t *data = nullptr;
-
 void tvgDrawCmds(tvg::Canvas* canvas)
 {
     if (!canvas) return;
@@ -27,7 +25,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     colorStops[1] = {1,255,255,255,255};
     fill->colorStops(colorStops,2);
     shape->fill(move(fill));
-    
+ 
     shape->composite(move(mask), tvg::CompositeMethod::AlphaMask);
     canvas->push(move(shape));
 
@@ -59,7 +57,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     colorStops1[1] = {1,1,255,255,255};
     fill1->colorStops(colorStops1,2);
     shape1->fill(move(fill1));
-    
+ 
     shape1->composite(move(mask1), tvg::CompositeMethod::AlphaMask);
     canvas->push(move(shape1));
 
@@ -81,7 +79,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     colorStops2[1] = {1,255,255,255,255};
     fill2->colorStops(colorStops2,2);
     shape2->fill(move(fill2));
-    
+
     shape2->composite(move(mask2), tvg::CompositeMethod::InvAlphaMask);
     canvas->push(move(shape2));
 
@@ -113,7 +111,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     colorStops3[1] = {1,1,255,255,255};
     fill3->colorStops(colorStops3,2);
     shape3->fill(move(fill3));
-    
+
     shape3->composite(move(mask3), tvg::CompositeMethod::InvAlphaMask);
     canvas->push(move(shape3));
 
@@ -218,8 +216,6 @@ int main(int argc, char **argv)
 
         //Terminate ThorVG Engine
         tvg::Initializer::term(tvg::CanvasEngine::Sw);
-
-        if (data) free(data);
 
     } else {
         cout << "engine is not supported" << endl;
