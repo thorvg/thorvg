@@ -27,8 +27,6 @@
 /* Drawing Commands                                                     */
 /************************************************************************/
 
-uint32_t *data = nullptr;
-
 void tvgDrawCmds(tvg::Canvas* canvas)
 {
     if (!canvas) return;
@@ -87,13 +85,15 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     //Image
     ifstream file(EXAMPLE_DIR"/rawimage_200x300.raw");
     if (!file.is_open()) return;
-    data = (uint32_t*) malloc(sizeof(uint32_t) * (200 * 300));
+    auto data = (uint32_t*) malloc(sizeof(uint32_t) * (200 * 300));
     file.read(reinterpret_cast<char *>(data), sizeof (uint32_t) * 200 * 300);
     file.close();
 
     auto image = tvg::Picture::gen();
     if (image->load(data, 200, 300, true) != tvg::Result::Success) return;
     image->translate(500, 400);
+    free(data);
+
 
     //Mask4
     auto mask4 = tvg::Shape::gen();
@@ -213,8 +213,6 @@ int main(int argc, char **argv)
 
         //Terminate ThorVG Engine
         tvg::Initializer::term(tvg::CanvasEngine::Sw);
-
-        if (data) free(data);
 
     } else {
         cout << "engine is not supported" << endl;
