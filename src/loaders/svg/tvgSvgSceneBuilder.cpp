@@ -255,6 +255,8 @@ static void _applyProperty(SvgNode* node, Shape* vg, float vx, float vy, float v
              auto radial = _applyRadialGradientProperty(style->fill.paint.gradient, vg, vx, vy, vw, vh, style->fill.opacity);
              vg->fill(move(radial));
         }
+    } else if (style->fill.paint.url) {
+        //TODO: Apply the color pointed by url
     } else if (style->fill.paint.curColor) {
         //Apply the current style color
         vg->fill(style->color.r, style->color.g, style->color.b, style->fill.opacity);
