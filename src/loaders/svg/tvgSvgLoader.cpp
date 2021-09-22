@@ -272,24 +272,19 @@ _parseDashArray(SvgLoaderData* loader, const char *str, SvgDash* dash)
 
 static string* _idFromUrl(const char* url)
 {
-    char tmp[50];
-    int i = 0;
-
     url = _skipSpace(url, nullptr);
     if ((*url) == '(') {
         ++url;
         url = _skipSpace(url, nullptr);
     }
 
+    if ((*url) == '\'') ++url;
     if ((*url) == '#') ++url;
 
-    while ((*url) != ')') {
-        tmp[i++] = *url;
-        ++url;
-    }
-    tmp[i] = '\0';
+    int i = 0;
+    while (url[i] > ' ' && url[i] != ')' && url[i] != '\'') ++i;
 
-    return new string(tmp);
+    return new string(url, i);
 }
 
 
