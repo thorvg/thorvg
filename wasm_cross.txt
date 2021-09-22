@@ -5,8 +5,8 @@ ar = 'EMSDK:upstream/emscripten/emar.py'
 
 [properties]
 root = 'EMSDK:upstream/emscripten/system'
-cpp_args = ['--bind' , '-s' , 'WASM=1' , '-s' , 'ALLOW_MEMORY_GROWTH=1' , '-s' , 'FORCE_FILESYSTEM=1' , '-O2']
-cpp_link_args = ['--bind' , '-s' , 'WASM=1' , '-s' , 'ALLOW_MEMORY_GROWTH=1' , '-s' , 'FORCE_FILESYSTEM=1' , '-O2']
+cpp_args = ['--bind' , '-s' , 'WASM=1' , '-s' , 'ALLOW_MEMORY_GROWTH=1' , '-s' , 'FORCE_FILESYSTEM=1' , '-s' , 'USE_LIBPNG=1' , '-O2']
+cpp_link_args = ['--bind' , '-s' , 'WASM=1' , '-s' , 'ALLOW_MEMORY_GROWTH=1' , '-s' , 'FORCE_FILESYSTEM=1' , '-s' , 'USE_LIBPNG=1' , '-O2']
 shared_lib_suffix = 'js'
 static_lib_suffix = 'js'
 shared_module_suffix = 'js'
