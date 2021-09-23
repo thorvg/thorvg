@@ -315,7 +315,7 @@ public:
      *
      * @return The method used to composite the source object with the target.
      *
-     * @BETA_API
+     * @since 0.5
      */
     CompositeMethod composite(const Paint** target) const noexcept;
 
@@ -1040,7 +1040,7 @@ public:
      *
      * @warning: you have responsibility to release the @p data memory if the @p copy is true
      *
-     * @BETA_API
+     * @since 0.5
      */
     Result load(const char* data, uint32_t size, const std::string& mimeType, bool copy = false) noexcept;
 
@@ -1367,7 +1367,7 @@ public:
  *
  * @see Picture::load()
  *
- * @BETA_API
+ * @since 0.5
  */
 class TVG_EXPORT Saver
 {
@@ -1392,7 +1392,7 @@ public:
      * @note Saving can be asynchronous if the assigned thread number is greater than zero. To guarantee the saving is done, call sync() afterwards.
      * @see Saver::sync()
      *
-     * @BETA_API
+     * @since 0.5
      */
     Result save(std::unique_ptr<Paint> paint, const std::string& path, bool compress = true) noexcept;
 
@@ -1409,7 +1409,7 @@ public:
      * @note The asynchronous tasking is depend on the saver module implementation.
      * @see Saver::save()
      *
-     * @BETA_API
+     * @since 0.5
      */
     Result sync() noexcept;
 
@@ -1418,7 +1418,7 @@ public:
      *
      * @return A new Saver object.
      *
-     * @BETA_API
+     * @since 0.5
      */
     static std::unique_ptr<Saver> gen() noexcept;
 
