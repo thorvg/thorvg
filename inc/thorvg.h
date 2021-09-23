@@ -1077,12 +1077,6 @@ public:
     const uint32_t* data(uint32_t* w, uint32_t* h) const noexcept;
 
     /**
-     * Must remove it!
-     * @BETA_API
-     */
-    Result paint(std::unique_ptr<Paint> paint) noexcept;
-
-    /**
      * @brief Loads a raw data from a memory block with a given size.
      *
      * @warning Please do not use it, this API is not official one. It could be modified in the next version.

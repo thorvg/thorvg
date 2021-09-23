@@ -111,13 +111,3 @@ const uint32_t* Picture::data(uint32_t* w, uint32_t* h) const noexcept
     }
     return pImpl->pixels;
 }
-
-
-Result Picture::paint(unique_ptr<Paint> paint) noexcept
-{
-    if (pImpl->paint) return Result::InsufficientCondition;
-    auto p = paint.release();
-    if (!p) return Result::MemoryCorruption;
-    pImpl->paint = p;
-    return Result::Success;
-}
