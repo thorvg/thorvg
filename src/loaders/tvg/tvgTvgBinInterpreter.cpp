@@ -347,12 +347,7 @@ static bool _parsePicture(TvgBinBlock block, Paint* paint)
     //Case2: Base Paint Properties
     if (_parsePaintProperty(block, picture)) return true;
 
-    //Case3: Vector Picture
-    if (auto paint = _parsePaint(block)) {
-        picture->paint(unique_ptr<Paint>(paint));
-        return true;
-    }
-
+    //Vector Picture won't be requested since Saver replaces it with the Scene
     return false;
 }
 
