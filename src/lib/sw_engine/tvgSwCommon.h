@@ -284,6 +284,15 @@ static inline SwCoord HALF_STROKE(float width)
     return TO_SWCOORD(width * 0.5f);
 }
 
+
+static inline bool TRANSLUCENT(const SwSurface* surface, uint8_t a)
+{
+    if (a < 255) return true;
+    if (!surface->compositor || surface->compositor->method == CompositeMethod::None) return false;
+    return true;
+}
+
+
 int64_t mathMultiply(int64_t a, int64_t b);
 int64_t mathDivide(int64_t a, int64_t b);
 int64_t mathMulDiv(int64_t a, int64_t b, int64_t c);
