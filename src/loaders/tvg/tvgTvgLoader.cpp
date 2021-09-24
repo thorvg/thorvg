@@ -79,18 +79,18 @@ bool TvgLoader::readHeader()
 
     //5. Compressed Size if any
     if (compressed) {
-        auto p = reinterpret_cast<TvgBinCounter*>(const_cast<char*>(ptr));
+        auto p = ptr;
 
         //TVG_HEADER_UNCOMPRESSED_SIZE
-        uncompressedSize = *static_cast<uint32_t*>(p);
-        ++p;
+        memcpy(&uncompressedSize, p, sizeof(uint32_t));
+        p += SIZE(uint32_t);
 
         //TVG_HEADER_COMPRESSED_SIZE
-        compressedSize = *static_cast<uint32_t*>(p);
-        ++p;
+        memcpy(&compressedSize, p, sizeof(uint32_t));
+        p += SIZE(uint32_t);
 
         //TVG_HEADER_COMPRESSED_SIZE_BITS
-        compressedSizeBits = *static_cast<uint32_t*>(p);
+        memcpy(&compressedSizeBits, p, sizeof(uint32_t));
     }
 
     ptr += TVG_HEADER_COMPRESS_SIZE;
