@@ -167,6 +167,8 @@ html {
 
 @media (prefers-color-scheme: dark) {
     html:not(.light-mode) {
+        color-scheme: dark;
+        
         --primary-color: #1982d2;
         --primary-dark-color: #5ca8e2;
         --primary-light-color: #4779ac;
@@ -211,6 +213,8 @@ html {
 
 /* dark mode variables are defined twice, to support both the dark-mode without and with doxygen-awesome-darkmode-toggle.js */
 html.dark-mode {
+    color-scheme: dark;
+
     --primary-color: #1982d2;
     --primary-dark-color: #5ca8e2;
     --primary-light-color: #4779ac;
