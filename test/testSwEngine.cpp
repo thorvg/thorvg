@@ -270,6 +270,7 @@ TEST_CASE("Image Draw", "[tvgSwEngine]")
     REQUIRE(basicPicture6->opacity(100) == Result::Success);
     REQUIRE(canvas->push(move(basicPicture6)) == Result::Success);
 
+
     // Downscaled images
     basicPicture = Picture::gen();
     REQUIRE(basicPicture);
