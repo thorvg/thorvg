@@ -10,7 +10,7 @@ Hermet Park (hermet) is the lead maintainer. Also there are designated maintaine
 <b>jpg_loader:</b> Michal Maciola (mmaciola) <br />
 <b>tvg_loader:</b> Michal Maciola (mmaciola) <br />
 <b>tvg_saver:</b> Mira Grudzinska (mgrudzinska) <br />
-<b>wasm:</b> Shinwoo Kim (kimcinoo) <br />
+<b>wasm:</b> Shinwoo Kim (kimcinoo), Michal Maciola (mmaciola) <br />
 <b>svg2png:</b> Junsu Choi (JSUYA), Michal Maciola (mmaciola) <br />
 <b>capi:</b> Michal Szczecinski (mihashco), Mira Grudzinska (mgrudzinska) <br />
 <br />
