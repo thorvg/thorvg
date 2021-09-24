@@ -214,7 +214,7 @@ TEST_CASE("Image Draw", "[tvgSwEngine]")
     REQUIRE(canvas->push(move(basicPicture6)) == Result::Success);
 
 
-    // Downscaled images
+    // Upscaled images
     basicPicture = Picture::gen();
     REQUIRE(basicPicture);
     REQUIRE(basicPicture->load(TEST_DIR"/test.png") == Result::Success);
@@ -270,12 +270,7 @@ TEST_CASE("Image Draw", "[tvgSwEngine]")
     REQUIRE(basicPicture6->opacity(100) == Result::Success);
     REQUIRE(canvas->push(move(basicPicture6)) == Result::Success);
 
-
-    //Draw
-    REQUIRE(canvas->draw() == Result::Success);
-    REQUIRE(canvas->sync() == Result::Success);
-
-    // Upscaled images
+    // Downscaled images
     basicPicture = Picture::gen();
     REQUIRE(basicPicture);
     REQUIRE(basicPicture->load(TEST_DIR"/test.png") == Result::Success);
@@ -330,7 +325,6 @@ TEST_CASE("Image Draw", "[tvgSwEngine]")
     REQUIRE(basicPicture6->composite(move(rleMask6), tvg::CompositeMethod::ClipPath) == Result::Success);
     REQUIRE(basicPicture6->opacity(100) == Result::Success);
     REQUIRE(canvas->push(move(basicPicture6)) == Result::Success);
-
 
     //Draw
     REQUIRE(canvas->draw() == Result::Success);
