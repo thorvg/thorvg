@@ -214,7 +214,7 @@ TEST_CASE("Image Draw", "[tvgSwEngine]")
     REQUIRE(canvas->push(move(basicPicture6)) == Result::Success);
 
 
-    // Upscaled images
+    // Downscaled images
     basicPicture = Picture::gen();
     REQUIRE(basicPicture);
     REQUIRE(basicPicture->load(TEST_DIR"/test.png") == Result::Success);
