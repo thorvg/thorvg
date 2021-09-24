@@ -366,7 +366,10 @@ TvgBinCounter TvgSaver::serializeChild(const Paint* parent, const Paint* child, 
 TvgBinCounter TvgSaver::serializeScene(const Scene* scene, const Matrix* pTransform, const Matrix* cTransform)
 {
     auto it = this->iterator(scene);
-    if (it->count() == 0) return 0;
+    if (it->count() == 0) {
+        delete(it);
+        return 0;
+    }
 
     //Case - Only Child: Skip saving this scene.
     if (it->count() == 1) {
@@ -381,7 +384,9 @@ TvgBinCounter TvgSaver::serializeScene(const Scene* scene, const Matrix* pTransf
 
     //Case - Delegator Scene: This scene is just a delegator, we can skip this:
     if (scene->composite(nullptr) == CompositeMethod::None && scene->opacity() == 255) {
-        return serializeChildren(it, cTransform, false);
+        auto ret = serializeChildren(it, cTransform, false);
+        delete(it);
+        return ret;
     }
 
     //Case - Serialize Scene & its children
