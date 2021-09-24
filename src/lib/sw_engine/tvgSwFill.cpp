@@ -150,7 +150,7 @@ bool _prepareRadial(SwFill* fill, const RadialGradient* radial, const Matrix* tr
         //FIXME; Scale + Rotation is not working properly
         radius *= sx;
 
-        if (fabsf(sx - sy) > FLT_EPSILON) {
+        if (abs(sx - sy) > DBL_EPSILON) {
             fill->sx = sx;
             fill->sy = sy;
         }
