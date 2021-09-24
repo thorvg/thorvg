@@ -463,7 +463,7 @@ TvgBinCounter TvgSaver::serializeStroke(const Shape* shape, const Matrix* pTrans
 
     //width
     auto width = shape->strokeWidth();
-    if (preTransform) width *= sqrtf(pow(pTransform->e11, 2) + pow(pTransform->e21, 2));  //we know x/y scaling factors are same.
+    if (preTransform) width *= sqrtf(powf(pTransform->e11, 2.0f) + powf(pTransform->e21, 2.0f));  //we know x/y scaling factors are same.
     auto cnt = writeTagProperty(TVG_TAG_SHAPE_STROKE_WIDTH, SIZE(width), &width);
 
     //cap

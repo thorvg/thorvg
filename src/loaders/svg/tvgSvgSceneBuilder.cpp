@@ -101,12 +101,12 @@ static unique_ptr<RadialGradient> _applyRadialGradientProperty(SvgStyleGradient*
     int radius;
     auto fillGrad = RadialGradient::gen();
 
-    radius = static_cast<int>(sqrtf(pow(rw, 2) + pow(rh, 2)) / sqrtf(2.0));
+    radius = static_cast<int>(sqrtf(powf(rw, 2.0f) + powf(rh, 2.0f)) / sqrtf(2.0f));
     if (!g->userSpace) {
          //That is according to Units in here
          //https://www.w3.org/TR/2015/WD-SVG2-20150915/coords.html
         int min = static_cast<int>((rh > rw) ? rw : rh);
-        radius = static_cast<int>(sqrtf(pow(min, 2) + pow(min, 2)) / sqrtf(2.0));
+        radius = static_cast<int>(sqrt(pow(min, 2) + pow(min, 2)) / sqrtf(2.0f));
     }
 
     if (g->usePercentage) {
@@ -123,7 +123,7 @@ static unique_ptr<RadialGradient> _applyRadialGradientProperty(SvgStyleGradient*
         g->radial->cy = g->radial->cx * g->transform->e21 + g->radial->cy * g->transform->e22 + g->transform->e23;
         g->radial->cx = cx;
 
-        auto sx = sqrtf(pow(g->transform->e11, 2) + pow(g->transform->e21, 2));
+        auto sx = sqrtf(powf(g->transform->e11, 2.0f) + powf(g->transform->e21, 2.0f));
         g->radial->r *= sx;
     }
 

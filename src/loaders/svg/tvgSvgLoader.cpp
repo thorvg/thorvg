@@ -124,7 +124,7 @@ static float _gradientToFloat(const SvgParser* svgParse, const char* str, SvgPar
     */
     if (type == SvgParserLengthType::Vertical) max = svgParse->global.h;
     else if (type == SvgParserLengthType::Horizontal) max = svgParse->global.w;
-    else if (type == SvgParserLengthType::Other) max = sqrt(pow(svgParse->global.h, 2) + pow(svgParse->global.w, 2)) / sqrt(2.0);
+    else if (type == SvgParserLengthType::Other) max = sqrtf(pow(svgParse->global.h, 2) + pow(svgParse->global.w, 2)) / sqrtf(2.0);
 
     if (strstr(str, "%")) parsedValue = parsedValue / 100.0;
     else if (strstr(str, "cm")) parsedValue = parsedValue * 35.43307;
@@ -261,7 +261,7 @@ _parseDashArray(SvgLoaderData* loader, const char *str, SvgDash* dash)
             ++end;
             //Refers to the diagonal length of the viewport.
             //https://www.w3.org/TR/SVG2/coords.html#Units
-            parsedValue = (sqrt(pow(loader->svgParse->global.w, 2) + pow(loader->svgParse->global.h, 2)) / sqrt(2.0f)) * (parsedValue / 100.0f);
+            parsedValue = (sqrtf(pow(loader->svgParse->global.w, 2) + pow(loader->svgParse->global.h, 2)) / sqrtf(2.0f)) * (parsedValue / 100.0f);
         }
         (*dash).array.push(parsedValue);
         str = end;
@@ -1970,7 +1970,7 @@ static void _recalcRadialFyAttr(SvgLoaderData* loader, SvgRadialGradient* radial
 
 static void _recalcRadialRAttr(SvgLoaderData* loader, SvgRadialGradient* radial, bool userSpace)
 {
-    if (!userSpace) radial->r = radial->r * (sqrt(pow(loader->svgParse->global.h, 2) + pow(loader->svgParse->global.w, 2)) / sqrt(2.0));
+    if (!userSpace) radial->r = radial->r * (sqrtf(pow(loader->svgParse->global.h, 2) + pow(loader->svgParse->global.w, 2)) / sqrtf(2.0));
 }
 
 
@@ -2052,7 +2052,7 @@ static SvgStyleGradient* _createRadialGradient(SvgLoaderData* loader, const char
     grad->radial->cy = 0.5f / loader->svgParse->global.h;
     grad->radial->fx = 0.5f / loader->svgParse->global.w;
     grad->radial->fy = 0.5f / loader->svgParse->global.h;
-    grad->radial->r = 0.5f / (sqrt(pow(loader->svgParse->global.h, 2) + pow(loader->svgParse->global.w, 2)) / sqrt(2.0f));
+    grad->radial->r = 0.5f / (sqrtf(pow(loader->svgParse->global.h, 2) + pow(loader->svgParse->global.w, 2)) / sqrtf(2.0f));
 
     loader->svgParse->gradient.parsedFx = false;
     loader->svgParse->gradient.parsedFy = false;
