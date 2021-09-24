@@ -18,7 +18,7 @@ option('savers',
 
 option('vector',
    type: 'boolean',
-   value: true,
+   value: false,
    description: 'Enable CPU Vectorization(SIMD) in thorvg')
 
 option('bindings',
