@@ -164,15 +164,15 @@ bool TvgSaver::saveEncoding(const std::string& path)
     uncompressed += TVG_HEADER_RESERVED_LENGTH;
 
     //Uncompressed Size
-    *reinterpret_cast<TvgBinCounter*>(uncompressed) = uncompressedSize;
+    memcpy(uncompressed, &uncompressedSize, TVG_HEADER_UNCOMPRESSED_SIZE);
     uncompressed += TVG_HEADER_UNCOMPRESSED_SIZE;
 
     //Comprssed Size
-    *reinterpret_cast<TvgBinCounter*>(uncompressed) = compressedSize;
+    memcpy(uncompressed, &compressedSize, TVG_HEADER_COMPRESSED_SIZE);
     uncompressed += TVG_HEADER_COMPRESSED_SIZE;
 
     //Compressed Size Bits
-    *reinterpret_cast<TvgBinCounter*>(uncompressed) = compressedSizeBits;
+    memcpy(uncompressed, &compressedSizeBits, TVG_HEADER_COMPRESSED_SIZE_BITS);
 
     //Good optimization, flush to file.
     auto fp = fopen(path.c_str(), "w+");
