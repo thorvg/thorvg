@@ -263,7 +263,9 @@ string svgUtilURLDecode(const char *src)
 {
     if (!src) return nullptr;
 
-    auto length = strlen(src);
+    auto x = src;
+    while (*x != '\0') ++x;
+    auto length = x - src;
     if (length == 0) return nullptr;
 
     string decoded;
@@ -290,7 +292,10 @@ string svgUtilBase64Decode(const char *src)
 {
     if (!src) return nullptr;
 
-    auto length = strlen(src);
+    auto x = src;
+    while (*x != '\0') ++x;
+    auto length = x - src;
+
     if (length == 0) return nullptr;
 
     string decoded;

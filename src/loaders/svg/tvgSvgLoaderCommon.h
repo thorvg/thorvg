@@ -24,6 +24,7 @@
 
 #include "tvgCommon.h"
 #include "tvgArray.h"
+#include <string.h>
 
 struct SvgNode;
 struct SvgStyleGradient;

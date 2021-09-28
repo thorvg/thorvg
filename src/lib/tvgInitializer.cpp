@@ -43,25 +43,31 @@ static uint16_t _version = 0;
 static bool _buildVersionInfo()
 {
     auto SRC = THORVG_VERSION_STRING;   //ex) 0.3.99
-    auto p = SRC;
     const char* x;
+    auto p = SRC;
+
+    x = p;
+    while (*x != '\0') ++x;
+    auto len = x - SRC;
 
     char major[3];
-    x = strchr(p, '.');
-    if (!x) return false;
+    x = p;
+    while (*x != '.' && (x - SRC < len - 1)) x++;
+    if (x - SRC == len - 1) return false;
     memcpy(major, p, x - p);
     major[x - p] = '\0';
     p = x + 1;
 
     char minor[3];
-    x = strchr(p, '.');
-    if (!x) return false;
+    x = p;
+    while (*x != '.' && (x - SRC < len - 1)) x++;
+    if (x - SRC == len - 1) return false;
     memcpy(minor, p, x - p);
     minor[x - p] = '\0';
     p = x + 1;
 
     char micro[3];
-    x = SRC + strlen(THORVG_VERSION_STRING);
+    x = SRC + len;
     memcpy(micro, p, x - p);
     micro[x - p] = '\0';
 
