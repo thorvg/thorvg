@@ -50,7 +50,7 @@ protected: \
     friend Canvas; \
     friend Scene; \
     friend Picture; \
-    friend IteratorModule; \
+    friend IteratorModule
 
 
 #define _TVG_DECALRE_IDENTIFIER() \

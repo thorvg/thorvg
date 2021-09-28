@@ -2771,7 +2771,7 @@ void SvgLoader::run(unsigned tid)
         if (loaderData.cloneNodes.count > 0) _clonePostponedNodes(&loaderData.cloneNodes);
     }
     root = svgSceneBuild(loaderData.doc, vx, vy, vw, vh, w, h, preserveAspect);
-};
+}
 
 
 bool SvgLoader::header()
