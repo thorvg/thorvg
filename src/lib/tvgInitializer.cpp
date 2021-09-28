@@ -23,6 +23,10 @@
 #include "tvgTaskScheduler.h"
 #include "tvgLoader.h"
 
+#ifdef _WIN32
+    #include <cstring>
+#endif
+
 #ifdef THORVG_SW_RASTER_SUPPORT
     #include "tvgSwRenderer.h"
 #endif
