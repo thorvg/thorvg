@@ -1,5 +1,7 @@
+[![License](https://img.shields.io/badge/licence-MIT-green.svg?style=flat)](LICENSE)
 [![Continuous-integration](https://github.com/Samsung/thorvg/actions/workflows/actions.yml/badge.svg)](https://github.com/Samsung/thorvg/actions/workflows/actions.yml)
 [![Gitter](https://badges.gitter.im/thorvg/community.svg)](https://gitter.im/thorvg/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
+
 
 # ThorVG
 
