@@ -24,8 +24,11 @@
 #include "tvgSwCommon.h"
 #include "tvgRender.h"
 #include "tvgSwRasterC.h"
-#include "tvgSwRasterAvx.h"
 #include "tvgSwRasterNeon.h"
+
+#ifdef THORVG_AVX_VECTOR_SUPPORT
+#include "tvgSwRasterAvx.h"
+#endif
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
@@ -194,7 +197,10 @@ static bool _rasterTranslucentRect(SwSurface* surface, const SwBBox& region, uin
     }
 
 #if defined(THORVG_AVX_VECTOR_SUPPORT)
-    return avxRasterTranslucentRect(surface, region, color);
+//    if (THORVG_SIMD_SUPPORT() == SimdExtension::Avx || THORVG_SIMD_SUPPORT() == SimdExtension::Avx2)
+        return avxRasterTranslucentRect(surface, region, color);
+//    else
+//        return cRasterTranslucentRect(surface, region, color);
 #elif defined(THORVG_NEON_VECTOR_SUPPORT)
     return neonRasterTranslucentRect(surface, region, color);
 #else
@@ -1427,7 +1433,10 @@ static bool _rasterOpaqueRadialGradientRle(SwSurface* surface, const SwRleData* 
 void rasterRGBA32(uint32_t *dst, uint32_t val, uint32_t offset, int32_t len)
 {
 #if defined(THORVG_AVX_VECTOR_SUPPORT)
-    avxRasterRGBA32(dst, val, offset, len);
+//    if (THORVG_SIMD_SUPPORT() == SimdExtension::Avx || THORVG_SIMD_SUPPORT() == SimdExtension::Avx2)
+        avxRasterRGBA32(dst, val, offset, len);
+//    else
+//        cRasterRGBA32(dst, val, offset, len);
 #elif defined(THORVG_NEON_VECTOR_SUPPORT)
     neonRasterRGBA32(dst, val, offset, len);
 #else

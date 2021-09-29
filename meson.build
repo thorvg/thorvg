@@ -40,6 +40,10 @@ if get_option('savers').contains('tvg') == true
     config_h.set10('THORVG_TVG_SAVER_SUPPORT', true)
 endif
 
+if host_machine.system() == 'windows'
+    config_h.set10('HOST_SYSTEM_WINDOWS', true)
+endif
+
 simd_type = 'none'
 
 if get_option('vector') == true
@@ -66,6 +70,7 @@ configure_file(
 )
 
 headers = [include_directories('inc'), include_directories('.')]
+avx_headers = headers
 
 subdir('inc')
 subdir('src')

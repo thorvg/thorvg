@@ -2,9 +2,6 @@ compiler_flags = ['-DTVG_BUILD']
 
 cc = meson.get_compiler('cpp')
 if (cc.get_id() != 'msvc')
-    if simd_type == 'avx'
-        compiler_flags += ['-mavx']
-    endif
     if simd_type == 'neon'
         compiler_flags += ['-mfpu=neon']
     endif

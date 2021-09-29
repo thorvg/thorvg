@@ -1,3 +1,5 @@
+avx_headers +=  [include_directories('.')]
+
 engine_dep = []
 
 if get_option('engines').contains('sw') == true
