@@ -25,6 +25,12 @@
 #include "tvgTvgSaver.h"
 #include "tvgLzw.h"
 
+#ifdef _WIN32
+    #include <malloc.h>
+#else
+    #include <alloca.h>
+#endif
+
 #define SIZE(A) sizeof(A)
 
 /************************************************************************/
@@ -497,7 +503,7 @@ TvgBinCounter TvgSaver::serializePath(const Shape* shape, const Matrix* transfor
 
     /* Reduce the binary size.
        Convert PathCommand(4 bytes) to TvgBinFlag(1 byte) */
-    TvgBinFlag outCmds[cmdCnt];
+    TvgBinFlag* outCmds = (TvgBinFlag*)alloca(SIZE(TvgBinFlag) * cmdCnt);
     for (uint32_t i = 0; i < cmdCnt; ++i) {
         outCmds[i] = static_cast<TvgBinFlag>(cmds[i]);
     }

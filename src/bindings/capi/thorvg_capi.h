@@ -27,11 +27,14 @@
 #endif
 
 #ifdef TVG_BUILD
-    #define TVG_EXPORT __attribute__ ((visibility ("default")))
+    #ifdef _WIN32
+        #define TVG_EXPORT __declspec(dllexport)
+    #else
+        #define TVG_EXPORT __attribute__ ((visibility ("default")))
+    #endif
 #else
     #define TVG_EXPORT
 #endif
-
 
 #ifdef __cplusplus
 extern "C" {
