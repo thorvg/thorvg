@@ -13,7 +13,6 @@
 * - composition: blending, masking, path clipping
 * - pictures: SVG, PNG, bitmap
 *
-* @BETA_API
 */
 
 #ifndef __THORVG_CAPI_H__
@@ -41,7 +40,7 @@ extern "C" {
 #endif
 
 /**
-* \defgroup ThorVG_CAPI ThorVG_CAPI (BETA version)
+* \defgroup ThorVG_CAPI ThorVG_CAPI
 * \brief ThorVG C language binding APIs.
 *
 * \{
@@ -219,6 +218,10 @@ typedef struct
 
 /**
  * \brief A data structure representing a three-dimensional matrix.
+ *
+ * The elements e11, e12, e21 and e22 represent the rotation matrix, including the scaling factor.
+ * The elements e13 and e23 determine the translation of the object along the x and y-axis, respectively.
+ * The elements e31 and e32 are set to 0, e33 is set to 1.
  */
 typedef struct
 {
@@ -241,13 +244,16 @@ typedef struct
 /*!
 * \brief Initializes TVG engines.
 *
-* It must be called before any other function, at the beginning of the TVG client.
+* TVG requires the running-engine environment.
+* TVG runs its own task-scheduler for parallelizing rendering tasks efficiently.
+* You can indicate the number of threads, the count of which is designated @p threads.
+* In the initialization step, TVG will generate/spawn the threads as set by @p threads count.
 *
 * \code
 * tvg_engine_init(TVG_ENGINE_SW, 0);  //Initialize software renderer and use the main thread only
 * \endcode
 *
-* \param[in] engine_method The engine types
+* \param[in] engine_method The engine types to initialize. This is relative to the Canvas types, in which it will be used. For multiple backeneds bitwise operation is allowed.
 *   - TVG_ENGINE_SW: CPU rasterizer
 *   - TVG_ENGINE_GL: OpenGL rasterizer (not supported yet)
 * \param[in] threads The number of additional threads used to perform rendering. Zero indicates only the main thread is to be used.
@@ -259,7 +265,7 @@ typedef struct
 * \retval TVG_RESULT_NOT_SUPPORTED Unsupported engine type.
 * \retval TVG_RESULT_UNKNOWN Other error.
 *
-* \note For multiple backeneds bitwise operation on the engine types is allowed.
+* \note The Initializer keeps track of the number of times it was called. Threads count is fixed at the first init() call.
 * \see tvg_engine_term()
 * \see TVG_ENGINE_SW, TVG_ENGINE_GL
 */
@@ -277,7 +283,7 @@ TVG_EXPORT Tvg_Result tvg_engine_init(unsigned engine_method, unsigned threads);
 * tvg_engine_term(TVG_ENGINE_SW);
 * \endcode
 *
-* \param engine_method renderer type
+* \param engine_method The engine types to terminate. This is relative to the Canvas types, in which it will be used. For multiple backeneds bitwise operation is allowed
 *   - TVG_ENGINE_SW: CPU rasterizer
 *   - TVG_ENGINE_GL: OpenGL rasterizer (not supported yet)
 *
@@ -301,7 +307,11 @@ TVG_EXPORT Tvg_Result tvg_engine_term(unsigned engine_method);
 * \defgroup ThorVGCapi_Canvas Canvas
 * \brief A module for managing and drawing graphical elements.
 *
-* \{
+* A canvas is an entity responsible for drawing the target. It sets up the drawing engine and the buffer, which can be drawn on the screen. It also manages given Paint objects.
+*
+* \note A Canvas behavior depends on the raster engine though the final content of the buffer is expected to be identical.
+* \warning The Paint objects belonging to one Canvas can't be shared among multiple Canvases.
+\{
 */
 
 
@@ -589,7 +599,7 @@ TVG_EXPORT Tvg_Result tvg_canvas_update_paint(Tvg_Canvas* canvas, Tvg_Paint* pai
 
 
 /*!
-* \brief The function start rendering process.
+* \brief Request the canvas to draw the Tvg_Paint objects.
 *
 * All paints from the given canvas will be rasterized to the buffer.
 *
@@ -685,6 +695,9 @@ TVG_EXPORT Tvg_Result tvg_paint_scale(Tvg_Paint* paint, float factor);
 /*!
 * \brief Rotates the given Tvg_Paint by the given angle.
 *
+* The angle in measured clockwise from the horizontal axis.
+* The rotational axis passes through the point on the object with zero coordinates.
+*
 * \param[in] paint The Tvg_Paint object to be rotated.
 * \param[in] degree The value of the rotation angle in degrees.
 *
@@ -698,6 +711,9 @@ TVG_EXPORT Tvg_Result tvg_paint_rotate(Tvg_Paint* paint, float degree);
 
 /*!
 * \brief Moves the given Tvg_Paint in a two-dimensional space.
+*
+* The origin of the coordinate system is in the upper left corner of the canvas.
+* The horizontal and vertical axes point to the right and down, respectively.
 *
 * \param[in] paint The Tvg_Paint object to be shifted.
 * \param[in] x The value of the horizontal shift.
@@ -713,6 +729,8 @@ TVG_EXPORT Tvg_Result tvg_paint_translate(Tvg_Paint* paint, float x, float y);
 
 /*!
 * \brief Transforms the given Tvg_Paint using the augmented transformation matrix.
+*
+* The augmented matrix of the transformation is expected to be given.
 *
 * \param[in] paint The Tvg_Paint object to be transformed.
 * \param[in] m The 3x3 augmented matrix.
@@ -791,6 +809,8 @@ TVG_EXPORT Tvg_Paint* tvg_paint_duplicate(Tvg_Paint* paint);
 * \retval TVG_RESULT_SUCCESS Succeed.
 * \retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
 * \retval TVG_RESULT_INSUFFICIENT_CONDITION Other errors.
+*
+* \note Transformation of an object changes the returned values.
 */
 TVG_EXPORT Tvg_Result tvg_paint_get_bounds(const Tvg_Paint* paint, float* x, float* y, float* w, float* h);
 
@@ -1020,6 +1040,7 @@ TVG_EXPORT Tvg_Result tvg_shape_append_arc(Tvg_Paint* paint, float cx, float cy,
 *
 * The current point value is set to the last point from the sub-path.
 * For each command from the @p cmds array, an appropriate number of points in @p pts array should be specified.
+* If the number of points in the @p pts array is different than the number required by the @p cmds array, the shape with this sub-path will not be displayed on the screen.
 *
 * \param[in] paint A Tvg_Paint pointer to the shape object.
 * \param[in] cmds The array of the commands in the sub-path.
@@ -1687,7 +1708,7 @@ TVG_EXPORT Tvg_Result tvg_picture_load_raw(Tvg_Paint* paint, uint32_t *data, uin
 
 
 /*!
-* \brief The function loads data into given paint object. (BETA version)
+* \brief The function loads data into the given paint object.
 *
 * \param[in] paint Tvg_Paint pointer
 * \param[in] data raw data pointer
@@ -1705,7 +1726,7 @@ TVG_EXPORT Tvg_Result tvg_picture_load_data(Tvg_Paint* paint, const char *data, 
 
 
 /*!
-* \brief Gets the size of the loaded picture. (BETA version)
+* \brief Gets the size of the loaded picture.
 *
 * \warning Please do not use it, this API is not official one. It can be modified in the next version.
 */

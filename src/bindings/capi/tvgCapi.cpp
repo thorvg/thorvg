@@ -194,7 +194,7 @@ TVG_EXPORT Tvg_Result tvg_paint_get_opacity(Tvg_Paint* paint, uint8_t* opacity)
 TVG_EXPORT Tvg_Result tvg_paint_get_bounds(const Tvg_Paint* paint, float* x, float* y, float* w, float* h)
 {
    if (!paint) return TVG_RESULT_INVALID_ARGUMENT;
-   return (Tvg_Result) reinterpret_cast<const Paint*>(paint)->bounds(x, y, w, h);
+   return (Tvg_Result) reinterpret_cast<const Paint*>(paint)->bounds(x, y, w, h, true);
 }
 
 
