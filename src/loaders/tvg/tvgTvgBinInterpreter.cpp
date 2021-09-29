@@ -20,6 +20,13 @@
  * SOFTWARE.
  */
 #include <memory.h>
+
+#ifdef _WIN32
+    #include <malloc.h>
+#else
+    #include <alloca.h>
+#endif
+
 #include "tvgTvgCommon.h"
 
 
@@ -139,7 +146,7 @@ static bool _parseShapePath(const char *ptr, const char *end, Shape *shape)
     if (ptr > end) return false;
 
     /* Recover to PathCommand(4 bytes) from TvgBinFlag(1 byte) */
-    PathCommand inCmds[cmdCnt];
+    PathCommand* inCmds = (PathCommand*)alloca(sizeof(PathCommand) * cmdCnt);
     for (uint32_t i = 0; i < cmdCnt; ++i) {
         inCmds[i] = static_cast<PathCommand>(cmds[i]);
     }
@@ -206,7 +213,7 @@ static unique_ptr<Fill> _parseShapeFill(const char *ptr, const char *end)
                 if (block.length == 0 || block.length & 0x07) return nullptr;
                 uint32_t stopsCnt = block.length >> 3; // 8 bytes per ColorStop
                 if (stopsCnt > 1023) return nullptr;
-                Fill::ColorStop stops[stopsCnt];
+                Fill::ColorStop* stops = (Fill::ColorStop*)alloca(sizeof(Fill::ColorStop) * stopsCnt);
                 auto p = block.data;
                 for (uint32_t i = 0; i < stopsCnt; i++, p += 8) {
                     READ_FLOAT(&stops[i].offset, p);

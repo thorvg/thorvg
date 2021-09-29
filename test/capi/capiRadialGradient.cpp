@@ -75,8 +75,8 @@ TEST_CASE("Set/Get color stops", "[capiRadialGradient]")
     REQUIRE(gradient);
 
     Tvg_Color_Stop color_stops[2] = {
-        {.offset=0.0, .r=0, .g=0,   .b=0, .a=255},
-        {.offset=1,   .r=0, .g=255, .b=0, .a=255},
+        {0.0, 0, 0,   0, 255},
+        {1.0, 0, 255, 0, 255},
     };
 
     const Tvg_Color_Stop *color_stops_ret;
@@ -102,8 +102,8 @@ TEST_CASE("Clear gradient data", "[capiRadialGradient]")
     REQUIRE(gradient);
 
     Tvg_Color_Stop color_stops[2] = {
-        {.offset=0.0, .r=0, .g=0,   .b=0, .a=255},
-        {.offset=1,   .r=0, .g=255, .b=0, .a=255},
+        {0.0, 0, 0,   0, 255},
+        {1.0, 0, 255, 0, 255},
     };
 
     const Tvg_Color_Stop *color_stops_ret;
@@ -148,10 +148,9 @@ TEST_CASE("Stroke Radial Gradient", "[capiRadialGradient]")
 
     REQUIRE(tvg_radial_gradient_set(gradient, 10.0, 15.0, 30.0) == TVG_RESULT_SUCCESS);
 
-    Tvg_Color_Stop color_stops[2] =
-    {
-        {.offset=0.0, .r=0, .g=0,   .b=0, .a=255},
-        {.offset=1,   .r=0, .g=255, .b=0, .a=255},
+    Tvg_Color_Stop color_stops[2] = {
+        {0.0, 0, 0,   0, 255},
+        {1.0, 0, 255, 0, 255},
     };
 
     Tvg_Gradient *gradient_ret = NULL;
