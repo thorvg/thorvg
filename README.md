@@ -42,6 +42,7 @@ If your program has the main renderer, your program could call ThorVG APIs while
 	- [SVG to PNG](#svg-to-png)
 	- [SVG to TVG](#svg-to-tvg)
 - [API Bindings](#api-bindings)
+- [Dependencies](#dependencies)
 - [Issues or Feature Requests](#issues-or-feature-requests)
 
 [](#contents)
@@ -323,6 +324,17 @@ Examples:
 <br />
 ## API Bindings
 Our main development APIs are written in C++, but ThorVG also provides API bindings for C.
+
+[Back to contents](#contents)
+<br />
+<br />
+## Dependencies
+The ThorVG core has no dependencies. However, ThorVG has optional feature extensions. Some of these have dependencies as follows:
+
+* GL renderer: EGL, GLESv2
+* PNG support: [libpng](https://github.com/glennrp/libpng)
+* JPG support: [turbojpeg](https://github.com/libjpeg-turbo/libjpeg-turbo)
+* Examples: [EFL](https://www.enlightenment.org/about-efl.md)
 
 [Back to contents](#contents)
 <br />
