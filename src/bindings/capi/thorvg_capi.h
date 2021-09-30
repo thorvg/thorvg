@@ -809,6 +809,19 @@ TVG_EXPORT Tvg_Result tvg_paint_get_bounds(const Tvg_Paint* paint, float* x, flo
 TVG_EXPORT Tvg_Result tvg_paint_set_composite_method(Tvg_Paint* paint, Tvg_Paint* target, Tvg_Composite_Method method);
 
 
+/**
+* \brief Gets the composition target object and the composition method.
+*
+* \param[in] paint The source object of the composition.
+* \param[out] target The target object of the composition.
+* \param[out] method The method used to composite the source object with the target.
+*
+* \return Tvg_Result enumeration.
+* \retval TVG_RESULT_SUCCESS Succeed.
+* \retval TVG_RESULT_INVALID_ARGUMENT A @c nullptr is passed as the argument.
+*/
+TVG_EXPORT Tvg_Result tvg_paint_get_composite_method(const Tvg_Paint* paint, const Tvg_Paint** target, Tvg_Composite_Method* method);
+
 /** \} */   // end defgroup ThorVGCapi_Paint
 
 
