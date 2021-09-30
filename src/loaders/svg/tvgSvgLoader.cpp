@@ -697,6 +697,8 @@ error:
     }
 
 
+/*
+// TODO - remove?
 static constexpr struct
 {
     const char* tag;
@@ -712,7 +714,6 @@ static constexpr struct
     LENGTH_DEF(in, SvgLengthType::In)
 };
 
-
 static float _parseLength(const char* str, SvgLengthType* type)
 {
     float value;
@@ -725,7 +726,7 @@ static float _parseLength(const char* str, SvgLengthType* type)
     value = svgUtilStrtof(str, nullptr);
     return value;
 }
-
+*/
 
 static bool _parseStyleAttr(void* data, const char* key, const char* value);
 static bool _parseStyleAttr(void* data, const char* key, const char* value, bool style);
@@ -736,13 +737,11 @@ static bool _attrParseSvgNode(void* data, const char* key, const char* value)
     SvgLoaderData* loader = (SvgLoaderData*)data;
     SvgNode* node = loader->svgParse->node;
     SvgDocNode* doc = &(node->node.doc);
-    SvgLengthType type;
 
-    //TODO: handle length unit.
     if (!strcmp(key, "width")) {
-        doc->w = _parseLength(value, &type);
+        doc->w = _toFloat(loader->svgParse, value, SvgParserLengthType::Horizontal);
     } else if (!strcmp(key, "height")) {
-        doc->h = _parseLength(value, &type);
+        doc->h = _toFloat(loader->svgParse, value, SvgParserLengthType::Vertical);
     } else if (!strcmp(key, "viewBox")) {
         if (_parseNumber(&value, &doc->vx)) {
             if (_parseNumber(&value, &doc->vy)) {
@@ -761,8 +760,8 @@ static bool _attrParseSvgNode(void* data, const char* key, const char* value)
         return simpleXmlParseW3CAttribute(value, _parseStyleAttr, loader);
     }
 #ifdef THORVG_LOG_ENABLED
-    else if (!strcmp(key, "x") || !strcmp(key, "y")) {
-        if (0.0f == _parseLength(value, &type)) TVGLOG("SVG", "Unsupported attributes used [Elements type: Svg][Attribute: %s][Value: %s]", key, value);
+    else if ((!strcmp(key, "x") || !strcmp(key, "y")) && fabsf(svgUtilStrtof(value, nullptr)) > FLT_EPSILON ) {
+        TVGLOG("SVG", "Unsupported attributes used [Elements type: Svg][Attribute: %s][Value: %s]", key, value);
     }
 #endif
     else {
