@@ -5,7 +5,7 @@ if get_option('loaders').contains('svg') == true
 endif
 
 if get_option('loaders').contains('png') == true
-    subdir('png')
+    subdir('dynamic_png')
 endif
 
 if get_option('loaders').contains('tvg') == true
@@ -13,7 +13,7 @@ if get_option('loaders').contains('tvg') == true
 endif
 
 if get_option('loaders').contains('jpg') == true
-    subdir('jpg')
+    subdir('dynamic_jpg')
 endif
 
 subdir('raw')
