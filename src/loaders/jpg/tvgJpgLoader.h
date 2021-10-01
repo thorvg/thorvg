@@ -22,8 +22,6 @@
 #ifndef _TVG_JPG_LOADER_H_
 #define _TVG_JPG_LOADER_H_
 
-using tjhandle = void*;
-
 //TODO: Use Task?
 class JpgLoader : public LoadModule
 {
@@ -38,15 +36,6 @@ public:
     bool close() override;
 
     const uint32_t* pixels() override;
-
-private:
-    void clear();
-
-    tjhandle jpegDecompressor;
-    unsigned char* data = nullptr;
-    unsigned char *image = nullptr;
-    unsigned long size = 0;
-    bool freeData = false;
 };
 
 #endif //_TVG_JPG_LOADER_H_

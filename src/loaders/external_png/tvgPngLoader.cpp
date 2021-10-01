@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Samsung Electronics Co., Ltd. All rights reserved.
+ * Copyright (c) 2020-2021 Samsung Electronics Co., Ltd. All rights reserved.
 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,63 +23,69 @@
 #include "tvgLoader.h"
 #include "tvgPngLoader.h"
 
-/************************************************************************/
-/* Internal Class Implementation                                        */
-/************************************************************************/
-
-
-
-/************************************************************************/
-/* External Class Implementation                                        */
-/************************************************************************/
-
 PngLoader::PngLoader()
 {
-    //TODO:
+    image = static_cast<png_imagep>(calloc(1, sizeof(png_image)));
+    image->version = PNG_IMAGE_VERSION;
+    image->opaque = NULL;
 }
-
 
 PngLoader::~PngLoader()
 {
-    //TODO:
+    if (content) {
+        free((void*)content);
+        content = nullptr;
+    }
+    free(image);
 }
-
 
 bool PngLoader::open(const string& path)
 {
-    //TODO:
+    image->opaque = NULL;
 
-    return false;
+    if (!png_image_begin_read_from_file(image, path.c_str())) return false;
+
+    w = image->width;
+    h = image->height;
+
+    return true;
 }
-
 
 bool PngLoader::open(const char* data, uint32_t size, bool copy)
 {
-    //TODO:
+    image->opaque = NULL;
 
-    return false;
+    if (!png_image_begin_read_from_memory(image, data, size)) return false;
+
+    w = image->width;
+    h = image->height;
+
+    return true;
 }
-
 
 bool PngLoader::read()
 {
-    //TODO:
+    png_bytep buffer;
+    image->format = PNG_FORMAT_BGRA;
+    buffer = static_cast<png_bytep>(malloc(PNG_IMAGE_SIZE((*image))));
+    if (!buffer) {
+        //out of memory, only time when libpng doesnt free its data
+        png_image_free(image);
+        return false;
+    }
+    if (!png_image_finish_read(image, NULL, buffer, 0, NULL)) return false;
+    content = reinterpret_cast<uint32_t*>(buffer);
 
-    return false;
+    return true;
 }
-
 
 bool PngLoader::close()
 {
-    //TODO:
-
-    return false;
+    png_image_free(image);
+    return true;
 }
-
 
 const uint32_t* PngLoader::pixels()
 {
-    //TODO:
-
-    return nullptr;
+    return this->content;
 }
