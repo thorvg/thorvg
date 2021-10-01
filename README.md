@@ -38,6 +38,7 @@ If your program has the main renderer, your program could call ThorVG APIs while
 	- [Tizen](#tizen)
 	- [Rive](#rive)
 - [Examples](#examples)
+- [Documentation](#documentation)
 - [Tools](#tools)
 	- [ThorVG Viewer](#thorvg-viewer)
 	- [SVG to PNG](#svg-to-png)
@@ -252,6 +253,12 @@ meson -Dexamples=true . build
 ```
 Note that these examples require the EFL `elementary` package for launching. If you're using Linux-based OS, you can easily
 install this package from your OS distribution server. Otherwise, please visit the official [EFL page](https://enlightenment.org/) for more information.
+
+[Back to contents](#contents)
+<br />
+<br />
+## Documentation
+ThorVG API documentation is available at [thorvg.org/apis](https://www.thorvg.org/apis), and can also found in the (docs)[/docs] folder of this repo.
 
 [Back to contents](#contents)
 <br />
