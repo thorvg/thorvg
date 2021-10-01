@@ -260,7 +260,7 @@ typedef struct
 *
 * \return Tvg_Result enumeration.
 * \retval TVG_RESULT_SUCCESS Succeed.
-* \retval TVG_RESULT_INSUFFICIENT_CONDITION An internal error possibly with memory allocation.
+* \retval TVG_RESULT_FAILED_ALLOCATION An internal error possibly with memory allocation.
 * \retval TVG_RESULT_INVALID_ARGUMENT Unknown engine type.
 * \retval TVG_RESULT_NOT_SUPPORTED Unsupported engine type.
 * \retval TVG_RESULT_UNKNOWN Other error.
@@ -289,7 +289,7 @@ TVG_EXPORT Tvg_Result tvg_engine_init(unsigned engine_method, unsigned threads);
 *
 * \return Tvg_Result enumeration.
 * \retval TVG_RESULT_SUCCESS Succeed.
-* \retval TVG_RESULT_INSUFFICIENT_CONDITION Multiple function calls.
+* \retval TVG_RESULT_INSUFFICIENT_CONDITION Nothing to be terminated.
 * \retval TVG_RESULT_INVALID_ARGUMENT Unknown engine type.
 * \retval TVG_RESULT_NOT_SUPPORTED Unsupported engine type.
 * \retval TVG_RESULT_UNKNOWN An internal error.
@@ -375,6 +375,8 @@ TVG_EXPORT Tvg_Canvas* tvg_swcanvas_create();
 * \retval TVG_RESULT_INVALID_ARGUMENTS An invalid buffer pointer passed or one of the @p stride, @p w or @p h being zero.
 * \retval TVG_RESULT_NOT_SUPPORTED The software engine is not supported.
 *
+* \warning Do not access @p buffer during tvg_canvas_draw() - tvg_canvas_sync(). It should not be accessed while TVG is writing on it.
+*
 * \see TVG_COLORSPACE_ARGB8888, TVG_COLORSPACE_ABGR8888
 */
 TVG_EXPORT Tvg_Result tvg_swcanvas_set_target(Tvg_Canvas* canvas, uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h, uint32_t cs);
@@ -401,10 +403,10 @@ TVG_EXPORT Tvg_Result tvg_swcanvas_set_target(Tvg_Canvas* canvas, uint32_t* buff
 *
 * //a task called from main function in a loop
 * static void _job(const int cmd) {
+*   //define a valid rectangle shape
 *   switch (cmd) {
 *     case CMD_EXIT: return 0;
 *     case CMD_ADD_RECT:
-*       //define valid rectangle shape
 *       tvg_canvas_push(canvas, rect);
 *       break;
 *     case CMD_DEL_RECT:
@@ -500,13 +502,13 @@ TVG_EXPORT Tvg_Result tvg_canvas_push(Tvg_Canvas* canvas, Tvg_Paint* paint);
 * \return Tvg_Result enumeration.
 * \retval TVG_RESULT_SUCCESS Succeed.
 * \retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Canvas pointer.
+* \retval TVG_RESULT_FAILED_ALLOCATION An internal error with memory allocation.
 */
 TVG_EXPORT Tvg_Result tvg_canvas_reserve(Tvg_Canvas* canvas, uint32_t n);
 
 
 /*!
-* \brief Clears a Tvg_Canvas objects from pushed paints.
-*
+* \brief Sets the total number of the paints pushed into the canvas to be zero.
 * Tvg_Paint objects stored in the canvas are released if @p free is set to @c true, otherwise the memory is not deallocated and
 * all paints should be released manually in order to avoid memory leaks.
 *
@@ -516,6 +518,7 @@ TVG_EXPORT Tvg_Result tvg_canvas_reserve(Tvg_Canvas* canvas, uint32_t n);
 * \return Tvg_Result enumeration.
 * \retval TVG_RESULT_SUCCESS Succeed.
 * \retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Canvas pointer.
+* \retval TVG_RESULT_INSUFFICIENT_CONDITION An internal error.
 *
 * \warning Please use the @p free argument only when you know how it works, otherwise it's not recommended.
 *
@@ -578,6 +581,8 @@ TVG_EXPORT Tvg_Result tvg_canvas_clear(Tvg_Canvas* canvas, bool free);
 * \retval TVG_RESULT_SUCCESS Succeed.
 * \retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Canvas pointer.
 * \retval TVG_RESULT_INSUFFICIENT_CONDITION An internal error.
+*
+* \see tvg_canvas_update_paint()
 */
 TVG_EXPORT Tvg_Result tvg_canvas_update(Tvg_Canvas* canvas);
 
@@ -594,16 +599,18 @@ TVG_EXPORT Tvg_Result tvg_canvas_update(Tvg_Canvas* canvas);
 * \return Tvg_Result enumeration.
 * \retval TVG_RESULT_SUCCESS Succeed.
 * \retval TVG_RESULT_INVALID_ARGUMENT In case a @c nullptr is passed as the argument.
+*
+* \see tvg_canvas_update()
 */
 TVG_EXPORT Tvg_Result tvg_canvas_update_paint(Tvg_Canvas* canvas, Tvg_Paint* paint);
 
 
 /*!
-* \brief Request the canvas to draw the Tvg_Paint objects.
+* \brief Requests the canvas to draw the Tvg_Paint objects.
 *
 * All paints from the given canvas will be rasterized to the buffer.
 *
-* \param[in] canvas The Tvg_Canvas object to be drawn.
+* \param[in] canvas The Tvg_Canvas object containing elements to be drawn.
 *
 * \return Tvg_Result enumeration.
 * \retval TVG_RESULT_SUCCESS Succeed.
@@ -617,17 +624,18 @@ TVG_EXPORT Tvg_Result tvg_canvas_draw(Tvg_Canvas* canvas);
 
 
 /*!
-* \brief Guarantees the drawing process is finished.
+* \brief Guarantees that the drawing process is finished.
 *
-* It should be called after tvg_canvas_draw().
+* Since the canvas rendering can be performed asynchronously, it should be called after the tvg_canvas_draw().
 *
-* \param[in] canvas The Tvg_Canvas object which was drawn.
+* \param[in] canvas The Tvg_Canvas object containing elements which were drawn.
 *
 * \return Tvg_Result enumeration.
 * \retval TVG_RESULT_SUCCESS Succeed.
 * \retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Canvas pointer.
+* \retval TVG_RESULT_INSUFFICIENT_CONDITION An internal error.
 *
-* @see tvg_canvas_sync()
+* \see tvg_canvas_draw()
 */
 TVG_EXPORT Tvg_Result tvg_canvas_sync(Tvg_Canvas* canvas);
 
@@ -701,6 +709,9 @@ TVG_EXPORT Tvg_Result tvg_paint_scale(Tvg_Paint* paint, float factor);
 * \param[in] paint The Tvg_Paint object to be rotated.
 * \param[in] degree The value of the rotation angle in degrees.
 *
+* The angle in measured clockwise from the horizontal axis.
+* The rotational axis passes through the point on the object with zero coordinates.
+*
 * \return Tvg_Result enumeration.
 * \retval TVG_RESULT_SUCCESS Succeed.
 * \retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
@@ -718,6 +729,9 @@ TVG_EXPORT Tvg_Result tvg_paint_rotate(Tvg_Paint* paint, float degree);
 * \param[in] paint The Tvg_Paint object to be shifted.
 * \param[in] x The value of the horizontal shift.
 * \param[in] y The value of the vertical shift.
+*
+* The origin of the coordinate system is in the upper left corner of the canvas.
+* The horizontal and vertical axes point to the right and down, respectively.
 *
 * \return Tvg_Result enumeration.
 * \retval TVG_RESULT_SUCCESS Succeed.
@@ -745,6 +759,8 @@ TVG_EXPORT Tvg_Result tvg_paint_transform(Tvg_Paint* paint, const Tvg_Matrix* m)
 
 /*!
 * \brief Gets the matrix of the affine transformation of the given Tvg_Paint object.
+*
+* In case no transformation was applied, the identity matrix is returned.
 *
 * \param[in] paint The Tvg_Paint object of which to get the transformation matrix.
 * \param[out] m The 3x3 augmented matrix.
@@ -1030,7 +1046,7 @@ TVG_EXPORT Tvg_Result tvg_shape_append_circle(Tvg_Paint* paint, float cx, float 
 * \retval TVG_RESULT_SUCCESS Succeed.
 * \retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
 *
-* \note Setting @p sweep value greater than 360 degrees, is equivalent to calling appendCircle(cx, cy, radius, radius).
+* \note Setting @p sweep value greater than 360 degrees, is equivalent to calling tvg_shape_append_circle(paint, cx, cy, radius, radius).
 */
 TVG_EXPORT Tvg_Result tvg_shape_append_arc(Tvg_Paint* paint, float cx, float cy, float radius, float startAngle, float sweep, uint8_t pie);
 
@@ -1141,12 +1157,12 @@ TVG_EXPORT Tvg_Result tvg_shape_get_stroke_width(const Tvg_Paint* paint, float* 
 * \param[in] r The red color channel value in the range [0 ~ 255]. The default value is 0.
 * \param[in] g The green color channel value in the range [0 ~ 255]. The default value is 0.
 * \param[in] b The blue color channel value in the range [0 ~ 255]. The default value is 0.
-* \param[in] a opacity value
+* \param[in] a The alpha channel value in the range [0 ~ 255], where 0 is completely transparent and 255 is opaque.
 *
 * \return Tvg_Result enumeration.
 * \retval TVG_RESULT_SUCCESS Succeed.
 * \retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
-* \retval TVG_RESULT_FAILED_ALLOCATION An internal error with a memory allocation.
+* \retval TVG_RESULT_INSUFFICIENT_CONDITION An internal error with a memory allocation.
 *
 * \note Either a solid color or a gradient fill is applied, depending on what was set as last.
 */
@@ -1160,11 +1176,12 @@ TVG_EXPORT Tvg_Result tvg_shape_set_stroke_color(Tvg_Paint* paint, uint8_t r, ui
 * \param[out] r The red color channel value in the range [0 ~ 255]. The default value is 0.
 * \param[out] g The green color channel value in the range [0 ~ 255]. The default value is 0.
 * \param[out] b The blue color channel value in the range [0 ~ 255]. The default value is 0.
-* \param[out] a opacity value
+* \param[out] a The alpha channel value in the range [0 ~ 255], where 0 is completely transparent and 255 is opaque.
 *
 * \return Tvg_Result enumeration.
 * \retval TVG_RESULT_SUCCESS Succeed.
 * \retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
+* \retval TVG_RESULT_INSUFFICIENT_CONDITION No stroke was set.
 */
 TVG_EXPORT Tvg_Result tvg_shape_get_stroke_color(const Tvg_Paint* paint, uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a);
 

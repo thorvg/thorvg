@@ -496,7 +496,7 @@ public:
     virtual Result update(Paint* paint = nullptr) noexcept;
 
     /**
-     * @brief Request the canvas to draw the Paint objects.
+     * @brief Requests the canvas to draw the Paint objects.
      *
      * @return Result::Success when succeed, Result::InsufficientCondition otherwise.
      *
@@ -1050,7 +1050,7 @@ public:
      *
      * @param[in] data A pointer to a memory location where the content of the picture file is stored.
      * @param[in] size The size in bytes of the memory occupied by the @p data.
-     * @param[in] mimetype Mimetype or extension of data such as "jpg", "jpeg", "svg", "svg+xml", "png", etc. If empty string or unknown, loaders will be tried one by one.
+     * @param[in] mimeType Mimetype or extension of data such as "jpg", "jpeg", "svg", "svg+xml", "png", etc. If empty string or unknown, loaders will be tried one by one.
      * @param[in] copy Decides whether the data should be copied into the engine local buffer.
      *
      * @retval Result::Success When succeed.
@@ -1165,7 +1165,7 @@ public:
      *
      * @param[in] size The number of objects for which the memory is to be reserved.
      *
-     * @return Result::Success when succeed.
+     * @return Result::Success when succeed, Result::FailedAllocation otherwise.
      */
     Result reserve(uint32_t size) noexcept;
 
