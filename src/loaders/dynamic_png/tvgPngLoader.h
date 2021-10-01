@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Samsung Electronics Co., Ltd. All rights reserved.
+ * Copyright (c) 2020-2021 Samsung Electronics Co., Ltd. All rights reserved.
 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -19,66 +19,28 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+#ifndef _TVG_PNG_LOADER_H_
+#define _TVG_PNG_LOADER_H_
 
-#include "tvgLoader.h"
-#include "tvgJpgLoader.h"
+#include <png.h>
 
-/************************************************************************/
-/* Internal Class Implementation                                        */
-/************************************************************************/
-
-
-/************************************************************************/
-/* External Class Implementation                                        */
-/************************************************************************/
-
-JpgLoader::JpgLoader()
+class PngLoader : public LoadModule
 {
-    //TODO:
-}
+public:
+    PngLoader();
+    ~PngLoader();
 
+    using LoadModule::open;
+    bool open(const string& path) override;
+    bool open(const char* data, uint32_t size, bool copy) override;
+    bool read() override;
+    bool close() override;
 
-JpgLoader::~JpgLoader()
-{
-    //TODO:
-}
+    const uint32_t* pixels() override;
 
+private:
+    png_imagep image = nullptr;
+    const uint32_t* content = nullptr;
+};
 
-bool JpgLoader::open(const string& path)
-{
-    //TODO:
-
-    return false;
-}
-
-
-bool JpgLoader::open(const char* data, uint32_t size, bool copy)
-{
-    //TODO:
-
-    return false;
-}
-
-
-bool JpgLoader::read()
-{
-    //TODO:
-
-    return false;
-}
-
-
-bool JpgLoader::close()
-{
-    //TODO:
-
-    return false;
-}
-
-
-const uint32_t* JpgLoader::pixels()
-{
-    //TODO:
-
-    return nullptr;
-}
+#endif //_TVG_PNG_LOADER_H_
