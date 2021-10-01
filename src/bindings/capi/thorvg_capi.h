@@ -813,13 +813,14 @@ TVG_EXPORT Tvg_Paint* tvg_paint_duplicate(Tvg_Paint* paint);
 
 
 /*!
-* \brief Gets the bounding box of the Tvg_Paint object before any transformation.
+* \brief Gets the bounding box of the Tvg_Paint object before any transformation. (BETA_API)
 *
 * \param[in] paint The Tvg_Paint object of which to get the bounds.
 * \param[out] x The x coordinate of the upper left corner of the object.
 * \param[out] y The y coordinate of the upper left corner of the object.
 * \param[out] w The width of the object.
 * \param[out] h The height of the object.
+* \param[in] transformed if @c true, apply the transformation of the paint.
 *
 * \return Tvg_Result enumeration.
 * \retval TVG_RESULT_SUCCESS Succeed.
@@ -828,7 +829,7 @@ TVG_EXPORT Tvg_Paint* tvg_paint_duplicate(Tvg_Paint* paint);
 *
 * \note Transformation of an object changes the returned values.
 */
-TVG_EXPORT Tvg_Result tvg_paint_get_bounds(const Tvg_Paint* paint, float* x, float* y, float* w, float* h);
+TVG_EXPORT Tvg_Result tvg_paint_get_bounds(const Tvg_Paint* paint, float* x, float* y, float* w, float* h, bool transformed);
 
 
 /*!
