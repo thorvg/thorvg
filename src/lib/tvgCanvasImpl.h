@@ -119,8 +119,7 @@ struct Canvas::Impl
             if ((*paint)->pImpl->render(*renderer)) rendered = true;
         }
 
-        if (!rendered) return Result::InsufficientCondition;
-        if (!renderer->postRender()) return Result::InsufficientCondition;
+        if (!rendered || !renderer->postRender()) return Result::InsufficientCondition;
 
         drawing = true;
 
