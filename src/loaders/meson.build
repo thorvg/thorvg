@@ -1,18 +1,18 @@
 subloader_dep = []
 
-if get_option('loaders').contains('svg') == true
+if all_loaders or get_option('loaders').contains('svg') == true
     subdir('svg')
 endif
 
-if get_option('loaders').contains('png') == true
+if all_loaders or get_option('loaders').contains('png') == true
     subdir('png')
 endif
 
-if get_option('loaders').contains('tvg') == true
+if all_loaders or get_option('loaders').contains('tvg') == true
     subdir('tvg')
 endif
 
-if get_option('loaders').contains('jpg') == true
+if all_loaders or get_option('loaders').contains('jpg') == true
     subdir('jpg')
 endif
 
