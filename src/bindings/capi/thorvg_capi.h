@@ -807,21 +807,21 @@ TVG_EXPORT Tvg_Paint* tvg_paint_duplicate(Tvg_Paint* paint);
 
 
 /*!
-* \brief Gets the bounding box of the Tvg_Paint object before any transformation. (BETA_API)
+* \brief Gets the axis-aligned bounding box of the Tvg_Paint object. (BETA_API)
 *
 * \param[in] paint The Tvg_Paint object of which to get the bounds.
 * \param[out] x The x coordinate of the upper left corner of the object.
 * \param[out] y The y coordinate of the upper left corner of the object.
 * \param[out] w The width of the object.
 * \param[out] h The height of the object.
-* \param[in] transformed if @c true, apply the transformation of the paint.
+* \param[in] transformed If @c true, the transformation of the paint is taken into account, otherwise it isn't.
 *
 * \return Tvg_Result enumeration.
 * \retval TVG_RESULT_SUCCESS Succeed.
 * \retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
 * \retval TVG_RESULT_INSUFFICIENT_CONDITION Other errors.
 *
-* \note Transformation of an object changes the returned values.
+* \note The bounding box doesn't indicate the actual drawing region. It's the smallest rectangle that encloses the object.
 */
 TVG_EXPORT Tvg_Result tvg_paint_get_bounds(const Tvg_Paint* paint, float* x, float* y, float* w, float* h, bool transformed);
 

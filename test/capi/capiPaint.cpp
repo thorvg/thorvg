@@ -142,7 +142,7 @@ TEST_CASE("Paint Bounds", "[capiPaint]")
     float x, y, w, h;
 
     REQUIRE(tvg_shape_append_rect(paint, 0, 10, 20, 100, 0, 0) == TVG_RESULT_SUCCESS);
-    REQUIRE(tvg_paint_get_bounds(paint, &x, &y, &w, &h) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_paint_get_bounds(paint, &x, &y, &w, &h, true) == TVG_RESULT_SUCCESS);
 
     REQUIRE(x == 0);
     REQUIRE(y == 10);
@@ -151,14 +151,24 @@ TEST_CASE("Paint Bounds", "[capiPaint]")
 
     REQUIRE(tvg_shape_reset(paint) == TVG_RESULT_SUCCESS);
 
+    REQUIRE(tvg_paint_translate(paint, 100, 100) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_paint_scale(paint, 2) == TVG_RESULT_SUCCESS);
+
     REQUIRE(tvg_shape_move_to(paint, 0, 10) == TVG_RESULT_SUCCESS);
     REQUIRE(tvg_shape_line_to(paint, 20, 110) == TVG_RESULT_SUCCESS);
-    REQUIRE(tvg_paint_get_bounds(paint, &x, &y, &w, &h) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_paint_get_bounds(paint, &x, &y, &w, &h, false) == TVG_RESULT_SUCCESS);
 
     REQUIRE(x == 0);
     REQUIRE(y == 10);
     REQUIRE(w == 20);
     REQUIRE(h == 100);
+
+    REQUIRE(tvg_paint_get_bounds(paint, &x, &y, &w, &h, true) == TVG_RESULT_SUCCESS);
+
+    REQUIRE(x == Approx(100.0f).margin(0.000001));
+    REQUIRE(y == Approx(120.0f).margin(0.000001));
+    REQUIRE(w == Approx(40.0f).margin(0.000001));
+    REQUIRE(h == Approx(200.0f).margin(0.000001));
 
     REQUIRE(tvg_paint_del(paint) == TVG_RESULT_SUCCESS);
 }
