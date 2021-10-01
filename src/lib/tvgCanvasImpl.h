@@ -114,11 +114,12 @@ struct Canvas::Impl
     {
         if (drawing || paints.count == 0 || !renderer || !renderer->preRender()) return Result::InsufficientCondition;
 
+        bool rendered = false;
         for (auto paint = paints.data; paint < (paints.data + paints.count); ++paint) {
-            if (!(*paint)->pImpl->render(*renderer)) return Result::InsufficientCondition;
+            if ((*paint)->pImpl->render(*renderer)) rendered = true;
         }
 
-        if (!renderer->postRender()) return Result::InsufficientCondition;
+        if (!rendered || !renderer->postRender()) return Result::InsufficientCondition;
 
         drawing = true;
 
