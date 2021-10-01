@@ -19,66 +19,34 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+#ifndef _TVG_JPG_LOADER_H_
+#define _TVG_JPG_LOADER_H_
 
-#include "tvgLoader.h"
-#include "tvgJpgLoader.h"
+using tjhandle = void*;
 
-/************************************************************************/
-/* Internal Class Implementation                                        */
-/************************************************************************/
-
-
-/************************************************************************/
-/* External Class Implementation                                        */
-/************************************************************************/
-
-JpgLoader::JpgLoader()
+//TODO: Use Task?
+class JpgLoader : public LoadModule
 {
-    //TODO:
-}
+public:
+    JpgLoader();
+    ~JpgLoader();
 
+    using LoadModule::open;
+    bool open(const string& path) override;
+    bool open(const char* data, uint32_t size, bool copy) override;
+    bool read() override;
+    bool close() override;
 
-JpgLoader::~JpgLoader()
-{
-    //TODO:
-}
+    const uint32_t* pixels() override;
 
+private:
+    void clear();
 
-bool JpgLoader::open(const string& path)
-{
-    //TODO:
+    tjhandle jpegDecompressor;
+    unsigned char* data = nullptr;
+    unsigned char *image = nullptr;
+    unsigned long size = 0;
+    bool freeData = false;
+};
 
-    return false;
-}
-
-
-bool JpgLoader::open(const char* data, uint32_t size, bool copy)
-{
-    //TODO:
-
-    return false;
-}
-
-
-bool JpgLoader::read()
-{
-    //TODO:
-
-    return false;
-}
-
-
-bool JpgLoader::close()
-{
-    //TODO:
-
-    return false;
-}
-
-
-const uint32_t* JpgLoader::pixels()
-{
-    //TODO:
-
-    return nullptr;
-}
+#endif //_TVG_JPG_LOADER_H_
