@@ -258,7 +258,7 @@ install this package from your OS distribution server. Otherwise, please visit t
 <br />
 <br />
 ## Documentation
-ThorVG API documentation is available at [thorvg.org/apis](https://www.thorvg.org/apis), and can also found in the (docs)[/docs] folder of this repo.
+ThorVG API documentation is available at [thorvg.org/apis](https://www.thorvg.org/apis), and can also found in the [docs](/docs) folder of this repo.
 
 [Back to contents](#contents)
 <br />
