@@ -80,7 +80,7 @@ bool GlGeometry::decomposeOutline(const Shape& shape)
                 mPrimitives.push_back(GlPrimitive());
                 curPrimitive = &mPrimitives.back();
             }
-            __attribute__ ((fallthrough));
+            TVG_FALLTHROUGH
             case PathCommand::LineTo: {
                 if (curPrimitive) addPoint(*curPrimitive, pts[0], min, max);
                 pts++;
