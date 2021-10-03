@@ -28,7 +28,7 @@
 /************************************************************************/
 
 //clz: count leading zero’s
-#ifdef _MSC_VER
+#if defined(_MSC_VER) && !defined(__clang__)
     #include <intrin.h>
     static uint32_t __inline _clz(uint32_t value)
     {

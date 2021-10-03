@@ -31,6 +31,20 @@
     #include <alloca.h>
 #endif
 
+static FILE* _fopen(const char* filename, const char* mode)
+{
+#ifdef __clang__
+    FILE *fp;
+    auto err = fopen_s(&fp, filename, mode);
+    if (err != 0) return nullptr;
+    return fp;
+#else
+    auto fp = fopen(filename, mode);
+    if (!fp) return nullptr;
+    return fp;
+#endif
+}
+
 #define SIZE(A) sizeof(A)
 
 /************************************************************************/
@@ -181,7 +195,7 @@ bool TvgSaver::saveEncoding(const std::string& path)
     memcpy(uncompressed, &compressedSizeBits, TVG_HEADER_COMPRESSED_SIZE_BITS);
 
     //Good optimization, flush to file.
-    auto fp = fopen(path.c_str(), "w+");
+    auto fp = _fopen(path.c_str(), "w+");
     if (!fp) goto fail;
 
     //write header
@@ -204,7 +218,7 @@ fail:
 
 bool TvgSaver::flushTo(const std::string& path)
 {
-    auto fp = fopen(path.c_str(), "w+");
+    auto fp = _fopen(path.c_str(), "w+");
     if (!fp) return false;
 
     if (fwrite(buffer.data, SIZE(uint8_t), buffer.count, fp) == 0) {

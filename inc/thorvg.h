@@ -18,7 +18,7 @@
 #include <string>
 
 #ifdef TVG_BUILD
-    #ifdef _MSC_VER
+    #if defined(_MSC_VER) && !defined(__clang__)
         #define TVG_EXPORT __declspec(dllexport)
         #define TVG_DEPRECATED __declspec(deprecated)
     #else
@@ -306,7 +306,7 @@ public:
      * @return Result::Success when succeed, Result::InsufficientCondition otherwise.
      *
      * @note The bounding box doesn't indicate the actual drawing region. It's the smallest rectangle that encloses the object.
-     * 
+     *
      * @BETA_API
      */
     Result bounds(float* x, float* y, float* w, float* h, bool transformed) const noexcept;
