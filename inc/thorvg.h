@@ -293,24 +293,24 @@ public:
      */
     TVG_DEPRECATED Result bounds(float* x, float* y, float* w, float* h) const noexcept;
 
-
     /**
      * @brief Gets the axis-aligned bounding box of the paint object.
+     *
+     * In case @p transform is @c true, all object's transformations are applied first, and then the bounding box is established. Otherwise, the bounding box is determined before any transformations.
      *
      * @param[out] x The x coordinate of the upper left corner of the object.
      * @param[out] y The y coordinate of the upper left corner of the object.
      * @param[out] w The width of the object.
      * @param[out] h The height of the object.
-     * @param[in] transformed if @c true, apply the transformation of the paint.
+     * @param[in] transformed If @c true, the paint's transformations are taken into account, otherwise they aren't.
      *
      * @return Result::Success when succeed, Result::InsufficientCondition otherwise.
      *
      * @note The bounding box doesn't indicate the actual drawing region. It's the smallest rectangle that encloses the object.
-     * 
+     *
      * @BETA_API
      */
     Result bounds(float* x, float* y, float* w, float* h, bool transformed) const noexcept;
-
 
     /**
      * @brief Duplicates the object.
