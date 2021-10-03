@@ -18,7 +18,7 @@
 #include <string>
 
 #ifdef TVG_BUILD
-    #ifdef _MSC_VER
+    #if defined(_MSC_VER) && !defined(__clang__)
         #define TVG_EXPORT __declspec(dllexport)
         #define TVG_DEPRECATED __declspec(deprecated)
     #else

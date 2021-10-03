@@ -48,6 +48,11 @@ using namespace tvg;
     #define TVG_FALLTHROUGH
 #endif
 
+#ifdef __clang__
+    #define strncpy strncpy_s
+    #define strdup _strdup
+#endif
+
 //TVG class identifier values
 #define TVG_CLASS_ID_UNDEFINED 0
 #define TVG_CLASS_ID_SHAPE     1
