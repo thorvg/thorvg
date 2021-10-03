@@ -709,9 +709,6 @@ TVG_EXPORT Tvg_Result tvg_paint_scale(Tvg_Paint* paint, float factor);
 * \param[in] paint The Tvg_Paint object to be rotated.
 * \param[in] degree The value of the rotation angle in degrees.
 *
-* The angle in measured clockwise from the horizontal axis.
-* The rotational axis passes through the point on the object with zero coordinates.
-*
 * \return Tvg_Result enumeration.
 * \retval TVG_RESULT_SUCCESS Succeed.
 * \retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
@@ -729,9 +726,6 @@ TVG_EXPORT Tvg_Result tvg_paint_rotate(Tvg_Paint* paint, float degree);
 * \param[in] paint The Tvg_Paint object to be shifted.
 * \param[in] x The value of the horizontal shift.
 * \param[in] y The value of the vertical shift.
-*
-* The origin of the coordinate system is in the upper left corner of the canvas.
-* The horizontal and vertical axes point to the right and down, respectively.
 *
 * \return Tvg_Result enumeration.
 * \retval TVG_RESULT_SUCCESS Succeed.
