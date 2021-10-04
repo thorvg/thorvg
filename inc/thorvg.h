@@ -3,7 +3,7 @@
  *
  * The main APIs enabling the TVG initialization, preparation of the canvas and provisioning of its content:
  * - drawing shapes such as line, curve, arc, rectangle, circle or user-defined
- * - drawing pictures - SVG, PNG, RAW
+ * - drawing pictures - SVG, PNG, JPG, RAW
  * - solid or gradient filling
  * - continuous and dashed stroking
  * - clipping and masking
@@ -455,7 +455,7 @@ public:
      *
      * Only pushed paints in the canvas will be drawing targets.
      * They are retained by the canvas until you call Canvas::clear().
-     * If you know the number of the pushed objects in the advance, please call Canvas::reserve().
+     * If you know the number of the pushed objects in advance, please call Canvas::reserve().
      *
      * @param[in] paint A Paint object to be drawn.
      *
@@ -545,7 +545,9 @@ public:
      * @param[in] x2 The horizontal coordinate of the second point used to determine the gradient bounds.
      * @param[in] y2 The vertical coordinate of the second point used to determine the gradient bounds.
      *
-     * @return Result::Success when succeed, Result::InvalidArguments otherwise.
+     * @return Result::Success when succeed.
+     *
+     * @note In case the first and the second points are equal, an object filled with such a gradient fill is not rendered.
      */
     Result linear(float x1, float y1, float x2, float y2) noexcept;
 
@@ -596,7 +598,7 @@ public:
      * @param[in] cy The vertical coordinate of the center of the bounding circle.
      * @param[in] radius The radius of the bounding circle.
      *
-     * @return Result::Success when succeed, Result::InvalidArguments otherwise.
+     * @return Result::Success when succeed, Result::InvalidArguments in case the @p radius value is zero or less.
      */
     Result radial(float cx, float cy, float radius) noexcept;
 
@@ -829,9 +831,8 @@ public:
      *
      * @retval Result::Success When succeed.
      * @retval Result::FailedAllocation An internal error with a memory allocation for an object to be dashed.
-     * @retval Result::InvalidArguments In case that either @p dashPattern is @c nullptr or @p cnt is zero.
+     * @retval Result::InvalidArguments In case @p dashPattern is @c nullptr and @p cnt > 0, @p cnt is zero, any of the dash pattern values is zero or less.
      *
-     * @note If any of the dash pattern values is zero, this function has no effect.
      * @note To reset the stroke dash pattern, pass @c nullptr to @p dashPattern and zero to @p cnt.
      * @warning @p cnt must be greater than 1 if the dash pattern is valid.
      */
@@ -889,7 +890,7 @@ public:
     /**
      * @brief Sets the fill rule for the Shape object.
      *
-     * @param[in] r The fill rule value.
+     * @param[in] r The fill rule value. The default value is @c FillRule::Winding.
      *
      * @return Result::Success when succeed.
      */
@@ -1002,7 +1003,7 @@ public:
 /**
  * @class Picture
  *
- * @brief A class representing an image read in one of the supported formats: raw, svg, png and etc.
+ * @brief A class representing an image read in one of the supported formats: raw, svg, png, jpg and etc.
  * Besides the methods inherited from the Paint, it provides methods to load & draw images on the canvas.
  *
  * @note Supported formats are depended on the available TVG loaders.
@@ -1144,9 +1145,9 @@ public:
     /**
      * @brief Passes drawing elements to the Scene using Paint objects.
      *
-     * Only pushed paints in the scene will be drawing targets.
-     * They are retained by the scene until you call Scene::clear().
-     * If you know the number of the pushed objects in the advance, please call Scene::reserve().
+     * Only the paints pushed into the scene will be the drawn targets.
+     * The paints are retained by the scene until Scene::clear() is called.
+     * If you know the number of the pushed objects in advance, please call Scene::reserve().
      *
      * @param[in] paint A Paint object to be drawn.
      *
@@ -1178,7 +1179,6 @@ public:
      * @return Result::Success when succeed
      *
      * @warning If you don't free the paints they become dangled. They are supposed to be reused, otherwise you are responsible for their lives. Thus please use the @p free argument only when you know how it works, otherwise it's not recommended.
-     * @warning Please do not use it, this API is not official one. It could be modified in the next version.
      *
      * @since 0.2
      */
