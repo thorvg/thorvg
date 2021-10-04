@@ -478,6 +478,13 @@ TVG_EXPORT Tvg_Result tvg_picture_load_data(Tvg_Paint* paint, const char *data, 
 }
 
 
+TVG_EXPORT Tvg_Result tvg_picture_set_size(Tvg_Paint* paint, float w, float h)
+{
+    if (!paint) return TVG_RESULT_INVALID_ARGUMENT;
+    return (Tvg_Result) reinterpret_cast<Picture*>(CCP(paint))->size(w, h);
+}
+
+
 TVG_EXPORT Tvg_Result tvg_picture_get_size(const Tvg_Paint* paint, float* w, float* h)
 {
     if (!paint) return TVG_RESULT_INVALID_ARGUMENT;

@@ -1065,9 +1065,9 @@ public:
     Result load(const char* data, uint32_t size, const std::string& mimeType, bool copy = false) noexcept;
 
     /**
-     * @brief Resize the picture content with the given width and height.
+     * @brief Resizes the picture content to the given width and height.
      *
-     * Resize the picture content while keeping the default size aspect ratio.
+     * The picture content is resized while keeping the default size aspect ratio.
      * The scaling factor is established for each of dimensions and the smaller value is applied to both of them.
      *
      * @param[in] w A new width of the image in pixels.
