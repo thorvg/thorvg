@@ -1050,15 +1050,15 @@ public:
      *
      * @param[in] data A pointer to a memory location where the content of the picture file is stored.
      * @param[in] size The size in bytes of the memory occupied by the @p data.
-     * @param[in] mimeType Mimetype or extension of data such as "jpg", "jpeg", "svg", "svg+xml", "png", etc. If empty string or unknown, loaders will be tried one by one.
-     * @param[in] copy Decides whether the data should be copied into the engine local buffer.
+     * @param[in] mimeType Mimetype or extension of data such as "jpg", "jpeg", "svg", "svg+xml", "png", etc. In case an empty string or an unknown type is provided, the loaders will be tried one by one.
+     * @param[in] copy If @c true the data are copied into the engine local buffer, otherwise they are not.
      *
      * @retval Result::Success When succeed.
      * @retval Result::InvalidArguments In case no data are provided or the @p size is zero or less.
      * @retval Result::NonSupport When trying to load a file with an unknown extension.
      * @retval Result::Unknown If an error occurs at a later stage.
      *
-     * @warning: you have responsibility to release the @p data memory if the @p copy is true
+     * @warning: It's the user responsibility to release the @p data memory if the @p copy is @c true.
      *
      * @since 0.5
      */

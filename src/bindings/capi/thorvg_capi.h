@@ -1707,7 +1707,7 @@ TVG_EXPORT Tvg_Result tvg_picture_load(Tvg_Paint* paint, const char* path);
 
 
 /*!
-* \brief Loads a picture data from a memory block of a given size. (BETA version)
+* \brief Loads a picture data from a memory block of a given size. (BETA_API)
 *
 * \return Tvg_Result return value
 * \retval TVG_RESULT_SUCCESS: if ok.
@@ -1719,19 +1719,21 @@ TVG_EXPORT Tvg_Result tvg_picture_load_raw(Tvg_Paint* paint, uint32_t *data, uin
 
 
 /*!
-* \brief The function loads data into the given paint object.
+* \brief Loads a picture data from a memory block of a given size.
 *
-* \param[in] paint Tvg_Paint pointer
-* \param[in] data raw data pointer
-* \param[in] size of data
-* \param[in] mimetype mimetype of data
-* \param[in] copy Decides whether the data should be copied into the local buffer
+* \param[in] paint A Tvg_Paint pointer to the picture object.
+* \param[in] data A pointer to a memory location where the content of the picture file is stored.
+* \param[in] size The size in bytes of the memory occupied by the @p data.
+* \param[in] mimetype Mimetype or extension of data such as "jpg", "jpeg", "svg", "svg+xml", "png", etc. In case an empty string or an unknown type is provided, the loaders will be tried one by one.
+* \param[in] copy If @c true the data are copied into the engine local buffer, otherwise they are not.
 *
-* \return Tvg_Result return value
-* \retval TVG_RESULT_SUCCESS: if ok.
-* \retval TVG_RESULT_INVALID_PARAMETERS: if paint is invalid
+* \return Tvg_Result enumeration.
+* \retval TVG_RESULT_SUCCESS Succeed.
+* \retval TVG_RESULT_INVALID_ARGUMENT In case a @c nullptr is passed as the argument or the @p size is zero or less.
+* \retval TVG_RESULT_NOT_SUPPORTED A file with an unknown extension.
+* \retval TVG_RESULT_UNKNOWN An error at a later stage.
 *
-* \warning Please do not use it, this API is not official one. It can be modified in the next version.
+* \warning: It's the user responsibility to release the @p data memory if the @p copy is @c true.
 */
 TVG_EXPORT Tvg_Result tvg_picture_load_data(Tvg_Paint* paint, const char *data, uint32_t size, const char *mimetype, bool copy);
 
