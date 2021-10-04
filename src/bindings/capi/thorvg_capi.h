@@ -1737,15 +1737,37 @@ TVG_EXPORT Tvg_Result tvg_picture_load_data(Tvg_Paint* paint, const char *data, 
 
 
 /*!
+* \brief Resizes the picture content to the given width and height.
+*
+* The picture content is resized while keeping the default size aspect ratio.
+* The scaling factor is established for each of dimensions and the smaller value is applied to both of them.
+*
+* \param[in] w A new width of the image in pixels.
+* \param[in] h A new height of the image in pixels.
+*
+* \return Tvg_Result enumeration.
+* \retval TVG_RESULT_SUCCESS Succeed.
+* \retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
+* \retval TVG_RESULT_INSUFFICIENT_CONDITION An internal error.
+*/
+TVG_EXPORT Tvg_Result tvg_picture_set_size(Tvg_Paint* paint, float w, float h);
+
+
+/*!
 * \brief Gets the size of the loaded picture.
 *
-* \warning Please do not use it, this API is not official one. It can be modified in the next version.
+* \param[out] w A width of the image in pixels.
+* \param[out] h A height of the image in pixels.
+*
+* \return Tvg_Result enumeration.
+* \retval TVG_RESULT_SUCCESS Succeed.
+* \retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
 */
 TVG_EXPORT Tvg_Result tvg_picture_get_size(const Tvg_Paint* paint, float* w, float* h);
 
 
 /*!
-* \brief Gets the position and the size of the loaded picture. (BETA version)
+* \brief Gets the position and the size of the loaded picture. (BETA_API)
 *
 * \warning Please do not use it, this API is not official one. It can be modified in the next version.
 */
