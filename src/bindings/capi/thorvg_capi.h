@@ -11,7 +11,7 @@
 * - scene graph & affine transformation (translation, rotation, scale, ...)
 * - stroking: width, join, cap, dash
 * - composition: blending, masking, path clipping
-* - pictures: SVG, PNG, bitmap
+* - pictures: SVG, PNG, JPG, bitmap
 *
 */
 
@@ -460,7 +460,7 @@ TVG_EXPORT Tvg_Result tvg_canvas_destroy(Tvg_Canvas* canvas);
 *
 * Only the paints pushed into the canvas will be drawing targets.
 * They are retained by the canvas until you call tvg_canvas_clear().
-* If you know the number of the pushed objects in the advance, please call tvg_canvas_reserve().
+* If you know the number of the pushed objects in advance, please call tvg_canvas_reserve().
 *
 * \return Tvg_Result return values:
 * \retval TVG_RESULT_SUCCESS Succeed.
@@ -1077,7 +1077,7 @@ TVG_EXPORT Tvg_Result tvg_shape_append_path(Tvg_Paint* paint, const Tvg_Path_Com
 *
 * tvg_shape_append_circle(shape, 10, 10, 50, 50);
 * tvg_shape_get_path_coords(shape, (const Tvg_Point**)&coords, &len);
-* //TVG approximates a circle by four Bezier lines. In the example above the cmds array stores their coordinates
+* //TVG approximates a circle by four Bezier curves. In the example above the coords array stores their coordinates.
 * \endcode
 *
 * \param[in] paint A Tvg_Paint pointer to the shape object.
@@ -1103,7 +1103,7 @@ TVG_EXPORT Tvg_Result tvg_shape_get_path_coords(const Tvg_Paint* paint, const Tv
 *
 * tvg_shape_append_circle(shape, 10, 10, 50, 50);
 * tvg_shape_get_path_commands(shape, (const Tvg_Path_Command**)&cmds, &len);
-* //TVG approximates a circle by four Bezier lines. In the example above the cmds array stores their coordinates
+* //TVG approximates a circle by four Bezier curves. In the example above the cmds array stores the commands of the path data.
 * \endcode
 *
 * \param[in] paint A Tvg_Paint pointer to the shape object.
@@ -1156,7 +1156,7 @@ TVG_EXPORT Tvg_Result tvg_shape_get_stroke_width(const Tvg_Paint* paint, float* 
 * \return Tvg_Result enumeration.
 * \retval TVG_RESULT_SUCCESS Succeed.
 * \retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
-* \retval TVG_RESULT_INSUFFICIENT_CONDITION An internal error with a memory allocation.
+* \retval TVG_RESULT_FAILED_ALLOCATION An internal error with a memory allocation.
 *
 * \note Either a solid color or a gradient fill is applied, depending on what was set as last.
 */
@@ -1234,7 +1234,7 @@ TVG_EXPORT Tvg_Result tvg_shape_get_stroke_gradient(const Tvg_Paint* paint, Tvg_
 *
 * \code
 * //dash pattern examples
-* float dashPattern[2] = {20, 10};  // -- - -- - -- -
+* float dashPattern[2] = {20, 10};  // -- -- --
 * float dashPattern[2] = {40, 20};  // ----  ----  ----
 * float dashPattern[4] = {10, 20, 30, 40} // -  ---    -  ---
 * \endcode
@@ -1245,8 +1245,10 @@ TVG_EXPORT Tvg_Result tvg_shape_get_stroke_gradient(const Tvg_Paint* paint, Tvg_
 *
 * \return Tvg_Result enumeration.
 * \retval TVG_RESULT_SUCCESS Succeed.
-* \retval TVG_RESULT_INVALID_ARGUMENT An invalid pointer passed as an argument, the given length of the array is less than two or any of the @p dashPattern values is zero or less.
+* \retval TVG_RESULT_INVALID_ARGUMENT An invalid pointer passed as an argument and @p cnt > 0, the given length of the array is less than two or any of the @p dashPattern values is zero or less.
 * \retval TVG_RESULT_FAILED_ALLOCATION An internal error with a memory allocation.
+*
+* \note To reset the stroke dash pattern, pass @c nullptr to @p dashPattern and zero to @p cnt.
 */
 TVG_EXPORT Tvg_Result tvg_shape_set_stroke_dash(Tvg_Paint* paint, const float* dashPattern, uint32_t cnt);
 
@@ -1300,7 +1302,7 @@ TVG_EXPORT Tvg_Result tvg_shape_get_stroke_cap(const Tvg_Paint* paint, Tvg_Strok
 * \brief Sets the join style for stroked path segments.
 *
 * \param[in] paint A Tvg_Paint pointer to the shape object.
-* \param[in] join The join style value. The default value is @c TVG_STROKE_JOIN_BEVEL .
+* \param[in] join The join style value. The default value is @c TVG_STROKE_JOIN_BEVEL.
 *
 * \return Tvg_Result enumeration.
 * \retval TVG_RESULT_SUCCESS Succeed.
@@ -1396,10 +1398,10 @@ TVG_EXPORT Tvg_Result tvg_shape_get_fill_rule(const Tvg_Paint* paint, Tvg_Fill_R
 * tvg_linear_gradient_set(grad, 700, 700, 800, 800);
 * Tvg_Color_Stop color_stops[4] =
 * {
-*   {.offset=0.0, .r=0, .g=0, .b=0, .a=255},
-*   {.offset=0.25, .r=255, .g=0, .b=0, .a=255},
-*   {.offset=0.5, .r=0, .g=255, .b=0, .a=255},
-*   {.offset=1.0, .r=0, .g=0, .b=255, .a=255}
+*   {0.0 , 0,   0,   0,   255},
+*   {0.25, 255, 0,   0,   255},
+*   {0.5 , 0,   255, 0,   255},
+*   {1.0 , 0,   0,   255, 255}
 * };
 * tvg_gradient_set_color_stops(grad, color_stops, 4);
 * tvg_shape_set_linear_gradient(shape, grad);
@@ -1426,13 +1428,13 @@ TVG_EXPORT Tvg_Result tvg_shape_set_linear_gradient(Tvg_Paint* paint, Tvg_Gradie
 *
 * \code
 * Tvg_Gradient* grad = tvg_radial_gradient_new();
-* tvg_radial_gradient_set(grad, 550, 550, 50));
+* tvg_radial_gradient_set(grad, 550, 550, 50);
 * Tvg_Color_Stop color_stops[4] =
 * {
-*   {.offset=0.0, .r=0, .g=0, .b=0, .a=255},
-*   {.offset=0.25, .r=255, .g=0, .b=0, .a=255},
-*   {.offset=0.5, .r=0, .g=255, .b=0, .a=255},
-*   {.offset=1.0, .r=0, .g=0, .b=255, .a=255}
+*   {0.0 , 0,   0,   0,   255},
+*   {0.25, 255, 0,   0,   255},
+*   {0.5 , 0,   255, 0,   255},
+*   {1.0 , 0,   0,   255, 255}
 * };
 * tvg_gradient_set_color_stops(grad, color_stops, 4);
 * tvg_shape_set_radial_gradient(shape, grad);
@@ -1488,14 +1490,14 @@ TVG_EXPORT Tvg_Result tvg_shape_get_gradient(const Tvg_Paint* paint, Tvg_Gradien
 * \brief Creates a new linear gradient object.
 *
 * \code
-* Tvg_Paint shape = tvg_shape_new();
+* Tvg_Paint* shape = tvg_shape_new();
 * tvg_shape_append_rect(shape, 700, 700, 100, 100, 20, 20);
 * Tvg_Gradient* grad = tvg_linear_gradient_new();
 * tvg_linear_gradient_set(grad, 700, 700, 800, 800);
 * Tvg_Color_Stop color_stops[2] =
 * {
-*   {.offset=0, .r=0, .g=0, .b=0,   .a=255},
-*   {.offset=1, .r=0, .g=255, .b=0, .a=255},
+*   {0.0, 0, 0,   0, 255},
+*   {1.0, 0, 255, 0, 255},
 * };
 * tvg_gradient_set_color_stops(grad, color_stops, 2);
 * tvg_shape_set_linear_gradient(shape, grad);
@@ -1510,14 +1512,14 @@ TVG_EXPORT Tvg_Gradient* tvg_linear_gradient_new();
 * \brief Creates a new radial gradient object.
 *
 * \code
-* Tvg_Paint shape = tvg_shape_new();
+* Tvg_Paint* shape = tvg_shape_new();
 * tvg_shape_append_rect(shape, 700, 700, 100, 100, 20, 20);
 * Tvg_Gradient* grad = tvg_radial_gradient_new();
-* tvg_linear_gradient_set(grad, 550, 550, 50);
+* tvg_radial_gradient_set(grad, 550, 550, 50);
 * Tvg_Color_Stop color_stops[2] =
 * {
-*   {.offset=0, .r=0, .g=0, .b=0,   .a=255},
-*   {.offset=1, .r=0, .g=255, .b=0, .a=255},
+*   {0.0, 0, 0,   0, 255},
+*   {1.0, 0, 255, 0, 255},
 * };
 * tvg_gradient_set_color_stops(grad, color_stops, 2);
 * tvg_shape_set_radial_gradient(shape, grad);
@@ -1543,7 +1545,9 @@ TVG_EXPORT Tvg_Gradient* tvg_radial_gradient_new();
 *
 * \return Tvg_Result enumeration.
 * \retval TVG_RESULT_SUCCESS Succeed.
-* \retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Gradient pointer or the first and the second points are equal.
+* \retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Gradient pointer.
+*
+* \note In case the first and the second points are equal, an object filled with such a gradient fill is not rendered.
 */
 TVG_EXPORT Tvg_Result tvg_linear_gradient_set(Tvg_Gradient* grad, float x1, float y1, float x2, float y2);
 
@@ -1674,7 +1678,7 @@ TVG_EXPORT Tvg_Result tvg_gradient_del(Tvg_Gradient* grad);
 /**
 * \defgroup ThorVGCapi_Picture Picture
 *
-* \brief A module enabling to create and to load an image in one of the supported formats: svg, png and raw.
+* \brief A module enabling to create and to load an image in one of the supported formats: svg, png, jpg and raw.
 *
 *
 * \{
@@ -1710,8 +1714,8 @@ TVG_EXPORT Tvg_Result tvg_picture_load(Tvg_Paint* paint, const char* path);
 * \brief Loads a picture data from a memory block of a given size. (BETA version)
 *
 * \return Tvg_Result return value
-* \retval TVG_RESULT_SUCCESS: if ok.
-* \retval TVG_RESULT_INVALID_PARAMETERS: if paint is invalid
+* \retval TVG_RESULT_SUCCESS Succeed.
+* \retval TVG_RESULT_INVALID_PARAMETERS: An invalid Tvg_Paint.
 *
 * \warning Please do not use it, this API is not official one. It can be modified in the next version.
 */
@@ -1719,7 +1723,7 @@ TVG_EXPORT Tvg_Result tvg_picture_load_raw(Tvg_Paint* paint, uint32_t *data, uin
 
 
 /*!
-* \brief The function loads data into the given paint object.
+* \brief Loads a picture data from a memory block of a given size.
 *
 * \param[in] paint Tvg_Paint pointer
 * \param[in] data raw data pointer
@@ -1789,6 +1793,7 @@ TVG_EXPORT Tvg_Paint* tvg_scene_new();
 *
 * \return Tvg_Result enumeration.
 * \retval TVG_RESULT_SUCCESS Succeed.
+* \retval TVG_RESULT_FAILED_ALLOCATION An internal error with a memory allocation.
 * \retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
 */
 TVG_EXPORT Tvg_Result tvg_scene_reserve(Tvg_Paint* scene, uint32_t size);
@@ -1797,17 +1802,17 @@ TVG_EXPORT Tvg_Result tvg_scene_reserve(Tvg_Paint* scene, uint32_t size);
 /*!
 * \brief Passes drawing elements to the scene using Tvg_Paint objects.
 *
-* Only the paints pushed into the scene will be drawing targets.
-* If you know the number of pushed objects in the advance, please call tvg_scene_reserve().
+* Only the paints pushed into the scene will be the drawn targets.
+* The paints are retained by the scene until the tvg_scene_clear() is called.
+* If you know the number of pushed objects in advance, please call tvg_scene_reserve().
 *
 * \param[in] scene A Tvg_Paint pointer to the scene object.
 * \param[in] paint A graphical object to be drawn.
 *
 * \return Tvg_Result enumeration.
 * \retval TVG_RESULT_SUCCESS Succeed.
-* \retval TVG_RESULT_INVALID_ARGUMENT An invalid pointer to the @p scene.
-* \retval TVG_RESULT_MEMORY_CORRUPTION An invalid pointer to the @p paint.
-* \retval TVG_RESULT_INSUFFICIENT_CONDITION An internal error.
+* \retval TVG_RESULT_INVALID_ARGUMENT A @c nullptr passed as the argument.
+* \retval TVG_RESULT_MEMORY_CORRUPTION An internal error.
 *
 * \note The rendering order of the paints is the same as the order as they were pushed. Consider sorting the paints before pushing them if you intend to use layering.
 * \see tvg_scene_reserve()
