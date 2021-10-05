@@ -3,16 +3,7 @@ source_file = [
    'tvgJpgLoader.cpp',
 ]
 
-jpg_dep = dependency('libturbojpeg', required: false)
-if not jpg_dep.found()
-	jpg_dep = cc.find_library('turbojpeg', required: false)
-endif
-if not jpg_dep.found()
-	error('JPEG image loading requires libturbojpeg or turbojpeg, neither was found.')
-endif
-
 subloader_dep += [declare_dependency(
     include_directories : include_directories('.'),
-    dependencies : jpg_dep,
     sources : source_file
 )]

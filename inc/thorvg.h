@@ -293,24 +293,24 @@ public:
      */
     TVG_DEPRECATED Result bounds(float* x, float* y, float* w, float* h) const noexcept;
 
-
     /**
      * @brief Gets the axis-aligned bounding box of the paint object.
+     *
+     * In case @p transform is @c true, all object's transformations are applied first, and then the bounding box is established. Otherwise, the bounding box is determined before any transformations.
      *
      * @param[out] x The x coordinate of the upper left corner of the object.
      * @param[out] y The y coordinate of the upper left corner of the object.
      * @param[out] w The width of the object.
      * @param[out] h The height of the object.
-     * @param[in] transformed if @c true, apply the transformation of the paint.
+     * @param[in] transformed If @c true, the paint's transformations are taken into account, otherwise they aren't.
      *
      * @return Result::Success when succeed, Result::InsufficientCondition otherwise.
      *
      * @note The bounding box doesn't indicate the actual drawing region. It's the smallest rectangle that encloses the object.
-     * 
+     *
      * @BETA_API
      */
     Result bounds(float* x, float* y, float* w, float* h, bool transformed) const noexcept;
-
 
     /**
      * @brief Duplicates the object.
@@ -1050,24 +1050,24 @@ public:
      *
      * @param[in] data A pointer to a memory location where the content of the picture file is stored.
      * @param[in] size The size in bytes of the memory occupied by the @p data.
-     * @param[in] mimeType Mimetype or extension of data such as "jpg", "jpeg", "svg", "svg+xml", "png", etc. If empty string or unknown, loaders will be tried one by one.
-     * @param[in] copy Decides whether the data should be copied into the engine local buffer.
+     * @param[in] mimeType Mimetype or extension of data such as "jpg", "jpeg", "svg", "svg+xml", "png", etc. In case an empty string or an unknown type is provided, the loaders will be tried one by one.
+     * @param[in] copy If @c true the data are copied into the engine local buffer, otherwise they are not.
      *
      * @retval Result::Success When succeed.
      * @retval Result::InvalidArguments In case no data are provided or the @p size is zero or less.
      * @retval Result::NonSupport When trying to load a file with an unknown extension.
      * @retval Result::Unknown If an error occurs at a later stage.
      *
-     * @warning: you have responsibility to release the @p data memory if the @p copy is true
+     * @warning: It's the user responsibility to release the @p data memory if the @p copy is @c true.
      *
      * @since 0.5
      */
     Result load(const char* data, uint32_t size, const std::string& mimeType, bool copy = false) noexcept;
 
     /**
-     * @brief Resize the picture content with the given width and height.
+     * @brief Resizes the picture content to the given width and height.
      *
-     * Resize the picture content while keeping the default size aspect ratio.
+     * The picture content is resized while keeping the default size aspect ratio.
      * The scaling factor is established for each of dimensions and the smaller value is applied to both of them.
      *
      * @param[in] w A new width of the image in pixels.

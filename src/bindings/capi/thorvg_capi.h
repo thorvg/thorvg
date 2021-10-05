@@ -709,9 +709,6 @@ TVG_EXPORT Tvg_Result tvg_paint_scale(Tvg_Paint* paint, float factor);
 * \param[in] paint The Tvg_Paint object to be rotated.
 * \param[in] degree The value of the rotation angle in degrees.
 *
-* The angle in measured clockwise from the horizontal axis.
-* The rotational axis passes through the point on the object with zero coordinates.
-*
 * \return Tvg_Result enumeration.
 * \retval TVG_RESULT_SUCCESS Succeed.
 * \retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
@@ -729,9 +726,6 @@ TVG_EXPORT Tvg_Result tvg_paint_rotate(Tvg_Paint* paint, float degree);
 * \param[in] paint The Tvg_Paint object to be shifted.
 * \param[in] x The value of the horizontal shift.
 * \param[in] y The value of the vertical shift.
-*
-* The origin of the coordinate system is in the upper left corner of the canvas.
-* The horizontal and vertical axes point to the right and down, respectively.
 *
 * \return Tvg_Result enumeration.
 * \retval TVG_RESULT_SUCCESS Succeed.
@@ -1713,7 +1707,7 @@ TVG_EXPORT Tvg_Result tvg_picture_load(Tvg_Paint* paint, const char* path);
 
 
 /*!
-* \brief Loads a picture data from a memory block of a given size. (BETA version)
+* \brief Loads a picture data from a memory block of a given size. (BETA_API)
 *
 * \return Tvg_Result return value
 * \retval TVG_RESULT_SUCCESS: if ok.
@@ -1725,33 +1719,57 @@ TVG_EXPORT Tvg_Result tvg_picture_load_raw(Tvg_Paint* paint, uint32_t *data, uin
 
 
 /*!
-* \brief The function loads data into the given paint object.
+* \brief Loads a picture data from a memory block of a given size.
 *
-* \param[in] paint Tvg_Paint pointer
-* \param[in] data raw data pointer
-* \param[in] size of data
-* \param[in] mimetype mimetype of data
-* \param[in] copy Decides whether the data should be copied into the local buffer
+* \param[in] paint A Tvg_Paint pointer to the picture object.
+* \param[in] data A pointer to a memory location where the content of the picture file is stored.
+* \param[in] size The size in bytes of the memory occupied by the @p data.
+* \param[in] mimetype Mimetype or extension of data such as "jpg", "jpeg", "svg", "svg+xml", "png", etc. In case an empty string or an unknown type is provided, the loaders will be tried one by one.
+* \param[in] copy If @c true the data are copied into the engine local buffer, otherwise they are not.
 *
-* \return Tvg_Result return value
-* \retval TVG_RESULT_SUCCESS: if ok.
-* \retval TVG_RESULT_INVALID_PARAMETERS: if paint is invalid
+* \return Tvg_Result enumeration.
+* \retval TVG_RESULT_SUCCESS Succeed.
+* \retval TVG_RESULT_INVALID_ARGUMENT In case a @c nullptr is passed as the argument or the @p size is zero or less.
+* \retval TVG_RESULT_NOT_SUPPORTED A file with an unknown extension.
+* \retval TVG_RESULT_UNKNOWN An error at a later stage.
 *
-* \warning Please do not use it, this API is not official one. It can be modified in the next version.
+* \warning: It's the user responsibility to release the @p data memory if the @p copy is @c true.
 */
 TVG_EXPORT Tvg_Result tvg_picture_load_data(Tvg_Paint* paint, const char *data, uint32_t size, const char *mimetype, bool copy);
 
 
 /*!
+* \brief Resizes the picture content to the given width and height.
+*
+* The picture content is resized while keeping the default size aspect ratio.
+* The scaling factor is established for each of dimensions and the smaller value is applied to both of them.
+*
+* \param[in] w A new width of the image in pixels.
+* \param[in] h A new height of the image in pixels.
+*
+* \return Tvg_Result enumeration.
+* \retval TVG_RESULT_SUCCESS Succeed.
+* \retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
+* \retval TVG_RESULT_INSUFFICIENT_CONDITION An internal error.
+*/
+TVG_EXPORT Tvg_Result tvg_picture_set_size(Tvg_Paint* paint, float w, float h);
+
+
+/*!
 * \brief Gets the size of the loaded picture.
 *
-* \warning Please do not use it, this API is not official one. It can be modified in the next version.
+* \param[out] w A width of the image in pixels.
+* \param[out] h A height of the image in pixels.
+*
+* \return Tvg_Result enumeration.
+* \retval TVG_RESULT_SUCCESS Succeed.
+* \retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
 */
 TVG_EXPORT Tvg_Result tvg_picture_get_size(const Tvg_Paint* paint, float* w, float* h);
 
 
 /*!
-* \brief Gets the position and the size of the loaded picture. (BETA version)
+* \brief Gets the position and the size of the loaded picture. (BETA_API)
 *
 * \warning Please do not use it, this API is not official one. It can be modified in the next version.
 */

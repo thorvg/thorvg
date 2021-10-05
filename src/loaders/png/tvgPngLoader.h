@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2021 Samsung Electronics Co., Ltd. All rights reserved.
+ * Copyright (c) 2021 Samsung Electronics Co., Ltd. All rights reserved.
 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,8 +22,7 @@
 #ifndef _TVG_PNG_LOADER_H_
 #define _TVG_PNG_LOADER_H_
 
-#include <png.h>
-
+//TODO: Use Task?
 class PngLoader : public LoadModule
 {
 public:
@@ -37,10 +36,6 @@ public:
     bool close() override;
 
     const uint32_t* pixels() override;
-
-private:
-    png_imagep image = nullptr;
-    const uint32_t* content = nullptr;
 };
 
 #endif //_TVG_PNG_LOADER_H_

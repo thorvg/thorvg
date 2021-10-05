@@ -37,6 +37,16 @@ using namespace tvg;
     #define TVG_UNUSED __attribute__ ((__unused__))
 #endif
 
+// Portable 'fallthrough' attribute
+#if __has_cpp_attribute(fallthrough)
+    #ifdef _MSC_VER
+        #define TVG_FALLTHROUGH [[fallthrough]];
+    #else
+        #define TVG_FALLTHROUGH __attribute__ ((fallthrough));
+    #endif
+#else
+    #define TVG_FALLTHROUGH
+#endif
 
 //TVG class identifier values
 #define TVG_CLASS_ID_UNDEFINED 0
