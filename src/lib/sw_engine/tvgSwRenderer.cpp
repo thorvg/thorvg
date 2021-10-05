@@ -20,7 +20,6 @@
  * SOFTWARE.
  */
 #include <math.h>
-#include <float.h>
 #include "tvgSwCommon.h"
 #include "tvgTaskScheduler.h"
 #include "tvgSwRenderer.h"
@@ -225,18 +224,6 @@ static void _termEngine()
 }
 
 
-bool _monochromaticGradient(const Fill* fill)
-{
-    float x1, x2, y1, y2, r;
-
-    if ((fill->id() == TVG_CLASS_ID_LINEAR && static_cast<const LinearGradient*>(fill)->linear(&x1, &y1, &x2, &y2) == Result::Success &&
-         fabsf(x1 - x2) < FLT_EPSILON && fabsf(y1 - y2) < FLT_EPSILON) ||
-        (fill->id() == TVG_CLASS_ID_RADIAL && static_cast<const RadialGradient*>(fill)->radial(nullptr, nullptr, &r) == Result::Success &&
-         r < FLT_EPSILON)) return true;
-
-    return false;
-}
-
 /************************************************************************/
 /* External Class Implementation                                        */
 /************************************************************************/
@@ -377,16 +364,7 @@ bool SwRenderer::renderShape(RenderData data)
     uint8_t r, g, b, a;
 
     if (auto fill = task->sdata->fill()) {
-        if (_monochromaticGradient(fill)) {
-            const Fill::ColorStop* stop;
-            auto cnt = fill->colorStops(&stop);
-            if (cnt > 0 && stop) {
-                a = static_cast<uint8_t>((opacity * static_cast<uint32_t>(stop[cnt - 1].a)) / 255);
-                if (a > 0) rasterSolidShape(surface, &task->shape, stop[cnt - 1].r, stop[cnt - 1].g, stop[cnt - 1].b, a);
-            }
-        } else {
-            rasterGradientShape(surface, &task->shape, fill->id());
-        }
+        rasterGradientShape(surface, &task->shape, fill->id());
     } else {
         task->sdata->fillColor(&r, &g, &b, &a);
         a = static_cast<uint8_t>((opacity * (uint32_t) a) / 255);
@@ -394,16 +372,7 @@ bool SwRenderer::renderShape(RenderData data)
     }
 
     if (auto strokeFill = task->sdata->strokeFill()) {
-        if (_monochromaticGradient(strokeFill)) {
-            const Fill::ColorStop* stop;
-            auto cnt = strokeFill->colorStops(&stop);
-            if (cnt > 0 && stop) {
-                a = static_cast<uint8_t>((opacity * static_cast<uint32_t>(stop[cnt - 1].a)) / 255);
-                if (a > 0) rasterStroke(surface, &task->shape, stop[cnt - 1].r, stop[cnt - 1].g, stop[cnt - 1].b, a);
-            }
-        } else {
-            rasterGradientStroke(surface, &task->shape, strokeFill->id());
-        }
+        rasterGradientStroke(surface, &task->shape, strokeFill->id());
     } else {
         if (task->sdata->strokeColor(&r, &g, &b, &a) == Result::Success) {
             a = static_cast<uint8_t>((opacity * (uint32_t) a) / 255);
