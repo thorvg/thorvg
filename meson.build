@@ -6,15 +6,9 @@ project('thorvg',
 
 config_h = configuration_data()
 
-if host_machine.system() != 'windows'
 add_project_arguments('-DEXAMPLE_DIR="@0@/src/examples/images"'.format(meson.current_source_dir()),
                       '-DTEST_DIR="@0@/test/images"'.format(meson.current_source_dir()),
                       language : 'cpp')
-else
-add_project_arguments('-DEXAMPLE_DIR="@0@\src\examples\images"'.format(meson.current_source_dir()),
-                      '-DTEST_DIR="@0@\test\images"'.format(meson.current_source_dir()),
-                      language : 'cpp')
-endif
 
 config_h.set_quoted('THORVG_VERSION_STRING', meson.project_version())
 
