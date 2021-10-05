@@ -54,6 +54,8 @@ enum class SvgNodeType
     Unknown
 };
 
+/*
+// TODO - remove?
 enum class SvgLengthType
 {
     Percent,
@@ -64,6 +66,7 @@ enum class SvgLengthType
     Cm,
     In,
 };
+*/
 
 enum class SvgFillFlags
 {
