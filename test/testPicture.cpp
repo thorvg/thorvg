@@ -276,6 +276,7 @@ TEST_CASE("Load SVG file and render", "[tvgPicture]")
     REQUIRE(picture);
 
     REQUIRE(picture->load(TEST_DIR"/tag.svg") == Result::Success);
+    REQUIRE(picture->size(100, 100) == Result::Success);
 
     REQUIRE(canvas->push(move(picture)) == Result::Success);
     REQUIRE(canvas->draw() == Result::Success);
