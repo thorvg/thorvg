@@ -20,19 +20,25 @@ if get_option('engines').contains('gl') == true
     config_h.set10('THORVG_GL_RASTER_SUPPORT', true)
 endif
 
-if get_option('loaders').contains('svg') == true
+all_loaders = false
+
+if get_option('loaders').contains('all') == true
+    all_loaders = true
+endif
+
+if all_loaders or get_option('loaders').contains('svg') == true
     config_h.set10('THORVG_SVG_LOADER_SUPPORT', true)
 endif
 
-if get_option('loaders').contains('tvg') == true
+if all_loaders or get_option('loaders').contains('tvg') == true
     config_h.set10('THORVG_TVG_LOADER_SUPPORT', true)
 endif
 
-if get_option('loaders').contains('png') == true
-    config_h.set10('THORVG_PNG_LOADER_SUPPORT', true)
+if all_loaders or get_option('loaders').contains('png') == true
+   config_h.set10('THORVG_PNG_LOADER_SUPPORT', true)
 endif
 
-if get_option('loaders').contains('jpg') == true
+if all_loaders or get_option('loaders').contains('jpg') == true
     config_h.set10('THORVG_JPG_LOADER_SUPPORT', true)
 endif
 
@@ -102,10 +108,10 @@ Summary:
         simd_type,
         get_option('engines').contains('sw'),
         get_option('engines').contains('gl'),
-        get_option('loaders').contains('tvg'),
-        get_option('loaders').contains('svg'),
-        get_option('loaders').contains('png'),
-        get_option('loaders').contains('jpg'),
+        all_loaders or get_option('loaders').contains('tvg'),
+        all_loaders or get_option('loaders').contains('svg'),
+        all_loaders or get_option('loaders').contains('png'),
+        all_loaders or get_option('loaders').contains('jpg'),
         get_option('savers').contains('tvg'),
         get_option('bindings').contains('capi'),
         get_option('log'),
