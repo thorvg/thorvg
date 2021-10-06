@@ -6,8 +6,8 @@ project('thorvg',
 
 config_h = configuration_data()
 
-add_project_arguments('-DEXAMPLE_DIR="@0@/src/examples/images"'.format(meson.current_source_dir()),
-                      '-DTEST_DIR="@0@/test/images"'.format(meson.current_source_dir()),
+add_project_arguments('-DEXAMPLE_DIR="@0@/src/examples/images"'.format(meson.current_source_dir()).replace('\\','/'),
+                      '-DTEST_DIR="@0@/test/images"'.format(meson.current_source_dir()).replace('\\','/'),
                       language : 'cpp')
 
 config_h.set_quoted('THORVG_VERSION_STRING', meson.project_version())
