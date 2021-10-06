@@ -335,6 +335,7 @@ struct SvgNode
         SvgImageNode image;
     } node;
     bool display;
+    ~SvgNode();
 };
 
 struct SvgParser

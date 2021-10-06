@@ -275,7 +275,7 @@ TEST_CASE("Image Draw", "[tvgSwEngine]")
     basicPicture = Picture::gen();
     REQUIRE(basicPicture);
     REQUIRE(basicPicture->load(TEST_DIR"/test.png") == Result::Success);
-    REQUIRE(basicPicture->scale(0.2) == Result::Success);
+    REQUIRE(basicPicture->scale(0.2f) == Result::Success);
     rectMask = tvg::Shape::gen();
     REQUIRE(rectMask);
     REQUIRE(rectMask->appendRect(10, 10, 30, 30, 0, 0) == Result::Success);

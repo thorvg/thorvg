@@ -45,8 +45,8 @@ bool RawLoader::open(const uint32_t* data, uint32_t w, uint32_t h, bool copy)
 {
     if (!data || w == 0 || h == 0) return false;
 
-    this->w = w;
-    this->h = h;
+    this->w = (float)w;
+    this->h = (float)h;
     this->copy = copy;
 
     if (copy) {
