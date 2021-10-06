@@ -1,6 +1,8 @@
 [![License](https://img.shields.io/badge/licence-MIT-green.svg?style=flat)](LICENSE)
-[![Continuous-integration](https://github.com/Samsung/thorvg/actions/workflows/actions.yml/badge.svg)](https://github.com/Samsung/thorvg/actions/workflows/actions.yml)
 [![Gitter](https://badges.gitter.im/thorvg/community.svg)](https://gitter.im/thorvg/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
+<br>
+[![Continuous-integration](https://github.com/Samsung/thorvg/actions/workflows/actions.yml/badge.svg)](https://github.com/Samsung/thorvg/actions/workflows/actions.yml)
+[![Build(Window)](https://github.com/Samsung/thorvg/actions/workflows/build_win.yml/badge.svg)](https://github.com/Samsung/thorvg/actions/workflows/build_win.yml)
 
 # ThorVG
 
