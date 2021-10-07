@@ -11,20 +11,37 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - uses: ilammy/msvc-dev-cmd@v1
-      with:
-        submodules: true
     - name: Install Packages
       run: |
         pip install meson==0.58.0 ninja
     - name: Build
       run: |
-        meson --backend=ninja build --buildtype=release
+        meson --backend=ninja build
         where link
-        ninja -C build
         ninja -C build install
 
     - uses: actions/upload-artifact@v2
       with:
         name: result
         path: build/src\thorvg*
+
+  build_with_loaders:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: ilammy/msvc-dev-cmd@v1
+    - name: Install Packages
+      run: |
+        pip install meson==0.58.0 ninja
+
+    - name: Install Packages(png, jpg)
+      run: |
+        vcpkg install libpng
+        vcpkg install libjpeg-turbo
+
+    - name: Build
+      run: |
+        meson --backend=ninja build -Dloaders="svg, tvg, png, jpg" -Dsavers="tvg" -Dbindings="capi"
+        where link
+        ninja -C build install
 
