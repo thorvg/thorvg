@@ -572,10 +572,17 @@ void* SwRenderer::prepareCommon(SwTask* task, const RenderTransform* transform, 
     task->surface = surface;
     task->mpool = mpool;
     task->flags = flags;
+#if defined(_MSC_VER)
+    task->bbox.min.x = __max(static_cast<SwCoord>(0), static_cast<SwCoord>(vport.x));
+    task->bbox.min.y = __max(static_cast<SwCoord>(0), static_cast<SwCoord>(vport.y));
+    task->bbox.max.x = __min(static_cast<SwCoord>(surface->w), static_cast<SwCoord>(vport.x + vport.w));
+    task->bbox.max.y = __min(static_cast<SwCoord>(surface->h), static_cast<SwCoord>(vport.y + vport.h));
+#else
     task->bbox.min.x = max(static_cast<SwCoord>(0), static_cast<SwCoord>(vport.x));
     task->bbox.min.y = max(static_cast<SwCoord>(0), static_cast<SwCoord>(vport.y));
     task->bbox.max.x = min(static_cast<SwCoord>(surface->w), static_cast<SwCoord>(vport.x + vport.w));
     task->bbox.max.y = min(static_cast<SwCoord>(surface->h), static_cast<SwCoord>(vport.y + vport.h));
+#endif
 
     tasks.push(task);
     TaskScheduler::request(task);
