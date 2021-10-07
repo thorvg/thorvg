@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\inc\meson.build" />
+    <None Include="..\src\bindings\capi\meson.build" />
+    <None Include="..\src\bindings\meson.build" />
+    <None Include="..\src\lib\meson.build" />
+    <None Include="..\src\lib\sw_engine\meson.build" />
+    <None Include="..\src\loaders\jpg\meson.build" />
+    <None Include="..\src\loaders\png\meson.build" />
+    <None Include="..\src\loaders\raw\meson.build" />
+    <None Include="..\src\loaders\svg\meson.build" />
+    <None Include="..\src\loaders\tvg\meson.build" />
+    <None Include="..\src\meson.build" />
+    <None Include="..\src\savers\meson.build" />
+    <None Include="..\src\savers\tvg\meson.build" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\inc\thorvg.h" />
+    <ClInclude Include="..\src\bindings\capi\thorvg_capi.h" />
+    <ClInclude Include="..\src\lib\sw_engine\tvgSwCommon.h" />
+    <ClInclude Include="..\src\lib\sw_engine\tvgSwRasterAvx.h" />
+    <ClInclude Include="..\src\lib\sw_engine\tvgSwRasterC.h" />
+    <ClInclude Include="..\src\lib\sw_engine\tvgSwRasterNeon.h" />
+    <ClInclude Include="..\src\lib\sw_engine\tvgSwRenderer.h" />
+    <ClInclude Include="..\src\lib\tvgArray.h" />
+    <ClInclude Include="..\src\lib\tvgBezier.h" />
+    <ClInclude Include="..\src\lib\tvgBinaryDesc.h" />
+    <ClInclude Include="..\src\lib\tvgCanvasImpl.h" />
+    <ClInclude Include="..\src\lib\tvgCommon.h" />
+    <ClInclude Include="..\src\lib\tvgFill.h" />
+    <ClInclude Include="..\src\lib\tvgIteratorModule.h" />
+    <ClInclude Include="..\src\lib\tvgLoader.h" />
+    <ClInclude Include="..\src\lib\tvgLoadModule.h" />
+    <ClInclude Include="..\src\lib\tvgLzw.h" />
+    <ClInclude Include="..\src\lib\tvgPaint.h" />
+    <ClInclude Include="..\src\lib\tvgPictureImpl.h" />
+    <ClInclude Include="..\src\lib\tvgRender.h" />
+    <ClInclude Include="..\src\lib\tvgSaveModule.h" />
+    <ClInclude Include="..\src\lib\tvgSceneImpl.h" />
+    <ClInclude Include="..\src\lib\tvgShapeImpl.h" />
+    <ClInclude Include="..\src\lib\tvgTaskScheduler.h" />
+    <ClInclude Include="..\src\loaders\jpg\tvgJpgLoader.h" />
+    <ClInclude Include="..\src\loaders\png\tvgPngLoader.h" />
+    <ClInclude Include="..\src\loaders\raw\tvgRawLoader.h" />
+    <ClInclude Include="..\src\loaders\svg\tvgSvgLoader.h" />
+    <ClInclude Include="..\src\loaders\svg\tvgSvgLoaderCommon.h" />
+    <ClInclude Include="..\src\loaders\svg\tvgSvgPath.h" />
+    <ClInclude Include="..\src\loaders\svg\tvgSvgSceneBuilder.h" />
+    <ClInclude Include="..\src\loaders\svg\tvgSvgUtil.h" />
+    <ClInclude Include="..\src\loaders\svg\tvgXmlParser.h" />
+    <ClInclude Include="..\src\loaders\tvg\tvgTvgCommon.h" />
+    <ClInclude Include="..\src\loaders\tvg\tvgTvgLoader.h" />
+    <ClInclude Include="..\src\savers\tvg\tvgTvgSaver.h" />
+    <ClInclude Include="config.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\src\bindings\capi\tvgCapi.cpp" />
+    <ClCompile Include="..\src\lib\sw_engine\tvgSwFill.cpp" />
+    <ClCompile Include="..\src\lib\sw_engine\tvgSwImage.cpp" />
+    <ClCompile Include="..\src\lib\sw_engine\tvgSwMath.cpp" />
+    <ClCompile Include="..\src\lib\sw_engine\tvgSwMemPool.cpp" />
+    <ClCompile Include="..\src\lib\sw_engine\tvgSwRaster.cpp" />
+    <ClCompile Include="..\src\lib\sw_engine\tvgSwRenderer.cpp" />
+    <ClCompile Include="..\src\lib\sw_engine\tvgSwRle.cpp" />
+    <ClCompile Include="..\src\lib\sw_engine\tvgSwShape.cpp" />
+    <ClCompile Include="..\src\lib\sw_engine\tvgSwStroke.cpp" />
+    <ClCompile Include="..\src\lib\tvgBezier.cpp" />
+    <ClCompile Include="..\src\lib\tvgCanvas.cpp" />
+    <ClCompile Include="..\src\lib\tvgFill.cpp" />
+    <ClCompile Include="..\src\lib\tvgGlCanvas.cpp" />
+    <ClCompile Include="..\src\lib\tvgInitializer.cpp" />
+    <ClCompile Include="..\src\lib\tvgLinearGradient.cpp" />
+    <ClCompile Include="..\src\lib\tvgLoader.cpp" />
+    <ClCompile Include="..\src\lib\tvgLzw.cpp" />
+    <ClCompile Include="..\src\lib\tvgPaint.cpp" />
+    <ClCompile Include="..\src\lib\tvgPicture.cpp" />
+    <ClCompile Include="..\src\lib\tvgRadialGradient.cpp" />
+    <ClCompile Include="..\src\lib\tvgRender.cpp" />
+    <ClCompile Include="..\src\lib\tvgSaver.cpp" />
+    <ClCompile Include="..\src\lib\tvgScene.cpp" />
+    <ClCompile Include="..\src\lib\tvgShape.cpp" />
+    <ClCompile Include="..\src\lib\tvgSwCanvas.cpp" />
+    <ClCompile Include="..\src\lib\tvgTaskScheduler.cpp" />
+    <ClCompile Include="..\src\loaders\jpg\tvgJpgLoader.cpp" />
+    <ClCompile Include="..\src\loaders\png\tvgPngLoader.cpp" />
+    <ClCompile Include="..\src\loaders\raw\tvgRawLoader.cpp" />
+    <ClCompile Include="..\src\loaders\svg\tvgSvgLoader.cpp" />
+    <ClCompile Include="..\src\loaders\svg\tvgSvgPath.cpp" />
+    <ClCompile Include="..\src\loaders\svg\tvgSvgSceneBuilder.cpp" />
+    <ClCompile Include="..\src\loaders\svg\tvgSvgUtil.cpp" />
+    <ClCompile Include="..\src\loaders\svg\tvgXmlParser.cpp" />
+    <ClCompile Include="..\src\loaders\tvg\tvgTvgBinInterpreter.cpp" />
+    <ClCompile Include="..\src\loaders\tvg\tvgTvgLoader.cpp" />
+    <ClCompile Include="..\src\savers\tvg\tvgTvgSaver.cpp" />
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>16.0</VCProjectVersion>
+    <ProjectGuid>{C0C36A7E-B4ED-409A-9AD1-1CD1F22ECCCB}</ProjectGuid>
+    <RootNamespace>thorvg</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>false</SDLCheck>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(MSBuildProjectDirectory);$(MSBuildProjectDirectory)\..\inc;$(MSBuildProjectDirectory)\..\src;$(MSBuildProjectDirectory)\..\src\lib;$(MSBuildProjectDirectory)\..\src\lib\gl_engine;$(MSBuildProjectDirectory)\..\src\lib\sw_engine;$(MSBuildProjectDirectory)\..\src\loaders\svg;$(MSBuildProjectDirectory)\..\src\loaders\tvg;$(MSBuildProjectDirectory)\..\src\loaders\raw;$(MSBuildProjectDirectory)\..\src\loaders\png;$(MSBuildProjectDirectory)\..\src\loaders\jpg;$(MSBuildProjectDirectory)\..\src\savers\tvg;$(MSBuildProjectDirectory)\..\src\bindings\capi;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>false</SDLCheck>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(MSBuildProjectDirectory);$(MSBuildProjectDirectory)\..\inc;$(MSBuildProjectDirectory)\..\src;$(MSBuildProjectDirectory)\..\src\lib;$(MSBuildProjectDirectory)\..\src\lib\gl_engine;$(MSBuildProjectDirectory)\..\src\lib\sw_engine;$(MSBuildProjectDirectory)\..\src\loaders\svg;$(MSBuildProjectDirectory)\..\src\loaders\tvg;$(MSBuildProjectDirectory)\..\src\loaders\raw;$(MSBuildProjectDirectory)\..\src\loaders\png;$(MSBuildProjectDirectory)\..\src\loaders\jpg;$(MSBuildProjectDirectory)\..\src\savers\tvg;$(MSBuildProjectDirectory)\..\src\bindings\capi;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>false</SDLCheck>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(MSBuildProjectDirectory);$(MSBuildProjectDirectory)\..\inc;$(MSBuildProjectDirectory)\..\src;$(MSBuildProjectDirectory)\..\src\lib;$(MSBuildProjectDirectory)\..\src\lib\gl_engine;$(MSBuildProjectDirectory)\..\src\lib\sw_engine;$(MSBuildProjectDirectory)\..\src\loaders\svg;$(MSBuildProjectDirectory)\..\src\loaders\tvg;$(MSBuildProjectDirectory)\..\src\loaders\raw;$(MSBuildProjectDirectory)\..\src\loaders\png;$(MSBuildProjectDirectory)\..\src\loaders\jpg;$(MSBuildProjectDirectory)\..\src\savers\tvg;$(MSBuildProjectDirectory)\..\src\bindings\capi;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>false</SDLCheck>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(MSBuildProjectDirectory);$(MSBuildProjectDirectory)\..\inc;$(MSBuildProjectDirectory)\..\src;$(MSBuildProjectDirectory)\..\src\lib;$(MSBuildProjectDirectory)\..\src\lib\gl_engine;$(MSBuildProjectDirectory)\..\src\lib\sw_engine;$(MSBuildProjectDirectory)\..\src\loaders\svg;$(MSBuildProjectDirectory)\..\src\loaders\tvg;$(MSBuildProjectDirectory)\..\src\loaders\raw;$(MSBuildProjectDirectory)\..\src\loaders\png;$(MSBuildProjectDirectory)\..\src\loaders\jpg;$(MSBuildProjectDirectory)\..\src\savers\tvg;$(MSBuildProjectDirectory)\..\src\bindings\capi;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

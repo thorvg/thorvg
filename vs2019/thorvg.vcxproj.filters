@@ -1,0 +1,315 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="src">
+      <UniqueIdentifier>{947970e5-1c95-4d59-b885-99237ef631ae}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="inc">
+      <UniqueIdentifier>{f1f298e7-eb17-4f10-ba0f-b72c86b93deb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\bindings">
+      <UniqueIdentifier>{138600da-6d8b-4cd7-acdc-83463ff46704}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\lib">
+      <UniqueIdentifier>{fca4a0eb-c67c-4732-8926-57f17d0dbb89}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\loaders">
+      <UniqueIdentifier>{fd2913c0-1d18-445b-8829-224ddae2691f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\savers">
+      <UniqueIdentifier>{fb46644e-4912-4449-b589-6932e0c965ea}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\bindings\capi">
+      <UniqueIdentifier>{d794b33b-2e2d-4fb8-9805-da8d08bd91fa}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\lib\sw_engine">
+      <UniqueIdentifier>{26c9f25a-7cf9-42ef-81e8-144507f66b73}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\loaders\png">
+      <UniqueIdentifier>{e6250d21-934b-4b68-81b3-a838017d324c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\loaders\jpg">
+      <UniqueIdentifier>{213f0f52-a154-471b-9e09-1c6cedef398c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\loaders\raw">
+      <UniqueIdentifier>{e210c11c-d841-44bd-9248-e61550b4432b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\loaders\svg">
+      <UniqueIdentifier>{071ec94c-f062-4363-b471-eac158783ca4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\loaders\tvg">
+      <UniqueIdentifier>{b34c99bb-9b7a-4f0d-9c0b-c3a0d7c37c68}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\savers\tvg">
+      <UniqueIdentifier>{99d44800-d2b1-425d-a724-6e735efe2f97}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\inc\meson.build">
+      <Filter>inc</Filter>
+    </None>
+    <None Include="..\src\meson.build">
+      <Filter>src</Filter>
+    </None>
+    <None Include="..\src\bindings\meson.build">
+      <Filter>src\bindings</Filter>
+    </None>
+    <None Include="..\src\bindings\capi\meson.build">
+      <Filter>src\bindings\capi</Filter>
+    </None>
+    <None Include="..\src\lib\meson.build">
+      <Filter>src\lib</Filter>
+    </None>
+    <None Include="..\src\lib\sw_engine\meson.build">
+      <Filter>src\lib\sw_engine</Filter>
+    </None>
+    <None Include="..\src\loaders\jpg\meson.build">
+      <Filter>src\loaders\jpg</Filter>
+    </None>
+    <None Include="..\src\loaders\tvg\meson.build">
+      <Filter>src\loaders\tvg</Filter>
+    </None>
+    <None Include="..\src\loaders\svg\meson.build">
+      <Filter>src\loaders\svg</Filter>
+    </None>
+    <None Include="..\src\loaders\raw\meson.build">
+      <Filter>src\loaders\raw</Filter>
+    </None>
+    <None Include="..\src\loaders\png\meson.build">
+      <Filter>src\loaders\png</Filter>
+    </None>
+    <None Include="..\src\savers\meson.build">
+      <Filter>src\savers</Filter>
+    </None>
+    <None Include="..\src\savers\tvg\meson.build">
+      <Filter>src\savers\tvg</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\inc\thorvg.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\bindings\capi\thorvg_capi.h">
+      <Filter>src\bindings\capi</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\lib\tvgArray.h">
+      <Filter>src\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\lib\tvgBezier.h">
+      <Filter>src\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\lib\tvgBinaryDesc.h">
+      <Filter>src\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\lib\tvgCanvasImpl.h">
+      <Filter>src\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\lib\tvgCommon.h">
+      <Filter>src\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\lib\tvgFill.h">
+      <Filter>src\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\lib\tvgIteratorModule.h">
+      <Filter>src\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\lib\tvgLoader.h">
+      <Filter>src\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\lib\tvgLoadModule.h">
+      <Filter>src\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\lib\tvgLzw.h">
+      <Filter>src\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\lib\tvgPaint.h">
+      <Filter>src\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\lib\tvgPictureImpl.h">
+      <Filter>src\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\lib\tvgRender.h">
+      <Filter>src\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\lib\tvgSaveModule.h">
+      <Filter>src\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\lib\tvgSceneImpl.h">
+      <Filter>src\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\lib\tvgShapeImpl.h">
+      <Filter>src\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\lib\tvgTaskScheduler.h">
+      <Filter>src\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\lib\sw_engine\tvgSwCommon.h">
+      <Filter>src\lib\sw_engine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\lib\sw_engine\tvgSwRasterAvx.h">
+      <Filter>src\lib\sw_engine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\lib\sw_engine\tvgSwRasterC.h">
+      <Filter>src\lib\sw_engine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\lib\sw_engine\tvgSwRasterNeon.h">
+      <Filter>src\lib\sw_engine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\lib\sw_engine\tvgSwRenderer.h">
+      <Filter>src\lib\sw_engine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\loaders\jpg\tvgJpgLoader.h">
+      <Filter>src\loaders\jpg</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\loaders\tvg\tvgTvgCommon.h">
+      <Filter>src\loaders\tvg</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\loaders\tvg\tvgTvgLoader.h">
+      <Filter>src\loaders\tvg</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\loaders\svg\tvgSvgLoader.h">
+      <Filter>src\loaders\svg</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\loaders\svg\tvgSvgLoaderCommon.h">
+      <Filter>src\loaders\svg</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\loaders\svg\tvgSvgPath.h">
+      <Filter>src\loaders\svg</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\loaders\svg\tvgSvgSceneBuilder.h">
+      <Filter>src\loaders\svg</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\loaders\svg\tvgSvgUtil.h">
+      <Filter>src\loaders\svg</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\loaders\svg\tvgXmlParser.h">
+      <Filter>src\loaders\svg</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\loaders\raw\tvgRawLoader.h">
+      <Filter>src\loaders\raw</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\loaders\png\tvgPngLoader.h">
+      <Filter>src\loaders\png</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\savers\tvg\tvgTvgSaver.h">
+      <Filter>src\savers\tvg</Filter>
+    </ClInclude>
+    <ClInclude Include="config.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\src\bindings\capi\tvgCapi.cpp">
+      <Filter>src\bindings\capi</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib\tvgBezier.cpp">
+      <Filter>src\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib\tvgCanvas.cpp">
+      <Filter>src\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib\tvgFill.cpp">
+      <Filter>src\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib\tvgGlCanvas.cpp">
+      <Filter>src\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib\tvgInitializer.cpp">
+      <Filter>src\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib\tvgLinearGradient.cpp">
+      <Filter>src\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib\tvgLoader.cpp">
+      <Filter>src\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib\tvgLzw.cpp">
+      <Filter>src\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib\tvgPaint.cpp">
+      <Filter>src\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib\tvgPicture.cpp">
+      <Filter>src\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib\tvgRadialGradient.cpp">
+      <Filter>src\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib\tvgRender.cpp">
+      <Filter>src\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib\tvgSaver.cpp">
+      <Filter>src\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib\tvgScene.cpp">
+      <Filter>src\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib\tvgShape.cpp">
+      <Filter>src\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib\tvgSwCanvas.cpp">
+      <Filter>src\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib\tvgTaskScheduler.cpp">
+      <Filter>src\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib\sw_engine\tvgSwFill.cpp">
+      <Filter>src\lib\sw_engine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib\sw_engine\tvgSwImage.cpp">
+      <Filter>src\lib\sw_engine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib\sw_engine\tvgSwMath.cpp">
+      <Filter>src\lib\sw_engine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib\sw_engine\tvgSwMemPool.cpp">
+      <Filter>src\lib\sw_engine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib\sw_engine\tvgSwRaster.cpp">
+      <Filter>src\lib\sw_engine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib\sw_engine\tvgSwRenderer.cpp">
+      <Filter>src\lib\sw_engine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib\sw_engine\tvgSwRle.cpp">
+      <Filter>src\lib\sw_engine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib\sw_engine\tvgSwShape.cpp">
+      <Filter>src\lib\sw_engine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib\sw_engine\tvgSwStroke.cpp">
+      <Filter>src\lib\sw_engine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\loaders\jpg\tvgJpgLoader.cpp">
+      <Filter>src\loaders\jpg</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\loaders\tvg\tvgTvgBinInterpreter.cpp">
+      <Filter>src\loaders\tvg</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\loaders\tvg\tvgTvgLoader.cpp">
+      <Filter>src\loaders\tvg</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\loaders\svg\tvgSvgLoader.cpp">
+      <Filter>src\loaders\svg</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\loaders\svg\tvgSvgPath.cpp">
+      <Filter>src\loaders\svg</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\loaders\svg\tvgSvgSceneBuilder.cpp">
+      <Filter>src\loaders\svg</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\loaders\svg\tvgSvgUtil.cpp">
+      <Filter>src\loaders\svg</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\loaders\svg\tvgXmlParser.cpp">
+      <Filter>src\loaders\svg</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\loaders\raw\tvgRawLoader.cpp">
+      <Filter>src\loaders\raw</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\loaders\png\tvgPngLoader.cpp">
+      <Filter>src\loaders\png</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\savers\tvg\tvgTvgSaver.cpp">
+      <Filter>src\savers\tvg</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
