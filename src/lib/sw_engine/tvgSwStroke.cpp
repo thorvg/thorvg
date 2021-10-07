@@ -828,8 +828,8 @@ void strokeFree(SwStroke* stroke)
 void strokeReset(SwStroke* stroke, const Shape* sdata, const Matrix* transform)
 {
     if (transform) {
-        stroke->sx = sqrt(pow(transform->e11, 2) + pow(transform->e21, 2));
-        stroke->sy = sqrt(pow(transform->e12, 2) + pow(transform->e22, 2));
+        stroke->sx = sqrtf(powf(transform->e11, 2.0f) + powf(transform->e21, 2.0f));
+        stroke->sy = sqrtf(powf(transform->e12, 2.0f) + powf(transform->e22, 2.0f));
     } else {
         stroke->sx = stroke->sy = 1.0f;
     }

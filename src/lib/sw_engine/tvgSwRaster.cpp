@@ -1561,8 +1561,8 @@ bool rasterImage(SwSurface* surface, SwImage* image, const Matrix* transform, co
 
     if (transform) {
         if (!_inverse(transform, &invTransform)) return false;
-        scaling = sqrt((transform->e11 * transform->e11) + (transform->e21 * transform->e21));
-        auto scalingY = sqrt((transform->e22 * transform->e22) + (transform->e12 * transform->e12));
+        scaling = sqrtf((transform->e11 * transform->e11) + (transform->e21 * transform->e21));
+        auto scalingY = sqrtf((transform->e22 * transform->e22) + (transform->e12 * transform->e12));
         //TODO:If the x and y axis scaling is different, a separate algorithm for each axis should be applied.
         if (scaling != scalingY) scaling = 1.0f;
     }

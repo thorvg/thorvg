@@ -39,8 +39,12 @@ TEST_CASE("Load Svg file in Picture", "[capiPicture]")
     //Load Svg file
     REQUIRE(tvg_picture_load(picture, TEST_DIR"/logo.svg") == TVG_RESULT_SUCCESS);
 
-    float w, h;
+    float wNew = 500.0f, hNew = 500.0f;
+    float w = 0.0f, h = 0.0f;
+    REQUIRE(tvg_picture_set_size(picture, wNew, hNew) == TVG_RESULT_SUCCESS);
     REQUIRE(tvg_picture_get_size(picture, &w, &h) == TVG_RESULT_SUCCESS);
+    REQUIRE(w == Approx(wNew).epsilon(0.0000001));
+    REQUIRE(h == Approx(hNew).epsilon(0.0000001));
 
     REQUIRE(tvg_paint_del(picture) == TVG_RESULT_SUCCESS);
 }
@@ -65,6 +69,12 @@ TEST_CASE("Load Svg Data in Picture", "[capiPicture]")
     REQUIRE(tvg_picture_get_size(picture, &w, &h) == TVG_RESULT_SUCCESS);
     REQUIRE(w == Approx(1000).epsilon(0.0000001));
     REQUIRE(h == Approx(1000).epsilon(0.0000001));
+    float wNew = 500.0f, hNew = 500.0f;
+    REQUIRE(tvg_picture_set_size(picture, wNew, hNew) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_picture_get_size(picture, &w, &h) == TVG_RESULT_SUCCESS);
+    REQUIRE(w == Approx(wNew).epsilon(0.0000001));
+    REQUIRE(h == Approx(hNew).epsilon(0.0000001));
+
 
     //Verify Position
     float x, y;
@@ -103,6 +113,11 @@ TEST_CASE("Load Raw file in Picture", "[capiPicture]")
         REQUIRE(tvg_picture_get_size(picture, &w, &h) == TVG_RESULT_SUCCESS);
         REQUIRE(w == Approx(200).epsilon(0.0000001));
         REQUIRE(h == Approx(300).epsilon(0.0000001));
+        float wNew = 500.0f, hNew = 500.0f;
+        REQUIRE(tvg_picture_set_size(picture, wNew, hNew) == TVG_RESULT_SUCCESS);
+        REQUIRE(tvg_picture_get_size(picture, &w, &h) == TVG_RESULT_SUCCESS);
+        REQUIRE(w == Approx(wNew).epsilon(0.0000001));
+        REQUIRE(h == Approx(hNew).epsilon(0.0000001));
     }
 
     REQUIRE(tvg_paint_del(picture) == TVG_RESULT_SUCCESS);
@@ -123,8 +138,12 @@ TEST_CASE("Load Png file in Picture", "[capiPicture]")
     REQUIRE(tvg_picture_load(picture, TEST_DIR"/test.png") == TVG_RESULT_SUCCESS);
 
     //Verify Size
-    float w, h;
+    float wNew = 500.0f, hNew = 500.0f;
+    float w = 0.0f, h = 0.0f;
+    REQUIRE(tvg_picture_set_size(picture, wNew, hNew) == TVG_RESULT_SUCCESS);
     REQUIRE(tvg_picture_get_size(picture, &w, &h) == TVG_RESULT_SUCCESS);
+    REQUIRE(w == Approx(wNew).epsilon(0.0000001));
+    REQUIRE(h == Approx(hNew).epsilon(0.0000001));
 
     REQUIRE(tvg_paint_del(picture) == TVG_RESULT_SUCCESS);
 }

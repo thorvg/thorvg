@@ -144,13 +144,13 @@ bool _prepareRadial(SwFill* fill, const RadialGradient* radial, const Matrix* tr
         fill->radial.cx = tx;
         fill->radial.cy = ty;
 
-        auto sx = sqrt(pow(transform->e11, 2) + pow(transform->e21, 2));
-        auto sy = sqrt(pow(transform->e12, 2) + pow(transform->e22, 2));
+        auto sx = sqrtf(powf(transform->e11, 2.0f) + powf(transform->e21, 2.0f));
+        auto sy = sqrtf(powf(transform->e12, 2.0f) + powf(transform->e22, 2.0f));
 
         //FIXME; Scale + Rotation is not working properly
         radius *= sx;
 
-        if (abs(sx - sy) > DBL_EPSILON) {
+        if (fabsf(sx - sy) > FLT_EPSILON) {
             fill->sx = sx;
             fill->sy = sy;
         }
@@ -219,7 +219,7 @@ void fillFetchRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, 
     auto detDelta2 = 2.0f * inva;
 
     for (uint32_t i = 0 ; i < len ; ++i) {
-        *dst = _pixel(fill, sqrt(det));
+        *dst = _pixel(fill, sqrtf(det));
         ++dst;
         det += detDelta;
         detDelta += detDelta2;
