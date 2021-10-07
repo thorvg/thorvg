@@ -269,7 +269,7 @@ TEST_CASE("Load SVG file and render", "[tvgPicture]")
     auto canvas = SwCanvas::gen();
     REQUIRE(canvas);
 
-    uint32_t buffer[1000*1000];
+    uint32_t* buffer = new uint32_t[1000*1000];
     REQUIRE(canvas->target(buffer, 1000, 1000, 1000, SwCanvas::Colorspace::ABGR8888) == Result::Success);
 
     auto picture = Picture::gen();
@@ -283,6 +283,8 @@ TEST_CASE("Load SVG file and render", "[tvgPicture]")
     REQUIRE(canvas->sync() == Result::Success);
 
     REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
+
+    delete buffer;
 }
 
 TEST_CASE("Load PNG file and render", "[tvgPicture]")
@@ -334,7 +336,7 @@ TEST_CASE("Load TVG file and render", "[tvgPicture]")
     auto canvas = SwCanvas::gen();
     REQUIRE(canvas);
 
-    uint32_t buffer[1000*1000];
+    uint32_t* buffer = new uint32_t[1000*1000];
     REQUIRE(canvas->target(buffer, 1000, 1000, 1000, SwCanvas::Colorspace::ABGR8888) == Result::Success);
 
     auto pictureTag = Picture::gen();
@@ -348,6 +350,8 @@ TEST_CASE("Load TVG file and render", "[tvgPicture]")
     REQUIRE(canvas->push(move(pictureTest)) == Result::Success);
 
     REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
+
+    delete buffer;
 }
 
 TEST_CASE("Load RAW file and render", "[tvgPicture]")
