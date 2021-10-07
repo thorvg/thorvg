@@ -82,7 +82,7 @@ static int32_t _normalize(SwPoint& pt)
     auto v = pt;
 
     //High order bit(MSB)
-    auto shift = 31 - _clz(abs(v.x) | abs(v.y));
+    int32_t shift = 31 - _clz(abs(v.x) | abs(v.y));
 
     if (shift <= SAFE_MSB) {
         shift = SAFE_MSB - shift;
