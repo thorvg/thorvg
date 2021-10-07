@@ -269,7 +269,9 @@ TEST_CASE("Load SVG file and render", "[tvgPicture]")
     auto canvas = SwCanvas::gen();
     REQUIRE(canvas);
 
-    uint32_t* buffer = new uint32_t[1000*1000];
+    auto buffer = new uint32_t[1000*1000];
+    if (!buffer) return;
+
     REQUIRE(canvas->target(buffer, 1000, 1000, 1000, SwCanvas::Colorspace::ABGR8888) == Result::Success);
 
     auto picture = Picture::gen();
@@ -336,7 +338,9 @@ TEST_CASE("Load TVG file and render", "[tvgPicture]")
     auto canvas = SwCanvas::gen();
     REQUIRE(canvas);
 
-    uint32_t* buffer = new uint32_t[1000*1000];
+    auto buffer = new uint32_t[1000*1000];
+    if (!buffer) return;
+
     REQUIRE(canvas->target(buffer, 1000, 1000, 1000, SwCanvas::Colorspace::ABGR8888) == Result::Success);
 
     auto pictureTag = Picture::gen();
@@ -372,6 +376,7 @@ TEST_CASE("Load RAW file and render", "[tvgPicture]")
     ifstream file(path);
     if (!file.is_open()) return;
     auto data = (uint32_t*)malloc(sizeof(uint32_t) * (200*300));
+    if (!data) return;
     file.read(reinterpret_cast<char *>(data), sizeof (uint32_t) * 200 * 300);
     file.close();
 
