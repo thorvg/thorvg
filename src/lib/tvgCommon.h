@@ -48,7 +48,7 @@ using namespace tvg;
     #define TVG_FALLTHROUGH
 #endif
 
-#ifdef __clang__
+#if defined(__clang__) && !defined(__EMSCRIPTEN__)
     #define strncpy strncpy_s
     #define strdup _strdup
 #endif
