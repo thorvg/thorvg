@@ -214,17 +214,17 @@ float svgUtilStrtof(const char *nPtr, char **endPtr)
         }
         else if (*iter == 0) goto on_success;
 
-        if ((_floatExact(val, 2.2250738585072011)) && ((minus_e * (int)expo_part) == -308))
+        if ((_floatExact(val, 2.2250738585072011f)) && ((minus_e * (int)expo_part) == -308))
         {
-            val *= 1.0e-308;
+            val *= 1.0e-308f;
             a = iter;
             errno = ERANGE;
             goto on_success;
         }
 
-        if ((_floatExact(val, 2.2250738585072012)) && ((minus_e * (int)expo_part) <= -308))
+        if ((_floatExact(val, 2.2250738585072012f)) && ((minus_e * (int)expo_part) <= -308))
         {
-            val *= 1.0e-308;
+            val *= 1.0e-308f;
             a = iter;
             goto on_success;
         }

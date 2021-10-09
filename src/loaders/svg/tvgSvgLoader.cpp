@@ -97,9 +97,9 @@ static float _toFloat(const SvgParser* svgParse, const char* str, SvgParserLengt
         else if (type == SvgParserLengthType::Horizontal) parsedValue = (parsedValue / 100.0) * svgParse->global.w;
         else //if other then it's radius
         {
-            float max = svgParse->global.w;
+            float max = (float)svgParse->global.w;
             if (max < svgParse->global.h)
-                max = svgParse->global.h;
+                max = (float)svgParse->global.h;
             parsedValue = (parsedValue / 100.0) * max;
         }
     }
@@ -122,8 +122,8 @@ static float _gradientToFloat(const SvgParser* svgParse, const char* str, SvgPar
     *
     * https://www.w3.org/TR/2015/WD-SVG2-20150915/coords.html
     */
-    if (type == SvgParserLengthType::Vertical) max = svgParse->global.h;
-    else if (type == SvgParserLengthType::Horizontal) max = svgParse->global.w;
+    if (type == SvgParserLengthType::Vertical) max = (float)svgParse->global.h;
+    else if (type == SvgParserLengthType::Horizontal) max = (float)svgParse->global.w;
     else if (type == SvgParserLengthType::Other) max = sqrtf(pow(svgParse->global.h, 2) + pow(svgParse->global.w, 2)) / sqrtf(2.0);
 
     if (strstr(str, "%")) parsedValue = parsedValue / 100.0;
@@ -747,13 +747,13 @@ static bool _attrParseSvgNode(void* data, const char* key, const char* value)
             if (_parseNumber(&value, &doc->vy)) {
                 if (_parseNumber(&value, &doc->vw)) {
                     _parseNumber(&value, &doc->vh);
-                    loader->svgParse->global.h = doc->vh;
+                    loader->svgParse->global.h = (uint32_t)doc->vh;
                 }
-                loader->svgParse->global.w = doc->vw;
+                loader->svgParse->global.w = (uint32_t)doc->vw;
             }
-            loader->svgParse->global.y = doc->vy;
+            loader->svgParse->global.y = (int)doc->vy;
         }
-        loader->svgParse->global.x = doc->vx;
+        loader->svgParse->global.x = (int)doc->vx;
     } else if (!strcmp(key, "preserveAspectRatio")) {
         if (!strcmp(value, "none")) doc->preserveAspect = false;
     } else if (!strcmp(key, "style")) {
@@ -1121,11 +1121,11 @@ static SvgNode* _createSvgNode(SvgLoaderData* loader, SvgNode* parent, const cha
 
     if (loader->svgParse->global.w == 0) {
         if (doc->w < FLT_EPSILON) loader->svgParse->global.w = 1;
-        else loader->svgParse->global.w = doc->w;
+        else loader->svgParse->global.w = (uint32_t)doc->w;
     }
     if (loader->svgParse->global.h == 0) {
         if (doc->h < FLT_EPSILON) loader->svgParse->global.h = 1;
-        else loader->svgParse->global.h =doc->h;
+        else loader->svgParse->global.h = (uint32_t)doc->h;
     }
 
     return loader->svgParse->node;

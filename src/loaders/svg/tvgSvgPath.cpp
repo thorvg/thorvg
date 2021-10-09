@@ -176,10 +176,10 @@ void _pathAppendArcTo(Array<PathCommand>* cmds, Array<Point>* pts, Point* cur, P
 
     if (sweep) {
         //Ensure delta theta < 0 or else add 360 degrees
-        if (deltaTheta < 0.0f) deltaTheta += 2.0f * M_PI;
+        if (deltaTheta < 0.0f) deltaTheta += (float)(2.0f * M_PI);
     } else {
         //Ensure delta theta > 0 or else substract 360 degrees
-        if (deltaTheta > 0.0f) deltaTheta -= 2.0f * M_PI;
+        if (deltaTheta > 0.0f) deltaTheta -= (float)(2.0f * M_PI);
     }
 
     //Add several cubic bezier to approximate the arc
@@ -477,8 +477,8 @@ static char* _nextCommand(char* path, char* cmd, float* arr, int* count)
                         if (_parseFlag(&path, &sweep)) {
                             if (_parseNumber(&path, &arr[5])) {
                                 if (_parseNumber(&path, &arr[6])) {
-                                    arr[3] = large;
-                                    arr[4] = sweep;
+                                    arr[3] = (float)large;
+                                    arr[4] = (float)sweep;
                                     return path;
                                 }
                             }

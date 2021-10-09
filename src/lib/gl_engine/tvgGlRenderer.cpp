@@ -137,7 +137,7 @@ bool GlRenderer::renderShape(RenderData data)
     uint8_t r, g, b, a;
     size_t flags = static_cast<size_t>(sdata->updateFlag);
 
-    GL_CHECK(glViewport(0, 0, sdata->viewWd, sdata->viewHt));
+    GL_CHECK(glViewport(0, 0, (GLsizei)sdata->viewWd, (GLsizei)sdata->viewHt));
 
     uint32_t primitiveCount = sdata->geometry->getPrimitiveCount();
     for (uint32_t i = 0; i < primitiveCount; ++i)

@@ -157,7 +157,7 @@ Result Shape::appendCircle(float cx, float cy, float rx, float ry) noexcept
 
 Result Shape::appendArc(float cx, float cy, float radius, float startAngle, float sweep, bool pie) noexcept
 {
-    const float M_PI_HALF = M_PI * 0.5f;
+    const float M_PI_HALF = (float)(M_PI * 0.5f);
 
     //just circle
     if (sweep >= 360 || sweep <= -360) return appendCircle(cx, cy, radius, radius);
