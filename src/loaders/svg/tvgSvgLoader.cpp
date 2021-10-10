@@ -110,32 +110,23 @@ static float _toFloat(const SvgParser* svgParse, const char* str, SvgParserLengt
 }
 
 
-static float _gradientToFloat(const SvgParser* svgParse, const char* str, SvgParserLengthType type)
+static float _gradientToFloat(const SvgParser* svgParse, const char* str, SvgParserLengthType type, uint8_t& pct)
 {
     char* end = nullptr;
 
     float parsedValue = svgUtilStrtof(str, &end);
-    float max = 1;
+    pct = 0;
 
-    /**
-    * That is according to Units in here
-    *
-    * https://www.w3.org/TR/2015/WD-SVG2-20150915/coords.html
-    */
-    if (type == SvgParserLengthType::Vertical) max = (float)svgParse->global.h;
-    else if (type == SvgParserLengthType::Horizontal) max = (float)svgParse->global.w;
-    else if (type == SvgParserLengthType::Other) max = sqrtf(pow(svgParse->global.h, 2) + pow(svgParse->global.w, 2)) / sqrtf(2.0);
-
-    if (strstr(str, "%")) parsedValue = parsedValue / 100.0;
+    if (strstr(str, "%")) {
+        parsedValue = parsedValue / 100.0;
+        pct = 1;
+    }
     else if (strstr(str, "cm")) parsedValue = parsedValue * 35.43307;
     else if (strstr(str, "mm")) parsedValue = parsedValue * 3.543307;
     else if (strstr(str, "pt")) parsedValue = parsedValue * 1.25;
     else if (strstr(str, "pc")) parsedValue = parsedValue * 15;
     else if (strstr(str, "in")) parsedValue = parsedValue * 90;
     //TODO: Implement 'em', 'ex' attributes
-
-    //Transform into global percentage
-    parsedValue = parsedValue / max;
 
     return parsedValue;
 }
@@ -1912,65 +1903,72 @@ FillSpread _parseSpreadValue(const char* value)
 
 static void _handleRadialCxAttr(SvgLoaderData* loader, SvgRadialGradient* radial, const char* value)
 {
-    radial->cx = _gradientToFloat(loader->svgParse, value, SvgParserLengthType::Horizontal);
-    if (!loader->svgParse->gradient.parsedFx) radial->fx = radial->cx;
+    radial->cx = _gradientToFloat(loader->svgParse, value, SvgParserLengthType::Horizontal, radial->cxPct);
+    if (!loader->svgParse->gradient.parsedFx) {
+        radial->fx = radial->cx;
+        radial->fxPct = radial->cxPct;
+    }
 }
 
 
 static void _handleRadialCyAttr(SvgLoaderData* loader, SvgRadialGradient* radial, const char* value)
 {
-    radial->cy = _gradientToFloat(loader->svgParse, value, SvgParserLengthType::Vertical);
-    if (!loader->svgParse->gradient.parsedFy) radial->fy = radial->cy;
+    radial->cy = _gradientToFloat(loader->svgParse, value, SvgParserLengthType::Vertical, radial->cyPct);
+    if (!loader->svgParse->gradient.parsedFy) {
+        radial->fy = radial->cy;
+        radial->fyPct = radial->cyPct;
+    }
 }
 
 
 static void _handleRadialFxAttr(SvgLoaderData* loader, SvgRadialGradient* radial, const char* value)
 {
-    radial->fx = _gradientToFloat(loader->svgParse, value, SvgParserLengthType::Horizontal);
+    radial->fx = _gradientToFloat(loader->svgParse, value, SvgParserLengthType::Horizontal, radial->fxPct);
     loader->svgParse->gradient.parsedFx = true;
 }
 
 
 static void _handleRadialFyAttr(SvgLoaderData* loader, SvgRadialGradient* radial, const char* value)
 {
-    radial->fy = _gradientToFloat(loader->svgParse, value, SvgParserLengthType::Vertical);
+    radial->fy = _gradientToFloat(loader->svgParse, value, SvgParserLengthType::Vertical, radial->fyPct);
     loader->svgParse->gradient.parsedFy = true;
 }
 
 
 static void _handleRadialRAttr(SvgLoaderData* loader, SvgRadialGradient* radial, const char* value)
 {
-    radial->r = _gradientToFloat(loader->svgParse, value, SvgParserLengthType::Other);
+    radial->r = _gradientToFloat(loader->svgParse, value, SvgParserLengthType::Other, radial->rPct);
 }
 
 
 static void _recalcRadialCxAttr(SvgLoaderData* loader, SvgRadialGradient* radial, bool userSpace)
 {
-    if (!userSpace) radial->cx = radial->cx * loader->svgParse->global.w;
+    if (userSpace && radial->cxPct == 0) radial->cx = radial->cx / loader->svgParse->global.w;
 }
 
 
 static void _recalcRadialCyAttr(SvgLoaderData* loader, SvgRadialGradient* radial, bool userSpace)
 {
-    if (!userSpace) radial->cy = radial->cy * loader->svgParse->global.h;
+    if (userSpace && radial->cyPct == 0) radial->cy = radial->cy / loader->svgParse->global.h;
 }
 
 
 static void _recalcRadialFxAttr(SvgLoaderData* loader, SvgRadialGradient* radial, bool userSpace)
 {
-    if (!userSpace) radial->fx = radial->fx * loader->svgParse->global.w;
+    if (userSpace && radial->fxPct == 0) radial->fx = radial->fx / loader->svgParse->global.w;
 }
 
 
 static void _recalcRadialFyAttr(SvgLoaderData* loader, SvgRadialGradient* radial, bool userSpace)
 {
-    if (!userSpace) radial->fy = radial->fy * loader->svgParse->global.h;
+    if (userSpace && radial->fyPct == 0) radial->fy = radial->fy / loader->svgParse->global.h;
 }
 
 
 static void _recalcRadialRAttr(SvgLoaderData* loader, SvgRadialGradient* radial, bool userSpace)
 {
-    if (!userSpace) radial->r = radial->r * (sqrtf(pow(loader->svgParse->global.h, 2) + pow(loader->svgParse->global.w, 2)) / sqrtf(2.0));
+    // scaling factor based on the Units paragraph from : https://www.w3.org/TR/2015/WD-SVG2-20150915/coords.html
+    if (userSpace && radial->rPct == 0) radial->r = radial->r / (sqrtf(pow(loader->svgParse->global.h, 2) + pow(loader->svgParse->global.w, 2)) / sqrtf(2.0));
 }
 
 
@@ -2053,6 +2051,11 @@ static SvgStyleGradient* _createRadialGradient(SvgLoaderData* loader, const char
     grad->radial->fx = 0.5f / loader->svgParse->global.w;
     grad->radial->fy = 0.5f / loader->svgParse->global.h;
     grad->radial->r = 0.5f / (sqrtf(pow(loader->svgParse->global.h, 2) + pow(loader->svgParse->global.w, 2)) / sqrtf(2.0f));
+    grad->radial->cxPct = 1;
+    grad->radial->cyPct = 1;
+    grad->radial->fxPct = 1;
+    grad->radial->fyPct = 1;
+    grad->radial->rPct = 1;
 
     loader->svgParse->gradient.parsedFx = false;
     loader->svgParse->gradient.parsedFy = false;
@@ -2115,49 +2118,49 @@ static bool _attrParseStops(void* data, const char* key, const char* value)
 
 static void _handleLinearX1Attr(SvgLoaderData* loader, SvgLinearGradient* linear, const char* value)
 {
-    linear->x1 = _gradientToFloat(loader->svgParse, value, SvgParserLengthType::Horizontal);
+    linear->x1 = _gradientToFloat(loader->svgParse, value, SvgParserLengthType::Horizontal, linear->x1Pct);
 }
 
 
 static void _handleLinearY1Attr(SvgLoaderData* loader, SvgLinearGradient* linear, const char* value)
 {
-    linear->y1 = _gradientToFloat(loader->svgParse, value, SvgParserLengthType::Vertical);
+    linear->y1 = _gradientToFloat(loader->svgParse, value, SvgParserLengthType::Vertical, linear->y1Pct);
 }
 
 
 static void _handleLinearX2Attr(SvgLoaderData* loader, SvgLinearGradient* linear, const char* value)
 {
-    linear->x2 = _gradientToFloat(loader->svgParse, value, SvgParserLengthType::Horizontal);
+    linear->x2 = _gradientToFloat(loader->svgParse, value, SvgParserLengthType::Horizontal, linear->x2Pct);
 }
 
 
 static void _handleLinearY2Attr(SvgLoaderData* loader, SvgLinearGradient* linear, const char* value)
 {
-    linear->y2 = _gradientToFloat(loader->svgParse, value, SvgParserLengthType::Vertical);
+    linear->y2 = _gradientToFloat(loader->svgParse, value, SvgParserLengthType::Vertical, linear->y2Pct);
 }
 
 
 static void _recalcLinearX1Attr(SvgLoaderData* loader, SvgLinearGradient* linear, bool userSpace)
 {
-    if (!userSpace) linear->x1 = linear->x1 * loader->svgParse->global.w;
+    if (userSpace && linear->x1Pct == 0) linear->x1 = linear->x1 / loader->svgParse->global.w;
 }
 
 
 static void _recalcLinearY1Attr(SvgLoaderData* loader, SvgLinearGradient* linear, bool userSpace)
 {
-    if (!userSpace) linear->y1 = linear->y1 * loader->svgParse->global.h;
+    if (userSpace && linear->y1Pct == 0) linear->y1 = linear->y1 / loader->svgParse->global.h;
 }
 
 
 static void _recalcLinearX2Attr(SvgLoaderData* loader, SvgLinearGradient* linear, bool userSpace)
 {
-    if (!userSpace) linear->x2 = linear->x2 * loader->svgParse->global.w;
+    if (userSpace && linear->x2Pct == 0) linear->x2 = linear->x2 / loader->svgParse->global.w;
 }
 
 
 static void _recalcLinearY2Attr(SvgLoaderData* loader, SvgLinearGradient* linear, bool userSpace)
 {
-    if (!userSpace) linear->y2 = linear->y2 * loader->svgParse->global.h;
+    if (userSpace && linear->y2Pct == 0) linear->y2 = linear->y2 / loader->svgParse->global.h;
 }
 
 
@@ -2235,6 +2238,8 @@ static SvgStyleGradient* _createLinearGradient(SvgLoaderData* loader, const char
     * Default value of x2 is 100% - transformed to the global percentage
     */
     grad->linear->x2 = 1.0f / loader->svgParse->global.w;
+    grad->linear->x2Pct = 1;
+
     simpleXmlParseAttributes(buf, bufLength, _attrParseLinearGradientNode, loader);
 
     for (unsigned int i = 0; i < sizeof(linear_tags) / sizeof(linear_tags[0]); i++) {
@@ -2254,10 +2259,9 @@ static SvgStyleGradient* _createLinearGradient(SvgLoaderData* loader, const char
 
 
 /**
- * For all Gradients lengths would be calculated into percentages related to
- * canvas width and height.
- *
- * if user then recalculate actual pixels into percentages
+ * In the case when the gradients lengths are given as numbers (not percentages)
+ * in the current user coordinate system, they are recalculated into percentages
+ * related to the canvas width and height.
  */
 static constexpr struct
 {
