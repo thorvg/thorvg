@@ -64,6 +64,17 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
+/*
+ * According to: https://www.w3.org/TR/SVG2/coords.html#Units
+ * and: https://www.w3.org/TR/css-values-4/#absolute-lengths
+ */
+#define PX_PER_IN 96        //1 in = 96 px
+#define PX_PER_PC 16        //1 pc = 1/6 in  -> PX_PER_IN/6
+#define PX_PER_PT 1.333333f //1 pt = 1/72 in -> PX_PER_IN/72
+#define PX_PER_MM 3.779528f //1 in = 25.4 mm -> PX_PER_IN/25.4
+#define PX_PER_CM 37.79528f //1 in = 2.54 cm -> PX_PER_IN/2.54
+
+
 typedef SvgNode* (*FactoryMethod)(SvgLoaderData* loader, SvgNode* parent, const char* buf, unsigned bufLength);
 typedef SvgStyleGradient* (*GradientFactoryMethod)(SvgLoaderData* loader, const char* buf, unsigned bufLength);
 
@@ -107,20 +118,16 @@ static bool _parseNumber(const char** content, float* number)
 
 /**
  * According to https://www.w3.org/TR/SVG/coords.html#Units
- *
- * TODO
- * Since this documentation is not obvious, more clean recalculation with dpi
- * is required, but for now default w3 constants would be used
  */
 static float _toFloat(const SvgParser* svgParse, const char* str, SvgParserLengthType type)
 {
     float parsedValue = svgUtilStrtof(str, nullptr);
 
-    if (strstr(str, "cm")) parsedValue = parsedValue * 35.43307;
-    else if (strstr(str, "mm")) parsedValue = parsedValue * 3.543307;
-    else if (strstr(str, "pt")) parsedValue = parsedValue * 1.25;
-    else if (strstr(str, "pc")) parsedValue = parsedValue * 15;
-    else if (strstr(str, "in")) parsedValue = parsedValue * 90;
+    if (strstr(str, "cm")) parsedValue *= PX_PER_CM;
+    else if (strstr(str, "mm")) parsedValue *= PX_PER_MM;
+    else if (strstr(str, "pt")) parsedValue *= PX_PER_PT;
+    else if (strstr(str, "pc")) parsedValue *= PX_PER_PC;
+    else if (strstr(str, "in")) parsedValue *= PX_PER_IN;
     else if (strstr(str, "%")) {
         if (type == SvgParserLengthType::Vertical) parsedValue = (parsedValue / 100.0) * svgParse->global.h;
         else if (type == SvgParserLengthType::Horizontal) parsedValue = (parsedValue / 100.0) * svgParse->global.w;
@@ -132,7 +139,6 @@ static float _toFloat(const SvgParser* svgParse, const char* str, SvgParserLengt
             parsedValue = (parsedValue / 100.0) * max;
         }
     }
-
     //TODO: Implement 'em', 'ex' attributes
 
     return parsedValue;
@@ -150,11 +156,11 @@ static float _gradientToFloat(const SvgParser* svgParse, const char* str, bool& 
         parsedValue = parsedValue / 100.0;
         isPercentage = true;
     }
-    else if (strstr(str, "cm")) parsedValue = parsedValue * 35.43307;
-    else if (strstr(str, "mm")) parsedValue = parsedValue * 3.543307;
-    else if (strstr(str, "pt")) parsedValue = parsedValue * 1.25;
-    else if (strstr(str, "pc")) parsedValue = parsedValue * 15;
-    else if (strstr(str, "in")) parsedValue = parsedValue * 90;
+    else if (strstr(str, "cm")) parsedValue *= PX_PER_CM;
+    else if (strstr(str, "mm")) parsedValue *= PX_PER_MM;
+    else if (strstr(str, "pt")) parsedValue *= PX_PER_PT;
+    else if (strstr(str, "pc")) parsedValue *= PX_PER_PC;
+    else if (strstr(str, "in")) parsedValue *= PX_PER_IN;
     //TODO: Implement 'em', 'ex' attributes
 
     return parsedValue;
