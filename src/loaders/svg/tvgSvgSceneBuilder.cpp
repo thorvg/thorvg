@@ -98,15 +98,15 @@ static unique_ptr<RadialGradient> _applyRadialGradientProperty(SvgStyleGradient*
 {
     Fill::ColorStop *stops;
     int stopCount = 0;
-    int radius;
+    float radius;
     auto fillGrad = RadialGradient::gen();
 
-    radius = static_cast<int>(sqrtf(powf(rw, 2.0f) + powf(rh, 2.0f)) / sqrtf(2.0f));
+    radius = sqrtf(powf(rw, 2.0f) + powf(rh, 2.0f)) / sqrtf(2.0f);
     if (!g->userSpace) {
          //That is according to Units in here
          //https://www.w3.org/TR/2015/WD-SVG2-20150915/coords.html
         int min = static_cast<int>((rh > rw) ? rw : rh);
-        radius = static_cast<int>(sqrt(pow(min, 2) + pow(min, 2)) / sqrtf(2.0f));
+        radius = sqrtf(pow(min, 2) + pow(min, 2)) / sqrtf(2.0f);
     }
 
     if (g->usePercentage) {
