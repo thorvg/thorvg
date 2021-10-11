@@ -50,6 +50,7 @@ struct FillDup : DuplicateMethod<Fill>
 struct Fill::Impl
 {
     ColorStop* colorStops = nullptr;
+    Matrix* transform = nullptr;
     uint32_t cnt = 0;
     FillSpread spread;
     DuplicateMethod<Fill>* dup = nullptr;
@@ -58,6 +59,7 @@ struct Fill::Impl
     {
         if (dup) delete(dup);
         if (colorStops) free(colorStops);
+        if (transform) delete(transform);
     }
 
     void method(DuplicateMethod<Fill>* dup)
@@ -74,7 +76,10 @@ struct Fill::Impl
         ret->pImpl->spread = spread;
         ret->pImpl->colorStops = static_cast<ColorStop*>(malloc(sizeof(ColorStop) * cnt));
         memcpy(ret->pImpl->colorStops, colorStops, sizeof(ColorStop) * cnt);
-
+        if (transform) {
+            ret->pImpl->transform = new Matrix;
+            if (ret->pImpl->transform) *ret->pImpl->transform = *transform;
+        }
         return ret;
     }
 };

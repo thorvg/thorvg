@@ -393,9 +393,22 @@ public:
     Result spread(FillSpread s) noexcept;
 
     /**
+     * @brief Sets the matrix of the affine transformation for the gradient fill.
+     *
+     * The augmented matrix of the transformation is expected to be given.
+     *
+     * @param[in] m The 3x3 augmented matrix.
+     *
+     * @return Result::Success when succeed, Result::FailedAllocation otherwise.
+     *
+     * @BETA_API
+     */
+    Result transform(const Matrix& m) noexcept;
+
+    /**
      * @brief Gets the parameters of the colors of the gradient, their position and number.
      *
-     * @param[in] colorStops A pointer to the memory location, where the array of the gradient's ColorStop is stored.
+     * @param[out] colorStops A pointer to the memory location, where the array of the gradient's ColorStop is stored.
      *
      * @return The number of colors used in the gradient. This value corresponds to the length of the @p colorStops array.
      */
@@ -407,6 +420,17 @@ public:
      * @return The FillSpread value of this Fill.
      */
     FillSpread spread() const noexcept;
+
+    /**
+     * @brief Gets the matrix of the affine transformation of the gradient fill.
+     *
+     * In case no transformation was applied, the identity matrix is returned.
+     *
+     * @retval The augmented transformation matrix.
+     *
+     * @BETA_API
+     */
+    Matrix transform() const noexcept;
 
     /**
      * @brief Creates a copy of the Fill object.
@@ -1375,7 +1399,7 @@ public:
  * It's useful when you need to save the composed scene or image from a paint object and recreate it later.
  *
  * The file format is decided by the extension name(i.e. "*.tvg") while the supported formats depend on the TVG packaging environment.
- * If it doesn't support the file format, the save() method returns the @c NonSuppport result.
+ * If it doesn't support the file format, the save() method returns the @c Result::NonSuppport result.
  *
  * Once you export a paint to the file successfully, you can recreate it using the Picture class.
  *
