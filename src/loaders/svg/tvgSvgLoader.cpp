@@ -1661,7 +1661,6 @@ static SvgStyleGradient* _cloneGradient(SvgStyleGradient* from)
     grad->id = from->id ? _copyId(from->id->c_str()) : nullptr;
     grad->ref = from->ref ? _copyId(from->ref->c_str()) : nullptr;
     grad->spread = from->spread;
-    grad->usePercentage = from->usePercentage;
     grad->userSpace = from->userSpace;
 
     if (from->transform) {
@@ -2063,8 +2062,6 @@ static SvgStyleGradient* _createRadialGradient(SvgLoaderData* loader, const char
         radialTags[i].tagRecalc(loader, grad->radial, grad->userSpace);
     }
 
-    grad->usePercentage = true;
-
     return loader->svgParse->styleGrad;
 }
 
@@ -2240,8 +2237,6 @@ static SvgStyleGradient* _createLinearGradient(SvgLoaderData* loader, const char
     for (unsigned int i = 0; i < sizeof(linear_tags) / sizeof(linear_tags[0]); i++) {
         linear_tags[i].tagRecalc(loader, grad->linear, grad->userSpace);
     }
-
-    grad->usePercentage = true;
 
     return loader->svgParse->styleGrad;
 }
