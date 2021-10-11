@@ -22,7 +22,6 @@
 
 #include <iostream>
 #include <thorvg.h>
-#include <vector>
 #include <array>
 
 using namespace std;
