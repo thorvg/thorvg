@@ -1371,11 +1371,11 @@ public:
  *
  * @brief A class for exporting a paint object into a specified file, from which to recover the paint data later.
  *
- * ThorVG provides a feature for exporting & importing paint data, the Saver has a role to export it to a file.
- * Basically, this feature is useful when you need to save the composed scene or image from a paint object and recreate it later.
+ * ThorVG provides a feature for exporting & importing paint data. The Saver role is to export the paint data to a file.
+ * It's useful when you need to save the composed scene or image from a paint object and recreate it later.
  *
  * The file format is decided by the extension name(i.e. "*.tvg") while the supported formats depend on the TVG packaging environment.
- * If it doesn't support the file format, it will return the @c NonSuppport result by the save() method.
+ * If it doesn't support the file format, the save() method returns the @c NonSuppport result.
  *
  * Once you export a paint to the file successfully, you can recreate it using the Picture class.
  *
@@ -1392,16 +1392,18 @@ public:
      * @brief Exports the given @p paint data to the given @p path
      *
      * If the saver module supports any compression mechanism, it will optimize the data size.
-     * This might affect the encoding/decoding time slow down in cases, You can turn off the compression
-     * if your system whole focus on the speed.
+     * This might affect the encoding/decoding time in some cases. You can turn off the compression
+     * if you wish to optimize for speed.
      *
      * @param[in] paint The paint to be saved with all its associated properties.
      * @param[in] path A path to the file, in which the paint data is to be saved.
-     * @param[in] compress Use data compression if it's available.
+     * @param[in] compress If @c true then compress data if possible.
      *
      * @retval Result::Success When succeed.
-     * @retval Result::NonSupport When trying to save a file with an unknown extension nor non supported format.
-     * @retval Result::Unknown Others.
+     * @retval Result::InsufficientCondition If currently saving other resources.
+     * @retval Result::NonSupport When trying to save a file with an unknown extension or in an unsupported format.
+     * @retval Result::MemoryCorruption An internal error.
+     * @retval Result::Unknown In case an empty paint is to be saved.
      *
      * @note Saving can be asynchronous if the assigned thread number is greater than zero. To guarantee the saving is done, call sync() afterwards.
      * @see Saver::sync()
@@ -1413,14 +1415,14 @@ public:
     /**
      * @brief Guarantees that the saving task is finished.
      *
-     * The behavior of the saver will work on a sync/async basis, depending on the threading setting of the Initializer.
-     * Thus if you wish to have a benefit of it, you must call sync() after the save() in the proper delayed time.
+     * The behavior of the Saver works on a sync/async basis, depending on the threading setting of the Initializer.
+     * Thus, if you wish to have a benefit of it, you must call sync() after the save() in the proper delayed time.
      * Otherwise, you can call sync() immediately.
      *
      * @return Result::Success when succeed.
      * @return Result::InsufficientCondition otherwise.
      *
-     * @note The asynchronous tasking is depend on the saver module implementation.
+     * @note The asynchronous tasking is dependent on the Saver module implementation.
      * @see Saver::save()
      *
      * @since 0.5
