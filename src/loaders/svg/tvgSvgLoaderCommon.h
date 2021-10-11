@@ -266,7 +266,6 @@ struct SvgStyleGradient
     Matrix* transform = nullptr;
     Array<Fill::ColorStop> stops;
     bool userSpace = false;
-    bool usePercentage = false;
 
     ~SvgStyleGradient()
     {

@@ -46,12 +46,10 @@ static unique_ptr<LinearGradient> _applyLinearGradientProperty(SvgStyleGradient*
     int stopCount = 0;
     auto fillGrad = LinearGradient::gen();
 
-    if (g->usePercentage) {
-        g->linear->x1 = g->linear->x1 * rw + rx;
-        g->linear->y1 = g->linear->y1 * rh + ry;
-        g->linear->x2 = g->linear->x2 * rw + rx;
-        g->linear->y2 = g->linear->y2 * rh + ry;
-    }
+    g->linear->x1 = g->linear->x1 * rw + rx;
+    g->linear->y1 = g->linear->y1 * rh + ry;
+    g->linear->x2 = g->linear->x2 * rw + rx;
+    g->linear->y2 = g->linear->y2 * rh + ry;
 
     if (g->transform) {
         //Calc start point
@@ -109,13 +107,11 @@ static unique_ptr<RadialGradient> _applyRadialGradientProperty(SvgStyleGradient*
         radius = sqrtf(pow(min, 2) + pow(min, 2)) / sqrtf(2.0f);
     }
 
-    if (g->usePercentage) {
-        g->radial->cx = g->radial->cx * rw + rx;
-        g->radial->cy = g->radial->cy * rh + ry;
-        g->radial->r = g->radial->r * radius;
-        g->radial->fx = g->radial->fx * rw + rx;
-        g->radial->fy = g->radial->fy * rh + ry;
-    }
+    g->radial->cx = g->radial->cx * rw + rx;
+    g->radial->cy = g->radial->cy * rh + ry;
+    g->radial->r = g->radial->r * radius;
+    g->radial->fx = g->radial->fx * rw + rx;
+    g->radial->fy = g->radial->fy * rh + ry;
 
     //TODO: Radial gradient transformation - all tests possible after rx/ry implementation
     if (g->transform) {
