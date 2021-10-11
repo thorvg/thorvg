@@ -87,6 +87,22 @@ FillSpread Fill::spread() const noexcept
 }
 
 
+Result Fill::transform(const Matrix& m) noexcept
+{
+    if (!pImpl->transform) pImpl->transform = new Matrix();
+    if (!pImpl->transform) return Result::FailedAllocation;
+    *pImpl->transform = m;
+    return Result::Success;
+}
+
+
+Matrix Fill::transform() const noexcept
+{
+    if (pImpl->transform) return *pImpl->transform;
+    return {1, 0, 0, 0, 1, 0, 0, 0, 1};
+}
+
+
 Fill* Fill::duplicate() const noexcept
 {
     return pImpl->duplicate();
