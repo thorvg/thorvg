@@ -515,6 +515,13 @@ TVG_EXPORT Tvg_Gradient* tvg_radial_gradient_new()
 }
 
 
+TVG_EXPORT Tvg_Gradient* tvg_gradient_duplicate(Tvg_Gradient* grad)
+{
+    if (!grad) return nullptr;
+    return (Tvg_Gradient*) reinterpret_cast<Fill*>(grad)->duplicate();
+}
+
+
 TVG_EXPORT Tvg_Result tvg_gradient_del(Tvg_Gradient* grad)
 {
     if (!grad) return TVG_RESULT_INVALID_ARGUMENT;
