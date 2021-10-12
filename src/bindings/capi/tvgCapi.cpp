@@ -511,7 +511,6 @@ TVG_EXPORT Tvg_Gradient* tvg_linear_gradient_new()
 TVG_EXPORT Tvg_Gradient* tvg_radial_gradient_new()
 {
     return (Tvg_Gradient*)RadialGradient::gen().release();
-
 }
 
 
@@ -580,6 +579,9 @@ TVG_EXPORT Tvg_Result tvg_gradient_get_spread(Tvg_Gradient* grad, Tvg_Stroke_Fil
     return TVG_RESULT_SUCCESS;
 }
 
+/************************************************************************/
+/* Scene API                                                            */
+/************************************************************************/
 
 TVG_EXPORT Tvg_Paint* tvg_scene_new()
 {
@@ -607,6 +609,34 @@ TVG_EXPORT Tvg_Result tvg_scene_clear(Tvg_Paint* scene, bool free)
     return (Tvg_Result) reinterpret_cast<Scene*>(scene)->clear(free);
 }
 
+/************************************************************************/
+/* Saver API                                                            */
+/************************************************************************/
+
+TVG_EXPORT Tvg_Saver* tvg_saver_new()
+{
+    return (Tvg_Saver*) Saver::gen().release();
+}
+
+
+TVG_EXPORT Tvg_Result tvg_saver_save(Tvg_Saver* saver, Tvg_Paint* paint, const char* path, bool compress)
+{
+    if (!saver || !paint || !path) return TVG_RESULT_INVALID_ARGUMENT;
+    return (Tvg_Result) reinterpret_cast<Saver*>(saver)->save(unique_ptr<Paint>((Paint*)paint), path, compress);
+}
+
+TVG_EXPORT Tvg_Result tvg_saver_sync(Tvg_Saver* saver)
+{
+    if (!saver) return TVG_RESULT_INVALID_ARGUMENT;
+    return (Tvg_Result) reinterpret_cast<Saver*>(saver)->sync();
+}
+
+TVG_EXPORT Tvg_Result tvg_saver_del(Tvg_Saver* saver)
+{
+    if (!saver) return TVG_RESULT_INVALID_ARGUMENT;
+    delete(reinterpret_cast<Saver*>(saver));
+    return TVG_RESULT_SUCCESS;
+}
 
 #ifdef __cplusplus
 }

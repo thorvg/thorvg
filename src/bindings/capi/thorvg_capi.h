@@ -101,6 +101,12 @@ typedef struct _Tvg_Gradient Tvg_Gradient;
 
 
 /**
+* \brief A structure representing an object that enables to save a Tvg_Paint object into a file.
+*/
+typedef struct _Tvg_Saver Tvg_Saver;
+
+
+/**
  * \brief Enumeration specifying the result from the APIs.
  */
 typedef enum {
@@ -1863,6 +1869,88 @@ TVG_EXPORT Tvg_Result tvg_scene_push(Tvg_Paint* scene, Tvg_Paint* paint);
 TVG_EXPORT Tvg_Result tvg_scene_clear(Tvg_Paint* scene, bool free);
 
 /** \} */   // end defgroup ThorVGCapi_Scene
+
+
+/**
+* \defgroup ThorVGCapi_Saver Saver
+* \brief A module for exporting a paint object into a specified file.
+*
+* The module enables to save the composed scene and/or image from a paint object.
+* Once it's successfully exported to a file, it can be recreated using the Picture module.
+*
+* \{
+*/
+
+/************************************************************************/
+/* Saver API                                                            */
+/************************************************************************/
+/*!
+* \brief Creates a new Tvg_Saver object.
+*
+* \return A new Tvg_Saver object.
+*/
+TVG_EXPORT Tvg_Saver* tvg_saver_new();
+
+
+/*!
+* \brief Exports the given @p paint data to the given @p path
+*
+* If the saver module supports any compression mechanism, it will optimize the data size.
+* This might affect the encoding/decoding time in some cases. You can turn off the compression
+* if you wish to optimize for speed.
+*
+* \param[in] saver The Tvg_Saver object connected with the saving task.
+* \param[in] paint The paint to be saved with all its associated properties.
+* \param[in] path A path to the file, in which the paint data is to be saved.
+* \param[in] compress If @c true then compress data if possible.
+*
+* \return Tvg_Result enumeration.
+* \retval TVG_RESULT_SUCCESS Succeed.
+* \retval TVG_RESULT_INVALID_ARGUMENT A @c nullptr passed as the argument.
+* \retval TVG_RESULT_INSUFFICIENT_CONDITION Currently saving other resources.
+* \retval TVG_RESULT_NOT_SUPPORTED Trying to save a file with an unknown extension or in an unsupported format.
+* \retval TVG_RESULT_MEMORY_CORRUPTION An internal error.
+* \retval TVG_RESULT_UNKNOWN An empty paint is to be saved.
+*
+* \note Saving can be asynchronous if the assigned thread number is greater than zero. To guarantee the saving is done, call tvg_saver_sync() afterwards.
+* \see tvg_saver_sync()
+*/
+TVG_EXPORT Tvg_Result tvg_saver_save(Tvg_Saver* saver, Tvg_Paint* paint, const char* path, bool compress);
+
+
+/*!
+* \brief Guarantees that the saving task is finished.
+*
+* The behavior of the Saver module works on a sync/async basis, depending on the threading setting of the Initializer.
+* Thus, if you wish to have a benefit of it, you must call tvg_saver_sync() after the tvg_saver_save() in the proper delayed time.
+* Otherwise, you can call tvg_saver_sync() immediately.
+*
+* \param[in] saver The Tvg_Saver object connected with the saving task.
+*
+* \return Tvg_Result enumeration.
+* \retval TVG_RESULT_SUCCESS Succeed.
+* \retval TVG_RESULT_INVALID_ARGUMENT A @c nullptr passed as the argument.
+* \retval TVG_RESULT_INSUFFICIENT_CONDITION No saving task is running. 
+*
+* \note The asynchronous tasking is dependent on the Saver module implementation.
+* \see tvg_saver_save()
+*/
+TVG_EXPORT Tvg_Result tvg_saver_sync(Tvg_Saver* saver);
+
+
+/*!
+* \brief Deletes the given Tvg_Saver object.
+*
+* \param[in] saver The Tvg_Saver object to be deleted.
+*
+* \return Tvg_Result enumeration.
+* \retval TVG_RESULT_SUCCESS Succeed.
+* \retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Saver pointer.
+*/
+TVG_EXPORT Tvg_Result tvg_saver_del(Tvg_Saver* saver);
+
+
+/** \} */   // end defgroup ThorVGCapi_Saver
 
 
 /** \} */   // end defgroup ThorVG_CAPI
