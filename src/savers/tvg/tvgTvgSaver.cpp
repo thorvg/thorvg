@@ -524,7 +524,7 @@ TvgBinCounter TvgSaver::serializePath(const Shape* shape, const Matrix* transfor
 
     auto cnt = writeData(&cmdCnt, SIZE(cmdCnt));
     cnt += writeData(&ptsCnt, SIZE(ptsCnt));
-    cnt += writeData(outCmds, SIZE(outCmds));
+    cnt += writeData(outCmds, SIZE(TvgBinFlag) * cmdCnt);
 
     //transform?
     if (preTransform) {
