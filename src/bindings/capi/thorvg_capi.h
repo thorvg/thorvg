@@ -62,22 +62,6 @@ extern "C" {
 #define TVG_ENGINE_GL (1 << 2)
 
 
-/*!
-* \brief The 8-bit color channels are combined into 32-bit color in the order: alpha, blue, green, red.
-*
-* \ingroup ThorVGCapi_Canvas
-*/
-#define TVG_COLORSPACE_ABGR8888 0
-
-
-/*!
-* \brief The 8-bit color channels are combined into 32-bit color in the order: alpha, red, green, blue.
-*
-* \ingroup ThorVGCapi_Canvas
-*/
-#define TVG_COLORSPACE_ARGB8888 1
-
-
 /**
 * \brief A structure responsible for managing and drawing graphical elements.
 *
@@ -327,6 +311,15 @@ TVG_EXPORT Tvg_Result tvg_engine_term(unsigned engine_method);
 /************************************************************************/
 /* SwCanvas API                                                         */
 /************************************************************************/
+
+/**
+ * \brief Enumeration specifying the methods of combining the 8-bit color channels into 32-bit color.
+ */
+typedef enum {
+    TVG_COLORSPACE_ABGR8888 = 0, ///< The 8-bit color channels are combined into 32-bit color in the order: alpha, blue, green, red.
+    TVG_COLORSPACE_ARGB8888      ///< The 8-bit color channels are combined into 32-bit color in the order: alpha, red, green, blue.
+} Tvg_Colorspace;
+
 /*!
 * \brief Creates a Canvas object.
 *
@@ -377,9 +370,9 @@ TVG_EXPORT Tvg_Canvas* tvg_swcanvas_create();
 *
 * \warning Do not access @p buffer during tvg_canvas_draw() - tvg_canvas_sync(). It should not be accessed while TVG is writing on it.
 *
-* \see TVG_COLORSPACE_ARGB8888, TVG_COLORSPACE_ABGR8888
+* \see Tvg_Colorspace
 */
-TVG_EXPORT Tvg_Result tvg_swcanvas_set_target(Tvg_Canvas* canvas, uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h, uint32_t cs);
+TVG_EXPORT Tvg_Result tvg_swcanvas_set_target(Tvg_Canvas* canvas, uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h, Tvg_Colorspace cs);
 
 
 /** \} */   // end defgroup ThorVGCapi_SwCanvas
