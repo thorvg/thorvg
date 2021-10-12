@@ -1662,6 +1662,18 @@ TVG_EXPORT Tvg_Result tvg_gradient_get_spread(Tvg_Gradient* grad, Tvg_Stroke_Fil
 
 
 /*!
+* \brief Duplicates the given Tvg_Gradient object.
+*
+* Creates a new object and sets its all properties as in the original object.
+*
+* \param[in] grad The Tvg_Gradient object to be copied.
+*
+* \return A copied Tvg_Gradient object if succeed, @c nullptr otherwise.
+*/
+TVG_EXPORT Tvg_Gradient* tvg_gradient_duplicate(Tvg_Gradient* grad);
+
+
+/*!
 * \brief Deletes the given gradient object.
 *
 * \param[in] grad The gradient object to be deleted.
