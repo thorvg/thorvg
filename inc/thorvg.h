@@ -1258,7 +1258,7 @@ public:
      * @param[in] policy The method specifying the Memory Pool behavior. The default value is @c MempoolPolicy::Default.
      *
      * @retval Result::Success When succeed.
-     * @retval Result::InsufficientCondition If the canvas has no paints.
+     * @retval Result::InsufficientCondition If the canvas contains some paints already.
      * @retval Result::NonSupport In case the software engine is not supported.
      *
      * @note When @c policy is set as @c MempoolPolicy::Individual, the current instance of canvas uses its own individual
