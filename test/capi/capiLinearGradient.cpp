@@ -95,6 +95,48 @@ TEST_CASE("Linear Gradient color stops", "[capiLinearGradient]")
     REQUIRE(tvg_paint_del(shape) == TVG_RESULT_SUCCESS);
 }
 
+TEST_CASE("Linear Gradient duplicate", "[capiLinearGradient]")
+{
+    Tvg_Paint *shape = tvg_shape_new();
+    REQUIRE(shape);
+
+    Tvg_Gradient *gradient = tvg_linear_gradient_new();
+    REQUIRE(gradient);
+
+    Tvg_Color_Stop color_stops[3] =
+    {
+        {0.0f, 255,   0,   0, 155},
+        {0.8f,   0, 255,   0, 155},
+        {1.0f, 128,   0, 128, 155},
+    };
+    REQUIRE(tvg_gradient_set_color_stops(gradient, color_stops, 3) == TVG_RESULT_SUCCESS);
+
+    REQUIRE(tvg_linear_gradient_set(gradient, 11.1f, 22.2f, 33.3f, 44.4f) == TVG_RESULT_SUCCESS);
+
+    Tvg_Gradient *gradient_dup = tvg_gradient_duplicate(gradient);
+    REQUIRE(gradient_dup);
+
+    const Tvg_Color_Stop *color_stops_dup = NULL;
+    uint32_t color_stops_count_dup = 0;
+    REQUIRE(tvg_gradient_get_color_stops(gradient_dup, &color_stops_dup,  &color_stops_count_dup) == TVG_RESULT_SUCCESS);
+    REQUIRE(color_stops_count_dup == 3);
+    REQUIRE(color_stops_dup);
+    REQUIRE(color_stops_dup[1].offset == Approx(0.8f).margin(0.000001));
+    REQUIRE(color_stops_dup[2].a == 155);
+    REQUIRE(color_stops_dup[2].r == 128);
+
+    float x1, y1, x2, y2;
+    REQUIRE(tvg_linear_gradient_get(gradient_dup, &x1, &y1, &x2, &y2) == TVG_RESULT_SUCCESS);
+    REQUIRE(x1 == Approx(11.1f).margin(0.000001));
+    REQUIRE(y1 == Approx(22.2f).margin(0.000001));
+    REQUIRE(x2 == Approx(33.3f).margin(0.000001));
+    REQUIRE(y2 == Approx(44.4f).margin(0.000001));
+
+    REQUIRE(tvg_gradient_del(gradient) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_gradient_del(gradient_dup) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_paint_del(shape) == TVG_RESULT_SUCCESS);
+}
+
 TEST_CASE("Linear Gradient clear data", "[capiLinearGradient]")
 {
     Tvg_Paint *shape = tvg_shape_new();
