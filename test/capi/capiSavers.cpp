@@ -1,0 +1,99 @@
+/*
+ * Copyright (c) 2021 Samsung Electronics Co., Ltd. All rights reserved.
+
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+#include <thorvg_capi.h>
+#include "../catch.hpp"
+
+
+TEST_CASE("Create and delete a Saver", "[capiSaver]")
+{
+    Tvg_Saver* saver = tvg_saver_new();
+    REQUIRE(saver);
+
+    REQUIRE(tvg_saver_del(nullptr) == TVG_RESULT_INVALID_ARGUMENT);
+    REQUIRE(tvg_saver_del(saver) == TVG_RESULT_SUCCESS);
+}
+
+TEST_CASE("Save a paint into a file", "[capiSaver]")
+{
+    Tvg_Saver* saver = tvg_saver_new();
+    REQUIRE(saver);
+
+    Tvg_Paint* paint_empty = tvg_shape_new();
+    REQUIRE(paint_empty);
+
+    Tvg_Paint* paint1 = tvg_shape_new();
+    REQUIRE(paint1);
+    REQUIRE(tvg_shape_append_rect(paint1, 11.1f, 22.2f, 33.3f, 44.4f, 5.5f, 6.6f) == TVG_RESULT_SUCCESS);
+
+    Tvg_Paint* paint2 = tvg_paint_duplicate(paint1);
+    REQUIRE(paint2);
+
+    Tvg_Paint* paint3 = tvg_paint_duplicate(paint1);
+    REQUIRE(paint3);
+
+    //An invalid argument
+    REQUIRE(tvg_saver_save(nullptr, paint_empty, TEST_DIR"/test.tvg", false) == TVG_RESULT_INVALID_ARGUMENT);
+    REQUIRE(tvg_saver_save(saver, nullptr, TEST_DIR"/test.tvg", false) == TVG_RESULT_INVALID_ARGUMENT);
+    REQUIRE(tvg_saver_save(saver, paint_empty, nullptr, false) == TVG_RESULT_INVALID_ARGUMENT);
+
+    //Save an empty paint
+    REQUIRE(tvg_saver_save(saver, paint_empty, TEST_DIR"/test.tvg", false) == TVG_RESULT_UNKNOWN);
+
+    //Unsupported target file format
+    REQUIRE(tvg_saver_save(saver, paint1, TEST_DIR"/test.err", false) == TVG_RESULT_NOT_SUPPORTED);
+
+    //Correct call
+    REQUIRE(tvg_saver_save(saver, paint2, TEST_DIR"/test.tvg", false) == TVG_RESULT_SUCCESS);
+
+    //Busy - saving some resources
+    REQUIRE(tvg_saver_save(saver, paint3, TEST_DIR"/test.tvg", false) == TVG_RESULT_INSUFFICIENT_CONDITION);
+
+    REQUIRE(tvg_saver_del(saver) == TVG_RESULT_SUCCESS);
+}
+
+TEST_CASE("Synchronize a Saver", "[capiSaver]")
+{
+    Tvg_Saver* saver = tvg_saver_new();
+    REQUIRE(saver);
+
+    Tvg_Paint* paint1 = tvg_shape_new();
+    REQUIRE(paint1);
+    REQUIRE(tvg_shape_append_rect(paint1, 11.1f, 22.2f, 33.3f, 44.4f, 5.5f, 6.6f) == TVG_RESULT_SUCCESS);
+
+    Tvg_Paint* paint2 = tvg_paint_duplicate(paint1);
+    REQUIRE(paint2);
+
+    //An invalid argument
+    REQUIRE(tvg_saver_sync(nullptr) == TVG_RESULT_INVALID_ARGUMENT);
+
+    //Nothing to be synced
+    REQUIRE(tvg_saver_sync(saver) == TVG_RESULT_INSUFFICIENT_CONDITION);
+
+    REQUIRE(tvg_saver_save(saver, paint1, TEST_DIR"/test.tvg", true) == TVG_RESULT_SUCCESS);
+
+    //Releasing the saving task
+    REQUIRE(tvg_saver_sync(saver) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_saver_save(saver, paint2, TEST_DIR"/test.tvg", true) == TVG_RESULT_SUCCESS);
+
+    REQUIRE(tvg_saver_del(saver) == TVG_RESULT_SUCCESS);
+}
