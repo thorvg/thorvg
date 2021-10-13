@@ -71,187 +71,147 @@ static uint8_t _base64Value(const char chr)
  */
 float svgUtilStrtof(const char *nPtr, char **endPtr)
 {
-    const char *iter;
-    const char *a;
-    float val;
-    unsigned long long integerPart;
-    int minus;
-
-    if (endPtr) *endPtr = (char*)nPtr;
+    if (endPtr) *endPtr = (char*)(nPtr);
     if (!nPtr) return 0.0f;
 
-    a = iter = nPtr;
+    auto a = nPtr;
+    auto iter = nPtr;
+    auto val = 0.0f;
+    unsigned long long integerPart = 0;
+    int minus = 1;
 
     //ignore leading whitespaces
     while (isspace(*iter)) iter++;
 
     //signed or not
-    minus = 1;
-    if (*iter == '-')
-    {
+    if (*iter == '-') {
         minus = -1;
         iter++;
+    } else if (*iter == '+') {
+        iter++;
     }
-    else if (*iter == '+') iter++;
 
-    if (tolower(*iter) == 'i')
-    {
-        if ((tolower(*(iter + 1)) == 'n') && (tolower(*(iter + 2)) == 'f'))
-        {
-            iter += 3;
+    if (tolower(*iter) == 'i') {
+        if ((tolower(*(iter + 1)) == 'n') && (tolower(*(iter + 2)) == 'f')) iter += 3;
+        else goto error;
+
+        if (tolower(*(iter + 3)) == 'i') {
+            if ((tolower(*(iter + 4)) == 'n') && (tolower(*(iter + 5)) == 'i') && (tolower(*(iter + 6)) == 't') && (tolower(*(iter + 7)) == 'y')) iter += 5;
+            else goto error;
         }
-        else goto on_error;
-
-        if (tolower(*(iter + 3)) == 'i')
-        {
-            if ((tolower(*(iter + 4)) == 'n') &&
-                (tolower(*(iter + 5)) == 'i') &&
-                (tolower(*(iter + 6)) == 't') &&
-                (tolower(*(iter + 7)) == 'y'))
-            {
-               iter += 5;
-            }
-            else goto on_error;
-         }
-         if (endPtr) *endPtr = (char *)iter;
-         return (minus == -1) ? -INFINITY : INFINITY;
+        if (endPtr) *endPtr = (char *)(iter);
+        return (minus == -1) ? -INFINITY : INFINITY;
     }
 
-    if (tolower(*iter) == 'n')
-    {
-         if ((tolower(*(iter + 1)) == 'a') && (tolower(*(iter + 2)) == 'n')) iter += 3;
-         else goto on_error;
+    if (tolower(*iter) == 'n') {
+        if ((tolower(*(iter + 1)) == 'a') && (tolower(*(iter + 2)) == 'n')) iter += 3;
+        else goto error;
 
-         if (endPtr) *endPtr = (char *)iter;
-         return (minus == -1) ? -NAN : NAN;
+        if (endPtr) *endPtr = (char *)(iter);
+        return (minus == -1) ? -NAN : NAN;
     }
 
-    integerPart = 0;
-
-    //(optional) integer part before dot
-    if (isdigit(*iter))
-    {
-        for (; isdigit(*iter); iter++) integerPart = integerPart * 10ULL + (unsigned long long)(*iter - '0');
-
+    //Optional: integer part before dot
+    if (isdigit(*iter)) {
+        for (; isdigit(*iter); iter++) {
+            integerPart = integerPart * 10ULL + (unsigned long long)(*iter - '0');
+        }
         a = iter;
-    }
-    else if (*iter != '.')
-    {
-        val = 0.0f;
-        goto on_success;
+    } else if (*iter != '.') {
+        goto success;
     }
 
-    val = (float)integerPart;
+    val = static_cast<float>(integerPart);
 
-    //(optional) decimal part after dot
-    if (*iter == '.')
-    {
-        unsigned long long decimalPart;
-        unsigned long long pow10;
-        int count;
+    //Optional: decimal part after dot
+    if (*iter == '.') {
+        unsigned long long decimalPart = 0;
+        unsigned long long pow10 = 1;
+        int count = 0;
 
         iter++;
 
-        decimalPart = 0;
-        count = 0;
-        pow10 = 1;
-
-        if (isdigit(*iter))
-        {
-            for (; isdigit(*iter); iter++, count++)
-            {
-                if (count < 19)
-                {
-                    decimalPart = decimalPart * 10ULL +  + (unsigned long long)(*iter - '0');
+        if (isdigit(*iter)) {
+            for (; isdigit(*iter); iter++, count++) {
+                if (count < 19) {
+                    decimalPart = decimalPart * 10ULL +  + static_cast<unsigned long long>(*iter - '0');
                     pow10 *= 10ULL;
                 }
             }
         }
-        val += (float)decimalPart / (float)pow10;
+        val += static_cast<float>(decimalPart) / static_cast<float>(pow10);
         a = iter;
     }
 
-    //(optional) exponent
-    if ((*iter == 'e') || (*iter == 'E'))
-    {
-        float scale = 1.0f;
-        unsigned int expo_part;
-        int minus_e;
-
+    //Optional: exponent
+    if (*iter == 'e' || *iter == 'E') {
         ++iter;
 
         //Exception: svg may have 'em' unit for fonts. ex) 5em, 10.5em
         if ((*iter == 'm') || (*iter == 'M')) {
             //TODO: We don't support font em unit now, but has to multiply val * font size later...
             a = iter + 1;
-            goto on_success;
+            goto success;
         }
 
         //signed or not
-        minus_e = 1;
-        if (*iter == '-')
-        {
+        int minus_e = 1;
+
+        if (*iter == '-') {
             minus_e = -1;
             ++iter;
+        } else if (*iter == '+') {
+            iter++;
         }
-        else if (*iter == '+') iter++;
 
-        //exponential part
-        expo_part = 0;
-        if (isdigit(*iter))
-        {
+        unsigned int exponetPart = 0;
+
+        if (isdigit(*iter)) {
             while (*iter == 0) iter++;
-
-            for (; isdigit(*iter); iter++)
-            {
-                expo_part = expo_part * 10U + (unsigned int)(*iter - '0');
+            for (; isdigit(*iter); iter++) {
+                exponetPart = exponetPart * 10U + static_cast<unsigned int>(*iter - '0');
             }
-        }
-        else if (!isdigit(*(a - 1)))
-        {
+        } else if (!isdigit(*(a - 1))) {
             a = nPtr;
-            goto on_success;
+            goto success;
+        } else if (*iter == 0) {
+            goto success;
         }
-        else if (*iter == 0) goto on_success;
 
-        //if ((_floatExact(val, 2.2250738585072011f)) && ((minus_e * (int)expo_part) <= -308))
-        if ((_floatExact(val, 1.175494351f)) && ((minus_e * (int)expo_part) <= -38))
-        {
+        //if ((_floatExact(val, 2.2250738585072011f)) && ((minus_e * static_cast<int>(exponetPart)) == -308)) {
+        if ((_floatExact(val, 1.175494351f)) && ((minus_e * static_cast<int>(exponetPart)) <= -38))
             //val *= 1.0e-308f;
             val *= 1.0e-38f;
             a = iter;
-            goto on_success;
+            goto success;
         }
 
         a = iter;
+        auto scale = 1.0f;
 
-        while (expo_part >= 8U)
-        {
+        while (exponetPart >= 8U) {
             scale *= 1E8;
-            expo_part -= 8U;
+            exponetPart -= 8U;
         }
-        while (expo_part > 0U)
-        {
+        while (exponetPart > 0U) {
             scale *= 10.0f;
-            expo_part--;
+            exponetPart--;
         }
-
         val = (minus_e == -1) ? (val / scale) : (val * scale);
-    }
-    else if ((iter > nPtr) && !isdigit(*(iter - 1)))
-    {
+    } else if ((iter > nPtr) && !isdigit(*(iter - 1))) {
         a = nPtr;
-        goto on_success;
+        goto success;
     }
 
-on_success:
-    if (endPtr) *endPtr = (char *)a;
+success:
+    if (endPtr) *endPtr = (char*)(a);
     return minus * val;
 
-on_error:
-    if (endPtr) *endPtr = (char *)nPtr;
+error:
+    if (endPtr) *endPtr = (char*)(nPtr);
     return 0.0f;
 }
+
 
 string svgUtilURLDecode(const char *src)
 {
@@ -279,6 +239,7 @@ string svgUtilURLDecode(const char *src)
     }
     return decoded;
 }
+
 
 string svgUtilBase64Decode(const char *src)
 {
@@ -311,4 +272,3 @@ string svgUtilBase64Decode(const char *src)
     }
     return decoded;
 }
-

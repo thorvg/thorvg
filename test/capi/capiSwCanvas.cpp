@@ -76,6 +76,8 @@ TEST_CASE("Canvas initialization", "[capiSwCanvas]")
 
     REQUIRE(tvg_swcanvas_set_target(canvas, buffer, 200, 200, 200, TVG_COLORSPACE_ARGB8888) == TVG_RESULT_SUCCESS);
 
+    REQUIRE(tvg_swcanvas_set_mempool(canvas, TVG_MEMPOOL_POLICY_DEFAULT) == TVG_RESULT_SUCCESS);
+
     REQUIRE(tvg_canvas_destroy(canvas) == TVG_RESULT_SUCCESS);
 
     REQUIRE(tvg_engine_term(TVG_ENGINE_SW) == TVG_RESULT_SUCCESS);
