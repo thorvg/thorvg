@@ -136,7 +136,7 @@ public:
         return val(typed_memory_view(2, mOriginalSize));
     }
 
-    bool saveTvg()
+    bool saveTvg(bool compress)
     {
         mErrorMsg = "None";
 
@@ -146,7 +146,7 @@ public:
             mErrorMsg = "Saving initialization failed";
             return false;
         }
-        if (saver->save(move(duplicate), "file.tvg") != tvg::Result::Success) {
+        if (saver->save(move(duplicate), "file.tvg", compress) != tvg::Result::Success) {
             mErrorMsg = "Tvg saving failed";
             return false;
         }
