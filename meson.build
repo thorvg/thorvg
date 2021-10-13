@@ -67,6 +67,14 @@ if get_option('log') == true
     config_h.set10('THORVG_LOG_ENABLED', true)
 endif
 
+
+all_tools = false
+
+if get_option('tools').contains('all') == true
+    all_tools = true
+endif
+
+
 configure_file(
     output: 'config.h',
     configuration: config_h
@@ -118,8 +126,8 @@ Summary:
         get_option('log'),
         get_option('tests'),
         get_option('examples'),
-        get_option('tools').contains('svg2tvg'),
-        get_option('tools').contains('svg2png'),
+        all_tools or get_option('tools').contains('svg2tvg'),
+        all_tools or get_option('tools').contains('svg2png'),
     )
 
 message(summary)
