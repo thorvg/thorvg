@@ -164,12 +164,12 @@ float svgUtilStrtof(const char *nPtr, char **endPtr)
             iter++;
         }
 
-        unsigned int exponetPart = 0;
+        unsigned int exponentPart = 0;
 
         if (isdigit(*iter)) {
             while (*iter == 0) iter++;
             for (; isdigit(*iter); iter++) {
-                exponetPart = exponetPart * 10U + static_cast<unsigned int>(*iter - '0');
+                exponentPart = exponentPart * 10U + static_cast<unsigned int>(*iter - '0');
             }
         } else if (!isdigit(*(a - 1))) {
             a = nPtr;
@@ -178,14 +178,14 @@ float svgUtilStrtof(const char *nPtr, char **endPtr)
             goto success;
         }
 
-        if ((_floatExact(val, 2.2250738585072011f)) && ((minus_e * static_cast<int>(exponetPart)) == -308)) {
+        if ((_floatExact(val, 2.2250738585072011f)) && ((minus_e * static_cast<int>(exponentPart)) == -308)) {
             val *= 1.0e-308f;
             a = iter;
             errno = ERANGE;
             goto success;
         }
 
-        if ((_floatExact(val, 2.2250738585072012f)) && ((minus_e * static_cast<int>(exponetPart)) <= -308)) {
+        if ((_floatExact(val, 2.2250738585072012f)) && ((minus_e * static_cast<int>(exponentPart)) <= -308)) {
             val *= 1.0e-308f;
             a = iter;
             goto success;
@@ -194,13 +194,13 @@ float svgUtilStrtof(const char *nPtr, char **endPtr)
         a = iter;
         auto scale = 1.0f;
 
-        while (exponetPart >= 8U) {
+        while (exponentPart >= 8U) {
             scale *= 1E8;
-            exponetPart -= 8U;
+            exponentPart -= 8U;
         }
-        while (exponetPart > 0U) {
+        while (exponentPart > 0U) {
             scale *= 10.0f;
-            exponetPart--;
+            exponentPart--;
         }
         val = (minus_e == -1) ? (val / scale) : (val * scale);
     } else if ((iter > nPtr) && !isdigit(*(iter - 1))) {
