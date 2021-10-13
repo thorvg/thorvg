@@ -6,6 +6,7 @@ test_file = [
    'capiPaint.cpp',
    'capiPicture.cpp',
    'capiRadialGradient.cpp',
+   'capiSavers.cpp',
    'capiScene.cpp',
    'capiShape.cpp',
    'capiSwCanvas.cpp',
