@@ -11,6 +11,7 @@ endif
 if all_loaders or get_option('loaders').contains('png') == true
     subdir('external_png')
     if not png_dep.found()
+        message('PNG external loader dependencies not found. Using local PNG loader.')
         subdir('png')
     endif
 endif
@@ -18,6 +19,7 @@ endif
 if all_loaders or get_option('loaders').contains('jpg') == true
     subdir('external_jpg')
     if not jpg_dep.found()
+        message('JPG external loader dependencies not found. Using local JPG loader.')
         subdir('jpg')
     endif
 endif

@@ -6,7 +6,7 @@ source_file = [
 png_dep = dependency('libpng', required: false)
 
 if not png_dep.found()
-    png_dep = meson.get_compiler('cpp').find_library('libpng')
+    png_dep = cc.find_library('libpng', required: false)
 endif
 
 if png_dep.found()
