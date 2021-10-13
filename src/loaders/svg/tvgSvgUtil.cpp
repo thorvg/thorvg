@@ -32,7 +32,7 @@
 
 static inline bool _floatExact(float a, float b)
 {
-    return memcmp(&a, &b, sizeof (float)) == 0;
+    return memcmp(&a, &b, sizeof(float)) == 0;
 }
 
 static uint8_t _hexCharToDec(const char c)
@@ -137,7 +137,7 @@ float svgUtilStrtof(const char *nPtr, char **endPtr)
     }
     else if (*iter != '.')
     {
-        val = 0.0;
+        val = 0.0f;
         goto on_success;
     }
 
@@ -214,17 +214,11 @@ float svgUtilStrtof(const char *nPtr, char **endPtr)
         }
         else if (*iter == 0) goto on_success;
 
-        if ((_floatExact(val, 2.2250738585072011f)) && ((minus_e * (int)expo_part) == -308))
+        //if ((_floatExact(val, 2.2250738585072011f)) && ((minus_e * (int)expo_part) <= -308))
+        if ((_floatExact(val, 1.175494351f)) && ((minus_e * (int)expo_part) <= -38))
         {
-            val *= 1.0e-308f;
-            a = iter;
-            errno = ERANGE;
-            goto on_success;
-        }
-
-        if ((_floatExact(val, 2.2250738585072012f)) && ((minus_e * (int)expo_part) <= -308))
-        {
-            val *= 1.0e-308f;
+            //val *= 1.0e-308f;
+            val *= 1.0e-38f;
             a = iter;
             goto on_success;
         }
