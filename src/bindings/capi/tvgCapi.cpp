@@ -49,6 +49,7 @@ TVG_EXPORT Tvg_Result tvg_engine_term(unsigned engine_method)
     return (Tvg_Result) Initializer::term(CanvasEngine(engine_method));
 }
 
+
 /************************************************************************/
 /* Canvas API                                                           */
 /************************************************************************/
@@ -121,6 +122,7 @@ TVG_EXPORT Tvg_Result tvg_canvas_sync(Tvg_Canvas* canvas)
     if (!canvas) return TVG_RESULT_INVALID_ARGUMENT;
     return (Tvg_Result) reinterpret_cast<Canvas*>(canvas)->sync();
 }
+
 
 /************************************************************************/
 /* Paint API                                                            */
@@ -211,6 +213,7 @@ TVG_EXPORT Tvg_Result tvg_paint_get_composite_method(const Tvg_Paint* paint, con
    *reinterpret_cast<CompositeMethod*>(method) = reinterpret_cast<const Paint*>(paint)->composite(reinterpret_cast<const Paint**>(target));
    return TVG_RESULT_SUCCESS;
 }
+
 
 /************************************************************************/
 /* Shape API                                                            */
@@ -498,6 +501,7 @@ TVG_EXPORT Tvg_Result tvg_picture_get_viewbox(const Tvg_Paint* paint, float* x, 
     return (Tvg_Result) reinterpret_cast<Picture*>(CCP(paint))->viewbox(x, y, w, h);
 }
 
+
 /************************************************************************/
 /* Gradient API                                                         */
 /************************************************************************/
@@ -616,6 +620,7 @@ TVG_EXPORT Tvg_Result tvg_scene_clear(Tvg_Paint* scene, bool free)
     return (Tvg_Result) reinterpret_cast<Scene*>(scene)->clear(free);
 }
 
+
 /************************************************************************/
 /* Saver API                                                            */
 /************************************************************************/
@@ -632,11 +637,13 @@ TVG_EXPORT Tvg_Result tvg_saver_save(Tvg_Saver* saver, Tvg_Paint* paint, const c
     return (Tvg_Result) reinterpret_cast<Saver*>(saver)->save(unique_ptr<Paint>((Paint*)paint), path, compress);
 }
 
+
 TVG_EXPORT Tvg_Result tvg_saver_sync(Tvg_Saver* saver)
 {
     if (!saver) return TVG_RESULT_INVALID_ARGUMENT;
     return (Tvg_Result) reinterpret_cast<Saver*>(saver)->sync();
 }
+
 
 TVG_EXPORT Tvg_Result tvg_saver_del(Tvg_Saver* saver)
 {
