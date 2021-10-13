@@ -74,7 +74,7 @@ TVG_EXPORT Tvg_Result tvg_swcanvas_set_mempool(Tvg_Canvas* canvas, Tvg_Mempool_P
 }
 
 
-TVG_EXPORT Tvg_Result tvg_swcanvas_set_target(Tvg_Canvas* canvas, uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h, uint32_t cs)
+TVG_EXPORT Tvg_Result tvg_swcanvas_set_target(Tvg_Canvas* canvas, uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h, Tvg_Colorspace cs)
 {
     if (!canvas) return TVG_RESULT_INVALID_ARGUMENT;
     return (Tvg_Result) reinterpret_cast<SwCanvas*>(canvas)->target(buffer, stride, w, h, static_cast<SwCanvas::Colorspace>(cs));
@@ -519,6 +519,13 @@ TVG_EXPORT Tvg_Gradient* tvg_radial_gradient_new()
 {
     return (Tvg_Gradient*)RadialGradient::gen().release();
 
+}
+
+
+TVG_EXPORT Tvg_Gradient* tvg_gradient_duplicate(Tvg_Gradient* grad)
+{
+    if (!grad) return nullptr;
+    return (Tvg_Gradient*) reinterpret_cast<Fill*>(grad)->duplicate();
 }
 
 

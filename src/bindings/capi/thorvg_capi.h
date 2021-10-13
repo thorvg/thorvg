@@ -62,22 +62,6 @@ extern "C" {
 #define TVG_ENGINE_GL (1 << 2)
 
 
-/*!
-* \brief The 8-bit color channels are combined into 32-bit color in the order: alpha, blue, green, red.
-*
-* \ingroup ThorVGCapi_Canvas
-*/
-#define TVG_COLORSPACE_ABGR8888 0
-
-
-/*!
-* \brief The 8-bit color channels are combined into 32-bit color in the order: alpha, red, green, blue.
-*
-* \ingroup ThorVGCapi_Canvas
-*/
-#define TVG_COLORSPACE_ARGB8888 1
-
-
 /**
 * \brief A structure responsible for managing and drawing graphical elements.
 *
@@ -337,6 +321,16 @@ typedef enum {
     TVG_MEMPOOL_POLICY_INDIVIDUAL   ///< Allocate designated memory pool that is used only by the current canvas instance.
 } Tvg_Mempool_Policy;
 
+
+/**
+ * \brief Enumeration specifying the methods of combining the 8-bit color channels into 32-bit color.
+ */
+typedef enum {
+    TVG_COLORSPACE_ABGR8888 = 0, ///< The 8-bit color channels are combined into 32-bit color in the order: alpha, blue, green, red.
+    TVG_COLORSPACE_ARGB8888      ///< The 8-bit color channels are combined into 32-bit color in the order: alpha, red, green, blue.
+} Tvg_Colorspace;
+
+
 /*!
 * \brief Creates a Canvas object.
 *
@@ -387,9 +381,9 @@ TVG_EXPORT Tvg_Canvas* tvg_swcanvas_create();
 *
 * \warning Do not access @p buffer during tvg_canvas_draw() - tvg_canvas_sync(). It should not be accessed while TVG is writing on it.
 *
-* \see TVG_COLORSPACE_ARGB8888, TVG_COLORSPACE_ABGR8888
+* \see Tvg_Colorspace
 */
-TVG_EXPORT Tvg_Result tvg_swcanvas_set_target(Tvg_Canvas* canvas, uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h, uint32_t cs);
+TVG_EXPORT Tvg_Result tvg_swcanvas_set_target(Tvg_Canvas* canvas, uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h, Tvg_Colorspace cs);
 
 
 /*!
@@ -1695,6 +1689,18 @@ TVG_EXPORT Tvg_Result tvg_gradient_set_spread(Tvg_Gradient* grad, const Tvg_Stro
 * \retval TVG_RESULT_INVALID_ARGUMENT A @c nullptr passed as the argument.
 */
 TVG_EXPORT Tvg_Result tvg_gradient_get_spread(Tvg_Gradient* grad, Tvg_Stroke_Fill* spread);
+
+
+/*!
+* \brief Duplicates the given Tvg_Gradient object.
+*
+* Creates a new object and sets its all properties as in the original object.
+*
+* \param[in] grad The Tvg_Gradient object to be copied.
+*
+* \return A copied Tvg_Gradient object if succeed, @c nullptr otherwise.
+*/
+TVG_EXPORT Tvg_Gradient* tvg_gradient_duplicate(Tvg_Gradient* grad);
 
 
 /*!
