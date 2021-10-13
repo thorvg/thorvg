@@ -22,8 +22,6 @@
 
 #include <math.h>
 #include <memory.h>
-#include <ctype.h>
-#include <errno.h>
 #include "tvgSvgUtil.h"
 
 /************************************************************************/
@@ -32,7 +30,7 @@
 
 static inline bool _floatExact(float a, float b)
 {
-    return memcmp(&a, &b, sizeof (float)) == 0;
+    return memcmp(&a, &b, sizeof(float)) == 0;
 }
 
 static uint8_t _hexCharToDec(const char c)
@@ -178,15 +176,10 @@ float svgUtilStrtof(const char *nPtr, char **endPtr)
             goto success;
         }
 
-        if ((_floatExact(val, 2.2250738585072011f)) && ((minus_e * static_cast<int>(exponentPart)) == -308)) {
-            val *= 1.0e-308f;
-            a = iter;
-            errno = ERANGE;
-            goto success;
-        }
-
-        if ((_floatExact(val, 2.2250738585072012f)) && ((minus_e * static_cast<int>(exponentPart)) <= -308)) {
-            val *= 1.0e-308f;
+        //if ((_floatExact(val, 2.2250738585072011f)) && ((minus_e * static_cast<int>(exponentPart)) <= -308)) {
+        if ((_floatExact(val, 1.175494351f)) && ((minus_e * static_cast<int>(exponentPart)) <= -38)) {
+            //val *= 1.0e-308f;
+            val *= 1.0e-38f;
             a = iter;
             goto success;
         }
