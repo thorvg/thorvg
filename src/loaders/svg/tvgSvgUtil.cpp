@@ -167,7 +167,7 @@ float svgUtilStrtof(const char *nPtr, char **endPtr)
         unsigned int exponentPart = 0;
 
         if (isdigit(*iter)) {
-            while (*iter == 0) iter++;
+            while (*iter == '0') iter++;
             for (; isdigit(*iter); iter++) {
                 exponentPart = exponentPart * 10U + static_cast<unsigned int>(*iter - '0');
             }
