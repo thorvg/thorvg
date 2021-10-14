@@ -216,7 +216,7 @@ Utilizing the TVG Picture allows you to reduce the data size and loading time by
 While TVG Saver exports the scene-tree to the TVG Picture data files(TVG), the TVG Loader imports and restores it to the programmable instances. You can quickly use the ThorVG Viewer to convert files from SVG to TVG.
 
 <p align="center">
-  <img width="788" height="238" src="https://github.com/Samsung/thorvg/blob/master/res/example_tvg.png">
+  <img width="788" height="238" src="https://github.com/Samsung/thorvg/blob/master/res/example_tvgmodule.png">
 </p>
 
 
