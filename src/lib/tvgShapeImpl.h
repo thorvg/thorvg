@@ -260,7 +260,7 @@ struct Shape::Impl
     {
         //TODO: Size Exception?
 
-        if (!stroke) stroke = new ShapeStroke();
+        if (!stroke) stroke = NEWT ShapeStroke();
         if (!stroke) return false;
 
         stroke->width = width;
@@ -271,7 +271,7 @@ struct Shape::Impl
 
     bool strokeCap(StrokeCap cap)
     {
-        if (!stroke) stroke = new ShapeStroke();
+        if (!stroke) stroke = NEWT ShapeStroke();
         if (!stroke) return false;
 
         stroke->cap = cap;
@@ -282,7 +282,7 @@ struct Shape::Impl
 
     bool strokeJoin(StrokeJoin join)
     {
-        if (!stroke) stroke = new ShapeStroke();
+        if (!stroke) stroke = NEWT ShapeStroke();
         if (!stroke) return false;
 
         stroke->join = join;
@@ -293,7 +293,7 @@ struct Shape::Impl
 
     bool strokeColor(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
     {
-        if (!stroke) stroke = new ShapeStroke();
+        if (!stroke) stroke = NEWT ShapeStroke();
         if (!stroke) return false;
 
         if (stroke->fill) {
@@ -317,7 +317,7 @@ struct Shape::Impl
         auto p = f.release();
         if (!p) return Result::MemoryCorruption;
 
-        if (!stroke) stroke = new ShapeStroke();
+        if (!stroke) stroke = NEWT ShapeStroke();
         if (!stroke) return Result::FailedAllocation;
 
         if (stroke->fill && stroke->fill != p) delete(stroke->fill);
@@ -336,7 +336,7 @@ struct Shape::Impl
             free(stroke->dashPattern);
             stroke->dashPattern = nullptr;
         } else {
-            if (!stroke) stroke = new ShapeStroke();
+            if (!stroke) stroke = NEWT ShapeStroke();
             if (!stroke) return false;
 
             if (stroke->dashCnt != cnt) {
@@ -375,7 +375,7 @@ struct Shape::Impl
 
         //Stroke
         if (stroke) {
-            dup->stroke = new ShapeStroke(stroke);
+            dup->stroke = NEWT ShapeStroke(stroke);
             dup->flag |= RenderUpdateFlag::Stroke;
 
             if (stroke->fill)

@@ -52,7 +52,7 @@ static string* _copyId(const char* str)
 {
     if (!str) return nullptr;
 
-    return new string(str);
+    return NEWT string(str);
 }
 
 
@@ -289,7 +289,7 @@ static string* _idFromUrl(const char* url)
     }
     tmp[i] = '\0';
 
-    return new string(tmp);
+    return NEWT string(tmp);
 }
 
 
@@ -1536,7 +1536,7 @@ static string* _idFromHref(const char* href)
 {
     href = _skipSpace(href, nullptr);
     if ((*href) == '#') href++;
-    return new string(href);
+    return NEWT string(href);
 }
 
 
@@ -1654,7 +1654,7 @@ static SvgStyleGradient* _cloneGradient(SvgStyleGradient* from)
 {
     if (!from) return nullptr;
 
-    auto grad = new SvgStyleGradient;
+    auto grad = NEWT SvgStyleGradient;
     if (!grad) return nullptr;
 
     grad->type = from->type;
@@ -1697,10 +1697,10 @@ static void _copyAttr(SvgNode* to, const SvgNode* from)
     }
     //Copy style attribute
     *to->style = *from->style;
-    if (from->style->fill.paint.url) to->style->fill.paint.url = new string(from->style->fill.paint.url->c_str());
-    if (from->style->stroke.paint.url) to->style->stroke.paint.url = new string(from->style->stroke.paint.url->c_str());
-    if (from->style->clipPath.url) to->style->clipPath.url = new string(from->style->clipPath.url->c_str());
-    if (from->style->mask.url) to->style->mask.url = new string(from->style->mask.url->c_str());
+    if (from->style->fill.paint.url) to->style->fill.paint.url = NEWT string(from->style->fill.paint.url->c_str());
+    if (from->style->stroke.paint.url) to->style->stroke.paint.url = NEWT string(from->style->stroke.paint.url->c_str());
+    if (from->style->clipPath.url) to->style->clipPath.url = NEWT string(from->style->clipPath.url->c_str());
+    if (from->style->mask.url) to->style->mask.url = NEWT string(from->style->mask.url->c_str());
 
     //Copy node attribute
     switch (from->type) {
@@ -1736,7 +1736,7 @@ static void _copyAttr(SvgNode* to, const SvgNode* from)
             break;
         }
         case SvgNodeType::Path: {
-            if (from->node.path.path) to->node.path.path = new string(from->node.path.path->c_str());
+            if (from->node.path.path) to->node.path.path = NEWT string(from->node.path.path->c_str());
             break;
         }
         case SvgNodeType::Polygon: {
@@ -1756,7 +1756,7 @@ static void _copyAttr(SvgNode* to, const SvgNode* from)
             to->node.image.y = from->node.image.y;
             to->node.image.w = from->node.image.w;
             to->node.image.h = from->node.image.h;
-            if (from->node.image.href) to->node.image.href = new string(from->node.image.href->c_str());
+            if (from->node.image.href) to->node.image.href = NEWT string(from->node.image.href->c_str());
             break;
         }
         default: {
@@ -2032,7 +2032,7 @@ static bool _attrParseRadialGradientNode(void* data, const char* key, const char
 
 static SvgStyleGradient* _createRadialGradient(SvgLoaderData* loader, const char* buf, unsigned bufLength)
 {
-    auto grad = new SvgStyleGradient;
+    auto grad = NEWT SvgStyleGradient;
     if (!grad) return nullptr;
 
     loader->svgParse->styleGrad = grad;
@@ -2216,7 +2216,7 @@ static bool _attrParseLinearGradientNode(void* data, const char* key, const char
 
 static SvgStyleGradient* _createLinearGradient(SvgLoaderData* loader, const char* buf, unsigned bufLength)
 {
-    auto grad = new SvgStyleGradient;
+    auto grad = NEWT SvgStyleGradient;
     if (!grad) return nullptr;
 
     loader->svgParse->styleGrad = grad;

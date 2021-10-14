@@ -59,7 +59,7 @@ void mpoolRetStrokeOutline(SwMpool* mpool, unsigned idx)
 
 SwMpool* mpoolInit(unsigned threads)
 {
-    auto mpool = new SwMpool;
+    auto mpool = NEWT SwMpool;
     if (!mpool) return nullptr;
 
     if (threads == 0) threads = 1;

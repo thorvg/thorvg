@@ -210,7 +210,7 @@ struct Scene::Impl
 
     Iterator* iterator()
     {
-        return new SceneIterator(&paints);
+        return NEWT SceneIterator(&paints);
     }
 };
 

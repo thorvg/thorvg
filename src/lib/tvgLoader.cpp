@@ -48,29 +48,29 @@ static LoadModule* _find(FileType type)
     switch(type) {
         case FileType::Tvg: {
 #ifdef THORVG_TVG_LOADER_SUPPORT
-            return new TvgLoader;
+            return NEWT TvgLoader;
 #endif
             break;
         }
         case FileType::Svg: {
 #ifdef THORVG_SVG_LOADER_SUPPORT
-            return new SvgLoader;
+            return NEWT SvgLoader;
 #endif
             break;
         }
         case FileType::Raw: {
-            return new RawLoader;
+            return NEWT RawLoader;
             break;
         }
         case FileType::Png: {
 #ifdef THORVG_PNG_LOADER_SUPPORT
-            return new PngLoader;
+            return NEWT PngLoader;
 #endif
             break;
         }
         case FileType::Jpg: {
 #ifdef THORVG_JPG_LOADER_SUPPORT
-            return new JpgLoader;
+            return NEWT JpgLoader;
 #endif
             break;
         }
@@ -205,7 +205,7 @@ shared_ptr<LoadModule> LoaderMgr::loader(const char* data, uint32_t size, const 
 shared_ptr<LoadModule> LoaderMgr::loader(const uint32_t *data, uint32_t w, uint32_t h, bool copy)
 {
     //function is dedicated for raw images only
-    auto loader = new RawLoader;
+    auto loader = NEWT RawLoader;
     if (loader) {
         if (loader->open(data, w, h, copy)) return shared_ptr<LoadModule>(loader);
         else delete(loader);

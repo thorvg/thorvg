@@ -284,7 +284,7 @@ bool SwRenderer::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t 
     if (!buffer || stride == 0 || w == 0 || h == 0 || w > stride) return false;
 
     if (!surface) {
-        surface = new SwSurface;
+        surface = NEWT SwSurface;
         if (!surface) return false;
     }
 
@@ -452,13 +452,13 @@ Compositor* SwRenderer::target(const RenderRegion& region)
 
     //New Composition
     if (!cmp) {
-        cmp = new SwSurface;
+        cmp = NEWT SwSurface;
         if (!cmp) goto err;
 
         //Inherits attributes from main surface
         *cmp = *surface;
 
-        cmp->compositor = new SwCompositor;
+        cmp->compositor = NEWT SwCompositor;
         if (!cmp->compositor) goto err;
 
         //SwImage, Optimize Me: Surface size from MainSurface(WxH) to Parameter W x H
@@ -589,7 +589,7 @@ RenderData SwRenderer::prepare(const Picture& pdata, RenderData data, const Rend
     //prepare task
     auto task = static_cast<SwImageTask*>(data);
     if (!task) {
-        task = new SwImageTask;
+        task = NEWT SwImageTask;
         if (!task) return nullptr;
         task->pdata = &pdata;
     }
@@ -602,7 +602,7 @@ RenderData SwRenderer::prepare(const Shape& sdata, RenderData data, const Render
     //prepare task
     auto task = static_cast<SwShapeTask*>(data);
     if (!task) {
-        task = new SwShapeTask;
+        task = NEWT SwShapeTask;
         if (!task) return nullptr;
         task->sdata = &sdata;
     }
@@ -652,5 +652,5 @@ bool SwRenderer::term()
 SwRenderer* SwRenderer::gen()
 {
     ++rendererCnt;
-    return new SwRenderer();
+    return NEWT SwRenderer();
 }

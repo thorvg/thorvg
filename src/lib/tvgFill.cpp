@@ -30,7 +30,7 @@
 /* External Class Implementation                                        */
 /************************************************************************/
 
-Fill::Fill():pImpl(new Impl())
+Fill::Fill():pImpl(NEWT Impl())
 {
 }
 

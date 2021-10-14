@@ -163,7 +163,7 @@ void GlProgram::linkProgram(std::shared_ptr<GlShader> shader)
         glGetProgramiv(progObj, GL_INFO_LOG_LENGTH, &infoLen);
         if (infoLen > 0)
         {
-            char* infoLog = new char[infoLen];
+            char* infoLog = NEWT char[infoLen];
             glGetProgramInfoLog(progObj, infoLen, NULL, infoLog);
             TVGERR("GL_ENGINE", "Error linking shader: %s", infoLog);
             delete[] infoLog;

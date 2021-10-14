@@ -245,7 +245,7 @@ struct Picture::Impl
     Iterator* iterator()
     {
         reload();
-        return new PictureIterator(paint);
+        return NEWT PictureIterator(paint);
     }
 };
 

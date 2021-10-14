@@ -50,10 +50,10 @@ struct RadialGradient::Impl
 /* External Class Implementation                                        */
 /************************************************************************/
 
-RadialGradient::RadialGradient():pImpl(new Impl())
+RadialGradient::RadialGradient():pImpl(NEWT Impl())
 {
     _id = TVG_CLASS_ID_RADIAL;
-    Fill::pImpl->method(new FillDup<RadialGradient::Impl>(pImpl));
+    Fill::pImpl->method(NEWT FillDup<RadialGradient::Impl>(pImpl));
 }
 
 
@@ -87,5 +87,5 @@ Result RadialGradient::radial(float* cx, float* cy, float* radius) const noexcep
 
 unique_ptr<RadialGradient> RadialGradient::gen() noexcept
 {
-    return unique_ptr<RadialGradient>(new RadialGradient);
+    return unique_ptr<RadialGradient>(NEWT RadialGradient);
 }

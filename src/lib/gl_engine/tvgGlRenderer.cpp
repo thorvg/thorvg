@@ -196,7 +196,7 @@ RenderData GlRenderer::prepare(const Shape& shape, RenderData data, const Render
     //prepare shape data
     GlShape* sdata = static_cast<GlShape*>(data);
     if (!sdata) {
-        sdata = new GlShape;
+        sdata = NEWT GlShape;
         if (!sdata) return nullptr;
         sdata->shape = &shape;
     }
@@ -277,7 +277,7 @@ int GlRenderer::term()
 
 GlRenderer* GlRenderer::gen()
 {
-    return new GlRenderer();
+    return NEWT GlRenderer();
 }
 
 

@@ -167,7 +167,7 @@ static TaskSchedulerImpl* inst = nullptr;
 void TaskScheduler::init(unsigned threads)
 {
     if (inst) return;
-    inst = new TaskSchedulerImpl(threads);
+    inst = NEWT TaskSchedulerImpl(threads);
 }
 
 

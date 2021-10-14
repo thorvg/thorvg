@@ -44,9 +44,9 @@ struct SwCanvas::Impl
 /************************************************************************/
 
 #ifdef THORVG_SW_RASTER_SUPPORT
-SwCanvas::SwCanvas() : Canvas(SwRenderer::gen()), pImpl(new Impl)
+SwCanvas::SwCanvas() : Canvas(SwRenderer::gen()), pImpl(NEWT Impl)
 #else
-SwCanvas::SwCanvas() : Canvas(nullptr), pImpl(new Impl)
+SwCanvas::SwCanvas() : Canvas(nullptr), pImpl(NEWT Impl)
 #endif
 {
 }
@@ -99,7 +99,7 @@ unique_ptr<SwCanvas> SwCanvas::gen() noexcept
 {
 #ifdef THORVG_SW_RASTER_SUPPORT
     if (SwRenderer::init() <= 0) return nullptr;
-    return unique_ptr<SwCanvas>(new SwCanvas);
+    return unique_ptr<SwCanvas>(NEWT SwCanvas);
 #endif
     return nullptr;
 }

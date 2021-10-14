@@ -84,7 +84,7 @@ uint32_t GlShader::complileShader(uint32_t type, char* shaderSrc)
 
         if (infoLen > 0)
         {
-            char* infoLog = new char[infoLen];
+            char* infoLog = NEWT char[infoLen];
             glGetShaderInfoLog(shader, infoLen, NULL, infoLog);
             TVGERR("GL_ENGINE", "Error compiling shader: %s", infoLog);
             delete[] infoLog;

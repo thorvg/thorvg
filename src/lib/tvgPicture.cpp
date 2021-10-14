@@ -26,10 +26,10 @@
 /* External Class Implementation                                        */
 /************************************************************************/
 
-Picture::Picture() : pImpl(new Impl(this))
+Picture::Picture() : pImpl(NEWT Impl(this))
 {
     _id = TVG_CLASS_ID_PICTURE;
-    Paint::pImpl->method(new PaintMethod<Picture::Impl>(pImpl));
+    Paint::pImpl->method(NEWT PaintMethod<Picture::Impl>(pImpl));
 }
 
 
@@ -41,7 +41,7 @@ Picture::~Picture()
 
 unique_ptr<Picture> Picture::gen() noexcept
 {
-    return unique_ptr<Picture>(new Picture);
+    return unique_ptr<Picture>(NEWT Picture);
 }
 
 

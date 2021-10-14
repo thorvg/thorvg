@@ -98,7 +98,7 @@ Paint* Paint::Impl::duplicate()
 
     //duplicate Transform
     if (rTransform) {
-        ret->pImpl->rTransform = new RenderTransform();
+        ret->pImpl->rTransform = NEWT RenderTransform();
         if (ret->pImpl->rTransform) {
             *ret->pImpl->rTransform = *rTransform;
             ret->pImpl->flag |= RenderUpdateFlag::Transform;
@@ -121,7 +121,7 @@ bool Paint::Impl::rotate(float degree)
         if (fabsf(degree - rTransform->degree) <= FLT_EPSILON) return true;
     } else {
         if (fabsf(degree) <= FLT_EPSILON) return true;
-        rTransform = new RenderTransform();
+        rTransform = NEWT RenderTransform();
         if (!rTransform) return false;
     }
     rTransform->degree = degree;
@@ -137,7 +137,7 @@ bool Paint::Impl::scale(float factor)
         if (fabsf(factor - rTransform->scale) <= FLT_EPSILON) return true;
     } else {
         if (fabsf(factor) <= FLT_EPSILON) return true;
-        rTransform = new RenderTransform();
+        rTransform = NEWT RenderTransform();
         if (!rTransform) return false;
     }
     rTransform->scale = factor;
@@ -153,7 +153,7 @@ bool Paint::Impl::translate(float x, float y)
         if (fabsf(x - rTransform->x) <= FLT_EPSILON && fabsf(y - rTransform->y) <= FLT_EPSILON) return true;
     } else {
         if (fabsf(x) <= FLT_EPSILON && fabsf(y) <= FLT_EPSILON) return true;
-        rTransform = new RenderTransform();
+        rTransform = NEWT RenderTransform();
         if (!rTransform) return false;
     }
     rTransform->x = x;
@@ -297,7 +297,7 @@ bool Paint::Impl::bounds(float* x, float* y, float* w, float* h, bool transforme
 /* External Class Implementation                                        */
 /************************************************************************/
 
-Paint :: Paint() : pImpl(new Impl())
+Paint :: Paint() : pImpl(NEWT Impl())
 {
 }
 

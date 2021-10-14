@@ -52,10 +52,10 @@ struct LinearGradient::Impl
 /* External Class Implementation                                        */
 /************************************************************************/
 
-LinearGradient::LinearGradient():pImpl(new Impl())
+LinearGradient::LinearGradient():pImpl(NEWT Impl())
 {
     _id = TVG_CLASS_ID_LINEAR;
-    Fill::pImpl->method(new FillDup<LinearGradient::Impl>(pImpl));
+    Fill::pImpl->method(NEWT FillDup<LinearGradient::Impl>(pImpl));
 }
 
 
@@ -89,5 +89,5 @@ Result LinearGradient::linear(float* x1, float* y1, float* x2, float* y2) const 
 
 unique_ptr<LinearGradient> LinearGradient::gen() noexcept
 {
-    return unique_ptr<LinearGradient>(new LinearGradient);
+    return unique_ptr<LinearGradient>(NEWT LinearGradient);
 }

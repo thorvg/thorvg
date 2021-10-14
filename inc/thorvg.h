@@ -16,6 +16,9 @@
 
 #include <memory>
 #include <string>
+#include <new>
+
+#define NEWT new(std::nothrow)
 
 #ifdef TVG_BUILD
     #if defined(_MSC_VER) && !defined(__clang__)

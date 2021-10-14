@@ -44,9 +44,9 @@ struct GlCanvas::Impl
 /************************************************************************/
 
 #ifdef THORVG_GL_RASTER_SUPPORT
-GlCanvas::GlCanvas() : Canvas(GlRenderer::gen()), pImpl(new Impl)
+GlCanvas::GlCanvas() : Canvas(GlRenderer::gen()), pImpl(NEWT Impl)
 #else
-GlCanvas::GlCanvas() : Canvas(nullptr), pImpl(new Impl)
+GlCanvas::GlCanvas() : Canvas(nullptr), pImpl(NEWT Impl)
 #endif
 {
 }
@@ -81,7 +81,7 @@ unique_ptr<GlCanvas> GlCanvas::gen() noexcept
 {
 #ifdef THORVG_GL_RASTER_SUPPORT
     if (GlRenderer::init() <= 0) return nullptr;
-    return unique_ptr<GlCanvas>(new GlCanvas);
+    return unique_ptr<GlCanvas>(NEWT GlCanvas);
 #endif
     return nullptr;
 }

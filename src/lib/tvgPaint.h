@@ -71,7 +71,7 @@ namespace tvg
         bool transform(const Matrix& m)
         {
             if (!rTransform) {
-                rTransform = new RenderTransform();
+                rTransform = NEWT RenderTransform();
                 if (!rTransform) return false;
             }
             rTransform->override(m);

@@ -45,7 +45,7 @@ static SaveModule* _find(FileType type)
     switch(type) {
         case FileType::Tvg: {
 #ifdef THORVG_TVG_SAVER_SUPPORT
-            return new TvgSaver;
+            return NEWT TvgSaver;
 #endif
             break;
         }
@@ -86,7 +86,7 @@ static SaveModule* _find(const string& path)
 /* External Class Implementation                                        */
 /************************************************************************/
 
-Saver::Saver() : pImpl(new Impl())
+Saver::Saver() : pImpl(NEWT Impl())
 {
 }
 
@@ -130,5 +130,5 @@ Result Saver::sync() noexcept
 
 unique_ptr<Saver> Saver::gen() noexcept
 {
-    return unique_ptr<Saver>(new Saver);
+    return unique_ptr<Saver>(NEWT Saver);
 }

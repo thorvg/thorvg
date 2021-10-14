@@ -25,10 +25,10 @@
 /* External Class Implementation                                        */
 /************************************************************************/
 
-Scene::Scene() : pImpl(new Impl())
+Scene::Scene() : pImpl(NEWT Impl())
 {
     _id = TVG_CLASS_ID_SCENE;
-    Paint::pImpl->method(new PaintMethod<Scene::Impl>(pImpl));
+    Paint::pImpl->method(NEWT PaintMethod<Scene::Impl>(pImpl));
 }
 
 
@@ -40,7 +40,7 @@ Scene::~Scene()
 
 unique_ptr<Scene> Scene::gen() noexcept
 {
-    return unique_ptr<Scene>(new Scene);
+    return unique_ptr<Scene>(NEWT Scene);
 }
 
 

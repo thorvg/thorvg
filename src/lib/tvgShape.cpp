@@ -36,10 +36,10 @@ constexpr auto PATH_KAPPA = 0.552284f;
 /* External Class Implementation                                        */
 /************************************************************************/
 
-Shape :: Shape() : pImpl(new Impl(this))
+Shape :: Shape() : pImpl(NEWT Impl(this))
 {
     _id = TVG_CLASS_ID_SHAPE;
-    Paint::pImpl->method(new PaintMethod<Shape::Impl>(pImpl));
+    Paint::pImpl->method(NEWT PaintMethod<Shape::Impl>(pImpl));
 }
 
 
@@ -51,7 +51,7 @@ Shape :: ~Shape()
 
 unique_ptr<Shape> Shape::gen() noexcept
 {
-    return unique_ptr<Shape>(new Shape);
+    return unique_ptr<Shape>(NEWT Shape);
 }
 
 

@@ -96,7 +96,7 @@ bool TvgLoader::readHeader()
     ptr += TVG_HEADER_COMPRESS_SIZE;
 
     //Decide the proper Tvg Binary Interpreter based on the current file version
-    if (this->version >= 0) interpreter = new TvgBinInterpreter;
+    if (this->version >= 0) interpreter = NEWT TvgBinInterpreter;
 
     return true;
 }
