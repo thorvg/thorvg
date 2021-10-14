@@ -548,7 +548,7 @@ unique_ptr<Scene> svgSceneBuild(SvgNode* node, float vx, float vy, float vw, flo
             Matrix m = {sx, 0, -tvx, 0, sy, -tvy, 0, 0, 1};
             docNode->transform(m);
         }
-    } else if (vx < 0 || vy < 0) {
+    } else if (fabs(vx) > FLT_EPSILON || fabs(vy) > FLT_EPSILON) {
         docNode->translate(-vx, -vy);
     }
 
