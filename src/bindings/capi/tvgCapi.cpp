@@ -38,13 +38,13 @@ extern "C" {
 /* Engine API                                                           */
 /************************************************************************/
 
-TVG_EXPORT Tvg_Result tvg_engine_init(unsigned engine_method, unsigned threads)
+TVG_EXPORT Tvg_Result tvg_engine_init(Tvg_Engine engine_method, unsigned threads)
 {
     return (Tvg_Result) Initializer::init(CanvasEngine(engine_method), threads);
 }
 
 
-TVG_EXPORT Tvg_Result tvg_engine_term(unsigned engine_method)
+TVG_EXPORT Tvg_Result tvg_engine_term(Tvg_Engine engine_method)
 {
     return (Tvg_Result) Initializer::term(CanvasEngine(engine_method));
 }

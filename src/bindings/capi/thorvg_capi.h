@@ -46,21 +46,6 @@ extern "C" {
 * \{
 */
 
-/*!
-* CPU raster engine type.
-*
-* \ingroup ThorVGCapi_Initializer
-*/
-#define TVG_ENGINE_SW (1 << 1)
-
-
-/*!
-* OpenGL raster engine type.
-*
-* \ingroup ThorVGCapi_Initializer
-*/
-#define TVG_ENGINE_GL (1 << 2)
-
 
 /**
 * \brief A structure responsible for managing and drawing graphical elements.
@@ -88,6 +73,17 @@ typedef struct _Tvg_Gradient Tvg_Gradient;
 * \brief A structure representing an object that enables to save a Tvg_Paint object into a file.
 */
 typedef struct _Tvg_Saver Tvg_Saver;
+
+
+/**
+* \brief Enumeration specifying the engine type used for the graphics backend. For multiple backeneds bitwise operation is allowed.
+*
+* \ingroup ThorVGCapi_Initializer
+*/
+typedef enum {
+    TVG_ENGINE_SW = (1 << 1),   ///< CPU rasterizer.
+    TVG_ENGINE_GL = (1 << 2)    ///< OpenGL rasterizer.
+} Tvg_Engine;
 
 
 /**
@@ -257,9 +253,9 @@ typedef struct
 *
 * \note The Initializer keeps track of the number of times it was called. Threads count is fixed at the first init() call.
 * \see tvg_engine_term()
-* \see TVG_ENGINE_SW, TVG_ENGINE_GL
+* \see Tvg_Engine
 */
-TVG_EXPORT Tvg_Result tvg_engine_init(unsigned engine_method, unsigned threads);
+TVG_EXPORT Tvg_Result tvg_engine_init(Tvg_Engine engine_method, unsigned threads);
 
 
 /*!
@@ -285,9 +281,9 @@ TVG_EXPORT Tvg_Result tvg_engine_init(unsigned engine_method, unsigned threads);
 * \retval TVG_RESULT_UNKNOWN An internal error.
 *
 * \see tvg_engine_init()
-* \see TVG_ENGINE_SW, TVG_ENGINE_GL
+* \see Tvg_Engine
 */
-TVG_EXPORT Tvg_Result tvg_engine_term(unsigned engine_method);
+TVG_EXPORT Tvg_Result tvg_engine_term(Tvg_Engine engine_method);
 
 
 /** \} */   // end defgroup ThorVGCapi_Initializer
@@ -471,7 +467,7 @@ TVG_EXPORT Tvg_Result tvg_swcanvas_set_mempool(Tvg_Canvas* canvas, Tvg_Mempool_P
 * }
 *
 * tvg_canvas_destroy(canvas);
-* tvg_engine_term()
+* tvg_engine_term(TVG_ENGINE_SW)
 * \endcode
 *
 * \param[in] canvas The Tvg_Canvas object to be destroyed.
@@ -529,7 +525,7 @@ TVG_EXPORT Tvg_Result tvg_canvas_push(Tvg_Canvas* canvas, Tvg_Paint* paint);
 * tvg_canvas_reserve(canvas, 100); //reserve array for 100 paints in canvas.
 *
 * tvg_canvas_destroy(canvas);
-* tvg_engine_term()
+* tvg_engine_term(TVG_ENGINE_SW)
 * \endcode
 *
 * \param[in] canvas The Tvg_Canvas object managing the reserved memory.
@@ -1972,7 +1968,7 @@ TVG_EXPORT Tvg_Result tvg_saver_save(Tvg_Saver* saver, Tvg_Paint* paint, const c
 * \return Tvg_Result enumeration.
 * \retval TVG_RESULT_SUCCESS Succeed.
 * \retval TVG_RESULT_INVALID_ARGUMENT A @c nullptr passed as the argument.
-* \retval TVG_RESULT_INSUFFICIENT_CONDITION No saving task is running. 
+* \retval TVG_RESULT_INSUFFICIENT_CONDITION No saving task is running.
 *
 * \note The asynchronous tasking is dependent on the Saver module implementation.
 * \see tvg_saver_save()
