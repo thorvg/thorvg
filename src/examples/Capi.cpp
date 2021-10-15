@@ -230,7 +230,7 @@ void resize_cb(void *data, Evas *e, Evas_Object *obj, void *event_info)
 int main(int argc, char **argv)
 {
     elm_init(argc, argv);
-    tvg_engine_init(TVG_ENGINE_SW | TVG_ENGINE_GL, 0);
+    tvg_engine_init(TVG_ENGINE_SW, 0);
 
     buffer = (uint32_t*) malloc(sizeof(uint32_t) * WIDTH * HEIGHT);
 
@@ -254,7 +254,7 @@ int main(int argc, char **argv)
     testCapi();
 
     elm_run();
-    tvg_engine_term(TVG_ENGINE_SW | TVG_ENGINE_GL);
+    tvg_engine_term(TVG_ENGINE_SW);
     elm_shutdown();
 
     return 0;
