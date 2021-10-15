@@ -74,6 +74,8 @@ bool JpgLoader::open(const string& path)
     data = (unsigned char *) malloc(size);
     if (!data) goto finalize;
 
+    freeData = true;
+
     if (fread(data, size, 1, jpegFile) < 1) goto failure;
 
     int width, height, subSample, colorSpace;
@@ -85,7 +87,6 @@ bool JpgLoader::open(const string& path)
     w = static_cast<float>(width);
     h = static_cast<float>(height);
     ret = true;
-    freeData = true;
 
     goto finalize;
 
@@ -112,6 +113,7 @@ bool JpgLoader::open(const char* data, uint32_t size, bool copy)
         freeData = true;
     } else {
         this->data = (unsigned char *) data;
+        freeData = false;
     }
 
     w = static_cast<float>(width);
