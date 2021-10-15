@@ -19,14 +19,24 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-
+#include <memory.h>
 #include "tvgLoader.h"
 #include "tvgPngLoader.h"
+
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
+void PngLoader::clear()
+{
+    lodepng_state_cleanup(&state);
+
+    if (freeData) free(data);
+    data = nullptr;
+    size = 0;
+    freeData = false;
+}
 
 
 /************************************************************************/
@@ -35,51 +45,115 @@
 
 PngLoader::PngLoader()
 {
-    //TODO:
+    lodepng_state_init(&state);
 }
 
 
 PngLoader::~PngLoader()
 {
-    //TODO:
+    if (freeData) free(data);
 }
 
 
 bool PngLoader::open(const string& path)
 {
-    //TODO:
+    clear();
 
-    return false;
+    auto pngFile = fopen(path.c_str(), "rb");
+    if (!pngFile) return false;
+
+    auto ret = false;
+
+    //determine size
+    if (fseek(pngFile, 0, SEEK_END) < 0) goto finalize;
+    if (((size = ftell(pngFile)) < 1)) goto finalize;
+    if (fseek(pngFile, 0, SEEK_SET)) goto finalize;
+
+    data = (unsigned char *) malloc(size);
+    if (!data) goto finalize;
+
+    freeData = true;
+
+    if (fread(data, size, 1, pngFile) < 1) goto failure;
+
+    lodepng_state_init(&state);
+
+    unsigned int width, height;
+    if (lodepng_inspect(&width, &height, &state, data, size) > 0) goto failure;
+
+    w = static_cast<float>(width);
+    h = static_cast<float>(height);
+    ret = true;
+
+    goto finalize;
+
+failure:
+    clear();
+
+finalize:
+    fclose(pngFile);
+    return ret;
 }
 
 
 bool PngLoader::open(const char* data, uint32_t size, bool copy)
 {
-    //TODO:
+    clear();
 
-    return false;
+    lodepng_state_init(&state);
+    
+    unsigned int width, height;
+    if (lodepng_inspect(&width, &height, &state, (unsigned char*)(data), size) > 0) return false;
+
+    if (copy) {
+        this->data = (unsigned char *) malloc(size);
+        if (!this->data) return false;
+        memcpy((unsigned char *)this->data, data, size);
+        freeData = true;
+    } else {
+        this->data = (unsigned char *) data;
+        freeData = false;
+    }
+
+    w = static_cast<float>(width);
+    h = static_cast<float>(height);
+    this->size = size;
+
+    return true;
 }
 
 
 bool PngLoader::read()
 {
-    //TODO:
+    if (!data || w <= 0 || h <= 0) return false;
 
-    return false;
+    TaskScheduler::request(this);
+
+    return true;
 }
 
 
 bool PngLoader::close()
 {
-    //TODO:
+    this->done();
 
-    return false;
+    clear();
+    return true;
 }
 
 
 const uint32_t* PngLoader::pixels()
 {
-    //TODO:
+    this->done();
 
-    return nullptr;
+    return (const uint32_t*) image;
+}
+
+
+void PngLoader::run(unsigned tid)
+{
+    auto width = static_cast<unsigned>(w);
+    auto height = static_cast<unsigned>(h);
+
+    lodepng_decode(&image, &width, &height, &state, data, size);
 }

@@ -22,9 +22,21 @@
 #ifndef _TVG_PNG_LOADER_H_
 #define _TVG_PNG_LOADER_H_
 
-//TODO: Use Task?
-class PngLoader : public LoadModule
+#include "tvgLodePng.h"
+#include "tvgTaskScheduler.h"
+
+
+class PngLoader : public LoadModule, public Task
 {
+private:
+    LodePNGState state;
+    unsigned char* data = nullptr;
+    unsigned char *image = nullptr;
+    unsigned long size = 0;
+    bool freeData = false;
+
+    void clear();
+
 public:
     PngLoader();
     ~PngLoader();
@@ -36,6 +48,8 @@ public:
     bool close() override;
 
     const uint32_t* pixels() override;
+
+    void run(unsigned tid) override;
 };
 
 #endif //_TVG_PNG_LOADER_H_
