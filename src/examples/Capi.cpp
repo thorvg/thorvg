@@ -37,160 +37,199 @@ static Eo* view = NULL;
 
 void testCapi()
 {
-
     canvas = tvg_swcanvas_create();
     tvg_swcanvas_set_target(canvas, buffer, WIDTH, WIDTH, HEIGHT, TVG_COLORSPACE_ARGB8888);
+    tvg_swcanvas_set_mempool(canvas, TVG_MEMPOOL_POLICY_DEFAULT);
 
-    Tvg_Paint* shape = tvg_shape_new();
-    tvg_shape_append_rect(shape, 0, 0, 200, 200, 0, 0);
-    tvg_shape_append_circle(shape, 200, 200, 100, 100);
-    tvg_shape_append_rect(shape, 100, 100, 300, 300, 100, 100);
-    Tvg_Gradient* grad = tvg_linear_gradient_new();
-    tvg_linear_gradient_set(grad, 0, 0, 300, 300);
-    Tvg_Color_Stop color_stops[4] =
+    tvg_canvas_reserve(canvas, 6);
+
+//////1. Linear gradient shape with a linear gradient stroke
+    //Set a shape
+    Tvg_Paint* shape1 = tvg_shape_new();
+    tvg_shape_move_to(shape1, 25.0f, 25.0f);
+    tvg_shape_line_to(shape1, 375.0f, 25.0f);
+    tvg_shape_cubic_to(shape1, 500.0f, 100.0f, -500.0f, 200.0f, 375.0f, 375.0f);
+    tvg_shape_close(shape1);
+
+    //Prepare a gradient for the fill
+    Tvg_Gradient* grad1 = tvg_linear_gradient_new();
+    tvg_linear_gradient_set(grad1, 25.0f, 25.0f, 200.0f, 200.0f);
+    Tvg_Color_Stop color_stops1[4] =
     {
-        {.offset=0.0, .r=0, .g=0, .b=0, .a=255},
-        {.offset=0.25, .r=255, .g=0, .b=0, .a=255},
-        {.offset=0.5, .r=0, .g=255, .b=0, .a=255},
-        {.offset=1.0, .r=0, .g=0, .b=255, .a=255}
+        {0.00f, 255,   0,   0, 155},
+        {0.33f,   0, 255,   0, 100},
+        {0.66f, 255,   0, 255, 100},
+        {1.00f,   0,   0, 255, 155}
     };
+    tvg_gradient_set_color_stops(grad1, color_stops1, 4);
+    tvg_gradient_set_spread(grad1, TVG_STROKE_FILL_REFLECT);
 
-    Tvg_Paint *shape1 = tvg_shape_new();
-    tvg_shape_append_rect(shape1, 500, 500, 100, 100, 30, 30);
-    Tvg_Gradient* grad1 = tvg_radial_gradient_new();
-    tvg_radial_gradient_set(grad1, 550, 550, 50);
-    Tvg_Color_Stop color_stops1[3] =
-    {
-        {.offset=0.0, .r=0, .g=0, .b=0, .a=255},
-        {.offset=0.6, .r=255, .g=0, .b=0, .a=255},
-        {.offset=1.0, .r=0, .g=255, .b=255, .a=255}
-    };
+    //Prepare a gradient for the stroke
+    Tvg_Gradient* grad1_stroke = tvg_gradient_duplicate(grad1);
 
-    Tvg_Paint *shape2 = tvg_shape_new();
-    tvg_shape_append_rect(shape2, 400, 0, 800, 400, 20, 20);
-    Tvg_Gradient* grad2 = tvg_linear_gradient_new();
-    tvg_linear_gradient_set(grad2, 400, 0, 450, 50);
-    Tvg_Color_Stop color_stops2[2] =
-    {
-        {.offset=0.0, .r=0, .g=0, .b=0, .a=255},
-        {.offset=1, .r=255, .g=0, .b=0, .a=255},
-    };
+    //Set a gradient fill
+    tvg_shape_set_linear_gradient(shape1, grad1);
 
-    tvg_gradient_set_spread(grad2, TVG_STROKE_FILL_REPEAT);
+    //Set a gradient stroke
+    tvg_shape_set_stroke_width(shape1, 20.0f);
+    tvg_shape_set_stroke_linear_gradient(shape1, grad1_stroke);
+    tvg_shape_set_stroke_join(shape1, TVG_STROKE_JOIN_ROUND);
 
-    Tvg_Paint* shape3 = tvg_shape_new();
-    tvg_shape_append_rect(shape3, 0, 400, 400, 800, 20, 20);
-    Tvg_Gradient* grad3 = tvg_linear_gradient_new();
-    tvg_linear_gradient_set(grad3, 0, 400, 50, 450);
-    Tvg_Color_Stop color_stops3[2] =
-    {
-        {.offset=0.0, .r=0, .g=0, .b=0, .a=255},
-        {.offset=1, .r=0, .g=255, .b=0, .a=255},
-    };
 
-    tvg_gradient_set_spread(grad3, TVG_STROKE_FILL_REFLECT);
-
-    tvg_gradient_set_color_stops(grad, color_stops, 4);
-    tvg_gradient_set_color_stops(grad1, color_stops1, 3);
-    tvg_gradient_set_color_stops(grad2, color_stops2, 2);
-    tvg_gradient_set_color_stops(grad3, color_stops3, 2);
-    tvg_shape_set_linear_gradient(shape, grad);
-    tvg_shape_set_radial_gradient(shape1, grad1);
-    tvg_shape_set_linear_gradient(shape2, grad2);
-    tvg_shape_set_linear_gradient(shape3, grad3);
-
-    tvg_canvas_push(canvas, shape);
-    tvg_canvas_push(canvas, shape1);
-    tvg_canvas_push(canvas, shape2);
-    tvg_canvas_push(canvas, shape3);
-
-    Tvg_Paint* shape4 = tvg_shape_new();
-    tvg_shape_append_rect(shape4, 700, 700, 100, 100, 20, 20);
-    Tvg_Gradient* grad4 = tvg_linear_gradient_new();
-    tvg_linear_gradient_set(grad4, 700, 700, 800, 800);
-    Tvg_Color_Stop color_stops4[2] =
-    {
-        {.offset=0.0, .r=0, .g=0, .b=0, .a=255},
-        {.offset=1, .r=0, .g=255, .b=0, .a=255},
-    };
-    tvg_gradient_set_color_stops(grad4, color_stops4, 2);
-    tvg_shape_set_linear_gradient(shape4, grad4);
-
-    Tvg_Gradient* grad5 = tvg_linear_gradient_new();
-    tvg_linear_gradient_set(grad5, 700, 700, 800, 800);
-    Tvg_Color_Stop color_stops5[2] =
-    {
-        {.offset=0.0, .r=0, .g=0, .b=255, .a=255},
-        {.offset=1, .r=0, .g=255, .b=255, .a=255},
-    };
-    tvg_gradient_set_color_stops(grad5, color_stops5, 2);
-    tvg_shape_set_linear_gradient(shape4, grad5);
-    tvg_canvas_push(canvas, shape4);
-
-    Tvg_Gradient* grad6 = tvg_radial_gradient_new();
-    tvg_radial_gradient_set(grad6, 550, 550, 50);
-    Tvg_Color_Stop color_stops6[2] =
-    {
-        {.offset=0.0, .r=0, .g=125, .b=0, .a=255},
-        {.offset=1, .r=125, .g=0, .b=125, .a=255},
-    };
-    tvg_gradient_set_color_stops(grad6, color_stops6, 2);
-    tvg_shape_set_radial_gradient(shape1, grad6);
-    tvg_canvas_update(canvas);
-
-    tvg_shape_set_stroke_width(shape,3);
-    tvg_shape_set_stroke_color(shape, 125, 0, 125, 255);
-    tvg_canvas_update_paint(canvas, shape);
-
+//////2. Solid transformed shape
+    //Set a shape
     const Tvg_Path_Command* cmds;
     uint32_t cmdCnt;
     const Tvg_Point* pts;
     uint32_t ptsCnt;
 
-    tvg_shape_get_path_commands(shape, &cmds, &cmdCnt);
+    Tvg_Paint* shape2 = tvg_shape_new();
+    tvg_shape_get_path_commands(shape1, &cmds, &cmdCnt);
+    tvg_shape_get_path_coords(shape1, &pts, &ptsCnt);
 
-    tvg_shape_get_path_coords(shape, &pts, &ptsCnt);
+    tvg_shape_append_path(shape2, cmds, cmdCnt, pts, ptsCnt);
+    tvg_shape_set_fill_color(shape2, 255, 255, 255, 128);
 
-    float x1, y1, x2, y2, radius;
-    tvg_linear_gradient_get(grad, &x1, &y1, &x2, &y2);
-    tvg_radial_gradient_get(grad6, &x1, &y1, &radius);
+    //Transform a shape
+    tvg_paint_scale(shape2, 0.3f);
+    tvg_paint_translate(shape2, 100.0f, 100.0f);
 
+
+    //Push shapes 1 and 2 into the canvas
+    tvg_canvas_push(canvas, shape1);
+    tvg_canvas_push(canvas, shape2);
+
+
+//////3. Radial gradient shape with a radial dashed stroke
+    //Set a shape
+    Tvg_Paint* shape3 = tvg_shape_new();
+    tvg_shape_append_rect(shape3, 550.0f, 20.0f, 100.0f, 50.0f, 0.0f, 0.0f);
+    tvg_shape_append_circle(shape3, 600.0f, 150.0f, 100.0f, 50.0f);
+    tvg_shape_append_rect(shape3, 550.0f, 230.0f, 100.0f, 100.0f, 20.0f, 40.0f);
+
+    //Prepare a radial gradient for the fill
+    Tvg_Gradient* grad2 = tvg_radial_gradient_new();
+    tvg_radial_gradient_set(grad2, 600.0f, 180.0f, 50.0f);
+    Tvg_Color_Stop color_stops2[3] =
+    {
+        {0.0f, 255,   0, 255, 255},
+        {0.5f,   0,   0, 255, 255},
+        {1.0f,  50,  55, 155, 255}
+    };
+    tvg_gradient_set_color_stops(grad2, color_stops2, 3);
+    tvg_gradient_set_spread(grad2, TVG_STROKE_FILL_PAD);
+
+    //Set a gradient fill
+    tvg_shape_set_radial_gradient(shape3, grad2);
+
+    //Prepaer a radial gradient for the stroke
     uint32_t cnt;
-    const Tvg_Color_Stop* color_stops_get;
-    tvg_gradient_get_color_stops(grad5, &color_stops_get, &cnt);
+    const Tvg_Color_Stop* color_stops2_get;
+    tvg_gradient_get_color_stops(grad2, &color_stops2_get, &cnt);
 
-    Tvg_Stroke_Fill spread;
-    tvg_gradient_get_spread(grad, &spread);
+    float cx, cy, radius;
+    tvg_radial_gradient_get(grad2, &cx, &cy, &radius);
 
-    //Origin paint for duplicated
-    Tvg_Paint* org = tvg_shape_new();
-    tvg_shape_append_rect(org, 550, 10, 100, 100, 0, 0);
-    tvg_shape_set_stroke_width(org, 3);
-    tvg_shape_set_stroke_color(org, 255, 0, 0, 255);
-    tvg_shape_set_fill_color(org, 0, 255, 0, 255);
+    Tvg_Gradient* grad2_stroke = tvg_radial_gradient_new();
+    tvg_radial_gradient_set(grad2_stroke, cx, cy, radius);
+    tvg_gradient_set_color_stops(grad2_stroke, color_stops2_get, cnt);
+    tvg_gradient_set_spread(grad2_stroke, TVG_STROKE_FILL_REPEAT);
 
-    //Duplicated paint test - should copy rectangle parameters from origin
-    Tvg_Paint* dup = tvg_paint_duplicate(org);
-    tvg_canvas_push(canvas, dup);
+    //Set a gradient stroke
+    tvg_shape_set_stroke_width(shape3, 30.0f);
+    tvg_shape_set_stroke_radial_gradient(shape3, grad2_stroke);
 
-    tvg_paint_del(org);
+    tvg_paint_set_opacity(shape3, 200);
 
-    //Scene test
+    //Push the shape into the canvas
+    tvg_canvas_push(canvas, shape3);
+
+
+//////4. Scene
+    //Set a scene
     Tvg_Paint* scene = tvg_scene_new();
+    tvg_scene_reserve(scene, 2);
 
-    Tvg_Paint* scene_shape_1 = tvg_shape_new();
-    tvg_shape_append_rect(scene_shape_1, 650, 410, 100, 50, 10, 10);
-    tvg_shape_set_fill_color(scene_shape_1, 0, 255, 0, 255);
+    //Set an arc
+    Tvg_Paint* scene_shape1 = tvg_shape_new();
+    tvg_shape_append_arc(scene_shape1, 175.0f, 600.0f, 150.0f, -45.0f, 90.0f, 1);
+    tvg_shape_append_arc(scene_shape1, 175.0f, 600.0f, 150.0f, 225.0f, -90.0f, 1);
+    tvg_shape_set_fill_color(scene_shape1, 0, 0, 255, 150);
 
-    Tvg_Paint* scene_shape_2 = tvg_shape_new();
-    tvg_shape_append_rect(scene_shape_2, 650, 470, 100, 50, 10, 10);
-    tvg_shape_set_fill_color(scene_shape_2, 0, 255, 0, 255);
+    //Set an arc with a dashed stroke
+    Tvg_Paint* scene_shape2 = tvg_paint_duplicate(scene_shape1);
+    tvg_shape_set_fill_color(scene_shape2, 75, 25, 155, 200);
 
-    tvg_scene_push(scene, scene_shape_1);
-    tvg_scene_push(scene, scene_shape_2);
-    tvg_paint_set_opacity(scene, 100);
+    //Prapare a dash for the stroke
+    float dashPattern[4] = {15.0f, 30.0f, 2.0f, 30.0f};
+    tvg_shape_set_stroke_dash(scene_shape2, dashPattern, 4);
+    tvg_shape_set_stroke_cap(scene_shape2, TVG_STROKE_CAP_ROUND);
+    tvg_shape_set_stroke_color(scene_shape2, 0, 0, 255, 255);
+    tvg_shape_set_stroke_width(scene_shape2, 15.0f);
 
+    //Transform a shape
+    tvg_paint_scale(scene_shape2, 0.7f);
+    tvg_paint_rotate(scene_shape2, -90.0f);
+    tvg_paint_translate(scene_shape2, -245.0f, 722.0f);
+
+    //Push the shapes into the scene
+    tvg_scene_push(scene, scene_shape1);
+    tvg_scene_push(scene, scene_shape2);
+
+    //Push the scene into the canvas
     tvg_canvas_push(canvas, scene);
+
+
+//////5. Masked picture
+    //Set a scene
+    Tvg_Paint* pict = tvg_picture_new();
+    if (tvg_picture_load(pict, EXAMPLE_DIR"/tiger.svg") != TVG_RESULT_SUCCESS) {
+        printf("Problem with loading an svg file\n");
+        tvg_paint_del(pict);
+    } else {
+        float w, h;
+        tvg_picture_get_size(pict, &w, &h);
+        tvg_picture_set_size(pict, w/2, h/2);
+        Tvg_Matrix m = {0.8f, 0.0f, 400.0f, 0.0f, 0.8f, 400.0f, 0.0f, 0.0f, 1.0f};
+        tvg_paint_transform(pict, &m);
+
+        // Set a composite shape
+        Tvg_Paint* comp = tvg_shape_new();
+        tvg_shape_append_circle(comp, 600.0f, 600.0f, 100.0f, 100.0f);
+        tvg_shape_set_fill_color(comp, 0, 0, 0, 200);
+        tvg_paint_set_composite_method(pict, comp, TVG_COMPOSITE_METHOD_INVERSE_ALPHA_MASK);
+
+        //Push the scene into the canvas
+        tvg_canvas_push(canvas, pict);
+    }
+
+
+//////Save a paint
+    //Create a shape
+    Tvg_Paint* shape = tvg_shape_new();
+    tvg_shape_append_circle(shape, 420.0f, 420.0f, 10.0f, 10.0f);
+    tvg_shape_set_fill_color(shape, 0, 255, 0, 200);
+
+    //Save the shape
+    Tvg_Saver* saver = tvg_saver_new();
+    if (tvg_saver_save(saver, shape, EXAMPLE_DIR"/capi_test.tvg", true) != TVG_RESULT_SUCCESS) {
+        printf("Problem with saving a tvg file\n");
+    } else {
+      tvg_saver_sync(saver);
+    }
+    tvg_saver_del(saver);
+
+    //Load the saved paint
+    Tvg_Paint* pict_tvg = tvg_picture_new();
+    if (tvg_picture_load(pict_tvg, EXAMPLE_DIR"/capi_test.tvg") != TVG_RESULT_SUCCESS) {
+        printf("Problem with loading a tvg file\n");
+        tvg_paint_del(pict_tvg);
+    } else {
+        //Push the scene into the canvas
+        tvg_canvas_push(canvas, pict_tvg);
+    }
+
+//////Draw the canvas
     tvg_canvas_draw(canvas);
     tvg_canvas_sync(canvas);
 }
@@ -230,9 +269,9 @@ void resize_cb(void *data, Evas *e, Evas_Object *obj, void *event_info)
 int main(int argc, char **argv)
 {
     elm_init(argc, argv);
-    tvg_engine_init(TVG_ENGINE_SW | TVG_ENGINE_GL, 0);
+    tvg_engine_init(Tvg_Engine(TVG_ENGINE_SW | TVG_ENGINE_GL), 0);
 
-    buffer = (uint32_t*) malloc(sizeof(uint32_t) * WIDTH * HEIGHT);
+    buffer = (uint32_t*)malloc(sizeof(uint32_t) * WIDTH * HEIGHT);
 
     Eo* win = elm_win_util_standard_add(NULL, "ThorVG Test");
 
@@ -254,7 +293,10 @@ int main(int argc, char **argv)
     testCapi();
 
     elm_run();
-    tvg_engine_term(TVG_ENGINE_SW | TVG_ENGINE_GL);
+
+    tvg_canvas_destroy(canvas);
+    free(buffer);
+    tvg_engine_term(Tvg_Engine(TVG_ENGINE_SW | TVG_ENGINE_GL));
     elm_shutdown();
 
     return 0;
