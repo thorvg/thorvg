@@ -153,7 +153,7 @@ enum class TVG_EXPORT CompositeMethod
 };
 
 /**
- * @brief Enumeration specifying the engine type used for the graphics backend. For multiple backeneds bitwise operation is allowed.
+ * @brief Enumeration specifying the engine type used for the graphics backend. For multiple backends bitwise operation is allowed.
  */
 enum class TVG_EXPORT CanvasEngine
 {
