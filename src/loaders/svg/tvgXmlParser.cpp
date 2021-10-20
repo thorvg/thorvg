@@ -206,6 +206,35 @@ static const char* _simpleXmlFindDoctypeChildEndTag(const char* itr, const char*
 }
 
 
+static SimpleXMLType _getXMLType(const char* itr, const char* itrEnd, size_t &toff)
+{
+    toff = 0;
+    if (itr[1] == '/') {
+        toff = 1;
+        return SimpleXMLType::Close;
+    } else if (itr[1] == '?') {
+        toff = 1;
+        return SimpleXMLType::Processing;
+    } else if (itr[1] == '!') {
+        if ((itr + sizeof("<!DOCTYPE>") - 1 < itrEnd) && (!memcmp(itr + 2, "DOCTYPE", sizeof("DOCTYPE") - 1)) && ((itr[2 + sizeof("DOCTYPE") - 1] == '>') || (isspace((unsigned char)itr[2 + sizeof("DOCTYPE") - 1])))) {
+            toff = sizeof("!DOCTYPE") - 1;
+            return SimpleXMLType::Doctype;
+        } else if (itr + sizeof("<!>") - 1 < itrEnd) {
+            toff = sizeof("!") - 1;
+            return SimpleXMLType::DoctypeChild;
+        } else if ((itr + sizeof("<![CDATA[]]>") - 1 < itrEnd) && (!memcmp(itr + 2, "[CDATA[", sizeof("[CDATA[") - 1))) {
+            toff = sizeof("![CDATA[") - 1;
+            return SimpleXMLType::CData;
+        } else if ((itr + sizeof("<!---->") - 1 < itrEnd) && (!memcmp(itr + 2, "--", sizeof("--") - 1))) {
+            toff = sizeof("!--") - 1;
+            return SimpleXMLType::Comment;
+        }
+        return SimpleXMLType::Open;
+    }
+    return SimpleXMLType::Open;
+}
+
+
 /************************************************************************/
 /* External Class Implementation                                        */
 /************************************************************************/
@@ -333,107 +362,63 @@ bool simpleXmlParse(const char* buf, unsigned bufLength, bool strip, simpleXMLCb
 
     if (!buf || !func) return false;
 
-#define CB(type, start, end)                                     \
-    do {                                                         \
-        size_t _sz = end - start;                                \
-        bool _ret;                                               \
-        _ret = func((void*)data, type, start, _sz);              \
-        if (!_ret)                                               \
-            return false;                                        \
-    } while (0)
-
     while (itr < itrEnd) {
         if (itr[0] == '<') {
-            if (itr + 1 >= itrEnd) {
-                CB(SimpleXMLType::Error, itr, itrEnd);
-                return false;
+            //Invalid case
+            if (itr + 1 >= itrEnd) return false;
+
+            size_t toff = 0;
+            SimpleXMLType type = _getXMLType(itr, itrEnd, toff);
+
+            const char* p;
+            if (type == SimpleXMLType::CData) p = _simpleXmlFindEndCdataTag(itr + 1 + toff, itrEnd);
+            else if (type == SimpleXMLType::DoctypeChild) p = _simpleXmlFindDoctypeChildEndTag(itr + 1 + toff, itrEnd);
+            else if (type == SimpleXMLType::Comment) p = _simpleXmlFindEndCommentTag(itr + 1 + toff, itrEnd);
+            else p = _simpleXmlFindEndTag(itr + 1 + toff, itrEnd);
+
+            if (p) {
+                //Invalid case: '<' nested
+                if (*p == '<') return false;
+                const char *start, *end;
+
+                start = itr + 1 + toff;
+                end = p;
+
+                switch (type) {
+                    case SimpleXMLType::Open: {
+                        if (p[-1] == '/') {
+                            type = SimpleXMLType::OpenEmpty;
+                            end--;
+                        }
+                        break;
+                    }
+                    case SimpleXMLType::CData: {
+                        if (!memcmp(p - 2, "]]", 2)) end -= 2;
+                        break;
+                    }
+                    case SimpleXMLType::Processing: {
+                        if (p[-1] == '?') end--;
+                        break;
+                    }
+                    case SimpleXMLType::Comment: {
+                        if (!memcmp(p - 2, "--", 2)) end -= 2;
+                        break;
+                    }
+                    default: {
+                        break;
+                    }
+                }
+
+                if (strip && (type != SimpleXMLType::CData)) {
+                    start = _skipWhiteSpacesAndXmlEntities(start, end);
+                    end = _unskipWhiteSpacesAndXmlEntities(end, start);
+                }
+
+                if (!func((void*)data, type, start, (size_t)(end - start))) return false;
+
+                itr = p + 1;
             } else {
-                SimpleXMLType type;
-                size_t toff;
-                const char* p;
-
-                if (itr[1] == '/') {
-                    type = SimpleXMLType::Close;
-                    toff = 1;
-                } else if (itr[1] == '?') {
-                    type = SimpleXMLType::Processing;
-                    toff = 1;
-                } else if (itr[1] == '!') {
-                    if ((itr + sizeof("<!DOCTYPE>") - 1 < itrEnd) && (!memcmp(itr + 2, "DOCTYPE", sizeof("DOCTYPE") - 1)) && ((itr[2 + sizeof("DOCTYPE") - 1] == '>') || (isspace((unsigned char)itr[2 + sizeof("DOCTYPE") - 1])))) {
-                        type = SimpleXMLType::Doctype;
-                        toff = sizeof("!DOCTYPE") - 1;
-                    } else if ((itr + sizeof("<!---->") - 1 < itrEnd) && (!memcmp(itr + 2, "--", sizeof("--") - 1))) {
-                        type = SimpleXMLType::Comment;
-                        toff = sizeof("!--") - 1;
-                    } else if ((itr + sizeof("<![CDATA[]]>") - 1 < itrEnd) && (!memcmp(itr + 2, "[CDATA[", sizeof("[CDATA[") - 1))) {
-                        type = SimpleXMLType::CData;
-                        toff = sizeof("![CDATA[") - 1;
-                    } else if (itr + sizeof("<!>") - 1 < itrEnd) {
-                        type = SimpleXMLType::DoctypeChild;
-                        toff = sizeof("!") - 1;
-                    } else {
-                        type = SimpleXMLType::Open;
-                        toff = 0;
-                    }
-                } else {
-                    type = SimpleXMLType::Open;
-                    toff = 0;
-                }
-
-                if (type == SimpleXMLType::CData) p = _simpleXmlFindEndCdataTag(itr + 1 + toff, itrEnd);
-                else if (type == SimpleXMLType::DoctypeChild) p = _simpleXmlFindDoctypeChildEndTag(itr + 1 + toff, itrEnd);
-                else if (type == SimpleXMLType::Comment) p = _simpleXmlFindEndCommentTag(itr + 1 + toff, itrEnd);
-                else p = _simpleXmlFindEndTag(itr + 1 + toff, itrEnd);
-
-                if ((p) && (*p == '<')) {
-                    type = SimpleXMLType::Error;
-                    toff = 0;
-                }
-
-                if (p) {
-                    const char *start, *end;
-
-                    start = itr + 1 + toff;
-                    end = p;
-
-                    switch (type) {
-                        case SimpleXMLType::Open: {
-                            if (p[-1] == '/') {
-                                type = SimpleXMLType::OpenEmpty;
-                                end--;
-                            }
-                            break;
-                        }
-                        case SimpleXMLType::CData: {
-                            if (!memcmp(p - 2, "]]", 2)) end -= 2;
-                            break;
-                        }
-                        case SimpleXMLType::Processing: {
-                            if (p[-1] == '?') end--;
-                            break;
-                        }
-                        case SimpleXMLType::Comment: {
-                            if (!memcmp(p - 2, "--", 2)) end -= 2;
-                            break;
-                        }
-                        default: {
-                            break;
-                        }
-                    }
-
-                    if ((strip) && (type != SimpleXMLType::Error) && (type != SimpleXMLType::CData)) {
-                        start = _skipWhiteSpacesAndXmlEntities(start, end);
-                        end = _unskipWhiteSpacesAndXmlEntities(end, start);
-                    }
-
-                    CB(type, start, end);
-
-                    if (type != SimpleXMLType::Error) itr = p + 1;
-                    else itr = p;
-                } else {
-                    CB(SimpleXMLType::Error, itr, itrEnd);
-                    return false;
-                }
+                return false;
             }
         } else {
             const char *p, *end;
@@ -442,7 +427,7 @@ bool simpleXmlParse(const char* buf, unsigned bufLength, bool strip, simpleXMLCb
                 p = itr;
                 p = _skipWhiteSpacesAndXmlEntities(p, itrEnd);
                 if (p) {
-                    CB(SimpleXMLType::Ignored, itr, p);
+                    if (!func((void*)data, SimpleXMLType::Ignored, itr, (size_t)(p - itr))) return false;
                     itr = p;
                 }
             }
@@ -453,16 +438,13 @@ bool simpleXmlParse(const char* buf, unsigned bufLength, bool strip, simpleXMLCb
             end = p;
             if (strip) end = _unskipWhiteSpacesAndXmlEntities(end, itr);
 
-            if (itr != end) CB(SimpleXMLType::Data, itr, end);
+            if (itr != end && !func((void*)data, SimpleXMLType::Data, itr, (size_t)(end - itr))) return false;
 
-            if ((strip) && (end < p)) CB(SimpleXMLType::Ignored, end, p);
+            if (strip && (end < p) && !func((void*)data, SimpleXMLType::Ignored, end, (size_t)(p - end))) return false;
 
             itr = p;
         }
     }
-
-#undef CB
-
     return true;
 }
 
