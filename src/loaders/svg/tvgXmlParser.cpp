@@ -69,7 +69,6 @@ bool _isIgnoreUnsupportedLogAttributes(TVG_UNUSED const char* tagAttribute, TVG_
 }
 
 
-
 static const char* _simpleXmlFindWhiteSpace(const char* itr, const char* itrEnd)
 {
     for (; itr < itrEnd; itr++) {
