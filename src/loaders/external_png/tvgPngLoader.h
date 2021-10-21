@@ -39,6 +39,10 @@ public:
     const uint32_t* pixels() override;
 
 private:
+    void clear();
+
+    char* data = nullptr;
+    bool freeData = false;
     png_imagep image = nullptr;
     const uint32_t* content = nullptr;
 };
