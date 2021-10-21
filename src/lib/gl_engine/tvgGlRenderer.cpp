@@ -247,6 +247,13 @@ bool GlRenderer::viewport(TVG_UNUSED const RenderRegion& vp)
 }
 
 
+uint32_t GlRenderer::colorSpace()
+{
+    //TODO:
+    return 0;
+}
+
+
 int GlRenderer::init(uint32_t threads)
 {
     if ((initEngineCnt++) > 0) return true;
