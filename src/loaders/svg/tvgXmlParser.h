@@ -44,7 +44,7 @@ enum class SimpleXMLType
     DoctypeChild //!< \<!doctype_child
 };
 
-typedef bool (*simpleXMLCb)(void* data, SimpleXMLType type, const char* content, unsigned length);
+typedef bool (*simpleXMLCb)(void* data, SimpleXMLType type, const char* content, unsigned int length);
 typedef bool (*simpleXMLAttributeCb)(void* data, const char* key, const char* value);
 
 bool simpleXmlParseAttributes(const char* buf, unsigned buflen, simpleXMLAttributeCb func, const void* data);

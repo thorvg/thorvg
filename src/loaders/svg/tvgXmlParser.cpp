@@ -414,7 +414,7 @@ bool simpleXmlParse(const char* buf, unsigned bufLength, bool strip, simpleXMLCb
                     end = _unskipWhiteSpacesAndXmlEntities(end, start);
                 }
 
-                if (!func((void*)data, type, start, (size_t)(end - start))) return false;
+                if (!func((void*)data, type, start, (unsigned int)(end - start))) return false;
 
                 itr = p + 1;
             } else {
@@ -427,7 +427,7 @@ bool simpleXmlParse(const char* buf, unsigned bufLength, bool strip, simpleXMLCb
                 p = itr;
                 p = _skipWhiteSpacesAndXmlEntities(p, itrEnd);
                 if (p) {
-                    if (!func((void*)data, SimpleXMLType::Ignored, itr, (size_t)(p - itr))) return false;
+                    if (!func((void*)data, SimpleXMLType::Ignored, itr, (unsigned int)(p - itr))) return false;
                     itr = p;
                 }
             }
