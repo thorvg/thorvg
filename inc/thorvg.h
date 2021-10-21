@@ -1099,7 +1099,6 @@ public:
      * @retval Result::Success When succeed.
      * @retval Result::InvalidArguments In case the @p path is invalid.
      * @retval Result::NonSupport When trying to load a file with an unknown extension.
-     * @retval Result::Unknown If an error occurs at a later stage.
      *
      * @note The Load behavior can be asynchronous if the assigned thread number is greater than zero.
      * @see Initializer::init()
@@ -1116,7 +1115,6 @@ public:
      * @retval Result::Success When succeed.
      * @retval Result::InvalidArguments In case no data are provided or the @p size is zero or less.
      * @retval Result::NonSupport When trying to load a file with an unknown extension.
-     * @retval Result::Unknown If an error occurs at a later stage.
      *
      * @warning: you have responsibility to release the @p data memory if the @p copy is true
      * @deprecated Use load(const char* data, uint32_t size, const std::string& mimeType, bool copy) instead.
@@ -1135,7 +1133,6 @@ public:
      * @retval Result::Success When succeed.
      * @retval Result::InvalidArguments In case no data are provided or the @p size is zero or less.
      * @retval Result::NonSupport When trying to load a file with an unknown extension.
-     * @retval Result::Unknown If an error occurs at a later stage.
      *
      * @warning: It's the user responsibility to release the @p data memory if the @p copy is @c true.
      *
