@@ -438,9 +438,9 @@ bool simpleXmlParse(const char* buf, unsigned bufLength, bool strip, simpleXMLCb
             end = p;
             if (strip) end = _unskipWhiteSpacesAndXmlEntities(end, itr);
 
-            if (itr != end && !func((void*)data, SimpleXMLType::Data, itr, (size_t)(end - itr))) return false;
+            if (itr != end && !func((void*)data, SimpleXMLType::Data, itr, (unsigned int)(end - itr))) return false;
 
-            if (strip && (end < p) && !func((void*)data, SimpleXMLType::Ignored, end, (size_t)(p - end))) return false;
+            if (strip && (end < p) && !func((void*)data, SimpleXMLType::Ignored, end, (unsigned int)(p - end))) return false;
 
             itr = p;
         }
