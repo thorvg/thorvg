@@ -131,7 +131,8 @@ bool JpgLoader::read(uint32_t colorspace)
     if (!image) return false;
 
     //decompress jpg image
-    if (tjDecompress2(jpegDecompressor, data, size, image, static_cast<int>(w), 0, static_cast<int>(h), TJPF_BGRX, 0) < 0) {
+    auto pixelFormat = (colorspace == tvg::SwCanvas::ABGR8888) ? TJPF_RGBX : TJPF_BGRX;
+    if (tjDecompress2(jpegDecompressor, data, size, image, static_cast<int>(w), 0, static_cast<int>(h), pixelFormat, 0) < 0) {
         TVGERR("JPG LOADER", "%s", tjGetErrorStr());
         tjFree(image);
         image = nullptr;
