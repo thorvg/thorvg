@@ -369,8 +369,10 @@ static bool _fastTrack(const SwOutline* outline)
     auto pt3 = outline->pts + 2;
     auto pt4 = outline->pts + 3;
 
-    auto a = SwPoint{pt1->x, pt3->y};
-    auto b = SwPoint{pt3->x, pt1->y};
+    //mathUpdateOutlineBBox shift rendering bbox. This shif should not be aplied to fastTrack method
+    //https://github.com/Samsung/thorvg/issues/916
+    auto a = SwPoint{pt1->x, pt3->y - 63};
+    auto b = SwPoint{pt3->x - 63, pt1->y};
 
     if ((*pt2 == a && *pt4 == b) || (*pt2 == b && *pt4 == a)) return true;
 
