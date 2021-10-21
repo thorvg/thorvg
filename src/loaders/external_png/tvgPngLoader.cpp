@@ -63,7 +63,7 @@ bool PngLoader::open(const char* data, uint32_t size, bool copy)
     return true;
 }
 
-bool PngLoader::read()
+bool PngLoader::read(uint32_t colorspace)
 {
     png_bytep buffer;
     image->format = PNG_FORMAT_BGRA;

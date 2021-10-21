@@ -194,7 +194,7 @@ struct Picture::Impl
             if (invalid) return Result::InvalidArguments;
             return Result::NonSupport;
         }
-        if (!loader->read()) return Result::Unknown;
+        if (!loader->read(0)) return Result::Unknown;
         w = loader->w;
         h = loader->h;
         return Result::Success;
@@ -206,7 +206,7 @@ struct Picture::Impl
         if (loader) loader->close();
         loader = LoaderMgr::loader(data, size, mimeType, copy);
         if (!loader) return Result::NonSupport;
-        if (!loader->read()) return Result::Unknown;
+        if (!loader->read(0)) return Result::Unknown;
         w = loader->w;
         h = loader->h;
         return Result::Success;

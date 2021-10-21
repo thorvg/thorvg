@@ -47,7 +47,7 @@ public:
     //Override this if the vector-format has own resizing policy.
     virtual bool resize(Paint* paint, float w, float h) { return false; };
 
-    virtual bool read() = 0;
+    virtual bool read(uint32_t colorspace) = 0;
     virtual bool close() = 0;
     virtual const uint32_t* pixels() { return nullptr; };
     virtual unique_ptr<Paint> paint() { return nullptr; };

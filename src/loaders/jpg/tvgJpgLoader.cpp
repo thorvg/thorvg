@@ -60,7 +60,7 @@ bool JpgLoader::open(const char* data, uint32_t size, bool copy)
 }
 
 
-bool JpgLoader::read()
+bool JpgLoader::read(uint32_t colorspace)
 {
     //TODO:
 

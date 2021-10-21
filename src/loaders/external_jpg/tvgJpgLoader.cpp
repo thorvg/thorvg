@@ -124,7 +124,7 @@ bool JpgLoader::open(const char* data, uint32_t size, bool copy)
 }
 
 
-bool JpgLoader::read()
+bool JpgLoader::read(uint32_t colorspace)
 {
     if (image) tjFree(image);
     image = (unsigned char *)tjAlloc(static_cast<int>(w) * static_cast<int>(h) * tjPixelSize[TJPF_BGRX]);
