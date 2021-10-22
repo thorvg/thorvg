@@ -54,7 +54,6 @@ protected: \
 
 
 #define _TVG_DECALRE_IDENTIFIER() \
-    auto id() const { return _id; } \
 protected: \
     unsigned _id
 

@@ -364,7 +364,7 @@ bool SwRenderer::renderShape(RenderData data)
     uint8_t r, g, b, a;
 
     if (auto fill = task->sdata->fill()) {
-        rasterGradientShape(surface, &task->shape, fill->id());
+        rasterGradientShape(surface, &task->shape, fill->identifier());
     } else {
         task->sdata->fillColor(&r, &g, &b, &a);
         a = static_cast<uint8_t>((opacity * (uint32_t) a) / 255);
@@ -372,7 +372,7 @@ bool SwRenderer::renderShape(RenderData data)
     }
 
     if (auto strokeFill = task->sdata->strokeFill()) {
-        rasterGradientStroke(surface, &task->shape, strokeFill->id());
+        rasterGradientStroke(surface, &task->shape, strokeFill->identifier());
     } else {
         if (task->sdata->strokeColor(&r, &g, &b, &a) == Result::Success) {
             a = static_cast<uint8_t>((opacity * (uint32_t) a) / 255);

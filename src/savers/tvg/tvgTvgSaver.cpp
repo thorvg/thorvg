@@ -435,7 +435,7 @@ TvgBinCounter TvgSaver::serializeFill(const Fill* fill, TvgBinTag tag)
     TvgBinCounter cnt = 0;
 
     //radial fill
-    if (fill->id() == TVG_CLASS_ID_RADIAL) {
+    if (fill->identifier() == TVG_CLASS_ID_RADIAL) {
         float args[3];
         static_cast<const RadialGradient*>(fill)->radial(args, args + 1, args + 2);
         cnt += writeTagProperty(TVG_TAG_FILL_RADIAL_GRADIENT, SIZE(args), args);
@@ -672,10 +672,10 @@ TvgBinCounter TvgSaver::serializeChildren(Iterator* it, const Matrix* pTransform
     children.push(it->next());
 
     while (auto child = it->next()) {
-        if (child->id() == TVG_CLASS_ID_SHAPE) {
+        if (child->identifier() == TVG_CLASS_ID_SHAPE) {
             //only dosable if the previous child is a shape.
             auto target = children.ptr() - 1;
-            if ((*target)->id() == TVG_CLASS_ID_SHAPE) {
+            if ((*target)->identifier() == TVG_CLASS_ID_SHAPE) {
                 if (_merge((Shape*)child, (Shape*)*target)) {
                     continue;
                 }
@@ -709,7 +709,7 @@ TvgBinCounter TvgSaver::serialize(const Paint* paint, const Matrix* pTransform, 
     auto transform = const_cast<Paint*>(paint)->transform();
     if (pTransform) transform = _multiply(pTransform, &transform);
 
-    switch (paint->id()) {
+    switch (paint->identifier()) {
         case TVG_CLASS_ID_SHAPE: return serializeShape(static_cast<const Shape*>(paint), pTransform, &transform);
         case TVG_CLASS_ID_SCENE: return serializeScene(static_cast<const Scene*>(paint), pTransform, &transform);
         case TVG_CLASS_ID_PICTURE: return serializePicture(static_cast<const Picture*>(paint), pTransform, &transform);
@@ -727,7 +727,7 @@ void TvgSaver::run(unsigned tid)
     Matrix transform = {1, 0, 0, 0, 1, 0, 0, 0, 1};
 
     if (paint->opacity() > 0) {
-        switch (paint->id()) {
+        switch (paint->identifier()) {
             case TVG_CLASS_ID_SHAPE: {
                 serializeShape(static_cast<const Shape*>(paint), nullptr, &transform);
                 break;
