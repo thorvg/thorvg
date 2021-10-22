@@ -1356,7 +1356,7 @@ public:
      * You can indicate the number of threads, the count of which is designated @p threads.
      * In the initialization step, TVG will generate/spawn the threads as set by @p threads count.
      *
-     * @param[in] engine The engine types to initialize. This is relative to the Canvas types, in which it will be used. For multiple backeneds bitwise operation is allowed.
+     * @param[in] engine The engine types to initialize. This is relative to the Canvas types, in which it will be used. For multiple backends bitwise operation is allowed.
      * @param[in] threads The number of additional threads. Zero indicates only the main thread is to be used.
      *
      * @retval Result::Success When succeed.
@@ -1373,7 +1373,7 @@ public:
     /**
      * @brief Terminates TVG engines.
      *
-     * @param[in] engine The engine types to terminate. This is relative to the Canvas types, in which it will be used. For multiple backeneds bitwise operation is allowed
+     * @param[in] engine The engine types to terminate. This is relative to the Canvas types, in which it will be used. For multiple backends bitwise operation is allowed
      *
      * @retval Result::Success When succeed.
      * @retval Result::InsufficientCondition In case there is nothing to be terminated.
