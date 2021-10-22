@@ -240,13 +240,13 @@ private:
     void sublayers(Array<Layer>* layers, const Paint* paint, uint32_t depth)
     {
         //paint
-        if (paint->id() != TVG_CLASS_ID_SHAPE) {
+        if (paint->identifier() != Shape::identifier()) {
             auto it = this->iterator(paint);
             if (it->count() > 0) {
                 layers->reserve(layers->count + it->count());
                 it->begin();
                 while (auto child = it->next()) {
-                    uint32_t type = child->id();
+                    uint32_t type = child->identifier();
                     uint32_t opacity = child->opacity();
                     layers->push({.paint = reinterpret_cast<uint32_t>(child), .depth = depth + 1, .type = type, .composite = static_cast<uint32_t>(CompositeMethod::None), .opacity = opacity});
                     sublayers(layers, child, depth + 1);
@@ -257,7 +257,7 @@ private:
         const Paint* compositeTarget = nullptr;
         CompositeMethod composite = paint->composite(&compositeTarget);
         if (compositeTarget && composite != CompositeMethod::None) {
-            uint32_t type = compositeTarget->id();
+            uint32_t type = compositeTarget->identifier();
             uint32_t opacity = compositeTarget->opacity();
             layers->push({.paint = reinterpret_cast<uint32_t>(compositeTarget), .depth = depth, .type = type, .composite = static_cast<uint32_t>(composite), .opacity = opacity});
             sublayers(layers, compositeTarget, depth);
@@ -271,7 +271,7 @@ private:
             return parent;
         }
         //paint
-        if (parent->id() != TVG_CLASS_ID_SHAPE) {
+        if (parent->identifier() != Shape::identifier()) {
             auto it = this->iterator(parent);
             if (it->count() > 0) {
                 it->begin();
