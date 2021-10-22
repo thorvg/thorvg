@@ -76,7 +76,7 @@ typedef struct _Tvg_Saver Tvg_Saver;
 
 
 /**
-* \brief Enumeration specifying the engine type used for the graphics backend. For multiple backeneds bitwise operation is allowed.
+* \brief Enumeration specifying the engine type used for the graphics backend. For multiple backends bitwise operation is allowed.
 *
 * \ingroup ThorVGCapi_Initializer
 */
@@ -239,7 +239,7 @@ typedef struct
 * tvg_engine_init(TVG_ENGINE_SW, 0);  //Initialize software renderer and use the main thread only
 * \endcode
 *
-* \param[in] engine_method The engine types to initialize. This is relative to the Canvas types, in which it will be used. For multiple backeneds bitwise operation is allowed.
+* \param[in] engine_method The engine types to initialize. This is relative to the Canvas types, in which it will be used. For multiple backends bitwise operation is allowed.
 *   - TVG_ENGINE_SW: CPU rasterizer
 *   - TVG_ENGINE_GL: OpenGL rasterizer (not supported yet)
 * \param[in] threads The number of additional threads used to perform rendering. Zero indicates only the main thread is to be used.
@@ -269,7 +269,7 @@ TVG_EXPORT Tvg_Result tvg_engine_init(Tvg_Engine engine_method, unsigned threads
 * tvg_engine_term(TVG_ENGINE_SW);
 * \endcode
 *
-* \param engine_method The engine types to terminate. This is relative to the Canvas types, in which it will be used. For multiple backeneds bitwise operation is allowed
+* \param engine_method The engine types to terminate. This is relative to the Canvas types, in which it will be used. For multiple backends bitwise operation is allowed
 *   - TVG_ENGINE_SW: CPU rasterizer
 *   - TVG_ENGINE_GL: OpenGL rasterizer (not supported yet)
 *
