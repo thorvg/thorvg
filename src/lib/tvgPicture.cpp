@@ -45,6 +45,12 @@ unique_ptr<Picture> Picture::gen() noexcept
 }
 
 
+uint32_t Picture::identifier() noexcept
+{
+    return TVG_CLASS_ID_PICTURE;
+}
+
+
 Result Picture::load(const std::string& path) noexcept
 {
     if (path.empty()) return Result::InvalidArguments;
