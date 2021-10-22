@@ -44,6 +44,12 @@ unique_ptr<Scene> Scene::gen() noexcept
 }
 
 
+uint32_t Scene::identifier() noexcept
+{
+    return TVG_CLASS_ID_SCENE;
+}
+
+
 Result Scene::push(unique_ptr<Paint> paint) noexcept
 {
     auto p = paint.release();

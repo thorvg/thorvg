@@ -89,3 +89,9 @@ unique_ptr<RadialGradient> RadialGradient::gen() noexcept
 {
     return unique_ptr<RadialGradient>(new RadialGradient);
 }
+
+
+uint32_t RadialGradient::identifier() noexcept
+{
+    return TVG_CLASS_ID_RADIAL;
+}

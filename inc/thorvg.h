@@ -339,6 +339,17 @@ public:
      */
     CompositeMethod composite(const Paint** target) const noexcept;
 
+    /**
+     * @brief Return the unique id value of the paint instance.
+     *
+     * This method can be called for checking the current concrete instance type.
+     *
+     * @return The type id of the Paint instance.
+     *
+     * @BETA_API
+     */
+    uint32_t identifier() const { return _id; }
+
     _TVG_DECLARE_ACCESSOR();
     _TVG_DECALRE_IDENTIFIER();
     _TVG_DECLARE_PRIVATE(Paint);
@@ -440,6 +451,17 @@ public:
      * @return A copied Fill object when succeed, @c nullptr otherwise.
      */
     Fill* duplicate() const noexcept;
+
+    /**
+     * @brief Return the unique id value of the Fill instance.
+     *
+     * This method can be called for checking the current concrete instance type.
+     *
+     * @return The type id of the Fill instance.
+     *
+     * @BETA_API
+     */
+    uint32_t identifier() const { return _id; }
 
     _TVG_DECALRE_IDENTIFIER();
     _TVG_DECLARE_PRIVATE(Fill);
@@ -598,6 +620,17 @@ public:
      */
     static std::unique_ptr<LinearGradient> gen() noexcept;
 
+    /**
+     * @brief Return the unique id value of this class.
+     *
+     * This method can be referred for identifying the LinearGradient class type.
+     *
+     * @return The type id of the LinearGradient class.
+     *
+     * @BETA_API
+     */
+    static uint32_t identifier() noexcept;
+
     _TVG_DECLARE_PRIVATE(LinearGradient);
 };
 
@@ -645,6 +678,17 @@ public:
      * @return A new RadialGradient object.
      */
     static std::unique_ptr<RadialGradient> gen() noexcept;
+
+    /**
+     * @brief Return the unique id value of this class.
+     *
+     * This method can be referred for identifying the RadialGradient class type.
+     *
+     * @return The type id of the RadialGradient class.
+     *
+     * @BETA_API
+     */
+    static uint32_t identifier() noexcept;
 
     _TVG_DECLARE_PRIVATE(RadialGradient);
 };
@@ -1020,6 +1064,17 @@ public:
      */
     static std::unique_ptr<Shape> gen() noexcept;
 
+    /**
+     * @brief Return the unique id value of this class.
+     *
+     * This method can be referred for identifying the Shape class type.
+     *
+     * @return The type id of the Shape class.
+     *
+     * @BETA_API
+     */
+    static uint32_t identifier() noexcept;
+
     _TVG_DECLARE_PRIVATE(Shape);
 };
 
@@ -1146,6 +1201,17 @@ public:
      */
     static std::unique_ptr<Picture> gen() noexcept;
 
+    /**
+     * @brief Return the unique id value of this class.
+     *
+     * This method can be referred for identifying the Picture class type.
+     *
+     * @return The type id of the Picture class.
+     *
+     * @BETA_API
+     */
+    static uint32_t identifier() noexcept;
+
     _TVG_DECLARE_PRIVATE(Picture);
 };
 
@@ -1214,6 +1280,17 @@ public:
      * @return A new Scene object.
      */
     static std::unique_ptr<Scene> gen() noexcept;
+
+    /**
+     * @brief Return the unique id value of this class.
+     *
+     * This method can be referred for identifying the Scene class type.
+     *
+     * @return The type id of the Scene class.
+     *
+     * @BETA_API
+     */
+    static uint32_t identifier() noexcept;
 
     _TVG_DECLARE_PRIVATE(Scene);
 };

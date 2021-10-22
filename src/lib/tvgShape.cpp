@@ -55,6 +55,12 @@ unique_ptr<Shape> Shape::gen() noexcept
 }
 
 
+uint32_t Shape::identifier() noexcept
+{
+    return TVG_CLASS_ID_SHAPE;
+}
+
+
 Result Shape::reset() noexcept
 {
     pImpl->path.reset();

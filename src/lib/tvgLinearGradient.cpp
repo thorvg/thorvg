@@ -91,3 +91,9 @@ unique_ptr<LinearGradient> LinearGradient::gen() noexcept
 {
     return unique_ptr<LinearGradient>(new LinearGradient);
 }
+
+
+uint32_t LinearGradient::identifier() noexcept
+{
+    return TVG_CLASS_ID_LINEAR;
+}
