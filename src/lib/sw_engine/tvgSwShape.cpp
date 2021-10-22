@@ -371,8 +371,9 @@ static bool _fastTrack(const SwOutline* outline)
 
     auto a = SwPoint{pt1->x, pt3->y};
     auto b = SwPoint{pt3->x, pt1->y};
+    auto rectSize = *pt3 - *pt1;
 
-    if ((*pt2 == a && *pt4 == b) || (*pt2 == b && *pt4 == a)) return true;
+    if (((*pt2 == a && *pt4 == b) || (*pt2 == b && *pt4 == a)) && rectSize.big()) return true;
 
     return false;
 }

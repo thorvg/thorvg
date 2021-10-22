@@ -45,6 +45,8 @@ static double timeStamp()
 using SwCoord = signed long;
 using SwFixed = signed long long;
 
+static inline SwCoord TO_SWCOORD(float val);
+
 struct SwPoint
 {
     SwCoord x, y;
@@ -89,6 +91,12 @@ struct SwPoint
         else return false;
     }
 
+    bool big() const
+    {
+        //20 is big enough
+        if (abs(x) > TO_SWCOORD(20.0f) && abs(y) > TO_SWCOORD(20.0f)) return true;
+        else return false;
+    }
 };
 
 struct SwSize
