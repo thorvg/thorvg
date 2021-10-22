@@ -50,7 +50,7 @@ protected: \
     friend Canvas; \
     friend Scene; \
     friend Picture; \
-    friend IteratorModule
+    friend IteratorAccessor
 
 
 #define _TVG_DECALRE_IDENTIFIER() \
@@ -61,7 +61,7 @@ namespace tvg
 {
 
 class RenderMethod;
-class IteratorModule;
+class IteratorAccessor;
 class Scene;
 class Picture;
 class Canvas;

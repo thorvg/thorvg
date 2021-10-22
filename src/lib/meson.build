@@ -19,7 +19,7 @@ source_file = [
    'tvgLzw.h',
    'tvgPictureImpl.h',
    'tvgRender.h',
-   'tvgIteratorModule.h',
+   'tvgIteratorAccessor.h',
    'tvgSaveModule.h',
    'tvgSceneImpl.h',
    'tvgShapeImpl.h',

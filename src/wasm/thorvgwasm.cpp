@@ -21,7 +21,7 @@
  */
 
 #include <thorvg.h>
-#include "tvgIteratorModule.h"
+#include "tvgIteratorAccessor.h"
 
 #include <emscripten/bind.h>
 
@@ -29,7 +29,7 @@ using namespace emscripten;
 using namespace std;
 using namespace tvg;
 
-class __attribute__((visibility("default"))) ThorvgWasm : public IteratorModule
+class __attribute__((visibility("default"))) ThorvgWasm : public IteratorAccessor
 {
 public:
     static unique_ptr<ThorvgWasm> create()
