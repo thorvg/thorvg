@@ -182,6 +182,47 @@ TEST_CASE("Linear Gradient spread", "[capiLinearGradient]")
     REQUIRE(tvg_gradient_del(NULL) == TVG_RESULT_INVALID_ARGUMENT);
 }
 
+TEST_CASE("Linear Gradient transformation", "[capiLinearGradient]")
+{
+    Tvg_Gradient *gradient = tvg_linear_gradient_new();
+    REQUIRE(gradient);
+
+    Tvg_Matrix matrix_get;
+
+    REQUIRE(tvg_gradient_get_transform(NULL, &matrix_get) == TVG_RESULT_INVALID_ARGUMENT);
+    REQUIRE(tvg_gradient_get_transform(gradient, NULL) == TVG_RESULT_INVALID_ARGUMENT);
+    REQUIRE(tvg_gradient_get_transform(gradient, &matrix_get) == TVG_RESULT_SUCCESS);
+
+    REQUIRE(matrix_get.e11 == Approx(1.0f).margin(0.000001));
+    REQUIRE(matrix_get.e12 == Approx(0.0f).margin(0.000001));
+    REQUIRE(matrix_get.e13 == Approx(0.0f).margin(0.000001));
+    REQUIRE(matrix_get.e21 == Approx(0.0f).margin(0.000001));
+    REQUIRE(matrix_get.e22 == Approx(1.0f).margin(0.000001));
+    REQUIRE(matrix_get.e23 == Approx(0.0f).margin(0.000001));
+    REQUIRE(matrix_get.e31 == Approx(0.0f).margin(0.000001));
+    REQUIRE(matrix_get.e32 == Approx(0.0f).margin(0.000001));
+    REQUIRE(matrix_get.e33 == Approx(1.0f).margin(0.000001));
+
+    Tvg_Matrix matrix_set = {1.1f, -2.2f, 3.3f, -4.4f, 5.5f, -6.6f, 7.7f, -8.8f, 9.9f};
+    REQUIRE(tvg_gradient_set_transform(NULL, &matrix_set) == TVG_RESULT_INVALID_ARGUMENT);
+    REQUIRE(tvg_gradient_set_transform(gradient, NULL) == TVG_RESULT_INVALID_ARGUMENT);
+    REQUIRE(tvg_gradient_set_transform(gradient, &matrix_set) == TVG_RESULT_SUCCESS);
+
+    REQUIRE(tvg_gradient_get_transform(gradient, &matrix_get) == TVG_RESULT_SUCCESS);
+
+    REQUIRE(matrix_get.e11 == Approx(matrix_set.e11).margin(0.000001));
+    REQUIRE(matrix_get.e12 == Approx(matrix_set.e12).margin(0.000001));
+    REQUIRE(matrix_get.e13 == Approx(matrix_set.e13).margin(0.000001));
+    REQUIRE(matrix_get.e21 == Approx(matrix_set.e21).margin(0.000001));
+    REQUIRE(matrix_get.e22 == Approx(matrix_set.e22).margin(0.000001));
+    REQUIRE(matrix_get.e23 == Approx(matrix_set.e23).margin(0.000001));
+    REQUIRE(matrix_get.e31 == Approx(matrix_set.e31).margin(0.000001));
+    REQUIRE(matrix_get.e32 == Approx(matrix_set.e32).margin(0.000001));
+    REQUIRE(matrix_get.e33 == Approx(matrix_set.e33).margin(0.000001));
+
+    REQUIRE(tvg_gradient_del(gradient) == TVG_RESULT_SUCCESS);
+}
+
 TEST_CASE("Stroke Linear Gradient", "[capiLinearGradient]")
 {
     Tvg_Paint *shape = tvg_shape_new();
