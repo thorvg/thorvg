@@ -29,6 +29,12 @@ If your program has the main renderer, your program could call ThorVG APIs while
   <img width="900" height="288" src="https://github.com/Samsung/thorvg/blob/master/res/example_flow.png">
 </p>
 <br />
+ThorVG has the threading mechanism so that it tries to acquire the next scenes without delay. It runs its own fine-tuned task-scheduler built on threading pools, encapsulates all the jobs such as encoding, decoding, updating, rendering with tasks. As a result, all the tasks could run on multi-processing. The task scheduler is readied for hiding complexity, easier integration and user convenience. Thus the policy is optional, users can select it by their demands.<br />
+<br />
+<p align="center">
+  <img width="900" height="313" src="https://github.com/Samsung/thorvg/blob/master/res/example_threading.png">
+</p>
+<br />
 
 ## Contents
 - [Building ThorVG](#building-thorvg)
