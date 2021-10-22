@@ -20,6 +20,7 @@
  * SOFTWARE.
  */
 
+#include "jpgd.h"
 #include "tvgLoader.h"
 #include "tvgJpgLoader.h"
 
@@ -32,53 +33,51 @@
 /* External Class Implementation                                        */
 /************************************************************************/
 
-JpgLoader::JpgLoader()
-{
-    //TODO:
-}
-
 
 JpgLoader::~JpgLoader()
 {
-    //TODO:
+    free(image);
+    image = NULL;
 }
-
 
 bool JpgLoader::open(const string& path)
 {
-    //TODO:
+    int width, height, actual_comps;
+    image = jpgd::decompress_jpeg_image_from_file(path.c_str(), &width, &height, &actual_comps, 4);
+    if (!image) return false;
 
-    return false;
+    vw = w = width;
+    vh = h = height;
+
+    return true;
 }
-
 
 bool JpgLoader::open(const char* data, uint32_t size, bool copy)
 {
-    //TODO:
+    int width, height, actual_comps;
+    image = jpgd::decompress_jpeg_image_from_memory((const unsigned char *)data, size, &width, &height, &actual_comps, 4);
+    if (!image) return false;
 
-    return false;
+    vw = w = width;
+    vh = h = height;
+
+    return true;
 }
 
 
 bool JpgLoader::read()
 {
-    //TODO:
-
-    return false;
+    return true;
 }
 
 
 bool JpgLoader::close()
 {
-    //TODO:
-
-    return false;
+    return true;
 }
 
 
 const uint32_t* JpgLoader::pixels()
 {
-    //TODO:
-
-    return nullptr;
+    return (const uint32_t*)image;
 }

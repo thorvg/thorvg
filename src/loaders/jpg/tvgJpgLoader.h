@@ -26,7 +26,6 @@
 class JpgLoader : public LoadModule
 {
 public:
-    JpgLoader();
     ~JpgLoader();
 
     using LoadModule::open;
@@ -36,6 +35,9 @@ public:
     bool close() override;
 
     const uint32_t* pixels() override;
+
+private:
+    unsigned char *image = nullptr;
 };
 
 #endif //_TVG_JPG_LOADER_H_
