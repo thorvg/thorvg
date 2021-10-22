@@ -30,6 +30,7 @@ source_file = [
    'tvgFill.cpp',
    'tvgGlCanvas.cpp',
    'tvgInitializer.cpp',
+   'tvgIterator.cpp',
    'tvgLinearGradient.cpp',
    'tvgLzw.cpp',
    'tvgLoader.cpp',
