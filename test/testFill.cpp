@@ -69,7 +69,7 @@ TEST_CASE("Common Filling", "[tvgFill]")
     };
 
     REQUIRE(fill->colorStops(nullptr, 4) == Result::InvalidArguments);
-    REQUIRE(fill->colorStops(cs2, 0) == Result::InvalidArguments);    
+    REQUIRE(fill->colorStops(cs2, 0) == Result::InvalidArguments);
     REQUIRE(fill->colorStops(cs2, 4) == Result::Success);
     REQUIRE(fill->colorStops(&cs) == 4);
 
@@ -91,6 +91,39 @@ TEST_CASE("Common Filling", "[tvgFill]")
     auto pFill = fill.get();
     REQUIRE(shape->fill(move(fill)) == Result::Success);
     REQUIRE(shape->fill() == pFill);
+}
+
+TEST_CASE("Fill Transformation", "[tvgFill]")
+{
+    auto fill = LinearGradient::gen();
+    REQUIRE(fill);
+
+    //no transformation
+    auto mGet = fill->transform();
+    REQUIRE(mGet.e11 == Approx(1.0f).margin(0.000001));
+    REQUIRE(mGet.e12 == Approx(0.0f).margin(0.000001));
+    REQUIRE(mGet.e13 == Approx(0.0f).margin(0.000001));
+    REQUIRE(mGet.e21 == Approx(0.0f).margin(0.000001));
+    REQUIRE(mGet.e22 == Approx(1.0f).margin(0.000001));
+    REQUIRE(mGet.e23 == Approx(0.0f).margin(0.000001));
+    REQUIRE(mGet.e31 == Approx(0.0f).margin(0.000001));
+    REQUIRE(mGet.e32 == Approx(0.0f).margin(0.000001));
+    REQUIRE(mGet.e33 == Approx(1.0f).margin(0.000001));
+
+    auto mSet = Matrix{1.1f, 2.2f, 3.3f, 4.4f, 5.5f, 6.6f, -7.7f, -8.8f, -9.9f};
+    REQUIRE(fill->transform(mSet) == Result::Success);
+
+    //transformation was set
+    mGet = fill->transform();
+    REQUIRE(mGet.e11 == Approx(mSet.e11).margin(0.000001));
+    REQUIRE(mGet.e12 == Approx(mSet.e12).margin(0.000001));
+    REQUIRE(mGet.e13 == Approx(mSet.e13).margin(0.000001));
+    REQUIRE(mGet.e21 == Approx(mSet.e21).margin(0.000001));
+    REQUIRE(mGet.e22 == Approx(mSet.e22).margin(0.000001));
+    REQUIRE(mGet.e23 == Approx(mSet.e23).margin(0.000001));
+    REQUIRE(mGet.e31 == Approx(mSet.e31).margin(0.000001));
+    REQUIRE(mGet.e32 == Approx(mSet.e32).margin(0.000001));
+    REQUIRE(mGet.e33 == Approx(mSet.e33).margin(0.000001));
 }
 
 TEST_CASE("Linear Filling", "[tvgFill]")
@@ -123,7 +156,7 @@ TEST_CASE("Radial Filling", "[tvgFill]")
     float cx, cy, radius;
 
     REQUIRE(fill->radial(0, 0, -1) == Result::InvalidArguments);
-    REQUIRE(fill->radial(nullptr, nullptr, nullptr) == Result::Success);    
+    REQUIRE(fill->radial(nullptr, nullptr, nullptr) == Result::Success);
     REQUIRE(fill->radial(100, 120, 50) == Result::Success);
 
     REQUIRE(fill->radial(&cx, nullptr, &radius) == Result::Success);
@@ -157,6 +190,9 @@ TEST_CASE("Linear Filling Dupliction", "[tvgFill]")
     REQUIRE(fill->spread(FillSpread::Reflect) == Result::Success);
     REQUIRE(fill->linear(-10.0f, 10.0f, 100.0f, 120.0f) == Result::Success);
 
+    auto m = Matrix{1.1f, 2.2f, 3.3f, 4.4f, 5.5f, 6.6f, -7.7f, -8.8f, -9.9f};
+    REQUIRE(fill->transform(m) == Result::Success);
+
     //Duplication
     auto dup = unique_ptr<LinearGradient>(static_cast<LinearGradient*>(fill->duplicate()));
     REQUIRE(dup);
@@ -178,7 +214,18 @@ TEST_CASE("Linear Filling Dupliction", "[tvgFill]")
         REQUIRE(cs[i].r == cs2[i].r);
         REQUIRE(cs[i].g == cs2[i].g);
         REQUIRE(cs[i].b == cs2[i].b);
-    };
+    }
+
+    auto mDup = dup->transform();
+    REQUIRE(mDup.e11 == Approx(m.e11).margin(0.000001));
+    REQUIRE(mDup.e12 == Approx(m.e12).margin(0.000001));
+    REQUIRE(mDup.e13 == Approx(m.e13).margin(0.000001));
+    REQUIRE(mDup.e21 == Approx(m.e21).margin(0.000001));
+    REQUIRE(mDup.e22 == Approx(m.e22).margin(0.000001));
+    REQUIRE(mDup.e23 == Approx(m.e23).margin(0.000001));
+    REQUIRE(mDup.e31 == Approx(m.e31).margin(0.000001));
+    REQUIRE(mDup.e32 == Approx(m.e32).margin(0.000001));
+    REQUIRE(mDup.e33 == Approx(m.e33).margin(0.000001));
 }
 
 TEST_CASE("Radial Filling Dupliction", "[tvgFill]")
@@ -197,6 +244,9 @@ TEST_CASE("Radial Filling Dupliction", "[tvgFill]")
     REQUIRE(fill->colorStops(cs, 4) == Result::Success);
     REQUIRE(fill->spread(FillSpread::Reflect) == Result::Success);
     REQUIRE(fill->radial(100.0f, 120.0f, 50.0f) == Result::Success);
+
+    auto m = Matrix{1.1f, 2.2f, 3.3f, 4.4f, 5.5f, 6.6f, -7.7f, -8.8f, -9.9f};
+    REQUIRE(fill->transform(m) == Result::Success);
 
     //Duplication
     auto dup = unique_ptr<RadialGradient>(static_cast<RadialGradient*>(fill->duplicate()));
@@ -218,5 +268,16 @@ TEST_CASE("Radial Filling Dupliction", "[tvgFill]")
         REQUIRE(cs[i].r == cs2[i].r);
         REQUIRE(cs[i].g == cs2[i].g);
         REQUIRE(cs[i].b == cs2[i].b);
-    };
+    }
+
+    auto mDup = dup->transform();
+    REQUIRE(mDup.e11 == Approx(m.e11).margin(0.000001));
+    REQUIRE(mDup.e12 == Approx(m.e12).margin(0.000001));
+    REQUIRE(mDup.e13 == Approx(m.e13).margin(0.000001));
+    REQUIRE(mDup.e21 == Approx(m.e21).margin(0.000001));
+    REQUIRE(mDup.e22 == Approx(m.e22).margin(0.000001));
+    REQUIRE(mDup.e23 == Approx(m.e23).margin(0.000001));
+    REQUIRE(mDup.e31 == Approx(m.e31).margin(0.000001));
+    REQUIRE(mDup.e32 == Approx(m.e32).margin(0.000001));
+    REQUIRE(mDup.e33 == Approx(m.e33).margin(0.000001));
 }
