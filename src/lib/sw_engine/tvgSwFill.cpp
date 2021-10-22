@@ -116,9 +116,19 @@ bool _prepareLinear(SwFill* fill, const LinearGradient* linear, const Matrix* tr
     fill->linear.dy /= fill->linear.len;
     fill->linear.offset = -fill->linear.dx * x1 - fill->linear.dy * y1;
 
-    if (transform) {
+    auto gradTransform = linear->transform();
+    bool isTransformation = !mathIdentity(&gradTransform);
+
+    if (isTransformation) {
+        if (transform) mathMultiply(transform, &gradTransform);
+    } else if (transform) {
+        gradTransform = *transform;
+        isTransformation = true;
+    }
+
+    if (isTransformation) {
         Matrix invTransform;
-        if (!mathInverse(transform, &invTransform)) return false;
+        if (!mathInverse(&gradTransform, &invTransform)) return false;
 
         fill->linear.offset += fill->linear.dx * invTransform.e13 + fill->linear.dy * invTransform.e23;
 

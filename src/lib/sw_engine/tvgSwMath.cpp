@@ -510,3 +510,39 @@ bool mathInverse(const Matrix* m, Matrix* invM)
 
     return true;
 }
+
+
+bool mathMultiply(const Matrix* lhs, Matrix* rhs)
+{
+    Matrix m;
+
+    m.e11 = lhs->e11 * rhs->e11 + lhs->e12 * rhs->e21 + lhs->e13 * rhs->e31;
+    m.e12 = lhs->e11 * rhs->e12 + lhs->e12 * rhs->e22 + lhs->e13 * rhs->e32;
+    m.e13 = lhs->e11 * rhs->e13 + lhs->e12 * rhs->e23 + lhs->e13 * rhs->e33;
+
+    m.e21 = lhs->e21 * rhs->e11 + lhs->e22 * rhs->e21 + lhs->e23 * rhs->e31;
+    m.e22 = lhs->e21 * rhs->e12 + lhs->e22 * rhs->e22 + lhs->e23 * rhs->e32;
+    m.e23 = lhs->e21 * rhs->e13 + lhs->e22 * rhs->e23 + lhs->e23 * rhs->e33;
+
+    m.e31 = lhs->e31 * rhs->e11 + lhs->e32 * rhs->e21 + lhs->e33 * rhs->e31;
+    m.e32 = lhs->e31 * rhs->e12 + lhs->e32 * rhs->e22 + lhs->e33 * rhs->e32;
+    m.e33 = lhs->e31 * rhs->e13 + lhs->e32 * rhs->e23 + lhs->e33 * rhs->e33;
+
+    *rhs = m;
+
+    return true;
+}
+
+
+bool mathIdentity(const Matrix* m)
+{
+    if (m) {
+        if (m->e11 != 1.0f || m->e12 != 0.0f || m->e13 != 0.0f ||
+            m->e21 != 0.0f || m->e22 != 1.0f || m->e23 != 0.0f ||
+            m->e31 != 0.0f || m->e32 != 0.0f || m->e33 != 1.0f) {
+            return false;
+        }
+    }
+
+    return true;
+}

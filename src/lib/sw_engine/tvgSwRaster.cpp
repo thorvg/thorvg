@@ -49,20 +49,6 @@ static uint32_t _argbJoin(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 }
 
 
-static bool _identify(const Matrix* transform)
-{
-    if (transform) {
-        if (transform->e11 != 1.0f || transform->e12 != 0.0f || transform->e13 != 0.0f ||
-            transform->e21 != 0.0f || transform->e22 != 1.0f || transform->e23 != 0.0f ||
-            transform->e31 != 0.0f || transform->e32 != 0.0f || transform->e33 != 1.0f) {
-            return false;
-        }
-    }
-
-    return true;
-}
-
-
 static bool _translucent(const SwSurface* surface, uint8_t a)
 {
     if (a < 255) return true;
@@ -1548,7 +1534,7 @@ bool rasterImage(SwSurface* surface, SwImage* image, const Matrix* transform, co
 
     if (image->rle) {
         //Fast track
-        if (_identify(transform)) {
+        if (mathIdentity(transform)) {
             //OPTIMIZE ME: Support non transformed image. Only shifted image can use these routines.
             if (translucent) return _rasterTranslucentImageRle(surface, image->rle, image->data, image->w, image->h, opacity);
             return _rasterImageRle(surface, image->rle, image->data, image->w, image->h);
@@ -1565,7 +1551,7 @@ bool rasterImage(SwSurface* surface, SwImage* image, const Matrix* transform, co
     }
     else {
         //Fast track
-        if (_identify(transform)) {
+        if (mathIdentity(transform)) {
             //OPTIMIZE ME: Support non transformed image. Only shifted image can use these routines.
             if (translucent) return _rasterTranslucentImage(surface, image->data, image->w, image->h, opacity, bbox);
             return _rasterImage(surface, image->data, image->w, image->h, bbox);

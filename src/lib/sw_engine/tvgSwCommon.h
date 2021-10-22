@@ -300,6 +300,8 @@ SwFixed mathMean(SwFixed angle1, SwFixed angle2);
 SwPoint mathTransform(const Point* to, const Matrix* transform);
 bool mathUpdateOutlineBBox(const SwOutline* outline, const SwBBox& clipRegion, SwBBox& renderRegion);
 bool mathInverse(const Matrix* m, Matrix* invM);
+bool mathMultiply(const Matrix* lhs, Matrix* rhs);
+bool mathIdentity(const Matrix* m);
 
 void shapeReset(SwShape* shape);
 bool shapePrepare(SwShape* shape, const Shape* sdata, const Matrix* transform, const SwBBox& clipRegion, SwBBox& renderRegion, SwMpool* mpool, unsigned tid);
