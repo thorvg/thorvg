@@ -86,7 +86,7 @@ struct Scene::Impl
 
         //If scene has several children or only scene, it may require composition.
         if (paints.count > 1) return true;
-        if (paints.count == 1 && (*paints.data)->id() == TVG_CLASS_ID_SCENE) return true;
+        if (paints.count == 1 && (*paints.data)->identifier() == TVG_CLASS_ID_SCENE) return true;
         return false;
     }
 
