@@ -129,7 +129,7 @@ Static Public Member Functions</h2></td></tr>
 <p>TVG requires the running-engine environment. TVG runs its own task-scheduler for parallelizing rendering tasks efficiently. You can indicate the number of threads, the count of which is designated <code>threads</code>. In the initialization step, TVG will generate/spawn the threads as set by <code>threads</code> count.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">engine</td><td>The engine types to initialize. This is relative to the <a class="el" href="classtvg_1_1Canvas.html" title="An abstract class for drawing graphical elements.">Canvas</a> types, in which it will be used. For multiple backeneds bitwise operation is allowed. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">engine</td><td>The engine types to initialize. This is relative to the <a class="el" href="classtvg_1_1Canvas.html" title="An abstract class for drawing graphical elements.">Canvas</a> types, in which it will be used. For multiple backends bitwise operation is allowed. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">threads</td><td>The number of additional threads. Zero indicates only the main thread is to be used.</td></tr>
   </table>
   </dd>
@@ -176,7 +176,7 @@ Static Public Member Functions</h2></td></tr>
 <p>Terminates TVG engines. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">engine</td><td>The engine types to terminate. This is relative to the <a class="el" href="classtvg_1_1Canvas.html" title="An abstract class for drawing graphical elements.">Canvas</a> types, in which it will be used. For multiple backeneds bitwise operation is allowed</td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">engine</td><td>The engine types to terminate. This is relative to the <a class="el" href="classtvg_1_1Canvas.html" title="An abstract class for drawing graphical elements.">Canvas</a> types, in which it will be used. For multiple backends bitwise operation is allowed</td></tr>
   </table>
   </dd>
 </dl>
