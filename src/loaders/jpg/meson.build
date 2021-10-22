@@ -1,5 +1,7 @@
 source_file = [
+   'jpgd.h',
    'tvgJpgLoader.h',
+   'jpgd.cpp',
    'tvgJpgLoader.cpp',
 ]
 
