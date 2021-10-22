@@ -170,6 +170,7 @@ TVG_EXPORT Tvg_Result tvg_paint_transform(Tvg_Paint* paint, const Tvg_Matrix* m)
     return (Tvg_Result) reinterpret_cast<Paint*>(paint)->transform(*(reinterpret_cast<const Matrix*>(m)));
 }
 
+
 TVG_EXPORT Tvg_Result tvg_paint_get_transform(Tvg_Paint* paint, Tvg_Matrix* m)
 {
     if (!paint || !m) return TVG_RESULT_INVALID_ARGUMENT;
@@ -594,6 +595,21 @@ TVG_EXPORT Tvg_Result tvg_gradient_get_spread(Tvg_Gradient* grad, Tvg_Stroke_Fil
 {
     if (!grad || !spread) return TVG_RESULT_INVALID_ARGUMENT;
     *spread = (Tvg_Stroke_Fill) reinterpret_cast<Fill*>(grad)->spread();
+    return TVG_RESULT_SUCCESS;
+}
+
+
+TVG_EXPORT Tvg_Result tvg_gradient_set_transform(Tvg_Gradient* grad, const Tvg_Matrix* m)
+{
+    if (!grad || !m) return TVG_RESULT_INVALID_ARGUMENT;
+    return (Tvg_Result) reinterpret_cast<Fill*>(grad)->transform(*(reinterpret_cast<const Matrix*>(m)));
+}
+
+
+TVG_EXPORT Tvg_Result tvg_gradient_get_transform(const Tvg_Gradient* grad, Tvg_Matrix* m)
+{
+    if (!grad || !m) return TVG_RESULT_INVALID_ARGUMENT;
+    *reinterpret_cast<Matrix*>(m) = reinterpret_cast<Fill*>(const_cast<Tvg_Gradient*>(grad))->transform();
     return TVG_RESULT_SUCCESS;
 }
 
