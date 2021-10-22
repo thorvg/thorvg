@@ -19,18 +19,18 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#ifndef _TVG_ITERATOR_MODULE_H_
-#define _TVG_ITERATOR_MODULE_H_
+#ifndef _TVG_ITERATOR_ACCESSOR_H_
+#define _TVG_ITERATOR_ACCESSOR_H_
 
 #include "tvgPaint.h"
 
 namespace tvg
 {
 
-class IteratorModule
+class IteratorAccessor
 {
 public:
-    //Utility Method: Iterator Delegator
+    //Utility Method: Iterator Accessor
     Iterator* iterator(const Paint* paint)
     {
         return paint->pImpl->iterator();
@@ -39,4 +39,4 @@ public:
 
 }
 
-#endif //_TVG_ITERATOR_MODULE_H_
+#endif //_TVG_ITERATOR_ACCESSOR_H_

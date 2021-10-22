@@ -22,12 +22,12 @@
 #ifndef _TVG_SAVE_MODULE_H_
 #define _TVG_SAVE_MODULE_H_
 
-#include "tvgIteratorModule.h"
+#include "tvgIteratorAccessor.h"
 
 namespace tvg
 {
 
-class SaveModule : public IteratorModule
+class SaveModule : public IteratorAccessor
 {
 public:
     virtual ~SaveModule() {}
