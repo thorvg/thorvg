@@ -1543,6 +1543,14 @@ public:
     _TVG_DECLARE_PRIVATE(Saver);
 };
 
+
+class TVG_EXPORT Iteratorv final
+{
+public:
+    static std::unique_ptr<Picture> iterate(std::unique_ptr<Picture> picture, int(*func)(const Paint* paint, const Paint* parent, bool hasChildren)) noexcept;
+};
+
+
 /** @}*/
 
 } //namespace
