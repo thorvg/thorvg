@@ -1483,7 +1483,7 @@ public:
  *
  * @since 0.5
  */
-class TVG_EXPORT Saver
+class TVG_EXPORT Saver final
 {
 public:
     ~Saver();
