@@ -27,6 +27,22 @@
 using namespace tvg;
 using namespace std;
 
+
+TEST_CASE("Filling Creation", "[tvgFill]")
+{
+    auto linear = LinearGradient::gen();
+    REQUIRE(linear);
+
+    REQUIRE(linear->identifier() == LinearGradient::identifier());
+    REQUIRE(linear->identifier() != RadialGradient::identifier());
+
+    auto radial = RadialGradient::gen();
+    REQUIRE(radial);
+
+    REQUIRE(radial->identifier() == RadialGradient::identifier());
+    REQUIRE(radial->identifier() != LinearGradient::identifier());
+}
+
 TEST_CASE("Common Filling", "[tvgFill]")
 {
     auto fill = LinearGradient::gen();
