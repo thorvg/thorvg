@@ -69,28 +69,43 @@ static inline bool _isGroupType(SvgNodeType type)
 }
 
 
+static void _transformMultiply(const Matrix* mBBox, Matrix* gradTransf)
+{
+    gradTransf->e13 = gradTransf->e13 * mBBox->e11 + mBBox->e13;
+    gradTransf->e12 *= mBBox->e11;
+    gradTransf->e11 *= mBBox->e11;
+
+    gradTransf->e23 = gradTransf->e23 * mBBox->e22 + mBBox->e23;
+    gradTransf->e22 *= mBBox->e22;
+    gradTransf->e21 *= mBBox->e22;
+}
+
+
 static unique_ptr<LinearGradient> _applyLinearGradientProperty(SvgStyleGradient* g, const Shape* vg, float rx, float ry, float rw, float rh, int opacity)
 {
     Fill::ColorStop* stops;
     int stopCount = 0;
     auto fillGrad = LinearGradient::gen();
 
-    g->linear->x1 = g->linear->x1 * rw + rx;
-    g->linear->y1 = g->linear->y1 * rh + ry;
-    g->linear->x2 = g->linear->x2 * rw + rx;
-    g->linear->y2 = g->linear->y2 * rh + ry;
+    bool isTransform = (g->transform ? true : false);
+    Matrix finalTransform = {1, 0, 0, 0, 1, 0, 0, 0, 1};
+    if (isTransform) finalTransform = *g->transform;
 
-    if (g->transform) {
-        //Calc start point
-        auto x = g->linear->x1;
-        g->linear->x1 = x * g->transform->e11 + g->linear->y1 * g->transform->e12 + g->transform->e13;
-        g->linear->y1 = x * g->transform->e21 + g->linear->y1 * g->transform->e22 + g->transform->e23;
-
-        //Calc end point
-        x = g->linear->x2;
-        g->linear->x2 = x * g->transform->e11 + g->linear->y2 * g->transform->e12 + g->transform->e13;
-        g->linear->y2 = x * g->transform->e21 + g->linear->y2 * g->transform->e22 + g->transform->e23;
+    if (g->userSpace) {
+        g->linear->x1 = g->linear->x1 * rw;
+        g->linear->y1 = g->linear->y1 * rh;
+        g->linear->x2 = g->linear->x2 * rw;
+        g->linear->y2 = g->linear->y2 * rh;
+    } else {
+        Matrix m = {rw, 0, rx, 0, rh, ry, 0, 0, 1};
+        if (isTransform) _transformMultiply(&m, &finalTransform);
+        else {
+            finalTransform = m;
+            isTransform = true;
+        }
     }
+
+    if (isTransform) fillGrad->transform(finalTransform);
 
     fillGrad->linear(g->linear->x1, g->linear->y1, g->linear->x2, g->linear->y2);
     fillGrad->spread(g->spread);
@@ -125,32 +140,30 @@ static unique_ptr<RadialGradient> _applyRadialGradientProperty(SvgStyleGradient*
 {
     Fill::ColorStop *stops;
     int stopCount = 0;
-    float radius;
     auto fillGrad = RadialGradient::gen();
 
-    radius = sqrtf(powf(rw, 2.0f) + powf(rh, 2.0f)) / sqrtf(2.0f);
-    if (!g->userSpace) {
-         //That is according to Units in here
-         //https://www.w3.org/TR/2015/WD-SVG2-20150915/coords.html
-        int min = static_cast<int>((rh > rw) ? rw : rh);
-        radius = sqrtf(pow(min, 2) + pow(min, 2)) / sqrtf(2.0f);
+    bool isTransform = (g->transform ? true : false);
+    Matrix finalTransform = {1, 0, 0, 0, 1, 0, 0, 0, 1};
+    if (isTransform) finalTransform = *g->transform;
+
+    if (g->userSpace) {
+        //The radius scalling is done according to the Units section:
+        //https://www.w3.org/TR/2015/WD-SVG2-20150915/coords.html
+        g->radial->cx = g->radial->cx * rw;
+        g->radial->cy = g->radial->cy * rh;
+        g->radial->r = g->radial->r * sqrtf(powf(rw, 2.0f) + powf(rh, 2.0f)) / sqrtf(2.0f);
+        g->radial->fx = g->radial->fx * rw;
+        g->radial->fy = g->radial->fy * rh;
+    } else {
+        Matrix m = {rw, 0, rx, 0, rh, ry, 0, 0, 1};
+        if (isTransform) _transformMultiply(&m, &finalTransform);
+        else {
+            finalTransform = m;
+            isTransform = true;
+        }
     }
 
-    g->radial->cx = g->radial->cx * rw + rx;
-    g->radial->cy = g->radial->cy * rh + ry;
-    g->radial->r = g->radial->r * radius;
-    g->radial->fx = g->radial->fx * rw + rx;
-    g->radial->fy = g->radial->fy * rh + ry;
-
-    //TODO: Radial gradient transformation - all tests possible after rx/ry implementation
-    if (g->transform) {
-        auto cx = g->radial->cx * g->transform->e11 + g->radial->cy * g->transform->e12 + g->transform->e13;
-        g->radial->cy = g->radial->cx * g->transform->e21 + g->radial->cy * g->transform->e22 + g->transform->e23;
-        g->radial->cx = cx;
-
-        auto sx = sqrtf(powf(g->transform->e11, 2.0f) + powf(g->transform->e21, 2.0f));
-        g->radial->r *= sx;
-    }
+    if (isTransform) fillGrad->transform(finalTransform);
 
     //TODO: Tvg is not support to focal
     //if (g->radial->fx != 0 && g->radial->fy != 0) {
