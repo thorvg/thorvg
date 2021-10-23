@@ -110,16 +110,16 @@ static float _toFloat(const SvgParser* svgParse, const char* str, SvgParserLengt
 }
 
 
-static float _gradientToFloat(const SvgParser* svgParse, const char* str, SvgParserLengthType type, uint8_t& pct)
+static float _gradientToFloat(const SvgParser* svgParse, const char* str, bool& isPercentage)
 {
     char* end = nullptr;
 
     float parsedValue = svgUtilStrtof(str, &end);
-    pct = 0;
+    isPercentage = false;
 
     if (strstr(str, "%")) {
         parsedValue = parsedValue / 100.0;
-        pct = 1;
+        isPercentage = true;
     }
     else if (strstr(str, "cm")) parsedValue = parsedValue * 35.43307;
     else if (strstr(str, "mm")) parsedValue = parsedValue * 3.543307;
@@ -1903,72 +1903,72 @@ FillSpread _parseSpreadValue(const char* value)
 
 static void _handleRadialCxAttr(SvgLoaderData* loader, SvgRadialGradient* radial, const char* value)
 {
-    radial->cx = _gradientToFloat(loader->svgParse, value, SvgParserLengthType::Horizontal, radial->cxPct);
+    radial->cx = _gradientToFloat(loader->svgParse, value, radial->isCxPercentage);
     if (!loader->svgParse->gradient.parsedFx) {
         radial->fx = radial->cx;
-        radial->fxPct = radial->cxPct;
+        radial->isFxPercentage = radial->isCxPercentage;
     }
 }
 
 
 static void _handleRadialCyAttr(SvgLoaderData* loader, SvgRadialGradient* radial, const char* value)
 {
-    radial->cy = _gradientToFloat(loader->svgParse, value, SvgParserLengthType::Vertical, radial->cyPct);
+    radial->cy = _gradientToFloat(loader->svgParse, value, radial->isCyPercentage);
     if (!loader->svgParse->gradient.parsedFy) {
         radial->fy = radial->cy;
-        radial->fyPct = radial->cyPct;
+        radial->isFyPercentage = radial->isCyPercentage;
     }
 }
 
 
 static void _handleRadialFxAttr(SvgLoaderData* loader, SvgRadialGradient* radial, const char* value)
 {
-    radial->fx = _gradientToFloat(loader->svgParse, value, SvgParserLengthType::Horizontal, radial->fxPct);
+    radial->fx = _gradientToFloat(loader->svgParse, value, radial->isFxPercentage);
     loader->svgParse->gradient.parsedFx = true;
 }
 
 
 static void _handleRadialFyAttr(SvgLoaderData* loader, SvgRadialGradient* radial, const char* value)
 {
-    radial->fy = _gradientToFloat(loader->svgParse, value, SvgParserLengthType::Vertical, radial->fyPct);
+    radial->fy = _gradientToFloat(loader->svgParse, value, radial->isFyPercentage);
     loader->svgParse->gradient.parsedFy = true;
 }
 
 
 static void _handleRadialRAttr(SvgLoaderData* loader, SvgRadialGradient* radial, const char* value)
 {
-    radial->r = _gradientToFloat(loader->svgParse, value, SvgParserLengthType::Other, radial->rPct);
+    radial->r = _gradientToFloat(loader->svgParse, value, radial->isRPercentage);
 }
 
 
 static void _recalcRadialCxAttr(SvgLoaderData* loader, SvgRadialGradient* radial, bool userSpace)
 {
-    if (userSpace && radial->cxPct == 0) radial->cx = radial->cx / loader->svgParse->global.w;
+    if (userSpace && !radial->isCxPercentage) radial->cx = radial->cx / loader->svgParse->global.w;
 }
 
 
 static void _recalcRadialCyAttr(SvgLoaderData* loader, SvgRadialGradient* radial, bool userSpace)
 {
-    if (userSpace && radial->cyPct == 0) radial->cy = radial->cy / loader->svgParse->global.h;
+    if (userSpace && !radial->isCyPercentage) radial->cy = radial->cy / loader->svgParse->global.h;
 }
 
 
 static void _recalcRadialFxAttr(SvgLoaderData* loader, SvgRadialGradient* radial, bool userSpace)
 {
-    if (userSpace && radial->fxPct == 0) radial->fx = radial->fx / loader->svgParse->global.w;
+    if (userSpace && !radial->isFxPercentage) radial->fx = radial->fx / loader->svgParse->global.w;
 }
 
 
 static void _recalcRadialFyAttr(SvgLoaderData* loader, SvgRadialGradient* radial, bool userSpace)
 {
-    if (userSpace && radial->fyPct == 0) radial->fy = radial->fy / loader->svgParse->global.h;
+    if (userSpace && !radial->isFyPercentage) radial->fy = radial->fy / loader->svgParse->global.h;
 }
 
 
 static void _recalcRadialRAttr(SvgLoaderData* loader, SvgRadialGradient* radial, bool userSpace)
 {
     // scaling factor based on the Units paragraph from : https://www.w3.org/TR/2015/WD-SVG2-20150915/coords.html
-    if (userSpace && radial->rPct == 0) radial->r = radial->r / (sqrtf(pow(loader->svgParse->global.h, 2) + pow(loader->svgParse->global.w, 2)) / sqrtf(2.0));
+    if (userSpace && !radial->isRPercentage) radial->r = radial->r / (sqrtf(pow(loader->svgParse->global.h, 2) + pow(loader->svgParse->global.w, 2)) / sqrtf(2.0));
 }
 
 
@@ -2051,11 +2051,11 @@ static SvgStyleGradient* _createRadialGradient(SvgLoaderData* loader, const char
     grad->radial->fx = 0.5f / loader->svgParse->global.w;
     grad->radial->fy = 0.5f / loader->svgParse->global.h;
     grad->radial->r = 0.5f / (sqrtf(pow(loader->svgParse->global.h, 2) + pow(loader->svgParse->global.w, 2)) / sqrtf(2.0f));
-    grad->radial->cxPct = 1;
-    grad->radial->cyPct = 1;
-    grad->radial->fxPct = 1;
-    grad->radial->fyPct = 1;
-    grad->radial->rPct = 1;
+    grad->radial->isCxPercentage = true;
+    grad->radial->isCyPercentage = true;
+    grad->radial->isFxPercentage = true;
+    grad->radial->isFyPercentage = true;
+    grad->radial->isRPercentage = true;
 
     loader->svgParse->gradient.parsedFx = false;
     loader->svgParse->gradient.parsedFy = false;
@@ -2118,49 +2118,49 @@ static bool _attrParseStops(void* data, const char* key, const char* value)
 
 static void _handleLinearX1Attr(SvgLoaderData* loader, SvgLinearGradient* linear, const char* value)
 {
-    linear->x1 = _gradientToFloat(loader->svgParse, value, SvgParserLengthType::Horizontal, linear->x1Pct);
+    linear->x1 = _gradientToFloat(loader->svgParse, value, linear->isX1Percentage);
 }
 
 
 static void _handleLinearY1Attr(SvgLoaderData* loader, SvgLinearGradient* linear, const char* value)
 {
-    linear->y1 = _gradientToFloat(loader->svgParse, value, SvgParserLengthType::Vertical, linear->y1Pct);
+    linear->y1 = _gradientToFloat(loader->svgParse, value, linear->isY1Percentage);
 }
 
 
 static void _handleLinearX2Attr(SvgLoaderData* loader, SvgLinearGradient* linear, const char* value)
 {
-    linear->x2 = _gradientToFloat(loader->svgParse, value, SvgParserLengthType::Horizontal, linear->x2Pct);
+    linear->x2 = _gradientToFloat(loader->svgParse, value, linear->isX2Percentage);
 }
 
 
 static void _handleLinearY2Attr(SvgLoaderData* loader, SvgLinearGradient* linear, const char* value)
 {
-    linear->y2 = _gradientToFloat(loader->svgParse, value, SvgParserLengthType::Vertical, linear->y2Pct);
+    linear->y2 = _gradientToFloat(loader->svgParse, value, linear->isY2Percentage);
 }
 
 
 static void _recalcLinearX1Attr(SvgLoaderData* loader, SvgLinearGradient* linear, bool userSpace)
 {
-    if (userSpace && linear->x1Pct == 0) linear->x1 = linear->x1 / loader->svgParse->global.w;
+    if (userSpace && !linear->isX1Percentage) linear->x1 = linear->x1 / loader->svgParse->global.w;
 }
 
 
 static void _recalcLinearY1Attr(SvgLoaderData* loader, SvgLinearGradient* linear, bool userSpace)
 {
-    if (userSpace && linear->y1Pct == 0) linear->y1 = linear->y1 / loader->svgParse->global.h;
+    if (userSpace && !linear->isY1Percentage) linear->y1 = linear->y1 / loader->svgParse->global.h;
 }
 
 
 static void _recalcLinearX2Attr(SvgLoaderData* loader, SvgLinearGradient* linear, bool userSpace)
 {
-    if (userSpace && linear->x2Pct == 0) linear->x2 = linear->x2 / loader->svgParse->global.w;
+    if (userSpace && !linear->isX2Percentage) linear->x2 = linear->x2 / loader->svgParse->global.w;
 }
 
 
 static void _recalcLinearY2Attr(SvgLoaderData* loader, SvgLinearGradient* linear, bool userSpace)
 {
-    if (userSpace && linear->y2Pct == 0) linear->y2 = linear->y2 / loader->svgParse->global.h;
+    if (userSpace && !linear->isY2Percentage) linear->y2 = linear->y2 / loader->svgParse->global.h;
 }
 
 
@@ -2238,7 +2238,7 @@ static SvgStyleGradient* _createLinearGradient(SvgLoaderData* loader, const char
     * Default value of x2 is 100% - transformed to the global percentage
     */
     grad->linear->x2 = 1.0f / loader->svgParse->global.w;
-    grad->linear->x2Pct = 1;
+    grad->linear->isX2Percentage = true;
 
     simpleXmlParseAttributes(buf, bufLength, _attrParseLinearGradientNode, loader);
 

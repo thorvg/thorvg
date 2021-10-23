@@ -216,10 +216,10 @@ struct SvgLinearGradient
     float y1;
     float x2;
     float y2;
-    uint8_t x1Pct;
-    uint8_t y1Pct;
-    uint8_t x2Pct;
-    uint8_t y2Pct;
+    bool isX1Percentage;
+    bool isY1Percentage;
+    bool isX2Percentage;
+    bool isY2Percentage;
 
 };
 
@@ -230,11 +230,11 @@ struct SvgRadialGradient
     float fx;
     float fy;
     float r;
-    uint8_t cxPct;
-    uint8_t cyPct;
-    uint8_t fxPct;
-    uint8_t fyPct;
-    uint8_t rPct;
+    bool isCxPercentage;
+    bool isCyPercentage;
+    bool isFxPercentage;
+    bool isFyPercentage;
+    bool isRPercentage;
 };
 
 struct SvgComposite
