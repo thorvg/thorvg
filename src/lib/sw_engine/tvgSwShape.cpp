@@ -22,6 +22,7 @@
 #include "tvgSwCommon.h"
 #include "tvgBezier.h"
 #include <float.h>
+#include <math.h>
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
@@ -508,8 +509,33 @@ bool shapeGenRle(SwShape* shape, TVG_UNUSED const Shape* sdata, bool antiAlias, 
     //if (shape.outline->opened) return true;
 
     //Case A: Fast Track Rectangle Drawing
-    if (!hasComposite && (shape->rect = _fastTrack(shape->outline))) return true;
-    //Case B: Normale Shape RLE Drawing
+    if (!hasComposite && (shape->rect = _fastTrack(shape->outline))) {
+        //Since no antialiasing is applied in the Fast Track case,
+        //the rasterization region has to be modified
+        auto corner1 = shape->outline->pts;
+        auto corner3 = shape->outline->pts + 2;
+
+        auto xMin = corner1->x;
+        auto xMax = corner3->x;
+        if (xMin > xMax) {
+            xMax = xMin;
+            xMin = corner3->x;
+        }
+        auto yMin = corner1->y;
+        auto yMax = corner3->y;
+        if (yMin > yMax) {
+            yMax = yMin;
+            yMin = corner3->y;
+        }
+
+        shape->bbox.min.x = static_cast<SwCoord>(round(xMin / 64.0f));
+        shape->bbox.max.x = static_cast<SwCoord>(round(xMax / 64.0f));
+        shape->bbox.min.y = static_cast<SwCoord>(round(yMin / 64.0f));
+        shape->bbox.max.y = static_cast<SwCoord>(round(yMax / 64.0f));
+
+        return true;
+    }
+    //Case B: Normal Shape RLE Drawing
     if ((shape->rle = rleRender(shape->rle, shape->outline, shape->bbox, antiAlias))) return true;
 
     return false;
