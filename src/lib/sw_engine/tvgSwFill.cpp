@@ -155,9 +155,19 @@ bool _prepareRadial(SwFill* fill, const RadialGradient* radial, const Matrix* tr
     fill->radial.shiftY = -cy;
     fill->radial.a = radius;
 
-    if (transform) {
+    auto gradTransform = radial->transform();
+    bool isTransformation = !mathIdentity(&gradTransform);
+
+    if (isTransformation) {
+        if (transform) mathMultiply(transform, &gradTransform);
+    } else if (transform) {
+        gradTransform = *transform;
+        isTransformation = true;
+    }
+
+    if (isTransformation) {
         Matrix invTransform;
-        if (!mathInverse(transform, &invTransform)) return false;
+        if (!mathInverse(&gradTransform, &invTransform)) return false;
 
         fill->radial.a11 = invTransform.e11 * invR;
         fill->radial.a12 = invTransform.e12 * invR;
