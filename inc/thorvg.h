@@ -1519,8 +1519,8 @@ public:
      * Thus, if you wish to have a benefit of it, you must call sync() after the save() in the proper delayed time.
      * Otherwise, you can call sync() immediately.
      *
-     * @return Result::Success when succeed.
-     * @return Result::InsufficientCondition otherwise.
+     * @retval Result::Success when succeed.
+     * @retval Result::InsufficientCondition otherwise.
      *
      * @note The asynchronous tasking is dependent on the Saver module implementation.
      * @see Saver::save()
