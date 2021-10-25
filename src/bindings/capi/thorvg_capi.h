@@ -823,7 +823,7 @@ TVG_EXPORT Tvg_Result tvg_paint_set_opacity(Tvg_Paint* paint, uint8_t opacity);
 * \retval TVG_RESULT_SUCCESS Succeed.
 * \retval TVG_RESULT_INVALID_ARGUMENT In case a @c nullptr is passed as the argument.
 */
-TVG_EXPORT Tvg_Result tvg_paint_get_opacity(Tvg_Paint* paint, uint8_t* opacity);
+TVG_EXPORT Tvg_Result tvg_paint_get_opacity(const Tvg_Paint* paint, uint8_t* opacity);
 
 
 /*!
@@ -1664,7 +1664,7 @@ TVG_EXPORT Tvg_Result tvg_gradient_set_color_stops(Tvg_Gradient* grad, const Tvg
 * \retval TVG_RESULT_SUCCESS Succeed.
 * \retval TVG_RESULT_INVALID_ARGUMENT A @c nullptr passed as the argument.
 */
-TVG_EXPORT Tvg_Result tvg_gradient_get_color_stops(Tvg_Gradient* grad, const Tvg_Color_Stop** color_stop, uint32_t* cnt);
+TVG_EXPORT Tvg_Result tvg_gradient_get_color_stops(const Tvg_Gradient* grad, const Tvg_Color_Stop** color_stop, uint32_t* cnt);
 
 
 /*!
@@ -1690,7 +1690,7 @@ TVG_EXPORT Tvg_Result tvg_gradient_set_spread(Tvg_Gradient* grad, const Tvg_Stro
 * \retval TVG_RESULT_SUCCESS Succeed.
 * \retval TVG_RESULT_INVALID_ARGUMENT A @c nullptr passed as the argument.
 */
-TVG_EXPORT Tvg_Result tvg_gradient_get_spread(Tvg_Gradient* grad, Tvg_Stroke_Fill* spread);
+TVG_EXPORT Tvg_Result tvg_gradient_get_spread(const Tvg_Gradient* grad, Tvg_Stroke_Fill* spread);
 
 
 /*!

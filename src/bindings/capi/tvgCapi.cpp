@@ -193,10 +193,10 @@ TVG_EXPORT Tvg_Result tvg_paint_set_opacity(Tvg_Paint* paint, uint8_t opacity)
 }
 
 
-TVG_EXPORT Tvg_Result tvg_paint_get_opacity(Tvg_Paint* paint, uint8_t* opacity)
+TVG_EXPORT Tvg_Result tvg_paint_get_opacity(const Tvg_Paint* paint, uint8_t* opacity)
 {
     if (!paint || !opacity)  return TVG_RESULT_INVALID_ARGUMENT;
-    *opacity = reinterpret_cast<Paint*>(paint)->opacity();
+    *opacity = reinterpret_cast<const Paint*>(paint)->opacity();
     return TVG_RESULT_SUCCESS;
 }
 
@@ -576,10 +576,10 @@ TVG_EXPORT Tvg_Result tvg_gradient_set_color_stops(Tvg_Gradient* grad, const Tvg
 }
 
 
-TVG_EXPORT Tvg_Result tvg_gradient_get_color_stops(Tvg_Gradient* grad, const Tvg_Color_Stop** color_stop, uint32_t* cnt)
+TVG_EXPORT Tvg_Result tvg_gradient_get_color_stops(const Tvg_Gradient* grad, const Tvg_Color_Stop** color_stop, uint32_t* cnt)
 {
     if (!grad || !color_stop || !cnt) return TVG_RESULT_INVALID_ARGUMENT;
-    *cnt = reinterpret_cast<Fill*>(grad)->colorStops(reinterpret_cast<const Fill::ColorStop**>(color_stop));
+    *cnt = reinterpret_cast<const Fill*>(grad)->colorStops(reinterpret_cast<const Fill::ColorStop**>(color_stop));
     return TVG_RESULT_SUCCESS;
 }
 
@@ -591,10 +591,10 @@ TVG_EXPORT Tvg_Result tvg_gradient_set_spread(Tvg_Gradient* grad, const Tvg_Stro
 }
 
 
-TVG_EXPORT Tvg_Result tvg_gradient_get_spread(Tvg_Gradient* grad, Tvg_Stroke_Fill* spread)
+TVG_EXPORT Tvg_Result tvg_gradient_get_spread(const Tvg_Gradient* grad, Tvg_Stroke_Fill* spread)
 {
     if (!grad || !spread) return TVG_RESULT_INVALID_ARGUMENT;
-    *spread = (Tvg_Stroke_Fill) reinterpret_cast<Fill*>(grad)->spread();
+    *spread = (Tvg_Stroke_Fill) reinterpret_cast<const Fill*>(grad)->spread();
     return TVG_RESULT_SUCCESS;
 }
 
