@@ -2069,11 +2069,11 @@ static SvgStyleGradient* _createRadialGradient(SvgLoaderData* loader, const char
     /**
     * Default values of gradient transformed into global percentage
     */
-    grad->radial->cx = 0.5f / loader->svgParse->global.w;
-    grad->radial->cy = 0.5f / loader->svgParse->global.h;
-    grad->radial->fx = 0.5f / loader->svgParse->global.w;
-    grad->radial->fy = 0.5f / loader->svgParse->global.h;
-    grad->radial->r = 0.5f / (sqrtf(pow(loader->svgParse->global.h, 2) + pow(loader->svgParse->global.w, 2)) / sqrtf(2.0f));
+    grad->radial->cx = 0.5f;
+    grad->radial->cy = 0.5f;
+    grad->radial->fx = 0.5f;
+    grad->radial->fy = 0.5f;
+    grad->radial->r = 0.5f;
     grad->radial->isCxPercentage = true;
     grad->radial->isCyPercentage = true;
     grad->radial->isFxPercentage = true;
@@ -2258,7 +2258,7 @@ static SvgStyleGradient* _createLinearGradient(SvgLoaderData* loader, const char
     /**
     * Default value of x2 is 100% - transformed to the global percentage
     */
-    grad->linear->x2 = 1.0f / loader->svgParse->global.w;
+    grad->linear->x2 = 1.0f;
     grad->linear->isX2Percentage = true;
 
     simpleXmlParseAttributes(buf, bufLength, _attrParseLinearGradientNode, loader);
