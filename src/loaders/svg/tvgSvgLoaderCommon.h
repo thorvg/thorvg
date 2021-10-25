@@ -157,6 +157,11 @@ struct SvgDefsNode
     Array<SvgStyleGradient*> gradients;
 };
 
+struct SvgUseNode
+{
+    float x, y, w, h;
+};
+
 
 struct SvgEllipseNode
 {
@@ -334,6 +339,7 @@ struct SvgNode
         SvgGNode g;
         SvgDocNode doc;
         SvgDefsNode defs;
+        SvgUseNode use;
         SvgCircleNode circle;
         SvgEllipseNode ellipse;
         SvgPolygonNode polygon;

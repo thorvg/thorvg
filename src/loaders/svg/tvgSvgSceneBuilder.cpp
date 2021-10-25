@@ -57,6 +57,7 @@
 #include <float.h>
 
 static bool _appendShape(SvgNode* node, Shape* shape, float vx, float vy, float vw, float vh);
+static unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, float vx, float vy, float vw, float vh, const string& svgPath);
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
@@ -550,6 +551,19 @@ static unique_ptr<Picture> _imageBuildHelper(SvgNode* node, float vx, float vy, 
 }
 
 
+static unique_ptr<Scene> _useBuildHelper(const SvgNode* node, float vx, float vy, float vw, float vh, const string& svgPath)
+{
+    auto scene = _sceneBuildHelper(node, vx, vy, vw, vh, svgPath);
+    if (node->node.use.x != 0.0f || node->node.use.y != 0.0f) {
+        scene->translate(node->node.use.x, node->node.use.y);
+    }
+    if (node->node.use.w > 0.0f && node->node.use.h > 0.0f) {
+        //TODO: handle width/height properties
+    }
+    return scene;
+}
+
+
 static unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, float vx, float vy, float vw, float vh, const string& svgPath)
 {
     if (_isGroupType(node->type)) {
@@ -560,7 +574,10 @@ static unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, float vx, float 
             auto child = node->child.data;
             for (uint32_t i = 0; i < node->child.count; ++i, ++child) {
                 if (_isGroupType((*child)->type)) {
-                    scene->push(_sceneBuildHelper(*child, vx, vy, vw, vh, svgPath));
+                    if ((*child)->type == SvgNodeType::Use)
+                        scene->push(_useBuildHelper(*child, vx, vy, vw, vh, svgPath));
+                    else
+                        scene->push(_sceneBuildHelper(*child, vx, vy, vw, vh, svgPath));
                 } else if ((*child)->type == SvgNodeType::Image) {
                     auto image = _imageBuildHelper(*child, vx, vy, vw, vh, svgPath);
                     if (image) scene->push(move(image));

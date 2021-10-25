@@ -1818,11 +1818,35 @@ static void _clonePostponedNodes(Array<SvgNodeIdPair>* cloneNodes) {
 }
 
 
+static constexpr struct
+{
+    const char* tag;
+    SvgParserLengthType type;
+    int sz;
+    size_t offset;
+} useTags[] = {
+    {"x", SvgParserLengthType::Horizontal, sizeof("x"), offsetof(SvgRectNode, x)},
+    {"y", SvgParserLengthType::Vertical, sizeof("y"), offsetof(SvgRectNode, y)},
+    {"width", SvgParserLengthType::Horizontal, sizeof("width"), offsetof(SvgRectNode, w)},
+    {"height", SvgParserLengthType::Vertical, sizeof("height"), offsetof(SvgRectNode, h)}
+};
+
+
 static bool _attrParseUseNode(void* data, const char* key, const char* value)
 {
     SvgLoaderData* loader = (SvgLoaderData*)data;
     SvgNode *defs, *nodeFrom, *node = loader->svgParse->node;
     string* id;
+
+    SvgUseNode* use = &(node->node.use);
+    int sz = strlen(key);
+    unsigned char* array = (unsigned char*)use;
+    for (unsigned int i = 0; i < sizeof(useTags) / sizeof(useTags[0]); i++) {
+        if (useTags[i].sz - 1 == sz && !strncmp(useTags[i].tag, key, sz)) {
+            *((float*)(array + useTags[i].offset)) = _toFloat(loader->svgParse, value, useTags[i].type);
+            return true;
+        }
+    }
 
     if (!strcmp(key, "href") || !strcmp(key, "xlink:href")) {
         id = _idFromHref(value);
