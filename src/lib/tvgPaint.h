@@ -80,7 +80,7 @@ namespace tvg
             return true;
         }
 
-        Matrix* transform()
+        Matrix* transform() const
         {
             if (rTransform) {
                 rTransform->update();

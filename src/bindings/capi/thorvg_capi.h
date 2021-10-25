@@ -795,7 +795,7 @@ TVG_EXPORT Tvg_Result tvg_paint_transform(Tvg_Paint* paint, const Tvg_Matrix* m)
 * \retval TVG_RESULT_SUCCESS Succeed.
 * \retval TVG_RESULT_INVALID_ARGUMENT A @c nullptr is passed as the argument.
 */
-TVG_EXPORT Tvg_Result tvg_paint_get_transform(Tvg_Paint* paint, Tvg_Matrix* m);
+TVG_EXPORT Tvg_Result tvg_paint_get_transform(const Tvg_Paint* paint, Tvg_Matrix* m);
 
 
 /*!

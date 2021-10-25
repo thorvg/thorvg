@@ -336,7 +336,7 @@ Result Paint::transform(const Matrix& m) noexcept
 }
 
 
-Matrix Paint::transform() noexcept
+Matrix Paint::transform() const noexcept
 {
     auto pTransform = pImpl->transform();
     if (pTransform) return *pTransform;
