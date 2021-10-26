@@ -87,6 +87,7 @@ using TvgBinFlag = TvgBinByte;
 #define TVG_TAG_FILL_RADIAL_GRADIENT                (TvgBinTag)0x61
 #define TVG_TAG_FILL_COLORSTOPS                     (TvgBinTag)0x62
 #define TVG_TAG_FILL_FILLSPREAD                     (TvgBinTag)0x63
+#define TVG_TAG_FILL_TRANSFORM                      (TvgBinTag)0x64
 
 
 //Picture

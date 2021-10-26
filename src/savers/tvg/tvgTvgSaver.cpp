@@ -323,12 +323,12 @@ TvgBinCounter TvgSaver::writeTagProperty(TvgBinTag tag, TvgBinCounter cnt, const
 }
 
 
-TvgBinCounter TvgSaver::writeTransform(const Matrix* transform)
+TvgBinCounter TvgSaver::writeTransform(const Matrix* transform, TvgBinTag tag)
 {
     if (fabs(transform->e11 - 1) > FLT_EPSILON || fabs(transform->e12) > FLT_EPSILON || fabs(transform->e13) > FLT_EPSILON ||
         fabs(transform->e21) > FLT_EPSILON || fabs(transform->e22 - 1) > FLT_EPSILON || fabs(transform->e23) > FLT_EPSILON ||
         fabs(transform->e31) > FLT_EPSILON || fabs(transform->e32) > FLT_EPSILON || fabs(transform->e33 - 1) > FLT_EPSILON) {
-        return writeTagProperty(TVG_TAG_PAINT_TRANSFORM, SIZE(Matrix), transform);
+        return writeTagProperty(tag, SIZE(Matrix), transform);
     }
     return 0;
 }
@@ -423,7 +423,7 @@ TvgBinCounter TvgSaver::serializeScene(const Scene* scene, const Matrix* pTransf
 }
 
 
-TvgBinCounter TvgSaver::serializeFill(const Fill* fill, TvgBinTag tag)
+TvgBinCounter TvgSaver::serializeFill(const Fill* fill, TvgBinTag tag, const Matrix* pTransform)
 {
     const Fill::ColorStop* stops = nullptr;
     auto stopsCnt = fill->colorStops(&stops);
@@ -449,6 +449,10 @@ TvgBinCounter TvgSaver::serializeFill(const Fill* fill, TvgBinTag tag)
     if (auto flag = static_cast<TvgBinFlag>(fill->spread()))
         cnt += writeTagProperty(TVG_TAG_FILL_FILLSPREAD, SIZE(TvgBinFlag), &flag);
     cnt += writeTagProperty(TVG_TAG_FILL_COLORSTOPS, stopsCnt * SIZE(Fill::ColorStop), stops);
+
+    auto gTransform = fill->transform();
+    if (pTransform) gTransform = _multiply(pTransform, &gTransform);
+    cnt += writeTransform(&gTransform, TVG_TAG_FILL_TRANSFORM);
 
     writeReservedCount(cnt);
 
@@ -476,7 +480,7 @@ TvgBinCounter TvgSaver::serializeStroke(const Shape* shape, const Matrix* pTrans
 
     //fill
     if (auto fill = shape->strokeFill()) {
-        cnt += serializeFill(fill, TVG_TAG_SHAPE_STROKE_FILL);
+        cnt += serializeFill(fill, TVG_TAG_SHAPE_STROKE_FILL, (preTransform ? pTransform : nullptr));
     } else {
         uint8_t color[4] = {0, 0, 0, 0};
         shape->strokeColor(color, color + 1, color + 2, color + 3);
@@ -555,18 +559,8 @@ TvgBinCounter TvgSaver::serializeShape(const Shape* shape, const Matrix* pTransf
         cnt = writeTagProperty(TVG_TAG_SHAPE_FILLRULE, SIZE(TvgBinFlag), &flag);
     }
 
-    //the pre-transformation can't be applied in the case where any fill is present or when the stroke is dashed or irregulary scaled
+    //the pre-transformation can't be applied in the case when the stroke is dashed or irregulary scaled
     bool preTransform = true;
-
-    //fill
-    if (auto fill = shape->fill()) {
-        preTransform = false;
-        cnt += serializeFill(fill, TVG_TAG_SHAPE_FILL);
-    } else {
-        uint8_t color[4] = {0, 0, 0, 0};
-        shape->fillColor(color, color + 1, color + 2, color + 3);
-        if (color[3] > 0) cnt += writeTagProperty(TVG_TAG_SHAPE_COLOR, SIZE(color), color);
-    }
 
     //stroke
     if (shape->strokeWidth() > 0) {
@@ -574,14 +568,23 @@ TvgBinCounter TvgSaver::serializeShape(const Shape* shape, const Matrix* pTransf
         shape->strokeColor(color, color + 1, color + 2, color + 3);
         auto fill = shape->strokeFill();
         if (fill || color[3] > 0) {
-            if (fill || fabsf(cTransform->e11 - cTransform->e22) > FLT_EPSILON || (fabsf(cTransform->e11) < FLT_EPSILON && fabsf(cTransform->e12 - cTransform->e21) > FLT_EPSILON) || shape->strokeDash(nullptr) > 0) preTransform = false;
+            if (fabsf(cTransform->e11 - cTransform->e22) > FLT_EPSILON || (fabsf(cTransform->e11) < FLT_EPSILON && fabsf(cTransform->e12 - cTransform->e21) > FLT_EPSILON) || shape->strokeDash(nullptr) > 0) preTransform = false;
             cnt += serializeStroke(shape, cTransform, preTransform);
         }
     }
 
+    //fill
+    if (auto fill = shape->fill()) {
+        cnt += serializeFill(fill, TVG_TAG_SHAPE_FILL, (preTransform ? cTransform : nullptr));
+    } else {
+        uint8_t color[4] = {0, 0, 0, 0};
+        shape->fillColor(color, color + 1, color + 2, color + 3);
+        if (color[3] > 0) cnt += writeTagProperty(TVG_TAG_SHAPE_COLOR, SIZE(color), color);
+    }
+
     cnt += serializePath(shape, cTransform, preTransform);
 
-    if (!preTransform) cnt += writeTransform(cTransform);
+    if (!preTransform) cnt += writeTransform(cTransform, TVG_TAG_PAINT_TRANSFORM);
     cnt += serializePaint(shape, pTransform);
 
     writeReservedCount(cnt);
@@ -636,7 +639,7 @@ TvgBinCounter TvgSaver::serializePicture(const Picture* picture, const Matrix* p
     cnt += SIZE(TvgBinTag) + SIZE(TvgBinCounter);
 
     //Bitmap picture needs the transform info.
-    cnt += writeTransform(cTransform);
+    cnt += writeTransform(cTransform, TVG_TAG_PAINT_TRANSFORM);
 
     cnt += serializePaint(picture, pTransform);
 

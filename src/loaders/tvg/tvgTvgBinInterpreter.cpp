@@ -225,6 +225,13 @@ static unique_ptr<Fill> _parseShapeFill(const char *ptr, const char *end)
                 fillGrad->colorStops(stops, stopsCnt);
                 break;
             }
+            case TVG_TAG_FILL_TRANSFORM: {
+                if (!fillGrad || block.length != SIZE(Matrix)) return nullptr;
+                Matrix gradTransform;
+                memcpy(&gradTransform, block.data, SIZE(Matrix));
+                fillGrad->transform(gradTransform);
+                break;
+            }
             default: {
                 TVGLOG("TVG", "Unsupported tag %d (0x%x) used as one of the fill properties, %d bytes skipped", block.type, block.type, block.length);
                 break;
