@@ -780,7 +780,7 @@ TVG_EXPORT Tvg_Result tvg_paint_translate(Tvg_Paint* paint, float x, float y);
 * \retval TVG_RESULT_INVALID_ARGUMENT A @c nullptr is passed as the argument.
 * \retval TVG_RESULT_FAILED_ALLOCATION An internal error with memory allocation.
 */
-TVG_EXPORT Tvg_Result tvg_paint_transform(Tvg_Paint* paint, const Tvg_Matrix* m);
+TVG_EXPORT Tvg_Result tvg_paint_set_transform(Tvg_Paint* paint, const Tvg_Matrix* m);
 
 
 /*!
