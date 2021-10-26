@@ -175,13 +175,13 @@ bool _prepareRadial(SwFill* fill, const RadialGradient* radial, const Matrix* tr
         fill->radial.a21 = invTransform.e21 * invR;
         fill->radial.a22 = invTransform.e22 * invR;
         fill->radial.shiftY += invTransform.e23;
-        fill->radial.ddDet = 2.0f * fill->radial.a11 * fill->radial.a11 + 2 * fill->radial.a21 * fill->radial.a21;
+        fill->radial.detSecDeriv = 2.0f * fill->radial.a11 * fill->radial.a11 + 2 * fill->radial.a21 * fill->radial.a21;
 
         fill->radial.a *= sqrt(pow(transform->e11, 2) + pow(transform->e21, 2));
     } else {
         fill->radial.a11 = fill->radial.a22 = invR;
         fill->radial.a12 = fill->radial.a21 = 0.0f;
-        fill->radial.ddDet = 2.0f * invR * invR;
+        fill->radial.detSecDeriv = 2.0f * invR * invR;
     }
     fill->radial.shiftX *= invR;
     fill->radial.shiftY *= invR;
@@ -238,15 +238,17 @@ void fillFetchRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, 
     auto rx = (x + 0.5f) * fill->radial.a11 + (y + 0.5f) * fill->radial.a12 + fill->radial.shiftX;
     auto ry = (x + 0.5f) * fill->radial.a21 + (y + 0.5f) * fill->radial.a22 + fill->radial.shiftY;
 
-    auto detDelta2 = fill->radial.ddDet;
-    auto detDelta = 2.0f * (fill->radial.a11 * rx + fill->radial.a21 * ry) + 0.5f * detDelta2;
+    // detSecondDerivative = d(detFirstDerivative)/dx = d( d(det)/dx )/dx
+    auto detSecondDerivative = fill->radial.detSecDeriv;
+    // detFirstDerivative = d(det)/dx
+    auto detFirstDerivative = 2.0f * (fill->radial.a11 * rx + fill->radial.a21 * ry) + 0.5f * detSecondDerivative;
     auto det = rx * rx + ry * ry;
 
     for (uint32_t i = 0 ; i < len ; ++i) {
         *dst = _pixel(fill, sqrtf(det));
         ++dst;
-        det += detDelta;
-        detDelta += detDelta2;
+        det += detFirstDerivative;
+        detFirstDerivative += detSecondDerivative;
     }
 }
 
