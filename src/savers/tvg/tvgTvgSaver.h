@@ -50,14 +50,14 @@ private:
     void writeReservedCount(TvgBinCounter cnt);
     TvgBinCounter writeData(const void* data, TvgBinCounter cnt);
     TvgBinCounter writeTagProperty(TvgBinTag tag, TvgBinCounter cnt, const void* data);
-    TvgBinCounter writeTransform(const Matrix* transform);
+    TvgBinCounter writeTransform(const Matrix* transform, TvgBinTag tag);
 
     TvgBinCounter serialize(const Paint* paint, const Matrix* pTransform, bool compTarget = false);
     TvgBinCounter serializeScene(const Scene* scene, const Matrix* pTransform, const Matrix* cTransform);
     TvgBinCounter serializeShape(const Shape* shape, const Matrix* pTransform, const Matrix* cTransform);
     TvgBinCounter serializePicture(const Picture* picture, const Matrix* pTransform, const Matrix* cTransform);
     TvgBinCounter serializePaint(const Paint* paint, const Matrix* pTransform);
-    TvgBinCounter serializeFill(const Fill* fill, TvgBinTag tag);
+    TvgBinCounter serializeFill(const Fill* fill, TvgBinTag tag, const Matrix* pTransform);
     TvgBinCounter serializeStroke(const Shape* shape, const Matrix* pTransform, bool preTransform);
     TvgBinCounter serializePath(const Shape* shape, const Matrix* transform, bool preTransform);
     TvgBinCounter serializeComposite(const Paint* cmpTarget, CompositeMethod cmpMethod, const Matrix* pTransform);
