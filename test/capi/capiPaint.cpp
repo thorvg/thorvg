@@ -31,7 +31,7 @@ TEST_CASE("Paint Transform", "[capiPaint]")
 
     Tvg_Matrix matrix_set = {1, 0, 0, 0, 1, 0, 0, 0, 1}, matrix_get;
 
-    REQUIRE(tvg_paint_transform(paint, &matrix_set) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_paint_set_transform(paint, &matrix_set) == TVG_RESULT_SUCCESS);
     REQUIRE(tvg_paint_get_transform(paint, &matrix_get) == TVG_RESULT_SUCCESS);
     REQUIRE(matrix_get.e11 == Approx(matrix_set.e11).margin(0.000001));
     REQUIRE(matrix_get.e12 == Approx(matrix_set.e12).margin(0.000001));
