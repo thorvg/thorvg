@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-#include "jpgd.h"
+#include "tvgJpgd.h"
 #include "tvgLoader.h"
 #include "tvgJpgLoader.h"
 
@@ -43,11 +43,11 @@ JpgLoader::~JpgLoader()
 bool JpgLoader::open(const string& path)
 {
     int width, height, actual_comps;
-    image = jpgd::decompress_jpeg_image_from_file(path.c_str(), &width, &height, &actual_comps, 4);
+    image = decompress_jpeg_image_from_file(path.c_str(), &width, &height, &actual_comps, 4);
     if (!image) return false;
 
-    vw = w = width;
-    vh = h = height;
+    vw = w = static_cast<float>(width);
+    vh = h = static_cast<float>(height);
 
     return true;
 }
@@ -55,11 +55,11 @@ bool JpgLoader::open(const string& path)
 bool JpgLoader::open(const char* data, uint32_t size, bool copy)
 {
     int width, height, actual_comps;
-    image = jpgd::decompress_jpeg_image_from_memory((const unsigned char *)data, size, &width, &height, &actual_comps, 4);
+    image = decompress_jpeg_image_from_memory((const unsigned char *)data, size, &width, &height, &actual_comps, 4);
     if (!image) return false;
 
-    vw = w = width;
-    vh = h = height;
+    vw = w = static_cast<float>(width);
+    vh = h = static_cast<float>(height);
 
     return true;
 }
