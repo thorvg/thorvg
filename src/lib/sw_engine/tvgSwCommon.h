@@ -144,7 +144,7 @@ struct SwFill
     struct SwRadial {
         float a11, a12, shiftX;
         float a21, a22, shiftY;
-        float ddDet;
+        float detSecDeriv;
         float a;
     };
 
