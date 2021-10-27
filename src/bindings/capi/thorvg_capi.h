@@ -269,7 +269,7 @@ TVG_EXPORT Tvg_Result tvg_engine_init(Tvg_Engine engine_method, unsigned threads
 * tvg_engine_term(TVG_ENGINE_SW);
 * \endcode
 *
-* \param engine_method The engine types to terminate. This is relative to the Canvas types, in which it will be used. For multiple backends bitwise operation is allowed
+* \param engine_method The engine types to terminate. This is relative to the Canvas types, in which it will be used.
 *   - TVG_ENGINE_SW: CPU rasterizer
 *   - TVG_ENGINE_GL: OpenGL rasterizer (not supported yet)
 *
