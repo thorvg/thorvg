@@ -65,7 +65,7 @@ TEST_CASE("Scene Memory Reservation", "[tvgScene]")
     REQUIRE(scene->reserve(0) == Result::Success);
 
     //Too Big Size
-    REQUIRE(scene->reserve(-1) == Result::FailedAllocation);
+    REQUIRE(scene->reserve(UINT32_MAX) == Result::FailedAllocation);
 }
 
 TEST_CASE("Scene Clear", "[tvgScene]")
