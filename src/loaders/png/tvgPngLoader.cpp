@@ -136,7 +136,6 @@ bool PngLoader::read()
 bool PngLoader::close()
 {
     this->done();
-
     clear();
     return true;
 }

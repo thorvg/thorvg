@@ -110,11 +110,12 @@ class jpeg_decoder_file_stream : public jpeg_decoder_stream
     jpeg_decoder_file_stream(const jpeg_decoder_file_stream &);
     jpeg_decoder_file_stream &operator =(const jpeg_decoder_file_stream &);
 
-    FILE *m_pFile;
-    bool m_eof_flag, m_error_flag;
+    FILE *m_pFile = nullptr;
+    bool m_eof_flag = false;
+    bool m_error_flag = false;
 
 public:
-    jpeg_decoder_file_stream();
+    jpeg_decoder_file_stream() {}
     virtual ~jpeg_decoder_file_stream();
     bool open(const char *Pfilename);
     void close();
@@ -2814,14 +2815,7 @@ int jpeg_decoder::begin_decoding()
 jpeg_decoder::~jpeg_decoder()
 {
     free_all_blocks();
-}
-
-
-jpeg_decoder_file_stream::jpeg_decoder_file_stream()
-{
-    m_pFile = nullptr;
-    m_eof_flag = false;
-    m_error_flag = false;
+    delete(m_pStream);
 }
 
 
@@ -2910,23 +2904,62 @@ int jpeg_decoder_mem_stream::read(uint8_t *pBuf, int max_bytes_to_read, bool *pE
 }
 
 
-unsigned char *decompress_jpeg_image_from_stream(jpeg_decoder_stream *pStream, int *width, int *height, int *actual_comps, int req_comps)
-{
-    if (!actual_comps) return nullptr;
-    *actual_comps = 0;
+/************************************************************************/
+/* External Class Implementation                                        */
+/************************************************************************/
 
-    if ((!pStream) || (!width) || (!height) || (!req_comps))  return nullptr;
+
+jpeg_decoder* jpgdHeader(const char* data, int size, int* width, int* height)
+{
+    auto decoder = new jpeg_decoder(new jpeg_decoder_mem_stream((const uint8_t*)data, size));
+    if (decoder->get_error_code() != JPGD_SUCCESS) {
+        delete(decoder);
+        return nullptr;
+    }
+
+    if (width) *width = decoder->get_width();
+    if (height) *height = decoder->get_height();
+
+    return decoder;
+}
+
+
+jpeg_decoder* jpgdHeader(const char* filename, int* width, int* height)
+{
+    auto fileStream = new jpeg_decoder_file_stream();
+    if (!fileStream->open(filename)) return nullptr;
+
+    auto decoder = new jpeg_decoder(fileStream);
+    if (decoder->get_error_code() != JPGD_SUCCESS) {
+        delete(decoder);
+        return nullptr;
+    }
+
+    if (width) *width = decoder->get_width();
+    if (height) *height = decoder->get_height();
+
+    return decoder;
+}
+
+
+void jpgdDelete(jpeg_decoder* decoder)
+{
+    delete(decoder);
+}
+
+
+unsigned char* jpgdDecompress(jpeg_decoder* decoder)
+{
+    if (!decoder) return nullptr;
+
+    int req_comps = 4;  //TODO: fixed 4 channel components now?
     if ((req_comps != 1) && (req_comps != 3) && (req_comps != 4)) return nullptr;
 
-    jpeg_decoder decoder(pStream);
-    if (decoder.get_error_code() != JPGD_SUCCESS) return nullptr;
+    auto image_width = decoder->get_width();
+    auto image_height = decoder->get_height();
+    //auto actual_comps = decoder->get_num_components();
 
-    const int image_width = decoder.get_width(), image_height = decoder.get_height();
-    *width = image_width;
-    *height = image_height;
-    *actual_comps = decoder.get_num_components();
-
-    if (decoder.begin_decoding() != JPGD_SUCCESS) return nullptr;
+    if (decoder->begin_decoding() != JPGD_SUCCESS) return nullptr;
 
     const int dst_bpl = image_width * req_comps;
     uint8_t *pImage_data = (uint8_t*)malloc(dst_bpl * image_height);
@@ -2935,7 +2968,7 @@ unsigned char *decompress_jpeg_image_from_stream(jpeg_decoder_stream *pStream, i
     for (int y = 0; y < image_height; y++) {
         const uint8_t* pScan_line;
         uint32_t scan_line_len;
-        if (decoder.decode((const void**)&pScan_line, &scan_line_len) != JPGD_SUCCESS) {
+        if (decoder->decode((const void**)&pScan_line, &scan_line_len) != JPGD_SUCCESS) {
             free(pImage_data);
             return nullptr;
         }
@@ -2943,17 +2976,17 @@ unsigned char *decompress_jpeg_image_from_stream(jpeg_decoder_stream *pStream, i
         uint8_t *pDst = pImage_data + y * dst_bpl;
 
         //Return as BGRA
-        if ((req_comps == 4) && (decoder.get_num_components() == 3)) {
+        if ((req_comps == 4) && (decoder->get_num_components() == 3)) {
             for (int x = 0; x < image_width; x++) {
                 pDst[0] = pScan_line[x*4+2];
                 pDst[1] = pScan_line[x*4+1];
                 pDst[2] = pScan_line[x*4+0];
                 pDst[3] = 255;
                 pDst += 4;
-            } 
-        } else if (((req_comps == 1) && (decoder.get_num_components() == 1)) || ((req_comps == 4) && (decoder.get_num_components() == 3))) {
+            }
+        } else if (((req_comps == 1) && (decoder->get_num_components() == 1)) || ((req_comps == 4) && (decoder->get_num_components() == 3))) {
             memcpy(pDst, pScan_line, dst_bpl);
-        } else if (decoder.get_num_components() == 1) {
+        } else if (decoder->get_num_components() == 1) {
             if (req_comps == 3) {
                 for (int x = 0; x < image_width; x++) {
                     uint8_t luma = pScan_line[x];
@@ -2972,7 +3005,7 @@ unsigned char *decompress_jpeg_image_from_stream(jpeg_decoder_stream *pStream, i
                     pDst += 4;
                 }
             }
-        } else if (decoder.get_num_components() == 3) {
+        } else if (decoder->get_num_components() == 3) {
             if (req_comps == 1) {
                 const int YR = 19595, YG = 38470, YB = 7471;
                 for (int x = 0; x < image_width; x++) {
@@ -2992,23 +3025,4 @@ unsigned char *decompress_jpeg_image_from_stream(jpeg_decoder_stream *pStream, i
         }
     }
     return pImage_data;
-}
-
-
-/************************************************************************/
-/* External Class Implementation                                        */
-/************************************************************************/
-
-unsigned char *decompress_jpeg_image_from_memory(const unsigned char *pSrc_data, int src_data_size, int *width, int *height, int *actual_comps, int req_comps)
-{
-    jpeg_decoder_mem_stream mem_stream(pSrc_data, src_data_size);
-    return decompress_jpeg_image_from_stream(&mem_stream, width, height, actual_comps, req_comps);
-}
-
-
-unsigned char *decompress_jpeg_image_from_file(const char *pSrc_filename, int *width, int *height, int *actual_comps, int req_comps)
-{
-    jpeg_decoder_file_stream file_stream;
-    if (!file_stream.open(pSrc_filename)) return nullptr;
-    return decompress_jpeg_image_from_stream(&file_stream, width, height, actual_comps, req_comps);
 }
