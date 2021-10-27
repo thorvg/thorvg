@@ -330,10 +330,11 @@ Alternatively, you can add the `svg2tvg` value to the `tools` option in `meson_o
 Examples of the usage of the `svg2tvg`:
 ```
 Usage:
-   svg2tvg [SVG file]
+   svg2tvg [SVG file] or [SVG folder]
 
 Examples:
     $ svg2tvg input.svg
+    $ svg2tvg svgfolder
 ```
 [Back to contents](#contents)
 <br />
