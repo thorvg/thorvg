@@ -84,7 +84,7 @@ int main(int argc, char **argv)
 
     //Get tvg file.
     auto tvgName = svgName.substr(svgName.find_last_of("/\\") + 1);
-    tvgName.append(".tvg");
+    tvgName.replace(tvgName.length() - 3, 3, "tvg");
 
     //Convert!
     if (convert(svgName, tvgName)) {
