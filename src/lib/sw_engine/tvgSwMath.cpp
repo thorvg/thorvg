@@ -512,7 +512,7 @@ bool mathInverse(const Matrix* m, Matrix* invM)
 }
 
 
-bool mathMultiply(const Matrix* lhs, Matrix* rhs)
+Matrix mathMultiply(const Matrix* lhs, const Matrix* rhs)
 {
     Matrix m;
 
@@ -528,9 +528,7 @@ bool mathMultiply(const Matrix* lhs, Matrix* rhs)
     m.e32 = lhs->e31 * rhs->e12 + lhs->e32 * rhs->e22 + lhs->e33 * rhs->e32;
     m.e33 = lhs->e31 * rhs->e13 + lhs->e32 * rhs->e23 + lhs->e33 * rhs->e33;
 
-    *rhs = m;
-
-    return true;
+    return m;
 }
 
 

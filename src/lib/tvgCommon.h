@@ -72,5 +72,6 @@ enum class FileType { Tvg = 0, Svg, Raw, Png, Jpg, Unknown };
 #endif
 
 uint16_t THORVG_VERSION_NUMBER();
+Matrix mathMultiply(const Matrix* lhs, const Matrix* rhs);
 
 #endif //_TVG_COMMON_H_

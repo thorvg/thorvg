@@ -57,26 +57,6 @@ static inline TvgBinCounter SERIAL_DONE(TvgBinCounter cnt)
 }
 
 
-static Matrix _multiply(const Matrix* lhs, const Matrix* rhs)
-{
-    Matrix m;
-
-    m.e11 = lhs->e11 * rhs->e11 + lhs->e12 * rhs->e21 + lhs->e13 * rhs->e31;
-    m.e12 = lhs->e11 * rhs->e12 + lhs->e12 * rhs->e22 + lhs->e13 * rhs->e32;
-    m.e13 = lhs->e11 * rhs->e13 + lhs->e12 * rhs->e23 + lhs->e13 * rhs->e33;
-
-    m.e21 = lhs->e21 * rhs->e11 + lhs->e22 * rhs->e21 + lhs->e23 * rhs->e31;
-    m.e22 = lhs->e21 * rhs->e12 + lhs->e22 * rhs->e22 + lhs->e23 * rhs->e32;
-    m.e23 = lhs->e21 * rhs->e13 + lhs->e22 * rhs->e23 + lhs->e23 * rhs->e33;
-
-    m.e31 = lhs->e31 * rhs->e11 + lhs->e32 * rhs->e21 + lhs->e33 * rhs->e31;
-    m.e32 = lhs->e31 * rhs->e12 + lhs->e32 * rhs->e22 + lhs->e33 * rhs->e32;
-    m.e33 = lhs->e31 * rhs->e13 + lhs->e32 * rhs->e23 + lhs->e33 * rhs->e33;
-
-    return m;
-}
-
-
 static void _multiply(Point* pt, const Matrix* transform)
 {
     auto tx = pt->x * transform->e11 + pt->y * transform->e12 + transform->e13;
@@ -707,7 +687,7 @@ TvgBinCounter TvgSaver::serialize(const Paint* paint, const Matrix* pTransform, 
     if (!compTarget && paint->opacity() == 0) return 0;
 
     auto transform = const_cast<Paint*>(paint)->transform();
-    if (pTransform) transform = _multiply(pTransform, &transform);
+    if (pTransform) transform = mathMultiply(pTransform, &transform);
 
     switch (paint->identifier()) {
         case TVG_CLASS_ID_SHAPE: return serializeShape(static_cast<const Shape*>(paint), pTransform, &transform);

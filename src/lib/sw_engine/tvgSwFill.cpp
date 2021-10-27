@@ -120,7 +120,7 @@ bool _prepareLinear(SwFill* fill, const LinearGradient* linear, const Matrix* tr
     bool isTransformation = !mathIdentity(&gradTransform);
 
     if (isTransformation) {
-        if (transform) mathMultiply(transform, &gradTransform);
+        if (transform) gradTransform = mathMultiply(transform, &gradTransform);
     } else if (transform) {
         gradTransform = *transform;
         isTransformation = true;
