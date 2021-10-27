@@ -360,10 +360,13 @@ static SwOutline* _genDashOutline(const Shape* sdata, const Matrix* transform)
 }
 
 
-static bool _fastTrack(const SwOutline* outline)
+static bool _fastTrack(const SwOutline* outline, SwBBox& bbox)
 {
     //Fast Track: Othogonal rectangle?
     if (outline->ptsCnt != 5) return false;
+
+    /* NOTICE: If the antialiased pixels matter, we can turn off the fast track
+       in case the pixels have the pixel fraction. */
 
     auto pt1 = outline->pts + 0;
     auto pt2 = outline->pts + 1;
@@ -373,7 +376,35 @@ static bool _fastTrack(const SwOutline* outline)
     auto a = SwPoint{pt1->x, pt3->y};
     auto b = SwPoint{pt3->x, pt1->y};
 
-    if ((*pt2 == a && *pt4 == b) || (*pt2 == b && *pt4 == a)) return true;
+    //Matched!
+    if ((*pt2 == a && *pt4 == b) || (*pt2 == b && *pt4 == a)) {
+        //Since no antialiasing is applied in the Fast Track case,
+        //the rasterization region has to be rearranged.
+        //https://github.com/Samsung/thorvg/issues/916
+        auto corner1 = outline->pts;
+        auto corner3 = outline->pts + 2;
+
+        auto xMin = corner1->x;
+        auto xMax = corner3->x;
+        if (xMin > xMax) {
+            xMax = xMin;
+            xMin = corner3->x;
+        }
+
+        auto yMin = corner1->y;
+        auto yMax = corner3->y;
+        if (yMin > yMax) {
+            yMax = yMin;
+            yMin = corner3->y;
+        }
+
+        bbox.min.x = static_cast<SwCoord>(round(xMin / 64.0f));
+        bbox.max.x = static_cast<SwCoord>(round(xMax / 64.0f));
+        bbox.min.y = static_cast<SwCoord>(round(yMin / 64.0f));
+        bbox.max.y = static_cast<SwCoord>(round(yMax / 64.0f));
+
+        return true;
+    }
 
     return false;
 }
@@ -509,32 +540,8 @@ bool shapeGenRle(SwShape* shape, TVG_UNUSED const Shape* sdata, bool antiAlias, 
     //if (shape.outline->opened) return true;
 
     //Case A: Fast Track Rectangle Drawing
-    if (!hasComposite && (shape->rect = _fastTrack(shape->outline))) {
-        //Since no antialiasing is applied in the Fast Track case,
-        //the rasterization region has to be modified
-        auto corner1 = shape->outline->pts;
-        auto corner3 = shape->outline->pts + 2;
+    if (!hasComposite && (shape->rect = _fastTrack(shape->outline, shape->bbox))) return true;
 
-        auto xMin = corner1->x;
-        auto xMax = corner3->x;
-        if (xMin > xMax) {
-            xMax = xMin;
-            xMin = corner3->x;
-        }
-        auto yMin = corner1->y;
-        auto yMax = corner3->y;
-        if (yMin > yMax) {
-            yMax = yMin;
-            yMin = corner3->y;
-        }
-
-        shape->bbox.min.x = static_cast<SwCoord>(round(xMin / 64.0f));
-        shape->bbox.max.x = static_cast<SwCoord>(round(xMax / 64.0f));
-        shape->bbox.min.y = static_cast<SwCoord>(round(yMin / 64.0f));
-        shape->bbox.max.y = static_cast<SwCoord>(round(yMax / 64.0f));
-
-        return true;
-    }
     //Case B: Normal Shape RLE Drawing
     if ((shape->rle = rleRender(shape->rle, shape->outline, shape->bbox, antiAlias))) return true;
 
