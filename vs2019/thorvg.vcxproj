@@ -58,7 +58,9 @@
     <ClInclude Include="..\src\lib\tvgSceneImpl.h" />
     <ClInclude Include="..\src\lib\tvgShapeImpl.h" />
     <ClInclude Include="..\src\lib\tvgTaskScheduler.h" />
+    <ClInclude Include="..\src\loaders\jpg\tvgJpgd.h" />
     <ClInclude Include="..\src\loaders\jpg\tvgJpgLoader.h" />
+    <ClInclude Include="..\src\loaders\png\tvgLodePng.h" />
     <ClInclude Include="..\src\loaders\png\tvgPngLoader.h" />
     <ClInclude Include="..\src\loaders\raw\tvgRawLoader.h" />
     <ClInclude Include="..\src\loaders\svg\tvgSvgLoader.h" />
@@ -100,7 +102,9 @@
     <ClCompile Include="..\src\lib\tvgShape.cpp" />
     <ClCompile Include="..\src\lib\tvgSwCanvas.cpp" />
     <ClCompile Include="..\src\lib\tvgTaskScheduler.cpp" />
+    <ClCompile Include="..\src\loaders\jpg\tvgJpgd.cpp" />
     <ClCompile Include="..\src\loaders\jpg\tvgJpgLoader.cpp" />
+    <ClCompile Include="..\src\loaders\png\tvgLodePng.cpp" />
     <ClCompile Include="..\src\loaders\png\tvgPngLoader.cpp" />
     <ClCompile Include="..\src\loaders\raw\tvgRawLoader.cpp" />
     <ClCompile Include="..\src\loaders\svg\tvgSvgLoader.cpp" />

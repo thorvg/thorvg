@@ -25,12 +25,6 @@
     <Filter Include="src\lib\sw_engine">
       <UniqueIdentifier>{26c9f25a-7cf9-42ef-81e8-144507f66b73}</UniqueIdentifier>
     </Filter>
-    <Filter Include="src\loaders\png">
-      <UniqueIdentifier>{e6250d21-934b-4b68-81b3-a838017d324c}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="src\loaders\jpg">
-      <UniqueIdentifier>{213f0f52-a154-471b-9e09-1c6cedef398c}</UniqueIdentifier>
-    </Filter>
     <Filter Include="src\loaders\raw">
       <UniqueIdentifier>{e210c11c-d841-44bd-9248-e61550b4432b}</UniqueIdentifier>
     </Filter>
@@ -42,6 +36,12 @@
     </Filter>
     <Filter Include="src\savers\tvg">
       <UniqueIdentifier>{99d44800-d2b1-425d-a724-6e735efe2f97}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\loaders\jpg">
+      <UniqueIdentifier>{67572131-2f7f-4523-816c-c16b4149a3fe}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\loaders\png">
+      <UniqueIdentifier>{b3150342-59e5-472e-b8d9-02c7dee5abfb}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -63,9 +63,6 @@
     <None Include="..\src\lib\sw_engine\meson.build">
       <Filter>src\lib\sw_engine</Filter>
     </None>
-    <None Include="..\src\loaders\jpg\meson.build">
-      <Filter>src\loaders\jpg</Filter>
-    </None>
     <None Include="..\src\loaders\tvg\meson.build">
       <Filter>src\loaders\tvg</Filter>
     </None>
@@ -75,14 +72,17 @@
     <None Include="..\src\loaders\raw\meson.build">
       <Filter>src\loaders\raw</Filter>
     </None>
-    <None Include="..\src\loaders\png\meson.build">
-      <Filter>src\loaders\png</Filter>
-    </None>
     <None Include="..\src\savers\meson.build">
       <Filter>src\savers</Filter>
     </None>
     <None Include="..\src\savers\tvg\meson.build">
       <Filter>src\savers\tvg</Filter>
+    </None>
+    <None Include="..\src\loaders\jpg\meson.build">
+      <Filter>src\loaders\jpg</Filter>
+    </None>
+    <None Include="..\src\loaders\png\meson.build">
+      <Filter>src\loaders\png</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
@@ -158,9 +158,6 @@
     <ClInclude Include="..\src\lib\sw_engine\tvgSwRenderer.h">
       <Filter>src\lib\sw_engine</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\loaders\jpg\tvgJpgLoader.h">
-      <Filter>src\loaders\jpg</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\loaders\tvg\tvgTvgCommon.h">
       <Filter>src\loaders\tvg</Filter>
     </ClInclude>
@@ -188,13 +185,22 @@
     <ClInclude Include="..\src\loaders\raw\tvgRawLoader.h">
       <Filter>src\loaders\raw</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\loaders\png\tvgPngLoader.h">
-      <Filter>src\loaders\png</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\savers\tvg\tvgTvgSaver.h">
       <Filter>src\savers\tvg</Filter>
     </ClInclude>
     <ClInclude Include="config.h" />
+    <ClInclude Include="..\src\loaders\jpg\tvgJpgd.h">
+      <Filter>src\loaders\jpg</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\loaders\jpg\tvgJpgLoader.h">
+      <Filter>src\loaders\jpg</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\loaders\png\tvgLodePng.h">
+      <Filter>src\loaders\png</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\loaders\png\tvgPngLoader.h">
+      <Filter>src\loaders\png</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\bindings\capi\tvgCapi.cpp">
@@ -278,9 +284,6 @@
     <ClCompile Include="..\src\lib\sw_engine\tvgSwStroke.cpp">
       <Filter>src\lib\sw_engine</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\loaders\jpg\tvgJpgLoader.cpp">
-      <Filter>src\loaders\jpg</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\loaders\tvg\tvgTvgBinInterpreter.cpp">
       <Filter>src\loaders\tvg</Filter>
     </ClCompile>
@@ -305,11 +308,20 @@
     <ClCompile Include="..\src\loaders\raw\tvgRawLoader.cpp">
       <Filter>src\loaders\raw</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\loaders\png\tvgPngLoader.cpp">
-      <Filter>src\loaders\png</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\savers\tvg\tvgTvgSaver.cpp">
       <Filter>src\savers\tvg</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\loaders\jpg\tvgJpgd.cpp">
+      <Filter>src\loaders\jpg</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\loaders\jpg\tvgJpgLoader.cpp">
+      <Filter>src\loaders\jpg</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\loaders\png\tvgLodePng.cpp">
+      <Filter>src\loaders\png</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\loaders\png\tvgPngLoader.cpp">
+      <Filter>src\loaders\png</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
