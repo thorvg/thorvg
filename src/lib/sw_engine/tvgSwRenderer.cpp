@@ -651,7 +651,7 @@ bool SwRenderer::term()
 
     initEngineCnt = 0;
 
-   _termEngine();
+    _termEngine();
 
     return true;
 }
