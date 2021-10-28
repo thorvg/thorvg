@@ -25,7 +25,7 @@ jobs:
         name: result
         path: build/src\thorvg*
 
-  build_with_loaders:
+  unit_test:
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v2
@@ -34,14 +34,9 @@ jobs:
       run: |
         pip install meson==0.58.0 ninja
 
-    - name: Install Packages(png, jpg)
-      run: |
-        vcpkg install libpng
-        vcpkg install libjpeg-turbo
-
     - name: Build
       run: |
-        meson --backend=ninja build -Dloaders="svg, tvg, png, jpg" -Dsavers="tvg" -Dbindings="capi"
+        meson --backend=ninja build -Dloaders="svg, tvg, png, jpg" -Dsavers="tvg" -Dbindings="capi" -Dtests=true
         where link
-        ninja -C build install
+        ninja -C build test
 
