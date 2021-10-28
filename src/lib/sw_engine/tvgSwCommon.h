@@ -298,7 +298,7 @@ SwFixed mathLength(const SwPoint& pt);
 bool mathSmallCubic(const SwPoint* base, SwFixed& angleIn, SwFixed& angleMid, SwFixed& angleOut);
 SwFixed mathMean(SwFixed angle1, SwFixed angle2);
 SwPoint mathTransform(const Point* to, const Matrix* transform);
-bool mathUpdateOutlineBBox(const SwOutline* outline, const SwBBox& clipRegion, SwBBox& renderRegion);
+bool mathUpdateOutlineBBox(const SwOutline* outline, const SwBBox& clipRegion, SwBBox& renderRegion, bool rect);
 bool mathInverse(const Matrix* m, Matrix* invM);
 bool mathMultiply(const Matrix* lhs, Matrix* rhs);
 bool mathIdentity(const Matrix* m);

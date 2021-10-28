@@ -360,13 +360,10 @@ static SwOutline* _genDashOutline(const Shape* sdata, const Matrix* transform)
 }
 
 
-static bool _fastTrack(const SwOutline* outline, SwBBox& bbox)
+static bool _fastTrack(const SwOutline* outline)
 {
-    //Fast Track: Othogonal rectangle?
+    //Fast Track: Orthogonal rectangle?
     if (outline->ptsCnt != 5) return false;
-
-    /* NOTICE: If the antialiased pixels matter, we can turn off the fast track
-       in case the pixels have the pixel fraction. */
 
     auto pt1 = outline->pts + 0;
     auto pt2 = outline->pts + 1;
@@ -376,35 +373,7 @@ static bool _fastTrack(const SwOutline* outline, SwBBox& bbox)
     auto a = SwPoint{pt1->x, pt3->y};
     auto b = SwPoint{pt3->x, pt1->y};
 
-    //Matched!
-    if ((*pt2 == a && *pt4 == b) || (*pt2 == b && *pt4 == a)) {
-        //Since no antialiasing is applied in the Fast Track case,
-        //the rasterization region has to be rearranged.
-        //https://github.com/Samsung/thorvg/issues/916
-        auto corner1 = outline->pts;
-        auto corner3 = outline->pts + 2;
-
-        auto xMin = corner1->x;
-        auto xMax = corner3->x;
-        if (xMin > xMax) {
-            xMax = xMin;
-            xMin = corner3->x;
-        }
-
-        auto yMin = corner1->y;
-        auto yMax = corner3->y;
-        if (yMin > yMax) {
-            yMax = yMin;
-            yMin = corner3->y;
-        }
-
-        bbox.min.x = static_cast<SwCoord>(round(xMin / 64.0f));
-        bbox.max.x = static_cast<SwCoord>(round(xMax / 64.0f));
-        bbox.min.y = static_cast<SwCoord>(round(yMin / 64.0f));
-        bbox.max.y = static_cast<SwCoord>(round(yMax / 64.0f));
-
-        return true;
-    }
+    if ((*pt2 == a && *pt4 == b) || (*pt2 == b && *pt4 == a)) return true;
 
     return false;
 }
@@ -500,6 +469,7 @@ static bool _genOutline(SwShape* shape, const Shape* sdata, const Matrix* transf
     outline->fillRule = sdata->fillRule();
     shape->outline = outline;
 
+    shape->rect = _fastTrack(shape->outline);
     return true;
 }
 
@@ -511,7 +481,7 @@ static bool _genOutline(SwShape* shape, const Shape* sdata, const Matrix* transf
 bool shapePrepare(SwShape* shape, const Shape* sdata, const Matrix* transform,  const SwBBox& clipRegion, SwBBox& renderRegion, SwMpool* mpool, unsigned tid)
 {
     if (!_genOutline(shape, sdata, transform, mpool, tid)) return false;
-    if (!mathUpdateOutlineBBox(shape->outline, clipRegion, renderRegion)) return false;
+    if (!mathUpdateOutlineBBox(shape->outline, clipRegion, renderRegion, shape->rect)) return false;
 
     //Keep it for Rasterization Region
     shape->bbox = renderRegion;
@@ -540,7 +510,7 @@ bool shapeGenRle(SwShape* shape, TVG_UNUSED const Shape* sdata, bool antiAlias, 
     //if (shape.outline->opened) return true;
 
     //Case A: Fast Track Rectangle Drawing
-    if (!hasComposite && (shape->rect = _fastTrack(shape->outline, shape->bbox))) return true;
+    if (!hasComposite && shape->rect) return true;
 
     //Case B: Normal Shape RLE Drawing
     if ((shape->rle = rleRender(shape->rle, shape->outline, shape->bbox, antiAlias))) return true;
@@ -629,7 +599,7 @@ bool shapeGenStrokeRle(SwShape* shape, const Shape* sdata, const Matrix* transfo
         goto fail;
     }
 
-    if (!mathUpdateOutlineBBox(strokeOutline, clipRegion, renderRegion)) {
+    if (!mathUpdateOutlineBBox(strokeOutline, clipRegion, renderRegion, false)) {
         ret = false;
         goto fail;
     }
