@@ -78,7 +78,7 @@ struct Fill::Impl
         memcpy(ret->pImpl->colorStops, colorStops, sizeof(ColorStop) * cnt);
         if (transform) {
             ret->pImpl->transform = new Matrix;
-            if (ret->pImpl->transform) *ret->pImpl->transform = *transform;
+            *ret->pImpl->transform = *transform;
         }
         return ret;
     }

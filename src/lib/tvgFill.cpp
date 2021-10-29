@@ -90,7 +90,6 @@ FillSpread Fill::spread() const noexcept
 Result Fill::transform(const Matrix& m) noexcept
 {
     if (!pImpl->transform) pImpl->transform = new Matrix();
-    if (!pImpl->transform) return Result::FailedAllocation;
     *pImpl->transform = m;
     return Result::Success;
 }

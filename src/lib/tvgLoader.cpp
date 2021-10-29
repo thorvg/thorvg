@@ -206,9 +206,8 @@ shared_ptr<LoadModule> LoaderMgr::loader(const uint32_t *data, uint32_t w, uint3
 {
     //function is dedicated for raw images only
     auto loader = new RawLoader;
-    if (loader) {
-        if (loader->open(data, w, h, copy)) return shared_ptr<LoadModule>(loader);
-        else delete(loader);
-    }
+    if (loader->open(data, w, h, copy)) return shared_ptr<LoadModule>(loader);
+    else delete(loader);
+
     return nullptr;
 }
