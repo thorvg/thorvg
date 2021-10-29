@@ -1670,8 +1670,6 @@ static SvgStyleGradient* _cloneGradient(SvgStyleGradient* from)
     if (!from) return nullptr;
 
     auto grad = new SvgStyleGradient;
-    if (!grad) return nullptr;
-
     grad->type = from->type;
     grad->id = from->id ? _copyId(from->id->c_str()) : nullptr;
     grad->ref = from->ref ? _copyId(from->ref->c_str()) : nullptr;
@@ -2079,8 +2077,6 @@ static bool _attrParseRadialGradientNode(void* data, const char* key, const char
 static SvgStyleGradient* _createRadialGradient(SvgLoaderData* loader, const char* buf, unsigned bufLength)
 {
     auto grad = new SvgStyleGradient;
-    if (!grad) return nullptr;
-
     loader->svgParse->styleGrad = grad;
 
     grad->type = SvgGradientType::Radial;
@@ -2268,8 +2264,6 @@ static bool _attrParseLinearGradientNode(void* data, const char* key, const char
 static SvgStyleGradient* _createLinearGradient(SvgLoaderData* loader, const char* buf, unsigned bufLength)
 {
     auto grad = new SvgStyleGradient;
-    if (!grad) return nullptr;
-
     loader->svgParse->styleGrad = grad;
 
     grad->type = SvgGradientType::Linear;
