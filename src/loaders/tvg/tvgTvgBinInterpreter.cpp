@@ -225,6 +225,10 @@ static unique_ptr<Fill> _parseShapeFill(const char *ptr, const char *end)
                 fillGrad->colorStops(stops, stopsCnt);
                 break;
             }
+            default: {
+                TVGLOG("TVG", "Unsupported tag %d (0x%x) used as one of the fill properties, %d bytes skipped", block.type, block.type, block.length);
+                break;
+            }
         }
         ptr = block.end;
     }
@@ -284,6 +288,10 @@ static bool _parseShapeStroke(const char *ptr, const char *end, Shape *shape)
             }
             case TVG_TAG_SHAPE_STROKE_DASHPTRN: {
                 if (!_parseShapeStrokeDashPattern(block.data, block.end, shape)) return false;
+                break;
+            }
+            default: {
+                TVGLOG("TVG", "Unsupported tag %d (0x%x) used as one of stroke properties, %d bytes skipped", block.type, block.type, block.length);
                 break;
             }
         }
@@ -382,7 +390,7 @@ static Paint* _parsePaint(TvgBinBlock baseBlock)
             break;
         }
         default: {
-            TVGERR("TVG", "Invalid Paint Type (%d)", baseBlock.type);
+            TVGERR("TVG", "Invalid Paint Type %d (0x%x)", baseBlock.type, baseBlock.type);
             return nullptr;
         }
     }
@@ -394,7 +402,7 @@ static Paint* _parsePaint(TvgBinBlock baseBlock)
         auto block = _readBlock(ptr);
         if (block.end > baseBlock.end) return paint;
         if (!parser(block, paint)) {
-            TVGERR("TVG", "Encountered the wrong paint properties... Paint Class (%d)", baseBlock.type);
+            TVGERR("TVG", "Encountered the wrong paint properties... Paint Class %d (0x%x)", baseBlock.type, baseBlock.type);
             return paint;
         }
         ptr = block.end;
