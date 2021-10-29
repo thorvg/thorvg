@@ -177,7 +177,7 @@ bool _prepareRadial(SwFill* fill, const RadialGradient* radial, const Matrix* tr
         fill->radial.shiftY += invTransform.e23;
         fill->radial.detSecDeriv = 2.0f * fill->radial.a11 * fill->radial.a11 + 2 * fill->radial.a21 * fill->radial.a21;
 
-        fill->radial.a *= sqrt(pow(transform->e11, 2) + pow(transform->e21, 2));
+        fill->radial.a *= sqrt(pow(invTransform.e11, 2) + pow(invTransform.e21, 2));
     } else {
         fill->radial.a11 = fill->radial.a22 = invR;
         fill->radial.a12 = fill->radial.a21 = 0.0f;
