@@ -255,7 +255,7 @@ typedef struct
 * \see tvg_engine_term()
 * \see Tvg_Engine
 */
-TVG_EXPORT Tvg_Result tvg_engine_init(Tvg_Engine engine_method, unsigned threads);
+TVG_EXPORT Tvg_Result tvg_engine_init(int engine_method, unsigned threads);
 
 
 /*!
@@ -283,7 +283,7 @@ TVG_EXPORT Tvg_Result tvg_engine_init(Tvg_Engine engine_method, unsigned threads
 * \see tvg_engine_init()
 * \see Tvg_Engine
 */
-TVG_EXPORT Tvg_Result tvg_engine_term(Tvg_Engine engine_method);
+TVG_EXPORT Tvg_Result tvg_engine_term(int engine_method);
 
 
 /** \} */   // end defgroup ThorVGCapi_Initializer

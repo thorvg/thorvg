@@ -100,7 +100,7 @@ void testCapi()
     tvg_canvas_push(canvas, shape2);
 
 
-//////3. Radial gradient shape with a radial dashed stroke
+//////3. Radial gradient shape with a radial gradient stroke
     //Set a shape
     Tvg_Paint* shape3 = tvg_shape_new();
     tvg_shape_append_rect(shape3, 550.0f, 20.0f, 100.0f, 50.0f, 0.0f, 0.0f);
@@ -269,7 +269,7 @@ void resize_cb(void *data, Evas *e, Evas_Object *obj, void *event_info)
 int main(int argc, char **argv)
 {
     elm_init(argc, argv);
-    tvg_engine_init(Tvg_Engine(TVG_ENGINE_SW | TVG_ENGINE_GL), 0);
+    tvg_engine_init(TVG_ENGINE_SW | TVG_ENGINE_GL, 0);
 
     buffer = (uint32_t*)malloc(sizeof(uint32_t) * WIDTH * HEIGHT);
 
@@ -296,7 +296,7 @@ int main(int argc, char **argv)
 
     tvg_canvas_destroy(canvas);
     free(buffer);
-    tvg_engine_term(Tvg_Engine(TVG_ENGINE_SW | TVG_ENGINE_GL));
+    tvg_engine_term(TVG_ENGINE_SW | TVG_ENGINE_GL);
     elm_shutdown();
 
     return 0;
