@@ -91,7 +91,7 @@ struct SwShapeTask : SwTask
             visibleFill = (alpha > 0 || sdata->fill());
             if (visibleFill || visibleStroke) {
                 shapeReset(&shape);
-                if (!shapePrepare(&shape, sdata, transform, clipRegion, bbox, mpool, tid)) goto err;
+                if (!shapePrepare(&shape, sdata, transform, clipRegion, bbox, mpool, tid, clips.count > 0 ? true : false)) goto err;
             }
         }
 
@@ -107,7 +107,7 @@ struct SwShapeTask : SwTask
                    Thus it turns off antialising in that condition.
                    Also, it shouldn't be dash style. */
                 auto antiAlias = (strokeAlpha == 255 && sdata->strokeWidth() > 2 && sdata->strokeDash(nullptr) == 0) ? false : true;
-                if (!shapeGenRle(&shape, sdata, antiAlias, clips.count > 0 ? true : false)) goto err;
+                if (!shapeGenRle(&shape, sdata, antiAlias)) goto err;
             }
             if (auto fill = sdata->fill()) {
                 auto ctable = (flags & RenderUpdateFlag::Gradient) ? true : false;

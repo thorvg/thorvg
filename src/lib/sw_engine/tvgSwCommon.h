@@ -304,9 +304,9 @@ bool mathMultiply(const Matrix* lhs, Matrix* rhs);
 bool mathIdentity(const Matrix* m);
 
 void shapeReset(SwShape* shape);
-bool shapePrepare(SwShape* shape, const Shape* sdata, const Matrix* transform, const SwBBox& clipRegion, SwBBox& renderRegion, SwMpool* mpool, unsigned tid);
+bool shapePrepare(SwShape* shape, const Shape* sdata, const Matrix* transform, const SwBBox& clipRegion, SwBBox& renderRegion, SwMpool* mpool, unsigned tid, bool hasComposite);
 bool shapePrepared(const SwShape* shape);
-bool shapeGenRle(SwShape* shape, const Shape* sdata, bool antiAlias, bool hasComposite);
+bool shapeGenRle(SwShape* shape, const Shape* sdata, bool antiAlias);
 void shapeDelOutline(SwShape* shape, SwMpool* mpool, uint32_t tid);
 void shapeResetStroke(SwShape* shape, const Shape* sdata, const Matrix* transform);
 bool shapeGenStrokeRle(SwShape* shape, const Shape* sdata, const Matrix* transform, const SwBBox& clipRegion, SwBBox& renderRegion, SwMpool* mpool, unsigned tid);
