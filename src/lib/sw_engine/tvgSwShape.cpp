@@ -360,9 +360,9 @@ static SwOutline* _genDashOutline(const Shape* sdata, const Matrix* transform)
 }
 
 
-static bool _fastTrack(const SwOutline* outline)
+static bool _axisAlignedRect(const SwOutline* outline)
 {
-    //Fast Track: Orthogonal rectangle?
+    //Fast Track: axis-aligned rectangle?
     if (outline->ptsCnt != 5) return false;
 
     auto pt1 = outline->pts + 0;
@@ -469,7 +469,7 @@ static bool _genOutline(SwShape* shape, const Shape* sdata, const Matrix* transf
     outline->fillRule = sdata->fillRule();
     shape->outline = outline;
 
-    shape->rect = (!hasComposite && _fastTrack(shape->outline));
+    shape->fastTrack = (!hasComposite && _axisAlignedRect(shape->outline));
     return true;
 }
 
@@ -481,7 +481,7 @@ static bool _genOutline(SwShape* shape, const Shape* sdata, const Matrix* transf
 bool shapePrepare(SwShape* shape, const Shape* sdata, const Matrix* transform,  const SwBBox& clipRegion, SwBBox& renderRegion, SwMpool* mpool, unsigned tid, bool hasComposite)
 {
     if (!_genOutline(shape, sdata, transform, mpool, tid, hasComposite)) return false;
-    if (!mathUpdateOutlineBBox(shape->outline, clipRegion, renderRegion, shape->rect)) return false;
+    if (!mathUpdateOutlineBBox(shape->outline, clipRegion, renderRegion, shape->fastTrack)) return false;
 
     //Keep it for Rasterization Region
     shape->bbox = renderRegion;
@@ -510,7 +510,7 @@ bool shapeGenRle(SwShape* shape, TVG_UNUSED const Shape* sdata, bool antiAlias)
     //if (shape.outline->opened) return true;
 
     //Case A: Fast Track Rectangle Drawing
-    if (shape->rect) return true;
+    if (shape->fastTrack) return true;
 
     //Case B: Normal Shape RLE Drawing
     if ((shape->rle = rleRender(shape->rle, shape->outline, shape->bbox, antiAlias))) return true;
@@ -530,7 +530,7 @@ void shapeReset(SwShape* shape)
 {
     rleReset(shape->rle);
     rleReset(shape->strokeRle);
-    shape->rect = false;
+    shape->fastTrack = false;
     shape->bbox.reset();
 }
 
