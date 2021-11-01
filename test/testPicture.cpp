@@ -297,7 +297,7 @@ TEST_CASE("Load SVG file and render", "[tvgPicture]")
 
     REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
 
-    delete buffer;
+    delete[] buffer;
 }
 
 TEST_CASE("Load PNG file and render", "[tvgPicture]")
@@ -366,7 +366,7 @@ TEST_CASE("Load TVG file and render", "[tvgPicture]")
 
     REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
 
-    delete buffer;
+    delete[] buffer;
 }
 
 TEST_CASE("Load RAW file and render", "[tvgPicture]")
