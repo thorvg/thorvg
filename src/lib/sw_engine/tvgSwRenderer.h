@@ -45,6 +45,7 @@ public:
     RenderRegion region(RenderData data) override;
     RenderRegion viewport() override;
     bool viewport(const RenderRegion& vp) override;
+    uint32_t colorSpace() override;
 
     bool clear() override;
     bool sync() override;

@@ -299,6 +299,12 @@ bool SwRenderer::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t 
 }
 
 
+uint32_t SwRenderer::colorSpace()
+{
+    return surface->cs;
+}
+
+
 bool SwRenderer::preRender()
 {
     return rasterClear(surface);

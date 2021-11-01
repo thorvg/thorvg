@@ -90,8 +90,7 @@ bool JpgLoader::open(const char* data, uint32_t size, bool copy)
 }
 
 
-
-bool JpgLoader::read()
+bool JpgLoader::read(uint32_t colorspace)
 {
     if (!decoder || w <= 0 || h <= 0) return false;
 

@@ -2927,7 +2927,7 @@ bool SvgLoader::resize(Paint* paint, float w, float h)
 }
 
 
-bool SvgLoader::read()
+bool SvgLoader::read(uint32_t colorspace)
 {
     if (!content || size == 0) return false;
 
