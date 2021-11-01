@@ -48,7 +48,6 @@ public:
     bool close() override;
 
     const uint32_t* pixels() override;
-
     void run(unsigned tid) override;
 };
 

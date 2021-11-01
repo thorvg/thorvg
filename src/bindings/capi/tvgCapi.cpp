@@ -27,8 +27,6 @@
 using namespace std;
 using namespace tvg;
 
-#define CCP(A) const_cast<Tvg_Paint*>(A)  //Const-Cast-Paint
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -164,11 +162,12 @@ TVG_EXPORT Tvg_Result tvg_paint_translate(Tvg_Paint* paint, float x, float y)
 }
 
 
-TVG_EXPORT Tvg_Result tvg_paint_transform(Tvg_Paint* paint, const Tvg_Matrix* m)
+TVG_EXPORT Tvg_Result tvg_paint_set_transform(Tvg_Paint* paint, const Tvg_Matrix* m)
 {
     if (!paint || !m) return TVG_RESULT_INVALID_ARGUMENT;
     return (Tvg_Result) reinterpret_cast<Paint*>(paint)->transform(*(reinterpret_cast<const Matrix*>(m)));
 }
+
 
 TVG_EXPORT Tvg_Result tvg_paint_get_transform(Tvg_Paint* paint, Tvg_Matrix* m)
 {
@@ -192,10 +191,10 @@ TVG_EXPORT Tvg_Result tvg_paint_set_opacity(Tvg_Paint* paint, uint8_t opacity)
 }
 
 
-TVG_EXPORT Tvg_Result tvg_paint_get_opacity(Tvg_Paint* paint, uint8_t* opacity)
+TVG_EXPORT Tvg_Result tvg_paint_get_opacity(const Tvg_Paint* paint, uint8_t* opacity)
 {
     if (!paint || !opacity)  return TVG_RESULT_INVALID_ARGUMENT;
-    *opacity = reinterpret_cast<Paint*>(paint)->opacity();
+    *opacity = reinterpret_cast<const Paint*>(paint)->opacity();
     return TVG_RESULT_SUCCESS;
 }
 
@@ -321,7 +320,7 @@ TVG_EXPORT Tvg_Result tvg_shape_set_stroke_width(Tvg_Paint* paint, float width)
 TVG_EXPORT Tvg_Result tvg_shape_get_stroke_width(const Tvg_Paint* paint, float* width)
 {
     if (!paint || !width) return TVG_RESULT_INVALID_ARGUMENT;
-    *width = reinterpret_cast<Shape*>(CCP(paint))->strokeWidth();
+    *width = reinterpret_cast<const Shape*>(paint)->strokeWidth();
     return TVG_RESULT_SUCCESS;
 }
 
@@ -336,7 +335,7 @@ TVG_EXPORT Tvg_Result tvg_shape_set_stroke_color(Tvg_Paint* paint, uint8_t r, ui
 TVG_EXPORT Tvg_Result tvg_shape_get_stroke_color(const Tvg_Paint* paint, uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a)
 {
     if (!paint) return TVG_RESULT_INVALID_ARGUMENT;
-    return (Tvg_Result) reinterpret_cast<Shape*>(CCP(paint))->strokeColor(r, g, b, a);
+    return (Tvg_Result) reinterpret_cast<const Shape*>(paint)->strokeColor(r, g, b, a);
 }
 
 
@@ -357,7 +356,7 @@ TVG_EXPORT Tvg_Result tvg_shape_set_stroke_radial_gradient(Tvg_Paint* paint, Tvg
 TVG_EXPORT Tvg_Result tvg_shape_get_stroke_gradient(const Tvg_Paint* paint, Tvg_Gradient** gradient)
 {
    if (!paint || !gradient) return TVG_RESULT_INVALID_ARGUMENT;
-   *gradient = (Tvg_Gradient*)(reinterpret_cast<Shape*>(CCP(paint))->strokeFill());
+   *gradient = (Tvg_Gradient*)(reinterpret_cast<const Shape*>(paint)->strokeFill());
    return TVG_RESULT_SUCCESS;
 }
 
@@ -372,7 +371,7 @@ TVG_EXPORT Tvg_Result tvg_shape_set_stroke_dash(Tvg_Paint* paint, const float* d
 TVG_EXPORT Tvg_Result tvg_shape_get_stroke_dash(const Tvg_Paint* paint, const float** dashPattern, uint32_t* cnt)
 {
     if (!paint || !cnt || !dashPattern) return TVG_RESULT_INVALID_ARGUMENT;
-    *cnt = reinterpret_cast<Shape*>(CCP(paint))->strokeDash(dashPattern);
+    *cnt = reinterpret_cast<const Shape*>(paint)->strokeDash(dashPattern);
     return TVG_RESULT_SUCCESS;
 }
 
@@ -387,7 +386,7 @@ TVG_EXPORT Tvg_Result tvg_shape_set_stroke_cap(Tvg_Paint* paint, Tvg_Stroke_Cap 
 TVG_EXPORT Tvg_Result tvg_shape_get_stroke_cap(const Tvg_Paint* paint, Tvg_Stroke_Cap* cap)
 {
     if (!paint || !cap) return TVG_RESULT_INVALID_ARGUMENT;
-    *cap = (Tvg_Stroke_Cap) reinterpret_cast<Shape*>(CCP(paint))->strokeCap();
+    *cap = (Tvg_Stroke_Cap) reinterpret_cast<const Shape*>(paint)->strokeCap();
     return TVG_RESULT_SUCCESS;
 }
 
@@ -402,7 +401,7 @@ TVG_EXPORT Tvg_Result tvg_shape_set_stroke_join(Tvg_Paint* paint, Tvg_Stroke_Joi
 TVG_EXPORT Tvg_Result tvg_shape_get_stroke_join(const Tvg_Paint* paint, Tvg_Stroke_Join* join)
 {
     if (!paint || !join) return TVG_RESULT_INVALID_ARGUMENT;
-    *join = (Tvg_Stroke_Join) reinterpret_cast<Shape*>(CCP(paint))->strokeJoin();
+    *join = (Tvg_Stroke_Join) reinterpret_cast<const Shape*>(paint)->strokeJoin();
     return TVG_RESULT_SUCCESS;
 }
 
@@ -417,7 +416,7 @@ TVG_EXPORT Tvg_Result tvg_shape_set_fill_color(Tvg_Paint* paint, uint8_t r, uint
 TVG_EXPORT Tvg_Result tvg_shape_get_fill_color(const Tvg_Paint* paint, uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a)
 {
     if (!paint) return TVG_RESULT_INVALID_ARGUMENT;
-    return (Tvg_Result) reinterpret_cast<Shape*>(CCP(paint))->fillColor(r, g, b, a);
+    return (Tvg_Result) reinterpret_cast<const Shape*>(paint)->fillColor(r, g, b, a);
 }
 
 
@@ -431,7 +430,7 @@ TVG_EXPORT Tvg_Result tvg_shape_set_fill_rule(Tvg_Paint* paint, Tvg_Fill_Rule ru
 TVG_EXPORT Tvg_Result tvg_shape_get_fill_rule(const Tvg_Paint* paint, Tvg_Fill_Rule* rule)
 {
     if (!paint || !rule) return TVG_RESULT_INVALID_ARGUMENT;
-    *rule = (Tvg_Fill_Rule) reinterpret_cast<Shape*>(CCP(paint))->fillRule();
+    *rule = (Tvg_Fill_Rule) reinterpret_cast<const Shape*>(paint)->fillRule();
     return TVG_RESULT_SUCCESS;
 }
 
@@ -453,7 +452,7 @@ TVG_EXPORT Tvg_Result tvg_shape_set_radial_gradient(Tvg_Paint* paint, Tvg_Gradie
 TVG_EXPORT Tvg_Result tvg_shape_get_gradient(const Tvg_Paint* paint, Tvg_Gradient** gradient)
 {
    if (!paint || !gradient) return TVG_RESULT_INVALID_ARGUMENT;
-   *gradient = (Tvg_Gradient*)(reinterpret_cast<Shape*>(CCP(paint))->fill());
+   *gradient = (Tvg_Gradient*)(reinterpret_cast<const Shape*>(paint)->fill());
    return TVG_RESULT_SUCCESS;
 }
 
@@ -491,21 +490,21 @@ TVG_EXPORT Tvg_Result tvg_picture_load_data(Tvg_Paint* paint, const char *data, 
 TVG_EXPORT Tvg_Result tvg_picture_set_size(Tvg_Paint* paint, float w, float h)
 {
     if (!paint) return TVG_RESULT_INVALID_ARGUMENT;
-    return (Tvg_Result) reinterpret_cast<Picture*>(CCP(paint))->size(w, h);
+    return (Tvg_Result) reinterpret_cast<Picture*>(paint)->size(w, h);
 }
 
 
 TVG_EXPORT Tvg_Result tvg_picture_get_size(const Tvg_Paint* paint, float* w, float* h)
 {
     if (!paint) return TVG_RESULT_INVALID_ARGUMENT;
-    return (Tvg_Result) reinterpret_cast<Picture*>(CCP(paint))->size(w, h);
+    return (Tvg_Result) reinterpret_cast<const Picture*>(paint)->size(w, h);
 }
 
 
 TVG_EXPORT Tvg_Result tvg_picture_get_viewbox(const Tvg_Paint* paint, float* x, float* y, float* w, float* h)
 {
     if (!paint) return TVG_RESULT_INVALID_ARGUMENT;
-    return (Tvg_Result) reinterpret_cast<Picture*>(CCP(paint))->viewbox(x, y, w, h);
+    return (Tvg_Result) reinterpret_cast<const Picture*>(paint)->viewbox(x, y, w, h);
 }
 
 
@@ -575,10 +574,10 @@ TVG_EXPORT Tvg_Result tvg_gradient_set_color_stops(Tvg_Gradient* grad, const Tvg
 }
 
 
-TVG_EXPORT Tvg_Result tvg_gradient_get_color_stops(Tvg_Gradient* grad, const Tvg_Color_Stop** color_stop, uint32_t* cnt)
+TVG_EXPORT Tvg_Result tvg_gradient_get_color_stops(const Tvg_Gradient* grad, const Tvg_Color_Stop** color_stop, uint32_t* cnt)
 {
     if (!grad || !color_stop || !cnt) return TVG_RESULT_INVALID_ARGUMENT;
-    *cnt = reinterpret_cast<Fill*>(grad)->colorStops(reinterpret_cast<const Fill::ColorStop**>(color_stop));
+    *cnt = reinterpret_cast<const Fill*>(grad)->colorStops(reinterpret_cast<const Fill::ColorStop**>(color_stop));
     return TVG_RESULT_SUCCESS;
 }
 
@@ -590,10 +589,25 @@ TVG_EXPORT Tvg_Result tvg_gradient_set_spread(Tvg_Gradient* grad, const Tvg_Stro
 }
 
 
-TVG_EXPORT Tvg_Result tvg_gradient_get_spread(Tvg_Gradient* grad, Tvg_Stroke_Fill* spread)
+TVG_EXPORT Tvg_Result tvg_gradient_get_spread(const Tvg_Gradient* grad, Tvg_Stroke_Fill* spread)
 {
     if (!grad || !spread) return TVG_RESULT_INVALID_ARGUMENT;
-    *spread = (Tvg_Stroke_Fill) reinterpret_cast<Fill*>(grad)->spread();
+    *spread = (Tvg_Stroke_Fill) reinterpret_cast<const Fill*>(grad)->spread();
+    return TVG_RESULT_SUCCESS;
+}
+
+
+TVG_EXPORT Tvg_Result tvg_gradient_set_transform(Tvg_Gradient* grad, const Tvg_Matrix* m)
+{
+    if (!grad || !m) return TVG_RESULT_INVALID_ARGUMENT;
+    return (Tvg_Result) reinterpret_cast<Fill*>(grad)->transform(*(reinterpret_cast<const Matrix*>(m)));
+}
+
+
+TVG_EXPORT Tvg_Result tvg_gradient_get_transform(const Tvg_Gradient* grad, Tvg_Matrix* m)
+{
+    if (!grad || !m) return TVG_RESULT_INVALID_ARGUMENT;
+    *reinterpret_cast<Matrix*>(m) = reinterpret_cast<Fill*>(const_cast<Tvg_Gradient*>(grad))->transform();
     return TVG_RESULT_SUCCESS;
 }
 

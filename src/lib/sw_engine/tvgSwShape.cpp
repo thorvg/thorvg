@@ -22,6 +22,7 @@
 #include "tvgSwCommon.h"
 #include "tvgBezier.h"
 #include <float.h>
+#include <math.h>
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
@@ -361,7 +362,7 @@ static SwOutline* _genDashOutline(const Shape* sdata, const Matrix* transform)
 
 static bool _fastTrack(const SwOutline* outline)
 {
-    //Fast Track: Othogonal rectangle?
+    //Fast Track: Orthogonal rectangle?
     if (outline->ptsCnt != 5) return false;
 
     auto pt1 = outline->pts + 0;
@@ -468,6 +469,7 @@ static bool _genOutline(SwShape* shape, const Shape* sdata, const Matrix* transf
     outline->fillRule = sdata->fillRule();
     shape->outline = outline;
 
+    shape->rect = _fastTrack(shape->outline);
     return true;
 }
 
@@ -479,7 +481,7 @@ static bool _genOutline(SwShape* shape, const Shape* sdata, const Matrix* transf
 bool shapePrepare(SwShape* shape, const Shape* sdata, const Matrix* transform,  const SwBBox& clipRegion, SwBBox& renderRegion, SwMpool* mpool, unsigned tid)
 {
     if (!_genOutline(shape, sdata, transform, mpool, tid)) return false;
-    if (!mathUpdateOutlineBBox(shape->outline, clipRegion, renderRegion)) return false;
+    if (!mathUpdateOutlineBBox(shape->outline, clipRegion, renderRegion, shape->rect)) return false;
 
     //Keep it for Rasterization Region
     shape->bbox = renderRegion;
@@ -508,8 +510,9 @@ bool shapeGenRle(SwShape* shape, TVG_UNUSED const Shape* sdata, bool antiAlias, 
     //if (shape.outline->opened) return true;
 
     //Case A: Fast Track Rectangle Drawing
-    if (!hasComposite && (shape->rect = _fastTrack(shape->outline))) return true;
-    //Case B: Normale Shape RLE Drawing
+    if (!hasComposite && shape->rect) return true;
+
+    //Case B: Normal Shape RLE Drawing
     if ((shape->rle = rleRender(shape->rle, shape->outline, shape->bbox, antiAlias))) return true;
 
     return false;
@@ -596,7 +599,7 @@ bool shapeGenStrokeRle(SwShape* shape, const Shape* sdata, const Matrix* transfo
         goto fail;
     }
 
-    if (!mathUpdateOutlineBBox(strokeOutline, clipRegion, renderRegion)) {
+    if (!mathUpdateOutlineBBox(strokeOutline, clipRegion, renderRegion, false)) {
         ret = false;
         goto fail;
     }

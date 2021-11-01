@@ -197,7 +197,6 @@ RenderData GlRenderer::prepare(const Shape& shape, RenderData data, const Render
     GlShape* sdata = static_cast<GlShape*>(data);
     if (!sdata) {
         sdata = new GlShape;
-        if (!sdata) return nullptr;
         sdata->shape = &shape;
     }
 

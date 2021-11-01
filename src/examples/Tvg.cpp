@@ -27,8 +27,9 @@
 /* Drawing Commands                                                     */
 /************************************************************************/
 
-#define NUM_PER_LINE 6
-#define SIZE (WIDTH/NUM_PER_LINE)
+#define NUM_PER_ROW 7
+#define NUM_PER_COL 6
+#define SIZE (WIDTH/NUM_PER_ROW)
 
 static int count = 0;
 
@@ -48,7 +49,7 @@ void tvgDirCallback(const char* name, const char* path, void* data)
     if (picture->load(buf) != tvg::Result::Success) return;
 
     picture->size(SIZE, SIZE);
-    picture->translate((count % NUM_PER_LINE) * SIZE, SIZE * (count / NUM_PER_LINE));
+    picture->translate((count % NUM_PER_ROW) * SIZE, (count / NUM_PER_ROW) * (HEIGHT / NUM_PER_COL));
 
     pictures.push_back(move(picture));
 

@@ -106,15 +106,6 @@ bool _prepareLinear(SwFill* fill, const LinearGradient* linear, const Matrix* tr
     float x1, x2, y1, y2;
     if (linear->linear(&x1, &y1, &x2, &y2) != Result::Success) return false;
 
-    if (transform) {
-        auto t1 = x1;
-        x1 = t1 * transform->e11 + y1 * transform->e12 + transform->e13;
-        y1 = t1 * transform->e21 + y1 * transform->e22 + transform->e23;
-        auto t2 = x2;
-        x2 = t2 * transform->e11 + y2 * transform->e12 + transform->e13;
-        y2 = t2 * transform->e21 + y2 * transform->e22 + transform->e23;
-    }
-
     fill->linear.dx = x2 - x1;
     fill->linear.dy = y2 - y1;
     fill->linear.len = fill->linear.dx * fill->linear.dx + fill->linear.dy * fill->linear.dy;
@@ -123,7 +114,31 @@ bool _prepareLinear(SwFill* fill, const LinearGradient* linear, const Matrix* tr
 
     fill->linear.dx /= fill->linear.len;
     fill->linear.dy /= fill->linear.len;
-    fill->linear.offset = -fill->linear.dx * x1 -fill->linear.dy * y1;
+    fill->linear.offset = -fill->linear.dx * x1 - fill->linear.dy * y1;
+
+    auto gradTransform = linear->transform();
+    bool isTransformation = !mathIdentity(&gradTransform);
+
+    if (isTransformation) {
+        if (transform) mathMultiply(transform, &gradTransform);
+    } else if (transform) {
+        gradTransform = *transform;
+        isTransformation = true;
+    }
+
+    if (isTransformation) {
+        Matrix invTransform;
+        if (!mathInverse(&gradTransform, &invTransform)) return false;
+
+        fill->linear.offset += fill->linear.dx * invTransform.e13 + fill->linear.dy * invTransform.e23;
+
+        auto dx = fill->linear.dx;
+        fill->linear.dx = dx * invTransform.e11 + fill->linear.dy * invTransform.e21;
+        fill->linear.dy = dx * invTransform.e12 + fill->linear.dy * invTransform.e22;
+
+        fill->linear.len = fill->linear.dx * fill->linear.dx + fill->linear.dy * fill->linear.dy;
+        if (fill->linear.len < FLT_EPSILON) return true;
+    }
 
     return true;
 }
@@ -131,33 +146,45 @@ bool _prepareLinear(SwFill* fill, const LinearGradient* linear, const Matrix* tr
 
 bool _prepareRadial(SwFill* fill, const RadialGradient* radial, const Matrix* transform)
 {
-    float radius;
-    if (radial->radial(&fill->radial.cx, &fill->radial.cy, &radius) != Result::Success) return false;
+    float radius, cx, cy;
+    if (radial->radial(&cx, &cy, &radius) != Result::Success) return false;
     if (radius < FLT_EPSILON) return true;
 
-    fill->sx = 1.0f;
-    fill->sy = 1.0f;
+    float invR = 1.0f / radius;
+    fill->radial.shiftX = -cx;
+    fill->radial.shiftY = -cy;
+    fill->radial.a = radius;
 
-    if (transform) {
-        auto tx = fill->radial.cx * transform->e11 + fill->radial.cy * transform->e12 + transform->e13;
-        auto ty = fill->radial.cx * transform->e21 + fill->radial.cy * transform->e22 + transform->e23;
-        fill->radial.cx = tx;
-        fill->radial.cy = ty;
+    auto gradTransform = radial->transform();
+    bool isTransformation = !mathIdentity(&gradTransform);
 
-        auto sx = sqrtf(powf(transform->e11, 2.0f) + powf(transform->e21, 2.0f));
-        auto sy = sqrtf(powf(transform->e12, 2.0f) + powf(transform->e22, 2.0f));
-
-        //FIXME; Scale + Rotation is not working properly
-        radius *= sx;
-
-        if (fabsf(sx - sy) > FLT_EPSILON) {
-            fill->sx = sx;
-            fill->sy = sy;
-        }
+    if (isTransformation) {
+        if (transform) mathMultiply(transform, &gradTransform);
+    } else if (transform) {
+        gradTransform = *transform;
+        isTransformation = true;
     }
 
-    fill->radial.a = radius * radius;
-    fill->radial.inva = 1.0 / fill->radial.a;
+    if (isTransformation) {
+        Matrix invTransform;
+        if (!mathInverse(&gradTransform, &invTransform)) return false;
+
+        fill->radial.a11 = invTransform.e11 * invR;
+        fill->radial.a12 = invTransform.e12 * invR;
+        fill->radial.shiftX += invTransform.e13;
+        fill->radial.a21 = invTransform.e21 * invR;
+        fill->radial.a22 = invTransform.e22 * invR;
+        fill->radial.shiftY += invTransform.e23;
+        fill->radial.detSecDeriv = 2.0f * fill->radial.a11 * fill->radial.a11 + 2 * fill->radial.a21 * fill->radial.a21;
+
+        fill->radial.a *= sqrt(pow(invTransform.e11, 2) + pow(invTransform.e21, 2));
+    } else {
+        fill->radial.a11 = fill->radial.a22 = invR;
+        fill->radial.a12 = fill->radial.a21 = 0.0f;
+        fill->radial.detSecDeriv = 2.0f * invR * invR;
+    }
+    fill->radial.shiftX *= invR;
+    fill->radial.shiftY *= invR;
 
     return true;
 }
@@ -208,21 +235,20 @@ static inline uint32_t _pixel(const SwFill* fill, float pos)
 
 void fillFetchRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len)
 {
-    //Rotation
-    auto rx = (x + 0.5f - fill->radial.cx) * fill->sy;
-    auto ry = (y + 0.5f - fill->radial.cy) * fill->sx;
-    auto rxy = rx * rx + ry * ry;
-    auto rxryPlus = 2 * rx;
-    auto inva = fill->radial.inva;
-    auto det = rxy * inva;
-    auto detDelta = (rxryPlus + 1.0f) * inva;
-    auto detDelta2 = 2.0f * inva;
+    auto rx = (x + 0.5f) * fill->radial.a11 + (y + 0.5f) * fill->radial.a12 + fill->radial.shiftX;
+    auto ry = (x + 0.5f) * fill->radial.a21 + (y + 0.5f) * fill->radial.a22 + fill->radial.shiftY;
+
+    // detSecondDerivative = d(detFirstDerivative)/dx = d( d(det)/dx )/dx
+    auto detSecondDerivative = fill->radial.detSecDeriv;
+    // detFirstDerivative = d(det)/dx
+    auto detFirstDerivative = 2.0f * (fill->radial.a11 * rx + fill->radial.a21 * ry) + 0.5f * detSecondDerivative;
+    auto det = rx * rx + ry * ry;
 
     for (uint32_t i = 0 ; i < len ; ++i) {
         *dst = _pixel(fill, sqrtf(det));
         ++dst;
-        det += detDelta;
-        detDelta += detDelta2;
+        det += detFirstDerivative;
+        detFirstDerivative += detSecondDerivative;
     }
 }
 

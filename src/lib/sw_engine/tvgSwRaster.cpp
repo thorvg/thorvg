@@ -49,45 +49,6 @@ static uint32_t _argbJoin(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 }
 
 
-static bool _inverse(const Matrix* transform, Matrix* invM)
-{
-    //computes the inverse of a matrix m
-    auto det = transform->e11 * (transform->e22 * transform->e33 - transform->e32 * transform->e23) -
-               transform->e12 * (transform->e21 * transform->e33 - transform->e23 * transform->e31) +
-               transform->e13 * (transform->e21 * transform->e32 - transform->e22 * transform->e31);
-
-    if (fabsf(det) < FLT_EPSILON) return false;
-
-    auto invDet = 1 / det;
-
-    invM->e11 = (transform->e22 * transform->e33 - transform->e32 * transform->e23) * invDet;
-    invM->e12 = (transform->e13 * transform->e32 - transform->e12 * transform->e33) * invDet;
-    invM->e13 = (transform->e12 * transform->e23 - transform->e13 * transform->e22) * invDet;
-    invM->e21 = (transform->e23 * transform->e31 - transform->e21 * transform->e33) * invDet;
-    invM->e22 = (transform->e11 * transform->e33 - transform->e13 * transform->e31) * invDet;
-    invM->e23 = (transform->e21 * transform->e13 - transform->e11 * transform->e23) * invDet;
-    invM->e31 = (transform->e21 * transform->e32 - transform->e31 * transform->e22) * invDet;
-    invM->e32 = (transform->e31 * transform->e12 - transform->e11 * transform->e32) * invDet;
-    invM->e33 = (transform->e11 * transform->e22 - transform->e21 * transform->e12) * invDet;
-
-    return true;
-}
-
-
-static bool _identify(const Matrix* transform)
-{
-    if (transform) {
-        if (transform->e11 != 1.0f || transform->e12 != 0.0f || transform->e13 != 0.0f ||
-            transform->e21 != 0.0f || transform->e22 != 1.0f || transform->e23 != 0.0f ||
-            transform->e31 != 0.0f || transform->e32 != 0.0f || transform->e33 != 1.0f) {
-            return false;
-        }
-    }
-
-    return true;
-}
-
-
 static bool _translucent(const SwSurface* surface, uint8_t a)
 {
     if (a < 255) return true;
@@ -1438,10 +1399,10 @@ void rasterRGBA32(uint32_t *dst, uint32_t val, uint32_t offset, int32_t len)
 
 bool rasterCompositor(SwSurface* surface)
 {
-    if (surface->cs == SwCanvas::ABGR8888) {
+    if (surface->cs == SwCanvas::ABGR8888 || surface->cs == SwCanvas::ABGR8888_STRAIGHT) {
         surface->blender.alpha = _colorAlpha;
         surface->blender.join = _abgrJoin;
-    } else if (surface->cs == SwCanvas::ARGB8888) {
+    } else if (surface->cs == SwCanvas::ARGB8888 || surface->cs == SwCanvas::ARGB8888_STRAIGHT) {
         surface->blender.alpha = _colorAlpha;
         surface->blender.join = _argbJoin;
     } else {
@@ -1554,13 +1515,38 @@ bool rasterClear(SwSurface* surface)
 }
 
 
+void rasterUnpremultiply(SwSurface* surface)
+{
+    //TODO: Create simd avx and neon version
+    for (uint32_t y = 0; y < surface->h; y++) {
+        auto buffer = surface->buffer + surface->stride * y;
+        for (uint32_t x = 0; x < surface->w; ++x) {
+            uint8_t a = buffer[x] >> 24;
+            if (a == 255) {
+                continue;
+            } else if (a == 0) {
+                buffer[x] = 0x00ffffff;
+            } else {
+                uint16_t r = ((buffer[x] >> 8) & 0xff00) / a;
+                uint16_t g = ((buffer[x]) & 0xff00) / a;
+                uint16_t b = ((buffer[x] << 8) & 0xff00) / a;
+                if (r > 0xff) r = 0xff;
+                if (g > 0xff) g = 0xff;
+                if (b > 0xff) b = 0xff;
+                buffer[x] = (a << 24) | (r << 16) | (g << 8) | (b);
+            }
+        }
+    }
+}
+
+
 bool rasterImage(SwSurface* surface, SwImage* image, const Matrix* transform, const SwBBox& bbox, uint32_t opacity)
 {
     Matrix invTransform;
     float scaling = 1.0f;
 
     if (transform) {
-        if (!_inverse(transform, &invTransform)) return false;
+        if (!mathInverse(transform, &invTransform)) return false;
         scaling = sqrtf((transform->e11 * transform->e11) + (transform->e21 * transform->e21));
         auto scalingY = sqrtf((transform->e22 * transform->e22) + (transform->e12 * transform->e12));
         //TODO:If the x and y axis scaling is different, a separate algorithm for each axis should be applied.
@@ -1573,7 +1559,7 @@ bool rasterImage(SwSurface* surface, SwImage* image, const Matrix* transform, co
 
     if (image->rle) {
         //Fast track
-        if (_identify(transform)) {
+        if (mathIdentity(transform)) {
             //OPTIMIZE ME: Support non transformed image. Only shifted image can use these routines.
             if (translucent) return _rasterTranslucentImageRle(surface, image->rle, image->data, image->w, image->h, opacity);
             return _rasterImageRle(surface, image->rle, image->data, image->w, image->h);
@@ -1590,7 +1576,7 @@ bool rasterImage(SwSurface* surface, SwImage* image, const Matrix* transform, co
     }
     else {
         //Fast track
-        if (_identify(transform)) {
+        if (mathIdentity(transform)) {
             //OPTIMIZE ME: Support non transformed image. Only shifted image can use these routines.
             if (translucent) return _rasterTranslucentImage(surface, image->data, image->w, image->h, opacity, bbox);
             return _rasterImage(surface, image->data, image->w, image->h, bbox);

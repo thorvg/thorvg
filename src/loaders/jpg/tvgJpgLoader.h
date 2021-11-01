@@ -22,11 +22,20 @@
 #ifndef _TVG_JPG_LOADER_H_
 #define _TVG_JPG_LOADER_H_
 
-//TODO: Use Task?
-class JpgLoader : public LoadModule
+#include "tvgTaskScheduler.h"
+#include "tvgJpgd.h"
+
+class JpgLoader : public LoadModule, public Task
 {
+private:
+    jpeg_decoder* decoder = nullptr;
+    char* data = nullptr;
+    unsigned char *image = nullptr;
+    bool freeData = false;
+
+    void clear();
+
 public:
-    JpgLoader();
     ~JpgLoader();
 
     using LoadModule::open;
@@ -36,6 +45,7 @@ public:
     bool close() override;
 
     const uint32_t* pixels() override;
+    void run(unsigned tid) override;
 };
 
 #endif //_TVG_JPG_LOADER_H_

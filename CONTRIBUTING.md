@@ -19,7 +19,7 @@ Hermet Park (hermet) is the lead maintainer. Also there are designated maintaine
 After updating ThorVG code, please verify your change doesn't break the library. We suggest unit-tests using the Catch2 framework. You can easily run it with build commands as the following: <br />
 <br/>
 `
-$meson . build -Dtests=true -Dloaders="all" -Dsavers="tvg" -Dbindings="capi" -Dtools="svg2png, svg2tvg" -Dlog=true
+$meson . build -Dtests=true -Dloaders="all" -Dsavers="tvg" -Dbindings="capi" -Dtools="all" -Dlog=true
 `
 <br />
 `

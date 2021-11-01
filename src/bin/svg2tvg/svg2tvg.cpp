@@ -21,17 +21,19 @@
  */
 
 #include <iostream>
+#include <vector>
 #include <thorvg.h>
-#include <array>
+#include <dirent.h>
 
 using namespace std;
 using namespace tvg;
 
-   
+
 void helpMsg()
 {
-    cout<<"Usage: \n   svg2tvg [SVG file]\n\nExamples: \n    $ svg2tvg input.svg\n\n";
+    cout<<"Usage: \n   svg2tvg [SVG file] or [SVG folder]\n\nExamples: \n    $ svg2tvg input.svg\n    $ svg2tvg svgfolder\n\n";
 }
+
 
 bool convert(string& in, string& out)
 {
@@ -50,47 +52,111 @@ bool convert(string& in, string& out)
 }
 
 
-int main(int argc, char **argv)
+void convert(string& svgName)
 {
-    //No Input SVG
-    if (argc < 2) {
-        helpMsg();
-        return 0;
-    }
+    //Get tvg file
+    auto tvgName = svgName;
+    tvgName.replace(tvgName.length() - 3, 3, "tvg");
 
-    auto input = argv[1];
-
-    array<char, 5000> memory;
-
-#ifdef _WIN32
-    input = _fullpath(memory.data(), input, memory.size());
-#else
-    input = realpath(input, memory.data());
-#endif
-
-    //Verify svg file.
-    if (!input) {
-        helpMsg();
-        return 0;
-    }
-
-    string svgName(input);
-    string extn = ".svg";
-
-    if (svgName.size() <= extn.size() || svgName.substr(svgName.size() - extn.size()) != extn) {
-        helpMsg();
-        return 0;
-    }
-
-    //Get tvg file.
-    auto tvgName = svgName.substr(svgName.find_last_of("/\\") + 1);
-    tvgName.append(".tvg");
-
-    //Convert!
     if (convert(svgName, tvgName)) {
         cout<<"Generated TVG file : "<< tvgName << endl;
     } else {
-        cout<<"Failed Converting TVG file : "<< tvgName << endl;
+        cout<<"Failed Converting TVG file : "<< svgName << endl;
+    }
+}
+
+
+char* getpath(const char* input)
+{
+    static char buf[PATH_MAX];
+#ifdef _WIN32
+    return fullpath(buf, input, PATH_MAX);
+#else
+    return realpath(input, buf);
+#endif
+}
+
+
+bool validate(string& svgName)
+{
+    string extn = ".svg";
+
+    if (svgName.size() <= extn.size() || svgName.substr(svgName.size() - extn.size()) != extn) {
+        cout << "Error: \"" << svgName << "\" is invalid." << endl;
+        return false;
+    }
+    return true;
+}
+
+
+void directory(const string& path, DIR* dir)
+{
+    //List directories
+    while (auto entry = readdir(dir)) {
+        if (*entry->d_name == '.' || *entry->d_name == '$') continue;
+        if (entry->d_type == DT_DIR) {
+            string subpath = string(path);
+#ifdef _WIN32
+            subpath += '\\';
+#else
+            subpath += '/';
+#endif
+            subpath += entry->d_name;
+
+            //open directory
+            if (auto subdir = opendir(subpath.c_str())) {
+                cout << "Sub Directory: \"" << subpath << "\"" << endl;
+                directory(subpath, subdir);
+                closedir(dir);
+            }
+
+        } else {
+            string svgName(entry->d_name);
+            if (!validate(svgName)) continue;
+            svgName = string(path);
+#ifdef _WIN32
+            svgName += '\\';
+#else
+            svgName += '/';
+#endif
+            svgName += entry->d_name;
+
+            convert(svgName);
+        }
+    }
+}
+
+
+
+int main(int argc, char **argv)
+{
+    //Collect input files
+    vector<const char*> inputs;
+
+    for (int i = 1; i < argc; ++i) {
+        inputs.push_back(argv[i]);
+    }
+
+    //No Input SVG
+    if (inputs.empty()) {
+        helpMsg();
+        return 0;
+    }
+
+    for (auto input : inputs) {
+
+        auto path = getpath(input);
+
+        if (auto dir = opendir(path)) {
+            //load from directory
+            cout << "Directory: \"" << path << "\"" << endl;
+            directory(path, dir);
+            closedir(dir);
+        } else {
+            string svgName(input);
+            if (!validate(svgName)) continue;
+            convert(svgName);
+        }
     }
 
     return 0;

@@ -20,6 +20,7 @@
  * SOFTWARE.
  */
 #include <math.h>
+#include <float.h>
 #include "tvgSwCommon.h"
 
 
@@ -442,7 +443,7 @@ SwPoint mathTransform(const Point* to, const Matrix* transform)
 }
 
 
-bool mathUpdateOutlineBBox(const SwOutline* outline, const SwBBox& clipRegion, SwBBox& renderRegion)
+bool mathUpdateOutlineBBox(const SwOutline* outline, const SwBBox& clipRegion, SwBBox& renderRegion, bool rect)
 {
     if (!outline) return false;
 
@@ -466,10 +467,21 @@ bool mathUpdateOutlineBBox(const SwOutline* outline, const SwBBox& clipRegion, S
         if (yMin > pt->y) yMin = pt->y;
         if (yMax < pt->y) yMax = pt->y;
     }
-    renderRegion.min.x = xMin >> 6;
-    renderRegion.max.x = (xMax + 63) >> 6;
-    renderRegion.min.y = yMin >> 6;
-    renderRegion.max.y = (yMax + 63) >> 6;
+
+    //Since no antialiasing is applied in the Fast Track case,
+    //the rasterization region has to be rearranged.
+    //https://github.com/Samsung/thorvg/issues/916
+    if (rect) {
+        renderRegion.min.x = static_cast<SwCoord>(round(xMin / 64.0f));
+        renderRegion.max.x = static_cast<SwCoord>(round(xMax / 64.0f));
+        renderRegion.min.y = static_cast<SwCoord>(round(yMin / 64.0f));
+        renderRegion.max.y = static_cast<SwCoord>(round(yMax / 64.0f));
+    } else {
+        renderRegion.min.x = xMin >> 6;
+        renderRegion.max.x = (xMax + 63) >> 6;
+        renderRegion.min.y = yMin >> 6;
+        renderRegion.max.y = (yMax + 63) >> 6;
+    }
 
     renderRegion.max.x = (renderRegion.max.x < clipRegion.max.x) ? renderRegion.max.x : clipRegion.max.x;
     renderRegion.max.y = (renderRegion.max.y < clipRegion.max.y) ? renderRegion.max.y : clipRegion.max.y;
@@ -482,6 +494,66 @@ bool mathUpdateOutlineBBox(const SwOutline* outline, const SwBBox& clipRegion, S
     //Check boundary
     if (renderRegion.min.x >= clipRegion.max.x || renderRegion.min.y >= clipRegion.max.y ||
         renderRegion.max.x <= clipRegion.min.x || renderRegion.max.y <= clipRegion.min.y) return false;
+
+    return true;
+}
+
+
+bool mathInverse(const Matrix* m, Matrix* invM)
+{
+    auto det = m->e11 * (m->e22 * m->e33 - m->e32 * m->e23) -
+               m->e12 * (m->e21 * m->e33 - m->e23 * m->e31) +
+               m->e13 * (m->e21 * m->e32 - m->e22 * m->e31);
+
+    if (fabsf(det) < FLT_EPSILON) return false;
+
+    auto invDet = 1 / det;
+
+    invM->e11 = (m->e22 * m->e33 - m->e32 * m->e23) * invDet;
+    invM->e12 = (m->e13 * m->e32 - m->e12 * m->e33) * invDet;
+    invM->e13 = (m->e12 * m->e23 - m->e13 * m->e22) * invDet;
+    invM->e21 = (m->e23 * m->e31 - m->e21 * m->e33) * invDet;
+    invM->e22 = (m->e11 * m->e33 - m->e13 * m->e31) * invDet;
+    invM->e23 = (m->e21 * m->e13 - m->e11 * m->e23) * invDet;
+    invM->e31 = (m->e21 * m->e32 - m->e31 * m->e22) * invDet;
+    invM->e32 = (m->e31 * m->e12 - m->e11 * m->e32) * invDet;
+    invM->e33 = (m->e11 * m->e22 - m->e21 * m->e12) * invDet;
+
+    return true;
+}
+
+
+bool mathMultiply(const Matrix* lhs, Matrix* rhs)
+{
+    Matrix m;
+
+    m.e11 = lhs->e11 * rhs->e11 + lhs->e12 * rhs->e21 + lhs->e13 * rhs->e31;
+    m.e12 = lhs->e11 * rhs->e12 + lhs->e12 * rhs->e22 + lhs->e13 * rhs->e32;
+    m.e13 = lhs->e11 * rhs->e13 + lhs->e12 * rhs->e23 + lhs->e13 * rhs->e33;
+
+    m.e21 = lhs->e21 * rhs->e11 + lhs->e22 * rhs->e21 + lhs->e23 * rhs->e31;
+    m.e22 = lhs->e21 * rhs->e12 + lhs->e22 * rhs->e22 + lhs->e23 * rhs->e32;
+    m.e23 = lhs->e21 * rhs->e13 + lhs->e22 * rhs->e23 + lhs->e23 * rhs->e33;
+
+    m.e31 = lhs->e31 * rhs->e11 + lhs->e32 * rhs->e21 + lhs->e33 * rhs->e31;
+    m.e32 = lhs->e31 * rhs->e12 + lhs->e32 * rhs->e22 + lhs->e33 * rhs->e32;
+    m.e33 = lhs->e31 * rhs->e13 + lhs->e32 * rhs->e23 + lhs->e33 * rhs->e33;
+
+    *rhs = m;
+
+    return true;
+}
+
+
+bool mathIdentity(const Matrix* m)
+{
+    if (m) {
+        if (m->e11 != 1.0f || m->e12 != 0.0f || m->e13 != 0.0f ||
+            m->e21 != 0.0f || m->e22 != 1.0f || m->e23 != 0.0f ||
+            m->e31 != 0.0f || m->e32 != 0.0f || m->e33 != 1.0f) {
+            return false;
+        }
+    }
 
     return true;
 }

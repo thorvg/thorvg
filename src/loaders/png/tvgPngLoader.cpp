@@ -136,7 +136,6 @@ bool PngLoader::read(uint32_t colorspace)
 bool PngLoader::close()
 {
     this->done();
-
     clear();
     return true;
 }

@@ -191,7 +191,7 @@ void testCapi()
         tvg_picture_get_size(pict, &w, &h);
         tvg_picture_set_size(pict, w/2, h/2);
         Tvg_Matrix m = {0.8f, 0.0f, 400.0f, 0.0f, 0.8f, 400.0f, 0.0f, 0.0f, 1.0f};
-        tvg_paint_transform(pict, &m);
+        tvg_paint_set_transform(pict, &m);
 
         // Set a composite shape
         Tvg_Paint* comp = tvg_shape_new();

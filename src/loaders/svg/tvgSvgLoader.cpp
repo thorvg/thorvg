@@ -1670,8 +1670,6 @@ static SvgStyleGradient* _cloneGradient(SvgStyleGradient* from)
     if (!from) return nullptr;
 
     auto grad = new SvgStyleGradient;
-    if (!grad) return nullptr;
-
     grad->type = from->type;
     grad->id = from->id ? _copyId(from->id->c_str()) : nullptr;
     grad->ref = from->ref ? _copyId(from->ref->c_str()) : nullptr;
@@ -1818,11 +1816,35 @@ static void _clonePostponedNodes(Array<SvgNodeIdPair>* cloneNodes) {
 }
 
 
+static constexpr struct
+{
+    const char* tag;
+    SvgParserLengthType type;
+    int sz;
+    size_t offset;
+} useTags[] = {
+    {"x", SvgParserLengthType::Horizontal, sizeof("x"), offsetof(SvgRectNode, x)},
+    {"y", SvgParserLengthType::Vertical, sizeof("y"), offsetof(SvgRectNode, y)},
+    {"width", SvgParserLengthType::Horizontal, sizeof("width"), offsetof(SvgRectNode, w)},
+    {"height", SvgParserLengthType::Vertical, sizeof("height"), offsetof(SvgRectNode, h)}
+};
+
+
 static bool _attrParseUseNode(void* data, const char* key, const char* value)
 {
     SvgLoaderData* loader = (SvgLoaderData*)data;
     SvgNode *defs, *nodeFrom, *node = loader->svgParse->node;
     string* id;
+
+    SvgUseNode* use = &(node->node.use);
+    int sz = strlen(key);
+    unsigned char* array = (unsigned char*)use;
+    for (unsigned int i = 0; i < sizeof(useTags) / sizeof(useTags[0]); i++) {
+        if (useTags[i].sz - 1 == sz && !strncmp(useTags[i].tag, key, sz)) {
+            *((float*)(array + useTags[i].offset)) = _toFloat(loader->svgParse, value, useTags[i].type);
+            return true;
+        }
+    }
 
     if (!strcmp(key, "href") || !strcmp(key, "xlink:href")) {
         id = _idFromHref(value);
@@ -2055,8 +2077,6 @@ static bool _attrParseRadialGradientNode(void* data, const char* key, const char
 static SvgStyleGradient* _createRadialGradient(SvgLoaderData* loader, const char* buf, unsigned bufLength)
 {
     auto grad = new SvgStyleGradient;
-    if (!grad) return nullptr;
-
     loader->svgParse->styleGrad = grad;
 
     grad->type = SvgGradientType::Radial;
@@ -2069,11 +2089,11 @@ static SvgStyleGradient* _createRadialGradient(SvgLoaderData* loader, const char
     /**
     * Default values of gradient transformed into global percentage
     */
-    grad->radial->cx = 0.5f / loader->svgParse->global.w;
-    grad->radial->cy = 0.5f / loader->svgParse->global.h;
-    grad->radial->fx = 0.5f / loader->svgParse->global.w;
-    grad->radial->fy = 0.5f / loader->svgParse->global.h;
-    grad->radial->r = 0.5f / (sqrtf(pow(loader->svgParse->global.h, 2) + pow(loader->svgParse->global.w, 2)) / sqrtf(2.0f));
+    grad->radial->cx = 0.5f;
+    grad->radial->cy = 0.5f;
+    grad->radial->fx = 0.5f;
+    grad->radial->fy = 0.5f;
+    grad->radial->r = 0.5f;
     grad->radial->isCxPercentage = true;
     grad->radial->isCyPercentage = true;
     grad->radial->isFxPercentage = true;
@@ -2244,8 +2264,6 @@ static bool _attrParseLinearGradientNode(void* data, const char* key, const char
 static SvgStyleGradient* _createLinearGradient(SvgLoaderData* loader, const char* buf, unsigned bufLength)
 {
     auto grad = new SvgStyleGradient;
-    if (!grad) return nullptr;
-
     loader->svgParse->styleGrad = grad;
 
     grad->type = SvgGradientType::Linear;
@@ -2258,7 +2276,7 @@ static SvgStyleGradient* _createLinearGradient(SvgLoaderData* loader, const char
     /**
     * Default value of x2 is 100% - transformed to the global percentage
     */
-    grad->linear->x2 = 1.0f / loader->svgParse->global.w;
+    grad->linear->x2 = 1.0f;
     grad->linear->isX2Percentage = true;
 
     simpleXmlParseAttributes(buf, bufLength, _attrParseLinearGradientNode, loader);

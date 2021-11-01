@@ -20,6 +20,7 @@
  * SOFTWARE.
  */
 
+#include <memory.h>
 #include "tvgLoader.h"
 #include "tvgJpgLoader.h"
 
@@ -27,58 +28,95 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
+void JpgLoader::clear()
+{
+    jpgdDelete(decoder);
+    if (freeData) free(data);
+    decoder = nullptr;
+    data = nullptr;
+    freeData = false;
+}
+
 
 /************************************************************************/
 /* External Class Implementation                                        */
 /************************************************************************/
 
-JpgLoader::JpgLoader()
-{
-    //TODO:
-}
-
 
 JpgLoader::~JpgLoader()
 {
-    //TODO:
+    jpgdDelete(decoder);
+    if (freeData) free(data);
 }
 
 
 bool JpgLoader::open(const string& path)
 {
-    //TODO:
+    clear();
 
-    return false;
+    int width, height;
+    decoder = jpgdHeader(path.c_str(), &width, &height);
+    if (!decoder) return false;
+
+    w = static_cast<float>(width);
+    h = static_cast<float>(height);
+
+    return true;
 }
 
 
 bool JpgLoader::open(const char* data, uint32_t size, bool copy)
 {
-    //TODO:
+    clear();
 
-    return false;
+    if (copy) {
+        this->data = (char *) malloc(size);
+        if (!this->data) return false;
+        memcpy((char *)this->data, data, size);
+        freeData = true;
+    } else {
+        this->data = (char *) data;
+        freeData = false;
+    }
+
+    int width, height;
+    decoder = jpgdHeader(this->data, size, &width, &height);
+    if (!decoder) return false;
+
+    w = static_cast<float>(width);
+    h = static_cast<float>(height);
+
+    return true;
 }
 
 
 bool JpgLoader::read(uint32_t colorspace)
 {
-    //TODO:
+    if (!decoder || w <= 0 || h <= 0) return false;
 
-    return false;
+    TaskScheduler::request(this);
+
+    return true;
 }
 
 
 bool JpgLoader::close()
 {
-    //TODO:
-
-    return false;
+    this->done();
+    clear();
+    return true;
 }
 
 
 const uint32_t* JpgLoader::pixels()
 {
-    //TODO:
+    this->done();
 
-    return nullptr;
+    return (const uint32_t*)image;
+}
+
+
+void JpgLoader::run(unsigned tid)
+{
+    image = jpgdDecompress(decoder);
 }

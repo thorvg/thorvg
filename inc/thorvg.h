@@ -1307,8 +1307,10 @@ public:
      */
     enum Colorspace
     {
-        ABGR8888 = 0, ///< The channels are joined in the order: alpha, blue, green, red.
-        ARGB8888      ///< The channels are joined in the order: alpha, red, green, blue.
+        ABGR8888 = 0,      ///< The channels are joined in the order: alpha, blue, green, red. Colors are alpha-premultiplied.
+        ARGB8888,          ///< The channels are joined in the order: alpha, red, green, blue. Colors are alpha-premultiplied.
+        ABGR8888_STRAIGHT, ///< @BETA_API The channels are joined in the order: alpha, blue, green, red. Colors are un-alpha-premultiplied.
+        ARGB8888_STRAIGHT, ///< @BETA_API The channels are joined in the order: alpha, red, green, blue. Colors are un-alpha-premultiplied.
     };
 
     /**

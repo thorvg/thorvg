@@ -129,7 +129,7 @@ TEST_CASE("Load PNG file from data", "[tvgPicture]")
     REQUIRE(picture);
 
     //Open file
-    ifstream file(TEST_DIR"/test.png");
+    ifstream file(TEST_DIR"/test.png", ios::in | ios::binary);
     REQUIRE(file.is_open());
     auto size = sizeof(uint32_t) * (1000*1000);
     auto data = (char*)malloc(size);
@@ -170,13 +170,13 @@ TEST_CASE("Load JPG file from data", "[tvgPicture]")
     REQUIRE(picture);
 
     //Open file
-    ifstream file(TEST_DIR"/test.jpg");
+    ifstream file(TEST_DIR"/test.jpg", ios::in | ios::binary);
     REQUIRE(file.is_open());
     auto begin = file.tellg();
-    file.seekg(0, std::ios::end);
+    file.seekg(0, ios::end);
     auto size = file.tellg() - begin;
     auto data = (char*)malloc(size);
-    file.seekg(0, std::ios::beg);
+    file.seekg(0, ios::beg);
     file.read(data, size);
     file.close();
 
@@ -214,13 +214,13 @@ TEST_CASE("Load TVG file from data", "[tvgPicture]")
     REQUIRE(picture);
 
     //Open file
-    ifstream file(TEST_DIR"/tag.tvg");
+    ifstream file(TEST_DIR"/tag.tvg", ios::in | ios::binary);
     REQUIRE(file.is_open());
     auto begin = file.tellg();
-    file.seekg(0, std::ios::end);
+    file.seekg(0, ios::end);
     auto size = file.tellg() - begin;
     auto data = (char*)malloc(size);
-    file.seekg(0, std::ios::beg);
+    file.seekg(0, ios::beg);
     file.read(data, size);
     file.close();
 
@@ -297,7 +297,7 @@ TEST_CASE("Load SVG file and render", "[tvgPicture]")
 
     REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
 
-    delete buffer;
+    delete[] buffer;
 }
 
 TEST_CASE("Load PNG file and render", "[tvgPicture]")
@@ -366,7 +366,7 @@ TEST_CASE("Load TVG file and render", "[tvgPicture]")
 
     REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
 
-    delete buffer;
+    delete[] buffer;
 }
 
 TEST_CASE("Load RAW file and render", "[tvgPicture]")

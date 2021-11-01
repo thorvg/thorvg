@@ -261,8 +261,6 @@ struct Shape::Impl
         //TODO: Size Exception?
 
         if (!stroke) stroke = new ShapeStroke();
-        if (!stroke) return false;
-
         stroke->width = width;
         flag |= RenderUpdateFlag::Stroke;
 
@@ -272,8 +270,6 @@ struct Shape::Impl
     bool strokeCap(StrokeCap cap)
     {
         if (!stroke) stroke = new ShapeStroke();
-        if (!stroke) return false;
-
         stroke->cap = cap;
         flag |= RenderUpdateFlag::Stroke;
 
@@ -283,8 +279,6 @@ struct Shape::Impl
     bool strokeJoin(StrokeJoin join)
     {
         if (!stroke) stroke = new ShapeStroke();
-        if (!stroke) return false;
-
         stroke->join = join;
         flag |= RenderUpdateFlag::Stroke;
 
@@ -294,8 +288,6 @@ struct Shape::Impl
     bool strokeColor(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
     {
         if (!stroke) stroke = new ShapeStroke();
-        if (!stroke) return false;
-
         if (stroke->fill) {
             delete(stroke->fill);
             stroke->fill = nullptr;
@@ -318,8 +310,6 @@ struct Shape::Impl
         if (!p) return Result::MemoryCorruption;
 
         if (!stroke) stroke = new ShapeStroke();
-        if (!stroke) return Result::FailedAllocation;
-
         if (stroke->fill && stroke->fill != p) delete(stroke->fill);
         stroke->fill = p;
 
@@ -337,8 +327,6 @@ struct Shape::Impl
             stroke->dashPattern = nullptr;
         } else {
             if (!stroke) stroke = new ShapeStroke();
-            if (!stroke) return false;
-
             if (stroke->dashCnt != cnt) {
                 free(stroke->dashPattern);
                 stroke->dashPattern = nullptr;

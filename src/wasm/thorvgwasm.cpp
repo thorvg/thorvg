@@ -224,7 +224,7 @@ private:
         mWidth = width;
         mHeight = height;
         mBuffer = make_unique<uint8_t[]>(mWidth * mHeight * 4);
-        mSwCanvas->target((uint32_t *)mBuffer.get(), mWidth, mWidth, mHeight, SwCanvas::ABGR8888);
+        mSwCanvas->target((uint32_t *)mBuffer.get(), mWidth, mWidth, mHeight, SwCanvas::ABGR8888_STRAIGHT);
 
         if (mPicture) mPicture->size(width, height);
     }

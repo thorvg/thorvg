@@ -59,11 +59,9 @@ void mpoolRetStrokeOutline(SwMpool* mpool, unsigned idx)
 
 SwMpool* mpoolInit(unsigned threads)
 {
-    auto mpool = new SwMpool;
-    if (!mpool) return nullptr;
-
     if (threads == 0) threads = 1;
 
+    auto mpool = new SwMpool;
     mpool->outline = static_cast<SwOutline*>(calloc(1, sizeof(SwOutline) * threads));
     if (!mpool->outline) goto err;
 

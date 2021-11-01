@@ -283,10 +283,7 @@ bool SwRenderer::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t 
 {
     if (!buffer || stride == 0 || w == 0 || h == 0 || w > stride) return false;
 
-    if (!surface) {
-        surface = new SwSurface;
-        if (!surface) return false;
-    }
+    if (!surface) surface = new SwSurface;
 
     surface->buffer = buffer;
     surface->stride = stride;
@@ -327,6 +324,11 @@ void SwRenderer::clearCompositors()
 
 bool SwRenderer::postRender()
 {
+    //Unmultiply alpha if needed
+    if (surface->cs == SwCanvas::ABGR8888_STRAIGHT || surface->cs == SwCanvas::ARGB8888_STRAIGHT) {
+        rasterUnpremultiply(surface);
+    }
+
     tasks.clear();
     clearCompositors();
     return true;

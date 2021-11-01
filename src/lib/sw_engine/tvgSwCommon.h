@@ -142,9 +142,10 @@ struct SwFill
     };
 
     struct SwRadial {
-        float cx, cy;
+        float a11, a12, shiftX;
+        float a21, a22, shiftY;
+        float detSecDeriv;
         float a;
-        float inva;
     };
 
     union {
@@ -154,7 +155,6 @@ struct SwFill
 
     uint32_t* ctable;
     FillSpread spread;
-    float sx, sy;
 
     bool translucent;
 };
@@ -298,7 +298,10 @@ SwFixed mathLength(const SwPoint& pt);
 bool mathSmallCubic(const SwPoint* base, SwFixed& angleIn, SwFixed& angleMid, SwFixed& angleOut);
 SwFixed mathMean(SwFixed angle1, SwFixed angle2);
 SwPoint mathTransform(const Point* to, const Matrix* transform);
-bool mathUpdateOutlineBBox(const SwOutline* outline, const SwBBox& clipRegion, SwBBox& renderRegion);
+bool mathUpdateOutlineBBox(const SwOutline* outline, const SwBBox& clipRegion, SwBBox& renderRegion, bool rect);
+bool mathInverse(const Matrix* m, Matrix* invM);
+bool mathMultiply(const Matrix* lhs, Matrix* rhs);
+bool mathIdentity(const Matrix* m);
 
 void shapeReset(SwShape* shape);
 bool shapePrepare(SwShape* shape, const Shape* sdata, const Matrix* transform, const SwBBox& clipRegion, SwBBox& renderRegion, SwMpool* mpool, unsigned tid);
@@ -355,5 +358,6 @@ bool rasterStroke(SwSurface* surface, SwShape* shape, uint8_t r, uint8_t g, uint
 bool rasterGradientStroke(SwSurface* surface, SwShape* shape, unsigned id);
 bool rasterClear(SwSurface* surface);
 void rasterRGBA32(uint32_t *dst, uint32_t val, uint32_t offset, int32_t len);
+void rasterUnpremultiply(SwSurface* surface);
 
 #endif /* _TVG_SW_COMMON_H_ */

@@ -99,10 +99,8 @@ Paint* Paint::Impl::duplicate()
     //duplicate Transform
     if (rTransform) {
         ret->pImpl->rTransform = new RenderTransform();
-        if (ret->pImpl->rTransform) {
-            *ret->pImpl->rTransform = *rTransform;
-            ret->pImpl->flag |= RenderUpdateFlag::Transform;
-        }
+        *ret->pImpl->rTransform = *rTransform;
+        ret->pImpl->flag |= RenderUpdateFlag::Transform;
     }
 
     ret->pImpl->opacity = opacity;
@@ -122,7 +120,6 @@ bool Paint::Impl::rotate(float degree)
     } else {
         if (fabsf(degree) <= FLT_EPSILON) return true;
         rTransform = new RenderTransform();
-        if (!rTransform) return false;
     }
     rTransform->degree = degree;
     if (!rTransform->overriding) flag |= RenderUpdateFlag::Transform;
@@ -138,7 +135,6 @@ bool Paint::Impl::scale(float factor)
     } else {
         if (fabsf(factor) <= FLT_EPSILON) return true;
         rTransform = new RenderTransform();
-        if (!rTransform) return false;
     }
     rTransform->scale = factor;
     if (!rTransform->overriding) flag |= RenderUpdateFlag::Transform;
@@ -154,7 +150,6 @@ bool Paint::Impl::translate(float x, float y)
     } else {
         if (fabsf(x) <= FLT_EPSILON && fabsf(y) <= FLT_EPSILON) return true;
         rTransform = new RenderTransform();
-        if (!rTransform) return false;
     }
     rTransform->x = x;
     rTransform->y = y;
