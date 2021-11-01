@@ -66,7 +66,6 @@ struct Picture::Impl
     void* rdata = nullptr;            //engine data
     float w = 0, h = 0;
     bool resizing = false;
-    bool justloaded = false;
 
     Impl(Picture* p) : picture(p)
     {
@@ -91,7 +90,7 @@ struct Picture::Impl
 
     uint32_t reload()
     {
-        if (loader && !justloaded) {
+        if (loader) {
             if (!paint) {
                 if (auto p = loader->paint()) {
                     paint = p.release();
@@ -128,14 +127,6 @@ struct Picture::Impl
 
     void* update(RenderMethod &renderer, const RenderTransform* pTransform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag pFlag)
     {
-        if (loader && justloaded) {
-            justloaded = false;
-            if (!loader->read(renderer.colorSpace())) {
-                TVGERR("Picture", "Loader read failure!");
-                return nullptr;
-            }
-        }
-
         auto flag = reload();
 
         if (pixels) {
@@ -203,9 +194,9 @@ struct Picture::Impl
             if (invalid) return Result::InvalidArguments;
             return Result::NonSupport;
         }
+        if (!loader->read()) return Result::Unknown;
         w = loader->w;
         h = loader->h;
-        justloaded = true;
         return Result::Success;
     }
 
@@ -215,9 +206,9 @@ struct Picture::Impl
         if (loader) loader->close();
         loader = LoaderMgr::loader(data, size, mimeType, copy);
         if (!loader) return Result::NonSupport;
+        if (!loader->read()) return Result::Unknown;
         w = loader->w;
         h = loader->h;
-        justloaded = true;
         return Result::Success;
     }
 
@@ -229,7 +220,6 @@ struct Picture::Impl
         if (!loader) return Result::NonSupport;
         this->w = loader->w;
         this->h = loader->h;
-        justloaded = true;
         return Result::Success;
     }
 

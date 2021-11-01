@@ -60,9 +60,8 @@ bool RawLoader::open(const uint32_t* data, uint32_t w, uint32_t h, bool copy)
 }
 
 
-bool RawLoader::read(uint32_t colorspace)
+bool RawLoader::read()
 {
-    //NOTE: raw data is used "as it is"- developer must take care of it so the same color space used
     return true;
 }
 

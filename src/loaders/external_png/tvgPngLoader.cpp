@@ -20,26 +20,8 @@
  * SOFTWARE.
  */
 
-#include <memory.h>
 #include "tvgLoader.h"
 #include "tvgPngLoader.h"
-
-
-/************************************************************************/
-/* Internal Class Implementation                                        */
-/************************************************************************/
-
-void PngLoader::clear()
-{
-    if (freeData) free(data);
-    data = nullptr;
-    freeData = false;
-}
-
-
-/************************************************************************/
-/* External Class Implementation                                        */
-/************************************************************************/
 
 PngLoader::PngLoader()
 {
@@ -50,9 +32,6 @@ PngLoader::PngLoader()
 
 PngLoader::~PngLoader()
 {
-    if (freeData) free(data);
-    data = nullptr;
-
     if (content) {
         free((void*)content);
         content = nullptr;
@@ -62,7 +41,6 @@ PngLoader::~PngLoader()
 
 bool PngLoader::open(const string& path)
 {
-    clear();
     image->opaque = NULL;
 
     if (!png_image_begin_read_from_file(image, path.c_str())) return false;
@@ -75,19 +53,9 @@ bool PngLoader::open(const string& path)
 
 bool PngLoader::open(const char* data, uint32_t size, bool copy)
 {
-    clear();
     image->opaque = NULL;
 
-    if (copy) {
-        this->data = (char *) malloc(size);
-        if (!this->data) return false;
-        memcpy(this->data, data, size);
-        freeData = true;
-    } else {
-        this->data = (char *) data;
-    }
-
-    if (!png_image_begin_read_from_memory(image, this->data, size)) return false;
+    if (!png_image_begin_read_from_memory(image, data, size)) return false;
 
     w = (float)image->width;
     h = (float)image->height;
@@ -95,10 +63,10 @@ bool PngLoader::open(const char* data, uint32_t size, bool copy)
     return true;
 }
 
-bool PngLoader::read(uint32_t colorspace)
+bool PngLoader::read()
 {
     png_bytep buffer;
-    image->format = (colorspace == tvg::SwCanvas::ABGR8888) ? PNG_FORMAT_RGBA : PNG_FORMAT_BGRA;
+    image->format = PNG_FORMAT_BGRA;
     buffer = static_cast<png_bytep>(malloc(PNG_IMAGE_SIZE((*image))));
     if (!buffer) {
         //out of memory, only time when libpng doesnt free its data

@@ -188,7 +188,7 @@ bool TvgLoader::resize(Paint* paint, float w, float h)
 }
 
 
-bool TvgLoader::read(uint32_t colorspace)
+bool TvgLoader::read()
 {
     if (!ptr || size == 0) return false;
 

@@ -33,16 +33,12 @@ public:
     using LoadModule::open;
     bool open(const string& path) override;
     bool open(const char* data, uint32_t size, bool copy) override;
-    bool read(uint32_t colorspace) override;
+    bool read() override;
     bool close() override;
 
     const uint32_t* pixels() override;
 
 private:
-    void clear();
-
-    char* data = nullptr;
-    bool freeData = false;
     png_imagep image = nullptr;
     const uint32_t* content = nullptr;
 };

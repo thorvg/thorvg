@@ -32,7 +32,7 @@ public:
 
     using LoadModule::open;
     bool open(const uint32_t* data, uint32_t w, uint32_t h, bool copy) override;
-    bool read(uint32_t colorspace) override;
+    bool read() override;
     bool close() override;
 
     const uint32_t* pixels() override;

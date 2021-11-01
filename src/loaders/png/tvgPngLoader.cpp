@@ -123,7 +123,7 @@ bool PngLoader::open(const char* data, uint32_t size, bool copy)
 }
 
 
-bool PngLoader::read(uint32_t colorspace)
+bool PngLoader::read()
 {
     if (!data || w <= 0 || h <= 0) return false;
 

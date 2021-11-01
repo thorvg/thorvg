@@ -124,15 +124,14 @@ bool JpgLoader::open(const char* data, uint32_t size, bool copy)
 }
 
 
-bool JpgLoader::read(uint32_t colorspace)
+bool JpgLoader::read()
 {
     if (image) tjFree(image);
     image = (unsigned char *)tjAlloc(static_cast<int>(w) * static_cast<int>(h) * tjPixelSize[TJPF_BGRX]);
     if (!image) return false;
 
     //decompress jpg image
-    auto pixelFormat = (colorspace == tvg::SwCanvas::ABGR8888) ? TJPF_RGBX : TJPF_BGRX;
-    if (tjDecompress2(jpegDecompressor, data, size, image, static_cast<int>(w), 0, static_cast<int>(h), pixelFormat, 0) < 0) {
+    if (tjDecompress2(jpegDecompressor, data, size, image, static_cast<int>(w), 0, static_cast<int>(h), TJPF_BGRX, 0) < 0) {
         TVGERR("JPG LOADER", "%s", tjGetErrorStr());
         tjFree(image);
         image = nullptr;
