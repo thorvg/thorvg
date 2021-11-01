@@ -1421,7 +1421,7 @@ bool rasterGradientShape(SwSurface* surface, SwShape* shape, unsigned id)
     auto translucent = shape->fill->translucent || (surface->compositor && surface->compositor->method != CompositeMethod::None);
 
     //Fast Track
-    if (shape->rect) {
+    if (shape->fastTrack) {
         if (id == TVG_CLASS_ID_LINEAR) {
             if (translucent) return _rasterTranslucentLinearGradientRect(surface, shape->bbox, shape->fill);
             return _rasterOpaqueLinearGradientRect(surface, shape->bbox, shape->fill);
@@ -1455,7 +1455,7 @@ bool rasterSolidShape(SwSurface* surface, SwShape* shape, uint8_t r, uint8_t g, 
     auto translucent = _translucent(surface, a);
 
     //Fast Track
-    if (shape->rect) {
+    if (shape->fastTrack) {
         if (translucent) return _rasterTranslucentRect(surface, shape->bbox, color);
         return _rasterSolidRect(surface, shape->bbox, color);
     }

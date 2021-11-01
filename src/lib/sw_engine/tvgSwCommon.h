@@ -215,7 +215,7 @@ struct SwShape
     SwRleData*   strokeRle = nullptr;
     SwBBox       bbox;           //Keep it boundary without stroke region. Using for optimal filling.
 
-    bool         rect = false;   //Fast Track: Othogonal rectangle?
+    bool         fastTrack = false;   //Fast Track: axis-aligned rectangle without any clips?
 };
 
 struct SwImage
@@ -298,7 +298,7 @@ SwFixed mathLength(const SwPoint& pt);
 bool mathSmallCubic(const SwPoint* base, SwFixed& angleIn, SwFixed& angleMid, SwFixed& angleOut);
 SwFixed mathMean(SwFixed angle1, SwFixed angle2);
 SwPoint mathTransform(const Point* to, const Matrix* transform);
-bool mathUpdateOutlineBBox(const SwOutline* outline, const SwBBox& clipRegion, SwBBox& renderRegion, bool rect);
+bool mathUpdateOutlineBBox(const SwOutline* outline, const SwBBox& clipRegion, SwBBox& renderRegion, bool fastTrack);
 bool mathInverse(const Matrix* m, Matrix* invM);
 bool mathMultiply(const Matrix* lhs, Matrix* rhs);
 bool mathIdentity(const Matrix* m);

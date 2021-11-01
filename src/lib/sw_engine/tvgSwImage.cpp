@@ -26,7 +26,7 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-static bool _genOutline(SwImage* image, const Matrix* transform, SwMpool* mpool,  unsigned tid)
+static bool _genOutline(SwImage* image, const Matrix* transform, SwMpool* mpool, unsigned tid)
 {
     image->outline = mpoolReqOutline(mpool, tid);
     auto outline = image->outline;

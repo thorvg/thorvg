@@ -141,13 +141,13 @@ struct SwShapeTask : SwTask
             auto clipper = &static_cast<SwShapeTask*>(*clip)->shape;
             //Clip shape rle
             if (shape.rle) {
-                if (clipper->rect) rleClipRect(shape.rle, &clipper->bbox);
+                if (clipper->fastTrack) rleClipRect(shape.rle, &clipper->bbox);
                 else if (clipper->rle) rleClipPath(shape.rle, clipper->rle);
                 else goto err;
             }
             //Clip stroke rle
             if (shape.strokeRle) {
-                if (clipper->rect) rleClipRect(shape.strokeRle, &clipper->bbox);
+                if (clipper->fastTrack) rleClipRect(shape.strokeRle, &clipper->bbox);
                 else if (clipper->rle) rleClipPath(shape.strokeRle, clipper->rle);
                 else goto err;
             }
@@ -192,7 +192,7 @@ struct SwImageTask : SwTask
                 if (image.rle) {
                     for (auto clip = clips.data; clip < (clips.data + clips.count); ++clip) {
                         auto clipper = &static_cast<SwShapeTask*>(*clip)->shape;
-                        if (clipper->rect) rleClipRect(image.rle, &clipper->bbox);
+                        if (clipper->fastTrack) rleClipRect(image.rle, &clipper->bbox);
                         else if (clipper->rle) rleClipPath(image.rle, clipper->rle);
                         else goto err;
                     }

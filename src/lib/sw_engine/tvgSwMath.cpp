@@ -443,7 +443,7 @@ SwPoint mathTransform(const Point* to, const Matrix* transform)
 }
 
 
-bool mathUpdateOutlineBBox(const SwOutline* outline, const SwBBox& clipRegion, SwBBox& renderRegion, bool rect)
+bool mathUpdateOutlineBBox(const SwOutline* outline, const SwBBox& clipRegion, SwBBox& renderRegion, bool fastTrack)
 {
     if (!outline) return false;
 
@@ -471,7 +471,7 @@ bool mathUpdateOutlineBBox(const SwOutline* outline, const SwBBox& clipRegion, S
     //Since no antialiasing is applied in the Fast Track case,
     //the rasterization region has to be rearranged.
     //https://github.com/Samsung/thorvg/issues/916
-    if (rect) {
+    if (fastTrack) {
         renderRegion.min.x = static_cast<SwCoord>(round(xMin / 64.0f));
         renderRegion.max.x = static_cast<SwCoord>(round(xMax / 64.0f));
         renderRegion.min.y = static_cast<SwCoord>(round(yMin / 64.0f));
