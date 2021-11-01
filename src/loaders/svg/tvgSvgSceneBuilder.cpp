@@ -289,11 +289,11 @@ static void _applyProperty(SvgNode* node, Shape* vg, float vx, float vy, float v
             vg->bounds(&vx, &vy, &vw, &vh, false);
             //According to: https://www.w3.org/TR/SVG11/coords.html#ObjectBoundingBoxUnits (the last paragraph)
             //a stroke width should be ignored for bounding box calculations
-            if (auto strokeHalfW = 0.5f * vg->strokeWidth()) {
-                vx += strokeHalfW;
-                vy += strokeHalfW;
-                vw -= strokeHalfW;
-                vh -= strokeHalfW;
+            if (auto strokeW = vg->strokeWidth()) {
+                vx += 0.5f * strokeW;
+                vy += 0.5f * strokeW;
+                vw -= strokeW;
+                vh -= strokeW;
             }
         }
 
@@ -338,11 +338,11 @@ static void _applyProperty(SvgNode* node, Shape* vg, float vx, float vy, float v
             //According to: https://www.w3.org/TR/SVG11/coords.html#ObjectBoundingBoxUnits (the last paragraph)
             //a stroke width should be ignored for bounding box calculations
             vg->bounds(&vx, &vy, &vw, &vh, false);
-            if (auto strokeHalfW = 0.5f * vg->strokeWidth()) {
-                vx += strokeHalfW;
-                vy += strokeHalfW;
-                vw -= strokeHalfW;
-                vh -= strokeHalfW;
+            if (auto strokeW = vg->strokeWidth()) {
+                vx += 0.5f * strokeW;
+                vy += 0.5f * strokeW;
+                vw -= strokeW;
+                vh -= strokeW;
             }
         }
 
