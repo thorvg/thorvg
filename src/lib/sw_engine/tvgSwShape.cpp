@@ -380,7 +380,7 @@ static bool _fastTrack(const SwOutline* outline)
 
 
 
-static bool _genOutline(SwShape* shape, const Shape* sdata, const Matrix* transform, SwMpool* mpool, unsigned tid)
+static bool _genOutline(SwShape* shape, const Shape* sdata, const Matrix* transform, SwMpool* mpool, unsigned tid, bool hasComposite)
 {
     const PathCommand* cmds = nullptr;
     auto cmdCnt = sdata->pathCommands(&cmds);
@@ -469,7 +469,7 @@ static bool _genOutline(SwShape* shape, const Shape* sdata, const Matrix* transf
     outline->fillRule = sdata->fillRule();
     shape->outline = outline;
 
-    shape->rect = _fastTrack(shape->outline);
+    shape->rect = (!hasComposite && _fastTrack(shape->outline));
     return true;
 }
 
@@ -478,9 +478,9 @@ static bool _genOutline(SwShape* shape, const Shape* sdata, const Matrix* transf
 /* External Class Implementation                                        */
 /************************************************************************/
 
-bool shapePrepare(SwShape* shape, const Shape* sdata, const Matrix* transform,  const SwBBox& clipRegion, SwBBox& renderRegion, SwMpool* mpool, unsigned tid)
+bool shapePrepare(SwShape* shape, const Shape* sdata, const Matrix* transform,  const SwBBox& clipRegion, SwBBox& renderRegion, SwMpool* mpool, unsigned tid, bool hasComposite)
 {
-    if (!_genOutline(shape, sdata, transform, mpool, tid)) return false;
+    if (!_genOutline(shape, sdata, transform, mpool, tid, hasComposite)) return false;
     if (!mathUpdateOutlineBBox(shape->outline, clipRegion, renderRegion, shape->rect)) return false;
 
     //Keep it for Rasterization Region
@@ -503,14 +503,14 @@ bool shapePrepared(const SwShape* shape)
 }
 
 
-bool shapeGenRle(SwShape* shape, TVG_UNUSED const Shape* sdata, bool antiAlias, bool hasComposite)
+bool shapeGenRle(SwShape* shape, TVG_UNUSED const Shape* sdata, bool antiAlias)
 {
     //FIXME: Should we draw it?
     //Case: Stroke Line
     //if (shape.outline->opened) return true;
 
     //Case A: Fast Track Rectangle Drawing
-    if (!hasComposite && shape->rect) return true;
+    if (shape->rect) return true;
 
     //Case B: Normal Shape RLE Drawing
     if ((shape->rle = rleRender(shape->rle, shape->outline, shape->bbox, antiAlias))) return true;
@@ -583,7 +583,7 @@ bool shapeGenStrokeRle(SwShape* shape, const Shape* sdata, const Matrix* transfo
     //Normal Style stroke
     } else {
         if (!shape->outline) {
-            if (!_genOutline(shape, sdata, transform, mpool, tid)) return false;
+            if (!_genOutline(shape, sdata, transform, mpool, tid, false)) return false;
         }
         shapeOutline = shape->outline;
     }
