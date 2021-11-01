@@ -574,7 +574,7 @@ TvgBinCounter TvgSaver::serializeShape(const Shape* shape, const Matrix* pTransf
         shape->strokeColor(color, color + 1, color + 2, color + 3);
         auto fill = shape->strokeFill();
         if (fill || color[3] > 0) {
-            if (fill || abs(cTransform->e11 - cTransform->e22) > FLT_EPSILON || shape->strokeDash(nullptr) > 0) preTransform = false;
+            if (fill || fabsf(cTransform->e11 - cTransform->e22) > FLT_EPSILON || (fabsf(cTransform->e11) < FLT_EPSILON && fabsf(cTransform->e12 - cTransform->e21) > FLT_EPSILON) || shape->strokeDash(nullptr) > 0) preTransform = false;
             cnt += serializeStroke(shape, cTransform, preTransform);
         }
     }
