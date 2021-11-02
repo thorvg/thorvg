@@ -9,16 +9,24 @@ if all_loaders or get_option('loaders').contains('svg') == true
 endif
 
 if all_loaders or get_option('loaders').contains('png') == true
-    subdir('external_png')
-    if not png_dep.found()
+    if get_option('static') == true
         subdir('png')
+    else
+        subdir('external_png')
+        if not png_dep.found()
+            subdir('png')
+        endif
     endif
 endif
 
 if all_loaders or get_option('loaders').contains('jpg') == true
-    subdir('external_jpg')
-    if not jpg_dep.found()
+    if get_option('static') == true
         subdir('jpg')
+    else
+        subdir('external_jpg')
+        if not jpg_dep.found()
+            subdir('jpg')
+        endif
     endif
 endif
 
