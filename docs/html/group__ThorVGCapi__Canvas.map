@@ -1,0 +1,5 @@
+<map id="Canvas" name="Canvas">
+<area shape="rect" id="node1" href="$group__ThorVG__CAPI.html" title="ThorVG C language binding APIs." alt="" coords="5,5,112,31"/>
+<area shape="rect" id="node2" title="A module for managing and drawing graphical elements." alt="" coords="160,5,231,31"/>
+<area shape="rect" id="node3" href="$group__ThorVGCapi__SwCanvas.html" title="A module for rendering the graphical elements using the software engine." alt="" coords="279,5,368,31"/>
+</map>

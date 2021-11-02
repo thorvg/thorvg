@@ -1,0 +1,11 @@
+<map id="ThorVG_CAPI" name="ThorVG_CAPI">
+<area shape="rect" id="node1" title="ThorVG C language binding APIs." alt="" coords="5,179,112,204"/>
+<area shape="rect" id="node2" href="$group__ThorVGCapi__Paint.html" title="A module for managing graphical elements. It enables duplication, transformation and composition." alt="" coords="174,5,229,31"/>
+<area shape="rect" id="node3" href="$group__ThorVGCapi__Saver.html" title="A module for exporting a paint object into a specified file." alt="" coords="172,55,231,80"/>
+<area shape="rect" id="node4" href="$group__ThorVGCapi__Shape.html" title="A module for managing two&#45;dimensional figures and their properties." alt="" coords="170,104,233,129"/>
+<area shape="rect" id="node5" href="$group__ThorVGCapi__Scene.html" title="A module managing the multiple paints as one group paint." alt="" coords="171,153,232,179"/>
+<area shape="rect" id="node6" href="$group__ThorVGCapi__Initializer.html" title="A module enabling initialization and termination of the TVG engines." alt="" coords="160,203,243,228"/>
+<area shape="rect" id="node7" href="$group__ThorVGCapi__Canvas.html" title="A module for managing and drawing graphical elements." alt="" coords="166,252,237,277"/>
+<area shape="rect" id="node8" href="$group__ThorVGCapi__Picture.html" title="A module enabling to create and to load an image in one of the supported formats: svg,..." alt="" coords="168,301,235,327"/>
+<area shape="rect" id="node9" href="$group__ThorVGCapi__Gradient.html" title="A module managing the gradient fill of objects." alt="" coords="162,351,241,376"/>
+</map>
