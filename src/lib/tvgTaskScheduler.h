@@ -26,32 +26,28 @@
 #include <condition_variable>
 #include "tvgCommon.h"
 
-namespace tvg
-{
+namespace tvg {
 
 struct Task;
 
-struct TaskScheduler
-{
+struct TaskScheduler {
     static unsigned threads();
     static void init(unsigned threads);
     static void term();
     static void request(Task* task);
 };
 
-struct Task
-{
-private:
-    mutex                   mtx;
-    condition_variable      cv;
-    bool                    ready{true};
-    bool                    pending{false};
+struct Task {
+  private:
+    mutex mtx;
+    condition_variable cv;
+    bool ready{true};
+    bool pending{false};
 
-public:
+  public:
     virtual ~Task() = default;
 
-    void done()
-    {
+    void done() {
         if (!pending) return;
 
         unique_lock<mutex> lock(mtx);
@@ -59,12 +55,11 @@ public:
         pending = false;
     }
 
-protected:
+  protected:
     virtual void run(unsigned tid) = 0;
 
-private:
-    void operator()(unsigned tid)
-    {
+  private:
+    void operator()(unsigned tid) {
         run(tid);
 
         lock_guard<mutex> lock(mtx);
@@ -72,8 +67,7 @@ private:
         cv.notify_one();
     }
 
-    void prepare()
-    {
+    void prepare() {
         ready = false;
         pending = true;
     }
@@ -81,8 +75,6 @@ private:
     friend class TaskSchedulerImpl;
 };
 
-
-
-}
+} // namespace tvg
 
 #endif //_TVG_TASK_SCHEDULER_H_

@@ -24,8 +24,7 @@
 
 #include "tvgLoadModule.h"
 
-struct LoaderMgr
-{
+struct LoaderMgr {
     static bool init();
     static bool term();
     static shared_ptr<LoadModule> loader(const string& path, bool* invalid);

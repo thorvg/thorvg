@@ -24,19 +24,16 @@
 
 #include "tvgPaint.h"
 
-namespace tvg
-{
+namespace tvg {
 
-class IteratorAccessor
-{
-public:
+class IteratorAccessor {
+  public:
     //Utility Method: Iterator Accessor
-    Iterator* iterator(const Paint* paint)
-    {
+    Iterator* iterator(const Paint* paint) {
         return paint->pImpl->iterator();
     }
 };
 
-}
+} // namespace tvg
 
 #endif //_TVG_ITERATOR_ACCESSOR_H_

@@ -29,47 +29,40 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-struct SceneIterator : Iterator
-{
+struct SceneIterator : Iterator {
     Array<Paint*>* paints;
     uint32_t idx = 0;
 
-    SceneIterator(Array<Paint*>* p) : paints(p)
-    {
+    SceneIterator(Array<Paint*>* p)
+        : paints(p) {
     }
 
-    const Paint* next() override
-    {
+    const Paint* next() override {
         if (idx >= paints->count) return nullptr;
         return paints->data[idx++];
     }
 
-    uint32_t count() override
-    {
+    uint32_t count() override {
         return paints->count;
     }
 
-    void begin() override
-    {
+    void begin() override {
         idx = 0;
     }
 };
 
-struct Scene::Impl
-{
+struct Scene::Impl {
     Array<Paint*> paints;
-    uint8_t opacity;                     //for composition
-    RenderMethod* renderer = nullptr;    //keep it for explicit clear
+    uint8_t opacity;                  //for composition
+    RenderMethod* renderer = nullptr; //keep it for explicit clear
 
-    ~Impl()
-    {
+    ~Impl() {
         for (auto paint = paints.data; paint < (paints.data + paints.count); ++paint) {
-            delete(*paint);
+            delete (*paint);
         }
     }
 
-    bool dispose(RenderMethod& renderer)
-    {
+    bool dispose(RenderMethod& renderer) {
         for (auto paint = paints.data; paint < (paints.data + paints.count); ++paint) {
             (*paint)->pImpl->dispose(renderer);
         }
@@ -79,8 +72,7 @@ struct Scene::Impl
         return true;
     }
 
-    bool needComposition(uint32_t opacity)
-    {
+    bool needComposition(uint32_t opacity) {
         //Half translucent requires intermediate composition.
         if (opacity == 255 || opacity == 0) return false;
 
@@ -90,8 +82,7 @@ struct Scene::Impl
         return false;
     }
 
-    void* update(RenderMethod &renderer, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flag)
-    {
+    void* update(RenderMethod& renderer, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flag) {
         /* Overriding opacity value. If this scene is half-translucent,
            It must do intermeidate composition with that opacity value. */
         this->opacity = static_cast<uint8_t>(opacity);
@@ -109,8 +100,7 @@ struct Scene::Impl
         return nullptr;
     }
 
-    bool render(RenderMethod& renderer)
-    {
+    bool render(RenderMethod& renderer) {
         Compositor* cmp = nullptr;
 
         if (needComposition(opacity)) {
@@ -127,8 +117,7 @@ struct Scene::Impl
         return true;
     }
 
-    RenderRegion bounds(RenderMethod& renderer) const
-    {
+    RenderRegion bounds(RenderMethod& renderer) const {
         if (paints.count == 0) return {0, 0, 0, 0};
 
         uint32_t x1 = UINT32_MAX;
@@ -149,8 +138,7 @@ struct Scene::Impl
         return {x1, y1, (x2 - x1), (y2 - y1)};
     }
 
-    bool bounds(float* px, float* py, float* pw, float* ph)
-    {
+    bool bounds(float* px, float* py, float* pw, float* ph) {
         if (paints.count == 0) return false;
 
         auto x1 = FLT_MAX;
@@ -181,8 +169,7 @@ struct Scene::Impl
         return true;
     }
 
-    Paint* duplicate()
-    {
+    Paint* duplicate() {
         auto ret = Scene::gen();
         if (!ret) return nullptr;
         auto dup = ret.get()->pImpl;
@@ -196,20 +183,18 @@ struct Scene::Impl
         return ret.release();
     }
 
-    void clear(bool free)
-    {
+    void clear(bool free) {
         auto dispose = renderer ? true : false;
 
         for (auto paint = paints.data; paint < (paints.data + paints.count); ++paint) {
             if (dispose) (*paint)->pImpl->dispose(*renderer);
-            if (free) delete(*paint);
+            if (free) delete (*paint);
         }
         paints.clear();
         renderer = nullptr;
     }
 
-    Iterator* iterator()
-    {
+    Iterator* iterator() {
         return new SceneIterator(&paints);
     }
 };

@@ -33,63 +33,57 @@ using TvgBinCounter = uint32_t;
 using TvgBinTag = TvgBinByte;
 using TvgBinFlag = TvgBinByte;
 
-
 //Header
-#define TVG_HEADER_SIZE 33                //TVG_HEADER_SIGNATURE_LENGTH + TVG_HEADER_VERSION_LENGTH + 2*SIZE(float) + TVG_HEADER_RESERVED_LENGTH + TVG_HEADER_COMPRESS_SIZE
-#define TVG_HEADER_SIGNATURE "ThorVG"
+#define TVG_HEADER_SIZE             33 //TVG_HEADER_SIGNATURE_LENGTH + TVG_HEADER_VERSION_LENGTH + 2*SIZE(float) + TVG_HEADER_RESERVED_LENGTH + TVG_HEADER_COMPRESS_SIZE
+#define TVG_HEADER_SIGNATURE        "ThorVG"
 #define TVG_HEADER_SIGNATURE_LENGTH 6
-#define TVG_HEADER_VERSION "000400"       //Major 00, Minor 04, Micro 00
-#define TVG_HEADER_VERSION_LENGTH 6
-#define TVG_HEADER_RESERVED_LENGTH 1      //Storing flags for extensions
-#define TVG_HEADER_COMPRESS_SIZE 12       //TVG_HEADER_UNCOMPRESSED_SIZE + TVG_HEADER_COMPRESSED_SIZE + TVG_HEADER_COMPRESSED_SIZE_BITS
-//Compress Size 
-#define TVG_HEADER_UNCOMPRESSED_SIZE 4     //SIZE (TvgBinCounter)
-#define TVG_HEADER_COMPRESSED_SIZE 4       //SIZE (TvgBinCounter)
-#define TVG_HEADER_COMPRESSED_SIZE_BITS 4  //SIZE (TvgBinCounter)
+#define TVG_HEADER_VERSION          "000400" //Major 00, Minor 04, Micro 00
+#define TVG_HEADER_VERSION_LENGTH   6
+#define TVG_HEADER_RESERVED_LENGTH  1  //Storing flags for extensions
+#define TVG_HEADER_COMPRESS_SIZE    12 //TVG_HEADER_UNCOMPRESSED_SIZE + TVG_HEADER_COMPRESSED_SIZE + TVG_HEADER_COMPRESSED_SIZE_BITS
+//Compress Size
+#define TVG_HEADER_UNCOMPRESSED_SIZE    4 //SIZE (TvgBinCounter)
+#define TVG_HEADER_COMPRESSED_SIZE      4 //SIZE (TvgBinCounter)
+#define TVG_HEADER_COMPRESSED_SIZE_BITS 4 //SIZE (TvgBinCounter)
 //Reserved Flag
-#define TVG_HEAD_FLAG_COMPRESSED                    0x01
+#define TVG_HEAD_FLAG_COMPRESSED 0x01
 
 //Paint Type
-#define TVG_TAG_CLASS_PICTURE                       (TvgBinTag)0xfc
-#define TVG_TAG_CLASS_SHAPE                         (TvgBinTag)0xfd
-#define TVG_TAG_CLASS_SCENE                         (TvgBinTag)0xfe
-
+#define TVG_TAG_CLASS_PICTURE (TvgBinTag)0xfc
+#define TVG_TAG_CLASS_SHAPE   (TvgBinTag)0xfd
+#define TVG_TAG_CLASS_SCENE   (TvgBinTag)0xfe
 
 //Paint
-#define TVG_TAG_PAINT_OPACITY                       (TvgBinTag)0x10
-#define TVG_TAG_PAINT_TRANSFORM                     (TvgBinTag)0x11
-#define TVG_TAG_PAINT_CMP_TARGET                    (TvgBinTag)0x01
-#define TVG_TAG_PAINT_CMP_METHOD                    (TvgBinTag)0x20
-
+#define TVG_TAG_PAINT_OPACITY    (TvgBinTag)0x10
+#define TVG_TAG_PAINT_TRANSFORM  (TvgBinTag)0x11
+#define TVG_TAG_PAINT_CMP_TARGET (TvgBinTag)0x01
+#define TVG_TAG_PAINT_CMP_METHOD (TvgBinTag)0x20
 
 //Scene
-#define TVG_TAG_SCENE_RESERVEDCNT                   (TvgBinTag)0x30
-
+#define TVG_TAG_SCENE_RESERVEDCNT (TvgBinTag)0x30
 
 //Shape
-#define TVG_TAG_SHAPE_PATH                          (TvgBinTag)0x40
-#define TVG_TAG_SHAPE_STROKE                        (TvgBinTag)0x41
-#define TVG_TAG_SHAPE_FILL                          (TvgBinTag)0x42
-#define TVG_TAG_SHAPE_COLOR                         (TvgBinTag)0x43
-#define TVG_TAG_SHAPE_FILLRULE                      (TvgBinTag)0x44
-#define TVG_TAG_SHAPE_STROKE_CAP                    (TvgBinTag)0x50
-#define TVG_TAG_SHAPE_STROKE_JOIN                   (TvgBinTag)0x51
+#define TVG_TAG_SHAPE_PATH        (TvgBinTag)0x40
+#define TVG_TAG_SHAPE_STROKE      (TvgBinTag)0x41
+#define TVG_TAG_SHAPE_FILL        (TvgBinTag)0x42
+#define TVG_TAG_SHAPE_COLOR       (TvgBinTag)0x43
+#define TVG_TAG_SHAPE_FILLRULE    (TvgBinTag)0x44
+#define TVG_TAG_SHAPE_STROKE_CAP  (TvgBinTag)0x50
+#define TVG_TAG_SHAPE_STROKE_JOIN (TvgBinTag)0x51
 
 //Stroke
-#define TVG_TAG_SHAPE_STROKE_WIDTH                  (TvgBinTag)0x52
-#define TVG_TAG_SHAPE_STROKE_COLOR                  (TvgBinTag)0x53
-#define TVG_TAG_SHAPE_STROKE_FILL                   (TvgBinTag)0x54
-#define TVG_TAG_SHAPE_STROKE_DASHPTRN               (TvgBinTag)0x55
-
+#define TVG_TAG_SHAPE_STROKE_WIDTH    (TvgBinTag)0x52
+#define TVG_TAG_SHAPE_STROKE_COLOR    (TvgBinTag)0x53
+#define TVG_TAG_SHAPE_STROKE_FILL     (TvgBinTag)0x54
+#define TVG_TAG_SHAPE_STROKE_DASHPTRN (TvgBinTag)0x55
 
 //Fill
-#define TVG_TAG_FILL_LINEAR_GRADIENT                (TvgBinTag)0x60
-#define TVG_TAG_FILL_RADIAL_GRADIENT                (TvgBinTag)0x61
-#define TVG_TAG_FILL_COLORSTOPS                     (TvgBinTag)0x62
-#define TVG_TAG_FILL_FILLSPREAD                     (TvgBinTag)0x63
-
+#define TVG_TAG_FILL_LINEAR_GRADIENT (TvgBinTag)0x60
+#define TVG_TAG_FILL_RADIAL_GRADIENT (TvgBinTag)0x61
+#define TVG_TAG_FILL_COLORSTOPS      (TvgBinTag)0x62
+#define TVG_TAG_FILL_FILLSPREAD      (TvgBinTag)0x63
 
 //Picture
-#define TVG_TAG_PICTURE_RAW_IMAGE                   (TvgBinTag)0x70
+#define TVG_TAG_PICTURE_RAW_IMAGE (TvgBinTag)0x70
 
 #endif //_TVG_BINARY_DESC_H_

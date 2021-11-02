@@ -33,13 +33,12 @@
 namespace tvg {
 
 struct TaskQueue {
-    deque<Task*>             taskDeque;
-    mutex                    mtx;
-    condition_variable       ready;
-    bool                     done = false;
+    deque<Task*> taskDeque;
+    mutex mtx;
+    condition_variable ready;
+    bool done = false;
 
-    bool tryPop(Task** task)
-    {
+    bool tryPop(Task** task) {
         unique_lock<mutex> lock{mtx, try_to_lock};
         if (!lock || taskDeque.empty()) return false;
         *task = taskDeque.front();
@@ -48,8 +47,7 @@ struct TaskQueue {
         return true;
     }
 
-    bool tryPush(Task* task)
-    {
+    bool tryPush(Task* task) {
         {
             unique_lock<mutex> lock{mtx, try_to_lock};
             if (!lock) return false;
@@ -61,8 +59,7 @@ struct TaskQueue {
         return true;
     }
 
-    void complete()
-    {
+    void complete() {
         {
             unique_lock<mutex> lock{mtx};
             done = true;
@@ -70,8 +67,7 @@ struct TaskQueue {
         ready.notify_all();
     }
 
-    bool pop(Task** task)
-    {
+    bool pop(Task** task) {
         unique_lock<mutex> lock{mtx};
 
         while (taskDeque.empty() && !done) {
@@ -86,8 +82,7 @@ struct TaskQueue {
         return true;
     }
 
-    void push(Task* task)
-    {
+    void push(Task* task) {
         {
             unique_lock<mutex> lock{mtx};
             taskDeque.push_back(task);
@@ -95,33 +90,30 @@ struct TaskQueue {
 
         ready.notify_one();
     }
-
 };
 
+class TaskSchedulerImpl {
+  public:
+    unsigned threadCnt;
+    vector<thread> threads;
+    vector<TaskQueue> taskQueues;
+    atomic<unsigned> idx{0};
 
-class TaskSchedulerImpl
-{
-public:
-    unsigned                       threadCnt;
-    vector<thread>                 threads;
-    vector<TaskQueue>              taskQueues;
-    atomic<unsigned>               idx{0};
-
-    TaskSchedulerImpl(unsigned threadCnt) : threadCnt(threadCnt), taskQueues(threadCnt)
-    {
+    TaskSchedulerImpl(unsigned threadCnt)
+        : threadCnt(threadCnt), taskQueues(threadCnt) {
         for (unsigned i = 0; i < threadCnt; ++i) {
-            threads.emplace_back([&, i] { run(i); });
+            threads.emplace_back([&, i] {
+                run(i);
+            });
         }
     }
 
-    ~TaskSchedulerImpl()
-    {
+    ~TaskSchedulerImpl() {
         for (auto& queue : taskQueues) queue.complete();
         for (auto& thread : threads) thread.join();
     }
 
-    void run(unsigned i)
-    {
+    void run(unsigned i) {
         Task* task;
 
         //Thread Loop
@@ -139,8 +131,7 @@ public:
         }
     }
 
-    void request(Task* task)
-    {
+    void request(Task* task) {
         //Async
         if (threadCnt > 0) {
             task->prepare();
@@ -149,14 +140,14 @@ public:
                 if (taskQueues[(i + n) % threadCnt].tryPush(task)) return;
             }
             taskQueues[i % threadCnt].push(task);
-        //Sync
+            //Sync
         } else {
             task->run(0);
         }
     }
 };
 
-}
+} // namespace tvg
 
 static TaskSchedulerImpl* inst = nullptr;
 
@@ -164,29 +155,22 @@ static TaskSchedulerImpl* inst = nullptr;
 /* External Class Implementation                                        */
 /************************************************************************/
 
-void TaskScheduler::init(unsigned threads)
-{
+void TaskScheduler::init(unsigned threads) {
     if (inst) return;
     inst = new TaskSchedulerImpl(threads);
 }
 
-
-void TaskScheduler::term()
-{
+void TaskScheduler::term() {
     if (!inst) return;
-    delete(inst);
+    delete (inst);
     inst = nullptr;
 }
 
-
-void TaskScheduler::request(Task* task)
-{
+void TaskScheduler::request(Task* task) {
     if (inst) inst->request(task);
 }
 
-
-unsigned TaskScheduler::threads()
-{
+unsigned TaskScheduler::threads() {
     if (inst) return inst->threadCnt;
     return 0;
 }

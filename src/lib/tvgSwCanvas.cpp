@@ -22,44 +22,39 @@
 #include "tvgCanvasImpl.h"
 
 #ifdef THORVG_SW_RASTER_SUPPORT
-    #include "tvgSwRenderer.h"
+#include "tvgSwRenderer.h"
 #else
-    class SwRenderer : public RenderMethod
-    {
-        //Non Supported. Dummy Class */
-    };
+class SwRenderer : public RenderMethod {
+    //Non Supported. Dummy Class */
+};
 #endif
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-struct SwCanvas::Impl
-{
+struct SwCanvas::Impl {
 };
-
 
 /************************************************************************/
 /* External Class Implementation                                        */
 /************************************************************************/
 
 #ifdef THORVG_SW_RASTER_SUPPORT
-SwCanvas::SwCanvas() : Canvas(SwRenderer::gen()), pImpl(new Impl)
+SwCanvas::SwCanvas()
+    : Canvas(SwRenderer::gen()), pImpl(new Impl)
 #else
-SwCanvas::SwCanvas() : Canvas(nullptr), pImpl(new Impl)
+SwCanvas::SwCanvas()
+    : Canvas(nullptr), pImpl(new Impl)
 #endif
 {
 }
 
-
-SwCanvas::~SwCanvas()
-{
-    delete(pImpl);
+SwCanvas::~SwCanvas() {
+    delete (pImpl);
 }
 
-
-Result SwCanvas::mempool(MempoolPolicy policy) noexcept
-{
+Result SwCanvas::mempool(MempoolPolicy policy) noexcept {
 #ifdef THORVG_SW_RASTER_SUPPORT
     //We know renderer type, avoid dynamic_cast for performance.
     auto renderer = static_cast<SwRenderer*>(Canvas::pImpl->renderer);
@@ -69,16 +64,15 @@ Result SwCanvas::mempool(MempoolPolicy policy) noexcept
     if (Canvas::pImpl->paints.count > 0) return Result::InsufficientCondition;
 
     if (policy == MempoolPolicy::Individual) renderer->mempool(false);
-    else renderer->mempool(true);
+    else
+        renderer->mempool(true);
 
     return Result::Success;
 #endif
     return Result::NonSupport;
 }
 
-
-Result SwCanvas::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h, Colorspace cs) noexcept
-{
+Result SwCanvas::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h, Colorspace cs) noexcept {
 #ifdef THORVG_SW_RASTER_SUPPORT
     //We know renderer type, avoid dynamic_cast for performance.
     auto renderer = static_cast<SwRenderer*>(Canvas::pImpl->renderer);
@@ -94,9 +88,7 @@ Result SwCanvas::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t 
     return Result::NonSupport;
 }
 
-
-unique_ptr<SwCanvas> SwCanvas::gen() noexcept
-{
+unique_ptr<SwCanvas> SwCanvas::gen() noexcept {
 #ifdef THORVG_SW_RASTER_SUPPORT
     if (SwRenderer::init() <= 0) return nullptr;
     return unique_ptr<SwCanvas>(new SwCanvas);

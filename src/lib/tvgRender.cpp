@@ -27,25 +27,22 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-
 /************************************************************************/
 /* External Class Implementation                                        */
 /************************************************************************/
 
-void RenderTransform::override(const Matrix& m)
-{
+void RenderTransform::override(const Matrix& m) {
     this->m = m;
 
     if (m.e11 == 0.0f && m.e12 == 0.0f && m.e13 == 0.0f &&
         m.e21 == 0.0f && m.e22 == 0.0f && m.e23 == 0.0f &&
         m.e31 == 0.0f && m.e32 == 0.0f && m.e33 == 0.0f) {
         overriding = false;
-    } else overriding = true;
+    } else
+        overriding = true;
 }
 
-
-bool RenderTransform::update()
-{
+bool RenderTransform::update() {
     constexpr auto PI = 3.141592f;
 
     if (overriding) return true;
@@ -89,14 +86,10 @@ bool RenderTransform::update()
     return true;
 }
 
-
-RenderTransform::RenderTransform()
-{
+RenderTransform::RenderTransform() {
 }
 
-
-RenderTransform::RenderTransform(const RenderTransform* lhs, const RenderTransform* rhs)
-{
+RenderTransform::RenderTransform(const RenderTransform* lhs, const RenderTransform* rhs) {
     m.e11 = lhs->m.e11 * rhs->m.e11 + lhs->m.e12 * rhs->m.e21 + lhs->m.e13 * rhs->m.e31;
     m.e12 = lhs->m.e11 * rhs->m.e12 + lhs->m.e12 * rhs->m.e22 + lhs->m.e13 * rhs->m.e32;
     m.e13 = lhs->m.e11 * rhs->m.e13 + lhs->m.e12 * rhs->m.e23 + lhs->m.e13 * rhs->m.e33;

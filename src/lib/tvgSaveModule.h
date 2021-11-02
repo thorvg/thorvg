@@ -24,18 +24,17 @@
 
 #include "tvgIteratorAccessor.h"
 
-namespace tvg
-{
+namespace tvg {
 
-class SaveModule : public IteratorAccessor
-{
-public:
-    virtual ~SaveModule() {}
+class SaveModule : public IteratorAccessor {
+  public:
+    virtual ~SaveModule() {
+    }
 
     virtual bool save(Paint* paint, const string& path, bool compress) = 0;
     virtual bool close() = 0;
 };
 
-}
+} // namespace tvg
 
 #endif //_TVG_SAVE_MODULE_H_

@@ -1,0 +1,28 @@
+---
+# We'll use defaults from the LLVM style, but with 4 columns indentation.
+BasedOnStyle: LLVM
+IndentWidth: 4
+---
+Language: Cpp
+# Force pointers to the type for C++.
+DerivePointerAlignment: false
+PointerAlignment: Left
+AllowShortLambdasOnASingleLine: Empty
+AllowShortIfStatementsOnASingleLine: Always
+AllowShortFunctionsOnASingleLine: None
+ColumnLimit: 0
+AlignAfterOpenBracket: Align
+AllowShortLoopsOnASingleLine: true
+AlignConsecutiveMacros: true
+SortIncludes: false
+BraceWrapping:
+  AfterCaseLabel: false
+  AfterClass: false
+  AfterEnum: false
+  AfterNamespace: false
+  AfterStruct: false
+  AfterUnion: false
+  BeforeElse: false
+  BeforeWhile: false
+  AfterControlStatement: Never
+...

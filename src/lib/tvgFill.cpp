@@ -25,24 +25,19 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-
 /************************************************************************/
 /* External Class Implementation                                        */
 /************************************************************************/
 
-Fill::Fill():pImpl(new Impl())
-{
+Fill::Fill()
+    : pImpl(new Impl()) {
 }
 
-
-Fill::~Fill()
-{
-    delete(pImpl);
+Fill::~Fill() {
+    delete (pImpl);
 }
 
-
-Result Fill::colorStops(const ColorStop* colorStops, uint32_t cnt) noexcept
-{
+Result Fill::colorStops(const ColorStop* colorStops, uint32_t cnt) noexcept {
     if ((!colorStops && cnt > 0) || (colorStops && cnt == 0)) return Result::InvalidArguments;
 
     if (cnt == 0) {
@@ -64,45 +59,33 @@ Result Fill::colorStops(const ColorStop* colorStops, uint32_t cnt) noexcept
     return Result::Success;
 }
 
-
-uint32_t Fill::colorStops(const ColorStop** colorStops) const noexcept
-{
+uint32_t Fill::colorStops(const ColorStop** colorStops) const noexcept {
     if (colorStops) *colorStops = pImpl->colorStops;
 
     return pImpl->cnt;
 }
 
-
-Result Fill::spread(FillSpread s) noexcept
-{
+Result Fill::spread(FillSpread s) noexcept {
     pImpl->spread = s;
 
     return Result::Success;
 }
 
-
-FillSpread Fill::spread() const noexcept
-{
+FillSpread Fill::spread() const noexcept {
     return pImpl->spread;
 }
 
-
-Result Fill::transform(const Matrix& m) noexcept
-{
+Result Fill::transform(const Matrix& m) noexcept {
     if (!pImpl->transform) pImpl->transform = new Matrix();
     *pImpl->transform = m;
     return Result::Success;
 }
 
-
-Matrix Fill::transform() const noexcept
-{
+Matrix Fill::transform() const noexcept {
     if (pImpl->transform) return *pImpl->transform;
     return {1, 0, 0, 0, 1, 0, 0, 0, 1};
 }
 
-
-Fill* Fill::duplicate() const noexcept
-{
+Fill* Fill::duplicate() const noexcept {
     return pImpl->duplicate();
 }

@@ -24,25 +24,23 @@
 
 #include "tvgCommon.h"
 
-namespace tvg
-{
+namespace tvg {
 
 #define BEZIER_EPSILON 1e-4f
 
-struct Bezier
-{
+struct Bezier {
     Point start;
     Point ctrl1;
     Point ctrl2;
     Point end;
 };
 
-void bezSplit(const Bezier&cur, Bezier& left, Bezier& right);
+void bezSplit(const Bezier& cur, Bezier& left, Bezier& right);
 float bezLength(const Bezier& cur);
 void bezSplitLeft(Bezier& cur, float at, Bezier& left);
 float bezAt(const Bezier& bz, float at);
 void bezSplitAt(const Bezier& cur, float at, Bezier& left, Bezier& right);
 
-}
+} // namespace tvg
 
 #endif //_TVG_BEZIER_H_
