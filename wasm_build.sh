@@ -8,8 +8,8 @@ fi
 
 if [ ! -d "./builddir_wasm" ]; then
     sed "s|EMSDK:|$1|g" wasm_cross.txt > /tmp/.wasm_cross.txt
-    meson -Dbindings=[''] -Db_lto=true -Ddefault_library=static -Dvector=false -Dlog=true --cross-file /tmp/.wasm_cross.txt builddir_wasm
-    cp ./test/wasm_test.html builddir_wasm/src/index.html
+    meson -Db_lto=true -Ddefault_library=static -Dstatic=true -Dloaders=all -Dsavers=tvg -Dvector=false -Dlog=true --cross-file /tmp/.wasm_cross.txt builddir_wasm
+    cp ./test/wasm/wasm_test.html builddir_wasm/src/index.html
 fi
 
 ninja -C builddir_wasm/
