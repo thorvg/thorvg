@@ -146,6 +146,10 @@ int main(int argc, char **argv)
     for (auto input : inputs) {
 
         auto path = getpath(input);
+        if (!path) {
+            cout << "Invalid file or path name: \"" << input << "\"" << endl;
+            continue;
+        }
 
         if (auto dir = opendir(path)) {
             //load from directory
