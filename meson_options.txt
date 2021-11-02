@@ -47,3 +47,8 @@ option('log',
     type: 'boolean',
     value: false,
     description: 'Enable log message')
+
+option('static',
+    type: 'boolean',
+    value: false,
+    description: 'Enable to use static library(png, jpg)')
