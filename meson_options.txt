@@ -51,4 +51,4 @@ option('log',
 option('static',
     type: 'boolean',
     value: false,
-    description: 'Enable to use static library(png, jpg)')
+    description: 'Force to use static linking modules in thorvg')
