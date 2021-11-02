@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['thorvg_222',['ThorVG',['../group__ThorVG.html',1,'']]]
+  ['canvas_504',['Canvas',['../group__ThorVGCapi__Canvas.html',1,'']]]
 ];
