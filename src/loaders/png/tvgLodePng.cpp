@@ -1122,9 +1122,6 @@ static void lodepng_decompress_settings_init(LodePNGDecompressSettings* settings
 }
 
 
-const LodePNGDecompressSettings lodepng_default_decompress_settings = {0, 0, 0, 0, 0};
-
-
 /* ////////////////////////////////////////////////////////////////////////// */
 /* ////////////////////////////////////////////////////////////////////////// */
 /* // End of Zlib related code. Begin of PNG related code.                 // */
