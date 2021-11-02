@@ -24,7 +24,7 @@
   <td id="projectlogo"><img alt="Logo" src="small_logo.svg"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">ThorVG
-   &#160;<span id="projectnumber">v0.5</span>
+   &#160;<span id="projectnumber">v0.6</span>
    </div>
   </td>
  </tr>
@@ -84,7 +84,7 @@ Inheritance diagram for Paint:</div>
 <div class="center"><img src="classtvg_1_1Paint__inherit__graph.png" border="0" usemap="#Paint_inherit__map" alt="Inheritance graph"/></div>
 <map name="Paint_inherit__map" id="Paint_inherit__map">
 <area shape="rect" title="An abstract class for managing graphical elements." alt="" coords="99,5,154,32"/>
-<area shape="rect" href="classtvg_1_1Picture.html" title="A class representing an image read in one of the supported formats: raw, svg, png and etc...." alt="" coords="5,80,72,107"/>
+<area shape="rect" href="classtvg_1_1Picture.html" title="A class representing an image read in one of the supported formats: raw, svg, png,..." alt="" coords="5,80,72,107"/>
 <area shape="rect" href="classtvg_1_1Scene.html" title="A class to composite children paints." alt="" coords="96,80,157,107"/>
 <area shape="rect" href="classtvg_1_1Shape.html" title="A class representing two&#45;dimensional figures and their properties." alt="" coords="182,80,245,107"/>
 </map>
@@ -128,6 +128,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:aefe4ade5b1b6bc13d518bd5f968af3ee"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__ThorVG.html#gaabdf94ada64e69d06deabc5aa6576f87">CompositeMethod</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Paint.html#aefe4ade5b1b6bc13d518bd5f968af3ee">composite</a> (const <a class="el" href="classtvg_1_1Paint.html">Paint</a> **target) const noexcept</td></tr>
 <tr class="memdesc:aefe4ade5b1b6bc13d518bd5f968af3ee"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets the composition target object and the composition method.  <a href="classtvg_1_1Paint.html#aefe4ade5b1b6bc13d518bd5f968af3ee">More...</a><br /></td></tr>
 <tr class="separator:aefe4ade5b1b6bc13d518bd5f968af3ee"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a87a69d60151166624e63799203acbd1d"><td class="memItemLeft" align="right" valign="top">uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Paint.html#a87a69d60151166624e63799203acbd1d">identifier</a> () const</td></tr>
+<tr class="memdesc:a87a69d60151166624e63799203acbd1d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return the unique id value of the paint instance.  <a href="classtvg_1_1Paint.html#a87a69d60151166624e63799203acbd1d">More...</a><br /></td></tr>
+<tr class="separator:a87a69d60151166624e63799203acbd1d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>An abstract class for managing graphical elements. </p>
@@ -248,13 +251,14 @@ Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Gets the axis-aligned bounding box of the paint object. </p>
+<p>In case <code>transform</code> is <code>true</code>, all object's transformations are applied first, and then the bounding box is established. Otherwise, the bounding box is determined before any transformations.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[out]</td><td class="paramname">x</td><td>The x coordinate of the upper left corner of the object. </td></tr>
     <tr><td class="paramdir">[out]</td><td class="paramname">y</td><td>The y coordinate of the upper left corner of the object. </td></tr>
     <tr><td class="paramdir">[out]</td><td class="paramname">w</td><td>The width of the object. </td></tr>
     <tr><td class="paramdir">[out]</td><td class="paramname">h</td><td>The height of the object. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">transformed</td><td>if <code>true</code>, apply the transformation of the paint.</td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">transformed</td><td>If <code>true</code>, the paint's transformations are taken into account, otherwise they aren't.</td></tr>
   </table>
   </dd>
 </dl>
@@ -372,6 +376,36 @@ Public Member Functions</h2></td></tr>
 <p>Duplicates the object. </p>
 <p>Creates a new object and sets its all properties as in the original object.</p>
 <dl class="section return"><dt>Returns</dt><dd>The created object when succeed, <code>nullptr</code> otherwise. </dd></dl>
+
+</div>
+</div>
+<a id="a87a69d60151166624e63799203acbd1d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a87a69d60151166624e63799203acbd1d">&#9670;&nbsp;</a></span>identifier()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">uint32_t identifier </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Return the unique id value of the paint instance. </p>
+<p>This method can be called for checking the current concrete instance type.</p>
+<dl class="section return"><dt>Returns</dt><dd>The type id of the <a class="el" href="classtvg_1_1Paint.html" title="An abstract class for managing graphical elements.">Paint</a> instance.</dd></dl>
+<p>@BETA_API </p>
 
 </div>
 </div>

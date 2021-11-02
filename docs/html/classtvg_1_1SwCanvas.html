@@ -24,7 +24,7 @@
   <td id="projectlogo"><img alt="Logo" src="small_logo.svg"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">ThorVG
-   &#160;<span id="projectnumber">v0.5</span>
+   &#160;<span id="projectnumber">v0.6</span>
    </div>
   </td>
  </tr>
@@ -89,11 +89,22 @@ Inheritance diagram for SwCanvas:</div>
 <area shape="rect" href="classtvg_1_1Canvas.html" title="An abstract class for drawing graphical elements." alt="" coords="15,5,85,32"/>
 </map>
 <center><span class="legend">[<a href="graph_legend.html">legend</a>]</span></center></div>
+<div class="dynheader">
+Collaboration diagram for SwCanvas:</div>
+<div class="dyncontent">
+<div class="center"><img src="classtvg_1_1SwCanvas__coll__graph.png" border="0" usemap="#SwCanvas_coll__map" alt="Collaboration graph"/></div>
+<map name="SwCanvas_coll__map" id="SwCanvas_coll__map">
+<area shape="rect" title="A class for the rendering graphical elements with a software raster engine." alt="" coords="5,80,95,107"/>
+<area shape="rect" href="classtvg_1_1Canvas.html" title="An abstract class for drawing graphical elements." alt="" coords="15,5,85,32"/>
+</map>
+<center><span class="legend">[<a href="graph_legend.html">legend</a>]</span></center></div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
 Public Types</h2></td></tr>
 <tr class="memitem:a7a7e24cdb2a27271343f0adceff89f65"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1SwCanvas.html#a7a7e24cdb2a27271343f0adceff89f65">Colorspace</a> { <a class="el" href="classtvg_1_1SwCanvas.html#a7a7e24cdb2a27271343f0adceff89f65adb1b146d65c52857a5a4af54e5006101">ABGR8888</a> = 0, 
-<a class="el" href="classtvg_1_1SwCanvas.html#a7a7e24cdb2a27271343f0adceff89f65af540c373a71dee269827b0d12026de80">ARGB8888</a>
+<a class="el" href="classtvg_1_1SwCanvas.html#a7a7e24cdb2a27271343f0adceff89f65af540c373a71dee269827b0d12026de80">ARGB8888</a>, 
+<a class="el" href="classtvg_1_1SwCanvas.html#a7a7e24cdb2a27271343f0adceff89f65a991b20672747a79379896e54794fdb85">ABGR8888_STRAIGHT</a>, 
+<a class="el" href="classtvg_1_1SwCanvas.html#a7a7e24cdb2a27271343f0adceff89f65a6cb891fcc637047868e6bcade0a6d608">ARGB8888_STRAIGHT</a>
  }</td></tr>
 <tr class="memdesc:a7a7e24cdb2a27271343f0adceff89f65"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enumeration specifying the methods of combining the 8-bit color channels into 32-bit color.  <a href="classtvg_1_1SwCanvas.html#a7a7e24cdb2a27271343f0adceff89f65">More...</a><br /></td></tr>
 <tr class="separator:a7a7e24cdb2a27271343f0adceff89f65"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -126,7 +137,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:a89ac8a85a8c22723af9fb07c098472b3 inherit pub_methods_classtvg_1_1Canvas"><td class="mdescLeft">&#160;</td><td class="mdescRight">Request the canvas to update the paint objects.  <a href="classtvg_1_1Canvas.html#a89ac8a85a8c22723af9fb07c098472b3">More...</a><br /></td></tr>
 <tr class="separator:a89ac8a85a8c22723af9fb07c098472b3 inherit pub_methods_classtvg_1_1Canvas"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aabf9e5a14da3b4bfd5883c2b4459abd0 inherit pub_methods_classtvg_1_1Canvas"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Canvas.html#aabf9e5a14da3b4bfd5883c2b4459abd0">draw</a> () noexcept</td></tr>
-<tr class="memdesc:aabf9e5a14da3b4bfd5883c2b4459abd0 inherit pub_methods_classtvg_1_1Canvas"><td class="mdescLeft">&#160;</td><td class="mdescRight">Request the canvas to draw the <a class="el" href="classtvg_1_1Paint.html" title="An abstract class for managing graphical elements.">Paint</a> objects.  <a href="classtvg_1_1Canvas.html#aabf9e5a14da3b4bfd5883c2b4459abd0">More...</a><br /></td></tr>
+<tr class="memdesc:aabf9e5a14da3b4bfd5883c2b4459abd0 inherit pub_methods_classtvg_1_1Canvas"><td class="mdescLeft">&#160;</td><td class="mdescRight">Requests the canvas to draw the <a class="el" href="classtvg_1_1Paint.html" title="An abstract class for managing graphical elements.">Paint</a> objects.  <a href="classtvg_1_1Canvas.html#aabf9e5a14da3b4bfd5883c2b4459abd0">More...</a><br /></td></tr>
 <tr class="separator:aabf9e5a14da3b4bfd5883c2b4459abd0 inherit pub_methods_classtvg_1_1Canvas"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:adbca600af79f9a0b8e8366e3be7450e9 inherit pub_methods_classtvg_1_1Canvas"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Canvas.html#adbca600af79f9a0b8e8366e3be7450e9">sync</a> () noexcept</td></tr>
 <tr class="memdesc:adbca600af79f9a0b8e8366e3be7450e9 inherit pub_methods_classtvg_1_1Canvas"><td class="mdescLeft">&#160;</td><td class="mdescRight">Guarantees that drawing task is finished.  <a href="classtvg_1_1Canvas.html#adbca600af79f9a0b8e8366e3be7450e9">More...</a><br /></td></tr>
@@ -155,9 +166,13 @@ Static Public Member Functions</h2></td></tr>
 
 <p>Enumeration specifying the methods of combining the 8-bit color channels into 32-bit color. </p>
 <table class="fieldtable">
-<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a7a7e24cdb2a27271343f0adceff89f65adb1b146d65c52857a5a4af54e5006101"></a>ABGR8888&#160;</td><td class="fielddoc"><p>The channels are joined in the order: alpha, blue, green, red. </p>
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a7a7e24cdb2a27271343f0adceff89f65adb1b146d65c52857a5a4af54e5006101"></a>ABGR8888&#160;</td><td class="fielddoc"><p>The channels are joined in the order: alpha, blue, green, red. Colors are alpha-premultiplied. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="a7a7e24cdb2a27271343f0adceff89f65af540c373a71dee269827b0d12026de80"></a>ARGB8888&#160;</td><td class="fielddoc"><p>The channels are joined in the order: alpha, red, green, blue. </p>
+<tr><td class="fieldname"><a id="a7a7e24cdb2a27271343f0adceff89f65af540c373a71dee269827b0d12026de80"></a>ARGB8888&#160;</td><td class="fielddoc"><p>The channels are joined in the order: alpha, red, green, blue. Colors are alpha-premultiplied. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a7a7e24cdb2a27271343f0adceff89f65a991b20672747a79379896e54794fdb85"></a>ABGR8888_STRAIGHT&#160;</td><td class="fielddoc"><p>@BETA_API The channels are joined in the order: alpha, blue, green, red. Colors are un-alpha-premultiplied. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a7a7e24cdb2a27271343f0adceff89f65a6cb891fcc637047868e6bcade0a6d608"></a>ARGB8888_STRAIGHT&#160;</td><td class="fielddoc"><p>@BETA_API The channels are joined in the order: alpha, red, green, blue. Colors are un-alpha-premultiplied. </p>
 </td></tr>
 </table>
 
@@ -253,7 +268,7 @@ Static Public Member Functions</h2></td></tr>
 <dl class="retval"><dt>Return values</dt><dd>
   <table class="retval">
     <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a505a83f220c02df2f85c3810cd9ceb38" title="The value returned in case of a correct request execution.">Result::Success</a></td><td>When succeed. </td></tr>
-    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a119732ff568bf103d744e930ae2404f1" title="The value returned in case the request cannot be processed - e.g. asking for properties of an object,...">Result::InsufficientCondition</a></td><td>If the canvas has no paints. </td></tr>
+    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a119732ff568bf103d744e930ae2404f1" title="The value returned in case the request cannot be processed - e.g. asking for properties of an object,...">Result::InsufficientCondition</a></td><td>If the canvas contains some paints already. </td></tr>
     <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066aa0cfd518e4385f31d38720579321ed29" title="The value returned in case of choosing unsupported options.">Result::NonSupport</a></td><td>In case the software engine is not supported.</td></tr>
   </table>
   </dd>
@@ -337,7 +352,7 @@ Static Public Member Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section warning"><dt>Warning</dt><dd>Do not access <code>buffer</code> during <a class="el" href="classtvg_1_1Canvas.html#aabf9e5a14da3b4bfd5883c2b4459abd0" title="Request the canvas to draw the Paint objects.">Canvas::draw()</a> - <a class="el" href="classtvg_1_1Canvas.html#adbca600af79f9a0b8e8366e3be7450e9" title="Guarantees that drawing task is finished.">Canvas::sync()</a>. It should not be accessed while TVG is writing on it. </dd></dl>
+<dl class="section warning"><dt>Warning</dt><dd>Do not access <code>buffer</code> during <a class="el" href="classtvg_1_1Canvas.html#aabf9e5a14da3b4bfd5883c2b4459abd0" title="Requests the canvas to draw the Paint objects.">Canvas::draw()</a> - <a class="el" href="classtvg_1_1Canvas.html#adbca600af79f9a0b8e8366e3be7450e9" title="Guarantees that drawing task is finished.">Canvas::sync()</a>. It should not be accessed while TVG is writing on it. </dd></dl>
 
 </div>
 </div>

@@ -24,7 +24,7 @@
   <td id="projectlogo"><img alt="Logo" src="small_logo.svg"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">ThorVG
-   &#160;<span id="projectnumber">v0.5</span>
+   &#160;<span id="projectnumber">v0.6</span>
    </div>
   </td>
  </tr>
@@ -88,6 +88,15 @@ Inheritance diagram for Scene:</div>
 <area shape="rect" href="classtvg_1_1Paint.html" title="An abstract class for managing graphical elements." alt="" coords="9,5,63,32"/>
 </map>
 <center><span class="legend">[<a href="graph_legend.html">legend</a>]</span></center></div>
+<div class="dynheader">
+Collaboration diagram for Scene:</div>
+<div class="dyncontent">
+<div class="center"><img src="classtvg_1_1Scene__coll__graph.png" border="0" usemap="#Scene_coll__map" alt="Collaboration graph"/></div>
+<map name="Scene_coll__map" id="Scene_coll__map">
+<area shape="rect" title="A class to composite children paints." alt="" coords="5,80,67,107"/>
+<area shape="rect" href="classtvg_1_1Paint.html" title="An abstract class for managing graphical elements." alt="" coords="9,5,63,32"/>
+</map>
+<center><span class="legend">[<a href="graph_legend.html">legend</a>]</span></center></div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
@@ -137,12 +146,18 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:aefe4ade5b1b6bc13d518bd5f968af3ee inherit pub_methods_classtvg_1_1Paint"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__ThorVG.html#gaabdf94ada64e69d06deabc5aa6576f87">CompositeMethod</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Paint.html#aefe4ade5b1b6bc13d518bd5f968af3ee">composite</a> (const <a class="el" href="classtvg_1_1Paint.html">Paint</a> **target) const noexcept</td></tr>
 <tr class="memdesc:aefe4ade5b1b6bc13d518bd5f968af3ee inherit pub_methods_classtvg_1_1Paint"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets the composition target object and the composition method.  <a href="classtvg_1_1Paint.html#aefe4ade5b1b6bc13d518bd5f968af3ee">More...</a><br /></td></tr>
 <tr class="separator:aefe4ade5b1b6bc13d518bd5f968af3ee inherit pub_methods_classtvg_1_1Paint"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a87a69d60151166624e63799203acbd1d inherit pub_methods_classtvg_1_1Paint"><td class="memItemLeft" align="right" valign="top">uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Paint.html#a87a69d60151166624e63799203acbd1d">identifier</a> () const</td></tr>
+<tr class="memdesc:a87a69d60151166624e63799203acbd1d inherit pub_methods_classtvg_1_1Paint"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return the unique id value of the paint instance.  <a href="classtvg_1_1Paint.html#a87a69d60151166624e63799203acbd1d">More...</a><br /></td></tr>
+<tr class="separator:a87a69d60151166624e63799203acbd1d inherit pub_methods_classtvg_1_1Paint"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
 <tr class="memitem:a01a17bb81862d89f2a0feb5d9818a149"><td class="memItemLeft" align="right" valign="top">static std::unique_ptr&lt; <a class="el" href="classtvg_1_1Scene.html">Scene</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Scene.html#a01a17bb81862d89f2a0feb5d9818a149">gen</a> () noexcept</td></tr>
 <tr class="memdesc:a01a17bb81862d89f2a0feb5d9818a149"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates a new <a class="el" href="classtvg_1_1Scene.html" title="A class to composite children paints.">Scene</a> object.  <a href="classtvg_1_1Scene.html#a01a17bb81862d89f2a0feb5d9818a149">More...</a><br /></td></tr>
 <tr class="separator:a01a17bb81862d89f2a0feb5d9818a149"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a13df43a335dadaea01769a726dc9ddfd"><td class="memItemLeft" align="right" valign="top">static uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Scene.html#a13df43a335dadaea01769a726dc9ddfd">identifier</a> () noexcept</td></tr>
+<tr class="memdesc:a13df43a335dadaea01769a726dc9ddfd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return the unique id value of this class.  <a href="classtvg_1_1Scene.html#a13df43a335dadaea01769a726dc9ddfd">More...</a><br /></td></tr>
+<tr class="separator:a13df43a335dadaea01769a726dc9ddfd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>A class to composite children paints. </p>
@@ -181,9 +196,7 @@ Static Public Member Functions</h2></td></tr>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a505a83f220c02df2f85c3810cd9ceb38" title="The value returned in case of a correct request execution.">Result::Success</a> when succeed</dd></dl>
-<dl class="section warning"><dt>Warning</dt><dd>If you don't free the paints they become dangled. They are supposed to be reused, otherwise you are responsible for their lives. Thus please use the <code>free</code> argument only when you know how it works, otherwise it's not recommended. </dd>
-<dd>
-Please do not use it, this API is not official one. It could be modified in the next version.</dd></dl>
+<dl class="section warning"><dt>Warning</dt><dd>If you don't free the paints they become dangled. They are supposed to be reused, otherwise you are responsible for their lives. Thus please use the <code>free</code> argument only when you know how it works, otherwise it's not recommended.</dd></dl>
 <dl class="section since"><dt>Since</dt><dd>0.2 </dd></dl>
 
 </div>
@@ -216,6 +229,36 @@ Please do not use it, this API is not official one. It could be modified in the 
 
 </div>
 </div>
+<a id="a13df43a335dadaea01769a726dc9ddfd"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a13df43a335dadaea01769a726dc9ddfd">&#9670;&nbsp;</a></span>identifier()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static uint32_t identifier </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Return the unique id value of this class. </p>
+<p>This method can be referred for identifying the <a class="el" href="classtvg_1_1Scene.html" title="A class to composite children paints.">Scene</a> class type.</p>
+<dl class="section return"><dt>Returns</dt><dd>The type id of the <a class="el" href="classtvg_1_1Scene.html" title="A class to composite children paints.">Scene</a> class.</dd></dl>
+<p>@BETA_API </p>
+
+</div>
+</div>
 <a id="a19240cd5b53571da718fabef8afb7103"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a19240cd5b53571da718fabef8afb7103">&#9670;&nbsp;</a></span>push()</h2>
 
@@ -241,7 +284,7 @@ Please do not use it, this API is not official one. It could be modified in the 
 </div><div class="memdoc">
 
 <p>Passes drawing elements to the <a class="el" href="classtvg_1_1Scene.html" title="A class to composite children paints.">Scene</a> using <a class="el" href="classtvg_1_1Paint.html" title="An abstract class for managing graphical elements.">Paint</a> objects. </p>
-<p>Only pushed paints in the scene will be drawing targets. They are retained by the scene until you call <a class="el" href="classtvg_1_1Scene.html#ac020ea777be697067c6f5c8b18f6a4ed" title="Sets the total number of the paints pushed into the scene to be zero. Depending on the value of the f...">Scene::clear()</a>. If you know the number of the pushed objects in the advance, please call <a class="el" href="classtvg_1_1Scene.html#a7e23b9ddc266b5910001174b3c84a485" title="Sets the size of the container, where all the paints pushed into the Scene are stored.">Scene::reserve()</a>.</p>
+<p>Only the paints pushed into the scene will be the drawn targets. The paints are retained by the scene until <a class="el" href="classtvg_1_1Scene.html#ac020ea777be697067c6f5c8b18f6a4ed" title="Sets the total number of the paints pushed into the scene to be zero. Depending on the value of the f...">Scene::clear()</a> is called. If you know the number of the pushed objects in advance, please call <a class="el" href="classtvg_1_1Scene.html#a7e23b9ddc266b5910001174b3c84a485" title="Sets the size of the container, where all the paints pushed into the Scene are stored.">Scene::reserve()</a>.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">paint</td><td>A <a class="el" href="classtvg_1_1Paint.html" title="An abstract class for managing graphical elements.">Paint</a> object to be drawn.</td></tr>
@@ -286,7 +329,7 @@ Please do not use it, this API is not official one. It could be modified in the 
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a505a83f220c02df2f85c3810cd9ceb38" title="The value returned in case of a correct request execution.">Result::Success</a> when succeed. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a505a83f220c02df2f85c3810cd9ceb38" title="The value returned in case of a correct request execution.">Result::Success</a> when succeed, <a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066abc2b4181e818f2e9b52b2bc54dd55907" title="The value returned in case of unsuccessful memory allocation.">Result::FailedAllocation</a> otherwise. </dd></dl>
 
 </div>
 </div>

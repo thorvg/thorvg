@@ -24,7 +24,7 @@
   <td id="projectlogo"><img alt="Logo" src="small_logo.svg"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">ThorVG
-   &#160;<span id="projectnumber">v0.5</span>
+   &#160;<span id="projectnumber">v0.6</span>
    </div>
   </td>
  </tr>
@@ -104,7 +104,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:a89ac8a85a8c22723af9fb07c098472b3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Request the canvas to update the paint objects.  <a href="classtvg_1_1Canvas.html#a89ac8a85a8c22723af9fb07c098472b3">More...</a><br /></td></tr>
 <tr class="separator:a89ac8a85a8c22723af9fb07c098472b3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aabf9e5a14da3b4bfd5883c2b4459abd0"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Canvas.html#aabf9e5a14da3b4bfd5883c2b4459abd0">draw</a> () noexcept</td></tr>
-<tr class="memdesc:aabf9e5a14da3b4bfd5883c2b4459abd0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Request the canvas to draw the <a class="el" href="classtvg_1_1Paint.html" title="An abstract class for managing graphical elements.">Paint</a> objects.  <a href="classtvg_1_1Canvas.html#aabf9e5a14da3b4bfd5883c2b4459abd0">More...</a><br /></td></tr>
+<tr class="memdesc:aabf9e5a14da3b4bfd5883c2b4459abd0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Requests the canvas to draw the <a class="el" href="classtvg_1_1Paint.html" title="An abstract class for managing graphical elements.">Paint</a> objects.  <a href="classtvg_1_1Canvas.html#aabf9e5a14da3b4bfd5883c2b4459abd0">More...</a><br /></td></tr>
 <tr class="separator:aabf9e5a14da3b4bfd5883c2b4459abd0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:adbca600af79f9a0b8e8366e3be7450e9"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Canvas.html#adbca600af79f9a0b8e8366e3be7450e9">sync</a> () noexcept</td></tr>
 <tr class="memdesc:adbca600af79f9a0b8e8366e3be7450e9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Guarantees that drawing task is finished.  <a href="classtvg_1_1Canvas.html#adbca600af79f9a0b8e8366e3be7450e9">More...</a><br /></td></tr>
@@ -175,7 +175,7 @@ Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Request the canvas to draw the <a class="el" href="classtvg_1_1Paint.html" title="An abstract class for managing graphical elements.">Paint</a> objects. </p>
+<p>Requests the canvas to draw the <a class="el" href="classtvg_1_1Paint.html" title="An abstract class for managing graphical elements.">Paint</a> objects. </p>
 <dl class="section return"><dt>Returns</dt><dd><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a505a83f220c02df2f85c3810cd9ceb38" title="The value returned in case of a correct request execution.">Result::Success</a> when succeed, <a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a119732ff568bf103d744e930ae2404f1" title="The value returned in case the request cannot be processed - e.g. asking for properties of an object,...">Result::InsufficientCondition</a> otherwise.</dd></dl>
 <dl class="section note"><dt>Note</dt><dd>Drawing can be asynchronous if the assigned thread number is greater than zero. To guarantee the drawing is done, call <a class="el" href="classtvg_1_1Canvas.html#adbca600af79f9a0b8e8366e3be7450e9" title="Guarantees that drawing task is finished.">sync()</a> afterwards. </dd></dl>
 <dl class="section see"><dt>See also</dt><dd><a class="el" href="classtvg_1_1Canvas.html#adbca600af79f9a0b8e8366e3be7450e9" title="Guarantees that drawing task is finished.">Canvas::sync()</a> </dd></dl>
@@ -207,7 +207,7 @@ Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Passes drawing elements to the <a class="el" href="classtvg_1_1Canvas.html" title="An abstract class for drawing graphical elements.">Canvas</a> using <a class="el" href="classtvg_1_1Paint.html" title="An abstract class for managing graphical elements.">Paint</a> objects. </p>
-<p>Only pushed paints in the canvas will be drawing targets. They are retained by the canvas until you call <a class="el" href="classtvg_1_1Canvas.html#a99cdb01cd893f4199b521b754d21aefd" title="Sets the total number of the paints pushed into the canvas to be zero. Depending on the value of the ...">Canvas::clear()</a>. If you know the number of the pushed objects in the advance, please call <a class="el" href="classtvg_1_1Canvas.html#a4cff0ab757e1db9077bbecaf25f012ba" title="Sets the size of the container, where all the paints pushed into the Canvas are stored.">Canvas::reserve()</a>.</p>
+<p>Only pushed paints in the canvas will be drawing targets. They are retained by the canvas until you call <a class="el" href="classtvg_1_1Canvas.html#a99cdb01cd893f4199b521b754d21aefd" title="Sets the total number of the paints pushed into the canvas to be zero. Depending on the value of the ...">Canvas::clear()</a>. If you know the number of the pushed objects in advance, please call <a class="el" href="classtvg_1_1Canvas.html#a4cff0ab757e1db9077bbecaf25f012ba" title="Sets the size of the container, where all the paints pushed into the Canvas are stored.">Canvas::reserve()</a>.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">paint</td><td>A <a class="el" href="classtvg_1_1Paint.html" title="An abstract class for managing graphical elements.">Paint</a> object to be drawn.</td></tr>
@@ -289,9 +289,9 @@ Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Guarantees that drawing task is finished. </p>
-<p>The <a class="el" href="classtvg_1_1Canvas.html" title="An abstract class for drawing graphical elements.">Canvas</a> rendering can be performed asynchronously. To make sure that rendering is finished, the <a class="el" href="classtvg_1_1Canvas.html#adbca600af79f9a0b8e8366e3be7450e9" title="Guarantees that drawing task is finished.">sync()</a> must be called after the <a class="el" href="classtvg_1_1Canvas.html#aabf9e5a14da3b4bfd5883c2b4459abd0" title="Request the canvas to draw the Paint objects.">draw()</a> regardless of threading.</p>
+<p>The <a class="el" href="classtvg_1_1Canvas.html" title="An abstract class for drawing graphical elements.">Canvas</a> rendering can be performed asynchronously. To make sure that rendering is finished, the <a class="el" href="classtvg_1_1Canvas.html#adbca600af79f9a0b8e8366e3be7450e9" title="Guarantees that drawing task is finished.">sync()</a> must be called after the <a class="el" href="classtvg_1_1Canvas.html#aabf9e5a14da3b4bfd5883c2b4459abd0" title="Requests the canvas to draw the Paint objects.">draw()</a> regardless of threading.</p>
 <dl class="section return"><dt>Returns</dt><dd><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a505a83f220c02df2f85c3810cd9ceb38" title="The value returned in case of a correct request execution.">Result::Success</a> when succeed, <a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a119732ff568bf103d744e930ae2404f1" title="The value returned in case the request cannot be processed - e.g. asking for properties of an object,...">Result::InsufficientCondition</a> otherwise. </dd></dl>
-<dl class="section see"><dt>See also</dt><dd><a class="el" href="classtvg_1_1Canvas.html#aabf9e5a14da3b4bfd5883c2b4459abd0" title="Request the canvas to draw the Paint objects.">Canvas::draw()</a> </dd></dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="classtvg_1_1Canvas.html#aabf9e5a14da3b4bfd5883c2b4459abd0" title="Requests the canvas to draw the Paint objects.">Canvas::draw()</a> </dd></dl>
 
 </div>
 </div>

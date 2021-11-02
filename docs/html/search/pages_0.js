@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['thorvg_20api_20documentation_217',['ThorVG API Documentation',['../index.html',1,'']]]
+  ['thorvg_20api_20documentation_223',['ThorVG API Documentation',['../index.html',1,'']]]
 ];

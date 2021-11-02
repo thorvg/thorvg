@@ -24,7 +24,7 @@
   <td id="projectlogo"><img alt="Logo" src="small_logo.svg"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">ThorVG
-   &#160;<span id="projectnumber">v0.5</span>
+   &#160;<span id="projectnumber">v0.6</span>
    </div>
   </td>
  </tr>
@@ -73,7 +73,7 @@ $(function() {
 <a href="#pub-static-methods">Static Public Member Functions</a> &#124;
 <a href="classtvg_1_1Saver-members.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">Saver<div class="ingroups"><a class="el" href="group__ThorVG.html">ThorVG</a></div></div>  </div>
+<div class="title">Saver<span class="mlabels"><span class="mlabel">final</span></span><div class="ingroups"><a class="el" href="group__ThorVG.html">ThorVG</a></div></div>  </div>
 </div><!--header-->
 <div class="contents">
 
@@ -97,9 +97,9 @@ Static Public Member Functions</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>A class for exporting a paint object into a specified file, from which to recover the paint data later. </p>
-<p>ThorVG provides a feature for exporting &amp; importing paint data, the <a class="el" href="classtvg_1_1Saver.html" title="A class for exporting a paint object into a specified file, from which to recover the paint data late...">Saver</a> has a role to export it to a file. Basically, this feature is useful when you need to save the composed scene or image from a paint object and recreate it later.</p>
-<p>The file format is decided by the extension name(i.e. "*.tvg") while the supported formats depend on the TVG packaging environment. If it doesn't support the file format, it will return the <code>NonSuppport</code> result by the <a class="el" href="classtvg_1_1Saver.html#acda492a458f3ddc2da01df672ecd85bd" title="Exports the given paint data to the given path.">save()</a> method.</p>
-<p>Once you export a paint to the file successfully, you can recreate it using the <a class="el" href="classtvg_1_1Picture.html" title="A class representing an image read in one of the supported formats: raw, svg, png and etc....">Picture</a> class.</p>
+<p>ThorVG provides a feature for exporting &amp; importing paint data. The <a class="el" href="classtvg_1_1Saver.html" title="A class for exporting a paint object into a specified file, from which to recover the paint data late...">Saver</a> role is to export the paint data to a file. It's useful when you need to save the composed scene or image from a paint object and recreate it later.</p>
+<p>The file format is decided by the extension name(i.e. "*.tvg") while the supported formats depend on the TVG packaging environment. If it doesn't support the file format, the <a class="el" href="classtvg_1_1Saver.html#acda492a458f3ddc2da01df672ecd85bd" title="Exports the given paint data to the given path.">save()</a> method returns the <code>Result::NonSuppport</code> result.</p>
+<p>Once you export a paint to the file successfully, you can recreate it using the <a class="el" href="classtvg_1_1Picture.html" title="A class representing an image read in one of the supported formats: raw, svg, png,...">Picture</a> class.</p>
 <dl class="section see"><dt>See also</dt><dd><a class="el" href="classtvg_1_1Picture.html#aaf06be7d0b572c5ce35315cbddd7d318" title="Loads a picture data directly from a file.">Picture::load()</a></dd></dl>
 <dl class="section since"><dt>Since</dt><dd>0.5 </dd></dl>
 </div><h2 class="groupheader">Member Function Documentation</h2>
@@ -173,20 +173,22 @@ Static Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Exports the given <code>paint</code> data to the given <code>path</code>. </p>
-<p>If the saver module supports any compression mechanism, it will optimize the data size. This might affect the encoding/decoding time slow down in cases, You can turn off the compression if your system whole focus on the speed.</p>
+<p>If the saver module supports any compression mechanism, it will optimize the data size. This might affect the encoding/decoding time in some cases. You can turn off the compression if you wish to optimize for speed.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">paint</td><td>The paint to be saved with all its associated properties. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">path</td><td>A path to the file, in which the paint data is to be saved. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">compress</td><td>Use data compression if it's available.</td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">compress</td><td>If <code>true</code> then compress data if possible.</td></tr>
   </table>
   </dd>
 </dl>
 <dl class="retval"><dt>Return values</dt><dd>
   <table class="retval">
     <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a505a83f220c02df2f85c3810cd9ceb38" title="The value returned in case of a correct request execution.">Result::Success</a></td><td>When succeed. </td></tr>
-    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066aa0cfd518e4385f31d38720579321ed29" title="The value returned in case of choosing unsupported options.">Result::NonSupport</a></td><td>When trying to save a file with an unknown extension nor non supported format. </td></tr>
-    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a88183b946cc5f0e8c96b2e66e1c74a7e" title="The value returned in all other cases.">Result::Unknown</a></td><td>Others.</td></tr>
+    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a119732ff568bf103d744e930ae2404f1" title="The value returned in case the request cannot be processed - e.g. asking for properties of an object,...">Result::InsufficientCondition</a></td><td>If currently saving other resources. </td></tr>
+    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066aa0cfd518e4385f31d38720579321ed29" title="The value returned in case of choosing unsupported options.">Result::NonSupport</a></td><td>When trying to save a file with an unknown extension or in an unsupported format. </td></tr>
+    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066ae8c0c653fcac575c31470f0f800991c6" title="The value returned in the event of bad memory handling - e.g. failing in pointer releasing or casting...">Result::MemoryCorruption</a></td><td>An internal error. </td></tr>
+    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a88183b946cc5f0e8c96b2e66e1c74a7e" title="The value returned in all other cases.">Result::Unknown</a></td><td>In case an empty paint is to be saved.</td></tr>
   </table>
   </dd>
 </dl>
@@ -220,11 +222,15 @@ Static Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Guarantees that the saving task is finished. </p>
-<p>The behavior of the saver will work on a sync/async basis, depending on the threading setting of the <a class="el" href="classtvg_1_1Initializer.html" title="A class that enables initialization and termination of the TVG engines.">Initializer</a>. Thus if you wish to have a benefit of it, you must call <a class="el" href="classtvg_1_1Saver.html#a2fdf9b2208358ea10f912b1877733778" title="Guarantees that the saving task is finished.">sync()</a> after the <a class="el" href="classtvg_1_1Saver.html#acda492a458f3ddc2da01df672ecd85bd" title="Exports the given paint data to the given path.">save()</a> in the proper delayed time. Otherwise, you can call <a class="el" href="classtvg_1_1Saver.html#a2fdf9b2208358ea10f912b1877733778" title="Guarantees that the saving task is finished.">sync()</a> immediately.</p>
-<dl class="section return"><dt>Returns</dt><dd><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a505a83f220c02df2f85c3810cd9ceb38" title="The value returned in case of a correct request execution.">Result::Success</a> when succeed. </dd>
-<dd>
-<a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a119732ff568bf103d744e930ae2404f1" title="The value returned in case the request cannot be processed - e.g. asking for properties of an object,...">Result::InsufficientCondition</a> otherwise.</dd></dl>
-<dl class="section note"><dt>Note</dt><dd>The asynchronous tasking is depend on the saver module implementation. </dd></dl>
+<p>The behavior of the <a class="el" href="classtvg_1_1Saver.html" title="A class for exporting a paint object into a specified file, from which to recover the paint data late...">Saver</a> works on a sync/async basis, depending on the threading setting of the <a class="el" href="classtvg_1_1Initializer.html" title="A class that enables initialization and termination of the TVG engines.">Initializer</a>. Thus, if you wish to have a benefit of it, you must call <a class="el" href="classtvg_1_1Saver.html#a2fdf9b2208358ea10f912b1877733778" title="Guarantees that the saving task is finished.">sync()</a> after the <a class="el" href="classtvg_1_1Saver.html#acda492a458f3ddc2da01df672ecd85bd" title="Exports the given paint data to the given path.">save()</a> in the proper delayed time. Otherwise, you can call <a class="el" href="classtvg_1_1Saver.html#a2fdf9b2208358ea10f912b1877733778" title="Guarantees that the saving task is finished.">sync()</a> immediately.</p>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a505a83f220c02df2f85c3810cd9ceb38" title="The value returned in case of a correct request execution.">Result::Success</a></td><td>when succeed. </td></tr>
+    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a119732ff568bf103d744e930ae2404f1" title="The value returned in case the request cannot be processed - e.g. asking for properties of an object,...">Result::InsufficientCondition</a></td><td>otherwise.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section note"><dt>Note</dt><dd>The asynchronous tasking is dependent on the <a class="el" href="classtvg_1_1Saver.html" title="A class for exporting a paint object into a specified file, from which to recover the paint data late...">Saver</a> module implementation. </dd></dl>
 <dl class="section see"><dt>See also</dt><dd><a class="el" href="classtvg_1_1Saver.html#acda492a458f3ddc2da01df672ecd85bd" title="Exports the given paint data to the given path.">Saver::save()</a></dd></dl>
 <dl class="section since"><dt>Since</dt><dd>0.5 </dd></dl>
 

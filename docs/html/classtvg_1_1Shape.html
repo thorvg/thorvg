@@ -24,7 +24,7 @@
   <td id="projectlogo"><img alt="Logo" src="small_logo.svg"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">ThorVG
-   &#160;<span id="projectnumber">v0.5</span>
+   &#160;<span id="projectnumber">v0.6</span>
    </div>
   </td>
  </tr>
@@ -84,6 +84,15 @@ Inheritance diagram for Shape:</div>
 <div class="dyncontent">
 <div class="center"><img src="classtvg_1_1Shape__inherit__graph.png" border="0" usemap="#Shape_inherit__map" alt="Inheritance graph"/></div>
 <map name="Shape_inherit__map" id="Shape_inherit__map">
+<area shape="rect" title="A class representing two&#45;dimensional figures and their properties." alt="" coords="5,80,68,107"/>
+<area shape="rect" href="classtvg_1_1Paint.html" title="An abstract class for managing graphical elements." alt="" coords="9,5,64,32"/>
+</map>
+<center><span class="legend">[<a href="graph_legend.html">legend</a>]</span></center></div>
+<div class="dynheader">
+Collaboration diagram for Shape:</div>
+<div class="dyncontent">
+<div class="center"><img src="classtvg_1_1Shape__coll__graph.png" border="0" usemap="#Shape_coll__map" alt="Collaboration graph"/></div>
+<map name="Shape_coll__map" id="Shape_coll__map">
 <area shape="rect" title="A class representing two&#45;dimensional figures and their properties." alt="" coords="5,80,68,107"/>
 <area shape="rect" href="classtvg_1_1Paint.html" title="An abstract class for managing graphical elements." alt="" coords="9,5,64,32"/>
 </map>
@@ -215,12 +224,18 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:aefe4ade5b1b6bc13d518bd5f968af3ee inherit pub_methods_classtvg_1_1Paint"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__ThorVG.html#gaabdf94ada64e69d06deabc5aa6576f87">CompositeMethod</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Paint.html#aefe4ade5b1b6bc13d518bd5f968af3ee">composite</a> (const <a class="el" href="classtvg_1_1Paint.html">Paint</a> **target) const noexcept</td></tr>
 <tr class="memdesc:aefe4ade5b1b6bc13d518bd5f968af3ee inherit pub_methods_classtvg_1_1Paint"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets the composition target object and the composition method.  <a href="classtvg_1_1Paint.html#aefe4ade5b1b6bc13d518bd5f968af3ee">More...</a><br /></td></tr>
 <tr class="separator:aefe4ade5b1b6bc13d518bd5f968af3ee inherit pub_methods_classtvg_1_1Paint"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a87a69d60151166624e63799203acbd1d inherit pub_methods_classtvg_1_1Paint"><td class="memItemLeft" align="right" valign="top">uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Paint.html#a87a69d60151166624e63799203acbd1d">identifier</a> () const</td></tr>
+<tr class="memdesc:a87a69d60151166624e63799203acbd1d inherit pub_methods_classtvg_1_1Paint"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return the unique id value of the paint instance.  <a href="classtvg_1_1Paint.html#a87a69d60151166624e63799203acbd1d">More...</a><br /></td></tr>
+<tr class="separator:a87a69d60151166624e63799203acbd1d inherit pub_methods_classtvg_1_1Paint"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
 <tr class="memitem:aa91a801f4f9e8fd8e1567d014c280cb9"><td class="memItemLeft" align="right" valign="top">static std::unique_ptr&lt; <a class="el" href="classtvg_1_1Shape.html">Shape</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Shape.html#aa91a801f4f9e8fd8e1567d014c280cb9">gen</a> () noexcept</td></tr>
 <tr class="memdesc:aa91a801f4f9e8fd8e1567d014c280cb9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates a new <a class="el" href="classtvg_1_1Shape.html" title="A class representing two-dimensional figures and their properties.">Shape</a> object.  <a href="classtvg_1_1Shape.html#aa91a801f4f9e8fd8e1567d014c280cb9">More...</a><br /></td></tr>
 <tr class="separator:aa91a801f4f9e8fd8e1567d014c280cb9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a13df43a335dadaea01769a726dc9ddfd"><td class="memItemLeft" align="right" valign="top">static uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Shape.html#a13df43a335dadaea01769a726dc9ddfd">identifier</a> () noexcept</td></tr>
+<tr class="memdesc:a13df43a335dadaea01769a726dc9ddfd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return the unique id value of this class.  <a href="classtvg_1_1Shape.html#a13df43a335dadaea01769a726dc9ddfd">More...</a><br /></td></tr>
+<tr class="separator:a13df43a335dadaea01769a726dc9ddfd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>A class representing two-dimensional figures and their properties. </p>
@@ -668,7 +683,7 @@ Static Public Member Functions</h2></td></tr>
 <p>Sets the fill rule for the <a class="el" href="classtvg_1_1Shape.html" title="A class representing two-dimensional figures and their properties.">Shape</a> object. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">r</td><td>The fill rule value.</td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">r</td><td>The fill rule value. The default value is <code><a class="el" href="group__ThorVG.html#gga9a534b0377c9ca41983d53b0dae0d5a4a268b61c62382fc1f9ca5cf52a4fece32" title="A line from the point to a location outside the shape is drawn. The intersections of the line with th...">FillRule::Winding</a></code>.</td></tr>
   </table>
   </dd>
 </dl>
@@ -888,6 +903,36 @@ Static Public Member Functions</h2></td></tr>
 
 <p>Creates a new <a class="el" href="classtvg_1_1Shape.html" title="A class representing two-dimensional figures and their properties.">Shape</a> object. </p>
 <dl class="section return"><dt>Returns</dt><dd>A new <a class="el" href="classtvg_1_1Shape.html" title="A class representing two-dimensional figures and their properties.">Shape</a> object. </dd></dl>
+
+</div>
+</div>
+<a id="a13df43a335dadaea01769a726dc9ddfd"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a13df43a335dadaea01769a726dc9ddfd">&#9670;&nbsp;</a></span>identifier()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static uint32_t identifier </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Return the unique id value of this class. </p>
+<p>This method can be referred for identifying the <a class="el" href="classtvg_1_1Shape.html" title="A class representing two-dimensional figures and their properties.">Shape</a> class type.</p>
+<dl class="section return"><dt>Returns</dt><dd>The type id of the <a class="el" href="classtvg_1_1Shape.html" title="A class representing two-dimensional figures and their properties.">Shape</a> class.</dd></dl>
+<p>@BETA_API </p>
 
 </div>
 </div>
@@ -1132,13 +1177,11 @@ Static Public Member Functions</h2></td></tr>
   <table class="retval">
     <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a505a83f220c02df2f85c3810cd9ceb38" title="The value returned in case of a correct request execution.">Result::Success</a></td><td>When succeed. </td></tr>
     <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066abc2b4181e818f2e9b52b2bc54dd55907" title="The value returned in case of unsuccessful memory allocation.">Result::FailedAllocation</a></td><td>An internal error with a memory allocation for an object to be dashed. </td></tr>
-    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066ae73a2e92f1c87086c838b442552a4775" title="The value returned in the event of a problem with the arguments given to the API - e....">Result::InvalidArguments</a></td><td>In case that either <code>dashPattern</code> is <code>nullptr</code> or <code>cnt</code> is zero.</td></tr>
+    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066ae73a2e92f1c87086c838b442552a4775" title="The value returned in the event of a problem with the arguments given to the API - e....">Result::InvalidArguments</a></td><td>In case <code>dashPattern</code> is <code>nullptr</code> and <code>cnt</code> &gt; 0, <code>cnt</code> is zero, any of the dash pattern values is zero or less.</td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section note"><dt>Note</dt><dd>If any of the dash pattern values is zero, this function has no effect. </dd>
-<dd>
-To reset the stroke dash pattern, pass <code>nullptr</code> to <code>dashPattern</code> and zero to <code>cnt</code>. </dd></dl>
+<dl class="section note"><dt>Note</dt><dd>To reset the stroke dash pattern, pass <code>nullptr</code> to <code>dashPattern</code> and zero to <code>cnt</code>. </dd></dl>
 <dl class="section warning"><dt>Warning</dt><dd><code>cnt</code> must be greater than 1 if the dash pattern is valid. </dd></dl>
 
 </div>
