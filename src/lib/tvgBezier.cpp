@@ -19,16 +19,15 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+#include "tvgBezier.h"
 #include <float.h>
 #include <math.h>
-#include "tvgBezier.h"
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-static float _lineLength(const Point& pt1, const Point& pt2)
-{
+static float _lineLength(const Point& pt1, const Point& pt2) {
     /* approximate sqrt(x*x + y*y) using alpha max plus beta min algorithm.
        With alpha = 1, beta = 3/8, giving results with the largest error less
        than 7% compared to the exact value. */
@@ -38,16 +37,13 @@ static float _lineLength(const Point& pt1, const Point& pt2)
     return (diff.x > diff.y) ? (diff.x + diff.y * 0.375f) : (diff.y + diff.x * 0.375f);
 }
 
-
 /************************************************************************/
 /* External Class Implementation                                        */
 /************************************************************************/
 
-namespace tvg
-{
+namespace tvg {
 
-void bezSplit(const Bezier&cur, Bezier& left, Bezier& right)
-{
+void bezSplit(const Bezier& cur, Bezier& left, Bezier& right) {
     auto c = (cur.ctrl1.x + cur.ctrl2.x) * 0.5f;
     left.ctrl1.x = (cur.start.x + cur.ctrl1.x) * 0.5f;
     right.ctrl2.x = (cur.ctrl2.x + cur.end.x) * 0.5f;
@@ -67,9 +63,7 @@ void bezSplit(const Bezier&cur, Bezier& left, Bezier& right)
     left.end.y = right.start.y = (left.ctrl2.y + right.ctrl1.y) * 0.5f;
 }
 
-
-float bezLength(const Bezier& cur)
-{
+float bezLength(const Bezier& cur) {
     Bezier left, right;
     auto len = _lineLength(cur.start, cur.ctrl1) + _lineLength(cur.ctrl1, cur.ctrl2) + _lineLength(cur.ctrl2, cur.end);
     auto chord = _lineLength(cur.start, cur.end);
@@ -81,9 +75,7 @@ float bezLength(const Bezier& cur)
     return len;
 }
 
-
-void bezSplitLeft(Bezier& cur, float at, Bezier& left)
-{
+void bezSplitLeft(Bezier& cur, float at, Bezier& left) {
     left.start = cur.start;
 
     left.ctrl1.x = cur.start.x + at * (cur.ctrl1.x - cur.start.x);
@@ -105,16 +97,14 @@ void bezSplitLeft(Bezier& cur, float at, Bezier& left)
     left.end.y = cur.start.y = left.ctrl2.y + at * (cur.ctrl1.y - left.ctrl2.y);
 }
 
-
-float bezAt(const Bezier& bz, float at)
-{
+float bezAt(const Bezier& bz, float at) {
     auto len = bezLength(bz);
     auto biggest = 1.0f;
     auto smallest = 0.0f;
     auto t = 0.5f;
 
     //just in case to prevent an infinite loop
-    if (at <= 0) return 0.0f; 
+    if (at <= 0) return 0.0f;
 
     if (at >= len) return 1.0f;
 
@@ -139,12 +129,10 @@ float bezAt(const Bezier& bz, float at)
     return t;
 }
 
-
-void bezSplitAt(const Bezier& cur, float at, Bezier& left, Bezier& right)
-{
+void bezSplitAt(const Bezier& cur, float at, Bezier& left, Bezier& right) {
     right = cur;
     auto t = bezAt(right, at);
     bezSplitLeft(right, t, left);
 }
 
-}
+} // namespace tvg

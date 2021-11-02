@@ -25,33 +25,25 @@
 /* External Class Implementation                                        */
 /************************************************************************/
 
-Scene::Scene() : pImpl(new Impl())
-{
+Scene::Scene()
+    : pImpl(new Impl()) {
     _id = TVG_CLASS_ID_SCENE;
     Paint::pImpl->method(new PaintMethod<Scene::Impl>(pImpl));
 }
 
-
-Scene::~Scene()
-{
-    delete(pImpl);
+Scene::~Scene() {
+    delete (pImpl);
 }
 
-
-unique_ptr<Scene> Scene::gen() noexcept
-{
+unique_ptr<Scene> Scene::gen() noexcept {
     return unique_ptr<Scene>(new Scene);
 }
 
-
-uint32_t Scene::identifier() noexcept
-{
+uint32_t Scene::identifier() noexcept {
     return TVG_CLASS_ID_SCENE;
 }
 
-
-Result Scene::push(unique_ptr<Paint> paint) noexcept
-{
+Result Scene::push(unique_ptr<Paint> paint) noexcept {
     auto p = paint.release();
     if (!p) return Result::MemoryCorruption;
     pImpl->paints.push(p);
@@ -59,17 +51,13 @@ Result Scene::push(unique_ptr<Paint> paint) noexcept
     return Result::Success;
 }
 
-
-Result Scene::reserve(uint32_t size) noexcept
-{
+Result Scene::reserve(uint32_t size) noexcept {
     if (!pImpl->paints.reserve(size)) return Result::FailedAllocation;
 
     return Result::Success;
 }
 
-
-Result Scene::clear(bool free) noexcept
-{
+Result Scene::clear(bool free) noexcept {
     pImpl->clear(free);
 
     return Result::Success;

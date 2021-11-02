@@ -26,86 +26,64 @@
 /* External Class Implementation                                        */
 /************************************************************************/
 
-Picture::Picture() : pImpl(new Impl(this))
-{
+Picture::Picture()
+    : pImpl(new Impl(this)) {
     _id = TVG_CLASS_ID_PICTURE;
     Paint::pImpl->method(new PaintMethod<Picture::Impl>(pImpl));
 }
 
-
-Picture::~Picture()
-{
-    delete(pImpl);
+Picture::~Picture() {
+    delete (pImpl);
 }
 
-
-unique_ptr<Picture> Picture::gen() noexcept
-{
+unique_ptr<Picture> Picture::gen() noexcept {
     return unique_ptr<Picture>(new Picture);
 }
 
-
-uint32_t Picture::identifier() noexcept
-{
+uint32_t Picture::identifier() noexcept {
     return TVG_CLASS_ID_PICTURE;
 }
 
-
-Result Picture::load(const std::string& path) noexcept
-{
+Result Picture::load(const std::string& path) noexcept {
     if (path.empty()) return Result::InvalidArguments;
 
     return pImpl->load(path);
 }
 
-
-Result Picture::load(const char* data, uint32_t size, const string& mimeType, bool copy) noexcept
-{
+Result Picture::load(const char* data, uint32_t size, const string& mimeType, bool copy) noexcept {
     if (!data || size <= 0) return Result::InvalidArguments;
 
     return pImpl->load(data, size, mimeType, copy);
 }
 
-
-TVG_DEPRECATED Result Picture::load(const char* data, uint32_t size, bool copy) noexcept
-{
+TVG_DEPRECATED Result Picture::load(const char* data, uint32_t size, bool copy) noexcept {
     return load(data, size, "", copy);
 }
 
-
-Result Picture::load(uint32_t* data, uint32_t w, uint32_t h, bool copy) noexcept
-{
+Result Picture::load(uint32_t* data, uint32_t w, uint32_t h, bool copy) noexcept {
     if (!data || w <= 0 || h <= 0) return Result::InvalidArguments;
 
     return pImpl->load(data, w, h, copy);
 }
 
-
-Result Picture::viewbox(float* x, float* y, float* w, float* h) const noexcept
-{
+Result Picture::viewbox(float* x, float* y, float* w, float* h) const noexcept {
     if (pImpl->viewbox(x, y, w, h)) return Result::Success;
     return Result::InsufficientCondition;
 }
 
-
-Result Picture::size(float w, float h) noexcept
-{
+Result Picture::size(float w, float h) noexcept {
     if (pImpl->size(w, h)) return Result::Success;
     return Result::InsufficientCondition;
 }
 
-
-Result Picture::size(float* w, float* h) const noexcept
-{
+Result Picture::size(float* w, float* h) const noexcept {
     if (!pImpl->loader) return Result::InsufficientCondition;
     if (w) *w = pImpl->w;
     if (h) *h = pImpl->h;
     return Result::Success;
 }
 
-
-const uint32_t* Picture::data(uint32_t* w, uint32_t* h) const noexcept
-{
+const uint32_t* Picture::data(uint32_t* w, uint32_t* h) const noexcept {
     //Try it, If not loaded yet.
     pImpl->reload();
 

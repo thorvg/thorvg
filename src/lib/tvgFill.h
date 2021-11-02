@@ -22,53 +22,50 @@
 #ifndef _TVG_FILL_H_
 #define _TVG_FILL_H_
 
+#include "tvgCommon.h"
 #include <cstdlib>
 #include <cstring>
-#include "tvgCommon.h"
 
-template<typename T>
-struct DuplicateMethod
-{
-    virtual ~DuplicateMethod() {}
+template <typename T>
+struct DuplicateMethod {
+    virtual ~DuplicateMethod() {
+    }
     virtual T* duplicate() = 0;
 };
 
-template<class T>
-struct FillDup : DuplicateMethod<Fill>
-{
+template <class T>
+struct FillDup : DuplicateMethod<Fill> {
     T* inst = nullptr;
 
-    FillDup(T* _inst) : inst(_inst) {}
-    ~FillDup() {}
+    FillDup(T* _inst)
+        : inst(_inst) {
+    }
+    ~FillDup() {
+    }
 
-    Fill* duplicate() override
-    {
+    Fill* duplicate() override {
         return inst->duplicate();
     }
 };
 
-struct Fill::Impl
-{
+struct Fill::Impl {
     ColorStop* colorStops = nullptr;
     Matrix* transform = nullptr;
     uint32_t cnt = 0;
     FillSpread spread;
     DuplicateMethod<Fill>* dup = nullptr;
 
-    ~Impl()
-    {
-        if (dup) delete(dup);
+    ~Impl() {
+        if (dup) delete (dup);
         if (colorStops) free(colorStops);
-        if (transform) delete(transform);
+        if (transform) delete (transform);
     }
 
-    void method(DuplicateMethod<Fill>* dup)
-    {
+    void method(DuplicateMethod<Fill>* dup) {
         this->dup = dup;
     }
 
-    Fill* duplicate()
-    {
+    Fill* duplicate() {
         auto ret = dup->duplicate();
         if (!ret) return nullptr;
 
@@ -84,4 +81,4 @@ struct Fill::Impl
     }
 };
 
-#endif  //_TVG_FILL_H_
+#endif //_TVG_FILL_H_

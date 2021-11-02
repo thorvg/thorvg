@@ -24,12 +24,10 @@
 
 #include "tvgCommon.h"
 
-namespace tvg
-{
+namespace tvg {
 
-class LoadModule
-{
-public:
+class LoadModule {
+  public:
     //default view box, if any.
     float vx = 0;
     float vy = 0;
@@ -38,21 +36,34 @@ public:
     float w = 0, h = 0;         //default image size
     bool preserveAspect = true; //keep aspect ratio by default.
 
-    virtual ~LoadModule() {}
+    virtual ~LoadModule() {
+    }
 
-    virtual bool open(const string& path) { return false; };
-    virtual bool open(const char* data, uint32_t size, bool copy) { return false; };
-    virtual bool open(const uint32_t* data, uint32_t w, uint32_t h, bool copy) { return false; };
+    virtual bool open(const string& path) {
+        return false;
+    };
+    virtual bool open(const char* data, uint32_t size, bool copy) {
+        return false;
+    };
+    virtual bool open(const uint32_t* data, uint32_t w, uint32_t h, bool copy) {
+        return false;
+    };
 
     //Override this if the vector-format has own resizing policy.
-    virtual bool resize(Paint* paint, float w, float h) { return false; };
+    virtual bool resize(Paint* paint, float w, float h) {
+        return false;
+    };
 
     virtual bool read() = 0;
     virtual bool close() = 0;
-    virtual const uint32_t* pixels() { return nullptr; };
-    virtual unique_ptr<Paint> paint() { return nullptr; };
+    virtual const uint32_t* pixels() {
+        return nullptr;
+    };
+    virtual unique_ptr<Paint> paint() {
+        return nullptr;
+    };
 };
 
-}
+} // namespace tvg
 
 #endif //_TVG_LOAD_MODULE_H_

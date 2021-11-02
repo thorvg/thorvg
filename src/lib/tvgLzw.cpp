@@ -61,21 +61,19 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-#include <string>
-#include <memory.h>
 #include "tvgLzw.h"
+#include <memory.h>
+#include <string>
 
 //LZW Dictionary helper:
 constexpr int Nil = -1;
 constexpr int MaxDictBits = 12;
 constexpr int StartBits = 9;
-constexpr int FirstCode = (1 << (StartBits - 1)); // 256
-constexpr int MaxDictEntries = (1 << MaxDictBits);     // 4096
-
+constexpr int FirstCode = (1 << (StartBits - 1));  // 256
+constexpr int MaxDictEntries = (1 << MaxDictBits); // 4096
 
 //Round up to the next power-of-two number, e.g. 37 => 64
-static int nextPowerOfTwo(int num)
-{
+static int nextPowerOfTwo(int num) {
     --num;
     for (size_t i = 1; i < sizeof(num) * 8; i <<= 1) {
         num = num | num >> i;
@@ -83,18 +81,15 @@ static int nextPowerOfTwo(int num)
     return ++num;
 }
 
+struct BitStreamWriter {
+    uint8_t* stream;    //Growable buffer to store our bits. Heap allocated & owned by the class instance.
+    int bytesAllocated; //Current size of heap-allocated stream buffer *in bytes*.
+    int granularity;    //Amount bytesAllocated multiplies by when auto-resizing in appendBit().
+    int currBytePos;    //Current byte being written to, from 0 to bytesAllocated-1.
+    int nextBitPos;     //Bit position within the current byte to access next. 0 to 7.
+    int numBitsWritten; //Number of bits in use from the stream buffer, not including byte-rounding padding.
 
-struct BitStreamWriter
-{
-    uint8_t* stream;       //Growable buffer to store our bits. Heap allocated & owned by the class instance.
-    int bytesAllocated;    //Current size of heap-allocated stream buffer *in bytes*.
-    int granularity;       //Amount bytesAllocated multiplies by when auto-resizing in appendBit().
-    int currBytePos;       //Current byte being written to, from 0 to bytesAllocated-1.
-    int nextBitPos;        //Bit position within the current byte to access next. 0 to 7.
-    int numBitsWritten;    //Number of bits in use from the stream buffer, not including byte-rounding padding.
-
-    void internalInit()
-    {
+    void internalInit() {
         stream = nullptr;
         bytesAllocated = 0;
         granularity = 2;
@@ -103,9 +98,8 @@ struct BitStreamWriter
         numBitsWritten = 0;
     }
 
-    uint8_t* allocBytes(const int bytesWanted, uint8_t * oldPtr, const int oldSize)
-    {
-        auto newMemory = static_cast<uint8_t *>(malloc(bytesWanted));
+    uint8_t* allocBytes(const int bytesWanted, uint8_t* oldPtr, const int oldSize) {
+        auto newMemory = static_cast<uint8_t*>(malloc(bytesWanted));
         memset(newMemory, 0, bytesWanted);
 
         if (oldPtr) {
@@ -115,28 +109,24 @@ struct BitStreamWriter
         return newMemory;
     }
 
-    BitStreamWriter()
-    {
+    BitStreamWriter() {
         /* 8192 bits for a start (1024 bytes). It will resize if needed.
            Default granularity is 2. */
         internalInit();
         allocate(8192);
     }
 
-    BitStreamWriter(const int initialSizeInBits, const int growthGranularity = 2)
-    {
+    BitStreamWriter(const int initialSizeInBits, const int growthGranularity = 2) {
         internalInit();
         setGranularity(growthGranularity);
         allocate(initialSizeInBits);
     }
 
-    ~BitStreamWriter()
-    {
+    ~BitStreamWriter() {
         free(stream);
     }
 
-    void allocate(int bitsWanted)
-    {
+    void allocate(int bitsWanted) {
         //Require at least a byte.
         if (bitsWanted <= 0) bitsWanted = 8;
 
@@ -151,8 +141,7 @@ struct BitStreamWriter
         bytesAllocated = sizeInBytes;
     }
 
-    void appendBit(const int bit)
-    {
+    void appendBit(const int bit) {
         const uint32_t mask = uint32_t(1) << nextBitPos;
         stream[currBytePos] = (stream[currBytePos] & ~mask) | (-bit & mask);
         ++numBitsWritten;
@@ -163,8 +152,7 @@ struct BitStreamWriter
         }
     }
 
-    void appendBitsU64(const uint64_t num, const int bitCount)
-    {
+    void appendBitsU64(const uint64_t num, const int bitCount) {
         for (int b = 0; b < bitCount; ++b) {
             const uint64_t mask = uint64_t(1) << b;
             const int bit = !!(num & mask);
@@ -172,20 +160,17 @@ struct BitStreamWriter
         }
     }
 
-    uint8_t* release()
-    {
+    uint8_t* release() {
         auto oldPtr = stream;
         internalInit();
         return oldPtr;
     }
 
-    void setGranularity(const int growthGranularity)
-    {
+    void setGranularity(const int growthGranularity) {
         granularity = (growthGranularity >= 2) ? growthGranularity : 2;
     }
 
-    int getByteCount() const
-    {
+    int getByteCount() const {
         int usedBytes = numBitsWritten / 8;
         int leftovers = numBitsWritten % 8;
         if (leftovers != 0) ++usedBytes;
@@ -193,22 +178,19 @@ struct BitStreamWriter
     }
 };
 
+struct BitStreamReader {
+    const uint8_t* stream; // Pointer to the external bit stream. Not owned by the reader.
+    const int sizeInBytes; // Size of the stream *in bytes*. Might include padding.
+    const int sizeInBits;  // Size of the stream *in bits*, padding *not* include.
+    int currBytePos = 0;   // Current byte being read in the stream.
+    int nextBitPos = 0;    // Bit position within the current byte to access next. 0 to 7.
+    int numBitsRead = 0;   // Total bits read from the stream so far. Never includes byte-rounding padding.
 
-struct BitStreamReader
-{
-    const uint8_t* stream;       // Pointer to the external bit stream. Not owned by the reader.
-    const int sizeInBytes;       // Size of the stream *in bytes*. Might include padding.
-    const int sizeInBits;        // Size of the stream *in bits*, padding *not* include.
-    int currBytePos = 0;         // Current byte being read in the stream.
-    int nextBitPos = 0;          // Bit position within the current byte to access next. 0 to 7.
-    int numBitsRead = 0;         // Total bits read from the stream so far. Never includes byte-rounding padding.
-
-    BitStreamReader(const uint8_t* bitStream, const int byteCount, const int bitCount) : stream(bitStream), sizeInBytes(byteCount), sizeInBits(bitCount)
-    {
+    BitStreamReader(const uint8_t* bitStream, const int byteCount, const int bitCount)
+        : stream(bitStream), sizeInBytes(byteCount), sizeInBits(bitCount) {
     }
 
-    bool readNextBit(int& bitOut)
-    {
+    bool readNextBit(int& bitOut) {
         if (numBitsRead >= sizeInBits) return false; //We are done.
 
         const uint32_t mask = uint32_t(1) << nextBitPos;
@@ -222,8 +204,7 @@ struct BitStreamReader
         return true;
     }
 
-    uint64_t readBitsU64(const int bitCount)
-    {
+    uint64_t readBitsU64(const int bitCount) {
         uint64_t num = 0;
         for (int b = 0; b < bitCount; ++b) {
             int bit;
@@ -236,17 +217,13 @@ struct BitStreamReader
         return num;
     }
 
-    bool isEndOfStream() const
-    {
+    bool isEndOfStream() const {
         return numBitsRead >= sizeInBits;
     }
 };
 
-
-struct Dictionary
-{
-    struct Entry
-    {
+struct Dictionary {
+    struct Entry {
         int code;
         int value;
     };
@@ -255,21 +232,19 @@ struct Dictionary
     int size;
     Entry entries[MaxDictEntries];
 
-    Dictionary()
-    {
+    Dictionary() {
         /* First 256 dictionary entries are reserved to the byte/ASCII range. 
            Additional entries follow for the character sequences found in the input. 
            Up to 4096 - 256 (MaxDictEntries - FirstCode). */
         size = FirstCode;
 
         for (int i = 0; i < size; ++i) {
-            entries[i].code  = Nil;
+            entries[i].code = Nil;
             entries[i].value = i;
         }
     }
 
-    int findIndex(const int code, const int value) const
-    {
+    int findIndex(const int code, const int value) const {
         if (code == Nil) return value;
 
         //Linear search for now.
@@ -280,17 +255,15 @@ struct Dictionary
         return Nil;
     }
 
-    bool add(const int code, const int value)
-    {
+    bool add(const int code, const int value) {
         if (size == MaxDictEntries) return false;
-        entries[size].code  = code;
+        entries[size].code = code;
         entries[size].value = value;
         ++size;
         return true;
     }
 
-    bool flush(int & codeBitsWidth)
-    {
+    bool flush(int& codeBitsWidth) {
         if (size == (1 << codeBitsWidth)) {
             ++codeBitsWidth;
             if (codeBitsWidth > MaxDictBits) {
@@ -304,18 +277,14 @@ struct Dictionary
     }
 };
 
-
-static bool outputByte(int code, uint8_t*& output, int outputSizeBytes, int& bytesDecodedSoFar)
-{
+static bool outputByte(int code, uint8_t*& output, int outputSizeBytes, int& bytesDecodedSoFar) {
     if (bytesDecodedSoFar >= outputSizeBytes) return false;
     *output++ = static_cast<uint8_t>(code);
     ++bytesDecodedSoFar;
     return true;
 }
 
-
-static bool outputSequence(const Dictionary& dict, int code, uint8_t*& output, int outputSizeBytes, int& bytesDecodedSoFar, int& firstByte)
-{
+static bool outputSequence(const Dictionary& dict, int code, uint8_t*& output, int outputSizeBytes, int& bytesDecodedSoFar, int& firstByte) {
     /* A sequence is stored backwards, so we have to write
        it to a temp then output the buffer in reverse. */
     int i = 0;
@@ -334,22 +303,19 @@ static bool outputSequence(const Dictionary& dict, int code, uint8_t*& output, i
     return true;
 }
 
-
-
 /************************************************************************/
 /* External Class Implementation                                        */
 /************************************************************************/
 
 namespace tvg {
 
-uint8_t* lzwDecode(const uint8_t* compressed, uint32_t compressedSizeBytes, uint32_t compressedSizeBits, uint32_t uncompressedSizeBytes)
-{
+uint8_t* lzwDecode(const uint8_t* compressed, uint32_t compressedSizeBytes, uint32_t compressedSizeBits, uint32_t uncompressedSizeBytes) {
     int code = Nil;
     int prevCode = Nil;
     int firstByte = 0;
     int bytesDecoded = 0;
     int codeBitsWidth = StartBits;
-    auto uncompressed = (uint8_t*) malloc(sizeof(uint8_t) * uncompressedSizeBytes);
+    auto uncompressed = (uint8_t*)malloc(sizeof(uint8_t) * uncompressedSizeBytes);
     auto ptr = uncompressed;
 
     /* We'll reconstruct the dictionary based on the bit stream codes.
@@ -365,25 +331,25 @@ uint8_t* lzwDecode(const uint8_t* compressed, uint32_t compressedSizeBytes, uint
         if (prevCode == Nil) {
             if (!outputByte(code, ptr, uncompressedSizeBytes, bytesDecoded)) break;
             firstByte = code;
-            prevCode  = code;
+            prevCode = code;
             continue;
         }
         if (code >= dictionary.size) {
             if (!outputSequence(dictionary, prevCode, ptr, uncompressedSizeBytes, bytesDecoded, firstByte)) break;
             if (!outputByte(firstByte, ptr, uncompressedSizeBytes, bytesDecoded)) break;
-        } else if (!outputSequence(dictionary, code, ptr, uncompressedSizeBytes, bytesDecoded, firstByte)) break;
+        } else if (!outputSequence(dictionary, code, ptr, uncompressedSizeBytes, bytesDecoded, firstByte))
+            break;
 
         dictionary.add(prevCode, firstByte);
         if (dictionary.flush(codeBitsWidth)) prevCode = Nil;
-        else prevCode = code;
+        else
+            prevCode = code;
     }
 
     return uncompressed;
 }
 
-
-uint8_t* lzwEncode(const uint8_t* uncompressed, uint32_t uncompressedSizeBytes, uint32_t* compressedSizeBytes, uint32_t* compressedSizeBits)
-{
+uint8_t* lzwEncode(const uint8_t* uncompressed, uint32_t uncompressedSizeBytes, uint32_t* compressedSizeBytes, uint32_t* compressedSizeBits) {
     //LZW encoding context:
     int code = Nil;
     int codeBitsWidth = StartBits;
@@ -422,6 +388,6 @@ uint8_t* lzwEncode(const uint8_t* uncompressed, uint32_t uncompressedSizeBytes, 
     return bitStream.release();
 }
 
-}
+} // namespace tvg
 
 #endif

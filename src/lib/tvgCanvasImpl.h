@@ -28,25 +28,22 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-struct Canvas::Impl
-{
+struct Canvas::Impl {
     Array<Paint*> paints;
     RenderMethod* renderer;
-    bool refresh = false;   //if all paints should be updated by force.
-    bool drawing = false;   //on drawing condition?
+    bool refresh = false; //if all paints should be updated by force.
+    bool drawing = false; //on drawing condition?
 
-    Impl(RenderMethod* pRenderer):renderer(pRenderer)
-    {
+    Impl(RenderMethod* pRenderer)
+        : renderer(pRenderer) {
     }
 
-    ~Impl()
-    {
+    ~Impl() {
         clear(true);
-        delete(renderer);
+        delete (renderer);
     }
 
-    Result push(unique_ptr<Paint> paint)
-    {
+    Result push(unique_ptr<Paint> paint) {
         //You can not push paints during rendering.
         if (drawing) return Result::InsufficientCondition;
 
@@ -57,15 +54,14 @@ struct Canvas::Impl
         return update(p, true);
     }
 
-    Result clear(bool free)
-    {
+    Result clear(bool free) {
         //Clear render target before drawing
         if (!renderer || !renderer->clear()) return Result::InsufficientCondition;
 
         //Free paints
         for (auto paint = paints.data; paint < (paints.data + paints.count); ++paint) {
             (*paint)->pImpl->dispose(*renderer);
-            if (free) delete(*paint);
+            if (free) delete (*paint);
         }
 
         paints.clear();
@@ -75,13 +71,11 @@ struct Canvas::Impl
         return Result::Success;
     }
 
-    void needRefresh()
-    {
+    void needRefresh() {
         refresh = true;
     }
 
-    Result update(Paint* paint, bool force)
-    {
+    Result update(Paint* paint, bool force) {
         if (paints.count == 0 || drawing || !renderer) return Result::InsufficientCondition;
 
         Array<RenderData> clips;
@@ -98,7 +92,7 @@ struct Canvas::Impl
                 }
             }
             return Result::InvalidArguments;
-        //Update all retained paint nodes
+            //Update all retained paint nodes
         } else {
             for (auto paint = paints.data; paint < (paints.data + paints.count); ++paint) {
                 (*paint)->pImpl->update(*renderer, nullptr, 255, clips, flag);
@@ -110,8 +104,7 @@ struct Canvas::Impl
         return Result::Success;
     }
 
-    Result draw()
-    {
+    Result draw() {
         if (drawing || paints.count == 0 || !renderer || !renderer->preRender()) return Result::InsufficientCondition;
 
         bool rendered = false;
@@ -126,8 +119,7 @@ struct Canvas::Impl
         return Result::Success;
     }
 
-    Result sync()
-    {
+    Result sync() {
         if (!drawing) return Result::InsufficientCondition;
 
         if (renderer->sync()) {

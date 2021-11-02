@@ -24,149 +24,133 @@
 
 #include "tvgRender.h"
 
+namespace tvg {
+struct Iterator {
+    virtual ~Iterator() {
+    }
+    virtual const Paint* next() = 0;
+    virtual uint32_t count() = 0;
+    virtual void begin() = 0;
+};
 
-namespace tvg
-{
-    struct Iterator
-    {
-        virtual ~Iterator() {}
-        virtual const Paint* next() = 0;
-        virtual uint32_t count() = 0;
-        virtual void begin() = 0;
-    };
+struct StrategyMethod {
+    virtual ~StrategyMethod() {
+    }
 
-    struct StrategyMethod
-    {
-        virtual ~StrategyMethod() {}
+    virtual bool dispose(RenderMethod& renderer) = 0;
+    virtual void* update(RenderMethod& renderer, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag pFlag) = 0; //Return engine data if it has.
+    virtual bool render(RenderMethod& renderer) = 0;
+    virtual bool bounds(float* x, float* y, float* w, float* h) = 0;
+    virtual RenderRegion bounds(RenderMethod& renderer) const = 0;
+    virtual Paint* duplicate() = 0;
+    virtual Iterator* iterator() = 0;
+};
 
-        virtual bool dispose(RenderMethod& renderer) = 0;
-        virtual void* update(RenderMethod& renderer, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag pFlag) = 0;   //Return engine data if it has.
-        virtual bool render(RenderMethod& renderer) = 0;
-        virtual bool bounds(float* x, float* y, float* w, float* h) = 0;
-        virtual RenderRegion bounds(RenderMethod& renderer) const = 0;
-        virtual Paint* duplicate() = 0;
-        virtual Iterator* iterator() = 0;
-    };
+struct Paint::Impl {
+    StrategyMethod* smethod = nullptr;
+    RenderTransform* rTransform = nullptr;
+    uint32_t flag = RenderUpdateFlag::None;
+    Paint* cmpTarget = nullptr;
+    CompositeMethod cmpMethod = CompositeMethod::None;
+    uint8_t opacity = 255;
 
-    struct Paint::Impl
-    {
-        StrategyMethod* smethod = nullptr;
-        RenderTransform *rTransform = nullptr;
-        uint32_t flag = RenderUpdateFlag::None;
-        Paint* cmpTarget = nullptr;
-        CompositeMethod cmpMethod = CompositeMethod::None;
-        uint8_t opacity = 255;
+    ~Impl() {
+        if (cmpTarget) delete (cmpTarget);
+        if (smethod) delete (smethod);
+        if (rTransform) delete (rTransform);
+    }
 
-        ~Impl() {
-            if (cmpTarget) delete(cmpTarget);
-            if (smethod) delete(smethod);
-            if (rTransform) delete(rTransform);
+    void method(StrategyMethod* method) {
+        smethod = method;
+    }
+
+    bool transform(const Matrix& m) {
+        if (!rTransform) {
+            rTransform = new RenderTransform();
+            if (!rTransform) return false;
         }
+        rTransform->override(m);
+        flag |= RenderUpdateFlag::Transform;
 
-        void method(StrategyMethod* method)
-        {
-            smethod = method;
+        return true;
+    }
+
+    Matrix* transform() {
+        if (rTransform) {
+            rTransform->update();
+            return &rTransform->m;
         }
+        return nullptr;
+    }
 
-        bool transform(const Matrix& m)
-        {
-            if (!rTransform) {
-                rTransform = new RenderTransform();
-                if (!rTransform) return false;
-            }
-            rTransform->override(m);
-            flag |= RenderUpdateFlag::Transform;
+    RenderRegion bounds(RenderMethod& renderer) const {
+        return smethod->bounds(renderer);
+    }
 
-            return true;
-        }
+    bool dispose(RenderMethod& renderer) {
+        if (cmpTarget) cmpTarget->pImpl->dispose(renderer);
+        return smethod->dispose(renderer);
+    }
 
-        Matrix* transform()
-        {
-            if (rTransform) {
-                rTransform->update();
-                return &rTransform->m;
-            }
-            return nullptr;
-        }
+    Iterator* iterator() {
+        return smethod->iterator();
+    }
 
-        RenderRegion bounds(RenderMethod& renderer) const
-        {
-            return smethod->bounds(renderer);
-        }
+    bool composite(Paint* target, CompositeMethod method) {
+        if ((!target && method != CompositeMethod::None) || (target && method == CompositeMethod::None)) return false;
+        if (cmpTarget) delete (cmpTarget);
+        cmpTarget = target;
+        cmpMethod = method;
+        return true;
+    }
 
-        bool dispose(RenderMethod& renderer)
-        {
-            if (cmpTarget) cmpTarget->pImpl->dispose(renderer);
-            return smethod->dispose(renderer);
-        }
+    bool rotate(float degree);
+    bool scale(float factor);
+    bool translate(float x, float y);
+    bool bounds(float* x, float* y, float* w, float* h, bool transformed);
+    void* update(RenderMethod& renderer, const RenderTransform* pTransform, uint32_t opacity, Array<RenderData>& clips, uint32_t pFlag);
+    bool render(RenderMethod& renderer);
+    Paint* duplicate();
+};
 
-        Iterator* iterator()
-        {
-            return smethod->iterator();
-        }
+template <class T>
+struct PaintMethod : StrategyMethod {
+    T* inst = nullptr;
 
-        bool composite(Paint* target, CompositeMethod method)
-        {
-            if ((!target && method != CompositeMethod::None) || (target && method == CompositeMethod::None)) return false;
-            if (cmpTarget) delete(cmpTarget);
-            cmpTarget = target;
-            cmpMethod = method;
-            return true;
-        }
+    PaintMethod(T* _inst)
+        : inst(_inst) {
+    }
+    ~PaintMethod() {
+    }
 
-        bool rotate(float degree);
-        bool scale(float factor);
-        bool translate(float x, float y);
-        bool bounds(float* x, float* y, float* w, float* h, bool transformed);
-        void* update(RenderMethod& renderer, const RenderTransform* pTransform, uint32_t opacity, Array<RenderData>& clips, uint32_t pFlag);
-        bool render(RenderMethod& renderer);
-        Paint* duplicate();
-    };
+    bool bounds(float* x, float* y, float* w, float* h) override {
+        return inst->bounds(x, y, w, h);
+    }
 
+    RenderRegion bounds(RenderMethod& renderer) const override {
+        return inst->bounds(renderer);
+    }
 
-    template<class T>
-    struct PaintMethod : StrategyMethod
-    {
-        T* inst = nullptr;
+    bool dispose(RenderMethod& renderer) override {
+        return inst->dispose(renderer);
+    }
 
-        PaintMethod(T* _inst) : inst(_inst) {}
-        ~PaintMethod() {}
+    void* update(RenderMethod& renderer, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flag) override {
+        return inst->update(renderer, transform, opacity, clips, flag);
+    }
 
-        bool bounds(float* x, float* y, float* w, float* h) override
-        {
-            return inst->bounds(x, y, w, h);
-        }
+    bool render(RenderMethod& renderer) override {
+        return inst->render(renderer);
+    }
 
-        RenderRegion bounds(RenderMethod& renderer) const override
-        {
-            return inst->bounds(renderer);
-        }
+    Paint* duplicate() override {
+        return inst->duplicate();
+    }
 
-        bool dispose(RenderMethod& renderer) override
-        {
-            return inst->dispose(renderer);
-        }
-
-        void* update(RenderMethod& renderer, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flag) override
-        {
-            return inst->update(renderer, transform, opacity, clips, flag);
-        }
-
-        bool render(RenderMethod& renderer) override
-        {
-            return inst->render(renderer);
-        }
-
-        Paint* duplicate() override
-        {
-            return inst->duplicate();
-        }
-
-        Iterator* iterator() override
-        {
-            return inst->iterator();
-        }
-    };
-}
+    Iterator* iterator() override {
+        return inst->iterator();
+    }
+};
+} // namespace tvg
 
 #endif //_TVG_PAINT_H_

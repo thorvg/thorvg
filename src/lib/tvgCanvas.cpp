@@ -25,49 +25,35 @@
 /* External Class Implementation                                        */
 /************************************************************************/
 
-Canvas::Canvas(RenderMethod *pRenderer):pImpl(new Impl(pRenderer))
-{
+Canvas::Canvas(RenderMethod* pRenderer)
+    : pImpl(new Impl(pRenderer)) {
 }
 
-
-Canvas::~Canvas()
-{
-    delete(pImpl);
+Canvas::~Canvas() {
+    delete (pImpl);
 }
 
-
-Result Canvas::reserve(uint32_t n) noexcept
-{
+Result Canvas::reserve(uint32_t n) noexcept {
     if (!pImpl->paints.reserve(n)) return Result::FailedAllocation;
     return Result::Success;
 }
 
-
-Result Canvas::push(unique_ptr<Paint> paint) noexcept
-{
+Result Canvas::push(unique_ptr<Paint> paint) noexcept {
     return pImpl->push(move(paint));
 }
 
-
-Result Canvas::clear(bool free) noexcept
-{
+Result Canvas::clear(bool free) noexcept {
     return pImpl->clear(free);
 }
 
-
-Result Canvas::draw() noexcept
-{
+Result Canvas::draw() noexcept {
     return pImpl->draw();
 }
 
-
-Result Canvas::update(Paint* paint) noexcept
-{
+Result Canvas::update(Paint* paint) noexcept {
     return pImpl->update(paint, false);
 }
 
-
-Result Canvas::sync() noexcept
-{
+Result Canvas::sync() noexcept {
     return pImpl->sync();
 }

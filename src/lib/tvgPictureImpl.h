@@ -22,74 +22,69 @@
 #ifndef _TVG_PICTURE_IMPL_H_
 #define _TVG_PICTURE_IMPL_H_
 
-#include <string>
-#include "tvgPaint.h"
 #include "tvgLoader.h"
+#include "tvgPaint.h"
+#include <string>
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-struct PictureIterator : Iterator
-{
+struct PictureIterator : Iterator {
     Paint* paint = nullptr;
     Paint* ptr = nullptr;
 
-    PictureIterator(Paint* p) : paint(p) {}
+    PictureIterator(Paint* p)
+        : paint(p) {
+    }
 
-    const Paint* next() override
-    {
+    const Paint* next() override {
         if (!ptr) ptr = paint;
-        else ptr = nullptr;
+        else
+            ptr = nullptr;
         return ptr;
     }
 
-    uint32_t count() override
-    {
+    uint32_t count() override {
         if (paint) return 1;
-        else return 0;
+        else
+            return 0;
     }
 
-    void begin() override
-    {
+    void begin() override {
         ptr = nullptr;
     }
 };
 
-
-struct Picture::Impl
-{
+struct Picture::Impl {
     shared_ptr<LoadModule> loader = nullptr;
     Paint* paint = nullptr;
     uint32_t* pixels = nullptr;
     Picture* picture = nullptr;
-    void* rdata = nullptr;            //engine data
+    void* rdata = nullptr; //engine data
     float w = 0, h = 0;
     bool resizing = false;
 
-    Impl(Picture* p) : picture(p)
-    {
+    Impl(Picture* p)
+        : picture(p) {
     }
 
-    ~Impl()
-    {
-        if (paint) delete(paint);
+    ~Impl() {
+        if (paint) delete (paint);
     }
 
-    bool dispose(RenderMethod& renderer)
-    {
+    bool dispose(RenderMethod& renderer) {
         bool ret = true;
         if (paint) {
             ret = paint->pImpl->dispose(renderer);
         } else if (pixels) {
-            ret =  renderer.dispose(rdata);
+            ret = renderer.dispose(rdata);
             rdata = nullptr;
         }
         return ret;
     }
 
-    uint32_t reload()
-    {
+    uint32_t reload() {
         if (loader) {
             if (!paint) {
                 if (auto p = loader->paint()) {
@@ -111,8 +106,7 @@ struct Picture::Impl
         return RenderUpdateFlag::None;
     }
 
-    RenderTransform resizeTransform(const RenderTransform* pTransform)
-    {
+    RenderTransform resizeTransform(const RenderTransform* pTransform) {
         //Overriding Transformation by the desired image size
         auto sx = w / loader->w;
         auto sy = h / loader->h;
@@ -122,11 +116,11 @@ struct Picture::Impl
         tmp.m = {scale, 0, 0, 0, scale, 0, 0, 0, 1};
 
         if (!pTransform) return tmp;
-        else return RenderTransform(pTransform, &tmp);
+        else
+            return RenderTransform(pTransform, &tmp);
     }
 
-    void* update(RenderMethod &renderer, const RenderTransform* pTransform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag pFlag)
-    {
+    void* update(RenderMethod& renderer, const RenderTransform* pTransform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag pFlag) {
         auto flag = reload();
 
         if (pixels) {
@@ -142,15 +136,14 @@ struct Picture::Impl
         return rdata;
     }
 
-    bool render(RenderMethod &renderer)
-    {
+    bool render(RenderMethod& renderer) {
         if (pixels) return renderer.renderImage(rdata);
-        else if (paint) return paint->pImpl->render(renderer);
+        else if (paint)
+            return paint->pImpl->render(renderer);
         return false;
     }
 
-    bool viewbox(float* x, float* y, float* w, float* h) const
-    {
+    bool viewbox(float* x, float* y, float* w, float* h) const {
         if (!loader) return false;
         if (x) *x = loader->vx;
         if (y) *y = loader->vy;
@@ -159,36 +152,32 @@ struct Picture::Impl
         return true;
     }
 
-    bool size(float w, float h)
-    {
+    bool size(float w, float h) {
         this->w = w;
         this->h = h;
         resizing = true;
         return true;
     }
 
-    bool bounds(float* x, float* y, float* w, float* h)
-    {
+    bool bounds(float* x, float* y, float* w, float* h) {
         if (x) *x = 0;
         if (y) *y = 0;
         if (w) *w = this->w;
         if (h) *h = this->h;
- 
+
         return true;
     }
 
-    RenderRegion bounds(RenderMethod& renderer)
-    {
+    RenderRegion bounds(RenderMethod& renderer) {
         if (rdata) return renderer.region(rdata);
         if (paint) return paint->pImpl->bounds(renderer);
         return {0, 0, 0, 0};
     }
 
-    Result load(const string& path)
-    {
+    Result load(const string& path) {
         if (paint || pixels) return Result::InsufficientCondition;
         if (loader) loader->close();
-        bool invalid;  //Invalid Path
+        bool invalid; //Invalid Path
         loader = LoaderMgr::loader(path, &invalid);
         if (!loader) {
             if (invalid) return Result::InvalidArguments;
@@ -200,8 +189,7 @@ struct Picture::Impl
         return Result::Success;
     }
 
-    Result load(const char* data, uint32_t size, const string& mimeType, bool copy)
-    {
+    Result load(const char* data, uint32_t size, const string& mimeType, bool copy) {
         if (paint || pixels) return Result::InsufficientCondition;
         if (loader) loader->close();
         loader = LoaderMgr::loader(data, size, mimeType, copy);
@@ -212,8 +200,7 @@ struct Picture::Impl
         return Result::Success;
     }
 
-    Result load(uint32_t* data, uint32_t w, uint32_t h, bool copy)
-    {
+    Result load(uint32_t* data, uint32_t w, uint32_t h, bool copy) {
         if (paint || pixels) return Result::InsufficientCondition;
         if (loader) loader->close();
         loader = LoaderMgr::loader(data, w, h, copy);
@@ -223,8 +210,7 @@ struct Picture::Impl
         return Result::Success;
     }
 
-    Paint* duplicate()
-    {
+    Paint* duplicate() {
         reload();
 
         auto ret = Picture::gen();
@@ -242,8 +228,7 @@ struct Picture::Impl
         return ret.release();
     }
 
-    Iterator* iterator()
-    {
+    Iterator* iterator() {
         reload();
         return new PictureIterator(paint);
     }

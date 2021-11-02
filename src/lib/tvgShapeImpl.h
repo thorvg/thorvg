@@ -22,31 +22,30 @@
 #ifndef _TVG_SHAPE_IMPL_H_
 #define _TVG_SHAPE_IMPL_H_
 
-#include <memory.h>
 #include "tvgPaint.h"
+#include <memory.h>
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-struct ShapeStroke
-{
+struct ShapeStroke {
     float width = 0;
     uint8_t color[4] = {0, 0, 0, 0};
-    Fill *fill = nullptr;
+    Fill* fill = nullptr;
     float* dashPattern = nullptr;
     uint32_t dashCnt = 0;
     StrokeCap cap = StrokeCap::Square;
     StrokeJoin join = StrokeJoin::Bevel;
 
-    ShapeStroke() {}
+    ShapeStroke() {
+    }
 
     ShapeStroke(const ShapeStroke* src)
-     : width(src->width),
-       dashCnt(src->dashCnt),
-       cap(src->cap),
-       join(src->join)
-    {
+        : width(src->width),
+          dashCnt(src->dashCnt),
+          cap(src->cap),
+          join(src->join) {
         memcpy(color, src->color, sizeof(color));
         if (dashCnt > 0) {
             dashPattern = static_cast<float*>(malloc(sizeof(float) * dashCnt));
@@ -55,36 +54,30 @@ struct ShapeStroke
         if (src->fill) fill = src->fill->duplicate();
     }
 
-    ~ShapeStroke()
-    {
+    ~ShapeStroke() {
         if (dashPattern) free(dashPattern);
-        if (fill) delete(fill);
+        if (fill) delete (fill);
     }
 };
 
-
-struct ShapePath
-{
+struct ShapePath {
     PathCommand* cmds = nullptr;
     uint32_t cmdCnt = 0;
     uint32_t reservedCmdCnt = 0;
 
-    Point *pts = nullptr;
+    Point* pts = nullptr;
     uint32_t ptsCnt = 0;
     uint32_t reservedPtsCnt = 0;
 
-    ~ShapePath()
-    {
+    ~ShapePath() {
         if (cmds) free(cmds);
         if (pts) free(pts);
     }
 
-    ShapePath()
-    {
+    ShapePath() {
     }
 
-    void duplicate(const ShapePath* src)
-    {
+    void duplicate(const ShapePath* src) {
         cmdCnt = src->cmdCnt;
         reservedCmdCnt = src->reservedCmdCnt;
         ptsCnt = src->ptsCnt;
@@ -102,42 +95,36 @@ struct ShapePath
         memcpy(pts, src->pts, sizeof(Point) * ptsCnt);
     }
 
-    void reserveCmd(uint32_t cmdCnt)
-    {
+    void reserveCmd(uint32_t cmdCnt) {
         if (cmdCnt <= reservedCmdCnt) return;
         reservedCmdCnt = cmdCnt;
         cmds = static_cast<PathCommand*>(realloc(cmds, sizeof(PathCommand) * reservedCmdCnt));
     }
 
-    void reservePts(uint32_t ptsCnt)
-    {
+    void reservePts(uint32_t ptsCnt) {
         if (ptsCnt <= reservedPtsCnt) return;
         reservedPtsCnt = ptsCnt;
         pts = static_cast<Point*>(realloc(pts, sizeof(Point) * reservedPtsCnt));
     }
 
-    void grow(uint32_t cmdCnt, uint32_t ptsCnt)
-    {
+    void grow(uint32_t cmdCnt, uint32_t ptsCnt) {
         reserveCmd(this->cmdCnt + cmdCnt);
         reservePts(this->ptsCnt + ptsCnt);
     }
 
-    void reset()
-    {
+    void reset() {
         cmdCnt = 0;
         ptsCnt = 0;
     }
 
-    void append(const PathCommand* cmds, uint32_t cmdCnt, const Point* pts, uint32_t ptsCnt)
-    {
+    void append(const PathCommand* cmds, uint32_t cmdCnt, const Point* pts, uint32_t ptsCnt) {
         memcpy(this->cmds + this->cmdCnt, cmds, sizeof(PathCommand) * cmdCnt);
         memcpy(this->pts + this->ptsCnt, pts, sizeof(Point) * ptsCnt);
         this->cmdCnt += cmdCnt;
         this->ptsCnt += ptsCnt;
     }
 
-    void moveTo(float x, float y)
-    {
+    void moveTo(float x, float y) {
         if (cmdCnt + 1 > reservedCmdCnt) reserveCmd((cmdCnt + 1) * 2);
         if (ptsCnt + 2 > reservedPtsCnt) reservePts((ptsCnt + 2) * 2);
 
@@ -145,8 +132,7 @@ struct ShapePath
         pts[ptsCnt++] = {x, y};
     }
 
-    void lineTo(float x, float y)
-    {
+    void lineTo(float x, float y) {
         if (cmdCnt + 1 > reservedCmdCnt) reserveCmd((cmdCnt + 1) * 2);
         if (ptsCnt + 2 > reservedPtsCnt) reservePts((ptsCnt + 2) * 2);
 
@@ -154,8 +140,7 @@ struct ShapePath
         pts[ptsCnt++] = {x, y};
     }
 
-    void cubicTo(float cx1, float cy1, float cx2, float cy2, float x, float y)
-    {
+    void cubicTo(float cx1, float cy1, float cx2, float cy2, float x, float y) {
         if (cmdCnt + 1 > reservedCmdCnt) reserveCmd((cmdCnt + 1) * 2);
         if (ptsCnt + 3 > reservedPtsCnt) reservePts((ptsCnt + 3) * 2);
 
@@ -165,20 +150,18 @@ struct ShapePath
         pts[ptsCnt++] = {x, y};
     }
 
-    void close()
-    {
+    void close() {
         if (cmdCnt > 0 && cmds[cmdCnt - 1] == PathCommand::Close) return;
 
         if (cmdCnt + 1 > reservedCmdCnt) reserveCmd((cmdCnt + 1) * 2);
         cmds[cmdCnt++] = PathCommand::Close;
     }
 
-    bool bounds(float* x, float* y, float* w, float* h) const
-    {
+    bool bounds(float* x, float* y, float* w, float* h) const {
         if (ptsCnt == 0) return false;
 
-        Point min = { pts[0].x, pts[0].y };
-        Point max = { pts[0].x, pts[0].y };
+        Point min = {pts[0].x, pts[0].y};
+        Point max = {pts[0].x, pts[0].y};
 
         for (uint32_t i = 1; i < ptsCnt; ++i) {
             if (pts[i].x < min.x) min.x = pts[i].x;
@@ -196,54 +179,46 @@ struct ShapePath
     }
 };
 
-
-struct Shape::Impl
-{
+struct Shape::Impl {
     ShapePath path;
-    Fill *fill = nullptr;
-    ShapeStroke *stroke = nullptr;
-    uint8_t color[4] = {0, 0, 0, 0};    //r, g, b, a
+    Fill* fill = nullptr;
+    ShapeStroke* stroke = nullptr;
+    uint8_t color[4] = {0, 0, 0, 0}; //r, g, b, a
     FillRule rule = FillRule::Winding;
-    RenderData rdata = nullptr;         //engine data
-    Shape *shape = nullptr;
+    RenderData rdata = nullptr; //engine data
+    Shape* shape = nullptr;
     uint32_t flag = RenderUpdateFlag::None;
 
-    Impl(Shape* s) : shape(s)
-    {
+    Impl(Shape* s)
+        : shape(s) {
     }
 
-    ~Impl()
-    {
-        if (fill) delete(fill);
-        if (stroke) delete(stroke);
+    ~Impl() {
+        if (fill) delete (fill);
+        if (stroke) delete (stroke);
     }
 
-    bool dispose(RenderMethod& renderer)
-    {
+    bool dispose(RenderMethod& renderer) {
         auto ret = renderer.dispose(rdata);
         rdata = nullptr;
         return ret;
     }
 
-    bool render(RenderMethod& renderer)
-    {
+    bool render(RenderMethod& renderer) {
         return renderer.renderShape(rdata);
     }
 
-    void* update(RenderMethod& renderer, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag pFlag)
-    {
+    void* update(RenderMethod& renderer, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag pFlag) {
         this->rdata = renderer.prepare(*shape, this->rdata, transform, opacity, clips, static_cast<RenderUpdateFlag>(pFlag | flag));
         flag = RenderUpdateFlag::None;
         return this->rdata;
     }
 
-    RenderRegion bounds(RenderMethod& renderer)
-    {
+    RenderRegion bounds(RenderMethod& renderer) {
         return renderer.region(rdata);
     }
 
-    bool bounds(float* x, float* y, float* w, float* h)
-    {
+    bool bounds(float* x, float* y, float* w, float* h) {
         auto ret = path.bounds(x, y, w, h);
 
         //Stroke feathering
@@ -256,8 +231,7 @@ struct Shape::Impl
         return ret;
     }
 
-    bool strokeWidth(float width)
-    {
+    bool strokeWidth(float width) {
         //TODO: Size Exception?
 
         if (!stroke) stroke = new ShapeStroke();
@@ -267,8 +241,7 @@ struct Shape::Impl
         return true;
     }
 
-    bool strokeCap(StrokeCap cap)
-    {
+    bool strokeCap(StrokeCap cap) {
         if (!stroke) stroke = new ShapeStroke();
         stroke->cap = cap;
         flag |= RenderUpdateFlag::Stroke;
@@ -276,8 +249,7 @@ struct Shape::Impl
         return true;
     }
 
-    bool strokeJoin(StrokeJoin join)
-    {
+    bool strokeJoin(StrokeJoin join) {
         if (!stroke) stroke = new ShapeStroke();
         stroke->join = join;
         flag |= RenderUpdateFlag::Stroke;
@@ -285,11 +257,10 @@ struct Shape::Impl
         return true;
     }
 
-    bool strokeColor(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
-    {
+    bool strokeColor(uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
         if (!stroke) stroke = new ShapeStroke();
         if (stroke->fill) {
-            delete(stroke->fill);
+            delete (stroke->fill);
             stroke->fill = nullptr;
             flag |= RenderUpdateFlag::GradientStroke;
         }
@@ -304,13 +275,12 @@ struct Shape::Impl
         return true;
     }
 
-    Result strokeFill(unique_ptr<Fill> f)
-    {
+    Result strokeFill(unique_ptr<Fill> f) {
         auto p = f.release();
         if (!p) return Result::MemoryCorruption;
 
         if (!stroke) stroke = new ShapeStroke();
-        if (stroke->fill && stroke->fill != p) delete(stroke->fill);
+        if (stroke->fill && stroke->fill != p) delete (stroke->fill);
         stroke->fill = p;
 
         flag |= RenderUpdateFlag::Stroke;
@@ -319,8 +289,7 @@ struct Shape::Impl
         return Result::Success;
     }
 
-    bool strokeDash(const float* pattern, uint32_t cnt)
-    {
+    bool strokeDash(const float* pattern, uint32_t cnt) {
         //Reset dash
         if (!pattern && cnt == 0) {
             free(stroke->dashPattern);
@@ -345,8 +314,7 @@ struct Shape::Impl
         return true;
     }
 
-    Paint* duplicate()
-    {
+    Paint* duplicate() {
         auto ret = Shape::gen();
         if (!ret) return nullptr;
 
@@ -379,8 +347,7 @@ struct Shape::Impl
         return ret.release();
     }
 
-    Iterator* iterator()
-    {
+    Iterator* iterator() {
         return nullptr;
     }
 };

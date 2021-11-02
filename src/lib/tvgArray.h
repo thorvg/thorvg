@@ -24,18 +24,15 @@
 
 #include <memory.h>
 
-namespace tvg
-{
+namespace tvg {
 
-template<class T>
-struct Array
-{
+template <class T>
+struct Array {
     T* data = nullptr;
     uint32_t count = 0;
     uint32_t reserved = 0;
 
-    void push(T element)
-    {
+    void push(T element) {
         if (count + 1 > reserved) {
             reserved = (count + 1) * 2;
             data = static_cast<T*>(realloc(data, sizeof(T) * reserved));
@@ -43,8 +40,7 @@ struct Array
         data[count++] = element;
     }
 
-    bool reserve(uint32_t size)
-    {
+    bool reserve(uint32_t size) {
         if (size > reserved) {
             reserved = size;
             data = static_cast<T*>(realloc(data, sizeof(T) * reserved));
@@ -53,23 +49,19 @@ struct Array
         return true;
     }
 
-    bool grow(uint32_t size)
-    {
+    bool grow(uint32_t size) {
         return reserve(count + size);
     }
 
-    T* ptr()
-    {
+    T* ptr() {
         return data + count;
     }
 
-    void pop()
-    {
+    void pop() {
         if (count > 0) --count;
     }
 
-    void reset()
-    {
+    void reset() {
         if (data) {
             free(data);
             data = nullptr;
@@ -77,24 +69,21 @@ struct Array
         count = reserved = 0;
     }
 
-    void clear()
-    {
+    void clear() {
         count = 0;
     }
 
-    void operator=(const Array& rhs)
-    {
+    void operator=(const Array& rhs) {
         reserve(rhs.count);
         if (rhs.count > 0) memcpy(data, rhs.data, sizeof(T) * reserved);
         count = rhs.count;
     }
 
-    ~Array()
-    {
+    ~Array() {
         if (data) free(data);
     }
 };
 
-}
+} // namespace tvg
 
 #endif //_TVG_ARRAY_H_

@@ -19,28 +19,25 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+#include "tvgPaint.h"
 #include <float.h>
 #include <math.h>
-#include "tvgPaint.h"
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-static inline bool FLT_SAME(float a, float b)
-{
+static inline bool FLT_SAME(float a, float b) {
     return (fabsf(a - b) < FLT_EPSILON);
 }
 
-
-static bool _clipPathFastTrack(Paint* cmpTarget, const RenderTransform* pTransform, RenderTransform* rTransform, RenderRegion& viewport)
-{
+static bool _clipPathFastTrack(Paint* cmpTarget, const RenderTransform* pTransform, RenderTransform* rTransform, RenderRegion& viewport) {
     /* Access Shape class by Paint is bad... but it's ok still it's an internal usage. */
     auto shape = static_cast<Shape*>(cmpTarget);
 
     //Rectangle Candidates?
     const Point* pts;
-     if (shape->pathCoords(&pts) != 4) return false;
+    if (shape->pathCoords(&pts) != 4) return false;
 
     if (rTransform) rTransform->update();
 
@@ -90,9 +87,7 @@ static bool _clipPathFastTrack(Paint* cmpTarget, const RenderTransform* pTransfo
     return false;
 }
 
-
-Paint* Paint::Impl::duplicate()
-{
+Paint* Paint::Impl::duplicate() {
     auto ret = smethod->duplicate();
     if (!ret) return nullptr;
 
@@ -112,9 +107,7 @@ Paint* Paint::Impl::duplicate()
     return ret;
 }
 
-
-bool Paint::Impl::rotate(float degree)
-{
+bool Paint::Impl::rotate(float degree) {
     if (rTransform) {
         if (fabsf(degree - rTransform->degree) <= FLT_EPSILON) return true;
     } else {
@@ -127,9 +120,7 @@ bool Paint::Impl::rotate(float degree)
     return true;
 }
 
-
-bool Paint::Impl::scale(float factor)
-{
+bool Paint::Impl::scale(float factor) {
     if (rTransform) {
         if (fabsf(factor - rTransform->scale) <= FLT_EPSILON) return true;
     } else {
@@ -142,9 +133,7 @@ bool Paint::Impl::scale(float factor)
     return true;
 }
 
-
-bool Paint::Impl::translate(float x, float y)
-{
+bool Paint::Impl::translate(float x, float y) {
     if (rTransform) {
         if (fabsf(x - rTransform->x) <= FLT_EPSILON && fabsf(y - rTransform->y) <= FLT_EPSILON) return true;
     } else {
@@ -158,9 +147,7 @@ bool Paint::Impl::translate(float x, float y)
     return true;
 }
 
-
-bool Paint::Impl::render(RenderMethod& renderer)
-{
+bool Paint::Impl::render(RenderMethod& renderer) {
     Compositor* cmp = nullptr;
 
     /* Note: only ClipPath is processed in update() step.
@@ -182,19 +169,17 @@ bool Paint::Impl::render(RenderMethod& renderer)
     return ret;
 }
 
-
-void* Paint::Impl::update(RenderMethod& renderer, const RenderTransform* pTransform, uint32_t opacity, Array<RenderData>& clips, uint32_t pFlag)
-{
+void* Paint::Impl::update(RenderMethod& renderer, const RenderTransform* pTransform, uint32_t opacity, Array<RenderData>& clips, uint32_t pFlag) {
     if (flag & RenderUpdateFlag::Transform) {
         if (!rTransform) return nullptr;
         if (!rTransform->update()) {
-            delete(rTransform);
+            delete (rTransform);
             rTransform = nullptr;
         }
     }
 
     /* 1. Composition Pre Processing */
-    void *cmpData = nullptr;
+    void* cmpData = nullptr;
     RenderRegion viewport;
     bool cmpFastTrack = false;
 
@@ -217,7 +202,7 @@ void* Paint::Impl::update(RenderMethod& renderer, const RenderTransform* pTransf
     }
 
     /* 2. Main Update */
-    void *edata = nullptr;
+    void* edata = nullptr;
     auto newFlag = static_cast<RenderUpdateFlag>(pFlag | flag);
     flag = RenderUpdateFlag::None;
     opacity = (opacity * this->opacity) / 255;
@@ -232,13 +217,13 @@ void* Paint::Impl::update(RenderMethod& renderer, const RenderTransform* pTransf
 
     /* 3. Composition Post Processing */
     if (cmpFastTrack) renderer.viewport(viewport);
-    else if (cmpData && cmpMethod == CompositeMethod::ClipPath) clips.pop();
+    else if (cmpData && cmpMethod == CompositeMethod::ClipPath)
+        clips.pop();
 
     return edata;
 }
 
-bool Paint::Impl::bounds(float* x, float* y, float* w, float* h, bool transformed)
-{
+bool Paint::Impl::bounds(float* x, float* y, float* w, float* h, bool transformed) {
     Matrix* m = nullptr;
 
     //Case: No transformed, quick return!
@@ -287,94 +272,69 @@ bool Paint::Impl::bounds(float* x, float* y, float* w, float* h, bool transforme
     return ret;
 }
 
-
 /************************************************************************/
 /* External Class Implementation                                        */
 /************************************************************************/
 
-Paint :: Paint() : pImpl(new Impl())
-{
+Paint ::Paint()
+    : pImpl(new Impl()) {
 }
 
-
-Paint :: ~Paint()
-{
-    delete(pImpl);
+Paint ::~Paint() {
+    delete (pImpl);
 }
 
-
-Result Paint::rotate(float degree) noexcept
-{
+Result Paint::rotate(float degree) noexcept {
     if (pImpl->rotate(degree)) return Result::Success;
     return Result::FailedAllocation;
 }
 
-
-Result Paint::scale(float factor) noexcept
-{
+Result Paint::scale(float factor) noexcept {
     if (pImpl->scale(factor)) return Result::Success;
     return Result::FailedAllocation;
 }
 
-
-Result Paint::translate(float x, float y) noexcept
-{
+Result Paint::translate(float x, float y) noexcept {
     if (pImpl->translate(x, y)) return Result::Success;
     return Result::FailedAllocation;
 }
 
-
-Result Paint::transform(const Matrix& m) noexcept
-{
+Result Paint::transform(const Matrix& m) noexcept {
     if (pImpl->transform(m)) return Result::Success;
     return Result::FailedAllocation;
 }
 
-
-Matrix Paint::transform() noexcept
-{
+Matrix Paint::transform() noexcept {
     auto pTransform = pImpl->transform();
     if (pTransform) return *pTransform;
     return {1, 0, 0, 0, 1, 0, 0, 0, 1};
 }
 
-
-TVG_DEPRECATED Result Paint::bounds(float* x, float* y, float* w, float* h) const noexcept
-{
+TVG_DEPRECATED Result Paint::bounds(float* x, float* y, float* w, float* h) const noexcept {
     return this->bounds(x, y, w, h, false);
 }
 
-
-Result Paint::bounds(float* x, float* y, float* w, float* h, bool transform) const noexcept
-{
+Result Paint::bounds(float* x, float* y, float* w, float* h, bool transform) const noexcept {
     if (pImpl->bounds(x, y, w, h, transform)) return Result::Success;
     return Result::InsufficientCondition;
 }
 
-
-Paint* Paint::duplicate() const noexcept
-{
+Paint* Paint::duplicate() const noexcept {
     return pImpl->duplicate();
 }
 
-
-Result Paint::composite(std::unique_ptr<Paint> target, CompositeMethod method) noexcept
-{
+Result Paint::composite(std::unique_ptr<Paint> target, CompositeMethod method) noexcept {
     if (pImpl->composite(target.release(), method)) return Result::Success;
     return Result::InvalidArguments;
 }
 
-
-CompositeMethod Paint::composite(const Paint** target) const noexcept
-{
+CompositeMethod Paint::composite(const Paint** target) const noexcept {
     if (target) *target = pImpl->cmpTarget;
 
     return pImpl->cmpMethod;
 }
 
-
-Result Paint::opacity(uint8_t o) noexcept
-{
+Result Paint::opacity(uint8_t o) noexcept {
     if (pImpl->opacity == o) return Result::Success;
 
     pImpl->opacity = o;
@@ -383,8 +343,6 @@ Result Paint::opacity(uint8_t o) noexcept
     return Result::Success;
 }
 
-
-uint8_t Paint::opacity() const noexcept
-{
+uint8_t Paint::opacity() const noexcept {
     return pImpl->opacity;
 }

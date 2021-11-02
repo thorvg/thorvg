@@ -23,57 +23,51 @@
 #include "tvgSaveModule.h"
 
 #ifdef THORVG_TVG_SAVER_SUPPORT
-    #include "tvgTvgSaver.h"
+#include "tvgTvgSaver.h"
 #endif
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-struct Saver::Impl
-{
+struct Saver::Impl {
     SaveModule* saveModule = nullptr;
-    ~Impl()
-    {
-        if (saveModule) delete(saveModule);
+    ~Impl() {
+        if (saveModule) delete (saveModule);
     }
 };
 
-
-static SaveModule* _find(FileType type)
-{
-    switch(type) {
-        case FileType::Tvg: {
+static SaveModule* _find(FileType type) {
+    switch (type) {
+    case FileType::Tvg: {
 #ifdef THORVG_TVG_SAVER_SUPPORT
-            return new TvgSaver;
+        return new TvgSaver;
 #endif
-            break;
-        }
-        default: {
-            break;
-        }
+        break;
+    }
+    default: {
+        break;
+    }
     }
 
 #ifdef THORVG_LOG_ENABLED
-    const char *format;
-    switch(type) {
-        case FileType::Tvg: {
-            format = "TVG";
-            break;
-        }
-        default: {
-            format = "???";
-            break;
-        }
+    const char* format;
+    switch (type) {
+    case FileType::Tvg: {
+        format = "TVG";
+        break;
+    }
+    default: {
+        format = "???";
+        break;
+    }
     }
     TVGLOG("SAVER", "%s format is not supported", format);
 #endif
     return nullptr;
 }
 
-
-static SaveModule* _find(const string& path)
-{
+static SaveModule* _find(const string& path) {
     auto ext = path.substr(path.find_last_of(".") + 1);
     if (!ext.compare("tvg")) {
         return _find(FileType::Tvg);
@@ -81,24 +75,19 @@ static SaveModule* _find(const string& path)
     return nullptr;
 }
 
-
 /************************************************************************/
 /* External Class Implementation                                        */
 /************************************************************************/
 
-Saver::Saver() : pImpl(new Impl())
-{
+Saver::Saver()
+    : pImpl(new Impl()) {
 }
 
-
-Saver::~Saver()
-{
-    delete(pImpl);
+Saver::~Saver() {
+    delete (pImpl);
 }
 
-
-Result Saver::save(std::unique_ptr<Paint> paint, const string& path, bool compress) noexcept
-{
+Result Saver::save(std::unique_ptr<Paint> paint, const string& path, bool compress) noexcept {
     //Already on saving an other resource.
     if (pImpl->saveModule) return Result::InsufficientCondition;
 
@@ -116,19 +105,15 @@ Result Saver::save(std::unique_ptr<Paint> paint, const string& path, bool compre
     return Result::NonSupport;
 }
 
-
-Result Saver::sync() noexcept
-{
+Result Saver::sync() noexcept {
     if (!pImpl->saveModule) return Result::InsufficientCondition;
     pImpl->saveModule->close();
-    delete(pImpl->saveModule);
+    delete (pImpl->saveModule);
     pImpl->saveModule = nullptr;
 
     return Result::Success;
 }
 
-
-unique_ptr<Saver> Saver::gen() noexcept
-{
+unique_ptr<Saver> Saver::gen() noexcept {
     return unique_ptr<Saver>(new Saver);
 }

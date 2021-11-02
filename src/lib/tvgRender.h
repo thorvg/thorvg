@@ -22,35 +22,40 @@
 #ifndef _TVG_RENDER_H_
 #define _TVG_RENDER_H_
 
-#include "tvgCommon.h"
 #include "tvgArray.h"
+#include "tvgCommon.h"
 
-namespace tvg
-{
+namespace tvg {
 
-enum RenderUpdateFlag {None = 0, Path = 1, Color = 2, Gradient = 4, Stroke = 8, Transform = 16, Image = 32, GradientStroke = 64, All = 127};
+enum RenderUpdateFlag { None = 0,
+                        Path = 1,
+                        Color = 2,
+                        Gradient = 4,
+                        Stroke = 8,
+                        Transform = 16,
+                        Image = 32,
+                        GradientStroke = 64,
+                        All = 127 };
 
-struct Surface
-{
+struct Surface {
     //TODO: Union for multiple types
     uint32_t* buffer;
-    uint32_t  stride;
-    uint32_t  w, h;
-    uint32_t  cs;
+    uint32_t stride;
+    uint32_t w, h;
+    uint32_t cs;
 };
 
 using RenderData = void*;
 
 struct Compositor {
     CompositeMethod method;
-    uint32_t        opacity;
+    uint32_t opacity;
 };
 
 struct RenderRegion {
     uint32_t x, y, w, h;
 
-    void intersect(const RenderRegion& rhs)
-    {
+    void intersect(const RenderRegion& rhs) {
         auto x1 = x + w;
         auto y1 = y + h;
         auto x2 = rhs.x + rhs.w;
@@ -63,14 +68,13 @@ struct RenderRegion {
     }
 };
 
-struct RenderTransform
-{
-    Matrix m;             //3x3 Matrix Elements
+struct RenderTransform {
+    Matrix m; //3x3 Matrix Elements
     float x = 0.0f;
     float y = 0.0f;
-    float degree = 0.0f;  //rotation degree
-    float scale = 1.0f;   //scale factor
-    bool overriding = false;  //user transform?
+    float degree = 0.0f;     //rotation degree
+    float scale = 1.0f;      //scale factor
+    bool overriding = false; //user transform?
 
     bool update();
     void override(const Matrix& m);
@@ -79,10 +83,10 @@ struct RenderTransform
     RenderTransform(const RenderTransform* lhs, const RenderTransform* rhs);
 };
 
-class RenderMethod
-{
-public:
-    virtual ~RenderMethod() {}
+class RenderMethod {
+  public:
+    virtual ~RenderMethod() {
+    }
     virtual RenderData prepare(const Shape& shape, RenderData data, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flags) = 0;
     virtual RenderData prepare(const Picture& picture, RenderData data, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flags) = 0;
     virtual bool preRender() = 0;
@@ -102,6 +106,6 @@ public:
     virtual bool endComposite(Compositor* cmp) = 0;
 };
 
-}
+} // namespace tvg
 
 #endif //_TVG_RENDER_H_
