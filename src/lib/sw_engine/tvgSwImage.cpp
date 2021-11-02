@@ -97,7 +97,6 @@ void imageDelOutline(SwImage* image, SwMpool* mpool, uint32_t tid)
 void imageReset(SwImage* image)
 {
     rleReset(image->rle);
-    image->rle = nullptr;
 }
 
 
