@@ -128,6 +128,9 @@ public:
 
         mSwCanvas->sync();
 
+        //Change ARGB into ABGR and unpremultiply
+        unpremultiplyBuffer();
+
         return val(typed_memory_view(mWidth * mHeight * 4, mBuffer.get()));
     }
 
@@ -216,6 +219,28 @@ private:
         }
     }
 
+    void unpremultiplyBuffer() {
+        for (uint32_t y = 0; y < mHeight; y++) {
+            auto buffer = (uint32_t *) mBuffer.get() + mWidth * y;
+            for (uint32_t x = 0; x < mWidth; ++x) {
+                uint8_t a = buffer[x] >> 24;
+                if (a == 255) {
+                    continue;
+                } else if (a == 0) {
+                    buffer[x] = 0x00ffffff;
+                } else {
+                    uint16_t b = ((buffer[x] << 8) & 0xff00) / a;
+                    uint16_t g = ((buffer[x]) & 0xff00) / a;
+                    uint16_t r = ((buffer[x] >> 8) & 0xff00) / a;
+                    if (b > 0xff) r = 0xff;
+                    if (g > 0xff) g = 0xff;
+                    if (r > 0xff) b = 0xff;
+                    buffer[x] = (a << 24) | (b << 16) | (g << 8) | (r);
+                }
+            }
+        }
+    }
+
     void updateSize(int width, int height)
     {
         if (!mSwCanvas) return;
@@ -224,7 +249,7 @@ private:
         mWidth = width;
         mHeight = height;
         mBuffer = make_unique<uint8_t[]>(mWidth * mHeight * 4);
-        mSwCanvas->target((uint32_t *)mBuffer.get(), mWidth, mWidth, mHeight, SwCanvas::ABGR8888_STRAIGHT);
+        mSwCanvas->target((uint32_t *)mBuffer.get(), mWidth, mWidth, mHeight, SwCanvas::ARGB8888);
 
         if (mPicture) mPicture->size(width, height);
     }
