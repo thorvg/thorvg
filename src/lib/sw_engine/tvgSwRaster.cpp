@@ -276,7 +276,7 @@ static bool _rasterSolidRle(SwSurface* surface, const SwRleData* rle, uint32_t c
 /* Image                                                                */
 /************************************************************************/
 
-static bool _rasterTranslucentImageRle(SwSurface* surface, const SwRleData* rle, uint32_t *img, uint32_t w, uint32_t h, uint32_t opacity)
+static bool _translucentImageRle(SwSurface* surface, const SwRleData* rle, uint32_t *img, uint32_t w, uint32_t h, uint32_t opacity)
 {
     auto span = rle->spans;
 
@@ -293,7 +293,23 @@ static bool _rasterTranslucentImageRle(SwSurface* surface, const SwRleData* rle,
 }
 
 
-static bool _rasterTranslucentImageRle(SwSurface* surface, const SwRleData* rle, uint32_t *img, uint32_t w, uint32_t h, uint32_t opacity, const Matrix* invTransform)
+static bool _rasterTranslucentImageRle(SwSurface* surface, const SwRleData* rle, uint32_t *img, uint32_t w, uint32_t h, uint32_t opacity)
+{
+    if (surface->compositor) {
+        if (surface->compositor->method == CompositeMethod::AlphaMask) {
+//TODO: implement
+//            return _translucentImageRleAlphaMask(surface, rle, img, w, h, opacity);
+        }
+        if (surface->compositor->method == CompositeMethod::InvAlphaMask) {
+//TODO: implement
+//            return _translucentImageRleInvAlphaMask(surface, rle, img, w, h, opacity);
+        }
+    }
+    return _translucentImageRle(surface, rle, img, w, h, opacity);
+}
+
+
+static bool _translucentImageRle(SwSurface* surface, const SwRleData* rle, uint32_t *img, uint32_t w, uint32_t h, uint32_t opacity, const Matrix* invTransform)
 {
     auto span = rle->spans;
 
@@ -314,7 +330,23 @@ static bool _rasterTranslucentImageRle(SwSurface* surface, const SwRleData* rle,
 }
 
 
-static bool _rasterTranslucentUpScaleImageRle(SwSurface* surface, const SwRleData* rle, uint32_t *img, uint32_t w, uint32_t h, uint32_t opacity, const Matrix* invTransform)
+static bool _rasterTranslucentImageRle(SwSurface* surface, const SwRleData* rle, uint32_t *img, uint32_t w, uint32_t h, uint32_t opacity, const Matrix* invTransform)
+{
+    if (surface->compositor) {
+        if (surface->compositor->method == CompositeMethod::AlphaMask) {
+//TODO: implement
+//            return _translucentImageRleAlphaMask(surface, rle, img, w, h, opacity, invTransform);
+        }
+        if (surface->compositor->method == CompositeMethod::InvAlphaMask) {
+//TODO: implement
+//            return _translucentImageRleInvAlphaMask(surface, rle, img, w, h, opacity, invTransform);
+        }
+    }
+    return _translucentImageRle(surface, rle, img, w, h, opacity, invTransform);
+}
+
+
+static bool _translucentUpScaleImageRle(SwSurface* surface, const SwRleData* rle, uint32_t *img, uint32_t w, uint32_t h, uint32_t opacity, const Matrix* invTransform)
 {
     auto span = rle->spans;
     for (uint32_t i = 0; i < rle->size; ++i, ++span) {
@@ -338,7 +370,23 @@ static bool _rasterTranslucentUpScaleImageRle(SwSurface* surface, const SwRleDat
 }
 
 
-static bool _rasterTranslucentDownScaleImageRle(SwSurface* surface, const SwRleData* rle, uint32_t *img, uint32_t w, uint32_t h, uint32_t opacity, const Matrix* invTransform, float scaling)
+static bool _rasterTranslucentUpScaleImageRle(SwSurface* surface, const SwRleData* rle, uint32_t *img, uint32_t w, uint32_t h, uint32_t opacity, const Matrix* invTransform)
+{
+    if (surface->compositor) {
+        if (surface->compositor->method == CompositeMethod::AlphaMask) {
+//TODO: implement
+//            return _translucentUpScaleImageRleAlphaMask(surface, rle, img, w, h, opacity, invTransform);
+        }
+        if (surface->compositor->method == CompositeMethod::InvAlphaMask) {
+//TODO: implement
+//            return _translucentUpScaleImageRleInvAlphaMask(surface, rle, img, w, h, opacity, invTransform);
+        }
+    }
+    return _translucentUpScaleImageRle(surface, rle, img, w, h, opacity, invTransform);
+}
+
+
+static bool _translucentDownScaleImageRle(SwSurface* surface, const SwRleData* rle, uint32_t *img, uint32_t w, uint32_t h, uint32_t opacity, const Matrix* invTransform, float scaling)
 {
     uint32_t halfScaling = static_cast<uint32_t>(0.5f / scaling);
     if (halfScaling == 0) halfScaling = 1;
@@ -359,6 +407,22 @@ static bool _rasterTranslucentDownScaleImageRle(SwSurface* surface, const SwRleD
         }
     }
     return true;
+}
+
+
+static bool _rasterTranslucentDownScaleImageRle(SwSurface* surface, const SwRleData* rle, uint32_t *img, uint32_t w, uint32_t h, uint32_t opacity, const Matrix* invTransform, float scaling)
+{
+    if (surface->compositor) {
+        if (surface->compositor->method == CompositeMethod::AlphaMask) {
+//TODO: implement
+//            return _translucentDownScaleImageRleAlphaMask(surface, rle, img, w, h, opacity, invTransform, scaling);
+        }
+        if (surface->compositor->method == CompositeMethod::InvAlphaMask) {
+//TODO: implement
+//            return _translucentDownScaleImageRleInvAlphaMask(surface, rle, img, w, h, opacity, invTransform, scaling);
+        }
+    }
+    return _translucentDownScaleImageRle(surface, rle, img, w, h, opacity, invTransform, scaling);
 }
 
 
