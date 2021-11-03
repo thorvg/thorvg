@@ -1022,6 +1022,7 @@ static bool _attrParseClipPathNode(void* data, const char* key, const char* valu
 {
     SvgLoaderData* loader = (SvgLoaderData*)data;
     SvgNode* node = loader->svgParse->node;
+    SvgCompositeNode* comp = &(node->node.comp);
 
     if (!strcmp(key, "style")) {
         return simpleXmlParseW3CAttribute(value, _parseStyleAttr, loader);
@@ -1030,6 +1031,8 @@ static bool _attrParseClipPathNode(void* data, const char* key, const char* valu
     } else if (!strcmp(key, "id")) {
         if (node->id && value) delete node->id;
         node->id = _copyId(value);
+    } else if (!strcmp(key, "clipPathUnits")) {
+        if (!strcmp(value, "objectBoundingBox")) comp->userSpace = false;
     } else {
         return _parseStyleAttr(loader, key, value, false);
     }
@@ -1041,6 +1044,7 @@ static bool _attrParseMaskNode(void* data, const char* key, const char* value)
 {
     SvgLoaderData* loader = (SvgLoaderData*)data;
     SvgNode* node = loader->svgParse->node;
+    SvgCompositeNode* comp = &(node->node.comp);
 
     if (!strcmp(key, "style")) {
         return simpleXmlParseW3CAttribute(value, _parseStyleAttr, loader);
@@ -1049,6 +1053,8 @@ static bool _attrParseMaskNode(void* data, const char* key, const char* value)
     } else if (!strcmp(key, "id")) {
         if (node->id && value) delete node->id;
         node->id = _copyId(value);
+    } else if (!strcmp(key, "maskContentUnits")) {
+        if (!strcmp(value, "objectBoundingBox")) comp->userSpace = false;
     } else {
         return _parseStyleAttr(loader, key, value, false);
     }
@@ -1158,6 +1164,8 @@ static SvgNode* _createMaskNode(SvgLoaderData* loader, SvgNode* parent, TVG_UNUS
     loader->svgParse->node = _createNode(parent, SvgNodeType::Mask);
     if (!loader->svgParse->node) return nullptr;
 
+    loader->svgParse->node->node.comp.userSpace = true;
+
     simpleXmlParseAttributes(buf, bufLength, _attrParseMaskNode, loader);
 
     return loader->svgParse->node;
@@ -1167,10 +1175,10 @@ static SvgNode* _createMaskNode(SvgLoaderData* loader, SvgNode* parent, TVG_UNUS
 static SvgNode* _createClipPathNode(SvgLoaderData* loader, SvgNode* parent, const char* buf, unsigned bufLength)
 {
     loader->svgParse->node = _createNode(parent, SvgNodeType::ClipPath);
-
     if (!loader->svgParse->node) return nullptr;
 
     loader->svgParse->node->display = false;
+    loader->svgParse->node->node.comp.userSpace = true;
 
     simpleXmlParseAttributes(buf, bufLength, _attrParseClipPathNode, loader);
 
@@ -2632,11 +2640,11 @@ static void _updateGradient(SvgNode* node, Array<SvgStyleGradient*>* gradients)
 static void _updateComposite(SvgNode* node, SvgNode* root)
 {
     if (node->style->clipPath.url && !node->style->clipPath.node) {
-        SvgNode *findResult = _findNodeById(root, node->style->clipPath.url);
+        SvgNode* findResult = _findNodeById(root, node->style->clipPath.url);
         if (findResult) node->style->clipPath.node = findResult;
     }
     if (node->style->mask.url && !node->style->mask.node) {
-        SvgNode *findResult = _findNodeById(root, node->style->mask.url);
+        SvgNode* findResult = _findNodeById(root, node->style->mask.url);
         if (findResult) node->style->mask.node = findResult;
     }
     if (node->child.count > 0) {
