@@ -57,7 +57,7 @@
 #include <float.h>
 
 static bool _appendShape(SvgNode* node, Shape* shape, float vx, float vy, float vw, float vh);
-static unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, float vx, float vy, float vw, float vh, const string& svgPath);
+static unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, float vx, float vy, float vw, float vh, const string& svgPath, bool mask);
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
@@ -255,18 +255,11 @@ static void _applyComposition(Paint* paint, const SvgNode* node, float vx, float
         if (compNode && compNode->child.count > 0) {
             node->style->mask.applying = true;
 
-            auto comp = Shape::gen();
-            comp->fill(255, 255, 255, 255);
-            if (node->transform) comp->transform(*node->transform);
-
-            auto child = compNode->child.data;
-            auto valid = false; //Composite only when valid shapes are existed
-
-            for (uint32_t i = 0; i < compNode->child.count; ++i, ++child) {
-                if (_appendChildShape(*child, comp.get(), vx, vy, vw, vh)) valid = true;
+            auto comp = _sceneBuildHelper(compNode, vx, vy, vw, vh, "", true);
+            if (comp) {
+                if (node->transform) comp->transform(*node->transform);
+                paint->composite(move(comp), CompositeMethod::AlphaMask);
             }
-
-            if (valid) paint->composite(move(comp), CompositeMethod::AlphaMask);
 
             node->style->mask.applying = false;
         }
@@ -553,7 +546,7 @@ static unique_ptr<Picture> _imageBuildHelper(SvgNode* node, float vx, float vy, 
 
 static unique_ptr<Scene> _useBuildHelper(const SvgNode* node, float vx, float vy, float vw, float vh, const string& svgPath)
 {
-    auto scene = _sceneBuildHelper(node, vx, vy, vw, vh, svgPath);
+    auto scene = _sceneBuildHelper(node, vx, vy, vw, vh, svgPath, false);
     if (node->node.use.x != 0.0f || node->node.use.y != 0.0f) {
         scene->translate(node->node.use.x, node->node.use.y);
     }
@@ -564,9 +557,9 @@ static unique_ptr<Scene> _useBuildHelper(const SvgNode* node, float vx, float vy
 }
 
 
-static unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, float vx, float vy, float vw, float vh, const string& svgPath)
+static unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, float vx, float vy, float vw, float vh, const string& svgPath, bool mask)
 {
-    if (_isGroupType(node->type)) {
+    if (_isGroupType(node->type) || mask) {
         auto scene = Scene::gen();
         if (node->transform) scene->transform(*node->transform);
 
@@ -577,11 +570,11 @@ static unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, float vx, float 
                     if ((*child)->type == SvgNodeType::Use)
                         scene->push(_useBuildHelper(*child, vx, vy, vw, vh, svgPath));
                     else
-                        scene->push(_sceneBuildHelper(*child, vx, vy, vw, vh, svgPath));
+                        scene->push(_sceneBuildHelper(*child, vx, vy, vw, vh, svgPath, false));
                 } else if ((*child)->type == SvgNodeType::Image) {
                     auto image = _imageBuildHelper(*child, vx, vy, vw, vh, svgPath);
                     if (image) scene->push(move(image));
-                } else {
+                } else if ((*child)->type != SvgNodeType::Mask) {
                     auto shape = _shapeBuildHelper(*child, vx, vy, vw, vh);
                     if (shape) scene->push(move(shape));
                 }
@@ -603,7 +596,7 @@ unique_ptr<Scene> svgSceneBuild(SvgNode* node, float vx, float vy, float vw, flo
 {
     if (!node || (node->type != SvgNodeType::Doc)) return nullptr;
 
-    auto docNode = _sceneBuildHelper(node, vx, vy, vw, vh, svgPath);
+    auto docNode = _sceneBuildHelper(node, vx, vy, vw, vh, svgPath, false);
 
     if (fabsf(w - vw) > FLT_EPSILON || fabsf(h - vh) > FLT_EPSILON) {
         auto sx = w / vw;
