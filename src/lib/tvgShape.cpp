@@ -22,7 +22,6 @@
 
 #define _USE_MATH_DEFINES       //Math Constants are not defined in Standard C/C++.
 
-#include <limits>
 #include <float.h>
 #include <math.h>
 #include "tvgShapeImpl.h"
@@ -163,18 +162,16 @@ Result Shape::appendCircle(float cx, float cy, float rx, float ry) noexcept
 
 Result Shape::appendArc(float cx, float cy, float radius, float startAngle, float sweep, bool pie) noexcept
 {
-    const float M_PI_HALF = (float)(M_PI * 0.5f);
-
     //just circle
-    if (sweep >= 360 || sweep <= -360) return appendCircle(cx, cy, radius, radius);
+    if (sweep >= 360.0f || sweep <= -360.0f) return appendCircle(cx, cy, radius, radius);
 
-    startAngle = (startAngle * M_PI) / 180;
-    sweep = sweep * M_PI / 180;
+    startAngle = (startAngle * M_PI) / 180.0f;
+    sweep = sweep * M_PI / 180.0f;
 
-    auto nCurves = ceil(fabsf(sweep / M_PI_HALF));
+    auto nCurves = ceil(fabsf(sweep / M_PI_2));
     auto sweepSign = (sweep < 0 ? -1 : 1);
-    auto fract = fmodf(sweep, M_PI_HALF);
-    fract = (fabsf(fract) < std::numeric_limits<float>::epsilon()) ? M_PI_HALF * sweepSign : fract;
+    auto fract = fmodf(sweep, M_PI_2);
+    fract = (fabsf(fract) < FLT_EPSILON) ? M_PI_2 * sweepSign : fract;
 
     //Start from here
     Point start = {radius * cosf(startAngle), radius * sinf(startAngle)};
@@ -187,7 +184,7 @@ Result Shape::appendArc(float cx, float cy, float radius, float startAngle, floa
     }
 
     for (int i = 0; i < nCurves; ++i) {
-        auto endAngle = startAngle + ((i != nCurves - 1) ? M_PI_HALF * sweepSign : fract);
+        auto endAngle = startAngle + ((i != nCurves - 1) ? M_PI_2 * sweepSign : fract);
         Point end = {radius * cosf(endAngle), radius * sinf(endAngle)};
 
         //variables needed to calculate bezier control points
