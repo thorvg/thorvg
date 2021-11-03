@@ -306,8 +306,6 @@ public:
      * @return Result::Success when succeed, Result::InsufficientCondition otherwise.
      *
      * @note The bounding box doesn't indicate the actual drawing region. It's the smallest rectangle that encloses the object.
-     *
-     * @BETA_API
      */
     Result bounds(float* x, float* y, float* w, float* h, bool transformed) const noexcept;
 
@@ -410,8 +408,6 @@ public:
      * @param[in] m The 3x3 augmented matrix.
      *
      * @return Result::Success when succeed, Result::FailedAllocation otherwise.
-     *
-     * @BETA_API
      */
     Result transform(const Matrix& m) noexcept;
 
@@ -437,8 +433,6 @@ public:
      * In case no transformation was applied, the identity matrix is returned.
      *
      * @retval The augmented transformation matrix.
-     *
-     * @BETA_API
      */
     Matrix transform() const noexcept;
 

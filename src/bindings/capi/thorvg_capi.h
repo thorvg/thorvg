@@ -839,7 +839,7 @@ TVG_EXPORT Tvg_Paint* tvg_paint_duplicate(Tvg_Paint* paint);
 
 
 /*!
-* \brief Gets the axis-aligned bounding box of the Tvg_Paint object. (BETA_API)
+* \brief Gets the axis-aligned bounding box of the Tvg_Paint object.
 *
 * \param[in] paint The Tvg_Paint object of which to get the bounds.
 * \param[out] x The x coordinate of the upper left corner of the object.
@@ -1694,7 +1694,7 @@ TVG_EXPORT Tvg_Result tvg_gradient_get_spread(const Tvg_Gradient* grad, Tvg_Stro
 
 
 /*!
-* \brief Sets the matrix of the affine transformation for the gradient object. (BETA_API)
+* \brief Sets the matrix of the affine transformation for the gradient object.
 *
 * The augmented matrix of the transformation is expected to be given.
 *
@@ -1710,7 +1710,7 @@ TVG_EXPORT Tvg_Result tvg_gradient_set_transform(Tvg_Gradient* grad, const Tvg_M
 
 
 /*!
-* \brief Gets the matrix of the affine transformation of the gradient object. (BETA_API)
+* \brief Gets the matrix of the affine transformation of the gradient object.
 *
 * In case no transformation was applied, the identity matrix is set.
 *
