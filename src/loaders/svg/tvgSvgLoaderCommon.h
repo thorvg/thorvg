@@ -215,6 +215,11 @@ struct SvgPolygonNode
     float* points;
 };
 
+struct SvgCompositeNode
+{
+    bool userSpace;
+};
+
 struct SvgLinearGradient
 {
     float x1;
@@ -225,7 +230,6 @@ struct SvgLinearGradient
     bool isY1Percentage;
     bool isX2Percentage;
     bool isY2Percentage;
-
 };
 
 struct SvgRadialGradient
@@ -348,6 +352,7 @@ struct SvgNode
         SvgPathNode path;
         SvgLineNode line;
         SvgImageNode image;
+        SvgCompositeNode comp;
     } node;
     bool display;
     ~SvgNode();
