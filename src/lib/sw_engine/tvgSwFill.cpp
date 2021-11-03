@@ -19,8 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#include <float.h>
-#include <math.h>
+#include "tvgMath.h"
 #include "tvgSwCommon.h"
 
 
@@ -117,10 +116,10 @@ bool _prepareLinear(SwFill* fill, const LinearGradient* linear, const Matrix* tr
     fill->linear.offset = -fill->linear.dx * x1 - fill->linear.dy * y1;
 
     auto gradTransform = linear->transform();
-    bool isTransformation = !mathIdentity(&gradTransform);
+    bool isTransformation = !mathIdentity((const Matrix*)(&gradTransform));
 
     if (isTransformation) {
-        if (transform) mathMultiply(transform, &gradTransform);
+        if (transform) gradTransform = mathMultiply(transform, &gradTransform);
     } else if (transform) {
         gradTransform = *transform;
         isTransformation = true;
@@ -156,10 +155,10 @@ bool _prepareRadial(SwFill* fill, const RadialGradient* radial, const Matrix* tr
     fill->radial.a = radius;
 
     auto gradTransform = radial->transform();
-    bool isTransformation = !mathIdentity(&gradTransform);
+    bool isTransformation = !mathIdentity((const Matrix*)(&gradTransform));
 
     if (isTransformation) {
-        if (transform) mathMultiply(transform, &gradTransform);
+        if (transform) gradTransform = mathMultiply(transform, &gradTransform);
     } else if (transform) {
         gradTransform = *transform;
         isTransformation = true;

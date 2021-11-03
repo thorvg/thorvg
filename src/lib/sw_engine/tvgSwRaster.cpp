@@ -19,10 +19,9 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#include <float.h>
-#include <math.h>
-#include "tvgSwCommon.h"
+#include "tvgMath.h"
 #include "tvgRender.h"
+#include "tvgSwCommon.h"
 #include "tvgSwRasterC.h"
 #include "tvgSwRasterAvx.h"
 #include "tvgSwRasterNeon.h"

@@ -21,6 +21,7 @@
  */
 #include <float.h>
 #include <math.h>
+#include "tvgMath.h"
 #include "tvgPaint.h"
 
 /************************************************************************/
@@ -261,17 +262,9 @@ bool Paint::Impl::bounds(float* x, float* y, float* w, float* h, bool transforme
     auto x2 = -FLT_MAX;
     auto y2 = -FLT_MAX;
 
-    //function = Point * Matrix
-    auto multiply = [&](Point* pt, const Matrix* transform) {
-        auto tx = pt->x * transform->e11 + pt->y * transform->e12 + transform->e13;
-        auto ty = pt->x * transform->e21 + pt->y * transform->e22 + transform->e23;
-        pt->x = tx;
-        pt->y = ty;
-    };
-
     //Compute the AABB after transformation
     for (int i = 0; i < 4; i++) {
-        multiply(&pt[i], m);
+        mathMultiply(&pt[i], m);
 
         if (pt[i].x < x1) x1 = pt[i].x;
         if (pt[i].x > x2) x2 = pt[i].x;
