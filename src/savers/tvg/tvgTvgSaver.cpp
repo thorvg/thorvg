@@ -19,8 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#include <float.h>
-#include <math.h>
+#include "tvgMath.h"
 #include "tvgSaveModule.h"
 #include "tvgTvgSaver.h"
 #include "tvgLzw.h"
@@ -54,35 +53,6 @@ static FILE* _fopen(const char* filename, const char* mode)
 static inline TvgBinCounter SERIAL_DONE(TvgBinCounter cnt)
 {
     return SIZE(TvgBinTag) + SIZE(TvgBinCounter) + cnt;
-}
-
-
-static Matrix _multiply(const Matrix* lhs, const Matrix* rhs)
-{
-    Matrix m;
-
-    m.e11 = lhs->e11 * rhs->e11 + lhs->e12 * rhs->e21 + lhs->e13 * rhs->e31;
-    m.e12 = lhs->e11 * rhs->e12 + lhs->e12 * rhs->e22 + lhs->e13 * rhs->e32;
-    m.e13 = lhs->e11 * rhs->e13 + lhs->e12 * rhs->e23 + lhs->e13 * rhs->e33;
-
-    m.e21 = lhs->e21 * rhs->e11 + lhs->e22 * rhs->e21 + lhs->e23 * rhs->e31;
-    m.e22 = lhs->e21 * rhs->e12 + lhs->e22 * rhs->e22 + lhs->e23 * rhs->e32;
-    m.e23 = lhs->e21 * rhs->e13 + lhs->e22 * rhs->e23 + lhs->e23 * rhs->e33;
-
-    m.e31 = lhs->e31 * rhs->e11 + lhs->e32 * rhs->e21 + lhs->e33 * rhs->e31;
-    m.e32 = lhs->e31 * rhs->e12 + lhs->e32 * rhs->e22 + lhs->e33 * rhs->e32;
-    m.e33 = lhs->e31 * rhs->e13 + lhs->e32 * rhs->e23 + lhs->e33 * rhs->e33;
-
-    return m;
-}
-
-
-static void _multiply(Point* pt, const Matrix* transform)
-{
-    auto tx = pt->x * transform->e11 + pt->y * transform->e12 + transform->e13;
-    auto ty = pt->x * transform->e21 + pt->y * transform->e22 + transform->e23;
-    pt->x = tx;
-    pt->y = ty;
 }
 
 
@@ -325,11 +295,7 @@ TvgBinCounter TvgSaver::writeTagProperty(TvgBinTag tag, TvgBinCounter cnt, const
 
 TvgBinCounter TvgSaver::writeTransform(const Matrix* transform, TvgBinTag tag)
 {
-    if (fabs(transform->e11 - 1) > FLT_EPSILON || fabs(transform->e12) > FLT_EPSILON || fabs(transform->e13) > FLT_EPSILON ||
-        fabs(transform->e21) > FLT_EPSILON || fabs(transform->e22 - 1) > FLT_EPSILON || fabs(transform->e23) > FLT_EPSILON ||
-        fabs(transform->e31) > FLT_EPSILON || fabs(transform->e32) > FLT_EPSILON || fabs(transform->e33 - 1) > FLT_EPSILON) {
-        return writeTagProperty(tag, SIZE(Matrix), transform);
-    }
+    if (!mathIdentity(transform)) return writeTagProperty(tag, SIZE(Matrix), transform);
     return 0;
 }
 
@@ -451,7 +417,8 @@ TvgBinCounter TvgSaver::serializeFill(const Fill* fill, TvgBinTag tag, const Mat
     cnt += writeTagProperty(TVG_TAG_FILL_COLORSTOPS, stopsCnt * SIZE(Fill::ColorStop), stops);
 
     auto gTransform = fill->transform();
-    if (pTransform) gTransform = _multiply(pTransform, &gTransform);
+    if (pTransform) gTransform = mathMultiply(pTransform, &gTransform);
+
     cnt += writeTransform(&gTransform, TVG_TAG_FILL_TRANSFORM);
 
     writeReservedCount(cnt);
@@ -536,7 +503,7 @@ TvgBinCounter TvgSaver::serializePath(const Shape* shape, const Matrix* transfor
             fabs(transform->e21) > FLT_EPSILON || fabs(transform->e22 - 1) > FLT_EPSILON || fabs(transform->e23) > FLT_EPSILON ||
             fabs(transform->e31) > FLT_EPSILON || fabs(transform->e32) > FLT_EPSILON || fabs(transform->e33 - 1) > FLT_EPSILON) {
             auto p = const_cast<Point*>(pts);
-            for (uint32_t i = 0; i < ptsCnt; ++i) _multiply(p++, transform);
+            for (uint32_t i = 0; i < ptsCnt; ++i) mathMultiply(p++, transform);
         }
     }
 
@@ -710,7 +677,7 @@ TvgBinCounter TvgSaver::serialize(const Paint* paint, const Matrix* pTransform, 
     if (!compTarget && paint->opacity() == 0) return 0;
 
     auto transform = const_cast<Paint*>(paint)->transform();
-    if (pTransform) transform = _multiply(pTransform, &transform);
+    if (pTransform) transform = mathMultiply(pTransform, &transform);
 
     switch (paint->identifier()) {
         case TVG_CLASS_ID_SHAPE: return serializeShape(static_cast<const Shape*>(paint), pTransform, &transform);

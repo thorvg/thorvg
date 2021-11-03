@@ -19,8 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#include <float.h>
-#include <math.h>
+#include "tvgMath.h"
 #include "tvgRender.h"
 
 /************************************************************************/
@@ -46,8 +45,6 @@ void RenderTransform::override(const Matrix& m)
 
 bool RenderTransform::update()
 {
-    constexpr auto PI = 3.141592f;
-
     if (overriding) return true;
 
     //Init Status
@@ -56,35 +53,13 @@ bool RenderTransform::update()
         return false;
     }
 
-    //identity
-    m.e11 = 1.0f;
-    m.e12 = 0.0f;
-    m.e13 = 0.0f;
-    m.e21 = 0.0f;
-    m.e22 = 1.0f;
-    m.e23 = 0.0f;
-    m.e31 = 0.0f;
-    m.e32 = 0.0f;
-    m.e33 = 1.0f;
+    mathIdentity(&m);
 
-    //scale
-    m.e11 = scale;
-    m.e22 = scale;
+    mathScale(&m, scale);
 
-    //rotation
-    if (fabsf(degree) > FLT_EPSILON) {
-        auto radian = degree / 180.0f * PI;
-        auto cosVal = cosf(radian);
-        auto sinVal = sinf(radian);
+    if (fabsf(degree) > FLT_EPSILON) mathRotate(&m, degree);
 
-        m.e12 = m.e11 * -sinVal;
-        m.e11 *= cosVal;
-        m.e21 = m.e22 * sinVal;
-        m.e22 *= cosVal;
-    }
-
-    m.e13 = x;
-    m.e23 = y;
+    mathTranslate(&m, x, y);
 
     return true;
 }
@@ -97,15 +72,5 @@ RenderTransform::RenderTransform()
 
 RenderTransform::RenderTransform(const RenderTransform* lhs, const RenderTransform* rhs)
 {
-    m.e11 = lhs->m.e11 * rhs->m.e11 + lhs->m.e12 * rhs->m.e21 + lhs->m.e13 * rhs->m.e31;
-    m.e12 = lhs->m.e11 * rhs->m.e12 + lhs->m.e12 * rhs->m.e22 + lhs->m.e13 * rhs->m.e32;
-    m.e13 = lhs->m.e11 * rhs->m.e13 + lhs->m.e12 * rhs->m.e23 + lhs->m.e13 * rhs->m.e33;
-
-    m.e21 = lhs->m.e21 * rhs->m.e11 + lhs->m.e22 * rhs->m.e21 + lhs->m.e23 * rhs->m.e31;
-    m.e22 = lhs->m.e21 * rhs->m.e12 + lhs->m.e22 * rhs->m.e22 + lhs->m.e23 * rhs->m.e32;
-    m.e23 = lhs->m.e21 * rhs->m.e13 + lhs->m.e22 * rhs->m.e23 + lhs->m.e23 * rhs->m.e33;
-
-    m.e31 = lhs->m.e31 * rhs->m.e11 + lhs->m.e32 * rhs->m.e21 + lhs->m.e33 * rhs->m.e31;
-    m.e32 = lhs->m.e31 * rhs->m.e12 + lhs->m.e32 * rhs->m.e22 + lhs->m.e33 * rhs->m.e32;
-    m.e33 = lhs->m.e31 * rhs->m.e13 + lhs->m.e32 * rhs->m.e23 + lhs->m.e33 * rhs->m.e33;
+    m = mathMultiply(&lhs->m, &rhs->m);
 }
