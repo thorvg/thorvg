@@ -9,7 +9,7 @@ if (cc.get_id() != 'msvc')
         compiler_flags += ['-mfpu=neon']
     endif
     if get_option('b_sanitize') == 'none'
-        compiler_flags += ['-fno-exceptions', '-fno-rtti',
+        compiler_flags += ['-s', '-fno-exceptions', '-fno-rtti', '-fno-stack-protector', '-fno-math-errno',
                            '-fno-unwind-tables' , '-fno-asynchronous-unwind-tables',
                            '-Woverloaded-virtual', '-Wno-unused-parameter']
     endif
