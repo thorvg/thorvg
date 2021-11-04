@@ -56,7 +56,7 @@
 #include "tvgSvgUtil.h"
 #include <float.h>
 
-static bool _appendShape(SvgNode* node, Shape* shape, float vx, float vy, float vw, float vh);
+static bool _appendShape(SvgNode* node, Shape* shape, float vx, float vy, float vw, float vh, const string& svgPath);
 static unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, float vx, float vy, float vw, float vh, const string& svgPath, bool mask);
 
 /************************************************************************/
@@ -199,16 +199,16 @@ static unique_ptr<RadialGradient> _applyRadialGradientProperty(SvgStyleGradient*
 }
 
 
-static bool _appendChildShape(SvgNode* node, Shape* shape, float vx, float vy, float vw, float vh)
+static bool _appendChildShape(SvgNode* node, Shape* shape, float vx, float vy, float vw, float vh, const string& svgPath)
 {
     auto valid = false;
 
-    if (_appendShape(node, shape, vx, vy, vw, vh)) valid = true;
+    if (_appendShape(node, shape, vx, vy, vw, vh, svgPath)) valid = true;
 
     if (node->child.count > 0) {
         auto child = node->child.data;
         for (uint32_t i = 0; i < node->child.count; ++i, ++child) {
-            if (_appendChildShape(*child, shape, vx, vy, vw, vh)) valid = true;
+            if (_appendChildShape(*child, shape, vx, vy, vw, vh, svgPath)) valid = true;
         }
     }
 
@@ -216,7 +216,7 @@ static bool _appendChildShape(SvgNode* node, Shape* shape, float vx, float vy, f
 }
 
 
-static void _applyComposition(Paint* paint, const SvgNode* node, float vx, float vy, float vw, float vh)
+static void _applyComposition(Paint* paint, const SvgNode* node, float vx, float vy, float vw, float vh, const string& svgPath)
 {
     /* ClipPath */
     /* Do not drop in Circular Dependency for ClipPath.
@@ -236,7 +236,7 @@ static void _applyComposition(Paint* paint, const SvgNode* node, float vx, float
             auto valid = false; //Composite only when valid shapes are existed
 
             for (uint32_t i = 0; i < compNode->child.count; ++i, ++child) {
-                if (_appendChildShape(*child, comp.get(), vx, vy, vw, vh)) valid = true;
+                if (_appendChildShape(*child, comp.get(), vx, vy, vw, vh, svgPath)) valid = true;
             }
 
             if (valid) paint->composite(move(comp), CompositeMethod::ClipPath);
@@ -255,7 +255,7 @@ static void _applyComposition(Paint* paint, const SvgNode* node, float vx, float
         if (compNode && compNode->child.count > 0) {
             node->style->mask.applying = true;
 
-            auto comp = _sceneBuildHelper(compNode, vx, vy, vw, vh, "", true);
+            auto comp = _sceneBuildHelper(compNode, vx, vy, vw, vh, svgPath, true);
             if (comp) {
                 if (node->transform) comp->transform(*node->transform);
                 paint->composite(move(comp), CompositeMethod::AlphaMask);
@@ -267,7 +267,7 @@ static void _applyComposition(Paint* paint, const SvgNode* node, float vx, float
 }
 
 
-static void _applyProperty(SvgNode* node, Shape* vg, float vx, float vy, float vw, float vh)
+static void _applyProperty(SvgNode* node, Shape* vg, float vx, float vy, float vw, float vh, const string& svgPath)
 {
     SvgStyleProperty* style = node->style;
 
@@ -356,19 +356,19 @@ static void _applyProperty(SvgNode* node, Shape* vg, float vx, float vy, float v
         vg->stroke(style->stroke.paint.color.r, style->stroke.paint.color.g, style->stroke.paint.color.b, style->stroke.opacity);
     }
 
-    _applyComposition(vg, node, vx, vy, vw, vh);
+    _applyComposition(vg, node, vx, vy, vw, vh, svgPath);
 }
 
 
-static unique_ptr<Shape> _shapeBuildHelper(SvgNode* node, float vx, float vy, float vw, float vh)
+static unique_ptr<Shape> _shapeBuildHelper(SvgNode* node, float vx, float vy, float vw, float vh, const string& svgPath)
 {
     auto shape = Shape::gen();
-    if (_appendShape(node, shape.get(), vx, vy, vw, vh)) return shape;
+    if (_appendShape(node, shape.get(), vx, vy, vw, vh, svgPath)) return shape;
     else return nullptr;
 }
 
 
-static bool _appendShape(SvgNode* node, Shape* shape, float vx, float vy, float vw, float vh)
+static bool _appendShape(SvgNode* node, Shape* shape, float vx, float vy, float vw, float vh, const string& svgPath)
 {
     Array<PathCommand> cmds;
     Array<Point> pts;
@@ -421,7 +421,7 @@ static bool _appendShape(SvgNode* node, Shape* shape, float vx, float vy, float 
         }
     }
 
-    _applyProperty(node, shape, vx, vy, vw, vh);
+    _applyProperty(node, shape, vx, vy, vw, vh, svgPath);
     return true;
 }
 
@@ -539,7 +539,7 @@ static unique_ptr<Picture> _imageBuildHelper(SvgNode* node, float vx, float vy, 
         picture->transform(m);
     }
 
-    _applyComposition(picture.get(), node, vx, vy, vw, vh);
+    _applyComposition(picture.get(), node, vx, vy, vw, vh, svgPath);
     return picture;
 }
 
@@ -561,7 +561,7 @@ static unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, float vx, float 
 {
     if (_isGroupType(node->type) || mask) {
         auto scene = Scene::gen();
-        if (node->transform) scene->transform(*node->transform);
+        if (!mask && node->transform) scene->transform(*node->transform);
 
         if (node->display && node->style->opacity != 0) {
             auto child = node->child.data;
@@ -575,11 +575,11 @@ static unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, float vx, float 
                     auto image = _imageBuildHelper(*child, vx, vy, vw, vh, svgPath);
                     if (image) scene->push(move(image));
                 } else if ((*child)->type != SvgNodeType::Mask) {
-                    auto shape = _shapeBuildHelper(*child, vx, vy, vw, vh);
+                    auto shape = _shapeBuildHelper(*child, vx, vy, vw, vh, svgPath);
                     if (shape) scene->push(move(shape));
                 }
             }
-            _applyComposition(scene.get(), node, vx, vy, vw, vh);
+            _applyComposition(scene.get(), node, vx, vy, vw, vh, svgPath);
             scene->opacity(node->style->opacity);
         }
         return scene;
