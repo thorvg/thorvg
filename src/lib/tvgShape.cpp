@@ -168,10 +168,10 @@ Result Shape::appendArc(float cx, float cy, float radius, float startAngle, floa
     startAngle = (startAngle * M_PI) / 180.0f;
     sweep = sweep * M_PI / 180.0f;
 
-    auto nCurves = ceil(fabsf(sweep / M_PI_2));
+    auto nCurves = ceil(fabsf(sweep / float(M_PI_2)));
     auto sweepSign = (sweep < 0 ? -1 : 1);
-    auto fract = fmodf(sweep, M_PI_2);
-    fract = (fabsf(fract) < FLT_EPSILON) ? M_PI_2 * sweepSign : fract;
+    auto fract = fmodf(sweep, float(M_PI_2));
+    fract = (fabsf(fract) < FLT_EPSILON) ? float(M_PI_2) * sweepSign : fract;
 
     //Start from here
     Point start = {radius * cosf(startAngle), radius * sinf(startAngle)};
@@ -184,7 +184,7 @@ Result Shape::appendArc(float cx, float cy, float radius, float startAngle, floa
     }
 
     for (int i = 0; i < nCurves; ++i) {
-        auto endAngle = startAngle + ((i != nCurves - 1) ? M_PI_2 * sweepSign : fract);
+        auto endAngle = startAngle + ((i != nCurves - 1) ? float(M_PI_2) * sweepSign : fract);
         Point end = {radius * cosf(endAngle), radius * sinf(endAngle)};
 
         //variables needed to calculate bezier control points
