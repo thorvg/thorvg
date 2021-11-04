@@ -31,22 +31,21 @@
 
 struct ShapeStroke
 {
-    float width = 0;
-    uint8_t color[4] = {0, 0, 0, 0};
-    Fill *fill = nullptr;
-    float* dashPattern = nullptr;
-    uint32_t dashCnt = 0;
-    StrokeCap cap = StrokeCap::Square;
-    StrokeJoin join = StrokeJoin::Bevel;
+    float width;
+    uint8_t color[4];
+    Fill *fill;
+    float* dashPattern;
+    uint32_t dashCnt;
+    StrokeCap cap;
+    StrokeJoin join;
 
-    ShapeStroke() {}
-
-    ShapeStroke(const ShapeStroke* src)
-     : width(src->width),
-       dashCnt(src->dashCnt),
-       cap(src->cap),
-       join(src->join)
+    void copy(const ShapeStroke* src)
     {
+       width = src->width;
+       dashCnt = src->dashCnt;
+       cap = src->cap;
+       join = src->join;
+
         memcpy(color, src->color, sizeof(color));
         if (dashCnt > 0) {
             dashPattern = static_cast<float*>(malloc(sizeof(float) * dashCnt));
@@ -55,7 +54,7 @@ struct ShapeStroke
         if (src->fill) fill = src->fill->duplicate();
     }
 
-    ~ShapeStroke()
+    void clear()
     {
         if (dashPattern) free(dashPattern);
         if (fill) delete(fill);
@@ -215,7 +214,10 @@ struct Shape::Impl
     ~Impl()
     {
         if (fill) delete(fill);
-        if (stroke) delete(stroke);
+        if (stroke) {
+            stroke->clear();
+            free (stroke);
+        }
     }
 
     bool dispose(RenderMethod& renderer)
@@ -260,7 +262,7 @@ struct Shape::Impl
     {
         //TODO: Size Exception?
 
-        if (!stroke) stroke = new ShapeStroke();
+        if (!stroke) stroke = static_cast<ShapeStroke*>(calloc(sizeof(ShapeStroke), 1));
         stroke->width = width;
         flag |= RenderUpdateFlag::Stroke;
 
@@ -269,7 +271,7 @@ struct Shape::Impl
 
     bool strokeCap(StrokeCap cap)
     {
-        if (!stroke) stroke = new ShapeStroke();
+        if (!stroke) stroke = static_cast<ShapeStroke*>(calloc(sizeof(ShapeStroke), 1));
         stroke->cap = cap;
         flag |= RenderUpdateFlag::Stroke;
 
@@ -278,7 +280,7 @@ struct Shape::Impl
 
     bool strokeJoin(StrokeJoin join)
     {
-        if (!stroke) stroke = new ShapeStroke();
+        if (!stroke) stroke = static_cast<ShapeStroke*>(calloc(sizeof(ShapeStroke), 1));
         stroke->join = join;
         flag |= RenderUpdateFlag::Stroke;
 
@@ -287,7 +289,7 @@ struct Shape::Impl
 
     bool strokeColor(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
     {
-        if (!stroke) stroke = new ShapeStroke();
+        if (!stroke) stroke = static_cast<ShapeStroke*>(calloc(sizeof(ShapeStroke), 1));
         if (stroke->fill) {
             delete(stroke->fill);
             stroke->fill = nullptr;
@@ -309,7 +311,7 @@ struct Shape::Impl
         auto p = f.release();
         if (!p) return Result::MemoryCorruption;
 
-        if (!stroke) stroke = new ShapeStroke();
+        if (!stroke) stroke = static_cast<ShapeStroke*>(calloc(sizeof(ShapeStroke), 1));
         if (stroke->fill && stroke->fill != p) delete(stroke->fill);
         stroke->fill = p;
 
@@ -326,7 +328,7 @@ struct Shape::Impl
             free(stroke->dashPattern);
             stroke->dashPattern = nullptr;
         } else {
-            if (!stroke) stroke = new ShapeStroke();
+            if (!stroke) stroke = static_cast<ShapeStroke*>(calloc(sizeof(ShapeStroke), 1));
             if (stroke->dashCnt != cnt) {
                 free(stroke->dashPattern);
                 stroke->dashPattern = nullptr;
@@ -363,7 +365,8 @@ struct Shape::Impl
 
         //Stroke
         if (stroke) {
-            dup->stroke = new ShapeStroke(stroke);
+            dup->stroke = static_cast<ShapeStroke*>(calloc(sizeof(ShapeStroke), 1));
+            dup->stroke->copy(stroke);
             dup->flag |= RenderUpdateFlag::Stroke;
 
             if (stroke->fill)

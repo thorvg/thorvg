@@ -251,9 +251,9 @@ struct SwCompositor : Compositor
 
 struct SwMpool
 {
-    SwOutline* outline = nullptr;
-    SwOutline* strokeOutline = nullptr;
-    unsigned allocSize = 0;
+    SwOutline* outline;
+    SwOutline* strokeOutline;
+    unsigned allocSize;
 };
 
 static inline SwCoord TO_SWCOORD(float val)

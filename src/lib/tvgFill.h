@@ -58,8 +58,8 @@ struct Fill::Impl
     ~Impl()
     {
         if (dup) delete(dup);
-        if (colorStops) free(colorStops);
-        if (transform) delete(transform);
+        free(colorStops);
+        free(transform);
     }
 
     void method(DuplicateMethod<Fill>* dup)
@@ -77,7 +77,7 @@ struct Fill::Impl
         ret->pImpl->colorStops = static_cast<ColorStop*>(malloc(sizeof(ColorStop) * cnt));
         memcpy(ret->pImpl->colorStops, colorStops, sizeof(ColorStop) * cnt);
         if (transform) {
-            ret->pImpl->transform = new Matrix;
+            ret->pImpl->transform = static_cast<Matrix*>(malloc(sizeof(Matrix)));
             *ret->pImpl->transform = *transform;
         }
         return ret;
