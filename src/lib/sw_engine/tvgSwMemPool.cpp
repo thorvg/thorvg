@@ -61,7 +61,7 @@ SwMpool* mpoolInit(unsigned threads)
 {
     if (threads == 0) threads = 1;
 
-    auto mpool = new SwMpool;
+    auto mpool = static_cast<SwMpool*>(calloc(sizeof(SwMpool), 1));
     mpool->outline = static_cast<SwOutline*>(calloc(1, sizeof(SwOutline) * threads));
     if (!mpool->outline) goto err;
 
@@ -82,7 +82,7 @@ err:
         free(mpool->strokeOutline);
         mpool->strokeOutline = nullptr;
     }
-    delete(mpool);
+    free(mpool);
     return nullptr;
 }
 
@@ -150,7 +150,7 @@ bool mpoolTerm(SwMpool* mpool)
         mpool->strokeOutline = nullptr;
     }
 
-    delete(mpool);
+    free(mpool);
 
     return true;
 }
