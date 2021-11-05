@@ -376,7 +376,7 @@ static bool _appendShape(SvgNode* node, Shape* shape, float vx, float vy, float 
     switch (node->type) {
         case SvgNodeType::Path: {
             if (node->node.path.path) {
-                if (svgPathToTvgPath(node->node.path.path->c_str(), cmds, pts)) {
+                if (svgPathToTvgPath(node->node.path.path, cmds, pts)) {
                     shape->appendPath(cmds.data, cmds.count, pts.data, pts.count);
                 }
             }
@@ -501,7 +501,7 @@ static unique_ptr<Picture> _imageBuildHelper(SvgNode* node, float vx, float vy, 
     if (!node->node.image.href) return nullptr;
     auto picture = Picture::gen();
 
-    const char* href = (*node->node.image.href).c_str();
+    const char* href = node->node.image.href;
     if (!strncmp(href, "data:", sizeof("data:") - 1)) {
         href += sizeof("data:") - 1;
         const char* mimetype;

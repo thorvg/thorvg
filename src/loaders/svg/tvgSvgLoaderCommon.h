@@ -201,12 +201,12 @@ struct SvgLineNode
 struct SvgImageNode
 {
     float x, y, w, h;
-    string *href;
+    char* href;
 };
 
 struct SvgPathNode
 {
-    string* path;
+    char* path;
 };
 
 struct SvgPolygonNode
@@ -248,7 +248,7 @@ struct SvgRadialGradient
 
 struct SvgComposite
 {
-    string *url;
+    char *url;
     SvgNode* node;
     bool applying;              //flag for checking circular dependency.
 };
@@ -263,7 +263,7 @@ struct SvgColor
 struct SvgPaint
 {
     SvgStyleGradient* gradient;
-    string *url;
+    char *url;
     SvgColor color;
     bool none;
     bool curColor;
@@ -277,8 +277,8 @@ struct SvgDash
 struct SvgStyleGradient
 {
     SvgGradientType type;
-    string *id;
-    string *ref;
+    char* id;
+    char* ref;
     FillSpread spread;
     SvgRadialGradient* radial;
     SvgLinearGradient* linear;
@@ -292,8 +292,8 @@ struct SvgStyleGradient
         free(transform);
         free(radial);
         free(linear);
-        delete(ref);
-        delete(id);
+        free(ref);
+        free(id);
     }
 };
 
@@ -336,7 +336,7 @@ struct SvgNode
     SvgNodeType type;
     SvgNode* parent;
     Array<SvgNode*> child;
-    string *id;
+    char *id;
     SvgStyleProperty *style;
     Matrix* transform;
     union {
@@ -379,7 +379,7 @@ struct SvgParser
 struct SvgNodeIdPair
 {
     SvgNode* node;
-    string *id;
+    char *id;
 };
 
 struct SvgLoaderData
