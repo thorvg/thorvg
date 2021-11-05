@@ -225,16 +225,20 @@ private:
             for (uint32_t x = 0; x < mWidth; ++x) {
                 uint8_t a = buffer[x] >> 24;
                 if (a == 255) {
-                    continue;
+                    uint8_t b = (buffer[x] & 0xff);
+                    uint8_t r = ((buffer[x] >> 16) & 0xff);
+                    buffer[x] = (buffer[x] & 0xff00ff00) | (b << 16) | (r);
+
                 } else if (a == 0) {
                     buffer[x] = 0x00ffffff;
+
                 } else {
                     uint16_t b = ((buffer[x] << 8) & 0xff00) / a;
                     uint16_t g = ((buffer[x]) & 0xff00) / a;
                     uint16_t r = ((buffer[x] >> 8) & 0xff00) / a;
-                    if (b > 0xff) r = 0xff;
+                    if (b > 0xff) b = 0xff;
                     if (g > 0xff) g = 0xff;
-                    if (r > 0xff) b = 0xff;
+                    if (r > 0xff) r = 0xff;
                     buffer[x] = (a << 24) | (b << 16) | (g << 8) | (r);
                 }
             }
