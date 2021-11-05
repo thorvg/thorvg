@@ -333,12 +333,12 @@ static bool _rasterTranslucentImageRle(SwSurface* surface, const SwRleData* rle,
 {
     if (surface->compositor) {
         if (surface->compositor->method == CompositeMethod::AlphaMask) {
-//TODO: implement
-//            return _translucentImageRleAlphaMask(surface, rle, img, w, h, opacity, invTransform);
+            TVGERR("Missing Implementation _translucentImageRleAlphaMask()");
+//          return _translucentImageRleAlphaMask(surface, rle, img, w, h, opacity, invTransform);
         }
         if (surface->compositor->method == CompositeMethod::InvAlphaMask) {
-//TODO: implement
-//            return _translucentImageRleInvAlphaMask(surface, rle, img, w, h, opacity, invTransform);
+            TVGERR("Missing Implementation _translucentImageRleInvAlphaMask()");
+//          return _translucentImageRleInvAlphaMask(surface, rle, img, w, h, opacity, invTransform);
         }
     }
     return _translucentImageRle(surface, rle, img, w, h, opacity, invTransform);
@@ -373,12 +373,12 @@ static bool _rasterTranslucentUpScaleImageRle(SwSurface* surface, const SwRleDat
 {
     if (surface->compositor) {
         if (surface->compositor->method == CompositeMethod::AlphaMask) {
-//TODO: implement
-//            return _translucentUpScaleImageRleAlphaMask(surface, rle, img, w, h, opacity, invTransform);
+            TVGERR("Missing Implementation _translucentUpScaleImageRleAlphaMask()");
+//          return _translucentUpScaleImageRleAlphaMask(surface, rle, img, w, h, opacity, invTransform);
         }
         if (surface->compositor->method == CompositeMethod::InvAlphaMask) {
-//TODO: implement
-//            return _translucentUpScaleImageRleInvAlphaMask(surface, rle, img, w, h, opacity, invTransform);
+            TVGERR("Missing Implementation _translucentUpScaleImageRleInvAlphaMask()");
+//          return _translucentUpScaleImageRleInvAlphaMask(surface, rle, img, w, h, opacity, invTransform);
         }
     }
     return _translucentUpScaleImageRle(surface, rle, img, w, h, opacity, invTransform);
@@ -413,12 +413,12 @@ static bool _rasterTranslucentDownScaleImageRle(SwSurface* surface, const SwRleD
 {
     if (surface->compositor) {
         if (surface->compositor->method == CompositeMethod::AlphaMask) {
-//TODO: implement
-//            return _translucentDownScaleImageRleAlphaMask(surface, rle, img, w, h, opacity, invTransform, scaling);
+            TVGERR("Missing Implementation _translucentDownScaleImageRleAlphaMask()");
+//          return _translucentDownScaleImageRleAlphaMask(surface, rle, img, w, h, opacity, invTransform, scaling);
         }
         if (surface->compositor->method == CompositeMethod::InvAlphaMask) {
-//TODO: implement
-//            return _translucentDownScaleImageRleInvAlphaMask(surface, rle, img, w, h, opacity, invTransform, scaling);
+            TVGERR("Missing Implementation _translucentDownScaleImageRleInvAlphaMask()");
+//          return _translucentDownScaleImageRleInvAlphaMask(surface, rle, img, w, h, opacity, invTransform, scaling);
         }
     }
     return _translucentDownScaleImageRle(surface, rle, img, w, h, opacity, invTransform, scaling);
