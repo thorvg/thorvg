@@ -296,11 +296,11 @@ static bool _rasterTranslucentImageRle(SwSurface* surface, const SwRleData* rle,
 {
     if (surface->compositor) {
         if (surface->compositor->method == CompositeMethod::AlphaMask) {
-//TODO: implement
-//            return _translucentImageRleAlphaMask(surface, rle, img, w, h, opacity);
+            TVGERR("Missing Implementation _translucentImageRleAlphaMask()");
+//          return _translucentImageRleAlphaMask(surface, rle, img, w, h, opacity);
         }
         if (surface->compositor->method == CompositeMethod::InvAlphaMask) {
-//TODO: implement
+            TVGERR("Missing Implementation _translucentImageRleInvAlphaMask()");
 //            return _translucentImageRleInvAlphaMask(surface, rle, img, w, h, opacity);
         }
     }
