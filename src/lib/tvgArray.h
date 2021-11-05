@@ -45,6 +45,7 @@ struct Array
 
     bool reserve(uint32_t size)
     {
+        if (size == UINT32_MAX) return false;
         if (size > reserved) {
             reserved = size;
             data = static_cast<T*>(realloc(data, sizeof(T) * reserved));
