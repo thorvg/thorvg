@@ -1690,7 +1690,7 @@ static SvgStyleGradient* _cloneGradient(SvgStyleGradient* from)
 {
     if (!from) return nullptr;
 
-    auto grad = new SvgStyleGradient;
+    auto grad = (SvgStyleGradient*)(calloc(1, sizeof(SvgStyleGradient)));
     grad->type = from->type;
     grad->id = from->id ? _copyId(from->id) : nullptr;
     grad->ref = from->ref ? _copyId(from->ref) : nullptr;
@@ -1717,7 +1717,10 @@ static SvgStyleGradient* _cloneGradient(SvgStyleGradient* from)
     return grad;
 
 error_grad_alloc:
-    if (grad) delete(grad);
+    if (grad) {
+        grad->clear();
+        free(grad);
+    }
     return nullptr;
 }
 
@@ -2094,14 +2097,15 @@ static bool _attrParseRadialGradientNode(void* data, const char* key, const char
 
 static SvgStyleGradient* _createRadialGradient(SvgLoaderData* loader, const char* buf, unsigned bufLength)
 {
-    auto grad = new SvgStyleGradient;
+    auto grad = (SvgStyleGradient*)(calloc(1, sizeof(SvgStyleGradient)));
     loader->svgParse->styleGrad = grad;
 
     grad->type = SvgGradientType::Radial;
     grad->userSpace = false;
     grad->radial = (SvgRadialGradient*)calloc(1, sizeof(SvgRadialGradient));
     if (!grad->radial) {
-        delete(grad);
+        grad->clear();
+        free(grad);
         return nullptr;
     }
     /**
@@ -2281,14 +2285,15 @@ static bool _attrParseLinearGradientNode(void* data, const char* key, const char
 
 static SvgStyleGradient* _createLinearGradient(SvgLoaderData* loader, const char* buf, unsigned bufLength)
 {
-    auto grad = new SvgStyleGradient;
+    auto grad = (SvgStyleGradient*)(calloc(1, sizeof(SvgStyleGradient)));
     loader->svgParse->styleGrad = grad;
 
     grad->type = SvgGradientType::Linear;
     grad->userSpace = false;
     grad->linear = (SvgLinearGradient*)calloc(1, sizeof(SvgLinearGradient));
     if (!grad->linear) {
-        delete(grad);
+        grad->clear();
+        free(grad);
         return nullptr;
     }
     /**
@@ -2628,11 +2633,17 @@ static void _updateGradient(SvgNode* node, Array<SvgStyleGradient*>* gradients)
         }
     } else {
         if (node->style->fill.paint.url) {
-            if (node->style->fill.paint.gradient) delete(node->style->fill.paint.gradient);
+            if (node->style->fill.paint.gradient) {
+                node->style->fill.paint.gradient->clear();
+                free(node->style->fill.paint.gradient);
+            }
             node->style->fill.paint.gradient = _gradientDup(gradients, node->style->fill.paint.url);
         }
         if (node->style->stroke.paint.url) {
-            if (node->style->stroke.paint.gradient) delete(node->style->stroke.paint.gradient);
+            if (node->style->stroke.paint.gradient) {
+                node->style->stroke.paint.gradient->clear();
+                free(node->style->stroke.paint.gradient);
+            }
             node->style->stroke.paint.gradient = _gradientDup(gradients, node->style->stroke.paint.url);
         }
     }
@@ -2666,8 +2677,14 @@ static void _freeNodeStyle(SvgStyleProperty* style)
     free(style->clipPath.url);
     free(style->mask.url);
 
-    if (style->fill.paint.gradient) delete(style->fill.paint.gradient);
-    if (style->stroke.paint.gradient) delete(style->stroke.paint.gradient);
+    if (style->fill.paint.gradient) {
+        style->fill.paint.gradient->clear();
+        free(style->fill.paint.gradient);
+    }
+    if (style->stroke.paint.gradient) {
+        style->stroke.paint.gradient->clear();
+        free(style->stroke.paint.gradient);
+    }
     free(style->fill.paint.url);
     free(style->stroke.paint.url);
     style->stroke.dash.array.reset();
@@ -2708,7 +2725,8 @@ static void _freeNode(SvgNode* node)
          case SvgNodeType::Defs: {
              auto gradients = node->node.defs.gradients.data;
              for (size_t i = 0; i < node->node.defs.gradients.count; ++i) {
-                 delete(*gradients);
+                 (*gradients)->clear();
+                 free(*gradients);
                  ++gradients;
              }
              node->node.defs.gradients.reset();

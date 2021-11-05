@@ -276,17 +276,17 @@ struct SvgDash
 
 struct SvgStyleGradient
 {
-    SvgGradientType type = SvgGradientType::Linear;
-    char *id = nullptr;
-    char *ref = nullptr;
-    FillSpread spread = FillSpread::Pad;
-    SvgRadialGradient* radial = nullptr;
-    SvgLinearGradient* linear = nullptr;
-    Matrix* transform = nullptr;
+    SvgGradientType type;
+    char* id;
+    char* ref;
+    FillSpread spread;
+    SvgRadialGradient* radial;
+    SvgLinearGradient* linear;
+    Matrix* transform;
     Array<Fill::ColorStop> stops;
-    bool userSpace = false;
+    bool userSpace;
 
-    ~SvgStyleGradient()
+    void clear()
     {
         stops.reset();
         free(transform);
