@@ -296,11 +296,11 @@ static bool _rasterTranslucentImageRle(SwSurface* surface, const SwRleData* rle,
 {
     if (surface->compositor) {
         if (surface->compositor->method == CompositeMethod::AlphaMask) {
-            TVGERR("Missing Implementation _translucentImageRleAlphaMask()");
+            TVGERR("SW_ENGINE", "Missing Implementation _translucentImageRleAlphaMask()");
 //          return _translucentImageRleAlphaMask(surface, rle, img, w, h, opacity);
         }
         if (surface->compositor->method == CompositeMethod::InvAlphaMask) {
-            TVGERR("Missing Implementation _translucentImageRleInvAlphaMask()");
+            TVGERR("SW_ENGINE", "Missing Implementation _translucentImageRleInvAlphaMask()");
 //            return _translucentImageRleInvAlphaMask(surface, rle, img, w, h, opacity);
         }
     }
@@ -333,11 +333,11 @@ static bool _rasterTranslucentImageRle(SwSurface* surface, const SwRleData* rle,
 {
     if (surface->compositor) {
         if (surface->compositor->method == CompositeMethod::AlphaMask) {
-            TVGERR("Missing Implementation _translucentImageRleAlphaMask()");
+            TVGERR("SW_ENGINE", "Missing Implementation _translucentImageRleAlphaMask()");
 //          return _translucentImageRleAlphaMask(surface, rle, img, w, h, opacity, invTransform);
         }
         if (surface->compositor->method == CompositeMethod::InvAlphaMask) {
-            TVGERR("Missing Implementation _translucentImageRleInvAlphaMask()");
+            TVGERR("SW_ENGINE", "Missing Implementation _translucentImageRleInvAlphaMask()");
 //          return _translucentImageRleInvAlphaMask(surface, rle, img, w, h, opacity, invTransform);
         }
     }
@@ -373,11 +373,11 @@ static bool _rasterTranslucentUpScaleImageRle(SwSurface* surface, const SwRleDat
 {
     if (surface->compositor) {
         if (surface->compositor->method == CompositeMethod::AlphaMask) {
-            TVGERR("Missing Implementation _translucentUpScaleImageRleAlphaMask()");
+            TVGERR("SW_ENGINE", "Missing Implementation _translucentUpScaleImageRleAlphaMask()");
 //          return _translucentUpScaleImageRleAlphaMask(surface, rle, img, w, h, opacity, invTransform);
         }
         if (surface->compositor->method == CompositeMethod::InvAlphaMask) {
-            TVGERR("Missing Implementation _translucentUpScaleImageRleInvAlphaMask()");
+            TVGERR("SW_ENGINE", "Missing Implementation _translucentUpScaleImageRleInvAlphaMask()");
 //          return _translucentUpScaleImageRleInvAlphaMask(surface, rle, img, w, h, opacity, invTransform);
         }
     }
@@ -413,11 +413,11 @@ static bool _rasterTranslucentDownScaleImageRle(SwSurface* surface, const SwRleD
 {
     if (surface->compositor) {
         if (surface->compositor->method == CompositeMethod::AlphaMask) {
-            TVGERR("Missing Implementation _translucentDownScaleImageRleAlphaMask()");
+            TVGERR("SW_ENGINE", "Missing Implementation _translucentDownScaleImageRleAlphaMask()");
 //          return _translucentDownScaleImageRleAlphaMask(surface, rle, img, w, h, opacity, invTransform, scaling);
         }
         if (surface->compositor->method == CompositeMethod::InvAlphaMask) {
-            TVGERR("Missing Implementation _translucentDownScaleImageRleInvAlphaMask()");
+            TVGERR("SW_ENGINE", "Missing Implementation _translucentDownScaleImageRleInvAlphaMask()");
 //          return _translucentDownScaleImageRleInvAlphaMask(surface, rle, img, w, h, opacity, invTransform, scaling);
         }
     }
