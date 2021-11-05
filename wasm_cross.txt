@@ -10,9 +10,9 @@ static_lib_suffix = 'js'
 shared_module_suffix = 'js'
 exe_suffix = 'js'
 
-[built-in options]
-cpp_args = ['-Wshift-negative-value', '--bind' , '-s' , 'WASM=1' , '-s' , 'ALLOW_MEMORY_GROWTH=1' , '-s' , 'FORCE_FILESYSTEM=1' , '-s' , '-O2', '-Wshift-negative-value']
-cpp_link_args = ['-Wshift-negative-value', '--bind' , '-s' , 'WASM=1' , '-s' , 'ALLOW_MEMORY_GROWTH=1' , '-s' , 'FORCE_FILESYSTEM=1' , '-s' , '-O2', '-Wshift-negative-value']
+#[built-in options]
+cpp_args = ['-Wshift-negative-value', '--bind' , '-s' , 'WASM=1' , '-s' , 'ALLOW_MEMORY_GROWTH=1' , '-s' , 'FORCE_FILESYSTEM=1' , '-O2']
+cpp_link_args = ['-Wshift-negative-value', '--bind' , '-s' , 'WASM=1' , '-s' , 'ALLOW_MEMORY_GROWTH=1' , '-s' , 'FORCE_FILESYSTEM=1' , '-O2']
 
 [host_machine]
 system = 'emscripten'
