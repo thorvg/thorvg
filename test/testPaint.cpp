@@ -24,7 +24,7 @@
 #include "catch.hpp"
 
 using namespace tvg;
-
+using namespace std;
 
 TEST_CASE("Custom Transformation", "[tvgPaint]")
 {
@@ -158,7 +158,7 @@ TEST_CASE("Duplication", "[tvgPaint]")
     REQUIRE(shape->composite(move(comp), CompositeMethod::ClipPath) == Result::Success);
 
     //Duplication
-    auto dup = shape->duplicate();
+    auto dup = unique_ptr<Shape>((Shape*)shape->duplicate());
     REQUIRE(dup);
 
     //Compare properties
