@@ -110,9 +110,12 @@ Result Saver::save(std::unique_ptr<Paint> paint, const string& path, bool compre
             pImpl->saveModule = saveModule;
             return Result::Success;
         } else {
+            delete(p);
+            delete(saveModule);
             return Result::Unknown;
         }
     }
+    delete(p);
     return Result::NonSupport;
 }
 
