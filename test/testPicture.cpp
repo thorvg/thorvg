@@ -264,7 +264,7 @@ TEST_CASE("Picture Duplication", "[tvgPicture]")
     REQUIRE(picture->load(TEST_DIR"/logo.svg") == Result::Success);
     REQUIRE(picture->size(100, 100) == Result::Success);
 
-    auto dup = picture->duplicate();
+    auto dup = unique_ptr<Picture>((Picture*)picture->duplicate());
     REQUIRE(dup);
 
     float w, h;
