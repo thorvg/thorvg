@@ -88,11 +88,11 @@ static char* _skipSpace(const char* str, const char* end)
 }
 
 
-static string* _copyId(const char* str)
+static char* _copyId(const char* str)
 {
     if (!str) return nullptr;
 
-    return new string(str);
+    return strdup(str);
 }
 
 
@@ -271,8 +271,7 @@ _PARSE_TAG(FillRule, fillRule, FillRule, fillRuleTags, FillRule::Winding)
  * Initial:    none
  * https://www.w3.org/TR/SVG/painting.html
  */
-static inline void
-_parseDashArray(SvgLoaderData* loader, const char *str, SvgDash* dash)
+static void _parseDashArray(SvgLoaderData* loader, const char *str, SvgDash* dash)
 {
     if (!strncmp(str, "none", 4)) return;
 
@@ -296,7 +295,8 @@ _parseDashArray(SvgLoaderData* loader, const char *str, SvgDash* dash)
     if ((*dash).array.count == 1) (*dash).array.push((*dash).array.data[0]);
 }
 
-static string* _idFromUrl(const char* url)
+
+static char* _idFromUrl(const char* url)
 {
     url = _skipSpace(url, nullptr);
     if ((*url) == '(') {
@@ -310,7 +310,14 @@ static string* _idFromUrl(const char* url)
     int i = 0;
     while (url[i] > ' ' && url[i] != ')' && url[i] != '\'') ++i;
 
-    return new string(url, i);
+    //custom strndup() for portability
+    int len = strlen(url);
+    if (i < len) len = i;
+
+    auto ret = (char*) malloc(len + 1);
+    if (!ret) return 0;
+    ret[len] = '\0';
+    return (char*) memcpy(ret, url, len);
 }
 
 
@@ -487,7 +494,7 @@ static constexpr struct
 };
 
 
-static void _toColor(const char* str, uint8_t* r, uint8_t* g, uint8_t* b, string** ref)
+static void _toColor(const char* str, uint8_t* r, uint8_t* g, uint8_t* b, char** ref)
 {
     unsigned int len = strlen(str);
     char *red, *green, *blue;
@@ -1561,11 +1568,11 @@ static SvgNode* _createLineNode(SvgLoaderData* loader, SvgNode* parent, const ch
 }
 
 
-static string* _idFromHref(const char* href)
+static char* _idFromHref(const char* href)
 {
     href = _skipSpace(href, nullptr);
     if ((*href) == '#') href++;
-    return new string(href);
+    return strdup(href);
 }
 
 
@@ -1651,15 +1658,15 @@ static SvgNode* _findChildById(const SvgNode* node, const char* id)
 
     auto child = node->child.data;
     for (uint32_t i = 0; i < node->child.count; ++i, ++child) {
-        if (((*child)->id != nullptr) && !strcmp((*child)->id->c_str(), id)) return (*child);
+        if (((*child)->id) && !strcmp((*child)->id, id)) return (*child);
     }
     return nullptr;
 }
 
-static SvgNode* _findNodeById(SvgNode *node, string* id)
+static SvgNode* _findNodeById(SvgNode *node, const char* id)
 {
     SvgNode* result = nullptr;
-    if (node->id && !node->id->compare(*id)) return node;
+    if (node->id && !strcmp(node->id, id)) return node;
 
     if (node->child.count > 0) {
         auto child = node->child.data;
@@ -1685,8 +1692,8 @@ static SvgStyleGradient* _cloneGradient(SvgStyleGradient* from)
 
     auto grad = new SvgStyleGradient;
     grad->type = from->type;
-    grad->id = from->id ? _copyId(from->id->c_str()) : nullptr;
-    grad->ref = from->ref ? _copyId(from->ref->c_str()) : nullptr;
+    grad->id = from->id ? _copyId(from->id) : nullptr;
+    grad->ref = from->ref ? _copyId(from->ref) : nullptr;
     grad->spread = from->spread;
     grad->userSpace = from->userSpace;
 
@@ -1724,10 +1731,10 @@ static void _copyAttr(SvgNode* to, const SvgNode* from)
     }
     //Copy style attribute
     *to->style = *from->style;
-    if (from->style->fill.paint.url) to->style->fill.paint.url = new string(from->style->fill.paint.url->c_str());
-    if (from->style->stroke.paint.url) to->style->stroke.paint.url = new string(from->style->stroke.paint.url->c_str());
-    if (from->style->clipPath.url) to->style->clipPath.url = new string(from->style->clipPath.url->c_str());
-    if (from->style->mask.url) to->style->mask.url = new string(from->style->mask.url->c_str());
+    if (from->style->fill.paint.url) to->style->fill.paint.url = strdup(from->style->fill.paint.url);
+    if (from->style->stroke.paint.url) to->style->stroke.paint.url = strdup(from->style->stroke.paint.url);
+    if (from->style->clipPath.url) to->style->clipPath.url = strdup(from->style->clipPath.url);
+    if (from->style->mask.url) to->style->mask.url = strdup(from->style->mask.url);
 
     //Copy node attribute
     switch (from->type) {
@@ -1763,7 +1770,7 @@ static void _copyAttr(SvgNode* to, const SvgNode* from)
             break;
         }
         case SvgNodeType::Path: {
-            if (from->node.path.path) to->node.path.path = new string(from->node.path.path->c_str());
+            if (from->node.path.path) to->node.path.path = strdup(from->node.path.path);
             break;
         }
         case SvgNodeType::Polygon: {
@@ -1783,7 +1790,7 @@ static void _copyAttr(SvgNode* to, const SvgNode* from)
             to->node.image.y = from->node.image.y;
             to->node.image.w = from->node.image.w;
             to->node.image.h = from->node.image.h;
-            if (from->node.image.href) to->node.image.href = new string(from->node.image.href->c_str());
+            if (from->node.image.href) to->node.image.href = strdup(from->node.image.href);
             break;
         }
         default: {
@@ -1811,21 +1818,18 @@ static void _cloneNode(SvgNode* from, SvgNode* parent)
 }
 
 
-static void _postponeCloneNode(SvgLoaderData* loader, SvgNode *node, string* id) {
-    SvgNodeIdPair nodeIdPair;
-    nodeIdPair.node = node;
-    nodeIdPair.id = id;
-    loader->cloneNodes.push(nodeIdPair);
+static void _postponeCloneNode(SvgLoaderData* loader, SvgNode *node, char* id) {
+    loader->cloneNodes.push({node, id});
 }
 
 
 static void _clonePostponedNodes(Array<SvgNodeIdPair>* cloneNodes) {
     for (uint32_t i = 0; i < cloneNodes->count; ++i) {
-        SvgNodeIdPair nodeIdPair = cloneNodes->data[i];
-        SvgNode *defs = _getDefsNode(nodeIdPair.node);
-        SvgNode *nodeFrom = _findChildById(defs, nodeIdPair.id->c_str());
+        auto nodeIdPair = cloneNodes->data[i];
+        auto defs = _getDefsNode(nodeIdPair.node);
+        auto nodeFrom = _findChildById(defs, nodeIdPair.id);
         _cloneNode(nodeFrom, nodeIdPair.node);
-        delete nodeIdPair.id;
+        free(nodeIdPair.id);
     }
 }
 
@@ -1848,7 +1852,7 @@ static bool _attrParseUseNode(void* data, const char* key, const char* value)
 {
     SvgLoaderData* loader = (SvgLoaderData*)data;
     SvgNode *defs, *nodeFrom, *node = loader->svgParse->node;
-    string* id;
+    char* id;
 
     SvgUseNode* use = &(node->node.use);
     int sz = strlen(key);
@@ -1863,7 +1867,7 @@ static bool _attrParseUseNode(void* data, const char* key, const char* value)
     if (!strcmp(key, "href") || !strcmp(key, "xlink:href")) {
         id = _idFromHref(value);
         defs = _getDefsNode(node);
-        nodeFrom = _findChildById(defs, id->c_str());
+        nodeFrom = _findChildById(defs, id);
         if (nodeFrom) {
             _cloneNode(nodeFrom, node);
             delete id;
@@ -2490,7 +2494,7 @@ static void _styleInherit(SvgStyleProperty* child, const SvgStyleProperty* paren
         child->fill.paint.color = parent->fill.paint.color;
         child->fill.paint.none = parent->fill.paint.none;
         child->fill.paint.curColor = parent->fill.paint.curColor;
-        if (parent->fill.paint.url) child->fill.paint.url = _copyId(parent->fill.paint.url->c_str());
+        if (parent->fill.paint.url) child->fill.paint.url = _copyId(parent->fill.paint.url);
     } else if (child->fill.paint.curColor && !child->curColorSet) {
         child->color = parent->color;
     }
@@ -2505,7 +2509,7 @@ static void _styleInherit(SvgStyleProperty* child, const SvgStyleProperty* paren
         child->stroke.paint.color = parent->stroke.paint.color;
         child->stroke.paint.none = parent->stroke.paint.none;
         child->stroke.paint.curColor = parent->stroke.paint.curColor;
-        child->stroke.paint.url = parent->stroke.paint.url ? _copyId(parent->stroke.paint.url->c_str()) : nullptr;
+        child->stroke.paint.url = parent->stroke.paint.url ? _copyId(parent->stroke.paint.url) : nullptr;
     } else if (child->stroke.paint.curColor && !child->curColorSet) {
         child->color = parent->color;
     }
@@ -2543,7 +2547,7 @@ static void _inefficientNodeCheck(TVG_UNUSED SvgNode* node){
 
     switch (node->type) {
         case SvgNodeType::Path: {
-            if (!node->node.path.path || node->node.path.path->empty()) TVGLOG("SVG", "Inefficient elements used [Empty path][Node Type : %s]", type);
+            if (!node->node.path.path) TVGLOG("SVG", "Inefficient elements used [Empty path][Node Type : %s]", type);
             break;
         }
         case SvgNodeType::Ellipse: {
@@ -2585,14 +2589,14 @@ static void _updateStyle(SvgNode* node, SvgStyleProperty* parentStyle)
 }
 
 
-static SvgStyleGradient* _gradientDup(Array<SvgStyleGradient*>* gradients, const string* id)
+static SvgStyleGradient* _gradientDup(Array<SvgStyleGradient*>* gradients, const char* id)
 {
     SvgStyleGradient* result = nullptr;
 
     auto gradList = gradients->data;
 
     for (uint32_t i = 0; i < gradients->count; ++i) {
-        if (!((*gradList)->id->compare(*id))) {
+        if (!strcmp((*gradList)->id, id)) {
             result = _cloneGradient(*gradList);
             break;
         }
@@ -2602,10 +2606,8 @@ static SvgStyleGradient* _gradientDup(Array<SvgStyleGradient*>* gradients, const
     if (result && result->ref) {
         gradList = gradients->data;
         for (uint32_t i = 0; i < gradients->count; ++i) {
-            if (!((*gradList)->id->compare(*result->ref))) {
-                if (result->stops.count == 0) {
-                    _cloneGradStops(result->stops, (*gradList)->stops);
-                }
+            if (!strcmp((*gradList)->id, result->ref)) {
+                if (result->stops.count == 0) _cloneGradStops(result->stops, (*gradList)->stops);
                 //TODO: Properly inherit other property
                 break;
             }
@@ -2661,13 +2663,13 @@ static void _freeNodeStyle(SvgStyleProperty* style)
     if (!style) return;
 
     //style->clipPath.node and style->mask.node has only the addresses of node. Therefore, node is released from _freeNode.
-    delete(style->clipPath.url);
-    delete(style->mask.url);
+    free(style->clipPath.url);
+    free(style->mask.url);
 
     if (style->fill.paint.gradient) delete(style->fill.paint.gradient);
     if (style->stroke.paint.gradient) delete(style->stroke.paint.gradient);
-    delete(style->fill.paint.url);
-    delete(style->stroke.paint.url);
+    free(style->fill.paint.url);
+    free(style->stroke.paint.url);
     style->stroke.dash.array.reset();
     free(style);
 }
@@ -2683,12 +2685,12 @@ static void _freeNode(SvgNode* node)
     }
     node->child.reset();
 
-    delete node->id;
+    free(node->id);
     free(node->transform);
     _freeNodeStyle(node->style);
     switch (node->type) {
          case SvgNodeType::Path: {
-             delete node->node.path.path;
+             free(node->node.path.path);
              break;
          }
          case SvgNodeType::Polygon: {
@@ -2713,7 +2715,7 @@ static void _freeNode(SvgNode* node)
              break;
          }
          case SvgNodeType::Image: {
-             delete node->node.image.href;
+             free(node->node.image.href);
              break;
          }
          default: {
