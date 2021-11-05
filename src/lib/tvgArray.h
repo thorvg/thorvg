@@ -38,7 +38,12 @@ struct Array
     {
         if (count + 1 > reserved) {
             reserved = (count + 1) * 2;
+            auto p  = data;
             data = static_cast<T*>(realloc(data, sizeof(T) * reserved));
+            if (!data) {
+                data = p;
+                return;
+            }
         }
         data[count++] = element;
     }
@@ -47,8 +52,12 @@ struct Array
     {
         if (size > reserved) {
             reserved = size;
+            auto p = data;
             data = static_cast<T*>(realloc(data, sizeof(T) * reserved));
-            if (!data) return false;
+            if (!data) {
+                data = p;
+                return false;
+            }
         }
         return true;
     }
