@@ -748,9 +748,6 @@ bool TvgSaver::save(Paint* paint, const string& path, bool compress)
 {
     close();
 
-    this->path = strdup(path.c_str());
-    if (!this->path) return false;
-
     float x, y;
     x = y = 0;
     paint->bounds(&x, &y, &vsize[0], &vsize[1], false);
@@ -763,6 +760,9 @@ bool TvgSaver::save(Paint* paint, const string& path, bool compress)
         TVGLOG("TVG_SAVER", "Saving paint(%p) has zero view size.", paint);
         return false;
     }
+
+    this->path = strdup(path.c_str());
+    if (!this->path) return false;
 
     this->paint = paint;
     this->compress = compress;
