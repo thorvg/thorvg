@@ -218,6 +218,9 @@ TEST_CASE("Paint Clip Path Composite Method", "[capiPaint]")
     REQUIRE(tvg_paint_set_composite_method(paint, NULL, TVG_COMPOSITE_METHOD_NONE) == TVG_RESULT_SUCCESS);
     REQUIRE(tvg_paint_set_composite_method(paint, target, TVG_COMPOSITE_METHOD_NONE) == TVG_RESULT_INVALID_ARGUMENT);
 
+    target = tvg_shape_new();
+    REQUIRE(target);
+
     REQUIRE(tvg_paint_set_composite_method(paint, NULL, TVG_COMPOSITE_METHOD_CLIP_PATH) == TVG_RESULT_INVALID_ARGUMENT);
     REQUIRE(tvg_paint_set_composite_method(paint, target, TVG_COMPOSITE_METHOD_CLIP_PATH) == TVG_RESULT_SUCCESS);
 
