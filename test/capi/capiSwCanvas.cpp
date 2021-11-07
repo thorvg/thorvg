@@ -81,6 +81,8 @@ TEST_CASE("Canvas initialization", "[capiSwCanvas]")
     REQUIRE(tvg_canvas_destroy(canvas) == TVG_RESULT_SUCCESS);
 
     REQUIRE(tvg_engine_term(TVG_ENGINE_SW) == TVG_RESULT_SUCCESS);
+
+    free(buffer);
 }
 
 TEST_CASE("Canvas draw", "[capiSwCanvas]")
@@ -124,6 +126,8 @@ TEST_CASE("Canvas draw", "[capiSwCanvas]")
     REQUIRE(tvg_canvas_destroy(canvas) == TVG_RESULT_SUCCESS);
 
     REQUIRE(tvg_engine_term(TVG_ENGINE_SW) == TVG_RESULT_SUCCESS);
+
+    free(buffer);
 }
 
 TEST_CASE("Canvas update, clear and reuse", "[capiSwCanvas]")
