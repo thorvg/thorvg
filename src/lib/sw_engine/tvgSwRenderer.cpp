@@ -540,6 +540,8 @@ bool SwRenderer::dispose(RenderData data)
     task->done();
     task->dispose();
     if (task->transform) free(task->transform);
+
+    tasks.remove(task);
     delete(task);
 
     return true;
@@ -579,7 +581,8 @@ void* SwRenderer::prepareCommon(SwTask* task, const RenderTransform* transform, 
     task->bbox.max.x = min(static_cast<SwCoord>(surface->w), static_cast<SwCoord>(vport.x + vport.w));
     task->bbox.max.y = min(static_cast<SwCoord>(surface->h), static_cast<SwCoord>(vport.y + vport.h));
 
-    tasks.push(task);
+    if (!tasks.find(task)) tasks.push(task);
+
     TaskScheduler::request(task);
 
     return task;

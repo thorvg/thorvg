@@ -43,6 +43,25 @@ struct Array
         data[count++] = element;
     }
 
+    void remove(T element)
+    {
+        for (uint32_t i = 0; i < count; ++i) {
+            if (data[i] == element) {
+                count--;
+                for (uint32_t j = i; j < count; ++j) data[j] = data[j + 1];
+                return;
+            }
+        }
+    }
+
+    bool find(T element)
+    {
+        for (uint32_t i = 0; i < count; ++i) {
+            if (data[i] == element) return true;
+        }
+        return false;
+    }
+
     bool reserve(uint32_t size)
     {
         if (size > reserved) {
