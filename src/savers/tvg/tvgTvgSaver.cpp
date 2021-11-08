@@ -752,6 +752,7 @@ bool TvgSaver::save(Paint* paint, const string& path, bool compress)
     if (!this->path) return false;
 
     float x, y;
+    x = y = 0;
     paint->bounds(&x, &y, &vsize[0], &vsize[1], false);
 
     //cut off the negative space
