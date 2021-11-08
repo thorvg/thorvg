@@ -47,14 +47,12 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-
-#include <math.h>
 #include <string>
 #include "tvgSvgLoaderCommon.h"
 #include "tvgSvgSceneBuilder.h"
 #include "tvgSvgPath.h"
 #include "tvgSvgUtil.h"
-#include <float.h>
+#include "tvgMath.h"
 
 static bool _appendShape(SvgNode* node, Shape* shape, float vx, float vy, float vw, float vh, const string& svgPath);
 static unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, float vx, float vy, float vw, float vh, const string& svgPath, bool mask);
@@ -228,12 +226,36 @@ static void _applyComposition(Paint* paint, const SvgNode* node, float vx, float
         if (compNode && compNode->child.count > 0) {
             node->style->clipPath.applying = true;
 
+            auto isTransform = (!compNode->node.comp.userSpace ? true : false);
+            Matrix finalTransform = {1, 0, 0, 0, 1, 0, 0, 0, 1};
+            if (isTransform) finalTransform = {vw, 0, vx, 0, vh, vy, 0, 0, 1};
+
+            if (node->transform) {
+                if (isTransform) finalTransform = mathMultiply(node->transform, &finalTransform);
+                else {
+                    finalTransform = *node->transform;
+                    isTransform = true;
+                }
+            }
+ 
+            // Although svg viewers (like w3school) display different results than ThorVG, 
+            // no justification for this behaviour was found in the SVG specs. 
+            // The approach below seams to be in compliance with the SVG standard for both,
+            // the case of the objectBoundingBox and of the userSpaceOnUse.
+            if (compNode->transform) {
+                if (isTransform) finalTransform = mathMultiply(&finalTransform, compNode->transform);
+                else {
+                    finalTransform = *compNode->transform;
+                    isTransform = true;
+                }
+            }
+
             auto comp = Shape::gen();
             comp->fill(255, 255, 255, 255);
-            if (node->transform) comp->transform(*node->transform);
+            if (isTransform) comp->transform(finalTransform);
 
             auto child = compNode->child.data;
-            auto valid = false; //Composite only when valid shapes are existed
+            auto valid = false; //Composite only when valid shapes exist
 
             for (uint32_t i = 0; i < compNode->child.count; ++i, ++child) {
                 if (_appendChildShape(*child, comp.get(), vx, vy, vw, vh, svgPath)) valid = true;
@@ -356,6 +378,15 @@ static void _applyProperty(SvgNode* node, Shape* vg, float vx, float vy, float v
         vg->stroke(style->stroke.paint.color.r, style->stroke.paint.color.g, style->stroke.paint.color.b, style->stroke.opacity);
     }
 
+    if (node->style->clipPath.node && !node->style->clipPath.node->node.comp.userSpace) {
+        vg->bounds(&vx, &vy, &vw, &vh, false);
+        if (auto strokeW = vg->strokeWidth()) {
+            vx += 0.5f * strokeW;
+            vy += 0.5f * strokeW;
+            vw -= strokeW;
+            vh -= strokeW;
+        }
+    }
     _applyComposition(vg, node, vx, vy, vw, vh, svgPath);
 }
 
@@ -539,6 +570,9 @@ static unique_ptr<Picture> _imageBuildHelper(SvgNode* node, float vx, float vy, 
         picture->transform(m);
     }
 
+    if (node->style->clipPath.node && !node->style->clipPath.node->node.comp.userSpace) {
+        picture->bounds(&vx, &vy, &vw, &vh, false); //TODO: bounds without any strokes
+    }
     _applyComposition(picture.get(), node, vx, vy, vw, vh, svgPath);
     return picture;
 }
@@ -578,6 +612,9 @@ static unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, float vx, float 
                     auto shape = _shapeBuildHelper(*child, vx, vy, vw, vh, svgPath);
                     if (shape) scene->push(move(shape));
                 }
+            }
+            if (node->style->clipPath.node && !node->style->clipPath.node->node.comp.userSpace) {
+                scene->bounds(&vx, &vy, &vw, &vh, false); //TODO: bounds without any strokes
             }
             _applyComposition(scene.get(), node, vx, vy, vw, vh, svgPath);
             scene->opacity(node->style->opacity);
