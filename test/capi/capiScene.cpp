@@ -59,9 +59,6 @@ TEST_CASE("Scene Reservation", "[capiScene]")
     REQUIRE(tvg_scene_reserve(scene, 100) == TVG_RESULT_SUCCESS);
     REQUIRE(tvg_scene_reserve(scene, 0) == TVG_RESULT_SUCCESS);
 
-    //Too big size
-    REQUIRE(tvg_scene_reserve(scene, -1) == TVG_RESULT_FAILED_ALLOCATION);
-
     //Invalid scene
     REQUIRE(tvg_scene_reserve(NULL, 1) == TVG_RESULT_INVALID_ARGUMENT);
 

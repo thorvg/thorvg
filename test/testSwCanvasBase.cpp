@@ -39,9 +39,6 @@ TEST_CASE("Memory Reservation", "[tvgSwCanvasBase]")
     REQUIRE(canvas->reserve(100) == Result::Success);
     REQUIRE(canvas->reserve(0) == Result::Success);
 
-    //Too big size
-    REQUIRE(canvas->reserve(UINT32_MAX) == Result::FailedAllocation);
-
     REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
 }
 
