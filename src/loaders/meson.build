@@ -8,6 +8,10 @@ if all_loaders or get_option('loaders').contains('svg') == true
     subdir('svg')
 endif
 
+if all_loaders or get_option('loaders').contains('lottie') == true
+    subdir('lottie')
+endif
+
 if all_loaders or get_option('loaders').contains('png') == true
     if get_option('static') == true
         subdir('png')
