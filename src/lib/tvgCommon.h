@@ -61,7 +61,7 @@ using namespace tvg;
 #define TVG_CLASS_ID_LINEAR    4
 #define TVG_CLASS_ID_RADIAL    5
 
-enum class FileType { Tvg = 0, Svg, Raw, Png, Jpg, Unknown };
+enum class FileType { Tvg = 0, Svg, Raw, Png, Jpg, Lottie, Unknown };
 
 #ifdef THORVG_LOG_ENABLED
     #define TVGLOG(tag, fmt, ...) fprintf(stdout, tag ": " fmt "\n", ##__VA_ARGS__)  //Log Message for notifying user some useful info
