@@ -27,10 +27,16 @@
 class LottieLoader : public LoadModule, public Task
 {
 private:
+    string filePath;
+    string svgPath = "";
+    const char* content = nullptr;
     char* data = nullptr;
-    unsigned char *image = nullptr;
-    bool freeData = false;
+    uint32_t size = 0;
+    bool copy = false;
 
+    unique_ptr<Scene> root;
+
+    bool header();
     void clear();
 
 public:
@@ -42,7 +48,7 @@ public:
     bool read() override;
     bool close() override;
 
-    const uint32_t* pixels() override;
+    unique_ptr<Paint> paint() override;
     void run(unsigned tid) override;
 };
 

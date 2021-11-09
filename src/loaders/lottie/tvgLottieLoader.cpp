@@ -20,6 +20,7 @@
  * SOFTWARE.
  */
 
+#include <fstream>
 #include <memory.h>
 #include "tvgLoader.h"
 #include "tvgLottieLoader.h"
@@ -30,11 +31,7 @@
 
 void LottieLoader::clear()
 {
-    //jpgdDelete(decoder);
-    if (freeData) free(data);
-    //decoder = nullptr;
     data = nullptr;
-    freeData = false;
 }
 
 
@@ -45,8 +42,13 @@ void LottieLoader::clear()
 
 LottieLoader::~LottieLoader()
 {
-    //jpgdDelete(decoder);
-    if (freeData) free(data);
+}
+
+
+bool LottieLoader::header()
+{
+printf("asd\n");
+    return true;
 }
 
 
@@ -54,15 +56,21 @@ bool LottieLoader::open(const string& path)
 {
     clear();
 
-    int width, height;
-    width = height = 0;
-    //decoder = jpgdHeader(path.c_str(), &width, &height);
-    //if (!decoder) return false;
+    ifstream f;
+    f.open(path);
 
-    w = static_cast<float>(width);
-    h = static_cast<float>(height);
+    if (!f.is_open()) return false;
 
-    return true;
+    svgPath = path;
+    getline(f, filePath, '\0');
+    f.close();
+
+    if (filePath.empty()) return false;
+
+    content = filePath.c_str();
+    size = filePath.size();
+
+    return header();
 }
 
 
@@ -71,24 +79,15 @@ bool LottieLoader::open(const char* data, uint32_t size, bool copy)
     clear();
 
     if (copy) {
-        this->data = (char *) malloc(size);
-        if (!this->data) return false;
-        memcpy((char *)this->data, data, size);
-        freeData = true;
-    } else {
-        this->data = (char *) data;
-        freeData = false;
-    }
+        content = (char*)malloc(size);
+        if (!content) return false;
+        memcpy((char*)content, data, size);
+    } else content = data;
 
-    int width, height;
-    width = height = 0;
-    //decoder = jpgdHeader(this->data, size, &width, &height);
-    //if (!decoder) return false;
+    this->size = size;
+    this->copy = copy;
 
-    w = static_cast<float>(width);
-    h = static_cast<float>(height);
-
-    return true;
+    return header();
 }
 
 
@@ -111,15 +110,15 @@ bool LottieLoader::close()
 }
 
 
-const uint32_t* LottieLoader::pixels()
-{
-    this->done();
-
-    return (const uint32_t*)image;
-}
-
 
 void LottieLoader::run(unsigned tid)
 {
     //image = jpgdDecompress(decoder);
+}
+
+unique_ptr<Paint> LottieLoader::paint()
+{
+    this->done();
+    if (root) return move(root);
+    else return nullptr;
 }
