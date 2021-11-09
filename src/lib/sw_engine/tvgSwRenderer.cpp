@@ -41,6 +41,8 @@ struct SwTask : Task
     Array<RenderData> clips;
     uint32_t opacity;
     SwBBox bbox = {{0, 0}, {0, 0}};       //Whole Rendering Region
+    bool pushed = false;                  //Pushed into task list?
+    bool disposed = false;                //Disposed task?
 
     RenderRegion bounds() const
     {
@@ -249,7 +251,14 @@ SwRenderer::~SwRenderer()
 
 bool SwRenderer::clear()
 {
-    for (auto task = tasks.data; task < (tasks.data + tasks.count); ++task) (*task)->done();
+    for (auto task = tasks.data; task < (tasks.data + tasks.count); ++task) {
+        if ((*task)->disposed) {
+            delete(*task);
+        } else {
+            (*task)->done();
+            (*task)->pushed = false;
+        }
+    }
     tasks.clear();
 
     if (!sharedMpool) mpoolClear(mpool);
@@ -328,7 +337,11 @@ bool SwRenderer::postRender()
         rasterUnpremultiply(surface);
     }
 
+    for (auto task = tasks.data; task < (tasks.data + tasks.count); ++task) {
+        (*task)->pushed = false;
+    }
     tasks.clear();
+
     clearCompositors();
     return true;
 }
@@ -543,7 +556,9 @@ bool SwRenderer::dispose(RenderData data)
     if (!task) return true;
     task->done();
     task->dispose();
-    delete(task);
+
+    if (task->pushed) task->disposed = true;
+    else delete(task);
 
     return true;
 }
@@ -582,7 +597,11 @@ void* SwRenderer::prepareCommon(SwTask* task, const RenderTransform* transform, 
     task->bbox.max.x = min(static_cast<SwCoord>(surface->w), static_cast<SwCoord>(vport.x + vport.w));
     task->bbox.max.y = min(static_cast<SwCoord>(surface->h), static_cast<SwCoord>(vport.y + vport.h));
 
-    tasks.push(task);
+    if (!task->pushed) {
+        task->pushed = true;
+        tasks.push(task);
+    }
+
     TaskScheduler::request(task);
 
     return task;
