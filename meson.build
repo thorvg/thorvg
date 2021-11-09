@@ -47,6 +47,10 @@ if get_option('savers').contains('tvg') == true
     config_h.set10('THORVG_TVG_SAVER_SUPPORT', true)
 endif
 
+if get_option('extensions').contains('lottie') == true
+    config_h.set10('THORVG_LOTTIE_EXTENSION_SUPPORT', true)
+endif
+
 simd_type = 'none'
 
 if get_option('vector') == true
@@ -103,12 +107,13 @@ Summary:
     Loader (PNG):          @8@
     Loader (JPG):          @9@
     Saver (TVG):           @10@
-    CAPI Binding:          @11@
-    Log Message:           @12@
-    Tests:                 @13@
-    Examples:              @14@
-    Tool (Svg2Tvg):        @15@
-    Tool (Svg2Png):        @16@
+    Extensions (Lottie):   @11@
+    CAPI Binding:          @12@
+    Log Message:           @13@
+    Tests:                 @14@
+    Examples:              @15@
+    Tool (Svg2Tvg):        @16@
+    Tool (Svg2Png):        @17@
 
 '''.format(
         meson.project_version(),
@@ -122,6 +127,7 @@ Summary:
         all_loaders or get_option('loaders').contains('png'),
         all_loaders or get_option('loaders').contains('jpg'),
         get_option('savers').contains('tvg'),
+        get_option('extensions').contains('lottie'),
         get_option('bindings').contains('capi'),
         get_option('log'),
         get_option('tests'),

@@ -20,6 +20,7 @@ subdir('lib')
 subdir('loaders')
 subdir('savers')
 subdir('bindings')
+subdir('extensions')
 
 thorvg_lib_dep = [common_dep, loader_dep, saver_dep, binding_dep]
 if host_machine.system() != 'windows'

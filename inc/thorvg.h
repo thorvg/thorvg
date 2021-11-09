@@ -1543,6 +1543,21 @@ public:
     _TVG_DECLARE_PRIVATE(Saver);
 };
 
+
+class TVG_EXPORT Animation
+{
+public:
+    virtual ~Animation();
+
+    Result frame(float val) noexcept;
+    Result size(float w, float h) noexcept;
+
+    float frame() const noexcept;
+    float duration() const noexcept;
+
+    _TVG_DECLARE_PRIVATE(Animation);
+};
+
 /** @}*/
 
 } //namespace

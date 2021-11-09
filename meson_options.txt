@@ -16,6 +16,12 @@ option('savers',
    value: [''],
    description: 'Enable File Savers in thorvg')
 
+option('extensions',
+   type: 'array',
+   choices: ['', 'lottie'],
+   value: [''],
+   description: 'Enable ThorVG Feature Extensions')
+
 option('vector',
    type: 'boolean',
    value: false,
