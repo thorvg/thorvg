@@ -36,6 +36,12 @@ static uint32_t _colorAlpha(uint32_t c)
 }
 
 
+static uint32_t _colorInvAlpha(uint32_t c)
+{
+    return (~c >> 24);
+}
+
+
 static uint32_t _abgrJoin(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 {
     return (a << 24 | b << 16 | g << 8 | r);
@@ -98,13 +104,13 @@ static uint32_t _average2Nx2NPixel(SwSurface* surface, const uint32_t *img, uint
 /* Rect                                                                 */
 /************************************************************************/
 
-static bool _translucentRectAlphaMask(SwSurface* surface, const SwBBox& region, uint32_t color)
+static bool _translucentRectMask(SwSurface* surface, const SwBBox& region, uint32_t color, uint32_t (*blendMethod)(uint32_t rgba))
 {
     auto buffer = surface->buffer + (region.min.y * surface->stride) + region.min.x;
     auto h = static_cast<uint32_t>(region.max.y - region.min.y);
     auto w = static_cast<uint32_t>(region.max.x - region.min.x);
 
-    TVGLOG("SW_ENGINE", "Rectangle Alpha Mask Composition");
+    TVGLOG("SW_ENGINE", "Rectangle Alpha Mask / Inverse Alpha Mask Composition");
 
     auto cbuffer = surface->compositor->image.data + (region.min.y * surface->stride) + region.min.x;   //compositor buffer
 
@@ -112,30 +118,8 @@ static bool _translucentRectAlphaMask(SwSurface* surface, const SwBBox& region, 
         auto dst = &buffer[y * surface->stride];
         auto cmp = &cbuffer[y * surface->stride];
         for (uint32_t x = 0; x < w; ++x) {
-            auto tmp = ALPHA_BLEND(color, surface->blender.alpha(*cmp));
-            dst[x] = tmp + ALPHA_BLEND(dst[x], 255 - surface->blender.alpha(tmp));
-            ++cmp;
-        }
-    }
-    return true;
-}
-
-static bool _translucentRectInvAlphaMask(SwSurface* surface, const SwBBox& region, uint32_t color)
-{
-    auto buffer = surface->buffer + (region.min.y * surface->stride) + region.min.x;
-    auto h = static_cast<uint32_t>(region.max.y - region.min.y);
-    auto w = static_cast<uint32_t>(region.max.x - region.min.x);
-
-    TVGLOG("SW_ENGINE", "Rectangle Inverse Alpha Mask Composition");
-
-    auto cbuffer = surface->compositor->image.data + (region.min.y * surface->stride) + region.min.x;   //compositor buffer
-
-    for (uint32_t y = 0; y < h; ++y) {
-        auto dst = &buffer[y * surface->stride];
-        auto cmp = &cbuffer[y * surface->stride];
-        for (uint32_t x = 0; x < w; ++x) {
-            auto tmp = ALPHA_BLEND(color, 255 - surface->blender.alpha(*cmp));
-            dst[x] = tmp + ALPHA_BLEND(dst[x], 255 - surface->blender.alpha(tmp));
+            auto tmp = ALPHA_BLEND(color, blendMethod(*cmp));
+            dst[x] = tmp + ALPHA_BLEND(dst[x], surface->blender.invAlpha(tmp));
             ++cmp;
         }
     }
@@ -146,10 +130,10 @@ static bool _rasterTranslucentRect(SwSurface* surface, const SwBBox& region, uin
 {
     if (surface->compositor) {
         if (surface->compositor->method == CompositeMethod::AlphaMask) {
-            return _translucentRectAlphaMask(surface, region, color);
+            return _translucentRectMask(surface, region, color, surface->blender.alpha);
         }
         if (surface->compositor->method == CompositeMethod::InvAlphaMask) {
-            return _translucentRectInvAlphaMask(surface, region, color);
+            return _translucentRectMask(surface, region, color, surface->blender.invAlpha);
         }
     }
 
@@ -180,10 +164,9 @@ static bool _rasterSolidRect(SwSurface* surface, const SwBBox& region, uint32_t 
 /* Rle                                                                  */
 /************************************************************************/
 
-
-static bool _translucentRleAlphaMask(SwSurface* surface, const SwRleData* rle, uint32_t color)
+static bool _translucentRleMask(SwSurface* surface, SwRleData* rle, uint32_t color, uint32_t (*blendMethod)(uint32_t rgba))
 {
-    TVGLOG("SW_ENGINE", "Rle Alpha Mask Composition");
+    TVGLOG("SW_ENGINE", "Rle Alpha Mask / Inverse Alpha Mask Composition");
 
     auto span = rle->spans;
     uint32_t src;
@@ -195,31 +178,8 @@ static bool _translucentRleAlphaMask(SwSurface* surface, const SwRleData* rle, u
         if (span->coverage < 255) src = ALPHA_BLEND(color, span->coverage);
         else src = color;
         for (uint32_t x = 0; x < span->len; ++x) {
-            auto tmp = ALPHA_BLEND(src, surface->blender.alpha(*cmp));
-            dst[x] = tmp + ALPHA_BLEND(dst[x], 255 - surface->blender.alpha(tmp));
-            ++cmp;
-        }
-        ++span;
-    }
-    return true;
-}
-
-static bool _translucentRleInvAlphaMask(SwSurface* surface, SwRleData* rle, uint32_t color)
-{
-    TVGLOG("SW_ENGINE", "Rle Inverse Alpha Mask Composition");
-
-    auto span = rle->spans;
-    uint32_t src;
-    auto cbuffer = surface->compositor->image.data;
-
-    for (uint32_t i = 0; i < rle->size; ++i) {
-        auto dst = &surface->buffer[span->y * surface->stride + span->x];
-        auto cmp = &cbuffer[span->y * surface->stride + span->x];
-        if (span->coverage < 255) src = ALPHA_BLEND(color, span->coverage);
-        else src = color;
-        for (uint32_t x = 0; x < span->len; ++x) {
-            auto tmp = ALPHA_BLEND(src, 255 - surface->blender.alpha(*cmp));
-            dst[x] = tmp + ALPHA_BLEND(dst[x], 255 - surface->blender.alpha(tmp));
+            auto tmp = ALPHA_BLEND(src, blendMethod(*cmp));
+            dst[x] = tmp + ALPHA_BLEND(dst[x], surface->blender.invAlpha(tmp));
             ++cmp;
         }
         ++span;
@@ -233,10 +193,10 @@ static bool _rasterTranslucentRle(SwSurface* surface, SwRleData* rle, uint32_t c
 
     if (surface->compositor) {
         if (surface->compositor->method == CompositeMethod::AlphaMask) {
-            return _translucentRleAlphaMask(surface, rle, color);
+            return _translucentRleMask(surface, rle, color, surface->blender.alpha);
         }
         if (surface->compositor->method == CompositeMethod::InvAlphaMask) {
-            return _translucentRleInvAlphaMask(surface, rle, color);
+            return _translucentRleMask(surface, rle, color, surface->blender.invAlpha);
         }
     }
 
@@ -530,9 +490,9 @@ static bool _translucentImage(SwSurface* surface, const uint32_t *img, uint32_t 
 }
 
 
-static bool _translucentImageAlphaMask(SwSurface* surface, const uint32_t *img, uint32_t w, TVG_UNUSED uint32_t h, uint32_t opacity, const SwBBox& region, const Matrix* invTransform)
+static bool _translucentImageMask(SwSurface* surface, const uint32_t *img, uint32_t w, uint32_t h, uint32_t opacity, const SwBBox& region, const Matrix* invTransform, uint32_t (*blendMethod)(uint32_t rgba))
 {
-    TVGLOG("SW_ENGINE", "Transformed Image Alpha Mask Composition");
+    TVGLOG("SW_ENGINE", "Transformed Image AlphaMask / Inverse Alpha Mask Composition");
 
     auto dbuffer = &surface->buffer[region.min.y * surface->stride + region.min.x];
     auto cbuffer = &surface->compositor->image.data[region.min.y * surface->stride + region.min.x];
@@ -546,33 +506,8 @@ static bool _translucentImageAlphaMask(SwSurface* surface, const uint32_t *img, 
             auto rX = static_cast<uint32_t>(roundf(x * invTransform->e11 + ey1));
             auto rY = static_cast<uint32_t>(roundf(x * invTransform->e21 + ey2));
             if (rX >= w || rY >= h) continue;
-            auto src = ALPHA_BLEND(img[rX + (rY * w)], ALPHA_MULTIPLY(opacity, surface->blender.alpha(*cmp)));  //TODO: need to use image's stride
-            *dst = src + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(src));
-        }
-        dbuffer += surface->stride;
-        cbuffer += surface->stride;
-    }
-    return true;
-}
-
-static bool _translucentImageInvAlphaMask(SwSurface* surface, const uint32_t *img, uint32_t w, uint32_t h, uint32_t opacity, const SwBBox& region, const Matrix* invTransform)
-{
-    TVGLOG("SW_ENGINE", "Transformed Image Inverse Alpha Mask Composition");
-
-    auto dbuffer = &surface->buffer[region.min.y * surface->stride + region.min.x];
-    auto cbuffer = &surface->compositor->image.data[region.min.y * surface->stride + region.min.x];
-
-    for (auto y = region.min.y; y < region.max.y; ++y) {
-        auto dst = dbuffer;
-        auto cmp = cbuffer;
-        float ey1 = y * invTransform->e12 + invTransform->e13;
-        float ey2 = y * invTransform->e22 + invTransform->e23;
-        for (auto x = region.min.x; x < region.max.x; ++x, ++dst, ++cmp) {
-            auto rX = static_cast<uint32_t>(roundf(x * invTransform->e11 + ey1));
-            auto rY = static_cast<uint32_t>(roundf(x * invTransform->e21 + ey2));
-            if (rX >= w || rY >= h) continue;
-            auto src = ALPHA_BLEND(img[rX + (rY * w)], ALPHA_MULTIPLY(opacity, 255 - surface->blender.alpha(*cmp)));  //TODO: need to use image's stride
-            *dst = src + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(src));
+            auto src = ALPHA_BLEND(img[rX + (rY * w)], ALPHA_MULTIPLY(opacity, blendMethod(*cmp)));  //TODO: need to use image's stride
+            *dst = src + ALPHA_BLEND(*dst, surface->blender.invAlpha(src));
         }
         dbuffer += surface->stride;
         cbuffer += surface->stride;
@@ -585,10 +520,10 @@ static bool _rasterTranslucentImage(SwSurface* surface, const uint32_t *img, uin
 {
     if (surface->compositor) {
         if (surface->compositor->method == CompositeMethod::AlphaMask) {
-            return _translucentImageAlphaMask(surface, img, w, h, opacity, region, invTransform);
+            return _translucentImageMask(surface, img, w, h, opacity, region, invTransform, surface->blender.alpha);
         }
         if (surface->compositor->method == CompositeMethod::InvAlphaMask) {
-            return _translucentImageInvAlphaMask(surface, img, w, h, opacity, region, invTransform);
+            return _translucentImageMask(surface, img, w, h, opacity, region, invTransform, surface->blender.invAlpha);
         }
     }
     return _translucentImage(surface, img, w, h, opacity, region, invTransform);
@@ -620,9 +555,9 @@ static bool _translucentUpScaleImage(SwSurface* surface, const uint32_t *img, ui
 }
 
 
-static bool _translucentUpScaleImageAlphaMask(SwSurface* surface, const uint32_t *img, uint32_t w, TVG_UNUSED uint32_t h, uint32_t opacity, const SwBBox& region, const Matrix* invTransform)
+static bool _translucentUpScaleImageMask(SwSurface* surface, const uint32_t *img, uint32_t w, uint32_t h, uint32_t opacity, const SwBBox& region, const Matrix* invTransform, uint32_t (*blendMethod)(uint32_t rgba))
 {
-    TVGLOG("SW_ENGINE", "Transformed Image Alpha Mask Composition");
+    TVGLOG("SW_ENGINE", "Transformed Image Alpha Mask / Inverse Alpha Mask Composition");
 
     auto dbuffer = &surface->buffer[region.min.y * surface->stride + region.min.x];
     auto cbuffer = &surface->compositor->image.data[region.min.y * surface->stride + region.min.x];
@@ -639,39 +574,9 @@ static bool _translucentUpScaleImageAlphaMask(SwSurface* surface, const uint32_t
             auto rY = static_cast<uint32_t>(roundf(fY));
             if (rX >= w || rY >= h) continue;
             uint32_t src;
-            if (rX == w - 1 || rY == h - 1) src = ALPHA_BLEND(img[rX + (rY * w)], ALPHA_MULTIPLY(opacity, surface->blender.alpha(*cmp)));  //TODO: need to use image's stride
-            else src = ALPHA_BLEND(_applyBilinearInterpolation(img, w, h, fX, fY), ALPHA_MULTIPLY(opacity, surface->blender.alpha(*cmp)));  //TODO: need to use image's stride
-            *dst = src + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(src));
-        }
-        dbuffer += surface->stride;
-        cbuffer += surface->stride;
-    }
-    return true;
-}
-
-
-static bool _translucentUpScaleImageInvAlphaMask(SwSurface* surface, const uint32_t *img, uint32_t w, uint32_t h, uint32_t opacity, const SwBBox& region, const Matrix* invTransform)
-{
-    TVGLOG("SW_ENGINE", "Transformed Image Inverse Alpha Mask Composition");
-
-    auto dbuffer = &surface->buffer[region.min.y * surface->stride + region.min.x];
-    auto cbuffer = &surface->compositor->image.data[region.min.y * surface->stride + region.min.x];
-
-    for (auto y = region.min.y; y < region.max.y; ++y) {
-        auto dst = dbuffer;
-        auto cmp = cbuffer;
-        float ey1 = y * invTransform->e12 + invTransform->e13;
-        float ey2 = y * invTransform->e22 + invTransform->e23;
-        for (auto x = region.min.x; x < region.max.x; ++x, ++dst, ++cmp) {
-            auto fX = x * invTransform->e11 + ey1;
-            auto fY = x * invTransform->e21 + ey2;
-            auto rX = static_cast<uint32_t>(roundf(fX));
-            auto rY = static_cast<uint32_t>(roundf(fY));
-            if (rX >= w || rY >= h) continue;
-            uint32_t src;
-            if (rX == w - 1 || rY == h - 1) src = ALPHA_BLEND(img[rX + (rY * w)], ALPHA_MULTIPLY(opacity, 255 - surface->blender.alpha(*cmp)));  //TODO: need to use image's stride
-            else src = ALPHA_BLEND(_applyBilinearInterpolation(img, w, h, fX, fY), ALPHA_MULTIPLY(opacity, 255 - surface->blender.alpha(*cmp)));  //TODO: need to use image's stride
-            *dst = src + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(src));
+            if (rX == w - 1 || rY == h - 1) src = ALPHA_BLEND(img[rX + (rY * w)], ALPHA_MULTIPLY(opacity, blendMethod(*cmp)));  //TODO: need to use image's stride
+            else src = ALPHA_BLEND(_applyBilinearInterpolation(img, w, h, fX, fY), ALPHA_MULTIPLY(opacity, blendMethod(*cmp)));  //TODO: need to use image's stride
+            *dst = src + ALPHA_BLEND(*dst, surface->blender.invAlpha(src));
         }
         dbuffer += surface->stride;
         cbuffer += surface->stride;
@@ -684,10 +589,10 @@ static bool _rasterTranslucentUpScaleImage(SwSurface* surface, const uint32_t *i
 {
     if (surface->compositor) {
         if (surface->compositor->method == CompositeMethod::AlphaMask) {
-            return _translucentUpScaleImageAlphaMask(surface, img, w, h, opacity, region, invTransform);
+            return _translucentUpScaleImageMask(surface, img, w, h, opacity, region, invTransform, surface->blender.alpha);
         }
         if (surface->compositor->method == CompositeMethod::InvAlphaMask) {
-            return _translucentUpScaleImageInvAlphaMask(surface, img, w, h, opacity, region, invTransform);
+            return _translucentUpScaleImageMask(surface, img, w, h, opacity, region, invTransform, surface->blender.invAlpha);
         }
     }
     return _translucentUpScaleImage(surface, img, w, h, opacity, region, invTransform);
@@ -719,9 +624,9 @@ static bool _translucentDownScaleImage(SwSurface* surface, const uint32_t *img, 
 }
 
 
-static bool _translucentDownScaleImageAlphaMask(SwSurface* surface, const uint32_t *img, uint32_t w, TVG_UNUSED uint32_t h, uint32_t opacity, const SwBBox& region, const Matrix* invTransform, float scaling)
+static bool _translucentDownScaleImageMask(SwSurface* surface, const uint32_t *img, uint32_t w, uint32_t h, uint32_t opacity, const SwBBox& region, const Matrix* invTransform, float scaling, uint32_t (*blendMethod)(uint32_t rgba))
 {
-    TVGLOG("SW_ENGINE", "Transformed Image Alpha Mask Composition");
+    TVGLOG("SW_ENGINE", "Transformed Image Alpha Mask / Inverse Alpha Mask Composition");
     uint32_t halfScaling = static_cast<uint32_t>(0.5f / scaling);
     if (halfScaling == 0) halfScaling = 1;
 
@@ -738,39 +643,9 @@ static bool _translucentDownScaleImageAlphaMask(SwSurface* surface, const uint32
             auto rY = static_cast<uint32_t>(roundf(x * invTransform->e21 + ey2));
             if (rX >= w || rY >= h) continue;
             uint32_t src;
-            if (rX < halfScaling || rY < halfScaling || rX >= w - halfScaling || rY >= h - halfScaling) src = ALPHA_BLEND(img[rX + (rY * w)], ALPHA_MULTIPLY(opacity, surface->blender.alpha(*cmp)));  //TODO: need to use image's stride
-            else src = ALPHA_BLEND(_average2Nx2NPixel(surface, img, w, h, rX, rY, halfScaling), ALPHA_MULTIPLY(opacity, surface->blender.alpha(*cmp)));  //TODO: need to use image's stride
-            *dst = src + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(src));
-        }
-        dbuffer += surface->stride;
-        cbuffer += surface->stride;
-    }
-    return true;
-}
-
-
-static bool _translucentDownScaleImageInvAlphaMask(SwSurface* surface, const uint32_t *img, uint32_t w, uint32_t h, uint32_t opacity, const SwBBox& region, const Matrix* invTransform, float scaling)
-{
-    TVGLOG("SW_ENGINE", "Transformed Image Inverse Alpha Mask Composition");
-    uint32_t halfScaling = static_cast<uint32_t>(0.5f / scaling);
-    if (halfScaling == 0) halfScaling = 1;
-
-    auto dbuffer = &surface->buffer[region.min.y * surface->stride + region.min.x];
-    auto cbuffer = &surface->compositor->image.data[region.min.y * surface->stride + region.min.x];
-
-    for (auto y = region.min.y; y < region.max.y; ++y) {
-        auto dst = dbuffer;
-        auto cmp = cbuffer;
-        float ey1 = y * invTransform->e12 + invTransform->e13;
-        float ey2 = y * invTransform->e22 + invTransform->e23;
-        for (auto x = region.min.x; x < region.max.x; ++x, ++dst, ++cmp) {
-            auto rX = static_cast<uint32_t>(roundf(x * invTransform->e11 + ey1));
-            auto rY = static_cast<uint32_t>(roundf(x * invTransform->e21 + ey2));
-            if (rX >= w || rY >= h) continue;
-            uint32_t src;
-            if (rX < halfScaling || rY < halfScaling || rX >= w - halfScaling || rY >= h - halfScaling) src = ALPHA_BLEND(img[rX + (rY * w)], ALPHA_MULTIPLY(opacity, 255 - surface->blender.alpha(*cmp)));  //TODO: need to use image's stride
-            else src = ALPHA_BLEND(_average2Nx2NPixel(surface, img, w, h, rX, rY, halfScaling), ALPHA_MULTIPLY(opacity, 255 - surface->blender.alpha(*cmp)));  //TODO: need to use image's stride
-            *dst = src + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(src));
+            if (rX < halfScaling || rY < halfScaling || rX >= w - halfScaling || rY >= h - halfScaling) src = ALPHA_BLEND(img[rX + (rY * w)], ALPHA_MULTIPLY(opacity, blendMethod(*cmp)));  //TODO: need to use image's stride
+            else src = ALPHA_BLEND(_average2Nx2NPixel(surface, img, w, h, rX, rY, halfScaling), ALPHA_MULTIPLY(opacity, blendMethod(*cmp)));  //TODO: need to use image's stride
+            *dst = src + ALPHA_BLEND(*dst, surface->blender.invAlpha(src));
         }
         dbuffer += surface->stride;
         cbuffer += surface->stride;
@@ -783,10 +658,10 @@ static bool _rasterTranslucentDownScaleImage(SwSurface* surface, const uint32_t 
 {
     if (surface->compositor) {
         if (surface->compositor->method == CompositeMethod::AlphaMask) {
-            return _translucentDownScaleImageAlphaMask(surface, img, w, h, opacity, region, invTransform, scaling);
+            return _translucentDownScaleImageMask(surface, img, w, h, opacity, region, invTransform, scaling, surface->blender.alpha);
         }
         if (surface->compositor->method == CompositeMethod::InvAlphaMask) {
-            return _translucentDownScaleImageInvAlphaMask(surface, img, w, h, opacity, region, invTransform, scaling);
+            return _translucentDownScaleImageMask(surface, img, w, h, opacity, region, invTransform, scaling, surface->blender.invAlpha);
         }
     }
     return _translucentDownScaleImage(surface, img, w, h, opacity, region, invTransform, scaling);
@@ -812,13 +687,13 @@ static bool _translucentImage(SwSurface* surface, uint32_t *img, uint32_t w, uin
 }
 
 
-static bool _translucentImageAlphaMask(SwSurface* surface, uint32_t *img, uint32_t w, uint32_t h, uint32_t opacity, const SwBBox& region)
+static bool _translucentImageMask(SwSurface* surface, uint32_t *img, uint32_t w, uint32_t h, uint32_t opacity, const SwBBox& region, uint32_t (*blendMethod)(uint32_t rgba))
 {
     auto buffer = surface->buffer + (region.min.y * surface->stride) + region.min.x;
     auto h2 = static_cast<uint32_t>(region.max.y - region.min.y);
     auto w2 = static_cast<uint32_t>(region.max.x - region.min.x);
 
-    TVGLOG("SW_ENGINE", "Image Alpha Mask Composition");
+    TVGLOG("SW_ENGINE", "Image Alpha Mask / Inverse Alpha Mask Composition");
 
     auto sbuffer = img + (region.min.y * w) + region.min.x;
     auto cbuffer = surface->compositor->image.data + (region.min.y * surface->stride) + region.min.x;   //compositor buffer
@@ -828,35 +703,8 @@ static bool _translucentImageAlphaMask(SwSurface* surface, uint32_t *img, uint32
         auto cmp = cbuffer;
         auto src = sbuffer;
         for (uint32_t x = 0; x < w2; ++x, ++dst, ++src, ++cmp) {
-            auto tmp = ALPHA_BLEND(*src, ALPHA_MULTIPLY(opacity, surface->blender.alpha(*cmp)));
-            *dst = tmp + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(tmp));
-        }
-        buffer += surface->stride;
-        cbuffer += surface->stride;
-        sbuffer += w;   //TODO: need to use image's stride
-    }
-    return true;
-}
-
-
-static bool _translucentImageInvAlphaMask(SwSurface* surface, uint32_t *img, uint32_t w, uint32_t h, uint32_t opacity, const SwBBox& region)
-{
-    auto buffer = surface->buffer + (region.min.y * surface->stride) + region.min.x;
-    auto h2 = static_cast<uint32_t>(region.max.y - region.min.y);
-    auto w2 = static_cast<uint32_t>(region.max.x - region.min.x);
-
-    TVGLOG("SW_ENGINE", "Image Inverse Alpha Mask Composition");
-
-    auto sbuffer = img + (region.min.y * w) + region.min.x;
-    auto cbuffer = surface->compositor->image.data + (region.min.y * surface->stride) + region.min.x;   //compositor buffer
-
-    for (uint32_t y = 0; y < h2; ++y) {
-        auto dst = buffer;
-        auto cmp = cbuffer;
-        auto src = sbuffer;
-        for (uint32_t x = 0; x < w2; ++x, ++dst, ++src, ++cmp) {
-            auto tmp = ALPHA_BLEND(*src, ALPHA_MULTIPLY(opacity, 255 - surface->blender.alpha(*cmp)));
-            *dst = tmp + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(tmp));
+            auto tmp = ALPHA_BLEND(*src, ALPHA_MULTIPLY(opacity, blendMethod(*cmp)));
+            *dst = tmp + ALPHA_BLEND(*dst, surface->blender.invAlpha(tmp));
         }
         buffer += surface->stride;
         cbuffer += surface->stride;
@@ -870,10 +718,10 @@ static bool _rasterTranslucentImage(SwSurface* surface, uint32_t *img, uint32_t 
 {
     if (surface->compositor) {
         if (surface->compositor->method == CompositeMethod::AlphaMask) {
-            return _translucentImageAlphaMask(surface, img, w, h, opacity, region);
+            return _translucentImageMask(surface, img, w, h, opacity, region, surface->blender.alpha);
         }
         if (surface->compositor->method == CompositeMethod::InvAlphaMask) {
-            return _translucentImageInvAlphaMask(surface, img, w, h, opacity, region);
+            return _translucentImageMask(surface, img, w, h, opacity, region, surface->blender.invAlpha);
         }
     }
     return _translucentImage(surface, img, w, h, opacity, region);
@@ -988,7 +836,7 @@ static bool _translucentLinearGradientRect(SwSurface* surface, const SwBBox& reg
 }
 
 
-static bool _translucentLinearGradientRectAlphaMask(SwSurface* surface, const SwBBox& region, const SwFill* fill)
+static bool _translucentLinearGradientRectMask(SwSurface* surface, const SwBBox& region, const SwFill* fill, uint32_t (*blendMethod)(uint32_t rgba))
 {
     if (fill->linear.len < FLT_EPSILON) return false;
 
@@ -1006,36 +854,8 @@ static bool _translucentLinearGradientRectAlphaMask(SwSurface* surface, const Sw
         auto cmp = cbuffer;
         auto src = sbuffer;
         for (uint32_t x = 0; x < w; ++x, ++dst, ++cmp, ++src) {
-            auto tmp = ALPHA_BLEND(*src, surface->blender.alpha(*cmp));
-            *dst = tmp + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(tmp));
-        }
-        buffer += surface->stride;
-        cbuffer += surface->stride;
-    }
-    return true;
-}
-
-
-static bool _translucentLinearGradientRectInvAlphaMask(SwSurface* surface, const SwBBox& region, const SwFill* fill)
-{
-    if (fill->linear.len < FLT_EPSILON) return false;
-
-    auto buffer = surface->buffer + (region.min.y * surface->stride) + region.min.x;
-    auto h = static_cast<uint32_t>(region.max.y - region.min.y);
-    auto w = static_cast<uint32_t>(region.max.x - region.min.x);
-    auto cbuffer = surface->compositor->image.data + (region.min.y * surface->stride) + region.min.x;
-
-    auto sbuffer = static_cast<uint32_t*>(alloca(w * sizeof(uint32_t)));
-    if (!sbuffer) return false;
-
-    for (uint32_t y = 0; y < h; ++y) {
-        fillFetchLinear(fill, sbuffer, region.min.y + y, region.min.x, w);
-        auto dst = buffer;
-        auto cmp = cbuffer;
-        auto src = sbuffer;
-        for (uint32_t x = 0; x < w; ++x, ++dst, ++cmp, ++src) {
-            auto tmp = ALPHA_BLEND(*src, 255 - surface->blender.alpha(*cmp));
-            *dst = tmp + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(tmp));
+            auto tmp = ALPHA_BLEND(*src, blendMethod(*cmp));
+            *dst = tmp + ALPHA_BLEND(*dst, surface->blender.invAlpha(tmp));
         }
         buffer += surface->stride;
         cbuffer += surface->stride;
@@ -1048,10 +868,10 @@ static bool _rasterTranslucentLinearGradientRect(SwSurface* surface, const SwBBo
 {
     if (surface->compositor) {
         if (surface->compositor->method == CompositeMethod::AlphaMask) {
-            return _translucentLinearGradientRectAlphaMask(surface, region, fill);
+            return _translucentLinearGradientRectMask(surface, region, fill, surface->blender.alpha);
         }
         if (surface->compositor->method == CompositeMethod::InvAlphaMask) {
-            return _translucentLinearGradientRectInvAlphaMask(surface, region, fill);
+            return _translucentLinearGradientRectMask(surface, region, fill, surface->blender.invAlpha);
         }
     }
     return _translucentLinearGradientRect(surface, region, fill);
@@ -1096,7 +916,7 @@ static bool _translucentRadialGradientRect(SwSurface* surface, const SwBBox& reg
 }
 
 
-static bool _translucentRadialGradientRectAlphaMask(SwSurface* surface, const SwBBox& region, const SwFill* fill)
+static bool _translucentRadialGradientRectMask(SwSurface* surface, const SwBBox& region, const SwFill* fill, uint32_t (*blendMethod)(uint32_t rgba))
 {
     if (fill->radial.a < FLT_EPSILON) return false;
 
@@ -1114,36 +934,8 @@ static bool _translucentRadialGradientRectAlphaMask(SwSurface* surface, const Sw
         auto cmp = cbuffer;
         auto src = sbuffer;
         for (uint32_t x = 0; x < w; ++x, ++dst, ++cmp, ++src) {
-             auto tmp = ALPHA_BLEND(*src, surface->blender.alpha(*cmp));
-             *dst = tmp + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(tmp));
-        }
-        buffer += surface->stride;
-        cbuffer += surface->stride;
-    }
-    return true;
-}
-
-
-static bool _translucentRadialGradientRectInvAlphaMask(SwSurface* surface, const SwBBox& region, const SwFill* fill)
-{
-    if (fill->radial.a < FLT_EPSILON) return false;
-
-    auto buffer = surface->buffer + (region.min.y * surface->stride) + region.min.x;
-    auto h = static_cast<uint32_t>(region.max.y - region.min.y);
-    auto w = static_cast<uint32_t>(region.max.x - region.min.x);
-    auto cbuffer = surface->compositor->image.data + (region.min.y * surface->stride) + region.min.x;
-
-    auto sbuffer = static_cast<uint32_t*>(alloca(w * sizeof(uint32_t)));
-    if (!sbuffer) return false;
-
-    for (uint32_t y = 0; y < h; ++y) {
-        fillFetchRadial(fill, sbuffer, region.min.y + y, region.min.x, w);
-        auto dst = buffer;
-        auto cmp = cbuffer;
-        auto src = sbuffer;
-        for (uint32_t x = 0; x < w; ++x, ++dst, ++cmp, ++src) {
-             auto tmp = ALPHA_BLEND(*src, 255 - surface->blender.alpha(*cmp));
-             *dst = tmp + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(tmp));
+             auto tmp = ALPHA_BLEND(*src, blendMethod(*cmp));
+             *dst = tmp + ALPHA_BLEND(*dst, surface->blender.invAlpha(tmp));
         }
         buffer += surface->stride;
         cbuffer += surface->stride;
@@ -1156,10 +948,10 @@ static bool _rasterTranslucentRadialGradientRect(SwSurface* surface, const SwBBo
 {
     if (surface->compositor) {
         if (surface->compositor->method == CompositeMethod::AlphaMask) {
-            return _translucentRadialGradientRectAlphaMask(surface, region, fill);
+            return _translucentRadialGradientRectMask(surface, region, fill, surface->blender.alpha);
         }
         if (surface->compositor->method == CompositeMethod::InvAlphaMask) {
-            return _translucentRadialGradientRectInvAlphaMask(surface, region, fill);
+            return _translucentRadialGradientRectMask(surface, region, fill, surface->blender.invAlpha);
         }
     }
     return _translucentRadialGradientRect(surface, region, fill);
@@ -1208,7 +1000,7 @@ static bool _translucentLinearGradientRle(SwSurface* surface, const SwRleData* r
 }
 
 
-static bool _translucentLinearGradientRleAlphaMask(SwSurface* surface, const SwRleData* rle, const SwFill* fill)
+static bool _translucentLinearGradientRleMask(SwSurface* surface, const SwRleData* rle, const SwFill* fill, uint32_t (*blendMethod)(uint32_t rgba))
 {
     if (fill->linear.len < FLT_EPSILON) return false;
 
@@ -1224,47 +1016,15 @@ static bool _translucentLinearGradientRleAlphaMask(SwSurface* surface, const SwR
         auto src = buffer;
         if (span->coverage == 255) {
             for (uint32_t x = 0; x < span->len; ++x, ++dst, ++cmp, ++src) {
-                auto tmp = ALPHA_BLEND(*src, surface->blender.alpha(*cmp));
-                *dst = tmp + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(tmp));
+                auto tmp = ALPHA_BLEND(*src, blendMethod(*cmp));
+                *dst = tmp + ALPHA_BLEND(*dst, surface->blender.invAlpha(tmp));
             }
         } else {
             auto ialpha = 255 - span->coverage;
             for (uint32_t x = 0; x < span->len; ++x, ++dst, ++cmp, ++src) {
-                auto tmp = ALPHA_BLEND(*src, surface->blender.alpha(*cmp));
+                auto tmp = ALPHA_BLEND(*src, blendMethod(*cmp));
                 tmp = ALPHA_BLEND(tmp, span->coverage) + ALPHA_BLEND(*dst, ialpha);
-                *dst = tmp + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(tmp));
-            }
-        }
-    }
-    return true;
-}
-
-
-static bool _translucentLinearGradientRleInvAlphaMask(SwSurface* surface, const SwRleData* rle, const SwFill* fill)
-{
-    if (fill->linear.len < FLT_EPSILON) return false;
-
-    auto span = rle->spans;
-    auto cbuffer = surface->compositor->image.data;
-    auto buffer = static_cast<uint32_t*>(alloca(surface->w * sizeof(uint32_t)));
-    if (!buffer) return false;
-
-    for (uint32_t i = 0; i < rle->size; ++i, ++span) {
-        fillFetchLinear(fill, buffer, span->y, span->x, span->len);
-        auto dst = &surface->buffer[span->y * surface->stride + span->x];
-        auto cmp = &cbuffer[span->y * surface->stride + span->x];
-        auto src = buffer;
-        if (span->coverage == 255) {
-            for (uint32_t x = 0; x < span->len; ++x, ++dst, ++cmp, ++src) {
-                auto tmp = ALPHA_BLEND(*src, 255 - surface->blender.alpha(*cmp));
-                *dst = tmp + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(tmp));
-            }
-        } else {
-            auto ialpha = 255 - span->coverage;
-            for (uint32_t x = 0; x < span->len; ++x, ++dst, ++cmp, ++src) {
-                auto tmp = ALPHA_BLEND(*src, 255 - surface->blender.alpha(*cmp));
-                tmp = ALPHA_BLEND(tmp, span->coverage) + ALPHA_BLEND(*dst, ialpha);
-                *dst = tmp + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(tmp));
+                *dst = tmp + ALPHA_BLEND(*dst, surface->blender.invAlpha(tmp));
             }
         }
     }
@@ -1278,10 +1038,10 @@ static bool _rasterTranslucentLinearGradientRle(SwSurface* surface, const SwRleD
 
     if (surface->compositor) {
         if (surface->compositor->method == CompositeMethod::AlphaMask) {
-            return _translucentLinearGradientRleAlphaMask(surface, rle, fill);
+            return _translucentLinearGradientRleMask(surface, rle, fill, surface->blender.alpha);
         }
         if (surface->compositor->method == CompositeMethod::InvAlphaMask) {
-            return _translucentLinearGradientRleInvAlphaMask(surface, rle, fill);
+            return _translucentLinearGradientRleMask(surface, rle, fill, surface->blender.invAlpha);
         }
     }
     return _translucentLinearGradientRle(surface, rle, fill);
@@ -1339,7 +1099,7 @@ static bool _translucentRadialGradientRle(SwSurface* surface, const SwRleData* r
 }
 
 
-static bool _translucentRadialGradientRleAlphaMask(SwSurface* surface, const SwRleData* rle, const SwFill* fill)
+static bool _translucentRadialGradientRleMask(SwSurface* surface, const SwRleData* rle, const SwFill* fill, uint32_t (*blendMethod)(uint32_t rgba))
 {
     if (fill->radial.a < FLT_EPSILON) return false;
 
@@ -1355,47 +1115,15 @@ static bool _translucentRadialGradientRleAlphaMask(SwSurface* surface, const SwR
         auto src = buffer;
         if (span->coverage == 255) {
             for (uint32_t x = 0; x < span->len; ++x, ++dst, ++cmp, ++src) {
-                auto tmp = ALPHA_BLEND(*src, surface->blender.alpha(*cmp));
-                *dst = tmp + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(tmp));
+                auto tmp = ALPHA_BLEND(*src, blendMethod(*cmp));
+                *dst = tmp + ALPHA_BLEND(*dst, surface->blender.invAlpha(tmp));
             }
         } else {
             auto ialpha = 255 - span->coverage;
             for (uint32_t x = 0; x < span->len; ++x, ++dst, ++cmp, ++src) {
-                auto tmp = ALPHA_BLEND(*src, surface->blender.alpha(*cmp));
+                auto tmp = ALPHA_BLEND(*src, blendMethod(*cmp));
                 tmp = ALPHA_BLEND(tmp, span->coverage) + ALPHA_BLEND(*dst, ialpha);
-                *dst = tmp + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(tmp));
-            }
-        }
-    }
-    return true;
-}
-
-
-static bool _translucentRadialGradientRleInvAlphaMask(SwSurface* surface, const SwRleData* rle, const SwFill* fill)
-{
-    if (fill->radial.a < FLT_EPSILON) return false;
-
-    auto span = rle->spans;
-    auto cbuffer = surface->compositor->image.data;
-    auto buffer = static_cast<uint32_t*>(alloca(surface->w * sizeof(uint32_t)));
-    if (!buffer) return false;
-
-    for (uint32_t i = 0; i < rle->size; ++i, ++span) {
-        fillFetchRadial(fill, buffer, span->y, span->x, span->len);
-        auto dst = &surface->buffer[span->y * surface->stride + span->x];
-        auto cmp = &cbuffer[span->y * surface->stride + span->x];
-        auto src = buffer;
-        if (span->coverage == 255) {
-            for (uint32_t x = 0; x < span->len; ++x, ++dst, ++cmp, ++src) {
-                auto tmp = ALPHA_BLEND(*src, 255 - surface->blender.alpha(*cmp));
-                *dst = tmp + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(tmp));
-            }
-        } else {
-            auto ialpha = 255 - span->coverage;
-            for (uint32_t x = 0; x < span->len; ++x, ++dst, ++cmp, ++src) {
-                auto tmp = ALPHA_BLEND(*src, 255 - surface->blender.alpha(*cmp));
-                tmp = ALPHA_BLEND(tmp, span->coverage) + ALPHA_BLEND(*dst, ialpha);
-                *dst = tmp + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(tmp));
+                *dst = tmp + ALPHA_BLEND(*dst, surface->blender.invAlpha(tmp));
             }
         }
     }
@@ -1409,10 +1137,10 @@ static bool _rasterTranslucentRadialGradientRle(SwSurface* surface, const SwRleD
 
     if (surface->compositor) {
         if (surface->compositor->method == CompositeMethod::AlphaMask) {
-            return _translucentRadialGradientRleAlphaMask(surface, rle, fill);
+            return _translucentRadialGradientRleMask(surface, rle, fill, surface->blender.alpha);
         }
         if (surface->compositor->method == CompositeMethod::InvAlphaMask) {
-            return _translucentRadialGradientRleInvAlphaMask(surface, rle, fill);
+            return _translucentRadialGradientRleMask(surface, rle, fill, surface->blender.invAlpha);
         }
     }
     return _translucentRadialGradientRle(surface, rle, fill);
@@ -1463,15 +1191,15 @@ void rasterRGBA32(uint32_t *dst, uint32_t val, uint32_t offset, int32_t len)
 bool rasterCompositor(SwSurface* surface)
 {
     if (surface->cs == SwCanvas::ABGR8888 || surface->cs == SwCanvas::ABGR8888_STRAIGHT) {
-        surface->blender.alpha = _colorAlpha;
         surface->blender.join = _abgrJoin;
     } else if (surface->cs == SwCanvas::ARGB8888 || surface->cs == SwCanvas::ARGB8888_STRAIGHT) {
-        surface->blender.alpha = _colorAlpha;
         surface->blender.join = _argbJoin;
     } else {
         //What Color Space ???
         return false;
     }
+    surface->blender.alpha = _colorAlpha;
+    surface->blender.invAlpha = _colorInvAlpha;
 
     return true;
 }
