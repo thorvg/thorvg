@@ -87,8 +87,9 @@ static bool _parsePaintProperty(TvgBinBlock block, Paint *paint)
         }
         case TVG_TAG_PAINT_TRANSFORM: {
             if (block.length != SIZE(Matrix)) return false;
-            auto transform = (Matrix*)(block.data);
-            paint->transform(*transform);
+            Matrix matrix;
+            memcpy(&matrix, block.data, SIZE(Matrix));
+            paint->transform(matrix);
             return true;
         }
         case TVG_TAG_PAINT_CMP_TARGET: {
@@ -226,8 +227,9 @@ static unique_ptr<Fill> _parseShapeFill(const char *ptr, const char *end)
             }
             case TVG_TAG_FILL_TRANSFORM: {
                 if (!fillGrad || block.length != SIZE(Matrix)) return nullptr;
-                auto transform = (Matrix*)(block.data);
-                fillGrad->transform(*transform);
+                Matrix gradTransform;
+                memcpy(&gradTransform, block.data, SIZE(Matrix));
+                fillGrad->transform(gradTransform);
                 break;
             }
             default: {
