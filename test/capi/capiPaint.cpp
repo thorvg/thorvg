@@ -216,18 +216,24 @@ TEST_CASE("Paint Clip Path Composite Method", "[capiPaint]")
     REQUIRE(target);
 
     REQUIRE(tvg_paint_set_composite_method(paint, NULL, TVG_COMPOSITE_METHOD_NONE) == TVG_RESULT_SUCCESS);
-    REQUIRE(tvg_paint_set_composite_method(paint, target, TVG_COMPOSITE_METHOD_NONE) == TVG_RESULT_INVALID_ARGUMENT);
+
+    Tvg_Paint* target2 = tvg_shape_new();
+    REQUIRE(target2);
+    REQUIRE(tvg_paint_set_composite_method(paint, target2, TVG_COMPOSITE_METHOD_NONE) == TVG_RESULT_INVALID_ARGUMENT);
 
     REQUIRE(tvg_paint_set_composite_method(paint, NULL, TVG_COMPOSITE_METHOD_CLIP_PATH) == TVG_RESULT_INVALID_ARGUMENT);
-    REQUIRE(tvg_paint_set_composite_method(paint, target, TVG_COMPOSITE_METHOD_CLIP_PATH) == TVG_RESULT_SUCCESS);
 
-    const Tvg_Paint* target2 = nullptr;
+    Tvg_Paint* target3 = tvg_shape_new();
+    REQUIRE(target3);
+    REQUIRE(tvg_paint_set_composite_method(paint, target3, TVG_COMPOSITE_METHOD_CLIP_PATH) == TVG_RESULT_SUCCESS);
+
+    const Tvg_Paint* target4 = nullptr;
     Tvg_Composite_Method method = TVG_COMPOSITE_METHOD_NONE;
     REQUIRE(tvg_paint_get_composite_method(paint, NULL, &method) == TVG_RESULT_INVALID_ARGUMENT);
-    REQUIRE(tvg_paint_get_composite_method(paint, &target2, NULL) == TVG_RESULT_INVALID_ARGUMENT);
-    REQUIRE(tvg_paint_get_composite_method(paint, &target2, &method) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_paint_get_composite_method(paint, &target4, NULL) == TVG_RESULT_INVALID_ARGUMENT);
+    REQUIRE(tvg_paint_get_composite_method(paint, &target4, &method) == TVG_RESULT_SUCCESS);
     REQUIRE(method == TVG_COMPOSITE_METHOD_CLIP_PATH);
-    REQUIRE(target == target2);
+    REQUIRE(target3 == target4);
 
     REQUIRE(tvg_paint_del(paint) == TVG_RESULT_SUCCESS);
 }
