@@ -16,6 +16,7 @@ source_file = [
     'GradientTransform.cpp',
     'InvMasking.cpp',
     'LinearGradient.cpp',
+    'Lottie.cpp',
     'Masking.cpp',
     'MultiCanvas.cpp',
     'MultiShapes.cpp',

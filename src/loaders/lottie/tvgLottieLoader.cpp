@@ -47,7 +47,6 @@ LottieLoader::~LottieLoader()
 
 bool LottieLoader::header()
 {
-printf("asd\n");
     return true;
 }
 
