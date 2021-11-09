@@ -48,12 +48,6 @@ TEST_CASE("Negative termination", "[tvgInitializer]")
     REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::InsufficientCondition);
 }
 
-TEST_CASE("Many threads", "[tvgInitializer]")
-{
-    REQUIRE(Initializer::init(CanvasEngine::Sw, -1) == Result::FailedAllocation);
-    REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::InsufficientCondition);
-}
-
 TEST_CASE("Invalid engine", "[tvgInitializer]")
 {
     REQUIRE(Initializer::init(CanvasEngine(0), 0) == Result::InvalidArguments);
