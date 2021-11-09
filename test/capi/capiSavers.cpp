@@ -69,8 +69,6 @@ TEST_CASE("Save a paint into a file", "[capiSaver]")
     REQUIRE(tvg_saver_save(saver, paint3, TEST_DIR"/test.tvg", false) == TVG_RESULT_INSUFFICIENT_CONDITION);
 
     REQUIRE(tvg_saver_del(saver) == TVG_RESULT_SUCCESS);
-
-    tvg_paint_del(paint_empty);
 }
 
 TEST_CASE("Synchronize a Saver", "[capiSaver]")
