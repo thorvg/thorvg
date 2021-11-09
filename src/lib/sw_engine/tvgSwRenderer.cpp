@@ -56,6 +56,11 @@ struct SwTask : Task
     }
 
     virtual bool dispose() = 0;
+
+    virtual ~SwTask()
+    {
+        free(transform);
+    }
 };
 
 
@@ -536,10 +541,8 @@ bool SwRenderer::dispose(RenderData data)
 {
     auto task = static_cast<SwTask*>(data);
     if (!task) return true;
-
     task->done();
     task->dispose();
-    if (task->transform) free(task->transform);
     delete(task);
 
     return true;
