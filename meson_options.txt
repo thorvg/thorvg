@@ -7,13 +7,13 @@ option('engines',
 option('loaders',
    type: 'array',
    choices: ['', 'tvg', 'svg', 'png', 'jpg', 'all'],
-   value: ['svg', 'tvg'],
+   value: ['all'],
    description: 'Enable File Loaders in thorvg')
 
 option('savers',
    type: 'array',
    choices: ['', 'tvg'],
-   value: [''],
+   value: ['tvg'],
    description: 'Enable File Savers in thorvg')
 
 option('vector',
@@ -35,7 +35,7 @@ option('tools',
 
 option('examples',
     type: 'boolean',
-    value: false,
+    value: true,
     description: 'Enable building examples')
 
 option('tests',
@@ -45,7 +45,7 @@ option('tests',
 
 option('log',
     type: 'boolean',
-    value: false,
+    value: true,
     description: 'Enable log message')
 
 option('static',
