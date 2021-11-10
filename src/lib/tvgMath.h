@@ -31,12 +31,10 @@
 
 static inline bool mathIdentity(const Matrix* m)
 {
-    if (m) {
-        if (fabs(m->e11 - 1) > FLT_EPSILON || fabs(m->e12) > FLT_EPSILON || fabs(m->e13) > FLT_EPSILON ||
-            fabs(m->e21) > FLT_EPSILON || fabs(m->e22 - 1) > FLT_EPSILON || fabs(m->e23) > FLT_EPSILON ||
-            fabs(m->e31) > FLT_EPSILON || fabs(m->e32) > FLT_EPSILON || fabs(m->e33 - 1) > FLT_EPSILON) {
-            return false;
-        }
+    if (fabs(m->e11 - 1) > FLT_EPSILON || fabs(m->e12) > FLT_EPSILON || fabs(m->e13) > FLT_EPSILON ||
+        fabs(m->e21) > FLT_EPSILON || fabs(m->e22 - 1) > FLT_EPSILON || fabs(m->e23) > FLT_EPSILON ||
+        fabs(m->e31) > FLT_EPSILON || fabs(m->e32) > FLT_EPSILON || fabs(m->e33 - 1) > FLT_EPSILON) {
+        return false;
     }
     return true;
 }

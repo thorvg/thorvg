@@ -788,7 +788,7 @@ static bool _rasterUpScaleImage(SwSurface* surface, const uint32_t *img, uint32_
 
 static bool _rasterDownScaleImage(SwSurface* surface, const uint32_t *img, uint32_t w, uint32_t h, const SwBBox& region, const Matrix* invTransform, float scaling)
 {
-    uint32_t halfScaling = static_cast<uint32_t>(0.5f / scaling);
+    auto halfScaling = static_cast<uint32_t>(0.5f / scaling);
 
     if (halfScaling == 0) halfScaling = 1;
     for (auto y = region.min.y; y < region.max.y; ++y) {
@@ -1334,23 +1334,26 @@ void rasterUnpremultiply(SwSurface* surface)
 bool rasterImage(SwSurface* surface, SwImage* image, const Matrix* transform, const SwBBox& bbox, uint32_t opacity)
 {
     Matrix invTransform;
-    float scaling = 1.0f;
+    auto scaling = 1.0f;
+    bool transformed = false;
 
     if (transform) {
         if (!mathInverse(transform, &invTransform)) return false;
         scaling = sqrtf((transform->e11 * transform->e11) + (transform->e21 * transform->e21));
         auto scalingY = sqrtf((transform->e22 * transform->e22) + (transform->e12 * transform->e12));
         //TODO:If the x and y axis scaling is different, a separate algorithm for each axis should be applied.
-        if (scaling != scalingY) scaling = 1.0f;
+        if (fabsf(scaling - scalingY) > FLT_EPSILON) scaling = 1.0f;
+        else transformed = true;
+    } else {
+        invTransform = {1, 0, 0, 0, 1, 0, 0, 0, 1};
     }
-    else invTransform = {1, 0, 0, 0, 1, 0, 0, 0, 1};
 
     auto translucent = _translucent(surface, opacity);
-    const float downScalingFactor = 0.5f;
+    auto downScalingFactor = 0.5f;
 
     if (image->rle) {
         //Fast track
-        if (mathIdentity(transform)) {
+        if (!transformed) {
             //OPTIMIZE ME: Support non transformed image. Only shifted image can use these routines.
             if (translucent) return _rasterTranslucentImageRle(surface, image->rle, image->data, image->w, image->h, opacity);
             return _rasterImageRle(surface, image->rle, image->data, image->w, image->h);
@@ -1359,15 +1362,15 @@ bool rasterImage(SwSurface* surface, SwImage* image, const Matrix* transform, co
                 if (fabsf(scaling - 1.0f) <= FLT_EPSILON) return _rasterTranslucentImageRle(surface, image->rle, image->data, image->w, image->h, opacity, &invTransform);
                 else if (scaling < downScalingFactor) return _rasterTranslucentDownScaleImageRle(surface, image->rle, image->data, image->w, image->h, opacity, &invTransform, scaling);
                 else return _rasterTranslucentUpScaleImageRle(surface, image->rle, image->data, image->w, image->h, opacity, &invTransform);
+            } else {
+                if (fabsf(scaling - 1.0f) <= FLT_EPSILON) return _rasterImageRle(surface, image->rle, image->data, image->w, image->h, &invTransform);
+                else if (scaling < downScalingFactor) return _rasterDownScaleImageRle(surface, image->rle, image->data, image->w, image->h, &invTransform, scaling);
+                else return _rasterUpScaleImageRle(surface, image->rle, image->data, image->w, image->h, &invTransform);
             }
-            if (fabsf(scaling - 1.0f) <= FLT_EPSILON) return _rasterImageRle(surface, image->rle, image->data, image->w, image->h, &invTransform);
-            else if (scaling < downScalingFactor) return _rasterDownScaleImageRle(surface, image->rle, image->data, image->w, image->h, &invTransform, scaling);
-            else return _rasterUpScaleImageRle(surface, image->rle, image->data, image->w, image->h, &invTransform);
         }
-    }
-    else {
+    } else {
         //Fast track
-        if (mathIdentity(transform)) {
+        if (!transformed) {
             //OPTIMIZE ME: Support non transformed image. Only shifted image can use these routines.
             if (translucent) return _rasterTranslucentImage(surface, image->data, image->w, image->h, opacity, bbox);
             return _rasterImage(surface, image->data, image->w, image->h, bbox);
@@ -1376,10 +1379,11 @@ bool rasterImage(SwSurface* surface, SwImage* image, const Matrix* transform, co
                 if (fabsf(scaling - 1.0f) <= FLT_EPSILON) return _rasterTranslucentImage(surface, image->data, image->w, image->h, opacity, bbox, &invTransform);
                 else if (scaling < downScalingFactor) return _rasterTranslucentDownScaleImage(surface, image->data, image->w, image->h, opacity, bbox, &invTransform, scaling);
                 else return _rasterTranslucentUpScaleImage(surface, image->data, image->w, image->h, opacity, bbox, &invTransform);
+            } else {
+                if (fabsf(scaling - 1.0f) <= FLT_EPSILON) return _rasterImage(surface, image->data, image->w, image->h, bbox, &invTransform);
+                else if (scaling  < downScalingFactor) return _rasterDownScaleImage(surface, image->data, image->w, image->h, bbox, &invTransform, scaling);
+                else return _rasterUpScaleImage(surface, image->data, image->w, image->h, bbox, &invTransform);
             }
-            if (fabsf(scaling - 1.0f) <= FLT_EPSILON) return _rasterImage(surface, image->data, image->w, image->h, bbox, &invTransform);
-            else if (scaling  < downScalingFactor) return _rasterDownScaleImage(surface, image->data, image->w, image->h, bbox, &invTransform, scaling);
-            else return _rasterUpScaleImage(surface, image->data, image->w, image->h, bbox, &invTransform);
         }
     }
 }
