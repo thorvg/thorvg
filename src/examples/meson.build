@@ -17,6 +17,7 @@ source_file = [
     'InvMasking.cpp',
     'LinearGradient.cpp',
     'Masking.cpp',
+    'MaskedClipPath.cpp',
     'MultiCanvas.cpp',
     'MultiShapes.cpp',
     'Opacity.cpp',
