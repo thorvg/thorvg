@@ -1337,53 +1337,57 @@ bool rasterImage(SwSurface* surface, SwImage* image, const Matrix* transform, co
     auto scale = 1.0f;
     bool transformed = false;
 
+    //Figure out the scale factor by transform matrix
     if (transform) {
         if (!mathInverse(transform, &itransform)) return false;
         scale = sqrtf((transform->e11 * transform->e11) + (transform->e21 * transform->e21));
         auto scaleY = sqrtf((transform->e22 * transform->e22) + (transform->e12 * transform->e12));
-        //TODO:If the x and y axis scale is different, a separate algorithm for each axis should be applied.
+        //TODO:If the x and y axis scale is different, a separate interpolation algorithm for each axis should be applied.
         if (fabsf(scale - scaleY) > FLT_EPSILON) scale = 1.0f;
-        else transformed = true;
+        if (!mathIdentity(transform)) transformed = true;
+    //TODO: Figure out the scale factor by the image size & drawing region
     } else {
         mathIdentity(&itransform);
     }
 
     auto translucent = _translucent(surface, opacity);
-    auto downScalingFactor = 0.5f;
+    auto downScaleTolerance = 0.5f;
 
+    //Clipped Image
     if (image->rle) {
-        //Fast track
-        if (!transformed) {
-            //OPTIMIZE ME: Support non transformed image. Only shifted image can use these routines.
-            if (translucent) return _rasterTranslucentImageRle(surface, image->rle, image->data, image->w, image->h, opacity);
-            return _rasterImageRle(surface, image->rle, image->data, image->w, image->h);
-        } else {
+        if (transformed) {
             if (translucent) {
                 if (fabsf(scale - 1.0f) <= FLT_EPSILON) return _rasterTranslucentImageRle(surface, image->rle, image->data, image->w, image->h, opacity, &itransform);
-                else if (scale < downScalingFactor) return _rasterTranslucentDownScaleImageRle(surface, image->rle, image->data, image->w, image->h, opacity, &itransform, scale);
+                else if (scale < downScaleTolerance) return _rasterTranslucentDownScaleImageRle(surface, image->rle, image->data, image->w, image->h, opacity, &itransform, scale);
                 else return _rasterTranslucentUpScaleImageRle(surface, image->rle, image->data, image->w, image->h, opacity, &itransform);
             } else {
                 if (fabsf(scale - 1.0f) <= FLT_EPSILON) return _rasterImageRle(surface, image->rle, image->data, image->w, image->h, &itransform);
-                else if (scale < downScalingFactor) return _rasterDownScaleImageRle(surface, image->rle, image->data, image->w, image->h, &itransform, scale);
+                else if (scale < downScaleTolerance) return _rasterDownScaleImageRle(surface, image->rle, image->data, image->w, image->h, &itransform, scale);
                 else return _rasterUpScaleImageRle(surface, image->rle, image->data, image->w, image->h, &itransform);
             }
-        }
-    } else {
         //Fast track
-        if (!transformed) {
-            //OPTIMIZE ME: Support non transformed image. Only shifted image can use these routines.
-            if (translucent) return _rasterTranslucentImage(surface, image->data, image->w, image->h, opacity, bbox);
-            return _rasterImage(surface, image->data, image->w, image->h, bbox);
+        //OPTIMIZE ME: Support non transformed image. Only shifted image can use these routines.
         } else {
+            if (translucent) return _rasterTranslucentImageRle(surface, image->rle, image->data, image->w, image->h, opacity);
+            return _rasterImageRle(surface, image->rle, image->data, image->w, image->h);
+        }
+    //Whole Image
+    } else {
+        if (transformed) {
             if (translucent) {
                 if (fabsf(scale - 1.0f) <= FLT_EPSILON) return _rasterTranslucentImage(surface, image->data, image->w, image->h, opacity, bbox, &itransform);
-                else if (scale < downScalingFactor) return _rasterTranslucentDownScaleImage(surface, image->data, image->w, image->h, opacity, bbox, &itransform, scale);
+                else if (scale < downScaleTolerance) return _rasterTranslucentDownScaleImage(surface, image->data, image->w, image->h, opacity, bbox, &itransform, scale);
                 else return _rasterTranslucentUpScaleImage(surface, image->data, image->w, image->h, opacity, bbox, &itransform);
             } else {
                 if (fabsf(scale - 1.0f) <= FLT_EPSILON) return _rasterImage(surface, image->data, image->w, image->h, bbox, &itransform);
-                else if (scale  < downScalingFactor) return _rasterDownScaleImage(surface, image->data, image->w, image->h, bbox, &itransform, scale);
+                else if (scale  < downScaleTolerance) return _rasterDownScaleImage(surface, image->data, image->w, image->h, bbox, &itransform, scale);
                 else return _rasterUpScaleImage(surface, image->data, image->w, image->h, bbox, &itransform);
             }
+        //Fast track
+        } else {
+            //OPTIMIZE ME: Support non transformed image. Only shifted image can use these routines.
+            if (translucent) return _rasterTranslucentImage(surface, image->data, image->w, image->h, opacity, bbox);
+            return _rasterImage(surface, image->data, image->w, image->h, bbox);
         }
     }
 }
