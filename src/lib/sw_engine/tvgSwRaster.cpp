@@ -252,16 +252,44 @@ static bool _translucentImageRle(SwSurface* surface, const SwImage* image, uint3
 }
 
 
+static bool _translucentImageRleMask(SwSurface* surface, const SwImage* image, uint32_t opacity, uint32_t (*blendMethod)(uint32_t rgba))
+{
+    TVGLOG("SW_ENGINE", "Image Rle Alpha Mask / Inverse Alpha Mask Composition");
+
+    auto span = image->rle->spans;
+    auto img = image->data;
+    auto w = image->w;
+    auto cbuffer = surface->compositor->image.data;
+
+    for (uint32_t i = 0; i < image->rle->size; ++i, ++span) {
+        auto dst = &surface->buffer[span->y * surface->stride + span->x];
+        auto cmp = &cbuffer[span->y * surface->stride + span->x];
+        auto src = img + span->y * w + span->x;    //TODO: need to use image's stride
+        auto alpha = ALPHA_MULTIPLY(span->coverage, opacity);
+        if (alpha == 255) {
+            for (uint32_t x = 0; x < span->len; ++x, ++dst, ++cmp, ++src) {
+                auto tmp = ALPHA_BLEND(*src, blendMethod(*cmp));
+                *dst = tmp + ALPHA_BLEND(*dst, surface->blender.ialpha(tmp));
+            }
+        } else {
+            for (uint32_t x = 0; x < span->len; ++x, ++dst, ++cmp, ++src) {
+                auto tmp = ALPHA_BLEND(*src, ALPHA_MULTIPLY(alpha, blendMethod(*cmp)));
+                *dst = tmp + ALPHA_BLEND(*dst, surface->blender.ialpha(tmp));
+            }
+        }
+    }
+    return true;
+}
+
+
 static bool _rasterTranslucentImageRle(SwSurface* surface, const SwImage* image, uint32_t opacity)
 {
     if (surface->compositor) {
         if (surface->compositor->method == CompositeMethod::AlphaMask) {
-            TVGERR("SW_ENGINE", "Missing Implementation _translucentImageRleAlphaMask()");
-//          return _translucentImageRleAlphaMask(surface, image, opacity);
+            return _translucentImageRleMask(surface, image, opacity, surface->blender.alpha);
         }
         if (surface->compositor->method == CompositeMethod::InvAlphaMask) {
-            TVGERR("SW_ENGINE", "Missing Implementation _translucentImageRleInvAlphaMask()");
-//            return _translucentImageRleInvAlphaMask(surface, image, opacity);
+            return _translucentImageRleMask(surface, image, opacity, surface->blender.ialpha);
         }
     }
     return _translucentImageRle(surface, image, opacity);
@@ -292,16 +320,53 @@ static bool _translucentImageRle(SwSurface* surface, const SwImage* image, uint3
 }
 
 
+static bool _translucentImageRleMask(SwSurface* surface, const SwImage* image, uint32_t opacity, const Matrix* itransform, uint32_t (*blendMethod)(uint32_t rgba))
+{
+    TVGLOG("SW_ENGINE", "Transformed Image Rle Alpha Mask / Inverse Alpha Mask Composition");
+
+    auto span = image->rle->spans;
+    auto img = image->data;
+    auto w = image->w;
+    auto h = image->h;
+    auto cbuffer = surface->compositor->image.data;
+
+    for (uint32_t i = 0; i < image->rle->size; ++i, ++span) {
+        auto ey1 = span->y * itransform->e12 + itransform->e13;
+        auto ey2 = span->y * itransform->e22 + itransform->e23;
+        auto dst = &surface->buffer[span->y * surface->stride + span->x];
+        auto cmp = &cbuffer[span->y * surface->stride + span->x];
+        auto alpha = ALPHA_MULTIPLY(span->coverage, opacity);
+        if (alpha == 255) {
+            for (uint32_t x = 0; x < span->len; ++x, ++dst, ++cmp) {
+                auto rX = static_cast<uint32_t>(roundf((span->x + x) * itransform->e11 + ey1));
+                auto rY = static_cast<uint32_t>(roundf((span->x + x) * itransform->e21 + ey2));
+                if (rX >= w || rY >= h) continue;
+                auto tmp = ALPHA_BLEND(img[rY * w + rX], blendMethod(*cmp)); //TODO: need to use image's stride
+                *dst = tmp + ALPHA_BLEND(*dst, surface->blender.ialpha(tmp));
+            }
+        } else {
+            for (uint32_t x = 0; x < span->len; ++x, ++dst, ++cmp) {
+                auto rX = static_cast<uint32_t>(roundf((span->x + x) * itransform->e11 + ey1));
+                auto rY = static_cast<uint32_t>(roundf((span->x + x) * itransform->e21 + ey2));
+                if (rX >= w || rY >= h) continue;
+                auto src = ALPHA_BLEND(img[rY * w + rX], alpha); //TODO: need to use image's stride
+                auto tmp = ALPHA_BLEND(src, blendMethod(*cmp));
+                *dst = tmp + ALPHA_BLEND(*dst, surface->blender.ialpha(tmp));
+            }
+        }
+    }
+    return true;
+}
+
+
 static bool _rasterTranslucentImageRle(SwSurface* surface, const SwImage* image, uint32_t opacity, const Matrix* itransform)
 {
     if (surface->compositor) {
         if (surface->compositor->method == CompositeMethod::AlphaMask) {
-            TVGERR("SW_ENGINE", "Missing Implementation _translucentImageRleAlphaMask()");
-//          return _translucentImageRleAlphaMask(surface, image, opacity, itransform);
+            return _translucentImageRleMask(surface, image, opacity, itransform, surface->blender.alpha);
         }
         if (surface->compositor->method == CompositeMethod::InvAlphaMask) {
-            TVGERR("SW_ENGINE", "Missing Implementation _translucentImageRleInvAlphaMask()");
-//          return _translucentImageRleInvAlphaMask(surface, image, opacity, itransform);
+            return _translucentImageRleMask(surface, image, opacity, itransform, surface->blender.ialpha);
         }
     }
     return _translucentImageRle(surface, image, opacity, itransform);
@@ -336,16 +401,62 @@ static bool _translucentUpScaleImageRle(SwSurface* surface, const SwImage* image
 }
 
 
+static bool _translucentUpScaleImageRleMask(SwSurface* surface, const SwImage* image, uint32_t opacity, const Matrix* itransform, uint32_t (*blendMethod)(uint32_t rgba))
+{
+    TVGLOG("SW_ENGINE", "Image Rle Alpha Mask / Inverse Alpha Mask Composition");
+
+    auto span = image->rle->spans;
+    auto img = image->data;
+    auto w = image->w;
+    auto h = image->h;
+    auto cbuffer = surface->compositor->image.data;
+
+    for (uint32_t i = 0; i < image->rle->size; ++i, ++span) {
+        auto ey1 = span->y * itransform->e12 + itransform->e13;
+        auto ey2 = span->y * itransform->e22 + itransform->e23;
+        auto dst = &surface->buffer[span->y * surface->stride + span->x];
+        auto cmp = &cbuffer[span->y * surface->stride + span->x];
+        auto alpha = ALPHA_MULTIPLY(span->coverage, opacity);
+        if (alpha == 255) {
+            for (uint32_t x = 0; x < span->len; ++x, ++dst, ++cmp) {
+                auto fX = (span->x + x) * itransform->e11 + ey1;
+                auto fY = (span->x + x) * itransform->e21 + ey2;
+                auto rX = static_cast<uint32_t>(roundf(fX));
+                auto rY = static_cast<uint32_t>(roundf(fY));
+                if (rX >= w || rY >= h) continue;
+                uint32_t src;
+                if (rX == w - 1 || rY == h - 1) src = ALPHA_BLEND(img[rY * w + rX], alpha);     //TODO: need to use image's stride
+                else src = ALPHA_BLEND(_applyBilinearInterpolation(img, w, h, fX, fY), alpha);     //TODO: need to use image's stride
+                auto tmp = ALPHA_BLEND(src, blendMethod(*cmp));
+                *dst = tmp + ALPHA_BLEND(*dst, surface->blender.ialpha(tmp));
+            }
+        } else {
+            for (uint32_t x = 0; x < span->len; ++x, ++dst, ++cmp) {
+                auto fX = (span->x + x) * itransform->e11 + ey1;
+                auto fY = (span->x + x) * itransform->e21 + ey2;
+                auto rX = static_cast<uint32_t>(roundf(fX));
+                auto rY = static_cast<uint32_t>(roundf(fY));
+                if (rX >= w || rY >= h) continue;
+                uint32_t src;
+                if (rX == w - 1 || rY == h - 1) src = ALPHA_BLEND(img[rY * w + rX], alpha);     //TODO: need to use image's stride
+                else src = ALPHA_BLEND(_applyBilinearInterpolation(img, w, h, fX, fY), alpha);     //TODO: need to use image's stride
+                auto tmp = ALPHA_BLEND(src, ALPHA_MULTIPLY(alpha, blendMethod(*cmp)));
+                *dst = tmp + ALPHA_BLEND(*dst, surface->blender.ialpha(tmp));
+            }
+        }
+    }
+    return true;
+}
+
+
 static bool _rasterTranslucentUpScaleImageRle(SwSurface* surface, const SwImage* image, uint32_t opacity, const Matrix* itransform)
 {
     if (surface->compositor) {
         if (surface->compositor->method == CompositeMethod::AlphaMask) {
-            TVGERR("SW_ENGINE", "Missing Implementation _translucentUpScaleImageRleAlphaMask()");
-//          return _translucentUpScaleImageRleAlphaMask(surface, image, opacity, itransform);
+            return _translucentUpScaleImageRleMask(surface, image, opacity, itransform, surface->blender.alpha);
         }
         if (surface->compositor->method == CompositeMethod::InvAlphaMask) {
-            TVGERR("SW_ENGINE", "Missing Implementation _translucentUpScaleImageRleInvAlphaMask()");
-//          return _translucentUpScaleImageRleInvAlphaMask(surface, image, opacity, itransform);
+            return _translucentUpScaleImageRleMask(surface, image, opacity, itransform, surface->blender.ialpha);
         }
     }
     return _translucentUpScaleImageRle(surface, image, opacity, itransform);
@@ -380,17 +491,62 @@ static bool _translucentDownScaleImageRle(SwSurface* surface, const SwImage* ima
     return true;
 }
 
+static bool _translucentDownScaleImageRleMask(SwSurface* surface, const SwImage* image, uint32_t opacity, const Matrix* itransform, float scale, uint32_t (*blendMethod)(uint32_t rgba))
+{
+    TVGLOG("SW_ENGINE", "Image Rle Alpha Mask / Inverse Alpha Mask Composition");
+
+    auto halfScale = static_cast<uint32_t>(0.5f / scale);
+    if (halfScale == 0) halfScale = 1;
+
+    auto span = image->rle->spans;
+    auto img = image->data;
+    auto w = image->w;
+    auto h = image->h;
+    auto cbuffer = surface->compositor->image.data;
+
+    for (uint32_t i = 0; i < image->rle->size; ++i, ++span) {
+        auto ey1 = span->y * itransform->e12 + itransform->e13;
+        auto ey2 = span->y * itransform->e22 + itransform->e23;
+        auto dst = &surface->buffer[span->y * surface->stride + span->x];
+        auto cmp = &cbuffer[span->y * surface->stride + span->x];
+        auto alpha = ALPHA_MULTIPLY(span->coverage, opacity);
+
+        if (alpha == 255) {
+            for (uint32_t x = 0; x < span->len; ++x, ++dst, ++cmp) {
+                auto rX = static_cast<uint32_t>(roundf((span->x + x) * itransform->e11 + ey1));
+                auto rY = static_cast<uint32_t>(roundf((span->x + x) * itransform->e21 + ey2));
+                if (rX >= w || rY >= h) continue;
+                uint32_t src;
+                if (rX < halfScale || rY < halfScale || rX >= w - halfScale || rY >= h - halfScale) src = ALPHA_BLEND(img[rY * w + rX], alpha);     //TODO: need to use image's stride
+                else src = ALPHA_BLEND(_average2Nx2NPixel(surface, img, w, h, rX, rY, halfScale), alpha);     //TODO: need to use image's stride
+                auto tmp = ALPHA_BLEND(src, blendMethod(*cmp));
+                *dst = tmp + ALPHA_BLEND(*dst, surface->blender.ialpha(tmp));
+            }
+        } else {
+            for (uint32_t x = 0; x < span->len; ++x, ++dst, ++cmp) {
+                auto rX = static_cast<uint32_t>(roundf((span->x + x) * itransform->e11 + ey1));
+                auto rY = static_cast<uint32_t>(roundf((span->x + x) * itransform->e21 + ey2));
+                if (rX >= w || rY >= h) continue;
+                uint32_t src;
+                if (rX < halfScale || rY < halfScale || rX >= w - halfScale || rY >= h - halfScale) src = ALPHA_BLEND(img[rY * w + rX], alpha);     //TODO: need to use image's stride
+                else src = ALPHA_BLEND(_average2Nx2NPixel(surface, img, w, h, rX, rY, halfScale), alpha);     //TODO: need to use image's stride
+                auto tmp = ALPHA_BLEND(src, ALPHA_MULTIPLY(alpha, blendMethod(*cmp)));
+                *dst = tmp + ALPHA_BLEND(*dst, surface->blender.ialpha(tmp));
+            }
+        }
+    }
+    return true;
+}
+
 
 static bool _rasterTranslucentDownScaleImageRle(SwSurface* surface, const SwImage* image, uint32_t opacity, const Matrix* itransform, float scale)
 {
     if (surface->compositor) {
         if (surface->compositor->method == CompositeMethod::AlphaMask) {
-            TVGERR("SW_ENGINE", "Missing Implementation _translucentDownScaleImageRleAlphaMask()");
-//          return _translucentDownScaleImageRleAlphaMask(surface, image, opacity, itransform, scale);
+            return _translucentDownScaleImageRleMask(surface, image, opacity, itransform, scale, surface->blender.alpha);
         }
         if (surface->compositor->method == CompositeMethod::InvAlphaMask) {
-            TVGERR("SW_ENGINE", "Missing Implementation _translucentDownScaleImageRleInvAlphaMask()");
-//          return _translucentDownScaleImageRleInvAlphaMask(surface, image, opacity, itransform, scale);
+            return _translucentDownScaleImageRleMask(surface, image, opacity, itransform, scale, surface->blender.ialpha);
         }
     }
     return _translucentDownScaleImageRle(surface, image, opacity, itransform, scale);
