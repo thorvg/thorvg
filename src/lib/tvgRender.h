@@ -41,12 +41,14 @@ struct Surface
 
 using RenderData = void*;
 
-struct Compositor {
+struct Compositor
+{
     CompositeMethod method;
     uint32_t        opacity;
 };
 
-struct RenderRegion {
+struct RenderRegion
+{
     uint32_t x, y, w, h;
 
     void intersect(const RenderRegion& rhs)
