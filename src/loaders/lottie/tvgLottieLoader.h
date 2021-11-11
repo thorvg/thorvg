@@ -23,6 +23,8 @@
 #define _TVG_LOTTIE_LOADER_H_
 
 #include "tvgTaskScheduler.h"
+#include "rlottie.h"
+#include "rlottiecommon.h"
 
 class LottieLoader : public LoadModule, public Task
 {
@@ -34,10 +36,15 @@ private:
     uint32_t size = 0;
     bool copy = false;
 
+    size_t mTotalFrame = 0;
+
+    std::unique_ptr<rlottie::Animation> mLottieAnimation;
+
     unique_ptr<Scene> root;
 
-    bool header();
+    unique_ptr<Scene> sceneBuilder(const LOTLayerNode* lotRoot);
     void clear();
+    bool header();
 
 public:
     ~LottieLoader();
