@@ -201,7 +201,7 @@ struct Picture::Impl
     }
 
     //Temporary
-    Result load(const string& path, uint32_t frame, uint32_t* totalFrame, float* duration)
+    Result load(const string& path, uint32_t frame)
     {
         if (paint || pixels) return Result::InsufficientCondition;
         if (loader) loader->close();
@@ -214,8 +214,6 @@ struct Picture::Impl
 
         ///
         loader->frame = frame;
-        *totalFrame = loader->totalFrame;
-        *duration = loader->duration;
         ///
 
         if (!loader->read()) return Result::Unknown;
@@ -223,6 +221,13 @@ struct Picture::Impl
         h = loader->h;
         return Result::Success;
     }
+
+
+    float totalFrame()
+    {
+        return loader->totalFrame;
+    }
+    ///////
 
     Result load(const char* data, uint32_t size, const string& mimeType, bool copy)
     {
