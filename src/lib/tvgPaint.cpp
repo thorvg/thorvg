@@ -101,7 +101,7 @@ Paint* Paint::Impl::duplicate()
     if (rTransform) {
         ret->pImpl->rTransform = new RenderTransform();
         *ret->pImpl->rTransform = *rTransform;
-        ret->pImpl->flag |= RenderUpdateFlag::Transform;
+        ret->pImpl->renderFlag |= RenderUpdateFlag::Transform;
     }
 
     ret->pImpl->opacity = opacity;
@@ -123,7 +123,7 @@ bool Paint::Impl::rotate(float degree)
         rTransform = new RenderTransform();
     }
     rTransform->degree = degree;
-    if (!rTransform->overriding) flag |= RenderUpdateFlag::Transform;
+    if (!rTransform->overriding) renderFlag |= RenderUpdateFlag::Transform;
 
     return true;
 }
@@ -138,7 +138,7 @@ bool Paint::Impl::scale(float factor)
         rTransform = new RenderTransform();
     }
     rTransform->scale = factor;
-    if (!rTransform->overriding) flag |= RenderUpdateFlag::Transform;
+    if (!rTransform->overriding) renderFlag |= RenderUpdateFlag::Transform;
 
     return true;
 }
@@ -154,7 +154,7 @@ bool Paint::Impl::translate(float x, float y)
     }
     rTransform->x = x;
     rTransform->y = y;
-    if (!rTransform->overriding) flag |= RenderUpdateFlag::Transform;
+    if (!rTransform->overriding) renderFlag |= RenderUpdateFlag::Transform;
 
     return true;
 }
@@ -186,7 +186,7 @@ bool Paint::Impl::render(RenderMethod& renderer)
 
 void* Paint::Impl::update(RenderMethod& renderer, const RenderTransform* pTransform, uint32_t opacity, Array<RenderData>& clips, uint32_t pFlag)
 {
-    if (flag & RenderUpdateFlag::Transform) {
+    if (renderFlag & RenderUpdateFlag::Transform) {
         if (!rTransform) return nullptr;
         if (!rTransform->update()) {
             delete(rTransform);
@@ -219,8 +219,8 @@ void* Paint::Impl::update(RenderMethod& renderer, const RenderTransform* pTransf
 
     /* 2. Main Update */
     void *edata = nullptr;
-    auto newFlag = static_cast<RenderUpdateFlag>(pFlag | flag);
-    flag = RenderUpdateFlag::None;
+    auto newFlag = static_cast<RenderUpdateFlag>(pFlag | renderFlag);
+    renderFlag = RenderUpdateFlag::None;
     opacity = (opacity * this->opacity) / 255;
 
     if (rTransform && pTransform) {
@@ -373,7 +373,7 @@ Result Paint::opacity(uint8_t o) noexcept
     if (pImpl->opacity == o) return Result::Success;
 
     pImpl->opacity = o;
-    pImpl->flag |= RenderUpdateFlag::Color;
+    pImpl->renderFlag |= RenderUpdateFlag::Color;
 
     return Result::Success;
 }
