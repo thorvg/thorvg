@@ -190,6 +190,7 @@ struct SwImageTask : SwTask
 
             image.data = const_cast<uint32_t*>(pdata->data(&image.w, &image.h));
             if (!image.data || image.w == 0 || image.h == 0) goto end;
+            image.stride = image.w;     //same, pixel buffer size.
 
             if (!imagePrepare(&image, transform, clipRegion, bbox, mpool, tid)) goto end;
 
@@ -500,7 +501,8 @@ Compositor* SwRenderer::target(const RenderRegion& region)
     cmp->compositor->bbox.min.y = y;
     cmp->compositor->bbox.max.x = x + w;
     cmp->compositor->bbox.max.y = y + h;
-    cmp->compositor->image.w = surface->stride;
+    cmp->compositor->image.stride = surface->stride;
+    cmp->compositor->image.w = surface->w;
     cmp->compositor->image.h = surface->h;
 
     //We know partial clear region
