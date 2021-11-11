@@ -1095,7 +1095,10 @@ public:
     Result load(const std::string& path) noexcept;
 
     //TEST API for Animated images(lottie)
-    Result load(const std::string& path, uint32_t frame, uint32_t* totalFrame, float* duration) noexcept;
+    Result load(const std::string& path, uint32_t frame) noexcept;
+
+    float totalFrame();
+    ////
 
     /**
      * @brief Loads a picture data from a memory block of a given size.

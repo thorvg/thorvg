@@ -28,21 +28,19 @@
 //temporary
 //#define DEBUG 1
 
-
 /************************************************************************/
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
 static void _shapeBuildHelper(tvg::Paint *_parent, const LOTLayerNode *layer, int depth)
 {
-   if (!_parent) return;
+    if (!_parent) return;
 
-   auto parent = reinterpret_cast<tvg::Scene*>(_parent);
+    auto parent = reinterpret_cast<tvg::Scene*>(_parent);
 
-   parent->reserve(layer->mNodeList.size);
+    parent->reserve(layer->mNodeList.size);
 
-   for (unsigned int i = 0; i < layer->mNodeList.size; i++)
-     {
+    for (unsigned int i = 0; i < layer->mNodeList.size; i++) {
         LOTNode *node = layer->mNodeList.ptr[i];
         if (!node) continue;
 
@@ -52,21 +50,19 @@ static void _shapeBuildHelper(tvg::Paint *_parent, const LOTLayerNode *layer, in
 #endif
 
         //Image object
-        if (node->mImageInfo.data)
-          {
-             //Tvg_Paint* picture = tvg_picture_new();
-             auto picture = tvg::Picture::gen().release();
-             tvg::Matrix matrix = {
+        if (node->mImageInfo.data) {
+            auto picture = tvg::Picture::gen().release();
+            tvg::Matrix matrix = {
                 node->mImageInfo.mMatrix.m11,  node->mImageInfo.mMatrix.m12, node->mImageInfo.mMatrix.m13,
                 node->mImageInfo.mMatrix.m21,  node->mImageInfo.mMatrix.m22, node->mImageInfo.mMatrix.m23,
                 node->mImageInfo.mMatrix.m31,  node->mImageInfo.mMatrix.m32, node->mImageInfo.mMatrix.m33
-             };
-             picture->transform(matrix);
-             picture->load((uint32_t *)node->mImageInfo.data, node->mImageInfo.width, node->mImageInfo.height, false);
-             picture->opacity(node->mImageInfo.mAlpha);
-             parent->push(unique_ptr<tvg::Picture>(picture));
-             continue;
-          }
+            };
+            picture->transform(matrix);
+            picture->load((uint32_t *)node->mImageInfo.data, node->mImageInfo.width, node->mImageInfo.height, false);
+            picture->opacity(node->mImageInfo.mAlpha);
+            parent->push(unique_ptr<tvg::Picture>(picture));
+            continue;
+        }
 
         const float *data = node->mPath.ptPtr;
         if (!data) continue;
@@ -80,148 +76,204 @@ static void _shapeBuildHelper(tvg::Paint *_parent, const LOTLayerNode *layer, in
         tvg::Point pts[ptsCnt];
 
         uint32_t cmd_i = 0, pts_i = 0;
-        for (uint32_t i = 0; i < cmdCnt; i++)
-          {
-            switch (node->mPath.elmPtr[i])
-              {
-               case 0:
-                  cmds[cmd_i++] = tvg::PathCommand::MoveTo;
-                  pts[pts_i++] = (tvg::Point){data[0], data[1]};
-                  data += 2;
-                  break;
-               case 1:
-                  cmds[cmd_i++] = tvg::PathCommand::LineTo;
-                  pts[pts_i++] = (tvg::Point){data[0], data[1]};
-                  data += 2;
-                  break;
-               case 2:
-                  cmds[cmd_i++] = tvg::PathCommand::CubicTo;
-                  pts[pts_i++] = (tvg::Point){data[0], data[1]};
-                  pts[pts_i++] = (tvg::Point){data[2], data[3]};
-                  pts[pts_i++] = (tvg::Point){data[4], data[5]};
-                  data += 6;
-                  break;
-               case 3:
-                  cmds[cmd_i++] = tvg::PathCommand::Close;
-                  break;
-               default:
-                  printf("No reserved path type = %d", node->mPath.elmPtr[i]);
-                  break;
-              }
-          }
+        for (uint32_t i = 0; i < cmdCnt; i++) {
+            switch (node->mPath.elmPtr[i]) {
+                case 0:
+                    cmds[cmd_i++] = tvg::PathCommand::MoveTo;
+                    pts[pts_i++] = (tvg::Point){data[0], data[1]};
+                    data += 2;
+                    break;
+                case 1:
+                    cmds[cmd_i++] = tvg::PathCommand::LineTo;
+                    pts[pts_i++] = (tvg::Point){data[0], data[1]};
+                    data += 2;
+                    break;
+                case 2:
+                    cmds[cmd_i++] = tvg::PathCommand::CubicTo;
+                    pts[pts_i++] = (tvg::Point){data[0], data[1]};
+                    pts[pts_i++] = (tvg::Point){data[2], data[3]};
+                    pts[pts_i++] = (tvg::Point){data[4], data[5]};
+                    data += 6;
+                    break;
+                case 3:
+                    cmds[cmd_i++] = tvg::PathCommand::Close;
+                    break;
+                default:
+                    printf("No reserved path type = %d", node->mPath.elmPtr[i]);
+                    break;
+            }
+        }
         shape->appendPath(cmds, cmd_i, pts, pts_i);
 
         //1: Stroke
-        if (node->mStroke.enable)
-          {
-             //Stroke Width
-             shape->stroke(node->mStroke.width);
+        if (node->mStroke.enable) {
+            //Stroke Width
+            shape->stroke(node->mStroke.width);
 
-             //Stroke Cap
-             tvg::StrokeCap cap;
-             switch (node->mStroke.cap)
-               {
-                case CapFlat: cap = tvg::StrokeCap::Butt; break;
-                case CapSquare: cap = tvg::StrokeCap::Square; break;
-                case CapRound: cap = tvg::StrokeCap::Round; break;
-                default: cap = tvg::StrokeCap::Butt; break;
-               }
-             shape->stroke(cap);
+            //Stroke Cap
+            tvg::StrokeCap cap;
+            switch (node->mStroke.cap) {
+                case CapFlat:
+                    cap = tvg::StrokeCap::Butt;
+                    break;
+                case CapSquare:
+                    cap = tvg::StrokeCap::Square;
+                    break;
+                case CapRound:
+                    cap = tvg::StrokeCap::Round;
+                    break;
+                default:
+                    cap = tvg::StrokeCap::Butt;
+                    break;
+            }
+            shape->stroke(cap);
 
-             //Stroke Join
-             tvg::StrokeJoin join;
-             switch (node->mStroke.join)
-               {
-                case JoinMiter: join = tvg::StrokeJoin::Miter; break;
-                case JoinBevel: join = tvg::StrokeJoin::Bevel; break;
-                case JoinRound: join = tvg::StrokeJoin::Round; break;
-                default: join = tvg::StrokeJoin::Miter; break;
-               }
-             shape->stroke(join);
+            //Stroke Join
+            tvg::StrokeJoin join;
+            switch (node->mStroke.join) {
+                case JoinMiter:
+                    join = tvg::StrokeJoin::Miter;
+                    break;
+                case JoinBevel:
+                    join = tvg::StrokeJoin::Bevel;
+                    break;
+                case JoinRound:
+                    join = tvg::StrokeJoin::Round;
+                    break;
+                default:
+                    join = tvg::StrokeJoin::Miter;
+                    break;
+            }
+            shape->stroke(join);
 
-             //Stroke Dash
-             if (node->mStroke.dashArraySize > 0)
-               {
-                  shape->stroke(node->mStroke.dashArray, node->mStroke.dashArraySize);
-               }
-          }
+            //Stroke Dash
+            if (node->mStroke.dashArraySize > 0) shape->stroke(node->mStroke.dashArray, node->mStroke.dashArraySize);
+        }
 
         //2: Fill Method
-        switch (node->mBrushType)
-          {
-           case BrushSolid:
-             {
-                if (node->mStroke.enable)
-                 shape->stroke(node->mColor.r, node->mColor.g, node->mColor.b, node->mColor.a);
-                else
-                  shape->fill(node->mColor.r, node->mColor.g, node->mColor.b, node->mColor.a);
-             }
-             break;
-           case BrushGradient:
-             {
+        switch (node->mBrushType) {
+            case BrushSolid:
+            {
+                if (node->mStroke.enable) shape->stroke(node->mColor.r, node->mColor.g, node->mColor.b, node->mColor.a);
+                else shape->fill(node->mColor.r, node->mColor.g, node->mColor.b, node->mColor.a);
+            }
+            break;
+            case BrushGradient:
+            {
                 tvg::Fill* grad = NULL;
 
-                if (node->mGradient.type == GradientLinear)
-                  {
-                     grad = tvg::LinearGradient::gen().release();
-                     reinterpret_cast<tvg::LinearGradient*>(grad)->linear(node->mGradient.start.x, node->mGradient.start.y, node->mGradient.end.x, node->mGradient.end.y);
-                  }
-                else if (node->mGradient.type == GradientRadial)
-                  {
+                if (node->mGradient.type == GradientLinear) {
+                    grad = tvg::LinearGradient::gen().release();
+                    reinterpret_cast<tvg::LinearGradient*>(grad)->linear(node->mGradient.start.x, node->mGradient.start.y, node->mGradient.end.x, node->mGradient.end.y);
+                }
+                else if (node->mGradient.type == GradientRadial) {
                      grad = tvg::RadialGradient::gen().release();
                      reinterpret_cast<tvg::RadialGradient*>(grad)->radial(node->mGradient.center.x, node->mGradient.center.y, node->mGradient.cradius);
-                  }
-                else
-                  printf("No reserved gradient type = %d", node->mGradient.type);
+                }
+                else printf("No reserved gradient type = %d", node->mGradient.type);
 
-                if (grad)
-                  {
-                     //Gradient Stop
-                     tvg::Fill::ColorStop *stops = new tvg::Fill::ColorStop[node->mGradient.stopCount];
+                if (grad) {
+                    //Gradient Stop
+                    tvg::Fill::ColorStop *stops = new tvg::Fill::ColorStop[node->mGradient.stopCount];
 
-                     if (stops)
-                       {
-                          for (unsigned int i = 0; i < node->mGradient.stopCount; i++)
-                            {
-                               stops[i].offset = node->mGradient.stopPtr[i].pos;
-                               stops[i].r = node->mGradient.stopPtr[i].r;
-                               stops[i].g = node->mGradient.stopPtr[i].g;
-                               stops[i].b = node->mGradient.stopPtr[i].b;
-                               stops[i].a = node->mGradient.stopPtr[i].a;
-                            }
-                          grad->colorStops(stops, node->mGradient.stopCount);
-                          delete[] stops;
-                       }
+                    if (stops) {
+                        for (unsigned int i = 0; i < node->mGradient.stopCount; i++) {
+                            stops[i].offset = node->mGradient.stopPtr[i].pos;
+                            stops[i].r = node->mGradient.stopPtr[i].r;
+                            stops[i].g = node->mGradient.stopPtr[i].g;
+                            stops[i].b = node->mGradient.stopPtr[i].b;
+                            stops[i].a = node->mGradient.stopPtr[i].a;
+                        }
+                        grad->colorStops(stops, node->mGradient.stopCount);
+                        delete[] stops;
+                    }
 
-                     if (node->mStroke.enable)
-                       {
-                          if (node->mGradient.type == GradientLinear)
-                             shape->stroke(unique_ptr<tvg::Fill>(grad));
-                          else if (node->mGradient.type == GradientRadial)
-                             shape->stroke(unique_ptr<tvg::Fill>(grad));
-                       }
-                     else
-                       {
-                          if (node->mGradient.type == GradientLinear)
-                             shape->fill(unique_ptr<tvg::Fill>(grad));
-                          else if (node->mGradient.type == GradientRadial)
-                             shape->fill(unique_ptr<tvg::Fill>(grad));
-                       }
-                  }
-             }
-             break;
-           default:
-              printf("No reserved brush type = %d", node->mBrushType);
-          }
+                    if (node->mStroke.enable) shape->stroke(unique_ptr<tvg::Fill>(grad));
+                    else shape->fill(unique_ptr<tvg::Fill>(grad));
+                }
+            }
+            break;
+            default:
+                printf("No reserved brush type = %d", node->mBrushType);
+        }
 
         //3: Fill Rule
-        if (node->mFillRule == FillEvenOdd)
-          shape->fill(tvg::FillRule::EvenOdd);
-        else if (node->mFillRule == FillWinding)
-          shape->fill(tvg::FillRule::Winding);
+        if (node->mFillRule == FillEvenOdd) shape->fill(tvg::FillRule::EvenOdd);
+        else if (node->mFillRule == FillWinding) shape->fill(tvg::FillRule::Winding);
 
         parent->push(unique_ptr<tvg::Shape>(shape));
-     }
+    }
+}
+
+
+static void _compositeShapeBuildHelper(tvg::Paint *_parent, LOTMask *mask, int depth)
+{
+    const float *data = mask->mPath.ptPtr;
+    if (!data) return;
+
+    auto parent = reinterpret_cast<tvg::Scene*>(_parent);
+    auto shape = tvg::Shape::gen().release();
+
+   //Path
+    uint32_t cmdCnt = mask->mPath.elmCount;
+    uint32_t ptsCnt = mask->mPath.ptCount * sizeof(float) / sizeof(tvg::Point);
+    tvg::PathCommand cmds[cmdCnt];
+    tvg::Point pts[ptsCnt];
+
+    uint32_t cmd_i = 0, pts_i = 0;
+    for (uint32_t i = 0; i < cmdCnt; i++) {
+        switch (mask->mPath.elmPtr[i]) {
+            case 0:
+                cmds[cmd_i++] = tvg::PathCommand::MoveTo;
+                pts[pts_i++] = (tvg::Point){data[0], data[1]};
+                data += 2;
+                break;
+            case 1:
+                cmds[cmd_i++] = tvg::PathCommand::LineTo;
+                pts[pts_i++] = (tvg::Point){data[0], data[1]};
+                data += 2;
+                break;
+            case 2:
+                cmds[cmd_i++] = tvg::PathCommand::CubicTo;
+                pts[pts_i++] = (tvg::Point){data[0], data[1]};
+                pts[pts_i++] = (tvg::Point){data[2], data[3]};
+                pts[pts_i++] = (tvg::Point){data[4], data[5]};
+                data += 6;
+                break;
+            case 3:
+                cmds[cmd_i++] = tvg::PathCommand::Close;
+                break;
+            default:
+                printf("No reserved path type = %d", mask->mPath.elmPtr[i]);
+                break;
+        }
+    }
+    shape->appendPath(cmds, cmd_i, pts, pts_i);
+
+    //White color and alpha setting
+    shape->fill(255, 255, 255, mask->mAlpha);
+
+    parent->push(unique_ptr<tvg::Shape>(shape));
+}
+
+
+static tvg::Paint* _compositeBuildHelper(tvg::Paint *mtarget, LOTMask *masks, unsigned int mask_cnt, int depth)
+{
+    tvg::Scene* msource = tvg::Scene::gen().release();
+    mtarget->composite(unique_ptr<Paint>(msource), tvg::CompositeMethod::AlphaMask);
+    mtarget = msource;
+
+    //Make mask layers
+    for (unsigned int i = 0; i < mask_cnt; i++) {
+        LOTMask *mask = &masks[i];
+        _compositeShapeBuildHelper(reinterpret_cast<tvg::Paint*>(msource), mask, depth + 1);
+
+#if DEBUG
+        for (int i = 0; i < depth; i++) printf("    ");
+        printf("[mask %03d] mode:%d\n", i, mask->mMode);
+#endif
+    }
+    return mtarget;
 }
 
 
@@ -238,87 +290,75 @@ static void _sceneBuildHelper(tvg::Paint *root, const LOTLayerNode *layer, int d
    root->opacity(layer->mAlpha);
 
    //Is this layer a container layer?
-   for (unsigned int i = 0; i < layer->mLayerList.size; i++)
-     {
-        LOTLayerNode *clayer = layer->mLayerList.ptr[i];
+   for (unsigned int i = 0; i < layer->mLayerList.size; i++) {
+       LOTLayerNode *clayer = layer->mLayerList.ptr[i];
 
 #if DEBUG
-        for (int i = 0; i < depth; i++) printf("    ");
-        printf("[layer %03d] matte:%s keypath:%s%s\n", i, matteMode, clayer->keypath, clayer->mVisible?"":" visible:FALSE");
+       for (int i = 0; i < depth; i++) printf("    ");
+       printf("[layer %03d] matte:%s keypath:%s%s\n", i, matteMode, clayer->keypath, clayer->mVisible?"":" visible:FALSE");
 #endif
 
-        if (!clayer->mVisible)
-          {
-             if (ptree && strcmp(matteMode, "none"))
-               ptree->opacity(0);
-             strcpy(matteMode,"none");
-             mtarget = NULL;
-
-             //If layer has a masking layer, skip it
-             if (clayer->mMatte != MatteNone) i++;
-             continue;
-          }
-
-        //Source Layer
-        auto ctree = tvg::Scene::gen().release();
-        _sceneBuildHelper(ctree, clayer, depth+1);
-
-        if (!strcmp(matteMode, "none"))
-          {
-             reinterpret_cast<tvg::Scene*>(root)->push(unique_ptr<Paint>((Paint*)ctree));
-          }
-        else
-          {
-             ptree->composite(unique_ptr<Paint>(ctree), tvg::CompositeMethod::AlphaMask); //temporary
-             mtarget = ctree;
-          }
-
-        ptree = ctree;
-
-        //Remap Matte Mode
-        switch (clayer->mMatte)
-          {
-           case MatteNone:
-              strcpy(matteMode, "none");
-              //matte_mode = TVG_COMPOSITE_METHOD_NONE;
-              break;
-           case MatteAlpha:
-              strcpy(matteMode, "mask");
-              //matte_mode = TVG_COMPOSITE_METHOD_ALPHA_MASK;
-              break;
-           case MatteAlphaInv:
-              strcpy(matteMode, "invmaske");
-              //matte_mode = TVG_COMPOSITE_METHOD_INVERSE_ALPHA_MASK;
-              break;
-           case MatteLuma:
-              strcpy(matteMode, "none");
-              printf("TODO: MatteLuma\n");
-              break;
-           case MatteLumaInv:
-              strcpy(matteMode, "none");
-              printf("TODO: MatteLumaInv\n");
-              break;
-           default:
-              strcpy(matteMode, "none");
-              break;
-          }
-
-        if (clayer->mMaskList.size > 0)
-          {
-             mlayer = clayer;
-             if (!mtarget) mtarget = ptree;
-          }
-        else
+       if (!clayer->mVisible) {
+           if (ptree && strcmp(matteMode, "none")) ptree->opacity(0);
+           strcpy(matteMode,"none");
            mtarget = NULL;
 
-        //Construct node that have mask.
-//        if (mlayer && mtarget)
-          //ptree = _compositeBuildHelper(mtarget, mlayer->mMaskList.ptr, mlayer->mMaskList.size, depth + 1);
-     }
+           //If layer has a masking layer, skip it
+           if (clayer->mMatte != MatteNone) i++;
+           continue;
+       }
 
-   //Construct drawable nodes.
-   if (layer->mNodeList.size > 0)
-     _shapeBuildHelper(root, layer, depth);
+       //Source Layer
+       auto ctree = tvg::Scene::gen().release();
+       _sceneBuildHelper(ctree, clayer, depth+1);
+
+       if (!strcmp(matteMode, "none")) reinterpret_cast<tvg::Scene*>(root)->push(unique_ptr<Paint>((Paint*)ctree));
+       else {
+           ptree->composite(unique_ptr<Paint>(ctree), tvg::CompositeMethod::AlphaMask); //temporary
+           mtarget = ctree;
+       }
+
+       ptree = ctree;
+
+       //Remap Matte Mode
+       switch (clayer->mMatte) {
+           case MatteNone:
+               strcpy(matteMode, "none");
+               //matte_mode = TVG_COMPOSITE_METHOD_NONE;
+               break;
+           case MatteAlpha:
+               strcpy(matteMode, "mask");
+               //matte_mode = TVG_COMPOSITE_METHOD_ALPHA_MASK;
+               break;
+           case MatteAlphaInv:
+               strcpy(matteMode, "invmaske");
+               //matte_mode = TVG_COMPOSITE_METHOD_INVERSE_ALPHA_MASK;
+               break;
+           case MatteLuma:
+               strcpy(matteMode, "none");
+               printf("TODO: MatteLuma\n");
+               break;
+           case MatteLumaInv:
+               strcpy(matteMode, "none");
+               printf("TODO: MatteLumaInv\n");
+               break;
+           default:
+               strcpy(matteMode, "none");
+               break;
+       }
+
+       if (clayer->mMaskList.size > 0) {
+           mlayer = clayer;
+           if (!mtarget) mtarget = ptree;
+       }
+       else mtarget = NULL;
+
+       //Construct node that have mask.
+       if (mlayer && mtarget) ptree = _compositeBuildHelper(mtarget, mlayer->mMaskList.ptr, mlayer->mMaskList.size, depth + 1);
+    }
+
+    //Construct drawable nodes.
+    if (layer->mNodeList.size > 0) _shapeBuildHelper(root, layer, depth);
 }
 
 
@@ -328,7 +368,6 @@ unique_ptr<Scene> LottieLoader::sceneBuilder(const LOTLayerNode* lotRoot)
 
    _sceneBuildHelper(root, lotRoot, 1);
    return unique_ptr<tvg::Scene>(root);
-
 }
 
 
@@ -381,13 +420,10 @@ bool LottieLoader::open(const string& path)
     size_t width, height;
     width = height = 0;
     mLottieAnimation->size(width, height);
-    w = static_cast<float>(width);
-    h = static_cast<float>(height);
+    if (w == 0) w = static_cast<float>(width);
+    if (h == 0) h = static_cast<float>(height);
 
     totalFrame = mLottieAnimation->totalFrame();
-    duration = (float)mLottieAnimation->duration();
-
-    //printf("load file %s %f %f %ld\n", path.c_str(), w, h, mTotalFrame);
 
     return header();
 }
@@ -429,6 +465,40 @@ bool LottieLoader::close()
 }
 
 
+bool LottieLoader::resize(Paint* paint, float w, float h)
+{
+    if (!paint) return false;
+
+    auto sx = w / this->w;
+    auto sy = h / this->h;
+
+    if (preserveAspect) {
+        //Scale
+        auto scale = sx < sy ? sx : sy;
+        paint->scale(scale);
+        //Align
+        auto tx = 0.0f;
+        auto ty = 0.0f;
+        auto tw = this->w * scale;
+        auto th = this->h * scale;
+        if (tw > th) ty -= (h - th) * 0.5f;
+        else tx -= (w - tw) * 0.5f;
+        paint->translate(-tx, -ty);
+    } else {
+        //Align
+        auto tx = 0.0f;
+        auto ty = 0.0f;
+        auto tw = this->w * sx;
+        auto th = this->h * sy;
+        if (tw > th) ty -= (h - th) * 0.5f;
+        else tx -= (w - tw) * 0.5f;
+
+        Matrix m = {sx, 0, -tx, 0, sy, -ty, 0, 0, 1};
+        paint->transform(m);
+    }
+    return true;
+}
+
 
 void LottieLoader::run(unsigned tid)
 {
@@ -436,6 +506,7 @@ void LottieLoader::run(unsigned tid)
 
     root = sceneBuilder(lotRoot);
 }
+
 
 unique_ptr<Paint> LottieLoader::paint()
 {

@@ -20,14 +20,52 @@
  * SOFTWARE.
  */
 
+#include <vector>
 #include "Common.h"
 
 /************************************************************************/
 /* Drawing Commands                                                     */
 /************************************************************************/
 
-static uint32_t totalFrame = 0;
-static float duration = 0;
+
+#define NUM_PER_ROW 7
+#define NUM_PER_COL 6
+#define SIZE (WIDTH/NUM_PER_ROW)
+
+static int count = 0;
+
+static std::vector<unique_ptr<tvg::Picture>> pictures;
+static uint32_t totalFrames[100] = {0};
+static uint32_t frames[100] = {0};
+
+void svgDirCallback(const char* name, const char* path, void* data)
+{
+    float progress = *(float*)data;
+    //ignore if not svgs.
+    const char *ext = name + strlen(name) - 4;
+    if (strcmp(ext, "json")) return;
+
+    auto picture = tvg::Picture::gen();
+
+    string buf = path;
+    buf += "/";
+    buf += name;
+
+    if (picture->load(buf, frames[count]) != tvg::Result::Success) {
+         cout << "JSON is not supported. Did you enable JSON Loader? : " << buf << endl;
+         return;
+    }
+    totalFrames[count] = picture->totalFrame();
+    frames[count]++;
+    if (frames[count] >= totalFrames[count]) frames[count] = 0;
+
+    picture->size(SIZE, SIZE);
+    picture->translate((count % NUM_PER_ROW) * SIZE, (count / NUM_PER_ROW) * (HEIGHT / NUM_PER_COL));
+
+    pictures.push_back(move(picture));
+
+    count++;
+}
 
 void tvgUpdateCmds(tvg::Canvas* canvas, float progress)
 {
@@ -35,16 +73,23 @@ void tvgUpdateCmds(tvg::Canvas* canvas, float progress)
 
     if (canvas->clear() != tvg::Result::Success) return;
 
-    //Load json file from path
-    auto picture = tvg::Picture::gen();
-    string path = EXAMPLE_DIR"/test.json";
-  printf("progress : %f d : %f\n", progress, duration);
-    if (picture->load(path, progress * totalFrame, &totalFrame, &duration) != tvg::Result::Success) {
-         cout << "JSON is not supported. Did you enable JSON Loader?" << endl;
-         return;
+    //Background
+    auto shape = tvg::Shape::gen();
+    shape->appendRect(0, 0, WIDTH, HEIGHT, 0, 0);    //x, y, w, h, rx, ry
+    shape->fill(255, 255, 255, 255);                 //r, g, b, a
+    if (canvas->push(move(shape)) != tvg::Result::Success) return;
+    count = 0;
+    eina_file_dir_list(EXAMPLE_DIR, EINA_TRUE, svgDirCallback, (void*)&progress);
+
+    /* This showcase shows you asynchrounous loading of svg.
+       For this, pushing pictures at a certian sync time.
+       This means it earns the time to finish loading svg resources,
+       otherwise you can push pictures immediately. */
+    for (auto& paint : pictures) {
+        canvas->push(move(paint));
     }
-    picture->size(WIDTH, HEIGHT);
-    if (canvas->push(move(picture)) != tvg::Result::Success) return;
+
+    pictures.clear();
 }
 
 
