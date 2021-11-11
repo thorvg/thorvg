@@ -463,15 +463,12 @@ static bool _rasterTranslucentUpScaleImageRle(SwSurface* surface, const SwImage*
 }
 
 
-static bool _translucentDownScaleImageRle(SwSurface* surface, const SwImage* image, uint32_t opacity, const Matrix* itransform, float scale)
+static bool _translucentDownScaleImageRle(SwSurface* surface, const SwImage* image, uint32_t opacity, const Matrix* itransform, uint32_t halfScale)
 {
     auto span = image->rle->spans;
     auto img = image->data;
     auto w = image->w;
     auto h = image->h;
-
-    auto halfScale = static_cast<uint32_t>(0.5f / scale);
-    if (halfScale == 0) halfScale = 1;
 
     for (uint32_t i = 0; i < image->rle->size; ++i, ++span) {
         auto ey1 = span->y * itransform->e12 + itransform->e13;
@@ -491,12 +488,9 @@ static bool _translucentDownScaleImageRle(SwSurface* surface, const SwImage* ima
     return true;
 }
 
-static bool _translucentDownScaleImageRleMask(SwSurface* surface, const SwImage* image, uint32_t opacity, const Matrix* itransform, float scale, uint32_t (*blendMethod)(uint32_t))
+static bool _translucentDownScaleImageRleMask(SwSurface* surface, const SwImage* image, uint32_t opacity, const Matrix* itransform, uint32_t halfScale, uint32_t (*blendMethod)(uint32_t))
 {
     TVGLOG("SW_ENGINE", "Image Rle Alpha Mask / Inverse Alpha Mask Composition");
-
-    auto halfScale = static_cast<uint32_t>(0.5f / scale);
-    if (halfScale == 0) halfScale = 1;
 
     auto span = image->rle->spans;
     auto img = image->data;
@@ -539,17 +533,17 @@ static bool _translucentDownScaleImageRleMask(SwSurface* surface, const SwImage*
 }
 
 
-static bool _rasterTranslucentDownScaleImageRle(SwSurface* surface, const SwImage* image, uint32_t opacity, const Matrix* itransform, float scale)
+static bool _rasterTranslucentDownScaleImageRle(SwSurface* surface, const SwImage* image, uint32_t opacity, const Matrix* itransform, uint32_t halfScale)
 {
     if (surface->compositor) {
         if (surface->compositor->method == CompositeMethod::AlphaMask) {
-            return _translucentDownScaleImageRleMask(surface, image, opacity, itransform, scale, surface->blender.alpha);
+            return _translucentDownScaleImageRleMask(surface, image, opacity, itransform, halfScale, surface->blender.alpha);
         }
         if (surface->compositor->method == CompositeMethod::InvAlphaMask) {
-            return _translucentDownScaleImageRleMask(surface, image, opacity, itransform, scale, surface->blender.ialpha);
+            return _translucentDownScaleImageRleMask(surface, image, opacity, itransform, halfScale, surface->blender.ialpha);
         }
     }
-    return _translucentDownScaleImageRle(surface, image, opacity, itransform, scale);
+    return _translucentDownScaleImageRle(surface, image, opacity, itransform, halfScale);
 }
 
 
@@ -619,15 +613,12 @@ static bool _rasterUpScaleImageRle(SwSurface* surface, const SwImage* image, con
 }
 
 
-static bool _rasterDownScaleImageRle(SwSurface* surface, const SwImage* image, const Matrix* itransform, float scale)
+static bool _rasterDownScaleImageRle(SwSurface* surface, const SwImage* image, const Matrix* itransform, uint32_t halfScale)
 {
     auto span = image->rle->spans;
     auto img = image->data;
     auto w = image->w;
     auto h = image->h;
-
-    auto halfScale = static_cast<uint32_t>(0.5f / scale);
-    if (halfScale == 0) halfScale = 1;
 
     for (uint32_t i = 0; i < image->rle->size; ++i, ++span) {
         auto ey1 = span->y * itransform->e12 + itransform->e13;
@@ -789,15 +780,11 @@ static bool _rasterTranslucentUpScaleImage(SwSurface* surface, const SwImage* im
 }
 
 
-static bool _translucentDownScaleImage(SwSurface* surface, const SwImage* image, uint32_t opacity, const SwBBox& region, const Matrix* itransform, float scale)
+static bool _translucentDownScaleImage(SwSurface* surface, const SwImage* image, uint32_t opacity, const SwBBox& region, const Matrix* itransform, uint32_t halfScale)
 {
     auto img = image->data;
     auto w = image->w;
     auto h = image->h;
-
-    auto halfScale = static_cast<uint32_t>(0.5f / scale);
-    if (halfScale == 0) halfScale = 1;
-
     auto dbuffer = &surface->buffer[region.min.y * surface->stride + region.min.x];
 
     for (auto y = region.min.y; y < region.max.y; ++y) {
@@ -819,17 +806,13 @@ static bool _translucentDownScaleImage(SwSurface* surface, const SwImage* image,
 }
 
 
-static bool _translucentDownScaleImageMask(SwSurface* surface, const SwImage* image, uint32_t opacity, const SwBBox& region, const Matrix* itransform, float scale, uint32_t (*blendMethod)(uint32_t))
+static bool _translucentDownScaleImageMask(SwSurface* surface, const SwImage* image, uint32_t opacity, const SwBBox& region, const Matrix* itransform, uint32_t halfScale, uint32_t (*blendMethod)(uint32_t))
 {
     TVGLOG("SW_ENGINE", "Transformed Image Alpha Mask / Inverse Alpha Mask Composition");
 
     auto img = image->data;
     auto w = image->w;
     auto h = image->h;
-
-    auto halfScale = static_cast<uint32_t>(0.5f / scale);
-    if (halfScale == 0) halfScale = 1;
-
     auto dbuffer = &surface->buffer[region.min.y * surface->stride + region.min.x];
     auto cbuffer = &surface->compositor->image.data[region.min.y * surface->stride + region.min.x];
 
@@ -854,17 +837,17 @@ static bool _translucentDownScaleImageMask(SwSurface* surface, const SwImage* im
 }
 
 
-static bool _rasterTranslucentDownScaleImage(SwSurface* surface, const SwImage* image, uint32_t opacity, const SwBBox& region, const Matrix* itransform, float scale)
+static bool _rasterTranslucentDownScaleImage(SwSurface* surface, const SwImage* image, uint32_t opacity, const SwBBox& region, const Matrix* itransform, uint32_t halfScale)
 {
     if (surface->compositor) {
         if (surface->compositor->method == CompositeMethod::AlphaMask) {
-            return _translucentDownScaleImageMask(surface, image, opacity, region, itransform, scale, surface->blender.alpha);
+            return _translucentDownScaleImageMask(surface, image, opacity, region, itransform, halfScale, surface->blender.alpha);
         }
         if (surface->compositor->method == CompositeMethod::InvAlphaMask) {
-            return _translucentDownScaleImageMask(surface, image, opacity, region, itransform, scale, surface->blender.ialpha);
+            return _translucentDownScaleImageMask(surface, image, opacity, region, itransform, halfScale, surface->blender.ialpha);
         }
     }
-    return _translucentDownScaleImage(surface, image, opacity, region, itransform, scale);
+    return _translucentDownScaleImage(surface, image, opacity, region, itransform, halfScale);
 }
 
 
@@ -1561,17 +1544,19 @@ bool rasterImage(SwSurface* surface, SwImage* image, const Matrix* transform, co
 
     auto translucent = _translucent(surface, opacity);
     auto downScaleTolerance = 0.5f;
+    auto halfScale = static_cast<uint32_t>(0.5f / scale);
+    if (halfScale == 0) halfScale = 1;
 
     //Clipped Image
     if (image->rle) {
         if (transformed) {
             if (translucent) {
                 if (fabsf(scale - 1.0f) <= FLT_EPSILON) return _rasterTranslucentImageRle(surface, image, opacity, &itransform);
-                else if (scale < downScaleTolerance) return _rasterTranslucentDownScaleImageRle(surface, image, opacity, &itransform, scale);
+                else if (scale < downScaleTolerance) return _rasterTranslucentDownScaleImageRle(surface, image, opacity, &itransform, halfScale);
                 else return _rasterTranslucentUpScaleImageRle(surface, image, opacity, &itransform);
             } else {
                 if (fabsf(scale - 1.0f) <= FLT_EPSILON) return _rasterImageRle(surface, image, &itransform);
-                else if (scale < downScaleTolerance) return _rasterDownScaleImageRle(surface, image, &itransform, scale);
+                else if (scale < downScaleTolerance) return _rasterDownScaleImageRle(surface, image, &itransform, halfScale);
                 else return _rasterUpScaleImageRle(surface, image, &itransform);
             }
         //Fast track
@@ -1585,11 +1570,11 @@ bool rasterImage(SwSurface* surface, SwImage* image, const Matrix* transform, co
         if (transformed) {
             if (translucent) {
                 if (fabsf(scale - 1.0f) <= FLT_EPSILON) return _rasterTranslucentImage(surface, image, opacity, bbox, &itransform);
-                else if (scale < downScaleTolerance) return _rasterTranslucentDownScaleImage(surface, image, opacity, bbox, &itransform, scale);
+                else if (scale < downScaleTolerance) return _rasterTranslucentDownScaleImage(surface, image, opacity, bbox, &itransform, halfScale);
                 else return _rasterTranslucentUpScaleImage(surface, image, opacity, bbox, &itransform);
             } else {
                 if (fabsf(scale - 1.0f) <= FLT_EPSILON) return _rasterImage(surface, image, bbox, &itransform);
-                else if (scale  < downScaleTolerance) return _rasterDownScaleImage(surface, image, bbox, &itransform, scale);
+                else if (scale  < downScaleTolerance) return _rasterDownScaleImage(surface, image, bbox, &itransform, halfScale);
                 else return _rasterUpScaleImage(surface, image, bbox, &itransform);
             }
         //Fast track
