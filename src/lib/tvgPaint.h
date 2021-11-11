@@ -27,6 +27,8 @@
 
 namespace tvg
 {
+    enum ContextFlag {Invalid = 0, FastTrack = 1};
+
     struct Iterator
     {
         virtual ~Iterator() {}
@@ -51,10 +53,11 @@ namespace tvg
     struct Paint::Impl
     {
         StrategyMethod* smethod = nullptr;
-        RenderTransform *rTransform = nullptr;
+        RenderTransform* rTransform = nullptr;
         uint32_t renderFlag = RenderUpdateFlag::None;
         Paint* cmpTarget = nullptr;
         CompositeMethod cmpMethod = CompositeMethod::None;
+        uint32_t ctxFlag = ContextFlag::Invalid;
         uint8_t opacity = 255;
 
         ~Impl() {
