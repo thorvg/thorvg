@@ -1555,12 +1555,9 @@ bool rasterImage(SwSurface* surface, SwImage* image, const Matrix* transform, co
         scale = sqrtf((transform->e11 * transform->e11) + (transform->e21 * transform->e21));
         auto scaleY = sqrtf((transform->e22 * transform->e22) + (transform->e12 * transform->e12));
         //TODO:If the x and y axis scale is different, a separate interpolation algorithm for each axis should be applied.
-        if (fabsf(scale - scaleY) > FLT_EPSILON) scale = 1.0f;
+        if (fabsf(scale - scaleY) > 0.01f) scale = 1.0f;
         if (!mathIdentity(transform)) transformed = true;
-    //TODO: Figure out the scale factor by the image size & drawing region
-    } else {
-        mathIdentity(&itransform);
-    }
+    } else mathIdentity(&itransform);
 
     auto translucent = _translucent(surface, opacity);
     auto downScaleTolerance = 0.5f;
