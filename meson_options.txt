@@ -45,7 +45,7 @@ option('tests',
 
 option('log',
     type: 'boolean',
-    value: true,
+    value: false,
     description: 'Enable log message')
 
 option('static',
