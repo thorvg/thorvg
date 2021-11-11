@@ -34,7 +34,7 @@ static inline bool FLT_SAME(float a, float b)
 }
 
 
-static bool _clipPathFastTrack(Paint* cmpTarget, const RenderTransform* pTransform, RenderTransform* rTransform, RenderRegion& viewport)
+static bool _compFastTrack(Paint* cmpTarget, const RenderTransform* pTransform, RenderTransform* rTransform, RenderRegion& viewport)
 {
     /* Access Shape class by Paint is bad... but it's ok still it's an internal usage. */
     auto shape = static_cast<Shape*>(cmpTarget);
@@ -164,9 +164,11 @@ bool Paint::Impl::render(RenderMethod& renderer)
 {
     Compositor* cmp = nullptr;
 
+    //OPTIMIZE_ME: Can we replace the simple AlphaMasking with ClipPath?
+
     /* Note: only ClipPath is processed in update() step.
         Create a composition image. */
-    if (cmpTarget && cmpMethod != CompositeMethod::ClipPath) {
+    if (cmpTarget && cmpMethod != CompositeMethod::ClipPath && !(cmpTarget->pImpl->ctxFlag & ContextFlag::FastTrack)) {
         auto region = smethod->bounds(renderer);
         if (region.w == 0 || region.h == 0) return false;
         cmp = renderer.target(region);
@@ -200,17 +202,27 @@ void* Paint::Impl::update(RenderMethod& renderer, const RenderTransform* pTransf
     bool cmpFastTrack = false;
 
     if (cmpTarget) {
-        /* If transform has no rotation factors && ClipPath is a simple rectangle,
-           we can avoid regular ClipPath sequence but use viewport for performance */
-        if (cmpMethod == CompositeMethod::ClipPath) {
+        /* If transform has no rotation factors && ClipPath / AlphaMasking is a simple rectangle,
+           we can avoid regular ClipPath / AlphaMasking sequence but use viewport for performance */
+        auto tryFastTrack = false;
+        if (cmpMethod == CompositeMethod::ClipPath) tryFastTrack = true;
+        else if (cmpMethod == CompositeMethod::AlphaMask) {
+            auto shape = static_cast<Shape*>(cmpTarget);
+            uint8_t a;
+            shape->fillColor(nullptr, nullptr, nullptr, &a);
+            if (a == 255 && shape->opacity() == 255 && !shape->fill()) tryFastTrack = true;
+        }
+        if (tryFastTrack) {
             RenderRegion viewport2;
-            if ((cmpFastTrack = _clipPathFastTrack(cmpTarget, pTransform, cmpTarget->pImpl->rTransform, viewport2))) {
+            if ((cmpFastTrack = _compFastTrack(cmpTarget, pTransform, cmpTarget->pImpl->rTransform, viewport2))) {
                 viewport = renderer.viewport();
                 viewport2.intersect(viewport);
                 renderer.viewport(viewport2);
+                cmpTarget->pImpl->ctxFlag |= ContextFlag::FastTrack;
+            } else {
+                cmpTarget->pImpl->ctxFlag &= ~ContextFlag::FastTrack;
             }
         }
-
         if (!cmpFastTrack) {
             cmpData = cmpTarget->pImpl->update(renderer, pTransform, 255, clips, pFlag);
             if (cmpMethod == CompositeMethod::ClipPath) clips.push(cmpData);
