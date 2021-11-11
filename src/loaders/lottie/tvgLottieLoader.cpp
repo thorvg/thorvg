@@ -26,7 +26,7 @@
 #include "tvgLottieLoader.h"
 
 //temporary
-#define DEBUG 1
+//#define DEBUG 1
 
 
 /************************************************************************/
@@ -384,9 +384,10 @@ bool LottieLoader::open(const string& path)
     w = static_cast<float>(width);
     h = static_cast<float>(height);
 
-    mTotalFrame = mLottieAnimation->totalFrame();
+    totalFrame = mLottieAnimation->totalFrame();
+    duration = (float)mLottieAnimation->duration();
 
-    printf("load file %s %f %f %ld\n", path.c_str(), w, h, mTotalFrame);
+    //printf("load file %s %f %f %ld\n", path.c_str(), w, h, mTotalFrame);
 
     return header();
 }
@@ -431,7 +432,7 @@ bool LottieLoader::close()
 
 void LottieLoader::run(unsigned tid)
 {
-    const LOTLayerNode* lotRoot = mLottieAnimation->renderTree(40, static_cast<size_t>(w), static_cast<size_t>(h));
+    const LOTLayerNode* lotRoot = mLottieAnimation->renderTree(frame, static_cast<size_t>(w), static_cast<size_t>(h));
 
     root = sceneBuilder(lotRoot);
 }
@@ -439,8 +440,6 @@ void LottieLoader::run(unsigned tid)
 unique_ptr<Paint> LottieLoader::paint()
 {
     this->done();
-    if (root){
-printf("asdasd\n");
- return move(root);}
+    if (root) return move(root);
     else return nullptr;
 }

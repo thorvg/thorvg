@@ -20,50 +20,31 @@
  * SOFTWARE.
  */
 
-#include <fstream>
 #include "Common.h"
 
 /************************************************************************/
 /* Drawing Commands                                                     */
 /************************************************************************/
 
-void tvgDrawCmds(tvg::Canvas* canvas)
+static uint32_t totalFrame = 0;
+static float duration = 0;
+
+void tvgUpdateCmds(tvg::Canvas* canvas, float progress)
 {
     if (!canvas) return;
 
+    if (canvas->clear() != tvg::Result::Success) return;
+
     //Load json file from path
     auto picture = tvg::Picture::gen();
-    if (picture->load(EXAMPLE_DIR"/test.json") != tvg::Result::Success) {
+    string path = EXAMPLE_DIR"/test.json";
+  printf("progress : %f d : %f\n", progress, duration);
+    if (picture->load(path, progress * totalFrame, &totalFrame, &duration) != tvg::Result::Success) {
          cout << "JSON is not supported. Did you enable JSON Loader?" << endl;
          return;
     }
     picture->size(WIDTH, HEIGHT);
     if (canvas->push(move(picture)) != tvg::Result::Success) return;
-
-/*
-    //Open file manually
-    ifstream file(EXAMPLE_DIR"/test.json");
-    if (!file.is_open()) return;
-    auto begin = file.tellg();
-    file.seekg(0, std::ios::end);
-    auto size = file.tellg() - begin;
-    auto data = (char*)malloc(size);
-    if (!data) return;
-    file.seekg(0, std::ios::beg);
-    file.read(data, size);
-    file.close();
-
-    auto picture = tvg::Picture::gen();
-    if (picture->load(data, size, "json", true) != tvg::Result::Success) {
-        cout << "Couldn't load JSON file from data." << endl;
-        return;
-    }
-
-    free(data);
-    picture->translate(400, 0);
-    picture->scale(0.8);
-    canvas->push(move(picture));
-*/
 }
 
 
@@ -83,7 +64,17 @@ void tvgSwTest(uint32_t* buffer)
        When this shape is into the canvas list, the shape could update & prepare
        internal data asynchronously for coming rendering.
        Canvas keeps this shape node unless user call canvas->clear() */
-    tvgDrawCmds(swCanvas.get());
+    tvgUpdateCmds(swCanvas.get(), 0);
+}
+
+void transitSwCb(Elm_Transit_Effect *effect, Elm_Transit* transit, double progress)
+{
+    tvgUpdateCmds(swCanvas.get(), progress);
+
+    //Update Efl Canvas
+    Eo* img = (Eo*) effect;
+    evas_object_image_data_update_add(img, 0, 0, WIDTH, HEIGHT);
+    evas_object_image_pixels_dirty_set(img, EINA_TRUE);
 }
 
 void drawSwView(void* data, Eo* obj)
@@ -112,7 +103,7 @@ void initGLview(Evas_Object *obj)
        When this shape is into the canvas list, the shape could update & prepare
        internal data asynchronously for coming rendering.
        Canvas keeps this shape node unless user call canvas->clear() */
-    tvgDrawCmds(glCanvas.get());
+    tvgUpdateCmds(glCanvas.get(), 0);
 }
 
 void drawGLview(Evas_Object *obj)
@@ -124,6 +115,12 @@ void drawGLview(Evas_Object *obj)
     if (glCanvas->draw() == tvg::Result::Success) {
         glCanvas->sync();
     }
+}
+
+void transitGlCb(Elm_Transit_Effect *effect, Elm_Transit* transit, double progress)
+{
+    tvgUpdateCmds(glCanvas.get(), progress);
+    elm_glview_changed_set((Evas_Object*)effect);
 }
 
 
@@ -148,24 +145,33 @@ int main(int argc, char **argv)
 
     //Threads Count
     auto threads = std::thread::hardware_concurrency();
+    if (threads > 0) --threads;    //Allow the designated main thread capacity
 
     //Initialize ThorVG Engine
     if (tvg::Initializer::init(tvgEngine, threads) == tvg::Result::Success) {
 
         elm_init(argc, argv);
 
+        Elm_Transit *transit = elm_transit_add();
+
         if (tvgEngine == tvg::CanvasEngine::Sw) {
-            createSwView();
+            auto view = createSwView();
+            elm_transit_effect_add(transit, transitSwCb, view, nullptr);
         } else {
-            createGlView();
+            auto view = createGlView();
+            elm_transit_effect_add(transit, transitGlCb, view, nullptr);
         }
+
+        elm_transit_duration_set(transit, 2);
+        elm_transit_repeat_times_set(transit, -1);
+        elm_transit_auto_reverse_set(transit, EINA_TRUE);
+        elm_transit_go(transit);
 
         elm_run();
         elm_shutdown();
 
         //Terminate ThorVG Engine
-        tvg::Initializer::term(tvg::CanvasEngine::Sw);
-
+        tvg::Initializer::term(tvgEngine);
 
     } else {
         cout << "engine is not supported" << endl;

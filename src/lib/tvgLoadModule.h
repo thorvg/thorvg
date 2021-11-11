@@ -36,6 +36,9 @@ public:
     float vw = 0;
     float vh = 0;
     float w = 0, h = 0;         //default image size
+    uint32_t frame = 0; //temporary
+    uint32_t totalFrame = 0; //temporary
+    float duration = 0; //temporary
     bool preserveAspect = true; //keep aspect ratio by default.
 
     virtual ~LoadModule() {}
