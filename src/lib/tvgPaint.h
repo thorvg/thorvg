@@ -52,7 +52,7 @@ namespace tvg
     {
         StrategyMethod* smethod = nullptr;
         RenderTransform *rTransform = nullptr;
-        uint32_t flag = RenderUpdateFlag::None;
+        uint32_t renderFlag = RenderUpdateFlag::None;
         Paint* cmpTarget = nullptr;
         CompositeMethod cmpMethod = CompositeMethod::None;
         uint8_t opacity = 255;
@@ -75,7 +75,7 @@ namespace tvg
                 if (!rTransform) return false;
             }
             rTransform->override(m);
-            flag |= RenderUpdateFlag::Transform;
+            renderFlag |= RenderUpdateFlag::Transform;
 
             return true;
         }
@@ -147,9 +147,9 @@ namespace tvg
             return inst->dispose(renderer);
         }
 
-        void* update(RenderMethod& renderer, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flag) override
+        void* update(RenderMethod& renderer, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag renderFlag) override
         {
-            return inst->update(renderer, transform, opacity, clips, flag);
+            return inst->update(renderer, transform, opacity, clips, renderFlag);
         }
 
         bool render(RenderMethod& renderer) override
