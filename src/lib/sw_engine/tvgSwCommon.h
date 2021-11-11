@@ -223,7 +223,7 @@ struct SwImage
     SwOutline*   outline = nullptr;
     SwRleData*   rle = nullptr;
     uint32_t*    data = nullptr;
-    uint32_t     w, h;
+    uint32_t     w, h, stride;
 };
 
 struct SwBlender

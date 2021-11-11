@@ -241,7 +241,7 @@ static bool _translucentImageRle(SwSurface* surface, const SwImage* image, uint3
 
     for (uint32_t i = 0; i < image->rle->size; ++i, ++span) {
         auto dst = &surface->buffer[span->y * surface->stride + span->x];
-        auto src = image->data + span->x + span->y * image->w;    //TODO: need to use image's stride
+        auto src = image->data + span->x + span->y * image->stride;
         auto alpha = ALPHA_MULTIPLY(span->coverage, opacity);
         for (uint32_t x = 0; x < span->len; ++x, ++dst, ++src) {
             *src = ALPHA_BLEND(*src, alpha);
@@ -258,13 +258,12 @@ static bool _translucentImageRleMask(SwSurface* surface, const SwImage* image, u
 
     auto span = image->rle->spans;
     auto img = image->data;
-    auto w = image->w;
     auto cbuffer = surface->compositor->image.data;
 
     for (uint32_t i = 0; i < image->rle->size; ++i, ++span) {
         auto dst = &surface->buffer[span->y * surface->stride + span->x];
         auto cmp = &cbuffer[span->y * surface->stride + span->x];
-        auto src = img + span->y * w + span->x;    //TODO: need to use image's stride
+        auto src = img + span->y * image->stride + span->x;
         auto alpha = ALPHA_MULTIPLY(span->coverage, opacity);
         if (alpha == 255) {
             for (uint32_t x = 0; x < span->len; ++x, ++dst, ++cmp, ++src) {
@@ -312,7 +311,7 @@ static bool _translucentImageRle(SwSurface* surface, const SwImage* image, uint3
             auto rX = static_cast<uint32_t>(roundf((span->x + x) * itransform->e11 + ey1));
             auto rY = static_cast<uint32_t>(roundf((span->x + x) * itransform->e21 + ey2));
             if (rX >= w || rY >= h) continue;
-            auto src = ALPHA_BLEND(img[rY * w + rX], alpha);     //TODO: need to use image's stride
+            auto src = ALPHA_BLEND(img[rY * image->stride + rX], alpha);
             *dst = src + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(src));
         }
     }
@@ -341,7 +340,7 @@ static bool _translucentImageRleMask(SwSurface* surface, const SwImage* image, u
                 auto rX = static_cast<uint32_t>(roundf((span->x + x) * itransform->e11 + ey1));
                 auto rY = static_cast<uint32_t>(roundf((span->x + x) * itransform->e21 + ey2));
                 if (rX >= w || rY >= h) continue;
-                auto tmp = ALPHA_BLEND(img[rY * w + rX], blendMethod(*cmp)); //TODO: need to use image's stride
+                auto tmp = ALPHA_BLEND(img[rY * image->stride + rX], blendMethod(*cmp));
                 *dst = tmp + ALPHA_BLEND(*dst, surface->blender.ialpha(tmp));
             }
         } else {
@@ -349,7 +348,7 @@ static bool _translucentImageRleMask(SwSurface* surface, const SwImage* image, u
                 auto rX = static_cast<uint32_t>(roundf((span->x + x) * itransform->e11 + ey1));
                 auto rY = static_cast<uint32_t>(roundf((span->x + x) * itransform->e21 + ey2));
                 if (rX >= w || rY >= h) continue;
-                auto src = ALPHA_BLEND(img[rY * w + rX], alpha); //TODO: need to use image's stride
+                auto src = ALPHA_BLEND(img[rY * image->stride + rX], alpha);
                 auto tmp = ALPHA_BLEND(src, blendMethod(*cmp));
                 *dst = tmp + ALPHA_BLEND(*dst, surface->blender.ialpha(tmp));
             }
@@ -392,8 +391,8 @@ static bool _translucentUpScaleImageRle(SwSurface* surface, const SwImage* image
             auto rY = static_cast<uint32_t>(roundf(fY));
             if (rX >= w || rY >= h) continue;
             uint32_t src;
-            if (rX == w - 1 || rY == h - 1) src = ALPHA_BLEND(img[rY * w + rX], alpha);     //TODO: need to use image's stride
-            else src = ALPHA_BLEND(_applyBilinearInterpolation(img, w, h, fX, fY), alpha);     //TODO: need to use image's stride
+            if (rX == w - 1 || rY == h - 1) src = ALPHA_BLEND(img[rY * image->stride + rX], alpha);
+            else src = ALPHA_BLEND(_applyBilinearInterpolation(img, image->stride, h, fX, fY), alpha);
             *dst = src + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(src));
         }
     }
@@ -425,8 +424,8 @@ static bool _translucentUpScaleImageRleMask(SwSurface* surface, const SwImage* i
                 auto rY = static_cast<uint32_t>(roundf(fY));
                 if (rX >= w || rY >= h) continue;
                 uint32_t src;
-                if (rX == w - 1 || rY == h - 1) src = ALPHA_BLEND(img[rY * w + rX], alpha);     //TODO: need to use image's stride
-                else src = ALPHA_BLEND(_applyBilinearInterpolation(img, w, h, fX, fY), alpha);     //TODO: need to use image's stride
+                if (rX == w - 1 || rY == h - 1) src = ALPHA_BLEND(img[rY * image->stride + rX], alpha);
+                else src = ALPHA_BLEND(_applyBilinearInterpolation(img, image->stride, h, fX, fY), alpha);
                 auto tmp = ALPHA_BLEND(src, blendMethod(*cmp));
                 *dst = tmp + ALPHA_BLEND(*dst, surface->blender.ialpha(tmp));
             }
@@ -438,8 +437,8 @@ static bool _translucentUpScaleImageRleMask(SwSurface* surface, const SwImage* i
                 auto rY = static_cast<uint32_t>(roundf(fY));
                 if (rX >= w || rY >= h) continue;
                 uint32_t src;
-                if (rX == w - 1 || rY == h - 1) src = ALPHA_BLEND(img[rY * w + rX], alpha);     //TODO: need to use image's stride
-                else src = ALPHA_BLEND(_applyBilinearInterpolation(img, w, h, fX, fY), alpha);     //TODO: need to use image's stride
+                if (rX == w - 1 || rY == h - 1) src = ALPHA_BLEND(img[rY * image->stride + rX], alpha);
+                else src = ALPHA_BLEND(_applyBilinearInterpolation(img, image->stride, h, fX, fY), alpha);
                 auto tmp = ALPHA_BLEND(src, ALPHA_MULTIPLY(alpha, blendMethod(*cmp)));
                 *dst = tmp + ALPHA_BLEND(*dst, surface->blender.ialpha(tmp));
             }
@@ -483,8 +482,8 @@ static bool _translucentDownScaleImageRle(SwSurface* surface, const SwImage* ima
             auto rY = static_cast<uint32_t>(roundf((span->x + x) * itransform->e21 + ey2));
             if (rX >= w || rY >= h) continue;
             uint32_t src;
-            if (rX < halfScale || rY < halfScale || rX >= w - halfScale || rY >= h - halfScale) src = ALPHA_BLEND(img[rY * w + rX], alpha);     //TODO: need to use image's stride
-            else src = ALPHA_BLEND(_average2Nx2NPixel(surface, img, w, h, rX, rY, halfScale), alpha);     //TODO: need to use image's stride
+            if (rX < halfScale || rY < halfScale || rX >= w - halfScale || rY >= h - halfScale) src = ALPHA_BLEND(img[rY * image->stride + rX], alpha);
+            else src = ALPHA_BLEND(_average2Nx2NPixel(surface, img, image->stride, h, rX, rY, halfScale), alpha);
             *dst = src + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(src));
         }
     }
@@ -517,8 +516,8 @@ static bool _translucentDownScaleImageRleMask(SwSurface* surface, const SwImage*
                 auto rY = static_cast<uint32_t>(roundf((span->x + x) * itransform->e21 + ey2));
                 if (rX >= w || rY >= h) continue;
                 uint32_t src;
-                if (rX < halfScale || rY < halfScale || rX >= w - halfScale || rY >= h - halfScale) src = ALPHA_BLEND(img[rY * w + rX], alpha);     //TODO: need to use image's stride
-                else src = ALPHA_BLEND(_average2Nx2NPixel(surface, img, w, h, rX, rY, halfScale), alpha);     //TODO: need to use image's stride
+                if (rX < halfScale || rY < halfScale || rX >= w - halfScale || rY >= h - halfScale) src = ALPHA_BLEND(img[rY * image->stride + rX], alpha);
+                else src = ALPHA_BLEND(_average2Nx2NPixel(surface, img, image->stride, h, rX, rY, halfScale), alpha);
                 auto tmp = ALPHA_BLEND(src, blendMethod(*cmp));
                 *dst = tmp + ALPHA_BLEND(*dst, surface->blender.ialpha(tmp));
             }
@@ -528,8 +527,8 @@ static bool _translucentDownScaleImageRleMask(SwSurface* surface, const SwImage*
                 auto rY = static_cast<uint32_t>(roundf((span->x + x) * itransform->e21 + ey2));
                 if (rX >= w || rY >= h) continue;
                 uint32_t src;
-                if (rX < halfScale || rY < halfScale || rX >= w - halfScale || rY >= h - halfScale) src = ALPHA_BLEND(img[rY * w + rX], alpha);     //TODO: need to use image's stride
-                else src = ALPHA_BLEND(_average2Nx2NPixel(surface, img, w, h, rX, rY, halfScale), alpha);     //TODO: need to use image's stride
+                if (rX < halfScale || rY < halfScale || rX >= w - halfScale || rY >= h - halfScale) src = ALPHA_BLEND(img[rY * image->stride + rX], alpha);
+                else src = ALPHA_BLEND(_average2Nx2NPixel(surface, img, image->stride, h, rX, rY, halfScale), alpha);
                 auto tmp = ALPHA_BLEND(src, ALPHA_MULTIPLY(alpha, blendMethod(*cmp)));
                 *dst = tmp + ALPHA_BLEND(*dst, surface->blender.ialpha(tmp));
             }
@@ -559,7 +558,7 @@ static bool _rasterImageRle(SwSurface* surface, const SwImage* image)
 
     for (uint32_t i = 0; i < image->rle->size; ++i, ++span) {
         auto dst = &surface->buffer[span->y * surface->stride + span->x];
-        auto src = image->data + span->x + span->y * image->w;    //TODO: need to use image's stride
+        auto src = image->data + span->x + span->y * image->stride;
         for (uint32_t x = 0; x < span->len; ++x, ++dst, ++src) {
             *src = ALPHA_BLEND(*src, span->coverage);
             *dst = *src + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(*src));
@@ -584,7 +583,7 @@ static bool _rasterImageRle(SwSurface* surface, const SwImage* image, const Matr
             auto rX = static_cast<uint32_t>(roundf((span->x + x) * itransform->e11 + ey1));
             auto rY = static_cast<uint32_t>(roundf((span->x + x) * itransform->e21 + ey2));
             if (rX >= w || rY >= h) continue;
-            auto src = ALPHA_BLEND(img[rY * w + rX], span->coverage);    //TODO: need to use image's stride
+            auto src = ALPHA_BLEND(img[rY * image->stride + rX], span->coverage);
             *dst = src + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(src));
         }
     }
@@ -610,8 +609,8 @@ static bool _rasterUpScaleImageRle(SwSurface* surface, const SwImage* image, con
             auto rY = static_cast<uint32_t>(roundf(fY));
             if (rX >= w || rY >= h) continue;
             uint32_t src;
-            if (rX == w - 1 || rY == h - 1) src = ALPHA_BLEND(img[rY * w + rX], span->coverage);    //TODO: need to use image's stride
-            else src = ALPHA_BLEND(_applyBilinearInterpolation(img, w, h, fX, fY), span->coverage);    //TODO: need to use image's stride
+            if (rX == w - 1 || rY == h - 1) src = ALPHA_BLEND(img[rY * image->stride + rX], span->coverage);
+            else src = ALPHA_BLEND(_applyBilinearInterpolation(img, image->stride, h, fX, fY), span->coverage);
             *dst = src + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(src));
         }
     }
@@ -638,8 +637,8 @@ static bool _rasterDownScaleImageRle(SwSurface* surface, const SwImage* image, c
             auto rY = static_cast<uint32_t>(roundf((span->x + x) * itransform->e21 + ey2));
             if (rX >= w || rY >= h) continue;
             uint32_t src;
-            if (rX < halfScale || rY < halfScale || rX >= w - halfScale || rY >= h - halfScale) src = ALPHA_BLEND(img[rY * w + rX], span->coverage);    //TODO: need to use image's stride
-            else src = ALPHA_BLEND(_average2Nx2NPixel(surface, img, w, h, rX, rY, halfScale), span->coverage);    //TODO: need to use image's stride
+            if (rX < halfScale || rY < halfScale || rX >= w - halfScale || rY >= h - halfScale) src = ALPHA_BLEND(img[rY * image->stride + rX], span->coverage);
+            else src = ALPHA_BLEND(_average2Nx2NPixel(surface, img, image->stride, h, rX, rY, halfScale), span->coverage);
             *dst = src + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(src));
         }
     }
@@ -662,7 +661,7 @@ static bool _translucentImage(SwSurface* surface, const SwImage* image, uint32_t
             auto rX = static_cast<uint32_t>(roundf(x * itransform->e11 + ey1));
             auto rY = static_cast<uint32_t>(roundf(x * itransform->e21 + ey2));
             if (rX >= w || rY >= h) continue;
-            auto src = ALPHA_BLEND(img[rX + (rY * w)], opacity);    //TODO: need to use image's stride
+            auto src = ALPHA_BLEND(img[rX + (rY * image->stride)], opacity);
             *dst = src + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(src));
         }
         dbuffer += surface->stride;
@@ -690,7 +689,7 @@ static bool _translucentImageMask(SwSurface* surface, const SwImage* image, uint
             auto rX = static_cast<uint32_t>(roundf(x * itransform->e11 + ey1));
             auto rY = static_cast<uint32_t>(roundf(x * itransform->e21 + ey2));
             if (rX >= w || rY >= h) continue;
-            auto src = ALPHA_BLEND(img[rX + (rY * w)], ALPHA_MULTIPLY(opacity, blendMethod(*cmp)));  //TODO: need to use image's stride
+            auto src = ALPHA_BLEND(img[rX + (rY * image->stride)], ALPHA_MULTIPLY(opacity, blendMethod(*cmp)));
             *dst = src + ALPHA_BLEND(*dst, surface->blender.ialpha(src));
         }
         dbuffer += surface->stride;
@@ -732,8 +731,8 @@ static bool _translucentUpScaleImage(SwSurface* surface, const SwImage* image, u
             auto rY = static_cast<uint32_t>(roundf(fY));
             if (rX >= w || rY >= h) continue;
             uint32_t src;
-            if (rX == w - 1 || rY == h - 1) src = ALPHA_BLEND(img[rX + (rY * w)], opacity);    //TODO: need to use image's stride
-            else src = ALPHA_BLEND(_applyBilinearInterpolation(img, w, h, fX, fY), opacity);    //TODO: need to use image's stride
+            if (rX == w - 1 || rY == h - 1) src = ALPHA_BLEND(img[rX + (rY * image->stride)], opacity);
+            else src = ALPHA_BLEND(_applyBilinearInterpolation(img, image->stride, h, fX, fY), opacity);
             *dst = src + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(src));
         }
         dbuffer += surface->stride;
@@ -764,8 +763,8 @@ static bool _translucentUpScaleImageMask(SwSurface* surface, const SwImage* imag
             auto rY = static_cast<uint32_t>(roundf(fY));
             if (rX >= w || rY >= h) continue;
             uint32_t src;
-            if (rX == w - 1 || rY == h - 1) src = ALPHA_BLEND(img[rX + (rY * w)], ALPHA_MULTIPLY(opacity, blendMethod(*cmp)));  //TODO: need to use image's stride
-            else src = ALPHA_BLEND(_applyBilinearInterpolation(img, w, h, fX, fY), ALPHA_MULTIPLY(opacity, blendMethod(*cmp)));  //TODO: need to use image's stride
+            if (rX == w - 1 || rY == h - 1) src = ALPHA_BLEND(img[rX + (rY * image->stride)], ALPHA_MULTIPLY(opacity, blendMethod(*cmp)));
+            else src = ALPHA_BLEND(_applyBilinearInterpolation(img, image->stride, h, fX, fY), ALPHA_MULTIPLY(opacity, blendMethod(*cmp)));
             *dst = src + ALPHA_BLEND(*dst, surface->blender.ialpha(src));
         }
         dbuffer += surface->stride;
@@ -843,8 +842,11 @@ static bool _translucentDownScaleImageMask(SwSurface* surface, const SwImage* im
             auto rY = static_cast<uint32_t>(roundf(x * itransform->e21 + ey2));
             if (rX >= w || rY >= h) continue;
             uint32_t src;
-            if (rX < halfScale || rY < halfScale || rX >= w - halfScale || rY >= h - halfScale) src = ALPHA_BLEND(img[rX + (rY * w)], ALPHA_MULTIPLY(opacity, blendMethod(*cmp)));  //TODO: need to use image's stride
-            else src = ALPHA_BLEND(_average2Nx2NPixel(surface, img, w, h, rX, rY, halfScale), ALPHA_MULTIPLY(opacity, blendMethod(*cmp)));  //TODO: need to use image's stride
+            if (rX < halfScale || rY < halfScale || rX >= w - halfScale || rY >= h - halfScale) {
+                src = ALPHA_BLEND(img[rX + (rY * image->stride)], ALPHA_MULTIPLY(opacity, blendMethod(*cmp)));
+            } else {
+                src = ALPHA_BLEND(_average2Nx2NPixel(surface, img, image->stride, h, rX, rY, halfScale), ALPHA_MULTIPLY(opacity, blendMethod(*cmp)));
+            }
             *dst = src + ALPHA_BLEND(*dst, surface->blender.ialpha(src));
         }
         dbuffer += surface->stride;
@@ -871,7 +873,7 @@ static bool _rasterTranslucentDownScaleImage(SwSurface* surface, const SwImage* 
 static bool _translucentImage(SwSurface* surface, const SwImage* image, uint32_t opacity, const SwBBox& region)
 {
     auto dbuffer = &surface->buffer[region.min.y * surface->stride + region.min.x];
-    auto sbuffer = image->data + region.min.x + region.min.y * image->w;    //TODO: need to use image's stride
+    auto sbuffer = image->data + region.min.x + region.min.y * image->stride;
 
     for (auto y = region.min.y; y < region.max.y; ++y) {
         auto dst = dbuffer;
@@ -881,7 +883,7 @@ static bool _translucentImage(SwSurface* surface, const SwImage* image, uint32_t
             *dst = p + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(p));
         }
         dbuffer += surface->stride;
-        sbuffer += image->w;    //TODO: need to use image's stride
+        sbuffer += image->stride;
     }
     return true;
 }
@@ -908,7 +910,7 @@ static bool _translucentImageMask(SwSurface* surface, const SwImage* image, uint
         }
         buffer += surface->stride;
         cbuffer += surface->stride;
-        sbuffer += image->w;   //TODO: need to use image's stride
+        sbuffer += image->stride;
     }
     return true;
 }
@@ -931,7 +933,7 @@ static bool _rasterTranslucentImage(SwSurface* surface, const SwImage* image, ui
 static bool _rasterImage(SwSurface* surface, const SwImage* image, const SwBBox& region)
 {
     auto dbuffer = &surface->buffer[region.min.y * surface->stride + region.min.x];
-    auto sbuffer = image->data + region.min.x + region.min.y * image->w;   //TODO: need to use image's stride
+    auto sbuffer = image->data + region.min.x + region.min.y * image->stride;
 
     for (auto y = region.min.y; y < region.max.y; ++y) {
         auto dst = dbuffer;
@@ -940,7 +942,7 @@ static bool _rasterImage(SwSurface* surface, const SwImage* image, const SwBBox&
             *dst = *src + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(*src));
         }
         dbuffer += surface->stride;
-        sbuffer += image->w;    //TODO: need to use image's stride
+        sbuffer += image->stride;
     }
     return true;
 }
@@ -960,7 +962,7 @@ static bool _rasterImage(SwSurface* surface, const SwImage* image, const SwBBox&
             auto rX = static_cast<uint32_t>(roundf(x * itransform->e11 + ey1));
             auto rY = static_cast<uint32_t>(roundf(x * itransform->e21 + ey2));
             if (rX >= w || rY >= h) continue;
-            auto src = img[rX + (rY * w)];    //TODO: need to use image's stride
+            auto src = img[rX + (rY * image->stride)];
             *dst = src + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(src));
         }
     }
