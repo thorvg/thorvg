@@ -104,7 +104,7 @@ static uint32_t _average2Nx2NPixel(SwSurface* surface, const uint32_t *img, uint
 /* Rect                                                                 */
 /************************************************************************/
 
-static bool _translucentRectMask(SwSurface* surface, const SwBBox& region, uint32_t color, uint32_t (*blendMethod)(uint32_t rgba))
+static bool _translucentRectMask(SwSurface* surface, const SwBBox& region, uint32_t color, uint32_t (*blendMethod)(uint32_t))
 {
     auto buffer = surface->buffer + (region.min.y * surface->stride) + region.min.x;
     auto h = static_cast<uint32_t>(region.max.y - region.min.y);
@@ -164,7 +164,7 @@ static bool _rasterSolidRect(SwSurface* surface, const SwBBox& region, uint32_t 
 /* Rle                                                                  */
 /************************************************************************/
 
-static bool _translucentRleMask(SwSurface* surface, SwRleData* rle, uint32_t color, uint32_t (*blendMethod)(uint32_t rgba))
+static bool _translucentRleMask(SwSurface* surface, SwRleData* rle, uint32_t color, uint32_t (*blendMethod)(uint32_t))
 {
     TVGLOG("SW_ENGINE", "Rle Alpha Mask / Inverse Alpha Mask Composition");
 
@@ -252,7 +252,7 @@ static bool _translucentImageRle(SwSurface* surface, const SwImage* image, uint3
 }
 
 
-static bool _translucentImageRleMask(SwSurface* surface, const SwImage* image, uint32_t opacity, uint32_t (*blendMethod)(uint32_t rgba))
+static bool _translucentImageRleMask(SwSurface* surface, const SwImage* image, uint32_t opacity, uint32_t (*blendMethod)(uint32_t))
 {
     TVGLOG("SW_ENGINE", "Image Rle Alpha Mask / Inverse Alpha Mask Composition");
 
@@ -320,7 +320,7 @@ static bool _translucentImageRle(SwSurface* surface, const SwImage* image, uint3
 }
 
 
-static bool _translucentImageRleMask(SwSurface* surface, const SwImage* image, uint32_t opacity, const Matrix* itransform, uint32_t (*blendMethod)(uint32_t rgba))
+static bool _translucentImageRleMask(SwSurface* surface, const SwImage* image, uint32_t opacity, const Matrix* itransform, uint32_t (*blendMethod)(uint32_t))
 {
     TVGLOG("SW_ENGINE", "Transformed Image Rle Alpha Mask / Inverse Alpha Mask Composition");
 
@@ -401,7 +401,7 @@ static bool _translucentUpScaleImageRle(SwSurface* surface, const SwImage* image
 }
 
 
-static bool _translucentUpScaleImageRleMask(SwSurface* surface, const SwImage* image, uint32_t opacity, const Matrix* itransform, uint32_t (*blendMethod)(uint32_t rgba))
+static bool _translucentUpScaleImageRleMask(SwSurface* surface, const SwImage* image, uint32_t opacity, const Matrix* itransform, uint32_t (*blendMethod)(uint32_t))
 {
     TVGLOG("SW_ENGINE", "Image Rle Alpha Mask / Inverse Alpha Mask Composition");
 
@@ -491,7 +491,7 @@ static bool _translucentDownScaleImageRle(SwSurface* surface, const SwImage* ima
     return true;
 }
 
-static bool _translucentDownScaleImageRleMask(SwSurface* surface, const SwImage* image, uint32_t opacity, const Matrix* itransform, float scale, uint32_t (*blendMethod)(uint32_t rgba))
+static bool _translucentDownScaleImageRleMask(SwSurface* surface, const SwImage* image, uint32_t opacity, const Matrix* itransform, float scale, uint32_t (*blendMethod)(uint32_t))
 {
     TVGLOG("SW_ENGINE", "Image Rle Alpha Mask / Inverse Alpha Mask Composition");
 
@@ -671,7 +671,7 @@ static bool _translucentImage(SwSurface* surface, const SwImage* image, uint32_t
 }
 
 
-static bool _translucentImageMask(SwSurface* surface, const SwImage* image, uint32_t opacity, const SwBBox& region, const Matrix* itransform, uint32_t (*blendMethod)(uint32_t rgba))
+static bool _translucentImageMask(SwSurface* surface, const SwImage* image, uint32_t opacity, const SwBBox& region, const Matrix* itransform, uint32_t (*blendMethod)(uint32_t))
 {
     TVGLOG("SW_ENGINE", "Transformed Image AlphaMask / Inverse Alpha Mask Composition");
 
@@ -742,7 +742,7 @@ static bool _translucentUpScaleImage(SwSurface* surface, const SwImage* image, u
 }
 
 
-static bool _translucentUpScaleImageMask(SwSurface* surface, const SwImage* image, uint32_t opacity, const SwBBox& region, const Matrix* itransform, uint32_t (*blendMethod)(uint32_t rgba))
+static bool _translucentUpScaleImageMask(SwSurface* surface, const SwImage* image, uint32_t opacity, const SwBBox& region, const Matrix* itransform, uint32_t (*blendMethod)(uint32_t))
 {
     TVGLOG("SW_ENGINE", "Transformed Image Alpha Mask / Inverse Alpha Mask Composition");
 
@@ -819,7 +819,7 @@ static bool _translucentDownScaleImage(SwSurface* surface, const SwImage* image,
 }
 
 
-static bool _translucentDownScaleImageMask(SwSurface* surface, const SwImage* image, uint32_t opacity, const SwBBox& region, const Matrix* itransform, float scale, uint32_t (*blendMethod)(uint32_t rgba))
+static bool _translucentDownScaleImageMask(SwSurface* surface, const SwImage* image, uint32_t opacity, const SwBBox& region, const Matrix* itransform, float scale, uint32_t (*blendMethod)(uint32_t))
 {
     TVGLOG("SW_ENGINE", "Transformed Image Alpha Mask / Inverse Alpha Mask Composition");
 
@@ -887,7 +887,7 @@ static bool _translucentImage(SwSurface* surface, const SwImage* image, uint32_t
 }
 
 
-static bool _translucentImageMask(SwSurface* surface, const SwImage* image, uint32_t opacity, const SwBBox& region, uint32_t (*blendMethod)(uint32_t rgba))
+static bool _translucentImageMask(SwSurface* surface, const SwImage* image, uint32_t opacity, const SwBBox& region, uint32_t (*blendMethod)(uint32_t))
 {
     auto buffer = surface->buffer + (region.min.y * surface->stride) + region.min.x;
     auto h2 = static_cast<uint32_t>(region.max.y - region.min.y);
@@ -1048,7 +1048,7 @@ static bool _translucentLinearGradientRect(SwSurface* surface, const SwBBox& reg
 }
 
 
-static bool _translucentLinearGradientRectMask(SwSurface* surface, const SwBBox& region, const SwFill* fill, uint32_t (*blendMethod)(uint32_t rgba))
+static bool _translucentLinearGradientRectMask(SwSurface* surface, const SwBBox& region, const SwFill* fill, uint32_t (*blendMethod)(uint32_t))
 {
     if (fill->linear.len < FLT_EPSILON) return false;
 
@@ -1128,7 +1128,7 @@ static bool _translucentRadialGradientRect(SwSurface* surface, const SwBBox& reg
 }
 
 
-static bool _translucentRadialGradientRectMask(SwSurface* surface, const SwBBox& region, const SwFill* fill, uint32_t (*blendMethod)(uint32_t rgba))
+static bool _translucentRadialGradientRectMask(SwSurface* surface, const SwBBox& region, const SwFill* fill, uint32_t (*blendMethod)(uint32_t))
 {
     if (fill->radial.a < FLT_EPSILON) return false;
 
@@ -1212,7 +1212,7 @@ static bool _translucentLinearGradientRle(SwSurface* surface, const SwRleData* r
 }
 
 
-static bool _translucentLinearGradientRleMask(SwSurface* surface, const SwRleData* rle, const SwFill* fill, uint32_t (*blendMethod)(uint32_t rgba))
+static bool _translucentLinearGradientRleMask(SwSurface* surface, const SwRleData* rle, const SwFill* fill, uint32_t (*blendMethod)(uint32_t))
 {
     if (fill->linear.len < FLT_EPSILON) return false;
 
@@ -1311,7 +1311,7 @@ static bool _translucentRadialGradientRle(SwSurface* surface, const SwRleData* r
 }
 
 
-static bool _translucentRadialGradientRleMask(SwSurface* surface, const SwRleData* rle, const SwFill* fill, uint32_t (*blendMethod)(uint32_t rgba))
+static bool _translucentRadialGradientRleMask(SwSurface* surface, const SwRleData* rle, const SwFill* fill, uint32_t (*blendMethod)(uint32_t))
 {
     if (fill->radial.a < FLT_EPSILON) return false;
 
