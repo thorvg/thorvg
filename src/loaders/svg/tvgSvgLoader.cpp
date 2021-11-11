@@ -2981,7 +2981,8 @@ bool SvgLoader::close()
     }
     auto gradients = loaderData.gradients.data;
     for (size_t i = 0; i < loaderData.gradients.count; ++i) {
-        delete(*gradients);
+        (*gradients)->clear();
+        free(*gradients);
         ++gradients;
     }
     loaderData.gradients.reset();
