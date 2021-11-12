@@ -26,7 +26,7 @@
 #include "tvgLottieLoader.h"
 
 //temporary
-//#define DEBUG 1
+//#define THORVG_LOG_ENABLED 1
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
@@ -44,9 +44,9 @@ static void _shapeBuildHelper(tvg::Paint *_parent, const LOTLayerNode *layer, in
         LOTNode *node = layer->mNodeList.ptr[i];
         if (!node) continue;
 
-#if DEBUG
-        for (int i = 0; i < depth; i++) printf("    ");
-        printf("[node %03d] type:%s keypath:%s\n", i, (node->mImageInfo.data)?"image":"shape", node->keypath);
+#if THORVG_LOG_ENABLED
+        for (int i = 0; i < depth; i++) TVGLOG("Lottie", "    ");
+        TVGLOG("Lottie", "[node %03d] type:%s keypath:%s\n", i, (node->mImageInfo.data)?"image":"shape", node->keypath);
 #endif
 
         //Image object
@@ -99,7 +99,7 @@ static void _shapeBuildHelper(tvg::Paint *_parent, const LOTLayerNode *layer, in
                     cmds[cmd_i++] = tvg::PathCommand::Close;
                     break;
                 default:
-                    printf("No reserved path type = %d", node->mPath.elmPtr[i]);
+                    TVGLOG("Lottie", "No reserved path type = %d", node->mPath.elmPtr[i]);
                     break;
             }
         }
@@ -170,7 +170,7 @@ static void _shapeBuildHelper(tvg::Paint *_parent, const LOTLayerNode *layer, in
                      grad = tvg::RadialGradient::gen().release();
                      reinterpret_cast<tvg::RadialGradient*>(grad)->radial(node->mGradient.center.x, node->mGradient.center.y, node->mGradient.cradius);
                 }
-                else printf("No reserved gradient type = %d", node->mGradient.type);
+                else TVGLOG("Lottie", "No reserved gradient type = %d", node->mGradient.type);
 
                 if (grad) {
                     //Gradient Stop
@@ -194,7 +194,7 @@ static void _shapeBuildHelper(tvg::Paint *_parent, const LOTLayerNode *layer, in
             }
             break;
             default:
-                printf("No reserved brush type = %d", node->mBrushType);
+                TVGLOG("Lottie", "No reserved brush type = %d", node->mBrushType);
         }
 
         //3: Fill Rule
@@ -244,7 +244,7 @@ static void _compositeShapeBuildHelper(tvg::Paint *_parent, LOTMask *mask, int d
                 cmds[cmd_i++] = tvg::PathCommand::Close;
                 break;
             default:
-                printf("No reserved path type = %d", mask->mPath.elmPtr[i]);
+                TVGLOG("Lottie", "No reserved path type = %d", mask->mPath.elmPtr[i]);
                 break;
         }
     }
@@ -268,9 +268,9 @@ static tvg::Paint* _compositeBuildHelper(tvg::Paint *mtarget, LOTMask *masks, un
         LOTMask *mask = &masks[i];
         _compositeShapeBuildHelper(reinterpret_cast<tvg::Paint*>(msource), mask, depth + 1);
 
-#if DEBUG
-        for (int i = 0; i < depth; i++) printf("    ");
-        printf("[mask %03d] mode:%d\n", i, mask->mMode);
+#if THORVG_LOG_ENABLED
+        for (int i = 0; i < depth; i++) TVGLOG("Lottie", "    ");
+        TVGLOG("Lottie", "[mask %03d] mode:%d\n", i, mask->mMode);
 #endif
     }
     return mtarget;
@@ -293,9 +293,9 @@ static void _sceneBuildHelper(tvg::Paint *root, const LOTLayerNode *layer, int d
    for (unsigned int i = 0; i < layer->mLayerList.size; i++) {
        LOTLayerNode *clayer = layer->mLayerList.ptr[i];
 
-#if DEBUG
-       for (int i = 0; i < depth; i++) printf("    ");
-       printf("[layer %03d] matte:%s keypath:%s%s\n", i, matteMode, clayer->keypath, clayer->mVisible?"":" visible:FALSE");
+#if THORVG_LOG_ENABLED
+       for (int i = 0; i < depth; i++) TVGLOG("Lottie", "    ");
+       TVGLOG("Lottie", "[layer %03d] matte:%s keypath:%s%s\n", i, matteMode, clayer->keypath, clayer->mVisible?"":" visible:FALSE");
 #endif
 
        if (!clayer->mVisible) {
@@ -336,11 +336,11 @@ static void _sceneBuildHelper(tvg::Paint *root, const LOTLayerNode *layer, int d
                break;
            case MatteLuma:
                strcpy(matteMode, "none");
-               printf("TODO: MatteLuma\n");
+               TVGLOG("Lottie", "TODO: MatteLuma\n");
                break;
            case MatteLumaInv:
                strcpy(matteMode, "none");
-               printf("TODO: MatteLumaInv\n");
+               TVGLOG("Lottie", "TODO: MatteLumaInv\n");
                break;
            default:
                strcpy(matteMode, "none");
@@ -424,7 +424,7 @@ bool LottieLoader::open(const string& path)
 
     mLottieAnimation = rlottie::Animation::loadFromFile(path.c_str());
     if (!mLottieAnimation) {
-        printf("load failed file %s\n", path.c_str());
+        TVGERR("Lottie", "load failed file %s\n", path.c_str());
         return false;
     }
 
