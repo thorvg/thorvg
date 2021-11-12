@@ -74,7 +74,7 @@ static bool _genOutline(SwImage* image, const Matrix* transform, SwMpool* mpool,
 
 bool imagePrepare(SwImage* image, const Matrix* transform, const SwBBox& clipRegion, SwBBox& renderRegion, SwMpool* mpool, unsigned tid, bool outline)
 {
-    if (outline || mathRotated(transform)) {
+    if (outline || !mathRightAngle(transform)) {
         if (!_genOutline(image, transform, mpool, tid)) return false;
         return mathUpdateOutlineBBox(image->outline, clipRegion, renderRegion, false);
     //Fast Track, don't need outlines.

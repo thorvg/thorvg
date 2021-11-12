@@ -28,11 +28,12 @@
 #include <math.h>
 #include "tvgCommon.h"
 
-static inline bool mathRotated(const Matrix* m)
+static inline bool mathRightAngle(const Matrix* m)
 {
-    if (fabs(m->e12) > FLT_EPSILON || fabs(m->e21 > FLT_EPSILON) || (m->e11 < -FLT_EPSILON) || (m->e22 < -FLT_EPSILON)) return true;
-
-    else return false;
+   auto radian = fabs(atan2(m->e21, m->e11));
+   if (radian < FLT_EPSILON || (radian - float(M_PI_2)) < FLT_EPSILON || (radian - float(M_PI)) < FLT_EPSILON)
+       return true;
+   return false;
 }
 
 
