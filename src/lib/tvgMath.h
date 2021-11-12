@@ -30,7 +30,8 @@
 
 static inline bool mathRotated(const Matrix* m)
 {
-    if (fabs(m->e12) > FLT_EPSILON || fabs(m->e21 > FLT_EPSILON)) return true;
+    if (fabs(m->e12) > FLT_EPSILON || fabs(m->e21 > FLT_EPSILON) || (m->e11 < -FLT_EPSILON) || (m->e22 < -FLT_EPSILON)) return true;
+
     else return false;
 }
 
