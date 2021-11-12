@@ -478,7 +478,7 @@ bool mathUpdateOutlineBBox(const SwOutline* outline, const SwBBox& clipRegion, S
 
     ++pt;
 
-    for(uint32_t i = 1; i < outline->ptsCnt; ++i, ++pt) {
+    for (uint32_t i = 1; i < outline->ptsCnt; ++i, ++pt) {
         if (xMin > pt->x) xMin = pt->x;
         if (xMax < pt->x) xMax = pt->x;
         if (yMin > pt->y) yMin = pt->y;
