@@ -63,7 +63,9 @@ jobs:
     - name: Install Packages
       run: |
         sudo apt-get update
-        sudo apt-get install ninja-build gcc-multilib g++-multilib libgtest-dev meson cmake cmake-data
+        sudo apt-get install ninja-build gcc-multilib g++-multilib libgtest-dev meson cmake cmake-data libasan5 valgrind
+        sudo apt-get install curl jq
+        sudo apt-get install software-properties-common
 
     - name: Install TurboJPEG library
       run: sudo apt-get install libturbojpeg0-dev libjpeg8-dev
@@ -86,3 +88,12 @@ jobs:
       with:
         name: UnitTestReport
         path: build/meson-logs/testlog.txt
+
+    - name: Run memcheck Script(valgrind)
+      run: |
+        export PATH=$PATH:~/.local/bin/
+        chmod +x "${GITHUB_WORKSPACE}/.github/workflows/memcheck_valgrind.sh"
+        "${GITHUB_WORKSPACE}/.github/workflows/memcheck_valgrind.sh"
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
