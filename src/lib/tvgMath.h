@@ -28,6 +28,12 @@
 #include <math.h>
 #include "tvgCommon.h"
 
+static inline bool mathRotated(const Matrix* m)
+{
+    if (fabs(m->e12) > FLT_EPSILON || fabs(m->e21 > FLT_EPSILON)) return true;
+    else return false;
+}
+
 
 static inline bool mathIdentity(const Matrix* m)
 {

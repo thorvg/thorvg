@@ -300,6 +300,7 @@ bool mathSmallCubic(const SwPoint* base, SwFixed& angleIn, SwFixed& angleMid, Sw
 SwFixed mathMean(SwFixed angle1, SwFixed angle2);
 SwPoint mathTransform(const Point* to, const Matrix* transform);
 bool mathUpdateOutlineBBox(const SwOutline* outline, const SwBBox& clipRegion, SwBBox& renderRegion, bool fastTrack);
+bool mathClipBBox(const SwBBox& clipper, SwBBox& clipee);
 
 void shapeReset(SwShape* shape);
 bool shapePrepare(SwShape* shape, const Shape* sdata, const Matrix* transform, const SwBBox& clipRegion, SwBBox& renderRegion, SwMpool* mpool, unsigned tid, bool hasComposite);
@@ -322,7 +323,7 @@ bool strokeParseOutline(SwStroke* stroke, const SwOutline& outline);
 SwOutline* strokeExportOutline(SwStroke* stroke, SwMpool* mpool, unsigned tid);
 void strokeFree(SwStroke* stroke);
 
-bool imagePrepare(SwImage* image, const Matrix* transform, const SwBBox& clipRegion, SwBBox& renderRegion, SwMpool* mpool, unsigned tid);
+bool imagePrepare(SwImage* image, const Matrix* transform, const SwBBox& clipRegion, SwBBox& renderRegion, SwMpool* mpool, unsigned tid, bool outline);
 bool imageGenRle(SwImage* image, TVG_UNUSED const Picture* pdata, const SwBBox& renderRegion, bool antiAlias);
 void imageDelOutline(SwImage* image, SwMpool* mpool, uint32_t tid);
 void imageReset(SwImage* image);

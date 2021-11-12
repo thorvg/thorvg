@@ -442,6 +442,24 @@ SwPoint mathTransform(const Point* to, const Matrix* transform)
 }
 
 
+bool mathClipBBox(const SwBBox& clipper, SwBBox& clipee)
+{
+    clipee.max.x = (clipee.max.x < clipper.max.x) ? clipee.max.x : clipper.max.x;
+    clipee.max.y = (clipee.max.y < clipper.max.y) ? clipee.max.y : clipper.max.y;
+    clipee.min.x = (clipee.min.x > clipper.min.x) ? clipee.min.x : clipper.min.x;
+    clipee.min.y = (clipee.min.y > clipper.min.y) ? clipee.min.y : clipper.min.y;
+
+    //Check valid region
+    if (clipee.max.x - clipee.min.x < 1 && clipee.max.y - clipee.min.y < 1) return false;
+
+    //Check boundary
+    if (clipee.min.x >= clipper.max.x || clipee.min.y >= clipper.max.y ||
+        clipee.max.x <= clipper.min.x || clipee.max.y <= clipper.min.y) return false;
+
+    return true;
+}
+
+
 bool mathUpdateOutlineBBox(const SwOutline* outline, const SwBBox& clipRegion, SwBBox& renderRegion, bool fastTrack)
 {
     if (!outline) return false;
@@ -466,7 +484,6 @@ bool mathUpdateOutlineBBox(const SwOutline* outline, const SwBBox& clipRegion, S
         if (yMin > pt->y) yMin = pt->y;
         if (yMax < pt->y) yMax = pt->y;
     }
-
     //Since no antialiasing is applied in the Fast Track case,
     //the rasterization region has to be rearranged.
     //https://github.com/Samsung/thorvg/issues/916
@@ -481,18 +498,5 @@ bool mathUpdateOutlineBBox(const SwOutline* outline, const SwBBox& clipRegion, S
         renderRegion.min.y = yMin >> 6;
         renderRegion.max.y = (yMax + 63) >> 6;
     }
-
-    renderRegion.max.x = (renderRegion.max.x < clipRegion.max.x) ? renderRegion.max.x : clipRegion.max.x;
-    renderRegion.max.y = (renderRegion.max.y < clipRegion.max.y) ? renderRegion.max.y : clipRegion.max.y;
-    renderRegion.min.x = (renderRegion.min.x > clipRegion.min.x) ? renderRegion.min.x : clipRegion.min.x;
-    renderRegion.min.y = (renderRegion.min.y > clipRegion.min.y) ? renderRegion.min.y : clipRegion.min.y;
-
-    //Check valid region
-    if (renderRegion.max.x - renderRegion.min.x < 1 && renderRegion.max.y - renderRegion.min.y < 1) return false;
-
-    //Check boundary
-    if (renderRegion.min.x >= clipRegion.max.x || renderRegion.min.y >= clipRegion.max.y ||
-        renderRegion.max.x <= clipRegion.min.x || renderRegion.max.y <= clipRegion.min.y) return false;
-
-    return true;
+    return mathClipBBox(clipRegion, renderRegion);
 }
