@@ -364,10 +364,21 @@ static void _sceneBuildHelper(tvg::Paint *root, const LOTLayerNode *layer, int d
 
 unique_ptr<Scene> LottieLoader::sceneBuilder(const LOTLayerNode* lotRoot)
 {
-   auto root = tvg::Scene::gen().release();
+    auto layer = tvg::Scene::gen().release();
 
-   _sceneBuildHelper(root, lotRoot, 1);
-   return unique_ptr<tvg::Scene>(root);
+    _sceneBuildHelper(layer, lotRoot, 1);
+
+    auto viewBoxClip = Shape::gen();
+    viewBoxClip->appendRect(0, 0, w, h, 0, 0);
+    viewBoxClip->fill(0, 0, 0, 255);
+
+    auto compositeLayer = Scene::gen();
+    compositeLayer->composite(move(viewBoxClip), CompositeMethod::ClipPath);
+    compositeLayer->push(unique_ptr<Scene>(layer));
+
+    auto root = Scene::gen().release();
+    root->push(move(compositeLayer));
+    return unique_ptr<tvg::Scene>(root);
 }
 
 
