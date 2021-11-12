@@ -40,7 +40,6 @@ static uint32_t frames[100] = {0};
 
 void svgDirCallback(const char* name, const char* path, void* data)
 {
-    float progress = *(float*)data;
     //ignore if not svgs.
     const char *ext = name + strlen(name) - 4;
     if (strcmp(ext, "json")) return;
@@ -79,7 +78,7 @@ void tvgUpdateCmds(tvg::Canvas* canvas, float progress)
     shape->fill(255, 255, 255, 255);                 //r, g, b, a
     if (canvas->push(move(shape)) != tvg::Result::Success) return;
     count = 0;
-    eina_file_dir_list(EXAMPLE_DIR, EINA_TRUE, svgDirCallback, (void*)&progress);
+    eina_file_dir_list(EXAMPLE_DIR"/json", EINA_TRUE, svgDirCallback, (void*)&progress);
 
     /* This showcase shows you asynchrounous loading of svg.
        For this, pushing pictures at a certian sync time.
