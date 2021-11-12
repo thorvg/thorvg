@@ -19,7 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#include <algorithm>
+#include "tvgMath.h"
 #include "tvgSwCommon.h"
 
 /************************************************************************/
@@ -72,10 +72,19 @@ static bool _genOutline(SwImage* image, const Matrix* transform, SwMpool* mpool,
 /************************************************************************/
 
 
-bool imagePrepare(SwImage* image, const Matrix* transform, const SwBBox& clipRegion, SwBBox& renderRegion, SwMpool* mpool, unsigned tid)
+bool imagePrepare(SwImage* image, const Matrix* transform, const SwBBox& clipRegion, SwBBox& renderRegion, SwMpool* mpool, unsigned tid, bool outline)
 {
-    if (!_genOutline(image, transform, mpool, tid)) return false;
-    return mathUpdateOutlineBBox(image->outline, clipRegion, renderRegion, false);
+    if (outline || mathRotated(transform)) {
+        if (!_genOutline(image, transform, mpool, tid)) return false;
+        return mathUpdateOutlineBBox(image->outline, clipRegion, renderRegion, false);
+    //Fast Track, don't need outlines.
+    } else {
+        renderRegion.min.x = static_cast<SwCoord>(round(transform->e13));
+        renderRegion.max.x = renderRegion.min.x + static_cast<SwCoord>(image->w);
+        renderRegion.min.y = static_cast<SwCoord>(round(transform->e23));
+        renderRegion.max.y= renderRegion.min.y + static_cast<SwCoord>(image->h);
+        return mathClipBBox(clipRegion, renderRegion);
+    }
 }
 
 
