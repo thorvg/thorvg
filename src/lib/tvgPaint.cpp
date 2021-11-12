@@ -206,7 +206,7 @@ void* Paint::Impl::update(RenderMethod& renderer, const RenderTransform* pTransf
            we can avoid regular ClipPath / AlphaMasking sequence but use viewport for performance */
         auto tryFastTrack = false;
         if (cmpMethod == CompositeMethod::ClipPath) tryFastTrack = true;
-        else if (cmpMethod == CompositeMethod::AlphaMask) {
+        else if (cmpMethod == CompositeMethod::AlphaMask && cmpTarget->identifier() == TVG_CLASS_ID_SHAPE) {
             auto shape = static_cast<Shape*>(cmpTarget);
             uint8_t a;
             shape->fillColor(nullptr, nullptr, nullptr, &a);
