@@ -46,10 +46,10 @@ static bool _compFastTrack(Paint* cmpTarget, const RenderTransform* pTransform, 
     if (rTransform) rTransform->update();
 
     //No Rotation?
-    if (pTransform && (fabs(pTransform->m.e12) > FLT_EPSILON || fabs(pTransform->m.e21 > FLT_EPSILON))) return false;
-    if (rTransform && (fabs(rTransform->m.e12) > FLT_EPSILON || fabs(rTransform->m.e21 > FLT_EPSILON))) return false;
+    if (pTransform && !mathRightAngle(&pTransform->m)) return false;
+    if (rTransform && !mathRightAngle(&rTransform->m)) return false;
 
-    //Axis-Aligned Rectangle?
+    //Perpendicular Rectangle?
     auto pt1 = pts + 0;
     auto pt2 = pts + 1;
     auto pt3 = pts + 2;

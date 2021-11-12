@@ -74,15 +74,34 @@ static bool _genOutline(SwImage* image, const Matrix* transform, SwMpool* mpool,
 
 bool imagePrepare(SwImage* image, const Matrix* transform, const SwBBox& clipRegion, SwBBox& renderRegion, SwMpool* mpool, unsigned tid, bool outline)
 {
-    if (outline || mathRotated(transform)) {
+    if (outline || !mathRightAngle(transform)) {
         if (!_genOutline(image, transform, mpool, tid)) return false;
         return mathUpdateOutlineBBox(image->outline, clipRegion, renderRegion, false);
     //Fast Track, don't need outlines.
     } else {
-        renderRegion.min.x = static_cast<SwCoord>(round(transform->e13));
-        renderRegion.max.x = renderRegion.min.x + static_cast<SwCoord>(image->w);
-        renderRegion.min.y = static_cast<SwCoord>(round(transform->e23));
-        renderRegion.max.y= renderRegion.min.y + static_cast<SwCoord>(image->h);
+        auto w = static_cast<float>(image->w);
+        auto h = static_cast<float>(image->h);
+
+        Point pt[4] = {{0 ,0}, {w, 0}, {w, h}, {0, h}};
+        for (int i = 0; i < 4; i++) mathMultiply(&pt[i], transform);
+
+        auto xMin = pt[0].x;
+        auto xMax = pt[0].x;
+        auto yMin = pt[0].y;
+        auto yMax = pt[0].y;
+
+        for (uint32_t i = 1; i < 4; ++i) {
+            if (xMin > pt[i].x) xMin = pt[i].x;
+            if (xMax < pt[i].x) xMax = pt[i].x;
+            if (yMin > pt[i].y) yMin = pt[i].y;
+            if (yMax < pt[i].y) yMax = pt[i].y;
+        }
+
+        renderRegion.min.x = static_cast<SwCoord>(xMin);
+        renderRegion.max.x = static_cast<SwCoord>(round(xMax));
+        renderRegion.min.y = static_cast<SwCoord>(yMin);
+        renderRegion.max.y = static_cast<SwCoord>(round(yMax));
+
         return mathClipBBox(clipRegion, renderRegion);
     }
 }
