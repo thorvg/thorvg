@@ -233,11 +233,11 @@ public:
                         if ((ret = renderFile(real_path))) break;
                     } else {
                         //not a directory and not .svg file
-                        cout << "Warning: File \"" << path << "\" is not a proper svg file." << endl;
+                        cout << "Error: File \"" << path << "\" is not a proper svg file." << endl;
                     }
 
                 } else {
-                    cout << "Warning: File \"" << path << "\" is invalid." << endl;
+                    cout << "Error: Invalid file or path name: \"" << path << "\"" << endl;
                 }
             }
         }
