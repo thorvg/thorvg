@@ -124,4 +124,56 @@ static inline bool avxRasterTranslucentRect(SwSurface* surface, const SwBBox& re
     return true;
 }
 
+
+static inline bool avxRasterTranslucentRle(SwSurface* surface, const SwRleData* rle, uint32_t color)
+{
+    auto span = rle->spans;
+    uint32_t src;
+
+    for (uint32_t i = 0; i < rle->size; ++i) {
+        auto dst = &surface->buffer[span->y * surface->stride + span->x];
+
+        if (span->coverage < 255) src = ALPHA_BLEND(color, span->coverage);
+        else src = color;
+
+        auto ialpha = 255 - static_cast<uint8_t>(surface->blender.alpha(src));
+
+        //1. fill the not aligned memory (for 128-bit registers a 16-bytes alignment is required)
+        auto notAligned = ((uintptr_t)dst & 0xf) / 4;
+        if (notAligned) {
+            notAligned = (N_32BITS_IN_128REG - notAligned > span->len ? span->len : N_32BITS_IN_128REG - notAligned);
+            for (uint32_t x = 0; x < notAligned; ++x, ++dst) {
+                *dst = src + ALPHA_BLEND(*dst, ialpha);
+            }
+        }
+
+        //2. fill the aligned memory using avx - N_32BITS_IN_128REG pixels processed at once
+        //In order to avoid unneccessary avx variables declarations a check is made whether there are any iterations at all
+        uint32_t iterations = (span->len - notAligned) / N_32BITS_IN_128REG;
+        uint32_t avxFilled = 0;
+        if (iterations > 0) {
+            auto avxSrc = _mm_set1_epi32(src);
+            auto avxIalpha = _mm_set1_epi8(ialpha);
+
+            avxFilled = iterations * N_32BITS_IN_128REG;
+            auto avxDst = (__m128i*)dst;
+            for (uint32_t x = 0; x < iterations; ++x, ++avxDst) {
+                *avxDst = _mm_add_epi32(avxSrc, ALPHA_BLEND(*avxDst, avxIalpha));
+            }
+        }
+
+        //3. fill the remaining pixels
+        int32_t leftovers = span->len - notAligned - avxFilled;
+        dst += avxFilled;
+        while (leftovers--) {
+            *dst = src + ALPHA_BLEND(*dst, ialpha);
+            dst++;
+        }
+
+        ++span;
+    }
+    return true;
+}
+
+
 #endif

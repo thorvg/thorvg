@@ -200,7 +200,9 @@ static bool _rasterTranslucentRle(SwSurface* surface, SwRleData* rle, uint32_t c
         }
     }
 
-#if defined(THORVG_NEON_VECTOR_SUPPORT)
+#if defined(THORVG_AVX_VECTOR_SUPPORT)
+    return avxRasterTranslucentRle(surface, rle, color);
+#elif defined(THORVG_NEON_VECTOR_SUPPORT)
     return neonRasterTranslucentRle(surface, rle, color);
 #else
     return cRasterTranslucentRle(surface, rle, color);
