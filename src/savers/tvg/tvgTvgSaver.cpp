@@ -83,9 +83,9 @@ static bool _merge(Shape* from, Shape* to)
     auto t1 = from->transform();
     auto t2 = to->transform();
 
-    if (fabs(t1.e11 - t2.e11) > FLT_EPSILON || fabs(t1.e12 - t2.e12) > FLT_EPSILON || fabs(t1.e13 - t2.e13) > FLT_EPSILON ||
-        fabs(t1.e21 - t2.e21) > FLT_EPSILON || fabs(t1.e22 - t2.e22) > FLT_EPSILON || fabs(t1.e23 - t2.e23) > FLT_EPSILON ||
-        fabs(t1.e31 - t2.e31) > FLT_EPSILON || fabs(t1.e32 - t2.e32) > FLT_EPSILON || fabs(t1.e33 - t2.e33) > FLT_EPSILON) {
+    if (!mathEqual(t1.e11, t2.e11) || !mathEqual(t1.e12, t2.e12) || !mathEqual(t1.e13, t2.e13) ||
+        !mathEqual(t1.e21, t2.e21) || !mathEqual(t1.e22, t2.e22) || !mathEqual(t1.e23, t2.e23) ||
+        !mathEqual(t1.e31, t2.e31) || !mathEqual(t1.e32, t2.e32) || !mathEqual(t1.e33, t2.e33)) {
        return false;
     }
 
@@ -499,9 +499,9 @@ TvgBinCounter TvgSaver::serializePath(const Shape* shape, const Matrix* transfor
 
     //transform?
     if (preTransform) {
-        if (fabs(transform->e11 - 1) > FLT_EPSILON || fabs(transform->e12) > FLT_EPSILON || fabs(transform->e13) > FLT_EPSILON ||
-            fabs(transform->e21) > FLT_EPSILON || fabs(transform->e22 - 1) > FLT_EPSILON || fabs(transform->e23) > FLT_EPSILON ||
-            fabs(transform->e31) > FLT_EPSILON || fabs(transform->e32) > FLT_EPSILON || fabs(transform->e33 - 1) > FLT_EPSILON) {
+        if (!mathEqual(transform->e11, 1.0f) || !mathZero(transform->e12) || !mathZero(transform->e13) ||
+            !mathZero(transform->e21) || !mathEqual(transform->e22, 1.0f) || !mathZero(transform->e23) ||
+            !mathZero(transform->e31) || !mathZero(transform->e32) || !mathEqual(transform->e33, 1.0f)) {
             auto p = const_cast<Point*>(pts);
             for (uint32_t i = 0; i < ptsCnt; ++i) mathMultiply(p++, transform);
         }
@@ -535,7 +535,7 @@ TvgBinCounter TvgSaver::serializeShape(const Shape* shape, const Matrix* pTransf
         shape->strokeColor(color, color + 1, color + 2, color + 3);
         auto fill = shape->strokeFill();
         if (fill || color[3] > 0) {
-            if (fabsf(cTransform->e11 - cTransform->e22) > FLT_EPSILON || (fabsf(cTransform->e11) < FLT_EPSILON && fabsf(cTransform->e12 - cTransform->e21) > FLT_EPSILON) || shape->strokeDash(nullptr) > 0) preTransform = false;
+            if (!mathEqual(cTransform->e11, cTransform->e22) || (mathZero(cTransform->e11) && !mathEqual(cTransform->e12, cTransform->e21)) || shape->strokeDash(nullptr) > 0) preTransform = false;
             cnt += serializeStroke(shape, cTransform, preTransform);
         }
     }
@@ -756,7 +756,7 @@ bool TvgSaver::save(Paint* paint, const string& path, bool compress)
     if (x < 0) vsize[0] += x;
     if (y < 0) vsize[1] += y;
 
-    if (vsize[0] <= FLT_EPSILON || vsize[1] <= FLT_EPSILON) {
+    if (vsize[0] < FLT_EPSILON || vsize[1] < FLT_EPSILON) {
         TVGLOG("TVG_SAVER", "Saving paint(%p) has zero view size.", paint);
         return false;
     }

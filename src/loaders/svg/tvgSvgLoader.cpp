@@ -1472,8 +1472,8 @@ static bool _attrParseRectNode(void* data, const char* key, const char* value)
             if (!strncmp(rectTags[i].tag, "rx", sz)) rect->hasRx = true;
             if (!strncmp(rectTags[i].tag, "ry", sz)) rect->hasRy = true;
 
-            if ((rect->rx > FLT_EPSILON) && (rect->ry <= FLT_EPSILON) && rect->hasRx && !rect->hasRy) rect->ry = rect->rx;
-            if ((rect->ry > FLT_EPSILON) && (rect->rx <= FLT_EPSILON) && !rect->hasRx && rect->hasRy) rect->rx = rect->ry;
+            if ((rect->rx >= FLT_EPSILON) && (rect->ry < FLT_EPSILON) && rect->hasRx && !rect->hasRy) rect->ry = rect->rx;
+            if ((rect->ry >= FLT_EPSILON) && (rect->rx < FLT_EPSILON) && !rect->hasRx && rect->hasRy) rect->rx = rect->ry;
             return ret;
         }
     }

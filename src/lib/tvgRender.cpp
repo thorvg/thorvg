@@ -48,16 +48,13 @@ bool RenderTransform::update()
     if (overriding) return true;
 
     //Init Status
-    if (fabsf(x) <= FLT_EPSILON && fabsf(y) <= FLT_EPSILON &&
-        fabsf(degree) <= FLT_EPSILON && fabsf(scale - 1) <= FLT_EPSILON) {
-        return false;
-    }
+    if (mathZero(x) && mathZero(y) && mathZero(degree) && mathEqual(scale, 1)) return false;
 
     mathIdentity(&m);
 
     mathScale(&m, scale);
 
-    if (fabsf(degree) > FLT_EPSILON) mathRotate(&m, degree);
+    if (!mathZero(degree)) mathRotate(&m, degree);
 
     mathTranslate(&m, x, y);
 

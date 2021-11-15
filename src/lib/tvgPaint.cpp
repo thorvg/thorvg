@@ -28,11 +28,6 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-static inline bool FLT_SAME(float a, float b)
-{
-    return (fabsf(a - b) < FLT_EPSILON);
-}
-
 
 static bool _compFastTrack(Paint* cmpTarget, const RenderTransform* pTransform, RenderTransform* rTransform, RenderRegion& viewport)
 {
@@ -55,8 +50,8 @@ static bool _compFastTrack(Paint* cmpTarget, const RenderTransform* pTransform, 
     auto pt3 = pts + 2;
     auto pt4 = pts + 3;
 
-    if ((FLT_SAME(pt1->x, pt2->x) && FLT_SAME(pt2->y, pt3->y) && FLT_SAME(pt3->x, pt4->x) && FLT_SAME(pt1->y, pt4->y)) ||
-        (FLT_SAME(pt2->x, pt3->x) && FLT_SAME(pt1->y, pt2->y) && FLT_SAME(pt1->x, pt4->x) && FLT_SAME(pt3->y, pt4->y))) {
+    if ((mathEqual(pt1->x, pt2->x) && mathEqual(pt2->y, pt3->y) && mathEqual(pt3->x, pt4->x) && mathEqual(pt1->y, pt4->y)) ||
+        (mathEqual(pt2->x, pt3->x) && mathEqual(pt1->y, pt2->y) && mathEqual(pt1->x, pt4->x) && mathEqual(pt3->y, pt4->y))) {
 
         auto x1 = pt1->x;
         auto y1 = pt1->y;
@@ -117,9 +112,9 @@ Paint* Paint::Impl::duplicate()
 bool Paint::Impl::rotate(float degree)
 {
     if (rTransform) {
-        if (fabsf(degree - rTransform->degree) <= FLT_EPSILON) return true;
+        if (mathEqual(degree, rTransform->degree)) return true;
     } else {
-        if (fabsf(degree) <= FLT_EPSILON) return true;
+        if (mathZero(degree)) return true;
         rTransform = new RenderTransform();
     }
     rTransform->degree = degree;
@@ -132,9 +127,9 @@ bool Paint::Impl::rotate(float degree)
 bool Paint::Impl::scale(float factor)
 {
     if (rTransform) {
-        if (fabsf(factor - rTransform->scale) <= FLT_EPSILON) return true;
+        if (mathEqual(factor, rTransform->scale)) return true;
     } else {
-        if (fabsf(factor) <= FLT_EPSILON) return true;
+        if (mathZero(factor)) return true;
         rTransform = new RenderTransform();
     }
     rTransform->scale = factor;
@@ -147,9 +142,9 @@ bool Paint::Impl::scale(float factor)
 bool Paint::Impl::translate(float x, float y)
 {
     if (rTransform) {
-        if (fabsf(x - rTransform->x) <= FLT_EPSILON && fabsf(y - rTransform->y) <= FLT_EPSILON) return true;
+        if (mathEqual(x, rTransform->x) && mathEqual(y, rTransform->y)) return true;
     } else {
-        if (fabsf(x) <= FLT_EPSILON && fabsf(y) <= FLT_EPSILON) return true;
+        if (mathZero(x) && mathZero(y)) return true;
         rTransform = new RenderTransform();
     }
     rTransform->x = x;

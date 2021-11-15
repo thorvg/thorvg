@@ -28,19 +28,32 @@
 #include <math.h>
 #include "tvgCommon.h"
 
+
+static inline bool mathZero(float a)
+{
+    return (fabsf(a) < FLT_EPSILON) ? true : false;
+}
+
+
+static inline bool mathEqual(float a, float b)
+{
+    return (fabsf(a - b) < FLT_EPSILON);
+}
+
+
 static inline bool mathRightAngle(const Matrix* m)
 {
    auto radian = fabsf(atan2(m->e21, m->e11));
-   if (radian < FLT_EPSILON || fabsf(radian - float(M_PI_2)) < FLT_EPSILON || fabsf(radian - float(M_PI)) < FLT_EPSILON) return true;
+   if (radian < FLT_EPSILON || mathEqual(radian, float(M_PI_2)) || mathEqual(radian, float(M_PI))) return true;
    return false;
 }
 
 
 static inline bool mathIdentity(const Matrix* m)
 {
-    if (fabs(m->e11 - 1) > FLT_EPSILON || fabs(m->e12) > FLT_EPSILON || fabs(m->e13) > FLT_EPSILON ||
-        fabs(m->e21) > FLT_EPSILON || fabs(m->e22 - 1) > FLT_EPSILON || fabs(m->e23) > FLT_EPSILON ||
-        fabs(m->e31) > FLT_EPSILON || fabs(m->e32) > FLT_EPSILON || fabs(m->e33 - 1) > FLT_EPSILON) {
+    if (!mathEqual(m->e11, 1.0f) || !mathZero(m->e12) || !mathZero(m->e13) ||
+        !mathZero(m->e21) || !mathEqual(m->e22, 1.0f) || !mathZero(m->e23) ||
+        !mathZero(m->e31) || !mathZero(m->e32) || !mathEqual(m->e33, 1.0f)) {
         return false;
     }
     return true;
@@ -53,7 +66,7 @@ static inline bool mathInverse(const Matrix* m, Matrix* out)
                m->e12 * (m->e21 * m->e33 - m->e23 * m->e31) +
                m->e13 * (m->e21 * m->e32 - m->e22 * m->e31);
 
-    if (fabsf(det) < FLT_EPSILON) return false;
+    if (mathZero(det)) return false;
 
     auto invDet = 1 / det;
 

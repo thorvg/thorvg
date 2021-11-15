@@ -1555,11 +1555,11 @@ bool rasterImage(SwSurface* surface, SwImage* image, const Matrix* transform, co
     if (image->rle) {
         if (transformed) {
             if (translucent) {
-                if (fabsf(scale - 1.0f) <= FLT_EPSILON) return _rasterTranslucentImageRle(surface, image, opacity, &itransform);
+                if (mathEqual(scale, 1.0f)) return _rasterTranslucentImageRle(surface, image, opacity, &itransform);
                 else if (scale < downScaleTolerance) return _rasterTranslucentDownScaleImageRle(surface, image, opacity, &itransform, halfScale);
                 else return _rasterTranslucentUpScaleImageRle(surface, image, opacity, &itransform);
             } else {
-                if (fabsf(scale - 1.0f) <= FLT_EPSILON) return _rasterImageRle(surface, image, &itransform);
+                if (mathEqual(scale, 1.0f)) return _rasterImageRle(surface, image, &itransform);
                 else if (scale < downScaleTolerance) return _rasterDownScaleImageRle(surface, image, &itransform, halfScale);
                 else return _rasterUpScaleImageRle(surface, image, &itransform);
             }
@@ -1573,11 +1573,11 @@ bool rasterImage(SwSurface* surface, SwImage* image, const Matrix* transform, co
     } else {
         if (transformed) {
             if (translucent) {
-                if (fabsf(scale - 1.0f) <= FLT_EPSILON) return _rasterTranslucentImage(surface, image, opacity, bbox, &itransform);
+                if (mathEqual(scale, 1.0f)) return _rasterTranslucentImage(surface, image, opacity, bbox, &itransform);
                 else if (scale < downScaleTolerance) return _rasterTranslucentDownScaleImage(surface, image, opacity, bbox, &itransform, halfScale);
                 else return _rasterTranslucentUpScaleImage(surface, image, opacity, bbox, &itransform);
             } else {
-                if (fabsf(scale - 1.0f) <= FLT_EPSILON) return _rasterImage(surface, image, bbox, &itransform);
+                if (mathEqual(scale, 1.0f)) return _rasterImage(surface, image, bbox, &itransform);
                 else if (scale  < downScaleTolerance) return _rasterDownScaleImage(surface, image, bbox, &itransform, halfScale);
                 else return _rasterUpScaleImage(surface, image, bbox, &itransform);
             }
