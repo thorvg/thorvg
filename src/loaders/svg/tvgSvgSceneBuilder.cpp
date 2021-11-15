@@ -48,13 +48,13 @@
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <math.h>
+
 #include <string>
+#include "tvgMath.h"
 #include "tvgSvgLoaderCommon.h"
 #include "tvgSvgSceneBuilder.h"
 #include "tvgSvgPath.h"
 #include "tvgSvgUtil.h"
-#include <float.h>
 
 static bool _appendShape(SvgNode* node, Shape* shape, float vx, float vy, float vw, float vh, const string& svgPath);
 static unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, float vx, float vy, float vw, float vh, const string& svgPath, bool mask);
@@ -598,7 +598,7 @@ unique_ptr<Scene> svgSceneBuild(SvgNode* node, float vx, float vy, float vw, flo
 
     auto docNode = _sceneBuildHelper(node, vx, vy, vw, vh, svgPath, false);
 
-    if (fabsf(w - vw) > FLT_EPSILON || fabsf(h - vh) > FLT_EPSILON) {
+    if (!mathEqual(w, vw) || !mathEqual(h, vh)) {
         auto sx = w / vw;
         auto sy = h / vh;
 
@@ -625,7 +625,7 @@ unique_ptr<Scene> svgSceneBuild(SvgNode* node, float vx, float vy, float vw, flo
             Matrix m = {sx, 0, -tvx, 0, sy, -tvy, 0, 0, 1};
             docNode->transform(m);
         }
-    } else if (fabs(vx) > FLT_EPSILON || fabs(vy) > FLT_EPSILON) {
+    } else if (!mathZero(vx) || !mathZero(vy)) {
         docNode->translate(-vx, -vy);
     }
 

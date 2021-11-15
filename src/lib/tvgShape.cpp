@@ -20,10 +20,7 @@
  * SOFTWARE.
  */
 
-#define _USE_MATH_DEFINES       //Math Constants are not defined in Standard C/C++.
-
-#include <float.h>
-#include <math.h>
+#include "tvgMath.h"
 #include "tvgShapeImpl.h"
 
 /************************************************************************/
@@ -171,7 +168,7 @@ Result Shape::appendArc(float cx, float cy, float radius, float startAngle, floa
     auto nCurves = ceil(fabsf(sweep / float(M_PI_2)));
     auto sweepSign = (sweep < 0 ? -1 : 1);
     auto fract = fmodf(sweep, float(M_PI_2));
-    fract = (fabsf(fract) < FLT_EPSILON) ? float(M_PI_2) * sweepSign : fract;
+    fract = (mathZero(fract)) ? float(M_PI_2) * sweepSign : fract;
 
     //Start from here
     Point start = {radius * cosf(startAngle), radius * sinf(startAngle)};
@@ -238,7 +235,7 @@ Result Shape::appendRect(float x, float y, float w, float h, float rx, float ry)
         pImpl->path.lineTo(x, y + h);
         pImpl->path.close();
     //circle
-    } else if (fabsf(rx - halfW) < FLT_EPSILON && fabsf(ry - halfH) < FLT_EPSILON) {
+    } else if (mathEqual(rx, halfW) && mathEqual(ry, halfH)) {
         return appendCircle(x + (w * 0.5f), y + (h * 0.5f), rx, ry);
     } else {
         auto hrx = rx * 0.5f;
