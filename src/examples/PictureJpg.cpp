@@ -31,6 +31,8 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 {
     if (!canvas) return;
 
+    auto opacity = 51;
+
     //Load jpg file from path
     for (int i = 0; i < 5; ++i) {
         auto picture = tvg::Picture::gen();
@@ -41,6 +43,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
         picture->translate(i* 150, i * 150);
         picture->rotate(30 * i);
         picture->size(200, 200);
+        picture->opacity(opacity + opacity * i);
         if (canvas->push(move(picture)) != tvg::Result::Success) return;
     }
 
