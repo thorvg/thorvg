@@ -192,11 +192,9 @@ struct SwImageTask : SwTask
             if (!image.data || image.w == 0 || image.h == 0) goto end;
             image.stride = image.w;     //same, pixel buffer size.
 
-            auto clipPath = (clips.count > 0) ? true : false;
+            if (!imagePrepare(&image, transform, clipRegion, bbox, mpool, tid)) goto end;
 
-            if (!imagePrepare(&image, transform, clipRegion, bbox, mpool, tid, clipPath)) goto end;
-
-            if (clipPath) {
+            if (clips.count > 0) {
                 if (!imageGenRle(&image, pdata, bbox, false)) goto end;
                 if (image.rle) {
                     for (auto clip = clips.data; clip < (clips.data + clips.count); ++clip) {
