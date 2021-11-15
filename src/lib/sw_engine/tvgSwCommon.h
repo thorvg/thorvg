@@ -224,6 +224,11 @@ struct SwImage
     SwRleData*   rle = nullptr;
     uint32_t*    data = nullptr;
     uint32_t     w, h, stride;
+    int32_t      x = 0;         //shift x
+    int32_t      y = 0;         //shift y
+    float        scale;
+
+    bool         transformed = false;
 };
 
 struct SwBlender

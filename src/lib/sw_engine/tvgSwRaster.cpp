@@ -243,11 +243,11 @@ static bool _translucentImageRle(SwSurface* surface, const SwImage* image, uint3
 
     for (uint32_t i = 0; i < image->rle->size; ++i, ++span) {
         auto dst = &surface->buffer[span->y * surface->stride + span->x];
-        auto src = image->data + span->x + span->y * image->stride;
+        auto img = image->data + (span->y + image->y) * image->stride + (span->x + image->x);
         auto alpha = ALPHA_MULTIPLY(span->coverage, opacity);
-        for (uint32_t x = 0; x < span->len; ++x, ++dst, ++src) {
-            *src = ALPHA_BLEND(*src, alpha);
-            *dst = *src + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(*src));
+        for (uint32_t x = 0; x < span->len; ++x, ++dst, ++img) {
+            auto src = ALPHA_BLEND(*img, alpha);
+            *dst = src + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(src));
         }
     }
     return true;
@@ -259,22 +259,21 @@ static bool _translucentImageRleMask(SwSurface* surface, const SwImage* image, u
     TVGLOG("SW_ENGINE", "Image Rle Alpha Mask / Inverse Alpha Mask Composition");
 
     auto span = image->rle->spans;
-    auto img = image->data;
     auto cbuffer = surface->compositor->image.data;
 
     for (uint32_t i = 0; i < image->rle->size; ++i, ++span) {
         auto dst = &surface->buffer[span->y * surface->stride + span->x];
         auto cmp = &cbuffer[span->y * surface->stride + span->x];
-        auto src = img + span->y * image->stride + span->x;
+        auto img = image->data + (span->y + image->y) * image->stride + (span->x + image->x);
         auto alpha = ALPHA_MULTIPLY(span->coverage, opacity);
         if (alpha == 255) {
-            for (uint32_t x = 0; x < span->len; ++x, ++dst, ++cmp, ++src) {
-                auto tmp = ALPHA_BLEND(*src, blendMethod(*cmp));
+            for (uint32_t x = 0; x < span->len; ++x, ++dst, ++cmp, ++img) {
+                auto tmp = ALPHA_BLEND(*img, blendMethod(*cmp));
                 *dst = tmp + ALPHA_BLEND(*dst, surface->blender.ialpha(tmp));
             }
         } else {
-            for (uint32_t x = 0; x < span->len; ++x, ++dst, ++cmp, ++src) {
-                auto tmp = ALPHA_BLEND(*src, ALPHA_MULTIPLY(alpha, blendMethod(*cmp)));
+            for (uint32_t x = 0; x < span->len; ++x, ++dst, ++cmp, ++img) {
+                auto tmp = ALPHA_BLEND(*img, ALPHA_MULTIPLY(alpha, blendMethod(*cmp)));
                 *dst = tmp + ALPHA_BLEND(*dst, surface->blender.ialpha(tmp));
             }
         }
@@ -554,10 +553,16 @@ static bool _rasterImageRle(SwSurface* surface, const SwImage* image)
 
     for (uint32_t i = 0; i < image->rle->size; ++i, ++span) {
         auto dst = &surface->buffer[span->y * surface->stride + span->x];
-        auto src = image->data + span->x + span->y * image->stride;
-        for (uint32_t x = 0; x < span->len; ++x, ++dst, ++src) {
-            *src = ALPHA_BLEND(*src, span->coverage);
-            *dst = *src + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(*src));
+        auto img = image->data + (span->y + image->y) * image->stride + (span->x + image->x);
+        if (span->coverage == 255) {
+            for (uint32_t x = 0; x < span->len; ++x, ++dst, ++img) {
+                *dst = *img;
+            }
+        } else {
+            for (uint32_t x = 0; x < span->len; ++x, ++dst, ++img) {
+                auto src = ALPHA_BLEND(*img, span->coverage);
+                *dst = src + ALPHA_BLEND(*dst, 255 - surface->blender.alpha(src));
+            }
         }
     }
     return true;
@@ -858,7 +863,7 @@ static bool _rasterTranslucentDownScaleImage(SwSurface* surface, const SwImage* 
 static bool _translucentImage(SwSurface* surface, const SwImage* image, uint32_t opacity, const SwBBox& region)
 {
     auto dbuffer = &surface->buffer[region.min.y * surface->stride + region.min.x];
-    auto sbuffer = image->data + region.min.x + region.min.y * image->stride;
+    auto sbuffer = image->data + (region.min.y + image->y) * image->stride + (region.min.x + image->x);
 
     for (auto y = region.min.y; y < region.max.y; ++y) {
         auto dst = dbuffer;
@@ -882,7 +887,7 @@ static bool _translucentImageMask(SwSurface* surface, const SwImage* image, uint
 
     TVGLOG("SW_ENGINE", "Image Alpha Mask / Inverse Alpha Mask Composition");
 
-    auto sbuffer = image->data + (region.min.y * image->w) + region.min.x;
+    auto sbuffer = image->data + (region.min.y + image->y) * image->stride + (region.min.x + image->x);
     auto cbuffer = surface->compositor->image.data + (region.min.y * surface->stride) + region.min.x;   //compositor buffer
 
     for (uint32_t y = 0; y < h2; ++y) {
@@ -918,7 +923,7 @@ static bool _rasterTranslucentImage(SwSurface* surface, const SwImage* image, ui
 static bool _rasterImage(SwSurface* surface, const SwImage* image, const SwBBox& region)
 {
     auto dbuffer = &surface->buffer[region.min.y * surface->stride + region.min.x];
-    auto sbuffer = image->data + region.min.x + region.min.y * image->stride;
+    auto sbuffer = image->data + (region.min.y + image->y) * image->stride + (region.min.x + image->x);
 
     for (auto y = region.min.y; y < region.max.y; ++y) {
         auto dst = dbuffer;
@@ -1532,57 +1537,47 @@ void rasterUnpremultiply(SwSurface* surface)
 
 bool rasterImage(SwSurface* surface, SwImage* image, const Matrix* transform, const SwBBox& bbox, uint32_t opacity)
 {
-    Matrix itransform;
-    auto scale = 1.0f;
-    bool transformed = false;
+    static constexpr float DOWN_SCALE_TOLERANCE = 0.5f;
 
-    //Figure out the scale factor by transform matrix
-    if (transform) {
-        if (!mathInverse(transform, &itransform)) return false;
-        scale = sqrtf((transform->e11 * transform->e11) + (transform->e21 * transform->e21));
-        auto scaleY = sqrtf((transform->e22 * transform->e22) + (transform->e12 * transform->e12));
-        //TODO:If the x and y axis scale is different, a separate interpolation algorithm for each axis should be applied.
-        if (fabsf(scale - scaleY) > 0.01f) scale = 1.0f;
-        if (!mathIdentity(transform)) transformed = true;
-    } else mathIdentity(&itransform);
+    uint32_t halfScale = static_cast<uint32_t>(0.5f / image->scale);
+    if (halfScale == 0) halfScale = 1;
 
     auto translucent = _translucent(surface, opacity);
-    auto downScaleTolerance = 0.5f;
-    auto halfScale = static_cast<uint32_t>(0.5f / scale);
-    if (halfScale == 0) halfScale = 1;
 
     //Clipped Image
     if (image->rle) {
-        if (transformed) {
+        if (image->transformed) {
+            Matrix itransform;
+            if (!mathInverse(transform, &itransform)) return false;
             if (translucent) {
-                if (mathEqual(scale, 1.0f)) return _rasterTranslucentImageRle(surface, image, opacity, &itransform);
-                else if (scale < downScaleTolerance) return _rasterTranslucentDownScaleImageRle(surface, image, opacity, &itransform, halfScale);
+                if (mathEqual(image->scale, 1.0f)) return _rasterTranslucentImageRle(surface, image, opacity, &itransform);
+                else if (image->scale < DOWN_SCALE_TOLERANCE) return _rasterTranslucentDownScaleImageRle(surface, image, opacity, &itransform, halfScale);
                 else return _rasterTranslucentUpScaleImageRle(surface, image, opacity, &itransform);
             } else {
-                if (mathEqual(scale, 1.0f)) return _rasterImageRle(surface, image, &itransform);
-                else if (scale < downScaleTolerance) return _rasterDownScaleImageRle(surface, image, &itransform, halfScale);
+                if (mathEqual(image->scale, 1.0f)) return _rasterImageRle(surface, image, &itransform);
+                else if (image->scale < DOWN_SCALE_TOLERANCE) return _rasterDownScaleImageRle(surface, image, &itransform, halfScale);
                 else return _rasterUpScaleImageRle(surface, image, &itransform);
             }
-        //Fast track
-        //OPTIMIZE ME: Support non transformed image. Only shifted image can use these routines.
+        //Fast track: Only shifted image can go into this routine.
         } else {
             if (translucent) return _rasterTranslucentImageRle(surface, image, opacity);
             return _rasterImageRle(surface, image);
         }
     //Whole Image
     } else {
-        if (transformed) {
+        if (image->transformed) {
+            Matrix itransform;
+            if (!mathInverse(transform, &itransform)) return false;
             if (translucent) {
-                if (mathEqual(scale, 1.0f)) return _rasterTranslucentImage(surface, image, opacity, bbox, &itransform);
-                else if (scale < downScaleTolerance) return _rasterTranslucentDownScaleImage(surface, image, opacity, bbox, &itransform, halfScale);
+                if (mathEqual(image->scale, 1.0f)) return _rasterTranslucentImage(surface, image, opacity, bbox, &itransform);
+                else if (image->scale < DOWN_SCALE_TOLERANCE) return _rasterTranslucentDownScaleImage(surface, image, opacity, bbox, &itransform, halfScale);
                 else return _rasterTranslucentUpScaleImage(surface, image, opacity, bbox, &itransform);
             } else {
-                if (mathEqual(scale, 1.0f)) return _rasterImage(surface, image, bbox, &itransform);
-                else if (scale  < downScaleTolerance) return _rasterDownScaleImage(surface, image, bbox, &itransform, halfScale);
+                if (mathEqual(image->scale, 1.0f)) return _rasterImage(surface, image, bbox, &itransform);
+                else if (image->scale  < DOWN_SCALE_TOLERANCE) return _rasterDownScaleImage(surface, image, bbox, &itransform, halfScale);
                 else return _rasterUpScaleImage(surface, image, bbox, &itransform);
             }
-        //Fast track
-        //OPTIMIZE ME: Support non transformed image. Only shifted image can use these routines.
+        //Fast track: Only shifted image can go into this routine.
         } else {
             if (translucent) return _rasterTranslucentImage(surface, image, opacity, bbox);
             return _rasterImage(surface, image, bbox);
