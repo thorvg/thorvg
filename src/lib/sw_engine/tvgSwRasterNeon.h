@@ -24,7 +24,7 @@
 
 #include <arm_neon.h>
 
-static inline uint8x8_t ALPHA_BLEND_NEON(uint8x8_t c, uint8x8_t a)
+static inline uint8x8_t ALPHA_BLEND(uint8x8_t c, uint8x8_t a)
 {
 	uint16x8_t t = vmull_u8(c, a);
 	return vshrn_n_u16(t, 8);
@@ -77,7 +77,7 @@ static inline bool neonRasterTranslucentRle(SwSurface* surface, const SwRleData*
         uint8x8_t vIalpha = vdup_n_u8((uint8_t) ialpha);
 
         for (uint32_t x = 0; x < (span->len - align) / 2; ++x)
-            vDst[x] = vadd_u8(vSrc, ALPHA_BLEND_NEON(vDst[x], vIalpha));
+            vDst[x] = vadd_u8(vSrc, ALPHA_BLEND(vDst[x], vIalpha));
 
         auto leftovers = (span->len - align) % 2;
         if (leftovers > 0) dst[span->len - 1] = src + ALPHA_BLEND(dst[span->len - 1], ialpha);
@@ -115,7 +115,7 @@ static inline bool neonRasterTranslucentRect(SwSurface* surface, const SwBBox& r
         }
 
         for (uint32_t x = 0; x <  (w - align) / 2; ++x)
-            vDst[x] = vadd_u8((uint8x8_t)vColor, ALPHA_BLEND_NEON(vDst[x], vIalpha));
+            vDst[x] = vadd_u8((uint8x8_t)vColor, ALPHA_BLEND(vDst[x], vIalpha));
         
         auto leftovers = (w - align) % 2;
         if (leftovers > 0) dst[w - 1] = color + ALPHA_BLEND(dst[w - 1], ialpha);
