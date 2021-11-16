@@ -9,7 +9,7 @@ if all_loaders or get_option('loaders').contains('svg') == true
 endif
 
 if all_loaders or get_option('loaders').contains('lottie') == true
-    subdir('lottie')
+    subdir('external_lottie')
 endif
 
 if all_loaders or get_option('loaders').contains('png') == true
