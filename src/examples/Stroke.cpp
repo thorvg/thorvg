@@ -87,7 +87,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     if (canvas->push(move(shape6)) != tvg::Result::Success) return;
 
-    //Test for Stroke Width
+    //Stroke width test
     for (int i = 0; i < 10; ++i) {
         auto hline = tvg::Shape::gen();
         hline->moveTo(50, 550 + (25 * i));
@@ -105,6 +105,26 @@ void tvgDrawCmds(tvg::Canvas* canvas)
         vline->stroke(tvg::StrokeCap::Round);    //default is Square
         if (canvas->push(move(vline)) != tvg::Result::Success) return;
     }
+
+    //Stroke cap test
+    auto line1 = tvg::Shape::gen();
+    line1->moveTo(320, 580);
+    line1->lineTo(490, 580);
+    line1->stroke(255, 255, 255, 255);           //color: r, g, b, a
+    line1->stroke(15);
+    line1->stroke(tvg::StrokeCap::Round);
+
+    auto line2 = std::unique_ptr<tvg::Shape>((tvg::Shape*)line1->duplicate());
+    auto line3 = std::unique_ptr<tvg::Shape>((tvg::Shape*)line1->duplicate());
+    if (canvas->push(move(line1)) != tvg::Result::Success) return;
+
+    line2->stroke(tvg::StrokeCap::Square);
+    line2->translate(0, 50);
+    if (canvas->push(move(line2)) != tvg::Result::Success) return;
+
+    line3->stroke(tvg::StrokeCap::Butt);
+    line3->translate(0, 100);
+    if (canvas->push(move(line3)) != tvg::Result::Success) return;
 }
 
 
