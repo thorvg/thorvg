@@ -903,8 +903,7 @@ static bool _rasterTransformedSolidImage(SwSurface* surface, const SwImage* imag
             auto rX = static_cast<uint32_t>(roundf(x * itransform->e11 + ey1));
             auto rY = static_cast<uint32_t>(roundf(x * itransform->e21 + ey2));
             if (rX >= w || rY >= h) continue;
-            auto src = img[rX + (rY * image->stride)];
-            *dst = src + ALPHA_BLEND(*dst, surface->blender.ialpha(src));
+            *dst = img[rX + (rY * image->stride)];
         }
     }
     return true;
@@ -928,7 +927,7 @@ static bool _rasterDownScaledSolidImage(SwSurface* surface, const SwImage* image
             uint32_t src;
             if (rX < halfScale || rY < halfScale || rX >= w - halfScale || rY >= h - halfScale) src = img[rX + (rY * w)];
             else src = _interpDownScaler(img, w, h, rX, rY, halfScale);
-            *dst = src + ALPHA_BLEND(*dst, surface->blender.ialpha(src));
+            *dst = src;
         }
     }
     return true;
@@ -954,7 +953,7 @@ static bool _rasterUpScaledSolidImage(SwSurface* surface, const SwImage* image, 
             uint32_t src;
             if (rX == w - 1 || rY == h - 1) src = img[rX + (rY * w)];
             else src = _interpUpScaler(img, w, h, fX, fY);
-            *dst = src + ALPHA_BLEND(*dst, surface->blender.ialpha(src));
+            *dst = src;
         }
     }
     return true;
@@ -1041,7 +1040,7 @@ static bool _rasterDirectSolidImage(SwSurface* surface, const SwImage* image, co
         auto dst = dbuffer;
         auto src = sbuffer;
         for (auto x = region.min.x; x < region.max.x; x++, dst++, src++) {
-            *dst = *src + ALPHA_BLEND(*dst, surface->blender.ialpha(*src));
+            *dst = *src;
         }
         dbuffer += surface->stride;
         sbuffer += image->stride;
