@@ -1103,7 +1103,7 @@ public:
     //TEST API for Animated images(lottie)
     Result load(const std::string& path, uint32_t frame) noexcept;
 
-    float totalFrame();
+    uint32_t totalFrame() noexcept;
     ////
 
     /**

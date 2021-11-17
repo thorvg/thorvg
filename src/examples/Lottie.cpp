@@ -75,7 +75,7 @@ void tvgUpdateCmds(tvg::Canvas* canvas, float progress)
     //Background
     auto shape = tvg::Shape::gen();
     shape->appendRect(0, 0, WIDTH, HEIGHT, 0, 0);    //x, y, w, h, rx, ry
-    shape->fill(255, 255, 255, 255);                 //r, g, b, a
+    shape->fill(128, 128, 128, 255);                 //r, g, b, a
     if (canvas->push(move(shape)) != tvg::Result::Success) return;
     count = 0;
     eina_file_dir_list(EXAMPLE_DIR"/json", EINA_TRUE, svgDirCallback, (void*)&progress);

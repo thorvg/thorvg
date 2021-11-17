@@ -68,7 +68,7 @@ Result Picture::load(const std::string& path, uint32_t frame) noexcept
 }
 
 
-float Picture::totalFrame() noexcept
+uint32_t Picture::totalFrame() noexcept
 {
     return pImpl->totalFrame();
 }
