@@ -67,7 +67,7 @@ jobs:
     - name: Install Packages
       run: |
         sudo apt-get update
-        sudo apt-get install ninja-build gcc-multilib g++-multilib libgtest-dev cmake cmake-data valgrind
+        sudo apt-get install ninja-build gcc-multilib g++-multilib libgtest-dev cmake cmake-data libasan5 valgrind
         sudo apt-get install curl jq
         sudo apt-get install software-properties-common
         sudo apt-get install python3-pip
@@ -102,3 +102,16 @@ jobs:
         "${GITHUB_WORKSPACE}/.github/workflows/memcheck_valgrind.sh"
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Build & Run memcheck Script(ASAN)
+      run: |
+        sudo rm -rf ./build
+        meson . build -Db_sanitize="address,undefined" -Dloaders="all" -Dsavers="tvg" -Dtests="true" -Dbindings="capi"
+        cd build
+        sudo ninja -C . install
+        export PATH=$PATH:~/.local/bin/
+        chmod +x "${GITHUB_WORKSPACE}/.github/workflows/memcheck_asan.sh"
+        "${GITHUB_WORKSPACE}/.github/workflows/memcheck_asan.sh"
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
