@@ -6,6 +6,7 @@ source_file = [
     'Async.cpp',
     'Blending.cpp',
     'Boundary.cpp',
+    'Boundary2.cpp',
     'ClipPath.cpp',
     'CustomTransform.cpp',
     'DirectUpdate.cpp',
