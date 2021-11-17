@@ -32,7 +32,7 @@
 
 static FILE* _fopen(const char* filename, const char* mode)
 {
-#if defined(__clang__) && !defined(__EMSCRIPTEN__)
+#if defined(_MSC_VER) && defined(__clang__)
     FILE *fp;
     auto err = fopen_s(&fp, filename, mode);
     if (err != 0) return nullptr;
