@@ -89,13 +89,21 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     //Test for Stroke Width
     for (int i = 0; i < 10; ++i) {
-        auto shape = tvg::Shape::gen();
-        shape->moveTo(50, 550 + (25 * i));
-        shape->lineTo(750, 550 + (25 * i));
-        shape->stroke(255, 255, 255, 255);       //color: r, g, b, a
-        shape->stroke(i + 1);                    //stroke width
-        shape->stroke(tvg::StrokeCap::Round);    //default is Square
-        if (canvas->push(move(shape)) != tvg::Result::Success) return;
+        auto hline = tvg::Shape::gen();
+        hline->moveTo(50, 550 + (25 * i));
+        hline->lineTo(400, 550 + (25 * i));
+        hline->stroke(255, 255, 255, 255);       //color: r, g, b, a
+        hline->stroke(i + 1);                    //stroke width
+        hline->stroke(tvg::StrokeCap::Round);    //default is Square
+        if (canvas->push(move(hline)) != tvg::Result::Success) return;
+
+        auto vline = tvg::Shape::gen();
+        vline->moveTo(450 + (33 * i), 550);
+        vline->lineTo(450 + (33 * i), 780);
+        vline->stroke(255, 255, 255, 255);       //color: r, g, b, a
+        vline->stroke(i + 1);                    //stroke width
+        vline->stroke(tvg::StrokeCap::Round);    //default is Square
+        if (canvas->push(move(vline)) != tvg::Result::Success) return;
     }
 }
 
