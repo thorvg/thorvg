@@ -35,8 +35,8 @@
 static int count = 0;
 
 static std::vector<unique_ptr<tvg::Picture>> pictures;
-static uint32_t totalFrames[100] = {0};
-static uint32_t frames[100] = {0};
+static uint32_t totalFrames[NUM_PER_ROW * NUM_PER_COL] = {0};
+static uint32_t frames[NUM_PER_ROW * NUM_PER_COL] = {0};
 
 void svgDirCallback(const char* name, const char* path, void* data)
 {
@@ -75,7 +75,7 @@ void tvgUpdateCmds(tvg::Canvas* canvas, float progress)
     //Background
     auto shape = tvg::Shape::gen();
     shape->appendRect(0, 0, WIDTH, HEIGHT, 0, 0);    //x, y, w, h, rx, ry
-    shape->fill(255, 255, 255, 255);                 //r, g, b, a
+    shape->fill(128, 128, 128, 255);                 //r, g, b, a
     if (canvas->push(move(shape)) != tvg::Result::Success) return;
     count = 0;
     eina_file_dir_list(EXAMPLE_DIR"/json", EINA_TRUE, svgDirCallback, (void*)&progress);
@@ -193,7 +193,6 @@ int main(int argc, char **argv)
 
     //Initialize ThorVG Engine
     if (tvg::Initializer::init(tvgEngine, threads) == tvg::Result::Success) {
-
         elm_init(argc, argv);
 
         Elm_Transit *transit = elm_transit_add();

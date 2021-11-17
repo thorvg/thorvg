@@ -220,7 +220,7 @@ struct Picture::Impl
     }
 
 
-    float totalFrame()
+    uint32_t totalFrame()
     {
         return loader->totalFrame;
     }
