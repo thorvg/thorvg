@@ -15,6 +15,8 @@ source_file = [
     'GradientMasking.cpp',
     'GradientStroke.cpp',
     'GradientTransform.cpp',
+    'ImageScaleDown.cpp',
+    'ImageScaleUp.cpp',
     'InvMasking.cpp',
     'LinearGradient.cpp',
     'Masking.cpp',
