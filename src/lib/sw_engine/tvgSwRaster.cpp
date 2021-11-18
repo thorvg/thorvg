@@ -123,7 +123,7 @@ static bool _rasterTranslucentMaskedRect(SwSurface* surface, const SwBBox& regio
     auto h = static_cast<uint32_t>(region.max.y - region.min.y);
     auto w = static_cast<uint32_t>(region.max.x - region.min.x);
 
-    TVGLOG("SW_ENGINE", "Rectangle Alpha Mask / Inverse Alpha Mask Composition");
+    TVGLOG("SW_ENGINE", "Translucent Masked Rect");
 
     auto cbuffer = surface->compositor->image.data + (region.min.y * surface->stride) + region.min.x;   //compositor buffer
 
@@ -179,7 +179,7 @@ static bool _rasterSolidRect(SwSurface* surface, const SwBBox& region, uint32_t 
 
 static bool _rasterTranslucentMaskedRle(SwSurface* surface, SwRleData* rle, uint32_t color, uint32_t (*blendMethod)(uint32_t))
 {
-    TVGLOG("SW_ENGINE", "Rle Alpha Mask / Inverse Alpha Mask Composition");
+    TVGLOG("SW_ENGINE", "Translucent Masked Rle");
 
     auto span = rle->spans;
     uint32_t src;
@@ -252,7 +252,7 @@ static bool _rasterSolidRle(SwSurface* surface, const SwRleData* rle, uint32_t c
 
 static bool _rasterTransformedMaskedRleImage(SwSurface* surface, const SwImage* image, uint32_t opacity, const Matrix* itransform, uint32_t (*blendMethod)(uint32_t))
 {
-    TVGLOG("SW_ENGINE", "Transformed Image Rle Alpha Mask / Inverse Alpha Mask Composition");
+    TVGLOG("SW_ENGINE", "Transformed Masked Rle Image");
 
     auto span = image->rle->spans;
     auto img = image->data;
@@ -315,7 +315,7 @@ static bool _rasterTransformedTranslucentRleImage(SwSurface* surface, const SwIm
 
 static bool _rasterDownScaledMaskedRleImage(SwSurface* surface, const SwImage* image, uint32_t opacity, const Matrix* itransform, uint32_t halfScale, uint32_t (*blendMethod)(uint32_t))
 {
-    TVGLOG("SW_ENGINE", "Image Rle Alpha Mask / Inverse Alpha Mask Composition");
+    TVGLOG("SW_ENGINE", "Down Scaled Masked Rle Image");
 
     auto span = image->rle->spans;
     auto img = image->data;
@@ -386,7 +386,7 @@ static bool _rasterDownScaledTranslucentRleImage(SwSurface* surface, const SwIma
 
 static bool _rasterUpScaledMaskedRleImage(SwSurface* surface, const SwImage* image, uint32_t opacity, const Matrix* itransform, uint32_t (*blendMethod)(uint32_t))
 {
-    TVGLOG("SW_ENGINE", "Image Rle Alpha Mask / Inverse Alpha Mask Composition");
+    TVGLOG("SW_ENGINE", "Up Scaled Masked Rle Image");
 
     auto span = image->rle->spans;
     auto img = image->data;
@@ -591,7 +591,7 @@ static bool _rasterTransformedSolidRleImage(SwSurface* surface, const SwImage* i
 
 static bool _rasterDirectMaskedRleImage(SwSurface* surface, const SwImage* image, uint32_t opacity, uint32_t (*blendMethod)(uint32_t))
 {
-    TVGLOG("SW_ENGINE", "Image Rle Alpha Mask / Inverse Alpha Mask Composition");
+    TVGLOG("SW_ENGINE", "Direct Masked Rle Image");
 
     auto span = image->rle->spans;
     auto cbuffer = surface->compositor->image.data;
@@ -675,7 +675,7 @@ static bool _rasterDirectSolidRleImage(SwSurface* surface, const SwImage* image)
 
 static bool _rasterTransformedMaskedImage(SwSurface* surface, const SwImage* image, uint32_t opacity, const SwBBox& region, const Matrix* itransform, uint32_t (*blendMethod)(uint32_t))
 {
-    TVGLOG("SW_ENGINE", "Transformed Image AlphaMask / Inverse Alpha Mask Composition");
+    TVGLOG("SW_ENGINE", "Transformed Masked Image");
 
     auto img = image->data;
     auto w = image->w;
@@ -729,7 +729,7 @@ static bool _rasterTransformedTranslucentImage(SwSurface* surface, const SwImage
 
 static bool _rasterDownScaledMaskedImage(SwSurface* surface, const SwImage* image, uint32_t opacity, const SwBBox& region, const Matrix* itransform, uint32_t halfScale, uint32_t (*blendMethod)(uint32_t))
 {
-    TVGLOG("SW_ENGINE", "Transformed Image Alpha Mask / Inverse Alpha Mask Composition");
+    TVGLOG("SW_ENGINE", "Down Scaled Masked Image");
 
     auto img = image->data;
     auto w = image->w;
@@ -789,7 +789,7 @@ static bool _rasterDownScaledTranslucentImage(SwSurface* surface, const SwImage*
 
 static bool _rasterUpScaledMaskedImage(SwSurface* surface, const SwImage* image, uint32_t opacity, const SwBBox& region, const Matrix* itransform, uint32_t (*blendMethod)(uint32_t))
 {
-    TVGLOG("SW_ENGINE", "Transformed Image Alpha Mask / Inverse Alpha Mask Composition");
+    TVGLOG("SW_ENGINE", "Up Scaled Masked Image");
 
     auto img = image->data;
     auto w = image->w;
@@ -978,7 +978,7 @@ static bool _rasterDirectMaskedImage(SwSurface* surface, const SwImage* image, u
     auto h2 = static_cast<uint32_t>(region.max.y - region.min.y);
     auto w2 = static_cast<uint32_t>(region.max.x - region.min.x);
 
-    TVGLOG("SW_ENGINE", "Image Alpha Mask / Inverse Alpha Mask Composition");
+    TVGLOG("SW_ENGINE", "Direct Masked Image");
 
     auto sbuffer = image->data + (region.min.y + image->y) * image->stride + (region.min.x + image->x);
     auto cbuffer = surface->compositor->image.data + (region.min.y * surface->stride) + region.min.x;   //compositor buffer
