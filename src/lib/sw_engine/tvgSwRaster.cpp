@@ -84,8 +84,6 @@ static uint32_t _interpUpScaler(const uint32_t *img, uint32_t w, uint32_t h, flo
     auto c3 = img[(rX + 1) + ((rY + 1) * w)];
     auto c4 = img[rX + ((rY + 1) * w)];
 
-    if (c1 == c2 && c1 == c3 && c1 == c4) return img[rX + (rY * w)];
-
     return COLOR_INTERPOLATE(COLOR_INTERPOLATE(c1, 255 - dX, c2, dX), 255 - dY, COLOR_INTERPOLATE(c4, 255 - dX, c3, dX), dY);
 }
 
