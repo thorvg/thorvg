@@ -84,6 +84,8 @@ struct ShapePath
 
     void duplicate(const ShapePath* src)
     {
+        if (src->cmdCnt == 0 || src->ptsCnt == 0) return;
+
         cmdCnt = src->cmdCnt;
         reservedCmdCnt = src->reservedCmdCnt;
         ptsCnt = src->ptsCnt;
