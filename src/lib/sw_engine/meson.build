@@ -3,6 +3,7 @@ source_file = [
    'tvgSwRasterC.h',
    'tvgSwRasterAvx.h',
    'tvgSwRasterNeon.h',
+   'tvgSwRasterTexmap.h',
    'tvgSwFill.cpp',
    'tvgSwImage.cpp',
    'tvgSwMath.cpp',
