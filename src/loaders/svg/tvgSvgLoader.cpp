@@ -1691,6 +1691,8 @@ static SvgStyleGradient* _cloneGradient(SvgStyleGradient* from)
     if (!from) return nullptr;
 
     auto grad = (SvgStyleGradient*)(calloc(1, sizeof(SvgStyleGradient)));
+    if (!grad) return nullptr;
+
     grad->type = from->type;
     grad->id = from->id ? _copyId(from->id) : nullptr;
     grad->ref = from->ref ? _copyId(from->ref) : nullptr;
