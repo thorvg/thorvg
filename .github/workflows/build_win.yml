@@ -39,7 +39,7 @@ jobs:
 
     - name: Build
       run: |
-        meson --backend=ninja build -Dloaders="svg, tvg, png, jpg" -Dsavers="tvg" -Dbindings="capi" -Dtests=true
+        meson --backend=ninja -Dbuildtype="release" -Ddebug=false -Dloaders="all" -Dlog=true -Dsavers="tvg" -Dtests=true -Ddefault_library="static" -Dstatic=true. build
         where link
         ninja -C build test
 
