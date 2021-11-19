@@ -71,20 +71,20 @@ static bool _translucent(const SwSurface* surface, uint8_t a)
 
 
 //Bilinear Interpolation
-static uint32_t _interpUpScaler(const uint32_t *img, uint32_t w, uint32_t h, float fX, float fY)
+static uint32_t _interpUpScaler(const uint32_t *img, uint32_t w, uint32_t h, float sx, float sy)
 {
-    auto rX = static_cast<uint32_t>(fX);
-    auto rY = static_cast<uint32_t>(fY);
+    auto rx = static_cast<uint32_t>(sx);
+    auto ry = static_cast<uint32_t>(sy);
 
-    auto dX = static_cast<uint32_t>((fX - rX) * 255.0f);
-    auto dY = static_cast<uint32_t>((fY - rY) * 255.0f);
+    auto dx = static_cast<uint32_t>((sx - rx) * 255.0f);
+    auto dy = static_cast<uint32_t>((sy - ry) * 255.0f);
 
-    auto c1 = img[rX + (rY * w)];
-    auto c2 = img[(rX + 1) + (rY * w)];
-    auto c3 = img[(rX + 1) + ((rY + 1) * w)];
-    auto c4 = img[rX + ((rY + 1) * w)];
+    auto c1 = img[rx + (ry * w)];
+    auto c2 = img[(rx + 1) + (ry * w)];
+    auto c3 = img[(rx + 1) + ((ry + 1) * w)];
+    auto c4 = img[rx + ((ry + 1) * w)];
 
-    return COLOR_INTERPOLATE(COLOR_INTERPOLATE(c1, 255 - dX, c2, dX), 255 - dY, COLOR_INTERPOLATE(c4, 255 - dX, c3, dX), dY);
+    return COLOR_INTERPOLATE(COLOR_INTERPOLATE(c1, 255 - dx, c2, dx), 255 - dy, COLOR_INTERPOLATE(c4, 255 - dx, c3, dx), dy);
 }
 
 
@@ -884,7 +884,7 @@ static bool _rasterTransformedTranslucentImage(SwSurface* surface, const SwImage
 
 
 /************************************************************************/
-/* Whole Transformed Solid Image                                       */
+/* Whole Transformed Solid Image                                        */
 /************************************************************************/
 
 static bool _rasterTransformedSolidImage(SwSurface* surface, const SwImage* image, const SwBBox& region, const Matrix* itransform)
@@ -967,10 +967,204 @@ static bool _rasterTransformedSolidImage(SwSurface* surface, const SwImage* imag
 
 
 /************************************************************************/
-/* Whole (Solid + Translucent) Direct Image                            */
+/* Whole Scaled RGBA Image                                              */
 /************************************************************************/
 
-static bool _rasterDirectMaskedImage(SwSurface* surface, const SwImage* image, uint32_t opacity, const SwBBox& region, uint32_t (*blendMethod)(uint32_t))
+static bool _rasterScaledMaskedRGBAImage(SwSurface* surface, const SwImage* image, uint32_t opacity, const SwBBox& region, const Matrix* itransform, uint32_t halfScale, uint32_t (*blendMethod)(uint32_t))
+{
+    TVGLOG("SW_ENGINE", "Scaled Masked Image");
+
+    //Top, Bottom Lines
+    SwCoord ys[2] = {region.min.y, region.max.y - 1};
+
+    for (auto i = 0; i < 2; ++i) {
+        auto y = ys[i];
+        auto dst = surface->buffer + (y * surface->stride + region.min.x);
+        auto cmp = surface->compositor->image.data + (y * surface->stride + region.min.x);
+        auto img = image->data + static_cast<uint32_t>(y * itransform->e22 + itransform->e23) * image->stride;
+        for (auto x = region.min.x; x < region.max.x; ++x, ++dst, ++cmp) {
+            auto src = ALPHA_BLEND(img[static_cast<uint32_t>(x * itransform->e11 + itransform->e13)], _multiplyAlpha(opacity, blendMethod(*cmp)));
+            *dst = src + ALPHA_BLEND(*dst, surface->blender.ialpha(src));
+        }
+    }
+    //Left, Right Lines
+    SwCoord xs[2] = {region.min.x, region.max.x - 1};
+
+    for (auto i = 0; i < 2; ++i) {
+        auto x = xs[i];
+        auto dst = surface->buffer + ((region.min.y + 1) * surface->stride + x);
+        auto cmp = surface->compositor->image.data + ((region.min.y + 1) * surface->stride + x);
+        auto img = image->data + static_cast<uint32_t>(x * itransform->e11 + itransform->e13);
+        for (auto y = region.min.y + 1; y < region.max.y - 1; ++y, dst += surface->stride, cmp += surface->stride) {
+            auto src = ALPHA_BLEND(img[static_cast<uint32_t>(y * itransform->e22 + itransform->e23) * image->stride], _multiplyAlpha(opacity, blendMethod(*cmp)));
+            *dst = src + ALPHA_BLEND(*dst, surface->blender.ialpha(src));
+        }
+    }
+    //Center (Down-Scaled)
+    if (image->scale < DOWN_SCALE_TOLERANCE) {
+        auto dbuffer = surface->buffer + ((region.min.y + 1) * surface->stride + (region.min.x + 1));
+        auto cbuffer = surface->compositor->image.data + ((region.min.y + 1) * surface->stride + (region.min.x + 1));
+        for (auto y = region.min.y + 1; y < region.max.y - 1; ++y) {
+            auto dst = dbuffer;
+            auto cmp = cbuffer;
+            auto sy = static_cast<uint32_t>(y * itransform->e22 + itransform->e23);
+            for (auto x = region.min.x + 1; x < region.max.x - 1; ++x, ++dst, ++cmp) {
+                auto sx = static_cast<uint32_t>(x * itransform->e11 + itransform->e13);
+                auto src = ALPHA_BLEND(_interpDownScaler(image->data, image->w, image->h, sx, sy, halfScale), _multiplyAlpha(opacity, blendMethod(*cmp)));
+                *dst = src + ALPHA_BLEND(*dst, surface->blender.ialpha(src));
+            }
+            dbuffer += surface->stride;
+            cbuffer += surface->compositor->image.stride;
+        }
+    //Center (Up-Scaled)
+    } else {
+        auto dbuffer = surface->buffer + (region.min.y * surface->stride + region.min.x);
+        auto cbuffer = surface->compositor->image.data + (region.min.y * surface->stride + region.min.x);
+        for (auto y = region.min.y; y < region.max.y - 1; ++y) {
+            auto dst = dbuffer;
+            auto cmp = cbuffer;
+            auto sy = y * itransform->e22 + itransform->e23;
+            for (auto x = region.min.x; x < region.max.x - 1; ++x, ++dst, ++cmp) {
+                auto sx = x * itransform->e11 + itransform->e13;
+                auto src = ALPHA_BLEND(_interpUpScaler(image->data, image->w, image->h, sx, sy), _multiplyAlpha(opacity, blendMethod(*cmp)));
+                *dst = src + ALPHA_BLEND(*dst, surface->blender.ialpha(src));
+            }
+            dbuffer += surface->stride;
+            cbuffer += surface->compositor->image.stride;
+        }
+    }
+    return true;
+}
+
+
+static bool __rasterScaledTranslucentRGBAImage(SwSurface* surface, const SwImage* image, uint32_t opacity, const SwBBox& region, const Matrix* itransform, uint32_t halfScale)
+{
+    //Top, Bottom Lines
+    SwCoord ys[2] = {region.min.y, region.max.y - 1};
+
+    for (auto i = 0; i < 2; ++i) {
+        auto y = ys[i];
+        auto dst = surface->buffer + (y * surface->stride + region.min.x);
+        auto img = image->data + static_cast<uint32_t>(y * itransform->e22 + itransform->e23) * image->stride;
+        for (auto x = region.min.x; x < region.max.x; ++x, ++dst) {
+            auto src = ALPHA_BLEND(img[static_cast<uint32_t>(x * itransform->e11 + itransform->e13)], opacity);
+            *dst = src + ALPHA_BLEND(*dst, surface->blender.ialpha(src));
+        }
+    }
+    //Left, Right Lines
+    SwCoord xs[2] = {region.min.x, region.max.x - 1};
+
+    for (auto i = 0; i < 2; ++i) {
+        auto x = xs[i];
+        auto dst = surface->buffer + ((region.min.y + 1) * surface->stride + x);
+        auto img = image->data + static_cast<uint32_t>(x * itransform->e11 + itransform->e13);
+        for (auto y = region.min.y + 1; y < region.max.y - 1; ++y, dst += surface->stride) {
+            auto src = ALPHA_BLEND(img[static_cast<uint32_t>(y * itransform->e22 + itransform->e23) * image->stride], opacity);
+            *dst = src + ALPHA_BLEND(*dst, surface->blender.ialpha(src));
+        }
+    }
+    //Center (Down-Scaled)
+    if (image->scale < DOWN_SCALE_TOLERANCE) {
+        auto dbuffer = surface->buffer + ((region.min.y + 1) * surface->stride + (region.min.x + 1));
+        for (auto y = region.min.y + 1; y < region.max.y - 1; ++y, dbuffer += surface->stride) {
+            auto sy = static_cast<uint32_t>(y * itransform->e22 + itransform->e23);
+            auto dst = dbuffer;
+            for (auto x = region.min.x + 1; x < region.max.x - 1; ++x, ++dst) {
+                auto sx = static_cast<uint32_t>(x * itransform->e11 + itransform->e13);
+                auto src = ALPHA_BLEND(_interpDownScaler(image->data, image->w, image->h, sx, sy, halfScale), opacity);
+                *dst = src + ALPHA_BLEND(*dst, surface->blender.ialpha(src));
+            }
+        }
+    //Center (Up-Scaled)
+    } else {
+        auto dbuffer = surface->buffer + (region.min.y * surface->stride + region.min.x);
+        for (auto y = region.min.y; y < region.max.y - 1; ++y, dbuffer += surface->stride) {
+            auto sy = y * itransform->e22 + itransform->e23;
+            auto dst = dbuffer;
+            for (auto x = region.min.x; x < region.max.x - 1; ++x, ++dst) {
+                auto sx = x * itransform->e11 + itransform->e13;
+                auto src = ALPHA_BLEND(_interpUpScaler(image->data, image->w, image->h, sx, sy), opacity);
+                *dst = src + ALPHA_BLEND(*dst, surface->blender.ialpha(src));
+            }
+        }
+    }
+    return true;
+}
+
+
+static bool _rasterScaledTranslucentRGBAImage(SwSurface* surface, const SwImage* image, uint32_t opacity, const SwBBox& region, const Matrix* itransform, uint32_t halfScale)
+{
+    if (surface->compositor) {
+        if (surface->compositor->method == CompositeMethod::AlphaMask) {
+            return _rasterScaledMaskedRGBAImage(surface, image, opacity, region, itransform, halfScale, surface->blender.alpha);
+        } else if (surface->compositor->method == CompositeMethod::InvAlphaMask) {
+            return _rasterScaledMaskedRGBAImage(surface, image, opacity, region, itransform, halfScale, surface->blender.ialpha);
+        }
+    }
+    return __rasterScaledTranslucentRGBAImage(surface, image, opacity, region, itransform, halfScale);
+}
+
+
+static bool _rasterScaledRGBAImage(SwSurface* surface, const SwImage* image, const SwBBox& region, const Matrix* itransform, uint32_t halfScale)
+{
+    //Top, Bottom Lines
+    SwCoord ys[2] = {region.min.y, region.max.y - 1};
+
+    for (auto i = 0; i < 2; ++i) {
+        auto y = ys[i];
+        auto dst = surface->buffer + (y * surface->stride + region.min.x);
+        auto img = image->data + static_cast<uint32_t>((y * itransform->e22 + itransform->e23)) * image->stride;
+        for (auto x = region.min.x; x < region.max.x; ++x, ++dst) {
+            auto src = img[static_cast<uint32_t>(x * itransform->e11 + itransform->e13)];
+            *dst = src + ALPHA_BLEND(*dst, surface->blender.ialpha(src));
+        }
+    }
+    //Left, Right Lines
+    SwCoord xs[2] = {region.min.x, region.max.x - 1};
+
+    for (auto i = 0; i < 2; ++i) {
+        auto x = xs[i];
+        auto dst = surface->buffer + ((region.min.y + 1) * surface->stride + x);
+        auto img = image->data + static_cast<uint32_t>(x * itransform->e11 + itransform->e13);
+        for (auto y = region.min.y + 1; y < region.max.y - 1; ++y, dst += surface->stride) {
+            auto src = img[static_cast<uint32_t>(y * itransform->e22 + itransform->e23) * image->stride];
+            *dst = src + ALPHA_BLEND(*dst, surface->blender.ialpha(src));
+        }
+    }
+    //Center (Down-Scaled)
+    if (image->scale < DOWN_SCALE_TOLERANCE) {
+        auto dbuffer = surface->buffer + ((region.min.y + 1) * surface->stride + (region.min.x + 1));
+        for (auto y = region.min.y + 1; y < region.max.y - 1; ++y, dbuffer += surface->stride) {
+            auto sy = static_cast<uint32_t>(y * itransform->e22 + itransform->e23);
+            auto dst = dbuffer;
+            for (auto x = region.min.x + 1; x < region.max.x - 1; ++x, ++dst) {
+                auto sx = static_cast<uint32_t>(x * itransform->e11 + itransform->e13);
+                auto src = _interpDownScaler(image->data, image->w, image->h, sx, sy, halfScale);
+                *dst = src + ALPHA_BLEND(*dst, surface->blender.ialpha(src));
+            }
+        }
+    //Center (Up-Scaled)
+    } else {
+        auto dbuffer = surface->buffer + (region.min.y * surface->stride + region.min.x);
+        for (auto y = region.min.y; y < region.max.y - 1; ++y, dbuffer += surface->stride) {
+            auto sy = y * itransform->e22 + itransform->e23;
+            auto dst = dbuffer;
+            for (auto x = region.min.x; x < region.max.x - 1; ++x, ++dst) {
+                auto sx = x * itransform->e11 + itransform->e13;
+                auto src = _interpUpScaler(image->data, image->w, image->h, sx, sy);
+                *dst = src + ALPHA_BLEND(*dst, surface->blender.ialpha(src));
+            }
+        }
+    }
+    return true;
+}
+
+
+/************************************************************************/
+/* Whole Direct RGBA Image                                              */
+/************************************************************************/
+
+static bool _rasterDirectMaskedRGBAImage(SwSurface* surface, const SwImage* image, uint32_t opacity, const SwBBox& region, uint32_t (*blendMethod)(uint32_t))
 {
     auto buffer = surface->buffer + (region.min.y * surface->stride) + region.min.x;
     auto h2 = static_cast<uint32_t>(region.max.y - region.min.y);
@@ -997,7 +1191,7 @@ static bool _rasterDirectMaskedImage(SwSurface* surface, const SwImage* image, u
 }
 
 
-static bool __rasterDirectTranslucentImage(SwSurface* surface, const SwImage* image, uint32_t opacity, const SwBBox& region)
+static bool __rasterDirectTranslucentRGBAImage(SwSurface* surface, const SwImage* image, uint32_t opacity, const SwBBox& region)
 {
     auto dbuffer = &surface->buffer[region.min.y * surface->stride + region.min.x];
     auto sbuffer = image->data + (region.min.y + image->oy) * image->stride + (region.min.x + image->ox);
@@ -1016,20 +1210,20 @@ static bool __rasterDirectTranslucentImage(SwSurface* surface, const SwImage* im
 }
 
 
-static bool _rasterDirectTranslucentImage(SwSurface* surface, const SwImage* image, uint32_t opacity, const SwBBox& region)
+static bool _rasterDirectTranslucentRGBAImage(SwSurface* surface, const SwImage* image, uint32_t opacity, const SwBBox& region)
 {
     if (surface->compositor) {
         if (surface->compositor->method == CompositeMethod::AlphaMask) {
-            return _rasterDirectMaskedImage(surface, image, opacity, region, surface->blender.alpha);
+            return _rasterDirectMaskedRGBAImage(surface, image, opacity, region, surface->blender.alpha);
         } else if (surface->compositor->method == CompositeMethod::InvAlphaMask) {
-            return _rasterDirectMaskedImage(surface, image, opacity, region, surface->blender.ialpha);
+            return _rasterDirectMaskedRGBAImage(surface, image, opacity, region, surface->blender.ialpha);
         }
     }
-    return __rasterDirectTranslucentImage(surface, image, opacity, region);
+    return __rasterDirectTranslucentRGBAImage(surface, image, opacity, region);
 }
 
 
-static bool _rasterDirectSolidImage(SwSurface* surface, const SwImage* image, const SwBBox& region)
+static bool _rasterDirectRGBAImage(SwSurface* surface, const SwImage* image, const SwBBox& region)
 {
     auto dbuffer = &surface->buffer[region.min.y * surface->stride + region.min.x];
     auto sbuffer = image->data + (region.min.y + image->oy) * image->stride + (region.min.x + image->ox);
@@ -1038,7 +1232,7 @@ static bool _rasterDirectSolidImage(SwSurface* surface, const SwImage* image, co
         auto dst = dbuffer;
         auto src = sbuffer;
         for (auto x = region.min.x; x < region.max.x; x++, dst++, src++) {
-            *dst = *src;
+            *dst = *src + ALPHA_BLEND(*dst, surface->blender.ialpha(*src));
         }
         dbuffer += surface->stride;
         sbuffer += image->stride;
@@ -1579,15 +1773,24 @@ void rasterUnpremultiply(SwSurface* surface)
     }
 }
 
-
+/* FIXME: Current SolidImage assumes always be RGBA.
+   Applying Blenders for the following scenarios:
+    - [Whole / RLE]
+      - [Direct / Scaled / Transformed]
+        - [RGB / RGBA]
+          - [None / Opacity / Composition / Opacity + Composition] */
 bool rasterImage(SwSurface* surface, SwImage* image, const Matrix* transform, const SwBBox& bbox, uint32_t opacity)
 {
+    //Boundary check
+    if (bbox.max.x < 0 || bbox.max.y < 0 || bbox.min.x >= surface->w || bbox.min.y >= surface->h) return false;
+
     Matrix itransform;
     if (transform && !mathInverse(transform, &itransform)) return false;
 
     auto halfScale = static_cast<uint32_t>(0.5f / image->scale);
     if (halfScale == 0) halfScale = 1;
 
+    //OPTIMIZE_ME: we can split the condition: Opacity & Composition!
     auto translucent = _translucent(surface, opacity);
 
     //Clipped Image
@@ -1602,9 +1805,13 @@ bool rasterImage(SwSurface* surface, SwImage* image, const Matrix* transform, co
     //Whole Image
     } else {
         if (image->direct) {
-            if (translucent) return _rasterDirectTranslucentImage(surface, image, opacity, bbox);
-            else return _rasterDirectSolidImage(surface, image, bbox);
+            if (translucent) return _rasterDirectTranslucentRGBAImage(surface, image, opacity, bbox);
+            else return _rasterDirectRGBAImage(surface, image, bbox);
+        } else if (image->scaled) {
+            if (translucent) return _rasterScaledTranslucentRGBAImage(surface, image, opacity, bbox, &itransform, halfScale);
+            else return _rasterScaledRGBAImage(surface, image, bbox, &itransform, halfScale);
         } else {
+            //OPTIMIZE_ME: Replace with the TexMap Rasterizer
             if (translucent) return _rasterTransformedTranslucentImage(surface, image, opacity, bbox, &itransform, halfScale);
             else return _rasterTransformedSolidImage(surface, image, bbox, &itransform, halfScale);
         }
