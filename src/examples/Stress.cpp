@@ -31,13 +31,16 @@
 #define SIZE 50
 
 static bool rendered = false;
-static int count = 0;
+static int xCnt = 0;
+static int yCnt = 0;
 static int frame = 0;
 static std::vector<tvg::Picture*> pictures;
 static double t1, t2, t3, t4;
 
 void svgDirCallback(const char* name, const char* path, void* data)
 {
+    if (yCnt > NUM_PER_LINE) return;        //Load maximum to NUM_PER_LINE
+
     //ignore if not svgs.
     const char *ext = name + strlen(name) - 3;
     if (strcmp(ext, "svg")) return;
@@ -50,19 +53,21 @@ void svgDirCallback(const char* name, const char* path, void* data)
     if (picture->load(buf) != tvg::Result::Success) return;
 
     picture->size(SIZE, SIZE);
-    picture->translate((count % NUM_PER_LINE) * SIZE, SIZE * (count / NUM_PER_LINE));
-    ++count;
+    picture->translate((xCnt % NUM_PER_LINE) * SIZE, SIZE * (xCnt / NUM_PER_LINE));
+    ++xCnt;
 
     //Duplicates
     for (int i = 0; i < NUM_PER_LINE - 1; i++) {
         tvg::Picture* dup = static_cast<tvg::Picture*>(picture->duplicate());
-        dup->translate((count % NUM_PER_LINE) * SIZE, SIZE * (count / NUM_PER_LINE));
+        dup->translate((xCnt % NUM_PER_LINE) * SIZE, SIZE * (xCnt / NUM_PER_LINE));
         pictures.push_back(dup);
-        ++count;
+        ++xCnt;
     }
 
     cout << "SVG: " << buf << endl;
     pictures.push_back(picture.release());
+
+    ++yCnt;
 }
 
 void tvgDrawCmds(tvg::Canvas* canvas)
