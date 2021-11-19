@@ -229,6 +229,7 @@ struct SwImage
     float        scale;
 
     bool         direct = false;  //draw image directly (with offset)
+    bool         scaled = false;  //draw scaled image
 };
 
 struct SwBlender

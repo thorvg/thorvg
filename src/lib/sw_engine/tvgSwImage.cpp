@@ -91,6 +91,9 @@ bool imagePrepare(SwImage* image, const Matrix* transform, const SwBBox& clipReg
         auto scaleX = sqrtf((transform->e11 * transform->e11) + (transform->e21 * transform->e21));
         auto scaleY = sqrtf((transform->e22 * transform->e22) + (transform->e12 * transform->e12));
         image->scale = (fabsf(scaleX - scaleY) > 0.01f) ? 1.0f : scaleX;
+
+        if (mathZero(transform->e12) && mathZero(transform->e21)) image->scaled = true;
+        else image->scaled = false;
     }
 
     if (!_genOutline(image, transform, mpool, tid)) return false;
