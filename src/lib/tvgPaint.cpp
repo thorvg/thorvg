@@ -78,7 +78,7 @@ static bool _compFastTrack(Paint* cmpTarget, const RenderTransform* pTransform, 
         viewport.x = static_cast<uint32_t>(x1);
         viewport.y = static_cast<uint32_t>(y1);
         viewport.w = static_cast<uint32_t>(x2 - x1 < 0 ? 0 : roundf(x2 - x1 + 0.5f));
-        viewport.h = static_cast<uint32_t>(x2 - x1 < 0 ? 0 : roundf(y2 - y1 + 0.5f));
+        viewport.h = static_cast<uint32_t>(y2 - y1 < 0 ? 0 : roundf(y2 - y1 + 0.5f));
 
         return true;
     }
