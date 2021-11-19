@@ -597,7 +597,7 @@ static bool _rasterDirectMaskedRleImage(SwSurface* surface, const SwImage* image
     for (uint32_t i = 0; i < image->rle->size; ++i, ++span) {
         auto dst = &surface->buffer[span->y * surface->stride + span->x];
         auto cmp = &cbuffer[span->y * surface->stride + span->x];
-        auto img = image->data + (span->y + image->y) * image->stride + (span->x + image->x);
+        auto img = image->data + (span->y + image->oy) * image->stride + (span->x + image->ox);
         auto alpha = _multiplyAlpha(span->coverage, opacity);
         if (alpha == 255) {
             for (uint32_t x = 0; x < span->len; ++x, ++dst, ++cmp, ++img) {
@@ -621,7 +621,7 @@ static bool __rasterDirectTranslucentRleImage(SwSurface* surface, const SwImage*
 
     for (uint32_t i = 0; i < image->rle->size; ++i, ++span) {
         auto dst = &surface->buffer[span->y * surface->stride + span->x];
-        auto img = image->data + (span->y + image->y) * image->stride + (span->x + image->x);
+        auto img = image->data + (span->y + image->oy) * image->stride + (span->x + image->ox);
         auto alpha = _multiplyAlpha(span->coverage, opacity);
         for (uint32_t x = 0; x < span->len; ++x, ++dst, ++img) {
             auto src = ALPHA_BLEND(*img, alpha);
@@ -651,7 +651,7 @@ static bool _rasterDirectSolidRleImage(SwSurface* surface, const SwImage* image)
 
     for (uint32_t i = 0; i < image->rle->size; ++i, ++span) {
         auto dst = &surface->buffer[span->y * surface->stride + span->x];
-        auto img = image->data + (span->y + image->y) * image->stride + (span->x + image->x);
+        auto img = image->data + (span->y + image->oy) * image->stride + (span->x + image->ox);
         if (span->coverage == 255) {
             for (uint32_t x = 0; x < span->len; ++x, ++dst, ++img) {
                 *dst = *img;
@@ -978,7 +978,7 @@ static bool _rasterDirectMaskedImage(SwSurface* surface, const SwImage* image, u
 
     TVGLOG("SW_ENGINE", "Direct Masked Image");
 
-    auto sbuffer = image->data + (region.min.y + image->y) * image->stride + (region.min.x + image->x);
+    auto sbuffer = image->data + (region.min.y + image->oy) * image->stride + (region.min.x + image->ox);
     auto cbuffer = surface->compositor->image.data + (region.min.y * surface->stride) + region.min.x;   //compositor buffer
 
     for (uint32_t y = 0; y < h2; ++y) {
@@ -1000,7 +1000,7 @@ static bool _rasterDirectMaskedImage(SwSurface* surface, const SwImage* image, u
 static bool __rasterDirectTranslucentImage(SwSurface* surface, const SwImage* image, uint32_t opacity, const SwBBox& region)
 {
     auto dbuffer = &surface->buffer[region.min.y * surface->stride + region.min.x];
-    auto sbuffer = image->data + (region.min.y + image->y) * image->stride + (region.min.x + image->x);
+    auto sbuffer = image->data + (region.min.y + image->oy) * image->stride + (region.min.x + image->ox);
 
     for (auto y = region.min.y; y < region.max.y; ++y) {
         auto dst = dbuffer;
@@ -1032,7 +1032,7 @@ static bool _rasterDirectTranslucentImage(SwSurface* surface, const SwImage* ima
 static bool _rasterDirectSolidImage(SwSurface* surface, const SwImage* image, const SwBBox& region)
 {
     auto dbuffer = &surface->buffer[region.min.y * surface->stride + region.min.x];
-    auto sbuffer = image->data + (region.min.y + image->y) * image->stride + (region.min.x + image->x);
+    auto sbuffer = image->data + (region.min.y + image->oy) * image->stride + (region.min.x + image->ox);
 
     for (auto y = region.min.y; y < region.max.y; ++y) {
         auto dst = dbuffer;
@@ -1592,21 +1592,21 @@ bool rasterImage(SwSurface* surface, SwImage* image, const Matrix* transform, co
 
     //Clipped Image
     if (image->rle) {
-        if (image->transformed) {
-            if (translucent) return _rasterTransformedTranslucentRleImage(surface, image, opacity, &itransform, halfScale);
-            else return _rasterTransformedSolidRleImage(surface, image, &itransform, halfScale);
-        } else {
+        if (image->direct) {
             if (translucent) return _rasterDirectTranslucentRleImage(surface, image, opacity);
             else return _rasterDirectSolidRleImage(surface, image);
+        } else {
+            if (translucent) return _rasterTransformedTranslucentRleImage(surface, image, opacity, &itransform, halfScale);
+            else return _rasterTransformedSolidRleImage(surface, image, &itransform, halfScale);
         }
     //Whole Image
     } else {
-        if (image->transformed) {
-            if (translucent) return _rasterTransformedTranslucentImage(surface, image, opacity, bbox, &itransform, halfScale);
-            else return _rasterTransformedSolidImage(surface, image, bbox, &itransform, halfScale);
-        } else {
+        if (image->direct) {
             if (translucent) return _rasterDirectTranslucentImage(surface, image, opacity, bbox);
             else return _rasterDirectSolidImage(surface, image, bbox);
+        } else {
+            if (translucent) return _rasterTransformedTranslucentImage(surface, image, opacity, bbox, &itransform, halfScale);
+            else return _rasterTransformedSolidImage(surface, image, bbox, &itransform, halfScale);
         }
     }
 }

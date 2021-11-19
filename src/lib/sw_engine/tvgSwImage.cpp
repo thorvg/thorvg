@@ -26,6 +26,13 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
+static inline bool _onlyShifted(const Matrix* m)
+{
+    if (mathEqual(m->e11, 1.0f) && mathEqual(m->e22, 1.0f) && mathZero(m->e12) && mathZero(m->e21)) return true;
+    return false;
+}
+
+
 static bool _genOutline(SwImage* image, const Matrix* transform, SwMpool* mpool, unsigned tid)
 {
     image->outline = mpoolReqOutline(mpool, tid);
@@ -67,40 +74,27 @@ static bool _genOutline(SwImage* image, const Matrix* transform, SwMpool* mpool,
 }
 
 
-static inline bool _onlyShifted(const Matrix* m)
-{
-    if (mathEqual(m->e11, 1.0f) && mathEqual(m->e22, 1.0f) && mathZero(m->e12) && mathZero(m->e21)) return true;
-    return false;
-}
-
-
 /************************************************************************/
 /* External Class Implementation                                        */
 /************************************************************************/
 
-
 bool imagePrepare(SwImage* image, const Matrix* transform, const SwBBox& clipRegion, SwBBox& renderRegion, SwMpool* mpool, unsigned tid)
 {
-    image->transformed = !_onlyShifted(transform);
-    bool fastTrack;
+    image->direct = _onlyShifted(transform);
 
+    //Fast track: Non-transformed image but just shifted.
+    if (image->direct) {
+        image->ox = -static_cast<uint32_t>(round(transform->e13));
+        image->oy = -static_cast<uint32_t>(round(transform->e23));
     //Figure out the scale factor by transform matrix
-    if (image->transformed) {
+    } else {
         auto scaleX = sqrtf((transform->e11 * transform->e11) + (transform->e21 * transform->e21));
         auto scaleY = sqrtf((transform->e22 * transform->e22) + (transform->e12 * transform->e12));
-        //TODO:If the x and y axis scale is different, a separate interpolation algorithm for each axis should be applied.
         image->scale = (fabsf(scaleX - scaleY) > 0.01f) ? 1.0f : scaleX;
-        fastTrack = false;
-    //Fast track: Non-transformed image but just shifted.
-    } else {
-        image->scale = 1.0f;
-        image->x = -static_cast<uint32_t>(round(transform->e13));
-        image->y = -static_cast<uint32_t>(round(transform->e23));
-        fastTrack = true;
     }
 
     if (!_genOutline(image, transform, mpool, tid)) return false;
-    return mathUpdateOutlineBBox(image->outline, clipRegion, renderRegion, fastTrack);
+    return mathUpdateOutlineBBox(image->outline, clipRegion, renderRegion, image->direct);
 }
 
 

@@ -224,11 +224,11 @@ struct SwImage
     SwRleData*   rle = nullptr;
     uint32_t*    data = nullptr;
     uint32_t     w, h, stride;
-    int32_t      x = 0;         //shift x
-    int32_t      y = 0;         //shift y
+    int32_t      ox = 0;         //offset x
+    int32_t      oy = 0;         //offset y
     float        scale;
 
-    bool         transformed = false;
+    bool         direct = false;  //draw image directly (with offset)
 };
 
 struct SwBlender
