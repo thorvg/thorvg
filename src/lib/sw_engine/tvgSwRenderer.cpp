@@ -503,6 +503,7 @@ Compositor* SwRenderer::target(const RenderRegion& region)
     cmp->compositor->image.stride = surface->stride;
     cmp->compositor->image.w = surface->w;
     cmp->compositor->image.h = surface->h;
+    cmp->compositor->image.direct = true;
 
     //We know partial clear region
     cmp->buffer = cmp->compositor->image.data + (cmp->stride * y + x);
