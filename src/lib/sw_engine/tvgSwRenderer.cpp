@@ -388,7 +388,7 @@ bool SwRenderer::renderShape(RenderData data)
     } else {
         task->sdata->fillColor(&r, &g, &b, &a);
         a = static_cast<uint8_t>((opacity * (uint32_t) a) / 255);
-        if (a > 0) rasterSolidShape(surface, &task->shape, r, g, b, a);
+        if (a > 0) rasterShape(surface, &task->shape, r, g, b, a);
     }
 
     if (auto strokeFill = task->sdata->strokeFill()) {
