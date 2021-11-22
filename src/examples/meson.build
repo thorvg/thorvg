@@ -5,8 +5,6 @@ source_file = [
     'Arc.cpp',
     'Async.cpp',
     'Blending.cpp',
-    'Boundary.cpp',
-    'Boundary2.cpp',
     'ClipPath.cpp',
     'CustomTransform.cpp',
     'DirectUpdate.cpp',
