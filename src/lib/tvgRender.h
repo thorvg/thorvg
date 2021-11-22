@@ -49,7 +49,7 @@ struct Compositor
 
 struct RenderRegion
 {
-    uint32_t x, y, w, h;
+    int32_t x, y, w, h;
 
     void intersect(const RenderRegion& rhs)
     {
@@ -62,6 +62,9 @@ struct RenderRegion
         y = (y > rhs.y) ? y : rhs.y;
         w = ((x1 < x2) ? x1 : x2) - x;
         h = ((y1 < y2) ? y1 : y2) - y;
+
+        if (w < 0) w = 0;
+        if (h < 0) h = 0;
     }
 };
 

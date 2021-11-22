@@ -19,8 +19,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#include <float.h>
-#include <math.h>
 #include "tvgMath.h"
 #include "tvgPaint.h"
 
@@ -40,7 +38,7 @@ static bool _compFastTrack(Paint* cmpTarget, const RenderTransform* pTransform, 
 
     if (rTransform) rTransform->update();
 
-    //No Rotation?
+    //No rotational.
     if (pTransform && !mathRightAngle(&pTransform->m)) return false;
     if (rTransform && !mathRightAngle(&rTransform->m)) return false;
 
@@ -53,32 +51,39 @@ static bool _compFastTrack(Paint* cmpTarget, const RenderTransform* pTransform, 
     if ((mathEqual(pt1->x, pt2->x) && mathEqual(pt2->y, pt3->y) && mathEqual(pt3->x, pt4->x) && mathEqual(pt1->y, pt4->y)) ||
         (mathEqual(pt2->x, pt3->x) && mathEqual(pt1->y, pt2->y) && mathEqual(pt1->x, pt4->x) && mathEqual(pt3->y, pt4->y))) {
 
-        auto x1 = pt1->x;
-        auto y1 = pt1->y;
-        auto x2 = pt3->x;
-        auto y2 = pt3->y;
+        auto v1 = *pt1;
+        auto v2 = *pt3;
 
         if (rTransform) {
-            x1 = x1 * rTransform->m.e11 + rTransform->m.e13;
-            y1 = y1 * rTransform->m.e22 + rTransform->m.e23;
-            x2 = x2 * rTransform->m.e11 + rTransform->m.e13;
-            y2 = y2 * rTransform->m.e22 + rTransform->m.e23;
+            mathMultiply(&v1, &rTransform->m);
+            mathMultiply(&v2, &rTransform->m);
         }
 
         if (pTransform) {
-            x1 = x1 * pTransform->m.e11 + pTransform->m.e13;
-            y1 = y1 * pTransform->m.e22 + pTransform->m.e23;
-            x2 = x2 * pTransform->m.e11 + pTransform->m.e13;
-            y2 = y2 * pTransform->m.e22 + pTransform->m.e23;
+            mathMultiply(&v1, &pTransform->m);
+            mathMultiply(&v2, &pTransform->m);
         }
 
-        if (x1 < 0.0f) x1 = 0.0f;
-        if (y1 < 0.0f) y1 = 0.0f;
+        //sorting
+        if (v1.x > v2.x) {
+            auto tmp = v2.x;
+            v2.x = v1.x;
+            v1.x = tmp;
+        }
 
-        viewport.x = static_cast<uint32_t>(x1);
-        viewport.y = static_cast<uint32_t>(y1);
-        viewport.w = static_cast<uint32_t>(x2 - x1 < 0 ? 0 : roundf(x2 - x1 + 0.5f));
-        viewport.h = static_cast<uint32_t>(y2 - y1 < 0 ? 0 : roundf(y2 - y1 + 0.5f));
+        if (v1.y > v2.y) {
+            auto tmp = v2.y;
+            v2.y = v1.y;
+            v1.y = tmp;
+        }
+
+        viewport.x = static_cast<int32_t>(v1.x);
+        viewport.y = static_cast<int32_t>(v1.y);
+        viewport.w = static_cast<int32_t>(v2.x - v1.x + 0.5f);
+        viewport.h = static_cast<int32_t>(v2.y - v1.y + 0.5f);
+
+        if (viewport.w < 0) viewport.w = 0;
+        if (viewport.h < 0) viewport.h = 0;
 
         return true;
     }
@@ -197,6 +202,8 @@ void* Paint::Impl::update(RenderMethod& renderer, const RenderTransform* pTransf
     bool cmpFastTrack = false;
 
     if (cmpTarget) {
+        cmpTarget->pImpl->ctxFlag = ContextFlag::Invalid;   //reset
+
         /* If transform has no rotation factors && ClipPath / AlphaMasking is a simple rectangle,
            we can avoid regular ClipPath / AlphaMasking sequence but use viewport for performance */
         auto tryFastTrack = false;
@@ -214,8 +221,6 @@ void* Paint::Impl::update(RenderMethod& renderer, const RenderTransform* pTransf
                 viewport2.intersect(viewport);
                 renderer.viewport(viewport2);
                 cmpTarget->pImpl->ctxFlag |= ContextFlag::FastTrack;
-            } else {
-                cmpTarget->pImpl->ctxFlag &= ~ContextFlag::FastTrack;
             }
         }
         if (!cmpFastTrack) {

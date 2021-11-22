@@ -131,10 +131,10 @@ struct Scene::Impl
     {
         if (paints.count == 0) return {0, 0, 0, 0};
 
-        uint32_t x1 = UINT32_MAX;
-        uint32_t y1 = UINT32_MAX;
-        uint32_t x2 = 0;
-        uint32_t y2 = 0;
+        int32_t x1 = INT32_MAX;
+        int32_t y1 = INT32_MAX;
+        int32_t x2 = 0;
+        int32_t y2 = 0;
 
         for (auto paint = paints.data; paint < (paints.data + paints.count); ++paint) {
             auto region = (*paint)->pImpl->bounds(renderer);
