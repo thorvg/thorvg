@@ -235,7 +235,7 @@ RenderData GlRenderer::prepare(const Shape& shape, RenderData data, const Render
 
 RenderRegion GlRenderer::viewport()
 {
-    return {0, 0, UINT32_MAX, UINT32_MAX};
+    return {0, 0, INT32_MAX, INT32_MAX};
 }
 
 

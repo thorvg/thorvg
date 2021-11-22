@@ -287,8 +287,7 @@ RenderRegion SwRenderer::viewport()
 
 bool SwRenderer::viewport(const RenderRegion& vp)
 {
-    this->vport = vp;
-
+    vport = vp;
     return true;
 }
 
@@ -456,9 +455,11 @@ Compositor* SwRenderer::target(const RenderRegion& region)
     auto y = region.y;
     auto w = region.w;
     auto h = region.h;
+    auto sw = static_cast<int32_t>(surface->w);
+    auto sh = static_cast<int32_t>(surface->h);
 
     //Out of boundary
-    if (x > surface->w || y > surface->h) return nullptr;
+    if (x > sw || y > sh) return nullptr;
 
     SwSurface* cmp = nullptr;
 
@@ -488,8 +489,8 @@ Compositor* SwRenderer::target(const RenderRegion& region)
     }
 
     //Boundary Check
-    if (x + w > surface->w) w = (surface->w - x);
-    if (y + h > surface->h) h = (surface->h - y);
+    if (x + w > sw) w = (sw - x);
+    if (y + h > sh) h = (sh - y);
 
     TVGLOG("SW_ENGINE", "Using intermediate composition [Region: %d %d %d %d]", x, y, w, h);
 
