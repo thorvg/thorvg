@@ -57,8 +57,6 @@ TEST_CASE("Memory Reservation", "[capiSwCanvas]")
     REQUIRE(tvg_canvas_reserve(canvas, 100) == TVG_RESULT_SUCCESS);
     REQUIRE(tvg_canvas_reserve(canvas, 0) == TVG_RESULT_SUCCESS);
 
-    REQUIRE(tvg_canvas_reserve(canvas, -1) == TVG_RESULT_FAILED_ALLOCATION);
-
     REQUIRE(tvg_canvas_destroy(canvas) == TVG_RESULT_SUCCESS);
 
     REQUIRE(tvg_engine_term(TVG_ENGINE_SW) == TVG_RESULT_SUCCESS);
