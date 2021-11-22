@@ -248,12 +248,20 @@ static bool _parseShapeStrokeDashPattern(const char *ptr, const char *end, Shape
     uint32_t dashPatternCnt;
     READ_UI32(&dashPatternCnt, ptr);
     ptr += SIZE(uint32_t);
-    const float* dashPattern = (float*) ptr;
-    ptr += SIZE(float) * dashPatternCnt;
+    if (dashPatternCnt > 0) {
+        float* dashPattern = static_cast<float*>(malloc(sizeof(float) * dashPatternCnt));
+        if (!dashPattern) return false;
+        memcpy(dashPattern, ptr, sizeof(float) * dashPatternCnt);
+        ptr += SIZE(float) * dashPatternCnt;
 
-    if (ptr > end) return false;
+        if (ptr > end) {
+            free(dashPattern);
+            return false;
+        }
 
-    shape->stroke(dashPattern, dashPatternCnt);
+        shape->stroke(dashPattern, dashPatternCnt);
+        free(dashPattern);
+    }
     return true;
 }
 
