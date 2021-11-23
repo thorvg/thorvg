@@ -170,7 +170,7 @@ bool Paint::Impl::render(RenderMethod& renderer)
         Create a composition image. */
     if (cmpTarget && cmpMethod != CompositeMethod::ClipPath && !(cmpTarget->pImpl->ctxFlag & ContextFlag::FastTrack)) {
         auto region = smethod->bounds(renderer);
-        if (region.w == 0 || region.h == 0) return false;
+        if (region.w == 0 || region.h == 0) return true;
         cmp = renderer.target(region);
         renderer.beginComposite(cmp, CompositeMethod::None, 255);
         cmpTarget->pImpl->render(renderer);
