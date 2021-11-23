@@ -662,7 +662,7 @@ static bool _rasterDirectRleRGBAImage(SwSurface* surface, const SwImage* image)
         auto img = image->data + (span->y + image->oy) * image->stride + (span->x + image->ox);
         if (span->coverage == 255) {
             for (uint32_t x = 0; x < span->len; ++x, ++dst, ++img) {
-                *dst = *img;
+                *dst = *img + ALPHA_BLEND(*dst, surface->blender.ialpha(*img));
             }
         } else {
             for (uint32_t x = 0; x < span->len; ++x, ++dst, ++img) {
@@ -911,7 +911,8 @@ static bool _rasterTransformedRGBAImage(SwSurface* surface, const SwImage* image
             auto rX = static_cast<uint32_t>(roundf(x * itransform->e11 + ey1));
             auto rY = static_cast<uint32_t>(roundf(x * itransform->e21 + ey2));
             if (rX >= w || rY >= h) continue;
-            *dst = img[rX + (rY * image->stride)];
+            auto src = img[rX + (rY * image->stride)];
+            *dst = src + ALPHA_BLEND(*dst, surface->blender.ialpha(src));
         }
     }
     return true;
@@ -935,7 +936,7 @@ static bool _rasterDownScaledRGBAImage(SwSurface* surface, const SwImage* image,
             uint32_t src;
             if (rX < halfScale || rY < halfScale || rX >= w - halfScale || rY >= h - halfScale) src = img[rX + (rY * w)];
             else src = _interpDownScaler(img, w, h, rX, rY, halfScale);
-            *dst = src;
+            *dst = src + ALPHA_BLEND(*dst, surface->blender.ialpha(src));
         }
     }
     return true;
@@ -961,7 +962,7 @@ static bool _rasterUpScaledRGBAImage(SwSurface* surface, const SwImage* image, c
             uint32_t src;
             if (rX == w - 1 || rY == h - 1) src = img[rX + (rY * w)];
             else src = _interpUpScaler(img, w, h, fX, fY);
-            *dst = src;
+            *dst = src + ALPHA_BLEND(*dst, surface->blender.ialpha(src));
         }
     }
     return true;
