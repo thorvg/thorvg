@@ -49,6 +49,18 @@ if [[ $PAYLOAD_CPPLINT == *"Total errors found: "* ]]; then
   OUTPUT+=$'\n```\n' 
 fi
 
+curl $COMMENTS_URL > comments.json
+EXIST_COMMENTS=`jq -r '.[] | select(.body | contains("*CODING STYLE CHECK*")) | .id' comments.json`
+echo $EXIST_COMMENTS
+for exist_comment in $EXIST_COMMENTS
+do
+  echo "---------------------"
+  echo $exist_comment
+  COMMENT_URL="https://api.github.com/repos/Samsung/thorvg/issues/comments/""$exist_comment"
+  curl -X "DELETE" -H "Authorization: token $GITHUB_TOKEN" --header "Content-Type: application/vnd.github.VERSION.text+json" "$COMMENT_URL"
+  echo "=================="
+done
+
 PAYLOAD=$(echo '{}' | jq --arg body "$OUTPUT" '.body = $body')
 
 curl -s -S -H "Authorization: token $GITHUB_TOKEN" --header "Content-Type: application/vnd.github.VERSION.text+json" --data "$PAYLOAD" "$COMMENTS_URL"
