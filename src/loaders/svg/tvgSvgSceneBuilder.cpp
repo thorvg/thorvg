@@ -77,6 +77,24 @@ static inline bool _isGroupType(SvgNodeType type)
 }
 
 
+//According to: https://www.w3.org/TR/SVG11/coords.html#ObjectBoundingBoxUnits (the last paragraph)
+//a stroke width should be ignored for bounding box calculations
+static Box _boundingBox(const Shape* shape)
+{
+    float x, y, w, h;
+    shape->bounds(&x, &y, &w, &h, false);
+
+    if (auto strokeW = shape->strokeWidth()) {
+        x += 0.5f * strokeW;
+        y += 0.5f * strokeW;
+        w -= strokeW;
+        h -= strokeW;
+    }
+
+    return {x, y, w, h};
+}
+
+
 static void _transformMultiply(const Matrix* mBBox, Matrix* gradTransf)
 {
     gradTransf->e13 = gradTransf->e13 * mBBox->e11 + mBBox->e13;
@@ -286,17 +304,7 @@ static void _applyProperty(SvgNode* node, Shape* vg, const Box& vBox, const stri
         //Do nothing
     } else if (style->fill.paint.gradient) {
         Box bBox = vBox;
-        if (!style->fill.paint.gradient->userSpace) {
-            vg->bounds(&bBox.x, &bBox.y, &bBox.w, &bBox.h, false);
-            //According to: https://www.w3.org/TR/SVG11/coords.html#ObjectBoundingBoxUnits (the last paragraph)
-            //a stroke width should be ignored for bounding box calculations
-            if (auto strokeW = vg->strokeWidth()) {
-                bBox.x += 0.5f * strokeW;
-                bBox.y += 0.5f * strokeW;
-                bBox.w -= strokeW;
-                bBox.h -= strokeW;
-            }
-        }
+        if (!style->fill.paint.gradient->userSpace) bBox = _boundingBox(vg);
 
         if (style->fill.paint.gradient->type == SvgGradientType::Linear) {
              auto linear = _applyLinearGradientProperty(style->fill.paint.gradient, vg, bBox, style->fill.opacity);
@@ -336,17 +344,7 @@ static void _applyProperty(SvgNode* node, Shape* vg, const Box& vBox, const stri
         //Do nothing
     } else if (style->stroke.paint.gradient) {
         Box bBox = vBox;
-        if (!style->stroke.paint.gradient->userSpace) {
-            //According to: https://www.w3.org/TR/SVG11/coords.html#ObjectBoundingBoxUnits (the last paragraph)
-            //a stroke width should be ignored for bounding box calculations
-            vg->bounds(&bBox.x, &bBox.y, &bBox.w, &bBox.h, false);
-            if (auto strokeW = vg->strokeWidth()) {
-                bBox.x += 0.5f * strokeW;
-                bBox.y += 0.5f * strokeW;
-                bBox.w -= strokeW;
-                bBox.h -= strokeW;
-            }
-        }
+        if (!style->stroke.paint.gradient->userSpace) bBox = _boundingBox(vg);
 
         if (style->stroke.paint.gradient->type == SvgGradientType::Linear) {
              auto linear = _applyLinearGradientProperty(style->stroke.paint.gradient, vg, bBox, style->stroke.opacity);
