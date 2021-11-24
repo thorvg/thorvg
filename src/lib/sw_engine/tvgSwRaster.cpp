@@ -590,7 +590,7 @@ static bool _rasterDownScaledRleRGBAImage(SwSurface* surface, const SwImage* ima
         auto ey1 = span->y * itransform->e12 + itransform->e13;
         auto ey2 = span->y * itransform->e22 + itransform->e23;
         auto dst = &surface->buffer[span->y * surface->stride + span->x];
-        for (uint32_t x = span->x; x < span->len; ++x, ++dst) {
+        for (uint32_t x = span->x; x < ((uint32_t)span->x) + span->len; ++x, ++dst) {
             auto rX = static_cast<uint32_t>(roundf(x * itransform->e11 + ey1));
             auto rY = static_cast<uint32_t>(roundf(x * itransform->e21 + ey2));
             if (rX >= w || rY >= h) continue;
@@ -616,7 +616,7 @@ static bool _rasterUpScaledRleRGBAImage(SwSurface* surface, const SwImage* image
         auto ey1 = span->y * itransform->e12 + itransform->e13;
         auto ey2 = span->y * itransform->e22 + itransform->e23;
         auto dst = &surface->buffer[span->y * surface->stride + span->x];
-        for (uint32_t x = span->x; x < span->len; ++x, ++dst) {
+        for (uint32_t x = span->x; x < ((uint32_t)span->x) + span->len; ++x, ++dst) {
             auto fX = x * itransform->e11 + ey1;
             auto fY = x * itransform->e21 + ey2;
             auto rX = static_cast<uint32_t>(roundf(fX));
