@@ -21,45 +21,43 @@
  */
 
 
-static inline void cRasterRGBA32(uint32_t *dst, uint32_t val, uint32_t offset, int32_t len)
+static void cRasterRGBA32(uint32_t *dst, uint32_t val, uint32_t offset, int32_t len)
 {
     dst += offset;
     while (len--) *dst++ = val;
 }
 
 
-static inline bool cRasterTranslucentRle(SwSurface* surface, const SwRleData* rle, uint32_t color)
+static bool cRasterTranslucentRle(SwSurface* surface, const SwRleData* rle, uint32_t color)
 {
     auto span = rle->spans;
     uint32_t src;
 
-    for (uint32_t i = 0; i < rle->size; ++i) {
+    for (uint32_t i = 0; i < rle->size; ++i, ++span) {
         auto dst = &surface->buffer[span->y * surface->stride + span->x];
 
         if (span->coverage < 255) src = ALPHA_BLEND(color, span->coverage);
         else src = color;
 
-        auto ialpha = 255 - surface->blender.alpha(src);
-
-        for (uint32_t x = 0; x < span->len; ++x)
-            dst[x] = src + ALPHA_BLEND(dst[x], ialpha);
-
-        ++span;
+        for (uint32_t x = 0; x < span->len; ++x, ++dst) {
+            *dst = src + ALPHA_BLEND(*dst, surface->blender.ialpha(src));
+        }
     }
     return true;
 }
 
-static inline bool cRasterTranslucentRect(SwSurface* surface, const SwBBox& region, uint32_t color)
+
+static bool cRasterTranslucentRect(SwSurface* surface, const SwBBox& region, uint32_t color)
 {
     auto buffer = surface->buffer + (region.min.y * surface->stride) + region.min.x;
     auto h = static_cast<uint32_t>(region.max.y - region.min.y);
     auto w = static_cast<uint32_t>(region.max.x - region.min.x);
-    auto ialpha = 255 - surface->blender.alpha(color);
+    auto ialpha = surface->blender.ialpha(color);
 
     for (uint32_t y = 0; y < h; ++y) {
         auto dst = &buffer[y * surface->stride];
-        for (uint32_t x = 0; x < w; ++x) {
-            dst[x] = color + ALPHA_BLEND(dst[x], ialpha);
+        for (uint32_t x = 0; x < w; ++x, ++dst) {
+            *dst = color + ALPHA_BLEND(*dst, ialpha);
         }
     }
     return true;

@@ -62,7 +62,7 @@ static inline __m128i ALPHA_BLEND(__m128i c, __m128i a)
 }
 
 
-static inline void avxRasterRGBA32(uint32_t *dst, uint32_t val, uint32_t offset, int32_t len)
+static void avxRasterRGBA32(uint32_t *dst, uint32_t val, uint32_t offset, int32_t len)
 {
     //1. calculate how many iterations we need to cover the length
     uint32_t iterations = len / N_32BITS_IN_256REG;
@@ -82,7 +82,7 @@ static inline void avxRasterRGBA32(uint32_t *dst, uint32_t val, uint32_t offset,
 }
 
 
-static inline bool avxRasterTranslucentRect(SwSurface* surface, const SwBBox& region, uint32_t color)
+static bool avxRasterTranslucentRect(SwSurface* surface, const SwBBox& region, uint32_t color)
 {
     auto buffer = surface->buffer + (region.min.y * surface->stride) + region.min.x;
     auto h = static_cast<uint32_t>(region.max.y - region.min.y);
@@ -125,7 +125,7 @@ static inline bool avxRasterTranslucentRect(SwSurface* surface, const SwBBox& re
 }
 
 
-static inline bool avxRasterTranslucentRle(SwSurface* surface, const SwRleData* rle, uint32_t color)
+static bool avxRasterTranslucentRle(SwSurface* surface, const SwRleData* rle, uint32_t color)
 {
     auto span = rle->spans;
     uint32_t src;

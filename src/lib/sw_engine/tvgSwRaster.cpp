@@ -62,14 +62,6 @@ static inline uint32_t _argbJoin(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 }
 
 
-static bool _translucent(const SwSurface* surface, uint8_t a)
-{
-    if (a < 255) return true;
-    if (!surface->compositor || surface->compositor->method == CompositeMethod::None) return false;
-    return true;
-}
-
-
 static inline bool _compositing(const SwSurface* surface)
 {
     if (!surface->compositor || surface->compositor->method == CompositeMethod::None) return false;
@@ -130,46 +122,25 @@ static uint32_t _interpDownScaler(const uint32_t *img, uint32_t w, uint32_t h, u
 /* Rect                                                                 */
 /************************************************************************/
 
-static bool _rasterTranslucentMaskedRect(SwSurface* surface, const SwBBox& region, uint32_t color, uint32_t (*blendMethod)(uint32_t))
+static bool _rasterMaskedRect(SwSurface* surface, const SwBBox& region, uint32_t color, uint32_t (*blendMethod)(uint32_t))
 {
-    auto buffer = surface->buffer + (region.min.y * surface->stride) + region.min.x;
-    auto h = static_cast<uint32_t>(region.max.y - region.min.y);
-    auto w = static_cast<uint32_t>(region.max.x - region.min.x);
+    TVGLOG("SW_ENGINE", "Masked Rect");
 
-    TVGLOG("SW_ENGINE", "Translucent Masked Rect");
+    auto buffer = surface->buffer + (region.min.y * surface->stride) + region.min.x;
+    auto w = static_cast<uint32_t>(region.max.x - region.min.x);
+    auto h = static_cast<uint32_t>(region.max.y - region.min.y);
 
     auto cbuffer = surface->compositor->image.data + (region.min.y * surface->compositor->image.stride) + region.min.x;   //compositor buffer
 
     for (uint32_t y = 0; y < h; ++y) {
         auto dst = &buffer[y * surface->stride];
         auto cmp = &cbuffer[y * surface->stride];
-        for (uint32_t x = 0; x < w; ++x) {
+        for (uint32_t x = 0; x < w; ++x, ++dst, ++cmp) {
             auto tmp = ALPHA_BLEND(color, blendMethod(*cmp));
-            dst[x] = tmp + ALPHA_BLEND(dst[x], surface->blender.ialpha(tmp));
-            ++cmp;
+            *dst = tmp + ALPHA_BLEND(*dst, surface->blender.ialpha(tmp));
         }
     }
     return true;
-}
-
-static bool _rasterTranslucentRect(SwSurface* surface, const SwBBox& region, uint32_t color)
-{
-    if (surface->compositor) {
-        if (surface->compositor->method == CompositeMethod::AlphaMask) {
-            return _rasterTranslucentMaskedRect(surface, region, color, surface->blender.alpha);
-        }
-        if (surface->compositor->method == CompositeMethod::InvAlphaMask) {
-            return _rasterTranslucentMaskedRect(surface, region, color, surface->blender.ialpha);
-        }
-    }
-
-#if defined(THORVG_AVX_VECTOR_SUPPORT)
-    return avxRasterTranslucentRect(surface, region, color);
-#elif defined(THORVG_NEON_VECTOR_SUPPORT)
-    return neonRasterTranslucentRect(surface, region, color);
-#else
-    return cRasterTranslucentRect(surface, region, color);
-#endif
 }
 
 
@@ -186,76 +157,101 @@ static bool _rasterSolidRect(SwSurface* surface, const SwBBox& region, uint32_t 
 }
 
 
+static bool _rasterRect(SwSurface* surface, const SwBBox& region, uint32_t color, uint8_t opacity)
+{
+    if (_compositing(surface)) {
+        if (surface->compositor->method == CompositeMethod::AlphaMask) {
+            return _rasterMaskedRect(surface, region, color, surface->blender.alpha);
+        } else if (surface->compositor->method == CompositeMethod::InvAlphaMask) {
+            return _rasterMaskedRect(surface, region, color, surface->blender.ialpha);
+        }
+    } else {
+        if (opacity == 255) {
+            return _rasterSolidRect(surface, region, color);
+        } else {
+#if defined(THORVG_AVX_VECTOR_SUPPORT)
+            return avxRasterTranslucentRect(surface, region, color);
+#elif defined(THORVG_NEON_VECTOR_SUPPORT)
+            return neonRasterTranslucentRect(surface, region, color);
+#else
+            return cRasterTranslucentRect(surface, region, color);
+#endif
+        }
+    }
+    return false;
+}
+
+
 /************************************************************************/
 /* Rle                                                                  */
 /************************************************************************/
 
-static bool _rasterTranslucentMaskedRle(SwSurface* surface, SwRleData* rle, uint32_t color, uint32_t (*blendMethod)(uint32_t))
+static bool _rasterMaskedRle(SwSurface* surface, SwRleData* rle, uint32_t color, uint32_t (*blendMethod)(uint32_t))
 {
-    TVGLOG("SW_ENGINE", "Translucent Masked Rle");
+    TVGLOG("SW_ENGINE", "Masked Rle");
 
     auto span = rle->spans;
     uint32_t src;
     auto cbuffer = surface->compositor->image.data;
 
-    for (uint32_t i = 0; i < rle->size; ++i) {
+    for (uint32_t i = 0; i < rle->size; ++i, ++span) {
         auto dst = &surface->buffer[span->y * surface->stride + span->x];
         auto cmp = &cbuffer[span->y * surface->compositor->image.stride + span->x];
-        if (span->coverage < 255) src = ALPHA_BLEND(color, span->coverage);
-        else src = color;
-        for (uint32_t x = 0; x < span->len; ++x) {
+        if (span->coverage == 255) src = color;
+        else src = ALPHA_BLEND(color, span->coverage);
+        for (uint32_t x = 0; x < span->len; ++x, ++dst, ++cmp) {
             auto tmp = ALPHA_BLEND(src, blendMethod(*cmp));
-            dst[x] = tmp + ALPHA_BLEND(dst[x], surface->blender.ialpha(tmp));
-            ++cmp;
+            *dst = tmp + ALPHA_BLEND(*dst, surface->blender.ialpha(tmp));
         }
-        ++span;
     }
     return true;
-}
-
-static bool _rasterTranslucentRle(SwSurface* surface, SwRleData* rle, uint32_t color)
-{
-    if (!rle) return false;
-
-    if (surface->compositor) {
-        if (surface->compositor->method == CompositeMethod::AlphaMask) {
-            return _rasterTranslucentMaskedRle(surface, rle, color, surface->blender.alpha);
-        }
-        if (surface->compositor->method == CompositeMethod::InvAlphaMask) {
-            return _rasterTranslucentMaskedRle(surface, rle, color, surface->blender.ialpha);
-        }
-    }
-
-#if defined(THORVG_AVX_VECTOR_SUPPORT)
-    return avxRasterTranslucentRle(surface, rle, color);
-#elif defined(THORVG_NEON_VECTOR_SUPPORT)
-    return neonRasterTranslucentRle(surface, rle, color);
-#else
-    return cRasterTranslucentRle(surface, rle, color);
-#endif
 }
 
 
 static bool _rasterSolidRle(SwSurface* surface, const SwRleData* rle, uint32_t color)
 {
-    if (!rle) return false;
-
     auto span = rle->spans;
 
-    for (uint32_t i = 0; i < rle->size; ++i) {
+    for (uint32_t i = 0; i < rle->size; ++i, ++span) {
         if (span->coverage == 255) {
             rasterRGBA32(surface->buffer + span->y * surface->stride, color, span->x, span->len);
         } else {
             auto dst = &surface->buffer[span->y * surface->stride + span->x];
             auto src = ALPHA_BLEND(color, span->coverage);
             auto ialpha = 255 - span->coverage;
-            for (uint32_t i = 0; i < span->len; ++i) {
-                dst[i] = src + ALPHA_BLEND(dst[i], ialpha);
+            for (uint32_t x = 0; x < span->len; ++x, ++dst) {
+                *dst = src + ALPHA_BLEND(*dst, ialpha);
             }
         }
-        ++span;
     }
     return true;
+}
+
+
+static bool _rasterRle(SwSurface* surface, SwRleData* rle, uint32_t color, uint8_t opacity)
+{
+    if (!rle) return false;
+
+    if (_compositing(surface)) {
+        if (surface->compositor->method == CompositeMethod::AlphaMask) {
+            return _rasterMaskedRle(surface, rle, color, surface->blender.alpha);
+        } else if (surface->compositor->method == CompositeMethod::InvAlphaMask) {
+            return _rasterMaskedRle(surface, rle, color, surface->blender.ialpha);
+        }
+    } else {
+        if (opacity == 255) {
+            return _rasterSolidRle(surface, rle, color);
+        } else {
+#if defined(THORVG_AVX_VECTOR_SUPPORT)
+            return avxRasterTranslucentRle(surface, rle, color);
+#elif defined(THORVG_NEON_VECTOR_SUPPORT)
+            return neonRasterTranslucentRle(surface, rle, color);
+#else
+            return cRasterTranslucentRle(surface, rle, color);
+#endif
+        }
+    }
+    return false;
 }
 
 
@@ -1896,7 +1892,7 @@ static bool _rasterRGBAImage(SwSurface* surface, SwImage* image, const Matrix* t
 /* Rect Linear Gradient                                                 */
 /************************************************************************/
 
-static bool _rasterTranslucentLinearGradientMaskedRect(SwSurface* surface, const SwBBox& region, const SwFill* fill, uint32_t (*blendMethod)(uint32_t))
+static bool _rasterLinearGradientMaskedRect(SwSurface* surface, const SwBBox& region, const SwFill* fill, uint32_t (*blendMethod)(uint32_t))
 {
     if (fill->linear.len < FLT_EPSILON) return false;
 
@@ -1924,7 +1920,7 @@ static bool _rasterTranslucentLinearGradientMaskedRect(SwSurface* surface, const
 }
 
 
-static bool __rasterTranslucentLinearGradientRect(SwSurface* surface, const SwBBox& region, const SwFill* fill)
+static bool _rasterTranslucentLinearGradientRect(SwSurface* surface, const SwBBox& region, const SwFill* fill)
 {
     if (fill->linear.len < FLT_EPSILON) return false;
 
@@ -1935,29 +1931,15 @@ static bool __rasterTranslucentLinearGradientRect(SwSurface* surface, const SwBB
     auto sbuffer = static_cast<uint32_t*>(alloca(w * sizeof(uint32_t)));
     if (!sbuffer) return false;
 
-    auto dst = buffer;
     for (uint32_t y = 0; y < h; ++y) {
+        auto dst = buffer;
         fillFetchLinear(fill, sbuffer, region.min.y + y, region.min.x, w);
-        for (uint32_t x = 0; x < w; ++x) {
-            dst[x] = sbuffer[x] + ALPHA_BLEND(dst[x], surface->blender.ialpha(sbuffer[x]));
+        for (uint32_t x = 0; x < w; ++x, ++dst) {
+            *dst = sbuffer[x] + ALPHA_BLEND(*dst, surface->blender.ialpha(sbuffer[x]));
         }
-        dst += surface->stride;
+        buffer += surface->stride;
     }
     return true;
-}
-
-
-static bool _rasterTranslucentLinearGradientRect(SwSurface* surface, const SwBBox& region, const SwFill* fill)
-{
-    if (surface->compositor) {
-        if (surface->compositor->method == CompositeMethod::AlphaMask) {
-            return _rasterTranslucentLinearGradientMaskedRect(surface, region, fill, surface->blender.alpha);
-        }
-        if (surface->compositor->method == CompositeMethod::InvAlphaMask) {
-            return _rasterTranslucentLinearGradientMaskedRect(surface, region, fill, surface->blender.ialpha);
-        }
-    }
-    return __rasterTranslucentLinearGradientRect(surface, region, fill);
 }
 
 
@@ -1966,8 +1948,8 @@ static bool _rasterSolidLinearGradientRect(SwSurface* surface, const SwBBox& reg
     if (fill->linear.len < FLT_EPSILON) return false;
 
     auto buffer = surface->buffer + (region.min.y * surface->stride) + region.min.x;
-    auto h = static_cast<uint32_t>(region.max.y - region.min.y);
     auto w = static_cast<uint32_t>(region.max.x - region.min.x);
+    auto h = static_cast<uint32_t>(region.max.y - region.min.y);
 
     for (uint32_t y = 0; y < h; ++y) {
         fillFetchLinear(fill, buffer + y * surface->stride, region.min.y + y, region.min.x, w);
@@ -1976,12 +1958,27 @@ static bool _rasterSolidLinearGradientRect(SwSurface* surface, const SwBBox& reg
 }
 
 
+static bool _rasterLinearGradientRect(SwSurface* surface, const SwBBox& region, const SwFill* fill)
+{
+    if (_compositing(surface)) {
+        if (surface->compositor->method == CompositeMethod::AlphaMask) {
+            return _rasterLinearGradientMaskedRect(surface, region, fill, surface->blender.alpha);
+        } else if (surface->compositor->method == CompositeMethod::InvAlphaMask) {
+            return _rasterLinearGradientMaskedRect(surface, region, fill, surface->blender.ialpha);
+        }
+    } else {
+        if (fill->translucent) return _rasterTranslucentLinearGradientRect(surface, region, fill);
+        else _rasterSolidLinearGradientRect(surface, region, fill);
+    }
+    return false;   
+}
+
+
 /************************************************************************/
 /* Rle Linear Gradient                                                  */
 /************************************************************************/
 
-
-static bool _rasterTranslucentLinearGradientMaskedRle(SwSurface* surface, const SwRleData* rle, const SwFill* fill, uint32_t (*blendMethod)(uint32_t))
+static bool _rasterLinearGradientMaskedRle(SwSurface* surface, const SwRleData* rle, const SwFill* fill, uint32_t (*blendMethod)(uint32_t))
 {
     if (fill->linear.len < FLT_EPSILON) return false;
 
@@ -2013,7 +2010,7 @@ static bool _rasterTranslucentLinearGradientMaskedRle(SwSurface* surface, const 
 }
 
 
-static bool __rasterTranslucentLinearGradientRle(SwSurface* surface, const SwRleData* rle, const SwFill* fill)
+static bool _rasterTranslucentLinearGradientRle(SwSurface* surface, const SwRleData* rle, const SwFill* fill)
 {
     if (fill->linear.len < FLT_EPSILON) return false;
 
@@ -2025,32 +2022,17 @@ static bool __rasterTranslucentLinearGradientRle(SwSurface* surface, const SwRle
         auto dst = &surface->buffer[span->y * surface->stride + span->x];
         fillFetchLinear(fill, buffer, span->y, span->x, span->len);
         if (span->coverage == 255) {
-            for (uint32_t i = 0; i < span->len; ++i) {
-                dst[i] = buffer[i] + ALPHA_BLEND(dst[i], surface->blender.ialpha(buffer[i]));
+            for (uint32_t i = 0; i < span->len; ++i, ++dst) {
+                *dst = buffer[i] + ALPHA_BLEND(*dst, surface->blender.ialpha(buffer[i]));
             }
         } else {
-            for (uint32_t i = 0; i < span->len; ++i) {
+            for (uint32_t i = 0; i < span->len; ++i, ++dst) {
                 auto tmp = ALPHA_BLEND(buffer[i], span->coverage);
-                dst[i] = tmp + ALPHA_BLEND(dst[i], surface->blender.ialpha(tmp));
+                *dst = tmp + ALPHA_BLEND(*dst, surface->blender.ialpha(tmp));
             }
         }
     }
     return true;
-}
-
-
-static bool _rasterTranslucentLinearGradientRle(SwSurface* surface, const SwRleData* rle, const SwFill* fill)
-{
-    if (!rle) return false;
-
-    if (surface->compositor) {
-        if (surface->compositor->method == CompositeMethod::AlphaMask) {
-            return _rasterTranslucentLinearGradientMaskedRle(surface, rle, fill, surface->blender.alpha);
-        } else if (surface->compositor->method == CompositeMethod::InvAlphaMask) {
-            return _rasterTranslucentLinearGradientMaskedRle(surface, rle, fill, surface->blender.ialpha);
-        }
-    }
-    return __rasterTranslucentLinearGradientRle(surface, rle, fill);
 }
 
 
@@ -2079,11 +2061,29 @@ static bool _rasterSolidLinearGradientRle(SwSurface* surface, const SwRleData* r
 }
 
 
+static bool _rasterLinearGradientRle(SwSurface* surface, const SwRleData* rle, const SwFill* fill)
+{
+    if (!rle) return false;
+
+    if (_compositing(surface)) {
+        if (surface->compositor->method == CompositeMethod::AlphaMask) {
+            return _rasterLinearGradientMaskedRle(surface, rle, fill, surface->blender.alpha);
+        } else if (surface->compositor->method == CompositeMethod::InvAlphaMask) {
+            return _rasterLinearGradientMaskedRle(surface, rle, fill, surface->blender.ialpha);
+        }
+    } else {
+        if (fill->translucent) return _rasterTranslucentLinearGradientRle(surface, rle, fill);
+        else return _rasterSolidLinearGradientRle(surface, rle, fill);
+    }
+    return false;
+}
+
+
 /************************************************************************/
 /* Rect Radial Gradient                                                 */
 /************************************************************************/
 
-static bool _rasterTranslucentRadialGradientMaskedRect(SwSurface* surface, const SwBBox& region, const SwFill* fill, uint32_t (*blendMethod)(uint32_t))
+static bool _rasterRadialGradientMaskedRect(SwSurface* surface, const SwBBox& region, const SwFill* fill, uint32_t (*blendMethod)(uint32_t))
 {
     if (fill->radial.a < FLT_EPSILON) return false;
 
@@ -2111,7 +2111,7 @@ static bool _rasterTranslucentRadialGradientMaskedRect(SwSurface* surface, const
 }
 
 
-static bool __rasterTranslucentRadialGradientRect(SwSurface* surface, const SwBBox& region, const SwFill* fill)
+static bool _rasterTranslucentRadialGradientRect(SwSurface* surface, const SwBBox& region, const SwFill* fill)
 {
     if (fill->radial.a < FLT_EPSILON) return false;
 
@@ -2122,28 +2122,15 @@ static bool __rasterTranslucentRadialGradientRect(SwSurface* surface, const SwBB
     auto sbuffer = static_cast<uint32_t*>(alloca(w * sizeof(uint32_t)));
     if (!sbuffer) return false;
 
-    auto dst = buffer;
     for (uint32_t y = 0; y < h; ++y) {
+        auto dst = buffer;
         fillFetchRadial(fill, sbuffer, region.min.y + y, region.min.x, w);
-        for (uint32_t x = 0; x < w; ++x) {
-            dst[x] = sbuffer[x] + ALPHA_BLEND(dst[x], surface->blender.ialpha(sbuffer[x]));
+        for (uint32_t x = 0; x < w; ++x, ++dst) {
+            *dst = sbuffer[x] + ALPHA_BLEND(*dst, surface->blender.ialpha(sbuffer[x]));
         }
-        dst += surface->stride;
+        buffer += surface->stride;
     }
     return true;
-}
-
-
-static bool _rasterTranslucentRadialGradientRect(SwSurface* surface, const SwBBox& region, const SwFill* fill)
-{
-    if (surface->compositor) {
-        if (surface->compositor->method == CompositeMethod::AlphaMask) {
-            return _rasterTranslucentRadialGradientMaskedRect(surface, region, fill, surface->blender.alpha);
-        } else if (surface->compositor->method == CompositeMethod::InvAlphaMask) {
-            return _rasterTranslucentRadialGradientMaskedRect(surface, region, fill, surface->blender.ialpha);
-        }
-    }
-    return __rasterTranslucentRadialGradientRect(surface, region, fill);
 }
 
 
@@ -2163,12 +2150,27 @@ static bool _rasterSolidRadialGradientRect(SwSurface* surface, const SwBBox& reg
 }
 
 
+static bool _rasterRadialGradientRect(SwSurface* surface, const SwBBox& region, const SwFill* fill)
+{
+    if (_compositing(surface)) {
+        if (surface->compositor->method == CompositeMethod::AlphaMask) {
+            return _rasterRadialGradientMaskedRect(surface, region, fill, surface->blender.alpha);
+        } else if (surface->compositor->method == CompositeMethod::InvAlphaMask) {
+            return _rasterRadialGradientMaskedRect(surface, region, fill, surface->blender.ialpha);
+        }
+    } else {
+        if (fill->translucent) return _rasterTranslucentRadialGradientRect(surface, region, fill);
+        else return _rasterSolidRadialGradientRect(surface, region, fill);
+    }
+    return false;
+}
+
+
 /************************************************************************/
 /* RLE Radial Gradient                                                  */
 /************************************************************************/
 
-
-static bool _rasterTranslucentRadialGradientMaskedRle(SwSurface* surface, const SwRleData* rle, const SwFill* fill, uint32_t (*blendMethod)(uint32_t))
+static bool _rasterRadialGradientMaskedRle(SwSurface* surface, const SwRleData* rle, const SwFill* fill, uint32_t (*blendMethod)(uint32_t))
 {
     if (fill->radial.a < FLT_EPSILON) return false;
 
@@ -2200,7 +2202,7 @@ static bool _rasterTranslucentRadialGradientMaskedRle(SwSurface* surface, const 
 }
 
 
-static bool __rasterTranslucentRadialGradientRle(SwSurface* surface, const SwRleData* rle, const SwFill* fill)
+static bool _rasterTranslucentRadialGradientRle(SwSurface* surface, const SwRleData* rle, const SwFill* fill)
 {
     if (fill->radial.a < FLT_EPSILON) return false;
 
@@ -2212,32 +2214,17 @@ static bool __rasterTranslucentRadialGradientRle(SwSurface* surface, const SwRle
         auto dst = &surface->buffer[span->y * surface->stride + span->x];
         fillFetchRadial(fill, buffer, span->y, span->x, span->len);
         if (span->coverage == 255) {
-            for (uint32_t i = 0; i < span->len; ++i) {
-                dst[i] = buffer[i] + ALPHA_BLEND(dst[i], surface->blender.ialpha(buffer[i]));
+            for (uint32_t i = 0; i < span->len; ++i, ++dst) {
+                *dst = buffer[i] + ALPHA_BLEND(*dst, surface->blender.ialpha(buffer[i]));
             }
         } else {
-           for (uint32_t i = 0; i < span->len; ++i) {
+           for (uint32_t i = 0; i < span->len; ++i, ++dst) {
                 auto tmp = ALPHA_BLEND(buffer[i], span->coverage);
-                dst[i] = tmp + ALPHA_BLEND(dst[i], surface->blender.ialpha(tmp));
+                *dst = tmp + ALPHA_BLEND(*dst, surface->blender.ialpha(tmp));
             }
         }
     }
     return true;
-}
-
-
-static bool _rasterTranslucentRadialGradientRle(SwSurface* surface, const SwRleData* rle, const SwFill* fill)
-{
-    if (!rle) return false;
-
-    if (surface->compositor) {
-        if (surface->compositor->method == CompositeMethod::AlphaMask) {
-            return _rasterTranslucentRadialGradientMaskedRle(surface, rle, fill, surface->blender.alpha);
-        } else if (surface->compositor->method == CompositeMethod::InvAlphaMask) {
-            return _rasterTranslucentRadialGradientMaskedRle(surface, rle, fill, surface->blender.ialpha);
-        }
-    }
-    return __rasterTranslucentRadialGradientRle(surface, rle, fill);
 }
 
 
@@ -2258,11 +2245,29 @@ static bool _rasterSolidRadialGradientRle(SwSurface* surface, const SwRleData* r
             fillFetchRadial(fill, buf, span->y, span->x, span->len);
             auto ialpha = 255 - span->coverage;
             for (uint32_t i = 0; i < span->len; ++i) {
-                dst[i] = ALPHA_BLEND(buf[i], span->coverage) + ALPHA_BLEND(dst[i], ialpha);
+                *dst = ALPHA_BLEND(buf[i], span->coverage) + ALPHA_BLEND(*dst, ialpha);
             }
         }
     }
     return true;
+}
+
+
+static bool _rasterRadialGradientRle(SwSurface* surface, const SwRleData* rle, const SwFill* fill)
+{
+    if (!rle) return false;
+
+    if (_compositing(surface)) {
+        if (surface->compositor->method == CompositeMethod::AlphaMask) {
+            return _rasterRadialGradientMaskedRle(surface, rle, fill, surface->blender.alpha);
+        } else if (surface->compositor->method == CompositeMethod::InvAlphaMask) {
+            return _rasterRadialGradientMaskedRle(surface, rle, fill, surface->blender.ialpha);
+        }
+    } else {
+        if (fill->translucent) _rasterTranslucentRadialGradientRle(surface, rle, fill);
+        else return _rasterSolidRadialGradientRle(surface, rle, fill);
+    }
+    return false;
 }
 
 
@@ -2296,92 +2301,6 @@ bool rasterCompositor(SwSurface* surface)
     surface->blender.ialpha = _colorInvAlpha;
 
     return true;
-}
-
-
-bool rasterGradientShape(SwSurface* surface, SwShape* shape, unsigned id)
-{
-    if (!shape->fill) return false;
-
-    auto translucent = shape->fill->translucent || (surface->compositor && surface->compositor->method != CompositeMethod::None);
-
-    //Fast Track
-    if (shape->fastTrack) {
-        if (id == TVG_CLASS_ID_LINEAR) {
-            if (translucent) return _rasterTranslucentLinearGradientRect(surface, shape->bbox, shape->fill);
-            return _rasterSolidLinearGradientRect(surface, shape->bbox, shape->fill);
-        } else {
-            if (translucent) return _rasterTranslucentRadialGradientRect(surface, shape->bbox, shape->fill);
-            return _rasterSolidRadialGradientRect(surface, shape->bbox, shape->fill);
-        }
-    } else {
-        if (!shape->rle) return false;
-        if (id == TVG_CLASS_ID_LINEAR) {
-            if (translucent) return _rasterTranslucentLinearGradientRle(surface, shape->rle, shape->fill);
-            return _rasterSolidLinearGradientRle(surface, shape->rle, shape->fill);
-        } else {
-            if (translucent) return _rasterTranslucentRadialGradientRle(surface, shape->rle, shape->fill);
-            return _rasterSolidRadialGradientRle(surface, shape->rle, shape->fill);
-        }
-    }
-    return false;
-}
-
-
-bool rasterShape(SwSurface* surface, SwShape* shape, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
-{
-    if (a < 255) {
-        r = _multiplyAlpha(r, a);
-        g = _multiplyAlpha(g, a);
-        b = _multiplyAlpha(b, a);
-    }
-
-    auto color = surface->blender.join(r, g, b, a);
-    auto translucent = _translucent(surface, a);
-
-    //Fast Track
-    if (shape->fastTrack) {
-        if (translucent) return _rasterTranslucentRect(surface, shape->bbox, color);
-        return _rasterSolidRect(surface, shape->bbox, color);
-    }
-    if (translucent) {
-        return _rasterTranslucentRle(surface, shape->rle, color);
-    }
-    return _rasterSolidRle(surface, shape->rle, color);
-}
-
-
-bool rasterStroke(SwSurface* surface, SwShape* shape, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
-{
-    if (a < 255) {
-        r = _multiplyAlpha(r, a);
-        g = _multiplyAlpha(g, a);
-        b = _multiplyAlpha(b, a);
-    }
-
-    auto color = surface->blender.join(r, g, b, a);
-    auto translucent = _translucent(surface, a);
-
-    if (translucent) return _rasterTranslucentRle(surface, shape->strokeRle, color);
-    return _rasterSolidRle(surface, shape->strokeRle, color);
-}
-
-
-bool rasterGradientStroke(SwSurface* surface, SwShape* shape, unsigned id)
-{
-    if (!shape->stroke || !shape->stroke->fill || !shape->strokeRle) return false;
-
-    auto translucent = shape->stroke->fill->translucent || (surface->compositor && surface->compositor->method != CompositeMethod::None);
-
-    if (id == TVG_CLASS_ID_LINEAR) {
-        if (translucent) return _rasterTranslucentLinearGradientRle(surface, shape->strokeRle, shape->stroke->fill);
-        return _rasterSolidLinearGradientRle(surface, shape->strokeRle, shape->stroke->fill);
-    } else {
-        if (translucent) return _rasterTranslucentRadialGradientRle(surface, shape->strokeRle, shape->stroke->fill);
-        return _rasterSolidRadialGradientRle(surface, shape->strokeRle, shape->stroke->fill);
-    }
-
-    return false;
 }
 
 
@@ -2422,6 +2341,61 @@ void rasterUnpremultiply(SwSurface* surface)
             }
         }
     }
+}
+
+
+bool rasterGradientShape(SwSurface* surface, SwShape* shape, unsigned id)
+{
+    if (!shape->fill) return false;
+
+    if (shape->fastTrack) {
+        if (id == TVG_CLASS_ID_LINEAR) return _rasterLinearGradientRect(surface, shape->bbox, shape->fill);
+        else if (id == TVG_CLASS_ID_RADIAL)return _rasterRadialGradientRect(surface, shape->bbox, shape->fill);
+    } else {
+        if (id == TVG_CLASS_ID_LINEAR) return _rasterLinearGradientRle(surface, shape->rle, shape->fill);
+        else if (id == TVG_CLASS_ID_RADIAL) return _rasterRadialGradientRle(surface, shape->rle, shape->fill);
+    }
+    return false;
+}
+
+
+bool rasterGradientStroke(SwSurface* surface, SwShape* shape, unsigned id)
+{
+    if (!shape->stroke || !shape->stroke->fill || !shape->strokeRle) return false;
+
+    if (id == TVG_CLASS_ID_LINEAR) return _rasterLinearGradientRle(surface, shape->strokeRle, shape->stroke->fill);
+    else if (id == TVG_CLASS_ID_RADIAL) return _rasterRadialGradientRle(surface, shape->strokeRle, shape->stroke->fill);
+
+    return false;
+}
+
+
+bool rasterShape(SwSurface* surface, SwShape* shape, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
+{
+    if (a < 255) {
+        r = _multiplyAlpha(r, a);
+        g = _multiplyAlpha(g, a);
+        b = _multiplyAlpha(b, a);
+    }
+
+    auto color = surface->blender.join(r, g, b, a);
+
+    if (shape->fastTrack) return _rasterRect(surface, shape->bbox, color, a);
+    else return _rasterRle(surface, shape->rle, color, a);
+}
+
+
+bool rasterStroke(SwSurface* surface, SwShape* shape, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
+{
+    if (a < 255) {
+        r = _multiplyAlpha(r, a);
+        g = _multiplyAlpha(g, a);
+        b = _multiplyAlpha(b, a);
+    }
+
+    auto color = surface->blender.join(r, g, b, a);
+
+    return _rasterRle(surface, shape->strokeRle, color, a);
 }
 
 

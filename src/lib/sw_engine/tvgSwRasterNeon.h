@@ -31,7 +31,7 @@ static inline uint8x8_t ALPHA_BLEND(uint8x8_t c, uint8x8_t a)
 }
 
 
-static inline void neonRasterRGBA32(uint32_t *dst, uint32_t val, uint32_t offset, int32_t len)
+static void neonRasterRGBA32(uint32_t *dst, uint32_t val, uint32_t offset, int32_t len)
 {
     uint32_t iterations = len / 4;
     uint32_t neonFilled = iterations * 4;
@@ -49,7 +49,7 @@ static inline void neonRasterRGBA32(uint32_t *dst, uint32_t val, uint32_t offset
 }
 
 
-static inline bool neonRasterTranslucentRle(SwSurface* surface, const SwRleData* rle, uint32_t color)
+static bool neonRasterTranslucentRle(SwSurface* surface, const SwRleData* rle, uint32_t color)
 {
     auto span = rle->spans;
     uint32_t src;
@@ -88,7 +88,7 @@ static inline bool neonRasterTranslucentRle(SwSurface* surface, const SwRleData*
 }
 
 
-static inline bool neonRasterTranslucentRect(SwSurface* surface, const SwBBox& region, uint32_t color)
+static bool neonRasterTranslucentRect(SwSurface* surface, const SwBBox& region, uint32_t color)
 {
     auto buffer = surface->buffer + (region.min.y * surface->stride) + region.min.x;
     auto h = static_cast<uint32_t>(region.max.y - region.min.y);
