@@ -5,7 +5,6 @@ Hermet Park (hermet) is the lead maintainer. Also there are designated maintaine
 
 <b>common:</b> Junsu Choi (JSUYA) <br />
 <b>sw_engine:</b> Junsu Choi (JSUYA), Mira Grudzinska (mgrudzinska), Michal Szczecinski (mihashco) <br />
-<b>gl_engine:</b> Prudhvi Raj Vasireddi (prudhvirajv) <br />
 <b>svg_loader:</b> Junsu Choi (JSUYA), Mira Grudzinska (mgrudzinska), Michal Maciola (mmaciola) <br />
 <b>jpg_loader:</b> Michal Maciola (mmaciola) <br />
 <b>tvg_loader:</b> Michal Maciola (mmaciola) <br />
