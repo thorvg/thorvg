@@ -70,6 +70,13 @@ static bool _translucent(const SwSurface* surface, uint8_t a)
 }
 
 
+static bool _compositing(const SwSurface* surface)
+{
+    if (!surface->compositor || surface->compositor->method == CompositeMethod::None) return false;
+    return true;
+}
+
+
 static uint32_t _halfScale(float scale)
 {
     auto halfScale = static_cast<uint32_t>(0.5f / scale);
@@ -1366,13 +1373,40 @@ static bool _scaledRGBAImage(SwSurface* surface, const SwImage* image, const Mat
 /* Direct RGBA Image                                                    */
 /************************************************************************/
 
-static bool _rasterDirectMaskedRGBAImage(SwSurface* surface, const SwImage* image, const SwBBox& region, uint32_t opacity, uint32_t (*blendMethod)(uint32_t))
+static bool _rasterDirectMaskedRGBAImage(SwSurface* surface, const SwImage* image, const SwBBox& region, uint32_t (*blendMethod)(uint32_t))
 {
+    TVGLOG("SW_ENGINE", "Direct Masked Image");
+
     auto buffer = surface->buffer + (region.min.y * surface->stride) + region.min.x;
     auto h2 = static_cast<uint32_t>(region.max.y - region.min.y);
     auto w2 = static_cast<uint32_t>(region.max.x - region.min.x);
 
-    TVGLOG("SW_ENGINE", "Direct Masked Image");
+    auto sbuffer = image->data + (region.min.y + image->oy) * image->stride + (region.min.x + image->ox);
+    auto cbuffer = surface->compositor->image.data + (region.min.y * surface->stride) + region.min.x;   //compositor buffer
+
+    for (uint32_t y = 0; y < h2; ++y) {
+        auto dst = buffer;
+        auto cmp = cbuffer;
+        auto src = sbuffer;
+        for (uint32_t x = 0; x < w2; ++x, ++dst, ++src, ++cmp) {
+            auto tmp = ALPHA_BLEND(*src, blendMethod(*cmp));
+            *dst = tmp + ALPHA_BLEND(*dst, surface->blender.ialpha(tmp));
+        }
+        buffer += surface->stride;
+        cbuffer += surface->compositor->image.stride;
+        sbuffer += image->stride;
+    }
+    return true;
+}
+
+
+static bool _rasterDirectMaskedTranslucentRGBAImage(SwSurface* surface, const SwImage* image, const SwBBox& region, uint32_t opacity, uint32_t (*blendMethod)(uint32_t))
+{
+    TVGLOG("SW_ENGINE", "Direct Masked Translucent Image");
+
+    auto buffer = surface->buffer + (region.min.y * surface->stride) + region.min.x;
+    auto h2 = static_cast<uint32_t>(region.max.y - region.min.y);
+    auto w2 = static_cast<uint32_t>(region.max.x - region.min.x);
 
     auto sbuffer = image->data + (region.min.y + image->oy) * image->stride + (region.min.x + image->ox);
     auto cbuffer = surface->compositor->image.data + (region.min.y * surface->stride) + region.min.x;   //compositor buffer
@@ -1386,7 +1420,7 @@ static bool _rasterDirectMaskedRGBAImage(SwSurface* surface, const SwImage* imag
             *dst = tmp + ALPHA_BLEND(*dst, surface->blender.ialpha(tmp));
         }
         buffer += surface->stride;
-        cbuffer += surface->stride;
+        cbuffer += surface->compositor->image.stride;
         sbuffer += image->stride;
     }
     return true;
@@ -1402,8 +1436,8 @@ static bool _rasterDirectTranslucentRGBAImage(SwSurface* surface, const SwImage*
         auto dst = dbuffer;
         auto src = sbuffer;
         for (auto x = region.min.x; x < region.max.x; ++x, ++dst, ++src) {
-            auto p = ALPHA_BLEND(*src, opacity);
-            *dst = p + ALPHA_BLEND(*dst, surface->blender.ialpha(p));
+            auto tmp = ALPHA_BLEND(*src, opacity);
+            *dst = tmp + ALPHA_BLEND(*dst, surface->blender.ialpha(tmp));
         }
         dbuffer += surface->stride;
         sbuffer += image->stride;
@@ -1430,22 +1464,28 @@ static bool _rasterDirectRGBAImage(SwSurface* surface, const SwImage* image, con
 }
 
 
+//Blenders for the following scenarios: [Composition / Non-Composition] * [Opaque / Translucent]
 static bool _directRGBAImage(SwSurface* surface, const SwImage* image, const SwBBox& region, uint32_t opacity)
 {
-    if (_translucent(surface, opacity)) {
-        //TODO: Blenders for the following scenarios: [Opacity / Composition / Opacity + Composition]
-        if (surface->compositor) {
+    if (_compositing(surface)) {
+        if (opacity == 255) {
             if (surface->compositor->method == CompositeMethod::AlphaMask) {
-                return _rasterDirectMaskedRGBAImage(surface, image, region, opacity, surface->blender.alpha);
+                return _rasterDirectMaskedRGBAImage(surface, image, region, surface->blender.alpha);
             } else if (surface->compositor->method == CompositeMethod::InvAlphaMask) {
-                return _rasterDirectMaskedRGBAImage(surface, image, region, opacity, surface->blender.ialpha);
+                return _rasterDirectMaskedRGBAImage(surface, image, region, surface->blender.ialpha);
+            }
+        } else {
+            if (surface->compositor->method == CompositeMethod::AlphaMask) {
+                return _rasterDirectMaskedTranslucentRGBAImage(surface, image, region, opacity, surface->blender.alpha);
+            } else if (surface->compositor->method == CompositeMethod::InvAlphaMask) {
+                return _rasterDirectMaskedTranslucentRGBAImage(surface, image, region, opacity, surface->blender.ialpha);
             }
         }
-        return _rasterDirectTranslucentRGBAImage(surface, image, region, opacity);
     } else {
-        //TODO: Blenders for the following scenarios: [No Composition / Composition]
-        return _rasterDirectRGBAImage(surface, image, region);
+        if (opacity == 255) return _rasterDirectRGBAImage(surface, image, region);
+        else return _rasterDirectTranslucentRGBAImage(surface, image, region, opacity);
     }
+    return false;
 }
 
 
