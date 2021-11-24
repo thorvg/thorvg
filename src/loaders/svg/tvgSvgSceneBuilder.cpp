@@ -56,12 +56,19 @@
 #include "tvgSvgPath.h"
 #include "tvgSvgUtil.h"
 
-static bool _appendShape(SvgNode* node, Shape* shape, float vx, float vy, float vw, float vh, const string& svgPath);
-static unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, float vx, float vy, float vw, float vh, const string& svgPath, bool mask);
-
 /************************************************************************/
 /* Internal Class Implementation                                        */
 /************************************************************************/
+
+struct Box
+{
+    float x, y, w, h;
+};
+
+
+static bool _appendShape(SvgNode* node, Shape* shape, const Box& vBox, const string& svgPath);
+static unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, const Box& vBox, const string& svgPath, bool mask);
+
 
 static inline bool _isGroupType(SvgNodeType type)
 {
@@ -82,7 +89,7 @@ static void _transformMultiply(const Matrix* mBBox, Matrix* gradTransf)
 }
 
 
-static unique_ptr<LinearGradient> _applyLinearGradientProperty(SvgStyleGradient* g, const Shape* vg, float rx, float ry, float rw, float rh, int opacity)
+static unique_ptr<LinearGradient> _applyLinearGradientProperty(SvgStyleGradient* g, const Shape* vg, const Box& vBox, int opacity)
 {
     Fill::ColorStop* stops;
     int stopCount = 0;
@@ -93,12 +100,12 @@ static unique_ptr<LinearGradient> _applyLinearGradientProperty(SvgStyleGradient*
     if (isTransform) finalTransform = *g->transform;
 
     if (g->userSpace) {
-        g->linear->x1 = g->linear->x1 * rw;
-        g->linear->y1 = g->linear->y1 * rh;
-        g->linear->x2 = g->linear->x2 * rw;
-        g->linear->y2 = g->linear->y2 * rh;
+        g->linear->x1 = g->linear->x1 * vBox.w;
+        g->linear->y1 = g->linear->y1 * vBox.h;
+        g->linear->x2 = g->linear->x2 * vBox.w;
+        g->linear->y2 = g->linear->y2 * vBox.h;
     } else {
-        Matrix m = {rw, 0, rx, 0, rh, ry, 0, 0, 1};
+        Matrix m = {vBox.w, 0, vBox.x, 0, vBox.h, vBox.y, 0, 0, 1};
         if (isTransform) _transformMultiply(&m, &finalTransform);
         else {
             finalTransform = m;
@@ -137,7 +144,7 @@ static unique_ptr<LinearGradient> _applyLinearGradientProperty(SvgStyleGradient*
 }
 
 
-static unique_ptr<RadialGradient> _applyRadialGradientProperty(SvgStyleGradient* g, const Shape* vg, float rx, float ry, float rw, float rh, int opacity)
+static unique_ptr<RadialGradient> _applyRadialGradientProperty(SvgStyleGradient* g, const Shape* vg, const Box& vBox, int opacity)
 {
     Fill::ColorStop *stops;
     int stopCount = 0;
@@ -150,13 +157,13 @@ static unique_ptr<RadialGradient> _applyRadialGradientProperty(SvgStyleGradient*
     if (g->userSpace) {
         //The radius scalling is done according to the Units section:
         //https://www.w3.org/TR/2015/WD-SVG2-20150915/coords.html
-        g->radial->cx = g->radial->cx * rw;
-        g->radial->cy = g->radial->cy * rh;
-        g->radial->r = g->radial->r * sqrtf(powf(rw, 2.0f) + powf(rh, 2.0f)) / sqrtf(2.0f);
-        g->radial->fx = g->radial->fx * rw;
-        g->radial->fy = g->radial->fy * rh;
+        g->radial->cx = g->radial->cx * vBox.w;
+        g->radial->cy = g->radial->cy * vBox.h;
+        g->radial->r = g->radial->r * sqrtf(powf(vBox.w, 2.0f) + powf(vBox.h, 2.0f)) / sqrtf(2.0f);
+        g->radial->fx = g->radial->fx * vBox.w;
+        g->radial->fy = g->radial->fy * vBox.h;
     } else {
-        Matrix m = {rw, 0, rx, 0, rh, ry, 0, 0, 1};
+        Matrix m = {vBox.w, 0, vBox.x, 0, vBox.h, vBox.y, 0, 0, 1};
         if (isTransform) _transformMultiply(&m, &finalTransform);
         else {
             finalTransform = m;
@@ -199,16 +206,16 @@ static unique_ptr<RadialGradient> _applyRadialGradientProperty(SvgStyleGradient*
 }
 
 
-static bool _appendChildShape(SvgNode* node, Shape* shape, float vx, float vy, float vw, float vh, const string& svgPath)
+static bool _appendChildShape(SvgNode* node, Shape* shape, const Box& vBox, const string& svgPath)
 {
     auto valid = false;
 
-    if (_appendShape(node, shape, vx, vy, vw, vh, svgPath)) valid = true;
+    if (_appendShape(node, shape, vBox, svgPath)) valid = true;
 
     if (node->child.count > 0) {
         auto child = node->child.data;
         for (uint32_t i = 0; i < node->child.count; ++i, ++child) {
-            if (_appendChildShape(*child, shape, vx, vy, vw, vh, svgPath)) valid = true;
+            if (_appendChildShape(*child, shape, vBox, svgPath)) valid = true;
         }
     }
 
@@ -216,7 +223,7 @@ static bool _appendChildShape(SvgNode* node, Shape* shape, float vx, float vy, f
 }
 
 
-static void _applyComposition(Paint* paint, const SvgNode* node, float vx, float vy, float vw, float vh, const string& svgPath)
+static void _applyComposition(Paint* paint, const SvgNode* node, const Box& vBox, const string& svgPath)
 {
     /* ClipPath */
     /* Do not drop in Circular Dependency for ClipPath.
@@ -236,7 +243,7 @@ static void _applyComposition(Paint* paint, const SvgNode* node, float vx, float
             auto valid = false; //Composite only when valid shapes are existed
 
             for (uint32_t i = 0; i < compNode->child.count; ++i, ++child) {
-                if (_appendChildShape(*child, comp.get(), vx, vy, vw, vh, svgPath)) valid = true;
+                if (_appendChildShape(*child, comp.get(), vBox, svgPath)) valid = true;
             }
 
             if (valid) paint->composite(move(comp), CompositeMethod::ClipPath);
@@ -255,7 +262,7 @@ static void _applyComposition(Paint* paint, const SvgNode* node, float vx, float
         if (compNode && compNode->child.count > 0) {
             node->style->mask.applying = true;
 
-            auto comp = _sceneBuildHelper(compNode, vx, vy, vw, vh, svgPath, true);
+            auto comp = _sceneBuildHelper(compNode, vBox, svgPath, true);
             if (comp) {
                 if (node->transform) comp->transform(*node->transform);
                 paint->composite(move(comp), CompositeMethod::AlphaMask);
@@ -267,7 +274,7 @@ static void _applyComposition(Paint* paint, const SvgNode* node, float vx, float
 }
 
 
-static void _applyProperty(SvgNode* node, Shape* vg, float vx, float vy, float vw, float vh, const string& svgPath)
+static void _applyProperty(SvgNode* node, Shape* vg, const Box& vBox, const string& svgPath)
 {
     SvgStyleProperty* style = node->style;
 
@@ -278,23 +285,24 @@ static void _applyProperty(SvgNode* node, Shape* vg, float vx, float vy, float v
     if (style->fill.paint.none) {
         //Do nothing
     } else if (style->fill.paint.gradient) {
+        Box bBox = vBox;
         if (!style->fill.paint.gradient->userSpace) {
-            vg->bounds(&vx, &vy, &vw, &vh, false);
+            vg->bounds(&bBox.x, &bBox.y, &bBox.w, &bBox.h, false);
             //According to: https://www.w3.org/TR/SVG11/coords.html#ObjectBoundingBoxUnits (the last paragraph)
             //a stroke width should be ignored for bounding box calculations
             if (auto strokeW = vg->strokeWidth()) {
-                vx += 0.5f * strokeW;
-                vy += 0.5f * strokeW;
-                vw -= strokeW;
-                vh -= strokeW;
+                bBox.x += 0.5f * strokeW;
+                bBox.y += 0.5f * strokeW;
+                bBox.w -= strokeW;
+                bBox.h -= strokeW;
             }
         }
 
         if (style->fill.paint.gradient->type == SvgGradientType::Linear) {
-             auto linear = _applyLinearGradientProperty(style->fill.paint.gradient, vg, vx, vy, vw, vh, style->fill.opacity);
+             auto linear = _applyLinearGradientProperty(style->fill.paint.gradient, vg, bBox, style->fill.opacity);
              vg->fill(move(linear));
         } else if (style->fill.paint.gradient->type == SvgGradientType::Radial) {
-             auto radial = _applyRadialGradientProperty(style->fill.paint.gradient, vg, vx, vy, vw, vh, style->fill.opacity);
+             auto radial = _applyRadialGradientProperty(style->fill.paint.gradient, vg, bBox, style->fill.opacity);
              vg->fill(move(radial));
         }
     } else if (style->fill.paint.url) {
@@ -327,23 +335,24 @@ static void _applyProperty(SvgNode* node, Shape* vg, float vx, float vy, float v
     if (style->stroke.paint.none) {
         //Do nothing
     } else if (style->stroke.paint.gradient) {
+        Box bBox = vBox;
         if (!style->stroke.paint.gradient->userSpace) {
             //According to: https://www.w3.org/TR/SVG11/coords.html#ObjectBoundingBoxUnits (the last paragraph)
             //a stroke width should be ignored for bounding box calculations
-            vg->bounds(&vx, &vy, &vw, &vh, false);
+            vg->bounds(&bBox.x, &bBox.y, &bBox.w, &bBox.h, false);
             if (auto strokeW = vg->strokeWidth()) {
-                vx += 0.5f * strokeW;
-                vy += 0.5f * strokeW;
-                vw -= strokeW;
-                vh -= strokeW;
+                bBox.x += 0.5f * strokeW;
+                bBox.y += 0.5f * strokeW;
+                bBox.w -= strokeW;
+                bBox.h -= strokeW;
             }
         }
 
         if (style->stroke.paint.gradient->type == SvgGradientType::Linear) {
-             auto linear = _applyLinearGradientProperty(style->stroke.paint.gradient, vg, vx, vy, vw, vh, style->stroke.opacity);
+             auto linear = _applyLinearGradientProperty(style->stroke.paint.gradient, vg, bBox, style->stroke.opacity);
              vg->stroke(move(linear));
         } else if (style->stroke.paint.gradient->type == SvgGradientType::Radial) {
-             auto radial = _applyRadialGradientProperty(style->stroke.paint.gradient, vg, vx, vy, vw, vh, style->stroke.opacity);
+             auto radial = _applyRadialGradientProperty(style->stroke.paint.gradient, vg, bBox, style->stroke.opacity);
              vg->stroke(move(radial));
         }
     } else if (style->stroke.paint.url) {
@@ -356,19 +365,19 @@ static void _applyProperty(SvgNode* node, Shape* vg, float vx, float vy, float v
         vg->stroke(style->stroke.paint.color.r, style->stroke.paint.color.g, style->stroke.paint.color.b, style->stroke.opacity);
     }
 
-    _applyComposition(vg, node, vx, vy, vw, vh, svgPath);
+    _applyComposition(vg, node, vBox, svgPath);
 }
 
 
-static unique_ptr<Shape> _shapeBuildHelper(SvgNode* node, float vx, float vy, float vw, float vh, const string& svgPath)
+static unique_ptr<Shape> _shapeBuildHelper(SvgNode* node, const Box& vBox, const string& svgPath)
 {
     auto shape = Shape::gen();
-    if (_appendShape(node, shape.get(), vx, vy, vw, vh, svgPath)) return shape;
+    if (_appendShape(node, shape.get(), vBox, svgPath)) return shape;
     else return nullptr;
 }
 
 
-static bool _appendShape(SvgNode* node, Shape* shape, float vx, float vy, float vw, float vh, const string& svgPath)
+static bool _appendShape(SvgNode* node, Shape* shape, const Box& vBox, const string& svgPath)
 {
     Array<PathCommand> cmds;
     Array<Point> pts;
@@ -421,7 +430,7 @@ static bool _appendShape(SvgNode* node, Shape* shape, float vx, float vy, float 
         }
     }
 
-    _applyProperty(node, shape, vx, vy, vw, vh, svgPath);
+    _applyProperty(node, shape, vBox, svgPath);
     return true;
 }
 
@@ -496,7 +505,7 @@ static bool _isValidImageMimeTypeAndEncoding(const char** href, const char** mim
 }
 
 
-static unique_ptr<Picture> _imageBuildHelper(SvgNode* node, float vx, float vy, float vw, float vh, const string& svgPath)
+static unique_ptr<Picture> _imageBuildHelper(SvgNode* node, const Box& vBox, const string& svgPath)
 {
     if (!node->node.image.href) return nullptr;
     auto picture = Picture::gen();
@@ -539,14 +548,14 @@ static unique_ptr<Picture> _imageBuildHelper(SvgNode* node, float vx, float vy, 
         picture->transform(m);
     }
 
-    _applyComposition(picture.get(), node, vx, vy, vw, vh, svgPath);
+    _applyComposition(picture.get(), node, vBox, svgPath);
     return picture;
 }
 
 
-static unique_ptr<Scene> _useBuildHelper(const SvgNode* node, float vx, float vy, float vw, float vh, const string& svgPath)
+static unique_ptr<Scene> _useBuildHelper(const SvgNode* node, const Box& vBox, const string& svgPath)
 {
-    auto scene = _sceneBuildHelper(node, vx, vy, vw, vh, svgPath, false);
+    auto scene = _sceneBuildHelper(node, vBox, svgPath, false);
     if (node->node.use.x != 0.0f || node->node.use.y != 0.0f) {
         scene->translate(node->node.use.x, node->node.use.y);
     }
@@ -557,7 +566,7 @@ static unique_ptr<Scene> _useBuildHelper(const SvgNode* node, float vx, float vy
 }
 
 
-static unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, float vx, float vy, float vw, float vh, const string& svgPath, bool mask)
+static unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, const Box& vBox, const string& svgPath, bool mask)
 {
     if (_isGroupType(node->type) || mask) {
         auto scene = Scene::gen();
@@ -568,18 +577,18 @@ static unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, float vx, float 
             for (uint32_t i = 0; i < node->child.count; ++i, ++child) {
                 if (_isGroupType((*child)->type)) {
                     if ((*child)->type == SvgNodeType::Use)
-                        scene->push(_useBuildHelper(*child, vx, vy, vw, vh, svgPath));
+                        scene->push(_useBuildHelper(*child, vBox, svgPath));
                     else
-                        scene->push(_sceneBuildHelper(*child, vx, vy, vw, vh, svgPath, false));
+                        scene->push(_sceneBuildHelper(*child, vBox, svgPath, false));
                 } else if ((*child)->type == SvgNodeType::Image) {
-                    auto image = _imageBuildHelper(*child, vx, vy, vw, vh, svgPath);
+                    auto image = _imageBuildHelper(*child, vBox, svgPath);
                     if (image) scene->push(move(image));
                 } else if ((*child)->type != SvgNodeType::Mask) {
-                    auto shape = _shapeBuildHelper(*child, vx, vy, vw, vh, svgPath);
+                    auto shape = _shapeBuildHelper(*child, vBox, svgPath);
                     if (shape) scene->push(move(shape));
                 }
             }
-            _applyComposition(scene.get(), node, vx, vy, vw, vh, svgPath);
+            _applyComposition(scene.get(), node, vBox, svgPath);
             scene->opacity(node->style->opacity);
         }
         return scene;
@@ -596,7 +605,8 @@ unique_ptr<Scene> svgSceneBuild(SvgNode* node, float vx, float vy, float vw, flo
 {
     if (!node || (node->type != SvgNodeType::Doc)) return nullptr;
 
-    auto docNode = _sceneBuildHelper(node, vx, vy, vw, vh, svgPath, false);
+    Box vBox = {vx, vy, vw, vh};
+    auto docNode = _sceneBuildHelper(node, vBox, svgPath, false);
 
     if (!mathEqual(w, vw) || !mathEqual(h, vh)) {
         auto sx = w / vw;
