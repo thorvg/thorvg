@@ -53,6 +53,8 @@ struct SwTask : Task
         region.y = bbox.min.y > 0 ? bbox.min.y : 0;
         region.w = bbox.max.x - region.x;
         region.h = bbox.max.y - region.y;
+        if (region.w < 0) region.w = 0;
+        if (region.h < 0) region.h = 0;
 
         return region;
     }
