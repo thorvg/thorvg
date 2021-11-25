@@ -43,46 +43,9 @@ static float dudx, dvdx;
 static float dxdya, dxdyb, dudya, dvdya;
 static float xa, xb, ua, va;
 
-static void _rasterPolygonImageSegment(SwSurface* surface, const SwImage* image, const SwBBox& region, int ystart, int yend, uint32_t opacity, uint32_t (*blendMethod)(uint32_t))
-{
-#define RASTER_COMMON() \
-    uu = (int) u; \
-    vv = (int) v; \
-    /* FIXME: sometimes u and v are < 0 - don'tc crash */ \
-    if (uu < 0) uu = 0;\
-    if (vv < 0) vv = 0; \
-    \
-    /* Range exception handling */ \
-    /* OPTIMIZE ME, handle in advance? */ \
-    if (uu >= sw) uu = sw - 1; \
-    if (vv >= sh) vv = sh - 1; \
-    \
-    ar = (int)(255 * (1 - modff(u, &iptr))); \
-    ab = (int)(255 * (1 - modff(v, &iptr))); \
-    iru = uu + 1; \
-    irv = vv + 1; \
-    px = *(sbuf + (vv * sw) + uu); \
-    \
-    /* horizontal interpolate */ \
-    if (iru < sw) { \
-        /* right pixel */ \
-        int px2 = *(sbuf + (vv * sw) + iru); \
-        px = _interpolate(ar, px, px2); \
-    } \
-    /* vertical interpolate */ \
-    if (irv < sh) { \
-        /* bottom pixel */ \
-        int px2 = *(sbuf + (irv * sw) + uu); \
-        \
-        /* horizontal interpolate */ \
-        if (iru < sw) { \
-            /* bottom right pixel */ \
-            int px3 = *(sbuf + (irv * sw) + iru);\
-            px2 = _interpolate(ar, px2, px3); \
-        } \
-        px = _interpolate(ab, px, px2); \
-    }
 
+static inline void _rasterRGBA(SwSurface* surface, const SwImage* image, const SwBBox& region, int ystart, int yend, TVG_UNUSED uint32_t opacity, TVG_UNUSED uint32_t (*blendMethod)(uint32_t))
+{
     float _dudx = dudx, _dvdx = dvdx;
     float _dxdya = dxdya, _dxdyb = dxdyb, _dudya = dudya, _dvdya = dvdya;
     float _xa = xa, _xb = xb, _ua = ua, _va = va;
@@ -125,57 +88,64 @@ static void _rasterPolygonImageSegment(SwSurface* surface, const SwImage* image,
 
         x = x1;
 
-        if (blendMethod) {
-            TVGLOG("SW_ENGINE", "Transformed Masked Image");
-            auto cmp = &surface->compositor->image.data[y * surface->compositor->image.stride + x1];
-            if (opacity == 255) {
-                //Draw horizontal line
-                while (x++ < x2) {
-                    RASTER_COMMON();
-                    auto src = ALPHA_BLEND(px, blendMethod(*cmp));
-                    *buf = src + ALPHA_BLEND(*buf, surface->blender.ialpha(src));
-                    ++cmp;
-                    ++buf;
-                    //Step UV horizontally
-                    u += _dudx;
-                    v += _dvdx;
-                }
-            } else {
-                //Draw horizontal line
-                while (x++ < x2) {
-                    RASTER_COMMON();
-                    auto src = ALPHA_BLEND(px, _multiplyAlpha(opacity, blendMethod(*cmp)));
-                    *buf = src + ALPHA_BLEND(*buf, surface->blender.ialpha(src));
-                    ++buf;
-                    ++cmp;
-                    //Step UV horizontally
-                    u += _dudx;
-                    v += _dvdx;
-                }    
+#ifdef TEXMAP_MAKSING
+        auto cmp = &surface->compositor->image.data[y * surface->compositor->image.stride + x1];
+#endif
+        //Draw horizontal line
+        while (x++ < x2) {
+            uu = (int) u;
+            vv = (int) v;
+            /* FIXME: sometimes u and v are < 0 - don'tc crash */
+            if (uu < 0) uu = 0;
+            if (vv < 0) vv = 0;
+
+            /* Range exception handling */
+            /* OPTIMIZE ME, handle in advance? */
+            if (uu >= sw) uu = sw - 1;
+            if (vv >= sh) vv = sh - 1;
+
+            ar = (int)(255 * (1 - modff(u, &iptr)));
+            ab = (int)(255 * (1 - modff(v, &iptr)));
+            iru = uu + 1;
+            irv = vv + 1;
+            px = *(sbuf + (vv * sw) + uu);
+
+            /* horizontal interpolate */
+            if (iru < sw) {
+                /* right pixel */
+                int px2 = *(sbuf + (vv * sw) + iru);
+                px = _interpolate(ar, px, px2);
             }
-        } else {
-            if (opacity == 255) {
-                //Draw horizontal line
-                while (x++ < x2) {
-                    RASTER_COMMON();
-                    *buf = px + ALPHA_BLEND(*buf, surface->blender.ialpha(px));
-                    ++buf;
-                    //Step UV horizontally
-                    u += _dudx;
-                    v += _dvdx;
+            /* vertical interpolate */
+            if (irv < sh) {
+                /* bottom pixel */
+                int px2 = *(sbuf + (irv * sw) + uu);
+
+                /* horizontal interpolate */
+                if (iru < sw) {
+                    /* bottom right pixel */
+                    int px3 = *(sbuf + (irv * sw) + iru);
+                    px2 = _interpolate(ar, px2, px3);
                 }
-            } else {
-                //Draw horizontal line
-                while (x++ < x2) {
-                    RASTER_COMMON();
-                    auto src = ALPHA_BLEND(px, opacity);
-                    *buf = src + ALPHA_BLEND(*buf, surface->blender.ialpha(src));
-                    ++buf;
-                    //Step UV horizontally
-                    u += _dudx;
-                    v += _dvdx;
-                }
+                px = _interpolate(ab, px, px2);
             }
+#if defined(TEXMAP_MAKSING) && defined(TEXTMAP_TRANSLUCENT)
+            auto src = ALPHA_BLEND(px, _multiplyAlpha(opacity, blendMethod(*cmp)));
+#elif defined(TEXMAP_MAKSING)
+            auto src = ALPHA_BLEND(px, blendMethod(*cmp));
+#elif defined(TEXTMAP_TRANSLUCENT)
+            auto src = ALPHA_BLEND(px, opacity);
+#else
+            auto src = px;
+#endif
+            *buf = src + ALPHA_BLEND(*buf, surface->blender.ialpha(src));
+            ++buf;
+#ifdef TEXMAP_MAKSING
+            ++cmp;
+#endif
+            //Step UV horizontally
+            u += _dudx;
+            v += _dvdx;
         }
 next:
         //Step along both edges
@@ -185,11 +155,42 @@ next:
         _va += _dvdya;
 
         y++;
-     }
-   xa = _xa;
-   xb = _xb;
-   ua = _ua;
-   va = _va;
+    }
+    xa = _xa;
+    xb = _xb;
+    ua = _ua;
+    va = _va;
+}
+
+static inline void _rasterPolygonImageSegment(SwSurface* surface, const SwImage* image, const SwBBox& region, int ystart, int yend, uint32_t opacity, uint32_t (*blendMethod)(uint32_t))
+{
+#define TEXTMAP_TRANSLUCENT
+#define TEXMAP_MAKSING
+    _rasterRGBA(surface, image, region, ystart, yend, opacity, blendMethod);
+#undef TEXMAP_MASKING
+#undef TEXTMAP_TRANSLUCENT
+}
+
+
+static inline void _rasterPolygonImageSegment(SwSurface* surface, const SwImage* image, const SwBBox& region, int ystart, int yend, uint32_t (*blendMethod)(uint32_t))
+{
+#define TEXMAP_MAKSING
+    _rasterRGBA(surface, image, region, ystart, yend, 255, nullptr);
+#undef TEXMAP_MASKING
+}
+
+
+static inline void _rasterPolygonImageSegment(SwSurface* surface, const SwImage* image, const SwBBox& region, int ystart, int yend, uint32_t opacity)
+{
+#define TEXTMAP_TRANSLUCENT
+    _rasterRGBA(surface, image, region, ystart, yend, opacity, nullptr);
+#undef TEXTMAP_TRANSLUCENT
+}
+
+
+static inline void _rasterPolygonImageSegment(SwSurface* surface, const SwImage* image, const SwBBox& region, int ystart, int yend)
+{
+    _rasterRGBA(surface, image, region, ystart, yend, 255, nullptr);
 }
 
 
@@ -279,7 +280,15 @@ static void _rasterPolygonImage(SwSurface* surface, const SwImage* image, const 
             // Set right edge X-slope and perform subpixel pre-stepping
             dxdyb = dxdy[0];
             xb = x[0] + dy * dxdyb + (off_y * dxdyb);
-            _rasterPolygonImageSegment(surface, image, region, yi[0], yi[1], opacity, blendMethod);
+
+            if (blendMethod) {
+                if (opacity == 255) _rasterPolygonImageSegment(surface, image, region, yi[0], yi[1], blendMethod);
+                else _rasterPolygonImageSegment(surface, image, region, yi[0], yi[1], opacity, blendMethod);
+            } else {
+                if (opacity == 255) _rasterPolygonImageSegment(surface, image, region, yi[0], yi[1]);
+                else _rasterPolygonImageSegment(surface, image, region, yi[0], yi[1], opacity);
+            }
+
             upper = true;
         }
         //Draw lower segment if possibly visible
@@ -293,7 +302,13 @@ static void _rasterPolygonImage(SwSurface* surface, const SwImage* image, const 
             // Set right edge X-slope and perform subpixel pre-stepping
             dxdyb = dxdy[2];
             xb = x[1] + (1 - (y[1] - yi[1])) * dxdyb + (off_y * dxdyb);
-            _rasterPolygonImageSegment(surface, image, region, yi[1], yi[2], opacity, blendMethod);
+            if (blendMethod) {
+                if (opacity == 255) _rasterPolygonImageSegment(surface, image, region, yi[1], yi[2], blendMethod);
+                else _rasterPolygonImageSegment(surface, image, region, yi[1], yi[2], opacity, blendMethod);
+            } else {
+                if (opacity == 255) _rasterPolygonImageSegment(surface, image, region, yi[1], yi[2]);
+                else _rasterPolygonImageSegment(surface, image, region, yi[1], yi[2], opacity);
+            }
         }
     //Longer edge is on the right side
     } else {
@@ -316,7 +331,13 @@ static void _rasterPolygonImage(SwSurface* surface, const SwImage* image, const 
             ua = u[0] + dy * dudya + (off_y * dudya);
             va = v[0] + dy * dvdya + (off_y * dvdya);
 
-            _rasterPolygonImageSegment(surface, image, region, yi[0], yi[1], opacity, blendMethod);
+            if (blendMethod) {
+                if (opacity == 255) _rasterPolygonImageSegment(surface, image, region, yi[0], yi[1], blendMethod);
+                else _rasterPolygonImageSegment(surface, image, region, yi[0], yi[1], opacity, blendMethod);
+            } else {
+                if (opacity == 255) _rasterPolygonImageSegment(surface, image, region, yi[0], yi[1]);
+                else _rasterPolygonImageSegment(surface, image, region, yi[0], yi[1], opacity);
+            }
 
             upper = true;
         }
@@ -334,7 +355,13 @@ static void _rasterPolygonImage(SwSurface* surface, const SwImage* image, const 
             ua = u[1] + dy * dudya + (off_y * dudya);
             va = v[1] + dy * dvdya + (off_y * dvdya);
 
-            _rasterPolygonImageSegment(surface, image, region, yi[1], yi[2], opacity, blendMethod);
+            if (blendMethod) {
+                if (opacity == 255) _rasterPolygonImageSegment(surface, image, region, yi[1], yi[2], blendMethod);
+                else _rasterPolygonImageSegment(surface, image, region, yi[1], yi[2], opacity, blendMethod);
+            } else {
+                if (opacity == 255) _rasterPolygonImageSegment(surface, image, region, yi[1], yi[2]);
+                else _rasterPolygonImageSegment(surface, image, region, yi[1], yi[2], opacity);
+            }
         }
     }
 }
