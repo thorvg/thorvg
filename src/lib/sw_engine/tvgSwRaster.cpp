@@ -2244,7 +2244,7 @@ static bool _rasterSolidRadialGradientRle(SwSurface* surface, const SwRleData* r
         } else {
             fillFetchRadial(fill, buf, span->y, span->x, span->len);
             auto ialpha = 255 - span->coverage;
-            for (uint32_t i = 0; i < span->len; ++i) {
+            for (uint32_t i = 0; i < span->len; ++i, ++dst) {
                 *dst = ALPHA_BLEND(buf[i], span->coverage) + ALPHA_BLEND(*dst, ialpha);
             }
         }
