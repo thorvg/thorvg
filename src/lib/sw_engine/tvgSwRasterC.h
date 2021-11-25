@@ -21,14 +21,14 @@
  */
 
 
-static void cRasterRGBA32(uint32_t *dst, uint32_t val, uint32_t offset, int32_t len)
+static void inline cRasterRGBA32(uint32_t *dst, uint32_t val, uint32_t offset, int32_t len)
 {
     dst += offset;
     while (len--) *dst++ = val;
 }
 
 
-static bool cRasterTranslucentRle(SwSurface* surface, const SwRleData* rle, uint32_t color)
+static bool inline cRasterTranslucentRle(SwSurface* surface, const SwRleData* rle, uint32_t color)
 {
     auto span = rle->spans;
     uint32_t src;
@@ -47,7 +47,7 @@ static bool cRasterTranslucentRle(SwSurface* surface, const SwRleData* rle, uint
 }
 
 
-static bool cRasterTranslucentRect(SwSurface* surface, const SwBBox& region, uint32_t color)
+static bool inline cRasterTranslucentRect(SwSurface* surface, const SwBBox& region, uint32_t color)
 {
     auto buffer = surface->buffer + (region.min.y * surface->stride) + region.min.x;
     auto h = static_cast<uint32_t>(region.max.y - region.min.y);
