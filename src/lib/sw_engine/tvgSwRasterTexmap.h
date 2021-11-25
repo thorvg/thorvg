@@ -114,7 +114,7 @@ static inline void _rasterRGBA(SwSurface* surface, const SwImage* image, const S
             if (iru < sw) {
                 /* right pixel */
                 int px2 = *(sbuf + (vv * sw) + iru);
-                px = _interpolate(ar, px, px2);
+                px = INTERPOLATE(ar, px, px2);
             }
             /* vertical interpolate */
             if (irv < sh) {
@@ -125,9 +125,9 @@ static inline void _rasterRGBA(SwSurface* surface, const SwImage* image, const S
                 if (iru < sw) {
                     /* bottom right pixel */
                     int px3 = *(sbuf + (irv * sw) + iru);
-                    px2 = _interpolate(ar, px2, px3);
+                    px2 = INTERPOLATE(ar, px2, px3);
                 }
-                px = _interpolate(ab, px, px2);
+                px = INTERPOLATE(ab, px, px2);
             }
 #if defined(TEXMAP_MAKSING) && defined(TEXTMAP_TRANSLUCENT)
             auto src = ALPHA_BLEND(px, _multiplyAlpha(opacity, blendMethod(*cmp)));

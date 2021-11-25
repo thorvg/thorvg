@@ -274,11 +274,9 @@ static inline uint32_t ALPHA_BLEND(uint32_t c, uint32_t a)
             ((((c & 0x00ff00ff) * a + 0x00ff00ff) >> 8) & 0x00ff00ff));
 }
 
-static inline uint32_t COLOR_INTERPOLATE(uint32_t c1, uint32_t a1, uint32_t c2, uint32_t a2)
+static inline uint32_t INTERPOLATE(uint32_t a, uint32_t c0, uint32_t c1)
 {
-    auto t = (((c1 & 0xff00ff) * a1 + (c2 & 0xff00ff) * a2) >> 8) & 0xff00ff;
-    c1 = (((c1 >> 8) & 0xff00ff) * a1 + ((c2 >> 8) & 0xff00ff) * a2) & 0xff00ff00;
-    return (c1 |= t);
+    return (((((((c0 >> 8) & 0xff00ff) - ((c1 >> 8) & 0xff00ff)) * a) + (c1 & 0xff00ff00)) & 0xff00ff00) + ((((((c0 & 0xff00ff) - (c1 & 0xff00ff)) * a) >> 8) + (c1 & 0xff00ff)) & 0xff00ff));
 }
 
 static inline SwCoord HALF_STROKE(float width)
