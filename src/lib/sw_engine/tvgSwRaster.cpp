@@ -59,12 +59,6 @@ static inline uint32_t _argbJoin(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 }
 
 
-static inline uint32_t _interpolate(uint32_t a, uint32_t c0, uint32_t c1)
-{
-    return (((((((c0 >> 8) & 0xff00ff) - ((c1 >> 8) & 0xff00ff)) * a) + (c1 & 0xff00ff00)) & 0xff00ff00) + ((((((c0 & 0xff00ff) - (c1 & 0xff00ff)) * a) >> 8) + (c1 & 0xff00ff)) & 0xff00ff));
-}
-
-
 #include "tvgSwRasterTexmap.h"
 #include "tvgSwRasterC.h"
 #include "tvgSwRasterAvx.h"
@@ -99,7 +93,7 @@ static uint32_t _interpUpScaler(const uint32_t *img, uint32_t w, uint32_t h, flo
     auto c3 = img[(rx + 1) + ((ry + 1) * w)];
     auto c4 = img[rx + ((ry + 1) * w)];
 
-    return COLOR_INTERPOLATE(COLOR_INTERPOLATE(c1, 255 - dx, c2, dx), 255 - dy, COLOR_INTERPOLATE(c4, 255 - dx, c3, dx), dy);
+    return INTERPOLATE(dy, INTERPOLATE(dx, c3, c4), INTERPOLATE(dx, c2, c1));
 }
 
 
@@ -1659,10 +1653,9 @@ static bool _rasterSolidLinearGradientRle(SwSurface* surface, const SwRleData* r
             fillFetchLinear(fill, surface->buffer + span->y * surface->stride + span->x, span->y, span->x, span->len);
         } else {
             fillFetchLinear(fill, buf, span->y, span->x, span->len);
-            auto ialpha = 255 - span->coverage;
             auto dst = &surface->buffer[span->y * surface->stride + span->x];
             for (uint32_t i = 0; i < span->len; ++i) {
-                dst[i] = ALPHA_BLEND(buf[i], span->coverage) + ALPHA_BLEND(dst[i], ialpha);
+                dst[i] = INTERPOLATE(span->coverage, buf[i], dst[i]);
             }
         }
     }
@@ -1799,10 +1792,8 @@ static bool _rasterRadialGradientMaskedRle(SwSurface* surface, const SwRleData* 
                 *dst = tmp + ALPHA_BLEND(*dst, surface->blender.ialpha(tmp));
             }
         } else {
-            auto ialpha = 255 - span->coverage;
             for (uint32_t x = 0; x < span->len; ++x, ++dst, ++cmp, ++src) {
-                auto tmp = ALPHA_BLEND(*src, blendMethod(*cmp));
-                tmp = ALPHA_BLEND(tmp, span->coverage) + ALPHA_BLEND(*dst, ialpha);
+                auto tmp = INTERPOLATE(span->coverage, ALPHA_BLEND(*src, blendMethod(*cmp)), *dst);
                 *dst = tmp + ALPHA_BLEND(*dst, surface->blender.ialpha(tmp));
             }
         }
