@@ -67,7 +67,8 @@ namespace tvg
         uint32_t id;
         uint8_t opacity = 255;
 
-        ~Impl() {
+        ~Impl()
+        {
             if (compData) {
                 delete(compData->target);
                 free(compData);

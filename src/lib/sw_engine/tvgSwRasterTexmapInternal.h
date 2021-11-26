@@ -33,28 +33,48 @@
     int uu = 0;
     float dx, u, v, iptr;
     uint32_t* buf;
+    int regionTop;
+    int regionBottom;
+    SwSpan* span = nullptr;         //used only when rle based.
+
 #ifdef TEXMAP_MASKING
     uint32_t* cmp;
 #endif
 
+    if (region) {
+        regionTop = region->min.y;
+        regionBottom = region->max.y;
+    } else {
+        regionTop = image->rle->spans->y;
+        regionBottom = image->rle->spans[image->rle->size - 1].y;
+    }
+
     //Range exception handling
-    if (ystart >= region.max.y) return;
-    if (ystart < region.min.y) ystart = region.min.y;
-    if (yend > region.max.y) yend = region.max.y;
+    if (yStart >= regionBottom) return;
+    if (yStart < regionTop) yStart = regionTop;
+    if (yEnd > regionBottom) yEnd = regionBottom;
 
     //Loop through all lines in the segment
-    y = ystart;
+    y = yStart;
 
-    while (y < yend) {
+    if (!region) span = image->rle->spans + (yStart - regionTop);
+
+    while (y < yEnd) {
         x1 = _xa;
         x2 = _xb;
 
         //Range exception handling
-        if (x1 < region.min.x) x1 = region.min.x;
-        if (x2 > region.max.x) x2 = region.max.x;
-
-        if ((x2 - x1) < 1) goto next;
-        if ((x1 >= region.max.x) || (x2 <= region.min.x)) goto next;
+        if (region) {
+            if (x1 < region->min.x) x1 = region->min.x;
+            if (x2 > region->max.x) x2 = region->max.x;
+            if ((x2 - x1) < 1) goto next;
+            if ((x1 >= region->max.x) || (x2 <= region->min.x)) goto next;
+        } else {
+            if (x1 < span->x) x1 = span->x;
+            if (x2 > span->x + span->len) x2 = (span->x + span->len);
+            if ((x2 - x1) < 1) goto next;
+            if ((x1 >= (span->x + span->len)) || (x2 <= span->x)) goto next;
+        }
 
         //Perform subtexel pre-stepping on UV
         dx = 1 - (_xa - x1);
@@ -105,7 +125,7 @@
 #elif defined(TEXMAP_TRANSLUCENT)
             auto src = ALPHA_BLEND(px, opacity);
 #else
-            auto src = px;            
+            auto src = px;
 #endif
             *buf = src + ALPHA_BLEND(*buf, _ialpha(src));
             ++buf;
@@ -123,7 +143,12 @@ next:
         _ua += _dudya;
         _va += _dvdya;
 
-        y++;
+        if (span) {
+            ++span;
+            y = span->y;
+        } else {
+            y++;
+        }
     }
     xa = _xa;
     xb = _xb;

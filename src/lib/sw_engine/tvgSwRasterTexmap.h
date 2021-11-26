@@ -31,6 +31,7 @@ struct Polygon
    Vertex vertex[3];
 };
 
+
 static inline void _swap(float& a, float& b, float& tmp)
 {
     tmp = a;
@@ -44,7 +45,7 @@ static float dxdya, dxdyb, dudya, dvdya;
 static float xa, xb, ua, va;
 
 
-static void _rasterPolygonImageSegment(SwSurface* surface, const SwImage* image, const SwBBox& region, int ystart, int yend, uint32_t opacity, uint32_t (*blendMethod)(uint32_t))
+static void _rasterPolygonImageSegment(SwSurface* surface, const SwImage* image, const SwBBox* region, int yStart, int yEnd, uint32_t opacity, uint32_t (*blendMethod)(uint32_t))
 {
 #define TEXMAP_TRANSLUCENT
 #define TEXMAP_MASKING
@@ -54,7 +55,7 @@ static void _rasterPolygonImageSegment(SwSurface* surface, const SwImage* image,
 }
 
 
-static void _rasterPolygonImageSegment(SwSurface* surface, const SwImage* image, const SwBBox& region, int ystart, int yend, uint32_t (*blendMethod)(uint32_t))
+static void _rasterPolygonImageSegment(SwSurface* surface, const SwImage* image, const SwBBox* region, int yStart, int yEnd, uint32_t (*blendMethod)(uint32_t))
 {
 #define TEXMAP_MASKING
     #include "tvgSwRasterTexmapInternal.h"
@@ -62,7 +63,7 @@ static void _rasterPolygonImageSegment(SwSurface* surface, const SwImage* image,
 }
 
 
-static void _rasterPolygonImageSegment(SwSurface* surface, const SwImage* image, const SwBBox& region, int ystart, int yend, uint32_t opacity)
+static void _rasterPolygonImageSegment(SwSurface* surface, const SwImage* image, const SwBBox* region, int yStart, int yEnd, uint32_t opacity)
 {
 #define TEXMAP_TRANSLUCENT
      #include "tvgSwRasterTexmapInternal.h"
@@ -70,14 +71,15 @@ static void _rasterPolygonImageSegment(SwSurface* surface, const SwImage* image,
 }
 
 
-static void _rasterPolygonImageSegment(SwSurface* surface, const SwImage* image, const SwBBox& region, int ystart, int yend)
+static void _rasterPolygonImageSegment(SwSurface* surface, const SwImage* image, const SwBBox* region, int yStart, int yEnd)
 {
     #include "tvgSwRasterTexmapInternal.h"
 }
 
 
+
 /* This mapping algorithm is based on Mikael Kalms's. */
-static void _rasterPolygonImage(SwSurface* surface, const SwImage* image, const SwBBox& region, uint32_t opacity, Polygon& polygon, uint32_t (*blendMethod)(uint32_t))
+static void _rasterPolygonImage(SwSurface* surface, const SwImage* image, const SwBBox* region, uint32_t opacity, Polygon& polygon, uint32_t (*blendMethod)(uint32_t))
 {
     float x[3] = {polygon.vertex[0].pt.x, polygon.vertex[1].pt.x, polygon.vertex[2].pt.x};
     float y[3] = {polygon.vertex[0].pt.y, polygon.vertex[1].pt.y, polygon.vertex[2].pt.y};
@@ -139,6 +141,8 @@ static void _rasterPolygonImage(SwSurface* surface, const SwImage* image, const 
     if (mathEqual(y[0], y[1])) side = x[0] > x[1];
     if (mathEqual(y[1], y[2])) side = x[2] > x[1];
 
+    auto regionTop = region ? region->min.y : image->rle->spans->y;  //Normal Image or Rle Image?
+
     //Longer edge is on the left side
     if (!side) {
         //Calculate slopes along left edge
@@ -154,7 +158,7 @@ static void _rasterPolygonImage(SwSurface* surface, const SwImage* image, const 
 
         //Draw upper segment if possibly visible
         if (yi[0] < yi[1]) {
-            off_y = y[0] < region.min.y ? (region.min.y - y[0]) : 0;
+            off_y = y[0] < regionTop ? (regionTop - y[0]) : 0;
             xa += (off_y * dxdya);
             ua += (off_y * dudya);
             va += (off_y * dvdya);
@@ -175,7 +179,7 @@ static void _rasterPolygonImage(SwSurface* surface, const SwImage* image, const 
         }
         //Draw lower segment if possibly visible
         if (yi[1] < yi[2]) {
-            off_y = y[1] < region.min.y ? (region.min.y - y[1]) : 0;
+            off_y = y[1] < regionTop ? (regionTop - y[1]) : 0;
             if (!upper) {
                 xa += (off_y * dxdya);
                 ua += (off_y * dudya);
@@ -201,7 +205,7 @@ static void _rasterPolygonImage(SwSurface* surface, const SwImage* image, const 
 
         //Draw upper segment if possibly visible
         if (yi[0] < yi[1]) {
-            off_y = y[0] < region.min.y ? (region.min.y - y[0]) : 0;
+            off_y = y[0] < regionTop ? (regionTop - y[0]) : 0;
             xb += (off_y *dxdyb);
 
             // Set slopes along left edge and perform subpixel pre-stepping
@@ -225,7 +229,7 @@ static void _rasterPolygonImage(SwSurface* surface, const SwImage* image, const 
         }
         //Draw lower segment if possibly visible
         if (yi[1] < yi[2]) {
-            off_y = y[1] < region.min.y ? (region.min.y - y[1]) : 0;
+            off_y = y[1] < regionTop ? (regionTop - y[1]) : 0;
             if (!upper) xb += (off_y *dxdyb);
 
             // Set slopes along left edge and perform subpixel pre-stepping
@@ -259,8 +263,11 @@ static void _rasterPolygonImage(SwSurface* surface, const SwImage* image, const 
     | /  |
     3 -- 2 
 */
-static bool _rasterTexmapPolygon(SwSurface* surface, const SwImage* image, const Matrix* transform, const SwBBox& region, uint32_t opacity, uint32_t (*blendMethod)(uint32_t))
+static bool _rasterTexmapPolygon(SwSurface* surface, const SwImage* image, const Matrix* transform, const SwBBox* region, uint32_t opacity, uint32_t (*blendMethod)(uint32_t))
 {
+    //Exceptions: No dedicated drawing area?
+    if (!region && image->rle->size == 0) return false;
+
    /* Prepare vertices.
       shift XY coordinates to match the sub-pixeling technique. */
     Vertex vertices[4];
@@ -286,6 +293,6 @@ static bool _rasterTexmapPolygon(SwSurface* surface, const SwImage* image, const
     polygon.vertex[2] = vertices[3];
 
     _rasterPolygonImage(surface, image, region, opacity, polygon, blendMethod);
-    
+
     return true;
 }
