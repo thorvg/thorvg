@@ -44,153 +44,35 @@ static float dxdya, dxdyb, dudya, dvdya;
 static float xa, xb, ua, va;
 
 
-static inline void _rasterRGBA(SwSurface* surface, const SwImage* image, const SwBBox& region, int ystart, int yend, TVG_UNUSED uint32_t opacity, TVG_UNUSED uint32_t (*blendMethod)(uint32_t))
+static void _rasterPolygonImageSegment(SwSurface* surface, const SwImage* image, const SwBBox& region, int ystart, int yend, uint32_t opacity, uint32_t (*blendMethod)(uint32_t))
 {
-    float _dudx = dudx, _dvdx = dvdx;
-    float _dxdya = dxdya, _dxdyb = dxdyb, _dudya = dudya, _dvdya = dvdya;
-    float _xa = xa, _xb = xb, _ua = ua, _va = va;
-    auto sbuf = image->data;
-    auto dbuf = surface->buffer;
-    int sw = static_cast<int>(image->stride);
-    int sh = image->h;
-    int dw = surface->stride;
-    int x1, x2, x, y, ar, ab, iru, irv, px;
-    int vv = 0;
-    int uu = 0;
-    float dx, u, v, iptr;
-    uint32_t* buf;
-
-    //Range exception handling
-    if (ystart >= region.max.y) return;
-    if (ystart < region.min.y) ystart = region.min.y;
-    if (yend > region.max.y) yend = region.max.y;
-
-    //Loop through all lines in the segment
-    y = ystart;
-
-    while (y < yend) {
-        x1 = _xa;
-        x2 = _xb;
-
-        //Range exception handling
-        if (x1 < region.min.x) x1 = region.min.x;
-        if (x2 > region.max.x) x2 = region.max.x;
-
-        if ((x2 - x1) < 1) goto next;
-        if ((x1 >= region.max.x) || (x2 <= region.min.x)) goto next;
-
-        //Perform subtexel pre-stepping on UV
-        dx = 1 - (_xa - x1);
-        u = _ua + dx * _dudx;
-        v = _va + dx * _dvdx;
-
-        buf = dbuf + ((y * dw) + x1);
-
-        x = x1;
-
-#ifdef TEXMAP_MAKSING
-        auto cmp = &surface->compositor->image.data[y * surface->compositor->image.stride + x1];
-#endif
-        //Draw horizontal line
-        while (x++ < x2) {
-            uu = (int) u;
-            vv = (int) v;
-            /* FIXME: sometimes u and v are < 0 - don'tc crash */
-            if (uu < 0) uu = 0;
-            if (vv < 0) vv = 0;
-
-            /* Range exception handling */
-            /* OPTIMIZE ME, handle in advance? */
-            if (uu >= sw) uu = sw - 1;
-            if (vv >= sh) vv = sh - 1;
-
-            ar = (int)(255 * (1 - modff(u, &iptr)));
-            ab = (int)(255 * (1 - modff(v, &iptr)));
-            iru = uu + 1;
-            irv = vv + 1;
-            px = *(sbuf + (vv * sw) + uu);
-
-            /* horizontal interpolate */
-            if (iru < sw) {
-                /* right pixel */
-                int px2 = *(sbuf + (vv * sw) + iru);
-                px = INTERPOLATE(ar, px, px2);
-            }
-            /* vertical interpolate */
-            if (irv < sh) {
-                /* bottom pixel */
-                int px2 = *(sbuf + (irv * sw) + uu);
-
-                /* horizontal interpolate */
-                if (iru < sw) {
-                    /* bottom right pixel */
-                    int px3 = *(sbuf + (irv * sw) + iru);
-                    px2 = INTERPOLATE(ar, px2, px3);
-                }
-                px = INTERPOLATE(ab, px, px2);
-            }
-#if defined(TEXMAP_MAKSING) && defined(TEXTMAP_TRANSLUCENT)
-            auto src = ALPHA_BLEND(px, _multiplyAlpha(opacity, blendMethod(*cmp)));
-#elif defined(TEXMAP_MAKSING)
-            auto src = ALPHA_BLEND(px, blendMethod(*cmp));
-#elif defined(TEXTMAP_TRANSLUCENT)
-            auto src = ALPHA_BLEND(px, opacity);
-#else
-            auto src = px;
-#endif
-            *buf = src + ALPHA_BLEND(*buf, surface->blender.ialpha(src));
-            ++buf;
-#ifdef TEXMAP_MAKSING
-            ++cmp;
-#endif
-            //Step UV horizontally
-            u += _dudx;
-            v += _dvdx;
-        }
-next:
-        //Step along both edges
-        _xa += _dxdya;
-        _xb += _dxdyb;
-        _ua += _dudya;
-        _va += _dvdya;
-
-        y++;
-    }
-    xa = _xa;
-    xb = _xb;
-    ua = _ua;
-    va = _va;
-}
-
-static inline void _rasterPolygonImageSegment(SwSurface* surface, const SwImage* image, const SwBBox& region, int ystart, int yend, uint32_t opacity, uint32_t (*blendMethod)(uint32_t))
-{
-#define TEXTMAP_TRANSLUCENT
-#define TEXMAP_MAKSING
-    _rasterRGBA(surface, image, region, ystart, yend, opacity, blendMethod);
+#define TEXMAP_TRANSLUCENT
+#define TEXMAP_MASKING
+      #include "tvgSwRasterTexmapInternal.h"
 #undef TEXMAP_MASKING
-#undef TEXTMAP_TRANSLUCENT
+#undef TEXMAP_TRANSLUCENT
 }
 
 
-static inline void _rasterPolygonImageSegment(SwSurface* surface, const SwImage* image, const SwBBox& region, int ystart, int yend, uint32_t (*blendMethod)(uint32_t))
+static void _rasterPolygonImageSegment(SwSurface* surface, const SwImage* image, const SwBBox& region, int ystart, int yend, uint32_t (*blendMethod)(uint32_t))
 {
-#define TEXMAP_MAKSING
-    _rasterRGBA(surface, image, region, ystart, yend, 255, nullptr);
+#define TEXMAP_MASKING
+    #include "tvgSwRasterTexmapInternal.h"
 #undef TEXMAP_MASKING
 }
 
 
-static inline void _rasterPolygonImageSegment(SwSurface* surface, const SwImage* image, const SwBBox& region, int ystart, int yend, uint32_t opacity)
+static void _rasterPolygonImageSegment(SwSurface* surface, const SwImage* image, const SwBBox& region, int ystart, int yend, uint32_t opacity)
 {
-#define TEXTMAP_TRANSLUCENT
-    _rasterRGBA(surface, image, region, ystart, yend, opacity, nullptr);
-#undef TEXTMAP_TRANSLUCENT
+#define TEXMAP_TRANSLUCENT
+     #include "tvgSwRasterTexmapInternal.h"
+#undef TEXMAP_TRANSLUCENT
 }
 
 
-static inline void _rasterPolygonImageSegment(SwSurface* surface, const SwImage* image, const SwBBox& region, int ystart, int yend)
+static void _rasterPolygonImageSegment(SwSurface* surface, const SwImage* image, const SwBBox& region, int ystart, int yend)
 {
-    _rasterRGBA(surface, image, region, ystart, yend, 255, nullptr);
+    #include "tvgSwRasterTexmapInternal.h"
 }
 
 
