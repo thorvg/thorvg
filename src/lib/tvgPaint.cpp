@@ -201,7 +201,7 @@ void* Paint::Impl::update(RenderMethod& renderer, const RenderTransform* pTransf
     if (compData) {
         auto target = compData->target;
         auto method = compData->method;
-        target->pImpl->ctxFlag = ContextFlag::Invalid;   //reset
+        target->pImpl->ctxFlag &= ~ContextFlag::FastTrack;   //reset
 
         /* If transform has no rotation factors && ClipPath / AlphaMasking is a simple rectangle,
            we can avoid regular ClipPath / AlphaMasking sequence but use viewport for performance */
@@ -223,7 +223,15 @@ void* Paint::Impl::update(RenderMethod& renderer, const RenderTransform* pTransf
             }
         }
         if (!compFastTrack) {
-            tdata = target->pImpl->update(renderer, pTransform, 255, clips, pFlag);
+            //Bad design!: ignore anti-aliasing if the bitmap image is the source of the clip-path!
+            auto tempFlag = pFlag;
+
+            if (id == TVG_CLASS_ID_PICTURE) {
+                auto picture = static_cast<Picture*>(compData->source);
+                if (picture->data(nullptr, nullptr)) tempFlag |= RenderUpdateFlag::IgnoreAliasing;
+            }
+
+            tdata = target->pImpl->update(renderer, pTransform, 255, clips, tempFlag);            
             if (method == CompositeMethod::ClipPath) clips.push(tdata);
         }
     }
@@ -248,6 +256,7 @@ void* Paint::Impl::update(RenderMethod& renderer, const RenderTransform* pTransf
 
     return edata;
 }
+
 
 bool Paint::Impl::bounds(float* x, float* y, float* w, float* h, bool transformed)
 {
