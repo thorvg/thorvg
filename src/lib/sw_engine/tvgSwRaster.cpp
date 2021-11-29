@@ -84,14 +84,18 @@ static uint32_t _interpUpScaler(const uint32_t *img, uint32_t w, uint32_t h, flo
 {
     auto rx = static_cast<uint32_t>(sx);
     auto ry = static_cast<uint32_t>(sy);
+    auto rx2 = rx + 1;
+    if (rx2 >= w) rx2 = w - 1;
+    auto ry2 = ry + 1;
+    if (ry2 >= h) ry2 = h - 1;
 
     auto dx = static_cast<uint32_t>((sx - rx) * 255.0f);
     auto dy = static_cast<uint32_t>((sy - ry) * 255.0f);
 
-    auto c1 = img[rx + (ry * w)];
-    auto c2 = img[(rx + 1) + (ry * w)];
-    auto c3 = img[(rx + 1) + ((ry + 1) * w)];
-    auto c4 = img[rx + ((ry + 1) * w)];
+    auto c1 = img[rx + ry * w];
+    auto c2 = img[rx2 + ry * w];
+    auto c3 = img[rx2 + ry2 * w];
+    auto c4 = img[rx + ry2 * w];
 
     return INTERPOLATE(dy, INTERPOLATE(dx, c3, c4), INTERPOLATE(dx, c2, c1));
 }
@@ -1080,43 +1084,16 @@ static bool _rasterScaledMaskedTranslucentRGBAImage(SwSurface* surface, const Sw
 {
     TVGLOG("SW_ENGINE", "Scaled Masked Image");
 
-    //Top, Bottom Lines
-    SwCoord ys[2] = {region.min.y, region.max.y - 1};
+    auto dbuffer = surface->buffer + (region.min.y * surface->stride + region.min.x);
+    auto cbuffer = surface->compositor->image.data + (region.min.y * surface->compositor->image.stride + region.min.x);
 
-    for (auto i = 0; i < 2; ++i) {
-        auto y = ys[i];
-        auto dst = surface->buffer + (y * surface->stride + region.min.x);
-        auto cmp = surface->compositor->image.data + (y * surface->compositor->image.stride + region.min.x);
-        auto img = image->data + static_cast<uint32_t>(y * itransform->e22 + itransform->e23) * image->stride;
-        for (auto x = region.min.x; x < region.max.x; ++x, ++dst, ++cmp) {
-            auto alpha = _multiplyAlpha(opacity, blendMethod(*cmp));
-            auto src = ALPHA_BLEND(img[static_cast<uint32_t>(x * itransform->e11 + itransform->e13)], alpha);
-            *dst = src + ALPHA_BLEND(*dst, surface->blender.ialpha(src));
-        }
-    }
-    //Left, Right Lines
-    SwCoord xs[2] = {region.min.x, region.max.x - 1};
-
-    for (auto i = 0; i < 2; ++i) {
-        auto x = xs[i];
-        auto dst = surface->buffer + ((region.min.y + 1) * surface->stride + x);
-        auto cmp = surface->compositor->image.data + ((region.min.y + 1) * surface->compositor->image.stride + x);
-        auto img = image->data + static_cast<uint32_t>(x * itransform->e11 + itransform->e13);
-        for (auto y = region.min.y + 1; y < region.max.y - 1; ++y, dst += surface->stride, cmp += surface->stride) {
-            auto alpha = _multiplyAlpha(opacity, blendMethod(*cmp));
-            auto src = ALPHA_BLEND(img[static_cast<uint32_t>(y * itransform->e22 + itransform->e23) * image->stride], alpha);
-            *dst = src + ALPHA_BLEND(*dst, surface->blender.ialpha(src));
-        }
-    }
-    //Center (Down-Scaled)
+    // Down-Scaled
     if (image->scale < DOWN_SCALE_TOLERANCE) {
-        auto dbuffer = surface->buffer + ((region.min.y + 1) * surface->stride + (region.min.x + 1));
-        auto cbuffer = surface->compositor->image.data + ((region.min.y + 1) * surface->compositor->image.stride + (region.min.x + 1));
-        for (auto y = region.min.y + 1; y < region.max.y - 1; ++y) {
+        for (auto y = region.min.y; y < region.max.y; ++y) {
             auto dst = dbuffer;
             auto cmp = cbuffer;
             auto sy = static_cast<uint32_t>(y * itransform->e22 + itransform->e23);
-            for (auto x = region.min.x + 1; x < region.max.x - 1; ++x, ++dst, ++cmp) {
+            for (auto x = region.min.x; x < region.max.x; ++x, ++dst, ++cmp) {
                 auto alpha = _multiplyAlpha(opacity, blendMethod(*cmp));
                 auto sx = static_cast<uint32_t>(x * itransform->e11 + itransform->e13);
                 auto src = ALPHA_BLEND(_interpDownScaler(image->data, image->w, image->h, sx, sy, halfScale), alpha);
@@ -1125,17 +1102,15 @@ static bool _rasterScaledMaskedTranslucentRGBAImage(SwSurface* surface, const Sw
             dbuffer += surface->stride;
             cbuffer += surface->compositor->image.stride;
         }
-    //Center (Up-Scaled)
+    // Up-Scaled
     } else {
-        auto dbuffer = surface->buffer + (region.min.y * surface->stride + region.min.x);
-        auto cbuffer = surface->compositor->image.data + (region.min.y * surface->compositor->image.stride + region.min.x);
-        for (auto y = region.min.y; y < region.max.y - 1; ++y) {
+        for (auto y = region.min.y; y < region.max.y; ++y) {
             auto dst = dbuffer;
             auto cmp = cbuffer;
-            auto sy = y * itransform->e22 + itransform->e23;
-            for (auto x = region.min.x; x < region.max.x - 1; ++x, ++dst, ++cmp) {
+            auto sy = fabsf(y * itransform->e22 + itransform->e23);
+            for (auto x = region.min.x; x < region.max.x; ++x, ++dst, ++cmp) {
                 auto alpha = _multiplyAlpha(opacity, blendMethod(*cmp));
-                auto sx = x * itransform->e11 + itransform->e13;
+                auto sx = fabsf(x * itransform->e11 + itransform->e13);
                 auto src = ALPHA_BLEND(_interpUpScaler(image->data, image->w, image->h, sx, sy), alpha);
                 *dst = src + ALPHA_BLEND(*dst, surface->blender.ialpha(src));
             }
@@ -1151,41 +1126,16 @@ static bool _rasterScaledMaskedRGBAImage(SwSurface* surface, const SwImage* imag
 {
     TVGLOG("SW_ENGINE", "Scaled Masked Image");
 
-    //Top, Bottom Lines
-    SwCoord ys[2] = {region.min.y, region.max.y - 1};
+    auto dbuffer = surface->buffer + (region.min.y * surface->stride + region.min.x);
+    auto cbuffer = surface->compositor->image.data + (region.min.y * surface->compositor->image.stride + region.min.x);
 
-    for (auto i = 0; i < 2; ++i) {
-        auto y = ys[i];
-        auto dst = surface->buffer + (y * surface->stride + region.min.x);
-        auto cmp = surface->compositor->image.data + (y * surface->compositor->image.stride + region.min.x);
-        auto img = image->data + static_cast<uint32_t>(y * itransform->e22 + itransform->e23) * image->stride;
-        for (auto x = region.min.x; x < region.max.x; ++x, ++dst, ++cmp) {
-            auto src = ALPHA_BLEND(img[static_cast<uint32_t>(x * itransform->e11 + itransform->e13)], blendMethod(*cmp));
-            *dst = src + ALPHA_BLEND(*dst, surface->blender.ialpha(src));
-        }
-    }
-    //Left, Right Lines
-    SwCoord xs[2] = {region.min.x, region.max.x - 1};
-
-    for (auto i = 0; i < 2; ++i) {
-        auto x = xs[i];
-        auto dst = surface->buffer + ((region.min.y + 1) * surface->stride + x);
-        auto cmp = surface->compositor->image.data + ((region.min.y + 1) * surface->compositor->image.stride + x);
-        auto img = image->data + static_cast<uint32_t>(x * itransform->e11 + itransform->e13);
-        for (auto y = region.min.y + 1; y < region.max.y - 1; ++y, dst += surface->stride, cmp += surface->stride) {
-            auto src = ALPHA_BLEND(img[static_cast<uint32_t>(y * itransform->e22 + itransform->e23) * image->stride], blendMethod(*cmp));
-            *dst = src + ALPHA_BLEND(*dst, surface->blender.ialpha(src));
-        }
-    }
-    //Center (Down-Scaled)
+    // Down-Scaled
     if (image->scale < DOWN_SCALE_TOLERANCE) {
-        auto dbuffer = surface->buffer + ((region.min.y + 1) * surface->stride + (region.min.x + 1));
-        auto cbuffer = surface->compositor->image.data + ((region.min.y + 1) * surface->compositor->image.stride + (region.min.x + 1));
-        for (auto y = region.min.y + 1; y < region.max.y - 1; ++y) {
+        for (auto y = region.min.y; y < region.max.y; ++y) {
             auto dst = dbuffer;
             auto cmp = cbuffer;
             auto sy = static_cast<uint32_t>(y * itransform->e22 + itransform->e23);
-            for (auto x = region.min.x + 1; x < region.max.x - 1; ++x, ++dst, ++cmp) {
+            for (auto x = region.min.x; x < region.max.x; ++x, ++dst, ++cmp) {
                 auto sx = static_cast<uint32_t>(x * itransform->e11 + itransform->e13);
                 auto src = ALPHA_BLEND(_interpDownScaler(image->data, image->w, image->h, sx, sy, halfScale), blendMethod(*cmp));
                 *dst = src + ALPHA_BLEND(*dst, surface->blender.ialpha(src));
@@ -1193,16 +1143,14 @@ static bool _rasterScaledMaskedRGBAImage(SwSurface* surface, const SwImage* imag
             dbuffer += surface->stride;
             cbuffer += surface->compositor->image.stride;
         }
-    //Center (Up-Scaled)
+    // Up-Scaled
     } else {
-        auto dbuffer = surface->buffer + (region.min.y * surface->stride + region.min.x);
-        auto cbuffer = surface->compositor->image.data + (region.min.y * surface->compositor->image.stride + region.min.x);
-        for (auto y = region.min.y; y < region.max.y - 1; ++y) {
+        for (auto y = region.min.y; y < region.max.y; ++y) {
             auto dst = dbuffer;
             auto cmp = cbuffer;
-            auto sy = y * itransform->e22 + itransform->e23;
-            for (auto x = region.min.x; x < region.max.x - 1; ++x, ++dst, ++cmp) {
-                auto sx = x * itransform->e11 + itransform->e13;
+            auto sy = fabsf(y * itransform->e22 + itransform->e23);
+            for (auto x = region.min.x; x < region.max.x; ++x, ++dst, ++cmp) {
+                auto sx = fabsf(x * itransform->e11 + itransform->e13);
                 auto src = ALPHA_BLEND(_interpUpScaler(image->data, image->w, image->h, sx, sy), blendMethod(*cmp));
                 *dst = src + ALPHA_BLEND(*dst, surface->blender.ialpha(src));
             }
@@ -1216,50 +1164,26 @@ static bool _rasterScaledMaskedRGBAImage(SwSurface* surface, const SwImage* imag
 
 static bool _rasterScaledTranslucentRGBAImage(SwSurface* surface, const SwImage* image, const Matrix* itransform, const SwBBox& region, uint32_t opacity, uint32_t halfScale)
 {
-    //Top, Bottom Lines
-    SwCoord ys[2] = {region.min.y, region.max.y - 1};
+    auto dbuffer = surface->buffer + (region.min.y * surface->stride + region.min.x);
 
-    for (auto i = 0; i < 2; ++i) {
-        auto y = ys[i];
-        auto dst = surface->buffer + (y * surface->stride + region.min.x);
-        auto img = image->data + static_cast<uint32_t>(y * itransform->e22 + itransform->e23) * image->stride;
-        for (auto x = region.min.x; x < region.max.x; ++x, ++dst) {
-            auto src = ALPHA_BLEND(img[static_cast<uint32_t>(x * itransform->e11 + itransform->e13)], opacity);
-            *dst = src + ALPHA_BLEND(*dst, surface->blender.ialpha(src));
-        }
-    }
-    //Left, Right Lines
-    SwCoord xs[2] = {region.min.x, region.max.x - 1};
-
-    for (auto i = 0; i < 2; ++i) {
-        auto x = xs[i];
-        auto dst = surface->buffer + ((region.min.y + 1) * surface->stride + x);
-        auto img = image->data + static_cast<uint32_t>(x * itransform->e11 + itransform->e13);
-        for (auto y = region.min.y + 1; y < region.max.y - 1; ++y, dst += surface->stride) {
-            auto src = ALPHA_BLEND(img[static_cast<uint32_t>(y * itransform->e22 + itransform->e23) * image->stride], opacity);
-            *dst = src + ALPHA_BLEND(*dst, surface->blender.ialpha(src));
-        }
-    }
-    //Center (Down-Scaled)
+    // Down-Scaled
     if (image->scale < DOWN_SCALE_TOLERANCE) {
-        auto dbuffer = surface->buffer + ((region.min.y + 1) * surface->stride + (region.min.x + 1));
-        for (auto y = region.min.y + 1; y < region.max.y - 1; ++y, dbuffer += surface->stride) {
+        for (auto y = region.min.y; y < region.max.y; ++y, dbuffer += surface->stride) {
             auto sy = static_cast<uint32_t>(y * itransform->e22 + itransform->e23);
             auto dst = dbuffer;
-            for (auto x = region.min.x + 1; x < region.max.x - 1; ++x, ++dst) {
+            for (auto x = region.min.x; x < region.max.x; ++x, ++dst) {
                 auto sx = static_cast<uint32_t>(x * itransform->e11 + itransform->e13);
                 auto src = ALPHA_BLEND(_interpDownScaler(image->data, image->w, image->h, sx, sy, halfScale), opacity);
                 *dst = src + ALPHA_BLEND(*dst, surface->blender.ialpha(src));
             }
         }
-    //Center (Up-Scaled)
+    // Up-Scaled
     } else {
-        auto dbuffer = surface->buffer + (region.min.y * surface->stride + region.min.x);
-        for (auto y = region.min.y; y < region.max.y - 1; ++y, dbuffer += surface->stride) {
-            auto sy = y * itransform->e22 + itransform->e23;
+        for (auto y = region.min.y; y < region.max.y; ++y, dbuffer += surface->stride) {
+            auto sy = fabsf(y * itransform->e22 + itransform->e23);
             auto dst = dbuffer;
-            for (auto x = region.min.x; x < region.max.x - 1; ++x, ++dst) {
-                auto sx = x * itransform->e11 + itransform->e13;
+            for (auto x = region.min.x; x < region.max.x; ++x, ++dst) {
+                auto sx = fabsf(x * itransform->e11 + itransform->e13);
                 auto src = ALPHA_BLEND(_interpUpScaler(image->data, image->w, image->h, sx, sy), opacity);
                 *dst = src + ALPHA_BLEND(*dst, surface->blender.ialpha(src));
             }
@@ -1271,50 +1195,26 @@ static bool _rasterScaledTranslucentRGBAImage(SwSurface* surface, const SwImage*
 
 static bool _rasterScaledRGBAImage(SwSurface* surface, const SwImage* image, const Matrix* itransform, const SwBBox& region, uint32_t halfScale)
 {
-    //Top, Bottom Lines
-    SwCoord ys[2] = {region.min.y, region.max.y - 1};
+    auto dbuffer = surface->buffer + (region.min.y * surface->stride + region.min.x);
 
-    for (auto i = 0; i < 2; ++i) {
-        auto y = ys[i];
-        auto dst = surface->buffer + (y * surface->stride + region.min.x);
-        auto img = image->data + static_cast<uint32_t>((y * itransform->e22 + itransform->e23)) * image->stride;
-        for (auto x = region.min.x; x < region.max.x; ++x, ++dst) {
-            auto src = img[static_cast<uint32_t>(x * itransform->e11 + itransform->e13)];
-            *dst = src + ALPHA_BLEND(*dst, surface->blender.ialpha(src));
-        }
-    }
-    //Left, Right Lines
-    SwCoord xs[2] = {region.min.x, region.max.x - 1};
-
-    for (auto i = 0; i < 2; ++i) {
-        auto x = xs[i];
-        auto dst = surface->buffer + ((region.min.y + 1) * surface->stride + x);
-        auto img = image->data + static_cast<uint32_t>(x * itransform->e11 + itransform->e13);
-        for (auto y = region.min.y + 1; y < region.max.y - 1; ++y, dst += surface->stride) {
-            auto src = img[static_cast<uint32_t>(y * itransform->e22 + itransform->e23) * image->stride];
-            *dst = src + ALPHA_BLEND(*dst, surface->blender.ialpha(src));
-        }
-    }
-    //Center (Down-Scaled)
+    // Down-Scaled
     if (image->scale < DOWN_SCALE_TOLERANCE) {
-        auto dbuffer = surface->buffer + ((region.min.y + 1) * surface->stride + (region.min.x + 1));
-        for (auto y = region.min.y + 1; y < region.max.y - 1; ++y, dbuffer += surface->stride) {
+        for (auto y = region.min.y; y < region.max.y; ++y, dbuffer += surface->stride) {
             auto sy = static_cast<uint32_t>(y * itransform->e22 + itransform->e23);
             auto dst = dbuffer;
-            for (auto x = region.min.x + 1; x < region.max.x - 1; ++x, ++dst) {
+            for (auto x = region.min.x; x < region.max.x; ++x, ++dst) {
                 auto sx = static_cast<uint32_t>(x * itransform->e11 + itransform->e13);
                 auto src = _interpDownScaler(image->data, image->w, image->h, sx, sy, halfScale);
                 *dst = src + ALPHA_BLEND(*dst, surface->blender.ialpha(src));
             }
         }
-    //Center (Up-Scaled)
+    // Up-Scaled
     } else {
-        auto dbuffer = surface->buffer + (region.min.y * surface->stride + region.min.x);
-        for (auto y = region.min.y; y < region.max.y - 1; ++y, dbuffer += surface->stride) {
-            auto sy = y * itransform->e22 + itransform->e23;
+        for (auto y = region.min.y; y < region.max.y; ++y, dbuffer += surface->stride) {
+            auto sy = fabsf(y * itransform->e22 + itransform->e23);
             auto dst = dbuffer;
-            for (auto x = region.min.x; x < region.max.x - 1; ++x, ++dst) {
-                auto sx = x * itransform->e11 + itransform->e13;
+            for (auto x = region.min.x; x < region.max.x; ++x, ++dst) {
+                auto sx = fabsf(x * itransform->e11 + itransform->e13);
                 auto src = _interpUpScaler(image->data, image->w, image->h, sx, sy);
                 *dst = src + ALPHA_BLEND(*dst, surface->blender.ialpha(src));
             }
