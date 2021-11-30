@@ -641,6 +641,7 @@ static bool _rasterUpScaledRleRGBAImage(SwSurface* surface, const SwImage* image
 static bool _transformedRleRGBAImage(SwSurface* surface, const SwImage* image, const Matrix* transform, uint32_t opacity)
 {
     Matrix itransform;
+    mathIdentity(&itransform);
     if (transform && !mathInverse(transform, &itransform)) return false;
 
     auto halfScale = _halfScale(image->scale);
@@ -653,7 +654,7 @@ static bool _transformedRleRGBAImage(SwSurface* surface, const SwImage* image, c
                     return _rasterTransformedMaskedRleRGBAImage(surface, image, &itransform, surface->blender.alpha);
                 } else if (surface->compositor->method == CompositeMethod::InvAlphaMask) {
                     return _rasterTransformedMaskedRleRGBAImage(surface, image, &itransform, surface->blender.ialpha);
-                }                
+                }
             //Transformed + Down Scaled
             } else if (image->scale < DOWN_SCALE_TOLERANCE) {
                 if (surface->compositor->method == CompositeMethod::AlphaMask) {
@@ -661,14 +662,13 @@ static bool _transformedRleRGBAImage(SwSurface* surface, const SwImage* image, c
                 } else  if (surface->compositor->method == CompositeMethod::InvAlphaMask) {
                     return _rasterDownScaledMaskedRleRGBAImage(surface, image, &itransform, halfScale, surface->blender.ialpha);
                 }
-                
             //Transformed + Up Scaled
             } else {
                 if (surface->compositor->method == CompositeMethod::AlphaMask) {
                     return _rasterUpScaledMaskedRleRGBAImage(surface, image, &itransform, surface->blender.alpha);
                 } else if (surface->compositor->method == CompositeMethod::InvAlphaMask) {
                     return _rasterUpScaledMaskedRleRGBAImage(surface, image, &itransform, surface->blender.ialpha);
-                }                
+                }
             }
         } else {
             //Transformed
@@ -677,7 +677,7 @@ static bool _transformedRleRGBAImage(SwSurface* surface, const SwImage* image, c
                     return _rasterTransformedMaskedTranslucentRleRGBAImage(surface, image, &itransform, opacity, surface->blender.alpha);
                 } else if (surface->compositor->method == CompositeMethod::InvAlphaMask) {
                     return _rasterTransformedMaskedTranslucentRleRGBAImage(surface, image, &itransform, opacity, surface->blender.ialpha);
-                }                
+                }
             //Transformed + Down Scaled
             } else if (image->scale < DOWN_SCALE_TOLERANCE) {
                 if (surface->compositor->method == CompositeMethod::AlphaMask) {
@@ -685,14 +685,13 @@ static bool _transformedRleRGBAImage(SwSurface* surface, const SwImage* image, c
                 } else  if (surface->compositor->method == CompositeMethod::InvAlphaMask) {
                     return _rasterDownScaledMaskedTranslucentRleRGBAImage(surface, image, &itransform, opacity, halfScale, surface->blender.ialpha);
                 }
-                
             //Transformed + Up Scaled
             } else {
                 if (surface->compositor->method == CompositeMethod::AlphaMask) {
                     return _rasterUpScaledMaskedTranslucentRleRGBAImage(surface, image, &itransform, opacity, surface->blender.alpha);
                 } else if (surface->compositor->method == CompositeMethod::InvAlphaMask) {
                     return _rasterUpScaledMaskedTranslucentRleRGBAImage(surface, image, &itransform, opacity, surface->blender.ialpha);
-                }                
+                }
             }
         }
     } else {
