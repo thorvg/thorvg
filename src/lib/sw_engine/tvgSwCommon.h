@@ -111,7 +111,7 @@ struct SwOutline
 
 struct SwSpan
 {
-    int16_t x, y;
+    uint16_t x, y;
     uint16_t len;
     uint8_t coverage;
 };
