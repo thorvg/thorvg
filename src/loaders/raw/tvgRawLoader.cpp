@@ -72,7 +72,16 @@ bool RawLoader::close()
 }
 
 
-const uint32_t* RawLoader::pixels()
+unique_ptr<Surface> RawLoader::bitmap()
 {
-    return this->content;
+    if (!content) return nullptr;
+
+    auto surface = static_cast<Surface*>(malloc(sizeof(Surface)));
+    surface->buffer = (uint32_t*)(content);
+    surface->stride = w;
+    surface->w = w;
+    surface->h = h;
+    surface->cs = SwCanvas::ARGB8888;
+
+    return unique_ptr<Surface>(surface);
 }

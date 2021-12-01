@@ -28,6 +28,26 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
+
+static inline uint32_t ALPHA_BLEND(uint32_t c, uint32_t a)
+{
+    return (((((c >> 8) & 0x00ff00ff) * a + 0x00ff00ff) & 0xff00ff00) +
+            ((((c & 0x00ff00ff) * a + 0x00ff00ff) >> 8) & 0x00ff00ff));
+}
+
+
+static void _premultiply(uint32_t* data, uint32_t w, uint32_t h)
+{
+    auto buffer = data;
+    for (uint32_t y = 0; y < h; ++y, buffer += w) {
+        auto src = buffer;
+        for (uint32_t x = 0; x < w; ++x, ++src) {
+            *src = ALPHA_BLEND(*src, (*src >> 24));
+        }
+    }
+}
+
+
 void PngLoader::clear()
 {
     lodepng_state_cleanup(&state);
@@ -141,11 +161,20 @@ bool PngLoader::close()
 }
 
 
-const uint32_t* PngLoader::pixels()
+unique_ptr<Surface> PngLoader::bitmap()
 {
     this->done();
 
-    return (const uint32_t*) image;
+    if (!image) return nullptr;
+
+    auto surface = static_cast<Surface*>(malloc(sizeof(Surface)));
+    surface->buffer = (uint32_t*)(image);
+    surface->stride = w;
+    surface->w = w;
+    surface->h = h;
+    surface->cs = SwCanvas::ARGB8888;
+
+    return unique_ptr<Surface>(surface);
 }
 
 
@@ -155,4 +184,6 @@ void PngLoader::run(unsigned tid)
     auto height = static_cast<unsigned>(h);
 
     lodepng_decode(&image, &width, &height, &state, data, size);
+
+    _premultiply((uint32_t*)(image), width, height);
 }

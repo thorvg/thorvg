@@ -101,7 +101,7 @@ bool imagePrepare(SwImage* image, const Matrix* transform, const SwBBox& clipReg
 }
 
 
-bool imageGenRle(SwImage* image, TVG_UNUSED const Picture* pdata, const SwBBox& renderRegion, bool antiAlias)
+bool imageGenRle(SwImage* image, const SwBBox& renderRegion, bool antiAlias)
 {
     if ((image->rle = rleRender(image->rle, image->outline, renderRegion, antiAlias))) return true;
 
