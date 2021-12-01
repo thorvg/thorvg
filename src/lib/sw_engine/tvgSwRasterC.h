@@ -40,7 +40,7 @@ static bool inline cRasterTranslucentRle(SwSurface* surface, const SwRleData* rl
         else src = color;
 
         for (uint32_t x = 0; x < span->len; ++x, ++dst) {
-            *dst = src + ALPHA_BLEND(*dst, surface->blender.ialpha(src));
+            *dst = src + ALPHA_BLEND(*dst, _ialpha(src));
         }
     }
     return true;
@@ -52,7 +52,7 @@ static bool inline cRasterTranslucentRect(SwSurface* surface, const SwBBox& regi
     auto buffer = surface->buffer + (region.min.y * surface->stride) + region.min.x;
     auto h = static_cast<uint32_t>(region.max.y - region.min.y);
     auto w = static_cast<uint32_t>(region.max.x - region.min.x);
-    auto ialpha = surface->blender.ialpha(color);
+    auto ialpha = _ialpha(color);
 
     for (uint32_t y = 0; y < h; ++y) {
         auto dst = &buffer[y * surface->stride];

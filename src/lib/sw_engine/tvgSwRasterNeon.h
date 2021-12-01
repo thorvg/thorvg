@@ -61,7 +61,7 @@ static bool neonRasterTranslucentRle(SwSurface* surface, const SwRleData* rle, u
         else src = color;
 
         auto dst = &surface->buffer[span->y * surface->stride + span->x];
-        auto ialpha = 255 - surface->blender.alpha(src);
+        auto ialpha = 255 - _alpha(src);
 
         if ((((uint32_t) dst) & 0x7) != 0) {
             //fill not aligned byte
@@ -93,7 +93,7 @@ static bool neonRasterTranslucentRect(SwSurface* surface, const SwBBox& region, 
     auto buffer = surface->buffer + (region.min.y * surface->stride) + region.min.x;
     auto h = static_cast<uint32_t>(region.max.y - region.min.y);
     auto w = static_cast<uint32_t>(region.max.x - region.min.x);
-    auto ialpha = 255 - surface->blender.alpha(color);
+    auto ialpha = 255 - _alpha(color);
 
     auto vColor = vdup_n_u32(color);
     auto vIalpha = vdup_n_u8((uint8_t) ialpha);
