@@ -1817,7 +1817,7 @@ bool rasterClear(SwSurface* surface)
 
 void rasterUnpremultiply(SwSurface* surface)
 {
-    //TODO: Create simd avx and neon version
+    //OPTIMIZE_ME: +SIMD
     for (uint32_t y = 0; y < surface->h; y++) {
         auto buffer = surface->buffer + surface->stride * y;
         for (uint32_t x = 0; x < surface->w; ++x) {
@@ -1904,6 +1904,5 @@ bool rasterImage(SwSurface* surface, SwImage* image, const Matrix* transform, co
     //TODO: case: _rasterRGBImage()
     //TODO: case: _rasterGrayscaleImage()
     //TODO: case: _rasterAlphaImage()
-
     return _rasterRGBAImage(surface, image, transform, bbox, opacity);
 }

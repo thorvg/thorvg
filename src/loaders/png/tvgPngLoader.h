@@ -47,7 +47,7 @@ public:
     bool read() override;
     bool close() override;
 
-    const uint32_t* pixels() override;
+    unique_ptr<Surface> bitmap() override;
     void run(unsigned tid) override;
 };
 

@@ -149,7 +149,16 @@ bool JpgLoader::close()
 }
 
 
-const uint32_t* JpgLoader::pixels()
+unique_ptr<Surface> JpgLoader::bitmap()
 {
-    return (const uint32_t*) image;
+    if (!image) return nullptr;
+
+    auto surface = static_cast<Surface*>(malloc(sizeof(Surface)));
+    surface->buffer = (uint32_t*)(image);
+    surface->stride = w;
+    surface->w = w;
+    surface->h = h;
+    surface->cs = SwCanvas::ARGB8888;
+
+    return unique_ptr<Surface>(surface);
 }

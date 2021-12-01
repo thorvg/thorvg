@@ -60,8 +60,10 @@ struct PictureIterator : Iterator
 struct Picture::Impl
 {
     shared_ptr<LoadModule> loader = nullptr;
-    Paint* paint = nullptr;
-    uint32_t* pixels = nullptr;
+
+    Paint* paint = nullptr;           //vector picture uses
+    Surface* surface = nullptr;       //bitmap picture uses
+
     Picture* picture = nullptr;
     void* rdata = nullptr;            //engine data
     float w = 0, h = 0;
@@ -74,6 +76,7 @@ struct Picture::Impl
     ~Impl()
     {
         if (paint) delete(paint);
+        free(surface);
     }
 
     bool dispose(RenderMethod& renderer)
@@ -81,7 +84,7 @@ struct Picture::Impl
         bool ret = true;
         if (paint) {
             ret = paint->pImpl->dispose(renderer);
-        } else if (pixels) {
+        } else if (surface) {
             ret =  renderer.dispose(rdata);
             rdata = nullptr;
         }
@@ -102,10 +105,10 @@ struct Picture::Impl
                     if (paint) return RenderUpdateFlag::None;
                 }
             }
-            if (!pixels) {
-                pixels = const_cast<uint32_t*>(loader->pixels());
+            free(surface);
+            if ((surface = loader->bitmap().release())) {
                 loader->close();
-                if (pixels) return RenderUpdateFlag::Image;
+                return RenderUpdateFlag::Image;
             }
         }
         return RenderUpdateFlag::None;
@@ -129,9 +132,9 @@ struct Picture::Impl
     {
         auto flag = reload();
 
-        if (pixels) {
+        if (surface) {
             auto transform = resizeTransform(pTransform);
-            rdata = renderer.prepare(*picture, rdata, &transform, opacity, clips, static_cast<RenderUpdateFlag>(pFlag | flag));
+            rdata = renderer.prepare(surface, rdata, &transform, opacity, clips, static_cast<RenderUpdateFlag>(pFlag | flag));
         } else if (paint) {
             if (resizing) {
                 loader->resize(paint, w, h);
@@ -144,7 +147,7 @@ struct Picture::Impl
 
     bool render(RenderMethod &renderer)
     {
-        if (pixels) return renderer.renderImage(rdata);
+        if (surface) return renderer.renderImage(rdata);
         else if (paint) return paint->pImpl->render(renderer);
         return false;
     }
@@ -186,7 +189,7 @@ struct Picture::Impl
 
     Result load(const string& path)
     {
-        if (paint || pixels) return Result::InsufficientCondition;
+        if (paint || surface) return Result::InsufficientCondition;
         if (loader) loader->close();
         bool invalid;  //Invalid Path
         loader = LoaderMgr::loader(path, &invalid);
@@ -202,7 +205,7 @@ struct Picture::Impl
 
     Result load(const char* data, uint32_t size, const string& mimeType, bool copy)
     {
-        if (paint || pixels) return Result::InsufficientCondition;
+        if (paint || surface) return Result::InsufficientCondition;
         if (loader) loader->close();
         loader = LoaderMgr::loader(data, size, mimeType, copy);
         if (!loader) return Result::NonSupport;
@@ -214,7 +217,7 @@ struct Picture::Impl
 
     Result load(uint32_t* data, uint32_t w, uint32_t h, bool copy)
     {
-        if (paint || pixels) return Result::InsufficientCondition;
+        if (paint || surface) return Result::InsufficientCondition;
         if (loader) loader->close();
         loader = LoaderMgr::loader(data, w, h, copy);
         if (!loader) return Result::NonSupport;
@@ -234,7 +237,10 @@ struct Picture::Impl
         if (paint) dup->paint = paint->duplicate();
 
         dup->loader = loader;
-        dup->pixels = pixels;
+        if (surface) {
+            dup->surface = static_cast<Surface*>(malloc(sizeof(Surface)));
+            *dup->surface = *surface;
+        }
         dup->w = w;
         dup->h = h;
         dup->resizing = resizing;

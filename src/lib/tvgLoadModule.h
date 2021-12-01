@@ -22,7 +22,7 @@
 #ifndef _TVG_LOAD_MODULE_H_
 #define _TVG_LOAD_MODULE_H_
 
-#include "tvgCommon.h"
+#include "tvgRender.h"
 
 namespace tvg
 {
@@ -40,17 +40,17 @@ public:
 
     virtual ~LoadModule() {}
 
-    virtual bool open(const string& path) { return false; };
-    virtual bool open(const char* data, uint32_t size, bool copy) { return false; };
-    virtual bool open(const uint32_t* data, uint32_t w, uint32_t h, bool copy) { return false; };
+    virtual bool open(const string& path) { return false; }
+    virtual bool open(const char* data, uint32_t size, bool copy) { return false; }
+    virtual bool open(const uint32_t* data, uint32_t w, uint32_t h, bool copy) { return false; }
 
     //Override this if the vector-format has own resizing policy.
-    virtual bool resize(Paint* paint, float w, float h) { return false; };
+    virtual bool resize(Paint* paint, float w, float h) { return false; }
 
     virtual bool read() = 0;
     virtual bool close() = 0;
-    virtual const uint32_t* pixels() { return nullptr; };
-    virtual unique_ptr<Paint> paint() { return nullptr; };
+    virtual unique_ptr<Surface> bitmap() { return nullptr; }
+    virtual unique_ptr<Paint> paint() { return nullptr; }
 };
 
 }

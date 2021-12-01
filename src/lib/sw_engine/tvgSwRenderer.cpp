@@ -180,7 +180,6 @@ struct SwShapeTask : SwTask
 struct SwImageTask : SwTask
 {
     SwImage image;
-    const Picture* pdata = nullptr;
 
     void run(unsigned tid) override
     {
@@ -189,15 +188,12 @@ struct SwImageTask : SwTask
         //Invisible shape turned to visible by alpha.
         if ((flags & (RenderUpdateFlag::Image | RenderUpdateFlag::Transform | RenderUpdateFlag::Color)) && (opacity > 0)) {
             imageReset(&image);
-
-            image.data = const_cast<uint32_t*>(pdata->data(&image.w, &image.h));
             if (!image.data || image.w == 0 || image.h == 0) goto end;
-            image.stride = image.w;     //same, pixel buffer size.
 
             if (!imagePrepare(&image, transform, clipRegion, bbox, mpool, tid)) goto end;
 
             if (clips.count > 0) {
-                if (!imageGenRle(&image, pdata, bbox, false)) goto end;
+                if (!imageGenRle(&image, bbox, false)) goto end;
                 if (image.rle) {
                     for (auto clip = clips.data; clip < (clips.data + clips.count); ++clip) {
                         auto clipper = &static_cast<SwShapeTask*>(*clip)->shape;
@@ -613,14 +609,18 @@ void* SwRenderer::prepareCommon(SwTask* task, const RenderTransform* transform, 
 }
 
 
-RenderData SwRenderer::prepare(const Picture& pdata, RenderData data, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flags)
+RenderData SwRenderer::prepare(Surface* image, RenderData data, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flags)
 {
     //prepare task
     auto task = static_cast<SwImageTask*>(data);
     if (!task) {
         task = new SwImageTask;
-        if (!task) return nullptr;
-        task->pdata = &pdata;
+        if (flags & RenderUpdateFlag::Image) {
+            task->image.data = image->buffer;
+            task->image.w = image->w;
+            task->image.h = image->h;
+            task->image.stride = image->stride;
+        }
     }
     return prepareCommon(task, transform, opacity, clips, flags);
 }
@@ -632,7 +632,6 @@ RenderData SwRenderer::prepare(const Shape& sdata, RenderData data, const Render
     auto task = static_cast<SwShapeTask*>(data);
     if (!task) {
         task = new SwShapeTask;
-        if (!task) return nullptr;
         task->sdata = &sdata;
     }
     return prepareCommon(task, transform, opacity, clips, flags);

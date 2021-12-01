@@ -23,6 +23,25 @@
 #include "tvgLoader.h"
 #include "tvgPngLoader.h"
 
+static inline uint32_t ALPHA_BLEND(uint32_t c, uint32_t a)
+{
+    return (((((c >> 8) & 0x00ff00ff) * a + 0x00ff00ff) & 0xff00ff00) +
+            ((((c & 0x00ff00ff) * a + 0x00ff00ff) >> 8) & 0x00ff00ff));
+}
+
+
+static void _premultiply(uint32_t* data, uint32_t w, uint32_t h)
+{
+    auto buffer = data;
+    for (uint32_t y = 0; y < h; ++y, buffer += w) {
+        auto src = buffer;
+        for (uint32_t x = 0; x < w; ++x, ++src) {
+            *src = ALPHA_BLEND(*src, (*src >> 24));
+        }
+    }
+}
+
+
 PngLoader::PngLoader()
 {
     image = static_cast<png_imagep>(calloc(1, sizeof(png_image)));
@@ -63,6 +82,7 @@ bool PngLoader::open(const char* data, uint32_t size, bool copy)
     return true;
 }
 
+
 bool PngLoader::read()
 {
     png_bytep buffer;
@@ -76,6 +96,8 @@ bool PngLoader::read()
     if (!png_image_finish_read(image, NULL, buffer, 0, NULL)) return false;
     content = reinterpret_cast<uint32_t*>(buffer);
 
+    _premultiply(reinterpret_cast<uint32_t*>(buffer), image->width, image->height);
+
     return true;
 }
 
@@ -85,7 +107,16 @@ bool PngLoader::close()
     return true;
 }
 
-const uint32_t* PngLoader::pixels()
+unique_ptr<Surface> PngLoader::bitmap()
 {
-    return this->content;
+    if (!content) return nullptr;
+
+    auto surface = static_cast<Surface*>(malloc(sizeof(Surface)));
+    surface->buffer = (uint32_t*)(content);
+    surface->stride = w;
+    surface->w = w;
+    surface->h = h;
+    surface->cs = SwCanvas::ARGB8888;
+
+    return unique_ptr<Surface>(surface);
 }
