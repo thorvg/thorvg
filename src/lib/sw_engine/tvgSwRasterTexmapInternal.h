@@ -107,7 +107,7 @@
 #else
             auto src = px;            
 #endif
-            *buf = src + ALPHA_BLEND(*buf, surface->blender.ialpha(src));
+            *buf = src + ALPHA_BLEND(*buf, _ialpha(src));
             ++buf;
 #ifdef TEXMAP_MASKING
             ++cmp;
