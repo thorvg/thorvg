@@ -52,7 +52,7 @@ struct RadialGradient::Impl
 
 RadialGradient::RadialGradient():pImpl(new Impl())
 {
-    _id = TVG_CLASS_ID_RADIAL;
+    Fill::pImpl->id = TVG_CLASS_ID_RADIAL;
     Fill::pImpl->method(new FillDup<RadialGradient::Impl>(pImpl));
 }
 

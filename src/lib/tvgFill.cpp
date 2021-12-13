@@ -108,3 +108,8 @@ Fill* Fill::duplicate() const noexcept
 {
     return pImpl->duplicate();
 }
+
+uint32_t Fill::identifier() const noexcept
+{
+    return pImpl->id;
+}

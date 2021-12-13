@@ -395,3 +395,9 @@ uint8_t Paint::opacity() const noexcept
 {
     return pImpl->opacity;
 }
+
+
+uint32_t Paint::identifier() const noexcept
+{
+    return pImpl->id;
+}

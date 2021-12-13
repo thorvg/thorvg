@@ -58,6 +58,7 @@ namespace tvg
         Paint* cmpTarget = nullptr;
         CompositeMethod cmpMethod = CompositeMethod::None;
         uint32_t ctxFlag = ContextFlag::Invalid;
+        uint32_t id;
         uint8_t opacity = 255;
 
         ~Impl() {
