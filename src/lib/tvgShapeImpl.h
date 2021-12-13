@@ -352,7 +352,6 @@ struct Shape::Impl
     Paint* duplicate()
     {
         auto ret = Shape::gen();
-        if (!ret) return nullptr;
 
         auto dup = ret.get()->pImpl;
         dup->rule = rule;
