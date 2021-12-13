@@ -225,7 +225,6 @@ struct Picture::Impl
         reload();
 
         auto ret = Picture::gen();
-        if (!ret) return nullptr;
 
         auto dup = ret.get()->pImpl;
         if (paint) dup->paint = paint->duplicate();

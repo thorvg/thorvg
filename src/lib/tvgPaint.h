@@ -50,19 +50,28 @@ namespace tvg
         virtual Iterator* iterator() = 0;
     };
 
+    struct Composite
+    {
+        Paint* target;
+        Paint* source;
+        CompositeMethod method;
+    };
+
     struct Paint::Impl
     {
         StrategyMethod* smethod = nullptr;
         RenderTransform* rTransform = nullptr;
+        Composite* compData = nullptr;
         uint32_t renderFlag = RenderUpdateFlag::None;
-        Paint* cmpTarget = nullptr;
-        CompositeMethod cmpMethod = CompositeMethod::None;
         uint32_t ctxFlag = ContextFlag::Invalid;
         uint32_t id;
         uint8_t opacity = 255;
 
         ~Impl() {
-            if (cmpTarget) delete(cmpTarget);
+            if (compData) {
+                delete(compData->target);
+                free(compData);
+            }
             if (smethod) delete(smethod);
             if (rTransform) delete(rTransform);
         }
@@ -100,7 +109,7 @@ namespace tvg
 
         bool dispose(RenderMethod& renderer)
         {
-            if (cmpTarget) cmpTarget->pImpl->dispose(renderer);
+            if (compData) compData->target->pImpl->dispose(renderer);
             return smethod->dispose(renderer);
         }
 
@@ -109,12 +118,26 @@ namespace tvg
             return smethod->iterator();
         }
 
-        bool composite(Paint* target, CompositeMethod method)
+        bool composite(Paint* source, Paint* target, CompositeMethod method)
         {
+            //Invalid case
             if ((!target && method != CompositeMethod::None) || (target && method == CompositeMethod::None)) return false;
-            if (cmpTarget) delete(cmpTarget);
-            cmpTarget = target;
-            cmpMethod = method;
+
+            if (compData) {
+                delete(compData->target);
+                //Reset scenario
+                if (!target && method == CompositeMethod::None) {
+                    free(compData);
+                    compData = nullptr;
+                    return true;
+                }
+            } else {
+                if (!target && method == CompositeMethod::None) return true;
+                compData = static_cast<Composite*>(calloc(1, sizeof(Composite)));
+            }
+            compData->target = target;
+            compData->source = source;
+            compData->method = method;
             return true;
         }
 

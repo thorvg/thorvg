@@ -184,7 +184,7 @@ struct Scene::Impl
     Paint* duplicate()
     {
         auto ret = Scene::gen();
-        if (!ret) return nullptr;
+
         auto dup = ret.get()->pImpl;
 
         dup->paints.reserve(paints.count);
