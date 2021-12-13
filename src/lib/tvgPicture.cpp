@@ -26,7 +26,7 @@
 /* External Class Implementation                                        */
 /************************************************************************/
 
-Picture::Picture() : pImpl(new Impl(this))
+Picture::Picture() : pImpl(new Impl)
 {
     Paint::pImpl->id = TVG_CLASS_ID_PICTURE;
     Paint::pImpl->method(new PaintMethod<Picture::Impl>(pImpl));
