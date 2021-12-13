@@ -28,7 +28,7 @@
 
 Picture::Picture() : pImpl(new Impl(this))
 {
-    _id = TVG_CLASS_ID_PICTURE;
+    Paint::pImpl->id = TVG_CLASS_ID_PICTURE;
     Paint::pImpl->method(new PaintMethod<Picture::Impl>(pImpl));
 }
 

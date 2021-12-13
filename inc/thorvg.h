@@ -53,10 +53,6 @@ protected: \
     friend IteratorAccessor
 
 
-#define _TVG_DECALRE_IDENTIFIER() \
-protected: \
-    unsigned _id
-
 namespace tvg
 {
 
@@ -345,10 +341,9 @@ public:
      *
      * @BETA_API
      */
-    uint32_t identifier() const { return _id; }
+    uint32_t identifier() const noexcept;
 
     _TVG_DECLARE_ACCESSOR();
-    _TVG_DECALRE_IDENTIFIER();
     _TVG_DECLARE_PRIVATE(Paint);
 };
 
@@ -454,9 +449,8 @@ public:
      *
      * @BETA_API
      */
-    uint32_t identifier() const { return _id; }
+    uint32_t identifier() const noexcept;
 
-    _TVG_DECALRE_IDENTIFIER();
     _TVG_DECLARE_PRIVATE(Fill);
 };
 

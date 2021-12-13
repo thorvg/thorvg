@@ -27,7 +27,7 @@
 
 Scene::Scene() : pImpl(new Impl())
 {
-    _id = TVG_CLASS_ID_SCENE;
+    Paint::pImpl->id = TVG_CLASS_ID_SCENE;
     Paint::pImpl->method(new PaintMethod<Scene::Impl>(pImpl));
 }
 
