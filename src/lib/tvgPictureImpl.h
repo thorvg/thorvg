@@ -63,15 +63,9 @@ struct Picture::Impl
 
     Paint* paint = nullptr;           //vector picture uses
     Surface* surface = nullptr;       //bitmap picture uses
-
-    Picture* picture = nullptr;
     void* rdata = nullptr;            //engine data
     float w = 0, h = 0;
     bool resizing = false;
-
-    Impl(Picture* p) : picture(p)
-    {
-    }
 
     ~Impl()
     {
