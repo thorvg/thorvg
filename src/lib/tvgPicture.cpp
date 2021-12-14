@@ -88,6 +88,13 @@ Result Picture::viewbox(float* x, float* y, float* w, float* h) const noexcept
 }
 
 
+Result Picture::aspectRatio(bool* preserved) const noexcept
+{
+    if (pImpl->aspectRatio(preserved)) return Result::Success;
+    return Result::InsufficientCondition;
+}
+
+
 Result Picture::size(float w, float h) noexcept
 {
     if (pImpl->size(w, h)) return Result::Success;

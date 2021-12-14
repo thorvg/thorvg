@@ -156,6 +156,13 @@ struct Picture::Impl
         return true;
     }
 
+    bool aspectRatio(bool* preserved) const
+    {
+        if (!loader) return false;
+        if (preserved) *preserved = loader->preserveAspect;
+        return true;
+    }
+
     bool size(float w, float h)
     {
         this->w = w;
@@ -170,7 +177,7 @@ struct Picture::Impl
         if (y) *y = 0;
         if (w) *w = this->w;
         if (h) *h = this->h;
- 
+
         return true;
     }
 

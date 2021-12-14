@@ -1184,6 +1184,15 @@ public:
     Result viewbox(float* x, float* y, float* w, float* h) const noexcept;
 
     /**
+     * @brief Gets the information about the preserveAspectRatio attribute of the loaded SVG picture.
+     *
+     * @warning Please do not use it, this API is not official one. It could be modified in the next version.
+     *
+     * @BETA_API
+     */
+    Result aspectRatio(bool* preserved) const noexcept;
+
+    /**
      * @brief Creates a new Picture object.
      *
      * @return A new Picture object.
