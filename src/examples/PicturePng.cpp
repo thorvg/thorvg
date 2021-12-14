@@ -31,6 +31,12 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 {
     if (!canvas) return;
 
+    //Background                            
+    auto bg = tvg::Shape::gen();
+    bg->appendRect(0, 0, WIDTH, HEIGHT, 0, 0);    //x, y, w, h, rx, ry
+    bg->fill(255, 255, 255, 255);                 //r, g, b, a
+    canvas->push(move(bg));
+
     //Load png file from path
     auto opacity = 51;
 
