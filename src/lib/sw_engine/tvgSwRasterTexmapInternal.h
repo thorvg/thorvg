@@ -25,56 +25,51 @@
     float _xa = xa, _xb = xb, _ua = ua, _va = va;
     auto sbuf = image->data;
     auto dbuf = surface->buffer;
-    int sw = static_cast<int>(image->stride);
-    int sh = image->h;
-    int dw = surface->stride;
-    int x1, x2, x, y, ar, ab, iru, irv, px;
-    int vv = 0;
-    int uu = 0;
+    int32_t sw = static_cast<int32_t>(image->stride);
+    int32_t sh = image->h;
+    int32_t dw = surface->stride;
+    int32_t x1, x2, x, y, ar, ab, iru, irv, px, ay;
+    int32_t vv = 0, uu = 0;
+    int32_t minx = 0, maxx = 0;
     float dx, u, v, iptr;
     uint32_t* buf;
-    int regionTop;
-    int regionBottom;
     SwSpan* span = nullptr;         //used only when rle based.
 
 #ifdef TEXMAP_MASKING
     uint32_t* cmp;
 #endif
 
-    if (region) {
-        regionTop = region->min.y;
-        regionBottom = region->max.y;
-    } else {
-        regionTop = image->rle->spans->y;
-        regionBottom = image->rle->spans[image->rle->size - 1].y;
-    }
-
-    //Range exception handling
-    if (yStart >= regionBottom) return;
-    if (yStart < regionTop) yStart = regionTop;
-    if (yEnd > regionBottom) yEnd = regionBottom;
+    if (!_arrange(image, region, yStart, yEnd)) return;
 
     //Loop through all lines in the segment
     y = yStart;
 
-    if (!region) span = image->rle->spans + (yStart - regionTop);
+    if (region) {
+        minx = region->min.x;
+        maxx = region->max.x;
+    } else {
+        span = image->rle->spans + (yStart - image->rle->spans->y);
+    }
 
     while (y < yEnd) {
         x1 = _xa;
         x2 = _xb;
 
-        //Range exception handling
-        if (region) {
-            if (x1 < region->min.x) x1 = region->min.x;
-            if (x2 > region->max.x) x2 = region->max.x;
-            if ((x2 - x1) < 1) goto next;
-            if ((x1 >= region->max.x) || (x2 <= region->min.x)) goto next;
-        } else {
-            if (x1 < span->x) x1 = span->x;
-            if (x2 > span->x + span->len) x2 = (span->x + span->len);
-            if ((x2 - x1) < 1) goto next;
-            if ((x1 >= (span->x + span->len)) || (x2 <= span->x)) goto next;
+        if (!region) {
+            minx = span->x;
+            maxx = span->x + span->len;
         }
+             
+        if (x1 < minx) x1 = minx;
+        if (x2 > maxx) x2 = maxx;
+            
+        //Anti-Aliasing frames
+        ay = y - aaSpans->yStart;
+        if (aaSpans->lines[ay].x[0] > x1) aaSpans->lines[ay].x[0] = x1;
+        if (aaSpans->lines[ay].x[1] < x2) aaSpans->lines[ay].x[1] = x2;
+
+        //Range exception
+        if ((x2 - x1) < 1 || (x1 >= maxx) || (x2 <= minx)) goto next;
 
         //Perform subtexel pre-stepping on UV
         dx = 1 - (_xa - x1);
