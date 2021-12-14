@@ -43,6 +43,8 @@ static void _premultiply(uint32_t* data, uint32_t w, uint32_t h)
         auto src = buffer;
         for (uint32_t x = 0; x < w; ++x, ++src) {
             *src = PREMULTIPLY(*src);
+            //change ABGR to ARGB.
+            *src = ((*src & 0xff) << 16) + ((*src >> 16) & 0xff) + (*src & 0xff00ff00);
         }
     }
 }
@@ -121,7 +123,7 @@ bool PngLoader::open(const char* data, uint32_t size, bool copy)
     clear();
 
     lodepng_state_init(&state);
-    
+
     unsigned int width, height;
     if (lodepng_inspect(&width, &height, &state, (unsigned char*)(data), size) > 0) return false;
 
