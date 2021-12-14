@@ -200,7 +200,7 @@ struct Picture::Impl
     //Temporary
     Result load(const string& path, uint32_t frame)
     {
-        if (paint || pixels) return Result::InsufficientCondition;
+        if (paint) return Result::InsufficientCondition;
         if (loader) loader->close();
         bool invalid;  //Invalid Path
         loader = LoaderMgr::loader(path, &invalid);
