@@ -29,10 +29,10 @@
 /************************************************************************/
 
 
-static inline uint32_t ALPHA_BLEND(uint32_t c, uint32_t a)
+static inline uint32_t PREMULTIPLY(uint32_t c)
 {
-    return (((((c >> 8) & 0x00ff00ff) * a + 0x00ff00ff) & 0xff00ff00) +
-            ((((c & 0x00ff00ff) * a + 0x00ff00ff) >> 8) & 0x00ff00ff));
+    auto a = (c >> 24);
+    return (c & 0xff000000) + ((((c >> 8) & 0xff) * a) & 0xff00) + ((((c & 0x00ff00ff) * a) >> 8) & 0x00ff00ff);
 }
 
 
@@ -42,7 +42,7 @@ static void _premultiply(uint32_t* data, uint32_t w, uint32_t h)
     for (uint32_t y = 0; y < h; ++y, buffer += w) {
         auto src = buffer;
         for (uint32_t x = 0; x < w; ++x, ++src) {
-            *src = ALPHA_BLEND(*src, (*src >> 24));
+            *src = PREMULTIPLY(*src);
         }
     }
 }
