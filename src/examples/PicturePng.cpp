@@ -38,9 +38,9 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     canvas->push(move(bg));
 
     //Load png file from path
-    auto opacity = 51;
+    auto opacity = 31;
 
-    for (int i = 0; i < 5; ++i) {
+    for (int i = 0; i < 7; ++i) {
         auto picture = tvg::Picture::gen();
         if (picture->load(EXAMPLE_DIR"/test.png") != tvg::Result::Success) {
              cout << "PNG is not supported. Did you enable PNG Loader?" << endl;

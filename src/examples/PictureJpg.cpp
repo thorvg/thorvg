@@ -31,10 +31,10 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 {
     if (!canvas) return;
 
-    auto opacity = 51;
+    auto opacity = 36;
 
     //Load jpg file from path
-    for (int i = 0; i < 5; ++i) {
+    for (int i = 0; i < 7; ++i) {
         auto picture = tvg::Picture::gen();
         if (picture->load(EXAMPLE_DIR"/test.jpg") != tvg::Result::Success) {
              cout << "JPG is not supported. Did you enable JPG Loader?" << endl;
