@@ -1074,7 +1074,7 @@ public:
  *
  * @note Supported formats are depended on the available TVG loaders.
  */
-class TVG_EXPORT Picture final : public Paint
+class TVG_EXPORT Picture : public Paint
 {
 public:
     ~Picture();
@@ -1560,6 +1560,34 @@ public:
     static std::unique_ptr<Picture> iterate(std::unique_ptr<Picture> picture, int(*func)(const Paint* paint, const Paint* parent, bool hasChildren)) noexcept;
 };
 
+
+class TVG_EXPORT Animation
+{
+public:
+    virtual ~Animation();
+
+
+    Result frame(int frame);
+
+    Result frame(int* frame);
+
+    Result totalFrame(int totalFrame);
+
+    Result totalFrame(int* totalFrame);
+
+    /**
+     * @brief Return the unique id value of this class.
+     *
+     * This method can be referred for identifying the Animation class type.
+     *
+     * @return The type id of the Lottie class.
+     *
+     * @BETA_API
+     */
+    static uint32_t identifier() noexcept;
+
+    _TVG_DECLARE_PRIVATE(Animation);
+};
 
 /** @}*/
 

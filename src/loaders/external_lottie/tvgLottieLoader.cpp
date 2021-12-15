@@ -431,8 +431,11 @@ bool LottieLoader::read()
 {
     if (/*!decoder || */w <= 0 || h <= 0) return false;
 
-    TaskScheduler::request(this);
+    //TaskScheduler::request(this);
 
+    const LOTLayerNode* lotRoot = mLottieAnimation->renderTree(frame, static_cast<size_t>(w), static_cast<size_t>(h));
+printf("%d\n", frame);
+    root = sceneBuilder(lotRoot);
     return true;
 }
 
@@ -482,9 +485,6 @@ bool LottieLoader::resize(Paint* paint, float w, float h)
 
 void LottieLoader::run(unsigned tid)
 {
-    const LOTLayerNode* lotRoot = mLottieAnimation->renderTree(frame, static_cast<size_t>(w), static_cast<size_t>(h));
-
-    root = sceneBuilder(lotRoot);
 }
 
 

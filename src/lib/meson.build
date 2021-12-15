@@ -9,6 +9,7 @@ if get_option('engines').contains('gl') == true
 endif
 
 source_file = [
+   'tvgAnimationImpl.h',
    'tvgCanvasImpl.h',
    'tvgCommon.h',
    'tvgBezier.h',
@@ -16,6 +17,7 @@ source_file = [
    'tvgFill.h',
    'tvgLoader.h',
    'tvgLoadModule.h',
+   'tvgLottieImpl.h',
    'tvgLzw.h',
    'tvgMath.h',
    'tvgPictureImpl.h',
@@ -25,6 +27,7 @@ source_file = [
    'tvgSceneImpl.h',
    'tvgShapeImpl.h',
    'tvgTaskScheduler.h',
+   'tvgAnimation.cpp',
    'tvgBezier.cpp',
    'tvgCanvas.cpp',
    'tvgFill.cpp',
@@ -34,6 +37,7 @@ source_file = [
    'tvgLinearGradient.cpp',
    'tvgLzw.cpp',
    'tvgLoader.cpp',
+   'tvgLottie.cpp',
    'tvgPaint.cpp',
    'tvgPicture.cpp',
    'tvgRadialGradient.cpp',

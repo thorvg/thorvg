@@ -22,46 +22,52 @@
 
 #include <vector>
 #include "Common.h"
+#include "thorvg_lottie.h"
 
 /************************************************************************/
 /* Drawing Commands                                                     */
 /************************************************************************/
 
 
-#define NUM_PER_ROW 7
-#define NUM_PER_COL 6
+#define NUM_PER_ROW 6
+#define NUM_PER_COL 5
 #define SIZE (WIDTH/NUM_PER_ROW)
 
 static int count = 0;
+static int num = 0;
 
-static std::vector<unique_ptr<tvg::Picture>> pictures;
+static std::vector<unique_ptr<tvg::Lottie>> lotties;
 static uint32_t totalFrames[NUM_PER_ROW * NUM_PER_COL] = {0};
 static uint32_t frames[NUM_PER_ROW * NUM_PER_COL] = {0};
 
 void svgDirCallback(const char* name, const char* path, void* data)
 {
+    num++;
+    if (num > NUM_PER_ROW * NUM_PER_COL) return;
     //ignore if not svgs.
     const char *ext = name + strlen(name) - 4;
     if (strcmp(ext, "json")) return;
 
-    auto picture = tvg::Picture::gen();
+    auto lottie = tvg::Lottie::gen();
 
     string buf = path;
     buf += "/";
     buf += name;
 
-    if (picture->load(buf, frames[count]) != tvg::Result::Success) {
+    if (lottie->load(buf) != tvg::Result::Success) {
          cout << "JSON is not supported. Did you enable JSON Loader? : " << buf << endl;
          return;
     }
-    totalFrames[count] = picture->totalFrame();
+    totalFrames[count] = 10;//lottie->totalFrame();
     frames[count]++;
+    lottie->frame(frames[count]);
+printf("asd %d \n", frames[count]);
     if (frames[count] >= totalFrames[count]) frames[count] = 0;
 
-    picture->size(SIZE, SIZE);
-    picture->translate((count % NUM_PER_ROW) * SIZE, (count / NUM_PER_ROW) * (HEIGHT / NUM_PER_COL));
+    lottie->size(SIZE, SIZE);
+    lottie->translate((count % NUM_PER_ROW) * SIZE, (count / NUM_PER_ROW) * (HEIGHT / NUM_PER_COL));
 
-    pictures.push_back(move(picture));
+    lotties.push_back(move(lottie));
 
     count++;
 }
@@ -79,16 +85,17 @@ void tvgUpdateCmds(tvg::Canvas* canvas, float progress)
     if (canvas->push(move(shape)) != tvg::Result::Success) return;
     count = 0;
     eina_file_dir_list(EXAMPLE_DIR"/json", EINA_TRUE, svgDirCallback, (void*)&progress);
+     num = 0;
 
     /* This showcase shows you asynchrounous loading of svg.
        For this, pushing pictures at a certian sync time.
        This means it earns the time to finish loading svg resources,
        otherwise you can push pictures immediately. */
-    for (auto& paint : pictures) {
+    for (auto& paint : lotties) {
         canvas->push(move(paint));
     }
 
-    pictures.clear();
+    lotties.clear();
 }
 
 
