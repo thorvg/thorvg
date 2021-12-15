@@ -594,10 +594,6 @@ bool shapeGenStrokeRle(SwShape* shape, const Shape* sdata, const Matrix* transfo
     }
 
     strokeOutline = strokeExportOutline(shape->stroke, mpool, tid);
-    if (!strokeOutline) {
-        ret = false;
-        goto fail;
-    }
 
     if (!mathUpdateOutlineBBox(strokeOutline, clipRegion, renderRegion, false)) {
         ret = false;
