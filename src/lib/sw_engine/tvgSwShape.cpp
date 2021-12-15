@@ -297,7 +297,7 @@ static SwOutline* _genDashOutline(const Shape* sdata, const Matrix* transform)
     auto outlineCntrsCnt = 0;
 
     for (uint32_t i = 0; i < cmdCnt; ++i) {
-        switch(*(cmds + i)) {
+        switch (*(cmds + i)) {
             case PathCommand::Close: {
                 ++outlinePtsCnt;
                 break;
@@ -326,7 +326,7 @@ static SwOutline* _genDashOutline(const Shape* sdata, const Matrix* transform)
     _growOutlineContour(*dash.outline, outlineCntrsCnt * 20);
 
     while (cmdCnt-- > 0) {
-        switch(*cmds) {
+        switch (*cmds) {
             case PathCommand::Close: {
                 _dashLineTo(dash, &dash.ptStart, transform);
                 break;
@@ -397,7 +397,7 @@ static bool _genOutline(SwShape* shape, const Shape* sdata, const Matrix* transf
     auto closeCnt = 0;
 
     for (uint32_t i = 0; i < cmdCnt; ++i) {
-        switch(*(cmds + i)) {
+        switch (*(cmds + i)) {
             case PathCommand::Close: {
                 ++outlinePtsCnt;
                 ++closeCnt;
@@ -440,7 +440,7 @@ static bool _genOutline(SwShape* shape, const Shape* sdata, const Matrix* transf
 
     //Generate Outlines
     while (cmdCnt-- > 0) {
-        switch(*cmds) {
+        switch (*cmds) {
             case PathCommand::Close: {
                 _outlineClose(*outline);
                 break;
