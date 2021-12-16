@@ -1824,6 +1824,7 @@ TVG_EXPORT Tvg_Result tvg_picture_load_data(Tvg_Paint* paint, const char *data, 
 * The picture content is resized while keeping the default size aspect ratio.
 * The scaling factor is established for each of dimensions and the smaller value is applied to both of them.
 *
+* \param[in] paint A Tvg_Paint pointer to the picture object.
 * \param[in] w A new width of the image in pixels.
 * \param[in] h A new height of the image in pixels.
 *
@@ -1838,6 +1839,7 @@ TVG_EXPORT Tvg_Result tvg_picture_set_size(Tvg_Paint* paint, float w, float h);
 /*!
 * \brief Gets the size of the loaded picture.
 *
+* \param[in] paint A Tvg_Paint pointer to the picture object.
 * \param[out] w A width of the image in pixels.
 * \param[out] h A height of the image in pixels.
 *
