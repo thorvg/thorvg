@@ -173,6 +173,30 @@ typedef enum {
 /** \} */   // end addtogroup ThorVGCapi_Shape
 
 
+/**
+ * \addtogroup ThorVGCapi_Picture
+ * \{
+ */
+
+/**
+ * \brief Enumeration indicating whether uniform scaling has to be forced and if so, how the graphic should be aligned.
+ */
+typedef enum {
+    TVG_ASPECT_RATIO_ALIGN_NONE = 0, ///< The graphic is scaled non-uniformly - it exactly matches the SVG's viewport.
+    TVG_ASPECT_RATIO_ALIGN_XMIDYMID  ///< Force the uniform scaling - the midpoint X of the viewBox aligned with the midpoint X of the viewport.
+} Tvg_Aspect_Ratio_Align;
+
+
+/**
+ * @brief Enumeration indicating the method used to scale the graphic, when the aspect ratio is preserved.
+ */
+typedef enum {
+    TVG_ASPECT_RATIO_METHOD_MEET = 0,  ///< The entire SVG's viewBox is visible within the viewport 
+} Tvg_Aspect_Ratio_Method;
+
+/** \} */   // end addtogroup ThorVGCapi_Picture
+
+
 /*!
 * \addtogroup ThorVGCapi_Gradient
 * \{
@@ -1854,6 +1878,21 @@ TVG_EXPORT Tvg_Result tvg_picture_get_size(const Tvg_Paint* paint, float* w, flo
 * \warning Please do not use it, this API is not official one. It can be modified in the next version.
 */
 TVG_EXPORT Tvg_Result tvg_picture_get_viewbox(const Tvg_Paint* paint, float* x, float* y, float* w, float* h);
+
+
+/*!
+* \brief Gets the information about the preserveAspectRatio attribute of the loaded SVG picture. (BETA_API)
+*
+* \param[in] paint A Tvg_Paint pointer to the picture object.
+* \param[out] align Value indicating whether or not the uniform scaling of the SVG is used, if so, how it's aligned.
+* \param[out] meetOrSlice Value indicating how the SVG is scaled if aspect ratio is preserved.
+*
+* \return Tvg_Result enumeration.
+* \retval TVG_RESULT_SUCCESS Succeed.
+* \retval TVG_RESULT_INVALID_ARGUMENT A @c nullptr passed as the argument.
+* \retval TVG_RESULT_INSUFFICIENT_CONDITION An internal error.
+*/
+TVG_EXPORT Tvg_Result tvg_picture_get_aspect_ratio(const Tvg_Paint* paint, Tvg_Aspect_Ratio_Align* align, Tvg_Aspect_Ratio_Method* meet_or_slice);
 
 
 /** \} */   // end defgroup ThorVGCapi_Picture

@@ -148,6 +148,25 @@ enum class TVG_EXPORT CompositeMethod
 };
 
 /**
+ * @brief Enumeration indicating whether uniform scaling has to be forced and if so, how the graphic should be aligned.
+ */
+enum class TVG_EXPORT AspectRatioAlign
+{
+    None = 0,     ///< The graphic is scaled non-uniformly - it exactly matches the SVG's viewport.
+    xMidYMid,     ///< Force the uniform scaling - the midpoint X of the viewBox aligned with the midpoint X of the viewport.
+};
+
+/**
+ * @brief Enumeration indicating the method used to scale the graphic, when the aspect ratio is preserved.
+ */
+enum class TVG_EXPORT AspectRatioMethod
+{
+    Meet = 0,     ///< The entire SVG's viewBox is visible within the viewport 
+//TODO: not supported yet
+//  Slice         ///< The entire SVG's viewport is covered by the viewBox
+};
+
+/**
  * @brief Enumeration specifying the engine type used for the graphics backend. For multiple backends bitwise operation is allowed.
  */
 enum class TVG_EXPORT CanvasEngine
@@ -1182,6 +1201,18 @@ public:
      * @BETA_API
      */
     Result viewbox(float* x, float* y, float* w, float* h) const noexcept;
+
+    /**
+     * @brief Gets the information about the preserveAspectRatio attribute of the loaded SVG picture.
+     *
+     * @param[out] align Value indicating whether or not the uniform scaling of the SVG is used, if so, how it's aligned.
+     * @param[out] meetOrSlice Value indicating how the SVG is scaled if aspect ratio is preserved.
+     *
+     * @return Result::Success when succeed, Result::InsufficientCondition otherwise.
+     *
+     * @BETA_API
+     */
+    Result aspectRatio(AspectRatioAlign* align, AspectRatioMethod* meetOrSlice) const noexcept;
 
     /**
      * @brief Creates a new Picture object.

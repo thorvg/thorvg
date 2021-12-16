@@ -508,6 +508,13 @@ TVG_EXPORT Tvg_Result tvg_picture_get_viewbox(const Tvg_Paint* paint, float* x, 
 }
 
 
+TVG_EXPORT Tvg_Result tvg_picture_get_aspect_ratio(const Tvg_Paint* paint, Tvg_Aspect_Ratio_Align* align, Tvg_Aspect_Ratio_Method* meet_or_slice)
+{
+    if (!paint || !align || !meet_or_slice) return TVG_RESULT_INVALID_ARGUMENT;
+    return (Tvg_Result) reinterpret_cast<const Picture*>(paint)->aspectRatio((AspectRatioAlign*)align, (AspectRatioMethod*)meet_or_slice);
+}
+
+
 /************************************************************************/
 /* Gradient API                                                         */
 /************************************************************************/
