@@ -111,13 +111,11 @@ struct SwShapeTask : SwTask
         //Fill
         if (flags & (RenderUpdateFlag::Gradient | RenderUpdateFlag::Transform | RenderUpdateFlag::Color)) {
             if (visibleFill) {
-                auto antiAlias = (flags & RenderUpdateFlag::IgnoreAliasing) ? false : true;
-
                 /* We assume that if stroke width is bigger than 2,
                    shape outline below stroke could be full covered by stroke drawing.
                    Thus it turns off antialising in that condition.
                    Also, it shouldn't be dash style. */
-                if (strokeAlpha == 255 && sdata->strokeWidth() > 2 && sdata->strokeDash(nullptr) == 0) antiAlias = false;
+                auto antiAlias = (strokeAlpha == 255 && sdata->strokeWidth() > 2 && sdata->strokeDash(nullptr) == 0) ? false : true;
 
                 if (!shapeGenRle(&shape, sdata, antiAlias)) goto err;
             }

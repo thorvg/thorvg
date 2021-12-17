@@ -30,7 +30,7 @@
     int32_t dw = surface->stride;
     int32_t x1, x2, x, y, ar, ab, iru, irv, px, ay;
     int32_t vv = 0, uu = 0;
-    int32_t minx = 0, maxx = 0;
+    int32_t minx, maxx;
     float dx, u, v, iptr;
     uint32_t* buf;
     SwSpan* span = nullptr;         //used only when rle based.
@@ -42,24 +42,36 @@
     if (!_arrange(image, region, yStart, yEnd)) return;
 
     //Loop through all lines in the segment
-    y = yStart;
+    uint32_t spanIdx = 0;
 
     if (region) {
         minx = region->min.x;
         maxx = region->max.x;
     } else {
-        span = image->rle->spans + (yStart - image->rle->spans->y);
+        span = image->rle->spans;
+        while (span->y < yStart) {
+            ++span;
+            ++spanIdx;
+        }
     }
+
+    y = yStart;
 
     while (y < yEnd) {
         x1 = _xa;
         x2 = _xb;
 
         if (!region) {
-            minx = span->x;
-            maxx = span->x + span->len;
+            minx = INT32_MAX;
+            maxx = INT32_MIN;
+            //one single row, could be consisted of multiple spans.
+            while (span->y == y && spanIdx < image->rle->size) {
+                if (minx > span->x) minx = span->x;
+                if (maxx < span->x + span->len) maxx = span->x + span->len;
+                ++span;
+                ++spanIdx;
+            }
         }
-             
         if (x1 < minx) x1 = minx;
         if (x2 > maxx) x2 = maxx;
 
@@ -138,12 +150,9 @@ next:
         _ua += _dudya;
         _va += _dvdya;
 
-        if (span) {
-            ++span;
-            y = span->y;
-        } else {
-            y++;
-        }
+        if (!region && spanIdx >= image->rle->size) break;
+
+        ++y;
     }
     xa = _xa;
     xb = _xb;
