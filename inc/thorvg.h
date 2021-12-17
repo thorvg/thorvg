@@ -1095,26 +1095,6 @@ public:
     Result load(const std::string& path) noexcept;
 
     /**
-     * @brief Load a picture data for specific frames directly from a file.
-     *        This API is a temporary API for Lottie animation support.
-     *
-     * @warning Please do not use it, this API is not official one. It could be modified in the next version.
-     *
-     * @BETA_API
-     */
-    Result load(const std::string& path, uint32_t frame) noexcept;
-
-    /**
-     * @brief Returns the total frame.
-     *        This API is a temporary API for Lottie animation support.
-     *
-     * @warning Please do not use it, this API is not official one. It could be modified in the next version.
-     *
-     * @BETA_API
-     */
-    uint32_t totalFrame() noexcept;
-
-    /**
      * @brief Loads a picture data from a memory block of a given size.
      *
      * @param[in] data A pointer to a memory location where the content of the picture file is stored.

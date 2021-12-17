@@ -62,7 +62,7 @@ struct Animation::Impl
 
     bool totalFrame(int* totalFrame)
     {
-        if (!loaded || !totalFrame) return false;
+        if (!totalFrame) return false;
         *totalFrame = this->totalFrameNum;
         return true;
     }

@@ -75,14 +75,15 @@ struct Lottie::Impl
 
     void* update(RenderMethod &renderer, const RenderTransform* pTransform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag pFlag)
     {
-        auto flag = RenderUpdateFlag::Image;
+        auto flag = RenderUpdateFlag::None;
 
         //Do update frame
-        pictureImpl->loader->frame = animationImpl->frameNum;
-        printf("frame : %d %d\n", pictureImpl->loader->frame, animationImpl->frameNum);
+        if ( pictureImpl->loader->frame != animationImpl->frameNum) {
+            flag = RenderUpdateFlag::Image;
+            pictureImpl->loader->frame = animationImpl->frameNum;
 
-        if (!pictureImpl->loader->read()) return nullptr;
-
+            if (!pictureImpl->loader->read()) return nullptr;
+        }
         //
         return pictureImpl->update(renderer, pTransform, opacity, clips, flag);
     }
@@ -104,12 +105,34 @@ struct Lottie::Impl
 
     Result load(const string& path)
     {
-        return pictureImpl->load(path);
+        Result ret = pictureImpl->load(path);
+        if (pictureImpl->loader)
+          animationImpl->totalFrameNum =pictureImpl->loader->totalFrame;
+        return ret;
     }
 
     Paint* duplicate()
     {
-        return pictureImpl->duplicate();
+        auto ret = Lottie::gen();
+        auto dup = ret.get()->pImpl;
+
+        if (pictureImpl->paint) dup->pictureImpl->paint = pictureImpl->paint->duplicate(); 
+
+
+        dup->pictureImpl->loader = pictureImpl->loader;
+        if (pictureImpl->surface) {
+            dup->pictureImpl->surface = static_cast<Surface*>(malloc(sizeof(Surface)));
+            *dup->pictureImpl->surface = *(pictureImpl->surface);
+        }
+        dup->pictureImpl->w = pictureImpl->w;
+        dup->pictureImpl->h = pictureImpl->h;
+        dup->pictureImpl->resizing = pictureImpl->resizing;
+
+
+        dup->animationImpl->frameNum = animationImpl->frameNum;
+        dup->animationImpl->totalFrameNum = animationImpl->totalFrameNum;
+
+        return ret.release();
     }
 
     Iterator* iterator()

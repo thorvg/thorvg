@@ -429,12 +429,11 @@ bool LottieLoader::open(const char* data, uint32_t size, bool copy)
 
 bool LottieLoader::read()
 {
-    if (/*!decoder || */w <= 0 || h <= 0) return false;
+    if (w <= 0 || h <= 0) return false;
 
     //TaskScheduler::request(this);
 
     const LOTLayerNode* lotRoot = mLottieAnimation->renderTree(frame, static_cast<size_t>(w), static_cast<size_t>(h));
-printf("%d\n", frame);
     root = sceneBuilder(lotRoot);
     return true;
 }

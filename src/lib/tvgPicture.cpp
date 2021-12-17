@@ -59,22 +59,6 @@ Result Picture::load(const std::string& path) noexcept
 }
 
 
-//Temporary
-Result Picture::load(const std::string& path, uint32_t frame) noexcept
-{
-    if (path.empty()) return Result::InvalidArguments;
-
-    return pImpl->load(path, frame);
-}
-
-
-uint32_t Picture::totalFrame() noexcept
-{
-    return pImpl->totalFrame();
-}
-///////////////////
-
-
 Result Picture::load(const char* data, uint32_t size, const string& mimeType, bool copy) noexcept
 {
     if (!data || size <= 0) return Result::InvalidArguments;

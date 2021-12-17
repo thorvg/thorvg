@@ -197,35 +197,6 @@ struct Picture::Impl
         return Result::Success;
     }
 
-    //Temporary
-    Result load(const string& path, uint32_t frame)
-    {
-        if (paint) return Result::InsufficientCondition;
-        if (loader) loader->close();
-        bool invalid;  //Invalid Path
-        loader = LoaderMgr::loader(path, &invalid);
-        if (!loader) {
-            if (invalid) return Result::InvalidArguments;
-            return Result::NonSupport;
-        }
-
-        ///
-        loader->frame = frame;
-        ///
-
-        if (!loader->read()) return Result::Unknown;
-        w = loader->w;
-        h = loader->h;
-        return Result::Success;
-    }
-
-
-    uint32_t totalFrame()
-    {
-        return loader->totalFrame;
-    }
-    ///////
-
     Result load(const char* data, uint32_t size, const string& mimeType, bool copy)
     {
         if (paint || surface) return Result::InsufficientCondition;

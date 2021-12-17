@@ -57,8 +57,6 @@ uint32_t Lottie::identifier() noexcept
 Result Lottie::load(const std::string& path) noexcept
 {
     if (path.empty()) return Result::InvalidArguments;
-    Result ret = pImpl->load(path);
-    //if (Picture::pImpl->loader) pImpl->loader = shared_ptr<LoadModule>(Picture::pImpl->loader);
-    return ret;
+    return pImpl->load(path);
 }
 
