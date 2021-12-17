@@ -54,7 +54,9 @@ static void _shapeBuildHelper(Paint *_parent, const LOTLayerNode *layer, int dep
                 node->mImageInfo.mMatrix.m31,  node->mImageInfo.mMatrix.m32, node->mImageInfo.mMatrix.m33
             };
             picture->transform(matrix);
-            picture->load((uint32_t *)node->mImageInfo.data, node->mImageInfo.width, node->mImageInfo.height, false);
+            if (picture->load((uint32_t *)node->mImageInfo.data, node->mImageInfo.width, node->mImageInfo.height, false) != tvg::Result::Success) {
+                printf("Embeded image load fail (%ld x %ld)\n", node->mImageInfo.width, node->mImageInfo.height);
+            }
             picture->opacity(node->mImageInfo.mAlpha);
             parent->push(unique_ptr<Picture>(picture));
             continue;
@@ -256,20 +258,26 @@ static void _compositeShapeBuildHelper(Paint *_parent, LOTMask *mask, int depth)
 static Paint* _compositeBuildHelper(Paint *mtarget, LOTMask *masks, unsigned int mask_cnt, int depth)
 {
     Scene* msource = Scene::gen().release();
-    mtarget->composite(unique_ptr<Paint>(msource), CompositeMethod::AlphaMask);
-    mtarget = msource;
+    int maskMode = (int)masks[0].mMode;
+    //mtarget->composite(unique_ptr<Paint>(msource), CompositeMethod::AlphaMask);
+    //mtarget = msource;
 
     //Make mask layers
     for (unsigned int i = 0; i < mask_cnt; i++) {
         LOTMask *mask = &masks[i];
-        _compositeShapeBuildHelper(reinterpret_cast<Paint*>(msource), mask, depth + 1);
+        //_compositeShapeBuildHelper(reinterpret_cast<Paint*>(msource), mask, depth + 1);
 
 #if THORVG_LOG_ENABLED
-        for (int i = 0; i < depth; i++) TVGLOG("Lottie", "    ");
-        TVGLOG("Lottie", "[mask %03d] mode:%d\n", i, mask->mMode);
+//        for (int i = 0; i < depth; i++) TVGLOG("Lottie", "    ");
+        //TVGLOG("Lottie", "[mask %03d] mode:%d\n", i, mask->mMode);
 #endif
+        if ((int)(mask->mMode) != maskMode) continue;
+            _compositeShapeBuildHelper(reinterpret_cast<Paint*>(msource), mask, depth + 1);
+            //_construct_mask_nodes(msource, mask, depth + 1);
     }
-    return mtarget;
+    mtarget->composite(unique_ptr<Paint>(msource), (maskMode == 1) ? CompositeMethod::InvAlphaMask : CompositeMethod::AlphaMask);
+   return msource;
+    //return mtarget;
 }
 
 
@@ -279,8 +287,6 @@ static void _sceneBuildHelper(Paint *root, const LOTLayerNode *layer, int depth)
 
    //Note: We assume that if matte is valid, next layer must be a matte source.
    char matteMode[10]="none"; //temporary, instead of enumulator.
-   Paint *mtarget = NULL;
-   LOTLayerNode *mlayer = NULL;
 
    //tvg_paint_set_opacity(root, layer->mAlpha);
    root->opacity(layer->mAlpha);
@@ -295,9 +301,9 @@ static void _sceneBuildHelper(Paint *root, const LOTLayerNode *layer, int depth)
 #endif
 
        if (!clayer->mVisible) {
-           if (ptree && strcmp(matteMode, "none")) ptree->opacity(0);
+           while (clayer->mMatte != MatteNone) clayer = layer->mLayerList.ptr[++i];
+
            strcpy(matteMode,"none");
-           mtarget = NULL;
 
            //If layer has a masking layer, skip it
            if (clayer->mMatte != MatteNone) i++;
@@ -310,8 +316,7 @@ static void _sceneBuildHelper(Paint *root, const LOTLayerNode *layer, int depth)
 
        if (!strcmp(matteMode, "none")) reinterpret_cast<Scene*>(root)->push(unique_ptr<Paint>((Paint*)ctree));
        else {
-           ptree->composite(unique_ptr<Paint>(ctree), CompositeMethod::AlphaMask); //temporary
-           mtarget = ctree;
+           ptree->composite(unique_ptr<Paint>(ctree), !strcmp(matteMode, "mask") ? CompositeMethod::AlphaMask : CompositeMethod::InvAlphaMask); //temporary
        }
 
        ptree = ctree;
@@ -342,15 +347,9 @@ static void _sceneBuildHelper(Paint *root, const LOTLayerNode *layer, int depth)
                strcpy(matteMode, "none");
                break;
        }
-
-       if (clayer->mMaskList.size > 0) {
-           mlayer = clayer;
-           if (!mtarget) mtarget = ptree;
-       }
-       else mtarget = NULL;
-
-       //Construct node that have mask.
-       if (mlayer && mtarget) ptree = _compositeBuildHelper(mtarget, mlayer->mMaskList.ptr, mlayer->mMaskList.size, depth + 1);
+        if (clayer->mMaskList.size > 0) {
+               ptree = _compositeBuildHelper(ptree, clayer->mMaskList.ptr, clayer->mMaskList.size, depth + 1);
+        }
     }
 
     //Construct drawable nodes.

@@ -61,6 +61,7 @@ void svgDirCallback(const char* name, const char* path, void* data)
              cout << "JSON is not supported. Did you enable JSON Loader? : " << buf << endl;
              return;
         }
+        else printf("load : %s\n", buf.c_str());
         lotties[count] = lottie;
     }
     else {
