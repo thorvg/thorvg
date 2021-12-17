@@ -62,7 +62,7 @@
              
         if (x1 < minx) x1 = minx;
         if (x2 > maxx) x2 = maxx;
-            
+
         //Anti-Aliasing frames
         ay = y - aaSpans->yStart;
         if (aaSpans->lines[ay].x[0] > x1) aaSpans->lines[ay].x[0] = x1;
