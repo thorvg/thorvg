@@ -65,6 +65,7 @@
 #include <memory.h>
 #include "tvgLzw.h"
 
+namespace {
 //LZW Dictionary helper:
 constexpr int Nil = -1;
 constexpr int MaxDictBits = 12;
@@ -333,7 +334,7 @@ static bool outputSequence(const Dictionary& dict, int code, uint8_t*& output, i
     }
     return true;
 }
-
+}
 
 
 /************************************************************************/
