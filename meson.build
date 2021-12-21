@@ -43,8 +43,8 @@ if all_loaders or get_option('loaders').contains('jpg') == true
     config_h.set10('THORVG_JPG_LOADER_SUPPORT', true)
 endif
 
-if all_loaders or get_option('loaders').contains('lottie') == true
-    config_h.set10('THORVG_LOTTIE_LOADER_SUPPORT', true)
+if all_loaders or get_option('extensions').contains('lottie') == true
+    config_h.set10('THORVG_LOTTIE_EXTENSION_SUPPORT', true)
 endif
 
 if get_option('savers').contains('tvg') == true

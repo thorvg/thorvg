@@ -1,3 +1,3 @@
-header_files = ['thorvg.h', 'thorvg_lottie.h']
+header_files = ['thorvg.h']
 
 install_headers(header_files)

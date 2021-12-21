@@ -6,9 +6,15 @@ option('engines',
 
 option('loaders',
    type: 'array',
-   choices: ['', 'tvg', 'svg', 'png', 'jpg', 'lottie', 'all'],
+   choices: ['', 'tvg', 'svg', 'png', 'jpg', 'all'],
    value: ['svg', 'tvg'],
    description: 'Enable File Loaders in thorvg')
+
+option('extensions',
+   type: 'array',
+   choices: ['', 'lottie'],
+   value: ['lottie'],
+   description: 'Enable ThorVG Feature Extensions')
 
 option('savers',
    type: 'array',

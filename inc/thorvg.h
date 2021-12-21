@@ -1547,24 +1547,13 @@ public:
     virtual ~Animation();
 
 
-    Result frame(int frame);
+    Result frame(uint32_t frame);
 
-    Result frame(int* frame);
+    Result frame(uint32_t* frame);
 
-    Result totalFrame(int totalFrame);
+    Result totalFrame(uint32_t totalFrame);
 
-    Result totalFrame(int* totalFrame);
-
-    /**
-     * @brief Return the unique id value of this class.
-     *
-     * This method can be referred for identifying the Animation class type.
-     *
-     * @return The type id of the Lottie class.
-     *
-     * @BETA_API
-     */
-    static uint32_t identifier() noexcept;
+    Result totalFrame(uint32_t* totalFrame);
 
     _TVG_DECLARE_PRIVATE(Animation);
 };

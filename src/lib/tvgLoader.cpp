@@ -37,7 +37,7 @@
     #include "tvgJpgLoader.h"
 #endif
 
-#ifdef THORVG_LOTTIE_LOADER_SUPPORT
+#ifdef THORVG_LOTTIE_EXTENSION_SUPPORT
     #include "tvgLottieLoader.h"
 #endif
 
@@ -79,7 +79,7 @@ static LoadModule* _find(FileType type)
             break;
         }
         case FileType::Lottie: {
-#ifdef THORVG_LOTTIE_LOADER_SUPPORT
+#ifdef THORVG_LOTTIE_EXTENSION_SUPPORT
             return new LottieLoader;
 #endif
             break;
