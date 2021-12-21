@@ -50,8 +50,8 @@ static void _shapeBuildHelper(Paint *_parent, const LOTLayerNode *layer, int dep
             auto picture = Picture::gen().release();
             Matrix matrix = {
                 node->mImageInfo.mMatrix.m11,  node->mImageInfo.mMatrix.m21, node->mImageInfo.mMatrix.m31,
-                node->mImageInfo.mMatrix.m21,  node->mImageInfo.mMatrix.m22, node->mImageInfo.mMatrix.m32,
-                node->mImageInfo.mMatrix.m31,  node->mImageInfo.mMatrix.m23, node->mImageInfo.mMatrix.m33
+                node->mImageInfo.mMatrix.m12,  node->mImageInfo.mMatrix.m22, node->mImageInfo.mMatrix.m32,
+                node->mImageInfo.mMatrix.m13,  node->mImageInfo.mMatrix.m23, node->mImageInfo.mMatrix.m33
             };
             picture->transform(matrix);
             if (picture->load((uint32_t *)node->mImageInfo.data, node->mImageInfo.width, node->mImageInfo.height, false) != tvg::Result::Success) {
