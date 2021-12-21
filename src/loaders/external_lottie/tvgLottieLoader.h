@@ -31,6 +31,7 @@ class LottieLoader : public LoadModule, public Task
 private:
     unique_ptr<rlottie::Animation> mLottieAnimation;
     unique_ptr<Scene> root;
+    const LOTLayerNode* lotRoot;
 
     unique_ptr<Scene> sceneBuilder(const LOTLayerNode* lotRoot);
     void clear();

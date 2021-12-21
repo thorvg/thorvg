@@ -30,6 +30,7 @@ Lottie::Lottie() : pImpl(new Impl)
 {
     Paint::pImpl->id = TVG_CLASS_ID_LOTTIE;
     Paint::pImpl->method(new PaintMethod<Lottie::Impl>(pImpl));
+
     //for Picture::pImpl access
     pImpl->pictureImpl = Picture::pImpl;
     pImpl->animationImpl = Animation::pImpl;

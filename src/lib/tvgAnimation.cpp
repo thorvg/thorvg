@@ -36,28 +36,28 @@ Animation :: ~Animation()
 }
 
 
-Result Animation::frame(int frame) noexcept
+Result Animation::frame(uint32_t frame) noexcept
 {
     if (pImpl->frame(frame)) return Result::Success;
     return Result::FailedAllocation;
 }
 
 
-Result Animation::frame(int* frame) noexcept
+Result Animation::frame(uint32_t* frame) noexcept
 {
     if (pImpl->frame(frame)) return Result::Success;
     return Result::FailedAllocation;
 }
 
 
-Result Animation::totalFrame(int totalFrame) noexcept
+Result Animation::totalFrame(uint32_t totalFrame) noexcept
 {
     if (pImpl->totalFrame(totalFrame)) return Result::Success;
     return Result::FailedAllocation;
 }
 
 
-Result Animation::totalFrame(int* totalFrame) noexcept
+Result Animation::totalFrame(uint32_t* totalFrame) noexcept
 {
     if (pImpl->totalFrame(totalFrame)) return Result::Success;
     return Result::FailedAllocation;

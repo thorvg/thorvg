@@ -272,11 +272,11 @@ static Paint* _compositeBuildHelper(Paint *mtarget, LOTMask *masks, unsigned int
         //TVGLOG("Lottie", "[mask %03d] mode:%d\n", i, mask->mMode);
 #endif
         if ((int)(mask->mMode) != maskMode) continue;
-            _compositeShapeBuildHelper(reinterpret_cast<Paint*>(msource), mask, depth + 1);
+        _compositeShapeBuildHelper(reinterpret_cast<Paint*>(msource), mask, depth + 1);
             //_construct_mask_nodes(msource, mask, depth + 1);
     }
     mtarget->composite(unique_ptr<Paint>(msource), (maskMode == 1) ? CompositeMethod::InvAlphaMask : CompositeMethod::AlphaMask);
-   return msource;
+    return msource;
     //return mtarget;
 }
 
@@ -430,10 +430,9 @@ bool LottieLoader::read()
 {
     if (w <= 0 || h <= 0) return false;
 
-    //TaskScheduler::request(this);
+    TaskScheduler::request(this);
 
-    const LOTLayerNode* lotRoot = mLottieAnimation->renderTree(frame, static_cast<size_t>(w), static_cast<size_t>(h));
-    root = sceneBuilder(lotRoot);
+
     return true;
 }
 
@@ -483,6 +482,8 @@ bool LottieLoader::resize(Paint* paint, float w, float h)
 
 void LottieLoader::run(unsigned tid)
 {
+    const LOTLayerNode* lotRoot = mLottieAnimation->renderTree(frame, static_cast<size_t>(w), static_cast<size_t>(h));
+    root = sceneBuilder(lotRoot);
 }
 
 

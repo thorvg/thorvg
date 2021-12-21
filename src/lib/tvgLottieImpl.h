@@ -77,14 +77,12 @@ struct Lottie::Impl
     {
         auto flag = RenderUpdateFlag::None;
 
-        //Do update frame
-        if ( pictureImpl->loader->frame != animationImpl->frameNum) {
-            flag = RenderUpdateFlag::Image;
+        if (pictureImpl->loader->frame != animationImpl->frameNum) {
+            flag = RenderUpdateFlag::All;
             pictureImpl->loader->frame = animationImpl->frameNum;
 
             if (!pictureImpl->loader->read()) return nullptr;
         }
-        //
         return pictureImpl->update(renderer, pTransform, opacity, clips, flag);
     }
 
@@ -106,8 +104,7 @@ struct Lottie::Impl
     Result load(const string& path)
     {
         Result ret = pictureImpl->load(path);
-        if (pictureImpl->loader)
-          animationImpl->totalFrameNum =pictureImpl->loader->totalFrame;
+        if (pictureImpl->loader) animationImpl->totalFrameNum = pictureImpl->loader->totalFrame;
         return ret;
     }
 
@@ -116,19 +113,16 @@ struct Lottie::Impl
         auto ret = Lottie::gen();
         auto dup = ret.get()->pImpl;
 
+        //Dupliate Picture::Impl
         if (pictureImpl->paint) dup->pictureImpl->paint = pictureImpl->paint->duplicate(); 
 
-
         dup->pictureImpl->loader = pictureImpl->loader;
-        if (pictureImpl->surface) {
-            dup->pictureImpl->surface = static_cast<Surface*>(malloc(sizeof(Surface)));
-            *dup->pictureImpl->surface = *(pictureImpl->surface);
-        }
         dup->pictureImpl->w = pictureImpl->w;
         dup->pictureImpl->h = pictureImpl->h;
         dup->pictureImpl->resizing = pictureImpl->resizing;
 
 
+        //Dupliate Animation::Impl
         dup->animationImpl->frameNum = animationImpl->frameNum;
         dup->animationImpl->totalFrameNum = animationImpl->totalFrameNum;
 

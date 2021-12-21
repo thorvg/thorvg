@@ -30,37 +30,34 @@
 
 struct Animation::Impl
 {
-    bool loaded = false;
-    int frameNum = 0;
-    int totalFrameNum = 0;
+    uint32_t frameNum = 0;
+    uint32_t totalFrameNum = 0;
 
     ~Impl()
     {
     }
 
 
-    bool frame(int frame)
+    bool frame(uint32_t frame)
     {
-        //if (!loaded) return false;
         frameNum = frame;
         return true;
     }
 
-    bool frame(int* frame)
+    bool frame(uint32_t* frame)
     {
-        if (!loaded || !frame) return false;
+        if (!frame) return false;
         *frame = this->frameNum;
         return true;
     }
 
-    bool totalFrame(int totalFrame)
+    bool totalFrame(uint32_t totalFrame)
     {
-        if (!loaded) return false;
         this->totalFrameNum = totalFrame;
         return true;
     }
 
-    bool totalFrame(int* totalFrame)
+    bool totalFrame(uint32_t* totalFrame)
     {
         if (!totalFrame) return false;
         *totalFrame = this->totalFrameNum;
