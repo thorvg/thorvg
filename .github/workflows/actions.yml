@@ -106,7 +106,7 @@ jobs:
     - name: Build & Run memcheck Script(ASAN)
       run: |
         sudo rm -rf ./build
-        meson . build -Db_sanitize="address,undefined" -Dloaders="all" -Dsavers="tvg" -Dtests="true" -Dbindings="capi"
+        meson . build -Db_sanitize="address,undefined" -Dloaders="svg, tvg, png, jpg" -Dsavers="tvg" -Dtests="true" -Dbindings="capi"
         cd build
         sudo ninja -C . install
         export PATH=$PATH:~/.local/bin/

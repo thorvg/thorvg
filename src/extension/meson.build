@@ -1,3 +1,4 @@
+extension_lottie_dep = []
 
 if get_option('extensions').contains('lottie') == true
     subdir('lottie')
