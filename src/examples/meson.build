@@ -66,3 +66,7 @@ if get_option('bindings').contains('capi') == true
             dependencies : examples_dep)
     endforeach
 endif
+
+execute_all_src = join_paths(meson.source_root(), 'src/examples/all.sh')
+execute_all_dest = join_paths(meson.build_root(), 'src/examples/all.sh')
+run_command('cp', execute_all_src, execute_all_dest)
