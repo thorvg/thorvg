@@ -1547,13 +1547,13 @@ public:
     virtual ~Animation();
 
 
-    Result frame(uint32_t frame);
+    Result frame(uint32_t frame) noexcept;
 
-    Result frame(uint32_t* frame);
+    Result totalFrame(uint32_t totalFrame) noexcept;
 
-    Result totalFrame(uint32_t totalFrame);
+    uint32_t frame() const noexcept;
 
-    Result totalFrame(uint32_t* totalFrame);
+    uint32_t totalFrame() const noexcept;
 
     _TVG_DECLARE_PRIVATE(Animation);
 };

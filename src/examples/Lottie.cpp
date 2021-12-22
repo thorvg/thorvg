@@ -70,7 +70,7 @@ void svgDirCallback(const char* name, const char* path, void* data)
         lottie = lotties[count];
     }
 
-    lottie->totalFrame(&totalFrames[count]);
+    totalFrames[count] = lottie->totalFrame();
     frames[count]++;
     if (frames[count] >= totalFrames[count]) frames[count] = 0;
     lottie->frame(frames[count]);

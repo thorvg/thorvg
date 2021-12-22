@@ -44,11 +44,9 @@ struct Animation::Impl
         return true;
     }
 
-    bool frame(uint32_t* frame)
+    uint32_t frame()
     {
-        if (!frame) return false;
-        *frame = this->frameNum;
-        return true;
+        return frameNum;
     }
 
     bool totalFrame(uint32_t totalFrame)
@@ -57,11 +55,9 @@ struct Animation::Impl
         return true;
     }
 
-    bool totalFrame(uint32_t* totalFrame)
+    uint32_t totalFrame()
     {
-        if (!totalFrame) return false;
-        *totalFrame = this->totalFrameNum;
-        return true;
+        return totalFrameNum;
     }
 };
 

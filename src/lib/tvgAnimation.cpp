@@ -43,10 +43,9 @@ Result Animation::frame(uint32_t frame) noexcept
 }
 
 
-Result Animation::frame(uint32_t* frame) noexcept
+uint32_t Animation::frame() const noexcept
 {
-    if (pImpl->frame(frame)) return Result::Success;
-    return Result::FailedAllocation;
+    return pImpl->frame();
 }
 
 
@@ -57,9 +56,8 @@ Result Animation::totalFrame(uint32_t totalFrame) noexcept
 }
 
 
-Result Animation::totalFrame(uint32_t* totalFrame) noexcept
+uint32_t Animation::totalFrame() const noexcept
 {
-    if (pImpl->totalFrame(totalFrame)) return Result::Success;
-    return Result::FailedAllocation;
+    return pImpl->totalFrame();
 }
 
