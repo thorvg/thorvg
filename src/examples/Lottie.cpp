@@ -22,13 +22,16 @@
 
 #include <vector>
 #include "Common.h"
+
+#ifdef THORVG_LOTTIE_EXTENSION_SUPPORT
 #include "thorvg_lottie.h"
+#endif
 
 /************************************************************************/
 /* Drawing Commands                                                     */
 /************************************************************************/
 
-
+#ifdef THORVG_LOTTIE_EXTENSION_SUPPORT
 #define NUM_PER_ROW 6
 #define NUM_PER_COL 6
 #define SIZE (WIDTH/NUM_PER_ROW)
@@ -74,6 +77,7 @@ void svgDirCallback(const char* name, const char* path, void* data)
 
     count++;
 }
+#endif
 
 void tvgUpdateCmds(tvg::Canvas* canvas, float progress)
 {
@@ -86,6 +90,8 @@ void tvgUpdateCmds(tvg::Canvas* canvas, float progress)
     shape->appendRect(0, 0, WIDTH, HEIGHT, 0, 0);    //x, y, w, h, rx, ry
     shape->fill(128, 128, 128, 255);                 //r, g, b, a
     if (canvas->push(move(shape)) != tvg::Result::Success) return;
+
+#ifdef THORVG_LOTTIE_EXTENSION_SUPPORT
     eina_file_dir_list(EXAMPLE_DIR"/json", EINA_TRUE, svgDirCallback, (void*)&progress);
 
     for(int i = 0; i< count; i++) {
@@ -93,7 +99,9 @@ void tvgUpdateCmds(tvg::Canvas* canvas, float progress)
     }
 
     count = 0;
-    //lotties.clear();
+#else
+    cout << "Lottie extension not enabled." << endl;
+#endif
 }
 
 
@@ -105,8 +113,6 @@ static unique_ptr<tvg::SwCanvas> swCanvas;
 
 void tvgSwTest(uint32_t* buffer)
 {
-
-    for (int i = 0; i < NUM_PER_ROW * NUM_PER_COL; i++) lotties[i] = nullptr;
     //Create a Canvas
     swCanvas = tvg::SwCanvas::gen();
     swCanvas->target(buffer, WIDTH, WIDTH, HEIGHT, tvg::SwCanvas::ARGB8888);
