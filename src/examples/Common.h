@@ -24,6 +24,7 @@
 #include <thread>
 #include <Elementary.h>
 #include <thorvg.h>
+#include "config.h"
 
 using namespace std;
 
