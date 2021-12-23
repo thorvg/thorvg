@@ -1,6 +1,7 @@
 examples_dep = dependency('elementary', required : true)
 
 source_file = [
+    'Accessor.cpp',
     'AnimateMasking.cpp',
     'Arc.cpp',
     'Async.cpp',
