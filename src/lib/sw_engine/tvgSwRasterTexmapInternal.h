@@ -142,6 +142,8 @@
             //Step UV horizontally
             u += _dudx;
             v += _dvdx;
+            //range over?
+            if ((uint32_t)v >= image->h) break;
         }
 next:
         //Step along both edges

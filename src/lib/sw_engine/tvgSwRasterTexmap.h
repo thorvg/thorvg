@@ -572,10 +572,10 @@ static bool _rasterTexmapPolygon(SwSurface* surface, const SwImage* image, const
    /* Prepare vertices.
       shift XY coordinates to match the sub-pixeling technique. */
     Vertex vertices[4];
-    vertices[0] = {{0.0f, 0.0f}, 0.0f, 0.0f};
-    vertices[1] = {{float(image->w), 0.0f}, float(image->w), 0.0f};
-    vertices[2] = {{float(image->w), float(image->h)}, float(image->w), float(image->h)};
-    vertices[3] = {{0.0f, float(image->h)}, 0.0f, float(image->h)};
+    vertices[0] = {{0.0f, 0.0f}, {0.0f, 0.0f}};
+    vertices[1] = {{float(image->w), 0.0f}, {float(image->w), 0.0f}};
+    vertices[2] = {{float(image->w), float(image->h)}, {float(image->w), float(image->h)}};
+    vertices[3] = {{0.0f, float(image->h)}, {0.0f, float(image->h)}};
 
     for (int i = 0; i < 4; i++) mathMultiply(&vertices[i].pt, transform);
 

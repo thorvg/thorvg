@@ -50,6 +50,7 @@ protected: \
     friend Canvas; \
     friend Scene; \
     friend Picture; \
+    friend Accessor; \
     friend IteratorAccessor
 
 
@@ -61,6 +62,7 @@ class IteratorAccessor;
 class Scene;
 class Picture;
 class Canvas;
+class Accessor;
 
 /**
  * @defgroup ThorVG ThorVG
@@ -1534,12 +1536,47 @@ public:
 };
 
 
-class TVG_EXPORT Iteratorv final
+/**
+ * @class Accessor
+ *
+ * @brief The Accessor is a utility class to debug the Scene structure by traversing the scene-tree.
+ *
+ * The Accessor helps you search specific nodes to read the property information, figure out the structure of the scene tree and its size.
+ *
+ * @warning We strongly warn you not to change the paints of a scene unless you really know the design-structure.
+ *
+ * @BETA_API
+ */
+class TVG_EXPORT Accessor final
 {
 public:
-    static std::unique_ptr<Picture> iterate(std::unique_ptr<Picture> picture, int(*func)(const Paint* paint, const Paint* parent, bool hasChildren)) noexcept;
-};
+    ~Accessor();
 
+    /**
+     * @brief Access the Picture scene stree nodes.
+     *
+     * @param[in] picture The picture node to traverse the internal scene-tree.
+     * @param[in] func The callback function calling for every paint nodes of the Picture.
+     *
+     * @return Return the given @p picture instance.
+     *
+     * @note The bitmap based picture might not have the scene-tree.
+     *
+     * @BETA_API
+     */
+    std::unique_ptr<Picture> access(std::unique_ptr<Picture> picture, bool(*func)(const Paint* paint)) noexcept;
+
+    /**
+     * @brief Creates a new Accessor object.
+     *
+     * @return A new Accessor object.
+     *
+     * @BETA_API
+     */
+    static std::unique_ptr<Accessor> gen() noexcept;
+
+    _TVG_DECLARE_PRIVATE(Accessor);
+};
 
 class TVG_EXPORT Animation
 {
