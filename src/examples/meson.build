@@ -18,6 +18,7 @@ source_file = [
     'ImageScaleUp.cpp',
     'InvMasking.cpp',
     'LinearGradient.cpp',
+    'LumaMasking.cpp',
     'Masking.cpp',
     'MultiCanvas.cpp',
     'MultiShapes.cpp',
