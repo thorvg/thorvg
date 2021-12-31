@@ -1029,7 +1029,7 @@ static bool _attrParseClipPathNode(void* data, const char* key, const char* valu
 {
     SvgLoaderData* loader = (SvgLoaderData*)data;
     SvgNode* node = loader->svgParse->node;
-    SvgCompositeNode* comp = &(node->node.comp);
+    SvgClipNode* clip = &(node->node.clip);
 
     if (!strcmp(key, "style")) {
         return simpleXmlParseW3CAttribute(value, _parseStyleAttr, loader);
@@ -1039,7 +1039,7 @@ static bool _attrParseClipPathNode(void* data, const char* key, const char* valu
         if (node->id && value) free(node->id);
         node->id = _copyId(value);
     } else if (!strcmp(key, "clipPathUnits")) {
-        if (!strcmp(value, "objectBoundingBox")) comp->userSpace = false;
+        if (!strcmp(value, "objectBoundingBox")) clip->userSpace = false;
     } else {
         return _parseStyleAttr(loader, key, value, false);
     }
@@ -1051,7 +1051,7 @@ static bool _attrParseMaskNode(void* data, const char* key, const char* value)
 {
     SvgLoaderData* loader = (SvgLoaderData*)data;
     SvgNode* node = loader->svgParse->node;
-    SvgCompositeNode* comp = &(node->node.comp);
+    SvgMaskNode* mask = &(node->node.mask);
 
     if (!strcmp(key, "style")) {
         return simpleXmlParseW3CAttribute(value, _parseStyleAttr, loader);
@@ -1061,7 +1061,7 @@ static bool _attrParseMaskNode(void* data, const char* key, const char* value)
         if (node->id && value) free(node->id);
         node->id = _copyId(value);
     } else if (!strcmp(key, "maskContentUnits")) {
-        if (!strcmp(value, "objectBoundingBox")) comp->userSpace = false;
+        if (!strcmp(value, "objectBoundingBox")) mask->userSpace = false;
     } else {
         return _parseStyleAttr(loader, key, value, false);
     }
@@ -1171,7 +1171,7 @@ static SvgNode* _createMaskNode(SvgLoaderData* loader, SvgNode* parent, TVG_UNUS
     loader->svgParse->node = _createNode(parent, SvgNodeType::Mask);
     if (!loader->svgParse->node) return nullptr;
 
-    loader->svgParse->node->node.comp.userSpace = true;
+    loader->svgParse->node->node.mask.userSpace = true;
 
     simpleXmlParseAttributes(buf, bufLength, _attrParseMaskNode, loader);
 
@@ -1185,7 +1185,7 @@ static SvgNode* _createClipPathNode(SvgLoaderData* loader, SvgNode* parent, cons
     if (!loader->svgParse->node) return nullptr;
 
     loader->svgParse->node->display = false;
-    loader->svgParse->node->node.comp.userSpace = true;
+    loader->svgParse->node->node.clip.userSpace = true;
 
     simpleXmlParseAttributes(buf, bufLength, _attrParseClipPathNode, loader);
 
