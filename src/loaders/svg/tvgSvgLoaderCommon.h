@@ -215,7 +215,12 @@ struct SvgPolygonNode
     float* points;
 };
 
-struct SvgCompositeNode
+struct SvgClipNode
+{
+    bool userSpace;
+};
+
+struct SvgMaskNode
 {
     bool userSpace;
 };
@@ -352,7 +357,8 @@ struct SvgNode
         SvgPathNode path;
         SvgLineNode line;
         SvgImageNode image;
-        SvgCompositeNode comp;
+        SvgMaskNode mask;
+        SvgClipNode clip;
     } node;
     bool display;
     ~SvgNode();
