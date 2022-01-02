@@ -111,7 +111,8 @@ enum class SvgStyleFlags
     Transform = 0x800,
     ClipPath = 0x1000,
     Mask = 0x2000,
-    Display = 0x4000
+    MaskType = 0x4000,
+    Display = 0x8000
 };
 
 enum class SvgStopStyleFlags
@@ -125,6 +126,12 @@ enum class SvgFillRule
 {
     Winding = 0,
     OddEven = 1
+};
+
+enum class SvgMaskType
+{
+    Luminance = 0,
+    Alpha
 };
 
 //Length type to recalculate %, pt, pc, mm, cm etc
@@ -222,6 +229,7 @@ struct SvgClipNode
 
 struct SvgMaskNode
 {
+    SvgMaskType type;
     bool userSpace;
 };
 

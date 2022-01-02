@@ -199,6 +199,14 @@ static int _toOpacity(const char* str)
 }
 
 
+static SvgMaskType _toMaskType(const char* str)
+{
+    if (!strcmp(str, "Alpha")) return SvgMaskType::Alpha;
+
+    return SvgMaskType::Luminance;
+}
+
+
 #define _PARSE_TAG(Type, Name, Name1, Tags_Array, Default)                        \
     static Type _to##Name1(const char* str)                                       \
     {                                                                             \
@@ -921,6 +929,12 @@ static void _handleMaskAttr(TVG_UNUSED SvgLoaderData* loader, SvgNode* node, con
 }
 
 
+static void _handleMaskTypeAttr(TVG_UNUSED SvgLoaderData* loader, SvgNode* node, const char* value)
+{
+    node->node.mask.type = _toMaskType(value);
+}
+
+
 static void _handleDisplayAttr(TVG_UNUSED SvgLoaderData* loader, SvgNode* node, const char* value)
 {
     //TODO : The display attribute can have various values as well as "none".
@@ -958,6 +972,7 @@ static constexpr struct
     STYLE_DEF(transform, Transform, SvgStyleFlags::Transform),
     STYLE_DEF(clip-path, ClipPath, SvgStyleFlags::ClipPath),
     STYLE_DEF(mask, Mask, SvgStyleFlags::Mask),
+    STYLE_DEF(mask-type, MaskType, SvgStyleFlags::MaskType),
     STYLE_DEF(display, Display, SvgStyleFlags::Display)
 };
 
@@ -1062,6 +1077,8 @@ static bool _attrParseMaskNode(void* data, const char* key, const char* value)
         node->id = _copyId(value);
     } else if (!strcmp(key, "maskContentUnits")) {
         if (!strcmp(value, "objectBoundingBox")) mask->userSpace = false;
+    } else if (!strcmp(key, "mask-type")) {
+        mask->type = _toMaskType(value);
     } else {
         return _parseStyleAttr(loader, key, value, false);
     }
@@ -1172,6 +1189,7 @@ static SvgNode* _createMaskNode(SvgLoaderData* loader, SvgNode* parent, TVG_UNUS
     if (!loader->svgParse->node) return nullptr;
 
     loader->svgParse->node->node.mask.userSpace = true;
+    loader->svgParse->node->node.mask.type = SvgMaskType::Luminance;
 
     simpleXmlParseAttributes(buf, bufLength, _attrParseMaskNode, loader);
 

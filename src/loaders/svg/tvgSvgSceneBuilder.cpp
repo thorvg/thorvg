@@ -275,7 +275,7 @@ static void _applyComposition(Paint* paint, const SvgNode* node, const Box& vBox
        Composition can be applied recursively if its children nodes have composition target to this one. */
     if (node->style->mask.applying) {
         TVGLOG("SVG", "Multiple Composition Tried! Check out Circular dependency?");
-    } else  {
+    } else {
         auto compNode = node->style->mask.node;
         if (compNode && compNode->child.count > 0) {
             node->style->mask.applying = true;
@@ -283,7 +283,12 @@ static void _applyComposition(Paint* paint, const SvgNode* node, const Box& vBox
             auto comp = _sceneBuildHelper(compNode, vBox, svgPath, true);
             if (comp) {
                 if (node->transform) comp->transform(*node->transform);
-                paint->composite(move(comp), CompositeMethod::AlphaMask);
+
+                if (compNode->node.mask.type == SvgMaskType::Luminance) {
+                    paint->composite(move(comp), CompositeMethod::LumaMask);
+                } else {
+                    paint->composite(move(comp), CompositeMethod::AlphaMask);
+                }
             }
 
             node->style->mask.applying = false;
