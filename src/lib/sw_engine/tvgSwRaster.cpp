@@ -499,7 +499,9 @@ static bool _rasterScaledRleRGBAImage(SwSurface* surface, const SwImage* image, 
 static bool _scaledRleRGBAImage(SwSurface* surface, const SwImage* image, const Matrix* transform, const SwBBox& region, uint32_t opacity)
 {
     Matrix itransform;
+
     if (transform && !mathInverse(transform, &itransform)) return false;
+    else mathIdentity(&itransform);
 
     auto halfScale = _halfScale(image->scale);
 
@@ -844,7 +846,9 @@ static bool _rasterScaledRGBAImage(SwSurface* surface, const SwImage* image, con
 static bool _scaledRGBAImage(SwSurface* surface, const SwImage* image, const Matrix* transform, const SwBBox& region, uint32_t opacity)
 {
     Matrix itransform;
+
     if (transform && !mathInverse(transform, &itransform)) return false;
+    else mathIdentity(&itransform);
 
     auto halfScale = _halfScale(image->scale);
 
