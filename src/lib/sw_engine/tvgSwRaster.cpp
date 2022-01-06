@@ -500,8 +500,9 @@ static bool _scaledRleRGBAImage(SwSurface* surface, const SwImage* image, const 
 {
     Matrix itransform;
 
-    if (transform && !mathInverse(transform, &itransform)) return false;
-    else mathIdentity(&itransform);
+    if (transform) {
+        if (!mathInverse(transform, &itransform)) return false;
+    } else mathIdentity(&itransform);
 
     auto halfScale = _halfScale(image->scale);
 
@@ -847,8 +848,9 @@ static bool _scaledRGBAImage(SwSurface* surface, const SwImage* image, const Mat
 {
     Matrix itransform;
 
-    if (transform && !mathInverse(transform, &itransform)) return false;
-    else mathIdentity(&itransform);
+    if (transform) {
+        if (!mathInverse(transform, &itransform)) return false;
+    } else mathIdentity(&itransform);
 
     auto halfScale = _halfScale(image->scale);
 
