@@ -2857,14 +2857,14 @@ void SvgLoader::run(unsigned tid)
     if (loaderData.doc) {
         _updateStyle(loaderData.doc, nullptr);
         auto defs = loaderData.doc->node.doc.defs;
-        if (defs) _updateGradient(loaderData.doc, &defs->node.defs.gradients);
-
-        if (loaderData.gradients.count > 0) _updateGradient(loaderData.doc, &loaderData.gradients);
 
         _updateComposite(loaderData.doc, loaderData.doc);
         if (defs) _updateComposite(loaderData.doc, defs);
 
         if (loaderData.cloneNodes.count > 0) _clonePostponedNodes(&loaderData.cloneNodes);
+
+        if (loaderData.gradients.count > 0) _updateGradient(loaderData.doc, &loaderData.gradients);
+        if (defs) _updateGradient(loaderData.doc, &defs->node.defs.gradients);
     }
     root = svgSceneBuild(loaderData.doc, vx, vy, vw, vh, w, h, preserveAspect, svgPath);
 }
