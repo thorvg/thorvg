@@ -2380,7 +2380,7 @@ static constexpr struct
 };
 
 
-static void _svgLoaderParerXmlClose(SvgLoaderData* loader, const char* content)
+static void _svgLoaderParserXmlClose(SvgLoaderData* loader, const char* content)
 {
     content = _skipSpace(content, nullptr);
 
@@ -2488,7 +2488,7 @@ static bool _svgLoaderParser(void* data, SimpleXMLType type, const char* content
             break;
         }
         case SimpleXMLType::Close: {
-            _svgLoaderParerXmlClose(loader, content);
+            _svgLoaderParserXmlClose(loader, content);
             break;
         }
         case SimpleXMLType::Data:
