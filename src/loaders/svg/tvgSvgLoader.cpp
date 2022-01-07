@@ -2496,14 +2496,16 @@ static void _styleInherit(SvgStyleProperty* child, const SvgStyleProperty* paren
 {
     if (parent == nullptr) return;
     //Inherit the property of parent if not present in child.
+    if (!child->curColorSet) {
+        child->color = parent->color;
+        child->curColorSet = parent->curColorSet;
+    }
     //Fill
     if (!((int)child->fill.flags & (int)SvgFillFlags::Paint)) {
         child->fill.paint.color = parent->fill.paint.color;
         child->fill.paint.none = parent->fill.paint.none;
         child->fill.paint.curColor = parent->fill.paint.curColor;
         if (parent->fill.paint.url) child->fill.paint.url = _copyId(parent->fill.paint.url);
-    } else if (child->fill.paint.curColor && !child->curColorSet) {
-        child->color = parent->color;
     }
     if (!((int)child->fill.flags & (int)SvgFillFlags::Opacity)) {
         child->fill.opacity = parent->fill.opacity;
@@ -2517,8 +2519,6 @@ static void _styleInherit(SvgStyleProperty* child, const SvgStyleProperty* paren
         child->stroke.paint.none = parent->stroke.paint.none;
         child->stroke.paint.curColor = parent->stroke.paint.curColor;
         child->stroke.paint.url = parent->stroke.paint.url ? _copyId(parent->stroke.paint.url) : nullptr;
-    } else if (child->stroke.paint.curColor && !child->curColorSet) {
-        child->color = parent->color;
     }
     if (!((int)child->stroke.flags & (int)SvgStrokeFlags::Opacity)) {
         child->stroke.opacity = parent->stroke.opacity;
