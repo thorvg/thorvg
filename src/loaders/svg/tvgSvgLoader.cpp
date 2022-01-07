@@ -548,7 +548,7 @@ static void _toColor(const char* str, uint8_t* r, uint8_t* g, uint8_t* b, char**
                 }
             }
         }
-    } else if (len >= 3 && !strncmp(str, "url", 3)) {
+    } else if (ref && len >= 3 && !strncmp(str, "url", 3)) {
         *ref = _idFromUrl((const char*)(str + 3));
     } else {
         //Handle named color
