@@ -1900,10 +1900,6 @@ static bool _attrParseUseNode(void* data, const char* key, const char* value)
             //after the whole file is parsed
             _postponeCloneNode(loader, node, id);
         }
-    } else if (!strcmp(key, "clip-path")) {
-        _handleClipPathAttr(loader, node, value);
-    } else if (!strcmp(key, "mask")) {
-        _handleMaskAttr(loader, node, value);
     } else {
         return _attrParseGNode(data, key, value);
     }
