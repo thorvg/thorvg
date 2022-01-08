@@ -2080,6 +2080,7 @@ static bool _attrParseRadialGradientNode(void* data, const char* key, const char
     }
 
     if (!strcmp(key, "id")) {
+        if (grad->id && value) free(grad->id);
         grad->id = _copyId(value);
     } else if (!strcmp(key, "spreadMethod")) {
         grad->spread = _parseSpreadValue(value);
@@ -2268,6 +2269,7 @@ static bool _attrParseLinearGradientNode(void* data, const char* key, const char
     }
 
     if (!strcmp(key, "id")) {
+        if (grad->id && value) free(grad->id);
         grad->id = _copyId(value);
     } else if (!strcmp(key, "spreadMethod")) {
         grad->spread = _parseSpreadValue(value);
