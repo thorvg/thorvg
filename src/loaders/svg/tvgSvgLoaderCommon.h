@@ -341,6 +341,7 @@ struct SvgStyleProperty
     int opacity;
     SvgColor color;
     bool curColorSet;
+    char* cssClass;
     SvgStyleFlags flags;
 };
 

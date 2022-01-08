@@ -946,6 +946,15 @@ static void _handleDisplayAttr(TVG_UNUSED SvgLoaderData* loader, SvgNode* node, 
 }
 
 
+static void _handleCssClassAttr(TVG_UNUSED SvgLoaderData* loader, SvgNode* node, const char* value)
+{
+    auto cssClass = node->style->cssClass;
+
+    if (cssClass && value) free(cssClass);
+    cssClass = _copyId(value);
+}
+
+
 typedef void (*styleMethod)(SvgLoaderData* loader, SvgNode* node, const char* value);
 
 #define STYLE_DEF(Name, Name1, Flag) { #Name, sizeof(#Name), _handle##Name1##Attr, Flag }
@@ -1026,6 +1035,8 @@ static bool _attrParseGNode(void* data, const char* key, const char* value)
     } else if (!strcmp(key, "id")) {
         if (node->id && value) free(node->id);
         node->id = _copyId(value);
+    } else if (!strcmp(key, "class")) {
+        _handleCssClassAttr(loader, node, value);
     } else if (!strcmp(key, "clip-path")) {
         _handleClipPathAttr(loader, node, value);
     } else if (!strcmp(key, "mask")) {
@@ -1053,6 +1064,8 @@ static bool _attrParseClipPathNode(void* data, const char* key, const char* valu
     } else if (!strcmp(key, "id")) {
         if (node->id && value) free(node->id);
         node->id = _copyId(value);
+    } else if (!strcmp(key, "class")) {
+        _handleCssClassAttr(loader, node, value);
     } else if (!strcmp(key, "clipPathUnits")) {
         if (!strcmp(value, "objectBoundingBox")) clip->userSpace = false;
     } else {
@@ -1075,6 +1088,8 @@ static bool _attrParseMaskNode(void* data, const char* key, const char* value)
     } else if (!strcmp(key, "id")) {
         if (node->id && value) free(node->id);
         node->id = _copyId(value);
+    } else if (!strcmp(key, "class")) {
+        _handleCssClassAttr(loader, node, value);
     } else if (!strcmp(key, "maskContentUnits")) {
         if (!strcmp(value, "objectBoundingBox")) mask->userSpace = false;
     } else if (!strcmp(key, "mask-type")) {
@@ -1228,6 +1243,8 @@ static bool _attrParsePathNode(void* data, const char* key, const char* value)
     } else if (!strcmp(key, "id")) {
         if (node->id && value) free(node->id);
         node->id = _copyId(value);
+    } else if (!strcmp(key, "class")) {
+        _handleCssClassAttr(loader, node, value);
     } else {
         return _parseStyleAttr(loader, key, value, false);
     }
@@ -1288,6 +1305,8 @@ static bool _attrParseCircleNode(void* data, const char* key, const char* value)
     } else if (!strcmp(key, "id")) {
         if (node->id && value) free(node->id);
         node->id = _copyId(value);
+    } else if (!strcmp(key, "class")) {
+        _handleCssClassAttr(loader, node, value);
     } else {
         return _parseStyleAttr(loader, key, value, false);
     }
@@ -1342,6 +1361,8 @@ static bool _attrParseEllipseNode(void* data, const char* key, const char* value
     if (!strcmp(key, "id")) {
         if (node->id && value) free(node->id);
         node->id = _copyId(value);
+    } else if (!strcmp(key, "class")) {
+        _handleCssClassAttr(loader, node, value);
     } else if (!strcmp(key, "style")) {
         return simpleXmlParseW3CAttribute(value, _parseStyleAttr, loader);
     } else if (!strcmp(key, "clip-path")) {
@@ -1425,6 +1446,8 @@ static bool _attrParsePolygonNode(void* data, const char* key, const char* value
     } else if (!strcmp(key, "id")) {
         if (node->id && value) free(node->id);
         node->id = _copyId(value);
+    } else if (!strcmp(key, "class")) {
+        _handleCssClassAttr(loader, node, value);
     } else {
         return _parseStyleAttr(loader, key, value, false);
     }
@@ -1499,6 +1522,8 @@ static bool _attrParseRectNode(void* data, const char* key, const char* value)
     if (!strcmp(key, "id")) {
         if (node->id && value) free(node->id);
         node->id = _copyId(value);
+    } else if (!strcmp(key, "class")) {
+        _handleCssClassAttr(loader, node, value);
     } else if (!strcmp(key, "style")) {
         ret = simpleXmlParseW3CAttribute(value, _parseStyleAttr, loader);
     } else if (!strcmp(key, "clip-path")) {
@@ -1562,6 +1587,8 @@ static bool _attrParseLineNode(void* data, const char* key, const char* value)
     if (!strcmp(key, "id")) {
         if (node->id && value) free(node->id);
         node->id = _copyId(value);
+    } else if (!strcmp(key, "class")) {
+        _handleCssClassAttr(loader, node, value);
     } else if (!strcmp(key, "style")) {
         return simpleXmlParseW3CAttribute(value, _parseStyleAttr, loader);
     } else if (!strcmp(key, "clip-path")) {
@@ -1632,6 +1659,8 @@ static bool _attrParseImageNode(void* data, const char* key, const char* value)
     } else if (!strcmp(key, "id")) {
         if (node->id && value) free(node->id);
         node->id = _copyId(value);
+    } else if (!strcmp(key, "class")) {
+        _handleCssClassAttr(loader, node, value);
     } else if (!strcmp(key, "style")) {
         return simpleXmlParseW3CAttribute(value, _parseStyleAttr, loader);
     } else if (!strcmp(key, "clip-path")) {
@@ -2696,6 +2725,7 @@ static void _freeNodeStyle(SvgStyleProperty* style)
     //style->clipPath.node and style->mask.node has only the addresses of node. Therefore, node is released from _freeNode.
     free(style->clipPath.url);
     free(style->mask.url);
+    free(style->cssClass);
 
     if (style->fill.paint.gradient) {
         style->fill.paint.gradient->clear();
