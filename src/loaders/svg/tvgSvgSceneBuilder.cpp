@@ -67,7 +67,7 @@ struct Box
 
 
 static bool _appendShape(SvgNode* node, Shape* shape, const Box& vBox, const string& svgPath);
-static unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, const Box& vBox, const string& svgPath, bool mask);
+static unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, const Box& vBox, const string& svgPath, bool mask, bool* isMaskWhite = nullptr);
 
 
 static inline bool _isGroupType(SvgNodeType type)
@@ -280,11 +280,12 @@ static void _applyComposition(Paint* paint, const SvgNode* node, const Box& vBox
         if (compNode && compNode->child.count > 0) {
             node->style->mask.applying = true;
 
-            auto comp = _sceneBuildHelper(compNode, vBox, svgPath, true);
+            bool isMaskWhite = true;
+            auto comp = _sceneBuildHelper(compNode, vBox, svgPath, true, &isMaskWhite);
             if (comp) {
                 if (node->transform) comp->transform(*node->transform);
 
-                if (compNode->node.mask.type == SvgMaskType::Luminance) {
+                if (compNode->node.mask.type == SvgMaskType::Luminance && !isMaskWhite) {
                     paint->composite(move(comp), CompositeMethod::LumaMask);
                 } else {
                     paint->composite(move(comp), CompositeMethod::AlphaMask);
@@ -556,9 +557,9 @@ static unique_ptr<Picture> _imageBuildHelper(SvgNode* node, const Box& vBox, con
 }
 
 
-static unique_ptr<Scene> _useBuildHelper(const SvgNode* node, const Box& vBox, const string& svgPath)
+static unique_ptr<Scene> _useBuildHelper(const SvgNode* node, const Box& vBox, const string& svgPath, bool* isMaskWhite)
 {
-    auto scene = _sceneBuildHelper(node, vBox, svgPath, false);
+    auto scene = _sceneBuildHelper(node, vBox, svgPath, false, isMaskWhite);
     if (node->node.use.x != 0.0f || node->node.use.y != 0.0f) {
         scene->translate(node->node.use.x, node->node.use.y);
     }
@@ -569,7 +570,7 @@ static unique_ptr<Scene> _useBuildHelper(const SvgNode* node, const Box& vBox, c
 }
 
 
-static unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, const Box& vBox, const string& svgPath, bool mask)
+static unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, const Box& vBox, const string& svgPath, bool mask, bool* isMaskWhite)
 {
     if (_isGroupType(node->type) || mask) {
         auto scene = Scene::gen();
@@ -580,15 +581,22 @@ static unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, const Box& vBox,
             for (uint32_t i = 0; i < node->child.count; ++i, ++child) {
                 if (_isGroupType((*child)->type)) {
                     if ((*child)->type == SvgNodeType::Use)
-                        scene->push(_useBuildHelper(*child, vBox, svgPath));
+                        scene->push(_useBuildHelper(*child, vBox, svgPath, isMaskWhite));
                     else
-                        scene->push(_sceneBuildHelper(*child, vBox, svgPath, false));
+                        scene->push(_sceneBuildHelper(*child, vBox, svgPath, false, isMaskWhite));
                 } else if ((*child)->type == SvgNodeType::Image) {
                     auto image = _imageBuildHelper(*child, vBox, svgPath);
                     if (image) scene->push(move(image));
                 } else if ((*child)->type != SvgNodeType::Mask) {
                     auto shape = _shapeBuildHelper(*child, vBox, svgPath);
-                    if (shape) scene->push(move(shape));
+                    if (shape) {
+                        if (isMaskWhite) {
+                            uint8_t r, g, b;
+                            shape->fillColor(&r, &g, &b, nullptr);
+                            if (shape->fill() || r < 255 || g < 255 || b < 255) *isMaskWhite = false;
+                        }
+                        scene->push(move(shape));
+                    }
                 }
             }
             _applyComposition(scene.get(), node, vBox, svgPath);
