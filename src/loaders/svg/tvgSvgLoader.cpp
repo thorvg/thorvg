@@ -1086,6 +1086,21 @@ static bool _attrParseMaskNode(void* data, const char* key, const char* value)
 }
 
 
+static bool _attrParseCssStyleNode(void* data, const char* key, const char* value)
+{
+    SvgLoaderData* loader = (SvgLoaderData*)data;
+    SvgNode* node = loader->svgParse->node;
+
+    if (!strcmp(key, "id")) {
+        if (node->id && value) free(node->id);
+        node->id = _copyId(value);
+    } else {
+        return _parseStyleAttr(loader, key, value, false);
+    }
+    return true;
+}
+
+
 static SvgNode* _createNode(SvgNode* parent, SvgNodeType type)
 {
     SvgNode* node = (SvgNode*)calloc(1, sizeof(SvgNode));
@@ -1209,6 +1224,17 @@ static SvgNode* _createClipPathNode(SvgLoaderData* loader, SvgNode* parent, cons
 
     return loader->svgParse->node;
 }
+
+
+static SvgNode* _createCssStyleNode(SvgLoaderData* loader, SvgNode* parent, const char* buf, unsigned bufLength)
+{
+    loader->svgParse->node = _createNode(parent, SvgNodeType::CssStyle);
+    if (!loader->svgParse->node) return nullptr;
+
+    simpleXmlParseAttributes(buf, bufLength, _attrParseCssStyleNode, loader);
+    return loader->svgParse->node;
+}
+
 
 static bool _attrParsePathNode(void* data, const char* key, const char* value)
 {
@@ -1950,7 +1976,8 @@ static constexpr struct
     {"g", sizeof("g"), _createGNode},
     {"svg", sizeof("svg"), _createSvgNode},
     {"mask", sizeof("mask"), _createMaskNode},
-    {"clipPath", sizeof("clipPath"), _createClipPathNode}
+    {"clipPath", sizeof("clipPath"), _createClipPathNode},
+    {"style", sizeof("style"), _createCssStyleNode}
 };
 
 
@@ -2376,7 +2403,8 @@ static constexpr struct
     {"svg", sizeof("svg")},
     {"defs", sizeof("defs")},
     {"mask", sizeof("mask")},
-    {"clipPath", sizeof("clipPath")}
+    {"clipPath", sizeof("clipPath")},
+    {"style", sizeof("style")}
 };
 
 
@@ -2434,6 +2462,7 @@ static void _svgLoaderParserXmlOpen(SvgLoaderData* loader, const char* content, 
             if (loader->stack.count > 0) parent = loader->stack.data[loader->stack.count - 1];
             else parent = loader->doc;
             node = method(loader, parent, attrs, attrsLength);
+            if (!strcmp(tagName, "style")) loader->cssStyle = node;
         }
 
         if (!node) return;
