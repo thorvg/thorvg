@@ -51,6 +51,7 @@ enum class SvgNodeType
     Video,
     ClipPath,
     Mask,
+    CssStyle,
     Unknown
 };
 
@@ -233,6 +234,10 @@ struct SvgMaskNode
     bool userSpace;
 };
 
+struct SvgCssStyleNode
+{
+};
+
 struct SvgLinearGradient
 {
     float x1;
@@ -368,6 +373,7 @@ struct SvgNode
         SvgImageNode image;
         SvgMaskNode mask;
         SvgClipNode clip;
+        SvgCssStyleNode cssStyle;
     } node;
     bool display;
     ~SvgNode();
@@ -402,6 +408,7 @@ struct SvgLoaderData
     Array<SvgNode *> stack = {nullptr, 0, 0};
     SvgNode* doc = nullptr;
     SvgNode* def = nullptr;
+    SvgNode* cssStyle = nullptr;
     Array<SvgStyleGradient*> gradients;
     SvgStyleGradient* latestGradient = nullptr; //For stops
     SvgParser* svgParse = nullptr;
