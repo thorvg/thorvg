@@ -1921,6 +1921,7 @@ static SvgNode* _createUseNode(SvgLoaderData* loader, SvgNode* parent, const cha
     return loader->svgParse->node;
 }
 
+
 //TODO: Implement 'text' primitive
 static constexpr struct
 {
@@ -2405,6 +2406,7 @@ static void _svgLoaderParserXmlOpen(SvgLoaderData* loader, const char* content, 
     GradientFactoryMethod gradientMethod;
     SvgNode *node = nullptr, *parent = nullptr;
     loader->level++;
+    loader->style = false;
     attrs = simpleXmlFindAttributesTag(content, length);
 
     if (!attrs) {
@@ -2434,6 +2436,7 @@ static void _svgLoaderParserXmlOpen(SvgLoaderData* loader, const char* content, 
             if (loader->stack.count > 0) parent = loader->stack.data[loader->stack.count - 1];
             else parent = loader->doc;
             node = method(loader, parent, attrs, attrsLength);
+            if (!strcmp(tagName, "style")) loader->style = true;
         }
 
         if (!node) return;
@@ -2474,6 +2477,48 @@ static void _svgLoaderParserXmlOpen(SvgLoaderData* loader, const char* content, 
 }
 
 
+static void _svgLoaderParserXmlCData(SvgLoaderData* loader, const char* content, unsigned int length)
+{
+    char* tag;
+    char* name;
+    const char* attrs = nullptr;
+    unsigned int attrsLength = 0;
+
+    FactoryMethod method;
+    GradientFactoryMethod gradientMethod;
+    SvgNode *node = nullptr;
+
+    const char *buf = content;
+    unsigned buflen = length;
+
+
+    while (auto next = simpleXmlParseCSSAttribute(buf, buflen, &tag, &name, &attrs, &attrsLength)) {
+        if ((method = _findGroupFactory(tag))) {
+//TODO - uncomment after #1142 merged; it shouldn't be node->id - add additional var for svgnode?
+//            if ((node = method(loader, loader->cssStyle, attrs, attrsLength))) node->id = _copyId(name);
+        } else if ((method = _findGraphicsFactory(tag))) {
+            //TODO - implement
+        } else if ((gradientMethod = _findGradientFactory(tag))) {
+            //TODO - implement
+            //SvgStyleGradient* gradient = gradientMethod(loader, attrs, attrsLength);
+        } else if (!strcmp(tag, "stop")) {
+            //TODO - implement
+        } else if (!isIgnoreUnsupportedLogElements(tag)) {
+            TVGLOG("SVG", "Unsupported elements used [Elements: %s]", tag);
+        }
+
+        buflen -= next - buf;
+        buf = next;
+
+        free(tag);
+        free(name);
+    }
+
+//_parseStyleAttr - on juz key i val chce
+
+}
+
+
 static bool _svgLoaderParser(void* data, SimpleXMLType type, const char* content, unsigned int length)
 {
     SvgLoaderData* loader = (SvgLoaderData*)data;
@@ -2491,8 +2536,11 @@ static bool _svgLoaderParser(void* data, SimpleXMLType type, const char* content
             _svgLoaderParserXmlClose(loader, content);
             break;
         }
+        case SimpleXMLType::CData: {
+            if (loader->style) _svgLoaderParserXmlCData(loader, content, length);
+            break;
+        }
         case SimpleXMLType::Data:
-        case SimpleXMLType::CData:
         case SimpleXMLType::DoctypeChild: {
             break;
         }
