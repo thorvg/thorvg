@@ -509,6 +509,47 @@ bool simpleXmlParseW3CAttribute(const char* buf, simpleXMLAttributeCb func, cons
 }
 
 
+/*
+ * Supported formats:
+ * tag {}, .name {}, tag.name{}
+ */
+const char* simpleXmlParseCSSAttribute(const char* buf, unsigned bufLength, char** tag, char** name, const char** attrs, unsigned* attrsLength)
+{
+    if (!buf) return nullptr;
+
+    *tag = *name = nullptr;
+    *attrsLength = 0;
+
+    auto itr = _simpleXmlSkipWhiteSpace(buf, buf + bufLength);
+    auto itrEnd = (const char*)memchr(buf, '{', bufLength);
+
+    if (!itrEnd || itr == itrEnd) return nullptr;
+
+    auto nextElement = (const char*)memchr(itrEnd, '}', bufLength - (itrEnd - buf));
+    if (!nextElement) return nullptr;
+
+    *attrs = itrEnd + 1;
+    *attrsLength = nextElement - *attrs;
+
+    const char *p;
+
+    itrEnd = _simpleXmlUnskipWhiteSpace(itrEnd, itr);
+    if (*(itrEnd - 1) == '.') return nullptr;
+
+    for (p = itr; p < itrEnd; p++) {
+        if (*p == '.') break;
+    }
+
+    if (p == itr) *tag = strdup("all");
+    else *tag = strndup(itr, p - itr);
+
+    if (p == itrEnd) *name = nullptr;
+    else *name = strndup(p + 1, itrEnd - p - 1);
+
+    return (nextElement ? nextElement + 1 : nullptr);
+}
+
+
 const char* simpleXmlFindAttributesTag(const char* buf, unsigned bufLength)
 {
     const char *itr = buf, *itrEnd = buf + bufLength;

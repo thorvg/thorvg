@@ -415,6 +415,7 @@ struct SvgLoaderData
     Array<SvgNodeIdPair> cloneNodes;
     int level = 0;
     bool result = false;
+    bool style = false; //TODO: find a better sollution?
 };
 
 /*
