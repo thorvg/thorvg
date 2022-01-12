@@ -80,6 +80,9 @@ typedef SvgNode* (*FactoryMethod)(SvgLoaderData* loader, SvgNode* parent, const 
 typedef SvgStyleGradient* (*GradientFactoryMethod)(SvgLoaderData* loader, const char* buf, unsigned bufLength);
 
 
+static void _copyAttr(SvgNode* to, const SvgNode* from, bool copyGeomAttrib = true);
+
+
 static char* _skipSpace(const char* str, const char* end)
 {
     while (((end && str < end) || (!end && *str != '\0')) && isspace(*str)) {
@@ -947,12 +950,32 @@ static void _handleDisplayAttr(TVG_UNUSED SvgLoaderData* loader, SvgNode* node, 
 }
 
 
-static void _handleCssClassAttr(TVG_UNUSED SvgLoaderData* loader, SvgNode* node, const char* value)
+static SvgNode* _findCssStyleNode(const SvgNode* cssStyle, const char* title)
+{
+    if (!cssStyle) return nullptr;
+
+    auto child = cssStyle->child.data;
+    for (uint32_t i = 0; i < cssStyle->child.count; ++i, ++child) {
+        if (((*child)->id) && !strcmp((*child)->id, title)) return (*child);
+    }
+    return nullptr;
+
+
+}
+
+
+static void _handleCssClassAttr(SvgLoaderData* loader, SvgNode* node, const char* value)
 {
     auto cssClass = &node->style->cssClass;
 
     if (*cssClass && value) free(*cssClass);
     *cssClass = _copyId(value);
+
+    //TODO: works only if style was defined before it is used
+    if (auto cssNode = _findCssStyleNode(loader->cssStyle, *cssClass)) {
+        //TODO: check SVG2 stndard - should the geometric properties be copied?
+        _copyAttr(node, cssNode, false);
+    }
 }
 
 
@@ -1908,7 +1931,7 @@ static void _styleCopy(SvgStyleProperty* to, const SvgStyleProperty* from)
 }
 
 
-static void _copyAttr(SvgNode* to, const SvgNode* from)
+static void _copyAttr(SvgNode* to, const SvgNode* from, bool copyGeomAttrib)
 {
     //Copy matrix attribute
     if (from->transform) {
@@ -1923,67 +1946,67 @@ static void _copyAttr(SvgNode* to, const SvgNode* from)
     if (from->style->clipPath.url) to->style->clipPath.url = strdup(from->style->clipPath.url);
     if (from->style->mask.url) to->style->mask.url = strdup(from->style->mask.url);
 
-    //Copy node attribute
-    switch (from->type) {
-        case SvgNodeType::Circle: {
-            to->node.circle.cx = from->node.circle.cx;
-            to->node.circle.cy = from->node.circle.cy;
-            to->node.circle.r = from->node.circle.r;
-            break;
-        }
-        case SvgNodeType::Ellipse: {
-            to->node.ellipse.cx = from->node.ellipse.cx;
-            to->node.ellipse.cy = from->node.ellipse.cy;
-            to->node.ellipse.rx = from->node.ellipse.rx;
-            to->node.ellipse.ry = from->node.ellipse.ry;
-            break;
-        }
-        case SvgNodeType::Rect: {
-            to->node.rect.x = from->node.rect.x;
-            to->node.rect.y = from->node.rect.y;
-            to->node.rect.w = from->node.rect.w;
-            to->node.rect.h = from->node.rect.h;
-            to->node.rect.rx = from->node.rect.rx;
-            to->node.rect.ry = from->node.rect.ry;
-            to->node.rect.hasRx = from->node.rect.hasRx;
-            to->node.rect.hasRy = from->node.rect.hasRy;
-            break;
-        }
-        case SvgNodeType::Line: {
-            to->node.line.x1 = from->node.line.x1;
-            to->node.line.y1 = from->node.line.y1;
-            to->node.line.x2 = from->node.line.x2;
-            to->node.line.y2 = from->node.line.y2;
-            break;
-        }
-        case SvgNodeType::Path: {
-            if (from->node.path.path) to->node.path.path = strdup(from->node.path.path);
-            break;
-        }
-        case SvgNodeType::Polygon: {
-            if ((to->node.polygon.pointsCount = from->node.polygon.pointsCount)) {
+    if (copyGeomAttrib) {
+        //Copy node attribute
+        switch (from->type) {
+            case SvgNodeType::Circle: {
+                to->node.circle.cx = from->node.circle.cx;
+                to->node.circle.cy = from->node.circle.cy;
+                to->node.circle.r = from->node.circle.r;
+                break;
+            }
+            case SvgNodeType::Ellipse: {
+                to->node.ellipse.cx = from->node.ellipse.cx;
+                to->node.ellipse.cy = from->node.ellipse.cy;
+                to->node.ellipse.rx = from->node.ellipse.rx;
+                to->node.ellipse.ry = from->node.ellipse.ry;
+                break;
+            }
+            case SvgNodeType::Rect: {
+                to->node.rect.x = from->node.rect.x;
+                to->node.rect.y = from->node.rect.y;
+                to->node.rect.w = from->node.rect.w;
+                to->node.rect.h = from->node.rect.h;
+                to->node.rect.rx = from->node.rect.rx;
+                to->node.rect.ry = from->node.rect.ry;
+                to->node.rect.hasRx = from->node.rect.hasRx;
+                to->node.rect.hasRy = from->node.rect.hasRy;
+                break;
+            }
+            case SvgNodeType::Line: {
+                to->node.line.x1 = from->node.line.x1;
+                to->node.line.y1 = from->node.line.y1;
+                to->node.line.x2 = from->node.line.x2;
+                to->node.line.y2 = from->node.line.y2;
+                break;
+            }
+            case SvgNodeType::Path: {
+                if (from->node.path.path) to->node.path.path = strdup(from->node.path.path);
+                break;
+            }
+            case SvgNodeType::Polygon: {
+                to->node.polygon.pointsCount = from->node.polygon.pointsCount;
                 to->node.polygon.points = (float*)malloc(to->node.polygon.pointsCount * sizeof(float));
                 memcpy(to->node.polygon.points, from->node.polygon.points, to->node.polygon.pointsCount * sizeof(float));
+                break;
             }
-            break;
-        }
-        case SvgNodeType::Polyline: {
-            if ((to->node.polyline.pointsCount = from->node.polyline.pointsCount)) {
+            case SvgNodeType::Polyline: {
+                to->node.polyline.pointsCount = from->node.polyline.pointsCount;
                 to->node.polyline.points = (float*)malloc(to->node.polyline.pointsCount * sizeof(float));
                 memcpy(to->node.polyline.points, from->node.polyline.points, to->node.polyline.pointsCount * sizeof(float));
+                break;
             }
-            break;
-        }
-        case SvgNodeType::Image: {
-            to->node.image.x = from->node.image.x;
-            to->node.image.y = from->node.image.y;
-            to->node.image.w = from->node.image.w;
-            to->node.image.h = from->node.image.h;
-            if (from->node.image.href) to->node.image.href = strdup(from->node.image.href);
-            break;
-        }
-        default: {
-            break;
+            case SvgNodeType::Image: {
+                to->node.image.x = from->node.image.x;
+                to->node.image.y = from->node.image.y;
+                to->node.image.w = from->node.image.w;
+                to->node.image.h = from->node.image.h;
+                if (from->node.image.href) to->node.image.href = strdup(from->node.image.href);
+                break;
+            }
+            default: {
+                break;
+            }
         }
     }
 }
@@ -2092,6 +2115,7 @@ static SvgNode* _createUseNode(SvgLoaderData* loader, SvgNode* parent, const cha
     simpleXmlParseAttributes(buf, bufLength, _attrParseUseNode, loader);
     return loader->svgParse->node;
 }
+
 
 //TODO: Implement 'text' primitive
 static constexpr struct
@@ -2583,6 +2607,7 @@ static void _svgLoaderParserXmlOpen(SvgLoaderData* loader, const char* content, 
     GradientFactoryMethod gradientMethod;
     SvgNode *node = nullptr, *parent = nullptr;
     loader->level++;
+    loader->style = false;
     attrs = simpleXmlFindAttributesTag(content, length);
 
     if (!attrs) {
@@ -2613,7 +2638,10 @@ static void _svgLoaderParserXmlOpen(SvgLoaderData* loader, const char* content, 
             if (loader->stack.count > 0) parent = loader->stack.data[loader->stack.count - 1];
             else parent = loader->doc;
             node = method(loader, parent, attrs, attrsLength);
-            if (!strcmp(tagName, "style")) loader->cssStyle = node;
+            if (!strcmp(tagName, "style")) {
+                loader->cssStyle = node;
+                loader->style = true;
+            }
         }
 
         if (!node) return;
@@ -2654,6 +2682,46 @@ static void _svgLoaderParserXmlOpen(SvgLoaderData* loader, const char* content, 
 }
 
 
+static void _svgLoaderParserXmlStyle(SvgLoaderData* loader, const char* content, unsigned int length)
+{
+    char* tag;
+    char* name;
+    const char* attrs = nullptr;
+    unsigned int attrsLength = 0;
+
+    FactoryMethod method;
+    GradientFactoryMethod gradientMethod;
+    SvgNode *node = nullptr;
+
+    const char *buf = content;
+    unsigned buflen = length;
+
+
+    while (auto next = simpleXmlParseCSSAttribute(buf, buflen, &tag, &name, &attrs, &attrsLength)) {
+        if ((method = _findGroupFactory(tag))) {
+            //TODO - node->id ??? add additional var for svgnode?
+            if ((node = method(loader, loader->cssStyle, attrs, attrsLength))) node->id = _copyId(name);
+        } else if ((method = _findGraphicsFactory(tag))) {
+            if ((node = method(loader, loader->cssStyle, attrs, attrsLength))) node->id = _copyId(name);
+            //TODO - implement
+        } else if ((gradientMethod = _findGradientFactory(tag))) {
+            //TODO - implement
+            //SvgStyleGradient* gradient = gradientMethod(loader, attrs, attrsLength);
+        } else if (!strcmp(tag, "stop")) {
+            //TODO - implement
+        } else if (!isIgnoreUnsupportedLogElements(tag)) {
+            TVGLOG("SVG", "Unsupported elements used [Elements: %s]", tag);
+        }
+
+        buflen -= next - buf;
+        buf = next;
+
+        free(tag);
+        free(name);
+    }
+}
+
+
 static bool _svgLoaderParser(void* data, SimpleXMLType type, const char* content, unsigned int length)
 {
     SvgLoaderData* loader = (SvgLoaderData*)data;
@@ -2672,7 +2740,10 @@ static bool _svgLoaderParser(void* data, SimpleXMLType type, const char* content
             break;
         }
         case SimpleXMLType::Data:
-        case SimpleXMLType::CData:
+        case SimpleXMLType::CData: {
+            if (loader->style) _svgLoaderParserXmlStyle(loader, content, length);
+            break;
+        }
         case SimpleXMLType::DoctypeChild: {
             break;
         }

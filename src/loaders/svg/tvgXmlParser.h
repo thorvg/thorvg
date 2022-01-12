@@ -32,7 +32,7 @@ const int xmlEntityLength[] = {6, 6, 6, 5, 4, 4, 6, 6};
 enum class SimpleXMLType
 {
     Open = 0,     //!< \<tag attribute="value"\>
-    OpenEmpty,   //!< \<tag attribute="value" /\>
+    OpenEmpty,    //!< \<tag attribute="value" /\>
     Close,        //!< \</tag\>
     Data,         //!< tag text data
     CData,        //!< \<![cdata[something]]\>
@@ -41,7 +41,7 @@ enum class SimpleXMLType
     Doctype,      //!< \<!doctype html
     Comment,      //!< \<!-- something --\>
     Ignored,      //!< whatever is ignored by parser, like whitespace
-    DoctypeChild //!< \<!doctype_child
+    DoctypeChild  //!< \<!doctype_child
 };
 
 typedef bool (*simpleXMLCb)(void* data, SimpleXMLType type, const char* content, unsigned int length);
@@ -50,7 +50,8 @@ typedef bool (*simpleXMLAttributeCb)(void* data, const char* key, const char* va
 bool simpleXmlParseAttributes(const char* buf, unsigned buflen, simpleXMLAttributeCb func, const void* data);
 bool simpleXmlParse(const char* buf, unsigned buflen, bool strip, simpleXMLCb func, const void* data);
 bool simpleXmlParseW3CAttribute(const char* buf, simpleXMLAttributeCb func, const void* data);
-const char *simpleXmlFindAttributesTag(const char* buf, unsigned buflen);
+const char* simpleXmlParseCSSAttribute(const char* buf, unsigned bufLength, char** tag, char** name, const char** attrs, unsigned* attrsLength);
+const char* simpleXmlFindAttributesTag(const char* buf, unsigned buflen);
 bool isIgnoreUnsupportedLogElements(const char* tagName);
 const char* simpleXmlNodeTypeToString(SvgNodeType type);
 
