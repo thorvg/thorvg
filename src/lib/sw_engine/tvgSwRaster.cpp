@@ -1493,7 +1493,7 @@ bool rasterStroke(SwSurface* surface, SwShape* shape, uint8_t r, uint8_t g, uint
 bool rasterImage(SwSurface* surface, SwImage* image, const Matrix* transform, const SwBBox& bbox, uint32_t opacity)
 {
     //Verify Boundary
-    if (bbox.max.x < 0 || bbox.max.y < 0 || bbox.min.x >= surface->w || bbox.min.y >= surface->h) return false;
+    if (bbox.max.x < 0 || bbox.max.y < 0 || bbox.min.x >= static_cast<SwCoord>(surface->w) || bbox.min.y >= static_cast<SwCoord>(surface->h)) return false;
 
     //TOOD: switch (image->format)
     //TODO: case: _rasterRGBImage()
