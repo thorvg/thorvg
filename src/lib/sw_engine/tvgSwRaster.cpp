@@ -1157,12 +1157,12 @@ static bool _rasterTranslucentLinearGradientRle(SwSurface* surface, const SwRleD
         auto dst = &surface->buffer[span->y * surface->stride + span->x];
         fillFetchLinear(fill, buffer, span->y, span->x, span->len);
         if (span->coverage == 255) {
-            for (uint32_t i = 0; i < span->len; ++i, ++dst) {
-                *dst = buffer[i] + ALPHA_BLEND(*dst, _ialpha(buffer[i]));
+            for (uint32_t x = 0; x < span->len; ++x, ++dst) {
+                *dst = buffer[x] + ALPHA_BLEND(*dst, _ialpha(buffer[x]));
             }
         } else {
-            for (uint32_t i = 0; i < span->len; ++i, ++dst) {
-                auto tmp = ALPHA_BLEND(buffer[i], span->coverage);
+            for (uint32_t x = 0; x < span->len; ++x, ++dst) {
+                auto tmp = ALPHA_BLEND(buffer[x], span->coverage);
                 *dst = tmp + ALPHA_BLEND(*dst, _ialpha(tmp));
             }
         }
@@ -1186,8 +1186,8 @@ static bool _rasterSolidLinearGradientRle(SwSurface* surface, const SwRleData* r
         } else {
             fillFetchLinear(fill, buf, span->y, span->x, span->len);
             auto dst = &surface->buffer[span->y * surface->stride + span->x];
-            for (uint32_t i = 0; i < span->len; ++i) {
-                dst[i] = INTERPOLATE(span->coverage, buf[i], dst[i]);
+            for (uint32_t x = 0; x < span->len; ++x) {
+                dst[x] = INTERPOLATE(span->coverage, buf[x], dst[x]);
             }
         }
     }
@@ -1350,12 +1350,12 @@ static bool _rasterTranslucentRadialGradientRle(SwSurface* surface, const SwRleD
         auto dst = &surface->buffer[span->y * surface->stride + span->x];
         fillFetchRadial(fill, buffer, span->y, span->x, span->len);
         if (span->coverage == 255) {
-            for (uint32_t i = 0; i < span->len; ++i, ++dst) {
-                *dst = buffer[i] + ALPHA_BLEND(*dst, _ialpha(buffer[i]));
+            for (uint32_t x = 0; x < span->len; ++x, ++dst) {
+                *dst = buffer[x] + ALPHA_BLEND(*dst, _ialpha(buffer[x]));
             }
         } else {
-           for (uint32_t i = 0; i < span->len; ++i, ++dst) {
-                auto tmp = ALPHA_BLEND(buffer[i], span->coverage);
+           for (uint32_t x = 0; x < span->len; ++x, ++dst) {
+                auto tmp = ALPHA_BLEND(buffer[x], span->coverage);
                 *dst = tmp + ALPHA_BLEND(*dst, _ialpha(tmp));
             }
         }
@@ -1380,8 +1380,8 @@ static bool _rasterSolidRadialGradientRle(SwSurface* surface, const SwRleData* r
         } else {
             fillFetchRadial(fill, buf, span->y, span->x, span->len);
             auto ialpha = 255 - span->coverage;
-            for (uint32_t i = 0; i < span->len; ++i, ++dst) {
-                *dst = ALPHA_BLEND(buf[i], span->coverage) + ALPHA_BLEND(*dst, ialpha);
+            for (uint32_t x = 0; x < span->len; ++x, ++dst) {
+                *dst = ALPHA_BLEND(buf[x], span->coverage) + ALPHA_BLEND(*dst, ialpha);
             }
         }
     }
