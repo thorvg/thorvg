@@ -796,7 +796,7 @@ static bool _attrParseSvgNode(void* data, const char* key, const char* value)
         return simpleXmlParseW3CAttribute(value, _parseStyleAttr, loader);
     }
 #ifdef THORVG_LOG_ENABLED
-    else if ((!strcmp(key, "x") || !strcmp(key, "y")) && fabsf(svgUtilStrtof(value, nullptr)) > FLT_EPSILON ) {
+    else if ((!strcmp(key, "x") || !strcmp(key, "y")) && fabsf(svgUtilStrtof(value, nullptr)) > FLT_EPSILON) {
         TVGLOG("SVG", "Unsupported attributes used [Elements type: Svg][Attribute: %s][Value: %s]", key, value);
     }
 #endif
@@ -2209,6 +2209,7 @@ static bool _attrParseRadialGradientNode(void* data, const char* key, const char
     } else if (!strcmp(key, "spreadMethod")) {
         grad->spread = _parseSpreadValue(value);
     } else if (!strcmp(key, "href") || !strcmp(key, "xlink:href")) {
+        if (grad->ref && value) free(grad->ref);
         grad->ref = _idFromHref(value);
     } else if (!strcmp(key, "gradientUnits") && !strcmp(value, "userSpaceOnUse")) {
         grad->userSpace = true;
@@ -2398,6 +2399,7 @@ static bool _attrParseLinearGradientNode(void* data, const char* key, const char
     } else if (!strcmp(key, "spreadMethod")) {
         grad->spread = _parseSpreadValue(value);
     } else if (!strcmp(key, "href") || !strcmp(key, "xlink:href")) {
+        if (grad->ref && value) free(grad->ref);
         grad->ref = _idFromHref(value);
     } else if (!strcmp(key, "gradientUnits") && !strcmp(value, "userSpaceOnUse")) {
         grad->userSpace = true;
