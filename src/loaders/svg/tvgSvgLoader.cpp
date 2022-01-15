@@ -807,6 +807,8 @@ static bool _attrParseSvgNode(void* data, const char* key, const char* value)
 }
 
 
+
+
 //https://www.w3.org/TR/SVGTiny12/painting.html#SpecifyingPaint
 static void _handlePaintAttr(SvgPaint* paint, const char* value)
 {
