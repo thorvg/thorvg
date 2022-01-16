@@ -43,6 +43,7 @@ jobs:
       run: |
         sudo apt-get update
         sudo add-apt-repository ppa:niko2040/e19
+        sudo add-apt-repository ppa:wltjr/epkgs
         sudo apt-get install ninja-build gcc-multilib g++-multilib
         sudo apt-get install libefl-dev
         sudo apt-get install python3-pip
