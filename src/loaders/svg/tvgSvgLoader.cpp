@@ -1933,7 +1933,7 @@ static void _copyAttr(SvgNode* to, const SvgNode* from)
 static void _cloneNode(SvgNode* from, SvgNode* parent)
 {
     SvgNode* newNode;
-    if (!from || !parent) return;
+    if (!from || !parent || from == parent) return;
 
     newNode = _createNode(parent, from->type);
     if (!newNode) return;
