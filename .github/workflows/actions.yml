@@ -10,7 +10,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v2
       with:
@@ -21,7 +21,7 @@ jobs:
         sudo apt-get update
         sudo apt-get install ninja-build gcc-multilib g++-multilib
         sudo apt-get install python3-pip
-        pip3 install meson --user
+        sudo pip3 install meson
 
     - name: Install TurboJPEG library
       run: sudo apt-get install libturbojpeg0-dev libjpeg8-dev
@@ -33,7 +33,7 @@ jobs:
         sudo ninja -C . install
 
   examples:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v2
       with:
@@ -42,11 +42,10 @@ jobs:
     - name: Install Packages
       run: |
         sudo apt-get update
-        sudo add-apt-repository ppa:niko2040/e19
         sudo apt-get install ninja-build gcc-multilib g++-multilib
-        sudo apt-get install libefl-dev
+        sudo apt-get install libefl-all-dev
         sudo apt-get install python3-pip
-        pip3 install meson --user
+        sudo pip3 install meson
 
     - name: Install TurboJPEG library
       run: sudo apt-get install libturbojpeg0-dev libjpeg8-dev
@@ -58,7 +57,7 @@ jobs:
         sudo ninja -C . install
 
   unit_test:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v2
       with:
@@ -71,7 +70,7 @@ jobs:
         sudo apt-get install curl jq
         sudo apt-get install software-properties-common
         sudo apt-get install python3-pip
-        pip3 install meson --user
+        sudo pip3 install meson
 
     - name: Install TurboJPEG library
       run: sudo apt-get install libturbojpeg0-dev libjpeg8-dev
