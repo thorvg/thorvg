@@ -468,6 +468,13 @@ bool simpleXmlParseW3CAttribute(const char* buf, TVG_UNUSED unsigned buflen, sim
     do {
         char* sep = (char*)strchr(buf, ':');
         next = (char*)strchr(buf, ';');
+        if (sep >= end)
+        {
+            next = nullptr;
+            sep = nullptr;
+        }
+        if (next >= end) next = nullptr;
+
 
         key[0] = '\0';
         val[0] = '\0';
