@@ -450,7 +450,7 @@ bool simpleXmlParse(const char* buf, unsigned bufLength, bool strip, simpleXMLCb
 }
 
 
-bool simpleXmlParseW3CAttribute(const char* buf, simpleXMLAttributeCb func, const void* data)
+bool simpleXmlParseW3CAttribute(const char* buf, TVG_UNUSED unsigned buflen, simpleXMLAttributeCb func, const void* data)
 {
     const char* end;
     char* key;
