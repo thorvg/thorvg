@@ -450,7 +450,7 @@ bool simpleXmlParse(const char* buf, unsigned bufLength, bool strip, simpleXMLCb
 }
 
 
-bool simpleXmlParseW3CAttribute(const char* buf, TVG_UNUSED unsigned buflen, simpleXMLAttributeCb func, const void* data)
+bool simpleXmlParseW3CAttribute(const char* buf, unsigned buflen, simpleXMLAttributeCb func, const void* data)
 {
     const char* end;
     char* key;
@@ -459,7 +459,7 @@ bool simpleXmlParseW3CAttribute(const char* buf, TVG_UNUSED unsigned buflen, sim
 
     if (!buf) return false;
 
-    end = buf + strlen(buf);
+    end = buf + buflen;
     key = (char*)alloca(end - buf + 1);
     val = (char*)alloca(end - buf + 1);
 
@@ -474,7 +474,6 @@ bool simpleXmlParseW3CAttribute(const char* buf, TVG_UNUSED unsigned buflen, sim
             sep = nullptr;
         }
         if (next >= end) next = nullptr;
-
 
         key[0] = '\0';
         val[0] = '\0';
