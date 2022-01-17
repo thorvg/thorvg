@@ -241,6 +241,12 @@ and scalable image contents such as SVG and Lottie Animation among the Tizen pow
 [Back to contents](#contents)
 <br />
 <br />
+#### Tizen NUI
+[Natural User Interface (NUI)](https://docs.tizen.org/application/dotnet/guides/user-interface/nui/overview/) is one of the ui framework provided by Tizen, which is written in C#. ThorVG is a backend engine for the [Vector Graphics](https://docs.tizen.org/application/dotnet/guides/user-interface/nui/vectorgraphics/Overview/) API set provided by the NUI. The NUI's VectorGraphics APIs are almost 1: 1 with the APIs of ThorVG. This is a good example that ThorVG is used by the ui framework level
+
+[Back to contents](#contents)
+<br />
+<br />
 ### Rive
 We're also building a [Rive](https://rive.app/) port that supports Rive Animation run through the ThorVG backend. Rive is a brand new animation platform
 that supports fancy, user-interactive vector animations. For more details see [Rive-Tizen](https://github.com/rive-app/rive-tizen) on [Github](https://github.com/rive-app/).
