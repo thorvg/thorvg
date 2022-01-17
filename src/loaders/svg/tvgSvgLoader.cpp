@@ -798,7 +798,7 @@ static bool _attrParseSvgNode(void* data, const char* key, const char* value)
     } else if (!strcmp(key, "preserveAspectRatio")) {
         if (!strcmp(value, "none")) doc->preserveAspect = false;
     } else if (!strcmp(key, "style")) {
-        return simpleXmlParseW3CAttribute(value, 0, _parseStyleAttr, loader);
+        return simpleXmlParseW3CAttribute(value, strlen(value), _parseStyleAttr, loader);
     }
 #ifdef THORVG_LOG_ENABLED
     else if ((!strcmp(key, "x") || !strcmp(key, "y")) && fabsf(svgUtilStrtof(value, nullptr)) > FLT_EPSILON) {
@@ -951,13 +951,13 @@ static void _handleDisplayAttr(TVG_UNUSED SvgLoaderData* loader, SvgNode* node, 
 }
 
 
-static SvgNode* _findCssStyleNode(const SvgNode* cssStyle, const char* title)
+static SvgNode* _findCssStyleNode(const SvgNode* cssStyle, const char* title, SvgNodeType type)
 {
     if (!cssStyle) return nullptr;
 
     auto child = cssStyle->child.data;
     for (uint32_t i = 0; i < cssStyle->child.count; ++i, ++child) {
-        if (((*child)->id) && !strcmp((*child)->id, title)) return (*child);
+        if ((*child)->type == type && ((*child)->id) && !strcmp((*child)->id, title)) return (*child);
     }
     return nullptr;
 
@@ -973,8 +973,8 @@ static void _handleCssClassAttr(SvgLoaderData* loader, SvgNode* node, const char
     *cssClass = _copyId(value);
 
     //TODO: works only if style was defined before it is used
-    if (auto cssNode = _findCssStyleNode(loader->cssStyle, *cssClass)) {
-        //TODO: check SVG2 stndard - should the geometric properties be copied?
+    if (auto cssNode = _findCssStyleNode(loader->cssStyle, *cssClass, node->type)) {
+        //TODO: check SVG2 standard - should the geometric properties be copied?
         _copyAttr(node, cssNode, false);
     }
 }
@@ -1054,7 +1054,7 @@ static bool _attrParseGNode(void* data, const char* key, const char* value)
     SvgNode* node = loader->svgParse->node;
 
     if (!strcmp(key, "style")) {
-        return simpleXmlParseW3CAttribute(value, 0, _parseStyleAttr, loader);
+        return simpleXmlParseW3CAttribute(value, strlen(value), _parseStyleAttr, loader);
     } else if (!strcmp(key, "transform")) {
         node->transform = _parseTransformationMatrix(value);
     } else if (!strcmp(key, "id")) {
@@ -1083,7 +1083,7 @@ static bool _attrParseClipPathNode(void* data, const char* key, const char* valu
     SvgClipNode* clip = &(node->node.clip);
 
     if (!strcmp(key, "style")) {
-        return simpleXmlParseW3CAttribute(value, 0, _parseStyleAttr, loader);
+        return simpleXmlParseW3CAttribute(value, strlen(value), _parseStyleAttr, loader);
     } else if (!strcmp(key, "transform")) {
         node->transform = _parseTransformationMatrix(value);
     } else if (!strcmp(key, "id")) {
@@ -1107,7 +1107,7 @@ static bool _attrParseMaskNode(void* data, const char* key, const char* value)
     SvgMaskNode* mask = &(node->node.mask);
 
     if (!strcmp(key, "style")) {
-        return simpleXmlParseW3CAttribute(value, 0, _parseStyleAttr, loader);
+        return simpleXmlParseW3CAttribute(value, strlen(value), _parseStyleAttr, loader);
     } else if (!strcmp(key, "transform")) {
         node->transform = _parseTransformationMatrix(value);
     } else if (!strcmp(key, "id")) {
@@ -1286,7 +1286,7 @@ static bool _attrParsePathNode(void* data, const char* key, const char* value)
         //Temporary: need to copy
         path->path = _copyId(value);
     } else if (!strcmp(key, "style")) {
-        return simpleXmlParseW3CAttribute(value, 0, _parseStyleAttr, loader);
+        return simpleXmlParseW3CAttribute(value, strlen(value), _parseStyleAttr, loader);
     } else if (!strcmp(key, "clip-path")) {
         _handleClipPathAttr(loader, node, value);
     } else if (!strcmp(key, "mask")) {
@@ -1348,7 +1348,7 @@ static bool _attrParseCircleNode(void* data, const char* key, const char* value)
     }
 
     if (!strcmp(key, "style")) {
-        return simpleXmlParseW3CAttribute(value, 0, _parseStyleAttr, loader);
+        return simpleXmlParseW3CAttribute(value, strlen(value), _parseStyleAttr, loader);
     } else if (!strcmp(key, "clip-path")) {
         _handleClipPathAttr(loader, node, value);
     } else if (!strcmp(key, "mask")) {
@@ -1415,7 +1415,7 @@ static bool _attrParseEllipseNode(void* data, const char* key, const char* value
     } else if (!strcmp(key, "class")) {
         _handleCssClassAttr(loader, node, value);
     } else if (!strcmp(key, "style")) {
-        return simpleXmlParseW3CAttribute(value, 0, _parseStyleAttr, loader);
+        return simpleXmlParseW3CAttribute(value, strlen(value), _parseStyleAttr, loader);
     } else if (!strcmp(key, "clip-path")) {
         _handleClipPathAttr(loader, node, value);
     } else if (!strcmp(key, "mask")) {
@@ -1489,7 +1489,7 @@ static bool _attrParsePolygonNode(void* data, const char* key, const char* value
     if (!strcmp(key, "points")) {
         return _attrParsePolygonPoints(value, &polygon->points, &polygon->pointsCount);
     } else if (!strcmp(key, "style")) {
-        return simpleXmlParseW3CAttribute(value, 0, _parseStyleAttr, loader);
+        return simpleXmlParseW3CAttribute(value, strlen(value), _parseStyleAttr, loader);
     } else if (!strcmp(key, "clip-path")) {
         _handleClipPathAttr(loader, node, value);
     } else if (!strcmp(key, "mask")) {
@@ -1576,7 +1576,7 @@ static bool _attrParseRectNode(void* data, const char* key, const char* value)
     } else if (!strcmp(key, "class")) {
         _handleCssClassAttr(loader, node, value);
     } else if (!strcmp(key, "style")) {
-        ret = simpleXmlParseW3CAttribute(value, 0, _parseStyleAttr, loader);
+        ret = simpleXmlParseW3CAttribute(value, strlen(value), _parseStyleAttr, loader);
     } else if (!strcmp(key, "clip-path")) {
         _handleClipPathAttr(loader, node, value);
     } else if (!strcmp(key, "mask")) {
@@ -1641,7 +1641,7 @@ static bool _attrParseLineNode(void* data, const char* key, const char* value)
     } else if (!strcmp(key, "class")) {
         _handleCssClassAttr(loader, node, value);
     } else if (!strcmp(key, "style")) {
-        return simpleXmlParseW3CAttribute(value, 0, _parseStyleAttr, loader);
+        return simpleXmlParseW3CAttribute(value, strlen(value), _parseStyleAttr, loader);
     } else if (!strcmp(key, "clip-path")) {
         _handleClipPathAttr(loader, node, value);
     } else if (!strcmp(key, "mask")) {
@@ -1714,7 +1714,7 @@ static bool _attrParseImageNode(void* data, const char* key, const char* value)
     } else if (!strcmp(key, "class")) {
         _handleCssClassAttr(loader, node, value);
     } else if (!strcmp(key, "style")) {
-        return simpleXmlParseW3CAttribute(value, 0, _parseStyleAttr, loader);
+        return simpleXmlParseW3CAttribute(value, strlen(value), _parseStyleAttr, loader);
     } else if (!strcmp(key, "clip-path")) {
         _handleClipPathAttr(loader, node, value);
     } else if (!strcmp(key, "mask")) {
@@ -2390,7 +2390,7 @@ static bool _attrParseStops(void* data, const char* key, const char* value)
             _toColor(value, &stop->r, &stop->g, &stop->b, nullptr);
         }
     } else if (!strcmp(key, "style")) {
-        simpleXmlParseW3CAttribute(value, 0, _attrParseStopsStyle, data);
+        simpleXmlParseW3CAttribute(value, strlen(value), _attrParseStopsStyle, data);
     } else {
         return false;
     }
@@ -2716,6 +2716,7 @@ static void _svgLoaderParserXmlStyle(SvgLoaderData* loader, const char* content,
 
         buflen -= next - buf;
         buf = next;
+
 
         free(tag);
         free(name);

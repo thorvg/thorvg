@@ -49,7 +49,7 @@ typedef bool (*simpleXMLAttributeCb)(void* data, const char* key, const char* va
 
 bool simpleXmlParseAttributes(const char* buf, unsigned buflen, simpleXMLAttributeCb func, const void* data);
 bool simpleXmlParse(const char* buf, unsigned buflen, bool strip, simpleXMLCb func, const void* data);
-bool simpleXmlParseW3CAttribute(const char* buf, TVG_UNUSED unsigned buflen, simpleXMLAttributeCb func, const void* data);
+bool simpleXmlParseW3CAttribute(const char* buf, unsigned buflen, simpleXMLAttributeCb func, const void* data);
 const char* simpleXmlParseCSSAttribute(const char* buf, unsigned bufLength, char** tag, char** name, const char** attrs, unsigned* attrsLength);
 const char* simpleXmlFindAttributesTag(const char* buf, unsigned buflen);
 bool isIgnoreUnsupportedLogElements(const char* tagName);
