@@ -2694,11 +2694,7 @@ static void _svgLoaderParserXmlStyle(SvgLoaderData* loader, const char* content,
     GradientFactoryMethod gradientMethod;
     SvgNode *node = nullptr;
 
-    const char *buf = content;
-    unsigned buflen = length;
-
-
-    while (auto next = simpleXmlParseCSSAttribute(buf, buflen, &tag, &name, &attrs, &attrsLength)) {
+    while (auto next = simpleXmlParseCSSAttribute(content, length, &tag, &name, &attrs, &attrsLength)) {
         if ((method = _findGroupFactory(tag))) {
             //TODO - node->id ??? add additional var for svgnode?
             if ((node = method(loader, loader->cssStyle, attrs, attrsLength, simpleXmlParseW3CAttribute))) node->id = _copyId(name);
@@ -2714,9 +2710,8 @@ static void _svgLoaderParserXmlStyle(SvgLoaderData* loader, const char* content,
             TVGLOG("SVG", "Unsupported elements used [Elements: %s]", tag);
         }
 
-        buflen -= next - buf;
-        buf = next;
-
+        length -= next - content;
+        content = next;
 
         free(tag);
         free(name);
