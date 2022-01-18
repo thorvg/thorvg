@@ -1932,7 +1932,17 @@ static void _copyAttr(SvgNode* to, const SvgNode* from)
 }
 
 
-static void _cloneNode(SvgNode* from, SvgNode* parent)
+static bool noCycles(SvgNode* node, Array<SvgNode*>* prevNodes)
+{
+    auto prevNode = prevNodes->data;
+    for (uint32_t i = 0; i < prevNodes->count; ++i, ++prevNode) {
+        if (*prevNode == node) return false;
+    }
+    return true;
+}
+
+
+static void _cloneNode(SvgNode* from, SvgNode* parent, Array<SvgNode*>* allParents)
 {
     SvgNode* newNode;
     if (!from || !parent || from == parent) return;
@@ -1940,12 +1950,14 @@ static void _cloneNode(SvgNode* from, SvgNode* parent)
     newNode = _createNode(parent, from->type);
     if (!newNode) return;
 
+    allParents->push(parent);
+
     _styleInherit(newNode->style, parent->style);
     _copyAttr(newNode, from);
 
     auto child = from->child.data;
-    for (uint32_t i = 0; i < from->child.count; ++i, ++child) {
-        _cloneNode(*child, newNode);
+    for (uint32_t i = 0; i < from->child.count && noCycles(*child, allParents); ++i, ++child) {
+        _cloneNode(*child, newNode, allParents);
     }
 }
 
@@ -1963,7 +1975,8 @@ static void _clonePostponedNodes(Array<SvgNodeIdPair>* cloneNodes, SvgNode* doc)
         auto defs = _getDefsNode(nodeIdPair.node);
         auto nodeFrom = _findChildById(defs, nodeIdPair.id);
         if (!nodeFrom) nodeFrom = _findChildById(doc, nodeIdPair.id);
-        _cloneNode(nodeFrom, nodeIdPair.node);
+        Array<SvgNode*> tmp;
+        _cloneNode(nodeFrom, nodeIdPair.node, &tmp);
         free(nodeIdPair.id);
     }
 }
@@ -2004,7 +2017,8 @@ static bool _attrParseUseNode(void* data, const char* key, const char* value)
         defs = _getDefsNode(node);
         nodeFrom = _findChildById(defs, id);
         if (nodeFrom) {
-            _cloneNode(nodeFrom, node);
+            Array<SvgNode*> tmp;
+            _cloneNode(nodeFrom, node, &tmp);
             free(id);
         } else {
             //some svg export software include <defs> element at the end of the file
