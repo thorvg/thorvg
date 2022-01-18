@@ -80,6 +80,7 @@ typedef bool (*parseAttributes)(const char*, unsigned, simpleXMLAttributeCb, con
 typedef SvgNode* (*FactoryMethod)(SvgLoaderData* loader, SvgNode* parent, const char* buf, unsigned bufLength, parseAttributes func);
 typedef SvgStyleGradient* (*GradientFactoryMethod)(SvgLoaderData* loader, const char* buf, unsigned bufLength);
 
+static void _postponeCloneNode(Array<SvgNodeIdPair>* nodes, SvgNode *node, char* id);
 
 static char* _skipSpace(const char* str, const char* end)
 {
@@ -1054,6 +1055,7 @@ static void _cssStyleCopy(SvgStyleProperty* to, const SvgStyleProperty* from)
 }
 
 
+//TODO: check SVG2 standard - should the geometric properties be copied?
 static void _copyCssStyleAttr(SvgNode* to, const SvgNode* from)
 {
     //Copy matrix attribute
@@ -1079,14 +1081,19 @@ static void _handleCssClassAttr(SvgLoaderData* loader, SvgNode* node, const char
     if (*cssClass && value) free(*cssClass);
     *cssClass = _copyId(value);
 
-    //TODO: works only if style was defined before it is used
+    bool cssClassFound = false;
+
+    //css styling: tag.name has higher priority than .name
     if (auto cssNode = _findCssStyleNode(loader->cssStyle, *cssClass, node->type)) {
-        //TODO: check SVG2 standard - should the geometric properties be copied?
+        cssClassFound = true;
         _copyCssStyleAttr(node, cssNode);
     }
     if (auto cssNode = _findCssStyleNode(loader->cssStyle, *cssClass)) {
+        cssClassFound = true;
         _copyCssStyleAttr(node, cssNode);
     }
+
+    if (!cssClassFound) _postponeCloneNode(&loader->cloneCssStyleNodes, node, *cssClass);
 }
 
 
@@ -2146,9 +2153,9 @@ static void _cloneNode(SvgNode* from, SvgNode* parent, int depth)
 }
 
 
-static void _postponeCloneNode(SvgLoaderData* loader, SvgNode *node, char* id)
+static void _postponeCloneNode(Array<SvgNodeIdPair>* nodes, SvgNode *node, char* id)
 {
-    loader->cloneNodes.push({node, id});
+    nodes->push({node, id});
 }
 
 
@@ -2206,7 +2213,7 @@ static bool _attrParseUseNode(void* data, const char* key, const char* value)
             //some svg export software include <defs> element at the end of the file
             //if so the 'from' element won't be found now and we have to repeat finding
             //after the whole file is parsed
-            _postponeCloneNode(loader, node, id);
+            _postponeCloneNode(&loader->cloneNodes, node, id);
         }
     } else {
         return _attrParseGNode(data, key, value);
@@ -3013,6 +3020,22 @@ static void _updateCssStyle(SvgNode* doc, SvgNode* cssStyle)
 }
 
 
+static void _clonePostponedCssStyleNodes(Array<SvgNodeIdPair>* cloneCssStyleNodes, SvgNode* cssStyle)
+{
+    for (uint32_t i = 0; i < cloneCssStyleNodes->count; ++i) {
+        auto nodeIdPair = cloneCssStyleNodes->data[i];
+
+        //css styling: tag.name has higher priority than .name
+        if (auto cssNode = _findCssStyleNode(cssStyle, nodeIdPair.id, nodeIdPair.node->type)) {
+            _copyCssStyleAttr(nodeIdPair.node, cssNode);
+        }
+        if (auto cssNode = _findCssStyleNode(cssStyle, nodeIdPair.id)) {
+            _copyCssStyleAttr(nodeIdPair.node, cssNode);
+        }
+    }
+}
+
+
 static void _freeNodeStyle(SvgStyleProperty* style)
 {
     if (!style) return;
@@ -3189,6 +3212,7 @@ void SvgLoader::run(unsigned tid)
         if (loaderData.gradients.count > 0) _updateGradient(loaderData.doc, &loaderData.gradients);
         if (defs) _updateGradient(loaderData.doc, &defs->node.defs.gradients);
 
+        if (loaderData.cloneCssStyleNodes.count > 0) _clonePostponedCssStyleNodes(&loaderData.cloneCssStyleNodes, loaderData.cssStyle);
         //TODO: defs should be updated as well?
         if (loaderData.cssStyle) _updateCssStyle(loaderData.doc, loaderData.cssStyle);
     }
