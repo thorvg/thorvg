@@ -954,7 +954,23 @@ static SvgNode* _findCssStyleNode(const SvgNode* cssStyle, const char* title, Sv
 
     auto child = cssStyle->child.data;
     for (uint32_t i = 0; i < cssStyle->child.count; ++i, ++child) {
-        if ((*child)->type == type && ((*child)->id) && !strcmp((*child)->id, title)) return (*child);
+        if ((*child)->type == type) {
+            if ((!title && !(*child)->id) || (title && (*child)->id && !strcmp((*child)->id, title))) return (*child);
+        }
+    }
+    return nullptr;
+}
+
+
+static SvgNode* _findCssStyleNode(const SvgNode* cssStyle, const char* title)
+{
+    if (!cssStyle) return nullptr;
+
+    auto child = cssStyle->child.data;
+    for (uint32_t i = 0; i < cssStyle->child.count; ++i, ++child) {
+        if ((*child)->type == SvgNodeType::CssStyle) {
+            if ((title && (*child)->id && !strcmp((*child)->id, title))) return (*child);
+        }
     }
     return nullptr;
 }
@@ -980,10 +996,12 @@ static void _cssStyleCopy(SvgStyleProperty* to, const SvgStyleProperty* from)
     }
     if (((int)from->fill.flags & (int)SvgFillFlags::Opacity) && !((int)to->flags & (int)SvgStyleFlags::FillOpacity)) {
         to->fill.opacity = from->fill.opacity;
+        to->fill.flags = (SvgFillFlags)((int)to->fill.flags | (int)SvgFillFlags::Opacity);
         to->flags = (SvgStyleFlags)((int)to->flags | (int)SvgStyleFlags::FillOpacity);
     }
     if (((int)from->fill.flags & (int)SvgFillFlags::FillRule) && !((int)to->flags & (int)SvgStyleFlags::FillRule)) {
         to->fill.fillRule = from->fill.fillRule;
+        to->fill.flags = (SvgFillFlags)((int)to->fill.flags | (int)SvgFillFlags::FillRule);
         to->flags = (SvgStyleFlags)((int)to->flags | (int)SvgStyleFlags::FillRule);
     }
     //Stroke
@@ -997,10 +1015,12 @@ static void _cssStyleCopy(SvgStyleProperty* to, const SvgStyleProperty* from)
     }
     if (((int)from->stroke.flags & (int)SvgStrokeFlags::Opacity) && !((int)to->flags & (int)SvgStyleFlags::StrokeOpacity)) {
         to->stroke.opacity = from->stroke.opacity;
+        to->stroke.flags = (SvgStrokeFlags)((int)to->stroke.flags | (int)SvgStrokeFlags::Opacity);
         to->flags = (SvgStyleFlags)((int)to->flags | (int)SvgStyleFlags::StrokeOpacity);
     }
     if (((int)from->stroke.flags & (int)SvgStrokeFlags::Width) && !((int)to->flags & (int)SvgStyleFlags::StrokeWidth)) {
         to->stroke.width = from->stroke.width;
+        to->stroke.flags = (SvgStrokeFlags)((int)to->stroke.flags | (int)SvgStrokeFlags::Width);
         to->flags = (SvgStyleFlags)((int)to->flags | (int)SvgStyleFlags::StrokeWidth);
     }
     if (((int)from->stroke.flags & (int)SvgStrokeFlags::Dash) && !((int)to->flags & (int)SvgStyleFlags::StrokeDashArray)) {
@@ -1010,15 +1030,18 @@ static void _cssStyleCopy(SvgStyleProperty* to, const SvgStyleProperty* from)
             for (uint32_t i = 0; i < from->stroke.dash.array.count; ++i) {
                 to->stroke.dash.array.push(from->stroke.dash.array.data[i]);
             }
+            to->stroke.flags = (SvgStrokeFlags)((int)to->stroke.flags | (int)SvgStrokeFlags::Dash);
             to->flags = (SvgStyleFlags)((int)to->flags | (int)SvgStyleFlags::StrokeDashArray);
         }
     }
     if (((int)from->stroke.flags & (int)SvgStrokeFlags::Cap) && !((int)to->flags & (int)SvgStyleFlags::StrokeLineCap)) {
         to->stroke.cap = from->stroke.cap;
+        to->stroke.flags = (SvgStrokeFlags)((int)to->stroke.flags | (int)SvgStrokeFlags::Cap);
         to->flags = (SvgStyleFlags)((int)to->flags | (int)SvgStyleFlags::StrokeLineCap);
     }
     if (((int)from->stroke.flags & (int)SvgStrokeFlags::Join) && !((int)to->flags & (int)SvgStyleFlags::StrokeLineJoin)) {
         to->stroke.join = from->stroke.join;
+        to->stroke.flags = (SvgStrokeFlags)((int)to->stroke.flags | (int)SvgStrokeFlags::Join);
         to->flags = (SvgStyleFlags)((int)to->flags | (int)SvgStyleFlags::StrokeLineJoin);
     }
     //Opacity
@@ -1059,6 +1082,9 @@ static void _handleCssClassAttr(SvgLoaderData* loader, SvgNode* node, const char
     //TODO: works only if style was defined before it is used
     if (auto cssNode = _findCssStyleNode(loader->cssStyle, *cssClass, node->type)) {
         //TODO: check SVG2 standard - should the geometric properties be copied?
+        _copyCssStyleAttr(node, cssNode);
+    }
+    if (auto cssNode = _findCssStyleNode(loader->cssStyle, *cssClass)) {
         _copyCssStyleAttr(node, cssNode);
     }
 }
@@ -2788,6 +2814,8 @@ static void _svgLoaderParserXmlCssStyle(SvgLoaderData* loader, const char* conte
             //SvgStyleGradient* gradient = gradientMethod(loader, attrs, attrsLength);
         } else if (!strcmp(tag, "stop")) {
             //TODO - implement
+        } else if (!strcmp(tag, "all")) {
+            if ((node = _createCssStyleNode(loader, loader->cssStyle, attrs, attrsLength, simpleXmlParseW3CAttribute))) node->id = _copyId(name);
         } else if (!isIgnoreUnsupportedLogElements(tag)) {
             TVGLOG("SVG", "Unsupported elements used [Elements: %s]", tag);
         }
@@ -2968,6 +2996,23 @@ static void _updateComposite(SvgNode* node, SvgNode* root)
 }
 
 
+static void _updateCssStyle(SvgNode* doc, SvgNode* cssStyle)
+{
+    if (doc->child.count > 0) {
+        auto child = doc->child.data;
+        for (uint32_t i = 0; i < doc->child.count; ++i, ++child) {
+            if (auto cssNode = _findCssStyleNode(cssStyle, nullptr, (*child)->type)) {
+                _copyCssStyleAttr(*child, cssNode);
+            }
+            if (auto cssNode = _findCssStyleNode(cssStyle, nullptr)) {
+                _copyCssStyleAttr(*child, cssNode);
+            }
+            _updateCssStyle(*child, cssStyle);
+        }
+    }
+}
+
+
 static void _freeNodeStyle(SvgStyleProperty* style)
 {
     if (!style) return;
@@ -3143,6 +3188,9 @@ void SvgLoader::run(unsigned tid)
 
         if (loaderData.gradients.count > 0) _updateGradient(loaderData.doc, &loaderData.gradients);
         if (defs) _updateGradient(loaderData.doc, &defs->node.defs.gradients);
+
+        //TODO: defs should be updated as well?
+        if (loaderData.cssStyle) _updateCssStyle(loaderData.doc, loaderData.cssStyle);
     }
     root = svgSceneBuild(loaderData.doc, vx, vy, vw, vh, w, h, preserveAspect, svgPath);
 }
