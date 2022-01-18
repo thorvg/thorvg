@@ -1628,6 +1628,7 @@ static bool _attrParseImageNode(void* data, const char* key, const char* value)
     }
 
     if (!strcmp(key, "href") || !strcmp(key, "xlink:href")) {
+        if (image->href && value) free(image->href);
         image->href = _idFromHref(value);
     } else if (!strcmp(key, "id")) {
         if (node->id && value) free(node->id);
