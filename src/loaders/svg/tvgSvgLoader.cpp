@@ -2539,6 +2539,7 @@ static void _svgLoaderParserXmlOpen(SvgLoaderData* loader, const char* content, 
 
     if ((method = _findGroupFactory(tagName))) {
         //Group
+        if (empty) return;
         if (!loader->doc) {
             if (strcmp(tagName, "svg")) return; //Not a valid svg document
             node = method(loader, nullptr, attrs, attrsLength);
