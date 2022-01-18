@@ -231,7 +231,7 @@ While TVG Saver exports the scene-tree to the TVG Picture data files(TVG), the T
 <br />
 ## Practices
 ### Tizen
-ThorVG has been integrated into the [Tizen](https://www.tizen.org) platform as the vector graphics engine. [NUI](https://docs.tizen.org/application/dotnet/guides/user-interface/nui/overview/) is the name of Tizen UI framework which is written in C#. ThorVG is the backend engine of the [NUI Vector Graphics](https://docs.tizen.org/application/dotnet/guides/user-interface/nui/vectorgraphics/Overview/), that is used for vector primitive drawings and scalable image contents such as SVG and Lottie Animation among the Tizen applications.
+ThorVG has been integrated into the [Tizen](https://www.tizen.org) platform as the vector graphics engine. [NUI](https://docs.tizen.org/application/dotnet/guides/user-interface/nui/overview/) is the name of Tizen UI framework which is written in C#. ThorVG is the backend engine of the [NUI Vector Graphics](https://docs.tizen.org/application/dotnet/guides/user-interface/nui/vectorgraphics/Overview/) which is used for vector primitive drawings and scalable image contents such as SVG and Lottie Animation among the Tizen applications.
 
 <p align="center">
   <img width="798" height="285" src="https://github.com/Samsung/thorvg/blob/master/res/example_tizen.png">
