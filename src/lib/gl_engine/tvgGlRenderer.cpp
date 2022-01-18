@@ -330,7 +330,7 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, uint32_t primit
     auto size = sdata.geometry->getPrimitiveSize(primitiveIndex);
     auto matrix = sdata.geometry->getTransforMatrix();
 
-    switch (fill->id()) {
+    switch (fill->identifier()) {
         case TVG_CLASS_ID_LINEAR: {
             float x1, y1, x2, y2;
             GlLinearGradientRenderTask *renderTask = static_cast<GlLinearGradientRenderTask*>(mRenderTasks[GlRenderTask::RenderTypes::RT_LinGradient].get());
