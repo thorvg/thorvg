@@ -1093,7 +1093,7 @@ static void _handleCssClassAttr(SvgLoaderData* loader, SvgNode* node, const char
         _copyCssStyleAttr(node, cssNode);
     }
 
-    if (!cssClassFound) _postponeCloneNode(&loader->cloneCssStyleNodes, node, *cssClass);
+    if (!cssClassFound) _postponeCloneNode(&loader->nodesToStyle, node, *cssClass);
 }
 
 
@@ -3022,10 +3022,10 @@ static void _updateCssStyle(SvgNode* doc, SvgNode* cssStyle)
 }
 
 
-static void _clonePostponedCssStyleNodes(Array<SvgNodeIdPair>* cloneCssStyleNodes, SvgNode* cssStyle)
+static void _stylePostponedNodes(Array<SvgNodeIdPair>* nodesToStyle, SvgNode* cssStyle)
 {
-    for (uint32_t i = 0; i < cloneCssStyleNodes->count; ++i) {
-        auto nodeIdPair = cloneCssStyleNodes->data[i];
+    for (uint32_t i = 0; i < nodesToStyle->count; ++i) {
+        auto nodeIdPair = nodesToStyle->data[i];
 
         //css styling: tag.name has higher priority than .name
         if (auto cssNode = _findCssStyleNode(cssStyle, nodeIdPair.id, nodeIdPair.node->type)) {
@@ -3214,7 +3214,7 @@ void SvgLoader::run(unsigned tid)
         if (loaderData.gradients.count > 0) _updateGradient(loaderData.doc, &loaderData.gradients);
         if (defs) _updateGradient(loaderData.doc, &defs->node.defs.gradients);
 
-        if (loaderData.cloneCssStyleNodes.count > 0) _clonePostponedCssStyleNodes(&loaderData.cloneCssStyleNodes, loaderData.cssStyle);
+        if (loaderData.nodesToStyle.count > 0) _stylePostponedNodes(&loaderData.nodesToStyle, loaderData.cssStyle);
         //TODO: defs should be updated as well?
         if (loaderData.cssStyle) _updateCssStyle(loaderData.doc, loaderData.cssStyle);
     }

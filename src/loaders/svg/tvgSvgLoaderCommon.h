@@ -413,7 +413,7 @@ struct SvgLoaderData
     SvgStyleGradient* latestGradient = nullptr; //For stops
     SvgParser* svgParse = nullptr;
     Array<SvgNodeIdPair> cloneNodes;
-    Array<SvgNodeIdPair> cloneCssStyleNodes;
+    Array<SvgNodeIdPair> nodesToStyle;
     int level = 0;
     bool result = false;
     bool style = false; //TODO: find a better sollution?
