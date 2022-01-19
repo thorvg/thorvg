@@ -2102,15 +2102,17 @@ static void _copyAttr(SvgNode* to, const SvgNode* from)
             break;
         }
         case SvgNodeType::Polygon: {
-            to->node.polygon.pointsCount = from->node.polygon.pointsCount;
-            to->node.polygon.points = (float*)malloc(to->node.polygon.pointsCount * sizeof(float));
-            memcpy(to->node.polygon.points, from->node.polygon.points, to->node.polygon.pointsCount * sizeof(float));
+            if ((to->node.polygon.pointsCount = from->node.polygon.pointsCount)) {
+                to->node.polygon.points = (float*)malloc(to->node.polygon.pointsCount * sizeof(float));
+                memcpy(to->node.polygon.points, from->node.polygon.points, to->node.polygon.pointsCount * sizeof(float));
+            }
             break;
         }
         case SvgNodeType::Polyline: {
-            to->node.polyline.pointsCount = from->node.polyline.pointsCount;
-            to->node.polyline.points = (float*)malloc(to->node.polyline.pointsCount * sizeof(float));
-            memcpy(to->node.polyline.points, from->node.polyline.points, to->node.polyline.pointsCount * sizeof(float));
+            if ((to->node.polyline.pointsCount = from->node.polyline.pointsCount)) {
+                to->node.polyline.points = (float*)malloc(to->node.polyline.pointsCount * sizeof(float));
+                memcpy(to->node.polyline.points, from->node.polyline.points, to->node.polyline.pointsCount * sizeof(float));
+            }
             break;
         }
         case SvgNodeType::Image: {
