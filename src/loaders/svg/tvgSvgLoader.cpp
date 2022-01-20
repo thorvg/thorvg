@@ -1916,8 +1916,15 @@ static void _copyAttr(SvgNode* to, const SvgNode* from)
 }
 
 
-static void _cloneNode(SvgNode* from, SvgNode* parent)
+static void _cloneNode(SvgNode* from, SvgNode* parent, int depth)
 {
+    /* Exception handling: Prevent invalid SVG data input.
+       The size is the arbitrary value, we need an experimental size. */
+    if (depth == 8192) {
+        TVGERR("SVG", "Infinite recursive call - stopped after %d calls! Svg file may be incorrectly formatted.", depth);
+        return;
+    }
+
     SvgNode* newNode;
     if (!from || !parent || from == parent) return;
 
@@ -1929,7 +1936,7 @@ static void _cloneNode(SvgNode* from, SvgNode* parent)
 
     auto child = from->child.data;
     for (uint32_t i = 0; i < from->child.count; ++i, ++child) {
-        _cloneNode(*child, newNode);
+        _cloneNode(*child, newNode, depth + 1);
     }
 }
 
@@ -1947,7 +1954,7 @@ static void _clonePostponedNodes(Array<SvgNodeIdPair>* cloneNodes, SvgNode* doc)
         auto defs = _getDefsNode(nodeIdPair.node);
         auto nodeFrom = _findChildById(defs, nodeIdPair.id);
         if (!nodeFrom) nodeFrom = _findChildById(doc, nodeIdPair.id);
-        _cloneNode(nodeFrom, nodeIdPair.node);
+        _cloneNode(nodeFrom, nodeIdPair.node, 0);
         free(nodeIdPair.id);
     }
 }
@@ -1988,7 +1995,7 @@ static bool _attrParseUseNode(void* data, const char* key, const char* value)
         defs = _getDefsNode(node);
         nodeFrom = _findChildById(defs, id);
         if (nodeFrom) {
-            _cloneNode(nodeFrom, node);
+            _cloneNode(nodeFrom, node, 0);
             free(id);
         } else {
             //some svg export software include <defs> element at the end of the file
