@@ -236,6 +236,14 @@ static SimpleXMLType _getXMLType(const char* itr, const char* itrEnd, size_t &to
 }
 
 
+static char* _strndup(const char* src, unsigned len)
+{
+    auto ret = (char*)malloc(len + 1);
+    if (!ret) return nullptr;
+    ret[len] = '\0';
+    return (char*)memcpy(ret, src, len);
+}
+
 /************************************************************************/
 /* External Class Implementation                                        */
 /************************************************************************/
@@ -547,10 +555,10 @@ const char* simpleXmlParseCSSAttribute(const char* buf, unsigned bufLength, char
     }
 
     if (p == itr) *tag = strdup("all");
-    else *tag = strndup(itr, p - itr);
+    else *tag = _strndup(itr, p - itr);
 
     if (p == itrEnd) *name = nullptr;
-    else *name = strndup(p + 1, itrEnd - p - 1);
+    else *name = _strndup(p + 1, itrEnd - p - 1);
 
     return (nextElement ? nextElement + 1 : nullptr);
 }
