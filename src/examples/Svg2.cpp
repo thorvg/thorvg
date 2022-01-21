@@ -147,7 +147,7 @@ int main(int argc, char **argv)
         elm_shutdown();
 
         //Terminate ThorVG Engine
-        tvg::Initializer::term(tvg::CanvasEngine::Sw);
+        tvg::Initializer::term(tvgEngine);
 
     } else {
         cout << "engine is not supported" << endl;

@@ -77,7 +77,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     if (canvas->push(move(shape1)) != tvg::Result::Success) return;
 
-    // radial gradient stroke + duplicate 
+    // radial gradient stroke + duplicate
     auto shape2 = tvg::Shape::gen();
     shape2->appendCircle(600, 175, 100, 60);
     shape2->stroke(80);

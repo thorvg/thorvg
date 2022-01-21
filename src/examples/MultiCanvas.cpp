@@ -178,7 +178,7 @@ void tvgGlTest(const char* name, const char* path, void* data)
     objData->name = strdup(name);
     objData->path = strdup(path);
 
-    Eo* win = (Eo*) data;   
+    Eo* win = (Eo*) data;
 
     Eo* view = elm_glview_add(win);
     elm_glview_mode_set(view, ELM_GLVIEW_ALPHA);
@@ -189,7 +189,7 @@ void tvgGlTest(const char* name, const char* path, void* data)
     evas_object_data_set(view, "objdata", reinterpret_cast<void*>(objData));
     evas_object_event_callback_add(view, EVAS_CALLBACK_DEL, gl_del, objData);
     evas_object_resize(view, SIZE, SIZE);
-    evas_object_move(view, (count % NUM_PER_LINE) * SIZE, SIZE * (count / NUM_PER_LINE)); 
+    evas_object_move(view, (count % NUM_PER_LINE) * SIZE, SIZE * (count / NUM_PER_LINE));
     evas_object_show(view);
 }
 
@@ -238,7 +238,7 @@ int main(int argc, char **argv)
         elm_shutdown();
 
         //Terminate ThorVG Engine
-        tvg::Initializer::term(tvg::CanvasEngine::Sw);
+        tvg::Initializer::term(tvgEngine);
 
     } else {
         cout << "engine is not supported" << endl;
