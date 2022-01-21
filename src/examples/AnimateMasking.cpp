@@ -103,7 +103,7 @@ void tvgUpdateCmds(tvg::Canvas* canvas, float progress)
        You can update only necessary properties of this shape,
        while retaining other properties. */
 
-    // Translate mask object with its stroke & update 
+    // Translate mask object with its stroke & update
     pMaskShape->translate(0 , progress * 300);
     pMask->translate(0 , progress * 300);
 

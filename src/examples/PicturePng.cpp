@@ -31,7 +31,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 {
     if (!canvas) return;
 
-    //Background                            
+    //Background
     auto bg = tvg::Shape::gen();
     bg->appendRect(0, 0, WIDTH, HEIGHT, 0, 0);    //x, y, w, h, rx, ry
     bg->fill(255, 255, 255, 255);                 //r, g, b, a
@@ -175,7 +175,7 @@ int main(int argc, char **argv)
         elm_shutdown();
 
         //Terminate ThorVG Engine
-        tvg::Initializer::term(tvg::CanvasEngine::Sw);
+        tvg::Initializer::term(tvgEngine);
 
 
     } else {
