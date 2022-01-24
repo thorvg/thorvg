@@ -1,7 +1,7 @@
 project('thorvg',
         'cpp',
-        default_options : ['buildtype=debugoptimized', 'b_sanitize=none', 'werror=false', 'optimization=s', 'cpp_std=c++14'],
-        version : '0.7.99',
+        default_options : ['buildtype=minsize', 'b_sanitize=none', 'werror=false', 'optimization=s', 'cpp_std=c++14'],
+        version : '0.7.1',
         license : 'MIT')
 
 config_h = configuration_data()
