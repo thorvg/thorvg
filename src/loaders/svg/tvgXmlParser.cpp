@@ -476,8 +476,7 @@ bool simpleXmlParseW3CAttribute(const char* buf, unsigned buflen, simpleXMLAttri
     do {
         char* sep = (char*)strchr(buf, ':');
         next = (char*)strchr(buf, ';');
-        if (sep >= end)
-        {
+        if (sep >= end) {
             next = nullptr;
             sep = nullptr;
         }
