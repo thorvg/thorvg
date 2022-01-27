@@ -2725,7 +2725,6 @@ static void _svgLoaderParserXmlOpen(SvgLoaderData* loader, const char* content, 
     GradientFactoryMethod gradientMethod;
     SvgNode *node = nullptr, *parent = nullptr;
     loader->level++;
-    loader->style = false;
     attrs = simpleXmlFindAttributesTag(content, length);
 
     if (!attrs) {
@@ -2835,6 +2834,7 @@ static void _svgLoaderParserXmlCssStyle(SvgLoaderData* loader, const char* conte
         free(tag);
         free(name);
     }
+    loader->style = false;
 }
 
 
