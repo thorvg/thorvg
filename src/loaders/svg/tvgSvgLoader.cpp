@@ -60,6 +60,7 @@
 #include "tvgSvgLoader.h"
 #include "tvgSvgSceneBuilder.h"
 #include "tvgSvgUtil.h"
+#include "tvgSvgCssStyle.h"
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
@@ -949,130 +950,6 @@ static void _handleDisplayAttr(TVG_UNUSED SvgLoaderData* loader, SvgNode* node, 
 }
 
 
-static SvgNode* _findCssStyleNode(const SvgNode* cssStyle, const char* title, SvgNodeType type)
-{
-    if (!cssStyle) return nullptr;
-
-    auto child = cssStyle->child.data;
-    for (uint32_t i = 0; i < cssStyle->child.count; ++i, ++child) {
-        if ((*child)->type == type) {
-            if ((!title && !(*child)->id) || (title && (*child)->id && !strcmp((*child)->id, title))) return (*child);
-        }
-    }
-    return nullptr;
-}
-
-
-static SvgNode* _findCssStyleNode(const SvgNode* cssStyle, const char* title)
-{
-    if (!cssStyle) return nullptr;
-
-    auto child = cssStyle->child.data;
-    for (uint32_t i = 0; i < cssStyle->child.count; ++i, ++child) {
-        if ((*child)->type == SvgNodeType::CssStyle) {
-            if ((title && (*child)->id && !strcmp((*child)->id, title))) return (*child);
-        }
-    }
-    return nullptr;
-}
-
-
-static void _cssStyleCopy(SvgStyleProperty* to, const SvgStyleProperty* from)
-{
-    if (from == nullptr) return;
-    //Copy the properties of 'from' only if they were explicitly set (not the default ones).
-    if (from->curColorSet && !((int)to->flags & (int)SvgStyleFlags::Color)) {
-        to->color = from->color;
-        to->curColorSet = true;
-        to->flags = (SvgStyleFlags)((int)to->flags | (int)SvgStyleFlags::Color);
-    }
-    //Fill
-    if (((int)from->fill.flags & (int)SvgFillFlags::Paint) && !((int)to->flags & (int)SvgStyleFlags::Fill)) {
-        to->fill.paint.color = from->fill.paint.color;
-        to->fill.paint.none = from->fill.paint.none;
-        to->fill.paint.curColor = from->fill.paint.curColor;
-        if (from->fill.paint.url) to->fill.paint.url = _copyId(from->fill.paint.url);
-        to->fill.flags = (SvgFillFlags)((int)to->fill.flags | (int)SvgFillFlags::Paint);
-        to->flags = (SvgStyleFlags)((int)to->flags | (int)SvgStyleFlags::Fill);
-    }
-    if (((int)from->fill.flags & (int)SvgFillFlags::Opacity) && !((int)to->flags & (int)SvgStyleFlags::FillOpacity)) {
-        to->fill.opacity = from->fill.opacity;
-        to->fill.flags = (SvgFillFlags)((int)to->fill.flags | (int)SvgFillFlags::Opacity);
-        to->flags = (SvgStyleFlags)((int)to->flags | (int)SvgStyleFlags::FillOpacity);
-    }
-    if (((int)from->fill.flags & (int)SvgFillFlags::FillRule) && !((int)to->flags & (int)SvgStyleFlags::FillRule)) {
-        to->fill.fillRule = from->fill.fillRule;
-        to->fill.flags = (SvgFillFlags)((int)to->fill.flags | (int)SvgFillFlags::FillRule);
-        to->flags = (SvgStyleFlags)((int)to->flags | (int)SvgStyleFlags::FillRule);
-    }
-    //Stroke
-    if (((int)from->stroke.flags & (int)SvgStrokeFlags::Paint) && !((int)to->flags & (int)SvgStyleFlags::Stroke)) {
-        to->stroke.paint.color = from->stroke.paint.color;
-        to->stroke.paint.none = from->stroke.paint.none;
-        to->stroke.paint.curColor = from->stroke.paint.curColor;
-        to->stroke.paint.url = from->stroke.paint.url ? _copyId(from->stroke.paint.url) : nullptr;
-        to->stroke.flags = (SvgStrokeFlags)((int)to->stroke.flags | (int)SvgStrokeFlags::Paint);
-        to->flags = (SvgStyleFlags)((int)to->flags | (int)SvgStyleFlags::Stroke);
-    }
-    if (((int)from->stroke.flags & (int)SvgStrokeFlags::Opacity) && !((int)to->flags & (int)SvgStyleFlags::StrokeOpacity)) {
-        to->stroke.opacity = from->stroke.opacity;
-        to->stroke.flags = (SvgStrokeFlags)((int)to->stroke.flags | (int)SvgStrokeFlags::Opacity);
-        to->flags = (SvgStyleFlags)((int)to->flags | (int)SvgStyleFlags::StrokeOpacity);
-    }
-    if (((int)from->stroke.flags & (int)SvgStrokeFlags::Width) && !((int)to->flags & (int)SvgStyleFlags::StrokeWidth)) {
-        to->stroke.width = from->stroke.width;
-        to->stroke.flags = (SvgStrokeFlags)((int)to->stroke.flags | (int)SvgStrokeFlags::Width);
-        to->flags = (SvgStyleFlags)((int)to->flags | (int)SvgStyleFlags::StrokeWidth);
-    }
-    if (((int)from->stroke.flags & (int)SvgStrokeFlags::Dash) && !((int)to->flags & (int)SvgStyleFlags::StrokeDashArray)) {
-        if (from->stroke.dash.array.count > 0) {
-            to->stroke.dash.array.clear();
-            to->stroke.dash.array.reserve(from->stroke.dash.array.count);
-            for (uint32_t i = 0; i < from->stroke.dash.array.count; ++i) {
-                to->stroke.dash.array.push(from->stroke.dash.array.data[i]);
-            }
-            to->stroke.flags = (SvgStrokeFlags)((int)to->stroke.flags | (int)SvgStrokeFlags::Dash);
-            to->flags = (SvgStyleFlags)((int)to->flags | (int)SvgStyleFlags::StrokeDashArray);
-        }
-    }
-    if (((int)from->stroke.flags & (int)SvgStrokeFlags::Cap) && !((int)to->flags & (int)SvgStyleFlags::StrokeLineCap)) {
-        to->stroke.cap = from->stroke.cap;
-        to->stroke.flags = (SvgStrokeFlags)((int)to->stroke.flags | (int)SvgStrokeFlags::Cap);
-        to->flags = (SvgStyleFlags)((int)to->flags | (int)SvgStyleFlags::StrokeLineCap);
-    }
-    if (((int)from->stroke.flags & (int)SvgStrokeFlags::Join) && !((int)to->flags & (int)SvgStyleFlags::StrokeLineJoin)) {
-        to->stroke.join = from->stroke.join;
-        to->stroke.flags = (SvgStrokeFlags)((int)to->stroke.flags | (int)SvgStrokeFlags::Join);
-        to->flags = (SvgStyleFlags)((int)to->flags | (int)SvgStyleFlags::StrokeLineJoin);
-    }
-    //Opacity
-    //TODO: it can be set to be 255 and shouldn't be changed by attribute 'opacity'
-    if (from->opacity < 255 && !((int)to->flags & (int)SvgStyleFlags::Opacity)) {
-        to->opacity = from->opacity;
-        to->flags = (SvgStyleFlags)((int)to->flags | (int)SvgStyleFlags::Opacity);
-    }
-    //TODO: support clip-path, mask, mask-type, display
-}
-
-
-static void _copyCssStyleAttr(SvgNode* to, const SvgNode* from)
-{
-    //Copy matrix attribute
-    if (from->transform && !((int)to->style->flags & (int)SvgStyleFlags::Transform)) {
-        to->transform = (Matrix*)malloc(sizeof(Matrix));
-        if (to->transform) {
-            *to->transform = *from->transform;
-            to->style->flags = (SvgStyleFlags)((int)to->style->flags | (int)SvgStyleFlags::Transform);
-        }
-    }
-    //Copy style attribute
-    _cssStyleCopy(to->style, from->style);
-    //TODO: clips and masks are not supported yet in css style
-    if (from->style->clipPath.url) to->style->clipPath.url = strdup(from->style->clipPath.url);
-    if (from->style->mask.url) to->style->mask.url = strdup(from->style->mask.url);
-}
-
-
 static void _handleCssClassAttr(SvgLoaderData* loader, SvgNode* node, const char* value)
 {
     auto cssClass = &node->style->cssClass;
@@ -1083,13 +960,13 @@ static void _handleCssClassAttr(SvgLoaderData* loader, SvgNode* node, const char
     bool cssClassFound = false;
 
     //css styling: tag.name has higher priority than .name
-    if (auto cssNode = _findCssStyleNode(loader->cssStyle, *cssClass, node->type)) {
+    if (auto cssNode = findCssStyleNode(loader->cssStyle, *cssClass, node->type)) {
         cssClassFound = true;
-        _copyCssStyleAttr(node, cssNode);
+        copyCssStyleAttr(node, cssNode);
     }
-    if (auto cssNode = _findCssStyleNode(loader->cssStyle, *cssClass)) {
+    if (auto cssNode = findCssStyleNode(loader->cssStyle, *cssClass)) {
         cssClassFound = true;
-        _copyCssStyleAttr(node, cssNode);
+        copyCssStyleAttr(node, cssNode);
     }
 
     if (!cssClassFound) _postponeCloneNode(&loader->nodesToStyle, node, *cssClass);
@@ -3001,39 +2878,6 @@ static void _updateComposite(SvgNode* node, SvgNode* root)
 }
 
 
-static void _updateCssStyle(SvgNode* doc, SvgNode* cssStyle)
-{
-    if (doc->child.count > 0) {
-        auto child = doc->child.data;
-        for (uint32_t i = 0; i < doc->child.count; ++i, ++child) {
-            if (auto cssNode = _findCssStyleNode(cssStyle, nullptr, (*child)->type)) {
-                _copyCssStyleAttr(*child, cssNode);
-            }
-            if (auto cssNode = _findCssStyleNode(cssStyle, nullptr)) {
-                _copyCssStyleAttr(*child, cssNode);
-            }
-            _updateCssStyle(*child, cssStyle);
-        }
-    }
-}
-
-
-static void _stylePostponedNodes(Array<SvgNodeIdPair>* nodesToStyle, SvgNode* cssStyle)
-{
-    for (uint32_t i = 0; i < nodesToStyle->count; ++i) {
-        auto nodeIdPair = nodesToStyle->data[i];
-
-        //css styling: tag.name has higher priority than .name
-        if (auto cssNode = _findCssStyleNode(cssStyle, nodeIdPair.id, nodeIdPair.node->type)) {
-            _copyCssStyleAttr(nodeIdPair.node, cssNode);
-        }
-        if (auto cssNode = _findCssStyleNode(cssStyle, nodeIdPair.id)) {
-            _copyCssStyleAttr(nodeIdPair.node, cssNode);
-        }
-    }
-}
-
-
 static void _freeNodeStyle(SvgStyleProperty* style)
 {
     if (!style) return;
@@ -3210,8 +3054,8 @@ void SvgLoader::run(unsigned tid)
         if (loaderData.gradients.count > 0) _updateGradient(loaderData.doc, &loaderData.gradients);
         if (defs) _updateGradient(loaderData.doc, &defs->node.defs.gradients);
 
-        if (loaderData.nodesToStyle.count > 0) _stylePostponedNodes(&loaderData.nodesToStyle, loaderData.cssStyle);
-        if (loaderData.cssStyle) _updateCssStyle(loaderData.doc, loaderData.cssStyle);
+        if (loaderData.nodesToStyle.count > 0) stylePostponedNodes(&loaderData.nodesToStyle, loaderData.cssStyle);
+        if (loaderData.cssStyle) updateCssStyle(loaderData.doc, loaderData.cssStyle);
     }
     root = svgSceneBuild(loaderData.doc, vx, vy, vw, vh, w, h, preserveAspect, svgPath);
 }
