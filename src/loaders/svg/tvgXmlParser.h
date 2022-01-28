@@ -47,11 +47,11 @@ enum class SimpleXMLType
 typedef bool (*simpleXMLCb)(void* data, SimpleXMLType type, const char* content, unsigned int length);
 typedef bool (*simpleXMLAttributeCb)(void* data, const char* key, const char* value);
 
-bool simpleXmlParseAttributes(const char* buf, unsigned buflen, simpleXMLAttributeCb func, const void* data);
-bool simpleXmlParse(const char* buf, unsigned buflen, bool strip, simpleXMLCb func, const void* data);
-bool simpleXmlParseW3CAttribute(const char* buf, unsigned buflen, simpleXMLAttributeCb func, const void* data);
+bool simpleXmlParseAttributes(const char* buf, unsigned bufLength, simpleXMLAttributeCb func, const void* data);
+bool simpleXmlParse(const char* buf, unsigned bufLength, bool strip, simpleXMLCb func, const void* data);
+bool simpleXmlParseW3CAttribute(const char* buf, unsigned bufLength, simpleXMLAttributeCb func, const void* data);
 const char* simpleXmlParseCSSAttribute(const char* buf, unsigned bufLength, char** tag, char** name, const char** attrs, unsigned* attrsLength);
-const char* simpleXmlFindAttributesTag(const char* buf, unsigned buflen);
+const char* simpleXmlFindAttributesTag(const char* buf, unsigned bufLength);
 bool isIgnoreUnsupportedLogElements(const char* tagName);
 const char* simpleXmlNodeTypeToString(SvgNodeType type);
 
