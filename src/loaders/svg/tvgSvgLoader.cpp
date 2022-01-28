@@ -75,12 +75,12 @@
 #define PX_PER_MM 3.779528f //1 in = 25.4 mm -> PX_PER_IN/25.4
 #define PX_PER_CM 37.79528f //1 in = 2.54 cm -> PX_PER_IN/2.54
 
-
-typedef bool (*parseAttributes)(const char*, unsigned, simpleXMLAttributeCb, const void*);
+typedef bool (*parseAttributes)(const char* buf, unsigned bufLength, simpleXMLAttributeCb func, const void* data);
 typedef SvgNode* (*FactoryMethod)(SvgLoaderData* loader, SvgNode* parent, const char* buf, unsigned bufLength, parseAttributes func);
 typedef SvgStyleGradient* (*GradientFactoryMethod)(SvgLoaderData* loader, const char* buf, unsigned bufLength);
 
 static void _postponeCloneNode(Array<SvgNodeIdPair>* nodes, SvgNode *node, char* id);
+
 
 static char* _skipSpace(const char* str, const char* end)
 {
@@ -1055,7 +1055,6 @@ static void _cssStyleCopy(SvgStyleProperty* to, const SvgStyleProperty* from)
 }
 
 
-//TODO: check SVG2 standard - should the geometric properties be copied?
 static void _copyCssStyleAttr(SvgNode* to, const SvgNode* from)
 {
     //Copy matrix attribute
@@ -2812,20 +2811,17 @@ static void _svgLoaderParserXmlCssStyle(SvgLoaderData* loader, const char* conte
 
     while (auto next = simpleXmlParseCSSAttribute(content, length, &tag, &name, &attrs, &attrsLength)) {
         if ((method = _findGroupFactory(tag))) {
-            //TODO - node->id ??? add additional var for svgnode?
-            if ((node = method(loader, loader->cssStyle, attrs, attrsLength, simpleXmlParseW3CAttribute))) node->id = _copyId(name);
+            TVGLOG("SVG", "Unsupported elements used in the internal CSS style sheets [Elements: %s]", tag);
         } else if ((method = _findGraphicsFactory(tag))) {
             if ((node = method(loader, loader->cssStyle, attrs, attrsLength, simpleXmlParseW3CAttribute))) node->id = _copyId(name);
-            //TODO - implement
         } else if ((gradientMethod = _findGradientFactory(tag))) {
-            //TODO - implement
-            //SvgStyleGradient* gradient = gradientMethod(loader, attrs, attrsLength);
+            TVGLOG("SVG", "Unsupported elements used in the internal CSS style sheets [Elements: %s]", tag);
         } else if (!strcmp(tag, "stop")) {
-            //TODO - implement
+            TVGLOG("SVG", "Unsupported elements used in the internal CSS style sheets [Elements: %s]", tag);
         } else if (!strcmp(tag, "all")) {
             if ((node = _createCssStyleNode(loader, loader->cssStyle, attrs, attrsLength, simpleXmlParseW3CAttribute))) node->id = _copyId(name);
         } else if (!isIgnoreUnsupportedLogElements(tag)) {
-            TVGLOG("SVG", "Unsupported elements used [Elements: %s]", tag);
+            TVGLOG("SVG", "Unsupported elements used in the internal CSS style sheets [Elements: %s]", tag);
         }
 
         length -= next - content;
@@ -3215,7 +3211,6 @@ void SvgLoader::run(unsigned tid)
         if (defs) _updateGradient(loaderData.doc, &defs->node.defs.gradients);
 
         if (loaderData.nodesToStyle.count > 0) _stylePostponedNodes(&loaderData.nodesToStyle, loaderData.cssStyle);
-        //TODO: defs should be updated as well?
         if (loaderData.cssStyle) _updateCssStyle(loaderData.doc, loaderData.cssStyle);
     }
     root = svgSceneBuild(loaderData.doc, vx, vy, vw, vh, w, h, preserveAspect, svgPath);

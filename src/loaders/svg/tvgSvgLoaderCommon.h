@@ -416,7 +416,7 @@ struct SvgLoaderData
     Array<SvgNodeIdPair> nodesToStyle;
     int level = 0;
     bool result = false;
-    bool style = false; //TODO: find a better sollution?
+    bool style = false;
 };
 
 /*
