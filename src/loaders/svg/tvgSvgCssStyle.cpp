@@ -101,7 +101,6 @@ static void _cssStyleCopy(SvgStyleProperty* to, const SvgStyleProperty* from)
         to->opacity = from->opacity;
         to->flags = (SvgStyleFlags)((int)to->flags | (int)SvgStyleFlags::Opacity);
     }
-    //TODO: support clip-path, mask, mask-type, display
 }
 
 
@@ -121,7 +120,7 @@ void copyCssStyleAttr(SvgNode* to, const SvgNode* from)
     }
     //Copy style attribute
     _cssStyleCopy(to->style, from->style);
-    //TODO: clips and masks are not supported yet in css style
+
     if (from->style->clipPath.url) to->style->clipPath.url = strdup(from->style->clipPath.url);
     if (from->style->mask.url) to->style->mask.url = strdup(from->style->mask.url);
 }
