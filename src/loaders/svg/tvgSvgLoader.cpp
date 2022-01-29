@@ -2690,7 +2690,7 @@ static void _svgLoaderParserXmlCssStyle(SvgLoaderData* loader, const char* conte
 
     while (auto next = simpleXmlParseCSSAttribute(content, length, &tag, &name, &attrs, &attrsLength)) {
         if ((method = _findGroupFactory(tag))) {
-            TVGLOG("SVG", "Unsupported elements used in the internal CSS style sheets [Elements: %s]", tag);
+            if ((node = method(loader, loader->cssStyle, attrs, attrsLength, simpleXmlParseW3CAttribute))) node->id = _copyId(name);
         } else if ((method = _findGraphicsFactory(tag))) {
             if ((node = method(loader, loader->cssStyle, attrs, attrsLength, simpleXmlParseW3CAttribute))) node->id = _copyId(name);
         } else if ((gradientMethod = _findGradientFactory(tag))) {
@@ -3045,8 +3045,10 @@ void SvgLoader::run(unsigned tid)
     if (!simpleXmlParse(content, size, true, _svgLoaderParser, &(loaderData))) return;
 
     if (loaderData.doc) {
-        _updateStyle(loaderData.doc, nullptr);
         auto defs = loaderData.doc->node.doc.defs;
+
+        if (loaderData.nodesToStyle.count > 0) stylePostponedNodes(&loaderData.nodesToStyle, loaderData.cssStyle);
+        if (loaderData.cssStyle) updateCssStyle(loaderData.doc, loaderData.cssStyle);
 
         _updateComposite(loaderData.doc, loaderData.doc);
         if (defs) _updateComposite(loaderData.doc, defs);
@@ -3056,8 +3058,7 @@ void SvgLoader::run(unsigned tid)
         if (loaderData.gradients.count > 0) _updateGradient(loaderData.doc, &loaderData.gradients);
         if (defs) _updateGradient(loaderData.doc, &defs->node.defs.gradients);
 
-        if (loaderData.nodesToStyle.count > 0) stylePostponedNodes(&loaderData.nodesToStyle, loaderData.cssStyle);
-        if (loaderData.cssStyle) updateCssStyle(loaderData.doc, loaderData.cssStyle);
+        _updateStyle(loaderData.doc, nullptr);
     }
     root = svgSceneBuild(loaderData.doc, vx, vy, vw, vh, w, h, preserveAspect, svgPath);
 }
