@@ -2630,10 +2630,12 @@ static void _svgLoaderParserXmlOpen(SvgLoaderData* loader, const char* content, 
             if (!strcmp(tagName, "svg")) return; //Already loaded <svg>(SvgNodeType::Doc) tag
             if (loader->stack.count > 0) parent = loader->stack.data[loader->stack.count - 1];
             else parent = loader->doc;
-            node = method(loader, parent, attrs, attrsLength, simpleXmlParseAttributes);
             if (!strcmp(tagName, "style")) {
+                node = method(loader, nullptr, attrs, attrsLength, simpleXmlParseAttributes);
                 loader->cssStyle = node;
                 loader->style = true;
+            } else {
+                node = method(loader, parent, attrs, attrsLength, simpleXmlParseAttributes);
             }
         }
 
