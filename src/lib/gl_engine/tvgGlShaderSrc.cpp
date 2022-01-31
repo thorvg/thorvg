@@ -26,13 +26,13 @@
 #define TVG_COMPOSE_SHADER(shader) #shader
 
 const char* COLOR_VERT_SHADER = TVG_COMPOSE_SHADER(
-    attribute mediump vec4 aLocation;								\n
-    uniform highp mat4 uTransform;									\n
-    varying highp float vOpacity;									\n
-    void main()														\n
-    {																\n
+    attribute mediump vec4 aLocation;                               \n
+    uniform highp mat4 uTransform;                                  \n
+    varying highp float vOpacity;                                   \n
+    void main()                                                     \n
+    {                                                               \n
         gl_Position = uTransform * vec4(aLocation.xy, 0.0, 1.0);    \n
-        vOpacity = aLocation.z;										\n
+        vOpacity = aLocation.z;                                     \n
     });
 
 const char* COLOR_FRAG_SHADER = TVG_COMPOSE_SHADER(
@@ -47,11 +47,11 @@ const char* GRADIENT_VERT_SHADER = TVG_COMPOSE_SHADER(
 attribute highp vec4 aLocation;                                                 \n
 varying highp float vOpacity;                                                   \n
 varying highp vec2 vPos;                                                        \n
-uniform highp mat4 uTransform;													\n
+uniform highp mat4 uTransform;                                                  \n
                                                                                 \n
 void main()                                                                     \n
 {                                                                               \n
-    gl_Position = uTransform * vec4(aLocation.xy, 0.0, 1.0);					\n
+    gl_Position = uTransform * vec4(aLocation.xy, 0.0, 1.0);                    \n
     vOpacity = aLocation.z;                                                     \n
     vPos = vec2((aLocation.x + 1.0) / 2.0, ((-1.0 * aLocation.y) +1.0) / 2.0);  \n
 });
@@ -62,7 +62,7 @@ precision highp float;                                                          
 const int MAX_STOP_COUNT = 4;                                                                           \n
 uniform highp vec2 uSize;                                                                               \n
 uniform highp vec2 uCanvasSize;                                                                         \n
-uniform float nStops;                                                                                  \n
+uniform float nStops;                                                                                   \n
 uniform float noise_level;                                                                              \n
 uniform float stopPoints[MAX_STOP_COUNT];                                                               \n
 uniform vec4 stopColors[MAX_STOP_COUNT];                                                                \n
