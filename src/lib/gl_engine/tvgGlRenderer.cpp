@@ -147,8 +147,8 @@ bool GlRenderer::renderShape(RenderData data)
             const Fill* gradient = sdata->shape->fill();
             if (gradient != nullptr)
             {
-		drawPrimitive(*sdata, gradient, i, RenderUpdateFlag::Gradient);
-	    }
+                drawPrimitive(*sdata, gradient, i, RenderUpdateFlag::Gradient);
+            }
         }
 
         if(flags & (RenderUpdateFlag::Color | RenderUpdateFlag::Transform))

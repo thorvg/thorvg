@@ -6,7 +6,7 @@ source_file = [
 jpg_dep = dependency('libturbojpeg', required: false)
 
 if not jpg_dep.found()
-	jpg_dep = cc.find_library('turbojpeg', required: false)
+    jpg_dep = cc.find_library('turbojpeg', required: false)
 endif
 
 if jpg_dep.found()

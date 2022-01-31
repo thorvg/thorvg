@@ -28,38 +28,38 @@ if host_machine.system() != 'windows'
 endif
 
 thorvg_lib = library(
-	'thorvg',
-	include_directories    : headers,
-	version                : meson.project_version(),
-	dependencies           : thorvg_lib_dep,
-	install                : true,
-	cpp_args               : compiler_flags,
-	gnu_symbol_visibility  : 'hidden',
+    'thorvg',
+    include_directories    : headers,
+    version                : meson.project_version(),
+    dependencies           : thorvg_lib_dep,
+    install                : true,
+    cpp_args               : compiler_flags,
+    gnu_symbol_visibility  : 'hidden',
 )
 
 thorvg_dep = declare_dependency(
-	include_directories: headers,
-	link_with : thorvg_lib
+    include_directories: headers,
+    link_with : thorvg_lib
 )
 
 if (cc.get_id() == 'emscripten')
-  subdir('wasm')
+    subdir('wasm')
 
-  executable('thorvg-wasm',
-             [],
-             include_directories : headers,
-             dependencies : [thorvg_lib_dep, thorvg_wasm_dep],
-            )
+    executable('thorvg-wasm',
+        [],
+        include_directories : headers,
+        dependencies : [thorvg_lib_dep, thorvg_wasm_dep],
+        )
 endif
 
 pkg_mod = import('pkgconfig')
 
 pkg_mod.generate(
-	libraries    : thorvg_lib,
-	version      : meson.project_version(),
-	name         : 'libthorvg',
-	filebase     : 'thorvg',
-	description  : 'A Thor library for rendering vector graphics'
+    libraries    : thorvg_lib,
+    version      : meson.project_version(),
+    name         : 'libthorvg',
+    filebase     : 'thorvg',
+    description  : 'A Thor library for rendering vector graphics'
 )
 
 subdir('bin')
