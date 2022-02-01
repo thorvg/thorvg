@@ -61,6 +61,7 @@
 #include "tvgSvgSceneBuilder.h"
 #include "tvgSvgUtil.h"
 #include "tvgSvgCssStyle.h"
+#include "tvgMath.h"
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
@@ -801,13 +802,11 @@ static bool _attrParseSvgNode(void* data, const char* key, const char* value)
         if (!strcmp(value, "none")) doc->preserveAspect = false;
     } else if (!strcmp(key, "style")) {
         return simpleXmlParseW3CAttribute(value, strlen(value), _parseStyleAttr, loader);
-    }
 #ifdef THORVG_LOG_ENABLED
-    else if ((!strcmp(key, "x") || !strcmp(key, "y")) && fabsf(svgUtilStrtof(value, nullptr)) > FLT_EPSILON) {
+    } else if ((!strcmp(key, "x") || !strcmp(key, "y")) && fabsf(svgUtilStrtof(value, nullptr)) > FLT_EPSILON) {
         TVGLOG("SVG", "Unsupported attributes used [Elements type: Svg][Attribute: %s][Value: %s]", key, value);
-    }
 #endif
-    else {
+    } else {
         return _parseStyleAttr(loader, key, value, false);
     }
     return true;
@@ -1137,6 +1136,36 @@ static bool _attrParseCssStyleNode(void* data, const char* key, const char* valu
 }
 
 
+static bool _attrParseSymbolNode(void* data, const char* key, const char* value)
+{
+    SvgLoaderData* loader = (SvgLoaderData*)data;
+    SvgNode* node = loader->svgParse->node;
+    SvgSymbolNode* symbol = &(node->node.symbol);
+
+    if (!strcmp(key, "viewBox")) {
+        if (_parseNumber(&value, &symbol->vx)) {
+            if (_parseNumber(&value, &symbol->vy)) {
+                if (_parseNumber(&value, &symbol->vw)) {
+                    _parseNumber(&value, &symbol->vh);
+                }
+            }
+        }
+    } else if (!strcmp(key, "width")) {
+        symbol->w = _toFloat(loader->svgParse, value, SvgParserLengthType::Horizontal);
+    } else if (!strcmp(key, "height")) {
+        symbol->h = _toFloat(loader->svgParse, value, SvgParserLengthType::Vertical);
+    } else if (!strcmp(key, "preserveAspectRatio")) {
+        if (!strcmp(value, "none")) symbol->preserveAspect = false;
+    } else if (!strcmp(key, "overflow")) {
+        if (!strcmp(value, "visible")) symbol->overflowVisible = true;
+    } else {
+        return _attrParseGNode(data, key, value);
+    }
+
+    return true;
+}
+
+
 static SvgNode* _createNode(SvgNode* parent, SvgNodeType type)
 {
     SvgNode* node = (SvgNode*)calloc(1, sizeof(SvgNode));
@@ -1268,6 +1297,21 @@ static SvgNode* _createCssStyleNode(SvgLoaderData* loader, SvgNode* parent, cons
     if (!loader->svgParse->node) return nullptr;
 
     func(buf, bufLength, _attrParseCssStyleNode, loader);
+
+    return loader->svgParse->node;
+}
+
+
+static SvgNode* _createSymbolNode(SvgLoaderData* loader, SvgNode* parent, const char* buf, unsigned bufLength, parseAttributes func)
+{
+    loader->svgParse->node = _createNode(parent, SvgNodeType::Symbol);
+    if (!loader->svgParse->node) return nullptr;
+
+    loader->svgParse->node->display = false;
+    loader->svgParse->node->node.symbol.preserveAspect = true;
+
+    func(buf, bufLength, _attrParseSymbolNode, loader);
+
     return loader->svgParse->node;
 }
 
@@ -2044,6 +2088,9 @@ static void _clonePostponedNodes(Array<SvgNodeIdPair>* cloneNodes, SvgNode* doc)
         auto nodeFrom = _findChildById(defs, nodeIdPair.id);
         if (!nodeFrom) nodeFrom = _findChildById(doc, nodeIdPair.id);
         _cloneNode(nodeFrom, nodeIdPair.node, 0);
+        if (nodeFrom && nodeFrom->type == SvgNodeType::Symbol && nodeIdPair.node->type == SvgNodeType::Use) {
+            nodeIdPair.node->node.use.symbol = nodeFrom;
+        }
         free(nodeIdPair.id);
     }
 }
@@ -2085,6 +2132,7 @@ static bool _attrParseUseNode(void* data, const char* key, const char* value)
         nodeFrom = _findChildById(defs, id);
         if (nodeFrom) {
             _cloneNode(nodeFrom, node, 0);
+            if (nodeFrom->type == SvgNodeType::Symbol) use->symbol = nodeFrom;
             free(id);
         } else {
             //some svg export software include <defs> element at the end of the file
@@ -2092,6 +2140,10 @@ static bool _attrParseUseNode(void* data, const char* key, const char* value)
             //after the whole file is parsed
             _postpone(loader->cloneNodes, node, id);
         }
+#ifdef THORVG_LOG_ENABLED
+    } else if ((!strcmp(key, "width") || !strcmp(key, "height")) && fabsf(svgUtilStrtof(value, nullptr)) > FLT_EPSILON) {
+        TVGLOG("SVG", "Unsupported attributes used [Elements type: Use][Attribute: %s][Value: %s]", key, value);
+#endif
     } else {
         return _attrParseGNode(data, key, value);
     }
@@ -2140,7 +2192,8 @@ static constexpr struct
     {"svg", sizeof("svg"), _createSvgNode},
     {"mask", sizeof("mask"), _createMaskNode},
     {"clipPath", sizeof("clipPath"), _createClipPathNode},
-    {"style", sizeof("style"), _createCssStyleNode}
+    {"style", sizeof("style"), _createCssStyleNode},
+    {"symbol", sizeof("symbol"), _createSymbolNode}
 };
 
 
@@ -2571,7 +2624,8 @@ static constexpr struct
     {"defs", sizeof("defs")},
     {"mask", sizeof("mask")},
     {"clipPath", sizeof("clipPath")},
-    {"style", sizeof("style")}
+    {"style", sizeof("style")},
+    {"symbol", sizeof("symbol")}
 };
 
 
@@ -2757,7 +2811,7 @@ static void _inefficientNodeCheck(TVG_UNUSED SvgNode* node)
 #ifdef THORVG_LOG_ENABLED
     auto type = simpleXmlNodeTypeToString(node->type);
 
-    if (!node->display && node->type != SvgNodeType::ClipPath) TVGLOG("SVG", "Inefficient elements used [Display is none][Node Type : %s]", type);
+    if (!node->display && node->type != SvgNodeType::ClipPath && node->type != SvgNodeType::Symbol) TVGLOG("SVG", "Inefficient elements used [Display is none][Node Type : %s]", type);
     if (node->style->opacity == 0) TVGLOG("SVG", "Inefficient elements used [Opacity is zero][Node Type : %s]", type);
     if (node->style->fill.opacity == 0 && node->style->stroke.opacity == 0) TVGLOG("SVG", "Inefficient elements used [Fill opacity and stroke opacity are zero][Node Type : %s]", type);
 
@@ -3051,10 +3105,10 @@ void SvgLoader::run(unsigned tid)
         if (loaderData.nodesToStyle.count > 0) cssApplyStyleToPostponeds(loaderData.nodesToStyle, loaderData.cssStyle);
         if (loaderData.cssStyle) cssUpdateStyle(loaderData.doc, loaderData.cssStyle);
 
+        if (loaderData.cloneNodes.count > 0) _clonePostponedNodes(&loaderData.cloneNodes, loaderData.doc);
+
         _updateComposite(loaderData.doc, loaderData.doc);
         if (defs) _updateComposite(loaderData.doc, defs);
-
-        if (loaderData.cloneNodes.count > 0) _clonePostponedNodes(&loaderData.cloneNodes, loaderData.doc);
 
         if (loaderData.gradients.count > 0) _updateGradient(loaderData.doc, &loaderData.gradients);
         if (defs) _updateGradient(loaderData.doc, &defs->node.defs.gradients);
