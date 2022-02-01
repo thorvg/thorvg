@@ -272,6 +272,7 @@ const char* simpleXmlNodeTypeToString(TVG_UNUSED SvgNodeType type)
         "Video",
         "ClipPath",
         "Mask",
+        "Symbol",
         "Unknown",
     };
     return TYPE_NAMES[(int) type];

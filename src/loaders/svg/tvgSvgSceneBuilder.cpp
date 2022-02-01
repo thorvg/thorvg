@@ -73,7 +73,7 @@ static unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, const Box& vBox,
 
 static inline bool _isGroupType(SvgNodeType type)
 {
-    if (type == SvgNodeType::Doc || type == SvgNodeType::G || type == SvgNodeType::Use || type == SvgNodeType::ClipPath) return true;
+    if (type == SvgNodeType::Doc || type == SvgNodeType::G || type == SvgNodeType::Use || type == SvgNodeType::ClipPath || type == SvgNodeType::Symbol) return true;
     return false;
 }
 
@@ -562,19 +562,72 @@ static unique_ptr<Picture> _imageBuildHelper(SvgNode* node, const Box& vBox, con
 
 static unique_ptr<Scene> _useBuildHelper(const SvgNode* node, const Box& vBox, const string& svgPath, bool* isMaskWhite)
 {
+    unique_ptr<Scene> finalScene;
     auto scene = _sceneBuildHelper(node, vBox, svgPath, false, isMaskWhite);
 
+    // mUseTransform = mUseTransform * mTranslate
+    Matrix mUseTransform = {1, 0, 0, 0, 1, 0, 0, 0, 1};
+    if (node->transform) mUseTransform = *node->transform;
     if (node->node.use.x != 0.0f || node->node.use.y != 0.0f) {
-        Matrix m = {1, 0, node->node.use.x, 0, 1, node->node.use.y, 0, 0, 1};
-        Matrix transform = scene->transform();
-        m = mathMultiply(&transform, &m);
-        scene->transform(m);
+        Matrix mTranslate = {1, 0, node->node.use.x, 0, 1, node->node.use.y, 0, 0, 1};
+        mUseTransform = mathMultiply(&mUseTransform, &mTranslate);
     }
+
+    if (node->node.use.symbol && !node->node.use.symbol->node.symbol.overflowVisible) {
+        auto symbol = node->node.use.symbol->node.symbol;
+
+        Matrix mViewBox = {1, 0, 0, 0, 1, 0, 0, 0, 1};
+        if ((!mathEqual(symbol.w, symbol.vw) || !mathEqual(symbol.h, symbol.vh)) && symbol.vw > 0 && symbol.vh > 0) {
+            auto sx = symbol.w / symbol.vw;
+            auto sy = symbol.h / symbol.vh;
+            if (symbol.preserveAspect) {
+                if (sx < sy) sy = sx;
+                else sx = sy;
+            }
+
+            auto tvx = symbol.vx * sx;
+            auto tvy = symbol.vy * sy;
+            auto tvw = symbol.vw * sx;
+            auto tvh = symbol.vh * sy;
+            if (tvw > tvh) tvy -= (symbol.h - tvh) * 0.5f;
+            else tvx -= (symbol.w - tvw) * 0.5f;
+
+            mViewBox = {sx, 0, -tvx, 0, sy, -tvy, 0, 0, 1};
+        } else if (!mathZero(symbol.vx) || !mathZero(symbol.vy)) {
+            mViewBox = {1, 0, -symbol.vx, 0, 1, -symbol.vy, 0, 0, 1};
+        }
+
+        // mSceneTransform = mUseTransform * mViewBox
+        Matrix mSceneTransform = mathMultiply(&mUseTransform, &mViewBox);
+        scene->transform(mSceneTransform);
+
+        auto viewBoxClip = Shape::gen();
+        viewBoxClip->appendRect(0, 0, symbol.w, symbol.h, 0, 0);
+        // mClipTransform = mUseTransform * mSymbolTransform
+        Matrix mClipTransform = mUseTransform;
+        if (node->node.use.symbol->transform) {
+            mClipTransform = mathMultiply(&mUseTransform, node->node.use.symbol->transform);
+        }
+        viewBoxClip->transform(mClipTransform);
+
+        auto compositeLayer = Scene::gen();
+        compositeLayer->composite(move(viewBoxClip), CompositeMethod::ClipPath);
+        compositeLayer->push(move(scene));
+
+        auto root = Scene::gen();
+        root->push(move(compositeLayer));
+
+        finalScene = move(root);
+    } else if (node->node.use.x != 0.0f || node->node.use.y != 0.0f) {
+        scene->transform(mUseTransform);
+        finalScene = move(scene);
+    }
+
     if (node->node.use.w > 0.0f && node->node.use.h > 0.0f) {
         //TODO: handle width/height properties
     }
 
-    return scene;
+    return finalScene;
 }
 
 

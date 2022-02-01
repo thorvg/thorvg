@@ -52,6 +52,7 @@ enum class SvgNodeType
     ClipPath,
     Mask,
     CssStyle,
+    Symbol,
     Unknown
 };
 
@@ -166,11 +167,19 @@ struct SvgDefsNode
     Array<SvgStyleGradient*> gradients;
 };
 
+struct SvgSymbolNode
+{
+    float w, h;
+    float vx, vy, vw, vh;
+    bool preserveAspect;
+    bool overflowVisible;
+};
+
 struct SvgUseNode
 {
     float x, y, w, h;
+    SvgNode* symbol;
 };
-
 
 struct SvgEllipseNode
 {
@@ -375,6 +384,7 @@ struct SvgNode
         SvgMaskNode mask;
         SvgClipNode clip;
         SvgCssStyleNode cssStyle;
+        SvgSymbolNode symbol;
     } node;
     bool display;
     ~SvgNode();
