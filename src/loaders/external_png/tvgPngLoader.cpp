@@ -93,7 +93,10 @@ bool PngLoader::read()
         png_image_free(image);
         return false;
     }
-    if (!png_image_finish_read(image, NULL, buffer, 0, NULL)) return false;
+    if (!png_image_finish_read(image, NULL, buffer, 0, NULL)) {
+        free(buffer);
+        return false;
+    }
     content = reinterpret_cast<uint32_t*>(buffer);
 
     _premultiply(reinterpret_cast<uint32_t*>(buffer), image->width, image->height);
