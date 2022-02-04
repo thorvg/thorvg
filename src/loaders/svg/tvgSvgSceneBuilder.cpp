@@ -540,7 +540,7 @@ static unique_ptr<Picture> _imageBuildHelper(SvgNode* node, const Box& vBox, con
         string imagePath = href;
         if (strncmp(href, "/", 1)) {
             auto last = svgPath.find_last_of("/");
-            imagePath = svgPath.substr(0, (last == string::npos ? 0 : last + 1 )) + imagePath;
+            imagePath = svgPath.substr(0, (last == string::npos ? 0 : last + 1)) + imagePath;
         }
         if (picture->load(imagePath) != Result::Success) return nullptr;
     }
@@ -561,12 +561,17 @@ static unique_ptr<Picture> _imageBuildHelper(SvgNode* node, const Box& vBox, con
 static unique_ptr<Scene> _useBuildHelper(const SvgNode* node, const Box& vBox, const string& svgPath, bool* isMaskWhite)
 {
     auto scene = _sceneBuildHelper(node, vBox, svgPath, false, isMaskWhite);
+
     if (node->node.use.x != 0.0f || node->node.use.y != 0.0f) {
-        scene->translate(node->node.use.x, node->node.use.y);
+        Matrix m = {1, 0, node->node.use.x, 0, 1, node->node.use.y, 0, 0, 1};
+        Matrix transform = scene->transform();
+        m = mathMultiply(&transform, &m);
+        scene->transform(m);
     }
     if (node->node.use.w > 0.0f && node->node.use.h > 0.0f) {
         //TODO: handle width/height properties
     }
+
     return scene;
 }
 
