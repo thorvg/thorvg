@@ -546,12 +546,14 @@ static unique_ptr<Picture> _imageBuildHelper(SvgNode* node, const Box& vBox, con
     }
 
     float w, h;
+    Matrix m = {1, 0, 0, 0, 1, 0, 0, 0, 1};
     if (picture->size(&w, &h) == Result::Success && w  > 0 && h > 0) {
         auto sx = node->node.image.w / w;
         auto sy = node->node.image.h / h;
-        Matrix m = {sx, 0, node->node.image.x, 0, sy, node->node.image.y, 0, 0, 1};
-        picture->transform(m);
+        m = {sx, 0, node->node.image.x, 0, sy, node->node.image.y, 0, 0, 1};
     }
+    if (node->transform) m = mathMultiply(node->transform, &m);
+    picture->transform(m);
 
     _applyComposition(picture.get(), node, vBox, svgPath);
     return picture;
