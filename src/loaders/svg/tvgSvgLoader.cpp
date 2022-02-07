@@ -1640,6 +1640,8 @@ static bool _attrParseImageNode(void* data, const char* key, const char* value)
         _handleClipPathAttr(loader, node, value);
     } else if (!strcmp(key, "mask")) {
         _handleMaskAttr(loader, node, value);
+    } else if (!strcmp(key, "transform")) {
+        node->transform = _parseTransformationMatrix(value);
     } else {
         return _parseStyleAttr(loader, key, value);
     }
