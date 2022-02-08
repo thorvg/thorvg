@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 - 2022 Samsung Electronics Co., Ltd. All rights reserved.
+ * Copyright (c) 2022 Samsung Electronics Co., Ltd. All rights reserved.
 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,14 +20,13 @@
  * SOFTWARE.
  */
 
-#include <cstring>
 #include "tvgSvgCssStyle.h"
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-static void _cssStyleCopy(SvgStyleProperty* to, const SvgStyleProperty* from)
+static void _copyStyle(SvgStyleProperty* to, const SvgStyleProperty* from)
 {
     if (from == nullptr) return;
     //Copy the properties of 'from' only if they were explicitly set (not the default ones).
@@ -108,7 +107,7 @@ static void _cssStyleCopy(SvgStyleProperty* to, const SvgStyleProperty* from)
 /* External Class Implementation                                        */
 /************************************************************************/
 
-void copyCssStyleAttr(SvgNode* to, const SvgNode* from)
+void cssCopyStyleAttr(SvgNode* to, const SvgNode* from)
 {
     //Copy matrix attribute
     if (from->transform && !((int)to->style->flags & (int)SvgStyleFlags::Transform)) {
@@ -119,19 +118,19 @@ void copyCssStyleAttr(SvgNode* to, const SvgNode* from)
         }
     }
     //Copy style attribute
-    _cssStyleCopy(to->style, from->style);
+    _copyStyle(to->style, from->style);
 
     if (from->style->clipPath.url) to->style->clipPath.url = strdup(from->style->clipPath.url);
     if (from->style->mask.url) to->style->mask.url = strdup(from->style->mask.url);
 }
 
 
-SvgNode* findCssStyleNode(const SvgNode* cssStyle, const char* title, SvgNodeType type)
+SvgNode* cssFindStyleNode(const SvgNode* style, const char* title, SvgNodeType type)
 {
-    if (!cssStyle) return nullptr;
+    if (!style) return nullptr;
 
-    auto child = cssStyle->child.data;
-    for (uint32_t i = 0; i < cssStyle->child.count; ++i, ++child) {
+    auto child = style->child.data;
+    for (uint32_t i = 0; i < style->child.count; ++i, ++child) {
         if ((*child)->type == type) {
             if ((!title && !(*child)->id) || (title && (*child)->id && !strcmp((*child)->id, title))) return (*child);
         }
@@ -140,12 +139,12 @@ SvgNode* findCssStyleNode(const SvgNode* cssStyle, const char* title, SvgNodeTyp
 }
 
 
-SvgNode* findCssStyleNode(const SvgNode* cssStyle, const char* title)
+SvgNode* cssFindStyleNode(const SvgNode* style, const char* title)
 {
-    if (!cssStyle) return nullptr;
+    if (!style) return nullptr;
 
-    auto child = cssStyle->child.data;
-    for (uint32_t i = 0; i < cssStyle->child.count; ++i, ++child) {
+    auto child = style->child.data;
+    for (uint32_t i = 0; i < style->child.count; ++i, ++child) {
         if ((*child)->type == SvgNodeType::CssStyle) {
             if ((title && (*child)->id && !strcmp((*child)->id, title))) return (*child);
         }
@@ -154,35 +153,34 @@ SvgNode* findCssStyleNode(const SvgNode* cssStyle, const char* title)
 }
 
 
-void updateCssStyle(SvgNode* doc, SvgNode* cssStyle)
+void cssUpdateStyle(SvgNode* doc, SvgNode* style)
 {
     if (doc->child.count > 0) {
         auto child = doc->child.data;
         for (uint32_t i = 0; i < doc->child.count; ++i, ++child) {
-            if (auto cssNode = findCssStyleNode(cssStyle, nullptr, (*child)->type)) {
-                copyCssStyleAttr(*child, cssNode);
+            if (auto cssNode = cssFindStyleNode(style, nullptr, (*child)->type)) {
+                cssCopyStyleAttr(*child, cssNode);
             }
-            if (auto cssNode = findCssStyleNode(cssStyle, nullptr)) {
-                copyCssStyleAttr(*child, cssNode);
+            if (auto cssNode = cssFindStyleNode(style, nullptr)) {
+                cssCopyStyleAttr(*child, cssNode);
             }
-            updateCssStyle(*child, cssStyle);
+            cssUpdateStyle(*child, style);
         }
     }
 }
 
 
-void stylePostponedNodes(Array<SvgNodeIdPair>* nodesToStyle, SvgNode* cssStyle)
+void cssApplyStyleToPostponeds(Array<SvgNodeIdPair>& postponeds, SvgNode* style)
 {
-    for (uint32_t i = 0; i < nodesToStyle->count; ++i) {
-        auto nodeIdPair = nodesToStyle->data[i];
+    for (uint32_t i = 0; i < postponeds.count; ++i) {
+        auto nodeIdPair = postponeds.data[i];
 
         //css styling: tag.name has higher priority than .name
-        if (auto cssNode = findCssStyleNode(cssStyle, nodeIdPair.id, nodeIdPair.node->type)) {
-            copyCssStyleAttr(nodeIdPair.node, cssNode);
+        if (auto cssNode = cssFindStyleNode(style, nodeIdPair.id, nodeIdPair.node->type)) {
+            cssCopyStyleAttr(nodeIdPair.node, cssNode);
         }
-        if (auto cssNode = findCssStyleNode(cssStyle, nodeIdPair.id)) {
-            copyCssStyleAttr(nodeIdPair.node, cssNode);
+        if (auto cssNode = cssFindStyleNode(style, nodeIdPair.id)) {
+            cssCopyStyleAttr(nodeIdPair.node, cssNode);
         }
     }
 }
-

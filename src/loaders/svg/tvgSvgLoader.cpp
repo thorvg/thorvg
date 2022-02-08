@@ -80,9 +80,6 @@ typedef bool (*parseAttributes)(const char* buf, unsigned bufLength, simpleXMLAt
 typedef SvgNode* (*FactoryMethod)(SvgLoaderData* loader, SvgNode* parent, const char* buf, unsigned bufLength, parseAttributes func);
 typedef SvgStyleGradient* (*GradientFactoryMethod)(SvgLoaderData* loader, const char* buf, unsigned bufLength);
 
-static void _postponeCloneNode(Array<SvgNodeIdPair>* nodes, SvgNode *node, char* id);
-
-
 static char* _skipSpace(const char* str, const char* end)
 {
     while (((end && str < end) || (!end && *str != '\0')) && isspace(*str)) {
@@ -737,6 +734,12 @@ error:
     }
 
 
+static void _postpone(Array<SvgNodeIdPair>& nodes, SvgNode *node, char* id)
+{
+    nodes.push({node, id});
+}
+
+
 /*
 // TODO - remove?
 static constexpr struct
@@ -960,16 +963,16 @@ static void _handleCssClassAttr(SvgLoaderData* loader, SvgNode* node, const char
     bool cssClassFound = false;
 
     //css styling: tag.name has higher priority than .name
-    if (auto cssNode = findCssStyleNode(loader->cssStyle, *cssClass, node->type)) {
+    if (auto cssNode = cssFindStyleNode(loader->cssStyle, *cssClass, node->type)) {
         cssClassFound = true;
-        copyCssStyleAttr(node, cssNode);
+        cssCopyStyleAttr(node, cssNode);
     }
-    if (auto cssNode = findCssStyleNode(loader->cssStyle, *cssClass)) {
+    if (auto cssNode = cssFindStyleNode(loader->cssStyle, *cssClass)) {
         cssClassFound = true;
-        copyCssStyleAttr(node, cssNode);
+        cssCopyStyleAttr(node, cssNode);
     }
 
-    if (!cssClassFound) _postponeCloneNode(&loader->nodesToStyle, node, *cssClass);
+    if (!cssClassFound) _postpone(loader->nodesToStyle, node, *cssClass);
 }
 
 
@@ -2031,12 +2034,6 @@ static void _cloneNode(SvgNode* from, SvgNode* parent, int depth)
 }
 
 
-static void _postponeCloneNode(Array<SvgNodeIdPair>* nodes, SvgNode *node, char* id)
-{
-    nodes->push({node, id});
-}
-
-
 static void _clonePostponedNodes(Array<SvgNodeIdPair>* cloneNodes, SvgNode* doc)
 {
     for (uint32_t i = 0; i < cloneNodes->count; ++i) {
@@ -2091,7 +2088,7 @@ static bool _attrParseUseNode(void* data, const char* key, const char* value)
             //some svg export software include <defs> element at the end of the file
             //if so the 'from' element won't be found now and we have to repeat finding
             //after the whole file is parsed
-            _postponeCloneNode(&loader->cloneNodes, node, id);
+            _postpone(loader->cloneNodes, node, id);
         }
     } else {
         return _attrParseGNode(data, key, value);
@@ -3047,8 +3044,8 @@ void SvgLoader::run(unsigned tid)
     if (loaderData.doc) {
         auto defs = loaderData.doc->node.doc.defs;
 
-        if (loaderData.nodesToStyle.count > 0) stylePostponedNodes(&loaderData.nodesToStyle, loaderData.cssStyle);
-        if (loaderData.cssStyle) updateCssStyle(loaderData.doc, loaderData.cssStyle);
+        if (loaderData.nodesToStyle.count > 0) cssApplyStyleToPostponeds(loaderData.nodesToStyle, loaderData.cssStyle);
+        if (loaderData.cssStyle) cssUpdateStyle(loaderData.doc, loaderData.cssStyle);
 
         _updateComposite(loaderData.doc, loaderData.doc);
         if (defs) _updateComposite(loaderData.doc, defs);

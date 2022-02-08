@@ -25,10 +25,10 @@
 
 #include "tvgSvgLoaderCommon.h"
 
-void copyCssStyleAttr(SvgNode* to, const SvgNode* from);
-SvgNode* findCssStyleNode(const SvgNode* cssStyle, const char* title, SvgNodeType type);
-SvgNode* findCssStyleNode(const SvgNode* cssStyle, const char* title);
-void updateCssStyle(SvgNode* doc, SvgNode* cssStyle);
-void stylePostponedNodes(Array<SvgNodeIdPair>* nodesToStyle, SvgNode* cssStyle);
+void cssCopyStyleAttr(SvgNode* to, const SvgNode* from);
+SvgNode* cssFindStyleNode(const SvgNode* style, const char* title, SvgNodeType type);
+SvgNode* cssFindStyleNode(const SvgNode* style, const char* title);
+void cssUpdateStyle(SvgNode* doc, SvgNode* style);
+void cssApplyStyleToPostponeds(Array<SvgNodeIdPair>& postponeds, SvgNode* style);
 
 #endif //_TVG_SVG_CSS_STYLE_H_
