@@ -2632,6 +2632,7 @@ static void _svgLoaderParserXmlOpen(SvgLoaderData* loader, const char* content, 
             if (!strcmp(tagName, "style")) {
                 node = method(loader, nullptr, attrs, attrsLength, simpleXmlParseAttributes);
                 loader->cssStyle = node;
+                loader->doc->node.doc.style = node;
                 loader->style = true;
             } else {
                 node = method(loader, parent, attrs, attrsLength, simpleXmlParseAttributes);
@@ -2931,6 +2932,7 @@ static void _freeNode(SvgNode* node)
          }
          case SvgNodeType::Doc: {
              _freeNode(node->node.doc.defs);
+             _freeNode(node->node.doc.style);
              break;
          }
          case SvgNodeType::Defs: {

@@ -153,6 +153,7 @@ struct SvgDocNode
     float vw;
     float vh;
     SvgNode* defs;
+    SvgNode* style;
     bool preserveAspect;
 };
 
@@ -405,7 +406,7 @@ struct SvgNodeIdPair
 
 struct SvgLoaderData
 {
-    Array<SvgNode *> stack = {nullptr, 0, 0};
+    Array<SvgNode*> stack = {nullptr, 0, 0};
     SvgNode* doc = nullptr;
     SvgNode* def = nullptr;
     SvgNode* cssStyle = nullptr;
