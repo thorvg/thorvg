@@ -2295,8 +2295,8 @@ static bool _attrParseRadialGradientNode(void* data, const char* key, const char
     } else if (!strcmp(key, "href") || !strcmp(key, "xlink:href")) {
         if (grad->ref && value) free(grad->ref);
         grad->ref = _idFromHref(value);
-    } else if (!strcmp(key, "gradientUnits") && !strcmp(value, "userSpaceOnUse")) {
-        grad->userSpace = true;
+    } else if (!strcmp(key, "gradientUnits")) {
+        if (!strcmp(value, "userSpaceOnUse")) grad->userSpace = true;
     } else if (!strcmp(key, "gradientTransform")) {
         grad->transform = _parseTransformationMatrix(value);
     } else {
@@ -2485,8 +2485,8 @@ static bool _attrParseLinearGradientNode(void* data, const char* key, const char
     } else if (!strcmp(key, "href") || !strcmp(key, "xlink:href")) {
         if (grad->ref && value) free(grad->ref);
         grad->ref = _idFromHref(value);
-    } else if (!strcmp(key, "gradientUnits") && !strcmp(value, "userSpaceOnUse")) {
-        grad->userSpace = true;
+    } else if (!strcmp(key, "gradientUnits")) {
+        if (!strcmp(value, "userSpaceOnUse")) grad->userSpace = true;
     } else if (!strcmp(key, "gradientTransform")) {
         grad->transform = _parseTransformationMatrix(value);
     } else {
