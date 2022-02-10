@@ -28,7 +28,7 @@ jobs:
         name: result
         path: build/src\thorvg*
 
-  unit_test:
+  build_loaders:
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v2
@@ -39,7 +39,7 @@ jobs:
 
     - name: Build
       run: |
-        meson --backend=ninja build -Dloaders="svg, tvg, png, jpg" -Dsavers="tvg" -Dbindings="capi" -Dtests=true
+        meson --backend=ninja build -Dloaders="svg, tvg, png, jpg" -Dsavers="tvg" -Dbindings="capi"
         where link
-        ninja -C build test
+        ninja -C build install
 
