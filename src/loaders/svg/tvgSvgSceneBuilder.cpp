@@ -573,7 +573,7 @@ static unique_ptr<Scene> _useBuildHelper(const SvgNode* node, const Box& vBox, c
         mUseTransform = mathMultiply(&mUseTransform, &mTranslate);
     }
 
-    if (node->node.use.symbol && !node->node.use.symbol->node.symbol.overflowVisible) {
+    if (node->node.use.symbol) {
         auto symbol = node->node.use.symbol->node.symbol;
 
         Matrix mViewBox = {1, 0, 0, 0, 1, 0, 0, 0, 1};
@@ -601,23 +601,27 @@ static unique_ptr<Scene> _useBuildHelper(const SvgNode* node, const Box& vBox, c
         Matrix mSceneTransform = mathMultiply(&mUseTransform, &mViewBox);
         scene->transform(mSceneTransform);
 
-        auto viewBoxClip = Shape::gen();
-        viewBoxClip->appendRect(0, 0, symbol.w, symbol.h, 0, 0);
-        // mClipTransform = mUseTransform * mSymbolTransform
-        Matrix mClipTransform = mUseTransform;
-        if (node->node.use.symbol->transform) {
-            mClipTransform = mathMultiply(&mUseTransform, node->node.use.symbol->transform);
+        if (node->node.use.symbol->node.symbol.overflowVisible) {
+            finalScene = move(scene);
+        } else {
+            auto viewBoxClip = Shape::gen();
+            viewBoxClip->appendRect(0, 0, symbol.w, symbol.h, 0, 0);
+            // mClipTransform = mUseTransform * mSymbolTransform
+            Matrix mClipTransform = mUseTransform;
+            if (node->node.use.symbol->transform) {
+                mClipTransform = mathMultiply(&mUseTransform, node->node.use.symbol->transform);
+            }
+            viewBoxClip->transform(mClipTransform);
+
+            auto compositeLayer = Scene::gen();
+            compositeLayer->composite(move(viewBoxClip), CompositeMethod::ClipPath);
+            compositeLayer->push(move(scene));
+
+            auto root = Scene::gen();
+            root->push(move(compositeLayer));
+
+            finalScene = move(root);
         }
-        viewBoxClip->transform(mClipTransform);
-
-        auto compositeLayer = Scene::gen();
-        compositeLayer->composite(move(viewBoxClip), CompositeMethod::ClipPath);
-        compositeLayer->push(move(scene));
-
-        auto root = Scene::gen();
-        root->push(move(compositeLayer));
-
-        finalScene = move(root);
     } else if (node->node.use.x != 0.0f || node->node.use.y != 0.0f) {
         scene->transform(mUseTransform);
         finalScene = move(scene);
