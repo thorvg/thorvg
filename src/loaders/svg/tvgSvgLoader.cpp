@@ -1309,6 +1309,7 @@ static SvgNode* _createSymbolNode(SvgLoaderData* loader, SvgNode* parent, const 
 
     loader->svgParse->node->display = false;
     loader->svgParse->node->node.symbol.preserveAspect = true;
+    loader->svgParse->node->node.symbol.overflowVisible = false;
 
     func(buf, bufLength, _attrParseSymbolNode, loader);
 
