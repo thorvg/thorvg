@@ -591,14 +591,17 @@ static unique_ptr<Scene> _useBuildHelper(const SvgNode* node, const Box& vBox, c
             auto tvh = symbol.vh * sy;
             if (tvw > tvh) tvy -= (symbol.h - tvh) * 0.5f;
             else tvx -= (symbol.w - tvw) * 0.5f;
-
             mViewBox = {sx, 0, -tvx, 0, sy, -tvy, 0, 0, 1};
         } else if (!mathZero(symbol.vx) || !mathZero(symbol.vy)) {
             mViewBox = {1, 0, -symbol.vx, 0, 1, -symbol.vy, 0, 0, 1};
         }
 
-        // mSceneTransform = mUseTransform * mViewBox
-        Matrix mSceneTransform = mathMultiply(&mUseTransform, &mViewBox);
+        // mSceneTransform = mUseTransform * mSymbolTransform * mViewBox
+        Matrix mSceneTransform = mViewBox;
+        if (node->node.use.symbol->transform) {
+            mSceneTransform = mathMultiply(node->node.use.symbol->transform, &mViewBox);
+        }
+        mSceneTransform = mathMultiply(&mUseTransform, &mSceneTransform);
         scene->transform(mSceneTransform);
 
         if (node->node.use.symbol->node.symbol.overflowVisible) {
@@ -606,6 +609,7 @@ static unique_ptr<Scene> _useBuildHelper(const SvgNode* node, const Box& vBox, c
         } else {
             auto viewBoxClip = Shape::gen();
             viewBoxClip->appendRect(0, 0, symbol.w, symbol.h, 0, 0);
+
             // mClipTransform = mUseTransform * mSymbolTransform
             Matrix mClipTransform = mUseTransform;
             if (node->node.use.symbol->transform) {
@@ -639,7 +643,8 @@ static unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, const Box& vBox,
 {
     if (_isGroupType(node->type) || mask) {
         auto scene = Scene::gen();
-        if (!mask && node->transform) scene->transform(*node->transform);
+        // For a Symbol node, the viewBox transformation has to be applied first - see _useBuildHelper()
+        if (!mask && node->transform && node->type != SvgNodeType::Symbol) scene->transform(*node->transform);
 
         if (node->display && node->style->opacity != 0) {
             auto child = node->child.data;
