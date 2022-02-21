@@ -22,6 +22,7 @@
 #include "tvgCommon.h"
 #include "tvgTaskScheduler.h"
 #include "tvgLoader.h"
+#include <mutex>
 
 #ifdef _WIN32
     #include <cstring>
@@ -42,6 +43,7 @@
 
 static int _initCnt = 0;
 static uint16_t _version = 0;
+static mutex mtx;
 
 
 static bool _buildVersionInfo()
@@ -84,6 +86,7 @@ static bool _buildVersionInfo()
 
 Result Initializer::init(CanvasEngine engine, uint32_t threads) noexcept
 {
+    lock_guard<mutex> lock(mtx);
     auto nonSupport = true;
 
     if (static_cast<uint32_t>(engine) & static_cast<uint32_t>(CanvasEngine::Sw)) {
@@ -116,6 +119,7 @@ Result Initializer::init(CanvasEngine engine, uint32_t threads) noexcept
 
 Result Initializer::term(CanvasEngine engine) noexcept
 {
+    lock_guard<mutex> lock(mtx);
     if (_initCnt == 0) return Result::InsufficientCondition;
 
     auto nonSupport = true;
