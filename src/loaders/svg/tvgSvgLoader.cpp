@@ -1143,13 +1143,8 @@ static bool _attrParseSymbolNode(void* data, const char* key, const char* value)
     SvgSymbolNode* symbol = &(node->node.symbol);
 
     if (!strcmp(key, "viewBox")) {
-        if (_parseNumber(&value, &symbol->vx)) {
-            if (_parseNumber(&value, &symbol->vy)) {
-                if (_parseNumber(&value, &symbol->vw)) {
-                    _parseNumber(&value, &symbol->vh);
-                }
-            }
-        }
+        if (!_parseNumber(&value, &symbol->vx) || !_parseNumber(&value, &symbol->vy)) return false;
+        if (!_parseNumber(&value, &symbol->vw) || !_parseNumber(&value, &symbol->vh)) return false;
     } else if (!strcmp(key, "width")) {
         symbol->w = _toFloat(loader->svgParse, value, SvgParserLengthType::Horizontal);
     } else if (!strcmp(key, "height")) {
