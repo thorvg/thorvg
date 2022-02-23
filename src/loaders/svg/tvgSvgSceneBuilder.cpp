@@ -589,8 +589,8 @@ static unique_ptr<Scene> _useBuildHelper(const SvgNode* node, const Box& vBox, c
             auto tvy = symbol.vy * sy;
             auto tvw = symbol.vw * sx;
             auto tvh = symbol.vh * sy;
-            if (tvw > tvh) tvy -= (symbol.h - tvh) * 0.5f;
-            else tvx -= (symbol.w - tvw) * 0.5f;
+            tvy -= (symbol.h - tvh) * 0.5f;
+            tvx -= (symbol.w - tvw) * 0.5f;
             mViewBox = {sx, 0, -tvx, 0, sy, -tvy, 0, 0, 1};
         } else if (!mathZero(symbol.vx) || !mathZero(symbol.vy)) {
             mViewBox = {1, 0, -symbol.vx, 0, 1, -symbol.vy, 0, 0, 1};
