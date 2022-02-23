@@ -626,8 +626,8 @@ static unique_ptr<Scene> _useBuildHelper(const SvgNode* node, const Box& vBox, c
 
             finalScene = move(root);
         }
-    } else if (node->node.use.x != 0.0f || node->node.use.y != 0.0f) {
-        scene->transform(mUseTransform);
+    } else {
+        if (!mathIdentity((const Matrix*)(&mUseTransform))) scene->transform(mUseTransform);
         finalScene = move(scene);
     }
 
