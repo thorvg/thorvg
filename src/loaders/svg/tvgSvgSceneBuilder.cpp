@@ -705,17 +705,13 @@ unique_ptr<Scene> svgSceneBuild(SvgNode* node, float vx, float vy, float vw, flo
             auto tvy = vy * scale;
             auto tvw = vw * scale;
             auto tvh = vh * scale;
-            if (vw > vh) tvy -= (h - tvh) * 0.5f;
-            else  tvx -= (w - tvw) * 0.5f;
+            tvx -= (w - tvw) * 0.5f;
+            tvy -= (h - tvh) * 0.5f;
             docNode->translate(-tvx, -tvy);
         } else {
             //Align
             auto tvx = vx * sx;
             auto tvy = vy * sy;
-            auto tvw = vw * sx;
-            auto tvh = vh * sy;
-            if (tvw > tvh) tvy -= (h - tvh) * 0.5f;
-            else tvx -= (w - tvw) * 0.5f;
             Matrix m = {sx, 0, -tvx, 0, sy, -tvy, 0, 0, 1};
             docNode->transform(m);
         }
