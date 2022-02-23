@@ -178,6 +178,8 @@ struct SvgSymbolNode
 struct SvgUseNode
 {
     float x, y, w, h;
+    bool isWidthSet;
+    bool isHeightSet;
     SvgNode* symbol;
 };
 

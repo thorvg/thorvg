@@ -576,10 +576,15 @@ static unique_ptr<Scene> _useBuildHelper(const SvgNode* node, const Box& vBox, c
     if (node->node.use.symbol) {
         auto symbol = node->node.use.symbol->node.symbol;
 
+        auto width = symbol.w;
+        if (node->node.use.isWidthSet) width = node->node.use.w;
+        auto height = symbol.h;
+        if (node->node.use.isHeightSet) height = node->node.use.h;
+
         Matrix mViewBox = {1, 0, 0, 0, 1, 0, 0, 0, 1};
-        if ((!mathEqual(symbol.w, symbol.vw) || !mathEqual(symbol.h, symbol.vh)) && symbol.vw > 0 && symbol.vh > 0) {
-            auto sx = symbol.w / symbol.vw;
-            auto sy = symbol.h / symbol.vh;
+        if ((!mathEqual(width, symbol.vw) || !mathEqual(height, symbol.vh)) && symbol.vw > 0 && symbol.vh > 0) {
+            auto sx = width / symbol.vw;
+            auto sy = height / symbol.vh;
             if (symbol.preserveAspect) {
                 if (sx < sy) sy = sx;
                 else sx = sy;
@@ -589,8 +594,8 @@ static unique_ptr<Scene> _useBuildHelper(const SvgNode* node, const Box& vBox, c
             auto tvy = symbol.vy * sy;
             auto tvw = symbol.vw * sx;
             auto tvh = symbol.vh * sy;
-            if (tvw > tvh) tvy -= (symbol.h - tvh) * 0.5f;
-            else tvx -= (symbol.w - tvw) * 0.5f;
+            if (tvw > tvh) tvy -= (height - tvh) * 0.5f;
+            else tvx -= (width - tvw) * 0.5f;
             mViewBox = {sx, 0, -tvx, 0, sy, -tvy, 0, 0, 1};
         } else if (!mathZero(symbol.vx) || !mathZero(symbol.vy)) {
             mViewBox = {1, 0, -symbol.vx, 0, 1, -symbol.vy, 0, 0, 1};
@@ -608,7 +613,7 @@ static unique_ptr<Scene> _useBuildHelper(const SvgNode* node, const Box& vBox, c
             finalScene = move(scene);
         } else {
             auto viewBoxClip = Shape::gen();
-            viewBoxClip->appendRect(0, 0, symbol.w, symbol.h, 0, 0);
+            viewBoxClip->appendRect(0, 0, width, height, 0, 0);
 
             // mClipTransform = mUseTransform * mSymbolTransform
             Matrix mClipTransform = mUseTransform;
@@ -629,10 +634,6 @@ static unique_ptr<Scene> _useBuildHelper(const SvgNode* node, const Box& vBox, c
     } else if (node->node.use.x != 0.0f || node->node.use.y != 0.0f) {
         scene->transform(mUseTransform);
         finalScene = move(scene);
-    }
-
-    if (node->node.use.w > 0.0f && node->node.use.h > 0.0f) {
-        //TODO: handle width/height properties
     }
 
     return finalScene;
