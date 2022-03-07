@@ -2099,10 +2099,10 @@ static constexpr struct
     int sz;
     size_t offset;
 } useTags[] = {
-    {"x", SvgParserLengthType::Horizontal, sizeof("x"), offsetof(SvgRectNode, x)},
-    {"y", SvgParserLengthType::Vertical, sizeof("y"), offsetof(SvgRectNode, y)},
-    {"width", SvgParserLengthType::Horizontal, sizeof("width"), offsetof(SvgRectNode, w)},
-    {"height", SvgParserLengthType::Vertical, sizeof("height"), offsetof(SvgRectNode, h)}
+    {"x", SvgParserLengthType::Horizontal, sizeof("x"), offsetof(SvgUseNode, x)},
+    {"y", SvgParserLengthType::Vertical, sizeof("y"), offsetof(SvgUseNode, y)},
+    {"width", SvgParserLengthType::Horizontal, sizeof("width"), offsetof(SvgUseNode, w)},
+    {"height", SvgParserLengthType::Vertical, sizeof("height"), offsetof(SvgUseNode, h)}
 };
 
 
@@ -2118,6 +2118,10 @@ static bool _attrParseUseNode(void* data, const char* key, const char* value)
     for (unsigned int i = 0; i < sizeof(useTags) / sizeof(useTags[0]); i++) {
         if (useTags[i].sz - 1 == sz && !strncmp(useTags[i].tag, key, sz)) {
             *((float*)(array + useTags[i].offset)) = _toFloat(loader->svgParse, value, useTags[i].type);
+
+            if (useTags[i].offset == offsetof(SvgUseNode, w)) use->isWidthSet = true;
+            else if (useTags[i].offset == offsetof(SvgUseNode, h)) use->isHeightSet = true;
+
             return true;
         }
     }
@@ -2136,10 +2140,6 @@ static bool _attrParseUseNode(void* data, const char* key, const char* value)
             //after the whole file is parsed
             _postpone(loader->cloneNodes, node, id);
         }
-#ifdef THORVG_LOG_ENABLED
-    } else if ((!strcmp(key, "width") || !strcmp(key, "height")) && fabsf(svgUtilStrtof(value, nullptr)) > FLT_EPSILON) {
-        TVGLOG("SVG", "Unsupported attributes used [Elements type: Use][Attribute: %s][Value: %s]", key, value);
-#endif
     } else {
         return _attrParseGNode(data, key, value);
     }
@@ -2152,6 +2152,9 @@ static SvgNode* _createUseNode(SvgLoaderData* loader, SvgNode* parent, const cha
     loader->svgParse->node = _createNode(parent, SvgNodeType::Use);
 
     if (!loader->svgParse->node) return nullptr;
+
+    loader->svgParse->node->node.use.isWidthSet = false;
+    loader->svgParse->node->node.use.isHeightSet = false;
 
     func(buf, bufLength, _attrParseUseNode, loader);
     return loader->svgParse->node;
