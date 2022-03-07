@@ -508,8 +508,7 @@ public:
     /**
      * @brief Request the canvas to remove a paint object
      *
-     * Remove the paint to which the given @p paint points. Note that the paint
-     * will be destroyed as well, since the canvas owns the object.
+     * Remove the paint to which the given @p paint points.
      *
      * @param[in] paint A pointer to the Paint object
      * @param[in] free If @c true, the memory occupied by the paint is deallocated, otherwise it is not.
