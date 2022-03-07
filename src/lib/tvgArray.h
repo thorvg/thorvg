@@ -77,6 +77,26 @@ struct Array
         if (count > 0) --count;
     }
 
+    bool remove(T element)
+    {
+        if (count==0) return false;
+
+        bool found = false;
+        for (int index = 0; index < count; index++) {
+            if (!found) {
+                if (data[index] == element) {
+                    found = true;
+                }
+            }
+            else {
+                // Optimize me: Can we do this without shuffling the data? (We could if it was a linked list and it would be faster :D )
+                data[index-1] = data[index];
+            }
+        }
+        if (found) count--;
+        return found;
+    }
+
     void reset()
     {
         if (data) {

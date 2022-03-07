@@ -57,6 +57,17 @@ struct Canvas::Impl
         return update(p, true);
     }
 
+    Result remove(Paint* paint, bool free)
+    {
+        //You can not remove paints during rendering.
+        if (drawing || !paint) return Result::InsufficientCondition;
+
+        // Optimize Me: Remove operation would be faster if paints was linked list instead of array
+        if (paints.remove(paint) && free) delete paint;
+
+        return Result::Success;
+    }
+
     Result clear(bool free)
     {
         //Clear render target before drawing

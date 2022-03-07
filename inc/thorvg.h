@@ -506,6 +506,21 @@ public:
     virtual Result push(std::unique_ptr<Paint> paint) noexcept;
 
     /**
+     * @brief Request the canvas to remove a paint object
+     *
+     * Remove the paint to which the given @p paint points. Note that the paint
+     * will be destroyed as well, since the canvas owns the object.
+     *
+     * @param[in] paint A pointer to the Paint object
+     * @param[in] free If @c true, the memory occupied by the paint is deallocated, otherwise it is not.
+     *
+     * @return Result::Success when succeed (also if not found), Result::InsufficientCondition otherwise.
+     * 
+     * @warning If you don't free the paints they become dangled. They are supposed to be reused, otherwise you are responsible for their lives. Thus please use the @p free argument only when you know how it works, otherwise it's not recommended.
+     */
+    virtual Result remove(Paint* paint, bool free = true) noexcept;
+
+    /**
      * @brief Sets the total number of the paints pushed into the canvas to be zero.
      * Depending on the value of the @p free argument, the paints are freed or not.
      *
