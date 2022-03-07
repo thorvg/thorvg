@@ -594,8 +594,8 @@ static unique_ptr<Scene> _useBuildHelper(const SvgNode* node, const Box& vBox, c
             auto tvy = symbol.vy * sy;
             auto tvw = symbol.vw * sx;
             auto tvh = symbol.vh * sy;
-            if (tvw > tvh) tvy -= (height - tvh) * 0.5f;
-            else tvx -= (width - tvw) * 0.5f;
+            tvy -= (symbol.h - tvh) * 0.5f;
+            tvx -= (symbol.w - tvw) * 0.5f;
             mViewBox = {sx, 0, -tvx, 0, sy, -tvy, 0, 0, 1};
         } else if (!mathZero(symbol.vx) || !mathZero(symbol.vy)) {
             mViewBox = {1, 0, -symbol.vx, 0, 1, -symbol.vy, 0, 0, 1};
@@ -631,8 +631,8 @@ static unique_ptr<Scene> _useBuildHelper(const SvgNode* node, const Box& vBox, c
 
             finalScene = move(root);
         }
-    } else if (node->node.use.x != 0.0f || node->node.use.y != 0.0f) {
-        scene->transform(mUseTransform);
+    } else {
+        if (!mathIdentity((const Matrix*)(&mUseTransform))) scene->transform(mUseTransform);
         finalScene = move(scene);
     }
 
@@ -706,17 +706,13 @@ unique_ptr<Scene> svgSceneBuild(SvgNode* node, float vx, float vy, float vw, flo
             auto tvy = vy * scale;
             auto tvw = vw * scale;
             auto tvh = vh * scale;
-            if (vw > vh) tvy -= (h - tvh) * 0.5f;
-            else  tvx -= (w - tvw) * 0.5f;
+            tvx -= (w - tvw) * 0.5f;
+            tvy -= (h - tvh) * 0.5f;
             docNode->translate(-tvx, -tvy);
         } else {
             //Align
             auto tvx = vx * sx;
             auto tvy = vy * sy;
-            auto tvw = vw * sx;
-            auto tvh = vh * sy;
-            if (tvw > tvh) tvy -= (h - tvh) * 0.5f;
-            else tvx -= (w - tvw) * 0.5f;
             Matrix m = {sx, 0, -tvx, 0, sy, -tvy, 0, 0, 1};
             docNode->transform(m);
         }
