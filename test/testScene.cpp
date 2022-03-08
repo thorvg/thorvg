@@ -101,3 +101,27 @@ TEST_CASE("Scene Clear And Reuse Shape", "[tvgScene]")
 
     REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
 }
+
+TEST_CASE("Scene Remove Paints", "[tvgScene]")
+{
+    auto scene = Scene::gen();
+    REQUIRE(scene);
+
+    Shape* ptrs[5];
+    for (int i = 0; i < 5; i++) {
+        auto shape = Shape::gen();
+        ptrs[i] = shape.get();
+        REQUIRE(scene->push(move(shape)) == Result::Success);
+    }
+    // Remove from beggining, middle and end
+    REQUIRE(scene->remove(ptrs[0]) == Result::Success);
+    REQUIRE(scene->remove(ptrs[2]) == Result::Success);
+    REQUIRE(scene->remove(ptrs[4]) == Result::Success);
+
+    // Invalid shape
+    auto shape2 = Shape::gen();
+    REQUIRE(scene->remove(shape2.get()) == Result::InsufficientCondition);
+
+    // Cleanup
+    REQUIRE(scene->clear() == Result::Success);
+}

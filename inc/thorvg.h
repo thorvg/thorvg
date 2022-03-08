@@ -513,7 +513,7 @@ public:
      * @param[in] paint A pointer to the Paint object
      * @param[in] free If @c true, the memory occupied by the paint is deallocated, otherwise it is not.
      *
-     * @return Result::Success when succeed (also if not found), Result::InsufficientCondition otherwise.
+     * @return Result::Success when succeed, Result::InsufficientCondition otherwise (including if not found).
      * 
      * @warning If you don't free the paints they become dangled. They are supposed to be reused, otherwise you are responsible for their lives. Thus please use the @p free argument only when you know how it works, otherwise it's not recommended.
      */
@@ -1253,6 +1253,20 @@ public:
      * @see Scene::reserve()
      */
     Result push(std::unique_ptr<Paint> paint) noexcept;
+
+    /**
+     * @brief Request the scene to remove a paint object
+     *
+     * Remove the paint to which the given @p paint points.
+     *
+     * @param[in] paint A pointer to the Paint object
+     * @param[in] free If @c true, the memory occupied by the paint is deallocated, otherwise it is not.
+     *
+     * @return Result::Success when succeed, Result::InsufficientCondition otherwise (including if not found).
+     * 
+     * @warning If you don't free the paints they become dangled. They are supposed to be reused, otherwise you are responsible for their lives. Thus please use the @p free argument only when you know how it works, otherwise it's not recommended.
+     */
+    Result remove(Paint* paint, bool free = true) noexcept;
 
     /**
      * @brief Sets the size of the container, where all the paints pushed into the Scene are stored.

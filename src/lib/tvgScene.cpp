@@ -60,6 +60,18 @@ Result Scene::push(unique_ptr<Paint> paint) noexcept
 }
 
 
+Result Scene::remove(Paint* paint, bool free) noexcept
+{
+    if (!paint) return Result::InsufficientCondition;
+
+    // Optimize Me: Remove operation would be faster if paints was linked list instead of array
+    if (!pImpl->paints.remove(paint)) return Result::InsufficientCondition;
+    if (free) delete paint;
+
+    return Result::Success;
+}
+
+
 Result Scene::reserve(uint32_t size) noexcept
 {
     if (!pImpl->paints.reserve(size)) return Result::FailedAllocation;

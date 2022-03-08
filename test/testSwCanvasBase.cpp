@@ -179,6 +179,46 @@ TEST_CASE("Update", "[tvgSwCanvasBase]")
     REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
 }
 
+TEST_CASE("Remove", "[tvgSwCanvasBase]")
+{
+    REQUIRE(Initializer::init(CanvasEngine::Sw, 0) == Result::Success);
+
+    auto canvas = SwCanvas::gen();
+    REQUIRE(canvas);
+
+    uint32_t buffer[100*100];
+    REQUIRE(canvas->target(buffer, 100, 100, 100, SwCanvas::Colorspace::ARGB8888) == Result::Success);
+
+    Shape* ptrs[5];
+    for (int i = 0; i < 5; i++) {
+        auto shape = Shape::gen();
+        ptrs[i] = shape.get();
+        REQUIRE(canvas->push(move(shape)) == Result::Success);
+    }
+    
+    // Test remove by trying to update the removed item
+    // beginning
+    REQUIRE(canvas->update(ptrs[0]) == Result::Success);
+    REQUIRE(canvas->remove(ptrs[0]) == Result::Success);
+    REQUIRE(canvas->update(ptrs[0]) == Result::InsufficientCondition);
+    // middle
+    REQUIRE(canvas->update(ptrs[2]) == Result::Success);
+    REQUIRE(canvas->remove(ptrs[2]) == Result::Success);
+    REQUIRE(canvas->update(ptrs[2]) == Result::InsufficientCondition);
+    // end
+    REQUIRE(canvas->update(ptrs[4]) == Result::Success);
+    REQUIRE(canvas->remove(ptrs[4]) == Result::Success);
+    REQUIRE(canvas->update(ptrs[4]) == Result::InsufficientCondition);
+
+    // Invalid shape
+    auto shape = Shape::gen();
+    REQUIRE(canvas->remove(shape.get()) == Result::InsufficientCondition);
+
+    // Cleanup
+    REQUIRE(canvas->clear() == Result::Success);
+    REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
+}
+
 TEST_CASE("Synchronized Drawing", "[tvgSwCanvasBase]")
 {
     REQUIRE(Initializer::init(CanvasEngine::Sw, 0) == Result::Success);
