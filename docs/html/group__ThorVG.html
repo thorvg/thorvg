@@ -24,7 +24,7 @@
   <td id="projectlogo"><img alt="Logo" src="small_logo.svg"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">ThorVG
-   &#160;<span id="projectnumber">v0.7</span>
+   &#160;<span id="projectnumber">v0.8</span>
    </div>
   </td>
  </tr>
@@ -119,6 +119,9 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Saver.html">Saver</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A class for exporting a paint object into a specified file, from which to recover the paint data later.  <a href="classtvg_1_1Saver.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Accessor.html">Accessor</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">The <a class="el" href="classtvg_1_1Accessor.html" title="The Accessor is a utility class to debug the Scene structure by traversing the scene-tree.">Accessor</a> is a utility class to debug the <a class="el" href="classtvg_1_1Scene.html" title="A class to composite children paints.">Scene</a> structure by traversing the scene-tree.  <a href="classtvg_1_1Accessor.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="enum-members"></a>
 Enumerations</h2></td></tr>
@@ -165,10 +168,14 @@ Enumerations</h2></td></tr>
  }</td></tr>
 <tr class="memdesc:ga9a534b0377c9ca41983d53b0dae0d5a4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enumeration specifying the algorithm used to establish which parts of the shape are treated as the inside of the shape.  <a href="group__ThorVG.html#ga9a534b0377c9ca41983d53b0dae0d5a4">More...</a><br /></td></tr>
 <tr class="separator:ga9a534b0377c9ca41983d53b0dae0d5a4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:gaabdf94ada64e69d06deabc5aa6576f87"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__ThorVG.html#gaabdf94ada64e69d06deabc5aa6576f87">CompositeMethod</a> { <a class="el" href="group__ThorVG.html#ggaabdf94ada64e69d06deabc5aa6576f87a6adf97f83acf6453d4a6a4b1070f3754">None</a> = 0, 
+<tr class="memitem:gaabdf94ada64e69d06deabc5aa6576f87"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__ThorVG.html#gaabdf94ada64e69d06deabc5aa6576f87">CompositeMethod</a> { <br />
+&#160;&#160;<a class="el" href="group__ThorVG.html#ggaabdf94ada64e69d06deabc5aa6576f87a6adf97f83acf6453d4a6a4b1070f3754">None</a> = 0, 
 <a class="el" href="group__ThorVG.html#ggaabdf94ada64e69d06deabc5aa6576f87a60575a18ece363c72551a982450efd52">ClipPath</a>, 
 <a class="el" href="group__ThorVG.html#ggaabdf94ada64e69d06deabc5aa6576f87abd68e2bb79d1a5e65ad8f0d202d14cbc">AlphaMask</a>, 
-<a class="el" href="group__ThorVG.html#ggaabdf94ada64e69d06deabc5aa6576f87a59cc48dcf714e3a3c2492f4dce1fe134">InvAlphaMask</a>
+<a class="el" href="group__ThorVG.html#ggaabdf94ada64e69d06deabc5aa6576f87a59cc48dcf714e3a3c2492f4dce1fe134">InvAlphaMask</a>, 
+<br />
+&#160;&#160;<a class="el" href="group__ThorVG.html#ggaabdf94ada64e69d06deabc5aa6576f87a4dae6fdfeb902e322a7bc9122c4e4cb4">LumaMask</a>
+<br />
  }</td></tr>
 <tr class="memdesc:gaabdf94ada64e69d06deabc5aa6576f87"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enumeration indicating the method used in the composition of two objects - the target and the source.  <a href="group__ThorVG.html#gaabdf94ada64e69d06deabc5aa6576f87">More...</a><br /></td></tr>
 <tr class="separator:gaabdf94ada64e69d06deabc5aa6576f87"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -237,9 +244,11 @@ Enumerations</h2></td></tr>
 </td></tr>
 <tr><td class="fieldname"><a id="ggaabdf94ada64e69d06deabc5aa6576f87a60575a18ece363c72551a982450efd52"></a>ClipPath&#160;</td><td class="fielddoc"><p>The intersection of the source and the target is determined and only the resulting pixels from the source are rendered. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="ggaabdf94ada64e69d06deabc5aa6576f87abd68e2bb79d1a5e65ad8f0d202d14cbc"></a>AlphaMask&#160;</td><td class="fielddoc"><p>The pixels of the source and the target are alpha blended. As a result, only the part of the source, which intersects with the target is visible. </p>
+<tr><td class="fieldname"><a id="ggaabdf94ada64e69d06deabc5aa6576f87abd68e2bb79d1a5e65ad8f0d202d14cbc"></a>AlphaMask&#160;</td><td class="fielddoc"><p>The pixels of the source and the target are alpha blended. As a result, only the part of the source, which alpha intersects with the target is visible. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="ggaabdf94ada64e69d06deabc5aa6576f87a59cc48dcf714e3a3c2492f4dce1fe134"></a>InvAlphaMask&#160;</td><td class="fielddoc"><p>The pixels of the source and the complement to the target's pixels are alpha blended. As a result, only the part of the source which is not covered by the target is visible. </p>
+<tr><td class="fieldname"><a id="ggaabdf94ada64e69d06deabc5aa6576f87a59cc48dcf714e3a3c2492f4dce1fe134"></a>InvAlphaMask&#160;</td><td class="fielddoc"><p>The pixels of the source and the complement to the target's pixels are alpha blended. As a result, only the part of the source which alpha is not covered by the target is visible. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ggaabdf94ada64e69d06deabc5aa6576f87a4dae6fdfeb902e322a7bc9122c4e4cb4"></a>LumaMask&#160;</td><td class="fielddoc"><p>@BETA_API The source pixels are converted to the grayscale (luma value) and alpha blended with the target. As a result, only the part of the source, which intersects with the target is visible. </p>
 </td></tr>
 </table>
 

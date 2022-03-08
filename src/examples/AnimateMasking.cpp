@@ -45,7 +45,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     picture1->load(EXAMPLE_DIR"/cartman.svg");
     picture1->size(400, 400);
     auto picture2 = tvg::Picture::gen();
-    picture2->load(EXAMPLE_DIR"/samsung-7.svg");
+    picture2->load(EXAMPLE_DIR"/logo.svg");
     picture2->size(400, 400);
     canvas->push(move(picture1));
 
@@ -104,8 +104,8 @@ void tvgUpdateCmds(tvg::Canvas* canvas, float progress)
        while retaining other properties. */
 
     // Translate mask object with its stroke & update
-    pMaskShape->translate(0 , progress * 300);
-    pMask->translate(0 , progress * 300);
+    pMaskShape->translate(0 , progress * 300 - 100);
+    pMask->translate(0 , progress * 300 - 100);
 
     canvas->update();
 }

@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['clippath_444',['ClipPath',['../group__ThorVG.html#ggaabdf94ada64e69d06deabc5aa6576f87a60575a18ece363c72551a982450efd52',1,'tvg']]],
-  ['close_445',['Close',['../group__ThorVG.html#gga6876ed676934f4dbcc19b1b53c153cc1ad3d2e617335f08df83599665eef8a418',1,'tvg']]],
-  ['cubicto_446',['CubicTo',['../group__ThorVG.html#gga6876ed676934f4dbcc19b1b53c153cc1ac8cd9cd16086764627079ed21bfc4e29',1,'tvg']]]
+  ['clippath_449',['ClipPath',['../group__ThorVG.html#ggaabdf94ada64e69d06deabc5aa6576f87a60575a18ece363c72551a982450efd52',1,'tvg']]],
+  ['close_450',['Close',['../group__ThorVG.html#gga6876ed676934f4dbcc19b1b53c153cc1ad3d2e617335f08df83599665eef8a418',1,'tvg']]],
+  ['cubicto_451',['CubicTo',['../group__ThorVG.html#gga6876ed676934f4dbcc19b1b53c153cc1ac8cd9cd16086764627079ed21bfc4e29',1,'tvg']]]
 ];
