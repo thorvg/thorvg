@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['initializer_258',['Initializer',['../classtvg_1_1Initializer.html',1,'tvg']]]
+  ['glcanvas_261',['GlCanvas',['../classtvg_1_1GlCanvas.html',1,'tvg']]]
 ];

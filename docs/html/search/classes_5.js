@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['matrix_260',['Matrix',['../structtvg_1_1Matrix.html',1,'tvg']]]
+  ['lineargradient_263',['LinearGradient',['../classtvg_1_1LinearGradient.html',1,'tvg']]]
 ];

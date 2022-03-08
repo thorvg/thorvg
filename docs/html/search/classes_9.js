@@ -1,6 +1,7 @@
 var searchData=
 [
-  ['tvg_5fcolor_5fstop_269',['Tvg_Color_Stop',['../structTvg__Color__Stop.html',1,'']]],
-  ['tvg_5fmatrix_270',['Tvg_Matrix',['../structTvg__Matrix.html',1,'']]],
-  ['tvg_5fpoint_271',['Tvg_Point',['../structTvg__Point.html',1,'']]]
+  ['saver_269',['Saver',['../classtvg_1_1Saver.html',1,'tvg']]],
+  ['scene_270',['Scene',['../classtvg_1_1Scene.html',1,'tvg']]],
+  ['shape_271',['Shape',['../classtvg_1_1Shape.html',1,'tvg']]],
+  ['swcanvas_272',['SwCanvas',['../classtvg_1_1SwCanvas.html',1,'tvg']]]
 ];

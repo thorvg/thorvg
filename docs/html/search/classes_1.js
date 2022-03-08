@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['fill_256',['Fill',['../classtvg_1_1Fill.html',1,'tvg']]]
+  ['canvas_258',['Canvas',['../classtvg_1_1Canvas.html',1,'tvg']]],
+  ['colorstop_259',['ColorStop',['../structtvg_1_1Fill_1_1ColorStop.html',1,'tvg::Fill']]]
 ];
