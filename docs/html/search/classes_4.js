@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['lineargradient_259',['LinearGradient',['../classtvg_1_1LinearGradient.html',1,'tvg']]]
+  ['initializer_262',['Initializer',['../classtvg_1_1Initializer.html',1,'tvg']]]
 ];
