@@ -82,7 +82,7 @@ struct Array
         if (count==0) return false;
 
         bool found = false;
-        for (int index = 0; index < count; index++) {
+        for (auto index = 0; index < count; index++) {
             if (!found) {
                 if (data[index] == element) {
                     found = true;
