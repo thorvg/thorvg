@@ -337,7 +337,10 @@ static unsigned char _parserColor(const char* value, char** end)
 
     r = svgUtilStrtof(value, end);
     *end = _skipSpace(*end, nullptr);
-    if (**end == '%') r = 255 * r / 100;
+    if (**end == '%') {
+        r = 255 * r / 100;
+        (*end)++;
+    }
     *end = _skipSpace(*end, nullptr);
 
     if (r < 0 || r > 255) {
