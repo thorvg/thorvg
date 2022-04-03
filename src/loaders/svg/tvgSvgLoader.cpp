@@ -2734,6 +2734,7 @@ static void _svgLoaderParserXmlOpen(SvgLoaderData* loader, const char* content, 
         }
         /* default value for opacity */
         loader->svgParse->gradStop = {0.0f, 0, 0, 0, 255};
+        loader->svgParse->flags = SvgStopStyleFlags::StopDefault;
         simpleXmlParseAttributes(attrs, attrsLength, _attrParseStops, loader);
         loader->latestGradient->stops.push(loader->svgParse->gradStop);
     } else if (!isIgnoreUnsupportedLogElements(tagName)) {
