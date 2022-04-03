@@ -2874,7 +2874,7 @@ static SvgStyleGradient* _gradientDup(Array<SvgStyleGradient*>* gradients, const
     auto gradList = gradients->data;
 
     for (uint32_t i = 0; i < gradients->count; ++i) {
-        if (!strcmp((*gradList)->id, id)) {
+        if ((*gradList)->id && !strcmp((*gradList)->id, id)) {
             result = _cloneGradient(*gradList);
             break;
         }
@@ -2884,7 +2884,7 @@ static SvgStyleGradient* _gradientDup(Array<SvgStyleGradient*>* gradients, const
     if (result && result->ref) {
         gradList = gradients->data;
         for (uint32_t i = 0; i < gradients->count; ++i) {
-            if (!strcmp((*gradList)->id, result->ref)) {
+            if ((*gradList)->id && !strcmp((*gradList)->id, result->ref)) {
                 if (result->stops.count == 0) _cloneGradStops(result->stops, (*gradList)->stops);
                 //TODO: Properly inherit other property
                 break;
