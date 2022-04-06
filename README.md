@@ -361,15 +361,13 @@ For support, please reach us in [Gitter](https://gitter.im/thorvg/community).
 <br />
 <br />
 ## Branding
-Various versions of the logo are available in the [logo](/logo/) folder.
-Please feel free to use these logos when referencing or linking to ThorVG.
-Using the logo without cropping (to maintain breathing space) is preferred.
+Various versions of the logo are available in the [logo](/logo/) folder. Please feel free to use these logos when referencing or linking to ThorVG. Using the logo without cropping (to maintain breathing space) is preferred. Examples:
 
 ### Logo
-![ThorVG logo](/logo/256/thorvg-logo.png?raw=true "ThorVG" | height=50)
+![ThorVG logo](/logo/256/thorvg-logo.png?raw=true "ThorVG") ![ThorVG logo](/logo/256/thorvg-logo-reverse.png?raw=true "ThorVG")
 
 ### Icon
-![ThorVG icon](/logo/256/thorvg-icon.png?raw=true "ThorVG" | height=50)
+![ThorVG icon](/logo/256/thorvg-icon.png?raw=true "ThorVG") ![ThorVG icon](/logo/256/thorvg-icon-reverse.png?raw=true "ThorVG")
 
 ### Banner
-![ThorVG banner](/logo/256/thorvg-banner.png?raw=true "ThorVG" | height=50)
+![ThorVG banner](/logo/256/thorvg-banner.png?raw=true "ThorVG") ![ThorVG banner](/logo/256/thorvg-banner-reverse.png?raw=true "ThorVG")
