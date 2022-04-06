@@ -6,9 +6,7 @@
 
 # ThorVG
 
-<p align="center">
-  <img width="500" height="346" src="https://github.com/Samsung/thorvg/blob/master/res/thorvg_card2.png">
-</p>
+![ThorVG logo](/logo/256/thorvg-logo.png?raw=true "ThorVG")
 
 ThorVG is a platform-independent portable library for drawing vector-based scenes and animation. It's open-source software that is freely used by a variety of software platforms and applications. ThorVG provides neat and easy APIs. Its library has no dependencies and keeps a super compact size. It serves as the vector graphics engine for Tizen OS that powers many products. <br />
 <br />
@@ -54,6 +52,7 @@ ThorVG has the threading mechanism so that it tries to acquire the next scenes w
 - [API Bindings](#api-bindings)
 - [Dependencies](#dependencies)
 - [Issues or Feature Requests](#issues-or-feature-requests)
+- [Branding](#branding)
 
 [](#contents)
 <br />
@@ -357,3 +356,20 @@ The ThorVG core has no dependencies. However, ThorVG has optional feature extens
 <br />
 ## Issues or Feature Requests
 For support, please reach us in [Gitter](https://gitter.im/thorvg/community).
+
+[Back to contents](#contents)
+<br />
+<br />
+## Branding
+Various versions of the logo are available in the [logo](/logo/) folder.
+Please feel free to use these logos when referencing or linking to ThorVG.
+Using the logo without cropping (to maintain breathing space) is preferred.
+
+### Logo
+![ThorVG logo](/logo/256/thorvg-logo.png?raw=true "ThorVG" | height=50)
+
+### Icon
+![ThorVG icon](/logo/256/thorvg-icon.png?raw=true "ThorVG" | height=50)
+
+### Banner
+![ThorVG banner](/logo/256/thorvg-banner.png?raw=true "ThorVG" | height=50)
