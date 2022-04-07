@@ -1,6 +1,6 @@
 # ThorVG API Documentation
 
 <p align="center">
-  <img width="500" src="https://raw.githubusercontent.com/Samsung/thorvg/master/res/thorvg_card2.png">
+  <img width="1024" src="https://raw.githubusercontent.com/Samsung/thorvg/master/res/logo/512/thorvg-banner.png">
 </p>
 <br />

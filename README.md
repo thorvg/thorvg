@@ -6,7 +6,7 @@
 
 # ThorVG
 <p align="center">
-  <img width="800" height="400" src="https://github.com/Samsung/thorvg/blob/master/logo/512/thorvg-banner.png">
+  <img width="800" height="400" src="https://github.com/Samsung/thorvg/blob/master/res/logo/512/thorvg-banner.png">
 </p>
 ThorVG is a platform-independent portable library for drawing vector-based scenes and animation. It's open-source software that is freely used by a variety of software platforms and applications. ThorVG provides neat and easy APIs. Its library has no dependencies and keeps a super compact size. It serves as the vector graphics engine for Tizen OS that powers many products. <br />
 <br />
