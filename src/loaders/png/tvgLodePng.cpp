@@ -2090,17 +2090,7 @@ static unsigned unfilterScanline(unsigned char* recon, const unsigned char* scan
     size_t i;
     switch (filterType) {
         case 0: {
-            if (bytewidth == 4) {
-                for (i = 0; i < length; i += 4) {
-                    //RGBA -> BGRA
-                    recon[i + 0] = scanline[i + 2];
-                    recon[i + 1] = scanline[i + 1];
-                    recon[i + 2] = scanline[i + 0];
-                    recon[i + 3] = scanline[i + 3];
-                }
-            } else {
-                for (i = 0; i != length; ++i) recon[i] = scanline[i];
-            }
+            for (i = 0; i < length; ++i) recon[i] = scanline[i];
             break;
         }
         case 1: {
