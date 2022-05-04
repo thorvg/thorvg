@@ -388,7 +388,7 @@ bool simpleXmlParse(const char* buf, unsigned bufLength, bool strip, simpleXMLCb
 
             if (p) {
                 //Invalid case: '<' nested
-                if (*p == '<') return false;
+                if (*p == '<' && type != SimpleXMLType::Doctype) return false;
                 const char *start, *end;
 
                 start = itr + 1 + toff;
