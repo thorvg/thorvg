@@ -69,8 +69,15 @@ public:
 
         //Picture
         auto picture = tvg::Picture::gen();
-        if (picture->load(path) != tvg::Result::Success) {
+        tvg::Result result = picture->load(path);
+        if (result == tvg::Result::Unknown) {
             cout << "Error: Couldn't load image " << path << endl;
+            return 1;
+        } else if (result == tvg::Result::InvalidArguments) {
+            cout << "Error: Couldn't load image(Invalid path or invalid SVG image) : " << path << endl;
+            return 1;
+        } else if (result == tvg::Result::NonSupport) {
+            cout << "Error: Couldn't load image(Not supported extension) : " << path << endl;
             return 1;
         }
 
