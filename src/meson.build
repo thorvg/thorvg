@@ -1,7 +1,20 @@
 compiler_flags = ['-DTVG_BUILD']
-
+override_options = []
 cc = meson.get_compiler('cpp')
-if (cc.get_id() != 'msvc')
+if (cc.get_id() == 'clang-cl')
+    if simd_type == 'avx'
+        compiler_flags += ['/clang:-mavx']
+    endif
+    if simd_type == 'neon'
+        compiler_flags += ['/clang:-mfpu=neon']
+    endif
+    if get_option('b_sanitize') == 'none'
+        override_options += ['cpp_eh=none','cpp_rtti=false']
+        compiler_flags += ['/clang:-fno-math-errno',
+                           '/clang:-fno-unwind-tables' , '/clang:-fno-asynchronous-unwind-tables',
+                           '/clang:-Woverloaded-virtual', '/clang:-Wno-unused-value', '-Wno-deprecated-declarations']
+    endif
+elif (cc.get_id() != 'msvc')
     if simd_type == 'avx'
         compiler_flags += ['-mavx']
     endif
@@ -35,6 +48,7 @@ thorvg_lib = library(
     install                : true,
     cpp_args               : compiler_flags,
     gnu_symbol_visibility  : 'hidden',
+    override_options       : override_options
 )
 
 thorvg_dep = declare_dependency(
