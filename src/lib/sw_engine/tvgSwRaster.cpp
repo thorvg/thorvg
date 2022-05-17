@@ -19,6 +19,15 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+
+#ifdef _WIN32
+    #include <malloc.h>
+#elif __FreeBSD__
+    #include<stdlib.h>
+#else
+    #include <alloca.h>
+#endif
+
 #include "tvgMath.h"
 #include "tvgRender.h"
 #include "tvgSwCommon.h"
