@@ -279,7 +279,7 @@ private:
     {
         //real path
 #ifdef _WIN32
-        path = fullpath(full, path, PATH_MAX);
+        path = _fullpath(full, path, PATH_MAX);
 #else
         path = realpath(path, full);
 #endif

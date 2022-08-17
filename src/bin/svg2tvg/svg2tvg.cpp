@@ -70,7 +70,7 @@ char* getpath(const char* input)
 {
     static char buf[PATH_MAX];
 #ifdef _WIN32
-    return fullpath(buf, input, PATH_MAX);
+    return _fullpath(buf, input, PATH_MAX);
 #else
     return realpath(input, buf);
 #endif
