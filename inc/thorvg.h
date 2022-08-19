@@ -183,6 +183,33 @@ struct Matrix
     float e31, e32, e33;
 };
 
+/**
+ * @brief A data structure representing a texture mesh vertex
+ * 
+ * @param pt The vertex coordinate
+ * @param uv The normalized texture coordinate in the range (0.0..1.0, 0.0..1.0)
+ * 
+ * @BETA_API
+ */
+struct Vertex
+{
+   Point pt;
+   Point uv;
+};
+
+
+/**
+ * @brief A data structure representing a triange in a texture mesh
+ * 
+ * @param vertex The three vertices that make up the polygon
+ * 
+ * @BETA_API
+ */
+struct Polygon
+{
+   Vertex vertex[3];
+};
+
 
 /**
  * @class Paint
@@ -1176,6 +1203,42 @@ public:
      * @BETA_API
      */
     Result load(uint32_t* data, uint32_t w, uint32_t h, bool copy) noexcept;
+
+    /**
+     * @brief Sets or removes the triangle mesh to deform the image.
+     * 
+     * If a mesh is provided, the transform property of the Picture will apply to the triangle mesh, and the
+     * image data will be used as the texture.
+     * 
+     * If triangles is null, or triangleCount is 0, the mesh will be removed.
+     * 
+     * Only raster image types are supported at this time (png, jpg). Vector types like svg and tvg do not support
+     * mesh deformation. However, if required you should be able to render a vector image to a raster image and then apply a mesh.
+     * 
+     * @param[in] triangles An array of Polygon objects (triangles) that make up the mesh, or null to remove the mesh
+     * @param[in] triangleCount The number of Polygon objects (triangles) provided, or 0 to remove the mesh
+     * 
+     * @retval Result::Success When succeed.
+     * @retval Result::Unknown If fails
+     * 
+     * @note The Polygons are copied internally, so modifying them after calling Mesh::mesh has no affect.
+     * 
+     * @BETA_API
+     */
+    Result mesh(const Polygon* triangles, const uint32_t triangleCount) noexcept;
+
+    /**
+     * @brief Return the number of triangles in the mesh, and optionally get a pointer to the array of triangles in the mesh.
+     * 
+     * @param[out] triangles Optional. A pointer to the array of Polygons used by this mesh
+     * 
+     * @return uint32_t The number of polygons in the array
+     * 
+     * @note Modifying the triangles returned by this method will modify them directly within the mesh
+     * 
+     * @BETA_API
+     */
+    uint32_t mesh(const Polygon** triangles) const noexcept;
 
     /**
      * @brief Gets the position and the size of the loaded SVG picture.

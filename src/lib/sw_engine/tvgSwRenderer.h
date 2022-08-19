@@ -36,10 +36,11 @@ class SwRenderer : public RenderMethod
 {
 public:
     RenderData prepare(const Shape& shape, RenderData data, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flags) override;
-    RenderData prepare(Surface* image, RenderData data, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flags) override;
+    RenderData prepare(Surface* image, Polygon* triangles, uint32_t triangleCnt, RenderData data, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flags) override;
     bool preRender() override;
     bool renderShape(RenderData data) override;
     bool renderImage(RenderData data) override;
+    bool renderImageMesh(RenderData data) override;
     bool postRender() override;
     bool dispose(RenderData data) override;
     RenderRegion region(RenderData data) override;

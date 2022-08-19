@@ -35,6 +35,7 @@ public:
     bool preRender() override;
     bool renderShape(RenderData data) override;
     bool renderImage(RenderData data) override;
+    bool renderImageMesh(RenderData data) override;
     bool postRender() override;
     bool dispose(RenderData data) override;;
     RenderRegion region(RenderData data) override;

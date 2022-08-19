@@ -1762,7 +1762,11 @@ static void getPixelColorsRGBA8(unsigned char* LODEPNG_RESTRICT buffer, size_t n
     } else if (mode->colortype == LCT_RGB) {
         if (mode->bitdepth == 8) {
             for (i = 0; i != numpixels; ++i, buffer += num_channels) {
-                lodepng_memcpy(buffer, &in[i * 3], 3);
+                //lodepng_memcpy(buffer, &in[i * 3], 3);
+                //Convert colortype to LCT_BGR?
+                buffer[0] = in[i * 3 + 2];
+                buffer[1] = in[i * 3 + 1];
+                buffer[2] = in[i * 3 + 0];
                 buffer[3] = 255;
             }
             if (mode->key_defined) {
@@ -2086,7 +2090,17 @@ static unsigned unfilterScanline(unsigned char* recon, const unsigned char* scan
     size_t i;
     switch (filterType) {
         case 0: {
-            for (i = 0; i < length; ++i) recon[i] = scanline[i];
+            if (bytewidth == 4) {
+                for (i = 0; i < length; i += 4) {
+                    //RGBA -> BGRA
+                    recon[i + 0] = scanline[i + 2];
+                    recon[i + 1] = scanline[i + 1];
+                    recon[i + 2] = scanline[i + 0];
+                    recon[i + 3] = scanline[i + 3];
+                }
+            } else {
+                for (i = 0; i != length; ++i) recon[i] = scanline[i];
+            }
             break;
         }
         case 1: {
