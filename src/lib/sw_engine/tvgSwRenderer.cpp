@@ -181,6 +181,8 @@ struct SwShapeTask : SwTask
 struct SwImageTask : SwTask
 {
     SwImage image;
+    Polygon* triangles;
+    uint32_t triangleCount;
 
     void run(unsigned tid) override
     {
@@ -191,9 +193,10 @@ struct SwImageTask : SwTask
             imageReset(&image);
             if (!image.data || image.w == 0 || image.h == 0) goto end;
 
-            if (!imagePrepare(&image, transform, clipRegion, bbox, mpool, tid)) goto end;
+            if (!imagePrepare(&image, triangles, triangleCount, transform, clipRegion, bbox, mpool, tid)) goto end;
 
-            if (clips.count > 0) {
+            // TODO: How do we clip the triangle mesh? Only clip non-meshed images for now
+            if (triangleCount == 0 && clips.count > 0) {
                 if (!imageGenRle(&image, bbox, false)) goto end;
                 if (image.rle) {
                     for (auto clip = clips.data; clip < (clips.data + clips.count); ++clip) {
@@ -353,6 +356,17 @@ bool SwRenderer::renderImage(RenderData data)
     if (task->opacity == 0) return true;
 
     return rasterImage(surface, &task->image, task->transform, task->bbox, task->opacity);
+}
+
+
+bool SwRenderer::renderImageMesh(RenderData data)
+{
+    auto task = static_cast<SwImageTask*>(data);
+    task->done();
+
+    if (task->opacity == 0) return true;
+
+    return rasterImageMesh(surface, &task->image, task->triangles, task->triangleCount, task->transform, task->bbox, task->opacity);
 }
 
 
@@ -610,18 +624,18 @@ void* SwRenderer::prepareCommon(SwTask* task, const RenderTransform* transform, 
 }
 
 
-RenderData SwRenderer::prepare(Surface* image, RenderData data, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flags)
+RenderData SwRenderer::prepare(Surface* image, Polygon* triangles, uint32_t triangleCount, RenderData data, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flags)
 {
     //prepare task
     auto task = static_cast<SwImageTask*>(data);
-    if (!task) {
-        task = new SwImageTask;
-        if (flags & RenderUpdateFlag::Image) {
-            task->image.data = image->buffer;
-            task->image.w = image->w;
-            task->image.h = image->h;
-            task->image.stride = image->stride;
-        }
+    if (!task) task = new SwImageTask;
+    if (flags & RenderUpdateFlag::Image) {
+        task->image.data = image->buffer;
+        task->image.w = image->w;
+        task->image.h = image->h;
+        task->image.stride = image->stride;
+        task->triangles = triangles;
+        task->triangleCount = triangleCount;
     }
     return prepareCommon(task, transform, opacity, clips, flags);
 }

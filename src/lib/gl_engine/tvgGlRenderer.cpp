@@ -129,6 +129,12 @@ bool GlRenderer::renderImage(TVG_UNUSED void* data)
 }
 
 
+bool GlRenderer::renderImageMesh(TVG_UNUSED void* data)
+{
+    return false;
+}
+
+
 bool GlRenderer::renderShape(RenderData data)
 {
     auto sdata = static_cast<GlShape*>(data);
