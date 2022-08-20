@@ -25,9 +25,17 @@
 #include <thorvg.h>
 #include <vector>
 #include "lodepng.h"
-#include <dirent.h>
-#include <unistd.h>
-#include <limits.h>
+#ifdef _WIN32
+    #include <windows.h>
+    #ifndef PATH_MAX
+        #define PATH_MAX MAX_PATH
+    #endif
+#else
+    #include <dirent.h>
+    #include <unistd.h>
+    #include <limits.h>
+    #include <sys/stat.h>
+#endif
 
 using namespace std;
 
@@ -229,11 +237,10 @@ public:
             for (auto path : paths) {
                 auto real_path = realFile(path);
                 if (real_path) {
-                    DIR* dir = opendir(real_path);
-                    if (dir) {
+                    if (isDirectory(real_path)) {
                         //load from directory
                         cout << "Trying load from directory \"" << real_path << "\"." << endl;
-                        if ((ret = handleDirectory(real_path, dir))) break;
+                        if ((ret = handleDirectory(real_path))) break;
 
                     } else if (svgFile(path)) {
                         //load single file
@@ -286,6 +293,25 @@ private:
         return path;
     }
 
+    bool isDirectory(const char* path)
+    {
+#ifdef _WIN32
+        DWORD attr = GetFileAttributes(path);
+        if (attr == INVALID_FILE_ATTRIBUTES)
+          return false;
+
+        return attr & FILE_ATTRIBUTE_DIRECTORY;
+#else
+        struct stat buf;
+
+        if (stat(path, &buf) != 0) {
+            return false;
+        }
+
+        return S_ISDIR(buf.st_mode);
+#endif
+    }
+
     int renderFile(const char* path)
     {
         if (!path) return 1;
@@ -299,15 +325,42 @@ private:
         return renderer.render(path, width, height, dst, bgColor);
     }
 
-    int handleDirectory(const string& path, DIR* dir)
+    int handleDirectory(const string& path)
     {
         //open directory
-        if (!dir) {
-            dir = opendir(path.c_str());
-            if (!dir) {
-                cout << "Couldn't open directory \"" << path.c_str() << "\"." << endl;
-                return 1;
+#ifdef _WIN32
+        WIN32_FIND_DATA fd;
+        HANDLE h = FindFirstFileEx((path + "\\*").c_str(), FindExInfoBasic, &fd, FindExSearchNameMatch, NULL, 0);
+        if (h == INVALID_HANDLE_VALUE) {
+            cout << "Couldn't open directory \"" << path.c_str() << "\"." << endl;
+            return 1;
+        }
+        int ret = 0;
+        do {
+            if (*fd.cFileName == '.' || *fd.cFileName == '$') continue;
+            if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+                string subpath = string(path);
+                subpath += '\\';
+                subpath += fd.cFileName;
+                ret = handleDirectory(subpath);
+                if (ret) break;
+
+            } else {
+                if (!svgFile(fd.cFileName)) continue;
+                string fullpath = string(path);
+                fullpath += '\\';
+                fullpath += fd.cFileName;
+                ret = renderFile(fullpath.c_str());
+                if (ret) break;
             }
+        } while (FindNextFile(h, &fd));
+
+        FindClose(h);
+#else
+        DIR* dir = opendir(path.c_str());
+        if (!dir) {
+            cout << "Couldn't open directory \"" << path.c_str() << "\"." << endl;
+            return 1;
         }
 
         //list directory
@@ -317,29 +370,22 @@ private:
             if (*entry->d_name == '.' || *entry->d_name == '$') continue;
             if (entry->d_type == DT_DIR) {
                 string subpath = string(path);
-#ifdef _WIN32
-                subpath += '\\';
-#else
                 subpath += '/';
-#endif
                 subpath += entry->d_name;
-                ret = handleDirectory(subpath, nullptr);
+                ret = handleDirectory(subpath);
                 if (ret) break;
 
             } else {
                 if (!svgFile(entry->d_name)) continue;
                 string fullpath = string(path);
-#ifdef _WIN32
-                fullpath += '\\';
-#else
                 fullpath += '/';
-#endif
                 fullpath += entry->d_name;
                 ret = renderFile(fullpath.c_str());
                 if (ret) break;
             }
         }
         closedir(dir);
+#endif
         return ret;
     }
 };
