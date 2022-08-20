@@ -368,8 +368,6 @@ public:
      * This method can be called for checking the current concrete instance type.
      *
      * @return The type id of the Paint instance.
-     *
-     * @BETA_API
      */
     uint32_t identifier() const noexcept;
 
@@ -476,8 +474,6 @@ public:
      * This method can be called for checking the current concrete instance type.
      *
      * @return The type id of the Fill instance.
-     *
-     * @BETA_API
      */
     uint32_t identifier() const noexcept;
 
@@ -643,8 +639,6 @@ public:
      * This method can be referred for identifying the LinearGradient class type.
      *
      * @return The type id of the LinearGradient class.
-     *
-     * @BETA_API
      */
     static uint32_t identifier() noexcept;
 
@@ -702,8 +696,6 @@ public:
      * This method can be referred for identifying the RadialGradient class type.
      *
      * @return The type id of the RadialGradient class.
-     *
-     * @BETA_API
      */
     static uint32_t identifier() noexcept;
 
@@ -1087,8 +1079,6 @@ public:
      * This method can be referred for identifying the Shape class type.
      *
      * @return The type id of the Shape class.
-     *
-     * @BETA_API
      */
     static uint32_t identifier() noexcept;
 
@@ -1212,16 +1202,17 @@ public:
      * 
      * If triangles is null, or triangleCount is 0, the mesh will be removed.
      * 
-     * Only raster image types are supported at this time (png, jpg). Vector types like svg and tvg do not support
+     * Only raster image types are supported at this time (png, jpg). Vector types like svg and tvg do not support.
      * mesh deformation. However, if required you should be able to render a vector image to a raster image and then apply a mesh.
      * 
-     * @param[in] triangles An array of Polygon objects (triangles) that make up the mesh, or null to remove the mesh
-     * @param[in] triangleCount The number of Polygon objects (triangles) provided, or 0 to remove the mesh
+     * @param[in] triangles An array of Polygon objects (triangles) that make up the mesh, or null to remove the mesh.
+     * @param[in] triangleCount The number of Polygon objects (triangles) provided, or 0 to remove the mesh.
      * 
      * @retval Result::Success When succeed.
      * @retval Result::Unknown If fails
      * 
      * @note The Polygons are copied internally, so modifying them after calling Mesh::mesh has no affect.
+     * @warning Please do not use it, this API is not official one. It could be modified in the next version.
      * 
      * @BETA_API
      */
@@ -1230,11 +1221,12 @@ public:
     /**
      * @brief Return the number of triangles in the mesh, and optionally get a pointer to the array of triangles in the mesh.
      * 
-     * @param[out] triangles Optional. A pointer to the array of Polygons used by this mesh
+     * @param[out] triangles Optional. A pointer to the array of Polygons used by this mesh.
      * 
-     * @return uint32_t The number of polygons in the array
+     * @return uint32_t The number of polygons in the array.
      * 
-     * @note Modifying the triangles returned by this method will modify them directly within the mesh
+     * @note Modifying the triangles returned by this method will modify them directly within the mesh.
+     * @warning Please do not use it, this API is not official one. It could be modified in the next version.
      * 
      * @BETA_API
      */
@@ -1262,8 +1254,6 @@ public:
      * This method can be referred for identifying the Picture class type.
      *
      * @return The type id of the Picture class.
-     *
-     * @BETA_API
      */
     static uint32_t identifier() noexcept;
 
@@ -1342,8 +1332,6 @@ public:
      * This method can be referred for identifying the Scene class type.
      *
      * @return The type id of the Scene class.
-     *
-     * @BETA_API
      */
     static uint32_t identifier() noexcept;
 
@@ -1608,8 +1596,6 @@ public:
  * The Accessor helps you search specific nodes to read the property information, figure out the structure of the scene tree and its size.
  *
  * @warning We strongly warn you not to change the paints of a scene unless you really know the design-structure.
- *
- * @BETA_API
  */
 class TVG_EXPORT Accessor final
 {
@@ -1625,8 +1611,6 @@ public:
      * @return Return the given @p picture instance.
      *
      * @note The bitmap based picture might not have the scene-tree.
-     *
-     * @BETA_API
      */
     std::unique_ptr<Picture> access(std::unique_ptr<Picture> picture, bool(*func)(const Paint* paint)) noexcept;
 
@@ -1634,8 +1618,6 @@ public:
      * @brief Creates a new Accessor object.
      *
      * @return A new Accessor object.
-     *
-     * @BETA_API
      */
     static std::unique_ptr<Accessor> gen() noexcept;
 
