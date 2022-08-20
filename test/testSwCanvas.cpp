@@ -88,7 +88,7 @@ TEST_CASE("Memory Pool", "[tvgSwCanvas]")
     REQUIRE(canvas2->mempool(SwCanvas::MempoolPolicy::Shareable) == Result::Success);
     REQUIRE(canvas2->mempool(SwCanvas::MempoolPolicy::Shareable) == Result::Success);
 
-    REQUIRE(canvas2->push(move(Shape::gen())) == Result::Success);
+    REQUIRE(canvas2->push(Shape::gen()) == Result::Success);
     REQUIRE(canvas2->mempool(SwCanvas::MempoolPolicy::Individual) == Result::InsufficientCondition);
 
     REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
