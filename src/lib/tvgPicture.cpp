@@ -121,9 +121,9 @@ const uint32_t* Picture::data(uint32_t* w, uint32_t* h) const noexcept
 }
 
 
-Result Picture::mesh(const Polygon* triangles, const uint32_t triangleCount) noexcept
+Result Picture::mesh(const Polygon* triangles, const uint32_t triangleCnt) noexcept
 {
-    if (pImpl->mesh(triangles, triangleCount)) return Result::Success;
+    if (pImpl->mesh(triangles, triangleCnt)) return Result::Success;
     return Result::Unknown;
 }
 
@@ -131,5 +131,5 @@ Result Picture::mesh(const Polygon* triangles, const uint32_t triangleCount) noe
 uint32_t Picture::mesh(const Polygon** triangles) const noexcept
 {
     if (triangles) *triangles = pImpl->triangles;
-    return pImpl->triangleCount;
+    return pImpl->triangleCnt;
 }

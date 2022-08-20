@@ -64,7 +64,7 @@ struct Picture::Impl
     Paint* paint = nullptr;           //vector picture uses
     Surface* surface = nullptr;       //bitmap picture uses
     Polygon* triangles = nullptr;     //mesh data
-    uint32_t triangleCount = 0;       //mesh triangle count
+    uint32_t triangleCnt = 0;       //mesh triangle count
     void* rdata = nullptr;            //engine data
     float w = 0, h = 0;
     bool resizing = false;
@@ -131,7 +131,7 @@ struct Picture::Impl
 
         if (surface) {
             auto transform = resizeTransform(pTransform);
-            rdata = renderer.prepare(surface, triangles, triangleCount, rdata, &transform, opacity, clips, static_cast<RenderUpdateFlag>(pFlag | flag));
+            rdata = renderer.prepare(surface, triangles, triangleCnt, rdata, &transform, opacity, clips, static_cast<RenderUpdateFlag>(pFlag | flag));
         } else if (paint) {
             if (resizing) {
                 loader->resize(paint, w, h);
@@ -172,12 +172,12 @@ struct Picture::Impl
 
     bool bounds(float* x, float* y, float* w, float* h)
     {
-        if (triangleCount > 0) {
+        if (triangleCnt > 0) {
             
             Point min = { triangles[0].vertex[0].pt.x, triangles[0].vertex[0].pt.y };
             Point max = { triangles[0].vertex[0].pt.x, triangles[0].vertex[0].pt.y };
 
-            for (uint32_t i = 0; i < triangleCount; ++i) {
+            for (uint32_t i = 0; i < triangleCnt; ++i) {
                 if (triangles[i].vertex[0].pt.x < min.x) min.x = triangles[i].vertex[0].pt.x;
                 else if (triangles[i].vertex[0].pt.x > max.x) max.x = triangles[i].vertex[0].pt.x;
                 if (triangles[i].vertex[0].pt.y < min.y) min.y = triangles[i].vertex[0].pt.y;
@@ -252,16 +252,16 @@ struct Picture::Impl
         return Result::Success;
     }
 
-    bool mesh(const Polygon* triangles, const uint32_t triangleCount)
+    bool mesh(const Polygon* triangles, const uint32_t triangleCnt)
     {
-        if (triangles && triangleCount > 0) {
-            this->triangleCount = triangleCount;
-            this->triangles = (Polygon*)malloc(sizeof(Polygon) * triangleCount);
-            memcpy(this->triangles, triangles, sizeof(Polygon) * triangleCount);
+        if (triangles && triangleCnt > 0) {
+            this->triangleCnt = triangleCnt;
+            this->triangles = (Polygon*)malloc(sizeof(Polygon) * triangleCnt);
+            memcpy(this->triangles, triangles, sizeof(Polygon) * triangleCnt);
         } else {
             free(this->triangles);
             this->triangles = nullptr;
-            this->triangleCount = 0;
+            this->triangleCnt = 0;
         }
         return true;
     }
@@ -284,10 +284,10 @@ struct Picture::Impl
         dup->h = h;
         dup->resizing = resizing;
 
-        if (triangleCount > 0) {
-            dup->triangleCount = triangleCount;
-            dup->triangles = (Polygon*)malloc(sizeof(Polygon) * triangleCount);
-            memcpy(dup->triangles, triangles, sizeof(Polygon) * triangleCount);
+        if (triangleCnt > 0) {
+            dup->triangleCnt = triangleCnt;
+            dup->triangles = (Polygon*)malloc(sizeof(Polygon) * triangleCnt);
+            memcpy(dup->triangles, triangles, sizeof(Polygon) * triangleCnt);
         }
 
         return ret.release();

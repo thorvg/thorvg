@@ -1200,13 +1200,13 @@ public:
      * If a mesh is provided, the transform property of the Picture will apply to the triangle mesh, and the
      * image data will be used as the texture.
      * 
-     * If triangles is null, or triangleCount is 0, the mesh will be removed.
+     * If @p triangles is @c nullptr, or @p triangleCnt is 0, the mesh will be removed.
      * 
      * Only raster image types are supported at this time (png, jpg). Vector types like svg and tvg do not support.
      * mesh deformation. However, if required you should be able to render a vector image to a raster image and then apply a mesh.
      * 
-     * @param[in] triangles An array of Polygon objects (triangles) that make up the mesh, or null to remove the mesh.
-     * @param[in] triangleCount The number of Polygon objects (triangles) provided, or 0 to remove the mesh.
+     * @param[in] triangles An array of Polygons(triangles) that make up the mesh, or null to remove the mesh.
+     * @param[in] triangleCnt The number of Polygons(triangles) provided, or 0 to remove the mesh.
      * 
      * @retval Result::Success When succeed.
      * @retval Result::Unknown If fails
@@ -1216,7 +1216,7 @@ public:
      * 
      * @BETA_API
      */
-    Result mesh(const Polygon* triangles, const uint32_t triangleCount) noexcept;
+    Result mesh(const Polygon* triangles, const uint32_t triangleCnt) noexcept;
 
     /**
      * @brief Return the number of triangles in the mesh, and optionally get a pointer to the array of triangles in the mesh.
