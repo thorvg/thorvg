@@ -41,9 +41,9 @@ TEST_CASE("Pushing Paints Into Scene", "[tvgScene]")
     REQUIRE(scene);
 
     //Pushing Paints
-    REQUIRE(scene->push(move(Shape::gen())) == Result::Success);
-    REQUIRE(scene->push(move(Picture::gen())) == Result::Success);
-    REQUIRE(scene->push(move(Scene::gen())) == Result::Success);
+    REQUIRE(scene->push(Shape::gen()) == Result::Success);
+    REQUIRE(scene->push(Picture::gen()) == Result::Success);
+    REQUIRE(scene->push(Scene::gen()) == Result::Success);
 
     //Pushing Null Pointer
     REQUIRE(scene->push(nullptr) == Result::MemoryCorruption);
@@ -70,7 +70,7 @@ TEST_CASE("Scene Clear", "[tvgScene]")
     auto scene = Scene::gen();
     REQUIRE(scene);
 
-    REQUIRE(scene->push(move(Shape::gen())) == Result::Success);
+    REQUIRE(scene->push(Shape::gen()) == Result::Success);
     REQUIRE(scene->clear() == Result::Success);
 }
 

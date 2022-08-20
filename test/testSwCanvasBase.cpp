@@ -53,19 +53,19 @@ TEST_CASE("Pushing Paints", "[tvgSwCanvasBase]")
     REQUIRE(canvas->target(buffer, 100, 100, 100, SwCanvas::Colorspace::ARGB8888) == Result::Success);
 
     //Try all types of paints.
-    REQUIRE(canvas->push(move(Shape::gen())) == Result::Success);
-    REQUIRE(canvas->push(move(Picture::gen())) == Result::Success);
-    REQUIRE(canvas->push(move(Scene::gen())) == Result::Success);
+    REQUIRE(canvas->push(Shape::gen()) == Result::Success);
+    REQUIRE(canvas->push(Picture::gen()) == Result::Success);
+    REQUIRE(canvas->push(Scene::gen()) == Result::Success);
 
     //Cases by contexts.
     REQUIRE(canvas->update() == Result::Success);
 
-    REQUIRE(canvas->push(move(Shape::gen())) == Result::Success);
-    REQUIRE(canvas->push(move(Shape::gen())) == Result::Success);
+    REQUIRE(canvas->push(Shape::gen()) == Result::Success);
+    REQUIRE(canvas->push(Shape::gen()) == Result::Success);
 
     REQUIRE(canvas->clear() == Result::Success);
 
-    REQUIRE(canvas->push(move(Shape::gen())) == Result::Success);
+    REQUIRE(canvas->push(Shape::gen()) == Result::Success);
 
     //Negative case 1
     REQUIRE(canvas->push(nullptr) == Result::MemoryCorruption);
@@ -75,9 +75,9 @@ TEST_CASE("Pushing Paints", "[tvgSwCanvasBase]")
     REQUIRE(canvas->push(move(shape6)) == Result::MemoryCorruption);
 
     //Negative case 3
-    REQUIRE(canvas->push(move(Shape::gen())) == Result::Success);
+    REQUIRE(canvas->push(Shape::gen()) == Result::Success);
     REQUIRE(canvas->draw() == Result::Success);
-    REQUIRE(canvas->push(move(Shape::gen())) == Result::InsufficientCondition);
+    REQUIRE(canvas->push(Shape::gen()) == Result::InsufficientCondition);
 
     REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
 }
@@ -104,7 +104,7 @@ TEST_CASE("Clear", "[tvgSwCanvasBase]")
 
     //Try 1: Push -> Clear
     for (int i = 0; i < 5; ++i) {
-        REQUIRE(canvas->push(move(Shape::gen())) == Result::Success);
+        REQUIRE(canvas->push(Shape::gen()) == Result::Success);
 
         auto shape2 = Shape::gen();
         REQUIRE(shape2);
@@ -123,7 +123,7 @@ TEST_CASE("Clear", "[tvgSwCanvasBase]")
 
     //Try 2: Push -> Update -> Clear
     for (int i = 0; i < 5; ++i) {
-        REQUIRE(canvas->push(move(Shape::gen())) == Result::Success);
+        REQUIRE(canvas->push(Shape::gen()) == Result::Success);
 
         auto shape2 = Shape::gen();
         REQUIRE(shape2);
@@ -157,7 +157,7 @@ TEST_CASE("Update", "[tvgSwCanvasBase]")
 
     REQUIRE(canvas->update() == Result::InsufficientCondition);
 
-    REQUIRE(canvas->push(move(Shape::gen())) == Result::Success);
+    REQUIRE(canvas->push(Shape::gen()) == Result::Success);
 
     //No pushed shape
     auto shape = Shape::gen();
