@@ -193,21 +193,16 @@ struct Picture::Impl
                 if (triangles[i].vertex[2].pt.y < min.y) min.y = triangles[i].vertex[2].pt.y;
                 else if (triangles[i].vertex[2].pt.y > max.y) max.y = triangles[i].vertex[2].pt.y;
             }
-
             if (x) *x = min.x;
             if (y) *y = min.y;
             if (w) *w = max.x - min.x;
             if (h) *h = max.y - min.y;
-
         } else {
-
             if (x) *x = 0;
             if (y) *y = 0;
             if (w) *w = this->w;
             if (h) *h = this->h;
-
         }
- 
         return true;
     }
 
@@ -262,7 +257,7 @@ struct Picture::Impl
         if (triangles && triangleCount > 0) {
             this->triangleCount = triangleCount;
             this->triangles = (Polygon*)malloc(sizeof(Polygon) * triangleCount);
-            for (uint32_t i = 0; i < triangleCount; i++) this->triangles[i] = triangles[i];
+            memcpy(this->triangles, triangles, sizeof(Polygon) * triangleCount);
         } else {
             free(this->triangles);
             this->triangles = nullptr;
@@ -292,7 +287,7 @@ struct Picture::Impl
         if (triangleCount > 0) {
             dup->triangleCount = triangleCount;
             dup->triangles = (Polygon*)malloc(sizeof(Polygon) * triangleCount);
-            for (uint32_t i = 0; i < triangleCount; i++) dup->triangles[i] = triangles[i];
+            memcpy(dup->triangles, triangles, sizeof(Polygon) * triangleCount);
         }
 
         return ret.release();
