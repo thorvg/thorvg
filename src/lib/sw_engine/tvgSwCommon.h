@@ -236,6 +236,7 @@ struct SwBlender
 {
     uint32_t (*join)(uint8_t r, uint8_t g, uint8_t b, uint8_t a);
     uint32_t (*lumaValue)(uint32_t c);
+    uint32_t (*blend)(uint32_t src, uint32_t dst, uint8_t alpha, uint8_t ialpha, uint32_t src_blended);
 };
 
 struct SwCompositor;
@@ -281,6 +282,28 @@ static inline uint32_t INTERPOLATE(uint32_t a, uint32_t c0, uint32_t c1)
 static inline SwCoord HALF_STROKE(float width)
 {
     return TO_SWCOORD(width * 0.5f);
+}
+
+static inline uint32_t LIMIT_BYTE(uint32_t b)
+{
+    return (b & 0xffffff00) ? 0xff : b;
+}
+
+static inline uint32_t LIMIT_BYTE_LOW(uint32_t b)
+{
+    return (b & 0xffffff00) ? 0x00 : b;
+}
+
+static inline uint32_t BLEND_COLORS(uint32_t src, uint32_t dst, uint8_t alpha, uint8_t ialpha)
+{
+    // for each byte: (src * alpha + dst * ialpha + 0xff) >> 8
+    return ((((src >> 8) & 0x00ff00ff) * alpha + ((dst >> 8) & 0x00ff00ff) * ialpha + 0xff00ff) & 0xff00ff00)
+            | (((((src) & 0x00ff00ff) * alpha + ((dst) & 0x00ff00ff) * ialpha + 0xff00ff) >> 8) & 0x00ff00ff);
+}
+
+static inline uint32_t ABS_DIFFERENCE(uint32_t src, uint32_t dst)
+{
+    return (src >= dst) ? (src - dst) : (dst - src);
 }
 
 int64_t mathMultiply(int64_t a, int64_t b);
@@ -346,6 +369,19 @@ SwOutline* mpoolReqOutline(SwMpool* mpool, unsigned idx);
 void mpoolRetOutline(SwMpool* mpool, unsigned idx);
 SwOutline* mpoolReqStrokeOutline(SwMpool* mpool, unsigned idx);
 void mpoolRetStrokeOutline(SwMpool* mpool, unsigned idx);
+
+uint32_t blendNormal(uint32_t src, uint32_t dst, uint8_t alpha, uint8_t ialpha, uint32_t src_blended);
+uint32_t blendScreen(uint32_t src, uint32_t dst, uint8_t alpha, uint8_t ialpha, uint32_t src_blended);
+uint32_t blendMultiply(uint32_t src, uint32_t dst, uint8_t alpha, uint8_t ialpha, uint32_t src_blended);
+uint32_t blendOverlay(uint32_t src, uint32_t dst, uint8_t alpha, uint8_t ialpha, uint32_t src_blended);
+uint32_t blendDarken(uint32_t src, uint32_t dst, uint8_t alpha, uint8_t ialpha, uint32_t src_blended);
+uint32_t blendLighten(uint32_t src, uint32_t dst, uint8_t alpha, uint8_t ialpha, uint32_t src_blended);
+uint32_t blendColorDodge(uint32_t src, uint32_t dst, uint8_t alpha, uint8_t ialpha, uint32_t src_blended);
+uint32_t blendColorBurn(uint32_t src, uint32_t dst, uint8_t alpha, uint8_t ialpha, uint32_t src_blended);
+uint32_t blendHardLight(uint32_t src, uint32_t dst, uint8_t alpha, uint8_t ialpha, uint32_t src_blended);
+uint32_t blendSoftLight(uint32_t src, uint32_t dst, uint8_t alpha, uint8_t ialpha, uint32_t src_blended);
+uint32_t blendDifference(uint32_t src, uint32_t dst, uint8_t alpha, uint8_t ialpha, uint32_t src_blended);
+uint32_t blendExclusion(uint32_t src, uint32_t dst, uint8_t alpha, uint8_t ialpha, uint32_t src_blended);
 
 bool rasterCompositor(SwSurface* surface);
 bool rasterGradientShape(SwSurface* surface, SwShape* shape, unsigned id);

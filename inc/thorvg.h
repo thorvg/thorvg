@@ -212,6 +212,28 @@ struct Polygon
 
 
 /**
+ * @brief Enumeration specifying the blending mode used for paint blending.
+ * 
+ * @BETA_API
+ */
+enum class BlendingMode
+{
+    Normal = 0,
+    Screen,
+    Multiply,
+    Overlay,
+    Darken,
+    Lighten,
+    ColorDodge,
+    ColorBurn,
+    HardLight,
+    SoftLight,
+    Difference,
+    Exclusion
+};
+
+
+/**
  * @class Paint
  *
  * @brief An abstract class for managing graphical elements.
@@ -302,6 +324,26 @@ public:
      * @return Result::Success when succeed, Result::InvalidArguments otherwise.
      */
     Result composite(std::unique_ptr<Paint> target, CompositeMethod method) noexcept;
+
+    /**
+     * @brief Sets the blending mode for paint.
+     *
+     * @param[in] blendingMode The blending mode for paint.
+     *
+     * @return Result::Success when succeed.
+     * 
+     * @BETA_API
+     */
+    Result blending(BlendingMode blendingMode) const noexcept;
+
+    /**
+     * @brief Gets the blending of the object.
+     *
+     * @return The blending mode
+     * 
+     * @BETA_API
+     */
+    BlendingMode blending() const noexcept;
 
     /**
      * @brief Gets the bounding box of the paint object before any transformation.

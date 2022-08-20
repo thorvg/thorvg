@@ -580,6 +580,51 @@ bool SwRenderer::dispose(RenderData data)
 }
 
 
+void SwRenderer::blending(BlendingMode blendingMode)
+{
+    switch (blendingMode)
+    {
+        default:
+        case BlendingMode::Normal:
+            this->surface->blender.blend = &blendNormal;
+            break;
+        case BlendingMode::Screen:
+            this->surface->blender.blend = &blendScreen;
+            break;
+        case BlendingMode::Multiply:
+            this->surface->blender.blend = &blendMultiply;
+            break;
+        case BlendingMode::Overlay:
+            this->surface->blender.blend = &blendOverlay;
+            break;
+        case BlendingMode::Darken:
+            this->surface->blender.blend = &blendDarken;
+            break;
+        case BlendingMode::Lighten:
+            this->surface->blender.blend = &blendLighten;
+            break;
+        case BlendingMode::ColorDodge:
+            this->surface->blender.blend = &blendColorDodge;
+            break;
+        case BlendingMode::ColorBurn:
+            this->surface->blender.blend = &blendColorBurn;
+            break;
+        case BlendingMode::HardLight:
+            this->surface->blender.blend = &blendHardLight;
+            break;
+        case BlendingMode::SoftLight:
+            this->surface->blender.blend = &blendSoftLight;
+            break;
+        case BlendingMode::Difference:
+            this->surface->blender.blend = &blendDifference;
+            break;
+        case BlendingMode::Exclusion:
+            this->surface->blender.blend = &blendExclusion;
+            break;
+    }
+}
+
+
 void* SwRenderer::prepareCommon(SwTask* task, const RenderTransform* transform, uint32_t opacity, const Array<RenderData>& clips, RenderUpdateFlag flags)
 {
     if (!surface) return task;

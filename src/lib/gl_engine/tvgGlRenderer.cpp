@@ -123,6 +123,12 @@ bool GlRenderer::endComposite(TVG_UNUSED Compositor* cmp)
 }
 
 
+void GlRenderer::blending(BlendingMode blendingMode)
+{
+    // TODO: Implement blending modes in GL
+}
+
+
 bool GlRenderer::renderImage(TVG_UNUSED void* data)
 {
     return false;

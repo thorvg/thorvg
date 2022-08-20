@@ -57,6 +57,8 @@ public:
     bool endComposite(Compositor* cmp) override;
     void clearCompositors();
 
+    void blending(BlendingMode blendingMode) override;
+
     static SwRenderer* gen();
     static bool init(uint32_t threads);
     static int32_t init();
