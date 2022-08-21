@@ -787,20 +787,27 @@ static bool _attrParseSvgNode(void* data, const char* key, const char* value)
 
     if (!strcmp(key, "width")) {
         doc->w = _toFloat(loader->svgParse, value, SvgParserLengthType::Horizontal);
+        doc->bboxFlag |= BBoxFlag::Width;
     } else if (!strcmp(key, "height")) {
         doc->h = _toFloat(loader->svgParse, value, SvgParserLengthType::Vertical);
+        doc->bboxFlag |= BBoxFlag::Height;
     } else if (!strcmp(key, "viewBox")) {
         if (_parseNumber(&value, &doc->vx)) {
             if (_parseNumber(&value, &doc->vy)) {
                 if (_parseNumber(&value, &doc->vw)) {
-                    _parseNumber(&value, &doc->vh);
-                    loader->svgParse->global.h = (uint32_t)doc->vh;
+                    if (_parseNumber(&value, &doc->vh)) {
+                        doc->bboxFlag |= BBoxFlag::ViewboxH;
+                        loader->svgParse->global.h = (uint32_t)doc->vh;
+                    }
+                    doc->bboxFlag |= BBoxFlag::ViewboxW;
+                    loader->svgParse->global.w = (uint32_t)doc->vw;
                 }
-                loader->svgParse->global.w = (uint32_t)doc->vw;
+                doc->bboxFlag |= BBoxFlag::ViewboxY;
+                loader->svgParse->global.y = (int)doc->vy;
             }
-            loader->svgParse->global.y = (int)doc->vy;
+            doc->bboxFlag |= BBoxFlag::ViewboxX;
+            loader->svgParse->global.x = (int)doc->vx;
         }
-        loader->svgParse->global.x = (int)doc->vx;
     } else if (!strcmp(key, "preserveAspectRatio")) {
         if (!strcmp(value, "none")) doc->preserveAspect = false;
     } else if (!strcmp(key, "style")) {
@@ -814,7 +821,6 @@ static bool _attrParseSvgNode(void* data, const char* key, const char* value)
     }
     return true;
 }
-
 
 //https://www.w3.org/TR/SVGTiny12/painting.html#SpecifyingPaint
 static void _handlePaintAttr(SvgPaint* paint, const char* value)
@@ -1249,6 +1255,7 @@ static SvgNode* _createSvgNode(SvgLoaderData* loader, SvgNode* parent, const cha
     loader->svgParse->global.h = 0;
 
     doc->preserveAspect = true;
+    doc->bboxFlag = BBoxFlag::None;
     func(buf, bufLength, _attrParseSvgNode, loader);
 
     if (loader->svgParse->global.w == 0) {
@@ -3127,7 +3134,14 @@ void SvgLoader::run(unsigned tid)
 
         _updateStyle(loaderData.doc, nullptr);
     }
-    root = svgSceneBuild(loaderData.doc, vx, vy, vw, vh, w, h, preserveAspect, svgPath);
+    Box vBox = {vx, vy, vw, vh};
+    root = svgSceneBuild(loaderData.doc, vBox, w, h, preserveAspect, svgPath, bboxGiven);
+    if (!bboxGiven) {
+        vx = vBox.x;
+        vy = vBox.y;
+        vw = w = vBox.w;
+        vh = h = vBox.h;
+    }
 }
 
 
@@ -3140,6 +3154,7 @@ bool SvgLoader::header()
     if (!loaderData.svgParse) return false;
 
     loaderData.svgParse->flags = SvgStopStyleFlags::StopDefault;
+    bboxGiven = false;
 
     simpleXmlParse(content, size, true, _svgLoaderParserForValidCheck, &(loaderData));
 
@@ -3161,6 +3176,14 @@ bool SvgLoader::header()
         }
 
         preserveAspect = loaderData.doc->node.doc.preserveAspect;
+
+        if ((loaderData.doc->node.doc.bboxFlag & BBoxFlag::All) == BBoxFlag::All ||
+            (loaderData.doc->node.doc.bboxFlag & BBoxFlag::Viewbox) == BBoxFlag::Viewbox ||
+            (loaderData.doc->node.doc.bboxFlag & BBoxFlag::WidthHeight) == BBoxFlag::WidthHeight) {
+            if (vw <= 0 || vh <= 0)
+                return false;
+            bboxGiven = true;
+        }
     } else {
         TVGLOG("SVG", "No SVG File. There is no <svg/>");
         return false;

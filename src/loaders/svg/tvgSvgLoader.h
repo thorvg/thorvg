@@ -50,6 +50,8 @@ public:
     unique_ptr<Paint> paint() override;
 
 private:
+    bool bboxGiven;
+
     bool header();
     void clear();
     void run(unsigned tid) override;

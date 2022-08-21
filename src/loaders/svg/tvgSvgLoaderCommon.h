@@ -25,6 +25,11 @@
 #include "tvgCommon.h"
 #include "tvgArray.h"
 
+struct Box
+{
+    float x, y, w, h;
+};
+
 struct SvgNode;
 struct SvgStyleGradient;
 
@@ -145,6 +150,20 @@ enum class SvgParserLengthType
     Other
 };
 
+enum BBoxFlag
+{
+    None = 0,
+    Width = 1,
+    Height = 2,
+    ViewboxX = 4,
+    ViewboxY = 8,
+    ViewboxW = 16,
+    ViewboxH = 32,
+    Viewbox = ViewboxX | ViewboxY | ViewboxW | ViewboxH,
+    WidthHeight = Width | Height,
+    All = Viewbox | WidthHeight
+};
+
 struct SvgDocNode
 {
     float w;
@@ -156,6 +175,7 @@ struct SvgDocNode
     SvgNode* defs;
     SvgNode* style;
     bool preserveAspect;
+    uint32_t bboxFlag;
 };
 
 struct SvgGNode

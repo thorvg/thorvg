@@ -61,12 +61,6 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-struct Box
-{
-    float x, y, w, h;
-};
-
-
 static bool _appendShape(SvgNode* node, Shape* shape, const Box& vBox, const string& svgPath);
 static unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, const Box& vBox, const string& svgPath, bool mask, bool* isMaskWhite = nullptr);
 
@@ -688,38 +682,45 @@ static unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, const Box& vBox,
 /* External Class Implementation                                        */
 /************************************************************************/
 
-unique_ptr<Scene> svgSceneBuild(SvgNode* node, float vx, float vy, float vw, float vh, float w, float h, bool preserveAspect, const string& svgPath)
+unique_ptr<Scene> svgSceneBuild(SvgNode* node, Box& vBox, float w, float h, bool preserveAspect, const string& svgPath, bool bboxGiven)
 {
     if (!node || (node->type != SvgNodeType::Doc)) return nullptr;
 
-    Box vBox = {vx, vy, vw, vh};
     auto docNode = _sceneBuildHelper(node, vBox, svgPath, false);
+    if (!bboxGiven) {
+        //TODO: remove stroke size?
+        docNode->bounds(nullptr, nullptr, &vBox.w, &vBox.h, false);
+        vBox.x = 0.0f;
+        vBox.y = 0.0f;
+        w = vBox.w;
+        h = vBox.h;
+    }
 
-    if (!mathEqual(w, vw) || !mathEqual(h, vh)) {
-        auto sx = w / vw;
-        auto sy = h / vh;
+    if (!mathEqual(w, vBox.w) || !mathEqual(h, vBox.h)) {
+        auto sx = w / vBox.w;
+        auto sy = h / vBox.h;
 
         if (preserveAspect) {
             //Scale
             auto scale = sx < sy ? sx : sy;
             docNode->scale(scale);
             //Align
-            auto tvx = vx * scale;
-            auto tvy = vy * scale;
-            auto tvw = vw * scale;
-            auto tvh = vh * scale;
+            auto tvx = vBox.x * scale;
+            auto tvy = vBox.y * scale;
+            auto tvw = vBox.w * scale;
+            auto tvh = vBox.h * scale;
             tvx -= (w - tvw) * 0.5f;
             tvy -= (h - tvh) * 0.5f;
             docNode->translate(-tvx, -tvy);
         } else {
             //Align
-            auto tvx = vx * sx;
-            auto tvy = vy * sy;
+            auto tvx = vBox.x * sx;
+            auto tvy = vBox.y * sy;
             Matrix m = {sx, 0, -tvx, 0, sy, -tvy, 0, 0, 1};
             docNode->transform(m);
         }
-    } else if (!mathZero(vx) || !mathZero(vy)) {
-        docNode->translate(-vx, -vy);
+    } else if (!mathZero(vBox.x) || !mathZero(vBox.y)) {
+        docNode->translate(-vBox.x, -vBox.y);
     }
 
     auto viewBoxClip = Shape::gen();
