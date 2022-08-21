@@ -587,17 +587,70 @@ static unique_ptr<Scene> _useBuildHelper(const SvgNode* node, const Box& vBox, c
         if ((!mathEqual(width, vw) || !mathEqual(height, vh)) && vw > 0 && vh > 0) {
             auto sx = width / vw;
             auto sy = height / vh;
-            if (symbol.preserveAspect) {
-                if (sx < sy) sy = sx;
-                else sx = sy;
-            }
-
             auto tvx = symbol.vx * sx;
             auto tvy = symbol.vy * sy;
-            auto tvw = vw * sx;
-            auto tvh = vh * sy;
-            tvy -= (symbol.h - tvh) * 0.5f;
-            tvx -= (symbol.w - tvw) * 0.5f;
+
+            if (symbol.align != AspectRatioAlign::None) {
+                //Scale
+                if (symbol.meetOrSlice == AspectRatioMeetOrSlice::Meet) {
+                    if (sx < sy) sy = sx;
+                    else sx = sy;
+                } else {
+                    if (sx < sy) sx = sy;
+                    else sy = sx;
+                }
+
+                tvx = symbol.vx * sx;
+                tvy = symbol.vy * sy;
+                auto tvw = vw * sx;
+                auto tvh = vh * sy;
+
+                switch (symbol.align) {
+                    case AspectRatioAlign::XMinYMin: {
+                        break;
+                    }
+                    case AspectRatioAlign::XMidYMin: {
+                        tvx -= (symbol.w - tvw) * 0.5f;
+                        break;
+                    }
+                    case AspectRatioAlign::XMaxYMin: {
+                        tvx -= symbol.w - tvw;
+                        break;
+                    }
+                    case AspectRatioAlign::XMinYMid: {
+                        tvy -= (symbol.h - tvh) * 0.5f;
+                        break;
+                    }
+                    case AspectRatioAlign::XMidYMid: {
+                        tvx -= (symbol.w - tvw) * 0.5f;
+                        tvy -= (symbol.h - tvh) * 0.5f;
+                        break;
+                    }
+                    case AspectRatioAlign::XMaxYMid: {
+                        tvx -= symbol.w - tvw;
+                        tvy -= (symbol.h - tvh) * 0.5f;
+                        break;
+                    }
+                    case AspectRatioAlign::XMinYMax: {
+                        tvy -= symbol.h - tvh;
+                        break;
+                    }
+                    case AspectRatioAlign::XMidYMax: {
+                        tvx -= (symbol.w - tvw) * 0.5f;
+                        tvy -= symbol.h - tvh;
+                        break;
+                    }
+                    case AspectRatioAlign::XMaxYMax: {
+                        tvx -= symbol.w - tvw;
+                        tvy -= symbol.h - tvh;
+                        break;
+                    }
+                    default: {
+                        break;
+                    }
+                }
+            }
+
             mViewBox = {sx, 0, -tvx, 0, sy, -tvy, 0, 0, 1};
         } else if (!mathZero(symbol.vx) || !mathZero(symbol.vy)) {
             mViewBox = {1, 0, -symbol.vx, 0, 1, -symbol.vy, 0, 0, 1};
@@ -688,8 +741,10 @@ static unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, const Box& vBox,
 /* External Class Implementation                                        */
 /************************************************************************/
 
-unique_ptr<Scene> svgSceneBuild(SvgNode* node, float vx, float vy, float vw, float vh, float w, float h, bool preserveAspect, const string& svgPath)
+unique_ptr<Scene> svgSceneBuild(SvgNode* node, float vx, float vy, float vw, float vh, float w, float h, AspectRatioAlign align, AspectRatioMeetOrSlice meetOrSlice, const string& svgPath)
 {
+    //TODO: aspect ratio is valid only if viewBox was set
+
     if (!node || (node->type != SvgNodeType::Doc)) return nullptr;
 
     Box vBox = {vx, vy, vw, vh};
@@ -699,24 +754,73 @@ unique_ptr<Scene> svgSceneBuild(SvgNode* node, float vx, float vy, float vw, flo
         auto sx = w / vw;
         auto sy = h / vh;
 
-        if (preserveAspect) {
-            //Scale
-            auto scale = sx < sy ? sx : sy;
-            docNode->scale(scale);
-            //Align
-            auto tvx = vx * scale;
-            auto tvy = vy * scale;
-            auto tvw = vw * scale;
-            auto tvh = vh * scale;
-            tvx -= (w - tvw) * 0.5f;
-            tvy -= (h - tvh) * 0.5f;
-            docNode->translate(-tvx, -tvy);
-        } else {
+        if (align == AspectRatioAlign::None) {
             //Align
             auto tvx = vx * sx;
             auto tvy = vy * sy;
             Matrix m = {sx, 0, -tvx, 0, sy, -tvy, 0, 0, 1};
             docNode->transform(m);
+        } else {
+            //Scale
+            float scale;
+            if (meetOrSlice == AspectRatioMeetOrSlice::Meet)
+                scale = sx < sy ? sx : sy;
+            else
+                scale = sx < sy ? sy : sx;
+            docNode->scale(scale);
+
+            //Align
+            auto tvx = vx * scale;
+            auto tvy = vy * scale;
+            auto tvw = vw * scale;
+            auto tvh = vh * scale;
+
+            switch (align) {
+                case AspectRatioAlign::XMinYMin: {
+                    break;
+                }
+                case AspectRatioAlign::XMidYMin: {
+                    tvx -= (w - tvw) * 0.5f;
+                    break;
+                }
+                case AspectRatioAlign::XMaxYMin: {
+                    tvx -= w - tvw;
+                    break;
+                }
+                case AspectRatioAlign::XMinYMid: {
+                    tvy -= (h - tvh) * 0.5f;
+                    break;
+                }
+                case AspectRatioAlign::XMidYMid: {
+                    tvx -= (w - tvw) * 0.5f;
+                    tvy -= (h - tvh) * 0.5f;
+                    break;
+                }
+                case AspectRatioAlign::XMaxYMid: {
+                    tvx -= w - tvw;
+                    tvy -= (h - tvh) * 0.5f;
+                    break;
+                }
+                case AspectRatioAlign::XMinYMax: {
+                    tvy -= h - tvh;
+                    break;
+                }
+                case AspectRatioAlign::XMidYMax: {
+                    tvx -= (w - tvw) * 0.5f;
+                    tvy -= h - tvh;
+                    break;
+                }
+                case AspectRatioAlign::XMaxYMax: {
+                    tvx -= w - tvw;
+                    tvy -= h - tvh;
+                    break;
+                }
+                default: {
+                    break;
+                }
+            }
+
+            docNode->translate(-tvx, -tvy);
         }
     } else if (!mathZero(vx) || !mathZero(vy)) {
         docNode->translate(-vx, -vy);

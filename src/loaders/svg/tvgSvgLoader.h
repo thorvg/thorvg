@@ -32,6 +32,8 @@ public:
     string svgPath = "";
     const char* content = nullptr;
     uint32_t size = 0;
+    AspectRatioAlign align;
+    AspectRatioMeetOrSlice meetOrSlice;
 
     SvgLoaderData loaderData;
     unique_ptr<Scene> root;
