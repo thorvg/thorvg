@@ -610,39 +610,39 @@ static unique_ptr<Scene> _useBuildHelper(const SvgNode* node, const Box& vBox, c
                         break;
                     }
                     case AspectRatioAlign::XMidYMin: {
-                        tvx -= (symbol.w - tvw) * 0.5f;
+                        tvx -= (width - tvw) * 0.5f;
                         break;
                     }
                     case AspectRatioAlign::XMaxYMin: {
-                        tvx -= symbol.w - tvw;
+                        tvx -= width - tvw;
                         break;
                     }
                     case AspectRatioAlign::XMinYMid: {
-                        tvy -= (symbol.h - tvh) * 0.5f;
+                        tvy -= (height - tvh) * 0.5f;
                         break;
                     }
                     case AspectRatioAlign::XMidYMid: {
-                        tvx -= (symbol.w - tvw) * 0.5f;
-                        tvy -= (symbol.h - tvh) * 0.5f;
+                        tvx -= (width - tvw) * 0.5f;
+                        tvy -= (height - tvh) * 0.5f;
                         break;
                     }
                     case AspectRatioAlign::XMaxYMid: {
-                        tvx -= symbol.w - tvw;
-                        tvy -= (symbol.h - tvh) * 0.5f;
+                        tvx -= width - tvw;
+                        tvy -= (height - tvh) * 0.5f;
                         break;
                     }
                     case AspectRatioAlign::XMinYMax: {
-                        tvy -= symbol.h - tvh;
+                        tvy -= height - tvh;
                         break;
                     }
                     case AspectRatioAlign::XMidYMax: {
-                        tvx -= (symbol.w - tvw) * 0.5f;
-                        tvy -= symbol.h - tvh;
+                        tvx -= (width - tvw) * 0.5f;
+                        tvy -= height - tvh;
                         break;
                     }
                     case AspectRatioAlign::XMaxYMax: {
-                        tvx -= symbol.w - tvw;
-                        tvy -= symbol.h - tvh;
+                        tvx -= width - tvw;
+                        tvy -= height - tvh;
                         break;
                     }
                     default: {
