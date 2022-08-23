@@ -29,7 +29,7 @@
 static tvg::Picture* pPicture = nullptr;
 static double updateTime = 0;
 static double accumulateTime = 0;
-static uint cnt = 0;
+static uint32_t cnt = 0;
 
 void tvgDrawCmds(tvg::Canvas* canvas)
 {
