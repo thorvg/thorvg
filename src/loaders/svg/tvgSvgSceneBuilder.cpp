@@ -49,9 +49,9 @@
 */
 
 
+#include "tvgMath.h" /* to include math.h before cstring */
 #include <cstring>
 #include <string>
-#include "tvgMath.h"
 #include "tvgSvgLoaderCommon.h"
 #include "tvgSvgSceneBuilder.h"
 #include "tvgSvgPath.h"
