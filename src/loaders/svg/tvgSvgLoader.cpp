@@ -153,10 +153,11 @@ static bool _parseAspectRatio(const char** content, AspectRatioAlign* align, Asp
         }
     }
 
-    if (!strcmp(*content, "meet"))
+    if (!strcmp(*content, "meet")) {
         *meetOrSlice = AspectRatioMeetOrSlice::Meet;
-    else if (!strcmp(*content, "slice"))
+    } else if (!strcmp(*content, "slice")) {
         *meetOrSlice = AspectRatioMeetOrSlice::Slice;
+    }
 
     return true;
 }
@@ -3262,19 +3263,8 @@ bool SvgLoader::resize(Paint* paint, float w, float h)
 
     auto sx = w / this->w;
     auto sy = h / this->h;
-
-    if (align == AspectRatioAlign::None) {
-        Matrix m = {sx, 0, 0, 0, sy, 0, 0, 0, 1};
-        paint->transform(m);
-    } else {
-        float scale;
-        if (meetOrSlice == AspectRatioMeetOrSlice::Meet)
-            scale = sx < sy ? sx : sy;
-        else
-            scale = sx < sy ? sy : sx;
-
-        paint->scale(scale);
-    }
+    Matrix m = {sx, 0, 0, 0, sy, 0, 0, 0, 1};
+    paint->transform(m);
 
     return true;
 }

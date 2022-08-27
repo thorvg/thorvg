@@ -32,8 +32,6 @@ public:
     string svgPath = "";
     const char* content = nullptr;
     uint32_t size = 0;
-    AspectRatioAlign align = AspectRatioAlign::XMidYMid;
-    AspectRatioMeetOrSlice meetOrSlice = AspectRatioMeetOrSlice::Meet;
 
     SvgLoaderData loaderData;
     unique_ptr<Scene> root;
@@ -52,6 +50,9 @@ public:
     unique_ptr<Paint> paint() override;
 
 private:
+    AspectRatioAlign align = AspectRatioAlign::XMidYMid;
+    AspectRatioMeetOrSlice meetOrSlice = AspectRatioMeetOrSlice::Meet;
+
     bool header();
     void clear();
     void run(unsigned tid) override;
