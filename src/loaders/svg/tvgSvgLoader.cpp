@@ -2695,10 +2695,14 @@ static void _svgLoaderParserXmlOpen(SvgLoaderData* loader, const char* content, 
             if (loader->stack.count > 0) parent = loader->stack.data[loader->stack.count - 1];
             else parent = loader->doc;
             if (!strcmp(tagName, "style")) {
-                node = method(loader, nullptr, attrs, attrsLength, simpleXmlParseAttributes);
-                loader->cssStyle = node;
-                loader->doc->node.doc.style = node;
-                loader->style = true;
+                // TODO: For now only the first style node is saved. After the css id selector
+                // is introduced this if condition shouldin't be necessary any more
+                if (!loader->cssStyle) {
+                    node = method(loader, nullptr, attrs, attrsLength, simpleXmlParseAttributes);
+                    loader->cssStyle = node;
+                    loader->doc->node.doc.style = node;
+                    loader->style = true;
+                }
             } else {
                 node = method(loader, parent, attrs, attrsLength, simpleXmlParseAttributes);
             }
