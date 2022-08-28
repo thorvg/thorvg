@@ -1992,8 +1992,6 @@ static void _copyAttr(SvgNode* to, const SvgNode* from)
     //Copy style attribute
     _styleCopy(to->style, from->style);
     to->style->flags = (SvgStyleFlags)((int)to->style->flags | (int)from->style->flags);
-    if (from->style->fill.paint.url) to->style->fill.paint.url = strdup(from->style->fill.paint.url);
-    if (from->style->stroke.paint.url) to->style->stroke.paint.url = strdup(from->style->stroke.paint.url);
     if (from->style->clipPath.url) to->style->clipPath.url = strdup(from->style->clipPath.url);
     if (from->style->mask.url) to->style->mask.url = strdup(from->style->mask.url);
 
