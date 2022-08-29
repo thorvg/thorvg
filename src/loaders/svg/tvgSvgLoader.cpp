@@ -554,6 +554,7 @@ static void _toColor(const char* str, uint8_t* r, uint8_t* g, uint8_t* b, char**
             }
         }
     } else if (ref && len >= 3 && !strncmp(str, "url", 3)) {
+        if (*ref) free(*ref);
         *ref = _idFromUrl((const char*)(str + 3));
     } else {
         //Handle named color
@@ -1889,7 +1890,10 @@ static void _styleInherit(SvgStyleProperty* child, const SvgStyleProperty* paren
         child->fill.paint.color = parent->fill.paint.color;
         child->fill.paint.none = parent->fill.paint.none;
         child->fill.paint.curColor = parent->fill.paint.curColor;
-        if (parent->fill.paint.url) child->fill.paint.url = _copyId(parent->fill.paint.url);
+        if (parent->fill.paint.url) {
+            if (child->fill.paint.url) free(child->fill.paint.url);
+            child->fill.paint.url = _copyId(parent->fill.paint.url);
+        }
     }
     if (!((int)child->fill.flags & (int)SvgFillFlags::Opacity)) {
         child->fill.opacity = parent->fill.opacity;
@@ -1902,7 +1906,12 @@ static void _styleInherit(SvgStyleProperty* child, const SvgStyleProperty* paren
         child->stroke.paint.color = parent->stroke.paint.color;
         child->stroke.paint.none = parent->stroke.paint.none;
         child->stroke.paint.curColor = parent->stroke.paint.curColor;
-        child->stroke.paint.url = parent->stroke.paint.url ? _copyId(parent->stroke.paint.url) : nullptr;
+        if (parent->stroke.paint.url) {
+            if (child->stroke.paint.url) free(child->stroke.paint.url);
+            child->stroke.paint.url = _copyId(parent->stroke.paint.url);
+        } else {
+            child->stroke.paint.url = nullptr;
+        }
     }
     if (!((int)child->stroke.flags & (int)SvgStrokeFlags::Opacity)) {
         child->stroke.opacity = parent->stroke.opacity;
@@ -1942,7 +1951,10 @@ static void _styleCopy(SvgStyleProperty* to, const SvgStyleProperty* from)
         to->fill.paint.color = from->fill.paint.color;
         to->fill.paint.none = from->fill.paint.none;
         to->fill.paint.curColor = from->fill.paint.curColor;
-        if (from->fill.paint.url) to->fill.paint.url = _copyId(from->fill.paint.url);
+        if (from->fill.paint.url) {
+            if (to->fill.paint.url) free(to->fill.paint.url);
+            to->fill.paint.url = _copyId(from->fill.paint.url);
+        }
     }
     if (((int)from->fill.flags & (int)SvgFillFlags::Opacity)) {
         to->fill.opacity = from->fill.opacity;
@@ -1956,7 +1968,12 @@ static void _styleCopy(SvgStyleProperty* to, const SvgStyleProperty* from)
         to->stroke.paint.color = from->stroke.paint.color;
         to->stroke.paint.none = from->stroke.paint.none;
         to->stroke.paint.curColor = from->stroke.paint.curColor;
-        to->stroke.paint.url = from->stroke.paint.url ? _copyId(from->stroke.paint.url) : nullptr;
+        if (from->stroke.paint.url) {
+            if (to->stroke.paint.url) free(to->stroke.paint.url);
+            to->stroke.paint.url = _copyId(from->stroke.paint.url);
+        } else {
+            to->stroke.paint.url = nullptr;
+        }
     }
     if (((int)from->stroke.flags & (int)SvgStrokeFlags::Opacity)) {
         to->stroke.opacity = from->stroke.opacity;
