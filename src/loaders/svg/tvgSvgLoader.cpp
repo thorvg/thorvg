@@ -1332,6 +1332,7 @@ static bool _attrParsePathNode(void* data, const char* key, const char* value)
     SvgPathNode* path = &(node->node.path);
 
     if (!strcmp(key, "d")) {
+        if (path->path) free(path->path);
         //Temporary: need to copy
         path->path = _copyId(value);
     } else if (!strcmp(key, "style")) {
@@ -2009,8 +2010,14 @@ static void _copyAttr(SvgNode* to, const SvgNode* from)
     //Copy style attribute
     _styleCopy(to->style, from->style);
     to->style->flags = (SvgStyleFlags)((int)to->style->flags | (int)from->style->flags);
-    if (from->style->clipPath.url) to->style->clipPath.url = strdup(from->style->clipPath.url);
-    if (from->style->mask.url) to->style->mask.url = strdup(from->style->mask.url);
+    if (from->style->clipPath.url) {
+        if (to->style->clipPath.url) free(to->style->clipPath.url);
+        to->style->clipPath.url = strdup(from->style->clipPath.url);
+    }
+    if (from->style->mask.url) {
+        if (to->style->mask.url) free(to->style->mask.url);
+        to->style->mask.url = strdup(from->style->mask.url);
+    }
 
     //Copy node attribute
     switch (from->type) {
@@ -2046,7 +2053,10 @@ static void _copyAttr(SvgNode* to, const SvgNode* from)
             break;
         }
         case SvgNodeType::Path: {
-            if (from->node.path.path) to->node.path.path = strdup(from->node.path.path);
+            if (from->node.path.path) {
+                if (to->node.path.path) free(to->node.path.path);
+                to->node.path.path = strdup(from->node.path.path);
+            }
             break;
         }
         case SvgNodeType::Polygon: {
@@ -2068,7 +2078,10 @@ static void _copyAttr(SvgNode* to, const SvgNode* from)
             to->node.image.y = from->node.image.y;
             to->node.image.w = from->node.image.w;
             to->node.image.h = from->node.image.h;
-            if (from->node.image.href) to->node.image.href = strdup(from->node.image.href);
+            if (from->node.image.href) {
+                if (to->node.image.href) free(to->node.image.href);
+                to->node.image.href = strdup(from->node.image.href);
+            }
             break;
         }
         default: {
