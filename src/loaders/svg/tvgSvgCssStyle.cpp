@@ -128,8 +128,14 @@ void cssCopyStyleAttr(SvgNode* to, const SvgNode* from)
     //Copy style attribute
     _copyStyle(to->style, from->style);
 
-    if (from->style->clipPath.url) to->style->clipPath.url = strdup(from->style->clipPath.url);
-    if (from->style->mask.url) to->style->mask.url = strdup(from->style->mask.url);
+    if (from->style->clipPath.url) {
+        if (to->style->clipPath.url) free(to->style->clipPath.url);
+        to->style->clipPath.url = strdup(from->style->clipPath.url);
+    }
+    if (from->style->mask.url) {
+        if (to->style->mask.url) free(to->style->mask.url);
+        to->style->mask.url = strdup(from->style->mask.url);
+    }
 }
 
 
