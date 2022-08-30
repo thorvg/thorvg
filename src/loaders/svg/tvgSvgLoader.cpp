@@ -1909,8 +1909,6 @@ static void _styleInherit(SvgStyleProperty* child, const SvgStyleProperty* paren
         if (parent->stroke.paint.url) {
             if (child->stroke.paint.url) free(child->stroke.paint.url);
             child->stroke.paint.url = _copyId(parent->stroke.paint.url);
-        } else {
-            child->stroke.paint.url = nullptr;
         }
     }
     if (!((int)child->stroke.flags & (int)SvgStrokeFlags::Opacity)) {
@@ -1971,8 +1969,6 @@ static void _styleCopy(SvgStyleProperty* to, const SvgStyleProperty* from)
         if (from->stroke.paint.url) {
             if (to->stroke.paint.url) free(to->stroke.paint.url);
             to->stroke.paint.url = _copyId(from->stroke.paint.url);
-        } else {
-            to->stroke.paint.url = nullptr;
         }
     }
     if (((int)from->stroke.flags & (int)SvgStrokeFlags::Opacity)) {
