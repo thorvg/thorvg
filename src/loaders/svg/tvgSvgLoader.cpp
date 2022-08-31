@@ -1803,19 +1803,10 @@ static SvgNode* _getDefsNode(SvgNode* node)
 }
 
 
-static SvgNode* _findChildById(const SvgNode* node, const char* id)
+static SvgNode* _findNodeById(SvgNode *node, const char* id)
 {
     if (!node) return nullptr;
 
-    auto child = node->child.data;
-    for (uint32_t i = 0; i < node->child.count; ++i, ++child) {
-        if (((*child)->id) && !strcmp((*child)->id, id)) return (*child);
-    }
-    return nullptr;
-}
-
-static SvgNode* _findNodeById(SvgNode *node, const char* id)
-{
     SvgNode* result = nullptr;
     if (node->id && !strcmp(node->id, id)) return node;
 
@@ -1828,6 +1819,7 @@ static SvgNode* _findNodeById(SvgNode *node, const char* id)
     }
     return result;
 }
+
 
 static void _cloneGradStops(Array<Fill::ColorStop>& dst, const Array<Fill::ColorStop>& src)
 {
@@ -2117,8 +2109,8 @@ static void _clonePostponedNodes(Array<SvgNodeIdPair>* cloneNodes, SvgNode* doc)
     for (uint32_t i = 0; i < cloneNodes->count; ++i) {
         auto nodeIdPair = cloneNodes->data[i];
         auto defs = _getDefsNode(nodeIdPair.node);
-        auto nodeFrom = _findChildById(defs, nodeIdPair.id);
-        if (!nodeFrom) nodeFrom = _findChildById(doc, nodeIdPair.id);
+        auto nodeFrom = _findNodeById(defs, nodeIdPair.id);
+        if (!nodeFrom) nodeFrom = _findNodeById(doc, nodeIdPair.id);
         _cloneNode(nodeFrom, nodeIdPair.node, 0);
         if (nodeFrom && nodeFrom->type == SvgNodeType::Symbol && nodeIdPair.node->type == SvgNodeType::Use) {
             nodeIdPair.node->node.use.symbol = nodeFrom;
@@ -2165,7 +2157,7 @@ static bool _attrParseUseNode(void* data, const char* key, const char* value)
     if (!strcmp(key, "href") || !strcmp(key, "xlink:href")) {
         id = _idFromHref(value);
         defs = _getDefsNode(node);
-        nodeFrom = _findChildById(defs, id);
+        nodeFrom = _findNodeById(defs, id);
         if (nodeFrom) {
             _cloneNode(nodeFrom, node, 0);
             if (nodeFrom->type == SvgNodeType::Symbol) use->symbol = nodeFrom;
