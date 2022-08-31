@@ -659,7 +659,10 @@ static unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, const Box& vBox,
                         scene->push(_sceneBuildHelper(*child, vBox, svgPath, false, isMaskWhite));
                 } else if ((*child)->type == SvgNodeType::Image) {
                     auto image = _imageBuildHelper(*child, vBox, svgPath);
-                    if (image) scene->push(move(image));
+                    if (image) {
+                        scene->push(move(image));
+                        if (isMaskWhite) *isMaskWhite = false;
+                    }
                 } else if ((*child)->type != SvgNodeType::Mask) {
                     auto shape = _shapeBuildHelper(*child, vBox, svgPath);
                     if (shape) {
