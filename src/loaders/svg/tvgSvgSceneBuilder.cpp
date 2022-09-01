@@ -68,7 +68,7 @@ struct Box
 
 
 static bool _appendShape(SvgNode* node, Shape* shape, const Box& vBox, const string& svgPath);
-static unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, const Box& vBox, const string& svgPath, bool mask, bool* isMaskWhite = nullptr);
+static unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, const Box& vBox, const string& svgPath, bool mask, int depth, bool* isMaskWhite = nullptr);
 
 
 static inline bool _isGroupType(SvgNodeType type)
@@ -282,7 +282,7 @@ static void _applyComposition(Paint* paint, const SvgNode* node, const Box& vBox
             node->style->mask.applying = true;
 
             bool isMaskWhite = true;
-            auto comp = _sceneBuildHelper(compNode, vBox, svgPath, true, &isMaskWhite);
+            auto comp = _sceneBuildHelper(compNode, vBox, svgPath, true, 0, &isMaskWhite);
             if (comp) {
                 if (node->transform) comp->transform(*node->transform);
 
@@ -560,10 +560,10 @@ static unique_ptr<Picture> _imageBuildHelper(SvgNode* node, const Box& vBox, con
 }
 
 
-static unique_ptr<Scene> _useBuildHelper(const SvgNode* node, const Box& vBox, const string& svgPath, bool* isMaskWhite)
+static unique_ptr<Scene> _useBuildHelper(const SvgNode* node, const Box& vBox, const string& svgPath, int depth, bool* isMaskWhite)
 {
     unique_ptr<Scene> finalScene;
-    auto scene = _sceneBuildHelper(node, vBox, svgPath, false, isMaskWhite);
+    auto scene = _sceneBuildHelper(node, vBox, svgPath, false, depth + 1, isMaskWhite);
 
     // mUseTransform = mUseTransform * mTranslate
     Matrix mUseTransform = {1, 0, 0, 0, 1, 0, 0, 0, 1};
@@ -642,8 +642,15 @@ static unique_ptr<Scene> _useBuildHelper(const SvgNode* node, const Box& vBox, c
 }
 
 
-static unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, const Box& vBox, const string& svgPath, bool mask, bool* isMaskWhite)
+static unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, const Box& vBox, const string& svgPath, bool mask, int depth, bool* isMaskWhite)
 {
+    /* Exception handling: Prevent invalid SVG data input.
+       The size is the arbitrary value, we need an experimental size. */
+    if (depth > 2192) {
+        TVGERR("SVG", "Infinite recursive call - stopped after %d calls! Svg file may be incorrectly formatted.", depth);
+        return nullptr;
+    }
+
     if (_isGroupType(node->type) || mask) {
         auto scene = Scene::gen();
         // For a Symbol node, the viewBox transformation has to be applied first - see _useBuildHelper()
@@ -654,9 +661,9 @@ static unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, const Box& vBox,
             for (uint32_t i = 0; i < node->child.count; ++i, ++child) {
                 if (_isGroupType((*child)->type)) {
                     if ((*child)->type == SvgNodeType::Use)
-                        scene->push(_useBuildHelper(*child, vBox, svgPath, isMaskWhite));
+                        scene->push(_useBuildHelper(*child, vBox, svgPath, depth + 1, isMaskWhite));
                     else
-                        scene->push(_sceneBuildHelper(*child, vBox, svgPath, false, isMaskWhite));
+                        scene->push(_sceneBuildHelper(*child, vBox, svgPath, false, depth + 1, isMaskWhite));
                 } else if ((*child)->type == SvgNodeType::Image) {
                     auto image = _imageBuildHelper(*child, vBox, svgPath);
                     if (image) {
@@ -696,7 +703,7 @@ unique_ptr<Scene> svgSceneBuild(SvgNode* node, float vx, float vy, float vw, flo
     if (!node || (node->type != SvgNodeType::Doc)) return nullptr;
 
     Box vBox = {vx, vy, vw, vh};
-    auto docNode = _sceneBuildHelper(node, vBox, svgPath, false);
+    auto docNode = _sceneBuildHelper(node, vBox, svgPath, false, 0);
 
     if (!mathEqual(w, vw) || !mathEqual(h, vh)) {
         auto sx = w / vw;
