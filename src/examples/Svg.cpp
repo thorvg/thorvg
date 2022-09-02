@@ -48,8 +48,22 @@ void svgDirCallback(const char* name, const char* path, void* data)
 
     if (picture->load(buf) != tvg::Result::Success) return;
 
-    picture->size(SIZE, SIZE);
-    picture->translate((count % NUM_PER_ROW) * SIZE, (count / NUM_PER_ROW) * (HEIGHT / NUM_PER_COL));
+    //image scaling preserving its aspect ratio
+    float scale;
+    float shiftX = 0.0f, shiftY = 0.0f;
+    float w, h;
+    picture->size(&w, &h);
+
+    if (w > h) {
+        scale = SIZE / w;
+        shiftY = (SIZE - h * scale) * 0.5f;
+    } else {
+        scale = SIZE / h;
+        shiftX = (SIZE - w * scale) * 0.5f;
+    }
+
+    picture->scale(scale);
+    picture->translate((count % NUM_PER_ROW) * SIZE + shiftX, (count / NUM_PER_ROW) * (HEIGHT / NUM_PER_COL) + shiftY);
 
     pictures.push_back(move(picture));
 
