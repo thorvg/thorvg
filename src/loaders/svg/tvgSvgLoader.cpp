@@ -137,11 +137,11 @@ static constexpr struct
 };
 
 
-static bool _parseAspectRatio(const char** content, AspectRatioAlign* align, AspectRatioMeetOrSlice* meetOrSlice)
+static void _parseAspectRatio(const char** content, AspectRatioAlign* align, AspectRatioMeetOrSlice* meetOrSlice)
 {
     if (!strcmp(*content, "none")) {
         *align = AspectRatioAlign::None;
-        return true;
+        return;
     }
 
     for (unsigned int i = 0; i < sizeof(alignTags) / sizeof(alignTags[0]); i++) {
@@ -158,8 +158,6 @@ static bool _parseAspectRatio(const char** content, AspectRatioAlign* align, Asp
     } else if (!strcmp(*content, "slice")) {
         *meetOrSlice = AspectRatioMeetOrSlice::Slice;
     }
-
-    return true;
 }
 
 
