@@ -115,8 +115,53 @@ static bool _parseNumber(const char** content, float* number)
     if ((*content) == end) return false;
     //Skip comma if any
     *content = _skipComma(end);
+
     return true;
 }
+
+
+static constexpr struct
+{
+    AspectRatioAlign align;
+    const char* tag;
+} alignTags[] = {
+    { AspectRatioAlign::XMinYMin, "xMinYMin" },
+    { AspectRatioAlign::XMidYMin, "xMidYMin" },
+    { AspectRatioAlign::XMaxYMin, "xMaxYMin" },
+    { AspectRatioAlign::XMinYMid, "xMinYMid" },
+    { AspectRatioAlign::XMidYMid, "xMidYMid" },
+    { AspectRatioAlign::XMaxYMid, "xMaxYMid" },
+    { AspectRatioAlign::XMinYMax, "xMinYMax" },
+    { AspectRatioAlign::XMidYMax, "xMidYMax" },
+    { AspectRatioAlign::XMaxYMax, "xMaxYMax" },
+};
+
+
+static bool _parseAspectRatio(const char** content, AspectRatioAlign* align, AspectRatioMeetOrSlice* meetOrSlice)
+{
+    if (!strcmp(*content, "none")) {
+        *align = AspectRatioAlign::None;
+        return true;
+    }
+
+    for (unsigned int i = 0; i < sizeof(alignTags) / sizeof(alignTags[0]); i++) {
+        if (!strncmp(*content, alignTags[i].tag, 8)) {
+            *align = alignTags[i].align;
+            *content += 8;
+            *content = _skipSpace(*content, nullptr);
+            break;
+        }
+    }
+
+    if (!strcmp(*content, "meet")) {
+        *meetOrSlice = AspectRatioMeetOrSlice::Meet;
+    } else if (!strcmp(*content, "slice")) {
+        *meetOrSlice = AspectRatioMeetOrSlice::Slice;
+    }
+
+    return true;
+}
+
 
 /**
  * According to https://www.w3.org/TR/SVG/coords.html#Units
@@ -803,7 +848,7 @@ static bool _attrParseSvgNode(void* data, const char* key, const char* value)
         }
         loader->svgParse->global.x = (int)doc->vx;
     } else if (!strcmp(key, "preserveAspectRatio")) {
-        if (!strcmp(value, "none")) doc->preserveAspect = false;
+        _parseAspectRatio(&value, &doc->align, &doc->meetOrSlice);
     } else if (!strcmp(key, "style")) {
         return simpleXmlParseW3CAttribute(value, strlen(value), _parseStyleAttr, loader);
 #ifdef THORVG_LOG_ENABLED
@@ -1157,7 +1202,7 @@ static bool _attrParseSymbolNode(void* data, const char* key, const char* value)
         symbol->h = _toFloat(loader->svgParse, value, SvgParserLengthType::Vertical);
         symbol->hasHeight = true;
     } else if (!strcmp(key, "preserveAspectRatio")) {
-        if (!strcmp(value, "none")) symbol->preserveAspect = false;
+        _parseAspectRatio(&value, &symbol->align, &symbol->meetOrSlice);
     } else if (!strcmp(key, "overflow")) {
         if (!strcmp(value, "visible")) symbol->overflowVisible = true;
     } else {
@@ -1249,7 +1294,8 @@ static SvgNode* _createSvgNode(SvgLoaderData* loader, SvgNode* parent, const cha
     loader->svgParse->global.w = 0;
     loader->svgParse->global.h = 0;
 
-    doc->preserveAspect = true;
+    doc->align = AspectRatioAlign::XMidYMid;
+    doc->meetOrSlice = AspectRatioMeetOrSlice::Meet;
     func(buf, bufLength, _attrParseSvgNode, loader);
 
     if (loader->svgParse->global.w == 0) {
@@ -1310,7 +1356,8 @@ static SvgNode* _createSymbolNode(SvgLoaderData* loader, SvgNode* parent, const 
     if (!loader->svgParse->node) return nullptr;
 
     loader->svgParse->node->display = false;
-    loader->svgParse->node->node.symbol.preserveAspect = true;
+    loader->svgParse->node->node.symbol.align = AspectRatioAlign::XMidYMid;
+    loader->svgParse->node->node.symbol.meetOrSlice = AspectRatioMeetOrSlice::Meet;
     loader->svgParse->node->node.symbol.overflowVisible = false;
 
     loader->svgParse->node->node.symbol.hasViewBox = false;
@@ -3151,7 +3198,7 @@ void SvgLoader::run(unsigned tid)
 
         _updateStyle(loaderData.doc, nullptr);
     }
-    root = svgSceneBuild(loaderData.doc, vx, vy, vw, vh, w, h, preserveAspect, svgPath);
+    root = svgSceneBuild(loaderData.doc, vx, vy, vw, vh, w, h, align, meetOrSlice, svgPath);
 }
 
 
@@ -3184,7 +3231,8 @@ bool SvgLoader::header()
             if (vh < FLT_EPSILON) vh = h;
         }
 
-        preserveAspect = loaderData.doc->node.doc.preserveAspect;
+        align = loaderData.doc->node.doc.align;
+        meetOrSlice = loaderData.doc->node.doc.meetOrSlice;
     } else {
         TVGLOG("SVG", "No SVG File. There is no <svg/>");
         return false;
@@ -3239,31 +3287,9 @@ bool SvgLoader::resize(Paint* paint, float w, float h)
 
     auto sx = w / this->w;
     auto sy = h / this->h;
+    Matrix m = {sx, 0, 0, 0, sy, 0, 0, 0, 1};
+    paint->transform(m);
 
-    if (preserveAspect) {
-        //Scale
-        auto scale = sx < sy ? sx : sy;
-        paint->scale(scale);
-        //Align
-        auto tx = 0.0f;
-        auto ty = 0.0f;
-        auto tw = this->w * scale;
-        auto th = this->h * scale;
-        if (tw > th) ty -= (h - th) * 0.5f;
-        else tx -= (w - tw) * 0.5f;
-        paint->translate(-tx, -ty);
-    } else {
-        //Align
-        auto tx = 0.0f;
-        auto ty = 0.0f;
-        auto tw = this->w * sx;
-        auto th = this->h * sy;
-        if (tw > th) ty -= (h - th) * 0.5f;
-        else tx -= (w - tw) * 0.5f;
-
-        Matrix m = {sx, 0, -tx, 0, sy, -ty, 0, 0, 1};
-        paint->transform(m);
-    }
     return true;
 }
 
