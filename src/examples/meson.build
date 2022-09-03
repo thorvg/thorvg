@@ -40,6 +40,7 @@ source_file = [
     'StrokeLine.cpp',
     'Svg.cpp',
     'Svg2.cpp',
+    'Texmap.cpp',
     'Transform.cpp',
     'Tvg.cpp',
     'TvgSaver.cpp',
