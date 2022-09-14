@@ -255,7 +255,19 @@ private:
         mBuffer = make_unique<uint8_t[]>(mWidth * mHeight * 4);
         mSwCanvas->target((uint32_t *)mBuffer.get(), mWidth, mWidth, mHeight, SwCanvas::ARGB8888);
 
-        if (mPicture) mPicture->size(width, height);
+        if (mPicture) {
+            float scale;
+            float shiftX = 0.0f, shiftY = 0.0f;
+            if (mOriginalSize[0] > mOriginalSize[1]) {
+                scale = width / mOriginalSize[0];
+                shiftY = (height - mOriginalSize[1] * scale) * 0.5f;
+            } else {
+                scale = height / mOriginalSize[1];
+                shiftX = (width - mOriginalSize[0] * scale) * 0.5f;
+            }
+            mPicture->scale(scale);
+            mPicture->translate(shiftX, shiftY);
+        }
     }
 
     struct Layer
