@@ -87,7 +87,7 @@ uint32_t GlShader::complileShader(uint32_t type, char* shaderSrc)
             auto infoLog = static_cast<char*>(malloc(sizeof(char)*infoLen));
             glGetShaderInfoLog(shader, infoLen, NULL, infoLog);
             TVGERR("GL_ENGINE", "Error compiling shader: %s", infoLog);
-            delete[] infoLog;
+            free(infoLog);
         }
         glDeleteShader(shader);
     }
