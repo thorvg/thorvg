@@ -105,9 +105,6 @@
             iru = uu + 1;
             irv = vv + 1;
 
-            //FIXME: If vv goes out of buffer, it can cause potential memory problems.
-            //Therefore, an `if condition` is added so that it does not exceed the height of the image.
-            //This is temporary fix.
             if (vv >= sh) continue;
 
             px = *(sbuf + (vv * sw) + uu);
