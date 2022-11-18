@@ -42,6 +42,24 @@ static bool accessChildren(Iterator* it, bool(*func)(const Paint* paint), Iterat
 }
 
 
+static bool accessChildren(Iterator* it, bool(*func)(const Paint* paint, void* data), IteratorAccessor& itrAccessor, void* data)
+{
+    while (auto child = it->next()) {
+        //Access the child
+        if (!func(child, data)) return false;
+
+        //Access the children of the child
+        if (auto it2 = itrAccessor.iterator(child)) {
+            if (!accessChildren(it2, func, itrAccessor, data)) {
+                delete(it2);
+                return false;
+            }
+            delete(it2);
+        }
+    }
+    return true;
+}
+
 /************************************************************************/
 /* External Class Implementation                                        */
 /************************************************************************/
@@ -60,6 +78,26 @@ unique_ptr<Picture> Accessor::access(unique_ptr<Picture> picture, bool(*func)(co
     IteratorAccessor itrAccessor;
     if (auto it = itrAccessor.iterator(p)) {
         accessChildren(it, func, itrAccessor);
+        delete(it);
+    }
+    return picture;
+}
+
+
+unique_ptr<Picture> Accessor::access(unique_ptr<Picture> picture, bool(*func)(const Paint* paint, void* data), void* data) noexcept
+{
+    auto p = picture.get();
+    if (!p || !func) return picture;
+
+    //Use the Preorder Tree-Search
+
+    //Root
+    if (!func(p, data)) return picture;
+
+    //Children
+    IteratorAccessor itrAccessor;
+    if (auto it = itrAccessor.iterator(p)) {
+        accessChildren(it, func, itrAccessor, data);
         delete(it);
     }
     return picture;
