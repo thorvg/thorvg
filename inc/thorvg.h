@@ -1615,6 +1615,19 @@ public:
     std::unique_ptr<Picture> access(std::unique_ptr<Picture> picture, bool(*func)(const Paint* paint)) noexcept;
 
     /**
+     * @brief Access the Picture scene stree nodes.
+     *
+     * @param[in] picture The picture node to traverse the internal scene-tree.
+     * @param[in] func The callback function calling for every paint nodes of the Picture.
+     * @param[in] data Data will be passed to callback function.
+     *
+     * @return Return the given @p picture instance.
+     *
+     * @note The bitmap based picture might not have the scene-tree.
+     */
+    std::unique_ptr<Picture> access(std::unique_ptr<Picture> picture, bool(*func)(const Paint* paint, void* data), void* data) noexcept;
+
+    /**
      * @brief Creates a new Accessor object.
      *
      * @return A new Accessor object.
