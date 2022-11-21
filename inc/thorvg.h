@@ -14,6 +14,7 @@
 #ifndef _THORVG_H_
 #define _THORVG_H_
 
+#include <functional>
 #include <memory>
 #include <string>
 
@@ -1612,7 +1613,7 @@ public:
      *
      * @note The bitmap based picture might not have the scene-tree.
      */
-    std::unique_ptr<Picture> access(std::unique_ptr<Picture> picture, bool(*func)(const Paint* paint)) noexcept;
+    std::unique_ptr<Picture> access(std::unique_ptr<Picture> picture, std::function<bool(const Paint* paint)> func) noexcept;
 
     /**
      * @brief Creates a new Accessor object.

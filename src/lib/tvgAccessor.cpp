@@ -23,7 +23,7 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-static bool accessChildren(Iterator* it, bool(*func)(const Paint* paint), IteratorAccessor& itrAccessor)
+static bool accessChildren(Iterator* it, function<bool(const Paint* paint)> func, IteratorAccessor& itrAccessor)
 {
     while (auto child = it->next()) {
         //Access the child
@@ -41,12 +41,11 @@ static bool accessChildren(Iterator* it, bool(*func)(const Paint* paint), Iterat
     return true;
 }
 
-
 /************************************************************************/
 /* External Class Implementation                                        */
 /************************************************************************/
 
-unique_ptr<Picture> Accessor::access(unique_ptr<Picture> picture, bool(*func)(const Paint* paint)) noexcept
+unique_ptr<Picture> Accessor::access(unique_ptr<Picture> picture, function<bool(const Paint* paint)> func) noexcept
 {
     auto p = picture.get();
     if (!p || !func) return picture;
