@@ -115,6 +115,17 @@ TEST_CASE("Opacity", "[tvgPaint]")
     REQUIRE(shape->opacity() == 0);
 }
 
+TEST_CASE("Name", "[tvgPaint]")
+{
+    auto shape = Shape::gen();
+    REQUIRE(shape);
+
+    REQUIRE(shape->name().empty());
+
+    REQUIRE(shape->name("test") == Result::Success);
+    REQUIRE(shape->name() == "test");
+}
+
 TEST_CASE("Bounding Box", "[tvgPaint]")
 {
     auto shape = Shape::gen();
@@ -166,6 +177,7 @@ TEST_CASE("Duplication", "[tvgPaint]")
     REQUIRE(shape->translate(200.0f, 100.0f) == Result::Success);
     REQUIRE(shape->scale(2.2f) == Result::Success);
     REQUIRE(shape->rotate(90.0f) == Result::Success);
+    REQUIRE(shape->name("test") == Result::Success);
 
     auto comp = Shape::gen();
     REQUIRE(comp);
@@ -177,6 +189,8 @@ TEST_CASE("Duplication", "[tvgPaint]")
 
     //Compare properties
     REQUIRE(dup->opacity() == 0);
+
+    REQUIRE(dup->name() == "test");
 
     auto m = shape->transform();
     REQUIRE(m.e11 == Approx(0.0f).margin(0.000001));

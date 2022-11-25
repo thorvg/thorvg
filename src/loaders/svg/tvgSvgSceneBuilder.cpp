@@ -796,6 +796,7 @@ static unique_ptr<Scene> _sceneBuildHelper(SvgLoaderData& loaderData, const SvgN
                 } else if ((*child)->type == SvgNodeType::Image) {
                     auto image = _imageBuildHelper(loaderData, *child, vBox, svgPath);
                     if (image) {
+                        if ((*child)->id) image->name(std::string((*child)->id));
                         scene->push(std::move(image));
                         if (isMaskWhite) *isMaskWhite = false;
                     }
@@ -810,6 +811,7 @@ static unique_ptr<Scene> _sceneBuildHelper(SvgLoaderData& loaderData, const SvgN
                                 *isMaskWhite = false;
                             }
                         }
+                        if ((*child)->id) shape->name(std::string((*child)->id));
                         scene->push(std::move(shape));
                     }
                 }
@@ -817,6 +819,7 @@ static unique_ptr<Scene> _sceneBuildHelper(SvgLoaderData& loaderData, const SvgN
             _applyComposition(loaderData, scene.get(), node, vBox, svgPath);
             scene->opacity(node->style->opacity);
         }
+        if (node->id) scene->name(std::string(node->id));
         return scene;
     }
     return nullptr;

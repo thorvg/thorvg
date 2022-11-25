@@ -427,6 +427,28 @@ public:
      */
     uint32_t identifier() const noexcept;
 
+    /**
+     * @brief Sets the name for the current instance.
+     *
+     * The name can be up to 127 characters long.
+     *
+     * @note The "id" attribute of the SVG format is set to name, and save/load is not yet supported in the case of the TVG format.
+     *
+     * @return Result::Success when succeed, Result::InvalidArguments in case the name length exceeded 128 characters.
+     *
+     * @BETA_API
+     */
+    Result name(std::string name) const noexcept;
+
+    /**
+     * @brief Returns the name set for the current instance.
+     *
+     * @return The name set on the current instance when succeed, otherwise an empty string.
+     *
+     * @BETA_API
+     */
+    std::string name() const noexcept;
+
     _TVG_DECLARE_PRIVATE(Paint);
 };
 
