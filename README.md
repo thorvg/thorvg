@@ -43,6 +43,7 @@ ThorVG has the threading mechanism so that it tries to acquire the next scenes w
 - [Practices](#practices)
 	- [Tizen](#tizen)
 	- [Rive](#rive)
+	- [Godot](#godot)
 - [Examples](#examples)
 - [Documentation](#documentation)
 - [Tools](#tools)
@@ -244,6 +245,16 @@ that supports fancy, user-interactive vector animations. For more details see [R
 
 <p align="center">
   <img width="600" height="324" src="https://github.com/Samsung/thorvg/blob/master/res/example_rive.gif">
+</p>
+
+[Back to contents](#contents)
+<br />
+<br />
+### Godot
+ThorVG has been integrated into the [Godot](https://www.godotengine.org) project for use of neat and slick icons in Godot editors. Godot is a completely free and open-source modern game engine, it provides a huge set of common tools, so you can just focus on making your game without reinventing the wheel.
+
+<p align="center">
+  <img width="798" height="461" src="https://github.com/Samsung/thorvg/blob/master/res/example_godot.png">
 </p>
 
 [Back to contents](#contents)
