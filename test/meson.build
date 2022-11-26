@@ -1,4 +1,5 @@
 test_file = [
+    'testAccessor.cpp',
     'testFill.cpp',
     'testInitializer.cpp',
     'testMain.cpp',
