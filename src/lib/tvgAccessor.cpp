@@ -45,26 +45,6 @@ static bool accessChildren(Iterator* it, IteratorAccessor& itrAccessor, function
 /* External Class Implementation                                        */
 /************************************************************************/
 
-unique_ptr<Picture> Accessor::access(unique_ptr<Picture> picture, bool(*func)(const Paint* paint)) noexcept
-{
-    auto p = picture.get();
-    if (!p || !func) return picture;
-
-    //Use the Preorder Tree-Search
-
-    //Root
-    if (!func(p)) return picture;
-
-    //Children
-    IteratorAccessor itrAccessor;
-    if (auto it = itrAccessor.iterator(p)) {
-        accessChildren(it, itrAccessor, func);
-        delete(it);
-    }
-    return picture;
-}
-
-
 unique_ptr<Picture> Accessor::set(unique_ptr<Picture> picture, function<bool(const Paint* paint)> func) noexcept
 {
     auto p = picture.get();
