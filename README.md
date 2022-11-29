@@ -35,24 +35,27 @@ ThorVG has the threading mechanism so that it tries to acquire the next scenes w
 <br />
 
 ## Contents
-- [Building ThorVG](#building-thorvg)
-	- [Meson Build](#meson-build)
-- [Quick Start](#quick-start)
-- [SVG](#svg)
-- [TVG Picture](#tvg-picture)
-- [Practices](#practices)
-	- [Tizen](#tizen)
-	- [Rive](#rive)
-	- [Godot](#godot)
-- [Examples](#examples)
-- [Documentation](#documentation)
-- [Tools](#tools)
-	- [ThorVG Viewer](#thorvg-viewer)
-	- [SVG to PNG](#svg-to-png)
-	- [SVG to TVG](#svg-to-tvg)
-- [API Bindings](#api-bindings)
-- [Dependencies](#dependencies)
-- [Issues or Feature Requests](#issues-or-feature-requests)
+- [ThorVG](#thorvg)
+  - [Contents](#contents)
+  - [Building ThorVG](#building-thorvg)
+    - [Meson Build](#meson-build)
+  - [Quick Start](#quick-start)
+  - [SVG](#svg)
+  - [TVG Picture](#tvg-picture)
+  - [Practices](#practices)
+    - [Tizen](#tizen)
+    - [Rive](#rive)
+    - [Godot](#godot)
+  - [Examples](#examples)
+  - [Installing thorvg using vcpkg](#installing-thorvg-using-vcpkg)
+  - [Documentation](#documentation)
+  - [Tools](#tools)
+    - [ThorVG Viewer](#thorvg-viewer)
+    - [SVG to PNG](#svg-to-png)
+    - [SVG to TVG](#svg-to-tvg)
+  - [API Bindings](#api-bindings)
+  - [Dependencies](#dependencies)
+  - [Issues or Feature Requests](#issues-or-feature-requests)
 
 [](#contents)
 <br />
@@ -273,6 +276,19 @@ install this package from your OS distribution server. Otherwise, please visit t
 [Back to contents](#contents)
 <br />
 <br />
+
+## Installing thorvg using vcpkg
+
+You can download and install thorvg using the vcpkg dependency manager
+
+```
+git clone https://github.com/Microsoft/vcpkg.git
+cd vcpkg
+./bootstrap-vcpkg.sh
+./vcpkg integrate install
+./vcpkg install thorvg
+```
+
 ## Documentation
 ThorVG API documentation is available at [thorvg.org/apis](https://www.thorvg.org/apis), and can also found in the [docs](/docs) folder of this repo.
 
