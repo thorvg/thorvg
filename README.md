@@ -239,9 +239,6 @@ ThorVG has been integrated into the [Tizen](https://www.tizen.org) platform as t
   <img width="798" height="285" src="https://github.com/Samsung/thorvg/blob/master/res/example_tizen.png">
 </p>
 
-[Back to contents](#contents)
-<br />
-<br />
 ### Rive
 We're also building a [Rive](https://rive.app/) port that supports Rive Animation run through the ThorVG backend. Rive is a brand new animation platform
 that supports fancy, user-interactive vector animations. For more details see [Rive-Tizen](https://github.com/rive-app/rive-tizen) on [Github](https://github.com/rive-app/).
@@ -250,9 +247,6 @@ that supports fancy, user-interactive vector animations. For more details see [R
   <img width="600" height="324" src="https://github.com/Samsung/thorvg/blob/master/res/example_rive.gif">
 </p>
 
-[Back to contents](#contents)
-<br />
-<br />
 ### Godot
 ThorVG has been integrated into the [Godot](https://www.godotengine.org) project for use of neat and slick icons in Godot editors. Godot is a completely free and open-source modern game engine, it provides a huge set of common tools, so you can just focus on making your game without reinventing the wheel.
 
@@ -289,6 +283,9 @@ cd vcpkg
 ./vcpkg install thorvg
 ```
 
+[Back to contents](#contents)
+<br />
+<br />
 ## Documentation
 ThorVG API documentation is available at [thorvg.org/apis](https://www.thorvg.org/apis), and can also found in the [docs](/docs) folder of this repo.
 
@@ -301,10 +298,6 @@ ThorVG provides the resource verification tool for the ThorVG Engine. [ThorVG vi
 
 https://user-images.githubusercontent.com/71131832/130445967-fb8f7d81-9c89-4598-b7e4-2c046d5d7438.mp4
 
-
-[Back to contents](#contents)
-<br />
-<br />
 ### SVG to PNG
 ThorVG provides an executable `svg2png` converter that generates a PNG file from an SVG file.
 
@@ -339,9 +332,7 @@ Examples:
     $ svg2png input1.svg input2.svg -r 200x200 -b ff00ff
     $ svg2png . -r 200x200
 ```
-[Back to contents](#contents)
-<br />
-<br />
+
 ### SVG to TVG
 ThorVG provides an executable `svg2tvg` converter that generates a TVG file from an SVG file.
 
@@ -360,6 +351,7 @@ Examples:
     $ svg2tvg input.svg
     $ svg2tvg svgfolder
 ```
+
 [Back to contents](#contents)
 <br />
 <br />
