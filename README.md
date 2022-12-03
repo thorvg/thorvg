@@ -11,12 +11,13 @@
 ThorVG is a platform-independent portable library for drawing vector-based scenes and animation. It's open-source software that is freely used by a variety of software platforms and applications. ThorVG provides neat and easy APIs. Its library has no dependencies and keeps a super compact size. It serves as the vector graphics engine for Tizen OS that powers many products. <br />
 <br />
 The following list shows primitives that are supported by ThorVG: <br />
- - Shapes: Line, Arc, Curve, Path, Polygon, ...
- - Filling: Solid, Linear and Radial Gradient
- - Scene Graph & Affine Transformation (translation, rotation, scale, ...)
- - Stroking: Width, Join, Cap, Dash
- - Composition: Blending, Masking, Path Clipping, ...
- - Pictures: TVG, SVG, JPG, PNG, Bitmap
+
+ * Shapes: Line, Arc, Curve, Path, Polygon, ...
+ * Filling: Solid, Linear and Radial Gradient
+ * Scene Graph & Affine Transformation (translation, rotation, scale, ...)
+ * Stroking: Width, Join, Cap, Dash
+ * Composition: Blending, Masking, Path Clipping, ...
+ * Pictures: TVG, SVG, JPG, PNG, Bitmap
 <p align="center">
   <img width="930" height="473" src="https://github.com/Samsung/thorvg/blob/master/res/example_primitives.png">
 </p>
@@ -36,9 +37,9 @@ ThorVG has the threading mechanism so that it tries to acquire the next scenes w
 
 ## Contents
 - [ThorVG](#thorvg)
-  - [Contents](#contents)
-  - [Building ThorVG](#building-thorvg)
+  - [Installation](#installation)
     - [Meson Build](#meson-build)
+    - [vcpkg](#vcpkg)
   - [Quick Start](#quick-start)
   - [SVG](#svg)
   - [TVG Picture](#tvg-picture)
@@ -46,8 +47,7 @@ ThorVG has the threading mechanism so that it tries to acquire the next scenes w
     - [Tizen](#tizen)
     - [Rive](#rive)
     - [Godot](#godot)
-  - [Examples](#examples)
-  - [Installing thorvg using vcpkg](#installing-thorvg-using-vcpkg)
+  - [Examples](#examples)  
   - [Documentation](#documentation)
   - [Tools](#tools)
     - [ThorVG Viewer](#thorvg-viewer)
@@ -59,11 +59,11 @@ ThorVG has the threading mechanism so that it tries to acquire the next scenes w
 
 [](#contents)
 <br />
-## Building ThorVG
-ThorVG supports [meson](https://mesonbuild.com/) build system.
+## Installation
+You can install ThorVG from either Meson build or vcpkg package manager.
 <br />
 ### Meson Build
-Install [meson](http://mesonbuild.com/Getting-meson.html) and [ninja](https://ninja-build.org/) if not already installed.
+ThorVG supports [meson](https://mesonbuild.com/) build system. Install [meson](http://mesonbuild.com/Getting-meson.html) and [ninja](https://ninja-build.org/) if not already installed.
 
 Run meson to configure ThorVG:
 ```
@@ -73,6 +73,23 @@ Run ninja to build & install ThorVG:
 ```
 ninja -C build install
 ```
+
+### vcpkg
+You can download and install pre-packaged ThorVG using the [vcpkg](https://vcpkg.io/en/index.html) package manager.
+
+Clone the vcpkg repo. Make sure you are in the directory you want the tool installed to before doing this.
+```
+git clone https://github.com/Microsoft/vcpkg.git
+```
+Run the bootstrap script to build vcpkg.
+```
+./bootstrap-vcpkg.sh
+```
+Install ThorVG package.
+```
+./vcpkg install thorvg
+```
+
 [Back to contents](#contents)
 <br />
 <br />
@@ -271,21 +288,6 @@ install this package from your OS distribution server. Otherwise, please visit t
 <br />
 <br />
 
-## Installing thorvg using vcpkg
-
-You can download and install thorvg using the vcpkg dependency manager
-
-```
-git clone https://github.com/Microsoft/vcpkg.git
-cd vcpkg
-./bootstrap-vcpkg.sh
-./vcpkg integrate install
-./vcpkg install thorvg
-```
-
-[Back to contents](#contents)
-<br />
-<br />
 ## Documentation
 ThorVG API documentation is available at [thorvg.org/apis](https://www.thorvg.org/apis), and can also found in the [docs](/docs) folder of this repo.
 
