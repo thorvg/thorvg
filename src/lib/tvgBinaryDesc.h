@@ -92,5 +92,6 @@ using TvgBinFlag = TvgBinByte;
 
 //Picture
 #define TVG_TAG_PICTURE_RAW_IMAGE                   (TvgBinTag)0x70
+#define TVG_TAG_PICTURE_MESH                        (TvgBinTag)0x71
 
 #endif //_TVG_BINARY_DESC_H_
