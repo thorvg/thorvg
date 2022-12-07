@@ -357,27 +357,45 @@ static bool _parsePicture(TvgBinBlock block, Paint* paint)
 {
     auto picture = static_cast<Picture*>(paint);
 
-    //Case1: Image Picture
-    if (block.type == TVG_TAG_PICTURE_RAW_IMAGE) {
-        if (block.length < 2 * SIZE(uint32_t)) return false;
+    switch (block.type) {
+        case TVG_TAG_PICTURE_RAW_IMAGE: {
+            if (block.length < 2 * SIZE(uint32_t)) return false;
 
-        auto ptr = block.data;
-        uint32_t w, h;
+            auto ptr = block.data;
+            uint32_t w, h;
 
-        READ_UI32(&w, ptr);
-        ptr += SIZE(uint32_t);
-        READ_UI32(&h, ptr);
-        ptr += SIZE(uint32_t);
+            READ_UI32(&w, ptr);
+            ptr += SIZE(uint32_t);
+            READ_UI32(&h, ptr);
+            ptr += SIZE(uint32_t);
 
-        auto size = w * h * SIZE(uint32_t);
-        if (block.length != 2 * SIZE(uint32_t) + size) return false;
+            auto size = w * h * SIZE(uint32_t);
+            if (block.length != 2 * SIZE(uint32_t) + size) return false;
 
-        picture->load((uint32_t*) ptr, w, h, true);
-        return true;
+            picture->load((uint32_t*) ptr, w, h, true);
+
+            return true;
+        }
+        case TVG_TAG_PICTURE_MESH: {
+            if (block.length < 1 * SIZE(uint32_t)) return false;
+
+            auto ptr = block.data;
+            uint32_t meshCnt;
+            READ_UI32(&meshCnt, ptr);
+            ptr += SIZE(uint32_t);
+
+            auto size = meshCnt * SIZE(Polygon);
+            if (block.length != SIZE(uint32_t) + size) return false;
+
+            picture->mesh((Polygon*) ptr, meshCnt);
+
+            return true;
+        }
+        //Base Paint Properties
+        default: {
+            if (_parsePaintProperty(block, picture)) return true;
+        }
     }
-
-    //Case2: Base Paint Properties
-    if (_parsePaintProperty(block, picture)) return true;
 
     //Vector Picture won't be requested since Saver replaces it with the Scene
     return false;
@@ -414,7 +432,7 @@ static Paint* _parsePaint(TvgBinBlock baseBlock)
 
     auto ptr = baseBlock.data;
 
-    //2. Read Subsquent properties of the current paint.
+    //2. Read Subsequent properties of the current paint.
     while (ptr < baseBlock.end) {
         auto block = _readBlock(ptr);
         if (block.end > baseBlock.end) return paint;
