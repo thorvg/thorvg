@@ -52,6 +52,55 @@ void exportTvg()
     //prepare the main scene
     auto scene = tvg::Scene::gen();
 
+    //image data
+    ifstream file(EXAMPLE_DIR"/rawimage_200x300.raw");
+    if (!file.is_open()) return;
+    uint32_t *data = (uint32_t*) malloc(sizeof(uint32_t) * 200 * 300);
+    if (!data) return;
+    file.read(reinterpret_cast<char*>(data), sizeof(uint32_t) * 200 * 300);
+    file.close();
+
+    //texmap image
+    auto texmap = tvg::Picture::gen();
+    if (texmap->load(data, 200, 300, true) != tvg::Result::Success) return;
+    texmap->translate(100, 100);
+
+    //Composing Meshes
+    tvg::Polygon triangles[4];
+    triangles[0].vertex[0] = {{100, 125}, {0, 0}};
+    triangles[0].vertex[1] = {{300, 100}, {0.5, 0}};
+    triangles[0].vertex[2] = {{200, 550}, {0, 1}};
+
+    triangles[1].vertex[0] = {{300, 100}, {0.5, 0}};
+    triangles[1].vertex[1] = {{350, 450}, {0.5, 1}};
+    triangles[1].vertex[2] = {{200, 550}, {0, 1}};
+
+    triangles[2].vertex[0] = {{300, 100}, {0.5, 0}};
+    triangles[2].vertex[1] = {{500, 200}, {1, 0}};
+    triangles[2].vertex[2] = {{350, 450}, {0.5, 1}};
+
+    triangles[3].vertex[0] = {{500, 200}, {1, 0}};
+    triangles[3].vertex[1] = {{450, 450}, {1, 1}};
+    triangles[3].vertex[2] = {{350, 450}, {0.5, 1}};
+
+    if (texmap->mesh(triangles, 4) != tvg::Result::Success) return;
+    if (scene->push(move(texmap)) != tvg::Result::Success) return;
+
+    //clipped image
+    auto image = tvg::Picture::gen();
+    if (image->load(data, 200, 300, true) != tvg::Result::Success) return;
+    image->translate(400, 0);
+    image->scale(2);
+
+    auto imageClip = tvg::Shape::gen();
+    imageClip->appendCircle(400, 200, 80, 180);
+    imageClip->fill(0, 0, 0, 155);
+    imageClip->translate(200, 0);
+    image->composite(move(imageClip), tvg::CompositeMethod::ClipPath);
+
+    if (scene->push(move(image)) != tvg::Result::Success) return;
+    free(data);
+
     tvg::Fill::ColorStop colorStops1[3];
     colorStops1[0] = {0, 255, 0, 0, 255};
     colorStops1[1] = {0.5, 0, 0, 255, 127};
@@ -84,28 +133,6 @@ void exportTvg()
     shape1->stroke(move(fillStroke1));
 
     if (scene->push(move(shape1)) != tvg::Result::Success) return;
-
-    //clipped image
-    ifstream file(EXAMPLE_DIR"/rawimage_200x300.raw");
-    if (!file.is_open()) return;
-    uint32_t *data = (uint32_t*) malloc(sizeof(uint32_t) * 200 * 300);
-    if (!data) return;
-    file.read(reinterpret_cast<char*>(data), sizeof(uint32_t) * 200 * 300);
-    file.close();
-
-    auto image = tvg::Picture::gen();
-    if (image->load(data, 200, 300, true) != tvg::Result::Success) return;
-    image->translate(400, 0);
-    image->scale(2);
-
-    auto imageClip = tvg::Shape::gen();
-    imageClip->appendCircle(400, 200, 80, 180);
-    imageClip->fill(0, 0, 0, 155);
-    imageClip->translate(200, 0);
-    image->composite(move(imageClip), tvg::CompositeMethod::ClipPath);
-
-    if (scene->push(move(image)) != tvg::Result::Success) return;
-    free(data);
 
     //nested paints
     auto scene2 = tvg::Scene::gen();
