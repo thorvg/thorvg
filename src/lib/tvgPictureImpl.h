@@ -252,7 +252,7 @@ struct Picture::Impl
         return Result::Success;
     }
 
-    bool mesh(const Polygon* triangles, const uint32_t triangleCnt)
+    void mesh(const Polygon* triangles, const uint32_t triangleCnt)
     {
         if (triangles && triangleCnt > 0) {
             this->triangleCnt = triangleCnt;
@@ -263,7 +263,6 @@ struct Picture::Impl
             this->triangles = nullptr;
             this->triangleCnt = 0;
         }
-        return true;
     }
 
     Paint* duplicate()
