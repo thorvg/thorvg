@@ -123,8 +123,11 @@ const uint32_t* Picture::data(uint32_t* w, uint32_t* h) const noexcept
 
 Result Picture::mesh(const Polygon* triangles, const uint32_t triangleCnt) noexcept
 {
-    if (pImpl->mesh(triangles, triangleCnt)) return Result::Success;
-    return Result::Unknown;
+    if (!triangles && triangleCnt > 0) return Result::InvalidArguments;
+    if (triangles && triangleCnt == 0) return Result::InvalidArguments;
+
+    pImpl->mesh(triangles, triangleCnt);
+    return Result::Success;
 }
 
 
