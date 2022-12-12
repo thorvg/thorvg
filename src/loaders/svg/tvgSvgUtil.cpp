@@ -140,6 +140,8 @@ float svgUtilStrtof(const char *nPtr, char **endPtr)
         }
         val += static_cast<float>(decimalPart) / static_cast<float>(pow10);
         a = iter;
+        //skip if there is a space after the dot.
+        if (isspace(*a)) goto success;
     }
 
     //Optional: exponent
