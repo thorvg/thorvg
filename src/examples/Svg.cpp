@@ -31,7 +31,7 @@
 #define NUM_PER_COL 6
 #define SIZE (WIDTH/NUM_PER_ROW)
 
-static int count = 0;
+static int counter = 0;
 
 static std::vector<unique_ptr<tvg::Picture>> pictures;
 
@@ -63,13 +63,13 @@ void svgDirCallback(const char* name, const char* path, void* data)
     }
 
     picture->scale(scale);
-    picture->translate((count % NUM_PER_ROW) * SIZE + shiftX, (count / NUM_PER_ROW) * (HEIGHT / NUM_PER_COL) + shiftY);
+    picture->translate((counter % NUM_PER_ROW) * SIZE + shiftX, (counter / NUM_PER_ROW) * (HEIGHT / NUM_PER_COL) + shiftY);
 
     pictures.push_back(move(picture));
 
     cout << "SVG: " << buf << endl;
 
-    count++;
+    counter++;
 }
 
 void tvgDrawCmds(tvg::Canvas* canvas)
