@@ -31,7 +31,7 @@
 #define NUM_PER_COL 6
 #define SIZE (WIDTH/NUM_PER_ROW)
 
-static int count = 0;
+static int counter = 0;
 
 static std::vector<unique_ptr<tvg::Picture>> pictures;
 
@@ -49,13 +49,13 @@ void tvgDirCallback(const char* name, const char* path, void* data)
     if (picture->load(buf) != tvg::Result::Success) return;
 
     picture->size(SIZE, SIZE);
-    picture->translate((count % NUM_PER_ROW) * SIZE, (count / NUM_PER_ROW) * (HEIGHT / NUM_PER_COL));
+    picture->translate((counter % NUM_PER_ROW) * SIZE, (counter / NUM_PER_ROW) * (HEIGHT / NUM_PER_COL));
 
     pictures.push_back(move(picture));
 
     cout << "TVG: " << buf << endl;
 
-    count++;
+    counter++;
 }
 
 void tvgDrawCmds(tvg::Canvas* canvas)
