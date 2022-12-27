@@ -77,7 +77,9 @@ struct SwShapeTask : SwTask
 
     void run(unsigned tid) override
     {
-        if (opacity == 0) return;  //Invisible
+        auto compMethod = CompositeMethod::None;
+        auto usedAsClip = (sdata->composite(nullptr, &compMethod) == Result::Success) && (compMethod == CompositeMethod::ClipPath);
+        if (opacity == 0 && !usedAsClip) return;  //Invisible
 
         uint8_t strokeAlpha = 0;
         auto visibleStroke = false;
@@ -99,7 +101,7 @@ struct SwShapeTask : SwTask
             sdata->fillColor(nullptr, nullptr, nullptr, &alpha);
             alpha = static_cast<uint8_t>(static_cast<uint32_t>(alpha) * opacity / 255);
             visibleFill = (alpha > 0 || sdata->fill());
-            if (visibleFill || visibleStroke) {
+            if (visibleFill || visibleStroke || usedAsClip) {
                 shapeReset(&shape);
                 if (!shapePrepare(&shape, sdata, transform, clipRegion, bbox, mpool, tid, clips.count > 0 ? true : false)) goto err;
             }
@@ -111,7 +113,7 @@ struct SwShapeTask : SwTask
 
         //Fill
         if (flags & (RenderUpdateFlag::Gradient | RenderUpdateFlag::Transform | RenderUpdateFlag::Color)) {
-            if (visibleFill) {
+            if (visibleFill || usedAsClip) {
                 /* We assume that if stroke width is bigger than 2,
                    shape outline below stroke could be full covered by stroke drawing.
                    Thus it turns off antialising in that condition.

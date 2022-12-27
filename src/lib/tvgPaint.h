@@ -63,6 +63,7 @@ namespace tvg
         StrategyMethod* smethod = nullptr;
         RenderTransform* rTransform = nullptr;
         Composite* compData = nullptr;
+        Paint* compSource = nullptr;
         uint32_t renderFlag = RenderUpdateFlag::None;
         uint32_t ctxFlag = ContextFlag::Invalid;
         uint32_t id;
@@ -137,6 +138,7 @@ namespace tvg
                 if (!target && method == CompositeMethod::None) return true;
                 compData = static_cast<Composite*>(calloc(1, sizeof(Composite)));
             }
+            target->pImpl->compSource = source;
             compData->target = target;
             compData->source = source;
             compData->method = method;
