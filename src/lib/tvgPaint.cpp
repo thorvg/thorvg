@@ -38,9 +38,9 @@ static bool _compFastTrack(Paint* cmpTarget, const RenderTransform* pTransform, 
 
     if (rTransform) rTransform->update();
 
-    //No rotational.
-    if (pTransform && !mathRightAngle(&pTransform->m)) return false;
-    if (rTransform && !mathRightAngle(&rTransform->m)) return false;
+    //No rotation and no skewing
+    if (pTransform && (!mathRightAngle(&pTransform->m) || mathSkewed(&pTransform->m))) return false;
+    if (rTransform && (!mathRightAngle(&rTransform->m) || mathSkewed(&rTransform->m))) return false;
 
     //Perpendicular Rectangle?
     auto pt1 = pts + 0;
