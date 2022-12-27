@@ -385,6 +385,19 @@ CompositeMethod Paint::composite(const Paint** target) const noexcept
 }
 
 
+Result Paint::composite(const Paint** source, CompositeMethod* method) const noexcept
+{
+    if (source) *source = pImpl->compSource;
+    auto met = (pImpl->compSource && pImpl->compSource->pImpl->compData ?
+                pImpl->compSource->pImpl->compData->method : CompositeMethod::None);
+    if (method) *method = met;
+
+    if (pImpl->compSource != nullptr && met != CompositeMethod::None)
+        return Result::Success;
+    return Result::InsufficientCondition;
+}
+
+
 Result Paint::opacity(uint8_t o) noexcept
 {
     if (pImpl->opacity == o) return Result::Success;
