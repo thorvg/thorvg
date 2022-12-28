@@ -91,7 +91,7 @@ You can keep the file name, but don't please contain any prefix(tvg) nor suffix(
     
     @References: any links to the references such as screenshot images.
 
-    @Issues: 49
+    @Issues: (Issue Link)
 <br />
 
 ## Pull Request
