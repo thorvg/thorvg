@@ -55,7 +55,22 @@ void tvgDrawCmds(tvg::Canvas* canvas, const char* path, const char* name)
 
     if (picture->load(buf) != tvg::Result::Success) return;
 
-    picture->size(SIZE, SIZE);
+    //image scaling preserving its aspect ratio
+    float scale;
+    float shiftX = 0.0f, shiftY = 0.0f;
+    float w, h;
+    picture->size(&w, &h);
+
+    if (w > h) {
+        scale = SIZE / w;
+        shiftY = (SIZE - h * scale) * 0.5f;
+    } else {
+        scale = SIZE / h;
+        shiftX = (SIZE - w * scale) * 0.5f;
+    }
+
+    picture->scale(scale);
+    picture->translate(shiftX, shiftY);
 
     if (canvas->push(move(picture)) != tvg::Result::Success) return;
 
