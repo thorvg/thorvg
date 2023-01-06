@@ -47,7 +47,7 @@ ThorVG has the threading mechanism so that it tries to acquire the next scenes w
     - [Tizen](#tizen)
     - [Rive](#rive)
     - [Godot](#godot)
-  - [Examples](#examples)  
+  - [Examples](#examples)
   - [Documentation](#documentation)
   - [Tools](#tools)
     - [ThorVG Viewer](#thorvg-viewer)

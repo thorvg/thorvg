@@ -96,7 +96,7 @@ public:
 
     bool operator== (const GlPoint& rhs)
     {
-        if (&rhs == this) return true; 
+        if (&rhs == this) return true;
         if (rhs.x == this->x && rhs.y == this->y) return true;
         return false;
     }

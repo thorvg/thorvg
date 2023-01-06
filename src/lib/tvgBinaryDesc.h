@@ -42,7 +42,7 @@ using TvgBinFlag = TvgBinByte;
 #define TVG_HEADER_VERSION_LENGTH 6
 #define TVG_HEADER_RESERVED_LENGTH 1      //Storing flags for extensions
 #define TVG_HEADER_COMPRESS_SIZE 12       //TVG_HEADER_UNCOMPRESSED_SIZE + TVG_HEADER_COMPRESSED_SIZE + TVG_HEADER_COMPRESSED_SIZE_BITS
-//Compress Size 
+//Compress Size
 #define TVG_HEADER_UNCOMPRESSED_SIZE 4     //SIZE (TvgBinCounter)
 #define TVG_HEADER_COMPRESSED_SIZE 4       //SIZE (TvgBinCounter)
 #define TVG_HEADER_COMPRESSED_SIZE_BITS 4  //SIZE (TvgBinCounter)

@@ -517,7 +517,7 @@ static bool _apply(SwSurface* surface, AASpans* aaSpans)
             dst = surface->buffer + (offset + line->x[1] - 1);
             if (line->x[1] < (int32_t)(surface->w - 1)) pixel = *(dst + 1);
             else pixel = *dst;
-            
+
             pos = width;
             while ((int32_t)(width - line->length[1]) < pos) {
                 *dst = INTERPOLATE(255 - (line->coverage[1] * (line->length[1] - (width - pos))), *dst, pixel);
@@ -543,7 +543,7 @@ static bool _apply(SwSurface* surface, AASpans* aaSpans)
     0 -- 1
     |  / |
     | /  |
-    3 -- 2 
+    3 -- 2
 */
 static bool _rasterTexmapPolygon(SwSurface* surface, const SwImage* image, const Matrix* transform, const SwBBox* region, uint32_t opacity, uint32_t (*blendMethod)(uint32_t))
 {
