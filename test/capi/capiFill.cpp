@@ -25,7 +25,7 @@
 
 
 TEST_CASE("Set/Get fill color", "[capiShapeFill]")
-{   
+{
     Tvg_Paint *paint = tvg_shape_new();
     REQUIRE(paint);
 
@@ -43,7 +43,7 @@ TEST_CASE("Set/Get fill color", "[capiShapeFill]")
 }
 
 TEST_CASE("Set/Get fill color on invalid shape", "[capiShapeFill]")
-{   
+{
     REQUIRE(tvg_shape_set_fill_color(NULL, 120, 154, 180, 100) == TVG_RESULT_INVALID_ARGUMENT);
 
     uint8_t r, g, b, a;
@@ -51,7 +51,7 @@ TEST_CASE("Set/Get fill color on invalid shape", "[capiShapeFill]")
 }
 
 TEST_CASE("Set/Get shape fill rule", "[capiShapeFill]")
-{   
+{
     Tvg_Paint *paint = tvg_shape_new();
     REQUIRE(paint);
 
@@ -65,7 +65,7 @@ TEST_CASE("Set/Get shape fill rule", "[capiShapeFill]")
 }
 
 TEST_CASE("Set/Get shape fill rule on invalid object", "[capiShapeFill]")
-{   
+{
     REQUIRE(tvg_shape_set_fill_rule(NULL, TVG_FILL_RULE_EVEN_ODD) == TVG_RESULT_INVALID_ARGUMENT);
 
     Tvg_Fill_Rule rule;

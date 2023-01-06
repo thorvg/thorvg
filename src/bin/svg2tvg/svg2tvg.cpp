@@ -38,7 +38,7 @@ void helpMsg()
 bool convert(string& in, string& out)
 {
     if (Initializer::init(CanvasEngine::Sw, 0) != Result::Success) return false;
-        
+
     auto picture = Picture::gen();
     if (picture->load(in) != Result::Success) return false;
 

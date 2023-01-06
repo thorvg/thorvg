@@ -173,7 +173,6 @@ struct Picture::Impl
     bool bounds(float* x, float* y, float* w, float* h)
     {
         if (triangleCnt > 0) {
-            
             Point min = { triangles[0].vertex[0].pt.x, triangles[0].vertex[0].pt.y };
             Point max = { triangles[0].vertex[0].pt.x, triangles[0].vertex[0].pt.y };
 

@@ -198,7 +198,7 @@ void exportTvg()
 
     //prepare image source
     const int width = 200;
-    const int height = 300;    
+    const int height = 300;
     ifstream file(EXAMPLE_DIR"/rawimage_200x300.raw");
     if (!file.is_open()) return;
     uint32_t *data = (uint32_t*) malloc(sizeof(uint32_t) * width * height);
@@ -213,7 +213,7 @@ void exportTvg()
     //clipped image
     auto image = tvgClippedImage(data, width, height);
     if (scene->push(move(image)) != tvg::Result::Success) return;
-    
+
     free(data);
 
     //prepare gradient common data
@@ -246,7 +246,7 @@ void exportTvg()
     auto circ1 = tvgCircle1(colorStops3, 2);
     if (scene->push(move(circ1)) != tvg::Result::Success) return;
 
-    auto circ2 = tvgCircle2(colorStops3, 2); 
+    auto circ2 = tvgCircle2(colorStops3, 2);
     if (scene->push(move(circ2)) != tvg::Result::Success) return;
 
     //inv mask applied to the main scene

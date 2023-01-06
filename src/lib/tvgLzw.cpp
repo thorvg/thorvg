@@ -258,8 +258,8 @@ struct Dictionary
 
     Dictionary()
     {
-        /* First 256 dictionary entries are reserved to the byte/ASCII range. 
-           Additional entries follow for the character sequences found in the input. 
+        /* First 256 dictionary entries are reserved to the byte/ASCII range.
+           Additional entries follow for the character sequences found in the input.
            Up to 4096 - 256 (MaxDictEntries - FirstCode). */
         size = FirstCode;
 

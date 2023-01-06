@@ -14,7 +14,7 @@ do
 	echo -e "Execute: "${GREEN}$EXAMPLE${NC}" for "$INTERVAL" second(s)"
 	$EXAMPLE &
 	EXAMPLE_PID=$!
-	sleep $INTERVAL 
+	sleep $INTERVAL
 	kill -s SIGTERM $EXAMPLE_PID
 	if [ $? -ne 0 ]; then
     		echo -e "Something wrong with: "${RED}$EXAMPLE${NC}

@@ -118,7 +118,7 @@ static inline void mathScale(Matrix* m, float scale)
 static inline void mathTranslate(Matrix* m, float x, float y)
 {
     m->e13 = x;
-    m->e23 = y;   
+    m->e23 = y;
 }
 
 

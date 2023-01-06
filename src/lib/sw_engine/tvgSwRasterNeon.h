@@ -116,7 +116,7 @@ static bool neonRasterTranslucentRect(SwSurface* surface, const SwBBox& region, 
 
         for (uint32_t x = 0; x <  (w - align) / 2; ++x)
             vDst[x] = vadd_u8((uint8x8_t)vColor, ALPHA_BLEND(vDst[x], vIalpha));
-        
+
         auto leftovers = (w - align) % 2;
         if (leftovers > 0) dst[w - 1] = color + ALPHA_BLEND(dst[w - 1], ialpha);
     }

@@ -114,7 +114,7 @@ float bezAt(const Bezier& bz, float at)
     auto t = 0.5f;
 
     //just in case to prevent an infinite loop
-    if (at <= 0) return 0.0f; 
+    if (at <= 0) return 0.0f;
 
     if (at >= len) return 1.0f;
 
