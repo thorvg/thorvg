@@ -374,7 +374,7 @@ static char* _idFromUrl(const char* url)
 }
 
 
-static unsigned char _parserColor(const char* value, char** end)
+static unsigned char _parseColor(const char* value, char** end)
 {
     float r;
 
@@ -584,11 +584,11 @@ static void _toColor(const char* str, uint8_t* r, uint8_t* g, uint8_t* b, char**
             *b = strtol(tmp, nullptr, 16);
         }
     } else if (len >= 10 && (str[0] == 'r' || str[0] == 'R') && (str[1] == 'g' || str[1] == 'G') && (str[2] == 'b' || str[2] == 'B') && str[3] == '(' && str[len - 1] == ')') {
-        tr = _parserColor(str + 4, &red);
+        tr = _parseColor(str + 4, &red);
         if (red && *red == ',') {
-            tg = _parserColor(red + 1, &green);
+            tg = _parseColor(red + 1, &green);
             if (green && *green == ',') {
-                tb = _parserColor(green + 1, &blue);
+                tb = _parseColor(green + 1, &blue);
                 if (blue && blue[0] == ')' && blue[1] == '\0') {
                     *r = tr;
                     *g = tg;
