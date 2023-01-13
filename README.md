@@ -371,7 +371,7 @@ ThorVG core has no dependencies. However, ThorVG has optional feature extensions
 * External JPG support: [turbojpeg](https://github.com/libjpeg-turbo/libjpeg-turbo)
 * Examples: [EFL](https://www.enlightenment.org/about-efl.md)
 
-Note that ThorVG supports both static/external image loaders. If your system has no external library, you can choose a static loader since it doesn't have dependency.
+Note that ThorVG supports both static/external image loaders. If your system has no external libraries, you can choose static loaders instead.
 
 [Back to contents](#contents)
 <br />
