@@ -85,12 +85,107 @@ struct RenderTransform
     RenderTransform(const RenderTransform* lhs, const RenderTransform* rhs);
 };
 
+struct RenderStroke
+{
+    float width = 0.0f;
+    uint8_t color[4] = {0, 0, 0, 0};
+    Fill *fill = nullptr;
+    float* dashPattern = nullptr;
+    uint32_t dashCnt = 0;
+    StrokeCap cap = StrokeCap::Square;
+    StrokeJoin join = StrokeJoin::Bevel;
+
+    ~RenderStroke()
+    {
+        free(dashPattern);
+        if (fill) delete(fill);
+    }
+};
+
+struct RenderShape
+{
+    struct
+    {
+        PathCommand* cmds = nullptr;
+        uint32_t cmdCnt = 0;
+        uint32_t reservedCmdCnt = 0;
+
+        Point *pts = nullptr;
+        uint32_t ptsCnt = 0;
+        uint32_t reservedPtsCnt = 0;
+    } path;
+
+    Fill *fill = nullptr;
+    RenderStroke *stroke = nullptr;
+    uint8_t color[4] = {0, 0, 0, 0};    //r, g, b, a
+    FillRule rule = FillRule::Winding;
+
+    ~RenderShape()
+    {
+        free(path.cmds);
+        free(path.pts);
+
+        if (fill) delete(fill);
+        if (stroke) delete(stroke);
+    }
+
+    void fillColor(uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a) const
+    {
+        if (r) *r = color[0];
+        if (g) *g = color[1];
+        if (b) *b = color[2];
+        if (a) *a = color[3];
+    }
+
+    float strokeWidth() const
+    {
+        if (!stroke) return 0;
+        return stroke->width;
+    }
+
+    bool strokeColor(uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a) const
+    {
+        if (!stroke) return false;
+
+        if (r) *r = stroke->color[0];
+        if (g) *g = stroke->color[1];
+        if (b) *b = stroke->color[2];
+        if (a) *a = stroke->color[3];
+
+        return true;
+    }
+
+    const Fill* strokeFill() const
+    {
+        if (!stroke) return nullptr;
+        return stroke->fill;
+    }
+
+    uint32_t strokeDash(const float** dashPattern) const
+    {
+        if (!stroke) return 0;
+        if (dashPattern) *dashPattern = stroke->dashPattern;
+        return stroke->dashCnt;
+    }
+
+    StrokeCap strokeCap() const
+    {
+        if (!stroke) return StrokeCap::Square;
+        return stroke->cap;
+    }
+
+    StrokeJoin strokeJoin() const
+    {
+        if (!stroke) return StrokeJoin::Bevel;
+        return stroke->join;
+    }
+};
 
 class RenderMethod
 {
 public:
     virtual ~RenderMethod() {}
-    virtual RenderData prepare(const Shape& shape, RenderData data, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flags, bool clipper) = 0;
+    virtual RenderData prepare(const RenderShape& rshape, RenderData data, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flags, bool clipper) = 0;
     virtual RenderData prepare(Surface* image, Polygon* triangles, uint32_t triangleCnt, RenderData data, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flags) = 0;
     virtual bool preRender() = 0;
     virtual bool renderShape(RenderData data) = 0;
