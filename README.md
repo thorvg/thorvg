@@ -81,11 +81,11 @@ Clone the vcpkg repo. Make sure you are in the directory you want the tool insta
 ```
 git clone https://github.com/Microsoft/vcpkg.git
 ```
-Run the bootstrap script to build vcpkg.
+Run the bootstrap script to build the vcpkg.
 ```
 ./bootstrap-vcpkg.sh
 ```
-Install ThorVG package.
+Install the ThorVG package.
 ```
 ./vcpkg install thorvg
 ```
