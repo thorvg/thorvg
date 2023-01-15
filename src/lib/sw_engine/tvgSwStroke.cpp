@@ -826,7 +826,7 @@ void strokeFree(SwStroke* stroke)
 }
 
 
-void strokeReset(SwStroke* stroke, const Shape* sdata, const Matrix* transform)
+void strokeReset(SwStroke* stroke, const RenderShape* rshape, const Matrix* transform)
 {
     if (transform) {
         stroke->sx = sqrtf(powf(transform->e11, 2.0f) + powf(transform->e21, 2.0f));
@@ -835,11 +835,11 @@ void strokeReset(SwStroke* stroke, const Shape* sdata, const Matrix* transform)
         stroke->sx = stroke->sy = 1.0f;
     }
 
-    stroke->width = HALF_STROKE(sdata->strokeWidth());
-    stroke->cap = sdata->strokeCap();
+    stroke->width = HALF_STROKE(rshape->strokeWidth());
+    stroke->cap = rshape->strokeCap();
 
     //Save line join: it can be temporarily changed when stroking curves...
-    stroke->joinSaved = stroke->join = sdata->strokeJoin();
+    stroke->joinSaved = stroke->join = rshape->strokeJoin();
 
     stroke->borders[0].ptsCnt = 0;
     stroke->borders[0].start = -1;

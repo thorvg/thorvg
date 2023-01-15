@@ -237,9 +237,9 @@ public:
 
     uint32_t getPrimitiveCount();
     const GlSize getPrimitiveSize(const uint32_t primitiveIndex) const;
-    bool decomposeOutline(const Shape& shape);
-    bool generateAAPoints(TVG_UNUSED const Shape& shape, float strokeWd, RenderUpdateFlag flag);
-    bool tesselate(TVG_UNUSED const Shape &shape, float viewWd, float viewHt, RenderUpdateFlag flag);
+    bool decomposeOutline(const RenderShape& rshape);
+    bool generateAAPoints(TVG_UNUSED const RenderShape& rshape, float strokeWd, RenderUpdateFlag flag);
+    bool tesselate(TVG_UNUSED const RenderShape& rshape, float viewWd, float viewHt, RenderUpdateFlag flag);
     void disableVertex(uint32_t location);
     void draw(const uint32_t location, const uint32_t primitiveIndex, RenderUpdateFlag flag);
     void updateTransform(const RenderTransform* transform, float w, float h);

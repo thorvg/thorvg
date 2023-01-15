@@ -43,13 +43,12 @@ const GlSize GlGeometry::getPrimitiveSize(const uint32_t primitiveIndex) const
 }
 
 
-bool GlGeometry::decomposeOutline(const Shape& shape)
+bool GlGeometry::decomposeOutline(const RenderShape& rshape)
 {
-    const PathCommand* cmds = nullptr;
-    auto cmdCnt = shape.pathCommands(&cmds);
-
-    Point* pts = nullptr;
-    auto ptsCnt = shape.pathCoords(const_cast<const Point**>(&pts));
+    auto cmds = rshape.path.cmds;
+    auto cmdCnt = rshape.path.cmdCnt;
+    auto pts = rshape.path.pts;
+    auto ptsCnt = rshape.path.ptsCnt;
 
     //No actual shape data
     if (cmdCnt == 0 || ptsCnt == 0) return false;
@@ -101,7 +100,7 @@ bool GlGeometry::decomposeOutline(const Shape& shape)
     return true;
 }
 
-bool GlGeometry::generateAAPoints(TVG_UNUSED const Shape& shape, float strokeWd, RenderUpdateFlag flag)
+bool GlGeometry::generateAAPoints(TVG_UNUSED const RenderShape& rshape, float strokeWd, RenderUpdateFlag flag)
 {
     for (auto& shapeGeometry : mPrimitives) {
         vector<PointNormals> normalInfo;
@@ -158,7 +157,7 @@ bool GlGeometry::generateAAPoints(TVG_UNUSED const Shape& shape, float strokeWd,
     return true;
 }
 
-bool GlGeometry::tesselate(TVG_UNUSED const Shape& shape, float viewWd, float viewHt, RenderUpdateFlag flag)
+bool GlGeometry::tesselate(TVG_UNUSED const RenderShape& rshape, float viewWd, float viewHt, RenderUpdateFlag flag)
 {
     for (auto& shapeGeometry : mPrimitives) {
         constexpr float opaque = 1.0f;
