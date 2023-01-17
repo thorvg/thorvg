@@ -140,6 +140,13 @@ namespace tvg
             compData->target = target;
             compData->source = source;
             compData->method = method;
+
+            //Overwrite the clip's opacity and alpha values.
+            //The exact values don't matter, but have to be > 0
+            if (method == CompositeMethod::ClipPath) {
+                target->opacity(255);
+                if (target->identifier() == TVG_CLASS_ID_SHAPE) static_cast<Shape*>(target)->fill(255, 255, 255, 255);
+            }
             return true;
         }
 
