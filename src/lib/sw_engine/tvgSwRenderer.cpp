@@ -296,7 +296,7 @@ bool SwRenderer::viewport(const RenderRegion& vp)
 }
 
 
-bool SwRenderer::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h, uint32_t cs)
+bool SwRenderer::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h, uint32_t colorSpace)
 {
     if (!buffer || stride == 0 || w == 0 || h == 0 || w > stride) return false;
 
@@ -306,7 +306,7 @@ bool SwRenderer::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t 
     surface->stride = stride;
     surface->w = w;
     surface->h = h;
-    surface->cs = cs;
+    surface->cs = colorSpace;
 
     vport.x = vport.y = 0;
     vport.w = surface->w;
@@ -658,6 +658,13 @@ RenderData SwRenderer::prepare(const RenderShape& rshape, RenderData data, const
 
 SwRenderer::SwRenderer():mpool(globalMpool)
 {
+}
+
+
+uint32_t SwRenderer::colorSpace()
+{
+    if (surface) return surface->cs;
+    return tvg::SwCanvas::ARGB8888;
 }
 
 

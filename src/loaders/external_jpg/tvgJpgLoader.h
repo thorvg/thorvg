@@ -38,7 +38,7 @@ public:
     bool read() override;
     bool close() override;
 
-    unique_ptr<Surface> bitmap() override;
+    unique_ptr<Surface> bitmap(uint32_t colorSpace) override;
 
 private:
     void clear();
