@@ -37,6 +37,24 @@ void JpgLoader::clear()
     freeData = false;
 }
 
+uint32_t convertColorSpaceType(uint32_t colorSpace)
+{
+    uint32_t tjpfColorSpace = TJPF_RGBX;
+    switch (colorSpace)
+    {
+        case SwCanvas::ARGB8888:
+        case SwCanvas::ARGB8888_STRAIGHT:
+        default:
+           tjpfColorSpace = TJPF_BGRX;
+        break;
+        case SwCanvas::ABGR8888:
+        case SwCanvas::ABGR8888_STRAIGHT:
+           tjpfColorSpace = TJPF_RGBX;
+        break;
+    }
+    return tjpfColorSpace;
+}
+
 /************************************************************************/
 /* External Class Implementation                                        */
 /************************************************************************/
@@ -127,11 +145,11 @@ bool JpgLoader::open(const char* data, uint32_t size, bool copy)
 bool JpgLoader::read()
 {
     if (image) tjFree(image);
-    image = (unsigned char *)tjAlloc(static_cast<int>(w) * static_cast<int>(h) * tjPixelSize[TJPF_BGRX]);
+    image = (unsigned char *)tjAlloc(static_cast<int>(w) * static_cast<int>(h) * tjPixelSize[convertColorSpaceType(colorSpace)]);
     if (!image) return false;
 
     //decompress jpg image
-    if (tjDecompress2(jpegDecompressor, data, size, image, static_cast<int>(w), 0, static_cast<int>(h), TJPF_BGRX, 0) < 0) {
+    if (tjDecompress2(jpegDecompressor, data, size, image, static_cast<int>(w), 0, static_cast<int>(h), convertColorSpaceType(colorSpace), 0) < 0) {
         TVGERR("JPG LOADER", "%s", tjGetErrorStr());
         tjFree(image);
         image = nullptr;
@@ -149,16 +167,20 @@ bool JpgLoader::close()
 }
 
 
-unique_ptr<Surface> JpgLoader::bitmap()
+unique_ptr<Surface> JpgLoader::bitmap(uint32_t colorSpace)
 {
     if (!image) return nullptr;
+    if (this->colorSpace != colorSpace) {
+        this->colorSpace = colorSpace;
+        read();
+    }
 
     auto surface = static_cast<Surface*>(malloc(sizeof(Surface)));
     surface->buffer = (uint32_t*)(image);
     surface->stride = w;
     surface->w = w;
     surface->h = h;
-    surface->cs = SwCanvas::ARGB8888;
+    surface->cs = colorSpace;
 
     return unique_ptr<Surface>(surface);
 }

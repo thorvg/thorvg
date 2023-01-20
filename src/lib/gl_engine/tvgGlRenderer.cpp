@@ -123,6 +123,13 @@ bool GlRenderer::endComposite(TVG_UNUSED Compositor* cmp)
 }
 
 
+int32_t GlRenderer::colorSpace()
+{
+    //TODO: return a proper color space value.
+    return -1;
+}
+
+
 bool GlRenderer::renderImage(TVG_UNUSED void* data)
 {
     return false;
