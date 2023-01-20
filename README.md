@@ -377,4 +377,4 @@ Note that ThorVG supports both static/external image loaders. If your system has
 <br />
 <br />
 ## Issues or Feature Requests
-For support, please reach us in [Gitter](https://gitter.im/thorvg/community).
+For support, please reach us in [Discord](https://discord.com/channels/1065834877586509835/1065834878056284287) or [Gitter](https://gitter.im/thorvg/community)
