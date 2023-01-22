@@ -264,11 +264,8 @@ static void _applyComposition(Paint* paint, const SvgNode* node, const Box& vBox
                 if (_appendChildShape(*child, comp.get(), vBox, svgPath)) valid = true;
             }
 
-            if (valid) {
-                comp->fill(255, 255, 255, 255);
-                comp->opacity(255);
-                paint->composite(move(comp), CompositeMethod::ClipPath);
-            }
+            if (valid) paint->composite(move(comp), CompositeMethod::ClipPath);
+
             node->style->clipPath.applying = false;
         }
     }
