@@ -61,7 +61,6 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     auto circle = tvg::Shape::gen();
     circle->appendCircle(350, 350, 200,200);
-    circle->fill(255, 255, 255, 255);
 
     picture2->composite(move(circle), tvg::CompositeMethod::ClipPath);
 
