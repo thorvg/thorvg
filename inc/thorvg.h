@@ -2,11 +2,12 @@
  * @file thorvg.h
  *
  * The main APIs enabling the TVG initialization, preparation of the canvas and provisioning of its content:
- * - drawing shapes such as line, curve, arc, rectangle, circle or user-defined
- * - drawing pictures - SVG, PNG, JPG, RAW
- * - solid or gradient filling
- * - continuous and dashed stroking
- * - clipping and masking
+ * - drawing shapes: line, arc, curve, path, polygon...
+ * - drawing pictures: tvg, svg, png, jpg, bitmap...
+ * - drawing fillings: solid, linear and radial gradient...
+ * - drawing stroking: continuous stroking with arbitrary width, join, cap, dash styles.
+ * - drawing composition: blending, masking, path clipping...
+ * - drawing scene graph & affine transformation (translation, rotation, scale, ...)
  * and finally drawing the canvas and TVG termination.
  */
 
@@ -291,6 +292,7 @@ public:
      * @return Result::Success when succeed.
      *
      * @note Setting the opacity with this API may require multiple render pass for composition. It is recommended to avoid changing the opacity if possible.
+     * @note ClipPath won't use the opacity value. (see: enum class CompositeMethod::ClipPath)
      */
     Result opacity(uint8_t o) noexcept;
 
@@ -963,6 +965,7 @@ public:
      * @return Result::Success when succeed.
      *
      * @note Either a solid color or a gradient fill is applied, depending on what was set as last.
+     * @note ClipPath won't use the fill values. (see: enum class CompositeMethod::ClipPath)
      */
     Result fill(uint8_t r, uint8_t g, uint8_t b, uint8_t a) noexcept;
 
