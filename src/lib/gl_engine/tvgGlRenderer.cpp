@@ -197,7 +197,7 @@ RenderData GlRenderer::prepare(TVG_UNUSED Surface* image, TVG_UNUSED Polygon* tr
 }
 
 
-RenderData GlRenderer::prepare(const Shape& shape, RenderData data, const RenderTransform* transform, TVG_UNUSED uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flags)
+RenderData GlRenderer::prepare(const Shape& shape, RenderData data, const RenderTransform* transform, TVG_UNUSED uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flags, TVG_UNUSED bool clipper)
 {
     //prepare shape data
     GlShape* sdata = static_cast<GlShape*>(data);

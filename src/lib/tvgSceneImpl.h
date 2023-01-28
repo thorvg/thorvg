@@ -102,7 +102,7 @@ struct Scene::Impl
         return false;
     }
 
-    void* update(RenderMethod &renderer, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flag)
+    void* update(RenderMethod &renderer, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flag, bool clipper)
     {
         /* Overriding opacity value. If this scene is half-translucent,
            It must do intermeidate composition with that opacity value. */
@@ -110,7 +110,7 @@ struct Scene::Impl
         if (needComposition(opacity)) opacity = 255;
 
         for (auto paint = paints.data; paint < (paints.data + paints.count); ++paint) {
-            (*paint)->pImpl->update(renderer, transform, opacity, clips, static_cast<uint32_t>(flag));
+            (*paint)->pImpl->update(renderer, transform, opacity, clips, static_cast<uint32_t>(flag), clipper);
         }
 
         /* FXIME: it requires to return list of children engine data
