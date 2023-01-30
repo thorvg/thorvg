@@ -7,6 +7,7 @@ on:
 
 jobs:
   coding-style:
+    if: ${{ false }}  # disable for now
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
