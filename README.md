@@ -1,5 +1,5 @@
 [![License](https://img.shields.io/badge/licence-MIT-green.svg?style=flat)](LICENSE)
-[![Discord](https://img.shields.io/badge/Community-5865f2?style=flat&logo=discord&logoColor=white)](https://discord.com/channels/1065834877586509835/1065834878056284287)
+[![Discord](https://img.shields.io/badge/Community-5865f2?style=flat&logo=discord&logoColor=white)](https://discord.com/invite/R5J3kaAxkA)
 [![Gitter](https://badges.gitter.im/thorvg/community.svg)](https://gitter.im/thorvg/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 <br>
 [![Build Linux](https://github.com/Samsung/thorvg/actions/workflows/actions.yml/badge.svg?branch=master&event=push)](https://github.com/Samsung/thorvg/actions/workflows/actions.yml)
@@ -378,4 +378,4 @@ Note that ThorVG supports both static/external image loaders. If your system has
 <br />
 <br />
 ## Issues or Feature Requests
-For support, please reach us in [Discord](https://discord.com/channels/1065834877586509835/1065834878056284287) or [Gitter](https://gitter.im/thorvg/community)
+For support, please reach us in [Discord](https://discord.com/invite/R5J3kaAxkA) or [Gitter](https://gitter.im/thorvg/community)
