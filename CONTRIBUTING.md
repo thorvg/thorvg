@@ -3,8 +3,8 @@ We always appreciate your contribution. ThorVG doesn't expect perfect patch cont
 ## Reviewers
 Hermet Park (hermet) is the lead maintainer. Also there are designated maintainers you can request your pull-request for separate modules.
 
-<b>common:</b> Junsu Choi (JSUYA) <br />
-<b>sw_engine:</b> Junsu Choi (JSUYA), Mira Grudzinska (mgrudzinska), Peter Vullings (projectitis) <br />
+<b>common:</b> Junsu Choi (JSUYA), Mira Grudzinska (mgrudzinska) <br />
+<b>sw_engine:</b> Junsu Choi (JSUYA), Mira Grudzinska (mgrudzinska) <br />
 <b>svg_loader:</b> Junsu Choi (JSUYA), Mira Grudzinska (mgrudzinska) <br />
 <b>tvg_saver:</b> Mira Grudzinska (mgrudzinska) <br />
 <b>svg2png:</b> Junsu Choi (JSUYA) <br />
