@@ -98,6 +98,7 @@ Result Picture::size(float w, float h) noexcept
 Result Picture::size(float* w, float* h) const noexcept
 {
     if (!pImpl->loader) return Result::InsufficientCondition;
+    pImpl->reload();
     if (w) *w = pImpl->w;
     if (h) *h = pImpl->h;
     return Result::Success;
