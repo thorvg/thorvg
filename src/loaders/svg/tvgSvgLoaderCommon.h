@@ -146,6 +146,14 @@ enum class SvgParserLengthType
     Other
 };
 
+enum class SvgViewFlag
+{
+    None = 0x0,
+    Width = 0x01,   //viewPort width
+    Height = 0x02,  //viewPort height
+    Viewbox = 0x04  //viewBox x,y,w,h - used only if all 4 are correctly set
+};
+
 enum class AspectRatioAlign
 {
     None,
@@ -174,6 +182,7 @@ struct SvgDocNode
     float vy;
     float vw;
     float vh;
+    SvgViewFlag viewFlag;
     SvgNode* defs;
     SvgNode* style;
     AspectRatioAlign align;
