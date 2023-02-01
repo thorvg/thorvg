@@ -51,6 +51,7 @@ public:
     unique_ptr<Paint> paint() override;
 
 private:
+    SvgViewFlag viewFlag = SvgViewFlag::None;
     AspectRatioAlign align = AspectRatioAlign::XMidYMid;
     AspectRatioMeetOrSlice meetOrSlice = AspectRatioMeetOrSlice::Meet;
 
