@@ -3,3 +3,4 @@ builddir
 .vscode
 *.swp
 doc
+capi_test.tvg
