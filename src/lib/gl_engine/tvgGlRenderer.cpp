@@ -140,7 +140,7 @@ bool GlRenderer::renderShape(RenderData data)
     auto sdata = static_cast<GlShape*>(data);
     if (!sdata) return false;
 
-    uint8_t r, g, b, a;
+    uint8_t r = 0, g = 0, b = 0, a = 0;
     size_t flags = static_cast<size_t>(sdata->updateFlag);
 
     GL_CHECK(glViewport(0, 0, (GLsizei)sdata->viewWd, (GLsizei)sdata->viewHt));
@@ -212,7 +212,7 @@ RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const
     sdata->geometry = make_unique<GlGeometry>();
 
     //invisible?
-    uint8_t alphaF, alphaS;
+    uint8_t alphaF = 0, alphaS = 0;
     rshape.fillColor(nullptr, nullptr, nullptr, &alphaF);
     rshape.strokeColor(nullptr, nullptr, nullptr, &alphaS);
     auto strokeWd = rshape.strokeWidth();
