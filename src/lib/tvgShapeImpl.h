@@ -33,31 +33,31 @@
 struct Shape::Impl
 {
     RenderShape rs;                     //shape data
-    RenderData rdata = nullptr;         //engine data
+    RenderData rd = nullptr;            //engine data
     uint32_t flag = RenderUpdateFlag::None;
 
     bool dispose(RenderMethod& renderer)
     {
-        auto ret = renderer.dispose(rdata);
-        rdata = nullptr;
+        auto ret = renderer.dispose(rd);
+        rd = nullptr;
         return ret;
     }
 
     bool render(RenderMethod& renderer)
     {
-        return renderer.renderShape(rdata);
+        return renderer.renderShape(rd);
     }
 
     void* update(RenderMethod& renderer, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag pFlag, bool clipper)
     {
-        rdata = renderer.prepare(rs, rdata, transform, opacity, clips, static_cast<RenderUpdateFlag>(pFlag | flag), clipper);
+        rd = renderer.prepare(rs, rd, transform, opacity, clips, static_cast<RenderUpdateFlag>(pFlag | flag), clipper);
         flag = RenderUpdateFlag::None;
-        return rdata;
+        return rd;
     }
 
     RenderRegion bounds(RenderMethod& renderer)
     {
-        return renderer.region(rdata);
+        return renderer.region(rd);
     }
 
     bool bounds(float* x, float* y, float* w, float* h)
