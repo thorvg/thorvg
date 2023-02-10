@@ -125,6 +125,8 @@ bool PngLoader::open(const string& path)
     h = static_cast<float>(height);
     ret = true;
 
+    if (state.info_png.color.colortype == LCT_RGBA) colorSpace = SwCanvas::ABGR8888;
+
     goto finalize;
 
 failure:
@@ -158,6 +160,8 @@ bool PngLoader::open(const char* data, uint32_t size, bool copy)
     w = static_cast<float>(width);
     h = static_cast<float>(height);
     this->size = size;
+
+    if (state.info_png.color.colortype == LCT_RGBA) colorSpace = SwCanvas::ABGR8888;
 
     return true;
 }
@@ -212,8 +216,6 @@ void PngLoader::run(unsigned tid)
     auto height = static_cast<unsigned>(h);
 
     lodepng_decode(&image, &width, &height, &state, data, size);
-
-    if (state.info_png.color.colortype == LCT_RGBA) colorSpace = SwCanvas::ABGR8888;
 
     _premultiply((uint32_t*)(image), width, height);
 }
