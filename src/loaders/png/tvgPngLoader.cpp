@@ -212,5 +212,7 @@ void PngLoader::run(unsigned tid)
 
     lodepng_decode(&image, &width, &height, &state, data, size);
 
+    if (state.info_png.color.colortype == LCT_RGBA) colorSpace = SwCanvas::ABGR8888;
+
     _premultiply((uint32_t*)(image), width, height);
 }
