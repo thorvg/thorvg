@@ -3016,9 +3016,9 @@ static void _freeNodeStyle(SvgStyleProperty* style)
     if (!style) return;
 
     //style->clipPath.node and style->mask.node has only the addresses of node. Therefore, node is released from _freeNode.
-    free(style->clipPath.url);
-    free(style->mask.url);
-    free(style->cssClass);
+    if (style->clipPath.url) free(style->clipPath.url);
+    if (style->mask.url) free(style->mask.url);
+    if (style->cssClass) free(style->cssClass);
 
     if (style->fill.paint.gradient) {
         style->fill.paint.gradient->clear();
