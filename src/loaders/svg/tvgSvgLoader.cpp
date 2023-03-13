@@ -2837,6 +2837,7 @@ static void _svgLoaderParserXmlCssStyle(SvgLoaderData* loader, const char* conte
         length -= next - content;
         content = next;
 
+        free(node->id);
         free(tag);
         free(name);
     }
