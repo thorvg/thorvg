@@ -20,11 +20,16 @@
  * SOFTWARE.
  */
 
+#include "tvgCommon.h"
 #include "tvgIteratorAccessor.h"
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
 /************************************************************************/
+
+struct Accessor::Impl
+{};
+
 
 static bool accessChildren(Iterator* it, IteratorAccessor& itrAccessor, function<bool(const Paint* paint)> func)
 {
@@ -70,11 +75,11 @@ unique_ptr<Picture> Accessor::set(unique_ptr<Picture> picture, function<bool(con
 
 Accessor::~Accessor()
 {
-
+    delete(pImpl);
 }
 
 
-Accessor::Accessor()
+Accessor::Accessor() : pImpl(new Impl())
 {
 
 }
