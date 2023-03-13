@@ -292,6 +292,8 @@ static AASpans* _AASpans(float ymin, float ymax, const SwImage* image, const SwB
 
     aaSpans->lines = static_cast<AALine*>(calloc(height, sizeof(AALine)));
 
+    if (!aaSpans->lines) return nullptr;
+
     for (int32_t i = 0; i < height; i++) {
         aaSpans->lines[i].x[0] = INT32_MAX;
         aaSpans->lines[i].x[1] = INT32_MIN;
