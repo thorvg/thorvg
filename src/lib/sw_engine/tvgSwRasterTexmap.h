@@ -548,7 +548,7 @@ static bool _apply(SwSurface* surface, AASpans* aaSpans)
 static bool _rasterTexmapPolygon(SwSurface* surface, const SwImage* image, const Matrix* transform, const SwBBox* region, uint32_t opacity, uint32_t (*blendMethod)(uint32_t))
 {
     //Exceptions: No dedicated drawing area?
-    if (!region && image->rle->size == 0) return false;
+    if (!image->rle || (!region && image->rle->size == 0)) return false;
 
    /* Prepare vertices.
       shift XY coordinates to match the sub-pixeling technique. */
@@ -605,7 +605,7 @@ static bool _rasterTexmapPolygon(SwSurface* surface, const SwImage* image, const
 static bool _rasterTexmapPolygonMesh(SwSurface* surface, const SwImage* image, const Polygon* triangles, const uint32_t triangleCount, const Matrix* transform, const SwBBox* region, uint32_t opacity, uint32_t (*blendMethod)(uint32_t))
 {
     //Exceptions: No dedicated drawing area?
-    if (!region && image->rle->size == 0) return false;
+    if (!image->rle || (!region && image->rle->size == 0)) return false;
 
     // Step polygons once to transform
     auto transformedTris = (Polygon*)malloc(sizeof(Polygon) * triangleCount);
