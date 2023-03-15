@@ -3192,6 +3192,12 @@ SvgLoader::~SvgLoader()
 
 void SvgLoader::run(unsigned tid)
 {
+    //According to the SVG standard the value of the width/height of the viewbox set to 0 disables rendering
+    if (renderingDisabled) {
+        root = Scene::gen();
+        return;
+    }
+
     if (!simpleXmlParse(content, size, true, _svgLoaderParser, &(loaderData))) return;
 
     if (loaderData.doc) {
@@ -3322,7 +3328,7 @@ bool SvgLoader::read()
     if (((uint32_t)viewFlag & (uint32_t)SvgViewFlag::Viewbox) &&
         (fabsf(vw) <= FLT_EPSILON || fabsf(vh) <= FLT_EPSILON)) {
         TVGLOG("SVG", "The <viewBox> width and/or height set to 0 - rendering disabled.");
-        return false;
+        renderingDisabled = true;
     }
 
     TaskScheduler::request(this);
