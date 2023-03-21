@@ -346,7 +346,7 @@ static void _applyProperty(SvgNode* node, Shape* vg, const Box& vBox, const stri
 
     //If stroke property is nullptr then do nothing
     if (style->stroke.paint.none) {
-        //Do nothing
+        vg->stroke(0.0f);
     } else if (style->stroke.paint.gradient) {
         Box bBox = vBox;
         if (!style->stroke.paint.gradient->userSpace) bBox = _boundingBox(vg);
