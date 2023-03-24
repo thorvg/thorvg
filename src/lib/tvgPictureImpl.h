@@ -90,24 +90,30 @@ struct Picture::Impl
         return ret;
     }
 
+    bool reloadPaint()
+    {
+        if (loader && !paint) {
+            if (auto p = loader->paint()) {
+                paint = p.release();
+                loader->close();
+                if (w != loader->w || h != loader->h) {
+                    if (!resizing) {
+                        w = loader->w;
+                        h = loader->h;
+                    }
+                    loader->resize(paint, w, h);
+                    resizing = false;
+                }
+                if (paint) return true;
+            }
+        }
+        return false;
+    }
+
     uint32_t reload()
     {
         if (loader) {
-            if (!paint) {
-                if (auto p = loader->paint()) {
-                    paint = p.release();
-                    loader->close();
-                    if (w != loader->w || h != loader->h) {
-                        if (!resizing) {
-                            w = loader->w;
-                            h = loader->h;
-                        }
-                        loader->resize(paint, w, h);
-                        resizing = false;
-                    }
-                    if (paint) return RenderUpdateFlag::None;
-                }
-            }
+            if (reloadPaint()) return RenderUpdateFlag::None;
             free(surface);
             if ((surface = loader->bitmap(rendererColorSpace).release())) {
                 loader->close();
@@ -162,7 +168,7 @@ struct Picture::Impl
     bool viewbox(float* x, float* y, float* w, float* h)
     {
         if (!loader) return false;
-        reload();
+        reloadPaint();
         if (x) *x = loader->vx;
         if (y) *y = loader->vy;
         if (w) *w = loader->vw;
@@ -205,6 +211,7 @@ struct Picture::Impl
             if (w) *w = max.x - min.x;
             if (h) *h = max.y - min.y;
         } else {
+            reloadPaint();
             if (x) *x = 0;
             if (y) *y = 0;
             if (w) *w = this->w;
