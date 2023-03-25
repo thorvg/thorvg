@@ -833,32 +833,20 @@ static bool _attrParseSvgNode(void* data, const char* key, const char* value)
 
     if (!strcmp(key, "width")) {
         doc->w = _toFloat(loader->svgParse, value, SvgParserLengthType::Horizontal);
-        doc->viewFlag = (SvgViewFlag)((uint32_t)doc->viewFlag | (uint32_t)SvgViewFlag::Width);
     } else if (!strcmp(key, "height")) {
         doc->h = _toFloat(loader->svgParse, value, SvgParserLengthType::Vertical);
-        doc->viewFlag = (SvgViewFlag)((uint32_t)doc->viewFlag | (uint32_t)SvgViewFlag::Height);
     } else if (!strcmp(key, "viewBox")) {
         if (_parseNumber(&value, &doc->vx)) {
             if (_parseNumber(&value, &doc->vy)) {
                 if (_parseNumber(&value, &doc->vw)) {
-                    if (_parseNumber(&value, &doc->vh)) {
-                        doc->viewFlag = (SvgViewFlag)((uint32_t)doc->viewFlag | (uint32_t)SvgViewFlag::Viewbox);
-                        loader->svgParse->global.h = doc->vh;
-                    }
-                    loader->svgParse->global.w = doc->vw;
+                    _parseNumber(&value, &doc->vh);
+                    loader->svgParse->global.h = doc->vh;
                 }
-                loader->svgParse->global.y = doc->vy;
+                loader->svgParse->global.w = doc->vw;
             }
-            loader->svgParse->global.x = doc->vx;
+            loader->svgParse->global.y = doc->vy;
         }
-        if (((uint32_t)doc->viewFlag & (uint32_t)SvgViewFlag::Viewbox) && (doc->vw < 0.0f || doc->vh < 0.0f)) {
-            doc->viewFlag = (SvgViewFlag)((uint32_t)doc->viewFlag & ~(uint32_t)SvgViewFlag::Viewbox);
-            TVGLOG("SVG", "Negative values of the <viewBox> width and/or height - the attribute invalidated.");
-        }
-        if (!((uint32_t)doc->viewFlag & (uint32_t)SvgViewFlag::Viewbox)) {
-            loader->svgParse->global.x = loader->svgParse->global.y = 0.0f;
-            loader->svgParse->global.w = loader->svgParse->global.h = 1.0f;
-        }
+        loader->svgParse->global.x = doc->vx;
     } else if (!strcmp(key, "preserveAspectRatio")) {
         _parseAspectRatio(&value, &doc->align, &doc->meetOrSlice);
     } else if (!strcmp(key, "style")) {
@@ -1303,22 +1291,22 @@ static SvgNode* _createSvgNode(SvgLoaderData* loader, SvgNode* parent, const cha
     if (!loader->svgParse->node) return nullptr;
     SvgDocNode* doc = &(loader->svgParse->node->node.doc);
 
-    loader->svgParse->global.w = 1.0f;
-    loader->svgParse->global.h = 1.0f;
+    loader->svgParse->global.w = 0;
+    loader->svgParse->global.h = 0;
 
     doc->align = AspectRatioAlign::XMidYMid;
     doc->meetOrSlice = AspectRatioMeetOrSlice::Meet;
-    doc->viewFlag = SvgViewFlag::None;
     func(buf, bufLength, _attrParseSvgNode, loader);
 
-    if (!((uint32_t)doc->viewFlag & (uint32_t)SvgViewFlag::Viewbox)) {
-        if ((uint32_t)doc->viewFlag & (uint32_t)SvgViewFlag::Width) {
-            loader->svgParse->global.w = doc->w;
-        }
-        if ((uint32_t)doc->viewFlag & (uint32_t)SvgViewFlag::Height) {
-            loader->svgParse->global.h = doc->h;
-        }
+    if (loader->svgParse->global.w == 0) {
+        if (doc->w < FLT_EPSILON) loader->svgParse->global.w = 1;
+        else loader->svgParse->global.w = doc->w;
     }
+    if (loader->svgParse->global.h == 0) {
+        if (doc->h < FLT_EPSILON) loader->svgParse->global.h = 1;
+        else loader->svgParse->global.h = doc->h;
+    }
+
     return loader->svgParse->node;
 }
 
@@ -3216,7 +3204,7 @@ void SvgLoader::run(unsigned tid)
 
         _updateStyle(loaderData.doc, nullptr);
     }
-    root = svgSceneBuild(loaderData.doc, vx, vy, vw, vh, w, h, align, meetOrSlice, svgPath, viewFlag);
+    root = svgSceneBuild(loaderData.doc, vx, vy, vw, vh, w, h, align, meetOrSlice, svgPath);
 }
 
 
@@ -3229,37 +3217,28 @@ bool SvgLoader::header()
     if (!loaderData.svgParse) return false;
 
     loaderData.svgParse->flags = SvgStopStyleFlags::StopDefault;
-    viewFlag = SvgViewFlag::None;
 
     simpleXmlParse(content, size, true, _svgLoaderParserForValidCheck, &(loaderData));
 
     if (loaderData.doc && loaderData.doc->type == SvgNodeType::Doc) {
-        viewFlag = loaderData.doc->node.doc.viewFlag;
+        //Return the brief resource info such as viewbox:
+        vx = loaderData.doc->node.doc.vx;
+        vy = loaderData.doc->node.doc.vy;
+        w = vw = loaderData.doc->node.doc.vw;
+        h = vh = loaderData.doc->node.doc.vh;
+
+        //Override size
+        if (loaderData.doc->node.doc.w > 0) {
+            w = loaderData.doc->node.doc.w;
+            if (vw < FLT_EPSILON) vw = w;
+        }
+        if (loaderData.doc->node.doc.h > 0) {
+            h = loaderData.doc->node.doc.h;
+            if (vh < FLT_EPSILON) vh = h;
+        }
+
         align = loaderData.doc->node.doc.align;
         meetOrSlice = loaderData.doc->node.doc.meetOrSlice;
-        w = 1.0f;
-        h = 1.0f;
-
-        //Return the brief resource info such as viewbox:
-        if ((uint32_t)viewFlag & (uint32_t)SvgViewFlag::Width) {
-            w = loaderData.doc->node.doc.w;
-        }
-        if ((uint32_t)viewFlag & (uint32_t)SvgViewFlag::Height) {
-            h = loaderData.doc->node.doc.h;
-        }
-        //Override size
-        if ((uint32_t)viewFlag & (uint32_t)SvgViewFlag::Viewbox) {
-            vx = loaderData.doc->node.doc.vx;
-            vy = loaderData.doc->node.doc.vy;
-            vw = loaderData.doc->node.doc.vw;
-            vh = loaderData.doc->node.doc.vh;
-
-            if (!((uint32_t)viewFlag & (uint32_t)SvgViewFlag::Width)) w = vw;
-            if (!((uint32_t)viewFlag & (uint32_t)SvgViewFlag::Height)) h = vh;
-        } else {
-            vw = w;
-            vh = h;
-        }
     } else {
         TVGLOG("SVG", "No SVG File. There is no <svg/>");
         return false;
@@ -3324,12 +3303,6 @@ bool SvgLoader::resize(Paint* paint, float w, float h)
 bool SvgLoader::read()
 {
     if (!content || size == 0) return false;
-
-    if (((uint32_t)viewFlag & (uint32_t)SvgViewFlag::Viewbox) &&
-        (fabsf(vw) <= FLT_EPSILON || fabsf(vh) <= FLT_EPSILON)) {
-        TVGLOG("SVG", "The <viewBox> width and/or height set to 0 - rendering disabled.");
-        renderingDisabled = true;
-    }
 
     TaskScheduler::request(this);
 

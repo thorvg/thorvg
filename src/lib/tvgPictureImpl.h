@@ -94,10 +94,6 @@ struct Picture::Impl
                     paint = p.release();
                     loader->close();
                     if (w != loader->w || h != loader->h) {
-                        if (!resizing) {
-                            w = loader->w;
-                            h = loader->h;
-                        }
                         loader->resize(paint, w, h);
                         resizing = false;
                     }
@@ -152,10 +148,9 @@ struct Picture::Impl
         return false;
     }
 
-    bool viewbox(float* x, float* y, float* w, float* h)
+    bool viewbox(float* x, float* y, float* w, float* h) const
     {
         if (!loader) return false;
-        reload();
         if (x) *x = loader->vx;
         if (y) *y = loader->vy;
         if (w) *w = loader->vw;
