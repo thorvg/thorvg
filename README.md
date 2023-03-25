@@ -1,5 +1,5 @@
 [![License](https://img.shields.io/badge/licence-MIT-green.svg?style=flat)](LICENSE)
-[![Discord](https://img.shields.io/badge/Community-5865f2?style=flat&logo=discord&logoColor=white)](https://discord.com/invite/R5J3kaAxkA)
+[![Discord](https://img.shields.io/badge/Community-5865f2?style=flat&logo=discord&logoColor=white)](https://discord.gg/n25xj6J6HM)
 <br>
 [![Build Linux](https://github.com/Samsung/thorvg/actions/workflows/actions.yml/badge.svg?branch=master&event=push)](https://github.com/Samsung/thorvg/actions/workflows/actions.yml)
 [![Build Windows](https://github.com/Samsung/thorvg/actions/workflows/build_win.yml/badge.svg?branch=master&event=push)](https://github.com/Samsung/thorvg/actions/workflows/build_win.yml)
@@ -377,4 +377,4 @@ Note that ThorVG supports both static/external image loaders. If your system has
 <br />
 <br />
 ## Issues or Feature Requests
-For support, please reach us in [Discord](https://discord.com/invite/R5J3kaAxkA)
+For support, please reach us in [Discord](https://discord.gg/n25xj6J6HM)
