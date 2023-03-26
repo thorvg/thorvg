@@ -3327,6 +3327,12 @@ bool SvgLoader::read()
 
     TaskScheduler::request(this);
 
+    //In case no viewbox and width/height data is provided the completion of loading
+    //has to be forced, in order to establish this data based on the whole picture bounding box.
+    if (!((uint32_t)viewFlag & (uint32_t)SvgViewFlag::Viewbox) &&
+        (!((uint32_t)viewFlag & (uint32_t)SvgViewFlag::Width) || !((uint32_t)viewFlag & (uint32_t)SvgViewFlag::Height)))
+        this->done();
+
     return true;
 }
 
