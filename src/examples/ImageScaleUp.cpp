@@ -40,8 +40,9 @@ void tvgDrawCmds(tvg::Canvas* canvas)
         cout << "The PNG file is not loaded correctly. Did you enable PNG Loader?" << endl;
         return;
     }
-    if (canvas->push(move(picture)) == tvg::Result::Success) {
-        pPicture = picture.get();
+    pPicture = picture.get();
+    if (canvas->push(move(picture)) != tvg::Result::Success) {
+        pPicture = nullptr;
     }
 }
 
