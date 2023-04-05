@@ -94,6 +94,7 @@ struct RenderStroke
     uint32_t dashCnt = 0;
     StrokeCap cap = StrokeCap::Square;
     StrokeJoin join = StrokeJoin::Bevel;
+    bool strokeFirst = false;
 
     ~RenderStroke()
     {
