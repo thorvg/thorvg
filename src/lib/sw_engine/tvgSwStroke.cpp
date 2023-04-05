@@ -302,7 +302,7 @@ static void _inside(SwStroke& stroke, int32_t side, SwFixed lineLength)
     bool intersect = false;
 
     /* Only intersect borders if between two line_to's and both
-       lines are long enough (line length is zero fur curves). */
+       lines are long enough (line length is zero for curves). */
     if (border->movable && lineLength > 0) {
         //compute minimum required length of lines
         SwFixed minLength = abs(mathMultiply(stroke.width, mathTan(theta)));
@@ -382,8 +382,15 @@ static void _lineTo(SwStroke& stroke, const SwPoint& to)
     if (delta.zero()) return;
 
     //compute length of line
-    auto lineLength =  mathLength(delta);
     auto angle = mathAtan(delta);
+
+    /* The lineLength is used to determine the intersection of strokes outlines.
+       The scale needs to be reverted since the stroke width has not been scaled.
+       An alternative option is to scale the width of the stroke properly by
+       calculating the mixture of the sx/sy rating on the stroke direction. */
+    delta.x /= stroke.sx;
+    delta.y /= stroke.sy;
+    auto lineLength = mathLength(delta);
 
     delta = {static_cast<SwCoord>(stroke.width), 0};
     mathRotate(delta, angle + SW_ANGLE_PI2);
