@@ -288,6 +288,14 @@ const Fill* Shape::fill() const noexcept
 }
 
 
+Result Shape::order(bool strokeFirst) noexcept
+{
+    if (!pImpl->strokeFirst(strokeFirst)) return Result::FailedAllocation;
+
+    return Result::Success;
+}
+
+
 Result Shape::stroke(float width) noexcept
 {
     if (!pImpl->strokeWidth(width)) return Result::FailedAllocation;

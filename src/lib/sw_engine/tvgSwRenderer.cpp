@@ -96,7 +96,7 @@ struct SwShapeTask : SwTask
     }
 
     void run(unsigned tid) override
-    {    
+    {
         if (opacity == 0 && !clipper) return;  //Invisible
 
         uint8_t strokeAlpha = 0;
@@ -136,7 +136,7 @@ struct SwShapeTask : SwTask
                    shape outline below stroke could be full covered by stroke drawing.
                    Thus it turns off antialising in that condition.
                    Also, it shouldn't be dash style. */
-                auto antiAlias = (strokeAlpha == 255 && rshape->strokeWidth() > 2 && rshape->strokeDash(nullptr) == 0) ? false : true;
+                auto antiAlias = strokeAlpha < 255 || rshape->strokeWidth() <= 2 || rshape->strokeDash(nullptr) > 0 || (rshape->stroke && rshape->stroke->strokeFirst);
 
                 if (!shapeGenRle(&shape, rshape, antiAlias)) goto err;
             }
@@ -322,6 +322,31 @@ static void _termEngine()
 }
 
 
+static void _renderFill(SwShapeTask* task, SwSurface* surface, uint32_t opacity)
+{
+    uint8_t r, g, b, a;
+    if (auto fill = task->rshape->fill) {
+        rasterGradientShape(surface, &task->shape, fill->identifier());
+    } else {
+        task->rshape->fillColor(&r, &g, &b, &a);
+        a = static_cast<uint8_t>((opacity * (uint32_t) a) / 255);
+        if (a > 0) rasterShape(surface, &task->shape, r, g, b, a);
+    }
+}
+
+static void _renderStroke(SwShapeTask* task, SwSurface* surface, uint32_t opacity)
+{
+    uint8_t r, g, b, a;
+    if (auto strokeFill = task->rshape->strokeFill()) {
+        rasterGradientStroke(surface, &task->shape, strokeFill->identifier());
+    } else {
+        if (task->rshape->strokeColor(&r, &g, &b, &a)) {
+            a = static_cast<uint8_t>((opacity * (uint32_t) a) / 255);
+            if (a > 0) rasterStroke(surface, &task->shape, r, g, b, a);
+        }
+    }
+}
+
 /************************************************************************/
 /* External Class Implementation                                        */
 /************************************************************************/
@@ -482,23 +507,12 @@ bool SwRenderer::renderShape(RenderData data)
     }
 
     //Main raster stage
-    uint8_t r, g, b, a;
-
-    if (auto fill = task->rshape->fill) {
-        rasterGradientShape(surface, &task->shape, fill->identifier());
+    if (task->rshape->stroke && task->rshape->stroke->strokeFirst) {
+        _renderStroke(task, surface, opacity);
+        _renderFill(task, surface, opacity);
     } else {
-        task->rshape->fillColor(&r, &g, &b, &a);
-        a = static_cast<uint8_t>((opacity * (uint32_t) a) / 255);
-        if (a > 0) rasterShape(surface, &task->shape, r, g, b, a);
-    }
-
-    if (auto strokeFill = task->rshape->strokeFill()) {
-        rasterGradientStroke(surface, &task->shape, strokeFill->identifier());
-    } else {
-        if (task->rshape->strokeColor(&r, &g, &b, &a)) {
-            a = static_cast<uint8_t>((opacity * (uint32_t) a) / 255);
-            if (a > 0) rasterStroke(surface, &task->shape, r, g, b, a);
-        }
+        _renderFill(task, surface, opacity);
+        _renderStroke(task, surface, opacity);
     }
 
     if (task->cmpStroking) endComposite(cmp);

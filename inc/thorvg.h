@@ -977,6 +977,18 @@ public:
      */
     Result fill(FillRule r) noexcept;
 
+
+    /**
+     * @brief Sets the rendering order of the stroke and the fill.
+     *
+     * @param[in] strokeFirst If @c true the stroke is rendered before the fill, otherwise the stroke is rendered as the second one (the default option).
+     *
+     * @return Result::Success when succeed, Result::FailedAllocation otherwise.
+     * @BETA_API
+     */
+    Result order(bool strokeFirst) noexcept;
+
+
     /**
      * @brief Gets the commands data of the path.
      *
