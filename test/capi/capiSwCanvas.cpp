@@ -23,6 +23,8 @@
 #include <thorvg_capi.h>
 #include "../catch.hpp"
 
+#ifdef THORVG_SW_RASTER_SUPPORT
+
 TEST_CASE("Canvas missing initialization", "[capiSwCanvas]")
 {
     Tvg_Canvas* canvas = tvg_swcanvas_create();
@@ -150,3 +152,5 @@ TEST_CASE("Canvas update, clear and reuse", "[capiSwCanvas]")
 
     REQUIRE(tvg_engine_term(TVG_ENGINE_SW) == TVG_RESULT_SUCCESS);
 }
+
+#endif

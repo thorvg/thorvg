@@ -21,10 +21,10 @@
  */
 
 #include <thorvg.h>
+#include "config.h"
 #include "catch.hpp"
 
 using namespace tvg;
-#include <stdio.h>
 
 TEST_CASE("Accessor Creation", "[tvgAccessor]")
 {
@@ -35,6 +35,7 @@ TEST_CASE("Accessor Creation", "[tvgAccessor]")
     REQUIRE(accessor2);
 }
 
+#ifdef THORVG_SVG_LOADER_SUPPORT
 
 TEST_CASE("Set", "[tvgAccessor]")
 {
@@ -75,3 +76,5 @@ TEST_CASE("Set", "[tvgAccessor]")
 
     REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
 }
+
+#endif

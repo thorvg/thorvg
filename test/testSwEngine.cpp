@@ -21,10 +21,14 @@
  */
 
 #include <thorvg.h>
+#include <fstream>
+#include "config.h"
 #include "catch.hpp"
 
 using namespace tvg;
+using namespace std;
 
+#ifdef THORVG_SW_RASTER_SUPPORT
 
 TEST_CASE("Basic draw", "[tvgSwEngine]")
 {
@@ -100,11 +104,17 @@ TEST_CASE("Image Draw", "[tvgSwEngine]")
     uint32_t buffer[100*100];
     REQUIRE(canvas->target(buffer, 100, 100, 100, SwCanvas::Colorspace::ABGR8888) == Result::Success);
 
+    //raw image
+    ifstream file(TEST_DIR"/rawimage_200x300.raw");
+    if (!file.is_open()) return;
+    auto data = (uint32_t*)malloc(sizeof(uint32_t) * (200*300));
+    file.read(reinterpret_cast<char *>(data), sizeof (uint32_t) * 200 * 300);
+    file.close();
 
     //Not transformed images
     auto basicPicture = Picture::gen();
     REQUIRE(basicPicture);
-    REQUIRE(basicPicture->load(TEST_DIR"/test.png") == Result::Success);
+    REQUIRE(basicPicture->load(data, 200, 300, false) == Result::Success);
     auto rectMask = tvg::Shape::gen();
     REQUIRE(rectMask);
     REQUIRE(rectMask->appendRect(10, 10, 30, 30, 0, 0) == Result::Success);
@@ -160,7 +170,8 @@ TEST_CASE("Image Draw", "[tvgSwEngine]")
     // Transformed images
     basicPicture = Picture::gen();
     REQUIRE(basicPicture);
-    REQUIRE(basicPicture->load(TEST_DIR"/test.png") == Result::Success);
+    REQUIRE(basicPicture->load(data, 200, 300, false) == Result::Success);
+
     REQUIRE(basicPicture->rotate(45) == Result::Success);
     rectMask = tvg::Shape::gen();
     REQUIRE(rectMask);
@@ -217,7 +228,7 @@ TEST_CASE("Image Draw", "[tvgSwEngine]")
     // Upscaled images
     basicPicture = Picture::gen();
     REQUIRE(basicPicture);
-    REQUIRE(basicPicture->load(TEST_DIR"/test.png") == Result::Success);
+    REQUIRE(basicPicture->load(data, 200, 300, false) == Result::Success);
     REQUIRE(basicPicture->scale(2) == Result::Success);
     rectMask = tvg::Shape::gen();
     REQUIRE(rectMask);
@@ -274,7 +285,7 @@ TEST_CASE("Image Draw", "[tvgSwEngine]")
     // Downscaled images
     basicPicture = Picture::gen();
     REQUIRE(basicPicture);
-    REQUIRE(basicPicture->load(TEST_DIR"/test.png") == Result::Success);
+    REQUIRE(basicPicture->load(data, 200, 300, false) == Result::Success);
     REQUIRE(basicPicture->scale(0.2f) == Result::Success);
     rectMask = tvg::Shape::gen();
     REQUIRE(rectMask);
@@ -332,6 +343,8 @@ TEST_CASE("Image Draw", "[tvgSwEngine]")
     REQUIRE(canvas->sync() == Result::Success);
 
     REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
+
+    free(data);
 }
 
 
@@ -995,3 +1008,5 @@ TEST_CASE("RLE Filling ClipPath", "[tvgSwEngine]")
 
     REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
 }
+
+#endif

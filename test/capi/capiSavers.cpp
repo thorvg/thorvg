@@ -21,6 +21,7 @@
  */
 
 #include <thorvg_capi.h>
+#include "config.h"
 #include "../catch.hpp"
 
 
@@ -32,6 +33,8 @@ TEST_CASE("Create and delete a Saver", "[capiSaver]")
     REQUIRE(tvg_saver_del(nullptr) == TVG_RESULT_INVALID_ARGUMENT);
     REQUIRE(tvg_saver_del(saver) == TVG_RESULT_SUCCESS);
 }
+
+#ifdef THORVG_TVG_SAVER_SUPPORT
 
 TEST_CASE("Save a paint into a file", "[capiSaver]")
 {
@@ -97,3 +100,5 @@ TEST_CASE("Synchronize a Saver", "[capiSaver]")
 
     REQUIRE(tvg_saver_del(saver) == TVG_RESULT_SUCCESS);
 }
+
+#endif

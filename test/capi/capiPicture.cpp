@@ -22,8 +22,50 @@
 
 #include <thorvg_capi.h>
 #include <string.h>
+#include "config.h"
 #include "../catch.hpp"
 
+
+TEST_CASE("Load Raw file in Picture", "[capiPicture]")
+{
+    Tvg_Paint* picture = tvg_picture_new();
+    REQUIRE(picture);
+
+    //Load Raw Data
+    FILE* fp = fopen(TEST_DIR"/rawimage_200x300.raw", "r");
+    if (!fp) return;
+
+    uint32_t* data = (uint32_t*)malloc(sizeof(uint32_t) * (200*300));
+
+    if (data && fread(data, sizeof(uint32_t), 200*300, fp) > 0) {
+        //Negative
+        REQUIRE(tvg_picture_load_raw(picture, nullptr, 100, 100, true) == TVG_RESULT_INVALID_ARGUMENT);
+        REQUIRE(tvg_picture_load_raw(nullptr, data, 200, 300, true) == TVG_RESULT_INVALID_ARGUMENT);
+        REQUIRE(tvg_picture_load_raw(picture, data, 0, 0, true) == TVG_RESULT_INVALID_ARGUMENT);
+
+        //Positive
+        REQUIRE(tvg_picture_load_raw(picture, data, 200, 300, true) == TVG_RESULT_SUCCESS);
+        REQUIRE(tvg_picture_load_raw(picture, data, 200, 300, false) == TVG_RESULT_SUCCESS);
+
+        //Verify Size
+        float w, h;
+        REQUIRE(tvg_picture_get_size(picture, &w, &h) == TVG_RESULT_SUCCESS);
+        REQUIRE(w == Approx(200).epsilon(0.0000001));
+        REQUIRE(h == Approx(300).epsilon(0.0000001));
+        float wNew = 500.0f, hNew = 500.0f;
+        REQUIRE(tvg_picture_set_size(picture, wNew, hNew) == TVG_RESULT_SUCCESS);
+        REQUIRE(tvg_picture_get_size(picture, &w, &h) == TVG_RESULT_SUCCESS);
+        REQUIRE(w == Approx(wNew).epsilon(0.0000001));
+        REQUIRE(h == Approx(hNew).epsilon(0.0000001));
+    }
+
+    REQUIRE(tvg_paint_del(picture) == TVG_RESULT_SUCCESS);
+
+    fclose(fp);
+    free(data);
+}
+
+#ifdef THORVG_SVG_LOADER_SUPPORT
 
 TEST_CASE("Load Svg file in Picture", "[capiPicture]")
 {
@@ -87,44 +129,9 @@ TEST_CASE("Load Svg Data in Picture", "[capiPicture]")
     REQUIRE(tvg_paint_del(picture) == TVG_RESULT_SUCCESS);
 }
 
-TEST_CASE("Load Raw file in Picture", "[capiPicture]")
-{
-    Tvg_Paint* picture = tvg_picture_new();
-    REQUIRE(picture);
+#endif
 
-    //Load Raw Data
-    FILE* fp = fopen(TEST_DIR"/rawimage_200x300.raw", "r");
-    if (!fp) return;
-
-    uint32_t* data = (uint32_t*)malloc(sizeof(uint32_t) * (200*300));
-
-    if (data && fread(data, sizeof(uint32_t), 200*300, fp) > 0) {
-        //Negative
-        REQUIRE(tvg_picture_load_raw(picture, nullptr, 100, 100, true) == TVG_RESULT_INVALID_ARGUMENT);
-        REQUIRE(tvg_picture_load_raw(nullptr, data, 200, 300, true) == TVG_RESULT_INVALID_ARGUMENT);
-        REQUIRE(tvg_picture_load_raw(picture, data, 0, 0, true) == TVG_RESULT_INVALID_ARGUMENT);
-
-        //Positive
-        REQUIRE(tvg_picture_load_raw(picture, data, 200, 300, true) == TVG_RESULT_SUCCESS);
-        REQUIRE(tvg_picture_load_raw(picture, data, 200, 300, false) == TVG_RESULT_SUCCESS);
-
-        //Verify Size
-        float w, h;
-        REQUIRE(tvg_picture_get_size(picture, &w, &h) == TVG_RESULT_SUCCESS);
-        REQUIRE(w == Approx(200).epsilon(0.0000001));
-        REQUIRE(h == Approx(300).epsilon(0.0000001));
-        float wNew = 500.0f, hNew = 500.0f;
-        REQUIRE(tvg_picture_set_size(picture, wNew, hNew) == TVG_RESULT_SUCCESS);
-        REQUIRE(tvg_picture_get_size(picture, &w, &h) == TVG_RESULT_SUCCESS);
-        REQUIRE(w == Approx(wNew).epsilon(0.0000001));
-        REQUIRE(h == Approx(hNew).epsilon(0.0000001));
-    }
-
-    REQUIRE(tvg_paint_del(picture) == TVG_RESULT_SUCCESS);
-
-    fclose(fp);
-    free(data);
-}
+#ifdef THORVG_PNG_LOADER_SUPPORT
 
 TEST_CASE("Load Png file in Picture", "[capiPicture]")
 {
@@ -147,3 +154,5 @@ TEST_CASE("Load Png file in Picture", "[capiPicture]")
 
     REQUIRE(tvg_paint_del(picture) == TVG_RESULT_SUCCESS);
 }
+
+#endif
