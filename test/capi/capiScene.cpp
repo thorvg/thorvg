@@ -21,6 +21,7 @@
  */
 
 #include <thorvg_capi.h>
+#include "config.h"
 #include "../catch.hpp"
 
 TEST_CASE("Create a Scene", "[capiScene]")

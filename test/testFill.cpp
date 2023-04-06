@@ -21,7 +21,7 @@
  */
 
 #include <thorvg.h>
-#include <memory>
+#include "config.h"
 #include "catch.hpp"
 
 using namespace tvg;

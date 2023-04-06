@@ -21,15 +21,20 @@
  */
 
 #include <thorvg.h>
+#include <fstream>
+#include "config.h"
 #include "catch.hpp"
 
 using namespace tvg;
+using namespace std;
 
 TEST_CASE("Saver Creation", "[tvgSavers]")
 {
     auto saver = Saver::gen();
     REQUIRE(saver);
 }
+
+#ifdef THORVG_TVG_SAVER_SUPPORT
 
 TEST_CASE("Save empty shape", "[tvgSavers]")
 {
@@ -65,7 +70,14 @@ TEST_CASE("Save scene into tvg", "[tvgSavers]")
 
     auto picture = tvg::Picture::gen();
     REQUIRE(picture);
-    REQUIRE(picture->load(TEST_DIR"/test.png") == Result::Success);
+
+    ifstream file(TEST_DIR"/rawimage_200x300.raw");
+    if (!file.is_open()) return;
+    auto data = (uint32_t*)malloc(sizeof(uint32_t) * (200*300));
+    file.read(reinterpret_cast<char *>(data), sizeof (uint32_t) * 200 * 300);
+    file.close();
+
+    REQUIRE(picture->load(data, 200, 300, false) == Result::Success);
     REQUIRE(picture->translate(50, 0) == Result::Success);
     REQUIRE(picture->scale(2) == Result::Success);
 
@@ -81,4 +93,8 @@ TEST_CASE("Save scene into tvg", "[tvgSavers]")
     REQUIRE(saver->sync() == Result::Success);
 
     REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
+
+    free(data);
 }
+
+#endif
