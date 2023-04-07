@@ -32,7 +32,7 @@ class IteratorAccessor
 {
 public:
     //Utility Method: Iterator Accessor
-    Iterator* iterator(const Paint* paint)
+    static Iterator* iterator(const Paint* paint)
     {
         return paint->pImpl->iterator();
     }

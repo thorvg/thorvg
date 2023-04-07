@@ -28,7 +28,7 @@
 namespace tvg
 {
 
-class SaveModule : public IteratorAccessor
+class SaveModule
 {
 public:
     virtual ~SaveModule() {}
