@@ -356,7 +356,7 @@ TvgBinCounter TvgSaver::serializeChild(const Paint* parent, const Paint* child, 
 
 TvgBinCounter TvgSaver::serializeScene(const Scene* scene, const Matrix* pTransform, const Matrix* cTransform)
 {
-    auto it = this->iterator(scene);
+    auto it = IteratorAccessor::iterator(scene);
     if (it->count() == 0) {
         delete(it);
         return 0;
@@ -568,7 +568,7 @@ TvgBinCounter TvgSaver::serializeShape(const Shape* shape, const Matrix* pTransf
 /* Picture has either a vector scene or a bitmap. */
 TvgBinCounter TvgSaver::serializePicture(const Picture* picture, const Matrix* pTransform, const Matrix* cTransform)
 {
-    auto it = this->iterator(picture);
+    auto it = IteratorAccessor::iterator(picture);
 
     //Case - Vector Scene:
     if (it->count() == 1) {

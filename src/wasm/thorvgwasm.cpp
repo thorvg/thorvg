@@ -29,7 +29,7 @@ using namespace emscripten;
 using namespace std;
 using namespace tvg;
 
-class __attribute__((visibility("default"))) ThorvgWasm : public IteratorAccessor
+class __attribute__((visibility("default"))) ThorvgWasm
 {
 public:
     static unique_ptr<ThorvgWasm> create()
@@ -282,7 +282,7 @@ private:
     {
         //paint
         if (paint->identifier() != Shape::identifier()) {
-            auto it = this->iterator(paint);
+            auto it = IteratorAccessor::iterator(paint);
             if (it->count() > 0) {
                 layers->reserve(layers->count + it->count());
                 it->begin();
@@ -313,7 +313,7 @@ private:
         }
         //paint
         if (parent->identifier() != Shape::identifier()) {
-            auto it = this->iterator(parent);
+            auto it = IteratorAccessor::iterator(parent);
             if (it->count() > 0) {
                 it->begin();
                 while (auto child = it->next()) {

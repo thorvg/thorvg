@@ -26,15 +26,15 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-static bool accessChildren(Iterator* it, IteratorAccessor& itrAccessor, function<bool(const Paint* paint)> func)
+static bool accessChildren(Iterator* it, function<bool(const Paint* paint)> func)
 {
     while (auto child = it->next()) {
         //Access the child
         if (!func(child)) return false;
 
         //Access the children of the child
-        if (auto it2 = itrAccessor.iterator(child)) {
-            if (!accessChildren(it2, itrAccessor, func)) {
+        if (auto it2 = IteratorAccessor::iterator(child)) {
+            if (!accessChildren(it2, func)) {
                 delete(it2);
                 return false;
             }
@@ -59,9 +59,8 @@ unique_ptr<Picture> Accessor::set(unique_ptr<Picture> picture, function<bool(con
     if (!func(p)) return picture;
 
     //Children
-    IteratorAccessor itrAccessor;
-    if (auto it = itrAccessor.iterator(p)) {
-        accessChildren(it, itrAccessor, func);
+    if (auto it = IteratorAccessor::iterator(p)) {
+        accessChildren(it, func);
         delete(it);
     }
     return picture;
