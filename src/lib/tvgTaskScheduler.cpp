@@ -100,13 +100,12 @@ struct TaskQueue {
 };
 
 
-class TaskSchedulerImpl
+struct TaskSchedulerImpl
 {
-public:
-    unsigned                       threadCnt;
+    uint32_t                       threadCnt;
     vector<thread>                 threads;
     vector<TaskQueue>              taskQueues;
-    atomic<unsigned>               idx{0};
+    uint32_t                       idx = 0;
 
     TaskSchedulerImpl(unsigned threadCnt) : threadCnt(threadCnt), taskQueues(threadCnt)
     {

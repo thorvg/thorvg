@@ -44,20 +44,25 @@ struct Task
 {
 private:
     mutex                   mtx;
-    condition_variable      cv;
-    bool                    ready{true};
-    bool                    pending{false};
+    bool                    finished = true;
+    bool                    running = false;
 
 public:
     virtual ~Task() = default;
 
-    void done()
+    void done(unsigned tid = 0)
     {
-        if (!pending) return;
+        if (finished) return;
 
         unique_lock<mutex> lock(mtx);
-        while (!ready) cv.wait(lock);
-        pending = false;
+
+        if (finished) return;
+
+        //the job hasn't been launched yet.
+        running = true;
+        run(tid);
+        running = false;
+        finished = true;
     }
 
 protected:
@@ -66,17 +71,21 @@ protected:
 private:
     void operator()(unsigned tid)
     {
-        run(tid);
+        if (finished || running) return;
 
         lock_guard<mutex> lock(mtx);
-        ready = true;
-        cv.notify_one();
+
+        if (finished || running) return;
+
+        running = true;
+        run(tid);
+        running = false;
+        finished = true;
     }
 
     void prepare()
     {
-        ready = false;
-        pending = true;
+        finished = false;
     }
 
     friend class TaskSchedulerImpl;
