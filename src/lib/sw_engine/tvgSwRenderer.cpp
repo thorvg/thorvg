@@ -150,6 +150,9 @@ struct SwShapeTask : SwTask
 
         //Clip Path
         for (auto clip = clips.data; clip < (clips.data + clips.count); ++clip) {
+            //Guarantee composition targets get ready.
+            static_cast<SwShapeTask*>(*clip)->done(tid);
+
             auto clipper = &static_cast<SwShapeTask*>(*clip)->shape;
             //Clip shape rle
             if (shape.rle) {
@@ -202,6 +205,9 @@ struct SwImageTask : SwTask
                 if (!imageGenRle(&image, bbox, false)) goto end;
                 if (image.rle) {
                     for (auto clip = clips.data; clip < (clips.data + clips.count); ++clip) {
+                        //Guarantee composition targets get ready.
+                        static_cast<SwShapeTask*>(*clip)->done(tid);
+
                         auto clipper = &static_cast<SwShapeTask*>(*clip)->shape;
                         if (clipper->fastTrack) rleClipRect(image.rle, &clipper->bbox);
                         else if (clipper->rle) rleClipPath(image.rle, clipper->rle);
@@ -590,13 +596,7 @@ void* SwRenderer::prepareCommon(SwTask* task, const RenderTransform* transform, 
     //Finish previous task if it has duplicated request.
     task->done();
 
-    if (clips.count > 0) {
-        //Guarantee composition targets get ready.
-        for (auto clip = clips.data; clip < (clips.data + clips.count); ++clip) {
-            static_cast<SwShapeTask*>(*clip)->done();
-        }
-        task->clips = clips;
-    }
+    if (clips.count > 0) task->clips = clips;
 
     if (transform) {
         if (!task->transform) task->transform = static_cast<Matrix*>(malloc(sizeof(Matrix)));
