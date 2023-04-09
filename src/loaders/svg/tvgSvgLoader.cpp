@@ -1878,305 +1878,6 @@ static SvgNode* _findNodeById(SvgNode *node, const char* id)
 }
 
 
-static void _cloneGradStops(Array<Fill::ColorStop>& dst, const Array<Fill::ColorStop>& src)
-{
-    for (uint32_t i = 0; i < src.count; ++i) {
-        dst.push(src.data[i]);
-    }
-}
-
-
-static SvgStyleGradient* _cloneGradient(SvgStyleGradient* from)
-{
-    if (!from) return nullptr;
-
-    auto grad = (SvgStyleGradient*)(calloc(1, sizeof(SvgStyleGradient)));
-    if (!grad) return nullptr;
-
-    grad->type = from->type;
-    grad->id = from->id ? _copyId(from->id) : nullptr;
-    grad->ref = from->ref ? _copyId(from->ref) : nullptr;
-    grad->spread = from->spread;
-    grad->userSpace = from->userSpace;
-
-    if (from->transform) {
-        grad->transform = (Matrix*)calloc(1, sizeof(Matrix));
-        if (grad->transform) memcpy(grad->transform, from->transform, sizeof(Matrix));
-    }
-
-    if (grad->type == SvgGradientType::Linear) {
-        grad->linear = (SvgLinearGradient*)calloc(1, sizeof(SvgLinearGradient));
-        if (!grad->linear) goto error_grad_alloc;
-        memcpy(grad->linear, from->linear, sizeof(SvgLinearGradient));
-    } else if (grad->type == SvgGradientType::Radial) {
-        grad->radial = (SvgRadialGradient*)calloc(1, sizeof(SvgRadialGradient));
-        if (!grad->radial) goto error_grad_alloc;
-        memcpy(grad->radial, from->radial, sizeof(SvgRadialGradient));
-    }
-
-    _cloneGradStops(grad->stops, from->stops);
-
-    return grad;
-
-error_grad_alloc:
-    if (grad) {
-        grad->clear();
-        free(grad);
-    }
-    return nullptr;
-}
-
-
-static void _styleInherit(SvgStyleProperty* child, const SvgStyleProperty* parent)
-{
-    if (parent == nullptr) return;
-    //Inherit the property of parent if not present in child.
-    if (!child->curColorSet) {
-        child->color = parent->color;
-        child->curColorSet = parent->curColorSet;
-    }
-    //Fill
-    if (!((int)child->fill.flags & (int)SvgFillFlags::Paint)) {
-        child->fill.paint.color = parent->fill.paint.color;
-        child->fill.paint.none = parent->fill.paint.none;
-        child->fill.paint.curColor = parent->fill.paint.curColor;
-        if (parent->fill.paint.url) {
-            if (child->fill.paint.url) free(child->fill.paint.url);
-            child->fill.paint.url = _copyId(parent->fill.paint.url);
-        }
-    }
-    if (!((int)child->fill.flags & (int)SvgFillFlags::Opacity)) {
-        child->fill.opacity = parent->fill.opacity;
-    }
-    if (!((int)child->fill.flags & (int)SvgFillFlags::FillRule)) {
-        child->fill.fillRule = parent->fill.fillRule;
-    }
-    //Stroke
-    if (!((int)child->stroke.flags & (int)SvgStrokeFlags::Paint)) {
-        child->stroke.paint.color = parent->stroke.paint.color;
-        child->stroke.paint.none = parent->stroke.paint.none;
-        child->stroke.paint.curColor = parent->stroke.paint.curColor;
-        if (parent->stroke.paint.url) {
-            if (child->stroke.paint.url) free(child->stroke.paint.url);
-            child->stroke.paint.url = _copyId(parent->stroke.paint.url);
-        }
-    }
-    if (!((int)child->stroke.flags & (int)SvgStrokeFlags::Opacity)) {
-        child->stroke.opacity = parent->stroke.opacity;
-    }
-    if (!((int)child->stroke.flags & (int)SvgStrokeFlags::Width)) {
-        child->stroke.width = parent->stroke.width;
-    }
-    if (!((int)child->stroke.flags & (int)SvgStrokeFlags::Dash)) {
-        if (parent->stroke.dash.array.count > 0) {
-            child->stroke.dash.array.clear();
-            child->stroke.dash.array.reserve(parent->stroke.dash.array.count);
-            for (uint32_t i = 0; i < parent->stroke.dash.array.count; ++i) {
-                child->stroke.dash.array.push(parent->stroke.dash.array.data[i]);
-            }
-        }
-    }
-    if (!((int)child->stroke.flags & (int)SvgStrokeFlags::Cap)) {
-        child->stroke.cap = parent->stroke.cap;
-    }
-    if (!((int)child->stroke.flags & (int)SvgStrokeFlags::Join)) {
-        child->stroke.join = parent->stroke.join;
-    }
-}
-
-
-static void _styleCopy(SvgStyleProperty* to, const SvgStyleProperty* from)
-{
-    if (from == nullptr) return;
-    //Copy the properties of 'from' only if they were explicitly set (not the default ones).
-    if (from->curColorSet) {
-        to->color = from->color;
-        to->curColorSet = true;
-    }
-    //Fill
-    to->fill.flags = (SvgFillFlags)((int)to->fill.flags | (int)from->fill.flags);
-    if (((int)from->fill.flags & (int)SvgFillFlags::Paint)) {
-        to->fill.paint.color = from->fill.paint.color;
-        to->fill.paint.none = from->fill.paint.none;
-        to->fill.paint.curColor = from->fill.paint.curColor;
-        if (from->fill.paint.url) {
-            if (to->fill.paint.url) free(to->fill.paint.url);
-            to->fill.paint.url = _copyId(from->fill.paint.url);
-        }
-    }
-    if (((int)from->fill.flags & (int)SvgFillFlags::Opacity)) {
-        to->fill.opacity = from->fill.opacity;
-    }
-    if (((int)from->fill.flags & (int)SvgFillFlags::FillRule)) {
-        to->fill.fillRule = from->fill.fillRule;
-    }
-    //Stroke
-    to->stroke.flags = (SvgStrokeFlags)((int)to->stroke.flags | (int)from->stroke.flags);
-    if (((int)from->stroke.flags & (int)SvgStrokeFlags::Paint)) {
-        to->stroke.paint.color = from->stroke.paint.color;
-        to->stroke.paint.none = from->stroke.paint.none;
-        to->stroke.paint.curColor = from->stroke.paint.curColor;
-        if (from->stroke.paint.url) {
-            if (to->stroke.paint.url) free(to->stroke.paint.url);
-            to->stroke.paint.url = _copyId(from->stroke.paint.url);
-        }
-    }
-    if (((int)from->stroke.flags & (int)SvgStrokeFlags::Opacity)) {
-        to->stroke.opacity = from->stroke.opacity;
-    }
-    if (((int)from->stroke.flags & (int)SvgStrokeFlags::Width)) {
-        to->stroke.width = from->stroke.width;
-    }
-    if (((int)from->stroke.flags & (int)SvgStrokeFlags::Dash)) {
-        if (from->stroke.dash.array.count > 0) {
-            to->stroke.dash.array.clear();
-            to->stroke.dash.array.reserve(from->stroke.dash.array.count);
-            for (uint32_t i = 0; i < from->stroke.dash.array.count; ++i) {
-                to->stroke.dash.array.push(from->stroke.dash.array.data[i]);
-            }
-        }
-    }
-    if (((int)from->stroke.flags & (int)SvgStrokeFlags::Cap)) {
-        to->stroke.cap = from->stroke.cap;
-    }
-    if (((int)from->stroke.flags & (int)SvgStrokeFlags::Join)) {
-        to->stroke.join = from->stroke.join;
-    }
-}
-
-
-static void _copyAttr(SvgNode* to, const SvgNode* from)
-{
-    //Copy matrix attribute
-    if (from->transform) {
-        to->transform = (Matrix*)malloc(sizeof(Matrix));
-        if (to->transform) *to->transform = *from->transform;
-    }
-    //Copy style attribute
-    _styleCopy(to->style, from->style);
-    to->style->flags = (SvgStyleFlags)((int)to->style->flags | (int)from->style->flags);
-    if (from->style->clipPath.url) {
-        if (to->style->clipPath.url) free(to->style->clipPath.url);
-        to->style->clipPath.url = strdup(from->style->clipPath.url);
-    }
-    if (from->style->mask.url) {
-        if (to->style->mask.url) free(to->style->mask.url);
-        to->style->mask.url = strdup(from->style->mask.url);
-    }
-
-    //Copy node attribute
-    switch (from->type) {
-        case SvgNodeType::Circle: {
-            to->node.circle.cx = from->node.circle.cx;
-            to->node.circle.cy = from->node.circle.cy;
-            to->node.circle.r = from->node.circle.r;
-            break;
-        }
-        case SvgNodeType::Ellipse: {
-            to->node.ellipse.cx = from->node.ellipse.cx;
-            to->node.ellipse.cy = from->node.ellipse.cy;
-            to->node.ellipse.rx = from->node.ellipse.rx;
-            to->node.ellipse.ry = from->node.ellipse.ry;
-            break;
-        }
-        case SvgNodeType::Rect: {
-            to->node.rect.x = from->node.rect.x;
-            to->node.rect.y = from->node.rect.y;
-            to->node.rect.w = from->node.rect.w;
-            to->node.rect.h = from->node.rect.h;
-            to->node.rect.rx = from->node.rect.rx;
-            to->node.rect.ry = from->node.rect.ry;
-            to->node.rect.hasRx = from->node.rect.hasRx;
-            to->node.rect.hasRy = from->node.rect.hasRy;
-            break;
-        }
-        case SvgNodeType::Line: {
-            to->node.line.x1 = from->node.line.x1;
-            to->node.line.y1 = from->node.line.y1;
-            to->node.line.x2 = from->node.line.x2;
-            to->node.line.y2 = from->node.line.y2;
-            break;
-        }
-        case SvgNodeType::Path: {
-            if (from->node.path.path) {
-                if (to->node.path.path) free(to->node.path.path);
-                to->node.path.path = strdup(from->node.path.path);
-            }
-            break;
-        }
-        case SvgNodeType::Polygon: {
-            if ((to->node.polygon.pointsCount = from->node.polygon.pointsCount)) {
-                to->node.polygon.points = (float*)malloc(to->node.polygon.pointsCount * sizeof(float));
-                memcpy(to->node.polygon.points, from->node.polygon.points, to->node.polygon.pointsCount * sizeof(float));
-            }
-            break;
-        }
-        case SvgNodeType::Polyline: {
-            if ((to->node.polyline.pointsCount = from->node.polyline.pointsCount)) {
-                to->node.polyline.points = (float*)malloc(to->node.polyline.pointsCount * sizeof(float));
-                memcpy(to->node.polyline.points, from->node.polyline.points, to->node.polyline.pointsCount * sizeof(float));
-            }
-            break;
-        }
-        case SvgNodeType::Image: {
-            to->node.image.x = from->node.image.x;
-            to->node.image.y = from->node.image.y;
-            to->node.image.w = from->node.image.w;
-            to->node.image.h = from->node.image.h;
-            if (from->node.image.href) {
-                if (to->node.image.href) free(to->node.image.href);
-                to->node.image.href = strdup(from->node.image.href);
-            }
-            break;
-        }
-        default: {
-            break;
-        }
-    }
-}
-
-
-static void _cloneNode(SvgNode* from, SvgNode* parent, int depth)
-{
-    /* Exception handling: Prevent invalid SVG data input.
-       The size is the arbitrary value, we need an experimental size. */
-    if (depth == 8192) {
-        TVGERR("SVG", "Infinite recursive call - stopped after %d calls! Svg file may be incorrectly formatted.", depth);
-        return;
-    }
-
-    SvgNode* newNode;
-    if (!from || !parent || from == parent) return;
-
-    newNode = _createNode(parent, from->type);
-    if (!newNode) return;
-
-    _styleInherit(newNode->style, parent->style);
-    _copyAttr(newNode, from);
-
-    auto child = from->child.data;
-    for (uint32_t i = 0; i < from->child.count; ++i, ++child) {
-        _cloneNode(*child, newNode, depth + 1);
-    }
-}
-
-
-static void _clonePostponedNodes(Array<SvgNodeIdPair>* cloneNodes, SvgNode* doc)
-{
-    for (uint32_t i = 0; i < cloneNodes->count; ++i) {
-        auto nodeIdPair = cloneNodes->data[i];
-        auto defs = _getDefsNode(nodeIdPair.node);
-        auto nodeFrom = _findNodeById(defs, nodeIdPair.id);
-        if (!nodeFrom) nodeFrom = _findNodeById(doc, nodeIdPair.id);
-        _cloneNode(nodeFrom, nodeIdPair.node, 0);
-        if (nodeFrom && nodeFrom->type == SvgNodeType::Symbol && nodeIdPair.node->type == SvgNodeType::Use) {
-            nodeIdPair.node->node.use.symbol = nodeFrom;
-        }
-        free(nodeIdPair.id);
-    }
-}
-
-
 static constexpr struct
 {
     const char* tag;
@@ -2190,7 +1891,7 @@ static constexpr struct
     {"height", SvgParserLengthType::Vertical, sizeof("height"), offsetof(SvgUseNode, h)}
 };
 
-
+static void _cloneNode(SvgNode* from, SvgNode* parent, int depth);
 static bool _attrParseUseNode(void* data, const char* key, const char* value)
 {
     SvgLoaderData* loader = (SvgLoaderData*)data;
@@ -2695,6 +2396,305 @@ static GradientFactoryMethod _findGradientFactory(const char* name)
         }
     }
     return nullptr;
+}
+
+
+static void _cloneGradStops(Array<Fill::ColorStop>& dst, const Array<Fill::ColorStop>& src)
+{
+    for (uint32_t i = 0; i < src.count; ++i) {
+        dst.push(src.data[i]);
+    }
+}
+
+
+static SvgStyleGradient* _cloneGradient(SvgStyleGradient* from)
+{
+    if (!from) return nullptr;
+
+    auto grad = (SvgStyleGradient*)(calloc(1, sizeof(SvgStyleGradient)));
+    if (!grad) return nullptr;
+
+    grad->type = from->type;
+    grad->id = from->id ? _copyId(from->id) : nullptr;
+    grad->ref = from->ref ? _copyId(from->ref) : nullptr;
+    grad->spread = from->spread;
+    grad->userSpace = from->userSpace;
+
+    if (from->transform) {
+        grad->transform = (Matrix*)calloc(1, sizeof(Matrix));
+        if (grad->transform) memcpy(grad->transform, from->transform, sizeof(Matrix));
+    }
+
+    if (grad->type == SvgGradientType::Linear) {
+        grad->linear = (SvgLinearGradient*)calloc(1, sizeof(SvgLinearGradient));
+        if (!grad->linear) goto error_grad_alloc;
+        memcpy(grad->linear, from->linear, sizeof(SvgLinearGradient));
+    } else if (grad->type == SvgGradientType::Radial) {
+        grad->radial = (SvgRadialGradient*)calloc(1, sizeof(SvgRadialGradient));
+        if (!grad->radial) goto error_grad_alloc;
+        memcpy(grad->radial, from->radial, sizeof(SvgRadialGradient));
+    }
+
+    _cloneGradStops(grad->stops, from->stops);
+
+    return grad;
+
+    error_grad_alloc:
+    if (grad) {
+        grad->clear();
+        free(grad);
+    }
+    return nullptr;
+}
+
+
+static void _styleInherit(SvgStyleProperty* child, const SvgStyleProperty* parent)
+{
+    if (parent == nullptr) return;
+    //Inherit the property of parent if not present in child.
+    if (!child->curColorSet) {
+        child->color = parent->color;
+        child->curColorSet = parent->curColorSet;
+    }
+    //Fill
+    if (!((int)child->fill.flags & (int)SvgFillFlags::Paint)) {
+        child->fill.paint.color = parent->fill.paint.color;
+        child->fill.paint.none = parent->fill.paint.none;
+        child->fill.paint.curColor = parent->fill.paint.curColor;
+        if (parent->fill.paint.url) {
+            if (child->fill.paint.url) free(child->fill.paint.url);
+            child->fill.paint.url = _copyId(parent->fill.paint.url);
+        }
+    }
+    if (!((int)child->fill.flags & (int)SvgFillFlags::Opacity)) {
+        child->fill.opacity = parent->fill.opacity;
+    }
+    if (!((int)child->fill.flags & (int)SvgFillFlags::FillRule)) {
+        child->fill.fillRule = parent->fill.fillRule;
+    }
+    //Stroke
+    if (!((int)child->stroke.flags & (int)SvgStrokeFlags::Paint)) {
+        child->stroke.paint.color = parent->stroke.paint.color;
+        child->stroke.paint.none = parent->stroke.paint.none;
+        child->stroke.paint.curColor = parent->stroke.paint.curColor;
+        if (parent->stroke.paint.url) {
+            if (child->stroke.paint.url) free(child->stroke.paint.url);
+            child->stroke.paint.url = _copyId(parent->stroke.paint.url);
+        }
+    }
+    if (!((int)child->stroke.flags & (int)SvgStrokeFlags::Opacity)) {
+        child->stroke.opacity = parent->stroke.opacity;
+    }
+    if (!((int)child->stroke.flags & (int)SvgStrokeFlags::Width)) {
+        child->stroke.width = parent->stroke.width;
+    }
+    if (!((int)child->stroke.flags & (int)SvgStrokeFlags::Dash)) {
+        if (parent->stroke.dash.array.count > 0) {
+            child->stroke.dash.array.clear();
+            child->stroke.dash.array.reserve(parent->stroke.dash.array.count);
+            for (uint32_t i = 0; i < parent->stroke.dash.array.count; ++i) {
+                child->stroke.dash.array.push(parent->stroke.dash.array.data[i]);
+            }
+        }
+    }
+    if (!((int)child->stroke.flags & (int)SvgStrokeFlags::Cap)) {
+        child->stroke.cap = parent->stroke.cap;
+    }
+    if (!((int)child->stroke.flags & (int)SvgStrokeFlags::Join)) {
+        child->stroke.join = parent->stroke.join;
+    }
+}
+
+
+static void _styleCopy(SvgStyleProperty* to, const SvgStyleProperty* from)
+{
+    if (from == nullptr) return;
+    //Copy the properties of 'from' only if they were explicitly set (not the default ones).
+    if (from->curColorSet) {
+        to->color = from->color;
+        to->curColorSet = true;
+    }
+    //Fill
+    to->fill.flags = (SvgFillFlags)((int)to->fill.flags | (int)from->fill.flags);
+    if (((int)from->fill.flags & (int)SvgFillFlags::Paint)) {
+        to->fill.paint.color = from->fill.paint.color;
+        to->fill.paint.none = from->fill.paint.none;
+        to->fill.paint.curColor = from->fill.paint.curColor;
+        if (from->fill.paint.url) {
+            if (to->fill.paint.url) free(to->fill.paint.url);
+            to->fill.paint.url = _copyId(from->fill.paint.url);
+        }
+    }
+    if (((int)from->fill.flags & (int)SvgFillFlags::Opacity)) {
+        to->fill.opacity = from->fill.opacity;
+    }
+    if (((int)from->fill.flags & (int)SvgFillFlags::FillRule)) {
+        to->fill.fillRule = from->fill.fillRule;
+    }
+    //Stroke
+    to->stroke.flags = (SvgStrokeFlags)((int)to->stroke.flags | (int)from->stroke.flags);
+    if (((int)from->stroke.flags & (int)SvgStrokeFlags::Paint)) {
+        to->stroke.paint.color = from->stroke.paint.color;
+        to->stroke.paint.none = from->stroke.paint.none;
+        to->stroke.paint.curColor = from->stroke.paint.curColor;
+        if (from->stroke.paint.url) {
+            if (to->stroke.paint.url) free(to->stroke.paint.url);
+            to->stroke.paint.url = _copyId(from->stroke.paint.url);
+        }
+    }
+    if (((int)from->stroke.flags & (int)SvgStrokeFlags::Opacity)) {
+        to->stroke.opacity = from->stroke.opacity;
+    }
+    if (((int)from->stroke.flags & (int)SvgStrokeFlags::Width)) {
+        to->stroke.width = from->stroke.width;
+    }
+    if (((int)from->stroke.flags & (int)SvgStrokeFlags::Dash)) {
+        if (from->stroke.dash.array.count > 0) {
+            to->stroke.dash.array.clear();
+            to->stroke.dash.array.reserve(from->stroke.dash.array.count);
+            for (uint32_t i = 0; i < from->stroke.dash.array.count; ++i) {
+                to->stroke.dash.array.push(from->stroke.dash.array.data[i]);
+            }
+        }
+    }
+    if (((int)from->stroke.flags & (int)SvgStrokeFlags::Cap)) {
+        to->stroke.cap = from->stroke.cap;
+    }
+    if (((int)from->stroke.flags & (int)SvgStrokeFlags::Join)) {
+        to->stroke.join = from->stroke.join;
+    }
+}
+
+
+static void _copyAttr(SvgNode* to, const SvgNode* from)
+{
+    //Copy matrix attribute
+    if (from->transform) {
+        to->transform = (Matrix*)malloc(sizeof(Matrix));
+        if (to->transform) *to->transform = *from->transform;
+    }
+    //Copy style attribute
+    _styleCopy(to->style, from->style);
+    to->style->flags = (SvgStyleFlags)((int)to->style->flags | (int)from->style->flags);
+    if (from->style->clipPath.url) {
+        if (to->style->clipPath.url) free(to->style->clipPath.url);
+        to->style->clipPath.url = strdup(from->style->clipPath.url);
+    }
+    if (from->style->mask.url) {
+        if (to->style->mask.url) free(to->style->mask.url);
+        to->style->mask.url = strdup(from->style->mask.url);
+    }
+
+    //Copy node attribute
+    switch (from->type) {
+        case SvgNodeType::Circle: {
+            to->node.circle.cx = from->node.circle.cx;
+            to->node.circle.cy = from->node.circle.cy;
+            to->node.circle.r = from->node.circle.r;
+            break;
+        }
+        case SvgNodeType::Ellipse: {
+            to->node.ellipse.cx = from->node.ellipse.cx;
+            to->node.ellipse.cy = from->node.ellipse.cy;
+            to->node.ellipse.rx = from->node.ellipse.rx;
+            to->node.ellipse.ry = from->node.ellipse.ry;
+            break;
+        }
+        case SvgNodeType::Rect: {
+            to->node.rect.x = from->node.rect.x;
+            to->node.rect.y = from->node.rect.y;
+            to->node.rect.w = from->node.rect.w;
+            to->node.rect.h = from->node.rect.h;
+            to->node.rect.rx = from->node.rect.rx;
+            to->node.rect.ry = from->node.rect.ry;
+            to->node.rect.hasRx = from->node.rect.hasRx;
+            to->node.rect.hasRy = from->node.rect.hasRy;
+            break;
+        }
+        case SvgNodeType::Line: {
+            to->node.line.x1 = from->node.line.x1;
+            to->node.line.y1 = from->node.line.y1;
+            to->node.line.x2 = from->node.line.x2;
+            to->node.line.y2 = from->node.line.y2;
+            break;
+        }
+        case SvgNodeType::Path: {
+            if (from->node.path.path) {
+                if (to->node.path.path) free(to->node.path.path);
+                to->node.path.path = strdup(from->node.path.path);
+            }
+            break;
+        }
+        case SvgNodeType::Polygon: {
+            if ((to->node.polygon.pointsCount = from->node.polygon.pointsCount)) {
+                to->node.polygon.points = (float*)malloc(to->node.polygon.pointsCount * sizeof(float));
+                memcpy(to->node.polygon.points, from->node.polygon.points, to->node.polygon.pointsCount * sizeof(float));
+            }
+            break;
+        }
+        case SvgNodeType::Polyline: {
+            if ((to->node.polyline.pointsCount = from->node.polyline.pointsCount)) {
+                to->node.polyline.points = (float*)malloc(to->node.polyline.pointsCount * sizeof(float));
+                memcpy(to->node.polyline.points, from->node.polyline.points, to->node.polyline.pointsCount * sizeof(float));
+            }
+            break;
+        }
+        case SvgNodeType::Image: {
+            to->node.image.x = from->node.image.x;
+            to->node.image.y = from->node.image.y;
+            to->node.image.w = from->node.image.w;
+            to->node.image.h = from->node.image.h;
+            if (from->node.image.href) {
+                if (to->node.image.href) free(to->node.image.href);
+                to->node.image.href = strdup(from->node.image.href);
+            }
+            break;
+        }
+        default: {
+            break;
+        }
+    }
+}
+
+
+static void _cloneNode(SvgNode* from, SvgNode* parent, int depth)
+{
+    /* Exception handling: Prevent invalid SVG data input.
+       The size is the arbitrary value, we need an experimental size. */
+    if (depth == 8192) {
+        TVGERR("SVG", "Infinite recursive call - stopped after %d calls! Svg file may be incorrectly formatted.", depth);
+        return;
+    }
+
+    SvgNode* newNode;
+    if (!from || !parent || from == parent) return;
+
+    newNode = _createNode(parent, from->type);
+    if (!newNode) return;
+
+    _styleInherit(newNode->style, parent->style);
+    _copyAttr(newNode, from);
+
+    auto child = from->child.data;
+    for (uint32_t i = 0; i < from->child.count; ++i, ++child) {
+        _cloneNode(*child, newNode, depth + 1);
+    }
+}
+
+
+static void _clonePostponedNodes(Array<SvgNodeIdPair>* cloneNodes, SvgNode* doc)
+{
+    for (uint32_t i = 0; i < cloneNodes->count; ++i) {
+        auto nodeIdPair = cloneNodes->data[i];
+        auto defs = _getDefsNode(nodeIdPair.node);
+        auto nodeFrom = _findNodeById(defs, nodeIdPair.id);
+        if (!nodeFrom) nodeFrom = _findNodeById(doc, nodeIdPair.id);
+        _cloneNode(nodeFrom, nodeIdPair.node, 0);
+        if (nodeFrom && nodeFrom->type == SvgNodeType::Symbol && nodeIdPair.node->type == SvgNodeType::Use) {
+            nodeIdPair.node->node.use.symbol = nodeFrom;
+        }
+        free(nodeIdPair.id);
+    }
 }
 
 
