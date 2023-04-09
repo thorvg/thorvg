@@ -125,6 +125,22 @@ enum class SvgStopStyleFlags
     StopColor = 0x02
 };
 
+enum class SvgGradientFlags
+{
+    None = 0x0,
+    GradientUnits = 0x1,
+    SpreadMethod = 0x2,
+    X1 = 0x4,
+    X2 = 0x8,
+    Y1 = 0x10,
+    Y2 = 0x20,
+    Cx = 0x40,
+    Cy = 0x80,
+    R = 0x100,
+    Fx = 0x200,
+    Fy = 0x400
+};
+
 enum class SvgFillRule
 {
     Winding = 0,
@@ -349,6 +365,7 @@ struct SvgStyleGradient
     SvgLinearGradient* linear;
     Matrix* transform;
     Array<Fill::ColorStop> stops;
+    SvgGradientFlags flags;
     bool userSpace;
 
     void clear()
