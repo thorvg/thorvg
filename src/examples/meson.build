@@ -32,6 +32,7 @@ source_file = [
     'PictureTvg.cpp',
     'RadialGradient.cpp',
     'Scene.cpp',
+    'SceneClipper.cpp',
     'SceneTransform.cpp',
     'Shape.cpp',
     'Stacking.cpp',
