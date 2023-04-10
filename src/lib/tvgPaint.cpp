@@ -162,8 +162,6 @@ bool Paint::Impl::render(RenderMethod& renderer)
 {
     Compositor* cmp = nullptr;
 
-    //OPTIMIZE_ME: Can we replace the simple AlphaMasking with ClipPath?
-
     /* Note: only ClipPath is processed in update() step.
         Create a composition image. */
     if (compData && compData->method != CompositeMethod::ClipPath && !(compData->target->pImpl->ctxFlag & ContextFlag::FastTrack)) {
@@ -208,20 +206,22 @@ RenderData Paint::Impl::update(RenderMethod& renderer, const RenderTransform* pT
         /* If transform has no rotation factors && ClipPath / AlphaMasking is a simple rectangle,
            we can avoid regular ClipPath / AlphaMasking sequence but use viewport for performance */
         auto tryFastTrack = false;
-        if (method == CompositeMethod::ClipPath) tryFastTrack = true;
-        else if (method == CompositeMethod::AlphaMask && target->identifier() == TVG_CLASS_ID_SHAPE) {
-            auto shape = static_cast<Shape*>(target);
-            uint8_t a;
-            shape->fillColor(nullptr, nullptr, nullptr, &a);
-            if (a == 255 && shape->opacity() == 255 && !shape->fill()) tryFastTrack = true;
-        }
-        if (tryFastTrack) {
-            RenderRegion viewport2;
-            if ((compFastTrack = _compFastTrack(target, pTransform, target->pImpl->rTransform, viewport2))) {
-                viewport = renderer.viewport();
-                viewport2.intersect(viewport);
-                renderer.viewport(viewport2);
-                target->pImpl->ctxFlag |= ContextFlag::FastTrack;
+        if (target->identifier() == TVG_CLASS_ID_SHAPE) {
+            if (method == CompositeMethod::ClipPath) tryFastTrack = true;
+            else if (method == CompositeMethod::AlphaMask) {
+                auto shape = static_cast<Shape*>(target);
+                uint8_t a;
+                shape->fillColor(nullptr, nullptr, nullptr, &a);
+                if (a == 255 && shape->opacity() == 255 && !shape->fill()) tryFastTrack = true;
+            }
+            if (tryFastTrack) {
+                RenderRegion viewport2;
+                if ((compFastTrack = _compFastTrack(target, pTransform, target->pImpl->rTransform, viewport2))) {
+                    viewport = renderer.viewport();
+                    viewport2.intersect(viewport);
+                    renderer.viewport(viewport2);
+                    target->pImpl->ctxFlag |= ContextFlag::FastTrack;
+                }
             }
         }
         if (!compFastTrack) {
