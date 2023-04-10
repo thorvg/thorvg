@@ -61,6 +61,7 @@ struct SwTask : Task
     }
 
     virtual bool dispose() = 0;
+    virtual bool clip(SwRleData* target) = 0;
 
     virtual ~SwTask()
     {
@@ -75,6 +76,15 @@ struct SwShapeTask : SwTask
     const RenderShape* rshape = nullptr;
     bool cmpStroking = false;
     bool clipper = false;
+
+    bool clip(SwRleData* target) override
+    {
+        if (shape.fastTrack) rleClipRect(target, &bbox);
+        else if (shape.rle) rleClipPath(target, shape.rle);
+        else return false;
+
+        return true;
+    }
 
     void run(unsigned tid) override
     {    
@@ -150,22 +160,13 @@ struct SwShapeTask : SwTask
 
         //Clip Path
         for (auto clip = clips.data; clip < (clips.data + clips.count); ++clip) {
+            auto clipper = static_cast<SwTask*>(*clip);
             //Guarantee composition targets get ready.
-            static_cast<SwShapeTask*>(*clip)->done(tid);
-
-            auto clipper = &static_cast<SwShapeTask*>(*clip)->shape;
+            clipper->done(tid);
             //Clip shape rle
-            if (shape.rle) {
-                if (clipper->fastTrack) rleClipRect(shape.rle, &clipper->bbox);
-                else if (clipper->rle) rleClipPath(shape.rle, clipper->rle);
-                else goto err;
-            }
+            if (shape.rle && !clipper->clip(shape.rle)) goto err;
             //Clip stroke rle
-            if (shape.strokeRle) {
-                if (clipper->fastTrack) rleClipRect(shape.strokeRle, &clipper->bbox);
-                else if (clipper->rle) rleClipPath(shape.strokeRle, clipper->rle);
-                else goto err;
-            }
+            if (shape.strokeRle && !clipper->clip(shape.strokeRle)) goto err;
         }
         goto end;
 
@@ -189,6 +190,12 @@ struct SwImageTask : SwTask
     Polygon* triangles;
     uint32_t triangleCnt;
 
+    bool clip(SwRleData* target) override
+    {
+        TVGERR("SW_ENGINE", "Image is used as ClipPath?");
+        return true;
+    }
+
     void run(unsigned tid) override
     {
         auto clipRegion = bbox;
@@ -205,13 +212,10 @@ struct SwImageTask : SwTask
                 if (!imageGenRle(&image, bbox, false)) goto end;
                 if (image.rle) {
                     for (auto clip = clips.data; clip < (clips.data + clips.count); ++clip) {
+                        auto clipper = static_cast<SwTask*>(*clip);
                         //Guarantee composition targets get ready.
-                        static_cast<SwShapeTask*>(*clip)->done(tid);
-
-                        auto clipper = &static_cast<SwShapeTask*>(*clip)->shape;
-                        if (clipper->fastTrack) rleClipRect(image.rle, &clipper->bbox);
-                        else if (clipper->rle) rleClipPath(image.rle, clipper->rle);
-                        else goto err;
+                        clipper->done(tid);
+                        if (!clipper->clip(image.rle)) goto err;
                     }
                 }
             }
