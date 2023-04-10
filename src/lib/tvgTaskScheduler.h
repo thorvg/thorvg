@@ -88,7 +88,7 @@ private:
         finished = false;
     }
 
-    friend class TaskSchedulerImpl;
+    friend struct TaskSchedulerImpl;
 };
 
 
