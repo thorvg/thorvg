@@ -65,11 +65,11 @@ struct Picture::Impl
     Paint* paint = nullptr;           //vector picture uses
     Surface* surface = nullptr;       //bitmap picture uses
     Polygon* triangles = nullptr;     //mesh data
-    uint32_t triangleCnt = 0;       //mesh triangle count
-    void* rdata = nullptr;            //engine data
+    uint32_t triangleCnt = 0;         //mesh triangle count
+    RenderData rd = nullptr;          //engine data
     float w = 0, h = 0;
-    bool resizing = false;
     uint32_t rendererColorSpace = 0;
+    bool resizing = false;
 
     ~Impl()
     {
@@ -84,8 +84,8 @@ struct Picture::Impl
         if (paint) {
             ret = paint->pImpl->dispose(renderer);
         } else if (surface) {
-            ret =  renderer.dispose(rdata);
-            rdata = nullptr;
+            ret =  renderer.dispose(rd);
+            rd = nullptr;
         }
         return ret;
     }
@@ -131,29 +131,29 @@ struct Picture::Impl
         else return RenderTransform(pTransform, &tmp);
     }
 
-    void* update(RenderMethod &renderer, const RenderTransform* pTransform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag pFlag, bool clipper)
+    RenderData update(RenderMethod &renderer, const RenderTransform* pTransform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag pFlag, bool clipper)
     {
         rendererColorSpace = renderer.colorSpace();
         auto flag = reload();
 
         if (surface) {
             auto transform = resizeTransform(pTransform);
-            rdata = renderer.prepare(surface, triangles, triangleCnt, rdata, &transform, opacity, clips, static_cast<RenderUpdateFlag>(pFlag | flag));
+            rd = renderer.prepare(surface, triangles, triangleCnt, rd, &transform, opacity, clips, static_cast<RenderUpdateFlag>(pFlag | flag));
         } else if (paint) {
             if (resizing) {
                 loader->resize(paint, w, h);
                 resizing = false;
             }
-            rdata = paint->pImpl->update(renderer, pTransform, opacity, clips, static_cast<RenderUpdateFlag>(pFlag | flag), clipper);
+            rd = paint->pImpl->update(renderer, pTransform, opacity, clips, static_cast<RenderUpdateFlag>(pFlag | flag), clipper);
         }
-        return rdata;
+        return rd;
     }
 
     bool render(RenderMethod &renderer)
     {
         if (surface) {
-            if (triangles) return renderer.renderImageMesh(rdata);
-            else return renderer.renderImage(rdata);
+            if (triangles) return renderer.renderImageMesh(rd);
+            else return renderer.renderImage(rd);
         }
         else if (paint) return paint->pImpl->render(renderer);
         return false;
@@ -214,7 +214,7 @@ struct Picture::Impl
 
     RenderRegion bounds(RenderMethod& renderer)
     {
-        if (rdata) return renderer.region(rdata);
+        if (rd) return renderer.region(rd);
         if (paint) return paint->pImpl->bounds(renderer);
         return {0, 0, 0, 0};
     }
