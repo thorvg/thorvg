@@ -39,7 +39,7 @@ jobs:
 
     - name: Build
       run: |
-        meson --backend=ninja build -Dloaders="svg, tvg, png, jpg" -Dsavers="tvg" -Dbindings="capi"
+        meson --backend=ninja build -Dloaders="all" -Dsavers="all" -Dbindings="capi"
         where link
         ninja -C build install
 

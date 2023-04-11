@@ -28,7 +28,7 @@ jobs:
 
     - name: Build
       run: |
-        meson . build -Dlog=true -Dloaders="svg, tvg, png, jpg" -Dsavers="tvg"
+        meson . build -Dlog=true -Dloaders="all" -Dsavers="all"
         cd build
         sudo ninja -C . install
 
@@ -52,7 +52,7 @@ jobs:
 
     - name: Build
       run: |
-        meson . build -Dexamples=true -Dloaders="svg, tvg, png, jpg" -Dsavers="tvg"
+        meson . build -Dexamples=true -Dloaders="all" -Dsavers="all"
         cd build
         sudo ninja -C . install
 
@@ -77,7 +77,7 @@ jobs:
 
     - name: Install-ThorVG
       run: |
-        meson . build -Dloaders="svg, tvg, png, jpg" -Dsavers="tvg" -Dbindings="capi"
+        meson . build -Dloaders="all" -Dsavers="all" -Dbindings="capi"
         cd build
         sudo ninja -C . install
         cd ..
@@ -85,7 +85,7 @@ jobs:
 
     - name: Build
       run: |
-        meson . build -Dtests=true -Dloaders="svg, tvg, png, jpg" -Dsavers="tvg" -Dbindings="capi" --errorlogs
+        meson . build -Dtests=true -Dloaders="all" -Dsavers="all" -Dbindings="capi" --errorlogs
         cd build
         sudo ninja -C . install test
 
@@ -105,7 +105,7 @@ jobs:
     - name: Build & Run memcheck Script(ASAN)
       run: |
         sudo rm -rf ./build
-        meson . build -Db_sanitize="address,undefined" -Dloaders="all" -Dsavers="tvg" -Dtests="true" -Dbindings="capi"
+        meson . build -Db_sanitize="address,undefined" -Dloaders="all" -Dsavers="all" -Dtests="true" -Dbindings="capi"
         cd build
         sudo ninja -C . install
         export PATH=$PATH:~/.local/bin/
