@@ -62,6 +62,7 @@ struct SwTask : Task
 
     virtual bool dispose() = 0;
     virtual bool clip(SwRleData* target) = 0;
+    virtual SwRleData* rle() = 0;
 
     virtual ~SwTask()
     {
@@ -84,6 +85,14 @@ struct SwShapeTask : SwTask
         else return false;
 
         return true;
+    }
+
+    SwRleData* rle() override
+    {
+        if (!shape.rle && shape.fastTrack) {
+            shape.rle = rleRender(&shape.bbox);
+        }
+        return shape.rle;
     }
 
     void run(unsigned tid) override
@@ -184,6 +193,68 @@ struct SwShapeTask : SwTask
 };
 
 
+struct SwSceneTask : SwTask
+{
+    Array<RenderData> scene;    //list of paints render data (SwTask)
+    SwRleData* sceneRle = nullptr;
+
+    bool clip(SwRleData* target) override
+    {
+        //Only one shape
+        if (scene.count == 1) {
+            return static_cast<SwTask*>(*scene.data)->clip(target);
+        }
+
+        //More than one shapes
+        if (sceneRle) rleClipPath(target, sceneRle);
+        else TVGLOG("SW_ENGINE", "No clippers in a scene?");
+
+        return true;
+    }
+
+    SwRleData* rle() override
+    {
+        return sceneRle;
+    }
+
+    void run(unsigned tid) override
+    {
+        //TODO: Skip the run if the scene hans't changed.
+        if (!sceneRle) sceneRle = static_cast<SwRleData*>(calloc(1, sizeof(SwRleData)));
+        else rleReset(sceneRle);
+
+        //Only one shape
+        if (scene.count == 1) {
+            auto clipper = static_cast<SwTask*>(*scene.data);
+            clipper->done(tid);
+        //Merge shapes if it has more than one shapes
+        } else {
+            //Merge first two clippers
+            auto clipper1 = static_cast<SwTask*>(*scene.data);
+            clipper1->done(tid);
+
+            auto clipper2 = static_cast<SwTask*>(*(scene.data + 1));
+            clipper2->done(tid);
+
+            rleMerge(sceneRle, clipper1->rle(), clipper2->rle());
+
+            //Unify the remained clippers
+            for (auto rd = scene.data + 2; rd < (scene.data + scene.count); ++rd) {
+                auto clipper = static_cast<SwTask*>(*rd);
+                clipper->done(tid);
+                rleMerge(sceneRle, sceneRle, clipper->rle());
+            }
+        }
+    }
+
+    bool dispose() override
+    {
+        rleFree(sceneRle);
+        return true;
+    }
+};
+
+
 struct SwImageTask : SwTask
 {
     SwImage image;
@@ -194,6 +265,12 @@ struct SwImageTask : SwTask
     {
         TVGERR("SW_ENGINE", "Image is used as ClipPath?");
         return true;
+    }
+
+    SwRleData* rle() override
+    {
+        TVGERR("SW_ENGINE", "Image is used as Scene ClipPath?");
+        return nullptr;
     }
 
     void run(unsigned tid) override
@@ -600,7 +677,7 @@ void* SwRenderer::prepareCommon(SwTask* task, const RenderTransform* transform, 
     //Finish previous task if it has duplicated request.
     task->done();
 
-    if (clips.count > 0) task->clips = clips;
+    task->clips = clips;
 
     if (transform) {
         if (!task->transform) task->transform = static_cast<Matrix*>(malloc(sizeof(Matrix)));
@@ -647,6 +724,17 @@ RenderData SwRenderer::prepare(Surface* image, Polygon* triangles, uint32_t tria
 }
 
 
+RenderData SwRenderer::prepare(const Array<RenderData>& scene, RenderData data, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flags)
+{
+    //prepare task
+    auto task = static_cast<SwSceneTask*>(data);
+    if (!task) task = new SwSceneTask;
+    task->scene = scene;
+
+    return prepareCommon(task, transform, opacity, clips, flags);
+}
+
+
 RenderData SwRenderer::prepare(const RenderShape& rshape, RenderData data, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flags, bool clipper)
 {
     //prepare task
@@ -654,8 +742,9 @@ RenderData SwRenderer::prepare(const RenderShape& rshape, RenderData data, const
     if (!task) {
         task = new SwShapeTask;
         task->rshape = &rshape;
-        task->clipper = clipper;
     }
+    task->clipper = clipper;
+
     return prepareCommon(task, transform, opacity, clips, flags);
 }
 

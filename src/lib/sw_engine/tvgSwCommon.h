@@ -335,10 +335,12 @@ void fillFetchLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, 
 void fillFetchRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len);
 
 SwRleData* rleRender(SwRleData* rle, const SwOutline* outline, const SwBBox& renderRegion, bool antiAlias);
+SwRleData* rleRender(const SwBBox* bbox);
 void rleFree(SwRleData* rle);
 void rleReset(SwRleData* rle);
-void rleClipPath(SwRleData *rle, const SwRleData *clip);
-void rleClipRect(SwRleData *rle, const SwBBox* clip);
+void rleMerge(SwRleData* rle, SwRleData* clip1, SwRleData* clip2);
+void rleClipPath(SwRleData* rle, const SwRleData* clip);
+void rleClipRect(SwRleData* rle, const SwBBox* clip);
 
 SwMpool* mpoolInit(uint32_t threads);
 bool mpoolTerm(SwMpool* mpool);
