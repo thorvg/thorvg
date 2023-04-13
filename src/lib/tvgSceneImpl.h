@@ -61,6 +61,7 @@ struct Scene::Impl
     Array<Paint*> paints;
     uint8_t opacity;                     //for composition
     RenderMethod* renderer = nullptr;    //keep it for explicit clear
+    RenderData rd = nullptr;
     Scene* scene = nullptr;
 
     Impl(Scene* s) : scene(s)
@@ -80,9 +81,11 @@ struct Scene::Impl
             (*paint)->pImpl->dispose(renderer);
         }
 
+        auto ret = renderer.dispose(rd);
         this->renderer = nullptr;
+        this->rd = nullptr;
 
-        return true;
+        return ret;
     }
 
     bool needComposition(uint32_t opacity)
@@ -109,16 +112,22 @@ struct Scene::Impl
         this->opacity = static_cast<uint8_t>(opacity);
         if (needComposition(opacity)) opacity = 255;
 
-        for (auto paint = paints.data; paint < (paints.data + paints.count); ++paint) {
-            (*paint)->pImpl->update(renderer, transform, opacity, clips, static_cast<uint32_t>(flag), clipper);
-        }
-
-        /* FXIME: it requires to return list of children engine data
-           This is necessary for scene composition */
-
         this->renderer = &renderer;
 
-        return nullptr;
+        if (clipper) {
+            Array<RenderData> rds;
+            rds.reserve(paints.count);
+            for (auto paint = paints.data; paint < (paints.data + paints.count); ++paint) {
+                rds.push((*paint)->pImpl->update(renderer, transform, opacity, clips, flag, true));
+            }
+            rd = renderer.prepare(rds, rd, transform, opacity, clips, flag);
+            return rd;
+        } else {
+            for (auto paint = paints.data; paint < (paints.data + paints.count); ++paint) {
+                (*paint)->pImpl->update(renderer, transform, opacity, clips, flag, false);
+            }
+            return nullptr;
+        }
     }
 
     bool render(RenderMethod& renderer)
