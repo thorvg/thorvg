@@ -66,11 +66,13 @@ enum class FileType { Tvg = 0, Svg, Raw, Png, Jpg, Unknown };
 
 #ifdef THORVG_LOG_ENABLED
     constexpr auto ErrorColor = "\033[31m";  //red
+    constexpr auto ErrorBgColor = "\033[41m";//bg red
     constexpr auto LogColor = "\033[32m";    //green
+    constexpr auto LogBgColor = "\033[42m";  //bg green
     constexpr auto GreyColor = "\033[90m";   //grey
-    constexpr auto ResetColor = "\033[0m";   //default
-    #define TVGERR(tag, fmt, ...) fprintf(stderr, "%s" tag "%s (%s l.%d): %s" fmt "\n", ErrorColor, GreyColor, __FILE__, __LINE__, ResetColor, ##__VA_ARGS__)
-    #define TVGLOG(tag, fmt, ...) fprintf(stderr, "%s" tag "%s (%s l.%d): %s" fmt "\n", LogColor, GreyColor, __FILE__, __LINE__, ResetColor, ##__VA_ARGS__)
+    constexpr auto ResetColors = "\033[0m";  //default
+    #define TVGERR(tag, fmt, ...) fprintf(stderr, "%s[E]%s %s" tag "%s (%s l.%d): %s" fmt "\n", ErrorBgColor, ResetColors, ErrorColor, GreyColor, __FILE__, __LINE__, ResetColors, ##__VA_ARGS__)
+    #define TVGLOG(tag, fmt, ...) fprintf(stderr, "%s[L]%s %s" tag "%s (%s l.%d): %s" fmt "\n", LogBgColor, ResetColors, LogColor, GreyColor, __FILE__, __LINE__, ResetColors, ##__VA_ARGS__)
 #else
     #define TVGERR(...)
     #define TVGLOG(...)
