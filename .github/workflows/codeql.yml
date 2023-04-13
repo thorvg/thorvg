@@ -72,8 +72,7 @@ jobs:
         sudo apt-get install libturbojpeg0-dev libpng-dev
 
         meson . build -Dbindings="capi" -Dloaders="all" -Dsavers="all" -Dtools="all"
-        cd build
-        sudo ninja -C . install
+        sudo ninja -C build install
          
 
     - name: Perform CodeQL Analysis

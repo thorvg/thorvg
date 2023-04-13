@@ -24,7 +24,7 @@ jobs:
         sudo pip3 install meson
 
     - name: Install TurboJPEG library
-      run: sudo apt-get install libturbojpeg0-dev libjpeg8-dev
+      run: sudo apt-get install libturbojpeg0-dev libpng-dev
 
     - name: Build
       run: |
@@ -48,7 +48,7 @@ jobs:
         sudo pip3 install meson
 
     - name: Install TurboJPEG library
-      run: sudo apt-get install libturbojpeg0-dev libjpeg8-dev
+      run: sudo apt-get install libturbojpeg0-dev libpng-dev
 
     - name: Build
       run: |
@@ -73,7 +73,7 @@ jobs:
         sudo pip3 install meson
 
     - name: Install TurboJPEG library
-      run: sudo apt-get install libturbojpeg0-dev libjpeg8-dev
+      run: sudo apt-get install libturbojpeg0-dev libpng-dev
 
     - name: Install-ThorVG
       run: |
