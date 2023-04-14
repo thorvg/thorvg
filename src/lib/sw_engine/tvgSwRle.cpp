@@ -773,54 +773,52 @@ static int _genRle(RleWorker& rw)
 }
 
 
-static SwSpan* _intersectSpansRegion(const SwRleData *clip, const SwRleData *targetRle, SwSpan *outSpans, uint32_t spanCnt)
+static SwSpan* _intersectSpansRegion(const SwRleData *clip, const SwRleData *target, SwSpan *outSpans)
 {
     auto out = outSpans;
-    auto spans = targetRle->spans;
-    auto end = targetRle->spans + targetRle->size;
+    auto spans = target->spans;
+    auto end = target->spans + target->size;
     auto clipSpans = clip->spans;
     auto clipEnd = clip->spans + clip->size;
 
-    while (spanCnt > 0 && spans < end) {
-        if (clipSpans == clipEnd) {
-            spans = end;
-            break;
-        }
+    while (spans < end && clipSpans < clipEnd) {
+        //align y cooridnates.
         if (clipSpans->y > spans->y) {
             ++spans;
             continue;
         }
-        if (spans->y != clipSpans->y) {
+        if (spans->y > clipSpans->y) {
             ++clipSpans;
             continue;
         }
-        auto sx1 = spans->x;
-        auto sx2 = sx1 + spans->len;
-        auto cx1 = clipSpans->x;
-        auto cx2 = cx1 + clipSpans->len;
 
-        if (cx1 < sx1 && cx2 < sx1) {
-            ++clipSpans;
-            continue;
+        //Try clipping with all clip spans which have a same y coordinate.
+        auto temp = clipSpans;
+        while(temp->y == clipSpans->y) {
+            auto sx1 = spans->x;
+            auto sx2 = sx1 + spans->len;
+            auto cx1 = temp->x;
+            auto cx2 = cx1 + temp->len;
+
+            //The span must be left(x1) to right(x2) direction. Not intersected.
+            if (cx2 < sx1 || sx2 < cx1) {
+                ++temp;
+                continue;
+            }
+
+            //clip span region.
+            auto x = sx1 > cx1 ? sx1 : cx1;
+            auto len = (sx2 < cx2 ? sx2 : cx2) - x;
+            if (len > 0) {
+                out->x = x;
+                out->y = temp->y;
+                out->len = len;
+                out->coverage = (uint8_t)(((spans->coverage * temp->coverage) + 0xff) >> 8);
+                ++out;
+            }
+            ++temp;
         }
-        else if (sx1 < cx1 && sx2 < cx1) {
-            ++spans;
-            continue;
-        }
-        auto x = sx1 > cx1 ? sx1 : cx1;
-        auto len = (sx2 < cx2 ? sx2 : cx2) - x;
-        if (len) {
-            auto spansCorverage = spans->coverage;
-            auto clipSpansCoverage = clipSpans->coverage;
-            out->x = sx1 > cx1 ? sx1 : cx1;
-            out->len = (sx2 < cx2 ? sx2 : cx2) - out->x;
-            out->y = spans->y;
-            out->coverage = (uint8_t)(((spansCorverage * clipSpansCoverage) + 0xff) >> 8);
-            ++out;
-            --spanCnt;
-        }
-        if (sx2 < cx2) ++spans;
-        else ++clipSpans;
+        ++spans;
     }
     return out;
 }
@@ -1122,7 +1120,7 @@ void rleClipPath(SwRleData *rle, const SwRleData *clip)
     if (rle->size == 0 || clip->size == 0) return;
     auto spanCnt = rle->size > clip->size ? rle->size : clip->size;
     auto spans = static_cast<SwSpan*>(malloc(sizeof(SwSpan) * (spanCnt)));
-    auto spansEnd = _intersectSpansRegion(clip, rle, spans, spanCnt);
+    auto spansEnd = _intersectSpansRegion(clip, rle, spans);
 
     _replaceClipSpan(rle, spans, spansEnd - spans);
 
