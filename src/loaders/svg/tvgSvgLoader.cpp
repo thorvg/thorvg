@@ -2976,6 +2976,7 @@ static void _svgLoaderParserXmlOpen(SvgLoaderData* loader, const char* content, 
         //Parse the empty tag
         attrs = content;
         while ((attrs != nullptr) && *attrs != '>') attrs++;
+        if (empty) attrs--;
     }
 
     if (attrs) {
