@@ -115,7 +115,8 @@ enum class SvgStyleFlags
     ClipPath = 0x1000,
     Mask = 0x2000,
     MaskType = 0x4000,
-    Display = 0x8000
+    Display = 0x8000,
+    PaintOrder = 0x10000
 };
 
 enum class SvgStopStyleFlags
@@ -411,6 +412,7 @@ struct SvgStyleProperty
     SvgColor color;
     bool curColorSet;
     char* cssClass;
+    bool paintOrder; //true if default (fill, stroke), false otherwise
     SvgStyleFlags flags;
 };
 

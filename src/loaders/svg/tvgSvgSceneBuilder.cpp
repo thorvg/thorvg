@@ -330,6 +330,8 @@ static void _applyProperty(SvgNode* node, Shape* vg, const Box& vBox, const stri
 
     //Apply the fill rule
     vg->fill((tvg::FillRule)style->fill.fillRule);
+    //Rendering order
+    vg->order(!style->paintOrder);
 
     //Apply node opacity
     if (style->opacity < 255) vg->opacity(style->opacity);
