@@ -757,9 +757,15 @@ static unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, const Box& vBox,
 static void _applySvgViewFlag(const Scene* scene, float& vx, float& vy, float& vw, float& vh, float& w, float& h, SvgViewFlag viewFlag)
 {
     if (!((uint32_t)viewFlag & (uint32_t)SvgViewFlag::Viewbox)) {
-        scene->bounds(&vx, &vy, &vw, &vh, false);
-        if ((uint32_t)viewFlag & (uint32_t)SvgViewFlag::Width) vw = w;
-        if ((uint32_t)viewFlag & (uint32_t)SvgViewFlag::Height) vh = h;
+        float x, y;
+        scene->bounds(&x, &y, &vw, &vh, false);
+        if (!((uint32_t)viewFlag & (uint32_t)SvgViewFlag::Width) && !((uint32_t)viewFlag & (uint32_t)SvgViewFlag::Height)) {
+            vx = x;
+            vy = y;
+        } else {
+            if ((uint32_t)viewFlag & (uint32_t)SvgViewFlag::Width) vw = w;
+            if ((uint32_t)viewFlag & (uint32_t)SvgViewFlag::Height) vh = h;
+        }
     }
     if (!((uint32_t)viewFlag & (uint32_t)SvgViewFlag::Width)) w = vw;
     if (!((uint32_t)viewFlag & (uint32_t)SvgViewFlag::Height)) h = vh;
