@@ -254,13 +254,18 @@ static void _applyComposition(Paint* paint, const SvgNode* node, const Box& vBox
             node->style->clipPath.applying = true;
 
             auto comp = Shape::gen();
-            if (node->transform) comp->transform(*node->transform);
 
             auto child = compNode->child.data;
             auto valid = false; //Composite only when valid shapes are existed
 
             for (uint32_t i = 0; i < compNode->child.count; ++i, ++child) {
                 if (_appendChildShape(*child, comp.get(), vBox, svgPath)) valid = true;
+            }
+
+            if (node->transform) {
+                auto m = comp->transform();
+                m = mathMultiply(node->transform, &m);
+                comp->transform(m);
             }
 
             if (valid) paint->composite(move(comp), CompositeMethod::ClipPath);
