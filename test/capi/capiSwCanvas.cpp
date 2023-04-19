@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 - 2022 Samsung Electronics Co., Ltd. All rights reserved.
+ * Copyright (c) 2021 - 2023 the ThorVG project. All rights reserved.
 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,6 +22,8 @@
 
 #include <thorvg_capi.h>
 #include "../catch.hpp"
+
+#ifdef THORVG_SW_RASTER_SUPPORT
 
 TEST_CASE("Canvas missing initialization", "[capiSwCanvas]")
 {
@@ -150,3 +152,5 @@ TEST_CASE("Canvas update, clear and reuse", "[capiSwCanvas]")
 
     REQUIRE(tvg_engine_term(TVG_ENGINE_SW) == TVG_RESULT_SUCCESS);
 }
+
+#endif

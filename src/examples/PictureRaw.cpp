@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 - 2022 Samsung Electronics Co., Ltd. All rights reserved.
+ * Copyright (c) 2020 - 2023 the ThorVG project. All rights reserved.
 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -61,7 +61,6 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     auto circle = tvg::Shape::gen();
     circle->appendCircle(350, 350, 200,200);
-    circle->fill(255, 255, 255, 255);
 
     picture2->composite(move(circle), tvg::CompositeMethod::ClipPath);
 

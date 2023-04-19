@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 - 2022 Samsung Electronics Co., Ltd. All rights reserved.
+ * Copyright (c) 2020 - 2023 the ThorVG project. All rights reserved.
 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -123,6 +123,13 @@ bool GlRenderer::endComposite(TVG_UNUSED Compositor* cmp)
 }
 
 
+int32_t GlRenderer::colorSpace()
+{
+    //TODO: return a proper color space value.
+    return -1;
+}
+
+
 bool GlRenderer::renderImage(TVG_UNUSED void* data)
 {
     return false;
@@ -140,7 +147,7 @@ bool GlRenderer::renderShape(RenderData data)
     auto sdata = static_cast<GlShape*>(data);
     if (!sdata) return false;
 
-    uint8_t r, g, b, a;
+    uint8_t r = 0, g = 0, b = 0, a = 0;
     size_t flags = static_cast<size_t>(sdata->updateFlag);
 
     GL_CHECK(glViewport(0, 0, (GLsizei)sdata->viewWd, (GLsizei)sdata->viewHt));
@@ -150,16 +157,13 @@ bool GlRenderer::renderShape(RenderData data)
     {
         if (flags & (RenderUpdateFlag::Gradient | RenderUpdateFlag::Transform))
         {
-            const Fill* gradient = sdata->shape->fill();
-            if (gradient != nullptr)
-            {
-                drawPrimitive(*sdata, gradient, i, RenderUpdateFlag::Gradient);
-            }
+            auto gradient = sdata->rshape->fill;
+            if (gradient) drawPrimitive(*sdata, gradient, i, RenderUpdateFlag::Gradient);
         }
 
         if(flags & (RenderUpdateFlag::Color | RenderUpdateFlag::Transform))
         {
-            sdata->shape->fillColor(&r, &g, &b, &a);
+            sdata->rshape->fillColor(&r, &g, &b, &a);
             if (a > 0)
             {
                 drawPrimitive(*sdata, r, g, b, a, i, RenderUpdateFlag::Color);
@@ -168,7 +172,7 @@ bool GlRenderer::renderShape(RenderData data)
 
         if (flags & (RenderUpdateFlag::Stroke | RenderUpdateFlag::Transform))
         {
-            sdata->shape->strokeColor(&r, &g, &b, &a);
+            sdata->rshape->strokeColor(&r, &g, &b, &a);
             if (a > 0)
             {
                 drawPrimitive(*sdata, r, g, b, a, i, RenderUpdateFlag::Stroke);
@@ -190,20 +194,27 @@ bool GlRenderer::dispose(RenderData data)
 }
 
 
-RenderData GlRenderer::prepare(TVG_UNUSED Surface* image, TVG_UNUSED RenderData data, TVG_UNUSED const RenderTransform* transform, TVG_UNUSED uint32_t opacity, TVG_UNUSED Array<RenderData>& clips, TVG_UNUSED RenderUpdateFlag flags)
+RenderData GlRenderer::prepare(TVG_UNUSED Surface* image, TVG_UNUSED Polygon* triangles, TVG_UNUSED uint32_t triangleCnt, TVG_UNUSED RenderData data, TVG_UNUSED const RenderTransform* transform, TVG_UNUSED uint32_t opacity, TVG_UNUSED Array<RenderData>& clips, TVG_UNUSED RenderUpdateFlag flags)
 {
     //TODO:
     return nullptr;
 }
 
 
-RenderData GlRenderer::prepare(const Shape& shape, RenderData data, const RenderTransform* transform, TVG_UNUSED uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flags)
+RenderData GlRenderer::prepare(TVG_UNUSED const Array<RenderData>& scene, TVG_UNUSED RenderData data, TVG_UNUSED const RenderTransform* transform, TVG_UNUSED uint32_t opacity, TVG_UNUSED Array<RenderData>& clips, TVG_UNUSED RenderUpdateFlag flags)
+{
+    //TODO:
+    return nullptr;
+}
+
+
+RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const RenderTransform* transform, TVG_UNUSED uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flags, TVG_UNUSED bool clipper)
 {
     //prepare shape data
     GlShape* sdata = static_cast<GlShape*>(data);
     if (!sdata) {
         sdata = new GlShape;
-        sdata->shape = &shape;
+        sdata->rshape = &rshape;
     }
 
     sdata->viewWd = static_cast<float>(surface.w);
@@ -215,10 +226,10 @@ RenderData GlRenderer::prepare(const Shape& shape, RenderData data, const Render
     sdata->geometry = make_unique<GlGeometry>();
 
     //invisible?
-    uint8_t alphaF, alphaS;
-    shape.fillColor(nullptr, nullptr, nullptr, &alphaF);
-    shape.strokeColor(nullptr, nullptr, nullptr, &alphaS);
-    auto strokeWd = shape.strokeWidth();
+    uint8_t alphaF = 0, alphaS = 0;
+    rshape.fillColor(nullptr, nullptr, nullptr, &alphaF);
+    rshape.strokeColor(nullptr, nullptr, nullptr, &alphaS);
+    auto strokeWd = rshape.strokeWidth();
 
     if ( ((sdata->updateFlag & RenderUpdateFlag::Gradient) == 0) &&
          ((sdata->updateFlag & RenderUpdateFlag::Color) && alphaF == 0) &&
@@ -231,9 +242,9 @@ RenderData GlRenderer::prepare(const Shape& shape, RenderData data, const Render
 
     if (sdata->updateFlag & (RenderUpdateFlag::Color | RenderUpdateFlag::Stroke | RenderUpdateFlag::Gradient | RenderUpdateFlag::Transform) )
     {
-        if (!sdata->geometry->decomposeOutline(shape)) return sdata;
-        if (!sdata->geometry->generateAAPoints(shape, static_cast<float>(strokeWd), sdata->updateFlag)) return sdata;
-        if (!sdata->geometry->tesselate(shape, sdata->viewWd, sdata->viewHt, sdata->updateFlag)) return sdata;
+        if (!sdata->geometry->decomposeOutline(rshape)) return sdata;
+        if (!sdata->geometry->generateAAPoints(rshape, static_cast<float>(strokeWd), sdata->updateFlag)) return sdata;
+        if (!sdata->geometry->tesselate(rshape, sdata->viewWd, sdata->viewHt, sdata->updateFlag)) return sdata;
     }
     return sdata;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 - 2022 Samsung Electronics Co., Ltd. All rights reserved.
+ * Copyright (c) 2020 - 2023 the ThorVG project. All rights reserved.
 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -137,7 +137,11 @@ float svgUtilStrtof(const char *nPtr, char **endPtr)
                     pow10 *= 10ULL;
                 }
             }
+        } else if (isspace(*iter)) { //skip if there is a space after the dot.
+            a = iter;
+            goto success;
         }
+
         val += static_cast<float>(decimalPart) / static_cast<float>(pow10);
         a = iter;
     }

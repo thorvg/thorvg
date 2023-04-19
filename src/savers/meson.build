@@ -1,6 +1,6 @@
 subsaver_dep = []
 
-if get_option('savers').contains('tvg') == true
+if all_savers or get_option('savers').contains('tvg') == true
     subdir('tvg')
 endif
 

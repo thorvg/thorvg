@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 - 2022 Samsung Electronics Co., Ltd. All rights reserved.
+ * Copyright (c) 2020 - 2023 the ThorVG project. All rights reserved.
 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -30,8 +30,9 @@ class GlRenderer : public RenderMethod
 public:
     Surface surface = {nullptr, 0, 0, 0};
 
-    RenderData prepare(const Shape& shape, RenderData data, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flags) override;
-    RenderData prepare(Surface* image, RenderData data, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flags) override;
+    RenderData prepare(const RenderShape& rshape, RenderData data, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flags, bool clipper) override;
+    RenderData prepare(const Array<RenderData>& scene, RenderData data, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flags) override;
+    RenderData prepare(Surface* image, Polygon* triangles, uint32_t triangleCnt, RenderData data, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flags) override;
     bool preRender() override;
     bool renderShape(RenderData data) override;
     bool renderImage(RenderData data) override;
@@ -49,6 +50,8 @@ public:
     Compositor* target(const RenderRegion& region) override;
     bool beginComposite(Compositor* cmp, CompositeMethod method, uint32_t opacity) override;
     bool endComposite(Compositor* cmp) override;
+
+    uint32_t colorSpace() override;
 
     static GlRenderer* gen();
     static int init(TVG_UNUSED uint32_t threads);

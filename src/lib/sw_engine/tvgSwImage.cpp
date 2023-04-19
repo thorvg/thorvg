@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 - 2022 Samsung Electronics Co., Ltd. All rights reserved.
+ * Copyright (c) 2020 - 2023 the ThorVG project. All rights reserved.
 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -19,6 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+
 #include "tvgMath.h"
 #include "tvgSwCommon.h"
 
@@ -53,9 +54,9 @@ static bool _genOutline(SwImage* image, Polygon* triangles, uint32_t triangleCou
 
     Point to[4];
     if (triangleCount > 0) {
-        // TODO: Optimise me. We appear to calculate this exact min/max bounding area in multiple 
+        // TODO: Optimise me. We appear to calculate this exact min/max bounding area in multiple
         // places. We should be able to re-use one we have already done? Also see:
-        //   tvgPictureImpl.h --> bounds 
+        //   tvgPictureImpl.h --> bounds
         //   tvgSwRasterTexmap.h --> _rasterTexmapPolygonMesh
         //
         // TODO: Should we calculate the exact path(s) of the triangle mesh instead?

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 - 2022 Samsung Electronics Co., Ltd. All rights reserved.
+ * Copyright (c) 2021 - 2023 the ThorVG project. All rights reserved.
 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -35,16 +35,20 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     //Original
     auto picture = tvg::Picture::gen();
-    pPicture = picture.get();
 
-    if (picture->load(EXAMPLE_DIR"/scaledown.png") == tvg::Result::Success) {
-        if (canvas->push(move(picture)) != tvg::Result::Success) return;
+    if (picture->load(EXAMPLE_DIR"/scaledown.png") != tvg::Result::Success) {
+        cout << "The PNG file is not loaded correctly. Did you enable PNG Loader?" << endl;
+        return;
+    }
+    pPicture = picture.get();
+    if (canvas->push(move(picture)) != tvg::Result::Success) {
+        pPicture = nullptr;
     }
 }
 
 void tvgUpdateCmds(tvg::Canvas* canvas, float progress)
 {
-    if (!canvas) return;
+    if (!canvas || !pPicture) return;
 
     auto scale = 1.0f;
 

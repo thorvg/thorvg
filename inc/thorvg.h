@@ -2,11 +2,12 @@
  * @file thorvg.h
  *
  * The main APIs enabling the TVG initialization, preparation of the canvas and provisioning of its content:
- * - drawing shapes such as line, curve, arc, rectangle, circle or user-defined
- * - drawing pictures - SVG, PNG, JPG, RAW
- * - solid or gradient filling
- * - continuous and dashed stroking
- * - clipping and masking
+ * - drawing shapes: line, arc, curve, path, polygon...
+ * - drawing pictures: tvg, svg, png, jpg, bitmap...
+ * - drawing fillings: solid, linear and radial gradient...
+ * - drawing stroking: continuous stroking with arbitrary width, join, cap, dash styles.
+ * - drawing composition: blending, masking, path clipping...
+ * - drawing scene graph & affine transformation (translation, rotation, scale, ...)
  * and finally drawing the canvas and TVG termination.
  */
 
@@ -14,6 +15,7 @@
 #ifndef _THORVG_H_
 #define _THORVG_H_
 
+#include <functional>
 #include <memory>
 #include <string>
 
@@ -185,10 +187,10 @@ struct Matrix
 
 /**
  * @brief A data structure representing a texture mesh vertex
- * 
+ *
  * @param pt The vertex coordinate
  * @param uv The normalized texture coordinate in the range (0.0..1.0, 0.0..1.0)
- * 
+ *
  * @BETA_API
  */
 struct Vertex
@@ -200,9 +202,9 @@ struct Vertex
 
 /**
  * @brief A data structure representing a triange in a texture mesh
- * 
+ *
  * @param vertex The three vertices that make up the polygon
- * 
+ *
  * @BETA_API
  */
 struct Polygon
@@ -290,6 +292,7 @@ public:
      * @return Result::Success when succeed.
      *
      * @note Setting the opacity with this API may require multiple render pass for composition. It is recommended to avoid changing the opacity if possible.
+     * @note ClipPath won't use the opacity value. (see: enum class CompositeMethod::ClipPath)
      */
     Result opacity(uint8_t o) noexcept;
 
@@ -948,6 +951,7 @@ public:
      * @return Result::Success when succeed.
      *
      * @note Either a solid color or a gradient fill is applied, depending on what was set as last.
+     * @note ClipPath won't use the fill values. (see: enum class CompositeMethod::ClipPath)
      */
     Result fill(uint8_t r, uint8_t g, uint8_t b, uint8_t a) noexcept;
 
@@ -972,6 +976,18 @@ public:
      * @return Result::Success when succeed.
      */
     Result fill(FillRule r) noexcept;
+
+
+    /**
+     * @brief Sets the rendering order of the stroke and the fill.
+     *
+     * @param[in] strokeFirst If @c true the stroke is rendered before the fill, otherwise the stroke is rendered as the second one (the default option).
+     *
+     * @return Result::Success when succeed, Result::FailedAllocation otherwise.
+     * @BETA_API
+     */
+    Result order(bool strokeFirst) noexcept;
+
 
     /**
      * @brief Gets the commands data of the path.
@@ -1196,38 +1212,38 @@ public:
 
     /**
      * @brief Sets or removes the triangle mesh to deform the image.
-     * 
+     *
      * If a mesh is provided, the transform property of the Picture will apply to the triangle mesh, and the
      * image data will be used as the texture.
-     * 
+     *
      * If @p triangles is @c nullptr, or @p triangleCnt is 0, the mesh will be removed.
-     * 
+     *
      * Only raster image types are supported at this time (png, jpg). Vector types like svg and tvg do not support.
      * mesh deformation. However, if required you should be able to render a vector image to a raster image and then apply a mesh.
-     * 
+     *
      * @param[in] triangles An array of Polygons(triangles) that make up the mesh, or null to remove the mesh.
      * @param[in] triangleCnt The number of Polygons(triangles) provided, or 0 to remove the mesh.
-     * 
+     *
      * @retval Result::Success When succeed.
      * @retval Result::Unknown If fails
-     * 
+     *
      * @note The Polygons are copied internally, so modifying them after calling Mesh::mesh has no affect.
      * @warning Please do not use it, this API is not official one. It could be modified in the next version.
-     * 
+     *
      * @BETA_API
      */
     Result mesh(const Polygon* triangles, const uint32_t triangleCnt) noexcept;
 
     /**
      * @brief Return the number of triangles in the mesh, and optionally get a pointer to the array of triangles in the mesh.
-     * 
+     *
      * @param[out] triangles Optional. A pointer to the array of Polygons used by this mesh.
-     * 
+     *
      * @return uint32_t The number of polygons in the array.
-     * 
+     *
      * @note Modifying the triangles returned by this method will modify them directly within the mesh.
      * @warning Please do not use it, this API is not official one. It could be modified in the next version.
-     * 
+     *
      * @BETA_API
      */
     uint32_t mesh(const Polygon** triangles) const noexcept;
@@ -1596,6 +1612,8 @@ public:
  * The Accessor helps you search specific nodes to read the property information, figure out the structure of the scene tree and its size.
  *
  * @warning We strongly warn you not to change the paints of a scene unless you really know the design-structure.
+ *
+ * @BETA_API
  */
 class TVG_EXPORT Accessor final
 {
@@ -1603,7 +1621,7 @@ public:
     ~Accessor();
 
     /**
-     * @brief Access the Picture scene stree nodes.
+     * @brief Set the access function for traversing the Picture scene tree nodes.
      *
      * @param[in] picture The picture node to traverse the internal scene-tree.
      * @param[in] func The callback function calling for every paint nodes of the Picture.
@@ -1611,13 +1629,17 @@ public:
      * @return Return the given @p picture instance.
      *
      * @note The bitmap based picture might not have the scene-tree.
+     *
+     * @BETA_API
      */
-    std::unique_ptr<Picture> access(std::unique_ptr<Picture> picture, bool(*func)(const Paint* paint)) noexcept;
+    std::unique_ptr<Picture> set(std::unique_ptr<Picture> picture, std::function<bool(const Paint* paint)> func) noexcept;
 
     /**
      * @brief Creates a new Accessor object.
      *
      * @return A new Accessor object.
+     *
+     * @BETA_API
      */
     static std::unique_ptr<Accessor> gen() noexcept;
 

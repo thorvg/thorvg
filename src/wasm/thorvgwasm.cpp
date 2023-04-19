@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 - 2022 Samsung Electronics Co., Ltd. All rights reserved.
+ * Copyright (c) 2020 - 2023 the ThorVG project. All rights reserved.
 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -29,7 +29,7 @@ using namespace emscripten;
 using namespace std;
 using namespace tvg;
 
-class __attribute__((visibility("default"))) ThorvgWasm : public IteratorAccessor
+class __attribute__((visibility("default"))) ThorvgWasm
 {
 public:
     static unique_ptr<ThorvgWasm> create()
@@ -181,14 +181,14 @@ public:
         const Paint* paint = findPaintById(mPicture, paintId, &parents);
         if (!paint) return val(typed_memory_view<float>(0, nullptr));
         paint->bounds(&mBounds[0], &mBounds[1], &mBounds[2], &mBounds[3]);
-        
+
         float points[8] = { //clockwise points
             mBounds[0], mBounds[1], //(x1, y1)
             mBounds[0] + mBounds[2], mBounds[1], //(x2, y1)
             mBounds[0] + mBounds[2], mBounds[1] + mBounds[3], //(x2, y2)
             mBounds[0], mBounds[1] + mBounds[3], //(x1, y2)
         };
-        
+
         for (auto paint = parents.data; paint < (parents.data + parents.count); ++paint) {
             auto m = const_cast<Paint*>(*paint)->transform();
             for (int i = 0; i<8; i += 2) {
@@ -197,7 +197,7 @@ public:
                 points[i] = x;
             }
         }
-        
+
         mBounds[0] = points[0];//x(p1)
         mBounds[1] = points[3];//y(p2)
         mBounds[2] = points[4] - mBounds[0];//x(p3)
@@ -255,7 +255,19 @@ private:
         mBuffer = make_unique<uint8_t[]>(mWidth * mHeight * 4);
         mSwCanvas->target((uint32_t *)mBuffer.get(), mWidth, mWidth, mHeight, SwCanvas::ARGB8888);
 
-        if (mPicture) mPicture->size(width, height);
+        if (mPicture) {
+            float scale;
+            float shiftX = 0.0f, shiftY = 0.0f;
+            if (mOriginalSize[0] > mOriginalSize[1]) {
+                scale = width / mOriginalSize[0];
+                shiftY = (height - mOriginalSize[1] * scale) * 0.5f;
+            } else {
+                scale = height / mOriginalSize[1];
+                shiftX = (width - mOriginalSize[0] * scale) * 0.5f;
+            }
+            mPicture->scale(scale);
+            mPicture->translate(shiftX, shiftY);
+        }
     }
 
     struct Layer
@@ -270,7 +282,7 @@ private:
     {
         //paint
         if (paint->identifier() != Shape::identifier()) {
-            auto it = this->iterator(paint);
+            auto it = IteratorAccessor::iterator(paint);
             if (it->count() > 0) {
                 layers->reserve(layers->count + it->count());
                 it->begin();
@@ -301,7 +313,7 @@ private:
         }
         //paint
         if (parent->identifier() != Shape::identifier()) {
-            auto it = this->iterator(parent);
+            auto it = IteratorAccessor::iterator(parent);
             if (it->count() > 0) {
                 it->begin();
                 while (auto child = it->next()) {

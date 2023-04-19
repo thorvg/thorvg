@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 - 2022 Samsung Electronics Co., Ltd. All rights reserved.
+ * Copyright (c) 2020 - 2023 the ThorVG project. All rights reserved.
 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -31,7 +31,7 @@
 #define NUM_PER_COL 6
 #define SIZE (WIDTH/NUM_PER_ROW)
 
-static int count = 0;
+static int counter = 0;
 
 static std::vector<unique_ptr<tvg::Picture>> pictures;
 
@@ -48,14 +48,28 @@ void svgDirCallback(const char* name, const char* path, void* data)
 
     if (picture->load(buf) != tvg::Result::Success) return;
 
-    picture->size(SIZE, SIZE);
-    picture->translate((count % NUM_PER_ROW) * SIZE, (count / NUM_PER_ROW) * (HEIGHT / NUM_PER_COL));
+    //image scaling preserving its aspect ratio
+    float scale;
+    float shiftX = 0.0f, shiftY = 0.0f;
+    float w, h;
+    picture->size(&w, &h);
+
+    if (w > h) {
+        scale = SIZE / w;
+        shiftY = (SIZE - h * scale) * 0.5f;
+    } else {
+        scale = SIZE / h;
+        shiftX = (SIZE - w * scale) * 0.5f;
+    }
+
+    picture->scale(scale);
+    picture->translate((counter % NUM_PER_ROW) * SIZE + shiftX, (counter / NUM_PER_ROW) * (HEIGHT / NUM_PER_COL) + shiftY);
 
     pictures.push_back(move(picture));
 
     cout << "SVG: " << buf << endl;
 
-    count++;
+    counter++;
 }
 
 void tvgDrawCmds(tvg::Canvas* canvas)

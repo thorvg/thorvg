@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 - 2022 Samsung Electronics Co., Ltd. All rights reserved.
+ * Copyright (c) 2020 - 2023 the ThorVG project. All rights reserved.
 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -1167,7 +1167,7 @@ static unsigned lodepng_crc32_table[256] = {
 };
 
 
-/* Calculate CRC32 of buffer 
+/* Calculate CRC32 of buffer
    Return the CRC of the bytes buf[0..len-1]. */
 static unsigned lodepng_crc32(const unsigned char* data, size_t length)
 {
@@ -1571,7 +1571,7 @@ static unsigned color_tree_add(ColorTree* tree, unsigned char r, unsigned char g
 
 /* put a pixel, given its RGBA color, into image of any color type */
 static unsigned rgba8ToPixel(unsigned char* out, size_t i, const LodePNGColorMode* mode, ColorTree* tree /*for palette*/, unsigned char r, unsigned char g, unsigned char b, unsigned char a)
-{  
+{
     if (mode->colortype == LCT_GREY) {
         unsigned char gray = r; /*((unsigned short)r + g + b) / 3u;*/
         if (mode->bitdepth == 8) out[i] = gray;

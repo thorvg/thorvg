@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 - 2022 Samsung Electronics Co., Ltd. All rights reserved.
+ * Copyright (c) 2020 - 2023 the ThorVG project. All rights reserved.
 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -63,9 +63,9 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     //Move Star1
     star1->translate(-10, -10);
 
+    // color/alpha/opacity are ignored for a clip object - no need to set them
     auto clipStar = tvg::Shape::gen();
     clipStar->appendCircle(200, 230, 110, 110);
-    clipStar->fill(255, 255, 255, 255); // clip object must have alpha.
     clipStar->translate(10, 10);
 
     star1->composite(move(clipStar), tvg::CompositeMethod::ClipPath);
@@ -80,9 +80,9 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     //Move Star2
     star2->translate(10, 40);
 
+    // color/alpha/opacity are ignored for a clip object - no need to set them
     auto clip = tvg::Shape::gen();
     clip->appendCircle(200, 230, 130, 130);
-    clip->fill(255, 255, 255, 255); // clip object must have alpha.
     clip->translate(10, 10);
 
     scene->push(move(star1));
@@ -110,9 +110,9 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     star3->stroke(10);
     star3->translate(400, 0);
 
+    // color/alpha/opacity are ignored for a clip object - no need to set them
     auto clipRect = tvg::Shape::gen();
     clipRect->appendRect(500, 120, 200, 200, 0, 0);          //x, y, w, h, rx, ry
-    clipRect->fill(255, 255, 255, 255); // clip object must have alpha.
     clipRect->translate(20, 20);
 
     //Clipping scene to rect(shape)
@@ -127,10 +127,10 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     picture->scale(3);
     picture->translate(50, 400);
 
+    // color/alpha/opacity are ignored for a clip object - no need to set them
     auto clipPath = tvg::Shape::gen();
     clipPath->appendCircle(200, 510, 50, 50);          //x, y, w, h, rx, ry
     clipPath->appendCircle(200, 650, 50, 50);          //x, y, w, h, rx, ry
-    clipPath->fill(255, 255, 255, 255); // clip object must have alpha.
     clipPath->translate(20, 20);
 
     //Clipping picture to path
@@ -143,9 +143,9 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     shape1->appendRect(500, 420, 100, 100, 20, 20);
     shape1->fill(255, 0, 255, 160);
 
+    // color/alpha/opacity are ignored for a clip object - no need to set them
     auto clipShape = tvg::Shape::gen();
     clipShape->appendRect(600, 420, 100, 100, 0, 0);
-    clipShape->fill(255, 0, 255, 150);
 
     //Clipping shape1 to clipShape
     shape1->composite(move(clipShape), tvg::CompositeMethod::ClipPath);

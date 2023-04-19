@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 - 2022 Samsung Electronics Co., Ltd. All rights reserved.
+ * Copyright (c) 2020 - 2023 the ThorVG project. All rights reserved.
 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -115,8 +115,51 @@ static bool _parseNumber(const char** content, float* number)
     if ((*content) == end) return false;
     //Skip comma if any
     *content = _skipComma(end);
+
     return true;
 }
+
+
+static constexpr struct
+{
+    AspectRatioAlign align;
+    const char* tag;
+} alignTags[] = {
+    { AspectRatioAlign::XMinYMin, "xMinYMin" },
+    { AspectRatioAlign::XMidYMin, "xMidYMin" },
+    { AspectRatioAlign::XMaxYMin, "xMaxYMin" },
+    { AspectRatioAlign::XMinYMid, "xMinYMid" },
+    { AspectRatioAlign::XMidYMid, "xMidYMid" },
+    { AspectRatioAlign::XMaxYMid, "xMaxYMid" },
+    { AspectRatioAlign::XMinYMax, "xMinYMax" },
+    { AspectRatioAlign::XMidYMax, "xMidYMax" },
+    { AspectRatioAlign::XMaxYMax, "xMaxYMax" },
+};
+
+
+static void _parseAspectRatio(const char** content, AspectRatioAlign* align, AspectRatioMeetOrSlice* meetOrSlice)
+{
+    if (!strcmp(*content, "none")) {
+        *align = AspectRatioAlign::None;
+        return;
+    }
+
+    for (unsigned int i = 0; i < sizeof(alignTags) / sizeof(alignTags[0]); i++) {
+        if (!strncmp(*content, alignTags[i].tag, 8)) {
+            *align = alignTags[i].align;
+            *content += 8;
+            *content = _skipSpace(*content, nullptr);
+            break;
+        }
+    }
+
+    if (!strcmp(*content, "meet")) {
+        *meetOrSlice = AspectRatioMeetOrSlice::Meet;
+    } else if (!strcmp(*content, "slice")) {
+        *meetOrSlice = AspectRatioMeetOrSlice::Slice;
+    }
+}
+
 
 /**
  * According to https://www.w3.org/TR/SVG/coords.html#Units
@@ -135,9 +178,9 @@ static float _toFloat(const SvgParser* svgParse, const char* str, SvgParserLengt
         else if (type == SvgParserLengthType::Horizontal) parsedValue = (parsedValue / 100.0) * svgParse->global.w;
         else //if other then it's radius
         {
-            float max = (float)svgParse->global.w;
+            float max = svgParse->global.w;
             if (max < svgParse->global.h)
-                max = (float)svgParse->global.h;
+                max = svgParse->global.h;
             parsedValue = (parsedValue / 100.0) * max;
         }
     }
@@ -206,6 +249,36 @@ static SvgMaskType _toMaskType(const char* str)
     if (!strcmp(str, "Alpha")) return SvgMaskType::Alpha;
 
     return SvgMaskType::Luminance;
+}
+
+
+//The default rendering order: fill, stroke, markers
+//If any is omitted, will be rendered in its default order after the specified ones.
+static bool _toPaintOrder(const char* str)
+{
+    uint8_t position = 1;
+    uint8_t strokePosition = 0;
+    uint8_t fillPosition = 0;
+
+    while (*str != '\0') {
+        str = _skipSpace(str, nullptr);
+        if (!strncmp(str, "fill", 4)) {
+            fillPosition = position++;
+            str += 4;
+        } else if (!strncmp(str, "stroke", 6)) {
+            strokePosition = position++;
+            str += 6;
+        } else if (!strncmp(str, "markers", 7)) {
+            str += 7;
+        } else {
+            return _toPaintOrder("fill stroke");
+        }
+    }
+
+    if (fillPosition == 0) fillPosition = position++;
+    if (strokePosition == 0) strokePosition = position++;
+
+    return fillPosition < strokePosition;
 }
 
 
@@ -296,7 +369,7 @@ static void _parseDashArray(SvgLoaderData* loader, const char *str, SvgDash* das
             ++end;
             //Refers to the diagonal length of the viewport.
             //https://www.w3.org/TR/SVG2/coords.html#Units
-            parsedValue = (sqrtf(pow(loader->svgParse->global.w, 2) + pow(loader->svgParse->global.h, 2)) / sqrtf(2.0f)) * (parsedValue / 100.0f);
+            parsedValue = (sqrtf(powf(loader->svgParse->global.w, 2) + powf(loader->svgParse->global.h, 2)) / sqrtf(2.0f)) * (parsedValue / 100.0f);
         }
         (*dash).array.push(parsedValue);
         str = end;
@@ -331,7 +404,7 @@ static char* _idFromUrl(const char* url)
 }
 
 
-static unsigned char _parserColor(const char* value, char** end)
+static unsigned char _parseColor(const char* value, char** end)
 {
     float r;
 
@@ -541,11 +614,11 @@ static void _toColor(const char* str, uint8_t* r, uint8_t* g, uint8_t* b, char**
             *b = strtol(tmp, nullptr, 16);
         }
     } else if (len >= 10 && (str[0] == 'r' || str[0] == 'R') && (str[1] == 'g' || str[1] == 'G') && (str[2] == 'b' || str[2] == 'B') && str[3] == '(' && str[len - 1] == ')') {
-        tr = _parserColor(str + 4, &red);
+        tr = _parseColor(str + 4, &red);
         if (red && *red == ',') {
-            tg = _parserColor(red + 1, &green);
+            tg = _parseColor(red + 1, &green);
             if (green && *green == ',') {
-                tb = _parserColor(green + 1, &blue);
+                tb = _parseColor(green + 1, &blue);
                 if (blue && blue[0] == ')' && blue[1] == '\0') {
                     *r = tr;
                     *g = tg;
@@ -554,6 +627,7 @@ static void _toColor(const char* str, uint8_t* r, uint8_t* g, uint8_t* b, char**
             }
         }
     } else if (ref && len >= 3 && !strncmp(str, "url", 3)) {
+        if (*ref) free(*ref);
         *ref = _idFromUrl((const char*)(str + 3));
     } else {
         //Handle named color
@@ -787,22 +861,34 @@ static bool _attrParseSvgNode(void* data, const char* key, const char* value)
 
     if (!strcmp(key, "width")) {
         doc->w = _toFloat(loader->svgParse, value, SvgParserLengthType::Horizontal);
+        doc->viewFlag = (SvgViewFlag)((uint32_t)doc->viewFlag | (uint32_t)SvgViewFlag::Width);
     } else if (!strcmp(key, "height")) {
         doc->h = _toFloat(loader->svgParse, value, SvgParserLengthType::Vertical);
+        doc->viewFlag = (SvgViewFlag)((uint32_t)doc->viewFlag | (uint32_t)SvgViewFlag::Height);
     } else if (!strcmp(key, "viewBox")) {
         if (_parseNumber(&value, &doc->vx)) {
             if (_parseNumber(&value, &doc->vy)) {
                 if (_parseNumber(&value, &doc->vw)) {
-                    _parseNumber(&value, &doc->vh);
-                    loader->svgParse->global.h = (uint32_t)doc->vh;
+                    if (_parseNumber(&value, &doc->vh)) {
+                        doc->viewFlag = (SvgViewFlag)((uint32_t)doc->viewFlag | (uint32_t)SvgViewFlag::Viewbox);
+                        loader->svgParse->global.h = doc->vh;
+                    }
+                    loader->svgParse->global.w = doc->vw;
                 }
-                loader->svgParse->global.w = (uint32_t)doc->vw;
+                loader->svgParse->global.y = doc->vy;
             }
-            loader->svgParse->global.y = (int)doc->vy;
+            loader->svgParse->global.x = doc->vx;
         }
-        loader->svgParse->global.x = (int)doc->vx;
+        if (((uint32_t)doc->viewFlag & (uint32_t)SvgViewFlag::Viewbox) && (doc->vw < 0.0f || doc->vh < 0.0f)) {
+            doc->viewFlag = (SvgViewFlag)((uint32_t)doc->viewFlag & ~(uint32_t)SvgViewFlag::Viewbox);
+            TVGLOG("SVG", "Negative values of the <viewBox> width and/or height - the attribute invalidated.");
+        }
+        if (!((uint32_t)doc->viewFlag & (uint32_t)SvgViewFlag::Viewbox)) {
+            loader->svgParse->global.x = loader->svgParse->global.y = 0.0f;
+            loader->svgParse->global.w = loader->svgParse->global.h = 1.0f;
+        }
     } else if (!strcmp(key, "preserveAspectRatio")) {
-        if (!strcmp(value, "none")) doc->preserveAspect = false;
+        _parseAspectRatio(&value, &doc->align, &doc->meetOrSlice);
     } else if (!strcmp(key, "style")) {
         return simpleXmlParseW3CAttribute(value, strlen(value), _parseStyleAttr, loader);
 #ifdef THORVG_LOG_ENABLED
@@ -955,6 +1041,13 @@ static void _handleDisplayAttr(TVG_UNUSED SvgLoaderData* loader, SvgNode* node, 
 }
 
 
+static void _handlePaintOrderAttr(TVG_UNUSED SvgLoaderData* loader, SvgNode* node, const char* value)
+{
+    node->style->flags = (SvgStyleFlags)((int)node->style->flags | (int)SvgStyleFlags::PaintOrder);
+    node->style->paintOrder = _toPaintOrder(value);
+}
+
+
 static void _handleCssClassAttr(SvgLoaderData* loader, SvgNode* node, const char* value)
 {
     auto cssClass = &node->style->cssClass;
@@ -1005,7 +1098,8 @@ static constexpr struct
     STYLE_DEF(clip-path, ClipPath, SvgStyleFlags::ClipPath),
     STYLE_DEF(mask, Mask, SvgStyleFlags::Mask),
     STYLE_DEF(mask-type, MaskType, SvgStyleFlags::MaskType),
-    STYLE_DEF(display, Display, SvgStyleFlags::Display)
+    STYLE_DEF(display, Display, SvgStyleFlags::Display),
+    STYLE_DEF(paint-order, PaintOrder, SvgStyleFlags::PaintOrder)
 };
 
 
@@ -1156,7 +1250,7 @@ static bool _attrParseSymbolNode(void* data, const char* key, const char* value)
         symbol->h = _toFloat(loader->svgParse, value, SvgParserLengthType::Vertical);
         symbol->hasHeight = true;
     } else if (!strcmp(key, "preserveAspectRatio")) {
-        if (!strcmp(value, "none")) symbol->preserveAspect = false;
+        _parseAspectRatio(&value, &symbol->align, &symbol->meetOrSlice);
     } else if (!strcmp(key, "overflow")) {
         if (!strcmp(value, "visible")) symbol->overflowVisible = true;
     } else {
@@ -1207,6 +1301,8 @@ static SvgNode* _createNode(SvgNode* parent, SvgNodeType type)
     node->style->stroke.join = StrokeJoin::Miter;
     node->style->stroke.scale = 1.0;
 
+    node->style->paintOrder = _toPaintOrder("fill stroke");
+
     //Default display is true("inline").
     node->display = true;
 
@@ -1245,21 +1341,22 @@ static SvgNode* _createSvgNode(SvgLoaderData* loader, SvgNode* parent, const cha
     if (!loader->svgParse->node) return nullptr;
     SvgDocNode* doc = &(loader->svgParse->node->node.doc);
 
-    loader->svgParse->global.w = 0;
-    loader->svgParse->global.h = 0;
+    loader->svgParse->global.w = 1.0f;
+    loader->svgParse->global.h = 1.0f;
 
-    doc->preserveAspect = true;
+    doc->align = AspectRatioAlign::XMidYMid;
+    doc->meetOrSlice = AspectRatioMeetOrSlice::Meet;
+    doc->viewFlag = SvgViewFlag::None;
     func(buf, bufLength, _attrParseSvgNode, loader);
 
-    if (loader->svgParse->global.w == 0) {
-        if (doc->w < FLT_EPSILON) loader->svgParse->global.w = 1;
-        else loader->svgParse->global.w = (uint32_t)doc->w;
+    if (!((uint32_t)doc->viewFlag & (uint32_t)SvgViewFlag::Viewbox)) {
+        if ((uint32_t)doc->viewFlag & (uint32_t)SvgViewFlag::Width) {
+            loader->svgParse->global.w = doc->w;
+        }
+        if ((uint32_t)doc->viewFlag & (uint32_t)SvgViewFlag::Height) {
+            loader->svgParse->global.h = doc->h;
+        }
     }
-    if (loader->svgParse->global.h == 0) {
-        if (doc->h < FLT_EPSILON) loader->svgParse->global.h = 1;
-        else loader->svgParse->global.h = (uint32_t)doc->h;
-    }
-
     return loader->svgParse->node;
 }
 
@@ -1309,7 +1406,8 @@ static SvgNode* _createSymbolNode(SvgLoaderData* loader, SvgNode* parent, const 
     if (!loader->svgParse->node) return nullptr;
 
     loader->svgParse->node->display = false;
-    loader->svgParse->node->node.symbol.preserveAspect = true;
+    loader->svgParse->node->node.symbol.align = AspectRatioAlign::XMidYMid;
+    loader->svgParse->node->node.symbol.meetOrSlice = AspectRatioMeetOrSlice::Meet;
     loader->svgParse->node->node.symbol.overflowVisible = false;
 
     loader->svgParse->node->node.symbol.hasViewBox = false;
@@ -1331,6 +1429,7 @@ static bool _attrParsePathNode(void* data, const char* key, const char* value)
     SvgPathNode* path = &(node->node.path);
 
     if (!strcmp(key, "d")) {
+        if (path->path) free(path->path);
         //Temporary: need to copy
         path->path = _copyId(value);
     } else if (!strcmp(key, "style")) {
@@ -1801,19 +1900,10 @@ static SvgNode* _getDefsNode(SvgNode* node)
 }
 
 
-static SvgNode* _findChildById(const SvgNode* node, const char* id)
+static SvgNode* _findNodeById(SvgNode *node, const char* id)
 {
     if (!node) return nullptr;
 
-    auto child = node->child.data;
-    for (uint32_t i = 0; i < node->child.count; ++i, ++child) {
-        if (((*child)->id) && !strcmp((*child)->id, id)) return (*child);
-    }
-    return nullptr;
-}
-
-static SvgNode* _findNodeById(SvgNode *node, const char* id)
-{
     SvgNode* result = nullptr;
     if (node->id && !strcmp(node->id, id)) return node;
 
@@ -1825,282 +1915,6 @@ static SvgNode* _findNodeById(SvgNode *node, const char* id)
         }
     }
     return result;
-}
-
-static void _cloneGradStops(Array<Fill::ColorStop>& dst, const Array<Fill::ColorStop>& src)
-{
-    for (uint32_t i = 0; i < src.count; ++i) {
-        dst.push(src.data[i]);
-    }
-}
-
-
-static SvgStyleGradient* _cloneGradient(SvgStyleGradient* from)
-{
-    if (!from) return nullptr;
-
-    auto grad = (SvgStyleGradient*)(calloc(1, sizeof(SvgStyleGradient)));
-    if (!grad) return nullptr;
-
-    grad->type = from->type;
-    grad->id = from->id ? _copyId(from->id) : nullptr;
-    grad->ref = from->ref ? _copyId(from->ref) : nullptr;
-    grad->spread = from->spread;
-    grad->userSpace = from->userSpace;
-
-    if (from->transform) {
-        grad->transform = (Matrix*)calloc(1, sizeof(Matrix));
-        if (grad->transform) memcpy(grad->transform, from->transform, sizeof(Matrix));
-    }
-
-    if (grad->type == SvgGradientType::Linear) {
-        grad->linear = (SvgLinearGradient*)calloc(1, sizeof(SvgLinearGradient));
-        if (!grad->linear) goto error_grad_alloc;
-        memcpy(grad->linear, from->linear, sizeof(SvgLinearGradient));
-    } else if (grad->type == SvgGradientType::Radial) {
-        grad->radial = (SvgRadialGradient*)calloc(1, sizeof(SvgRadialGradient));
-        if (!grad->radial) goto error_grad_alloc;
-        memcpy(grad->radial, from->radial, sizeof(SvgRadialGradient));
-    }
-
-    _cloneGradStops(grad->stops, from->stops);
-
-    return grad;
-
-error_grad_alloc:
-    if (grad) {
-        grad->clear();
-        free(grad);
-    }
-    return nullptr;
-}
-
-
-static void _styleInherit(SvgStyleProperty* child, const SvgStyleProperty* parent)
-{
-    if (parent == nullptr) return;
-    //Inherit the property of parent if not present in child.
-    if (!child->curColorSet) {
-        child->color = parent->color;
-        child->curColorSet = parent->curColorSet;
-    }
-    //Fill
-    if (!((int)child->fill.flags & (int)SvgFillFlags::Paint)) {
-        child->fill.paint.color = parent->fill.paint.color;
-        child->fill.paint.none = parent->fill.paint.none;
-        child->fill.paint.curColor = parent->fill.paint.curColor;
-        if (parent->fill.paint.url) child->fill.paint.url = _copyId(parent->fill.paint.url);
-    }
-    if (!((int)child->fill.flags & (int)SvgFillFlags::Opacity)) {
-        child->fill.opacity = parent->fill.opacity;
-    }
-    if (!((int)child->fill.flags & (int)SvgFillFlags::FillRule)) {
-        child->fill.fillRule = parent->fill.fillRule;
-    }
-    //Stroke
-    if (!((int)child->stroke.flags & (int)SvgStrokeFlags::Paint)) {
-        child->stroke.paint.color = parent->stroke.paint.color;
-        child->stroke.paint.none = parent->stroke.paint.none;
-        child->stroke.paint.curColor = parent->stroke.paint.curColor;
-        child->stroke.paint.url = parent->stroke.paint.url ? _copyId(parent->stroke.paint.url) : nullptr;
-    }
-    if (!((int)child->stroke.flags & (int)SvgStrokeFlags::Opacity)) {
-        child->stroke.opacity = parent->stroke.opacity;
-    }
-    if (!((int)child->stroke.flags & (int)SvgStrokeFlags::Width)) {
-        child->stroke.width = parent->stroke.width;
-    }
-    if (!((int)child->stroke.flags & (int)SvgStrokeFlags::Dash)) {
-        if (parent->stroke.dash.array.count > 0) {
-            child->stroke.dash.array.clear();
-            child->stroke.dash.array.reserve(parent->stroke.dash.array.count);
-            for (uint32_t i = 0; i < parent->stroke.dash.array.count; ++i) {
-                child->stroke.dash.array.push(parent->stroke.dash.array.data[i]);
-            }
-        }
-    }
-    if (!((int)child->stroke.flags & (int)SvgStrokeFlags::Cap)) {
-        child->stroke.cap = parent->stroke.cap;
-    }
-    if (!((int)child->stroke.flags & (int)SvgStrokeFlags::Join)) {
-        child->stroke.join = parent->stroke.join;
-    }
-}
-
-
-static void _styleCopy(SvgStyleProperty* to, const SvgStyleProperty* from)
-{
-    if (from == nullptr) return;
-    //Copy the properties of 'from' only if they were explicitly set (not the default ones).
-    if (from->curColorSet) {
-        to->color = from->color;
-        to->curColorSet = true;
-    }
-    //Fill
-    to->fill.flags = (SvgFillFlags)((int)to->fill.flags | (int)from->fill.flags);
-    if (((int)from->fill.flags & (int)SvgFillFlags::Paint)) {
-        to->fill.paint.color = from->fill.paint.color;
-        to->fill.paint.none = from->fill.paint.none;
-        to->fill.paint.curColor = from->fill.paint.curColor;
-        if (from->fill.paint.url) to->fill.paint.url = _copyId(from->fill.paint.url);
-    }
-    if (((int)from->fill.flags & (int)SvgFillFlags::Opacity)) {
-        to->fill.opacity = from->fill.opacity;
-    }
-    if (((int)from->fill.flags & (int)SvgFillFlags::FillRule)) {
-        to->fill.fillRule = from->fill.fillRule;
-    }
-    //Stroke
-    to->stroke.flags = (SvgStrokeFlags)((int)to->stroke.flags | (int)from->stroke.flags);
-    if (((int)from->stroke.flags & (int)SvgStrokeFlags::Paint)) {
-        to->stroke.paint.color = from->stroke.paint.color;
-        to->stroke.paint.none = from->stroke.paint.none;
-        to->stroke.paint.curColor = from->stroke.paint.curColor;
-        to->stroke.paint.url = from->stroke.paint.url ? _copyId(from->stroke.paint.url) : nullptr;
-    }
-    if (((int)from->stroke.flags & (int)SvgStrokeFlags::Opacity)) {
-        to->stroke.opacity = from->stroke.opacity;
-    }
-    if (((int)from->stroke.flags & (int)SvgStrokeFlags::Width)) {
-        to->stroke.width = from->stroke.width;
-    }
-    if (((int)from->stroke.flags & (int)SvgStrokeFlags::Dash)) {
-        if (from->stroke.dash.array.count > 0) {
-            to->stroke.dash.array.clear();
-            to->stroke.dash.array.reserve(from->stroke.dash.array.count);
-            for (uint32_t i = 0; i < from->stroke.dash.array.count; ++i) {
-                to->stroke.dash.array.push(from->stroke.dash.array.data[i]);
-            }
-        }
-    }
-    if (((int)from->stroke.flags & (int)SvgStrokeFlags::Cap)) {
-        to->stroke.cap = from->stroke.cap;
-    }
-    if (((int)from->stroke.flags & (int)SvgStrokeFlags::Join)) {
-        to->stroke.join = from->stroke.join;
-    }
-}
-
-
-static void _copyAttr(SvgNode* to, const SvgNode* from)
-{
-    //Copy matrix attribute
-    if (from->transform) {
-        to->transform = (Matrix*)malloc(sizeof(Matrix));
-        if (to->transform) *to->transform = *from->transform;
-    }
-    //Copy style attribute
-    _styleCopy(to->style, from->style);
-    to->style->flags = (SvgStyleFlags)((int)to->style->flags | (int)from->style->flags);
-    if (from->style->fill.paint.url) to->style->fill.paint.url = strdup(from->style->fill.paint.url);
-    if (from->style->stroke.paint.url) to->style->stroke.paint.url = strdup(from->style->stroke.paint.url);
-    if (from->style->clipPath.url) to->style->clipPath.url = strdup(from->style->clipPath.url);
-    if (from->style->mask.url) to->style->mask.url = strdup(from->style->mask.url);
-
-    //Copy node attribute
-    switch (from->type) {
-        case SvgNodeType::Circle: {
-            to->node.circle.cx = from->node.circle.cx;
-            to->node.circle.cy = from->node.circle.cy;
-            to->node.circle.r = from->node.circle.r;
-            break;
-        }
-        case SvgNodeType::Ellipse: {
-            to->node.ellipse.cx = from->node.ellipse.cx;
-            to->node.ellipse.cy = from->node.ellipse.cy;
-            to->node.ellipse.rx = from->node.ellipse.rx;
-            to->node.ellipse.ry = from->node.ellipse.ry;
-            break;
-        }
-        case SvgNodeType::Rect: {
-            to->node.rect.x = from->node.rect.x;
-            to->node.rect.y = from->node.rect.y;
-            to->node.rect.w = from->node.rect.w;
-            to->node.rect.h = from->node.rect.h;
-            to->node.rect.rx = from->node.rect.rx;
-            to->node.rect.ry = from->node.rect.ry;
-            to->node.rect.hasRx = from->node.rect.hasRx;
-            to->node.rect.hasRy = from->node.rect.hasRy;
-            break;
-        }
-        case SvgNodeType::Line: {
-            to->node.line.x1 = from->node.line.x1;
-            to->node.line.y1 = from->node.line.y1;
-            to->node.line.x2 = from->node.line.x2;
-            to->node.line.y2 = from->node.line.y2;
-            break;
-        }
-        case SvgNodeType::Path: {
-            if (from->node.path.path) to->node.path.path = strdup(from->node.path.path);
-            break;
-        }
-        case SvgNodeType::Polygon: {
-            if ((to->node.polygon.pointsCount = from->node.polygon.pointsCount)) {
-                to->node.polygon.points = (float*)malloc(to->node.polygon.pointsCount * sizeof(float));
-                memcpy(to->node.polygon.points, from->node.polygon.points, to->node.polygon.pointsCount * sizeof(float));
-            }
-            break;
-        }
-        case SvgNodeType::Polyline: {
-            if ((to->node.polyline.pointsCount = from->node.polyline.pointsCount)) {
-                to->node.polyline.points = (float*)malloc(to->node.polyline.pointsCount * sizeof(float));
-                memcpy(to->node.polyline.points, from->node.polyline.points, to->node.polyline.pointsCount * sizeof(float));
-            }
-            break;
-        }
-        case SvgNodeType::Image: {
-            to->node.image.x = from->node.image.x;
-            to->node.image.y = from->node.image.y;
-            to->node.image.w = from->node.image.w;
-            to->node.image.h = from->node.image.h;
-            if (from->node.image.href) to->node.image.href = strdup(from->node.image.href);
-            break;
-        }
-        default: {
-            break;
-        }
-    }
-}
-
-
-static void _cloneNode(SvgNode* from, SvgNode* parent, int depth)
-{
-    /* Exception handling: Prevent invalid SVG data input.
-       The size is the arbitrary value, we need an experimental size. */
-    if (depth == 8192) {
-        TVGERR("SVG", "Infinite recursive call - stopped after %d calls! Svg file may be incorrectly formatted.", depth);
-        return;
-    }
-
-    SvgNode* newNode;
-    if (!from || !parent || from == parent) return;
-
-    newNode = _createNode(parent, from->type);
-    if (!newNode) return;
-
-    _styleInherit(newNode->style, parent->style);
-    _copyAttr(newNode, from);
-
-    auto child = from->child.data;
-    for (uint32_t i = 0; i < from->child.count; ++i, ++child) {
-        _cloneNode(*child, newNode, depth + 1);
-    }
-}
-
-
-static void _clonePostponedNodes(Array<SvgNodeIdPair>* cloneNodes, SvgNode* doc)
-{
-    for (uint32_t i = 0; i < cloneNodes->count; ++i) {
-        auto nodeIdPair = cloneNodes->data[i];
-        auto defs = _getDefsNode(nodeIdPair.node);
-        auto nodeFrom = _findChildById(defs, nodeIdPair.id);
-        if (!nodeFrom) nodeFrom = _findChildById(doc, nodeIdPair.id);
-        _cloneNode(nodeFrom, nodeIdPair.node, 0);
-        if (nodeFrom && nodeFrom->type == SvgNodeType::Symbol && nodeIdPair.node->type == SvgNodeType::Use) {
-            nodeIdPair.node->node.use.symbol = nodeFrom;
-        }
-        free(nodeIdPair.id);
-    }
 }
 
 
@@ -2118,6 +1932,7 @@ static constexpr struct
 };
 
 
+static void _cloneNode(SvgNode* from, SvgNode* parent, int depth);
 static bool _attrParseUseNode(void* data, const char* key, const char* value)
 {
     SvgLoaderData* loader = (SvgLoaderData*)data;
@@ -2141,7 +1956,7 @@ static bool _attrParseUseNode(void* data, const char* key, const char* value)
     if (!strcmp(key, "href") || !strcmp(key, "xlink:href")) {
         id = _idFromHref(value);
         defs = _getDefsNode(node);
-        nodeFrom = _findChildById(defs, id);
+        nodeFrom = _findNodeById(defs, id);
         if (nodeFrom) {
             _cloneNode(nodeFrom, node, 0);
             if (nodeFrom->type == SvgNodeType::Symbol) use->symbol = nodeFrom;
@@ -2308,17 +2123,103 @@ static void _recalcRadialFyAttr(SvgLoaderData* loader, SvgRadialGradient* radial
 static void _recalcRadialRAttr(SvgLoaderData* loader, SvgRadialGradient* radial, bool userSpace)
 {
     // scaling factor based on the Units paragraph from : https://www.w3.org/TR/2015/WD-SVG2-20150915/coords.html
-    if (userSpace && !radial->isRPercentage) radial->r = radial->r / (sqrtf(pow(loader->svgParse->global.h, 2) + pow(loader->svgParse->global.w, 2)) / sqrtf(2.0));
+    if (userSpace && !radial->isRPercentage) radial->r = radial->r / (sqrtf(powf(loader->svgParse->global.h, 2) + powf(loader->svgParse->global.w, 2)) / sqrtf(2.0));
+}
+
+
+static void _recalcInheritedRadialCxAttr(SvgLoaderData* loader, SvgRadialGradient* radial, bool userSpace)
+{
+    if (!radial->isCxPercentage) {
+        if (userSpace) radial->cx /= loader->svgParse->global.w;
+        else radial->cx *= loader->svgParse->global.w;
+    }
+}
+
+
+static void _recalcInheritedRadialCyAttr(SvgLoaderData* loader, SvgRadialGradient* radial, bool userSpace)
+{
+    if (!radial->isCyPercentage) {
+        if (userSpace) radial->cy /= loader->svgParse->global.h;
+        else radial->cy *= loader->svgParse->global.h;
+    }
+}
+
+
+static void _recalcInheritedRadialFxAttr(SvgLoaderData* loader, SvgRadialGradient* radial, bool userSpace)
+{
+    if (!radial->isFxPercentage) {
+        if (userSpace) radial->fx /= loader->svgParse->global.w;
+        else radial->fx *= loader->svgParse->global.w;
+    }
+}
+
+
+static void _recalcInheritedRadialFyAttr(SvgLoaderData* loader, SvgRadialGradient* radial, bool userSpace)
+{
+    if (!radial->isFyPercentage) {
+        if (userSpace) radial->fy /= loader->svgParse->global.h;
+        else radial->fy *= loader->svgParse->global.h;
+    }
+}
+
+
+static void _recalcInheritedRadialRAttr(SvgLoaderData* loader, SvgRadialGradient* radial, bool userSpace)
+{
+    if (!radial->isRPercentage) {
+        if (userSpace) radial->r /= sqrtf(powf(loader->svgParse->global.h, 2) + powf(loader->svgParse->global.w, 2)) / sqrtf(2.0);
+        else radial->r *= sqrtf(powf(loader->svgParse->global.h, 2) + powf(loader->svgParse->global.w, 2)) / sqrtf(2.0);
+    }
+}
+
+
+static void _inheritRadialCxAttr(SvgStyleGradient* to, SvgStyleGradient* from)
+{
+    to->radial->cx = from->radial->cx;
+    to->radial->isCxPercentage = from->radial->isCxPercentage;
+    to->flags = (SvgGradientFlags)((int)to->flags | (int)SvgGradientFlags::Cx);
+}
+
+
+static void _inheritRadialCyAttr(SvgStyleGradient* to, SvgStyleGradient* from)
+{
+    to->radial->cy = from->radial->cy;
+    to->radial->isCyPercentage = from->radial->isCyPercentage;
+    to->flags = (SvgGradientFlags)((int)to->flags | (int)SvgGradientFlags::Cy);
+}
+
+
+static void _inheritRadialFxAttr(SvgStyleGradient* to, SvgStyleGradient* from)
+{
+    to->radial->fx = from->radial->fx;
+    to->radial->isFxPercentage = from->radial->isFxPercentage;
+    to->flags = (SvgGradientFlags)((int)to->flags | (int)SvgGradientFlags::Fx);
+}
+
+
+static void _inheritRadialFyAttr(SvgStyleGradient* to, SvgStyleGradient* from)
+{
+    to->radial->fy = from->radial->fy;
+    to->radial->isFyPercentage = from->radial->isFyPercentage;
+    to->flags = (SvgGradientFlags)((int)to->flags | (int)SvgGradientFlags::Fy);
+}
+
+
+static void _inheritRadialRAttr(SvgStyleGradient* to, SvgStyleGradient* from)
+{
+    to->radial->r = from->radial->r;
+    to->radial->isRPercentage = from->radial->isRPercentage;
+    to->flags = (SvgGradientFlags)((int)to->flags | (int)SvgGradientFlags::R);
 }
 
 
 typedef void (*radialMethod)(SvgLoaderData* loader, SvgRadialGradient* radial, const char* value);
+typedef void (*radialInheritMethod)(SvgStyleGradient* to, SvgStyleGradient* from);
 typedef void (*radialMethodRecalc)(SvgLoaderData* loader, SvgRadialGradient* radial, bool userSpace);
 
 
-#define RADIAL_DEF(Name, Name1)                                                          \
+#define RADIAL_DEF(Name, Name1, Flag)                                                    \
     {                                                                                    \
-#Name, sizeof(#Name), _handleRadial##Name1##Attr, _recalcRadial##Name1##Attr             \
+#Name, sizeof(#Name), _handleRadial##Name1##Attr, _inheritRadial##Name1##Attr, _recalcRadial##Name1##Attr, _recalcInheritedRadial##Name1##Attr, Flag \
     }
 
 
@@ -2327,13 +2228,16 @@ static constexpr struct
     const char* tag;
     int sz;
     radialMethod tagHandler;
+    radialInheritMethod tagInheritHandler;
     radialMethodRecalc tagRecalc;
+    radialMethodRecalc tagInheritedRecalc;
+    SvgGradientFlags flag;
 } radialTags[] = {
-    RADIAL_DEF(cx, Cx),
-    RADIAL_DEF(cy, Cy),
-    RADIAL_DEF(fx, Fx),
-    RADIAL_DEF(fy, Fy),
-    RADIAL_DEF(r, R)
+    RADIAL_DEF(cx, Cx, SvgGradientFlags::Cx),
+    RADIAL_DEF(cy, Cy, SvgGradientFlags::Cy),
+    RADIAL_DEF(fx, Fx, SvgGradientFlags::Fx),
+    RADIAL_DEF(fy, Fy, SvgGradientFlags::Fy),
+    RADIAL_DEF(r, R, SvgGradientFlags::R)
 };
 
 
@@ -2347,6 +2251,7 @@ static bool _attrParseRadialGradientNode(void* data, const char* key, const char
     for (unsigned int i = 0; i < sizeof(radialTags) / sizeof(radialTags[0]); i++) {
         if (radialTags[i].sz - 1 == sz && !strncmp(radialTags[i].tag, key, sz)) {
             radialTags[i].tagHandler(loader, radial, value);
+            grad->flags = (SvgGradientFlags)((int)grad->flags | (int)radialTags[i].flag);
             return true;
         }
     }
@@ -2356,11 +2261,13 @@ static bool _attrParseRadialGradientNode(void* data, const char* key, const char
         grad->id = _copyId(value);
     } else if (!strcmp(key, "spreadMethod")) {
         grad->spread = _parseSpreadValue(value);
+        grad->flags = (SvgGradientFlags)((int)grad->flags | (int)SvgGradientFlags::SpreadMethod);
     } else if (!strcmp(key, "href") || !strcmp(key, "xlink:href")) {
         if (grad->ref && value) free(grad->ref);
         grad->ref = _idFromHref(value);
     } else if (!strcmp(key, "gradientUnits")) {
         if (!strcmp(value, "userSpaceOnUse")) grad->userSpace = true;
+        grad->flags = (SvgGradientFlags)((int)grad->flags | (int)SvgGradientFlags::GradientUnits);
     } else if (!strcmp(key, "gradientTransform")) {
         grad->transform = _parseTransformationMatrix(value);
     } else {
@@ -2376,6 +2283,7 @@ static SvgStyleGradient* _createRadialGradient(SvgLoaderData* loader, const char
     auto grad = (SvgStyleGradient*)(calloc(1, sizeof(SvgStyleGradient)));
     loader->svgParse->styleGrad = grad;
 
+    grad->flags = SvgGradientFlags::None;
     grad->type = SvgGradientType::Radial;
     grad->userSpace = false;
     grad->radial = (SvgRadialGradient*)calloc(1, sizeof(SvgRadialGradient));
@@ -2503,13 +2411,82 @@ static void _recalcLinearY2Attr(SvgLoaderData* loader, SvgLinearGradient* linear
 }
 
 
+static void _recalcInheritedLinearX1Attr(SvgLoaderData* loader, SvgLinearGradient* linear, bool userSpace)
+{
+    if (!linear->isX1Percentage) {
+        if (userSpace) linear->x1 /= loader->svgParse->global.w;
+        else linear->x1 *= loader->svgParse->global.w;
+    }
+}
+
+
+static void _recalcInheritedLinearX2Attr(SvgLoaderData* loader, SvgLinearGradient* linear, bool userSpace)
+{
+    if (!linear->isX2Percentage) {
+        if (userSpace) linear->x2 /= loader->svgParse->global.w;
+        else linear->x2 *= loader->svgParse->global.w;
+    }
+}
+
+
+static void _recalcInheritedLinearY1Attr(SvgLoaderData* loader, SvgLinearGradient* linear, bool userSpace)
+{
+    if (!linear->isY1Percentage) {
+        if (userSpace) linear->y1 /= loader->svgParse->global.h;
+        else linear->y1 *= loader->svgParse->global.h;
+    }
+}
+
+
+static void _recalcInheritedLinearY2Attr(SvgLoaderData* loader, SvgLinearGradient* linear, bool userSpace)
+{
+    if (!linear->isY2Percentage) {
+        if (userSpace) linear->y2 /= loader->svgParse->global.h;
+        else linear->y2 *= loader->svgParse->global.h;
+    }
+}
+
+
+static void _inheritLinearX1Attr(SvgStyleGradient* to, SvgStyleGradient* from)
+{
+    to->linear->x1 = from->linear->x1;
+    to->linear->isX1Percentage = from->linear->isX1Percentage;
+    to->flags = (SvgGradientFlags)((int)to->flags | (int)SvgGradientFlags::X1);
+}
+
+
+static void _inheritLinearX2Attr(SvgStyleGradient* to, SvgStyleGradient* from)
+{
+    to->linear->x2 = from->linear->x2;
+    to->linear->isX2Percentage = from->linear->isX2Percentage;
+    to->flags = (SvgGradientFlags)((int)to->flags | (int)SvgGradientFlags::X2);
+}
+
+
+static void _inheritLinearY1Attr(SvgStyleGradient* to, SvgStyleGradient* from)
+{
+    to->linear->y1 = from->linear->y1;
+    to->linear->isY1Percentage = from->linear->isY1Percentage;
+    to->flags = (SvgGradientFlags)((int)to->flags | (int)SvgGradientFlags::Y1);
+}
+
+
+static void _inheritLinearY2Attr(SvgStyleGradient* to, SvgStyleGradient* from)
+{
+    to->linear->y2 = from->linear->y2;
+    to->linear->isY2Percentage = from->linear->isY2Percentage;
+    to->flags = (SvgGradientFlags)((int)to->flags | (int)SvgGradientFlags::Y2);
+}
+
+
 typedef void (*Linear_Method)(SvgLoaderData* loader, SvgLinearGradient* linear, const char* value);
+typedef void (*Linear_Inherit_Method)(SvgStyleGradient* to, SvgStyleGradient* from);
 typedef void (*Linear_Method_Recalc)(SvgLoaderData* loader, SvgLinearGradient* linear, bool userSpace);
 
 
-#define LINEAR_DEF(Name, Name1)                                                          \
+#define LINEAR_DEF(Name, Name1, Flag)                                                    \
     {                                                                                    \
-#Name, sizeof(#Name), _handleLinear##Name1##Attr, _recalcLinear##Name1##Attr \
+#Name, sizeof(#Name), _handleLinear##Name1##Attr, _inheritLinear##Name1##Attr, _recalcLinear##Name1##Attr, _recalcInheritedLinear##Name1##Attr, Flag \
     }
 
 
@@ -2518,12 +2495,15 @@ static constexpr struct
     const char* tag;
     int sz;
     Linear_Method tagHandler;
+    Linear_Inherit_Method tagInheritHandler;
     Linear_Method_Recalc tagRecalc;
+    Linear_Method_Recalc tagInheritedRecalc;
+    SvgGradientFlags flag;
 } linear_tags[] = {
-    LINEAR_DEF(x1, X1),
-    LINEAR_DEF(y1, Y1),
-    LINEAR_DEF(x2, X2),
-    LINEAR_DEF(y2, Y2)
+    LINEAR_DEF(x1, X1, SvgGradientFlags::X1),
+    LINEAR_DEF(y1, Y1, SvgGradientFlags::Y1),
+    LINEAR_DEF(x2, X2, SvgGradientFlags::X2),
+    LINEAR_DEF(y2, Y2, SvgGradientFlags::Y2)
 };
 
 
@@ -2537,6 +2517,7 @@ static bool _attrParseLinearGradientNode(void* data, const char* key, const char
     for (unsigned int i = 0; i < sizeof(linear_tags) / sizeof(linear_tags[0]); i++) {
         if (linear_tags[i].sz - 1 == sz && !strncmp(linear_tags[i].tag, key, sz)) {
             linear_tags[i].tagHandler(loader, linear, value);
+            grad->flags = (SvgGradientFlags)((int)grad->flags | (int)linear_tags[i].flag);
             return true;
         }
     }
@@ -2546,11 +2527,13 @@ static bool _attrParseLinearGradientNode(void* data, const char* key, const char
         grad->id = _copyId(value);
     } else if (!strcmp(key, "spreadMethod")) {
         grad->spread = _parseSpreadValue(value);
+        grad->flags = (SvgGradientFlags)((int)grad->flags | (int)SvgGradientFlags::SpreadMethod);
     } else if (!strcmp(key, "href") || !strcmp(key, "xlink:href")) {
         if (grad->ref && value) free(grad->ref);
         grad->ref = _idFromHref(value);
     } else if (!strcmp(key, "gradientUnits")) {
         if (!strcmp(value, "userSpaceOnUse")) grad->userSpace = true;
+        grad->flags = (SvgGradientFlags)((int)grad->flags | (int)SvgGradientFlags::GradientUnits);
     } else if (!strcmp(key, "gradientTransform")) {
         grad->transform = _parseTransformationMatrix(value);
     } else {
@@ -2566,6 +2549,7 @@ static SvgStyleGradient* _createLinearGradient(SvgLoaderData* loader, const char
     auto grad = (SvgStyleGradient*)(calloc(1, sizeof(SvgStyleGradient)));
     loader->svgParse->styleGrad = grad;
 
+    grad->flags = SvgGradientFlags::None;
     grad->type = SvgGradientType::Linear;
     grad->userSpace = false;
     grad->linear = (SvgLinearGradient*)calloc(1, sizeof(SvgLinearGradient));
@@ -2625,6 +2609,373 @@ static GradientFactoryMethod _findGradientFactory(const char* name)
 }
 
 
+static void _cloneGradStops(Array<Fill::ColorStop>& dst, const Array<Fill::ColorStop>& src)
+{
+    for (uint32_t i = 0; i < src.count; ++i) {
+        dst.push(src.data[i]);
+    }
+}
+
+
+static void _inheritGradient(SvgLoaderData* loader, SvgStyleGradient* to, SvgStyleGradient* from)
+{
+    if (!to || !from) return;
+
+    if (!((int)to->flags & (int)SvgGradientFlags::SpreadMethod) &&
+        ((int)from->flags & (int)SvgGradientFlags::SpreadMethod)) {
+        to->spread = from->spread;
+        to->flags = (SvgGradientFlags)((int)to->flags | (int)SvgGradientFlags::SpreadMethod);
+    }
+    bool gradUnitSet = (int)to->flags & (int)SvgGradientFlags::GradientUnits;
+    if (!((int)to->flags & (int)SvgGradientFlags::GradientUnits) &&
+        ((int)from->flags & (int)SvgGradientFlags::GradientUnits)) {
+        to->userSpace = from->userSpace;
+        to->flags = (SvgGradientFlags)((int)to->flags | (int)SvgGradientFlags::GradientUnits);
+    }
+
+    if (!to->transform && from->transform) {
+        to->transform = (Matrix*)malloc(sizeof(Matrix));
+        if (to->transform) memcpy(to->transform, from->transform, sizeof(Matrix));
+    }
+
+    if (to->type == SvgGradientType::Linear && from->type == SvgGradientType::Linear) {
+        for (unsigned int i = 0; i < sizeof(linear_tags) / sizeof(linear_tags[0]); i++) {
+            bool coordSet = (int)to->flags & (int)linear_tags[i].flag;
+            if (!((int)to->flags & (int)linear_tags[i].flag) && ((int)from->flags & (int)linear_tags[i].flag)) {
+                linear_tags[i].tagInheritHandler(to, from);
+            }
+
+            //GradUnits not set directly, coord set
+            if (!gradUnitSet && coordSet) {
+                linear_tags[i].tagRecalc(loader, to->linear, to->userSpace);
+            }
+            //GradUnits set, coord not set directly
+            if (to->userSpace == from->userSpace) continue;
+            if (gradUnitSet && !coordSet) {
+                linear_tags[i].tagInheritedRecalc(loader, to->linear, to->userSpace);
+            }
+        }
+    } else if (to->type == SvgGradientType::Radial && from->type == SvgGradientType::Radial) {
+        for (unsigned int i = 0; i < sizeof(radialTags) / sizeof(radialTags[0]); i++) {
+            bool coordSet = (int)to->flags & (int)radialTags[i].flag;
+            if (!((int)to->flags & (int)radialTags[i].flag) && ((int)from->flags & (int)radialTags[i].flag)) {
+                radialTags[i].tagInheritHandler(to, from);
+            }
+
+            //GradUnits not set directly, coord set
+            if (!gradUnitSet && coordSet) {
+                radialTags[i].tagRecalc(loader, to->radial, to->userSpace);
+            }
+            //GradUnits set, coord not set directly
+            if (to->userSpace == from->userSpace) continue;
+            if (gradUnitSet && !coordSet) {
+                radialTags[i].tagInheritedRecalc(loader, to->radial, to->userSpace);
+            }
+        }
+    }
+
+    if (to->stops.count == 0) _cloneGradStops(to->stops, from->stops);
+}
+
+
+static SvgStyleGradient* _cloneGradient(SvgStyleGradient* from)
+{
+    if (!from) return nullptr;
+
+    auto grad = (SvgStyleGradient*)(calloc(1, sizeof(SvgStyleGradient)));
+    if (!grad) return nullptr;
+
+    grad->type = from->type;
+    grad->id = from->id ? _copyId(from->id) : nullptr;
+    grad->ref = from->ref ? _copyId(from->ref) : nullptr;
+    grad->spread = from->spread;
+    grad->userSpace = from->userSpace;
+    grad->flags = from->flags;
+
+    if (from->transform) {
+        grad->transform = (Matrix*)calloc(1, sizeof(Matrix));
+        if (grad->transform) memcpy(grad->transform, from->transform, sizeof(Matrix));
+    }
+
+    if (grad->type == SvgGradientType::Linear) {
+        grad->linear = (SvgLinearGradient*)calloc(1, sizeof(SvgLinearGradient));
+        if (!grad->linear) goto error_grad_alloc;
+        memcpy(grad->linear, from->linear, sizeof(SvgLinearGradient));
+    } else if (grad->type == SvgGradientType::Radial) {
+        grad->radial = (SvgRadialGradient*)calloc(1, sizeof(SvgRadialGradient));
+        if (!grad->radial) goto error_grad_alloc;
+        memcpy(grad->radial, from->radial, sizeof(SvgRadialGradient));
+    }
+
+    _cloneGradStops(grad->stops, from->stops);
+
+    return grad;
+
+    error_grad_alloc:
+    if (grad) {
+        grad->clear();
+        free(grad);
+    }
+    return nullptr;
+}
+
+
+static void _styleInherit(SvgStyleProperty* child, const SvgStyleProperty* parent)
+{
+    if (parent == nullptr) return;
+    //Inherit the property of parent if not present in child.
+    if (!child->curColorSet) {
+        child->color = parent->color;
+        child->curColorSet = parent->curColorSet;
+    }
+    if (!((int)child->flags & (int)SvgStyleFlags::PaintOrder)) {
+        child->paintOrder = parent->paintOrder;
+    }
+    //Fill
+    if (!((int)child->fill.flags & (int)SvgFillFlags::Paint)) {
+        child->fill.paint.color = parent->fill.paint.color;
+        child->fill.paint.none = parent->fill.paint.none;
+        child->fill.paint.curColor = parent->fill.paint.curColor;
+        if (parent->fill.paint.url) {
+            if (child->fill.paint.url) free(child->fill.paint.url);
+            child->fill.paint.url = _copyId(parent->fill.paint.url);
+        }
+    }
+    if (!((int)child->fill.flags & (int)SvgFillFlags::Opacity)) {
+        child->fill.opacity = parent->fill.opacity;
+    }
+    if (!((int)child->fill.flags & (int)SvgFillFlags::FillRule)) {
+        child->fill.fillRule = parent->fill.fillRule;
+    }
+    //Stroke
+    if (!((int)child->stroke.flags & (int)SvgStrokeFlags::Paint)) {
+        child->stroke.paint.color = parent->stroke.paint.color;
+        child->stroke.paint.none = parent->stroke.paint.none;
+        child->stroke.paint.curColor = parent->stroke.paint.curColor;
+        if (parent->stroke.paint.url) {
+            if (child->stroke.paint.url) free(child->stroke.paint.url);
+            child->stroke.paint.url = _copyId(parent->stroke.paint.url);
+        }
+    }
+    if (!((int)child->stroke.flags & (int)SvgStrokeFlags::Opacity)) {
+        child->stroke.opacity = parent->stroke.opacity;
+    }
+    if (!((int)child->stroke.flags & (int)SvgStrokeFlags::Width)) {
+        child->stroke.width = parent->stroke.width;
+    }
+    if (!((int)child->stroke.flags & (int)SvgStrokeFlags::Dash)) {
+        if (parent->stroke.dash.array.count > 0) {
+            child->stroke.dash.array.clear();
+            child->stroke.dash.array.reserve(parent->stroke.dash.array.count);
+            for (uint32_t i = 0; i < parent->stroke.dash.array.count; ++i) {
+                child->stroke.dash.array.push(parent->stroke.dash.array.data[i]);
+            }
+        }
+    }
+    if (!((int)child->stroke.flags & (int)SvgStrokeFlags::Cap)) {
+        child->stroke.cap = parent->stroke.cap;
+    }
+    if (!((int)child->stroke.flags & (int)SvgStrokeFlags::Join)) {
+        child->stroke.join = parent->stroke.join;
+    }
+}
+
+
+static void _styleCopy(SvgStyleProperty* to, const SvgStyleProperty* from)
+{
+    if (from == nullptr) return;
+    //Copy the properties of 'from' only if they were explicitly set (not the default ones).
+    if (from->curColorSet) {
+        to->color = from->color;
+        to->curColorSet = true;
+    }
+    if (((int)from->flags & (int)SvgStyleFlags::PaintOrder)) {
+        to->paintOrder = from->paintOrder;
+    }
+    //Fill
+    to->fill.flags = (SvgFillFlags)((int)to->fill.flags | (int)from->fill.flags);
+    if (((int)from->fill.flags & (int)SvgFillFlags::Paint)) {
+        to->fill.paint.color = from->fill.paint.color;
+        to->fill.paint.none = from->fill.paint.none;
+        to->fill.paint.curColor = from->fill.paint.curColor;
+        if (from->fill.paint.url) {
+            if (to->fill.paint.url) free(to->fill.paint.url);
+            to->fill.paint.url = _copyId(from->fill.paint.url);
+        }
+    }
+    if (((int)from->fill.flags & (int)SvgFillFlags::Opacity)) {
+        to->fill.opacity = from->fill.opacity;
+    }
+    if (((int)from->fill.flags & (int)SvgFillFlags::FillRule)) {
+        to->fill.fillRule = from->fill.fillRule;
+    }
+    //Stroke
+    to->stroke.flags = (SvgStrokeFlags)((int)to->stroke.flags | (int)from->stroke.flags);
+    if (((int)from->stroke.flags & (int)SvgStrokeFlags::Paint)) {
+        to->stroke.paint.color = from->stroke.paint.color;
+        to->stroke.paint.none = from->stroke.paint.none;
+        to->stroke.paint.curColor = from->stroke.paint.curColor;
+        if (from->stroke.paint.url) {
+            if (to->stroke.paint.url) free(to->stroke.paint.url);
+            to->stroke.paint.url = _copyId(from->stroke.paint.url);
+        }
+    }
+    if (((int)from->stroke.flags & (int)SvgStrokeFlags::Opacity)) {
+        to->stroke.opacity = from->stroke.opacity;
+    }
+    if (((int)from->stroke.flags & (int)SvgStrokeFlags::Width)) {
+        to->stroke.width = from->stroke.width;
+    }
+    if (((int)from->stroke.flags & (int)SvgStrokeFlags::Dash)) {
+        if (from->stroke.dash.array.count > 0) {
+            to->stroke.dash.array.clear();
+            to->stroke.dash.array.reserve(from->stroke.dash.array.count);
+            for (uint32_t i = 0; i < from->stroke.dash.array.count; ++i) {
+                to->stroke.dash.array.push(from->stroke.dash.array.data[i]);
+            }
+        }
+    }
+    if (((int)from->stroke.flags & (int)SvgStrokeFlags::Cap)) {
+        to->stroke.cap = from->stroke.cap;
+    }
+    if (((int)from->stroke.flags & (int)SvgStrokeFlags::Join)) {
+        to->stroke.join = from->stroke.join;
+    }
+}
+
+
+static void _copyAttr(SvgNode* to, const SvgNode* from)
+{
+    //Copy matrix attribute
+    if (from->transform) {
+        to->transform = (Matrix*)malloc(sizeof(Matrix));
+        if (to->transform) *to->transform = *from->transform;
+    }
+    //Copy style attribute
+    _styleCopy(to->style, from->style);
+    to->style->flags = (SvgStyleFlags)((int)to->style->flags | (int)from->style->flags);
+    if (from->style->clipPath.url) {
+        if (to->style->clipPath.url) free(to->style->clipPath.url);
+        to->style->clipPath.url = strdup(from->style->clipPath.url);
+    }
+    if (from->style->mask.url) {
+        if (to->style->mask.url) free(to->style->mask.url);
+        to->style->mask.url = strdup(from->style->mask.url);
+    }
+
+    //Copy node attribute
+    switch (from->type) {
+        case SvgNodeType::Circle: {
+            to->node.circle.cx = from->node.circle.cx;
+            to->node.circle.cy = from->node.circle.cy;
+            to->node.circle.r = from->node.circle.r;
+            break;
+        }
+        case SvgNodeType::Ellipse: {
+            to->node.ellipse.cx = from->node.ellipse.cx;
+            to->node.ellipse.cy = from->node.ellipse.cy;
+            to->node.ellipse.rx = from->node.ellipse.rx;
+            to->node.ellipse.ry = from->node.ellipse.ry;
+            break;
+        }
+        case SvgNodeType::Rect: {
+            to->node.rect.x = from->node.rect.x;
+            to->node.rect.y = from->node.rect.y;
+            to->node.rect.w = from->node.rect.w;
+            to->node.rect.h = from->node.rect.h;
+            to->node.rect.rx = from->node.rect.rx;
+            to->node.rect.ry = from->node.rect.ry;
+            to->node.rect.hasRx = from->node.rect.hasRx;
+            to->node.rect.hasRy = from->node.rect.hasRy;
+            break;
+        }
+        case SvgNodeType::Line: {
+            to->node.line.x1 = from->node.line.x1;
+            to->node.line.y1 = from->node.line.y1;
+            to->node.line.x2 = from->node.line.x2;
+            to->node.line.y2 = from->node.line.y2;
+            break;
+        }
+        case SvgNodeType::Path: {
+            if (from->node.path.path) {
+                if (to->node.path.path) free(to->node.path.path);
+                to->node.path.path = strdup(from->node.path.path);
+            }
+            break;
+        }
+        case SvgNodeType::Polygon: {
+            if ((to->node.polygon.pointsCount = from->node.polygon.pointsCount)) {
+                to->node.polygon.points = (float*)malloc(to->node.polygon.pointsCount * sizeof(float));
+                memcpy(to->node.polygon.points, from->node.polygon.points, to->node.polygon.pointsCount * sizeof(float));
+            }
+            break;
+        }
+        case SvgNodeType::Polyline: {
+            if ((to->node.polyline.pointsCount = from->node.polyline.pointsCount)) {
+                to->node.polyline.points = (float*)malloc(to->node.polyline.pointsCount * sizeof(float));
+                memcpy(to->node.polyline.points, from->node.polyline.points, to->node.polyline.pointsCount * sizeof(float));
+            }
+            break;
+        }
+        case SvgNodeType::Image: {
+            to->node.image.x = from->node.image.x;
+            to->node.image.y = from->node.image.y;
+            to->node.image.w = from->node.image.w;
+            to->node.image.h = from->node.image.h;
+            if (from->node.image.href) {
+                if (to->node.image.href) free(to->node.image.href);
+                to->node.image.href = strdup(from->node.image.href);
+            }
+            break;
+        }
+        default: {
+            break;
+        }
+    }
+}
+
+
+static void _cloneNode(SvgNode* from, SvgNode* parent, int depth)
+{
+    /* Exception handling: Prevent invalid SVG data input.
+       The size is the arbitrary value, we need an experimental size. */
+    if (depth == 8192) {
+        TVGERR("SVG", "Infinite recursive call - stopped after %d calls! Svg file may be incorrectly formatted.", depth);
+        return;
+    }
+
+    SvgNode* newNode;
+    if (!from || !parent || from == parent) return;
+
+    newNode = _createNode(parent, from->type);
+    if (!newNode) return;
+
+    _styleInherit(newNode->style, parent->style);
+    _copyAttr(newNode, from);
+
+    auto child = from->child.data;
+    for (uint32_t i = 0; i < from->child.count; ++i, ++child) {
+        _cloneNode(*child, newNode, depth + 1);
+    }
+}
+
+
+static void _clonePostponedNodes(Array<SvgNodeIdPair>* cloneNodes, SvgNode* doc)
+{
+    for (uint32_t i = 0; i < cloneNodes->count; ++i) {
+        auto nodeIdPair = cloneNodes->data[i];
+        auto defs = _getDefsNode(nodeIdPair.node);
+        auto nodeFrom = _findNodeById(defs, nodeIdPair.id);
+        if (!nodeFrom) nodeFrom = _findNodeById(doc, nodeIdPair.id);
+        _cloneNode(nodeFrom, nodeIdPair.node, 0);
+        if (nodeFrom && nodeFrom->type == SvgNodeType::Symbol && nodeIdPair.node->type == SvgNodeType::Use) {
+            nodeIdPair.node->node.use.symbol = nodeFrom;
+        }
+        free(nodeIdPair.id);
+    }
+}
+
+
 static constexpr struct
 {
     const char* tag;
@@ -2671,6 +3022,7 @@ static void _svgLoaderParserXmlOpen(SvgLoaderData* loader, const char* content, 
         //Parse the empty tag
         attrs = content;
         while ((attrs != nullptr) && *attrs != '>') attrs++;
+        if (empty) attrs--;
     }
 
     if (attrs) {
@@ -2695,10 +3047,14 @@ static void _svgLoaderParserXmlOpen(SvgLoaderData* loader, const char* content, 
             if (loader->stack.count > 0) parent = loader->stack.data[loader->stack.count - 1];
             else parent = loader->doc;
             if (!strcmp(tagName, "style")) {
-                node = method(loader, nullptr, attrs, attrsLength, simpleXmlParseAttributes);
-                loader->cssStyle = node;
-                loader->doc->node.doc.style = node;
-                loader->style = true;
+                // TODO: For now only the first style node is saved. After the css id selector
+                // is introduced this if condition shouldin't be necessary any more
+                if (!loader->cssStyle) {
+                    node = method(loader, nullptr, attrs, attrsLength, simpleXmlParseAttributes);
+                    loader->cssStyle = node;
+                    loader->doc->node.doc.style = node;
+                    loader->style = true;
+                }
             } else {
                 node = method(loader, parent, attrs, attrsLength, simpleXmlParseAttributes);
             }
@@ -2871,7 +3227,7 @@ static void _updateStyle(SvgNode* node, SvgStyleProperty* parentStyle)
 }
 
 
-static SvgStyleGradient* _gradientDup(Array<SvgStyleGradient*>* gradients, const char* id)
+static SvgStyleGradient* _gradientDup(SvgLoaderData* loader, Array<SvgStyleGradient*>* gradients, const char* id)
 {
     SvgStyleGradient* result = nullptr;
 
@@ -2889,8 +3245,7 @@ static SvgStyleGradient* _gradientDup(Array<SvgStyleGradient*>* gradients, const
         gradList = gradients->data;
         for (uint32_t i = 0; i < gradients->count; ++i) {
             if ((*gradList)->id && !strcmp((*gradList)->id, result->ref)) {
-                if (result->stops.count == 0) _cloneGradStops(result->stops, (*gradList)->stops);
-                //TODO: Properly inherit other property
+                _inheritGradient(loader, result, *gradList);
                 break;
             }
             ++gradList;
@@ -2901,12 +3256,12 @@ static SvgStyleGradient* _gradientDup(Array<SvgStyleGradient*>* gradients, const
 }
 
 
-static void _updateGradient(SvgNode* node, Array<SvgStyleGradient*>* gradients)
+static void _updateGradient(SvgLoaderData* loader, SvgNode* node, Array<SvgStyleGradient*>* gradients)
 {
     if (node->child.count > 0) {
         auto child = node->child.data;
         for (uint32_t i = 0; i < node->child.count; ++i, ++child) {
-            _updateGradient(*child, gradients);
+            _updateGradient(loader, *child, gradients);
         }
     } else {
         if (node->style->fill.paint.url) {
@@ -2914,14 +3269,14 @@ static void _updateGradient(SvgNode* node, Array<SvgStyleGradient*>* gradients)
                 node->style->fill.paint.gradient->clear();
                 free(node->style->fill.paint.gradient);
             }
-            node->style->fill.paint.gradient = _gradientDup(gradients, node->style->fill.paint.url);
+            node->style->fill.paint.gradient = _gradientDup(loader, gradients, node->style->fill.paint.url);
         }
         if (node->style->stroke.paint.url) {
             if (node->style->stroke.paint.gradient) {
                 node->style->stroke.paint.gradient->clear();
                 free(node->style->stroke.paint.gradient);
             }
-            node->style->stroke.paint.gradient = _gradientDup(gradients, node->style->stroke.paint.url);
+            node->style->stroke.paint.gradient = _gradientDup(loader, gradients, node->style->stroke.paint.url);
         }
     }
 }
@@ -3109,6 +3464,12 @@ SvgLoader::~SvgLoader()
 
 void SvgLoader::run(unsigned tid)
 {
+    //According to the SVG standard the value of the width/height of the viewbox set to 0 disables rendering
+    if (renderingDisabled) {
+        root = Scene::gen();
+        return;
+    }
+
     if (!simpleXmlParse(content, size, true, _svgLoaderParser, &(loaderData))) return;
 
     if (loaderData.doc) {
@@ -3122,12 +3483,12 @@ void SvgLoader::run(unsigned tid)
         _updateComposite(loaderData.doc, loaderData.doc);
         if (defs) _updateComposite(loaderData.doc, defs);
 
-        if (loaderData.gradients.count > 0) _updateGradient(loaderData.doc, &loaderData.gradients);
-        if (defs) _updateGradient(loaderData.doc, &defs->node.defs.gradients);
+        if (loaderData.gradients.count > 0) _updateGradient(&loaderData, loaderData.doc, &loaderData.gradients);
+        if (defs) _updateGradient(&loaderData, loaderData.doc, &defs->node.defs.gradients);
 
         _updateStyle(loaderData.doc, nullptr);
     }
-    root = svgSceneBuild(loaderData.doc, vx, vy, vw, vh, w, h, preserveAspect, svgPath);
+    root = svgSceneBuild(loaderData.doc, vx, vy, vw, vh, w, h, align, meetOrSlice, svgPath, viewFlag);
 }
 
 
@@ -3140,27 +3501,37 @@ bool SvgLoader::header()
     if (!loaderData.svgParse) return false;
 
     loaderData.svgParse->flags = SvgStopStyleFlags::StopDefault;
+    viewFlag = SvgViewFlag::None;
 
     simpleXmlParse(content, size, true, _svgLoaderParserForValidCheck, &(loaderData));
 
     if (loaderData.doc && loaderData.doc->type == SvgNodeType::Doc) {
+        viewFlag = loaderData.doc->node.doc.viewFlag;
+        align = loaderData.doc->node.doc.align;
+        meetOrSlice = loaderData.doc->node.doc.meetOrSlice;
+        w = 1.0f;
+        h = 1.0f;
+
         //Return the brief resource info such as viewbox:
-        vx = loaderData.doc->node.doc.vx;
-        vy = loaderData.doc->node.doc.vy;
-        w = vw = loaderData.doc->node.doc.vw;
-        h = vh = loaderData.doc->node.doc.vh;
-
-        //Override size
-        if (loaderData.doc->node.doc.w > 0) {
+        if ((uint32_t)viewFlag & (uint32_t)SvgViewFlag::Width) {
             w = loaderData.doc->node.doc.w;
-            if (vw < FLT_EPSILON) vw = w;
         }
-        if (loaderData.doc->node.doc.h > 0) {
+        if ((uint32_t)viewFlag & (uint32_t)SvgViewFlag::Height) {
             h = loaderData.doc->node.doc.h;
-            if (vh < FLT_EPSILON) vh = h;
         }
+        //Override size
+        if ((uint32_t)viewFlag & (uint32_t)SvgViewFlag::Viewbox) {
+            vx = loaderData.doc->node.doc.vx;
+            vy = loaderData.doc->node.doc.vy;
+            vw = loaderData.doc->node.doc.vw;
+            vh = loaderData.doc->node.doc.vh;
 
-        preserveAspect = loaderData.doc->node.doc.preserveAspect;
+            if (!((uint32_t)viewFlag & (uint32_t)SvgViewFlag::Width)) w = vw;
+            if (!((uint32_t)viewFlag & (uint32_t)SvgViewFlag::Height)) h = vh;
+        } else {
+            vw = w;
+            vh = h;
+        }
     } else {
         TVGLOG("SVG", "No SVG File. There is no <svg/>");
         return false;
@@ -3215,31 +3586,9 @@ bool SvgLoader::resize(Paint* paint, float w, float h)
 
     auto sx = w / this->w;
     auto sy = h / this->h;
+    Matrix m = {sx, 0, 0, 0, sy, 0, 0, 0, 1};
+    paint->transform(m);
 
-    if (preserveAspect) {
-        //Scale
-        auto scale = sx < sy ? sx : sy;
-        paint->scale(scale);
-        //Align
-        auto tx = 0.0f;
-        auto ty = 0.0f;
-        auto tw = this->w * scale;
-        auto th = this->h * scale;
-        if (tw > th) ty -= (h - th) * 0.5f;
-        else tx -= (w - tw) * 0.5f;
-        paint->translate(-tx, -ty);
-    } else {
-        //Align
-        auto tx = 0.0f;
-        auto ty = 0.0f;
-        auto tw = this->w * sx;
-        auto th = this->h * sy;
-        if (tw > th) ty -= (h - th) * 0.5f;
-        else tx -= (w - tw) * 0.5f;
-
-        Matrix m = {sx, 0, -tx, 0, sy, -ty, 0, 0, 1};
-        paint->transform(m);
-    }
     return true;
 }
 
@@ -3248,7 +3597,19 @@ bool SvgLoader::read()
 {
     if (!content || size == 0) return false;
 
+    if (((uint32_t)viewFlag & (uint32_t)SvgViewFlag::Viewbox) &&
+        (fabsf(vw) <= FLT_EPSILON || fabsf(vh) <= FLT_EPSILON)) {
+        TVGLOG("SVG", "The <viewBox> width and/or height set to 0 - rendering disabled.");
+        renderingDisabled = true;
+    }
+
     TaskScheduler::request(this);
+
+    //In case no viewbox and width/height data is provided the completion of loading
+    //has to be forced, in order to establish this data based on the whole picture bounding box.
+    if (!((uint32_t)viewFlag & (uint32_t)SvgViewFlag::Viewbox) &&
+        (!((uint32_t)viewFlag & (uint32_t)SvgViewFlag::Width) || !((uint32_t)viewFlag & (uint32_t)SvgViewFlag::Height)))
+        this->done();
 
     return true;
 }

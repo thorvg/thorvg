@@ -1,5 +1,5 @@
 [![License](https://img.shields.io/badge/licence-MIT-green.svg?style=flat)](LICENSE)
-[![Gitter](https://badges.gitter.im/thorvg/community.svg)](https://gitter.im/thorvg/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
+[![Discord](https://img.shields.io/badge/Community-5865f2?style=flat&logo=discord&logoColor=white)](https://discord.gg/n25xj6J6HM)
 <br>
 [![Build Linux](https://github.com/Samsung/thorvg/actions/workflows/actions.yml/badge.svg?branch=master&event=push)](https://github.com/Samsung/thorvg/actions/workflows/actions.yml)
 [![Build Windows](https://github.com/Samsung/thorvg/actions/workflows/build_win.yml/badge.svg?branch=master&event=push)](https://github.com/Samsung/thorvg/actions/workflows/build_win.yml)
@@ -11,12 +11,13 @@
 ThorVG is a platform-independent portable library for drawing vector-based scenes and animation. It's open-source software that is freely used by a variety of software platforms and applications. ThorVG provides neat and easy APIs. Its library has no dependencies and keeps a super compact size. It serves as the vector graphics engine for Tizen OS that powers many products. <br />
 <br />
 The following list shows primitives that are supported by ThorVG: <br />
- - Shapes: Line, Arc, Curve, Path, Polygon, ...
- - Filling: Solid, Linear and Radial Gradient
- - Scene Graph & Affine Transformation (translation, rotation, scale, ...)
- - Stroking: Width, Join, Cap, Dash
- - Composition: Blending, Masking, Path Clipping, ...
- - Pictures: TVG, SVG, JPG, PNG, Bitmap
+
+ * Shapes: Line, Arc, Curve, Path, Polygon, ...
+ * Filling: Solid, Linear and Radial Gradient
+ * Scene Graph & Affine Transformation (translation, rotation, scale, ...)
+ * Stroking: Width, Join, Cap, Dash
+ * Composition: Blending, Masking, Path Clipping, ...
+ * Pictures: TVG, SVG, JPG, PNG, Bitmap
 <p align="center">
   <img width="930" height="473" src="https://github.com/Samsung/thorvg/blob/master/res/example_primitives.png">
 </p>
@@ -35,31 +36,34 @@ ThorVG has the threading mechanism so that it tries to acquire the next scenes w
 <br />
 
 ## Contents
-- [Building ThorVG](#building-thorvg)
-	- [Meson Build](#meson-build)
-- [Quick Start](#quick-start)
-- [SVG](#svg)
-- [TVG Picture](#tvg-picture)
-- [Practices](#practices)
-	- [Tizen](#tizen)
-	- [Rive](#rive)
-- [Examples](#examples)
-- [Documentation](#documentation)
-- [Tools](#tools)
-	- [ThorVG Viewer](#thorvg-viewer)
-	- [SVG to PNG](#svg-to-png)
-	- [SVG to TVG](#svg-to-tvg)
-- [API Bindings](#api-bindings)
-- [Dependencies](#dependencies)
-- [Issues or Feature Requests](#issues-or-feature-requests)
+- [ThorVG](#thorvg)
+  - [Installation](#installation)
+    - [Meson Build](#meson-build)
+    - [vcpkg](#vcpkg)
+  - [Quick Start](#quick-start)
+  - [SVG](#svg)
+  - [TVG Picture](#tvg-picture)
+  - [Practices](#practices)
+    - [Tizen](#tizen)
+    - [Rive](#rive)
+    - [Godot](#godot)
+  - [Examples](#examples)
+  - [Documentation](#documentation)
+  - [Tools](#tools)
+    - [ThorVG Viewer](#thorvg-viewer)
+    - [SVG to PNG](#svg-to-png)
+    - [SVG to TVG](#svg-to-tvg)
+  - [API Bindings](#api-bindings)
+  - [Dependencies](#dependencies)
+  - [Issues or Feature Requests](#issues-or-feature-requests)
 
 [](#contents)
 <br />
-## Building ThorVG
-ThorVG supports [meson](https://mesonbuild.com/) build system.
+## Installation
+You can install ThorVG from either Meson build or vcpkg package manager.
 <br />
 ### Meson Build
-Install [meson](http://mesonbuild.com/Getting-meson.html) and [ninja](https://ninja-build.org/) if not already installed.
+ThorVG supports [meson](https://mesonbuild.com/) build system. Install [meson](http://mesonbuild.com/Getting-meson.html) and [ninja](https://ninja-build.org/) if not already installed.
 
 Run meson to configure ThorVG:
 ```
@@ -69,6 +73,23 @@ Run ninja to build & install ThorVG:
 ```
 ninja -C build install
 ```
+
+### vcpkg
+You can download and install pre-packaged ThorVG using the [vcpkg](https://vcpkg.io/en/index.html) package manager.
+
+Clone the vcpkg repo. Make sure you are in the directory you want the tool installed to before doing this.
+```
+git clone https://github.com/Microsoft/vcpkg.git
+```
+Run the bootstrap script to build the vcpkg.
+```
+./bootstrap-vcpkg.sh
+```
+Install the ThorVG package.
+```
+./vcpkg install thorvg
+```
+
 [Back to contents](#contents)
 <br />
 <br />
@@ -235,15 +256,19 @@ ThorVG has been integrated into the [Tizen](https://www.tizen.org) platform as t
   <img width="798" height="285" src="https://github.com/Samsung/thorvg/blob/master/res/example_tizen.png">
 </p>
 
-[Back to contents](#contents)
-<br />
-<br />
 ### Rive
 We're also building a [Rive](https://rive.app/) port that supports Rive Animation run through the ThorVG backend. Rive is a brand new animation platform
 that supports fancy, user-interactive vector animations. For more details see [Rive-Tizen](https://github.com/rive-app/rive-tizen) on [Github](https://github.com/rive-app/).
 
 <p align="center">
   <img width="600" height="324" src="https://github.com/Samsung/thorvg/blob/master/res/example_rive.gif">
+</p>
+
+### Godot
+ThorVG has been integrated into the [Godot](https://www.godotengine.org) project for use of neat and slick icons in Godot editors. Godot is a completely free and open-source modern game engine, it provides a huge set of common tools, so you can just focus on making your game without reinventing the wheel.
+
+<p align="center">
+  <img width="798" height="461" src="https://github.com/Samsung/thorvg/blob/master/res/example_godot.png">
 </p>
 
 [Back to contents](#contents)
@@ -262,6 +287,7 @@ install this package from your OS distribution server. Otherwise, please visit t
 [Back to contents](#contents)
 <br />
 <br />
+
 ## Documentation
 ThorVG API documentation is available at [thorvg.org/apis](https://www.thorvg.org/apis), and can also found in the [docs](/docs) folder of this repo.
 
@@ -274,10 +300,6 @@ ThorVG provides the resource verification tool for the ThorVG Engine. [ThorVG vi
 
 https://user-images.githubusercontent.com/71131832/130445967-fb8f7d81-9c89-4598-b7e4-2c046d5d7438.mp4
 
-
-[Back to contents](#contents)
-<br />
-<br />
 ### SVG to PNG
 ThorVG provides an executable `svg2png` converter that generates a PNG file from an SVG file.
 
@@ -312,9 +334,7 @@ Examples:
     $ svg2png input1.svg input2.svg -r 200x200 -b ff00ff
     $ svg2png . -r 200x200
 ```
-[Back to contents](#contents)
-<br />
-<br />
+
 ### SVG to TVG
 ThorVG provides an executable `svg2tvg` converter that generates a TVG file from an SVG file.
 
@@ -333,6 +353,7 @@ Examples:
     $ svg2tvg input.svg
     $ svg2tvg svgfolder
 ```
+
 [Back to contents](#contents)
 <br />
 <br />
@@ -343,15 +364,17 @@ Our main development APIs are written in C++, but ThorVG also provides API bindi
 <br />
 <br />
 ## Dependencies
-The ThorVG core has no dependencies. However, ThorVG has optional feature extensions. Some of these have dependencies as follows:
+ThorVG core has no dependencies. However, ThorVG has optional feature extensions. Some of these have dependencies as follows:
 
-* GL renderer: EGL, GLESv2
-* PNG support: [libpng](https://github.com/glennrp/libpng)
-* JPG support: [turbojpeg](https://github.com/libjpeg-turbo/libjpeg-turbo)
+* GL renderer: [EGL](https://www.khronos.org/egl), [GLESv2](https://www.khronos.org/opengles/)
+* External PNG support: [libpng](https://github.com/glennrp/libpng)
+* External JPG support: [turbojpeg](https://github.com/libjpeg-turbo/libjpeg-turbo)
 * Examples: [EFL](https://www.enlightenment.org/about-efl.md)
+
+Note that ThorVG supports both static/external image loaders. If your system has no external libraries, you can choose static loaders instead.
 
 [Back to contents](#contents)
 <br />
 <br />
 ## Issues or Feature Requests
-For support, please reach us in [Gitter](https://gitter.im/thorvg/community).
+For support, please reach us in [Discord](https://discord.gg/n25xj6J6HM)

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 - 2022 Samsung Electronics Co., Ltd. All rights reserved.
+ * Copyright (c) 2020 - 2023 the ThorVG project. All rights reserved.
 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -36,7 +36,7 @@ using namespace std;
 #define NUM_PER_LINE 5
 #define SIZE (WIDTH/NUM_PER_LINE)
 
-static size_t count = 0;
+static size_t counter = 0;
 static std::vector<unique_ptr<tvg::Canvas>> canvases;
 
 
@@ -55,13 +55,28 @@ void tvgDrawCmds(tvg::Canvas* canvas, const char* path, const char* name)
 
     if (picture->load(buf) != tvg::Result::Success) return;
 
-    picture->size(SIZE, SIZE);
+    //image scaling preserving its aspect ratio
+    float scale;
+    float shiftX = 0.0f, shiftY = 0.0f;
+    float w, h;
+    picture->size(&w, &h);
+
+    if (w > h) {
+        scale = SIZE / w;
+        shiftY = (SIZE - h * scale) * 0.5f;
+    } else {
+        scale = SIZE / h;
+        shiftX = (SIZE - w * scale) * 0.5f;
+    }
+
+    picture->scale(scale);
+    picture->translate(shiftX, shiftY);
 
     if (canvas->push(move(picture)) != tvg::Result::Success) return;
 
     cout << "SVG: " << buf << endl;
 
-    count++;
+    counter++;
 }
 
 
@@ -103,10 +118,10 @@ void tvgSwTest(const char* name, const char* path, void* data)
     evas_object_image_pixels_dirty_set(view, EINA_TRUE);
     evas_object_image_data_update_add(view, 0, 0, SIZE, SIZE);
     evas_object_image_alpha_set(view, EINA_TRUE);
-    evas_object_image_pixels_get_callback_set(view, drawSwView, reinterpret_cast<void*>(count));
+    evas_object_image_pixels_get_callback_set(view, drawSwView, reinterpret_cast<void*>(counter));
     evas_object_event_callback_add(view, EVAS_CALLBACK_DEL, sw_del, buffer);
     evas_object_resize(view, SIZE, SIZE);
-    evas_object_move(view, (count % NUM_PER_LINE) * SIZE, SIZE * (count / NUM_PER_LINE));
+    evas_object_move(view, (counter % NUM_PER_LINE) * SIZE, SIZE * (counter / NUM_PER_LINE));
     evas_object_show(view);
 
     //Create a Canvas
@@ -139,7 +154,7 @@ void gl_del(void* data, Evas* evas, Eo* obj, void* ev)
 void initGLview(Evas_Object *obj)
 {
     auto objData = reinterpret_cast<ObjData*>(evas_object_data_get(obj, "objdata"));
-    objData->idx = count;
+    objData->idx = counter;
 
     static constexpr auto BPP = 4;
 
@@ -189,7 +204,7 @@ void tvgGlTest(const char* name, const char* path, void* data)
     evas_object_data_set(view, "objdata", reinterpret_cast<void*>(objData));
     evas_object_event_callback_add(view, EVAS_CALLBACK_DEL, gl_del, objData);
     evas_object_resize(view, SIZE, SIZE);
-    evas_object_move(view, (count % NUM_PER_LINE) * SIZE, SIZE * (count / NUM_PER_LINE));
+    evas_object_move(view, (counter % NUM_PER_LINE) * SIZE, SIZE * (counter / NUM_PER_LINE));
     evas_object_show(view);
 }
 

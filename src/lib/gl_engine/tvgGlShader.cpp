@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 - 2022 Samsung Electronics Co., Ltd. All rights reserved.
+ * Copyright (c) 2020 - 2023 the ThorVG project. All rights reserved.
 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -87,7 +87,7 @@ uint32_t GlShader::complileShader(uint32_t type, char* shaderSrc)
             auto infoLog = static_cast<char*>(malloc(sizeof(char)*infoLen));
             glGetShaderInfoLog(shader, infoLen, NULL, infoLog);
             TVGERR("GL_ENGINE", "Error compiling shader: %s", infoLog);
-            delete[] infoLog;
+            free(infoLog);
         }
         glDeleteShader(shader);
     }

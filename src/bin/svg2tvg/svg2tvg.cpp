@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 - 2022 Samsung Electronics Co., Ltd. All rights reserved.
+ * Copyright (c) 2021 - 2023 the ThorVG project. All rights reserved.
 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -38,7 +38,7 @@ void helpMsg()
 bool convert(string& in, string& out)
 {
     if (Initializer::init(CanvasEngine::Sw, 0) != Result::Success) return false;
-        
+
     auto picture = Picture::gen();
     if (picture->load(in) != Result::Success) return false;
 

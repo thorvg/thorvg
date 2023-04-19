@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 - 2022 Samsung Electronics Co., Ltd. All rights reserved.
+ * Copyright (c) 2020 - 2023 the ThorVG project. All rights reserved.
 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -96,7 +96,7 @@ public:
 
     bool operator== (const GlPoint& rhs)
     {
-        if (&rhs == this) return true; 
+        if (&rhs == this) return true;
         if (rhs.x == this->x && rhs.y == this->y) return true;
         return false;
     }
@@ -237,9 +237,9 @@ public:
 
     uint32_t getPrimitiveCount();
     const GlSize getPrimitiveSize(const uint32_t primitiveIndex) const;
-    bool decomposeOutline(const Shape& shape);
-    bool generateAAPoints(TVG_UNUSED const Shape& shape, float strokeWd, RenderUpdateFlag flag);
-    bool tesselate(TVG_UNUSED const Shape &shape, float viewWd, float viewHt, RenderUpdateFlag flag);
+    bool decomposeOutline(const RenderShape& rshape);
+    bool generateAAPoints(TVG_UNUSED const RenderShape& rshape, float strokeWd, RenderUpdateFlag flag);
+    bool tesselate(TVG_UNUSED const RenderShape& rshape, float viewWd, float viewHt, RenderUpdateFlag flag);
     void disableVertex(uint32_t location);
     void draw(const uint32_t location, const uint32_t primitiveIndex, RenderUpdateFlag flag);
     void updateTransform(const RenderTransform* transform, float w, float h);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 - 2022 Samsung Electronics Co., Ltd. All rights reserved.
+ * Copyright (c) 2021 - 2023 the ThorVG project. All rights reserved.
 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,6 +21,7 @@
  */
 
 #include <thorvg_capi.h>
+#include "config.h"
 #include "../catch.hpp"
 
 
@@ -32,6 +33,8 @@ TEST_CASE("Create and delete a Saver", "[capiSaver]")
     REQUIRE(tvg_saver_del(nullptr) == TVG_RESULT_INVALID_ARGUMENT);
     REQUIRE(tvg_saver_del(saver) == TVG_RESULT_SUCCESS);
 }
+
+#ifdef THORVG_TVG_SAVER_SUPPORT
 
 TEST_CASE("Save a paint into a file", "[capiSaver]")
 {
@@ -97,3 +100,5 @@ TEST_CASE("Synchronize a Saver", "[capiSaver]")
 
     REQUIRE(tvg_saver_del(saver) == TVG_RESULT_SUCCESS);
 }
+
+#endif

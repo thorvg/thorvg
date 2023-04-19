@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 - 2022 Samsung Electronics Co., Ltd. All rights reserved.
+ * Copyright (c) 2020 - 2023 the ThorVG project. All rights reserved.
 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -36,6 +36,10 @@
     #include <limits.h>
     #include <sys/stat.h>
 #endif
+
+#define WIDTH_8K 7680
+#define HEIGHT_8K 4320
+#define SIZE_8K 33177600 //WIDTH_8K x HEIGHT_8K
 
 using namespace std;
 
@@ -94,6 +98,19 @@ public:
             picture->size(&fw, &fh);
             w = static_cast<uint32_t>(fw);
             h = static_cast<uint32_t>(fh);
+
+            if (w * h > SIZE_8K) {
+                float scale = fw / fh;
+                if (scale > 1) {
+                    w = WIDTH_8K;
+                    h = static_cast<uint32_t>(w / scale);
+                } else {
+                    h = HEIGHT_8K;
+                    w = static_cast<uint32_t>(h * scale);
+                }
+                cout << "Warning: The SVG width and/or height values exceed the 8k resolution. "
+                        "To avoid the heap overflow, the conversion to the PNG file made in " << WIDTH_8K << " x " << HEIGHT_8K << " resolution." << endl;
+            }
         } else {
             picture->size(w, h);
         }
@@ -272,7 +289,7 @@ private:
 private:
     int help()
     {
-        cout << "Usage:\n   svg2png [SVG files] [-r resolution] [-b bgColor]\n\nFlags:\n    -r set the output image resolution.\n    -b set the output image background color.\n\nExamples:\n    $ svg2png input.svg\n    $ svg2png input.svg -r 200x200\n    $ svg2png input.svg -r 200x200 -b ff00ff\n    $ svg2png input1.svg input2.svg -r 200x200 -b ff00ff\n    $ svg2png . -r 200x200\n\n";
+        cout << "Usage:\n   svg2png [SVG files] [-r resolution] [-b bgColor]\n\nFlags:\n    -r set the output image resolution.\n    -b set the output image background color.\n\nExamples:\n    $ svg2png input.svg\n    $ svg2png input.svg -r 200x200\n    $ svg2png input.svg -r 200x200 -b ff00ff\n    $ svg2png input1.svg input2.svg -r 200x200 -b ff00ff\n    $ svg2png . -r 200x200\n\nNote:\n    In the case, where the width and height in the SVG file determine the size of the image in resolution higher than 8k (7680 x 4320), limiting the resolution to this value is enforced.\n\n";
         return 1;
     }
 

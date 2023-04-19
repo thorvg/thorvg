@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 - 2022 Samsung Electronics Co., Ltd. All rights reserved.
+ * Copyright (c) 2020 - 2023 the ThorVG project. All rights reserved.
 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -19,6 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+
 #ifndef _TVG_SVG_LOADER_COMMON_H_
 #define _TVG_SVG_LOADER_COMMON_H_
 
@@ -114,7 +115,8 @@ enum class SvgStyleFlags
     ClipPath = 0x1000,
     Mask = 0x2000,
     MaskType = 0x4000,
-    Display = 0x8000
+    Display = 0x8000,
+    PaintOrder = 0x10000
 };
 
 enum class SvgStopStyleFlags
@@ -122,6 +124,22 @@ enum class SvgStopStyleFlags
     StopDefault = 0x0,
     StopOpacity = 0x01,
     StopColor = 0x02
+};
+
+enum class SvgGradientFlags
+{
+    None = 0x0,
+    GradientUnits = 0x1,
+    SpreadMethod = 0x2,
+    X1 = 0x4,
+    X2 = 0x8,
+    Y1 = 0x10,
+    Y2 = 0x20,
+    Cx = 0x40,
+    Cy = 0x80,
+    R = 0x100,
+    Fx = 0x200,
+    Fy = 0x400
 };
 
 enum class SvgFillRule
@@ -145,6 +163,34 @@ enum class SvgParserLengthType
     Other
 };
 
+enum class SvgViewFlag
+{
+    None = 0x0,
+    Width = 0x01,   //viewPort width
+    Height = 0x02,  //viewPort height
+    Viewbox = 0x04  //viewBox x,y,w,h - used only if all 4 are correctly set
+};
+
+enum class AspectRatioAlign
+{
+    None,
+    XMinYMin,
+    XMidYMin,
+    XMaxYMin,
+    XMinYMid,
+    XMidYMid,
+    XMaxYMid,
+    XMinYMax,
+    XMidYMax,
+    XMaxYMax
+};
+
+enum class AspectRatioMeetOrSlice
+{
+    Meet,
+    Slice
+};
+
 struct SvgDocNode
 {
     float w;
@@ -153,9 +199,11 @@ struct SvgDocNode
     float vy;
     float vw;
     float vh;
+    SvgViewFlag viewFlag;
     SvgNode* defs;
     SvgNode* style;
-    bool preserveAspect;
+    AspectRatioAlign align;
+    AspectRatioMeetOrSlice meetOrSlice;
 };
 
 struct SvgGNode
@@ -171,7 +219,8 @@ struct SvgSymbolNode
 {
     float w, h;
     float vx, vy, vw, vh;
-    bool preserveAspect;
+    AspectRatioAlign align;
+    AspectRatioMeetOrSlice meetOrSlice;
     bool overflowVisible;
     bool hasViewBox;
     bool hasWidth;
@@ -317,6 +366,7 @@ struct SvgStyleGradient
     SvgLinearGradient* linear;
     Matrix* transform;
     Array<Fill::ColorStop> stops;
+    SvgGradientFlags flags;
     bool userSpace;
 
     void clear()
@@ -362,6 +412,7 @@ struct SvgStyleProperty
     SvgColor color;
     bool curColorSet;
     char* cssClass;
+    bool paintOrder; //true if default (fill, stroke), false otherwise
     SvgStyleFlags flags;
 };
 
@@ -403,8 +454,7 @@ struct SvgParser
     SvgStopStyleFlags flags;
     struct
     {
-        int x, y;
-        uint32_t w, h;
+        float x, y, w, h;
     } global;
     struct
     {

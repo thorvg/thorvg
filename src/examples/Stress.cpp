@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 - 2022 Samsung Electronics Co., Ltd. All rights reserved.
+ * Copyright (c) 2020 - 2023 the ThorVG project. All rights reserved.
 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -52,14 +52,28 @@ void svgDirCallback(const char* name, const char* path, void* data)
 
     if (picture->load(buf) != tvg::Result::Success) return;
 
-    picture->size(SIZE, SIZE);
-    picture->translate((xCnt % NUM_PER_LINE) * SIZE, SIZE * (xCnt / NUM_PER_LINE));
+    //image scaling preserving its aspect ratio
+    float scale;
+    float shiftX = 0.0f, shiftY = 0.0f;
+    float w, h;
+    picture->size(&w, &h);
+
+    if (w > h) {
+        scale = SIZE / w;
+        shiftY = (SIZE - h * scale) * 0.5f;
+    } else {
+        scale = SIZE / h;
+        shiftX = (SIZE - w * scale) * 0.5f;
+    }
+
+    picture->scale(scale);
+    picture->translate((xCnt % NUM_PER_LINE) * SIZE + shiftX, SIZE * (xCnt / NUM_PER_LINE) + shiftY);
     ++xCnt;
 
     //Duplicates
     for (int i = 0; i < NUM_PER_LINE - 1; i++) {
         tvg::Picture* dup = static_cast<tvg::Picture*>(picture->duplicate());
-        dup->translate((xCnt % NUM_PER_LINE) * SIZE, SIZE * (xCnt / NUM_PER_LINE));
+        dup->translate((xCnt % NUM_PER_LINE) * SIZE + shiftX, SIZE * (xCnt / NUM_PER_LINE) + shiftY);
         pictures.push_back(dup);
         ++xCnt;
     }

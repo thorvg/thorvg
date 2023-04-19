@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 - 2022 Samsung Electronics Co., Ltd. All rights reserved.
+ * Copyright (c) 2021 - 2023 the ThorVG project. All rights reserved.
 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,8 +21,9 @@
  */
 
 #include <thorvg.h>
-#include <string.h>
 #include <fstream>
+#include <cstring>
+#include "config.h"
 #include "catch.hpp"
 
 using namespace tvg;
@@ -38,6 +39,195 @@ TEST_CASE("Picture Creation", "[tvgPicture]")
     REQUIRE(picture->identifier() != Shape::identifier());
     REQUIRE(picture->identifier() != Scene::identifier());
 }
+
+TEST_CASE("Load RAW Data", "[tvgPicture]")
+{
+    auto picture = Picture::gen();
+    REQUIRE(picture);
+
+    ifstream file(TEST_DIR"/rawimage_200x300.raw");
+    if (!file.is_open()) return;
+    auto data = (uint32_t*)malloc(sizeof(uint32_t) * (200*300));
+    file.read(reinterpret_cast<char *>(data), sizeof (uint32_t) * 200 * 300);
+    file.close();
+
+    //Negative cases
+    REQUIRE(picture->load(nullptr, 200, 300, false) == Result::InvalidArguments);
+    REQUIRE(picture->load(data, 0, 0, false) == Result::InvalidArguments);
+    REQUIRE(picture->load(data, 200, 0, false) == Result::InvalidArguments);
+    REQUIRE(picture->load(data, 0, 300, false) == Result::InvalidArguments);
+
+    //Positive cases
+    REQUIRE(picture->load(data, 200, 300, false) == Result::Success);
+    REQUIRE(picture->load(data, 200, 300, true) == Result::Success);
+
+    float w, h;
+    REQUIRE(picture->size(&w, &h) == Result::Success);
+
+    REQUIRE(w == 200);
+    REQUIRE(h == 300);
+
+    free(data);
+}
+
+TEST_CASE("Load RAW file and render", "[tvgPicture]")
+{
+    REQUIRE(Initializer::init(CanvasEngine::Sw, 0) == Result::Success);
+
+    auto canvas = SwCanvas::gen();
+    REQUIRE(canvas);
+
+    uint32_t buffer[100*100];
+    REQUIRE(canvas->target(buffer, 100, 100, 100, SwCanvas::Colorspace::ABGR8888) == Result::Success);
+
+    auto picture = Picture::gen();
+    REQUIRE(picture);
+
+    ifstream file(TEST_DIR"/rawimage_200x300.raw");
+    if (!file.is_open()) return;
+    auto data = (uint32_t*)malloc(sizeof(uint32_t) * (200*300));
+    if (!data) return;
+    file.read(reinterpret_cast<char *>(data), sizeof (uint32_t) * 200 * 300);
+    file.close();
+
+    REQUIRE(picture->load(data, 200, 300, false) == Result::Success);
+    REQUIRE(picture->size(100, 150) == Result::Success);
+
+    REQUIRE(canvas->push(move(picture)) == Result::Success);
+
+    REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
+
+    free(data);
+}
+
+TEST_CASE("Texture mesh", "[tvgPicture]")
+{
+    auto picture = Picture::gen();
+    REQUIRE(picture);
+
+    ifstream file(TEST_DIR"/rawimage_200x300.raw");
+    if (!file.is_open()) return;
+    auto data = (uint32_t*)malloc(sizeof(uint32_t) * (200*300));
+    file.read(reinterpret_cast<char *>(data), sizeof (uint32_t) * 200 * 300);
+    file.close();
+
+    REQUIRE(picture->load(data, 200, 300, false) == Result::Success);
+
+    //Composing Meshes
+    tvg::Polygon triangles[4];
+    triangles[0].vertex[0] = {{100, 125}, {0, 0}};
+    triangles[0].vertex[1] = {{300, 100}, {0.5, 0}};
+    triangles[0].vertex[2] = {{200, 550}, {0, 1}};
+
+    triangles[1].vertex[0] = {{300, 100}, {0.5, 0}};
+    triangles[1].vertex[1] = {{350, 450}, {0.5, 1}};
+    triangles[1].vertex[2] = {{200, 550}, {0, 1}};
+
+    triangles[2].vertex[0] = {{300, 100}, {0.5, 0}};
+    triangles[2].vertex[1] = {{500, 200}, {1, 0}};
+    triangles[2].vertex[2] = {{350, 450}, {0.5, 1}};
+
+    triangles[3].vertex[0] = {{500, 200}, {1, 0}};
+    triangles[3].vertex[1] = {{450, 450}, {1, 1}};
+    triangles[3].vertex[2] = {{350, 450}, {0.5, 1}};
+
+    //Negative cases
+    const tvg::Polygon* triangles2 = nullptr;
+    REQUIRE(picture->mesh(nullptr, 4) == tvg::Result::InvalidArguments);
+    REQUIRE(picture->mesh(nullptr) == 0);
+    REQUIRE(picture->mesh(&triangles2) == 0);
+    REQUIRE(picture->mesh(triangles, 0) == tvg::Result::InvalidArguments);
+    REQUIRE(picture->mesh(nullptr) == 0);
+    REQUIRE(picture->mesh(&triangles2) == 0);
+
+    //Positive cases
+    REQUIRE(picture->mesh(triangles, 4) == tvg::Result::Success);
+    REQUIRE(picture->mesh(nullptr) == 4);
+    REQUIRE(picture->mesh(&triangles2) == 4);
+
+    for(int i = 0; i < 4; i++) {
+        for(int j = 0; j < 3; j++) {
+            REQUIRE(triangles[i].vertex[j].pt.x == triangles2[i].vertex[j].pt.x);
+            REQUIRE(triangles[i].vertex[j].pt.y == triangles2[i].vertex[j].pt.y);
+            REQUIRE(triangles[i].vertex[j].uv.x == triangles2[i].vertex[j].uv.x);
+            REQUIRE(triangles[i].vertex[j].uv.y == triangles2[i].vertex[j].uv.y);
+        }
+    }
+
+    REQUIRE(picture->mesh(nullptr, 0) == tvg::Result::Success);
+    REQUIRE(picture->mesh(nullptr) == 0);
+    REQUIRE(picture->mesh(&triangles2) == 0);
+
+    free(data);
+}
+
+TEST_CASE("Picture Size", "[tvgPicture]")
+{
+    auto picture = Picture::gen();
+    REQUIRE(picture);
+
+    float w, h;
+    REQUIRE(picture->size(&w, &h) == Result::InsufficientCondition);
+
+    //Primary
+    ifstream file(TEST_DIR"/rawimage_200x300.raw");
+    if (!file.is_open()) return;
+    auto data = (uint32_t*)malloc(sizeof(uint32_t) * (200*300));
+    file.read(reinterpret_cast<char *>(data), sizeof (uint32_t) * 200 * 300);
+    file.close();
+
+    REQUIRE(picture->load(data, 200, 300, false) == Result::Success);
+
+    REQUIRE(picture->size(nullptr, nullptr) == Result::Success);
+    REQUIRE(picture->size(100, 100) == Result::Success);
+    REQUIRE(picture->size(&w, &h) == Result::Success);
+    REQUIRE(w == 100);
+    REQUIRE(h == 100);
+
+    free(data);
+
+    //Secondary
+    ifstream file2(TEST_DIR"/rawimage_250x375.raw");
+    if (!file2.is_open()) return;
+    data = (uint32_t*)malloc(sizeof(uint32_t) * (250*375));
+    file2.read(reinterpret_cast<char *>(data), sizeof (uint32_t) * 250 * 375);
+    file2.close();
+
+    REQUIRE(picture->load(data, 250, 375, false) == Result::Success);
+
+    REQUIRE(picture->size(&w, &h) == Result::Success);
+    REQUIRE(picture->size(w, h) == Result::Success);
+
+    free(data);
+}
+
+TEST_CASE("Picture Duplication", "[tvgPicture]")
+{
+    auto picture = Picture::gen();
+    REQUIRE(picture);
+
+    //Primary
+    ifstream file(TEST_DIR"/rawimage_200x300.raw");
+    if (!file.is_open()) return;
+    auto data = (uint32_t*)malloc(sizeof(uint32_t) * (200*300));
+    file.read(reinterpret_cast<char *>(data), sizeof (uint32_t) * 200 * 300);
+    file.close();
+
+    REQUIRE(picture->load(data, 200, 300, false) == Result::Success);
+    REQUIRE(picture->size(100, 100) == Result::Success);
+
+    auto dup = unique_ptr<Picture>((Picture*)picture->duplicate());
+    REQUIRE(dup);
+
+    float w, h;
+    REQUIRE(picture->size(&w, &h) == Result::Success);
+    REQUIRE(w == 100);
+    REQUIRE(h == 100);
+
+    free(data);
+}
+
+#ifdef THORVG_SVG_LOADER_SUPPORT
 
 TEST_CASE("Load SVG file", "[tvgPicture]")
 {
@@ -74,37 +264,36 @@ TEST_CASE("Load SVG Data", "[tvgPicture]")
     REQUIRE(h == 1000);
 }
 
-TEST_CASE("Load RAW Data", "[tvgPicture]")
+TEST_CASE("Load SVG file and render", "[tvgPicture]")
 {
+    REQUIRE(Initializer::init(CanvasEngine::Sw, 0) == Result::Success);
+
+    auto canvas = SwCanvas::gen();
+    REQUIRE(canvas);
+
+    auto buffer = new uint32_t[1000*1000];
+    if (!buffer) return;
+
+    REQUIRE(canvas->target(buffer, 1000, 1000, 1000, SwCanvas::Colorspace::ABGR8888) == Result::Success);
+
     auto picture = Picture::gen();
     REQUIRE(picture);
 
-    string path(TEST_DIR"/rawimage_200x300.raw");
+    REQUIRE(picture->load(TEST_DIR"/tag.svg") == Result::Success);
+    REQUIRE(picture->size(100, 100) == Result::Success);
 
-    ifstream file(path);
-    if (!file.is_open()) return;
-    auto data = (uint32_t*)malloc(sizeof(uint32_t) * (200*300));
-    file.read(reinterpret_cast<char *>(data), sizeof (uint32_t) * 200 * 300);
-    file.close();
+    REQUIRE(canvas->push(move(picture)) == Result::Success);
+    REQUIRE(canvas->draw() == Result::Success);
+    REQUIRE(canvas->sync() == Result::Success);
 
-    //Negative cases
-    REQUIRE(picture->load(nullptr, 200, 300, false) == Result::InvalidArguments);
-    REQUIRE(picture->load(data, 0, 0, false) == Result::InvalidArguments);
-    REQUIRE(picture->load(data, 200, 0, false) == Result::InvalidArguments);
-    REQUIRE(picture->load(data, 0, 300, false) == Result::InvalidArguments);
+    REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
 
-    //Positive cases
-    REQUIRE(picture->load(data, 200, 300, false) == Result::Success);
-    REQUIRE(picture->load(data, 200, 300, true) == Result::Success);
-
-    float w, h;
-    REQUIRE(picture->size(&w, &h) == Result::Success);
-
-    REQUIRE(w == 200);
-    REQUIRE(h == 300);
-
-    free(data);
+    delete[] buffer;
 }
+
+#endif
+
+#ifdef THORVG_PNG_LOADER_SUPPORT
 
 TEST_CASE("Load PNG file from path", "[tvgPicture]")
 {
@@ -146,6 +335,32 @@ TEST_CASE("Load PNG file from data", "[tvgPicture]")
 
     free(data);
 }
+
+TEST_CASE("Load PNG file and render", "[tvgPicture]")
+{
+    REQUIRE(Initializer::init(CanvasEngine::Sw, 0) == Result::Success);
+
+    auto canvas = SwCanvas::gen();
+    REQUIRE(canvas);
+
+    uint32_t buffer[100*100];
+    REQUIRE(canvas->target(buffer, 100, 100, 100, SwCanvas::Colorspace::ABGR8888) == Result::Success);
+
+    auto picture = Picture::gen();
+    REQUIRE(picture);
+
+    REQUIRE(picture->load(TEST_DIR"/test.png") == Result::Success);
+    REQUIRE(picture->opacity(192) == Result::Success);
+    REQUIRE(picture->scale(5.0) == Result::Success);
+
+    REQUIRE(canvas->push(move(picture)) == Result::Success);
+
+    REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
+}
+
+#endif
+
+#ifdef THORVG_JPG_LOADER_SUPPORT
 
 TEST_CASE("Load JPG file from path", "[tvgPicture]")
 {
@@ -191,6 +406,30 @@ TEST_CASE("Load JPG file from data", "[tvgPicture]")
     free(data);
 }
 
+TEST_CASE("Load JPG file and render", "[tvgPicture]")
+{
+    REQUIRE(Initializer::init(CanvasEngine::Sw, 0) == Result::Success);
+
+    auto canvas = SwCanvas::gen();
+    REQUIRE(canvas);
+
+    uint32_t buffer[100*100];
+    REQUIRE(canvas->target(buffer, 100, 100, 100, SwCanvas::Colorspace::ABGR8888) == Result::Success);
+
+    auto picture = Picture::gen();
+    REQUIRE(picture);
+
+    REQUIRE(picture->load(TEST_DIR"/test.jpg") == Result::Success);
+
+    REQUIRE(canvas->push(move(picture)) == Result::Success);
+
+    REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
+}
+
+#endif
+
+#ifdef THORVG_TVG_LOADER_SUPPORT
+
 TEST_CASE("Load TVG file from path", "[tvgPicture]")
 {
     auto picture = Picture::gen();
@@ -235,113 +474,6 @@ TEST_CASE("Load TVG file from data", "[tvgPicture]")
     free(data);
 }
 
-TEST_CASE("Picture Size", "[tvgPicture]")
-{
-    auto picture = Picture::gen();
-    REQUIRE(picture);
-
-    float w, h;
-    REQUIRE(picture->size(&w, &h) == Result::InsufficientCondition);
-
-    REQUIRE(picture->load(TEST_DIR"/logo.svg") == Result::Success);
-
-    REQUIRE(picture->size(nullptr, nullptr) == Result::Success);
-    REQUIRE(picture->size(100, 100) == Result::Success);
-    REQUIRE(picture->size(&w, &h) == Result::Success);
-    REQUIRE(w == 100);
-    REQUIRE(h == 100);
-
-    REQUIRE(picture->load(TEST_DIR"/tiger.svg") == Result::Success);
-    REQUIRE(picture->size(&w, &h) == Result::Success);
-    REQUIRE(picture->size(w, h) == Result::Success);
-}
-
-TEST_CASE("Picture Duplication", "[tvgPicture]")
-{
-    auto picture = Picture::gen();
-    REQUIRE(picture);
-
-    REQUIRE(picture->load(TEST_DIR"/logo.svg") == Result::Success);
-    REQUIRE(picture->size(100, 100) == Result::Success);
-
-    auto dup = unique_ptr<Picture>((Picture*)picture->duplicate());
-    REQUIRE(dup);
-
-    float w, h;
-    REQUIRE(picture->size(&w, &h) == Result::Success);
-    REQUIRE(w == 100);
-    REQUIRE(h == 100);
-}
-
-TEST_CASE("Load SVG file and render", "[tvgPicture]")
-{
-    REQUIRE(Initializer::init(CanvasEngine::Sw, 0) == Result::Success);
-
-    auto canvas = SwCanvas::gen();
-    REQUIRE(canvas);
-
-    auto buffer = new uint32_t[1000*1000];
-    if (!buffer) return;
-
-    REQUIRE(canvas->target(buffer, 1000, 1000, 1000, SwCanvas::Colorspace::ABGR8888) == Result::Success);
-
-    auto picture = Picture::gen();
-    REQUIRE(picture);
-
-    REQUIRE(picture->load(TEST_DIR"/tag.svg") == Result::Success);
-    REQUIRE(picture->size(100, 100) == Result::Success);
-
-    REQUIRE(canvas->push(move(picture)) == Result::Success);
-    REQUIRE(canvas->draw() == Result::Success);
-    REQUIRE(canvas->sync() == Result::Success);
-
-    REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
-
-    delete[] buffer;
-}
-
-TEST_CASE("Load PNG file and render", "[tvgPicture]")
-{
-    REQUIRE(Initializer::init(CanvasEngine::Sw, 0) == Result::Success);
-
-    auto canvas = SwCanvas::gen();
-    REQUIRE(canvas);
-
-    uint32_t buffer[100*100];
-    REQUIRE(canvas->target(buffer, 100, 100, 100, SwCanvas::Colorspace::ABGR8888) == Result::Success);
-
-    auto picture = Picture::gen();
-    REQUIRE(picture);
-
-    REQUIRE(picture->load(TEST_DIR"/test.png") == Result::Success);
-    REQUIRE(picture->opacity(192) == Result::Success);
-    REQUIRE(picture->scale(5.0) == Result::Success);
-
-    REQUIRE(canvas->push(move(picture)) == Result::Success);
-
-    REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
-}
-
-TEST_CASE("Load JPG file and render", "[tvgPicture]")
-{
-    REQUIRE(Initializer::init(CanvasEngine::Sw, 0) == Result::Success);
-
-    auto canvas = SwCanvas::gen();
-    REQUIRE(canvas);
-
-    uint32_t buffer[100*100];
-    REQUIRE(canvas->target(buffer, 100, 100, 100, SwCanvas::Colorspace::ABGR8888) == Result::Success);
-
-    auto picture = Picture::gen();
-    REQUIRE(picture);
-
-    REQUIRE(picture->load(TEST_DIR"/test.jpg") == Result::Success);
-
-    REQUIRE(canvas->push(move(picture)) == Result::Success);
-
-    REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
-}
-
 TEST_CASE("Load TVG file and render", "[tvgPicture]")
 {
     REQUIRE(Initializer::init(CanvasEngine::Sw, 0) == Result::Success);
@@ -369,34 +501,4 @@ TEST_CASE("Load TVG file and render", "[tvgPicture]")
     delete[] buffer;
 }
 
-TEST_CASE("Load RAW file and render", "[tvgPicture]")
-{
-    REQUIRE(Initializer::init(CanvasEngine::Sw, 0) == Result::Success);
-
-    auto canvas = SwCanvas::gen();
-    REQUIRE(canvas);
-
-    uint32_t buffer[100*100];
-    REQUIRE(canvas->target(buffer, 100, 100, 100, SwCanvas::Colorspace::ABGR8888) == Result::Success);
-
-    auto picture = Picture::gen();
-    REQUIRE(picture);
-
-    string path(TEST_DIR"/rawimage_200x300.raw");
-
-    ifstream file(path);
-    if (!file.is_open()) return;
-    auto data = (uint32_t*)malloc(sizeof(uint32_t) * (200*300));
-    if (!data) return;
-    file.read(reinterpret_cast<char *>(data), sizeof (uint32_t) * 200 * 300);
-    file.close();
-
-    REQUIRE(picture->load(data, 200, 300, false) == Result::Success);
-    REQUIRE(picture->size(100, 150) == Result::Success);
-
-    REQUIRE(canvas->push(move(picture)) == Result::Success);
-
-    REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
-
-    free(data);
-}
+#endif

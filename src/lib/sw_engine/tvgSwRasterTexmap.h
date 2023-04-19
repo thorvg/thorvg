@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 - 2022 Samsung Electronics Co., Ltd. All rights reserved.
+ * Copyright (c) 2021 - 2023 the ThorVG project. All rights reserved.
 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -517,7 +517,7 @@ static bool _apply(SwSurface* surface, AASpans* aaSpans)
             dst = surface->buffer + (offset + line->x[1] - 1);
             if (line->x[1] < (int32_t)(surface->w - 1)) pixel = *(dst + 1);
             else pixel = *dst;
-            
+
             pos = width;
             while ((int32_t)(width - line->length[1]) < pos) {
                 *dst = INTERPOLATE(255 - (line->coverage[1] * (line->length[1] - (width - pos))), *dst, pixel);
@@ -543,12 +543,12 @@ static bool _apply(SwSurface* surface, AASpans* aaSpans)
     0 -- 1
     |  / |
     | /  |
-    3 -- 2 
+    3 -- 2
 */
 static bool _rasterTexmapPolygon(SwSurface* surface, const SwImage* image, const Matrix* transform, const SwBBox* region, uint32_t opacity, uint32_t (*blendMethod)(uint32_t))
 {
     //Exceptions: No dedicated drawing area?
-    if (!region && image->rle->size == 0) return false;
+    if ((!image->rle && !region) || (image->rle && image->rle->size == 0)) return false;
 
    /* Prepare vertices.
       shift XY coordinates to match the sub-pixeling technique. */
@@ -605,7 +605,7 @@ static bool _rasterTexmapPolygon(SwSurface* surface, const SwImage* image, const
 static bool _rasterTexmapPolygonMesh(SwSurface* surface, const SwImage* image, const Polygon* triangles, const uint32_t triangleCount, const Matrix* transform, const SwBBox* region, uint32_t opacity, uint32_t (*blendMethod)(uint32_t))
 {
     //Exceptions: No dedicated drawing area?
-    if (!region && image->rle->size == 0) return false;
+    if ((!image->rle && !region) || (image->rle && image->rle->size == 0)) return false;
 
     // Step polygons once to transform
     auto transformedTris = (Polygon*)malloc(sizeof(Polygon) * triangleCount);
