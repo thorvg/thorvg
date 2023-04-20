@@ -112,7 +112,7 @@ public:
                         "To avoid the heap overflow, the conversion to the PNG file made in " << WIDTH_8K << " x " << HEIGHT_8K << " resolution." << endl;
             }
         } else {
-            picture->size(w, h);
+            picture->size(static_cast<float>(w), static_cast<float>(h));
         }
 
         //Buffer
@@ -134,7 +134,7 @@ public:
             uint8_t b = (uint8_t)((bgColor & 0x0000ff));
 
             auto shape = tvg::Shape::gen();
-            shape->appendRect(0, 0, w, h, 0, 0);
+            shape->appendRect(0, 0, static_cast<float>(w), static_cast<float>(h), 0, 0);
             shape->fill(r, g, b, 255);
 
             if (canvas->push(move(shape)) != tvg::Result::Success) return 1;
