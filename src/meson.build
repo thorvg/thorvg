@@ -1,5 +1,12 @@
 compiler_flags = ['-DTVG_BUILD']
 override_options = []
+
+lib_type = get_option('default_library')
+
+if (lib_type == 'shared')
+    compiler_flags += ['-DTVG_EXPORT']
+endif
+
 cc = meson.get_compiler('cpp')
 if (cc.get_id() == 'clang-cl')
     if simd_type == 'avx'
@@ -26,7 +33,6 @@ elif (cc.get_id() != 'msvc')
                            '-Woverloaded-virtual', '-Wno-unused-parameter']
     endif
 endif
-
 
 subdir('lib')
 subdir('loaders')
