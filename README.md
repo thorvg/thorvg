@@ -338,9 +338,9 @@ Examples:
 ### SVG to TVG
 ThorVG provides an executable `svg2tvg` converter that generates a TVG file from an SVG file.
 
-To use `svg2tvg`, you must turn on this feature in the build option:
+To use `svg2tvg`, you need to activate this feature in the build option:
 ```
-meson -Dtools=svg2tvg . build
+meson . build -Dtools=svg2tvg
 ```
 Alternatively, you can add the `svg2tvg` value to the `tools` option in `meson_option.txt`. The build output will be located in `{builddir}/src/bin/svg2tvg/`.
 
@@ -360,6 +360,10 @@ Examples:
 ## API Bindings
 Our main development APIs are written in C++, but ThorVG also provides API bindings for C.
 
+To enable CAPI binding, you need to activate this feature in the build options:
+```
+meson . build -Dbindings="capi"
+```
 [Back to contents](#contents)
 <br />
 <br />
