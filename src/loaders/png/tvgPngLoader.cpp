@@ -192,7 +192,7 @@ unique_ptr<Surface> PngLoader::bitmap(uint32_t colorSpace)
     if (!image) return nullptr;
     if (this->colorSpace != colorSpace) {
         this->colorSpace = colorSpace;
-        _changeColorSpace(reinterpret_cast<uint32_t*>(image), w, h);
+        _changeColorSpace(reinterpret_cast<uint32_t*>(image), static_cast<uint32_t>(w), static_cast<uint32_t>(h));
     }
 
     auto surface = static_cast<Surface*>(malloc(sizeof(Surface)));
