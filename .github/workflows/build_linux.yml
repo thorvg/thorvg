@@ -29,6 +29,25 @@ jobs:
         meson . build -Dlog=true -Dloaders="all" -Dsavers="all" -Dbindings="capi" -Dtools="all"
         sudo ninja -C build install
 
+  static_loaders:
+    runs-on: ubuntu-20.04
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: true
+
+    - name: Install Packages
+      run: |
+        sudo apt-get update
+        sudo apt-get install ninja-build gcc-multilib g++-multilib
+        sudo apt-get install python3-pip
+        sudo pip3 install meson
+
+    - name: Build
+      run: |
+        meson . build -Dlog=true -Dloaders="all" -Dsavers="all" -Dbindings="capi" -Dtools="all" -Dstatic=true
+        sudo ninja -C build install
+
   examples:
     runs-on: ubuntu-20.04
     steps:
