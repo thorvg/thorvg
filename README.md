@@ -39,6 +39,7 @@ ThorVG has the threading mechanism so that it tries to acquire the next scenes w
 - [ThorVG](#thorvg)
   - [Installation](#installation)
     - [Meson Build](#meson-build)
+    - [Using with Visual Studio](#using-with-visual-studio)
     - [vcpkg](#vcpkg)
   - [Quick Start](#quick-start)
   - [SVG](#svg)
@@ -281,14 +282,17 @@ ThorVG has been integrated into the [Godot](https://www.godotengine.org) project
 <br />
 <br />
 ## Examples
-There are various examples available in `thorvg/src/examples` to help you understand ThorVG APIs.
+here are plenty of sample code in `thorvg/src/examples` to help you in understanding the ThorVG APIs.
 
-To execute these examples, you can build them with the following meson option:
+To execute these examples, you can build them with the following meson build option:
 ```
 meson . build -Dexamples=true
 ```
-Note that these examples require the EFL `elementary` package for launching. If you're using Linux-based OS, you can easily
-install this package from your OS distribution server. Otherwise, please visit the official [EFL page](https://enlightenment.org/) for more information.
+Note that these examples require the EFL dev package for launching. If you're using Linux-based OS, you can easily install this package from your OS distribution server. For Ubuntu, you can install it with this command.
+```
+apt-get install libefl-all-dev
+```
+Please visit the official [EFL page](https://enlightenment.org/) for more information.
 
 [Back to contents](#contents)
 <br />
