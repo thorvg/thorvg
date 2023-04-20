@@ -74,6 +74,12 @@ Run ninja to build & install ThorVG:
 ninja -C build install
 ```
 
+### Using with Visual Studio
+If you want to create Visual Studio project files, use the command --backend=vs. The resulting solution file (thorvg.sln) will be located in the build folder.
+```
+meson build --backend=vs
+```
+
 ### vcpkg
 You can download and install pre-packaged ThorVG using the [vcpkg](https://vcpkg.io/en/index.html) package manager.
 
@@ -279,7 +285,7 @@ There are various examples available in `thorvg/src/examples` to help you unders
 
 To execute these examples, you can build them with the following meson option:
 ```
-meson -Dexamples=true . build
+meson . build -Dexamples=true
 ```
 Note that these examples require the EFL `elementary` package for launching. If you're using Linux-based OS, you can easily
 install this package from your OS distribution server. Otherwise, please visit the official [EFL page](https://enlightenment.org/) for more information.
@@ -305,7 +311,7 @@ ThorVG provides an executable `svg2png` converter that generates a PNG file from
 
 To use the `svg2png`, you must turn on this feature in the build option:
 ```
-meson -Dtools=svg2png . build
+meson . build -Dtools=svg2png
 ```
 Alternatively, you can add the `svg2png` value to the `tools` option in `meson_option.txt`. The build output will be located in `{builddir}/src/bin/svg2png/`.
 <br />
