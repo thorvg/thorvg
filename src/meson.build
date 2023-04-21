@@ -1,5 +1,12 @@
 compiler_flags = ['-DTVG_BUILD']
 override_options = []
+
+lib_type = get_option('default_library')
+
+if (lib_type == 'shared')
+    compiler_flags += ['-DTVG_EXPORT']
+endif
+
 cc = meson.get_compiler('cpp')
 if (cc.get_id() == 'clang-cl')
     if simd_type == 'avx'
@@ -48,11 +55,6 @@ thorvg_lib = library(
     cpp_args               : compiler_flags,
     gnu_symbol_visibility  : 'hidden',
     override_options       : override_options
-)
-
-thorvg_dep = declare_dependency(
-    include_directories: headers,
-    link_with : thorvg_lib
 )
 
 if (cc.get_id() == 'emscripten')
