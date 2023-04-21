@@ -252,11 +252,11 @@ TEST_CASE("Load SVG Data", "[tvgPicture]")
     REQUIRE(picture);
 
     //Negative cases
-    REQUIRE(picture->load(nullptr, 100, "") == Result::InvalidArguments);
-    REQUIRE(picture->load(svg, 0, "") == Result::InvalidArguments);
+    REQUIRE(picture->load(nullptr, 100, "", false) == Result::InvalidArguments);
+    REQUIRE(picture->load(svg, 0, "", false) == Result::InvalidArguments);
 
     //Positive cases
-    REQUIRE(picture->load(svg, strlen(svg), "svg") == Result::Success);
+    REQUIRE(picture->load(svg, strlen(svg), "svg", false) == Result::Success);
 
     float w, h;
     REQUIRE(picture->size(&w, &h) == Result::Success);
