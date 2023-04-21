@@ -1,3 +1,5 @@
+compiler_flags = ['-DTVG_BUILD']
+
 examples_dep = dependency('elementary', required : true)
 
 source_file = [
@@ -53,6 +55,7 @@ foreach current_file : source_file
     executable(name, current_file,
         include_directories : headers,
         link_with : thorvg_lib,
+        cpp_args : compiler_flags,
         dependencies : examples_dep)
 endforeach
 
@@ -67,6 +70,7 @@ if get_option('bindings').contains('capi') == true
         executable(name, current_file,
             include_directories : headers,
             link_with : thorvg_lib,
+            cpp_args : compiler_flags,
             dependencies : examples_dep)
     endforeach
 endif

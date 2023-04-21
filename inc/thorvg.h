@@ -19,17 +19,32 @@
 #include <memory>
 #include <string>
 
-#ifdef TVG_BUILD
-    #if defined(_WIN32) && !defined(__clang__)
-        #define TVG_EXPORT __declspec(dllexport)
-        #define TVG_DEPRECATED __declspec(deprecated)
+#ifdef TVG_API
+    #undef TVG_API
+#endif
+
+#if defined(_WIN32) && !defined(__clang__)
+    #if TVG_BUILD
+        #if TVG_EXPORT
+            #define TVG_API __declspec(dllexport)
+        #else
+            #define TVG_API
+        #endif
     #else
-        #define TVG_EXPORT __attribute__ ((visibility ("default")))
-        #define TVG_DEPRECATED __attribute__ ((__deprecated__))
+        #define TVG_API __declspec(dllimport)
     #endif
+    #define TVG_DEPRECATED __declspec(deprecated)
 #else
-    #define TVG_EXPORT
-    #define TVG_DEPRECATED
+    #if TVG_BUILD
+        #if TVG_EXPORT
+            #define TVG_API __attribute__ ((visibility ("default")))
+        #else
+            #define TVG_API
+        #endif
+    #else
+        #define TVG_API
+    #endif
+    #define TVG_DEPRECATED __attribute__ ((__deprecated__))
 #endif
 
 #ifdef __cplusplus
@@ -222,7 +237,7 @@ struct Polygon
  * Paint represents such a graphical object and its behaviors such as duplication, transformation and composition.
  * TVG recommends the user to regard a paint as a set of volatile commands. They can prepare a Paint and then request a Canvas to run them.
  */
-class TVG_EXPORT Paint
+class TVG_API Paint
 {
 public:
     virtual ~Paint();
@@ -390,7 +405,7 @@ public:
  * It specifies the gradient behavior in case the area defined by the gradient bounds
  * is smaller than the area to be filled.
  */
-class TVG_EXPORT Fill
+class TVG_API Fill
 {
 public:
     /**
@@ -494,7 +509,7 @@ public:
  * @note A Canvas behavior depends on the raster engine though the final content of the buffer is expected to be identical.
  * @warning The Paint objects belonging to one Canvas can't be shared among multiple Canvases.
  */
-class TVG_EXPORT Canvas
+class TVG_API Canvas
 {
 public:
     Canvas(RenderMethod*);
@@ -590,7 +605,7 @@ public:
  * Besides the APIs inherited from the Fill class, it enables setting and getting the linear gradient bounds.
  * The behavior outside the gradient bounds depends on the value specified in the spread API.
  */
-class TVG_EXPORT LinearGradient final : public Fill
+class TVG_API LinearGradient final : public Fill
 {
 public:
     ~LinearGradient();
@@ -655,7 +670,7 @@ public:
  * @brief A class representing the radial gradient fill of the Shape object.
  *
  */
-class TVG_EXPORT RadialGradient final : public Fill
+class TVG_API RadialGradient final : public Fill
 {
 public:
     ~RadialGradient();
@@ -718,7 +733,7 @@ public:
  * The stroke of Shape is an optional property in case the Shape needs to be represented with/without the outline borders.
  * It's efficient since the shape path and the stroking path can be shared with each other. It's also convenient when controlling both in one context.
  */
-class TVG_EXPORT Shape final : public Paint
+class TVG_API Shape final : public Paint
 {
 public:
     ~Shape();
@@ -1110,7 +1125,7 @@ public:
  *
  * @note Supported formats are depended on the available TVG loaders.
  */
-class TVG_EXPORT Picture final : public Paint
+class TVG_API Picture final : public Paint
 {
 public:
     ~Picture();
@@ -1288,7 +1303,7 @@ public:
  * As a group, the scene can be transformed, made translucent and composited with other target paints,
  * its children will be affected by the scene world.
  */
-class TVG_EXPORT Scene final : public Paint
+class TVG_API Scene final : public Paint
 {
 public:
     ~Scene();
@@ -1360,7 +1375,7 @@ public:
  *
  * @brief A class for the rendering graphical elements with a software raster engine.
  */
-class TVG_EXPORT SwCanvas final : public Canvas
+class TVG_API SwCanvas final : public Canvas
 {
 public:
     ~SwCanvas();
@@ -1451,7 +1466,7 @@ public:
  *
  * @BETA_API
  */
-class TVG_EXPORT GlCanvas final : public Canvas
+class TVG_API GlCanvas final : public Canvas
 {
 public:
     ~GlCanvas();
@@ -1483,7 +1498,7 @@ public:
  *
  * @brief A class that enables initialization and termination of the TVG engines.
  */
-class TVG_EXPORT Initializer final
+class TVG_API Initializer final
 {
 public:
     /**
@@ -1545,7 +1560,7 @@ public:
  *
  * @since 0.5
  */
-class TVG_EXPORT Saver final
+class TVG_API Saver final
 {
 public:
     ~Saver();
@@ -1615,7 +1630,7 @@ public:
  *
  * @BETA_API
  */
-class TVG_EXPORT Accessor final
+class TVG_API Accessor final
 {
 public:
     ~Accessor();
