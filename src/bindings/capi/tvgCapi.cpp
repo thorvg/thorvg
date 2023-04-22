@@ -221,6 +221,13 @@ TVG_API Tvg_Result tvg_paint_get_composite_method(const Tvg_Paint* paint, const 
 }
 
 
+TVG_API Tvg_Result tvg_paint_get_identifier(const Tvg_Paint* paint, Tvg_Identifier* identifier)
+{
+    if (!paint || !identifier) return TVG_RESULT_INVALID_ARGUMENT;
+    *identifier = static_cast<Tvg_Identifier>(reinterpret_cast<const Paint*>(paint)->identifier());
+    return TVG_RESULT_SUCCESS;
+}
+
 /************************************************************************/
 /* Shape API                                                            */
 /************************************************************************/
@@ -608,6 +615,14 @@ TVG_API Tvg_Result tvg_gradient_get_transform(const Tvg_Gradient* grad, Tvg_Matr
 {
     if (!grad || !m) return TVG_RESULT_INVALID_ARGUMENT;
     *reinterpret_cast<Matrix*>(m) = reinterpret_cast<Fill*>(const_cast<Tvg_Gradient*>(grad))->transform();
+    return TVG_RESULT_SUCCESS;
+}
+
+
+TVG_API Tvg_Result tvg_gradient_get_identifier(const Tvg_Gradient* grad, Tvg_Identifier* identifier)
+{
+    if (!grad || !identifier) return TVG_RESULT_INVALID_ARGUMENT;
+    *identifier = static_cast<Tvg_Identifier>(reinterpret_cast<const Paint*>(grad)->identifier());
     return TVG_RESULT_SUCCESS;
 }
 
