@@ -43,6 +43,10 @@ source_file = [
    'tvgShape.cpp',
    'tvgSwCanvas.cpp',
    'tvgTaskScheduler.cpp',
+   'sweep_line/slCommon.cpp',
+   'sweep_line/slCommon.h',
+   'sweep_line/outlineExtractor.cpp',
+   'sweep_line/outlineExtractor.h',
 ]
 
 common_dep = declare_dependency(

@@ -421,13 +421,6 @@ static void _sweep(RleWorker& rw)
             cover += cell->cover;
             auto area = cover * (ONE_PIXEL * 2) - cell->area;
             if (area != 0 && cell->x >= 0) _horizLine(rw, cell->x, y, area, 1);
-            else if (area == 0 && cover != 0) {
-                // area is zero means for edge aa, this pixel is transparent.
-                // But if two edge with same slope but different direction, the area is zero.
-                // So if cover is not zero, means the winding number of this pixel is not zero
-                // and needs to be marked in sweep line
-                _horizLine(rw, cell->x, y, cover * (ONE_PIXEL * 2), 1);
-            }
             x = cell->x + 1;
             cell = cell->next;
         }

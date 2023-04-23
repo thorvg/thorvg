@@ -22,6 +22,7 @@
 
 #include "tvgMath.h"
 #include "tvgShapeImpl.h"
+#include "sweep_line/outlineExtractor.h"
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
@@ -415,4 +416,13 @@ Result Shape::fill(FillRule r) noexcept
 FillRule Shape::fillRule() const noexcept
 {
     return pImpl->rs.rule;
+}
+
+std::unique_ptr<Shape> Shape::extractOutline() const {
+    auto outline = Shape::gen();
+
+    sweep_line::OutlineExtractor ext{};
+    ext.extractOutline(this, outline.get());
+
+    return outline;
 }
