@@ -155,12 +155,12 @@ SvgNode* cssFindStyleNode(const SvgNode* style, const char* title, SvgNodeType t
 
 SvgNode* cssFindStyleNode(const SvgNode* style, const char* title)
 {
-    if (!style) return nullptr;
+    if (!style || !title) return nullptr;
 
     auto child = style->child.data;
     for (uint32_t i = 0; i < style->child.count; ++i, ++child) {
         if ((*child)->type == SvgNodeType::CssStyle) {
-            if ((title && (*child)->id && !strcmp((*child)->id, title))) return (*child);
+            if ((*child)->id && !strcmp((*child)->id, title)) return (*child);
         }
     }
     return nullptr;
@@ -173,9 +173,6 @@ void cssUpdateStyle(SvgNode* doc, SvgNode* style)
         auto child = doc->child.data;
         for (uint32_t i = 0; i < doc->child.count; ++i, ++child) {
             if (auto cssNode = cssFindStyleNode(style, nullptr, (*child)->type)) {
-                cssCopyStyleAttr(*child, cssNode);
-            }
-            if (auto cssNode = cssFindStyleNode(style, nullptr)) {
                 cssCopyStyleAttr(*child, cssNode);
             }
             cssUpdateStyle(*child, style);
