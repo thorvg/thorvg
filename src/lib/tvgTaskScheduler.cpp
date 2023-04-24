@@ -135,7 +135,7 @@ struct TaskSchedulerImpl
             }
 
             if (!success && !taskQueues[i].pop(&task)) break;
-            (*task)(i);
+            (*task)(i + 1);
         }
     }
 
