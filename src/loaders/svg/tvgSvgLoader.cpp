@@ -3265,18 +3265,24 @@ static void _updateGradient(SvgLoaderData* loader, SvgNode* node, Array<SvgStyle
         }
     } else {
         if (node->style->fill.paint.url) {
-            if (node->style->fill.paint.gradient) {
-                node->style->fill.paint.gradient->clear();
-                free(node->style->fill.paint.gradient);
+            auto newGrad = _gradientDup(loader, gradients, node->style->fill.paint.url);
+            if (newGrad) {
+                if (node->style->fill.paint.gradient) {
+                    node->style->fill.paint.gradient->clear();
+                    free(node->style->fill.paint.gradient);
+                }
+                node->style->fill.paint.gradient = newGrad;
             }
-            node->style->fill.paint.gradient = _gradientDup(loader, gradients, node->style->fill.paint.url);
         }
         if (node->style->stroke.paint.url) {
-            if (node->style->stroke.paint.gradient) {
-                node->style->stroke.paint.gradient->clear();
-                free(node->style->stroke.paint.gradient);
+            auto newGrad = _gradientDup(loader, gradients, node->style->stroke.paint.url);
+            if (newGrad) {
+                if (node->style->stroke.paint.gradient) {
+                    node->style->stroke.paint.gradient->clear();
+                    free(node->style->stroke.paint.gradient);
+                }
+                node->style->stroke.paint.gradient = newGrad;
             }
-            node->style->stroke.paint.gradient = _gradientDup(loader, gradients, node->style->stroke.paint.url);
         }
     }
 }
