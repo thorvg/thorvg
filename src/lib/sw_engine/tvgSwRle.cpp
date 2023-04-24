@@ -773,7 +773,7 @@ static int _genRle(RleWorker& rw)
 }
 
 
-static SwSpan* _intersectSpansRegion(const SwRleData *clip, const SwRleData *target, SwSpan *outSpans)
+static SwSpan* _intersectSpansRegion(const SwRleData *clip, const SwRleData *target, SwSpan *outSpans, uint32_t outSpansCnt)
 {
     auto out = outSpans;
     auto spans = target->spans;
@@ -794,7 +794,7 @@ static SwSpan* _intersectSpansRegion(const SwRleData *clip, const SwRleData *tar
 
         //Try clipping with all clip spans which have a same y coordinate.
         auto temp = clipSpans;
-        while(temp->y == clipSpans->y) {
+        while(temp < clipEnd && outSpansCnt > 0 && temp->y == clipSpans->y) {
             auto sx1 = spans->x;
             auto sx2 = sx1 + spans->len;
             auto cx1 = temp->x;
@@ -815,6 +815,7 @@ static SwSpan* _intersectSpansRegion(const SwRleData *clip, const SwRleData *tar
                 out->len = len;
                 out->coverage = (uint8_t)(((spans->coverage * temp->coverage) + 0xff) >> 8);
                 ++out;
+                --outSpansCnt;
             }
             ++temp;
         }
@@ -824,7 +825,7 @@ static SwSpan* _intersectSpansRegion(const SwRleData *clip, const SwRleData *tar
 }
 
 
-static SwSpan* _intersectSpansRect(const SwBBox *bbox, const SwRleData *targetRle, SwSpan *outSpans, uint32_t spanCnt)
+static SwSpan* _intersectSpansRect(const SwBBox *bbox, const SwRleData *targetRle, SwSpan *outSpans, uint32_t outSpansCnt)
 {
     auto out = outSpans;
     auto spans = targetRle->spans;
@@ -834,7 +835,7 @@ static SwSpan* _intersectSpansRect(const SwBBox *bbox, const SwRleData *targetRl
     auto maxx = minx + static_cast<int16_t>(bbox->max.x - bbox->min.x) - 1;
     auto maxy = miny + static_cast<int16_t>(bbox->max.y - bbox->min.y) - 1;
 
-    while (spanCnt && spans < end) {
+    while (outSpansCnt > 0 && spans < end) {
         if (spans->y > maxy) {
             spans = end;
             break;
@@ -851,13 +852,13 @@ static SwSpan* _intersectSpansRect(const SwBBox *bbox, const SwRleData *targetRl
             out->x = spans->x;
             out->len = spans->len < (maxx - spans->x + 1) ? spans->len : (maxx - spans->x + 1);
         }
-        if (out->len != 0) {
+        if (out->len > 0) {
             out->y = spans->y;
             out->coverage = spans->coverage;
             ++out;
+            --outSpansCnt;
         }
         ++spans;
-        --spanCnt;
     }
     return out;
 }
@@ -1120,7 +1121,7 @@ void rleClipPath(SwRleData *rle, const SwRleData *clip)
     if (rle->size == 0 || clip->size == 0) return;
     auto spanCnt = rle->size > clip->size ? rle->size : clip->size;
     auto spans = static_cast<SwSpan*>(malloc(sizeof(SwSpan) * (spanCnt)));
-    auto spansEnd = _intersectSpansRegion(clip, rle, spans);
+    auto spansEnd = _intersectSpansRegion(clip, rle, spans, spanCnt);
 
     _replaceClipSpan(rle, spans, spansEnd - spans);
 
