@@ -450,9 +450,11 @@ enum class imageMimeTypeEncoding
     base64 = 0x1,
     utf8 = 0x2
 };
+
 constexpr imageMimeTypeEncoding operator|(imageMimeTypeEncoding a, imageMimeTypeEncoding b) {
     return static_cast<imageMimeTypeEncoding>(static_cast<int>(a) | static_cast<int>(b));
 }
+
 constexpr bool operator&(imageMimeTypeEncoding a, imageMimeTypeEncoding b) {
     return (static_cast<int>(a) & static_cast<int>(b));
 }
@@ -763,9 +765,9 @@ static unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, const Box& vBox,
 
 static void _applySvgViewFlag(const Scene* scene, float& vx, float& vy, float& vw, float& vh, float& w, float& h, SvgViewFlag viewFlag)
 {
-    bool noViewbox = !((uint32_t)viewFlag & (uint32_t)SvgViewFlag::Viewbox);
-    bool noWidth = !((uint32_t)viewFlag & (uint32_t)SvgViewFlag::Width);
-    bool noHeight = !((uint32_t)viewFlag & (uint32_t)SvgViewFlag::Height);
+    bool noViewbox = !(viewFlag & SvgViewFlag::Viewbox);
+    bool noWidth = !(viewFlag & SvgViewFlag::Width);
+    bool noHeight = !(viewFlag & SvgViewFlag::Height);
 
     if (noViewbox) {
         float x, y;
