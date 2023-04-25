@@ -43,56 +43,83 @@ struct TaskScheduler
 struct Task
 {
 private:
-    mutex                   mtx;
-    bool                    finished = true;
-    bool                    running = false;
+    mutex                   finishedMtx;
+    mutex                   preparedMtx;
+    condition_variable      cv;
+    bool                    finished = true;        //if run() finished
+    bool                    prepared = false;       //the task is requested
 
 public:
-    virtual ~Task() = default;
+    virtual ~Task()
+    {
+        if (!prepared) return;
+
+        //Guarantee the task is finished by TaskScheduler.
+        unique_lock<mutex> lock(preparedMtx);
+
+        while (prepared) {
+            cv.wait(lock);
+        }
+    }
 
     void done(unsigned tid = 0)
     {
         if (finished) return;
 
-        unique_lock<mutex> lock(mtx);
+        lock_guard<mutex> lock(finishedMtx);
 
         if (finished) return;
 
         //the job hasn't been launched yet.
-        running = true;
-        run(tid);
-        running = false;
+
+        //set finished so that operator() quickly returns.
         finished = true;
+
+        run(tid);
     }
 
 protected:
     virtual void run(unsigned tid) = 0;
 
 private:
+    void finish()
+    {
+        lock_guard<mutex> lock(preparedMtx);
+        prepared = false;
+        cv.notify_one();
+    }
+
     void operator()(unsigned tid)
     {
-        if (finished || running) return;
+        if (finished) {
+            finish();
+            return;
+        }
 
-        lock_guard<mutex> lock(mtx);
+        lock_guard<mutex> lock(finishedMtx);
 
-        if (finished || running) return;
+        if (finished) {
+            finish();
+            return;
+        }
 
-        running = true;
         run(tid);
-        running = false;
+
         finished = true;
+
+        finish();
     }
 
     void prepare()
     {
         finished = false;
+        prepared = true;
     }
 
     friend struct TaskSchedulerImpl;
 };
 
-
-
 }
 
 #endif //_TVG_TASK_SCHEDULER_H_
+ 
