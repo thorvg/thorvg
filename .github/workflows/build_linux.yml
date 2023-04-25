@@ -1,4 +1,4 @@
-name: Build Linux
+name: Linux
 
 on:
   pull_request:
@@ -21,16 +21,32 @@ jobs:
         sudo apt-get update
         sudo apt-get install ninja-build gcc-multilib g++-multilib
         sudo apt-get install python3-pip
+        sudo apt-get install libturbojpeg0-dev libpng-dev
         sudo pip3 install meson
-
-    - name: Install TurboJPEG library
-      run: sudo apt-get install libturbojpeg0-dev libpng-dev
 
     - name: Build
       run: |
-        meson . build -Dlog=true -Dloaders="all" -Dsavers="all"
-        cd build
-        sudo ninja -C . install
+        meson . build -Dlog=true -Dloaders="all" -Dsavers="all" -Dbindings="capi" -Dtools="all"
+        sudo ninja -C build install
+
+  static_loaders:
+    runs-on: ubuntu-20.04
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: true
+
+    - name: Install Packages
+      run: |
+        sudo apt-get update
+        sudo apt-get install ninja-build gcc-multilib g++-multilib
+        sudo apt-get install python3-pip
+        sudo pip3 install meson
+
+    - name: Build
+      run: |
+        meson . build -Dlog=true -Dloaders="all" -Dsavers="all" -Dbindings="capi" -Dtools="all" -Dstatic=true
+        sudo ninja -C build install
 
   examples:
     runs-on: ubuntu-20.04
@@ -45,16 +61,13 @@ jobs:
         sudo apt-get install ninja-build gcc-multilib g++-multilib
         sudo apt-get install libefl-all-dev
         sudo apt-get install python3-pip
+        sudo apt-get install libturbojpeg0-dev libpng-dev
         sudo pip3 install meson
-
-    - name: Install TurboJPEG library
-      run: sudo apt-get install libturbojpeg0-dev libpng-dev
 
     - name: Build
       run: |
-        meson . build -Dexamples=true -Dloaders="all" -Dsavers="all"
-        cd build
-        sudo ninja -C . install
+        meson . build -Dexamples=true -Dloaders="all" -Dsavers="all" -Dbindings="capi"
+        sudo ninja -C build install
 
   unit_test:
     runs-on: ubuntu-20.04
@@ -70,24 +83,13 @@ jobs:
         sudo apt-get install curl jq
         sudo apt-get install software-properties-common
         sudo apt-get install python3-pip
+        sudo apt-get install libturbojpeg0-dev libpng-dev
         sudo pip3 install meson
-
-    - name: Install TurboJPEG library
-      run: sudo apt-get install libturbojpeg0-dev libpng-dev
-
-    - name: Install-ThorVG
-      run: |
-        meson . build -Dloaders="all" -Dsavers="all" -Dbindings="capi"
-        cd build
-        sudo ninja -C . install
-        cd ..
-        sudo rm -rf ./build
 
     - name: Build
       run: |
         meson . build -Dtests=true -Dloaders="all" -Dsavers="all" -Dbindings="capi" --errorlogs
-        cd build
-        sudo ninja -C . install test
+        sudo ninja -C build install test
 
     - uses: actions/upload-artifact@v3
       with:
@@ -106,11 +108,9 @@ jobs:
       run: |
         sudo rm -rf ./build
         meson . build -Db_sanitize="address,undefined" -Dloaders="all" -Dsavers="all" -Dtests="true" -Dbindings="capi"
-        cd build
-        sudo ninja -C . install
+        sudo ninja -C build install
         export PATH=$PATH:~/.local/bin/
         chmod +x "${GITHUB_WORKSPACE}/.github/workflows/memcheck_asan.sh"
         "${GITHUB_WORKSPACE}/.github/workflows/memcheck_asan.sh"
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-

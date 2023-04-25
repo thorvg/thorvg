@@ -95,7 +95,7 @@ unique_ptr<Surface> RawLoader::bitmap(uint32_t colorSpace)
     if (!content) return nullptr;
     if (this->colorSpace != colorSpace) {
         this->colorSpace = colorSpace;
-        _changeColorSpace(content, w, h);
+        _changeColorSpace(content, static_cast<uint32_t>(w), static_cast<uint32_t>(h));
     }
 
     auto surface = static_cast<Surface*>(malloc(sizeof(Surface)));

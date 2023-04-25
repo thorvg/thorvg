@@ -1,4 +1,4 @@
-name: Build Windows
+name: Windows
 
 on:
   pull_request:
@@ -19,7 +19,7 @@ jobs:
         pip install meson==0.58.0 ninja
     - name: Build
       run: |
-        meson --backend=ninja build
+        meson --backend=ninja build -Dlog=true -Dloaders="all" -Dsavers="all" -Dbindings="capi" -Dtools="all"
         where link
         ninja -C build install
 
@@ -27,19 +27,3 @@ jobs:
       with:
         name: result
         path: build/src\thorvg*
-
-  build_loaders:
-    runs-on: windows-latest
-    steps:
-    - uses: actions/checkout@v3
-    - uses: ilammy/msvc-dev-cmd@v1
-    - name: Install Packages
-      run: |
-        pip install meson==0.58.0 ninja
-
-    - name: Build
-      run: |
-        meson --backend=ninja build -Dloaders="all" -Dsavers="all" -Dbindings="capi"
-        where link
-        ninja -C build install
-

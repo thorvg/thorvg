@@ -162,7 +162,7 @@ TEST_CASE("Linear Gradient clear data", "[capiLinearGradient]")
 
     REQUIRE(tvg_gradient_set_color_stops(gradient, NULL, 0) == TVG_RESULT_SUCCESS);
     REQUIRE(tvg_gradient_get_color_stops(gradient, &color_stops_ret, &color_stops_count_ret) == TVG_RESULT_SUCCESS);
-    REQUIRE(color_stops_ret == NULL);
+    REQUIRE(color_stops_ret == nullptr);
     REQUIRE(color_stops_count_ret == 0);
 
     REQUIRE(tvg_gradient_del(gradient) == TVG_RESULT_SUCCESS);

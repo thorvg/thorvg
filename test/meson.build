@@ -1,3 +1,5 @@
+compiler_flags = ['-DTVG_BUILD']
+
 test_file = [
     'testAccessor.cpp',
     'testFill.cpp',
@@ -16,7 +18,8 @@ test_file = [
 tests = executable('tvgUnitTests',
     test_file,
     include_directories : headers,
-    link_with : thorvg_lib)
+    link_with : thorvg_lib,
+    cpp_args : compiler_flags)
 
 test('Unit Tests', tests, args : ['--success'])
 

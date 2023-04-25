@@ -122,11 +122,11 @@ TEST_CASE("Bounding Box", "[tvgPaint]")
 
     //Negative
     float x = 0, y = 0, w = 0, h = 0;
-    REQUIRE(shape->bounds(&x, &y, &w, &h) == Result::InsufficientCondition);
+    REQUIRE(shape->bounds(&x, &y, &w, &h, false) == Result::InsufficientCondition);
 
     //Case 1
     REQUIRE(shape->appendRect(0.0f, 10.0f, 20.0f, 100.0f, 50.0f, 50.0f) == Result::Success);
-    REQUIRE(shape->bounds(&x, &y, &w, &h) == Result::Success);
+    REQUIRE(shape->bounds(&x, &y, &w, &h, false) == Result::Success);
     REQUIRE(x == 0.0f);
     REQUIRE(y == 10.0f);
     REQUIRE(w == 20.0f);
@@ -136,7 +136,7 @@ TEST_CASE("Bounding Box", "[tvgPaint]")
     REQUIRE(shape->reset() == Result::Success);
     REQUIRE(shape->moveTo(0.0f, 10.0f) == Result::Success);
     REQUIRE(shape->lineTo(20.0f, 210.0f) == Result::Success);
-    REQUIRE(shape->bounds(&x, &y, &w, &h) == Result::Success);
+    REQUIRE(shape->bounds(&x, &y, &w, &h, false) == Result::Success);
     REQUIRE(x == 0.0f);
     REQUIRE(y == 10.0f);
     REQUIRE(w == 20.0f);

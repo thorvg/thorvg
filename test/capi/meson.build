@@ -15,6 +15,7 @@ test_file = [
 tests = executable('capiUnitTests',
     test_file,
     include_directories : headers,
-    link_with : thorvg_lib)
+    link_with : thorvg_lib,
+    cpp_args : compiler_flags)
 
 test('Capi Unit Tests', tests)

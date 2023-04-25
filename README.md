@@ -1,7 +1,7 @@
 [![License](https://img.shields.io/badge/licence-MIT-green.svg?style=flat)](LICENSE)
 [![Discord](https://img.shields.io/badge/Community-5865f2?style=flat&logo=discord&logoColor=white)](https://discord.gg/n25xj6J6HM)
 <br>
-[![Build Linux](https://github.com/Samsung/thorvg/actions/workflows/actions.yml/badge.svg?branch=master&event=push)](https://github.com/Samsung/thorvg/actions/workflows/actions.yml)
+[![Build Linux](https://github.com/Samsung/thorvg/actions/workflows/build_linux.yml/badge.svg?branch=master&event=push)](https://github.com/Samsung/thorvg/actions/workflows/actions.yml)
 [![Build Windows](https://github.com/Samsung/thorvg/actions/workflows/build_win.yml/badge.svg?branch=master&event=push)](https://github.com/Samsung/thorvg/actions/workflows/build_win.yml)
 
 # ThorVG
@@ -39,6 +39,7 @@ ThorVG has the threading mechanism so that it tries to acquire the next scenes w
 - [ThorVG](#thorvg)
   - [Installation](#installation)
     - [Meson Build](#meson-build)
+    - [Using with Visual Studio](#using-with-visual-studio)
     - [vcpkg](#vcpkg)
   - [Quick Start](#quick-start)
   - [SVG](#svg)
@@ -72,6 +73,12 @@ meson build
 Run ninja to build & install ThorVG:
 ```
 ninja -C build install
+```
+
+### Using with Visual Studio
+If you want to create Visual Studio project files, use the command --backend=vs. The resulting solution file (thorvg.sln) will be located in the build folder.
+```
+meson build --backend=vs
 ```
 
 ### vcpkg
@@ -275,14 +282,17 @@ ThorVG has been integrated into the [Godot](https://www.godotengine.org) project
 <br />
 <br />
 ## Examples
-There are various examples available in `thorvg/src/examples` to help you understand ThorVG APIs.
+here are plenty of sample code in `thorvg/src/examples` to help you in understanding the ThorVG APIs.
 
-To execute these examples, you can build them with the following meson option:
+To execute these examples, you can build them with the following meson build option:
 ```
-meson -Dexamples=true . build
+meson . build -Dexamples=true
 ```
-Note that these examples require the EFL `elementary` package for launching. If you're using Linux-based OS, you can easily
-install this package from your OS distribution server. Otherwise, please visit the official [EFL page](https://enlightenment.org/) for more information.
+Note that these examples require the EFL dev package for launching. If you're using Linux-based OS, you can easily install this package from your OS distribution server. For Ubuntu, you can install it with this command.
+```
+apt-get install libefl-all-dev
+```
+Please visit the official [EFL page](https://enlightenment.org/) for more information.
 
 [Back to contents](#contents)
 <br />
@@ -305,7 +315,7 @@ ThorVG provides an executable `svg2png` converter that generates a PNG file from
 
 To use the `svg2png`, you must turn on this feature in the build option:
 ```
-meson -Dtools=svg2png . build
+meson . build -Dtools=svg2png
 ```
 Alternatively, you can add the `svg2png` value to the `tools` option in `meson_option.txt`. The build output will be located in `{builddir}/src/bin/svg2png/`.
 <br />
@@ -338,9 +348,9 @@ Examples:
 ### SVG to TVG
 ThorVG provides an executable `svg2tvg` converter that generates a TVG file from an SVG file.
 
-To use `svg2tvg`, you must turn on this feature in the build option:
+To use `svg2tvg`, you need to activate this feature in the build option:
 ```
-meson -Dtools=svg2tvg . build
+meson . build -Dtools=svg2tvg
 ```
 Alternatively, you can add the `svg2tvg` value to the `tools` option in `meson_option.txt`. The build output will be located in `{builddir}/src/bin/svg2tvg/`.
 
@@ -360,6 +370,10 @@ Examples:
 ## API Bindings
 Our main development APIs are written in C++, but ThorVG also provides API bindings for C.
 
+To enable CAPI binding, you need to activate this feature in the build options:
+```
+meson . build -Dbindings="capi"
+```
 [Back to contents](#contents)
 <br />
 <br />

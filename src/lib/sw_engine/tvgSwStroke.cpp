@@ -388,8 +388,8 @@ static void _lineTo(SwStroke& stroke, const SwPoint& to)
        The scale needs to be reverted since the stroke width has not been scaled.
        An alternative option is to scale the width of the stroke properly by
        calculating the mixture of the sx/sy rating on the stroke direction. */
-    delta.x /= stroke.sx;
-    delta.y /= stroke.sy;
+    delta.x = static_cast<SwCoord>(delta.x / stroke.sx);
+    delta.y = static_cast<SwCoord>(delta.y / stroke.sy);
     auto lineLength = mathLength(delta);
 
     delta = {static_cast<SwCoord>(stroke.width), 0};
