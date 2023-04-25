@@ -44,6 +44,11 @@
 static int _initCnt = 0;
 static uint16_t _version = 0;
 
+//enum class operation helper
+static constexpr bool operator &(CanvasEngine a, CanvasEngine b)
+{
+    return int(a) & int(b);
+}
 
 static bool _buildVersionInfo()
 {
@@ -87,12 +92,12 @@ Result Initializer::init(CanvasEngine engine, uint32_t threads) noexcept
 {
     auto nonSupport = true;
 
-    if (static_cast<uint32_t>(engine) & static_cast<uint32_t>(CanvasEngine::Sw)) {
+    if (engine & CanvasEngine::Sw) {
         #ifdef THORVG_SW_RASTER_SUPPORT
             if (!SwRenderer::init(threads)) return Result::FailedAllocation;
             nonSupport = false;
         #endif
-    } else if (static_cast<uint32_t>(engine) & static_cast<uint32_t>(CanvasEngine::Gl)) {
+    } else if (engine & CanvasEngine::Gl) {
         #ifdef THORVG_GL_RASTER_SUPPORT
             if (!GlRenderer::init(threads)) return Result::FailedAllocation;
             nonSupport = false;
@@ -121,12 +126,12 @@ Result Initializer::term(CanvasEngine engine) noexcept
 
     auto nonSupport = true;
 
-    if (static_cast<uint32_t>(engine) & static_cast<uint32_t>(CanvasEngine::Sw)) {
+    if (engine & CanvasEngine::Sw) {
         #ifdef THORVG_SW_RASTER_SUPPORT
             if (!SwRenderer::term()) return Result::InsufficientCondition;
             nonSupport = false;
         #endif
-    } else if (static_cast<uint32_t>(engine) & static_cast<uint32_t>(CanvasEngine::Gl)) {
+    } else if (engine & CanvasEngine::Gl) {
         #ifdef THORVG_GL_RASTER_SUPPORT
             if (!GlRenderer::term()) return Result::InsufficientCondition;
             nonSupport = false;
