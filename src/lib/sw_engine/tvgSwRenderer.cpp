@@ -258,8 +258,8 @@ struct SwSceneTask : SwTask
 struct SwImageTask : SwTask
 {
     SwImage image;
-    Polygon* triangles;
-    uint32_t triangleCnt;
+    Polygon* triangles = nullptr;
+    uint32_t triangleCnt = 0;
 
     bool clip(SwRleData* target) override
     {
@@ -469,18 +469,7 @@ bool SwRenderer::renderImage(RenderData data)
 
     if (task->opacity == 0) return true;
 
-    return rasterImage(surface, &task->image, task->transform, task->bbox, task->opacity);
-}
-
-
-bool SwRenderer::renderImageMesh(RenderData data)
-{
-    auto task = static_cast<SwImageTask*>(data);
-    task->done();
-
-    if (task->opacity == 0) return true;
-
-    return rasterImageMesh(surface, &task->image, task->triangles, task->triangleCnt, task->transform, task->bbox, task->opacity);
+    return rasterImage(surface, &task->image, task->triangles, task->triangleCnt, task->transform, task->bbox, task->opacity);
 }
 
 
@@ -662,7 +651,7 @@ bool SwRenderer::endComposite(Compositor* cmp)
 
     //Default is alpha blending
     if (p->method == CompositeMethod::None) {
-        return rasterImage(surface, &p->image, nullptr, p->bbox, p->opacity);
+        return rasterImage(surface, &p->image, nullptr, 0, nullptr, p->bbox, p->opacity);
     }
 
     return true;

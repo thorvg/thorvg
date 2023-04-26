@@ -132,12 +132,7 @@ int32_t GlRenderer::colorSpace()
 
 bool GlRenderer::renderImage(TVG_UNUSED void* data)
 {
-    return false;
-}
-
-
-bool GlRenderer::renderImageMesh(TVG_UNUSED void* data)
-{
+    //TODO: render requested images
     return false;
 }
 

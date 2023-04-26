@@ -192,7 +192,6 @@ public:
     virtual bool preRender() = 0;
     virtual bool renderShape(RenderData data) = 0;
     virtual bool renderImage(RenderData data) = 0;
-    virtual bool renderImageMesh(RenderData data) = 0;
     virtual bool postRender() = 0;
     virtual bool dispose(RenderData data) = 0;
     virtual RenderRegion region(RenderData data) = 0;

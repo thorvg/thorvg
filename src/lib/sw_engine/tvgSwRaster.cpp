@@ -1561,19 +1561,7 @@ bool rasterStroke(SwSurface* surface, SwShape* shape, uint8_t r, uint8_t g, uint
 }
 
 
-bool rasterImage(SwSurface* surface, SwImage* image, const Matrix* transform, const SwBBox& bbox, uint32_t opacity)
-{
-    //Verify Boundary
-    if (bbox.max.x < 0 || bbox.max.y < 0 || bbox.min.x >= static_cast<SwCoord>(surface->w) || bbox.min.y >= static_cast<SwCoord>(surface->h)) return false;
-
-    //TOOD: switch (image->format)
-    //TODO: case: _rasterRGBImage()
-    //TODO: case: _rasterGrayscaleImage()
-    //TODO: case: _rasterAlphaImage()
-    return _rasterRGBAImage(surface, image, transform, bbox, opacity);
-}
-
-bool rasterImageMesh(SwSurface* surface, SwImage* image, const Polygon* triangles, const uint32_t count, const Matrix* transform, const SwBBox& bbox, uint32_t opacity)
+bool rasterImage(SwSurface* surface, SwImage* image, const Polygon* triangles, uint32_t triangleCnt, const Matrix* transform, const SwBBox& bbox, uint32_t opacity)
 {
     //Verify Boundary
     if (bbox.max.x < 0 || bbox.max.y < 0 || bbox.min.x >= static_cast<SwCoord>(surface->w) || bbox.min.y >= static_cast<SwCoord>(surface->h)) return false;
@@ -1582,5 +1570,6 @@ bool rasterImageMesh(SwSurface* surface, SwImage* image, const Polygon* triangle
     //TODO: case: _rasterRGBImageMesh()
     //TODO: case: _rasterGrayscaleImageMesh()
     //TODO: case: _rasterAlphaImageMesh()
-    return _transformedRGBAImageMesh(surface, image, triangles, count, transform, &bbox, opacity);
+    if (triangles) return _transformedRGBAImageMesh(surface, image, triangles, triangleCnt, transform, &bbox, opacity);
+    else return _rasterRGBAImage(surface, image, transform, bbox, opacity);
 }
