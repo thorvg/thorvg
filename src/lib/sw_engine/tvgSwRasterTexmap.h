@@ -602,16 +602,16 @@ static bool _rasterTexmapPolygon(SwSurface* surface, const SwImage* image, const
       Should provide two Polygons, one for each triangle.
       // TODO: region?
 */
-static bool _rasterTexmapPolygonMesh(SwSurface* surface, const SwImage* image, const Polygon* triangles, const uint32_t triangleCount, const Matrix* transform, const SwBBox* region, uint32_t opacity, uint32_t (*blendMethod)(uint32_t))
+static bool _rasterTexmapPolygonMesh(SwSurface* surface, const SwImage* image, const RenderMesh* mesh, const Matrix* transform, const SwBBox* region, uint32_t opacity, uint32_t (*blendMethod)(uint32_t))
 {
     //Exceptions: No dedicated drawing area?
     if ((!image->rle && !region) || (image->rle && image->rle->size == 0)) return false;
 
     // Step polygons once to transform
-    auto transformedTris = (Polygon*)malloc(sizeof(Polygon) * triangleCount);
+    auto transformedTris = (Polygon*)malloc(sizeof(Polygon) * mesh->triangleCnt);
     float ys = FLT_MAX, ye = -1.0f;
-    for (uint32_t i = 0; i < triangleCount; i++) {
-        transformedTris[i] = triangles[i];
+    for (uint32_t i = 0; i < mesh->triangleCnt; i++) {
+        transformedTris[i] = mesh->triangles[i];
         mathMultiply(&transformedTris[i].vertex[0].pt, transform);
         mathMultiply(&transformedTris[i].vertex[1].pt, transform);
         mathMultiply(&transformedTris[i].vertex[2].pt, transform);
@@ -635,7 +635,7 @@ static bool _rasterTexmapPolygonMesh(SwSurface* surface, const SwImage* image, c
     // Get AA spans and step polygons again to draw
     auto aaSpans = _AASpans(ys, ye, image, region);
     if (aaSpans) {
-        for (uint32_t i = 0; i < triangleCount; i++) {
+        for (uint32_t i = 0; i < mesh->triangleCnt; i++) {
             _rasterPolygonImage(surface, image, region, opacity, transformedTris[i], blendMethod, aaSpans);
         }
         // Apply to surface (note: frees the AA spans)
