@@ -149,10 +149,7 @@ struct Picture::Impl
 
     bool render(RenderMethod &renderer)
     {
-        if (surface) {
-            if (triangles) return renderer.renderImageMesh(rd);
-            else return renderer.renderImage(rd);
-        }
+        if (surface) return renderer.renderImage(rd);
         else if (paint) return paint->pImpl->render(renderer);
         return false;
     }
