@@ -1239,15 +1239,15 @@ public:
      * @param[in] triangles An array of Polygons(triangles) that make up the mesh, or null to remove the mesh.
      * @param[in] triangleCnt The number of Polygons(triangles) provided, or 0 to remove the mesh.
      *
-     * @retval Result::Success When succeed.
-     * @retval Result::Unknown If fails
+     * @return Result::Success When succeed.
+     * @return Result::Unknown If fails
      *
      * @note The Polygons are copied internally, so modifying them after calling Mesh::mesh has no affect.
      * @warning Please do not use it, this API is not official one. It could be modified in the next version.
      *
      * @BETA_API
      */
-    Result mesh(const Polygon* triangles, const uint32_t triangleCnt) noexcept;
+    Result mesh(const Polygon* triangles, uint32_t triangleCnt) noexcept;
 
     /**
      * @brief Return the number of triangles in the mesh, and optionally get a pointer to the array of triangles in the mesh.

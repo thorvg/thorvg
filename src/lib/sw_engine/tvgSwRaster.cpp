@@ -687,18 +687,18 @@ static bool _transformedRGBAImage(SwSurface* surface, const SwImage* image, cons
     return false;
 }
 
-static bool _transformedRGBAImageMesh(SwSurface* surface, const SwImage* image, const Polygon* triangles, const uint32_t count, const Matrix* transform, const SwBBox* region, uint32_t opacity)
+static bool _transformedRGBAImageMesh(SwSurface* surface, const SwImage* image, const RenderMesh* mesh, const Matrix* transform, const SwBBox* region, uint32_t opacity)
 {
     if (_compositing(surface)) {
         if (surface->compositor->method == CompositeMethod::AlphaMask) {
-            return _rasterTexmapPolygonMesh(surface, image, triangles, count, transform, region, opacity, _alpha);
+            return _rasterTexmapPolygonMesh(surface, image, mesh, transform, region, opacity, _alpha);
         } else if (surface->compositor->method == CompositeMethod::InvAlphaMask) {
-            return _rasterTexmapPolygonMesh(surface, image, triangles, count, transform, region, opacity, _ialpha);
+            return _rasterTexmapPolygonMesh(surface, image, mesh, transform, region, opacity, _ialpha);
         } else if (surface->compositor->method == CompositeMethod::LumaMask) {
-            return _rasterTexmapPolygonMesh(surface, image, triangles, count, transform, region, opacity, surface->blender.lumaValue);
+            return _rasterTexmapPolygonMesh(surface, image, mesh, transform, region, opacity, surface->blender.lumaValue);
         }
     } else {
-        return _rasterTexmapPolygonMesh(surface, image, triangles, count, transform, region, opacity, nullptr);
+        return _rasterTexmapPolygonMesh(surface, image, mesh, transform, region, opacity, nullptr);
     }
     return false;
 }
@@ -1561,7 +1561,7 @@ bool rasterStroke(SwSurface* surface, SwShape* shape, uint8_t r, uint8_t g, uint
 }
 
 
-bool rasterImage(SwSurface* surface, SwImage* image, const Polygon* triangles, uint32_t triangleCnt, const Matrix* transform, const SwBBox& bbox, uint32_t opacity)
+bool rasterImage(SwSurface* surface, SwImage* image, const RenderMesh* mesh, const Matrix* transform, const SwBBox& bbox, uint32_t opacity)
 {
     //Verify Boundary
     if (bbox.max.x < 0 || bbox.max.y < 0 || bbox.min.x >= static_cast<SwCoord>(surface->w) || bbox.min.y >= static_cast<SwCoord>(surface->h)) return false;
@@ -1570,6 +1570,6 @@ bool rasterImage(SwSurface* surface, SwImage* image, const Polygon* triangles, u
     //TODO: case: _rasterRGBImageMesh()
     //TODO: case: _rasterGrayscaleImageMesh()
     //TODO: case: _rasterAlphaImageMesh()
-    if (triangles) return _transformedRGBAImageMesh(surface, image, triangles, triangleCnt, transform, &bbox, opacity);
+    if (mesh && mesh->triangleCnt > 0) return _transformedRGBAImageMesh(surface, image, mesh, transform, &bbox, opacity);
     else return _rasterRGBAImage(surface, image, transform, bbox, opacity);
 }

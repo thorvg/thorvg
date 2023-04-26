@@ -258,8 +258,7 @@ struct SwSceneTask : SwTask
 struct SwImageTask : SwTask
 {
     SwImage image;
-    Polygon* triangles = nullptr;
-    uint32_t triangleCnt = 0;
+    const RenderMesh* mesh = nullptr;           //Should be valid ptr in action
 
     bool clip(SwRleData* target) override
     {
@@ -282,10 +281,10 @@ struct SwImageTask : SwTask
             imageReset(&image);
             if (!image.data || image.w == 0 || image.h == 0) goto end;
 
-            if (!imagePrepare(&image, triangles, triangleCnt, transform, clipRegion, bbox, mpool, tid)) goto end;
+            if (!imagePrepare(&image, mesh, transform, clipRegion, bbox, mpool, tid)) goto end;
 
             // TODO: How do we clip the triangle mesh? Only clip non-meshed images for now
-            if (triangleCnt == 0 && clips.count > 0) {
+            if (mesh->triangleCnt == 0 && clips.count > 0) {
                 if (!imageGenRle(&image, bbox, false)) goto end;
                 if (image.rle) {
                     for (auto clip = clips.data; clip < (clips.data + clips.count); ++clip) {
@@ -469,7 +468,7 @@ bool SwRenderer::renderImage(RenderData data)
 
     if (task->opacity == 0) return true;
 
-    return rasterImage(surface, &task->image, task->triangles, task->triangleCnt, task->transform, task->bbox, task->opacity);
+    return rasterImage(surface, &task->image, task->mesh, task->transform, task->bbox, task->opacity);
 }
 
 
@@ -651,7 +650,7 @@ bool SwRenderer::endComposite(Compositor* cmp)
 
     //Default is alpha blending
     if (p->method == CompositeMethod::None) {
-        return rasterImage(surface, &p->image, nullptr, 0, nullptr, p->bbox, p->opacity);
+        return rasterImage(surface, &p->image, nullptr, nullptr, p->bbox, p->opacity);
     }
 
     return true;
@@ -710,7 +709,7 @@ void* SwRenderer::prepareCommon(SwTask* task, const RenderTransform* transform, 
 }
 
 
-RenderData SwRenderer::prepare(Surface* image, Polygon* triangles, uint32_t triangleCnt, RenderData data, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flags)
+RenderData SwRenderer::prepare(Surface* image, const RenderMesh* mesh, RenderData data, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flags)
 {
     //prepare task
     auto task = static_cast<SwImageTask*>(data);
@@ -720,8 +719,7 @@ RenderData SwRenderer::prepare(Surface* image, Polygon* triangles, uint32_t tria
         task->image.w = image->w;
         task->image.h = image->h;
         task->image.stride = image->stride;
-        task->triangles = triangles;
-        task->triangleCnt = triangleCnt;
+        task->mesh = mesh;
     }
     return prepareCommon(task, transform, opacity, clips, flags);
 }
