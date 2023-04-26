@@ -105,7 +105,7 @@ struct TaskSchedulerImpl
     uint32_t                       threadCnt;
     vector<thread>                 threads;
     vector<TaskQueue>              taskQueues;
-    uint32_t                       idx = 0;
+    atomic<uint32_t>               idx{0};
 
     TaskSchedulerImpl(unsigned threadCnt) : threadCnt(threadCnt), taskQueues(threadCnt)
     {
@@ -135,7 +135,7 @@ struct TaskSchedulerImpl
             }
 
             if (!success && !taskQueues[i].pop(&task)) break;
-            (*task)(i);
+            (*task)(i + 1);
         }
     }
 

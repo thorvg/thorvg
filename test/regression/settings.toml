@@ -1,0 +1,27 @@
+[general]
+folder_with_files_to_check = "SVG1000"
+problematic_files_path = "ProblematicSVG" # Where to store problematic files, in which conversion failed(e.g. due program crash)
+output_folder = "BrokenSVG" # Place where to save files(Input and output that show differences)
+timeout = 0 # TODO not working yet, use bigger value than 0 to enable timeout functionality, time in seconds
+px_size_of_generated_file = 400
+ignore_conversion_step = false # Ignore step with conversion files from svg to png, just compare files
+ignore_similarity_checking_step = false # Useful to finding problems with generating files
+ignore_thorvg_not_supported_items = true # Thorvg not supports files with text, filters
+similarity = 10 # Bigger similiarity will show only broken files that are completelly different, looks that 0-100 is quite reasonable range
+limit_files = 0 # Limit checked files, useful if you are just wanting to check how app works, 0 will remove limit of checked files
+remove_files_from_output_folder_at_start = true # Useful if you run app with different settings and you don't want to remove files one by one
+debug_show_always_output = false # Allows to find broken files
+test_version = false # Tests `app --version`, this allows to earlier find but with problematic files instead in runtime, when checking files
+return_error_when_finding_invalid_files = false # When finding invalid files(broken or problematic) app will close with status 1
+
+[first_tool]
+name = "thorvg_pr"
+path = "./build/src/bin/svg2png/svg2png"
+png_name_ending = "_thorvg_pr.png"
+arguments = "{FILE} -r {SIZE}x{SIZE}"
+
+[other_tool]
+name = "thorvg_develop"
+path = "./thorvg_develop/build/src/bin/svg2png/svg2png"
+png_name_ending = "_thorvg_pr.png"
+arguments = "{FILE} -r {SIZE}x{SIZE}"

@@ -4,3 +4,4 @@ builddir
 *.swp
 doc
 capi_test.tvg
+.idea

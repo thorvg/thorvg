@@ -80,6 +80,16 @@ enum class SvgFillFlags
     ClipPath = 0x16
 };
 
+constexpr bool operator &(SvgFillFlags a, SvgFillFlags b)
+{
+    return int(a) & int(b);
+}
+
+constexpr SvgFillFlags operator |(SvgFillFlags a, SvgFillFlags b)
+{
+    return SvgFillFlags(int(a) | int(b));
+}
+
 enum class SvgStrokeFlags
 {
     Paint = 0x1,
@@ -91,6 +101,17 @@ enum class SvgStrokeFlags
     Join = 0x40,
     Dash = 0x80,
 };
+
+constexpr bool operator &(SvgStrokeFlags a, SvgStrokeFlags b)
+{
+    return int(a) & int(b);
+}
+
+constexpr SvgStrokeFlags operator |(SvgStrokeFlags a, SvgStrokeFlags b)
+{
+    return SvgStrokeFlags(int(a) | int(b));
+}
+
 
 enum class SvgGradientType
 {
@@ -119,12 +140,32 @@ enum class SvgStyleFlags
     PaintOrder = 0x10000
 };
 
+constexpr bool operator &(SvgStyleFlags a, SvgStyleFlags b)
+{
+    return int(a) & int(b);
+}
+
+constexpr SvgStyleFlags operator |(SvgStyleFlags a, SvgStyleFlags b)
+{
+    return SvgStyleFlags(int(a) | int(b));
+}
+
 enum class SvgStopStyleFlags
 {
     StopDefault = 0x0,
     StopOpacity = 0x01,
     StopColor = 0x02
 };
+
+constexpr bool operator &(SvgStopStyleFlags a, SvgStopStyleFlags b)
+{
+    return int(a) & int(b);
+}
+
+constexpr SvgStopStyleFlags operator |(SvgStopStyleFlags a, SvgStopStyleFlags b)
+{
+    return SvgStopStyleFlags(int(a) | int(b));
+}
 
 enum class SvgGradientFlags
 {
@@ -141,6 +182,16 @@ enum class SvgGradientFlags
     Fx = 0x200,
     Fy = 0x400
 };
+
+constexpr bool operator &(SvgGradientFlags a, SvgGradientFlags b)
+{
+    return int(a) & int(b);
+}
+
+constexpr SvgGradientFlags operator |(SvgGradientFlags a, SvgGradientFlags b)
+{
+    return SvgGradientFlags(int(a) | int(b));
+}
 
 enum class SvgFillRule
 {
@@ -170,6 +221,16 @@ enum class SvgViewFlag
     Height = 0x02,  //viewPort height
     Viewbox = 0x04  //viewBox x,y,w,h - used only if all 4 are correctly set
 };
+
+constexpr bool operator &(SvgViewFlag a, SvgViewFlag b)
+{
+    return static_cast<int>(a) & static_cast<int>(b);
+}
+
+constexpr SvgViewFlag operator |(SvgViewFlag a, SvgViewFlag b)
+{
+    return SvgViewFlag(int(a) | int(b));
+}
 
 enum class AspectRatioAlign
 {

@@ -1,0 +1,67 @@
+name: Regression Testing
+
+on:
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install things
+        run: |
+          sudo apt install -y wget2 librsvg2-dev librsvg2-bin ninja-build git gcc-multilib g++-multilib
+          sudo pip3 install meson
+
+      - name: Compile Thorvg PR
+        run: |
+          meson . build -Dtools=svg2png -Db_sanitize=address,undefined
+          sudo ninja -C build install
+
+      - name: Compile Thorvg Develop
+        run: |
+          git clone https://github.com/thorvg/thorvg.git thorvg_develop
+          cd thorvg_develop
+          meson . build -Dtools=svg2png -Db_sanitize=address,undefined
+          sudo ninja -C build install
+          cd ..
+
+      - name: Download SVG Regression finder
+        run: |
+          wget https://github.com/qarmin/SVG-regression-finder/releases/download/0.2.0/svg_tester
+          chmod +x ./svg_tester
+
+      - name: Prepare files to test
+        run: |
+          wget https://github.com/qarmin/SVG-regression-finder/releases/download/0.2.0/SVG1000.zip
+          unzip SVG1000.zip
+          mv test/regression/settings.toml settings.toml
+          mkdir BrokenSVG
+
+      - name: Run tests
+        run: |
+          ./svg_tester 2>&1 | tee regression_logs.txt
+
+      - name: Store Broken Images
+        uses: actions/upload-artifact@v3
+        with:
+          name: broken-images
+          path: BrokenSVG
+          if-no-files-found: ignore
+
+      - name: Store Problematic Images
+        uses: actions/upload-artifact@v3
+        with:
+          name: problematic-images
+          path: ProblematicSVG
+          if-no-files-found: ignore
+
+      - name: Add comment to PR
+        run: |
+          export PATH=$PATH:~/.local/bin/
+          chmod +x "${GITHUB_WORKSPACE}/.github/workflows/regression_check.sh"
+          "${GITHUB_WORKSPACE}/.github/workflows/regression_check.sh"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

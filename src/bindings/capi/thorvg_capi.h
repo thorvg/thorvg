@@ -128,6 +128,23 @@ typedef enum {
 
 
 /**
+ * \brief Enumeration indicating the ThorVG class type.
+ *
+ * \ingroup ThorVGCapi_Paint
+ *
+ * \since 0.9
+ */
+typedef enum {
+    TVG_IDENTIFIER_UNDEF = 0,   ///< Undefined type.
+    TVG_IDENTIFIER_SHAPE,       ///< A shape type paint.
+    TVG_IDENTIFIER_SCENE,       ///< A scene type paint.
+    TVG_IDENTIFIER_PICTURE,     ///< A picture type paint.
+    TVG_IDENTIFIER_LINEAR_GRAD, ///< A linear gradient type.
+    TVG_IDENTIFIER_RADIAL_GRAD  ///< A radial gradient type.
+} Tvg_Identifier;
+
+
+/**
  * \addtogroup ThorVGCapi_Shape
  * \{
  */
@@ -899,6 +916,20 @@ TVG_API Tvg_Result tvg_paint_set_composite_method(Tvg_Paint* paint, Tvg_Paint* t
 */
 TVG_API Tvg_Result tvg_paint_get_composite_method(const Tvg_Paint* paint, const Tvg_Paint** target, Tvg_Composite_Method* method);
 
+
+/**
+* \brief Gets the unique id value of the paint instance indicating the instance type.
+*
+* \param[in] paint The Tvg_Paint object of which to get the identifier value.
+* \param[out] identifier The unique identifier of the paint instance type.
+*
+* \return Tvg_Result enumeration.
+* \retval TVG_RESULT_SUCCESS Succeed.
+* \retval TVG_RESULT_INVALID_ARGUMENT In case a @c nullptr is passed as the argument.
+*
+* \since 0.9
+*/
+TVG_API Tvg_Result tvg_paint_get_identifier(const Tvg_Paint* paint, Tvg_Identifier* identifier);
 /** \} */   // end defgroup ThorVGCapi_Paint
 
 
@@ -1736,6 +1767,20 @@ TVG_API Tvg_Result tvg_gradient_set_transform(Tvg_Gradient* grad, const Tvg_Matr
 * \retval TVG_RESULT_INVALID_ARGUMENT A @c nullptr is passed as the argument.
 */
 TVG_API Tvg_Result tvg_gradient_get_transform(const Tvg_Gradient* grad, Tvg_Matrix* m);
+
+/**
+* \brief Gets the unique id value of the gradient instance indicating the instance type.
+*
+* \param[in] grad The Tvg_Gradient object of which to get the identifier value.
+* \param[out] identifier The unique identifier of the gradient instance type.
+*
+* \return Tvg_Result enumeration.
+* \retval TVG_RESULT_SUCCESS Succeed.
+* \retval TVG_RESULT_INVALID_ARGUMENT In case a @c nullptr is passed as the argument.
+*
+* \since 0.9
+*/
+TVG_API Tvg_Result tvg_gradient_get_identifier(const Tvg_Gradient* grad, Tvg_Identifier* identifier);
 
 
 /*!
