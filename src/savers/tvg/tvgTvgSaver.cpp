@@ -170,7 +170,7 @@ bool TvgSaver::saveEncoding(const std::string& path)
     memcpy(uncompressed, &compressedSizeBits, TVG_HEADER_COMPRESSED_SIZE_BITS);
 
     //Good optimization, flush to file.
-    auto fp = _fopen(path.c_str(), "w+");
+    auto fp = _fopen(path.c_str(), "wb+");
     if (!fp) goto fail;
 
     //write header
@@ -193,7 +193,7 @@ fail:
 
 bool TvgSaver::flushTo(const std::string& path)
 {
-    auto fp = _fopen(path.c_str(), "w+");
+    auto fp = _fopen(path.c_str(), "wb+");
     if (!fp) return false;
 
     if (fwrite(buffer.data, SIZE(uint8_t), buffer.count, fp) == 0) {
