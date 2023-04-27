@@ -125,7 +125,7 @@ bool PngLoader::open(const string& path)
     h = static_cast<float>(height);
     ret = true;
 
-    if (state.info_png.color.colortype == LCT_RGBA) colorSpace = SwCanvas::ABGR8888;
+    if (state.info_png.color.colortype == LCT_RGBA) cs = ColorSpace::ABGR8888;
 
     goto finalize;
 
@@ -161,7 +161,7 @@ bool PngLoader::open(const char* data, uint32_t size, bool copy)
     h = static_cast<float>(height);
     this->size = size;
 
-    if (state.info_png.color.colortype == LCT_RGBA) colorSpace = SwCanvas::ABGR8888;
+    if (state.info_png.color.colortype == LCT_RGBA) cs = ColorSpace::ABGR8888;
 
     return true;
 }
@@ -185,13 +185,13 @@ bool PngLoader::close()
 }
 
 
-unique_ptr<Surface> PngLoader::bitmap(uint32_t colorSpace)
+unique_ptr<Surface> PngLoader::bitmap(ColorSpace cs)
 {
     this->done();
 
     if (!image) return nullptr;
-    if (this->colorSpace != colorSpace) {
-        this->colorSpace = colorSpace;
+    if (this->cs != cs) {
+        this->cs = cs;
         _changeColorSpace(reinterpret_cast<uint32_t*>(image), static_cast<uint32_t>(w), static_cast<uint32_t>(h));
     }
 
@@ -200,7 +200,7 @@ unique_ptr<Surface> PngLoader::bitmap(uint32_t colorSpace)
     surface->stride = static_cast<uint32_t>(w);
     surface->w = static_cast<uint32_t>(w);
     surface->h = static_cast<uint32_t>(h);
-    surface->cs = colorSpace;
+    surface->cs = cs;
 
     return unique_ptr<Surface>(surface);
 }

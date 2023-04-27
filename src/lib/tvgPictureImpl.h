@@ -66,7 +66,7 @@ struct Picture::Impl
     Surface* surface = nullptr;       //bitmap picture uses
     RenderData rd = nullptr;          //engine data
     float w = 0, h = 0;
-    uint32_t rendererColorSpace = 0;
+    ColorSpace rendererColorSpace = ColorSpace::Unsupported;
     RenderMesh rm;                    //mesh data
     bool resizing = false;
 

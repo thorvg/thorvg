@@ -123,10 +123,10 @@ bool GlRenderer::endComposite(TVG_UNUSED Compositor* cmp)
 }
 
 
-int32_t GlRenderer::colorSpace()
+ColorSpace GlRenderer::colorSpace()
 {
     //TODO: return a proper color space value.
-    return -1;
+    return ColorSpace::Unsupported;
 }
 
 

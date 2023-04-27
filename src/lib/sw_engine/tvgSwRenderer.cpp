@@ -407,7 +407,7 @@ bool SwRenderer::viewport(const RenderRegion& vp)
 }
 
 
-bool SwRenderer::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h, uint32_t colorSpace)
+bool SwRenderer::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h, ColorSpace cs)
 {
     if (!buffer || stride == 0 || w == 0 || h == 0 || w > stride) return false;
 
@@ -417,7 +417,7 @@ bool SwRenderer::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t 
     surface->stride = stride;
     surface->w = w;
     surface->h = h;
-    surface->cs = colorSpace;
+    surface->cs = cs;
 
     vport.x = vport.y = 0;
     vport.w = surface->w;
@@ -447,7 +447,7 @@ void SwRenderer::clearCompositors()
 bool SwRenderer::postRender()
 {
     //Unmultiply alpha if needed
-    if (surface->cs == SwCanvas::ABGR8888_STRAIGHT || surface->cs == SwCanvas::ARGB8888_STRAIGHT) {
+    if (surface->cs == ColorSpace::ABGR8888S || surface->cs == ColorSpace::ARGB8888S) {
         rasterUnpremultiply(surface);
     }
 
@@ -755,10 +755,10 @@ SwRenderer::SwRenderer():mpool(globalMpool)
 }
 
 
-uint32_t SwRenderer::colorSpace()
+ColorSpace SwRenderer::colorSpace()
 {
     if (surface) return surface->cs;
-    return tvg::SwCanvas::ARGB8888;
+    return ColorSpace::Unsupported;
 }
 
 
