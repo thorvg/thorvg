@@ -107,7 +107,7 @@ Result Picture::size(float* w, float* h) const noexcept
 const uint32_t* Picture::data(uint32_t* w, uint32_t* h) const noexcept
 {
     //Try it, If not loaded yet.
-    pImpl->reload();
+    pImpl->load();
 
     if (pImpl->loader) {
         if (w) *w = static_cast<uint32_t>(pImpl->loader->w);
