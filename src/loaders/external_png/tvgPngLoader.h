@@ -37,7 +37,7 @@ public:
     bool read() override;
     bool close() override;
 
-    unique_ptr<Surface> bitmap(ColorSpace cs) override;
+    unique_ptr<Surface> bitmap() override;
 
 private:
     png_imagep image = nullptr;

@@ -45,7 +45,7 @@ public:
     bool read() override;
     bool close() override;
 
-    unique_ptr<Surface> bitmap(ColorSpace cs) override;
+    unique_ptr<Surface> bitmap() override;
     void run(unsigned tid) override;
 };
 

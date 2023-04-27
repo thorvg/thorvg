@@ -761,13 +761,6 @@ SwRenderer::SwRenderer():mpool(globalMpool)
 }
 
 
-ColorSpace SwRenderer::colorSpace()
-{
-    if (surface) return surface->cs;
-    return ColorSpace::Unsupported;
-}
-
-
 bool SwRenderer::init(uint32_t threads)
 {
     if ((initEngineCnt++) > 0) return true;

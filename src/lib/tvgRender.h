@@ -226,8 +226,6 @@ public:
     virtual Compositor* target(const RenderRegion& region) = 0;
     virtual bool beginComposite(Compositor* cmp, CompositeMethod method, uint32_t opacity) = 0;
     virtual bool endComposite(Compositor* cmp) = 0;
-
-    virtual ColorSpace colorSpace() = 0;
 };
 
 }
