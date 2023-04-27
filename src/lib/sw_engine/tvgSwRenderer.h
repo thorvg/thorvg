@@ -50,7 +50,7 @@ public:
 
     bool clear() override;
     bool sync() override;
-    bool target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h, uint32_t colorSpace);
+    bool target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h, ColorSpace cs);
     bool mempool(bool shared);
 
     Compositor* target(const RenderRegion& region) override;
@@ -58,7 +58,7 @@ public:
     bool endComposite(Compositor* cmp) override;
     void clearCompositors();
 
-    uint32_t colorSpace() override;
+    ColorSpace colorSpace() override;
 
     static SwRenderer* gen();
     static bool init(uint32_t threads);

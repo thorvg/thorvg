@@ -128,11 +128,11 @@ bool PngLoader::close()
     return true;
 }
 
-unique_ptr<Surface> PngLoader::bitmap(uint32_t colorSpace)
+unique_ptr<Surface> PngLoader::bitmap(ColorSpace cs)
 {
     if (!content) return nullptr;
-    if (this->colorSpace != colorSpace) {
-        this->colorSpace = colorSpace;
+    if (this->cs != cs) {
+        this->cs = cs;
         _changeColorSpace(content, w, h);
     }
 
@@ -141,7 +141,7 @@ unique_ptr<Surface> PngLoader::bitmap(uint32_t colorSpace)
     surface->stride = w;
     surface->w = w;
     surface->h = h;
-    surface->cs = colorSpace;
+    surface->cs = cs;
 
     return unique_ptr<Surface>(surface);
 }
