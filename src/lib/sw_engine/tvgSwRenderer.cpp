@@ -750,15 +750,21 @@ RenderData SwRenderer::prepare(const RenderShape& rshape, RenderData data, const
 }
 
 
-SwRenderer::SwRenderer():mpool(globalMpool)
-{
-}
-
-
 ColorSpace SwRenderer::colorSpace()
 {
     if (surface) return surface->cs;
     return ColorSpace::Unsupported;
+}
+
+
+bool SwRenderer::convert(Surface* image, ColorSpace from, ColorSpace to)
+{
+    return rasterConvert(image, from, to);
+}
+
+
+SwRenderer::SwRenderer():mpool(globalMpool)
+{
 }
 
 

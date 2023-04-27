@@ -258,6 +258,13 @@ bool GlRenderer::viewport(TVG_UNUSED const RenderRegion& vp)
 }
 
 
+bool GlRenderer::convert(Surface* image, ColorSpace from, ColorSpace to)
+{
+    //TODO:
+    return false;
+}
+
+
 int GlRenderer::init(uint32_t threads)
 {
     if ((initEngineCnt++) > 0) return true;

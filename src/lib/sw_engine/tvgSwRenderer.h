@@ -47,6 +47,7 @@ public:
     RenderRegion region(RenderData data) override;
     RenderRegion viewport() override;
     bool viewport(const RenderRegion& vp) override;
+    bool convert(Surface* image, ColorSpace from, ColorSpace to) override;
 
     bool clear() override;
     bool sync() override;

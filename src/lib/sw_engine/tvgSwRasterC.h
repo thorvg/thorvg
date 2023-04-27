@@ -61,3 +61,27 @@ static bool inline cRasterTranslucentRect(SwSurface* surface, const SwBBox& regi
     }
     return true;
 }
+
+
+static bool inline cRasterABGRtoARGB(Surface* surface)
+{
+    TVGLOG("SW_ENGINE", "Convert ColorSpace ABGR - ARGB");
+
+    auto buffer = surface->buffer;
+    for (uint32_t y = 0; y < surface->h; ++y, buffer += surface->stride) {
+        auto dst = buffer;
+        for (uint32_t x = 0; x < surface->w; ++x, ++dst) {
+            auto c = *dst;
+            //flip Blue, Red channels
+            *dst = (c & 0xff000000) + ((c & 0x00ff0000) >> 16) + (c & 0x0000ff00) + ((c & 0x000000ff) << 16);
+        }
+    }
+    return true;
+}
+
+
+static bool inline cRasterARGBtoABGR(Surface* surface)
+{
+    //exaclty same with ABGRtoARGB
+    return cRasterABGRtoARGB(surface);
+}
