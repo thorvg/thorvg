@@ -258,6 +258,7 @@ struct SwSceneTask : SwTask
 struct SwImageTask : SwTask
 {
     SwImage image;
+    Surface* source;                            //Image source
     const RenderMesh* mesh = nullptr;           //Should be valid ptr in action
 
     bool clip(SwRleData* target) override
@@ -275,6 +276,14 @@ struct SwImageTask : SwTask
     void run(unsigned tid) override
     {
         auto clipRegion = bbox;
+
+        //Convert colorspace if it's not aligned.
+        if (surface->cs != source->cs) rasterConvertCS(source, surface->cs);
+
+        image.data = source->buffer;
+        image.w = source->w;
+        image.h = source->h;
+        image.stride = source->stride;
 
         //Invisible shape turned to visible by alpha.
         if ((flags & (RenderUpdateFlag::Image | RenderUpdateFlag::Transform | RenderUpdateFlag::Color)) && (opacity > 0)) {
@@ -709,16 +718,13 @@ void* SwRenderer::prepareCommon(SwTask* task, const RenderTransform* transform, 
 }
 
 
-RenderData SwRenderer::prepare(Surface* image, const RenderMesh* mesh, RenderData data, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flags)
+RenderData SwRenderer::prepare(Surface* surface, const RenderMesh* mesh, RenderData data, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flags)
 {
     //prepare task
     auto task = static_cast<SwImageTask*>(data);
     if (!task) task = new SwImageTask;
     if (flags & RenderUpdateFlag::Image) {
-        task->image.data = image->buffer;
-        task->image.w = image->w;
-        task->image.h = image->h;
-        task->image.stride = image->stride;
+        task->source = surface;
         task->mesh = mesh;
     }
     return prepareCommon(task, transform, opacity, clips, flags);

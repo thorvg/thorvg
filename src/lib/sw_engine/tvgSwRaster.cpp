@@ -1573,3 +1573,21 @@ bool rasterImage(SwSurface* surface, SwImage* image, const RenderMesh* mesh, con
     if (mesh && mesh->triangleCnt > 0) return _transformedRGBAImageMesh(surface, image, mesh, transform, &bbox, opacity);
     else return _rasterRGBAImage(surface, image, transform, bbox, opacity);
 }
+
+
+bool rasterConvertCS(Surface* surface, ColorSpace to)
+{
+    //TOOD: Support SIMD accelerations
+    auto from = surface->cs;
+
+    if ((from == ColorSpace::ABGR8888 && to == ColorSpace::ARGB8888) || (from == ColorSpace::ABGR8888S && to == ColorSpace::ARGB8888S)) {
+        return cRasterABGRtoARGB(surface);
+    }
+    if ((from == ColorSpace::ARGB8888 && to == ColorSpace::ABGR8888) || (from == ColorSpace::ARGB8888S && to == ColorSpace::ABGR8888S)) {
+        return cRasterARGBtoABGR(surface);
+    }
+
+    surface->cs = to;
+
+    return false;
+}
