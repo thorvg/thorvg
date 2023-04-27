@@ -123,13 +123,6 @@ bool GlRenderer::endComposite(TVG_UNUSED Compositor* cmp)
 }
 
 
-ColorSpace GlRenderer::colorSpace()
-{
-    //TODO: return a proper color space value.
-    return ColorSpace::Unsupported;
-}
-
-
 bool GlRenderer::renderImage(TVG_UNUSED void* data)
 {
     //TODO: render requested images

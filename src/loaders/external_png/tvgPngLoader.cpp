@@ -23,6 +23,10 @@
 #include "tvgLoader.h"
 #include "tvgPngLoader.h"
 
+/************************************************************************/
+/* Internal Class Implementation                                        */
+/************************************************************************/
+
 static inline uint32_t PREMULTIPLY(uint32_t c)
 {
     auto a = (c >> 24);
@@ -42,23 +46,9 @@ static void _premultiply(uint32_t* data, uint32_t w, uint32_t h)
 }
 
 
-static inline uint32_t CHANGE_COLORSPACE(uint32_t c)
-{
-    return (c & 0xff000000) + ((c & 0x00ff0000)>>16) + (c & 0x0000ff00) + ((c & 0x000000ff)<<16);
-}
-
-
-static void _changeColorSpace(uint32_t* data, uint32_t w, uint32_t h)
-{
-    auto buffer = data;
-    for (uint32_t y = 0; y < h; ++y, buffer += w) {
-        auto src = buffer;
-        for (uint32_t x = 0; x < w; ++x, ++src) {
-            *src = CHANGE_COLORSPACE(*src);
-        }
-    }
-}
-
+/************************************************************************/
+/* External Class Implementation                                        */
+/************************************************************************/
 
 PngLoader::PngLoader()
 {
@@ -84,6 +74,7 @@ bool PngLoader::open(const string& path)
 
     w = (float)image->width;
     h = (float)image->height;
+    cs = ColorSpace::ARGB8888;
 
     return true;
 }
@@ -96,6 +87,7 @@ bool PngLoader::open(const char* data, uint32_t size, bool copy)
 
     w = (float)image->width;
     h = (float)image->height;
+    cs = ColorSpace::ARGB8888;
 
     return true;
 }
@@ -128,13 +120,9 @@ bool PngLoader::close()
     return true;
 }
 
-unique_ptr<Surface> PngLoader::bitmap(ColorSpace cs)
+unique_ptr<Surface> PngLoader::bitmap()
 {
     if (!content) return nullptr;
-    if (this->cs != cs) {
-        this->cs = cs;
-        _changeColorSpace(content, w, h);
-    }
 
     auto surface = static_cast<Surface*>(malloc(sizeof(Surface)));
     surface->buffer = content;
