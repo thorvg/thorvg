@@ -85,7 +85,7 @@ struct Picture::Impl
         return ret;
     }
 
-    uint32_t reload()
+    uint32_t load()
     {
         if (loader) {
             if (!paint) {
@@ -103,10 +103,11 @@ struct Picture::Impl
                     if (paint) return RenderUpdateFlag::None;
                 }
             }
-            free(surface);
-            if ((surface = loader->bitmap().release())) {
-                loader->close();
-                return RenderUpdateFlag::Image;
+            if (!surface) {
+                if ((surface = loader->bitmap().release())) {
+                    loader->close();
+                    return RenderUpdateFlag::Image;
+                }
             }
         }
         return RenderUpdateFlag::None;
@@ -128,7 +129,7 @@ struct Picture::Impl
 
     RenderData update(RenderMethod &renderer, const RenderTransform* pTransform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag pFlag, bool clipper)
     {
-        auto flag = reload();
+        auto flag = load();
 
         if (surface) {
             auto transform = resizeTransform(pTransform);
@@ -265,7 +266,7 @@ struct Picture::Impl
 
     Paint* duplicate()
     {
-        reload();
+        load();
 
         auto ret = Picture::gen();
 
@@ -297,7 +298,7 @@ struct Picture::Impl
 
     Iterator* iterator()
     {
-        reload();
+        load();
         return new PictureIterator(paint);
     }
 };
