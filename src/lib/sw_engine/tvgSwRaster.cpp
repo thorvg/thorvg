@@ -1452,10 +1452,10 @@ void rasterRGBA32(uint32_t *dst, uint32_t val, uint32_t offset, int32_t len)
 
 bool rasterCompositor(SwSurface* surface)
 {
-    if (surface->cs == SwCanvas::ABGR8888 || surface->cs == SwCanvas::ABGR8888_STRAIGHT) {
+    if (surface->cs == ColorSpace::ABGR8888 || surface->cs == ColorSpace::ABGR8888S) {
         surface->blender.join = _abgrJoin;
         surface->blender.lumaValue = _abgrLumaValue;
-    } else if (surface->cs == SwCanvas::ARGB8888 || surface->cs == SwCanvas::ARGB8888_STRAIGHT) {
+    } else if (surface->cs == ColorSpace::ARGB8888 || surface->cs == ColorSpace::ARGB8888S) {
         surface->blender.join = _argbJoin;
         surface->blender.lumaValue = _argbLumaValue;
     } else {

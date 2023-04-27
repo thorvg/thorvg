@@ -29,29 +29,22 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-void JpgLoader::clear()
-{
-    if (freeData) free(data);
-    data = nullptr;
-    size = 0;
-    freeData = false;
-}
-
-uint32_t convertColorSpaceType(uint32_t colorSpace)
+static uint32_t convertColorSpaceType(ColorSpace cs)
 {
     uint32_t tjpfColorSpace = TJPF_RGBX;
-    switch (colorSpace)
-    {
-        case SwCanvas::ARGB8888:
-        case SwCanvas::ARGB8888_STRAIGHT:
+
+    switch (cs) {
+        case ColorSpace::ARGB8888:
+        case ColorSpace::ARGB8888S:
         default:
            tjpfColorSpace = TJPF_BGRX;
-        break;
-        case SwCanvas::ABGR8888:
-        case SwCanvas::ABGR8888_STRAIGHT:
+            break;
+        case ColorSpace::ABGR8888:
+        case ColorSpace::ABGR8888S:
            tjpfColorSpace = TJPF_RGBX;
-        break;
+            break;
     }
+
     return tjpfColorSpace;
 }
 
@@ -72,6 +65,15 @@ static void _changeColorSpace(uint32_t* data, uint32_t w, uint32_t h)
         }
     }
 }
+
+void JpgLoader::clear()
+{
+    if (freeData) free(data);
+    data = nullptr;
+    size = 0;
+    freeData = false;
+}
+
 
 /************************************************************************/
 /* External Class Implementation                                        */
@@ -163,11 +165,11 @@ bool JpgLoader::open(const char* data, uint32_t size, bool copy)
 bool JpgLoader::read()
 {
     if (image) tjFree(image);
-    image = (unsigned char *)tjAlloc(static_cast<int>(w) * static_cast<int>(h) * tjPixelSize[convertColorSpaceType(colorSpace)]);
+    image = (unsigned char *)tjAlloc(static_cast<int>(w) * static_cast<int>(h) * tjPixelSize[convertColorSpaceType(cs)]);
     if (!image) return false;
 
     //decompress jpg image
-    if (tjDecompress2(jpegDecompressor, data, size, image, static_cast<int>(w), 0, static_cast<int>(h), convertColorSpaceType(colorSpace), 0) < 0) {
+    if (tjDecompress2(jpegDecompressor, data, size, image, static_cast<int>(w), 0, static_cast<int>(h), convertColorSpaceType(cs), 0) < 0) {
         TVGERR("JPG LOADER", "%s", tjGetErrorStr());
         tjFree(image);
         image = nullptr;
@@ -185,11 +187,11 @@ bool JpgLoader::close()
 }
 
 
-unique_ptr<Surface> JpgLoader::bitmap(uint32_t colorSpace)
+unique_ptr<Surface> JpgLoader::bitmap(ColorSpace cs)
 {
     if (!image) return nullptr;
-    if (this->colorSpace != colorSpace) {
-        this->colorSpace = colorSpace;
+    if (this->cs != cs) {
+        this->cs = cs;
         _changeColorSpace(reinterpret_cast<uint32_t*>(image), w, h);
     }
 
@@ -198,7 +200,7 @@ unique_ptr<Surface> JpgLoader::bitmap(uint32_t colorSpace)
     surface->stride = w;
     surface->w = w;
     surface->h = h;
-    surface->cs = colorSpace;
+    surface->cs = cs;
 
     return unique_ptr<Surface>(surface);
 }

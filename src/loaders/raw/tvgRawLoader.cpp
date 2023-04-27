@@ -90,11 +90,11 @@ bool RawLoader::close()
 }
 
 
-unique_ptr<Surface> RawLoader::bitmap(uint32_t colorSpace)
+unique_ptr<Surface> RawLoader::bitmap(ColorSpace cs)
 {
     if (!content) return nullptr;
-    if (this->colorSpace != colorSpace) {
-        this->colorSpace = colorSpace;
+    if (this->cs != cs) {
+        this->cs = cs;
         _changeColorSpace(content, static_cast<uint32_t>(w), static_cast<uint32_t>(h));
     }
 
@@ -103,7 +103,7 @@ unique_ptr<Surface> RawLoader::bitmap(uint32_t colorSpace)
     surface->stride = static_cast<uint32_t>(w);
     surface->w = static_cast<uint32_t>(w);
     surface->h = static_cast<uint32_t>(h);
-    surface->cs = colorSpace;
+    surface->cs = cs;
 
     return unique_ptr<Surface>(surface);
 }
