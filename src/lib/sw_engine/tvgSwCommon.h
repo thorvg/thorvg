@@ -359,5 +359,6 @@ bool rasterGradientStroke(SwSurface* surface, SwShape* shape, unsigned id);
 bool rasterClear(SwSurface* surface);
 void rasterRGBA32(uint32_t *dst, uint32_t val, uint32_t offset, int32_t len);
 void rasterUnpremultiply(SwSurface* surface);
+bool rasterConvertCS(Surface* surface, ColorSpace to);
 
 #endif /* _TVG_SW_COMMON_H_ */

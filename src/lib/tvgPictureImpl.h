@@ -278,6 +278,11 @@ struct Picture::Impl
         if (surface) {
             dup->surface = static_cast<Surface*>(malloc(sizeof(Surface)));
             *dup->surface = *surface;
+            //TODO: It needs a better design...
+            //Backend engines might try to align the colorspace.
+            //Since it shares the bitmap, duplications should not touch the data.
+            //Only the owner could manage it.
+            dup->surface->cs = ColorSpace::Unsupported;
         }
         dup->w = w;
         dup->h = h;
