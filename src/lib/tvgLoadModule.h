@@ -50,7 +50,7 @@ public:
 
     virtual bool read() = 0;
     virtual bool close() = 0;
-    virtual unique_ptr<Surface> bitmap(ColorSpace cs) { return nullptr; }
+    virtual unique_ptr<Surface> bitmap(RenderMethod* renderer) { return nullptr; }
     virtual unique_ptr<Paint> paint() { return nullptr; }
 };
 

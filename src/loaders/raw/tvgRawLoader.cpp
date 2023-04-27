@@ -90,9 +90,12 @@ bool RawLoader::close()
 }
 
 
-unique_ptr<Surface> RawLoader::bitmap(ColorSpace cs)
+unique_ptr<Surface> RawLoader::bitmap(RenderMethod* renderer)
 {
     if (!content) return nullptr;
+
+    auto cs = renderer ? renderer->colorSpace() : this->cs;
+
     if (this->cs != cs) {
         this->cs = cs;
         _changeColorSpace(content, static_cast<uint32_t>(w), static_cast<uint32_t>(h));

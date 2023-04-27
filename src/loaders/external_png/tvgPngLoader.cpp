@@ -128,9 +128,12 @@ bool PngLoader::close()
     return true;
 }
 
-unique_ptr<Surface> PngLoader::bitmap(ColorSpace cs)
+unique_ptr<Surface> PngLoader::bitmap(RenderMethod* renderer)
 {
     if (!content) return nullptr;
+
+    auto cs = renderer ? renderer->colorSpace() : this->cs;
+
     if (this->cs != cs) {
         this->cs = cs;
         _changeColorSpace(content, w, h);

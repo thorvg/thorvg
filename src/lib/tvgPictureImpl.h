@@ -66,7 +66,6 @@ struct Picture::Impl
     Surface* surface = nullptr;       //bitmap picture uses
     RenderData rd = nullptr;          //engine data
     float w = 0, h = 0;
-    ColorSpace rendererColorSpace = ColorSpace::Unsupported;
     RenderMesh rm;                    //mesh data
     bool resizing = false;
 
@@ -86,7 +85,7 @@ struct Picture::Impl
         return ret;
     }
 
-    uint32_t reload()
+    uint32_t reload(RenderMethod* renderer = nullptr)
     {
         if (loader) {
             if (!paint) {
@@ -105,7 +104,7 @@ struct Picture::Impl
                 }
             }
             free(surface);
-            if ((surface = loader->bitmap(rendererColorSpace).release())) {
+            if ((surface = loader->bitmap(renderer).release())) {
                 loader->close();
                 return RenderUpdateFlag::Image;
             }
@@ -129,8 +128,7 @@ struct Picture::Impl
 
     RenderData update(RenderMethod &renderer, const RenderTransform* pTransform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag pFlag, bool clipper)
     {
-        rendererColorSpace = renderer.colorSpace();
-        auto flag = reload();
+        auto flag = reload(&renderer);
 
         if (surface) {
             auto transform = resizeTransform(pTransform);

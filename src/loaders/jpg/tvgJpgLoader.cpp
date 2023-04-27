@@ -128,11 +128,14 @@ bool JpgLoader::close()
 }
 
 
-unique_ptr<Surface> JpgLoader::bitmap(ColorSpace cs)
+unique_ptr<Surface> JpgLoader::bitmap(RenderMethod* renderer)
 {
     this->done();
 
     if (!image) return nullptr;
+
+    auto cs = renderer ? renderer->colorSpace() : this->cs;
+
     if (this->cs != cs) {
         this->cs = cs;
         _changeColorSpace(reinterpret_cast<uint32_t*>(image), static_cast<uint32_t>(w), static_cast<uint32_t>(h));
