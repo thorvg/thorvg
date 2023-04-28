@@ -1481,8 +1481,10 @@ bool rasterClear(SwSurface* surface)
 }
 
 
-void rasterUnpremultiply(SwSurface* surface)
+void rasterUnpremultiply(Surface* surface)
 {
+    TVGLOG("SW_ENGINE", "Unpremultiply [Size: %d x %d]", surface->w, surface->h);
+
     //OPTIMIZE_ME: +SIMD
     for (uint32_t y = 0; y < surface->h; y++) {
         auto buffer = surface->buffer + surface->stride * y;
@@ -1503,6 +1505,25 @@ void rasterUnpremultiply(SwSurface* surface)
             }
         }
     }
+    surface->premultiplied = false;
+}
+
+
+void rasterPremultiply(Surface* surface)
+{
+    TVGLOG("SW_ENGINE", "Premultiply [Size: %d x %d]", surface->w, surface->h);
+
+    //OPTIMIZE_ME: +SIMD
+    auto buffer = surface->buffer;
+    for (uint32_t y = 0; y < surface->h; ++y, buffer += surface->stride) {
+        auto dst = buffer;
+        for (uint32_t x = 0; x < surface->w; ++x, ++dst) {
+            auto c = *dst;
+            auto a = (c >> 24);
+            *dst = (c & 0xff000000) + ((((c >> 8) & 0xff) * a) & 0xff00) + ((((c & 0x00ff00ff) * a) >> 8) & 0x00ff00ff);
+        }
+    }
+    surface->premultiplied = true;
 }
 
 

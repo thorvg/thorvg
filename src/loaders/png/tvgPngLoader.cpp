@@ -29,26 +29,6 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-
-static inline uint32_t PREMULTIPLY(uint32_t c)
-{
-    auto a = (c >> 24);
-    return (c & 0xff000000) + ((((c >> 8) & 0xff) * a) & 0xff00) + ((((c & 0x00ff00ff) * a) >> 8) & 0x00ff00ff);
-}
-
-
-static void _premultiply(uint32_t* data, uint32_t w, uint32_t h)
-{
-    auto buffer = data;
-    for (uint32_t y = 0; y < h; ++y, buffer += w) {
-        auto src = buffer;
-        for (uint32_t x = 0; x < w; ++x, ++src) {
-            *src = PREMULTIPLY(*src);
-        }
-    }
-}
-
-
 void PngLoader::clear()
 {
     lodepng_state_cleanup(&state);
@@ -174,12 +154,15 @@ unique_ptr<Surface> PngLoader::bitmap()
 {
     this->done();
 
-    auto surface = static_cast<Surface*>(malloc(sizeof(Surface)));
+    //TODO: It's better to keep this surface instance in the loader side
+    auto surface = new Surface;
     surface->buffer = reinterpret_cast<uint32_t*>(image);
     surface->stride = static_cast<uint32_t>(w);
     surface->w = static_cast<uint32_t>(w);
     surface->h = static_cast<uint32_t>(h);
     surface->cs = cs;
+    surface->premultiplied = false;
+    surface->owner = true;
 
     return unique_ptr<Surface>(surface);
 }
@@ -195,6 +178,4 @@ void PngLoader::run(unsigned tid)
     auto height = static_cast<unsigned>(h);
 
     lodepng_decode(&image, &width, &height, &state, data, size);
-
-    _premultiply((uint32_t*)(image), width, height);
 }

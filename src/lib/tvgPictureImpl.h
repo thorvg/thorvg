@@ -72,7 +72,7 @@ struct Picture::Impl
     ~Impl()
     {
         if (paint) delete(paint);
-        free(surface);
+        delete(surface);
     }
 
     bool dispose(RenderMethod& renderer)
@@ -275,13 +275,10 @@ struct Picture::Impl
 
         dup->loader = loader;
         if (surface) {
-            dup->surface = static_cast<Surface*>(malloc(sizeof(Surface)));
+            dup->surface = new Surface;
             *dup->surface = *surface;
-            //TODO: It needs a better design...
-            //Backend engines might try to align the colorspace.
-            //Since it shares the bitmap, duplications should not touch the data.
-            //Only the owner could manage it.
-            dup->surface->cs = ColorSpace::Unsupported;
+            //TODO: A dupilcation is not a proxy... it needs copy of the pixel data?
+            dup->surface->owner = false;
         }
         dup->w = w;
         dup->h = h;

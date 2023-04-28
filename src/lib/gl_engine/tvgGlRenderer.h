@@ -28,7 +28,7 @@
 class GlRenderer : public RenderMethod
 {
 public:
-    Surface surface = {nullptr, 0, 0, 0};
+    Surface surface = {nullptr, 0, 0, 0, ColorSpace::Unsupported, true};
 
     RenderData prepare(const RenderShape& rshape, RenderData data, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flags, bool clipper) override;
     RenderData prepare(const Array<RenderData>& scene, RenderData data, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flags) override;

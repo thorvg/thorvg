@@ -278,7 +278,10 @@ struct SwImageTask : SwTask
         auto clipRegion = bbox;
 
         //Convert colorspace if it's not aligned.
-        if (surface->cs != source->cs) rasterConvertCS(source, surface->cs);
+        if (source->owner) {
+            if (source->cs != surface->cs) rasterConvertCS(source, surface->cs);
+            if (!source->premultiplied) rasterPremultiply(source);
+        }
 
         image.data = source->buffer;
         image.w = source->w;
@@ -427,6 +430,8 @@ bool SwRenderer::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t 
     surface->w = w;
     surface->h = h;
     surface->cs = cs;
+    surface->premultiplied = true;
+    surface->owner = true;
 
     vport.x = vport.y = 0;
     vport.w = surface->w;
