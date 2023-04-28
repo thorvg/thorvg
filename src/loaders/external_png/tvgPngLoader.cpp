@@ -27,24 +27,6 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-static inline uint32_t PREMULTIPLY(uint32_t c)
-{
-    auto a = (c >> 24);
-    return (c & 0xff000000) + ((((c >> 8) & 0xff) * a) & 0xff00) + ((((c & 0x00ff00ff) * a) >> 8) & 0x00ff00ff);
-}
-
-
-static void _premultiply(uint32_t* data, uint32_t w, uint32_t h)
-{
-    auto buffer = data;
-    for (uint32_t y = 0; y < h; ++y, buffer += w) {
-        auto src = buffer;
-        for (uint32_t x = 0; x < w; ++x, ++src) {
-            *src = PREMULTIPLY(*src);
-        }
-    }
-}
-
 
 /************************************************************************/
 /* External Class Implementation                                        */
@@ -109,8 +91,6 @@ bool PngLoader::read()
     }
     content = reinterpret_cast<uint32_t*>(buffer);
 
-    _premultiply(reinterpret_cast<uint32_t*>(buffer), image->width, image->height);
-
     return true;
 }
 
@@ -124,12 +104,15 @@ unique_ptr<Surface> PngLoader::bitmap()
 {
     if (!content) return nullptr;
 
-    auto surface = static_cast<Surface*>(malloc(sizeof(Surface)));
+    //TODO: It's better to keep this surface instance in the loader side
+    auto surface = new Surface;
     surface->buffer = content;
     surface->stride = w;
     surface->w = w;
     surface->h = h;
     surface->cs = cs;
+    surface->owner = true;
+    surface->premultiplied = false;
 
     return unique_ptr<Surface>(surface);
 }

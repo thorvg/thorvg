@@ -158,12 +158,15 @@ unique_ptr<Surface> JpgLoader::bitmap()
 {
     if (!image) return nullptr;
 
-    auto surface = static_cast<Surface*>(malloc(sizeof(Surface)));
+    //TODO: It's better to keep this surface instance in the loader side
+    auto surface = new Surface;
     surface->buffer = (uint32_t*)(image);
     surface->stride = w;
     surface->w = w;
     surface->h = h;
     surface->cs = cs;
+    surface->premultiplied = true;
+    surface->owner = true;
 
     return unique_ptr<Surface>(surface);
 }

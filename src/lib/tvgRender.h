@@ -46,11 +46,13 @@ enum ColorSpace
 
 struct Surface
 {
-    //TODO: Union for multiple types
     uint32_t* buffer;
-    uint32_t  stride;
-    uint32_t  w, h;
+    uint32_t stride;
+    uint32_t w, h;
     ColorSpace  cs;
+
+    bool premultiplied;      //Alpha-premultiplied
+    bool owner;              //Only owner could modify the buffer
 };
 
 struct Compositor

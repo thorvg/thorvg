@@ -80,12 +80,15 @@ unique_ptr<Surface> RawLoader::bitmap()
 {
     if (!content) return nullptr;
 
-    auto surface = static_cast<Surface*>(malloc(sizeof(Surface)));
+    //TODO: It's better to keep this surface instance in the loader side
+    auto surface = new Surface;
     surface->buffer = content;
     surface->stride = static_cast<uint32_t>(w);
     surface->w = static_cast<uint32_t>(w);
     surface->h = static_cast<uint32_t>(h);
     surface->cs = cs;
+    surface->premultiplied = true;
+    surface->owner = true;
 
     return unique_ptr<Surface>(surface);
 }

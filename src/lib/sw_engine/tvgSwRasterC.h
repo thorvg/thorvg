@@ -65,7 +65,7 @@ static bool inline cRasterTranslucentRect(SwSurface* surface, const SwBBox& regi
 
 static bool inline cRasterABGRtoARGB(Surface* surface)
 {
-    TVGLOG("SW_ENGINE", "Convert ColorSpace ABGR - ARGB");
+    TVGLOG("SW_ENGINE", "Convert ColorSpace ABGR - ARGB [Size: %d x %d]", surface->w, surface->h);
 
     auto buffer = surface->buffer;
     for (uint32_t y = 0; y < surface->h; ++y, buffer += surface->stride) {
