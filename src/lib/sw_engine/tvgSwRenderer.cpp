@@ -167,6 +167,9 @@ struct SwShapeTask : SwTask
             }
         }
 
+        //Clear current task memorypool here if the clippers would use the same memory pool
+        shapeDelOutline(&shape, mpool, tid);
+
         //Clip Path
         for (auto clip = clips.data; clip < (clips.data + clips.count); ++clip) {
             auto clipper = static_cast<SwTask*>(*clip);
@@ -177,11 +180,10 @@ struct SwShapeTask : SwTask
             //Clip stroke rle
             if (shape.strokeRle && !clipper->clip(shape.strokeRle)) goto err;
         }
-        goto end;
+        return;
 
     err:
         shapeReset(&shape);
-    end:
         shapeDelOutline(&shape, mpool, tid);
     }
 
@@ -299,17 +301,19 @@ struct SwImageTask : SwTask
             if (mesh->triangleCnt == 0 && clips.count > 0) {
                 if (!imageGenRle(&image, bbox, false)) goto end;
                 if (image.rle) {
+                    //Clear current task memorypool here if the clippers would use the same memory pool
+                    imageDelOutline(&image, mpool, tid);
                     for (auto clip = clips.data; clip < (clips.data + clips.count); ++clip) {
                         auto clipper = static_cast<SwTask*>(*clip);
                         //Guarantee composition targets get ready.
                         clipper->done(tid);
                         if (!clipper->clip(image.rle)) goto err;
                     }
+                    return;
                 }
             }
         }
         goto end;
-
     err:
         rleReset(image.rle);
     end:
