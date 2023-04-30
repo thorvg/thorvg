@@ -861,10 +861,18 @@ static bool _attrParseSvgNode(void* data, const char* key, const char* value)
 
     if (!strcmp(key, "width")) {
         doc->w = _toFloat(loader->svgParse, value, SvgParserLengthType::Horizontal);
-        doc->viewFlag = (doc->viewFlag | SvgViewFlag::Width);
+        if (strstr(value, "%")) {
+            doc->sw = svgUtilStrtof(value, nullptr) / 100.0f;
+        } else {
+            doc->viewFlag = (doc->viewFlag | SvgViewFlag::Width);
+        }
     } else if (!strcmp(key, "height")) {
         doc->h = _toFloat(loader->svgParse, value, SvgParserLengthType::Vertical);
-        doc->viewFlag = (doc->viewFlag | SvgViewFlag::Height);
+        if (strstr(value, "%")) {
+            doc->sh = svgUtilStrtof(value, nullptr) / 100.0f;
+        } else {
+            doc->viewFlag = (doc->viewFlag | SvgViewFlag::Height);
+        }
     } else if (!strcmp(key, "viewBox")) {
         if (_parseNumber(&value, &doc->vx)) {
             if (_parseNumber(&value, &doc->vy)) {
@@ -1347,6 +1355,8 @@ static SvgNode* _createSvgNode(SvgLoaderData* loader, SvgNode* parent, const cha
     doc->align = AspectRatioAlign::XMidYMid;
     doc->meetOrSlice = AspectRatioMeetOrSlice::Meet;
     doc->viewFlag = SvgViewFlag::None;
+    doc->sw = 1.0f;
+    doc->sh = 1.0f;
     func(buf, bufLength, _attrParseSvgNode, loader);
 
     if (!(doc->viewFlag & SvgViewFlag::Viewbox)) {
@@ -3530,8 +3540,16 @@ bool SvgLoader::header()
             vw = loaderData.doc->node.doc.vw;
             vh = loaderData.doc->node.doc.vh;
 
-            if (!(viewFlag & SvgViewFlag::Width)) w = vw;
-            if (!(viewFlag & SvgViewFlag::Height)) h = vh;
+            if (!(viewFlag & SvgViewFlag::Width)) {
+                w = vw * loaderData.doc->node.doc.sw;
+                loaderData.doc->node.doc.sw = 1.0f;
+                viewFlag = (viewFlag | SvgViewFlag::Width);
+            }
+            if (!(viewFlag & SvgViewFlag::Height)) {
+                h = vh * loaderData.doc->node.doc.sh;
+                loaderData.doc->node.doc.sh = 1.0f;
+                viewFlag = (viewFlag | SvgViewFlag::Height);
+            }
         } else {
             vw = w;
             vh = h;

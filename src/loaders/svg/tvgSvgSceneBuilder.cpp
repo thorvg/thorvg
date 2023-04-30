@@ -796,7 +796,10 @@ unique_ptr<Scene> svgSceneBuild(SvgNode* node, float& vx, float& vy, float& vw, 
 
     Box vBox = {vx, vy, vw, vh};
     auto docNode = _sceneBuildHelper(node, vBox, svgPath, false, 0);
+
     _applySvgViewFlag(docNode.get(), vx, vy, vw, vh, w, h, viewFlag);
+    w *= node->node.doc.sw;
+    h *= node->node.doc.sh;
 
     if (!mathEqual(w, vw) || !mathEqual(h, vh)) {
         Matrix m = _calculateAspectRatioMatrix(align, meetOrSlice, w, h, {vx, vy, vw, vh});
