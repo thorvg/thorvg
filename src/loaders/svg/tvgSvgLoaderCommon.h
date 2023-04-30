@@ -260,6 +260,8 @@ struct SvgDocNode
     float vy;
     float vw;
     float vh;
+    float sw;
+    float sh;
     SvgViewFlag viewFlag;
     SvgNode* defs;
     SvgNode* style;
