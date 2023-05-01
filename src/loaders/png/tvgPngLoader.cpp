@@ -161,6 +161,7 @@ unique_ptr<Surface> PngLoader::bitmap()
     surface->w = static_cast<uint32_t>(w);
     surface->h = static_cast<uint32_t>(h);
     surface->cs = cs;
+    surface->channelSize = sizeof(uint32_t);
     surface->premultiplied = false;
     surface->owner = true;
 
