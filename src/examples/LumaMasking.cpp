@@ -39,7 +39,14 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     //Mask
     auto mask = tvg::Shape::gen();
     mask->appendCircle(200, 200, 125, 125);
-    mask->fill(255, 0, 0, 255);
+    mask->fill(255, 100, 255, 255);
+
+    //Nested Mask
+    auto nMask = tvg::Shape::gen();
+    nMask->appendCircle(220, 220, 125, 125);
+    nMask->fill(255, 200, 255, 255);
+
+    mask->composite(move(nMask), tvg::CompositeMethod::LumaMask);
     shape->composite(move(mask), tvg::CompositeMethod::LumaMask);
     canvas->push(move(shape));
 

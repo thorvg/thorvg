@@ -44,16 +44,17 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     auto picture1 = tvg::Picture::gen();
     picture1->load(EXAMPLE_DIR"/cartman.svg");
     picture1->size(400, 400);
+    canvas->push(move(picture1));
+
     auto picture2 = tvg::Picture::gen();
     picture2->load(EXAMPLE_DIR"/logo.svg");
     picture2->size(400, 400);
-    canvas->push(move(picture1));
 
     //mask
     auto maskShape = tvg::Shape::gen();
     pMaskShape = maskShape.get();
     maskShape->appendCircle(180, 180, 75, 75);
-    maskShape->fill(0, 0, 0, 125);
+    maskShape->fill(125, 125, 125, 255);
     maskShape->stroke(25, 25, 25, 255);
     maskShape->stroke(tvg::StrokeJoin::Round);
     maskShape->stroke(10);
@@ -62,7 +63,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     auto mask = tvg::Shape::gen();
     pMask = mask.get();
     mask->appendCircle(180, 180, 75, 75);
-    mask->fill(255, 0, 0, 255);
+    mask->fill(255, 255, 255, 255);    //AlphaMask RGB channels are unused.
 
     picture2->composite(move(mask), tvg::CompositeMethod::AlphaMask);
     if (canvas->push(move(picture2)) != tvg::Result::Success) return;
