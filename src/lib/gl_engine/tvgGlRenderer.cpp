@@ -123,6 +123,12 @@ bool GlRenderer::endComposite(TVG_UNUSED Compositor* cmp)
 }
 
 
+ColorSpace GlRenderer::SwRenderer::colorSpace()
+{
+    return surface->cs;
+}
+
+
 bool GlRenderer::renderImage(TVG_UNUSED void* data)
 {
     //TODO: render requested images
