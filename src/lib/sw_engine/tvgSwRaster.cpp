@@ -154,11 +154,11 @@ static uint32_t _interpDownScaler(const uint32_t *img, uint32_t stride, uint32_t
 
 static bool _rasterMaskedRect(SwSurface* surface, const SwBBox& region, uint32_t color, uint32_t (*blendMethod)(uint32_t))
 {
-    TVGLOG("SW_ENGINE", "Masked Rect");
-
     auto buffer = surface->buffer + (region.min.y * surface->stride) + region.min.x;
     auto w = static_cast<uint32_t>(region.max.x - region.min.x);
     auto h = static_cast<uint32_t>(region.max.y - region.min.y);
+
+    TVGLOG("SW_ENGINE", "Masked Rect [Region: %lu %lu %u %u]", region.min.x, region.min.y, w, h);
 
     auto cbuffer = surface->compositor->image.data + (region.min.y * surface->compositor->image.stride) + region.min.x; //compositor buffer
 
