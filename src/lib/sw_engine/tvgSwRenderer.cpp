@@ -664,6 +664,13 @@ bool SwRenderer::endComposite(Compositor* cmp)
 }
 
 
+ColorSpace SwRenderer::colorSpace()
+{
+    if (surface) return surface->cs;
+    else return ColorSpace::Unsupported;
+}
+
+
 bool SwRenderer::dispose(RenderData data)
 {
     auto task = static_cast<SwTask*>(data);
