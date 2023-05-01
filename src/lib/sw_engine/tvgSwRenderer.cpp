@@ -581,7 +581,7 @@ Compositor* SwRenderer::target(const RenderRegion& region)
     auto sh = static_cast<int32_t>(surface->h);
 
     //Out of boundary
-    if (x > sw || y > sh) return nullptr;
+    if (x >= sw || y >= sh || x + w < 0 || y + h < 0) return nullptr;
 
     SwSurface* cmp = nullptr;
 
@@ -596,17 +596,14 @@ Compositor* SwRenderer::target(const RenderRegion& region)
     //New Composition
     if (!cmp) {
         cmp = new SwSurface;
-        if (!cmp) goto err;
 
         //Inherits attributes from main surface
         *cmp = *surface;
 
         cmp->compositor = new SwCompositor;
-        if (!cmp->compositor) goto err;
 
         //SwImage, Optimize Me: Surface size from MainSurface(WxH) to Parameter W x H
         cmp->compositor->image.data = (uint32_t*) malloc(sizeof(uint32_t) * surface->stride * surface->h);
-        if (!cmp->compositor->image.data) goto err;
         compositors.push(cmp);
     }
 
@@ -644,14 +641,6 @@ Compositor* SwRenderer::target(const RenderRegion& region)
     surface = cmp;
 
     return cmp->compositor;
-
-err:
-    if (cmp) {
-        if (cmp->compositor) delete(cmp->compositor);
-        delete(cmp);
-    }
-
-    return nullptr;
 }
 
 
