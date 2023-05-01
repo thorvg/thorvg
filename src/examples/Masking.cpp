@@ -39,7 +39,14 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     //Mask
     auto mask = tvg::Shape::gen();
     mask->appendCircle(200, 200, 125, 125);
-    mask->fill(255, 0, 0, 255);
+    mask->fill(255, 255, 255, 255);     //AlphaMask RGB channels are unused.
+
+    //Nested Mask
+    auto nMask = tvg::Shape::gen();
+    nMask->appendCircle(220, 220, 125, 125);
+    nMask->fill(255, 255, 255, 255);     //AlphaMask RGB channels are unused.
+
+    mask->composite(move(nMask), tvg::CompositeMethod::AlphaMask);
     shape->composite(move(mask), tvg::CompositeMethod::AlphaMask);
     canvas->push(move(shape));
 
@@ -54,7 +61,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     auto mask2 = tvg::Shape::gen();
     mask2->appendCircle(150, 500, 75, 75);
     mask2->appendRect(150, 500, 200, 200, 30, 30);
-    mask2->fill(255, 255, 255, 255);
+    mask2->fill(255, 255, 255, 255);    //AlphaMask RGB channels are unused.
     svg->composite(move(mask2), tvg::CompositeMethod::AlphaMask);
     if (canvas->push(move(svg)) != tvg::Result::Success) return;
 
@@ -78,7 +85,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     //Mask3
     auto mask3 = tvg::Shape::gen();
     mask3->appendCircle(600, 200, 125, 125);
-    mask3->fill(255, 255, 255, 255);
+    mask3->fill(255, 255, 255, 255);    //AlphaMask RGB channels are unused.
     star->composite(move(mask3), tvg::CompositeMethod::AlphaMask);
     if (canvas->push(move(star)) != tvg::Result::Success) return;
 
@@ -86,7 +93,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     ifstream file(EXAMPLE_DIR"/rawimage_200x300.raw");
     if (!file.is_open()) return;
     auto data = (uint32_t*) malloc(sizeof(uint32_t) * (200 * 300));
-    file.read(reinterpret_cast<char *>(data), sizeof (uint32_t) * 200 * 300);
+    file.read(reinterpret_cast<char*>(data), sizeof (uint32_t) * 200 * 300);
     file.close();
 
     auto image = tvg::Picture::gen();
@@ -106,7 +113,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     mask4->lineTo(426, 511);
     mask4->lineTo(546, 493);
     mask4->close();
-    mask4->fill(255, 255, 255, 70);
+    mask4->fill(255, 255, 255, 70);     //AlphaMask RGB channels are unused.
     image->composite(move(mask4), tvg::CompositeMethod::AlphaMask);
     if (canvas->push(move(image)) != tvg::Result::Success) return;
 
