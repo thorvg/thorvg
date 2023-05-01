@@ -51,6 +51,7 @@ struct Surface
     uint32_t stride;
     uint32_t w, h;
     ColorSpace  cs;
+    uint8_t channelSize;
 
     bool premultiplied;      //Alpha-premultiplied
     bool owner;              //Only owner could modify the buffer
@@ -227,10 +228,41 @@ public:
     virtual bool clear() = 0;
     virtual bool sync() = 0;
 
-    virtual Compositor* target(const RenderRegion& region) = 0;
+    virtual Compositor* target(const RenderRegion& region, ColorSpace cs) = 0;
     virtual bool beginComposite(Compositor* cmp, CompositeMethod method, uint32_t opacity) = 0;
     virtual bool endComposite(Compositor* cmp) = 0;
 };
+
+static inline uint8_t CHANNEL_SIZE(ColorSpace cs)
+{
+    switch(cs) {
+        case ColorSpace::ABGR8888:
+        case ColorSpace::ABGR8888S:
+        case ColorSpace::ARGB8888:
+        case ColorSpace::ARGB8888S:
+            return sizeof(uint32_t);
+        case ColorSpace::Grayscale8:
+            return sizeof(uint8_t);
+        case ColorSpace::Unsupported:
+        default:
+            TVGERR("SW_ENGINE", "Unsupported Channel Size! = %d", (int)cs);
+            return 0;
+    }
+}
+
+static inline ColorSpace COMPOSITE_TO_COLORSPACE(RenderMethod& renderer, CompositeMethod method)
+{
+    switch(method) {
+        case CompositeMethod::AlphaMask:
+        case CompositeMethod::InvAlphaMask:
+            return ColorSpace::Grayscale8;
+        case CompositeMethod::LumaMask:
+            return renderer.colorSpace();
+        default:
+            TVGERR("COMMON", "Unsupported Composite Size! = %d", (int)method);
+            return ColorSpace::Unsupported;
+    }
+}
 
 }
 

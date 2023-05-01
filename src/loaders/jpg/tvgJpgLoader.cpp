@@ -125,6 +125,7 @@ unique_ptr<Surface> JpgLoader::bitmap()
     surface->w = static_cast<uint32_t>(w);
     surface->h = static_cast<uint32_t>(h);
     surface->cs = cs;
+    surface->channelSize = sizeof(uint32_t);
     surface->premultiplied = true;
     surface->owner = true;
 

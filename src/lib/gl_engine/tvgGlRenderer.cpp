@@ -102,7 +102,7 @@ bool GlRenderer::postRender()
 }
 
 
-Compositor* GlRenderer::target(TVG_UNUSED const RenderRegion& region)
+Compositor* GlRenderer::target(TVG_UNUSED const RenderRegion& region, TVG_UNUSED ColorSpace cs)
 {
     //TODO: Prepare frameBuffer & Setup render target for composition
     return nullptr;

@@ -228,6 +228,7 @@ struct SwImage
     int32_t      ox = 0;         //offset x
     int32_t      oy = 0;         //offset y
     float        scale;
+    uint8_t      channelSize;
 
     bool         direct = false;  //draw image directly (with offset)
     bool         scaled = false;  //draw scaled image

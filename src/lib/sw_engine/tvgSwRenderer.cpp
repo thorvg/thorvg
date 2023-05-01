@@ -289,6 +289,7 @@ struct SwImageTask : SwTask
         image.w = source->w;
         image.h = source->h;
         image.stride = source->stride;
+        image.channelSize = source->channelSize;
 
         //Invisible shape turned to visible by alpha.
         if ((flags & (RenderUpdateFlag::Image | RenderUpdateFlag::Transform | RenderUpdateFlag::Color)) && (opacity > 0)) {
@@ -434,6 +435,7 @@ bool SwRenderer::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t 
     surface->w = w;
     surface->h = h;
     surface->cs = cs;
+    surface->channelSize = CHANNEL_SIZE(cs);
     surface->premultiplied = true;
     surface->owner = true;
 
@@ -505,7 +507,7 @@ bool SwRenderer::renderShape(RenderData data)
     //Do Stroking Composition
     if (task->cmpStroking) {
         opacity = 255;
-        cmp = target(task->bounds());
+        cmp = target(task->bounds(), colorSpace());
         beginComposite(cmp, CompositeMethod::None, task->opacity);
     //No Stroking Composition
     } else {
@@ -571,7 +573,7 @@ bool SwRenderer::mempool(bool shared)
 }
 
 
-Compositor* SwRenderer::target(const RenderRegion& region)
+Compositor* SwRenderer::target(const RenderRegion& region, ColorSpace cs)
 {
     auto x = region.x;
     auto y = region.y;
@@ -585,9 +587,11 @@ Compositor* SwRenderer::target(const RenderRegion& region)
 
     SwSurface* cmp = nullptr;
 
+    auto reqChannelSize = CHANNEL_SIZE(cs);
+
     //Use cached data
     for (auto p = compositors.data; p < (compositors.data + compositors.count); ++p) {
-        if ((*p)->compositor->valid) {
+        if ((*p)->compositor->valid && (*p)->compositor->image.channelSize == reqChannelSize) {
             cmp = *p;
             break;
         }
@@ -602,8 +606,10 @@ Compositor* SwRenderer::target(const RenderRegion& region)
 
         cmp->compositor = new SwCompositor;
 
-        //SwImage, Optimize Me: Surface size from MainSurface(WxH) to Parameter W x H
-        cmp->compositor->image.data = (uint32_t*) malloc(sizeof(uint32_t) * surface->stride * surface->h);
+        //TODO: We can optimize compositor surface size from (surface->stride x surface->h) to Parameter(w x h)
+        cmp->compositor->image.data = (uint32_t*) malloc(reqChannelSize * surface->stride * surface->h);
+        cmp->channelSize = cmp->compositor->image.channelSize = reqChannelSize;
+
         compositors.push(cmp);
     }
 
