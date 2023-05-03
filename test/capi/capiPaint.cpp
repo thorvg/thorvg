@@ -208,6 +208,24 @@ TEST_CASE("Paint Dupliction", "[capiPaint]")
     REQUIRE(tvg_paint_del(paint_copy) == TVG_RESULT_SUCCESS);
 }
 
+TEST_CASE("Paint Identifier", "[capiPaint]")
+{
+    Tvg_Paint* paint = tvg_shape_new();
+    REQUIRE(paint);
+
+    Tvg_Paint* paint_copy = tvg_paint_duplicate(paint);
+    REQUIRE(paint_copy);
+
+    Tvg_Identifier id = TVG_IDENTIFIER_UNDEF;
+    Tvg_Identifier id_copy = TVG_IDENTIFIER_UNDEF;
+
+    REQUIRE(tvg_paint_get_identifier(nullptr, &id) == TVG_RESULT_INVALID_ARGUMENT);
+    REQUIRE(tvg_paint_get_identifier(paint, nullptr) == TVG_RESULT_INVALID_ARGUMENT);
+    REQUIRE(tvg_paint_get_identifier(paint, &id) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_paint_get_identifier(paint_copy, &id_copy) == TVG_RESULT_SUCCESS);
+    REQUIRE(id_copy == id);
+}
+
 TEST_CASE("Paint Clip Path Composite Method", "[capiPaint]")
 {
     Tvg_Paint* paint = tvg_shape_new();

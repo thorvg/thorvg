@@ -29,6 +29,12 @@ TEST_CASE("Create a Scene", "[capiScene]")
     Tvg_Paint* scene = tvg_scene_new();
     REQUIRE(scene);
 
+    Tvg_Identifier id = TVG_IDENTIFIER_UNDEF;
+    REQUIRE(tvg_paint_get_identifier(scene, &id) == TVG_RESULT_SUCCESS);
+    REQUIRE(id == TVG_IDENTIFIER_SCENE);
+    REQUIRE(id != TVG_IDENTIFIER_PICTURE);
+    REQUIRE(id != TVG_IDENTIFIER_SHAPE);
+
     REQUIRE(tvg_paint_del(scene) == TVG_RESULT_SUCCESS);
 }
 
