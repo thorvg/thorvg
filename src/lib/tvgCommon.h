@@ -72,7 +72,7 @@ enum class FileType { Tvg = 0, Svg, Raw, Png, Jpg, Unknown };
     constexpr auto GreyColor = "\033[90m";   //grey
     constexpr auto ResetColors = "\033[0m";  //default
     #define TVGERR(tag, fmt, ...) fprintf(stderr, "%s[E]%s %s" tag "%s (%s %d): %s" fmt "\n", ErrorBgColor, ResetColors, ErrorColor, GreyColor, __FILE__, __LINE__, ResetColors, ##__VA_ARGS__)
-    #define TVGLOG(tag, fmt, ...) fprintf(stderr, "%s[L]%s %s" tag "%s (%s %d): %s" fmt "\n", LogBgColor, ResetColors, LogColor, GreyColor, __FILE__, __LINE__, ResetColors, ##__VA_ARGS__)
+    #define TVGLOG(tag, fmt, ...) fprintf(stdout, "%s[L]%s %s" tag "%s (%s %d): %s" fmt "\n", LogBgColor, ResetColors, LogColor, GreyColor, __FILE__, __LINE__, ResetColors, ##__VA_ARGS__)
 #else
     #define TVGERR(...)
     #define TVGLOG(...)
