@@ -861,17 +861,15 @@ static bool _attrParseSvgNode(void* data, const char* key, const char* value)
 
     if (!strcmp(key, "width")) {
         doc->w = _toFloat(loader->svgParse, value, SvgParserLengthType::Horizontal);
-        if (strstr(value, "%")) {
+        if (strstr(value, "%") && !(doc->viewFlag & SvgViewFlag::Viewbox)) {
             doc->viewFlag = (doc->viewFlag | SvgViewFlag::WidthInPercent);
-            doc->w /= 100.0f;
         } else {
             doc->viewFlag = (doc->viewFlag | SvgViewFlag::Width);
         }
     } else if (!strcmp(key, "height")) {
         doc->h = _toFloat(loader->svgParse, value, SvgParserLengthType::Vertical);
-        if (strstr(value, "%")) {
+        if (strstr(value, "%") && !(doc->viewFlag & SvgViewFlag::Viewbox)) {
             doc->viewFlag = (doc->viewFlag | SvgViewFlag::HeightInPercent);
-            doc->h /= 100.0f;
         } else {
             doc->viewFlag = (doc->viewFlag | SvgViewFlag::Height);
         }
