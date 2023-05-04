@@ -120,7 +120,7 @@ unique_ptr<Surface> JpgLoader::bitmap()
 
     //TODO: It's better to keep this surface instance in the loader side
     auto surface = new Surface;
-    surface->buffer = reinterpret_cast<uint32_t*>(image);
+    surface->buf8 = image;
     surface->stride = static_cast<uint32_t>(w);
     surface->w = static_cast<uint32_t>(w);
     surface->h = static_cast<uint32_t>(h);

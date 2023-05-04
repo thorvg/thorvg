@@ -33,7 +33,7 @@ static bool inline cRasterTranslucentRle(SwSurface* surface, const SwRleData* rl
     uint32_t src;
 
     for (uint32_t i = 0; i < rle->size; ++i, ++span) {
-        auto dst = &surface->buffer[span->y * surface->stride + span->x];
+        auto dst = &surface->buf32[span->y * surface->stride + span->x];
 
         if (span->coverage < 255) src = ALPHA_BLEND(color, span->coverage);
         else src = color;
@@ -48,7 +48,7 @@ static bool inline cRasterTranslucentRle(SwSurface* surface, const SwRleData* rl
 
 static bool inline cRasterTranslucentRect(SwSurface* surface, const SwBBox& region, uint32_t color)
 {
-    auto buffer = surface->buffer + (region.min.y * surface->stride) + region.min.x;
+    auto buffer = surface->buf32 + (region.min.y * surface->stride) + region.min.x;
     auto h = static_cast<uint32_t>(region.max.y - region.min.y);
     auto w = static_cast<uint32_t>(region.max.x - region.min.x);
     auto ialpha = _ialpha(color);
@@ -67,7 +67,7 @@ static bool inline cRasterABGRtoARGB(Surface* surface)
 {
     TVGLOG("SW_ENGINE", "Convert ColorSpace ABGR - ARGB [Size: %d x %d]", surface->w, surface->h);
 
-    auto buffer = surface->buffer;
+    auto buffer = surface->buf32;
     for (uint32_t y = 0; y < surface->h; ++y, buffer += surface->stride) {
         auto dst = buffer;
         for (uint32_t x = 0; x < surface->w; ++x, ++dst) {

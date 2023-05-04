@@ -24,8 +24,8 @@
     float _dudx = dudx, _dvdx = dvdx;
     float _dxdya = dxdya, _dxdyb = dxdyb, _dudya = dudya, _dvdya = dvdya;
     float _xa = xa, _xb = xb, _ua = ua, _va = va;
-    auto sbuf = image->data;
-    auto dbuf = surface->buffer;
+    auto sbuf = image->buf32;
+    auto dbuf = surface->buf32;
     int32_t sw = static_cast<int32_t>(image->stride);
     int32_t sh = image->h;
     int32_t dw = surface->stride;
@@ -94,7 +94,7 @@
         x = x1;
 
 #ifdef TEXMAP_MASKING
-        cmp = &surface->compositor->image.data[y * surface->compositor->image.stride + x1];
+        cmp = &surface->compositor->image.buf32[y * surface->compositor->image.stride + x1];
 #endif
         //Draw horizontal line
         while (x++ < x2) {

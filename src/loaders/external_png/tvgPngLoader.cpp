@@ -106,7 +106,7 @@ unique_ptr<Surface> PngLoader::bitmap()
 
     //TODO: It's better to keep this surface instance in the loader side
     auto surface = new Surface;
-    surface->buffer = content;
+    surface->buf32 = content;
     surface->stride = w;
     surface->w = w;
     surface->h = h;
