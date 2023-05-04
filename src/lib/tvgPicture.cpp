@@ -116,7 +116,7 @@ const uint32_t* Picture::data(uint32_t* w, uint32_t* h) const noexcept
         if (w) *w = 0;
         if (h) *h = 0;
     }
-    if (pImpl->surface) return pImpl->surface->buffer;
+    if (pImpl->surface) return pImpl->surface->buf32;
     else return nullptr;
 }
 

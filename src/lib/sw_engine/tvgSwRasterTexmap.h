@@ -502,7 +502,7 @@ static bool _apply(SwSurface* surface, AASpans* aaSpans)
             auto offset = y * surface->stride;
 
             //Left edge
-            dst = surface->buffer + (offset + line->x[0]);
+            dst = surface->buf32 + (offset + line->x[0]);
             if (line->x[0] > 1) pixel = *(dst - 1);
             else pixel = *dst;
 
@@ -514,7 +514,7 @@ static bool _apply(SwSurface* surface, AASpans* aaSpans)
             }
 
             //Right edge
-            dst = surface->buffer + (offset + line->x[1] - 1);
+            dst = surface->buf32 + (offset + line->x[1] - 1);
             if (line->x[1] < (int32_t)(surface->w - 1)) pixel = *(dst + 1);
             else pixel = *dst;
 

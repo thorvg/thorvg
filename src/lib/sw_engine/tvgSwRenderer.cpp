@@ -285,7 +285,7 @@ struct SwImageTask : SwTask
             if (!source->premultiplied) rasterPremultiply(source);
         }
 
-        image.data = source->buffer;
+        image.data = source->data;
         image.w = source->w;
         image.h = source->h;
         image.stride = source->stride;
@@ -424,13 +424,13 @@ bool SwRenderer::viewport(const RenderRegion& vp)
 }
 
 
-bool SwRenderer::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h, ColorSpace cs)
+bool SwRenderer::target(pixel_t* data, uint32_t stride, uint32_t w, uint32_t h, ColorSpace cs)
 {
-    if (!buffer || stride == 0 || w == 0 || h == 0 || w > stride) return false;
+    if (!data || stride == 0 || w == 0 || h == 0 || w > stride) return false;
 
     if (!surface) surface = new SwSurface;
 
-    surface->buffer = buffer;
+    surface->data = data;
     surface->stride = stride;
     surface->w = w;
     surface->h = h;
@@ -608,7 +608,7 @@ Compositor* SwRenderer::target(const RenderRegion& region, ColorSpace cs)
         cmp->compositor = new SwCompositor;
 
         //TODO: We can optimize compositor surface size from (surface->stride x surface->h) to Parameter(w x h)
-        cmp->compositor->image.data = (uint32_t*) malloc(reqChannelSize * surface->stride * surface->h);
+        cmp->compositor->image.data = (pixel_t*)malloc(reqChannelSize * surface->stride * surface->h);
         cmp->channelSize = cmp->compositor->image.channelSize = reqChannelSize;
 
         compositors.push(cmp);
@@ -632,7 +632,7 @@ Compositor* SwRenderer::target(const RenderRegion& region, ColorSpace cs)
     cmp->compositor->image.h = surface->h;
     cmp->compositor->image.direct = true;
 
-    cmp->buffer = cmp->compositor->image.data;
+    cmp->data = cmp->compositor->image.data;
     cmp->w = cmp->compositor->image.w;
     cmp->h = cmp->compositor->image.h;
 

@@ -30,6 +30,7 @@ namespace tvg
 {
 
 using RenderData = void*;
+using pixel_t = uint32_t;
 
 enum RenderUpdateFlag {None = 0, Path = 1, Color = 2, Gradient = 4, Stroke = 8, Transform = 16, Image = 32, GradientStroke = 64, All = 255};
 
@@ -47,7 +48,11 @@ enum ColorSpace
 
 struct Surface
 {
-    uint32_t* buffer;
+    union {
+        pixel_t* data;       //system based data pointer
+        uint32_t* buf32;     //for explicit 32bits channels
+        uint8_t*  buf8;      //for explicit 8bits grayscale
+    };
     uint32_t stride;
     uint32_t w, h;
     ColorSpace  cs;

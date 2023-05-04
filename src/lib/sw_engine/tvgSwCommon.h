@@ -223,7 +223,11 @@ struct SwImage
 {
     SwOutline*   outline = nullptr;
     SwRleData*   rle = nullptr;
-    uint32_t*    data = nullptr;
+    union {
+        pixel_t*  data;      //system based data pointer
+        uint32_t* buf32;     //for explicit 32bits channels
+        uint8_t*  buf8;      //for explicit 8bits grayscale
+    };
     uint32_t     w, h, stride;
     int32_t      ox = 0;         //offset x
     int32_t      oy = 0;         //offset y
