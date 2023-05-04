@@ -1466,15 +1466,18 @@ bool rasterCompositor(SwSurface* surface)
 }
 
 
-bool rasterClear(SwSurface* surface)
+bool rasterClear(SwSurface* surface, uint32_t x, uint32_t y, uint32_t w, uint32_t h)
 {
-    if (!surface || !surface->buffer || surface->stride <= 0 || surface->w <= 0 || surface->h <= 0) return false;
+    if (!surface || !surface->buffer || surface->stride == 0 || surface->w == 0 || surface->h == 0) return false;
 
+    //full clear
     if (surface->w == surface->stride) {
-        rasterRGBA32(surface->buffer, 0x00000000, 0, surface->w * surface->h);
+        rasterRGBA32(surface->buffer + (surface->stride * y + x), 0x00000000, x, w * h);
+    //partial clear
     } else {
-        for (uint32_t i = 0; i < surface->h; i++) {
-            rasterRGBA32(surface->buffer + surface->stride * i, 0x00000000, 0, surface->w);
+        auto offset = surface->stride * y + x;
+        for (uint32_t i = 0; i < h; i++) {
+            rasterRGBA32(surface->buffer + (offset * i), 0x00000000, x, w);
         }
     }
     return true;
