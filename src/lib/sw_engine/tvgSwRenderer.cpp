@@ -449,8 +449,9 @@ bool SwRenderer::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t 
 
 bool SwRenderer::preRender()
 {
-    return rasterClear(surface);
+    return rasterClear(surface, 0, 0, surface->w, surface->h);
 }
+
 
 void SwRenderer::clearCompositors()
 {
@@ -631,17 +632,11 @@ Compositor* SwRenderer::target(const RenderRegion& region, ColorSpace cs)
     cmp->compositor->image.h = surface->h;
     cmp->compositor->image.direct = true;
 
-    //We know partial clear region
-    cmp->buffer = cmp->compositor->image.data + (cmp->stride * y + x);
-    cmp->w = w;
-    cmp->h = h;
-
-    rasterClear(cmp);
-
-    //Recover context
     cmp->buffer = cmp->compositor->image.data;
     cmp->w = cmp->compositor->image.w;
     cmp->h = cmp->compositor->image.h;
+
+    rasterClear(cmp, x, y, w, h);
 
     //Switch render target
     surface = cmp;
