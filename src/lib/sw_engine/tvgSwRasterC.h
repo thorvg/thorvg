@@ -20,43 +20,70 @@
  * SOFTWARE.
  */
 
-static void inline cRasterRGBA32(uint32_t *dst, uint32_t val, uint32_t offset, int32_t len)
+template<typename PIXEL_T>
+static void inline cRasterPixels(PIXEL_T* dst, uint32_t val, uint32_t offset, int32_t len)
 {
     dst += offset;
     while (len--) *dst++ = val;
 }
 
 
-static bool inline cRasterTranslucentRle(SwSurface* surface, const SwRleData* rle, uint32_t color)
+static bool inline cRasterTranslucentRle(SwSurface* surface, const SwRleData* rle, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 {
     auto span = rle->spans;
-    uint32_t src;
 
-    for (uint32_t i = 0; i < rle->size; ++i, ++span) {
-        auto dst = &surface->buf32[span->y * surface->stride + span->x];
-
-        if (span->coverage < 255) src = ALPHA_BLEND(color, span->coverage);
-        else src = color;
-
-        for (uint32_t x = 0; x < span->len; ++x, ++dst) {
-            *dst = src + ALPHA_BLEND(*dst, _ialpha(src));
+    //32bit channels
+    if (surface->channelSize == sizeof(uint32_t)) {
+        auto color = surface->blender.join(r, g, b, a);
+        uint32_t src;
+        for (uint32_t i = 0; i < rle->size; ++i, ++span) {
+            auto dst = &surface->buf32[span->y * surface->stride + span->x];
+            if (span->coverage < 255) src = ALPHA_BLEND(color, span->coverage);
+            else src = color;
+            for (uint32_t x = 0; x < span->len; ++x, ++dst) {
+                *dst = src + ALPHA_BLEND(*dst, _ialpha(src));
+            }
+        }
+    //8bit grayscale
+    } else if (surface->channelSize == sizeof(uint8_t)) {
+        uint8_t src;
+        for (uint32_t i = 0; i < rle->size; ++i, ++span) {
+            auto dst = &surface->buf8[span->y * surface->stride + span->x];
+            if (span->coverage < 255) src = _multiply<uint8_t>(span->coverage, a);
+            else src = a;
+            for (uint32_t x = 0; x < span->len; ++x, ++dst) {
+                *dst = src + _multiply<uint8_t>(*dst, ~src);
+            }
         }
     }
     return true;
 }
 
 
-static bool inline cRasterTranslucentRect(SwSurface* surface, const SwBBox& region, uint32_t color)
+static bool inline cRasterTranslucentRect(SwSurface* surface, const SwBBox& region, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 {
-    auto buffer = surface->buf32 + (region.min.y * surface->stride) + region.min.x;
     auto h = static_cast<uint32_t>(region.max.y - region.min.y);
     auto w = static_cast<uint32_t>(region.max.x - region.min.x);
-    auto ialpha = _ialpha(color);
 
-    for (uint32_t y = 0; y < h; ++y) {
-        auto dst = &buffer[y * surface->stride];
-        for (uint32_t x = 0; x < w; ++x, ++dst) {
-            *dst = color + ALPHA_BLEND(*dst, ialpha);
+    //32bits channels
+    if (surface->channelSize == sizeof(uint32_t)) {
+        auto color = surface->blender.join(r, g, b, a);
+        auto buffer = surface->buf32 + (region.min.y * surface->stride) + region.min.x;
+        auto ialpha = _ialpha(color);
+        for (uint32_t y = 0; y < h; ++y) {
+            auto dst = &buffer[y * surface->stride];
+            for (uint32_t x = 0; x < w; ++x, ++dst) {
+                *dst = color + ALPHA_BLEND(*dst, ialpha);
+            }
+        }
+    //8bit grayscale
+    } else if (surface->channelSize == sizeof(uint8_t)) {
+        auto buffer = surface->buf8 + (region.min.y * surface->stride) + region.min.x;
+        for (uint32_t y = 0; y < h; ++y) {
+            auto dst = &buffer[y * surface->stride];
+            for (uint32_t x = 0; x < w; ++x, ++dst) {
+                *dst = a + _multiply<uint8_t>(*dst, ~a);
+            }
         }
     }
     return true;
