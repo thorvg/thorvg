@@ -167,8 +167,7 @@ bool Paint::Impl::render(RenderMethod& renderer)
     if (compData && compData->method != CompositeMethod::ClipPath && !(compData->target->pImpl->ctxFlag & ContextFlag::FastTrack)) {
         auto region = smethod->bounds(renderer);
         if (region.w == 0 || region.h == 0) return true;
-        //cmp = renderer.target(region, COMPOSITE_TO_COLORSPACE(renderer, compData->method));
-        cmp = renderer.target(region, renderer.colorSpace());
+        cmp = renderer.target(region, COMPOSITE_TO_COLORSPACE(renderer, compData->method));
         if (renderer.beginComposite(cmp, CompositeMethod::None, 255)) {
             compData->target->pImpl->render(renderer);
         }

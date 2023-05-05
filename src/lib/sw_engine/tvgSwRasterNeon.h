@@ -49,8 +49,14 @@ static void neonRasterRGBA32(uint32_t *dst, uint32_t val, uint32_t offset, int32
 }
 
 
-static bool neonRasterTranslucentRle(SwSurface* surface, const SwRleData* rle, uint32_t color)
+static bool neonRasterTranslucentRle(SwSurface* surface, const SwRleData* rle, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 {
+    if (surface->channelSize != sizeof(uint32_t)) {
+        TVGERR("SW_ENGINE", "Unsupported Channel Size = %d", surface->channelSize);
+        return false;
+    }
+
+    auto color = surface->blender.join(r, g, b, a);
     auto span = rle->spans;
     uint32_t src;
     uint8x8_t *vDst = nullptr;
@@ -88,8 +94,14 @@ static bool neonRasterTranslucentRle(SwSurface* surface, const SwRleData* rle, u
 }
 
 
-static bool neonRasterTranslucentRect(SwSurface* surface, const SwBBox& region, uint32_t color)
+static bool neonRasterTranslucentRect(SwSurface* surface, const SwBBox& region, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 {
+    if (surface->channelSize != sizeof(uint32_t)) {
+        TVGERR("SW_ENGINE", "Unsupported Channel Size = %d", surface->channelSize);
+        return false;
+    }
+
+    auto color = surface->blender.join(r, g, b, a);
     auto buffer = surface->buffer + (region.min.y * surface->stride) + region.min.x;
     auto h = static_cast<uint32_t>(region.max.y - region.min.y);
     auto w = static_cast<uint32_t>(region.max.x - region.min.x);
