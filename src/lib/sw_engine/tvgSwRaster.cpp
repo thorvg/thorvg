@@ -1602,13 +1602,13 @@ bool rasterConvertCS(Surface* surface, ColorSpace to)
     auto from = surface->cs;
 
     if ((from == ColorSpace::ABGR8888 && to == ColorSpace::ARGB8888) || (from == ColorSpace::ABGR8888S && to == ColorSpace::ARGB8888S)) {
+        surface->cs = to;
         return cRasterABGRtoARGB(surface);
     }
     if ((from == ColorSpace::ARGB8888 && to == ColorSpace::ABGR8888) || (from == ColorSpace::ARGB8888S && to == ColorSpace::ABGR8888S)) {
+        surface->cs = to;
         return cRasterARGBtoABGR(surface);
     }
-
-    surface->cs = to;
 
     return false;
 }
