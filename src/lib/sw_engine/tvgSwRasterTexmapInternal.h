@@ -130,9 +130,9 @@
                 px = INTERPOLATE(ab, px, px2);
             }
 #if defined(TEXMAP_MASKING) && defined(TEXMAP_TRANSLUCENT)
-            auto src = ALPHA_BLEND(px, _multiplyAlpha(opacity, blendMethod(*cmp)));
+            auto src = ALPHA_BLEND(px, _multiplyAlpha(opacity, blender(*cmp)));
 #elif defined(TEXMAP_MASKING)
-            auto src = ALPHA_BLEND(px, blendMethod(*cmp));
+            auto src = ALPHA_BLEND(px, blender(*cmp));
 #elif defined(TEXMAP_TRANSLUCENT)
             auto src = ALPHA_BLEND(px, opacity);
 #else
