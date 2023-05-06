@@ -35,10 +35,14 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 {
     if (!canvas) return;
 
-    auto picture = tvg::Picture::gen();
+    auto mask = tvg::Shape::gen();
+    mask->appendCircle(WIDTH/2, HEIGHT/2, WIDTH/2, HEIGHT/2);
+    mask->fill(255, 255, 255, 100);
 
+    auto picture = tvg::Picture::gen();
     picture->load(EXAMPLE_DIR"/tiger.svg");
     picture->size(WIDTH, HEIGHT);
+    picture->composite(move(mask), tvg::CompositeMethod::AlphaMask);
     pPicture = picture.get();
     canvas->push(move(picture));
 }
