@@ -1135,11 +1135,26 @@ static bool _parseStyleAttr(void* data, const char* key, const char* value, bool
     sz = strlen(key);
     for (unsigned int i = 0; i < sizeof(styleTags) / sizeof(styleTags[0]); i++) {
         if (styleTags[i].sz - 1 == sz && !strncmp(styleTags[i].tag, key, sz)) {
+            bool importance = false;
+            if (auto ptr = strstr(value, "!important")) {
+                size_t size = ptr - value;
+                while (size > 0 && isspace(value[size - 1])) {
+                    size--;
+                }
+                value = svgUtilStrndup(value, size);
+                importance = true;
+            }
             if (style) {
-                styleTags[i].tagHandler(loader, node, value);
-                node->style->flags = (node->style->flags | styleTags[i].flag);
+                if (importance || !(node->style->flagsImportance & styleTags[i].flag)) {
+                    styleTags[i].tagHandler(loader, node, value);
+                    node->style->flags = (node->style->flags | styleTags[i].flag);
+                }
             } else if (!(node->style->flags & styleTags[i].flag)) {
                 styleTags[i].tagHandler(loader, node, value);
+            }
+            if (importance) {
+                node->style->flagsImportance = (node->style->flags | styleTags[i].flag);
+                free(const_cast<char*>(value));
             }
             return true;
         }
