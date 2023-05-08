@@ -1,10 +1,14 @@
-# This is a comment.
-# Each line is a file pattern followed by one or more owners.
+# ThorVG uses the CODEOWNERS file to automatically assign reviewers in the GitHub system. 
+# However, the presence of a CODEOWNER does not necessarily imply that they are the sole copyright owners of the code. 
+# For more information, please consult the AUTHORS file.
 
-# These owners will be the default owners for everything in
-# the repo. Unless a later match takes precedence,
-# @global-owner1 and @global-owner2 will be requested for
-# review when someone opens a pull request.
-* @hermet @mgrudzinska
-/src/loaders/svg/ @JSUYA
+* @hermet
+/src/lib/* @JSUYA @mgrudzinska
+/src/lib/sw_engine/ @JSUYA @mgrudzinska
+/src/loaders/svg/ @JSUYA @mgrudzinska
+/src/loaders/tvg/ @mgrudzinska
+/src/savers/tvg/ @mgrudzinska
 /src/bin/svg2png/ @JSUYA
+/src/examples/ @JSUYA @mgrudzinska
+/test/* @JSUYA @mgrudzinska
+/test/capi/ @mgrudzinska
