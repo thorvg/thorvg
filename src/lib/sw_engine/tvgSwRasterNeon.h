@@ -66,7 +66,7 @@ static bool neonRasterTranslucentRle(SwSurface* surface, const SwRleData* rle, u
         if (span->coverage < 255) src = ALPHA_BLEND(color, span->coverage);
         else src = color;
 
-        auto dst = &surface->buffer[span->y * surface->stride + span->x];
+        auto dst = &surface->buf32[span->y * surface->stride + span->x];
         auto ialpha = 255 - _alpha(src);
 
         if ((((uint32_t) dst) & 0x7) != 0) {
@@ -102,7 +102,7 @@ static bool neonRasterTranslucentRect(SwSurface* surface, const SwBBox& region, 
     }
 
     auto color = surface->blender.join(r, g, b, a);
-    auto buffer = surface->buffer + (region.min.y * surface->stride) + region.min.x;
+    auto buffer = surface->buf32 + (region.min.y * surface->stride) + region.min.x;
     auto h = static_cast<uint32_t>(region.max.y - region.min.y);
     auto w = static_cast<uint32_t>(region.max.x - region.min.x);
     auto ialpha = 255 - _alpha(color);

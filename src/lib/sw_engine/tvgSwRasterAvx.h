@@ -90,7 +90,7 @@ static bool avxRasterTranslucentRect(SwSurface* surface, const SwBBox& region, u
     }
 
     auto color = surface->blender.join(r, g, b, a);
-    auto buffer = surface->buffer + (region.min.y * surface->stride) + region.min.x;
+    auto buffer = surface->buf32 + (region.min.y * surface->stride) + region.min.x;
     auto h = static_cast<uint32_t>(region.max.y - region.min.y);
     auto w = static_cast<uint32_t>(region.max.x - region.min.x);
 
@@ -143,7 +143,7 @@ static bool avxRasterTranslucentRle(SwSurface* surface, const SwRleData* rle, ui
     uint32_t src;
 
     for (uint32_t i = 0; i < rle->size; ++i) {
-        auto dst = &surface->buffer[span->y * surface->stride + span->x];
+        auto dst = &surface->buf32[span->y * surface->stride + span->x];
 
         if (span->coverage < 255) src = ALPHA_BLEND(color, span->coverage);
         else src = color;
