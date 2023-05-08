@@ -6,5 +6,5 @@
 # @global-owner1 and @global-owner2 will be requested for
 # review when someone opens a pull request.
 * @hermet @mgrudzinska
-* /src/loaders/svg/ @JSUYA
-* /src/bin/svg2png/ @JSUYA
+/src/loaders/svg/ @JSUYA
+/src/bin/svg2png/ @JSUYA
