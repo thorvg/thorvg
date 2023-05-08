@@ -164,7 +164,7 @@ enum class CompositeMethod
     ClipPath,     ///< The intersection of the source and the target is determined and only the resulting pixels from the source are rendered.
     AlphaMask,    ///< The pixels of the source and the target are alpha blended. As a result, only the part of the source, which alpha intersects with the target is visible.
     InvAlphaMask, ///< The pixels of the source and the complement to the target's pixels are alpha blended. As a result, only the part of the source which alpha is not covered by the target is visible.
-    LumaMask      ///< @BETA_API The source pixels are converted to the grayscale (luma value) and alpha blended with the target. As a result, only the part of the source, which intersects with the target is visible.
+    LumaMask      ///< The source pixels are converted to the grayscale (luma value) and alpha blended with the target. As a result, only the part of the source, which intersects with the target is visible. @since 0.9
 };
 
 /**
@@ -1219,9 +1219,10 @@ public:
     /**
      * @brief Loads a raw data from a memory block with a given size.
      *
-     * @warning Please do not use it, this API is not official one. It could be modified in the next version.
+     * @retval Result::Success When succeed, Result::InsufficientCondition otherwise.
+     * @retval Result::FailedAllocation An internal error possibly with memory allocation.
      *
-     * @BETA_API
+     * @since 0.9
      */
     Result load(uint32_t* data, uint32_t w, uint32_t h, bool copy) noexcept;
 
