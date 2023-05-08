@@ -124,6 +124,7 @@ typedef enum {
     TVG_COMPOSITE_METHOD_CLIP_PATH,          ///< The intersection of the source and the target is determined and only the resulting pixels from the source are rendered.
     TVG_COMPOSITE_METHOD_ALPHA_MASK,         ///< The pixels of the source and the target are alpha blended. As a result, only the part of the source, which intersects with the target is visible.
     TVG_COMPOSITE_METHOD_INVERSE_ALPHA_MASK, ///< The pixels of the source and the complement to the target's pixels are alpha blended. As a result, only the part of the source which is not covered by the target is visible.
+    TVG_COMPOSITE_METHOD_LUMA_MASK           ///< The source pixels are converted to grayscale (luma value) and alpha blended with the target. As a result, only the part of the source which intersects with the target is visible. \since 0.9
 } Tvg_Composite_Method;
 
 
@@ -1848,11 +1849,13 @@ TVG_API Tvg_Result tvg_picture_load(Tvg_Paint* paint, const char* path);
 /*!
 * \brief Loads a picture data from a memory block of a given size. (BETA_API)
 *
-* \return Tvg_Result return value
+* \return Tvg_Result enumeration.
 * \retval TVG_RESULT_SUCCESS Succeed.
-* \retval TVG_RESULT_INVALID_PARAMETERS: An invalid Tvg_Paint.
+* \retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer or no data are provided or the @p width or @p height value is zero or less.
+* \retval TVG_RESULT_FAILED_ALLOCATION A problem with memory allocation occurs.
+* \retval TVG_RESULT_INSUFFICIENT_CONDITION An error occurs at a later stage.
 *
-* \warning Please do not use it, this API is not official one. It can be modified in the next version.
+* \since 0.9
 */
 TVG_API Tvg_Result tvg_picture_load_raw(Tvg_Paint* paint, uint32_t *data, uint32_t w, uint32_t h, bool copy);
 
