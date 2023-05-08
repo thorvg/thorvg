@@ -25,6 +25,10 @@
 #include "tvgTaskScheduler.h"
 #include "tvgSwRenderer.h"
 
+#ifdef _WIN32
+    #include <intrin.h>
+#endif
+
 /************************************************************************/
 /* Internal Class Implementation                                        */
 /************************************************************************/
@@ -32,6 +36,7 @@ static int32_t initEngineCnt = false;
 static int32_t rendererCnt = 0;
 static SwMpool* globalMpool = nullptr;
 static uint32_t threadsCnt = 0;
+static SimdExtension _simdSupport = SimdExtension::Other;
 
 struct SwTask : Task
 {
@@ -350,6 +355,7 @@ static void _renderFill(SwShapeTask* task, SwSurface* surface, uint32_t opacity)
     }
 }
 
+
 static void _renderStroke(SwShapeTask* task, SwSurface* surface, uint32_t opacity)
 {
     uint8_t r, g, b, a;
@@ -362,6 +368,46 @@ static void _renderStroke(SwShapeTask* task, SwSurface* surface, uint32_t opacit
         }
     }
 }
+
+
+#ifdef THORVG_AVX_VECTOR_SUPPORT
+void _cpuInfo(unsigned i, uint32_t* registers) {
+#ifdef _WIN32
+    __cpuid((int*)registers, (int)i);
+#else
+    asm volatile ("cpuid"
+                  : "=a" (registers[0]), "=b" (registers[1]), "=c" (registers[2]), "=d" (registers[3])
+                  : "a" (i), "c" (0));
+#endif
+}
+
+
+static void _simdExt()
+{
+    uint32_t registers[4] = {0, 0, 0, 0};
+
+    _cpuInfo(7, registers);
+    if ((registers[1] >> 16) & 1) { //AVX-512 Foundation
+        _simdSupport = SimdExtension::Avx512;
+        TVGLOG("SW_ENGINE", "Runtime SIMD extension check: AVX512");
+        return;
+    }
+    if ((registers[1] >> 5) & 1) {
+        _simdSupport = SimdExtension::Avx2;
+        TVGLOG("SW_ENGINE", "Runtime SIMD extension check: AVX2");
+        return;
+    }
+
+    _cpuInfo(1, registers);
+    if ((registers[2] >> 28) & 1) {
+        _simdSupport = SimdExtension::Avx;
+        TVGLOG("SW_ENGINE", "Runtime SIMD extension check: AVX");
+        return;
+    }
+
+    TVGLOG("SW_ENGINE", "Runtime SIMD extension check: other");
+}
+#endif
 
 /************************************************************************/
 /* External Class Implementation                                        */
@@ -773,6 +819,10 @@ bool SwRenderer::init(uint32_t threads)
 
     threadsCnt = threads;
 
+#ifdef THORVG_AVX_VECTOR_SUPPORT
+    _simdExt();
+#endif
+
     //Share the memory pool among the renderer
     globalMpool = mpoolInit(threads);
     if (!globalMpool) {
@@ -801,8 +851,15 @@ bool SwRenderer::term()
     return true;
 }
 
+
 SwRenderer* SwRenderer::gen()
 {
     ++rendererCnt;
     return new SwRenderer();
+}
+
+
+SimdExtension THORVG_SIMD_SUPPORT()
+{
+    return _simdSupport;
 }
