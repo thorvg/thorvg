@@ -9,6 +9,8 @@ Hermet Park (hermet) is the lead maintainer. Also there are designated maintaine
 <b>tvg_saver:</b> Mira Grudzinska (mgrudzinska) <br />
 <b>svg2png:</b> Junsu Choi (JSUYA) <br />
 <b>capi:</b> Mira Grudzinska (mgrudzinska) <br />
+<b>test:</b> Mira Grudzinska (mgrudzinska) <br />
+<b>examples:</b> Mira Grudzinska (mgrudzinska) <br />
 <br />
 
 ## Self Test & Verification
