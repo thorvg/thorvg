@@ -51,7 +51,7 @@ private:
 public:
     virtual ~Task() = default;
 
-    void done(unsigned tid = 0)
+    void done()
     {
         if (!pending) return;
 

@@ -173,8 +173,6 @@ struct SwShapeTask : SwTask
         //Clip Path
         for (auto clip = clips.data; clip < (clips.data + clips.count); ++clip) {
             auto clipper = static_cast<SwTask*>(*clip);
-            //Guarantee composition targets get ready.
-            clipper->done(tid);
             //Clip shape rle
             if (shape.rle && !clipper->clip(shape.rle)) goto err;
             //Clip stroke rle
@@ -225,25 +223,17 @@ struct SwSceneTask : SwTask
         if (!sceneRle) sceneRle = static_cast<SwRleData*>(calloc(1, sizeof(SwRleData)));
         else rleReset(sceneRle);
 
-        //Only one shape
-        if (scene.count == 1) {
-            auto clipper = static_cast<SwTask*>(*scene.data);
-            clipper->done(tid);
         //Merge shapes if it has more than one shapes
-        } else {
+        if (scene.count > 1) {
             //Merge first two clippers
             auto clipper1 = static_cast<SwTask*>(*scene.data);
-            clipper1->done(tid);
-
             auto clipper2 = static_cast<SwTask*>(*(scene.data + 1));
-            clipper2->done(tid);
 
             rleMerge(sceneRle, clipper1->rle(), clipper2->rle());
 
             //Unify the remained clippers
             for (auto rd = scene.data + 2; rd < (scene.data + scene.count); ++rd) {
                 auto clipper = static_cast<SwTask*>(*rd);
-                clipper->done(tid);
                 rleMerge(sceneRle, sceneRle, clipper->rle());
             }
         }
@@ -306,8 +296,6 @@ struct SwImageTask : SwTask
                     imageDelOutline(&image, mpool, tid);
                     for (auto clip = clips.data; clip < (clips.data + clips.count); ++clip) {
                         auto clipper = static_cast<SwTask*>(*clip);
-                        //Guarantee composition targets get ready.
-                        clipper->done(tid);
                         if (!clipper->clip(image.rle)) goto err;
                     }
                     return;
@@ -694,6 +682,13 @@ void* SwRenderer::prepareCommon(SwTask* task, const RenderTransform* transform, 
     //Finish previous task if it has duplicated request.
     task->done();
 
+    //TODO: Failed threading them. It would be better if it's possible.
+    //See: https://github.com/thorvg/thorvg/issues/1409
+    //Guarantee composition targets get ready.
+    for (auto clip = clips.data; clip < (clips.data + clips.count); ++clip) {
+        static_cast<SwTask*>(*clip)->done();
+    }
+
     task->clips = clips;
 
     if (transform) {
@@ -744,6 +739,12 @@ RenderData SwRenderer::prepare(const Array<RenderData>& scene, RenderData data, 
     if (!task) task = new SwSceneTask;
     task->scene = scene;
 
+    //TODO: Failed threading them. It would be better if it's possible.
+    //See: https://github.com/thorvg/thorvg/issues/1409
+    //Guarantee composition targets get ready.
+    for (auto task = scene.data; task < (scene.data + scene.count); ++task) {
+        static_cast<SwTask*>(*task)->done();
+    }
     return prepareCommon(task, transform, opacity, clips, flags);
 }
 
