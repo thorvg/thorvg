@@ -30,6 +30,14 @@ if all_loaders or get_option('loaders').contains('jpg') == true
     endif
 endif
 
+if get_option('loaders').contains('webp_beta') == true
+    if get_option('static') == true
+        message('static webp is not available, disable webp_beta loader.')
+    else
+        subdir('external_webp')
+    endif
+endif
+
 subdir('raw')
 
 loader_dep = declare_dependency(

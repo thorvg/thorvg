@@ -21,12 +21,12 @@ jobs:
         sudo apt-get update
         sudo apt-get install ninja-build gcc-multilib g++-multilib
         sudo apt-get install python3-pip
-        sudo apt-get install libturbojpeg0-dev libpng-dev
+        sudo apt-get install libturbojpeg0-dev libpng-dev libwebp-dev
         sudo pip3 install meson
 
     - name: Build
       run: |
-        meson . build -Dlog=true -Dloaders="all" -Dsavers="all" -Dbindings="capi" -Dtools="all"
+        meson . build -Dlog=true -Dloaders="all, webp_beta" -Dsavers="all" -Dbindings="capi" -Dtools="all"
         sudo ninja -C build install
 
   static_loaders:
@@ -45,7 +45,7 @@ jobs:
 
     - name: Build
       run: |
-        meson . build -Dlog=true -Dloaders="all" -Dsavers="all" -Dbindings="capi" -Dtools="all" -Dstatic=true
+        meson . build -Dlog=true -Dloaders="tvg, svg, png, jpg" -Dsavers="all" -Dbindings="capi" -Dtools="all" -Dstatic=true
         sudo ninja -C build install
 
   examples:
@@ -61,12 +61,12 @@ jobs:
         sudo apt-get install ninja-build gcc-multilib g++-multilib
         sudo apt-get install libefl-all-dev
         sudo apt-get install python3-pip
-        sudo apt-get install libturbojpeg0-dev libpng-dev
+        sudo apt-get install libturbojpeg0-dev libpng-dev libwebp-dev
         sudo pip3 install meson
 
     - name: Build
       run: |
-        meson . build -Dexamples=true -Dloaders="all" -Dsavers="all" -Dbindings="capi"
+        meson . build -Dexamples=true -Dloaders="all, webp_beta" -Dsavers="all" -Dbindings="capi"
         sudo ninja -C build install
 
   unit_test:
@@ -83,12 +83,12 @@ jobs:
         sudo apt-get install curl jq
         sudo apt-get install software-properties-common
         sudo apt-get install python3-pip
-        sudo apt-get install libturbojpeg0-dev libpng-dev
+        sudo apt-get install libturbojpeg0-dev libpng-dev libwebp-dev
         sudo pip3 install meson
 
     - name: Build
       run: |
-        meson . build -Dtests=true -Dloaders="all" -Dsavers="all" -Dbindings="capi" --errorlogs
+        meson . build -Dtests=true -Dloaders="all, webp_beta" -Dsavers="all" -Dbindings="capi" --errorlogs
         sudo ninja -C build install test
 
     - uses: actions/upload-artifact@v3
@@ -107,7 +107,7 @@ jobs:
     - name: Build & Run memcheck Script(ASAN)
       run: |
         sudo rm -rf ./build
-        meson . build -Db_sanitize="address,undefined" -Dloaders="all" -Dsavers="all" -Dtests="true" -Dbindings="capi"
+        meson . build -Db_sanitize="address,undefined" -Dloaders="all, webp_beta" -Dsavers="all" -Dtests="true" -Dbindings="capi"
         sudo ninja -C build install
         export PATH=$PATH:~/.local/bin/
         chmod +x "${GITHUB_WORKSPACE}/.github/workflows/memcheck_asan.sh"

@@ -38,6 +38,10 @@
     #include "tvgJpgLoader.h"
 #endif
 
+#ifdef THORVG_WEBP_LOADER_SUPPORT
+    #include "tvgWebpLoader.h"
+#endif
+
 #include "tvgRawLoader.h"
 
 /************************************************************************/
@@ -75,6 +79,12 @@ static LoadModule* _find(FileType type)
 #endif
             break;
         }
+        case FileType::Webp: {
+#ifdef THORVG_WEBP_LOADER_SUPPORT
+            return new WebpLoader;
+#endif
+            break;
+        }
         default: {
             break;
         }
@@ -103,6 +113,10 @@ static LoadModule* _find(FileType type)
             format = "JPG";
             break;
         }
+        case FileType::Webp: {
+            format = "WEBP";
+            break;
+        }
         default: {
             format = "???";
             break;
@@ -121,6 +135,7 @@ static LoadModule* _findByPath(const string& path)
     if (!ext.compare("svg")) return _find(FileType::Svg);
     if (!ext.compare("png")) return _find(FileType::Png);
     if (!ext.compare("jpg")) return _find(FileType::Jpg);
+    if (!ext.compare("webp")) return _find(FileType::Webp);
     return nullptr;
 }
 
@@ -136,6 +151,7 @@ static LoadModule* _findByType(const string& mimeType)
     else if (mimeType == "raw") type = FileType::Raw;
     else if (mimeType == "png") type = FileType::Png;
     else if (mimeType == "jpg" || mimeType == "jpeg") type = FileType::Jpg;
+    else if (mimeType == "webp") type = FileType::Webp;
     else {
         TVGLOG("LOADER", "Given mimetype is unknown = \"%s\".", mimeType.c_str());
         return nullptr;
