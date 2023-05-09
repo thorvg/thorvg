@@ -502,3 +502,70 @@ TEST_CASE("Load TVG file and render", "[tvgPicture]")
 }
 
 #endif
+
+#ifdef THORVG_WEBP_LOADER_SUPPORT
+
+TEST_CASE("Load WEBP file from path", "[tvgPicture]")
+{
+    auto picture = Picture::gen();
+    REQUIRE(picture);
+
+    //Invalid file
+    REQUIRE(picture->load("invalid.webp") == Result::InvalidArguments);
+
+    REQUIRE(picture->load(TEST_DIR"/test.webp") == Result::Success);
+
+    float w, h;
+    REQUIRE(picture->size(&w, &h) == Result::Success);
+
+    REQUIRE(w == 512);
+    REQUIRE(h == 512);
+}
+
+TEST_CASE("Load WEBP file from data", "[tvgPicture]")
+{
+    auto picture = Picture::gen();
+    REQUIRE(picture);
+
+    //Open file
+    ifstream file(TEST_DIR"/test.webp", ios::in | ios::binary);
+    REQUIRE(file.is_open());
+    auto size = sizeof(uint32_t) * (1000*1000);
+    auto data = (char*)malloc(size);
+    file.read(data, size);
+    file.close();
+
+    REQUIRE(picture->load(data, size, "", false) == Result::Success);
+    REQUIRE(picture->load(data, size, "webp", true) == Result::Success);
+
+    float w, h;
+    REQUIRE(picture->size(&w, &h) == Result::Success);
+    REQUIRE(w == 512);
+    REQUIRE(h == 512);
+
+    free(data);
+}
+
+TEST_CASE("Load WEBP file and render", "[tvgPicture]")
+{
+    REQUIRE(Initializer::init(CanvasEngine::Sw, 0) == Result::Success);
+
+    auto canvas = SwCanvas::gen();
+    REQUIRE(canvas);
+
+    uint32_t buffer[100*100];
+    REQUIRE(canvas->target(buffer, 100, 100, 100, SwCanvas::Colorspace::ABGR8888) == Result::Success);
+
+    auto picture = Picture::gen();
+    REQUIRE(picture);
+
+    REQUIRE(picture->load(TEST_DIR"/test.webp") == Result::Success);
+    REQUIRE(picture->opacity(192) == Result::Success);
+    REQUIRE(picture->scale(5.0) == Result::Success);
+
+    REQUIRE(canvas->push(move(picture)) == Result::Success);
+
+    REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
+}
+
+#endif

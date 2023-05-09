@@ -30,6 +30,12 @@ if all_loaders or get_option('loaders').contains('jpg') == true
     endif
 endif
 
+if all_loaders or get_option('loaders').contains('webp') == true
+    if get_option('static') == false and webp_dep.found()
+        subdir('external_webp')
+    endif
+endif
+
 subdir('raw')
 
 loader_dep = declare_dependency(

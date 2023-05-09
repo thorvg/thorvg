@@ -32,6 +32,7 @@ source_file = [
     'PicturePng.cpp',
     'PictureRaw.cpp',
     'PictureTvg.cpp',
+    'PictureWebp.cpp',
     'RadialGradient.cpp',
     'Scene.cpp',
     'SceneClipper.cpp',

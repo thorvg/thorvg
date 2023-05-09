@@ -21,7 +21,7 @@ jobs:
         sudo apt-get update
         sudo apt-get install ninja-build gcc-multilib g++-multilib
         sudo apt-get install python3-pip
-        sudo apt-get install libturbojpeg0-dev libpng-dev
+        sudo apt-get install libturbojpeg0-dev libpng-dev libwebp-dev
         sudo pip3 install meson
 
     - name: Build
@@ -45,7 +45,7 @@ jobs:
 
     - name: Build
       run: |
-        meson . build -Dlog=true -Dloaders="all" -Dsavers="all" -Dbindings="capi" -Dtools="all" -Dstatic=true
+        meson . build -Dlog=true -Dloaders="tvg, svg, png, jpg" -Dsavers="all" -Dbindings="capi" -Dtools="all" -Dstatic=true
         sudo ninja -C build install
 
   examples:
@@ -61,7 +61,7 @@ jobs:
         sudo apt-get install ninja-build gcc-multilib g++-multilib
         sudo apt-get install libefl-all-dev
         sudo apt-get install python3-pip
-        sudo apt-get install libturbojpeg0-dev libpng-dev
+        sudo apt-get install libturbojpeg0-dev libpng-dev libwebp-dev
         sudo pip3 install meson
 
     - name: Build
@@ -83,7 +83,7 @@ jobs:
         sudo apt-get install curl jq
         sudo apt-get install software-properties-common
         sudo apt-get install python3-pip
-        sudo apt-get install libturbojpeg0-dev libpng-dev
+        sudo apt-get install libturbojpeg0-dev libpng-dev libwebp-dev
         sudo pip3 install meson
 
     - name: Build

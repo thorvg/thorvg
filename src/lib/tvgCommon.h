@@ -62,7 +62,7 @@ using namespace tvg;
 #define TVG_CLASS_ID_LINEAR    4
 #define TVG_CLASS_ID_RADIAL    5
 
-enum class FileType { Tvg = 0, Svg, Raw, Png, Jpg, Unknown };
+enum class FileType { Tvg = 0, Svg, Raw, Png, Jpg, Webp, Unknown };
 
 #ifdef THORVG_LOG_ENABLED
     constexpr auto ErrorColor = "\033[31m";  //red

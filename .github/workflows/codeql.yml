@@ -69,7 +69,7 @@ jobs:
         sudo apt-get install ninja-build gcc-multilib g++-multilib
         sudo apt-get install python3-pip
         sudo pip3 install meson
-        sudo apt-get install libturbojpeg0-dev libpng-dev
+        sudo apt-get install libturbojpeg0-dev libpng-dev libwebp-dev
 
         meson . build -Dbindings="capi" -Dloaders="all" -Dsavers="all" -Dtools="all"
         sudo ninja -C build install

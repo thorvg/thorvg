@@ -6,7 +6,7 @@ option('engines',
 
 option('loaders',
    type: 'array',
-   choices: ['', 'tvg', 'svg', 'png', 'jpg', 'all'],
+   choices: ['', 'tvg', 'svg', 'png', 'jpg', 'webp','all'],
    value: ['svg', 'tvg'],
    description: 'Enable File Loaders in thorvg')
 

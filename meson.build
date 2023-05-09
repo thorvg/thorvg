@@ -45,6 +45,24 @@ if all_loaders or get_option('loaders').contains('jpg') == true
     config_h.set10('THORVG_JPG_LOADER_SUPPORT', true)
 endif
 
+if all_loaders or get_option('loaders').contains('webp') == true
+    webp_dep = dependency('libwebp', required: false)
+
+    if get_option('static') == true
+        if all_loaders
+            message('static webp is not available, disable webp loader.')
+        elif get_option('loaders').contains('webp') == true
+            error('static webp is not available, disable webp loader.')
+        endif
+    else
+        if webp_dep.found()
+            config_h.set10('THORVG_WEBP_LOADER_SUPPORT', true)
+        else
+            message('Failed to find webp library, disable webp loader.')
+        endif
+    endif
+endif
+
 #Savers
 all_savers = false
 
@@ -114,13 +132,14 @@ Summary:
     Loader (SVG):          @7@
     Loader (PNG):          @8@
     Loader (JPG):          @9@
-    Saver (TVG):           @10@
-    CAPI Binding:          @11@
-    Log Message:           @12@
-    Tests:                 @13@
-    Examples:              @14@
-    Tool (Svg2Tvg):        @15@
-    Tool (Svg2Png):        @16@
+    Loader (WEBP):         @10@
+    Saver (TVG):           @11@
+    CAPI Binding:          @12@
+    Log Message:           @13@
+    Tests:                 @14@
+    Examples:              @15@
+    Tool (Svg2Tvg):        @16@
+    Tool (Svg2Png):        @17@
 
 '''.format(
         meson.project_version(),
@@ -133,6 +152,7 @@ Summary:
         all_loaders or get_option('loaders').contains('svg'),
         all_loaders or get_option('loaders').contains('png'),
         all_loaders or get_option('loaders').contains('jpg'),
+        all_loaders or get_option('loaders').contains('webp'),
         all_savers or get_option('savers').contains('tvg'),
         get_option('bindings').contains('capi'),
         get_option('log'),
