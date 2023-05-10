@@ -75,7 +75,10 @@ static bool _merge(Shape* from, Shape* to)
     from->fillColor(&r, &g, &b, &a);
     to->fillColor(&r2, &g2, &b2, &a2);
 
-    if (r != r2 || g != g2 || b != b2 || a != a2) return false;
+    if (r != r2 || g != g2 || b != b2 || a != a2 || a < 255) return false;
+
+    auto fromRule = from->fillRule();
+    if (fromRule == FillRule::EvenOdd || fromRule != to->fillRule()) return false;
 
     //composition
     if (from->composite(nullptr) != CompositeMethod::None) return false;
