@@ -160,6 +160,9 @@ TEST_CASE("Linear Gradient identifier", "[capiLinearGradient]")
     REQUIRE(tvg_gradient_get_identifier(grad, &id) == TVG_RESULT_SUCCESS);
     REQUIRE(tvg_gradient_get_identifier(grad_copy, &id_copy) == TVG_RESULT_SUCCESS);
     REQUIRE(id_copy == id);
+
+    REQUIRE(tvg_gradient_del(grad_copy) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_gradient_del(grad) == TVG_RESULT_SUCCESS);
 }
 
 TEST_CASE("Linear Gradient clear data", "[capiLinearGradient]")

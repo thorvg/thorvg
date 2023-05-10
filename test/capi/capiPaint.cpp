@@ -224,6 +224,9 @@ TEST_CASE("Paint Identifier", "[capiPaint]")
     REQUIRE(tvg_paint_get_identifier(paint, &id) == TVG_RESULT_SUCCESS);
     REQUIRE(tvg_paint_get_identifier(paint_copy, &id_copy) == TVG_RESULT_SUCCESS);
     REQUIRE(id_copy == id);
+
+    REQUIRE(tvg_paint_del(paint_copy) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_paint_del(paint) == TVG_RESULT_SUCCESS);
 }
 
 TEST_CASE("Paint Clip Path Composite Method", "[capiPaint]")
