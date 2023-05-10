@@ -8,6 +8,7 @@
 /src/loaders/svg/ @JSUYA @mgrudzinska
 /src/loaders/tvg/ @mgrudzinska
 /src/savers/tvg/ @mgrudzinska
+/src/bindings/capi/ @mgrudzinska
 /src/bin/svg2png/ @JSUYA
 /src/examples/ @JSUYA @mgrudzinska
 /test/* @JSUYA @mgrudzinska
