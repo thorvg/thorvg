@@ -55,10 +55,6 @@ bool JpgLoader::open(const string& path)
 {
     clear();
 
-    auto jpgFile = fopen(path.c_str(), "rb");
-    if (!jpgFile) return false;
-    fclose(jpgFile);
-
     int width, height;
     decoder = jpgdHeader(path.c_str(), &width, &height);
     if (!decoder) return false;
