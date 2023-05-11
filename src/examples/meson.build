@@ -24,6 +24,7 @@ source_file = [
     'InvMasking.cpp',
     'LinearGradient.cpp',
     'LumaMasking.cpp',
+    'Lottie.cpp',
     'Masking.cpp',
     'MaskingMethods.cpp',
     'MultiCanvas.cpp',
