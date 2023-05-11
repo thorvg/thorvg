@@ -2928,10 +2928,14 @@ jpeg_decoder* jpgdHeader(const char* data, int size, int* width, int* height)
 jpeg_decoder* jpgdHeader(const char* filename, int* width, int* height)
 {
     auto fileStream = new jpeg_decoder_file_stream();
-    if (!fileStream->open(filename)) return nullptr;
+    if (!fileStream->open(filename)) {
+        delete(fileStream);
+        return nullptr;
+    }
 
     auto decoder = new jpeg_decoder(fileStream);
     if (decoder->get_error_code() != JPGD_SUCCESS) {
+        delete(fileStream);
         delete(decoder);
         return nullptr;
     }
