@@ -348,12 +348,6 @@ Matrix Paint::transform() noexcept
 }
 
 
-TVG_DEPRECATED Result Paint::bounds(float* x, float* y, float* w, float* h) const noexcept
-{
-    return this->bounds(x, y, w, h, false);
-}
-
-
 Result Paint::bounds(float* x, float* y, float* w, float* h, bool transform) const noexcept
 {
     if (pImpl->bounds(x, y, w, h, transform)) return Result::Success;
