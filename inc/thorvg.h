@@ -47,10 +47,6 @@
     #define TVG_DEPRECATED __attribute__ ((__deprecated__))
 #endif
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #define _TVG_DECLARE_PRIVATE(A) \
 protected: \
     struct Impl; \
@@ -1632,9 +1628,5 @@ public:
 /** @}*/
 
 } //namespace
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif //_THORVG_H_
