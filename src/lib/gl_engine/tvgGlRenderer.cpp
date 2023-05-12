@@ -102,7 +102,7 @@ bool GlRenderer::postRender()
 }
 
 
-Compositor* GlRenderer::target(TVG_UNUSED const RenderRegion& region)
+Compositor* GlRenderer::target(TVG_UNUSED const RenderRegion& region, TVG_UNUSED ColorSpace cs)
 {
     //TODO: Prepare frameBuffer & Setup render target for composition
     return nullptr;
@@ -123,21 +123,15 @@ bool GlRenderer::endComposite(TVG_UNUSED Compositor* cmp)
 }
 
 
-int32_t GlRenderer::colorSpace()
+ColorSpace GlRenderer::colorSpace()
 {
-    //TODO: return a proper color space value.
-    return -1;
+    return ColorSpace::Unsupported;
 }
 
 
 bool GlRenderer::renderImage(TVG_UNUSED void* data)
 {
-    return false;
-}
-
-
-bool GlRenderer::renderImageMesh(TVG_UNUSED void* data)
-{
+    //TODO: render requested images
     return false;
 }
 
@@ -194,7 +188,7 @@ bool GlRenderer::dispose(RenderData data)
 }
 
 
-RenderData GlRenderer::prepare(TVG_UNUSED Surface* image, TVG_UNUSED Polygon* triangles, TVG_UNUSED uint32_t triangleCnt, TVG_UNUSED RenderData data, TVG_UNUSED const RenderTransform* transform, TVG_UNUSED uint32_t opacity, TVG_UNUSED Array<RenderData>& clips, TVG_UNUSED RenderUpdateFlag flags)
+RenderData GlRenderer::prepare(TVG_UNUSED Surface* surface, TVG_UNUSED const RenderMesh* mesh, TVG_UNUSED RenderData data, TVG_UNUSED const RenderTransform* transform, TVG_UNUSED uint32_t opacity, TVG_UNUSED Array<RenderData>& clips, TVG_UNUSED RenderUpdateFlag flags)
 {
     //TODO:
     return nullptr;

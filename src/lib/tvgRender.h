@@ -29,23 +29,54 @@
 namespace tvg
 {
 
+using RenderData = void*;
+using pixel_t = uint32_t;
+
 enum RenderUpdateFlag {None = 0, Path = 1, Color = 2, Gradient = 4, Stroke = 8, Transform = 16, Image = 32, GradientStroke = 64, All = 255};
+
+struct Surface;
+
+enum ColorSpace
+{
+    ABGR8888 = 0,      //The channels are joined in the order: alpha, blue, green, red. Colors are alpha-premultiplied.
+    ARGB8888,          //The channels are joined in the order: alpha, red, green, blue. Colors are alpha-premultiplied.
+    ABGR8888S,         //The channels are joined in the order: alpha, blue, green, red. Colors are un-alpha-premultiplied.
+    ARGB8888S,         //The channels are joined in the order: alpha, red, green, blue. Colors are un-alpha-premultiplied.
+    Grayscale8,        //One single channel data.
+    Unsupported        //TODO: Change to the default, At the moment, we put it in the last to align with SwCanvas::Colorspace.
+};
 
 struct Surface
 {
-    //TODO: Union for multiple types
-    uint32_t* buffer;
-    uint32_t  stride;
-    uint32_t  w, h;
-    uint32_t  cs;
-};
+    union {
+        pixel_t* data;       //system based data pointer
+        uint32_t* buf32;     //for explicit 32bits channels
+        uint8_t*  buf8;      //for explicit 8bits grayscale
+    };
+    uint32_t stride;
+    uint32_t w, h;
+    ColorSpace  cs;
+    uint8_t channelSize;
 
-using RenderData = void*;
+    bool premultiplied;      //Alpha-premultiplied
+    bool owner;              //Only owner could modify the buffer
+};
 
 struct Compositor
 {
     CompositeMethod method;
     uint32_t        opacity;
+};
+
+struct RenderMesh
+{
+    Polygon* triangles = nullptr;
+    uint32_t triangleCnt = 0;
+
+    ~RenderMesh()
+    {
+        free(triangles);
+    }
 };
 
 struct RenderRegion
@@ -188,26 +219,55 @@ public:
     virtual ~RenderMethod() {}
     virtual RenderData prepare(const RenderShape& rshape, RenderData data, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flags, bool clipper) = 0;
     virtual RenderData prepare(const Array<RenderData>& scene, RenderData data, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flags) = 0;
-    virtual RenderData prepare(Surface* image, Polygon* triangles, uint32_t triangleCnt, RenderData data, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flags) = 0;
+    virtual RenderData prepare(Surface* surface, const RenderMesh* mesh, RenderData data, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flags) = 0;
     virtual bool preRender() = 0;
     virtual bool renderShape(RenderData data) = 0;
     virtual bool renderImage(RenderData data) = 0;
-    virtual bool renderImageMesh(RenderData data) = 0;
     virtual bool postRender() = 0;
     virtual bool dispose(RenderData data) = 0;
     virtual RenderRegion region(RenderData data) = 0;
     virtual RenderRegion viewport() = 0;
     virtual bool viewport(const RenderRegion& vp) = 0;
+    virtual ColorSpace colorSpace() = 0;
 
     virtual bool clear() = 0;
     virtual bool sync() = 0;
 
-    virtual Compositor* target(const RenderRegion& region) = 0;
+    virtual Compositor* target(const RenderRegion& region, ColorSpace cs) = 0;
     virtual bool beginComposite(Compositor* cmp, CompositeMethod method, uint32_t opacity) = 0;
     virtual bool endComposite(Compositor* cmp) = 0;
-
-    virtual uint32_t colorSpace() = 0;
 };
+
+static inline uint8_t CHANNEL_SIZE(ColorSpace cs)
+{
+    switch(cs) {
+        case ColorSpace::ABGR8888:
+        case ColorSpace::ABGR8888S:
+        case ColorSpace::ARGB8888:
+        case ColorSpace::ARGB8888S:
+            return sizeof(uint32_t);
+        case ColorSpace::Grayscale8:
+            return sizeof(uint8_t);
+        case ColorSpace::Unsupported:
+        default:
+            TVGERR("SW_ENGINE", "Unsupported Channel Size! = %d", (int)cs);
+            return 0;
+    }
+}
+
+static inline ColorSpace COMPOSITE_TO_COLORSPACE(RenderMethod& renderer, CompositeMethod method)
+{
+    switch(method) {
+        case CompositeMethod::AlphaMask:
+        case CompositeMethod::InvAlphaMask:
+            return ColorSpace::Grayscale8;
+        case CompositeMethod::LumaMask:
+            return renderer.colorSpace();
+        default:
+            TVGERR("COMMON", "Unsupported Composite Size! = %d", (int)method);
+            return ColorSpace::Unsupported;
+    }
+}
 
 }
 

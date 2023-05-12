@@ -37,41 +37,6 @@ void JpgLoader::clear()
     freeData = false;
 }
 
-uint32_t convertColorSpaceType(uint32_t colorSpace)
-{
-    uint32_t tjpfColorSpace = TJPF_RGBX;
-    switch (colorSpace)
-    {
-        case SwCanvas::ARGB8888:
-        case SwCanvas::ARGB8888_STRAIGHT:
-        default:
-           tjpfColorSpace = TJPF_BGRX;
-        break;
-        case SwCanvas::ABGR8888:
-        case SwCanvas::ABGR8888_STRAIGHT:
-           tjpfColorSpace = TJPF_RGBX;
-        break;
-    }
-    return tjpfColorSpace;
-}
-
-
-static inline uint32_t CHANGE_COLORSPACE(uint32_t c)
-{
-    return (c & 0xff000000) + ((c & 0x00ff0000)>>16) + (c & 0x0000ff00) + ((c & 0x000000ff)<<16);
-}
-
-
-static void _changeColorSpace(uint32_t* data, uint32_t w, uint32_t h)
-{
-    auto buffer = data;
-    for (uint32_t y = 0; y < h; ++y, buffer += w) {
-        auto src = buffer;
-        for (uint32_t x = 0; x < w; ++x, ++src) {
-            *src = CHANGE_COLORSPACE(*src);
-        }
-    }
-}
 
 /************************************************************************/
 /* External Class Implementation                                        */
@@ -122,6 +87,7 @@ bool JpgLoader::open(const string& path)
 
     w = static_cast<float>(width);
     h = static_cast<float>(height);
+    cs = ColorSpace::ARGB8888;
     ret = true;
 
     goto finalize;
@@ -154,6 +120,7 @@ bool JpgLoader::open(const char* data, uint32_t size, bool copy)
 
     w = static_cast<float>(width);
     h = static_cast<float>(height);
+    cs = ColorSpace::ARGB8888;
     this->size = size;
 
     return true;
@@ -162,12 +129,14 @@ bool JpgLoader::open(const char* data, uint32_t size, bool copy)
 
 bool JpgLoader::read()
 {
+    /* OPTIMIZE: We assume the desired colorspace is ColorSpace::ARGB
+       How could we notice the renderer colorspace at this time? */
     if (image) tjFree(image);
-    image = (unsigned char *)tjAlloc(static_cast<int>(w) * static_cast<int>(h) * tjPixelSize[convertColorSpaceType(colorSpace)]);
+    image = (unsigned char *)tjAlloc(static_cast<int>(w) * static_cast<int>(h) * tjPixelSize[TJPF_BGRX]);
     if (!image) return false;
 
     //decompress jpg image
-    if (tjDecompress2(jpegDecompressor, data, size, image, static_cast<int>(w), 0, static_cast<int>(h), convertColorSpaceType(colorSpace), 0) < 0) {
+    if (tjDecompress2(jpegDecompressor, data, size, image, static_cast<int>(w), 0, static_cast<int>(h), TJPF_BGRX, 0) < 0) {
         TVGERR("JPG LOADER", "%s", tjGetErrorStr());
         tjFree(image);
         image = nullptr;
@@ -185,20 +154,20 @@ bool JpgLoader::close()
 }
 
 
-unique_ptr<Surface> JpgLoader::bitmap(uint32_t colorSpace)
+unique_ptr<Surface> JpgLoader::bitmap()
 {
     if (!image) return nullptr;
-    if (this->colorSpace != colorSpace) {
-        this->colorSpace = colorSpace;
-        _changeColorSpace(reinterpret_cast<uint32_t*>(image), w, h);
-    }
 
-    auto surface = static_cast<Surface*>(malloc(sizeof(Surface)));
-    surface->buffer = (uint32_t*)(image);
+    //TODO: It's better to keep this surface instance in the loader side
+    auto surface = new Surface;
+    surface->buf8 = image;
     surface->stride = w;
     surface->w = w;
     surface->h = h;
-    surface->cs = colorSpace;
+    surface->cs = cs;
+    surface->channelSize = sizeof(uint32_t);
+    surface->premultiplied = true;
+    surface->owner = true;
 
     return unique_ptr<Surface>(surface);
 }

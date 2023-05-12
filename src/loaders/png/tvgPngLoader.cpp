@@ -29,44 +29,6 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-
-static inline uint32_t PREMULTIPLY(uint32_t c)
-{
-    auto a = (c >> 24);
-    return (c & 0xff000000) + ((((c >> 8) & 0xff) * a) & 0xff00) + ((((c & 0x00ff00ff) * a) >> 8) & 0x00ff00ff);
-}
-
-
-static void _premultiply(uint32_t* data, uint32_t w, uint32_t h)
-{
-    auto buffer = data;
-    for (uint32_t y = 0; y < h; ++y, buffer += w) {
-        auto src = buffer;
-        for (uint32_t x = 0; x < w; ++x, ++src) {
-            *src = PREMULTIPLY(*src);
-        }
-    }
-}
-
-
-static inline uint32_t CHANGE_COLORSPACE(uint32_t c)
-{
-    return (c & 0xff000000) + ((c & 0x00ff0000)>>16) + (c & 0x0000ff00) + ((c & 0x000000ff)<<16);
-}
-
-
-static void _changeColorSpace(uint32_t* data, uint32_t w, uint32_t h)
-{
-    auto buffer = data;
-    for (uint32_t y = 0; y < h; ++y, buffer += w) {
-        auto src = buffer;
-        for (uint32_t x = 0; x < w; ++x, ++src) {
-            *src = CHANGE_COLORSPACE(*src);
-        }
-    }
-}
-
-
 void PngLoader::clear()
 {
     lodepng_state_cleanup(&state);
@@ -123,9 +85,11 @@ bool PngLoader::open(const string& path)
 
     w = static_cast<float>(width);
     h = static_cast<float>(height);
-    ret = true;
 
-    if (state.info_png.color.colortype == LCT_RGBA) colorSpace = SwCanvas::ABGR8888;
+    if (state.info_png.color.colortype == LCT_RGBA) cs = ColorSpace::ABGR8888;
+    else cs = ColorSpace::ARGB8888;
+
+    ret = true;
 
     goto finalize;
 
@@ -161,7 +125,8 @@ bool PngLoader::open(const char* data, uint32_t size, bool copy)
     h = static_cast<float>(height);
     this->size = size;
 
-    if (state.info_png.color.colortype == LCT_RGBA) colorSpace = SwCanvas::ABGR8888;
+    if (state.info_png.color.colortype == LCT_RGBA) cs = ColorSpace::ABGR8888;
+    else cs = ColorSpace::ARGB8888;
 
     return true;
 }
@@ -185,22 +150,20 @@ bool PngLoader::close()
 }
 
 
-unique_ptr<Surface> PngLoader::bitmap(uint32_t colorSpace)
+unique_ptr<Surface> PngLoader::bitmap()
 {
     this->done();
 
-    if (!image) return nullptr;
-    if (this->colorSpace != colorSpace) {
-        this->colorSpace = colorSpace;
-        _changeColorSpace(reinterpret_cast<uint32_t*>(image), static_cast<uint32_t>(w), static_cast<uint32_t>(h));
-    }
-
-    auto surface = static_cast<Surface*>(malloc(sizeof(Surface)));
-    surface->buffer = reinterpret_cast<uint32_t*>(image);
+    //TODO: It's better to keep this surface instance in the loader side
+    auto surface = new Surface;
+    surface->buf8 = image;
     surface->stride = static_cast<uint32_t>(w);
     surface->w = static_cast<uint32_t>(w);
     surface->h = static_cast<uint32_t>(h);
-    surface->cs = colorSpace;
+    surface->cs = cs;
+    surface->channelSize = sizeof(uint32_t);
+    surface->premultiplied = false;
+    surface->owner = true;
 
     return unique_ptr<Surface>(surface);
 }
@@ -216,6 +179,4 @@ void PngLoader::run(unsigned tid)
     auto height = static_cast<unsigned>(h);
 
     lodepng_decode(&image, &width, &height, &state, data, size);
-
-    _premultiply((uint32_t*)(image), width, height);
 }

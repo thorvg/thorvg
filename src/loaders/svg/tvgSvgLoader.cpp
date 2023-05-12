@@ -861,10 +861,18 @@ static bool _attrParseSvgNode(void* data, const char* key, const char* value)
 
     if (!strcmp(key, "width")) {
         doc->w = _toFloat(loader->svgParse, value, SvgParserLengthType::Horizontal);
-        doc->viewFlag = (doc->viewFlag | SvgViewFlag::Width);
+        if (strstr(value, "%") && !(doc->viewFlag & SvgViewFlag::Viewbox)) {
+            doc->viewFlag = (doc->viewFlag | SvgViewFlag::WidthInPercent);
+        } else {
+            doc->viewFlag = (doc->viewFlag | SvgViewFlag::Width);
+        }
     } else if (!strcmp(key, "height")) {
         doc->h = _toFloat(loader->svgParse, value, SvgParserLengthType::Vertical);
-        doc->viewFlag = (doc->viewFlag | SvgViewFlag::Height);
+        if (strstr(value, "%") && !(doc->viewFlag & SvgViewFlag::Viewbox)) {
+            doc->viewFlag = (doc->viewFlag | SvgViewFlag::HeightInPercent);
+        } else {
+            doc->viewFlag = (doc->viewFlag | SvgViewFlag::Height);
+        }
     } else if (!strcmp(key, "viewBox")) {
         if (_parseNumber(&value, &doc->vx)) {
             if (_parseNumber(&value, &doc->vy)) {
@@ -3469,7 +3477,8 @@ SvgLoader::~SvgLoader()
 void SvgLoader::run(unsigned tid)
 {
     //According to the SVG standard the value of the width/height of the viewbox set to 0 disables rendering
-    if (renderingDisabled) {
+    if ((viewFlag & SvgViewFlag::Viewbox) && (fabsf(vw) <= FLT_EPSILON || fabsf(vh) <= FLT_EPSILON)) {
+        TVGLOG("SVG", "The <viewBox> width and/or height set to 0 - rendering disabled.");
         root = Scene::gen();
         return;
     }
@@ -3492,7 +3501,7 @@ void SvgLoader::run(unsigned tid)
         if (loaderData.gradients.count > 0) _updateGradient(&loaderData, loaderData.doc, &loaderData.gradients);
         if (defs) _updateGradient(&loaderData, loaderData.doc, &defs->node.defs.gradients);
     }
-    root = svgSceneBuild(loaderData.doc, vx, vy, vw, vh, w, h, align, meetOrSlice, svgPath, viewFlag);
+    root = svgSceneBuild(loaderData, {vx, vy, vw, vh}, w, h, align, meetOrSlice, svgPath, viewFlag);
 }
 
 
@@ -3513,35 +3522,70 @@ bool SvgLoader::header()
         viewFlag = loaderData.doc->node.doc.viewFlag;
         align = loaderData.doc->node.doc.align;
         meetOrSlice = loaderData.doc->node.doc.meetOrSlice;
-        w = 1.0f;
-        h = 1.0f;
 
-        //Return the brief resource info such as viewbox:
-        if (viewFlag & SvgViewFlag::Width) {
-            w = loaderData.doc->node.doc.w;
-        }
-        if (viewFlag & SvgViewFlag::Height) {
-            h = loaderData.doc->node.doc.h;
-        }
-        //Override size
         if (viewFlag & SvgViewFlag::Viewbox) {
             vx = loaderData.doc->node.doc.vx;
             vy = loaderData.doc->node.doc.vy;
             vw = loaderData.doc->node.doc.vw;
             vh = loaderData.doc->node.doc.vh;
 
-            if (!(viewFlag & SvgViewFlag::Width)) w = vw;
-            if (!(viewFlag & SvgViewFlag::Height)) h = vh;
+            if (viewFlag & SvgViewFlag::Width) w = loaderData.doc->node.doc.w;
+            else {
+                w = loaderData.doc->node.doc.vw;
+                if (viewFlag & SvgViewFlag::WidthInPercent) {
+                    w *= loaderData.doc->node.doc.w;
+                    viewFlag = (viewFlag ^ SvgViewFlag::WidthInPercent);
+                }
+                viewFlag = (viewFlag | SvgViewFlag::Width);
+            }
+            if (viewFlag & SvgViewFlag::Height) h = loaderData.doc->node.doc.h;
+            else {
+                h = loaderData.doc->node.doc.vh;
+                if (viewFlag & SvgViewFlag::HeightInPercent) {
+                    h *= loaderData.doc->node.doc.h;
+                    viewFlag = (viewFlag ^ SvgViewFlag::HeightInPercent);
+                }
+                viewFlag = (viewFlag | SvgViewFlag::Height);
+            }
+        //In case no viewbox and width/height data is provided the completion of loading
+        //has to be forced, in order to establish this data based on the whole picture.
         } else {
-            vw = w;
-            vh = h;
+            //Before loading, set default viewbox & size if they are empty
+            vx = vy = 0.0f;
+            if (viewFlag & SvgViewFlag::Width) {
+                vw = w = loaderData.doc->node.doc.w;
+            } else {
+                vw = 1.0f;
+                if (viewFlag & SvgViewFlag::WidthInPercent) {
+                    w = loaderData.doc->node.doc.w;
+                } else w = 1.0f;
+            }
+
+            if (viewFlag & SvgViewFlag::Height) {
+                vh = h = loaderData.doc->node.doc.h;
+            } else {
+                vh = 1.0f;
+                if (viewFlag & SvgViewFlag::HeightInPercent) {
+                    h = loaderData.doc->node.doc.h;
+                } else h = 1.0f;
+            }
+
+            run(0);
+
+            //Override viewbox & size again after svg loading.
+            vx = loaderData.doc->node.doc.vx;
+            vy = loaderData.doc->node.doc.vy;
+            vw = loaderData.doc->node.doc.vw;
+            vh = loaderData.doc->node.doc.vh;
+            w = loaderData.doc->node.doc.w;
+            h = loaderData.doc->node.doc.h;
         }
-    } else {
-        TVGLOG("SVG", "No SVG File. There is no <svg/>");
-        return false;
+
+        return true;
     }
 
-    return true;
+    TVGLOG("SVG", "No SVG File. There is no <svg/>");
+    return false;
 }
 
 
@@ -3601,18 +3645,10 @@ bool SvgLoader::read()
 {
     if (!content || size == 0) return false;
 
-    if ((viewFlag & SvgViewFlag::Viewbox) && (fabsf(vw) <= FLT_EPSILON || fabsf(vh) <= FLT_EPSILON)) {
-        TVGLOG("SVG", "The <viewBox> width and/or height set to 0 - rendering disabled.");
-        renderingDisabled = true;
-    }
+    //the loading has been already completed in header()
+    if (root) return true;
 
     TaskScheduler::request(this);
-
-    //In case no viewbox and width/height data is provided the completion of loading
-    //has to be forced, in order to establish this data based on the whole picture bounding box.
-    if (!(viewFlag & SvgViewFlag::Viewbox) && (!(viewFlag & SvgViewFlag::Width) || !(viewFlag & SvgViewFlag::Height))) {
-        this->done();
-    }
 
     return true;
 }

@@ -208,10 +208,19 @@ TEST_CASE("Composition", "[tvgPaint]")
     REQUIRE(shape->composite(&pComp2) == CompositeMethod::AlphaMask);
     REQUIRE(pComp == pComp2);
 
+    //InvAlphaMask
     comp = Shape::gen();
     pComp = comp.get();
     REQUIRE(shape->composite(move(comp), CompositeMethod::InvAlphaMask) == Result::Success);
 
     REQUIRE(shape->composite(&pComp2) == CompositeMethod::InvAlphaMask);
+    REQUIRE(pComp == pComp2);
+
+    //LumaMask
+    comp = Shape::gen();
+    pComp = comp.get();
+    REQUIRE(shape->composite(move(comp), CompositeMethod::LumaMask) == Result::Success);
+
+    REQUIRE(shape->composite(&pComp2) == CompositeMethod::LumaMask);
     REQUIRE(pComp == pComp2);
 }

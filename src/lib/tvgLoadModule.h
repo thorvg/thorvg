@@ -36,8 +36,8 @@ public:
     float vy = 0;
     float vw = 0;
     float vh = 0;
-    float w = 0, h = 0;         //default image size
-    uint32_t colorSpace = SwCanvas::ARGB8888;
+    float w = 0, h = 0;                             //default image size
+    ColorSpace cs = ColorSpace::Unsupported;        //must be clarified at open()
 
     virtual ~LoadModule() {}
 
@@ -50,7 +50,7 @@ public:
 
     virtual bool read() = 0;
     virtual bool close() = 0;
-    virtual unique_ptr<Surface> bitmap(uint32_t colorSpace) { return nullptr; }
+    virtual unique_ptr<Surface> bitmap() { return nullptr; }
     virtual unique_ptr<Paint> paint() { return nullptr; }
 };
 

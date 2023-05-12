@@ -167,21 +167,21 @@ struct SwShapeTask : SwTask
             }
         }
 
+        //Clear current task memorypool here if the clippers would use the same memory pool
+        shapeDelOutline(&shape, mpool, tid);
+
         //Clip Path
         for (auto clip = clips.data; clip < (clips.data + clips.count); ++clip) {
             auto clipper = static_cast<SwTask*>(*clip);
-            //Guarantee composition targets get ready.
-            clipper->done(tid);
             //Clip shape rle
             if (shape.rle && !clipper->clip(shape.rle)) goto err;
             //Clip stroke rle
             if (shape.strokeRle && !clipper->clip(shape.strokeRle)) goto err;
         }
-        goto end;
+        return;
 
     err:
         shapeReset(&shape);
-    end:
         shapeDelOutline(&shape, mpool, tid);
     }
 
@@ -223,25 +223,17 @@ struct SwSceneTask : SwTask
         if (!sceneRle) sceneRle = static_cast<SwRleData*>(calloc(1, sizeof(SwRleData)));
         else rleReset(sceneRle);
 
-        //Only one shape
-        if (scene.count == 1) {
-            auto clipper = static_cast<SwTask*>(*scene.data);
-            clipper->done(tid);
         //Merge shapes if it has more than one shapes
-        } else {
+        if (scene.count > 1) {
             //Merge first two clippers
             auto clipper1 = static_cast<SwTask*>(*scene.data);
-            clipper1->done(tid);
-
             auto clipper2 = static_cast<SwTask*>(*(scene.data + 1));
-            clipper2->done(tid);
 
             rleMerge(sceneRle, clipper1->rle(), clipper2->rle());
 
             //Unify the remained clippers
             for (auto rd = scene.data + 2; rd < (scene.data + scene.count); ++rd) {
                 auto clipper = static_cast<SwTask*>(*rd);
-                clipper->done(tid);
                 rleMerge(sceneRle, sceneRle, clipper->rle());
             }
         }
@@ -258,8 +250,8 @@ struct SwSceneTask : SwTask
 struct SwImageTask : SwTask
 {
     SwImage image;
-    Polygon* triangles;
-    uint32_t triangleCnt;
+    Surface* source;                            //Image source
+    const RenderMesh* mesh = nullptr;           //Should be valid ptr in action
 
     bool clip(SwRleData* target) override
     {
@@ -277,28 +269,40 @@ struct SwImageTask : SwTask
     {
         auto clipRegion = bbox;
 
+        //Convert colorspace if it's not aligned.
+        if (source->owner) {
+            if (source->cs != surface->cs) rasterConvertCS(source, surface->cs);
+            if (!source->premultiplied) rasterPremultiply(source);
+        }
+
+        image.data = source->data;
+        image.w = source->w;
+        image.h = source->h;
+        image.stride = source->stride;
+        image.channelSize = source->channelSize;
+
         //Invisible shape turned to visible by alpha.
         if ((flags & (RenderUpdateFlag::Image | RenderUpdateFlag::Transform | RenderUpdateFlag::Color)) && (opacity > 0)) {
             imageReset(&image);
             if (!image.data || image.w == 0 || image.h == 0) goto end;
 
-            if (!imagePrepare(&image, triangles, triangleCnt, transform, clipRegion, bbox, mpool, tid)) goto end;
+            if (!imagePrepare(&image, mesh, transform, clipRegion, bbox, mpool, tid)) goto end;
 
             // TODO: How do we clip the triangle mesh? Only clip non-meshed images for now
-            if (triangleCnt == 0 && clips.count > 0) {
+            if (mesh->triangleCnt == 0 && clips.count > 0) {
                 if (!imageGenRle(&image, bbox, false)) goto end;
                 if (image.rle) {
+                    //Clear current task memorypool here if the clippers would use the same memory pool
+                    imageDelOutline(&image, mpool, tid);
                     for (auto clip = clips.data; clip < (clips.data + clips.count); ++clip) {
                         auto clipper = static_cast<SwTask*>(*clip);
-                        //Guarantee composition targets get ready.
-                        clipper->done(tid);
                         if (!clipper->clip(image.rle)) goto err;
                     }
+                    return;
                 }
             }
         }
         goto end;
-
     err:
         rleReset(image.rle);
     end:
@@ -408,17 +412,20 @@ bool SwRenderer::viewport(const RenderRegion& vp)
 }
 
 
-bool SwRenderer::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h, uint32_t colorSpace)
+bool SwRenderer::target(pixel_t* data, uint32_t stride, uint32_t w, uint32_t h, ColorSpace cs)
 {
-    if (!buffer || stride == 0 || w == 0 || h == 0 || w > stride) return false;
+    if (!data || stride == 0 || w == 0 || h == 0 || w > stride) return false;
 
     if (!surface) surface = new SwSurface;
 
-    surface->buffer = buffer;
+    surface->data = data;
     surface->stride = stride;
     surface->w = w;
     surface->h = h;
-    surface->cs = colorSpace;
+    surface->cs = cs;
+    surface->channelSize = CHANNEL_SIZE(cs);
+    surface->premultiplied = true;
+    surface->owner = true;
 
     vport.x = vport.y = 0;
     vport.w = surface->w;
@@ -430,8 +437,9 @@ bool SwRenderer::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t 
 
 bool SwRenderer::preRender()
 {
-    return rasterClear(surface);
+    return rasterClear(surface, 0, 0, surface->w, surface->h);
 }
+
 
 void SwRenderer::clearCompositors()
 {
@@ -448,7 +456,7 @@ void SwRenderer::clearCompositors()
 bool SwRenderer::postRender()
 {
     //Unmultiply alpha if needed
-    if (surface->cs == SwCanvas::ABGR8888_STRAIGHT || surface->cs == SwCanvas::ARGB8888_STRAIGHT) {
+    if (surface->cs == ColorSpace::ABGR8888S || surface->cs == ColorSpace::ARGB8888S) {
         rasterUnpremultiply(surface);
     }
 
@@ -469,18 +477,7 @@ bool SwRenderer::renderImage(RenderData data)
 
     if (task->opacity == 0) return true;
 
-    return rasterImage(surface, &task->image, task->transform, task->bbox, task->opacity);
-}
-
-
-bool SwRenderer::renderImageMesh(RenderData data)
-{
-    auto task = static_cast<SwImageTask*>(data);
-    task->done();
-
-    if (task->opacity == 0) return true;
-
-    return rasterImageMesh(surface, &task->image, task->triangles, task->triangleCnt, task->transform, task->bbox, task->opacity);
+    return rasterImage(surface, &task->image, task->mesh, task->transform, task->bbox, task->opacity);
 }
 
 
@@ -499,7 +496,7 @@ bool SwRenderer::renderShape(RenderData data)
     //Do Stroking Composition
     if (task->cmpStroking) {
         opacity = 255;
-        cmp = target(task->bounds());
+        cmp = target(task->bounds(), colorSpace());
         beginComposite(cmp, CompositeMethod::None, task->opacity);
     //No Stroking Composition
     } else {
@@ -565,7 +562,7 @@ bool SwRenderer::mempool(bool shared)
 }
 
 
-Compositor* SwRenderer::target(const RenderRegion& region)
+Compositor* SwRenderer::target(const RenderRegion& region, ColorSpace cs)
 {
     auto x = region.x;
     auto y = region.y;
@@ -575,13 +572,15 @@ Compositor* SwRenderer::target(const RenderRegion& region)
     auto sh = static_cast<int32_t>(surface->h);
 
     //Out of boundary
-    if (x > sw || y > sh) return nullptr;
+    if (x >= sw || y >= sh || x + w < 0 || y + h < 0) return nullptr;
 
     SwSurface* cmp = nullptr;
 
+    auto reqChannelSize = CHANNEL_SIZE(cs);
+
     //Use cached data
     for (auto p = compositors.data; p < (compositors.data + compositors.count); ++p) {
-        if ((*p)->compositor->valid) {
+        if ((*p)->compositor->valid && (*p)->compositor->image.channelSize == reqChannelSize) {
             cmp = *p;
             break;
         }
@@ -590,17 +589,16 @@ Compositor* SwRenderer::target(const RenderRegion& region)
     //New Composition
     if (!cmp) {
         cmp = new SwSurface;
-        if (!cmp) goto err;
 
         //Inherits attributes from main surface
         *cmp = *surface;
 
         cmp->compositor = new SwCompositor;
-        if (!cmp->compositor) goto err;
 
-        //SwImage, Optimize Me: Surface size from MainSurface(WxH) to Parameter W x H
-        cmp->compositor->image.data = (uint32_t*) malloc(sizeof(uint32_t) * surface->stride * surface->h);
-        if (!cmp->compositor->image.data) goto err;
+        //TODO: We can optimize compositor surface size from (surface->stride x surface->h) to Parameter(w x h)
+        cmp->compositor->image.data = (pixel_t*)malloc(reqChannelSize * surface->stride * surface->h);
+        cmp->channelSize = cmp->compositor->image.channelSize = reqChannelSize;
+
         compositors.push(cmp);
     }
 
@@ -622,30 +620,16 @@ Compositor* SwRenderer::target(const RenderRegion& region)
     cmp->compositor->image.h = surface->h;
     cmp->compositor->image.direct = true;
 
-    //We know partial clear region
-    cmp->buffer = cmp->compositor->image.data + (cmp->stride * y + x);
-    cmp->w = w;
-    cmp->h = h;
-
-    rasterClear(cmp);
-
-    //Recover context
-    cmp->buffer = cmp->compositor->image.data;
+    cmp->data = cmp->compositor->image.data;
     cmp->w = cmp->compositor->image.w;
     cmp->h = cmp->compositor->image.h;
+
+    rasterClear(cmp, x, y, w, h);
 
     //Switch render target
     surface = cmp;
 
     return cmp->compositor;
-
-err:
-    if (cmp) {
-        if (cmp->compositor) delete(cmp->compositor);
-        delete(cmp);
-    }
-
-    return nullptr;
 }
 
 
@@ -662,10 +646,17 @@ bool SwRenderer::endComposite(Compositor* cmp)
 
     //Default is alpha blending
     if (p->method == CompositeMethod::None) {
-        return rasterImage(surface, &p->image, nullptr, p->bbox, p->opacity);
+        return rasterImage(surface, &p->image, nullptr, nullptr, p->bbox, p->opacity);
     }
 
     return true;
+}
+
+
+ColorSpace SwRenderer::colorSpace()
+{
+    if (surface) return surface->cs;
+    else return ColorSpace::Unsupported;
 }
 
 
@@ -690,6 +681,13 @@ void* SwRenderer::prepareCommon(SwTask* task, const RenderTransform* transform, 
 
     //Finish previous task if it has duplicated request.
     task->done();
+
+    //TODO: Failed threading them. It would be better if it's possible.
+    //See: https://github.com/thorvg/thorvg/issues/1409
+    //Guarantee composition targets get ready.
+    for (auto clip = clips.data; clip < (clips.data + clips.count); ++clip) {
+        static_cast<SwTask*>(*clip)->done();
+    }
 
     task->clips = clips;
 
@@ -721,18 +719,14 @@ void* SwRenderer::prepareCommon(SwTask* task, const RenderTransform* transform, 
 }
 
 
-RenderData SwRenderer::prepare(Surface* image, Polygon* triangles, uint32_t triangleCnt, RenderData data, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flags)
+RenderData SwRenderer::prepare(Surface* surface, const RenderMesh* mesh, RenderData data, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flags)
 {
     //prepare task
     auto task = static_cast<SwImageTask*>(data);
     if (!task) task = new SwImageTask;
     if (flags & RenderUpdateFlag::Image) {
-        task->image.data = image->buffer;
-        task->image.w = image->w;
-        task->image.h = image->h;
-        task->image.stride = image->stride;
-        task->triangles = triangles;
-        task->triangleCnt = triangleCnt;
+        task->source = surface;
+        task->mesh = mesh;
     }
     return prepareCommon(task, transform, opacity, clips, flags);
 }
@@ -745,6 +739,12 @@ RenderData SwRenderer::prepare(const Array<RenderData>& scene, RenderData data, 
     if (!task) task = new SwSceneTask;
     task->scene = scene;
 
+    //TODO: Failed threading them. It would be better if it's possible.
+    //See: https://github.com/thorvg/thorvg/issues/1409
+    //Guarantee composition targets get ready.
+    for (auto task = scene.data; task < (scene.data + scene.count); ++task) {
+        static_cast<SwTask*>(*task)->done();
+    }
     return prepareCommon(task, transform, opacity, clips, flags);
 }
 
@@ -765,13 +765,6 @@ RenderData SwRenderer::prepare(const RenderShape& rshape, RenderData data, const
 
 SwRenderer::SwRenderer():mpool(globalMpool)
 {
-}
-
-
-uint32_t SwRenderer::colorSpace()
-{
-    if (surface) return surface->cs;
-    return tvg::SwCanvas::ARGB8888;
 }
 
 

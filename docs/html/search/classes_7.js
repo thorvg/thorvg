@@ -1,6 +1,7 @@
 var searchData=
 [
-  ['paint_265',['Paint',['../classtvg_1_1Paint.html',1,'tvg']]],
-  ['picture_266',['Picture',['../classtvg_1_1Picture.html',1,'tvg']]],
-  ['point_267',['Point',['../structtvg_1_1Point.html',1,'tvg']]]
+  ['paint_279',['Paint',['../classtvg_1_1Paint.html',1,'tvg']]],
+  ['picture_280',['Picture',['../classtvg_1_1Picture.html',1,'tvg']]],
+  ['point_281',['Point',['../structtvg_1_1Point.html',1,'tvg']]],
+  ['polygon_282',['Polygon',['../structtvg_1_1Polygon.html',1,'tvg']]]
 ];

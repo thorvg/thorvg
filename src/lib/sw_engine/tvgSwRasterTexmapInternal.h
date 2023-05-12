@@ -24,8 +24,8 @@
     float _dudx = dudx, _dvdx = dvdx;
     float _dxdya = dxdya, _dxdyb = dxdyb, _dudya = dudya, _dvdya = dvdya;
     float _xa = xa, _xb = xb, _ua = ua, _va = va;
-    auto sbuf = image->data;
-    auto dbuf = surface->buffer;
+    auto sbuf = image->buf32;
+    auto dbuf = surface->buf32;
     int32_t sw = static_cast<int32_t>(image->stride);
     int32_t sh = image->h;
     int32_t dw = surface->stride;
@@ -37,7 +37,8 @@
     SwSpan* span = nullptr;         //used only when rle based.
 
 #ifdef TEXMAP_MASKING
-    uint32_t* cmp;
+    uint8_t* cmp;
+    auto csize = surface->compositor->image.channelSize;
 #endif
 
     if (!_arrange(image, region, yStart, yEnd)) return;
@@ -94,7 +95,7 @@
         x = x1;
 
 #ifdef TEXMAP_MASKING
-        cmp = &surface->compositor->image.data[y * surface->compositor->image.stride + x1];
+        cmp = &surface->compositor->image.buf8[(y * surface->compositor->image.stride + x1) * csize];
 #endif
         //Draw horizontal line
         while (x++ < x2) {
@@ -130,9 +131,9 @@
                 px = INTERPOLATE(ab, px, px2);
             }
 #if defined(TEXMAP_MASKING) && defined(TEXMAP_TRANSLUCENT)
-            auto src = ALPHA_BLEND(px, _multiplyAlpha(opacity, blendMethod(*cmp)));
+            auto src = ALPHA_BLEND(px, _multiply<uint32_t>(opacity, blender(cmp)));
 #elif defined(TEXMAP_MASKING)
-            auto src = ALPHA_BLEND(px, blendMethod(*cmp));
+            auto src = ALPHA_BLEND(px, blender(cmp));
 #elif defined(TEXMAP_TRANSLUCENT)
             auto src = ALPHA_BLEND(px, opacity);
 #else
@@ -141,7 +142,7 @@
             *buf = src + ALPHA_BLEND(*buf, _ialpha(src));
             ++buf;
 #ifdef TEXMAP_MASKING
-            ++cmp;
+            cmp += csize;
 #endif
             //Step UV horizontally
             u += _dudx;

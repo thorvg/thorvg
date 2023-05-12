@@ -61,11 +61,6 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-struct Box
-{
-    float x, y, w, h;
-};
-
 static bool _appendShape(SvgNode* node, Shape* shape, const Box& vBox, const string& svgPath);
 static unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, const Box& vBox, const string& svgPath, bool mask, int depth, bool* isMaskWhite = nullptr);
 
@@ -763,46 +758,45 @@ static unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, const Box& vBox,
 }
 
 
-static void _applySvgViewFlag(const Scene* scene, float& vx, float& vy, float& vw, float& vh, float& w, float& h, SvgViewFlag viewFlag)
+static void _updateInvalidViewSize(const Scene* scene, Box& vBox, float& w, float& h, SvgViewFlag viewFlag)
 {
-    bool noViewbox = !(viewFlag & SvgViewFlag::Viewbox);
-    bool noWidth = !(viewFlag & SvgViewFlag::Width);
-    bool noHeight = !(viewFlag & SvgViewFlag::Height);
+    bool validWidth = (viewFlag & SvgViewFlag::Width);
+    bool validHeight = (viewFlag & SvgViewFlag::Height);
 
-    if (noViewbox) {
-        float x, y;
-        scene->bounds(&x, &y, &vw, &vh, false);
-        if (noWidth && noHeight) {
-            vx = x;
-            vy = y;
-        } else {
-            vw = noWidth ? vw : w;
-            vh = noHeight ? vh : h;
-        }
+    float x, y;
+    scene->bounds(&x, &y, &vBox.w, &vBox.h, false);
+    if (!validWidth && !validHeight) {
+        vBox.x = x;
+        vBox.y = y;
+    } else {
+        if (validWidth) vBox.w = w;
+        if (validHeight) vBox.h = h;
     }
-    w = noWidth ? vw : w;
-    h = noHeight ? vh : h;
+
+    //the size would have 1x1 or percentage values.
+    if (!validWidth) w *= vBox.w;
+    if (!validHeight) h *= vBox.h;
 }
 
 /************************************************************************/
 /* External Class Implementation                                        */
 /************************************************************************/
 
-unique_ptr<Scene> svgSceneBuild(SvgNode* node, float& vx, float& vy, float& vw, float& vh, float& w, float& h, AspectRatioAlign align, AspectRatioMeetOrSlice meetOrSlice, const string& svgPath, SvgViewFlag viewFlag)
+unique_ptr<Scene> svgSceneBuild(SvgLoaderData& loaderData, Box vBox, float w, float h, AspectRatioAlign align, AspectRatioMeetOrSlice meetOrSlice, const string& svgPath, SvgViewFlag viewFlag)
 {
     //TODO: aspect ratio is valid only if viewBox was set
 
-    if (!node || (node->type != SvgNodeType::Doc)) return nullptr;
+    if (!loaderData.doc || (loaderData.doc->type != SvgNodeType::Doc)) return nullptr;
 
-    Box vBox = {vx, vy, vw, vh};
-    auto docNode = _sceneBuildHelper(node, vBox, svgPath, false, 0);
-    _applySvgViewFlag(docNode.get(), vx, vy, vw, vh, w, h, viewFlag);
+    auto docNode = _sceneBuildHelper(loaderData.doc, vBox, svgPath, false, 0);
 
-    if (!mathEqual(w, vw) || !mathEqual(h, vh)) {
-        Matrix m = _calculateAspectRatioMatrix(align, meetOrSlice, w, h, {vx, vy, vw, vh});
+    if (!(viewFlag & SvgViewFlag::Viewbox)) _updateInvalidViewSize(docNode.get(), vBox, w, h, viewFlag);
+
+    if (!mathEqual(w, vBox.w) || !mathEqual(h, vBox.h)) {
+        Matrix m = _calculateAspectRatioMatrix(align, meetOrSlice, w, h, vBox);
         docNode->transform(m);
-    } else if (!mathZero(vx) || !mathZero(vy)) {
-        docNode->translate(-vx, -vy);
+    } else if (!mathZero(vBox.x) || !mathZero(vBox.y)) {
+        docNode->translate(-vBox.x, -vBox.y);
     }
 
     auto viewBoxClip = Shape::gen();
@@ -815,6 +809,13 @@ unique_ptr<Scene> svgSceneBuild(SvgNode* node, float& vx, float& vy, float& vw, 
 
     auto root = Scene::gen();
     root->push(move(compositeLayer));
+
+    loaderData.doc->node.doc.vx = vBox.x;
+    loaderData.doc->node.doc.vy = vBox.y;
+    loaderData.doc->node.doc.vw = vBox.w;
+    loaderData.doc->node.doc.vh = vBox.h;
+    loaderData.doc->node.doc.w = w;
+    loaderData.doc->node.doc.h = h;
 
     return root;
 }

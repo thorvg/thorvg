@@ -107,7 +107,7 @@ Result Picture::size(float* w, float* h) const noexcept
 const uint32_t* Picture::data(uint32_t* w, uint32_t* h) const noexcept
 {
     //Try it, If not loaded yet.
-    pImpl->reload();
+    pImpl->load();
 
     if (pImpl->loader) {
         if (w) *w = static_cast<uint32_t>(pImpl->loader->w);
@@ -116,12 +116,12 @@ const uint32_t* Picture::data(uint32_t* w, uint32_t* h) const noexcept
         if (w) *w = 0;
         if (h) *h = 0;
     }
-    if (pImpl->surface) return pImpl->surface->buffer;
+    if (pImpl->surface) return pImpl->surface->buf32;
     else return nullptr;
 }
 
 
-Result Picture::mesh(const Polygon* triangles, const uint32_t triangleCnt) noexcept
+Result Picture::mesh(const Polygon* triangles, uint32_t triangleCnt) noexcept
 {
     if (!triangles && triangleCnt > 0) return Result::InvalidArguments;
     if (triangles && triangleCnt == 0) return Result::InvalidArguments;
@@ -133,6 +133,6 @@ Result Picture::mesh(const Polygon* triangles, const uint32_t triangleCnt) noexc
 
 uint32_t Picture::mesh(const Polygon** triangles) const noexcept
 {
-    if (triangles) *triangles = pImpl->triangles;
-    return pImpl->triangleCnt;
+    if (triangles) *triangles = pImpl->rm.triangles;
+    return pImpl->rm.triangleCnt;
 }

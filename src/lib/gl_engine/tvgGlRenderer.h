@@ -28,30 +28,28 @@
 class GlRenderer : public RenderMethod
 {
 public:
-    Surface surface = {nullptr, 0, 0, 0};
+    Surface surface = {nullptr, 0, 0, 0, ColorSpace::Unsupported, true};
 
     RenderData prepare(const RenderShape& rshape, RenderData data, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flags, bool clipper) override;
     RenderData prepare(const Array<RenderData>& scene, RenderData data, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flags) override;
-    RenderData prepare(Surface* image, Polygon* triangles, uint32_t triangleCnt, RenderData data, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flags) override;
+    RenderData prepare(Surface* surface, const RenderMesh* mesh, RenderData data, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flags) override;
     bool preRender() override;
     bool renderShape(RenderData data) override;
     bool renderImage(RenderData data) override;
-    bool renderImageMesh(RenderData data) override;
     bool postRender() override;
     bool dispose(RenderData data) override;;
     RenderRegion region(RenderData data) override;
     RenderRegion viewport() override;
     bool viewport(const RenderRegion& vp) override;
+    ColorSpace colorSpace() override;
 
     bool target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h);
     bool sync() override;
     bool clear() override;
 
-    Compositor* target(const RenderRegion& region) override;
+    Compositor* target(const RenderRegion& region, ColorSpace cs) override;
     bool beginComposite(Compositor* cmp, CompositeMethod method, uint32_t opacity) override;
     bool endComposite(Compositor* cmp) override;
-
-    uint32_t colorSpace() override;
 
     static GlRenderer* gen();
     static int init(TVG_UNUSED uint32_t threads);

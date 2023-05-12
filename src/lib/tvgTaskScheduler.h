@@ -43,77 +43,40 @@ struct TaskScheduler
 struct Task
 {
 private:
-    mutex                   finishedMtx;
-    mutex                   preparedMtx;
+    mutex                   mtx;
     condition_variable      cv;
-    bool                    finished = true;        //if run() finished
-    bool                    prepared = false;       //the task is requested
+    bool                    ready = true;
+    bool                    pending = false;
 
 public:
-    virtual ~Task()
+    virtual ~Task() = default;
+
+    void done()
     {
-        if (!prepared) return;
+        if (!pending) return;
 
-        //Guarantee the task is finished by TaskScheduler.
-        unique_lock<mutex> lock(preparedMtx);
-
-        while (prepared) {
-            cv.wait(lock);
-        }
-    }
-
-    void done(unsigned tid = 0)
-    {
-        if (finished) return;
-
-        lock_guard<mutex> lock(finishedMtx);
-
-        if (finished) return;
-
-        //the job hasn't been launched yet.
-
-        //set finished so that operator() quickly returns.
-        finished = true;
-
-        run(tid);
+        unique_lock<mutex> lock(mtx);
+        while (!ready) cv.wait(lock);
+        pending = false;
     }
 
 protected:
     virtual void run(unsigned tid) = 0;
 
 private:
-    void finish()
-    {
-        lock_guard<mutex> lock(preparedMtx);
-        prepared = false;
-        cv.notify_one();
-    }
-
     void operator()(unsigned tid)
     {
-        if (finished) {
-            finish();
-            return;
-        }
-
-        lock_guard<mutex> lock(finishedMtx);
-
-        if (finished) {
-            finish();
-            return;
-        }
-
         run(tid);
 
-        finished = true;
-
-        finish();
+        lock_guard<mutex> lock(mtx);
+        ready = true;
+        cv.notify_one();
     }
 
     void prepare()
     {
-        finished = false;
-        prepared = true;
+        ready = false;
+        pending = true;
     }
 
     friend struct TaskSchedulerImpl;

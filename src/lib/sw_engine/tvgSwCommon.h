@@ -223,11 +223,16 @@ struct SwImage
 {
     SwOutline*   outline = nullptr;
     SwRleData*   rle = nullptr;
-    uint32_t*    data = nullptr;
+    union {
+        pixel_t*  data;      //system based data pointer
+        uint32_t* buf32;     //for explicit 32bits channels
+        uint8_t*  buf8;      //for explicit 8bits grayscale
+    };
     uint32_t     w, h, stride;
     int32_t      ox = 0;         //offset x
     int32_t      oy = 0;         //offset y
     float        scale;
+    uint8_t      channelSize;
 
     bool         direct = false;  //draw image directly (with offset)
     bool         scaled = false;  //draw scaled image
@@ -236,7 +241,7 @@ struct SwImage
 struct SwBlender
 {
     uint32_t (*join)(uint8_t r, uint8_t g, uint8_t b, uint8_t a);
-    uint32_t (*lumaValue)(uint32_t c);
+    uint8_t (*luma)(uint8_t* c);
 };
 
 struct SwCompositor;
@@ -322,7 +327,7 @@ bool strokeParseOutline(SwStroke* stroke, const SwOutline& outline);
 SwOutline* strokeExportOutline(SwStroke* stroke, SwMpool* mpool, unsigned tid);
 void strokeFree(SwStroke* stroke);
 
-bool imagePrepare(SwImage* image, Polygon* triangles, uint32_t triangleCount, const Matrix* transform, const SwBBox& clipRegion, SwBBox& renderRegion, SwMpool* mpool, unsigned tid);
+bool imagePrepare(SwImage* image, const RenderMesh* mesh, const Matrix* transform, const SwBBox& clipRegion, SwBBox& renderRegion, SwMpool* mpool, unsigned tid);
 bool imageGenRle(SwImage* image, const SwBBox& renderRegion, bool antiAlias);
 void imageDelOutline(SwImage* image, SwMpool* mpool, uint32_t tid);
 void imageReset(SwImage* image);
@@ -353,12 +358,13 @@ void mpoolRetStrokeOutline(SwMpool* mpool, unsigned idx);
 bool rasterCompositor(SwSurface* surface);
 bool rasterGradientShape(SwSurface* surface, SwShape* shape, unsigned id);
 bool rasterShape(SwSurface* surface, SwShape* shape, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
-bool rasterImage(SwSurface* surface, SwImage* image, const Matrix* transform, const SwBBox& bbox, uint32_t opacity);
-bool rasterImageMesh(SwSurface* surface, SwImage* image, const Polygon* triangles, const uint32_t triangleCount, const Matrix* transform, const SwBBox& bbox, uint32_t opacity);
+bool rasterImage(SwSurface* surface, SwImage* image, const RenderMesh* mesh, const Matrix* transform, const SwBBox& bbox, uint32_t opacity);
 bool rasterStroke(SwSurface* surface, SwShape* shape, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
 bool rasterGradientStroke(SwSurface* surface, SwShape* shape, unsigned id);
-bool rasterClear(SwSurface* surface);
+bool rasterClear(SwSurface* surface, uint32_t x, uint32_t y, uint32_t w, uint32_t h);
 void rasterRGBA32(uint32_t *dst, uint32_t val, uint32_t offset, int32_t len);
-void rasterUnpremultiply(SwSurface* surface);
+void rasterUnpremultiply(Surface* surface);
+void rasterPremultiply(Surface* surface);
+bool rasterConvertCS(Surface* surface, ColorSpace to);
 
 #endif /* _TVG_SW_COMMON_H_ */

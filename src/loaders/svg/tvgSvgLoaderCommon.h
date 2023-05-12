@@ -219,7 +219,9 @@ enum class SvgViewFlag
     None = 0x0,
     Width = 0x01,   //viewPort width
     Height = 0x02,  //viewPort height
-    Viewbox = 0x04  //viewBox x,y,w,h - used only if all 4 are correctly set
+    Viewbox = 0x04,  //viewBox x,y,w,h - used only if all 4 are correctly set
+    WidthInPercent = 0x08,
+    HeightInPercent = 0x10
 };
 
 constexpr bool operator &(SvgViewFlag a, SvgViewFlag b)
@@ -230,6 +232,11 @@ constexpr bool operator &(SvgViewFlag a, SvgViewFlag b)
 constexpr SvgViewFlag operator |(SvgViewFlag a, SvgViewFlag b)
 {
     return SvgViewFlag(int(a) | int(b));
+}
+
+constexpr SvgViewFlag operator ^(SvgViewFlag a, SvgViewFlag b)
+{
+    return SvgViewFlag(int(a) ^ int(b));
 }
 
 enum class AspectRatioAlign
@@ -254,8 +261,8 @@ enum class AspectRatioMeetOrSlice
 
 struct SvgDocNode
 {
-    float w;
-    float h;
+    float w;       //unit: point or in percentage see: SvgViewFlag
+    float h;       //unit: point or in percentage see: SvgViewFlag
     float vx;
     float vy;
     float vw;
@@ -544,6 +551,11 @@ struct SvgLoaderData
     int level = 0;
     bool result = false;
     bool style = false;
+};
+
+struct Box
+{
+    float x, y, w, h;
 };
 
 /*

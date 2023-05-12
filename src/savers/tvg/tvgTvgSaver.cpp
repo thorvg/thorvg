@@ -75,7 +75,10 @@ static bool _merge(Shape* from, Shape* to)
     from->fillColor(&r, &g, &b, &a);
     to->fillColor(&r2, &g2, &b2, &a2);
 
-    if (r != r2 || g != g2 || b != b2 || a != a2) return false;
+    if (r != r2 || g != g2 || b != b2 || a != a2 || a < 255) return false;
+
+    auto fromRule = from->fillRule();
+    if (fromRule == FillRule::EvenOdd || fromRule != to->fillRule()) return false;
 
     //composition
     if (from->composite(nullptr) != CompositeMethod::None) return false;
@@ -170,7 +173,7 @@ bool TvgSaver::saveEncoding(const std::string& path)
     memcpy(uncompressed, &compressedSizeBits, TVG_HEADER_COMPRESSED_SIZE_BITS);
 
     //Good optimization, flush to file.
-    auto fp = _fopen(path.c_str(), "w+");
+    auto fp = _fopen(path.c_str(), "wb+");
     if (!fp) goto fail;
 
     //write header
@@ -193,7 +196,7 @@ fail:
 
 bool TvgSaver::flushTo(const std::string& path)
 {
-    auto fp = _fopen(path.c_str(), "w+");
+    auto fp = _fopen(path.c_str(), "wb+");
     if (!fp) return false;
 
     if (fwrite(buffer.data, SIZE(uint8_t), buffer.count, fp) == 0) {

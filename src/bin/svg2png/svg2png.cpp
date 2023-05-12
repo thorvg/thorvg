@@ -98,6 +98,8 @@ public:
             picture->size(&fw, &fh);
             w = static_cast<uint32_t>(fw);
             h = static_cast<uint32_t>(fh);
+            if (fw > w) w++;
+            if (fh > h) h++;
 
             if (w * h > SIZE_8K) {
                 float scale = fw / fh;
@@ -109,7 +111,8 @@ public:
                     w = static_cast<uint32_t>(h * scale);
                 }
                 cout << "Warning: The SVG width and/or height values exceed the 8k resolution. "
-                        "To avoid the heap overflow, the conversion to the PNG file made in " << WIDTH_8K << " x " << HEIGHT_8K << " resolution." << endl;
+                        "To avoid the heap overflow, the conversion to the PNG file made in " << w << " x " << h << " resolution." << endl;
+                picture->size(static_cast<float>(w), static_cast<float>(h));
             }
         } else {
             picture->size(static_cast<float>(w), static_cast<float>(h));

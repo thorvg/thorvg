@@ -1,7 +1,7 @@
 project('thorvg',
         'cpp',
         default_options : ['buildtype=debugoptimized', 'b_sanitize=none', 'werror=false', 'optimization=s', 'cpp_std=c++14'],
-        version : '0.8.99',
+        version : '0.9.99',
         license : 'MIT')
 
 config_h = configuration_data()
@@ -18,7 +18,7 @@ if get_option('engines').contains('sw') == true
     config_h.set10('THORVG_SW_RASTER_SUPPORT', true)
 endif
 
-if get_option('engines').contains('gl') == true
+if get_option('engines').contains('gl_beta') == true
     config_h.set10('THORVG_GL_RASTER_SUPPORT', true)
 endif
 
@@ -128,7 +128,7 @@ Summary:
         get_option('prefix'),
         simd_type,
         get_option('engines').contains('sw'),
-        get_option('engines').contains('gl'),
+        get_option('engines').contains('gl_beta'),
         all_loaders or get_option('loaders').contains('tvg'),
         all_loaders or get_option('loaders').contains('svg'),
         all_loaders or get_option('loaders').contains('png'),
