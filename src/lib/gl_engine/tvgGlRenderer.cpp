@@ -123,9 +123,9 @@ bool GlRenderer::endComposite(TVG_UNUSED Compositor* cmp)
 }
 
 
-ColorSpace GlRenderer::SwRenderer::colorSpace()
+ColorSpace GlRenderer::colorSpace()
 {
-    return surface->cs;
+    return ColorSpace::Unsupported;
 }
 
 
