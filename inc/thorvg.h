@@ -1658,6 +1658,30 @@ public:
     _TVG_DECLARE_PRIVATE(Accessor);
 };
 
+
+/**
+ * @brief The cast() function is a utility function used to cast a 'Paint' to type 'T'.
+ *
+ * @BETA_API
+ */
+template<typename T>
+std::unique_ptr<T> cast(Paint* paint)
+{
+    return std::unique_ptr<T>(static_cast<T*>(paint));
+}
+
+/**
+ * @brief The cast() function is a utility function used to cast a 'Fill' to type 'T'.
+ *
+ * @BETA_API
+ */
+template<typename T>
+std::unique_ptr<T> cast(Fill* fill)
+{
+    return std::unique_ptr<T>(static_cast<T*>(fill));
+}
+
+
 /** @}*/
 
 } //namespace
