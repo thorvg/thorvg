@@ -114,8 +114,8 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     line1->stroke(15);
     line1->stroke(tvg::StrokeCap::Round);
 
-    auto line2 = std::unique_ptr<tvg::Shape>((tvg::Shape*)line1->duplicate());
-    auto line3 = std::unique_ptr<tvg::Shape>((tvg::Shape*)line1->duplicate());
+    auto line2 = tvg::cast<tvg::Shape>(line1->duplicate());
+    auto line3 = tvg::cast<tvg::Shape>(line1->duplicate());
     if (canvas->push(move(line1)) != tvg::Result::Success) return;
 
     line2->stroke(tvg::StrokeCap::Square);

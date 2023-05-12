@@ -159,7 +159,7 @@ TEST_CASE("Duplication", "[tvgPaint]")
     REQUIRE(shape->composite(move(comp), CompositeMethod::ClipPath) == Result::Success);
 
     //Duplication
-    auto dup = unique_ptr<Shape>((Shape*)shape->duplicate());
+    auto dup = tvg::cast<Shape>(shape->duplicate());
     REQUIRE(dup);
 
     //Compare properties

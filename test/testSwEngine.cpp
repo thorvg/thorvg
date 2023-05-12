@@ -125,31 +125,31 @@ TEST_CASE("Image Draw", "[tvgSwEngine]")
     REQUIRE(rleMask->fill(100, 100, 100, 255) == Result::Success);
 
     // Rect images
-    auto basicPicture2 = std::unique_ptr<Picture>(static_cast<Picture*>(basicPicture->duplicate()));
+    auto basicPicture2 = tvg::cast<Picture>(basicPicture->duplicate());
     REQUIRE(basicPicture2);
-    auto rectMask2 = std::unique_ptr<Shape>(static_cast<Shape*>(rectMask->duplicate()));
+    auto rectMask2 = tvg::cast<Shape>(rectMask->duplicate());
     REQUIRE(rectMask2);
 
-    auto basicPicture3 = std::unique_ptr<Picture>(static_cast<Picture*>(basicPicture->duplicate()));
+    auto basicPicture3 = tvg::cast<Picture>(basicPicture->duplicate());
     REQUIRE(basicPicture3);
-    auto rectMask3 = std::unique_ptr<Shape>(static_cast<Shape*>(rectMask->duplicate()));
+    auto rectMask3 = tvg::cast<Shape>(rectMask->duplicate());
     REQUIRE(rectMask3);
 
-    auto basicPicture4 = std::unique_ptr<Picture>(static_cast<Picture*>(basicPicture->duplicate()));
+    auto basicPicture4 = tvg::cast<Picture>(basicPicture->duplicate());
     REQUIRE(basicPicture4);
-    auto rectMask4 = std::unique_ptr<Shape>(static_cast<Shape*>(rectMask->duplicate()));
+    auto rectMask4 = tvg::cast<Shape>(rectMask->duplicate());
     REQUIRE(rectMask4);
 
-    auto basicPicture5 = std::unique_ptr<Picture>(static_cast<Picture*>(basicPicture->duplicate()));
+    auto basicPicture5 = tvg::cast<Picture>(basicPicture->duplicate());
     REQUIRE(basicPicture5);
 
     // Rle images
-    auto basicPicture6 = std::unique_ptr<Picture>(static_cast<Picture*>(basicPicture->duplicate()));
+    auto basicPicture6 = tvg::cast<Picture>(basicPicture->duplicate());
     REQUIRE(basicPicture6);
 
-    auto basicPicture7 = std::unique_ptr<Picture>(static_cast<Picture*>(basicPicture->duplicate()));
+    auto basicPicture7 = tvg::cast<Picture>(basicPicture->duplicate());
     REQUIRE(basicPicture7);
-    auto rleMask7 = std::unique_ptr<Shape>(static_cast<Shape*>(rleMask->duplicate()));
+    auto rleMask7 = tvg::cast<Shape>(rleMask->duplicate());
     REQUIRE(rleMask7);
 
     // Rect
@@ -191,31 +191,31 @@ TEST_CASE("Image Draw", "[tvgSwEngine]")
     REQUIRE(rleMask->appendRect(0, 10, 20, 30, 5, 5) == Result::Success);
 
     // Rect images
-    basicPicture2 = std::unique_ptr<Picture>(static_cast<Picture*>(basicPicture->duplicate()));
+    basicPicture2 = tvg::cast<Picture>(basicPicture->duplicate());
     REQUIRE(basicPicture2);
-    rectMask2 = std::unique_ptr<Shape>(static_cast<Shape*>(rectMask->duplicate()));
+    rectMask2 = tvg::cast<Shape>(rectMask->duplicate());
     REQUIRE(rectMask2);
 
-    basicPicture3 = std::unique_ptr<Picture>(static_cast<Picture*>(basicPicture->duplicate()));
+    basicPicture3 = tvg::cast<Picture>(basicPicture->duplicate());
     REQUIRE(basicPicture3);
-    rectMask3 = std::unique_ptr<Shape>(static_cast<Shape*>(rectMask->duplicate()));
+    rectMask3 = tvg::cast<Shape>(rectMask->duplicate());
     REQUIRE(rectMask3);
 
-    basicPicture4 = std::unique_ptr<Picture>(static_cast<Picture*>(basicPicture->duplicate()));
+    basicPicture4 = tvg::cast<Picture>(basicPicture->duplicate());
     REQUIRE(basicPicture4);
-    rectMask4 = std::unique_ptr<Shape>(static_cast<Shape*>(rectMask->duplicate()));
+    rectMask4 = tvg::cast<Shape>(rectMask->duplicate());
     REQUIRE(rectMask4);
 
-    basicPicture5 = std::unique_ptr<Picture>(static_cast<Picture*>(basicPicture->duplicate()));
+    basicPicture5 = tvg::cast<Picture>(basicPicture->duplicate());
     REQUIRE(basicPicture5);
 
     // Rle images
-    basicPicture6 = std::unique_ptr<Picture>(static_cast<Picture*>(basicPicture->duplicate()));
+    basicPicture6 = tvg::cast<Picture>(basicPicture->duplicate());
     REQUIRE(basicPicture6);
 
-    basicPicture7 = std::unique_ptr<Picture>(static_cast<Picture*>(basicPicture->duplicate()));
+    basicPicture7 = tvg::cast<Picture>(basicPicture->duplicate());
     REQUIRE(basicPicture7);
-    rleMask7 = std::unique_ptr<Shape>(static_cast<Shape*>(rleMask->duplicate()));
+    rleMask7 = tvg::cast<Shape>(rleMask->duplicate());
     REQUIRE(rleMask7);
 
     // Rect
@@ -256,31 +256,31 @@ TEST_CASE("Image Draw", "[tvgSwEngine]")
     REQUIRE(rleMask->appendRect(0, 10, 20, 30, 5, 5) == Result::Success);
 
     // Rect images
-    basicPicture2 = std::unique_ptr<Picture>(static_cast<Picture*>(basicPicture->duplicate()));
+    basicPicture2 = tvg::cast<Picture>(basicPicture->duplicate());
     REQUIRE(basicPicture2);
-    rectMask2 = std::unique_ptr<Shape>(static_cast<Shape*>(rectMask->duplicate()));
+    rectMask2 = tvg::cast<Shape>(rectMask->duplicate());
     REQUIRE(rectMask2);
 
-    basicPicture3 = std::unique_ptr<Picture>(static_cast<Picture*>(basicPicture->duplicate()));
+    basicPicture3 = tvg::cast<Picture>(basicPicture->duplicate());
     REQUIRE(basicPicture3);
-    rectMask3 = std::unique_ptr<Shape>(static_cast<Shape*>(rectMask->duplicate()));
+    rectMask3 = tvg::cast<Shape>(rectMask->duplicate());
     REQUIRE(rectMask3);
 
-    basicPicture4 = std::unique_ptr<Picture>(static_cast<Picture*>(basicPicture->duplicate()));
+    basicPicture4 = tvg::cast<Picture>(basicPicture->duplicate());
     REQUIRE(basicPicture4);
-    rectMask4 = std::unique_ptr<Shape>(static_cast<Shape*>(rectMask->duplicate()));
+    rectMask4 = tvg::cast<Shape>(rectMask->duplicate());
     REQUIRE(rectMask4);
 
-    basicPicture5 = std::unique_ptr<Picture>(static_cast<Picture*>(basicPicture->duplicate()));
+    basicPicture5 = tvg::cast<Picture>(basicPicture->duplicate());
     REQUIRE(basicPicture5);
 
     // Rle images
-    basicPicture6 = std::unique_ptr<Picture>(static_cast<Picture*>(basicPicture->duplicate()));
+    basicPicture6 = tvg::cast<Picture>(basicPicture->duplicate());
     REQUIRE(basicPicture6);
 
-    basicPicture7 = std::unique_ptr<Picture>(static_cast<Picture*>(basicPicture->duplicate()));
+    basicPicture7 = tvg::cast<Picture>(basicPicture->duplicate());
     REQUIRE(basicPicture7);
-    rleMask7 = std::unique_ptr<Shape>(static_cast<Shape*>(rleMask->duplicate()));
+    rleMask7 = tvg::cast<Shape>(rleMask->duplicate());
     REQUIRE(rleMask7);
 
     // Rect
@@ -321,31 +321,31 @@ TEST_CASE("Image Draw", "[tvgSwEngine]")
     REQUIRE(rleMask->appendRect(0, 10, 20, 30, 5, 5) == Result::Success);
 
     // Rect images
-    basicPicture2 = std::unique_ptr<Picture>(static_cast<Picture*>(basicPicture->duplicate()));
+    basicPicture2 = tvg::cast<Picture>(basicPicture->duplicate());
     REQUIRE(basicPicture2);
-    rectMask2 = std::unique_ptr<Shape>(static_cast<Shape*>(rectMask->duplicate()));
+    rectMask2 = tvg::cast<Shape>(rectMask->duplicate());
     REQUIRE(rectMask2);
 
-    basicPicture3 = std::unique_ptr<Picture>(static_cast<Picture*>(basicPicture->duplicate()));
+    basicPicture3 = tvg::cast<Picture>(basicPicture->duplicate());
     REQUIRE(basicPicture3);
-    rectMask3 = std::unique_ptr<Shape>(static_cast<Shape*>(rectMask->duplicate()));
+    rectMask3 = tvg::cast<Shape>(rectMask->duplicate());
     REQUIRE(rectMask3);
 
-    basicPicture4 = std::unique_ptr<Picture>(static_cast<Picture*>(basicPicture->duplicate()));
+    basicPicture4 = tvg::cast<Picture>(basicPicture->duplicate());
     REQUIRE(basicPicture4);
-    rectMask4 = std::unique_ptr<Shape>(static_cast<Shape*>(rectMask->duplicate()));
+    rectMask4 = tvg::cast<Shape>(rectMask->duplicate());
     REQUIRE(rectMask4);
 
-    basicPicture5 = std::unique_ptr<Picture>(static_cast<Picture*>(basicPicture->duplicate()));
+    basicPicture5 = tvg::cast<Picture>(basicPicture->duplicate());
     REQUIRE(basicPicture5);
 
     // Rle images
-    basicPicture6 = std::unique_ptr<Picture>(static_cast<Picture*>(basicPicture->duplicate()));
+    basicPicture6 = tvg::cast<Picture>(basicPicture->duplicate());
     REQUIRE(basicPicture6);
 
-    basicPicture7 = std::unique_ptr<Picture>(static_cast<Picture*>(basicPicture->duplicate()));
+    basicPicture7 = tvg::cast<Picture>(basicPicture->duplicate());
     REQUIRE(basicPicture7);
-    rleMask7 = std::unique_ptr<Shape>(static_cast<Shape*>(rleMask->duplicate()));
+    rleMask7 = tvg::cast<Shape>(rleMask->duplicate());
     REQUIRE(rleMask7);
 
     // Rect
@@ -401,22 +401,22 @@ TEST_CASE("Rect Draw", "[tvgSwEngine]")
     REQUIRE(basicMask->appendRect(10, 10, 30, 30, 0, 0) == Result::Success);
     REQUIRE(basicShape->fill(255, 255, 255, 155) == Result::Success);
 
-    auto basicShape2 = std::unique_ptr<Shape>(static_cast<Shape*>(basicShape->duplicate()));
+    auto basicShape2 = tvg::cast<Shape>(basicShape->duplicate());
     REQUIRE(basicShape2);
-    auto basicMask2 = std::unique_ptr<Shape>(static_cast<Shape*>(basicMask->duplicate()));
+    auto basicMask2 = tvg::cast<Shape>(basicMask->duplicate());
     REQUIRE(basicMask2);
 
-    auto basicShape3 = std::unique_ptr<Shape>(static_cast<Shape*>(basicShape->duplicate()));
+    auto basicShape3 = tvg::cast<Shape>(basicShape->duplicate());
     REQUIRE(basicShape3);
-    auto basicMask3 = std::unique_ptr<Shape>(static_cast<Shape*>(basicMask->duplicate()));
+    auto basicMask3 = tvg::cast<Shape>(basicMask->duplicate());
     REQUIRE(basicMask3);
 
-    auto basicShape4 = std::unique_ptr<Shape>(static_cast<Shape*>(basicShape->duplicate()));
+    auto basicShape4 = tvg::cast<Shape>(basicShape->duplicate());
     REQUIRE(basicShape4);
-    auto basicMask4 = std::unique_ptr<Shape>(static_cast<Shape*>(basicMask->duplicate()));
+    auto basicMask4 = tvg::cast<Shape>(basicMask->duplicate());
     REQUIRE(basicMask4);
 
-    auto basicShape5 = std::unique_ptr<Shape>(static_cast<Shape*>(basicShape->duplicate()));
+    auto basicShape5 = tvg::cast<Shape>(basicShape->duplicate());
     REQUIRE(basicShape5);
 
     REQUIRE(basicShape->composite(move(basicMask), tvg::CompositeMethod::AlphaMask) == Result::Success);
@@ -460,22 +460,22 @@ TEST_CASE("RLE Draw", "[tvgSwEngine]")
     REQUIRE(basicMask->appendRect(10, 10, 30, 30, 0, 0) == Result::Success);
     REQUIRE(basicShape->fill(255, 255, 255, 100) == Result::Success);
 
-    auto basicShape2 = std::unique_ptr<Shape>(static_cast<Shape*>(basicShape->duplicate()));
+    auto basicShape2 = tvg::cast<Shape>(basicShape->duplicate());
     REQUIRE(basicShape2);
-    auto basicMask2 = std::unique_ptr<Shape>(static_cast<Shape*>(basicMask->duplicate()));
+    auto basicMask2 = tvg::cast<Shape>(basicMask->duplicate());
     REQUIRE(basicMask2);
 
-    auto basicShape3 = std::unique_ptr<Shape>(static_cast<Shape*>(basicShape->duplicate()));
+    auto basicShape3 = tvg::cast<Shape>(basicShape->duplicate());
     REQUIRE(basicShape3);
-    auto basicMask3 = std::unique_ptr<Shape>(static_cast<Shape*>(basicMask->duplicate()));
+    auto basicMask3 = tvg::cast<Shape>(basicMask->duplicate());
     REQUIRE(basicMask3);
 
-    auto basicShape4 = std::unique_ptr<Shape>(static_cast<Shape*>(basicShape->duplicate()));
+    auto basicShape4 = tvg::cast<Shape>(basicShape->duplicate());
     REQUIRE(basicShape4);
-    auto basicMask4 = std::unique_ptr<Shape>(static_cast<Shape*>(basicMask->duplicate()));
+    auto basicMask4 = tvg::cast<Shape>(basicMask->duplicate());
     REQUIRE(basicMask4);
 
-    auto basicShape5 = std::unique_ptr<Shape>(static_cast<Shape*>(basicShape->duplicate()));
+    auto basicShape5 = tvg::cast<Shape>(basicShape->duplicate());
     REQUIRE(basicShape5);
 
     REQUIRE(basicShape->composite(move(basicMask), tvg::CompositeMethod::AlphaMask) == Result::Success);

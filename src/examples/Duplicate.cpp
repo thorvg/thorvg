@@ -46,7 +46,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
         shape1->fill(255, 0, 0, 255);
 
         //Duplicate Shape, Switch fill method
-        auto shape2 = unique_ptr<tvg::Shape>(static_cast<tvg::Shape*>(shape1->duplicate()));
+        auto shape2 = tvg::cast<tvg::Shape>(shape1->duplicate());
         shape2->translate(0, 220);
 
         auto fill = tvg::LinearGradient::gen();
@@ -60,7 +60,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
         shape2->fill(move(fill));
 
         //Duplicate Shape 2
-        auto shape3 = unique_ptr<tvg::Shape>(static_cast<tvg::Shape*>(shape2->duplicate()));
+        auto shape3 = tvg::cast<tvg::Shape>(shape2->duplicate());
         shape3->translate(0, 440);
 
         canvas->push(move(shape1));
@@ -93,7 +93,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
         scene1->translate(400, 0);
 
         //Duplicate Scene1
-        auto scene2 = unique_ptr<tvg::Scene>(static_cast<tvg::Scene*>(scene1->duplicate()));
+        auto scene2 = tvg::cast<tvg::Scene>(scene1->duplicate());
         scene2->translate(600, 0);
 
         canvas->push(move(scene1));
@@ -107,7 +107,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
         picture1->translate(350, 200);
         picture1->scale(0.25);
 
-        auto picture2 = unique_ptr<tvg::Picture>(static_cast<tvg::Picture*>(picture1->duplicate()));
+        auto picture2 = tvg::cast<tvg::Picture>(picture1->duplicate());
         picture2->translate(550, 250);
 
         canvas->push(move(picture1));
@@ -128,7 +128,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
         picture1->scale(0.8);
         picture1->translate(400, 450);
 
-        auto picture2 = unique_ptr<tvg::Picture>(static_cast<tvg::Picture*>(picture1->duplicate()));
+        auto picture2 = tvg::cast<tvg::Picture>(picture1->duplicate());
         picture2->translate(600, 550);
         picture2->scale(0.7);
         picture2->rotate(8);
