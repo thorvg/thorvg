@@ -144,7 +144,7 @@ public:
         mErrorMsg = "None";
 
         auto saver = tvg::Saver::gen();
-        auto duplicate = unique_ptr<tvg::Picture>(static_cast<tvg::Picture*>(mPicture->duplicate()));
+        auto duplicate = tvg::Cast<tvg::Picture>(mPicture->duplicate());
         if (!saver || !duplicate) {
             mErrorMsg = "Saving initialization failed";
             return false;

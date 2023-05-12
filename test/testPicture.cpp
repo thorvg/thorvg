@@ -216,7 +216,7 @@ TEST_CASE("Picture Duplication", "[tvgPicture]")
     REQUIRE(picture->load(data, 200, 300, false) == Result::Success);
     REQUIRE(picture->size(100, 100) == Result::Success);
 
-    auto dup = unique_ptr<Picture>((Picture*)picture->duplicate());
+    auto dup = tvg::cast<Picture>(picture->duplicate());
     REQUIRE(dup);
 
     float w, h;

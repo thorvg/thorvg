@@ -351,7 +351,7 @@ TvgBinCounter TvgSaver::serializeChild(const Paint* parent, const Paint* child, 
     }
 
     //propagate composition
-    if (compTarget) const_cast<Paint*>(child)->composite(unique_ptr<Paint>(compTarget->duplicate()), compMethod);
+    if (compTarget) const_cast<Paint*>(child)->composite(cast<Paint>(compTarget->duplicate()), compMethod);
 
     return serialize(child, transform);
 }

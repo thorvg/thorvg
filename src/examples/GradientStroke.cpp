@@ -87,7 +87,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     fillStroke2->colorStops(colorStops2, 2);
     shape2->stroke(move(fillStroke2));
 
-    auto shape3 = unique_ptr<tvg::Shape>(static_cast<tvg::Shape*>(shape2->duplicate()));
+    auto shape3 = tvg::cast<tvg::Shape>(shape2->duplicate());
     shape3->translate(0, 200);
 
     auto fillStroke3 = tvg::LinearGradient::gen();
@@ -95,7 +95,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     fillStroke3->colorStops(colorStops3, 2);
     shape3->stroke(move(fillStroke3));
 
-    auto shape4 = unique_ptr<tvg::Shape>(static_cast<tvg::Shape*>(shape2->duplicate()));
+    auto shape4 = tvg::cast<tvg::Shape>(shape2->duplicate());
     shape4->translate(0, 400);
 
     if (canvas->push(move(shape2)) != tvg::Result::Success) return;
