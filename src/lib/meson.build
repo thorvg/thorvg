@@ -4,7 +4,7 @@ if get_option('engines').contains('sw') == true
     subdir('sw_engine')
 endif
 
-if get_option('engines').contains('gl') == true
+if get_option('engines').contains('gl_beta') == true
     subdir('gl_engine')
 endif
 
