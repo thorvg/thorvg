@@ -1,10 +1,12 @@
-compiler_flags = ['-DTVG_BUILD']
+compiler_flags = []
 override_options = []
 
 lib_type = get_option('default_library')
 
 if (lib_type == 'shared')
-    compiler_flags += ['-DTVG_EXPORT']
+    compiler_flags += ['-DTVG_EXPORT', '-DTVG_BUILD']
+else
+    compiler_flags += ['-DTVG_STATIC']
 endif
 
 cc = meson.get_compiler('cpp')
