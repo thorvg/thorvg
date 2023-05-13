@@ -1,4 +1,6 @@
-compiler_flags = ['-DTVG_BUILD']
+if (lib_type == 'static')
+    compiler_flags += ['-DTVG_STATIC']
+endif
 
 test_file = [
     'testAccessor.cpp',

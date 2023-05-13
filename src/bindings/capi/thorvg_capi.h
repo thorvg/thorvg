@@ -21,32 +21,42 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+// TVG_API
 #ifdef TVG_API
     #undef TVG_API
 #endif
 
-#if defined(_WIN32) && !defined(__clang__)
-    #if TVG_BUILD
-        #if TVG_EXPORT
+#ifndef TVG_STATIC
+    #ifdef _WIN32
+        #if TVG_BUILD
             #define TVG_API __declspec(dllexport)
         #else
-            #define TVG_API
+            #define TVG_API __declspec(dllimport)
         #endif
+    #elif (defined(__SUNPRO_C)  || defined(__SUNPRO_CC))
+        #define TVG_API __global
     #else
-        #define TVG_API __declspec(dllimport)
-    #endif
-    #define TVG_DEPRECATED __declspec(deprecated)
-#else
-    #if TVG_BUILD
-        #if TVG_EXPORT
-            #define TVG_API __attribute__ ((visibility ("default")))
+        #if (defined(__GNUC__) && __GNUC__ >= 4) || defined(__INTEL_COMPILER)
+            #define TVG_API __attribute__ ((visibility("default")))
         #else
             #define TVG_API
         #endif
-    #else
-        #define TVG_API
     #endif
+#else
+    #define TVG_API
+#endif
+
+// TVG_DEPRECATED
+#ifdef TVG_DEPRECATED
+    #undef TVG_DEPRECATED
+#endif
+
+#ifdef _WIN32
+    #define TVG_DEPRECATED __declspec(deprecated)
+#elif __GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 1)
     #define TVG_DEPRECATED __attribute__ ((__deprecated__))
+#else
+    #define TVG_DEPRECATED
 #endif
 
 #ifdef __cplusplus
