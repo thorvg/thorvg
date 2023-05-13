@@ -1,4 +1,6 @@
-compiler_flags = ['-DTVG_BUILD']
+if (lib_type == 'static')
+    compiler_flags += ['-DTVG_STATIC']
+endif
 
 if all_tools or get_option('tools').contains('svg2png') == true
    subdir('svg2png')
