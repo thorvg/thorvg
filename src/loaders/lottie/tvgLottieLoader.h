@@ -27,7 +27,7 @@
 #include "tvgFrameModule.h"
 #include "tvgTaskScheduler.h"
 
-class LottieLoader : public LoadModule, public FrameModule, public Task
+class LottieLoader : public FrameModule, public Task
 {
 public:
     string filePath;                    //lottie file path
@@ -49,8 +49,6 @@ public:
     bool read() override;
     bool close() override;
     unique_ptr<Paint> paint() override;
-
-    bool animatable() override { return true; }
 
     //Frame Controls
     bool frame(uint32_t val) override;
