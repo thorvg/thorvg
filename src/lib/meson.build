@@ -14,6 +14,7 @@ source_file = [
    'tvgBezier.h',
    'tvgBinaryDesc.h',
    'tvgFill.h',
+   'tvgFrameModule.h',
    'tvgLoader.h',
    'tvgLoadModule.h',
    'tvgLzw.h',
