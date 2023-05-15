@@ -1903,6 +1903,7 @@ static SvgNode* _getDefsNode(SvgNode* node)
     }
 
     if (node->type == SvgNodeType::Doc) return node->node.doc.defs;
+    if (node->type == SvgNodeType::Defs) return node;
 
     return nullptr;
 }
