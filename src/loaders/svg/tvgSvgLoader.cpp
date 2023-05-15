@@ -2934,6 +2934,16 @@ static void _copyAttr(SvgNode* to, const SvgNode* from)
             }
             break;
         }
+        case SvgNodeType::Use: {
+            to->node.use.x = from->node.use.x;
+            to->node.use.y = from->node.use.y;
+            to->node.use.w = from->node.use.w;
+            to->node.use.h = from->node.use.h;
+            to->node.use.isWidthSet = from->node.use.isWidthSet;
+            to->node.use.isHeightSet = from->node.use.isHeightSet;
+            to->node.use.symbol = from->node.use.symbol;
+            break;
+        }
         default: {
             break;
         }
