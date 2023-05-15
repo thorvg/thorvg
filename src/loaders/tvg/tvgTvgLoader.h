@@ -50,6 +50,7 @@ public:
     bool read() override;
     bool close() override;
     bool resize(Paint* paint, float w, float h) override;
+
     unique_ptr<Paint> paint() override;
 
 private:
