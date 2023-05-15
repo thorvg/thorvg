@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 - 2023 the ThorVG project. All rights reserved.
+ * Copyright (c) 2023 the ThorVG project. All rights reserved.
 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,50 +20,49 @@
  * SOFTWARE.
  */
 
-#ifndef _TVG_SVG_LOADER_H_
-#define _TVG_SVG_LOADER_H_
+#ifndef _TVG_LOTTIE_LOADER_H_
+#define _TVG_LOTTIE_LOADER_H_
 
+#include "tvgCommon.h"
+#include "tvgFrameModule.h"
 #include "tvgTaskScheduler.h"
-#include "tvgSvgLoaderCommon.h"
 
-class SvgLoader : public LoadModule, public Task
+class LottieLoader : public LoadModule, public FrameModule, public Task
 {
 public:
-    string filePath;
-    string svgPath = "";
-    const char* content = nullptr;
-    uint32_t size = 0;
+    string filePath;                    //lottie file path
+    const char* content = nullptr;      //lottie file data
+    uint32_t size = 0;                  //lottie data size
 
-    SvgLoaderData loaderData;
-    unique_ptr<Scene> root;
+    unique_ptr<Scene> root;             //current motion frame
 
-    bool copy = false;
+    bool copy = false;                  //"content" is owned by this loader
 
-    SvgLoader();
-    ~SvgLoader();
+    LottieLoader();
+    ~LottieLoader();
 
+    //Lottie Loaders
     using LoadModule::open;
     bool open(const string& path) override;
     bool open(const char* data, uint32_t size, bool copy) override;
     bool resize(Paint* paint, float w, float h) override;
     bool read() override;
     bool close() override;
-
     unique_ptr<Paint> paint() override;
 
-private:
-    SvgViewFlag viewFlag = SvgViewFlag::None;
-    AspectRatioAlign align = AspectRatioAlign::XMidYMid;
-    AspectRatioMeetOrSlice meetOrSlice = AspectRatioMeetOrSlice::Meet;
-    float vx = 0;
-    float vy = 0;
-    float vw = 0;
-    float vh = 0;
+    bool animatable() override { return true; }
 
+    //Frame Controls
+    bool frame(uint32_t val) override;
+    uint32_t totalFrame() override;
+    uint32_t curFrame() override;
+    double duration() override;
+
+private:
     bool header();
     void clear();
     void run(unsigned tid) override;
 };
 
 
-#endif //_TVG_SVG_LOADER_H_
+#endif //_TVG_LOTTIELOADER_H_
