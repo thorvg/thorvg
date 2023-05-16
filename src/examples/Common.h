@@ -27,8 +27,10 @@
 
 using namespace std;
 
-#define WIDTH 800
-#define HEIGHT 800
+static uint32_t WIDTH = 800;
+static uint32_t HEIGHT = 800;
+static uint32_t* buffer = nullptr;
+
 
 /************************************************************************/
 /* Common Infrastructure Code                                           */
@@ -39,12 +41,16 @@ void drawSwView(void* data, Eo* obj);
 
 void win_del(void *data, Evas_Object *o, void *ev)
 {
-   elm_exit();
+    free(buffer);
+    elm_exit();
 }
 
-static Eo* createSwView()
+static Eo* createSwView(uint32_t w = 800, uint32_t h = 800)
 {
-    static uint32_t buffer[WIDTH * HEIGHT];
+    WIDTH = w;
+    HEIGHT = h;
+
+    buffer = static_cast<uint32_t*>(malloc(w * h * sizeof(uint32_t)));
 
     Eo* win = elm_win_util_standard_add(NULL, "ThorVG Test");
     evas_object_smart_callback_add(win, "delete,request", win_del, 0);
@@ -70,8 +76,11 @@ static Eo* createSwView()
 void initGLview(Evas_Object *obj);
 void drawGLview(Evas_Object *obj);
 
-static Eo* createGlView()
+static Eo* createGlView(uint32_t w = 800, uint32_t h = 800)
 {
+    WIDTH = w;
+    HEIGHT = h;
+
     elm_config_accel_preference_set("gl");
 
     Eo* win = elm_win_util_standard_add(NULL, "ThorVG Test");
