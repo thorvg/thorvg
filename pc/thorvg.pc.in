@@ -8,3 +8,4 @@ Version: @VERSION@
 Requires:
 Libs: -L${libdir} -lthorvg
 Cflags: -I${includedir}/thorvg
+Cflags.private: -DTHORVG_STATIC
