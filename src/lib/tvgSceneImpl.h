@@ -59,10 +59,10 @@ struct SceneIterator : Iterator
 struct Scene::Impl
 {
     Array<Paint*> paints;
-    uint8_t opacity;                     //for composition
     RenderMethod* renderer = nullptr;    //keep it for explicit clear
     RenderData rd = nullptr;
     Scene* scene = nullptr;
+    uint8_t opacity;                     //for composition
 
     Impl(Scene* s) : scene(s)
     {
