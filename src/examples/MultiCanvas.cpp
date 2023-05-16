@@ -31,9 +31,9 @@ using namespace std;
 /************************************************************************/
 /* Drawing Commands                                                     */
 /************************************************************************/
-#define WIDTH 800
-#define HEIGHT 800
-#define NUM_PER_LINE 5
+#define WIDTH 1024
+#define HEIGHT 1024
+#define NUM_PER_LINE 7
 #define SIZE (WIDTH/NUM_PER_LINE)
 
 static size_t counter = 0;
