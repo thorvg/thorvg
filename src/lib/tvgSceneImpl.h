@@ -63,6 +63,7 @@ struct Scene::Impl
     RenderData rd = nullptr;
     Scene* scene = nullptr;
     uint8_t opacity;                     //for composition
+    bool needComp;                       //composite or not
 
     Impl(Scene* s) : scene(s)
     {
@@ -109,10 +110,12 @@ struct Scene::Impl
 
     RenderData update(RenderMethod &renderer, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flag, bool clipper)
     {
-        /* Overriding opacity value. If this scene is half-translucent,
-           It must do intermeidate composition with that opacity value. */
-        this->opacity = static_cast<uint8_t>(opacity);
-        if (needComposition(opacity)) opacity = 255;
+        if ((needComp = needComposition(opacity))) {
+            /* Overriding opacity value. If this scene is half-translucent,
+               It must do intermeidate composition with that opacity value. */
+            this->opacity = static_cast<uint8_t>(opacity);
+            opacity = 255;
+        }
 
         this->renderer = &renderer;
 
@@ -136,7 +139,7 @@ struct Scene::Impl
     {
         Compositor* cmp = nullptr;
 
-        if (needComposition(opacity)) {
+        if (needComp) {
             cmp = renderer.target(bounds(renderer), renderer.colorSpace());
             renderer.beginComposite(cmp, CompositeMethod::None, opacity);
         }
