@@ -70,6 +70,7 @@ protected: \
 #define _TVG_DECLARE_ACCESSOR() \
     friend Canvas; \
     friend Scene; \
+    friend Shape; \
     friend Picture; \
     friend Accessor; \
     friend IteratorAccessor
@@ -81,6 +82,7 @@ namespace tvg
 class RenderMethod;
 class IteratorAccessor;
 class Scene;
+class Shape;
 class Picture;
 class Canvas;
 class Accessor;

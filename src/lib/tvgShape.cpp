@@ -32,7 +32,7 @@ constexpr auto PATH_KAPPA = 0.552284f;
 /* External Class Implementation                                        */
 /************************************************************************/
 
-Shape :: Shape() : pImpl(new Impl())
+Shape :: Shape() : pImpl(new Impl(this))
 {
     Paint::pImpl->id = TVG_CLASS_ID_SHAPE;
     Paint::pImpl->method(new PaintMethod<Shape::Impl>(pImpl));

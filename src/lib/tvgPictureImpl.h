@@ -142,8 +142,9 @@ struct Picture::Impl
         const Paint* target;
         auto method = picture->composite(&target);
         if (!target || method == tvg::CompositeMethod::ClipPath) return false;
-        if (target->pImpl->opacity < 255 && target->pImpl->opacity > 0) return true;
-        return false;
+        if (target->pImpl->opacity == 255 || target->pImpl->opacity == 0) return false;
+
+        return true;
     }
 
     RenderData update(RenderMethod &renderer, const RenderTransform* pTransform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag pFlag, bool clipper)
