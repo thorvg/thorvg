@@ -79,13 +79,15 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     star->lineTo(426, 161);
     star->lineTo(546, 143);
     star->close();
-    star->stroke(10);
+    star->stroke(30);
+    star->stroke(tvg::StrokeJoin::Miter);
     star->stroke(255, 255, 255, 255);
 
     //Mask3
     auto mask3 = tvg::Shape::gen();
     mask3->appendCircle(600, 200, 125, 125);
     mask3->fill(255, 255, 255, 255);    //AlphaMask RGB channels are unused.
+    mask3->opacity(200);
     star->composite(move(mask3), tvg::CompositeMethod::AlphaMask);
     if (canvas->push(move(star)) != tvg::Result::Success) return;
 
@@ -113,7 +115,8 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     mask4->lineTo(426, 511);
     mask4->lineTo(546, 493);
     mask4->close();
-    mask4->fill(255, 255, 255, 70);     //AlphaMask RGB channels are unused.
+    mask4->fill(255, 255, 255, 255);     //AlphaMask RGB channels are unused.
+    mask4->opacity(70);
     image->composite(move(mask4), tvg::CompositeMethod::AlphaMask);
     if (canvas->push(move(image)) != tvg::Result::Success) return;
 
