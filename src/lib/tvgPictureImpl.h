@@ -70,6 +70,7 @@ struct Picture::Impl
     Picture* picture = nullptr;
     bool resizing = false;
     bool needComp = false;            //need composition
+    bool animated = false;            //picture is belonged to Animation
 
     Impl(Picture* p) : picture(p)
     {

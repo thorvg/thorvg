@@ -86,6 +86,7 @@ class Shape;
 class Picture;
 class Canvas;
 class Accessor;
+class Animation;
 
 /**
  * @defgroup ThorVG ThorVG
@@ -1270,6 +1271,7 @@ public:
      */
     static uint32_t identifier() noexcept;
 
+    friend Animation;
     _TVG_DECLARE_PRIVATE(Picture);
 };
 
@@ -1522,6 +1524,38 @@ public:
     static Result term(CanvasEngine engine) noexcept;
 
     _TVG_DISABLE_CTOR(Initializer);
+};
+
+
+/**
+ * @class Animation
+ *
+ * @brief ...
+ *
+ * @BETA_API
+ */
+class TVG_API Animation
+{
+public:
+    ~Animation();
+
+    Result frame(uint32_t frame) noexcept;
+
+    Picture* picture() const noexcept;
+    uint32_t curFrame() const noexcept;
+    uint32_t totalFrame() const noexcept;
+    double duration() const noexcept;
+
+    /**
+     * @brief Creates a new Animation object.
+     *
+     * @return A new Animation object.
+     *
+     * @BETA_API
+     */
+    static std::unique_ptr<Animation> gen() noexcept;
+
+    _TVG_DECLARE_PRIVATE(Animation);
 };
 
 
