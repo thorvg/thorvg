@@ -186,9 +186,9 @@ int main(int argc, char **argv)
         elm_init(argc, argv);
 
         if (tvgEngine == tvg::CanvasEngine::Sw) {
-            createSwView(1280, 1280);
+            createSwView(1024, 1024);
         } else {
-            createGlView(1280, 1280);
+            createGlView(1024, 1024);
         }
 
         elm_run();
