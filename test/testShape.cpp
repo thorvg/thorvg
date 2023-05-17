@@ -141,6 +141,10 @@ TEST_CASE("Stroking", "[tvgShape]")
     auto shape = Shape::gen();
     REQUIRE(shape);
 
+    //Stroke Order Before Stroke Setting
+    REQUIRE(shape->order(true) == Result::Success);
+    REQUIRE(shape->order(false) == Result::Success);
+
     //Stroke Width
     REQUIRE(shape->stroke(0) == Result::Success);
     REQUIRE(shape->strokeWidth() == 0);
@@ -186,6 +190,10 @@ TEST_CASE("Stroking", "[tvgShape]")
     REQUIRE(shape->stroke(StrokeJoin::Miter) == Result::Success);
     REQUIRE(shape->stroke(StrokeJoin::Round) == Result::Success);
     REQUIRE(shape->strokeJoin() == StrokeJoin::Round);
+
+    //Stroke Order After Stroke Setting
+    REQUIRE(shape->order(true) == Result::Success);
+    REQUIRE(shape->order(false) == Result::Success);
 }
 
 TEST_CASE("Shape Filling", "[tvgShape]")
