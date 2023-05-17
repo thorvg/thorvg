@@ -36,7 +36,8 @@ struct Shape::Impl
     RenderData rd = nullptr;            //engine data
     uint32_t flag = RenderUpdateFlag::None;
     Shape* shape;
-    bool needComp;                      //for composition
+    uint8_t opacity;                    //for composition
+    bool needComp;                      //composite or not
 
     Impl(Shape* s) : shape(s)
     {
@@ -56,7 +57,7 @@ struct Shape::Impl
 
         if (needComp) {
             cmp = renderer.target(bounds(renderer), renderer.colorSpace());
-            renderer.beginComposite(cmp, CompositeMethod::None, 255);
+            renderer.beginComposite(cmp, CompositeMethod::None, opacity);
         }
         ret = renderer.renderShape(rd);
         if (cmp) renderer.endComposite(cmp);
@@ -65,12 +66,14 @@ struct Shape::Impl
 
     bool needComposition(uint32_t opacity)
     {
-        //In this case, paint(shape) would try composition by backends. (See: SwShapeTask::run())
-        //TODO: that composition should be moved here?
-        if (opacity < 255) return false;
+        if (opacity == 0) return false;
 
-        //Shape composition is only necessary when stroking is valid.
+        //Shape composition is only necessary when stroking & fill are valid.
         if (!rs.stroke || rs.stroke->width < FLT_EPSILON || rs.stroke->color[3] == 0) return false;
+        if (!rs.fill && rs.color[3] == 0) return false;
+
+        //translucent fill & stroke
+        if (opacity < 255) return true;
 
         //Composition test
         const Paint* target;
@@ -82,8 +85,13 @@ struct Shape::Impl
     }
 
     RenderData update(RenderMethod& renderer, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag pFlag, bool clipper)
-    {
-        needComp = needComposition(opacity);
+    {     
+        if ((needComp = needComposition(opacity))) {
+            /* Overriding opacity value. If this scene is half-translucent,
+               It must do intermeidate composition with that opacity value. */ 
+            this->opacity = static_cast<uint8_t>(opacity);
+            opacity = 255;
+        }
 
         rd = renderer.prepare(rs, rd, transform, opacity, clips, static_cast<RenderUpdateFlag>(pFlag | flag), clipper);
         flag = RenderUpdateFlag::None;

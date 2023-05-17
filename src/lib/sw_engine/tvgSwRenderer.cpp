@@ -125,10 +125,6 @@ struct SwShapeTask : SwTask
             }
         }
 
-        //Decide Stroking Composition
-        if (visibleStroke && visibleFill && opacity < 255) cmpStroking = true;
-        else cmpStroking = false;
-
         //Fill
         if (flags & (RenderUpdateFlag::Gradient | RenderUpdateFlag::Transform | RenderUpdateFlag::Color)) {
             if (visibleFill || clipper) {
@@ -143,7 +139,7 @@ struct SwShapeTask : SwTask
             if (auto fill = rshape->fill) {
                 auto ctable = (flags & RenderUpdateFlag::Gradient) ? true : false;
                 if (ctable) shapeResetFill(&shape);
-                if (!shapeGenFillColors(&shape, fill, transform, surface, cmpStroking ? 255 : opacity, ctable)) goto err;
+                if (!shapeGenFillColors(&shape, fill, transform, surface, opacity, ctable)) goto err;
             } else {
                 shapeDelFill(&shape);
             }
@@ -158,7 +154,7 @@ struct SwShapeTask : SwTask
                 if (auto fill = rshape->strokeFill()) {
                     auto ctable = (flags & RenderUpdateFlag::GradientStroke) ? true : false;
                     if (ctable) shapeResetStrokeFill(&shape);
-                    if (!shapeGenStrokeFillColors(&shape, fill, transform, surface, cmpStroking ? 255 : opacity, ctable)) goto err;
+                    if (!shapeGenStrokeFillColors(&shape, fill, transform, surface, opacity, ctable)) goto err;
                 } else {
                     shapeDelStrokeFill(&shape);
                 }
@@ -490,29 +486,14 @@ bool SwRenderer::renderShape(RenderData data)
 
     if (task->opacity == 0) return true;
 
-    uint32_t opacity;
-    Compositor* cmp = nullptr;
-
-    //Do Stroking Composition
-    if (task->cmpStroking) {
-        opacity = 255;
-        cmp = target(task->bounds(), colorSpace());
-        beginComposite(cmp, CompositeMethod::None, task->opacity);
-    //No Stroking Composition
-    } else {
-        opacity = task->opacity;
-    }
-
     //Main raster stage
     if (task->rshape->stroke && task->rshape->stroke->strokeFirst) {
-        _renderStroke(task, surface, opacity);
-        _renderFill(task, surface, opacity);
+        _renderStroke(task, surface, task->opacity);
+        _renderFill(task, surface, task->opacity);
     } else {
-        _renderFill(task, surface, opacity);
-        _renderStroke(task, surface, opacity);
+        _renderFill(task, surface, task->opacity);
+        _renderStroke(task, surface, task->opacity);
     }
-
-    if (task->cmpStroking) endComposite(cmp);
 
     return true;
 }
