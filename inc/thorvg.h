@@ -990,7 +990,8 @@ public:
      * @param[in] strokeFirst If @c true the stroke is rendered before the fill, otherwise the stroke is rendered as the second one (the default option).
      *
      * @return Result::Success when succeed, Result::FailedAllocation otherwise.
-     * @BETA_API
+     *
+     * @since 0.10
      */
     Result order(bool strokeFirst) noexcept;
 
@@ -1602,7 +1603,7 @@ public:
  *
  * @warning We strongly warn you not to change the paints of a scene unless you really know the design-structure.
  *
- * @BETA_API
+ * @since 0.10
  */
 class TVG_API Accessor final
 {
@@ -1618,8 +1619,6 @@ public:
      * @return Return the given @p picture instance.
      *
      * @note The bitmap based picture might not have the scene-tree.
-     *
-     * @BETA_API
      */
     std::unique_ptr<Picture> set(std::unique_ptr<Picture> picture, std::function<bool(const Paint* paint)> func) noexcept;
 
@@ -1627,8 +1626,6 @@ public:
      * @brief Creates a new Accessor object.
      *
      * @return A new Accessor object.
-     *
-     * @BETA_API
      */
     static std::unique_ptr<Accessor> gen() noexcept;
 
