@@ -20,6 +20,7 @@ source_file = [
     'GradientTransform.cpp',
     'ImageScaleDown.cpp',
     'ImageScaleUp.cpp',
+    'InvLumaMasking.cpp',
     'InvMasking.cpp',
     'LinearGradient.cpp',
     'LumaMasking.cpp',
