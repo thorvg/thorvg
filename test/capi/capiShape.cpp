@@ -272,3 +272,16 @@ TEST_CASE("Fill rule", "[capiFillRule]")
 
     REQUIRE(tvg_paint_del(paint) == TVG_RESULT_SUCCESS);
 }
+
+TEST_CASE("Paint order", "[capiPaintOrder]")
+{
+    Tvg_Paint* paint = tvg_shape_new();
+    REQUIRE(paint);
+
+    REQUIRE(tvg_shape_set_paint_order(nullptr, true) == TVG_RESULT_INVALID_ARGUMENT);
+    REQUIRE(tvg_shape_set_paint_order(paint, true) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_shape_set_paint_order(paint, false) == TVG_RESULT_SUCCESS);
+
+    REQUIRE(tvg_paint_del(paint) == TVG_RESULT_SUCCESS);
+}
+
