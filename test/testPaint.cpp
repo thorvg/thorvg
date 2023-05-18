@@ -223,4 +223,12 @@ TEST_CASE("Composition", "[tvgPaint]")
 
     REQUIRE(shape->composite(&pComp2) == CompositeMethod::LumaMask);
     REQUIRE(pComp == pComp2);
+
+    //InvLumaMask
+    comp = Shape::gen();
+    pComp = comp.get();
+    REQUIRE(shape->composite(move(comp), CompositeMethod::InvLumaMask) == Result::Success);
+
+    REQUIRE(shape->composite(&pComp2) == CompositeMethod::InvLumaMask);
+    REQUIRE(pComp == pComp2);
 }

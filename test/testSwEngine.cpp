@@ -1120,6 +1120,66 @@ TEST_CASE("RLE Filling LumaMask", "[tvgSwEngine]")
 }
 
 
+TEST_CASE("RLE Filling InvLumaMask", "[tvgSwEngine]")
+{
+    REQUIRE(Initializer::init(CanvasEngine::Sw, 0) == Result::Success);
+
+    auto canvas = SwCanvas::gen();
+    REQUIRE(canvas);
+
+    uint32_t buffer[100*100];
+    REQUIRE(canvas->target(buffer, 100, 100, 100, SwCanvas::Colorspace::ABGR8888) == Result::Success);
+
+    //Fill
+    auto linearFill = LinearGradient::gen();
+    REQUIRE(linearFill);
+
+    auto radialFill = RadialGradient::gen();
+    REQUIRE(radialFill);
+
+    Fill::ColorStop cs[4] = {
+        {0.0f, 0, 0, 0, 0},
+        {0.2f, 50, 25, 50, 25},
+        {0.5f, 100, 100, 100, 125},
+        {1.0f, 255, 255, 255, 255}
+    };
+    REQUIRE(linearFill->colorStops(cs, 4) == Result::Success);
+    REQUIRE(radialFill->colorStops(cs, 4) == Result::Success);
+    REQUIRE(linearFill->linear(0.0f, 0.0f, 100.0f, 120.0f) == Result::Success);
+    REQUIRE(radialFill->radial(50.0f, 50.0f, 50.0f) == Result::Success);
+
+    //Mask
+    auto mask = tvg::Shape::gen();
+    REQUIRE(mask);
+    REQUIRE(mask->appendCircle(50, 50, 50, 50) == Result::Success);
+
+    //Filled Shapes
+    auto shape3 = tvg::Shape::gen();
+    REQUIRE(shape3);
+    auto shape4 = tvg::Shape::gen();
+    REQUIRE(shape4);
+    REQUIRE(shape3->appendRect(0, 0, 50, 50, 10, 10) == Result::Success);
+    REQUIRE(shape4->appendRect(50, 0, 50, 50, 10, 10) == Result::Success);
+
+    REQUIRE(shape3->fill(move(linearFill)) == Result::Success);
+    REQUIRE(shape4->fill(move(radialFill)) == Result::Success);
+
+    //Scene
+    auto scene = tvg::Scene::gen();
+    REQUIRE(scene);
+    REQUIRE(scene->push(move(shape3)) == Result::Success);
+    REQUIRE(scene->push(move(shape4)) == Result::Success);
+    REQUIRE(scene->composite(move(mask), tvg::CompositeMethod::InvLumaMask) == Result::Success);
+    REQUIRE(canvas->push(move(scene)) == Result::Success);
+
+    //Draw
+    REQUIRE(canvas->draw() == Result::Success);
+    REQUIRE(canvas->sync() == Result::Success);
+
+    REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
+}
+
+
 TEST_CASE("RLE Filling ClipPath", "[tvgSwEngine]")
 {
     REQUIRE(Initializer::init(CanvasEngine::Sw, 0) == Result::Success);
