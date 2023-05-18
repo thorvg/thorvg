@@ -1476,6 +1476,22 @@ TVG_API Tvg_Result tvg_shape_get_fill_rule(const Tvg_Paint* paint, Tvg_Fill_Rule
 
 
 /*!
+* \brief Sets the rendering order of the stroke and the fill.
+*
+* \param[in] paint A Tvg_Paint pointer to the shape object.
+* \param[in] strokeFirst If @c true the stroke is rendered before the fill, otherwise the stroke is rendered as the second one (the default option).
+*
+* \return Tvg_Result enumeration.
+* \retval TVG_RESULT_SUCCESS Succeed.
+* \retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
+* \retval TVG_RESULT_FAILED_ALLOCATION An internal error with a memory allocation.
+*
+* \since 0.10
+*/
+TVG_API Tvg_Result tvg_shape_set_paint_order(Tvg_Paint* paint, bool strokeFirst);
+
+
+/*!
 * \brief Sets the linear gradient fill for all of the figures from the path.
 *
 * The parts of the shape defined as inner are filled.
