@@ -44,12 +44,6 @@ static inline T _multiply(T c, T a)
 }
 
 
-static inline uint32_t _alpha(uint32_t c)
-{
-    return (c >> 24);
-}
-
-
 static inline uint32_t _ialpha(uint32_t c)
 {
     return (~c >> 24);
