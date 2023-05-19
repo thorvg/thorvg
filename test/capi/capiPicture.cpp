@@ -123,15 +123,6 @@ TEST_CASE("Load Svg Data in Picture", "[capiPicture]")
     REQUIRE(w == Approx(wNew).epsilon(0.0000001));
     REQUIRE(h == Approx(hNew).epsilon(0.0000001));
 
-
-    //Verify Position
-    float x, y;
-    REQUIRE(tvg_picture_get_viewbox(picture, &x, &y, &w, &h) == TVG_RESULT_SUCCESS);
-    REQUIRE(x == Approx(0).epsilon(0.0000001));
-    REQUIRE(y == Approx(0).epsilon(0.0000001));
-    REQUIRE(w == Approx(600).epsilon(0.0000001));
-    REQUIRE(h == Approx(600).epsilon(0.0000001));
-
     REQUIRE(tvg_paint_del(picture) == TVG_RESULT_SUCCESS);
 }
 

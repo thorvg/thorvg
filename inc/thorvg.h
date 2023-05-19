@@ -1239,15 +1239,6 @@ public:
     uint32_t mesh(const Polygon** triangles) const noexcept;
 
     /**
-     * @brief Gets the position and the size of the loaded SVG picture.
-     *
-     * @warning Please do not use it, this API is not official one. It could be modified in the next version.
-     *
-     * @BETA_API
-     */
-    Result viewbox(float* x, float* y, float* w, float* h) const noexcept;
-
-    /**
      * @brief Creates a new Picture object.
      *
      * @return A new Picture object.
