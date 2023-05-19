@@ -93,7 +93,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     shape->appendRect(0, 0, WIDTH, HEIGHT, 0, 0);    //x, y, w, h, rx, ry
     shape->fill(255, 255, 255, 255);                 //r, g, b, a
 
-    if (canvas->push(move(shape)) != tvg::Result::Success) return;
+    if (canvas->push(std::move(shape)) != tvg::Result::Success) return;
 
     eina_file_dir_list(EXAMPLE_DIR, EINA_TRUE, svgDirCallback, canvas);
 

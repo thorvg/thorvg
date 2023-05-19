@@ -38,14 +38,14 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     shape->appendRect(0, 0, WIDTH, HEIGHT, 0, 0);    //x, y, w, h, rx, ry
     shape->fill(255, 255, 255, 255);                 //r, g, b, a
 
-    if (canvas->push(move(shape)) != tvg::Result::Success) return;
+    if (canvas->push(std::move(shape)) != tvg::Result::Success) return;
 
     auto picture = tvg::Picture::gen();
     if (picture->load(svg, strlen(svg), "svg", false) != tvg::Result::Success) return;
 
     picture->size(WIDTH, HEIGHT);
 
-    canvas->push(move(picture));
+    canvas->push(std::move(picture));
 }
 
 

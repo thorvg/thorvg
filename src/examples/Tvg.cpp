@@ -51,7 +51,7 @@ void tvgDirCallback(const char* name, const char* path, void* data)
     picture->size(SIZE, SIZE);
     picture->translate((counter % NUM_PER_ROW) * SIZE, (counter / NUM_PER_ROW) * (HEIGHT / NUM_PER_COL));
 
-    pictures.push_back(move(picture));
+    pictures.push_back(std::move(picture));
 
     cout << "TVG: " << buf << endl;
 
@@ -67,7 +67,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     shape->appendRect(0, 0, WIDTH, HEIGHT, 0, 0);    //x, y, w, h, rx, ry
     shape->fill(255, 255, 255, 255);                 //r, g, b, a
 
-    if (canvas->push(move(shape)) != tvg::Result::Success) return;
+    if (canvas->push(std::move(shape)) != tvg::Result::Success) return;
 
     eina_file_dir_list(EXAMPLE_DIR, EINA_TRUE, tvgDirCallback, canvas);
 
@@ -76,7 +76,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
        This means it earns the time to finish loading tvg resources,
        otherwise you can push pictures immediately. */
     for (auto& paint : pictures) {
-        canvas->push(move(paint));
+        canvas->push(std::move(paint));
     }
 
     pictures.clear();

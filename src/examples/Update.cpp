@@ -34,7 +34,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     auto shape = tvg::Shape::gen();
     shape->appendRect(-100, -100, 200, 200, 0, 0);
     shape->fill(255, 255, 255, 255);
-    canvas->push(move(shape));
+    canvas->push(std::move(shape));
 }
 
 void tvgUpdateCmds(tvg::Canvas* canvas, float progress)
@@ -52,7 +52,7 @@ void tvgUpdateCmds(tvg::Canvas* canvas, float progress)
     shape->scale(1 - 0.75 * progress);
     shape->rotate(360 * progress);
 
-    canvas->push(move(shape));
+    canvas->push(std::move(shape));
 }
 
 

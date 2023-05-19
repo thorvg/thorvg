@@ -44,9 +44,9 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     auto picture = tvg::Picture::gen();
     picture->load(EXAMPLE_DIR"/tiger.svg");
     picture->size(WIDTH, HEIGHT);
-    picture->composite(move(mask), tvg::CompositeMethod::AlphaMask);
+    picture->composite(std::move(mask), tvg::CompositeMethod::AlphaMask);
     pPicture = picture.get();
-    canvas->push(move(picture));
+    canvas->push(std::move(picture));
 }
 
 void tvgUpdateCmds(tvg::Canvas* canvas, float progress)

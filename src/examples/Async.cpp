@@ -66,9 +66,9 @@ bool tvgUpdateCmds(tvg::Canvas* canvas)
         colorStops[2] = {2, uint8_t(rand() % 255), uint8_t(rand() % 255), uint8_t(rand() % 255), 255};
 
         fill->colorStops(colorStops, 3);
-        shape->fill(move(fill));
+        shape->fill(std::move(fill));
 
-        if (canvas->push(move(shape)) != tvg::Result::Success) {
+        if (canvas->push(std::move(shape)) != tvg::Result::Success) {
             //Did you call clear()? Make it sure if canvas is on rendering
             break;
         }

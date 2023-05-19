@@ -228,6 +228,6 @@ void TvgLoader::run(unsigned tid)
 unique_ptr<Paint> TvgLoader::paint()
 {
     this->done();
-    if (root) return move(root);
+    if (root) return std::move(root);
     return nullptr;
 }

@@ -39,7 +39,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     auto shape1 = tvg::Shape::gen();
     shape1->appendCircle(400, 400, 250, 250);
     shape1->fill(255, 255, 0, 255);
-    scene->push(move(shape1));
+    scene->push(std::move(shape1));
 
     //Round rectangle
     auto shape2 = tvg::Shape::gen();
@@ -47,11 +47,11 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     shape2->fill(0, 255, 0, 255);
     shape2->stroke(10);
     shape2->stroke(255, 255, 255, 255);
-    scene->push(move(shape2));
+    scene->push(std::move(shape2));
 
 
     //Draw the Scene onto the Canvas
-    canvas->push(move(scene));
+    canvas->push(std::move(scene));
 
     //Create a Scene 2
     auto scene2 = tvg::Scene::gen();
@@ -79,7 +79,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     shape3->stroke(255, 255, 255, 255);
     shape3->opacity(127);
 
-    scene2->push(move(shape3));
+    scene2->push(std::move(shape3));
 
     //Circle
     auto shape4 = tvg::Shape::gen();
@@ -101,10 +101,10 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     shape4->stroke(0, 0, 255, 255);
     shape4->opacity(200);
     shape4->scale(3);
-    scene2->push(move(shape4));
+    scene2->push(std::move(shape4));
 
     //Draw the Scene onto the Canvas
-    canvas->push(move(scene2));
+    canvas->push(std::move(scene2));
 }
 
 

@@ -42,19 +42,19 @@ void tvgUpdateCmds(tvg::Canvas* canvas, float progress)
     shape1->fill(0, 255, 0, 255);                      //r, g, b, a
     shape1->stroke(5);                                 //width
     shape1->stroke(255, 255, 255, 255);                //r, g, b, a
-    scene->push(move(shape1));
+    scene->push(std::move(shape1));
 
     //Prepare Circle (Scene1)
     auto shape2 = tvg::Shape::gen();
     shape2->appendCircle(-165, -150, 200, 200);    //cx, cy, radiusW, radiusH
     shape2->fill(255, 255, 0, 255);                //r, g, b, a
-    scene->push(move(shape2));
+    scene->push(std::move(shape2));
 
     //Prepare Ellipse (Scene1)
     auto shape3 = tvg::Shape::gen();
     shape3->appendCircle(265, 250, 150, 100);      //cx, cy, radiusW, radiusH
     shape3->fill(0, 255, 255, 255);                //r, g, b, a
-    scene->push(move(shape3));
+    scene->push(std::move(shape3));
 
     scene->translate(350, 350);
     scene->scale(0.5);
@@ -82,7 +82,7 @@ void tvgUpdateCmds(tvg::Canvas* canvas, float progress)
     shape4->fill(0, 0, 255, 127);
     shape4->stroke(3);                             //width
     shape4->stroke(0, 0, 255, 255);                //r, g, b, a
-    scene2->push(move(shape4));
+    scene2->push(std::move(shape4));
 
     //Circle (Scene2)
     auto shape5 = tvg::Shape::gen();
@@ -100,16 +100,16 @@ void tvgUpdateCmds(tvg::Canvas* canvas, float progress)
     shape5->cubicTo(cx - radius, cy - halfRadius, cx - halfRadius, cy - radius, cx, cy - radius);
     shape5->close();
     shape5->fill(255, 0, 0, 127);
-    scene2->push(move(shape5));
+    scene2->push(std::move(shape5));
 
     scene2->translate(500, 350);
     scene2->rotate(360 * progress);
 
     //Push scene2 onto the scene
-    scene->push(move(scene2));
+    scene->push(std::move(scene2));
 
     //Draw the Scene onto the Canvas
-    canvas->push(move(scene));
+    canvas->push(std::move(scene));
 }
 
 

@@ -38,7 +38,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     //fill property will be retained
     bg->fill(255, 255, 255, 255);
 
-    if (canvas->push(move(bg)) != tvg::Result::Success) return;
+    if (canvas->push(std::move(bg)) != tvg::Result::Success) return;
 
     //Shape
     auto shape = tvg::Shape::gen();
@@ -54,7 +54,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     shape->stroke(0, 0, 255, 255);
     shape->stroke(1);
 
-    if (canvas->push(move(shape)) != tvg::Result::Success) return;
+    if (canvas->push(std::move(shape)) != tvg::Result::Success) return;
 }
 
 void tvgUpdateCmds(tvg::Canvas* canvas, float progress)
