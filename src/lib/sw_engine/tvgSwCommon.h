@@ -238,10 +238,13 @@ struct SwImage
     bool         scaled = false;  //draw scaled image
 };
 
+typedef uint32_t(*SwJoin)(uint8_t r, uint8_t g, uint8_t b, uint8_t a);      //color channel join
+typedef uint8_t(*SwAlpha)(uint8_t*);                                        //blending alpha
+
 struct SwBlender
 {
-    uint32_t (*join)(uint8_t r, uint8_t g, uint8_t b, uint8_t a);
-    uint8_t (*alpha[(int)CompositeMethod::InvLumaMask + 1])(uint8_t*);
+    SwJoin  join;
+    SwAlpha alpha[(int)CompositeMethod::InvLumaMask + 1];
 };
 
 struct SwCompositor;
