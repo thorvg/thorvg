@@ -46,7 +46,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     shape1->lineTo(146, 143);
     shape1->close();
     shape1->fill(0, 0, 255, 255);
-    if (canvas->push(move(shape1)) != tvg::Result::Success) return;
+    if (canvas->push(std::move(shape1)) != tvg::Result::Success) return;
 
 
     //Circle
@@ -65,7 +65,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     shape2->cubicTo(cx - radius, cy - halfRadius, cx - halfRadius, cy - radius, cx, cy - radius);
     shape2->close();
     shape2->fill(255, 0, 0, 255);
-    if (canvas->push(move(shape2)) != tvg::Result::Success) return;
+    if (canvas->push(std::move(shape2)) != tvg::Result::Success) return;
 
 }
 

@@ -86,7 +86,7 @@ void tvgUpdateCmds(tvg::Canvas* canvas, float progress)
 
     shape->transform(m);
 
-    canvas->push(move(shape));
+    canvas->push(std::move(shape));
 }
 
 

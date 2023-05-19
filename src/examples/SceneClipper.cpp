@@ -38,23 +38,23 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     auto shape1 = tvg::Shape::gen();
     shape1->appendCircle(200, 200, 100, 100);
-    clipper->push(move(shape1));
+    clipper->push(std::move(shape1));
 
     auto shape2 = tvg::Shape::gen();
     shape2->appendCircle(400, 400, 150, 150);
-    clipper->push(move(shape2));
+    clipper->push(std::move(shape2));
 
     auto shape3 = tvg::Shape::gen();
     shape3->appendCircle(150, 300, 60, 60);
-    clipper->push(move(shape3));
+    clipper->push(std::move(shape3));
 
     auto shape4 = tvg::Shape::gen();
     shape4->appendCircle(400, 100, 125, 125);
-    clipper->push(move(shape4));
+    clipper->push(std::move(shape4));
 
     auto shape5 = tvg::Shape::gen();
     shape5->appendCircle(150, 500, 100, 100);
-    clipper->push(move(shape5));
+    clipper->push(std::move(shape5));
 #else
     //A single clipper with multiple regions
     auto clipper = tvg::Shape::gen();
@@ -71,8 +71,8 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     shape->stroke(0, 0, 255, 255);
     shape->stroke(10);
     shape->fill(255, 255, 255, 255);
-    shape->composite(move(clipper), tvg::CompositeMethod::ClipPath);
-    if (canvas->push(move(shape)) != tvg::Result::Success) return;
+    shape->composite(std::move(clipper), tvg::CompositeMethod::ClipPath);
+    if (canvas->push(std::move(shape)) != tvg::Result::Success) return;
 }
 
 /************************************************************************/

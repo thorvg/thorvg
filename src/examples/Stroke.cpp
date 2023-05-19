@@ -38,7 +38,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     shape1->stroke(tvg::StrokeJoin::Bevel);   //default is Bevel
     shape1->stroke(10);                       //width: 10px
 
-    if (canvas->push(move(shape1)) != tvg::Result::Success) return;
+    if (canvas->push(std::move(shape1)) != tvg::Result::Success) return;
 
     //Shape 2
     auto shape2 = tvg::Shape::gen();
@@ -48,7 +48,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     shape2->stroke(tvg::StrokeJoin::Round);
     shape2->stroke(10);
 
-    if (canvas->push(move(shape2)) != tvg::Result::Success) return;
+    if (canvas->push(std::move(shape2)) != tvg::Result::Success) return;
 
     //Shape 3
     auto shape3 = tvg::Shape::gen();
@@ -58,7 +58,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     shape3->stroke(tvg::StrokeJoin::Miter);
     shape3->stroke(10);
 
-    if (canvas->push(move(shape3)) != tvg::Result::Success) return;
+    if (canvas->push(std::move(shape3)) != tvg::Result::Success) return;
 
     //Shape 4
     auto shape4 = tvg::Shape::gen();
@@ -67,7 +67,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     shape4->stroke(255, 255, 255, 255);
     shape4->stroke(1);
 
-    if (canvas->push(move(shape4)) != tvg::Result::Success) return;
+    if (canvas->push(std::move(shape4)) != tvg::Result::Success) return;
 
     //Shape 5
     auto shape5 = tvg::Shape::gen();
@@ -76,7 +76,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     shape5->stroke(255, 255, 255, 255);
     shape5->stroke(2);
 
-    if (canvas->push(move(shape5)) != tvg::Result::Success) return;
+    if (canvas->push(std::move(shape5)) != tvg::Result::Success) return;
 
     //Shape 6
     auto shape6 = tvg::Shape::gen();
@@ -85,7 +85,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     shape6->stroke(255, 255, 255, 255);
     shape6->stroke(4);
 
-    if (canvas->push(move(shape6)) != tvg::Result::Success) return;
+    if (canvas->push(std::move(shape6)) != tvg::Result::Success) return;
 
     //Stroke width test
     for (int i = 0; i < 10; ++i) {
@@ -95,7 +95,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
         hline->stroke(255, 255, 255, 255);       //color: r, g, b, a
         hline->stroke(i + 1);                    //stroke width
         hline->stroke(tvg::StrokeCap::Round);    //default is Square
-        if (canvas->push(move(hline)) != tvg::Result::Success) return;
+        if (canvas->push(std::move(hline)) != tvg::Result::Success) return;
 
         auto vline = tvg::Shape::gen();
         vline->moveTo(500 + (25 * i), 550);
@@ -103,7 +103,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
         vline->stroke(255, 255, 255, 255);       //color: r, g, b, a
         vline->stroke(i + 1);                    //stroke width
         vline->stroke(tvg::StrokeCap::Round);    //default is Square
-        if (canvas->push(move(vline)) != tvg::Result::Success) return;
+        if (canvas->push(std::move(vline)) != tvg::Result::Success) return;
     }
 
     //Stroke cap test
@@ -116,15 +116,15 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     auto line2 = tvg::cast<tvg::Shape>(line1->duplicate());
     auto line3 = tvg::cast<tvg::Shape>(line1->duplicate());
-    if (canvas->push(move(line1)) != tvg::Result::Success) return;
+    if (canvas->push(std::move(line1)) != tvg::Result::Success) return;
 
     line2->stroke(tvg::StrokeCap::Square);
     line2->translate(0, 50);
-    if (canvas->push(move(line2)) != tvg::Result::Success) return;
+    if (canvas->push(std::move(line2)) != tvg::Result::Success) return;
 
     line3->stroke(tvg::StrokeCap::Butt);
     line3->translate(0, 100);
-    if (canvas->push(move(line3)) != tvg::Result::Success) return;
+    if (canvas->push(std::move(line3)) != tvg::Result::Success) return;
 }
 
 

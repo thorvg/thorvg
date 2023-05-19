@@ -41,7 +41,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     shape1->stroke(10);
     shape1->stroke(tvg::StrokeJoin::Round);
     shape1->stroke(tvg::StrokeCap::Round);
-    if (canvas->push(move(shape1)) != tvg::Result::Success) return;
+    if (canvas->push(std::move(shape1)) != tvg::Result::Success) return;
 
     auto shape2 = tvg::Shape::gen();
     shape2->moveTo(270, 50);
@@ -53,7 +53,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     shape2->stroke(10);
     shape2->stroke(tvg::StrokeJoin::Bevel);
     shape2->stroke(tvg::StrokeCap::Square);
-    if (canvas->push(move(shape2)) != tvg::Result::Success) return;
+    if (canvas->push(std::move(shape2)) != tvg::Result::Success) return;
 
     auto shape3 = tvg::Shape::gen();
     shape3->moveTo(520, 50);
@@ -65,7 +65,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     shape3->stroke(10);
     shape3->stroke(tvg::StrokeJoin::Miter);
     shape3->stroke(tvg::StrokeCap::Butt);
-    if (canvas->push(move(shape3)) != tvg::Result::Success) return;
+    if (canvas->push(std::move(shape3)) != tvg::Result::Success) return;
 
     //Test for Stroke Dash
     auto shape4 = tvg::Shape::gen();
@@ -81,7 +81,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     float dashPattern1[2] = {20, 10};
     shape4->stroke(dashPattern1, 2);
-    if (canvas->push(move(shape4)) != tvg::Result::Success) return;
+    if (canvas->push(std::move(shape4)) != tvg::Result::Success) return;
 
     auto shape5 = tvg::Shape::gen();
     shape5->moveTo(270, 230);
@@ -96,7 +96,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     float dashPattern2[2] = {10, 10};
     shape5->stroke(dashPattern2, 2);
-    if (canvas->push(move(shape5)) != tvg::Result::Success) return;
+    if (canvas->push(std::move(shape5)) != tvg::Result::Success) return;
 
     auto shape6 = tvg::Shape::gen();
     shape6->moveTo(520, 230);
@@ -111,7 +111,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     float dashPattern3[6] = {10, 10, 1, 8, 1, 10};
     shape6->stroke(dashPattern3, 6);
-    if (canvas->push(move(shape6)) != tvg::Result::Success) return;
+    if (canvas->push(std::move(shape6)) != tvg::Result::Success) return;
 
     //For a comparison with shapes 10-12
     auto shape7 = tvg::Shape::gen();
@@ -120,7 +120,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     shape7->stroke(7);
     shape7->stroke(tvg::StrokeJoin::Round);
     shape7->stroke(tvg::StrokeCap::Round);
-    if (canvas->push(move(shape7)) != tvg::Result::Success) return;
+    if (canvas->push(std::move(shape7)) != tvg::Result::Success) return;
 
     auto shape8 = tvg::Shape::gen();
     shape8->appendArc(320, 400, 160, 10, 70, false);
@@ -128,7 +128,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     shape8->stroke(7);
     shape8->stroke(tvg::StrokeJoin::Bevel);
     shape8->stroke(tvg::StrokeCap::Square);
-    if (canvas->push(move(shape8)) != tvg::Result::Success) return;
+    if (canvas->push(std::move(shape8)) != tvg::Result::Success) return;
 
     auto shape9 = tvg::Shape::gen();
     shape9->appendArc(570, 400, 160, 10, 70, true);
@@ -136,7 +136,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     shape9->stroke(7);
     shape9->stroke(tvg::StrokeJoin::Miter);
     shape9->stroke(tvg::StrokeCap::Butt);
-    if (canvas->push(move(shape9)) != tvg::Result::Success) return;
+    if (canvas->push(std::move(shape9)) != tvg::Result::Success) return;
 
     //Test for Stroke Dash for Arc, Circle, Rect
     auto shape10 = tvg::Shape::gen();
@@ -148,7 +148,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     shape10->stroke(tvg::StrokeJoin::Round);
     shape10->stroke(tvg::StrokeCap::Round);
     shape10->stroke(dashPattern1, 2);
-    if (canvas->push(move(shape10)) != tvg::Result::Success) return;
+    if (canvas->push(std::move(shape10)) != tvg::Result::Success) return;
 
     auto shape11 = tvg::Shape::gen();
     shape11->appendArc(320, 600, 160, 10, 30, false);
@@ -159,7 +159,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     shape11->stroke(tvg::StrokeJoin::Bevel);
     shape11->stroke(tvg::StrokeCap::Square);
     shape11->stroke(dashPattern2, 2);
-    if (canvas->push(move(shape11)) != tvg::Result::Success) return;
+    if (canvas->push(std::move(shape11)) != tvg::Result::Success) return;
 
     auto shape12 = tvg::Shape::gen();
     shape12->appendArc(570, 600, 160, 10, 30, true);
@@ -170,7 +170,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     shape12->stroke(tvg::StrokeJoin::Miter);
     shape12->stroke(tvg::StrokeCap::Butt);
     shape12->stroke(dashPattern3, 6);
-    if (canvas->push(move(shape12)) != tvg::Result::Success) return;
+    if (canvas->push(std::move(shape12)) != tvg::Result::Success) return;
 }
 
 

@@ -47,8 +47,8 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     fill->colorStops(colorStops, 2);
 
-    shape1->fill(move(fill));
-    if (canvas->push(move(shape1)) != tvg::Result::Success) return;
+    shape1->fill(std::move(fill));
+    if (canvas->push(std::move(shape1)) != tvg::Result::Success) return;
 
     //Prepare Circle
     auto shape2 = tvg::Shape::gen();
@@ -66,8 +66,8 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     fill2->colorStops(colorStops2, 3);
 
-    shape2->fill(move(fill2));
-    if (canvas->push(move(shape2)) != tvg::Result::Success) return;
+    shape2->fill(std::move(fill2));
+    if (canvas->push(std::move(shape2)) != tvg::Result::Success) return;
 
 
     //Prepare Ellipse
@@ -87,8 +87,8 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     fill3->colorStops(colorStops3, 4);
 
-    shape3->fill(move(fill3));
-    if (canvas->push(move(shape3)) != tvg::Result::Success) return;
+    shape3->fill(std::move(fill3));
+    if (canvas->push(std::move(shape3)) != tvg::Result::Success) return;
 }
 
 

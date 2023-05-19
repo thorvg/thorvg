@@ -50,14 +50,14 @@ void tvgUpdateCmds(tvg::Canvas* canvas, float progress)
     colorStops[2] = {1, 255, 255, 255, 255};
 
     fill->colorStops(colorStops, 3);
-    shape->fill(move(fill));
+    shape->fill(std::move(fill));
     shape->translate(385, 400);
 
     //Update Shape1
     shape->scale(1 - 0.75 * progress);
     shape->rotate(360 * progress);
 
-    if (canvas->push(move(shape)) != tvg::Result::Success) return;
+    if (canvas->push(std::move(shape)) != tvg::Result::Success) return;
 
     //Shape2
     auto shape2 = tvg::Shape::gen();
@@ -74,12 +74,12 @@ void tvgUpdateCmds(tvg::Canvas* canvas, float progress)
     colorStops2[1] = {1, 255, 255, 255, 255};
 
     fill2->colorStops(colorStops2, 2);
-    shape2->fill(move(fill2));
+    shape2->fill(std::move(fill2));
 
     shape2->rotate(360 * progress);
     shape2->translate(400 + progress * 300, 400);
 
-    if (canvas->push(move(shape2)) != tvg::Result::Success) return;
+    if (canvas->push(std::move(shape2)) != tvg::Result::Success) return;
 
     //Shape3
     auto shape3 = tvg::Shape::gen();
@@ -100,14 +100,14 @@ void tvgUpdateCmds(tvg::Canvas* canvas, float progress)
 
     fill3->colorStops(colorStops3, 4);
 
-    shape3->fill(move(fill3));
+    shape3->fill(std::move(fill3));
     shape3->translate(400, 400);
 
     //Update Shape3
     shape3->rotate(-360 * progress);
     shape3->scale(0.5 + progress);
 
-    if (canvas->push(move(shape3)) != tvg::Result::Success) return;
+    if (canvas->push(std::move(shape3)) != tvg::Result::Success) return;
 }
 
 

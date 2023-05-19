@@ -46,9 +46,9 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     nMask->appendCircle(220, 220, 125, 125);
     nMask->fill(255, 255, 255, 255);     //AlphaMask RGB channels are unused.
 
-    mask->composite(move(nMask), tvg::CompositeMethod::AlphaMask);
-    shape->composite(move(mask), tvg::CompositeMethod::AlphaMask);
-    canvas->push(move(shape));
+    mask->composite(std::move(nMask), tvg::CompositeMethod::AlphaMask);
+    shape->composite(std::move(mask), tvg::CompositeMethod::AlphaMask);
+    canvas->push(std::move(shape));
 
     //SVG
     auto svg = tvg::Picture::gen();
@@ -62,8 +62,8 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     mask2->appendCircle(150, 500, 75, 75);
     mask2->appendRect(150, 500, 200, 200, 30, 30);
     mask2->fill(255, 255, 255, 255);    //AlphaMask RGB channels are unused.
-    svg->composite(move(mask2), tvg::CompositeMethod::AlphaMask);
-    if (canvas->push(move(svg)) != tvg::Result::Success) return;
+    svg->composite(std::move(mask2), tvg::CompositeMethod::AlphaMask);
+    if (canvas->push(std::move(svg)) != tvg::Result::Success) return;
 
     //Star
     auto star = tvg::Shape::gen();
@@ -88,8 +88,8 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     mask3->appendCircle(600, 200, 125, 125);
     mask3->fill(255, 255, 255, 255);    //AlphaMask RGB channels are unused.
     mask3->opacity(200);
-    star->composite(move(mask3), tvg::CompositeMethod::AlphaMask);
-    if (canvas->push(move(star)) != tvg::Result::Success) return;
+    star->composite(std::move(mask3), tvg::CompositeMethod::AlphaMask);
+    if (canvas->push(std::move(star)) != tvg::Result::Success) return;
 
     //Image
     ifstream file(EXAMPLE_DIR"/rawimage_200x300.raw");
@@ -117,8 +117,8 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     mask4->close();
     mask4->fill(255, 255, 255, 255);     //AlphaMask RGB channels are unused.
     mask4->opacity(70);
-    image->composite(move(mask4), tvg::CompositeMethod::AlphaMask);
-    if (canvas->push(move(image)) != tvg::Result::Success) return;
+    image->composite(std::move(mask4), tvg::CompositeMethod::AlphaMask);
+    if (canvas->push(std::move(image)) != tvg::Result::Success) return;
 
     free(data);
 }

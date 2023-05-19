@@ -36,7 +36,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     shape->appendRect(0, 0, WIDTH, HEIGHT, 0, 0);
     shape->fill(255, 255, 255, 255);
 
-    if (canvas->push(move(shape)) != tvg::Result::Success) return;
+    if (canvas->push(std::move(shape)) != tvg::Result::Success) return;
 
     string path(EXAMPLE_DIR"/rawimage_200x300.raw");
 
@@ -49,7 +49,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     auto picture = tvg::Picture::gen();
     if (picture->load(data, 200, 300, true) != tvg::Result::Success) return;
     picture->translate(400, 250);
-    canvas->push(move(picture));
+    canvas->push(std::move(picture));
 
     auto picture2 = tvg::Picture::gen();
     if (picture2->load(data, 200, 300, true) != tvg::Result::Success) return;
@@ -62,9 +62,9 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     auto circle = tvg::Shape::gen();
     circle->appendCircle(350, 350, 200,200);
 
-    picture2->composite(move(circle), tvg::CompositeMethod::ClipPath);
+    picture2->composite(std::move(circle), tvg::CompositeMethod::ClipPath);
 
-    canvas->push(move(picture2));
+    canvas->push(std::move(picture2));
 
     free(data);
 }

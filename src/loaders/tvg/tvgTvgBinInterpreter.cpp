@@ -183,7 +183,7 @@ static unique_ptr<Fill> _parseShapeFill(const char *ptr, const char *end)
 
                 auto fillGradRadial = RadialGradient::gen();
                 fillGradRadial->radial(x, y, radius);
-                fillGrad = move(fillGradRadial);
+                fillGrad = std::move(fillGradRadial);
                 break;
             }
             case TVG_TAG_FILL_LINEAR_GRADIENT: {
@@ -202,7 +202,7 @@ static unique_ptr<Fill> _parseShapeFill(const char *ptr, const char *end)
 
                 auto fillGradLinear = LinearGradient::gen();
                 fillGradLinear->linear(x1, y1, x2, y2);
-                fillGrad = move(fillGradLinear);
+                fillGrad = std::move(fillGradLinear);
                 break;
             }
             case TVG_TAG_FILL_FILLSPREAD: {
@@ -301,7 +301,7 @@ static bool _parseShapeStroke(const char *ptr, const char *end, Shape *shape)
             case TVG_TAG_SHAPE_STROKE_FILL: {
                 auto fill = _parseShapeFill(block.data, block.end);
                 if (!fill) return false;
-                shape->stroke(move(move(fill)));
+                shape->stroke(std::move(fill));
                 break;
             }
             case TVG_TAG_SHAPE_STROKE_DASHPTRN: {
@@ -334,7 +334,7 @@ static bool _parseShape(TvgBinBlock block, Paint* paint)
         case TVG_TAG_SHAPE_FILL: {
             auto fill = _parseShapeFill(block.data, block.end);
             if (!fill) return false;
-            shape->fill(move(fill));
+            shape->fill(std::move(fill));
             return true;
         }
         case TVG_TAG_SHAPE_COLOR: {

@@ -46,7 +46,7 @@ Result Canvas::reserve(uint32_t n) noexcept
 
 Result Canvas::push(unique_ptr<Paint> paint) noexcept
 {
-    return pImpl->push(move(paint));
+    return pImpl->push(std::move(paint));
 }
 
 

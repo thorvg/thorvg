@@ -44,7 +44,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
         picture->rotate(30 * i);
         picture->size(200, 200);
         picture->opacity(opacity + opacity * i);
-        if (canvas->push(move(picture)) != tvg::Result::Success) return;
+        if (canvas->push(std::move(picture)) != tvg::Result::Success) return;
     }
 
     //Open file manually
@@ -68,7 +68,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     free(data);
     picture->translate(400, 0);
     picture->scale(0.8);
-    canvas->push(move(picture));
+    canvas->push(std::move(picture));
 }
 
 

@@ -57,15 +57,15 @@ void tvgDrawCmds(tvg::Canvas* canvas)
         colorStops[1] = {1, 255, 255, 255, 255};
         fill->colorStops(colorStops, 2);
 
-        shape2->fill(move(fill));
+        shape2->fill(std::move(fill));
 
         //Duplicate Shape 2
         auto shape3 = tvg::cast<tvg::Shape>(shape2->duplicate());
         shape3->translate(0, 440);
 
-        canvas->push(move(shape1));
-        canvas->push(move(shape2));
-        canvas->push(move(shape3));
+        canvas->push(std::move(shape1));
+        canvas->push(std::move(shape2));
+        canvas->push(std::move(shape3));
     }
 
     //Duplicate Scene
@@ -77,17 +77,17 @@ void tvgDrawCmds(tvg::Canvas* canvas)
         auto shape1 = tvg::Shape::gen();
         shape1->appendRect(0, 0, 400, 400, 50, 50);
         shape1->fill(0, 255, 0, 255);
-        scene1->push(move(shape1));
+        scene1->push(std::move(shape1));
 
         auto shape2 = tvg::Shape::gen();
         shape2->appendCircle(400, 400, 200, 200);
         shape2->fill(255, 255, 0, 255);
-        scene1->push(move(shape2));
+        scene1->push(std::move(shape2));
 
         auto shape3 = tvg::Shape::gen();
         shape3->appendCircle(600, 600, 150, 100);
         shape3->fill(0, 255, 255, 255);
-        scene1->push(move(shape3));
+        scene1->push(std::move(shape3));
 
         scene1->scale(0.25);
         scene1->translate(400, 0);
@@ -96,8 +96,8 @@ void tvgDrawCmds(tvg::Canvas* canvas)
         auto scene2 = tvg::cast<tvg::Scene>(scene1->duplicate());
         scene2->translate(600, 0);
 
-        canvas->push(move(scene1));
-        canvas->push(move(scene2));
+        canvas->push(std::move(scene1));
+        canvas->push(std::move(scene2));
     }
 
     //Duplicate Picture - svg
@@ -110,8 +110,8 @@ void tvgDrawCmds(tvg::Canvas* canvas)
         auto picture2 = tvg::cast<tvg::Picture>(picture1->duplicate());
         picture2->translate(550, 250);
 
-        canvas->push(move(picture1));
-        canvas->push(move(picture2));
+        canvas->push(std::move(picture1));
+        canvas->push(std::move(picture2));
     }
 
     //Duplicate Picture - raw
@@ -133,8 +133,8 @@ void tvgDrawCmds(tvg::Canvas* canvas)
         picture2->scale(0.7);
         picture2->rotate(8);
 
-        canvas->push(move(picture1));
-        canvas->push(move(picture2));
+        canvas->push(std::move(picture1));
+        canvas->push(std::move(picture2));
 
         free(data);
     }

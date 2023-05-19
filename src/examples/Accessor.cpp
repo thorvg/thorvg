@@ -55,9 +55,9 @@ void tvgDrawCmds(tvg::Canvas* canvas)
         return true;
     };
 
-    picture = accessor->set(move(picture), f);
+    picture = accessor->set(std::move(picture), f);
 
-    canvas->push(move(picture));
+    canvas->push(std::move(picture));
 }
 
 

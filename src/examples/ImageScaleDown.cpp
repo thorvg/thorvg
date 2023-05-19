@@ -41,7 +41,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
         return;
     }
     pPicture = picture.get();
-    if (canvas->push(move(picture)) != tvg::Result::Success) {
+    if (canvas->push(std::move(picture)) != tvg::Result::Success) {
         pPicture = nullptr;
     }
 }

@@ -43,7 +43,7 @@ void tvgUpdateCmds(tvg::Canvas* canvas, float progress)
     shape->scale(1 - 0.75 * progress);
     shape->rotate(360 * progress);
 
-    if (canvas->push(move(shape)) != tvg::Result::Success) return;
+    if (canvas->push(std::move(shape)) != tvg::Result::Success) return;
 
     //Shape2
     auto shape2 = tvg::Shape::gen();
@@ -52,7 +52,7 @@ void tvgUpdateCmds(tvg::Canvas* canvas, float progress)
     shape2->translate(400, 400);
     shape2->rotate(360 * progress);
     shape2->translate(400 + progress * 300, 400);
-    if (canvas->push(move(shape2)) != tvg::Result::Success) return;
+    if (canvas->push(std::move(shape2)) != tvg::Result::Success) return;
 
     //Shape3
     auto shape3 = tvg::Shape::gen();
@@ -64,7 +64,7 @@ void tvgUpdateCmds(tvg::Canvas* canvas, float progress)
     shape3->translate(400, 400);
     shape3->rotate(-360 * progress);
     shape3->scale(0.5 + progress);
-    if (canvas->push(move(shape3)) != tvg::Result::Success) return;
+    if (canvas->push(std::move(shape3)) != tvg::Result::Success) return;
 }
 
 
