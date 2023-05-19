@@ -240,7 +240,7 @@ static bool _rasterSolidRect(SwSurface* surface, const SwBBox& region, uint8_t r
 static bool _rasterRect(SwSurface* surface, const SwBBox& region, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 {
     if (_compositing(surface)) {
-        auto alpha = surface->blender.alpha[(int)surface->compositor->method];
+        auto alpha = surface->blender.alpha(surface->compositor->method);
         return _rasterMaskedRect(surface, region, r, g, b, a, alpha);
     } else {
         if (a == 255) {
@@ -343,7 +343,7 @@ static bool _rasterRle(SwSurface* surface, SwRleData* rle, uint8_t r, uint8_t g,
     if (!rle) return false;
 
     if (_compositing(surface)) {
-        auto alpha = surface->blender.alpha[(int)surface->compositor->method];
+        auto alpha = surface->blender.alpha(surface->compositor->method);
         return _rasterMaskedRle(surface, rle, r, g, b, a, alpha);
     } else {
         if (a == 255) {
@@ -369,7 +369,7 @@ static bool _rasterRle(SwSurface* surface, SwRleData* rle, uint8_t r, uint8_t g,
 static bool _transformedRleRGBAImage(SwSurface* surface, const SwImage* image, const Matrix* transform, uint32_t opacity)
 {
     if (_compositing(surface)) {
-        auto alpha = surface->blender.alpha[(int)surface->compositor->method];
+        auto alpha = surface->blender.alpha(surface->compositor->method);
         return _rasterTexmapPolygon(surface, image, transform, nullptr, opacity, alpha);
     } else {
         return _rasterTexmapPolygon(surface, image, transform, nullptr, opacity, nullptr);
@@ -586,7 +586,7 @@ static bool _scaledRleRGBAImage(SwSurface* surface, const SwImage* image, const 
     auto halfScale = _halfScale(image->scale);
 
     if (_compositing(surface)) {
-        auto alpha = surface->blender.alpha[(int)surface->compositor->method];
+        auto alpha = surface->blender.alpha(surface->compositor->method);
         if (opacity == 255) return _rasterScaledMaskedRleRGBAImage(surface, image, &itransform, region, halfScale, alpha);
         else return _rasterScaledMaskedTranslucentRleRGBAImage(surface, image, &itransform, region, opacity, halfScale, alpha);
     } else {
@@ -700,7 +700,7 @@ static bool _rasterDirectRleRGBAImage(SwSurface* surface, const SwImage* image)
 static bool _directRleRGBAImage(SwSurface* surface, const SwImage* image, uint32_t opacity)
 {
     if (_compositing(surface)) {
-        auto alpha = surface->blender.alpha[(int)surface->compositor->method];
+        auto alpha = surface->blender.alpha(surface->compositor->method);
         if (opacity == 255) return _rasterDirectMaskedRleRGBAImage(surface, image, alpha);
         else return _rasterDirectMaskedTranslucentRleRGBAImage(surface, image, opacity, alpha);
     } else {
@@ -718,7 +718,7 @@ static bool _directRleRGBAImage(SwSurface* surface, const SwImage* image, uint32
 static bool _transformedRGBAImage(SwSurface* surface, const SwImage* image, const Matrix* transform, const SwBBox& region, uint32_t opacity)
 {
     if (_compositing(surface)) {
-        auto alpha = surface->blender.alpha[(int)surface->compositor->method];
+        auto alpha = surface->blender.alpha(surface->compositor->method);
         return _rasterTexmapPolygon(surface, image, transform, &region, opacity, alpha);
     } else {
         return _rasterTexmapPolygon(surface, image, transform, &region, opacity, nullptr);
@@ -729,7 +729,7 @@ static bool _transformedRGBAImage(SwSurface* surface, const SwImage* image, cons
 static bool _transformedRGBAImageMesh(SwSurface* surface, const SwImage* image, const RenderMesh* mesh, const Matrix* transform, const SwBBox* region, uint32_t opacity)
 {
     if (_compositing(surface)) {
-        auto alpha = surface->blender.alpha[(int)surface->compositor->method];
+        auto alpha = surface->blender.alpha(surface->compositor->method);
         return _rasterTexmapPolygonMesh(surface, image, mesh, transform, region, opacity, alpha);
     } else {
         return _rasterTexmapPolygonMesh(surface, image, mesh, transform, region, opacity, nullptr);
@@ -915,7 +915,7 @@ static bool _scaledRGBAImage(SwSurface* surface, const SwImage* image, const Mat
     auto halfScale = _halfScale(image->scale);
 
     if (_compositing(surface)) {
-        auto alpha = surface->blender.alpha[(int)surface->compositor->method];
+        auto alpha = surface->blender.alpha(surface->compositor->method);
         if (opacity == 255) return _rasterScaledMaskedRGBAImage(surface, image, &itransform, region, halfScale, alpha);
         else return _rasterScaledMaskedTranslucentRGBAImage(surface, image, &itransform, region, opacity, halfScale, alpha);
     } else {
@@ -1027,7 +1027,7 @@ static bool _rasterDirectRGBAImage(SwSurface* surface, const SwImage* image, con
 static bool _directRGBAImage(SwSurface* surface, const SwImage* image, const SwBBox& region, uint32_t opacity)
 {
     if (_compositing(surface)) {
-        auto alpha = surface->blender.alpha[(int)surface->compositor->method];
+        auto alpha = surface->blender.alpha(surface->compositor->method);
         if (opacity == 255) return _rasterDirectMaskedRGBAImage(surface, image, region, alpha);
         else return _rasterDirectMaskedTranslucentRGBAImage(surface, image, region, opacity, alpha);
     } else {
@@ -1129,7 +1129,7 @@ static bool _rasterSolidLinearGradientRect(SwSurface* surface, const SwBBox& reg
 static bool _rasterLinearGradientRect(SwSurface* surface, const SwBBox& region, const SwFill* fill)
 {
     if (_compositing(surface)) {
-        auto alpha = surface->blender.alpha[(int)surface->compositor->method];
+        auto alpha = surface->blender.alpha(surface->compositor->method);
         return _rasterLinearGradientMaskedRect(surface, region, fill, alpha);
     } else {
         if (fill->translucent) return _rasterTranslucentLinearGradientRect(surface, region, fill);
@@ -1231,7 +1231,7 @@ static bool _rasterLinearGradientRle(SwSurface* surface, const SwRleData* rle, c
     if (!rle) return false;
 
     if (_compositing(surface)) {
-        auto alpha = surface->blender.alpha[(int)surface->compositor->method];
+        auto alpha = surface->blender.alpha(surface->compositor->method);
         return _rasterLinearGradientMaskedRle(surface, rle, fill, alpha);
     } else {
         if (fill->translucent) return _rasterTranslucentLinearGradientRle(surface, rle, fill);
@@ -1316,7 +1316,7 @@ static bool _rasterSolidRadialGradientRect(SwSurface* surface, const SwBBox& reg
 static bool _rasterRadialGradientRect(SwSurface* surface, const SwBBox& region, const SwFill* fill)
 {
     if (_compositing(surface)) {
-        auto alpha = surface->blender.alpha[(int)surface->compositor->method];
+        auto alpha = surface->blender.alpha(surface->compositor->method);
         return _rasterRadialGradientMaskedRect(surface, region, fill, alpha);
     } else {
         if (fill->translucent) return _rasterTranslucentRadialGradientRect(surface, region, fill);
@@ -1417,7 +1417,7 @@ static bool _rasterRadialGradientRle(SwSurface* surface, const SwRleData* rle, c
     if (!rle) return false;
 
     if (_compositing(surface)) {
-        auto alpha = surface->blender.alpha[(int)surface->compositor->method];
+        auto alpha = surface->blender.alpha(surface->compositor->method);
         return _rasterRadialGradientMaskedRle(surface, rle, fill, alpha);
     } else {
         if (fill->translucent) _rasterTranslucentRadialGradientRle(surface, rle, fill);
@@ -1444,17 +1444,18 @@ void rasterRGBA32(uint32_t *dst, uint32_t val, uint32_t offset, int32_t len)
 
 bool rasterCompositor(SwSurface* surface)
 {
-    surface->blender.alpha[(int)CompositeMethod::AlphaMask] = _alpha;
-    surface->blender.alpha[(int)CompositeMethod::InvAlphaMask] = _ialpha;
+    //See CompositeMethod, Alpha:3, InvAlpha:4, Luma:5, InvLuma:6
+    surface->blender.alphas[0] = _alpha;
+    surface->blender.alphas[1] = _ialpha;
 
     if (surface->cs == ColorSpace::ABGR8888 || surface->cs == ColorSpace::ABGR8888S) {
         surface->blender.join = _abgrJoin;
-        surface->blender.alpha[(int)CompositeMethod::LumaMask] = _abgrLuma;
-        surface->blender.alpha[(int)CompositeMethod::InvLumaMask] = _abgrInvLuma;
+        surface->blender.alphas[2] = _abgrLuma;
+        surface->blender.alphas[3] = _abgrInvLuma;
     } else if (surface->cs == ColorSpace::ARGB8888 || surface->cs == ColorSpace::ARGB8888S) {
         surface->blender.join = _argbJoin;
-        surface->blender.alpha[(int)CompositeMethod::LumaMask] = _argbLuma;
-        surface->blender.alpha[(int)CompositeMethod::InvLumaMask] = _argbInvLuma;
+        surface->blender.alphas[2] = _argbLuma;
+        surface->blender.alphas[3] = _argbInvLuma;
     } else {
         TVGERR("SW_ENGINE", "Unsupported Colorspace(%d) is expected!", surface->cs);
         return false;
