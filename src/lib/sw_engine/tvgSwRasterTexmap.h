@@ -69,7 +69,7 @@ static bool _arrange(const SwImage* image, const SwBBox* region, int& yStart, in
 }
 
 
-static void _rasterPolygonImageSegment(SwSurface* surface, const SwImage* image, const SwBBox* region, int yStart, int yEnd, uint32_t opacity, uint8_t(*blender)(uint8_t*), AASpans* aaSpans)
+static void _rasterPolygonImageSegment(SwSurface* surface, const SwImage* image, const SwBBox* region, int yStart, int yEnd, uint32_t opacity, SwAlpha alpha, AASpans* aaSpans)
 {
 #define TEXMAP_TRANSLUCENT
 #define TEXMAP_MASKING
@@ -79,7 +79,7 @@ static void _rasterPolygonImageSegment(SwSurface* surface, const SwImage* image,
 }
 
 
-static void _rasterPolygonImageSegment(SwSurface* surface, const SwImage* image, const SwBBox* region, int yStart, int yEnd, uint8_t(*blender)(uint8_t*), AASpans* aaSpans)
+static void _rasterPolygonImageSegment(SwSurface* surface, const SwImage* image, const SwBBox* region, int yStart, int yEnd, SwAlpha alpha, AASpans* aaSpans)
 {
 #define TEXMAP_MASKING
     #include "tvgSwRasterTexmapInternal.h"
@@ -102,7 +102,7 @@ static void _rasterPolygonImageSegment(SwSurface* surface, const SwImage* image,
 
 
 /* This mapping algorithm is based on Mikael Kalms's. */
-static void _rasterPolygonImage(SwSurface* surface, const SwImage* image, const SwBBox* region, uint32_t opacity, Polygon& polygon, uint8_t(*blender)(uint8_t*), AASpans* aaSpans)
+static void _rasterPolygonImage(SwSurface* surface, const SwImage* image, const SwBBox* region, uint32_t opacity, Polygon& polygon, SwAlpha alpha, AASpans* aaSpans)
 {
     float x[3] = {polygon.vertex[0].pt.x, polygon.vertex[1].pt.x, polygon.vertex[2].pt.x};
     float y[3] = {polygon.vertex[0].pt.y, polygon.vertex[1].pt.y, polygon.vertex[2].pt.y};
@@ -190,9 +190,9 @@ static void _rasterPolygonImage(SwSurface* surface, const SwImage* image, const 
             dxdyb = dxdy[0];
             xb = x[0] + dy * dxdyb + (off_y * dxdyb);
 
-            if (blender) {
-                if (opacity == 255) _rasterPolygonImageSegment(surface, image, region, yi[0], yi[1], blender, aaSpans);
-                else _rasterPolygonImageSegment(surface, image, region, yi[0], yi[1], opacity, blender, aaSpans);
+            if (alpha) {
+                if (opacity == 255) _rasterPolygonImageSegment(surface, image, region, yi[0], yi[1], alpha, aaSpans);
+                else _rasterPolygonImageSegment(surface, image, region, yi[0], yi[1], opacity, alpha, aaSpans);
             } else {
                 if (opacity == 255) _rasterPolygonImageSegment(surface, image, region, yi[0], yi[1], aaSpans);
                 else _rasterPolygonImageSegment(surface, image, region, yi[0], yi[1], opacity, aaSpans);
@@ -211,9 +211,9 @@ static void _rasterPolygonImage(SwSurface* surface, const SwImage* image, const 
             // Set right edge X-slope and perform subpixel pre-stepping
             dxdyb = dxdy[2];
             xb = x[1] + (1 - (y[1] - yi[1])) * dxdyb + (off_y * dxdyb);
-            if (blender) {
-                if (opacity == 255) _rasterPolygonImageSegment(surface, image, region, yi[1], yi[2], blender, aaSpans);
-                else _rasterPolygonImageSegment(surface, image, region, yi[1], yi[2], opacity, blender, aaSpans);
+            if (alpha) {
+                if (opacity == 255) _rasterPolygonImageSegment(surface, image, region, yi[1], yi[2], alpha, aaSpans);
+                else _rasterPolygonImageSegment(surface, image, region, yi[1], yi[2], opacity, alpha, aaSpans);
             } else {
                 if (opacity == 255) _rasterPolygonImageSegment(surface, image, region, yi[1], yi[2], aaSpans);
                 else _rasterPolygonImageSegment(surface, image, region, yi[1], yi[2], opacity, aaSpans);
@@ -240,9 +240,9 @@ static void _rasterPolygonImage(SwSurface* surface, const SwImage* image, const 
             ua = u[0] + dy * dudya + (off_y * dudya);
             va = v[0] + dy * dvdya + (off_y * dvdya);
 
-            if (blender) {
-                if (opacity == 255) _rasterPolygonImageSegment(surface, image, region, yi[0], yi[1], blender, aaSpans);
-                else _rasterPolygonImageSegment(surface, image, region, yi[0], yi[1], opacity, blender, aaSpans);
+            if (alpha) {
+                if (opacity == 255) _rasterPolygonImageSegment(surface, image, region, yi[0], yi[1], alpha, aaSpans);
+                else _rasterPolygonImageSegment(surface, image, region, yi[0], yi[1], opacity, alpha, aaSpans);
             } else {
                 if (opacity == 255) _rasterPolygonImageSegment(surface, image, region, yi[0], yi[1], aaSpans);
                 else _rasterPolygonImageSegment(surface, image, region, yi[0], yi[1], opacity, aaSpans);
@@ -264,9 +264,9 @@ static void _rasterPolygonImage(SwSurface* surface, const SwImage* image, const 
             ua = u[1] + dy * dudya + (off_y * dudya);
             va = v[1] + dy * dvdya + (off_y * dvdya);
 
-            if (blender) {
-                if (opacity == 255) _rasterPolygonImageSegment(surface, image, region, yi[1], yi[2], blender, aaSpans);
-                else _rasterPolygonImageSegment(surface, image, region, yi[1], yi[2], opacity, blender, aaSpans);
+            if (alpha) {
+                if (opacity == 255) _rasterPolygonImageSegment(surface, image, region, yi[1], yi[2], alpha, aaSpans);
+                else _rasterPolygonImageSegment(surface, image, region, yi[1], yi[2], opacity, alpha, aaSpans);
             } else {
                 if (opacity == 255) _rasterPolygonImageSegment(surface, image, region, yi[1], yi[2], aaSpans);
                 else _rasterPolygonImageSegment(surface, image, region, yi[1], yi[2], opacity, aaSpans);
@@ -545,7 +545,7 @@ static bool _apply(SwSurface* surface, AASpans* aaSpans)
     | /  |
     3 -- 2
 */
-static bool _rasterTexmapPolygon(SwSurface* surface, const SwImage* image, const Matrix* transform, const SwBBox* region, uint32_t opacity, uint8_t(*blender)(uint8_t*))
+static bool _rasterTexmapPolygon(SwSurface* surface, const SwImage* image, const Matrix* transform, const SwBBox* region, uint32_t opacity, SwAlpha alpha)
 {
     //Exceptions: No dedicated drawing area?
     if ((!image->rle && !region) || (image->rle && image->rle->size == 0)) return false;
@@ -576,14 +576,14 @@ static bool _rasterTexmapPolygon(SwSurface* surface, const SwImage* image, const
     polygon.vertex[1] = vertices[1];
     polygon.vertex[2] = vertices[3];
 
-    _rasterPolygonImage(surface, image, region, opacity, polygon, blender, aaSpans);
+    _rasterPolygonImage(surface, image, region, opacity, polygon, alpha, aaSpans);
 
     //Draw the second polygon
     polygon.vertex[0] = vertices[1];
     polygon.vertex[1] = vertices[2];
     polygon.vertex[2] = vertices[3];
 
-    _rasterPolygonImage(surface, image, region, opacity, polygon, blender, aaSpans);
+    _rasterPolygonImage(surface, image, region, opacity, polygon, alpha, aaSpans);
 
     return _apply(surface, aaSpans);
 }
@@ -602,7 +602,7 @@ static bool _rasterTexmapPolygon(SwSurface* surface, const SwImage* image, const
       Should provide two Polygons, one for each triangle.
       // TODO: region?
 */
-static bool _rasterTexmapPolygonMesh(SwSurface* surface, const SwImage* image, const RenderMesh* mesh, const Matrix* transform, const SwBBox* region, uint32_t opacity, uint8_t(*blender)(uint8_t*))
+static bool _rasterTexmapPolygonMesh(SwSurface* surface, const SwImage* image, const RenderMesh* mesh, const Matrix* transform, const SwBBox* region, uint32_t opacity, SwAlpha alpha)
 {
     //Exceptions: No dedicated drawing area?
     if ((!image->rle && !region) || (image->rle && image->rle->size == 0)) return false;
@@ -636,7 +636,7 @@ static bool _rasterTexmapPolygonMesh(SwSurface* surface, const SwImage* image, c
     auto aaSpans = _AASpans(ys, ye, image, region);
     if (aaSpans) {
         for (uint32_t i = 0; i < mesh->triangleCnt; i++) {
-            _rasterPolygonImage(surface, image, region, opacity, transformedTris[i], blender, aaSpans);
+            _rasterPolygonImage(surface, image, region, opacity, transformedTris[i], alpha, aaSpans);
         }
         // Apply to surface (note: frees the AA spans)
         _apply(surface, aaSpans);
