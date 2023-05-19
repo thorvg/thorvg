@@ -1920,14 +1920,6 @@ TVG_API Tvg_Result tvg_picture_set_size(Tvg_Paint* paint, float w, float h);
 TVG_API Tvg_Result tvg_picture_get_size(const Tvg_Paint* paint, float* w, float* h);
 
 
-/*!
-* \brief Gets the position and the size of the loaded picture. (BETA_API)
-*
-* \warning Please do not use it, this API is not official one. It can be modified in the next version.
-*/
-TVG_API Tvg_Result tvg_picture_get_viewbox(const Tvg_Paint* paint, float* x, float* y, float* w, float* h);
-
-
 /** \} */   // end defgroup ThorVGCapi_Picture
 
 

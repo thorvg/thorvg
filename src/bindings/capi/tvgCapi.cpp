@@ -508,13 +508,6 @@ TVG_API Tvg_Result tvg_picture_get_size(const Tvg_Paint* paint, float* w, float*
 }
 
 
-TVG_API Tvg_Result tvg_picture_get_viewbox(const Tvg_Paint* paint, float* x, float* y, float* w, float* h)
-{
-    if (!paint) return TVG_RESULT_INVALID_ARGUMENT;
-    return (Tvg_Result) reinterpret_cast<const Picture*>(paint)->viewbox(x, y, w, h);
-}
-
-
 /************************************************************************/
 /* Gradient API                                                         */
 /************************************************************************/
