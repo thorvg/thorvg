@@ -244,7 +244,12 @@ typedef uint8_t(*SwAlpha)(uint8_t*);                                        //bl
 struct SwBlender
 {
     SwJoin  join;
-    SwAlpha alpha[(int)CompositeMethod::InvLumaMask + 1];
+    SwAlpha alphas[4];     //Alpha:2, InvAlpha:3, Luma:4, InvLuma:5
+
+    SwAlpha alpha(CompositeMethod method)
+    {
+        return alphas[(int)(method) - 2];      //0: None, 1: ClipPath
+    }
 };
 
 struct SwCompositor;
