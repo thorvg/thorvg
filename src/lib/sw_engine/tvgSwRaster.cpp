@@ -100,17 +100,17 @@ static inline uint32_t _argbJoin(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 }
 
 
-#include "tvgSwRasterTexmap.h"
-#include "tvgSwRasterC.h"
-#include "tvgSwRasterAvx.h"
-#include "tvgSwRasterNeon.h"
-
-
 static inline bool _compositing(const SwSurface* surface)
 {
     if (!surface->compositor || (int)surface->compositor->method <= (int)CompositeMethod::ClipPath) return false;
     return true;
 }
+
+
+#include "tvgSwRasterTexmap.h"
+#include "tvgSwRasterC.h"
+#include "tvgSwRasterAvx.h"
+#include "tvgSwRasterNeon.h"
 
 
 static inline uint32_t _halfScale(float scale)
@@ -138,7 +138,7 @@ static uint32_t _interpUpScaler(const uint32_t *img, uint32_t w, uint32_t h, flo
     auto c3 = img[rx2 + ry2 * w];
     auto c4 = img[rx + ry2 * w];
 
-    return INTERPOLATE(dy, INTERPOLATE(dx, c3, c4), INTERPOLATE(dx, c2, c1));
+    return INTERPOLATE(INTERPOLATE(c3, c4, dx), INTERPOLATE(c2, c1, dx), dy);
 }
 
 
@@ -177,12 +177,13 @@ void _rasterGrayscale8(uint8_t *dst, uint32_t val, uint32_t offset, int32_t len)
 /* Rect                                                                 */
 /************************************************************************/
 
-static bool _rasterMaskedRect(SwSurface* surface, const SwBBox& region, uint8_t r, uint8_t g, uint8_t b, uint8_t a, SwAlpha alpha)
+static bool _rasterMaskedRect(SwSurface* surface, const SwBBox& region, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 {
     auto w = static_cast<uint32_t>(region.max.x - region.min.x);
     auto h = static_cast<uint32_t>(region.max.y - region.min.y);
     auto csize = surface->compositor->image.channelSize;
     auto cbuffer = surface->compositor->image.buf8 + ((region.min.y * surface->compositor->image.stride + region.min.x) * csize);   //compositor buffer
+    auto alpha = surface->blender.alpha(surface->compositor->method);
 
     TVGLOG("SW_ENGINE", "Masked Rect [Region: %lu %lu %u %u]", region.min.x, region.min.y, w, h);
     
@@ -194,8 +195,7 @@ static bool _rasterMaskedRect(SwSurface* surface, const SwBBox& region, uint8_t 
             auto dst = &buffer[y * surface->stride];
             auto cmp = &cbuffer[y * surface->stride * csize];
             for (uint32_t x = 0; x < w; ++x, ++dst, cmp += csize) {
-                auto tmp = ALPHA_BLEND(color, alpha(cmp));
-                *dst = tmp + ALPHA_BLEND(*dst, _ialpha(tmp));
+                *dst = INTERPOLATE(color, *dst, alpha(cmp));
             }
         }
     //8bits grayscale
@@ -205,8 +205,7 @@ static bool _rasterMaskedRect(SwSurface* surface, const SwBBox& region, uint8_t 
             auto dst = &buffer[y * surface->stride];
             auto cmp = &cbuffer[y * surface->stride * csize];
             for (uint32_t x = 0; x < w; ++x, ++dst, cmp += csize) {
-                auto tmp = _multiply<uint8_t>(a, alpha(cmp));
-                *dst = tmp + _multiply<uint8_t>(*dst, _ialpha(tmp));
+                *dst = INTERPOLATE8(a, *dst, alpha(cmp));
             }
         }
     }
@@ -240,8 +239,7 @@ static bool _rasterSolidRect(SwSurface* surface, const SwBBox& region, uint8_t r
 static bool _rasterRect(SwSurface* surface, const SwBBox& region, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 {
     if (_compositing(surface)) {
-        auto alpha = surface->blender.alpha(surface->compositor->method);
-        return _rasterMaskedRect(surface, region, r, g, b, a, alpha);
+        return _rasterMaskedRect(surface, region, r, g, b, a);
     } else {
         if (a == 255) {
             return _rasterSolidRect(surface, region, r, g, b);
@@ -263,17 +261,18 @@ static bool _rasterRect(SwSurface* surface, const SwBBox& region, uint8_t r, uin
 /* Rle                                                                  */
 /************************************************************************/
 
-static bool _rasterMaskedRle(SwSurface* surface, SwRleData* rle, uint8_t r, uint8_t g, uint8_t b, uint8_t a, SwAlpha alpha)
+static bool _rasterMaskedRle(SwSurface* surface, SwRleData* rle, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 {
     TVGLOG("SW_ENGINE", "Masked Rle");
 
     auto span = rle->spans;
-    uint32_t src;
     auto cbuffer = surface->compositor->image.buf8;
     auto csize = surface->compositor->image.channelSize;
+    auto alpha = surface->blender.alpha(surface->compositor->method);
 
     //32bit channels
     if (surface->channelSize == sizeof(uint32_t)) {
+        uint32_t src;
         auto color = surface->blender.join(r, g, b, a);
         for (uint32_t i = 0; i < rle->size; ++i, ++span) {
             auto dst = &surface->buf32[span->y * surface->stride + span->x];
@@ -281,20 +280,19 @@ static bool _rasterMaskedRle(SwSurface* surface, SwRleData* rle, uint8_t r, uint
             if (span->coverage == 255) src = color;
             else src = ALPHA_BLEND(color, span->coverage);
             for (uint32_t x = 0; x < span->len; ++x, ++dst, cmp += csize) {
-                auto tmp = ALPHA_BLEND(src, alpha(cmp));
-                *dst = tmp + ALPHA_BLEND(*dst, _ialpha(tmp));
+                *dst = INTERPOLATE(src, *dst, alpha(cmp));
             }
         }
     //8bit grayscale
     } else if (surface->channelSize == sizeof(uint8_t)) {
+        uint8_t src;
         for (uint32_t i = 0; i < rle->size; ++i, ++span) {
             auto dst = &surface->buf8[span->y * surface->stride + span->x];
             auto cmp = &cbuffer[(span->y * surface->compositor->image.stride + span->x) * csize];
             if (span->coverage == 255) src = a;
             else src = _multiply<uint8_t>(a, span->coverage);
             for (uint32_t x = 0; x < span->len; ++x, ++dst, cmp += csize) {
-                auto tmp = _multiply<uint8_t>(src, alpha(cmp));
-                *dst = tmp + _multiply<uint8_t>(*dst, _ialpha(tmp));
+                *dst = INTERPOLATE8(src, *dst, alpha(cmp));
             }
         }
     }
@@ -343,8 +341,7 @@ static bool _rasterRle(SwSurface* surface, SwRleData* rle, uint8_t r, uint8_t g,
     if (!rle) return false;
 
     if (_compositing(surface)) {
-        auto alpha = surface->blender.alpha(surface->compositor->method);
-        return _rasterMaskedRle(surface, rle, r, g, b, a, alpha);
+        return _rasterMaskedRle(surface, rle, r, g, b, a);
     } else {
         if (a == 255) {
             return _rasterSolidRle(surface, rle, r, g, b);
@@ -368,25 +365,21 @@ static bool _rasterRle(SwSurface* surface, SwRleData* rle, uint8_t r, uint8_t g,
 
 static bool _transformedRleRGBAImage(SwSurface* surface, const SwImage* image, const Matrix* transform, uint32_t opacity)
 {
-    if (_compositing(surface)) {
-        auto alpha = surface->blender.alpha(surface->compositor->method);
-        return _rasterTexmapPolygon(surface, image, transform, nullptr, opacity, alpha);
-    } else {
-        return _rasterTexmapPolygon(surface, image, transform, nullptr, opacity, nullptr);
-    }
-    return false;
+    return _rasterTexmapPolygon(surface, image, transform, nullptr, opacity);
 }
+
 
 /************************************************************************/
 /* RLE Scaled RGBA Image                                                */
 /************************************************************************/
 
-static bool _rasterScaledMaskedTranslucentRleRGBAImage(SwSurface* surface, const SwImage* image, const Matrix* itransform, const SwBBox& region, uint32_t opacity, uint32_t halfScale, SwAlpha alpha)
+static bool _rasterScaledMaskedTranslucentRleRGBAImage(SwSurface* surface, const SwImage* image, const Matrix* itransform, const SwBBox& region, uint32_t opacity, uint32_t halfScale)
 {
     TVGLOG("SW_ENGINE", "Scaled Masked Translucent Rle Image");
 
     auto span = image->rle->spans;
     auto csize = surface->compositor->image.channelSize;
+    auto alpha = surface->blender.alpha(surface->compositor->method);
 
     //Center (Down-Scaled)
     if (image->scale < DOWN_SCALE_TOLERANCE) {
@@ -399,8 +392,8 @@ static bool _rasterScaledMaskedTranslucentRleRGBAImage(SwSurface* surface, const
             for (uint32_t x = static_cast<uint32_t>(span->x); x < static_cast<uint32_t>(span->x) + span->len; ++x, ++dst, cmp += csize) {
                 auto sx = (uint32_t)(x * itransform->e11 + itransform->e13);
                 if (sx >= image->w) continue;
-                auto src = ALPHA_BLEND(_interpDownScaler(image->buf32, image->stride, image->w, image->h, sx, sy, halfScale), a);
-                auto tmp = ALPHA_BLEND(src, alpha(cmp));
+                auto src = _interpDownScaler(image->buf32, image->stride, image->w, image->h, sx, sy, halfScale);
+                auto tmp = ALPHA_BLEND(src, _multiply<uint8_t>(alpha(cmp), a));
                 *dst = tmp + ALPHA_BLEND(*dst, _ialpha(tmp));
             }
         }
@@ -415,8 +408,8 @@ static bool _rasterScaledMaskedTranslucentRleRGBAImage(SwSurface* surface, const
             for (uint32_t x = static_cast<uint32_t>(span->x); x < static_cast<uint32_t>(span->x) + span->len; ++x, ++dst, cmp += csize) {
                 auto sx = x * itransform->e11 + itransform->e13;
                 if ((uint32_t)sx >= image->w) continue;
-                auto src = ALPHA_BLEND(_interpUpScaler(image->buf32, image->w, image->h, sx, sy), a);
-                auto tmp = ALPHA_BLEND(src, alpha(cmp));
+                auto src = _interpUpScaler(image->buf32, image->w, image->h, sx, sy);
+                auto tmp = ALPHA_BLEND(src, _multiply<uint8_t>(alpha(cmp), a));
                 *dst = tmp + ALPHA_BLEND(*dst, _ialpha(tmp));
             }
         }
@@ -425,12 +418,13 @@ static bool _rasterScaledMaskedTranslucentRleRGBAImage(SwSurface* surface, const
 }
 
 
-static bool _rasterScaledMaskedRleRGBAImage(SwSurface* surface, const SwImage* image, const Matrix* itransform, const SwBBox& region, uint32_t halfScale, SwAlpha alpha)
+static bool _rasterScaledMaskedRleRGBAImage(SwSurface* surface, const SwImage* image, const Matrix* itransform, const SwBBox& region, uint32_t halfScale)
 {
     TVGLOG("SW_ENGINE", "Scaled Masked Rle Image");
 
     auto span = image->rle->spans;
     auto csize = surface->compositor->image.channelSize;
+    auto alpha = surface->blender.alpha(surface->compositor->method);
 
     //Center (Down-Scaled)
     if (image->scale < DOWN_SCALE_TOLERANCE) {
@@ -450,8 +444,8 @@ static bool _rasterScaledMaskedRleRGBAImage(SwSurface* surface, const SwImage* i
                 for (uint32_t x = static_cast<uint32_t>(span->x); x < static_cast<uint32_t>(span->x) + span->len; ++x, ++dst, cmp += csize) {
                     auto sx = (uint32_t)(x * itransform->e11 + itransform->e13);
                     if (sx >= image->w) continue;
-                    auto src = ALPHA_BLEND(_interpDownScaler(image->buf32, image->stride, image->w, image->h, sx, sy, halfScale), span->coverage);
-                    auto tmp = ALPHA_BLEND(src, alpha(cmp));
+                    auto src = _interpDownScaler(image->buf32, image->stride, image->w, image->h, sx, sy, halfScale);
+                    auto tmp = ALPHA_BLEND(src, _multiply<uint8_t>(span->coverage, alpha(cmp)));
                     *dst = tmp + ALPHA_BLEND(*dst, _ialpha(tmp));
                 }
             }
@@ -474,8 +468,8 @@ static bool _rasterScaledMaskedRleRGBAImage(SwSurface* surface, const SwImage* i
                 for (uint32_t x = static_cast<uint32_t>(span->x); x < static_cast<uint32_t>(span->x) + span->len; ++x, ++dst, cmp += csize) {
                     auto sx = x * itransform->e11 + itransform->e13;
                     if ((uint32_t)sx >= image->w) continue;
-                    auto src = ALPHA_BLEND(_interpUpScaler(image->buf32, image->w, image->h, sx, sy), span->coverage);
-                    auto tmp = ALPHA_BLEND(src, alpha(cmp));
+                    auto src = _interpUpScaler(image->buf32, image->w, image->h, sx, sy);
+                    auto tmp = ALPHA_BLEND(src, _multiply<uint8_t>(span->coverage, alpha(cmp)));
                     *dst = tmp + ALPHA_BLEND(*dst, _ialpha(tmp));
                 }
             }
@@ -586,9 +580,8 @@ static bool _scaledRleRGBAImage(SwSurface* surface, const SwImage* image, const 
     auto halfScale = _halfScale(image->scale);
 
     if (_compositing(surface)) {
-        auto alpha = surface->blender.alpha(surface->compositor->method);
-        if (opacity == 255) return _rasterScaledMaskedRleRGBAImage(surface, image, &itransform, region, halfScale, alpha);
-        else return _rasterScaledMaskedTranslucentRleRGBAImage(surface, image, &itransform, region, opacity, halfScale, alpha);
+        if (opacity == 255) return _rasterScaledMaskedRleRGBAImage(surface, image, &itransform, region, halfScale);
+        else return _rasterScaledMaskedTranslucentRleRGBAImage(surface, image, &itransform, region, opacity, halfScale);
     } else {
         if (opacity == 255) return _rasterScaledRleRGBAImage(surface, image, &itransform, region, opacity, halfScale);
         else return _rasterScaledTranslucentRleRGBAImage(surface, image, &itransform, region, opacity, halfScale);
@@ -601,13 +594,14 @@ static bool _scaledRleRGBAImage(SwSurface* surface, const SwImage* image, const 
 /* RLE Direct RGBA Image                                                */
 /************************************************************************/
 
-static bool _rasterDirectMaskedTranslucentRleRGBAImage(SwSurface* surface, const SwImage* image, uint32_t opacity, SwAlpha alpha)
+static bool _rasterDirectMaskedTranslucentRleRGBAImage(SwSurface* surface, const SwImage* image, uint32_t opacity)
 {
     TVGLOG("SW_ENGINE", "Direct Masked Rle Image");
 
     auto span = image->rle->spans;
     auto csize = surface->compositor->image.channelSize;
     auto cbuffer = surface->compositor->image.buf8;
+    auto alpha = surface->blender.alpha(surface->compositor->method);
 
     for (uint32_t i = 0; i < image->rle->size; ++i, ++span) {
         auto dst = &surface->buf32[span->y * surface->stride + span->x];
@@ -630,13 +624,14 @@ static bool _rasterDirectMaskedTranslucentRleRGBAImage(SwSurface* surface, const
 }
 
 
-static bool _rasterDirectMaskedRleRGBAImage(SwSurface* surface, const SwImage* image, SwAlpha alpha)
+static bool _rasterDirectMaskedRleRGBAImage(SwSurface* surface, const SwImage* image)
 {
     TVGLOG("SW_ENGINE", "Direct Masked Rle Image");
 
     auto span = image->rle->spans;
     auto csize = surface->compositor->image.channelSize;
     auto cbuffer = surface->compositor->image.buf8;
+    auto alpha = surface->blender.alpha(surface->compositor->method);
 
     for (uint32_t i = 0; i < image->rle->size; ++i, ++span) {
         auto dst = &surface->buf32[span->y * surface->stride + span->x];
@@ -700,9 +695,8 @@ static bool _rasterDirectRleRGBAImage(SwSurface* surface, const SwImage* image)
 static bool _directRleRGBAImage(SwSurface* surface, const SwImage* image, uint32_t opacity)
 {
     if (_compositing(surface)) {
-        auto alpha = surface->blender.alpha(surface->compositor->method);
-        if (opacity == 255) return _rasterDirectMaskedRleRGBAImage(surface, image, alpha);
-        else return _rasterDirectMaskedTranslucentRleRGBAImage(surface, image, opacity, alpha);
+        if (opacity == 255) return _rasterDirectMaskedRleRGBAImage(surface, image);
+        else return _rasterDirectMaskedTranslucentRleRGBAImage(surface, image, opacity);
     } else {
         if (opacity == 255) return _rasterDirectRleRGBAImage(surface, image);
         else return _rasterDirectTranslucentRleRGBAImage(surface, image, opacity);
@@ -717,24 +711,12 @@ static bool _directRleRGBAImage(SwSurface* surface, const SwImage* image, uint32
 
 static bool _transformedRGBAImage(SwSurface* surface, const SwImage* image, const Matrix* transform, const SwBBox& region, uint32_t opacity)
 {
-    if (_compositing(surface)) {
-        auto alpha = surface->blender.alpha(surface->compositor->method);
-        return _rasterTexmapPolygon(surface, image, transform, &region, opacity, alpha);
-    } else {
-        return _rasterTexmapPolygon(surface, image, transform, &region, opacity, nullptr);
-    }
-    return false;
+    return _rasterTexmapPolygon(surface, image, transform, &region, opacity);
 }
 
 static bool _transformedRGBAImageMesh(SwSurface* surface, const SwImage* image, const RenderMesh* mesh, const Matrix* transform, const SwBBox* region, uint32_t opacity)
 {
-    if (_compositing(surface)) {
-        auto alpha = surface->blender.alpha(surface->compositor->method);
-        return _rasterTexmapPolygonMesh(surface, image, mesh, transform, region, opacity, alpha);
-    } else {
-        return _rasterTexmapPolygonMesh(surface, image, mesh, transform, region, opacity, nullptr);
-    }
-    return false;
+    return _rasterTexmapPolygonMesh(surface, image, mesh, transform, region, opacity);
 }
 
 
@@ -742,13 +724,14 @@ static bool _transformedRGBAImageMesh(SwSurface* surface, const SwImage* image, 
 /*Scaled RGBA Image                                                     */
 /************************************************************************/
 
-static bool _rasterScaledMaskedTranslucentRGBAImage(SwSurface* surface, const SwImage* image, const Matrix* itransform, const SwBBox& region, uint32_t opacity, uint32_t halfScale, SwAlpha alpha)
+static bool _rasterScaledMaskedTranslucentRGBAImage(SwSurface* surface, const SwImage* image, const Matrix* itransform, const SwBBox& region, uint32_t opacity, uint32_t halfScale)
 {
     TVGLOG("SW_ENGINE", "Scaled Masked Image");
 
     auto dbuffer = surface->buf32 + (region.min.y * surface->stride + region.min.x);
     auto csize = surface->compositor->image.channelSize;
     auto cbuffer = surface->compositor->image.buf8 + (region.min.y * surface->compositor->image.stride + region.min.x) * csize;
+    auto alpha = surface->blender.alpha(surface->compositor->method);
 
     // Down-Scaled
     if (image->scale < DOWN_SCALE_TOLERANCE) {
@@ -760,9 +743,9 @@ static bool _rasterScaledMaskedTranslucentRGBAImage(SwSurface* surface, const Sw
             for (auto x = region.min.x; x < region.max.x; ++x, ++dst, cmp += csize) {
                 auto sx = (uint32_t)(x * itransform->e11 + itransform->e13);
                 if (sx >= image->w) continue;
-                auto a = _multiply<uint32_t>(opacity, alpha(cmp));
-                auto src = ALPHA_BLEND(_interpDownScaler(image->buf32, image->stride, image->w, image->h, sx, sy, halfScale), a);
-                *dst = src + ALPHA_BLEND(*dst, _ialpha(src));
+                auto src = _interpDownScaler(image->buf32, image->stride, image->w, image->h, sx, sy, halfScale);
+                auto temp = ALPHA_BLEND(src, _multiply<uint32_t>(opacity, alpha(cmp)));
+                *dst = temp + ALPHA_BLEND(*dst, _ialpha(temp));
             }
             dbuffer += surface->stride;
             cbuffer += surface->compositor->image.stride * csize;
@@ -777,9 +760,9 @@ static bool _rasterScaledMaskedTranslucentRGBAImage(SwSurface* surface, const Sw
             for (auto x = region.min.x; x < region.max.x; ++x, ++dst, cmp += csize) {
                 auto sx = x * itransform->e11 + itransform->e13;
                 if ((uint32_t)sx >= image->w) continue;
-                auto a = _multiply<uint32_t>(opacity, alpha(cmp));
-                auto src = ALPHA_BLEND(_interpUpScaler(image->buf32, image->w, image->h, sx, sy), a);
-                *dst = src + ALPHA_BLEND(*dst, _ialpha(src));
+                auto src = _interpUpScaler(image->buf32, image->w, image->h, sx, sy);
+                auto temp = ALPHA_BLEND(src, _multiply<uint32_t>(opacity, alpha(cmp)));
+                *dst = temp + ALPHA_BLEND(*dst, _ialpha(temp));
             }
             dbuffer += surface->stride;
             cbuffer += surface->compositor->image.stride * csize;
@@ -789,13 +772,14 @@ static bool _rasterScaledMaskedTranslucentRGBAImage(SwSurface* surface, const Sw
 }
 
 
-static bool _rasterScaledMaskedRGBAImage(SwSurface* surface, const SwImage* image, const Matrix* itransform, const SwBBox& region, uint32_t halfScale, SwAlpha alpha)
+static bool _rasterScaledMaskedRGBAImage(SwSurface* surface, const SwImage* image, const Matrix* itransform, const SwBBox& region, uint32_t halfScale)
 {
     TVGLOG("SW_ENGINE", "Scaled Masked Image");
 
     auto dbuffer = surface->buf32 + (region.min.y * surface->stride + region.min.x);
     auto csize = surface->compositor->image.channelSize;
     auto cbuffer = surface->compositor->image.buf8 + (region.min.y * surface->compositor->image.stride + region.min.x) * csize;
+    auto alpha = surface->blender.alpha(surface->compositor->method);
 
     // Down-Scaled
     if (image->scale < DOWN_SCALE_TOLERANCE) {
@@ -807,8 +791,9 @@ static bool _rasterScaledMaskedRGBAImage(SwSurface* surface, const SwImage* imag
             for (auto x = region.min.x; x < region.max.x; ++x, ++dst, cmp += csize) {
                 auto sx = (uint32_t)(x * itransform->e11 + itransform->e13);
                 if (sx >= image->w) continue;
-                auto src = ALPHA_BLEND(_interpDownScaler(image->buf32, image->stride, image->w, image->h, sx, sy, halfScale), alpha(cmp));
-                *dst = src + ALPHA_BLEND(*dst, _ialpha(src));
+                auto src = _interpDownScaler(image->buf32, image->stride, image->w, image->h, sx, sy, halfScale);
+                auto temp = ALPHA_BLEND(src, alpha(cmp));
+                *dst = temp + ALPHA_BLEND(*dst, _ialpha(temp));
             }
             dbuffer += surface->stride;
             cbuffer += surface->compositor->image.stride * csize;
@@ -823,8 +808,9 @@ static bool _rasterScaledMaskedRGBAImage(SwSurface* surface, const SwImage* imag
             for (auto x = region.min.x; x < region.max.x; ++x, ++dst, cmp += csize) {
                 auto sx = x * itransform->e11 + itransform->e13;
                 if ((uint32_t)sx >= image->w) continue;
-                auto src = ALPHA_BLEND(_interpUpScaler(image->buf32, image->w, image->h, sx, sy), alpha(cmp));
-                *dst = src + ALPHA_BLEND(*dst, _ialpha(src));
+                auto src = _interpUpScaler(image->buf32, image->w, image->h, sx, sy);
+                auto temp = ALPHA_BLEND(src, alpha(cmp));
+                *dst = temp + ALPHA_BLEND(*dst, _ialpha(temp));
             }
             dbuffer += surface->stride;
             cbuffer += surface->compositor->image.stride * csize;
@@ -915,9 +901,8 @@ static bool _scaledRGBAImage(SwSurface* surface, const SwImage* image, const Mat
     auto halfScale = _halfScale(image->scale);
 
     if (_compositing(surface)) {
-        auto alpha = surface->blender.alpha(surface->compositor->method);
-        if (opacity == 255) return _rasterScaledMaskedRGBAImage(surface, image, &itransform, region, halfScale, alpha);
-        else return _rasterScaledMaskedTranslucentRGBAImage(surface, image, &itransform, region, opacity, halfScale, alpha);
+        if (opacity == 255) return _rasterScaledMaskedRGBAImage(surface, image, &itransform, region, halfScale);
+        else return _rasterScaledMaskedTranslucentRGBAImage(surface, image, &itransform, region, opacity, halfScale);
     } else {
         if (opacity == 255) return _rasterScaledRGBAImage(surface, image, &itransform, region, halfScale);
         else return _rasterScaledTranslucentRGBAImage(surface, image, &itransform, region, opacity, halfScale);
@@ -930,7 +915,7 @@ static bool _scaledRGBAImage(SwSurface* surface, const SwImage* image, const Mat
 /* Direct RGBA Image                                                    */
 /************************************************************************/
 
-static bool _rasterDirectMaskedRGBAImage(SwSurface* surface, const SwImage* image, const SwBBox& region, SwAlpha alpha)
+static bool _rasterDirectMaskedRGBAImage(SwSurface* surface, const SwImage* image, const SwBBox& region)
 {
     TVGLOG("SW_ENGINE", "Direct Masked Image");
 
@@ -938,6 +923,7 @@ static bool _rasterDirectMaskedRGBAImage(SwSurface* surface, const SwImage* imag
     auto h2 = static_cast<uint32_t>(region.max.y - region.min.y);
     auto w2 = static_cast<uint32_t>(region.max.x - region.min.x);
     auto csize = surface->compositor->image.channelSize;
+    auto alpha = surface->blender.alpha(surface->compositor->method);
 
     auto sbuffer = image->buf32 + (region.min.y + image->oy) * image->stride + (region.min.x + image->ox);
     auto cbuffer = surface->compositor->image.buf8 + (region.min.y * surface->compositor->image.stride + region.min.x) * csize; //compositor buffer
@@ -958,7 +944,7 @@ static bool _rasterDirectMaskedRGBAImage(SwSurface* surface, const SwImage* imag
 }
 
 
-static bool _rasterDirectMaskedTranslucentRGBAImage(SwSurface* surface, const SwImage* image, const SwBBox& region, uint32_t opacity, SwAlpha alpha)
+static bool _rasterDirectMaskedTranslucentRGBAImage(SwSurface* surface, const SwImage* image, const SwBBox& region, uint32_t opacity)
 {
     TVGLOG("SW_ENGINE", "Direct Masked Translucent Image");
 
@@ -966,6 +952,7 @@ static bool _rasterDirectMaskedTranslucentRGBAImage(SwSurface* surface, const Sw
     auto h2 = static_cast<uint32_t>(region.max.y - region.min.y);
     auto w2 = static_cast<uint32_t>(region.max.x - region.min.x);
     auto csize = surface->compositor->image.channelSize;
+    auto alpha = surface->blender.alpha(surface->compositor->method);
 
     auto sbuffer = image->buf32 + (region.min.y + image->oy) * image->stride + (region.min.x + image->ox);
     auto cbuffer = surface->compositor->image.buf8 + (region.min.y * surface->compositor->image.stride + region.min.x) * csize; //compositor buffer
@@ -975,7 +962,7 @@ static bool _rasterDirectMaskedTranslucentRGBAImage(SwSurface* surface, const Sw
         auto cmp = cbuffer;
         auto src = sbuffer;
         for (uint32_t x = 0; x < w2; ++x, ++dst, ++src, cmp += csize) {
-            auto tmp = ALPHA_BLEND(*src, _multiply<uint32_t>(opacity, alpha(cmp)));
+            auto tmp = ALPHA_BLEND(*src, _multiply<uint8_t>(opacity, alpha(cmp)));
             *dst = tmp + ALPHA_BLEND(*dst, _ialpha(tmp));
         }
         buffer += surface->stride;
@@ -1027,9 +1014,8 @@ static bool _rasterDirectRGBAImage(SwSurface* surface, const SwImage* image, con
 static bool _directRGBAImage(SwSurface* surface, const SwImage* image, const SwBBox& region, uint32_t opacity)
 {
     if (_compositing(surface)) {
-        auto alpha = surface->blender.alpha(surface->compositor->method);
-        if (opacity == 255) return _rasterDirectMaskedRGBAImage(surface, image, region, alpha);
-        else return _rasterDirectMaskedTranslucentRGBAImage(surface, image, region, opacity, alpha);
+        if (opacity == 255) return _rasterDirectMaskedRGBAImage(surface, image, region);
+        else return _rasterDirectMaskedTranslucentRGBAImage(surface, image, region, opacity);
     } else {
         if (opacity == 255) return _rasterDirectRGBAImage(surface, image, region);
         else return _rasterDirectTranslucentRGBAImage(surface, image, region, opacity);
@@ -1059,7 +1045,7 @@ static bool _rasterRGBAImage(SwSurface* surface, SwImage* image, const Matrix* t
 /* Rect Linear Gradient                                                 */
 /************************************************************************/
 
-static bool _rasterLinearGradientMaskedRect(SwSurface* surface, const SwBBox& region, const SwFill* fill, SwAlpha alpha)
+static bool _rasterLinearGradientMaskedRect(SwSurface* surface, const SwBBox& region, const SwFill* fill)
 {
     if (fill->linear.len < FLT_EPSILON) return false;
 
@@ -1068,6 +1054,7 @@ static bool _rasterLinearGradientMaskedRect(SwSurface* surface, const SwBBox& re
     auto w = static_cast<uint32_t>(region.max.x - region.min.x);
     auto csize = surface->compositor->image.channelSize;
     auto cbuffer = surface->compositor->image.buf8 + (region.min.y * surface->compositor->image.stride + region.min.x) * csize;
+    auto alpha = surface->blender.alpha(surface->compositor->method);
 
     auto sbuffer = static_cast<uint32_t*>(alloca(w * sizeof(uint32_t)));
     if (!sbuffer) return false;
@@ -1129,8 +1116,7 @@ static bool _rasterSolidLinearGradientRect(SwSurface* surface, const SwBBox& reg
 static bool _rasterLinearGradientRect(SwSurface* surface, const SwBBox& region, const SwFill* fill)
 {
     if (_compositing(surface)) {
-        auto alpha = surface->blender.alpha(surface->compositor->method);
-        return _rasterLinearGradientMaskedRect(surface, region, fill, alpha);
+        return _rasterLinearGradientMaskedRect(surface, region, fill);
     } else {
         if (fill->translucent) return _rasterTranslucentLinearGradientRect(surface, region, fill);
         else _rasterSolidLinearGradientRect(surface, region, fill);
@@ -1143,15 +1129,17 @@ static bool _rasterLinearGradientRect(SwSurface* surface, const SwBBox& region, 
 /* Rle Linear Gradient                                                  */
 /************************************************************************/
 
-static bool _rasterLinearGradientMaskedRle(SwSurface* surface, const SwRleData* rle, const SwFill* fill, SwAlpha alpha)
+static bool _rasterLinearGradientMaskedRle(SwSurface* surface, const SwRleData* rle, const SwFill* fill)
 {
     if (fill->linear.len < FLT_EPSILON) return false;
+
+    auto buffer = static_cast<uint32_t*>(alloca(surface->w * sizeof(uint32_t)));
+    if (!buffer) return false;
 
     auto span = rle->spans;
     auto csize = surface->compositor->image.channelSize;
     auto cbuffer = surface->compositor->image.buf8;
-    auto buffer = static_cast<uint32_t*>(alloca(surface->w * sizeof(uint32_t)));
-    if (!buffer) return false;
+    auto alpha = surface->blender.alpha(surface->compositor->method);
 
     for (uint32_t i = 0; i < rle->size; ++i, ++span) {
         fillFetchLinear(fill, buffer, span->y, span->x, span->len);
@@ -1164,10 +1152,8 @@ static bool _rasterLinearGradientMaskedRle(SwSurface* surface, const SwRleData* 
                 *dst = tmp + ALPHA_BLEND(*dst, _ialpha(tmp));
             }
         } else {
-            auto ialpha = 255 - span->coverage;
             for (uint32_t x = 0; x < span->len; ++x, ++dst, ++src, cmp += csize) {
-                auto tmp = ALPHA_BLEND(*src, alpha(cmp));
-                tmp = ALPHA_BLEND(tmp, span->coverage) + ALPHA_BLEND(*dst, ialpha);
+                auto tmp = ALPHA_BLEND(*src, _multiply<uint8_t>(span->coverage, alpha(cmp)));
                 *dst = tmp + ALPHA_BLEND(*dst, _ialpha(tmp));
             }
         }
@@ -1218,7 +1204,7 @@ static bool _rasterSolidLinearGradientRle(SwSurface* surface, const SwRleData* r
             fillFetchLinear(fill, buf, span->y, span->x, span->len);
             auto dst = &surface->buf32[span->y * surface->stride + span->x];
             for (uint32_t x = 0; x < span->len; ++x) {
-                dst[x] = INTERPOLATE(span->coverage, buf[x], dst[x]);
+                dst[x] = INTERPOLATE(buf[x], dst[x], span->coverage);
             }
         }
     }
@@ -1231,8 +1217,7 @@ static bool _rasterLinearGradientRle(SwSurface* surface, const SwRleData* rle, c
     if (!rle) return false;
 
     if (_compositing(surface)) {
-        auto alpha = surface->blender.alpha(surface->compositor->method);
-        return _rasterLinearGradientMaskedRle(surface, rle, fill, alpha);
+        return _rasterLinearGradientMaskedRle(surface, rle, fill);
     } else {
         if (fill->translucent) return _rasterTranslucentLinearGradientRle(surface, rle, fill);
         else return _rasterSolidLinearGradientRle(surface, rle, fill);
@@ -1245,7 +1230,7 @@ static bool _rasterLinearGradientRle(SwSurface* surface, const SwRleData* rle, c
 /* Rect Radial Gradient                                                 */
 /************************************************************************/
 
-static bool _rasterRadialGradientMaskedRect(SwSurface* surface, const SwBBox& region, const SwFill* fill, SwAlpha alpha)
+static bool _rasterRadialGradientMaskedRect(SwSurface* surface, const SwBBox& region, const SwFill* fill)
 {
     if (fill->radial.a < FLT_EPSILON) return false;
 
@@ -1254,6 +1239,7 @@ static bool _rasterRadialGradientMaskedRect(SwSurface* surface, const SwBBox& re
     auto w = static_cast<uint32_t>(region.max.x - region.min.x);
     auto csize = surface->compositor->image.channelSize;
     auto cbuffer = surface->compositor->image.buf8 + (region.min.y * surface->compositor->image.stride + region.min.x) * csize;
+    auto alpha = surface->blender.alpha(surface->compositor->method);
 
     auto sbuffer = static_cast<uint32_t*>(alloca(w * sizeof(uint32_t)));
     if (!sbuffer) return false;
@@ -1316,8 +1302,7 @@ static bool _rasterSolidRadialGradientRect(SwSurface* surface, const SwBBox& reg
 static bool _rasterRadialGradientRect(SwSurface* surface, const SwBBox& region, const SwFill* fill)
 {
     if (_compositing(surface)) {
-        auto alpha = surface->blender.alpha(surface->compositor->method);
-        return _rasterRadialGradientMaskedRect(surface, region, fill, alpha);
+        return _rasterRadialGradientMaskedRect(surface, region, fill);
     } else {
         if (fill->translucent) return _rasterTranslucentRadialGradientRect(surface, region, fill);
         else return _rasterSolidRadialGradientRect(surface, region, fill);
@@ -1330,15 +1315,17 @@ static bool _rasterRadialGradientRect(SwSurface* surface, const SwBBox& region, 
 /* RLE Radial Gradient                                                  */
 /************************************************************************/
 
-static bool _rasterRadialGradientMaskedRle(SwSurface* surface, const SwRleData* rle, const SwFill* fill, SwAlpha alpha)
+static bool _rasterRadialGradientMaskedRle(SwSurface* surface, const SwRleData* rle, const SwFill* fill)
 {
     if (fill->radial.a < FLT_EPSILON) return false;
+
+    auto buffer = static_cast<uint32_t*>(alloca(surface->w * sizeof(uint32_t)));
+    if (!buffer) return false;
 
     auto span = rle->spans;
     auto csize = surface->compositor->image.channelSize;
     auto cbuffer = surface->compositor->image.buf8;
-    auto buffer = static_cast<uint32_t*>(alloca(surface->w * sizeof(uint32_t)));
-    if (!buffer) return false;
+    auto alpha = surface->blender.alpha(surface->compositor->method);
 
     for (uint32_t i = 0; i < rle->size; ++i, ++span) {
         fillFetchRadial(fill, buffer, span->y, span->x, span->len);
@@ -1352,7 +1339,7 @@ static bool _rasterRadialGradientMaskedRle(SwSurface* surface, const SwRleData* 
             }
         } else {
             for (uint32_t x = 0; x < span->len; ++x, ++dst, ++src, cmp += csize) {
-                auto tmp = INTERPOLATE(span->coverage, ALPHA_BLEND(*src, alpha(cmp)), *dst);
+                auto tmp = ALPHA_BLEND(*src, _multiply<uint8_t>(span->coverage, alpha(cmp)));
                 *dst = tmp + ALPHA_BLEND(*dst, _ialpha(tmp));
             }
         }
@@ -1402,9 +1389,8 @@ static bool _rasterSolidRadialGradientRle(SwSurface* surface, const SwRleData* r
             fillFetchRadial(fill, dst, span->y, span->x, span->len);
         } else {
             fillFetchRadial(fill, buf, span->y, span->x, span->len);
-            auto ialpha = 255 - span->coverage;
             for (uint32_t x = 0; x < span->len; ++x, ++dst) {
-                *dst = ALPHA_BLEND(buf[x], span->coverage) + ALPHA_BLEND(*dst, ialpha);
+                *dst = INTERPOLATE(buf[x], *dst, span->coverage);
             }
         }
     }
@@ -1417,8 +1403,7 @@ static bool _rasterRadialGradientRle(SwSurface* surface, const SwRleData* rle, c
     if (!rle) return false;
 
     if (_compositing(surface)) {
-        auto alpha = surface->blender.alpha(surface->compositor->method);
-        return _rasterRadialGradientMaskedRle(surface, rle, fill, alpha);
+        return _rasterRadialGradientMaskedRle(surface, rle, fill);
     } else {
         if (fill->translucent) _rasterTranslucentRadialGradientRle(surface, rle, fill);
         else return _rasterSolidRadialGradientRle(surface, rle, fill);

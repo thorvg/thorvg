@@ -39,6 +39,7 @@
 #ifdef TEXMAP_MASKING
     uint8_t* cmp;
     auto csize = surface->compositor->image.channelSize;
+    auto alpha = surface->blender.alpha(surface->compositor->method);
 #endif
 
     if (!_arrange(image, region, yStart, yEnd)) return;
@@ -115,7 +116,7 @@
             if (iru < sw) {
                 /* right pixel */
                 int px2 = *(sbuf + (vv * sw) + iru);
-                px = INTERPOLATE(ar, px, px2);
+                px = INTERPOLATE(px, px2, ar);
             }
             /* vertical interpolate */
             if (irv < sh) {
@@ -126,14 +127,17 @@
                 if (iru < sw) {
                     /* bottom right pixel */
                     int px3 = *(sbuf + (irv * sw) + iru);
-                    px2 = INTERPOLATE(ar, px2, px3);
+                    px2 = INTERPOLATE(px2, px3, ar);
                 }
-                px = INTERPOLATE(ab, px, px2);
+                px = INTERPOLATE(px, px2, ab);
             }
+
 #if defined(TEXMAP_MASKING) && defined(TEXMAP_TRANSLUCENT)
             auto src = ALPHA_BLEND(px, _multiply<uint32_t>(opacity, alpha(cmp)));
+            cmp += csize;
 #elif defined(TEXMAP_MASKING)
             auto src = ALPHA_BLEND(px, alpha(cmp));
+            cmp += csize;
 #elif defined(TEXMAP_TRANSLUCENT)
             auto src = ALPHA_BLEND(px, opacity);
 #else
@@ -141,9 +145,7 @@
 #endif
             *buf = src + ALPHA_BLEND(*buf, _ialpha(src));
             ++buf;
-#ifdef TEXMAP_MASKING
-            cmp += csize;
-#endif
+
             //Step UV horizontally
             u += _dudx;
             v += _dvdx;

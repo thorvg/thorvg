@@ -80,7 +80,7 @@ static bool _updateColorTable(SwFill* fill, const Fill* fdata, const SwSurface* 
             auto dist = static_cast<int32_t>(255 * t);
             auto dist2 = 255 - dist;
 
-            auto color = INTERPOLATE(dist2, rgba, rgba2);
+            auto color = INTERPOLATE(rgba, rgba2, dist2);
             fill->ctable[i] = ALPHA_BLEND((color | 0xff000000), (color >> 24));
 
             ++i;
