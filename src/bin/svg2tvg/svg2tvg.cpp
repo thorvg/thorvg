@@ -68,7 +68,7 @@ private:
       if (picture->load(in) != Result::Success) return false;
 
       auto saver = Saver::gen();
-      if (saver->save(move(picture), out) != Result::Success) return false;
+      if (saver->save(std::move(picture), out) != Result::Success) return false;
       if (saver->sync() != Result::Success) return false;
 
       if (Initializer::term(CanvasEngine::Sw) != Result::Success) return false;

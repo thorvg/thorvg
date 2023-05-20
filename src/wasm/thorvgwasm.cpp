@@ -149,7 +149,7 @@ public:
             mErrorMsg = "Saving initialization failed";
             return false;
         }
-        if (saver->save(move(duplicate), "file.tvg", compress) != tvg::Result::Success) {
+        if (saver->save(std::move(duplicate), "file.tvg", compress) != tvg::Result::Success) {
             mErrorMsg = "Tvg saving failed";
             return false;
         }
