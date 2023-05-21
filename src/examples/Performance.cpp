@@ -180,10 +180,10 @@ int main(int argc, char **argv)
         Elm_Transit *transit = elm_transit_add();
 
         if (tvgEngine == tvg::CanvasEngine::Sw) {
-            auto view = createSwView();
+            auto view = createSwView(1024, 1024);
             elm_transit_effect_add(transit, transitSwCb, view, nullptr);
         } else {
-            auto view = createGlView();
+            auto view = createGlView(1024, 1024);
             elm_transit_effect_add(transit, transitGlCb, view, nullptr);
         }
 
