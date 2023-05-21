@@ -94,7 +94,7 @@ static bool avxRasterTranslucentRect(SwSurface* surface, const SwBBox& region, u
     auto h = static_cast<uint32_t>(region.max.y - region.min.y);
     auto w = static_cast<uint32_t>(region.max.x - region.min.x);
 
-    auto ialpha = 255 - static_cast<uint8_t>(_alpha(color));
+    uint32_t ialpha = 255 - a;
 
     auto avxColor = _mm_set1_epi32(color);
     auto avxIalpha = _mm_set1_epi8(ialpha);
@@ -148,7 +148,7 @@ static bool avxRasterTranslucentRle(SwSurface* surface, const SwRleData* rle, ui
         if (span->coverage < 255) src = ALPHA_BLEND(color, span->coverage);
         else src = color;
 
-        auto ialpha = 255 - static_cast<uint8_t>(_alpha(src));
+	auto ialpha = _ialpha(src);
 
         //1. fill the not aligned memory (for 128-bit registers a 16-bytes alignment is required)
         auto notAligned = ((uintptr_t)dst & 0xf) / 4;
