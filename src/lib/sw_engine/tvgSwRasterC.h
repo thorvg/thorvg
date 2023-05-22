@@ -49,10 +49,10 @@ static bool inline cRasterTranslucentRle(SwSurface* surface, const SwRleData* rl
         uint8_t src;
         for (uint32_t i = 0; i < rle->size; ++i, ++span) {
             auto dst = &surface->buf8[span->y * surface->stride + span->x];
-            if (span->coverage < 255) src = _multiply<uint8_t>(span->coverage, a);
+            if (span->coverage < 255) src = _multiply(span->coverage, a);
             else src = a;
             for (uint32_t x = 0; x < span->len; ++x, ++dst) {
-                *dst = src + _multiply<uint8_t>(*dst, ~src);
+                *dst = src + _multiply(*dst, ~src);
             }
         }
     }
@@ -82,7 +82,7 @@ static bool inline cRasterTranslucentRect(SwSurface* surface, const SwBBox& regi
         for (uint32_t y = 0; y < h; ++y) {
             auto dst = &buffer[y * surface->stride];
             for (uint32_t x = 0; x < w; ++x, ++dst) {
-                *dst = a + _multiply<uint8_t>(*dst, ~a);
+                *dst = a + _multiply(*dst, ~a);
             }
         }
     }
