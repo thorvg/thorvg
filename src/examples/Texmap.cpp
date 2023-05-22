@@ -71,9 +71,19 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     if (picture->mesh(triangles, 4) != tvg::Result::Success) return;
 
-    picture->translate(100, 100);
+    //Masking + Opacity
+    auto picture2 = tvg::cast<tvg::Picture>(picture->duplicate());
+    picture2->translate(400, 400);
+    picture2->opacity(200);
+
+    auto mask = tvg::Shape::gen();
+    mask->appendCircle(700, 700, 200, 200);
+    mask->fill(255, 255, 255, 255);
+    picture2->composite(std::move(mask), tvg::CompositeMethod::AlphaMask);
+
 
     canvas->push(std::move(picture));
+    canvas->push(std::move(picture2));
 
     free(data);
 }
@@ -168,9 +178,9 @@ int main(int argc, char **argv)
         elm_init(argc, argv);
 
         if (tvgEngine == tvg::CanvasEngine::Sw) {
-            createSwView();
+            createSwView(1024, 1024);
         } else {
-            createGlView();
+            createGlView(1024, 1024);
         }
 
         elm_run();
