@@ -209,11 +209,18 @@ RenderData Paint::Impl::update(RenderMethod& renderer, const RenderTransform* pT
         auto tryFastTrack = false;
         if (target->identifier() == TVG_CLASS_ID_SHAPE) {
             if (method == CompositeMethod::ClipPath) tryFastTrack = true;
+            //OPTIMIZE HERE: Actually, this condition AlphaMask is useless. We can skip it?
             else if (method == CompositeMethod::AlphaMask) {
                 auto shape = static_cast<Shape*>(target);
                 uint8_t a;
                 shape->fillColor(nullptr, nullptr, nullptr, &a);
                 if (a == 255 && shape->opacity() == 255 && !shape->fill()) tryFastTrack = true;
+            //OPTIMIZE HERE: Actually, this condition InvAlphaMask is useless. We can skip it?
+            } else if (method == CompositeMethod::InvAlphaMask) {
+                auto shape = static_cast<Shape*>(target);
+                uint8_t a;
+                shape->fillColor(nullptr, nullptr, nullptr, &a);
+                if ((a == 0 || shape->opacity() == 0) && !shape->fill()) tryFastTrack = true;
             }
             if (tryFastTrack) {
                 RenderRegion viewport2;
