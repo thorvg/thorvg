@@ -37,17 +37,6 @@
 /************************************************************************/
 constexpr auto DOWN_SCALE_TOLERANCE = 0.5f;
 
-static inline uint8_t _multiply(uint8_t c, uint8_t a)
-{
-    return ((c * a + 0xff) >> 8);
-}
-
-
-static inline uint32_t _ialpha(uint32_t c)
-{
-    return (~c >> 24);
-}
-
 
 static inline uint8_t _alpha(uint8_t* a)
 {
@@ -926,18 +915,8 @@ static bool _rasterLinearGradientMaskedRect(SwSurface* surface, const SwBBox& re
     auto cbuffer = surface->compositor->image.buf8 + (region.min.y * surface->compositor->image.stride + region.min.x) * csize;
     auto alpha = surface->blender.alpha(surface->compositor->method);
 
-    auto sbuffer = static_cast<uint32_t*>(alloca(w * sizeof(uint32_t)));
-    if (!sbuffer) return false;
-
     for (uint32_t y = 0; y < h; ++y) {
-        fillFetchLinear(fill, sbuffer, region.min.y + y, region.min.x, w);
-        auto dst = buffer;
-        auto cmp = cbuffer;
-        auto src = sbuffer;
-        for (uint32_t x = 0; x < w; ++x, ++dst, ++src, cmp += csize) {
-            auto tmp = ALPHA_BLEND(*src, alpha(cmp));
-            *dst = tmp + ALPHA_BLEND(*dst, _ialpha(tmp));
-        }
+        fillRasterLinear(fill, buffer, region.min.y + y, region.min.x, w, cbuffer, alpha, csize, 255);
         buffer += surface->stride;
         cbuffer += surface->stride * csize;
     }
@@ -953,15 +932,9 @@ static bool _rasterTranslucentLinearGradientRect(SwSurface* surface, const SwBBo
     auto h = static_cast<uint32_t>(region.max.y - region.min.y);
     auto w = static_cast<uint32_t>(region.max.x - region.min.x);
 
-    auto sbuffer = static_cast<uint32_t*>(alloca(w * sizeof(uint32_t)));
-    if (!sbuffer) return false;
-
     for (uint32_t y = 0; y < h; ++y) {
         auto dst = buffer;
-        fillFetchLinear(fill, sbuffer, region.min.y + y, region.min.x, w);
-        for (uint32_t x = 0; x < w; ++x, ++dst) {
-            *dst = sbuffer[x] + ALPHA_BLEND(*dst, _ialpha(sbuffer[x]));
-        }
+        fillRasterLinear(fill, dst, region.min.y + y, region.min.x, w, opBlend);
         buffer += surface->stride;
     }
     return true;
@@ -977,7 +950,7 @@ static bool _rasterSolidLinearGradientRect(SwSurface* surface, const SwBBox& reg
     auto h = static_cast<uint32_t>(region.max.y - region.min.y);
 
     for (uint32_t y = 0; y < h; ++y) {
-        fillFetchLinear(fill, buffer + y * surface->stride, region.min.y + y, region.min.x, w);
+        fillRasterLinear(fill, buffer + y * surface->stride, region.min.y + y, region.min.x, w);
     }
     return true;
 }
@@ -988,6 +961,7 @@ static bool _rasterLinearGradientRect(SwSurface* surface, const SwBBox& region, 
     if (_compositing(surface)) {
         return _rasterLinearGradientMaskedRect(surface, region, fill);
     } else {
+        //OPTIMIZE_ME: Unity branches.
         if (fill->translucent) return _rasterTranslucentLinearGradientRect(surface, region, fill);
         else _rasterSolidLinearGradientRect(surface, region, fill);
     }
@@ -1003,30 +977,15 @@ static bool _rasterLinearGradientMaskedRle(SwSurface* surface, const SwRleData* 
 {
     if (fill->linear.len < FLT_EPSILON) return false;
 
-    auto buffer = static_cast<uint32_t*>(alloca(surface->w * sizeof(uint32_t)));
-    if (!buffer) return false;
-
     auto span = rle->spans;
     auto csize = surface->compositor->image.channelSize;
     auto cbuffer = surface->compositor->image.buf8;
     auto alpha = surface->blender.alpha(surface->compositor->method);
 
     for (uint32_t i = 0; i < rle->size; ++i, ++span) {
-        fillFetchLinear(fill, buffer, span->y, span->x, span->len);
         auto dst = &surface->buf32[span->y * surface->stride + span->x];
         auto cmp = &cbuffer[(span->y * surface->compositor->image.stride + span->x) * csize];
-        auto src = buffer;
-        if (span->coverage == 255) {
-            for (uint32_t x = 0; x < span->len; ++x, ++dst, ++src, cmp += csize) {
-                auto tmp = ALPHA_BLEND(*src, alpha(cmp));
-                *dst = tmp + ALPHA_BLEND(*dst, _ialpha(tmp));
-            }
-        } else {
-            for (uint32_t x = 0; x < span->len; ++x, ++dst, ++src, cmp += csize) {
-                auto tmp = ALPHA_BLEND(*src, _multiply(span->coverage, alpha(cmp)));
-                *dst = tmp + ALPHA_BLEND(*dst, _ialpha(tmp));
-            }
-        }
+        fillRasterLinear(fill, dst, span->y, span->x, span->len, cmp, alpha, csize, span->coverage);
     }
     return true;
 }
@@ -1037,22 +996,11 @@ static bool _rasterTranslucentLinearGradientRle(SwSurface* surface, const SwRleD
     if (fill->linear.len < FLT_EPSILON) return false;
 
     auto span = rle->spans;
-    auto buffer = static_cast<uint32_t*>(alloca(surface->w * sizeof(uint32_t)));
-    if (!buffer) return false;
 
     for (uint32_t i = 0; i < rle->size; ++i, ++span) {
         auto dst = &surface->buf32[span->y * surface->stride + span->x];
-        fillFetchLinear(fill, buffer, span->y, span->x, span->len);
-        if (span->coverage == 255) {
-            for (uint32_t x = 0; x < span->len; ++x, ++dst) {
-                *dst = buffer[x] + ALPHA_BLEND(*dst, _ialpha(buffer[x]));
-            }
-        } else {
-            for (uint32_t x = 0; x < span->len; ++x, ++dst) {
-                auto tmp = ALPHA_BLEND(buffer[x], span->coverage);
-                *dst = tmp + ALPHA_BLEND(*dst, _ialpha(tmp));
-            }
-        }
+        if (span->coverage == 255) fillRasterLinear(fill, dst, span->y, span->x, span->len, opBlend);
+        else fillRasterLinear(fill, dst, span->y, span->x, span->len, opAlphaBlend, span->coverage);
     }
     return true;
 }
@@ -1062,21 +1010,12 @@ static bool _rasterSolidLinearGradientRle(SwSurface* surface, const SwRleData* r
 {
     if (fill->linear.len < FLT_EPSILON) return false;
 
-    auto buf = static_cast<uint32_t*>(alloca(surface->w * sizeof(uint32_t)));
-    if (!buf) return false;
-
     auto span = rle->spans;
 
     for (uint32_t i = 0; i < rle->size; ++i, ++span) {
-        if (span->coverage == 255) {
-            fillFetchLinear(fill, surface->buf32 + span->y * surface->stride + span->x, span->y, span->x, span->len);
-        } else {
-            fillFetchLinear(fill, buf, span->y, span->x, span->len);
-            auto dst = &surface->buf32[span->y * surface->stride + span->x];
-            for (uint32_t x = 0; x < span->len; ++x) {
-                dst[x] = INTERPOLATE(buf[x], dst[x], span->coverage);
-            }
-        }
+        auto dst = &surface->buf32[span->y * surface->stride + span->x];
+        if (span->coverage == 255) fillRasterLinear(fill, dst, span->y, span->x, span->len);
+        else fillRasterLinear(fill, dst, span->y, span->x, span->len, opInterpolate, span->coverage);
     }
     return true;
 }
@@ -1089,6 +1028,7 @@ static bool _rasterLinearGradientRle(SwSurface* surface, const SwRleData* rle, c
     if (_compositing(surface)) {
         return _rasterLinearGradientMaskedRle(surface, rle, fill);
     } else {
+        //OPTIMIZE_ME: Unify branches
         if (fill->translucent) return _rasterTranslucentLinearGradientRle(surface, rle, fill);
         else return _rasterSolidLinearGradientRle(surface, rle, fill);
     }
@@ -1111,18 +1051,8 @@ static bool _rasterRadialGradientMaskedRect(SwSurface* surface, const SwBBox& re
     auto cbuffer = surface->compositor->image.buf8 + (region.min.y * surface->compositor->image.stride + region.min.x) * csize;
     auto alpha = surface->blender.alpha(surface->compositor->method);
 
-    auto sbuffer = static_cast<uint32_t*>(alloca(w * sizeof(uint32_t)));
-    if (!sbuffer) return false;
-
     for (uint32_t y = 0; y < h; ++y) {
-        fillFetchRadial(fill, sbuffer, region.min.y + y, region.min.x, w);
-        auto dst = buffer;
-        auto cmp = cbuffer;
-        auto src = sbuffer;
-        for (uint32_t x = 0; x < w; ++x, ++dst, ++src, cmp += csize) {
-             auto tmp = ALPHA_BLEND(*src, alpha(cmp));
-             *dst = tmp + ALPHA_BLEND(*dst, _ialpha(tmp));
-        }
+        fillRasterRadial(fill, buffer, region.min.y + y, region.min.x, w, cbuffer, alpha, csize, 255);
         buffer += surface->stride;
         cbuffer += surface->stride * csize;
     }
@@ -1138,15 +1068,9 @@ static bool _rasterTranslucentRadialGradientRect(SwSurface* surface, const SwBBo
     auto h = static_cast<uint32_t>(region.max.y - region.min.y);
     auto w = static_cast<uint32_t>(region.max.x - region.min.x);
 
-    auto sbuffer = static_cast<uint32_t*>(alloca(w * sizeof(uint32_t)));
-    if (!sbuffer) return false;
-
     for (uint32_t y = 0; y < h; ++y) {
         auto dst = buffer;
-        fillFetchRadial(fill, sbuffer, region.min.y + y, region.min.x, w);
-        for (uint32_t x = 0; x < w; ++x, ++dst) {
-            *dst = sbuffer[x] + ALPHA_BLEND(*dst, _ialpha(sbuffer[x]));
-        }
+        fillRasterRadial(fill, dst, region.min.y + y, region.min.x, w, opBlend);
         buffer += surface->stride;
     }
     return true;
@@ -1162,8 +1086,7 @@ static bool _rasterSolidRadialGradientRect(SwSurface* surface, const SwBBox& reg
     auto w = static_cast<uint32_t>(region.max.x - region.min.x);
 
     for (uint32_t y = 0; y < h; ++y) {
-        auto dst = &buffer[y * surface->stride];
-        fillFetchRadial(fill, dst, region.min.y + y, region.min.x, w);
+        fillRasterRadial(fill, &buffer[y * surface->stride], region.min.y + y, region.min.x, w);
     }
     return true;
 }
@@ -1174,6 +1097,7 @@ static bool _rasterRadialGradientRect(SwSurface* surface, const SwBBox& region, 
     if (_compositing(surface)) {
         return _rasterRadialGradientMaskedRect(surface, region, fill);
     } else {
+        //OPTIMIZE_ME: Unity branches.
         if (fill->translucent) return _rasterTranslucentRadialGradientRect(surface, region, fill);
         else return _rasterSolidRadialGradientRect(surface, region, fill);
     }
@@ -1189,30 +1113,15 @@ static bool _rasterRadialGradientMaskedRle(SwSurface* surface, const SwRleData* 
 {
     if (fill->radial.a < FLT_EPSILON) return false;
 
-    auto buffer = static_cast<uint32_t*>(alloca(surface->w * sizeof(uint32_t)));
-    if (!buffer) return false;
-
     auto span = rle->spans;
     auto csize = surface->compositor->image.channelSize;
     auto cbuffer = surface->compositor->image.buf8;
     auto alpha = surface->blender.alpha(surface->compositor->method);
 
     for (uint32_t i = 0; i < rle->size; ++i, ++span) {
-        fillFetchRadial(fill, buffer, span->y, span->x, span->len);
         auto dst = &surface->buf32[span->y * surface->stride + span->x];
         auto cmp = &cbuffer[(span->y * surface->compositor->image.stride + span->x) * csize];
-        auto src = buffer;
-        if (span->coverage == 255) {
-            for (uint32_t x = 0; x < span->len; ++x, ++dst, ++src, cmp += csize) {
-                auto tmp = ALPHA_BLEND(*src, alpha(cmp));
-                *dst = tmp + ALPHA_BLEND(*dst, _ialpha(tmp));
-            }
-        } else {
-            for (uint32_t x = 0; x < span->len; ++x, ++dst, ++src, cmp += csize) {
-                auto tmp = ALPHA_BLEND(*src, _multiply(span->coverage, alpha(cmp)));
-                *dst = tmp + ALPHA_BLEND(*dst, _ialpha(tmp));
-            }
-        }
+        fillRasterRadial(fill, dst, span->y, span->x, span->len, cmp, alpha, csize, span->coverage);
     }
     return true;
 }
@@ -1223,22 +1132,11 @@ static bool _rasterTranslucentRadialGradientRle(SwSurface* surface, const SwRleD
     if (fill->radial.a < FLT_EPSILON) return false;
 
     auto span = rle->spans;
-    auto buffer = static_cast<uint32_t*>(alloca(surface->w * sizeof(uint32_t)));
-    if (!buffer) return false;
 
     for (uint32_t i = 0; i < rle->size; ++i, ++span) {
         auto dst = &surface->buf32[span->y * surface->stride + span->x];
-        fillFetchRadial(fill, buffer, span->y, span->x, span->len);
-        if (span->coverage == 255) {
-            for (uint32_t x = 0; x < span->len; ++x, ++dst) {
-                *dst = buffer[x] + ALPHA_BLEND(*dst, _ialpha(buffer[x]));
-            }
-        } else {
-           for (uint32_t x = 0; x < span->len; ++x, ++dst) {
-                auto tmp = ALPHA_BLEND(buffer[x], span->coverage);
-                *dst = tmp + ALPHA_BLEND(*dst, _ialpha(tmp));
-            }
-        }
+        if (span->coverage == 255) fillRasterRadial(fill, dst, span->y, span->x, span->len, opBlend);
+        else fillRasterRadial(fill, dst, span->y, span->x, span->len, opAlphaBlend, span->coverage);
     }
     return true;
 }
@@ -1248,21 +1146,12 @@ static bool _rasterSolidRadialGradientRle(SwSurface* surface, const SwRleData* r
 {
     if (fill->radial.a < FLT_EPSILON) return false;
 
-    auto buf = static_cast<uint32_t*>(alloca(surface->w * sizeof(uint32_t)));
-    if (!buf) return false;
-
     auto span = rle->spans;
 
     for (uint32_t i = 0; i < rle->size; ++i, ++span) {
         auto dst = &surface->buf32[span->y * surface->stride + span->x];
-        if (span->coverage == 255) {
-            fillFetchRadial(fill, dst, span->y, span->x, span->len);
-        } else {
-            fillFetchRadial(fill, buf, span->y, span->x, span->len);
-            for (uint32_t x = 0; x < span->len; ++x, ++dst) {
-                *dst = INTERPOLATE(buf[x], *dst, span->coverage);
-            }
-        }
+        if (span->coverage == 255) fillRasterRadial(fill, dst, span->y, span->x, span->len);
+        else fillRasterRadial(fill, dst, span->y, span->x, span->len, opInterpolate, span->coverage);
     }
     return true;
 }
@@ -1275,6 +1164,7 @@ static bool _rasterRadialGradientRle(SwSurface* surface, const SwRleData* rle, c
     if (_compositing(surface)) {
         return _rasterRadialGradientMaskedRle(surface, rle, fill);
     } else {
+        //OPTIMIZE_ME: Unity branches.
         if (fill->translucent) _rasterTranslucentRadialGradientRle(surface, rle, fill);
         else return _rasterSolidRadialGradientRle(surface, rle, fill);
     }
