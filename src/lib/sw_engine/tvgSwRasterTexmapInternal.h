@@ -133,7 +133,7 @@
             }
 
 #if defined(TEXMAP_MASKING) && defined(TEXMAP_TRANSLUCENT)
-            auto src = ALPHA_BLEND(px, _multiply(opacity, alpha(cmp)));
+            auto src = ALPHA_BLEND(px, MULTIPLY(opacity, alpha(cmp)));
             cmp += csize;
 #elif defined(TEXMAP_MASKING)
             auto src = ALPHA_BLEND(px, alpha(cmp));
@@ -143,7 +143,7 @@
 #else
             auto src = px;
 #endif
-            *buf = src + ALPHA_BLEND(*buf, _ialpha(src));
+            *buf = src + ALPHA_BLEND(*buf, IALPHA(src));
             ++buf;
 
             //Step UV horizontally

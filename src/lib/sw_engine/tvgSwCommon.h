@@ -240,7 +240,6 @@ struct SwImage
 
 typedef uint32_t(*SwJoin)(uint8_t r, uint8_t g, uint8_t b, uint8_t a);      //color channel join
 typedef uint8_t(*SwAlpha)(uint8_t*);                                        //blending alpha
-typedef uint32_t(*SwBlendOp)(uint32_t s, uint32_t d, uint8_t a);            //src, dst, alpha
 
 struct SwBlender
 {
@@ -303,30 +302,33 @@ static inline SwCoord HALF_STROKE(float width)
     return TO_SWCOORD(width * 0.5f);
 }
 
-static inline uint8_t _multiply(uint8_t c, uint8_t a)
+static inline uint8_t MULTIPLY(uint8_t c, uint8_t a)
 {
     return ((c * a + 0xff) >> 8);
 }
 
-static inline uint8_t _alpha(uint32_t c)
+static inline uint8_t ALPHA(uint32_t c)
 {
     return (c >> 24);
 }
 
-static inline uint8_t _ialpha(uint32_t c)
+static inline uint8_t IALPHA(uint32_t c)
 {
     return (~c >> 24);
 }
 
+
+typedef uint32_t(*SwBlendOp)(uint32_t s, uint32_t d, uint8_t a);            //src, dst, alpha
+
 static inline uint32_t opAlphaBlend(uint32_t s, uint32_t d, uint8_t a)
 {
     auto t = ALPHA_BLEND(s, a);
-    return t + ALPHA_BLEND(d, _ialpha(t));
+    return t + ALPHA_BLEND(d, IALPHA(t));
 }
 
 static inline uint32_t opBlend(uint32_t s, uint32_t d, TVG_UNUSED uint8_t a)
 {
-    return s + ALPHA_BLEND(d, _ialpha(s));
+    return s + ALPHA_BLEND(d, IALPHA(s));
 }
 
 static inline uint32_t opInterpolate(uint32_t s, uint32_t d, uint8_t a)
@@ -382,10 +384,10 @@ void imageFree(SwImage* image);
 bool fillGenColorTable(SwFill* fill, const Fill* fdata, const Matrix* transform, SwSurface* surface, uint32_t opacity, bool ctable);
 void fillReset(SwFill* fill);
 void fillFree(SwFill* fill);
-void fillRasterLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlendOp op = nullptr, uint8_t a = 255);                         //blending ver.
-void fillRasterLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, uint8_t* cmp, SwAlpha alpha, uint8_t csize, uint8_t opacity);     //masking ver.
-void fillRasterRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlendOp op = nullptr, uint8_t a = 255);                         //blending ver.
-void fillRasterRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, uint8_t* cmp, SwAlpha alpha, uint8_t csize, uint8_t opacity);     //masking ver.
+void fillLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlendOp op = nullptr, uint8_t a = 255);                         //blending ver.
+void fillLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, uint8_t* cmp, SwAlpha alpha, uint8_t csize, uint8_t opacity);     //masking ver.
+void fillRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlendOp op = nullptr, uint8_t a = 255);                         //blending ver.
+void fillRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, uint8_t* cmp, SwAlpha alpha, uint8_t csize, uint8_t opacity);     //masking ver.
 
 SwRleData* rleRender(SwRleData* rle, const SwOutline* outline, const SwBBox& renderRegion, bool antiAlias);
 SwRleData* rleRender(const SwBBox* bbox);
