@@ -148,7 +148,7 @@ static bool avxRasterTranslucentRle(SwSurface* surface, const SwRleData* rle, ui
         if (span->coverage < 255) src = ALPHA_BLEND(color, span->coverage);
         else src = color;
 
-	auto ialpha = _ialpha(src);
+	auto ialpha = IALPHA(src);
 
         //1. fill the not aligned memory (for 128-bit registers a 16-bytes alignment is required)
         auto notAligned = ((uintptr_t)dst & 0xf) / 4;

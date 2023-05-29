@@ -233,7 +233,7 @@ static inline uint32_t _pixel(const SwFill* fill, float pos)
 /* External Class Implementation                                        */
 /************************************************************************/
 
-void fillRasterRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, uint8_t* cmp, SwAlpha alpha, uint8_t csize, uint8_t opacity)
+void fillRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, uint8_t* cmp, SwAlpha alpha, uint8_t csize, uint8_t opacity)
 {
     auto rx = (x + 0.5f) * fill->radial.a11 + (y + 0.5f) * fill->radial.a12 + fill->radial.shiftX;
     auto ry = (x + 0.5f) * fill->radial.a21 + (y + 0.5f) * fill->radial.a22 + fill->radial.shiftY;
@@ -252,16 +252,15 @@ void fillRasterRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x,
         }
     } else {
         for (uint32_t i = 0 ; i < len ; ++i, ++dst, cmp += csize) {
-            *dst = opAlphaBlend(_pixel(fill, sqrtf(det)), *dst, _multiply(opacity, alpha(cmp)));
+            *dst = opAlphaBlend(_pixel(fill, sqrtf(det)), *dst, MULTIPLY(opacity, alpha(cmp)));
             det += detFirstDerivative;
             detFirstDerivative += detSecondDerivative;
         }
     }
-
 }
 
 
-void fillRasterRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlendOp op, uint8_t a)
+void fillRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlendOp op, uint8_t a)
 {
     auto rx = (x + 0.5f) * fill->radial.a11 + (y + 0.5f) * fill->radial.a12 + fill->radial.shiftX;
     auto ry = (x + 0.5f) * fill->radial.a21 + (y + 0.5f) * fill->radial.a22 + fill->radial.shiftY;
@@ -288,7 +287,7 @@ void fillRasterRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x,
 }
 
 
-void fillRasterLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, uint8_t* cmp, SwAlpha alpha, uint8_t csize, uint8_t opacity)
+void fillLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, uint8_t* cmp, SwAlpha alpha, uint8_t csize, uint8_t opacity)
 {
     //Rotation
     float rx = x + 0.5f;
@@ -331,7 +330,7 @@ void fillRasterLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x,
         if (mathZero(inc)) {
             auto color = _fixedPixel(fill, static_cast<int32_t>(t * FIXPT_SIZE));
             for (uint32_t i = 0; i < len; ++i, ++dst, cmp += csize) {
-                *dst = opAlphaBlend(color, *dst, _multiply(alpha(cmp), opacity));
+                *dst = opAlphaBlend(color, *dst, MULTIPLY(alpha(cmp), opacity));
             }
             return;
         }
@@ -345,14 +344,14 @@ void fillRasterLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x,
             auto t2 = static_cast<int32_t>(t * FIXPT_SIZE);
             auto inc2 = static_cast<int32_t>(inc * FIXPT_SIZE);
             for (uint32_t j = 0; j < len; ++j, ++dst, cmp += csize) {
-                *dst = opAlphaBlend(_fixedPixel(fill, t2), *dst, _multiply(alpha(cmp), opacity));
+                *dst = opAlphaBlend(_fixedPixel(fill, t2), *dst, MULTIPLY(alpha(cmp), opacity));
                 t2 += inc2;
             }
         //we have to fallback to float math
         } else {
             uint32_t counter = 0;
             while (counter++ < len) {
-                *dst = opAlphaBlend(_pixel(fill, t / GRADIENT_STOP_SIZE), *dst, _multiply(opacity, alpha(cmp)));
+                *dst = opAlphaBlend(_pixel(fill, t / GRADIENT_STOP_SIZE), *dst, MULTIPLY(opacity, alpha(cmp)));
                 ++dst;
                 t += inc;
                 cmp += csize;
@@ -362,7 +361,7 @@ void fillRasterLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x,
 }
 
 
-void fillRasterLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlendOp op, uint8_t a)
+void fillLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlendOp op, uint8_t a)
 {
     //Rotation
     float rx = x + 0.5f;

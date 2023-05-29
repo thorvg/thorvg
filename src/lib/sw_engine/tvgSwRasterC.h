@@ -40,8 +40,9 @@ static bool inline cRasterTranslucentRle(SwSurface* surface, const SwRleData* rl
             auto dst = &surface->buf32[span->y * surface->stride + span->x];
             if (span->coverage < 255) src = ALPHA_BLEND(color, span->coverage);
             else src = color;
+            auto ialpha = IALPHA(src);
             for (uint32_t x = 0; x < span->len; ++x, ++dst) {
-                *dst = src + ALPHA_BLEND(*dst, _ialpha(src));
+                *dst = src + ALPHA_BLEND(*dst, ialpha);
             }
         }
     //8bit grayscale
@@ -49,10 +50,11 @@ static bool inline cRasterTranslucentRle(SwSurface* surface, const SwRleData* rl
         uint8_t src;
         for (uint32_t i = 0; i < rle->size; ++i, ++span) {
             auto dst = &surface->buf8[span->y * surface->stride + span->x];
-            if (span->coverage < 255) src = _multiply(span->coverage, a);
+            if (span->coverage < 255) src = MULTIPLY(span->coverage, a);
             else src = a;
+            auto ialpha = ~a;
             for (uint32_t x = 0; x < span->len; ++x, ++dst) {
-                *dst = src + _multiply(*dst, ~src);
+                *dst = src + MULTIPLY(*dst, ialpha);
             }
         }
     }
@@ -69,7 +71,7 @@ static bool inline cRasterTranslucentRect(SwSurface* surface, const SwBBox& regi
     if (surface->channelSize == sizeof(uint32_t)) {
         auto color = surface->blender.join(r, g, b, a);
         auto buffer = surface->buf32 + (region.min.y * surface->stride) + region.min.x;
-        auto ialpha = _ialpha(color);
+        auto ialpha = IALPHA(color);
         for (uint32_t y = 0; y < h; ++y) {
             auto dst = &buffer[y * surface->stride];
             for (uint32_t x = 0; x < w; ++x, ++dst) {
@@ -79,10 +81,11 @@ static bool inline cRasterTranslucentRect(SwSurface* surface, const SwBBox& regi
     //8bit grayscale
     } else if (surface->channelSize == sizeof(uint8_t)) {
         auto buffer = surface->buf8 + (region.min.y * surface->stride) + region.min.x;
+        auto ialpha = ~a;
         for (uint32_t y = 0; y < h; ++y) {
             auto dst = &buffer[y * surface->stride];
             for (uint32_t x = 0; x < w; ++x, ++dst) {
-                *dst = a + _multiply(*dst, ~a);
+                *dst = a + MULTIPLY(*dst, ialpha);
             }
         }
     }
