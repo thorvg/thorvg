@@ -161,18 +161,33 @@ enum class FillRule
     EvenOdd      ///< A line from the point to a location outside the shape is drawn and its intersections with the path segments of the shape are counted. If the number of intersections is an odd number, the point is inside the shape.
 };
 
+
 /**
  * @brief Enumeration indicating the method used in the composition of two objects - the target and the source.
+ *
+ * In the case of Mask composition, you need to perform bit operations on two options - Mask Alpha and Mask Operation.
+ * Mask Alpha specifies the origin of the alpha channel, while Mask Operation specifies the masking operation.
+ * @code paint->composite(tvg::CompositeMethod::AlphaMask + tvg::CompositeMethod::AddMaskOp); @endcode
+ *
+ * @note If you don't specify the mask alpha, @c AlphaMask will be used.
+ * @note If you don't specify the mask method, @c AddMaskOp will be used.
+ * @warning Composition does not support multiple choices for both Mask Alpha and Mask Operation.
+ * @see Paint::composite()
  */
 enum class CompositeMethod
 {
-    None = 0,     ///< No composition is applied.
-    ClipPath,     ///< The intersection of the source and the target is determined and only the resulting pixels from the source are rendered.
-    AlphaMask,    ///< The pixels of the source and the target are alpha blended. As a result, only the part of the source, which alpha intersects with the target is visible.
-    InvAlphaMask, ///< The pixels of the source and the complement to the target's pixels are alpha blended. As a result, only the part of the source which alpha is not covered by the target is visible.
-    LumaMask,     ///< The source pixels are converted to the grayscale (luma value) and alpha blended with the target. As a result, only the part of the source, which intersects with the target is visible. @since 0.9
-    InvLumaMask   ///< The source pixels are converted to the grayscale (luma value) and the complement to the target's pixels are alpha blended. As a result, only the part of the source which grayscale is not covered by the target is visible. @BETA_API
+    None = 0,           ///< No composition is applied.
+    ClipPath,           ///< The intersection of the source and the target is determined and only the resulting pixels from the source are rendered.
+    AlphaMask,          ///< Mask Alpha: Use the compositing target's pixels as an alpha value.
+    InvAlphaMask,       ///< Mask Alpha: Use the complement to the compositing target's pixels as an alpha.
+    LumaMask,           ///< Mask Alpha: Use the grayscale (0.2125R + 0.7154G + 0.0721*B) of the compositing target's pixels. @since 0.9
+    InvLumaMask,        ///< Mask Alpha: Use the grayscale (0.2125R + 0.7154G + 0.0721*B) of the complement to the compositing target's pixels. @BETA_API
+    AddMask,            ///< Mask Operation: Combines the source and target pixels using Mask Alpha. @BETA_API
+    SubtractMask,       ///< Mask Operation: Subtracts the target color from the source color while considering their respective Mask Alpha. @BETA_API
+    IntersectMask,      ///< Mask Operation: Computes the result by taking the minimum value between the Mask Alpha and the target alpha and multiplies it with the source color. @BETA_API
+    DifferenceMask      ///< Mask Operation: Calculates the absolute difference between the source color and the target color multiplied by the complement of the Mask Alpha. @BETA_API
 };
+
 
 /**
  * @brief Enumeration specifying the engine type used for the graphics backend. For multiple backends bitwise operation is allowed.
@@ -1636,6 +1651,7 @@ std::unique_ptr<T> cast(Paint* paint)
     return std::unique_ptr<T>(static_cast<T*>(paint));
 }
 
+
 /**
  * @brief The cast() function is a utility function used to cast a 'Fill' to type 'T'.
  *
@@ -1645,6 +1661,17 @@ template<typename T>
 std::unique_ptr<T> cast(Fill* fill)
 {
     return std::unique_ptr<T>(static_cast<T*>(fill));
+}
+
+
+/**
+ * @brief The operator() function is the OR function used to combine Mask Alpha & Mask Operation
+ *
+ * @BETA_API
+ */
+constexpr CompositeMethod operator+(CompositeMethod a, CompositeMethod b)
+{
+    return CompositeMethod(int(a) | int(b));
 }
 
 
