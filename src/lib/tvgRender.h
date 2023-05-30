@@ -98,6 +98,20 @@ struct RenderRegion
         if (w < 0) w = 0;
         if (h < 0) h = 0;
     }
+
+    void add(const RenderRegion& rhs)
+    {
+        if (rhs.x < x) {
+            w += (x - rhs.x);
+            x = rhs.x;
+        }
+        if (rhs.y < y) {
+            h += (y - rhs.y);
+            y = rhs.y;
+        }
+        if (rhs.x + rhs.w > x + w) w = (rhs.x + rhs.w) - x;
+        if (rhs.y + rhs.h > y + h) h = (rhs.y + rhs.h) - y;
+    }
 };
 
 struct RenderTransform
@@ -238,6 +252,25 @@ public:
     virtual bool endComposite(Compositor* cmp) = 0;
 };
 
+static inline bool MASK_OPERATION(CompositeMethod method)
+{
+    switch(method) {
+        case CompositeMethod::AlphaMask:
+        case CompositeMethod::InvAlphaMask:
+        case CompositeMethod::LumaMask:
+        case CompositeMethod::InvLumaMask:
+            return false;
+        case CompositeMethod::AddMask:
+        case CompositeMethod::SubtractMask:
+        case CompositeMethod::IntersectMask:
+        case CompositeMethod::DifferenceMask:
+            return true;
+        default:
+            TVGERR("COMMON", "Unsupported Composite Size! = %d", (int)method);
+            return false;
+    }
+}
+
 static inline uint8_t CHANNEL_SIZE(ColorSpace cs)
 {
     switch(cs) {
@@ -263,6 +296,10 @@ static inline ColorSpace COMPOSITE_TO_COLORSPACE(RenderMethod& renderer, Composi
             return ColorSpace::Grayscale8;
         case CompositeMethod::LumaMask:
         case CompositeMethod::InvLumaMask:
+        case CompositeMethod::AddMask:
+        case CompositeMethod::SubtractMask:
+        case CompositeMethod::IntersectMask:
+        case CompositeMethod::DifferenceMask:
             return renderer.colorSpace();
         default:
             TVGERR("COMMON", "Unsupported Composite Size! = %d", (int)method);

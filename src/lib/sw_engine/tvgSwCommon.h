@@ -248,7 +248,8 @@ struct SwBlender
 
     SwAlpha alpha(CompositeMethod method)
     {
-        return alphas[(int)(method) - 2];      //0: None, 1: ClipPath
+        auto idx = (int)(method) - 2;       //0: None, 1: ClipPath
+        return alphas[idx > 3 ? 0 : idx];   //CompositeMethod has only four Matting methods.
     }
 };
 
@@ -331,6 +332,26 @@ static inline uint32_t opBlend(uint32_t s, uint32_t d, TVG_UNUSED uint8_t a)
     return s + ALPHA_BLEND(d, IALPHA(s));
 }
 
+static inline uint32_t opSubMask(uint32_t s, uint32_t d, TVG_UNUSED uint8_t a)
+{
+    return ALPHA_BLEND(d, IALPHA(s));
+}
+
+static inline uint32_t opDifMask(uint32_t s, uint32_t d, TVG_UNUSED uint8_t a)
+{
+   return ALPHA_BLEND(s, IALPHA(d)) + ALPHA_BLEND(d, IALPHA(s));
+}
+
+static inline uint32_t opIntMask(uint32_t s, uint32_t d, TVG_UNUSED uint8_t a)
+{
+   return ALPHA_BLEND(d, ALPHA(s));
+}
+
+static inline uint32_t opAddMask(uint32_t s, uint32_t d, TVG_UNUSED uint8_t a)
+{
+    return opBlend(s, d, a);
+}
+
 static inline uint32_t opInterpolate(uint32_t s, uint32_t d, uint8_t a)
 {
     return INTERPOLATE(s, d, a);
@@ -385,6 +406,7 @@ bool fillGenColorTable(SwFill* fill, const Fill* fdata, const Matrix* transform,
 void fillReset(SwFill* fill);
 void fillFree(SwFill* fill);
 void fillLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlendOp op = nullptr, uint8_t a = 255);                         //blending ver.
+void fillLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlendOp op, uint8_t a);                                         //blending ver.
 void fillLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, uint8_t* cmp, SwAlpha alpha, uint8_t csize, uint8_t opacity);     //masking ver.
 void fillRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlendOp op = nullptr, uint8_t a = 255);                         //blending ver.
 void fillRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, uint8_t* cmp, SwAlpha alpha, uint8_t csize, uint8_t opacity);     //masking ver.
