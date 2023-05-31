@@ -98,59 +98,104 @@
 #ifdef TEXMAP_MASKING
         cmp = &surface->compositor->image.buf8[(y * surface->compositor->image.stride + x1) * csize];
 #endif
-        //Draw horizontal line
-        while (x++ < x2) {
-            uu = (int) u;
-            vv = (int) v;
+        if (opacity == 255) {
+            //Draw horizontal line
+            while (x++ < x2) {
+                uu = (int) u;
+                vv = (int) v;
 
-            ar = (int)(255 * (1 - modff(u, &iptr)));
-            ab = (int)(255 * (1 - modff(v, &iptr)));
-            iru = uu + 1;
-            irv = vv + 1;
+                ar = (int)(255 * (1 - modff(u, &iptr)));
+                ab = (int)(255 * (1 - modff(v, &iptr)));
+                iru = uu + 1;
+                irv = vv + 1;
 
-            if (vv >= sh) continue;
+                if (vv >= sh) continue;
 
-            px = *(sbuf + (vv * sw) + uu);
-
-            /* horizontal interpolate */
-            if (iru < sw) {
-                /* right pixel */
-                int px2 = *(sbuf + (vv * sw) + iru);
-                px = INTERPOLATE(px, px2, ar);
-            }
-            /* vertical interpolate */
-            if (irv < sh) {
-                /* bottom pixel */
-                int px2 = *(sbuf + (irv * sw) + uu);
+                px = *(sbuf + (vv * sw) + uu);
 
                 /* horizontal interpolate */
                 if (iru < sw) {
-                    /* bottom right pixel */
-                    int px3 = *(sbuf + (irv * sw) + iru);
-                    px2 = INTERPOLATE(px2, px3, ar);
+                    /* right pixel */
+                    int px2 = *(sbuf + (vv * sw) + iru);
+                    px = INTERPOLATE(px, px2, ar);
                 }
-                px = INTERPOLATE(px, px2, ab);
+                /* vertical interpolate */
+                if (irv < sh) {
+                    /* bottom pixel */
+                    int px2 = *(sbuf + (irv * sw) + uu);
+
+                    /* horizontal interpolate */
+                    if (iru < sw) {
+                        /* bottom right pixel */
+                        int px3 = *(sbuf + (irv * sw) + iru);
+                        px2 = INTERPOLATE(px2, px3, ar);
+                    }
+                    px = INTERPOLATE(px, px2, ab);
+                }
+    #ifdef TEXMAP_MASKING
+                auto src = ALPHA_BLEND(px, alpha(cmp));
+                cmp += csize;
+    #else
+                auto src = px;
+    #endif
+                *buf = src + ALPHA_BLEND(*buf, IALPHA(src));
+                ++buf;
+
+                //Step UV horizontally
+                u += _dudx;
+                v += _dvdx;
+                //range over?
+                if ((uint32_t)v >= image->h) break;
             }
+        } else {
+            //Draw horizontal line
+            while (x++ < x2) {
+                uu = (int) u;
+                vv = (int) v;
 
-#if defined(TEXMAP_MASKING) && defined(TEXMAP_TRANSLUCENT)
-            auto src = ALPHA_BLEND(px, MULTIPLY(opacity, alpha(cmp)));
-            cmp += csize;
-#elif defined(TEXMAP_MASKING)
-            auto src = ALPHA_BLEND(px, alpha(cmp));
-            cmp += csize;
-#elif defined(TEXMAP_TRANSLUCENT)
-            auto src = ALPHA_BLEND(px, opacity);
-#else
-            auto src = px;
-#endif
-            *buf = src + ALPHA_BLEND(*buf, IALPHA(src));
-            ++buf;
+                ar = (int)(255 * (1 - modff(u, &iptr)));
+                ab = (int)(255 * (1 - modff(v, &iptr)));
+                iru = uu + 1;
+                irv = vv + 1;
 
-            //Step UV horizontally
-            u += _dudx;
-            v += _dvdx;
-            //range over?
-            if ((uint32_t)v >= image->h) break;
+                if (vv >= sh) continue;
+
+                px = *(sbuf + (vv * sw) + uu);
+
+                /* horizontal interpolate */
+                if (iru < sw) {
+                    /* right pixel */
+                    int px2 = *(sbuf + (vv * sw) + iru);
+                    px = INTERPOLATE(px, px2, ar);
+                }
+                /* vertical interpolate */
+                if (irv < sh) {
+                    /* bottom pixel */
+                    int px2 = *(sbuf + (irv * sw) + uu);
+
+                    /* horizontal interpolate */
+                    if (iru < sw) {
+                        /* bottom right pixel */
+                        int px3 = *(sbuf + (irv * sw) + iru);
+                        px2 = INTERPOLATE(px2, px3, ar);
+                    }
+                    px = INTERPOLATE(px, px2, ab);
+                }
+    #ifdef TEXMAP_MASKING
+                auto src = ALPHA_BLEND(px, MULTIPLY(opacity, alpha(cmp)));
+                cmp += csize;
+    #else
+                auto src = ALPHA_BLEND(px, opacity);
+    #endif
+                *buf = src + ALPHA_BLEND(*buf, IALPHA(src));
+                ++buf;
+
+                //Step UV horizontally
+                u += _dudx;
+                v += _dvdx;
+                //range over?
+                if ((uint32_t)v >= image->h) break;
+            }  
         }
 next:
         //Step along both edges
