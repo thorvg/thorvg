@@ -71,31 +71,13 @@ static bool _arrange(const SwImage* image, const SwBBox* region, int& yStart, in
 
 static void _rasterMaskedPolygonImageSegment(SwSurface* surface, const SwImage* image, const SwBBox* region, int yStart, int yEnd, uint32_t opacity, AASpans* aaSpans)
 {
-#define TEXMAP_TRANSLUCENT
 #define TEXMAP_MASKING
       #include "tvgSwRasterTexmapInternal.h"
-#undef TEXMAP_MASKING
-#undef TEXMAP_TRANSLUCENT
-}
-
-
-static void _rasterMaskedPolygonImageSegment(SwSurface* surface, const SwImage* image, const SwBBox* region, int yStart, int yEnd, AASpans* aaSpans)
-{
-#define TEXMAP_MASKING
-    #include "tvgSwRasterTexmapInternal.h"
 #undef TEXMAP_MASKING
 }
 
 
 static void _rasterPolygonImageSegment(SwSurface* surface, const SwImage* image, const SwBBox* region, int yStart, int yEnd, uint32_t opacity, AASpans* aaSpans)
-{
-#define TEXMAP_TRANSLUCENT
-     #include "tvgSwRasterTexmapInternal.h"
-#undef TEXMAP_TRANSLUCENT
-}
-
-
-static void _rasterPolygonImageSegment(SwSurface* surface, const SwImage* image, const SwBBox* region, int yStart, int yEnd, AASpans* aaSpans)
 {
     #include "tvgSwRasterTexmapInternal.h"
 }
@@ -191,13 +173,8 @@ static void _rasterPolygonImage(SwSurface* surface, const SwImage* image, const 
             dxdyb = dxdy[0];
             xb = x[0] + dy * dxdyb + (off_y * dxdyb);
 
-            if (masking) {
-                if (opacity == 255) _rasterMaskedPolygonImageSegment(surface, image, region, yi[0], yi[1], aaSpans);
-                else _rasterMaskedPolygonImageSegment(surface, image, region, yi[0], yi[1], opacity, aaSpans);
-            } else {
-                if (opacity == 255) _rasterPolygonImageSegment(surface, image, region, yi[0], yi[1], aaSpans);
-                else _rasterPolygonImageSegment(surface, image, region, yi[0], yi[1], opacity, aaSpans);
-            }
+            if (masking) _rasterMaskedPolygonImageSegment(surface, image, region, yi[0], yi[1], opacity, aaSpans);
+            else _rasterPolygonImageSegment(surface, image, region, yi[0], yi[1], opacity, aaSpans);
 
             upper = true;
         }
@@ -212,13 +189,8 @@ static void _rasterPolygonImage(SwSurface* surface, const SwImage* image, const 
             // Set right edge X-slope and perform subpixel pre-stepping
             dxdyb = dxdy[2];
             xb = x[1] + (1 - (y[1] - yi[1])) * dxdyb + (off_y * dxdyb);
-            if (masking) {
-                if (opacity == 255) _rasterMaskedPolygonImageSegment(surface, image, region, yi[1], yi[2], aaSpans);
-                else _rasterMaskedPolygonImageSegment(surface, image, region, yi[1], yi[2], opacity, aaSpans);
-            } else {
-                if (opacity == 255) _rasterPolygonImageSegment(surface, image, region, yi[1], yi[2], aaSpans);
-                else _rasterPolygonImageSegment(surface, image, region, yi[1], yi[2], opacity, aaSpans);
-            }
+            if (masking) _rasterMaskedPolygonImageSegment(surface, image, region, yi[1], yi[2], opacity, aaSpans);
+            else _rasterPolygonImageSegment(surface, image, region, yi[1], yi[2], opacity, aaSpans);
         }
     //Longer edge is on the right side
     } else {
@@ -241,13 +213,8 @@ static void _rasterPolygonImage(SwSurface* surface, const SwImage* image, const 
             ua = u[0] + dy * dudya + (off_y * dudya);
             va = v[0] + dy * dvdya + (off_y * dvdya);
 
-            if (masking) {
-                if (opacity == 255) _rasterMaskedPolygonImageSegment(surface, image, region, yi[0], yi[1], aaSpans);
-                else _rasterMaskedPolygonImageSegment(surface, image, region, yi[0], yi[1], opacity, aaSpans);
-            } else {
-                if (opacity == 255) _rasterPolygonImageSegment(surface, image, region, yi[0], yi[1], aaSpans);
-                else _rasterPolygonImageSegment(surface, image, region, yi[0], yi[1], opacity, aaSpans);
-            }
+            if (masking) _rasterMaskedPolygonImageSegment(surface, image, region, yi[0], yi[1], opacity, aaSpans);
+            else _rasterPolygonImageSegment(surface, image, region, yi[0], yi[1], opacity, aaSpans);
 
             upper = true;
         }
@@ -265,13 +232,8 @@ static void _rasterPolygonImage(SwSurface* surface, const SwImage* image, const 
             ua = u[1] + dy * dudya + (off_y * dudya);
             va = v[1] + dy * dvdya + (off_y * dvdya);
 
-            if (masking) {
-                if (opacity == 255) _rasterMaskedPolygonImageSegment(surface, image, region, yi[1], yi[2], aaSpans);
-                else _rasterMaskedPolygonImageSegment(surface, image, region, yi[1], yi[2], opacity, aaSpans);
-            } else {
-                if (opacity == 255) _rasterPolygonImageSegment(surface, image, region, yi[1], yi[2], aaSpans);
-                else _rasterPolygonImageSegment(surface, image, region, yi[1], yi[2], opacity, aaSpans);
-            }
+            if (masking) _rasterMaskedPolygonImageSegment(surface, image, region, yi[1], yi[2], opacity, aaSpans);
+            else _rasterPolygonImageSegment(surface, image, region, yi[1], yi[2], opacity, aaSpans);
         }
     }
 }
