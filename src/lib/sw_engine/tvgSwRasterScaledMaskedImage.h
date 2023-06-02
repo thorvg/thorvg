@@ -20,6 +20,8 @@
  * SOFTWARE.
  */
 
+auto scaleMethod = image->scale < DOWN_SCALE_TOLERANCE ? _interpDownScaler : _interpUpScaler;
+
 #ifdef SCALED_IMAGE_INT_MASK
 {
     auto cbuffer = surface->compositor->image.buf32 + (surface->compositor->bbox.min.y * cstride + surface->compositor->bbox.min.x);
@@ -28,47 +30,25 @@
         if (y == region.min.y) {
             auto cbuffer2 = cbuffer;
             for (uint32_t y2 = y; y2 < region.max.y; ++y2) {
-                auto sy = (uint32_t)(y2 * itransform->e22 + itransform->e23);
-                if (sy >= image->h) continue;
+                auto sy = y2 * itransform->e22 + itransform->e23;
+                if ((uint32_t)sy >= image->h) continue;
                 auto tmp = cbuffer2;
                 auto x = surface->compositor->bbox.min.x;
                 while (x < surface->compositor->bbox.max.x) {
                     if (x == region.min.x) {                          
                         if (opacity == 255) {
-                            //Down-Scaled
-                            if (image->scale < DOWN_SCALE_TOLERANCE) {
-                                for (uint32_t i = 0; i < w; ++i, ++tmp) {
-                                    auto sx = (uint32_t)((x + i) * itransform->e11 + itransform->e13);
-                                    if (sx >= image->w) continue;
-                                    auto src = _interpDownScaler(image->buf32, image->stride, image->w, image->h, sx, sy, halfScale);
-                                    *tmp = ALPHA_BLEND(*tmp, ALPHA(src));
-                                }
-                            //Up-Scaled
-                            } else {
-                                 for (uint32_t i = 0; i < w; ++i, ++tmp) {
-                                    auto sx = (uint32_t)((x + i) * itransform->e11 + itransform->e13);
-                                    if (sx >= image->w) continue;
-                                    auto src = _interpUpScaler(image->buf32, image->w, image->h, sx, sy);
-                                    *tmp = ALPHA_BLEND(*tmp, ALPHA(src));
-                                }                               
+                            for (uint32_t i = 0; i < w; ++i, ++tmp) {
+                                auto sx = (x + i) * itransform->e11 + itransform->e13;
+                                if ((uint32_t)sx >= image->w) continue;
+                                auto src = scaleMethod(image->buf32, image->stride, image->w, image->h, sx, sy, halfScale);
+                                *tmp = ALPHA_BLEND(*tmp, ALPHA(src));
                             }
                         } else {
-                            //Down-Scaled
-                            if (image->scale < DOWN_SCALE_TOLERANCE) {
-                                for (uint32_t i = 0; i < w; ++i, ++tmp) {
-                                    auto sx = (uint32_t)((x + i) * itransform->e11 + itransform->e13);
-                                    if (sx >= image->w) continue;
-                                    auto src = ALPHA_BLEND(_interpDownScaler(image->buf32, image->stride, image->w, image->h, sx, sy, halfScale), opacity);
-                                    *tmp = ALPHA_BLEND(*tmp, ALPHA(src));
-                                }
-                            //Up-Scaled
-                            } else {
-                                for (uint32_t i = 0; i < w; ++i, ++tmp) {
-                                    auto sx = (uint32_t)((x + i) * itransform->e11 + itransform->e13);
-                                    if (sx >= image->w) continue;
-                                    auto src = ALPHA_BLEND(_interpUpScaler(image->buf32, image->w, image->h, sx, sy), opacity);
-                                    *tmp = ALPHA_BLEND(*tmp, ALPHA(src));
-                                }
+                            for (uint32_t i = 0; i < w; ++i, ++tmp) {
+                                auto sx = (x + i) * itransform->e11 + itransform->e13;
+                                if ((uint32_t)sx >= image->w) continue;
+                                auto src = ALPHA_BLEND(scaleMethod(image->buf32, image->stride, image->w, image->h, sx, sy, halfScale), opacity);
+                                *tmp = ALPHA_BLEND(*tmp, ALPHA(src));
                             }
                         }
                         x += w;
@@ -94,78 +74,39 @@
 {
     auto cbuffer = surface->compositor->image.buf32 + (region.min.y * cstride + region.min.x);
 
-    // Down-Scaled
-    if (image->scale < DOWN_SCALE_TOLERANCE) {
-        for (auto y = region.min.y; y < region.max.y; ++y) {
-            auto sy = (uint32_t)(y * itransform->e22 + itransform->e23);
-            if (sy >= image->h) continue;
-            auto cmp = cbuffer;
-            if (opacity == 255) {
-                for (auto x = region.min.x; x < region.max.x; ++x, ++cmp) {
-                    auto sx = (uint32_t)(x * itransform->e11 + itransform->e13);
-                    if (sx >= image->w) continue;
-                    auto src = _interpDownScaler(image->buf32, image->stride, image->w, image->h, sx, sy, halfScale);
+    for (auto y = region.min.y; y < region.max.y; ++y) {
+        auto sy = y * itransform->e22 + itransform->e23;
+        if ((uint32_t)sy >= image->h) continue;
+        auto cmp = cbuffer;
+        if (opacity == 255) {
+            for (auto x = region.min.x; x < region.max.x; ++x, ++cmp) {
+                auto sx = x * itransform->e11 + itransform->e13;
+                if ((uint32_t)sx >= image->w) continue;
+                auto src = scaleMethod(image->buf32, image->stride, image->w, image->h, sx, sy, halfScale);
 #ifdef SCALED_IMAGE_ADD_MASK
-                    *cmp = src + ALPHA_BLEND(*cmp, IALPHA(src));
+                *cmp = src + ALPHA_BLEND(*cmp, IALPHA(src));
 #elif defined(SCALED_IMAGE_SUB_MASK)
-                    *cmp = ALPHA_BLEND(*cmp, IALPHA(src));
+                *cmp = ALPHA_BLEND(*cmp, IALPHA(src));
 #elif defined(SCALED_IMAGE_DIF_MASK)
-                    *cmp = ALPHA_BLEND(src, IALPHA(*cmp)) + ALPHA_BLEND(*cmp, IALPHA(src));
+                *cmp = ALPHA_BLEND(src, IALPHA(*cmp)) + ALPHA_BLEND(*cmp, IALPHA(src));
 #endif
-                }
-            } else {
-                for (auto x = region.min.x; x < region.max.x; ++x, ++cmp) {
-                    auto sx = (uint32_t)(x * itransform->e11 + itransform->e13);
-                    if (sx >= image->w) continue;
-                    auto src = _interpDownScaler(image->buf32, image->stride, image->w, image->h, sx, sy, halfScale);
-#ifdef SCALED_IMAGE_ADD_MASK
-                    *cmp = INTERPOLATE(src, *cmp, opacity);
-#elif defined(SCALED_IMAGE_SUB_MASK)
-                    *cmp = ALPHA_BLEND(*cmp, IALPHA(ALPHA_BLEND(src, opacity)));
-#elif defined(SCALED_IMAGE_DIF_MASK)
-                    src = ALPHA_BLEND(src, opacity);
-                    *cmp = ALPHA_BLEND(src, IALPHA(*cmp)) + ALPHA_BLEND(*cmp, IALPHA(src));
-#endif
-                }
             }
-            cbuffer += cstride;
-        }
-    // Up-Scaled
-    } else {
-        for (auto y = region.min.y; y < region.max.y; ++y) {
-            auto sy = y * itransform->e22 + itransform->e23;
-            if ((uint32_t)sy >= image->h) continue;
-            auto cmp = cbuffer;
-            if (opacity == 255) {
-                for (auto x = region.min.x; x < region.max.x; ++x, ++cmp) {
-                    auto sx = x * itransform->e11 + itransform->e13;
-                    if ((uint32_t)sx >= image->w) continue;
-                    auto src = _interpUpScaler(image->buf32, image->w, image->h, sx, sy);
+        } else {
+            for (auto x = region.min.x; x < region.max.x; ++x, ++cmp) {
+                auto sx = x * itransform->e11 + itransform->e13;
+                if ((uint32_t)sx >= image->w) continue;
+                auto src = scaleMethod(image->buf32, image->stride, image->w, image->h, sx, sy, halfScale);
 #ifdef SCALED_IMAGE_ADD_MASK
-                    *cmp = src + ALPHA_BLEND(*cmp, IALPHA(src));
+                *cmp = INTERPOLATE(src, *cmp, opacity);
 #elif defined(SCALED_IMAGE_SUB_MASK)
-                    *cmp = ALPHA_BLEND(*cmp, IALPHA(src));
+                *cmp = ALPHA_BLEND(*cmp, IALPHA(ALPHA_BLEND(src, opacity)));
 #elif defined(SCALED_IMAGE_DIF_MASK)
-                    *cmp = ALPHA_BLEND(src, IALPHA(*cmp)) + ALPHA_BLEND(*cmp, IALPHA(src));
+                src = ALPHA_BLEND(src, opacity);
+                *cmp = ALPHA_BLEND(src, IALPHA(*cmp)) + ALPHA_BLEND(*cmp, IALPHA(src));
 #endif
-                }
-            } else {
-                for (auto x = region.min.x; x < region.max.x; ++x, ++cmp) {
-                    auto sx = x * itransform->e11 + itransform->e13;
-                    if ((uint32_t)sx >= image->w) continue;
-                    auto src = _interpUpScaler(image->buf32, image->w, image->h, sx, sy);
-#ifdef SCALED_IMAGE_ADD_MASK
-                    *cmp = INTERPOLATE(src, *cmp, opacity);
-#elif defined(SCALED_IMAGE_SUB_MASK)
-                    *cmp = ALPHA_BLEND(*cmp, IALPHA(ALPHA_BLEND(src, opacity)));
-#elif defined(SCALED_IMAGE_DIF_MASK)
-                    src = ALPHA_BLEND(src, opacity);
-                    *cmp = ALPHA_BLEND(src, IALPHA(*cmp)) + ALPHA_BLEND(*cmp, IALPHA(src));
-#endif
-                }
             }
-            cbuffer += cstride;
         }
+        cbuffer += cstride;
     }
 }
 #endif
