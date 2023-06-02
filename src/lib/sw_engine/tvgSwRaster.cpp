@@ -148,6 +148,61 @@ static inline bool _masking(const SwSurface* surface)
 }
 
 
+struct AddMaskOp
+{
+    uint32_t operator()(uint32_t s, uint32_t d, uint8_t a)
+    {
+        return s + ALPHA_BLEND(d, a);
+    }
+};
+
+
+struct SubMaskOp
+{
+    uint32_t operator()(uint32_t s, uint32_t d, uint8_t a)
+    {
+        return ALPHA_BLEND(d, a);
+    }
+};
+
+
+struct DifMaskOp
+{
+    uint32_t operator()(uint32_t s, uint32_t d, uint8_t a)
+    {
+        return ALPHA_BLEND(s, IALPHA(d)) + ALPHA_BLEND(d, a);
+    }
+};
+
+
+struct AddMaskAOp
+{
+    uint32_t operator()(uint32_t s, uint32_t d, uint8_t a)
+    {
+        return INTERPOLATE(s, d, a);
+    }
+};
+
+
+struct SubMaskAOp
+{
+    uint32_t operator()(uint32_t s, uint32_t d, uint8_t a)
+    {
+        return ALPHA_BLEND(d, IALPHA(ALPHA_BLEND(s, a)));
+    }
+};
+
+
+struct DifMaskAOp
+{
+    uint32_t operator()(uint32_t s, uint32_t d, uint8_t a)
+    {
+        auto t = ALPHA_BLEND(s, a);
+        return ALPHA_BLEND(t, IALPHA(d)) + ALPHA_BLEND(d, IALPHA(t));
+    }
+};
+
+
 #include "tvgSwRasterTexmap.h"
 #include "tvgSwRasterC.h"
 #include "tvgSwRasterAvx.h"
@@ -220,73 +275,74 @@ void _rasterGrayscale8(uint8_t *dst, uint32_t val, uint32_t offset, int32_t len)
 /* Rect                                                                 */
 /************************************************************************/
 
-static bool _rasterMaskedRect(SwSurface* surface, const SwBBox& region, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
+template<typename maskOp>
+static void _rasterMaskedRectDup(SwSurface* surface, const SwBBox& region, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 {
-    //32bit channels composition
-    if (surface->channelSize != sizeof(uint32_t)) return false;
-
     auto w = static_cast<uint32_t>(region.max.x - region.min.x);
     auto h = static_cast<uint32_t>(region.max.y - region.min.y);
     auto cbuffer = surface->compositor->image.buf32 + (region.min.y * surface->compositor->image.stride + region.min.x);   //compositor buffer
     auto cstride = surface->compositor->image.stride;
     auto color = surface->blender.join(r, g, b, a);
     auto ialpha = 255 - a;
-    auto method = surface->compositor->method;
 
-    TVGLOG("SW_ENGINE", "Masked(%d) Rect [Region: %lu %lu %u %u]", (int)surface->compositor->method, region.min.x, region.min.y, w, h);
+    for (uint32_t y = 0; y < h; ++y) {
+        auto cmp = cbuffer;
+        for (uint32_t x = 0; x < w; ++x, ++cmp) {
+            *cmp = maskOp()(color, *cmp, ialpha);
+        }
+        cbuffer += cstride;
+    }
+}
 
-    if (method == CompositeMethod::AddMask) {
-        for (uint32_t y = 0; y < h; ++y) {
-            auto cmp = cbuffer;
-            for (uint32_t x = 0; x < w; ++x, ++cmp) {
-                *cmp = color + ALPHA_BLEND(*cmp, ialpha);
-            }
-            cbuffer += cstride;
-        }
-    } else if (method == CompositeMethod::SubtractMask) {
-        for (uint32_t y = 0; y < h; ++y) {
-            auto cmp = cbuffer;
-            for (uint32_t x = 0; x < w; ++x, ++cmp) {
-                *cmp = ALPHA_BLEND(*cmp, ialpha);
-            }
-            cbuffer += cstride;
-        }
-    } else if (method == CompositeMethod::IntersectMask) {
-        for (uint32_t y = surface->compositor->bbox.min.y; y < surface->compositor->bbox.max.y; ++y) {
-            auto cmp = surface->compositor->image.buf32 + (y * cstride + surface->compositor->bbox.min.x);
-            if (y == region.min.y) {
-                for (uint32_t y2 = y; y2 < region.max.y; ++y2) {
-                    auto tmp = cmp;
-                    auto x = surface->compositor->bbox.min.x;
-                    while (x < surface->compositor->bbox.max.x) {
-                        if (x == region.min.x) {
-                            for (uint32_t i = 0; i < w; ++i, ++tmp) {
-                                *tmp = ALPHA_BLEND(*tmp, a);
-                            }
-                            x += w;
-                        } else {
-                            *tmp = 0;
-                            ++tmp;
-                            ++x;
+
+static void _rasterMaskedRectInt(SwSurface* surface, const SwBBox& region, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
+{
+    auto w = static_cast<uint32_t>(region.max.x - region.min.x);
+    auto h = static_cast<uint32_t>(region.max.y - region.min.y);
+    auto cstride = surface->compositor->image.stride;
+
+    for (uint32_t y = surface->compositor->bbox.min.y; y < surface->compositor->bbox.max.y; ++y) {
+        auto cmp = surface->compositor->image.buf32 + (y * cstride + surface->compositor->bbox.min.x);
+        if (y == region.min.y) {
+            for (uint32_t y2 = y; y2 < region.max.y; ++y2) {
+                auto tmp = cmp;
+                auto x = surface->compositor->bbox.min.x;
+                while (x < surface->compositor->bbox.max.x) {
+                    if (x == region.min.x) {
+                        for (uint32_t i = 0; i < w; ++i, ++tmp) {
+                            *tmp = ALPHA_BLEND(*tmp, a);
                         }
+                        x += w;
+                    } else {
+                        *tmp = 0;
+                        ++tmp;
+                        ++x;
                     }
-                    cmp += cstride;
                 }
-                y += (h - 1);
-            } else {
-                rasterRGBA32(cmp, 0x00000000, 0, w);
                 cmp += cstride;
             }
+            y += (h - 1);
+        } else {
+            rasterRGBA32(cmp, 0x00000000, 0, w);
+            cmp += cstride;
         }
-    } else if (method == CompositeMethod::DifferenceMask) {
-        for (uint32_t y = 0; y < h; ++y) {
-            auto cmp = cbuffer;
-            for (uint32_t x = 0; x < w; ++x, ++cmp) {
-                *cmp = ALPHA_BLEND(color, IALPHA(*cmp)) + ALPHA_BLEND(*cmp, ialpha);
-            }
-            cbuffer += cstride;
-        }
-    } else return false;
+    }
+}
+
+
+static bool _rasterMaskedRect(SwSurface* surface, const SwBBox& region, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
+{
+    //32bit channels composition
+    if (surface->channelSize != sizeof(uint32_t)) return false;
+
+    auto method = surface->compositor->method;
+
+    TVGLOG("SW_ENGINE", "Masked(%d) Rect [Region: %lu %lu %lu %lu]", (int)method, region.min.x, region.min.y, region.max.x - region.max.y, region.min.y);
+    if (method == CompositeMethod::AddMask) _rasterMaskedRectDup<AddMaskOp>(surface, region, r, g, b, a);
+    else if (method == CompositeMethod::SubtractMask) _rasterMaskedRectDup<SubMaskOp>(surface, region, r, g, b, a);
+    else if (method == CompositeMethod::DifferenceMask) _rasterMaskedRectDup<DifMaskOp>(surface, region, r, g, b, a);
+    else if (method == CompositeMethod::IntersectMask) _rasterMaskedRectInt(surface, region, r, g, b, a);
+    else return false;
 
     //Masking Composition
     return _rasterDirectRGBAImage(surface, &surface->compositor->image, surface->compositor->bbox);
@@ -381,6 +437,57 @@ static bool _rasterRect(SwSurface* surface, const SwBBox& region, uint8_t r, uin
 /* Rle                                                                  */
 /************************************************************************/
 
+template<typename maskOp>
+static void _rasterMaskedRleDup(SwSurface* surface, SwRleData* rle, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
+{
+    auto span = rle->spans;
+    auto cbuffer = surface->compositor->image.buf32;
+    auto cstride = surface->compositor->image.stride;
+    auto color = surface->blender.join(r, g, b, a);
+    uint32_t src;
+
+    for (uint32_t i = 0; i < rle->size; ++i, ++span) {
+        auto cmp = &cbuffer[span->y * cstride + span->x];
+        if (span->coverage == 255) src = color;
+        else src = ALPHA_BLEND(color, span->coverage);
+        auto ialpha = IALPHA(src);
+        for (auto x = 0; x < span->len; ++x, ++cmp) {
+            *cmp = maskOp()(src, *cmp, ialpha);
+        }
+    }
+}
+
+
+static void _rasterMaskedRleInt(SwSurface* surface, SwRleData* rle, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
+{
+    auto span = rle->spans;
+    auto cbuffer = surface->compositor->image.buf32;
+    auto cstride = surface->compositor->image.stride;
+    auto color = surface->blender.join(r, g, b, a);
+    uint32_t src;
+
+    for (uint32_t y = surface->compositor->bbox.min.y; y < surface->compositor->bbox.max.y; ++y) {
+        auto cmp = &cbuffer[y * cstride];
+        uint32_t x = surface->compositor->bbox.min.x;
+        while (x < surface->compositor->bbox.max.x) {
+            if (y == span->y && x == span->x && x + span->len <= surface->compositor->bbox.max.x) {
+                if (span->coverage == 255) src = color;
+                else src = ALPHA_BLEND(color, span->coverage);
+                auto alpha = ALPHA(src);
+                for (uint32_t i = 0; i < span->len; ++i) {
+                    cmp[x + i] = ALPHA_BLEND(cmp[x + i], alpha);
+                }
+                x += span->len;
+                ++span;
+            } else {
+                cmp[x] = 0;
+                ++x;
+            }
+        }
+    }
+}
+
+
 static bool _rasterMaskedRle(SwSurface* surface, SwRleData* rle, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 {
     TVGLOG("SW_ENGINE", "Masked(%d) Rle", (int)surface->compositor->method);
@@ -388,64 +495,13 @@ static bool _rasterMaskedRle(SwSurface* surface, SwRleData* rle, uint8_t r, uint
     //32bit channels composition
     if (surface->channelSize != sizeof(uint32_t)) return false;
 
-    auto span = rle->spans;
-    auto cbuffer = surface->compositor->image.buf32;
-    auto cstride = surface->compositor->image.stride;
-    auto color = surface->blender.join(r, g, b, a);
     auto method = surface->compositor->method;
-    uint32_t src;
 
-    if (method == CompositeMethod::AddMask) {
-        for (uint32_t i = 0; i < rle->size; ++i, ++span) {
-            auto cmp = &cbuffer[span->y * cstride + span->x];
-            if (span->coverage == 255) src = color;
-            else src = ALPHA_BLEND(color, span->coverage);
-            auto ialpha = IALPHA(src);
-            for (auto x = 0; x < span->len; ++x, ++cmp) {
-                *cmp = src + ALPHA_BLEND(*cmp, ialpha);
-            }
-        }
-    } else if (method == CompositeMethod::SubtractMask) {
-        for (uint32_t i = 0; i < rle->size; ++i, ++span) {
-            auto cmp = &cbuffer[span->y * cstride + span->x];
-            if (span->coverage == 255) src = color;
-            else src = ALPHA_BLEND(color, span->coverage);
-            auto ialpha = IALPHA(src);
-            for (auto x = 0; x < span->len; ++x, ++cmp) {
-                *cmp = ALPHA_BLEND(*cmp, ialpha);
-            }
-        }
-    } else if (method == CompositeMethod::IntersectMask) {
-        for (uint32_t y = surface->compositor->bbox.min.y; y < surface->compositor->bbox.max.y; ++y) {
-            auto cmp = &cbuffer[y * cstride];
-            uint32_t x = surface->compositor->bbox.min.x;
-            while (x < surface->compositor->bbox.max.x) {
-                if (y == span->y && x == span->x && x + span->len <= surface->compositor->bbox.max.x) {
-                    if (span->coverage == 255) src = color;
-                    else src = ALPHA_BLEND(color, span->coverage);
-                    auto alpha = ALPHA(src);
-                    for (uint32_t i = 0; i < span->len; ++i) {
-                        cmp[x + i] = ALPHA_BLEND(cmp[x + i], alpha);
-                    }
-                    x += span->len;
-                    ++span;
-                } else {
-                    cmp[x] = 0;
-                    ++x;
-                }
-            }
-        }
-    } else if (method == CompositeMethod::DifferenceMask) {
-        for (uint32_t i = 0; i < rle->size; ++i, ++span) {
-            auto cmp = &cbuffer[span->y * cstride + span->x];
-            if (span->coverage == 255) src = color;
-            else src = ALPHA_BLEND(color, span->coverage);
-            auto ialpha = IALPHA(src);
-            for (uint32_t x = 0; x < span->len; ++x, ++cmp) {
-                *cmp = ALPHA_BLEND(src, IALPHA(*cmp)) + ALPHA_BLEND(*cmp, ialpha);
-            }
-        }
-    } else return false;
+    if (method == CompositeMethod::AddMask) _rasterMaskedRleDup<AddMaskOp>(surface, rle, r, g, b, a);
+    else if (method == CompositeMethod::SubtractMask) _rasterMaskedRleDup<SubMaskOp>(surface, rle, r, g, b, a);
+    else if (method == CompositeMethod::DifferenceMask) _rasterMaskedRleDup<DifMaskOp>(surface, rle, r, g, b, a);
+    else if (method == CompositeMethod::IntersectMask) _rasterMaskedRleInt(surface, rle, r, g, b, a);
+    else return false;
 
     //Masking Composition
     return _rasterDirectRGBAImage(surface, &surface->compositor->image, surface->compositor->bbox);
@@ -569,30 +625,86 @@ static bool _transformedRleRGBAImage(SwSurface* surface, const SwImage* image, c
 /* RLE Scaled RGBA Image                                                */
 /************************************************************************/
 
+template<typename maskOp, typename amaskOp>
+static void _rasterScaledMaskedRleRGBAImageDup(SwSurface* surface, const SwImage* image, const Matrix* itransform, const SwBBox& region, uint32_t opacity, uint32_t halfScale)
+{
+    auto scaleMethod = image->scale < DOWN_SCALE_TOLERANCE ? _interpDownScaler : _interpUpScaler;
+    auto span = image->rle->spans;
+
+    for (uint32_t i = 0; i < image->rle->size; ++i, ++span) {
+        auto sy = span->y * itransform->e22 + itransform->e23;
+        if ((uint32_t)sy >= image->h) continue;
+        auto cmp = &surface->compositor->image.buf32[span->y * surface->compositor->image.stride + span->x];
+        auto a = MULTIPLY(span->coverage, opacity);
+        if (a == 255) {
+            for (uint32_t x = static_cast<uint32_t>(span->x); x < static_cast<uint32_t>(span->x) + span->len; ++x, ++cmp) {
+                auto sx = x * itransform->e11 + itransform->e13;
+                if ((uint32_t)sx >= image->w) continue;
+                auto src = scaleMethod(image->buf32, image->stride, image->w, image->h, sx, sy, halfScale);
+                *cmp = maskOp()(src, *cmp, 255);
+            }
+        } else {
+            for (uint32_t x = static_cast<uint32_t>(span->x); x < static_cast<uint32_t>(span->x) + span->len; ++x, ++cmp) {
+                auto sx = x * itransform->e11 + itransform->e13;
+                if ((uint32_t)sx >= image->w) continue;
+                auto src = scaleMethod(image->buf32, image->stride, image->w, image->h, sx, sy, halfScale);
+                *cmp = amaskOp()(src, *cmp, a);
+            }
+        }
+    }
+}
+
+
+static void _rasterScaledMaskedRleRGBAImageInt(SwSurface* surface, const SwImage* image, const Matrix* itransform, const SwBBox& region, uint32_t opacity, uint32_t halfScale)
+{
+    auto scaleMethod = image->scale < DOWN_SCALE_TOLERANCE ? _interpDownScaler : _interpUpScaler;
+    auto span = image->rle->spans;
+    auto cbuffer = surface->compositor->image.buf32;
+    auto cstride = surface->compositor->image.stride;
+
+    for (uint32_t y = surface->compositor->bbox.min.y; y < surface->compositor->bbox.max.y; ++y) {
+        auto cmp = &cbuffer[y * cstride];
+        for (uint32_t x = surface->compositor->bbox.min.x; x < surface->compositor->bbox.max.x; ++x) {
+            if (y == span->y && x == span->x && x + span->len <= surface->compositor->bbox.max.x) {
+                auto sy = span->y * itransform->e22 + itransform->e23;
+                if ((uint32_t)sy >= image->h) continue;
+                auto alpha = MULTIPLY(span->coverage, opacity);
+                if (alpha == 255) {
+                    for (uint32_t i = 0; i < span->len; ++i) {
+                        auto sx = (x + i) * itransform->e11 + itransform->e13;
+                        if ((uint32_t)sx >= image->w) continue;
+                        auto src = scaleMethod(image->buf32, image->stride, image->w, image->h, sx, sy, halfScale);
+                        cmp[x + i] = ALPHA_BLEND(cmp[x + i], ALPHA(src));
+                    }
+                } else {
+                    for (uint32_t i = 0; i < span->len; ++i) {
+                        auto sx = (x + i) * itransform->e11 + itransform->e13;
+                        if ((uint32_t)sx >= image->w) continue;
+                        auto src = scaleMethod(image->buf32, image->stride, image->w, image->h, sx, sy, halfScale);
+                        cmp[x + i] = ALPHA_BLEND(cmp[x + i], ALPHA(ALPHA_BLEND(src, alpha)));
+                    }
+                }
+                x += span->len - 1;
+                ++span;
+            } else {
+                cmp[x] = 0;
+            }
+        }
+    }
+}
+
+
 static bool _rasterScaledMaskedRleRGBAImage(SwSurface* surface, const SwImage* image, const Matrix* itransform, const SwBBox& region, uint32_t opacity, uint32_t halfScale)
 {
     TVGLOG("SW_ENGINE", "Scaled Masked(%d) Rle Image", (int)surface->compositor->method);
 
-    auto span = image->rle->spans;
     auto method = surface->compositor->method;
 
-    if (method == CompositeMethod::AddMask) {
-        #define SCALED_RLE_IMAGE_ADD_MASK
-            #include "tvgSwRasterScaledMaskedRleImage.h"
-        #undef SCALED_RLE_IMAGE_ADD_MASK
-    } else if (method == CompositeMethod::SubtractMask) {
-        #define SCALED_RLE_IMAGE_SUB_MASK
-            #include "tvgSwRasterScaledMaskedRleImage.h"
-        #undef SCALED_RLE_IMAGE_SUB_MASK
-    } else if (method == CompositeMethod::IntersectMask) {
-        #define SCALED_RLE_IMAGE_INT_MASK
-            #include "tvgSwRasterScaledMaskedRleImage.h"
-        #undef SCALED_RLE_IMAGE_INT_MASK
-    } else if (method == CompositeMethod::DifferenceMask) {
-        #define SCALED_RLE_IMAGE_DIF_MASK
-            #include "tvgSwRasterScaledMaskedRleImage.h"
-        #undef SCALED_RLE_IMAGE_DIF_MASK
-    } else return false;
+    if (method == CompositeMethod::AddMask) _rasterScaledMaskedRleRGBAImageDup<AddMaskOp, AddMaskAOp>(surface, image, itransform, region, opacity, halfScale);
+    else if (method == CompositeMethod::SubtractMask) _rasterScaledMaskedRleRGBAImageDup<SubMaskOp, SubMaskAOp>(surface, image, itransform, region, opacity, halfScale);
+    else if (method == CompositeMethod::IntersectMask) _rasterScaledMaskedRleRGBAImageDup<DifMaskOp, DifMaskAOp>(surface, image, itransform, region, opacity, halfScale);
+    else if (method == CompositeMethod::IntersectMask) _rasterScaledMaskedRleRGBAImageInt(surface, image, itransform, region, opacity, halfScale);
+    else return false;
 
     //Masking Composition
     return _rasterDirectRGBAImage(surface, &surface->compositor->image, surface->compositor->bbox);
@@ -692,89 +804,75 @@ static bool _scaledRleRGBAImage(SwSurface* surface, const SwImage* image, const 
 /* RLE Direct RGBA Image                                                */
 /************************************************************************/
 
+template<typename maskOp, typename amaskOp>
+static void _rasterDirectMaskedRleRGBAImageDup(SwSurface* surface, const SwImage* image, uint32_t opacity)
+{
+    auto span = image->rle->spans;
+    auto cbuffer = surface->compositor->image.buf32;
+    auto ctride = surface->compositor->image.stride;
+
+    for (uint32_t i = 0; i < image->rle->size; ++i, ++span) {
+        auto src = image->buf32 + (span->y + image->oy) * image->stride + (span->x + image->ox);
+        auto cmp = &cbuffer[span->y * ctride + span->x];
+        auto alpha = MULTIPLY(span->coverage, opacity);
+        if (alpha == 255) {
+            for (uint32_t x = 0; x < span->len; ++x, ++src, ++cmp) {
+                *cmp = maskOp()(*src, *cmp, IALPHA(*src));
+            }
+        } else {
+            for (uint32_t x = 0; x < span->len; ++x, ++src, ++cmp) {
+                *cmp = amaskOp()(*src, *cmp, alpha);
+            }
+        }
+    }
+}
+
+
+static void _rasterDirectMaskedRleRGBAImageInt(SwSurface* surface, const SwImage* image, uint32_t opacity)
+{
+    auto span = image->rle->spans;
+    auto cbuffer = surface->compositor->image.buf32;
+    auto ctride = surface->compositor->image.stride;
+
+    for (uint32_t y = surface->compositor->bbox.min.y; y < surface->compositor->bbox.max.y; ++y) {
+        auto cmp = &cbuffer[y * ctride];
+        auto x = surface->compositor->bbox.min.x;
+        while (x < surface->compositor->bbox.max.x) {
+            if (y == span->y && x == span->x && x + span->len <= surface->compositor->bbox.max.x) {
+                auto alpha = MULTIPLY(span->coverage, opacity);
+                auto src = image->buf32 + (span->y + image->oy) * image->stride + (span->x + image->ox);
+                if (alpha == 255) {
+                    for (uint32_t i = 0; i < span->len; ++i, ++src) {
+                        cmp[x + i] = ALPHA_BLEND(cmp[x + i], ALPHA(*src));
+                    }
+                } else {
+                    for (uint32_t i = 0; i < span->len; ++i, ++src) {
+                        auto t = ALPHA_BLEND(*src, alpha);
+                        cmp[x + i] = ALPHA_BLEND(cmp[x + i], ALPHA(t));
+                    }
+                }
+                x += span->len;
+                ++span;
+            } else {
+                cmp[x] = 0;
+                ++x;
+            }
+        }
+    }
+}
+
+
 static bool _rasterDirectMaskedRleRGBAImage(SwSurface* surface, const SwImage* image, uint32_t opacity)
 {
     TVGLOG("SW_ENGINE", "Direct Masked(%d) Rle Image", (int)surface->compositor->method);
 
-    auto span = image->rle->spans;
-    auto cbuffer = surface->compositor->image.buf32;
-    auto ctride = surface->compositor->image.stride;
     auto method = surface->compositor->method;
 
-    if (method == CompositeMethod::AddMask) {
-        for (uint32_t i = 0; i < image->rle->size; ++i, ++span) {
-            auto src = image->buf32 + (span->y + image->oy) * image->stride + (span->x + image->ox);
-            auto cmp = &cbuffer[span->y * ctride + span->x];
-            auto alpha = MULTIPLY(span->coverage, opacity);
-            if (alpha == 255) {
-                for (uint32_t x = 0; x < span->len; ++x, ++src, ++cmp) {
-                    *cmp = *src + ALPHA_BLEND(*cmp, IALPHA(*src));
-                }
-            } else {
-                for (uint32_t x = 0; x < span->len; ++x, ++src, ++cmp) {
-                    *cmp = INTERPOLATE(*src, *cmp, alpha);
-                }
-            }
-        }
-    } else if (method == CompositeMethod::SubtractMask) {
-        for (uint32_t i = 0; i < image->rle->size; ++i, ++span) {
-            auto src = image->buf32 + (span->y + image->oy) * image->stride + (span->x + image->ox);
-            auto cmp = &cbuffer[span->y * ctride + span->x];
-            auto alpha = MULTIPLY(span->coverage, opacity);
-            if (alpha == 255) {
-                for (uint32_t x = 0; x < span->len; ++x, ++src, ++cmp) {
-                    *cmp = ALPHA_BLEND(*cmp, IALPHA(*src));
-                }
-            } else {
-                for (uint32_t x = 0; x < span->len; ++x, ++src, ++cmp) {
-                    auto t = ALPHA_BLEND(*src, alpha);
-                    *cmp = ALPHA_BLEND(*cmp, IALPHA(t));
-                }
-            }
-        }
-    } else if (method == CompositeMethod::IntersectMask) {
-        for (uint32_t y = surface->compositor->bbox.min.y; y < surface->compositor->bbox.max.y; ++y) {
-            auto cmp = &cbuffer[y * ctride];
-            auto x = surface->compositor->bbox.min.x;
-            while (x < surface->compositor->bbox.max.x) {
-                if (y == span->y && x == span->x && x + span->len <= surface->compositor->bbox.max.x) {
-                    auto alpha = MULTIPLY(span->coverage, opacity);
-                    auto src = image->buf32 + (span->y + image->oy) * image->stride + (span->x + image->ox);
-                    if (alpha == 255) {
-                        for (uint32_t i = 0; i < span->len; ++i, ++src) {
-                            cmp[x + i] = ALPHA_BLEND(cmp[x + i], ALPHA(*src));
-                        }
-                    } else {
-                        for (uint32_t i = 0; i < span->len; ++i, ++src) {
-                            auto t = ALPHA_BLEND(*src, alpha);
-                            cmp[x + i] = ALPHA_BLEND(cmp[x + i], ALPHA(t));
-                        }
-                    }
-                    x += span->len;
-                    ++span;
-                } else {
-                    cmp[x] = 0;
-                    ++x;
-                }
-            }
-        }
-    } else if (method == CompositeMethod::DifferenceMask) {
-        for (uint32_t i = 0; i < image->rle->size; ++i, ++span) {
-            auto src = image->buf32 + (span->y + image->oy) * image->stride + (span->x + image->ox);
-            auto cmp = &cbuffer[span->y * ctride + span->x];
-            auto alpha = MULTIPLY(span->coverage, opacity);
-            if (alpha == 255) {
-                for (uint32_t x = 0; x < span->len; ++x, ++src, ++cmp) {
-                    *cmp = ALPHA_BLEND(*src, IALPHA(*cmp)) + ALPHA_BLEND(*cmp, IALPHA(*src));
-                }
-            } else {
-                for (uint32_t x = 0; x < span->len; ++x, ++src, ++cmp) {
-                    auto t = ALPHA_BLEND(*src, alpha);
-                    *cmp = ALPHA_BLEND(t, IALPHA(*cmp)) + ALPHA_BLEND(*cmp, IALPHA(t));
-                }
-            }
-        }
-    } else return false;
+    if (method == CompositeMethod::AddMask) _rasterDirectMaskedRleRGBAImageDup<AddMaskOp, AddMaskAOp>(surface, image, opacity);
+    else if (method == CompositeMethod::SubtractMask) _rasterDirectMaskedRleRGBAImageDup<SubMaskOp, SubMaskAOp>(surface, image, opacity);
+    else if (method == CompositeMethod::DifferenceMask) _rasterDirectMaskedRleRGBAImageDup<DifMaskOp, DifMaskAOp>(surface, image, opacity);
+    else if (method == CompositeMethod::IntersectMask) _rasterDirectMaskedRleRGBAImageInt(surface, image, opacity);
+    else return false;
 
     //Masking Composition
     return _rasterDirectRGBAImage(surface, &surface->compositor->image, surface->compositor->bbox);
@@ -872,32 +970,101 @@ static bool _transformedRGBAImageMesh(SwSurface* surface, const SwImage* image, 
 /*Scaled RGBA Image                                                     */
 /************************************************************************/
 
-static bool _rasterScaledMaskedRGBAImage(SwSurface* surface, const SwImage* image, const Matrix* itransform, const SwBBox& region, uint32_t opacity, uint32_t halfScale)
+template<typename maskOp, typename amaskOp>
+static void _rasterScaledMaskedRGBAImageDup(SwSurface* surface, const SwImage* image, const Matrix* itransform, const SwBBox& region, uint32_t opacity, uint32_t halfScale)
 {
+    auto scaleMethod = image->scale < DOWN_SCALE_TOLERANCE ? _interpDownScaler : _interpUpScaler;
+    auto cstride = surface->compositor->image.stride;
+    auto cbuffer = surface->compositor->image.buf32 + (region.min.y * cstride + region.min.x);
+
+    for (auto y = region.min.y; y < region.max.y; ++y) {
+        auto sy = y * itransform->e22 + itransform->e23;
+        if ((uint32_t)sy >= image->h) continue;
+        auto cmp = cbuffer;
+        if (opacity == 255) {
+            for (auto x = region.min.x; x < region.max.x; ++x, ++cmp) {
+                auto sx = x * itransform->e11 + itransform->e13;
+                if ((uint32_t)sx >= image->w) continue;
+                auto src = scaleMethod(image->buf32, image->stride, image->w, image->h, sx, sy, halfScale);
+                *cmp = maskOp()(src, *cmp, IALPHA(src));
+            }
+        } else {
+            for (auto x = region.min.x; x < region.max.x; ++x, ++cmp) {
+                auto sx = x * itransform->e11 + itransform->e13;
+                if ((uint32_t)sx >= image->w) continue;
+                auto src = scaleMethod(image->buf32, image->stride, image->w, image->h, sx, sy, halfScale);
+                *cmp = amaskOp()(src, *cmp, opacity);
+            }
+        }
+        cbuffer += cstride;
+    }
+}
+
+static void _rasterScaledMaskedRGBAImageInt(SwSurface* surface, const SwImage* image, const Matrix* itransform, const SwBBox& region, uint32_t opacity, uint32_t halfScale)
+{
+    auto scaleMethod = image->scale < DOWN_SCALE_TOLERANCE ? _interpDownScaler : _interpUpScaler;
     auto h = static_cast<uint32_t>(region.max.y - region.min.y);
     auto w = static_cast<uint32_t>(region.max.x - region.min.x);
     auto cstride = surface->compositor->image.stride;
+    auto cbuffer = surface->compositor->image.buf32 + (surface->compositor->bbox.min.y * cstride + surface->compositor->bbox.min.x);
+
+    for (uint32_t y = surface->compositor->bbox.min.y; y < surface->compositor->bbox.max.y; ++y) {
+        if (y == region.min.y) {
+            auto cbuffer2 = cbuffer;
+            for (uint32_t y2 = y; y2 < region.max.y; ++y2) {
+                auto sy = y2 * itransform->e22 + itransform->e23;
+                if ((uint32_t)sy >= image->h) continue;
+                auto tmp = cbuffer2;
+                auto x = surface->compositor->bbox.min.x;
+                while (x < surface->compositor->bbox.max.x) {
+                    if (x == region.min.x) {
+                        if (opacity == 255) {
+                            for (uint32_t i = 0; i < w; ++i, ++tmp) {
+                                auto sx = (x + i) * itransform->e11 + itransform->e13;
+                                if ((uint32_t)sx >= image->w) continue;
+                                auto src = scaleMethod(image->buf32, image->stride, image->w, image->h, sx, sy, halfScale);
+                                *tmp = ALPHA_BLEND(*tmp, ALPHA(src));
+                            }
+                        } else {
+                            for (uint32_t i = 0; i < w; ++i, ++tmp) {
+                                auto sx = (x + i) * itransform->e11 + itransform->e13;
+                                if ((uint32_t)sx >= image->w) continue;
+                                auto src = ALPHA_BLEND(scaleMethod(image->buf32, image->stride, image->w, image->h, sx, sy, halfScale), opacity);
+                                *tmp = ALPHA_BLEND(*tmp, ALPHA(src));
+                            }
+                        }
+                        x += w;
+                    } else {
+                        *tmp = 0;
+                        ++tmp;
+                        ++x;
+                    }
+                }
+                cbuffer2 += cstride;
+            }
+            y += (h - 1);
+        } else {
+            auto tmp = cbuffer;
+            for (uint32_t x = surface->compositor->bbox.min.x; x < surface->compositor->bbox.max.x; ++x, ++tmp) {
+                *tmp = 0;
+            }
+        }
+        cbuffer += cstride;
+    }
+}
+
+
+static bool _rasterScaledMaskedRGBAImage(SwSurface* surface, const SwImage* image, const Matrix* itransform, const SwBBox& region, uint32_t opacity, uint32_t halfScale)
+{
     auto method = surface->compositor->method;
 
-    TVGLOG("SW_ENGINE", "Scaled Masked(%d) Image [Region: %lu %lu %u %u]", (int)surface->compositor->method, region.min.x, region.min.y, w, h);
+    TVGLOG("SW_ENGINE", "Scaled Masked(%d) Image [Region: %lu %lu %lu %lu]", (int)surface->compositor->method, region.min.x, region.min.y, region.max.x - region.min.x, region.max.y - region.min.y);
 
-    if (method == CompositeMethod::AddMask) {
-        #define SCALED_IMAGE_ADD_MASK
-            #include "tvgSwRasterScaledMaskedImage.h"
-        #undef SCALED_IMAGE_ADD_MASK
-    } else if (method == CompositeMethod::SubtractMask) {
-        #define SCALED_IMAGE_SUB_MASK
-            #include "tvgSwRasterScaledMaskedImage.h"
-        #undef SCALED_IMAGE_SUB_MASK
-    } else if (method == CompositeMethod::IntersectMask) {
-        #define SCALED_IMAGE_INT_MASK
-            #include "tvgSwRasterScaledMaskedImage.h"
-        #undef SCALED_IMAGE_INT_MASK
-    } else if (method == CompositeMethod::DifferenceMask) {
-        #define SCALED_IMAGE_DIF_MASK
-            #include "tvgSwRasterScaledMaskedImage.h"
-        #undef SCALED_IMAGE_DIF_MASK
-    } else return false;
+    if (method == CompositeMethod::AddMask) _rasterScaledMaskedRGBAImageDup<AddMaskOp, AddMaskAOp>(surface, image, itransform, region, opacity, halfScale);
+    else if (method == CompositeMethod::SubtractMask) _rasterScaledMaskedRGBAImageDup<SubMaskOp, SubMaskAOp>(surface, image, itransform, region, opacity, halfScale);
+    else if (method == CompositeMethod::DifferenceMask) _rasterScaledMaskedRGBAImageDup<DifMaskOp, DifMaskAOp>(surface, image, itransform, region, opacity, halfScale);
+    else if (method == CompositeMethod::IntersectMask) _rasterScaledMaskedRGBAImageInt(surface, image, itransform, region, opacity, halfScale);
+    else return false;
 
     //Masking Composition
     return _rasterDirectRGBAImage(surface, &surface->compositor->image, surface->compositor->bbox);
@@ -997,108 +1164,89 @@ static bool _scaledRGBAImage(SwSurface* surface, const SwImage* image, const Mat
 /* Direct RGBA Image                                                    */
 /************************************************************************/
 
-static bool _rasterDirectMaskedRGBAImage(SwSurface* surface, const SwImage* image, const SwBBox& region, uint32_t opacity)
+template<typename maskOp, typename amaskOp>
+static void _rasterDirectMaskedRGBAImageDup(SwSurface* surface, const SwImage* image, const SwBBox& region, uint32_t opacity)
 {
     auto h = static_cast<uint32_t>(region.max.y - region.min.y);
     auto w = static_cast<uint32_t>(region.max.x - region.min.x);
     auto cstride = surface->compositor->image.stride;
+
+    auto cbuffer = surface->compositor->image.buf32 + (region.min.y * cstride + region.min.x); //compositor buffer
+    auto sbuffer = image->buf32 + (region.min.y + image->oy) * image->stride + (region.min.x + image->ox);
+
+    for (uint32_t y = 0; y < h; ++y) {
+        auto cmp = cbuffer;
+        auto src = sbuffer;
+        if (opacity == 255) {
+            for (uint32_t x = 0; x < w; ++x, ++src, ++cmp) {
+                *cmp = maskOp()(*src, *cmp, IALPHA(*src));
+            }
+        } else {
+            for (uint32_t x = 0; x < w; ++x, ++src, ++cmp) {
+                *cmp = amaskOp()(*src, *cmp, opacity);
+            }
+        }
+        cbuffer += cstride;
+        sbuffer += image->stride;
+    }
+}
+
+
+static void _rasterDirectMaskedRGBAImageInt(SwSurface* surface, const SwImage* image, const SwBBox& region, uint32_t opacity)
+{
+    auto h = static_cast<uint32_t>(region.max.y - region.min.y);
+    auto w = static_cast<uint32_t>(region.max.x - region.min.x);
+    auto cstride = surface->compositor->image.stride;
+    auto cbuffer = surface->compositor->image.buf32 + (surface->compositor->bbox.min.y * cstride + surface->compositor->bbox.min.x);
+
+    for (uint32_t y = surface->compositor->bbox.min.y; y < surface->compositor->bbox.max.y; ++y) {
+        if (y == region.min.y) {
+            auto cbuffer2 = cbuffer;
+            for (uint32_t y2 = y; y2 < region.max.y; ++y2) {
+                auto tmp = cbuffer2;
+                auto x = surface->compositor->bbox.min.x;
+                while (x < surface->compositor->bbox.max.x) {
+                    if (x == region.min.x) {
+                        auto src = &image->buf32[(y2 + image->oy) * image->stride + (x + image->ox)];
+                        if (opacity == 255) {
+                            for (uint32_t i = 0; i < w; ++i, ++tmp, ++src) {
+                                *tmp = ALPHA_BLEND(*tmp, ALPHA(*src));
+                            }
+                        } else {
+                            for (uint32_t i = 0; i < w; ++i, ++tmp, ++src) {
+                                auto t = ALPHA_BLEND(*src, opacity);
+                                *tmp = ALPHA_BLEND(*tmp, ALPHA(t));
+                            }
+                        }
+                        x += w;
+                    } else {
+                        *tmp = 0;
+                        ++tmp;
+                        ++x;
+                    }
+                }
+                cbuffer2 += cstride;
+            }
+            y += (h - 1);
+        } else {
+            rasterRGBA32(cbuffer, 0x00000000, 0, surface->compositor->bbox.max.x - surface->compositor->bbox.min.x);
+        }
+        cbuffer += cstride;
+    }
+}
+
+
+static bool _rasterDirectMaskedRGBAImage(SwSurface* surface, const SwImage* image, const SwBBox& region, uint32_t opacity)
+{
     auto method = surface->compositor->method;
 
-    TVGLOG("SW_ENGINE", "Direct Masked(%d) Image  [Region: %lu %lu %u %u]", (int)surface->compositor->method, region.min.x, region.min.y, w, h);
+    TVGLOG("SW_ENGINE", "Direct Masked(%d) Image  [Region: %lu %lu %lu %lu]", (int)surface->compositor->method, region.min.x, region.min.y, region.max.x - region.min.x, region.max.y - region.min.y);
 
-    if (method == CompositeMethod::AddMask) {
-        auto cbuffer = surface->compositor->image.buf32 + (region.min.y * cstride + region.min.x); //compositor buffer
-        auto sbuffer = image->buf32 + (region.min.y + image->oy) * image->stride + (region.min.x + image->ox);
-        for (uint32_t y = 0; y < h; ++y) {
-            auto cmp = cbuffer;
-            auto src = sbuffer;
-            if (opacity == 255) {
-                for (uint32_t x = 0; x < w; ++x, ++src, ++cmp) {
-                    *cmp = *src + ALPHA_BLEND(*cmp, IALPHA(*src));
-                }
-            } else {
-                for (uint32_t x = 0; x < w; ++x, ++src, ++cmp) {
-                    *cmp = INTERPOLATE(*src, *cmp, opacity);
-                }
-            }
-            cbuffer += cstride;
-            sbuffer += image->stride;
-        }
-    } else if (method == CompositeMethod::SubtractMask) {
-        auto cbuffer = surface->compositor->image.buf32 + (region.min.y * cstride + region.min.x); //compositor buffer
-        auto sbuffer = image->buf32 + (region.min.y + image->oy) * image->stride + (region.min.x + image->ox);
-        for (uint32_t y = 0; y < h; ++y) {
-            auto cmp = cbuffer;
-            auto src = sbuffer;
-            if (opacity == 255) {
-                for (uint32_t x = 0; x < w; ++x, ++src, ++cmp) {
-                    *cmp = ALPHA_BLEND(*cmp, IALPHA(*src));
-                }
-            } else {
-                for (uint32_t x = 0; x < w; ++x, ++src, ++cmp) {
-                    auto t = ALPHA_BLEND(*src, opacity);
-                    *cmp = ALPHA_BLEND(*cmp, IALPHA(t));
-                }
-            }
-            cbuffer += cstride;
-            sbuffer += image->stride;
-        }
-    } else if (method == CompositeMethod::IntersectMask) {
-        auto cbuffer = surface->compositor->image.buf32 + (surface->compositor->bbox.min.y * cstride + surface->compositor->bbox.min.x);
-        for (uint32_t y = surface->compositor->bbox.min.y; y < surface->compositor->bbox.max.y; ++y) {
-            if (y == region.min.y) {
-                auto cbuffer2 = cbuffer;
-                for (uint32_t y2 = y; y2 < region.max.y; ++y2) {
-                    auto tmp = cbuffer2;
-                    auto x = surface->compositor->bbox.min.x;
-                    while (x < surface->compositor->bbox.max.x) {
-                        if (x == region.min.x) {
-                            auto src = &image->buf32[(y2 + image->oy) * image->stride + (x + image->ox)];
-                            if (opacity == 255) {
-                                for (uint32_t i = 0; i < w; ++i, ++tmp, ++src) {
-                                    *tmp = ALPHA_BLEND(*tmp, ALPHA(*src));
-                                }
-                            } else {
-                                for (uint32_t i = 0; i < w; ++i, ++tmp, ++src) {
-                                    auto t = ALPHA_BLEND(*src, opacity);
-                                    *tmp = ALPHA_BLEND(*tmp, ALPHA(t));
-                                }
-                            }
-                            x += w;
-                        } else {
-                            *tmp = 0;
-                            ++tmp;
-                            ++x;
-                        }
-                    }
-                    cbuffer2 += cstride;
-                }
-                y += (h - 1);
-            } else {
-                rasterRGBA32(cbuffer, 0x00000000, 0, surface->compositor->bbox.max.x - surface->compositor->bbox.min.x);
-            }
-            cbuffer += cstride;
-        }
-    } else if (method == CompositeMethod::DifferenceMask) {
-        auto cbuffer = surface->compositor->image.buf32 + (region.min.y * cstride + region.min.x); //compositor buffer
-        auto sbuffer = image->buf32 + (region.min.y + image->oy) * image->stride + (region.min.x + image->ox);
-        for (uint32_t y = 0; y < h; ++y) {
-            auto cmp = cbuffer;
-            auto src = sbuffer;
-            if (opacity == 255) {
-                for (uint32_t x = 0; x < w; ++x, ++src, ++cmp) {
-                    *cmp = ALPHA_BLEND(*src, IALPHA(*cmp)) + ALPHA_BLEND(*cmp, IALPHA(*src));
-                }
-            } else {
-                for (uint32_t x = 0; x < w; ++x, ++src, ++cmp) {
-                    auto t = ALPHA_BLEND(*src, opacity);
-                    *cmp = ALPHA_BLEND(t, IALPHA(*cmp)) + ALPHA_BLEND(*cmp, IALPHA(t));
-                }
-            }
-            cbuffer += cstride;
-            sbuffer += image->stride;
-        }
-    } else return false;
+    if (method == CompositeMethod::AddMask) _rasterDirectMaskedRGBAImageDup<AddMaskOp, AddMaskAOp>(surface, image, region, opacity);
+    else if (method == CompositeMethod::SubtractMask) _rasterDirectMaskedRGBAImageDup<SubMaskOp, SubMaskAOp>(surface, image, region, opacity);
+    else if (method == CompositeMethod::DifferenceMask) _rasterDirectMaskedRGBAImageDup<DifMaskOp, DifMaskAOp>(surface, image, region, opacity);
+    else if (method == CompositeMethod::IntersectMask) _rasterDirectMaskedRGBAImageInt(surface, image, region, opacity);
+    else return false;
 
     //Masking Composition
     return _rasterDirectRGBAImage(surface, &surface->compositor->image, surface->compositor->bbox);

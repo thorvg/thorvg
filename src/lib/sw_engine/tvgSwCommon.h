@@ -332,24 +332,24 @@ static inline uint32_t opBlend(uint32_t s, uint32_t d, TVG_UNUSED uint8_t a)
     return s + ALPHA_BLEND(d, IALPHA(s));
 }
 
+static inline uint32_t opAddMask(uint32_t s, uint32_t d, TVG_UNUSED uint8_t a)
+{
+    return opBlend(s, d, a);
+}
+
 static inline uint32_t opSubMask(uint32_t s, uint32_t d, TVG_UNUSED uint8_t a)
 {
     return ALPHA_BLEND(d, IALPHA(s));
 }
 
+static inline uint32_t opIntMask(TVG_UNUSED uint32_t s, uint32_t d, uint8_t a)
+{
+   return ALPHA_BLEND(d, a);
+}
+
 static inline uint32_t opDifMask(uint32_t s, uint32_t d, TVG_UNUSED uint8_t a)
 {
    return ALPHA_BLEND(s, IALPHA(d)) + ALPHA_BLEND(d, IALPHA(s));
-}
-
-static inline uint32_t opIntMask(uint32_t s, uint32_t d, TVG_UNUSED uint8_t a)
-{
-   return ALPHA_BLEND(d, ALPHA(s));
-}
-
-static inline uint32_t opAddMask(uint32_t s, uint32_t d, TVG_UNUSED uint8_t a)
-{
-    return opBlend(s, d, a);
 }
 
 static inline uint32_t opInterpolate(uint32_t s, uint32_t d, uint8_t a)
