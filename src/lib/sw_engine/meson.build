@@ -4,7 +4,6 @@ source_file = [
    'tvgSwRasterAvx.h',
    'tvgSwRasterNeon.h',
    'tvgSwRasterTexmap.h',
-   'tvgSwRasterTexmapInternal.h',
    'tvgSwFill.cpp',
    'tvgSwImage.cpp',
    'tvgSwMath.cpp',
