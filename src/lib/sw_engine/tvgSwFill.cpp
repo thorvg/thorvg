@@ -271,18 +271,10 @@ void fillRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint3
     auto detFirstDerivative = 2.0f * (fill->radial.a11 * rx + fill->radial.a21 * ry) + 0.5f * detSecondDerivative;
     auto det = rx * rx + ry * ry;
 
-    if (op) {
-        for (uint32_t i = 0 ; i < len ; ++i, ++dst) {
-            *dst = op(_pixel(fill, sqrtf(det)), *dst, a);
-            det += detFirstDerivative;
-            detFirstDerivative += detSecondDerivative;
-        }
-    } else {
-        for (uint32_t i = 0 ; i < len ; ++i, ++dst) {
-            *dst = _pixel(fill, sqrtf(det));
-            det += detFirstDerivative;
-            detFirstDerivative += detSecondDerivative;
-        }
+    for (uint32_t i = 0 ; i < len ; ++i, ++dst) {
+        *dst = op(_pixel(fill, sqrtf(det)), *dst, a);
+        det += detFirstDerivative;
+        detFirstDerivative += detSecondDerivative;
     }
 }
 
@@ -385,41 +377,21 @@ void fillLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint3
     auto vMin = -vMax;
     auto v = t + (inc * len);
 
-    if (op) {
-        //we can use fixed point math
-        if (v < vMax && v > vMin) {
-            auto t2 = static_cast<int32_t>(t * FIXPT_SIZE);
-            auto inc2 = static_cast<int32_t>(inc * FIXPT_SIZE);
-            for (uint32_t j = 0; j < len; ++j, ++dst) {
-                *dst = op(_fixedPixel(fill, t2), *dst, a);
-                t2 += inc2;
-            }
-        //we have to fallback to float math
-        } else {
-            uint32_t counter = 0;
-            while (counter++ < len) {
-                *dst = op(_pixel(fill, t / GRADIENT_STOP_SIZE), *dst, a);
-                ++dst;
-                t += inc;
-            }
+    //we can use fixed point math
+    if (v < vMax && v > vMin) {
+        auto t2 = static_cast<int32_t>(t * FIXPT_SIZE);
+        auto inc2 = static_cast<int32_t>(inc * FIXPT_SIZE);
+        for (uint32_t j = 0; j < len; ++j, ++dst) {
+            *dst = op(_fixedPixel(fill, t2), *dst, a);
+            t2 += inc2;
         }
+    //we have to fallback to float math
     } else {
-        //we can use fixed point math
-        if (v < vMax && v > vMin) {
-            auto t2 = static_cast<int32_t>(t * FIXPT_SIZE);
-            auto inc2 = static_cast<int32_t>(inc * FIXPT_SIZE);
-            for (uint32_t j = 0; j < len; ++j, ++dst) {
-                *dst = _fixedPixel(fill, t2);
-                t2 += inc2;
-            }
-        //we have to fallback to float math
-        } else {
-            uint32_t counter = 0;
-            while (counter++ < len) {
-                *dst = _pixel(fill, t / GRADIENT_STOP_SIZE);
-                ++dst;
-                t += inc;
-            }
+        uint32_t counter = 0;
+        while (counter++ < len) {
+            *dst = op(_pixel(fill, t / GRADIENT_STOP_SIZE), *dst, a);
+            ++dst;
+            t += inc;
         }
     }
 }
