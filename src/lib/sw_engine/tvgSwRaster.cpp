@@ -44,11 +44,6 @@ struct FillLinear
         fillLinear(fill, dst, y, x, len, op, a);
     }
 
-    void operator()(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len)
-    {
-        fillLinear(fill, dst, y, x, len, nullptr, 255);
-    }
-
     void operator()(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, uint8_t* cmp, SwAlpha alpha, uint8_t csize, uint8_t opacity)
     {
         fillLinear(fill, dst, y, x, len, cmp, alpha, csize, opacity);
@@ -60,11 +55,6 @@ struct FillRadial
     void operator()(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlendOp op, uint8_t a)
     {
         fillRadial(fill, dst, y, x, len, op, a);
-    }
-
-    void operator()(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len)
-    {
-        fillRadial(fill, dst, y, x, len, nullptr, 255);
     }
 
     void operator()(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, uint8_t* cmp, SwAlpha alpha, uint8_t csize, uint8_t opacity)
@@ -216,7 +206,9 @@ static inline uint32_t _halfScale(float scale)
     return halfScale;
 }
 
+
 //Bilinear Interpolation
+//OPTIMIZE_ME: Skip the function pointer access
 static uint32_t _interpUpScaler(const uint32_t *img, TVG_UNUSED uint32_t stride, uint32_t w, uint32_t h, float sx, float sy, TVG_UNUSED uint32_t n)
 {
     auto rx = (uint32_t)(sx);
@@ -239,6 +231,7 @@ static uint32_t _interpUpScaler(const uint32_t *img, TVG_UNUSED uint32_t stride,
 
 
 //2n x 2n Mean Kernel
+//OPTIMIZE_ME: Skip the function pointer access
 static uint32_t _interpDownScaler(const uint32_t *img, uint32_t stride, uint32_t w, uint32_t h, float sx, float sy, uint32_t n)
 {
     uint32_t rx = sx;
@@ -1460,7 +1453,7 @@ static bool _rasterSolidGradientRect(SwSurface* surface, const SwBBox& region, c
     auto h = static_cast<uint32_t>(region.max.y - region.min.y);
 
     for (uint32_t y = 0; y < h; ++y) {
-        fillMethod()(fill, buffer + y * surface->stride, region.min.y + y, region.min.x, w);
+        fillMethod()(fill, buffer + y * surface->stride, region.min.y + y, region.min.x, w, opDirect, 0);
     }
     return true;
 }
@@ -1597,7 +1590,7 @@ static bool _rasterSolidGradientRle(SwSurface* surface, const SwRleData* rle, co
 
     for (uint32_t i = 0; i < rle->size; ++i, ++span) {
         auto dst = &surface->buf32[span->y * surface->stride + span->x];
-        if (span->coverage == 255) fillMethod()(fill, dst, span->y, span->x, span->len);
+        if (span->coverage == 255) fillMethod()(fill, dst, span->y, span->x, span->len, opDirect, 0);
         else fillMethod()(fill, dst, span->y, span->x, span->len, opInterpolate, span->coverage);
     }
     return true;

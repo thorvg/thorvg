@@ -332,6 +332,11 @@ static inline uint32_t opBlend(uint32_t s, uint32_t d, TVG_UNUSED uint8_t a)
     return s + ALPHA_BLEND(d, IALPHA(s));
 }
 
+static inline uint32_t opDirect(uint32_t s, TVG_UNUSED uint32_t d, TVG_UNUSED uint8_t a)
+{
+    return s;
+}
+
 static inline uint32_t opAddMask(uint32_t s, uint32_t d, TVG_UNUSED uint8_t a)
 {
     return opBlend(s, d, a);
@@ -405,6 +410,7 @@ void imageFree(SwImage* image);
 bool fillGenColorTable(SwFill* fill, const Fill* fdata, const Matrix* transform, SwSurface* surface, uint32_t opacity, bool ctable);
 void fillReset(SwFill* fill);
 void fillFree(SwFill* fill);
+//OPTIMIZE_ME: Skip the function pointer access
 void fillLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlendOp op, uint8_t a);                                         //blending ver.
 void fillLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, uint8_t* cmp, SwAlpha alpha, uint8_t csize, uint8_t opacity);     //masking ver.
 void fillRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlendOp op, uint8_t a);                                         //blending ver.
