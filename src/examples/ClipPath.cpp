@@ -57,7 +57,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     auto star1 = tvg::Shape::gen();
     tvgDrawStar(star1.get());
     star1->fill(255, 255, 0);
-    star1->stroke(255 ,0, 0, 255);
+    star1->stroke(255 ,0, 0);
     star1->stroke(10);
 
     //Move Star1
@@ -73,7 +73,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     auto star2 = tvg::Shape::gen();
     tvgDrawStar(star2.get());
     star2->fill(0, 255, 255);
-    star2->stroke(0 ,255, 0, 255);
+    star2->stroke(0 ,255, 0);
     star2->stroke(10);
     star2->opacity(100);
 
@@ -106,7 +106,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     fill->colorStops(colorStops, 2);
     star3->fill(std::move(fill));
 
-    star3->stroke(255 ,0, 0, 255);
+    star3->stroke(255 ,0, 0);
     star3->stroke(10);
     star3->translate(400, 0);
 

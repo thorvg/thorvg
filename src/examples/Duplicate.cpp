@@ -39,7 +39,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
         shape1->appendRect(220, 10, 100, 100, 0, 0);
 
         shape1->stroke(3);
-        shape1->stroke(0, 255, 0, 255);
+        shape1->stroke(0, 255, 0);
 
         float dashPattern[2] = {4, 4};
         shape1->stroke(dashPattern, 2);

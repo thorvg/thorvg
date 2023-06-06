@@ -46,7 +46,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     shape2->appendRect(450, 100, 200, 200, 50, 50);
     shape2->fill(0, 255, 0);
     shape2->stroke(10);
-    shape2->stroke(255, 255, 255, 255);
+    shape2->stroke(255, 255, 255);
     scene->push(std::move(shape2));
 
 
@@ -76,7 +76,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     shape3->close();
     shape3->fill(0, 0, 255);
     shape3->stroke(10);
-    shape3->stroke(255, 255, 255, 255);
+    shape3->stroke(255, 255, 255);
     shape3->opacity(127);
 
     scene2->push(std::move(shape3));
@@ -98,7 +98,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     shape4->close();
     shape4->fill(255, 0, 0);
     shape4->stroke(10);
-    shape4->stroke(0, 0, 255, 255);
+    shape4->stroke(0, 0, 255);
     shape4->opacity(200);
     shape4->scale(3);
     scene2->push(std::move(shape4));
