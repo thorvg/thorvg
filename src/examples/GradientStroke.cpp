@@ -60,7 +60,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     shape1->lineTo(100, 150);
     shape1->close();
 
-    shape1->stroke(0, 255, 0, 255);
+    shape1->stroke(0, 255, 0);
     shape1->stroke(20);
     shape1->stroke(tvg::StrokeJoin::Miter);
     shape1->stroke(tvg::StrokeCap::Butt);

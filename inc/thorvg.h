@@ -928,7 +928,7 @@ public:
      *
      * @return Result::Success when succeed, Result::FailedAllocation otherwise.
      */
-    Result stroke(uint8_t r, uint8_t g, uint8_t b, uint8_t a) noexcept;
+    Result stroke(uint8_t r, uint8_t g, uint8_t b, uint8_t a = 255) noexcept;
 
     /**
      * @brief Sets the gradient fill of the stroke for all of the figures from the path.
@@ -1089,7 +1089,7 @@ public:
      *
      * @return Result::Success when succeed, Result::InsufficientCondition otherwise.
      */
-    Result strokeColor(uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a) const noexcept;
+    Result strokeColor(uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a = nullptr) const noexcept;
 
     /**
      * @brief Gets the pointer to the gradient fill of the stroke.
