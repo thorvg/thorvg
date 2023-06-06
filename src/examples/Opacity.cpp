@@ -38,13 +38,13 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     //Prepare Circle
     auto shape1 = tvg::Shape::gen();
     shape1->appendCircle(400, 400, 250, 250);
-    shape1->fill(255, 255, 0, 255);
+    shape1->fill(255, 255, 0);
     scene->push(std::move(shape1));
 
     //Round rectangle
     auto shape2 = tvg::Shape::gen();
     shape2->appendRect(450, 100, 200, 200, 50, 50);
-    shape2->fill(0, 255, 0, 255);
+    shape2->fill(0, 255, 0);
     shape2->stroke(10);
     shape2->stroke(255, 255, 255, 255);
     scene->push(std::move(shape2));
@@ -74,7 +74,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     shape3->lineTo(26, 161);
     shape3->lineTo(146, 143);
     shape3->close();
-    shape3->fill(0, 0, 255, 255);
+    shape3->fill(0, 0, 255);
     shape3->stroke(10);
     shape3->stroke(255, 255, 255, 255);
     shape3->opacity(127);
@@ -96,7 +96,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     shape4->cubicTo(cx - halfRadius, cy + radius, cx - radius, cy + halfRadius, cx - radius, cy);
     shape4->cubicTo(cx - radius, cy - halfRadius, cx - halfRadius, cy - radius, cx, cy - radius);
     shape4->close();
-    shape4->fill(255, 0, 0, 255);
+    shape4->fill(255, 0, 0);
     shape4->stroke(10);
     shape4->stroke(0, 0, 255, 255);
     shape4->opacity(200);

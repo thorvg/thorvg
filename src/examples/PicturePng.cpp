@@ -34,7 +34,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     //Background
     auto bg = tvg::Shape::gen();
     bg->appendRect(0, 0, WIDTH, HEIGHT, 0, 0);    //x, y, w, h, rx, ry
-    bg->fill(255, 255, 255, 255);                 //r, g, b, a
+    bg->fill(255, 255, 255);                      //r, g, b
     canvas->push(std::move(bg));
 
     //Load png file from path

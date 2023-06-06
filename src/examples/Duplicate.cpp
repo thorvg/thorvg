@@ -43,7 +43,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
         float dashPattern[2] = {4, 4};
         shape1->stroke(dashPattern, 2);
-        shape1->fill(255, 0, 0, 255);
+        shape1->fill(255, 0, 0);
 
         //Duplicate Shape, Switch fill method
         auto shape2 = tvg::cast<tvg::Shape>(shape1->duplicate());
@@ -76,17 +76,17 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
         auto shape1 = tvg::Shape::gen();
         shape1->appendRect(0, 0, 400, 400, 50, 50);
-        shape1->fill(0, 255, 0, 255);
+        shape1->fill(0, 255, 0);
         scene1->push(std::move(shape1));
 
         auto shape2 = tvg::Shape::gen();
         shape2->appendCircle(400, 400, 200, 200);
-        shape2->fill(255, 255, 0, 255);
+        shape2->fill(255, 255, 0);
         scene1->push(std::move(shape2));
 
         auto shape3 = tvg::Shape::gen();
         shape3->appendCircle(600, 600, 150, 100);
-        shape3->fill(0, 255, 255, 255);
+        shape3->fill(0, 255, 255);
         scene1->push(std::move(shape3));
 
         scene1->scale(0.25);

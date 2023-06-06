@@ -34,17 +34,17 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     //Solid Rectangle
     auto shape = tvg::Shape::gen();
     shape->appendRect(0, 0, 400, 400, 0, 0);
-    shape->fill(0, 0, 255, 255);
+    shape->fill(0, 0, 255);
 
     //Mask
     auto mask = tvg::Shape::gen();
     mask->appendCircle(200, 200, 125, 125);
-    mask->fill(255, 255, 255, 255);     //InvAlphaMask RGB channels are unused.
+    mask->fill(255, 255, 255);     //InvAlphaMask RGB channels are unused.
 
     //Nested Mask
     auto nMask = tvg::Shape::gen();
     nMask->appendCircle(220, 220, 125, 125);
-    nMask->fill(255, 255, 255, 255);     //InvAlphaMask RGB channels are unused.
+    nMask->fill(255, 255, 255);    //InvAlphaMask RGB channels are unused.
 
     mask->composite(std::move(nMask), tvg::CompositeMethod::InvAlphaMask);
     shape->composite(std::move(mask), tvg::CompositeMethod::InvAlphaMask);
@@ -61,13 +61,13 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     auto mask2 = tvg::Shape::gen();
     mask2->appendCircle(150, 500, 75, 75);
     mask2->appendRect(150, 500, 200, 200, 30, 30);
-    mask2->fill(255, 255, 255, 255);    //InvAlphaMask RGB channels are unused.
+    mask2->fill(255, 255, 255);   //InvAlphaMask RGB channels are unused.
     svg->composite(std::move(mask2), tvg::CompositeMethod::InvAlphaMask);
     if (canvas->push(std::move(svg)) != tvg::Result::Success) return;
 
     //Star
     auto star = tvg::Shape::gen();
-    star->fill(80, 80, 80, 255);
+    star->fill(80, 80, 80);
     star->moveTo(599, 34);
     star->lineTo(653, 143);
     star->lineTo(774, 160);
@@ -85,7 +85,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     //Mask3
     auto mask3 = tvg::Shape::gen();
     mask3->appendCircle(600, 200, 125, 125);
-    mask3->fill(255, 255, 255, 255);    //InvAlphaMask RGB channels are unused.
+    mask3->fill(255, 255, 255);        //InvAlphaMask RGB channels are unused.
     star->composite(std::move(mask3), tvg::CompositeMethod::InvAlphaMask);
     if (canvas->push(std::move(star)) != tvg::Result::Success) return;
 
@@ -115,7 +115,8 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     mask4->lineTo(426, 511);
     mask4->lineTo(546, 493);
     mask4->close();
-    mask4->fill(255, 255, 255, 70);     //InvAlphaMask RGB channels are unused.
+    mask4->fill(255, 255, 255);      //InvAlphaMask RGB channels are unused.
+    mask4->opacity(70);
     image->composite(std::move(mask4), tvg::CompositeMethod::InvAlphaMask);
     if (canvas->push(std::move(image)) != tvg::Result::Success) return;
 }

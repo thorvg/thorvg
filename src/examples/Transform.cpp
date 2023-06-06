@@ -38,7 +38,7 @@ void tvgUpdateCmds(tvg::Canvas* canvas, float progress)
     shape->appendRect(-185, -200, 300, 300, 100, 100);
     shape->appendCircle(115, 100, 100, 100);
     shape->appendCircle(115, 200, 170, 100);
-    shape->fill(255, 255, 255, 255);
+    shape->fill(255, 255, 255);
     shape->translate(385, 400);
     shape->scale(1 - 0.75 * progress);
     shape->rotate(360 * progress);
@@ -48,7 +48,7 @@ void tvgUpdateCmds(tvg::Canvas* canvas, float progress)
     //Shape2
     auto shape2 = tvg::Shape::gen();
     shape2->appendRect(-50, -50, 100, 100, 0, 0);
-    shape2->fill(0, 255, 255, 255);
+    shape2->fill(0, 255, 255);
     shape2->translate(400, 400);
     shape2->rotate(360 * progress);
     shape2->translate(400 + progress * 300, 400);
@@ -60,7 +60,7 @@ void tvgUpdateCmds(tvg::Canvas* canvas, float progress)
     /* Look, how shape3's origin is different with shape2
        The center of the shape is the anchor point for transformation. */
     shape3->appendRect(100, 100, 150, 50, 20, 20);
-    shape3->fill(255, 0, 255, 255);
+    shape3->fill(255, 0, 255);
     shape3->translate(400, 400);
     shape3->rotate(-360 * progress);
     shape3->scale(0.5 + progress);

@@ -39,7 +39,7 @@ void tvgUpdateCmds(tvg::Canvas* canvas, float progress)
     //Prepare Round Rectangle (Scene1)
     auto shape1 = tvg::Shape::gen();
     shape1->appendRect(-235, -250, 400, 400, 50, 50);  //x, y, w, h, rx, ry
-    shape1->fill(0, 255, 0, 255);                      //r, g, b, a
+    shape1->fill(0, 255, 0);                           //r, g, b
     shape1->stroke(5);                                 //width
     shape1->stroke(255, 255, 255, 255);                //r, g, b, a
     scene->push(std::move(shape1));
@@ -47,13 +47,13 @@ void tvgUpdateCmds(tvg::Canvas* canvas, float progress)
     //Prepare Circle (Scene1)
     auto shape2 = tvg::Shape::gen();
     shape2->appendCircle(-165, -150, 200, 200);    //cx, cy, radiusW, radiusH
-    shape2->fill(255, 255, 0, 255);                //r, g, b, a
+    shape2->fill(255, 255, 0);                     //r, g, b
     scene->push(std::move(shape2));
 
     //Prepare Ellipse (Scene1)
     auto shape3 = tvg::Shape::gen();
     shape3->appendCircle(265, 250, 150, 100);      //cx, cy, radiusW, radiusH
-    shape3->fill(0, 255, 255, 255);                //r, g, b, a
+    shape3->fill(0, 255, 255);                     //r, g, b
     scene->push(std::move(shape3));
 
     scene->translate(350, 350);

@@ -138,7 +138,7 @@ public:
 
             auto shape = tvg::Shape::gen();
             shape->appendRect(0, 0, static_cast<float>(w), static_cast<float>(h), 0, 0);
-            shape->fill(r, g, b, 255);
+            shape->fill(r, g, b);
 
             if (canvas->push(std::move(shape)) != tvg::Result::Success) return 1;
         }

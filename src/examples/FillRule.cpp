@@ -38,7 +38,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     shape1->lineTo(385, 150);
     shape1->lineTo(80, 355);
     shape1->close();
-    shape1->fill(255, 255, 255, 255);
+    shape1->fill(255, 255, 255);
     shape1->fill(tvg::FillRule::Winding);  //Fill all winding shapes
 
     if (canvas->push(std::move(shape1)) != tvg::Result::Success) return;
@@ -51,7 +51,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     shape2->lineTo(715, 450);
     shape2->lineTo(410, 655);
     shape2->close();
-    shape2->fill(255, 255, 255, 255);
+    shape2->fill(255, 255, 255);
     shape2->fill(tvg::FillRule::EvenOdd); //Fill polygons with even odd pattern
 
     if (canvas->push(std::move(shape2)) != tvg::Result::Success) return;
