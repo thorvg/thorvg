@@ -344,6 +344,21 @@ public:
     Result composite(std::unique_ptr<Paint> target, CompositeMethod method) noexcept;
 
     /**
+     * @brief Gets the bounding box of the paint object before any transformation.
+     *
+     * @param[out] x The x coordinate of the upper left corner of the object.
+     * @param[out] y The y coordinate of the upper left corner of the object.
+     * @param[out] w The width of the object.
+     * @param[out] h The height of the object.
+     *
+     * @return Result::Success when succeed, Result::InsufficientCondition otherwise.
+     *
+     * @note The bounding box doesn't indicate the final rendered region. It's the smallest rectangle that encloses the object.
+     * @see Paint::bounds(float* x, float* y, float* w, float* h, bool transformed);
+     */
+    TVG_DEPRECATED Result bounds(float* x, float* y, float* w, float* h) const noexcept;
+
+    /**
      * @brief Gets the axis-aligned bounding box of the paint object.
      *
      * In case @p transform is @c true, all object's transformations are applied first, and then the bounding box is established. Otherwise, the bounding box is determined before any transformations.
@@ -1152,6 +1167,24 @@ public:
      * @see Initializer::init()
      */
     Result load(const std::string& path) noexcept;
+
+    /**
+     * @brief Loads a picture data from a memory block of a given size.
+     *
+     * @param[in] data A pointer to a memory location where the content of the picture file is stored.
+     * @param[in] size The size in bytes of the memory occupied by the @p data.
+     * @param[in] copy Decides whether the data should be copied into the engine local buffer.
+     *
+     * @retval Result::Success When succeed.
+     * @retval Result::InvalidArguments In case no data are provided or the @p size is zero or less.
+     * @retval Result::NonSupport When trying to load a file with an unknown extension.
+     * @retval Result::Unknown If an error occurs at a later stage.
+     *
+     * @warning: you have responsibility to release the @p data memory if the @p copy is true
+     * @deprecated Use load(const char* data, uint32_t size, const std::string& mimeType, bool copy) instead.
+     * @see Result load(const char* data, uint32_t size, const std::string& mimeType, bool copy = false) noexcept
+     */
+    TVG_DEPRECATED Result load(const char* data, uint32_t size, bool copy = false) noexcept;
 
     /**
      * @brief Loads a picture data from a memory block of a given size.
