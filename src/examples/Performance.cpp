@@ -37,7 +37,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     auto mask = tvg::Shape::gen();
     mask->appendCircle(WIDTH/2, HEIGHT/2, WIDTH/2, HEIGHT/2);    
-    mask->fill(255, 255, 255, 255);
+    mask->fill(255, 255, 255);
     //Use the opacity for a half-translucent mask.
     mask->opacity(125);
 

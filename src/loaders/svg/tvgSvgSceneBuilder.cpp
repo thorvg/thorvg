@@ -739,7 +739,7 @@ static unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, const Box& vBox,
                     if (shape) {
                         if (isMaskWhite) {
                             uint8_t r, g, b;
-                            shape->fillColor(&r, &g, &b, nullptr);
+                            shape->fillColor(&r, &g, &b);
                             if (shape->fill() || r < 255 || g < 255 || b < 255 || shape->strokeFill() ||
                                 (shape->strokeColor(&r, &g, &b, nullptr) == Result::Success && (r < 255 || g < 255 || b < 255))) {
                                 *isMaskWhite = false;
@@ -801,7 +801,7 @@ unique_ptr<Scene> svgSceneBuild(SvgLoaderData& loaderData, Box vBox, float w, fl
 
     auto viewBoxClip = Shape::gen();
     viewBoxClip->appendRect(0, 0, w, h, 0, 0);
-    viewBoxClip->fill(0, 0, 0, 255);
+    viewBoxClip->fill(0, 0, 0);
 
     auto compositeLayer = Scene::gen();
     compositeLayer->composite(std::move(viewBoxClip), CompositeMethod::ClipPath);

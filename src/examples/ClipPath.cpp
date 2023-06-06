@@ -47,7 +47,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     //Background
     auto shape = tvg::Shape::gen();
     shape->appendRect(0, 0, WIDTH, HEIGHT, 0, 0);
-    shape->fill(255, 255, 255, 255);
+    shape->fill(255, 255, 255);
     if (canvas->push(std::move(shape)) != tvg::Result::Success) return;
 
     //////////////////////////////////////////////
@@ -56,7 +56,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     auto star1 = tvg::Shape::gen();
     tvgDrawStar(star1.get());
-    star1->fill(255, 255, 0, 255);
+    star1->fill(255, 255, 0);
     star1->stroke(255 ,0, 0, 255);
     star1->stroke(10);
 
@@ -72,7 +72,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     auto star2 = tvg::Shape::gen();
     tvgDrawStar(star2.get());
-    star2->fill(0, 255, 255, 255);
+    star2->fill(0, 255, 255);
     star2->stroke(0 ,255, 0, 255);
     star2->stroke(10);
     star2->opacity(100);

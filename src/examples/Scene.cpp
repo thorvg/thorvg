@@ -37,19 +37,19 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     //Prepare Round Rectangle
     auto shape1 = tvg::Shape::gen();
     shape1->appendRect(0, 0, 400, 400, 50, 50);  //x, y, w, h, rx, ry
-    shape1->fill(0, 255, 0, 255);                //r, g, b, a
+    shape1->fill(0, 255, 0);                     //r, g, b
     scene->push(std::move(shape1));
 
     //Prepare Circle
     auto shape2 = tvg::Shape::gen();
     shape2->appendCircle(400, 400, 200, 200);    //cx, cy, radiusW, radiusH
-    shape2->fill(255, 255, 0, 255);              //r, g, b, a
+    shape2->fill(255, 255, 0);                   //r, g, b
     scene->push(std::move(shape2));
 
     //Prepare Ellipse
     auto shape3 = tvg::Shape::gen();
     shape3->appendCircle(600, 600, 150, 100);    //cx, cy, radiusW, radiusH
-    shape3->fill(0, 255, 255, 255);              //r, g, b, a
+    shape3->fill(0, 255, 255);                   //r, g, b
     scene->push(std::move(shape3));
 
     //Create another Scene
@@ -71,7 +71,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     shape4->lineTo(26, 161);
     shape4->lineTo(146, 143);
     shape4->close();
-    shape4->fill(0, 0, 255, 255);
+    shape4->fill(0, 0, 255);
     scene2->push(std::move(shape4));
 
     //Circle
@@ -88,7 +88,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     shape5->cubicTo(cx + radius, cy + halfRadius, cx + halfRadius, cy + radius, cx, cy+ radius);
     shape5->cubicTo(cx - halfRadius, cy + radius, cx - radius, cy + halfRadius, cx - radius, cy);
     shape5->cubicTo(cx - radius, cy - halfRadius, cx - halfRadius, cy - radius, cx, cy - radius);
-    shape5->fill(255, 0, 0, 255);
+    shape5->fill(255, 0, 0);
     scene2->push(std::move(shape5));
 
     //Push scene2 onto the scene

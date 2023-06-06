@@ -85,7 +85,6 @@ unique_ptr<tvg::Paint> tvgClippedImage(uint32_t * data, int width, int heigth)
 
     auto imageClip = tvg::Shape::gen();
     imageClip->appendCircle(400, 200, 80, 180);
-    imageClip->fill(0, 0, 0, 155);
     imageClip->translate(200, 0);
     image->composite(std::move(imageClip), tvg::CompositeMethod::ClipPath);
 
@@ -102,7 +101,7 @@ unique_ptr<tvg::Paint> tvgMaskedSvg()
 
     auto svgMask = tvg::Shape::gen();
     tvgDrawStar(svgMask.get());
-    svgMask->fill(0, 0, 0, 255);
+    svgMask->fill(0, 0, 0);
     svgMask->translate(30, 440);
     svgMask->opacity(200);
     svgMask->scale(0.7);
@@ -169,10 +168,6 @@ unique_ptr<tvg::Paint> tvgCircle1(tvg::Fill::ColorStop* colorStops, int colorSto
 {
     auto circ = tvg::Shape::gen();
     circ->appendCircle(400, 375, 50, 50);
-    auto fill = tvg::RadialGradient::gen();
-    fill->radial(400, 375, 50);
-    fill->colorStops(colorStops, colorStopsCnt);
-    circ->fill(std::move(fill));
     circ->fill(0, 255, 0, 155);
 
     return circ;
@@ -182,7 +177,6 @@ unique_ptr<tvg::Paint> tvgCircle2(tvg::Fill::ColorStop* colorStops, int colorSto
 {
     auto circ = tvg::Shape::gen();
     circ->appendCircle(400, 425, 50, 50);
-    circ->fill(0, 255, 0, 155);
     auto fill = tvg::RadialGradient::gen();
     fill->radial(400, 425, 50);
     fill->colorStops(colorStops, colorStopsCnt);
@@ -252,7 +246,7 @@ void exportTvg()
     //inv mask applied to the main scene
     auto mask = tvg::Shape::gen();
     mask->appendCircle(400, 400, 15, 15);
-    mask->fill(0, 0, 0, 255);
+    mask->fill(0, 0, 0);
     scene->composite(std::move(mask), tvg::CompositeMethod::InvAlphaMask);
 
     //save the tvg file

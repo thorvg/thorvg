@@ -63,10 +63,10 @@ TEST_CASE("Set", "[tvgAccessor]")
     {
         if (paint->identifier() == tvg::Shape::identifier()) {
             auto shape = (tvg::Shape*) paint;
-            uint8_t r, g, b, a;
-            shape->fillColor(&r, &g, &b, &a);
+            uint8_t r, g, b;
+            shape->fillColor(&r, &g, &b);
             if (r == 37 && g == 47 && b == 53)
-                shape->fill(0, 0, 255, a);
+                shape->fill(0, 0, 255);
         }
         return true;
     };

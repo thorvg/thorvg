@@ -34,17 +34,17 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     //Solid Rectangle
     auto shape = tvg::Shape::gen();
     shape->appendRect(0, 0, 400, 400, 0, 0);
-    shape->fill(255, 0, 0, 255);
+    shape->fill(255, 0, 0);
 
     //Mask
     auto mask = tvg::Shape::gen();
     mask->appendCircle(200, 200, 125, 125);
-    mask->fill(255, 100, 255, 255);
+    mask->fill(255, 100, 255);
 
     //Nested Mask
     auto nMask = tvg::Shape::gen();
     nMask->appendCircle(220, 220, 125, 125);
-    nMask->fill(255, 200, 255, 255);
+    nMask->fill(255, 200, 255);
 
     mask->composite(std::move(nMask), tvg::CompositeMethod::InvLumaMask);
     shape->composite(std::move(mask), tvg::CompositeMethod::InvLumaMask);
@@ -61,13 +61,13 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     auto mask2 = tvg::Shape::gen();
     mask2->appendCircle(150, 500, 75, 75);
     mask2->appendRect(150, 500, 200, 200, 30, 30);
-    mask2->fill(255, 255, 255, 255);
+    mask2->fill(255, 255, 255);
     svg->composite(std::move(mask2), tvg::CompositeMethod::InvLumaMask);
     if (canvas->push(std::move(svg)) != tvg::Result::Success) return;
 
     //Star
     auto star = tvg::Shape::gen();
-    star->fill(80, 80, 80, 255);
+    star->fill(80, 80, 80);
     star->moveTo(599, 34);
     star->lineTo(653, 143);
     star->lineTo(774, 160);
@@ -85,7 +85,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     //Mask3
     auto mask3 = tvg::Shape::gen();
     mask3->appendCircle(600, 200, 125, 125);
-    mask3->fill(0, 255, 255, 255);
+    mask3->fill(0, 255, 255);
     star->composite(std::move(mask3), tvg::CompositeMethod::InvLumaMask);
     if (canvas->push(std::move(star)) != tvg::Result::Success) return;
 
@@ -104,10 +104,10 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     auto mask4 = tvg::Scene::gen();
     auto mask4_rect = tvg::Shape::gen();
     mask4_rect->appendRect(500, 400, 200, 300, 0, 0);
-    mask4_rect->fill(255, 255, 255, 255);
+    mask4_rect->fill(255, 255, 255);
     auto mask4_circle = tvg::Shape::gen();
     mask4_circle->appendCircle(600, 550, 125, 125);
-    mask4_circle->fill(128, 0, 128, 224);
+    mask4_circle->fill(128, 0, 128);
     if (mask4->push(std::move(mask4_rect)) != tvg::Result::Success) return;
     if (mask4->push(std::move(mask4_circle)) != tvg::Result::Success) return;
     image->composite(std::move(mask4), tvg::CompositeMethod::InvLumaMask);

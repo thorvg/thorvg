@@ -37,7 +37,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     // background
     auto bg = tvg::Shape::gen();
     bg->appendRect(0,0,WIDTH, HEIGHT,0, 0);
-    bg->fill(255, 255, 255, 255);
+    bg->fill(255, 255, 255);
     canvas->push(std::move(bg));
 
     // image
@@ -54,7 +54,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     auto maskShape = tvg::Shape::gen();
     pMaskShape = maskShape.get();
     maskShape->appendCircle(180, 180, 75, 75);
-    maskShape->fill(125, 125, 125, 255);
+    maskShape->fill(125, 125, 125);
     maskShape->stroke(25, 25, 25, 255);
     maskShape->stroke(tvg::StrokeJoin::Round);
     maskShape->stroke(10);
@@ -63,7 +63,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     auto mask = tvg::Shape::gen();
     pMask = mask.get();
     mask->appendCircle(180, 180, 75, 75);
-    mask->fill(255, 255, 255, 255);    //AlphaMask RGB channels are unused.
+    mask->fill(255, 255, 255);         //AlphaMask RGB channels are unused.
 
     picture2->composite(std::move(mask), tvg::CompositeMethod::AlphaMask);
     if (canvas->push(std::move(picture2)) != tvg::Result::Success) return;

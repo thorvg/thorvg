@@ -46,7 +46,7 @@ void tvgUpdateCmds(tvg::Canvas* canvas, float progress)
     shape->lineTo(-173, 12.5);
     shape->lineTo(-53, -5.5);
     shape->close();
-    shape->fill(0, 0, 255, 255);
+    shape->fill(0, 0, 255);
     shape->stroke(3);
     shape->stroke(255, 255, 255, 255);
 

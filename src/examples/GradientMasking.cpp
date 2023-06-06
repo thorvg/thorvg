@@ -38,7 +38,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     //Mask
     auto mask = tvg::Shape::gen();
     mask->appendCircle(200, 200, 125, 125);
-    mask->fill(255, 0, 0, 255);
+    mask->fill(255, 0, 0);
 
     auto fill = tvg::LinearGradient::gen();
     fill->linear(0, 0, 400, 400);
@@ -70,7 +70,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     //Mask
     auto mask1 = tvg::Shape::gen();
     mask1->appendCircle(600, 200, 125, 125);
-    mask1->fill(255, 0, 0, 255);
+    mask1->fill(255, 0, 0);
 
     auto fill1 = tvg::LinearGradient::gen();
     fill1->linear(400, 0, 800, 400);
@@ -92,7 +92,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     //Mask
     auto mask2 = tvg::Shape::gen();
     mask2->appendCircle(200, 600, 125, 125);
-    mask2->fill(255, 0, 0, 255);
+    mask2->fill(255, 0, 0);
 
     auto fill2 = tvg::LinearGradient::gen();
     fill2->linear(0, 400, 400, 800);
@@ -124,7 +124,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     //Mask
     auto mask3 = tvg::Shape::gen();
     mask3->appendCircle(600, 600, 125, 125);
-    mask3->fill(255, 0, 0, 255);
+    mask3->fill(255, 0, 0);
 
     auto fill3 = tvg::LinearGradient::gen();
     fill3->linear(400, 400, 800, 800);

@@ -355,6 +355,7 @@ public:
      *
      * @note The bounding box doesn't indicate the final rendered region. It's the smallest rectangle that encloses the object.
      * @see Paint::bounds(float* x, float* y, float* w, float* h, bool transformed);
+     * @deprecated Use bounds(float* x, float* y, float* w, float* h, bool transformed) instead
      */
     TVG_DEPRECATED Result bounds(float* x, float* y, float* w, float* h) const noexcept;
 
@@ -990,7 +991,7 @@ public:
      * @note Either a solid color or a gradient fill is applied, depending on what was set as last.
      * @note ClipPath won't use the fill values. (see: enum class CompositeMethod::ClipPath)
      */
-    Result fill(uint8_t r, uint8_t g, uint8_t b, uint8_t a) noexcept;
+    Result fill(uint8_t r, uint8_t g, uint8_t b, uint8_t a = 255) noexcept;
 
     /**
      * @brief Sets the gradient fill for all of the figures from the path.
@@ -1062,7 +1063,7 @@ public:
      *
      * @return Result::Success when succeed.
      */
-    Result fillColor(uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a) const noexcept;
+    Result fillColor(uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a = nullptr) const noexcept;
 
     /**
      * @brief Gets the fill rule value.
