@@ -89,7 +89,7 @@ TEST_CASE("Common Filling", "[tvgFill]")
     REQUIRE(shape);
 
     auto pFill = fill.get();
-    REQUIRE(shape->fill(move(fill)) == Result::Success);
+    REQUIRE(shape->fill(std::move(fill)) == Result::Success);
     REQUIRE(shape->fill() == pFill);
 }
 

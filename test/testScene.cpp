@@ -51,7 +51,7 @@ TEST_CASE("Pushing Paints Into Scene", "[tvgScene]")
 
     //Pushing Invalid Paint
     std::unique_ptr<Shape> shape = nullptr;
-    REQUIRE(scene->push(move(shape)) == Result::MemoryCorruption);
+    REQUIRE(scene->push(std::move(shape)) == Result::MemoryCorruption);
 }
 
 TEST_CASE("Scene Memory Reservation", "[tvgScene]")
@@ -90,8 +90,8 @@ TEST_CASE("Scene Clear And Reuse Shape", "[tvgScene]")
     REQUIRE(shape);
     Shape* pShape = shape.get();
 
-    REQUIRE(scene->push(move(shape)) == Result::Success);
-    REQUIRE(canvas->push(move(scene)) == Result::Success);
+    REQUIRE(scene->push(std::move(shape)) == Result::Success);
+    REQUIRE(canvas->push(std::move(scene)) == Result::Success);
     REQUIRE(canvas->update() == Result::Success);
 
     //No deallocate shape.
