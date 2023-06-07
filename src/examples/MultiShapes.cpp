@@ -30,8 +30,6 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 {
     if (!canvas) return;
 
-    canvas->reserve(3);                          //reserve 3 shape nodes (optional)
-
     //Prepare Round Rectangle
     auto shape1 = tvg::Shape::gen();
     shape1->appendRect(0, 0, 400, 400, 50, 50);  //x, y, w, h, rx, ry

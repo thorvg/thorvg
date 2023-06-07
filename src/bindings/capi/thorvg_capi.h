@@ -540,7 +540,7 @@ TVG_API Tvg_Result tvg_canvas_destroy(Tvg_Canvas* canvas);
 * \retval TVG_RESULT_INSUFFICIENT_CONDITION An internal error.
 *
 * \note The rendering order of the paints is the same as the order as they were pushed. Consider sorting the paints before pushing them if you intend to use layering.
-* \see tvg_canvas_reserve(), tvg_canvas_clear()
+* \see tvg_canvas_clear()
 */
 TVG_API Tvg_Result tvg_canvas_push(Tvg_Canvas* canvas, Tvg_Paint* paint);
 
@@ -562,7 +562,6 @@ TVG_API Tvg_Result tvg_canvas_push(Tvg_Canvas* canvas, Tvg_Paint* paint);
 * if (!buffer) return;
 *
 * tvg_swcanvas_set_target(canvas, buffer, 100, 100, 100, TVG_COLORSPACE_ARGB8888);
-* tvg_canvas_reserve(canvas, 100); //reserve array for 100 paints in canvas.
 *
 * tvg_canvas_destroy(canvas);
 * tvg_engine_term(TVG_ENGINE_SW)
@@ -576,7 +575,7 @@ TVG_API Tvg_Result tvg_canvas_push(Tvg_Canvas* canvas, Tvg_Paint* paint);
 * \retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Canvas pointer.
 * \retval TVG_RESULT_FAILED_ALLOCATION An internal error with memory allocation.
 */
-TVG_API Tvg_Result tvg_canvas_reserve(Tvg_Canvas* canvas, uint32_t n);
+TVG_DEPRECATED TVG_API Tvg_Result tvg_canvas_reserve(Tvg_Canvas* canvas, uint32_t n);
 
 
 /*!
@@ -1976,7 +1975,7 @@ TVG_API Tvg_Paint* tvg_scene_new();
 * \retval TVG_RESULT_FAILED_ALLOCATION An internal error with a memory allocation.
 * \retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
 */
-TVG_API Tvg_Result tvg_scene_reserve(Tvg_Paint* scene, uint32_t size);
+TVG_DEPRECATED TVG_API Tvg_Result tvg_scene_reserve(Tvg_Paint* scene, uint32_t size);
 
 
 /*!
@@ -1995,7 +1994,6 @@ TVG_API Tvg_Result tvg_scene_reserve(Tvg_Paint* scene, uint32_t size);
 * \retval TVG_RESULT_MEMORY_CORRUPTION An internal error.
 *
 * \note The rendering order of the paints is the same as the order as they were pushed. Consider sorting the paints before pushing them if you intend to use layering.
-* \see tvg_scene_reserve()
 */
 TVG_API Tvg_Result tvg_scene_push(Tvg_Paint* scene, Tvg_Paint* paint);
 

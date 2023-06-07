@@ -54,18 +54,6 @@ TEST_CASE("Pushing Paints Into Scene", "[tvgScene]")
     REQUIRE(scene->push(std::move(shape)) == Result::MemoryCorruption);
 }
 
-TEST_CASE("Scene Memory Reservation", "[tvgScene]")
-{
-    auto scene = Scene::gen();
-    REQUIRE(scene);
-
-    //Check Growth / Reduction
-    REQUIRE(scene->reserve(10) == Result::Success);
-    REQUIRE(scene->reserve(1000) == Result::Success);
-    REQUIRE(scene->reserve(100) == Result::Success);
-    REQUIRE(scene->reserve(0) == Result::Success);
-}
-
 TEST_CASE("Scene Clear", "[tvgScene]")
 {
     auto scene = Scene::gen();

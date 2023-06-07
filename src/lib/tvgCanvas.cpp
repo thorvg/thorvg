@@ -37,10 +37,15 @@ Canvas::~Canvas()
 }
 
 
-Result Canvas::reserve(uint32_t n) noexcept
+Result Canvas::reserve(TVG_UNUSED uint32_t n) noexcept
 {
-    if (!pImpl->paints.reserve(n)) return Result::FailedAllocation;
-    return Result::Success;
+    return Result::NonSupport;
+}
+
+
+list<Paint*>& Canvas::paints() noexcept
+{
+    return pImpl->paints;
 }
 
 

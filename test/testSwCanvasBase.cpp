@@ -27,22 +27,6 @@
 using namespace tvg;
 
 
-TEST_CASE("Memory Reservation", "[tvgSwCanvasBase]")
-{
-    REQUIRE(Initializer::init(CanvasEngine::Sw, 0) == Result::Success);
-
-    auto canvas = SwCanvas::gen();
-    REQUIRE(canvas);
-
-    //Check Growth / Reduction
-    REQUIRE(canvas->reserve(10) == Result::Success);
-    REQUIRE(canvas->reserve(1000) == Result::Success);
-    REQUIRE(canvas->reserve(100) == Result::Success);
-    REQUIRE(canvas->reserve(0) == Result::Success);
-
-    REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
-}
-
 TEST_CASE("Pushing Paints", "[tvgSwCanvasBase]")
 {
     REQUIRE(Initializer::init(CanvasEngine::Sw, 0) == Result::Success);

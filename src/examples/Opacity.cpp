@@ -33,7 +33,6 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     //Create a Scene
     auto scene = tvg::Scene::gen();
     scene->opacity(175);              //Apply opacity to scene (0 - 255)
-    scene->reserve(2);
 
     //Prepare Circle
     auto shape1 = tvg::Shape::gen();
@@ -57,7 +56,6 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     auto scene2 = tvg::Scene::gen();
     scene2->opacity(127);              //Apply opacity to scene (0 - 255)
     scene2->scale(1.2);
-    scene2->reserve(2);
 
     //Star
     auto shape3 = tvg::Shape::gen();
