@@ -32,7 +32,6 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     //Create a Scene
     auto scene = tvg::Scene::gen();
-    scene->reserve(3);   //reserve 3 shape nodes (optional)
 
     //Prepare Round Rectangle
     auto shape1 = tvg::Shape::gen();
@@ -54,7 +53,6 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     //Create another Scene
     auto scene2 = tvg::Scene::gen();
-    scene2->reserve(2);   //reserve 2 shape nodes (optional)
 
     //Star
     auto shape4 = tvg::Shape::gen();

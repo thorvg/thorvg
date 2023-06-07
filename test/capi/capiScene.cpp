@@ -55,23 +55,6 @@ TEST_CASE("Paints Into a Scene", "[capiScene]")
     REQUIRE(tvg_paint_del(scene) == TVG_RESULT_SUCCESS);
 }
 
-TEST_CASE("Scene Reservation", "[capiScene]")
-{
-    Tvg_Paint* scene = tvg_scene_new();
-    REQUIRE(scene);
-
-    //Check Growth / Reduction
-    REQUIRE(tvg_scene_reserve(scene, 100) == TVG_RESULT_SUCCESS);
-    REQUIRE(tvg_scene_reserve(scene, 1000) == TVG_RESULT_SUCCESS);
-    REQUIRE(tvg_scene_reserve(scene, 100) == TVG_RESULT_SUCCESS);
-    REQUIRE(tvg_scene_reserve(scene, 0) == TVG_RESULT_SUCCESS);
-
-    //Invalid scene
-    REQUIRE(tvg_scene_reserve(NULL, 1) == TVG_RESULT_INVALID_ARGUMENT);
-
-    REQUIRE(tvg_paint_del(scene) == TVG_RESULT_SUCCESS);
-}
-
 TEST_CASE("Clear the Scene", "[capiScene]")
 {
     Tvg_Paint* scene = tvg_scene_new();

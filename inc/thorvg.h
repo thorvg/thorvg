@@ -18,6 +18,7 @@
 #include <functional>
 #include <memory>
 #include <string>
+#include <list>
 
 #ifdef TVG_API
     #undef TVG_API
@@ -548,14 +549,25 @@ public:
      *
      * @return Result::Success when succeed.
      */
-    Result reserve(uint32_t n) noexcept;
+    TVG_DEPRECATED Result reserve(uint32_t n) noexcept;
+
+    /**
+     * @brief Returns the list of the paints that currently held by the Canvas.
+     *
+     * This function provides the list of paint nodes, allowing users a direct opportunity to modify the scene tree.
+     *
+     * @warning  Please avoid accessing the paints during Canvas update/draw. You can access them after calling sync().
+     * @see Canvas::sync()
+     *
+     * @BETA_API
+     */
+    std::list<Paint*>& paints() noexcept;
 
     /**
      * @brief Passes drawing elements to the Canvas using Paint objects.
      *
      * Only pushed paints in the canvas will be drawing targets.
      * They are retained by the canvas until you call Canvas::clear().
-     * If you know the number of the pushed objects in advance, please call Canvas::reserve().
      *
      * @param[in] paint A Paint object to be drawn.
      *
@@ -564,7 +576,7 @@ public:
      * @retval Result::InsufficientCondition An internal error.
      *
      * @note The rendering order of the paints is the same as the order as they were pushed into the canvas. Consider sorting the paints before pushing them if you intend to use layering.
-     * @see Canvas::reserve()
+     * @see Canvas::paints()
      * @see Canvas::clear()
      */
     virtual Result push(std::unique_ptr<Paint> paint) noexcept;
@@ -578,6 +590,8 @@ public:
      * @return Result::Success when succeed, Result::InsufficientCondition otherwise.
      *
      * @warning If you don't free the paints they become dangled. They are supposed to be reused, otherwise you are responsible for their lives. Thus please use the @p free argument only when you know how it works, otherwise it's not recommended.
+     * @see Canvas::push()
+     * @see Canvas::paints()
      */
     virtual Result clear(bool free = true) noexcept;
 
@@ -1329,14 +1343,14 @@ public:
      *
      * Only the paints pushed into the scene will be the drawn targets.
      * The paints are retained by the scene until Scene::clear() is called.
-     * If you know the number of the pushed objects in advance, please call Scene::reserve().
      *
      * @param[in] paint A Paint object to be drawn.
      *
      * @return Result::Success when succeed, Result::MemoryCorruption otherwise.
      *
      * @note The rendering order of the paints is the same as the order as they were pushed. Consider sorting the paints before pushing them if you intend to use layering.
-     * @see Scene::reserve()
+     * @see Scene::paints()
+     * @see Scene::clear()
      */
     Result push(std::unique_ptr<Paint> paint) noexcept;
 
@@ -1350,7 +1364,21 @@ public:
      *
      * @return Result::Success when succeed, Result::FailedAllocation otherwise.
      */
-    Result reserve(uint32_t size) noexcept;
+    TVG_DEPRECATED Result reserve(uint32_t size) noexcept;
+
+    /**
+     * @brief Returns the list of the paints that currently held by the Scene.
+     *
+     * This function provides the list of paint nodes, allowing users a direct opportunity to modify the scene tree.
+     *
+     * @warning  Please avoid accessing the paints during Scene update/draw. You can access them after calling Canvas::sync().
+     * @see Canvas::sync()
+     * @see Scene::push()
+     * @see Scene::clear()
+     *
+     * @BETA_API
+     */
+    std::list<Paint*>& paints() noexcept;
 
     /**
      * @brief Sets the total number of the paints pushed into the scene to be zero.

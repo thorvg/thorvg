@@ -48,23 +48,6 @@ TEST_CASE("Basic canvas", "[capiSwCanvas]")
     REQUIRE(tvg_engine_term(TVG_ENGINE_SW) == TVG_RESULT_SUCCESS);
 }
 
-TEST_CASE("Memory Reservation", "[capiSwCanvas]")
-{
-    REQUIRE(tvg_engine_init(TVG_ENGINE_SW, 0) == TVG_RESULT_SUCCESS);
-
-    Tvg_Canvas* canvas = tvg_swcanvas_create();
-    REQUIRE(canvas);
-
-    REQUIRE(tvg_canvas_reserve(canvas, 1) == TVG_RESULT_SUCCESS);
-    REQUIRE(tvg_canvas_reserve(canvas, 10) == TVG_RESULT_SUCCESS);
-    REQUIRE(tvg_canvas_reserve(canvas, 100) == TVG_RESULT_SUCCESS);
-    REQUIRE(tvg_canvas_reserve(canvas, 0) == TVG_RESULT_SUCCESS);
-
-    REQUIRE(tvg_canvas_destroy(canvas) == TVG_RESULT_SUCCESS);
-
-    REQUIRE(tvg_engine_term(TVG_ENGINE_SW) == TVG_RESULT_SUCCESS);
-}
-
 TEST_CASE("Canvas initialization", "[capiSwCanvas]")
 {
     uint32_t* buffer = (uint32_t*) malloc(sizeof(uint32_t) * 200 * 200);

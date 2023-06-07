@@ -32,33 +32,36 @@
 
 struct SceneIterator : Iterator
 {
-    Array<Paint*>* paints;
-    uint32_t idx = 0;
+    list<Paint*>* paints;
+    list<Paint*>::iterator itr;
 
-    SceneIterator(Array<Paint*>* p) : paints(p)
+    SceneIterator(list<Paint*>* p) : paints(p)
     {
+        begin();
     }
 
     const Paint* next() override
     {
-        if (idx >= paints->count) return nullptr;
-        return paints->data[idx++];
+        if (itr == paints->end()) return nullptr;
+        auto paint = *itr;
+        ++itr;
+        return paint;
     }
 
     uint32_t count() override
     {
-        return paints->count;
+       return paints->size();
     }
 
     void begin() override
     {
-        idx = 0;
+        itr = paints->begin();
     }
 };
 
 struct Scene::Impl
 {
-    Array<Paint*> paints;
+    list<Paint*> paints;
     RenderMethod* renderer = nullptr;    //keep it for explicit clear
     RenderData rd = nullptr;
     Scene* scene = nullptr;
@@ -71,15 +74,15 @@ struct Scene::Impl
 
     ~Impl()
     {
-        for (auto paint = paints.data; paint < (paints.data + paints.count); ++paint) {
-            delete(*paint);
+        for (auto paint : paints) {
+            delete(paint);
         }
     }
 
     bool dispose(RenderMethod& renderer)
     {
-        for (auto paint = paints.data; paint < (paints.data + paints.count); ++paint) {
-            (*paint)->pImpl->dispose(renderer);
+        for (auto paint : paints) {
+            paint->pImpl->dispose(renderer);
         }
 
         auto ret = renderer.dispose(rd);
@@ -91,7 +94,7 @@ struct Scene::Impl
 
     bool needComposition(uint32_t opacity)
     {
-        if (opacity == 0 || paints.count == 0) return false;
+        if (opacity == 0 || paints.empty()) return false;
 
         //Masking may require composition (even if opacity == 255)
         auto compMethod = scene->composite(nullptr);
@@ -103,7 +106,7 @@ struct Scene::Impl
         //If scene has several children or only scene, it may require composition.
         //OPTIMIZE: the bitmap type of the picture would not need the composition.
         //OPTIMIZE: a single paint of a scene would not need the composition.
-        if (paints.count == 1 && (*paints.data)->identifier() == TVG_CLASS_ID_SHAPE) return false;
+        if (paints.size() == 1 && paints.front()->identifier() == TVG_CLASS_ID_SHAPE) return false;
 
         return true;
     }
@@ -121,15 +124,15 @@ struct Scene::Impl
 
         if (clipper) {
             Array<RenderData> rds;
-            rds.reserve(paints.count);
-            for (auto paint = paints.data; paint < (paints.data + paints.count); ++paint) {
-                rds.push((*paint)->pImpl->update(renderer, transform, opacity, clips, flag, true));
+            rds.reserve(paints.size());
+            for (auto paint : paints) {
+                rds.push(paint->pImpl->update(renderer, transform, opacity, clips, flag, true));
             }
             rd = renderer.prepare(rds, rd, transform, opacity, clips, flag);
             return rd;
         } else {
-            for (auto paint = paints.data; paint < (paints.data + paints.count); ++paint) {
-                (*paint)->pImpl->update(renderer, transform, opacity, clips, flag, false);
+            for (auto paint : paints) {
+                paint->pImpl->update(renderer, transform, opacity, clips, flag, false);
             }
             return nullptr;
         }
@@ -144,8 +147,8 @@ struct Scene::Impl
             renderer.beginComposite(cmp, CompositeMethod::None, opacity);
         }
 
-        for (auto paint = paints.data; paint < (paints.data + paints.count); ++paint) {
-            if (!(*paint)->pImpl->render(renderer)) return false;
+        for (auto paint : paints) {
+            if (!paint->pImpl->render(renderer)) return false;
         }
 
         if (cmp) renderer.endComposite(cmp);
@@ -155,15 +158,15 @@ struct Scene::Impl
 
     RenderRegion bounds(RenderMethod& renderer) const
     {
-        if (paints.count == 0) return {0, 0, 0, 0};
+        if (paints.empty()) return {0, 0, 0, 0};
 
         int32_t x1 = INT32_MAX;
         int32_t y1 = INT32_MAX;
         int32_t x2 = 0;
         int32_t y2 = 0;
 
-        for (auto paint = paints.data; paint < (paints.data + paints.count); ++paint) {
-            auto region = (*paint)->pImpl->bounds(renderer);
+        for (auto paint : paints) {
+            auto region = paint->pImpl->bounds(renderer);
 
             //Merge regions
             if (region.x < x1) x1 = region.x;
@@ -177,20 +180,20 @@ struct Scene::Impl
 
     bool bounds(float* px, float* py, float* pw, float* ph)
     {
-        if (paints.count == 0) return false;
+        if (paints.empty()) return false;
 
         auto x1 = FLT_MAX;
         auto y1 = FLT_MAX;
         auto x2 = -FLT_MAX;
         auto y2 = -FLT_MAX;
 
-        for (auto paint = paints.data; paint < (paints.data + paints.count); ++paint) {
+        for (auto paint : paints) {
             auto x = FLT_MAX;
             auto y = FLT_MAX;
             auto w = 0.0f;
             auto h = 0.0f;
 
-            if ((*paint)->bounds(&x, &y, &w, &h, true) != tvg::Result::Success) continue;
+            if (paint->bounds(&x, &y, &w, &h, true) != tvg::Result::Success) continue;
 
             //Merge regions
             if (x < x1) x1 = x;
@@ -213,10 +216,8 @@ struct Scene::Impl
 
         auto dup = ret.get()->pImpl;
 
-        dup->paints.reserve(paints.count);
-
-        for (auto paint = paints.data; paint < (paints.data + paints.count); ++paint) {
-            dup->paints.push((*paint)->duplicate());
+        for (auto paint : paints) {
+            dup->paints.push_back(paint->duplicate());
         }
 
         return ret.release();
@@ -226,9 +227,9 @@ struct Scene::Impl
     {
         auto dispose = renderer ? true : false;
 
-        for (auto paint = paints.data; paint < (paints.data + paints.count); ++paint) {
-            if (dispose) (*paint)->pImpl->dispose(*renderer);
-            if (free) delete(*paint);
+        for (auto paint : paints) {
+            if (dispose) paint->pImpl->dispose(*renderer);
+            if (free) delete(paint);
         }
         paints.clear();
         renderer = nullptr;

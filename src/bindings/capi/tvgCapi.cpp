@@ -89,8 +89,7 @@ TVG_API Tvg_Result tvg_canvas_push(Tvg_Canvas* canvas, Tvg_Paint* paint)
 
 TVG_API Tvg_Result tvg_canvas_reserve(Tvg_Canvas* canvas, uint32_t n)
 {
-    if (!canvas) return TVG_RESULT_INVALID_ARGUMENT;
-    return (Tvg_Result) reinterpret_cast<Canvas*>(canvas)->reserve(n);
+    return TVG_RESULT_NOT_SUPPORTED;
 }
 
 
@@ -638,8 +637,7 @@ TVG_API Tvg_Paint* tvg_scene_new()
 
 TVG_API Tvg_Result tvg_scene_reserve(Tvg_Paint* scene, uint32_t size)
 {
-    if (!scene) return TVG_RESULT_INVALID_ARGUMENT;
-    return (Tvg_Result) reinterpret_cast<Scene*>(scene)->reserve(size);
+    return TVG_RESULT_NOT_SUPPORTED;
 }
 
 

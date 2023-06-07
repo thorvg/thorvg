@@ -72,7 +72,6 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     {
         //Create a Scene1
         auto scene1 = tvg::Scene::gen();
-        scene1->reserve(3);
 
         auto shape1 = tvg::Shape::gen();
         shape1->appendRect(0, 0, 400, 400, 50, 50);

@@ -41,8 +41,6 @@ void testCapi()
     tvg_swcanvas_set_target(canvas, buffer, WIDTH, WIDTH, HEIGHT, TVG_COLORSPACE_ARGB8888);
     tvg_swcanvas_set_mempool(canvas, TVG_MEMPOOL_POLICY_DEFAULT);
 
-    tvg_canvas_reserve(canvas, 6);
-
 //////1. Linear gradient shape with a linear gradient stroke
     //Set a shape
     Tvg_Paint* shape1 = tvg_shape_new();
@@ -148,7 +146,6 @@ void testCapi()
 //////4. Scene
     //Set a scene
     Tvg_Paint* scene = tvg_scene_new();
-    tvg_scene_reserve(scene, 2);
 
     //Set an arc
     Tvg_Paint* scene_shape1 = tvg_shape_new();

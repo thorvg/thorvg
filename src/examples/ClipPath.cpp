@@ -52,7 +52,6 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     //////////////////////////////////////////////
     auto scene = tvg::Scene::gen();
-    scene->reserve(2);
 
     auto star1 = tvg::Shape::gen();
     tvgDrawStar(star1.get());
