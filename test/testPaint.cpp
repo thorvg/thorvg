@@ -156,7 +156,7 @@ TEST_CASE("Duplication", "[tvgPaint]")
 
     auto comp = Shape::gen();
     REQUIRE(comp);
-    REQUIRE(shape->composite(move(comp), CompositeMethod::ClipPath) == Result::Success);
+    REQUIRE(shape->composite(std::move(comp), CompositeMethod::ClipPath) == Result::Success);
 
     //Duplication
     auto dup = tvg::cast<Shape>(shape->duplicate());
@@ -189,12 +189,12 @@ TEST_CASE("Composition", "[tvgPaint]")
 
     auto comp = Shape::gen();
     REQUIRE(shape->composite(nullptr, CompositeMethod::ClipPath) == Result::InvalidArguments);
-    REQUIRE(shape->composite(move(comp), CompositeMethod::None) == Result::InvalidArguments);
+    REQUIRE(shape->composite(std::move(comp), CompositeMethod::None) == Result::InvalidArguments);
 
     //ClipPath
     comp = Shape::gen();
     auto pComp = comp.get();
-    REQUIRE(shape->composite(move(comp), CompositeMethod::ClipPath) == Result::Success);
+    REQUIRE(shape->composite(std::move(comp), CompositeMethod::ClipPath) == Result::Success);
 
     const Paint* pComp2 = nullptr;
     REQUIRE(shape->composite(&pComp2) == CompositeMethod::ClipPath);
@@ -203,7 +203,7 @@ TEST_CASE("Composition", "[tvgPaint]")
     //AlphaMask
     comp = Shape::gen();
     pComp = comp.get();
-    REQUIRE(shape->composite(move(comp), CompositeMethod::AlphaMask) == Result::Success);
+    REQUIRE(shape->composite(std::move(comp), CompositeMethod::AlphaMask) == Result::Success);
 
     REQUIRE(shape->composite(&pComp2) == CompositeMethod::AlphaMask);
     REQUIRE(pComp == pComp2);
@@ -211,7 +211,7 @@ TEST_CASE("Composition", "[tvgPaint]")
     //InvAlphaMask
     comp = Shape::gen();
     pComp = comp.get();
-    REQUIRE(shape->composite(move(comp), CompositeMethod::InvAlphaMask) == Result::Success);
+    REQUIRE(shape->composite(std::move(comp), CompositeMethod::InvAlphaMask) == Result::Success);
 
     REQUIRE(shape->composite(&pComp2) == CompositeMethod::InvAlphaMask);
     REQUIRE(pComp == pComp2);
@@ -219,7 +219,7 @@ TEST_CASE("Composition", "[tvgPaint]")
     //LumaMask
     comp = Shape::gen();
     pComp = comp.get();
-    REQUIRE(shape->composite(move(comp), CompositeMethod::LumaMask) == Result::Success);
+    REQUIRE(shape->composite(std::move(comp), CompositeMethod::LumaMask) == Result::Success);
 
     REQUIRE(shape->composite(&pComp2) == CompositeMethod::LumaMask);
     REQUIRE(pComp == pComp2);
@@ -227,7 +227,7 @@ TEST_CASE("Composition", "[tvgPaint]")
     //InvLumaMask
     comp = Shape::gen();
     pComp = comp.get();
-    REQUIRE(shape->composite(move(comp), CompositeMethod::InvLumaMask) == Result::Success);
+    REQUIRE(shape->composite(std::move(comp), CompositeMethod::InvLumaMask) == Result::Success);
 
     REQUIRE(shape->composite(&pComp2) == CompositeMethod::InvLumaMask);
     REQUIRE(pComp == pComp2);

@@ -55,7 +55,7 @@ TEST_CASE("Set", "[tvgAccessor]")
     REQUIRE(accessor);
 
     //Case 1
-    picture = accessor->set(move(picture), nullptr);
+    picture = accessor->set(std::move(picture), nullptr);
     REQUIRE(picture);
 
     //Case 2
@@ -71,7 +71,7 @@ TEST_CASE("Set", "[tvgAccessor]")
         return true;
     };
 
-    picture = accessor->set(move(picture), f);
+    picture = accessor->set(std::move(picture), f);
     REQUIRE(picture);
 
     REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);

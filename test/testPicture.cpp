@@ -93,7 +93,7 @@ TEST_CASE("Load RAW file and render", "[tvgPicture]")
     REQUIRE(picture->load(data, 200, 300, false) == Result::Success);
     REQUIRE(picture->size(100, 150) == Result::Success);
 
-    REQUIRE(canvas->push(move(picture)) == Result::Success);
+    REQUIRE(canvas->push(std::move(picture)) == Result::Success);
 
     REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
 
@@ -282,7 +282,7 @@ TEST_CASE("Load SVG file and render", "[tvgPicture]")
     REQUIRE(picture->load(TEST_DIR"/tag.svg") == Result::Success);
     REQUIRE(picture->size(100, 100) == Result::Success);
 
-    REQUIRE(canvas->push(move(picture)) == Result::Success);
+    REQUIRE(canvas->push(std::move(picture)) == Result::Success);
     REQUIRE(canvas->draw() == Result::Success);
     REQUIRE(canvas->sync() == Result::Success);
 
@@ -353,7 +353,7 @@ TEST_CASE("Load PNG file and render", "[tvgPicture]")
     REQUIRE(picture->opacity(192) == Result::Success);
     REQUIRE(picture->scale(5.0) == Result::Success);
 
-    REQUIRE(canvas->push(move(picture)) == Result::Success);
+    REQUIRE(canvas->push(std::move(picture)) == Result::Success);
 
     REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
 }
@@ -421,7 +421,7 @@ TEST_CASE("Load JPG file and render", "[tvgPicture]")
 
     REQUIRE(picture->load(TEST_DIR"/test.jpg") == Result::Success);
 
-    REQUIRE(canvas->push(move(picture)) == Result::Success);
+    REQUIRE(canvas->push(std::move(picture)) == Result::Success);
 
     REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
 }
@@ -489,12 +489,12 @@ TEST_CASE("Load TVG file and render", "[tvgPicture]")
     auto pictureTag = Picture::gen();
     REQUIRE(pictureTag);
     REQUIRE(pictureTag->load(TEST_DIR"/tag.tvg") == Result::Success);
-    REQUIRE(canvas->push(move(pictureTag)) == Result::Success);
+    REQUIRE(canvas->push(std::move(pictureTag)) == Result::Success);
 
     auto pictureTest = Picture::gen();
     REQUIRE(pictureTest);
     REQUIRE(pictureTest->load(TEST_DIR"/test.tvg") == Result::Success);
-    REQUIRE(canvas->push(move(pictureTest)) == Result::Success);
+    REQUIRE(canvas->push(std::move(pictureTest)) == Result::Success);
 
     REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
 

@@ -73,7 +73,7 @@ TEST_CASE("Pushing Paints", "[tvgSwCanvasBase]")
 
     //Negative case 2
     std::unique_ptr<Shape> shape6 = nullptr;
-    REQUIRE(canvas->push(move(shape6)) == Result::MemoryCorruption);
+    REQUIRE(canvas->push(std::move(shape6)) == Result::MemoryCorruption);
 
     //Negative case 3
     REQUIRE(canvas->push(Shape::gen()) == Result::Success);
@@ -111,7 +111,7 @@ TEST_CASE("Clear", "[tvgSwCanvasBase]")
         REQUIRE(shape2);
         ptrs[i] = shape2.get();
 
-        REQUIRE(canvas2->push(move(shape2)) == Result::Success);
+        REQUIRE(canvas2->push(std::move(shape2)) == Result::Success);
     }
 
     REQUIRE(canvas->clear() == Result::Success);
@@ -130,7 +130,7 @@ TEST_CASE("Clear", "[tvgSwCanvasBase]")
         REQUIRE(shape2);
         ptrs[i] = shape2.get();
 
-        REQUIRE(canvas2->push(move(shape2)) == Result::Success);
+        REQUIRE(canvas2->push(std::move(shape2)) == Result::Success);
     }
 
     REQUIRE(canvas->update() == Result::Success);
@@ -166,7 +166,7 @@ TEST_CASE("Update", "[tvgSwCanvasBase]")
 
     //Normal case
     auto ptr = shape.get();
-    REQUIRE(canvas->push(move(shape)) == Result::Success);
+    REQUIRE(canvas->push(std::move(shape)) == Result::Success);
     REQUIRE(canvas->update(ptr) == Result::Success);
     REQUIRE(canvas->update() == Result::Success);
     REQUIRE(canvas->draw() == Result::Success);
@@ -199,7 +199,7 @@ TEST_CASE("Synchronized Drawing", "[tvgSwCanvasBase]")
     //Invalid Shape
     auto shape = Shape::gen();
     REQUIRE(shape);
-    REQUIRE(canvas->push(move(shape)) == Result::Success);
+    REQUIRE(canvas->push(std::move(shape)) == Result::Success);
 
     REQUIRE(canvas->draw() == Result::Success);
     REQUIRE(canvas->sync() == Result::Success);
@@ -210,7 +210,7 @@ TEST_CASE("Synchronized Drawing", "[tvgSwCanvasBase]")
     REQUIRE(shape2->appendRect(0, 0, 100, 100, 0, 0) == Result::Success);
     REQUIRE(shape2->fill(255, 255, 255, 255) == Result::Success);
 
-    REQUIRE(canvas->push(move(shape2)) == Result::Success);
+    REQUIRE(canvas->push(std::move(shape2)) == Result::Success);
     REQUIRE(canvas->draw() == Result::Success);
     REQUIRE(canvas->sync() == Result::Success);
 
@@ -234,7 +234,7 @@ TEST_CASE("Asynchronized Drawing", "[tvgSwCanvasBase]")
         REQUIRE(shape->appendRect(0, 0, 100, 100, 0, 0) == Result::Success);
         REQUIRE(shape->fill(255, 255, 255, 255) == Result::Success);
 
-        REQUIRE(canvas->push(move(shape)) == Result::Success);
+        REQUIRE(canvas->push(std::move(shape)) == Result::Success);
     }
 
     REQUIRE(canvas->draw() == Result::Success);

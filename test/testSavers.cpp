@@ -44,7 +44,7 @@ TEST_CASE("Save empty shape", "[tvgSavers]")
     auto saver = Saver::gen();
     REQUIRE(saver);
 
-    REQUIRE(saver->save(move(shape), TEST_DIR"/test.tvg") == Result::Unknown);
+    REQUIRE(saver->save(std::move(shape), TEST_DIR"/test.tvg") == Result::Unknown);
 }
 
 TEST_CASE("Save svg into tvg", "[tvgSavers]")
@@ -58,7 +58,7 @@ TEST_CASE("Save svg into tvg", "[tvgSavers]")
     auto saver = Saver::gen();
     REQUIRE(saver);
 
-    REQUIRE(saver->save(move(picture), TEST_DIR"/tag.tvg") == Result::Success);
+    REQUIRE(saver->save(std::move(picture), TEST_DIR"/tag.tvg") == Result::Success);
     REQUIRE(saver->sync() == Result::Success);
 
     REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
@@ -85,11 +85,11 @@ TEST_CASE("Save scene into tvg", "[tvgSavers]")
     REQUIRE(mask);
     REQUIRE(mask->appendCircle(400, 400, 15, 15) == Result::Success);
     REQUIRE(mask->fill(0, 0, 0, 255) == Result::Success);
-    REQUIRE(picture->composite(move(mask), tvg::CompositeMethod::InvAlphaMask) == Result::Success);
+    REQUIRE(picture->composite(std::move(mask), tvg::CompositeMethod::InvAlphaMask) == Result::Success);
 
     auto saver = Saver::gen();
     REQUIRE(saver);
-    REQUIRE(saver->save(move(picture), TEST_DIR"/test.tvg") == Result::Success);
+    REQUIRE(saver->save(std::move(picture), TEST_DIR"/test.tvg") == Result::Success);
     REQUIRE(saver->sync() == Result::Success);
 
     REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
