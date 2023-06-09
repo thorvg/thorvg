@@ -412,6 +412,22 @@ TVG_API Tvg_Result tvg_shape_get_stroke_join(const Tvg_Paint* paint, Tvg_Stroke_
 }
 
 
+TVG_API Tvg_Result tvg_shape_set_stroke_miterlimit(Tvg_Paint* paint, float ml)
+{
+    if (ml < 0.0f) return TVG_RESULT_NOT_SUPPORTED;
+    if (!paint) return TVG_RESULT_INVALID_ARGUMENT;
+    return (Tvg_Result) reinterpret_cast<Shape*>(paint)->strokeMiterlimit(ml);
+}
+
+
+TVG_API Tvg_Result tvg_shape_get_stroke_miterlimit(const Tvg_Paint* paint, float* ml)
+{
+    if (!paint || !ml) return TVG_RESULT_INVALID_ARGUMENT;
+    *ml = reinterpret_cast<const Shape*>(paint)->strokeMiterlimit();
+    return TVG_RESULT_SUCCESS;
+}
+
+
 TVG_API Tvg_Result tvg_shape_set_fill_color(Tvg_Paint* paint, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 {
     if (!paint) return TVG_RESULT_INVALID_ARGUMENT;

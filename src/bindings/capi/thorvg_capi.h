@@ -1412,6 +1412,34 @@ TVG_API Tvg_Result tvg_shape_get_stroke_join(const Tvg_Paint* paint, Tvg_Stroke_
 
 
 /*!
+* \brief Sets the stroke miterlimit. (BETA_API)
+*
+* \param[in] paint A Tvg_Paint pointer to the shape object.
+* \param[in] miterlimit The miterlimit imposes a limit on the extent of the stroke join when the @c TVG_STROKE_JOIN_MITER join style is set. The default value is 4.
+*
+* \return Tvg_Result enumeration.
+* \retval TVG_RESULT_SUCCESS Succeed.
+* \retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
+* \retval TVG_RESULT_NOT_SUPPORTED Unsupported value.
+* \retval TVG_RESULT_FAILED_ALLOCATION An internal error with a memory allocation.
+*/
+TVG_API Tvg_Result tvg_shape_set_stroke_miterlimit(Tvg_Paint* paint, float miterlimit);
+
+
+/*!
+* \brief The function gets the stroke miterlimit. (BETA_API)
+*
+* \param[in] paint A Tvg_Paint pointer to the shape object.
+* \param[out] miterlimit The stroke miterlimit.
+*
+* \return Tvg_Result enumeration.
+* \retval TVG_RESULT_SUCCESS Succeed.
+* \retval TVG_RESULT_INVALID_ARGUMENT An invalid pointer passed as an argument.
+*/
+TVG_API Tvg_Result tvg_shape_get_stroke_miterlimit(const Tvg_Paint* paint, float* miterlimit);
+
+
+/*!
 * \brief Sets the shape's solid color.
 *
 * The parts of the shape defined as inner are colored.

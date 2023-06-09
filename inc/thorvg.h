@@ -990,6 +990,18 @@ public:
      */
     Result stroke(StrokeJoin join) noexcept;
 
+
+    /**
+     * @brief Sets the stroke miterlimit.
+     *
+     * @param[in] miterlimit The miterlimit imposes a limit on the extent of the stroke join, when the @c StrokeJoin::Miter join style is set. The default value is 4.
+     *
+     * @return Result::Success when succeed, Result::NonSupport unsupported value, Result::FailedAllocation otherwise.
+     * 
+     * @BETA_API
+     */
+    Result strokeMiterlimit(float miterlimit) noexcept;
+
     /**
      * @brief Sets the solid color for all of the figures from the path.
      *
@@ -1134,6 +1146,15 @@ public:
      * @return The join style value of the stroke.
      */
     StrokeJoin strokeJoin() const noexcept;
+
+    /**
+     * @brief Gets the stroke miterlimit.
+     *
+     * @return The stroke miterlimit value when succeed, 4 if no stroke was set.
+     *
+     * @BETA_API
+     */
+    float strokeMiterlimit() const noexcept;
 
     /**
      * @brief Creates a new Shape object.

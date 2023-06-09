@@ -373,6 +373,17 @@ Result Shape::stroke(StrokeJoin join) noexcept
     return Result::Success;
 }
 
+Result Shape::strokeMiterlimit(float miterlimit) noexcept
+{
+    // https://www.w3.org/TR/SVG2/painting.html#LineJoin
+    // - A negative value for stroke-miterlimit must be treated as an illegal value.
+    if (miterlimit < 0.0f) return Result::NonSupport;
+    // TODO Find out a reasonable max value.
+    if (!pImpl->strokeMiterlimit(miterlimit)) return Result::FailedAllocation;
+
+    return Result::Success;
+}
+
 
 StrokeCap Shape::strokeCap() const noexcept
 {
@@ -383,6 +394,11 @@ StrokeCap Shape::strokeCap() const noexcept
 StrokeJoin Shape::strokeJoin() const noexcept
 {
     return pImpl->rs.strokeJoin();
+}
+
+float Shape::strokeMiterlimit() const noexcept
+{
+    return pImpl->rs.strokeMiterlimit();
 }
 
 

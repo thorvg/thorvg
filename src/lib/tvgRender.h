@@ -139,6 +139,7 @@ struct RenderStroke
     uint32_t dashCnt = 0;
     StrokeCap cap = StrokeCap::Square;
     StrokeJoin join = StrokeJoin::Bevel;
+    float miterlimit = 4.0f;
     bool strokeFirst = false;
 
     ~RenderStroke()
@@ -224,6 +225,13 @@ struct RenderShape
     {
         if (!stroke) return StrokeJoin::Bevel;
         return stroke->join;
+    }
+
+    float strokeMiterlimit() const
+    {
+        if (!stroke) return 4.0f;
+
+        return stroke->miterlimit;;
     }
 };
 
