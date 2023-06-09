@@ -45,7 +45,7 @@ jobs:
 
     - name: Build
       run: |
-        meson . build -Dlog=true -Dloaders="tvg, svg, png, jpg" -Dsavers="all" -Dbindings="capi" -Dtools="all" -Dstatic=true
+        meson . build -Dlog=true -Dloaders="all" -Dsavers="all" -Dbindings="capi" -Dtools="all" -Dstatic=true
         sudo ninja -C build install
 
   examples:
