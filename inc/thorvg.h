@@ -1726,17 +1726,6 @@ std::unique_ptr<T> cast(Fill* fill)
 }
 
 
-/**
- * @brief The operator() function is the OR function used to combine Mask Alpha & Mask Operation
- *
- * @BETA_API
- */
-constexpr CompositeMethod operator+(CompositeMethod a, CompositeMethod b)
-{
-    return CompositeMethod(int(a) | int(b));
-}
-
-
 /** @}*/
 
 } //namespace
