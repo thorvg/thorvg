@@ -180,6 +180,7 @@ struct SwStroke
     SwPoint ptStartSubPath;
     SwFixed subPathLineLength;
     SwFixed width;
+    float miterlimit;
 
     StrokeCap cap;
     StrokeJoin join;

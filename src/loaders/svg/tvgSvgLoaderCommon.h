@@ -100,6 +100,7 @@ enum class SvgStrokeFlags
     Cap = 0x20,
     Join = 0x40,
     Dash = 0x80,
+    Miterlimit = 0x100
 };
 
 constexpr bool operator &(SvgStrokeFlags a, SvgStrokeFlags b)
@@ -137,7 +138,8 @@ enum class SvgStyleFlags
     Mask = 0x2000,
     MaskType = 0x4000,
     Display = 0x8000,
-    PaintOrder = 0x10000
+    PaintOrder = 0x10000,
+    StrokeMiterlimit = 0x20000
 };
 
 constexpr bool operator &(SvgStyleFlags a, SvgStyleFlags b)
@@ -466,6 +468,7 @@ struct SvgStyleStroke
     float centered;
     StrokeCap cap;
     StrokeJoin join;
+    float miterlimit;
     SvgDash dash;
     int dashCount;
 };

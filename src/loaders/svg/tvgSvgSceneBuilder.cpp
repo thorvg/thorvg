@@ -342,6 +342,7 @@ static void _applyProperty(SvgNode* node, Shape* vg, const Box& vBox, const stri
     vg->stroke(style->stroke.width);
     vg->stroke(style->stroke.cap);
     vg->stroke(style->stroke.join);
+    vg->strokeMiterlimit(style->stroke.miterlimit);
     if (style->stroke.dash.array.count > 0) {
         vg->stroke(style->stroke.dash.array.data, style->stroke.dash.array.count);
     }

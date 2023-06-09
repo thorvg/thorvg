@@ -233,8 +233,6 @@ static void _arcTo(SwStroke& stroke, int32_t side)
 
 static void _outside(SwStroke& stroke, int32_t side, SwFixed lineLength)
 {
-    constexpr SwFixed MITER_LIMIT = 4 * (1 << 16);
-
     auto border = stroke.borders + side;
 
     if (stroke.join == StrokeJoin::Round) {
@@ -257,7 +255,7 @@ static void _outside(SwStroke& stroke, int32_t side, SwFixed lineLength)
             }
 
             thcos = mathCos(theta);
-            auto sigma = mathMultiply(MITER_LIMIT, thcos);
+            auto sigma = mathMultiply(stroke.miterlimit, thcos);
 
             //is miter limit exceeded?
             if (sigma < 0x10000L) bevel = true;
@@ -844,6 +842,7 @@ void strokeReset(SwStroke* stroke, const RenderShape* rshape, const Matrix* tran
 
     stroke->width = HALF_STROKE(rshape->strokeWidth());
     stroke->cap = rshape->strokeCap();
+    stroke->miterlimit = rshape->strokeMiterlimit() * (1 << 16);
 
     //Save line join: it can be temporarily changed when stroking curves...
     stroke->joinSaved = stroke->join = rshape->strokeJoin();

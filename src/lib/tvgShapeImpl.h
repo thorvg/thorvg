@@ -245,6 +245,15 @@ struct Shape::Impl
         return true;
     }
 
+    bool strokeMiterlimit(float miterlimit)
+    {
+        if (!rs.stroke) rs.stroke = new RenderStroke();
+        rs.stroke->miterlimit = miterlimit;
+        flag |= RenderUpdateFlag::Stroke;
+
+        return true;
+    }
+
     bool strokeColor(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
     {
         if (!rs.stroke) rs.stroke = new RenderStroke();

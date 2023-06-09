@@ -191,6 +191,14 @@ TEST_CASE("Stroking", "[tvgShape]")
     REQUIRE(shape->stroke(StrokeJoin::Round) == Result::Success);
     REQUIRE(shape->strokeJoin() == StrokeJoin::Round);
 
+    //Stroke Miterlimit
+    REQUIRE(shape->strokeMiterlimit() == 4.0f);
+    REQUIRE(shape->strokeMiterlimit(0.00001f) == Result::Success);
+    REQUIRE(shape->strokeMiterlimit() == 0.00001f);
+    REQUIRE(shape->strokeMiterlimit(1000.0f) == Result::Success);
+    REQUIRE(shape->strokeMiterlimit() == 1000.0f);
+    REQUIRE(shape->strokeMiterlimit(-0.001f) == Result::NonSupport);
+
     //Stroke Order After Stroke Setting
     REQUIRE(shape->order(true) == Result::Success);
     REQUIRE(shape->order(false) == Result::Success);

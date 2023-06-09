@@ -224,6 +224,7 @@ TEST_CASE("Stroke join", "[capiStrokeJoin]")
     REQUIRE(paint);
 
     Tvg_Stroke_Join join;
+    float ml = -1.0f;
 
     REQUIRE(tvg_shape_set_stroke_join(paint, TVG_STROKE_JOIN_BEVEL) == TVG_RESULT_SUCCESS);
     REQUIRE(tvg_shape_get_stroke_join(paint, &join) == TVG_RESULT_SUCCESS);
@@ -232,6 +233,20 @@ TEST_CASE("Stroke join", "[capiStrokeJoin]")
     REQUIRE(tvg_shape_set_stroke_join(paint, TVG_STROKE_JOIN_MITER) == TVG_RESULT_SUCCESS);
     REQUIRE(tvg_shape_get_stroke_join(paint, &join) == TVG_RESULT_SUCCESS);
     REQUIRE(join == TVG_STROKE_JOIN_MITER);
+
+
+    REQUIRE(tvg_shape_get_stroke_miterlimit(paint, &ml) == TVG_RESULT_SUCCESS);
+    REQUIRE(ml == 4.0f);
+
+    REQUIRE(tvg_shape_set_stroke_miterlimit(paint, 1000.0f) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_shape_get_stroke_miterlimit(paint, &ml) == TVG_RESULT_SUCCESS);
+    REQUIRE(ml == 1000.0f);
+
+    REQUIRE(tvg_shape_set_stroke_miterlimit(paint, -0.001f) == TVG_RESULT_NOT_SUPPORTED);
+    REQUIRE(tvg_shape_get_stroke_miterlimit(paint, &ml) == TVG_RESULT_SUCCESS);
+    REQUIRE(ml == 1000.0f);
+
+
 
     REQUIRE(tvg_paint_del(paint) == TVG_RESULT_SUCCESS);
 }
