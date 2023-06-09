@@ -46,6 +46,7 @@ source_file = [
     'Stress.cpp',
     'Stroke.cpp',
     'StrokeLine.cpp',
+    'StrokeMiterlimit.cpp',
     'Svg.cpp',
     'Svg2.cpp',
     'Texmap.cpp',
