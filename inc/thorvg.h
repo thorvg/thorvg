@@ -866,7 +866,7 @@ public:
      *
      * @note For @p rx and @p ry greater than or equal to the half of @p w and the half of @p h, respectively, the shape become an ellipse.
      */
-    Result appendRect(float x, float y, float w, float h, float rx, float ry) noexcept;
+    Result appendRect(float x, float y, float w, float h, float rx = 0, float ry = 0) noexcept;
 
     /**
      * @brief Appends an ellipse to the path.

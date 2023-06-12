@@ -46,7 +46,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     if (!canvas) return;
     //Background
     auto shape = tvg::Shape::gen();
-    shape->appendRect(0, 0, WIDTH, HEIGHT, 0, 0);
+    shape->appendRect(0, 0, WIDTH, HEIGHT);
     shape->fill(255, 255, 255);
     if (canvas->push(std::move(shape)) != tvg::Result::Success) return;
 
@@ -111,7 +111,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     // color/alpha/opacity are ignored for a clip object - no need to set them
     auto clipRect = tvg::Shape::gen();
-    clipRect->appendRect(500, 120, 200, 200, 0, 0);          //x, y, w, h, rx, ry
+    clipRect->appendRect(500, 120, 200, 200);          //x, y, w, h
     clipRect->translate(20, 20);
 
     //Clipping scene to rect(shape)
@@ -144,7 +144,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     // color/alpha/opacity are ignored for a clip object - no need to set them
     auto clipShape = tvg::Shape::gen();
-    clipShape->appendRect(600, 420, 100, 100, 0, 0);
+    clipShape->appendRect(600, 420, 100, 100);
 
     //Clipping shape1 to clipShape
     shape1->composite(std::move(clipShape), tvg::CompositeMethod::ClipPath);

@@ -191,7 +191,7 @@ TEST_CASE("Synchronized Drawing", "[tvgSwCanvasBase]")
 
     auto shape2 = Shape::gen();
     REQUIRE(shape2);
-    REQUIRE(shape2->appendRect(0, 0, 100, 100, 0, 0) == Result::Success);
+    REQUIRE(shape2->appendRect(0, 0, 100, 100) == Result::Success);
     REQUIRE(shape2->fill(255, 255, 255, 255) == Result::Success);
 
     REQUIRE(canvas->push(std::move(shape2)) == Result::Success);
@@ -215,7 +215,7 @@ TEST_CASE("Asynchronized Drawing", "[tvgSwCanvasBase]")
     for (int i = 0; i < 3; ++i) {
         auto shape = Shape::gen();
         REQUIRE(shape);
-        REQUIRE(shape->appendRect(0, 0, 100, 100, 0, 0) == Result::Success);
+        REQUIRE(shape->appendRect(0, 0, 100, 100) == Result::Success);
         REQUIRE(shape->fill(255, 255, 255, 255) == Result::Success);
 
         REQUIRE(canvas->push(std::move(shape)) == Result::Success);

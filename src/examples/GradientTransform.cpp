@@ -34,7 +34,7 @@ void tvgUpdateCmds(tvg::Canvas* canvas, float progress)
 
     //Shape1
     auto shape = tvg::Shape::gen();
-    shape->appendRect(-285, -300, 200, 200, 0, 0);
+    shape->appendRect(-285, -300, 200, 200);
     shape->appendRect(-185, -200, 300, 300, 100, 100);
     shape->appendCircle(115, 100, 100, 100);
     shape->appendCircle(115, 200, 170, 100);
@@ -61,7 +61,7 @@ void tvgUpdateCmds(tvg::Canvas* canvas, float progress)
 
     //Shape2
     auto shape2 = tvg::Shape::gen();
-    shape2->appendRect(-50, -50, 100, 100, 0, 0);
+    shape2->appendRect(-50, -50, 100, 100);
     shape2->translate(400, 400);
 
     //LinearGradient

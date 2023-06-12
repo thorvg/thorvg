@@ -33,7 +33,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     //Shape (for BG)
     auto bg = tvg::Shape::gen();
-    bg->appendRect(0, 0, WIDTH, HEIGHT, 0, 0);
+    bg->appendRect(0, 0, WIDTH, HEIGHT);
 
     //fill property will be retained
     bg->fill(255, 255, 255);
@@ -47,7 +47,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
        instead, you should consider not to interrupt this pointer life-cycle. */
     pShape = shape.get();
 
-    shape->appendRect(-100, -100, 200, 200, 0, 0);
+    shape->appendRect(-100, -100, 200, 200);
 
     //fill property will be retained
     shape->fill(127, 255, 255);

@@ -142,7 +142,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     auto shape10 = tvg::Shape::gen();
     shape10->appendArc(70, 600, 160, 10, 30, true);
     shape10->appendCircle(70, 700, 20, 60);
-    shape10->appendRect(130, 710, 100, 40, 0, 0);
+    shape10->appendRect(130, 710, 100, 40);
     shape10->stroke(255, 0, 0);
     shape10->stroke(5);
     shape10->stroke(tvg::StrokeJoin::Round);
@@ -153,7 +153,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     auto shape11 = tvg::Shape::gen();
     shape11->appendArc(320, 600, 160, 10, 30, false);
     shape11->appendCircle(320, 700, 20, 60);
-    shape11->appendRect(380, 710, 100, 40, 0, 0);
+    shape11->appendRect(380, 710, 100, 40);
     shape11->stroke(255, 255, 0);
     shape11->stroke(5);
     shape11->stroke(tvg::StrokeJoin::Bevel);
@@ -164,7 +164,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     auto shape12 = tvg::Shape::gen();
     shape12->appendArc(570, 600, 160, 10, 30, true);
     shape12->appendCircle(570, 700, 20, 60);
-    shape12->appendRect(630, 710, 100, 40, 0, 0);
+    shape12->appendRect(630, 710, 100, 40);
     shape12->stroke(0, 255, 0);
     shape12->stroke(5);
     shape12->stroke(tvg::StrokeJoin::Miter);

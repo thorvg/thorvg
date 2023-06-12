@@ -33,7 +33,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     //Solid Rectangle
     auto shape = tvg::Shape::gen();
-    shape->appendRect(0, 0, 400, 400, 0, 0);
+    shape->appendRect(0, 0, 400, 400);
     shape->fill(0, 0, 255);
 
     //Mask
