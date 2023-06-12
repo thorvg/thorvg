@@ -43,6 +43,16 @@ static double timeStamp()
 #define SW_ANGLE_PI2 (SW_ANGLE_PI >> 1)
 #define SW_ANGLE_PI4 (SW_ANGLE_PI >> 2)
 
+enum class SimdExtension
+{
+    Other = 0,
+    Avx,
+    Avx2,
+    Avx512
+};
+
+SimdExtension THORVG_SIMD_SUPPORT();
+
 using SwCoord = signed long;
 using SwFixed = signed long long;
 
