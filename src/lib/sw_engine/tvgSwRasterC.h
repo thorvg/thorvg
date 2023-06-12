@@ -21,9 +21,43 @@
  */
 
 template<typename PIXEL_T>
-static void inline cRasterPixels(PIXEL_T* dst, uint32_t val, uint32_t offset, int32_t len)
+static void inline cRasterPixels(PIXEL_T* dst, PIXEL_T val, uint32_t offset, int32_t len)
 {
     dst += offset;
+
+    //fix the misaligned memory
+    auto alignOffset = 0;
+    if (sizeof(PIXEL_T) == 4) alignOffset = offset % 2;
+    else if (sizeof(PIXEL_T) == 1) {
+        alignOffset = offset % 8;
+        if (alignOffset > 0) alignOffset = 8 - alignOffset;
+    }
+
+    while (alignOffset > 0 && len > 0) {
+        *dst++ = val;
+        --len;
+        --alignOffset;
+    }
+
+    //64bits faster clear
+    if ((sizeof(PIXEL_T) == 4)) {
+        auto val64 = (uint64_t(val) << 32) | uint64_t(val);
+        while (len > 1) {
+            *reinterpret_cast<uint64_t*>(dst) = val64;
+            len -= 2;
+            dst += 2;
+        }
+    } else if (sizeof(PIXEL_T) == 1) {
+        auto val32 = (uint32_t(val) << 24) | (uint32_t(val) << 16) | (uint32_t(val) << 8) | uint32_t(val);
+        auto val64 = (uint64_t(val32) << 32) | val32;
+        while (len > 7) {
+            *reinterpret_cast<uint64_t*>(dst) = val64;
+            len -= 8;
+            dst += 8;
+        }
+    }
+
+    //leftovers
     while (len--) *dst++ = val;
 }
 
@@ -97,13 +131,27 @@ static bool inline cRasterABGRtoARGB(Surface* surface)
 {
     TVGLOG("SW_ENGINE", "Convert ColorSpace ABGR - ARGB [Size: %d x %d]", surface->w, surface->h);
 
-    auto buffer = surface->buf32;
-    for (uint32_t y = 0; y < surface->h; ++y, buffer += surface->stride) {
-        auto dst = buffer;
-        for (uint32_t x = 0; x < surface->w; ++x, ++dst) {
-            auto c = *dst;
-            //flip Blue, Red channels
-            *dst = (c & 0xff000000) + ((c & 0x00ff0000) >> 16) + (c & 0x0000ff00) + ((c & 0x000000ff) << 16);
+    //64bits faster converting
+    if (surface->w % 2 == 0) {
+        auto buffer = reinterpret_cast<uint64_t*>(surface->buf32);
+        for (uint32_t y = 0; y < surface->h; ++y, buffer += surface->stride / 2) {
+            auto dst = buffer;
+            for (uint32_t x = 0; x < surface->w / 2; ++x, ++dst) {
+                auto c = *dst;
+                //flip Blue, Red channels
+                *dst = (c & 0xff000000ff000000) + ((c & 0x00ff000000ff0000) >> 16) + (c & 0x0000ff000000ff00) + ((c & 0x000000ff000000ff) << 16);
+            }
+        }
+    //default converting
+    } else {
+        auto buffer = surface->buf32;
+        for (uint32_t y = 0; y < surface->h; ++y, buffer += surface->stride) {
+            auto dst = buffer;
+            for (uint32_t x = 0; x < surface->w; ++x, ++dst) {
+                auto c = *dst;
+                //flip Blue, Red channels
+                *dst = (c & 0xff000000) + ((c & 0x00ff0000) >> 16) + (c & 0x0000ff00) + ((c & 0x000000ff) << 16);
+            }
         }
     }
     return true;

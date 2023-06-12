@@ -259,7 +259,7 @@ static uint32_t _interpDownScaler(const uint32_t *img, uint32_t stride, uint32_t
 }
 
 
-void _rasterGrayscale8(uint8_t *dst, uint32_t val, uint32_t offset, int32_t len)
+void _rasterGrayscale8(uint8_t *dst, uint8_t val, uint32_t offset, int32_t len)
 {
     cRasterPixels(dst, val, offset, len);
 }
@@ -391,12 +391,11 @@ static bool _rasterSolidRect(SwSurface* surface, const SwBBox& region, uint8_t r
             rasterRGBA32(buffer + y * surface->stride, color, region.min.x, w);
         }
         return true;
-    //8bits grayscale
     }
+    //8bits grayscale
     if (surface->channelSize == sizeof(uint8_t)) {
-        auto buffer = surface->buf8 + (region.min.y * surface->stride);
         for (uint32_t y = 0; y < h; ++y) {
-            _rasterGrayscale8(buffer + y * surface->stride, 255, region.min.x, w);
+            _rasterGrayscale8(surface->buf8, 255, region.min.y * surface->stride + region.min.x, w);
         }
         return true;
     }
@@ -565,7 +564,7 @@ static bool _rasterSolidRle(SwSurface* surface, const SwRleData* rle, uint8_t r,
     //8bit grayscale
     } else if (surface->channelSize == sizeof(uint8_t)) {
         for (uint32_t i = 0; i < rle->size; ++i, ++span) {
-            _rasterGrayscale8(surface->buf8 + span->y * surface->stride, span->coverage, span->x, span->len);
+            _rasterGrayscale8(surface->buf8, span->coverage, span->y * surface->stride + span->x, span->len);
         }
     }
     return true;
@@ -1637,7 +1636,7 @@ void rasterRGBA32(uint32_t *dst, uint32_t val, uint32_t offset, int32_t len)
 #elif defined(THORVG_NEON_VECTOR_SUPPORT)
     neonRasterRGBA32(dst, val, offset, len);
 #else
-    cRasterPixels<uint32_t>(dst, val, offset, len);
+    cRasterPixels(dst, val, offset, len);
 #endif
 }
 
@@ -1672,24 +1671,22 @@ bool rasterClear(SwSurface* surface, uint32_t x, uint32_t y, uint32_t w, uint32_
     if (surface->channelSize == sizeof(uint32_t)) {
         //full clear
         if (w == surface->stride) {
-            rasterRGBA32(surface->buf32 + (surface->stride * y), 0x00000000, 0, w * h);
+            rasterRGBA32(surface->buf32, 0x00000000, surface->stride * y, w * h);
         //partial clear
         } else {
-            auto buffer = surface->buf32 + (surface->stride * y + x);
             for (uint32_t i = 0; i < h; i++) {
-                rasterRGBA32(buffer + (surface->stride * i), 0x00000000, 0, w);
+                rasterRGBA32(surface->buf32, 0x00000000, (surface->stride * y + x) + (surface->stride * i), w);
             }
         }
     //8 bits
     } else if (surface->channelSize == sizeof(uint8_t)) {
         //full clear
         if (w == surface->stride) {
-            _rasterGrayscale8(surface->buf8 + (surface->stride * y), 0x00, 0, w * h);
+            _rasterGrayscale8(surface->buf8, 0x00, surface->stride * y, w * h);
         //partial clear
         } else {
-            auto buffer = surface->buf8 + (surface->stride * y + x);
             for (uint32_t i = 0; i < h; i++) {
-                _rasterGrayscale8(buffer + (surface->stride * i), 0x00, 0, w);
+                _rasterGrayscale8(surface->buf8, 0x00, (surface->stride * y + x) + (surface->stride * i), w);
             }
         }
     }
