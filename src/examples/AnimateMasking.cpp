@@ -36,7 +36,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     // background
     auto bg = tvg::Shape::gen();
-    bg->appendRect(0,0,WIDTH, HEIGHT,0, 0);
+    bg->appendRect(0, 0, WIDTH, HEIGHT);
     bg->fill(255, 255, 255);
     canvas->push(std::move(bg));
 

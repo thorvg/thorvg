@@ -145,11 +145,11 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     {
         //Rect + Rect Mask Add
         auto shape = tvg::Shape::gen();
-        shape->appendRect(75, 500, 100, 100, 0, 0);
+        shape->appendRect(75, 500, 100, 100);
         shape->fill(255, 255, 255);
 
         auto mask = tvg::Shape::gen();
-        mask->appendRect(125, 450, 100, 100, 0, 0);
+        mask->appendRect(125, 450, 100, 100);
         mask->fill(255, 255, 255);
         shape->composite(std::move(mask), tvg::CompositeMethod::AddMask);
 
@@ -157,11 +157,11 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
         //Rect + Rect Mask Subtract
         auto shape2 = tvg::Shape::gen();
-        shape2->appendRect(325, 500, 100, 100, 0, 0);
+        shape2->appendRect(325, 500, 100, 100);
         shape2->fill(255, 255, 255);
 
         auto mask2 = tvg::Shape::gen();
-        mask2->appendRect(375, 450, 100, 100, 0, 0);
+        mask2->appendRect(375, 450, 100, 100);
         mask2->fill(255, 255, 255);
         shape2->composite(std::move(mask2), tvg::CompositeMethod::SubtractMask);
 
@@ -169,11 +169,11 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
         //Rect + Rect Mask Intersect
         auto shape3 = tvg::Shape::gen();
-        shape3->appendRect(575, 500, 100, 100, 0, 0);
+        shape3->appendRect(575, 500, 100, 100);
         shape3->fill(255, 255, 255);
 
         auto mask3 = tvg::Shape::gen();
-        mask3->appendRect(625, 450, 100, 100, 0, 0);
+        mask3->appendRect(625, 450, 100, 100);
         mask3->fill(255, 255, 255);
         shape3->composite(std::move(mask3), tvg::CompositeMethod::IntersectMask);
 
@@ -181,11 +181,11 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
         //Rect + Rect Mask Difference
         auto shape4 = tvg::Shape::gen();
-        shape4->appendRect(825, 500, 100, 100, 0, 0);
+        shape4->appendRect(825, 500, 100, 100);
         shape4->fill(255, 255, 255);
 
         auto mask4 = tvg::Shape::gen();
-        mask4->appendRect(875, 450, 100, 100, 0, 0);
+        mask4->appendRect(875, 450, 100, 100);
         mask4->fill(255, 255, 255);
         shape4->composite(std::move(mask4), tvg::CompositeMethod::DifferenceMask);
 

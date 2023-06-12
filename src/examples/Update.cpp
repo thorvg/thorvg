@@ -32,7 +32,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     //Shape
     auto shape = tvg::Shape::gen();
-    shape->appendRect(-100, -100, 200, 200, 0, 0);
+    shape->appendRect(-100, -100, 200, 200);
     shape->fill(255, 255, 255);
     canvas->push(std::move(shape));
 }

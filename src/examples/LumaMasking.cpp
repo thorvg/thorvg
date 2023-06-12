@@ -33,7 +33,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     //Solid Rectangle
     auto shape = tvg::Shape::gen();
-    shape->appendRect(0, 0, 400, 400, 0, 0);
+    shape->appendRect(0, 0, 400, 400);
     shape->fill(255, 0, 0);
 
     //Mask
@@ -103,7 +103,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     //Mask4
     auto mask4 = tvg::Scene::gen();
     auto mask4_rect = tvg::Shape::gen();
-    mask4_rect->appendRect(500, 400, 200, 300, 0, 0);
+    mask4_rect->appendRect(500, 400, 200, 300);
     mask4_rect->fill(255, 255, 255);
     auto mask4_circle = tvg::Shape::gen();
     mask4_circle->appendCircle(600, 550, 125, 125);

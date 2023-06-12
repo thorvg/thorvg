@@ -35,8 +35,8 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     {
         //Original Shape
         auto shape1 = tvg::Shape::gen();
-        shape1->appendRect(10, 10, 200, 200, 0, 0);
-        shape1->appendRect(220, 10, 100, 100, 0, 0);
+        shape1->appendRect(10, 10, 200, 200);
+        shape1->appendRect(220, 10, 100, 100);
 
         shape1->stroke(3);
         shape1->stroke(0, 255, 0);

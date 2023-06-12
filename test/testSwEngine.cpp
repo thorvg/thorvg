@@ -117,7 +117,7 @@ TEST_CASE("Image Draw", "[tvgSwEngine]")
     REQUIRE(basicPicture->load(data, 200, 300, false) == Result::Success);
     auto rectMask = tvg::Shape::gen();
     REQUIRE(rectMask);
-    REQUIRE(rectMask->appendRect(10, 10, 30, 30, 0, 0) == Result::Success);
+    REQUIRE(rectMask->appendRect(10, 10, 30, 30) == Result::Success);
     REQUIRE(rectMask->fill(100, 100, 100, 255) == Result::Success);
     auto rleMask = tvg::Shape::gen();
     REQUIRE(rleMask);
@@ -185,7 +185,7 @@ TEST_CASE("Image Draw", "[tvgSwEngine]")
     REQUIRE(basicPicture->rotate(45) == Result::Success);
     rectMask = tvg::Shape::gen();
     REQUIRE(rectMask);
-    REQUIRE(rectMask->appendRect(10, 10, 30, 30, 0, 0) == Result::Success);
+    REQUIRE(rectMask->appendRect(10, 10, 30, 30) == Result::Success);
     rleMask = tvg::Shape::gen();
     REQUIRE(rleMask);
     REQUIRE(rleMask->appendRect(0, 10, 20, 30, 5, 5) == Result::Success);
@@ -250,7 +250,7 @@ TEST_CASE("Image Draw", "[tvgSwEngine]")
     REQUIRE(basicPicture->scale(2) == Result::Success);
     rectMask = tvg::Shape::gen();
     REQUIRE(rectMask);
-    REQUIRE(rectMask->appendRect(10, 10, 30, 30, 0, 0) == Result::Success);
+    REQUIRE(rectMask->appendRect(10, 10, 30, 30) == Result::Success);
     rleMask = tvg::Shape::gen();
     REQUIRE(rleMask);
     REQUIRE(rleMask->appendRect(0, 10, 20, 30, 5, 5) == Result::Success);
@@ -315,7 +315,7 @@ TEST_CASE("Image Draw", "[tvgSwEngine]")
     REQUIRE(basicPicture->scale(0.2f) == Result::Success);
     rectMask = tvg::Shape::gen();
     REQUIRE(rectMask);
-    REQUIRE(rectMask->appendRect(10, 10, 30, 30, 0, 0) == Result::Success);
+    REQUIRE(rectMask->appendRect(10, 10, 30, 30) == Result::Success);
     rleMask = tvg::Shape::gen();
     REQUIRE(rleMask);
     REQUIRE(rleMask->appendRect(0, 10, 20, 30, 5, 5) == Result::Success);
@@ -397,8 +397,8 @@ TEST_CASE("Rect Draw", "[tvgSwEngine]")
     REQUIRE(basicShape);
     auto basicMask = tvg::Shape::gen();
     REQUIRE(basicMask);
-    REQUIRE(basicShape->appendRect(0, 0, 50, 50, 0, 0) == Result::Success);
-    REQUIRE(basicMask->appendRect(10, 10, 30, 30, 0, 0) == Result::Success);
+    REQUIRE(basicShape->appendRect(0, 0, 50, 50) == Result::Success);
+    REQUIRE(basicMask->appendRect(10, 10, 30, 30) == Result::Success);
     REQUIRE(basicShape->fill(255, 255, 255, 155) == Result::Success);
 
     auto basicShape2 = tvg::cast<Shape>(basicShape->duplicate());
@@ -457,7 +457,7 @@ TEST_CASE("RLE Draw", "[tvgSwEngine]")
     auto basicMask = tvg::Shape::gen();
     REQUIRE(basicMask);
     REQUIRE(basicShape->appendRect(0, 0, 50, 50, 50, 50) == Result::Success);
-    REQUIRE(basicMask->appendRect(10, 10, 30, 30, 0, 0) == Result::Success);
+    REQUIRE(basicMask->appendRect(10, 10, 30, 30) == Result::Success);
     REQUIRE(basicShape->fill(255, 255, 255, 100) == Result::Success);
 
     auto basicShape2 = tvg::cast<Shape>(basicShape->duplicate());
@@ -533,8 +533,8 @@ TEST_CASE("Filling Draw", "[tvgSwEngine]")
     REQUIRE(shape3);
     auto shape4 = tvg::Shape::gen();
     REQUIRE(shape4);
-    REQUIRE(shape3->appendRect(0, 0, 50, 50, 0, 0) == Result::Success);
-    REQUIRE(shape4->appendRect(50, 0, 50, 50, 0, 0) == Result::Success);
+    REQUIRE(shape3->appendRect(0, 0, 50, 50) == Result::Success);
+    REQUIRE(shape4->appendRect(50, 0, 50, 50) == Result::Success);
 
     REQUIRE(shape3->fill(std::move(linearFill)) == Result::Success);
     REQUIRE(shape4->fill(std::move(radialFill)) == Result::Success);
@@ -583,8 +583,8 @@ TEST_CASE("Filling Opaque Draw", "[tvgSwEngine]")
     REQUIRE(shape3);
     auto shape4 = tvg::Shape::gen();
     REQUIRE(shape4);
-    REQUIRE(shape3->appendRect(0, 0, 50, 50, 0, 0) == Result::Success);
-    REQUIRE(shape4->appendRect(50, 0, 50, 50, 0, 0) == Result::Success);
+    REQUIRE(shape3->appendRect(0, 0, 50, 50) == Result::Success);
+    REQUIRE(shape4->appendRect(50, 0, 50, 50) == Result::Success);
 
     REQUIRE(shape3->fill(std::move(linearFill)) == Result::Success);
     REQUIRE(shape4->fill(std::move(radialFill)) == Result::Success);
@@ -638,8 +638,8 @@ TEST_CASE("Filling AlphaMask", "[tvgSwEngine]")
     REQUIRE(shape3);
     auto shape4 = tvg::Shape::gen();
     REQUIRE(shape4);
-    REQUIRE(shape3->appendRect(0, 0, 50, 50, 0, 0) == Result::Success);
-    REQUIRE(shape4->appendRect(50, 0, 50, 50, 0, 0) == Result::Success);
+    REQUIRE(shape3->appendRect(0, 0, 50, 50) == Result::Success);
+    REQUIRE(shape4->appendRect(50, 0, 50, 50) == Result::Success);
 
     REQUIRE(shape3->fill(std::move(linearFill)) == Result::Success);
     REQUIRE(shape4->fill(std::move(radialFill)) == Result::Success);
@@ -698,8 +698,8 @@ TEST_CASE("Filling InvAlphaMask", "[tvgSwEngine]")
     REQUIRE(shape3);
     auto shape4 = tvg::Shape::gen();
     REQUIRE(shape4);
-    REQUIRE(shape3->appendRect(0, 0, 50, 50, 0, 0) == Result::Success);
-    REQUIRE(shape4->appendRect(50, 0, 50, 50, 0, 0) == Result::Success);
+    REQUIRE(shape3->appendRect(0, 0, 50, 50) == Result::Success);
+    REQUIRE(shape4->appendRect(50, 0, 50, 50) == Result::Success);
 
     REQUIRE(shape3->fill(std::move(linearFill)) == Result::Success);
     REQUIRE(shape4->fill(std::move(radialFill)) == Result::Success);
@@ -758,8 +758,8 @@ TEST_CASE("Filling LumaMask", "[tvgSwEngine]")
     REQUIRE(shape3);
     auto shape4 = tvg::Shape::gen();
     REQUIRE(shape4);
-    REQUIRE(shape3->appendRect(0, 0, 50, 50, 0, 0) == Result::Success);
-    REQUIRE(shape4->appendRect(50, 0, 50, 50, 0, 0) == Result::Success);
+    REQUIRE(shape3->appendRect(0, 0, 50, 50) == Result::Success);
+    REQUIRE(shape4->appendRect(50, 0, 50, 50) == Result::Success);
 
     REQUIRE(shape3->fill(std::move(linearFill)) == Result::Success);
     REQUIRE(shape4->fill(std::move(radialFill)) == Result::Success);
@@ -818,8 +818,8 @@ TEST_CASE("Filling ClipPath", "[tvgSwEngine]")
     REQUIRE(shape3);
     auto shape4 = tvg::Shape::gen();
     REQUIRE(shape4);
-    REQUIRE(shape3->appendRect(0, 0, 50, 50, 0, 0) == Result::Success);
-    REQUIRE(shape4->appendRect(50, 0, 50, 50, 0, 0) == Result::Success);
+    REQUIRE(shape3->appendRect(0, 0, 50, 50) == Result::Success);
+    REQUIRE(shape4->appendRect(50, 0, 50, 50) == Result::Success);
 
     REQUIRE(shape3->fill(std::move(linearFill)) == Result::Success);
     REQUIRE(shape4->fill(std::move(radialFill)) == Result::Success);
