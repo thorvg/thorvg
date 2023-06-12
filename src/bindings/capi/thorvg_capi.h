@@ -1870,7 +1870,7 @@ TVG_API Tvg_Result tvg_picture_load(Tvg_Paint* paint, const char* path);
 
 
 /*!
-* \brief Loads a picture data from a memory block of a given size. (BETA_API)
+* \brief Loads a picture data from a memory block of a given size.
 *
 * \return Tvg_Result enumeration.
 * \retval TVG_RESULT_SUCCESS Succeed.
