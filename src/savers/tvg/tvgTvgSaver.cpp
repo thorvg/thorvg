@@ -676,6 +676,7 @@ TvgBinCounter TvgSaver::serializeChildren(Iterator* it, const Matrix* pTransform
         children.push(child);
     }
 
+    //TODO: Keep this for the compatibility, Remove in TVG 1.0 release
     //The children of a reserved scene
     if (reserved && children.count > 1) {
         cnt += writeTagProperty(TVG_TAG_SCENE_RESERVEDCNT, SIZE(children.count), &children.count);
