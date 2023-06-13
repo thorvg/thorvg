@@ -50,7 +50,11 @@ TEST_CASE("Pushing Paints", "[tvgSwCanvasBase]")
 
     REQUIRE(canvas->clear() == Result::Success);
 
-    REQUIRE(canvas->push(Shape::gen()) == Result::Success);
+    Paint* paints[2];
+    
+    auto p1 = Shape::gen();
+    paints[0] = p1.get();
+    REQUIRE(canvas->push(std::move(p1)) == Result::Success);
 
     //Negative case 1
     REQUIRE(canvas->push(nullptr) == Result::MemoryCorruption);
@@ -59,10 +63,22 @@ TEST_CASE("Pushing Paints", "[tvgSwCanvasBase]")
     std::unique_ptr<Shape> shape6 = nullptr;
     REQUIRE(canvas->push(std::move(shape6)) == Result::MemoryCorruption);
 
-    //Negative case 3
-    REQUIRE(canvas->push(Shape::gen()) == Result::Success);
+    auto p2 = Shape::gen();
+    paints[1] = p2.get();
+    REQUIRE(canvas->push(std::move(p2)) == Result::Success);
     REQUIRE(canvas->draw() == Result::Success);
+
+    //Negative case 3
     REQUIRE(canvas->push(Shape::gen()) == Result::InsufficientCondition);
+
+    //Check list of paints
+    auto list = canvas->paints();
+    REQUIRE(list.size() == 2);
+    int idx = 0;
+    for (auto paint : list) {
+       REQUIRE(paints[idx] == paint);
+       ++idx;
+    }
 
     REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
 }
