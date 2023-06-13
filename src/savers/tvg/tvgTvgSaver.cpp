@@ -115,6 +115,8 @@ static bool _merge(Shape* from, Shape* to)
     if (from->strokeDash(nullptr) > 0 || to->strokeDash(nullptr) > 0) return false;
     if (from->strokeFill() || to->strokeFill()) return false;
 
+    if (fabsf(from->strokeMiterlimit() - to->strokeMiterlimit()) > FLT_EPSILON) return false;
+
     //fill rule
     if (from->fillRule() != to->fillRule()) return false;
 
@@ -474,6 +476,12 @@ TvgBinCounter TvgSaver::serializeStroke(const Shape* shape, const Matrix* pTrans
         cnt += writeData(&dashCnt, dashCntSize);
         cnt += writeData(dashPattern, dashPtrnSize);
         cnt += SIZE(TvgBinTag) + SIZE(TvgBinCounter);
+    }
+
+    //miterlimit (the default value is 4)
+    auto miterlimit = shape->strokeMiterlimit();
+    if (fabsf(miterlimit - 4.0f) > FLT_EPSILON) {
+        cnt += writeTagProperty(TVG_TAG_SHAPE_STROKE_MITERLIMIT, SIZE(miterlimit), &miterlimit);
     }
 
     writeReservedCount(cnt);

@@ -71,14 +71,16 @@ using TvgBinFlag = TvgBinByte;
 #define TVG_TAG_SHAPE_FILL                          (TvgBinTag)0x42
 #define TVG_TAG_SHAPE_COLOR                         (TvgBinTag)0x43
 #define TVG_TAG_SHAPE_FILLRULE                      (TvgBinTag)0x44
-#define TVG_TAG_SHAPE_STROKE_CAP                    (TvgBinTag)0x50
-#define TVG_TAG_SHAPE_STROKE_JOIN                   (TvgBinTag)0x51
+
 
 //Stroke
+#define TVG_TAG_SHAPE_STROKE_CAP                    (TvgBinTag)0x50
+#define TVG_TAG_SHAPE_STROKE_JOIN                   (TvgBinTag)0x51
 #define TVG_TAG_SHAPE_STROKE_WIDTH                  (TvgBinTag)0x52
 #define TVG_TAG_SHAPE_STROKE_COLOR                  (TvgBinTag)0x53
 #define TVG_TAG_SHAPE_STROKE_FILL                   (TvgBinTag)0x54
 #define TVG_TAG_SHAPE_STROKE_DASHPTRN               (TvgBinTag)0x55
+#define TVG_TAG_SHAPE_STROKE_MITERLIMIT             (TvgBinTag)0x56
 
 
 //Fill
