@@ -34,8 +34,8 @@ struct Shape::Impl
 {
     RenderShape rs;                     //shape data
     RenderData rd = nullptr;            //engine data
-    uint32_t flag = RenderUpdateFlag::None;
     Shape* shape;
+    uint8_t flag = RenderUpdateFlag::None;
     uint8_t opacity;                    //for composition
     bool needComp;                      //composite or not
 

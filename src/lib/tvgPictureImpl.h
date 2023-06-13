@@ -91,7 +91,7 @@ struct Picture::Impl
         return ret;
     }
 
-    uint32_t load()
+    RenderUpdateFlag load()
     {
         if (loader) {
             if (!paint) {

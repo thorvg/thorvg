@@ -28,7 +28,7 @@
 
 namespace tvg
 {
-    enum ContextFlag {Invalid = 0, FastTrack = 1};
+    enum ContextFlag : uint8_t {Invalid = 0, FastTrack = 1};
 
     struct Iterator
     {
@@ -63,9 +63,9 @@ namespace tvg
         StrategyMethod* smethod = nullptr;
         RenderTransform* rTransform = nullptr;
         Composite* compData = nullptr;
-        uint32_t renderFlag = RenderUpdateFlag::None;
-        uint32_t ctxFlag = ContextFlag::Invalid;
-        uint32_t id;
+        uint8_t renderFlag = RenderUpdateFlag::None;
+        uint8_t ctxFlag = ContextFlag::Invalid;
+        uint8_t id;
         uint8_t opacity = 255;
 
         ~Impl()
@@ -147,7 +147,7 @@ namespace tvg
         bool scale(float factor);
         bool translate(float x, float y);
         bool bounds(float* x, float* y, float* w, float* h, bool transformed);
-        RenderData update(RenderMethod& renderer, const RenderTransform* pTransform, uint32_t opacity, Array<RenderData>& clips, uint32_t pFlag, bool clipper = false);
+        RenderData update(RenderMethod& renderer, const RenderTransform* pTransform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag pFlag, bool clipper = false);
         bool render(RenderMethod& renderer);
         Paint* duplicate();
     };
