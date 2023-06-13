@@ -637,7 +637,7 @@ TVG_API Tvg_Result tvg_gradient_get_transform(const Tvg_Gradient* grad, Tvg_Matr
 TVG_API Tvg_Result tvg_gradient_get_identifier(const Tvg_Gradient* grad, Tvg_Identifier* identifier)
 {
     if (!grad || !identifier) return TVG_RESULT_INVALID_ARGUMENT;
-    *identifier = static_cast<Tvg_Identifier>(reinterpret_cast<const Paint*>(grad)->identifier());
+    *identifier = static_cast<Tvg_Identifier>(reinterpret_cast<const Fill*>(grad)->identifier());
     return TVG_RESULT_SUCCESS;
 }
 
