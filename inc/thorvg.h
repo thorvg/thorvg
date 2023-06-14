@@ -183,10 +183,10 @@ enum class CompositeMethod
     InvAlphaMask,       ///< Alpha Masking using the complement to the compositing target's pixels as an alpha value.
     LumaMask,           ///< Alpha Masking using the grayscale (0.2125R + 0.7154G + 0.0721*B) of the compositing target's pixels. @since 0.9
     InvLumaMask,        ///< Alpha Masking using the grayscale (0.2125R + 0.7154G + 0.0721*B) of the complement to the compositing target's pixels. @BETA_API
-    AddMask,            ///< Combines the source and target pixels using Mask Alpha. (S * SA) + (T * (1 - SA)) @BETA_API
-    SubtractMask,       ///< Subtracts the target color from the source color while considering their respective Mask Alpha. (S * SA) - (t * (1 - SA)) @BETA_API
-    IntersectMask,      ///< Computes the result by taking the minimum value between the Mask Alpha and the target alpha and multiplies it with the source color. (S * min(SA, TA)) @BETA_API
-    DifferenceMask      ///< Calculates the absolute difference between the source color and the target color multiplied by the complement of the Mask Alpha. abs(S - T * (1 - SA)) @BETA_API
+    AddMask,            ///< Combines the target and source objects pixels using target alpha. (T * TA) + (S * (1 - TA)) @BETA_API
+    SubtractMask,       ///< Subtracts the source color from the target color while considering their respective target alpha. (T * TA) - (S * (1 - TA)) @BETA_API
+    IntersectMask,      ///< Computes the result by taking the minimum value between the target alpha and the source alpha and multiplies it with the target color. (T * min(TA, SA)) @BETA_API
+    DifferenceMask      ///< Calculates the absolute difference between the target color and the source color multiplied by the complement of the target alpha. abs(T - S * (1 - TA)) @BETA_API
 };
 
 
