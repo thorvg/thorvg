@@ -92,7 +92,7 @@ struct Scene::Impl
         return ret;
     }
 
-    bool needComposition(uint32_t opacity)
+    bool needComposition(uint8_t opacity)
     {
         if (opacity == 0 || paints.empty()) return false;
 
@@ -111,12 +111,12 @@ struct Scene::Impl
         return true;
     }
 
-    RenderData update(RenderMethod &renderer, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flag, bool clipper)
+    RenderData update(RenderMethod &renderer, const RenderTransform* transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flag, bool clipper)
     {
         if ((needComp = needComposition(opacity))) {
             /* Overriding opacity value. If this scene is half-translucent,
                It must do intermeidate composition with that opacity value. */
-            this->opacity = static_cast<uint8_t>(opacity);
+            this->opacity = opacity;
             opacity = 255;
         }
 
@@ -126,13 +126,13 @@ struct Scene::Impl
             Array<RenderData> rds;
             rds.reserve(paints.size());
             for (auto paint : paints) {
-                rds.push(paint->pImpl->update(renderer, transform, opacity, clips, flag, true));
+                rds.push(paint->pImpl->update(renderer, transform, clips, opacity, flag, true));
             }
-            rd = renderer.prepare(rds, rd, transform, opacity, clips, flag);
+            rd = renderer.prepare(rds, rd, transform, clips, opacity, flag);
             return rd;
         } else {
             for (auto paint : paints) {
-                paint->pImpl->update(renderer, transform, opacity, clips, flag, false);
+                paint->pImpl->update(renderer, transform, clips, opacity, flag, false);
             }
             return nullptr;
         }

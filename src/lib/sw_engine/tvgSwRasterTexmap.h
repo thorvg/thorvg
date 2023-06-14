@@ -70,7 +70,7 @@ static bool _arrange(const SwImage* image, const SwBBox* region, int& yStart, in
 }
 
 
-static void _rasterMaskedPolygonImageSegmentInt(SwSurface* surface, const SwImage* image, const SwBBox* region, int yStart, int yEnd, uint32_t opacity, AASpans* aaSpans, uint8_t dirFlag)
+static void _rasterMaskedPolygonImageSegmentInt(SwSurface* surface, const SwImage* image, const SwBBox* region, int yStart, int yEnd, AASpans* aaSpans, uint8_t opacity, uint8_t dirFlag)
 {
     float _dudx = dudx, _dvdx = dvdx;
     float _dxdya = dxdya, _dxdyb = dxdyb, _dudya = dudya, _dvdya = dvdya;
@@ -247,7 +247,7 @@ static void _rasterMaskedPolygonImageSegmentInt(SwSurface* surface, const SwImag
 
 
 template<typename maskOp, typename amaskOp>
-static void _rasterMaskedPolygonImageSegmentDup(SwSurface* surface, const SwImage* image, const SwBBox* region, int yStart, int yEnd, uint32_t opacity, AASpans* aaSpans)
+static void _rasterMaskedPolygonImageSegmentDup(SwSurface* surface, const SwImage* image, const SwBBox* region, int yStart, int yEnd, AASpans* aaSpans, uint8_t opacity)
 {
     float _dudx = dudx, _dvdx = dvdx;
     float _dxdya = dxdya, _dxdyb = dxdyb, _dudya = dudya, _dvdya = dvdya;
@@ -420,18 +420,18 @@ static void _rasterMaskedPolygonImageSegmentDup(SwSurface* surface, const SwImag
 }
 
 
-static void _rasterMaskedPolygonImageSegment(SwSurface* surface, const SwImage* image, const SwBBox* region, int yStart, int yEnd, uint32_t opacity, AASpans* aaSpans, uint8_t dirFlag = 0)
+static void _rasterMaskedPolygonImageSegment(SwSurface* surface, const SwImage* image, const SwBBox* region, int yStart, int yEnd, AASpans* aaSpans, uint8_t opacity, uint8_t dirFlag = 0)
 {
     auto method = surface->compositor->method;
 
-    if (method == CompositeMethod::AddMask) _rasterMaskedPolygonImageSegmentDup<AddMaskOp, AddMaskAOp>(surface, image, region, yStart, yEnd, opacity, aaSpans);
-    else if (method == CompositeMethod::SubtractMask) _rasterMaskedPolygonImageSegmentDup<SubMaskOp, SubMaskAOp>(surface, image, region, yStart, yEnd, opacity, aaSpans);
-    else if (method == CompositeMethod::DifferenceMask) _rasterMaskedPolygonImageSegmentDup<DifMaskOp, DifMaskAOp>(surface, image, region, yStart, yEnd, opacity, aaSpans);
-    else if (method == CompositeMethod::IntersectMask) _rasterMaskedPolygonImageSegmentInt(surface, image, region, yStart, yEnd, opacity, aaSpans, dirFlag);
+    if (method == CompositeMethod::AddMask) _rasterMaskedPolygonImageSegmentDup<AddMaskOp, AddMaskAOp>(surface, image, region, yStart, yEnd, aaSpans, opacity);
+    else if (method == CompositeMethod::SubtractMask) _rasterMaskedPolygonImageSegmentDup<SubMaskOp, SubMaskAOp>(surface, image, region, yStart, yEnd, aaSpans, opacity);
+    else if (method == CompositeMethod::DifferenceMask) _rasterMaskedPolygonImageSegmentDup<DifMaskOp, DifMaskAOp>(surface, image, region, yStart, yEnd, aaSpans, opacity);
+    else if (method == CompositeMethod::IntersectMask) _rasterMaskedPolygonImageSegmentInt(surface, image, region, yStart, yEnd, aaSpans, opacity, dirFlag);
 }
 
 
-static void _rasterPolygonImageSegment(SwSurface* surface, const SwImage* image, const SwBBox* region, int yStart, int yEnd, uint32_t opacity, AASpans* aaSpans, bool matting)
+static void _rasterPolygonImageSegment(SwSurface* surface, const SwImage* image, const SwBBox* region, int yStart, int yEnd, AASpans* aaSpans, uint8_t opacity, bool matting)
 {
     float _dudx = dudx, _dvdx = dvdx;
     float _dxdya = dxdya, _dxdyb = dxdyb, _dudya = dudya, _dvdya = dvdya;
@@ -629,7 +629,7 @@ static void _rasterPolygonImageSegment(SwSurface* surface, const SwImage* image,
 
 
 /* This mapping algorithm is based on Mikael Kalms's. */
-static void _rasterPolygonImage(SwSurface* surface, const SwImage* image, const SwBBox* region, uint32_t opacity, Polygon& polygon, AASpans* aaSpans)
+static void _rasterPolygonImage(SwSurface* surface, const SwImage* image, const SwBBox* region, Polygon& polygon, AASpans* aaSpans, uint8_t opacity)
 {
     float x[3] = {polygon.vertex[0].pt.x, polygon.vertex[1].pt.x, polygon.vertex[2].pt.x};
     float y[3] = {polygon.vertex[0].pt.y, polygon.vertex[1].pt.y, polygon.vertex[2].pt.y};
@@ -719,9 +719,9 @@ static void _rasterPolygonImage(SwSurface* surface, const SwImage* image, const 
             xb = x[0] + dy * dxdyb + (off_y * dxdyb);
 
             if (compositing) {
-                if (_matting(surface)) _rasterPolygonImageSegment(surface, image, region, yi[0], yi[1], opacity, aaSpans, true);
-                else _rasterMaskedPolygonImageSegment(surface, image, region, yi[0], yi[1], opacity, aaSpans, 1);
-            } else _rasterPolygonImageSegment(surface, image, region, yi[0], yi[1], opacity, aaSpans, false);
+                if (_matting(surface)) _rasterPolygonImageSegment(surface, image, region, yi[0], yi[1], aaSpans, opacity, true);
+                else _rasterMaskedPolygonImageSegment(surface, image, region, yi[0], yi[1], aaSpans, opacity, 1);
+            } else _rasterPolygonImageSegment(surface, image, region, yi[0], yi[1], aaSpans, opacity, false);
 
             upper = true;
         }
@@ -737,9 +737,9 @@ static void _rasterPolygonImage(SwSurface* surface, const SwImage* image, const 
             dxdyb = dxdy[2];
             xb = x[1] + (1 - (y[1] - yi[1])) * dxdyb + (off_y * dxdyb);
             if (compositing) {
-                if (_matting(surface)) _rasterPolygonImageSegment(surface, image, region, yi[1], yi[2], opacity, aaSpans, true);
-                else _rasterMaskedPolygonImageSegment(surface, image, region, yi[1], yi[2], opacity, aaSpans, 2);
-            } else _rasterPolygonImageSegment(surface, image, region, yi[1], yi[2], opacity, aaSpans, false);
+                if (_matting(surface)) _rasterPolygonImageSegment(surface, image, region, yi[1], yi[2], aaSpans, opacity, true);
+                else _rasterMaskedPolygonImageSegment(surface, image, region, yi[1], yi[2], aaSpans, opacity, 2);
+            } else _rasterPolygonImageSegment(surface, image, region, yi[1], yi[2], aaSpans, opacity, false);
         }
     //Longer edge is on the right side
     } else {
@@ -763,9 +763,9 @@ static void _rasterPolygonImage(SwSurface* surface, const SwImage* image, const 
             va = v[0] + dy * dvdya + (off_y * dvdya);
 
             if (compositing) {
-                if (_matting(surface)) _rasterPolygonImageSegment(surface, image, region, yi[0], yi[1], opacity, aaSpans, true);
-                else _rasterMaskedPolygonImageSegment(surface, image, region, yi[0], yi[1], opacity, aaSpans, 3);
-            } else _rasterPolygonImageSegment(surface, image, region, yi[0], yi[1], opacity, aaSpans, false);
+                if (_matting(surface)) _rasterPolygonImageSegment(surface, image, region, yi[0], yi[1], aaSpans, opacity, true);
+                else _rasterMaskedPolygonImageSegment(surface, image, region, yi[0], yi[1], aaSpans, opacity, 3);
+            } else _rasterPolygonImageSegment(surface, image, region, yi[0], yi[1], aaSpans, opacity, false);
 
             upper = true;
         }
@@ -784,9 +784,9 @@ static void _rasterPolygonImage(SwSurface* surface, const SwImage* image, const 
             va = v[1] + dy * dvdya + (off_y * dvdya);
 
             if (compositing) {
-                if (_matting(surface)) _rasterPolygonImageSegment(surface, image, region, yi[1], yi[2], opacity, aaSpans, true);
-                else _rasterMaskedPolygonImageSegment(surface, image, region, yi[1], yi[2], opacity, aaSpans, 4);
-            } else _rasterPolygonImageSegment(surface, image, region, yi[1], yi[2], opacity, aaSpans, false);
+                if (_matting(surface)) _rasterPolygonImageSegment(surface, image, region, yi[1], yi[2], aaSpans, opacity, true);
+                else _rasterMaskedPolygonImageSegment(surface, image, region, yi[1], yi[2], aaSpans, opacity, 4);
+            } else _rasterPolygonImageSegment(surface, image, region, yi[1], yi[2], aaSpans, opacity, false);
         }
     }
 }
@@ -1061,7 +1061,7 @@ static bool _apply(SwSurface* surface, AASpans* aaSpans)
     | /  |
     3 -- 2
 */
-static bool _rasterTexmapPolygon(SwSurface* surface, const SwImage* image, const Matrix* transform, const SwBBox* region, uint32_t opacity)
+static bool _rasterTexmapPolygon(SwSurface* surface, const SwImage* image, const Matrix* transform, const SwBBox* region, uint8_t opacity)
 {
     //Exceptions: No dedicated drawing area?
     if ((!image->rle && !region) || (image->rle && image->rle->size == 0)) return false;
@@ -1092,14 +1092,14 @@ static bool _rasterTexmapPolygon(SwSurface* surface, const SwImage* image, const
     polygon.vertex[1] = vertices[1];
     polygon.vertex[2] = vertices[3];
 
-    _rasterPolygonImage(surface, image, region, opacity, polygon, aaSpans);
+    _rasterPolygonImage(surface, image, region, polygon, aaSpans, opacity);
 
     //Draw the second polygon
     polygon.vertex[0] = vertices[1];
     polygon.vertex[1] = vertices[2];
     polygon.vertex[2] = vertices[3];
 
-    _rasterPolygonImage(surface, image, region, opacity, polygon, aaSpans);
+    _rasterPolygonImage(surface, image, region, polygon, aaSpans, opacity);
 
     return _apply(surface, aaSpans);
 }
@@ -1118,7 +1118,7 @@ static bool _rasterTexmapPolygon(SwSurface* surface, const SwImage* image, const
       Should provide two Polygons, one for each triangle.
       // TODO: region?
 */
-static bool _rasterTexmapPolygonMesh(SwSurface* surface, const SwImage* image, const RenderMesh* mesh, const Matrix* transform, const SwBBox* region, uint32_t opacity)
+static bool _rasterTexmapPolygonMesh(SwSurface* surface, const SwImage* image, const RenderMesh* mesh, const Matrix* transform, const SwBBox* region, uint8_t opacity)
 {
     //Exceptions: No dedicated drawing area?
     if ((!image->rle && !region) || (image->rle && image->rle->size == 0)) return false;
@@ -1152,7 +1152,7 @@ static bool _rasterTexmapPolygonMesh(SwSurface* surface, const SwImage* image, c
     auto aaSpans = _AASpans(ys, ye, image, region);
     if (aaSpans) {
         for (uint32_t i = 0; i < mesh->triangleCnt; i++) {
-            _rasterPolygonImage(surface, image, region, opacity, transformedTris[i], aaSpans);
+            _rasterPolygonImage(surface, image, region, transformedTris[i], aaSpans, opacity);
         }
         // Apply to surface (note: frees the AA spans)
         _apply(surface, aaSpans);

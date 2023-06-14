@@ -64,7 +64,7 @@ struct Shape::Impl
         return ret;
     }
 
-    bool needComposition(uint32_t opacity)
+    bool needComposition(uint8_t opacity)
     {
         if (opacity == 0) return false;
 
@@ -84,16 +84,16 @@ struct Shape::Impl
         return true;
     }
 
-    RenderData update(RenderMethod& renderer, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag pFlag, bool clipper)
+    RenderData update(RenderMethod& renderer, const RenderTransform* transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag pFlag, bool clipper)
     {     
         if ((needComp = needComposition(opacity))) {
             /* Overriding opacity value. If this scene is half-translucent,
                It must do intermeidate composition with that opacity value. */ 
-            this->opacity = static_cast<uint8_t>(opacity);
+            this->opacity = opacity;
             opacity = 255;
         }
 
-        rd = renderer.prepare(rs, rd, transform, opacity, clips, static_cast<RenderUpdateFlag>(pFlag | flag), clipper);
+        rd = renderer.prepare(rs, rd, transform, clips, opacity, static_cast<RenderUpdateFlag>(pFlag | flag), clipper);
         flag = RenderUpdateFlag::None;
         return rd;
     }

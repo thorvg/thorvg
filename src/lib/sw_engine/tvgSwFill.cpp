@@ -33,7 +33,7 @@
 #define FIXPT_SIZE (1<<FIXPT_BITS)
 
 
-static bool _updateColorTable(SwFill* fill, const Fill* fdata, const SwSurface* surface, uint32_t opacity)
+static bool _updateColorTable(SwFill* fill, const Fill* fdata, const SwSurface* surface, uint8_t opacity)
 {
     if (!fill->ctable) {
         fill->ctable = static_cast<uint32_t*>(malloc(GRADIENT_STOP_SIZE * sizeof(uint32_t)));
@@ -46,7 +46,7 @@ static bool _updateColorTable(SwFill* fill, const Fill* fdata, const SwSurface* 
 
     auto pColors = colors;
 
-    auto a = (pColors->a * opacity) / 255;
+    auto a = MULTIPLY(pColors->a, opacity);
     if (a < 255) fill->translucent = true;
 
     auto r = pColors->r;
@@ -70,7 +70,7 @@ static bool _updateColorTable(SwFill* fill, const Fill* fdata, const SwSurface* 
         auto curr = colors + j;
         auto next = curr + 1;
         auto delta = 1.0f / (next->offset - curr->offset);
-        auto a2 = (next->a * opacity) / 255;
+        auto a2 = MULTIPLY(next->a, opacity);
         if (!fill->translucent && a2 < 255) fill->translucent = true;
 
         auto rgba2 = surface->blender.join(next->r, next->g, next->b, a2);
@@ -397,7 +397,7 @@ void fillLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint3
 }
 
 
-bool fillGenColorTable(SwFill* fill, const Fill* fdata, const Matrix* transform, SwSurface* surface, uint32_t opacity, bool ctable)
+bool fillGenColorTable(SwFill* fill, const Fill* fdata, const Matrix* transform, SwSurface* surface, uint8_t opacity, bool ctable)
 {
     if (!fill) return false;
 

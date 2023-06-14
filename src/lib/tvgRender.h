@@ -65,7 +65,7 @@ struct Surface
 struct Compositor
 {
     CompositeMethod method;
-    uint32_t        opacity;
+    uint8_t        opacity;
 };
 
 struct RenderMesh
@@ -239,9 +239,9 @@ class RenderMethod
 {
 public:
     virtual ~RenderMethod() {}
-    virtual RenderData prepare(const RenderShape& rshape, RenderData data, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flags, bool clipper) = 0;
-    virtual RenderData prepare(const Array<RenderData>& scene, RenderData data, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flags) = 0;
-    virtual RenderData prepare(Surface* surface, const RenderMesh* mesh, RenderData data, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flags) = 0;
+    virtual RenderData prepare(const RenderShape& rshape, RenderData data, const RenderTransform* transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags, bool clipper) = 0;
+    virtual RenderData prepare(const Array<RenderData>& scene, RenderData data, const RenderTransform* transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags) = 0;
+    virtual RenderData prepare(Surface* surface, const RenderMesh* mesh, RenderData data, const RenderTransform* transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags) = 0;
     virtual bool preRender() = 0;
     virtual bool renderShape(RenderData data) = 0;
     virtual bool renderImage(RenderData data) = 0;
@@ -256,7 +256,7 @@ public:
     virtual bool sync() = 0;
 
     virtual Compositor* target(const RenderRegion& region, ColorSpace cs) = 0;
-    virtual bool beginComposite(Compositor* cmp, CompositeMethod method, uint32_t opacity) = 0;
+    virtual bool beginComposite(Compositor* cmp, CompositeMethod method, uint8_t opacity) = 0;
     virtual bool endComposite(Compositor* cmp) = 0;
 };
 
