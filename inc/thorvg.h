@@ -109,6 +109,7 @@ enum class Result
     Unknown                ///< The value returned in all other cases.
 };
 
+
 /**
  * @brief Enumeration specifying the values of the path commands accepted by TVG.
  *
@@ -123,6 +124,7 @@ enum class PathCommand
     CubicTo    ///< Draws a cubic Bezier curve from the current point to the given point using two given control points and sets a new value of the current point. This command expects 3 points: the 1st control-point, the 2nd control-point, the end-point of the curve.
 };
 
+
 /**
  * @brief Enumeration determining the ending type of a stroke in the open sub-paths.
  */
@@ -132,6 +134,7 @@ enum class StrokeCap
     Round,      ///< The stroke is extended in both end-points of a sub-path by a half circle, with a radius equal to the half of a stroke width. For zero length sub-paths a full circle is rendered.
     Butt        ///< The stroke ends exactly at each of the two end-points of a sub-path. For zero length sub-paths no stroke is rendered.
 };
+
 
 /**
  * @brief Enumeration determining the style used at the corners of joined stroked path segments.
@@ -143,6 +146,7 @@ enum class StrokeJoin
     Miter      ///< The outer corner of the joined path segments is spiked. The spike is created by extension beyond the join point of the outer edges of the stroke until they intersect. In case the extension goes beyond the limit, the join style is converted to the Bevel style.
 };
 
+
 /**
  * @brief Enumeration specifying how to fill the area outside the gradient bounds.
  */
@@ -152,6 +156,7 @@ enum class FillSpread
     Reflect, ///< The gradient pattern is reflected outside the gradient area until the expected region is filled.
     Repeat   ///< The gradient pattern is repeated continuously beyond the gradient area until the expected region is filled.
 };
+
 
 /**
  * @brief Enumeration specifying the algorithm used to establish which parts of the shape are treated as the inside of the shape.
@@ -166,27 +171,22 @@ enum class FillRule
 /**
  * @brief Enumeration indicating the method used in the composition of two objects - the target and the source.
  *
- * In the case of Mask composition, you need to perform bit operations on two options - Mask Alpha and Mask Operation.
- * Mask Alpha specifies the origin of the alpha channel, while Mask Operation specifies the masking operation.
- * @code paint->composite(tvg::CompositeMethod::AlphaMask + tvg::CompositeMethod::AddMaskOp); @endcode
+ * Notation: S(Source), T(Target), SA(Source Alpha), TA(Target Alpha)
  *
- * @note If you don't specify the mask alpha, @c AlphaMask will be used.
- * @note If you don't specify the mask method, @c AddMaskOp will be used.
- * @warning Composition does not support multiple choices for both Mask Alpha and Mask Operation.
  * @see Paint::composite()
  */
 enum class CompositeMethod
 {
     None = 0,           ///< No composition is applied.
     ClipPath,           ///< The intersection of the source and the target is determined and only the resulting pixels from the source are rendered.
-    AlphaMask,          ///< Mask Alpha: Use the compositing target's pixels as an alpha value.
-    InvAlphaMask,       ///< Mask Alpha: Use the complement to the compositing target's pixels as an alpha.
-    LumaMask,           ///< Mask Alpha: Use the grayscale (0.2125R + 0.7154G + 0.0721*B) of the compositing target's pixels. @since 0.9
-    InvLumaMask,        ///< Mask Alpha: Use the grayscale (0.2125R + 0.7154G + 0.0721*B) of the complement to the compositing target's pixels. @BETA_API
-    AddMask,            ///< Mask Operation: Combines the source and target pixels using Mask Alpha. @BETA_API
-    SubtractMask,       ///< Mask Operation: Subtracts the target color from the source color while considering their respective Mask Alpha. @BETA_API
-    IntersectMask,      ///< Mask Operation: Computes the result by taking the minimum value between the Mask Alpha and the target alpha and multiplies it with the source color. @BETA_API
-    DifferenceMask      ///< Mask Operation: Calculates the absolute difference between the source color and the target color multiplied by the complement of the Mask Alpha. @BETA_API
+    AlphaMask,          ///< Alpha Masking using the compositing target's pixels as an alpha value.
+    InvAlphaMask,       ///< Alpha Masking using the complement to the compositing target's pixels as an alpha value.
+    LumaMask,           ///< Alpha Masking using the grayscale (0.2125R + 0.7154G + 0.0721*B) of the compositing target's pixels. @since 0.9
+    InvLumaMask,        ///< Alpha Masking using the grayscale (0.2125R + 0.7154G + 0.0721*B) of the complement to the compositing target's pixels. @BETA_API
+    AddMask,            ///< Combines the source and target pixels using Mask Alpha. (S * SA) + (T * (1 - SA)) @BETA_API
+    SubtractMask,       ///< Subtracts the target color from the source color while considering their respective Mask Alpha. (S * SA) - (t * (1 - SA)) @BETA_API
+    IntersectMask,      ///< Computes the result by taking the minimum value between the Mask Alpha and the target alpha and multiplies it with the source color. (S * min(SA, TA)) @BETA_API
+    DifferenceMask      ///< Calculates the absolute difference between the source color and the target color multiplied by the complement of the Mask Alpha. abs(S - T * (1 - SA)) @BETA_API
 };
 
 
