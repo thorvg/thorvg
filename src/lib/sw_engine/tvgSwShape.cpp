@@ -617,13 +617,13 @@ fail:
 }
 
 
-bool shapeGenFillColors(SwShape* shape, const Fill* fill, const Matrix* transform, SwSurface* surface, uint32_t opacity, bool ctable)
+bool shapeGenFillColors(SwShape* shape, const Fill* fill, const Matrix* transform, SwSurface* surface, uint8_t opacity, bool ctable)
 {
     return fillGenColorTable(shape->fill, fill, transform, surface, opacity, ctable);
 }
 
 
-bool shapeGenStrokeFillColors(SwShape* shape, const Fill* fill, const Matrix* transform, SwSurface* surface, uint32_t opacity, bool ctable)
+bool shapeGenStrokeFillColors(SwShape* shape, const Fill* fill, const Matrix* transform, SwSurface* surface, uint8_t opacity, bool ctable)
 {
     return fillGenColorTable(shape->stroke->fill, fill, transform, surface, opacity, ctable);
 }

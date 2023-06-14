@@ -109,7 +109,7 @@ Compositor* GlRenderer::target(TVG_UNUSED const RenderRegion& region, TVG_UNUSED
 }
 
 
-bool GlRenderer::beginComposite(TVG_UNUSED Compositor* cmp, CompositeMethod method, uint32_t opacity)
+bool GlRenderer::beginComposite(TVG_UNUSED Compositor* cmp, CompositeMethod method, uint8_t opacity)
 {
     //TODO: delete the given compositor and restore the context
     return false;
@@ -188,21 +188,21 @@ bool GlRenderer::dispose(RenderData data)
 }
 
 
-RenderData GlRenderer::prepare(TVG_UNUSED Surface* surface, TVG_UNUSED const RenderMesh* mesh, TVG_UNUSED RenderData data, TVG_UNUSED const RenderTransform* transform, TVG_UNUSED uint32_t opacity, TVG_UNUSED Array<RenderData>& clips, TVG_UNUSED RenderUpdateFlag flags)
+RenderData GlRenderer::prepare(TVG_UNUSED Surface* surface, TVG_UNUSED const RenderMesh* mesh, TVG_UNUSED RenderData data, TVG_UNUSED const RenderTransform* transform, TVG_UNUSED Array<RenderData>& clips, TVG_UNUSED uint8_t opacity, TVG_UNUSED RenderUpdateFlag flags)
 {
     //TODO:
     return nullptr;
 }
 
 
-RenderData GlRenderer::prepare(TVG_UNUSED const Array<RenderData>& scene, TVG_UNUSED RenderData data, TVG_UNUSED const RenderTransform* transform, TVG_UNUSED uint32_t opacity, TVG_UNUSED Array<RenderData>& clips, TVG_UNUSED RenderUpdateFlag flags)
+RenderData GlRenderer::prepare(TVG_UNUSED const Array<RenderData>& scene, TVG_UNUSED RenderData data, TVG_UNUSED const RenderTransform* transform, TVG_UNUSED Array<RenderData>& clips, TVG_UNUSED uint8_t opacity, TVG_UNUSED RenderUpdateFlag flags)
 {
     //TODO:
     return nullptr;
 }
 
 
-RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const RenderTransform* transform, TVG_UNUSED uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flags, TVG_UNUSED bool clipper)
+RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const RenderTransform* transform, Array<RenderData>& clips, TVG_UNUSED uint8_t opacity, RenderUpdateFlag flags, TVG_UNUSED bool clipper)
 {
     //prepare shape data
     GlShape* sdata = static_cast<GlShape*>(data);

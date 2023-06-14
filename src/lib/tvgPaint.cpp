@@ -184,7 +184,7 @@ bool Paint::Impl::render(RenderMethod& renderer)
 }
 
 
-RenderData Paint::Impl::update(RenderMethod& renderer, const RenderTransform* pTransform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag pFlag, bool clipper)
+RenderData Paint::Impl::update(RenderMethod& renderer, const RenderTransform* pTransform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag pFlag, bool clipper)
 {
     if (renderFlag & RenderUpdateFlag::Transform) {
         if (!rTransform) return nullptr;
@@ -235,7 +235,7 @@ RenderData Paint::Impl::update(RenderMethod& renderer, const RenderTransform* pT
         }
         if (!compFastTrack) {
             childClipper = compData->method == CompositeMethod::ClipPath ? true : false;
-            trd = target->pImpl->update(renderer, pTransform, 255, clips, pFlag, childClipper);
+            trd = target->pImpl->update(renderer, pTransform, clips, 255, pFlag, childClipper);
             if (childClipper) clips.push(trd);
         }
     }
@@ -244,14 +244,14 @@ RenderData Paint::Impl::update(RenderMethod& renderer, const RenderTransform* pT
     RenderData rd = nullptr;
     auto newFlag = static_cast<RenderUpdateFlag>(pFlag | renderFlag);
     renderFlag = RenderUpdateFlag::None;
-    opacity = (opacity * this->opacity) / 255;
+    opacity = ((opacity * this->opacity + 0xff) >> 8);      //opacity = (opacity * this->opacity) / 255;
 
     if (rTransform && pTransform) {
         RenderTransform outTransform(pTransform, rTransform);
-        rd = smethod->update(renderer, &outTransform, opacity, clips, newFlag, clipper);
+        rd = smethod->update(renderer, &outTransform, clips, opacity, newFlag, clipper);
     } else {
         auto outTransform = pTransform ? pTransform : rTransform;
-        rd = smethod->update(renderer, outTransform, opacity, clips, newFlag, clipper);
+        rd = smethod->update(renderer, outTransform, clips, opacity, newFlag, clipper);
     }
 
     /* 3. Composition Post Processing */

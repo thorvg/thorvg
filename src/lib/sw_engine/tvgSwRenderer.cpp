@@ -35,13 +35,13 @@ static uint32_t threadsCnt = 0;
 
 struct SwTask : Task
 {
-    Matrix* transform = nullptr;
     SwSurface* surface = nullptr;
     SwMpool* mpool = nullptr;
-    RenderUpdateFlag flags = RenderUpdateFlag::None;
-    Array<RenderData> clips;
-    uint32_t opacity;
     SwBBox bbox = {{0, 0}, {0, 0}};       //Whole Rendering Region
+    Matrix* transform = nullptr;
+    Array<RenderData> clips;
+    RenderUpdateFlag flags = RenderUpdateFlag::None;
+    uint8_t opacity;
     bool pushed = false;                  //Pushed into task list?
     bool disposed = false;                //Disposed task?
 
@@ -106,7 +106,7 @@ struct SwShapeTask : SwTask
 
         if (HALF_STROKE(rshape->strokeWidth()) > 0) {
             rshape->strokeColor(nullptr, nullptr, nullptr, &strokeAlpha);
-            visibleStroke = rshape->strokeFill() || (static_cast<uint32_t>(strokeAlpha * opacity / 255) > 0);
+            visibleStroke = rshape->strokeFill() || (MULTIPLY(strokeAlpha, opacity) > 0);
         }
 
         //This checks also for the case, if the invisible shape turned to visible by alpha.
@@ -117,7 +117,7 @@ struct SwShapeTask : SwTask
         if (flags & (RenderUpdateFlag::Path | RenderUpdateFlag::Transform) || prepareShape) {
             uint8_t alpha = 0;
             rshape->fillColor(nullptr, nullptr, nullptr, &alpha);
-            alpha = static_cast<uint8_t>(static_cast<uint32_t>(alpha) * opacity / 255);
+            alpha = MULTIPLY(alpha, opacity);
             visibleFill = (alpha > 0 || rshape->fill);
             if (visibleFill || visibleStroke || clipper) {
                 shapeReset(&shape);
@@ -322,26 +322,26 @@ static void _termEngine()
 }
 
 
-static void _renderFill(SwShapeTask* task, SwSurface* surface, uint32_t opacity)
+static void _renderFill(SwShapeTask* task, SwSurface* surface, uint8_t opacity)
 {
     uint8_t r, g, b, a;
     if (auto fill = task->rshape->fill) {
         rasterGradientShape(surface, &task->shape, fill->identifier());
     } else {
         task->rshape->fillColor(&r, &g, &b, &a);
-        a = static_cast<uint8_t>((opacity * (uint32_t) a) / 255);
+        a = MULTIPLY(opacity, a);
         if (a > 0) rasterShape(surface, &task->shape, r, g, b, a);
     }
 }
 
-static void _renderStroke(SwShapeTask* task, SwSurface* surface, uint32_t opacity)
+static void _renderStroke(SwShapeTask* task, SwSurface* surface, uint8_t opacity)
 {
     uint8_t r, g, b, a;
     if (auto strokeFill = task->rshape->strokeFill()) {
         rasterGradientStroke(surface, &task->shape, strokeFill->identifier());
     } else {
         if (task->rshape->strokeColor(&r, &g, &b, &a)) {
-            a = static_cast<uint8_t>((opacity * (uint32_t) a) / 255);
+            a = MULTIPLY(opacity, a);
             if (a > 0) rasterStroke(surface, &task->shape, r, g, b, a);
         }
     }
@@ -505,7 +505,7 @@ RenderRegion SwRenderer::region(RenderData data)
 }
 
 
-bool SwRenderer::beginComposite(Compositor* cmp, CompositeMethod method, uint32_t opacity)
+bool SwRenderer::beginComposite(Compositor* cmp, CompositeMethod method, uint8_t opacity)
 {
     if (!cmp) return false;
     auto p = static_cast<SwCompositor*>(cmp);
@@ -655,7 +655,7 @@ bool SwRenderer::dispose(RenderData data)
 }
 
 
-void* SwRenderer::prepareCommon(SwTask* task, const RenderTransform* transform, uint32_t opacity, const Array<RenderData>& clips, RenderUpdateFlag flags)
+void* SwRenderer::prepareCommon(SwTask* task, const RenderTransform* transform, const Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags)
 {
     if (!surface) return task;
     if (flags == RenderUpdateFlag::None) return task;
@@ -700,7 +700,7 @@ void* SwRenderer::prepareCommon(SwTask* task, const RenderTransform* transform, 
 }
 
 
-RenderData SwRenderer::prepare(Surface* surface, const RenderMesh* mesh, RenderData data, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flags)
+RenderData SwRenderer::prepare(Surface* surface, const RenderMesh* mesh, RenderData data, const RenderTransform* transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags)
 {
     //prepare task
     auto task = static_cast<SwImageTask*>(data);
@@ -709,11 +709,11 @@ RenderData SwRenderer::prepare(Surface* surface, const RenderMesh* mesh, RenderD
         task->source = surface;
         task->mesh = mesh;
     }
-    return prepareCommon(task, transform, opacity, clips, flags);
+    return prepareCommon(task, transform, clips, opacity, flags);
 }
 
 
-RenderData SwRenderer::prepare(const Array<RenderData>& scene, RenderData data, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flags)
+RenderData SwRenderer::prepare(const Array<RenderData>& scene, RenderData data, const RenderTransform* transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags)
 {
     //prepare task
     auto task = static_cast<SwSceneTask*>(data);
@@ -726,11 +726,11 @@ RenderData SwRenderer::prepare(const Array<RenderData>& scene, RenderData data, 
     for (auto task = scene.data; task < (scene.data + scene.count); ++task) {
         static_cast<SwTask*>(*task)->done();
     }
-    return prepareCommon(task, transform, opacity, clips, flags);
+    return prepareCommon(task, transform, clips, opacity, flags);
 }
 
 
-RenderData SwRenderer::prepare(const RenderShape& rshape, RenderData data, const RenderTransform* transform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag flags, bool clipper)
+RenderData SwRenderer::prepare(const RenderShape& rshape, RenderData data, const RenderTransform* transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags, bool clipper)
 {
     //prepare task
     auto task = static_cast<SwShapeTask*>(data);
@@ -740,7 +740,7 @@ RenderData SwRenderer::prepare(const RenderShape& rshape, RenderData data, const
     }
     task->clipper = clipper;
 
-    return prepareCommon(task, transform, opacity, clips, flags);
+    return prepareCommon(task, transform, clips, opacity, flags);
 }
 
 

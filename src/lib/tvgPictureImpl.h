@@ -133,7 +133,7 @@ struct Picture::Impl
         else return RenderTransform(pTransform, &tmp);
     }
 
-    bool needComposition(uint32_t opacity)
+    bool needComposition(uint8_t opacity)
     {
         //In this case, paint(scene) would try composition itself.
         if (opacity < 255) return false;
@@ -147,20 +147,20 @@ struct Picture::Impl
         return true;
     }
 
-    RenderData update(RenderMethod &renderer, const RenderTransform* pTransform, uint32_t opacity, Array<RenderData>& clips, RenderUpdateFlag pFlag, bool clipper)
+    RenderData update(RenderMethod &renderer, const RenderTransform* pTransform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag pFlag, bool clipper)
     {
         auto flag = load();
 
         if (surface) {
             auto transform = resizeTransform(pTransform);
-            rd = renderer.prepare(surface, &rm, rd, &transform, opacity, clips, static_cast<RenderUpdateFlag>(pFlag | flag));
+            rd = renderer.prepare(surface, &rm, rd, &transform, clips, opacity, static_cast<RenderUpdateFlag>(pFlag | flag));
         } else if (paint) {
             if (resizing) {
                 loader->resize(paint, w, h);
                 resizing = false;
             }
             needComp = needComposition(opacity) ? true : false;
-            rd = paint->pImpl->update(renderer, pTransform, opacity, clips, static_cast<RenderUpdateFlag>(pFlag | flag), clipper);
+            rd = paint->pImpl->update(renderer, pTransform, clips, opacity, static_cast<RenderUpdateFlag>(pFlag | flag), clipper);
         }
         return rd;
     }

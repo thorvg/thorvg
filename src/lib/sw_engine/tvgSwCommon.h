@@ -390,8 +390,8 @@ void shapeResetStroke(SwShape* shape, const RenderShape* rshape, const Matrix* t
 bool shapeGenStrokeRle(SwShape* shape, const RenderShape* rshape, const Matrix* transform, const SwBBox& clipRegion, SwBBox& renderRegion, SwMpool* mpool, unsigned tid);
 void shapeFree(SwShape* shape);
 void shapeDelStroke(SwShape* shape);
-bool shapeGenFillColors(SwShape* shape, const Fill* fill, const Matrix* transform, SwSurface* surface, uint32_t opacity, bool ctable);
-bool shapeGenStrokeFillColors(SwShape* shape, const Fill* fill, const Matrix* transform, SwSurface* surface, uint32_t opacity, bool ctable);
+bool shapeGenFillColors(SwShape* shape, const Fill* fill, const Matrix* transform, SwSurface* surface, uint8_t opacity, bool ctable);
+bool shapeGenStrokeFillColors(SwShape* shape, const Fill* fill, const Matrix* transform, SwSurface* surface, uint8_t opacity, bool ctable);
 void shapeResetFill(SwShape* shape);
 void shapeResetStrokeFill(SwShape* shape);
 void shapeDelFill(SwShape* shape);
@@ -408,7 +408,7 @@ void imageDelOutline(SwImage* image, SwMpool* mpool, uint32_t tid);
 void imageReset(SwImage* image);
 void imageFree(SwImage* image);
 
-bool fillGenColorTable(SwFill* fill, const Fill* fdata, const Matrix* transform, SwSurface* surface, uint32_t opacity, bool ctable);
+bool fillGenColorTable(SwFill* fill, const Fill* fdata, const Matrix* transform, SwSurface* surface, uint8_t opacity, bool ctable);
 void fillReset(SwFill* fill);
 void fillFree(SwFill* fill);
 //OPTIMIZE_ME: Skip the function pointer access
@@ -436,7 +436,7 @@ void mpoolRetStrokeOutline(SwMpool* mpool, unsigned idx);
 bool rasterCompositor(SwSurface* surface);
 bool rasterGradientShape(SwSurface* surface, SwShape* shape, unsigned id);
 bool rasterShape(SwSurface* surface, SwShape* shape, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
-bool rasterImage(SwSurface* surface, SwImage* image, const RenderMesh* mesh, const Matrix* transform, const SwBBox& bbox, uint32_t opacity);
+bool rasterImage(SwSurface* surface, SwImage* image, const RenderMesh* mesh, const Matrix* transform, const SwBBox& bbox, uint8_t opacity);
 bool rasterStroke(SwSurface* surface, SwShape* shape, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
 bool rasterGradientStroke(SwSurface* surface, SwShape* shape, unsigned id);
 bool rasterClear(SwSurface* surface, uint32_t x, uint32_t y, uint32_t w, uint32_t h);
