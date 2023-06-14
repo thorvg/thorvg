@@ -450,7 +450,7 @@ static void _rasterPolygonImageSegment(SwSurface* surface, const SwImage* image,
 
     //for matting(composition)
     auto csize = matting ? surface->compositor->image.channelSize: 0;
-    auto alpha = matting ? surface->blender.alpha(surface->compositor->method) : nullptr;
+    auto alpha = matting ? surface->alpha(surface->compositor->method) : nullptr;
     uint8_t* cmp = nullptr;
 
     if (!_arrange(image, region, yStart, yEnd)) return;

@@ -242,24 +242,19 @@ struct SwImage
 typedef uint32_t(*SwJoin)(uint8_t r, uint8_t g, uint8_t b, uint8_t a);      //color channel join
 typedef uint8_t(*SwAlpha)(uint8_t*);                                        //blending alpha
 
-struct SwBlender
+struct SwCompositor;
+
+struct SwSurface : Surface
 {
     SwJoin  join;
-    SwAlpha alphas[4];     //Alpha:2, InvAlpha:3, Luma:4, InvLuma:5
+    SwAlpha alphas[4];                    //Alpha:2, InvAlpha:3, Luma:4, InvLuma:5
+    SwCompositor* compositor = nullptr;   //compositor (optional)
 
     SwAlpha alpha(CompositeMethod method)
     {
         auto idx = (int)(method) - 2;       //0: None, 1: ClipPath
         return alphas[idx > 3 ? 0 : idx];   //CompositeMethod has only four Matting methods.
     }
-};
-
-struct SwCompositor;
-
-struct SwSurface : Surface
-{
-    SwBlender blender;                    //mandatory
-    SwCompositor* compositor = nullptr;   //compositor (optional)
 };
 
 struct SwCompositor : Compositor
