@@ -275,7 +275,7 @@ static void _rasterMaskedRectDup(SwSurface* surface, const SwBBox& region, uint8
     auto h = static_cast<uint32_t>(region.max.y - region.min.y);
     auto cbuffer = surface->compositor->image.buf32 + (region.min.y * surface->compositor->image.stride + region.min.x);   //compositor buffer
     auto cstride = surface->compositor->image.stride;
-    auto color = surface->blender.join(r, g, b, a);
+    auto color = surface->join(r, g, b, a);
     auto ialpha = 255 - a;
 
     for (uint32_t y = 0; y < h; ++y) {
@@ -348,13 +348,13 @@ static bool _rasterMattedRect(SwSurface* surface, const SwBBox& region, uint8_t 
     auto h = static_cast<uint32_t>(region.max.y - region.min.y);
     auto csize = surface->compositor->image.channelSize;
     auto cbuffer = surface->compositor->image.buf8 + ((region.min.y * surface->compositor->image.stride + region.min.x) * csize);   //compositor buffer
-    auto alpha = surface->blender.alpha(surface->compositor->method);
+    auto alpha = surface->alpha(surface->compositor->method);
 
     TVGLOG("SW_ENGINE", "Matted(%d) Rect [Region: %lu %lu %u %u]", (int)surface->compositor->method, region.min.x, region.min.y, w, h);
     
     //32bits channels
     if (surface->channelSize == sizeof(uint32_t)) {
-        auto color = surface->blender.join(r, g, b, a);
+        auto color = surface->join(r, g, b, a);
         auto buffer = surface->buf32 + (region.min.y * surface->stride) + region.min.x;
         for (uint32_t y = 0; y < h; ++y) {
             auto dst = &buffer[y * surface->stride];
@@ -385,7 +385,7 @@ static bool _rasterSolidRect(SwSurface* surface, const SwBBox& region, uint8_t r
 
     //32bits channels
     if (surface->channelSize == sizeof(uint32_t)) {
-        auto color = surface->blender.join(r, g, b, 255);
+        auto color = surface->join(r, g, b, 255);
         auto buffer = surface->buf32 + (region.min.y * surface->stride);
         for (uint32_t y = 0; y < h; ++y) {
             rasterRGBA32(buffer + y * surface->stride, color, region.min.x, w);
@@ -435,7 +435,7 @@ static void _rasterMaskedRleDup(SwSurface* surface, SwRleData* rle, uint8_t r, u
     auto span = rle->spans;
     auto cbuffer = surface->compositor->image.buf32;
     auto cstride = surface->compositor->image.stride;
-    auto color = surface->blender.join(r, g, b, a);
+    auto color = surface->join(r, g, b, a);
     uint32_t src;
 
     for (uint32_t i = 0; i < rle->size; ++i, ++span) {
@@ -455,7 +455,7 @@ static void _rasterMaskedRleInt(SwSurface* surface, SwRleData* rle, uint8_t r, u
     auto span = rle->spans;
     auto cbuffer = surface->compositor->image.buf32;
     auto cstride = surface->compositor->image.stride;
-    auto color = surface->blender.join(r, g, b, a);
+    auto color = surface->join(r, g, b, a);
     uint32_t src;
 
     for (uint32_t y = surface->compositor->bbox.min.y; y < surface->compositor->bbox.max.y; ++y) {
@@ -507,12 +507,12 @@ static bool _rasterMattedRle(SwSurface* surface, SwRleData* rle, uint8_t r, uint
     auto span = rle->spans;
     auto cbuffer = surface->compositor->image.buf8;
     auto csize = surface->compositor->image.channelSize;
-    auto alpha = surface->blender.alpha(surface->compositor->method);
+    auto alpha = surface->alpha(surface->compositor->method);
 
     //32bit channels
     if (surface->channelSize == sizeof(uint32_t)) {
         uint32_t src;
-        auto color = surface->blender.join(r, g, b, a);
+        auto color = surface->join(r, g, b, a);
         for (uint32_t i = 0; i < rle->size; ++i, ++span) {
             auto dst = &surface->buf32[span->y * surface->stride + span->x];
             auto cmp = &cbuffer[(span->y * surface->compositor->image.stride + span->x) * csize];
@@ -548,7 +548,7 @@ static bool _rasterSolidRle(SwSurface* surface, const SwRleData* rle, uint8_t r,
 
     //32bit channels
     if (surface->channelSize == sizeof(uint32_t)) {
-        auto color = surface->blender.join(r, g, b, 255);
+        auto color = surface->join(r, g, b, 255);
         for (uint32_t i = 0; i < rle->size; ++i, ++span) {
             if (span->coverage == 255) {
                 rasterRGBA32(surface->buf32 + span->y * surface->stride, color, span->x, span->len);
@@ -709,7 +709,7 @@ static bool _rasterScaledMattedRleRGBAImage(SwSurface* surface, const SwImage* i
 
     auto span = image->rle->spans;
     auto csize = surface->compositor->image.channelSize;
-    auto alpha = surface->blender.alpha(surface->compositor->method);
+    auto alpha = surface->alpha(surface->compositor->method);
 
     auto scaleMethod = image->scale < DOWN_SCALE_TOLERANCE ? _interpDownScaler : _interpUpScaler;
 
@@ -878,7 +878,7 @@ static bool _rasterDirectMattedRleRGBAImage(SwSurface* surface, const SwImage* i
     auto span = image->rle->spans;
     auto csize = surface->compositor->image.channelSize;
     auto cbuffer = surface->compositor->image.buf8;
-    auto alpha = surface->blender.alpha(surface->compositor->method);
+    auto alpha = surface->alpha(surface->compositor->method);
 
     for (uint32_t i = 0; i < image->rle->size; ++i, ++span) {
         auto dst = &surface->buf32[span->y * surface->stride + span->x];
@@ -1068,7 +1068,7 @@ static bool _rasterScaledMattedRGBAImage(SwSurface* surface, const SwImage* imag
     auto dbuffer = surface->buf32 + (region.min.y * surface->stride + region.min.x);
     auto csize = surface->compositor->image.channelSize;
     auto cbuffer = surface->compositor->image.buf8 + (region.min.y * surface->compositor->image.stride + region.min.x) * csize;
-    auto alpha = surface->blender.alpha(surface->compositor->method);
+    auto alpha = surface->alpha(surface->compositor->method);
 
     TVGLOG("SW_ENGINE", "Scaled Matted(%d) Image [Region: %lu %lu %lu %lu]", (int)surface->compositor->method, region.min.x, region.min.y, region.max.x - region.min.x, region.max.y - region.min.y);
 
@@ -1251,7 +1251,7 @@ static bool _rasterDirectMattedRGBAImage(SwSurface* surface, const SwImage* imag
     auto h = static_cast<uint32_t>(region.max.y - region.min.y);
     auto w = static_cast<uint32_t>(region.max.x - region.min.x);
     auto csize = surface->compositor->image.channelSize;
-    auto alpha = surface->blender.alpha(surface->compositor->method);
+    auto alpha = surface->alpha(surface->compositor->method);
 
     TVGLOG("SW_ENGINE", "Direct Matted(%d) Image  [Region: %lu %lu %u %u]", (int)surface->compositor->method, region.min.x, region.min.y, w, h);
 
@@ -1416,7 +1416,7 @@ static bool _rasterGradientMattedRect(SwSurface* surface, const SwBBox& region, 
     auto w = static_cast<uint32_t>(region.max.x - region.min.x);
     auto csize = surface->compositor->image.channelSize;
     auto cbuffer = surface->compositor->image.buf8 + (region.min.y * surface->compositor->image.stride + region.min.x) * csize;
-    auto alpha = surface->blender.alpha(surface->compositor->method);
+    auto alpha = surface->alpha(surface->compositor->method);
 
     TVGLOG("SW_ENGINE", "Matted(%d) Gradient [Region: %lu %lu %u %u]", (int)surface->compositor->method, region.min.x, region.min.y, w, h);
 
@@ -1557,7 +1557,7 @@ static bool _rasterGradientMattedRle(SwSurface* surface, const SwRleData* rle, c
     auto span = rle->spans;
     auto csize = surface->compositor->image.channelSize;
     auto cbuffer = surface->compositor->image.buf8;
-    auto alpha = surface->blender.alpha(surface->compositor->method);
+    auto alpha = surface->alpha(surface->compositor->method);
 
     for (uint32_t i = 0; i < rle->size; ++i, ++span) {
         auto dst = &surface->buf32[span->y * surface->stride + span->x];
@@ -1644,17 +1644,17 @@ void rasterRGBA32(uint32_t *dst, uint32_t val, uint32_t offset, int32_t len)
 bool rasterCompositor(SwSurface* surface)
 {
     //See CompositeMethod, Alpha:3, InvAlpha:4, Luma:5, InvLuma:6
-    surface->blender.alphas[0] = ALPHA;
-    surface->blender.alphas[1] = IALPHA;
+    surface->alphas[0] = ALPHA;
+    surface->alphas[1] = IALPHA;
 
     if (surface->cs == ColorSpace::ABGR8888 || surface->cs == ColorSpace::ABGR8888S) {
-        surface->blender.join = _abgrJoin;
-        surface->blender.alphas[2] = _abgrLuma;
-        surface->blender.alphas[3] = _abgrInvLuma;
+        surface->join = _abgrJoin;
+        surface->alphas[2] = _abgrLuma;
+        surface->alphas[3] = _abgrInvLuma;
     } else if (surface->cs == ColorSpace::ARGB8888 || surface->cs == ColorSpace::ARGB8888S) {
-        surface->blender.join = _argbJoin;
-        surface->blender.alphas[2] = _argbLuma;
-        surface->blender.alphas[3] = _argbInvLuma;
+        surface->join = _argbJoin;
+        surface->alphas[2] = _argbLuma;
+        surface->alphas[3] = _argbInvLuma;
     } else {
         TVGERR("SW_ENGINE", "Unsupported Colorspace(%d) is expected!", surface->cs);
         return false;

@@ -52,7 +52,7 @@ static bool _updateColorTable(SwFill* fill, const Fill* fdata, const SwSurface* 
     auto r = pColors->r;
     auto g = pColors->g;
     auto b = pColors->b;
-    auto rgba = surface->blender.join(r, g, b, a);
+    auto rgba = surface->join(r, g, b, a);
 
     auto inc = 1.0f / static_cast<float>(GRADIENT_STOP_SIZE);
     auto pos = 1.5f * inc;
@@ -73,7 +73,7 @@ static bool _updateColorTable(SwFill* fill, const Fill* fdata, const SwSurface* 
         auto a2 = MULTIPLY(next->a, opacity);
         if (!fill->translucent && a2 < 255) fill->translucent = true;
 
-        auto rgba2 = surface->blender.join(next->r, next->g, next->b, a2);
+        auto rgba2 = surface->join(next->r, next->g, next->b, a2);
 
         while (pos < next->offset && i < GRADIENT_STOP_SIZE) {
             auto t = (pos - curr->offset) * delta;
