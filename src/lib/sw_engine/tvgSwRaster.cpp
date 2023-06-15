@@ -39,7 +39,7 @@ constexpr auto DOWN_SCALE_TOLERANCE = 0.5f;
 
 struct FillLinear
 {
-    void operator()(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlendOp op, uint8_t a)
+    void operator()(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlender op, uint8_t a)
     {
         fillLinear(fill, dst, y, x, len, op, a);
     }
@@ -52,7 +52,7 @@ struct FillLinear
 
 struct FillRadial
 {
-    void operator()(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlendOp op, uint8_t a)
+    void operator()(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlender op, uint8_t a)
     {
         fillRadial(fill, dst, y, x, len, op, a);
     }
@@ -694,7 +694,7 @@ static bool _rasterScaledMaskedRleRGBAImage(SwSurface* surface, const SwImage* i
 
     if (method == CompositeMethod::AddMask) _rasterScaledMaskedRleRGBAImageDup<AddMaskOp, AddMaskAOp>(surface, image, itransform, region, opacity, halfScale);
     else if (method == CompositeMethod::SubtractMask) _rasterScaledMaskedRleRGBAImageDup<SubMaskOp, SubMaskAOp>(surface, image, itransform, region, opacity, halfScale);
-    else if (method == CompositeMethod::IntersectMask) _rasterScaledMaskedRleRGBAImageDup<DifMaskOp, DifMaskAOp>(surface, image, itransform, region, opacity, halfScale);
+    else if (method == CompositeMethod::DifferenceMask) _rasterScaledMaskedRleRGBAImageDup<DifMaskOp, DifMaskAOp>(surface, image, itransform, region, opacity, halfScale);
     else if (method == CompositeMethod::IntersectMask) _rasterScaledMaskedRleRGBAImageInt(surface, image, itransform, region, opacity, halfScale);
     else return false;
 
@@ -1341,7 +1341,7 @@ static bool _rasterRGBAImage(SwSurface* surface, SwImage* image, const Matrix* t
 /************************************************************************/
 
 template<typename fillMethod>
-static void _rasterGradientMaskedRectDup(SwSurface* surface, const SwBBox& region, const SwFill* fill, SwBlendOp maskOp)
+static void _rasterGradientMaskedRectDup(SwSurface* surface, const SwBBox& region, const SwFill* fill, SwBlender maskOp)
 {
     auto h = static_cast<uint32_t>(region.max.y - region.min.y);
     auto w = static_cast<uint32_t>(region.max.x - region.min.x);
@@ -1370,7 +1370,7 @@ static void _rasterGradientMaskedRectInt(SwSurface* surface, const SwBBox& regio
                 auto x = surface->compositor->bbox.min.x;
                 while (x < surface->compositor->bbox.max.x) {
                     if (x == region.min.x) {
-                        fillMethod()(fill, tmp, y2, x, w, opIntMask, 255);
+                        fillMethod()(fill, tmp, y2, x, w, opMaskPreIntersect, 255);
                         x += w;
                         tmp += w;
                     } else {
@@ -1397,9 +1397,9 @@ static bool _rasterGradientMaskedRect(SwSurface* surface, const SwBBox& region, 
 
     TVGLOG("SW_ENGINE", "Masked(%d) Gradient [Region: %lu %lu %lu %lu]", (int)surface->compositor->method, region.min.x, region.min.y, region.max.x - region.min.x, region.max.y - region.min.y);
 
-    if (method == CompositeMethod::AddMask) _rasterGradientMaskedRectDup<fillMethod>(surface, region, fill, opAddMask);
-    else if (method == CompositeMethod::SubtractMask) _rasterGradientMaskedRectDup<fillMethod>(surface, region, fill, opSubMask);
-    else if (method == CompositeMethod::DifferenceMask) _rasterGradientMaskedRectDup<fillMethod>(surface, region, fill, opDifMask);
+    if (method == CompositeMethod::AddMask) _rasterGradientMaskedRectDup<fillMethod>(surface, region, fill, opMaskPreAdd);
+    else if (method == CompositeMethod::SubtractMask) _rasterGradientMaskedRectDup<fillMethod>(surface, region, fill, opMaskPreSubtract);
+    else if (method == CompositeMethod::DifferenceMask) _rasterGradientMaskedRectDup<fillMethod>(surface, region, fill, opMaskPreDifference);
     else if (method == CompositeMethod::IntersectMask) _rasterGradientMaskedRectInt<fillMethod>(surface, region, fill);
     else return false;
 
@@ -1437,7 +1437,7 @@ static bool _rasterTranslucentGradientRect(SwSurface* surface, const SwBBox& reg
     auto w = static_cast<uint32_t>(region.max.x - region.min.x);
 
     for (uint32_t y = 0; y < h; ++y) {
-        fillMethod()(fill, buffer, region.min.y + y, region.min.x, w, opBlend, 255);
+        fillMethod()(fill, buffer, region.min.y + y, region.min.x, w, opBlendPreNormal, 255);
         buffer += surface->stride;
     }
     return true;
@@ -1452,7 +1452,7 @@ static bool _rasterSolidGradientRect(SwSurface* surface, const SwBBox& region, c
     auto h = static_cast<uint32_t>(region.max.y - region.min.y);
 
     for (uint32_t y = 0; y < h; ++y) {
-        fillMethod()(fill, buffer + y * surface->stride, region.min.y + y, region.min.x, w, opDirect, 0);
+        fillMethod()(fill, buffer + y * surface->stride, region.min.y + y, region.min.x, w, opBlendSrcOver, 255);
     }
     return true;
 }
@@ -1494,7 +1494,7 @@ static bool _rasterRadialGradientRect(SwSurface* surface, const SwBBox& region, 
 /************************************************************************/
 
 template<typename fillMethod>
-static void _rasterGradientMaskedRleDup(SwSurface* surface, const SwRleData* rle, const SwFill* fill, SwBlendOp maskOp)
+static void _rasterGradientMaskedRleDup(SwSurface* surface, const SwRleData* rle, const SwFill* fill, SwBlender maskOp)
 {
     auto span = rle->spans;
     auto cstride = surface->compositor->image.stride;
@@ -1519,7 +1519,7 @@ static void _rasterGradientMaskedRleInt(SwSurface* surface, const SwRleData* rle
         uint32_t x = surface->compositor->bbox.min.x;
         while (x < surface->compositor->bbox.max.x) {
             if (y == span->y && x == span->x && x + span->len <= surface->compositor->bbox.max.x) {
-                fillMethod()(fill, cmp, span->y, span->x, span->len, opIntMask, span->coverage);
+                fillMethod()(fill, cmp, span->y, span->x, span->len, opMaskIntersect, span->coverage);
                 x += span->len;
                 ++span;
             } else {
@@ -1538,9 +1538,9 @@ static bool _rasterGradientMaskedRle(SwSurface* surface, const SwRleData* rle, c
 
     auto method = surface->compositor->method;
 
-    if (method == CompositeMethod::AddMask) _rasterGradientMaskedRleDup<fillMethod>(surface, rle, fill, opAddMask);
-    else if (method == CompositeMethod::SubtractMask) _rasterGradientMaskedRleDup<fillMethod>(surface, rle, fill, opSubMask);
-    else if (method == CompositeMethod::DifferenceMask) _rasterGradientMaskedRleDup<fillMethod>(surface, rle, fill, opDifMask);
+    if (method == CompositeMethod::AddMask) _rasterGradientMaskedRleDup<fillMethod>(surface, rle, fill, opMaskAdd);
+    else if (method == CompositeMethod::SubtractMask) _rasterGradientMaskedRleDup<fillMethod>(surface, rle, fill, opMaskSubtract);
+    else if (method == CompositeMethod::DifferenceMask) _rasterGradientMaskedRleDup<fillMethod>(surface, rle, fill, opMaskDifference);
     else if (method == CompositeMethod::IntersectMask) _rasterGradientMaskedRleInt<fillMethod>(surface, rle, fill);
     else return false;
 
@@ -1575,8 +1575,8 @@ static bool _rasterTranslucentGradientRle(SwSurface* surface, const SwRleData* r
 
     for (uint32_t i = 0; i < rle->size; ++i, ++span) {
         auto dst = &surface->buf32[span->y * surface->stride + span->x];
-        if (span->coverage == 255) fillMethod()(fill, dst, span->y, span->x, span->len, opBlend, 255);
-        else fillMethod()(fill, dst, span->y, span->x, span->len, opAlphaBlend, span->coverage);
+        if (span->coverage == 255) fillMethod()(fill, dst, span->y, span->x, span->len, opBlendPreNormal, 255);
+        else fillMethod()(fill, dst, span->y, span->x, span->len, opBlendNormal, span->coverage);
     }
     return true;
 }
@@ -1589,8 +1589,8 @@ static bool _rasterSolidGradientRle(SwSurface* surface, const SwRleData* rle, co
 
     for (uint32_t i = 0; i < rle->size; ++i, ++span) {
         auto dst = &surface->buf32[span->y * surface->stride + span->x];
-        if (span->coverage == 255) fillMethod()(fill, dst, span->y, span->x, span->len, opDirect, 0);
-        else fillMethod()(fill, dst, span->y, span->x, span->len, opInterpolate, span->coverage);
+        if (span->coverage == 255) fillMethod()(fill, dst, span->y, span->x, span->len, opBlendSrcOver, 255);
+        else fillMethod()(fill, dst, span->y, span->x, span->len, opBlendInterp, span->coverage);
     }
     return true;
 }
