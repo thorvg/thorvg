@@ -239,6 +239,7 @@ struct SwImage
     bool         scaled = false;  //draw scaled image
 };
 
+typedef uint32_t(*SwBlender)(uint32_t s, uint32_t d, uint8_t sa);           //src, dst, alpha
 typedef uint32_t(*SwJoin)(uint8_t r, uint8_t g, uint8_t b, uint8_t a);      //color channel join
 typedef uint8_t(*SwAlpha)(uint8_t*);                                        //blending alpha
 
@@ -314,48 +315,66 @@ static inline uint8_t IALPHA(uint32_t c)
     return (~c >> 24);
 }
 
+static inline uint32_t opBlendInterp(uint32_t s, uint32_t d, uint8_t a)
+{
+    return INTERPOLATE(s, d, a);
+}
 
-typedef uint32_t(*SwBlendOp)(uint32_t s, uint32_t d, uint8_t a);            //src, dst, alpha
-
-static inline uint32_t opAlphaBlend(uint32_t s, uint32_t d, uint8_t a)
+static inline uint32_t opBlendNormal(uint32_t s, uint32_t d, uint8_t a)
 {
     auto t = ALPHA_BLEND(s, a);
     return t + ALPHA_BLEND(d, IALPHA(t));
 }
 
-static inline uint32_t opBlend(uint32_t s, uint32_t d, TVG_UNUSED uint8_t a)
+static inline uint32_t opBlendPreNormal(uint32_t s, uint32_t d, TVG_UNUSED uint8_t a)
 {
     return s + ALPHA_BLEND(d, IALPHA(s));
 }
 
-static inline uint32_t opDirect(uint32_t s, TVG_UNUSED uint32_t d, TVG_UNUSED uint8_t a)
+static inline uint32_t opBlendSrcOver(uint32_t s, TVG_UNUSED uint32_t d, TVG_UNUSED uint8_t a)
 {
     return s;
 }
 
-static inline uint32_t opAddMask(uint32_t s, uint32_t d, TVG_UNUSED uint8_t a)
+static inline uint32_t opMaskAdd(uint32_t s, uint32_t d, uint8_t a)
 {
-    return opBlend(s, d, a);
+    return opBlendNormal(s, d, a);
 }
 
-static inline uint32_t opSubMask(uint32_t s, uint32_t d, TVG_UNUSED uint8_t a)
+static inline uint32_t opMaskSubtract(uint32_t s, uint32_t d, uint8_t a)
+{
+    return ALPHA_BLEND(d, MULTIPLY(IALPHA(s), a));
+}
+
+static inline uint32_t opMaskDifference(uint32_t s, uint32_t d, uint8_t a)
+{
+    auto t = ALPHA_BLEND(s, a);
+    return ALPHA_BLEND(t, IALPHA(d)) + ALPHA_BLEND(d, IALPHA(t));
+}
+
+static inline uint32_t opMaskIntersect(uint32_t s, uint32_t d, uint8_t a)
+{
+   return ALPHA_BLEND(d, MULTIPLY(IALPHA(s), a));
+}
+
+static inline uint32_t opMaskPreAdd(uint32_t s, uint32_t d, TVG_UNUSED uint8_t a)
+{
+    return opBlendPreNormal(s, d, a);
+}
+
+static inline uint32_t opMaskPreSubtract(uint32_t s, uint32_t d, TVG_UNUSED uint8_t a)
 {
     return ALPHA_BLEND(d, IALPHA(s));
 }
 
-static inline uint32_t opIntMask(TVG_UNUSED uint32_t s, uint32_t d, uint8_t a)
-{
-   return ALPHA_BLEND(d, a);
-}
-
-static inline uint32_t opDifMask(uint32_t s, uint32_t d, TVG_UNUSED uint8_t a)
+static inline uint32_t opMaskPreDifference(uint32_t s, uint32_t d, TVG_UNUSED uint8_t a)
 {
    return ALPHA_BLEND(s, IALPHA(d)) + ALPHA_BLEND(d, IALPHA(s));
 }
 
-static inline uint32_t opInterpolate(uint32_t s, uint32_t d, uint8_t a)
+static inline uint32_t opMaskPreIntersect(uint32_t s, uint32_t d, TVG_UNUSED uint8_t a)
 {
-    return INTERPOLATE(s, d, a);
+   return ALPHA_BLEND(d, MULTIPLY(a, IALPHA(s)));
 }
 
 
@@ -407,9 +426,9 @@ bool fillGenColorTable(SwFill* fill, const Fill* fdata, const Matrix* transform,
 void fillReset(SwFill* fill);
 void fillFree(SwFill* fill);
 //OPTIMIZE_ME: Skip the function pointer access
-void fillLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlendOp op, uint8_t a);                                         //blending ver.
+void fillLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlender op, uint8_t a);                                         //blending ver.
 void fillLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, uint8_t* cmp, SwAlpha alpha, uint8_t csize, uint8_t opacity);     //masking ver.
-void fillRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlendOp op, uint8_t a);                                         //blending ver.
+void fillRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlender op, uint8_t a);                                         //blending ver.
 void fillRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, uint8_t* cmp, SwAlpha alpha, uint8_t csize, uint8_t opacity);     //masking ver.
 
 SwRleData* rleRender(SwRleData* rle, const SwOutline* outline, const SwBBox& renderRegion, bool antiAlias);

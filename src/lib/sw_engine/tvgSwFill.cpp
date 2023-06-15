@@ -246,13 +246,13 @@ void fillRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint3
 
     if (opacity == 255) {
         for (uint32_t i = 0 ; i < len ; ++i, ++dst, cmp += csize) {
-            *dst = opAlphaBlend(_pixel(fill, sqrtf(det)), *dst, alpha(cmp));
+            *dst = opBlendNormal(_pixel(fill, sqrtf(det)), *dst, alpha(cmp));
             det += detFirstDerivative;
             detFirstDerivative += detSecondDerivative;
         }
     } else {
         for (uint32_t i = 0 ; i < len ; ++i, ++dst, cmp += csize) {
-            *dst = opAlphaBlend(_pixel(fill, sqrtf(det)), *dst, MULTIPLY(opacity, alpha(cmp)));
+            *dst = opBlendNormal(_pixel(fill, sqrtf(det)), *dst, MULTIPLY(opacity, alpha(cmp)));
             det += detFirstDerivative;
             detFirstDerivative += detSecondDerivative;
         }
@@ -260,7 +260,7 @@ void fillRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint3
 }
 
 
-void fillRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlendOp op, uint8_t a)
+void fillRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlender op, uint8_t a)
 {
     auto rx = (x + 0.5f) * fill->radial.a11 + (y + 0.5f) * fill->radial.a12 + fill->radial.shiftX;
     auto ry = (x + 0.5f) * fill->radial.a21 + (y + 0.5f) * fill->radial.a22 + fill->radial.shiftY;
@@ -291,7 +291,7 @@ void fillLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint3
         if (mathZero(inc)) {
             auto color = _fixedPixel(fill, static_cast<int32_t>(t * FIXPT_SIZE));
             for (uint32_t i = 0; i < len; ++i, ++dst, cmp += csize) {
-                *dst = opAlphaBlend(color, *dst, alpha(cmp));
+                *dst = opBlendNormal(color, *dst, alpha(cmp));
             }
             return;
         }
@@ -305,14 +305,14 @@ void fillLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint3
             auto t2 = static_cast<int32_t>(t * FIXPT_SIZE);
             auto inc2 = static_cast<int32_t>(inc * FIXPT_SIZE);
             for (uint32_t j = 0; j < len; ++j, ++dst, cmp += csize) {
-                *dst = opAlphaBlend(_fixedPixel(fill, t2), *dst, alpha(cmp));
+                *dst = opBlendNormal(_fixedPixel(fill, t2), *dst, alpha(cmp));
                 t2 += inc2;
             }
         //we have to fallback to float math
         } else {
             uint32_t counter = 0;
             while (counter++ < len) {
-                *dst = opAlphaBlend(_pixel(fill, t / GRADIENT_STOP_SIZE), *dst, alpha(cmp));
+                *dst = opBlendNormal(_pixel(fill, t / GRADIENT_STOP_SIZE), *dst, alpha(cmp));
                 ++dst;
                 t += inc;
                 cmp += csize;
@@ -322,7 +322,7 @@ void fillLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint3
         if (mathZero(inc)) {
             auto color = _fixedPixel(fill, static_cast<int32_t>(t * FIXPT_SIZE));
             for (uint32_t i = 0; i < len; ++i, ++dst, cmp += csize) {
-                *dst = opAlphaBlend(color, *dst, MULTIPLY(alpha(cmp), opacity));
+                *dst = opBlendNormal(color, *dst, MULTIPLY(alpha(cmp), opacity));
             }
             return;
         }
@@ -336,14 +336,14 @@ void fillLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint3
             auto t2 = static_cast<int32_t>(t * FIXPT_SIZE);
             auto inc2 = static_cast<int32_t>(inc * FIXPT_SIZE);
             for (uint32_t j = 0; j < len; ++j, ++dst, cmp += csize) {
-                *dst = opAlphaBlend(_fixedPixel(fill, t2), *dst, MULTIPLY(alpha(cmp), opacity));
+                *dst = opBlendNormal(_fixedPixel(fill, t2), *dst, MULTIPLY(alpha(cmp), opacity));
                 t2 += inc2;
             }
         //we have to fallback to float math
         } else {
             uint32_t counter = 0;
             while (counter++ < len) {
-                *dst = opAlphaBlend(_pixel(fill, t / GRADIENT_STOP_SIZE), *dst, MULTIPLY(opacity, alpha(cmp)));
+                *dst = opBlendNormal(_pixel(fill, t / GRADIENT_STOP_SIZE), *dst, MULTIPLY(opacity, alpha(cmp)));
                 ++dst;
                 t += inc;
                 cmp += csize;
@@ -353,7 +353,7 @@ void fillLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint3
 }
 
 
-void fillLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlendOp op, uint8_t a)
+void fillLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlender op, uint8_t a)
 {
     //Rotation
     float rx = x + 0.5f;
