@@ -20,6 +20,7 @@
  * SOFTWARE.
  */
 
+#include <fstream>
 #include "Common.h"
 
 /************************************************************************/
@@ -30,25 +31,28 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 {
     if (!canvas) return;
 
-    //Prepare Round Rectangle
+    //Normal
     auto shape1 = tvg::Shape::gen();
-    shape1->appendRect(0, 0, 400, 400, 50, 50);  //x, y, w, h, rx, ry
-    shape1->fill(0, 255, 0);                     //r, g, b
+    shape1->appendRect(0, 0, 400, 400, 50, 50);
+    shape1->fill(0, 255, 255);
+    shape1->blend(tvg::BlendMethod::Normal);
     if (canvas->push(std::move(shape1)) != tvg::Result::Success) return;
 
-    //Prepare Circle
+    //Add
     auto shape2 = tvg::Shape::gen();
-    shape2->appendCircle(400, 400, 200, 200);    //cx, cy, radiusW, radiusH
-    shape2->fill(255, 255, 0, 170);                   //r, g, b, a
+    shape2->appendCircle(400, 400, 200, 200);
+    shape2->fill(255, 255, 0, 170);
+    shape2->blend(tvg::BlendMethod::Add);
     if (canvas->push(std::move(shape2)) != tvg::Result::Success) return;
 
-    //Prepare Ellipse
+    //Multiply
     auto shape3 = tvg::Shape::gen();
-    shape3->appendCircle(400, 400, 250, 100);    //cx, cy, radiusW, radiusH
-    shape3->fill(255, 255, 255, 100);                 //r, g, b, a
+    shape3->appendCircle(400, 400, 250, 100);
+    shape3->fill(255, 255, 255, 100);
+    shape3->blend(tvg::BlendMethod::Multiply);
     if (canvas->push(std::move(shape3)) != tvg::Result::Success) return;
 
-    //Prepare Star
+    //Overlay
     auto shape4 = tvg::Shape::gen();
     shape4->moveTo(199, 234);
     shape4->lineTo(253, 343);
@@ -62,13 +66,107 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     shape4->lineTo(146, 343);
     shape4->close();
     shape4->fill(255, 0, 200, 200);
+    shape4->blend(tvg::BlendMethod::Overlay);
     if (canvas->push(std::move(shape4)) != tvg::Result::Success) return;
 
-    //Prepare Opaque Ellipse
+    //Difference
     auto shape5 = tvg::Shape::gen();
-    shape5->appendCircle(600, 650, 200, 150);
-    shape5->fill(0, 0, 255);
+    shape5->appendCircle(300, 600, 200, 200);
+
+    //LinearGradient
+    auto fill = tvg::LinearGradient::gen();
+    fill->linear(300, 600, 200, 200);
+
+    //Gradient Color Stops
+    tvg::Fill::ColorStop colorStops[2];
+    colorStops[0] = {0, 0, 0, 0, 255};
+    colorStops[1] = {1, 255, 255, 255, 100};
+    fill->colorStops(colorStops, 2);
+
+    shape5->fill(std::move(fill));
+    shape5->blend(tvg::BlendMethod::Difference);
     if (canvas->push(std::move(shape5)) != tvg::Result::Success) return;
+
+    //Exclusion
+    auto shape6 = tvg::Shape::gen();
+    shape6->appendCircle(300, 800, 150, 150);
+
+    //RadialGradient
+    auto fill2 = tvg::RadialGradient::gen();
+    fill2->radial(300, 800, 150);
+    fill2->colorStops(colorStops, 2);
+
+    shape6->fill(std::move(fill2));
+    shape6->blend(tvg::BlendMethod::Exclusion);
+    if (canvas->push(std::move(shape6)) != tvg::Result::Success) return;
+
+    //Screen
+    auto shape7 = tvg::Shape::gen();
+    shape7->appendCircle(600, 650, 200, 150);
+    shape7->blend(tvg::BlendMethod::Screen);
+    shape7->fill(0, 0, 255);
+    if (canvas->push(std::move(shape7)) != tvg::Result::Success) return;
+
+    //SrcOver
+    auto shape8 = tvg::Shape::gen();
+    shape8->appendRect(550, 600, 150, 150);
+    shape8->blend(tvg::BlendMethod::SrcOver);
+    shape8->fill(10, 255, 155, 50);
+    if (canvas->push(std::move(shape8)) != tvg::Result::Success) return;
+
+    //Darken
+    auto shape9 = tvg::Shape::gen();
+    shape9->appendRect(600, 650, 350, 250);
+    shape9->blend(tvg::BlendMethod::Darken);
+    shape9->fill(10, 255, 155);
+    if (canvas->push(std::move(shape9)) != tvg::Result::Success) return;
+
+    //Prepare Transformed Image
+    string path(EXAMPLE_DIR"/rawimage_200x300.raw");
+
+    ifstream file(path);
+    if (!file.is_open()) return ;
+    auto data = (uint32_t*)malloc(sizeof(uint32_t) * (200*300));
+    file.read(reinterpret_cast<char *>(data), sizeof (uint32_t) * 200 * 300);
+    file.close();
+
+    //Lighten
+    auto picture = tvg::Picture::gen();
+    if (picture->load(data, 200, 300, true) != tvg::Result::Success) return;
+    picture->translate(800, 700);
+    picture->rotate(40);
+    picture->blend(tvg::BlendMethod::Lighten);
+    canvas->push(std::move(picture));
+
+    //ColorDodge
+    auto shape10 = tvg::Shape::gen();
+    shape10->appendRect(0, 0, 200, 200, 50, 50);
+    shape10->blend(tvg::BlendMethod::ColorDodge);
+    shape10->fill(255, 255, 255, 250);
+    if (canvas->push(std::move(shape10)) != tvg::Result::Success) return;
+
+    //ColorBurn
+    auto picture2 = tvg::Picture::gen();
+    if (picture2->load(data, 200, 300, true) != tvg::Result::Success) return;
+    picture2->translate(600, 250);
+    picture2->blend(tvg::BlendMethod::ColorBurn);
+    picture2->opacity(150);
+    canvas->push(std::move(picture2));
+
+    //HardLight
+    auto picture3 = tvg::Picture::gen();
+    if (picture3->load(data, 200, 300, true) != tvg::Result::Success) return;
+    picture3->translate(700, 150);
+    picture3->blend(tvg::BlendMethod::HardLight);
+    canvas->push(std::move(picture3));
+
+    //SoftLight
+    auto picture4 = tvg::Picture::gen();
+    if (picture4->load(data, 200, 300, true) != tvg::Result::Success) return;
+    picture4->translate(350, 600);
+    picture4->rotate(90);
+    picture4->blend(tvg::BlendMethod::SoftLight);
+    canvas->push(std::move(picture4));
 }
 
 
@@ -161,9 +259,9 @@ int main(int argc, char **argv)
         elm_init(argc, argv);
 
         if (tvgEngine == tvg::CanvasEngine::Sw) {
-            createSwView();
+            createSwView(1024, 1024);
         } else {
-            createGlView();
+            createGlView(1024, 1024);
         }
 
         elm_run();
