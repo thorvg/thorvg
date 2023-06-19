@@ -100,6 +100,9 @@ struct Scene::Impl
         auto compMethod = scene->composite(nullptr);
         if (compMethod != CompositeMethod::None && compMethod != CompositeMethod::ClipPath) return true;
 
+        //Blending may require composition (even if opacity == 255)
+        if (scene->blend() != BlendMethod::Normal) return true;
+
         //Half translucent requires intermediate composition.
         if (opacity == 255) return false;
 

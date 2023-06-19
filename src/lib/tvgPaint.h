@@ -63,6 +63,7 @@ namespace tvg
         StrategyMethod* smethod = nullptr;
         RenderTransform* rTransform = nullptr;
         Composite* compData = nullptr;
+        BlendMethod blendMethod = BlendMethod::Normal;              //uint8_t
         uint8_t renderFlag = RenderUpdateFlag::None;
         uint8_t ctxFlag = ContextFlag::Invalid;
         uint8_t id;

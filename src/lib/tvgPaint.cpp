@@ -176,6 +176,7 @@ bool Paint::Impl::render(RenderMethod& renderer)
 
     if (cmp) renderer.beginComposite(cmp, compData->method, compData->target->pImpl->opacity);
 
+    renderer.blend(blendMethod);
     auto ret = smethod->render(renderer);
 
     if (cmp) renderer.endComposite(cmp);
@@ -416,4 +417,18 @@ uint8_t Paint::opacity() const noexcept
 uint32_t Paint::identifier() const noexcept
 {
     return pImpl->id;
+}
+
+
+Result Paint::blend(BlendMethod method) const noexcept
+{
+    pImpl->blendMethod = method;
+
+    return Result::Success;
+}
+
+
+BlendMethod Paint::blend() const noexcept
+{
+    return pImpl->blendMethod;
 }
