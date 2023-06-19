@@ -47,6 +47,7 @@ public:
     RenderRegion region(RenderData data) override;
     RenderRegion viewport() override;
     bool viewport(const RenderRegion& vp) override;
+    bool blend(BlendMethod method) override;
     ColorSpace colorSpace() override;
 
     bool clear() override;
@@ -70,7 +71,6 @@ private:
     Array<SwSurface*>    compositors;                 //render targets cache list
     SwMpool*             mpool;                       //private memory pool
     RenderRegion         vport;                       //viewport
-
     bool                 sharedMpool = true;          //memory-pool behavior policy
 
     SwRenderer();

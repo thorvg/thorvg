@@ -129,6 +129,13 @@ ColorSpace GlRenderer::colorSpace()
 }
 
 
+bool GlRenderer::blend(TVG_UNUSED BlendMethod method)
+{
+    //TODO:
+    return false;
+}
+
+
 bool GlRenderer::renderImage(TVG_UNUSED void* data)
 {
     //TODO: render requested images

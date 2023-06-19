@@ -183,10 +183,38 @@ enum class CompositeMethod
     InvAlphaMask,       ///< Alpha Masking using the complement to the compositing target's pixels as an alpha value.
     LumaMask,           ///< Alpha Masking using the grayscale (0.2125R + 0.7154G + 0.0721*B) of the compositing target's pixels. @since 0.9
     InvLumaMask,        ///< Alpha Masking using the grayscale (0.2125R + 0.7154G + 0.0721*B) of the complement to the compositing target's pixels. @BETA_API
-    AddMask,            ///< Combines the target and source objects pixels using target alpha. (T * TA) + (S * (1 - TA)) @BETA_API
-    SubtractMask,       ///< Subtracts the source color from the target color while considering their respective target alpha. (T * TA) - (S * (1 - TA)) @BETA_API
+    AddMask,            ///< Combines the target and source objects pixels using target alpha. (T * TA) + (S * (255 - TA)) @BETA_API
+    SubtractMask,       ///< Subtracts the source color from the target color while considering their respective target alpha. (T * TA) - (S * (255 - TA)) @BETA_API
     IntersectMask,      ///< Computes the result by taking the minimum value between the target alpha and the source alpha and multiplies it with the target color. (T * min(TA, SA)) @BETA_API
-    DifferenceMask      ///< Calculates the absolute difference between the target color and the source color multiplied by the complement of the target alpha. abs(T - S * (1 - TA)) @BETA_API
+    DifferenceMask      ///< Calculates the absolute difference between the target color and the source color multiplied by the complement of the target alpha. abs(T - S * (255 - TA)) @BETA_API
+};
+
+
+/**
+ * @brief Enumeration indicates the method used for blending paint. Please refer to the respective formulas for each method.
+ *
+ * Notation: S(source paint as the top layer), D(destination as the bottom layer), Sa(source paint alpha), Da(destination alpha)
+ *
+ * @see Paint::blend()
+ *
+ * @BETA_API
+ */
+enum class BlendMethod : uint8_t
+{
+    Normal = 0,        ///< Perform the alpha blending(default). S if (Sa == 255), otherwise (Sa * S) + (255 - Sa) * D
+    Add,               ///< Simply adds pixel values of one layer with the other. (S + D)
+    Screen,            ///< The values of the pixels in the two layers are inverted, multiplied, and then inverted again. (S + D) - (S * D)
+    Multiply,          ///< Takes the RGB channel values from 0 to 255 of each pixel in the top layer and multiples them with the values for the corresponding pixel from the bottom layer. (S * D)
+    Overlay,           ///< Combines Multiply and Screen blend modes. (2 * S * D) if (2 * D < Da), otherwise (Sa * Da) - 2 * (Da - S) * (Sa - D)
+    Difference,        ///< Subtracts the bottom layer from the top layer or the other way around, to always get a non-negative value. (S - D) if (S > D), otherwise (D - S)
+    Exclusion,         ///< The result is twice the product of the top and bottom layers, subtracted from their sum. s + d - (2 * s * d)
+    SrcOver,           ///< Replace the bottom layer with the top layer.
+    Darken,            ///< Creates a pixel that retains the smallest components of the top and bottom layer pixels. min(S, D)
+    Lighten,           ///< Only has the opposite action of Darken Only. max(S, D)
+    ColorDodge,        ///< Divides the bottom layer by the inverted top layer. D / (255 - S)
+    ColorBurn,         ///< Divides the inverted bottom layer by the top layer, and then inverts the result. 255 - (255 - D) / S
+    HardLight,         ///< The same as Overlay but with the color roles reversed. (2 * S * D) if (S < Sa), otherwise (Sa * Da) - 2 * (Da - S) * (Sa - D)
+    SoftLight          ///< The same as Overlay but with applying pure black or white does not result in pure black or white. (1 - 2 * S) * (D ^ 2) + (2 * S * D)
 };
 
 
@@ -316,7 +344,7 @@ public:
      * The values of the matrix can be set by the transform() API, as well by the translate(),
      * scale() and rotate(). In case no transformation was applied, the identity matrix is returned.
      *
-     * @retval The augmented transformation matrix.
+     * @return The augmented transformation matrix.
      *
      * @since 0.4
      */
@@ -343,6 +371,21 @@ public:
      * @return Result::Success when succeed, Result::InvalidArguments otherwise.
      */
     Result composite(std::unique_ptr<Paint> target, CompositeMethod method) noexcept;
+
+    /**
+     * @brief Sets the blending method for the paint object.
+     *
+     * The blending feature allows you to combine colors to create visually appealing effects, including transparency, lighting, shading, and color mixing, among others.
+     * its process involves the combination of colors or images from the source paint object with the destination (the lower layer image) using blending operations.
+     * The blending operation is determined by the chosen @p BlendMethod, which specifies how the colors or images are combined.
+     *
+     * @param[in] method The blending method to be set.
+     *
+     * @return Result::Success when the blending method is successfully set.
+     *
+     * @BETA_API
+     */
+    Result blend(BlendMethod method) const noexcept;
 
     /**
      * @brief Gets the bounding box of the paint object before any transformation.
@@ -403,6 +446,15 @@ public:
      * @since 0.5
      */
     CompositeMethod composite(const Paint** target) const noexcept;
+
+    /**
+     * @brief Gets the blending method of the object.
+     *
+     * @return The blending method
+     *
+     * @BETA_API
+     */
+    BlendMethod blend() const noexcept;
 
     /**
      * @brief Return the unique id value of the paint instance.

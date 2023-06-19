@@ -250,6 +250,7 @@ public:
     virtual RenderRegion region(RenderData data) = 0;
     virtual RenderRegion viewport() = 0;
     virtual bool viewport(const RenderRegion& vp) = 0;
+    virtual bool blend(BlendMethod method) = 0;
     virtual ColorSpace colorSpace() = 0;
 
     virtual bool clear() = 0;

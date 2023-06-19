@@ -499,6 +499,59 @@ bool SwRenderer::renderShape(RenderData data)
 }
 
 
+bool SwRenderer::blend(BlendMethod method)
+{
+    if (surface->blendMethod == method) return true;
+    surface->blendMethod = method;
+
+    switch (method) {
+        case BlendMethod::Add:
+            surface->blender = opBlendAdd;
+            break;
+        case BlendMethod::Screen:
+            surface->blender = opBlendScreen;
+            break;
+        case BlendMethod::Multiply:
+            surface->blender = opBlendMultiply;
+            break;
+        case BlendMethod::Overlay:
+            surface->blender = opBlendOverlay;
+            break;
+        case BlendMethod::Difference:
+            surface->blender = opBlendDifference;
+            break;
+        case BlendMethod::Exclusion:
+            surface->blender = opBlendExclusion;
+            break;
+        case BlendMethod::SrcOver:
+            surface->blender = opBlendSrcOver;
+            break;
+        case BlendMethod::Darken:
+            surface->blender = opBlendDarken;
+            break;
+        case BlendMethod::Lighten:
+            surface->blender = opBlendLighten;
+            break;
+        case BlendMethod::ColorDodge:
+            surface->blender = opBlendColorDodge;
+            break;
+        case BlendMethod::ColorBurn:
+            surface->blender = opBlendColorBurn;
+            break;
+        case BlendMethod::HardLight:
+            surface->blender = opBlendHardLight;
+            break;
+        case BlendMethod::SoftLight:
+            surface->blender = opBlendSoftLight;
+            break;
+        default:
+            surface->blender = nullptr;
+            break;
+    }
+    return false;
+}
+
+
 RenderRegion SwRenderer::region(RenderData data)
 {
     return static_cast<SwTask*>(data)->bounds();
