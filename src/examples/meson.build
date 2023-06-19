@@ -39,6 +39,7 @@ source_file = [
     'PictureWebp.cpp',
     'RadialGradient.cpp',
     'Scene.cpp',
+    'SceneBlending.cpp',
     'SceneClipper.cpp',
     'SceneTransform.cpp',
     'Shape.cpp',

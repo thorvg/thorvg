@@ -20,148 +20,97 @@
  * SOFTWARE.
  */
 
-#include <fstream>
 #include "Common.h"
 
 /************************************************************************/
 /* Drawing Commands                                                     */
 /************************************************************************/
 
-void bgColor(tvg::Canvas* canvas)
-{
-    //Background
-    auto bg = tvg::Shape::gen();
-    bg->appendRect(0, 0, WIDTH, HEIGHT, 0, 0);    //x, y, w, h, rx, ry
-    bg->fill(200, 200, 255);                      //r, g, b
-    canvas->push(std::move(bg));
-}
-
-void goWild(tvg::Canvas* canvas)
-{
-    float top = 100.0f;
-    float bot = 700.0f;
-
-    auto path = tvg::Shape::gen();
-    path->moveTo(300, top / 2);
-    path->lineTo(100, bot);
-    path->lineTo(350, 400);
-    path->lineTo(420, bot);
-    path->lineTo(430, top * 2);
-    path->lineTo(500, bot);
-    path->lineTo(460, top * 2);
-    path->lineTo(750, bot);
-    path->lineTo(460, top / 2);
-    path->close();
-
-    path->fill(150, 150, 255);   // fill color
-    path->stroke(20);            // stroke width
-    path->stroke(120, 120, 255); // stroke color
-
-    // path->stroke(tvg::StrokeJoin::Round);
-    // path->stroke(tvg::StrokeJoin::Bevel);
-    path->stroke(tvg::StrokeJoin::Miter);
-
-    path->strokeMiterlimit(10);
-    static float ml = path->strokeMiterlimit();
-    cout << "Set stroke miterlimit to " << ml << endl;
-    canvas->push(std::move(path)); // push the path into the canvas
-
-}
-
-void blueprint(tvg::Canvas* canvas)
-{
-    // Load png file from path.
-    std::string path = EXAMPLE_DIR"/stroke-miterlimit.png";
-
-    std::unique_ptr<tvg::Picture> picture = tvg::Picture::gen();
-    if (picture->load(path) != tvg::Result::Success) {
-        cout << "Cannot load the picture: " << path << endl;
-        return;
-    }
-
-    picture->opacity(42);
-    picture->translate(24, 0);
-    if (canvas->push(std::move(picture)) != tvg::Result::Success) {
-        cout << "Cannot push image to canvas: " << path << endl;
-    }
-}
-
-void svg(tvg::Canvas* canvas)
-{
-    //SVG stroke-miterlimit test.
-    std::string svg_text (R"SVG(
-<svg viewBox="0 0 38 30">
-  <!-- Impact of the default miter limit -->
-  <path
-    stroke="black"
-    fill="none"
-    stroke-linejoin="miter"
-    id="p1"
-    d="M1,9 l7   ,-3 l7   ,3
-       m2,0 l3.5 ,-3 l3.5 ,3
-       m2,0 l2   ,-3 l2   ,3
-       m2,0 l0.75,-3 l0.75,3
-       m2,0 l0.5 ,-3 l0.5 ,3" />
-
-  <!-- Impact of the smallest miter limit (1) -->
-  <path
-    stroke="black"
-    fill="none"
-    stroke-linejoin="miter"
-    stroke-miterlimit="1"
-    id="p2"
-    d="M1,19 l7   ,-3 l7   ,3
-       m2, 0 l3.5 ,-3 l3.5 ,3
-       m2, 0 l2   ,-3 l2   ,3
-       m2, 0 l0.75,-3 l0.75,3
-       m2, 0 l0.5 ,-3 l0.5 ,3" />
-
-  <!-- Impact of a large miter limit (8) -->
-  <path
-    stroke="black"
-    fill="none"
-    stroke-linejoin="miter"
-    stroke-miterlimit="8"
-    id="p3"
-    d="M1,29 l7   ,-3 l7   ,3
-       m2, 0 l3.5 ,-3 l3.5 ,3
-       m2, 0 l2   ,-3 l2   ,3
-       m2, 0 l0.75,-3 l0.75,3
-       m2, 0 l0.5 ,-3 l0.5 ,3" />
-
-  <!-- the following pink lines highlight the position of the path for each stroke -->
-  <path
-    stroke="pink"
-    fill="none"
-    stroke-width="0.05"
-    d="M1, 9 l7,-3 l7,3 m2,0 l3.5,-3 l3.5,3 m2,0 l2,-3 l2,3 m2,0 l0.75,-3 l0.75,3 m2,0 l0.5,-3 l0.5,3
-      M1,19 l7,-3 l7,3 m2,0 l3.5,-3 l3.5,3 m2,0 l2,-3 l2,3 m2,0 l0.75,-3 l0.75,3 m2,0 l0.5,-3 l0.5,3
-      M1,29 l7,-3 l7,3 m2,0 l3.5,-3 l3.5,3 m2,0 l2,-3 l2,3 m2,0 l0.75,-3 l0.75,3 m2,0 l0.5,-3 l0.5,3" />
-</svg>
-)SVG");
-
-    std::size_t svg_text_size = svg_text.size();
-    std::unique_ptr<tvg::Picture> picture = tvg::Picture::gen();
-
-    if (picture->load(svg_text.data(), svg_text_size, "svg", true) != tvg::Result::Success) {
-        cout << "Couldn't load svg text data." << endl;
-        return;
-    }
-
-    picture->scale(20);
-    canvas->push(std::move(picture));
-}
-
-
 void tvgDrawCmds(tvg::Canvas* canvas)
 {
-    if (canvas) {
-        bgColor(canvas);
-        goWild(canvas);
-        blueprint(canvas);
-        svg(canvas);
-    }
+    if (!canvas) return;
+
+    //BG 
+    auto bg = tvg::Shape::gen();
+    bg->appendRect(0, 0, WIDTH, HEIGHT);
+    bg->fill(100, 100, 100);
+    canvas->push(std::move(bg));
+
+    //Create a Scene
+    auto scene = tvg::Scene::gen();
+    scene->blend(tvg::BlendMethod::Add);
+
+    //Prepare Circle
+    auto shape1 = tvg::Shape::gen();
+    shape1->appendCircle(400, 400, 250, 250);
+    shape1->fill(255, 255, 0);
+    scene->push(std::move(shape1));
+
+    //Round rectangle
+    auto shape2 = tvg::Shape::gen();
+    shape2->appendRect(450, 100, 200, 200, 50, 50);
+    shape2->fill(0, 255, 0);
+    shape2->stroke(10);
+    shape2->stroke(255, 255, 255);
+    scene->push(std::move(shape2));
+
+    //Draw the Scene onto the Canvas
+    canvas->push(std::move(scene));
+
+    //Create a Scene 2
+    auto scene2 = tvg::Scene::gen();
+    scene2->opacity(127);              //Apply opacity to scene (0 - 255)
+    scene2->blend(tvg::BlendMethod::Overlay);
+    scene2->scale(1.2);
+
+    //Star
+    auto shape3 = tvg::Shape::gen();
+
+    //Appends Paths
+    shape3->moveTo(199, 34);
+    shape3->lineTo(253, 143);
+    shape3->lineTo(374, 160);
+    shape3->lineTo(287, 244);
+    shape3->lineTo(307, 365);
+    shape3->lineTo(199, 309);
+    shape3->lineTo(97, 365);
+    shape3->lineTo(112, 245);
+    shape3->lineTo(26, 161);
+    shape3->lineTo(146, 143);
+    shape3->close();
+    shape3->fill(0, 0, 255);
+    shape3->stroke(10);
+    shape3->stroke(255, 255, 255);
+    shape3->opacity(127);
+
+    scene2->push(std::move(shape3));
+
+    //Circle
+    auto shape4 = tvg::Shape::gen();
+
+    auto cx = 150.0f;
+    auto cy = 150.0f;
+    auto radius = 50.0f;
+    auto halfRadius = radius * 0.552284f;
+
+    //Append Paths
+    shape4->moveTo(cx, cy - radius);
+    shape4->cubicTo(cx + halfRadius, cy - radius, cx + radius, cy - halfRadius, cx + radius, cy);
+    shape4->cubicTo(cx + radius, cy + halfRadius, cx + halfRadius, cy + radius, cx, cy+ radius);
+    shape4->cubicTo(cx - halfRadius, cy + radius, cx - radius, cy + halfRadius, cx - radius, cy);
+    shape4->cubicTo(cx - radius, cy - halfRadius, cx - halfRadius, cy - radius, cx, cy - radius);
+    shape4->close();
+    shape4->fill(255, 0, 0);
+    shape4->stroke(10);
+    shape4->stroke(0, 0, 255);
+    shape4->opacity(200);
+    shape4->scale(3);
+    scene2->push(std::move(shape4));
+
+    //Draw the Scene onto the Canvas
+    canvas->push(std::move(scene2));
 }
+
 
 /************************************************************************/
 /* Sw Engine Test Code                                                  */
@@ -173,7 +122,7 @@ void tvgSwTest(uint32_t* buffer)
 {
     //Create a Canvas
     swCanvas = tvg::SwCanvas::gen();
-    swCanvas->target(buffer, WIDTH, WIDTH, HEIGHT, tvg::SwCanvas::ARGB8888S);
+    swCanvas->target(buffer, WIDTH, WIDTH, HEIGHT, tvg::SwCanvas::ARGB8888);
 
     /* Push the shape into the Canvas drawing list
        When this shape is into the canvas list, the shape could update & prepare
@@ -244,9 +193,11 @@ int main(int argc, char **argv)
 
     //Threads Count
     auto threads = std::thread::hardware_concurrency();
+    if (threads > 0) --threads;    //Allow the designated main thread capacity
 
     //Initialize ThorVG Engine
     if (tvg::Initializer::init(tvgEngine, threads) == tvg::Result::Success) {
+
 
         elm_init(argc, argv);
 
@@ -261,7 +212,6 @@ int main(int argc, char **argv)
 
         //Terminate ThorVG Engine
         tvg::Initializer::term(tvgEngine);
-
 
     } else {
         cout << "engine is not supported" << endl;
