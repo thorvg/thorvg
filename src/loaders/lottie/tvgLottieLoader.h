@@ -27,12 +27,13 @@
 #include "tvgFrameModule.h"
 #include "tvgTaskScheduler.h"
 
-class LottieLoader : public LoadModule, public FrameModule, public Task
+class LottieLoader : public FrameModule, public Task
 {
 public:
-    string filePath;                    //lottie file path
     const char* content = nullptr;      //lottie file data
     uint32_t size = 0;                  //lottie data size
+    uint32_t frameRate;
+    uint32_t frameNo = 0;               //current frame number
 
     unique_ptr<Scene> root;             //current motion frame
 
@@ -50,13 +51,11 @@ public:
     bool close() override;
     unique_ptr<Paint> paint() override;
 
-    bool animatable() override { return true; }
-
     //Frame Controls
     bool frame(uint32_t frameNo) override;
     uint32_t totalFrame() override;
     uint32_t curFrame() override;
-    double duration() override;
+    float duration() override;
 
 private:
     bool header();

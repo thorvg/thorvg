@@ -49,6 +49,11 @@ if get_option('loaders').contains('webp_beta') == true
     config_h.set10('THORVG_WEBP_LOADER_SUPPORT', true)
 endif
 
+if get_option('loaders').contains('lottie_beta') == true
+    config_h.set10('THORVG_LOTTIE_LOADER_SUPPORT', true)
+endif
+
+
 #Savers
 all_savers = false
 
@@ -119,13 +124,14 @@ Summary:
     Loader (PNG):          @8@
     Loader (JPG):          @9@
     Loader (WEBP_BETA):    @10@
-    Saver (TVG):           @11@
-    CAPI Binding:          @12@
-    Log Message:           @13@
-    Tests:                 @14@
-    Examples:              @15@
-    Tool (Svg2Tvg):        @16@
-    Tool (Svg2Png):        @17@
+    Loader (LOTTIE_BETA):  @11@
+    Saver (TVG):           @12@
+    CAPI Binding:          @13@
+    Log Message:           @14@
+    Tests:                 @15@
+    Examples:              @16@
+    Tool (Svg2Tvg):        @17@
+    Tool (Svg2Png):        @18@
 
 '''.format(
         meson.project_version(),
@@ -139,6 +145,7 @@ Summary:
         all_loaders or get_option('loaders').contains('png'),
         all_loaders or get_option('loaders').contains('jpg'),
         get_option('loaders').contains('webp_beta'),
+        get_option('loaders').contains('lottie_beta'),
         all_savers or get_option('savers').contains('tvg'),
         get_option('bindings').contains('capi'),
         get_option('log'),
