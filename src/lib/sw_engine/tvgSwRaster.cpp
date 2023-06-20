@@ -75,7 +75,7 @@ struct FillRadial
 };
 
 
-static bool _rasterDirectRGBAImage(SwSurface* surface, const SwImage* image, const SwBBox& region,  uint8_t opacity = 255);
+static bool _rasterDirectImage(SwSurface* surface, const SwImage* image, const SwBBox& region,  uint8_t opacity = 255);
 
 
 static inline uint8_t _alpha(uint8_t* a)
@@ -331,7 +331,7 @@ static void _rasterMaskedRectInt(SwSurface* surface, const SwBBox& region, uint8
             }
             y += (h - 1);
         } else {
-            rasterRGBA32(cmp, 0x00000000, 0, w);
+            rasterPixel32(cmp, 0x00000000, 0, w);
             cmp += cstride;
         }
     }
@@ -355,7 +355,7 @@ static bool _rasterMaskedRect(SwSurface* surface, const SwBBox& region, uint8_t 
     }
 
     //Masking Composition
-    return _rasterDirectRGBAImage(surface, &surface->compositor->image, surface->compositor->bbox);
+    return _rasterDirectImage(surface, &surface->compositor->image, surface->compositor->bbox);
 }
 
 
@@ -437,7 +437,7 @@ static bool _rasterSolidRect(SwSurface* surface, const SwBBox& region, uint8_t r
         auto color = surface->join(r, g, b, 255);
         auto buffer = surface->buf32 + (region.min.y * surface->stride);
         for (uint32_t y = 0; y < h; ++y) {
-            rasterRGBA32(buffer + y * surface->stride, color, region.min.x, w);
+            rasterPixel32(buffer + y * surface->stride, color, region.min.x, w);
         }
         return true;
     }
@@ -538,7 +538,7 @@ static bool _rasterMaskedRle(SwSurface* surface, SwRleData* rle, uint8_t r, uint
     }
 
     //Masking Composition
-    return _rasterDirectRGBAImage(surface, &surface->compositor->image, surface->compositor->bbox);
+    return _rasterDirectImage(surface, &surface->compositor->image, surface->compositor->bbox);
 }
 
 
@@ -630,7 +630,7 @@ static bool _rasterSolidRle(SwSurface* surface, const SwRleData* rle, uint8_t r,
         auto color = surface->join(r, g, b, 255);
         for (uint32_t i = 0; i < rle->size; ++i, ++span) {
             if (span->coverage == 255) {
-                rasterRGBA32(surface->buf32 + span->y * surface->stride, color, span->x, span->len);
+                rasterPixel32(surface->buf32 + span->y * surface->stride, color, span->x, span->len);
             } else {
                 auto dst = &surface->buf32[span->y * surface->stride + span->x];
                 auto src = ALPHA_BLEND(color, span->coverage);
@@ -668,16 +668,16 @@ static bool _rasterRle(SwSurface* surface, SwRleData* rle, uint8_t r, uint8_t g,
 
 
 /************************************************************************/
-/* RLE Transformed RGBA Image                                           */
+/* RLE Transformed Image                                                */
 /************************************************************************/
 
-static bool _transformedRleRGBAImage(SwSurface* surface, const SwImage* image, const Matrix* transform, uint8_t opacity)
+static bool _transformedRleImage(SwSurface* surface, const SwImage* image, const Matrix* transform, uint8_t opacity)
 {
     auto ret = _rasterTexmapPolygon(surface, image, transform, nullptr, opacity);
 
     //Masking Composition
     if (_compositing(surface) && _masking(surface)) {
-        return _rasterDirectRGBAImage(surface, &surface->compositor->image, surface->compositor->bbox);
+        return _rasterDirectImage(surface, &surface->compositor->image, surface->compositor->bbox);
     }
 
     return ret;
@@ -686,10 +686,10 @@ static bool _transformedRleRGBAImage(SwSurface* surface, const SwImage* image, c
 
 
 /************************************************************************/
-/* RLE Scaled RGBA Image                                                */
+/* RLE Scaled Image                                                     */
 /************************************************************************/
 
-static void _rasterScaledMaskedRleRGBAImageDup(SwSurface* surface, const SwImage* image, const Matrix* itransform, const SwBBox& region, SwBlender maskOp, SwBlender amaskOp, uint8_t opacity)
+static void _rasterScaledMaskedRleImageDup(SwSurface* surface, const SwImage* image, const Matrix* itransform, const SwBBox& region, SwBlender maskOp, SwBlender amaskOp, uint8_t opacity)
 {
     auto scaleMethod = image->scale < DOWN_SCALE_TOLERANCE ? _interpDownScaler : _interpUpScaler;
     auto sampleSize = _sampleSize(image->scale);
@@ -720,7 +720,7 @@ static void _rasterScaledMaskedRleRGBAImageDup(SwSurface* surface, const SwImage
 }
 
 
-static void _rasterScaledMaskedRleRGBAImageInt(SwSurface* surface, const SwImage* image, const Matrix* itransform, const SwBBox& region, uint8_t opacity)
+static void _rasterScaledMaskedRleImageInt(SwSurface* surface, const SwImage* image, const Matrix* itransform, const SwBBox& region, uint8_t opacity)
 {
     auto scaleMethod = image->scale < DOWN_SCALE_TOLERANCE ? _interpDownScaler : _interpUpScaler;
     auto sampleSize = _sampleSize(image->scale);
@@ -761,24 +761,24 @@ static void _rasterScaledMaskedRleRGBAImageInt(SwSurface* surface, const SwImage
 }
 
 
-static bool _rasterScaledMaskedRleRGBAImage(SwSurface* surface, const SwImage* image, const Matrix* itransform, const SwBBox& region, uint8_t opacity)
+static bool _rasterScaledMaskedRleImage(SwSurface* surface, const SwImage* image, const Matrix* itransform, const SwBBox& region, uint8_t opacity)
 {
     TVGLOG("SW_ENGINE", "Scaled Masked(%d) Rle Image", (int)surface->compositor->method);
 
     if (surface->compositor->method == CompositeMethod::IntersectMask) {
-        _rasterScaledMaskedRleRGBAImageInt(surface, image, itransform, region, opacity);
+        _rasterScaledMaskedRleImageInt(surface, image, itransform, region, opacity);
     } else if (auto opMask = _getMaskOp(surface->compositor->method)) {
         //Other Masking operations: Add, Subtract, Difference ...
-        _rasterScaledMaskedRleRGBAImageDup(surface, image, itransform, region, opMask, _getAMaskOp(surface->compositor->method), opacity);
+        _rasterScaledMaskedRleImageDup(surface, image, itransform, region, opMask, _getAMaskOp(surface->compositor->method), opacity);
     } else {
         return false;
     }
     //Masking Composition
-    return _rasterDirectRGBAImage(surface, &surface->compositor->image, surface->compositor->bbox);
+    return _rasterDirectImage(surface, &surface->compositor->image, surface->compositor->bbox);
 }
 
 
-static bool _rasterScaledMattedRleRGBAImage(SwSurface* surface, const SwImage* image, const Matrix* itransform, const SwBBox& region, uint8_t opacity)
+static bool _rasterScaledMattedRleImage(SwSurface* surface, const SwImage* image, const Matrix* itransform, const SwBBox& region, uint8_t opacity)
 {
     TVGLOG("SW_ENGINE", "Scaled Matted(%d) Rle Image", (int)surface->compositor->method);
 
@@ -818,7 +818,7 @@ static bool _rasterScaledMattedRleRGBAImage(SwSurface* surface, const SwImage* i
 }
 
 
-static bool _rasterScaledBlendingRleRGBAImage(SwSurface* surface, const SwImage* image, const Matrix* itransform, const SwBBox& region, uint8_t opacity)
+static bool _rasterScaledBlendingRleImage(SwSurface* surface, const SwImage* image, const Matrix* itransform, const SwBBox& region, uint8_t opacity)
 {
     auto span = image->rle->spans;
     auto scaleMethod = image->scale < DOWN_SCALE_TOLERANCE ? _interpDownScaler : _interpUpScaler;
@@ -860,7 +860,7 @@ static bool _rasterScaledBlendingRleRGBAImage(SwSurface* surface, const SwImage*
 }
 
 
-static bool _rasterScaledRleRGBAImage(SwSurface* surface, const SwImage* image, const Matrix* itransform, const SwBBox& region, uint8_t opacity)
+static bool _rasterScaledRleImage(SwSurface* surface, const SwImage* image, const Matrix* itransform, const SwBBox& region, uint8_t opacity)
 {
     auto span = image->rle->spans;
     auto scaleMethod = image->scale < DOWN_SCALE_TOLERANCE ? _interpDownScaler : _interpUpScaler;
@@ -892,7 +892,7 @@ static bool _rasterScaledRleRGBAImage(SwSurface* surface, const SwImage* image, 
 }
 
 
-static bool _scaledRleRGBAImage(SwSurface* surface, const SwImage* image, const Matrix* transform, const SwBBox& region, uint8_t opacity)
+static bool _scaledRleImage(SwSurface* surface, const SwImage* image, const Matrix* transform, const SwBBox& region, uint8_t opacity)
 {
     Matrix itransform;
 
@@ -901,22 +901,22 @@ static bool _scaledRleRGBAImage(SwSurface* surface, const SwImage* image, const 
     } else mathIdentity(&itransform);
 
     if (_compositing(surface)) {
-        if (_matting(surface)) return _rasterScaledMattedRleRGBAImage(surface, image, &itransform, region, opacity);
-        else return _rasterScaledMaskedRleRGBAImage(surface, image, &itransform, region, opacity);
+        if (_matting(surface)) return _rasterScaledMattedRleImage(surface, image, &itransform, region, opacity);
+        else return _rasterScaledMaskedRleImage(surface, image, &itransform, region, opacity);
     } else if (_blending(surface)) {
-        return _rasterScaledBlendingRleRGBAImage(surface, image, &itransform, region, opacity);
+        return _rasterScaledBlendingRleImage(surface, image, &itransform, region, opacity);
     } else {
-        return _rasterScaledRleRGBAImage(surface, image, &itransform, region, opacity);
+        return _rasterScaledRleImage(surface, image, &itransform, region, opacity);
     }
     return false;
 }
 
 
 /************************************************************************/
-/* RLE Direct RGBA Image                                                */
+/* RLE Direct Image                                                     */
 /************************************************************************/
 
-static void _rasterDirectMaskedRleRGBAImageDup(SwSurface* surface, const SwImage* image, SwBlender maskOp, SwBlender amaskOp, uint8_t opacity)
+static void _rasterDirectMaskedRleImageDup(SwSurface* surface, const SwImage* image, SwBlender maskOp, SwBlender amaskOp, uint8_t opacity)
 {
     auto span = image->rle->spans;
     auto cbuffer = surface->compositor->image.buf32;
@@ -939,7 +939,7 @@ static void _rasterDirectMaskedRleRGBAImageDup(SwSurface* surface, const SwImage
 }
 
 
-static void _rasterDirectMaskedRleRGBAImageInt(SwSurface* surface, const SwImage* image, uint8_t opacity)
+static void _rasterDirectMaskedRleImageInt(SwSurface* surface, const SwImage* image, uint8_t opacity)
 {
     auto span = image->rle->spans;
     auto cbuffer = surface->compositor->image.buf32;
@@ -973,25 +973,25 @@ static void _rasterDirectMaskedRleRGBAImageInt(SwSurface* surface, const SwImage
 }
 
 
-static bool _rasterDirectMaskedRleRGBAImage(SwSurface* surface, const SwImage* image, uint8_t opacity)
+static bool _rasterDirectMaskedRleImage(SwSurface* surface, const SwImage* image, uint8_t opacity)
 {
     TVGLOG("SW_ENGINE", "Direct Masked(%d) Rle Image", (int)surface->compositor->method);
 
     if (surface->compositor->method == CompositeMethod::IntersectMask) {
-        _rasterDirectMaskedRleRGBAImageInt(surface, image, opacity);
+        _rasterDirectMaskedRleImageInt(surface, image, opacity);
     } else if (auto opMask = _getMaskOp(surface->compositor->method)) {
         //Other Masking operations: Add, Subtract, Difference ...
-       _rasterDirectMaskedRleRGBAImageDup(surface, image, opMask, _getAMaskOp(surface->compositor->method), opacity);
+       _rasterDirectMaskedRleImageDup(surface, image, opMask, _getAMaskOp(surface->compositor->method), opacity);
     } else {
         return false;
     }
 
     //Masking Composition
-    return _rasterDirectRGBAImage(surface, &surface->compositor->image, surface->compositor->bbox);
+    return _rasterDirectImage(surface, &surface->compositor->image, surface->compositor->bbox);
 }
 
 
-static bool _rasterDirectMattedRleRGBAImage(SwSurface* surface, const SwImage* image, uint8_t opacity)
+static bool _rasterDirectMattedRleImage(SwSurface* surface, const SwImage* image, uint8_t opacity)
 {
     TVGLOG("SW_ENGINE", "Direct Matted(%d) Rle Image", (int)surface->compositor->method);
 
@@ -1021,7 +1021,7 @@ static bool _rasterDirectMattedRleRGBAImage(SwSurface* surface, const SwImage* i
 }
 
 
-static bool _rasterDirectBlendingRleRGBAImage(SwSurface* surface, const SwImage* image, uint8_t opacity)
+static bool _rasterDirectBlendingRleImage(SwSurface* surface, const SwImage* image, uint8_t opacity)
 {
     auto span = image->rle->spans;
 
@@ -1050,7 +1050,7 @@ static bool _rasterDirectBlendingRleRGBAImage(SwSurface* surface, const SwImage*
 }
 
 
-static bool _rasterDirectRleRGBAImage(SwSurface* surface, const SwImage* image, uint8_t opacity)
+static bool _rasterDirectRleImage(SwSurface* surface, const SwImage* image, uint8_t opacity)
 {
     auto span = image->rle->spans;
 
@@ -1073,38 +1073,38 @@ static bool _rasterDirectRleRGBAImage(SwSurface* surface, const SwImage* image, 
 }
 
 
-static bool _directRleRGBAImage(SwSurface* surface, const SwImage* image, uint8_t opacity)
+static bool _directRleImage(SwSurface* surface, const SwImage* image, uint8_t opacity)
 {
     if (_compositing(surface)) {
-        if (_matting(surface)) return _rasterDirectMattedRleRGBAImage(surface, image, opacity);
-        else return _rasterDirectMaskedRleRGBAImage(surface, image, opacity);
+        if (_matting(surface)) return _rasterDirectMattedRleImage(surface, image, opacity);
+        else return _rasterDirectMaskedRleImage(surface, image, opacity);
     } else if (_blending(surface)) {
-        return _rasterDirectBlendingRleRGBAImage(surface, image, opacity);
+        return _rasterDirectBlendingRleImage(surface, image, opacity);
     } else {
-        return _rasterDirectRleRGBAImage(surface, image, opacity);
+        return _rasterDirectRleImage(surface, image, opacity);
     }
     return false;
 }
 
 
 /************************************************************************/
-/* Transformed RGBA Image                                               */
+/* Transformed Image                                                    */
 /************************************************************************/
 
-static bool _transformedRGBAImage(SwSurface* surface, const SwImage* image, const Matrix* transform, const SwBBox& region, uint8_t opacity)
+static bool _transformedImage(SwSurface* surface, const SwImage* image, const Matrix* transform, const SwBBox& region, uint8_t opacity)
 {
     auto ret = _rasterTexmapPolygon(surface, image, transform, &region, opacity);
 
     //Masking Composition
     if (_compositing(surface) && _masking(surface)) {
-        return _rasterDirectRGBAImage(surface, &surface->compositor->image, surface->compositor->bbox);
+        return _rasterDirectImage(surface, &surface->compositor->image, surface->compositor->bbox);
     }
 
     return ret;
 }
 
 
-static bool _transformedRGBAImageMesh(SwSurface* surface, const SwImage* image, const RenderMesh* mesh, const Matrix* transform, const SwBBox* region, uint8_t opacity)
+static bool _transformedImageMesh(SwSurface* surface, const SwImage* image, const RenderMesh* mesh, const Matrix* transform, const SwBBox* region, uint8_t opacity)
 {
     //TODO: Not completed for all cases.
     return _rasterTexmapPolygonMesh(surface, image, mesh, transform, region, opacity);
@@ -1112,10 +1112,10 @@ static bool _transformedRGBAImageMesh(SwSurface* surface, const SwImage* image, 
 
 
 /************************************************************************/
-/*Scaled RGBA Image                                                     */
+/*Scaled Image                                                          */
 /************************************************************************/
 
-static void _rasterScaledMaskedRGBAImageDup(SwSurface* surface, const SwImage* image, const Matrix* itransform, const SwBBox& region, SwBlender maskOp, SwBlender amaskOp, uint8_t opacity)
+static void _rasterScaledMaskedImageDup(SwSurface* surface, const SwImage* image, const Matrix* itransform, const SwBBox& region, SwBlender maskOp, SwBlender amaskOp, uint8_t opacity)
 {
     auto scaleMethod = image->scale < DOWN_SCALE_TOLERANCE ? _interpDownScaler : _interpUpScaler;
     auto sampleSize = _sampleSize(image->scale);
@@ -1146,7 +1146,7 @@ static void _rasterScaledMaskedRGBAImageDup(SwSurface* surface, const SwImage* i
     }
 }
 
-static void _rasterScaledMaskedRGBAImageInt(SwSurface* surface, const SwImage* image, const Matrix* itransform, const SwBBox& region, uint8_t opacity)
+static void _rasterScaledMaskedImageInt(SwSurface* surface, const SwImage* image, const Matrix* itransform, const SwBBox& region, uint8_t opacity)
 {
     auto scaleMethod = image->scale < DOWN_SCALE_TOLERANCE ? _interpDownScaler : _interpUpScaler;
     auto sampleSize = _sampleSize(image->scale);
@@ -1202,25 +1202,25 @@ static void _rasterScaledMaskedRGBAImageInt(SwSurface* surface, const SwImage* i
 }
 
 
-static bool _rasterScaledMaskedRGBAImage(SwSurface* surface, const SwImage* image, const Matrix* itransform, const SwBBox& region, uint8_t opacity)
+static bool _rasterScaledMaskedImage(SwSurface* surface, const SwImage* image, const Matrix* itransform, const SwBBox& region, uint8_t opacity)
 {
     TVGLOG("SW_ENGINE", "Scaled Masked(%d) Image [Region: %lu %lu %lu %lu]", (int)surface->compositor->method, region.min.x, region.min.y, region.max.x - region.min.x, region.max.y - region.min.y);
 
     if (surface->compositor->method == CompositeMethod::IntersectMask) {
-        _rasterScaledMaskedRGBAImageInt(surface, image, itransform, region, opacity);
+        _rasterScaledMaskedImageInt(surface, image, itransform, region, opacity);
     } else if (auto opMask = _getMaskOp(surface->compositor->method)) {
         //Other Masking operations: Add, Subtract, Difference ...
-       _rasterScaledMaskedRGBAImageDup(surface, image, itransform, region, opMask, _getAMaskOp(surface->compositor->method), opacity);
+       _rasterScaledMaskedImageDup(surface, image, itransform, region, opMask, _getAMaskOp(surface->compositor->method), opacity);
     } else {
         return false;
     }
 
     //Masking Composition
-    return _rasterDirectRGBAImage(surface, &surface->compositor->image, surface->compositor->bbox);
+    return _rasterDirectImage(surface, &surface->compositor->image, surface->compositor->bbox);
 }
 
 
-static bool _rasterScaledMattedRGBAImage(SwSurface* surface, const SwImage* image, const Matrix* itransform, const SwBBox& region, uint8_t opacity)
+static bool _rasterScaledMattedImage(SwSurface* surface, const SwImage* image, const Matrix* itransform, const SwBBox& region, uint8_t opacity)
 {
     auto dbuffer = surface->buf32 + (region.min.y * surface->stride + region.min.x);
     auto csize = surface->compositor->image.channelSize;
@@ -1262,7 +1262,7 @@ static bool _rasterScaledMattedRGBAImage(SwSurface* surface, const SwImage* imag
 }
 
 
-static bool _rasterScaledBlendingRGBAImage(SwSurface* surface, const SwImage* image, const Matrix* itransform, const SwBBox& region, uint8_t opacity)
+static bool _rasterScaledBlendingImage(SwSurface* surface, const SwImage* image, const Matrix* itransform, const SwBBox& region, uint8_t opacity)
 {
     auto dbuffer = surface->buf32 + (region.min.y * surface->stride + region.min.x);
     auto scaleMethod = image->scale < DOWN_SCALE_TOLERANCE ? _interpDownScaler : _interpUpScaler;
@@ -1295,7 +1295,7 @@ static bool _rasterScaledBlendingRGBAImage(SwSurface* surface, const SwImage* im
 }
 
 
-static bool _rasterScaledRGBAImage(SwSurface* surface, const SwImage* image, const Matrix* itransform, const SwBBox& region, uint8_t opacity)
+static bool _rasterScaledImage(SwSurface* surface, const SwImage* image, const Matrix* itransform, const SwBBox& region, uint8_t opacity)
 {
     auto dbuffer = surface->buf32 + (region.min.y * surface->stride + region.min.x);
     auto scaleMethod = image->scale < DOWN_SCALE_TOLERANCE ? _interpDownScaler : _interpUpScaler;
@@ -1326,7 +1326,7 @@ static bool _rasterScaledRGBAImage(SwSurface* surface, const SwImage* image, con
 }
 
 
-static bool _scaledRGBAImage(SwSurface* surface, const SwImage* image, const Matrix* transform, const SwBBox& region, uint8_t opacity)
+static bool _scaledImage(SwSurface* surface, const SwImage* image, const Matrix* transform, const SwBBox& region, uint8_t opacity)
 {
     Matrix itransform;
 
@@ -1335,22 +1335,22 @@ static bool _scaledRGBAImage(SwSurface* surface, const SwImage* image, const Mat
     } else mathIdentity(&itransform);
 
     if (_compositing(surface)) {
-        if (_matting(surface)) return _rasterScaledMattedRGBAImage(surface, image, &itransform, region, opacity);
-        else return _rasterScaledMaskedRGBAImage(surface, image, &itransform, region, opacity);
+        if (_matting(surface)) return _rasterScaledMattedImage(surface, image, &itransform, region, opacity);
+        else return _rasterScaledMaskedImage(surface, image, &itransform, region, opacity);
     } else if (_blending(surface)) {
-        return _rasterScaledBlendingRGBAImage(surface, image, &itransform, region, opacity);
+        return _rasterScaledBlendingImage(surface, image, &itransform, region, opacity);
     } else {
-        return _rasterScaledRGBAImage(surface, image, &itransform, region, opacity);
+        return _rasterScaledImage(surface, image, &itransform, region, opacity);
     }
     return false;
 }
 
 
 /************************************************************************/
-/* Direct RGBA Image                                                    */
+/* Direct Image                                                         */
 /************************************************************************/
 
-static void _rasterDirectMaskedRGBAImageDup(SwSurface* surface, const SwImage* image, const SwBBox& region, SwBlender maskOp, SwBlender amaskOp, uint8_t opacity)
+static void _rasterDirectMaskedImageDup(SwSurface* surface, const SwImage* image, const SwBBox& region, SwBlender maskOp, SwBlender amaskOp, uint8_t opacity)
 {
     auto h = static_cast<uint32_t>(region.max.y - region.min.y);
     auto w = static_cast<uint32_t>(region.max.x - region.min.x);
@@ -1377,7 +1377,7 @@ static void _rasterDirectMaskedRGBAImageDup(SwSurface* surface, const SwImage* i
 }
 
 
-static void _rasterDirectMaskedRGBAImageInt(SwSurface* surface, const SwImage* image, const SwBBox& region, uint8_t opacity)
+static void _rasterDirectMaskedImageInt(SwSurface* surface, const SwImage* image, const SwBBox& region, uint8_t opacity)
 {
     auto h = static_cast<uint32_t>(region.max.y - region.min.y);
     auto w = static_cast<uint32_t>(region.max.x - region.min.x);
@@ -1414,31 +1414,31 @@ static void _rasterDirectMaskedRGBAImageInt(SwSurface* surface, const SwImage* i
             }
             y += (h - 1);
         } else {
-            rasterRGBA32(cbuffer, 0x00000000, 0, surface->compositor->bbox.max.x - surface->compositor->bbox.min.x);
+            rasterPixel32(cbuffer, 0x00000000, 0, surface->compositor->bbox.max.x - surface->compositor->bbox.min.x);
         }
         cbuffer += cstride;
     }
 }
 
 
-static bool _rasterDirectMaskedRGBAImage(SwSurface* surface, const SwImage* image, const SwBBox& region, uint8_t opacity)
+static bool _rasterDirectMaskedImage(SwSurface* surface, const SwImage* image, const SwBBox& region, uint8_t opacity)
 {
     TVGLOG("SW_ENGINE", "Direct Masked(%d) Image  [Region: %lu %lu %lu %lu]", (int)surface->compositor->method, region.min.x, region.min.y, region.max.x - region.min.x, region.max.y - region.min.y);
 
     if (surface->compositor->method == CompositeMethod::IntersectMask) {
-        _rasterDirectMaskedRGBAImageInt(surface, image, region, opacity);
+        _rasterDirectMaskedImageInt(surface, image, region, opacity);
     } else if (auto opMask = _getMaskOp(surface->compositor->method)) {
         //Other Masking operations: Add, Subtract, Difference ...
-       _rasterDirectMaskedRGBAImageDup(surface, image, region, opMask, _getAMaskOp(surface->compositor->method), opacity);
+       _rasterDirectMaskedImageDup(surface, image, region, opMask, _getAMaskOp(surface->compositor->method), opacity);
     } else {
         return false;
     }
     //Masking Composition
-    return _rasterDirectRGBAImage(surface, &surface->compositor->image, surface->compositor->bbox);
+    return _rasterDirectImage(surface, &surface->compositor->image, surface->compositor->bbox);
 }
 
 
-static bool _rasterDirectMattedRGBAImage(SwSurface* surface, const SwImage* image, const SwBBox& region, uint8_t opacity)
+static bool _rasterDirectMattedImage(SwSurface* surface, const SwImage* image, const SwBBox& region, uint8_t opacity)
 {
     auto buffer = surface->buf32 + (region.min.y * surface->stride) + region.min.x;
     auto h = static_cast<uint32_t>(region.max.y - region.min.y);
@@ -1474,7 +1474,7 @@ static bool _rasterDirectMattedRGBAImage(SwSurface* surface, const SwImage* imag
 }
 
 
-static bool _rasterDirectBlendingRGBAImage(SwSurface* surface, const SwImage* image, const SwBBox& region, uint8_t opacity)
+static bool _rasterDirectBlendingImage(SwSurface* surface, const SwImage* image, const SwBBox& region, uint8_t opacity)
 {
     auto dbuffer = &surface->buf32[region.min.y * surface->stride + region.min.x];
     auto sbuffer = image->buf32 + (region.min.y + image->oy) * image->stride + (region.min.x + image->ox);
@@ -1501,7 +1501,7 @@ static bool _rasterDirectBlendingRGBAImage(SwSurface* surface, const SwImage* im
 }
 
 
-static bool _rasterDirectRGBAImage(SwSurface* surface, const SwImage* image, const SwBBox& region, uint8_t opacity)
+static bool _rasterDirectImage(SwSurface* surface, const SwImage* image, const SwBBox& region, uint8_t opacity)
 {
     auto dbuffer = &surface->buf32[region.min.y * surface->stride + region.min.x];
     auto sbuffer = image->buf32 + (region.min.y + image->oy) * image->stride + (region.min.x + image->ox);
@@ -1527,33 +1527,33 @@ static bool _rasterDirectRGBAImage(SwSurface* surface, const SwImage* image, con
 
 
 //Blenders for the following scenarios: [Composition / Non-Composition] * [Opaque / Translucent]
-static bool _directRGBAImage(SwSurface* surface, const SwImage* image, const SwBBox& region, uint8_t opacity)
+static bool _directImage(SwSurface* surface, const SwImage* image, const SwBBox& region, uint8_t opacity)
 {
     if (_compositing(surface)) {
-        if (_matting(surface)) return _rasterDirectMattedRGBAImage(surface, image, region, opacity);
-        else return _rasterDirectMaskedRGBAImage(surface, image, region, opacity);
+        if (_matting(surface)) return _rasterDirectMattedImage(surface, image, region, opacity);
+        else return _rasterDirectMaskedImage(surface, image, region, opacity);
     } else if (_blending(surface)) {
-        return _rasterDirectBlendingRGBAImage(surface, image, region, opacity);
+        return _rasterDirectBlendingImage(surface, image, region, opacity);
     } else {
-        return _rasterDirectRGBAImage(surface, image, region, opacity);
+        return _rasterDirectImage(surface, image, region, opacity);
     }
     return false;
 }
 
 
 //Blenders for the following scenarios: [RLE / Whole] * [Direct / Scaled / Transformed]
-static bool _rasterRGBAImage(SwSurface* surface, SwImage* image, const Matrix* transform, const SwBBox& region, uint8_t opacity)
+static bool _rasterImage(SwSurface* surface, SwImage* image, const Matrix* transform, const SwBBox& region, uint8_t opacity)
 {
     //RLE Image
     if (image->rle) {
-        if (image->direct) return _directRleRGBAImage(surface, image, opacity);
-        else if (image->scaled) return _scaledRleRGBAImage(surface, image, transform, region, opacity);
-        else return _transformedRleRGBAImage(surface, image, transform, opacity);
+        if (image->direct) return _directRleImage(surface, image, opacity);
+        else if (image->scaled) return _scaledRleImage(surface, image, transform, region, opacity);
+        else return _transformedRleImage(surface, image, transform, opacity);
     //Whole Image
     } else {
-        if (image->direct) return _directRGBAImage(surface, image, region, opacity);
-        else if (image->scaled) return _scaledRGBAImage(surface, image, transform, region, opacity);
-        else return _transformedRGBAImage(surface, image, transform, region, opacity);
+        if (image->direct) return _directImage(surface, image, region, opacity);
+        else if (image->scaled) return _scaledImage(surface, image, transform, region, opacity);
+        else return _transformedImage(surface, image, transform, region, opacity);
     }
 }
 
@@ -1605,7 +1605,7 @@ static void _rasterGradientMaskedRectInt(SwSurface* surface, const SwBBox& regio
             }
             y += (h - 1);
         } else {
-            rasterRGBA32(cmp, 0x00000000, 0, surface->compositor->bbox.max.x -surface->compositor->bbox.min.x);
+            rasterPixel32(cmp, 0x00000000, 0, surface->compositor->bbox.max.x -surface->compositor->bbox.min.x);
             cmp += cstride;
         }
     }
@@ -1626,7 +1626,7 @@ static bool _rasterGradientMaskedRect(SwSurface* surface, const SwBBox& region, 
     else return false;
 
     //Masking Composition
-    return _rasterDirectRGBAImage(surface, &surface->compositor->image, surface->compositor->bbox, 255);
+    return _rasterDirectImage(surface, &surface->compositor->image, surface->compositor->bbox, 255);
 }
 
 
@@ -1790,7 +1790,7 @@ static bool _rasterGradientMaskedRle(SwSurface* surface, const SwRleData* rle, c
     else return false;
 
     //Masking Composition
-    return _rasterDirectRGBAImage(surface, &surface->compositor->image, surface->compositor->bbox, 255);
+    return _rasterDirectImage(surface, &surface->compositor->image, surface->compositor->bbox, 255);
 }
 
 
@@ -1900,12 +1900,12 @@ void rasterGrayscale8(uint8_t *dst, uint8_t val, uint32_t offset, int32_t len)
 }
 
 
-void rasterRGBA32(uint32_t *dst, uint32_t val, uint32_t offset, int32_t len)
+void rasterPixel32(uint32_t *dst, uint32_t val, uint32_t offset, int32_t len)
 {
 #if defined(THORVG_AVX_VECTOR_SUPPORT)
-    avxRasterRGBA32(dst, val, offset, len);
+    avxRasterPixel32(dst, val, offset, len);
 #elif defined(THORVG_NEON_VECTOR_SUPPORT)
-    neonRasterRGBA32(dst, val, offset, len);
+    neonRasterPixel32(dst, val, offset, len);
 #else
     cRasterPixels(dst, val, offset, len);
 #endif
@@ -1942,11 +1942,11 @@ bool rasterClear(SwSurface* surface, uint32_t x, uint32_t y, uint32_t w, uint32_
     if (surface->channelSize == sizeof(uint32_t)) {
         //full clear
         if (w == surface->stride) {
-            rasterRGBA32(surface->buf32, 0x00000000, surface->stride * y, w * h);
+            rasterPixel32(surface->buf32, 0x00000000, surface->stride * y, w * h);
         //partial clear
         } else {
             for (uint32_t i = 0; i < h; i++) {
-                rasterRGBA32(surface->buf32, 0x00000000, (surface->stride * y + x) + (surface->stride * i), w);
+                rasterPixel32(surface->buf32, 0x00000000, (surface->stride * y + x) + (surface->stride * i), w);
             }
         }
     //8 bits
@@ -2090,8 +2090,8 @@ bool rasterImage(SwSurface* surface, SwImage* image, const RenderMesh* mesh, con
     //TODO: case: _rasterRGBImageMesh()
     //TODO: case: _rasterGrayscaleImageMesh()
     //TODO: case: _rasterAlphaImageMesh()
-    if (mesh && mesh->triangleCnt > 0) return _transformedRGBAImageMesh(surface, image, mesh, transform, &bbox, opacity);
-    else return _rasterRGBAImage(surface, image, transform, bbox, opacity);
+    if (mesh && mesh->triangleCnt > 0) return _transformedImageMesh(surface, image, mesh, transform, &bbox, opacity);
+    else return _rasterImage(surface, image, transform, bbox, opacity);
 }
 
 

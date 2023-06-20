@@ -62,7 +62,7 @@ static inline __m128i ALPHA_BLEND(__m128i c, __m128i a)
 }
 
 
-static void avxRasterRGBA32(uint32_t *dst, uint32_t val, uint32_t offset, int32_t len)
+static void avxRasterPixel32(uint32_t *dst, uint32_t val, uint32_t offset, int32_t len)
 {
     //1. calculate how many iterations we need to cover the length
     uint32_t iterations = len / N_32BITS_IN_256REG;

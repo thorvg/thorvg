@@ -31,7 +31,7 @@ static inline uint8x8_t ALPHA_BLEND(uint8x8_t c, uint8x8_t a)
 }
 
 
-static void neonRasterRGBA32(uint32_t *dst, uint32_t val, uint32_t offset, int32_t len)
+static void neonRasterPixel32(uint32_t *dst, uint32_t val, uint32_t offset, int32_t len)
 {
     uint32_t iterations = len / 4;
     uint32_t neonFilled = iterations * 4;

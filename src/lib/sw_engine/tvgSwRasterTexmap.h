@@ -91,12 +91,12 @@ static void _rasterMaskedPolygonImageSegmentInt(SwSurface* surface, const SwImag
     auto size = surface->compositor->bbox.max.x - surface->compositor->bbox.min.x;
     if (dirFlag == 1) {     //left top case.
         for(int y = surface->compositor->bbox.min.y; y < yStart; ++y) {
-            rasterRGBA32(surface->compositor->image.buf32 + y * surface->compositor->image.stride, 0, surface->compositor->bbox.min.x, size);
+            rasterPixel32(surface->compositor->image.buf32 + y * surface->compositor->image.stride, 0, surface->compositor->bbox.min.x, size);
         }
     }
     if (dirFlag == 4) {     //right bottom case.
         for(int y = yEnd; y < surface->compositor->bbox.max.y; ++y) {
-            rasterRGBA32(surface->compositor->image.buf32 + y * surface->compositor->image.stride, 0, surface->compositor->bbox.min.x, size);
+            rasterPixel32(surface->compositor->image.buf32 + y * surface->compositor->image.stride, 0, surface->compositor->bbox.min.x, size);
         }
     }
 
