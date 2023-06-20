@@ -246,8 +246,7 @@ static void _rasterMaskedPolygonImageSegmentInt(SwSurface* surface, const SwImag
 }
 
 
-template<typename maskOp, typename amaskOp>
-static void _rasterMaskedPolygonImageSegmentDup(SwSurface* surface, const SwImage* image, const SwBBox* region, int yStart, int yEnd, AASpans* aaSpans, uint8_t opacity)
+static void _rasterMaskedPolygonImageSegmentDup(SwSurface* surface, const SwImage* image, const SwBBox* region, SwBlender maskOp, SwBlender amaskOp, int yStart, int yEnd, AASpans* aaSpans, uint8_t opacity)
 {
     float _dudx = dudx, _dvdx = dvdx;
     float _dxdya = dxdya, _dxdyb = dxdyb, _dudya = dudya, _dvdya = dvdya;
@@ -348,7 +347,7 @@ static void _rasterMaskedPolygonImageSegmentDup(SwSurface* surface, const SwImag
                         }
                         px = INTERPOLATE(px, px2, ab);
                     }
-                    *cmp = maskOp()(px, *cmp, IA(px));
+                    *cmp = maskOp(px, *cmp, IA(px));
                     ++cmp;
 
                     //Step UV horizontally
@@ -391,7 +390,7 @@ static void _rasterMaskedPolygonImageSegmentDup(SwSurface* surface, const SwImag
                         }
                         px = INTERPOLATE(px, px2, ab);
                     }
-                    *cmp = amaskOp()(px, *cmp, opacity);
+                    *cmp = amaskOp(px, *cmp, opacity);
                     ++cmp;
 
                     //Step UV horizontally
@@ -422,12 +421,12 @@ static void _rasterMaskedPolygonImageSegmentDup(SwSurface* surface, const SwImag
 
 static void _rasterMaskedPolygonImageSegment(SwSurface* surface, const SwImage* image, const SwBBox* region, int yStart, int yEnd, AASpans* aaSpans, uint8_t opacity, uint8_t dirFlag = 0)
 {
-    auto method = surface->compositor->method;
-
-    if (method == CompositeMethod::AddMask) _rasterMaskedPolygonImageSegmentDup<AddMaskOp, AddMaskAOp>(surface, image, region, yStart, yEnd, aaSpans, opacity);
-    else if (method == CompositeMethod::SubtractMask) _rasterMaskedPolygonImageSegmentDup<SubMaskOp, SubMaskAOp>(surface, image, region, yStart, yEnd, aaSpans, opacity);
-    else if (method == CompositeMethod::DifferenceMask) _rasterMaskedPolygonImageSegmentDup<DifMaskOp, DifMaskAOp>(surface, image, region, yStart, yEnd, aaSpans, opacity);
-    else if (method == CompositeMethod::IntersectMask) _rasterMaskedPolygonImageSegmentInt(surface, image, region, yStart, yEnd, aaSpans, opacity, dirFlag);
+    if (surface->compositor->method == CompositeMethod::IntersectMask) {
+        _rasterMaskedPolygonImageSegmentInt(surface, image, region, yStart, yEnd, aaSpans, opacity, dirFlag);
+    } else if (auto opMask = _getMaskOp(surface->compositor->method)) {
+        //Other Masking operations: Add, Subtract, Difference ...
+        _rasterMaskedPolygonImageSegmentDup(surface, image, region, opMask, _getAMaskOp(surface->compositor->method), yStart, yEnd, aaSpans, opacity);
+    }
 }
 
 
