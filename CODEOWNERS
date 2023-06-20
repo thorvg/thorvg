@@ -3,10 +3,11 @@
 # For more information, please consult the AUTHORS file.
 
 * @hermet
-/src/lib/* @JSUYA @mgrudzinska
-/src/lib/sw_engine/ @JSUYA @mgrudzinska
+/src/lib/* @mgrudzinska
+/src/lib/sw_engine/ @mgrudzinska
 /src/loaders/svg/ @JSUYA @mgrudzinska
 /src/loaders/tvg/ @mgrudzinska
+/src/loaders/external_webp/ @JSUYA
 /src/savers/tvg/ @mgrudzinska
 /src/bindings/capi/ @mgrudzinska
 /src/bin/svg2png/ @JSUYA
