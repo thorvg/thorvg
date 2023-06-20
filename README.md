@@ -1,4 +1,5 @@
 [![License](https://img.shields.io/badge/licence-MIT-green.svg?style=flat)](LICENSE)
+![BinarySize](https://img.shields.io/badge/Size-150kb-blue)
 [![Discord](https://img.shields.io/badge/Community-5865f2?style=flat&logo=discord&logoColor=white)](https://discord.gg/n25xj6J6HM)
 <br>
 [![Build Linux](https://github.com/Samsung/thorvg/actions/workflows/build_linux.yml/badge.svg?branch=master&event=push)](https://github.com/Samsung/thorvg/actions/workflows/actions.yml)
