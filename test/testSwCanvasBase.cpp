@@ -101,15 +101,12 @@ TEST_CASE("Clear", "[tvgSwCanvasBase]")
     REQUIRE(canvas2->clear() == Result::Success);
     REQUIRE(canvas2->clear(false) == Result::Success);
 
-    Shape* ptrs[5];
-
     //Try 1: Push -> Clear
     for (int i = 0; i < 5; ++i) {
         REQUIRE(canvas->push(Shape::gen()) == Result::Success);
 
         auto shape2 = Shape::gen();
         REQUIRE(shape2);
-        ptrs[i] = shape2.get();
 
         REQUIRE(canvas2->push(std::move(shape2)) == Result::Success);
     }
@@ -120,16 +117,12 @@ TEST_CASE("Clear", "[tvgSwCanvasBase]")
     REQUIRE(canvas2->clear(false) == Result::Success);
     REQUIRE(canvas2->clear() == Result::Success);
 
-    for (int i = 0; i < 5; ++i) delete(ptrs[i]);
-
     //Try 2: Push -> Update -> Clear
     for (int i = 0; i < 5; ++i) {
         REQUIRE(canvas->push(Shape::gen()) == Result::Success);
 
         auto shape2 = Shape::gen();
         REQUIRE(shape2);
-        ptrs[i] = shape2.get();
-
         REQUIRE(canvas2->push(std::move(shape2)) == Result::Success);
     }
 
@@ -140,8 +133,6 @@ TEST_CASE("Clear", "[tvgSwCanvasBase]")
     REQUIRE(canvas2->update() == Result::Success);
     REQUIRE(canvas2->clear(false) == Result::Success);
     REQUIRE(canvas2->clear() == Result::Success);
-
-    for (int i = 0; i < 5; ++i) delete(ptrs[i]);
 
     REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
 }
