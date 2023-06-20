@@ -3682,6 +3682,5 @@ bool SvgLoader::close()
 unique_ptr<Paint> SvgLoader::paint()
 {
     this->done();
-    if (root) return std::move(root);
-    else return nullptr;
+    return std::move(root);
 }
