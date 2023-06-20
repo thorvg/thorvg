@@ -130,8 +130,6 @@ TEST_CASE("Canvas update, clear and reuse", "[capiSwCanvas]")
 
     REQUIRE(tvg_canvas_clear(canvas, false) == TVG_RESULT_SUCCESS);
 
-    REQUIRE(tvg_canvas_push(canvas, paint) == TVG_RESULT_SUCCESS);
-
     REQUIRE(tvg_canvas_destroy(canvas) == TVG_RESULT_SUCCESS);
 
     REQUIRE(tvg_engine_term(TVG_ENGINE_SW) == TVG_RESULT_SUCCESS);

@@ -64,13 +64,13 @@ struct Canvas::Impl
         if (!renderer || !renderer->clear()) return Result::InsufficientCondition;
 
         //Free paints
-        for (auto paint : paints) {
-            paint->pImpl->dispose(*renderer);
-            if (free) delete(paint);
+        if (free) {
+            for (auto paint : paints) {
+                paint->pImpl->dispose(*renderer);
+                delete(paint);
+            }
+            paints.clear();
         }
-
-        paints.clear();
-
         drawing = false;
 
         return Result::Success;

@@ -622,14 +622,16 @@ public:
     virtual Result push(std::unique_ptr<Paint> paint) noexcept;
 
     /**
-     * @brief Sets the total number of the paints pushed into the canvas to be zero.
-     * Depending on the value of the @p free argument, the paints are freed or not.
+     * @brief Clear the internal canvas resources that used for the drawing.
+     *
+     * This API sets the total number of paints pushed into the canvas to zero.
+     * Depending on the value of the @p free argument, the paints are either freed or retained.
+     * So if you need to update paint properties while maintaining the existing scene structure, you can set @p free = false.
      *
      * @param[in] free If @c true, the memory occupied by paints is deallocated, otherwise it is not.
      *
      * @return Result::Success when succeed, Result::InsufficientCondition otherwise.
      *
-     * @warning If you don't free the paints they become dangled. They are supposed to be reused, otherwise you are responsible for their lives. Thus please use the @p free argument only when you know how it works, otherwise it's not recommended.
      * @see Canvas::push()
      * @see Canvas::paints()
      */
