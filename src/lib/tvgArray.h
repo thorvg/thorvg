@@ -73,6 +73,11 @@ struct Array
         return data + count;
     }
 
+    T* last()
+    {
+        return data + count - 1;
+    }
+
     void pop()
     {
         if (count > 0) --count;
