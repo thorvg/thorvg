@@ -674,7 +674,7 @@ TvgBinCounter TvgSaver::serializeChildren(Iterator* it, const Matrix* pTransform
     while (auto child = it->next()) {
         if (child->identifier() == TVG_CLASS_ID_SHAPE) {
             //only dosable if the previous child is a shape.
-            auto target = children.ptr() - 1;
+            auto target = children.last();
             if ((*target)->identifier() == TVG_CLASS_ID_SHAPE) {
                 if (_merge((Shape*)child, (Shape*)*target)) {
                     continue;
