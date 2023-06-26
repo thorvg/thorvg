@@ -189,7 +189,7 @@ public:
             mBounds[0], mBounds[1] + mBounds[3], //(x1, y2)
         };
 
-        for (auto paint = parents.data; paint < (parents.data + parents.count); ++paint) {
+        for (auto paint = parents.data; paint < parents.end(); ++paint) {
             auto m = const_cast<Paint*>(*paint)->transform();
             for (int i = 0; i<8; i += 2) {
                 float x = points[i] * m.e11 + points[i+1] * m.e12 + m.e13;
