@@ -219,7 +219,7 @@ bool TvgSaver::writeHeader()
     buffer.grow(headerSize);
 
     //1. Signature
-    auto ptr = buffer.ptr();
+    auto ptr = buffer.end();
     memcpy(ptr, TVG_HEADER_SIGNATURE, TVG_HEADER_SIGNATURE_LENGTH);
     ptr += TVG_HEADER_SIGNATURE_LENGTH;
 
@@ -244,7 +244,7 @@ bool TvgSaver::writeHeader()
 void TvgSaver::writeTag(TvgBinTag tag)
 {
     buffer.grow(SIZE(TvgBinTag));
-    memcpy(buffer.ptr(), &tag, SIZE(TvgBinTag));
+    memcpy(buffer.end(), &tag, SIZE(TvgBinTag));
     buffer.count += SIZE(TvgBinTag);
 }
 
@@ -252,14 +252,14 @@ void TvgSaver::writeTag(TvgBinTag tag)
 void TvgSaver::writeCount(TvgBinCounter cnt)
 {
     buffer.grow(SIZE(TvgBinCounter));
-    memcpy(buffer.ptr(), &cnt, SIZE(TvgBinCounter));
+    memcpy(buffer.end(), &cnt, SIZE(TvgBinCounter));
     buffer.count += SIZE(TvgBinCounter);
 }
 
 
 void TvgSaver::writeReservedCount(TvgBinCounter cnt)
 {
-    memcpy(buffer.ptr() - cnt - SIZE(TvgBinCounter), &cnt, SIZE(TvgBinCounter));
+    memcpy(buffer.end() - cnt - SIZE(TvgBinCounter), &cnt, SIZE(TvgBinCounter));
 }
 
 
@@ -273,7 +273,7 @@ void TvgSaver::reserveCount()
 TvgBinCounter TvgSaver::writeData(const void* data, TvgBinCounter cnt)
 {
     buffer.grow(cnt);
-    memcpy(buffer.ptr(), data, cnt);
+    memcpy(buffer.end(), data, cnt);
     buffer.count += cnt;
 
     return cnt;
@@ -286,7 +286,7 @@ TvgBinCounter TvgSaver::writeTagProperty(TvgBinTag tag, TvgBinCounter cnt, const
 
     buffer.grow(growCnt);
 
-    auto ptr = buffer.ptr();
+    auto ptr = buffer.end();
 
     *ptr = tag;
     ++ptr;
