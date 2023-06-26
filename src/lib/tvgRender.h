@@ -316,6 +316,12 @@ static inline ColorSpace COMPOSITE_TO_COLORSPACE(RenderMethod& renderer, Composi
     }
 }
 
+static inline uint8_t MULTIPLY(uint8_t c, uint8_t a)
+{
+    return (((c) * (a) + 0xff) >> 8);
+}
+
+
 }
 
 #endif //_TVG_RENDER_H_

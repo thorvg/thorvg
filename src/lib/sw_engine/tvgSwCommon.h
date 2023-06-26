@@ -307,11 +307,6 @@ static inline SwCoord HALF_STROKE(float width)
     return TO_SWCOORD(width * 0.5f);
 }
 
-static inline uint8_t MULTIPLY(uint8_t c, uint8_t a)
-{
-    return (((c) * (a) + 0xff) >> 8);
-}
-
 static inline uint8_t A(uint32_t c)
 {
     return ((c) >> 24);
