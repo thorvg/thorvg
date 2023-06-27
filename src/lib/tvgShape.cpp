@@ -244,17 +244,19 @@ Result Shape::appendRect(float x, float y, float w, float h, float rx, float ry)
 
 Result Shape::fill(uint8_t r, uint8_t g, uint8_t b, uint8_t a) noexcept
 {
-    pImpl->rs.color[0] = r;
-    pImpl->rs.color[1] = g;
-    pImpl->rs.color[2] = b;
-    pImpl->rs.color[3] = a;
-    pImpl->flag |= RenderUpdateFlag::Color;
-
     if (pImpl->rs.fill) {
         delete(pImpl->rs.fill);
         pImpl->rs.fill = nullptr;
         pImpl->flag |= RenderUpdateFlag::Gradient;
     }
+
+    if (r == pImpl->rs.color[0] && g == pImpl->rs.color[1] && b == pImpl->rs.color[2] && a == pImpl->rs.color[3]) return Result::Success;
+
+    pImpl->rs.color[0] = r;
+    pImpl->rs.color[1] = g;
+    pImpl->rs.color[2] = b;
+    pImpl->rs.color[3] = a;
+    pImpl->flag |= RenderUpdateFlag::Color;
 
     return Result::Success;
 }
