@@ -49,11 +49,11 @@ bool RenderTransform::update()
     if (overriding) return true;
 
     //Init Status
-    if (mathZero(x) && mathZero(y) && mathZero(degree) && mathEqual(scale, 1)) return false;
+    if (mathZero(x) && mathZero(y) && mathZero(degree) && mathEqual(sx, 1.0f) && mathEqual(sy, 1.0f)) return false;
 
     mathIdentity(&m);
 
-    mathScale(&m, scale);
+    mathScale(&m, sx, sy);
 
     if (!mathZero(degree)) mathRotate(&m, degree);
 

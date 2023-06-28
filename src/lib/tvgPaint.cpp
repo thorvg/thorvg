@@ -127,15 +127,18 @@ bool Paint::Impl::rotate(float degree)
 }
 
 
-bool Paint::Impl::scale(float factor)
+bool Paint::Impl::scale(float sx, float sy)
 {
     if (rTransform) {
-        if (mathEqual(factor, rTransform->scale)) return true;
+        if (mathEqual(sx, rTransform->sx) && mathEqual(sy, rTransform->sy)) return true;
     } else {
-        if (mathZero(factor)) return true;
+        if (mathEqual(sx, 1.0f) && mathEqual(sy, 1.0f)) return true;
         rTransform = new RenderTransform();
     }
-    rTransform->scale = factor;
+
+    rTransform->sx = sx;
+    rTransform->sy = sy;
+
     if (!rTransform->overriding) renderFlag |= RenderUpdateFlag::Transform;
 
     return true;
@@ -330,7 +333,14 @@ Result Paint::rotate(float degree) noexcept
 
 Result Paint::scale(float factor) noexcept
 {
-    if (pImpl->scale(factor)) return Result::Success;
+    if (pImpl->scale(factor, factor)) return Result::Success;
+    return Result::FailedAllocation;
+}
+
+
+Result Paint::scale(float sx, float sy) noexcept
+{
+    if (pImpl->scale(sx, sy)) return Result::Success;
     return Result::FailedAllocation;
 }
 

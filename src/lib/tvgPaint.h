@@ -145,7 +145,7 @@ namespace tvg
         }
 
         bool rotate(float degree);
-        bool scale(float factor);
+        bool scale(float sx, float sy);
         bool translate(float x, float y);
         bool bounds(float* x, float* y, float* w, float* h, bool transformed);
         RenderData update(RenderMethod& renderer, const RenderTransform* pTransform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag pFlag, bool clipper = false);

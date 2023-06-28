@@ -109,10 +109,10 @@ static inline void mathIdentity(Matrix* m)
 }
 
 
-static inline void mathScale(Matrix* m, float scale)
+static inline void mathScale(Matrix* m, float sx, float sy)
 {
-    m->e11 = scale;
-    m->e22 = scale;
+    m->e11 = sx;
+    m->e22 = sy;
 }
 
 

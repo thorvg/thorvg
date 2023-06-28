@@ -311,8 +311,24 @@ public:
      * @param[in] factor The value of the scaling factor. The default value is 1.
      *
      * @return Result::Success when succeed, Result::FailedAllocation otherwise.
+     * @see Paint::scale(float sx, float sy);
      */
     Result scale(float factor) noexcept;
+
+
+    /**
+     * @brief Sets the scale value of the object.
+     *
+     * @param[in] sx The value of the x-scaling factor. The default value is 1.
+     * @param[in] sy The value of the y-scaling factor. The default value is 1.
+     *
+     * @return Result::Success when succeed, Result::FailedAllocation otherwise.
+     * @see Paint::scale(float factor);
+     *
+     * @BETA_API
+     */
+    Result scale(float sx, float sy) noexcept;
+
 
     /**
      * @brief Sets the values by which the object is moved in a two-dimensional space.
