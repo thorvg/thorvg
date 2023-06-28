@@ -96,6 +96,24 @@ TEST_CASE("Basic Transformation", "[tvgPaint]")
     REQUIRE(m.e31 == Approx(0).margin(0.000001));
     REQUIRE(m.e32 == Approx(0).margin(0.000001));
     REQUIRE(m.e33 == Approx(1).margin(0.000001));
+
+    auto shape2 = Shape::gen();
+    REQUIRE(shape2);
+
+    REQUIRE(shape2->translate(155.0f, -155.0f) == Result::Success);
+    REQUIRE(shape2->rotate(45.0f) == Result::Success);
+    REQUIRE(shape2->scale(4.7f, 4.7f) == Result::Success);
+
+    auto m2 = shape2->transform();
+    REQUIRE(m2.e11 == Approx(3.323402f).margin(0.000001));
+    REQUIRE(m2.e12 == Approx(-3.323401f).margin(0.000001));
+    REQUIRE(m2.e13 == Approx(155.0f).margin(0.000001));
+    REQUIRE(m2.e21 == Approx(3.323401f).margin(0.000001));
+    REQUIRE(m2.e22 == Approx(3.323402f).margin(0.000001));
+    REQUIRE(m2.e23 == Approx(-155.0f).margin(0.000001));
+    REQUIRE(m2.e31 == Approx(0).margin(0.000001));
+    REQUIRE(m2.e32 == Approx(0).margin(0.000001));
+    REQUIRE(m2.e33 == Approx(1).margin(0.000001));
 }
 
 TEST_CASE("Opacity", "[tvgPaint]")
