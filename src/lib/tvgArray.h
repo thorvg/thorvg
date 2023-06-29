@@ -73,9 +73,14 @@ struct Array
         return data + count;
     }
 
-    T* last() const
+    T& last() const
     {
-        return data + count - 1;
+        return data[count - 1];
+    }
+
+    T& first() const
+    {
+        return data[0];
     }
 
     void pop()
