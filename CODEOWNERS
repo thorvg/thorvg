@@ -3,8 +3,6 @@
 # For more information, please consult the AUTHORS file.
 
 * @hermet
-/src/lib/* @mgrudzinska
-/src/lib/sw_engine/ @mgrudzinska
 /src/loaders/svg/ @JSUYA @mgrudzinska
 /src/loaders/tvg/ @mgrudzinska
 /src/loaders/external_webp/ @JSUYA
