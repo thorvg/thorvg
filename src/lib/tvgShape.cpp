@@ -22,6 +22,7 @@
 
 #include "tvgMath.h"
 #include "tvgShapeImpl.h"
+#include "tvgTessellator.h"
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
@@ -54,6 +55,40 @@ unique_ptr<Shape> Shape::gen() noexcept
 uint32_t Shape::identifier() noexcept
 {
     return TVG_CLASS_ID_SHAPE;
+}
+
+std::unique_ptr<Shape> Shape::triangulation(const Shape *shape) {
+    auto result = Shape::gen();
+
+    Tessellator tessellator{};
+
+    tessellator.tessellate(shape);
+
+    auto const& points = tessellator.getPoints();
+    auto const& indices = tessellator.getIndices();
+
+    for (uint32_t i = 0; i < indices.count; i += 3) {
+        auto a = indices.data[i];
+        auto b = indices.data[i + 1];
+        auto c = indices.data[i + 2];
+
+        auto x1 = points.data[a * 2];
+        auto y1 = points.data[a * 2+ 1];
+
+        auto x2 = points.data[b * 2];
+        auto y2 = points.data[b * 2 + 1];
+
+        auto x3 = points.data[c * 2];
+        auto y3 = points.data[c * 2 + 1];
+
+        result->moveTo(x1, y1);
+        result->lineTo(x2, y2);
+        result->lineTo(x3, y3);
+
+        result->close();
+    }
+
+    return result;
 }
 
 
