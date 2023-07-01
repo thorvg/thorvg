@@ -25,6 +25,8 @@
 
 #include <memory.h>
 
+#include <cstdint>
+
 namespace tvg
 {
 
@@ -110,6 +112,11 @@ struct Array
         return count == 0;
     }
 
+    template <class COMPARE>
+    void sort() {
+        qsort<COMPARE>(data, 0, count - 1);
+    }
+
     void operator=(const Array& rhs)
     {
         reserve(rhs.count);
@@ -120,6 +127,34 @@ struct Array
     ~Array()
     {
         free(data);
+    }
+
+private:
+    
+    template <class COMPARE>
+    void qsort(T* arr, uint32_t low, uint32_t high) {
+        if (low < high) {
+            uint32_t i = low;
+            uint32_t j = high;
+            T tmp = arr[low];
+            while (i < j) {
+                while (i < j && !COMPARE{}(arr[j], tmp)) --j;
+                // while (i < j && arr[j] >= tmp) --j;
+                if (i < j) {
+                    arr[i] = arr[j];
+                    ++i;
+                }
+                while (i < j && COMPARE{}(arr[i], tmp)) ++i;
+                // while (i < j && arr[i] <= tmp) ++i;
+                if (i < j) {
+                    arr[j] = arr[i];
+                    --j;
+                }
+            }
+            arr[i] = tmp;
+            qsort<COMPARE>(arr, low, i - 1);
+            qsort<COMPARE>(arr, i + 1, high);
+        }
     }
 };
 
