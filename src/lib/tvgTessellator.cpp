@@ -91,7 +91,7 @@ public:
   template <class T, class... Args> T *Allocate(Args &&...args) {
 
     pObjs.push(new T(std::forward<Args>(args)...));
-    return static_cast<T *>(*pObjs.end());
+    return static_cast<T *>(pObjs.data[pObjs.count - 1]);
   }
 
 private:

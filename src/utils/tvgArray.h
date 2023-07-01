@@ -132,10 +132,10 @@ struct Array
 private:
     
     template <class COMPARE>
-    void qsort(T* arr, uint32_t low, uint32_t high) {
+    void qsort(T* arr, int32_t low, int32_t high) {
         if (low < high) {
-            uint32_t i = low;
-            uint32_t j = high;
+            int32_t i = low;
+            int32_t j = high;
             T tmp = arr[low];
             while (i < j) {
                 while (i < j && !COMPARE{}(arr[j], tmp)) --j;
