@@ -1,5 +1,6 @@
 
 #include <SDL.h>
+#include <cstring>
 #include <iostream>
 #include <thorvg.h>
 #include <vector>
