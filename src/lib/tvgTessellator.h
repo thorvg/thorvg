@@ -26,6 +26,8 @@ public:
 
   void tessellate(const Shape *shape);
 
+  void decomposeOutline(const Shape *shape, Shape *dst);
+
   const Array<float> &getPoints() const { return resPoints; }
 
   const Array<uint32_t> &getIndices() const { return resIndices; }
@@ -39,9 +41,15 @@ private:
 
   void simplifyMesh();
 
-  void tessMess();
+  void tessMesh();
+
+  void mergeMesh();
 
   bool matchFillRule(int32_t winding);
+
+  void removeInnerEdges();
+
+  void extractBoundary(detail::Edge *edge);
 
   detail::Edge *makeEdge(detail::Vertex *p1, detail::Vertex *p2);
 
@@ -69,6 +77,8 @@ private:
 
   Array<float> resPoints;
   Array<uint32_t> resIndices;
+
+  Shape *outlineResult = nullptr;
 };
 
 } // namespace tvg

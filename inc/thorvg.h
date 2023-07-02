@@ -1216,6 +1216,8 @@ public:
 
     static std::unique_ptr<Shape> triangulation(const Shape* shape);
 
+    static std::unique_ptr<Shape> decomposeOutline(const Shape* shape);
+
     _TVG_DECLARE_PRIVATE(Shape);
 };
 

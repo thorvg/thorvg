@@ -20,6 +20,7 @@
  * SOFTWARE.
  */
 
+#include "thorvg.h"
 #include "tvgMath.h"
 #include "tvgShapeImpl.h"
 #include "tvgTessellator.h"
@@ -89,6 +90,16 @@ std::unique_ptr<Shape> Shape::triangulation(const Shape *shape) {
     }
 
     return result;
+}
+
+std::unique_ptr<Shape> Shape::decomposeOutline(const Shape *shape) {
+    auto outline = Shape::gen();
+
+    Tessellator tessellator{};
+
+    tessellator.decomposeOutline(shape, outline.get());
+
+    return outline;
 }
 
 

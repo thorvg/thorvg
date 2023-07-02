@@ -693,7 +693,7 @@ void Tessellator::tessellate(const Shape *shape) {
 
   this->simplifyMesh();
 
-  this->tessMess();
+  this->tessMesh();
 
   // output triangles
   for (auto poly = this->pPolygon; poly; poly = poly->next) {
@@ -709,6 +709,22 @@ void Tessellator::tessellate(const Shape *shape) {
       this->emitPoly(m);
     }
   }
+}
+
+void Tessellator::decomposeOutline(const Shape *shape, Shape *dst) {
+  this->fillRule = shape->fillRule();
+
+  outlineResult = dst;
+
+  this->visitShape(shape);
+
+  this->buildMesh();
+
+  this->mergeVertices();
+
+  this->simplifyMesh();
+
+  this->mergeMesh();
 }
 
 void Tessellator::visitShape(const Shape *shape) {
@@ -893,7 +909,7 @@ void Tessellator::simplifyMesh() {
   }
 }
 
-void Tessellator::tessMess() {
+void Tessellator::tessMesh() {
   /// this function also use sweep line algorithm
   /// but during the process, we calculate the winding number of left and right
   /// polygon and add edge to them
@@ -1046,12 +1062,125 @@ void Tessellator::tessMess() {
   }
 }
 
+void Tessellator::mergeMesh() {
+  this->removeInnerEdges();
+
+  for (auto v = pMesh->head; v; v = v->next) {
+    while (v->edge_below.head) {
+      auto winding = v->edge_below.head->winding;
+
+      if (winding != 0 && !matchFillRule(winding)) {
+        break;
+      }
+
+      this->extractBoundary(v->edge_below.head);
+    }
+  }
+}
+
 bool Tessellator::matchFillRule(int32_t winding) {
   if (fillRule == FillRule::Winding) {
     return winding != 0;
   } else {
     return (winding & 0x1) != 0;
   }
+}
+
+void Tessellator::removeInnerEdges() {
+  /// we use sweep line algorithm here to remove inner edges
+  /// during sweep line, we calculate all edge's winding number
+  /// and remove edges which not effects the winding rules
+  detail::ActiveEdgeList ael{};
+
+  for (auto v = pMesh->head; v; v = v->next) {
+    if (!v->isConnected()) {
+      continue;
+    }
+
+    detail::Edge *left_enclosing = nullptr;
+    detail::Edge *right_enclosing = nullptr;
+
+    ael.findEnclosing(v, &left_enclosing, &right_enclosing);
+
+    bool prev_filled =
+        left_enclosing && this->matchFillRule(left_enclosing->winding);
+
+    for (auto e = v->edge_above.head; e;) {
+      auto next = e->above_next;
+
+      ael.remove(e);
+
+      bool filled = this->matchFillRule(e->winding);
+
+      if (filled == prev_filled) {
+        e->disconnect();
+      } else if (next && next->top->point == e->top->point &&
+                 next->bottom->point == e->bottom->point) {
+        if (!filled) {
+          e->disconnect();
+          filled = true;
+        }
+      }
+
+      prev_filled = filled;
+      e = next;
+    }
+
+    auto prev = left_enclosing;
+
+    for (auto e = v->edge_below.head; e; e = e->below_next) {
+      if (prev) {
+        e->winding += prev->winding;
+      }
+
+      ael.insert(e, prev);
+
+      prev = e;
+    }
+  }
+}
+
+void Tessellator::extractBoundary(detail::Edge *e) {
+  bool down = e->winding & 1;
+
+  auto start = down ? e->top : e->bottom;
+  outlineResult->moveTo(start->point.x, start->point.y);
+
+  do {
+    e->winding = down ? 1 : -1;
+
+    if (down) {
+      outlineResult->lineTo(e->bottom->point.x, e->bottom->point.y);
+    } else {
+      outlineResult->lineTo(e->top->point.x, e->top->point.y);
+    }
+
+    detail::Edge *next;
+
+    if (down) {
+      if ((next = e->above_next)) {
+        down = false;
+      } else if ((next = e->bottom->edge_below.tail)) {
+        down = true;
+      } else if ((next = e->above_prev)) {
+        down = false;
+      }
+    } else {
+      if ((next = e->below_prev)) {
+        down = true;
+      } else if ((next = e->top->edge_above.head)) {
+        down = false;
+      } else if ((next = e->below_next)) {
+        down = true;
+      }
+    }
+
+    e->disconnect();
+    e = next;
+
+  } while (e && (down ? e->top : e->bottom) != start);
+
+  outlineResult->close();
 }
 
 detail::Edge *Tessellator::makeEdge(detail::Vertex *a, detail::Vertex *b) {
