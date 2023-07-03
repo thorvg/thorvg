@@ -316,16 +316,10 @@ struct Shape::Impl
 
         //Path
         if (rs.path.cmds.count > 0 && rs.path.pts.count > 0) {
-            dup->rs.path.cmds.reserve(rs.path.cmds.reserved);
-            dup->rs.path.pts.reserve(rs.path.pts.reserved);
-
-            dup->rs.path.cmds.count = rs.path.cmds.count;
-            memcpy(dup->rs.path.cmds.data, rs.path.cmds.data, sizeof(PathCommand) * dup->rs.path.cmds.count);
-
-            dup->rs.path.pts.count = rs.path.pts.count;
-            memcpy(dup->rs.path.pts.data, rs.path.pts.data, sizeof(Point) * dup->rs.path.pts.count);
+            dup->rs.path.cmds = rs.path.cmds;
+            dup->rs.path.pts = rs.path.pts;
+            dup->flag |= RenderUpdateFlag::Path;
         }
-        dup->flag |= RenderUpdateFlag::Path;
 
         //Stroke
         if (rs.stroke) {
