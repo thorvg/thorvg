@@ -77,7 +77,7 @@ struct Picture::Impl
 
     ~Impl()
     {
-        if (paint) delete(paint);
+        delete(paint);
         delete(surface);
     }
 
