@@ -106,15 +106,16 @@ struct Shape::Impl
     bool bounds(float* x, float* y, float* w, float* h)
     {
         //Path bounding size
-        if (rs.path.ptsCnt > 0 ) {
-            Point min = { rs.path.pts[0].x, rs.path.pts[0].y };
-            Point max = { rs.path.pts[0].x, rs.path.pts[0].y };
+        if (rs.path.pts.count > 0 ) {
+            auto pts = rs.path.pts.data;
+            Point min = { pts->x, pts->y };
+            Point max = { pts->x, pts->y };
 
-            for (uint32_t i = 1; i < rs.path.ptsCnt; ++i) {
-                if (rs.path.pts[i].x < min.x) min.x = rs.path.pts[i].x;
-                if (rs.path.pts[i].y < min.y) min.y = rs.path.pts[i].y;
-                if (rs.path.pts[i].x > max.x) max.x = rs.path.pts[i].x;
-                if (rs.path.pts[i].y > max.y) max.y = rs.path.pts[i].y;
+            for (auto pts2 = pts + 1; pts2 < rs.path.pts.end(); ++pts2) {
+                if (pts2->x < min.x) min.x = pts2->x;
+                if (pts2->y < min.y) min.y = pts2->y;
+                if (pts2->x > max.x) max.x = pts2->x;
+                if (pts2->y > max.y) max.y = pts2->y;
             }
 
             if (x) *x = min.x;
@@ -130,88 +131,67 @@ struct Shape::Impl
             if (w) *w += rs.stroke->width;
             if (h) *h += rs.stroke->width;
         }
-        return rs.path.ptsCnt > 0 ? true : false;
+        return rs.path.pts.count > 0 ? true : false;
     }
 
     void reserveCmd(uint32_t cmdCnt)
     {
-        if (cmdCnt <= rs.path.reservedCmdCnt) return;
-        rs.path.reservedCmdCnt = cmdCnt;
-        rs.path.cmds = static_cast<PathCommand*>(realloc(rs.path.cmds, sizeof(PathCommand) * rs.path.reservedCmdCnt));
+        rs.path.cmds.reserve(cmdCnt);
     }
 
     void reservePts(uint32_t ptsCnt)
     {
-        if (ptsCnt <= rs.path.reservedPtsCnt) return;
-        rs.path.reservedPtsCnt = ptsCnt;
-        rs.path.pts = static_cast<Point*>(realloc(rs.path.pts, sizeof(Point) * rs.path.reservedPtsCnt));
+        rs.path.pts.reserve(ptsCnt);
     }
 
     void grow(uint32_t cmdCnt, uint32_t ptsCnt)
     {
-        reserveCmd(rs.path.cmdCnt + cmdCnt);
-        reservePts(rs.path.ptsCnt + ptsCnt);
-    }
-
-    void reset()
-    {
-        rs.path.cmdCnt = 0;
-        rs.path.ptsCnt = 0;
-
-        flag = RenderUpdateFlag::Path;
+        rs.path.cmds.grow(cmdCnt);
+        rs.path.pts.grow(ptsCnt);
     }
 
     void append(const PathCommand* cmds, uint32_t cmdCnt, const Point* pts, uint32_t ptsCnt)
     {
-        memcpy(rs.path.cmds + rs.path.cmdCnt, cmds, sizeof(PathCommand) * cmdCnt);
-        memcpy(rs.path.pts + rs.path.ptsCnt, pts, sizeof(Point) * ptsCnt);
-        rs.path.cmdCnt += cmdCnt;
-        rs.path.ptsCnt += ptsCnt;
+        memcpy(rs.path.cmds.end(), cmds, sizeof(PathCommand) * cmdCnt);
+        memcpy(rs.path.pts.end(), pts, sizeof(Point) * ptsCnt);
+        rs.path.cmds.count += cmdCnt;
+        rs.path.pts.count += ptsCnt;
 
         flag |= RenderUpdateFlag::Path;
     }
 
     void moveTo(float x, float y)
     {
-        if (rs.path.cmdCnt + 1 > rs.path.reservedCmdCnt) reserveCmd((rs.path.cmdCnt + 1) * 2);
-        if (rs.path.ptsCnt + 2 > rs.path.reservedPtsCnt) reservePts((rs.path.ptsCnt + 2) * 2);
-
-        rs.path.cmds[rs.path.cmdCnt++] = PathCommand::MoveTo;
-        rs.path.pts[rs.path.ptsCnt++] = {x, y};
+        rs.path.cmds.push(PathCommand::MoveTo);
+        rs.path.pts.push({x, y});
 
         flag |= RenderUpdateFlag::Path;
     }
 
     void lineTo(float x, float y)
     {
-        if (rs.path.cmdCnt + 1 > rs.path.reservedCmdCnt) reserveCmd((rs.path.cmdCnt + 1) * 2);
-        if (rs.path.ptsCnt + 2 > rs.path.reservedPtsCnt) reservePts((rs.path.ptsCnt + 2) * 2);
-
-        rs.path.cmds[rs.path.cmdCnt++] = PathCommand::LineTo;
-        rs.path.pts[rs.path.ptsCnt++] = {x, y};
+        rs.path.cmds.push(PathCommand::LineTo);
+        rs.path.pts.push({x, y});
 
         flag |= RenderUpdateFlag::Path;
     }
 
     void cubicTo(float cx1, float cy1, float cx2, float cy2, float x, float y)
     {
-        if (rs.path.cmdCnt + 1 > rs.path.reservedCmdCnt) reserveCmd((rs.path.cmdCnt + 1) * 2);
-        if (rs.path.ptsCnt + 3 > rs.path.reservedPtsCnt) reservePts((rs.path.ptsCnt + 3) * 2);
-
-        rs.path.cmds[rs.path.cmdCnt++] = PathCommand::CubicTo;
-        rs.path.pts[rs.path.ptsCnt++] = {cx1, cy1};
-        rs.path.pts[rs.path.ptsCnt++] = {cx2, cy2};
-        rs.path.pts[rs.path.ptsCnt++] = {x, y};
+        rs.path.cmds.push(PathCommand::CubicTo);
+        rs.path.pts.push({cx1, cy1});
+        rs.path.pts.push({cx2, cy2});
+        rs.path.pts.push({x, y});
 
         flag |= RenderUpdateFlag::Path;
     }
 
     void close()
     {
-        if (rs.path.cmdCnt > 0 && rs.path.cmds[rs.path.cmdCnt - 1] == PathCommand::Close) return;
+        //Don't close multiple times.
+        if (rs.path.cmds.count > 0 && rs.path.cmds.last() == PathCommand::Close) return;
 
-        if (rs.path.cmdCnt + 1 > rs.path.reservedCmdCnt) reserveCmd((rs.path.cmdCnt + 1) * 2);
-        rs.path.cmds[rs.path.cmdCnt++] = PathCommand::Close;
+        rs.path.cmds.push(PathCommand::Close);
 
         flag |= RenderUpdateFlag::Path;
     }
@@ -335,17 +315,15 @@ struct Shape::Impl
         dup->flag = RenderUpdateFlag::Color;
 
         //Path
-        if (rs.path.cmdCnt > 0 && rs.path.ptsCnt > 0) {
-            dup->rs.path.cmdCnt = rs.path.cmdCnt;
-            dup->rs.path.reservedCmdCnt = rs.path.reservedCmdCnt;
-            dup->rs.path.ptsCnt = rs.path.ptsCnt;
-            dup->rs.path.reservedPtsCnt = rs.path.reservedPtsCnt;
+        if (rs.path.cmds.count > 0 && rs.path.pts.count > 0) {
+            dup->rs.path.cmds.reserve(rs.path.cmds.reserved);
+            dup->rs.path.pts.reserve(rs.path.pts.reserved);
 
-            dup->rs.path.cmds = static_cast<PathCommand*>(malloc(sizeof(PathCommand) * dup->rs.path.reservedCmdCnt));
-            if (dup->rs.path.cmds) memcpy(dup->rs.path.cmds, rs.path.cmds, sizeof(PathCommand) * dup->rs.path.cmdCnt);
+            dup->rs.path.cmds.count = rs.path.cmds.count;
+            memcpy(dup->rs.path.cmds.data, rs.path.cmds.data, sizeof(PathCommand) * dup->rs.path.cmds.count);
 
-            dup->rs.path.pts = static_cast<Point*>(malloc(sizeof(Point) * dup->rs.path.reservedPtsCnt));
-            if (dup->rs.path.pts) memcpy(dup->rs.path.pts, rs.path.pts, sizeof(Point) * dup->rs.path.ptsCnt);
+            dup->rs.path.pts.count = rs.path.pts.count;
+            memcpy(dup->rs.path.pts.data, rs.path.pts.data, sizeof(Point) * dup->rs.path.pts.count);
         }
         dup->flag |= RenderUpdateFlag::Path;
 
