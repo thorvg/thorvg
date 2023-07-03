@@ -153,13 +153,8 @@ struct RenderShape
 {
     struct
     {
-        PathCommand* cmds = nullptr;
-        uint32_t cmdCnt = 0;
-        uint32_t reservedCmdCnt = 0;
-
-        Point *pts = nullptr;
-        uint32_t ptsCnt = 0;
-        uint32_t reservedPtsCnt = 0;
+        Array<PathCommand> cmds;
+        Array<Point> pts;
     } path;
 
     Fill *fill = nullptr;
@@ -169,9 +164,6 @@ struct RenderShape
 
     ~RenderShape()
     {
-        free(path.cmds);
-        free(path.pts);
-
         if (fill) delete(fill);
         if (stroke) delete(stroke);
     }

@@ -111,7 +111,7 @@ struct Array
 
     ~Array()
     {
-        if (data) free(data);
+        free(data);
     }
 };
 

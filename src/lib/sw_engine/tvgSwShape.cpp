@@ -269,11 +269,11 @@ static void _dashCubicTo(SwDashStroke& dash, const Point* ctrl1, const Point* ct
 
 static SwOutline* _genDashOutline(const RenderShape* rshape, const Matrix* transform)
 {
-    const PathCommand* cmds = rshape->path.cmds;
-    auto cmdCnt = rshape->path.cmdCnt;
+    const PathCommand* cmds = rshape->path.cmds.data;
+    auto cmdCnt = rshape->path.cmds.count;
 
-    const Point* pts = rshape->path.pts;
-    auto ptsCnt = rshape->path.ptsCnt;
+    const Point* pts = rshape->path.pts.data;
+    auto ptsCnt = rshape->path.pts.count;
 
     //No actual shape data
     if (cmdCnt == 0 || ptsCnt == 0) return nullptr;
@@ -383,11 +383,11 @@ static bool _axisAlignedRect(const SwOutline* outline)
 
 static bool _genOutline(SwShape* shape, const RenderShape* rshape, const Matrix* transform, SwMpool* mpool, unsigned tid, bool hasComposite)
 {
-    const PathCommand* cmds = rshape->path.cmds;
-    auto cmdCnt = rshape->path.cmdCnt;
+    const PathCommand* cmds = rshape->path.cmds.data;
+    auto cmdCnt = rshape->path.cmds.count;
 
-    const Point* pts = rshape->path.pts;
-    auto ptsCnt = rshape->path.ptsCnt;
+    const Point* pts = rshape->path.pts.data;
+    auto ptsCnt = rshape->path.pts.count;
 
     //No actual shape data
     if (cmdCnt == 0 || ptsCnt == 0) return false;
