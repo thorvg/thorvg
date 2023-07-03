@@ -24,7 +24,11 @@
 #define _TVG_GL_COMMON_H_
 
 #include <assert.h>
+#ifdef OS_ANDROID
 #include <GLES2/gl2.h>
+#else
+#include <OpenGL/gl.h>
+#endif
 #include "tvgCommon.h"
 #include "tvgRender.h"
 
