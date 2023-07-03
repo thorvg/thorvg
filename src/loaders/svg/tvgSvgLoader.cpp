@@ -2908,13 +2908,13 @@ static void _copyAttr(SvgNode* to, const SvgNode* from)
             break;
         }
         case SvgNodeType::Polygon: {
-            if (to->node.polygon.pts.count = from->node.polygon.pts.count) {
+            if ((to->node.polygon.pts.count = from->node.polygon.pts.count)) {
                 to->node.polygon.pts = from->node.polygon.pts;
             }
             break;
         }
         case SvgNodeType::Polyline: {
-            if (to->node.polyline.pts.count = from->node.polyline.pts.count) {
+            if ((to->node.polyline.pts.count = from->node.polyline.pts.count)) {
                 to->node.polyline.pts = from->node.polyline.pts;
             }
             break;
