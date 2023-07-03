@@ -402,19 +402,21 @@ static bool _appendShape(SvgNode* node, Shape* shape, const Box& vBox, const str
             break;
         }
         case SvgNodeType::Polygon: {
-            if (node->node.polygon.pointsCount < 2) break;
-            shape->moveTo(node->node.polygon.points[0], node->node.polygon.points[1]);
-            for (int i = 2; i < node->node.polygon.pointsCount - 1; i += 2) {
-                shape->lineTo(node->node.polygon.points[i], node->node.polygon.points[i + 1]);
+            if (node->node.polygon.pts.count < 2) break;
+            auto pts = node->node.polygon.pts.data;
+            shape->moveTo(pts[0], pts[1]);
+            for (pts += 2; pts < node->node.polygon.pts.end(); pts += 2) {
+                shape->lineTo(pts[0], pts[1]);
             }
             shape->close();
             break;
         }
         case SvgNodeType::Polyline: {
-            if (node->node.polygon.pointsCount < 2) break;
-            shape->moveTo(node->node.polygon.points[0], node->node.polygon.points[1]);
-            for (int i = 2; i < node->node.polygon.pointsCount - 1; i += 2) {
-                shape->lineTo(node->node.polygon.points[i], node->node.polygon.points[i + 1]);
+            if (node->node.polyline.pts.count < 2) break;
+            auto pts = node->node.polyline.pts.data;
+            shape->moveTo(pts[0], pts[1]);
+            for (pts += 2; pts < node->node.polyline.pts.end(); pts += 2) {
+                shape->lineTo(pts[0], pts[1]);
             }
             break;
         }

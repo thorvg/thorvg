@@ -1611,39 +1611,11 @@ static SvgNode* _createEllipseNode(SvgLoaderData* loader, SvgNode* parent, const
 }
 
 
-static bool _attrParsePolygonPoints(const char* str, float** points, int* ptCount)
+static bool _attrParsePolygonPoints(const char* str, SvgPolygonNode* polygon)
 {
-    float tmp[50];
-    int tmpCount = 0;
-    int count = 0;
     float num;
-    float *pointArray = nullptr, *tmpArray;
-
-    while (_parseNumber(&str, &num)) {
-        tmp[tmpCount++] = num;
-        if (tmpCount == 50) {
-            tmpArray = (float*)realloc(pointArray, (count + tmpCount) * sizeof(float));
-            if (!tmpArray) goto error_alloc;
-            pointArray = tmpArray;
-            memcpy(&pointArray[count], tmp, tmpCount * sizeof(float));
-            count += tmpCount;
-            tmpCount = 0;
-        }
-    }
-
-    if (tmpCount > 0) {
-        tmpArray = (float*)realloc(pointArray, (count + tmpCount) * sizeof(float));
-        if (!tmpArray) goto error_alloc;
-        pointArray = tmpArray;
-        memcpy(&pointArray[count], tmp, tmpCount * sizeof(float));
-        count += tmpCount;
-    }
-    *ptCount = count;
-    *points = pointArray;
+    while (_parseNumber(&str, &num)) polygon->pts.push(num);
     return true;
-
-error_alloc:
-    return false;
 }
 
 
@@ -1660,7 +1632,7 @@ static bool _attrParsePolygonNode(void* data, const char* key, const char* value
     else polygon = &(node->node.polyline);
 
     if (!strcmp(key, "points")) {
-        return _attrParsePolygonPoints(value, &polygon->points, &polygon->pointsCount);
+        return _attrParsePolygonPoints(value, polygon);
     } else if (!strcmp(key, "style")) {
         return simpleXmlParseW3CAttribute(value, strlen(value), _parseStyleAttr, loader);
     } else if (!strcmp(key, "clip-path")) {
@@ -2936,16 +2908,14 @@ static void _copyAttr(SvgNode* to, const SvgNode* from)
             break;
         }
         case SvgNodeType::Polygon: {
-            if ((to->node.polygon.pointsCount = from->node.polygon.pointsCount)) {
-                to->node.polygon.points = (float*)malloc(to->node.polygon.pointsCount * sizeof(float));
-                memcpy(to->node.polygon.points, from->node.polygon.points, to->node.polygon.pointsCount * sizeof(float));
+            if (to->node.polygon.pts.count = from->node.polygon.pts.count) {
+                to->node.polygon.pts = from->node.polygon.pts;
             }
             break;
         }
         case SvgNodeType::Polyline: {
-            if ((to->node.polyline.pointsCount = from->node.polyline.pointsCount)) {
-                to->node.polyline.points = (float*)malloc(to->node.polyline.pointsCount * sizeof(float));
-                memcpy(to->node.polyline.points, from->node.polyline.points, to->node.polyline.pointsCount * sizeof(float));
+            if (to->node.polyline.pts.count = from->node.polyline.pts.count) {
+                to->node.polyline.pts = from->node.polyline.pts;
             }
             break;
         }
@@ -3236,7 +3206,7 @@ static void _inefficientNodeCheck(TVG_UNUSED SvgNode* node)
         }
         case SvgNodeType::Polygon:
         case SvgNodeType::Polyline: {
-            if (node->node.polygon.pointsCount < 2) TVGLOG("SVG", "Inefficient elements used [Invalid Polygon][Node Type : %s]", type);
+            if (node->node.polygon.pts.count < 2) TVGLOG("SVG", "Inefficient elements used [Invalid Polygon][Node Type : %s]", type);
             break;
         }
         case SvgNodeType::Circle: {
@@ -3392,11 +3362,11 @@ static void _freeNode(SvgNode* node)
              break;
          }
          case SvgNodeType::Polygon: {
-             free(node->node.polygon.points);
+             free(node->node.polygon.pts.data);
              break;
          }
          case SvgNodeType::Polyline: {
-             free(node->node.polyline.points);
+             free(node->node.polyline.pts.data);
              break;
          }
          case SvgNodeType::Doc: {

@@ -353,8 +353,7 @@ struct SvgPathNode
 
 struct SvgPolygonNode
 {
-    int pointsCount;
-    float* points;
+    Array<float> pts;
 };
 
 struct SvgClipNode
