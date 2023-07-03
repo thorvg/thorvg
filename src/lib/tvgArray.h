@@ -82,12 +82,12 @@ struct Array
         return data + count;
     }
 
-    const T& last() const
+    T& last()
     {
         return data[count - 1];
     }
 
-    const T& first() const
+    T& first()
     {
         return data[0];
     }
