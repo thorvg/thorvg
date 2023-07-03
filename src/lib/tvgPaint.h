@@ -75,8 +75,8 @@ namespace tvg
                 delete(compData->target);
                 free(compData);
             }
-            if (smethod) delete(smethod);
-            if (rTransform) delete(rTransform);
+            delete(smethod);
+            delete(rTransform);
         }
 
         void method(StrategyMethod* method)

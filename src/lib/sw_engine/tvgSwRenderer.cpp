@@ -355,7 +355,7 @@ SwRenderer::~SwRenderer()
 {
     clearCompositors();
 
-    if (surface) delete(surface);
+    delete(surface);
 
     if (!sharedMpool) mpoolTerm(mpool);
 

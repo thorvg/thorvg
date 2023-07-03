@@ -59,7 +59,7 @@ struct Fill::Impl
 
     ~Impl()
     {
-        if (dup) delete(dup);
+        delete(dup);
         free(colorStops);
         free(transform);
     }

@@ -145,7 +145,7 @@ struct RenderStroke
     ~RenderStroke()
     {
         free(dashPattern);
-        if (fill) delete(fill);
+        delete(fill);
     }
 };
 
@@ -164,8 +164,8 @@ struct RenderShape
 
     ~RenderShape()
     {
-        if (fill) delete(fill);
-        if (stroke) delete(stroke);
+        delete(fill);
+        delete(stroke);
     }
 
     void fillColor(uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a) const

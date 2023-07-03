@@ -380,7 +380,7 @@ Result Paint::composite(std::unique_ptr<Paint> target, CompositeMethod method) n
 {
     auto p = target.release();
     if (pImpl->composite(this, p, method)) return Result::Success;
-    if (p) delete(p);
+    delete(p);
     return Result::InvalidArguments;
 }
 
