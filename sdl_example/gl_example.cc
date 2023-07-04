@@ -26,6 +26,8 @@ int main(int argc, const char **argv) {
 
   auto canvas = tvg::GlCanvas::gen();
 
+  canvas->target(nullptr, 800 * 4, 800, 600);
+
   bool runing = true;
 
   std::cout << "glversion = " << glGetString(GL_VERSION) << std::endl;

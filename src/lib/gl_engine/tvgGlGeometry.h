@@ -259,8 +259,9 @@ private:
     void decomposeCubicCurve(GlPrimitive& primitve, const GlPoint &pt1, const GlPoint &cpt1, const GlPoint &cpt2, const GlPoint &pt2, GlPoint &min, GlPoint &max);
     void updateBuffer(const uint32_t location, const VertexDataArray& vertexArray);
 
-    unique_ptr<GlGpuBuffer> mGpuBuffer;
-    vector<GlPrimitive>     mPrimitives;
+    std::unique_ptr<GlGpuBuffer> mGpuVertexBuffer;
+    std::unique_ptr<GlGpuBuffer> mGpuIndexBuffer;
+    std::vector<GlPrimitive>     mPrimitives;
     GlTransform             mTransform;
     GLuint                  mVao;
 };

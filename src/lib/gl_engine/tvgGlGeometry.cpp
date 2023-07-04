@@ -214,7 +214,9 @@ bool GlGeometry::tesselate(TVG_UNUSED const RenderShape& rshape, float viewWd, f
 void GlGeometry::disableVertex(uint32_t location)
 {
     GL_CHECK(glDisableVertexAttribArray(location));
-    mGpuBuffer->unbind(GlGpuBuffer::Target::ARRAY_BUFFER);
+    mGpuVertexBuffer->unbind(GlGpuBuffer::Target::ARRAY_BUFFER);
+    mGpuIndexBuffer->unbind(GlGpuBuffer::Target::ELEMENT_ARRAY_BUFFER);
+    glBindVertexArray(0);
 }
 
 
@@ -225,21 +227,28 @@ void GlGeometry::draw(const uint32_t location, const uint32_t primitiveIndex, Re
     VertexDataArray& geometry = (flag == RenderUpdateFlag::Stroke) ? mPrimitives[primitiveIndex].mStroke : mPrimitives[primitiveIndex].mFill;
 
     updateBuffer(location, geometry);
-    GL_CHECK(glDrawElements(GL_TRIANGLES, geometry.indices.size(), GL_UNSIGNED_INT, geometry.indices.data()));
+    GL_CHECK(glDrawElements(GL_TRIANGLES, geometry.indices.size(), GL_UNSIGNED_INT, 0));
 }
 
 
 void GlGeometry::updateBuffer(uint32_t location, const VertexDataArray& vertexArray)
 {
-    if (mGpuBuffer.get() == nullptr) { 
-        mGpuBuffer = make_unique<GlGpuBuffer>(); 
+    if (mGpuVertexBuffer.get() == nullptr) { 
+        mGpuVertexBuffer = std::make_unique<GlGpuBuffer>(); 
+    }
+
+    if (mGpuIndexBuffer.get() == nullptr) {
+        mGpuIndexBuffer = std::make_unique<GlGpuBuffer>();
         glGenVertexArrays(1, &mVao);
     }
 
-    mGpuBuffer->updateBufferData(GlGpuBuffer::Target::ARRAY_BUFFER, vertexArray.vertices.size() * sizeof(VertexData), vertexArray.vertices.data());
+    mGpuVertexBuffer->updateBufferData(GlGpuBuffer::Target::ARRAY_BUFFER, vertexArray.vertices.size() * sizeof(VertexData), vertexArray.vertices.data());
     glBindVertexArray(mVao);
+    // no need to do this every time
     GL_CHECK(glEnableVertexAttribArray(location));
     GL_CHECK(glVertexAttribPointer(location, 3, GL_FLOAT, GL_FALSE, sizeof(VertexData), 0));
+
+    mGpuIndexBuffer->updateBufferData(GlGpuBuffer::Target::ELEMENT_ARRAY_BUFFER, vertexArray.indices.size() * sizeof(uint32_t), vertexArray.indices.data());
 }
 
 
