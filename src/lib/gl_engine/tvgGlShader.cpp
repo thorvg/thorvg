@@ -67,8 +67,17 @@ uint32_t GlShader::complileShader(uint32_t type, char* shaderSrc)
     // Create the shader object
     shader = glCreateShader(type);
 
+    const char* shaders[2];
+#ifdef TVG_TARGET_GLES
+    shaders[0] = "#version 300 es\n";
+#elif defined(TVG_TARGET_GL)
+    shaders[0] = "#version 330 core\n";
+#endif
+
+    shaders[1] = shaderSrc;
+
     // Load the shader source
-    glShaderSource(shader, 1, &shaderSrc, NULL);
+    glShaderSource(shader, 2, shaders, NULL);
 
     // Compile the shader
     glCompileShader(shader);

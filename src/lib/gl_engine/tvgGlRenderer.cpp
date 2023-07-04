@@ -314,10 +314,10 @@ void GlRenderer::initShaders()
     mRenderTasks.push_back(GlColorRenderTask::gen());
 
     // Linear Gradient Renderer
-    mRenderTasks.push_back(GlLinearGradientRenderTask::gen());
+    // mRenderTasks.push_back(GlLinearGradientRenderTask::gen());
 
     // Radial Gradient Renderer
-    mRenderTasks.push_back(GlRadialGradientRenderTask::gen());
+    // mRenderTasks.push_back(GlRadialGradientRenderTask::gen());
 }
 
 

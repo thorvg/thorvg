@@ -24,13 +24,18 @@ defines = []
 
 if host_machine.system() == 'android'
     external_dep += [ meson.get_compiler('cpp').find_library('GLESv2') ]
-    defines += [ '-DOS_ANDROID' ]
+    defines += [ '-DTVG_TARGET_GLES' ]
 else
     external_dep += [ dependency('opengl', required:true) ]
+    defines += [ '-DTVG_TARGET_GL' ]
 endif
 
+# shaders
+subdir('shader')
+
 engine_dep += [declare_dependency(
-    dependencies        : external_dep,
+    dependencies        : [external_dep, gl_shader_dep],
+    compile_args        : defines,
     include_directories : include_directories('.'),
     sources             : source_file,
 )]

@@ -24,6 +24,8 @@
 #include "tvgGlShaderSrc.h"
 #include "tvgGlPropertyInterface.h"
 
+// auto packed file
+#include "gl_shader_source.h"
 
 /************************************************************************/
 /* External Class Implementation                                        */
@@ -36,7 +38,7 @@ GlRenderTask::GlRenderTask(RenderTypes renderType, shared_ptr<GlShader> shader)
     load();
 
     VertexProperty* prop = nullptr;
-    ADD_ATTRIBUTE_PROPERTY(prop, this, mProgram, "aLocation", FORMAT_SIZE_VEC_4, mLocVertexAttribute);
+    ADD_ATTRIBUTE_PROPERTY(prop, this, mProgram, "aLocation", FORMAT_SIZE_VEC_3, mLocVertexAttribute);
     ADD_UNIFORM_PROPERTY_2(prop, this, mProgram, "uTransform", FORMAT_SIZE_MAT_4x4, mLocTransform, VertexProperty::DataType::MATRIX);
 }
 
@@ -153,7 +155,7 @@ std::shared_ptr<GlColorRenderTask> GlColorRenderTask::gen()
 
 
 GlColorRenderTask::GlColorRenderTask()
-    :GlRenderTask(GlRenderTask::RenderTypes::RT_Color, GlShader::gen(COLOR_VERT_SHADER, COLOR_FRAG_SHADER))
+    :GlRenderTask(GlRenderTask::RenderTypes::RT_Color, GlShader::gen(color_vert, color_frag))
 {
     VertexProperty* prop = nullptr;
     ADD_UNIFORM_PROPERTY(prop, this, getProgram(), "uColor", FORMAT_SIZE_VEC_4, mLocColor);

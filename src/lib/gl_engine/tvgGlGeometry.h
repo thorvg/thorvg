@@ -262,6 +262,7 @@ private:
     unique_ptr<GlGpuBuffer> mGpuBuffer;
     vector<GlPrimitive>     mPrimitives;
     GlTransform             mTransform;
+    GLuint                  mVao;
 };
 
 #endif /* _TVG_GL_GEOMETRY_H_ */

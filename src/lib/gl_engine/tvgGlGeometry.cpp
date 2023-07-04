@@ -231,11 +231,15 @@ void GlGeometry::draw(const uint32_t location, const uint32_t primitiveIndex, Re
 
 void GlGeometry::updateBuffer(uint32_t location, const VertexDataArray& vertexArray)
 {
-    if (mGpuBuffer.get() == nullptr) mGpuBuffer = make_unique<GlGpuBuffer>();
+    if (mGpuBuffer.get() == nullptr) { 
+        mGpuBuffer = make_unique<GlGpuBuffer>(); 
+        glGenVertexArrays(1, &mVao);
+    }
 
     mGpuBuffer->updateBufferData(GlGpuBuffer::Target::ARRAY_BUFFER, vertexArray.vertices.size() * sizeof(VertexData), vertexArray.vertices.data());
-    GL_CHECK(glVertexAttribPointer(location, 3, GL_FLOAT, GL_FALSE, sizeof(VertexData), 0));
+    glBindVertexArray(mVao);
     GL_CHECK(glEnableVertexAttribArray(location));
+    GL_CHECK(glVertexAttribPointer(location, 3, GL_FLOAT, GL_FALSE, sizeof(VertexData), 0));
 }
 
 
