@@ -218,7 +218,7 @@ The following code snippet shows how to draw SVG image using ThorVG:
 
 ```cpp
 auto picture = tvg::Picture::gen();         //generate a picture
-picture->load("tiger.svg");                 //load SVG file
+picture->load("tiger.svg");                 //load a SVG file
 canvas->push(move(picture));                //push the picture into the canvas
 ```
 
