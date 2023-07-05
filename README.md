@@ -203,7 +203,7 @@ tvg::Initializer::term(tvg::CanvasEngine::Sw);
 [Back to contents](#contents)
 <br />
 <br />
-## SVG
+## SVG Support
 
 ThorVG supports SVG (Scalable Vector Graphics) rendering through its SVG interpreter. It satisfies the [SVG Tiny Specification](https://www.w3.org/TR/SVGTiny12/)
 to keep it lightweight, so it's useful for the embedded systems. Among the SVG Tiny specs, unsupported features in the ThorVG are the following:
@@ -222,7 +222,7 @@ picture->load("tiger.svg");                 //load a SVG file
 canvas->push(move(picture));                //push the picture into the canvas
 ```
 
-The result:
+The result is:
 
 <p align="center">
   <img width="300" height="300" src="https://github.com/Samsung/thorvg/blob/master/res/example_tiger.png">
@@ -265,19 +265,19 @@ ThorVG has been integrated into the [Tizen](https://www.tizen.org) platform as t
   <img width="798" height="285" src="https://github.com/Samsung/thorvg/blob/master/res/example_tizen.png">
 </p>
 
+### Godot
+ThorVG has been integrated into the [Godot](https://www.godotengine.org) project to enable the creation of sleek and visually appealing user interfaces (UIs) and vector resources in the Godot game engine. Godot is a modern game engine that is both free and open-source, offering a comprehensive range of tools. With Godot, you can concentrate on developing your game without the need to recreate existing functionalities.
+
+<p align="center">
+  <img width="798" height="440" src="https://github.com/Samsung/thorvg/blob/master/res/example_godot.png">
+</p>
+
 ### Rive
 We're also building a [Rive](https://rive.app/) port that supports Rive Animation run through the ThorVG backend. Rive is a brand new animation platform
 that supports fancy, user-interactive vector animations. For more details see [Rive-Tizen](https://github.com/rive-app/rive-tizen) on [Github](https://github.com/rive-app/).
 
 <p align="center">
   <img width="600" height="324" src="https://github.com/Samsung/thorvg/blob/master/res/example_rive.gif">
-</p>
-
-### Godot
-ThorVG has been integrated into the [Godot](https://www.godotengine.org) project to enable the creation of sleek and visually appealing user interfaces (UIs) and vector resources in the Godot game engine. Godot is a modern game engine that is both free and open-source, offering a comprehensive range of tools. With Godot, you can concentrate on developing your game without the need to recreate existing functionalities.
-
-<p align="center">
-  <img width="798" height="440" src="https://github.com/Samsung/thorvg/blob/master/res/example_godot.png">
 </p>
 
 [Back to contents](#contents)
