@@ -243,8 +243,8 @@ RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const
 
     if (sdata->updateFlag & (RenderUpdateFlag::Color | RenderUpdateFlag::Stroke | RenderUpdateFlag::Gradient | RenderUpdateFlag::Transform) )
     {
-        if (!sdata->geometry->decomposeOutline(rshape)) return sdata;
-        if (!sdata->geometry->generateAAPoints(rshape, static_cast<float>(strokeWd), sdata->updateFlag)) return sdata;
+        // if (!sdata->geometry->decomposeOutline(rshape)) return sdata;
+        // if (!sdata->geometry->generateAAPoints(rshape, static_cast<float>(strokeWd), sdata->updateFlag)) return sdata;
         if (!sdata->geometry->tesselate(rshape, sdata->viewWd, sdata->viewHt, sdata->updateFlag)) return sdata;
     }
     return sdata;

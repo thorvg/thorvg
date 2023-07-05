@@ -1,6 +1,7 @@
 #include "tvgTessellator.h"
 #include "thorvg.h"
 #include "tvgArray.h"
+#include "tvgRender.h"
 
 #include <algorithm>
 #include <array>
@@ -685,7 +686,13 @@ Tessellator::~Tessellator() {
 void Tessellator::tessellate(const Shape *shape) {
   this->fillRule = shape->fillRule();
 
-  this->visitShape(shape);
+  const PathCommand *cmds = nullptr;
+  const Point *pts = nullptr;
+
+  auto cmd_count = shape->pathCommands(&cmds);
+  auto pts_count = shape->pathCoords(&pts);
+
+  this->visitShape(cmds, cmd_count, pts, pts_count);
 
   this->buildMesh();
 
@@ -711,12 +718,29 @@ void Tessellator::tessellate(const Shape *shape) {
   }
 }
 
+void Tessellator::tessellate(const RenderShape *rshape, bool antialias) {
+  auto cmds = rshape->path.cmds;
+  auto cmdCnt = rshape->path.cmdCnt;
+  auto pts = rshape->path.pts;
+  auto ptsCnt = rshape->path.ptsCnt;
+
+  this->fillRule = rshape->rule;
+
+  this->visitShape(cmds, cmdCnt, pts, ptsCnt);
+}
+
 void Tessellator::decomposeOutline(const Shape *shape, Shape *dst) {
   this->fillRule = shape->fillRule();
 
   outlineResult = dst;
 
-  this->visitShape(shape);
+  const PathCommand *cmd = nullptr;
+  const Point *pts = nullptr;
+
+  auto cmdCnt = shape->pathCommands(&cmd);
+  auto ptsCnt = shape->pathCoords(&pts);
+
+  this->visitShape(cmd, cmdCnt, pts, ptsCnt);
 
   this->buildMesh();
 
@@ -727,13 +751,8 @@ void Tessellator::decomposeOutline(const Shape *shape, Shape *dst) {
   this->mergeMesh();
 }
 
-void Tessellator::visitShape(const Shape *shape) {
-  const PathCommand *cmds = nullptr;
-  const Point *pts = nullptr;
-
-  auto cmd_count = shape->pathCommands(&cmds);
-  auto pts_count = shape->pathCoords(&pts);
-
+void Tessellator::visitShape(const PathCommand *cmds, uint32_t cmd_count,
+                             const Point *pts, uint32_t pts_count) {
   // all points at least need to be visit once
   // so the points cound is at least is the same as the count in shape
   resPoints.reserve(pts_count * 2);

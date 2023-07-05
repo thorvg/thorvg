@@ -17,6 +17,8 @@ struct ActiveEdgeList;
 
 } // namespace detail
 
+struct RenderShape;
+
 class Tessellator final {
   enum {
     TES_POINT_STRIDE = 3,
@@ -28,6 +30,8 @@ public:
 
   void tessellate(const Shape *shape);
 
+  void tessellate(const RenderShape *rshape, bool antialias = false);
+
   void decomposeOutline(const Shape *shape, Shape *dst);
 
   const Array<float> &getPoints() const { return resPoints; }
@@ -35,7 +39,8 @@ public:
   const Array<uint32_t> &getIndices() const { return resIndices; }
 
 private:
-  void visitShape(const Shape *shape);
+  void visitShape(const PathCommand *cmds, uint32_t cmd_count, const Point *pts,
+                  uint32_t pts_count);
 
   void buildMesh();
 
