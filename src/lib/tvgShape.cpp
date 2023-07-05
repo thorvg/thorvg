@@ -73,14 +73,14 @@ std::unique_ptr<Shape> Shape::triangulation(const Shape *shape) {
         auto b = indices.data[i + 1];
         auto c = indices.data[i + 2];
 
-        auto x1 = points.data[a * 2];
-        auto y1 = points.data[a * 2+ 1];
+        auto x1 = points.data[a * 3];
+        auto y1 = points.data[a * 3+ 1];
 
-        auto x2 = points.data[b * 2];
-        auto y2 = points.data[b * 2 + 1];
+        auto x2 = points.data[b * 3];
+        auto y2 = points.data[b * 3 + 1];
 
-        auto x3 = points.data[c * 2];
-        auto y3 = points.data[c * 2 + 1];
+        auto x3 = points.data[c * 3];
+        auto y3 = points.data[c * 3 + 1];
 
         result->moveTo(x1, y1);
         result->lineTo(x2, y2);

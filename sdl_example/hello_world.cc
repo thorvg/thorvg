@@ -70,9 +70,9 @@ int main(int argc, const char **argv) {
 
   canvas->push(std::move(rect));
 
-  result->translate(300, 0);
+  result->translate(400, 0);
 
-  result->stroke(3.f);
+  result->stroke(1.f);
 
   result->stroke(255, 0, 0);
 

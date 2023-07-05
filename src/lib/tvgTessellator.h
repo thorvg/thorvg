@@ -5,9 +5,7 @@
 #include "tvgArray.h"
 
 namespace tvg {
-
 namespace detail {
-
 class ObjectHeap;
 
 struct Vertex;
@@ -20,6 +18,10 @@ struct ActiveEdgeList;
 } // namespace detail
 
 class Tessellator final {
+  enum {
+    TES_POINT_STRIDE = 3,
+  };
+
 public:
   Tessellator();
   ~Tessellator();
@@ -65,6 +67,8 @@ private:
   detail::Polygon *makePoly(detail::Vertex *v, int32_t winding);
 
   void emitPoly(detail::MonotonePolygon *poly);
+
+  uint32_t pushVertex(float x, float y, float a);
 
 private:
   FillRule fillRule = FillRule::Winding;

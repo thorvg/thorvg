@@ -1413,21 +1413,15 @@ void Tessellator::emitPoly(detail::MonotonePolygon *poly) {
     return;
   }
 
-  uint32_t first_index = this->resPoints.count / 2;
+  uint32_t first_index = this->pushVertex(vertices.first()->point.x,
+                                          vertices.first()->point.y, 1.f);
 
-  this->resPoints.push(vertices.first()->point.x);
-  this->resPoints.push(vertices.first()->point.y);
-
-  uint32_t prev_index = this->resPoints.count / 2;
-
-  this->resPoints.push(vertices.data[1]->point.x);
-  this->resPoints.push(vertices.data[1]->point.y);
+  uint32_t prev_index = this->pushVertex(vertices.data[1]->point.x,
+                                         vertices.data[1]->point.y, 1.f);
 
   for (uint32_t i = 2; i < vertices.count; i++) {
-    uint32_t curr_index = this->resPoints.count / 2;
-
-    this->resPoints.push(vertices.data[i]->point.x);
-    this->resPoints.push(vertices.data[i]->point.y);
+    uint32_t curr_index = this->pushVertex(vertices.data[i]->point.x,
+                                           vertices.data[i]->point.y, 1.f);
 
     this->resIndices.push(first_index);
     this->resIndices.push(prev_index);
@@ -1435,6 +1429,16 @@ void Tessellator::emitPoly(detail::MonotonePolygon *poly) {
 
     prev_index = curr_index;
   }
+}
+
+uint32_t Tessellator::pushVertex(float x, float y, float a) {
+  auto index = this->resPoints.count / TES_POINT_STRIDE;
+
+  this->resPoints.push(x);
+  this->resPoints.push(y);
+  this->resPoints.push(a);
+
+  return index;
 }
 
 } // namespace tvg
