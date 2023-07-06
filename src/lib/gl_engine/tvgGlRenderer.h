@@ -62,8 +62,8 @@ private:
     ~GlRenderer();
 
     void initShaders();
-    void drawPrimitive(GlShape& sdata, uint8_t r, uint8_t g, uint8_t b, uint8_t a, uint32_t primitiveIndex, RenderUpdateFlag flag);
-    void drawPrimitive(GlShape& sdata, const Fill* fill, uint32_t primitiveIndex, RenderUpdateFlag flag);
+    void drawPrimitive(GlShape& sdata, uint8_t r, uint8_t g, uint8_t b, uint8_t a, RenderUpdateFlag flag);
+    void drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFlag flag);
 
     vector<shared_ptr<GlRenderTask>>  mRenderTasks;
 };
