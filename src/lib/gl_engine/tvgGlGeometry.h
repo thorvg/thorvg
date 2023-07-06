@@ -170,32 +170,6 @@ class GlPoint {
 
 typedef GlPoint GlSize;
 
-struct SmoothPoint {
-    GlPoint orgPt;
-    GlPoint fillOuterBlur;
-    GlPoint fillOuter;
-    GlPoint strokeOuterBlur;
-    GlPoint strokeOuter;
-    GlPoint strokeInnerBlur;
-    GlPoint strokeInner;
-
-    SmoothPoint(GlPoint pt)
-        : orgPt(pt),
-          fillOuterBlur(pt),
-          fillOuter(pt),
-          strokeOuterBlur(pt),
-          strokeOuter(pt),
-          strokeInnerBlur(pt),
-          strokeInner(pt) {
-    }
-};
-
-struct PointNormals {
-    GlPoint normal1;
-    GlPoint normal2;
-    GlPoint normalF;
-};
-
 struct VertexData {
     GlPoint point;
     float opacity = 0.0f;
@@ -204,15 +178,6 @@ struct VertexData {
 struct VertexDataArray {
     vector<VertexData> vertices;
     vector<uint32_t> indices;
-};
-
-struct GlPrimitive {
-    vector<SmoothPoint> mAAPoints;
-    VertexDataArray mFill;
-    VertexDataArray mStroke;
-    GlPoint mTopLeft;
-    GlPoint mBottomRight;
-    bool mIsClosed = false;
 };
 
 struct GlTransform {
@@ -239,16 +204,7 @@ class GlGeometry {
    private:
     GlPoint normalizePoint(const GlPoint &pt, float viewWd, float viewHt);
     void addGeometryPoint(VertexDataArray &geometry, const GlPoint &pt, float viewWd, float viewHt, float opacity);
-    GlPoint getNormal(const GlPoint &p1, const GlPoint &p2);
-    float dotProduct(const GlPoint &p1, const GlPoint &p2);
-    GlPoint extendEdge(const GlPoint &pt, const GlPoint &normal, float scalar);
 
-    void addPoint(GlPrimitive &primitve, const GlPoint &pt, GlPoint &min, GlPoint &max);
-    void addTriangleFanIndices(uint32_t &curPt, vector<uint32_t> &indices);
-    void addQuadIndices(uint32_t &curPt, vector<uint32_t> &indices);
-    bool isBezierFlat(const GlPoint &p1, const GlPoint &c1, const GlPoint &c2, const GlPoint &p2);
-    void decomposeCubicCurve(GlPrimitive &primitve, const GlPoint &pt1, const GlPoint &cpt1, const GlPoint &cpt2,
-                             const GlPoint &pt2, GlPoint &min, GlPoint &max);
     void updateBuffer(const uint32_t location, const VertexDataArray &vertexArray);
 
     std::unique_ptr<GlGpuBuffer> mGpuVertexBuffer;
