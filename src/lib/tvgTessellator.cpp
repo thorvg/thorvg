@@ -853,6 +853,38 @@ void Tessellator::tessellate(const RenderShape *rshape, bool antialias)
     this->fillRule = rshape->rule;
 
     this->visitShape(cmds, cmdCnt, pts, ptsCnt);
+
+    this->buildMesh();
+
+    this->mergeVertices();
+
+    this->simplifyMesh();
+
+    this->tessMesh();
+
+    // output triangles
+    for (auto poly = this->pPolygon; poly; poly = poly->next)
+    {
+        if (!this->matchFillRule(poly->winding))
+        {
+            continue;
+        }
+
+        if (poly->count < 3)
+        {
+            continue;
+        }
+
+        for (auto m = poly->head; m; m = m->next)
+        {
+            this->emitPoly(m);
+        }
+    }
+
+    if (antialias)
+    {
+        // TODO extract outline from current polygon list and generate aa edges
+    }
 }
 
 void Tessellator::decomposeOutline(const Shape *shape, Shape *dst)

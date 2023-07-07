@@ -25,78 +25,114 @@
 #include <float.h>
 
 #include "tvgGlGpuBuffer.h"
+#include "tvgTessellator.h"
 
 #define NORMALIZED_TOP_3D 1.0f
 #define NORMALIZED_BOTTOM_3D -1.0f
 #define NORMALIZED_LEFT_3D -1.0f
 #define NORMALIZED_RIGHT_3D 1.0f
 
-bool GlGeometry::tessellate(TVG_UNUSED const RenderShape& rshape, float viewWd, float viewHt, RenderUpdateFlag flag) {
-    return true;
+bool GlGeometry::tessellate(const RenderShape& rshape, float viewWd, float viewHt, RenderUpdateFlag flag)
+{
+    Tessellator tess(&mStageBuffer.vertices, &mStageBuffer.indices);
+
+    tess.tessellate(&rshape, true);
+
+    // No vertex data is generated
+    return mStageBuffer.vertices.count && mStageBuffer.indices.count;
 }
 
-void GlGeometry::disableVertex(uint32_t location) {
+void GlGeometry::disableVertex(uint32_t location)
+{
     GL_CHECK(glDisableVertexAttribArray(location));
     mGpuVertexBuffer->unbind(GlGpuBuffer::Target::ARRAY_BUFFER);
     mGpuIndexBuffer->unbind(GlGpuBuffer::Target::ELEMENT_ARRAY_BUFFER);
     glBindVertexArray(0);
 }
 
-void GlGeometry::draw(const uint32_t location, RenderUpdateFlag flag) {
-    // GL_CHECK(glDrawElements(GL_TRIANGLES, geometry.indices.size(), GL_UNSIGNED_INT, 0));
+void GlGeometry::draw(const uint32_t location, RenderUpdateFlag flag)
+{
+    // TODO draw stroke based on flag
+
+    this->updateBuffer(location);
+
+    GL_CHECK(glDrawElements(GL_TRIANGLES, mStageBuffer.indices.count, GL_UNSIGNED_INT, 0));
+
+    mStageBuffer.indices.clear();
+    mStageBuffer.vertices.clear();
 }
 
-void GlGeometry::updateBuffer(uint32_t location, const VertexDataArray& vertexArray) {
-    if (mGpuVertexBuffer.get() == nullptr) {
+void GlGeometry::updateBuffer(uint32_t location)
+{
+    if (mGpuVertexBuffer.get() == nullptr)
+    {
         mGpuVertexBuffer = std::make_unique<GlGpuBuffer>();
     }
 
-    if (mGpuIndexBuffer.get() == nullptr) {
+    if (mGpuIndexBuffer.get() == nullptr)
+    {
         mGpuIndexBuffer = std::make_unique<GlGpuBuffer>();
         glGenVertexArrays(1, &mVao);
     }
 
-    mGpuVertexBuffer->updateBufferData(GlGpuBuffer::Target::ARRAY_BUFFER,
-                                       vertexArray.vertices.size() * sizeof(VertexData), vertexArray.vertices.data());
+    mGpuVertexBuffer->updateBufferData(GlGpuBuffer::Target::ARRAY_BUFFER, mStageBuffer.vertices.count * sizeof(float),
+                                       mStageBuffer.vertices.data);
     glBindVertexArray(mVao);
     // no need to do this every time
     GL_CHECK(glEnableVertexAttribArray(location));
-    GL_CHECK(glVertexAttribPointer(location, 3, GL_FLOAT, GL_FALSE, sizeof(VertexData), 0));
+    GL_CHECK(glVertexAttribPointer(location, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, 0));
 
     mGpuIndexBuffer->updateBufferData(GlGpuBuffer::Target::ELEMENT_ARRAY_BUFFER,
-                                      vertexArray.indices.size() * sizeof(uint32_t), vertexArray.indices.data());
+                                      mStageBuffer.indices.count * sizeof(uint32_t), mStageBuffer.indices.data);
 }
 
-GlPoint GlGeometry::normalizePoint(const GlPoint& pt, float viewWd, float viewHt) {
+GlPoint GlGeometry::normalizePoint(const GlPoint& pt, float viewWd, float viewHt)
+{
     GlPoint p;
     p.x = (pt.x * 2.0f / viewWd) - 1.0f;
     p.y = -1.0f * ((pt.y * 2.0f / viewHt) - 1.0f);
     return p;
 }
 
-void GlGeometry::addGeometryPoint(VertexDataArray& geometry, const GlPoint& pt, float viewWd, float viewHt,
-                                  float opacity) {
-    VertexData tv = {normalizePoint(pt, viewWd, viewHt), opacity};
-    geometry.vertices.push_back(tv);
+void GlGeometry::addGeometryPoint(const GlPoint& pt, float viewWd, float viewHt, float opacity)
+{
+    auto npt = normalizePoint(pt, viewWd, viewHt);
+
+    mStageBuffer.vertices.push(npt.x);
+    mStageBuffer.vertices.push(npt.y);
+    mStageBuffer.vertices.push(opacity);
 }
 
-void GlGeometry::updateTransform(const RenderTransform* transform, float w, float h) {
-    if (transform) {
+void GlGeometry::updateTransform(const RenderTransform* transform, float w, float h)
+{
+    if (transform)
+    {
         mTransform.x = transform->x;
         mTransform.y = transform->y;
         mTransform.angle = transform->degree;
         mTransform.scale = transform->scale;
+    } else {
+        mTransform.x = 0;
+        mTransform.y = 0;
+        mTransform.angle = 0;
+        mTransform.scale = 1.f;
     }
 
     mTransform.w = w;
     mTransform.h = h;
-    GET_TRANSFORMATION(NORMALIZED_LEFT_3D, NORMALIZED_TOP_3D, mTransform.matrix);
+
+    MVP_MATRIX();
+
+    memcpy(mTransform.matrix, mvp, 16 * sizeof(float));
+
 }
 
-float* GlGeometry::getTransforMatrix() {
+float* GlGeometry::getTransforMatrix()
+{
     return mTransform.matrix;
 }
 
-GlSize GlGeometry::getPrimitiveSize() const {
+GlSize GlGeometry::getPrimitiveSize() const
+{
     return GlSize{};
 }
