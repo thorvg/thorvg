@@ -5,3 +5,17 @@ IndentWidth: 4
 ColumnLimit: 120
 PointerBindsToType: true
 AllowShortFunctionsOnASingleLine: false
+AllowShortBlocksOnASingleLine: Empty
+AllowShortIfStatementsOnASingleLine: Never
+SortIncludes: false
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterEnum: true
+  AfterStruct: true
+  AfterFunction: true
+  SplitEmptyFunction: true
+  AfterNamespace: true
+SpaceAfterTemplateKeyword: false
+FixNamespaceComments: false
+KeepEmptyLinesAtTheStartOfBlocks: true
+AlignConsecutiveDeclarations: true

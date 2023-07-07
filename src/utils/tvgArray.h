@@ -33,11 +33,13 @@ namespace tvg
 template<class T>
 struct Array
 {
-    T* data = nullptr;
+    T*       data = nullptr;
     uint32_t count = 0;
     uint32_t reserved = 0;
 
-    Array(){}
+    Array()
+    {
+    }
 
     Array(const Array& rhs)
     {
@@ -92,7 +94,8 @@ struct Array
 
     void pop()
     {
-        if (count > 0) --count;
+        if (count > 0)
+            --count;
     }
 
     void reset()
@@ -112,8 +115,9 @@ struct Array
         return count == 0;
     }
 
-    template <class COMPARE>
-    void sort() {
+    template<class COMPARE>
+    void sort()
+    {
         qsort<COMPARE>(data, 0, count - 1);
     }
 
@@ -129,14 +133,14 @@ struct Array
         free(data);
     }
 
-private:
-    
-    template <class COMPARE>
-    void qsort(T* arr, int32_t low, int32_t high) {
+   private:
+    template<class COMPARE>
+    void qsort(T* arr, int32_t low, int32_t high)
+    {
         if (low < high) {
             int32_t i = low;
             int32_t j = high;
-            T tmp = arr[low];
+            T       tmp = arr[low];
             while (i < j) {
                 while (i < j && !COMPARE{}(arr[j], tmp)) --j;
                 // while (i < j && arr[j] >= tmp) --j;
@@ -160,4 +164,4 @@ private:
 
 }
 
-#endif //_TVG_ARRAY_H_
+#endif  //_TVG_ARRAY_H_
