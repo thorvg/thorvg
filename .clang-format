@@ -6,16 +6,21 @@ ColumnLimit: 120
 PointerBindsToType: true
 AllowShortFunctionsOnASingleLine: false
 AllowShortBlocksOnASingleLine: Empty
-AllowShortIfStatementsOnASingleLine: Never
+EmptyLineBeforeAccessModifier: Leave 
+AllowShortIfStatementsOnASingleLine: WithoutElse
 SortIncludes: false
 BreakBeforeBraces: Custom
 BraceWrapping:
+  AfterClass: true
   AfterEnum: true
   AfterStruct: true
   AfterFunction: true
   SplitEmptyFunction: true
   AfterNamespace: true
+  AfterControlStatement: Always
 SpaceAfterTemplateKeyword: false
 FixNamespaceComments: false
 KeepEmptyLinesAtTheStartOfBlocks: true
 AlignConsecutiveDeclarations: true
+AccessModifierOffset: -4
+MaxEmptyLinesToKeep: 2

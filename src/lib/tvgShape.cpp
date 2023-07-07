@@ -34,16 +34,16 @@ constexpr auto PATH_KAPPA = 0.552284f;
 /* External Class Implementation                                        */
 /************************************************************************/
 
-Shape :: Shape() : pImpl(new Impl(this))
+Shape::Shape() : pImpl(new Impl(this))
 {
     Paint::pImpl->id = TVG_CLASS_ID_SHAPE;
     Paint::pImpl->method(new PaintMethod<Shape::Impl>(pImpl));
 }
 
 
-Shape :: ~Shape()
+Shape ::~Shape()
 {
-    delete(pImpl);
+    delete (pImpl);
 }
 
 
@@ -58,23 +58,26 @@ uint32_t Shape::identifier() noexcept
     return TVG_CLASS_ID_SHAPE;
 }
 
-std::unique_ptr<Shape> Shape::triangulation(const Shape *shape) {
+std::unique_ptr<Shape> Shape::triangulation(const Shape* shape)
+{
     auto result = Shape::gen();
 
-    Tessellator tessellator{};
+    Array<float>    points{};
+    Array<uint32_t> indices{};
+
+    Tessellator tessellator(&points, &indices);
 
     tessellator.tessellate(shape);
 
-    auto const& points = tessellator.getPoints();
-    auto const& indices = tessellator.getIndices();
 
-    for (uint32_t i = 0; i < indices.count; i += 3) {
+    for (uint32_t i = 0; i < indices.count; i += 3)
+    {
         auto a = indices.data[i];
         auto b = indices.data[i + 1];
         auto c = indices.data[i + 2];
 
         auto x1 = points.data[a * 3];
-        auto y1 = points.data[a * 3+ 1];
+        auto y1 = points.data[a * 3 + 1];
 
         auto x2 = points.data[b * 3];
         auto y2 = points.data[b * 3 + 1];
@@ -92,10 +95,11 @@ std::unique_ptr<Shape> Shape::triangulation(const Shape *shape) {
     return result;
 }
 
-std::unique_ptr<Shape> Shape::decomposeOutline(const Shape *shape) {
+std::unique_ptr<Shape> Shape::decomposeOutline(const Shape* shape)
+{
     auto outline = Shape::gen();
 
-    Tessellator tessellator{};
+    Tessellator tessellator{nullptr, nullptr};
 
     tessellator.decomposeOutline(shape, outline.get());
 
@@ -132,7 +136,7 @@ uint32_t Shape::pathCoords(const Point** pts) const noexcept
 }
 
 
-Result Shape::appendPath(const PathCommand *cmds, uint32_t cmdCnt, const Point* pts, uint32_t ptsCnt) noexcept
+Result Shape::appendPath(const PathCommand* cmds, uint32_t cmdCnt, const Point* pts, uint32_t ptsCnt) noexcept
 {
     if (cmdCnt == 0 || ptsCnt == 0 || !cmds || !pts) return Result::InvalidArguments;
 
@@ -193,7 +197,7 @@ Result Shape::appendCircle(float cx, float cy, float rx, float ry) noexcept
 
 Result Shape::appendArc(float cx, float cy, float radius, float startAngle, float sweep, bool pie) noexcept
 {
-    //just circle
+    // just circle
     if (sweep >= 360.0f || sweep <= -360.0f) return appendCircle(cx, cy, radius, radius);
 
     startAngle = (startAngle * M_PI) / 180.0f;
@@ -204,23 +208,26 @@ Result Shape::appendArc(float cx, float cy, float radius, float startAngle, floa
     auto fract = fmodf(sweep, float(M_PI_2));
     fract = (mathZero(fract)) ? float(M_PI_2) * sweepSign : fract;
 
-    //Start from here
+    // Start from here
     Point start = {radius * cosf(startAngle), radius * sinf(startAngle)};
 
-    if (pie) {
+    if (pie)
+    {
         pImpl->moveTo(cx, cy);
         pImpl->lineTo(start.x + cx, start.y + cy);
-    } else {
+    } else
+    {
         pImpl->moveTo(start.x + cx, start.y + cy);
     }
 
-    for (int i = 0; i < nCurves; ++i) {
-        auto endAngle = startAngle + ((i != nCurves - 1) ? float(M_PI_2) * sweepSign : fract);
+    for (int i = 0; i < nCurves; ++i)
+    {
+        auto  endAngle = startAngle + ((i != nCurves - 1) ? float(M_PI_2) * sweepSign : fract);
         Point end = {radius * cosf(endAngle), radius * sinf(endAngle)};
 
-        //variables needed to calculate bezier control points
+        // variables needed to calculate bezier control points
 
-        //get bezier control points using article:
+        // get bezier control points using article:
         //(http://itc.ktu.lt/index.php/ITC/article/view/11812/6479)
         auto ax = start.x;
         auto ay = start.y;
@@ -228,9 +235,9 @@ Result Shape::appendArc(float cx, float cy, float radius, float startAngle, floa
         auto by = end.y;
         auto q1 = ax * ax + ay * ay;
         auto q2 = ax * bx + ay * by + q1;
-        auto k2 = (4.0f/3.0f) * ((sqrtf(2 * q1 * q2) - q2) / (ax * by - ay * bx));
+        auto k2 = (4.0f / 3.0f) * ((sqrtf(2 * q1 * q2) - q2) / (ax * by - ay * bx));
 
-        start = end; //Next start point is the current end point
+        start = end;  // Next start point is the current end point
 
         end.x += cx;
         end.y += cy;
@@ -254,22 +261,25 @@ Result Shape::appendRect(float x, float y, float w, float h, float rx, float ry)
     auto halfW = w * 0.5f;
     auto halfH = h * 0.5f;
 
-    //clamping cornerRadius by minimum size
+    // clamping cornerRadius by minimum size
     if (rx > halfW) rx = halfW;
     if (ry > halfH) ry = halfH;
 
-    //rectangle
-    if (rx == 0 && ry == 0) {
+    // rectangle
+    if (rx == 0 && ry == 0)
+    {
         pImpl->grow(5, 4);
         pImpl->moveTo(x, y);
         pImpl->lineTo(x + w, y);
         pImpl->lineTo(x + w, y + h);
         pImpl->lineTo(x, y + h);
         pImpl->close();
-    //circle
-    } else if (mathEqual(rx, halfW) && mathEqual(ry, halfH)) {
+        // circle
+    } else if (mathEqual(rx, halfW) && mathEqual(ry, halfH))
+    {
         return appendCircle(x + (w * 0.5f), y + (h * 0.5f), rx, ry);
-    } else {
+    } else
+    {
         auto hrx = rx * 0.5f;
         auto hry = ry * 0.5f;
         pImpl->grow(10, 17);
@@ -291,13 +301,15 @@ Result Shape::appendRect(float x, float y, float w, float h, float rx, float ry)
 
 Result Shape::fill(uint8_t r, uint8_t g, uint8_t b, uint8_t a) noexcept
 {
-    if (pImpl->rs.fill) {
-        delete(pImpl->rs.fill);
+    if (pImpl->rs.fill)
+    {
+        delete (pImpl->rs.fill);
         pImpl->rs.fill = nullptr;
         pImpl->flag |= RenderUpdateFlag::Gradient;
     }
 
-    if (r == pImpl->rs.color[0] && g == pImpl->rs.color[1] && b == pImpl->rs.color[2] && a == pImpl->rs.color[3]) return Result::Success;
+    if (r == pImpl->rs.color[0] && g == pImpl->rs.color[1] && b == pImpl->rs.color[2] && a == pImpl->rs.color[3])
+        return Result::Success;
 
     pImpl->rs.color[0] = r;
     pImpl->rs.color[1] = g;
@@ -314,7 +326,7 @@ Result Shape::fill(unique_ptr<Fill> f) noexcept
     auto p = f.release();
     if (!p) return Result::MemoryCorruption;
 
-    if (pImpl->rs.fill && pImpl->rs.fill != p) delete(pImpl->rs.fill);
+    if (pImpl->rs.fill && pImpl->rs.fill != p) delete (pImpl->rs.fill);
     pImpl->rs.fill = p;
     pImpl->flag |= RenderUpdateFlag::Gradient;
 
@@ -388,7 +400,8 @@ const Fill* Shape::strokeFill() const noexcept
 
 Result Shape::stroke(const float* dashPattern, uint32_t cnt) noexcept
 {
-    if ((cnt == 1) || (!dashPattern && cnt > 0) || (dashPattern && cnt == 0)) {
+    if ((cnt == 1) || (!dashPattern && cnt > 0) || (dashPattern && cnt == 0))
+    {
         return Result::InvalidArguments;
     }
 

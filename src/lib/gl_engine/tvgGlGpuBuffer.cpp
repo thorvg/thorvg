@@ -53,3 +53,8 @@ void GlGpuBuffer::unbind(Target target)
 {
     GL_CHECK(glBindBuffer(static_cast<uint32_t>(target), 0));
 }
+
+void GlGpuBuffer::bind(Target target)
+{
+    GL_CHECK(glBindBuffer(static_cast<uint32_t>(target), mGlBufferId));
+}

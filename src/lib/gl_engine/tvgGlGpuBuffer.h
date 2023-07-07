@@ -38,10 +38,9 @@ public:
     ~GlGpuBuffer();
     void updateBufferData(Target target, uint32_t size, const void* data);
     void unbind(Target target);
+    void bind(Target target);
 private:
-    uint32_t    mGlBufferId = 0;
-
+    uint32_t mGlBufferId = 0;
 };
 
 #endif /* _TVG_GL_GPU_BUFFER_H_ */
-
