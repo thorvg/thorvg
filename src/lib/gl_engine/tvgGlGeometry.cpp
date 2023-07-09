@@ -105,17 +105,18 @@ void GlGeometry::addGeometryPoint(const GlPoint& pt, float viewWd, float viewHt,
 
 void GlGeometry::updateTransform(const RenderTransform* transform, float w, float h)
 {
+    float model[16];
+
     if (transform)
     {
-        mTransform.x = transform->x;
-        mTransform.y = transform->y;
-        mTransform.angle = transform->degree;
-        mTransform.scale = transform->scale;
+        transform->toMatrix4x4(model);
     } else {
-        mTransform.x = 0;
-        mTransform.y = 0;
-        mTransform.angle = 0;
-        mTransform.scale = 1.f;
+       // identity matrix
+       memset(model, 0, 16 * sizeof(float));
+       model[0] = 1.f;
+       model[5] = 1.f;
+       model[10] = 1.f;
+       model[15] = 1.f;
     }
 
     mTransform.w = w;
@@ -123,8 +124,7 @@ void GlGeometry::updateTransform(const RenderTransform* transform, float w, floa
 
     MVP_MATRIX();
 
-    memcpy(mTransform.matrix, mvp, 16 * sizeof(float));
-
+    MULTIPLY_MATRIX(mvp, model, mTransform.matrix);
 }
 
 float* GlGeometry::getTransforMatrix()

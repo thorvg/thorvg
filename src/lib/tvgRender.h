@@ -125,6 +125,7 @@ struct RenderTransform
 
     bool update();
     void override(const Matrix& m);
+    void toMatrix4x4(float matrix[16]) const;
 
     RenderTransform();
     RenderTransform(const RenderTransform* lhs, const RenderTransform* rhs);

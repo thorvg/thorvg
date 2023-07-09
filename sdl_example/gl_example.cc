@@ -60,6 +60,8 @@ int main(int argc, const char **argv) {
       shape1->close();
       shape1->fill(0, 0, 255);
 
+      shape1->translate(100, 0);
+
       canvas->push(std::move(shape1));
 
       canvas->draw();

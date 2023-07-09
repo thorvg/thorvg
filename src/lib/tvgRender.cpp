@@ -43,6 +43,26 @@ void RenderTransform::override(const Matrix& m)
     } else overriding = true;
 }
 
+void RenderTransform::toMatrix4x4(float matrix[16]) const {
+    // matrix 3x3 to matrix 4x4 for opengl mat4
+    matrix[0] = m.e11;
+    matrix[1] = m.e21;
+    matrix[2] = m.e31;
+    matrix[3] = 100.0f;
+    matrix[4] = m.e12;
+    matrix[5] = m.e22;
+    matrix[6] = m.e32;
+    matrix[7] = 0.0f;
+    matrix[8] = m.e13;
+    matrix[9] = m.e23;
+    matrix[10] = m.e33;
+    matrix[11] = 0.0f;
+    matrix[12] = 0.0f;
+    matrix[13] = 0.0f;
+    matrix[14] = 0.0f;
+    matrix[15] = 1.0f;
+}
+
 
 bool RenderTransform::update()
 {

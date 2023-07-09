@@ -3,6 +3,7 @@
 import os
 import re
 import sys
+from typing import List
 
 
 def file_to_hex(file_path: str) -> str:
@@ -16,7 +17,7 @@ def file_to_hex(file_path: str) -> str:
         return re.sub('([0-9a-f][0-9a-f])', '0x\\1,', hex_str)
 
 
-def pack_shader_files(output_name: str, shader_list: list[str]):
+def pack_shader_files(output_name: str, shader_list: List[str]):
     file_content = "#pragma once\n\n\n"
 
     file_content += "// this file is auto generated do not edit it directly \n"
