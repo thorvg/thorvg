@@ -25,6 +25,9 @@ defines = []
 if host_machine.system() == 'android'
     external_dep += [ meson.get_compiler('cpp').find_library('GLESv2') ]
     defines += [ '-DTVG_TARGET_GLES' ]
+elif host_machine.system() == 'linux'
+    external_dep += [ meson.get_compiler('cpp').find_library('GL', required: true) ]
+    defines += [ '-DTVG_TARGET_GL' ]
 else
     external_dep += [ dependency('opengl', required:true) ]
     defines += [ '-DTVG_TARGET_GL' ]

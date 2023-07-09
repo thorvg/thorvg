@@ -26,9 +26,15 @@
 #include <assert.h>
 #ifdef OS_ANDROID
 #include <GLES2/gl2.h>
-#else
+#elif defined(__APPLE__)
 #include <OpenGL/gl.h>
 #include <OpenGL/gl3.h>
+#else
+#ifndef GL_GLEXT_PROTOTYPES
+#define GL_GLEXT_PROTOTYPES 1
+#endif
+#include <GL/gl.h>
+#include <GL/glext.h>
 #endif
 #include "tvgCommon.h"
 #include "tvgRender.h"
