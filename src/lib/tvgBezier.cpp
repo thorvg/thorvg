@@ -20,8 +20,7 @@
  * SOFTWARE.
  */
 
-#include <float.h>
-#include <math.h>
+#include "tvgMath.h"
 #include "tvgBezier.h"
 
 /************************************************************************/
@@ -75,7 +74,7 @@ float bezLength(const Bezier& cur)
     auto len = _lineLength(cur.start, cur.ctrl1) + _lineLength(cur.ctrl1, cur.ctrl2) + _lineLength(cur.ctrl2, cur.end);
     auto chord = _lineLength(cur.start, cur.end);
 
-    if (fabsf(len - chord) > BEZIER_EPSILON) {
+    if (!mathEqual(len, chord)) {
         bezSplit(cur, left, right);
         return bezLength(left) + bezLength(right);
     }
@@ -116,19 +115,16 @@ float bezAt(const Bezier& bz, float at)
 
     //just in case to prevent an infinite loop
     if (at <= 0) return 0.0f;
-
-    if (at >= len) return 1.0f;
+    if (at >= len) return len;
 
     while (true) {
         auto right = bz;
         Bezier left;
         bezSplitLeft(right, t, left);
         len = bezLength(left);
-
-        if (fabsf(len - at) < BEZIER_EPSILON || fabsf(smallest - biggest) < BEZIER_EPSILON) {
+        if (mathEqual(len, at) || mathEqual(smallest, biggest)) {
             break;
         }
-
         if (len < at) {
             smallest = t;
             t = (t + biggest) * 0.5f;
@@ -146,6 +142,29 @@ void bezSplitAt(const Bezier& cur, float at, Bezier& left, Bezier& right)
     right = cur;
     auto t = bezAt(right, at);
     bezSplitLeft(right, t, left);
+}
+
+
+Point bezPointAt(const Bezier& bz, float t)
+{
+    Point cur;
+    auto it = 1.0f - t;
+
+    auto ax = bz.start.x * it + bz.ctrl1.x * t;
+    auto bx = bz.ctrl1.x * it + bz.ctrl2.x * t;
+    auto cx = bz.ctrl2.x * it + bz.end.x * t;
+    ax = ax * it + bx * t;
+    bx = bx * it + cx * t;
+    cur.x = ax * it + bx * t;
+
+    float ay = bz.start.y * it + bz.ctrl1.y * t;
+    float by = bz.ctrl1.y * it + bz.ctrl2.y * t;
+    float cy = bz.ctrl2.y * it + bz.end.y * t;
+    ay = ay * it + by * t;
+    by = by * it + cy * t;
+    cur.y = ay * it + by * t;
+
+    return cur;
 }
 
 }
