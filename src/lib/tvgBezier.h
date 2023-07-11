@@ -28,8 +28,6 @@
 namespace tvg
 {
 
-#define BEZIER_EPSILON 1e-4f
-
 struct Bezier
 {
     Point start;
@@ -43,6 +41,7 @@ float bezLength(const Bezier& cur);
 void bezSplitLeft(Bezier& cur, float at, Bezier& left);
 float bezAt(const Bezier& bz, float at);
 void bezSplitAt(const Bezier& cur, float at, Bezier& left, Bezier& right);
+Point bezPointAt(const Bezier& bz, float t);
 
 }
 
