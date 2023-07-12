@@ -23,6 +23,8 @@
 #include "tvgMath.h"
 #include "tvgBezier.h"
 
+#define BEZIER_EPSILON 1e-4f
+
 /************************************************************************/
 /* Internal Class Implementation                                        */
 /************************************************************************/
@@ -74,7 +76,7 @@ float bezLength(const Bezier& cur)
     auto len = _lineLength(cur.start, cur.ctrl1) + _lineLength(cur.ctrl1, cur.ctrl2) + _lineLength(cur.ctrl2, cur.end);
     auto chord = _lineLength(cur.start, cur.end);
 
-    if (!mathEqual(len, chord)) {
+    if (fabsf(len - chord) > BEZIER_EPSILON) {
         bezSplit(cur, left, right);
         return bezLength(left) + bezLength(right);
     }
@@ -122,7 +124,7 @@ float bezAt(const Bezier& bz, float at)
         Bezier left;
         bezSplitLeft(right, t, left);
         len = bezLength(left);
-        if (mathEqual(len, at) || mathEqual(smallest, biggest)) {
+        if (fabsf(len - at) < BEZIER_EPSILON || fabsf(smallest - biggest) < BEZIER_EPSILON) {
             break;
         }
         if (len < at) {
