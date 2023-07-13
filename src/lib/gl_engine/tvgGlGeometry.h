@@ -30,23 +30,9 @@
 
 #define PI 3.1415926535897932384626433832795f
 
-#define MVP_MATRIX()                        \
-    float mvp[4 * 4] = {2.f / mTransform.w, \
-                        0.0,                \
-                        0.0f,               \
-                        0.0f,               \
-                        0.0f,               \
-                        -2.f / mTransform.h, \
-                        0.0f,               \
-                        0.0f,               \
-                        0.0f,               \
-                        0.0f,               \
-                        -1.0f,               \
-                        0.0f,               \
-                        -1.0f,              \
-                        1.0f,              \
-                        0.0f,               \
-                        1.0f};
+#define MVP_MATRIX(w, h)                                                         \
+    float mvp[4 * 4] = {2.f / w, 0.0,  0.0f,  0.0f, 0.0f,  -2.f / h, 0.0f, 0.0f, \
+                        0.0f,    0.0f, -1.0f, 0.0f, -1.0f, 1.0f,     0.0f, 1.0f};
 
 #define ROTATION_MATRIX(xPivot, yPivot)                                    \
     auto  radian = mTransform.angle / 180.0f * PI;                         \
@@ -70,10 +56,8 @@
                            1.0f};
 
 #define MULTIPLY_MATRIX(A, B, transform)                                     \
-    for (auto i = 0; i < 4; ++i)                                             \
-    {                                                                        \
-        for (auto j = 0; j < 4; ++j)                                         \
-        {                                                                    \
+    for (auto i = 0; i < 4; ++i) {                                           \
+        for (auto j = 0; j < 4; ++j) {                                       \
             float sum = 0.0;                                                 \
             for (auto k = 0; k < 4; ++k) sum += A[k * 4 + i] * B[j * 4 + k]; \
             transform[j * 4 + i] = sum;                                      \
@@ -177,8 +161,7 @@ public:
     void normalize()
     {
         auto length = sqrtf((x * x) + (y * y));
-        if (length != 0.0f)
-        {
+        if (length != 0.0f) {
             const auto inverseLen = 1.0f / length;
             x *= inverseLen;
             y *= inverseLen;
@@ -196,23 +179,13 @@ struct VertexDataArray
     Array<uint32_t> indices;
 };
 
-struct GlTransform
-{
-    float x = 0.0f;
-    float y = 0.0f;
-    float angle = 0.0f;
-    float scale = 1.0f;
-    float w;
-    float h;
-    float matrix[16];
-};
 
 class GlGpuBuffer;
 
 class GlGeometry
 {
 public:
-    bool   tessellate(const RenderShape &rshape, float viewWd, float viewHt, RenderUpdateFlag flag);
+    bool   tessellate(const RenderShape &rshape, RenderUpdateFlag flag);
     void   disableVertex(uint32_t location);
     void   draw(const uint32_t location, RenderUpdateFlag flag);
     void   updateTransform(const RenderTransform *transform, float w, float h);
@@ -220,15 +193,12 @@ public:
     GlSize getPrimitiveSize() const;
 
 private:
-    GlPoint normalizePoint(const GlPoint &pt, float viewWd, float viewHt);
-    void    addGeometryPoint(const GlPoint &pt, float viewWd, float viewHt, float opacity);
-
     void updateBuffer(const uint32_t location);
 
     VertexDataArray              mStageBuffer;
     std::unique_ptr<GlGpuBuffer> mGpuVertexBuffer;
     std::unique_ptr<GlGpuBuffer> mGpuIndexBuffer;
-    GlTransform                  mTransform;
+    float                        mTransform[16];
     GLuint                       mVao;
 };
 

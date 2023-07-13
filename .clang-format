@@ -17,7 +17,7 @@ BraceWrapping:
   AfterFunction: true
   SplitEmptyFunction: true
   AfterNamespace: true
-  AfterControlStatement: Always
+  AfterControlStatement: Never
 SpaceAfterTemplateKeyword: false
 FixNamespaceComments: false
 KeepEmptyLinesAtTheStartOfBlocks: true

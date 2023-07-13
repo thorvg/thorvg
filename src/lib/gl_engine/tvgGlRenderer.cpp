@@ -205,7 +205,7 @@ RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const
 
     if (sdata->updateFlag & (RenderUpdateFlag::Color | RenderUpdateFlag::Stroke | RenderUpdateFlag::Gradient |
                              RenderUpdateFlag::Transform)) {
-        if (!sdata->geometry->tessellate(rshape, sdata->viewWd, sdata->viewHt, sdata->updateFlag)) return sdata;
+        if (!sdata->geometry->tessellate(rshape, sdata->updateFlag)) return sdata;
     }
     return sdata;
 }

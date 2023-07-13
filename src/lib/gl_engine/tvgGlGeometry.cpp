@@ -32,7 +32,7 @@
 #define NORMALIZED_LEFT_3D -1.0f
 #define NORMALIZED_RIGHT_3D 1.0f
 
-bool GlGeometry::tessellate(const RenderShape& rshape, float viewWd, float viewHt, RenderUpdateFlag flag)
+bool GlGeometry::tessellate(const RenderShape& rshape, RenderUpdateFlag flag)
 {
     Tessellator tess(&mStageBuffer.vertices, &mStageBuffer.indices);
 
@@ -64,13 +64,11 @@ void GlGeometry::draw(const uint32_t location, RenderUpdateFlag flag)
 
 void GlGeometry::updateBuffer(uint32_t location)
 {
-    if (mGpuVertexBuffer.get() == nullptr)
-    {
+    if (mGpuVertexBuffer.get() == nullptr) {
         mGpuVertexBuffer = std::make_unique<GlGpuBuffer>();
     }
 
-    if (mGpuIndexBuffer.get() == nullptr)
-    {
+    if (mGpuIndexBuffer.get() == nullptr) {
         mGpuIndexBuffer = std::make_unique<GlGpuBuffer>();
         glGenVertexArrays(1, &mVao);
     }
@@ -86,50 +84,30 @@ void GlGeometry::updateBuffer(uint32_t location)
                                       mStageBuffer.indices.count * sizeof(uint32_t), mStageBuffer.indices.data);
 }
 
-GlPoint GlGeometry::normalizePoint(const GlPoint& pt, float viewWd, float viewHt)
-{
-    GlPoint p;
-    p.x = (pt.x * 2.0f / viewWd) - 1.0f;
-    p.y = -1.0f * ((pt.y * 2.0f / viewHt) - 1.0f);
-    return p;
-}
-
-void GlGeometry::addGeometryPoint(const GlPoint& pt, float viewWd, float viewHt, float opacity)
-{
-    auto npt = normalizePoint(pt, viewWd, viewHt);
-
-    mStageBuffer.vertices.push(npt.x);
-    mStageBuffer.vertices.push(npt.y);
-    mStageBuffer.vertices.push(opacity);
-}
 
 void GlGeometry::updateTransform(const RenderTransform* transform, float w, float h)
 {
     float model[16];
 
-    if (transform)
-    {
+    if (transform) {
         transform->toMatrix4x4(model);
     } else {
-       // identity matrix
-       memset(model, 0, 16 * sizeof(float));
-       model[0] = 1.f;
-       model[5] = 1.f;
-       model[10] = 1.f;
-       model[15] = 1.f;
+        // identity matrix
+        memset(model, 0, 16 * sizeof(float));
+        model[0] = 1.f;
+        model[5] = 1.f;
+        model[10] = 1.f;
+        model[15] = 1.f;
     }
 
-    mTransform.w = w;
-    mTransform.h = h;
+    MVP_MATRIX(w, h);
 
-    MVP_MATRIX();
-
-    MULTIPLY_MATRIX(mvp, model, mTransform.matrix);
+    MULTIPLY_MATRIX(mvp, model, mTransform);
 }
 
 float* GlGeometry::getTransforMatrix()
 {
-    return mTransform.matrix;
+    return mTransform;
 }
 
 GlSize GlGeometry::getPrimitiveSize() const

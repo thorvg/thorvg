@@ -43,4 +43,10 @@ private:
     uint32_t mGlBufferId = 0;
 };
 
+struct GlGpuBufferView
+{
+    uint32_t     offset = 0;
+    GlGpuBuffer* buffer = nullptr;
+};
+
 #endif /* _TVG_GL_GPU_BUFFER_H_ */
