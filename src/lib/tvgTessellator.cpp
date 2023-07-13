@@ -51,19 +51,15 @@ struct LinkedList
         t->*Prev = prev;
         t->*Next = next;
 
-        if (prev)
-        {
+        if (prev) {
             prev->*Next = t;
-        } else if (head)
-        {
+        } else if (head) {
             *head = t;
         }
 
-        if (next)
-        {
+        if (next) {
             next->*Prev = t;
-        } else if (tail)
-        {
+        } else if (tail) {
             *tail = t;
         }
     }
@@ -71,19 +67,15 @@ struct LinkedList
     template<T *T::*Prev, T *T::*Next>
     static void Remove(T *t, T **head, T **tail)
     {
-        if (t->*Prev)
-        {
+        if (t->*Prev) {
             t->*Prev->*Next = t->*Next;
-        } else if (head)
-        {
+        } else if (head) {
             *head = t->*Next;
         }
 
-        if (t->*Next)
-        {
+        if (t->*Next) {
             t->*Next->*Prev = t->*Prev;
-        } else if (tail)
-        {
+        } else if (tail) {
             *tail = t->*Prev;
         }
 
@@ -107,8 +99,7 @@ public:
 
         auto first = pObjs.data;
 
-        for (uint32_t i = 0; i < count; ++i)
-        {
+        for (uint32_t i = 0; i < count; ++i) {
             delete static_cast<Object *>(first[i]);
         }
     }
@@ -349,9 +340,8 @@ struct MonotonePolygon : public Object
 // ----------------------------- Impl -------------------------------
 void Vertex::insertAbove(Edge *e)
 {
-    if (e->top->point == e->bottom->point ||  // no edge
-        VertexCompare::Compare(e->bottom->point, e->top->point))
-    {  // not above
+    if (e->top->point == e->bottom->point ||                        // no edge
+        VertexCompare::Compare(e->bottom->point, e->top->point)) {  // not above
         return;
     }
 
@@ -359,10 +349,8 @@ void Vertex::insertAbove(Edge *e)
     Edge *above_next = nullptr;
 
     // find insertion point
-    for (above_next = this->edge_above.head; above_next; above_next = above_next->above_next)
-    {
-        if (above_next->isRightOf(e->top->point))
-        {
+    for (above_next = this->edge_above.head; above_next; above_next = above_next->above_next) {
+        if (above_next->isRightOf(e->top->point)) {
             break;
         }
 
@@ -375,9 +363,8 @@ void Vertex::insertAbove(Edge *e)
 
 void Vertex::insertBelow(Edge *e)
 {
-    if (e->top->point == e->bottom->point ||  // no edge
-        VertexCompare::Compare(e->bottom->point, e->top->point))
-    {  // not below
+    if (e->top->point == e->bottom->point ||                        // no edge
+        VertexCompare::Compare(e->bottom->point, e->top->point)) {  // not below
         return;
     }
 
@@ -385,10 +372,8 @@ void Vertex::insertBelow(Edge *e)
     Edge *below_next = nullptr;
 
     // find insertion point
-    for (below_next = this->edge_below.head; below_next; below_next = below_next->below_next)
-    {
-        if (below_next->isRightOf(e->bottom->point))
-        {
+    for (below_next = this->edge_below.head; below_next; below_next = below_next->below_next) {
+        if (below_next->isRightOf(e->bottom->point)) {
             break;
         }
 
@@ -416,17 +401,14 @@ void VertexList::remove(Vertex *v)
 
 void VertexList::append(VertexList const &other)
 {
-    if (!other.head)
-    {
+    if (!other.head) {
         return;
     }
 
-    if (tail)
-    {
+    if (tail) {
         tail->next = other.head;
         other.head->prev = tail;
-    } else
-    {
+    } else {
         head = other.head;
     }
 
@@ -445,8 +427,7 @@ void VertexList::prepend(Vertex *v)
 
 void VertexList::close()
 {
-    if (head && tail)
-    {
+    if (head && tail) {
         tail->next = head;
         head->prev = tail;
     }
@@ -470,8 +451,7 @@ double Edge::sideDist(const Point &p)
 bool Edge::intersect(Edge *other, Point *point)
 {
     if (this->top == other->top || this->bottom == other->bottom || this->top == other->bottom ||
-        this->bottom == other->top)
-    {
+        this->bottom == other->top) {
         return false;
     }
 
@@ -479,15 +459,13 @@ bool Edge::intersect(Edge *other, Point *point)
     if (std::min(top->point.x, bottom->point.x) > std::max(other->top->point.x, other->bottom->point.x) ||
         std::max(top->point.x, bottom->point.x) < std::min(other->top->point.x, other->bottom->point.x) ||
         std::min(top->point.y, bottom->point.y) > std::max(other->top->point.y, other->bottom->point.y) ||
-        std::max(top->point.y, bottom->point.y) < std::min(other->top->point.y, other->bottom->point.y))
-    {
+        std::max(top->point.y, bottom->point.y) < std::min(other->top->point.y, other->bottom->point.y)) {
         return false;
     }
 
     double denom = le_a * other->le_b - le_b * other->le_a;
 
-    if (denom == 0.0)
-    {
+    if (denom == 0.0) {
         return false;
     }
 
@@ -498,8 +476,7 @@ bool Edge::intersect(Edge *other, Point *point)
     double t_number = dy * le_b + dx * le_a;
 
     if (denom > 0.0 ? (s_number < 0.0 || s_number > denom || t_number < 0.0 || t_number > denom)
-                    : (s_number > 0.0 || s_number < denom || t_number > 0.0 || t_number < denom))
-    {
+                    : (s_number > 0.0 || s_number < denom || t_number > 0.0 || t_number < denom)) {
         return false;
     }
 
@@ -508,8 +485,7 @@ bool Edge::intersect(Edge *other, Point *point)
     point->x = std::round(static_cast<float>(top->point.x - s_number * le_b * scale));
     point->y = std::round(static_cast<float>(top->point.y + s_number * le_a * scale));
 
-    if (std::isinf(point->x) || std::isinf(point->y))
-    {
+    if (std::isinf(point->x) || std::isinf(point->y)) {
         return false;
     }
 
@@ -595,34 +571,29 @@ bool ActiveEdgeList::contains(Edge *edge)
 
 void ActiveEdgeList::rewind(Vertex **current, Vertex *dst)
 {
-    if (!current || *current == dst || VertexCompare::Compare((*current)->point, dst->point))
-    {
+    if (!current || *current == dst || VertexCompare::Compare((*current)->point, dst->point)) {
         return;
     }
 
     Vertex *v = *current;
 
-    while (v != dst)
-    {
+    while (v != dst) {
         v = v->prev;
 
-        for (auto e = v->edge_below.head; e; e = e->below_next)
-        {
+        for (auto e = v->edge_below.head; e; e = e->below_next) {
             this->remove(e);
         }
 
         auto left = v->left;
 
-        for (auto e = v->edge_above.head; e; e = e->above_next)
-        {
+        for (auto e = v->edge_above.head; e; e = e->above_next) {
             this->insert(e, left);
             left = e;
 
             auto top = e->top;
             if (VertexCompare::Compare(top->point, dst->point) &&
                 ((top->left && !top->left->isLeftOf(e->top->point)) ||
-                 (top->right && !top->right->isRightOf(e->top->point))))
-            {
+                 (top->right && !top->right->isRightOf(e->top->point)))) {
                 dst = top;
             }
         }
@@ -633,8 +604,7 @@ void ActiveEdgeList::rewind(Vertex **current, Vertex *dst)
 
 void ActiveEdgeList::findEnclosing(Vertex *v, Edge **left, Edge **right)
 {
-    if (v->edge_above.head && v->edge_above.tail)
-    {
+    if (v->edge_above.head && v->edge_above.tail) {
         *left = v->edge_above.head->left;
         *right = v->edge_above.tail->right;
         return;
@@ -644,10 +614,8 @@ void ActiveEdgeList::findEnclosing(Vertex *v, Edge **left, Edge **right)
     Edge *next = nullptr;
 
     // walk through aet to get left most edge
-    for (prev = tail; prev != nullptr; prev = prev->left)
-    {
-        if (prev->isLeftOf(v->point))
-        {
+    for (prev = tail; prev != nullptr; prev = prev->left) {
+        if (prev->isLeftOf(v->point)) {
             break;
         }
         next = prev;
@@ -663,49 +631,38 @@ Polygon *Polygon::addEdge(Edge *e, Side side, ObjectHeap *heap)
 
     auto poly = this;
 
-    if (side == Side::kRight)
-    {
-        if (e->used_in_right)
-        {  // already in this polygon
+    if (side == Side::kRight) {
+        if (e->used_in_right) {  // already in this polygon
             return this;
         }
-    } else
-    {
-        if (e->used_in_left)
-        {  // already in this polygon
+    } else {
+        if (e->used_in_left) {  // already in this polygon
             return this;
         }
     }
 
-    if (p_parent)
-    {
+    if (p_parent) {
         this->parent = p_parent->parent = nullptr;
     }
 
-    if (!this->tail)
-    {
+    if (!this->tail) {
         this->head = this->tail = heap->Allocate<MonotonePolygon>(e, side, this->winding);
         this->count += 2;
-    } else if (e->bottom == this->tail->last->bottom)
-    {
+    } else if (e->bottom == this->tail->last->bottom) {
         // close this polygon
         return poly;
-    } else if (side == this->tail->side)
-    {
+    } else if (side == this->tail->side) {
         this->tail->addEdge(e);
         this->count++;
-    } else
-    {
+    } else {
         e = heap->Allocate<Edge>(this->tail->last->bottom, e->bottom, 1);
         this->tail->addEdge(e);
         this->count++;
 
-        if (p_parent)
-        {
+        if (p_parent) {
             p_parent->addEdge(e, side, heap);
             poly = p_parent;
-        } else
-        {
+        } else {
             auto m = heap->Allocate<MonotonePolygon>(e, side, this->winding);
             m->prev = this->tail;
 
@@ -720,8 +677,7 @@ Polygon *Polygon::addEdge(Edge *e, Side side, ObjectHeap *heap)
 
 Vertex *Polygon::lastVertex() const
 {
-    if (tail)
-    {
+    if (tail) {
         return tail->last->bottom;
     }
 
@@ -730,12 +686,10 @@ Vertex *Polygon::lastVertex() const
 
 void MonotonePolygon::addEdge(Edge *edge)
 {
-    if (this->side == Side::kRight)
-    {
+    if (this->side == Side::kRight) {
         LinkedList<Edge>::Insert<&Edge::right_poly_prev, &Edge::right_poly_next>(edge, this->last, nullptr,
                                                                                  &this->first, &this->last);
-    } else
-    {
+    } else {
         LinkedList<Edge>::Insert<&Edge::left_poly_prev, &Edge::left_poly_next>(edge, last, nullptr, &this->first,
                                                                                &this->last);
     }
@@ -787,18 +741,15 @@ Tessellator::Tessellator(Array<float> *points, Array<uint32_t> *indices)
 
 Tessellator::~Tessellator()
 {
-    if (outlines.count)
-    {
+    if (outlines.count) {
         auto count = outlines.count;
 
-        for (uint32_t i = 0; i < count; i++)
-        {
+        for (uint32_t i = 0; i < count; i++) {
             delete outlines.data[i];
         }
     }
 
-    if (pMesh)
-    {
+    if (pMesh) {
         delete pMesh;
     }
 }
@@ -824,20 +775,16 @@ void Tessellator::tessellate(const Shape *shape)
     this->tessMesh();
 
     // output triangles
-    for (auto poly = this->pPolygon; poly; poly = poly->next)
-    {
-        if (!this->matchFillRule(poly->winding))
-        {
+    for (auto poly = this->pPolygon; poly; poly = poly->next) {
+        if (!this->matchFillRule(poly->winding)) {
             continue;
         }
 
-        if (poly->count < 3)
-        {
+        if (poly->count < 3) {
             continue;
         }
 
-        for (auto m = poly->head; m; m = m->next)
-        {
+        for (auto m = poly->head; m; m = m->next) {
             this->emitPoly(m);
         }
     }
@@ -863,26 +810,21 @@ void Tessellator::tessellate(const RenderShape *rshape, bool antialias)
     this->tessMesh();
 
     // output triangles
-    for (auto poly = this->pPolygon; poly; poly = poly->next)
-    {
-        if (!this->matchFillRule(poly->winding))
-        {
+    for (auto poly = this->pPolygon; poly; poly = poly->next) {
+        if (!this->matchFillRule(poly->winding)) {
             continue;
         }
 
-        if (poly->count < 3)
-        {
+        if (poly->count < 3) {
             continue;
         }
 
-        for (auto m = poly->head; m; m = m->next)
-        {
+        for (auto m = poly->head; m; m = m->next) {
             this->emitPoly(m);
         }
     }
 
-    if (antialias)
-    {
+    if (antialias) {
         // TODO extract outline from current polygon list and generate aa edges
     }
 }
@@ -918,10 +860,8 @@ void Tessellator::visitShape(const PathCommand *cmds, uint32_t cmd_count, const 
     // triangle fans, the indices count is at least triangles number * 3
     resIndices->reserve((pts_count - 2) * 3);
 
-    for (uint32_t i = 0; i < cmd_count; i++)
-    {
-        switch (cmds[i])
-        {
+    for (uint32_t i = 0; i < cmd_count; i++) {
+        switch (cmds[i]) {
             case PathCommand::MoveTo: {
                 outlines.push(new detail::VertexList);
 
@@ -929,14 +869,12 @@ void Tessellator::visitShape(const PathCommand *cmds, uint32_t cmd_count, const 
 
                 last->append(pHeap->Allocate<detail::Vertex>(*pts));
                 pts++;
-            }
-            break;
+            } break;
             case PathCommand::LineTo: {
                 auto last = outlines.last();
                 last->append(pHeap->Allocate<detail::Vertex>(*pts));
                 pts++;
-            }
-            break;
+            } break;
             case PathCommand::CubicTo: {
                 // bezier curve needs to calcluate how many segment to split
                 // for now just break curve into 16 segments for convenient
@@ -951,14 +889,12 @@ void Tessellator::visitShape(const PathCommand *cmds, uint32_t cmd_count, const 
 
                 float step = 1.f / 15.f;
 
-                for (uint32_t s = 0; s < 16; s++)
-                {
+                for (uint32_t s = 0; s < 16; s++) {
                     last->append(pHeap->Allocate<detail::Vertex>(cubic.eval(step * s)));
                 }
 
                 pts += 3;
-            }
-            break;
+            } break;
             case PathCommand::Close:  // fall through
             default:
                 break;
@@ -970,28 +906,23 @@ void Tessellator::buildMesh()
 {
     Array<detail::Vertex *> temp{};
 
-    for (uint32_t i = 0; i < outlines.count; i++)
-    {
+    for (uint32_t i = 0; i < outlines.count; i++) {
         auto list = outlines.data[i];
 
         auto prev = list->tail;
         auto v = list->head;
 
-        while (v)
-        {
+        while (v) {
             auto next = v->next;
 
             auto edge = this->makeEdge(prev, v);
 
-            if (edge)
-            {
+            if (edge) {
                 edge->bottom->insertAbove(edge);
                 edge->top->insertBelow(edge);
             }
 
-            if (v->isConnected())
-            {
-                this->pMesh->append(v);
+            if (v->isConnected()) {
                 temp.push(v);
             }
 
@@ -1000,44 +931,36 @@ void Tessellator::buildMesh()
         }
     }
 
-    if (temp.count < 3)
-    {
+    if (temp.count < 3) {
         return;
     }
 
     temp.sort<detail::VertexCompare>();
 
-    for (uint32_t i = 0; i < temp.count; i++)
-    {
+    for (uint32_t i = 0; i < temp.count; i++) {
         this->pMesh->append(temp.data[i]);
     }
 }
 
 void Tessellator::mergeVertices()
 {
-    if (!pMesh->head)
-    {
+    if (!pMesh->head) {
         return;
     }
 
-    for (auto v = pMesh->head->next; v;)
-    {
-        if (detail::VertexCompare::Compare(v->point, v->prev->point))
-        {
+    for (auto v = pMesh->head->next; v;) {
+        if (detail::VertexCompare::Compare(v->point, v->prev->point)) {
             // already sorted, this means these two points is same
             v->point = v->prev->point;
         }
 
-        if (v->point == v->prev->point)
-        {
+        if (v->point == v->prev->point) {
             // merve v into v->prev
-            while (auto e = v->edge_above.head)
-            {
+            while (auto e = v->edge_above.head) {
                 e->setBottom(v->prev);
             }
 
-            while (auto e = v->edge_below.head)
-            {
+            while (auto e = v->edge_below.head) {
                 e->setTop(v->prev);
             }
 
@@ -1058,10 +981,8 @@ void Tessellator::simplifyMesh()
 
     detail::ActiveEdgeList ael{};
 
-    for (auto v = pMesh->head; v; v = v->next)
-    {
-        if (!v->isConnected())
-        {
+    for (auto v = pMesh->head; v; v = v->next) {
+        if (!v->isConnected()) {
             continue;
         }
 
@@ -1076,40 +997,33 @@ void Tessellator::simplifyMesh()
             v->left = left_enclosing;
             v->right = right_enclosing;
 
-            if (v->edge_below.head)
-            {
-                for (auto e = v->edge_below.head; e; e = e->below_next)
-                {
+            if (v->edge_below.head) {
+                for (auto e = v->edge_below.head; e; e = e->below_next) {
                     // check current edge is intersected by left or right neighbor edges
                     if (checkIntersection(left_enclosing, e, &ael, &v) ||
-                        checkIntersection(e, right_enclosing, &ael, &v))
-                    {
+                        checkIntersection(e, right_enclosing, &ael, &v)) {
                         intersected = true;
                         // find intersection between current and it's neighbor
                         break;
                     }
                 }
-            } else
-            {
+            } else {
                 // check left and right intersection
-                if (checkIntersection(left_enclosing, right_enclosing, &ael, &v))
-                {
+                if (checkIntersection(left_enclosing, right_enclosing, &ael, &v)) {
                     intersected = true;
                 }
             }
         } while (intersected);
 
         // we are done for all edge end with current point
-        for (auto e = v->edge_above.head; e; e = e->above_next)
-        {
+        for (auto e = v->edge_above.head; e; e = e->above_next) {
             ael.remove(e);
         }
 
         auto left = left_enclosing;
 
         // insert all edge start from current point into ael
-        for (auto e = v->edge_below.head; e; e = e->below_next)
-        {
+        for (auto e = v->edge_below.head; e; e = e->below_next) {
             ael.insert(e, left);
             left = e;
         }
@@ -1124,10 +1038,8 @@ void Tessellator::tessMesh()
 
     detail::ActiveEdgeList ael{};
 
-    for (auto v = pMesh->head; v; v = v->next)
-    {
-        if (!v->isConnected())
-        {
+    for (auto v = pMesh->head; v; v = v->next) {
+        if (!v->isConnected()) {
             continue;
         }
 
@@ -1155,44 +1067,36 @@ void Tessellator::tessMesh()
          */
         detail::Polygon *right_poly = nullptr;
 
-        if (v->edge_above.head)
-        {
+        if (v->edge_above.head) {
             left_poly = v->edge_above.head->left_poly;
             right_poly = v->edge_above.head->right_poly;
-        } else
-        {
+        } else {
             left_poly = left_enclosing ? left_enclosing->right_poly : nullptr;
             right_poly = right_enclosing ? right_enclosing->left_poly : nullptr;
         }
 
-        if (v->edge_above.head)
-        {
+        if (v->edge_above.head) {
             // add above edge first
-            if (left_poly)
-            {
+            if (left_poly) {
                 left_poly = left_poly->addEdge(v->edge_above.head, detail::Side::kRight, pHeap.get());
             }
 
-            if (right_poly)
-            {
+            if (right_poly) {
                 right_poly = right_poly->addEdge(v->edge_above.tail, detail::Side::kLeft, pHeap.get());
             }
 
             // walk through all edges end with this vertex
-            for (auto e = v->edge_above.head; e != v->edge_above.tail; e = e->above_next)
-            {
+            for (auto e = v->edge_above.head; e != v->edge_above.tail; e = e->above_next) {
                 auto right_edge = e->above_next;
 
                 ael.remove(e);
 
-                if (e->right_poly)
-                {
+                if (e->right_poly) {
                     e->right_poly->addEdge(right_edge, detail::Side::kLeft, pHeap.get());
                 }
 
                 // this means there is a new polygon between e and right_edge
-                if (right_edge->left_poly && right_edge->left_poly != e->right_poly)
-                {
+                if (right_edge->left_poly && right_edge->left_poly != e->right_poly) {
                     right_edge->left_poly->addEdge(e, detail::Side::kRight, pHeap.get());
                 }
             }
@@ -1200,10 +1104,8 @@ void Tessellator::tessMesh()
             ael.remove(v->edge_above.tail);
 
             // there is no edge begin with this vertex
-            if (!v->edge_below.head)
-            {
-                if (left_poly && right_poly && left_poly != right_poly)
-                {
+            if (!v->edge_below.head) {
+                if (left_poly && right_poly && left_poly != right_poly) {
                     // polygon not closed at this point
                     // need to mark these two polygon each other, because they will be
                     // linked by a cross edge later
@@ -1214,16 +1116,12 @@ void Tessellator::tessMesh()
             }
         }
 
-        if (v->edge_below.head)
-        {
-            if (!v->edge_above.head)
-            {
+        if (v->edge_below.head) {
+            if (!v->edge_above.head) {
                 // there is no edge end with this vertex
-                if (left_poly && right_poly)
-                {
+                if (left_poly && right_poly) {
 
-                    if (left_poly == right_poly)
-                    {
+                    if (left_poly == right_poly) {
                         /**
                          *   left_poly      right_poly
                          *
@@ -1232,14 +1130,14 @@ void Tessellator::tessMesh()
                          *            /   \
                          *             ...
                          */
-                        if (left_poly->tail && left_poly->tail->side == detail::Side::kLeft)
-                        {
+                        if (left_poly->tail && left_poly->tail->side == detail::Side::kLeft) {
                             left_poly = this->makePoly(left_poly->lastVertex(), left_poly->winding);
 
                             left_enclosing->right_poly = left_poly;
-                        } else
-                        {
+                        } else {
                             right_poly = this->makePoly(right_poly->lastVertex(), right_poly->winding);
+
+                            right_enclosing->left_poly = right_poly;
                         }
                     }
 
@@ -1256,16 +1154,14 @@ void Tessellator::tessMesh()
 
             ael.insert(left_edge, left_enclosing);
 
-            for (auto right_edge = left_edge->below_next; right_edge; right_edge = right_edge->below_next)
-            {
+            for (auto right_edge = left_edge->below_next; right_edge; right_edge = right_edge->below_next) {
                 ael.insert(right_edge, left_edge);
 
                 int32_t winding = left_edge->left_poly ? left_edge->left_poly->winding : 0;
 
                 winding += left_edge->winding;
 
-                if (winding != 0)
-                {
+                if (winding != 0) {
                     auto poly = this->makePoly(v, winding);
 
                     left_edge->right_poly = right_edge->left_poly = poly;
@@ -1283,14 +1179,11 @@ void Tessellator::mergeMesh()
 {
     this->removeInnerEdges();
 
-    for (auto v = pMesh->head; v; v = v->next)
-    {
-        while (v->edge_below.head)
-        {
+    for (auto v = pMesh->head; v; v = v->next) {
+        while (v->edge_below.head) {
             auto winding = v->edge_below.head->winding;
 
-            if (winding != 0 && !matchFillRule(winding))
-            {
+            if (winding != 0 && !matchFillRule(winding)) {
                 break;
             }
 
@@ -1301,11 +1194,9 @@ void Tessellator::mergeMesh()
 
 bool Tessellator::matchFillRule(int32_t winding)
 {
-    if (fillRule == FillRule::Winding)
-    {
+    if (fillRule == FillRule::Winding) {
         return winding != 0;
-    } else
-    {
+    } else {
         return (winding & 0x1) != 0;
     }
 }
@@ -1317,10 +1208,8 @@ void Tessellator::removeInnerEdges()
     /// and remove edges which not effects the winding rules
     detail::ActiveEdgeList ael{};
 
-    for (auto v = pMesh->head; v; v = v->next)
-    {
-        if (!v->isConnected())
-        {
+    for (auto v = pMesh->head; v; v = v->next) {
+        if (!v->isConnected()) {
             continue;
         }
 
@@ -1331,21 +1220,17 @@ void Tessellator::removeInnerEdges()
 
         bool prev_filled = left_enclosing && this->matchFillRule(left_enclosing->winding);
 
-        for (auto e = v->edge_above.head; e;)
-        {
+        for (auto e = v->edge_above.head; e;) {
             auto next = e->above_next;
 
             ael.remove(e);
 
             bool filled = this->matchFillRule(e->winding);
 
-            if (filled == prev_filled)
-            {
+            if (filled == prev_filled) {
                 e->disconnect();
-            } else if (next && next->top->point == e->top->point && next->bottom->point == e->bottom->point)
-            {
-                if (!filled)
-                {
+            } else if (next && next->top->point == e->top->point && next->bottom->point == e->bottom->point) {
+                if (!filled) {
                     e->disconnect();
                     filled = true;
                 }
@@ -1357,10 +1242,8 @@ void Tessellator::removeInnerEdges()
 
         auto prev = left_enclosing;
 
-        for (auto e = v->edge_below.head; e; e = e->below_next)
-        {
-            if (prev)
-            {
+        for (auto e = v->edge_below.head; e; e = e->below_next) {
+            if (prev) {
                 e->winding += prev->winding;
             }
 
@@ -1381,38 +1264,28 @@ void Tessellator::extractBoundary(detail::Edge *e)
     do {
         e->winding = down ? 1 : -1;
 
-        if (down)
-        {
+        if (down) {
             outlineResult->lineTo(e->bottom->point.x, e->bottom->point.y);
-        } else
-        {
+        } else {
             outlineResult->lineTo(e->top->point.x, e->top->point.y);
         }
 
         detail::Edge *next;
 
-        if (down)
-        {
-            if ((next = e->above_next))
-            {
+        if (down) {
+            if ((next = e->above_next)) {
                 down = false;
-            } else if ((next = e->bottom->edge_below.tail))
-            {
+            } else if ((next = e->bottom->edge_below.tail)) {
                 down = true;
-            } else if ((next = e->above_prev))
-            {
+            } else if ((next = e->above_prev)) {
                 down = false;
             }
-        } else
-        {
-            if ((next = e->below_prev))
-            {
+        } else {
+            if ((next = e->below_prev)) {
                 down = true;
-            } else if ((next = e->top->edge_above.head))
-            {
+            } else if ((next = e->top->edge_above.head)) {
                 down = false;
-            } else if ((next = e->below_next))
-            {
+            } else if ((next = e->below_next)) {
                 down = true;
             }
         }
@@ -1427,15 +1300,13 @@ void Tessellator::extractBoundary(detail::Edge *e)
 
 detail::Edge *Tessellator::makeEdge(detail::Vertex *a, detail::Vertex *b)
 {
-    if (!a || !b || a->point == b->point)
-    {
+    if (!a || !b || a->point == b->point) {
         return nullptr;
     }
 
     int32_t winding = 1;
 
-    if (detail::VertexCompare::Compare(b->point, a->point))
-    {
+    if (detail::VertexCompare::Compare(b->point, a->point)) {
         winding = -1;
         std::swap(a, b);
     }
@@ -1446,62 +1317,49 @@ detail::Edge *Tessellator::makeEdge(detail::Vertex *a, detail::Vertex *b)
 bool Tessellator::checkIntersection(detail::Edge *left, detail::Edge *right, detail::ActiveEdgeList *ael,
                                     detail::Vertex **current)
 {
-    if (!left || !right)
-    {
+    if (!left || !right) {
         return false;
     }
 
     Point p;
 
-    if (left->intersect(right, &p) && !std::isinf(p.x) && !std::isinf(p.y))
-    {
+    if (left->intersect(right, &p) && !std::isinf(p.x) && !std::isinf(p.y)) {
         detail::Vertex *v;
         detail::Vertex *top = *current;
 
         // the vertex in mesh is sorted, so walk to prev can find latest top point
-        while (top && detail::VertexCompare::Compare(p, top->point))
-        {
+        while (top && detail::VertexCompare::Compare(p, top->point)) {
             top = top->prev;
         }
 
-        if (p == left->top->point)
-        {
+        if (p == left->top->point) {
             v = left->top;
-        } else if (p == left->bottom->point)
-        {
+        } else if (p == left->bottom->point) {
             v = left->bottom;
-        } else if (p == right->top->point)
-        {
+        } else if (p == right->top->point) {
             v = right->top;
-        } else if (p == right->bottom->point)
-        {
+        } else if (p == right->bottom->point) {
             v = right->bottom;
-        } else
-        {
+        } else {
             // intersect point is between start and end point
             // need to insert new vertex
             auto prev = top;
-            while (prev && detail::VertexCompare::Compare(p, prev->point))
-            {
+            while (prev && detail::VertexCompare::Compare(p, prev->point)) {
                 prev = prev->prev;
             }
 
             auto next = prev ? prev->next : pMesh->head;
-            while (next && detail::VertexCompare::Compare(next->point, p))
-            {
+            while (next && detail::VertexCompare::Compare(next->point, p)) {
                 prev = next;
                 next = next->next;
             }
 
             // check if point is already in mesh
-            if (prev && prev->point == p)
-            {
+            if (prev && prev->point == p) {
                 v = prev;
-            } else if (next && next->point == p)
-            {
+            } else if (next && next->point == p) {
                 v = next;
-            } else
-            {
+            } else {
                 v = pHeap->Allocate<detail::Vertex>(p);
                 v->point = p;
 
@@ -1523,8 +1381,7 @@ bool Tessellator::checkIntersection(detail::Edge *left, detail::Edge *right, det
 bool Tessellator::splitEdge(detail::Edge *edge, detail::Vertex *v, detail::ActiveEdgeList *ael,
                             detail::Vertex **current)
 {
-    if (!edge->top || !edge->bottom || v == edge->top || v == edge->bottom)
-    {
+    if (!edge->top || !edge->bottom || v == edge->top || v == edge->bottom) {
         return false;
     }
 
@@ -1533,8 +1390,7 @@ bool Tessellator::splitEdge(detail::Edge *edge, detail::Vertex *v, detail::Activ
     detail::Vertex *top;
     detail::Vertex *bottom;
 
-    if (detail::VertexCompare::Compare(v->point, edge->top->point))
-    {
+    if (detail::VertexCompare::Compare(v->point, edge->top->point)) {
         /**
          *
          *   v
@@ -1551,8 +1407,7 @@ bool Tessellator::splitEdge(detail::Edge *edge, detail::Vertex *v, detail::Activ
         winding *= -1;
 
         edge->setTop(v);
-    } else if (detail::VertexCompare::Compare(edge->bottom->point, v->point))
-    {
+    } else if (detail::VertexCompare::Compare(edge->bottom->point, v->point)) {
         /**
          *
          *   top
@@ -1569,8 +1424,7 @@ bool Tessellator::splitEdge(detail::Edge *edge, detail::Vertex *v, detail::Activ
         winding *= -1;
 
         edge->setBottom(v);
-    } else
-    {
+    } else {
         /**
          *
          *   top
@@ -1599,13 +1453,11 @@ bool Tessellator::splitEdge(detail::Edge *edge, detail::Vertex *v, detail::Activ
 bool Tessellator::intersectPairEdge(detail::Edge *left, detail::Edge *right, detail::ActiveEdgeList *ael,
                                     detail::Vertex **current)
 {
-    if (!left->top || !left->bottom || !right->top || !right->bottom)
-    {
+    if (!left->top || !left->bottom || !right->top || !right->bottom) {
         return false;
     }
 
-    if (left->top == right->top || left->bottom == right->bottom)
-    {
+    if (left->top == right->top || left->bottom == right->bottom) {
         return false;
     }
 
@@ -1614,40 +1466,31 @@ bool Tessellator::intersectPairEdge(detail::Edge *left, detail::Edge *right, det
     detail::Vertex *split_at = nullptr;
 
     // check if these two edge is intersected
-    if (detail::VertexCompare::Compare(left->top->point, right->top->point))
-    {
-        if (!left->isLeftOf(right->top->point))
-        {
+    if (detail::VertexCompare::Compare(left->top->point, right->top->point)) {
+        if (!left->isLeftOf(right->top->point)) {
             split = left;
             split_at = right->top;
         }
-    } else
-    {
-        if (!right->isRightOf(left->top->point))
-        {
+    } else {
+        if (!right->isRightOf(left->top->point)) {
             split = right;
             split_at = left->top;
         }
     }
 
-    if (detail::VertexCompare::Compare(right->bottom->point, left->bottom->point))
-    {
-        if (!left->isLeftOf(right->bottom->point))
-        {
+    if (detail::VertexCompare::Compare(right->bottom->point, left->bottom->point)) {
+        if (!left->isLeftOf(right->bottom->point)) {
             split = left;
             split_at = right->bottom;
         }
-    } else
-    {
-        if (!right->isRightOf(left->bottom->point))
-        {
+    } else {
+        if (!right->isRightOf(left->bottom->point)) {
             split = right;
             split_at = left->bottom;
         }
     }
 
-    if (!split)
-    {
+    if (!split) {
         return false;
     }
 
@@ -1674,20 +1517,16 @@ void Tessellator::emitPoly(detail::MonotonePolygon *poly)
 
     vertices.push(e->top);
 
-    while (e != nullptr)
-    {
+    while (e != nullptr) {
         vertices.push(e->bottom);
-        if (poly->side == detail::Side::kLeft)
-        {
+        if (poly->side == detail::Side::kLeft) {
             e = e->left_poly_next;
-        } else
-        {
+        } else {
             e = e->right_poly_next;
         }
     }
 
-    if (vertices.count < 3)
-    {
+    if (vertices.count < 3) {
         return;
     }
 
@@ -1695,8 +1534,7 @@ void Tessellator::emitPoly(detail::MonotonePolygon *poly)
 
     uint32_t prev_index = this->pushVertex(vertices.data[1]->point.x, vertices.data[1]->point.y, 1.f);
 
-    for (uint32_t i = 2; i < vertices.count; i++)
-    {
+    for (uint32_t i = 2; i < vertices.count; i++) {
         uint32_t curr_index = this->pushVertex(vertices.data[i]->point.x, vertices.data[i]->point.y, 1.f);
 
         this->resIndices->push(first_index);
