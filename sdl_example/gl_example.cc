@@ -22,8 +22,7 @@ int main(int argc, const char **argv)
 
     auto gl_context = SDL_GL_CreateContext(window);
 
-    if (!gl_context)
-    {
+    if (!gl_context) {
         auto err = SDL_GetError();
         std::cout << "failed to create gl context: " << err << std::endl;
         return -1;
@@ -32,8 +31,7 @@ int main(int argc, const char **argv)
     std::cout << "glversion = " << glGetString(GL_VERSION) << std::endl;
 
 
-    if (tvg::Initializer::init(tvg::CanvasEngine::Gl, 1) != tvg::Result::Success)
-    {
+    if (tvg::Initializer::init(tvg::CanvasEngine::Gl, 1) != tvg::Result::Success) {
         std::cerr << "failed to init thorvg" << std::endl;
         return -1;
     }
@@ -45,14 +43,11 @@ int main(int argc, const char **argv)
     bool runing = true;
 
 
-    while (runing)
-    {
+    while (runing) {
         SDL_Event event{};
 
-        while (SDL_PollEvent(&event))
-        {
-            if (event.type == SDL_QUIT)
-            {
+        while (SDL_PollEvent(&event)) {
+            if (event.type == SDL_QUIT) {
                 runing = false;
             }
 
@@ -79,6 +74,15 @@ int main(int argc, const char **argv)
             shape1->translate(100, 0);
 
             canvas->push(std::move(shape1));
+
+            auto rect = tvg::Shape::gen();
+
+            rect->appendRect(50, 50, 200, 200, 20, 20);
+            rect->fill(100, 100, 100, 255);
+
+            rect->translate(400, 200);
+
+            canvas->push(std::move(rect));
 
             canvas->draw();
             canvas->sync();
