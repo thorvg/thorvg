@@ -889,7 +889,7 @@ void Tessellator::visitShape(const PathCommand *cmds, uint32_t cmd_count, const 
 
                 float step = 1.f / 15.f;
 
-                for (uint32_t s = 0; s < 16; s++) {
+                for (uint32_t s = 1; s < 16; s++) {
                     last->append(pHeap->Allocate<detail::Vertex>(cubic.eval(step * s)));
                 }
 
@@ -922,9 +922,7 @@ void Tessellator::buildMesh()
                 edge->top->insertBelow(edge);
             }
 
-            if (v->isConnected()) {
-                temp.push(v);
-            }
+            temp.push(v);
 
             prev = v;
             v = next;
