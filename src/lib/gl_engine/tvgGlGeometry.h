@@ -196,7 +196,9 @@ private:
     GlGpuBufferView mVertexBufferView = {};
     GlGpuBufferView mIndexBufferView = {};
 
-    uint32_t mDrawCount = 0;
+    uint32_t mFillDrawCount = 0;
+    uint32_t mStrokeDrawStart = 0;
+    uint32_t mStrokeDrawCount = 0;
 };
 
 #endif /* _TVG_GL_GEOMETRY_H_ */

@@ -50,9 +50,25 @@ bool GlGeometry::tessellate(const RenderShape& rshape, RenderUpdateFlag flag, GL
 {
     Array<float>    vertices;
     Array<uint32_t> indices;
-    Tessellator     tess(&vertices, &indices);
 
-    tess.tessellate(&rshape, true);
+    if (flag & RenderUpdateFlag::Color) {
+
+        Tessellator tess(&vertices, &indices);
+
+        tess.tessellate(&rshape, true);
+
+        mFillDrawCount = indices.count;
+    }
+
+    if ((flag & RenderUpdateFlag::Stroke) && rshape.strokeWidth() > 0.f) {
+        Stroker stroker(&vertices, &indices);
+
+        mStrokeDrawStart = mFillDrawCount;
+
+        stroker.stroke(&rshape);
+
+        mStrokeDrawCount = indices.count - mStrokeDrawStart;
+    }
 
     if (vertices.count == 0 || indices.count == 0) {
         return false;
@@ -61,7 +77,6 @@ bool GlGeometry::tessellate(const RenderShape& rshape, RenderUpdateFlag flag, GL
     mVertexBufferView = vertexBuffer->push(vertices.data, vertices.count * sizeof(float));
     mIndexBufferView = indexBuffer->push(indices.data, indices.count * sizeof(uint32_t));
 
-    mDrawCount = indices.count;
 
     return true;
 }
@@ -69,15 +84,26 @@ bool GlGeometry::tessellate(const RenderShape& rshape, RenderUpdateFlag flag, GL
 
 void GlGeometry::draw(RenderUpdateFlag flag)
 {
-    if (mDrawCount == 0) {
+    if (flag == RenderUpdateFlag::Color && mFillDrawCount == 0) {
+        return;
+    }
+
+    if (flag == RenderUpdateFlag::Stroke && mStrokeDrawCount == 0) {
         return;
     }
 
     // TODO draw stroke based on flag
     this->bindBuffers();
 
-    GL_CHECK(
-        glDrawElements(GL_TRIANGLES, mDrawCount, GL_UNSIGNED_INT, reinterpret_cast<void*>(mIndexBufferView.offset)));
+    if (flag == RenderUpdateFlag::Color) {
+
+        GL_CHECK(glDrawElements(GL_TRIANGLES, mFillDrawCount, GL_UNSIGNED_INT,
+                                reinterpret_cast<void*>(mIndexBufferView.offset)));
+    } else if (flag == RenderUpdateFlag::Stroke) {
+        GL_CHECK(
+            glDrawElements(GL_TRIANGLES, mStrokeDrawCount, GL_UNSIGNED_INT,
+                           reinterpret_cast<void*>(mIndexBufferView.offset + mStrokeDrawStart * sizeof(uint32_t))));
+    }
 
     // reset vao state
     GL_CHECK(glBindVertexArray(0));

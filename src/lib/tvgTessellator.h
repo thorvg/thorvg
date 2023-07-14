@@ -90,4 +90,23 @@ private:
     Shape *outlineResult = nullptr;
 };
 
+class Stroker final
+{
+public:
+    Stroker(Array<float> *points, Array<uint32_t> *indices);
+    ~Stroker() = default;
+
+    void stroke(const RenderShape *rshape);
+
+private:
+    void doStroke(const PathCommand *cmds, uint32_t cmd_count, const Point *pts, uint32_t pts_count);
+
+private:
+    Array<float>    *mResPoints;
+    Array<uint32_t> *mResIndices;
+    float            mStrokeWidth = 1.f;
+    StrokeCap        mStrokeCap = StrokeCap::Square;
+    StrokeJoin       mStrokeJoin = StrokeJoin::Bevel;
+};
+
 }  // namespace tvg

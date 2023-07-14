@@ -1544,4 +1544,50 @@ uint32_t Tessellator::pushVertex(float x, float y, float a)
     return index;
 }
 
+Stroker::Stroker(Array<float> *points, Array<uint32_t> *indices) : mResPoints(points), mResIndices(indices)
+{
+}
+
+void Stroker::stroke(const RenderShape *rshape)
+{
+    mStrokeWidth = std::max(mStrokeWidth, rshape->strokeWidth());
+    mStrokeCap = rshape->strokeCap();
+    mStrokeJoin = rshape->strokeJoin();
+
+
+    auto cmds = rshape->path.cmds.data;
+    auto cmdCnt = rshape->path.cmds.count;
+    auto pts = rshape->path.pts.data;
+    auto ptsCnt = rshape->path.pts.count;
+
+    doStroke(cmds, cmdCnt, pts, ptsCnt);
+}
+
+void Stroker::doStroke(const PathCommand *cmds, uint32_t cmd_count, const Point *pts, uint32_t pts_count)
+{
+    mResPoints->reserve(pts_count * 4 + 16);
+    mResIndices->reserve(pts_count * 3);
+
+
+    for (uint32_t i = 0; i < cmd_count; i++) {
+        switch (cmds[i]) {
+            case PathCommand::MoveTo: {
+
+                pts++;
+            } break;
+            case PathCommand::LineTo: {
+                pts++;
+            } break;
+            case PathCommand::CubicTo: {
+
+
+                pts += 3;
+            } break;
+            case PathCommand::Close:  // fall through
+            default:
+                break;
+        }
+    }
+}
+
 }  // namespace tvg
