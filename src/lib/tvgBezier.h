@@ -39,9 +39,10 @@ struct Bezier
 void bezSplit(const Bezier&cur, Bezier& left, Bezier& right);
 float bezLength(const Bezier& cur);
 void bezSplitLeft(Bezier& cur, float at, Bezier& left);
-float bezAt(const Bezier& bz, float at);
+float bezAt(const Bezier& bz, float at, float length);
 void bezSplitAt(const Bezier& cur, float at, Bezier& left, Bezier& right);
 Point bezPointAt(const Bezier& bz, float t);
+float bezAngleAt(const Bezier& bz, float t);
 
 }
 
