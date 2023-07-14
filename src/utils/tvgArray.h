@@ -26,6 +26,7 @@
 #include <memory.h>
 
 #include <cstdint>
+#include <cstdlib>
 
 namespace tvg
 {

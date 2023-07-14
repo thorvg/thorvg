@@ -27,6 +27,7 @@
 
 #include "tvgArray.h"
 #include "tvgGlCommon.h"
+#include "tvgGlGpuBuffer.h"
 
 #define PI 3.1415926535897932384626433832795f
 
@@ -172,34 +173,30 @@ public:
 typedef GlPoint GlSize;
 
 
-// this buffer can be shared between all GlGeometries
-struct VertexDataArray
-{
-    Array<float>    vertices;
-    Array<uint32_t> indices;
-};
-
-
-class GlGpuBuffer;
-
 class GlGeometry
 {
 public:
-    bool   tessellate(const RenderShape &rshape, RenderUpdateFlag flag);
-    void   disableVertex(uint32_t location);
-    void   draw(const uint32_t location, RenderUpdateFlag flag);
+    GlGeometry();
+    ~GlGeometry();
+
+    bool   tessellate(const RenderShape &rshape, RenderUpdateFlag flag, GLStageBuffer *vertexBuffer,
+                      GLStageBuffer *indexBuffer);
+    void   draw(RenderUpdateFlag flag);
     void   updateTransform(const RenderTransform *transform, float w, float h);
     float *getTransforMatrix();
     GlSize getPrimitiveSize() const;
 
 private:
-    void updateBuffer(const uint32_t location);
+    void bindBuffers();
 
-    VertexDataArray              mStageBuffer;
-    std::unique_ptr<GlGpuBuffer> mGpuVertexBuffer;
-    std::unique_ptr<GlGpuBuffer> mGpuIndexBuffer;
-    float                        mTransform[16];
-    GLuint                       mVao;
+private:
+    GLuint mVao = 0;
+    float  mTransform[16] = {0.f};
+
+    GlGpuBufferView mVertexBufferView = {};
+    GlGpuBufferView mIndexBufferView = {};
+
+    uint32_t mDrawCount = 0;
 };
 
 #endif /* _TVG_GL_GEOMETRY_H_ */

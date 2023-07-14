@@ -23,6 +23,7 @@
 #ifndef _TVG_GL_GPU_BUFFER_H_
 #define _TVG_GL_GPU_BUFFER_H_
 
+#include "tvgArray.h"
 #include "tvgGlCommon.h"
 
 class GlGpuBuffer
@@ -47,6 +48,23 @@ struct GlGpuBufferView
 {
     uint32_t     offset = 0;
     GlGpuBuffer* buffer = nullptr;
+};
+
+class GLStageBuffer
+{
+public:
+    GLStageBuffer(GlGpuBuffer::Target target);
+
+    ~GLStageBuffer() = default;
+
+
+    GlGpuBufferView push(void* data, uint32_t length);
+
+    void copyToGPU();
+private:
+    GlGpuBuffer::Target          mBufferTarget;
+    std::unique_ptr<GlGpuBuffer> mGpuBuffer;
+    Array<uint8_t>               mStageBuffer;
 };
 
 #endif /* _TVG_GL_GPU_BUFFER_H_ */

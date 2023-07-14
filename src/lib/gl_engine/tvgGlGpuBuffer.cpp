@@ -22,6 +22,8 @@
 
 #include "tvgGlGpuBuffer.h"
 
+#include <cmath>
+
 /************************************************************************/
 /* Internal Class Implementation                                        */
 /************************************************************************/
@@ -35,8 +37,7 @@ GlGpuBuffer::GlGpuBuffer()
 
 GlGpuBuffer::~GlGpuBuffer()
 {
-    if (mGlBufferId)
-    {
+    if (mGlBufferId) {
         GL_CHECK(glDeleteBuffers(1, &mGlBufferId));
     }
 }
@@ -57,4 +58,38 @@ void GlGpuBuffer::unbind(Target target)
 void GlGpuBuffer::bind(Target target)
 {
     GL_CHECK(glBindBuffer(static_cast<uint32_t>(target), mGlBufferId));
+}
+
+GLStageBuffer::GLStageBuffer(GlGpuBuffer::Target target)
+    : mBufferTarget(target), mGpuBuffer(new GlGpuBuffer), mStageBuffer()
+{
+    // a little reserve buffer
+    mStageBuffer.reserve(512);
+}
+
+GlGpuBufferView GLStageBuffer::push(void* data, uint32_t length)
+{
+    GlGpuBufferView result{};
+
+    result.buffer = this->mGpuBuffer.get();
+    result.offset = this->mStageBuffer.count;
+
+    if (this->mStageBuffer.reserved - this->mStageBuffer.count < length) {
+        this->mStageBuffer.grow(std::max(length, this->mStageBuffer.reserved));
+    }
+
+    std::memcpy(this->mStageBuffer.data + result.offset, data, length);
+
+    this->mStageBuffer.count += length;
+
+    return result;
+}
+
+void GLStageBuffer::copyToGPU()
+{
+    mGpuBuffer->updateBufferData(mBufferTarget, mStageBuffer.count, mStageBuffer.data);
+
+    mGpuBuffer->unbind(mBufferTarget);
+
+    mStageBuffer.clear();
 }

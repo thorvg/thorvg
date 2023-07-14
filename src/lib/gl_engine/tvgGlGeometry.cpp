@@ -24,7 +24,6 @@
 
 #include <float.h>
 
-#include "tvgGlGpuBuffer.h"
 #include "tvgTessellator.h"
 
 #define NORMALIZED_TOP_3D 1.0f
@@ -32,56 +31,56 @@
 #define NORMALIZED_LEFT_3D -1.0f
 #define NORMALIZED_RIGHT_3D 1.0f
 
-bool GlGeometry::tessellate(const RenderShape& rshape, RenderUpdateFlag flag)
+GlGeometry::GlGeometry()
 {
-    Tessellator tess(&mStageBuffer.vertices, &mStageBuffer.indices);
+    GL_CHECK(glGenVertexArrays(1, &mVao));
+
+    assert(mVao);
+}
+
+GlGeometry::~GlGeometry()
+{
+    GL_CHECK(glDeleteVertexArrays(1, &mVao));
+
+    mVao = 0;
+}
+
+bool GlGeometry::tessellate(const RenderShape& rshape, RenderUpdateFlag flag, GLStageBuffer* vertexBuffer,
+                            GLStageBuffer* indexBuffer)
+{
+    Array<float>    vertices;
+    Array<uint32_t> indices;
+    Tessellator     tess(&vertices, &indices);
 
     tess.tessellate(&rshape, true);
 
-    // No vertex data is generated
-    return mStageBuffer.vertices.count && mStageBuffer.indices.count;
+    if (vertices.count == 0 || indices.count == 0) {
+        return false;
+    }
+
+    mVertexBufferView = vertexBuffer->push(vertices.data, vertices.count * sizeof(float));
+    mIndexBufferView = indexBuffer->push(indices.data, indices.count * sizeof(uint32_t));
+
+    mDrawCount = indices.count;
+
+    return true;
 }
 
-void GlGeometry::disableVertex(uint32_t location)
-{
-    GL_CHECK(glDisableVertexAttribArray(location));
-    mGpuVertexBuffer->unbind(GlGpuBuffer::Target::ARRAY_BUFFER);
-    mGpuIndexBuffer->unbind(GlGpuBuffer::Target::ELEMENT_ARRAY_BUFFER);
-    glBindVertexArray(0);
-}
 
-void GlGeometry::draw(const uint32_t location, RenderUpdateFlag flag)
+void GlGeometry::draw(RenderUpdateFlag flag)
 {
+    if (mDrawCount == 0) {
+        return;
+    }
+
     // TODO draw stroke based on flag
+    this->bindBuffers();
 
-    this->updateBuffer(location);
+    GL_CHECK(
+        glDrawElements(GL_TRIANGLES, mDrawCount, GL_UNSIGNED_INT, reinterpret_cast<void*>(mIndexBufferView.offset)));
 
-    GL_CHECK(glDrawElements(GL_TRIANGLES, mStageBuffer.indices.count, GL_UNSIGNED_INT, 0));
-
-    mStageBuffer.indices.clear();
-    mStageBuffer.vertices.clear();
-}
-
-void GlGeometry::updateBuffer(uint32_t location)
-{
-    if (mGpuVertexBuffer.get() == nullptr) {
-        mGpuVertexBuffer = std::make_unique<GlGpuBuffer>();
-    }
-
-    if (mGpuIndexBuffer.get() == nullptr) {
-        mGpuIndexBuffer = std::make_unique<GlGpuBuffer>();
-        glGenVertexArrays(1, &mVao);
-    }
-
-    mGpuVertexBuffer->updateBufferData(GlGpuBuffer::Target::ARRAY_BUFFER, mStageBuffer.vertices.count * sizeof(float),
-                                       mStageBuffer.vertices.data);
-    glBindVertexArray(mVao);
-    // no need to do this every time
-    GL_CHECK(glEnableVertexAttribArray(location));
-    GL_CHECK(glVertexAttribPointer(location, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, 0));
-
-    mGpuIndexBuffer->updateBufferData(GlGpuBuffer::Target::ELEMENT_ARRAY_BUFFER,
-                                      mStageBuffer.indices.count * sizeof(uint32_t), mStageBuffer.indices.data);
+    // reset vao state
+    GL_CHECK(glBindVertexArray(0));
 }
 
 
@@ -113,4 +112,24 @@ float* GlGeometry::getTransforMatrix()
 GlSize GlGeometry::getPrimitiveSize() const
 {
     return GlSize{};
+}
+
+void GlGeometry::bindBuffers()
+{
+    assert(mVertexBufferView.buffer);
+    assert(mIndexBufferView.buffer);
+    assert(mVao);
+
+    // bind vao to make sure buffer offset is applied inside this geometry
+    GL_CHECK(glBindVertexArray(mVao));
+
+    mVertexBufferView.buffer->bind(GlGpuBuffer::Target::ARRAY_BUFFER);
+
+    // currently only have one attribute
+    // if we need to support text in the future, we may need another attribute ot carry uv information
+    GL_CHECK(glEnableVertexAttribArray(0));
+    GL_CHECK(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3,
+                                   reinterpret_cast<void*>(mVertexBufferView.offset)));
+
+    mIndexBufferView.buffer->bind(GlGpuBuffer::Target::ELEMENT_ARRAY_BUFFER);
 }
