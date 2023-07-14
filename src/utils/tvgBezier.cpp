@@ -190,4 +190,19 @@ float bezAngleAt(const Bezier& bz, float t)
 }
 
 
+bool bezIsFlatten(const Bezier& bz)
+{
+    float diff1_x = fabs((bz.ctrl1.x * 3.f) - (bz.start.x * 2.f) - bz.end.x);
+    float diff1_y = fabs( (bz.ctrl1.y * 3.f) - (bz.start.y * 2.f) - bz.end.y);
+    float diff2_x = fabs( (bz.ctrl2.x * 3.f) - (bz.end.x * 2.f) - bz.start.x);
+    float diff2_y = fabs( (bz.ctrl2.y * 3.f) - (bz.end.y * 2.f) - bz.start.y);
+
+    if (diff1_x < diff2_x) diff1_x = diff2_x;
+    if (diff1_y < diff2_y) diff1_y = diff2_y;
+
+    if (diff1_x + diff1_y <= 0.5f) return true;
+
+    return false;
+}
+
 }

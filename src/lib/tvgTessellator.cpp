@@ -2,6 +2,7 @@
 #include "thorvg.h"
 #include "tvgArray.h"
 #include "tvgRender.h"
+#include "tvgBezier.h"
 
 #include <algorithm>
 #include <array>
@@ -695,37 +696,20 @@ void MonotonePolygon::addEdge(Edge *edge)
     }
 }
 
-/**
- * use for : eval(t) = A * t ^ 3 + B * t ^ 2 + C * t + D
- */
-struct Cubic
+int32_t _bezierCurveCount(const Bezier &curve)
 {
-    Point A{};
-    Point B{};
-    Point C{};
-    Point D{};
 
-    explicit Cubic(std::array<Point, 4> const &src)
-    {
-        auto p0 = src[0];
-        auto p1 = src[1];
-        auto p2 = src[2];
-        auto p3 = src[3];
-
-        Point three{3, 3};
-
-        A = p3 + three * (p1 - p2) - p0;
-        B = three * (p2 - (p1 + p1) + p0);
-        C = three * (p1 - p0);
-        D = p0;
+    if (bezIsFlatten(curve)) {
+        return 1;
     }
 
-    Point eval(float t)
-    {
-        Point tt{t, t};
-        return ((A * tt + B) * tt + C) * tt + D;
-    }
-};
+    Bezier left{};
+    Bezier right{};
+
+    bezSplit(curve, left, right);
+
+    return _bezierCurveCount(left) + _bezierCurveCount(right);
+}
 
 }  // namespace detail
 
@@ -792,10 +776,10 @@ void Tessellator::tessellate(const Shape *shape)
 
 void Tessellator::tessellate(const RenderShape *rshape, bool antialias)
 {
-    auto cmds = rshape->path.cmds;
-    auto cmdCnt = rshape->path.cmdCnt;
-    auto pts = rshape->path.pts;
-    auto ptsCnt = rshape->path.ptsCnt;
+    auto cmds = rshape->path.cmds.data;
+    auto cmdCnt = rshape->path.cmds.count;
+    auto pts = rshape->path.pts.data;
+    auto ptsCnt = rshape->path.pts.count;
 
     this->fillRule = rshape->rule;
 
@@ -885,12 +869,18 @@ void Tessellator::visitShape(const PathCommand *cmds, uint32_t cmd_count, const 
                 Point c2 = pts[1];
                 Point end = pts[2];
 
-                detail::Cubic cubic({start, c1, c2, end});
+                Bezier curve{start, c1, c2, end};
 
-                float step = 1.f / 15.f;
+                auto stepCount = detail::_bezierCurveCount(curve);
 
-                for (uint32_t s = 1; s < 16; s++) {
-                    last->append(pHeap->Allocate<detail::Vertex>(cubic.eval(step * s)));
+                if (stepCount <= 1) {
+                    stepCount = 2;
+                }
+
+                float step = 1.f / (stepCount - 1);
+
+                for (uint32_t s = 1; s < stepCount; s++) {
+                    last->append(pHeap->Allocate<detail::Vertex>(bezPointAt(curve, step * s)));
                 }
 
                 pts += 3;
