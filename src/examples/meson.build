@@ -23,6 +23,7 @@ source_file = [
     'InvLumaMasking.cpp',
     'InvMasking.cpp',
     'LinearGradient.cpp',
+    'Lottie.cpp',
     'LumaMasking.cpp',
     'Masking.cpp',
     'MaskingMethods.cpp',

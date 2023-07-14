@@ -73,6 +73,8 @@ static Eo* createSwView(uint32_t w = 800, uint32_t h = 800)
     return view;
 }
 
+#ifndef NO_GL_EXAMPLE
+
 void initGLview(Evas_Object *obj);
 void drawGLview(Evas_Object *obj);
 
@@ -101,3 +103,5 @@ static Eo* createGlView(uint32_t w = 800, uint32_t h = 800)
 
     return view;
 }
+
+#endif //NO_GL_EXAMPLE
