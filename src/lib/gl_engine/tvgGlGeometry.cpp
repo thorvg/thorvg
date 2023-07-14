@@ -45,10 +45,10 @@ const GlSize GlGeometry::getPrimitiveSize(const uint32_t primitiveIndex) const
 
 bool GlGeometry::decomposeOutline(const RenderShape& rshape)
 {
-    auto cmds = rshape.path.cmds;
-    auto cmdCnt = rshape.path.cmdCnt;
-    auto pts = rshape.path.pts;
-    auto ptsCnt = rshape.path.ptsCnt;
+    auto cmds = rshape.path.cmds.data;
+    auto cmdCnt = rshape.path.cmds.count;
+    auto pts = rshape.path.pts.data;
+    auto ptsCnt = rshape.path.pts.count;
 
     //No actual shape data
     if (cmdCnt == 0 || ptsCnt == 0) return false;
