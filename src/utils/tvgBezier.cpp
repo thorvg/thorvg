@@ -216,8 +216,8 @@ Bezier bezFromArc(const Point &start, const Point &end, float radius)
     Bezier bz;
 
     bz.start = start;
-    bz.ctrl1 = {start.x + radius * std::cos(angle), start.y + radius * sin(angle)};
-    bz.ctrl2 = {end.x - c * std::cos(angle), end.y - c * sin(angle)};
+    bz.ctrl1 = Point{start.x + radius * cos(angle), start.y + radius * sin(angle)};
+    bz.ctrl2 = {end.x - c * cos(angle), end.y - c * sin(angle)};
     bz.end = end;
 
     return bz;
