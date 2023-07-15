@@ -4,6 +4,7 @@
 #include <cstdint>
 
 #include "tvgArray.h"
+#include "tvgBezier.h"
 
 namespace tvg
 {
@@ -104,6 +105,11 @@ public:
 private:
     void doStroke(const PathCommand *cmds, uint32_t cmd_count, const Point *pts, uint32_t pts_count);
 
+    float strokeRadius() const
+    {
+        return mStrokeWidth * 0.5f;
+    }
+
     void strokeCap();
 
     void strokeLineTo(const Point &curr);
@@ -112,7 +118,9 @@ private:
 
     void strokeClose();
 
-    void strokeJoin(const Point& curr, const Point& dir);
+    void strokeJoin(const Point &dir);
+
+    void strokeRound(const Bezier& curve, const Point& center);
 private:
     Array<float>    *mResPoints;
     Array<uint32_t> *mResIndices;

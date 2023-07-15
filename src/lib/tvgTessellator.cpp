@@ -700,6 +700,35 @@ uint32_t _pushVertex(Array<float> *array, float x, float y, float z)
     return (array->count - 3) / 3;
 }
 
+enum class Orientation
+{
+    Linear,
+    Clockwise,
+    CounterClockwise,
+};
+
+Orientation _calcOrientation(const Point &p1, const Point &p2, const Point &p3)
+{
+    float val = (p2.x - p1.x) * (p3.y - p1.y) - (p2.y - p1.y) * (p3.x - p1.x);
+
+    if (std::abs(val) < 0.0001f) {
+        return Orientation::Linear;
+    } else {
+        return val > 0 ? Orientation::Clockwise : Orientation::CounterClockwise;
+    }
+}
+
+Orientation _calcOrientation(const Point &dir1, const Point &dir2)
+{
+    float val = (dir2.x - dir1.x) * (dir1.y + dir2.y);
+
+    if (std::abs(val) < 0.0001f) {
+        return Orientation::Linear;
+    }
+
+    return val > 0 ? Orientation::Clockwise : Orientation::CounterClockwise;
+}
+
 }  // namespace detail
 
 Tessellator::Tessellator(Array<float> *points, Array<uint32_t> *indices)
@@ -1597,10 +1626,10 @@ void Stroker::strokeLineTo(const Point &curr)
 
     auto normal = Point{-dir.y, dir.x};
 
-    auto a = mStrokeState.prevPt + normal * mStrokeWidth;
-    auto b = mStrokeState.prevPt - normal * mStrokeWidth;
-    auto c = curr + normal * mStrokeWidth;
-    auto d = curr - normal * mStrokeWidth;
+    auto a = mStrokeState.prevPt + normal * strokeRadius();
+    auto b = mStrokeState.prevPt - normal * strokeRadius();
+    auto c = curr + normal * strokeRadius();
+    auto d = curr - normal * strokeRadius();
 
     auto ia = detail::_pushVertex(mResPoints, a.x, a.y, 1.f);
     auto ib = detail::_pushVertex(mResPoints, b.x, b.y, 1.f);
@@ -1629,6 +1658,8 @@ void Stroker::strokeLineTo(const Point &curr)
 
         mStrokeState.firstPtDir = dir;
     } else {
+        this->strokeJoin(dir);
+
         mStrokeState.prevPtDir = dir;
         mStrokeState.prevPt = curr;
     }
@@ -1647,6 +1678,57 @@ void Stroker::strokeClose()
     }
 
     mStrokeState.hasMove = false;
+}
+
+void Stroker::strokeJoin(const Point &dir)
+{
+    auto orientation = detail::_calcOrientation(mStrokeState.prevPtDir, dir);
+
+    if (orientation == detail::Orientation::Linear) {
+        // check is same direction
+        if (mStrokeState.prevPtDir == dir) {
+            return;
+        }
+
+        // opposite direction
+        if (mStrokeJoin != StrokeJoin::Round) {
+            return;
+        }
+
+        auto normal = Point{-dir.y, dir.x};
+
+        auto p1 = mStrokeState.prevPt + normal * strokeRadius();
+        auto p2 = mStrokeState.prevPt - normal * strokeRadius();
+
+        auto curve = bezFromArc(p1, p2, strokeRadius());
+
+
+        strokeRound(curve, mStrokeState.prevPt);
+    } else {
+    }
+}
+
+
+void Stroker::strokeRound(const Bezier &curve, const Point &center) {
+    auto count = detail::_bezierCurveCount(curve);
+
+    auto centerIndex = detail::_pushVertex(mResPoints, center.x, center.y, 1.f);
+
+    auto prevIndex = detail::_pushVertex(mResPoints, curve.start.x, curve.start.y, 1.f);
+
+    float step = 1.f / (count - 1);
+
+    for (uint32_t i = 1; i < count; i++) {
+        auto pt = bezPointAt(curve, i * step);
+
+        auto currIndex = detail::_pushVertex(mResPoints, pt.x, pt.y, 1.f);
+
+        this->mResIndices->push(prevIndex);
+        this->mResIndices->push(currIndex);
+        this->mResIndices->push(centerIndex);
+
+        prevIndex = currIndex;
+    }
 }
 
 }  // namespace tvg

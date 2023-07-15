@@ -23,6 +23,7 @@
 #ifndef _TVG_BEZIER_H_
 #define _TVG_BEZIER_H_
 
+#include "thorvg.h"
 #include "tvgCommon.h"
 
 namespace tvg
@@ -44,6 +45,7 @@ void bezSplitAt(const Bezier& cur, float at, Bezier& left, Bezier& right);
 Point bezPointAt(const Bezier& bz, float t);
 float bezAngleAt(const Bezier& bz, float t);
 bool bezIsFlatten(const Bezier& bz);
+Bezier bezFromArc(const Point& start, const Point& end, float radius);
 
 }
 
