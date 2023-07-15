@@ -32,6 +32,7 @@ source_file = [
    'tvgLinearGradient.cpp',
    'tvgLoader.cpp',
    'tvgPaint.cpp',
+   'tvgPoint.h',
    'tvgPicture.cpp',
    'tvgRadialGradient.cpp',
    'tvgRender.cpp',

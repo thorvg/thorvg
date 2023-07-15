@@ -48,15 +48,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     shape1->close();
     shape1->fill(0, 0, 255);
 
-
-    auto shape1_triangles = tvg::Shape::triangulation(shape1.get());
-    shape1_triangles->fill(0, 0, 255);
-
-    shape1_triangles->translate(400, 0);
-
     if (canvas->push(std::move(shape1)) != tvg::Result::Success) return;
-    if (canvas->push(std::move(shape1_triangles)) != tvg::Result::Success) return;
-
 
     //Circle
     auto shape2 = tvg::Shape::gen();

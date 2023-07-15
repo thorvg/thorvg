@@ -1,6 +1,7 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_opengl.h>
 #include <iostream>
+#include "SDL_video.h"
 #include <thorvg.h>
 
 int main(int argc, const char **argv)
@@ -9,18 +10,23 @@ int main(int argc, const char **argv)
     // init sdl
     SDL_Init(SDL_INIT_EVERYTHING);
 
-
-    auto window = SDL_CreateWindow("Hello world !", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 800, 600,
-                                   SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL);
-
-
 #ifdef __APPLE__
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 #endif
 
+    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);   // Enable multisampling
+    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 16);  // Set the number of samples
+
+    auto window = SDL_CreateWindow("Hello world !", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 800, 600,
+                                   SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL);
+
+
     auto gl_context = SDL_GL_CreateContext(window);
+
+
+    glEnable(GL_MULTISAMPLE);
 
     if (!gl_context) {
         auto err = SDL_GetError();
@@ -70,6 +76,9 @@ int main(int argc, const char **argv)
             shape1->lineTo(146, 143);
             shape1->close();
             shape1->fill(0, 0, 255);
+
+            shape1->stroke(3.f);
+            shape1->stroke(255, 0, 0);
 
             shape1->translate(100, 0);
 

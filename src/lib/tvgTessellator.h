@@ -1,6 +1,7 @@
 #pragma once
 
 #include <thorvg.h>
+#include <cstdint>
 
 #include "tvgArray.h"
 
@@ -25,11 +26,6 @@ struct RenderShape;
 
 class Tessellator final
 {
-    enum
-    {
-        TES_POINT_STRIDE = 3,
-    };
-
 public:
     Tessellator(Array<float> *points, Array<uint32_t> *indices);
     ~Tessellator();
@@ -73,8 +69,6 @@ private:
 
     void emitPoly(detail::MonotonePolygon *poly);
 
-    uint32_t pushVertex(float x, float y, float a);
-
 private:
     FillRule                            fillRule = FillRule::Winding;
     std::unique_ptr<detail::ObjectHeap> pHeap;
@@ -92,6 +86,15 @@ private:
 
 class Stroker final
 {
+
+    struct State
+    {
+        Point firstPt = {};
+        Point firstPtDir = {};
+        Point prevPt = {};
+        Point prevPtDir = {};
+        bool  hasMove = false;
+    };
 public:
     Stroker(Array<float> *points, Array<uint32_t> *indices);
     ~Stroker() = default;
@@ -101,12 +104,23 @@ public:
 private:
     void doStroke(const PathCommand *cmds, uint32_t cmd_count, const Point *pts, uint32_t pts_count);
 
+    void strokeCap();
+
+    void strokeLineTo(const Point &curr);
+
+    void strokeCubicTo(const Point &cnt1, const Point &cnt2, const Point &end);
+
+    void strokeClose();
+
+    void strokeJoin(const Point& curr, const Point& dir);
 private:
     Array<float>    *mResPoints;
     Array<uint32_t> *mResIndices;
     float            mStrokeWidth = 1.f;
+    float            mMiterLimit = 4.f;
     StrokeCap        mStrokeCap = StrokeCap::Square;
     StrokeJoin       mStrokeJoin = StrokeJoin::Bevel;
+    State            mStrokeState = {};
 };
 
 }  // namespace tvg

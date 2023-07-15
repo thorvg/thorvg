@@ -3,6 +3,7 @@
 #include "tvgArray.h"
 #include "tvgRender.h"
 #include "tvgBezier.h"
+#include "tvgPoint.h"
 
 #include <algorithm>
 #include <array>
@@ -11,26 +12,6 @@
 
 namespace tvg
 {
-
-bool operator==(const Point &p1, const Point &p2)
-{
-    return p1.x == p2.x && p1.y == p2.y;
-}
-
-Point operator-(const Point &p1, const Point &p2)
-{
-    return Point{p1.x - p2.x, p1.y - p2.y};
-}
-
-Point operator+(const Point &p1, const Point &p2)
-{
-    return Point{p1.x + p2.x, p1.y + p2.y};
-}
-
-Point operator*(const Point &p1, const Point &p2)
-{
-    return Point{p1.x * p2.x, p1.y * p2.y};
-}
 
 namespace detail
 {
@@ -709,6 +690,14 @@ int32_t _bezierCurveCount(const Bezier &curve)
     bezSplit(curve, left, right);
 
     return _bezierCurveCount(left) + _bezierCurveCount(right);
+}
+
+uint32_t _pushVertex(Array<float> *array, float x, float y, float z)
+{
+    array->push(x);
+    array->push(y);
+    array->push(z);
+    return (array->count - 3) / 3;
 }
 
 }  // namespace detail
@@ -1518,12 +1507,12 @@ void Tessellator::emitPoly(detail::MonotonePolygon *poly)
         return;
     }
 
-    uint32_t first_index = this->pushVertex(vertices.first()->point.x, vertices.first()->point.y, 1.f);
+    uint32_t first_index = detail::_pushVertex(resPoints, vertices.first()->point.x, vertices.first()->point.y, 1.f);
 
-    uint32_t prev_index = this->pushVertex(vertices.data[1]->point.x, vertices.data[1]->point.y, 1.f);
+    uint32_t prev_index = detail::_pushVertex(resPoints, vertices.data[1]->point.x, vertices.data[1]->point.y, 1.f);
 
     for (uint32_t i = 2; i < vertices.count; i++) {
-        uint32_t curr_index = this->pushVertex(vertices.data[i]->point.x, vertices.data[i]->point.y, 1.f);
+        uint32_t curr_index = detail::_pushVertex(resPoints, vertices.data[i]->point.x, vertices.data[i]->point.y, 1.f);
 
         this->resIndices->push(first_index);
         this->resIndices->push(prev_index);
@@ -1533,16 +1522,6 @@ void Tessellator::emitPoly(detail::MonotonePolygon *poly)
     }
 }
 
-uint32_t Tessellator::pushVertex(float x, float y, float a)
-{
-    auto index = this->resPoints->count / TES_POINT_STRIDE;
-
-    this->resPoints->push(x);
-    this->resPoints->push(y);
-    this->resPoints->push(a);
-
-    return index;
-}
 
 Stroker::Stroker(Array<float> *points, Array<uint32_t> *indices) : mResPoints(points), mResIndices(indices)
 {
@@ -1550,6 +1529,7 @@ Stroker::Stroker(Array<float> *points, Array<uint32_t> *indices) : mResPoints(po
 
 void Stroker::stroke(const RenderShape *rshape)
 {
+    mMiterLimit = rshape->strokeMiterlimit();
     mStrokeWidth = std::max(mStrokeWidth, rshape->strokeWidth());
     mStrokeCap = rshape->strokeCap();
     mStrokeJoin = rshape->strokeJoin();
@@ -1572,22 +1552,101 @@ void Stroker::doStroke(const PathCommand *cmds, uint32_t cmd_count, const Point 
     for (uint32_t i = 0; i < cmd_count; i++) {
         switch (cmds[i]) {
             case PathCommand::MoveTo: {
-
+                if (mStrokeState.hasMove) {
+                    strokeCap();
+                    mStrokeState.hasMove = false;
+                }
+                mStrokeState.hasMove = true;
+                mStrokeState.firstPt = *pts;
+                mStrokeState.firstPtDir = {};
+                mStrokeState.prevPt = *pts;
+                mStrokeState.prevPtDir = {};
                 pts++;
             } break;
             case PathCommand::LineTo: {
+                this->strokeLineTo(*pts);
                 pts++;
             } break;
             case PathCommand::CubicTo: {
-
-
+                this->strokeCubicTo(pts[0], pts[1], pts[2]);
                 pts += 3;
             } break;
-            case PathCommand::Close:  // fall through
+            case PathCommand::Close: {
+                this->strokeClose();
+
+                mStrokeState.hasMove = false;
+            } break;
             default:
                 break;
         }
     }
+}
+
+void Stroker::strokeCap()
+{
+}
+
+void Stroker::strokeLineTo(const Point &curr)
+{
+    auto dir = pointNormalize(curr - mStrokeState.prevPt);
+
+    if (dir.x == 0.f && dir.y == 0.f) {
+        // same point
+        return;
+    }
+
+    auto normal = Point{-dir.y, dir.x};
+
+    auto a = mStrokeState.prevPt + normal * mStrokeWidth;
+    auto b = mStrokeState.prevPt - normal * mStrokeWidth;
+    auto c = curr + normal * mStrokeWidth;
+    auto d = curr - normal * mStrokeWidth;
+
+    auto ia = detail::_pushVertex(mResPoints, a.x, a.y, 1.f);
+    auto ib = detail::_pushVertex(mResPoints, b.x, b.y, 1.f);
+    auto ic = detail::_pushVertex(mResPoints, c.x, c.y, 1.f);
+    auto id = detail::_pushVertex(mResPoints, d.x, d.y, 1.f);
+
+    /**
+     *   a --------- c
+     *   |           |
+     *   |           |
+     *   b-----------d
+     */
+
+    this->mResIndices->push(ia);
+    this->mResIndices->push(ib);
+    this->mResIndices->push(ic);
+
+    this->mResIndices->push(ib);
+    this->mResIndices->push(id);
+    this->mResIndices->push(ic);
+
+    if (mStrokeState.prevPt == mStrokeState.firstPt) {
+        // first point after moveTo
+        mStrokeState.prevPt = curr;
+        mStrokeState.prevPtDir = dir;
+
+        mStrokeState.firstPtDir = dir;
+    } else {
+        mStrokeState.prevPtDir = dir;
+        mStrokeState.prevPt = curr;
+    }
+}
+
+void Stroker::strokeCubicTo(const Point &cnt1, const Point &cnt2, const Point &end)
+{
+}
+
+void Stroker::strokeClose()
+{
+    if (mStrokeState.prevPt != mStrokeState.firstPt) {
+        this->strokeLineTo(mStrokeState.firstPt);
+    } else {
+        // join prevPt and firstPt
+    }
+
+    mStrokeState.hasMove = false;
 }
 
 }  // namespace tvg

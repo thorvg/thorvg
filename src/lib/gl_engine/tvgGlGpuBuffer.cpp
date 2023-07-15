@@ -23,6 +23,7 @@
 #include "tvgGlGpuBuffer.h"
 
 #include <cmath>
+#include <cstring>
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
