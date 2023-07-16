@@ -120,7 +120,11 @@ private:
 
     void strokeJoin(const Point &dir);
 
-    void strokeRound(const Bezier& curve, const Point& center);
+    void strokeRound(const Bezier &curve, const Point &center);
+
+    void strokeMiter(const Point &prev, const Point &curr, const Point &center);
+
+    void strokeBevel(const Point &prev, const Point &curr, const Point &center);
 private:
     Array<float>    *mResPoints;
     Array<uint32_t> *mResIndices;

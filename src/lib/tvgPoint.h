@@ -48,4 +48,9 @@ inline Point pointNormalize(const Point &p)
     return p / std::sqrt(p.x * p.x + p.y * p.y);
 }
 
+inline float pointLength(const Point &p)
+{
+    return std::sqrt(p.x * p.x + p.y * p.y);
+}
+
 }

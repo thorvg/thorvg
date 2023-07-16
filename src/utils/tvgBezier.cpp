@@ -48,7 +48,7 @@ static float _lineLength(const Point& pt1, const Point& pt2)
 namespace tvg
 {
 
-void bezSplit(const Bezier&cur, Bezier& left, Bezier& right)
+void bezSplit(const Bezier& cur, Bezier& left, Bezier& right)
 {
     auto c = (cur.ctrl1.x + cur.ctrl2.x) * 0.5f;
     left.ctrl1.x = (cur.start.x + cur.ctrl1.x) * 0.5f;
@@ -91,8 +91,8 @@ void bezSplitLeft(Bezier& cur, float at, Bezier& left)
     left.ctrl1.x = cur.start.x + at * (cur.ctrl1.x - cur.start.x);
     left.ctrl1.y = cur.start.y + at * (cur.ctrl1.y - cur.start.y);
 
-    left.ctrl2.x = cur.ctrl1.x + at * (cur.ctrl2.x - cur.ctrl1.x); //temporary holding spot
-    left.ctrl2.y = cur.ctrl1.y + at * (cur.ctrl2.y - cur.ctrl1.y); //temporary holding spot
+    left.ctrl2.x = cur.ctrl1.x + at * (cur.ctrl2.x - cur.ctrl1.x);  // temporary holding spot
+    left.ctrl2.y = cur.ctrl1.y + at * (cur.ctrl2.y - cur.ctrl1.y);  // temporary holding spot
 
     cur.ctrl2.x = cur.ctrl2.x + at * (cur.end.x - cur.ctrl2.x);
     cur.ctrl2.y = cur.ctrl2.y + at * (cur.end.y - cur.ctrl2.y);
@@ -114,12 +114,12 @@ float bezAt(const Bezier& bz, float at, float length)
     auto smallest = 0.0f;
     auto t = 0.5f;
 
-    //just in case to prevent an infinite loop
+    // just in case to prevent an infinite loop
     if (at <= 0) return 0.0f;
     if (at >= length) return length;
 
     while (true) {
-        auto right = bz;
+        auto   right = bz;
         Bezier left;
         bezSplitLeft(right, t, left);
         length = bezLength(left);
@@ -149,7 +149,7 @@ void bezSplitAt(const Bezier& cur, float at, Bezier& left, Bezier& right)
 Point bezPointAt(const Bezier& bz, float t)
 {
     Point cur;
-    auto it = 1.0f - t;
+    auto  it = 1.0f - t;
 
     auto ax = bz.start.x * it + bz.ctrl1.x * t;
     auto bx = bz.ctrl1.x * it + bz.ctrl2.x * t;
@@ -205,7 +205,7 @@ bool bezIsFlatten(const Bezier& bz)
     return false;
 }
 
-Bezier bezFromArc(const Point &start, const Point &end, float radius) 
+Bezier bezFromArc(const Point& start, const Point& end, float radius)
 {
     // Calculate the angle between the start and end points
     float angle = atan2(end.y - start.y, end.x - start.x);
@@ -221,6 +221,23 @@ Bezier bezFromArc(const Point &start, const Point &end, float radius)
     bz.end = end;
 
     return bz;
+}
+
+Bezier bezFromArc(const Point& start, const Point& end, const Point& center)
+{
+    Point start_tangent{center.x - start.x, center.y - start.y};
+    Point end_tangent{end.x - center.x, end.y - center.y};
+
+    Point control1{start.x + (1.0f / 3.0f) * start_tangent.x, start.y + (1.0f / 3.0f) * start_tangent.y};
+    Point control2{end.x - (1.0f / 3.0f) * end_tangent.x, end.y - (1.0f / 3.0f) * end_tangent.y};
+
+    Bezier bz;
+    bz.start = start;
+    bz.ctrl1 = control1;
+    bz.ctrl2 = control2;
+    bz.end = end;
+
+    return bz;   
 }
 
 }

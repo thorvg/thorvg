@@ -1705,11 +1705,42 @@ void Stroker::strokeJoin(const Point &dir)
 
         strokeRound(curve, mStrokeState.prevPt);
     } else {
+        auto normal = Point{-dir.y, dir.x};
+        auto prevNormal = Point{-mStrokeState.prevPtDir.y, mStrokeState.prevPtDir.x};
+
+        Point prevJoin{};
+        Point currJoin{};
+
+        if (orientation == detail::Orientation::Clockwise) {
+            prevJoin = mStrokeState.prevPt + prevNormal * strokeRadius();
+            currJoin = mStrokeState.prevPt + normal * strokeRadius();
+        } else {
+            prevJoin = mStrokeState.prevPt - prevNormal * strokeRadius();
+            currJoin = mStrokeState.prevPt - normal * strokeRadius();
+        }
+
+        if (mStrokeJoin == StrokeJoin::Miter) {
+            this->strokeMiter(prevJoin, currJoin, mStrokeState.prevPt);
+        } else if (mStrokeJoin == StrokeJoin::Bevel) {
+            this->strokeBevel(prevJoin, currJoin, mStrokeState.prevPt);
+        } else {
+            // round join
+            auto oc = (prevJoin + currJoin) * 0.5f;
+
+            auto ocNormal = pointNormalize(oc - mStrokeState.prevPt);
+
+            auto out = mStrokeState.prevPt + ocNormal * strokeRadius();
+
+            auto curve = bezFromArc(prevJoin, currJoin, out);
+
+            this->strokeRound(curve, mStrokeState.prevPt);
+        }
     }
 }
 
 
-void Stroker::strokeRound(const Bezier &curve, const Point &center) {
+void Stroker::strokeRound(const Bezier &curve, const Point &center)
+{
     auto count = detail::_bezierCurveCount(curve);
 
     auto centerIndex = detail::_pushVertex(mResPoints, center.x, center.y, 1.f);
@@ -1729,6 +1760,51 @@ void Stroker::strokeRound(const Bezier &curve, const Point &center) {
 
         prevIndex = currIndex;
     }
+}
+
+void Stroker::strokeMiter(const Point &prev, const Point &curr, const Point &center)
+{
+    auto pp1 = pointNormalize(prev - center);
+    auto pp2 = pointNormalize(curr - center);
+
+    auto out = pp1 + pp2;
+
+    float k = 2.f * strokeRadius() * strokeRadius() / (out.x * out.x + out.y * out.y);
+
+    auto pe = out * k;
+
+    if (pointLength(pe) >= mMiterLimit) {
+        this->strokeBevel(prev, curr, center);
+        return;
+    }
+
+    auto join = center + pe;
+
+    auto c = detail::_pushVertex(mResPoints, center.x, center.y, 1.f);
+
+    auto cp1 = detail::_pushVertex(mResPoints, pp1.x, pp1.y, 1.f);
+    auto cp2 = detail::_pushVertex(mResPoints, pp2.x, pp2.y, 1.f);
+
+    auto e = detail::_pushVertex(mResPoints, join.x, join.y, 1.f);
+
+    this->mResIndices->push(c);
+    this->mResIndices->push(cp1);
+    this->mResIndices->push(e);
+
+    this->mResIndices->push(e);
+    this->mResIndices->push(cp2);
+    this->mResIndices->push(c);
+}
+
+void Stroker::strokeBevel(const Point &prev, const Point &curr, const Point &center)
+{
+    auto a = detail::_pushVertex(mResPoints, prev.x, prev.y, 1.f);
+    auto b = detail::_pushVertex(mResPoints, curr.x, curr.y, 1.f);
+    auto c = detail::_pushVertex(mResPoints, center.x, center.y, 1.f);
+
+    mResIndices->push(a);
+    mResIndices->push(b);
+    mResIndices->push(c);
 }
 
 }  // namespace tvg
