@@ -22,6 +22,7 @@
 
 #include "tvgMath.h"
 #include "tvgBezier.h"
+#include "tvgPoint.h"
 
 #define BEZIER_EPSILON 1e-4f
 
@@ -225,16 +226,10 @@ Bezier bezFromArc(const Point& start, const Point& end, float radius)
 
 Bezier bezFromArc(const Point& start, const Point& end, const Point& center)
 {
-    Point start_tangent{center.x - start.x, center.y - start.y};
-    Point end_tangent{end.x - center.x, end.y - center.y};
-
-    Point control1{start.x + (1.0f / 3.0f) * start_tangent.x, start.y + (1.0f / 3.0f) * start_tangent.y};
-    Point control2{end.x - (1.0f / 3.0f) * end_tangent.x, end.y - (1.0f / 3.0f) * end_tangent.y};
-
     Bezier bz;
     bz.start = start;
-    bz.ctrl1 = control1;
-    bz.ctrl2 = control2;
+    bz.ctrl1 = start + (center - start) * (2.f / 3.f);
+    bz.ctrl2 = end + (center - end) * (2.f / 3.f);
     bz.end = end;
 
     return bz;   

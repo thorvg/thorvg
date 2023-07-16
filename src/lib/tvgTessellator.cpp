@@ -1673,16 +1673,18 @@ void Stroker::strokeClose()
 {
     if (mStrokeState.prevPt != mStrokeState.firstPt) {
         this->strokeLineTo(mStrokeState.firstPt);
-    } else {
-        // join prevPt and firstPt
     }
+
+    // join firstPt with prevPt
+    this->strokeJoin(mStrokeState.firstPtDir);
 
     mStrokeState.hasMove = false;
 }
 
 void Stroker::strokeJoin(const Point &dir)
 {
-    auto orientation = detail::_calcOrientation(mStrokeState.prevPtDir, dir);
+    auto orientation = detail::_calcOrientation(mStrokeState.prevPt - mStrokeState.prevPtDir, mStrokeState.prevPt,
+                                                mStrokeState.prevPt + dir);
 
     if (orientation == detail::Orientation::Linear) {
         // check is same direction
@@ -1711,7 +1713,7 @@ void Stroker::strokeJoin(const Point &dir)
         Point prevJoin{};
         Point currJoin{};
 
-        if (orientation == detail::Orientation::Clockwise) {
+        if (orientation == detail::Orientation::CounterClockwise) {
             prevJoin = mStrokeState.prevPt + prevNormal * strokeRadius();
             currJoin = mStrokeState.prevPt + normal * strokeRadius();
         } else {
@@ -1733,7 +1735,11 @@ void Stroker::strokeJoin(const Point &dir)
 
             auto curve = bezFromArc(prevJoin, currJoin, out);
 
-            this->strokeRound(curve, mStrokeState.prevPt);
+            if (bezIsFlatten(curve)) {
+                this->strokeBevel(prevJoin, currJoin, mStrokeState.prevPt);
+            } else {
+                this->strokeRound(curve, mStrokeState.prevPt);
+            }
         }
     }
 }

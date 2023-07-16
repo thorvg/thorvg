@@ -80,7 +80,7 @@ int main(int argc, const char **argv)
 
             shape1->stroke(20.f);
             shape1->stroke(255, 0, 0);
-            shape1->stroke(tvg::StrokeJoin::Miter);
+            shape1->stroke(tvg::StrokeJoin::Round);
 
             shape1->translate(100, 0);
 
