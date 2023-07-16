@@ -46,7 +46,6 @@ Point bezPointAt(const Bezier& bz, float t);
 float bezAngleAt(const Bezier& bz, float t);
 bool bezIsFlatten(const Bezier& bz);
 Bezier bezFromArc(const Point& start, const Point& end, float radius);
-Bezier bezFromArc(const Point& start, const Point& end, const Point& center);
 
 }
 

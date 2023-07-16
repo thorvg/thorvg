@@ -1701,11 +1701,11 @@ void Stroker::strokeJoin(const Point &dir)
 
         auto p1 = mStrokeState.prevPt + normal * strokeRadius();
         auto p2 = mStrokeState.prevPt - normal * strokeRadius();
+        auto oc = mStrokeState.prevPt + dir * strokeRadius();
 
-        auto curve = bezFromArc(p1, p2, strokeRadius());
+        this->strokeRound(p1, oc, mStrokeState.prevPt);
+        this->strokeRound(oc, p2, mStrokeState.prevPt);
 
-
-        strokeRound(curve, mStrokeState.prevPt);
     } else {
         auto normal = Point{-dir.y, dir.x};
         auto prevNormal = Point{-mStrokeState.prevPtDir.y, mStrokeState.prevPtDir.x};
@@ -1727,44 +1727,42 @@ void Stroker::strokeJoin(const Point &dir)
             this->strokeBevel(prevJoin, currJoin, mStrokeState.prevPt);
         } else {
             // round join
-            auto oc = (prevJoin + currJoin) * 0.5f;
-
-            auto ocNormal = pointNormalize(oc - mStrokeState.prevPt);
-
-            auto out = mStrokeState.prevPt + ocNormal * strokeRadius();
-
-            auto curve = bezFromArc(prevJoin, currJoin, out);
-
-            if (bezIsFlatten(curve)) {
-                this->strokeBevel(prevJoin, currJoin, mStrokeState.prevPt);
-            } else {
-                this->strokeRound(curve, mStrokeState.prevPt);
-            }
+            this->strokeRound(prevJoin, currJoin, mStrokeState.prevPt);
         }
     }
 }
 
 
-void Stroker::strokeRound(const Bezier &curve, const Point &center)
+void Stroker::strokeRound(const Point &prev, const Point &curr, const Point &center)
 {
-    auto count = detail::_bezierCurveCount(curve);
+    if (detail::_calcOrientation(prev, center, curr) == detail::Orientation::Linear) {
+        return;
+    }
 
-    auto centerIndex = detail::_pushVertex(mResPoints, center.x, center.y, 1.f);
+    // Fixme: just use bezier curve to calculate step count
+    auto count = detail::_bezierCurveCount(bezFromArc(prev, curr, strokeRadius()));
 
-    auto prevIndex = detail::_pushVertex(mResPoints, curve.start.x, curve.start.y, 1.f);
+    auto c = detail::_pushVertex(mResPoints, center.x, center.y, 1.f);
+
+    auto pi = detail::_pushVertex(mResPoints, prev.x, prev.y, 1.f);
 
     float step = 1.f / (count - 1);
 
+    auto dir = curr - prev;
     for (uint32_t i = 1; i < count; i++) {
-        auto pt = bezPointAt(curve, i * step);
+        float t = i * step;
 
-        auto currIndex = detail::_pushVertex(mResPoints, pt.x, pt.y, 1.f);
+        auto p = prev + dir * t;
 
-        this->mResIndices->push(prevIndex);
-        this->mResIndices->push(currIndex);
-        this->mResIndices->push(centerIndex);
+        auto out = center + pointNormalize(p - center) * strokeRadius();
 
-        prevIndex = currIndex;
+        auto oi = detail::_pushVertex(mResPoints, out.x, out.y, 1.f);
+
+        this->mResIndices->push(c);
+        this->mResIndices->push(pi);
+        this->mResIndices->push(oi);
+
+        pi = oi;
     }
 }
 

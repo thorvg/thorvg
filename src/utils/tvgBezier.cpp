@@ -224,15 +224,4 @@ Bezier bezFromArc(const Point& start, const Point& end, float radius)
     return bz;
 }
 
-Bezier bezFromArc(const Point& start, const Point& end, const Point& center)
-{
-    Bezier bz;
-    bz.start = start;
-    bz.ctrl1 = start + (center - start) * (2.f / 3.f);
-    bz.ctrl2 = end + (center - end) * (2.f / 3.f);
-    bz.end = end;
-
-    return bz;   
-}
-
 }
