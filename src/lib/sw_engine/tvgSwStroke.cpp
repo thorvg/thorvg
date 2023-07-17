@@ -780,33 +780,29 @@ static void _exportBorderOutline(const SwStroke& stroke, SwOutline* outline, uin
 
     if (border->ptsCnt == 0) return;  //invalid border
 
-    memcpy(outline->pts + outline->ptsCnt, border->pts, border->ptsCnt * sizeof(SwPoint));
+    memcpy(outline->pts.data + outline->pts.count, border->pts, border->ptsCnt * sizeof(SwPoint));
 
     auto cnt = border->ptsCnt;
     auto src = border->tags;
-    auto tags = outline->types + outline->ptsCnt;
-    auto cntrs = outline->cntrs + outline->cntrsCnt;
-    auto idx = outline->ptsCnt;
+    auto tags = outline->types.data + outline->types.count;
+    auto idx = outline->pts.count;
 
     while (cnt > 0) {
-
         if (*src & SW_STROKE_TAG_POINT) *tags = SW_CURVE_TYPE_POINT;
         else if (*src & SW_STROKE_TAG_CUBIC) *tags = SW_CURVE_TYPE_CUBIC;
         else {
             //LOG: What type of stroke outline??
         }
 
-        if (*src & SW_STROKE_TAG_END) {
-            *cntrs = idx;
-            ++cntrs;
-            ++outline->cntrsCnt;
-        }
+        if (*src & SW_STROKE_TAG_END) outline->cntrs.push(idx);
+        
         ++src;
         ++tags;
         ++idx;
         --cnt;
     }
-    outline->ptsCnt = outline->ptsCnt + border->ptsCnt;
+    outline->pts.count += border->ptsCnt;
+    outline->types.count += border->ptsCnt;
 }
 
 
@@ -857,10 +853,11 @@ void strokeReset(SwStroke* stroke, const RenderShape* rshape, const Matrix* tran
 bool strokeParseOutline(SwStroke* stroke, const SwOutline& outline)
 {
     uint32_t first = 0;
+    uint32_t i = 0;
 
-    for (uint32_t i = 0; i < outline.cntrsCnt; ++i) {
-        auto last = outline.cntrs[i];  //index of last point in contour
-        auto limit = outline.pts + last;
+    for (auto cntr = outline.cntrs.data; cntr < outline.cntrs.end(); ++cntr, ++i) {
+        auto last = *cntr;           //index of last point in contour
+        auto limit = outline.pts.data + last;
 
         //Skip empty points
         if (last <= first) {
@@ -868,15 +865,15 @@ bool strokeParseOutline(SwStroke* stroke, const SwOutline& outline)
             continue;
         }
 
-        auto start = outline.pts[first];
-        auto pt = outline.pts + first;
-        auto types = outline.types + first;
+        auto start = outline.pts.data[first];
+        auto pt = outline.pts.data + first;
+        auto types = outline.types.data + first;
         auto type = types[0];
 
         //A contour cannot start with a cubic control point
         if (type == SW_CURVE_TYPE_CUBIC) return false;
 
-        auto closed =  outline.closed ? outline.closed[i]: false;
+        auto closed =  outline.closed.data ? outline.closed.data[i]: false;
 
         _beginSubPath(*stroke, start, closed);
 
@@ -922,15 +919,9 @@ SwOutline* strokeExportOutline(SwStroke* stroke, SwMpool* mpool, unsigned tid)
     auto cntrsCnt = count2 + count4;
 
     auto outline = mpoolReqStrokeOutline(mpool, tid);
-    if (outline->reservedPtsCnt < ptsCnt) {
-        outline->pts = static_cast<SwPoint*>(realloc(outline->pts, sizeof(SwPoint) * ptsCnt));
-        outline->types = static_cast<uint8_t*>(realloc(outline->types, sizeof(uint8_t) * ptsCnt));
-        outline->reservedPtsCnt = ptsCnt;
-    }
-    if (outline->reservedCntrsCnt < cntrsCnt) {
-        outline->cntrs = static_cast<uint32_t*>(realloc(outline->cntrs, sizeof(uint32_t) * cntrsCnt));
-        outline->reservedCntrsCnt = cntrsCnt;
-    }
+    outline->pts.reserve(ptsCnt);
+    outline->types.reserve(ptsCnt);
+    outline->cntrs.reserve(cntrsCnt);
 
     _exportBorderOutline(*stroke, outline, 0);  //left
     _exportBorderOutline(*stroke, outline, 1);  //right
