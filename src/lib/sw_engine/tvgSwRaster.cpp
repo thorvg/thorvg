@@ -256,8 +256,8 @@ static uint32_t _interpUpScaler(const uint32_t *img, TVG_UNUSED uint32_t stride,
 //OPTIMIZE_ME: Skip the function pointer access
 static uint32_t _interpDownScaler(const uint32_t *img, uint32_t stride, uint32_t w, uint32_t h, float sx, float sy, uint32_t n, uint32_t n2)
 {
-    uint32_t rx = sx;
-    uint32_t ry = sy;
+    uint32_t rx = lround(sx);
+    uint32_t ry = lround(sy);
     uint32_t c[4] = {0, 0, 0, 0};
     auto src = img + rx - n + (ry - n) * stride;
 

@@ -838,7 +838,7 @@ void strokeReset(SwStroke* stroke, const RenderShape* rshape, const Matrix* tran
 
     stroke->width = HALF_STROKE(rshape->strokeWidth());
     stroke->cap = rshape->strokeCap();
-    stroke->miterlimit = rshape->strokeMiterlimit() * (1 << 16);
+    stroke->miterlimit = static_cast<SwFixed>(rshape->strokeMiterlimit()) << 16;
 
     //Save line join: it can be temporarily changed when stroking curves...
     stroke->joinSaved = stroke->join = rshape->strokeJoin();
