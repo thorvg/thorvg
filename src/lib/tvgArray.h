@@ -52,6 +52,13 @@ struct Array
         data[count++] = element;
     }
 
+    void push(Array<T>& rhs)
+    {
+        grow(rhs.count);
+        memcpy(data + count, rhs.data, rhs.count * sizeof(T));
+        count += rhs.count;
+    }
+
     bool reserve(uint32_t size)
     {
         if (size > reserved) {
