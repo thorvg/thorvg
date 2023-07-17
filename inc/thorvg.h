@@ -26,7 +26,7 @@
 
 #ifndef TVG_STATIC
     #ifdef _WIN32
-        #if TVG_BUILD
+        #if TVG_EXPORT
             #define TVG_API __declspec(dllexport)
         #else
             #define TVG_API __declspec(dllimport)
@@ -56,37 +56,31 @@
     #define TVG_DEPRECATED
 #endif
 
-#define _TVG_DECLARE_PRIVATE(A) \
-protected: \
-    struct Impl; \
-    Impl* pImpl; \
-    A(const A&) = delete; \
-    const A& operator=(const A&) = delete; \
-    A()
+#ifdef TVG_BUILD
+    #define _TVG_DECLARE_PRIVATE(A) \
+            struct Impl; \
+            Impl* pImpl; \
+            A(const A&) = delete; \
+            const A& operator=(const A&) = delete; \
+            A()
+#else
+    #define _TVG_DECLARE_PRIVATE(A) \
+        protected: \
+            struct Impl; \
+            Impl* pImpl; \
+            A(const A&) = delete; \
+            const A& operator=(const A&) = delete; \
+            A()
+#endif
 
 #define _TVG_DISABLE_CTOR(A) \
     A() = delete; \
     ~A() = delete
 
-#define _TVG_DECLARE_ACCESSOR() \
-    friend Canvas; \
-    friend Scene; \
-    friend Shape; \
-    friend Picture; \
-    friend Accessor; \
-    friend IteratorAccessor
-
-
 namespace tvg
 {
 
 class RenderMethod;
-class IteratorAccessor;
-class Scene;
-class Shape;
-class Picture;
-class Canvas;
-class Accessor;
 
 /**
  * @defgroup ThorVG ThorVG
@@ -465,7 +459,6 @@ public:
      */
     uint32_t identifier() const noexcept;
 
-    _TVG_DECLARE_ACCESSOR();
     _TVG_DECLARE_PRIVATE(Paint);
 };
 
