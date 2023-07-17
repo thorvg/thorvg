@@ -303,6 +303,11 @@ struct Shape::Impl
         return true;
     }
 
+    void update(RenderUpdateFlag flag)
+    {
+        this->flag |= flag;
+    }
+
     Paint* duplicate()
     {
         auto ret = Shape::gen();
