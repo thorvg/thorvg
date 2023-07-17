@@ -713,17 +713,17 @@ static bool _decomposeOutline(RleWorker& rw)
     auto outline = rw.outline;
     auto first = 0;  //index of first point in contour
 
-    for (uint32_t n = 0; n < outline->cntrsCnt; ++n) {
-        auto last = outline->cntrs[n];
-        auto limit = outline->pts + last;
-        auto start = UPSCALE(outline->pts[first]);
-        auto pt = outline->pts + first;
-        auto types = outline->types + first;
+    for (auto cntr = outline->cntrs.data; cntr < outline->cntrs.end(); ++cntr) {
+        auto last = *cntr;
+        auto limit = outline->pts.data + last;
+        auto start = UPSCALE(outline->pts.data[first]);
+        auto pt = outline->pts.data + first;
+        auto types = outline->types.data + first;
 
         /* A contour cannot start with a cubic control point! */
         if (types[0] == SW_CURVE_TYPE_CUBIC) goto invalid_outline;
 
-        _moveTo(rw, UPSCALE(outline->pts[first]));
+        _moveTo(rw, UPSCALE(outline->pts.data[first]));
 
         while (pt < limit) {
             ++pt;
