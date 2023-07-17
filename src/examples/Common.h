@@ -22,86 +22,162 @@
 
 #include <iostream>
 #include <thread>
-#include <Elementary.h>
 #include <thorvg.h>
+#include <SDL.h>
+#ifdef TVG_EXAMPLE_GL
+#ifdef OS_ANDROID
+#include <GLES2/gl2.h>
+#elif defined(__APPLE__)
+#include <OpenGL/gl.h>
+#include <OpenGL/gl3.h>
+#else
+#ifndef GL_GLEXT_PROTOTYPES
+#define GL_GLEXT_PROTOTYPES 1
+#endif
+#include <GL/gl.h>
+#include <GL/glext.h>
+#endif
+#endif
 
 using namespace std;
 
-static uint32_t WIDTH = 800;
-static uint32_t HEIGHT = 800;
+static uint32_t  WIDTH = 800;
+static uint32_t  HEIGHT = 800;
 static uint32_t* buffer = nullptr;
 
+static SDL_Window* win = nullptr;
+SDL_Surface*       w_surface = nullptr;
+SDL_Surface*       r_surface = nullptr;
+SDL_GLContext      glContext = nullptr;
 
 /************************************************************************/
 /* Common Infrastructure Code                                           */
 /************************************************************************/
 
 void tvgSwTest(uint32_t* buffer);
-void drawSwView(void* data, Eo* obj);
+void drawSwView(void* data);
 
-void win_del(void *data, Evas_Object *o, void *ev)
-{
-    free(buffer);
-    elm_exit();
-}
 
-static Eo* createSwView(uint32_t w = 800, uint32_t h = 800)
+static SDL_Window* createSwView(uint32_t w = 800, uint32_t h = 800)
 {
     WIDTH = w;
     HEIGHT = h;
+
+    Uint32 rmask, gmask, bmask, amask;
+#if SDL_BYTEORDER == SDL_BIG_ENDIAN
+    rmask = 0xff000000;
+    gmask = 0x00ff0000;
+    bmask = 0x0000ff00;
+    amask = 0x000000ff;
+#else
+    rmask = 0x00ff0000;
+    gmask = 0x0000ff00;
+    bmask = 0x000000ff;
+    amask = 0xff000000;
+#endif
+
+    SDL_Init(SDL_INIT_EVERYTHING);
 
     buffer = static_cast<uint32_t*>(malloc(w * h * sizeof(uint32_t)));
 
-    Eo* win = elm_win_util_standard_add(NULL, "ThorVG Test");
-    evas_object_smart_callback_add(win, "delete,request", win_del, 0);
+    memset(buffer, 0 , w * h * 4);
 
-    Eo* view = evas_object_image_filled_add(evas_object_evas_get(win));
-    evas_object_image_size_set(view, WIDTH, HEIGHT);
-    evas_object_image_data_set(view, buffer);
-    evas_object_image_pixels_get_callback_set(view, drawSwView, nullptr);
-    evas_object_image_pixels_dirty_set(view, EINA_TRUE);
-    evas_object_image_data_update_add(view, 0, 0, WIDTH, HEIGHT);
-    evas_object_size_hint_weight_set(view, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
-    evas_object_show(view);
+    win = SDL_CreateWindow("Thorvg Test", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, WIDTH, HEIGHT,
+                           SDL_WINDOW_SHOWN);
 
-    elm_win_resize_object_add(win, view);
-    evas_object_geometry_set(win, 0, 0, WIDTH, HEIGHT);
-    evas_object_show(win);
+    w_surface = SDL_GetWindowSurface(win);
+    r_surface = SDL_CreateRGBSurface(0, WIDTH, HEIGHT, 32, rmask, gmask, bmask, amask);
 
     tvgSwTest(buffer);
 
-    return view;
+    bool quite = false;
+
+    while (!quite) {
+        SDL_Event e{0};
+        while (SDL_PollEvent(&e)) {
+            if (e.type == SDL_QUIT) {
+                quite = true;
+                break;
+            }
+            SDL_FillRect(w_surface, nullptr, SDL_MapRGB(w_surface->format, 0x0, 0x0, 0x0));
+
+            drawSwView(buffer);
+
+            SDL_LockSurface(r_surface);
+
+            std::memcpy(r_surface->pixels, buffer, WIDTH * HEIGHT * 4);
+
+            SDL_UnlockSurface(r_surface);
+
+            SDL_Rect stretchRect;
+            stretchRect.x = 0;
+            stretchRect.y = 0;
+            stretchRect.w = WIDTH;
+            stretchRect.h = HEIGHT;
+
+            SDL_BlitScaled(r_surface, nullptr, w_surface, &stretchRect);
+
+            SDL_UpdateWindowSurface(win);
+        }
+    }
+
+    SDL_DestroyWindow(win);
+
+    SDL_Quit();
+
+    return win;
 }
 
-#ifndef NO_GL_EXAMPLE
+void initGLview(SDL_Window* win);
+void drawGLview(SDL_Window* win);
 
-void initGLview(Evas_Object *obj);
-void drawGLview(Evas_Object *obj);
-
-static Eo* createGlView(uint32_t w = 800, uint32_t h = 800)
+static SDL_Window* createGlView(uint32_t w = 800, uint32_t h = 800)
 {
     WIDTH = w;
     HEIGHT = h;
 
-    elm_config_accel_preference_set("gl");
+    // init sdl
+    SDL_Init(SDL_INIT_EVERYTHING);
 
-    Eo* win = elm_win_util_standard_add(NULL, "ThorVG Test");
-    evas_object_smart_callback_add(win, "delete,request", win_del, 0);
+#ifdef __APPLE__
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+#endif
 
-    Eo* view = elm_glview_add(win);
-    evas_object_size_hint_weight_set(view, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
-    elm_glview_mode_set(view, ELM_GLVIEW_ALPHA);
-    elm_glview_resize_policy_set(view, ELM_GLVIEW_RESIZE_POLICY_RECREATE);
-    elm_glview_render_policy_set(view, ELM_GLVIEW_RENDER_POLICY_ON_DEMAND);
-    elm_glview_init_func_set(view, initGLview);
-    elm_glview_render_func_set(view, drawGLview);
-    evas_object_show(view);
+    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);   // Enable multisampling
+    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 16);  // Set the number of samples
 
-    elm_win_resize_object_add(win, view);
-    evas_object_geometry_set(win, 0, 0, WIDTH, HEIGHT);
-    evas_object_show(win);
+    win = SDL_CreateWindow("Hello world !", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, WIDTH, HEIGHT,
+                           SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL);
 
-    return view;
+
+    glContext = SDL_GL_CreateContext(win);
+
+
+    glEnable(GL_MULTISAMPLE);
+
+    bool runing = true;
+
+    initGLview(win);
+
+    while (runing) {
+        SDL_Event event{};
+
+        while (SDL_PollEvent(&event)) {
+            if (event.type == SDL_QUIT) {
+                runing = false;
+                break;
+            }
+
+            drawGLview(win);
+
+            SDL_GL_SwapWindow(win);
+        }
+    }
+
+
+    return win;
 }
 
 #endif //NO_GL_EXAMPLE

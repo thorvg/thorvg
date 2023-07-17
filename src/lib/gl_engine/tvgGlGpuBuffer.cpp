@@ -88,6 +88,10 @@ GlGpuBufferView GLStageBuffer::push(void* data, uint32_t length)
 
 void GLStageBuffer::copyToGPU()
 {
+    if (mStageBuffer.count == 0) {
+        return;
+    }
+
     mGpuBuffer->updateBufferData(mBufferTarget, mStageBuffer.count, mStageBuffer.data);
 
     mGpuBuffer->unbind(mBufferTarget);

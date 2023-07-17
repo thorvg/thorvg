@@ -76,7 +76,7 @@ int main(int argc, const char **argv)
             shape1->lineTo(26, 161);
             shape1->lineTo(146, 143);
             shape1->close();
-            // shape1->fill(0, 0, 255);
+            shape1->fill(0, 0, 255);
 
             shape1->stroke(20.f);
             shape1->stroke(255, 0, 0);

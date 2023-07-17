@@ -997,6 +997,7 @@ void Tessellator::simplifyMesh()
 
         bool intersected = false;
         do {
+            intersected = false;
 
             ael.findEnclosing(v, &left_enclosing, &right_enclosing);
 

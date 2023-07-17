@@ -2,7 +2,13 @@ if (lib_type == 'static')
     compiler_flags += ['-DTVG_STATIC']
 endif
 
-examples_dep = dependency('elementary', required : true)
+examples_dep = [ dependency('sdl2', required : true) ]
+
+if (get_option('engines').contains('gl_beta') == true)
+    examples_dep += [ dependency('opengl', required : true) ]
+    compiler_flags += [ '-DTVG_EXAMPLE_GL' ]
+endif
+
 
 source_file = [
     'Accessor.cpp',
