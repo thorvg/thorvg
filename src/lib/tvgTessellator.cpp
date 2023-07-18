@@ -1086,7 +1086,7 @@ void Tessellator::tessMesh()
 
         if (v->edge_above.head) {
             left_poly = v->edge_above.head->left_poly;
-            right_poly = v->edge_above.head->right_poly;
+            right_poly = v->edge_above.tail->right_poly;
         } else {
             left_poly = left_enclosing ? left_enclosing->right_poly : nullptr;
             right_poly = right_enclosing ? right_enclosing->left_poly : nullptr;
