@@ -862,6 +862,8 @@ void Tessellator::visitShape(const PathCommand *cmds, uint32_t cmd_count, const 
     // triangle fans, the indices count is at least triangles number * 3
     resIndices->reserve((pts_count - 2) * 3);
 
+    const Point *firstPt = nullptr;
+
     for (uint32_t i = 0; i < cmd_count; i++) {
         switch (cmds[i]) {
             case PathCommand::MoveTo: {
@@ -870,6 +872,7 @@ void Tessellator::visitShape(const PathCommand *cmds, uint32_t cmd_count, const 
                 auto last = outlines.last();
 
                 last->append(pHeap->Allocate<detail::Vertex>(*pts));
+                firstPt = pts;
                 pts++;
             } break;
             case PathCommand::LineTo: {
@@ -903,7 +906,16 @@ void Tessellator::visitShape(const PathCommand *cmds, uint32_t cmd_count, const 
 
                 pts += 3;
             } break;
-            case PathCommand::Close:  // fall through
+            case PathCommand::Close: {
+                if (firstPt && outlines.count > 0) {
+                    auto last = outlines.last();
+
+                    if (last->head->point != *firstPt) {
+                        last->append(pHeap->Allocate<detail::Vertex>(*firstPt));
+                    }
+                    firstPt = nullptr;
+                }
+            }
             default:
                 break;
         }
@@ -937,10 +949,6 @@ void Tessellator::buildMesh()
         }
     }
 
-    if (temp.count < 3) {
-        return;
-    }
-
     temp.sort<detail::VertexCompare>();
 
     for (uint32_t i = 0; i < temp.count; i++) {
@@ -955,6 +963,8 @@ void Tessellator::mergeVertices()
     }
 
     for (auto v = pMesh->head->next; v;) {
+        auto next = v->next;
+
         if (detail::VertexCompare::Compare(v->point, v->prev->point)) {
             // already sorted, this means these two points is same
             v->point = v->prev->point;
@@ -973,7 +983,7 @@ void Tessellator::mergeVertices()
             pMesh->remove(v);
         }
 
-        v = v->next;
+        v = next;
     }
 }
 
