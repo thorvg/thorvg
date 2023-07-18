@@ -83,7 +83,7 @@ bool GlRenderer::preRender()
     GlRenderTask::unload();
 
     // Blend function for straight alpha
-    GL_CHECK(glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA));
+    GL_CHECK(glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA));
     GL_CHECK(glEnable(GL_BLEND));
 
     mVertexBuffer.copyToGPU();
