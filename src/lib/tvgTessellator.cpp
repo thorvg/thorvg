@@ -1678,6 +1678,19 @@ void Stroker::strokeLineTo(const Point &curr)
 
 void Stroker::strokeCubicTo(const Point &cnt1, const Point &cnt2, const Point &end)
 {
+    Bezier curve{};
+    curve.start = mStrokeState.prevPt;
+    curve.ctrl1 = cnt1;
+    curve.ctrl2 = cnt2;
+    curve.end = end;
+
+    auto count = detail::_bezierCurveCount(curve);
+
+    float step = 1.f / count;
+
+    for (int32_t i = 0; i <= count; i++) {
+        strokeLineTo(bezPointAt(curve, step * i));
+    }
 }
 
 void Stroker::strokeClose()
