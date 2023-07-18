@@ -65,8 +65,8 @@ static int _str2float(const char* str, int len)
 
 void LottieLoader::clear()
 {
-    //TODO: Clear all used resources
     if (copy) free((char*)content);
+
     size = 0;
     content = nullptr;
     copy = false;
@@ -279,9 +279,15 @@ unique_ptr<Paint> LottieLoader::paint()
 
 bool LottieLoader::frame(uint32_t frameNo)
 {
+    if (this->frameNo == frameNo) return true;
+
     this->done();
 
-    return true;
+    if (!comp || frameNo >= comp->frameCnt()) return false;
+
+    this->frameNo = frameNo;
+
+    return builder->update(comp, frameNo);
 }
 
 
@@ -289,7 +295,8 @@ uint32_t LottieLoader::totalFrame()
 {
     this->done();
 
-    return 0;
+    if (!comp) return 0;
+    return comp->frameCnt();
 }
 
 
@@ -305,5 +312,6 @@ float LottieLoader::duration()
 {
     this->done();
 
-    return 0;
+    if (!comp) return 0;
+    return comp->duration();
 }
