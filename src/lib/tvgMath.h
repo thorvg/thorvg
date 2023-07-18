@@ -165,4 +165,29 @@ static inline Matrix mathMultiply(const Matrix* lhs, const Matrix* rhs)
 }
 
 
+static inline Point operator-(const Point& lhs, const Point& rhs)
+{
+    return {lhs.x - rhs.x, lhs.y - rhs.y};
+}
+
+
+static inline Point operator+(const Point& lhs, const Point& rhs)
+{
+    return {lhs.x + rhs.x, lhs.y + rhs.y};
+}
+
+
+static inline Point operator*(const Point& lhs, float rhs)
+{
+    return {lhs.x * rhs, lhs.y * rhs};
+}
+
+
+template <typename T>
+static inline T mathLerp(const T &start, const T &end, float t)
+{
+    return static_cast<T>(start + (end - start) * t);
+}
+
+
 #endif //_TVG_MATH_H_

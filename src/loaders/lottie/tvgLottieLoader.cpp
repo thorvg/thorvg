@@ -23,6 +23,8 @@
 #include <math.h>
 #include "tvgLoader.h"
 #include "tvgLottieLoader.h"
+#include "tvgLottieModel.h"
+#include "tvgLottieParser.h"
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
@@ -87,8 +89,8 @@ LottieLoader::~LottieLoader()
 
 void LottieLoader::run(unsigned tid)
 {
-    /* TODO: Compose current frame of Lottie Scene tree
-       The result should be assigned to "this->root" */
+    LottieParser parser(content);
+    parser.parse();
 }
 
 
