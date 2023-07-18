@@ -108,7 +108,7 @@ struct Array
     void operator=(const Array& rhs)
     {
         reserve(rhs.count);
-        if (rhs.count > 0) memcpy(data, rhs.data, sizeof(T) * reserved);
+        if (rhs.count > 0) memcpy(data, rhs.data, sizeof(T) * rhs.count);
         count = rhs.count;
     }
 
