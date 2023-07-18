@@ -125,7 +125,7 @@ void tvgSwTest(uint32_t* buffer)
     tvgDrawCmds(swCanvas.get());
 }
 
-void drawSwView(void* data, Eo* obj)
+void drawSwView(void* data)
 {
     if (swCanvas->draw() == tvg::Result::Success) {
         swCanvas->sync();
@@ -139,7 +139,7 @@ void drawSwView(void* data, Eo* obj)
 
 static unique_ptr<tvg::GlCanvas> glCanvas;
 
-void initGLview(Evas_Object *obj)
+void initGLview(SDL_Window *obj)
 {
     static constexpr auto BPP = 4;
 
@@ -154,11 +154,10 @@ void initGLview(Evas_Object *obj)
     tvgDrawCmds(glCanvas.get());
 }
 
-void drawGLview(Evas_Object *obj)
+void drawGLview(SDL_Window *obj)
 {
-    auto gl = elm_glview_gl_api_get(obj);
-    gl->glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    gl->glClear(GL_COLOR_BUFFER_BIT);
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
 
     if (glCanvas->draw() == tvg::Result::Success) {
         glCanvas->sync();
@@ -193,16 +192,11 @@ int main(int argc, char **argv)
     if (tvg::Initializer::init(tvgEngine, threads) == tvg::Result::Success) {
 
 
-        elm_init(argc, argv);
-
         if (tvgEngine == tvg::CanvasEngine::Sw) {
             createSwView();
         } else {
             createGlView();
         }
-
-        elm_run();
-        elm_shutdown();
 
         //Terminate ThorVG Engine
         tvg::Initializer::term(tvgEngine);

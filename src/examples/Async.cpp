@@ -34,7 +34,7 @@ bool tvgUpdateCmds(tvg::Canvas* canvas)
 {
    if (!canvas) return false;
 
-    auto t = ecore_time_get();
+    auto t = SDL_GetTicks64();
 
     //Explicitly clear all retained paint nodes.
     if (canvas->clear() != tvg::Result::Success) {
@@ -43,7 +43,7 @@ bool tvgUpdateCmds(tvg::Canvas* canvas)
     }
 
     t1 = t;
-    t2 = ecore_time_get();
+    t2 = SDL_GetTicks64();
 
     for (int i = 0; i < COUNT; i++) {
         auto shape = tvg::Shape::gen();
@@ -74,7 +74,7 @@ bool tvgUpdateCmds(tvg::Canvas* canvas)
         }
     }
 
-    t3 = ecore_time_get();
+    t3 = SDL_GetTicks64();
 
     //Drawing task can be performed asynchronously.
     if (canvas->draw() != tvg::Result::Success) return false;
@@ -96,24 +96,26 @@ void tvgSwTest(uint32_t* buffer)
     swCanvas->target(buffer, WIDTH, WIDTH, HEIGHT, tvg::SwCanvas::ARGB8888);
 }
 
-Eina_Bool animSwCb(void* data)
+bool animSwCb(void* data)
 {
-    if (!tvgUpdateCmds(swCanvas.get())) return ECORE_CALLBACK_RENEW;
+    if (!tvgUpdateCmds(swCanvas.get())) return true;
 
     //Update Efl Canvas
-    Eo* img = (Eo*) data;
-    evas_object_image_pixels_dirty_set(img, EINA_TRUE);
-    evas_object_image_data_update_add(img, 0, 0, WIDTH, HEIGHT);
+    // Eo* img = (Eo*) data;
+    // evas_object_image_pixels_dirty_set(img, EINA_TRUE);
+    // evas_object_image_data_update_add(img, 0, 0, WIDTH, HEIGHT);
 
-    return ECORE_CALLBACK_RENEW;
+    return true;
 }
 
-void drawSwView(void* data, Eo* obj)
+void drawSwView(void* data)
 {
+    if (!tvgUpdateCmds(swCanvas.get())) return ;
+
     //Make it guarantee finishing drawing task.
     swCanvas->sync();
 
-    t4 = ecore_time_get();
+    t4 = SDL_GetTicks64();
 
     printf("[%5d]: total[%fs] = clear[%fs], update[%fs], render[%fs]\n", ++cnt, t4 - t1, t2 - t1, t3 - t2, t4 - t3);
 }
@@ -125,7 +127,7 @@ void drawSwView(void* data, Eo* obj)
 
 static unique_ptr<tvg::GlCanvas> glCanvas;
 
-void initGLview(Evas_Object *obj)
+void initGLview(SDL_Window *obj)
 {
     static constexpr auto BPP = 4;
 
@@ -134,23 +136,24 @@ void initGLview(Evas_Object *obj)
     glCanvas->target(nullptr, WIDTH * BPP, WIDTH, HEIGHT);
 }
 
-void drawGLview(Evas_Object *obj)
+void drawGLview(SDL_Window *obj)
 {
-    auto gl = elm_glview_gl_api_get(obj);
-    gl->glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    gl->glClear(GL_COLOR_BUFFER_BIT);
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    if (!tvgUpdateCmds(glCanvas.get())) return ;
 
     glCanvas->sync();
 }
 
-Eina_Bool animGlCb(void* data)
+bool animGlCb(void* data)
 {
-    if (!tvgUpdateCmds(glCanvas.get())) return ECORE_CALLBACK_RENEW;
+    if (!tvgUpdateCmds(glCanvas.get())) return true;
 
     //Drawing task can be performed asynchronously.
     glCanvas->draw();
 
-    return ECORE_CALLBACK_RENEW;
+    return true;
 }
 
 
@@ -180,19 +183,12 @@ int main(int argc, char **argv)
     //Initialize ThorVG Engine
     if (tvg::Initializer::init(tvgEngine, threads) == tvg::Result::Success) {
 
-        elm_init(argc, argv);
-
         if (tvgEngine == tvg::CanvasEngine::Sw) {
-            auto view = createSwView();
-            evas_object_image_pixels_get_callback_set(view, drawSwView, nullptr);
-            ecore_animator_add(animSwCb, view);
+            createSwView();
         } else {
-            auto view = createGlView();
-            ecore_animator_add(animGlCb, view);
+            createGlView();
         }
 
-        elm_run();
-        elm_shutdown();
 
         //Terminate ThorVG Engine
         tvg::Initializer::term(tvgEngine);
