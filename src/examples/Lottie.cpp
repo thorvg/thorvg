@@ -42,6 +42,8 @@ static unique_ptr<tvg::SwCanvas> swCanvas;
 
 void lottieDirCallback(const char* name, const char* path, void* data)
 {
+    if (counter >= NUM_PER_ROW * NUM_PER_COL) return;
+
     //ignore if not lottie file.
     const char *ext = name + strlen(name) - 4;
     if (strcmp(ext, "json")) return;
