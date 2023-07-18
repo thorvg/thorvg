@@ -37,6 +37,8 @@ static std::vector<unique_ptr<tvg::Picture>> pictures;
 
 void tvgDirCallback(const char* name, const char* path, void* data)
 {
+    if (counter >= NUM_PER_ROW * NUM_PER_COL) return;
+
     //ignore if not tvgs.
     const char *ext = name + strlen(name) - 3;
     if (strcmp(ext, "tvg")) return;
