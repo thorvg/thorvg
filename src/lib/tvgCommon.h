@@ -64,6 +64,8 @@ using namespace tvg;
 
 enum class FileType { Tvg = 0, Svg, Lottie, Raw, Png, Jpg, Webp, Unknown };
 
+using Size = Point;
+
 #ifdef THORVG_LOG_ENABLED
     constexpr auto ErrorColor = "\033[31m";  //red
     constexpr auto ErrorBgColor = "\033[41m";//bg red
