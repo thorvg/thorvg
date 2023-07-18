@@ -63,7 +63,7 @@ static void _lineSplitAt(const Line& cur, float at, Line& left, Line& right)
 
 static void _outlineEnd(SwOutline& outline)
 {
-    if (outline.pts.count == 0) return;
+    if (outline.pts.empty()) return;
     outline.cntrs.push(outline.pts.count - 1);
 }
 

@@ -467,7 +467,7 @@ bool mathUpdateOutlineBBox(const SwOutline* outline, const SwBBox& clipRegion, S
 
     auto pt = outline->pts.data;
 
-    if (outline->pts.count == 0 || outline->cntrs.count <= 0) {
+    if (outline->pts.empty() || outline->cntrs.empty()) {
         renderRegion.reset();
         return false;
     }

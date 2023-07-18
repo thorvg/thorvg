@@ -2671,7 +2671,7 @@ static void _inheritGradient(SvgLoaderData* loader, SvgStyleGradient* to, SvgSty
         }
     }
 
-    if (to->stops.count == 0) _cloneGradStops(to->stops, from->stops);
+    if (to->stops.empty()) _cloneGradStops(to->stops, from->stops);
 }
 
 

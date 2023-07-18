@@ -39,15 +39,15 @@ struct Array
 
     Array(const Array& rhs)
     {
-        reserve(rhs.reserved);
-        count = rhs.count;
-        memcpy(data, rhs.data, sizeof(T) * count);
+        reset();
+        *this = rhs;
     }
 
     void push(T element)
     {
         if (count + 1 > reserved) {
-            if (!reserve(count + (count >> 1) + 1)) return;
+            reserved = count + (count + 2) / 2;
+            data = static_cast<T*>(realloc(data, sizeof(T) * reserved));
         }
         data[count++] = element;
     }
@@ -63,12 +63,7 @@ struct Array
     {
         if (size > reserved) {
             reserved = size;
-            auto p = data;
             data = static_cast<T*>(realloc(data, sizeof(T) * reserved));
-            if (!data) {
-                data = p;
-                return false;
-            }
         }
         return true;
     }
@@ -100,16 +95,19 @@ struct Array
 
     void reset()
     {
-        if (data) {
-            free(data);
-            data = nullptr;
-        }
+        free(data);
+        data = nullptr;
         count = reserved = 0;
     }
 
     void clear()
     {
         count = 0;
+    }
+
+    bool empty() const
+    {
+        return count == 0;
     }
 
     void operator=(const Array& rhs)
