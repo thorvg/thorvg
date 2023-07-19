@@ -27,6 +27,9 @@
 #include "tvgFrameModule.h"
 #include "tvgTaskScheduler.h"
 
+struct LottieComposition;
+struct LottieBuilder;
+
 class LottieLoader : public FrameModule, public Task
 {
 public:
@@ -34,6 +37,9 @@ public:
     uint32_t size = 0;                  //lottie data size
     uint32_t frameRate;
     uint32_t frameNo = 0;               //current frame number
+
+    LottieBuilder* builder = nullptr;
+    LottieComposition* comp = nullptr;
 
     unique_ptr<Scene> root;             //current motion frame
 

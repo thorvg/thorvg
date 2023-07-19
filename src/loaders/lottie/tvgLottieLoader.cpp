@@ -25,6 +25,7 @@
 #include "tvgLottieLoader.h"
 #include "tvgLottieModel.h"
 #include "tvgLottieParser.h"
+#include "tvgLottieBuilder.h"
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
@@ -72,11 +73,22 @@ void LottieLoader::clear()
 }
 
 
+void LottieLoader::run(unsigned tid)
+{
+    LottieParser parser(content);
+    parser.parse();
+
+    comp = parser.comp;
+
+    root = builder->build(comp);
+}
+
+
 /************************************************************************/
 /* External Class Implementation                                        */
 /************************************************************************/
 
-LottieLoader::LottieLoader()
+LottieLoader::LottieLoader() : builder(new LottieBuilder)
 {
 }
 
@@ -84,13 +96,14 @@ LottieLoader::LottieLoader()
 LottieLoader::~LottieLoader()
 {
     close();
-}
 
+    //TODO: correct position?
+    if (comp) {
+        delete(comp);
+        comp = nullptr;
+    }
 
-void LottieLoader::run(unsigned tid)
-{
-    LottieParser parser(content);
-    parser.parse();
+    delete(builder);
 }
 
 
