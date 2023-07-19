@@ -15,7 +15,7 @@ ThorVG is a platform-independent portable library for drawing vector-based scene
 The following list shows primitives that are supported by ThorVG: <br />
 
  * Shapes: Line, Arc, Curve, Path, Polygon, ...
- * Filling: Solid, Linear, Radial Gradient and Texture Mapping
+ * Filling: Solid & Gradient Fillings and Texture Mapping
  * Scene Graph & Affine Transformation (translation, rotation, scale, ...)
  * Stroking: Width, Join, Cap, Dash
  * Composition: Blending, Masking, Path Clipping, ...
