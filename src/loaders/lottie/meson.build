@@ -1,10 +1,12 @@
 source_file = [
+   'tvgLottieBuilder.h',
    'tvgLottieInterpolator.h',
    'tvgLottieLoader.h',
    'tvgLottieModel.h',
    'tvgLottieParser.h',
    'tvgLottieParserHandler.h',
    'tvgLottieProperty.h',
+   'tvgLottieBuilder.cpp',
    'tvgLottieInterpolator.cpp',
    'tvgLottieLoader.cpp',
    'tvgLottieParserHandler.cpp',
