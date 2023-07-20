@@ -1569,7 +1569,7 @@ Stroker::Stroker(Array<float> *points, Array<uint32_t> *indices) : mResPoints(po
 
 void Stroker::stroke(const RenderShape *rshape)
 {
-    mMiterLimit = rshape->strokeMiterlimit();
+    mMiterLimit = rshape->strokeMiterlimit() * 2.f;
     mStrokeWidth = std::max(mStrokeWidth, rshape->strokeWidth());
     mStrokeCap = rshape->strokeCap();
     mStrokeJoin = rshape->strokeJoin();
@@ -1792,8 +1792,8 @@ void Stroker::strokeRound(const Point &prev, const Point &curr, const Point &cen
 
 void Stroker::strokeMiter(const Point &prev, const Point &curr, const Point &center)
 {
-    auto pp1 = pointNormalize(prev - center);
-    auto pp2 = pointNormalize(curr - center);
+    auto pp1 = prev - center;
+    auto pp2 = curr - center;
 
     auto out = pp1 + pp2;
 
@@ -1810,8 +1810,8 @@ void Stroker::strokeMiter(const Point &prev, const Point &curr, const Point &cen
 
     auto c = detail::_pushVertex(mResPoints, center.x, center.y, 1.f);
 
-    auto cp1 = detail::_pushVertex(mResPoints, pp1.x, pp1.y, 1.f);
-    auto cp2 = detail::_pushVertex(mResPoints, pp2.x, pp2.y, 1.f);
+    auto cp1 = detail::_pushVertex(mResPoints, prev.x, prev.y, 1.f);
+    auto cp2 = detail::_pushVertex(mResPoints, curr.x, curr.y, 1.f);
 
     auto e = detail::_pushVertex(mResPoints, join.x, join.y, 1.f);
 
