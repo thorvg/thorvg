@@ -32,7 +32,8 @@ public:
     enum class Target
     {
         ARRAY_BUFFER = GL_ARRAY_BUFFER,
-        ELEMENT_ARRAY_BUFFER = GL_ELEMENT_ARRAY_BUFFER
+        ELEMENT_ARRAY_BUFFER = GL_ELEMENT_ARRAY_BUFFER,
+        UNIFORM_BUFFER = GL_UNIFORM_BUFFER,
     };
 
     GlGpuBuffer();

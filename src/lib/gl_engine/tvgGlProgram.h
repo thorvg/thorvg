@@ -26,6 +26,13 @@
 #include <map>
 #include "tvgGlShader.h"
 
+enum PipelineType
+{
+    kSolidColor = 0,
+    kLinearGradient = 1,
+    kRadialGradient = 2,
+};
+
 class GlProgram
 {
 public:
@@ -37,6 +44,7 @@ public:
     static void unload();
     int32_t getAttributeLocation(const char* name);
     int32_t getUniformLocation(const char* name);
+    int32_t getUniformBlockIndex(const char* name);
     void setUniform1Value(int32_t location, int count, const int* values);
     void setUniform2Value(int32_t location, int count, const int* values);
     void setUniform3Value(int32_t location, int count, const int* values);

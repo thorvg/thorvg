@@ -26,6 +26,8 @@
 #include "tvgGlGpuBuffer.h"
 #include "tvgGlPropertyInterface.h"
 
+#include "gl_shader_source.h"
+
 /************************************************************************/
 /* Internal Class Implementation                                        */
 /************************************************************************/
@@ -60,6 +62,10 @@ bool GlRenderer::target(TVG_UNUSED uint32_t* buffer, uint32_t stride, uint32_t w
     surface.w = w;
     surface.h = h;
 
+    if (mShaders.empty()) {
+        initShaders();
+    }
+
     return true;
 }
 
@@ -77,17 +83,13 @@ RenderRegion GlRenderer::region(TVG_UNUSED RenderData data)
 
 bool GlRenderer::preRender()
 {
-    if (mRenderTasks.size() == 0) {
-        initShaders();
-    }
-    GlRenderTask::unload();
-
     // Blend function for straight alpha
     GL_CHECK(glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA));
     GL_CHECK(glEnable(GL_BLEND));
 
     mVertexBuffer.copyToGPU();
     mIndexBuffer.copyToGPU();
+    mUniformBuffer.copyToGPU();
 
     return true;
 }
@@ -139,28 +141,28 @@ bool GlRenderer::renderShape(RenderData data)
     auto sdata = static_cast<GlShape*>(data);
     if (!sdata) return false;
 
-    uint8_t r = 0, g = 0, b = 0, a = 0;
     size_t  flags = static_cast<size_t>(sdata->updateFlag);
 
     GL_CHECK(glViewport(0, 0, (GLsizei)sdata->viewWd, (GLsizei)sdata->viewHt));
 
+    sdata->geometry->preDraw();
+
     if (flags & (RenderUpdateFlag::Gradient | RenderUpdateFlag::Transform)) {
-        auto gradient = sdata->rshape->fill;
-        if (gradient) drawPrimitive(*sdata, gradient, RenderUpdateFlag::Gradient);
+        auto cmd = sdata->geometry->drawCmd(RenderUpdateFlag::Gradient);
+
+        if (cmd) cmd->execute();
     }
 
     if (flags & (RenderUpdateFlag::Color | RenderUpdateFlag::Transform)) {
-        sdata->rshape->fillColor(&r, &g, &b, &a);
-        if (a > 0) {
-            drawPrimitive(*sdata, r, g, b, a, RenderUpdateFlag::Color);
-        }
+        auto cmd = sdata->geometry->drawCmd(RenderUpdateFlag::Color);
+
+        if (cmd) cmd->execute();
     }
 
     if (flags & (RenderUpdateFlag::Stroke | RenderUpdateFlag::Transform)) {
-        sdata->rshape->strokeColor(&r, &g, &b, &a);
-        if (a > 0) {
-            drawPrimitive(*sdata, r, g, b, a, RenderUpdateFlag::Stroke);
-        }
+        auto cmd = sdata->geometry->drawCmd(RenderUpdateFlag::Stroke);
+
+        if (cmd) cmd->execute();
     }
 
     return true;
@@ -215,7 +217,6 @@ RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const
     uint8_t alphaF = 0, alphaS = 0;
     rshape.fillColor(nullptr, nullptr, nullptr, &alphaF);
     rshape.strokeColor(nullptr, nullptr, nullptr, &alphaS);
-    auto strokeWd = rshape.strokeWidth();
 
     if (((sdata->updateFlag & RenderUpdateFlag::Gradient) == 0) &&
         ((sdata->updateFlag & RenderUpdateFlag::Color) && alphaF == 0) &&
@@ -225,9 +226,13 @@ RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const
 
     sdata->geometry->updateTransform(transform, sdata->viewWd, sdata->viewHt);
 
+    TessContext context{&mVertexBuffer, &mIndexBuffer, &mUniformBuffer, mShaders};
+
     if (sdata->updateFlag & (RenderUpdateFlag::Color | RenderUpdateFlag::Stroke | RenderUpdateFlag::Gradient |
                              RenderUpdateFlag::Transform)) {
-        if (!sdata->geometry->tessellate(rshape, sdata->updateFlag, &mVertexBuffer, &mIndexBuffer)) return sdata;
+        if (!sdata->geometry->tessellate(rshape, sdata->updateFlag, &context)) {
+            return sdata;
+        }
     }
     return sdata;
 }
@@ -274,13 +279,15 @@ GlRenderer* GlRenderer::gen()
 }
 
 GlRenderer::GlRenderer()
-    : mVertexBuffer(GlGpuBuffer::Target::ARRAY_BUFFER), mIndexBuffer(GlGpuBuffer::Target::ELEMENT_ARRAY_BUFFER)
+    : mVertexBuffer(GlGpuBuffer::Target::ARRAY_BUFFER),
+      mIndexBuffer(GlGpuBuffer::Target::ELEMENT_ARRAY_BUFFER),
+      mUniformBuffer(GlGpuBuffer::Target::UNIFORM_BUFFER)
 {
 }
 
 GlRenderer::~GlRenderer()
 {
-    mRenderTasks.clear();
+    mShaders.clear();
 
     --rendererCnt;
 
@@ -289,82 +296,17 @@ GlRenderer::~GlRenderer()
 
 void GlRenderer::initShaders()
 {
+    mShaders.reserve(3);
     // Solid Color Renderer
-    mRenderTasks.push_back(GlColorRenderTask::gen());
+    {
+        std::string vs_shader(color_vert, color_vert_size);
+        std::string fs_shader(color_frag, color_frag_size);
+        mShaders[0] = GlProgram::gen(GlShader::gen(vs_shader.c_str(), fs_shader.c_str()));
+    }
 
     // Linear Gradient Renderer
     // mRenderTasks.push_back(GlLinearGradientRenderTask::gen());
 
     // Radial Gradient Renderer
     // mRenderTasks.push_back(GlRadialGradientRenderTask::gen());
-}
-
-void GlRenderer::drawPrimitive(GlShape& sdata, uint8_t r, uint8_t g, uint8_t b, uint8_t a, RenderUpdateFlag flag)
-{
-    GlColorRenderTask* renderTask =
-        static_cast<GlColorRenderTask*>(mRenderTasks[GlRenderTask::RenderTypes::RT_Color].get());
-    assert(renderTask);
-    renderTask->load();
-    float* matrix = sdata.geometry->getTransforMatrix();
-    PropertyInterface::clearData(renderTask);
-    renderTask->setColor(r, g, b, a);
-    renderTask->setTransform(FORMAT_SIZE_MAT_4x4, matrix);
-    renderTask->uploadValues();
-    sdata.geometry->draw(flag);
-}
-
-void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFlag flag)
-{
-    const Fill::ColorStop* stops = nullptr;
-    auto                   stopCnt = fill->colorStops(&stops);
-    if (stopCnt < 2) return;
-
-    GlGradientRenderTask* rTask = nullptr;
-    auto                  size = sdata.geometry->getPrimitiveSize();
-    auto                  matrix = sdata.geometry->getTransforMatrix();
-
-    switch (fill->identifier()) {
-        case TVG_CLASS_ID_LINEAR: {
-            float                       x1, y1, x2, y2;
-            GlLinearGradientRenderTask* renderTask =
-                static_cast<GlLinearGradientRenderTask*>(mRenderTasks[GlRenderTask::RenderTypes::RT_LinGradient].get());
-            assert(renderTask);
-            rTask = renderTask;
-            renderTask->load();
-            PropertyInterface::clearData(renderTask);
-            const LinearGradient* grad = static_cast<const LinearGradient*>(fill);
-            grad->linear(&x1, &y1, &x2, &y2);
-            renderTask->setStartPosition(x1, y1);
-            renderTask->setEndPosition(x2, y2);
-            break;
-        }
-        case TVG_CLASS_ID_RADIAL: {
-            float                       x1, y1, r1;
-            GlRadialGradientRenderTask* renderTask =
-                static_cast<GlRadialGradientRenderTask*>(mRenderTasks[GlRenderTask::RenderTypes::RT_RadGradient].get());
-            assert(renderTask);
-            rTask = renderTask;
-            renderTask->load();
-            PropertyInterface::clearData(renderTask);
-            const RadialGradient* grad = static_cast<const RadialGradient*>(fill);
-            grad->radial(&x1, &y1, &r1);
-            renderTask->setStartPosition(x1, y1);
-            renderTask->setStartRadius(r1);
-            break;
-        }
-    }
-    if (rTask) {
-        rTask->setPrimitveSize(size.x, size.y);
-        rTask->setCanvasSize(sdata.viewWd, sdata.viewHt);
-        rTask->setNoise(NOISE_LEVEL);
-        rTask->setStopCount((int)stopCnt);
-        rTask->setTransform(FORMAT_SIZE_MAT_4x4, matrix);
-
-        for (uint32_t i = 0; i < stopCnt; ++i) {
-            rTask->setStopColor(i, stops[i].offset, stops[i].r, stops[i].g, stops[i].b, stops[i].a);
-        }
-
-        rTask->uploadValues();
-        sdata.geometry->draw(flag);
-    }
 }

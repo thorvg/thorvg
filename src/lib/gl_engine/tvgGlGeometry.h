@@ -24,10 +24,12 @@
 #define _TVG_GL_GEOMETRY_H_
 
 #include <math.h>
+#include <unordered_map>
 
 #include "tvgArray.h"
 #include "tvgGlCommon.h"
 #include "tvgGlGpuBuffer.h"
+#include "tvgGlCommand.h"
 
 #define PI 3.1415926535897932384626433832795f
 
@@ -172,6 +174,15 @@ public:
 
 typedef GlPoint GlSize;
 
+class GlProgram;
+struct TessContext
+{
+    GLStageBuffer *vertexBuffer = {};
+    GLStageBuffer *indexBuffer = {};
+    GLStageBuffer *uniformBuffer = {};
+
+    const std::vector<std::unique_ptr<GlProgram>> &shaders;
+};
 
 class GlGeometry
 {
@@ -179,26 +190,21 @@ public:
     GlGeometry();
     ~GlGeometry();
 
-    bool   tessellate(const RenderShape &rshape, RenderUpdateFlag flag, GLStageBuffer *vertexBuffer,
-                      GLStageBuffer *indexBuffer);
-    void   draw(RenderUpdateFlag flag);
-    void   updateTransform(const RenderTransform *transform, float w, float h);
-    float *getTransforMatrix();
-    GlSize getPrimitiveSize() const;
+    bool       tessellate(const RenderShape &rshape, RenderUpdateFlag flag, TessContext *context);
+    void       preDraw();
+    GlCommand *drawCmd(RenderUpdateFlag flag);
+    void       updateTransform(const RenderTransform *transform, float w, float h);
+    GlSize     getPrimitiveSize() const;
 
 private:
-    void bindBuffers();
+    GlCommand generateColorCMD(float color[4], const Array<float> &vertex, const Array<uint32_t> &index,
+                               TessContext *context);
 
 private:
     GLuint mVao = 0;
     float  mTransform[16] = {0.f};
 
-    GlGpuBufferView mVertexBufferView = {};
-    GlGpuBufferView mIndexBufferView = {};
-
-    uint32_t mFillDrawCount = 0;
-    uint32_t mStrokeDrawStart = 0;
-    uint32_t mStrokeDrawCount = 0;
+    std::unordered_map<uint32_t, GlCommand> mCmds = {};
 };
 
 #endif /* _TVG_GL_GEOMETRY_H_ */

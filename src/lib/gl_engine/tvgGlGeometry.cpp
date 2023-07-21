@@ -45,68 +45,96 @@ GlGeometry::~GlGeometry()
     mVao = 0;
 }
 
-bool GlGeometry::tessellate(const RenderShape& rshape, RenderUpdateFlag flag, GLStageBuffer* vertexBuffer,
-                            GLStageBuffer* indexBuffer)
+bool GlGeometry::tessellate(const RenderShape& rshape, RenderUpdateFlag flag, TessContext* context)
 {
-    Array<float>    vertices;
-    Array<uint32_t> indices;
-
     if (flag & RenderUpdateFlag::Color) {
+        uint8_t r, g, b, a;
+        rshape.fillColor(&r, &g, &b, &a);
 
-        Tessellator tess(&vertices, &indices);
+        if (a > 0) {
+            Array<float>    vertices;
+            Array<uint32_t> indices;
 
-        tess.tessellate(&rshape, true);
+            Tessellator tess(&vertices, &indices);
 
-        mFillDrawCount = indices.count;
+            tess.tessellate(&rshape, true);
+
+            float color[4];
+            color[0] = r / 255.f;
+            color[1] = g / 255.f;
+            color[2] = b / 255.f;
+            color[3] = a / 255.f;
+
+            mCmds.insert({RenderUpdateFlag::Color, generateColorCMD(color, vertices, indices, context)});
+        }
     }
 
     if ((flag & RenderUpdateFlag::Stroke) && rshape.strokeWidth() > 0.f) {
-        Stroker stroker(&vertices, &indices);
 
-        mStrokeDrawStart = mFillDrawCount;
+        uint8_t r, g, b, a;
+        rshape.fillColor(&r, &g, &b, &a);
 
-        stroker.stroke(&rshape);
+        if (a > 0) {
 
-        mStrokeDrawCount = indices.count - mStrokeDrawStart;
+            Array<float>    vertices;
+            Array<uint32_t> indices;
+
+            Stroker stroker(&vertices, &indices);
+
+            stroker.stroke(&rshape);
+
+            float color[4];
+            color[0] = r / 255.f;
+            color[1] = g / 255.f;
+            color[2] = b / 255.f;
+            color[3] = a / 255.f;
+
+            mCmds.insert({RenderUpdateFlag::Stroke, generateColorCMD(color, vertices, indices, context)});
+        }
     }
-
-    if (vertices.count == 0 || indices.count == 0) {
-        return false;
-    }
-
-    mVertexBufferView = vertexBuffer->push(vertices.data, vertices.count * sizeof(float));
-    mIndexBufferView = indexBuffer->push(indices.data, indices.count * sizeof(uint32_t));
-
 
     return true;
 }
 
-
-void GlGeometry::draw(RenderUpdateFlag flag)
+void GlGeometry::preDraw()
 {
-    if (flag == RenderUpdateFlag::Color && mFillDrawCount == 0) {
-        return;
+    assert(mVao);
+
+    glBindVertexArray(mVao);
+}
+
+GlCommand* GlGeometry::drawCmd(RenderUpdateFlag flag)
+{
+    auto it = mCmds.find(flag);
+
+    if (it == mCmds.end()) {
+        return nullptr;
+    } else {
+        return &it->second;
     }
+    // if (flag == RenderUpdateFlag::Color && mFillDrawCount == 0) {
+    //     return;
+    // }
 
-    if (flag == RenderUpdateFlag::Stroke && mStrokeDrawCount == 0) {
-        return;
-    }
+    // if (flag == RenderUpdateFlag::Stroke && mStrokeDrawCount == 0) {
+    //     return;
+    // }
 
-    // TODO draw stroke based on flag
-    this->bindBuffers();
+    // // TODO draw stroke based on flag
+    // this->bindBuffers();
 
-    if (flag == RenderUpdateFlag::Color) {
+    // if (flag == RenderUpdateFlag::Color) {
 
-        GL_CHECK(glDrawElements(GL_TRIANGLES, mFillDrawCount, GL_UNSIGNED_INT,
-                                reinterpret_cast<void*>(mIndexBufferView.offset)));
-    } else if (flag == RenderUpdateFlag::Stroke) {
-        GL_CHECK(
-            glDrawElements(GL_TRIANGLES, mStrokeDrawCount, GL_UNSIGNED_INT,
-                           reinterpret_cast<void*>(mIndexBufferView.offset + mStrokeDrawStart * sizeof(uint32_t))));
-    }
+    //     GL_CHECK(glDrawElements(GL_TRIANGLES, mFillDrawCount, GL_UNSIGNED_INT,
+    //                             reinterpret_cast<void*>(mIndexBufferView.offset)));
+    // } else if (flag == RenderUpdateFlag::Stroke) {
+    //     GL_CHECK(
+    //         glDrawElements(GL_TRIANGLES, mStrokeDrawCount, GL_UNSIGNED_INT,
+    //                        reinterpret_cast<void*>(mIndexBufferView.offset + mStrokeDrawStart * sizeof(uint32_t))));
+    // }
 
-    // reset vao state
-    GL_CHECK(glBindVertexArray(0));
+    // // reset vao state
+    // GL_CHECK(glBindVertexArray(0));
 }
 
 
@@ -130,32 +158,55 @@ void GlGeometry::updateTransform(const RenderTransform* transform, float w, floa
     MULTIPLY_MATRIX(mvp, model, mTransform);
 }
 
-float* GlGeometry::getTransforMatrix()
-{
-    return mTransform;
-}
 
 GlSize GlGeometry::getPrimitiveSize() const
 {
     return GlSize{};
 }
 
-void GlGeometry::bindBuffers()
+GlCommand GlGeometry::generateColorCMD(float color[4], const Array<float>& vertices, const Array<uint32_t>& indices,
+                                       TessContext* context)
 {
-    assert(mVertexBufferView.buffer);
-    assert(mIndexBufferView.buffer);
-    assert(mVao);
+    GlCommand cmd;
 
-    // bind vao to make sure buffer offset is applied inside this geometry
-    GL_CHECK(glBindVertexArray(mVao));
+    cmd.shader = context->shaders[PipelineType::kSolidColor].get();
+    cmd.vertexBuffer = context->vertexBuffer->push(vertices.data, vertices.count * sizeof(float));
+    cmd.indexBuffer = context->indexBuffer->push(indices.data, indices.count * sizeof(uint32_t));
+    cmd.drawCount = indices.count;
+    cmd.drawStart = 0;
+    // attribute layout
+    cmd.vertexLayouts.emplace_back(VertexLayout{0, 3, 0});
+    // uniforms
+    // matrix
+    {
+        int32_t loc = cmd.shader->getUniformBlockIndex("Matrix");
+        cmd.bindings.emplace_back(
+            BindingResource(0, loc, context->uniformBuffer->push(mTransform, 16 * sizeof(float)), 16 * sizeof(float)));
+    }
+    // color
+    {
+        int32_t loc = cmd.shader->getUniformBlockIndex("ColorInfo");
 
-    mVertexBufferView.buffer->bind(GlGpuBuffer::Target::ARRAY_BUFFER);
+        cmd.bindings.emplace_back(
+            BindingResource(1, loc, context->uniformBuffer->push(color, 4 * sizeof(float)), 4 * sizeof(float)));
+    }
 
-    // currently only have one attribute
-    // if we need to support text in the future, we may need another attribute ot carry uv information
-    GL_CHECK(glEnableVertexAttribArray(0));
-    GL_CHECK(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3,
-                                   reinterpret_cast<void*>(mVertexBufferView.offset)));
-
-    mIndexBufferView.buffer->bind(GlGpuBuffer::Target::ELEMENT_ARRAY_BUFFER);
+    return cmd;
 }
+
+// void GlGeometry::bindBuffers()
+// {
+//     assert(mVertexBufferView.buffer);
+//     assert(mIndexBufferView.buffer);
+//     assert(mVao);
+
+//     GL_CHECK(glBindVertexArray(mVao));
+
+//     mVertexBufferView.buffer->bind(GlGpuBuffer::Target::ARRAY_BUFFER);
+
+//     GL_CHECK(glEnableVertexAttribArray(0));
+//     GL_CHECK(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3,
+//                                    reinterpret_cast<void*>(mVertexBufferView.offset)));
+
+//     mIndexBufferView.buffer->bind(GlGpuBuffer::Target::ELEMENT_ARRAY_BUFFER);
+// }

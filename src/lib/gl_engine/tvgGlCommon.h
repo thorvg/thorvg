@@ -69,7 +69,7 @@ struct GlShape
   float viewWd;
   float viewHt;
   RenderUpdateFlag updateFlag = None;
-  unique_ptr<GlGeometry> geometry;
+  std::unique_ptr<GlGeometry> geometry;
 };
 
 

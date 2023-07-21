@@ -47,8 +47,7 @@ GlProgram::GlProgram(std::shared_ptr<GlShader> shader)
 
 GlProgram::~GlProgram()
 {
-    if (mCurrentProgram == mProgramObj)
-    {
+    if (mCurrentProgram == mProgramObj) {
         unload();
     }
     glDeleteProgram(mProgramObj);
@@ -57,14 +56,12 @@ GlProgram::~GlProgram()
 
 void GlProgram::load()
 {
-    if (mCurrentProgram == mProgramObj)
-    {
+    if (mCurrentProgram == mProgramObj) {
         return;
     }
 
     mCurrentProgram = mProgramObj;
     GL_CHECK(glUseProgram(mProgramObj));
-
 }
 
 
@@ -83,8 +80,14 @@ int32_t GlProgram::getAttributeLocation(const char* name)
 
 int32_t GlProgram::getUniformLocation(const char* name)
 {
-    GL_CHECK(int32_t location = glGetUniformLocation(mCurrentProgram, name));
+    GL_CHECK(int32_t location = glGetUniformLocation(mProgramObj, name));
     return location;
+}
+
+int32_t GlProgram::getUniformBlockIndex(const char* name)
+{
+    GL_CHECK(int32_t index = glGetUniformBlockIndex(mProgramObj, name));
+    return index;
 }
 
 
@@ -157,17 +160,14 @@ void GlProgram::linkProgram(std::shared_ptr<GlShader> shader)
     // Check the link status
     glGetProgramiv(progObj, GL_LINK_STATUS, &linked);
 
-    if (!linked)
-    {
+    if (!linked) {
         GLint infoLen = 0;
         glGetProgramiv(progObj, GL_INFO_LOG_LENGTH, &infoLen);
-        if (infoLen > 0)
-        {
+        if (infoLen > 0) {
             auto infoLog = static_cast<char*>(malloc(sizeof(char) * infoLen));
             glGetProgramInfoLog(progObj, infoLen, NULL, infoLog);
             TVGERR("GL_ENGINE", "Error linking shader: %s", infoLog);
             free(infoLog);
-
         }
         glDeleteProgram(progObj);
         progObj = 0;
@@ -175,4 +175,3 @@ void GlProgram::linkProgram(std::shared_ptr<GlShader> shader)
     }
     mProgramObj = progObj;
 }
-

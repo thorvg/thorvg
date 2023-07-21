@@ -71,13 +71,12 @@ private:
     ~GlRenderer();
 
     void initShaders();
-    void drawPrimitive(GlShape& sdata, uint8_t r, uint8_t g, uint8_t b, uint8_t a, RenderUpdateFlag flag);
-    void drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFlag flag);
 
     GLStageBuffer mVertexBuffer;
     GLStageBuffer mIndexBuffer;
+    GLStageBuffer mUniformBuffer;
 
-    std::vector<shared_ptr<GlRenderTask>> mRenderTasks;
+    std::vector<std::unique_ptr<GlProgram>> mShaders;
 };
 
 #endif /* _TVG_GL_RENDERER_H_ */
