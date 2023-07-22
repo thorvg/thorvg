@@ -309,10 +309,10 @@ static void _rasterMaskedRectInt(SwSurface* surface, const SwBBox& region, uint8
     auto h = static_cast<uint32_t>(region.max.y - region.min.y);
     auto cstride = surface->compositor->image.stride;
 
-    for (uint32_t y = surface->compositor->bbox.min.y; y < surface->compositor->bbox.max.y; ++y) {
+    for (auto y = surface->compositor->bbox.min.y; y < surface->compositor->bbox.max.y; ++y) {
         auto cmp = surface->compositor->image.buf32 + (y * cstride + surface->compositor->bbox.min.x);
         if (y == region.min.y) {
-            for (uint32_t y2 = y; y2 < region.max.y; ++y2) {
+            for (auto y2 = y; y2 < region.max.y; ++y2) {
                 auto tmp = cmp;
                 auto x = surface->compositor->bbox.min.x;
                 while (x < surface->compositor->bbox.max.x) {
@@ -499,9 +499,9 @@ static void _rasterMaskedRleInt(SwSurface* surface, SwRleData* rle, uint8_t r, u
     auto color = surface->join(r, g, b, a);
     uint32_t src;
 
-    for (uint32_t y = surface->compositor->bbox.min.y; y < surface->compositor->bbox.max.y; ++y) {
+    for (auto y = surface->compositor->bbox.min.y; y < surface->compositor->bbox.max.y; ++y) {
         auto cmp = &cbuffer[y * cstride];
-        uint32_t x = surface->compositor->bbox.min.x;
+        auto x = surface->compositor->bbox.min.x;
         while (x < surface->compositor->bbox.max.x) {
             if (y == span->y && x == span->x && x + span->len <= surface->compositor->bbox.max.x) {
                 if (span->coverage == 255) src = color;
@@ -729,9 +729,9 @@ static void _rasterScaledMaskedRleImageInt(SwSurface* surface, const SwImage* im
     auto cbuffer = surface->compositor->image.buf32;
     auto cstride = surface->compositor->image.stride;
 
-    for (uint32_t y = surface->compositor->bbox.min.y; y < surface->compositor->bbox.max.y; ++y) {
+    for (auto y = surface->compositor->bbox.min.y; y < surface->compositor->bbox.max.y; ++y) {
         auto cmp = &cbuffer[y * cstride];
-        for (uint32_t x = surface->compositor->bbox.min.x; x < surface->compositor->bbox.max.x; ++x) {
+        for (auto x = surface->compositor->bbox.min.x; x < surface->compositor->bbox.max.x; ++x) {
             if (y == span->y && x == span->x && x + span->len <= surface->compositor->bbox.max.x) {
                 auto sy = span->y * itransform->e22 + itransform->e23;
                 if ((uint32_t)sy >= image->h) continue;
@@ -945,7 +945,7 @@ static void _rasterDirectMaskedRleImageInt(SwSurface* surface, const SwImage* im
     auto cbuffer = surface->compositor->image.buf32;
     auto ctride = surface->compositor->image.stride;
 
-    for (uint32_t y = surface->compositor->bbox.min.y; y < surface->compositor->bbox.max.y; ++y) {
+    for (auto y = surface->compositor->bbox.min.y; y < surface->compositor->bbox.max.y; ++y) {
         auto cmp = &cbuffer[y * ctride];
         auto x = surface->compositor->bbox.min.x;
         while (x < surface->compositor->bbox.max.x) {
@@ -1156,10 +1156,10 @@ static void _rasterScaledMaskedImageInt(SwSurface* surface, const SwImage* image
     auto cstride = surface->compositor->image.stride;
     auto cbuffer = surface->compositor->image.buf32 + (surface->compositor->bbox.min.y * cstride + surface->compositor->bbox.min.x);
 
-    for (uint32_t y = surface->compositor->bbox.min.y; y < surface->compositor->bbox.max.y; ++y) {
+    for (auto y = surface->compositor->bbox.min.y; y < surface->compositor->bbox.max.y; ++y) {
         if (y == region.min.y) {
             auto cbuffer2 = cbuffer;
-            for (uint32_t y2 = y; y2 < region.max.y; ++y2) {
+            for (auto y2 = y; y2 < region.max.y; ++y2) {
                 auto sy = y2 * itransform->e22 + itransform->e23;
                 if ((uint32_t)sy >= image->h) continue;
                 auto tmp = cbuffer2;
@@ -1193,7 +1193,7 @@ static void _rasterScaledMaskedImageInt(SwSurface* surface, const SwImage* image
             y += (h - 1);
         } else {
             auto tmp = cbuffer;
-            for (uint32_t x = surface->compositor->bbox.min.x; x < surface->compositor->bbox.max.x; ++x, ++tmp) {
+            for (auto x = surface->compositor->bbox.min.x; x < surface->compositor->bbox.max.x; ++x, ++tmp) {
                 *tmp = 0;
             }
         }
@@ -1384,10 +1384,10 @@ static void _rasterDirectMaskedImageInt(SwSurface* surface, const SwImage* image
     auto cstride = surface->compositor->image.stride;
     auto cbuffer = surface->compositor->image.buf32 + (surface->compositor->bbox.min.y * cstride + surface->compositor->bbox.min.x);
 
-    for (uint32_t y = surface->compositor->bbox.min.y; y < surface->compositor->bbox.max.y; ++y) {
+    for (auto y = surface->compositor->bbox.min.y; y < surface->compositor->bbox.max.y; ++y) {
         if (y == region.min.y) {
             auto cbuffer2 = cbuffer;
-            for (uint32_t y2 = y; y2 < region.max.y; ++y2) {
+            for (auto y2 = y; y2 < region.max.y; ++y2) {
                 auto tmp = cbuffer2;
                 auto x = surface->compositor->bbox.min.x;
                 while (x < surface->compositor->bbox.max.x) {
@@ -1584,10 +1584,10 @@ static void _rasterGradientMaskedRectInt(SwSurface* surface, const SwBBox& regio
     auto w = static_cast<uint32_t>(region.max.x - region.min.x);
     auto cstride = surface->compositor->image.stride;
 
-    for (uint32_t y = surface->compositor->bbox.min.y; y < surface->compositor->bbox.max.y; ++y) {
+    for (auto y = surface->compositor->bbox.min.y; y < surface->compositor->bbox.max.y; ++y) {
         auto cmp = surface->compositor->image.buf32 + (y * cstride + surface->compositor->bbox.min.x);
         if (y == region.min.y) {
-            for (uint32_t y2 = y; y2 < region.max.y; ++y2) {
+            for (auto y2 = y; y2 < region.max.y; ++y2) {
                 auto tmp = cmp;
                 auto x = surface->compositor->bbox.min.x;
                 while (x < surface->compositor->bbox.max.x) {
@@ -1759,9 +1759,9 @@ static void _rasterGradientMaskedRleInt(SwSurface* surface, const SwRleData* rle
     auto cstride = surface->compositor->image.stride;
     auto cbuffer = surface->compositor->image.buf32;
 
-    for (uint32_t y = surface->compositor->bbox.min.y; y < surface->compositor->bbox.max.y; ++y) {
+    for (auto y = surface->compositor->bbox.min.y; y < surface->compositor->bbox.max.y; ++y) {
         auto cmp = &cbuffer[y * cstride];
-        uint32_t x = surface->compositor->bbox.min.x;
+        auto x = surface->compositor->bbox.min.x;
         while (x < surface->compositor->bbox.max.x) {
             if (y == span->y && x == span->x && x + span->len <= surface->compositor->bbox.max.x) {
                 fillMethod()(fill, cmp, span->y, span->x, span->len, opMaskIntersect, span->coverage);
