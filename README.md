@@ -294,7 +294,7 @@ Note that these examples require the EFL dev package for launching. If you're us
 ```
 apt-get install libefl-all-dev
 ```
-Or download the package [here](https://download.enlightenment.org/rel/win/efl/) for Windows. For more information, please visit the official [EFL page](https://enlightenment.org/).
+Alternatively, you can download the package [here](https://download.enlightenment.org/rel/win/efl/) for Windows. For more information, please visit the official [EFL page](https://enlightenment.org/).
 
 [Back to contents](#contents)
 <br />
