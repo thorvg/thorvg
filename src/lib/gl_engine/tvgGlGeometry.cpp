@@ -116,29 +116,6 @@ void GlGeometry::draw(RenderUpdateFlag flag)
         return;
     }
     it->second.execute();
-    // if (flag == RenderUpdateFlag::Color && mFillDrawCount == 0) {
-    //     return;
-    // }
-
-    // if (flag == RenderUpdateFlag::Stroke && mStrokeDrawCount == 0) {
-    //     return;
-    // }
-
-    // // TODO draw stroke based on flag
-    // this->bindBuffers();
-
-    // if (flag == RenderUpdateFlag::Color) {
-
-    //     GL_CHECK(glDrawElements(GL_TRIANGLES, mFillDrawCount, GL_UNSIGNED_INT,
-    //                             reinterpret_cast<void*>(mIndexBufferView.offset)));
-    // } else if (flag == RenderUpdateFlag::Stroke) {
-    //     GL_CHECK(
-    //         glDrawElements(GL_TRIANGLES, mStrokeDrawCount, GL_UNSIGNED_INT,
-    //                        reinterpret_cast<void*>(mIndexBufferView.offset + mStrokeDrawStart * sizeof(uint32_t))));
-    // }
-
-    // // reset vao state
-    // GL_CHECK(glBindVertexArray(0));
 }
 
 
@@ -197,20 +174,3 @@ GlCommand GlGeometry::generateColorCMD(float color[4], const Array<float>& verti
 
     return cmd;
 }
-
-// void GlGeometry::bindBuffers()
-// {
-//     assert(mVertexBufferView.buffer);
-//     assert(mIndexBufferView.buffer);
-//     assert(mVao);
-
-//     GL_CHECK(glBindVertexArray(mVao));
-
-//     mVertexBufferView.buffer->bind(GlGpuBuffer::Target::ARRAY_BUFFER);
-
-//     GL_CHECK(glEnableVertexAttribArray(0));
-//     GL_CHECK(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3,
-//                                    reinterpret_cast<void*>(mVertexBufferView.offset)));
-
-//     mIndexBufferView.buffer->bind(GlGpuBuffer::Target::ELEMENT_ARRAY_BUFFER);
-// }

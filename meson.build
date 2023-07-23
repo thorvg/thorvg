@@ -109,7 +109,6 @@ headers = [include_directories('inc'), include_directories('.')]
 
 subdir('inc')
 subdir('src')
-subdir('sdl_example')
 
 if get_option('tests') == true
    subdir('test')
