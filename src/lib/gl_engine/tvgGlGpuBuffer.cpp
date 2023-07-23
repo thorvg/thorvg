@@ -21,8 +21,10 @@
  */
 
 #include "tvgGlGpuBuffer.h"
+#include <SDL2/SDL_opengl_glext.h>
 
 #include <cmath>
+#include <cstdint>
 #include <cstring>
 
 /************************************************************************/
@@ -62,14 +64,23 @@ void GlGpuBuffer::bind(Target target)
 }
 
 GLStageBuffer::GLStageBuffer(GlGpuBuffer::Target target)
-    : mBufferTarget(target), mGpuBuffer(new GlGpuBuffer), mStageBuffer()
+    : mBufferTarget(target), mOffsetAlign(1), mGpuBuffer(new GlGpuBuffer), mStageBuffer()
 {
     // a little reserve buffer
     mStageBuffer.reserve(512);
+
+    if (mBufferTarget == GlGpuBuffer::Target::UNIFORM_BUFFER) {
+        GLint tmp = 0;
+        glGetIntegerv(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, &tmp);
+
+        mOffsetAlign = tmp;
+    }
 }
 
 GlGpuBufferView GLStageBuffer::push(void* data, uint32_t length)
 {
+    alignOffset();
+
     GlGpuBufferView result{};
 
     result.buffer = this->mGpuBuffer.get();
@@ -97,4 +108,24 @@ void GLStageBuffer::copyToGPU()
     mGpuBuffer->unbind(mBufferTarget);
 
     mStageBuffer.clear();
+}
+
+void GLStageBuffer::alignOffset()
+{
+    if (mBufferTarget != GlGpuBuffer::Target::UNIFORM_BUFFER) {
+        return;
+    }
+
+    if (mStageBuffer.count % mOffsetAlign == 0) {
+        return;
+    }
+
+    uint32_t offset = mOffsetAlign - mStageBuffer.count % mOffsetAlign;
+
+    // check if we need to grow
+    if (mStageBuffer.count + offset > mStageBuffer.reserved) {
+        mStageBuffer.grow(std::max(mOffsetAlign, mStageBuffer.reserved));
+    }
+
+    mStageBuffer.count += offset;
 }

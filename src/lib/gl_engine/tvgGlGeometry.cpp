@@ -72,7 +72,7 @@ bool GlGeometry::tessellate(const RenderShape& rshape, RenderUpdateFlag flag, Te
     if ((flag & RenderUpdateFlag::Stroke) && rshape.strokeWidth() > 0.f) {
 
         uint8_t r, g, b, a;
-        rshape.fillColor(&r, &g, &b, &a);
+        rshape.strokeColor(&r, &g, &b, &a);
 
         if (a > 0) {
 
@@ -96,22 +96,26 @@ bool GlGeometry::tessellate(const RenderShape& rshape, RenderUpdateFlag flag, Te
     return true;
 }
 
-void GlGeometry::preDraw()
+void GlGeometry::bind()
 {
     assert(mVao);
 
     glBindVertexArray(mVao);
 }
 
-GlCommand* GlGeometry::drawCmd(RenderUpdateFlag flag)
+void GlGeometry::unBind()
+{
+    glBindVertexArray(0);
+}
+
+void GlGeometry::draw(RenderUpdateFlag flag)
 {
     auto it = mCmds.find(flag);
 
     if (it == mCmds.end()) {
-        return nullptr;
-    } else {
-        return &it->second;
+        return;
     }
+    it->second.execute();
     // if (flag == RenderUpdateFlag::Color && mFillDrawCount == 0) {
     //     return;
     // }
@@ -175,7 +179,7 @@ GlCommand GlGeometry::generateColorCMD(float color[4], const Array<float>& verti
     cmd.drawCount = indices.count;
     cmd.drawStart = 0;
     // attribute layout
-    cmd.vertexLayouts.emplace_back(VertexLayout{0, 3, 0});
+    cmd.vertexLayouts.emplace_back(VertexLayout{0, 3, 3 * sizeof(float), 0});
     // uniforms
     // matrix
     {

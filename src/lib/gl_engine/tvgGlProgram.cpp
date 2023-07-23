@@ -21,6 +21,7 @@
  */
 
 #include "tvgGlProgram.h"
+#include <cstdint>
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
@@ -141,6 +142,11 @@ void GlProgram::setUniform4Value(int32_t location, int count, const float* value
 void GlProgram::setUniform4x4Value(int32_t location, int count, const float* values)
 {
     GL_CHECK(glUniformMatrix4fv(location, count, GL_FALSE, &values[0]));
+}
+
+uint32_t GlProgram::getProgramId() const
+{
+    return mProgramObj;
 }
 
 void GlProgram::linkProgram(std::shared_ptr<GlShader> shader)

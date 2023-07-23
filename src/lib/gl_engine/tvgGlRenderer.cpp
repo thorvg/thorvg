@@ -141,30 +141,25 @@ bool GlRenderer::renderShape(RenderData data)
     auto sdata = static_cast<GlShape*>(data);
     if (!sdata) return false;
 
-    size_t  flags = static_cast<size_t>(sdata->updateFlag);
+    size_t flags = static_cast<size_t>(sdata->updateFlag);
 
     GL_CHECK(glViewport(0, 0, (GLsizei)sdata->viewWd, (GLsizei)sdata->viewHt));
 
-    sdata->geometry->preDraw();
+    sdata->geometry->bind();
 
     if (flags & (RenderUpdateFlag::Gradient | RenderUpdateFlag::Transform)) {
-        auto cmd = sdata->geometry->drawCmd(RenderUpdateFlag::Gradient);
-
-        if (cmd) cmd->execute();
+        sdata->geometry->draw(RenderUpdateFlag::Gradient);
     }
 
     if (flags & (RenderUpdateFlag::Color | RenderUpdateFlag::Transform)) {
-        auto cmd = sdata->geometry->drawCmd(RenderUpdateFlag::Color);
-
-        if (cmd) cmd->execute();
+        sdata->geometry->draw(RenderUpdateFlag::Color);
     }
 
     if (flags & (RenderUpdateFlag::Stroke | RenderUpdateFlag::Transform)) {
-        auto cmd = sdata->geometry->drawCmd(RenderUpdateFlag::Stroke);
-
-        if (cmd) cmd->execute();
+        sdata->geometry->draw(RenderUpdateFlag::Stroke);
     }
 
+    sdata->geometry->unBind();
     return true;
 }
 
@@ -296,12 +291,11 @@ GlRenderer::~GlRenderer()
 
 void GlRenderer::initShaders()
 {
-    mShaders.reserve(3);
     // Solid Color Renderer
     {
         std::string vs_shader(color_vert, color_vert_size);
         std::string fs_shader(color_frag, color_frag_size);
-        mShaders[0] = GlProgram::gen(GlShader::gen(vs_shader.c_str(), fs_shader.c_str()));
+        mShaders.emplace_back(GlProgram::gen(GlShader::gen(vs_shader.c_str(), fs_shader.c_str())));
     }
 
     // Linear Gradient Renderer

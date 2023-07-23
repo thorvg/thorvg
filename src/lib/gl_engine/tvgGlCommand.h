@@ -5,6 +5,7 @@
 #include "tvgGlGpuBuffer.h"
 #include "tvgGlRenderTask.h"
 
+#include <cstdint>
 #include <vector>
 
 enum class BindingType
@@ -39,6 +40,7 @@ struct BindingResource
 struct VertexLayout
 {
     uint32_t index;
+    uint32_t size;
     uint32_t stride;
     size_t   offset;
 };

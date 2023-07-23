@@ -55,6 +55,7 @@ public:
     void setUniform4Value(int32_t location, int count, const float* values);
     void setUniform4x4Value(int32_t location, int count, const float* values);
 
+    uint32_t getProgramId() const;
 private:
 
     void linkProgram(std::shared_ptr<GlShader> shader);

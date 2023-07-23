@@ -23,6 +23,7 @@
 #ifndef _TVG_GL_GPU_BUFFER_H_
 #define _TVG_GL_GPU_BUFFER_H_
 
+#include <cstdint>
 #include "tvgArray.h"
 #include "tvgGlCommon.h"
 
@@ -41,6 +42,11 @@ public:
     void updateBufferData(Target target, uint32_t size, const void* data);
     void unbind(Target target);
     void bind(Target target);
+
+    uint32_t GetBufferId() const
+    {
+        return mGlBufferId;
+    }
 private:
     uint32_t mGlBufferId = 0;
 };
@@ -62,8 +68,13 @@ public:
     GlGpuBufferView push(void* data, uint32_t length);
 
     void copyToGPU();
+
+private:
+    void alignOffset();
+
 private:
     GlGpuBuffer::Target          mBufferTarget;
+    uint32_t                     mOffsetAlign;
     std::unique_ptr<GlGpuBuffer> mGpuBuffer;
     Array<uint8_t>               mStageBuffer;
 };

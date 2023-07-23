@@ -22,6 +22,7 @@
 
 #include <iostream>
 #include <thread>
+#include <cstring>
 #include <thorvg.h>
 #include <SDL.h>
 #ifdef TVG_EXAMPLE_GL
@@ -80,7 +81,7 @@ static SDL_Window* createSwView(uint32_t w = 800, uint32_t h = 800)
 
     buffer = static_cast<uint32_t*>(malloc(w * h * sizeof(uint32_t)));
 
-    memset(buffer, 0 , w * h * 4);
+    memset(buffer, 0, w * h * 4);
 
     win = SDL_CreateWindow("Thorvg Test", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, WIDTH, HEIGHT,
                            SDL_WINDOW_SHOWN);

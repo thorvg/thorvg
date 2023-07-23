@@ -190,11 +190,12 @@ public:
     GlGeometry();
     ~GlGeometry();
 
-    bool       tessellate(const RenderShape &rshape, RenderUpdateFlag flag, TessContext *context);
-    void       preDraw();
-    GlCommand *drawCmd(RenderUpdateFlag flag);
-    void       updateTransform(const RenderTransform *transform, float w, float h);
-    GlSize     getPrimitiveSize() const;
+    bool   tessellate(const RenderShape &rshape, RenderUpdateFlag flag, TessContext *context);
+    void   bind();
+    void   unBind();
+    void   draw(RenderUpdateFlag flag);
+    void   updateTransform(const RenderTransform *transform, float w, float h);
+    GlSize getPrimitiveSize() const;
 
 private:
     GlCommand generateColorCMD(float color[4], const Array<float> &vertex, const Array<uint32_t> &index,
