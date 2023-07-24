@@ -5,7 +5,9 @@ py3 = pymod.find_installation('python3', required: true)
 
 shader_list = files(
     'color.frag',
-    'color.vert'
+    'color.vert',
+    'gradient.vert',
+    'linear_gradient.frag',
 )
 
 gl_shader_source = custom_target(

@@ -21,7 +21,6 @@
  */
 
 #include "tvgGlGpuBuffer.h"
-#include <SDL2/SDL_opengl_glext.h>
 
 #include <cmath>
 #include <cstdint>

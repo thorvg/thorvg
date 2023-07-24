@@ -1,5 +1,4 @@
-
-uniform vec4 uColor;
+precision highp float;
 
 layout(std140) uniform ColorInfo {
     vec4 solidColor;

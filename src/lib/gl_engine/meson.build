@@ -2,6 +2,8 @@ source_file = [
    'tvgGlCommand.cpp',
    'tvgGlCommand.h',
    'tvgGlCommon.h',
+   'tvgGlFill.cpp',
+   'tvgGlFill.h',
    'tvgGlGeometry.h',
    'tvgGlGpuBuffer.h',
    'tvgGlProgram.h',

@@ -1,7 +1,5 @@
 
 #include "tvgGlCommand.h"
-#include <GL/gl.h>
-#include <GL/glext.h>
 #include <cstddef>
 #include <cstdint>
 #include "tvgGlCommon.h"

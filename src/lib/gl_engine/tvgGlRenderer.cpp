@@ -223,12 +223,15 @@ RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const
 
     TessContext context{&mVertexBuffer, &mIndexBuffer, &mUniformBuffer, mShaders};
 
-    if (sdata->updateFlag & (RenderUpdateFlag::Color | RenderUpdateFlag::Stroke | RenderUpdateFlag::Gradient |
-                             RenderUpdateFlag::Transform)) {
-        if (!sdata->geometry->tessellate(rshape, sdata->updateFlag, &context)) {
-            return sdata;
-        }
+
+    if (rshape.fill) {
+        sdata->geometry->tessellate(rshape, RenderUpdateFlag::Gradient, &context);
+    } else {
+        sdata->geometry->tessellate(rshape, RenderUpdateFlag::Color, &context);
     }
+
+    sdata->geometry->tessellate(rshape, RenderUpdateFlag::Stroke, &context);
+
     return sdata;
 }
 
@@ -299,7 +302,11 @@ void GlRenderer::initShaders()
     }
 
     // Linear Gradient Renderer
-    // mRenderTasks.push_back(GlLinearGradientRenderTask::gen());
+    {
+        std::string vs_shader(gradient_vert, gradient_vert_size);
+        std::string fs_shader(linear_gradient_frag, linear_gradient_frag_size);
+        mShaders.emplace_back(GlProgram::gen(GlShader::gen(vs_shader.c_str(), fs_shader.c_str())));
+    }
 
     // Radial Gradient Renderer
     // mRenderTasks.push_back(GlRadialGradientRenderTask::gen());

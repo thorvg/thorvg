@@ -25,6 +25,7 @@
 #include <float.h>
 
 #include "tvgTessellator.h"
+#include "tvgGlFill.h"
 
 #define NORMALIZED_TOP_3D 1.0f
 #define NORMALIZED_BOTTOM_3D -1.0f
@@ -91,6 +92,18 @@ bool GlGeometry::tessellate(const RenderShape& rshape, RenderUpdateFlag flag, Te
 
             mCmds.insert({RenderUpdateFlag::Stroke, generateColorCMD(color, vertices, indices, context)});
         }
+    }
+
+    if (flag & RenderUpdateFlag::Gradient && rshape.fill != nullptr) {
+        Array<float>    vertices;
+        Array<uint32_t> indices;
+
+        Tessellator tess(&vertices, &indices);
+
+        tess.tessellate(&rshape, true);
+
+        mCmds.insert({RenderUpdateFlag::Gradient,
+                      generateLinearCMD(static_cast<tvg::LinearGradient*>(rshape.fill), vertices, indices, context)});
     }
 
     return true;
@@ -171,6 +184,42 @@ GlCommand GlGeometry::generateColorCMD(float color[4], const Array<float>& verti
         cmd.bindings.emplace_back(
             BindingResource(1, loc, context->uniformBuffer->push(color, 4 * sizeof(float)), 4 * sizeof(float)));
     }
+
+    return cmd;
+}
+
+GlCommand GlGeometry::generateLinearCMD(tvg::LinearGradient* gradient, const Array<float>& vertices,
+                                        const Array<uint32_t>& indices, TessContext* context)
+{
+    GlCommand cmd;
+
+    cmd.shader = context->shaders[PipelineType::kLinearGradient].get();
+
+    cmd.vertexBuffer = context->vertexBuffer->push(vertices.data, vertices.count * sizeof(float));
+    cmd.indexBuffer = context->indexBuffer->push(indices.data, indices.count * sizeof(uint32_t));
+    cmd.drawCount = indices.count;
+    cmd.drawStart = 0;
+
+    cmd.vertexLayouts.emplace_back(VertexLayout{0, 3, 3 * sizeof(float), 0});
+    // uniforms
+    // matrix
+    {
+        int32_t loc = cmd.shader->getUniformBlockIndex("Matrix");
+        cmd.bindings.emplace_back(
+            BindingResource(0, loc, context->uniformBuffer->push(mTransform, 16 * sizeof(float)), 16 * sizeof(float)));
+    }
+
+    // gradient block
+    {
+        int32_t loc = cmd.shader->getUniformBlockIndex("GradientInfo");
+
+        GlLinearBlock linearBlock(gradient);
+
+        cmd.bindings.emplace_back(BindingResource(
+            1, loc, context->uniformBuffer->push(&linearBlock, sizeof(GlLinearBlock)), sizeof(GlLinearBlock)));
+    }
+
+    // TODO support gradient local matrix
 
     return cmd;
 }

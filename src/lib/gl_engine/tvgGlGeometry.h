@@ -201,6 +201,8 @@ private:
     GlCommand generateColorCMD(float color[4], const Array<float> &vertex, const Array<uint32_t> &index,
                                TessContext *context);
 
+    GlCommand generateLinearCMD(tvg::LinearGradient *gradient, const Array<float> &vertex, const Array<uint32_t> &index,
+                                TessContext *context);
 private:
     GLuint mVao = 0;
     float  mTransform[16] = {0.f};
