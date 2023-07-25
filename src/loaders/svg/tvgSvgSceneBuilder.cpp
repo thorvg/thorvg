@@ -63,6 +63,7 @@
 /************************************************************************/
 
 static bool _appendShape(SvgNode* node, Shape* shape, const Box& vBox, const string& svgPath);
+static bool _appendClipShape(SvgNode* node, Shape* shape, const Box& vBox, const string& svgPath, const Matrix* transform);
 static unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, const Box& vBox, const string& svgPath, bool mask, int depth, bool* isMaskWhite = nullptr);
 
 
@@ -220,20 +221,30 @@ static unique_ptr<RadialGradient> _applyRadialGradientProperty(SvgStyleGradient*
 }
 
 
-static bool _appendChildShape(SvgNode* node, Shape* shape, const Box& vBox, const string& svgPath)
+//The SVG standard allows only for 'use' nodes that point directly to a basic shape.
+static bool _appendClipUseNode(SvgNode* node, Shape* shape, const Box& vBox, const string& svgPath)
 {
-    auto valid = false;
+    if (node->child.count != 1) return false;
+    auto child = *(node->child.data);
 
-    if (_appendShape(node, shape, vBox, svgPath)) valid = true;
-
-    if (node->child.count > 0) {
-        auto child = node->child.data;
-        for (uint32_t i = 0; i < node->child.count; ++i, ++child) {
-            if (_appendChildShape(*child, shape, vBox, svgPath)) valid = true;
-        }
+    Matrix finalTransform = {1, 0, 0, 0, 1, 0, 0, 0, 1};
+    if (node->transform) finalTransform = *node->transform;
+    if (node->node.use.x != 0.0f || node->node.use.y != 0.0f) {
+        Matrix m = {1, 0, node->node.use.x, 0, 1, node->node.use.y, 0, 0, 1};
+        finalTransform = mathMultiply(&finalTransform, &m);
     }
+    if (child->transform) finalTransform = mathMultiply(child->transform, &finalTransform);
 
-    return valid;
+    return _appendClipShape(child, shape, vBox, svgPath, mathIdentity((const Matrix*)(&finalTransform)) ? nullptr : &finalTransform);
+}
+
+
+static bool _appendClipChild(SvgNode* node, Shape* shape, const Box& vBox, const string& svgPath, bool clip)
+{
+    if (node->type == SvgNodeType::Use) {
+        return _appendClipUseNode(node, shape, vBox, svgPath);
+    }
+    return _appendClipShape(node, shape, vBox, svgPath, nullptr);
 }
 
 
@@ -252,10 +263,10 @@ static void _applyComposition(Paint* paint, const SvgNode* node, const Box& vBox
             auto comp = Shape::gen();
 
             auto child = compNode->child.data;
-            auto valid = false; //Composite only when valid shapes are existed
+            auto valid = false; //Composite only when valid shapes exist
 
             for (uint32_t i = 0; i < compNode->child.count; ++i, ++child) {
-                if (_appendChildShape(*child, comp.get(), vBox, svgPath)) valid = true;
+                if (_appendClipChild(*child, comp.get(), vBox, svgPath, compNode->child.count > 1)) valid = true;
             }
 
             if (node->transform) {
@@ -298,11 +309,12 @@ static void _applyComposition(Paint* paint, const SvgNode* node, const Box& vBox
 }
 
 
-static void _applyProperty(SvgNode* node, Shape* vg, const Box& vBox, const string& svgPath)
+static void _applyProperty(SvgNode* node, Shape* vg, const Box& vBox, const string& svgPath, bool clip)
 {
     SvgStyleProperty* style = node->style;
 
-    if (node->transform) vg->transform(*node->transform);
+    //Clip transformation is applied directly to the path in the _appendClipShape function
+    if (node->transform && !clip) vg->transform(*node->transform);
     if (node->type == SvgNodeType::Doc || !node->display) return;
 
     //If fill property is nullptr then do nothing
@@ -384,14 +396,13 @@ static unique_ptr<Shape> _shapeBuildHelper(SvgNode* node, const Box& vBox, const
 }
 
 
-static bool _appendShape(SvgNode* node, Shape* shape, const Box& vBox, const string& svgPath)
+static bool _recognizeShape(SvgNode* node, Shape* shape)
 {
-    Array<PathCommand> cmds;
-    Array<Point> pts;
-
     switch (node->type) {
         case SvgNodeType::Path: {
             if (node->node.path.path) {
+                Array<PathCommand> cmds;
+                Array<Point> pts;
                 if (svgPathToTvgPath(node->node.path.path, cmds, pts)) {
                     shape->appendPath(cmds.data, cmds.count, pts.data, pts.count);
                 }
@@ -438,8 +449,41 @@ static bool _appendShape(SvgNode* node, Shape* shape, const Box& vBox, const str
             return false;
         }
     }
+    return true;
+}
 
-    _applyProperty(node, shape, vBox, svgPath);
+
+static bool _appendShape(SvgNode* node, Shape* shape, const Box& vBox, const string& svgPath)
+{
+    if (!_recognizeShape(node, shape)) return false;
+
+    _applyProperty(node, shape, vBox, svgPath, false);
+    return true;
+}
+
+
+static bool _appendClipShape(SvgNode* node, Shape* shape, const Box& vBox, const string& svgPath, const Matrix* transform)
+{
+    //The 'transform' matrix has higher priority than the node->transform, since it already contains it
+    auto m = transform ? transform : (node->transform ? node->transform : nullptr);
+
+    uint32_t currentPtsCnt = 0;
+    if (m) {
+        const Point *tmp = nullptr;
+        currentPtsCnt = shape->pathCoords(&tmp);
+    }
+
+    if (!_recognizeShape(node, shape)) return false;
+
+    if (m) {
+        const Point *pts = nullptr;
+        auto ptsCnt = shape->pathCoords(&pts);
+
+        auto p = const_cast<Point*>(pts) + currentPtsCnt;
+        while (currentPtsCnt++ < ptsCnt) mathMultiply(p++, m);
+    }
+
+    _applyProperty(node, shape, vBox, svgPath, true);
     return true;
 }
 
