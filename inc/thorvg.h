@@ -57,9 +57,9 @@
 #endif
 
 #define _TVG_DECLARE_PRIVATE(A) \
-protected: \
     struct Impl; \
     Impl* pImpl; \
+protected: \
     A(const A&) = delete; \
     const A& operator=(const A&) = delete; \
     A()
@@ -68,25 +68,14 @@ protected: \
     A() = delete; \
     ~A() = delete
 
-#define _TVG_DECLARE_ACCESSOR() \
-    friend Canvas; \
-    friend Scene; \
-    friend Shape; \
-    friend Picture; \
-    friend Accessor; \
-    friend IteratorAccessor
-
+#define _TVG_DECLARE_ACCESSOR(A) \
+    friend A
 
 namespace tvg
 {
 
 class RenderMethod;
-class IteratorAccessor;
-class Scene;
-class Shape;
-class Picture;
-class Canvas;
-class Accessor;
+class Animation;
 
 /**
  * @defgroup ThorVG ThorVG
@@ -465,7 +454,6 @@ public:
      */
     uint32_t identifier() const noexcept;
 
-    _TVG_DECLARE_ACCESSOR();
     _TVG_DECLARE_PRIVATE(Paint);
 };
 
@@ -1392,6 +1380,7 @@ public:
      */
     static uint32_t identifier() noexcept;
 
+    _TVG_DECLARE_ACCESSOR(Animation);
     _TVG_DECLARE_PRIVATE(Picture);
 };
 
