@@ -392,15 +392,8 @@ static char* _idFromUrl(const char* url)
 
     int i = 0;
     while (url[i] > ' ' && url[i] != ')' && url[i] != '\'') ++i;
-
-    //custom strndup() for portability
-    int len = strlen(url);
-    if (i < len) len = i;
-
-    auto ret = (char*) malloc(len + 1);
-    if (!ret) return 0;
-    ret[len] = '\0';
-    return (char*) memcpy(ret, url, len);
+    
+    return svgUtilStrndup(url, i);
 }
 
 
