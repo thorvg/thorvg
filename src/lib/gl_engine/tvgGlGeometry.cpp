@@ -109,6 +109,56 @@ bool GlGeometry::tessellate(const RenderShape& rshape, RenderUpdateFlag flag, Te
     return true;
 }
 
+bool GlGeometry::tessellate(uint32_t texId, Surface* image, uint8_t opacity, TessContext* context)
+{
+    Array<float>    vertices;
+    Array<uint32_t> indices;
+
+    vertices.reserve(5 * 4);
+    indices.reserve(6);
+
+    float left = 0.f;
+    float top = 0.f;
+    float right = image->w;
+    float bottom = image->h;
+
+    // left top point
+    vertices.push(left);
+    vertices.push(top);
+    vertices.push(1.f);
+    vertices.push(0.f);
+    vertices.push(1.f);
+    // left bottom point
+    vertices.push(left);
+    vertices.push(bottom);
+    vertices.push(1.f);
+    vertices.push(0.f);
+    vertices.push(0.f);
+    // right top point
+    vertices.push(right);
+    vertices.push(top);
+    vertices.push(1.f);
+    vertices.push(1.f);
+    vertices.push(1.f);
+    // right bottom point
+    vertices.push(right);
+    vertices.push(bottom);
+    vertices.push(1.f);
+    vertices.push(1.f);
+    vertices.push(0.f);
+
+    indices.push(0);
+    indices.push(1);
+    indices.push(2);
+
+    indices.push(2);
+    indices.push(1);
+    indices.push(3);
+
+    mCmds.insert({RenderUpdateFlag::Image, generateImageCMD(texId, image->cs, opacity, vertices, indices, context)});
+    return true;
+}
+
 void GlGeometry::bind()
 {
     assert(mVao);
@@ -220,6 +270,55 @@ GlCommand GlGeometry::generateLinearCMD(tvg::LinearGradient* gradient, const Arr
     }
 
     // TODO support gradient local matrix
+
+    return cmd;
+}
+
+GlCommand GlGeometry::generateImageCMD(uint32_t texId, uint32_t colorSpace, uint8_t opacity,
+                                       const Array<float>& vertices, const Array<uint32_t>& indices,
+                                       TessContext* context)
+{
+    GlCommand cmd;
+
+    cmd.shader = context->shaders[PipelineType::kImageColor].get();
+
+    cmd.vertexBuffer = context->vertexBuffer->push(vertices.data, vertices.count * sizeof(float));
+    cmd.indexBuffer = context->indexBuffer->push(indices.data, indices.count * sizeof(uint32_t));
+    cmd.drawCount = indices.count;
+    cmd.drawStart = 0;
+
+    // attribute layout
+    cmd.vertexLayouts.emplace_back(VertexLayout{0, 3, 5 * sizeof(float), 0});
+    cmd.vertexLayouts.emplace_back(VertexLayout{1, 2, 5 * sizeof(float), 3 * sizeof(float)});
+
+    // uniforms
+    // matrix
+    {
+        int32_t loc = cmd.shader->getUniformBlockIndex("Matrix");
+        cmd.bindings.emplace_back(
+            BindingResource(0, loc, context->uniformBuffer->push(mTransform, 16 * sizeof(float)), 16 * sizeof(float)));
+    }
+
+    // image info
+    {
+        int32_t info[4];
+        // format
+        info[0] = colorSpace;
+        // flipY
+        info[1] = 1;
+        // opacity
+        info[2] = opacity;
+
+        int32_t loc = cmd.shader->getUniformBlockIndex("ColorInfo");
+        cmd.bindings.emplace_back(
+            BindingResource(1, loc, context->uniformBuffer->push(info, 4 * sizeof(uint32_t)), 4 * sizeof(uint32_t)));
+    }
+
+    // texture id
+    {
+        int32_t loc = cmd.shader->getUniformLocation("uTexture");
+        cmd.bindings.emplace_back(BindingResource(texId, loc));
+    }
 
     return cmd;
 }

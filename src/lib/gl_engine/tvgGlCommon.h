@@ -68,6 +68,7 @@ struct GlShape
   const RenderShape* rshape = nullptr;
   float viewWd;
   float viewHt;
+  uint32_t texId;
   RenderUpdateFlag updateFlag = None;
   std::unique_ptr<GlGeometry> geometry;
 };

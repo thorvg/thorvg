@@ -23,7 +23,10 @@
 #ifndef _TVG_GL_RENDERER_H_
 #define _TVG_GL_RENDERER_H_
 
-#include "tvgGlRenderTask.h"
+#include <memory>
+#include <vector>
+
+#include "tvgGlProgram.h"
 #include "tvgGlGpuBuffer.h"
 
 class GlRenderer : public RenderMethod
@@ -71,6 +74,8 @@ private:
     ~GlRenderer();
 
     void initShaders();
+
+    uint32_t genTexture(Surface* image);
 
     GLStageBuffer mVertexBuffer;
     GLStageBuffer mIndexBuffer;

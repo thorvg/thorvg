@@ -132,8 +132,25 @@ bool GlRenderer::blend(TVG_UNUSED BlendMethod method)
 
 bool GlRenderer::renderImage(TVG_UNUSED void* data)
 {
-    // TODO: render requested images
-    return false;
+    auto sdata = static_cast<GlShape*>(data);
+
+    if (!sdata) {
+        return false;
+    }
+
+    if (sdata->texId == 0) {
+        return false;
+    }
+
+    GL_CHECK(glViewport(0, 0, (GLsizei)sdata->viewWd, (GLsizei)sdata->viewHt));
+
+    sdata->geometry->bind();
+
+    sdata->geometry->draw(RenderUpdateFlag::Image);
+
+    sdata->geometry->unBind();
+
+    return true;
 }
 
 bool GlRenderer::renderShape(RenderData data)
@@ -172,13 +189,32 @@ bool GlRenderer::dispose(RenderData data)
     return true;
 }
 
-RenderData GlRenderer::prepare(TVG_UNUSED Surface* surface, TVG_UNUSED const RenderMesh* mesh,
-                               TVG_UNUSED RenderData data, TVG_UNUSED const RenderTransform* transform,
-                               TVG_UNUSED Array<RenderData>& clips, TVG_UNUSED uint8_t opacity,
+RenderData GlRenderer::prepare(Surface* image, TVG_UNUSED const RenderMesh* mesh, TVG_UNUSED RenderData data,
+                               const RenderTransform* transform, TVG_UNUSED Array<RenderData>& clips, uint8_t opacity,
                                TVG_UNUSED RenderUpdateFlag flags)
 {
-    // TODO:
-    return nullptr;
+    auto sdata = static_cast<GlShape*>(data);
+    if (!sdata) {
+        sdata = new GlShape;
+    }
+
+    sdata->viewWd = static_cast<float>(this->surface.w);
+    sdata->viewHt = static_cast<float>(this->surface.h);
+
+    if (flags == RenderUpdateFlag::None) {
+        return sdata;
+    }
+
+    sdata->texId = genTexture(image);
+    sdata->geometry = make_unique<GlGeometry>();
+
+    sdata->geometry->updateTransform(transform, sdata->viewWd, sdata->viewHt);
+
+    TessContext context{&mVertexBuffer, &mIndexBuffer, &mUniformBuffer, mShaders};
+
+    sdata->geometry->tessellate(sdata->texId, image, opacity, &context);
+
+    return sdata;
 }
 
 RenderData GlRenderer::prepare(TVG_UNUSED const Array<RenderData>& scene, TVG_UNUSED RenderData data,
@@ -198,6 +234,7 @@ RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const
     if (!sdata) {
         sdata = new GlShape;
         sdata->rshape = &rshape;
+        sdata->texId = 0;
     }
 
     sdata->viewWd = static_cast<float>(surface.w);
@@ -309,5 +346,30 @@ void GlRenderer::initShaders()
     }
 
     // Radial Gradient Renderer
-    // mRenderTasks.push_back(GlRadialGradientRenderTask::gen());
+    {
+        mShaders.emplace_back(std::unique_ptr<GlProgram>());
+    }
+    // Image Renderer
+    {
+        std::string vs_shader(image_vert, image_vert_size);
+        std::string fs_shader(image_frag, image_frag_size);
+        mShaders.emplace_back(GlProgram::gen(GlShader::gen(vs_shader.c_str(), fs_shader.c_str())));
+    }
+}
+
+uint32_t GlRenderer::genTexture(Surface* image)
+{
+    GLuint tex = 0;
+
+    GL_CHECK(glGenTextures(1, &tex));
+
+    GL_CHECK(glBindTexture(GL_TEXTURE_2D, tex));
+    GL_CHECK(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, image->w, image->h, 0, GL_RGBA, GL_UNSIGNED_BYTE, image->data));
+
+    GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
+    GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
+    GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
+    GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
+
+    return tex;
 }

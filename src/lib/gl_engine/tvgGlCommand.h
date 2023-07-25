@@ -35,6 +35,11 @@ struct BindingResource
           bufferRange(range)
     {
     }
+
+    BindingResource(uint32_t texId, uint32_t location)
+        : type(BindingType::kTexture), bindPoint(0), location(location), texId(texId)
+    {
+    }
 };
 
 struct VertexLayout

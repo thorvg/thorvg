@@ -191,6 +191,7 @@ public:
     ~GlGeometry();
 
     bool   tessellate(const RenderShape &rshape, RenderUpdateFlag flag, TessContext *context);
+    bool   tessellate(uint32_t texId, Surface *image, uint8_t opacity, TessContext *context);
     void   bind();
     void   unBind();
     void   draw(RenderUpdateFlag flag);
@@ -203,6 +204,9 @@ private:
 
     GlCommand generateLinearCMD(tvg::LinearGradient *gradient, const Array<float> &vertex, const Array<uint32_t> &index,
                                 TessContext *context);
+
+    GlCommand generateImageCMD(uint32_t texId, uint32_t colorSpace, uint8_t opacity, const Array<float> &vertices,
+                               const Array<uint32_t> &indices, TessContext *context);
 private:
     GLuint mVao = 0;
     float  mTransform[16] = {0.f};

@@ -31,6 +31,7 @@ enum PipelineType
     kSolidColor = 0,
     kLinearGradient = 1,
     kRadialGradient = 2,
+    kImageColor = 3,
 };
 
 class GlProgram
