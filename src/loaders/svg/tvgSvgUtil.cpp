@@ -279,7 +279,7 @@ string svgUtilBase64Decode(const char *src)
 
 char* svgUtilStrndup(const char* str, size_t n)
 {
-    int len = strlen(str);
+    auto len = strlen(str);
     if (len < n) n = len;
 
     auto ret = (char*)malloc(n + 1);
