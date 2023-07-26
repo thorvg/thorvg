@@ -70,6 +70,7 @@ private:
 
     void emitPoly(detail::MonotonePolygon *poly);
 
+    void emitTriangle(detail::Vertex* p1, detail::Vertex* p2, detail::Vertex* p3);
 private:
     FillRule                            fillRule = FillRule::Winding;
     std::unique_ptr<detail::ObjectHeap> pHeap;

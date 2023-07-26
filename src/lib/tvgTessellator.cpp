@@ -104,6 +104,7 @@ struct Vertex : public Object
     Vertex *prev = nullptr;
     Vertex *next = nullptr;
 
+    uint32_t index = 0xFFFFFFFF;
     /**
      * All edge above and end with this vertex
      *
@@ -1530,36 +1531,73 @@ void Tessellator::emitPoly(detail::MonotonePolygon *poly)
 {
     auto e = poly->first;
 
-    Array<detail::Vertex *> vertices;
+    detail::VertexList vertices;
 
-    vertices.push(e->top);
-
+    vertices.append(e->top);
+    int32_t count = 1;
     while (e != nullptr) {
-        vertices.push(e->bottom);
-        if (poly->side == detail::Side::kLeft) {
-            e = e->left_poly_next;
-        } else {
+        if (poly->side == detail::Side::kRight) {
+            vertices.append(e->bottom);
             e = e->right_poly_next;
+        } else {
+            vertices.prepend(e->bottom);
+            e = e->left_poly_next;
         }
+        count += 1;
     }
 
-    if (vertices.count < 3) {
+    if (count < 3) {
         return;
     }
 
-    uint32_t first_index = detail::_pushVertex(resPoints, vertices.first()->point.x, vertices.first()->point.y, 1.f);
+    auto first = vertices.head;
+    auto v = first->next;
 
-    uint32_t prev_index = detail::_pushVertex(resPoints, vertices.data[1]->point.x, vertices.data[1]->point.y, 1.f);
 
-    for (uint32_t i = 2; i < vertices.count; i++) {
-        uint32_t curr_index = detail::_pushVertex(resPoints, vertices.data[i]->point.x, vertices.data[i]->point.y, 1.f);
+    while (v != vertices.tail) {
+        auto prev = v->prev;
+        auto curr = v;
+        auto next = v->next;
 
-        this->resIndices->push(first_index);
-        this->resIndices->push(prev_index);
-        this->resIndices->push(curr_index);
+        if (count == 3) {
+            emitTriangle(prev, curr, next);
+            return;
+        }
 
-        prev_index = curr_index;
+
+        double ax = static_cast<double>(curr->point.x) - prev->point.x;
+        double ay = static_cast<double>(curr->point.y) - prev->point.y;
+        double bx = static_cast<double>(next->point.x) - curr->point.x;
+        double by = static_cast<double>(next->point.y) - curr->point.y;
+
+        if (ax * by - ay * bx >= 0.0) {
+            emitTriangle(prev, curr, next);
+            v->prev->next = v->next;
+            v->next->prev = v->prev;
+
+            count--;
+
+            if (v->prev == first) {
+                v = v->next;
+            } else {
+                v = v->prev;
+            }
+        } else {
+            v = v->next;
+        }
     }
+}
+
+void Tessellator::emitTriangle(detail::Vertex *p1, detail::Vertex *p2, detail::Vertex *p3)
+{
+    // check if index is generated
+    if (p1->index == 0xFFFFFFFF) p1->index = detail::_pushVertex(resPoints, p1->point.x, p1->point.y, 1.f);
+    if (p2->index == 0xFFFFFFFF) p2->index = detail::_pushVertex(resPoints, p2->point.x, p2->point.y, 1.f);
+    if (p3->index == 0xFFFFFFFF) p3->index = detail::_pushVertex(resPoints, p3->point.x, p3->point.y, 1.f);
+
+    resIndices->push(p1->index);
+    resIndices->push(p2->index);
+    resIndices->push(p3->index);
 }
 
 
