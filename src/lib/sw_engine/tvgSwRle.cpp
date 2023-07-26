@@ -720,7 +720,6 @@ static void _decomposeOutline(RleWorker& rw)
         auto pt = outline->pts.data + first;
         auto types = outline->types.data + first;
 
-        /* A contour cannot start with a cubic control point! */
         _moveTo(rw, UPSCALE(outline->pts.data[first]));
 
         while (pt < limit) {
