@@ -708,7 +708,7 @@ static void _cubicTo(RleWorker& rw, const SwPoint& ctrl1, const SwPoint& ctrl2, 
 }
 
 
-static bool _decomposeOutline(RleWorker& rw)
+static void _decomposeOutline(RleWorker& rw)
 {
     auto outline = rw.outline;
     auto first = 0;  //index of first point in contour
@@ -721,8 +721,6 @@ static bool _decomposeOutline(RleWorker& rw)
         auto types = outline->types.data + first;
 
         /* A contour cannot start with a cubic control point! */
-        if (types[0] == SW_CURVE_TYPE_CUBIC) goto invalid_outline;
-
         _moveTo(rw, UPSCALE(outline->pts.data[first]));
 
         while (pt < limit) {
@@ -734,9 +732,6 @@ static bool _decomposeOutline(RleWorker& rw)
                 _lineTo(rw, UPSCALE(*pt));
             //types cubic
             } else {
-                if (pt + 1 > limit || types[1] != SW_CURVE_TYPE_CUBIC)
-                    goto invalid_outline;
-
                 pt += 2;
                 types += 2;
 
@@ -752,22 +747,15 @@ static bool _decomposeOutline(RleWorker& rw)
     close:
        first = last + 1;
     }
-
-    return true;
-
-invalid_outline:
-    TVGERR("SW_ENGINE", "Invalid Outline!");
-    return false;
 }
 
 
 static int _genRle(RleWorker& rw)
 {
     if (setjmp(rw.jmpBuf) == 0) {
-        auto ret = _decomposeOutline(rw);
+        _decomposeOutline(rw);
         if (!rw.invalid) _recordCell(rw);
-        if (ret) return 0;  //success
-        else return 1;      //fail
+        return 0;
     }
     return -1;              //lack of cell memory
 }
