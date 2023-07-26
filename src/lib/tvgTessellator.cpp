@@ -1479,6 +1479,10 @@ bool Tessellator::intersectPairEdge(detail::Edge *left, detail::Edge *right, det
         return false;
     }
 
+    if (detail::_calcOrientation(left->bottom->point - left->top->point, right->bottom->point - right->top->point) == detail::Orientation::Linear) {
+        return false;
+    }
+
     detail::Edge *split = nullptr;
 
     detail::Vertex *split_at = nullptr;

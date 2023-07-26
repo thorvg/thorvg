@@ -12,6 +12,11 @@ GlLinearBlock::GlLinearBlock(tvg::LinearGradient* gradient)
         return;
     }
 
+    // FIXME to handle index out of bounds error
+    if (nStops > 4) {
+        nStops = 4;
+    }
+
     for (int32_t i = 0; i < nStops; i++) {
         stopPoints[i] = colorStops[i].offset;
 

@@ -70,7 +70,7 @@ foreach current_file : source_file
     executable(name, current_file,
         include_directories : headers,
         link_with : thorvg_lib,
-        cpp_args : compiler_flags,
+        cpp_args : [compiler_flags, '-std=c++17' ],
         dependencies : examples_dep)
 endforeach
 
