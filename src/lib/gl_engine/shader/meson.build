@@ -10,6 +10,7 @@ shader_list = files(
     'linear_gradient.frag',
     'image.frag',
     'image.vert',
+    'radial_gradient.frag',
 )
 
 gl_shader_source = custom_target(

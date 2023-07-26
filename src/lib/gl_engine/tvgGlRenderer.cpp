@@ -343,11 +343,10 @@ void GlRenderer::initShaders()
         std::string vs_shader(gradient_vert, gradient_vert_size);
         std::string fs_shader(linear_gradient_frag, linear_gradient_frag_size);
         mShaders.emplace_back(GlProgram::gen(GlShader::gen(vs_shader.c_str(), fs_shader.c_str())));
-    }
 
-    // Radial Gradient Renderer
-    {
-        mShaders.emplace_back(std::unique_ptr<GlProgram>());
+        // Radial Gradient Renderer
+        std::string rs_shader(radial_gradient_frag, radial_gradient_frag_size);
+        mShaders.emplace_back(GlProgram::gen(GlShader::gen(vs_shader.c_str(), rs_shader.c_str())));
     }
     // Image Renderer
     {

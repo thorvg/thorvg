@@ -202,8 +202,8 @@ private:
     GlCommand generateColorCMD(float color[4], const Array<float> &vertex, const Array<uint32_t> &index,
                                TessContext *context);
 
-    GlCommand generateLinearCMD(tvg::LinearGradient *gradient, const Array<float> &vertex, const Array<uint32_t> &index,
-                                TessContext *context);
+    GlCommand generateGradientCMD(void *gradient, uint32_t length, PipelineType type, const Array<float> &vertex,
+                                  const Array<uint32_t> &index, TessContext *context);
 
     GlCommand generateImageCMD(uint32_t texId, uint32_t colorSpace, uint8_t opacity, const Array<float> &vertices,
                                const Array<uint32_t> &indices, TessContext *context);

@@ -102,8 +102,19 @@ bool GlGeometry::tessellate(const RenderShape& rshape, RenderUpdateFlag flag, Te
 
         tess.tessellate(&rshape, true);
 
-        mCmds.insert({RenderUpdateFlag::Gradient,
-                      generateLinearCMD(static_cast<tvg::LinearGradient*>(rshape.fill), vertices, indices, context)});
+        if (rshape.fill->identifier() == TVG_CLASS_ID_LINEAR) {
+            GlLinearBlock linearBlock(static_cast<tvg::LinearGradient*>(rshape.fill));
+
+            mCmds.insert({RenderUpdateFlag::Gradient,
+                          generateGradientCMD(&linearBlock, sizeof(GlLinearBlock), PipelineType::kLinearGradient,
+                                              vertices, indices, context)});
+        } else if (rshape.fill->identifier() == TVG_CLASS_ID_RADIAL) {
+            GlRadialBlock radialBlock(static_cast<tvg::RadialGradient*>(rshape.fill));
+
+            mCmds.insert({RenderUpdateFlag::Gradient,
+                          generateGradientCMD(&radialBlock, sizeof(GlRadialBlock), PipelineType::kRadialGradient,
+                                              vertices, indices, context)});
+        }
     }
 
     return true;
@@ -238,12 +249,13 @@ GlCommand GlGeometry::generateColorCMD(float color[4], const Array<float>& verti
     return cmd;
 }
 
-GlCommand GlGeometry::generateLinearCMD(tvg::LinearGradient* gradient, const Array<float>& vertices,
-                                        const Array<uint32_t>& indices, TessContext* context)
+GlCommand GlGeometry::generateGradientCMD(void* gradient, uint32_t length, PipelineType type,
+                                          const Array<float>& vertices, const Array<uint32_t>& indices,
+                                          TessContext* context)
 {
     GlCommand cmd;
 
-    cmd.shader = context->shaders[PipelineType::kLinearGradient].get();
+    cmd.shader = context->shaders[type].get();
 
     cmd.vertexBuffer = context->vertexBuffer->push(vertices.data, vertices.count * sizeof(float));
     cmd.indexBuffer = context->indexBuffer->push(indices.data, indices.count * sizeof(uint32_t));
@@ -263,10 +275,7 @@ GlCommand GlGeometry::generateLinearCMD(tvg::LinearGradient* gradient, const Arr
     {
         int32_t loc = cmd.shader->getUniformBlockIndex("GradientInfo");
 
-        GlLinearBlock linearBlock(gradient);
-
-        cmd.bindings.emplace_back(BindingResource(
-            1, loc, context->uniformBuffer->push(&linearBlock, sizeof(GlLinearBlock)), sizeof(GlLinearBlock)));
+        cmd.bindings.emplace_back(BindingResource(1, loc, context->uniformBuffer->push(gradient, length), length));
     }
 
     // TODO support gradient local matrix
