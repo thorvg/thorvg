@@ -202,6 +202,10 @@ bool GlRenderer::dispose(RenderData data)
     auto sdata = static_cast<GlShape*>(data);
     if (!sdata) return false;
 
+    if (sdata->texId) {
+        GL_CHECK(glDeleteTextures(1, &sdata->texId));
+    }
+
     delete sdata;
     return true;
 }
@@ -253,8 +257,33 @@ RenderData GlRenderer::prepare(TVG_UNUSED const Array<RenderData>& scene, TVG_UN
                                TVG_UNUSED const RenderTransform* transform, TVG_UNUSED Array<RenderData>& clips,
                                TVG_UNUSED uint8_t opacity, TVG_UNUSED RenderUpdateFlag flags)
 {
-    // TODO:
-    return nullptr;
+    GlShape* sdata = static_cast<GlShape*>(data);
+    if (!sdata) {
+        sdata = new GlShape;
+        sdata->texId = 0;
+    }
+
+    sdata->viewPort = mViewPort;
+    sdata->viewWd = static_cast<float>(surface.w);
+    sdata->viewHt = static_cast<float>(surface.h);
+    sdata->updateFlag = flags;
+
+    if (sdata->updateFlag == RenderUpdateFlag::None) return sdata;
+
+    sdata->geometry = std::make_unique<GlGeometry>();
+
+    // handle scene data
+    for (uint32_t i = 0; i < scene.count; i++) {
+        auto clipData = reinterpret_cast<GlShape*>(scene.data[i]);
+
+        if (clipData == nullptr) {
+            continue;
+        }
+
+        sdata->sceneData.push(clipData);
+    }
+
+    return sdata;
 }
 
 RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const RenderTransform* transform,
@@ -311,7 +340,11 @@ RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const
                 continue;
             }
 
-            sdata->geometry->addClipDraw(clipData->geometry->tessellate(*clipData->rshape, &context));
+            if (clipData->rshape) {
+                sdata->geometry->addClipDraw(clipData->geometry->tessellate(*clipData->rshape, &context));
+            } else if (clipData->sceneData.count > 0) {
+                sdata->geometry->addClipDraw(sdata->geometry->tessellate(clipData->sceneData, &context));
+            }
         }
     }
 

@@ -832,6 +832,43 @@ void Tessellator::tessellate(const RenderShape *rshape, bool antialias)
     }
 }
 
+void Tessellator::tessellate(const Array<const RenderShape *> &shapes)
+{
+    this->fillRule = FillRule::Winding;
+
+    for (uint32_t i = 0; i < shapes.count; i++) {
+        auto cmds = shapes.data[i]->path.cmds.data;
+        auto cmdCnt = shapes.data[i]->path.cmds.count;
+        auto pts = shapes.data[i]->path.pts.data;
+        auto ptsCnt = shapes.data[i]->path.pts.count;
+
+        this->visitShape(cmds, cmdCnt, pts, ptsCnt);
+    }
+
+    this->buildMesh();
+
+    this->mergeVertices();
+
+    this->simplifyMesh();
+
+    this->tessMesh();
+
+    // output triangles
+    for (auto poly = this->pPolygon; poly; poly = poly->next) {
+        if (!this->matchFillRule(poly->winding)) {
+            continue;
+        }
+
+        if (poly->count < 3) {
+            continue;
+        }
+
+        for (auto m = poly->head; m; m = m->next) {
+            this->emitPoly(m);
+        }
+    }
+}
+
 void Tessellator::decomposeOutline(const Shape *shape, Shape *dst)
 {
     this->fillRule = shape->fillRule();
@@ -899,11 +936,13 @@ void Tessellator::visitShape(const PathCommand *cmds, uint32_t cmd_count, const 
                     stepCount = 2;
                 }
 
-                float step = 1.f / (stepCount - 1);
+                float step = 1.f / stepCount;
 
                 for (uint32_t s = 1; s < stepCount; s++) {
                     last->append(pHeap->Allocate<detail::Vertex>(bezPointAt(curve, step * s)));
                 }
+
+                last->append(pHeap->Allocate<detail::Vertex>(end));
 
                 pts += 3;
             } break;
@@ -1479,7 +1518,8 @@ bool Tessellator::intersectPairEdge(detail::Edge *left, detail::Edge *right, det
         return false;
     }
 
-    if (detail::_calcOrientation(left->bottom->point - left->top->point, right->bottom->point - right->top->point) == detail::Orientation::Linear) {
+    if (detail::_calcOrientation(left->bottom->point - left->top->point, right->bottom->point - right->top->point) ==
+        detail::Orientation::Linear) {
         return false;
     }
 

@@ -193,7 +193,9 @@ public:
     bool tessellate(const RenderShape &rshape, RenderUpdateFlag flag, TessContext *context);
     bool tessellate(uint32_t texId, Surface *image, uint8_t opacity, TessContext *context);
     // tess for clip
-    GlCommand  tessellate(const RenderShape &rshape, TessContext *context);
+    GlCommand tessellate(const RenderShape &rshape, TessContext *context);
+    // tess for merge
+    GlCommand   tessellate(const Array<GlShape*>& scene, TessContext* context);
     void   bind();
     void   unBind();
     void   draw(RenderUpdateFlag flag);

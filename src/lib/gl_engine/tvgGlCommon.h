@@ -72,6 +72,8 @@ struct GlShape
   uint32_t texId;
   RenderUpdateFlag updateFlag = None;
   std::unique_ptr<GlGeometry> geometry;
+
+  Array<GlShape*> sceneData = {};
 };
 
 

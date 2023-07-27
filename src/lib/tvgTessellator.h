@@ -25,6 +25,7 @@ struct ActiveEdgeList;
 
 struct RenderShape;
 
+
 class Tessellator final
 {
 public:
@@ -34,6 +35,8 @@ public:
     void tessellate(const Shape *shape);
 
     void tessellate(const RenderShape *rshape, bool antialias = false);
+
+    void tessellate(const Array<const RenderShape*>& shapes);
 
     void decomposeOutline(const Shape *shape, Shape *dst);
 

@@ -203,6 +203,41 @@ GlCommand GlGeometry::tessellate(const RenderShape& rshape, TessContext* context
     return cmd;
 }
 
+GlCommand GlGeometry::tessellate(const Array<GlShape*>& scene, TessContext* context)
+{
+    Array<float>    vertices;
+    Array<uint32_t> indices;
+
+    Tessellator tess(&vertices, &indices);
+
+    Array<const RenderShape*> shapes;
+    shapes.reserve(scene.count);
+    for(uint32_t i = 0; i < scene.count; i++) {
+        shapes.push(scene.data[i]->rshape);
+    }
+
+    tess.tessellate(shapes);
+
+    GlCommand cmd;
+
+    cmd.shader = context->shaders[PipelineType::kStencil].get();
+    cmd.vertexBuffer = context->vertexBuffer->push(vertices.data, vertices.count * sizeof(float));
+    cmd.indexBuffer = context->indexBuffer->push(indices.data, indices.count * sizeof(uint32_t));
+    cmd.drawCount = indices.count;
+    cmd.drawStart = 0;
+
+    cmd.vertexLayouts.emplace_back(VertexLayout{0, 2, 3 * sizeof(float), 0});
+
+    // matrix
+    {
+        int32_t loc = cmd.shader->getUniformBlockIndex("Matrix");
+        cmd.bindings.emplace_back(
+            BindingResource(0, loc, context->uniformBuffer->push(mTransform, 16 * sizeof(float)), 16 * sizeof(float)));
+    }
+
+    return cmd;
+}
+
 void GlGeometry::bind()
 {
     assert(mVao);
