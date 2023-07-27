@@ -10,16 +10,18 @@
 <p align="center">
   <img width="800" height="400" src="https://github.com/Samsung/thorvg/blob/master/res/logo/512/thorvg-banner.png">
 </p>
-ThorVG is a platform-independent portable library for drawing vector-based scenes and animation. It's open-source software that is freely used by a variety of software platforms and applications. ThorVG provides neat and easy APIs. Its library has no dependencies and keeps a super compact size. It serves as the vector graphics engine for Tizen OS that powers many products. <br />
+ThorVG is an open-source, platform-independent portable library used for drawing vector-based scenes and animations, which can be freely utilized across various software platforms and applications. With user-friendly APIs, it has no dependencies and maintains a super compact size. It serves as the vector graphics engine for Tizen OS, which powers many products. <br />
 <br />
 The following list shows primitives that are supported by ThorVG: <br />
+<br />
 
- * Shapes: Line, Arc, Curve, Path, Polygon, ...
+ * Shapes: Line, Arc, Curve, Path, Polygon
  * Filling: Solid & Gradients and Texture Mapping
  * Scene Graph & Affine Transformation (translation, rotation, scale, ...)
  * Stroking: Width, Join, Cap, Dash
- * Composition: Blending, Masking, Path Clipping, ...
- * Pictures: TVG, SVG, JPG, PNG, WEBP, Bitmap
+ * Composition: Blending, Masking, Path Clipping
+ * Images: TVG, SVG, JPG, PNG, WEBP, Bitmap
+ * Animations: Lottie
 <p align="center">
   <img width="930" height="473" src="https://github.com/Samsung/thorvg/blob/master/res/example_primitives.png">
 </p>
@@ -45,6 +47,7 @@ ThorVG has the threading mechanism so that it tries to acquire the next scenes w
     - [vcpkg](#vcpkg)
   - [Quick Start](#quick-start)
   - [SVG](#svg)
+  - [Lottie](#lottie)
   - [TVG Picture](#tvg-picture)
   - [Practices](#practices)
     - [Tizen](#tizen)
@@ -203,7 +206,7 @@ tvg::Initializer::term(tvg::CanvasEngine::Sw);
 [Back to contents](#contents)
 <br />
 <br />
-## SVG Support
+## SVG
 
 ThorVG supports SVG (Scalable Vector Graphics) rendering through its SVG interpreter. It satisfies the [SVG Tiny Specification](https://www.w3.org/TR/SVGTiny12/)
 to keep it lightweight, so it's useful for the embedded systems. Among the SVG Tiny specs, unsupported features in the ThorVG are the following:
@@ -227,6 +230,40 @@ The result is:
 <p align="center">
   <img width="300" height="300" src="https://github.com/Samsung/thorvg/blob/master/res/example_tiger.png">
 </p>
+
+[Back to contents](#contents)
+<br />
+<br />
+## Lottie
+
+ThorVG aims to fully support Lottie Animation features. Lottie is a JSON-based vector animation file format that enables seamless distribution of animations on any platform, akin to shipping static assets. These files are compact and compatible with various devices, scaling up or down without pixelation. With Lottie, you can easily create, edit, test, collaborate, and distribute animations in a user-friendly manner. For more information, please visit [LottieFiles](www.lottiefiles.com)' website.
+<br />
+https://github.com/thorvg/thorvg/assets/3711518/c42f714a-2349-41c0-840c-195d3cb51812
+<br />
+Currently, ThorVG provides experimental support for Lottie Animation, and while most features are supported, a few advanced properties of Lottie may not be available yet:
+
+ - Maskings
+ - Trimpath
+ - Images
+ - Texts
+ - Polystar
+ - Repeater
+ - Merge-path
+ - Expressions
+
+The following code snippet demonstrates how to use ThorVG to play a Lottie animation.
+```cpp
+auto animation = tvg::Animation::gen();     //generate an animation
+auto picture = animation->picture()         //Acquire a picture which associated with the animation.
+picture->load("lottie.json");               //load a Lottie file
+canvas->push(tvg::cast(picture));           //push the picture into the canvas
+```
+First, an animation and a picture are generated. The Lottie file (lottie.json) is loaded into the picture, and then the picture is added to the canvas. The animation frames are controlled using the animation object to play the Lottie animation.
+```cpp
+animation->frame(nimation->totalFrame() * progress);  //Set a current animation frame to display
+canvas->update(animation->picture());                 //Update the picture to be redrawn.
+```
+Let's suppose the progress variable determines the position of the animation, ranging from 0 to 1. Adjusting the progress value allows you to control the animation at the desired position. And then the canvas is updated to redraw the picture with the updated animation frame.
 
 [Back to contents](#contents)
 <br />
