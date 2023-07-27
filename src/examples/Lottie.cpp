@@ -117,7 +117,7 @@ void tvgSwTest(uint32_t* buffer)
         elm_transit_repeat_times_set(transit, -1);
         elm_transit_go(transit);
 
-        swCanvas->push(unique_ptr<tvg::Picture>(animation->picture()));
+        swCanvas->push(tvg::cast<tvg::Picture>(animation->picture()));
     }
 }
 

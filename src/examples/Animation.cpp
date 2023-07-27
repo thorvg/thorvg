@@ -86,7 +86,7 @@ void tvgSwTest(uint32_t* buffer)
     picture->scale(scale);
     picture->translate(shiftX, shiftY);
 
-    swCanvas->push(unique_ptr<tvg::Picture>(picture));
+    swCanvas->push(tvg::cast<tvg::Picture>(picture));
 
     //Run animation loop
     elm_transit_duration_set(transit, animation->duration());
