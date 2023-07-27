@@ -253,8 +253,9 @@ Currently, ThorVG provides experimental support for Lottie Animation, and while 
 The following code snippet demonstrates how to use ThorVG to play a Lottie animation.
 ```cpp
 auto animation = tvg::Animation::gen();     //generate an animation
-auto picture = animation->picture()         //Acquire a picture which associated with the animation.
+auto picture = animation->picture()         //acquire a picture which associated with the animation.
 picture->load("lottie.json");               //load a Lottie file
+auto duration = animation->duration();      //figure out the animation duration time in seconds.
 canvas->push(tvg::cast(picture));           //push the picture into the canvas
 ```
 First, an animation and a picture are generated. The Lottie file (lottie.json) is loaded into the picture, and then the picture is added to the canvas. The animation frames are controlled using the animation object to play the Lottie animation.
@@ -262,7 +263,7 @@ First, an animation and a picture are generated. The Lottie file (lottie.json) i
 animation->frame(animation->totalFrame() * progress);  //Set a current animation frame to display
 canvas->update(animation->picture());                  //Update the picture to be redrawn.
 ```
-Let's suppose the progress variable determines the position of the animation, ranging from 0 to 1. Adjusting the progress value allows you to control the animation at the desired position. And then the canvas is updated to redraw the picture with the updated animation frame.<br />
+Let's suppose the progress variable determines the position of the animation, ranging from 0 to 1 based on the total duration time of the animation. Adjusting the progress value allows you to control the animation at the desired position. Afterwards, the canvas is updated to redraw the picture with the updated animation frame.<br />
 <br />
 <p align="center">
   <img width="600" height="600" src="https://github.com/Samsung/thorvg/blob/master/res/example_lottie.gif">
