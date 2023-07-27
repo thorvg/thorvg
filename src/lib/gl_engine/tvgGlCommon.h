@@ -65,6 +65,7 @@ class GlGeometry;
 
 struct GlShape
 {
+  RenderRegion viewPort = {};
   const RenderShape* rshape = nullptr;
   float viewWd;
   float viewHt;

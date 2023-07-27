@@ -77,6 +77,8 @@ private:
 
     uint32_t genTexture(Surface* image);
 
+    RenderRegion mViewPort = {};
+
     GLStageBuffer mVertexBuffer;
     GLStageBuffer mIndexBuffer;
     GLStageBuffer mUniformBuffer;

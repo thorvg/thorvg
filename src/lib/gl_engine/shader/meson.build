@@ -11,6 +11,8 @@ shader_list = files(
     'image.frag',
     'image.vert',
     'radial_gradient.frag',
+    'stencil.frag',
+    'stencil.vert',
 )
 
 gl_shader_source = custom_target(

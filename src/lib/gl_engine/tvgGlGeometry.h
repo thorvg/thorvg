@@ -190,13 +190,20 @@ public:
     GlGeometry();
     ~GlGeometry();
 
-    bool   tessellate(const RenderShape &rshape, RenderUpdateFlag flag, TessContext *context);
-    bool   tessellate(uint32_t texId, Surface *image, uint8_t opacity, TessContext *context);
+    bool tessellate(const RenderShape &rshape, RenderUpdateFlag flag, TessContext *context);
+    bool tessellate(uint32_t texId, Surface *image, uint8_t opacity, TessContext *context);
+    // tess for clip
+    GlCommand  tessellate(const RenderShape &rshape, TessContext *context);
     void   bind();
     void   unBind();
     void   draw(RenderUpdateFlag flag);
     void   updateTransform(const RenderTransform *transform, float w, float h);
     GlSize getPrimitiveSize() const;
+
+    void beginClipMask();
+    void endClipMask();
+
+    void addClipDraw(GlCommand cmd);
 
 private:
     GlCommand generateColorCMD(float color[4], const Array<float> &vertex, const Array<uint32_t> &index,
@@ -209,9 +216,12 @@ private:
                                const Array<uint32_t> &indices, TessContext *context);
 private:
     GLuint mVao = 0;
+    GLuint mClipVao = 0;
     float  mTransform[16] = {0.f};
 
     std::unordered_map<uint32_t, GlCommand> mCmds = {};
+
+    Array<GlCommand> mClips = {};
 };
 
 #endif /* _TVG_GL_GEOMETRY_H_ */

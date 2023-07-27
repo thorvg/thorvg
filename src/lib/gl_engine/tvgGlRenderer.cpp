@@ -66,6 +66,11 @@ bool GlRenderer::target(TVG_UNUSED uint32_t* buffer, uint32_t stride, uint32_t w
         initShaders();
     }
 
+    mViewPort.x = 0;
+    mViewPort.y = 0;
+    mViewPort.w = w;
+    mViewPort.h = h;
+
     return true;
 }
 
@@ -86,6 +91,8 @@ bool GlRenderer::preRender()
     // Blend function for straight alpha
     GL_CHECK(glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA));
     GL_CHECK(glEnable(GL_BLEND));
+    GL_CHECK(glEnable(GL_SCISSOR_TEST));
+    GL_CHECK(glScissor(mViewPort.x, mViewPort.y, mViewPort.w, mViewPort.h));
 
     mVertexBuffer.copyToGPU();
     mIndexBuffer.copyToGPU();
@@ -121,7 +128,7 @@ bool GlRenderer::endComposite(TVG_UNUSED Compositor* cmp)
 
 ColorSpace GlRenderer::colorSpace()
 {
-    return ColorSpace::Unsupported;
+    return ColorSpace::ABGR8888;
 }
 
 bool GlRenderer::blend(TVG_UNUSED BlendMethod method)
@@ -142,13 +149,17 @@ bool GlRenderer::renderImage(TVG_UNUSED void* data)
         return false;
     }
 
-    GL_CHECK(glViewport(0, 0, (GLsizei)sdata->viewWd, (GLsizei)sdata->viewHt));
+    GL_CHECK(glScissor(sdata->viewPort.x, sdata->viewPort.y, sdata->viewPort.w, sdata->viewPort.h));
+
+    sdata->geometry->beginClipMask();
 
     sdata->geometry->bind();
 
     sdata->geometry->draw(RenderUpdateFlag::Image);
 
     sdata->geometry->unBind();
+
+    sdata->geometry->endClipMask();
 
     return true;
 }
@@ -160,7 +171,10 @@ bool GlRenderer::renderShape(RenderData data)
 
     size_t flags = static_cast<size_t>(sdata->updateFlag);
 
-    GL_CHECK(glViewport(0, 0, (GLsizei)sdata->viewWd, (GLsizei)sdata->viewHt));
+    GL_CHECK(glScissor(sdata->viewPort.x, surface.h - sdata->viewPort.y - sdata->viewPort.h, sdata->viewPort.w,
+                       sdata->viewPort.h));
+
+    sdata->geometry->beginClipMask();
 
     sdata->geometry->bind();
 
@@ -177,6 +191,9 @@ bool GlRenderer::renderShape(RenderData data)
     }
 
     sdata->geometry->unBind();
+
+    sdata->geometry->endClipMask();
+
     return true;
 }
 
@@ -198,6 +215,7 @@ RenderData GlRenderer::prepare(Surface* image, TVG_UNUSED const RenderMesh* mesh
         sdata = new GlShape;
     }
 
+    sdata->viewPort = mViewPort;
     sdata->viewWd = static_cast<float>(this->surface.w);
     sdata->viewHt = static_cast<float>(this->surface.h);
 
@@ -213,6 +231,20 @@ RenderData GlRenderer::prepare(Surface* image, TVG_UNUSED const RenderMesh* mesh
     TessContext context{&mVertexBuffer, &mIndexBuffer, &mUniformBuffer, mShaders};
 
     sdata->geometry->tessellate(sdata->texId, image, opacity, &context);
+
+
+    if (clips.count > 0) {
+
+        for (uint32_t i = 0; i < clips.count; i++) {
+            auto clipData = static_cast<GlShape*>(clips.data[i]);
+
+            if (clipData == nullptr) {
+                continue;
+            }
+
+            sdata->geometry->addClipDraw(clipData->geometry->tessellate(*clipData->rshape, &context));
+        }
+    }
 
     return sdata;
 }
@@ -237,6 +269,7 @@ RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const
         sdata->texId = 0;
     }
 
+    sdata->viewPort = mViewPort;
     sdata->viewWd = static_cast<float>(surface.w);
     sdata->viewHt = static_cast<float>(surface.h);
     sdata->updateFlag = flags;
@@ -269,17 +302,30 @@ RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const
 
     sdata->geometry->tessellate(rshape, RenderUpdateFlag::Stroke, &context);
 
+    if (clips.count > 0) {
+
+        for (uint32_t i = 0; i < clips.count; i++) {
+            auto clipData = static_cast<GlShape*>(clips.data[i]);
+
+            if (clipData == nullptr) {
+                continue;
+            }
+
+            sdata->geometry->addClipDraw(clipData->geometry->tessellate(*clipData->rshape, &context));
+        }
+    }
+
     return sdata;
 }
 
 RenderRegion GlRenderer::viewport()
 {
-    return {0, 0, INT32_MAX, INT32_MAX};
+    return mViewPort;
 }
 
 bool GlRenderer::viewport(TVG_UNUSED const RenderRegion& vp)
 {
-    // TODO:
+    mViewPort = vp;
     return true;
 }
 
@@ -352,6 +398,12 @@ void GlRenderer::initShaders()
     {
         std::string vs_shader(image_vert, image_vert_size);
         std::string fs_shader(image_frag, image_frag_size);
+        mShaders.emplace_back(GlProgram::gen(GlShader::gen(vs_shader.c_str(), fs_shader.c_str())));
+    }
+    // stencil Renderer
+    {
+        std::string vs_shader(stencil_vert, stencil_vert_size);
+        std::string fs_shader(stencil_frag, stencil_frag_size);
         mShaders.emplace_back(GlProgram::gen(GlShader::gen(vs_shader.c_str(), fs_shader.c_str())));
     }
 }

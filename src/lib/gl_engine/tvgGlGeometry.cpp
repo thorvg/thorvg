@@ -35,7 +35,7 @@
 GlGeometry::GlGeometry()
 {
     GL_CHECK(glGenVertexArrays(1, &mVao));
-
+    GL_CHECK(glGenVertexArrays(1, &mClipVao));
     assert(mVao);
 }
 
@@ -44,6 +44,10 @@ GlGeometry::~GlGeometry()
     GL_CHECK(glDeleteVertexArrays(1, &mVao));
 
     mVao = 0;
+
+    GL_CHECK(glDeleteVertexArrays(1, &mClipVao));
+
+    mClipVao = 0;
 }
 
 bool GlGeometry::tessellate(const RenderShape& rshape, RenderUpdateFlag flag, TessContext* context)
@@ -170,6 +174,35 @@ bool GlGeometry::tessellate(uint32_t texId, Surface* image, uint8_t opacity, Tes
     return true;
 }
 
+GlCommand GlGeometry::tessellate(const RenderShape& rshape, TessContext* context)
+{
+    Array<float>    vertices;
+    Array<uint32_t> indices;
+
+    Tessellator tess(&vertices, &indices);
+    tess.tessellate(&rshape, true);
+
+
+    GlCommand cmd;
+
+    cmd.shader = context->shaders[PipelineType::kStencil].get();
+    cmd.vertexBuffer = context->vertexBuffer->push(vertices.data, vertices.count * sizeof(float));
+    cmd.indexBuffer = context->indexBuffer->push(indices.data, indices.count * sizeof(uint32_t));
+    cmd.drawCount = indices.count;
+    cmd.drawStart = 0;
+
+    cmd.vertexLayouts.emplace_back(VertexLayout{0, 2, 3 * sizeof(float), 0});
+
+    // matrix
+    {
+        int32_t loc = cmd.shader->getUniformBlockIndex("Matrix");
+        cmd.bindings.emplace_back(
+            BindingResource(0, loc, context->uniformBuffer->push(mTransform, 16 * sizeof(float)), 16 * sizeof(float)));
+    }
+
+    return cmd;
+}
+
 void GlGeometry::bind()
 {
     assert(mVao);
@@ -217,6 +250,51 @@ void GlGeometry::updateTransform(const RenderTransform* transform, float w, floa
 GlSize GlGeometry::getPrimitiveSize() const
 {
     return GlSize{};
+}
+
+void GlGeometry::beginClipMask()
+{
+    if (mClips.count == 0) {
+        return;
+    }
+
+    GL_CHECK(glEnable(GL_STENCIL_TEST));
+    GL_CHECK(glStencilMask(0xFF));
+
+    GL_CHECK(glColorMask(0, 0, 0, 0));
+
+    GL_CHECK(glStencilOp(GL_KEEP, GL_KEEP, GL_INCR_WRAP));
+
+    GL_CHECK(glBindVertexArray(mClipVao));
+
+    uint8_t ref = 0;
+
+    for (uint32_t i = 0; i < mClips.count; i++) {
+        GL_CHECK(glStencilFunc(GL_EQUAL, ref, 0xFF));
+        mClips.data[i].execute();
+        ref++;
+    }
+
+    GL_CHECK(glStencilFunc(GL_EQUAL, ref, 0xFF));
+    GL_CHECK(glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP));
+
+    GL_CHECK(glColorMask(1, 1, 1, 1));
+}
+
+void GlGeometry::endClipMask()
+{
+    if (mClips.count == 0) {
+        return;
+    }
+
+    GL_CHECK(glClearStencil(0x0));
+    GL_CHECK(glClear(GL_STENCIL_BUFFER_BIT));
+    GL_CHECK(glDisable(GL_STENCIL_TEST));
+}
+
+void GlGeometry::addClipDraw(GlCommand cmd)
+{
+    mClips.push(std::move(cmd));
 }
 
 GlCommand GlGeometry::generateColorCMD(float color[4], const Array<float>& vertices, const Array<uint32_t>& indices,

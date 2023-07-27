@@ -148,6 +148,7 @@ static SDL_Window* createGlView(uint32_t w = 800, uint32_t h = 800)
 
     SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);   // Enable multisampling
     SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 16);  // Set the number of samples
+    SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
 
     win = SDL_CreateWindow("Hello world !", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, WIDTH, HEIGHT,
                            SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL);
