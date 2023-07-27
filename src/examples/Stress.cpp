@@ -102,7 +102,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
        This means it earns the time to finish loading svg resources,
        otherwise you can push pictures immediately. */
     for (auto picture : pictures) {
-        canvas->push(unique_ptr<tvg::Picture>(picture));
+        canvas->push(tvg::cast<tvg::Picture>(picture));
     }
 }
 
