@@ -62,12 +62,12 @@
 /************************************************************************/
 
 static bool _appendShape(SvgNode* node, Shape* shape, const Box& vBox, const string& svgPath);
-static unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, const Box& vBox, const string& svgPath, bool mask, int depth, bool* isMaskWhite = nullptr);
+static unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, const Box& vBox, const string& svgPath, SvgNodeType compositionType, int depth, bool* isMaskWhite = nullptr);
 
 
 static inline bool _isGroupType(SvgNodeType type)
 {
-    if (type == SvgNodeType::Doc || type == SvgNodeType::G || type == SvgNodeType::Use || type == SvgNodeType::ClipPath || type == SvgNodeType::Symbol) return true;
+    if (type == SvgNodeType::Doc || type == SvgNodeType::G || type == SvgNodeType::Use || type == SvgNodeType::Symbol) return true;
     return false;
 }
 
@@ -248,22 +248,16 @@ static void _applyComposition(Paint* paint, const SvgNode* node, const Box& vBox
         if (compNode && compNode->child.count > 0) {
             node->style->clipPath.applying = true;
 
-            auto comp = Shape::gen();
+            auto comp = _sceneBuildHelper(compNode, vBox, svgPath, SvgNodeType::ClipPath, 0);
+            if (comp) {
+                if (node->transform) {
+                    auto m = comp->transform();
+                    m = mathMultiply(node->transform, &m);
+                    comp->transform(m);
+                }
 
-            auto child = compNode->child.data;
-            auto valid = false; //Composite only when valid shapes are existed
-
-            for (uint32_t i = 0; i < compNode->child.count; ++i, ++child) {
-                if (_appendChildShape(*child, comp.get(), vBox, svgPath)) valid = true;
+                paint->composite(std::move(comp), CompositeMethod::ClipPath);
             }
-
-            if (node->transform) {
-                auto m = comp->transform();
-                m = mathMultiply(node->transform, &m);
-                comp->transform(m);
-            }
-
-            if (valid) paint->composite(std::move(comp), CompositeMethod::ClipPath);
 
             node->style->clipPath.applying = false;
         }
@@ -280,7 +274,7 @@ static void _applyComposition(Paint* paint, const SvgNode* node, const Box& vBox
             node->style->mask.applying = true;
 
             bool isMaskWhite = true;
-            auto comp = _sceneBuildHelper(compNode, vBox, svgPath, true, 0, &isMaskWhite);
+            auto comp = _sceneBuildHelper(compNode, vBox, svgPath, SvgNodeType::Mask, 0, &isMaskWhite);
             if (comp) {
                 if (node->transform) comp->transform(*node->transform);
 
@@ -642,7 +636,7 @@ static Matrix _calculateAspectRatioMatrix(AspectRatioAlign align, AspectRatioMee
 static unique_ptr<Scene> _useBuildHelper(const SvgNode* node, const Box& vBox, const string& svgPath, int depth, bool* isMaskWhite)
 {
     unique_ptr<Scene> finalScene;
-    auto scene = _sceneBuildHelper(node, vBox, svgPath, false, depth + 1, isMaskWhite);
+    auto scene = _sceneBuildHelper(node, vBox, svgPath, SvgNodeType::Unknown, depth + 1, isMaskWhite);
 
     // mUseTransform = mUseTransform * mTranslate
     Matrix mUseTransform = {1, 0, 0, 0, 1, 0, 0, 0, 1};
@@ -709,7 +703,7 @@ static unique_ptr<Scene> _useBuildHelper(const SvgNode* node, const Box& vBox, c
 }
 
 
-static unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, const Box& vBox, const string& svgPath, bool mask, int depth, bool* isMaskWhite)
+static unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, const Box& vBox, const string& svgPath, SvgNodeType compositionType, int depth, bool* isMaskWhite)
 {
     /* Exception handling: Prevent invalid SVG data input.
        The size is the arbitrary value, we need an experimental size. */
@@ -718,26 +712,27 @@ static unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, const Box& vBox,
         return nullptr;
     }
 
-    if (_isGroupType(node->type) || mask) {
+    if (_isGroupType(node->type) || compositionType != SvgNodeType::Unknown) {
         auto scene = Scene::gen();
         // For a Symbol node, the viewBox transformation has to be applied first - see _useBuildHelper()
-        if (!mask && node->transform && node->type != SvgNodeType::Symbol) scene->transform(*node->transform);
+        if (node->transform && node->type != SvgNodeType::Symbol) scene->transform(*node->transform);
 
-        if (node->display && node->style->opacity != 0) {
+        if ((node->display || compositionType == SvgNodeType::ClipPath) && node->style->opacity != 0) {
             auto child = node->child.data;
             for (uint32_t i = 0; i < node->child.count; ++i, ++child) {
                 if (_isGroupType((*child)->type)) {
                     if ((*child)->type == SvgNodeType::Use)
                         scene->push(_useBuildHelper(*child, vBox, svgPath, depth + 1, isMaskWhite));
-                    else
-                        scene->push(_sceneBuildHelper(*child, vBox, svgPath, false, depth + 1, isMaskWhite));
+                    // According to the SVG standard ClipPath doesn't support <g> tag
+                    else if (compositionType != SvgNodeType::ClipPath)
+                        scene->push(_sceneBuildHelper(*child, vBox, svgPath, SvgNodeType::Unknown, depth + 1, isMaskWhite));
                 } else if ((*child)->type == SvgNodeType::Image) {
                     auto image = _imageBuildHelper(*child, vBox, svgPath);
                     if (image) {
                         scene->push(std::move(image));
                         if (isMaskWhite) *isMaskWhite = false;
                     }
-                } else if ((*child)->type != SvgNodeType::Mask) {
+                } else if ((*child)->type != SvgNodeType::Mask && (*child)->type != SvgNodeType::ClipPath) {
                     auto shape = _shapeBuildHelper(*child, vBox, svgPath);
                     if (shape) {
                         if (isMaskWhite) {
@@ -791,7 +786,7 @@ unique_ptr<Scene> svgSceneBuild(SvgLoaderData& loaderData, Box vBox, float w, fl
 
     if (!loaderData.doc || (loaderData.doc->type != SvgNodeType::Doc)) return nullptr;
 
-    auto docNode = _sceneBuildHelper(loaderData.doc, vBox, svgPath, false, 0);
+    auto docNode = _sceneBuildHelper(loaderData.doc, vBox, svgPath, SvgNodeType::Unknown, 0);
 
     if (!(viewFlag & SvgViewFlag::Viewbox)) _updateInvalidViewSize(docNode.get(), vBox, w, h, viewFlag);
 
