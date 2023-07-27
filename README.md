@@ -236,11 +236,10 @@ The result is:
 <br />
 ## Lottie
 
-ThorVG aims to fully support Lottie Animation features. Lottie is a JSON-based vector animation file format that enables seamless distribution of animations on any platform, akin to shipping static assets. These files are compact and compatible with various devices, scaling up or down without pixelation. With Lottie, you can easily create, edit, test, collaborate, and distribute animations in a user-friendly manner. For more information, please visit [LottieFiles](www.lottiefiles.com)' website.
-<br />
-https://github.com/thorvg/thorvg/assets/3711518/c42f714a-2349-41c0-840c-195d3cb51812
+ThorVG aims to fully support Lottie Animation features. Lottie is a JSON-based vector animation file format that enables seamless distribution of animations on any platform, akin to shipping static assets. These files are compact and compatible with various devices, scaling up or down without pixelation. With Lottie, you can easily create, edit, test, collaborate, and distribute animations in a user-friendly manner. For more information, please visit [LottieFiles](www.lottiefiles.com)' website. <br />
 <br />
 Currently, ThorVG provides experimental support for Lottie Animation, and while most features are supported, a few advanced properties of Lottie may not be available yet:
+<br />
 
  - Maskings
  - Trimpath
@@ -260,10 +259,14 @@ canvas->push(tvg::cast(picture));           //push the picture into the canvas
 ```
 First, an animation and a picture are generated. The Lottie file (lottie.json) is loaded into the picture, and then the picture is added to the canvas. The animation frames are controlled using the animation object to play the Lottie animation.
 ```cpp
-animation->frame(nimation->totalFrame() * progress);  //Set a current animation frame to display
-canvas->update(animation->picture());                 //Update the picture to be redrawn.
+animation->frame(animation->totalFrame() * progress);  //Set a current animation frame to display
+canvas->update(animation->picture());                  //Update the picture to be redrawn.
 ```
-Let's suppose the progress variable determines the position of the animation, ranging from 0 to 1. Adjusting the progress value allows you to control the animation at the desired position. And then the canvas is updated to redraw the picture with the updated animation frame.
+Let's suppose the progress variable determines the position of the animation, ranging from 0 to 1. Adjusting the progress value allows you to control the animation at the desired position. And then the canvas is updated to redraw the picture with the updated animation frame.<br />
+<br />
+<p align="center">
+  <img width="600" height="600" src="https://github.com/Samsung/thorvg/blob/master/res/example_lottie.gif">
+</p>
 
 [Back to contents](#contents)
 <br />
