@@ -167,6 +167,8 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     picture4->rotate(90);
     picture4->blend(tvg::BlendMethod::SoftLight);
     canvas->push(std::move(picture4));
+
+    free(data);
 }
 
 
