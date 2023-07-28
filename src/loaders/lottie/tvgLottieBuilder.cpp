@@ -363,6 +363,7 @@ bool LottieBuilder::update(LottieComposition* comp, int32_t frameNo)
 
     //Update root layer
     auto root = comp->root;
+    if (!root) return false;
 
     //Prepare render data
     if (!root->scene) {

@@ -527,8 +527,6 @@ LottieSolidFill* LottieParser::parseSolidFill()
 
 void LottieParser::parseStrokeDash(LottieStroke* stroke)
 {
-    TVGLOG("LOTTIE", "StrokeDash(d) is not supported");
-
     enterArray();
     while (nextArrayValue()) {
         enterObject();
@@ -555,7 +553,12 @@ LottieSolidStroke* LottieParser::parseSolidStroke()
         else if (!strcmp(key, "nm")) stroke->name = getStringCopy();
         else if (!strcmp(key, "hd")) stroke->hidden = getBool();
         else if (!strcmp(key, "fillEnabled")) stroke->disabled = !getBool();
-        else if (!strcmp(key, "d")) parseStrokeDash(stroke);
+        else if (!strcmp(key, "d"))
+        {
+            TVGLOG("LOTTIE", "StrokeDash(d) is not supported");
+            skip(key);
+            //parseStrokeDash(stroke);
+        }
         else skip(key);
     }
     stroke->prepare();
@@ -899,7 +902,11 @@ LottieLayer* LottieParser::parseLayer()
         else if (!strcmp(key, "st")) layer->startFrame = lroundf(getFloat());
         else if (!strcmp(key, "bm")) layer->blendMethod = getBlendMethod();
         else if (!strcmp(key, "parent")) layer->pid = getInt();
-        else if (!strcmp(key, "tm")) TVGLOG("LOTTIE", "Time Remap(tm) is not supported");
+        else if (!strcmp(key, "tm"))
+        {
+            TVGLOG("LOTTIE", "Time Remap(tm) is not supported");
+            skip(key);
+        }
         else if (!strcmp(key, "w")) layer->w = getInt();
         else if (!strcmp(key, "h")) layer->h = getInt();
         else if (!strcmp(key, "sw")) layer->w = getInt();
@@ -907,7 +914,11 @@ LottieLayer* LottieParser::parseLayer()
         else if (!strcmp(key, "sc")) layer->color = getColor(getString());
         else if (!strcmp(key, "tt")) layer->matteType = getMatteType();
         else if (!strcmp(key, "hasMask")) layer->mask = getBool();
-        else if (!strcmp(key, "masksProperties")) TVGLOG("LOTTIE", "Masking(maskProperties) is not supported");
+        else if (!strcmp(key, "masksProperties"))
+        {
+            TVGLOG("LOTTIE", "Masking(maskProperties) is not supported");
+            skip(key);
+        }
         else if (!strcmp(key, "hd")) layer->hidden = getBool();
         else if (!strcmp(key, "refId")) layer->refId = getStringCopy();
         else skip(key);
