@@ -561,7 +561,8 @@ static bool _rasterMattedRle(SwSurface* surface, SwRleData* rle, uint8_t r, uint
             if (span->coverage == 255) src = color;
             else src = ALPHA_BLEND(color, span->coverage);
             for (uint32_t x = 0; x < span->len; ++x, ++dst, cmp += csize) {
-                *dst = INTERPOLATE(src, *dst, alpha(cmp));
+                auto tmp = ALPHA_BLEND(src, alpha(cmp));
+                *dst = tmp + ALPHA_BLEND(*dst, IA(tmp));
             }
         }
         return true;
