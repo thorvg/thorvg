@@ -289,7 +289,7 @@ GlSize GlGeometry::getPrimitiveSize() const
 
 void GlGeometry::beginClipMask()
 {
-    if (mClips.count == 0) {
+    if (mClips.empty()) {
         return;
     }
 
@@ -304,9 +304,9 @@ void GlGeometry::beginClipMask()
 
     uint8_t ref = 0;
 
-    for (uint32_t i = 0; i < mClips.count; i++) {
+    for (size_t i = 0; i < mClips.size(); i++) {
         GL_CHECK(glStencilFunc(GL_EQUAL, ref, 0xFF));
-        mClips.data[i].execute();
+        mClips[i].execute();
         ref++;
     }
 
@@ -318,7 +318,7 @@ void GlGeometry::beginClipMask()
 
 void GlGeometry::endClipMask()
 {
-    if (mClips.count == 0) {
+    if (mClips.empty()) {
         return;
     }
 
@@ -329,7 +329,7 @@ void GlGeometry::endClipMask()
 
 void GlGeometry::addClipDraw(GlCommand cmd)
 {
-    mClips.push(std::move(cmd));
+    mClips.emplace_back(std::move(cmd));
 }
 
 GlCommand GlGeometry::generateColorCMD(float color[4], const Array<float>& vertices, const Array<uint32_t>& indices,

@@ -25,6 +25,7 @@
 
 #include <math.h>
 #include <unordered_map>
+#include <vector>
 
 #include "tvgArray.h"
 #include "tvgGlCommon.h"
@@ -223,7 +224,7 @@ private:
 
     std::unordered_map<uint32_t, GlCommand> mCmds = {};
 
-    Array<GlCommand> mClips = {};
+    std::vector<GlCommand> mClips = {};
 };
 
 #endif /* _TVG_GL_GEOMETRY_H_ */
