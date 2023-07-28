@@ -24,6 +24,7 @@
 #define _TVG_SHAPE_IMPL_H_
 
 #include <memory.h>
+#include "tvgMath.h"
 #include "tvgPaint.h"
 
 /************************************************************************/
@@ -292,6 +293,12 @@ struct Shape::Impl
         flag |= RenderUpdateFlag::Stroke;
 
         return true;
+    }
+
+    bool strokeFirst()
+    {
+        if (!rs.stroke) return true;
+        return rs.stroke->strokeFirst;
     }
 
     bool strokeFirst(bool strokeFirst)

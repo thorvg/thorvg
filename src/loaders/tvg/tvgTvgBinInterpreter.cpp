@@ -31,7 +31,10 @@
 #endif
 
 #include "tvgTvgCommon.h"
+#include "tvgShapeImpl.h"
 
+
+#define P(A) A->pImpl
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
@@ -285,6 +288,11 @@ static bool _parseShapeStroke(const char *ptr, const char *end, Shape *shape)
             case TVG_TAG_SHAPE_STROKE_JOIN: {
                 if (block.length != SIZE(TvgBinFlag)) return false;
                 shape->stroke((StrokeJoin) *block.data);
+                break;
+            }
+            case TVG_TAG_SHAPE_STROKE_ORDER: {
+                if (block.length != SIZE(TvgBinFlag)) return false;
+                P(shape)->strokeFirst((bool) *block.data);
                 break;
             }
             case TVG_TAG_SHAPE_STROKE_WIDTH: {

@@ -20,12 +20,12 @@
  * SOFTWARE.
  */
 
-#include "tvgMath.h"
+#include <cstring>
+
 #include "tvgSaveModule.h"
 #include "tvgTvgSaver.h"
 #include "tvgLzw.h"
-
-#include <cstring>
+#include "tvgShapeImpl.h"
 
 #ifdef _WIN32
     #include <malloc.h>
@@ -50,6 +50,8 @@ static FILE* _fopen(const char* filename, const char* mode)
 }
 
 #define SIZE(A) sizeof(A)
+
+#define P(A) A->pImpl
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
@@ -98,6 +100,8 @@ static bool _merge(Shape* from, Shape* to)
     }
 
     //stroke
+    if (P(from)->strokeFirst() != P(to)->strokeFirst()) return false;
+
     r = g = b = a = r2 = g2 = b2 = a2 = 0;
 
     from->strokeColor(&r, &g, &b, &a);
@@ -454,6 +458,10 @@ TvgBinCounter TvgSaver::serializeStroke(const Shape* shape, const Matrix* pTrans
     //join
     if (auto flag = static_cast<TvgBinFlag>(shape->strokeJoin()))
         cnt += writeTagProperty(TVG_TAG_SHAPE_STROKE_JOIN, SIZE(TvgBinFlag), &flag);
+
+    //order
+    if (auto flag = static_cast<TvgBinFlag>(P(shape)->strokeFirst()))
+        writeTagProperty(TVG_TAG_SHAPE_STROKE_ORDER, SIZE(TvgBinFlag), &flag);
 
     //fill
     if (auto fill = shape->strokeFill()) {
