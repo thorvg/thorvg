@@ -81,6 +81,7 @@ using TvgBinFlag = TvgBinByte;
 #define TVG_TAG_SHAPE_STROKE_FILL                   (TvgBinTag)0x54
 #define TVG_TAG_SHAPE_STROKE_DASHPTRN               (TvgBinTag)0x55
 #define TVG_TAG_SHAPE_STROKE_MITERLIMIT             (TvgBinTag)0x56
+#define TVG_TAG_SHAPE_STROKE_ORDER                  (TvgBinTag)0x57
 
 
 //Fill
