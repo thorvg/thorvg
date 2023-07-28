@@ -377,25 +377,19 @@ bool LottieBuilder::update(LottieComposition* comp, int32_t frameNo)
 }
 
 
-unique_ptr<Scene> LottieBuilder::build(LottieComposition* comp)
+void LottieBuilder::build(LottieComposition* comp)
 {
-    if (comp->scene) {
-        TVGERR("LOTTIE", "LottieBuilder::build() is requested multiple times?");
-        return unique_ptr<Scene>(comp->scene);
-    }
+    if (comp->scene) return;
 
-    auto scene = Scene::gen();
-    if (!scene) return nullptr;
-    comp->scene = scene.get();
+    comp->scene = Scene::gen().release();
+    if (!comp->scene) return;
 
     //TODO: Process repeater objects?
 
-    if (!update(comp, 0)) return nullptr;
+    if (!update(comp, 0)) return;
 
     //viewport clip
     auto clip = Shape::gen();
     clip->appendRect(0, 0, static_cast<float>(comp->w), static_cast<float>(comp->h));
-    scene->composite(std::move(clip), CompositeMethod::ClipPath);
-
-    return scene;
+    comp->scene->composite(std::move(clip), CompositeMethod::ClipPath);
 }

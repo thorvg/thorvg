@@ -109,7 +109,8 @@ struct Picture::Impl
                     }
                     if (paint) return RenderUpdateFlag::None;
                 }
-            }
+            } else loader->sync();
+
             if (!surface) {
                 if ((surface = loader->bitmap().release())) {
                     loader->close();

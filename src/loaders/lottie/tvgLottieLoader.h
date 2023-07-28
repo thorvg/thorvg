@@ -41,8 +41,6 @@ public:
     LottieBuilder* builder = nullptr;
     LottieComposition* comp = nullptr;
 
-    unique_ptr<Scene> root;             //current motion frame
-
     bool copy = false;                  //"content" is owned by this loader
 
     LottieLoader();
@@ -62,6 +60,7 @@ public:
     uint32_t totalFrame() override;
     uint32_t curFrame() override;
     float duration() override;
+    void sync() override;
 
 private:
     bool header();
