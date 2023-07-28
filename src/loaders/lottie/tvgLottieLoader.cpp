@@ -75,12 +75,16 @@ void LottieLoader::clear()
 
 void LottieLoader::run(unsigned tid)
 {
-    LottieParser parser(content);
-    parser.parse();
-
-    comp = parser.comp;
-
-    root = builder->build(comp);
+    //update frame
+    if (comp && comp->scene) {
+        builder->update(comp, frameNo);
+    //initial loading
+    } else {
+        LottieParser parser(content);
+        parser.parse();
+        comp = parser.comp;
+        builder->build(comp);
+    }
 }
 
 
@@ -143,6 +147,8 @@ bool LottieLoader::header()
             p = e;
             continue;
         }
+        //TODO: need a duration time in advance.
+
         //width
         if (!strncmp(p, "\"w\":", 4)) {
             p += 4;
@@ -251,7 +257,7 @@ bool LottieLoader::read()
     if (!content || size == 0) return false;
 
     //the loading has been already completed in header()
-    if (root) return true;
+    if (comp) return true;
 
     TaskScheduler::request(this);
 
@@ -273,7 +279,7 @@ unique_ptr<Paint> LottieLoader::paint()
 {
     this->done();
 
-    return std::move(root);
+    return cast<Paint>(comp->scene);
 }
 
 
@@ -287,7 +293,9 @@ bool LottieLoader::frame(uint32_t frameNo)
 
     this->frameNo = frameNo;
 
-    return builder->update(comp, frameNo);
+    TaskScheduler::request(this);
+
+    return true;
 }
 
 
@@ -302,8 +310,6 @@ uint32_t LottieLoader::totalFrame()
 
 uint32_t LottieLoader::curFrame()
 {
-    this->done();
-
     return frameNo;
 }
 
@@ -314,4 +320,10 @@ float LottieLoader::duration()
 
     if (!comp) return 0;
     return comp->duration();
+}
+
+
+void LottieLoader::sync()
+{
+    this->done();
 }

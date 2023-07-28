@@ -30,7 +30,7 @@ struct LottieComposition;
 struct LottieBuilder
 {
     bool update(LottieComposition* comp, int32_t frameNo);
-    unique_ptr<Scene> build(LottieComposition* comp);
+    void build(LottieComposition* comp);
 };
 
 #endif //_TVG_LOTTIE_BUILDER_H

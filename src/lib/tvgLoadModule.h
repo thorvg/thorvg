@@ -44,9 +44,11 @@ public:
     virtual bool resize(Paint* paint, float w, float h) { return false; }
 
     virtual bool animatable() { return false; }  //true if this loader supports animation.
+    virtual void sync() {};  //finish immediately if any async update jobs.
 
     virtual bool read() = 0;
     virtual bool close() = 0;
+
     virtual unique_ptr<Surface> bitmap() { return nullptr; }
     virtual unique_ptr<Paint> paint() { return nullptr; }
 };
