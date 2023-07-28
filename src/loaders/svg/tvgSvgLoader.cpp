@@ -3511,6 +3511,7 @@ void SvgLoader::run(unsigned tid)
         if (defs) _updateComposite(loaderData.doc, defs);
 
         _updateStyle(loaderData.doc, nullptr);
+        if (defs) _updateStyle(defs, nullptr);
 
         if (loaderData.gradients.count > 0) _updateGradient(&loaderData, loaderData.doc, &loaderData.gradients);
         if (defs) _updateGradient(&loaderData, loaderData.doc, &defs->node.defs.gradients);
