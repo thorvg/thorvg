@@ -401,8 +401,8 @@ struct LottieLayer : LottieGroup
 
     //cached data
     struct {
+        int32_t frameNo = -1;
         Matrix matrix;
-        int32_t frameNo;
         uint8_t opacity;
     } cache;
 
