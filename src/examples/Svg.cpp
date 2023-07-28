@@ -76,27 +76,12 @@ void svgDirCallback(const char* name, const char* path, void* data)
 
 void dir_foreach(const char* dir, tvg::Canvas* canvas)
 {
-    int32_t count = 0;
     for (const auto& entry : std::filesystem::directory_iterator(dir)) {
         if (!entry.is_regular_file()) {
             continue;
         }
 
-        if (entry.path().filename() == "samsung-7.svg" || 
-        entry.path().filename() == "1528971751.svg" ||
-        entry.path().filename() == "gradtransf.svg" ||
-        entry.path().filename() == "Psychedelica.svg"
-        ) {
-            continue;
-        }
-
         svgDirCallback(entry.path().filename().c_str(), entry.path().c_str(), canvas);
-
-        count++;
-
-        if (count >= 80) {
-            break;
-        }
     }
 }
 

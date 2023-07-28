@@ -1045,6 +1045,11 @@ void Tessellator::simplifyMesh()
         detail::Edge *left_enclosing = nullptr;
         detail::Edge *right_enclosing = nullptr;
 
+        if (ael.head != ael.tail) {
+            // FIXME: state is corrupted
+            continue;
+        }
+
         bool intersected = false;
         do {
             intersected = false;
@@ -1503,6 +1508,14 @@ bool Tessellator::splitEdge(detail::Edge *edge, detail::Vertex *v, detail::Activ
     bottom->insertAbove(new_edge);
 
     top->insertBelow(new_edge);
+
+    if (new_edge->above_prev == nullptr && new_edge->above_next == nullptr) {
+        return false;
+    }
+
+    if (new_edge->below_prev == nullptr && new_edge->below_next == nullptr) {
+        return false;
+    }
 
     return true;
 }

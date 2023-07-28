@@ -36,7 +36,7 @@ public:
 
     void tessellate(const RenderShape *rshape, bool antialias = false);
 
-    void tessellate(const Array<const RenderShape*>& shapes);
+    void tessellate(const Array<const RenderShape *> &shapes);
 
     void decomposeOutline(const Shape *shape, Shape *dst);
 
@@ -73,7 +73,7 @@ private:
 
     void emitPoly(detail::MonotonePolygon *poly);
 
-    void emitTriangle(detail::Vertex* p1, detail::Vertex* p2, detail::Vertex* p3);
+    void emitTriangle(detail::Vertex *p1, detail::Vertex *p2, detail::Vertex *p3);
 private:
     FillRule                            fillRule = FillRule::Winding;
     std::unique_ptr<detail::ObjectHeap> pHeap;
