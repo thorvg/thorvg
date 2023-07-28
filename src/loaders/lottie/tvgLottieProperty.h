@@ -46,7 +46,7 @@ struct RGB24
 
 struct ColorStop
 {
-    Fill::ColorStop* data;
+    Fill::ColorStop* data = nullptr;
 };
 
 

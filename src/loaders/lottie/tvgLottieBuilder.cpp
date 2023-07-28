@@ -232,6 +232,9 @@ static void _updateChildren(LottieGroup* parent, int32_t frameNo, Shape* baseSha
 {
     if (parent->children.empty()) return;
 
+    //inherits the parent's shape properties.
+    baseShape = baseShape ? static_cast<Shape*>(baseShape->duplicate()) : Shape::gen().release();
+
     //merge shapes if they are continuously appended?
     Shape* mergingShape = nullptr;
 
@@ -239,7 +242,7 @@ static void _updateChildren(LottieGroup* parent, int32_t frameNo, Shape* baseSha
     for (auto child = parent->children.end() - 1; child >= parent->children.data; --child) {
         switch ((*child)->type) {
             case LottieObject::Group: {
-                mergingShape = _updateGroup(parent, static_cast<LottieGroup*>(*child), frameNo, static_cast<Shape*>(baseShape->duplicate()), reset);
+                mergingShape = _updateGroup(parent, static_cast<LottieGroup*>(*child), frameNo, baseShape, reset);
                 break;
             }
             case LottieObject::Transform: {
@@ -288,6 +291,7 @@ static void _updateChildren(LottieGroup* parent, int32_t frameNo, Shape* baseSha
             }
         }
     }
+    delete(baseShape);
 }
 
 static void _updatePrecomp(LottieLayer* precomp, int32_t frameNo, bool reset)
@@ -340,8 +344,7 @@ static void _updateLayer(LottieLayer* root, LottieLayer* layer, int32_t frameNo,
             break;
         }
         default: {
-            auto baseShape = Shape::gen();
-            _updateChildren(layer, frameNo, baseShape.get(), reset);
+            _updateChildren(layer, frameNo, nullptr, reset);
             break;
         }
     }
