@@ -154,13 +154,14 @@ static void _rasterMaskedPolygonImageSegmentInt(SwSurface* surface, const SwImag
                     } else {
                         if (opacity == 255) {
                             uu = (int) u;
+                            if (uu >= sw) continue;
                             vv = (int) v;
+                            if (vv >= sh) continue;
+
                             ar = (int)(255 * (1 - modff(u, &iptr)));
                             ab = (int)(255 * (1 - modff(v, &iptr)));
                             iru = uu + 1;
                             irv = vv + 1;
-
-                            if (vv >= sh) continue;
 
                             px = *(sbuf + (vv * sw) + uu);
 
@@ -190,13 +191,14 @@ static void _rasterMaskedPolygonImageSegmentInt(SwSurface* surface, const SwImag
                             v += _dvdx;
                         } else {
                             uu = (int) u;
+                            if (uu >= sw) continue;
                             vv = (int) v;
+                            if (vv >= sh) continue;
+
                             ar = (int)(255 * (1 - modff(u, &iptr)));
                             ab = (int)(255 * (1 - modff(v, &iptr)));
                             iru = uu + 1;
                             irv = vv + 1;
-
-                            if (vv >= sh) continue;
 
                             px = *(sbuf + (vv * sw) + uu);
 
@@ -317,14 +319,14 @@ static void _rasterMaskedPolygonImageSegmentDup(SwSurface* surface, const SwImag
                 //Draw horizontal line
                 while (x++ < x2) {
                     uu = (int) u;
+                    if (uu >= sw) continue;
                     vv = (int) v;
+                    if (vv >= sh) continue;
 
                     ar = (int)(255 * (1 - modff(u, &iptr)));
                     ab = (int)(255 * (1 - modff(v, &iptr)));
                     iru = uu + 1;
                     irv = vv + 1;
-
-                    if (vv >= sh) continue;
 
                     px = *(sbuf + (vv * sw) + uu);
 
@@ -360,14 +362,14 @@ static void _rasterMaskedPolygonImageSegmentDup(SwSurface* surface, const SwImag
                 //Draw horizontal line
                 while (x++ < x2) {
                     uu = (int) u;
+                    if (uu >= sw) continue;
                     vv = (int) v;
+                    if (vv >= sh) continue;
 
                     ar = (int)(255 * (1 - modff(u, &iptr)));
                     ab = (int)(255 * (1 - modff(v, &iptr)));
                     iru = uu + 1;
                     irv = vv + 1;
-
-                    if (vv >= sh) continue;
 
                     px = *(sbuf + (vv * sw) + uu);
 
@@ -504,14 +506,14 @@ static void _rasterBlendingPolygonImageSegment(SwSurface* surface, const SwImage
                 //Draw horizontal line
                 while (x++ < x2) {
                     uu = (int) u;
+                    if (uu >= sw) continue;
                     vv = (int) v;
+                    if (vv >= sh) continue;
 
                     ar = (int)(255 * (1 - modff(u, &iptr)));
                     ab = (int)(255 * (1 - modff(v, &iptr)));
                     iru = uu + 1;
                     irv = vv + 1;
-
-                    if (vv >= sh) continue;
 
                     px = *(sbuf + (vv * sw) + uu);
 
@@ -547,14 +549,14 @@ static void _rasterBlendingPolygonImageSegment(SwSurface* surface, const SwImage
                 //Draw horizontal line
                 while (x++ < x2) {
                     uu = (int) u;
+                    if (uu >= sw) continue;
                     vv = (int) v;
+                    if (vv >= sh) continue;
 
                     ar = (int)(255 * (1 - modff(u, &iptr)));
                     ab = (int)(255 * (1 - modff(v, &iptr)));
                     iru = uu + 1;
                     irv = vv + 1;
-
-                    if (vv >= sh) continue;
 
                     px = *(sbuf + (vv * sw) + uu);
 
@@ -688,14 +690,14 @@ static void _rasterPolygonImageSegment(SwSurface* surface, const SwImage* image,
                 //Draw horizontal line
                 while (x++ < x2) {
                     uu = (int) u;
+                    if (uu >= sw) continue;
                     vv = (int) v;
+                    if (vv >= sh) continue;
 
                     ar = (int)(255 * (1 - modff(u, &iptr)));
                     ab = (int)(255 * (1 - modff(v, &iptr)));
                     iru = uu + 1;
                     irv = vv + 1;
-
-                    if (vv >= sh) continue;
 
                     px = *(sbuf + (vv * sw) + uu);
 
