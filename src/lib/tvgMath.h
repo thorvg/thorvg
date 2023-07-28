@@ -45,6 +45,15 @@ static inline bool mathEqual(float a, float b)
     return (fabsf(a - b) < FLT_EPSILON);
 }
 
+static inline bool mathEqual(const Matrix& a, const Matrix& b)
+{
+    if (!mathEqual(a.e11, b.e11) || !mathEqual(a.e12, b.e12) || !mathEqual(a.e13, b.e13) ||
+        !mathEqual(a.e21, b.e21) || !mathEqual(a.e22, b.e22) || !mathEqual(a.e23, b.e23) ||
+        !mathEqual(a.e31, b.e31) || !mathEqual(a.e32, b.e32) || !mathEqual(a.e33, b.e33)) {
+       return false;
+    }
+    return true;
+}
 
 static inline bool mathRightAngle(const Matrix* m)
 {

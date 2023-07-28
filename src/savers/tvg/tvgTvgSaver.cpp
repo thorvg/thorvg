@@ -93,11 +93,7 @@ static bool _merge(Shape* from, Shape* to)
     auto t1 = from->transform();
     auto t2 = to->transform();
 
-    if (!mathEqual(t1.e11, t2.e11) || !mathEqual(t1.e12, t2.e12) || !mathEqual(t1.e13, t2.e13) ||
-        !mathEqual(t1.e21, t2.e21) || !mathEqual(t1.e22, t2.e22) || !mathEqual(t1.e23, t2.e23) ||
-        !mathEqual(t1.e31, t2.e31) || !mathEqual(t1.e32, t2.e32) || !mathEqual(t1.e33, t2.e33)) {
-       return false;
-    }
+    if (!mathEqual(t1, t2)) return false;
 
     //stroke
     if (P(from)->strokeFirst() != P(to)->strokeFirst()) return false;
