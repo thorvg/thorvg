@@ -26,17 +26,15 @@ static void inline cRasterPixels(PIXEL_T* dst, PIXEL_T val, uint32_t offset, int
     dst += offset;
 
     //fix the misaligned memory
-    auto alignOffset = 0;
-    if (sizeof(PIXEL_T) == 4) alignOffset = offset % 2;
-    else if (sizeof(PIXEL_T) == 1) {
-        alignOffset = offset % 8;
-        if (alignOffset > 0) alignOffset = 8 - alignOffset;
-    }
-
-    while (alignOffset > 0 && len > 0) {
-        *dst++ = val;
-        --len;
-        --alignOffset;
+    auto alignOffset = (long) dst % 8;
+    if (alignOffset > 0) {
+        if (sizeof(PIXEL_T) == 4) alignOffset /= 4;
+        else if (sizeof(PIXEL_T) == 1) alignOffset = 8 - alignOffset;
+        while (alignOffset > 0 && len > 0) {
+            *dst++ = val;
+            --len;
+            --alignOffset;
+        }
     }
 
     //64bits faster clear
