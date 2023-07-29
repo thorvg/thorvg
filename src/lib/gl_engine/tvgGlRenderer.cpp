@@ -46,10 +46,38 @@ static void _termEngine()
 
 #define NOISE_LEVEL 0.5f
 
+
+void GlRenderCommand::execute()
+{
+    // setup scissor box
+    GL_CHECK(glScissor(viewPort.x, viewPort.y, viewPort.w, viewPort.h));
+
+    if (geometry) {
+        geometry->beginClipMask();
+
+        geometry->bind();
+
+    } else if (compositor) {
+        // TODO handle fbo switch
+    }
+
+    for (auto& cmd : commands) {
+        cmd.execute();
+    }
+
+    if (geometry) {
+        geometry->unBind();
+        geometry->endClipMask();
+    } else if (compositor) {
+        // TODO handle fbo switch
+    }
+}
+
 bool GlRenderer::clear()
 {
-    // TODO: (Request) to clear target
     // Will be adding glClearColor for input buffer
+    mDrawCommands.clear();
+
     return true;
 }
 
@@ -75,17 +103,6 @@ bool GlRenderer::target(TVG_UNUSED uint32_t* buffer, uint32_t stride, uint32_t w
 
 bool GlRenderer::sync()
 {
-    GL_CHECK(glFinish());
-    return true;
-}
-
-RenderRegion GlRenderer::region(TVG_UNUSED RenderData data)
-{
-    return {0, 0, 0, 0};
-}
-
-bool GlRenderer::preRender()
-{
     // Blend function for straight alpha
     GL_CHECK(glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA));
     GL_CHECK(glEnable(GL_BLEND));
@@ -96,32 +113,84 @@ bool GlRenderer::preRender()
     mIndexBuffer.copyToGPU();
     mUniformBuffer.copyToGPU();
 
+    for (auto& cmd : mDrawCommands) {
+        cmd.execute();
+    }
+
+    GL_CHECK(glFlush());
+    return true;
+}
+
+RenderRegion GlRenderer::region(TVG_UNUSED RenderData data)
+{
+    // TODO generate region based on shape bounds
+    return RenderRegion{0, 0, static_cast<int32_t>(surface.w), static_cast<int32_t>(surface.h)};
+}
+
+bool GlRenderer::preRender()
+{
     return true;
 }
 
 bool GlRenderer::postRender()
 {
     // TODO: called just after render()
+    clearCompositors();
 
     return true;
 }
 
 Compositor* GlRenderer::target(TVG_UNUSED const RenderRegion& region, TVG_UNUSED ColorSpace cs)
 {
-    // TODO: Prepare frameBuffer & Setup render target for composition
-    return nullptr;
+    // TODO: Prepare frameBuffer based on region
+
+    auto cmp = new GlCompositor(surface.w, surface.h);
+
+    mCompositors.push(cmp);
+
+    return cmp;
 }
 
-bool GlRenderer::beginComposite(TVG_UNUSED Compositor* cmp, CompositeMethod method, uint8_t opacity)
+bool GlRenderer::beginComposite(Compositor* cmp, CompositeMethod method, uint8_t opacity)
 {
-    // TODO: delete the given compositor and restore the context
-    return false;
+    auto glCmp = static_cast<GlCompositor*>(cmp);
+
+    if (!glCmp) {
+        return false;
+    }
+
+    glCmp->method = method;
+    glCmp->opacity = opacity;
+
+    // check before bind to fbo
+    if (glCmp->fboId == 0) {
+        return false;
+    }
+
+    if (method == tvg::CompositeMethod::None) {
+        // FIXME: this maybe a masking layer
+        mCompositor = glCmp;
+    }
+
+    return true;
 }
 
-bool GlRenderer::endComposite(TVG_UNUSED Compositor* cmp)
+bool GlRenderer::endComposite(Compositor* cmp)
 {
-    // TODO: delete the given compositor and restore the context
-    return false;
+    auto glCmp = static_cast<GlCompositor*>(cmp);
+
+    if (!glCmp) {
+        return false;
+    }
+
+    // if method is not NONE, generate a blit draw command
+    if (glCmp->method != tvg::CompositeMethod::None && mCompositor != nullptr) {
+
+    } else {
+        return false;
+    }
+
+    return true;
 }
 
 ColorSpace GlRenderer::colorSpace()
@@ -147,17 +216,17 @@ bool GlRenderer::renderImage(TVG_UNUSED void* data)
         return false;
     }
 
-    GL_CHECK(glScissor(sdata->viewPort.x, sdata->viewPort.y, sdata->viewPort.w, sdata->viewPort.h));
+    GlRenderCommand cmd{};
 
-    sdata->geometry->beginClipMask();
+    cmd.viewPort =
+        RenderRegion{sdata->viewPort.x, static_cast<int32_t>(surface.h - sdata->viewPort.y - sdata->viewPort.h),
+                     sdata->viewPort.w, sdata->viewPort.h};
 
-    sdata->geometry->bind();
+    cmd.geometry = sdata->geometry.get();
 
-    sdata->geometry->draw(RenderUpdateFlag::Image);
+    sdata->geometry->draw(RenderUpdateFlag::Image, cmd.commands);
 
-    sdata->geometry->unBind();
-
-    sdata->geometry->endClipMask();
+    mDrawCommands.emplace_back(cmd);
 
     return true;
 }
@@ -169,28 +238,27 @@ bool GlRenderer::renderShape(RenderData data)
 
     size_t flags = static_cast<size_t>(sdata->updateFlag);
 
-    GL_CHECK(glScissor(sdata->viewPort.x, surface.h - sdata->viewPort.y - sdata->viewPort.h, sdata->viewPort.w,
-                       sdata->viewPort.h));
+    GlRenderCommand cmd{};
 
-    sdata->geometry->beginClipMask();
+    cmd.viewPort =
+        RenderRegion{sdata->viewPort.x, static_cast<int32_t>(surface.h - sdata->viewPort.y - sdata->viewPort.h),
+                     sdata->viewPort.w, sdata->viewPort.h};
 
-    sdata->geometry->bind();
+    cmd.geometry = sdata->geometry.get();
 
     if (flags & (RenderUpdateFlag::Gradient | RenderUpdateFlag::Transform)) {
-        sdata->geometry->draw(RenderUpdateFlag::Gradient);
+        sdata->geometry->draw(RenderUpdateFlag::Gradient, cmd.commands);
     }
 
     if (flags & (RenderUpdateFlag::Color | RenderUpdateFlag::Transform)) {
-        sdata->geometry->draw(RenderUpdateFlag::Color);
+        sdata->geometry->draw(RenderUpdateFlag::Color, cmd.commands);
     }
 
     if (flags & (RenderUpdateFlag::Stroke | RenderUpdateFlag::Transform)) {
-        sdata->geometry->draw(RenderUpdateFlag::Stroke);
+        sdata->geometry->draw(RenderUpdateFlag::Stroke, cmd.commands);
     }
 
-    sdata->geometry->unBind();
-
-    sdata->geometry->endClipMask();
+    mDrawCommands.emplace_back(cmd);
 
     return true;
 }
@@ -393,13 +461,17 @@ GlRenderer* GlRenderer::gen()
 GlRenderer::GlRenderer()
     : mVertexBuffer(GlGpuBuffer::Target::ARRAY_BUFFER),
       mIndexBuffer(GlGpuBuffer::Target::ELEMENT_ARRAY_BUFFER),
-      mUniformBuffer(GlGpuBuffer::Target::UNIFORM_BUFFER)
+      mUniformBuffer(GlGpuBuffer::Target::UNIFORM_BUFFER),
+      mShaders(),
+      mDrawCommands()
 {
 }
 
 GlRenderer::~GlRenderer()
 {
     mShaders.clear();
+
+    clearCompositors();
 
     --rendererCnt;
 
@@ -437,6 +509,12 @@ void GlRenderer::initShaders()
         std::string fs_shader(stencil_frag, stencil_frag_size);
         mShaders.emplace_back(GlProgram::gen(GlShader::gen(vs_shader.c_str(), fs_shader.c_str())));
     }
+    // masking Renderer
+    {
+        std::string vs_shader(masking_vert, masking_vert_size);
+        std::string fs_shader(masking_frag, masking_frag_size);
+        mShaders.emplace_back(GlProgram::gen(GlShader::gen(vs_shader.c_str(), fs_shader.c_str())));
+    }
 }
 
 uint32_t GlRenderer::genTexture(Surface* image)
@@ -454,4 +532,13 @@ uint32_t GlRenderer::genTexture(Surface* image)
     GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
 
     return tex;
+}
+
+void GlRenderer::clearCompositors()
+{
+    for (uint32_t i = 0; i < mCompositors.count; i++) {
+        delete mCompositors.data[i];
+    }
+
+    mCompositors.clear();
 }

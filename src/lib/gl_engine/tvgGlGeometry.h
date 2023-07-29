@@ -200,7 +200,7 @@ public:
     GlCommand   tessellate(const Array<GlShape*>& scene, TessContext* context);
     void   bind();
     void   unBind();
-    void   draw(RenderUpdateFlag flag);
+    void   draw(RenderUpdateFlag flag, std::vector<GlCommand>& cmds);
     void   updateTransform(const RenderTransform *transform, float w, float h);
     GlSize getPrimitiveSize() const;
 

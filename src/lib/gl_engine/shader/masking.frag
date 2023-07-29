@@ -11,6 +11,7 @@
 
 layout(std140) uniform MaskInfo {
     int method;
+    int opacity;
 } uMaskInfo;
 
 uniform sampler2D uSrcTexture;

@@ -26,8 +26,20 @@
 #include <memory>
 #include <vector>
 
+#include "tvgGlCommand.h"
 #include "tvgGlProgram.h"
 #include "tvgGlGpuBuffer.h"
+#include "tvgGlCompositor.h"
+
+struct GlRenderCommand
+{
+    RenderRegion           viewPort = {};
+    GlGeometry*            geometry = nullptr;
+    GlCompositor*          compositor = nullptr;
+    std::vector<GlCommand> commands;
+
+    void execute();
+};
 
 class GlRenderer : public RenderMethod
 {
@@ -77,6 +89,8 @@ private:
 
     uint32_t genTexture(Surface* image);
 
+    void clearCompositors();
+
     RenderRegion mViewPort = {};
 
     GLStageBuffer mVertexBuffer;
@@ -84,6 +98,12 @@ private:
     GLStageBuffer mUniformBuffer;
 
     std::vector<std::unique_ptr<GlProgram>> mShaders;
+
+    std::vector<GlRenderCommand> mDrawCommands;
+
+    GlCompositor* mCompositor = nullptr;
+
+    Array<GlCompositor*> mCompositors;
 };
 
 #endif /* _TVG_GL_RENDERER_H_ */

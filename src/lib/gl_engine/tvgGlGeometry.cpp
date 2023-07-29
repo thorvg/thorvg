@@ -212,7 +212,7 @@ GlCommand GlGeometry::tessellate(const Array<GlShape*>& scene, TessContext* cont
 
     Array<const RenderShape*> shapes;
     shapes.reserve(scene.count);
-    for(uint32_t i = 0; i < scene.count; i++) {
+    for (uint32_t i = 0; i < scene.count; i++) {
         shapes.push(scene.data[i]->rshape);
     }
 
@@ -250,14 +250,15 @@ void GlGeometry::unBind()
     glBindVertexArray(0);
 }
 
-void GlGeometry::draw(RenderUpdateFlag flag)
+void GlGeometry::draw(RenderUpdateFlag flag, std::vector<GlCommand>& cmds)
 {
     auto it = mCmds.find(flag);
 
     if (it == mCmds.end()) {
         return;
     }
-    it->second.execute();
+
+    cmds.emplace_back(it->second);
 }
 
 
