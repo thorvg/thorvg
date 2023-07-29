@@ -144,7 +144,7 @@ public:
         mErrorMsg = "None";
 
         auto saver = tvg::Saver::gen();
-        auto duplicate = tvg::Cast<tvg::Picture>(mPicture->duplicate());
+        auto duplicate = tvg::cast<tvg::Picture>(mPicture->duplicate());
         if (!saver || !duplicate) {
             mErrorMsg = "Saving initialization failed";
             return false;
@@ -180,7 +180,7 @@ public:
         Array<const Paint *> parents;
         const Paint* paint = findPaintById(mPicture, paintId, &parents);
         if (!paint) return val(typed_memory_view<float>(0, nullptr));
-        paint->bounds(&mBounds[0], &mBounds[1], &mBounds[2], &mBounds[3]);
+        paint->bounds(&mBounds[0], &mBounds[1], &mBounds[2], &mBounds[3], false);
 
         float points[8] = { //clockwise points
             mBounds[0], mBounds[1], //(x1, y1)
