@@ -24,7 +24,6 @@
 
 #include "tvgGlGeometry.h"
 #include "tvgGlGpuBuffer.h"
-#include "tvgGlPropertyInterface.h"
 
 #include "gl_shader_source.h"
 
@@ -77,7 +76,6 @@ bool GlRenderer::target(TVG_UNUSED uint32_t* buffer, uint32_t stride, uint32_t w
 bool GlRenderer::sync()
 {
     GL_CHECK(glFinish());
-    GlRenderTask::unload();
     return true;
 }
 

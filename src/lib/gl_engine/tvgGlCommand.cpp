@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <cstdint>
 #include "tvgGlCommon.h"
+#include "tvgGlProgram.h"
 
 void GlCommand::execute()
 {

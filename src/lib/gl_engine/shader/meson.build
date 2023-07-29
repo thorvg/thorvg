@@ -13,6 +13,8 @@ shader_list = files(
     'radial_gradient.frag',
     'stencil.frag',
     'stencil.vert',
+    'masking.frag',
+    'masking.vert',
 )
 
 gl_shader_source = custom_target(

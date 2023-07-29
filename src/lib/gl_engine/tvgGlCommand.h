@@ -3,7 +3,6 @@
 #define _TVG_GL_COMMAND_H_
 
 #include "tvgGlGpuBuffer.h"
-#include "tvgGlRenderTask.h"
 
 #include <cstdint>
 #include <vector>
