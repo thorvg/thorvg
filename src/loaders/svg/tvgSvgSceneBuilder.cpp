@@ -56,6 +56,7 @@
 #include "tvgSvgSceneBuilder.h"
 #include "tvgSvgPath.h"
 #include "tvgSvgUtil.h"
+#include "tvgIteratorAccessor.h"
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
@@ -72,8 +73,26 @@ static inline bool _isGroupType(SvgNodeType type)
 }
 
 
+static void _mergeBoxes(Box &box1, const Box &box2)
+{
+    //Invalid box1; box2 always correct
+    if (box1.w < 0.0f && box1.h < 0.0f) box1 = box2;
+
+    float minX = box1.x < box2.x ? box1.x : box2.x;
+    float minY = box1.y < box2.y ? box1.y : box2.y;
+
+    float maxX = (box1.x + box1.w) > (box2.x + box2.w) ? box1.x + box1.w : box2.x + box2.w;
+    float maxY = (box1.y + box1.h) > (box2.y + box2.h) ? box1.y + box1.h : box2.y + box2.h;
+
+    box1 = {minX, minY, maxX - minX, maxY - minY};
+}
+
+
 //According to: https://www.w3.org/TR/SVG11/coords.html#ObjectBoundingBoxUnits (the last paragraph)
 //a stroke width should be ignored for bounding box calculations
+static Box _boundingBox(const Paint* paint);
+
+
 static Box _boundingBox(const Shape* shape)
 {
     float x, y, w, h;
@@ -87,6 +106,52 @@ static Box _boundingBox(const Shape* shape)
     }
 
     return {x, y, w, h};
+}
+
+
+static Box _boundingBox(const Picture* pic)
+{
+    Box bbox;
+    pic->bounds(&bbox.x, &bbox.y, &bbox.w, &bbox.h, true);
+    return bbox;
+}
+
+
+static Box _boundingBox(const Scene* scene)
+{
+    auto it = IteratorAccessor::iterator(scene);
+    if (it->count() == 0) {
+        delete(it);
+        return {0.0f, 0.0f, 0.0f, 0.0f};
+    }
+
+    Box box = {0.0f, 0.0f, -1.0f, -1.0f}; //init with invalid values
+    Box childBBox;
+
+    while (auto child = it->next()) {
+        childBBox = _boundingBox(child);
+        _mergeBoxes(box, childBBox);
+    }
+
+    delete(it);
+    return box;
+}
+
+
+static Box _boundingBox(const Paint* paint)
+{
+    switch(paint->identifier()) {
+        case TVG_CLASS_ID_SHAPE: {
+            return _boundingBox(static_cast<const Shape*>(paint));
+        }
+        case TVG_CLASS_ID_SCENE: {
+            return _boundingBox(static_cast<const Scene*>(paint));
+        }
+        case TVG_CLASS_ID_PICTURE: {
+            return _boundingBox(static_cast<const Picture*>(paint));
+        }
+    }
+    return {0.0f, 0.0f, 0.0f, 0.0f};
 }
 
 
@@ -219,22 +284,23 @@ static unique_ptr<RadialGradient> _applyRadialGradientProperty(SvgStyleGradient*
 }
 
 
-static bool _appendChildShape(SvgNode* node, Shape* shape, const Box& vBox, const string& svgPath)
+static Matrix _compositionTransform(Paint* paint, const SvgNode* node, const SvgNode* compNode, SvgNodeType type)
 {
-    auto valid = false;
-
-    if (_appendShape(node, shape, vBox, svgPath)) valid = true;
-
-    if (node->child.count > 0) {
-        auto child = node->child.data;
-        for (uint32_t i = 0; i < node->child.count; ++i, ++child) {
-            if (_appendChildShape(*child, shape, vBox, svgPath)) valid = true;
-        }
+    Matrix m = {1, 0, 0, 0, 1, 0, 0, 0, 1};
+    //The initial mask transformation ignored according to the SVG standard.
+    if (node->transform && type != SvgNodeType::Mask) {
+        m = *node->transform;
     }
-
-    return valid;
+    if (compNode->transform) {
+        m = mathMultiply(&m, compNode->transform);
+    }
+    if (!compNode->node.clip.userSpace) {
+        Box bBox = _boundingBox(paint);
+        Matrix mBBox = {bBox.w, 0, bBox.x, 0, bBox.h, bBox.y, 0, 0, 1};
+        m = mathMultiply(&m, &mBBox);
+    }
+    return m;
 }
-
 
 static void _applyComposition(Paint* paint, const SvgNode* node, const Box& vBox, const string& svgPath)
 {
@@ -248,13 +314,9 @@ static void _applyComposition(Paint* paint, const SvgNode* node, const Box& vBox
         if (compNode && compNode->child.count > 0) {
             node->style->clipPath.applying = true;
 
-            auto comp = _sceneBuildHelper(compNode, vBox, svgPath, SvgNodeType::ClipPath, 0);
-            if (comp) {
-                if (node->transform) {
-                    auto m = comp->transform();
-                    m = mathMultiply(node->transform, &m);
-                    comp->transform(m);
-                }
+            if (auto comp = _sceneBuildHelper(compNode, vBox, svgPath, SvgNodeType::ClipPath, 0)) {
+                Matrix finalTransform = _compositionTransform(paint, node, compNode, SvgNodeType::ClipPath);
+                if (!mathIdentity((const Matrix*)(&finalTransform))) comp->transform(finalTransform);
 
                 paint->composite(std::move(comp), CompositeMethod::ClipPath);
             }
@@ -274,9 +336,9 @@ static void _applyComposition(Paint* paint, const SvgNode* node, const Box& vBox
             node->style->mask.applying = true;
 
             bool isMaskWhite = true;
-            auto comp = _sceneBuildHelper(compNode, vBox, svgPath, SvgNodeType::Mask, 0, &isMaskWhite);
-            if (comp) {
-                if (node->transform) comp->transform(*node->transform);
+            if (auto comp = _sceneBuildHelper(compNode, vBox, svgPath, SvgNodeType::Mask, 0, &isMaskWhite)) {
+                Matrix finalTransform = _compositionTransform(paint, node, compNode, SvgNodeType::Mask);
+                if (!mathIdentity((const Matrix*)(&finalTransform))) comp->transform(finalTransform);
 
                 if (compNode->node.mask.type == SvgMaskType::Luminance && !isMaskWhite) {
                     paint->composite(std::move(comp), CompositeMethod::LumaMask);
@@ -723,7 +785,7 @@ static unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, const Box& vBox,
                 if (_isGroupType((*child)->type)) {
                     if ((*child)->type == SvgNodeType::Use)
                         scene->push(_useBuildHelper(*child, vBox, svgPath, depth + 1, isMaskWhite));
-                    // According to the SVG standard ClipPath doesn't support <g> tag
+                    // According to the SVG standard ClipPath doesn't support <g>/<symbol> tags
                     else if (compositionType != SvgNodeType::ClipPath)
                         scene->push(_sceneBuildHelper(*child, vBox, svgPath, SvgNodeType::Unknown, depth + 1, isMaskWhite));
                 } else if ((*child)->type == SvgNodeType::Image) {
