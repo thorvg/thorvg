@@ -9,11 +9,14 @@
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
+<link href="navtree.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="resize.js"></script>
+<script type="text/javascript" src="navtreedata.js"></script>
+<script type="text/javascript" src="navtree.js"></script>
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
-<link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -24,7 +27,7 @@
   <td id="projectlogo"><img alt="Logo" src="small_logo.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">ThorVG
-   &#160;<span id="projectnumber">v0.9</span>
+   &#160;<span id="projectnumber">v0.10</span>
    </div>
   </td>
  </tr>
@@ -49,6 +52,22 @@ $(function() {
 /* @license-end */</script>
 <div id="main-nav"></div>
 </div><!-- top -->
+<div id="side-nav" class="ui-resizable side-nav-resizable">
+  <div id="nav-tree">
+    <div id="nav-tree-contents">
+      <div id="nav-sync" class="sync"></div>
+    </div>
+  </div>
+  <div id="splitbar" style="-moz-user-select:none;" 
+       class="ui-resizable-handle">
+  </div>
+</div>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:cf05388f2679ee054f2beb29a391d25f4e673ac3&amp;dn=gpl-2.0.txt GPL-v2 */
+$(document).ready(function(){initNavTree('group__ThorVGCapi__Shape.html',''); initResizable(); });
+/* @license-end */
+</script>
+<div id="doc-content">
 <!-- window showing the filter options -->
 <div id="MSearchSelectWindow"
      onmouseover="return searchBox.OnSearchSelectShow()"
@@ -194,6 +213,12 @@ Functions</h2></td></tr>
 <tr class="memitem:gaef194d97c801f65106a3c59877cb637a"><td class="memItemLeft" align="right" valign="top">TVG_API <a class="el" href="group__ThorVG__CAPI.html#gad980f552658dcbbe42a0168f35c27781">Tvg_Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__ThorVGCapi__Shape.html#gaef194d97c801f65106a3c59877cb637a">tvg_shape_get_stroke_join</a> (const <a class="el" href="group__ThorVG__CAPI.html#ga98af7c3fe18afa8ad65ea6a6e097a292">Tvg_Paint</a> *paint, <a class="el" href="group__ThorVGCapi__Shape.html#gaf2cbac2c9164a782b96a8cd94f32e1ed">Tvg_Stroke_Join</a> *join)</td></tr>
 <tr class="memdesc:gaef194d97c801f65106a3c59877cb637a"><td class="mdescLeft">&#160;</td><td class="mdescRight">The function gets the stroke join method.  <a href="group__ThorVGCapi__Shape.html#gaef194d97c801f65106a3c59877cb637a">More...</a><br /></td></tr>
 <tr class="separator:gaef194d97c801f65106a3c59877cb637a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga05dbbd43434213450b57b23c6811060f"><td class="memItemLeft" align="right" valign="top">TVG_API <a class="el" href="group__ThorVG__CAPI.html#gad980f552658dcbbe42a0168f35c27781">Tvg_Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__ThorVGCapi__Shape.html#ga05dbbd43434213450b57b23c6811060f">tvg_shape_set_stroke_miterlimit</a> (<a class="el" href="group__ThorVG__CAPI.html#ga98af7c3fe18afa8ad65ea6a6e097a292">Tvg_Paint</a> *paint, float miterlimit)</td></tr>
+<tr class="memdesc:ga05dbbd43434213450b57b23c6811060f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the stroke miterlimit. (BETA_API)  <a href="group__ThorVGCapi__Shape.html#ga05dbbd43434213450b57b23c6811060f">More...</a><br /></td></tr>
+<tr class="separator:ga05dbbd43434213450b57b23c6811060f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga735fb8f0bd5e3854b9cab052816e0ced"><td class="memItemLeft" align="right" valign="top">TVG_API <a class="el" href="group__ThorVG__CAPI.html#gad980f552658dcbbe42a0168f35c27781">Tvg_Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__ThorVGCapi__Shape.html#ga735fb8f0bd5e3854b9cab052816e0ced">tvg_shape_get_stroke_miterlimit</a> (const <a class="el" href="group__ThorVG__CAPI.html#ga98af7c3fe18afa8ad65ea6a6e097a292">Tvg_Paint</a> *paint, float *miterlimit)</td></tr>
+<tr class="memdesc:ga735fb8f0bd5e3854b9cab052816e0ced"><td class="mdescLeft">&#160;</td><td class="mdescRight">The function gets the stroke miterlimit. (BETA_API)  <a href="group__ThorVGCapi__Shape.html#ga735fb8f0bd5e3854b9cab052816e0ced">More...</a><br /></td></tr>
+<tr class="separator:ga735fb8f0bd5e3854b9cab052816e0ced"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga1ba1b224fd94bad550a89310f17d03b1"><td class="memItemLeft" align="right" valign="top">TVG_API <a class="el" href="group__ThorVG__CAPI.html#gad980f552658dcbbe42a0168f35c27781">Tvg_Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__ThorVGCapi__Shape.html#ga1ba1b224fd94bad550a89310f17d03b1">tvg_shape_set_fill_color</a> (<a class="el" href="group__ThorVG__CAPI.html#ga98af7c3fe18afa8ad65ea6a6e097a292">Tvg_Paint</a> *paint, uint8_t r, uint8_t g, uint8_t b, uint8_t a)</td></tr>
 <tr class="memdesc:ga1ba1b224fd94bad550a89310f17d03b1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the shape's solid color.  <a href="group__ThorVGCapi__Shape.html#ga1ba1b224fd94bad550a89310f17d03b1">More...</a><br /></td></tr>
 <tr class="separator:ga1ba1b224fd94bad550a89310f17d03b1"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -206,6 +231,9 @@ Functions</h2></td></tr>
 <tr class="memitem:gaae8783884ee1dd7598cada5aa4548d0f"><td class="memItemLeft" align="right" valign="top">TVG_API <a class="el" href="group__ThorVG__CAPI.html#gad980f552658dcbbe42a0168f35c27781">Tvg_Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__ThorVGCapi__Shape.html#gaae8783884ee1dd7598cada5aa4548d0f">tvg_shape_get_fill_rule</a> (const <a class="el" href="group__ThorVG__CAPI.html#ga98af7c3fe18afa8ad65ea6a6e097a292">Tvg_Paint</a> *paint, <a class="el" href="group__ThorVGCapi__Shape.html#gaffafa3cd9dc4bc90a7ef3c763add2695">Tvg_Fill_Rule</a> *rule)</td></tr>
 <tr class="memdesc:gaae8783884ee1dd7598cada5aa4548d0f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets the shape's fill rule.  <a href="group__ThorVGCapi__Shape.html#gaae8783884ee1dd7598cada5aa4548d0f">More...</a><br /></td></tr>
 <tr class="separator:gaae8783884ee1dd7598cada5aa4548d0f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gab185b4efa65838d3426620a17f55bbf2"><td class="memItemLeft" align="right" valign="top">TVG_API <a class="el" href="group__ThorVG__CAPI.html#gad980f552658dcbbe42a0168f35c27781">Tvg_Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__ThorVGCapi__Shape.html#gab185b4efa65838d3426620a17f55bbf2">tvg_shape_set_paint_order</a> (<a class="el" href="group__ThorVG__CAPI.html#ga98af7c3fe18afa8ad65ea6a6e097a292">Tvg_Paint</a> *paint, bool strokeFirst)</td></tr>
+<tr class="memdesc:gab185b4efa65838d3426620a17f55bbf2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the rendering order of the stroke and the fill.  <a href="group__ThorVGCapi__Shape.html#gab185b4efa65838d3426620a17f55bbf2">More...</a><br /></td></tr>
+<tr class="separator:gab185b4efa65838d3426620a17f55bbf2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga454b875a06e720e8a23e6051d51c613f"><td class="memItemLeft" align="right" valign="top">TVG_API <a class="el" href="group__ThorVG__CAPI.html#gad980f552658dcbbe42a0168f35c27781">Tvg_Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__ThorVGCapi__Shape.html#ga454b875a06e720e8a23e6051d51c613f">tvg_shape_set_linear_gradient</a> (<a class="el" href="group__ThorVG__CAPI.html#ga98af7c3fe18afa8ad65ea6a6e097a292">Tvg_Paint</a> *paint, <a class="el" href="group__ThorVG__CAPI.html#gafc8e0d01812127260d0753eceb056181">Tvg_Gradient</a> *grad)</td></tr>
 <tr class="memdesc:ga454b875a06e720e8a23e6051d51c613f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the linear gradient fill for all of the figures from the path.  <a href="group__ThorVGCapi__Shape.html#ga454b875a06e720e8a23e6051d51c613f">More...</a><br /></td></tr>
 <tr class="separator:ga454b875a06e720e8a23e6051d51c613f"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -963,7 +991,7 @@ Functions</h2></td></tr>
 <div class="line"><a class="code" href="group__ThorVGCapi__Shape.html#ga0819fb030d2a0fa33b11650d6741612c">tvg_shape_get_path_commands</a>(shape, (<span class="keyword">const</span> <a class="code" href="group__ThorVGCapi__Shape.html#ga08e05d64247332603a624cea6597be77">Tvg_Path_Command</a>**)&amp;cmds, &amp;len);</div>
 <div class="line"><span class="comment">//TVG approximates a circle by four Bezier curves. In the example above the cmds array stores the commands of the path data.</span></div>
 <div class="ttc" id="agroup__ThorVGCapi__Shape_html_ga0819fb030d2a0fa33b11650d6741612c"><div class="ttname"><a href="group__ThorVGCapi__Shape.html#ga0819fb030d2a0fa33b11650d6741612c">tvg_shape_get_path_commands</a></div><div class="ttdeci">TVG_API Tvg_Result tvg_shape_get_path_commands(const Tvg_Paint *paint, const Tvg_Path_Command **cmds, uint32_t *cnt)</div><div class="ttdoc">Gets the commands data of the path.</div></div>
-<div class="ttc" id="agroup__ThorVGCapi__Shape_html_ga08e05d64247332603a624cea6597be77"><div class="ttname"><a href="group__ThorVGCapi__Shape.html#ga08e05d64247332603a624cea6597be77">Tvg_Path_Command</a></div><div class="ttdeci">Tvg_Path_Command</div><div class="ttdoc">Enumeration specifying the values of the path commands accepted by TVG.</div><div class="ttdef"><b>Definition:</b> thorvg_capi.h:159</div></div>
+<div class="ttc" id="agroup__ThorVGCapi__Shape_html_ga08e05d64247332603a624cea6597be77"><div class="ttname"><a href="group__ThorVGCapi__Shape.html#ga08e05d64247332603a624cea6597be77">Tvg_Path_Command</a></div><div class="ttdeci">Tvg_Path_Command</div><div class="ttdoc">Enumeration specifying the values of the path commands accepted by TVG.</div><div class="ttdef"><b>Definition:</b> thorvg_capi.h:167</div></div>
 <div class="ttc" id="agroup__ThorVGCapi__Shape_html_ga8fc1a5061fcc9d2a65a90e31d14afbfd"><div class="ttname"><a href="group__ThorVGCapi__Shape.html#ga8fc1a5061fcc9d2a65a90e31d14afbfd">tvg_shape_append_circle</a></div><div class="ttdeci">TVG_API Tvg_Result tvg_shape_append_circle(Tvg_Paint *paint, float cx, float cy, float rx, float ry)</div><div class="ttdoc">Appends an ellipse to the path.</div></div>
 <div class="ttc" id="agroup__ThorVGCapi__Shape_html_gaab3a6e911389e34f0ab01705958f555e"><div class="ttname"><a href="group__ThorVGCapi__Shape.html#gaab3a6e911389e34f0ab01705958f555e">tvg_shape_new</a></div><div class="ttdeci">TVG_API Tvg_Paint * tvg_shape_new()</div><div class="ttdoc">Creates a new shape object.</div></div>
 </div><!-- fragment --><dl class="params"><dt>Parameters</dt><dd>
@@ -1027,7 +1055,7 @@ Functions</h2></td></tr>
 <div class="line"><a class="code" href="group__ThorVGCapi__Shape.html#ga0de9d041e87b3c40a9c2f18a5c2d5368">tvg_shape_get_path_coords</a>(shape, (<span class="keyword">const</span> <a class="code" href="structTvg__Point.html">Tvg_Point</a>**)&amp;coords, &amp;len);</div>
 <div class="line"><span class="comment">//TVG approximates a circle by four Bezier curves. In the example above the coords array stores their coordinates.</span></div>
 <div class="ttc" id="agroup__ThorVGCapi__Shape_html_ga0de9d041e87b3c40a9c2f18a5c2d5368"><div class="ttname"><a href="group__ThorVGCapi__Shape.html#ga0de9d041e87b3c40a9c2f18a5c2d5368">tvg_shape_get_path_coords</a></div><div class="ttdeci">TVG_API Tvg_Result tvg_shape_get_path_coords(const Tvg_Paint *paint, const Tvg_Point **pts, uint32_t *cnt)</div><div class="ttdoc">Gets the points values of the path.</div></div>
-<div class="ttc" id="astructTvg__Point_html"><div class="ttname"><a href="structTvg__Point.html">Tvg_Point</a></div><div class="ttdoc">A data structure representing a point in two-dimensional space.</div><div class="ttdef"><b>Definition:</b> thorvg_capi.h:232</div></div>
+<div class="ttc" id="astructTvg__Point_html"><div class="ttname"><a href="structTvg__Point.html">Tvg_Point</a></div><div class="ttdoc">A data structure representing a point in two-dimensional space.</div><div class="ttdef"><b>Definition:</b> thorvg_capi.h:240</div></div>
 </div><!-- fragment --><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">paint</td><td>A Tvg_Paint pointer to the shape object. </td></tr>
@@ -1289,6 +1317,51 @@ Functions</h2></td></tr>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">paint</td><td>A Tvg_Paint pointer to the shape object. </td></tr>
     <tr><td class="paramdir">[out]</td><td class="paramname">join</td><td>The join style value.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Tvg_Result enumeration. </dd></dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">TVG_RESULT_SUCCESS</td><td>Succeed. </td></tr>
+    <tr><td class="paramname">TVG_RESULT_INVALID_ARGUMENT</td><td>An invalid pointer passed as an argument. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="ga735fb8f0bd5e3854b9cab052816e0ced"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ga735fb8f0bd5e3854b9cab052816e0ced">&#9670;&nbsp;</a></span>tvg_shape_get_stroke_miterlimit()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">TVG_API <a class="el" href="group__ThorVG__CAPI.html#gad980f552658dcbbe42a0168f35c27781">Tvg_Result</a> tvg_shape_get_stroke_miterlimit </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="group__ThorVG__CAPI.html#ga98af7c3fe18afa8ad65ea6a6e097a292">Tvg_Paint</a> *&#160;</td>
+          <td class="paramname"><em>paint</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">float *&#160;</td>
+          <td class="paramname"><em>miterlimit</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>The function gets the stroke miterlimit. (BETA_API) </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">paint</td><td>A Tvg_Paint pointer to the shape object. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">miterlimit</td><td>The stroke miterlimit.</td></tr>
   </table>
   </dd>
 </dl>
@@ -1668,8 +1741,8 @@ Functions</h2></td></tr>
 <div class="ttc" id="agroup__ThorVGCapi__Gradient_html_ga2bcaa032e59ada34d5b80eaa35fcc974"><div class="ttname"><a href="group__ThorVGCapi__Gradient.html#ga2bcaa032e59ada34d5b80eaa35fcc974">tvg_linear_gradient_set</a></div><div class="ttdeci">TVG_API Tvg_Result tvg_linear_gradient_set(Tvg_Gradient *grad, float x1, float y1, float x2, float y2)</div><div class="ttdoc">Sets the linear gradient bounds.</div></div>
 <div class="ttc" id="agroup__ThorVGCapi__Gradient_html_ga9424f4880bc4122a7f56635ca7f25889"><div class="ttname"><a href="group__ThorVGCapi__Gradient.html#ga9424f4880bc4122a7f56635ca7f25889">tvg_gradient_set_color_stops</a></div><div class="ttdeci">TVG_API Tvg_Result tvg_gradient_set_color_stops(Tvg_Gradient *grad, const Tvg_Color_Stop *color_stop, uint32_t cnt)</div><div class="ttdoc">Sets the parameters of the colors of the gradient and their position.</div></div>
 <div class="ttc" id="agroup__ThorVGCapi__Shape_html_ga454b875a06e720e8a23e6051d51c613f"><div class="ttname"><a href="group__ThorVGCapi__Shape.html#ga454b875a06e720e8a23e6051d51c613f">tvg_shape_set_linear_gradient</a></div><div class="ttdeci">TVG_API Tvg_Result tvg_shape_set_linear_gradient(Tvg_Paint *paint, Tvg_Gradient *grad)</div><div class="ttdoc">Sets the linear gradient fill for all of the figures from the path.</div></div>
-<div class="ttc" id="agroup__ThorVG__CAPI_html_gafc8e0d01812127260d0753eceb056181"><div class="ttname"><a href="group__ThorVG__CAPI.html#gafc8e0d01812127260d0753eceb056181">Tvg_Gradient</a></div><div class="ttdeci">struct _Tvg_Gradient Tvg_Gradient</div><div class="ttdoc">A structure representing a gradient fill of a Tvg_Paint object.</div><div class="ttdef"><b>Definition:</b> thorvg_capi.h:83</div></div>
-<div class="ttc" id="astructTvg__Color__Stop_html"><div class="ttname"><a href="structTvg__Color__Stop.html">Tvg_Color_Stop</a></div><div class="ttdoc">A data structure storing the information about the color and its relative position inside the gradien...</div><div class="ttdef"><b>Definition:</b> thorvg_capi.h:217</div></div>
+<div class="ttc" id="agroup__ThorVG__CAPI_html_gafc8e0d01812127260d0753eceb056181"><div class="ttname"><a href="group__ThorVG__CAPI.html#gafc8e0d01812127260d0753eceb056181">Tvg_Gradient</a></div><div class="ttdeci">struct _Tvg_Gradient Tvg_Gradient</div><div class="ttdoc">A structure representing a gradient fill of a Tvg_Paint object.</div><div class="ttdef"><b>Definition:</b> thorvg_capi.h:91</div></div>
+<div class="ttc" id="astructTvg__Color__Stop_html"><div class="ttname"><a href="structTvg__Color__Stop.html">Tvg_Color_Stop</a></div><div class="ttdoc">A data structure storing the information about the color and its relative position inside the gradien...</div><div class="ttdef"><b>Definition:</b> thorvg_capi.h:225</div></div>
 </div><!-- fragment --><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">paint</td><td>A Tvg_Paint pointer to the shape object. </td></tr>
@@ -1688,6 +1761,53 @@ Functions</h2></td></tr>
 </dl>
 <dl class="section note"><dt>Note</dt><dd>Either a solid color or a gradient fill is applied, depending on what was set as last. </dd></dl>
 <dl class="section see"><dt>See also</dt><dd><a class="el" href="group__ThorVGCapi__Shape.html#ga06f3ea4e37bd77a37e0216d7ecd37077" title="Sets the shape&#39;s fill rule.">tvg_shape_set_fill_rule()</a> </dd></dl>
+
+</div>
+</div>
+<a id="gab185b4efa65838d3426620a17f55bbf2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#gab185b4efa65838d3426620a17f55bbf2">&#9670;&nbsp;</a></span>tvg_shape_set_paint_order()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">TVG_API <a class="el" href="group__ThorVG__CAPI.html#gad980f552658dcbbe42a0168f35c27781">Tvg_Result</a> tvg_shape_set_paint_order </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="group__ThorVG__CAPI.html#ga98af7c3fe18afa8ad65ea6a6e097a292">Tvg_Paint</a> *&#160;</td>
+          <td class="paramname"><em>paint</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>strokeFirst</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Sets the rendering order of the stroke and the fill. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">paint</td><td>A Tvg_Paint pointer to the shape object. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">strokeFirst</td><td>If <code>true</code> the stroke is rendered before the fill, otherwise the stroke is rendered as the second one (the default option).</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Tvg_Result enumeration. </dd></dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">TVG_RESULT_SUCCESS</td><td>Succeed. </td></tr>
+    <tr><td class="paramname">TVG_RESULT_INVALID_ARGUMENT</td><td>An invalid Tvg_Paint pointer. </td></tr>
+    <tr><td class="paramname">TVG_RESULT_FAILED_ALLOCATION</td><td>An internal error with a memory allocation.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section since"><dt>Since</dt><dd>0.10 </dd></dl>
 
 </div>
 </div>
@@ -2021,6 +2141,53 @@ Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="ga05dbbd43434213450b57b23c6811060f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ga05dbbd43434213450b57b23c6811060f">&#9670;&nbsp;</a></span>tvg_shape_set_stroke_miterlimit()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">TVG_API <a class="el" href="group__ThorVG__CAPI.html#gad980f552658dcbbe42a0168f35c27781">Tvg_Result</a> tvg_shape_set_stroke_miterlimit </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="group__ThorVG__CAPI.html#ga98af7c3fe18afa8ad65ea6a6e097a292">Tvg_Paint</a> *&#160;</td>
+          <td class="paramname"><em>paint</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">float&#160;</td>
+          <td class="paramname"><em>miterlimit</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Sets the stroke miterlimit. (BETA_API) </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">paint</td><td>A Tvg_Paint pointer to the shape object. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">miterlimit</td><td>The miterlimit imposes a limit on the extent of the stroke join when the <code>TVG_STROKE_JOIN_MITER</code> join style is set. The default value is 4.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Tvg_Result enumeration. </dd></dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">TVG_RESULT_SUCCESS</td><td>Succeed. </td></tr>
+    <tr><td class="paramname">TVG_RESULT_INVALID_ARGUMENT</td><td>An invalid Tvg_Paint pointer. </td></tr>
+    <tr><td class="paramname">TVG_RESULT_NOT_SUPPORTED</td><td>Unsupported value. </td></tr>
+    <tr><td class="paramname">TVG_RESULT_FAILED_ALLOCATION</td><td>An internal error with a memory allocation. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a id="ga39d99664e1338aa70dbe3a4ab6fe3827"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ga39d99664e1338aa70dbe3a4ab6fe3827">&#9670;&nbsp;</a></span>tvg_shape_set_stroke_radial_gradient()</h2>
 
@@ -2116,9 +2283,12 @@ Functions</h2></td></tr>
 </div>
 </div>
 </div><!-- contents -->
+</div><!-- doc-content -->
 <!-- start footer part -->
-<hr class="footer"/><address class="footer"><small>
-Generated by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
-</small></address>
+<div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
+  <ul>
+    <li class="footer">Generated by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1 </li>
+  </ul>
+</div>
 </body>
 </html>

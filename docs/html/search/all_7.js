@@ -1,10 +1,4 @@
 var searchData=
 [
-  ['identifier_45',['identifier',['../classtvg_1_1Paint.html#a37466e9eff2de62ff15c9df3d72b656d',1,'tvg::Paint::identifier()'],['../classtvg_1_1Fill.html#a37466e9eff2de62ff15c9df3d72b656d',1,'tvg::Fill::identifier()'],['../classtvg_1_1LinearGradient.html#a13df43a335dadaea01769a726dc9ddfd',1,'tvg::LinearGradient::identifier()'],['../classtvg_1_1RadialGradient.html#a13df43a335dadaea01769a726dc9ddfd',1,'tvg::RadialGradient::identifier()'],['../classtvg_1_1Shape.html#a13df43a335dadaea01769a726dc9ddfd',1,'tvg::Shape::identifier()'],['../classtvg_1_1Picture.html#a13df43a335dadaea01769a726dc9ddfd',1,'tvg::Picture::identifier()'],['../classtvg_1_1Scene.html#a13df43a335dadaea01769a726dc9ddfd',1,'tvg::Scene::identifier()']]],
-  ['individual_46',['Individual',['../classtvg_1_1SwCanvas.html#a9b9770837f0171b15f0cd86f94e8e22bab0257211e60ed5eb6767ec8ed3ec2524',1,'tvg::SwCanvas']]],
-  ['init_47',['init',['../classtvg_1_1Initializer.html#aecd30dc028635b645b0dac5b6facea73',1,'tvg::Initializer']]],
-  ['initializer_48',['Initializer',['../group__ThorVGCapi__Initializer.html',1,'(Global Namespace)'],['../classtvg_1_1Initializer.html',1,'Initializer']]],
-  ['insufficientcondition_49',['InsufficientCondition',['../group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a119732ff568bf103d744e930ae2404f1',1,'tvg']]],
-  ['invalidarguments_50',['InvalidArguments',['../group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066ae73a2e92f1c87086c838b442552a4775',1,'tvg']]],
-  ['invalphamask_51',['InvAlphaMask',['../group__ThorVG.html#ggaabdf94ada64e69d06deabc5aa6576f87a59cc48dcf714e3a3c2492f4dce1fe134',1,'tvg']]]
+  ['hardlight_60',['HardLight',['../group__ThorVG.html#gga4dd2f3776540c10b565e0446aa8e9e02ad509708d332760c4dac5299aee3aa518',1,'tvg']]]
 ];

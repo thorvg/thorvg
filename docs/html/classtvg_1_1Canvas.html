@@ -9,11 +9,14 @@
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
+<link href="navtree.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="resize.js"></script>
+<script type="text/javascript" src="navtreedata.js"></script>
+<script type="text/javascript" src="navtree.js"></script>
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
-<link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -24,7 +27,7 @@
   <td id="projectlogo"><img alt="Logo" src="small_logo.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">ThorVG
-   &#160;<span id="projectnumber">v0.9</span>
+   &#160;<span id="projectnumber">v0.10</span>
    </div>
   </td>
  </tr>
@@ -48,6 +51,23 @@ $(function() {
 });
 /* @license-end */</script>
 <div id="main-nav"></div>
+</div><!-- top -->
+<div id="side-nav" class="ui-resizable side-nav-resizable">
+  <div id="nav-tree">
+    <div id="nav-tree-contents">
+      <div id="nav-sync" class="sync"></div>
+    </div>
+  </div>
+  <div id="splitbar" style="-moz-user-select:none;" 
+       class="ui-resizable-handle">
+  </div>
+</div>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:cf05388f2679ee054f2beb29a391d25f4e673ac3&amp;dn=gpl-2.0.txt GPL-v2 */
+$(document).ready(function(){initNavTree('classtvg_1_1Canvas.html',''); initResizable(); });
+/* @license-end */
+</script>
+<div id="doc-content">
 <!-- window showing the filter options -->
 <div id="MSearchSelectWindow"
      onmouseover="return searchBox.OnSearchSelectShow()"
@@ -62,11 +82,6 @@ $(function() {
 </iframe>
 </div>
 
-<div id="nav-path" class="navpath">
-  <ul>
-<li class="navelem"><b>tvg</b></li><li class="navelem"><a class="el" href="classtvg_1_1Canvas.html">Canvas</a></li>  </ul>
-</div>
-</div><!-- top -->
 <div class="header">
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
@@ -87,13 +102,16 @@ Inheritance diagram for Canvas:</div>
 <area shape="rect" href="classtvg_1_1GlCanvas.html" title="A class for the rendering graphic elements with a GL raster engine." alt="" coords="5,80,89,107"/>
 <area shape="rect" href="classtvg_1_1SwCanvas.html" title="A class for the rendering graphical elements with a software raster engine." alt="" coords="113,80,203,107"/>
 </map>
-<center><span class="legend">[<a href="graph_legend.html">legend</a>]</span></center></div>
+<center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a4cff0ab757e1db9077bbecaf25f012ba"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Canvas.html#a4cff0ab757e1db9077bbecaf25f012ba">reserve</a> (uint32_t n) noexcept</td></tr>
-<tr class="memdesc:a4cff0ab757e1db9077bbecaf25f012ba"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the size of the container, where all the paints pushed into the <a class="el" href="classtvg_1_1Canvas.html" title="An abstract class for drawing graphical elements.">Canvas</a> are stored.  <a href="classtvg_1_1Canvas.html#a4cff0ab757e1db9077bbecaf25f012ba">More...</a><br /></td></tr>
-<tr class="separator:a4cff0ab757e1db9077bbecaf25f012ba"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1db0cc15b62127da865b37981402b411"><td class="memItemLeft" align="right" valign="top">TVG_DEPRECATED <a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Canvas.html#a1db0cc15b62127da865b37981402b411">reserve</a> (uint32_t n) noexcept</td></tr>
+<tr class="memdesc:a1db0cc15b62127da865b37981402b411"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the size of the container, where all the paints pushed into the <a class="el" href="classtvg_1_1Canvas.html" title="An abstract class for drawing graphical elements.">Canvas</a> are stored.  <a href="classtvg_1_1Canvas.html#a1db0cc15b62127da865b37981402b411">More...</a><br /></td></tr>
+<tr class="separator:a1db0cc15b62127da865b37981402b411"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ace6c268f853a4c144076de89b7bbbe75"><td class="memItemLeft" align="right" valign="top">std::list&lt; <a class="el" href="classtvg_1_1Paint.html">Paint</a> * &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Canvas.html#ace6c268f853a4c144076de89b7bbbe75">paints</a> () noexcept</td></tr>
+<tr class="memdesc:ace6c268f853a4c144076de89b7bbbe75"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the list of the paints that currently held by the <a class="el" href="classtvg_1_1Canvas.html" title="An abstract class for drawing graphical elements.">Canvas</a>.  <a href="classtvg_1_1Canvas.html#ace6c268f853a4c144076de89b7bbbe75">More...</a><br /></td></tr>
+<tr class="separator:ace6c268f853a4c144076de89b7bbbe75"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a82c5ec1c1ba93cf7671642400074201e"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Canvas.html#a82c5ec1c1ba93cf7671642400074201e">push</a> (std::unique_ptr&lt; <a class="el" href="classtvg_1_1Paint.html">Paint</a> &gt; paint) noexcept</td></tr>
 <tr class="memdesc:a82c5ec1c1ba93cf7671642400074201e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Passes drawing elements to the <a class="el" href="classtvg_1_1Canvas.html" title="An abstract class for drawing graphical elements.">Canvas</a> using <a class="el" href="classtvg_1_1Paint.html" title="An abstract class for managing graphical elements.">Paint</a> objects.  <a href="classtvg_1_1Canvas.html#a82c5ec1c1ba93cf7671642400074201e">More...</a><br /></td></tr>
 <tr class="separator:a82c5ec1c1ba93cf7671642400074201e"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -149,6 +167,9 @@ Public Member Functions</h2></td></tr>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a505a83f220c02df2f85c3810cd9ceb38" title="The value returned in case of a correct request execution.">Result::Success</a> when succeed, <a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a119732ff568bf103d744e930ae2404f1" title="The value returned in case the request cannot be processed - e.g. asking for properties of an object,...">Result::InsufficientCondition</a> otherwise.</dd></dl>
 <dl class="section warning"><dt>Warning</dt><dd>If you don't free the paints they become dangled. They are supposed to be reused, otherwise you are responsible for their lives. Thus please use the <code>free</code> argument only when you know how it works, otherwise it's not recommended. </dd></dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="classtvg_1_1Canvas.html#a82c5ec1c1ba93cf7671642400074201e" title="Passes drawing elements to the Canvas using Paint objects.">Canvas::push()</a> </dd>
+<dd>
+<a class="el" href="classtvg_1_1Canvas.html#ace6c268f853a4c144076de89b7bbbe75" title="Returns the list of the paints that currently held by the Canvas.">Canvas::paints()</a> </dd></dl>
 
 </div>
 </div>
@@ -182,6 +203,37 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="ace6c268f853a4c144076de89b7bbbe75"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ace6c268f853a4c144076de89b7bbbe75">&#9670;&nbsp;</a></span>paints()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::list&lt;<a class="el" href="classtvg_1_1Paint.html">Paint</a>*&gt;&amp; paints </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns the list of the paints that currently held by the <a class="el" href="classtvg_1_1Canvas.html" title="An abstract class for drawing graphical elements.">Canvas</a>. </p>
+<p>This function provides the list of paint nodes, allowing users a direct opportunity to modify the scene tree.</p>
+<dl class="section warning"><dt>Warning</dt><dd>Please avoid accessing the paints during <a class="el" href="classtvg_1_1Canvas.html" title="An abstract class for drawing graphical elements.">Canvas</a> update/draw. You can access them after calling <a class="el" href="classtvg_1_1Canvas.html#adbca600af79f9a0b8e8366e3be7450e9" title="Guarantees that drawing task is finished.">sync()</a>. </dd></dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="classtvg_1_1Canvas.html#adbca600af79f9a0b8e8366e3be7450e9" title="Guarantees that drawing task is finished.">Canvas::sync()</a></dd></dl>
+<p>@BETA_API </p>
+
+</div>
+</div>
 <a id="a82c5ec1c1ba93cf7671642400074201e"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a82c5ec1c1ba93cf7671642400074201e">&#9670;&nbsp;</a></span>push()</h2>
 
@@ -207,7 +259,7 @@ Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Passes drawing elements to the <a class="el" href="classtvg_1_1Canvas.html" title="An abstract class for drawing graphical elements.">Canvas</a> using <a class="el" href="classtvg_1_1Paint.html" title="An abstract class for managing graphical elements.">Paint</a> objects. </p>
-<p>Only pushed paints in the canvas will be drawing targets. They are retained by the canvas until you call <a class="el" href="classtvg_1_1Canvas.html#a99cdb01cd893f4199b521b754d21aefd" title="Sets the total number of the paints pushed into the canvas to be zero. Depending on the value of the ...">Canvas::clear()</a>. If you know the number of the pushed objects in advance, please call <a class="el" href="classtvg_1_1Canvas.html#a4cff0ab757e1db9077bbecaf25f012ba" title="Sets the size of the container, where all the paints pushed into the Canvas are stored.">Canvas::reserve()</a>.</p>
+<p>Only pushed paints in the canvas will be drawing targets. They are retained by the canvas until you call <a class="el" href="classtvg_1_1Canvas.html#a99cdb01cd893f4199b521b754d21aefd" title="Sets the total number of the paints pushed into the canvas to be zero. Depending on the value of the ...">Canvas::clear()</a>.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">paint</td><td>A <a class="el" href="classtvg_1_1Paint.html" title="An abstract class for managing graphical elements.">Paint</a> object to be drawn.</td></tr>
@@ -223,14 +275,14 @@ Public Member Functions</h2></td></tr>
   </dd>
 </dl>
 <dl class="section note"><dt>Note</dt><dd>The rendering order of the paints is the same as the order as they were pushed into the canvas. Consider sorting the paints before pushing them if you intend to use layering. </dd></dl>
-<dl class="section see"><dt>See also</dt><dd><a class="el" href="classtvg_1_1Canvas.html#a4cff0ab757e1db9077bbecaf25f012ba" title="Sets the size of the container, where all the paints pushed into the Canvas are stored.">Canvas::reserve()</a> </dd>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="classtvg_1_1Canvas.html#ace6c268f853a4c144076de89b7bbbe75" title="Returns the list of the paints that currently held by the Canvas.">Canvas::paints()</a> </dd>
 <dd>
 <a class="el" href="classtvg_1_1Canvas.html#a99cdb01cd893f4199b521b754d21aefd" title="Sets the total number of the paints pushed into the canvas to be zero. Depending on the value of the ...">Canvas::clear()</a> </dd></dl>
 
 </div>
 </div>
-<a id="a4cff0ab757e1db9077bbecaf25f012ba"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a4cff0ab757e1db9077bbecaf25f012ba">&#9670;&nbsp;</a></span>reserve()</h2>
+<a id="a1db0cc15b62127da865b37981402b411"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1db0cc15b62127da865b37981402b411">&#9670;&nbsp;</a></span>reserve()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -239,7 +291,7 @@ Public Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a> reserve </td>
+          <td class="memname">TVG_DEPRECATED <a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a> reserve </td>
           <td>(</td>
           <td class="paramtype">uint32_t&#160;</td>
           <td class="paramname"><em>n</em></td><td>)</td>
@@ -333,9 +385,13 @@ Public Member Functions</h2></td></tr>
 </div>
 </div>
 </div><!-- contents -->
+</div><!-- doc-content -->
 <!-- start footer part -->
-<hr class="footer"/><address class="footer"><small>
-Generated by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
-</small></address>
+<div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
+  <ul>
+    <li class="navelem"><b>tvg</b></li><li class="navelem"><a class="el" href="classtvg_1_1Canvas.html">Canvas</a></li>
+    <li class="footer">Generated by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1 </li>
+  </ul>
+</div>
 </body>
 </html>

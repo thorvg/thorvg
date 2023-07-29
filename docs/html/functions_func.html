@@ -9,11 +9,14 @@
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
+<link href="navtree.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="resize.js"></script>
+<script type="text/javascript" src="navtreedata.js"></script>
+<script type="text/javascript" src="navtree.js"></script>
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
-<link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -24,7 +27,7 @@
   <td id="projectlogo"><img alt="Logo" src="small_logo.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">ThorVG
-   &#160;<span id="projectnumber">v0.9</span>
+   &#160;<span id="projectnumber">v0.10</span>
    </div>
   </td>
  </tr>
@@ -49,6 +52,22 @@ $(function() {
 /* @license-end */</script>
 <div id="main-nav"></div>
 </div><!-- top -->
+<div id="side-nav" class="ui-resizable side-nav-resizable">
+  <div id="nav-tree">
+    <div id="nav-tree-contents">
+      <div id="nav-sync" class="sync"></div>
+    </div>
+  </div>
+  <div id="splitbar" style="-moz-user-select:none;" 
+       class="ui-resizable-handle">
+  </div>
+</div>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:cf05388f2679ee054f2beb29a391d25f4e673ac3&amp;dn=gpl-2.0.txt GPL-v2 */
+$(document).ready(function(){initNavTree('functions_func.html',''); initResizable(); });
+/* @license-end */
+</script>
+<div id="doc-content">
 <!-- window showing the filter options -->
 <div id="MSearchSelectWindow"
      onmouseover="return searchBox.OnSearchSelectShow()"
@@ -77,12 +96,15 @@ $(function() {
 : <a class="el" href="classtvg_1_1Shape.html#a3588ea30776a747a22b6ee82dadb9717">Shape</a>
 </li>
 <li>appendRect()
-: <a class="el" href="classtvg_1_1Shape.html#a676c64ce75c274ce75032606d33b03da">Shape</a>
+: <a class="el" href="classtvg_1_1Shape.html#a8ef2587269a01153c9ea4ca4a8d31b49">Shape</a>
 </li>
 </ul>
 
 
 <h3><a id="index_b"></a>- b -</h3><ul>
+<li>blend()
+: <a class="el" href="classtvg_1_1Paint.html#a7e1214a5dc2f3c19ddeedc5371c4e488">Paint</a>
+</li>
 <li>bounds()
 : <a class="el" href="classtvg_1_1Paint.html#aed5a6ad8edd827a378111b590ed7755d">Paint</a>
 </li>
@@ -106,6 +128,9 @@ $(function() {
 <li>cubicTo()
 : <a class="el" href="classtvg_1_1Shape.html#a7b71316176172fa052373bdb7c9efd29">Shape</a>
 </li>
+<li>curFrame()
+: <a class="el" href="classtvg_1_1Animation.html#a0e791c8144b0ad30d25f06c042496d27">Animation</a>
+</li>
 </ul>
 
 
@@ -120,18 +145,24 @@ $(function() {
 : <a class="el" href="classtvg_1_1Fill.html#a48e358abab4478ff7f84dfb85608eaf3">Fill</a>
 , <a class="el" href="classtvg_1_1Paint.html#a71afac69fe1e7c352460be5878812635">Paint</a>
 </li>
+<li>duration()
+: <a class="el" href="classtvg_1_1Animation.html#a90ab38b7a2cb72d6b9de4492ff3e6679">Animation</a>
+</li>
 </ul>
 
 
 <h3><a id="index_f"></a>- f -</h3><ul>
 <li>fill()
-: <a class="el" href="classtvg_1_1Shape.html#ae25e3697b5df587d50b809f1faeeabd9">Shape</a>
+: <a class="el" href="classtvg_1_1Shape.html#a0552551ad67547043167f7f382174e89">Shape</a>
 </li>
 <li>fillColor()
-: <a class="el" href="classtvg_1_1Shape.html#afc81d85ad3fb3f006abf835311a0acfc">Shape</a>
+: <a class="el" href="classtvg_1_1Shape.html#a8b4f00f01c2d24d6be2962ddf04a70ca">Shape</a>
 </li>
 <li>fillRule()
 : <a class="el" href="classtvg_1_1Shape.html#ac14cd997439012e1abf6c1b8d9f3d4aa">Shape</a>
+</li>
+<li>frame()
+: <a class="el" href="classtvg_1_1Animation.html#ac13e2b8f811686e95f3f22c08ac75f8a">Animation</a>
 </li>
 </ul>
 
@@ -139,6 +170,7 @@ $(function() {
 <h3><a id="index_g"></a>- g -</h3><ul>
 <li>gen()
 : <a class="el" href="classtvg_1_1Accessor.html#a948e9f4ff06cdc9c19bcc60c1458ecc2">Accessor</a>
+, <a class="el" href="classtvg_1_1Animation.html#a9f1d09061273b58fff49740abdeb1ddf">Animation</a>
 , <a class="el" href="classtvg_1_1GlCanvas.html#ad6ae7e14a4f29b7ae78ad5b92350cf90">GlCanvas</a>
 , <a class="el" href="classtvg_1_1LinearGradient.html#a346e161f12d8e8ad26b6eaaf5d0f5c5c">LinearGradient</a>
 , <a class="el" href="classtvg_1_1Picture.html#a68af11946af3c1c63a4e915cd0207811">Picture</a>
@@ -204,11 +236,18 @@ $(function() {
 
 
 <h3><a id="index_p"></a>- p -</h3><ul>
+<li>paints()
+: <a class="el" href="classtvg_1_1Canvas.html#ace6c268f853a4c144076de89b7bbbe75">Canvas</a>
+, <a class="el" href="classtvg_1_1Scene.html#ace6c268f853a4c144076de89b7bbbe75">Scene</a>
+</li>
 <li>pathCommands()
 : <a class="el" href="classtvg_1_1Shape.html#ac14d90c2c0130b66a9a33eb7d08101b7">Shape</a>
 </li>
 <li>pathCoords()
 : <a class="el" href="classtvg_1_1Shape.html#a818b1b358f0ed7ba448b6d804e087923">Shape</a>
+</li>
+<li>picture()
+: <a class="el" href="classtvg_1_1Animation.html#a004ba625c58005c931b244fb2515624f">Animation</a>
 </li>
 <li>push()
 : <a class="el" href="classtvg_1_1Canvas.html#a82c5ec1c1ba93cf7671642400074201e">Canvas</a>
@@ -222,8 +261,8 @@ $(function() {
 : <a class="el" href="classtvg_1_1RadialGradient.html#a3688387d86ebd5003ee98d90f24a6030">RadialGradient</a>
 </li>
 <li>reserve()
-: <a class="el" href="classtvg_1_1Canvas.html#a4cff0ab757e1db9077bbecaf25f012ba">Canvas</a>
-, <a class="el" href="classtvg_1_1Scene.html#a7e23b9ddc266b5910001174b3c84a485">Scene</a>
+: <a class="el" href="classtvg_1_1Canvas.html#a1db0cc15b62127da865b37981402b411">Canvas</a>
+, <a class="el" href="classtvg_1_1Scene.html#a7b0edd52cb97da03615fe9af3ee768a9">Scene</a>
 </li>
 <li>reset()
 : <a class="el" href="classtvg_1_1Shape.html#a8014640e362066901c2e2ebe6ddd1251">Shape</a>
@@ -251,13 +290,13 @@ $(function() {
 : <a class="el" href="classtvg_1_1Fill.html#aed49d00ca09e69fdf97aaae235f8e950">Fill</a>
 </li>
 <li>stroke()
-: <a class="el" href="classtvg_1_1Shape.html#ae79102d63897ad86a96afb4436c731e4">Shape</a>
+: <a class="el" href="classtvg_1_1Shape.html#a39068c9686211de862844dacabf92375">Shape</a>
 </li>
 <li>strokeCap()
 : <a class="el" href="classtvg_1_1Shape.html#a0948989a7f0a9e253234cd9f53784674">Shape</a>
 </li>
 <li>strokeColor()
-: <a class="el" href="classtvg_1_1Shape.html#a7b81219e058ae54e731c5702a1c61462">Shape</a>
+: <a class="el" href="classtvg_1_1Shape.html#a6705be0d6481277e9bf17cc918597665">Shape</a>
 </li>
 <li>strokeDash()
 : <a class="el" href="classtvg_1_1Shape.html#afbc1e469219ee86df47d216f58af282a">Shape</a>
@@ -267,6 +306,9 @@ $(function() {
 </li>
 <li>strokeJoin()
 : <a class="el" href="classtvg_1_1Shape.html#aac0235df4172e9c079689e5291c7ad5a">Shape</a>
+</li>
+<li>strokeMiterlimit()
+: <a class="el" href="classtvg_1_1Shape.html#ad8fb8f42c07ac68ef83383b05203ff6f">Shape</a>
 </li>
 <li>strokeWidth()
 : <a class="el" href="classtvg_1_1Shape.html#a1536ec32e91c29dd8300b0d4354773f9">Shape</a>
@@ -286,6 +328,9 @@ $(function() {
 <li>term()
 : <a class="el" href="classtvg_1_1Initializer.html#ace5ab49a2678becae6e7230420a003df">Initializer</a>
 </li>
+<li>totalFrame()
+: <a class="el" href="classtvg_1_1Animation.html#a91d83102afb1ec5c65f009240b29250c">Animation</a>
+</li>
 <li>transform()
 : <a class="el" href="classtvg_1_1Fill.html#ac9f6ba428afe884bcc2861de0a2a96f4">Fill</a>
 , <a class="el" href="classtvg_1_1Paint.html#ac9f6ba428afe884bcc2861de0a2a96f4">Paint</a>
@@ -301,17 +346,13 @@ $(function() {
 : <a class="el" href="classtvg_1_1Canvas.html#a89ac8a85a8c22723af9fb07c098472b3">Canvas</a>
 </li>
 </ul>
-
-
-<h3><a id="index_v"></a>- v -</h3><ul>
-<li>viewbox()
-: <a class="el" href="classtvg_1_1Picture.html#af04ad88b171b00da024fae34112378be">Picture</a>
-</li>
-</ul>
 </div><!-- contents -->
+</div><!-- doc-content -->
 <!-- start footer part -->
-<hr class="footer"/><address class="footer"><small>
-Generated by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
-</small></address>
+<div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
+  <ul>
+    <li class="footer">Generated by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1 </li>
+  </ul>
+</div>
 </body>
 </html>

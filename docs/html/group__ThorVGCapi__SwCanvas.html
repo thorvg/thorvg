@@ -9,11 +9,14 @@
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
+<link href="navtree.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="resize.js"></script>
+<script type="text/javascript" src="navtreedata.js"></script>
+<script type="text/javascript" src="navtree.js"></script>
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
-<link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -24,7 +27,7 @@
   <td id="projectlogo"><img alt="Logo" src="small_logo.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">ThorVG
-   &#160;<span id="projectnumber">v0.9</span>
+   &#160;<span id="projectnumber">v0.10</span>
    </div>
   </td>
  </tr>
@@ -49,6 +52,22 @@ $(function() {
 /* @license-end */</script>
 <div id="main-nav"></div>
 </div><!-- top -->
+<div id="side-nav" class="ui-resizable side-nav-resizable">
+  <div id="nav-tree">
+    <div id="nav-tree-contents">
+      <div id="nav-sync" class="sync"></div>
+    </div>
+  </div>
+  <div id="splitbar" style="-moz-user-select:none;" 
+       class="ui-resizable-handle">
+  </div>
+</div>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:cf05388f2679ee054f2beb29a391d25f4e673ac3&amp;dn=gpl-2.0.txt GPL-v2 */
+$(document).ready(function(){initNavTree('group__ThorVGCapi__SwCanvas.html',''); initResizable(); });
+/* @license-end */
+</script>
+<div id="doc-content">
 <!-- window showing the filter options -->
 <div id="MSearchSelectWindow"
      onmouseover="return searchBox.OnSearchSelectShow()"
@@ -195,11 +214,11 @@ Functions</h2></td></tr>
 <div class="ttc" id="agroup__ThorVGCapi__Canvas_html_ga15208125646162cd19a928708a335295"><div class="ttname"><a href="group__ThorVGCapi__Canvas.html#ga15208125646162cd19a928708a335295">tvg_canvas_destroy</a></div><div class="ttdeci">TVG_API Tvg_Result tvg_canvas_destroy(Tvg_Canvas *canvas)</div><div class="ttdoc">Clears the canvas internal data, releases all paints stored by the canvas and destroys the canvas obj...</div></div>
 <div class="ttc" id="agroup__ThorVGCapi__Initializer_html_ga437d5601fe8dc17eb4788b7694000452"><div class="ttname"><a href="group__ThorVGCapi__Initializer.html#ga437d5601fe8dc17eb4788b7694000452">tvg_engine_init</a></div><div class="ttdeci">TVG_API Tvg_Result tvg_engine_init(Tvg_Engine engine_method, unsigned threads)</div><div class="ttdoc">Initializes TVG engines.</div></div>
 <div class="ttc" id="agroup__ThorVGCapi__Initializer_html_gaaee6b1a83765cfecd47d8f979a9a3211"><div class="ttname"><a href="group__ThorVGCapi__Initializer.html#gaaee6b1a83765cfecd47d8f979a9a3211">tvg_engine_term</a></div><div class="ttdeci">TVG_API Tvg_Result tvg_engine_term(Tvg_Engine engine_method)</div><div class="ttdoc">Terminates TVG engines.</div></div>
-<div class="ttc" id="agroup__ThorVGCapi__Initializer_html_ggaa61c2088915fc211ac91ffafaf45f695a87a18b02d5fc2509c1c4372e46183c96"><div class="ttname"><a href="group__ThorVGCapi__Initializer.html#ggaa61c2088915fc211ac91ffafaf45f695a87a18b02d5fc2509c1c4372e46183c96">TVG_ENGINE_SW</a></div><div class="ttdeci">@ TVG_ENGINE_SW</div><div class="ttdoc">CPU rasterizer.</div><div class="ttdef"><b>Definition:</b> thorvg_capi.h:98</div></div>
+<div class="ttc" id="agroup__ThorVGCapi__Initializer_html_ggaa61c2088915fc211ac91ffafaf45f695a87a18b02d5fc2509c1c4372e46183c96"><div class="ttname"><a href="group__ThorVGCapi__Initializer.html#ggaa61c2088915fc211ac91ffafaf45f695a87a18b02d5fc2509c1c4372e46183c96">TVG_ENGINE_SW</a></div><div class="ttdeci">@ TVG_ENGINE_SW</div><div class="ttdoc">CPU rasterizer.</div><div class="ttdef"><b>Definition:</b> thorvg_capi.h:106</div></div>
 <div class="ttc" id="agroup__ThorVGCapi__SwCanvas_html_ga1929b0e99eff5584ed03c36cdfa81065"><div class="ttname"><a href="group__ThorVGCapi__SwCanvas.html#ga1929b0e99eff5584ed03c36cdfa81065">tvg_swcanvas_create</a></div><div class="ttdeci">TVG_API Tvg_Canvas * tvg_swcanvas_create()</div><div class="ttdoc">Creates a Canvas object.</div></div>
 <div class="ttc" id="agroup__ThorVGCapi__SwCanvas_html_ga7bd619a80e4a2ba4bc012734387a2010"><div class="ttname"><a href="group__ThorVGCapi__SwCanvas.html#ga7bd619a80e4a2ba4bc012734387a2010">tvg_swcanvas_set_target</a></div><div class="ttdeci">TVG_API Tvg_Result tvg_swcanvas_set_target(Tvg_Canvas *canvas, uint32_t *buffer, uint32_t stride, uint32_t w, uint32_t h, Tvg_Colorspace cs)</div><div class="ttdoc">Sets the buffer used in the rasterization process and defines the used colorspace.</div></div>
-<div class="ttc" id="agroup__ThorVGCapi__SwCanvas_html_ggae038f89e569d85c0896711a0a31b4a78a362994879a2332b343d408dd3a397d97"><div class="ttname"><a href="group__ThorVGCapi__SwCanvas.html#ggae038f89e569d85c0896711a0a31b4a78a362994879a2332b343d408dd3a397d97">TVG_COLORSPACE_ARGB8888</a></div><div class="ttdeci">@ TVG_COLORSPACE_ARGB8888</div><div class="ttdoc">The 8-bit color channels are combined into 32-bit color in the order: alpha, red, green,...</div><div class="ttdef"><b>Definition:</b> thorvg_capi.h:364</div></div>
-<div class="ttc" id="agroup__ThorVG__CAPI_html_ga5f10c1f3dabdc9287166611c7fe5fd8a"><div class="ttname"><a href="group__ThorVG__CAPI.html#ga5f10c1f3dabdc9287166611c7fe5fd8a">Tvg_Canvas</a></div><div class="ttdeci">struct _Tvg_Canvas Tvg_Canvas</div><div class="ttdoc">A structure responsible for managing and drawing graphical elements.</div><div class="ttdef"><b>Definition:</b> thorvg_capi.h:69</div></div>
+<div class="ttc" id="agroup__ThorVGCapi__SwCanvas_html_ggae038f89e569d85c0896711a0a31b4a78a362994879a2332b343d408dd3a397d97"><div class="ttname"><a href="group__ThorVGCapi__SwCanvas.html#ggae038f89e569d85c0896711a0a31b4a78a362994879a2332b343d408dd3a397d97">TVG_COLORSPACE_ARGB8888</a></div><div class="ttdeci">@ TVG_COLORSPACE_ARGB8888</div><div class="ttdoc">The 8-bit color channels are combined into 32-bit color in the order: alpha, red, green,...</div><div class="ttdef"><b>Definition:</b> thorvg_capi.h:372</div></div>
+<div class="ttc" id="agroup__ThorVG__CAPI_html_ga5f10c1f3dabdc9287166611c7fe5fd8a"><div class="ttname"><a href="group__ThorVG__CAPI.html#ga5f10c1f3dabdc9287166611c7fe5fd8a">Tvg_Canvas</a></div><div class="ttdeci">struct _Tvg_Canvas Tvg_Canvas</div><div class="ttdoc">A structure responsible for managing and drawing graphical elements.</div><div class="ttdef"><b>Definition:</b> thorvg_capi.h:77</div></div>
 </div><!-- fragment --><dl class="section return"><dt>Returns</dt><dd>A new Tvg_Canvas object. </dd></dl>
 
 </div>
@@ -338,9 +357,12 @@ Functions</h2></td></tr>
 </div>
 </div>
 </div><!-- contents -->
+</div><!-- doc-content -->
 <!-- start footer part -->
-<hr class="footer"/><address class="footer"><small>
-Generated by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
-</small></address>
+<div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
+  <ul>
+    <li class="footer">Generated by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1 </li>
+  </ul>
+</div>
 </body>
 </html>

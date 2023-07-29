@@ -1,13 +1,14 @@
 var searchData=
 [
-  ['r_80',['r',['../structtvg_1_1Fill_1_1ColorStop.html#a4c5c6ceb8ed33456261fa907136e0c3a',1,'tvg::Fill::ColorStop::r()'],['../structTvg__Color__Stop.html#a4c5c6ceb8ed33456261fa907136e0c3a',1,'Tvg_Color_Stop::r()']]],
-  ['radial_81',['radial',['../classtvg_1_1RadialGradient.html#a3688387d86ebd5003ee98d90f24a6030',1,'tvg::RadialGradient::radial(float cx, float cy, float radius) noexcept'],['../classtvg_1_1RadialGradient.html#a706e9ec51bf12483b1d59f99c6fe045e',1,'tvg::RadialGradient::radial(float *cx, float *cy, float *radius) const noexcept']]],
-  ['radialgradient_82',['RadialGradient',['../classtvg_1_1RadialGradient.html',1,'tvg']]],
-  ['reflect_83',['Reflect',['../group__ThorVG.html#gga0cfa2c92260cca776292cc9e8964f2daa74de3e45e4491e956e8dc18d841d9b00',1,'tvg']]],
-  ['repeat_84',['Repeat',['../group__ThorVG.html#gga0cfa2c92260cca776292cc9e8964f2daa7020426cfb0a204051be4b3053d2acc8',1,'tvg']]],
-  ['reserve_85',['reserve',['../classtvg_1_1Canvas.html#a4cff0ab757e1db9077bbecaf25f012ba',1,'tvg::Canvas::reserve()'],['../classtvg_1_1Scene.html#a7e23b9ddc266b5910001174b3c84a485',1,'tvg::Scene::reserve()']]],
-  ['reset_86',['reset',['../classtvg_1_1Shape.html#a8014640e362066901c2e2ebe6ddd1251',1,'tvg::Shape']]],
-  ['result_87',['Result',['../group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066',1,'tvg']]],
-  ['rotate_88',['rotate',['../classtvg_1_1Paint.html#a7841fa0c14643e09735d48042ead68f3',1,'tvg::Paint']]],
-  ['round_89',['Round',['../group__ThorVG.html#gga6239974a858100e129f1e0b8ffac4f96ab7f41fc1412ad2ee75e9b2635d3b9d5c',1,'Round()tvg'],['../group__ThorVG.html#ggaba8b7236c41a171289aef2f3c71eef51ab7f41fc1412ad2ee75e9b2635d3b9d5c',1,'Round()tvg']]]
+  ['pad_93',['Pad',['../group__ThorVG.html#gga0cfa2c92260cca776292cc9e8964f2daade43468adaf6acb2c38ebc0c1176f82f',1,'tvg']]],
+  ['paint_94',['Paint',['../group__ThorVGCapi__Paint.html',1,'(Global Namespace)'],['../classtvg_1_1Paint.html',1,'Paint']]],
+  ['paints_95',['paints',['../classtvg_1_1Canvas.html#ace6c268f853a4c144076de89b7bbbe75',1,'tvg::Canvas::paints()'],['../classtvg_1_1Scene.html#ace6c268f853a4c144076de89b7bbbe75',1,'tvg::Scene::paints()']]],
+  ['pathcommand_96',['PathCommand',['../group__ThorVG.html#ga6876ed676934f4dbcc19b1b53c153cc1',1,'tvg']]],
+  ['pathcommands_97',['pathCommands',['../classtvg_1_1Shape.html#ac14d90c2c0130b66a9a33eb7d08101b7',1,'tvg::Shape']]],
+  ['pathcoords_98',['pathCoords',['../classtvg_1_1Shape.html#a818b1b358f0ed7ba448b6d804e087923',1,'tvg::Shape']]],
+  ['picture_99',['picture',['../classtvg_1_1Animation.html#a004ba625c58005c931b244fb2515624f',1,'tvg::Animation']]],
+  ['picture_100',['Picture',['../group__ThorVGCapi__Picture.html',1,'(Global Namespace)'],['../classtvg_1_1Picture.html',1,'Picture']]],
+  ['point_101',['Point',['../structtvg_1_1Point.html',1,'tvg']]],
+  ['polygon_102',['Polygon',['../structtvg_1_1Polygon.html',1,'tvg']]],
+  ['push_103',['push',['../classtvg_1_1Canvas.html#a82c5ec1c1ba93cf7671642400074201e',1,'tvg::Canvas::push()'],['../classtvg_1_1Scene.html#a19240cd5b53571da718fabef8afb7103',1,'tvg::Scene::push()']]]
 ];

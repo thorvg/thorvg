@@ -9,11 +9,14 @@
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
+<link href="navtree.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="resize.js"></script>
+<script type="text/javascript" src="navtreedata.js"></script>
+<script type="text/javascript" src="navtree.js"></script>
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
-<link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -24,7 +27,7 @@
   <td id="projectlogo"><img alt="Logo" src="small_logo.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">ThorVG
-   &#160;<span id="projectnumber">v0.9</span>
+   &#160;<span id="projectnumber">v0.10</span>
    </div>
   </td>
  </tr>
@@ -49,6 +52,22 @@ $(function() {
 /* @license-end */</script>
 <div id="main-nav"></div>
 </div><!-- top -->
+<div id="side-nav" class="ui-resizable side-nav-resizable">
+  <div id="nav-tree">
+    <div id="nav-tree-contents">
+      <div id="nav-sync" class="sync"></div>
+    </div>
+  </div>
+  <div id="splitbar" style="-moz-user-select:none;" 
+       class="ui-resizable-handle">
+  </div>
+</div>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:cf05388f2679ee054f2beb29a391d25f4e673ac3&amp;dn=gpl-2.0.txt GPL-v2 */
+$(document).ready(function(){initNavTree('group__ThorVGCapi__Canvas.html',''); initResizable(); });
+/* @license-end */
+</script>
+<div id="doc-content">
 <!-- window showing the filter options -->
 <div id="MSearchSelectWindow"
      onmouseover="return searchBox.OnSearchSelectShow()"
@@ -99,9 +118,9 @@ Functions</h2></td></tr>
 <tr class="memitem:ga81ac2919a9e19634ffb9cb6c42d10a75"><td class="memItemLeft" align="right" valign="top">TVG_API <a class="el" href="group__ThorVG__CAPI.html#gad980f552658dcbbe42a0168f35c27781">Tvg_Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__ThorVGCapi__Canvas.html#ga81ac2919a9e19634ffb9cb6c42d10a75">tvg_canvas_push</a> (<a class="el" href="group__ThorVG__CAPI.html#ga5f10c1f3dabdc9287166611c7fe5fd8a">Tvg_Canvas</a> *canvas, <a class="el" href="group__ThorVG__CAPI.html#ga98af7c3fe18afa8ad65ea6a6e097a292">Tvg_Paint</a> *paint)</td></tr>
 <tr class="memdesc:ga81ac2919a9e19634ffb9cb6c42d10a75"><td class="mdescLeft">&#160;</td><td class="mdescRight">Inserts a drawing element into the canvas using a Tvg_Paint object.  <a href="group__ThorVGCapi__Canvas.html#ga81ac2919a9e19634ffb9cb6c42d10a75">More...</a><br /></td></tr>
 <tr class="separator:ga81ac2919a9e19634ffb9cb6c42d10a75"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga35b7dca8a8018eec1f5f35870962c9ff"><td class="memItemLeft" align="right" valign="top">TVG_API <a class="el" href="group__ThorVG__CAPI.html#gad980f552658dcbbe42a0168f35c27781">Tvg_Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__ThorVGCapi__Canvas.html#ga35b7dca8a8018eec1f5f35870962c9ff">tvg_canvas_reserve</a> (<a class="el" href="group__ThorVG__CAPI.html#ga5f10c1f3dabdc9287166611c7fe5fd8a">Tvg_Canvas</a> *canvas, uint32_t n)</td></tr>
-<tr class="memdesc:ga35b7dca8a8018eec1f5f35870962c9ff"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reserves a memory block where the objects pushed into a canvas are stored.  <a href="group__ThorVGCapi__Canvas.html#ga35b7dca8a8018eec1f5f35870962c9ff">More...</a><br /></td></tr>
-<tr class="separator:ga35b7dca8a8018eec1f5f35870962c9ff"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga6e83a76e3bdf1b06d42c87c2d8bf245e"><td class="memItemLeft" align="right" valign="top">TVG_DEPRECATED TVG_API <a class="el" href="group__ThorVG__CAPI.html#gad980f552658dcbbe42a0168f35c27781">Tvg_Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__ThorVGCapi__Canvas.html#ga6e83a76e3bdf1b06d42c87c2d8bf245e">tvg_canvas_reserve</a> (<a class="el" href="group__ThorVG__CAPI.html#ga5f10c1f3dabdc9287166611c7fe5fd8a">Tvg_Canvas</a> *canvas, uint32_t n)</td></tr>
+<tr class="memdesc:ga6e83a76e3bdf1b06d42c87c2d8bf245e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reserves a memory block where the objects pushed into a canvas are stored.  <a href="group__ThorVGCapi__Canvas.html#ga6e83a76e3bdf1b06d42c87c2d8bf245e">More...</a><br /></td></tr>
+<tr class="separator:ga6e83a76e3bdf1b06d42c87c2d8bf245e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gaca4447f647446c29b90cc443aa84f032"><td class="memItemLeft" align="right" valign="top">TVG_API <a class="el" href="group__ThorVG__CAPI.html#gad980f552658dcbbe42a0168f35c27781">Tvg_Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__ThorVGCapi__Canvas.html#gaca4447f647446c29b90cc443aa84f032">tvg_canvas_clear</a> (<a class="el" href="group__ThorVG__CAPI.html#ga5f10c1f3dabdc9287166611c7fe5fd8a">Tvg_Canvas</a> *canvas, bool free)</td></tr>
 <tr class="memdesc:gaca4447f647446c29b90cc443aa84f032"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the total number of the paints pushed into the canvas to be zero. Tvg_Paint objects stored in the canvas are released if <code>free</code> is set to <code>true</code>, otherwise the memory is not deallocated and all paints should be released manually in order to avoid memory leaks.  <a href="group__ThorVGCapi__Canvas.html#gaca4447f647446c29b90cc443aa84f032">More...</a><br /></td></tr>
 <tr class="separator:gaca4447f647446c29b90cc443aa84f032"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -238,12 +257,12 @@ Functions</h2></td></tr>
 <div class="ttc" id="agroup__ThorVGCapi__Canvas_html_gaca4447f647446c29b90cc443aa84f032"><div class="ttname"><a href="group__ThorVGCapi__Canvas.html#gaca4447f647446c29b90cc443aa84f032">tvg_canvas_clear</a></div><div class="ttdeci">TVG_API Tvg_Result tvg_canvas_clear(Tvg_Canvas *canvas, bool free)</div><div class="ttdoc">Sets the total number of the paints pushed into the canvas to be zero. Tvg_Paint objects stored in th...</div></div>
 <div class="ttc" id="agroup__ThorVGCapi__Initializer_html_ga437d5601fe8dc17eb4788b7694000452"><div class="ttname"><a href="group__ThorVGCapi__Initializer.html#ga437d5601fe8dc17eb4788b7694000452">tvg_engine_init</a></div><div class="ttdeci">TVG_API Tvg_Result tvg_engine_init(Tvg_Engine engine_method, unsigned threads)</div><div class="ttdoc">Initializes TVG engines.</div></div>
 <div class="ttc" id="agroup__ThorVGCapi__Initializer_html_gaaee6b1a83765cfecd47d8f979a9a3211"><div class="ttname"><a href="group__ThorVGCapi__Initializer.html#gaaee6b1a83765cfecd47d8f979a9a3211">tvg_engine_term</a></div><div class="ttdeci">TVG_API Tvg_Result tvg_engine_term(Tvg_Engine engine_method)</div><div class="ttdoc">Terminates TVG engines.</div></div>
-<div class="ttc" id="agroup__ThorVGCapi__Initializer_html_ggaa61c2088915fc211ac91ffafaf45f695a87a18b02d5fc2509c1c4372e46183c96"><div class="ttname"><a href="group__ThorVGCapi__Initializer.html#ggaa61c2088915fc211ac91ffafaf45f695a87a18b02d5fc2509c1c4372e46183c96">TVG_ENGINE_SW</a></div><div class="ttdeci">@ TVG_ENGINE_SW</div><div class="ttdoc">CPU rasterizer.</div><div class="ttdef"><b>Definition:</b> thorvg_capi.h:98</div></div>
+<div class="ttc" id="agroup__ThorVGCapi__Initializer_html_ggaa61c2088915fc211ac91ffafaf45f695a87a18b02d5fc2509c1c4372e46183c96"><div class="ttname"><a href="group__ThorVGCapi__Initializer.html#ggaa61c2088915fc211ac91ffafaf45f695a87a18b02d5fc2509c1c4372e46183c96">TVG_ENGINE_SW</a></div><div class="ttdeci">@ TVG_ENGINE_SW</div><div class="ttdoc">CPU rasterizer.</div><div class="ttdef"><b>Definition:</b> thorvg_capi.h:106</div></div>
 <div class="ttc" id="agroup__ThorVGCapi__Paint_html_ga4d4d3afa5b161c44155f40790d869e83"><div class="ttname"><a href="group__ThorVGCapi__Paint.html#ga4d4d3afa5b161c44155f40790d869e83">tvg_paint_del</a></div><div class="ttdeci">TVG_API Tvg_Result tvg_paint_del(Tvg_Paint *paint)</div><div class="ttdoc">Releases the given Tvg_Paint object.</div></div>
 <div class="ttc" id="agroup__ThorVGCapi__SwCanvas_html_ga1929b0e99eff5584ed03c36cdfa81065"><div class="ttname"><a href="group__ThorVGCapi__SwCanvas.html#ga1929b0e99eff5584ed03c36cdfa81065">tvg_swcanvas_create</a></div><div class="ttdeci">TVG_API Tvg_Canvas * tvg_swcanvas_create()</div><div class="ttdoc">Creates a Canvas object.</div></div>
 <div class="ttc" id="agroup__ThorVGCapi__SwCanvas_html_ga7bd619a80e4a2ba4bc012734387a2010"><div class="ttname"><a href="group__ThorVGCapi__SwCanvas.html#ga7bd619a80e4a2ba4bc012734387a2010">tvg_swcanvas_set_target</a></div><div class="ttdeci">TVG_API Tvg_Result tvg_swcanvas_set_target(Tvg_Canvas *canvas, uint32_t *buffer, uint32_t stride, uint32_t w, uint32_t h, Tvg_Colorspace cs)</div><div class="ttdoc">Sets the buffer used in the rasterization process and defines the used colorspace.</div></div>
-<div class="ttc" id="agroup__ThorVGCapi__SwCanvas_html_ggae038f89e569d85c0896711a0a31b4a78a362994879a2332b343d408dd3a397d97"><div class="ttname"><a href="group__ThorVGCapi__SwCanvas.html#ggae038f89e569d85c0896711a0a31b4a78a362994879a2332b343d408dd3a397d97">TVG_COLORSPACE_ARGB8888</a></div><div class="ttdeci">@ TVG_COLORSPACE_ARGB8888</div><div class="ttdoc">The 8-bit color channels are combined into 32-bit color in the order: alpha, red, green,...</div><div class="ttdef"><b>Definition:</b> thorvg_capi.h:364</div></div>
-<div class="ttc" id="agroup__ThorVG__CAPI_html_ga5f10c1f3dabdc9287166611c7fe5fd8a"><div class="ttname"><a href="group__ThorVG__CAPI.html#ga5f10c1f3dabdc9287166611c7fe5fd8a">Tvg_Canvas</a></div><div class="ttdeci">struct _Tvg_Canvas Tvg_Canvas</div><div class="ttdoc">A structure responsible for managing and drawing graphical elements.</div><div class="ttdef"><b>Definition:</b> thorvg_capi.h:69</div></div>
+<div class="ttc" id="agroup__ThorVGCapi__SwCanvas_html_ggae038f89e569d85c0896711a0a31b4a78a362994879a2332b343d408dd3a397d97"><div class="ttname"><a href="group__ThorVGCapi__SwCanvas.html#ggae038f89e569d85c0896711a0a31b4a78a362994879a2332b343d408dd3a397d97">TVG_COLORSPACE_ARGB8888</a></div><div class="ttdeci">@ TVG_COLORSPACE_ARGB8888</div><div class="ttdoc">The 8-bit color channels are combined into 32-bit color in the order: alpha, red, green,...</div><div class="ttdef"><b>Definition:</b> thorvg_capi.h:372</div></div>
+<div class="ttc" id="agroup__ThorVG__CAPI_html_ga5f10c1f3dabdc9287166611c7fe5fd8a"><div class="ttname"><a href="group__ThorVG__CAPI.html#ga5f10c1f3dabdc9287166611c7fe5fd8a">Tvg_Canvas</a></div><div class="ttdeci">struct _Tvg_Canvas Tvg_Canvas</div><div class="ttdoc">A structure responsible for managing and drawing graphical elements.</div><div class="ttdef"><b>Definition:</b> thorvg_capi.h:77</div></div>
 </div><!-- fragment --><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">canvas</td><td>The Tvg_Canvas object to be destroyed.</td></tr>
@@ -335,7 +354,7 @@ Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
-<p>Only the paints pushed into the canvas will be drawing targets. They are retained by the canvas until you call <a class="el" href="group__ThorVGCapi__Canvas.html#gaca4447f647446c29b90cc443aa84f032" title="Sets the total number of the paints pushed into the canvas to be zero. Tvg_Paint objects stored in th...">tvg_canvas_clear()</a>. If you know the number of the pushed objects in advance, please call <a class="el" href="group__ThorVGCapi__Canvas.html#ga35b7dca8a8018eec1f5f35870962c9ff" title="Reserves a memory block where the objects pushed into a canvas are stored.">tvg_canvas_reserve()</a>.</p>
+<p>Only the paints pushed into the canvas will be drawing targets. They are retained by the canvas until you call <a class="el" href="group__ThorVGCapi__Canvas.html#gaca4447f647446c29b90cc443aa84f032" title="Sets the total number of the paints pushed into the canvas to be zero. Tvg_Paint objects stored in th...">tvg_canvas_clear()</a>. If you know the number of the pushed objects in advance, please call <a class="el" href="group__ThorVGCapi__Canvas.html#ga6e83a76e3bdf1b06d42c87c2d8bf245e" title="Reserves a memory block where the objects pushed into a canvas are stored.">tvg_canvas_reserve()</a>.</p>
 <dl class="section return"><dt>Returns</dt><dd>Tvg_Result return values: </dd></dl>
 <dl class="retval"><dt>Return values</dt><dd>
   <table class="retval">
@@ -346,18 +365,18 @@ Functions</h2></td></tr>
   </dd>
 </dl>
 <dl class="section note"><dt>Note</dt><dd>The rendering order of the paints is the same as the order as they were pushed. Consider sorting the paints before pushing them if you intend to use layering. </dd></dl>
-<dl class="section see"><dt>See also</dt><dd><a class="el" href="group__ThorVGCapi__Canvas.html#ga35b7dca8a8018eec1f5f35870962c9ff" title="Reserves a memory block where the objects pushed into a canvas are stored.">tvg_canvas_reserve()</a>, <a class="el" href="group__ThorVGCapi__Canvas.html#gaca4447f647446c29b90cc443aa84f032" title="Sets the total number of the paints pushed into the canvas to be zero. Tvg_Paint objects stored in th...">tvg_canvas_clear()</a> </dd></dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="group__ThorVGCapi__Canvas.html#gaca4447f647446c29b90cc443aa84f032" title="Sets the total number of the paints pushed into the canvas to be zero. Tvg_Paint objects stored in th...">tvg_canvas_clear()</a> </dd></dl>
 
 </div>
 </div>
-<a id="ga35b7dca8a8018eec1f5f35870962c9ff"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ga35b7dca8a8018eec1f5f35870962c9ff">&#9670;&nbsp;</a></span>tvg_canvas_reserve()</h2>
+<a id="ga6e83a76e3bdf1b06d42c87c2d8bf245e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ga6e83a76e3bdf1b06d42c87c2d8bf245e">&#9670;&nbsp;</a></span>tvg_canvas_reserve()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">TVG_API <a class="el" href="group__ThorVG__CAPI.html#gad980f552658dcbbe42a0168f35c27781">Tvg_Result</a> tvg_canvas_reserve </td>
+          <td class="memname">TVG_DEPRECATED TVG_API <a class="el" href="group__ThorVG__CAPI.html#gad980f552658dcbbe42a0168f35c27781">Tvg_Result</a> tvg_canvas_reserve </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="group__ThorVG__CAPI.html#ga5f10c1f3dabdc9287166611c7fe5fd8a">Tvg_Canvas</a> *&#160;</td>
           <td class="paramname"><em>canvas</em>, </td>
@@ -388,11 +407,9 @@ Functions</h2></td></tr>
 <div class="line"><span class="keywordflow">if</span> (!buffer) <span class="keywordflow">return</span>;</div>
 <div class="line"> </div>
 <div class="line"><a class="code" href="group__ThorVGCapi__SwCanvas.html#ga7bd619a80e4a2ba4bc012734387a2010">tvg_swcanvas_set_target</a>(canvas, buffer, 100, 100, 100, <a class="code" href="group__ThorVGCapi__SwCanvas.html#ggae038f89e569d85c0896711a0a31b4a78a362994879a2332b343d408dd3a397d97">TVG_COLORSPACE_ARGB8888</a>);</div>
-<div class="line"><a class="code" href="group__ThorVGCapi__Canvas.html#ga35b7dca8a8018eec1f5f35870962c9ff">tvg_canvas_reserve</a>(canvas, 100); <span class="comment">//reserve array for 100 paints in canvas.</span></div>
 <div class="line"> </div>
 <div class="line"><a class="code" href="group__ThorVGCapi__Canvas.html#ga15208125646162cd19a928708a335295">tvg_canvas_destroy</a>(canvas);</div>
 <div class="line"><a class="code" href="group__ThorVGCapi__Initializer.html#gaaee6b1a83765cfecd47d8f979a9a3211">tvg_engine_term</a>(<a class="code" href="group__ThorVGCapi__Initializer.html#ggaa61c2088915fc211ac91ffafaf45f695a87a18b02d5fc2509c1c4372e46183c96">TVG_ENGINE_SW</a>)</div>
-<div class="ttc" id="agroup__ThorVGCapi__Canvas_html_ga35b7dca8a8018eec1f5f35870962c9ff"><div class="ttname"><a href="group__ThorVGCapi__Canvas.html#ga35b7dca8a8018eec1f5f35870962c9ff">tvg_canvas_reserve</a></div><div class="ttdeci">TVG_API Tvg_Result tvg_canvas_reserve(Tvg_Canvas *canvas, uint32_t n)</div><div class="ttdoc">Reserves a memory block where the objects pushed into a canvas are stored.</div></div>
 </div><!-- fragment --><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">canvas</td><td>The Tvg_Canvas object managing the reserved memory. </td></tr>
@@ -514,7 +531,7 @@ Functions</h2></td></tr>
 <div class="ttc" id="agroup__ThorVGCapi__Shape_html_ga08d388f8a75ac13c9a4e8717663b61ad"><div class="ttname"><a href="group__ThorVGCapi__Shape.html#ga08d388f8a75ac13c9a4e8717663b61ad">tvg_shape_append_rect</a></div><div class="ttdeci">TVG_API Tvg_Result tvg_shape_append_rect(Tvg_Paint *paint, float x, float y, float w, float h, float rx, float ry)</div><div class="ttdoc">Appends a rectangle to the path.</div></div>
 <div class="ttc" id="agroup__ThorVGCapi__Shape_html_ga984061de00f2d76714e354b165365bab"><div class="ttname"><a href="group__ThorVGCapi__Shape.html#ga984061de00f2d76714e354b165365bab">tvg_shape_set_stroke_width</a></div><div class="ttdeci">TVG_API Tvg_Result tvg_shape_set_stroke_width(Tvg_Paint *paint, float width)</div><div class="ttdoc">Sets the stroke width for all of the figures from the paint.</div></div>
 <div class="ttc" id="agroup__ThorVGCapi__Shape_html_gacc948f2205c906ce4e17baad36a0ee3f"><div class="ttname"><a href="group__ThorVGCapi__Shape.html#gacc948f2205c906ce4e17baad36a0ee3f">tvg_shape_set_stroke_color</a></div><div class="ttdeci">TVG_API Tvg_Result tvg_shape_set_stroke_color(Tvg_Paint *paint, uint8_t r, uint8_t g, uint8_t b, uint8_t a)</div><div class="ttdoc">Sets the shape's stroke color.</div></div>
-<div class="ttc" id="agroup__ThorVG__CAPI_html_ga98af7c3fe18afa8ad65ea6a6e097a292"><div class="ttname"><a href="group__ThorVG__CAPI.html#ga98af7c3fe18afa8ad65ea6a6e097a292">Tvg_Paint</a></div><div class="ttdeci">struct _Tvg_Paint Tvg_Paint</div><div class="ttdoc">A structure representing a graphical element.</div><div class="ttdef"><b>Definition:</b> thorvg_capi.h:77</div></div>
+<div class="ttc" id="agroup__ThorVG__CAPI_html_ga98af7c3fe18afa8ad65ea6a6e097a292"><div class="ttname"><a href="group__ThorVG__CAPI.html#ga98af7c3fe18afa8ad65ea6a6e097a292">Tvg_Paint</a></div><div class="ttdeci">struct _Tvg_Paint Tvg_Paint</div><div class="ttdoc">A structure representing a graphical element.</div><div class="ttdef"><b>Definition:</b> thorvg_capi.h:85</div></div>
 </div><!-- fragment --><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">canvas</td><td>The Tvg_Canvas object to be updated.</td></tr>
@@ -582,9 +599,12 @@ Functions</h2></td></tr>
 </div>
 </div>
 </div><!-- contents -->
+</div><!-- doc-content -->
 <!-- start footer part -->
-<hr class="footer"/><address class="footer"><small>
-Generated by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
-</small></address>
+<div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
+  <ul>
+    <li class="footer">Generated by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1 </li>
+  </ul>
+</div>
 </body>
 </html>

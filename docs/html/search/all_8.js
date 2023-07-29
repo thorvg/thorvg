@@ -1,9 +1,12 @@
 var searchData=
 [
-  ['linear_52',['linear',['../classtvg_1_1LinearGradient.html#aa881eb89e14ade6a30bc41d7eb8eaf52',1,'tvg::LinearGradient::linear(float x1, float y1, float x2, float y2) noexcept'],['../classtvg_1_1LinearGradient.html#a5c77e9f6e855a595945f45a6b19ee983',1,'tvg::LinearGradient::linear(float *x1, float *y1, float *x2, float *y2) const noexcept']]],
-  ['lineargradient_53',['LinearGradient',['../classtvg_1_1LinearGradient.html',1,'tvg']]],
-  ['lineto_54',['lineTo',['../classtvg_1_1Shape.html#a9c28e9bbc6bd22dc62e891ffb3fa02cd',1,'tvg::Shape']]],
-  ['lineto_55',['LineTo',['../group__ThorVG.html#gga6876ed676934f4dbcc19b1b53c153cc1a5dc59cf06f56c730c0a4bfe69c9bf689',1,'tvg']]],
-  ['load_56',['load',['../classtvg_1_1Picture.html#aaf06be7d0b572c5ce35315cbddd7d318',1,'tvg::Picture::load(const std::string &amp;path) noexcept'],['../classtvg_1_1Picture.html#a3e487c0b236a6eea853c5ccb7665cdce',1,'tvg::Picture::load(const char *data, uint32_t size, bool copy=false) noexcept'],['../classtvg_1_1Picture.html#a95979a7c4ce51445c7ef9d6461c34767',1,'tvg::Picture::load(const char *data, uint32_t size, const std::string &amp;mimeType, bool copy=false) noexcept'],['../classtvg_1_1Picture.html#a1fdf75092cebaa7cde48d6a7d4946368',1,'tvg::Picture::load(uint32_t *data, uint32_t w, uint32_t h, bool copy) noexcept']]],
-  ['lumamask_57',['LumaMask',['../group__ThorVG.html#ggaabdf94ada64e69d06deabc5aa6576f87a4dae6fdfeb902e322a7bc9122c4e4cb4',1,'tvg']]]
+  ['identifier_61',['identifier',['../classtvg_1_1Paint.html#a37466e9eff2de62ff15c9df3d72b656d',1,'tvg::Paint::identifier()'],['../classtvg_1_1Fill.html#a37466e9eff2de62ff15c9df3d72b656d',1,'tvg::Fill::identifier()'],['../classtvg_1_1LinearGradient.html#a13df43a335dadaea01769a726dc9ddfd',1,'tvg::LinearGradient::identifier()'],['../classtvg_1_1RadialGradient.html#a13df43a335dadaea01769a726dc9ddfd',1,'tvg::RadialGradient::identifier()'],['../classtvg_1_1Shape.html#a13df43a335dadaea01769a726dc9ddfd',1,'tvg::Shape::identifier()'],['../classtvg_1_1Picture.html#a13df43a335dadaea01769a726dc9ddfd',1,'tvg::Picture::identifier()'],['../classtvg_1_1Scene.html#a13df43a335dadaea01769a726dc9ddfd',1,'tvg::Scene::identifier()']]],
+  ['individual_62',['Individual',['../classtvg_1_1SwCanvas.html#a9b9770837f0171b15f0cd86f94e8e22bab0257211e60ed5eb6767ec8ed3ec2524',1,'tvg::SwCanvas']]],
+  ['init_63',['init',['../classtvg_1_1Initializer.html#aecd30dc028635b645b0dac5b6facea73',1,'tvg::Initializer']]],
+  ['initializer_64',['Initializer',['../group__ThorVGCapi__Initializer.html',1,'(Global Namespace)'],['../classtvg_1_1Initializer.html',1,'Initializer']]],
+  ['insufficientcondition_65',['InsufficientCondition',['../group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a119732ff568bf103d744e930ae2404f1',1,'tvg']]],
+  ['intersectmask_66',['IntersectMask',['../group__ThorVG.html#ggaabdf94ada64e69d06deabc5aa6576f87ac41b6c9f18e9ee080e9f74bceff36a47',1,'tvg']]],
+  ['invalidarguments_67',['InvalidArguments',['../group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066ae73a2e92f1c87086c838b442552a4775',1,'tvg']]],
+  ['invalphamask_68',['InvAlphaMask',['../group__ThorVG.html#ggaabdf94ada64e69d06deabc5aa6576f87a59cc48dcf714e3a3c2492f4dce1fe134',1,'tvg']]],
+  ['invlumamask_69',['InvLumaMask',['../group__ThorVG.html#ggaabdf94ada64e69d06deabc5aa6576f87a28f3dcc7d8cad65deff7d3a83031ef5a',1,'tvg']]]
 ];

@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['mempoolpolicy_447',['MempoolPolicy',['../classtvg_1_1SwCanvas.html#a9b9770837f0171b15f0cd86f94e8e22b',1,'tvg::SwCanvas']]]
+  ['fillrule_487',['FillRule',['../group__ThorVG.html#ga9a534b0377c9ca41983d53b0dae0d5a4',1,'tvg']]],
+  ['fillspread_488',['FillSpread',['../group__ThorVG.html#ga0cfa2c92260cca776292cc9e8964f2da',1,'tvg']]]
 ];
