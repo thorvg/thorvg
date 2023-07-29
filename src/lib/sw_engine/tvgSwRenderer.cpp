@@ -457,7 +457,8 @@ bool SwRenderer::postRender()
     }
 
     for (auto task = tasks.data; task < tasks.end(); ++task) {
-        (*task)->pushed = false;
+        if ((*task)->disposed) delete(*task);
+        else (*task)->pushed = false;
     }
     tasks.clear();
 
