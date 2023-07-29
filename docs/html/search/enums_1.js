@@ -1,5 +1,6 @@
 var searchData=
 [
-  ['fillrule_445',['FillRule',['../group__ThorVG.html#ga9a534b0377c9ca41983d53b0dae0d5a4',1,'tvg']]],
-  ['fillspread_446',['FillSpread',['../group__ThorVG.html#ga0cfa2c92260cca776292cc9e8964f2da',1,'tvg']]]
+  ['canvasengine_484',['CanvasEngine',['../group__ThorVG.html#ga3dfc0651e85484b1011772dd9f8300df',1,'tvg']]],
+  ['colorspace_485',['Colorspace',['../classtvg_1_1SwCanvas.html#a7a7e24cdb2a27271343f0adceff89f65',1,'tvg::SwCanvas']]],
+  ['compositemethod_486',['CompositeMethod',['../group__ThorVG.html#gaabdf94ada64e69d06deabc5aa6576f87',1,'tvg']]]
 ];

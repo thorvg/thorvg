@@ -1,7 +1,4 @@
 var searchData=
 [
-  ['individual_477',['Individual',['../classtvg_1_1SwCanvas.html#a9b9770837f0171b15f0cd86f94e8e22bab0257211e60ed5eb6767ec8ed3ec2524',1,'tvg::SwCanvas']]],
-  ['insufficientcondition_478',['InsufficientCondition',['../group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a119732ff568bf103d744e930ae2404f1',1,'tvg']]],
-  ['invalidarguments_479',['InvalidArguments',['../group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066ae73a2e92f1c87086c838b442552a4775',1,'tvg']]],
-  ['invalphamask_480',['InvAlphaMask',['../group__ThorVG.html#ggaabdf94ada64e69d06deabc5aa6576f87a59cc48dcf714e3a3c2492f4dce1fe134',1,'tvg']]]
+  ['hardlight_527',['HardLight',['../group__ThorVG.html#gga4dd2f3776540c10b565e0446aa8e9e02ad509708d332760c4dac5299aee3aa518',1,'tvg']]]
 ];

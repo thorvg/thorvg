@@ -9,11 +9,14 @@
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
+<link href="navtree.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="resize.js"></script>
+<script type="text/javascript" src="navtreedata.js"></script>
+<script type="text/javascript" src="navtree.js"></script>
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
-<link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -24,7 +27,7 @@
   <td id="projectlogo"><img alt="Logo" src="small_logo.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">ThorVG
-   &#160;<span id="projectnumber">v0.9</span>
+   &#160;<span id="projectnumber">v0.10</span>
    </div>
   </td>
  </tr>
@@ -48,6 +51,23 @@ $(function() {
 });
 /* @license-end */</script>
 <div id="main-nav"></div>
+</div><!-- top -->
+<div id="side-nav" class="ui-resizable side-nav-resizable">
+  <div id="nav-tree">
+    <div id="nav-tree-contents">
+      <div id="nav-sync" class="sync"></div>
+    </div>
+  </div>
+  <div id="splitbar" style="-moz-user-select:none;" 
+       class="ui-resizable-handle">
+  </div>
+</div>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:cf05388f2679ee054f2beb29a391d25f4e673ac3&amp;dn=gpl-2.0.txt GPL-v2 */
+$(document).ready(function(){initNavTree('classtvg_1_1Shape.html',''); initResizable(); });
+/* @license-end */
+</script>
+<div id="doc-content">
 <!-- window showing the filter options -->
 <div id="MSearchSelectWindow"
      onmouseover="return searchBox.OnSearchSelectShow()"
@@ -62,11 +82,6 @@ $(function() {
 </iframe>
 </div>
 
-<div id="nav-path" class="navpath">
-  <ul>
-<li class="navelem"><b>tvg</b></li><li class="navelem"><a class="el" href="classtvg_1_1Shape.html">Shape</a></li>  </ul>
-</div>
-</div><!-- top -->
 <div class="header">
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
@@ -87,7 +102,16 @@ Inheritance diagram for Shape:</div>
 <area shape="rect" title="A class representing two&#45;dimensional figures and their properties." alt="" coords="5,80,68,107"/>
 <area shape="rect" href="classtvg_1_1Paint.html" title="An abstract class for managing graphical elements." alt="" coords="9,5,64,32"/>
 </map>
-<center><span class="legend">[<a href="graph_legend.html">legend</a>]</span></center></div>
+<center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
+<div class="dynheader">
+Collaboration diagram for Shape:</div>
+<div class="dyncontent">
+<div class="center"><img src="classtvg_1_1Shape__coll__graph.png" border="0" usemap="#aShape_coll__map" alt="Collaboration graph"/></div>
+<map name="aShape_coll__map" id="aShape_coll__map">
+<area shape="rect" title="A class representing two&#45;dimensional figures and their properties." alt="" coords="5,80,68,107"/>
+<area shape="rect" href="classtvg_1_1Paint.html" title="An abstract class for managing graphical elements." alt="" coords="9,5,64,32"/>
+</map>
+<center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
@@ -106,9 +130,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a2765987a2641ac1db76d5c64f00da697"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Shape.html#a2765987a2641ac1db76d5c64f00da697">close</a> () noexcept</td></tr>
 <tr class="memdesc:a2765987a2641ac1db76d5c64f00da697"><td class="mdescLeft">&#160;</td><td class="mdescRight">Closes the current sub-path by drawing a line from the current point to the initial point of the sub-path.  <a href="classtvg_1_1Shape.html#a2765987a2641ac1db76d5c64f00da697">More...</a><br /></td></tr>
 <tr class="separator:a2765987a2641ac1db76d5c64f00da697"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a676c64ce75c274ce75032606d33b03da"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Shape.html#a676c64ce75c274ce75032606d33b03da">appendRect</a> (float x, float y, float w, float h, float rx, float ry) noexcept</td></tr>
-<tr class="memdesc:a676c64ce75c274ce75032606d33b03da"><td class="mdescLeft">&#160;</td><td class="mdescRight">Appends a rectangle to the path.  <a href="classtvg_1_1Shape.html#a676c64ce75c274ce75032606d33b03da">More...</a><br /></td></tr>
-<tr class="separator:a676c64ce75c274ce75032606d33b03da"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8ef2587269a01153c9ea4ca4a8d31b49"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Shape.html#a8ef2587269a01153c9ea4ca4a8d31b49">appendRect</a> (float x, float y, float w, float h, float rx=0, float ry=0) noexcept</td></tr>
+<tr class="memdesc:a8ef2587269a01153c9ea4ca4a8d31b49"><td class="mdescLeft">&#160;</td><td class="mdescRight">Appends a rectangle to the path.  <a href="classtvg_1_1Shape.html#a8ef2587269a01153c9ea4ca4a8d31b49">More...</a><br /></td></tr>
+<tr class="separator:a8ef2587269a01153c9ea4ca4a8d31b49"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a52eccb2815eaa1231da9c389cd92ffa1"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Shape.html#a52eccb2815eaa1231da9c389cd92ffa1">appendCircle</a> (float cx, float cy, float rx, float ry) noexcept</td></tr>
 <tr class="memdesc:a52eccb2815eaa1231da9c389cd92ffa1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Appends an ellipse to the path.  <a href="classtvg_1_1Shape.html#a52eccb2815eaa1231da9c389cd92ffa1">More...</a><br /></td></tr>
 <tr class="separator:a52eccb2815eaa1231da9c389cd92ffa1"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -121,9 +145,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a5ce764cd1970c7a7d76b209c4441bc73"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Shape.html#a5ce764cd1970c7a7d76b209c4441bc73">stroke</a> (float width) noexcept</td></tr>
 <tr class="memdesc:a5ce764cd1970c7a7d76b209c4441bc73"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the stroke width for all of the figures from the path.  <a href="classtvg_1_1Shape.html#a5ce764cd1970c7a7d76b209c4441bc73">More...</a><br /></td></tr>
 <tr class="separator:a5ce764cd1970c7a7d76b209c4441bc73"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a68a4822b30573cf4f02195b249218e4e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Shape.html#a68a4822b30573cf4f02195b249218e4e">stroke</a> (uint8_t r, uint8_t g, uint8_t b, uint8_t a) noexcept</td></tr>
-<tr class="memdesc:a68a4822b30573cf4f02195b249218e4e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the color of the stroke for all of the figures from the path.  <a href="classtvg_1_1Shape.html#a68a4822b30573cf4f02195b249218e4e">More...</a><br /></td></tr>
-<tr class="separator:a68a4822b30573cf4f02195b249218e4e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aad81d8f86d9432eac25b00cc675c8d7f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Shape.html#aad81d8f86d9432eac25b00cc675c8d7f">stroke</a> (uint8_t r, uint8_t g, uint8_t b, uint8_t a=255) noexcept</td></tr>
+<tr class="memdesc:aad81d8f86d9432eac25b00cc675c8d7f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the color of the stroke for all of the figures from the path.  <a href="classtvg_1_1Shape.html#aad81d8f86d9432eac25b00cc675c8d7f">More...</a><br /></td></tr>
+<tr class="separator:aad81d8f86d9432eac25b00cc675c8d7f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab0b09b5064dff4931db9ea898b36dcc1"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Shape.html#ab0b09b5064dff4931db9ea898b36dcc1">stroke</a> (std::unique_ptr&lt; <a class="el" href="classtvg_1_1Fill.html">Fill</a> &gt; f) noexcept</td></tr>
 <tr class="memdesc:ab0b09b5064dff4931db9ea898b36dcc1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the gradient fill of the stroke for all of the figures from the path.  <a href="classtvg_1_1Shape.html#ab0b09b5064dff4931db9ea898b36dcc1">More...</a><br /></td></tr>
 <tr class="separator:ab0b09b5064dff4931db9ea898b36dcc1"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -136,9 +160,12 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ac416cad0d9e15079a112b1f609d19177"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Shape.html#ac416cad0d9e15079a112b1f609d19177">stroke</a> (<a class="el" href="group__ThorVG.html#gaba8b7236c41a171289aef2f3c71eef51">StrokeJoin</a> join) noexcept</td></tr>
 <tr class="memdesc:ac416cad0d9e15079a112b1f609d19177"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the join style for stroked path segments.  <a href="classtvg_1_1Shape.html#ac416cad0d9e15079a112b1f609d19177">More...</a><br /></td></tr>
 <tr class="separator:ac416cad0d9e15079a112b1f609d19177"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae25e3697b5df587d50b809f1faeeabd9"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Shape.html#ae25e3697b5df587d50b809f1faeeabd9">fill</a> (uint8_t r, uint8_t g, uint8_t b, uint8_t a) noexcept</td></tr>
-<tr class="memdesc:ae25e3697b5df587d50b809f1faeeabd9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the solid color for all of the figures from the path.  <a href="classtvg_1_1Shape.html#ae25e3697b5df587d50b809f1faeeabd9">More...</a><br /></td></tr>
-<tr class="separator:ae25e3697b5df587d50b809f1faeeabd9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad8fb8f42c07ac68ef83383b05203ff6f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Shape.html#ad8fb8f42c07ac68ef83383b05203ff6f">strokeMiterlimit</a> (float miterlimit) noexcept</td></tr>
+<tr class="memdesc:ad8fb8f42c07ac68ef83383b05203ff6f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the stroke miterlimit.  <a href="classtvg_1_1Shape.html#ad8fb8f42c07ac68ef83383b05203ff6f">More...</a><br /></td></tr>
+<tr class="separator:ad8fb8f42c07ac68ef83383b05203ff6f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0552551ad67547043167f7f382174e89"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Shape.html#a0552551ad67547043167f7f382174e89">fill</a> (uint8_t r, uint8_t g, uint8_t b, uint8_t a=255) noexcept</td></tr>
+<tr class="memdesc:a0552551ad67547043167f7f382174e89"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the solid color for all of the figures from the path.  <a href="classtvg_1_1Shape.html#a0552551ad67547043167f7f382174e89">More...</a><br /></td></tr>
+<tr class="separator:a0552551ad67547043167f7f382174e89"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad0cb7b2ec8d18d7c6d366cc84741682c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Shape.html#ad0cb7b2ec8d18d7c6d366cc84741682c">fill</a> (std::unique_ptr&lt; <a class="el" href="classtvg_1_1Fill.html">Fill</a> &gt; f) noexcept</td></tr>
 <tr class="memdesc:ad0cb7b2ec8d18d7c6d366cc84741682c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the gradient fill for all of the figures from the path.  <a href="classtvg_1_1Shape.html#ad0cb7b2ec8d18d7c6d366cc84741682c">More...</a><br /></td></tr>
 <tr class="separator:ad0cb7b2ec8d18d7c6d366cc84741682c"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -157,18 +184,18 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a989edf4b4f68532ff25004fc0c7fe826"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="classtvg_1_1Fill.html">Fill</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Shape.html#a989edf4b4f68532ff25004fc0c7fe826">fill</a> () const noexcept</td></tr>
 <tr class="memdesc:a989edf4b4f68532ff25004fc0c7fe826"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets the pointer to the gradient fill of the shape.  <a href="classtvg_1_1Shape.html#a989edf4b4f68532ff25004fc0c7fe826">More...</a><br /></td></tr>
 <tr class="separator:a989edf4b4f68532ff25004fc0c7fe826"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afc81d85ad3fb3f006abf835311a0acfc"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Shape.html#afc81d85ad3fb3f006abf835311a0acfc">fillColor</a> (uint8_t *r, uint8_t *g, uint8_t *b, uint8_t *a) const noexcept</td></tr>
-<tr class="memdesc:afc81d85ad3fb3f006abf835311a0acfc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets the solid color of the shape.  <a href="classtvg_1_1Shape.html#afc81d85ad3fb3f006abf835311a0acfc">More...</a><br /></td></tr>
-<tr class="separator:afc81d85ad3fb3f006abf835311a0acfc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8b4f00f01c2d24d6be2962ddf04a70ca"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Shape.html#a8b4f00f01c2d24d6be2962ddf04a70ca">fillColor</a> (uint8_t *r, uint8_t *g, uint8_t *b, uint8_t *a=nullptr) const noexcept</td></tr>
+<tr class="memdesc:a8b4f00f01c2d24d6be2962ddf04a70ca"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets the solid color of the shape.  <a href="classtvg_1_1Shape.html#a8b4f00f01c2d24d6be2962ddf04a70ca">More...</a><br /></td></tr>
+<tr class="separator:a8b4f00f01c2d24d6be2962ddf04a70ca"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac14cd997439012e1abf6c1b8d9f3d4aa"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__ThorVG.html#ga9a534b0377c9ca41983d53b0dae0d5a4">FillRule</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Shape.html#ac14cd997439012e1abf6c1b8d9f3d4aa">fillRule</a> () const noexcept</td></tr>
 <tr class="memdesc:ac14cd997439012e1abf6c1b8d9f3d4aa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets the fill rule value.  <a href="classtvg_1_1Shape.html#ac14cd997439012e1abf6c1b8d9f3d4aa">More...</a><br /></td></tr>
 <tr class="separator:ac14cd997439012e1abf6c1b8d9f3d4aa"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1536ec32e91c29dd8300b0d4354773f9"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Shape.html#a1536ec32e91c29dd8300b0d4354773f9">strokeWidth</a> () const noexcept</td></tr>
 <tr class="memdesc:a1536ec32e91c29dd8300b0d4354773f9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets the stroke width.  <a href="classtvg_1_1Shape.html#a1536ec32e91c29dd8300b0d4354773f9">More...</a><br /></td></tr>
 <tr class="separator:a1536ec32e91c29dd8300b0d4354773f9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7b81219e058ae54e731c5702a1c61462"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Shape.html#a7b81219e058ae54e731c5702a1c61462">strokeColor</a> (uint8_t *r, uint8_t *g, uint8_t *b, uint8_t *a) const noexcept</td></tr>
-<tr class="memdesc:a7b81219e058ae54e731c5702a1c61462"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets the color of the shape's stroke.  <a href="classtvg_1_1Shape.html#a7b81219e058ae54e731c5702a1c61462">More...</a><br /></td></tr>
-<tr class="separator:a7b81219e058ae54e731c5702a1c61462"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6705be0d6481277e9bf17cc918597665"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Shape.html#a6705be0d6481277e9bf17cc918597665">strokeColor</a> (uint8_t *r, uint8_t *g, uint8_t *b, uint8_t *a=nullptr) const noexcept</td></tr>
+<tr class="memdesc:a6705be0d6481277e9bf17cc918597665"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets the color of the shape's stroke.  <a href="classtvg_1_1Shape.html#a6705be0d6481277e9bf17cc918597665">More...</a><br /></td></tr>
+<tr class="separator:a6705be0d6481277e9bf17cc918597665"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a08ce41b2d01d2d43980e5c26f4df111e"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="classtvg_1_1Fill.html">Fill</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Shape.html#a08ce41b2d01d2d43980e5c26f4df111e">strokeFill</a> () const noexcept</td></tr>
 <tr class="memdesc:a08ce41b2d01d2d43980e5c26f4df111e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets the pointer to the gradient fill of the stroke.  <a href="classtvg_1_1Shape.html#a08ce41b2d01d2d43980e5c26f4df111e">More...</a><br /></td></tr>
 <tr class="separator:a08ce41b2d01d2d43980e5c26f4df111e"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -181,6 +208,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:aac0235df4172e9c079689e5291c7ad5a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__ThorVG.html#gaba8b7236c41a171289aef2f3c71eef51">StrokeJoin</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Shape.html#aac0235df4172e9c079689e5291c7ad5a">strokeJoin</a> () const noexcept</td></tr>
 <tr class="memdesc:aac0235df4172e9c079689e5291c7ad5a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets the join style value used for stroking the path.  <a href="classtvg_1_1Shape.html#aac0235df4172e9c079689e5291c7ad5a">More...</a><br /></td></tr>
 <tr class="separator:aac0235df4172e9c079689e5291c7ad5a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a84ec91023314c914e900cade78a9095d"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Shape.html#a84ec91023314c914e900cade78a9095d">strokeMiterlimit</a> () const noexcept</td></tr>
+<tr class="memdesc:a84ec91023314c914e900cade78a9095d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets the stroke miterlimit.  <a href="classtvg_1_1Shape.html#a84ec91023314c914e900cade78a9095d">More...</a><br /></td></tr>
+<tr class="separator:a84ec91023314c914e900cade78a9095d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_classtvg_1_1Paint"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classtvg_1_1Paint')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="classtvg_1_1Paint.html">Paint</a></td></tr>
 <tr class="memitem:a7841fa0c14643e09735d48042ead68f3 inherit pub_methods_classtvg_1_1Paint"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Paint.html#a7841fa0c14643e09735d48042ead68f3">rotate</a> (float degree) noexcept</td></tr>
 <tr class="memdesc:a7841fa0c14643e09735d48042ead68f3 inherit pub_methods_classtvg_1_1Paint"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the angle by which the object is rotated.  <a href="classtvg_1_1Paint.html#a7841fa0c14643e09735d48042ead68f3">More...</a><br /></td></tr>
@@ -203,6 +233,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a2e2d077b820d1cfd6502a86e0221638b inherit pub_methods_classtvg_1_1Paint"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Paint.html#a2e2d077b820d1cfd6502a86e0221638b">composite</a> (std::unique_ptr&lt; <a class="el" href="classtvg_1_1Paint.html">Paint</a> &gt; target, <a class="el" href="group__ThorVG.html#gaabdf94ada64e69d06deabc5aa6576f87">CompositeMethod</a> method) noexcept</td></tr>
 <tr class="memdesc:a2e2d077b820d1cfd6502a86e0221638b inherit pub_methods_classtvg_1_1Paint"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the composition target object and the composition method.  <a href="classtvg_1_1Paint.html#a2e2d077b820d1cfd6502a86e0221638b">More...</a><br /></td></tr>
 <tr class="separator:a2e2d077b820d1cfd6502a86e0221638b inherit pub_methods_classtvg_1_1Paint"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7e1214a5dc2f3c19ddeedc5371c4e488 inherit pub_methods_classtvg_1_1Paint"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Paint.html#a7e1214a5dc2f3c19ddeedc5371c4e488">blend</a> (<a class="el" href="group__ThorVG.html#ga4dd2f3776540c10b565e0446aa8e9e02">BlendMethod</a> method) const noexcept</td></tr>
+<tr class="memdesc:a7e1214a5dc2f3c19ddeedc5371c4e488 inherit pub_methods_classtvg_1_1Paint"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the blending method for the paint object.  <a href="classtvg_1_1Paint.html#a7e1214a5dc2f3c19ddeedc5371c4e488">More...</a><br /></td></tr>
+<tr class="separator:a7e1214a5dc2f3c19ddeedc5371c4e488 inherit pub_methods_classtvg_1_1Paint"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aed5a6ad8edd827a378111b590ed7755d inherit pub_methods_classtvg_1_1Paint"><td class="memItemLeft" align="right" valign="top">TVG_DEPRECATED <a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Paint.html#aed5a6ad8edd827a378111b590ed7755d">bounds</a> (float *x, float *y, float *w, float *h) const noexcept</td></tr>
 <tr class="memdesc:aed5a6ad8edd827a378111b590ed7755d inherit pub_methods_classtvg_1_1Paint"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets the bounding box of the paint object before any transformation.  <a href="classtvg_1_1Paint.html#aed5a6ad8edd827a378111b590ed7755d">More...</a><br /></td></tr>
 <tr class="separator:aed5a6ad8edd827a378111b590ed7755d inherit pub_methods_classtvg_1_1Paint"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -218,6 +251,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:aefe4ade5b1b6bc13d518bd5f968af3ee inherit pub_methods_classtvg_1_1Paint"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__ThorVG.html#gaabdf94ada64e69d06deabc5aa6576f87">CompositeMethod</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Paint.html#aefe4ade5b1b6bc13d518bd5f968af3ee">composite</a> (const <a class="el" href="classtvg_1_1Paint.html">Paint</a> **target) const noexcept</td></tr>
 <tr class="memdesc:aefe4ade5b1b6bc13d518bd5f968af3ee inherit pub_methods_classtvg_1_1Paint"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets the composition target object and the composition method.  <a href="classtvg_1_1Paint.html#aefe4ade5b1b6bc13d518bd5f968af3ee">More...</a><br /></td></tr>
 <tr class="separator:aefe4ade5b1b6bc13d518bd5f968af3ee inherit pub_methods_classtvg_1_1Paint"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4bd3efb580822b2db64034e3f3cd18ad inherit pub_methods_classtvg_1_1Paint"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__ThorVG.html#ga4dd2f3776540c10b565e0446aa8e9e02">BlendMethod</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Paint.html#a4bd3efb580822b2db64034e3f3cd18ad">blend</a> () const noexcept</td></tr>
+<tr class="memdesc:a4bd3efb580822b2db64034e3f3cd18ad inherit pub_methods_classtvg_1_1Paint"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets the blending method of the object.  <a href="classtvg_1_1Paint.html#a4bd3efb580822b2db64034e3f3cd18ad">More...</a><br /></td></tr>
+<tr class="separator:a4bd3efb580822b2db64034e3f3cd18ad inherit pub_methods_classtvg_1_1Paint"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a37466e9eff2de62ff15c9df3d72b656d inherit pub_methods_classtvg_1_1Paint"><td class="memItemLeft" align="right" valign="top">uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Paint.html#a37466e9eff2de62ff15c9df3d72b656d">identifier</a> () const noexcept</td></tr>
 <tr class="memdesc:a37466e9eff2de62ff15c9df3d72b656d inherit pub_methods_classtvg_1_1Paint"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return the unique id value of the paint instance.  <a href="classtvg_1_1Paint.html#a37466e9eff2de62ff15c9df3d72b656d">More...</a><br /></td></tr>
 <tr class="separator:a37466e9eff2de62ff15c9df3d72b656d inherit pub_methods_classtvg_1_1Paint"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -233,7 +269,7 @@ Static Public Member Functions</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>A class representing two-dimensional figures and their properties. </p>
-<p>A shape has three major properties: shape outline, stroking, filling. The outline in the <a class="el" href="classtvg_1_1Shape.html" title="A class representing two-dimensional figures and their properties.">Shape</a> is retained as the path. Path can be composed by accumulating primitive commands such as <a class="el" href="classtvg_1_1Shape.html#a59f97aaa973af7c58081690433286461" title="Sets the initial point of the sub-path.">moveTo()</a>, <a class="el" href="classtvg_1_1Shape.html#a9c28e9bbc6bd22dc62e891ffb3fa02cd" title="Adds a new point to the sub-path, which results in drawing a line from the current point to the given...">lineTo()</a>, <a class="el" href="classtvg_1_1Shape.html#a7b71316176172fa052373bdb7c9efd29" title="Adds new points to the sub-path, which results in drawing a cubic Bezier curve starting at the curren...">cubicTo()</a>, or complete shape interfaces such as <a class="el" href="classtvg_1_1Shape.html#a676c64ce75c274ce75032606d33b03da" title="Appends a rectangle to the path.">appendRect()</a>, <a class="el" href="classtvg_1_1Shape.html#a52eccb2815eaa1231da9c389cd92ffa1" title="Appends an ellipse to the path.">appendCircle()</a>, etc. Path can consists of sub-paths. One sub-path is determined by a close command.</p>
+<p>A shape has three major properties: shape outline, stroking, filling. The outline in the <a class="el" href="classtvg_1_1Shape.html" title="A class representing two-dimensional figures and their properties.">Shape</a> is retained as the path. Path can be composed by accumulating primitive commands such as <a class="el" href="classtvg_1_1Shape.html#a59f97aaa973af7c58081690433286461" title="Sets the initial point of the sub-path.">moveTo()</a>, <a class="el" href="classtvg_1_1Shape.html#a9c28e9bbc6bd22dc62e891ffb3fa02cd" title="Adds a new point to the sub-path, which results in drawing a line from the current point to the given...">lineTo()</a>, <a class="el" href="classtvg_1_1Shape.html#a7b71316176172fa052373bdb7c9efd29" title="Adds new points to the sub-path, which results in drawing a cubic Bezier curve starting at the curren...">cubicTo()</a>, or complete shape interfaces such as <a class="el" href="classtvg_1_1Shape.html#a8ef2587269a01153c9ea4ca4a8d31b49" title="Appends a rectangle to the path.">appendRect()</a>, <a class="el" href="classtvg_1_1Shape.html#a52eccb2815eaa1231da9c389cd92ffa1" title="Appends an ellipse to the path.">appendCircle()</a>, etc. Path can consists of sub-paths. One sub-path is determined by a close command.</p>
 <p>The stroke of <a class="el" href="classtvg_1_1Shape.html" title="A class representing two-dimensional figures and their properties.">Shape</a> is an optional property in case the <a class="el" href="classtvg_1_1Shape.html" title="A class representing two-dimensional figures and their properties.">Shape</a> needs to be represented with/without the outline borders. It's efficient since the shape path and the stroking path can be shared with each other. It's also convenient when controlling both in one context. </p>
 </div><h2 class="groupheader">Member Function Documentation</h2>
 <a id="a2f003a843ff42f6cee6a726f543836e3"></a>
@@ -437,8 +473,8 @@ Static Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="a676c64ce75c274ce75032606d33b03da"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a676c64ce75c274ce75032606d33b03da">&#9670;&nbsp;</a></span>appendRect()</h2>
+<a id="a8ef2587269a01153c9ea4ca4a8d31b49"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8ef2587269a01153c9ea4ca4a8d31b49">&#9670;&nbsp;</a></span>appendRect()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -474,13 +510,13 @@ Static Public Member Functions</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">float&#160;</td>
-          <td class="paramname"><em>rx</em>, </td>
+          <td class="paramname"><em>rx</em> = <code>0</code>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">float&#160;</td>
-          <td class="paramname"><em>ry</em>&#160;</td>
+          <td class="paramname"><em>ry</em> = <code>0</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -722,8 +758,8 @@ Static Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="ae25e3697b5df587d50b809f1faeeabd9"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ae25e3697b5df587d50b809f1faeeabd9">&#9670;&nbsp;</a></span>fill() <span class="overload">[4/4]</span></h2>
+<a id="a0552551ad67547043167f7f382174e89"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0552551ad67547043167f7f382174e89">&#9670;&nbsp;</a></span>fill() <span class="overload">[4/4]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -753,7 +789,7 @@ Static Public Member Functions</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">uint8_t&#160;</td>
-          <td class="paramname"><em>a</em>&#160;</td>
+          <td class="paramname"><em>a</em> = <code>255</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -786,8 +822,8 @@ ClipPath won't use the fill values. (see: enum class <a class="el" href="group__
 
 </div>
 </div>
-<a id="afc81d85ad3fb3f006abf835311a0acfc"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#afc81d85ad3fb3f006abf835311a0acfc">&#9670;&nbsp;</a></span>fillColor()</h2>
+<a id="a8b4f00f01c2d24d6be2962ddf04a70ca"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8b4f00f01c2d24d6be2962ddf04a70ca">&#9670;&nbsp;</a></span>fillColor()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -817,7 +853,7 @@ ClipPath won't use the fill values. (see: enum class <a class="el" href="group__
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">uint8_t *&#160;</td>
-          <td class="paramname"><em>a</em>&#160;</td>
+          <td class="paramname"><em>a</em> = <code>nullptr</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -1057,7 +1093,8 @@ ClipPath won't use the fill values. (see: enum class <a class="el" href="group__
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a505a83f220c02df2f85c3810cd9ceb38" title="The value returned in case of a correct request execution.">Result::Success</a> when succeed, <a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066abc2b4181e818f2e9b52b2bc54dd55907" title="The value returned in case of unsuccessful memory allocation.">Result::FailedAllocation</a> otherwise. @BETA_API </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a505a83f220c02df2f85c3810cd9ceb38" title="The value returned in case of a correct request execution.">Result::Success</a> when succeed, <a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066abc2b4181e818f2e9b52b2bc54dd55907" title="The value returned in case of unsuccessful memory allocation.">Result::FailedAllocation</a> otherwise.</dd></dl>
+<dl class="section since"><dt>Since</dt><dd>0.10 </dd></dl>
 
 </div>
 </div>
@@ -1364,8 +1401,8 @@ ClipPath won't use the fill values. (see: enum class <a class="el" href="group__
 
 </div>
 </div>
-<a id="a68a4822b30573cf4f02195b249218e4e"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a68a4822b30573cf4f02195b249218e4e">&#9670;&nbsp;</a></span>stroke() <span class="overload">[6/6]</span></h2>
+<a id="aad81d8f86d9432eac25b00cc675c8d7f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aad81d8f86d9432eac25b00cc675c8d7f">&#9670;&nbsp;</a></span>stroke() <span class="overload">[6/6]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -1395,7 +1432,7 @@ ClipPath won't use the fill values. (see: enum class <a class="el" href="group__
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">uint8_t&#160;</td>
-          <td class="paramname"><em>a</em>&#160;</td>
+          <td class="paramname"><em>a</em> = <code>255</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -1452,8 +1489,8 @@ ClipPath won't use the fill values. (see: enum class <a class="el" href="group__
 
 </div>
 </div>
-<a id="a7b81219e058ae54e731c5702a1c61462"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a7b81219e058ae54e731c5702a1c61462">&#9670;&nbsp;</a></span>strokeColor()</h2>
+<a id="a6705be0d6481277e9bf17cc918597665"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6705be0d6481277e9bf17cc918597665">&#9670;&nbsp;</a></span>strokeColor()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -1483,7 +1520,7 @@ ClipPath won't use the fill values. (see: enum class <a class="el" href="group__
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">uint8_t *&#160;</td>
-          <td class="paramname"><em>a</em>&#160;</td>
+          <td class="paramname"><em>a</em> = <code>nullptr</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -1603,6 +1640,71 @@ ClipPath won't use the fill values. (see: enum class <a class="el" href="group__
 
 </div>
 </div>
+<a id="a84ec91023314c914e900cade78a9095d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a84ec91023314c914e900cade78a9095d">&#9670;&nbsp;</a></span>strokeMiterlimit() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">float strokeMiterlimit </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Gets the stroke miterlimit. </p>
+<dl class="section return"><dt>Returns</dt><dd>The stroke miterlimit value when succeed, 4 if no stroke was set.</dd></dl>
+<p>@BETA_API </p>
+
+</div>
+</div>
+<a id="ad8fb8f42c07ac68ef83383b05203ff6f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad8fb8f42c07ac68ef83383b05203ff6f">&#9670;&nbsp;</a></span>strokeMiterlimit() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a> strokeMiterlimit </td>
+          <td>(</td>
+          <td class="paramtype">float&#160;</td>
+          <td class="paramname"><em>miterlimit</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Sets the stroke miterlimit. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">miterlimit</td><td>The miterlimit imposes a limit on the extent of the stroke join, when the <code><a class="el" href="group__ThorVG.html#ggaba8b7236c41a171289aef2f3c71eef51ae4396f81cd926bb129ccf3c147c64514" title="The outer corner of the joined path segments is spiked. The spike is created by extension beyond the ...">StrokeJoin::Miter</a></code> join style is set. The default value is 4.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a505a83f220c02df2f85c3810cd9ceb38" title="The value returned in case of a correct request execution.">Result::Success</a> when succeed, <a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066aa0cfd518e4385f31d38720579321ed29" title="The value returned in case of choosing unsupported options.">Result::NonSupport</a> unsupported value, <a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066abc2b4181e818f2e9b52b2bc54dd55907" title="The value returned in case of unsuccessful memory allocation.">Result::FailedAllocation</a> otherwise.</dd></dl>
+<p>@BETA_API </p>
+
+</div>
+</div>
 <a id="a1536ec32e91c29dd8300b0d4354773f9"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a1536ec32e91c29dd8300b0d4354773f9">&#9670;&nbsp;</a></span>strokeWidth()</h2>
 
@@ -1632,9 +1734,13 @@ ClipPath won't use the fill values. (see: enum class <a class="el" href="group__
 </div>
 </div>
 </div><!-- contents -->
+</div><!-- doc-content -->
 <!-- start footer part -->
-<hr class="footer"/><address class="footer"><small>
-Generated by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
-</small></address>
+<div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
+  <ul>
+    <li class="navelem"><b>tvg</b></li><li class="navelem"><a class="el" href="classtvg_1_1Shape.html">Shape</a></li>
+    <li class="footer">Generated by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1 </li>
+  </ul>
+</div>
 </body>
 </html>

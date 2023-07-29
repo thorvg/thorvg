@@ -1,11 +1,10 @@
 var searchData=
 [
-  ['matrix_58',['Matrix',['../structtvg_1_1Matrix.html',1,'tvg']]],
-  ['memorycorruption_59',['MemoryCorruption',['../group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066ae8c0c653fcac575c31470f0f800991c6',1,'tvg']]],
-  ['mempool_60',['mempool',['../classtvg_1_1SwCanvas.html#a3486268541200559f16847cbe714a72c',1,'tvg::SwCanvas']]],
-  ['mempoolpolicy_61',['MempoolPolicy',['../classtvg_1_1SwCanvas.html#a9b9770837f0171b15f0cd86f94e8e22b',1,'tvg::SwCanvas']]],
-  ['mesh_62',['mesh',['../classtvg_1_1Picture.html#a761d19e78330e8ce73add01cbf1cd2e9',1,'tvg::Picture::mesh(const Polygon *triangles, uint32_t triangleCnt) noexcept'],['../classtvg_1_1Picture.html#ae4d1479dbae28f521da8e90f91a97caa',1,'tvg::Picture::mesh(const Polygon **triangles) const noexcept']]],
-  ['miter_63',['Miter',['../group__ThorVG.html#ggaba8b7236c41a171289aef2f3c71eef51ae4396f81cd926bb129ccf3c147c64514',1,'tvg']]],
-  ['moveto_64',['moveTo',['../classtvg_1_1Shape.html#a59f97aaa973af7c58081690433286461',1,'tvg::Shape']]],
-  ['moveto_65',['MoveTo',['../group__ThorVG.html#gga6876ed676934f4dbcc19b1b53c153cc1ad9046d3b1ebf3889943b3be3ca477613',1,'tvg']]]
+  ['lighten_70',['Lighten',['../group__ThorVG.html#gga4dd2f3776540c10b565e0446aa8e9e02a1371ecd5df513d77a001392435cf4d12',1,'tvg']]],
+  ['linear_71',['linear',['../classtvg_1_1LinearGradient.html#aa881eb89e14ade6a30bc41d7eb8eaf52',1,'tvg::LinearGradient::linear(float x1, float y1, float x2, float y2) noexcept'],['../classtvg_1_1LinearGradient.html#a5c77e9f6e855a595945f45a6b19ee983',1,'tvg::LinearGradient::linear(float *x1, float *y1, float *x2, float *y2) const noexcept']]],
+  ['lineargradient_72',['LinearGradient',['../classtvg_1_1LinearGradient.html',1,'tvg']]],
+  ['lineto_73',['lineTo',['../classtvg_1_1Shape.html#a9c28e9bbc6bd22dc62e891ffb3fa02cd',1,'tvg::Shape']]],
+  ['lineto_74',['LineTo',['../group__ThorVG.html#gga6876ed676934f4dbcc19b1b53c153cc1a5dc59cf06f56c730c0a4bfe69c9bf689',1,'tvg']]],
+  ['load_75',['load',['../classtvg_1_1Picture.html#aaf06be7d0b572c5ce35315cbddd7d318',1,'tvg::Picture::load(const std::string &amp;path) noexcept'],['../classtvg_1_1Picture.html#a3e487c0b236a6eea853c5ccb7665cdce',1,'tvg::Picture::load(const char *data, uint32_t size, bool copy=false) noexcept'],['../classtvg_1_1Picture.html#a95979a7c4ce51445c7ef9d6461c34767',1,'tvg::Picture::load(const char *data, uint32_t size, const std::string &amp;mimeType, bool copy=false) noexcept'],['../classtvg_1_1Picture.html#a1fdf75092cebaa7cde48d6a7d4946368',1,'tvg::Picture::load(uint32_t *data, uint32_t w, uint32_t h, bool copy) noexcept']]],
+  ['lumamask_76',['LumaMask',['../group__ThorVG.html#ggaabdf94ada64e69d06deabc5aa6576f87a4dae6fdfeb902e322a7bc9122c4e4cb4',1,'tvg']]]
 ];

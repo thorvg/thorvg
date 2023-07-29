@@ -9,11 +9,14 @@
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
+<link href="navtree.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="resize.js"></script>
+<script type="text/javascript" src="navtreedata.js"></script>
+<script type="text/javascript" src="navtree.js"></script>
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
-<link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -24,7 +27,7 @@
   <td id="projectlogo"><img alt="Logo" src="small_logo.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">ThorVG
-   &#160;<span id="projectnumber">v0.9</span>
+   &#160;<span id="projectnumber">v0.10</span>
    </div>
   </td>
  </tr>
@@ -49,6 +52,22 @@ $(function() {
 /* @license-end */</script>
 <div id="main-nav"></div>
 </div><!-- top -->
+<div id="side-nav" class="ui-resizable side-nav-resizable">
+  <div id="nav-tree">
+    <div id="nav-tree-contents">
+      <div id="nav-sync" class="sync"></div>
+    </div>
+  </div>
+  <div id="splitbar" style="-moz-user-select:none;" 
+       class="ui-resizable-handle">
+  </div>
+</div>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:cf05388f2679ee054f2beb29a391d25f4e673ac3&amp;dn=gpl-2.0.txt GPL-v2 */
+$(document).ready(function(){initNavTree('group__ThorVGCapi__Scene.html',''); initResizable(); });
+/* @license-end */
+</script>
+<div id="doc-content">
 <!-- window showing the filter options -->
 <div id="MSearchSelectWindow"
      onmouseover="return searchBox.OnSearchSelectShow()"
@@ -88,9 +107,9 @@ Functions</h2></td></tr>
 <tr class="memitem:ga21f41993400bc0bfaad2314e584fc62d"><td class="memItemLeft" align="right" valign="top">TVG_API <a class="el" href="group__ThorVG__CAPI.html#ga98af7c3fe18afa8ad65ea6a6e097a292">Tvg_Paint</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__ThorVGCapi__Scene.html#ga21f41993400bc0bfaad2314e584fc62d">tvg_scene_new</a> ()</td></tr>
 <tr class="memdesc:ga21f41993400bc0bfaad2314e584fc62d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates a new scene object.  <a href="group__ThorVGCapi__Scene.html#ga21f41993400bc0bfaad2314e584fc62d">More...</a><br /></td></tr>
 <tr class="separator:ga21f41993400bc0bfaad2314e584fc62d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga04748446be3c527b31f20bee995b25a5"><td class="memItemLeft" align="right" valign="top">TVG_API <a class="el" href="group__ThorVG__CAPI.html#gad980f552658dcbbe42a0168f35c27781">Tvg_Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__ThorVGCapi__Scene.html#ga04748446be3c527b31f20bee995b25a5">tvg_scene_reserve</a> (<a class="el" href="group__ThorVG__CAPI.html#ga98af7c3fe18afa8ad65ea6a6e097a292">Tvg_Paint</a> *scene, uint32_t size)</td></tr>
-<tr class="memdesc:ga04748446be3c527b31f20bee995b25a5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the size of the container, where all the paints pushed into the scene are stored.  <a href="group__ThorVGCapi__Scene.html#ga04748446be3c527b31f20bee995b25a5">More...</a><br /></td></tr>
-<tr class="separator:ga04748446be3c527b31f20bee995b25a5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga07033d14aee9749678302e1e4ac6f842"><td class="memItemLeft" align="right" valign="top">TVG_DEPRECATED TVG_API <a class="el" href="group__ThorVG__CAPI.html#gad980f552658dcbbe42a0168f35c27781">Tvg_Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__ThorVGCapi__Scene.html#ga07033d14aee9749678302e1e4ac6f842">tvg_scene_reserve</a> (<a class="el" href="group__ThorVG__CAPI.html#ga98af7c3fe18afa8ad65ea6a6e097a292">Tvg_Paint</a> *scene, uint32_t size)</td></tr>
+<tr class="memdesc:ga07033d14aee9749678302e1e4ac6f842"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the size of the container, where all the paints pushed into the scene are stored.  <a href="group__ThorVGCapi__Scene.html#ga07033d14aee9749678302e1e4ac6f842">More...</a><br /></td></tr>
+<tr class="separator:ga07033d14aee9749678302e1e4ac6f842"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gaeb7b49fea2b5f93fe0787255e5552143"><td class="memItemLeft" align="right" valign="top">TVG_API <a class="el" href="group__ThorVG__CAPI.html#gad980f552658dcbbe42a0168f35c27781">Tvg_Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__ThorVGCapi__Scene.html#gaeb7b49fea2b5f93fe0787255e5552143">tvg_scene_push</a> (<a class="el" href="group__ThorVG__CAPI.html#ga98af7c3fe18afa8ad65ea6a6e097a292">Tvg_Paint</a> *scene, <a class="el" href="group__ThorVG__CAPI.html#ga98af7c3fe18afa8ad65ea6a6e097a292">Tvg_Paint</a> *paint)</td></tr>
 <tr class="memdesc:gaeb7b49fea2b5f93fe0787255e5552143"><td class="mdescLeft">&#160;</td><td class="mdescRight">Passes drawing elements to the scene using Tvg_Paint objects.  <a href="group__ThorVGCapi__Scene.html#gaeb7b49fea2b5f93fe0787255e5552143">More...</a><br /></td></tr>
 <tr class="separator:gaeb7b49fea2b5f93fe0787255e5552143"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -197,7 +216,7 @@ Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Passes drawing elements to the scene using Tvg_Paint objects. </p>
-<p>Only the paints pushed into the scene will be the drawn targets. The paints are retained by the scene until the <a class="el" href="group__ThorVGCapi__Scene.html#gaca0ceb2a0740d6a22bf78525d55416dd" title="Clears a Tvg_Scene objects from pushed paints.">tvg_scene_clear()</a> is called. If you know the number of pushed objects in advance, please call <a class="el" href="group__ThorVGCapi__Scene.html#ga04748446be3c527b31f20bee995b25a5" title="Sets the size of the container, where all the paints pushed into the scene are stored.">tvg_scene_reserve()</a>.</p>
+<p>Only the paints pushed into the scene will be the drawn targets. The paints are retained by the scene until the <a class="el" href="group__ThorVGCapi__Scene.html#gaca0ceb2a0740d6a22bf78525d55416dd" title="Clears a Tvg_Scene objects from pushed paints.">tvg_scene_clear()</a> is called. If you know the number of pushed objects in advance, please call <a class="el" href="group__ThorVGCapi__Scene.html#ga07033d14aee9749678302e1e4ac6f842" title="Sets the size of the container, where all the paints pushed into the scene are stored.">tvg_scene_reserve()</a>.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">scene</td><td>A Tvg_Paint pointer to the scene object. </td></tr>
@@ -215,18 +234,17 @@ Functions</h2></td></tr>
   </dd>
 </dl>
 <dl class="section note"><dt>Note</dt><dd>The rendering order of the paints is the same as the order as they were pushed. Consider sorting the paints before pushing them if you intend to use layering. </dd></dl>
-<dl class="section see"><dt>See also</dt><dd><a class="el" href="group__ThorVGCapi__Scene.html#ga04748446be3c527b31f20bee995b25a5" title="Sets the size of the container, where all the paints pushed into the scene are stored.">tvg_scene_reserve()</a> </dd></dl>
 
 </div>
 </div>
-<a id="ga04748446be3c527b31f20bee995b25a5"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ga04748446be3c527b31f20bee995b25a5">&#9670;&nbsp;</a></span>tvg_scene_reserve()</h2>
+<a id="ga07033d14aee9749678302e1e4ac6f842"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ga07033d14aee9749678302e1e4ac6f842">&#9670;&nbsp;</a></span>tvg_scene_reserve()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">TVG_API <a class="el" href="group__ThorVG__CAPI.html#gad980f552658dcbbe42a0168f35c27781">Tvg_Result</a> tvg_scene_reserve </td>
+          <td class="memname">TVG_DEPRECATED TVG_API <a class="el" href="group__ThorVG__CAPI.html#gad980f552658dcbbe42a0168f35c27781">Tvg_Result</a> tvg_scene_reserve </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="group__ThorVG__CAPI.html#ga98af7c3fe18afa8ad65ea6a6e097a292">Tvg_Paint</a> *&#160;</td>
           <td class="paramname"><em>scene</em>, </td>
@@ -267,9 +285,12 @@ Functions</h2></td></tr>
 </div>
 </div>
 </div><!-- contents -->
+</div><!-- doc-content -->
 <!-- start footer part -->
-<hr class="footer"/><address class="footer"><small>
-Generated by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
-</small></address>
+<div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
+  <ul>
+    <li class="footer">Generated by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1 </li>
+  </ul>
+</div>
 </body>
 </html>

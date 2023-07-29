@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['memorycorruption_483',['MemoryCorruption',['../group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066ae8c0c653fcac575c31470f0f800991c6',1,'tvg']]],
-  ['miter_484',['Miter',['../group__ThorVG.html#ggaba8b7236c41a171289aef2f3c71eef51ae4396f81cd926bb129ccf3c147c64514',1,'tvg']]],
-  ['moveto_485',['MoveTo',['../group__ThorVG.html#gga6876ed676934f4dbcc19b1b53c153cc1ad9046d3b1ebf3889943b3be3ca477613',1,'tvg']]]
+  ['lighten_534',['Lighten',['../group__ThorVG.html#gga4dd2f3776540c10b565e0446aa8e9e02a1371ecd5df513d77a001392435cf4d12',1,'tvg']]],
+  ['lineto_535',['LineTo',['../group__ThorVG.html#gga6876ed676934f4dbcc19b1b53c153cc1a5dc59cf06f56c730c0a4bfe69c9bf689',1,'tvg']]],
+  ['lumamask_536',['LumaMask',['../group__ThorVG.html#ggaabdf94ada64e69d06deabc5aa6576f87a4dae6fdfeb902e322a7bc9122c4e4cb4',1,'tvg']]]
 ];
