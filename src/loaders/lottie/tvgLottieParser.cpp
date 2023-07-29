@@ -201,7 +201,7 @@ void LottieParser::getValue(ColorStop& color)
 
     int idx = 0;
     auto count = context->gradient->colorStops.count;
-    color.data = static_cast<Fill::ColorStop*>(malloc(sizeof(Fill::ColorStop) * count));
+    if (!color.data) color.data = static_cast<Fill::ColorStop*>(malloc(sizeof(Fill::ColorStop) * count));
 
     while (nextArrayValue()) {
         auto remains = (idx % 4);
