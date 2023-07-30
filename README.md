@@ -248,6 +248,7 @@ Currently, ThorVG provides experimental support for Lottie Animation, and while 
  - Polystar
  - Repeater
  - Merge-path
+ - Filter Effects
  - Expressions
 
 The following code snippet demonstrates how to use ThorVG to play a Lottie animation.
