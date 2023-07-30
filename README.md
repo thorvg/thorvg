@@ -215,7 +215,6 @@ to keep it lightweight, so it's useful for the embedded systems. Among the SVG T
  - Fonts & Text
  - Interactivity
  - Multimedia
- - Scripting (Partially Supported)
 
 The following code snippet shows how to draw SVG image using ThorVG:
 
