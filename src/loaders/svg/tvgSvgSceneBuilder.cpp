@@ -61,8 +61,28 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-static bool _appendShape(SvgNode* node, Shape* shape, const Box& vBox, const string& svgPath);
-static unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, const Box& vBox, const string& svgPath, bool mask, int depth, bool* isMaskWhite = nullptr);
+struct LinearGradientPair
+{
+    LinearGradient* fill;
+    SvgLinearGradient* linear;
+};
+
+struct RadialGradientPair
+{
+    RadialGradient* fill;
+    SvgRadialGradient* radial;
+};
+
+struct UpdatePostponed
+{
+    bool updateRequired = false;
+    Array<LinearGradientPair> linearGradients;
+    Array<RadialGradientPair> radialGradients;
+};
+
+
+static bool _appendShape(SvgNode* node, Shape* shape, const Box& vBox, const string& svgPath, UpdatePostponed& updatePostponed);
+static unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, const Box& vBox, const string& svgPath, UpdatePostponed& updatePostponed, bool mask, int depth, bool* isMaskWhite = nullptr);
 
 
 static inline bool _isGroupType(SvgNodeType type)
@@ -102,7 +122,19 @@ static void _transformMultiply(const Matrix* mBBox, Matrix* gradTransf)
 }
 
 
-static unique_ptr<LinearGradient> _applyLinearGradientProperty(SvgStyleGradient* g, const Shape* vg, const Box& vBox, int opacity)
+static void _postponeLinearGradient(Array<LinearGradientPair>& linearGradients, LinearGradient* fill, SvgLinearGradient* linear)
+{
+    linearGradients.push({fill, linear});
+}
+
+
+static void _postponeRadialGradient(Array<RadialGradientPair>& radialGradients, RadialGradient* fill, SvgRadialGradient* radial)
+{
+    radialGradients.push({fill, radial});
+}
+
+
+static unique_ptr<LinearGradient> _applyLinearGradientProperty(SvgStyleGradient* g, const Shape* vg, const Box& vBox, int opacity, UpdatePostponed& updatePostponed)
 {
     Fill::ColorStop* stops;
     int stopCount = 0;
@@ -117,6 +149,10 @@ static unique_ptr<LinearGradient> _applyLinearGradientProperty(SvgStyleGradient*
         g->linear->y1 = g->linear->y1 * vBox.h;
         g->linear->x2 = g->linear->x2 * vBox.w;
         g->linear->y2 = g->linear->y2 * vBox.h;
+        if (updatePostponed.updateRequired && (g->linear->isX1Percentage || g->linear->isY1Percentage ||
+            g->linear->isX2Percentage || g->linear->isY2Percentage)) {
+            _postponeLinearGradient(updatePostponed.linearGradients, fillGrad.get(), g->linear);
+        }
     } else {
         Matrix m = {vBox.w, 0, vBox.x, 0, vBox.h, vBox.y, 0, 0, 1};
         if (isTransform) _transformMultiply(&m, &finalTransform);
@@ -157,7 +193,7 @@ static unique_ptr<LinearGradient> _applyLinearGradientProperty(SvgStyleGradient*
 }
 
 
-static unique_ptr<RadialGradient> _applyRadialGradientProperty(SvgStyleGradient* g, const Shape* vg, const Box& vBox, int opacity)
+static unique_ptr<RadialGradient> _applyRadialGradientProperty(SvgStyleGradient* g, const Shape* vg, const Box& vBox, int opacity, UpdatePostponed& updatePostponed)
 {
     Fill::ColorStop *stops;
     int stopCount = 0;
@@ -175,6 +211,11 @@ static unique_ptr<RadialGradient> _applyRadialGradientProperty(SvgStyleGradient*
         g->radial->r = g->radial->r * sqrtf(powf(vBox.w, 2.0f) + powf(vBox.h, 2.0f)) / sqrtf(2.0f);
         g->radial->fx = g->radial->fx * vBox.w;
         g->radial->fy = g->radial->fy * vBox.h;
+        if (updatePostponed.updateRequired && (g->radial->isCxPercentage || g->radial->isCyPercentage ||
+                                               g->radial->isFxPercentage || g->radial->isFyPercentage ||
+                                               g->radial->isRPercentage)) {
+            _postponeRadialGradient(updatePostponed.radialGradients, fillGrad.get(), g->radial);
+        }
     } else {
         Matrix m = {vBox.w, 0, vBox.x, 0, vBox.h, vBox.y, 0, 0, 1};
         if (isTransform) _transformMultiply(&m, &finalTransform);
@@ -219,16 +260,16 @@ static unique_ptr<RadialGradient> _applyRadialGradientProperty(SvgStyleGradient*
 }
 
 
-static bool _appendChildShape(SvgNode* node, Shape* shape, const Box& vBox, const string& svgPath)
+static bool _appendChildShape(SvgNode* node, Shape* shape, const Box& vBox, const string& svgPath, UpdatePostponed& updatePostponed)
 {
     auto valid = false;
 
-    if (_appendShape(node, shape, vBox, svgPath)) valid = true;
+    if (_appendShape(node, shape, vBox, svgPath, updatePostponed)) valid = true;
 
     if (node->child.count > 0) {
         auto child = node->child.data;
         for (uint32_t i = 0; i < node->child.count; ++i, ++child) {
-            if (_appendChildShape(*child, shape, vBox, svgPath)) valid = true;
+            if (_appendChildShape(*child, shape, vBox, svgPath, updatePostponed)) valid = true;
         }
     }
 
@@ -236,7 +277,7 @@ static bool _appendChildShape(SvgNode* node, Shape* shape, const Box& vBox, cons
 }
 
 
-static void _applyComposition(Paint* paint, const SvgNode* node, const Box& vBox, const string& svgPath)
+static void _applyComposition(Paint* paint, const SvgNode* node, const Box& vBox, const string& svgPath, UpdatePostponed& updatePostponed)
 {
     /* ClipPath */
     /* Do not drop in Circular Dependency for ClipPath.
@@ -254,7 +295,7 @@ static void _applyComposition(Paint* paint, const SvgNode* node, const Box& vBox
             auto valid = false; //Composite only when valid shapes are existed
 
             for (uint32_t i = 0; i < compNode->child.count; ++i, ++child) {
-                if (_appendChildShape(*child, comp.get(), vBox, svgPath)) valid = true;
+                if (_appendChildShape(*child, comp.get(), vBox, svgPath, updatePostponed)) valid = true;
             }
 
             if (node->transform) {
@@ -280,7 +321,7 @@ static void _applyComposition(Paint* paint, const SvgNode* node, const Box& vBox
             node->style->mask.applying = true;
 
             bool isMaskWhite = true;
-            auto comp = _sceneBuildHelper(compNode, vBox, svgPath, true, 0, &isMaskWhite);
+            auto comp = _sceneBuildHelper(compNode, vBox, svgPath, updatePostponed, true, 0, &isMaskWhite);
             if (comp) {
                 if (node->transform) comp->transform(*node->transform);
 
@@ -297,7 +338,7 @@ static void _applyComposition(Paint* paint, const SvgNode* node, const Box& vBox
 }
 
 
-static void _applyProperty(SvgNode* node, Shape* vg, const Box& vBox, const string& svgPath)
+static void _applyProperty(SvgNode* node, Shape* vg, const Box& vBox, const string& svgPath, UpdatePostponed& updatePostponed)
 {
     SvgStyleProperty* style = node->style;
 
@@ -312,10 +353,10 @@ static void _applyProperty(SvgNode* node, Shape* vg, const Box& vBox, const stri
         if (!style->fill.paint.gradient->userSpace) bBox = _boundingBox(vg);
 
         if (style->fill.paint.gradient->type == SvgGradientType::Linear) {
-             auto linear = _applyLinearGradientProperty(style->fill.paint.gradient, vg, bBox, style->fill.opacity);
+             auto linear = _applyLinearGradientProperty(style->fill.paint.gradient, vg, bBox, style->fill.opacity, updatePostponed);
              vg->fill(std::move(linear));
         } else if (style->fill.paint.gradient->type == SvgGradientType::Radial) {
-             auto radial = _applyRadialGradientProperty(style->fill.paint.gradient, vg, bBox, style->fill.opacity);
+             auto radial = _applyRadialGradientProperty(style->fill.paint.gradient, vg, bBox, style->fill.opacity, updatePostponed);
              vg->fill(std::move(radial));
         }
     } else if (style->fill.paint.url) {
@@ -355,10 +396,10 @@ static void _applyProperty(SvgNode* node, Shape* vg, const Box& vBox, const stri
         if (!style->stroke.paint.gradient->userSpace) bBox = _boundingBox(vg);
 
         if (style->stroke.paint.gradient->type == SvgGradientType::Linear) {
-             auto linear = _applyLinearGradientProperty(style->stroke.paint.gradient, vg, bBox, style->stroke.opacity);
+             auto linear = _applyLinearGradientProperty(style->stroke.paint.gradient, vg, bBox, style->stroke.opacity, updatePostponed);
              vg->stroke(std::move(linear));
         } else if (style->stroke.paint.gradient->type == SvgGradientType::Radial) {
-             auto radial = _applyRadialGradientProperty(style->stroke.paint.gradient, vg, bBox, style->stroke.opacity);
+             auto radial = _applyRadialGradientProperty(style->stroke.paint.gradient, vg, bBox, style->stroke.opacity, updatePostponed);
              vg->stroke(std::move(radial));
         }
     } else if (style->stroke.paint.url) {
@@ -371,19 +412,19 @@ static void _applyProperty(SvgNode* node, Shape* vg, const Box& vBox, const stri
         vg->stroke(style->stroke.paint.color.r, style->stroke.paint.color.g, style->stroke.paint.color.b, style->stroke.opacity);
     }
 
-    _applyComposition(vg, node, vBox, svgPath);
+    _applyComposition(vg, node, vBox, svgPath, updatePostponed);
 }
 
 
-static unique_ptr<Shape> _shapeBuildHelper(SvgNode* node, const Box& vBox, const string& svgPath)
+static unique_ptr<Shape> _shapeBuildHelper(SvgNode* node, const Box& vBox, const string& svgPath, UpdatePostponed& updatePostponed)
 {
     auto shape = Shape::gen();
-    if (_appendShape(node, shape.get(), vBox, svgPath)) return shape;
+    if (_appendShape(node, shape.get(), vBox, svgPath, updatePostponed)) return shape;
     else return nullptr;
 }
 
 
-static bool _appendShape(SvgNode* node, Shape* shape, const Box& vBox, const string& svgPath)
+static bool _appendShape(SvgNode* node, Shape* shape, const Box& vBox, const string& svgPath, UpdatePostponed& updatePostponed)
 {
     Array<PathCommand> cmds;
     Array<Point> pts;
@@ -438,7 +479,7 @@ static bool _appendShape(SvgNode* node, Shape* shape, const Box& vBox, const str
         }
     }
 
-    _applyProperty(node, shape, vBox, svgPath);
+    _applyProperty(node, shape, vBox, svgPath, updatePostponed);
     return true;
 }
 
@@ -515,7 +556,7 @@ static bool _isValidImageMimeTypeAndEncoding(const char** href, const char** mim
 }
 
 
-static unique_ptr<Picture> _imageBuildHelper(SvgNode* node, const Box& vBox, const string& svgPath)
+static unique_ptr<Picture> _imageBuildHelper(SvgNode* node, const Box& vBox, const string& svgPath, UpdatePostponed& updatePostponed)
 {
     if (!node->node.image.href) return nullptr;
     auto picture = Picture::gen();
@@ -560,7 +601,7 @@ static unique_ptr<Picture> _imageBuildHelper(SvgNode* node, const Box& vBox, con
     if (node->transform) m = mathMultiply(node->transform, &m);
     picture->transform(m);
 
-    _applyComposition(picture.get(), node, vBox, svgPath);
+    _applyComposition(picture.get(), node, vBox, svgPath, updatePostponed);
     return picture;
 }
 
@@ -639,10 +680,10 @@ static Matrix _calculateAspectRatioMatrix(AspectRatioAlign align, AspectRatioMee
 }
 
 
-static unique_ptr<Scene> _useBuildHelper(const SvgNode* node, const Box& vBox, const string& svgPath, int depth, bool* isMaskWhite)
+static unique_ptr<Scene> _useBuildHelper(const SvgNode* node, const Box& vBox, const string& svgPath, UpdatePostponed& updatePostponed, int depth, bool* isMaskWhite)
 {
     unique_ptr<Scene> finalScene;
-    auto scene = _sceneBuildHelper(node, vBox, svgPath, false, depth + 1, isMaskWhite);
+    auto scene = _sceneBuildHelper(node, vBox, svgPath, updatePostponed, false, depth + 1, isMaskWhite);
 
     // mUseTransform = mUseTransform * mTranslate
     Matrix mUseTransform = {1, 0, 0, 0, 1, 0, 0, 0, 1};
@@ -709,7 +750,7 @@ static unique_ptr<Scene> _useBuildHelper(const SvgNode* node, const Box& vBox, c
 }
 
 
-static unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, const Box& vBox, const string& svgPath, bool mask, int depth, bool* isMaskWhite)
+static unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, const Box& vBox, const string& svgPath, UpdatePostponed& updatePostponed, bool mask, int depth, bool* isMaskWhite)
 {
     /* Exception handling: Prevent invalid SVG data input.
        The size is the arbitrary value, we need an experimental size. */
@@ -728,17 +769,17 @@ static unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, const Box& vBox,
             for (uint32_t i = 0; i < node->child.count; ++i, ++child) {
                 if (_isGroupType((*child)->type)) {
                     if ((*child)->type == SvgNodeType::Use)
-                        scene->push(_useBuildHelper(*child, vBox, svgPath, depth + 1, isMaskWhite));
+                        scene->push(_useBuildHelper(*child, vBox, svgPath, updatePostponed, depth + 1, isMaskWhite));
                     else
-                        scene->push(_sceneBuildHelper(*child, vBox, svgPath, false, depth + 1, isMaskWhite));
+                        scene->push(_sceneBuildHelper(*child, vBox, svgPath, updatePostponed, false, depth + 1, isMaskWhite));
                 } else if ((*child)->type == SvgNodeType::Image) {
-                    auto image = _imageBuildHelper(*child, vBox, svgPath);
+                    auto image = _imageBuildHelper(*child, vBox, svgPath, updatePostponed);
                     if (image) {
                         scene->push(std::move(image));
                         if (isMaskWhite) *isMaskWhite = false;
                     }
                 } else if ((*child)->type != SvgNodeType::Mask) {
-                    auto shape = _shapeBuildHelper(*child, vBox, svgPath);
+                    auto shape = _shapeBuildHelper(*child, vBox, svgPath, updatePostponed);
                     if (shape) {
                         if (isMaskWhite) {
                             uint8_t r, g, b;
@@ -752,7 +793,7 @@ static unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, const Box& vBox,
                     }
                 }
             }
-            _applyComposition(scene.get(), node, vBox, svgPath);
+            _applyComposition(scene.get(), node, vBox, svgPath, updatePostponed);
             scene->opacity(node->style->opacity);
         }
         return scene;
@@ -781,6 +822,33 @@ static void _updateInvalidViewSize(const Scene* scene, Box& vBox, float& w, floa
     if (!validHeight) h *= vBox.h;
 }
 
+
+static void _updateLinearGradient(Array<LinearGradientPair>& linearGradientsToUpdate, const Box& vBox)
+{
+    for (uint32_t i = 0; i < linearGradientsToUpdate.count; ++i) {
+        auto g = linearGradientsToUpdate.data[i];
+        if (g.linear->isX1Percentage) g.linear->x1 *= vBox.w;
+        if (g.linear->isY1Percentage) g.linear->y1 *= vBox.h;
+        if (g.linear->isX2Percentage) g.linear->x2 *= vBox.w;
+        if (g.linear->isY2Percentage) g.linear->y2 *= vBox.h;
+        (g.fill)->linear(g.linear->x1, g.linear->y1, g.linear->x2 , g.linear->y2);
+    }
+}
+
+
+static void _updateRadialGradient(Array<RadialGradientPair>& radialGradientsToUpdate, const Box& vBox)
+{
+    for (uint32_t i = 0; i < radialGradientsToUpdate.count; ++i) {
+        auto g = radialGradientsToUpdate.data[i];
+        if (g.radial->isCxPercentage) g.radial->cx *= vBox.w;
+        if (g.radial->isCyPercentage) g.radial->cy *= vBox.h;
+        if (g.radial->isFxPercentage) g.radial->fx *= vBox.w;
+        if (g.radial->isFyPercentage) g.radial->fy *= vBox.h;
+        if (g.radial->isRPercentage) g.radial->r *= sqrtf(powf(vBox.w, 2.0f) + powf(vBox.h, 2.0f)) / sqrtf(2.0f);
+        (g.fill)->radial(g.radial->cx, g.radial->cy, g.radial->r);
+    }
+}
+
 /************************************************************************/
 /* External Class Implementation                                        */
 /************************************************************************/
@@ -791,9 +859,18 @@ unique_ptr<Scene> svgSceneBuild(SvgLoaderData& loaderData, Box vBox, float w, fl
 
     if (!loaderData.doc || (loaderData.doc->type != SvgNodeType::Doc)) return nullptr;
 
-    auto docNode = _sceneBuildHelper(loaderData.doc, vBox, svgPath, false, 0);
+    UpdatePostponed updatePostponed;
+    if (!(viewFlag & SvgViewFlag::Viewbox)) updatePostponed.updateRequired = true;
 
-    if (!(viewFlag & SvgViewFlag::Viewbox)) _updateInvalidViewSize(docNode.get(), vBox, w, h, viewFlag);
+    auto docNode = _sceneBuildHelper(loaderData.doc, vBox, svgPath, updatePostponed, false, 0);
+
+    if (!(viewFlag & SvgViewFlag::Viewbox)) {
+        _updateInvalidViewSize(docNode.get(), vBox, w, h, viewFlag);
+        _updateLinearGradient(updatePostponed.linearGradients, vBox);
+        updatePostponed.linearGradients.reset();
+        _updateRadialGradient(updatePostponed.radialGradients, vBox);
+        updatePostponed.radialGradients.reset();
+    }
 
     if (!mathEqual(w, vBox.w) || !mathEqual(h, vBox.h)) {
         Matrix m = _calculateAspectRatioMatrix(align, meetOrSlice, w, h, vBox);
