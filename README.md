@@ -3,12 +3,12 @@
 [![Discord](https://img.shields.io/badge/Community-5865f2?style=flat&logo=discord&logoColor=white)](https://discord.gg/n25xj6J6HM)
 <br>
 [![CodeFactor](https://www.codefactor.io/repository/github/hermet/thorvg/badge)](https://www.codefactor.io/repository/github/hermet/thorvg)
-[![Build Linux](https://github.com/Samsung/thorvg/actions/workflows/build_linux.yml/badge.svg?branch=master&event=push)](https://github.com/Samsung/thorvg/actions/workflows/actions.yml)
-[![Build Windows](https://github.com/Samsung/thorvg/actions/workflows/build_win.yml/badge.svg?branch=master&event=push)](https://github.com/Samsung/thorvg/actions/workflows/build_win.yml)
+[![Build Linux](https://github.com/thorvg/thorvg/actions/workflows/build_linux.yml/badge.svg?branch=main&event=push)](https://github.com/thorvg/thorvg/actions/workflows/actions.yml)
+[![Build Windows](https://github.com/thorvg/thorvg/actions/workflows/build_win.yml/badge.svg?branch=main&event=push)](https://github.com/thorvg/thorvg/actions/workflows/build_win.yml)
 
 # ThorVG
 <p align="center">
-  <img width="800" height="400" src="https://github.com/Samsung/thorvg/blob/master/res/logo/512/thorvg-banner.png">
+  <img width="800" height="400" src="https://github.com/thorvg/thorvg/blob/main/res/logo/512/thorvg-banner.png">
 </p>
 ThorVG is an open-source, platform-independent portable library used for drawing vector-based scenes and animations, which can be freely utilized across various software platforms and applications. With user-friendly APIs, it has no dependencies and maintains a super compact size. It serves as the vector graphics engine for Tizen OS and the Godot Platform, powering numerous products. <br />
 <br />
@@ -23,19 +23,19 @@ The following list shows primitives that are supported by ThorVG: <br />
  * Images: TVG, SVG, JPG, PNG, WebP, Bitmap
  * Animations: Lottie
 <p align="center">
-  <img width="900" height="472" src="https://github.com/Samsung/thorvg/blob/master/res/example_primitives.png">
+  <img width="900" height="472" src="https://github.com/thorvg/thorvg/blob/main/res/example_primitives.png">
 </p>
 <br />
 If your program has the main renderer, your program could call ThorVG APIs while switching drawing contexts between the main renderer and ThorVG. During the API calls, ThorVG serializes drawing commands among the volatile paints' nodes then performs synchronous/asynchronous rendering using its backend raster engines. ThorVG supports vector images such as SVG, also expands, supporting other popular formats on demand. On the rendering, it could spawn intermediate frame-buffers for compositing scenes only when it's necessary. The next figure shows you a brief strategy on how to use ThorVG on your system.<br />
 <br />
 <p align="center">
-  <img width="900" height="288" src="https://github.com/Samsung/thorvg/blob/master/res/example_flow.png">
+  <img width="900" height="288" src="https://github.com/thorvg/thorvg/blob/main/res/example_flow.png">
 </p>
 <br />
 ThorVG has the threading mechanism so that it tries to acquire the next scenes without delay. It runs its own fine-tuned task-scheduler built on threading pools, encapsulates all the jobs such as encoding, decoding, updating, rendering with tasks. As a result, all the tasks could run on multi-processing. The task scheduler is readied for hiding complexity, easier integration and user convenience. Thus the policy is optional, users can select it by their demands.<br />
 <br />
 <p align="center">
-  <img width="900" height="313" src="https://github.com/Samsung/thorvg/blob/master/res/example_thread.png">
+  <img width="900" height="313" src="https://github.com/thorvg/thorvg/blob/main/res/example_thread.png">
 </p>
 <br />
 
@@ -150,7 +150,7 @@ canvas->push(move(circle));                  //push the circle into the canvas
 This code generates the following result:
 
 <p align="center">
-  <img width="416" height="411" src="https://github.com/Samsung/thorvg/blob/master/res/example_shapes.png">
+  <img width="416" height="411" src="https://github.com/thorvg/thorvg/blob/main/res/example_shapes.png">
 </p>
 
 You can also draw you own shapes and use dashed stroking:
@@ -186,7 +186,7 @@ canvas->push(move(path));                    //push the path into the canvas
 The code generates the following result:
 
 <p align="center">
-  <img width="300" height="300" src="https://github.com/Samsung/thorvg/blob/master/res/example_path.png">
+  <img width="300" height="300" src="https://github.com/thorvg/thorvg/blob/main/res/example_path.png">
 </p>
 
 Now begin rendering & finish it at a particular time:
@@ -227,7 +227,7 @@ canvas->push(move(picture));                //push the picture into the canvas
 The result is:
 
 <p align="center">
-  <img width="300" height="300" src="https://github.com/Samsung/thorvg/blob/master/res/example_tiger.png">
+  <img width="300" height="300" src="https://github.com/thorvg/thorvg/blob/main/res/example_tiger.png">
 </p>
 
 [Back to contents](#contents)
@@ -266,7 +266,7 @@ canvas->update(animation->picture());                  //Update the picture to b
 Let's suppose the progress variable determines the position of the animation, ranging from 0 to 1 based on the total duration time of the animation. Adjusting the progress value allows you to control the animation at the desired position. Afterwards, the canvas is updated to redraw the picture with the updated animation frame.<br />
 <br />
 <p align="center">
-  <img width="600" height="600" src="https://github.com/Samsung/thorvg/blob/master/res/example_lottie.gif">
+  <img width="600" height="600" src="https://github.com/thorvg/thorvg/blob/main/res/example_lottie.gif">
 </p>
 
 [Back to contents](#contents)
@@ -282,16 +282,16 @@ The final data size is smaller in comparison to any other text-based vector data
 
 Additionally, TVG Picture helps to reduce the resource loading tasks since it can skip interpreting the data stage. That brings the reduced amount of the required runtime memory and rendering tasks that increases the performance.
 
-Utilizing the TVG Picture allows you to reduce the data size and loading time by more than 30%, on average ([See More](https://github.com/Samsung/thorvg/wiki/TVG-Picture-Binary-Size)). Note that the charge in the performance rate depends on the resource size and its complexity.
+Utilizing the TVG Picture allows you to reduce the data size and loading time by more than 30%, on average ([See More](https://github.com/thorvg/thorvg/wiki/TVG-Picture-Binary-Size)). Note that the charge in the performance rate depends on the resource size and its complexity.
 
 <p align="center">
-  <img width="909" height="314" src="https://github.com/Samsung/thorvg/blob/master/res/example_tvgsize.png">
+  <img width="909" height="314" src="https://github.com/thorvg/thorvg/blob/main/res/example_tvgsize.png">
 </p>
 
 While TVG Saver exports the scene-tree to the TVG Picture data files(TVG), the TVG Loader imports and restores it to the programmable instances. You can quickly use the ThorVG Viewer to convert files from SVG to TVG.
 
 <p align="center">
-  <img width="710" height="215" src="https://github.com/Samsung/thorvg/blob/master/res/example_tvgmodule.png">
+  <img width="710" height="215" src="https://github.com/thorvg/thorvg/blob/main/res/example_tvgmodule.png">
 </p>
 
 
@@ -303,14 +303,14 @@ While TVG Saver exports the scene-tree to the TVG Picture data files(TVG), the T
 ThorVG has been integrated into the [Tizen](https://www.tizen.org) platform as the vector graphics engine. [NUI](https://docs.tizen.org/application/dotnet/guides/user-interface/nui/overview/) is the name of Tizen UI framework which is written in C#. ThorVG is the backend engine of the [NUI Vector Graphics](https://docs.tizen.org/application/dotnet/guides/user-interface/nui/vectorgraphics/Overview/) which is used for vector primitive drawings and scalable image contents such as SVG and Lottie Animation among the Tizen applications.
 
 <p align="center">
-  <img width="798" height="285" src="https://github.com/Samsung/thorvg/blob/master/res/example_tizen.png">
+  <img width="798" height="285" src="https://github.com/thorvg/thorvg/blob/main/res/example_tizen.png">
 </p>
 
 ### Godot
 ThorVG has been integrated into the [Godot](https://www.godotengine.org) project to enable the creation of sleek and visually appealing user interfaces (UIs) and vector resources in the Godot game engine. Godot is a modern game engine that is both free and open-source, offering a comprehensive range of tools. With Godot, you can concentrate on developing your game without the need to recreate existing functionalities.
 
 <p align="center">
-  <img width="798" height="440" src="https://github.com/Samsung/thorvg/blob/master/res/example_godot.png">
+  <img width="798" height="440" src="https://github.com/thorvg/thorvg/blob/main/res/example_godot.png">
 </p>
 
 ### Rive
@@ -318,7 +318,7 @@ We're also building a [Rive](https://rive.app/) port that supports Rive Animatio
 that supports fancy, user-interactive vector animations. For more details see [Rive-Tizen](https://github.com/rive-app/rive-tizen) on [Github](https://github.com/rive-app/).
 
 <p align="center">
-  <img width="600" height="324" src="https://github.com/Samsung/thorvg/blob/master/res/example_rive.gif">
+  <img width="600" height="324" src="https://github.com/thorvg/thorvg/blob/main/res/example_rive.gif">
 </p>
 
 [Back to contents](#contents)
