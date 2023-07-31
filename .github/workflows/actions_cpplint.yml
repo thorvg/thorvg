@@ -3,7 +3,7 @@ name: Check Commit
 on:
   pull_request:
     branches:
-      - master
+      - main
 
 jobs:
   coding-style:
