@@ -136,6 +136,7 @@ bool GlRenderer::postRender()
 {
     // TODO: called just after render()
     clearCompositors();
+    mFboStack.clear();
 
     return true;
 }
@@ -159,17 +160,17 @@ bool GlRenderer::beginComposite(Compositor* cmp, CompositeMethod method, uint8_t
         return false;
     }
 
-    glCmp->method = method;
     glCmp->opacity = opacity;
 
     // check before bind to fbo
-    if (glCmp->fboId == 0) {
+    if (glCmp->fboId[0] == 0 || glCmp->fboId[1] == 0) {
         return false;
     }
 
-    if (method == tvg::CompositeMethod::None) {
-        // FIXME: this maybe a masking layer
-        mCompositor = glCmp;
+    if (method == CompositeMethod::None) {
+        mFboStack.push(glCmp->targetFbo());
+    } else {
+        glCmp->method = method;
     }
 
     return true;
@@ -184,10 +185,14 @@ bool GlRenderer::endComposite(Compositor* cmp)
     }
 
     // if method is not NONE, generate a blit draw command
-    if (glCmp->method != tvg::CompositeMethod::None && mCompositor != nullptr) {
-
+    if (glCmp->method == tvg::CompositeMethod::None) {
+        (void) false;
     } else {
-        return false;
+
+    }
+
+    if (mFboStack.last() == glCmp->targetFbo()) {
+        mFboStack.pop();
     }
 
     return true;
@@ -463,7 +468,8 @@ GlRenderer::GlRenderer()
       mIndexBuffer(GlGpuBuffer::Target::ELEMENT_ARRAY_BUFFER),
       mUniformBuffer(GlGpuBuffer::Target::UNIFORM_BUFFER),
       mShaders(),
-      mDrawCommands()
+      mDrawCommands(),
+      mFboStack()
 {
 }
 

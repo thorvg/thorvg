@@ -12,10 +12,14 @@ struct GlCompositor : public tvg::Compositor
     GlCompositor(uint32_t width, uint32_t height);
     ~GlCompositor();
 
-    GLuint fboId;
-    GLuint texId;
+    GLuint fboId[2];
 
-    GlCompositor* previous;
+    GLuint texId[2];
+
+    GLuint targetFbo() const;
+    GLuint sourceFbo() const;
+    GLuint targetTex() const;
+    GLuint sourceTex() const;
 
 private:
     void init(uint32_t width, uint32_t height);

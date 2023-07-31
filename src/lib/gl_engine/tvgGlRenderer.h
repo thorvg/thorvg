@@ -101,9 +101,9 @@ private:
 
     std::vector<GlRenderCommand> mDrawCommands;
 
-    GlCompositor* mCompositor = nullptr;
-
     Array<GlCompositor*> mCompositors;
+
+    Array<GLuint> mFboStack;
 };
 
 #endif /* _TVG_GL_RENDERER_H_ */
