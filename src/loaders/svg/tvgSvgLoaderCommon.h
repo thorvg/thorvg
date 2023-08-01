@@ -561,18 +561,4 @@ struct Box
     float x, y, w, h;
 };
 
-/*
- * https://docs.microsoft.com/en-us/cpp/c-runtime-library/reference/strtof-strtod-l-wcstod-wcstod-l?view=vs-2017
- *
- * src should be one of the following form :
- *
- * [whitespace] [sign] {digits [radix digits] | radix digits} [{e | E} [sign] digits]
- * [whitespace] [sign] {INF | INFINITY}
- * [whitespace] [sign] NAN [sequence]
- *
- * No hexadecimal form supported
- * no sequence supported after NAN
- */
-float customStrtof(const char *nptr, char **endptr);
-
 #endif
