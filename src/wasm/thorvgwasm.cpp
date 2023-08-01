@@ -21,69 +21,82 @@
  */
 
 #include <thorvg.h>
+#include <emscripten/bind.h>
 #include "tvgIteratorAccessor.h"
 
-#include <emscripten/bind.h>
 
 using namespace emscripten;
 using namespace std;
 using namespace tvg;
 
-class __attribute__((visibility("default"))) ThorvgWasm
+static const char* NoError = "None";
+
+class __attribute__((visibility("default"))) TvgWasm
 {
-public:
-    static unique_ptr<ThorvgWasm> create()
+    struct Layer
     {
-        return unique_ptr<ThorvgWasm>(new ThorvgWasm());
+        uint32_t paint;         //cast of a paint pointer
+        uint32_t depth;
+        uint32_t type;
+        uint8_t opacity;
+        CompositeMethod method;
+    };
+
+public:
+    ~TvgWasm()
+    {
+        Initializer::term(CanvasEngine::Sw);
     }
 
-    string getError()
+    static unique_ptr<TvgWasm> create()
     {
-        return mErrorMsg;
+        return unique_ptr<TvgWasm>(new TvgWasm());
+    }
+
+    string error()
+    {
+        return errorMsg;
     }
 
     bool load(string data, string mimetype, int width, int height)
     {
-        mErrorMsg = "None";
+        errorMsg = NoError;
 
-        if (!mSwCanvas) {
-             mErrorMsg = "Canvas is NULL";
+        if (!canvas) {
+             errorMsg = "Invalid canvas";
              return false;
         }
 
         if (data.empty()) {
-            mErrorMsg = "Data is empty";
+            errorMsg = "Invalid data";
             return false;
         }
 
-        mPicture = Picture::gen().release();
-        if (!mPicture) {
-            mErrorMsg = "Picture get failed";
+        picture = Picture::gen().release();
+        if (!picture) {
+            errorMsg = "Invalid picture";
             return false;
         }
 
-        mSwCanvas->clear();
+        canvas->clear();
 
-        if (mPicture->load(data.c_str(), data.size(), mimetype, false) != Result::Success) {
-            /* mPicture is not handled as unique_ptr yet, so delete here */
-            delete(mPicture);
-            mPicture = nullptr;
-
-            mErrorMsg = "Load failed";
+        if (picture->load(data.c_str(), data.size(), mimetype, false) != Result::Success) {
+            delete(picture);
+            picture = nullptr;
+            errorMsg = "Fail, load()";
             return false;
         }
 
-        mPicture->size(&mOriginalSize[0], &mOriginalSize[1]);
+        picture->size(&psize[0], &psize[1]);
 
-        /* need to reset size to calculate scale in Picture.size internally
-           before calling updateSize */
-        mWidth = 0;
-        mHeight = 0;
+        /* need to reset size to calculate scale in Picture.size internally before calling resize() */
+        this->width = 0;
+        this->height = 0;
 
-        updateSize(width, height);
+        resize(width, height);
 
-        if (mSwCanvas->push(unique_ptr<Picture>(mPicture)) != Result::Success) {
-            mErrorMsg = "Push failed";
+        if (canvas->push(cast<Picture>(picture)) != Result::Success) {
+            errorMsg = "Fail, push()";
             return false;
         }
 
@@ -92,21 +105,21 @@ public:
 
     bool update(int width, int height, bool force)
     {
-        mErrorMsg = "None";
+        errorMsg = NoError;
 
-        if (!mSwCanvas || !mPicture) {
-            mErrorMsg = "Invalid Conditions";
+        if (!canvas || !picture) {
+            errorMsg = "Invalid Conditions";
             return false;
         }
 
-        if (!force && mWidth == width && mHeight == height) {
+        if (!force && this->width == width && this->height == height) {
             return true;
         }
 
-        updateSize(width, height);
+        resize(width, height);
 
-        if (mSwCanvas->update(mPicture) != Result::Success) {
-            mErrorMsg = "Update failed";
+        if (canvas->update(picture) != Result::Success) {
+            errorMsg = "Fail, update()";
             return false;
         }
         return true;
@@ -114,200 +127,164 @@ public:
 
     val render()
     {
-        mErrorMsg = "None";
+        errorMsg = NoError;
 
-        if (!mSwCanvas) {
-            mErrorMsg = "Canvas is NULL";
+        if (!canvas) {
+            errorMsg = "Invalid canvas";
             return val(typed_memory_view<uint8_t>(0, nullptr));
         }
 
-        if (mSwCanvas->draw() != Result::Success) {
-            mErrorMsg = "Draw failed";
+        if (canvas->draw() != Result::Success) {
+            errorMsg = "Fail, draw()";
             return val(typed_memory_view<uint8_t>(0, nullptr));
         }
 
-        mSwCanvas->sync();
+        canvas->sync();
 
-        //Change ARGB into ABGR and unpremultiply
-        unpremultiplyBuffer();
-
-        return val(typed_memory_view(mWidth * mHeight * 4, mBuffer.get()));
+        return val(typed_memory_view(width * height * 4, buffer.get()));
     }
 
-    val originalSize()
+    val size()
     {
-        return val(typed_memory_view(2, mOriginalSize));
+        return val(typed_memory_view(2, psize));
     }
 
-    bool saveTvg(bool compress)
+    bool save(bool compress)
     {
-        mErrorMsg = "None";
+        errorMsg = NoError;
 
-        auto saver = tvg::Saver::gen();
-        auto duplicate = tvg::cast<tvg::Picture>(mPicture->duplicate());
-        if (!saver || !duplicate) {
-            mErrorMsg = "Saving initialization failed";
+        auto saver = Saver::gen();
+        if (!saver) {
+            errorMsg = "Invalid saver";
+            return false;
+        }
+        auto duplicate = cast<Picture>(picture->duplicate());
+
+        if (!duplicate) {
+            errorMsg = "Invalid dupliate";
             return false;
         }
         if (saver->save(std::move(duplicate), "file.tvg", compress) != tvg::Result::Success) {
-            mErrorMsg = "Tvg saving failed";
+            errorMsg = "Fail, save()";
             return false;
         }
         saver->sync();
-
         return true;
     }
 
     val layers()
     {
         //returns an array of a structure Layer: [id] [depth] [type] [composite]
-        mLayers.reset();
-        sublayers(&mLayers, mPicture, 0);
-
-        return val(typed_memory_view(mLayers.count * sizeof(Layer) / sizeof(uint32_t), (uint32_t *)(mLayers.data)));
+        children.reset();
+        sublayers(&children, picture, 0);
+        return val(typed_memory_view(children.count * sizeof(Layer) / sizeof(uint32_t), (uint32_t *)(children.data)));
     }
 
-    bool setOpacity(uint32_t paintId, uint8_t opacity)
+    bool opacity(uint32_t pid, uint8_t opacity)
     {
-        const Paint* paint = findPaintById(mPicture, paintId, nullptr);
+        auto paint = findPaintById(picture, pid, nullptr);
         if (!paint) return false;
         const_cast<Paint*>(paint)->opacity(opacity);
         return true;
     }
 
-    val bounds(uint32_t paintId)
+    val geometry(uint32_t pid)
     {
-        Array<const Paint *> parents;
-        const Paint* paint = findPaintById(mPicture, paintId, &parents);
+        Array<const Paint*> parents;
+        auto paint = findPaintById(picture, pid, &parents);
         if (!paint) return val(typed_memory_view<float>(0, nullptr));
-        paint->bounds(&mBounds[0], &mBounds[1], &mBounds[2], &mBounds[3], false);
+        paint->bounds(&bounds[0], &bounds[1], &bounds[2], &bounds[3], false);
 
         float points[8] = { //clockwise points
-            mBounds[0], mBounds[1], //(x1, y1)
-            mBounds[0] + mBounds[2], mBounds[1], //(x2, y1)
-            mBounds[0] + mBounds[2], mBounds[1] + mBounds[3], //(x2, y2)
-            mBounds[0], mBounds[1] + mBounds[3], //(x1, y2)
+            bounds[0], bounds[1], //(x1, y1)
+            bounds[0] + bounds[2], bounds[1], //(x2, y1)
+            bounds[0] + bounds[2], bounds[1] + bounds[3], //(x2, y2)
+            bounds[0], bounds[1] + bounds[3], //(x1, y2)
         };
 
         for (auto paint = parents.data; paint < parents.end(); ++paint) {
             auto m = const_cast<Paint*>(*paint)->transform();
-            for (int i = 0; i<8; i += 2) {
+            for (int i = 0; i < 8; i += 2) {
                 float x = points[i] * m.e11 + points[i+1] * m.e12 + m.e13;
-                points[i+1] = points[i] * m.e21 + points[i+1] * m.e22 + m.e23;
                 points[i] = x;
+                points[i + 1] = points[i] * m.e21 + points[i + 1] * m.e22 + m.e23;
             }
         }
 
-        mBounds[0] = points[0];//x(p1)
-        mBounds[1] = points[3];//y(p2)
-        mBounds[2] = points[4] - mBounds[0];//x(p3)
-        mBounds[3] = points[7] - mBounds[1];//y(p4)
+        bounds[0] = points[0]; //x(p1)
+        bounds[1] = points[3]; //y(p2)
+        bounds[2] = points[4] - bounds[0]; //x(p3)
+        bounds[3] = points[7] - bounds[1]; //y(p4)
 
-        return val(typed_memory_view(4, mBounds));
+        return val(typed_memory_view(4, bounds));
     }
 
 private:
-    explicit ThorvgWasm()
+    explicit TvgWasm()
     {
-        mErrorMsg = "None";
+        errorMsg = NoError;
 
         Initializer::init(CanvasEngine::Sw, 0);
-        mSwCanvas = SwCanvas::gen();
-        if (!mSwCanvas) {
-            mErrorMsg = "Canvas get failed";
+        canvas = SwCanvas::gen();
+        if (!canvas) {
+            errorMsg = "Invalid canvas";
             return;
         }
     }
 
-    void unpremultiplyBuffer() {
-        for (uint32_t y = 0; y < mHeight; y++) {
-            auto buffer = (uint32_t *) mBuffer.get() + mWidth * y;
-            for (uint32_t x = 0; x < mWidth; ++x) {
-                uint8_t a = buffer[x] >> 24;
-                if (a == 255) {
-                    uint8_t b = (buffer[x] & 0xff);
-                    uint8_t r = ((buffer[x] >> 16) & 0xff);
-                    buffer[x] = (buffer[x] & 0xff00ff00) | (b << 16) | (r);
-
-                } else if (a == 0) {
-                    buffer[x] = 0x00ffffff;
-
-                } else {
-                    uint16_t b = ((buffer[x] << 8) & 0xff00) / a;
-                    uint16_t g = ((buffer[x]) & 0xff00) / a;
-                    uint16_t r = ((buffer[x] >> 8) & 0xff00) / a;
-                    if (b > 0xff) b = 0xff;
-                    if (g > 0xff) g = 0xff;
-                    if (r > 0xff) r = 0xff;
-                    buffer[x] = (a << 24) | (b << 16) | (g << 8) | (r);
-                }
-            }
-        }
-    }
-
-    void updateSize(int width, int height)
+    void resize(int width, int height)
     {
-        if (!mSwCanvas) return;
-        if (mWidth == width && mHeight == height) return;
+        if (!canvas) return;
+        if (this->width == width && this->height == height) return;
 
-        mWidth = width;
-        mHeight = height;
-        mBuffer = make_unique<uint8_t[]>(mWidth * mHeight * 4);
-        mSwCanvas->target((uint32_t *)mBuffer.get(), mWidth, mWidth, mHeight, SwCanvas::ARGB8888);
+        this->width = width;
+        this->height = height;
 
-        if (mPicture) {
+        buffer = make_unique<uint8_t[]>(width * height * sizeof(uint32_t));
+        canvas->target((uint32_t *)buffer.get(), width, width, height, SwCanvas::ABGR8888S);
+
+        if (picture) {
             float scale;
             float shiftX = 0.0f, shiftY = 0.0f;
-            if (mOriginalSize[0] > mOriginalSize[1]) {
-                scale = width / mOriginalSize[0];
-                shiftY = (height - mOriginalSize[1] * scale) * 0.5f;
+            if (psize[0] > psize[1]) {
+                scale = width / psize[0];
+                shiftY = (height - psize[1] * scale) * 0.5f;
             } else {
-                scale = height / mOriginalSize[1];
-                shiftX = (width - mOriginalSize[0] * scale) * 0.5f;
+                scale = height / psize[1];
+                shiftX = (width - psize[0] * scale) * 0.5f;
             }
-            mPicture->scale(scale);
-            mPicture->translate(shiftX, shiftY);
+            picture->scale(scale);
+            picture->translate(shiftX, shiftY);
         }
     }
 
-    struct Layer
-    {
-        uint32_t paint; //cast of a paint pointer
-        uint32_t depth;
-        uint32_t type;
-        uint32_t composite;
-        uint32_t opacity;
-    };
     void sublayers(Array<Layer>* layers, const Paint* paint, uint32_t depth)
     {
         //paint
         if (paint->identifier() != Shape::identifier()) {
             auto it = IteratorAccessor::iterator(paint);
             if (it->count() > 0) {
-                layers->reserve(layers->count + it->count());
                 it->begin();
+                layers->grow(it->count());
                 while (auto child = it->next()) {
                     uint32_t type = child->identifier();
-                    uint32_t opacity = child->opacity();
-                    layers->push({.paint = reinterpret_cast<uint32_t>(child), .depth = depth + 1, .type = type, .composite = static_cast<uint32_t>(CompositeMethod::None), .opacity = opacity});
+                    layers->push({.paint = reinterpret_cast<uint32_t>(child), .depth = depth + 1, .type = type, .opacity = child->opacity(), .method = CompositeMethod::None});
                     sublayers(layers, child, depth + 1);
                 }
             }
         }
         //composite
-        const Paint* compositeTarget = nullptr;
-        CompositeMethod composite = paint->composite(&compositeTarget);
-        if (compositeTarget && composite != CompositeMethod::None) {
-            uint32_t type = compositeTarget->identifier();
-            uint32_t opacity = compositeTarget->opacity();
-            layers->push({.paint = reinterpret_cast<uint32_t>(compositeTarget), .depth = depth, .type = type, .composite = static_cast<uint32_t>(composite), .opacity = opacity});
-            sublayers(layers, compositeTarget, depth);
+        const Paint* target = nullptr;
+        CompositeMethod method = paint->composite(&target);
+        if (target && method != CompositeMethod::None) {
+            layers->push({.paint = reinterpret_cast<uint32_t>(target), .depth = depth, .type = target->identifier(), .opacity = target->opacity(), .method = method});
+            sublayers(layers, target, depth);
         }
     }
 
-    const Paint* findPaintById(const Paint* parent, uint32_t paintId, Array<const Paint *>* parents) {
+    const Paint* findPaintById(const Paint* parent, uint32_t id, Array<const Paint *>* parents) {
         //validate paintId is correct and exists in the picture
-        if (reinterpret_cast<uint32_t>(parent) == paintId) {
+        if (reinterpret_cast<uint32_t>(parent) == id) {
             if (parents) parents->push(parent);
             return parent;
         }
@@ -317,7 +294,7 @@ private:
             if (it->count() > 0) {
                 it->begin();
                 while (auto child = it->next()) {
-                    if (auto paint = findPaintById(child, paintId, parents)) {
+                    if (auto paint = findPaintById(child, id, parents)) {
                         if (parents) parents->push(parent);
                         return paint;
                     }
@@ -325,10 +302,10 @@ private:
             }
         }
         //composite
-        const Paint* compositeTarget = nullptr;
-        CompositeMethod composite = parent->composite(&compositeTarget);
-        if (compositeTarget && composite != CompositeMethod::None) {
-            if (auto paint = findPaintById(compositeTarget, paintId, parents)) {
+        const Paint* target = nullptr;
+        CompositeMethod method = parent->composite(&target);
+        if (target && method != CompositeMethod::None) {
+            if (auto paint = findPaintById(target, id, parents)) {
                 if (parents) parents->push(parent);
                 return paint;
             }
@@ -337,32 +314,28 @@ private:
     }
 
 private:
-    string                 mErrorMsg;
-    unique_ptr< SwCanvas > mSwCanvas = nullptr;
-    Picture*               mPicture = nullptr;
-    unique_ptr<uint8_t[]>  mBuffer = nullptr;
-
-    uint32_t               mWidth{0};
-    uint32_t               mHeight{0};
-
-    Array<Layer>           mLayers;
-    float                  mBounds[4];
-    float                  mOriginalSize[2];
+    string                 errorMsg;
+    unique_ptr<SwCanvas>   canvas = nullptr;
+    Picture*               picture = nullptr;
+    unique_ptr<uint8_t[]>  buffer = nullptr;
+    Array<Layer>           children;
+    uint32_t               width = 0;
+    uint32_t               height = 0;
+    float                  bounds[4];
+    float                  psize[2];       //picture size
 };
 
-//Binding code
+
 EMSCRIPTEN_BINDINGS(thorvg_bindings) {
-  class_<ThorvgWasm>("ThorvgWasm")
-    .constructor(&ThorvgWasm::create)
-    .function("getError", &ThorvgWasm::getError, allow_raw_pointers())
-    .function("load", &ThorvgWasm::load)
-    .function("update", &ThorvgWasm::update)
-    .function("render", &ThorvgWasm::render)
-    .function("originalSize", &ThorvgWasm::originalSize)
-
-    .function("saveTvg", &ThorvgWasm::saveTvg)
-
-    .function("layers", &ThorvgWasm::layers)
-    .function("bounds", &ThorvgWasm::bounds)
-    .function("setOpacity", &ThorvgWasm::setOpacity);
+  class_<TvgWasm>("TvgWasm")
+    .constructor(&TvgWasm::create)
+    .function("error", &TvgWasm::error, allow_raw_pointers())
+    .function("load", &TvgWasm::load)
+    .function("update", &TvgWasm::update)
+    .function("render", &TvgWasm::render)
+    .function("size", &TvgWasm::size)
+    .function("save", &TvgWasm::save)
+    .function("layers", &TvgWasm::layers)
+    .function("geometry", &TvgWasm::geometry)
+    .function("opacity", &TvgWasm::opacity);
 }
