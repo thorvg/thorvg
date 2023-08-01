@@ -126,9 +126,15 @@ TEST_CASE("Bounding Box", "[tvgPaint]")
 
     //Case 1
     REQUIRE(shape->appendRect(0.0f, 10.0f, 20.0f, 100.0f, 50.0f, 50.0f) == Result::Success);
+    REQUIRE(shape->translate(100.0f, 111.0f) == Result::Success);
     REQUIRE(shape->bounds(&x, &y, &w, &h, false) == Result::Success);
     REQUIRE(x == 0.0f);
     REQUIRE(y == 10.0f);
+    REQUIRE(w == 20.0f);
+    REQUIRE(h == 100.0f);
+    REQUIRE(shape->bounds(&x, &y, &w, &h, true) == Result::Success);
+    REQUIRE(x == 100.0f);
+    REQUIRE(y == 121.0f);
     REQUIRE(w == 20.0f);
     REQUIRE(h == 100.0f);
 
@@ -136,7 +142,14 @@ TEST_CASE("Bounding Box", "[tvgPaint]")
     REQUIRE(shape->reset() == Result::Success);
     REQUIRE(shape->moveTo(0.0f, 10.0f) == Result::Success);
     REQUIRE(shape->lineTo(20.0f, 210.0f) == Result::Success);
+    auto identity = Matrix{1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f};
+    REQUIRE(shape->transform(identity) == Result::Success);
     REQUIRE(shape->bounds(&x, &y, &w, &h, false) == Result::Success);
+    REQUIRE(x == 0.0f);
+    REQUIRE(y == 10.0f);
+    REQUIRE(w == 20.0f);
+    REQUIRE(h == 200.0f);
+    REQUIRE(shape->bounds(&x, &y, &w, &h, true) == Result::Success);
     REQUIRE(x == 0.0f);
     REQUIRE(y == 10.0f);
     REQUIRE(w == 20.0f);
