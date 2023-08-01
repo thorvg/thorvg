@@ -20,12 +20,14 @@
  * SOFTWARE.
  */
 
-#ifndef _TVG_SVG_UTIL_H_
-#define _TVG_SVG_UTIL_H_
+#ifndef _TVG_STR_H_
+#define _TVG_STR_H_
 
-#include "tvgCommon.h"
+namespace tvg
+{
 
-string svgUtilURLDecode(const char *src);
-string svgUtilBase64Decode(const char *src);
+float strToFloat(const char *nPtr, char **endPtr);
+char* strDuplicate(const char *str, size_t n);
 
-#endif //_TVG_SVG_UTIL_H_
+}
+#endif //_TVG_STR_H_
