@@ -372,7 +372,6 @@ public:
      *
      * @return Result::Success when the blending method is successfully set.
      *
-     * @BETA_API
      */
     Result blend(BlendMethod method) const noexcept;
 
@@ -441,7 +440,6 @@ public:
      *
      * @return The blending method
      *
-     * @BETA_API
      */
     BlendMethod blend() const noexcept;
 
@@ -599,7 +597,6 @@ public:
      * @warning  Please avoid accessing the paints during Canvas update/draw. You can access them after calling sync().
      * @see Canvas::sync()
      *
-     * @BETA_API
      */
     std::list<Paint*>& paints() noexcept;
 
@@ -1038,7 +1035,6 @@ public:
      *
      * @return Result::Success when succeed, Result::NonSupport unsupported value, Result::FailedAllocation otherwise.
      * 
-     * @BETA_API
      */
     Result strokeMiterlimit(float miterlimit) noexcept;
 
@@ -1192,7 +1188,6 @@ public:
      *
      * @return The stroke miterlimit value when succeed, 4 if no stroke was set.
      *
-     * @BETA_API
      */
     float strokeMiterlimit() const noexcept;
 
@@ -1439,7 +1434,6 @@ public:
      * @see Scene::push()
      * @see Scene::clear()
      *
-     * @BETA_API
      */
     std::list<Paint*>& paints() noexcept;
 
@@ -1494,8 +1488,8 @@ public:
     {
         ABGR8888 = 0,      ///< The channels are joined in the order: alpha, blue, green, red. Colors are alpha-premultiplied. (a << 24 | b << 16 | g << 8 | r)
         ARGB8888,          ///< The channels are joined in the order: alpha, red, green, blue. Colors are alpha-premultiplied. (a << 24 | r << 16 | g << 8 | b)
-        ABGR8888S,         ///< @BETA_API The channels are joined in the order: alpha, blue, green, red. Colors are un-alpha-premultiplied.
-        ARGB8888S,         ///< @BETA_API The channels are joined in the order: alpha, red, green, blue. Colors are un-alpha-premultiplied.
+        ABGR8888S,         ///< The channels are joined in the order: alpha, blue, green, red. Colors are un-alpha-premultiplied.
+        ARGB8888S,         ///< The channels are joined in the order: alpha, red, green, blue. Colors are un-alpha-premultiplied.
     };
 
     /**
@@ -1862,8 +1856,6 @@ public:
 
 /**
  * @brief The cast() function is a utility function used to cast a 'Paint' to type 'T'.
- *
- * @BETA_API
  */
 template<typename T>
 std::unique_ptr<T> cast(Paint* paint)
@@ -1874,8 +1866,6 @@ std::unique_ptr<T> cast(Paint* paint)
 
 /**
  * @brief The cast() function is a utility function used to cast a 'Fill' to type 'T'.
- *
- * @BETA_API
  */
 template<typename T>
 std::unique_ptr<T> cast(Fill* fill)
