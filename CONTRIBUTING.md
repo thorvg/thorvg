@@ -104,4 +104,4 @@ Once you submitted a pull request(PR), please make it sure below check list.
 -  Assignees: You
 -  Labels: Patch Purpose
 -  CODING STYLE CHECK: Must be perfect
-<p align="center"><img width="1000" height="1072" src="https://github.com/Samsung/thorvg/blob/master/res/contribution.png"></p>
+<p align="center"><img width="1000" height="1072" src="https://github.com/Samsung/thorvg/blob/main/res/contribution.png"></p>
