@@ -4,6 +4,7 @@
 #include <cstdint>
 #include "tvgGlCommon.h"
 #include "tvgGlProgram.h"
+#include "tvgGlGeometry.h"
 
 void GlCommand::execute()
 {
@@ -38,3 +39,23 @@ void GlCommand::execute()
     // draw
     GL_CHECK(glDrawElements(GL_TRIANGLES, drawCount, GL_UNSIGNED_INT, reinterpret_cast<void *>(indexBuffer.offset)));
 }
+
+
+void GlRenderCommand::execute()
+{
+    GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, fboId));
+    // setup scissor box
+    GL_CHECK(glScissor(viewPort.x, viewPort.y, viewPort.w, viewPort.h));
+
+    geometry->beginClipMask();
+
+    geometry->bind();
+
+    for (auto &cmd : commands) {
+        cmd.execute();
+    }
+
+    geometry->unBind();
+    geometry->endClipMask();
+}
+

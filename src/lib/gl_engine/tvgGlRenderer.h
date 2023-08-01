@@ -31,16 +31,6 @@
 #include "tvgGlGpuBuffer.h"
 #include "tvgGlCompositor.h"
 
-struct GlRenderCommand
-{
-    RenderRegion           viewPort = {};
-    GlGeometry*            geometry = nullptr;
-    GlCompositor*          compositor = nullptr;
-    std::vector<GlCommand> commands;
-
-    void execute();
-};
-
 class GlRenderer : public RenderMethod
 {
 public:
@@ -91,11 +81,18 @@ private:
 
     void clearCompositors();
 
+    void prepareBlitCMD(GlCompositor* cmp);
+
     RenderRegion mViewPort = {};
 
     GLStageBuffer mVertexBuffer;
     GLStageBuffer mIndexBuffer;
     GLStageBuffer mUniformBuffer;
+
+    // FIXME: use seperate buffer for blit command
+    GLStageBuffer mBlitVertexBuffer;
+    GLStageBuffer mBlitIndexBuffer;
+    GLStageBuffer mBlitUniformBuffer;
 
     std::vector<std::unique_ptr<GlProgram>> mShaders;
 
@@ -104,6 +101,10 @@ private:
     Array<GlCompositor*> mCompositors;
 
     Array<GLuint> mFboStack;
+
+    std::unique_ptr<GlGeometry> mBlitGeometry;
+
+    GLuint mCurrentFbo = 0;
 };
 
 #endif /* _TVG_GL_RENDERER_H_ */

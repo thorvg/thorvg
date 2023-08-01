@@ -1,5 +1,6 @@
 
 // compose method defined in thorvg.h
+#define NONE                0
 #define ALPHA_MASK          2
 #define INV_ALPHA_MASK      3
 #define LUMA_MASK           4
@@ -12,6 +13,8 @@
 layout(std140) uniform MaskInfo {
     int method;
     int opacity;
+    int dum1;
+    int dum2;
 } uMaskInfo;
 
 uniform sampler2D uSrcTexture;
@@ -21,9 +24,21 @@ in vec2 vUV;
 
 out vec4 FragColor;
 
+vec4 blit_color() {
+    vec4 srcColor = texture(uSrcTexture, vUV);
+    vec4 dstColor = texture(uDstTexture, vUV);
+
+    float alpha = float(uMaskInfo.opacity) / 255.0;
+
+    if (uMaskInfo.method == NONE) {
+        return dstColor * alpha;
+    } else if (uMaskInfo.method == ALPHA_MASK) {
+        return srcColor * dstColor.a * alpha;
+    } else {
+        return srcColor;
+    }
+}
 
 void main() {
-    vec4 color = texture(uSrcTexture, vUV);
-
-    FragColor = color;
+    FragColor = blit_color();
 }

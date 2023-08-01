@@ -192,7 +192,7 @@ public:
     GlGeometry();
     ~GlGeometry();
 
-    bool tessellate(const RenderShape &rshape, RenderUpdateFlag flag, TessContext *context);
+    bool tessellate(const RenderShape &rshape, uint8_t opacity, RenderUpdateFlag flag, TessContext *context);
     bool tessellate(uint32_t texId, Surface *image, uint8_t opacity, TessContext *context);
     // tess for clip
     GlCommand tessellate(const RenderShape &rshape, TessContext *context);

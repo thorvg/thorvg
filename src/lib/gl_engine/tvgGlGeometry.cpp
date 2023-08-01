@@ -50,11 +50,13 @@ GlGeometry::~GlGeometry()
     mClipVao = 0;
 }
 
-bool GlGeometry::tessellate(const RenderShape& rshape, RenderUpdateFlag flag, TessContext* context)
+bool GlGeometry::tessellate(const RenderShape& rshape, uint8_t opacity, RenderUpdateFlag flag, TessContext* context)
 {
     if (flag & RenderUpdateFlag::Color) {
         uint8_t r, g, b, a;
         rshape.fillColor(&r, &g, &b, &a);
+
+        a = MULTIPLY(a, opacity);
 
         if (a > 0) {
             Array<float>    vertices;
@@ -440,7 +442,7 @@ GlCommand GlGeometry::generateImageCMD(uint32_t texId, uint32_t colorSpace, uint
     // texture id
     {
         int32_t loc = cmd.shader->getUniformLocation("uTexture");
-        cmd.bindings.emplace_back(BindingResource(texId, loc));
+        cmd.bindings.emplace_back(BindingResource(0, texId, loc));
     }
 
     return cmd;

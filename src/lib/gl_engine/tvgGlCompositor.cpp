@@ -35,8 +35,9 @@ GLuint GlCompositor::sourceTex() const
 
 void GlCompositor::init(uint32_t width, uint32_t height)
 {
-    GL_CHECK(glGenFramebuffers(2, fboId));
+    GL_CHECK(glClearColor(0, 0, 0, 0));
 
+    GL_CHECK(glGenFramebuffers(2, fboId));
 
     GL_CHECK(glGenTextures(2, texId));
 
@@ -53,8 +54,12 @@ void GlCompositor::init(uint32_t width, uint32_t height)
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, fboId[0]));
     GL_CHECK(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texId[0], 0));
 
+    GL_CHECK(glClear(GL_COLOR_BUFFER_BIT));
+
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, fboId[1]));
     GL_CHECK(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texId[1], 0));
+
+    GL_CHECK(glClear(GL_COLOR_BUFFER_BIT));
 
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, 0));
 }

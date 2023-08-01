@@ -47,32 +47,6 @@ static void _termEngine()
 #define NOISE_LEVEL 0.5f
 
 
-void GlRenderCommand::execute()
-{
-    // setup scissor box
-    GL_CHECK(glScissor(viewPort.x, viewPort.y, viewPort.w, viewPort.h));
-
-    if (geometry) {
-        geometry->beginClipMask();
-
-        geometry->bind();
-
-    } else if (compositor) {
-        // TODO handle fbo switch
-    }
-
-    for (auto& cmd : commands) {
-        cmd.execute();
-    }
-
-    if (geometry) {
-        geometry->unBind();
-        geometry->endClipMask();
-    } else if (compositor) {
-        // TODO handle fbo switch
-    }
-}
-
 bool GlRenderer::clear()
 {
     // Will be adding glClearColor for input buffer
@@ -104,14 +78,19 @@ bool GlRenderer::target(TVG_UNUSED uint32_t* buffer, uint32_t stride, uint32_t w
 bool GlRenderer::sync()
 {
     // Blend function for straight alpha
-    GL_CHECK(glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA));
+    GL_CHECK(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
     GL_CHECK(glEnable(GL_BLEND));
     GL_CHECK(glEnable(GL_SCISSOR_TEST));
     GL_CHECK(glScissor(mViewPort.x, mViewPort.y, mViewPort.w, mViewPort.h));
+    GL_CHECK(glClear(GL_STENCIL_BUFFER_BIT));
 
     mVertexBuffer.copyToGPU();
     mIndexBuffer.copyToGPU();
     mUniformBuffer.copyToGPU();
+
+    mBlitVertexBuffer.copyToGPU();
+    mBlitIndexBuffer.copyToGPU();
+    mBlitUniformBuffer.copyToGPU();
 
     for (auto& cmd : mDrawCommands) {
         cmd.execute();
@@ -129,13 +108,13 @@ RenderRegion GlRenderer::region(TVG_UNUSED RenderData data)
 
 bool GlRenderer::preRender()
 {
+    clearCompositors();
+
     return true;
 }
 
 bool GlRenderer::postRender()
 {
-    // TODO: called just after render()
-    clearCompositors();
     mFboStack.clear();
 
     return true;
@@ -161,17 +140,21 @@ bool GlRenderer::beginComposite(Compositor* cmp, CompositeMethod method, uint8_t
     }
 
     glCmp->opacity = opacity;
+    glCmp->method = method;
 
     // check before bind to fbo
     if (glCmp->fboId[0] == 0 || glCmp->fboId[1] == 0) {
         return false;
     }
 
+
     if (method == CompositeMethod::None) {
         mFboStack.push(glCmp->targetFbo());
     } else {
-        glCmp->method = method;
+        mFboStack.push(glCmp->sourceFbo());
     }
+
+    mCurrentFbo = mFboStack.last();
 
     return true;
 }
@@ -184,16 +167,25 @@ bool GlRenderer::endComposite(Compositor* cmp)
         return false;
     }
 
-    // if method is not NONE, generate a blit draw command
-    if (glCmp->method == tvg::CompositeMethod::None) {
-        (void) false;
+
+    if (glCmp->method != CompositeMethod::None) {
+        assert(mFboStack.data[mFboStack.count - 1] == glCmp->sourceFbo());
+        assert(mFboStack.data[mFboStack.count - 2] == glCmp->targetFbo());
+        mFboStack.pop();
+        mFboStack.pop();
     } else {
-
-    }
-
-    if (mFboStack.last() == glCmp->targetFbo()) {
+        assert(mFboStack.last() == glCmp->targetFbo());
         mFboStack.pop();
     }
+
+    if (mFboStack.count == 0) {
+        mCurrentFbo = 0;
+    } else {
+        mCurrentFbo = mFboStack.last();
+    }
+
+    // if method is not NONE, generate a blit draw command
+    prepareBlitCMD(glCmp);
 
     return true;
 }
@@ -222,7 +214,7 @@ bool GlRenderer::renderImage(TVG_UNUSED void* data)
     }
 
     GlRenderCommand cmd{};
-
+    cmd.fboId = mCurrentFbo;
     cmd.viewPort =
         RenderRegion{sdata->viewPort.x, static_cast<int32_t>(surface.h - sdata->viewPort.y - sdata->viewPort.h),
                      sdata->viewPort.w, sdata->viewPort.h};
@@ -245,6 +237,7 @@ bool GlRenderer::renderShape(RenderData data)
 
     GlRenderCommand cmd{};
 
+    cmd.fboId = mCurrentFbo;
     cmd.viewPort =
         RenderRegion{sdata->viewPort.x, static_cast<int32_t>(surface.h - sdata->viewPort.y - sdata->viewPort.h),
                      sdata->viewPort.w, sdata->viewPort.h};
@@ -395,12 +388,12 @@ RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const
 
 
     if (rshape.fill) {
-        sdata->geometry->tessellate(rshape, RenderUpdateFlag::Gradient, &context);
+        sdata->geometry->tessellate(rshape, opacity, RenderUpdateFlag::Gradient, &context);
     } else {
-        sdata->geometry->tessellate(rshape, RenderUpdateFlag::Color, &context);
+        sdata->geometry->tessellate(rshape, opacity, RenderUpdateFlag::Color, &context);
     }
 
-    sdata->geometry->tessellate(rshape, RenderUpdateFlag::Stroke, &context);
+    sdata->geometry->tessellate(rshape, opacity, RenderUpdateFlag::Stroke, &context);
 
     if (clips.count > 0) {
 
@@ -467,6 +460,9 @@ GlRenderer::GlRenderer()
     : mVertexBuffer(GlGpuBuffer::Target::ARRAY_BUFFER),
       mIndexBuffer(GlGpuBuffer::Target::ELEMENT_ARRAY_BUFFER),
       mUniformBuffer(GlGpuBuffer::Target::UNIFORM_BUFFER),
+      mBlitVertexBuffer(GlGpuBuffer::Target::ARRAY_BUFFER),
+      mBlitIndexBuffer(GlGpuBuffer::Target::ELEMENT_ARRAY_BUFFER),
+      mBlitUniformBuffer(GlGpuBuffer::Target::UNIFORM_BUFFER),
       mShaders(),
       mDrawCommands(),
       mFboStack()
@@ -547,4 +543,91 @@ void GlRenderer::clearCompositors()
     }
 
     mCompositors.clear();
+}
+
+void GlRenderer::prepareBlitCMD(GlCompositor* cmp)
+{
+    if (mBlitGeometry == nullptr) {
+        mBlitGeometry.reset(new GlGeometry);
+    }
+
+    // TODO we can reuse blit geometry mesh
+    Array<float>    vertices{};
+    Array<uint32_t> indices{};
+
+    vertices.reserve(4 * 4);
+    indices.reserve(6);
+
+    // p1
+    vertices.push(-1.f);
+    vertices.push(1.f);
+    vertices.push(0.f);
+    vertices.push(1.f);
+    // p2
+    vertices.push(-1.f);
+    vertices.push(-1.f);
+    vertices.push(0.f);
+    vertices.push(0.f);
+    // p3
+    vertices.push(1.f);
+    vertices.push(-1.f);
+    vertices.push(1.f);
+    vertices.push(0.f);
+    // p4
+    vertices.push(1.f);
+    vertices.push(1.f);
+    vertices.push(1.f);
+    vertices.push(1.f);
+
+    indices.push(0);
+    indices.push(1);
+    indices.push(3);
+
+    indices.push(3);
+    indices.push(1);
+    indices.push(2);
+
+    GlCommand cmd;
+
+    cmd.vertexBuffer = mBlitVertexBuffer.push(vertices.data, vertices.count * sizeof(float));
+    cmd.indexBuffer = mBlitIndexBuffer.push(indices.data, indices.count * sizeof(uint32_t));
+
+    cmd.shader = mShaders[PipelineType::kMasking].get();
+
+    // layout
+    cmd.vertexLayouts.emplace_back(VertexLayout{0, 2, 4 * sizeof(float), 0});
+    cmd.vertexLayouts.emplace_back(VertexLayout{1, 2, 4 * sizeof(float), 2 * sizeof(float)});
+    // bindings
+    // textures
+    cmd.bindings.emplace_back(BindingResource(0, cmp->targetTex(), cmd.shader->getUniformLocation("uDstTexture")));
+    cmd.bindings.emplace_back(BindingResource(1, cmp->sourceTex(), cmd.shader->getUniformLocation("uSrcTexture")));
+    // infos
+    {
+        int32_t infos[4];
+        infos[0] = static_cast<int32_t>(cmp->method);
+        infos[1] = cmp->opacity;
+        infos[2] = 0;
+        infos[3] = 0;
+
+        auto bufferView = mBlitUniformBuffer.push(infos, 4 * sizeof(int32_t));
+
+        cmd.bindings.emplace_back(
+            BindingResource(0, cmd.shader->getUniformBlockIndex("MaskInfo"), bufferView, 4 * sizeof(int32_t)));
+    }
+
+    cmd.drawCount = 6;
+    cmd.drawStart = 0;
+
+    GlRenderCommand blitCmd;
+
+    blitCmd.fboId = mCurrentFbo;
+    blitCmd.geometry = mBlitGeometry.get();
+    blitCmd.viewPort.x = 0;
+    blitCmd.viewPort.y = 0;
+    blitCmd.viewPort.w = static_cast<int32_t>(surface.w);
+    blitCmd.viewPort.h = static_cast<int32_t>(surface.h);
+
+    blitCmd.commands.emplace_back(cmd);
+
+    mDrawCommands.emplace_back(blitCmd);
 }
