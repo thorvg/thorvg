@@ -26,6 +26,7 @@
 #include "tvgTvgSaver.h"
 #include "tvgLzw.h"
 #include "tvgShapeImpl.h"
+#include "tvgPictureImpl.h"
 
 #ifdef _WIN32
     #include <malloc.h>
@@ -607,7 +608,7 @@ TvgBinCounter TvgSaver::serializePicture(const Picture* picture, const Matrix* p
 
     //Case - Bitmap Image:
     uint32_t w, h;
-    auto pixels = picture->data(&w, &h);
+    auto pixels = P(picture)->data(&w, &h);
     if (!pixels) return 0;
 
     writeTag(TVG_TAG_CLASS_PICTURE);
