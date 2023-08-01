@@ -56,6 +56,7 @@
 #include "tvgSvgSceneBuilder.h"
 #include "tvgSvgPath.h"
 #include "tvgSvgUtil.h"
+#include "tvgStr.h"
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
