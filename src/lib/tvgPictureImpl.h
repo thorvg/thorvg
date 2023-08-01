@@ -90,35 +90,6 @@ struct Picture::Impl
         return !animated;
     }
 
-    RenderUpdateFlag load()
-    {
-        if (loader) {
-            if (!paint) {
-                if (auto p = loader->paint()) {
-                    paint = p.release();
-                    loader->close();
-                    if (w != loader->w || h != loader->h) {
-                        if (!resizing) {
-                            w = loader->w;
-                            h = loader->h;
-                        }
-                        loader->resize(paint, w, h);
-                        resizing = false;
-                    }
-                    if (paint) return RenderUpdateFlag::None;
-                }
-            } else loader->sync();
-
-            if (!surface) {
-                if ((surface = loader->bitmap().release())) {
-                    loader->close();
-                    return RenderUpdateFlag::Image;
-                }
-            }
-        }
-        return RenderUpdateFlag::None;
-    }
-
     RenderTransform resizeTransform(const RenderTransform* pTransform)
     {
         //Overriding Transformation by the desired image size
@@ -334,6 +305,8 @@ struct Picture::Impl
         if (surface) return surface->buf32;
         else return nullptr;
     }
+
+    RenderUpdateFlag load();
 };
 
 #endif //_TVG_PICTURE_IMPL_H_
