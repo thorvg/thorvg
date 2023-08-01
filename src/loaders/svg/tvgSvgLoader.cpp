@@ -55,7 +55,7 @@
 #include "tvgXmlParser.h"
 #include "tvgSvgLoader.h"
 #include "tvgSvgSceneBuilder.h"
-#include "tvgSvgUtil.h"
+#include "tvgStr.h"
 #include "tvgSvgCssStyle.h"
 #include "tvgMath.h"
 
@@ -106,7 +106,7 @@ static bool _parseNumber(const char** content, float* number)
 {
     char* end = nullptr;
 
-    *number = svgUtilStrtof(*content, &end);
+    *number = strToFloat(*content, &end);
     //If the start of string is not number
     if ((*content) == end) return false;
     //Skip comma if any
@@ -162,7 +162,7 @@ static void _parseAspectRatio(const char** content, AspectRatioAlign* align, Asp
  */
 static float _toFloat(const SvgParser* svgParse, const char* str, SvgParserLengthType type)
 {
-    float parsedValue = svgUtilStrtof(str, nullptr);
+    float parsedValue = strToFloat(str, nullptr);
 
     if (strstr(str, "cm")) parsedValue *= PX_PER_CM;
     else if (strstr(str, "mm")) parsedValue *= PX_PER_MM;
@@ -190,7 +190,7 @@ static float _gradientToFloat(const SvgParser* svgParse, const char* str, bool& 
 {
     char* end = nullptr;
 
-    float parsedValue = svgUtilStrtof(str, &end);
+    float parsedValue = strToFloat(str, &end);
     isPercentage = false;
 
     if (strstr(str, "%")) {
@@ -213,7 +213,7 @@ static float _toOffset(const char* str)
     char* end = nullptr;
     auto strEnd = str + strlen(str);
 
-    float parsedValue = svgUtilStrtof(str, &end);
+    float parsedValue = strToFloat(str, &end);
 
     end = _skipSpace(end, nullptr);
     auto ptr = strstr(str, "%");
@@ -230,7 +230,7 @@ static float _toOffset(const char* str)
 static int _toOpacity(const char* str)
 {
     char* end = nullptr;
-    float opacity = svgUtilStrtof(str, &end);
+    float opacity = strToFloat(str, &end);
 
     if (end) {
         if (end[0] == '%' && end[1] == '\0') return lrint(opacity * 2.55f);
@@ -358,7 +358,7 @@ static void _parseDashArray(SvgLoaderData* loader, const char *str, SvgDash* das
 
     while (*str) {
         str = _skipComma(str);
-        float parsedValue = svgUtilStrtof(str, &end);
+        float parsedValue = strToFloat(str, &end);
         if (str == end) break;
         if (parsedValue <= 0.0f) break;
         if (*end == '%') {
@@ -389,7 +389,7 @@ static char* _idFromUrl(const char* url)
     int i = 0;
     while (url[i] > ' ' && url[i] != ')' && url[i] != '\'') ++i;
     
-    return svgUtilStrndup(url, i);
+    return strDuplicate(url, i);
 }
 
 
@@ -397,7 +397,7 @@ static unsigned char _parseColor(const char* value, char** end)
 {
     float r;
 
-    r = svgUtilStrtof(value, end);
+    r = strToFloat(value, end);
     *end = _skipSpace(*end, nullptr);
     if (**end == '%') {
         r = 255 * r / 100;
@@ -639,7 +639,7 @@ static char* _parseNumbersArray(char* str, float* points, int* ptCount, int len)
 
     str = _skipSpace(str, nullptr);
     while ((count < len) && (isdigit(*str) || *str == '-' || *str == '+' || *str == '.')) {
-        points[count++] = svgUtilStrtof(str, &end);
+        points[count++] = strToFloat(str, &end);
         str = end;
         str = _skipSpace(str, nullptr);
         if (*str == ',') ++str;
@@ -889,7 +889,7 @@ static bool _attrParseSvgNode(void* data, const char* key, const char* value)
     } else if (!strcmp(key, "style")) {
         return simpleXmlParseW3CAttribute(value, strlen(value), _parseStyleAttr, loader);
 #ifdef THORVG_LOG_ENABLED
-    } else if ((!strcmp(key, "x") || !strcmp(key, "y")) && fabsf(svgUtilStrtof(value, nullptr)) > FLT_EPSILON) {
+    } else if ((!strcmp(key, "x") || !strcmp(key, "y")) && fabsf(strToFloat(value, nullptr)) > FLT_EPSILON) {
         TVGLOG("SVG", "Unsupported attributes used [Elements type: Svg][Attribute: %s][Value: %s]", key, value);
 #endif
     } else {
@@ -975,7 +975,7 @@ static void _handleStrokeLineJoinAttr(TVG_UNUSED SvgLoaderData* loader, SvgNode*
 static void _handleStrokeMiterlimitAttr(SvgLoaderData* loader, SvgNode* node, const char* value)
 {
     char* end = nullptr;
-    const float miterlimit = svgUtilStrtof(value, &end);
+    const float miterlimit = strToFloat(value, &end);
 
     // https://www.w3.org/TR/SVG2/painting.html#LineJoin
     // - A negative value for stroke-miterlimit must be treated as an illegal value.
@@ -1137,7 +1137,7 @@ static bool _parseStyleAttr(void* data, const char* key, const char* value, bool
                 while (size > 0 && isspace(value[size - 1])) {
                     size--;
                 }
-                value = svgUtilStrndup(value, size);
+                value = strDuplicate(value, size);
                 importance = true;
             }
             if (style) {
