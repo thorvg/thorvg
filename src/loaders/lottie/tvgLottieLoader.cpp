@@ -20,7 +20,6 @@
  * SOFTWARE.
  */
 
-#include <math.h>
 #include "tvgLoader.h"
 #include "tvgLottieLoader.h"
 #include "tvgLottieModel.h"
