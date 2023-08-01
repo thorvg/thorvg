@@ -34,6 +34,10 @@ vec4 blit_color() {
         return dstColor * alpha;
     } else if (uMaskInfo.method == ALPHA_MASK) {
         return srcColor * dstColor.a * alpha;
+    } else if (uMaskInfo.method == INV_ALPHA_MASK) {
+        return srcColor * (1.0 - dstColor.a) * alpha;
+    } else if (uMaskInfo.method == LUMA_MASK) {
+        return srcColor * alpha * (0.299 * dstColor.r + 0.587 * dstColor.g + 0.114 * dstColor.b);
     } else {
         return srcColor;
     }
