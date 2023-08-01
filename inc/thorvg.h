@@ -818,7 +818,7 @@ public:
     /**
      * @brief Resets the properties of the shape path.
      *
-     * The color, the fill and the stroke properties are retained.
+     * The transformation matrix, the color, the fill and the stroke properties are retained.
      *
      * @return Result::Success when succeed.
      *
