@@ -5,6 +5,7 @@
 #include "tvgGlCommon.h"
 #include "tvgGlProgram.h"
 #include "tvgGlGeometry.h"
+#include "tvgGlCompositor.h"
 
 void GlCommand::execute()
 {
@@ -43,6 +44,10 @@ void GlCommand::execute()
 
 void GlRenderCommand::execute()
 {
+    if (cmp) {
+        cmp->resolveMSAA();
+    }
+
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, fboId));
     // setup scissor box
     GL_CHECK(glScissor(viewPort.x, viewPort.y, viewPort.w, viewPort.h));
@@ -58,4 +63,3 @@ void GlRenderCommand::execute()
     geometry->unBind();
     geometry->endClipMask();
 }
-

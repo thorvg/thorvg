@@ -35,7 +35,7 @@ struct BindingResource
     {
     }
 
-    BindingResource(uint32_t bindPoint,uint32_t texId, uint32_t location)
+    BindingResource(uint32_t bindPoint, uint32_t texId, uint32_t location)
         : type(BindingType::kTexture), bindPoint(bindPoint), location(location), texId(texId)
     {
     }
@@ -68,12 +68,15 @@ struct GlCommand
     void execute();
 };
 
+class GlCompositor;
+
 struct GlRenderCommand
 {
     RenderRegion           viewPort = {};
     GlGeometry*            geometry = nullptr;
     std::vector<GlCommand> commands;
     uint32_t               fboId = 0;
+    GlCompositor*          cmp = nullptr;
 
     void execute();
 };

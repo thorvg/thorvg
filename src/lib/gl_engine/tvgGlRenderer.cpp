@@ -78,7 +78,7 @@ bool GlRenderer::target(TVG_UNUSED uint32_t* buffer, uint32_t stride, uint32_t w
 bool GlRenderer::sync()
 {
     // Blend function for straight alpha
-    GL_CHECK(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
+    GL_CHECK(glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA));
     GL_CHECK(glEnable(GL_BLEND));
     GL_CHECK(glEnable(GL_SCISSOR_TEST));
     GL_CHECK(glScissor(mViewPort.x, mViewPort.y, mViewPort.w, mViewPort.h));
@@ -109,6 +109,7 @@ RenderRegion GlRenderer::region(TVG_UNUSED RenderData data)
 bool GlRenderer::preRender()
 {
     clearCompositors();
+    mDrawCommands.clear();
 
     return true;
 }
@@ -626,6 +627,7 @@ void GlRenderer::prepareBlitCMD(GlCompositor* cmp)
     blitCmd.viewPort.y = 0;
     blitCmd.viewPort.w = static_cast<int32_t>(surface.w);
     blitCmd.viewPort.h = static_cast<int32_t>(surface.h);
+    blitCmd.cmp = cmp;
 
     blitCmd.commands.emplace_back(cmd);
 
