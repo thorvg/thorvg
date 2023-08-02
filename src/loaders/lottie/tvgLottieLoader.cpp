@@ -25,6 +25,7 @@
 #include "tvgLottieModel.h"
 #include "tvgLottieParser.h"
 #include "tvgLottieBuilder.h"
+#include "tvgStr.h"
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
@@ -50,13 +51,8 @@ static int _str2int(const char* str, int len)
 
 static int _str2float(const char* str, int len)
 {
-    //strndup()
-    auto tmp = (char*)malloc(len + 1);
-    if (!tmp) return 0;
-    tmp[len] = '\0';
-    memcpy(tmp, str, len);
-
-    auto ret = strtof(tmp, nullptr);
+    auto tmp = strDuplicate(str, len);
+    auto ret = strToFloat(tmp, nullptr);
     free(tmp);
     return lround(ret);
 }
