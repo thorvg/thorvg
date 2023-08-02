@@ -33,6 +33,7 @@ static const char* NoError = "None";
 
 class __attribute__((visibility("default"))) TvgWasm
 {
+    //This structure data should be aligned with the ThorVG Viewer implementation.
     struct Layer
     {
         uint32_t paint;         //cast of a paint pointer
@@ -63,32 +64,23 @@ public:
     {
         errorMsg = NoError;
 
-        if (!canvas) {
-             errorMsg = "Invalid canvas";
-             return false;
-        }
+        if (!canvas) return false;
 
         if (data.empty()) {
             errorMsg = "Invalid data";
             return false;
         }
 
-        picture = Picture::gen().release();
-        if (!picture) {
-            errorMsg = "Invalid picture";
+        canvas->clear(true);
+
+        animation = Animation::gen();
+
+        if (animation->picture()->load(data.c_str(), data.size(), mimetype, false) != Result::Success) {
+            errorMsg = "load() fail";
             return false;
         }
 
-        canvas->clear();
-
-        if (picture->load(data.c_str(), data.size(), mimetype, false) != Result::Success) {
-            delete(picture);
-            picture = nullptr;
-            errorMsg = "Fail, load()";
-            return false;
-        }
-
-        picture->size(&psize[0], &psize[1]);
+        animation->picture()->size(&psize[0], &psize[1]);
 
         /* need to reset size to calculate scale in Picture.size internally before calling resize() */
         this->width = 0;
@@ -96,33 +88,23 @@ public:
 
         resize(width, height);
 
-        if (canvas->push(cast<Picture>(picture)) != Result::Success) {
-            errorMsg = "Fail, push()";
+        if (canvas->push(cast<Picture>(animation->picture())) != Result::Success) {
+            errorMsg = "push() fail";
             return false;
         }
 
         return true;
     }
 
-    bool update(int width, int height, bool force)
+    bool update()
     {
         errorMsg = NoError;
 
-        if (!canvas || !picture) {
-            errorMsg = "Invalid Conditions";
+        if (canvas->update() != Result::Success) {
+            errorMsg = "update() fail";
             return false;
         }
 
-        if (!force && this->width == width && this->height == height) {
-            return true;
-        }
-
-        resize(width, height);
-
-        if (canvas->update(picture) != Result::Success) {
-            errorMsg = "Fail, update()";
-            return false;
-        }
         return true;
     }
 
@@ -130,13 +112,10 @@ public:
     {
         errorMsg = NoError;
 
-        if (!canvas) {
-            errorMsg = "Invalid canvas";
-            return val(typed_memory_view<uint8_t>(0, nullptr));
-        }
+        if (!canvas || !animation) return val(typed_memory_view<uint8_t>(0, nullptr));
 
         if (canvas->draw() != Result::Success) {
-            errorMsg = "Fail, draw()";
+            errorMsg = "draw() fail";
             return val(typed_memory_view<uint8_t>(0, nullptr));
         }
 
@@ -150,49 +129,107 @@ public:
         return val(typed_memory_view(2, psize));
     }
 
+    val duration()
+    {
+        if (!canvas || !animation) return val(0);
+        return val(animation->duration());
+    }
+
+    val totalFrame()
+    {
+        if (!canvas || !animation) return val(0);
+        return val(animation->totalFrame());
+    }
+
+    bool frame(uint32_t no)
+    {
+        if (!canvas || !animation) return false;
+        if (animation->frame(no) != Result::Success) {
+            errorMsg = "frame() fail";
+            return false;
+        }
+        return true;
+    }
+
+    void resize(int width, int height)
+    {
+        if (!canvas || !animation) return;
+        if (this->width == width && this->height == height) return;
+
+        this->width = width;
+        this->height = height;
+
+        buffer = (uint8_t*)malloc(width * height * sizeof(uint32_t));
+        canvas->target((uint32_t *)buffer, width, width, height, SwCanvas::ABGR8888S);
+
+        float scale;
+        float shiftX = 0.0f, shiftY = 0.0f;
+        if (psize[0] > psize[1]) {
+            scale = width / psize[0];
+            shiftY = (height - psize[1] * scale) * 0.5f;
+        } else {
+            scale = height / psize[1];
+            shiftX = (width - psize[0] * scale) * 0.5f;
+        }
+        animation->picture()->scale(scale);
+        animation->picture()->translate(shiftX, shiftY);
+    }
+
     bool save(bool compress)
     {
         errorMsg = NoError;
+
+        if (!canvas || !animation) return false;
 
         auto saver = Saver::gen();
         if (!saver) {
             errorMsg = "Invalid saver";
             return false;
         }
-        auto duplicate = cast<Picture>(picture->duplicate());
+
+        auto duplicate = cast<Picture>(animation->picture()->duplicate());
 
         if (!duplicate) {
-            errorMsg = "Invalid dupliate";
+            errorMsg = "duplicate(), fail";
             return false;
         }
         if (saver->save(std::move(duplicate), "output.tvg", compress) != tvg::Result::Success) {
-            errorMsg = "Fail, save()";
+            errorMsg = "save(), fail";
             return false;
         }
+
         saver->sync();
+
         return true;
     }
 
     val layers()
     {
+        if (!canvas || !animation) return val(nullptr);
+
         //returns an array of a structure Layer: [id] [depth] [type] [composite]
         children.reset();
-        sublayers(&children, picture, 0);
+        sublayers(&children, animation->picture(), 0);
+
         return val(typed_memory_view(children.count * sizeof(Layer) / sizeof(uint32_t), (uint32_t *)(children.data)));
     }
 
-    bool opacity(uint32_t pid, uint8_t opacity)
+    bool opacity(uint32_t id, uint8_t opacity)
     {
-        auto paint = findPaintById(picture, pid, nullptr);
+        if (!canvas || !animation) return false;
+
+        auto paint = findPaintById(animation->picture(), id, nullptr);
         if (!paint) return false;
         const_cast<Paint*>(paint)->opacity(opacity);
         return true;
     }
 
-    val geometry(uint32_t pid)
+    val geometry(uint32_t id)
     {
+        if (!canvas || !animation) return val(typed_memory_view<float>(0, nullptr));
+
         Array<const Paint*> parents;
-        auto paint = findPaintById(picture, pid, &parents);
+        auto paint = findPaintById(animation->picture(), id, &parents);
         if (!paint) return val(typed_memory_view<float>(0, nullptr));
         paint->bounds(&bounds[0], &bounds[1], &bounds[2], &bounds[3], false);
 
@@ -225,38 +262,16 @@ private:
     {
         errorMsg = NoError;
 
-        Initializer::init(CanvasEngine::Sw, 0);
-        canvas = SwCanvas::gen();
-        if (!canvas) {
-            errorMsg = "Invalid canvas";
+        if (Initializer::init(CanvasEngine::Sw, 0) != Result::Success) {
+            errorMsg = "init() fail";
             return;
         }
-    }
 
-    void resize(int width, int height)
-    {
-        if (!canvas) return;
-        if (this->width == width && this->height == height) return;
+        canvas = SwCanvas::gen();
+        if (!canvas) errorMsg = "Invalid canvas";
 
-        this->width = width;
-        this->height = height;
-
-        buffer = (uint8_t*)malloc(width * height * sizeof(uint32_t));
-        canvas->target((uint32_t *)buffer, width, width, height, SwCanvas::ABGR8888S);
-
-        if (picture) {
-            float scale;
-            float shiftX = 0.0f, shiftY = 0.0f;
-            if (psize[0] > psize[1]) {
-                scale = width / psize[0];
-                shiftY = (height - psize[1] * scale) * 0.5f;
-            } else {
-                scale = height / psize[1];
-                shiftX = (width - psize[0] * scale) * 0.5f;
-            }
-            picture->scale(scale);
-            picture->translate(shiftX, shiftY);
-        }
+        animation = Animation::gen();
+        if (!animation) errorMsg = "Invalid animation";
     }
 
     void sublayers(Array<Layer>* layers, const Paint* paint, uint32_t depth)
@@ -317,7 +332,7 @@ private:
 private:
     string                 errorMsg;
     unique_ptr<SwCanvas>   canvas = nullptr;
-    Picture*               picture = nullptr;
+    unique_ptr<Animation>  animation = nullptr;
     uint8_t*               buffer = nullptr;
     Array<Layer>           children;
     uint32_t               width = 0;
@@ -333,8 +348,12 @@ EMSCRIPTEN_BINDINGS(thorvg_bindings) {
     .function("error", &TvgWasm::error, allow_raw_pointers())
     .function("load", &TvgWasm::load)
     .function("update", &TvgWasm::update)
+    .function("resize", &TvgWasm::resize)
     .function("render", &TvgWasm::render)
     .function("size", &TvgWasm::size)
+    .function("duration", &TvgWasm::duration)
+    .function("totalFrame", &TvgWasm::totalFrame)
+    .function("frame", &TvgWasm::frame)
     .function("save", &TvgWasm::save)
     .function("layers", &TvgWasm::layers)
     .function("geometry", &TvgWasm::geometry)
