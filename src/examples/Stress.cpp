@@ -34,11 +34,12 @@ static bool rendered = false;
 static int xCnt = 0;
 static int yCnt = 0;
 static int frame = 0;
-static std::vector<tvg::Picture*> pictures;
 static double t1, t2, t3, t4;
 
 void svgDirCallback(const char* name, const char* path, void* data)
 {
+    tvg::Canvas* canvas = static_cast<tvg::Canvas*>(data);
+
     if (yCnt > NUM_PER_LINE) return;        //Load maximum to NUM_PER_LINE
 
     //ignore if not svgs.
@@ -72,14 +73,14 @@ void svgDirCallback(const char* name, const char* path, void* data)
 
     //Duplicates
     for (int i = 0; i < NUM_PER_LINE - 1; i++) {
-        tvg::Picture* dup = static_cast<tvg::Picture*>(picture->duplicate());
+        auto dup = tvg::cast<tvg::Picture>(picture->duplicate());
         dup->translate((xCnt % NUM_PER_LINE) * SIZE + shiftX, SIZE * (xCnt / NUM_PER_LINE) + shiftY);
-        pictures.push_back(dup);
+        canvas->push(std::move(dup));
         ++xCnt;
     }
 
     cout << "SVG: " << buf << endl;
-    pictures.push_back(picture.release());
+    canvas->push(std::move(picture));
 
     ++yCnt;
 }
@@ -96,14 +97,6 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     if (canvas->push(std::move(shape)) != tvg::Result::Success) return;
 
     eina_file_dir_list(EXAMPLE_DIR, EINA_TRUE, svgDirCallback, canvas);
-
-    /* This showcase shows you asynchrounous loading of svg.
-       For this, pushing pictures at a certian sync time.
-       This means it earns the time to finish loading svg resources,
-       otherwise you can push pictures immediately. */
-    for (auto picture : pictures) {
-        canvas->push(tvg::cast<tvg::Picture>(picture));
-    }
 }
 
 
@@ -147,10 +140,14 @@ void transitSwCb(Elm_Transit_Effect *effect, Elm_Transit* transit, double progre
 
     t1 = ecore_time_get();
 
-    for (auto picture : pictures) {
+    auto& list = swCanvas->paints();
+
+    for (auto picture : list) {
+        if (picture->identifier() != tvg::Picture::identifier()) continue;
         picture->rotate(progress * 360);
-        swCanvas->update(picture);
     }
+
+    swCanvas->update();
 
     t2 = ecore_time_get();
 
@@ -197,10 +194,14 @@ void drawGLview(Evas_Object *obj)
 
 void transitGlCb(Elm_Transit_Effect *effect, Elm_Transit* transit, double progress)
 {
-    for (auto picture : pictures) {
+    auto& list = glCanvas->paints();
+
+    for (auto picture : list) {
+        if (picture->identifier() != tvg::Picture::identifier()) continue;
         picture->rotate(progress * 360);
-        glCanvas->update(picture);
     }
+
+    glCanvas->update();
 }
 
 
