@@ -25,7 +25,7 @@ option('bindings',
    type: 'array',
    choices: ['', 'capi'],
    value: [''],
-   description: 'Enable C API binding')
+   description: 'Enable API bindings')
 
 option('tools',
    type: 'array',

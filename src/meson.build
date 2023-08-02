@@ -40,13 +40,14 @@ endif
 subdir('lib')
 subdir('loaders')
 subdir('savers')
-subdir('bindings')
 
-thorvg_lib_dep = [common_dep, loader_dep, saver_dep, binding_dep]
+thorvg_lib_dep = [common_dep, loader_dep, saver_dep]
 if host_machine.system() != 'windows'
     thread_dep = meson.get_compiler('cpp').find_library('pthread')
     thorvg_lib_dep += [thread_dep]
 endif
+
+subdir('bindings')
 
 thorvg_lib = library(
     'thorvg',
