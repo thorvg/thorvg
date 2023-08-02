@@ -33,10 +33,12 @@ GLuint GlCompositor::sourceTex() const
     return texId[1];
 }
 
+static const GLenum color_buffer = GL_COLOR_ATTACHMENT0;
+
+static const float transparent[] = {0.f, 0.f, 0.f, 0.f};
+
 void GlCompositor::init(uint32_t width, uint32_t height)
 {
-    GL_CHECK(glClearColor(0, 0, 0, 0));
-
     GL_CHECK(glGenFramebuffers(2, fboId));
 
     GL_CHECK(glGenTextures(2, texId));
@@ -54,12 +56,14 @@ void GlCompositor::init(uint32_t width, uint32_t height)
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, fboId[0]));
     GL_CHECK(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texId[0], 0));
 
-    GL_CHECK(glClear(GL_COLOR_BUFFER_BIT));
+    GL_CHECK(glDrawBuffers(1, &color_buffer));
+    GL_CHECK(glClearBufferfv(GL_COLOR, 0, transparent));
 
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, fboId[1]));
     GL_CHECK(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texId[1], 0));
 
-    GL_CHECK(glClear(GL_COLOR_BUFFER_BIT));
+    GL_CHECK(glDrawBuffers(1, &color_buffer));
+    GL_CHECK(glClearBufferfv(GL_COLOR, 0, transparent));
 
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, 0));
 }

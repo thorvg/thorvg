@@ -34,9 +34,9 @@ void main() {
     if (uColorInfo.format == FMT_ABGR8888) {
          result = color;   
     } else if (uColorInfo.format == FMT_ARGB8888) {
-        result.r = color.b;
-        result.g = color.g;
-        result.b = color.r;
+        result.r = color.b * color.a;
+        result.g = color.g * color.a;
+        result.b = color.r * color.a;
         result.a = color.a;
     } else if (uColorInfo.format == FMT_ABGR8888S) {
         result = vec4(color.rgb * color.a, color.a);
@@ -50,5 +50,5 @@ void main() {
     float opacity = float(uColorInfo.opacity) / 255.0;
 
 
-    FragColor = vec4(result.rgb * aOpacity * opacity, result.a * aOpacity * opacity);
+    FragColor = vec4(result.rgb, result.a * aOpacity * opacity);
 }
