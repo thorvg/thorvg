@@ -296,7 +296,17 @@ TVG_API Tvg_Result tvg_shape_append_circle(Tvg_Paint* paint, float cx, float cy,
 TVG_API Tvg_Result tvg_shape_append_path(Tvg_Paint* paint, const Tvg_Path_Command* cmds, uint32_t cmdCnt, const Tvg_Point* pts, uint32_t ptsCnt)
 {
     if (!paint) return TVG_RESULT_INVALID_ARGUMENT;
-    return (Tvg_Result) reinterpret_cast<Shape*>(paint)->appendPath((const PathCommand*)cmds, cmdCnt, (const Point*)pts, ptsCnt);
+    PathCommand* converted = (PathCommand*)malloc(sizeof(PathCommand) * cmdCnt);
+
+    //The origin PathCommand is 1 bytes type.
+    for (uint32_t i = 0; i < cmdCnt; ++i)
+        converted[i] = (PathCommand)cmds[i];
+
+    auto ret = (Tvg_Result) reinterpret_cast<Shape*>(paint)->appendPath(converted, cmdCnt, (const Point*)pts, ptsCnt);
+
+    free(converted);
+
+    return ret;
 }
 
 
@@ -308,10 +318,19 @@ TVG_API Tvg_Result tvg_shape_get_path_coords(const Tvg_Paint* paint, const Tvg_P
 }
 
 
-TVG_API Tvg_Result tvg_shape_get_path_commands(const Tvg_Paint* paint, const Tvg_Path_Command** cmds, uint32_t* cnt)
+TVG_API Tvg_Result tvg_shape_get_path_commands(const Tvg_Paint* paint, Tvg_Path_Command** cmds, uint32_t* cnt)
 {
     if (!paint || !cmds || !cnt) return TVG_RESULT_INVALID_ARGUMENT;
-    *cnt = reinterpret_cast<const Shape*>(paint)->pathCommands((const PathCommand**)cmds);
+
+    const PathCommand* converted = nullptr;
+    *cnt = reinterpret_cast<const Shape*>(paint)->pathCommands(&converted);
+
+    *cmds = (Tvg_Path_Command*) malloc(sizeof(Tvg_Path_Command) * *cnt);
+
+    //The origin PathCommand is 1 bytes type.
+    for (uint32_t i = 0; i < *cnt; ++i)
+        (*cmds)[i] = (Tvg_Path_Command) converted[i];
+
     return TVG_RESULT_SUCCESS;
 }
 

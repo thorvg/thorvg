@@ -76,7 +76,7 @@ void testCapi()
 
 //////2. Solid transformed shape
     //Set a shape
-    const Tvg_Path_Command* cmds;
+    Tvg_Path_Command* cmds = NULL;
     uint32_t cmdCnt;
     const Tvg_Point* pts;
     uint32_t ptsCnt;
@@ -97,6 +97,7 @@ void testCapi()
     tvg_canvas_push(canvas, shape1);
     tvg_canvas_push(canvas, shape2);
 
+    free(cmds);
 
 //////3. Radial gradient shape with a radial dashed stroke
     //Set a shape

@@ -66,7 +66,7 @@ TEST_CASE("Shape path", "[capiShapePath]")
     Tvg_Paint* paint = tvg_shape_new();
     REQUIRE(paint);
 
-    Tvg_Path_Command* cmds_get;
+    Tvg_Path_Command* cmds_get = NULL;
     Tvg_Point* pts_get;
     uint32_t cnt;
     uint32_t i;
@@ -98,11 +98,12 @@ TEST_CASE("Shape path", "[capiShapePath]")
 
     REQUIRE(tvg_shape_append_path(paint, cmds, 11, pts, 10) == TVG_RESULT_SUCCESS);
 
-    REQUIRE(tvg_shape_get_path_commands(paint, (const Tvg_Path_Command**) &cmds_get, &cnt) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_shape_get_path_commands(paint, &cmds_get, &cnt) == TVG_RESULT_SUCCESS);
     REQUIRE(cnt == 11);
     for (i = 0; i < cnt; i++) {
         REQUIRE(cmds_get[i] == cmds[i]);
     }
+    free(cmds_get);
 
     REQUIRE(tvg_shape_get_path_coords(paint, (const Tvg_Point**) &pts_get, &cnt) == TVG_RESULT_SUCCESS);
     REQUIRE(cnt == 10);

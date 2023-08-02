@@ -1180,7 +1180,7 @@ TVG_API Tvg_Result tvg_shape_get_path_coords(const Tvg_Paint* paint, const Tvg_P
 /*!
 * \brief Gets the commands data of the path.
 *
-* The function does not allocate any data. There is no need to free the @p cmds array.
+* After using the data, You need to free the @p cmds array.
 *
 * \code
 * Tvg_Shape *shape = tvg_shape_new();
@@ -1200,7 +1200,7 @@ TVG_API Tvg_Result tvg_shape_get_path_coords(const Tvg_Paint* paint, const Tvg_P
 * \retval TVG_RESULT_SUCCESS Succeed.
 * \retval TVG_RESULT_INVALID_ARGUMENT A @c nullptr passed as the argument.
 */
-TVG_API Tvg_Result tvg_shape_get_path_commands(const Tvg_Paint* paint, const Tvg_Path_Command** cmds, uint32_t* cnt);
+TVG_API Tvg_Result tvg_shape_get_path_commands(const Tvg_Paint* paint, Tvg_Path_Command** cmds, uint32_t* cnt);
 
 
 /*!
