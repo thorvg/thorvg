@@ -45,12 +45,26 @@ vec4 blit_color() {
         vec4 color = srcColor + dstColor * (1.0 - srcColor.a);
         return min(color, vec4(1.0, 1.0, 1.0, 1.0));
     } else if (uMaskInfo.method == SUB_MASK) {
-        return dstColor * alpha * (abs(dstColor.a - srcColor.a));
+        float a = dstColor.a - srcColor.a;
+        if (a <= 0.0) {
+            return vec4(0.0, 0.0, 0.0, 0.0);
+        } else {
+            return dstColor * alpha * a;
+        }
     } else if (uMaskInfo.method == INTERSECT) {
         float intAlpha = srcColor.a * dstColor.a;
         return dstColor * alpha * intAlpha;
     } else if (uMaskInfo.method == DIFF_MASK) {
-        return abs(srcColor - dstColor);
+        float da = srcColor.a - dstColor.a;
+        if (abs(da) == 0.0) {
+            return vec4(0.0, 0.0, 0.0, 0.0);
+        } else {
+            if (da > 0.0) {
+                return srcColor * da;
+            } else {
+                return dstColor * (-da);
+            }
+        }
     } else {
         return srcColor;
     }
