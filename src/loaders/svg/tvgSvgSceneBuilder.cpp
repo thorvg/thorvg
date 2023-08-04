@@ -24,6 +24,7 @@
 #include <cstring>
 #include <string>
 #include "tvgCompressor.h"
+#include "tvgPaint.h"
 #include "tvgSvgLoaderCommon.h"
 #include "tvgSvgSceneBuilder.h"
 #include "tvgSvgPath.h"
@@ -220,6 +221,26 @@ static bool _appendClipChild(SvgNode* node, Shape* shape, const Box& vBox, const
 }
 
 
+static Matrix _compositionTransform(Paint* paint, const SvgNode* node, const SvgNode* compNode, SvgNodeType type)
+{
+    Matrix m = {1, 0, 0, 0, 1, 0, 0, 0, 1};
+    //The initial mask transformation ignored according to the SVG standard.
+    if (node->transform && type != SvgNodeType::Mask) {
+        m = *node->transform;
+    }
+    if (compNode->transform) {
+        m = mathMultiply(&m, compNode->transform);
+    }
+    if (!compNode->node.clip.userSpace) {
+        float x, y, w, h;
+        P(paint)->bounds(&x, &y, &w, &h, false, false);
+        Matrix mBBox = {w, 0, x, 0, h, y, 0, 0, 1};
+        m = mathMultiply(&m, &mBBox);
+    }
+    return m;
+}
+
+
 static void _applyComposition(Paint* paint, const SvgNode* node, const Box& vBox, const string& svgPath)
 {
     /* ClipPath */
@@ -241,13 +262,12 @@ static void _applyComposition(Paint* paint, const SvgNode* node, const Box& vBox
                 if (_appendClipChild(*child, comp.get(), vBox, svgPath, compNode->child.count > 1)) valid = true;
             }
 
-            if (node->transform) {
-                auto m = comp->transform();
-                m = mathMultiply(node->transform, &m);
-                comp->transform(m);
-            }
+            if (valid) {
+                Matrix finalTransform = _compositionTransform(paint, node, compNode, SvgNodeType::ClipPath);
+                comp->transform(finalTransform);
 
-            if (valid) paint->composite(std::move(comp), CompositeMethod::ClipPath);
+                paint->composite(std::move(comp), CompositeMethod::ClipPath);
+            }
 
             node->style->clipPath.applying = false;
         }
@@ -264,9 +284,9 @@ static void _applyComposition(Paint* paint, const SvgNode* node, const Box& vBox
             node->style->mask.applying = true;
 
             bool isMaskWhite = true;
-            auto comp = _sceneBuildHelper(compNode, vBox, svgPath, true, 0, &isMaskWhite);
-            if (comp) {
-                if (node->transform) comp->transform(*node->transform);
+            if (auto comp = _sceneBuildHelper(compNode, vBox, svgPath, true, 0, &isMaskWhite)) {
+                Matrix finalTransform = _compositionTransform(paint, node, compNode, SvgNodeType::Mask);
+                comp->transform(finalTransform);
 
                 if (compNode->node.mask.type == SvgMaskType::Luminance && !isMaskWhite) {
                     paint->composite(std::move(comp), CompositeMethod::LumaMask);
