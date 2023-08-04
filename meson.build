@@ -83,7 +83,7 @@ if get_option('bindings').contains('capi') == true
     config_h.set10('THORVG_CAPI_BINDING_SUPPORT', true)
 endif
 
-if get_option('bindings').contains('wasm') == true
+if get_option('bindings').contains('wasm_beta') == true
     config_h.set10('THORVG_WASM_BINDING_SUPPORT', true)
 endif
 
@@ -131,7 +131,7 @@ Summary:
     Loader (LOTTIE_BETA):  @11@
     Saver (TVG):           @12@
     Binding (CAPI):        @13@
-    Binding (WASM):        @14@
+    Binding (WASM_BETA):   @14@
     Log Message:           @15@
     Tests:                 @16@
     Examples:              @17@
@@ -153,7 +153,7 @@ Summary:
         get_option('loaders').contains('lottie_beta'),
         all_savers or get_option('savers').contains('tvg'),
         get_option('bindings').contains('capi'),
-        get_option('bindings').contains('wasm'),
+        get_option('bindings').contains('wasm_beta'),
         get_option('log'),
         get_option('tests'),
         get_option('examples'),
