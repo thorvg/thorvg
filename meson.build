@@ -83,6 +83,10 @@ if get_option('bindings').contains('capi') == true
     config_h.set10('THORVG_CAPI_BINDING_SUPPORT', true)
 endif
 
+if get_option('bindings').contains('wasm') == true
+    config_h.set10('THORVG_WASM_BINDING_SUPPORT', true)
+endif
+
 #Log
 if get_option('log') == true
     config_h.set10('THORVG_LOG_ENABLED', true)
@@ -126,12 +130,13 @@ Summary:
     Loader (WEBP_BETA):    @10@
     Loader (LOTTIE_BETA):  @11@
     Saver (TVG):           @12@
-    CAPI Binding:          @13@
-    Log Message:           @14@
-    Tests:                 @15@
-    Examples:              @16@
-    Tool (Svg2Tvg):        @17@
-    Tool (Svg2Png):        @18@
+    Binding (CAPI):        @13@
+    Binding (WASM):        @14@
+    Log Message:           @15@
+    Tests:                 @16@
+    Examples:              @17@
+    Tool (Svg2Tvg):        @18@
+    Tool (Svg2Png):        @19@
 
 '''.format(
         meson.project_version(),
@@ -148,6 +153,7 @@ Summary:
         get_option('loaders').contains('lottie_beta'),
         all_savers or get_option('savers').contains('tvg'),
         get_option('bindings').contains('capi'),
+        get_option('bindings').contains('wasm'),
         get_option('log'),
         get_option('tests'),
         get_option('examples'),
