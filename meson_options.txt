@@ -23,7 +23,7 @@ option('vector',
 
 option('bindings',
    type: 'array',
-   choices: ['', 'capi', 'wasm'],
+   choices: ['', 'capi', 'wasm_beta'],
    value: [''],
    description: 'Enable API bindings')
 
