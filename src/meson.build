@@ -60,16 +60,6 @@ thorvg_lib = library(
     override_options       : override_options
 )
 
-if (cc.get_id() == 'emscripten')
-    subdir('wasm')
-
-    executable('thorvg-wasm',
-        [],
-        include_directories : headers,
-        dependencies : [thorvg_lib_dep, thorvg_wasm_dep],
-        )
-endif
-
 pkg_mod = import('pkgconfig')
 
 pkg_mod.generate(
