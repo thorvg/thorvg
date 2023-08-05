@@ -129,6 +129,8 @@ static SDL_Window* createSwView(uint32_t w = 800, uint32_t h = 800)
     return win;
 }
 
+#ifndef NO_GL_EXAMPLE
+
 void initGLview(SDL_Window* win);
 void drawGLview(SDL_Window* win);
 
@@ -177,15 +179,16 @@ static SDL_Window* createGlView(uint32_t w = 800, uint32_t h = 800)
                 runing = false;
                 break;
             }
-
-            drawGLview(win);
-
-            SDL_GL_SwapWindow(win);
         }
+        drawGLview(win);
+
+        SDL_GL_SwapWindow(win);
+
+        SDL_Delay(0);
     }
 
 
     return win;
 }
 
-#endif //NO_GL_EXAMPLE
+#endif  // NO_GL_EXAMPLE
