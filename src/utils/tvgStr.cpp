@@ -26,7 +26,6 @@
 #include "tvgMath.h"
 #include "tvgStr.h"
 
-#if defined(THORVG_SVG_LOADER_SUPPORT) || defined(THORVG_LOTTIE_LOADER_SUPPORT)
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
@@ -219,5 +218,3 @@ char* strDuplicate(const char *str, size_t n)
 }
 
 }
-
-#endif
