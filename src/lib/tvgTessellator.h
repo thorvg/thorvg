@@ -108,6 +108,8 @@ public:
 
 private:
     void doStroke(const PathCommand *cmds, uint32_t cmd_count, const Point *pts, uint32_t pts_count);
+    void doDashStroke(const PathCommand *cmds, uint32_t cmd_count, const Point *pts, uint32_t pts_count,
+                      uint32_t dash_count, const float *dash_pattern);
 
     float strokeRadius() const
     {
@@ -137,6 +139,35 @@ private:
     StrokeCap        mStrokeCap = StrokeCap::Square;
     StrokeJoin       mStrokeJoin = StrokeJoin::Bevel;
     State            mStrokeState = {};
+};
+
+class DashStroke
+{
+public:
+    DashStroke(Array<PathCommand> *cmds, Array<Point> *pts, uint32_t dash_count, const float *dash_pattern);
+
+    ~DashStroke() = default;
+
+    void doStroke(const PathCommand *cmds, uint32_t cmd_count, const Point *pts, uint32_t pts_count);
+
+private:
+    void dashLineTo(const Point &pt);
+    void dashCubicTo(const Point &pt1, const Point &pt2, const Point &pt3);
+
+    void moveTo(const Point &pt);
+    void lineTo(const Point &pt);
+    void cubicTo(const Point &pt1, const Point &pt2, const Point &pt3);
+
+private:
+    Array<PathCommand> *mCmds;
+    Array<Point>       *mPts;
+    uint32_t            mDashCount;
+    const float        *mDashPattern;
+    float               mCurrLen;
+    int32_t             mCurrIdx;
+    bool                mCurOpGap;
+    Point               mPtStart;
+    Point               mPtCur;
 };
 
 }  // namespace tvg

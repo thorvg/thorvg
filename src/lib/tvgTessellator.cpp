@@ -730,6 +730,25 @@ Orientation _calcOrientation(const Point &dir1, const Point &dir2)
     return val > 0 ? Orientation::Clockwise : Orientation::CounterClockwise;
 }
 
+struct Line
+{
+    Point p1;
+    Point p2;
+};
+
+void _lineSplitAt(const Line &line, float at, Line *left, Line *right)
+{
+    auto len = pointLength(line.p2 - line.p1);
+    auto dx = ((line.p2.x - line.p1.x) / len) * at;
+    auto dy = ((line.p2.y - line.p1.y) / len) * at;
+
+    left->p1 = line.p1;
+    left->p2 = {line.p1.x + dx, line.p1.y + dy};
+
+    right->p1 = left->p2;
+    right->p2 = line.p2;
+}
+
 }  // namespace detail
 
 Tessellator::Tessellator(Array<float> *points, Array<uint32_t> *indices)
@@ -1675,7 +1694,14 @@ void Stroker::stroke(const RenderShape *rshape)
     auto pts = rshape->path.pts.data;
     auto ptsCnt = rshape->path.pts.count;
 
-    doStroke(cmds, cmdCnt, pts, ptsCnt);
+    const float *dash_pattern = nullptr;
+    auto         dash_count = rshape->strokeDash(&dash_pattern);
+
+    if (dash_count == 0) {
+        doStroke(cmds, cmdCnt, pts, ptsCnt);
+    } else {
+        doDashStroke(cmds, cmdCnt, pts, ptsCnt, dash_count, dash_pattern);
+    }
 }
 
 void Stroker::doStroke(const PathCommand *cmds, uint32_t cmd_count, const Point *pts, uint32_t pts_count)
@@ -1715,6 +1741,22 @@ void Stroker::doStroke(const PathCommand *cmds, uint32_t cmd_count, const Point 
                 break;
         }
     }
+}
+
+void Stroker::doDashStroke(const PathCommand *cmds, uint32_t cmd_count, const Point *pts, uint32_t pts_count,
+                           uint32_t dast_count, const float *dash_pattern)
+{
+    Array<PathCommand> dash_cmds{};
+    Array<Point>       dash_pts{};
+
+    dash_cmds.reserve(20 * cmd_count);
+    dash_pts.reserve(20 * pts_count);
+
+    DashStroke dash(&dash_cmds, &dash_pts, dast_count, dash_pattern);
+
+    dash.doStroke(cmds, cmd_count, pts, pts_count);
+
+    this->doStroke(dash_cmds.data, dash_cmds.count, dash_pts.data, dash_pts.count);
 }
 
 void Stroker::strokeCap()
@@ -1928,6 +1970,170 @@ void Stroker::strokeBevel(const Point &prev, const Point &curr, const Point &cen
     mResIndices->push(a);
     mResIndices->push(b);
     mResIndices->push(c);
+}
+
+DashStroke::DashStroke(Array<PathCommand> *cmds, Array<Point> *pts, uint32_t dash_count, const float *dash_pattern)
+    : mCmds(cmds),
+      mPts(pts),
+      mDashCount(dash_count),
+      mDashPattern(dash_pattern),
+      mCurrLen(),
+      mCurrIdx(),
+      mCurOpGap(false),
+      mPtStart(),
+      mPtCur()
+{
+}
+
+void DashStroke::doStroke(const PathCommand *cmds, uint32_t cmd_count, const Point *pts, uint32_t pts_count)
+{
+    for (uint32_t i = 0; i < cmd_count; i++) {
+        switch (*cmds) {
+            case PathCommand::Close: {
+                this->dashLineTo(mPtStart);
+                break;
+            }
+
+            case PathCommand::MoveTo: {
+                // reset the dash state
+                mCurrIdx = 0;
+                mCurrLen = 0.f;
+                mCurOpGap = false;
+                mPtStart = mPtCur = *pts;
+                pts++;
+                break;
+            }
+            case PathCommand::LineTo: {
+                this->dashLineTo(*pts);
+                pts++;
+                break;
+            }
+
+            case PathCommand::CubicTo: {
+                this->dashCubicTo(pts[0], pts[1], pts[2]);
+                pts += 3;
+                break;
+            }
+            default:
+                break;
+        }
+        cmds++;
+    }
+}
+
+void DashStroke::dashLineTo(const Point &to)
+{
+    float len = pointLength(mPtCur - to);
+
+    if (len < mCurrLen) {
+        mCurrLen -= len;
+
+        if (!mCurOpGap) {
+            this->moveTo(mPtCur);
+            this->lineTo(to);
+        }
+    } else {
+        detail::Line curr{mPtCur, to};
+
+        while (len > mCurrLen) {
+            len -= mCurrLen;
+
+            detail::Line left, right;
+
+            detail::_lineSplitAt(curr, mCurrLen, &left, &right);
+
+            mCurrIdx = (mCurrIdx + 1) % mDashCount;
+            if (!mCurOpGap) {
+                this->moveTo(left.p1);
+                this->lineTo(left.p2);
+            }
+            mCurrLen = mDashPattern[mCurrIdx];
+            mCurOpGap = !mCurOpGap;
+            curr = right;
+            mPtCur = curr.p1;
+        }
+        mCurrLen -= len;
+        if (!mCurOpGap) {
+            this->moveTo(curr.p1);
+            this->lineTo(curr.p2);
+        }
+
+        if (mCurrLen < 1) {
+            mCurrIdx = (mCurrIdx + 1) % mDashCount;
+            mCurrLen = mDashPattern[mCurrIdx];
+            mCurOpGap = !mCurOpGap;
+        }
+    }
+
+    mPtCur = to;
+}
+
+void DashStroke::dashCubicTo(const Point &cnt1, const Point &cnt2, const Point &end)
+{
+    Bezier cur = {mPtCur, cnt1, cnt2, end};
+
+    auto len = bezLength(cur);
+
+    if (len < mCurrLen) {
+        mCurrLen -= len;
+        if (!mCurOpGap) {
+            this->moveTo(mPtCur);
+            this->cubicTo(cnt1, cnt2, end);
+        }
+    } else {
+        while (len > mCurrLen) {
+            len -= mCurrLen;
+
+            Bezier left, right;
+
+            bezSplitAt(cur, mCurrLen, left, right);
+
+            if (mCurrIdx == 0) {
+                this->moveTo(left.start);
+                this->cubicTo(left.ctrl1, left.ctrl2, left.end);
+            }
+
+            mCurrIdx = (mCurrIdx + 1) % mDashCount;
+            mCurrLen = mDashPattern[mCurrIdx];
+            mCurOpGap = !mCurOpGap;
+            cur = right;
+            mPtCur = cur.start;
+        }
+
+        mCurrLen -= len;
+        if (!mCurOpGap) {
+            this->moveTo(cur.start);
+            this->cubicTo(cur.ctrl1, cur.ctrl2, cur.end);
+        }
+
+        if (mCurrLen < 1) {
+            mCurrIdx = (mCurrIdx + 1) % mDashCount;
+            mCurrLen = mDashPattern[mCurrIdx];
+            mCurOpGap = !mCurOpGap;
+        }
+    }
+
+    mPtCur = end;
+}
+
+void DashStroke::moveTo(const Point &pt)
+{
+    mPts->push(pt);
+    mCmds->push(PathCommand::MoveTo);
+}
+
+void DashStroke::lineTo(const Point &pt)
+{
+    mPts->push(pt);
+    mCmds->push(PathCommand::LineTo);
+}
+
+void DashStroke::cubicTo(const Point &cnt1, const Point &cnt2, const Point &end)
+{
+    mPts->push(cnt1);
+    mPts->push(cnt2);
+    mPts->push(end);
+    mCmds->push(PathCommand::CubicTo);
 }
 
 }  // namespace tvg
