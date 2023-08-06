@@ -1,24 +1,24 @@
-We always appreciate your contribution. ThorVG doesn't expect perfect patch contributions, instead we expect contributions if your patch makes thorvg better than before. This page guides the ThorVG contribution format.<br />
+We always appreciate your contribution. ThorVG doesn't expect patches to be perfect; instead, we value contributions that make ThorVG better than before. This page outlines the ThorVG contribution format.<br />
 <br />
 ## Reviewers
-Hermet Park (hermet) is the lead maintainer. Also there are designated maintainers you can request your pull-request for separate modules.
+Hermet Park (hermet) is the lead maintainer. Additionally, there are designated maintainers to whom you can direct your pull requests for separate modules.
 
-<b>common:</b> Junsu Choi (JSUYA), Mira Grudzinska (mgrudzinska) <br />
 <b>sw_engine:</b> Junsu Choi (JSUYA), Mira Grudzinska (mgrudzinska) <br />
 <b>svg_loader:</b> Junsu Choi (JSUYA), Mira Grudzinska (mgrudzinska) <br />
-<b>tvg_saver:</b> Mira Grudzinska (mgrudzinska) <br />
 <b>tvg_loader:</b> Mira Grudzinska (mgrudzinska) <br />
-<b>svg2png:</b> Junsu Choi (JSUYA) <br />
+<b>webp_loader:</b> Junsu Choi (JSUYA) <br />
+<b>tvg_saver:</b> Mira Grudzinska (mgrudzinska) <br />
 <b>capi:</b> Mira Grudzinska (mgrudzinska) <br />
 <b>test:</b> Junsu Choi (JSUYA), Mira Grudzinska (mgrudzinska) <br />
+<b>svg2png:</b> Junsu Choi (JSUYA) <br />
 <b>examples:</b> Junsu Choi (JSUYA), Mira Grudzinska (mgrudzinska) <br />
 <br />
 
 ## Self Test & Verification
-After updating ThorVG code, please verify your change doesn't break the library. We suggest unit-tests using the Catch2 framework. You can easily run it with build commands as the following: <br />
+After updating the ThorVG code, please ensure your changes don't break the library. We recommend conducting unit tests. You can easily run them using the following build commands: <br />
 <br/>
 `
-$meson . build -Dtests=true -Dloaders="all" -Dsavers="tvg" -Dbindings="capi" -Dtools="all" -Dlog=true
+$meson . build -Dtests=true -Dloaders="all" -Dsavers="all" -Dbindings="capi" -Dtools="all" -Dlog=true
 `
 <br />
 `
@@ -39,69 +39,66 @@ Timeout:            0<br/>
 
 [Description]
 
-- [Module] is a sub module majorly affected by your change. Most of times this indicates a sub folder name.
-This indicates whom need to review your patch as well.
-If your change don't belonged to any sub modules, you can replace with proper name or skip it.
-The name must be written in all lower alphabet characters.
-  - ex) build / doc / infra / common / sw_engine / gl_engine / svg_loader / examples / wasm / svg2png  ...
+- [Module] refers to the sub-module primarily affected by your change. Most of the time, this indicates the name of a sub-folder.
+This also suggests who might need to review your patch.
+If your change doesn't belong to any sub-modules, you can either replace this with a suitable name or skip it.
+The name should be written entirely in lowercase letters.
+  - e.g., build, doc, infra, common, sw_engine, gl_engine, svg_loader, examples, wasm, svg2png...
 
-- [Feature] is what major function/feature you changed. Normally this indicates a representive file name.
-You can keep the file name, but don't please contain any prefix(tvg) nor suffix(Impl) here.
-  - ex) Canvas / TaskScehduler / SvgLoader / SvgBuilder / SwRle / GlRenderer / ...
+- [Feature] indicates the primary function or feature you modified. Typically, this represents a file name.
+Retain the original file name, but please don't include any prefixes (e.g., "tvg") or suffixes (e.g., "Impl") here.
+  - e.g., Canvas, TaskScheduler, SvgLoader, SvgBuilder, SwRle, GlRenderer...
 
-- [Title] is a brief description of your change. It must be described in one sentence.
-  - ex) "Fixed a typo"
-  - ex) "Fixed compile warnings"
-  - ex) "Code refactoring"
-  - ex) "Fixed a rendering bug that overlapped shapes inproper way."
+- [Title] provides a brief description of your change and should be encapsulated in a single sentence.
+  - e.g., "Fixed a typo."
+  - e.g., "Addressed compile warnings."
+  - e.g., "Refactored code."
+  - e.g., "Resolved a rendering bug causing overlapped shapes to display improperly."
 
-- [Description] There is no any strict formats, but it must describe what you did in this patch as far as possible you can describe in detail.
+- [Description] doesn't have a strict format. However, it should detail what you accomplished in this patch as comprehensively as possible.
 
-  If you fixed any bugs, it must contain below:
-  - what type of bug
-  - conditions to reproduce it
-  - root cause
-  - solution
+ If you've resolved bugs, include the following details:
+  - The type of bug.
+  - Steps to reproduce it.
+  - The root cause.
+  - The solution applied.
 
-  Or if you add a new feature or function, it must contain below:
-  - what sort of features
-  - api full specification (if any api additions)
-  - any necessity
-  - condition / restriction
-  - reference or sample
+  For new features or functions, cover:
+  - The nature of the feature.
+  - Full API specifications (if there are any API additions).
+  - Its necessity or rationale.
+  - Any conditions or restrictions.
+  - Relevant examples or references.
 
-  Lastly, please append any issue ticket numbers in this section if any.
+ Finally, include any related issue ticket numbers in this section, if applicable.
 
 
-- Here is a overall commit message what we expect to review:
+Here's a sample commit message for clarity:
 
-  - common composite: newly added path clipping feature
+- common composite: Introduced path clipping feature
 
-    We introduced new method Paint::composite() to support composite behaviors. </br>
-    This allows paints to composite with other paints instances. </br>
-    Composite behaviors depend on its composite method type. </br>
-    Here we firstly introduced "ClipPath" method to support clipping by path unit of paint.</br>
+  We've added a new method, Paint::composite(), to support various composite behaviors. This allows paints to interact with other paint instances based on the chosen composite method. Initially, we're introducing the "ClipPath" method for path-based clipping.
 
-    tagetPaint->composite(srcPaint, CompositeMethod::ClipPath);</br>
+  targetPaint->composite(srcPaint, CompositeMethod::ClipPath);
 
-    Beaware if the source paint doesn't contain any path info, clipping won't be applied as you expected.
+  Note: If the source paint lacks path information, clipping may not produce the desired effect.
 
-    @API Additions:</br>
-    enum CompositeMethod {None = 0, ClipPath}; </br>
-    Result Paint::composite(std::unique_ptr<Paint> target, CompositeMethod method) const noexcept;</br>
+  @API Additions:
+  enum CompositeMethod {None = 0, ClipPath};
+  Result Paint::composite(std::unique_ptr<Paint> target, CompositeMethod method) const noexcept;
 
-    @Examples: added ClipPath</br>
+  @Examples: Introduced ClipPath
 
-    @References: any links to the references such as screenshot images.
+  @References: [Provide any relevant links, such as screenshots.]
 
-    @Issues: (Issue Link)
+  @Issues: [Link to the issue]
 <br />
 
 ## Pull Request
 
-Once you submitted a pull request(PR), please make it sure below check list.
--  Reviewers: Check Reviewers List
--  Assignees: You
--  Labels: Patch Purpose
--  CODING STYLE CHECK: Must be perfect
+Once you've submitted a pull request (PR), please ensure the following checklist is completed:
+- Reviewers: Check the Reviewers List.
+- Assignees: You should be assigned.
+- Labels: Mark the appropriate Patch Purpose.
+- Automated Integration Test: All must pass.
 <p align="center"><img width="1000" height="1072" src="https://github.com/thorvg/thorvg/blob/main/res/contribution.png"></p>
