@@ -55,7 +55,6 @@
  */
 #include "config.h"
 
-#if defined(THORVG_TVG_SAVER_SUPPORT) || defined(THORVG_TVG_LOADER_SUPPORT)
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
@@ -66,6 +65,7 @@
 #include "tvgLzw.h"
 
 namespace {
+
 //LZW Dictionary helper:
 constexpr int Nil = -1;
 constexpr int MaxDictBits = 12;
@@ -424,5 +424,3 @@ uint8_t* lzwEncode(const uint8_t* uncompressed, uint32_t uncompressedSizeBytes, 
 }
 
 }
-
-#endif
