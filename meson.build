@@ -45,13 +45,14 @@ if all_loaders or get_option('loaders').contains('jpg') == true
     config_h.set10('THORVG_JPG_LOADER_SUPPORT', true)
 endif
 
+if all_loaders or get_option('loaders').contains('lottie') == true
+    config_h.set10('THORVG_LOTTIE_LOADER_SUPPORT', true)
+endif
+
 if get_option('loaders').contains('webp_beta') == true
     config_h.set10('THORVG_WEBP_LOADER_SUPPORT', true)
 endif
 
-if get_option('loaders').contains('lottie_beta') == true
-    config_h.set10('THORVG_LOTTIE_LOADER_SUPPORT', true)
-endif
 
 
 #Savers
@@ -128,7 +129,7 @@ Summary:
     Loader (PNG):          @8@
     Loader (JPG):          @9@
     Loader (WEBP_BETA):    @10@
-    Loader (LOTTIE_BETA):  @11@
+    Loader (LOTTIE):       @11@
     Saver (TVG):           @12@
     Binding (CAPI):        @13@
     Binding (WASM_BETA):   @14@
@@ -150,7 +151,7 @@ Summary:
         all_loaders or get_option('loaders').contains('png'),
         all_loaders or get_option('loaders').contains('jpg'),
         get_option('loaders').contains('webp_beta'),
-        get_option('loaders').contains('lottie_beta'),
+        all_loaders or get_option('loaders').contains('lottie'),
         all_savers or get_option('savers').contains('tvg'),
         get_option('bindings').contains('capi'),
         get_option('bindings').contains('wasm_beta'),

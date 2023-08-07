@@ -8,7 +8,7 @@ if all_loaders or get_option('loaders').contains('svg') == true
     subdir('svg')
 endif
 
-if get_option('loaders').contains('lottie_beta') == true
+if all_loaders or get_option('loaders').contains('lottie') == true
     subdir('lottie')
 endif
 
