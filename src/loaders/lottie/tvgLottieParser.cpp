@@ -20,6 +20,7 @@
  * SOFTWARE.
  */
 
+#include "tvgStr.h"
 #include "tvgLottieModel.h"
 #include "tvgLottieParser.h"
 
@@ -28,11 +29,48 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
+static constexpr const char B64_INDEX[256] =
+{
+    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+    0,  0,  0,  0,  0,  0,  0,  62, 63, 62, 62, 63, 52, 53, 54, 55, 56, 57,
+    58, 59, 60, 61, 0,  0,  0,  0,  0,  0,  0,  0,  1,  2,  3,  4,  5,  6,
+    7,  8,  9,  10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24,
+    25, 0,  0,  0,  0,  63, 0,  26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36,
+    37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51
+};
+
+
 static char* _int2str(int num)
 {
     char str[20];
     snprintf(str, 20, "%d", num);
     return strdup(str);
+}
+
+
+static void _decodeB64(const uint8_t* input, const size_t len, Array<char>& output)
+{
+    int pad = len > 0 && (len % 4 || input[len - 1] == '=');
+    const size_t L = ((len + 3) / 4 - pad) * 4;
+    output.reserve(L / 4 * 3 + pad);
+    output.data[output.reserved - 1] = '\0';
+
+    for (size_t i = 0; i < L; i += 4) {
+        int n = B64_INDEX[input[i]] << 18 | B64_INDEX[input[i + 1]] << 12 | B64_INDEX[input[i + 2]] << 6 | B64_INDEX[input[i + 3]];
+        output.push(n >> 16);
+        output.push(n >> 8 & 0xFF);
+        output.push(n & 0xFF);
+    }
+    if (pad) {
+        if (pad > 1 ) TVGERR("LOTTIE", "b64 pad size = %d", pad);
+        int n = B64_INDEX[input[L]] << 18 | B64_INDEX[input[L + 1]] << 12;
+        output.last() = n >> 16;
+        if (len > L + 2 && input[L + 2] != '=') {
+            n |= B64_INDEX[input[L + 2]] << 6;
+            output.push(n >> 8 & 0xFF);
+        }
+    }
 }
 
 
@@ -772,34 +810,52 @@ LottieImage* LottieParser::parseImage(const char* key)
     if (!image) return nullptr;
 
     //Used for Image Asset
-    const char* fileName = nullptr;
-    const char* relativePath = nullptr;
+    const char* data = nullptr;
+    const char* subPath = nullptr;
     auto embedded = false;
 
     do {
-        if (!strcmp(key, "w"))  {
-            image->surface.w = getInt();
-        } else if (!strcmp(key, "h")) {
-            image->surface.h = getInt();
-        } else if (!strcmp(key, "u")) {
-            relativePath = getString();
+        if (!strcmp(key, "u")) {
+            subPath = getString();
+        } else if (!strcmp(key, "p")) {
+            data = getString();
         } else if (!strcmp(key, "e")) {
             embedded = getInt();
-        } else if (!strcmp(key, "p")) {
-            fileName = getString();
+#if 0
+        } else if (!strcmp(key, "w"))  {
+            auto w = getInt();
+        } else if (!strcmp(key, "h")) {
+            auto h = getInt();
+#endif
         } else skip(key);
     } while ((key = nextObjectKey()));
 
-    image->prepare();
+    //embeded image resource. should start with "data:"
+    //header look like "data:image/png;base64," so need to skip till ','.
+    if (embedded && !strncmp(data, "data:", 5)) {
+        //figure out the mimetype
+        auto mimeType = data + 11;
+        auto needle = strstr(mimeType, ";");
+        image->mimeType = strDuplicate(mimeType, needle - mimeType);
 
-    // embeded resource should start with "data:"
-    if (embedded && !strncmp(fileName, "data:", 5)) {
-        //TODO:
+        //b64 data
+        auto b64Data = strstr(data, ",") + 1;
+        size_t length = strlen(data) - (b64Data - data);
+
+        Array<char> decoded;
+        _decodeB64(reinterpret_cast<const uint8_t*>(b64Data), length, decoded);
+        image->b64Data = decoded.data;
+        image->size = decoded.count;
+        decoded.data = nullptr;
+    //external image resource
     } else {
-        //TODO:
+        auto len = strlen(dirName) + strlen(subPath) + strlen(data) + 1;
+        image->path = static_cast<char*>(malloc(len));
+        snprintf(image->path, len, "%s%s%s", dirName, subPath, data);
     }
 
-    TVGLOG("LOTTIE", "Image is not supported: (dirPath + %s + %s)", relativePath, fileName);
+    image->prepare();
+
     return image;
 }
 
@@ -989,32 +1045,6 @@ bool LottieParser::parse()
 
     if (Invalid() || !comp->root) return false;
 
-    for (auto c = comp->root->children.data; c < comp->root->children.end(); ++c) {
-        auto child = static_cast<LottieLayer*>(*c);
-        //Organize the parent-chlid layers.
-        if (child->pid != -1) {
-            for (auto p = comp->root->children.data; p < comp->root->children.end(); ++p) {
-                if (c == p) continue;
-                auto parent = static_cast<LottieLayer*>(*p);
-                if (child->pid == parent->id) {
-                    child->parent = parent;
-                    break;
-                }
-            }
-        }
-        //Resolve Assets
-        if (child->refId) {
-            for (auto asset = comp->assets.data; asset < comp->assets.end(); ++asset) {
-                if (strcmp(child->refId, (*asset)->name)) continue;
-                if (child->type == LottieLayer::Precomp) {
-                    child->children = static_cast<LottieLayer*>(*asset)->children;
-                    child->statical &= (*asset)->statical;
-                } else if (child->type == LottieLayer::Image) {
-                    //TODO:
-                }
-            }
-        }
-    }
     comp->root->inFrame = comp->startFrame;
     comp->root->outFrame = comp->endFrame;
     return true;

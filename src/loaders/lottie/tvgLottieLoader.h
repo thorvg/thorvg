@@ -41,6 +41,7 @@ public:
     LottieBuilder* builder = nullptr;
     LottieComposition* comp = nullptr;
 
+    char* dirName = nullptr;            //base resource directory
     bool copy = false;                  //"content" is owned by this loader
 
     LottieLoader();

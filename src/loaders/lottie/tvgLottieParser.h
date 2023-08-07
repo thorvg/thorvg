@@ -29,11 +29,15 @@
 struct LottieParser : LookaheadParserHandler
 {
 public:
-    LottieParser(const char *str) : LookaheadParserHandler(str) {}
+    LottieParser(const char *str, const char* dirName) : LookaheadParserHandler(str)
+    {
+        this->dirName = dirName;
+    }
 
     bool parse();
 
     LottieComposition* comp = nullptr;
+    const char* dirName = nullptr;       //base resource directory
 
 private:
     BlendMethod getBlendMethod();
