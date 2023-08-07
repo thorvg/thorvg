@@ -84,12 +84,10 @@ struct Picture::Impl
 
     bool dispose(RenderMethod& renderer)
     {
-        bool ret = true;
-        if (paint) ret = paint->pImpl->dispose(renderer);
-        else if (surface) ret =  renderer.dispose(rd);
+        if (paint) paint->pImpl->dispose(renderer);
+        else if (surface) renderer.dispose(rd);
         rd = nullptr;
-
-        return ret;
+        return !animated;
     }
 
     RenderUpdateFlag load()
