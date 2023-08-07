@@ -39,16 +39,6 @@ static bool _checkDotLottie(const char *str)
 }
 
 
-static int _str2int(const char* str, int len)
-{
-    int ret = 0;
-    for(int i = 0; i < len; ++i) {
-        ret = ret * 10 + (str[i] - '0');
-    }
-    return ret;
-}
-
-
 static int _str2float(const char* str, int len)
 {
     auto tmp = strDuplicate(str, len);
@@ -149,7 +139,7 @@ bool LottieLoader::header()
             p += 4;
             auto e = strstr(p, ",");
             if (!e) e = strstr(p, "}");
-            w = static_cast<float>(_str2int(p, e - p));
+            w = static_cast<float>(str2int(p, e - p));
             p = e;
             continue;
         }
@@ -158,7 +148,7 @@ bool LottieLoader::header()
             p += 4;
             auto e = strstr(p, ",");
             if (!e) e = strstr(p, "}");
-            h = static_cast<float>(_str2int(p, e - p));
+            h = static_cast<float>(str2int(p, e - p));
             p = e;
             continue;
         }
