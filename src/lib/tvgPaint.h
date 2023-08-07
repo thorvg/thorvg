@@ -42,7 +42,7 @@ namespace tvg
     {
         virtual ~StrategyMethod() {}
 
-        virtual bool dispose(RenderMethod& renderer) = 0;
+        virtual bool dispose(RenderMethod& renderer) = 0;     //return true if the deletion is allowed.
         virtual void* update(RenderMethod& renderer, const RenderTransform* transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag pFlag, bool clipper) = 0;   //Return engine data if it has.
         virtual bool render(RenderMethod& renderer) = 0;
         virtual bool bounds(float* x, float* y, float* w, float* h) = 0;

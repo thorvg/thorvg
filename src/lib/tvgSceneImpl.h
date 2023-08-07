@@ -85,11 +85,11 @@ struct Scene::Impl
             paint->pImpl->dispose(renderer);
         }
 
-        auto ret = renderer.dispose(rd);
+        renderer.dispose(rd);
         this->renderer = nullptr;
         this->rd = nullptr;
 
-        return ret;
+        return true;
     }
 
     bool needComposition(uint8_t opacity)
@@ -231,7 +231,7 @@ struct Scene::Impl
         auto dispose = renderer ? true : false;
 
         for (auto paint : paints) {
-            if (dispose) paint->pImpl->dispose(*renderer);
+            if (dispose) free &= paint->pImpl->dispose(*renderer);
             if (free) delete(paint);
         }
         paints.clear();
