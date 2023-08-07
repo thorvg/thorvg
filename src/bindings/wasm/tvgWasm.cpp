@@ -150,6 +150,53 @@ public:
         return val(typed_memory_view(2, psize));
     }
 
+    val duration()
+    {
+        if (!canvas || !animation) return val(0);
+        return val(animation->duration());
+    }
+
+    val totalFrame()
+    {
+        if (!canvas || !animation) return val(0);
+        return val(animation->totalFrame());
+    }
+
+    bool frame(uint32_t no)
+    {
+        if (!canvas || !animation) return false;
+        if (animation->frame(no) != Result::Success) {
+            errorMsg = "frame() fail";
+            return false;
+        }
+        return true;
+    }
+
+    void resize(int width, int height)
+    {
+        if (!canvas || !animation) return;
+        if (this->width == width && this->height == height) return;
+
+        this->width = width;
+        this->height = height;
+
+        free(buffer);
+        buffer = (uint8_t*)malloc(width * height * sizeof(uint32_t));
+        canvas->target((uint32_t *)buffer, width, width, height, SwCanvas::ABGR8888S);
+
+        float scale;
+        float shiftX = 0.0f, shiftY = 0.0f;
+        if (psize[0] > psize[1]) {
+            scale = width / psize[0];
+            shiftY = (height - psize[1] * scale) * 0.5f;
+        } else {
+            scale = height / psize[1];
+            shiftX = (width - psize[0] * scale) * 0.5f;
+        }
+        animation->picture()->scale(scale);
+        animation->picture()->translate(shiftX, shiftY);
+    }
+
     bool save(bool compress)
     {
         errorMsg = NoError;
