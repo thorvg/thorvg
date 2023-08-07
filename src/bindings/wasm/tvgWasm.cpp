@@ -159,6 +159,7 @@ public:
         this->width = width;
         this->height = height;
 
+        free(buffer);
         buffer = (uint8_t*)malloc(width * height * sizeof(uint32_t));
         canvas->target((uint32_t *)buffer, width, width, height, SwCanvas::ABGR8888S);
 
