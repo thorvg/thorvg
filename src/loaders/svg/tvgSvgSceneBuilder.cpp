@@ -150,6 +150,7 @@ static unique_ptr<RadialGradient> _applyRadialGradientProperty(SvgStyleGradient*
         g->radial->r = g->radial->r * sqrtf(powf(vBox.w, 2.0f) + powf(vBox.h, 2.0f)) / sqrtf(2.0f);
         g->radial->fx = g->radial->fx * vBox.w;
         g->radial->fy = g->radial->fy * vBox.h;
+        g->radial->fr = g->radial->fr * sqrtf(powf(vBox.w, 2.0f) + powf(vBox.h, 2.0f)) / sqrtf(2.0f);
     } else {
         Matrix m = {vBox.w, 0, vBox.x, 0, vBox.h, vBox.y, 0, 0, 1};
         if (isTransform) _transformMultiply(&m, &finalTransform);
@@ -161,11 +162,7 @@ static unique_ptr<RadialGradient> _applyRadialGradientProperty(SvgStyleGradient*
 
     if (isTransform) fillGrad->transform(finalTransform);
 
-    //TODO: Tvg is not support to focal
-    //if (g->radial->fx != 0 && g->radial->fy != 0) {
-    //    fillGrad->radial(g->radial->fx, g->radial->fy, g->radial->r);
-    //}
-    fillGrad->radial(g->radial->cx, g->radial->cy, g->radial->r);
+    fillGrad->radial(g->radial->cx, g->radial->cy, g->radial->r, g->radial->fx, g->radial->fy, g->radial->fr);
     fillGrad->spread(g->spread);
 
     //Update the stops

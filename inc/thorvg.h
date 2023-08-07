@@ -757,28 +757,67 @@ public:
     /**
      * @brief Sets the radial gradient bounds.
      *
-     * The radial gradient bounds are defined as a circle centered in a given point (@p cx, @p cy) of a given radius.
+     * The radial gradient bounds are defined as a circle centered in a given point (@p cx, @p cy) of a given radius @p r.
      *
      * @param[in] cx The horizontal coordinate of the center of the bounding circle.
      * @param[in] cy The vertical coordinate of the center of the bounding circle.
-     * @param[in] radius The radius of the bounding circle.
+     * @param[in] r The radius of the bounding circle.
      *
-     * @return Result::Success when succeed, Result::InvalidArguments in case the @p radius value is zero or less.
+     * @return Result::Success when succeed, Result::InvalidArguments in case the @p r value is zero or less.
      */
-    Result radial(float cx, float cy, float radius) noexcept;
+    Result radial(float cx, float cy, float r) noexcept;
 
     /**
-     * @brief Gets the radial gradient bounds.
+     * @brief Sets the radial gradient attributes.
      *
-     * The radial gradient bounds are defined as a circle centered in a given point (@p cx, @p cy) of a given radius.
+     * The radial gradient is defined by the end circle with a center (@p cx, @p cy) and a radius @p r and
+     * the start circle with a center - focal point (@p fx, @p fy) and a radius @p fr.
+     * The gradient will be rendered in a way that aligns the 100% gradient stop with the edge of the end circle
+     * and 0% gradient stop with the edge of the start circle.
      *
-     * @param[out] cx The horizontal coordinate of the center of the bounding circle.
-     * @param[out] cy The vertical coordinate of the center of the bounding circle.
-     * @param[out] radius The radius of the bounding circle.
+     * @param[in] cx The horizontal coordinate of the center of the end circle.
+     * @param[in] cy The vertical coordinate of the center of the end circle.
+     * @param[in] r The radius of the end circle.
+     * @param[in] fx The horizontal coordinate of the center of the start circle.
+     * @param[in] fy The vertical coordinate of the center of the start circle.
+     * @param[in] fr The radius of the start circle.
+     *
+     * @return Result::Success when succeed, Result::InvalidArguments in case the @p r or @p fr value is zero or less.
+     *
+     * @BETA_API
+     */
+    Result radial(float cx, float cy, float r, float fx, float fy, float fr) noexcept;
+
+    /**
+    * @brief Gets the radial gradient bounds.
+    *
+    * The radial gradient bounds are defined as a circle centered in a given point (@p cx, @p cy) of a given radius.
+    *
+    * @param[out] cx The horizontal coordinate of the center of the bounding circle.
+    * @param[out] cy The vertical coordinate of the center of the bounding circle.
+    * @param[out] r The radius of the bounding circle.
+    *
+    * @return Result::Success when succeed.
+    */
+    Result radial(float* cx, float* cy, float* r) const noexcept;
+
+    /**
+     * @brief Gets the radial gradient attributes.
+     *
+     * @param[out] cx The horizontal coordinate of the center of the end circle.
+     * @param[out] cy The vertical coordinate of the center of the end circle.
+     * @param[out] r The radius of the end circle.
+     * @param[out] fx The horizontal coordinate of the center of the start circle.
+     * @param[out] fy The vertical coordinate of the center of the start circle.
+     * @param[out] fr The radius of the start circle.
      *
      * @return Result::Success when succeed.
+     *
+     * @see Result radial(float cx, float cy, float r, float fx, float fy, float fr) noexcept
+     *
+     * @BETA_API
      */
-    Result radial(float* cx, float* cy, float* radius) const noexcept;
+    Result radial(float* cx, float* cy, float* r, float* fx, float* fy, float* fr) const noexcept;
 
     /**
      * @brief Creates a new RadialGradient object.

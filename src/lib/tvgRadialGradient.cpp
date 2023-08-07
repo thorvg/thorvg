@@ -29,9 +29,9 @@
 
 struct RadialGradient::Impl
 {
-    float cx = 0;
-    float cy = 0;
-    float radius = 0;
+    float cx {}, cy {};
+    float fx {}, fy {};
+    float r {}, fr {};
 
     Fill* duplicate()
     {
@@ -40,7 +40,11 @@ struct RadialGradient::Impl
 
         ret->pImpl->cx = cx;
         ret->pImpl->cy = cy;
-        ret->pImpl->radius = radius;
+        ret->pImpl->r = r;
+
+        ret->pImpl->fx = fx;
+        ret->pImpl->fy = fy;
+        ret->pImpl->fr = fr;
 
         return ret.release();
     }
@@ -64,23 +68,52 @@ RadialGradient::~RadialGradient()
 }
 
 
-Result RadialGradient::radial(float cx, float cy, float radius) noexcept
+Result RadialGradient::radial(float cx, float cy, float r) noexcept
 {
-    if (radius < 0) return Result::InvalidArguments;
+    if (r < 0) return Result::InvalidArguments;
 
-    pImpl->cx = cx;
-    pImpl->cy = cy;
-    pImpl->radius = radius;
+    pImpl->cx = pImpl->fx = cx;
+    pImpl->cy = pImpl->fy = cy;
+    pImpl->r = r;
+    pImpl->fr = 0.0f;
 
     return Result::Success;
 }
 
 
-Result RadialGradient::radial(float* cx, float* cy, float* radius) const noexcept
+Result RadialGradient::radial(float cx, float cy, float r, float fx, float fy, float fr) noexcept
+{
+    if (r < 0 || fr < 0) return Result::InvalidArguments;
+
+    pImpl->cx = cx;
+    pImpl->cy = cy;
+    pImpl->r = r;
+    pImpl->fx = fx;
+    pImpl->fy = fy;
+    pImpl->fr = fr;
+
+    return Result::Success;
+}
+
+
+Result RadialGradient::radial(float* cx, float* cy, float* r) const noexcept
 {
     if (cx) *cx = pImpl->cx;
     if (cy) *cy = pImpl->cy;
-    if (radius) *radius = pImpl->radius;
+    if (r) *r = pImpl->r;
+
+    return Result::Success;
+}
+
+
+Result RadialGradient::radial(float* cx, float* cy, float* r, float* fx, float* fy, float* fr) const noexcept
+{
+    if (cx) *cx = pImpl->cx;
+    if (cy) *cy = pImpl->cy;
+    if (r) *r = pImpl->r;
+    if (fx) *fx = pImpl->fx;
+    if (fy) *fy = pImpl->fy;
+    if (fr) *fr = pImpl->fr;
 
     return Result::Success;
 }
