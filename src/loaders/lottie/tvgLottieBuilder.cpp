@@ -32,6 +32,7 @@
 
 static void _updateChildren(LottieGroup* parent, int32_t frameNo, Shape* baseShape, bool reset);
 static void _updateLayer(LottieLayer* root, LottieLayer* layer, int32_t frameNo, bool reset);
+static bool _buildPrecomp(LottieComposition* comp, LottieGroup* parent);
 
 static bool _invisible(LottieGroup* group, int32_t frameNo)
 {
@@ -228,6 +229,20 @@ static Shape* _updatePath(LottieGroup* parent, LottiePath* path, int32_t frameNo
 }
 
 
+static void _updateImage(LottieGroup* parent, LottieImage* image, int32_t frameNo, Shape* baseShape)
+{
+    auto picture = Picture::gen();
+
+    if (image->size > 0) picture->load((const char*)image->b64Data, image->size, image->mimeType, false);
+    else picture->load(image->path);
+
+    if (baseShape) {
+        picture->transform(baseShape->transform());
+        picture->opacity(baseShape->opacity());
+    }
+    parent->scene->push(std::move(picture));
+}
+
 static void _updateChildren(LottieGroup* parent, int32_t frameNo, Shape* baseShape, bool reset)
 {
     if (parent->children.empty()) return;
@@ -285,6 +300,10 @@ static void _updateChildren(LottieGroup* parent, int32_t frameNo, Shape* baseSha
                 TVGERR("LOTTIE", "TODO: update Round Corner");
                 break;
             }
+            case LottieObject::Image: {
+                _updateImage(parent, static_cast<LottieImage*>(*child), frameNo, baseShape);
+                break;
+            }
             default: {
                 TVGERR("LOTTIE", "TODO: Missing type??");
                 break;
@@ -339,15 +358,55 @@ static void _updateLayer(LottieLayer* root, LottieLayer* layer, int32_t frameNo,
             TVGERR("LOTTIE", "TODO: update Solid Layer");
             break;
         }
-        case LottieLayer::Image: {
-            TVGERR("LOTTIE", "TODO: update Image Layer");
-            break;
-        }
         default: {
             _updateChildren(layer, frameNo, nullptr, reset);
             break;
         }
     }
+}
+
+
+static void _buildReference(LottieComposition* comp, LottieLayer* layer)
+{
+    for (auto asset = comp->assets.data; asset < comp->assets.end(); ++asset) {
+        if (strcmp(layer->refId, (*asset)->name)) continue;
+        auto assetLayer = static_cast<LottieLayer*>(*asset);
+        if (layer->type == LottieLayer::Precomp) {
+            if (_buildPrecomp(comp, assetLayer)) {
+                layer->children = assetLayer->children;
+            }
+        } else if (layer->type == LottieLayer::Image) {
+            layer->children.push(*asset);
+        }
+        layer->statical &= assetLayer->statical;
+        break;
+    }
+}
+
+
+static bool _buildPrecomp(LottieComposition* comp, LottieGroup* parent)
+{
+    if (parent->children.count == 0) return false;
+
+    for (auto c = parent->children.data; c < parent->children.end(); ++c) {
+        auto child = static_cast<LottieLayer*>(*c);
+        //attach the referencing layer.
+        if (child->refId) _buildReference(comp, child);
+
+        if (child->pid == -1) continue;
+
+        //parenting
+        for (auto p = parent->children.data; p < parent->children.end(); ++p) {
+            if (c == p) continue;
+            auto parent = static_cast<LottieLayer*>(*p);
+            if (child->pid == parent->id) {
+                child->parent = parent;
+                parent->statical &= child->statical;
+                break;
+            }
+        }
+    }
+    return true;
 }
 
 
@@ -387,6 +446,8 @@ void LottieBuilder::build(LottieComposition* comp)
 
     comp->scene = Scene::gen().release();
     if (!comp->scene) return;
+
+    _buildPrecomp(comp, comp->root);
 
     //TODO: Process repeater objects?
 

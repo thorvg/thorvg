@@ -51,7 +51,8 @@ static int _str2float(const char* str, int len)
 void LottieLoader::clear()
 {
     if (copy) free((char*)content);
-
+    free(dirName);
+    dirName = nullptr;
     size = 0;
     content = nullptr;
     copy = false;
@@ -65,7 +66,7 @@ void LottieLoader::run(unsigned tid)
         builder->update(comp, frameNo);
     //initial loading
     } else {
-        LottieParser parser(content);
+        LottieParser parser(content, dirName);
         parser.parse();
         comp = parser.comp;
         builder->build(comp);
@@ -217,6 +218,7 @@ bool LottieLoader::open(const string& path)
         return false;
     }
 
+    this->dirName = strDirname(path.c_str());
     this->content = content;
     this->copy = true;
 

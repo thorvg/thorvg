@@ -294,7 +294,18 @@ struct LottieGradientStroke : LottieObject, LottieStroke, LottieGradient
 
 struct LottieImage : LottieObject
 {
-    Surface surface;
+    union {
+        char* b64Data = nullptr;
+        char* path;
+    };
+    char* mimeType = nullptr;
+    uint32_t size = 0;
+
+    ~LottieImage()
+    {
+        free(b64Data);
+        free(mimeType);
+    }
 
     void prepare()
     {
