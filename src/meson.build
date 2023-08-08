@@ -1,10 +1,10 @@
-compiler_flags = []
+compiler_flags = ['-DTVG_BUILD']
 override_options = []
 
 lib_type = get_option('default_library')
 
 if (lib_type == 'shared')
-    compiler_flags += ['-DTVG_EXPORT', '-DTVG_BUILD']
+    compiler_flags += ['-DTVG_EXPORT']
 else
     compiler_flags += ['-DTVG_STATIC']
 endif

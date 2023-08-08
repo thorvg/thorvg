@@ -27,7 +27,7 @@
 
 #ifndef TVG_STATIC
     #ifdef _WIN32
-        #if TVG_BUILD
+        #if TVG_EXPORT
             #define TVG_API __declspec(dllexport)
         #else
             #define TVG_API __declspec(dllimport)
