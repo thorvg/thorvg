@@ -241,8 +241,7 @@ Currently, ThorVG provides experimental support for Lottie Animation, and while 
 <br />
 
  - Maskings
- - Trimpath
- - Images
+ - Trimpath 
  - Texts
  - Polystar
  - Repeater
