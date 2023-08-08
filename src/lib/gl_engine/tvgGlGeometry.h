@@ -60,6 +60,37 @@
         } \
     }
 
+/**
+ *  mat3x3               mat4x4
+ *
+ * [ e11 e12 e13 ]     [ e11 e12 0 e13 ]
+ * [ e21 e22 e23 ] =>  [ e21 e22 0 e23 ]
+ * [ e31 e32 e33 ]     [ 0   0   1  0  ]
+ *                     [ e31 e32 0 e33 ]
+ *
+ */
+
+// All GPU use 4x4 matrix with column major order
+#define GET_MATRIX44(mat3, mat4)    \
+    do {                            \
+        mat4[0] = mat3.e11;         \
+        mat4[1] = mat3.e21;         \
+        mat4[2] = 0;                \
+        mat4[3] = mat3.e31;         \
+        mat4[4] = mat3.e12;         \
+        mat4[5] = mat3.e22;         \
+        mat4[6] = 0;                \
+        mat4[7] = mat3.e32;         \
+        mat4[8] = 0;                \
+        mat4[9] = 0;                \
+        mat4[10] = 1;               \
+        mat4[11] = 0;               \
+        mat4[12] = mat3.e13;        \
+        mat4[13] = mat3.e23;        \
+        mat4[14] = 0;               \
+        mat4[15] = mat3.e33;        \
+    } while (false)
+
 #define GET_TRANSFORMATION(xPivot, yPivot, transform) \
     MVP_MATRIX(); \
     ROTATION_MATRIX(xPivot, yPivot); \
