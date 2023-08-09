@@ -370,15 +370,15 @@ static void _buildReference(LottieComposition* comp, LottieLayer* layer)
 {
     for (auto asset = comp->assets.data; asset < comp->assets.end(); ++asset) {
         if (strcmp(layer->refId, (*asset)->name)) continue;
-        auto assetLayer = static_cast<LottieLayer*>(*asset);
         if (layer->type == LottieLayer::Precomp) {
+            auto assetLayer = static_cast<LottieLayer*>(*asset);
             if (_buildPrecomp(comp, assetLayer)) {
                 layer->children = assetLayer->children;
             }
         } else if (layer->type == LottieLayer::Image) {
             layer->children.push(*asset);
         }
-        layer->statical &= assetLayer->statical;
+        layer->statical &= (*asset)->statical;
         break;
     }
 }

@@ -806,9 +806,6 @@ void LottieParser::parseObject(LottieGroup* parent)
 
 LottieImage* LottieParser::parseImage(const char* key)
 {
-    auto image = new LottieImage;
-    if (!image) return nullptr;
-
     //Used for Image Asset
     const char* data = nullptr;
     const char* subPath = nullptr;
@@ -821,14 +818,13 @@ LottieImage* LottieParser::parseImage(const char* key)
             data = getString();
         } else if (!strcmp(key, "e")) {
             embedded = getInt();
-#if 0
-        } else if (!strcmp(key, "w"))  {
-            auto w = getInt();
-        } else if (!strcmp(key, "h")) {
-            auto h = getInt();
-#endif
         } else skip(key);
     } while ((key = nextObjectKey()));
+
+    if (!data) return nullptr;
+
+    auto image = new LottieImage;
+    if (!image) return nullptr;
 
     //embeded image resource. should start with "data:"
     //header look like "data:image/png;base64," so need to skip till ','.
@@ -877,13 +873,15 @@ LottieObject* LottieParser::parseAsset()
         //Precomposition asset
         } else if (!strcmp(key, "layers")) {
             obj = parseLayers();
+        } else if (!strcmp(key, "w") || !strcmp(key, "h") || !strcmp(key, "nm") || !strcmp(key, "fr")) {
+            skip(key);
         //Image asset
         } else {
             obj = parseImage(key);
             break;
         }
     }
-    obj->name = id;
+    if (obj) obj->name = id;
     return obj;
 }
 
@@ -1007,6 +1005,8 @@ LottieLayer* LottieParser::parseLayers()
             root->children.push(layer);
         }
     }
+
+    root->prepare();
     return root;
 }
 
