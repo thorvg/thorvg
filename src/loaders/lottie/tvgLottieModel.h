@@ -349,12 +349,6 @@ struct LottieLayer : LottieGroup
 {
     enum Type : uint8_t {Precomp = 0, Solid, Image, Null, Shape, Text};
 
-    LottieLayer()
-    {
-        autoOrient  = false;
-        mask = false;
-    }
-
     ~LottieLayer()
     {
         if (refId) {
@@ -418,9 +412,8 @@ struct LottieLayer : LottieGroup
     } cache;
 
     Type type = Null;
-
-    bool autoOrient : 1;
-    bool mask : 1;
+    bool autoOrient = false;
+    bool mask = false;
 };
 
 
