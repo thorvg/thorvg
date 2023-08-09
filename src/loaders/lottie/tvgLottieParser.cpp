@@ -74,6 +74,24 @@ static void _decodeB64(const uint8_t* input, const size_t len, Array<char>& outp
 }
 
 
+static void _updateRoundedCorner(LottieGroup* parent, LottieRoundedCorner* roundedCorner)
+{
+    for (auto child = parent->children.data; child < parent->children.end(); ++child) {
+        auto obj = *child;
+        if (obj->type == LottieObject::Rect) {
+            auto rect = static_cast<LottieRect*>(obj);
+            rect->roundedCorner = roundedCorner;
+            rect->statical &= roundedCorner->statical;
+            parent->statical &= roundedCorner->statical;
+            continue;
+        }
+        if (obj->type == LottieObject::Group || obj->type == LottieObject::Layer) {
+            _updateRoundedCorner(static_cast<LottieGroup*>(obj), roundedCorner);
+        }
+    }
+}
+
+
 BlendMethod LottieParser::getBlendMethod()
 {
     switch (getInt()) {
@@ -670,6 +688,8 @@ LottieRoundedCorner* LottieParser::parseRoundedCorner()
     auto corner = new LottieRoundedCorner;
     if (!corner) return nullptr;
 
+    context->layer->roundedCorner = true;
+
     while (auto key = nextObjectKey()) {
         if (!strcmp(key, "nm")) corner->name = getStringCopy();
         else if (!strcmp(key, "r")) parseProperty(corner->radius);
@@ -768,7 +788,6 @@ LottieObject* LottieParser::parseObject()
         TVGLOG("LOTTIE", "Polystar(sr) is not supported");
         return parsePolyStar();
     } else if (!strcmp(type, "rd")) {
-        TVGLOG("LOTTIE", "RoundedCorner(rd) is not supported");
         return parseRoundedCorner();
     } else if (!strcmp(type, "gf")) {
         return parseGradientFill();
@@ -794,8 +813,9 @@ void LottieParser::parseObject(LottieGroup* parent)
         if (!strcmp(key, "ty")) {
             auto child = parseObject();
             if (child && !child->hidden) {
+                //propagate the rounded corner properties.
                 if (child->type == LottieObject::RoundedCorner) {
-                    //TODO:
+                    _updateRoundedCorner(parent, static_cast<LottieRoundedCorner*>(child));
                 }
                 parent->children.push(child);
             } else delete(child);

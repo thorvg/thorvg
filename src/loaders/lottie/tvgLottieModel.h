@@ -144,13 +144,6 @@ struct LottieRect : LottieShape
         return roundedCorner ? roundedCorner->radius(frameNo) : round(frameNo);
     }
 
-    bool roundnessChanged(int prevFrame, int curFrame)
-    {
-        //return roundedCorner ? roundedCorner->radius.changed(prevFrame, curFrame) : round.changed(prevFrame, curFrame);
-        TVGERR("LOTTIE", "TODO: LottieRect::roundnessChanged()");
-        return 0;
-    }
-
     LottieRoundedCorner* roundedCorner = nullptr;
     LottiePosition position = Point{0.0f, 0.0f};
     LottiePoint size = Point{0.0f, 0.0f};
@@ -382,6 +375,7 @@ struct LottieLayer : LottieGroup
     Type type = Null;
     bool autoOrient = false;
     bool mask = false;
+    bool roundedCorner = false;
 };
 
 
