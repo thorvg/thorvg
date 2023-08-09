@@ -31,7 +31,6 @@
 
 struct Animation::Impl
 {
-    //TODO: Memory Safety
     Picture picture;
 };
 
@@ -41,7 +40,7 @@ struct Animation::Impl
 
 Animation::~Animation()
 {
-
+    //FIXME: free pImpl
 }
 
 
