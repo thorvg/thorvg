@@ -88,7 +88,7 @@ static Eo* createGlView(uint32_t w = 800, uint32_t h = 800)
     Eo* win = elm_win_util_standard_add(NULL, "ThorVG Test");
     evas_object_smart_callback_add(win, "delete,request", win_del, 0);
 
-    Eo* view = elm_glview_add(win);
+    Eo* view = elm_glview_version_add(win, EVAS_GL_GLES_3_X);
     evas_object_size_hint_weight_set(view, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
     elm_glview_mode_set(view, ELM_GLVIEW_ALPHA);
     elm_glview_resize_policy_set(view, ELM_GLVIEW_RESIZE_POLICY_RECREATE);

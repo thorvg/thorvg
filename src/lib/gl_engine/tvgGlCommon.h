@@ -24,7 +24,7 @@
 #define _TVG_GL_COMMON_H_
 
 #include <assert.h>
-#include <GLES2/gl2.h>
+#include <GLES3/gl3.h>
 #include "tvgCommon.h"
 #include "tvgRender.h"
 
