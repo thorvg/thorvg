@@ -586,8 +586,16 @@ void LottieParser::parseStrokeDash(LottieStroke* stroke)
     enterArray();
     while (nextArrayValue()) {
         enterObject();
+        int idx = 0;
         while (auto key = nextObjectKey()) {
-            if (!strcmp(key, "v")) {
+            if (!strcmp(key, "n")) {
+                auto style = getString();
+                if (!strcmp("o", style)) idx = 0;           //offset
+                else if (!strcmp("d", style)) idx = 1;      //dash
+                else if (!strcmp("g", style)) idx = 2;      //gap
+                else TVGERR("LOTTIE", "Unsupported Dash Style");
+            } else if (!strcmp(key, "v")) {
+                parseProperty(stroke->dash(idx));
             } else skip(key);
         }
     }
@@ -609,12 +617,7 @@ LottieSolidStroke* LottieParser::parseSolidStroke()
         else if (!strcmp(key, "nm")) stroke->name = getStringCopy();
         else if (!strcmp(key, "hd")) stroke->hidden = getBool();
         else if (!strcmp(key, "fillEnabled")) stroke->disabled = !getBool();
-        else if (!strcmp(key, "d"))
-        {
-            TVGLOG("LOTTIE", "StrokeDash(d) is not supported");
-            skip(key);
-            //parseStrokeDash(stroke);
-        }
+        else if (!strcmp(key, "d")) parseStrokeDash(stroke);
         else skip(key);
     }
     stroke->prepare();
@@ -998,6 +1001,11 @@ LottieLayer* LottieParser::parseLayer()
         }
         else if (!strcmp(key, "hd")) layer->hidden = getBool();
         else if (!strcmp(key, "refId")) layer->refId = getStringCopy();
+        else if (!strcmp(key, "ef"))
+        {
+            TVGLOG("LOTTIE", "Effect(ef) is not supported");
+            skip(key);
+        }
         else skip(key);
     }
 
