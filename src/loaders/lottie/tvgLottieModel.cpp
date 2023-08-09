@@ -49,7 +49,14 @@ Fill* LottieGradient::fill(int32_t frameNo)
     //Radial Gradient
     if (id == 2) {
         fill = RadialGradient::gen().release();
-        TVGLOG("LOTTIE", "TODO: Missing Radial Gradient!");
+        auto sx = start(frameNo).x;
+        auto sy = start(frameNo).y;
+        auto w = fabsf(end(frameNo).x - sx);
+        auto h = fabsf(end(frameNo).y - sy);
+        auto radius = (w > h) ? (w + 0.375f * h) : (h + 0.375f * w);
+        static_cast<RadialGradient*>(fill)->radial(sx, sy, radius);
+
+        //TODO: focal support?
     }
 
     if (!fill) return nullptr;
