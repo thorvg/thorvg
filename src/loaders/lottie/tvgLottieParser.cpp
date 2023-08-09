@@ -918,6 +918,13 @@ LottieObject* LottieParser::parseGroup()
 }
 
 
+void LottieParser::parseTimeRemap(LottieLayer* layer)
+{
+    layer->comp = comp;
+    parseProperty(layer->timeRemap);
+}
+
+
 void LottieParser::parseShapes(LottieLayer* layer)
 {
     enterArray();
@@ -956,11 +963,7 @@ LottieLayer* LottieParser::parseLayer()
         else if (!strcmp(key, "st")) layer->startFrame = lroundf(getFloat());
         else if (!strcmp(key, "bm")) layer->blendMethod = getBlendMethod();
         else if (!strcmp(key, "parent")) layer->pid = getInt();
-        else if (!strcmp(key, "tm"))
-        {
-            TVGLOG("LOTTIE", "Time Remap(tm) is not supported");
-            skip(key);
-        }
+        else if (!strcmp(key, "tm")) parseTimeRemap(layer);
         else if (!strcmp(key, "w")) layer->w = getInt();
         else if (!strcmp(key, "h")) layer->h = getInt();
         else if (!strcmp(key, "sw")) layer->w = getInt();
