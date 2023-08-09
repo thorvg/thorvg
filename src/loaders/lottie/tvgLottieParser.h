@@ -83,6 +83,7 @@ private:
 
     void parseObject(LottieGroup* parent);
     void parseShapes(LottieLayer* layer);
+    void parseTimeRemap(LottieLayer* layer);
     void parseStrokeDash(LottieStroke* stroke);
     void parseGradient(LottieGradient* gradient, const char* key);
     void parseAssets();
