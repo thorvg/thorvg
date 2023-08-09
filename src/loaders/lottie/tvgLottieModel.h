@@ -32,18 +32,51 @@ struct LottieComposition;
 
 struct LottieStroke
 {
+    struct DashAttr
+    {
+        //0: offset, 1: dash, 2: gap
+        LottieFloat value[3] = {0.0f, 0.0f, 0.0f};
+    };
+
+    virtual ~LottieStroke()
+    {
+        delete(dashattr);
+    }
+
+    LottieFloat& dash(int no)
+    {
+        if (!dashattr) dashattr = new DashAttr;
+        return dashattr->value[no];
+    }
+
+    float dashOffset(int32_t frameNo)
+    {
+        return dash(0)(frameNo);
+    }
+
+    float dashGap(int32_t frameNo)
+    {
+        return dash(1)(frameNo) + dash(2)(frameNo);
+    }
+
+    float dashSize(int32_t frameNo)
+    {
+        return dash(1)(frameNo);
+    }
+
     bool dynamic()
     {
-        if (dash.frames || width.frames) return true;
+        if (width.frames || dashattr) return true;
         return false;
     }
 
-    LottieFloat dash = 0.0f;
     LottieFloat width = 0.0f;
+    DashAttr* dashattr = nullptr;
+    float miterLimit = 0;
     StrokeCap cap = StrokeCap::Butt;
     StrokeJoin join = StrokeJoin::Miter;
-    float miterLimit = 0;
 };
+
 
 
 struct LottieGradient
