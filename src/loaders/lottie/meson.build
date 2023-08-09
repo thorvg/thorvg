@@ -9,6 +9,7 @@ source_file = [
    'tvgLottieBuilder.cpp',
    'tvgLottieInterpolator.cpp',
    'tvgLottieLoader.cpp',
+   'tvgLottieModel.cpp',
    'tvgLottieParserHandler.cpp',
    'tvgLottieParser.cpp'
 ]

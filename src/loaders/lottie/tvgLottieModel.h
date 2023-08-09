@@ -28,6 +28,8 @@
 #include "tvgLottieProperty.h"
 
 
+struct LottieComposition;
+
 struct LottieStroke
 {
     bool dynamic()
@@ -52,27 +54,7 @@ struct LottieGradient
         return false;
     }
 
-    Fill* fill(int32_t frameNo)
-    {
-        Fill* fill = nullptr;
-
-        //Linear Graident
-        if (id == 1) {
-            fill = LinearGradient::gen().release();
-            static_cast<LinearGradient*>(fill)->linear(start(frameNo).x, start(frameNo).y, end(frameNo).x, end(frameNo).y);
-        }
-        //Radial Gradient
-        if (id == 2) {
-            fill = RadialGradient::gen().release();
-            TVGLOG("LOTTIE", "TODO: Missing Radial Gradient!");
-        }
-
-        if (!fill) return nullptr;
-
-        colorStops(frameNo, fill);
-
-        return fill;
-    }
+    Fill* fill(int32_t frameNo);
 
     LottiePoint start = Point{0.0f, 0.0f};
     LottiePoint end = Point{0.0f, 0.0f};
@@ -322,15 +304,7 @@ struct LottieGroup : LottieObject
         delete(transform);
     }
 
-    void prepare(LottieObject::Type type = LottieObject::Group)
-    {
-        LottieObject::type = type;
-        if (transform) statical &= transform->statical;
-        for (auto child = children.data; child < children.end(); ++child) {
-            statical &= (*child)->statical;
-            if (!statical) break;
-        }
-    }
+    void prepare(LottieObject::Type type = LottieObject::Group);
 
     virtual uint8_t opacity(int32_t frameNo)
     {
@@ -379,22 +353,16 @@ struct LottieLayer : LottieGroup
         return LottieGroup::opacity(frameNo);
     }
 
-    /* frameRemap has the value in time domain(in sec)
-       To get the proper mapping first we get the mapped time at the current frame
-       Number then we need to convert mapped time to frame number using the
-       composition time line Ex: at frame 10 the mappend time is 0.5(500 ms) which
-       will be convert to frame number 30 if the frame rate is 60. or will result to
-      frame number 15 if the frame rate is 30. */
-    int32_t remap(int32_t frameNo)
-    {
-        return frameNo;
-        //return (int32_t)((frameNo - startFrame) / timeStretch);
-    }
+    int32_t remap(int32_t frameNo);
 
-    RGB24 color = {255, 255, 255};    //Optimize: used for solidcolor
+    //Optimize: compact data??
+    RGB24 color = {255, 255, 255};
     CompositeMethod matteType = CompositeMethod::None;
     BlendMethod blendMethod = BlendMethod::Normal;
     LottieLayer* parent = nullptr;
+    LottieFloat timeRemap = 0.0f;
+    LottieComposition* comp = nullptr;
+
     float timeStretch = 1.0f;
     uint32_t w, h;
     int32_t inFrame = 0;
@@ -419,47 +387,27 @@ struct LottieLayer : LottieGroup
 
 struct LottieComposition
 {
-    ~LottieComposition()
-    {
-        delete(root);
-        free(version);
-        free(name);
-
-        //delete interpolators
-        for (auto i = interpolators.data; i < interpolators.end(); ++i) {
-            free((*i)->key);
-            free(*i);
-        }
-
-        //delete assets
-        for (auto a = assets.data; a < assets.end(); ++a) {
-            delete(*a);
-        }
-    }
+    ~LottieComposition();
 
     float duration() const
     {
         return frameDuration() / frameRate;  // in second
     }
 
-    uint32_t frameAtPos(float pos) const
+    int32_t frameAtTime(float timeInSec) const
     {
-        if (pos < 0) pos = 0;
-        if (pos > 1) pos = 1;
-        return (uint32_t)lroundf(pos * frameDuration());
-    }
-
-    long frameAtTime(double timeInSec) const
-    {
-        return long(frameAtPos(timeInSec / duration()));
+        auto p = timeInSec / duration();
+        if (p < 0.0f) p = 0.0f;
+        else if (p > 1.0f) p = 1.0f;
+        return (int32_t)lroundf(p * frameDuration());
     }
 
     uint32_t frameCnt() const
     {
-        return endFrame - startFrame + 1;
+        return frameDuration() + 1;
     }
 
-    long frameDuration() const
+    uint32_t frameDuration() const
     {
         return endFrame - startFrame;
     }
