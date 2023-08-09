@@ -296,16 +296,11 @@ static void _updateChildren(LottieGroup* parent, int32_t frameNo, Shape* baseSha
                 TVGERR("LOTTIE", "TODO: update Polystar");
                 break;
             }
-            case LottieObject::RoundedCorner: {
-                TVGERR("LOTTIE", "TODO: update Round Corner");
-                break;
-            }
             case LottieObject::Image: {
                 _updateImage(parent, static_cast<LottieImage*>(*child), frameNo, baseShape);
                 break;
             }
             default: {
-                TVGERR("LOTTIE", "TODO: Missing type??");
                 break;
             }
         }
