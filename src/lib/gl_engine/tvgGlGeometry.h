@@ -266,6 +266,8 @@ class GlGeometry
 {
 public:
 
+    ~GlGeometry();
+
     uint32_t getPrimitiveCount();
     const GlSize getPrimitiveSize(const uint32_t primitiveIndex) const;
     bool decomposeOutline(const RenderShape& rshape);
@@ -290,7 +292,9 @@ private:
     void decomposeCubicCurve(GlPrimitive& primitve, const GlPoint &pt1, const GlPoint &cpt1, const GlPoint &cpt2, const GlPoint &pt2, GlPoint &min, GlPoint &max);
     void updateBuffer(const uint32_t location, const VertexDataArray& vertexArray);
 
-    unique_ptr<GlGpuBuffer> mGpuBuffer;
+    GLuint mVao = 0;
+    std::unique_ptr<GlGpuBuffer> mVertexBuffer;
+    std::unique_ptr<GlGpuBuffer> mIndexBuffer;
     vector<GlPrimitive>     mPrimitives;
     GlTransform             mTransform;
 };

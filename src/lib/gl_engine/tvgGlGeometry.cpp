@@ -29,6 +29,13 @@
 #define NORMALIZED_LEFT_3D -1.0f
 #define NORMALIZED_RIGHT_3D 1.0f
 
+GlGeometry::~GlGeometry()
+{
+    if (mVao) {
+        glDeleteVertexArrays(1, &mVao);
+    }
+}
+
 uint32_t GlGeometry::getPrimitiveCount()
 {
     return mPrimitives.size();
@@ -214,7 +221,8 @@ bool GlGeometry::tesselate(TVG_UNUSED const RenderShape& rshape, float viewWd, f
 void GlGeometry::disableVertex(uint32_t location)
 {
     GL_CHECK(glDisableVertexAttribArray(location));
-    mGpuBuffer->unbind(GlGpuBuffer::Target::ARRAY_BUFFER);
+    mVertexBuffer->unbind(GlGpuBuffer::Target::ARRAY_BUFFER);
+    mIndexBuffer->unbind(GlGpuBuffer::Target::ELEMENT_ARRAY_BUFFER);
 }
 
 
@@ -222,20 +230,27 @@ void GlGeometry::draw(const uint32_t location, const uint32_t primitiveIndex, Re
 {
     if (primitiveIndex >= mPrimitives.size()) return;
 
+    if (mVao == 0) glGenVertexArrays(1, &mVao);
+    glBindVertexArray(mVao);
+
     VertexDataArray& geometry = (flag == RenderUpdateFlag::Stroke) ? mPrimitives[primitiveIndex].mStroke : mPrimitives[primitiveIndex].mFill;
 
     updateBuffer(location, geometry);
-    GL_CHECK(glDrawElements(GL_TRIANGLES, geometry.indices.size(), GL_UNSIGNED_INT, geometry.indices.data()));
+
+    GL_CHECK(glVertexAttribPointer(location, 3, GL_FLOAT, GL_FALSE, sizeof(VertexData), 0));
+    GL_CHECK(glEnableVertexAttribArray(location));
+
+    GL_CHECK(glDrawElements(GL_TRIANGLES, geometry.indices.size(), GL_UNSIGNED_INT, 0));
 }
 
 
 void GlGeometry::updateBuffer(uint32_t location, const VertexDataArray& vertexArray)
 {
-    if (mGpuBuffer.get() == nullptr) mGpuBuffer = make_unique<GlGpuBuffer>();
+    if (mVertexBuffer == nullptr) mVertexBuffer = std::make_unique<GlGpuBuffer>();
+    if (mIndexBuffer == nullptr) mIndexBuffer = std::make_unique<GlGpuBuffer>();
 
-    mGpuBuffer->updateBufferData(GlGpuBuffer::Target::ARRAY_BUFFER, vertexArray.vertices.size() * sizeof(VertexData), vertexArray.vertices.data());
-    GL_CHECK(glVertexAttribPointer(location, 3, GL_FLOAT, GL_FALSE, sizeof(VertexData), 0));
-    GL_CHECK(glEnableVertexAttribArray(location));
+    mVertexBuffer->updateBufferData(GlGpuBuffer::Target::ARRAY_BUFFER, vertexArray.vertices.size() * sizeof(VertexData), vertexArray.vertices.data());
+    mIndexBuffer->updateBufferData(GlGpuBuffer::Target::ELEMENT_ARRAY_BUFFER, vertexArray.indices.size() * sizeof(uint32_t), vertexArray.indices.data());
 }
 
 
