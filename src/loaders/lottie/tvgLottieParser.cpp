@@ -53,7 +53,7 @@ static void _decodeB64(const uint8_t* input, const size_t len, Array<char>& outp
 {
     int pad = len > 0 && (len % 4 || input[len - 1] == '=');
     const size_t L = ((len + 3) / 4 - pad) * 4;
-    output.reserve(L / 4 * 3 + pad);
+    output.reserve(L / 4 * 3 + pad + 1);
     output.data[output.reserved - 1] = '\0';
 
     for (size_t i = 0; i < L; i += 4) {
@@ -63,7 +63,6 @@ static void _decodeB64(const uint8_t* input, const size_t len, Array<char>& outp
         output.push(n & 0xFF);
     }
     if (pad) {
-        if (pad > 1 ) TVGERR("LOTTIE", "b64 pad size = %d", pad);
         int n = B64_INDEX[input[L]] << 18 | B64_INDEX[input[L + 1]] << 12;
         output.last() = n >> 16;
         if (len > L + 2 && input[L + 2] != '=') {
@@ -71,6 +70,7 @@ static void _decodeB64(const uint8_t* input, const size_t len, Array<char>& outp
             output.push(n >> 8 & 0xFF);
         }
     }
+    output.count = output.reserved;
 }
 
 
