@@ -70,7 +70,6 @@ struct Picture::Impl
     Picture* picture = nullptr;
     bool resizing = false;
     bool needComp = false;            //need composition
-    bool animated = false;            //picture is belonged to Animation
 
     Impl(Picture* p) : picture(p)
     {
@@ -87,7 +86,7 @@ struct Picture::Impl
         if (paint) paint->pImpl->dispose(renderer);
         else if (surface) renderer.dispose(rd);
         rd = nullptr;
-        return !animated;
+        return true;
     }
 
     RenderUpdateFlag load()

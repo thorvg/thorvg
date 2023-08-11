@@ -68,6 +68,7 @@ namespace tvg
         uint8_t ctxFlag = ContextFlag::Invalid;
         uint8_t id;
         uint8_t opacity = 255;
+        uint8_t refCnt = 1;
 
         ~Impl()
         {
@@ -77,6 +78,18 @@ namespace tvg
             }
             delete(smethod);
             delete(rTransform);
+        }
+
+        uint8_t ref()
+        {
+            if (refCnt == 255) TVGERR("RENDERER", "Corrupted reference count!");
+            return (++refCnt);
+        }
+
+        uint8_t unref()
+        {
+            if (refCnt == 0) TVGERR("RENDERER", "Corrupted reference count!");
+            return (--refCnt);
         }
 
         void method(StrategyMethod* method)
