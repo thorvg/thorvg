@@ -20,7 +20,8 @@
  * SOFTWARE.
  */
 
-#include "tvgMath.h"
+#include "tvgCommon.h"
+#include "tvgPaint.h"
 #include "tvgShapeImpl.h"
 #include "tvgLottieModel.h"
 #include "tvgLottieBuilder.h"
@@ -104,9 +105,10 @@ static Shape* _updateTransform(Paint* paint, LottieTransform* transform, int32_t
     uint8_t opacity;
     if (!_updateTransform(transform, frameNo, false, matrix, opacity)) return nullptr;
 
-    auto pmatrix = paint->transform();
-    paint->transform(mathMultiply(&pmatrix, &matrix));
+    auto pmatrix = P(paint)->transform();
+    paint->transform(pmatrix ? mathMultiply(pmatrix, &matrix) : matrix);
     paint->opacity(opacity);
+
     return nullptr;
 }
 
@@ -229,14 +231,14 @@ static Shape* _updatePath(LottieGroup* parent, LottiePath* path, int32_t frameNo
         mergingShape = newShape.get();
         static_cast<Scene*>(parent->scene)->push(std::move(newShape));
     }
-    if (path->pathset(frameNo, mergingShape->pImpl->rs.path.cmds, mergingShape->pImpl->rs.path.pts)) {
-        mergingShape->pImpl->update(RenderUpdateFlag::Path);
+    if (path->pathset(frameNo, P(mergingShape)->rs.path.cmds, P(mergingShape)->rs.path.pts)) {
+        P(mergingShape)->update(RenderUpdateFlag::Path);
     }
     return mergingShape;
 }
 
 
-static void _updateImage(LottieGroup* parent, LottieImage* image, int32_t frameNo, Shape* baseShape)
+static void _updateImage(LottieGroup* parent, LottieImage* image, int32_t frameNo, Paint* baseShape)
 {
     auto picture = Picture::gen();
 
@@ -247,11 +249,14 @@ static void _updateImage(LottieGroup* parent, LottieImage* image, int32_t frameN
     }
 
     if (baseShape) {
-        picture->transform(baseShape->transform());
+        if (auto matrix = P(baseShape)->transform()) {
+            picture->transform(*matrix);
+        }
         picture->opacity(baseShape->opacity());
     }
     parent->scene->push(std::move(picture));
 }
+
 
 static void _updateChildren(LottieGroup* parent, int32_t frameNo, Shape* baseShape, bool reset)
 {

@@ -52,8 +52,6 @@ static FILE* _fopen(const char* filename, const char* mode)
 
 #define SIZE(A) sizeof(A)
 
-#define P(A) A->pImpl
-
 /************************************************************************/
 /* Internal Class Implementation                                        */
 /************************************************************************/
