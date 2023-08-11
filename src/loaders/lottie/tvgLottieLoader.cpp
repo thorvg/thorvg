@@ -279,7 +279,7 @@ bool LottieLoader::close()
 unique_ptr<Paint> LottieLoader::paint()
 {
     this->done();
-
+    if (!comp) return nullptr;
     return cast<Paint>(comp->scene);
 }
 

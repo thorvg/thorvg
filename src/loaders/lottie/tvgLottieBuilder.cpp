@@ -240,8 +240,11 @@ static void _updateImage(LottieGroup* parent, LottieImage* image, int32_t frameN
 {
     auto picture = Picture::gen();
 
-    if (image->size > 0) picture->load((const char*)image->b64Data, image->size, image->mimeType, false);
-    else picture->load(image->path);
+    if (image->size > 0) {
+        if (picture->load((const char*)image->b64Data, image->size, image->mimeType, false) != Result::Success) return;
+    } else {
+        if (picture->load(image->path) != Result::Success) return;
+    }
 
     if (baseShape) {
         picture->transform(baseShape->transform());
@@ -444,7 +447,7 @@ bool LottieBuilder::update(LottieComposition* comp, int32_t frameNo)
 
 void LottieBuilder::build(LottieComposition* comp)
 {
-    if (comp->scene) return;
+    if (!comp || comp->scene) return;
 
     comp->scene = Scene::gen().release();
     if (!comp->scene) return;
