@@ -125,8 +125,7 @@ bool PngLoader::open(const char* data, uint32_t size, bool copy)
     h = static_cast<float>(height);
     this->size = size;
 
-    if (state.info_png.color.colortype == LCT_RGBA) cs = ColorSpace::ABGR8888;
-    else cs = ColorSpace::ARGB8888;
+    cs = ColorSpace::ABGR8888;
 
     return true;
 }
@@ -154,6 +153,8 @@ unique_ptr<Surface> PngLoader::bitmap()
 {
     this->done();
 
+    if (!image) return nullptr;
+
     //TODO: It's better to keep this surface instance in the loader side
     auto surface = new Surface;
     surface->buf8 = image;
@@ -178,5 +179,7 @@ void PngLoader::run(unsigned tid)
     auto width = static_cast<unsigned>(w);
     auto height = static_cast<unsigned>(h);
 
-    lodepng_decode(&image, &width, &height, &state, data, size);
+    if (lodepng_decode(&image, &width, &height, &state, data, size)) {
+        TVGERR("PNG", "Failed to decode image");
+    }
 }
