@@ -238,6 +238,8 @@ static Shape* _updatePath(LottieGroup* parent, LottiePath* path, int32_t frameNo
 
 static void _updateImage(LottieGroup* parent, LottieImage* image, int32_t frameNo, Shape* baseShape)
 {
+//Crash with static png loader
+#if 0
     auto picture = Picture::gen();
 
     if (image->size > 0) {
@@ -251,6 +253,7 @@ static void _updateImage(LottieGroup* parent, LottieImage* image, int32_t frameN
         picture->opacity(baseShape->opacity());
     }
     parent->scene->push(std::move(picture));
+#endif
 }
 
 static void _updateChildren(LottieGroup* parent, int32_t frameNo, Shape* baseShape, bool reset)
