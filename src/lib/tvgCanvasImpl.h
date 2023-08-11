@@ -67,7 +67,7 @@ struct Canvas::Impl
         if (free) {
             for (auto paint : paints) {
                 if (paint->pImpl->dispose(*renderer)) {
-                    delete(paint);
+                    if (paint->pImpl->unref() == 0) delete(paint);
                 }
             }
             paints.clear();

@@ -267,7 +267,7 @@ static inline bool MASK_OPERATION(CompositeMethod method)
         case CompositeMethod::DifferenceMask:
             return true;
         default:
-            TVGERR("COMMON", "Unsupported Composite Size! = %d", (int)method);
+            TVGERR("RENDERER", "Unsupported Composite Size! = %d", (int)method);
             return false;
     }
 }
@@ -284,7 +284,7 @@ static inline uint8_t CHANNEL_SIZE(ColorSpace cs)
             return sizeof(uint8_t);
         case ColorSpace::Unsupported:
         default:
-            TVGERR("SW_ENGINE", "Unsupported Channel Size! = %d", (int)cs);
+            TVGERR("RENDERER", "Unsupported Channel Size! = %d", (int)cs);
             return 0;
     }
 }
@@ -303,7 +303,7 @@ static inline ColorSpace COMPOSITE_TO_COLORSPACE(RenderMethod& renderer, Composi
         case CompositeMethod::DifferenceMask:
             return renderer.colorSpace();
         default:
-            TVGERR("COMMON", "Unsupported Composite Size! = %d", (int)method);
+            TVGERR("RENDERER", "Unsupported Composite Size! = %d", (int)method);
             return ColorSpace::Unsupported;
     }
 }
