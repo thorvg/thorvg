@@ -26,9 +26,9 @@
 #define TVG_COMPOSE_SHADER(shader) #shader
 
 const char* COLOR_VERT_SHADER = TVG_COMPOSE_SHADER(
-    attribute mediump vec4 aLocation;                               \n
-    uniform highp mat4 uTransform;                                  \n
-    varying highp float vOpacity;                                   \n
+    layout(location = 0) in vec3 aLocation;                         \n
+    uniform mat4 uTransform;                                        \n
+    out float vOpacity;                                             \n
     void main()                                                     \n
     {                                                               \n
         gl_Position = uTransform * vec4(aLocation.xy, 0.0, 1.0);    \n
@@ -36,18 +36,19 @@ const char* COLOR_VERT_SHADER = TVG_COMPOSE_SHADER(
     });
 
 const char* COLOR_FRAG_SHADER = TVG_COMPOSE_SHADER(
-    uniform highp vec4 uColor;                               \n
-    varying highp float vOpacity;                            \n
+    uniform vec4 uColor;                                     \n
+    in float vOpacity;                                       \n
+    out vec4 FragColor;                                      \n
     void main()                                              \n
     {                                                        \n
-       gl_FragColor = vec4(uColor.xyz, uColor.w*vOpacity);   \n
+       FragColor = vec4(uColor.xyz, uColor.w*vOpacity);      \n
     });
 
 const char* GRADIENT_VERT_SHADER = TVG_COMPOSE_SHADER(
-attribute highp vec4 aLocation;                                                 \n
-varying highp float vOpacity;                                                   \n
-varying highp vec2 vPos;                                                        \n
-uniform highp mat4 uTransform;                                                  \n
+layout(location = 0) in vec3 aLocation;                                         \n
+out float vOpacity;                                                             \n
+out vec2 vPos;                                                                  \n
+uniform mat4 uTransform;                                                        \n
                                                                                 \n
 void main()                                                                     \n
 {                                                                               \n
@@ -57,17 +58,16 @@ void main()                                                                     
 });
 
 
-std::string STR_GRADIENT_FRAG_COMMON_VARIABLES = TVG_COMPOSE_SHADER(
-precision highp float;                                                                                  \n
+std::string STR_GRADIENT_FRAG_COMMON_VARIABLES = TVG_COMPOSE_SHADER(                                                                               \n
 const int MAX_STOP_COUNT = 4;                                                                           \n
-uniform highp vec2 uSize;                                                                               \n
-uniform highp vec2 uCanvasSize;                                                                         \n
+uniform vec2 uSize;                                                                                     \n
+uniform vec2 uCanvasSize;                                                                               \n
 uniform float nStops;                                                                                   \n
 uniform float noise_level;                                                                              \n
 uniform float stopPoints[MAX_STOP_COUNT];                                                               \n
 uniform vec4 stopColors[MAX_STOP_COUNT];                                                                \n
-varying highp vec2 vPos;                                                                                \n
-varying highp float vOpacity;                                                                           \n
+in vec2 vPos;                                                                                           \n
+in float vOpacity;                                                                                      \n
 );
 
 std::string STR_GRADIENT_FRAG_COMMON_FUNCTIONS = TVG_COMPOSE_SHADER(
@@ -107,53 +107,55 @@ vec4 gradient(float t)                                                          
     return col;                                                                                         \n
 }                                                                                                       \n
                                                                                                         \n
-highp vec3 ScreenSpaceDither(vec2 vScreenPos)                                                           \n
+vec3 ScreenSpaceDither(vec2 vScreenPos)                                                                 \n
 {                                                                                                       \n
-    highp vec3 vDither = vec3(dot(vec2(171.0, 231.0), vScreenPos.xy));                                  \n
+    vec3 vDither = vec3(dot(vec2(171.0, 231.0), vScreenPos.xy));                                        \n
     vDither.rgb = fract(vDither.rgb / vec3(103.0, 71.0, 97.0));                                         \n
     return vDither.rgb / 255.0;                                                                         \n
 });
 
 std::string STR_LINEAR_GRADIENT_VARIABLES = TVG_COMPOSE_SHADER(
-uniform highp vec2 gradStartPos;                                                                        \n
-uniform highp vec2 gradEndPos;                                                                          \n
+uniform vec2 gradStartPos;                                                                              \n
+uniform vec2 gradEndPos;                                                                                \n
 );
 
 std::string STR_LINEAR_GRADIENT_MAIN = TVG_COMPOSE_SHADER(
+out vec4 FragColor;                                                                                     \n
 void main()                                                                                             \n
 {                                                                                                       \n
-    highp vec2 pos = vec2(vPos.x * uCanvasSize.x, vPos.y * uCanvasSize.y);                              \n
-    highp vec2 spos = vec2(pos.x / uSize.x, pos.y / uSize.y);                                           \n
-    highp vec2 st = gradStartPos / (uSize.xy);                                                          \n
-    highp vec2 ed = gradEndPos / (uSize.xy);                                                            \n
+    vec2 pos = vec2(vPos.x * uCanvasSize.x, vPos.y * uCanvasSize.y);                                    \n
+    vec2 spos = vec2(pos.x / uSize.x, pos.y / uSize.y);                                                 \n
+    vec2 st = gradStartPos / (uSize.xy);                                                                \n
+    vec2 ed = gradEndPos / (uSize.xy);                                                                  \n
                                                                                                         \n
-    highp vec2 ba = ed - st;                                                                            \n
+    vec2 ba = ed - st;                                                                                  \n
                                                                                                         \n
-    highp float t = dot(spos - st, ba) / dot(ba, ba);                                                   \n
+    float t = dot(spos - st, ba) / dot(ba, ba);                                                         \n
                                                                                                         \n
     //t = smoothstep(0.0, 1.0, clamp(t, 0.0, 1.0));                                                     \n
     t = clamp(t, 0.0, 1.0);                                                                             \n
                                                                                                         \n
     vec4 color = gradient(t);                                                                           \n
                                                                                                         \n
-    highp vec3 noise = 8.0 * noise_level * ScreenSpaceDither(pos);                                      \n
+    vec3 noise = 8.0 * noise_level * ScreenSpaceDither(pos);                                            \n
     vec4 finalCol = vec4(color.xyz + noise, color.w);                                                   \n
-    gl_FragColor = vec4(finalCol.xyz, finalCol.w* vOpacity);                                            \n
+    FragColor = vec4(finalCol.xyz, finalCol.w* vOpacity);                                               \n
 });
 
 std::string STR_RADIAL_GRADIENT_VARIABLES = TVG_COMPOSE_SHADER(
-    uniform highp vec2 gradStartPos;                                                                    \n
-    uniform highp float stRadius;                                                                       \n
+    uniform vec2 gradStartPos;                                                                          \n
+    uniform float stRadius;                                                                             \n
 );
 
 std::string STR_RADIAL_GRADIENT_MAIN = TVG_COMPOSE_SHADER(
+out vec4 FragColor;                                                                                     \n
 void main()                                                                                             \n
 {                                                                                                       \n
-    highp vec2 pos = vec2(vPos.x * uCanvasSize.x, vPos.y * uCanvasSize.y);                              \n
-    highp vec2 spos = vec2(pos.x / uSize.x, pos.y / uSize.y);                                           \n
+    vec2 pos = vec2(vPos.x * uCanvasSize.x, vPos.y * uCanvasSize.y);                                    \n
+    vec2 spos = vec2(pos.x / uSize.x, pos.y / uSize.y);                                                 \n
                                                                                                         \n
-    highp float ba = stRadius;                                                                          \n
-    highp float d = distance(gradStartPos, pos);                                                        \n
+    float ba = stRadius;                                                                                \n
+    float d = distance(gradStartPos, pos);                                                              \n
     d = (d / ba);                                                                                       \n
                                                                                                         \n
     //float t = smoothstep(0.0, 1.0, clamp(d, 0.0, 1.0));                                               \n
@@ -161,9 +163,9 @@ void main()                                                                     
                                                                                                         \n
     vec4 color = gradient(t);                                                                           \n
                                                                                                         \n
-    highp vec3 noise = 8.0 * noise_level * ScreenSpaceDither(pos);                                      \n
+    vec3 noise = 8.0 * noise_level * ScreenSpaceDither(pos);                                            \n
     vec4 finalCol = vec4(color.xyz + noise, color.w);                                                   \n
-    gl_FragColor = vec4(finalCol.xyz, finalCol.w * vOpacity);                                           \n
+    FragColor = vec4(finalCol.xyz, finalCol.w * vOpacity);                                              \n
 });
 
 std::string STR_LINEAR_GRADIENT_FRAG_SHADER =

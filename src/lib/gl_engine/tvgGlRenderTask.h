@@ -55,7 +55,6 @@ public:
 private:
     RenderTypes mRenderType;
 
-    uint32_t    propertyFormatSize;
     std::shared_ptr<GlProgram> mProgram;
     std::map<int32_t, VertexProperty> mAttributePropertyBuffer;
     std::map<int32_t, VertexProperty> mUniformPropertyBuffer;

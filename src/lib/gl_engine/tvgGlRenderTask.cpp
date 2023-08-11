@@ -36,7 +36,8 @@ GlRenderTask::GlRenderTask(RenderTypes renderType, shared_ptr<GlShader> shader)
     load();
 
     VertexProperty* prop = nullptr;
-    ADD_ATTRIBUTE_PROPERTY(prop, this, mProgram, "aLocation", FORMAT_SIZE_VEC_4, mLocVertexAttribute);
+    // now location is specified directly in shader
+    mLocVertexAttribute = 0;
     ADD_UNIFORM_PROPERTY_2(prop, this, mProgram, "uTransform", FORMAT_SIZE_MAT_4x4, mLocTransform, VertexProperty::DataType::MATRIX);
 }
 

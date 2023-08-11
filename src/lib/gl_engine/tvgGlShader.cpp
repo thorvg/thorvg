@@ -67,8 +67,20 @@ uint32_t GlShader::complileShader(uint32_t type, char* shaderSrc)
     // Create the shader object
     shader = glCreateShader(type);
 
+    /**
+     * [0] shader version string
+     * [1] precision declaration
+     * [2] shader source
+     */
+    const char* shaderPack[3];
+    // for now only support GLES version
+    // but in general All Desktop GPU should use OpenGL version ( #version 330 core )
+    shaderPack[0] ="#version 300 es\n";
+    shaderPack[1] = "precision highp float;\n precision mediump int;\n";
+    shaderPack[2] = shaderSrc;
+
     // Load the shader source
-    glShaderSource(shader, 1, &shaderSrc, NULL);
+    glShaderSource(shader, 3, shaderPack, NULL);
 
     // Compile the shader
     glCompileShader(shader);
