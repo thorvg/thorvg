@@ -67,8 +67,9 @@ void LottieLoader::run(unsigned tid)
     //initial loading
     } else {
         LottieParser parser(content, dirName);
-        parser.parse();
+        if (!parser.parse()) return;
         comp = parser.comp;
+        if (!comp) return;
         builder->build(comp);
     }
 }
@@ -99,10 +100,15 @@ LottieLoader::~LottieLoader()
 
 bool LottieLoader::header()
 {
-    //Quickly validate the given Lottie file without parsing in order to get the animation info.
-    auto p = content;
+    //A single thread doesn't need to perform intensive tasks.
+    if (TaskScheduler::threads() == 0) return true;
 
+    //Quickly validate the given Lottie file without parsing in order to get the animation info.
+    auto startFrame = 0.0f;
+    auto endFrame = 0.0f;
     uint32_t depth = 0;
+
+    auto p = content;
 
     while (*p != '\0') {
         if (*p == '{') {
@@ -124,6 +130,7 @@ bool LottieLoader::header()
             p += 4;
             continue;
         }
+
         //framerate
         if (!strncmp(p, "\"fr\":", 5)) {
             p += 5;
@@ -133,7 +140,26 @@ bool LottieLoader::header()
             p = e;
             continue;
         }
-        //TODO: need a duration time in advance.
+
+        //start frame
+        if (!strncmp(p, "\"ip\":", 5)) {
+            p += 5;
+            auto e = strstr(p, ",");
+            if (!e) e = strstr(p, "}");
+            startFrame = _str2float(p, e - p);
+            p = e;
+            continue;
+        }
+
+        //end frame
+        if (!strncmp(p, "\"op\":", 5)) {
+            p += 5;
+            auto e = strstr(p, ",");
+            if (!e) e = strstr(p, "}");
+            endFrame = _str2float(p, e - p);
+            p = e;
+            continue;
+        }
 
         //width
         if (!strncmp(p, "\"w\":", 4)) {
@@ -155,7 +181,10 @@ bool LottieLoader::header()
         }
         ++p;
     }
-    TVGLOG("LOTTIE", "info: fr = %d, size = %d x %d", frameRate, (int)w, (int)h);
+
+    frameDuration = (endFrame - startFrame) / frameRate;
+
+    TVGLOG("LOTTIE", "info: frame rate = %d, duration = %f size = %d x %d", frameRate, frameDuration, (int)w, (int)h);
 
     return true;
 }
@@ -303,10 +332,7 @@ uint32_t LottieLoader::curFrame()
 
 float LottieLoader::duration()
 {
-    this->done();
-
-    if (!comp) return 0;
-    return comp->duration();
+    return frameDuration;
 }
 
 

@@ -445,7 +445,7 @@ struct LottieComposition
     char* version = nullptr;
     char* name = nullptr;
     uint32_t w, h;
-    long startFrame, endFrame;
+    int32_t startFrame, endFrame;
     float frameRate;
     Array<LottieObject*> assets;
     Array<LottieInterpolator*> interpolators;
