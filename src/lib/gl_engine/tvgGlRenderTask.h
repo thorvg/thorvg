@@ -85,8 +85,6 @@ public:
     void setStopColor(int index, float stopVal, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
     int32_t getTransformLocationPropertyId() const;
 private:
-    int32_t mLocPrimitiveSize = -1;
-    int32_t mLocCanvasSize = -1;
     int32_t mLocNoise = -1;
     int32_t mLocStopCnt = -1;
     int32_t mLocStops = -1;

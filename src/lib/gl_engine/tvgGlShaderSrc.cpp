@@ -54,14 +54,12 @@ void main()                                                                     
 {                                                                               \n
     gl_Position = uTransform * vec4(aLocation.xy, 0.0, 1.0);                    \n
     vOpacity = aLocation.z;                                                     \n
-    vPos = vec2((aLocation.x + 1.0) / 2.0, ((-1.0 * aLocation.y) +1.0) / 2.0);  \n
+    vPos =  aLocation.xy;                                                       \n
 });
 
 
 std::string STR_GRADIENT_FRAG_COMMON_VARIABLES = TVG_COMPOSE_SHADER(                                                                               \n
 const int MAX_STOP_COUNT = 4;                                                                           \n
-uniform vec2 uSize;                                                                                     \n
-uniform vec2 uCanvasSize;                                                                               \n
 uniform float nStops;                                                                                   \n
 uniform float noise_level;                                                                              \n
 uniform float stopPoints[MAX_STOP_COUNT];                                                               \n
@@ -123,14 +121,13 @@ std::string STR_LINEAR_GRADIENT_MAIN = TVG_COMPOSE_SHADER(
 out vec4 FragColor;                                                                                     \n
 void main()                                                                                             \n
 {                                                                                                       \n
-    vec2 pos = vec2(vPos.x * uCanvasSize.x, vPos.y * uCanvasSize.y);                                    \n
-    vec2 spos = vec2(pos.x / uSize.x, pos.y / uSize.y);                                                 \n
-    vec2 st = gradStartPos / (uSize.xy);                                                                \n
-    vec2 ed = gradEndPos / (uSize.xy);                                                                  \n
+    vec2 pos = vPos;                                                                                    \n
+    vec2 st = gradStartPos;                                                                             \n
+    vec2 ed = gradEndPos;                                                                               \n
                                                                                                         \n
     vec2 ba = ed - st;                                                                                  \n
                                                                                                         \n
-    float t = dot(spos - st, ba) / dot(ba, ba);                                                         \n
+    float t = dot(pos - st, ba) / dot(ba, ba);                                                          \n
                                                                                                         \n
     //t = smoothstep(0.0, 1.0, clamp(t, 0.0, 1.0));                                                     \n
     t = clamp(t, 0.0, 1.0);                                                                             \n
@@ -151,8 +148,7 @@ std::string STR_RADIAL_GRADIENT_MAIN = TVG_COMPOSE_SHADER(
 out vec4 FragColor;                                                                                     \n
 void main()                                                                                             \n
 {                                                                                                       \n
-    vec2 pos = vec2(vPos.x * uCanvasSize.x, vPos.y * uCanvasSize.y);                                    \n
-    vec2 spos = vec2(pos.x / uSize.x, pos.y / uSize.y);                                                 \n
+    vec2 pos = vPos;                                                                                    \n
                                                                                                         \n
     float ba = stRadius;                                                                                \n
     float d = distance(gradStartPos, pos);                                                              \n

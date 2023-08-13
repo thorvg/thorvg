@@ -174,30 +174,10 @@ GlGradientRenderTask::GlGradientRenderTask(GlRenderTask::RenderTypes renderType,
     :GlRenderTask(renderType, shader)
 {
     VertexProperty* prop = nullptr;
-    ADD_UNIFORM_PROPERTY(prop, this, getProgram(), "uSize", FORMAT_SIZE_VEC_2, mLocPrimitiveSize);
-    ADD_UNIFORM_PROPERTY(prop, this, getProgram(), "uCanvasSize", FORMAT_SIZE_VEC_2, mLocCanvasSize);
     ADD_UNIFORM_PROPERTY(prop, this, getProgram(), "noise_level", FORMAT_SIZE_FLOAT, mLocNoise);
     ADD_UNIFORM_PROPERTY(prop, this, getProgram(), "nStops", FORMAT_SIZE_FLOAT, mLocStopCnt);
     ADD_UNIFORM_PROPERTY(prop, this, getProgram(), "stopPoints", FORMAT_SIZE_FLOAT, mLocStops);
     ADD_UNIFORM_PROPERTY(prop, this, getProgram(), "stopColors", FORMAT_SIZE_VEC_4, mLocStopColors);
-}
-
-
-void GlGradientRenderTask::setPrimitveSize(float width, float height)
-{
-    if (mLocPrimitiveSize != -1)
-    {
-        PropertyInterface::setProperty(this, mLocPrimitiveSize, width, height);
-    }
-}
-
-
-void GlGradientRenderTask::setCanvasSize(float width, float height)
-{
-    if (mLocCanvasSize != -1)
-    {
-        PropertyInterface::setProperty(this, mLocCanvasSize, width, height);
-    }
 }
 
 

@@ -345,7 +345,6 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, uint32_t primit
     if (stopCnt < 2) return;
 
     GlGradientRenderTask* rTask = nullptr;
-    auto size = sdata.geometry->getPrimitiveSize(primitiveIndex);
     auto matrix = sdata.geometry->getTransforMatrix();
 
     switch (fill->identifier()) {
@@ -378,8 +377,6 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, uint32_t primit
     }
     if (rTask) {
         auto vertexLoc = rTask->getLocationPropertyId();
-        rTask->setPrimitveSize(size.x, size.y);
-        rTask->setCanvasSize(sdata.viewWd, sdata.viewHt);
         rTask->setNoise(NOISE_LEVEL);
         rTask->setStopCount((int)stopCnt);
         rTask->setTransform(FORMAT_SIZE_MAT_4x4, matrix);
