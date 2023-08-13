@@ -254,17 +254,9 @@ void GlGeometry::updateBuffer(uint32_t location, const VertexDataArray& vertexAr
 }
 
 
-GlPoint GlGeometry::normalizePoint(const GlPoint& pt, float viewWd, float viewHt)
-{
-    GlPoint p;
-    p.x = (pt.x * 2.0f / viewWd) - 1.0f;
-    p.y = -1.0f * ((pt.y * 2.0f / viewHt) - 1.0f);
-    return p;
-}
-
 void GlGeometry::addGeometryPoint(VertexDataArray& geometry, const GlPoint &pt, float viewWd, float viewHt, float opacity)
 {
-    VertexData tv = { normalizePoint(pt, viewWd, viewHt), opacity};
+    VertexData tv = {pt, opacity};
     geometry.vertices.push_back(tv);
 }
 
@@ -349,19 +341,22 @@ void GlGeometry::decomposeCubicCurve(GlPrimitive& primitve, const GlPoint& pt1, 
 
 void GlGeometry::updateTransform(const RenderTransform* transform, float w, float h)
 {
+    float modelMatrix[16];
     if (transform) {
-        mTransform.x = transform->x;
-        mTransform.y = transform->y;
-        mTransform.angle = transform->degree;
-        mTransform.scale = transform->scale;
+        GET_MATRIX44(transform->m, modelMatrix);
+    } else {
+        memset(modelMatrix, 0, 16 * sizeof(float));
+        modelMatrix[0] = 1.f;
+        modelMatrix[5] = 1.f;
+        modelMatrix[10] = 1.f;
+        modelMatrix[15] = 1.f;
     }
 
-    mTransform.w = w;
-    mTransform.h = h;
-    GET_TRANSFORMATION(NORMALIZED_LEFT_3D, NORMALIZED_TOP_3D, mTransform.matrix);
+    MVP_MATRIX();
+    MULTIPLY_MATRIX(mvp, modelMatrix, mTransform)
 }
 
 float* GlGeometry::getTransforMatrix()
 {
-    return mTransform.matrix;
+    return mTransform;
 }

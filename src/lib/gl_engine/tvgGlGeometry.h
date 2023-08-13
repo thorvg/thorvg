@@ -31,21 +31,10 @@
 
 #define MVP_MATRIX() \
     float mvp[4*4] = { \
-        mTransform.scale, 0.0, 0.0f, 0.0f, \
-        0.0, mTransform.scale, 0.0f, 0.0f, \
-        0.0f, 0.0f, mTransform.scale, 0.0f, \
-        (mTransform.x * 2.0f) * (mTransform.scale / mTransform.w), -(mTransform.y * 2.0f) * (mTransform.scale / mTransform.h), 0.0f, 1.0f \
-    };
-
-#define ROTATION_MATRIX(xPivot, yPivot) \
-    auto radian = mTransform.angle / 180.0f * PI; \
-    auto cosVal = cosf(radian);  \
-    auto sinVal = sinf(radian); \
-    float rotate[4*4] = { \
-        cosVal, -sinVal, 0.0f, 0.0f, \
-        sinVal, cosVal, 0.0f, 0.0f, \
-        0.0f, 0.0f, 1.0f, 0.0f, \
-        (xPivot * (1.0f - cosVal)) - (yPivot * sinVal), (yPivot *(1.0f - cosVal)) + (xPivot * sinVal), 0.0f, 1.0f \
+        2.f / w, 0.0, 0.0f, 0.0f, \
+        0.0, -2.f / h, 0.0f, 0.0f, \
+        0.0f, 0.0f, -1.f, 0.0f, \
+        -1.f, 1.f, 0.0f, 1.0f \
     };
 
 #define MULTIPLY_MATRIX(A, B, transform) \
@@ -90,11 +79,6 @@
         mat4[14] = 0;               \
         mat4[15] = mat3.e33;        \
     } while (false)
-
-#define GET_TRANSFORMATION(xPivot, yPivot, transform) \
-    MVP_MATRIX(); \
-    ROTATION_MATRIX(xPivot, yPivot); \
-    MULTIPLY_MATRIX(mvp, rotate, transform);
 
 class GlPoint
 {
@@ -249,17 +233,6 @@ struct GlPrimitive
     bool mIsClosed = false;
 };
 
-struct GlTransform
-{
-    float x = 0.0f;
-    float y = 0.0f;
-    float angle = 0.0f;
-    float scale = 1.0f;
-    float w;
-    float h;
-    float matrix[16];
-};
-
 class GlGpuBuffer;
 
 class GlGeometry
@@ -279,7 +252,6 @@ public:
     float* getTransforMatrix();
 
 private:
-    GlPoint normalizePoint(const GlPoint &pt, float viewWd, float viewHt);
     void addGeometryPoint(VertexDataArray &geometry, const GlPoint &pt, float viewWd, float viewHt, float opacity);
     GlPoint getNormal(const GlPoint &p1, const GlPoint &p2);
     float dotProduct(const GlPoint &p1, const GlPoint &p2);
@@ -296,7 +268,7 @@ private:
     std::unique_ptr<GlGpuBuffer> mVertexBuffer;
     std::unique_ptr<GlGpuBuffer> mIndexBuffer;
     vector<GlPrimitive>     mPrimitives;
-    GlTransform             mTransform;
+    float                   mTransform[16];
 };
 
 #endif /* _TVG_GL_GEOMETRY_H_ */
