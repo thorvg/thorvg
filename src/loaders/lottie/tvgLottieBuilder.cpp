@@ -43,6 +43,16 @@ static bool _invisible(LottieGroup* group, int32_t frameNo)
     else return false;
 }
 
+static bool _invisible(LottieLayer* layer, int32_t frameNo)
+{
+    if (frameNo < layer->inFrame || frameNo > layer->outFrame) {
+        if (layer->scene) layer->scene->opacity(0);
+        return true;
+    }
+
+    return _invisible(static_cast<LottieGroup*>(layer), frameNo);
+}
+
 
 static bool _updateTransform(LottieTransform* transform, int32_t frameNo, bool autoOrient, Matrix& matrix, uint8_t& opacity)
 {
