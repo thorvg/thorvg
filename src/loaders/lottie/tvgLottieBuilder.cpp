@@ -240,12 +240,15 @@ static Shape* _updatePath(LottieGroup* parent, LottiePath* path, int32_t frameNo
 
 static void _updateImage(LottieGroup* parent, LottieImage* image, int32_t frameNo, Paint* baseShape)
 {
-    auto picture = Picture::gen();
+    auto picture = image->picture;
 
-    if (image->size > 0) {
-        if (picture->load((const char*)image->b64Data, image->size, image->mimeType, false) != Result::Success) return;
-    } else {
-        if (picture->load(image->path) != Result::Success) return;
+    if (!picture) {
+        picture = Picture::gen().release();
+        if (image->size > 0) {
+            if (picture->load((const char*)image->b64Data, image->size, image->mimeType, false) != Result::Success) return;
+        } else {
+            if (picture->load(image->path) != Result::Success) return;
+        }
     }
 
     if (baseShape) {
@@ -254,7 +257,11 @@ static void _updateImage(LottieGroup* parent, LottieImage* image, int32_t frameN
         }
         picture->opacity(baseShape->opacity());
     }
-    parent->scene->push(std::move(picture));
+
+    //TODO: remove duplicate.
+    image->picture = (Picture*)picture->duplicate();
+
+    parent->scene->push(cast<Picture>(picture));
 }
 
 
