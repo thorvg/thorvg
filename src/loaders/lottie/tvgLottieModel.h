@@ -309,6 +309,8 @@ struct LottieImage : LottieObject
     char* mimeType = nullptr;
     uint32_t size = 0;
 
+    Picture* picture = nullptr;   //tvg render data
+
     ~LottieImage()
     {
         free(b64Data);
