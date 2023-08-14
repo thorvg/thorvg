@@ -35,12 +35,7 @@
 void RenderTransform::override(const Matrix& m)
 {
     this->m = m;
-
-    if (m.e11 == 0.0f && m.e12 == 0.0f && m.e13 == 0.0f &&
-        m.e21 == 0.0f && m.e22 == 0.0f && m.e23 == 0.0f &&
-        m.e31 == 0.0f && m.e32 == 0.0f && m.e33 == 0.0f) {
-        overriding = false;
-    } else overriding = true;
+    overriding = true;
 }
 
 
