@@ -57,6 +57,7 @@ private:
     void getValue(uint8_t& val);
     void getValue(Point& pt);
     void getValue(RGB24& color);
+    void getLayerSize(uint32_t& val);
 
     template<typename T> bool parseTangent(const char *key, LottieVectorFrame<T>& value);
     template<typename T> bool parseTangent(const char *key, LottieScalarFrame<T>& value);

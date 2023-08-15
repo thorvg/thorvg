@@ -43,6 +43,7 @@ static bool _invisible(LottieGroup* group, int32_t frameNo)
     else return false;
 }
 
+
 static bool _invisible(LottieLayer* layer, int32_t frameNo)
 {
     if (frameNo < layer->inFrame || frameNo > layer->outFrame) {
@@ -349,6 +350,15 @@ static void _updatePrecomp(LottieLayer* precomp, int32_t frameNo, bool reset)
 }
 
 
+static void _updateSolid(LottieLayer* layer, int32_t frameNo)
+{
+    auto shape = Shape::gen();
+    shape->appendRect(0, 0, layer->w, layer->h);
+    shape->fill(layer->color.rgb[0], layer->color.rgb[1], layer->color.rgb[2], layer->opacity(frameNo));
+    static_cast<Scene*>(layer->scene)->push(std::move(shape));
+}
+
+
 static void _updateLayer(LottieLayer* root, LottieLayer* layer, int32_t frameNo, bool reset)
 {
     //Prepare render data
@@ -382,7 +392,7 @@ static void _updateLayer(LottieLayer* root, LottieLayer* layer, int32_t frameNo,
             break;
         }
         case LottieLayer::Solid: {
-            TVGERR("LOTTIE", "TODO: update Solid Layer");
+            _updateSolid(layer, frameNo);
             break;
         }
         default: {
