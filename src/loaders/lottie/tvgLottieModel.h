@@ -336,7 +336,6 @@ struct LottieGroup : LottieObject
 
     virtual uint8_t opacity(int32_t frameNo)
     {
-        if (children.empty()) return 0;
         return (transform ? transform->opacity(frameNo) : 255);
     }
 
@@ -385,6 +384,7 @@ struct LottieLayer : LottieGroup
 
     //Optimize: compact data??
     RGB24 color = {255, 255, 255};
+
     CompositeMethod matteType = CompositeMethod::None;
     BlendMethod blendMethod = BlendMethod::Normal;
     LottieLayer* parent = nullptr;

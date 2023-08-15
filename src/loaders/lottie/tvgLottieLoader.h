@@ -36,7 +36,6 @@ public:
     const char* content = nullptr;      //lottie file data
     uint32_t size = 0;                  //lottie data size
     uint32_t frameNo = 0;               //current frame number
-    uint32_t frameRate;
     float frameDuration;
 
     LottieBuilder* builder = nullptr;
