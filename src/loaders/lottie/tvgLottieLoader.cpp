@@ -71,6 +71,9 @@ void LottieLoader::run(unsigned tid)
         comp = parser.comp;
         if (!comp) return;
         builder->build(comp);
+        w = comp->w;
+        h = comp->h;
+        frameDuration = comp->duration();
     }
 }
 
@@ -106,6 +109,7 @@ bool LottieLoader::header()
     //Quickly validate the given Lottie file without parsing in order to get the animation info.
     auto startFrame = 0.0f;
     auto endFrame = 0.0f;
+    float frameRate = 0.0f;
     uint32_t depth = 0;
 
     auto p = content;
@@ -189,7 +193,7 @@ bool LottieLoader::header()
 
     frameDuration = (endFrame - startFrame) / frameRate;
 
-    TVGLOG("LOTTIE", "info: frame rate = %d, duration = %f size = %d x %d", frameRate, frameDuration, (int)w, (int)h);
+    TVGLOG("LOTTIE", "info: frame rate = %f, duration = %f size = %d x %d", frameRate, frameDuration, (int)w, (int)h);
 
     return true;
 }

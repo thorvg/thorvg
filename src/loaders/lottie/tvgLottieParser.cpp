@@ -918,6 +918,19 @@ void LottieParser::parseShapes(LottieLayer* layer)
 }
 
 
+void LottieParser::getLayerSize(uint32_t& val)
+{
+    if (val == 0) {
+        val = getInt();
+    } else {
+        //layer might have both w(width) & sw(solid color width)
+        //override one if the a new size is smaller.
+        uint32_t w = getInt();
+        if (w < val) val = w;
+    }
+}
+
+
 LottieLayer* LottieParser::parseLayer()
 {
     auto layer = new LottieLayer;
@@ -948,10 +961,8 @@ LottieLayer* LottieParser::parseLayer()
         else if (!strcmp(key, "bm")) layer->blendMethod = getBlendMethod();
         else if (!strcmp(key, "parent")) layer->pid = getInt();
         else if (!strcmp(key, "tm")) parseTimeRemap(layer);
-        else if (!strcmp(key, "w")) layer->w = getInt();
-        else if (!strcmp(key, "h")) layer->h = getInt();
-        else if (!strcmp(key, "sw")) layer->w = getInt();
-        else if (!strcmp(key, "sh")) layer->h = getInt();
+        else if (!strcmp(key, "w") || !strcmp(key, "sw")) getLayerSize(layer->w);
+        else if (!strcmp(key, "h") || !strcmp(key, "sh")) getLayerSize(layer->h);
         else if (!strcmp(key, "sc")) layer->color = getColor(getString());
         else if (!strcmp(key, "tt")) layer->matteType = getMatteType();
         else if (!strcmp(key, "hasMask")) layer->mask = getBool();
@@ -962,11 +973,6 @@ LottieLayer* LottieParser::parseLayer()
         }
         else if (!strcmp(key, "hd")) layer->hidden = getBool();
         else if (!strcmp(key, "refId")) layer->refId = getStringCopy();
-        else if (!strcmp(key, "ef"))
-        {
-            TVGLOG("LOTTIE", "Effect(ef) is not supported");
-            skip(key);
-        }
         else skip(key);
     }
 
