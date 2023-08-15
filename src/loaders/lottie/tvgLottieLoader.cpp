@@ -182,6 +182,11 @@ bool LottieLoader::header()
         ++p;
     }
 
+    if (frameRate < FLT_EPSILON) {
+        TVGLOG("LOTTIE", "Not a Lottie file? Frame rate is 0!");
+        return false;
+    }
+
     frameDuration = (endFrame - startFrame) / frameRate;
 
     TVGLOG("LOTTIE", "info: frame rate = %d, duration = %f size = %d x %d", frameRate, frameDuration, (int)w, (int)h);
