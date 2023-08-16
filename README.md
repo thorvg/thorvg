@@ -240,7 +240,6 @@ ThorVG aims to fully support Lottie Animation features. Lottie is a JSON-based v
 Currently, ThorVG provides experimental support for Lottie Animation, and while most features are supported, a few advanced properties of Lottie may not be available yet:
 <br />
 
- - Maskings
  - Trimpath 
  - Texts
  - Polystar
