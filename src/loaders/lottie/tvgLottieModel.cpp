@@ -80,8 +80,8 @@ int32_t LottieLayer::remap(int32_t frameNo)
         frameNo = comp->frameAtTime(timeRemap(frameNo));
     }
 
-    if (timeStretch == 1.0f) return frameNo;
-    return (int32_t)(frameNo / timeStretch);
+    if (type == Precomp) return (int32_t)(frameNo / timeStretch) - startFrame;
+    else return (int32_t)(frameNo / timeStretch);
 }
 
 
