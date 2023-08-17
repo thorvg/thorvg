@@ -31,8 +31,8 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-static void _updateChildren(LottieGroup* parent, int32_t frameNo, Shape* baseShape, bool reset);
-static void _updateLayer(LottieLayer* root, LottieLayer* layer, int32_t frameNo, bool reset);
+static void _updateChildren(LottieGroup* parent, int32_t frameNo, Shape* baseShape);
+static void _updateLayer(LottieLayer* root, LottieLayer* layer, int32_t frameNo);
 static bool _buildPrecomp(LottieComposition* comp, LottieGroup* parent);
 
 static bool _invisible(LottieGroup* group, int32_t frameNo)
@@ -68,17 +68,16 @@ static bool _updateTransform(LottieTransform* transform, int32_t frameNo, bool a
         mathTranslate(&matrix, position.x, position.y);
     }
 
-    auto scale = transform->scale(frameNo);
-    mathScale(&matrix, scale.x * 0.01f, scale.y * 0.01f);
-
     auto angle = 0.0f;
     if (autoOrient) angle = transform->position.angle(frameNo);
     mathRotate(&matrix, transform->rotation(frameNo) + angle);
 
+    auto scale = transform->scale(frameNo);
+    mathScaleR(&matrix, scale.x * 0.01f, scale.y * 0.01f);
+
     //Lottie specific anchor transform.
     auto anchor = transform->anchor(frameNo);
-    matrix.e13 -= (anchor.x * matrix.e11 + anchor.y * matrix.e12);
-    matrix.e23 -= (anchor.x * matrix.e21 + anchor.y * matrix.e22);
+    mathTranslateR(&matrix, -anchor.x, -anchor.y);
 
     opacity = transform->opacity(frameNo);
 
@@ -97,7 +96,8 @@ static void _updateTransform(LottieLayer* layer, int32_t frameNo)
 
     auto& matrix = layer->cache.matrix;
     uint8_t opacity;
-    _updateTransform(transform, layer->remap(frameNo), layer->autoOrient, matrix, opacity);
+
+    _updateTransform(transform, frameNo, layer->autoOrient, matrix, opacity);
 
     if (parent) {
         layer->cache.matrix = mathMultiply(&parent->cache.matrix, &matrix);
@@ -124,17 +124,12 @@ static Shape* _updateTransform(Paint* paint, LottieTransform* transform, int32_t
 }
 
 
-static Shape* _updateGroup(LottieGroup* parent, LottieGroup* group, int32_t frameNo, Shape* baseShape, bool reset)
+static Shape* _updateGroup(LottieGroup* parent, LottieGroup* group, int32_t frameNo, Shape* baseShape)
 {
     //Prepare render data
-    if (reset || !group->scene) {
-        auto scene = Scene::gen();
-        group->scene = scene.get();
-        static_cast<Scene*>(parent->scene)->push(std::move(scene));
-    } else {
-        static_cast<Scene*>(group->scene)->clear();
-        reset = true;
-    }
+    auto scene = Scene::gen();
+    group->scene = scene.get();
+    parent->scene->push(std::move(scene));
 
     if (_invisible(group, frameNo)) return nullptr;
 
@@ -145,7 +140,7 @@ static Shape* _updateGroup(LottieGroup* parent, LottieGroup* group, int32_t fram
         group->scene->transform(matrix);
         group->scene->opacity(opacity);
     }
-    _updateChildren(group, frameNo, baseShape, reset);
+    _updateChildren(group, frameNo, baseShape);
     return nullptr;
 }
 
@@ -214,7 +209,7 @@ static Shape* _updateRect(LottieGroup* parent, LottieRect* rect, int32_t frameNo
     if (!mergingShape) {
         auto newShape = cast<Shape>(baseShape->duplicate());
         mergingShape = newShape.get();
-        static_cast<Scene*>(parent->scene)->push(std::move(newShape));
+        parent->scene->push(std::move(newShape));
     }
     mergingShape->appendRect(position.x - size.x * 0.5f, position.y - size.y * 0.5f, size.x, size.y, roundness, roundness);
     return mergingShape;
@@ -228,7 +223,7 @@ static Shape* _updateEllipse(LottieGroup* parent, LottieEllipse* ellipse, int32_
     if (!mergingShape) {
         auto newShape = cast<Shape>(baseShape->duplicate());
         mergingShape = newShape.get();
-        static_cast<Scene*>(parent->scene)->push(std::move(newShape));
+        parent->scene->push(std::move(newShape));
     }
     mergingShape->appendCircle(position.x, position.y, size.x * 0.5f, size.y * 0.5f);
     return mergingShape;
@@ -240,7 +235,7 @@ static Shape* _updatePath(LottieGroup* parent, LottiePath* path, int32_t frameNo
     if (!mergingShape) {
         auto newShape = cast<Shape>(baseShape->duplicate());
         mergingShape = newShape.get();
-        static_cast<Scene*>(parent->scene)->push(std::move(newShape));
+        parent->scene->push(std::move(newShape));
     }
     if (path->pathset(frameNo, P(mergingShape)->rs.path.cmds, P(mergingShape)->rs.path.pts)) {
         P(mergingShape)->update(RenderUpdateFlag::Path);
@@ -276,7 +271,7 @@ static void _updateImage(LottieGroup* parent, LottieImage* image, int32_t frameN
 }
 
 
-static void _updateChildren(LottieGroup* parent, int32_t frameNo, Shape* baseShape, bool reset)
+static void _updateChildren(LottieGroup* parent, int32_t frameNo, Shape* baseShape)
 {
     if (parent->children.empty()) return;
 
@@ -290,7 +285,7 @@ static void _updateChildren(LottieGroup* parent, int32_t frameNo, Shape* baseSha
     for (auto child = parent->children.end() - 1; child >= parent->children.data; --child) {
         switch ((*child)->type) {
             case LottieObject::Group: {
-                mergingShape = _updateGroup(parent, static_cast<LottieGroup*>(*child), frameNo, baseShape, reset);
+                mergingShape = _updateGroup(parent, static_cast<LottieGroup*>(*child), frameNo, baseShape);
                 break;
             }
             case LottieObject::Transform: {
@@ -341,11 +336,14 @@ static void _updateChildren(LottieGroup* parent, int32_t frameNo, Shape* baseSha
     delete(baseShape);
 }
 
-static void _updatePrecomp(LottieLayer* precomp, int32_t frameNo, bool reset)
+
+static void _updatePrecomp(LottieLayer* precomp, int32_t frameNo)
 {
+    if (precomp->children.count == 0) return;
+
     //TODO: skip if the layer is static.
     for (auto child = precomp->children.end() - 1; child >= precomp->children.data; --child) {
-        _updateLayer(precomp, static_cast<LottieLayer*>(*child), frameNo, reset);
+        _updateLayer(precomp, static_cast<LottieLayer*>(*child), frameNo);
     }
 }
 
@@ -355,25 +353,47 @@ static void _updateSolid(LottieLayer* layer, int32_t frameNo)
     auto shape = Shape::gen();
     shape->appendRect(0, 0, layer->w, layer->h);
     shape->fill(layer->color.rgb[0], layer->color.rgb[1], layer->color.rgb[2], layer->opacity(frameNo));
-    static_cast<Scene*>(layer->scene)->push(std::move(shape));
+    layer->scene->push(std::move(shape));
 }
 
 
-static void _updateLayer(LottieLayer* root, LottieLayer* layer, int32_t frameNo, bool reset)
+static void _updateMaskings(LottieLayer* layer, int32_t frameNo)
 {
-    //Prepare render data
-    if (reset || !layer->scene) {
-        auto scene = Scene::gen();
-        layer->scene = scene.get();
-        static_cast<Scene*>(root->scene)->push(std::move(scene));
+    if (layer->masks.count == 0) return;
+
+    //maskings+clipping
+    Shape* mergingMask = nullptr;
+
+    for (auto m = layer->masks.data; m < layer->masks.end(); ++m) {
+        auto mask = static_cast<LottieMask*>(*m);
+        auto shape = Shape::gen().release();
+        shape->fill(255, 255, 255, mask->opacity(frameNo));
+        shape->transform(layer->cache.matrix);
+        if (mask->pathset(frameNo, P(shape)->rs.path.cmds, P(shape)->rs.path.pts)) {
+            P(shape)->update(RenderUpdateFlag::Path);
+        }
+        if (mergingMask) {
+            mergingMask->composite(cast<Shape>(shape), mask->method);
+        }
+        else {
+            auto method = mask->method;
+            if (method == CompositeMethod::AddMask) method = CompositeMethod::AlphaMask;
+            if (method == CompositeMethod::SubtractMask) method = CompositeMethod::InvAlphaMask;
+            layer->scene->composite(cast<Shape>(shape), method);
+        }
+        mergingMask = shape;
     }
-    //else if (layer->statical) return;   //FIXME: rendering is skipped due to no update?
-    else {
-        static_cast<Scene*>(layer->scene)->clear();
-        reset = true;
-    }
+}
+
+
+static void _updateLayer(LottieLayer* root, LottieLayer* layer, int32_t frameNo)
+{
+    layer->scene = nullptr;
 
     if (_invisible(layer, frameNo)) return;
+
+    //Prepare render data
+    layer->scene = Scene::gen().release();
 
     _updateTransform(layer, frameNo);
 
@@ -384,22 +404,49 @@ static void _updateLayer(LottieLayer* root, LottieLayer* layer, int32_t frameNo,
         layer->scene->opacity(layer->cache.opacity);
     }
 
-    frameNo = layer->remap(frameNo);
+    auto rFrameNo = layer->remap(frameNo);
 
     switch (layer->type) {
         case LottieLayer::Precomp: {
-            _updatePrecomp(layer, frameNo, reset);
+            _updatePrecomp(layer, rFrameNo);
             break;
         }
         case LottieLayer::Solid: {
-            _updateSolid(layer, frameNo);
+            _updateSolid(layer, rFrameNo);
             break;
         }
         default: {
-            _updateChildren(layer, frameNo, nullptr, reset);
+            _updateChildren(layer, rFrameNo, nullptr);
             break;
         }
     }
+
+    if (layer->matte.target && layer->masks.count > 0) {
+        TVGERR("LOTTIE", "FIXME: Matte + Masking??");
+    }
+
+    //matte masking layer
+    if (layer->matte.target) {
+        _updateLayer(root, layer->matte.target, frameNo);
+        layer->scene->composite(cast<Scene>(layer->matte.target->scene), layer->matte.type);
+    }
+
+    _updateMaskings(layer, rFrameNo);
+
+    //clip the layer viewport
+    if (layer->clipself) {
+        //TODO: remove the intermediate scene....
+        auto cscene = Scene::gen();
+        auto clipper = Shape::gen();
+        clipper->appendRect(0, 0, layer->w, layer->h);
+        clipper->transform(layer->cache.matrix);
+        cscene->composite(move(clipper), CompositeMethod::ClipPath);
+        cscene->push(cast<Scene>(layer->scene));
+        layer->scene = cscene.release();
+    }
+
+    //the given matte source was composited by the target earlier.
+    if (!layer->matteSrc) root->scene->push(cast<Scene>(layer->scene));
 }
 
 
@@ -421,27 +468,53 @@ static void _buildReference(LottieComposition* comp, LottieLayer* layer)
 }
 
 
+static void _bulidHierarchy(LottieGroup* parent, LottieLayer* child)
+{
+    if (child->pid == -1) return;
+
+    for (auto p = parent->children.data; p < parent->children.end(); ++p) {
+        auto parent = static_cast<LottieLayer*>(*p);
+        if (child == parent) continue;
+        if (child->pid == parent->id) {
+            child->parent = parent;
+            parent->statical &= child->statical;
+            break;
+        }
+    }
+}
+
+
+static void _buildSize(LottieComposition* comp, LottieLayer* layer)
+{
+    // default size is 0x0
+    if (layer->w == 0 || layer->h == 0) return;
+
+    //compact layer size
+    if (layer->w > comp->w) layer->w = comp->w;
+    if (layer->h > comp->h) layer->h = comp->h;
+
+    if (layer->w < comp->w || layer->h < comp->h) {
+        layer->clipself = true;
+    }
+}
+
+
 static bool _buildPrecomp(LottieComposition* comp, LottieGroup* parent)
 {
     if (parent->children.count == 0) return false;
 
     for (auto c = parent->children.data; c < parent->children.end(); ++c) {
         auto child = static_cast<LottieLayer*>(*c);
+
+        //compact layer size
+        _buildSize(comp, child);
+
         //attach the referencing layer.
         if (child->refId) _buildReference(comp, child);
 
-        if (child->pid == -1) continue;
-
         //parenting
-        for (auto p = parent->children.data; p < parent->children.end(); ++p) {
-            if (c == p) continue;
-            auto parent = static_cast<LottieLayer*>(*p);
-            if (child->pid == parent->id) {
-                child->parent = parent;
-                parent->statical &= child->statical;
-                break;
-            }
-        }
+        if (child->matte.target) _bulidHierarchy(parent, child->matte.target);
+        if (child->pid != -1) _bulidHierarchy(parent, child);
     }
     return true;
 }
@@ -466,12 +539,14 @@ bool LottieBuilder::update(LottieComposition* comp, int32_t frameNo)
         auto scene = Scene::gen();
         root->scene = scene.get();
         comp->scene->push(std::move(scene));
+    } else {
+        root->scene->clear();
     }
 
     //update children layers
     //TODO: skip if the layer is static.
     for (auto child = root->children.end() - 1; child >= root->children.data; --child) {
-        _updateLayer(root, static_cast<LottieLayer*>(*child), frameNo, false);
+        _updateLayer(root, static_cast<LottieLayer*>(*child), frameNo);
     }
     return true;
 }
