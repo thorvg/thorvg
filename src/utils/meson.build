@@ -6,6 +6,7 @@ source_file = [
    'tvgStr.h',
    'tvgBezier.cpp',
    'tvgLzw.cpp',
+   'tvgMath.cpp',
    'tvgStr.cpp'
 ]
 
