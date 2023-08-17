@@ -10,7 +10,7 @@
 <p align="center">
   <img width="800" height="400" src="https://github.com/thorvg/thorvg/blob/main/res/logo/512/thorvg-banner.png">
 </p>
-ThorVG is an open-source, platform-independent portable library used for drawing vector-based scenes and animations, which can be freely utilized across various software platforms and applications. With user-friendly APIs, it has no dependencies and maintains a super compact size. It serves as the vector graphics engine for Tizen OS and the Godot Platform, powering numerous products. <br />
+ThorVG is an open-source graphics library designed for creating vector-based scenes and animations. Embracing the philosophy of "Simpler is better," the ThorVG project offers intuitive and user-friendly interfaces, all the while maintaining a compact size and minimal software complexity. <br />
 <br />
 The following list shows primitives that are supported by ThorVG: <br />
 <br />
@@ -26,13 +26,17 @@ The following list shows primitives that are supported by ThorVG: <br />
   <img width="900" height="472" src="https://github.com/thorvg/thorvg/blob/main/res/example_primitives.png">
 </p>
 <br />
-If your program has the main renderer, your program could call ThorVG APIs while switching drawing contexts between the main renderer and ThorVG. During the API calls, ThorVG serializes drawing commands among the volatile paints' nodes then performs synchronous/asynchronous rendering using its backend raster engines. ThorVG supports vector images such as SVG, also expands, supporting other popular formats on demand. On the rendering, it could spawn intermediate frame-buffers for compositing scenes only when it's necessary. The next figure shows you a brief strategy on how to use ThorVG on your system.<br />
+If your program includes the main renderer, you can seamlessly utilize ThorVG APIs by transitioning drawing contexts between the main renderer and ThorVG. Throughout these API calls, ThorVG effectively serializes drawing commands among volatile paint nodes. Subsequently, it undertakes synchronous or asynchronous rendering via its backend raster engines.<br />
+<br />
+ThorVG is adept at handling vector images, including formats like SVG, and it remains adaptable for accommodating additional popular formats as needed. In the rendering process, the library may generate intermediate frame buffers for scene compositing, though only when essential. The accompanying diagram provides a concise overview of how to effectively incorporate ThorVG within your system.<br />
 <br />
 <p align="center">
   <img width="900" height="288" src="https://github.com/thorvg/thorvg/blob/main/res/example_flow.png">
 </p>
 <br />
-ThorVG has the threading mechanism so that it tries to acquire the next scenes without delay. It runs its own fine-tuned task-scheduler built on threading pools, encapsulates all the jobs such as encoding, decoding, updating, rendering with tasks. As a result, all the tasks could run on multi-processing. The task scheduler is readied for hiding complexity, easier integration and user convenience. Thus the policy is optional, users can select it by their demands.<br />
+ThorVG incorporates a threading mechanism that aims to seamlessly acquire subsequent scenes without unnecessary delays. It operates using a finely-tuned task scheduler based on thread pools, encompassing various tasks such as encoding, decoding, updating, and rendering. This design ensures that all tasks can effectively leverage multi-processing capabilities.<br />
+<br />
+The task scheduler has been meticulously crafted to conceal complexity, streamline integration, and enhance user convenience. Therefore, the policy it employs is optional, allowing users to select it based on their specific requirements..<br />
 <br />
 <p align="center">
   <img width="900" height="313" src="https://github.com/thorvg/thorvg/blob/main/res/example_thread.png">
@@ -208,8 +212,7 @@ tvg::Initializer::term(tvg::CanvasEngine::Sw);
 <br />
 ## SVG
 
-ThorVG supports SVG (Scalable Vector Graphics) rendering through its SVG interpreter. It satisfies the [SVG Tiny Specification](https://www.w3.org/TR/SVGTiny12/)
-to keep it lightweight, so it's useful for the embedded systems. Among the SVG Tiny specs, unsupported features in the ThorVG are the following:
+ThorVG facilitates [SVG Tiny Specification](https://www.w3.org/TR/SVGTiny12/) rendering via its dedicated SVG interpreter. Adhering to the SVG Tiny Specification, the implementation maintains a lightweight profile, rendering it particularly advantageous for embedded systems. While ThorVG comprehensively adheres to most of the SVG Tiny specs, certain features remain unsupported within the current framework. These include:</br>
 
  - Animation
  - Fonts & Text
@@ -272,21 +275,21 @@ Let's suppose the progress variable determines the position of the animation, ra
 <br />
 ## TVG Picture
 
-ThorVG provides the designated vector data format which is called TVG Picture. TVG Picture stores a list of properties of the Paint nodes of a scene in binary form. The data saved in a TVG Picture is optimized beforehand, keeping the resulting file small and the data loading process fast and efficient.
-
-To save data in a TVG Picture format, ThorVG uses a dedicated module - TVG Saver. It is responsible for optimizing the data of all the scene-tree nodes and saving them in binary format. In the optimization process, the TVG Saver filters out unused information, removing the duplicated properties, merges the overlapping shapes and compresses the data if possible, but keeping the TVG Pictures compatible with the later version of ThorVG libraries. In case of compression, it uses [Lempel-Ziv-Welchi](https://en.wikipedia.org/wiki/Lempel%E2%80%93Ziv%E2%80%93Welch) data compression algorithm.
-
-The final data size is smaller in comparison to any other text-based vector data format, such as SVG, which in turn decreases the required application resources. This helps not only reduce the number of I/O operations but also reduces the memory bandwidth while loading the data. Thus this is effective if your program uses a big amount of the vector resources.
-
-Additionally, TVG Picture helps to reduce the resource loading tasks since it can skip interpreting the data stage. That brings the reduced amount of the required runtime memory and rendering tasks that increases the performance.
-
-Utilizing the TVG Picture allows you to reduce the data size and loading time by more than 30%, on average ([See More](https://github.com/thorvg/thorvg/wiki/TVG-Picture-Binary-Size)). Note that the charge in the performance rate depends on the resource size and its complexity.
-
+ThorVG introduces the dedicated vector data format, known as TVG Picture, designed to efficiently store Paint node properties within a scene in binary form. This format is meticulously optimized in advance, ensuring compact file sizes and swift data loading processes. </br>
+</br>
+To leverage the TVG Picture format, ThorVG employs a specialized module called TVG Saver. This module is responsible for optimizing the data associated with all scene-tree nodes and storing them in binary form. During the optimization phase, TVG Saver intelligently eliminates unused information, eliminates duplicated properties, consolidates overlapping shapes, and employs data compression where feasible. Remarkably, these optimizations maintain compatibility with future versions of ThorVG libraries, with data compression utilizing the [Lempel-Ziv-Welchi](https://en.wikipedia.org/wiki/Lempel%E2%80%93Ziv%E2%80%93Welch) algorithm when applicable.</br>
+</br>
+As a result of these efforts, the final data size is notably smaller than other text-based vector data formats, such as SVG. This reduction in data size not only minimizes I/O operations but also mitigates memory bandwidth requirements during data loading. This aspect proves particularly beneficial for programs reliant on substantial vector resources. </br>
+</br>
+Furthermore, TVG Picture substantially streamlines resource loading tasks by circumventing the need for data interpretation, resulting in reduced runtime memory demands and rendering tasks that subsequently enhance performance. </br>
+</br>
+By adopting TVG Picture, you can achieve an average reduction of over 30% in data size and loading times (for more details, refer to "[See More](https://github.com/thorvg/thorvg/wiki/TVG-Picture-Binary-Size)"). Notably, the extent of performance improvement is contingent on resource size and complexity. </br>
+</br>
 <p align="center">
   <img width="909" height="314" src="https://github.com/thorvg/thorvg/blob/main/res/example_tvgsize.png">
 </p>
 
-While TVG Saver exports the scene-tree to the TVG Picture data files(TVG), the TVG Loader imports and restores it to the programmable instances. You can quickly use the ThorVG Viewer to convert files from SVG to TVG.
+As TVG Saver facilitates the export of the scene-tree into TVG Picture data files (TVG), the subsequent task of importing and restoring this data to programmable instances is efficiently handled by the TVG Loader. For seamless conversion from SVG to TVG, the ThorVG Viewer provides a swift solution.
 
 <p align="center">
   <img width="710" height="215" src="https://github.com/thorvg/thorvg/blob/main/res/example_tvgmodule.png">
