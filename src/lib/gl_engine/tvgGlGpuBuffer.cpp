@@ -29,7 +29,7 @@
 GlGpuBuffer::GlGpuBuffer()
 {
     GL_CHECK(glGenBuffers(1, &mGlBufferId));
-    assert(mGlBufferId != GL_INVALID_VALUE);
+    assert(mGlBufferId != 0);
 }
 
 
