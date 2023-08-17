@@ -746,7 +746,7 @@ static unique_ptr<Scene> _useBuildHelper(const SvgNode* node, const Box& vBox, c
             finalScene = std::move(root);
         }
     } else {
-        if (!mathIdentity((const Matrix*)(&mUseTransform))) scene->transform(mUseTransform);
+        scene->transform(mUseTransform);
         finalScene = std::move(scene);
     }
 
