@@ -24,7 +24,7 @@
 #include <fstream>
 #include "tvgLoader.h"
 #include "tvgTvgLoader.h"
-#include "tvgLzw.h"
+#include "tvgCompressor.h"
 
 
 /************************************************************************/

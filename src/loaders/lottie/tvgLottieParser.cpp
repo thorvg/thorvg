@@ -21,6 +21,7 @@
  */
 
 #include "tvgStr.h"
+#include "tvgCompressor.h"
 #include "tvgLottieModel.h"
 #include "tvgLottieParser.h"
 
@@ -29,16 +30,6 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-static constexpr const char B64_INDEX[256] =
-{
-    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-    0,  0,  0,  0,  0,  0,  0,  62, 63, 62, 62, 63, 52, 53, 54, 55, 56, 57,
-    58, 59, 60, 61, 0,  0,  0,  0,  0,  0,  0,  0,  1,  2,  3,  4,  5,  6,
-    7,  8,  9,  10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24,
-    25, 0,  0,  0,  0,  63, 0,  26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36,
-    37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51
-};
 
 
 static char* _int2str(int num)
@@ -46,31 +37,6 @@ static char* _int2str(int num)
     char str[20];
     snprintf(str, 20, "%d", num);
     return strdup(str);
-}
-
-
-static void _decodeB64(const uint8_t* input, const size_t len, Array<char>& output)
-{
-    int pad = len > 0 && (len % 4 || input[len - 1] == '=');
-    const size_t L = ((len + 3) / 4 - pad) * 4;
-    output.reserve(L / 4 * 3 + pad + 1);
-    output.data[output.reserved - 1] = '\0';
-
-    for (size_t i = 0; i < L; i += 4) {
-        int n = B64_INDEX[input[i]] << 18 | B64_INDEX[input[i + 1]] << 12 | B64_INDEX[input[i + 2]] << 6 | B64_INDEX[input[i + 3]];
-        output.push(n >> 16);
-        output.push(n >> 8 & 0xFF);
-        output.push(n & 0xFF);
-    }
-    if (pad) {
-        int n = B64_INDEX[input[L]] << 18 | B64_INDEX[input[L + 1]] << 12;
-        output.last() = n >> 16;
-        if (len > L + 2 && input[L + 2] != '=') {
-            n |= B64_INDEX[input[L + 2]] << 6;
-            output.push(n >> 8 & 0xFF);
-        }
-    }
-    output.count = output.reserved;
 }
 
 
@@ -860,12 +826,7 @@ LottieImage* LottieParser::parseImage(const char* key)
         //b64 data
         auto b64Data = strstr(data, ",") + 1;
         size_t length = strlen(data) - (b64Data - data);
-
-        Array<char> decoded;
-        _decodeB64(reinterpret_cast<const uint8_t*>(b64Data), length, decoded);
-        image->b64Data = decoded.data;
-        image->size = decoded.count;
-        decoded.data = nullptr;
+        image->size = b64Decode(b64Data, length, &image->b64Data);
     //external image resource
     } else {
         auto len = strlen(dirName) + strlen(subPath) + strlen(data) + 1;
