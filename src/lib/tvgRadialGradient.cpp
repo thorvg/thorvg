@@ -29,9 +29,9 @@
 
 struct RadialGradient::Impl
 {
-    float cx {}, cy {};
-    float fx {}, fy {};
-    float r {}, fr {};
+    float cx = 0.0f, cy = 0.0f;
+    float fx = 0.0f, fy = 0.0f;
+    float r = 0.0f, fr = 0.0f;
 
     Fill* duplicate()
     {

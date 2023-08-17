@@ -240,6 +240,7 @@ static inline uint32_t _pixel(const SwFill* fill, float pos)
     return fill->ctable[_clamp(fill, i)];
 }
 
+
 /*
  * quadratic equation with the following coefficients (rx and ry defined in the _calculateCoefficients()):
  * A = a  // fill->radial.a
@@ -250,7 +251,7 @@ static inline uint32_t _pixel(const SwFill* fill, float pos)
  * for consecutive x values with a constant y. The Taylor series expansions are computed as long as
  * its terms are non-zero.
  */
-static void _calculateCoefficients(const SwFill* fill, uint32_t x, uint32_t y, float& b, float& delta_b, float& det, float& delta_det, float& delta_delta_det, float* ddd = nullptr, float* delta_ddd = nullptr, float* delta_delta_ddd = nullptr)
+static void _calculateCoefficients(const SwFill* fill, uint32_t x, uint32_t y, float& b, float& deltaB, float& det, float& deltaDet, float& deltaDeltaDet)
 {
     auto radial = &fill->radial;
 
@@ -258,45 +259,19 @@ static void _calculateCoefficients(const SwFill* fill, uint32_t x, uint32_t y, f
     auto ry = (x + 0.5f) * radial->a21 + (y + 0.5f) * radial->a22 + radial->a23 - radial->fy;
 
     b = (radial->dr * radial->fr + rx * radial->dx + ry * radial->dy) * radial->invA;
-    delta_b = (radial->a11 * radial->dx + radial->a21 * radial->dy) * radial->invA;
+    deltaB = (radial->a11 * radial->dx + radial->a21 * radial->dy) * radial->invA;
 
     auto rr = rx * rx + ry * ry;
-    auto delta_rr = 2.0f * (rx * radial->a11 + ry * radial->a21) * radial->invA;
-    auto delta_delta_rr = 2.0f * (radial->a11 * radial->a11 + radial->a21 * radial->a21) * radial->invA;
+    auto deltaRr = 2.0f * (rx * radial->a11 + ry * radial->a21) * radial->invA;
+    auto deltaDeltaRr = 2.0f * (radial->a11 * radial->a11 + radial->a21 * radial->a21) * radial->invA;
 
     det = b * b + (rr - radial->fr * radial->fr) * radial->invA;
-    delta_det = 2.0f * b * delta_b + delta_b * delta_b + delta_rr + delta_delta_rr;
-    delta_delta_det = 2.0f * delta_b * delta_b + delta_delta_rr;
-}
-
-/************************************************************************/
-/* External Class Implementation                                        */
-/************************************************************************/
-
-void fillRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, uint8_t* cmp, SwAlpha alpha, uint8_t csize, uint8_t opacity)
-{
-    float b, delta_b, det, delta_det, delta_delta_det;
-    _calculateCoefficients(fill, x, y, b, delta_b, det, delta_det, delta_delta_det);
-
-    if (opacity == 255) {
-        for (uint32_t i = 0 ; i < len ; ++i, ++dst, cmp += csize) {
-            *dst = opBlendNormal(_pixel(fill, sqrtf(det) - b), *dst, alpha(cmp));
-            det += delta_det;
-            delta_det += delta_delta_det;
-            b += delta_b;
-        }
-    } else {
-        for (uint32_t i = 0 ; i < len ; ++i, ++dst, cmp += csize) {
-            *dst = opBlendNormal(_pixel(fill, sqrtf(det) - b), *dst, MULTIPLY(opacity, alpha(cmp)));
-            det += delta_det;
-            delta_det += delta_delta_det;
-            b += delta_b;
-        }
-    }
+    deltaDet = 2.0f * b * deltaB + deltaB * deltaB + deltaRr + deltaDeltaRr;
+    deltaDeltaDet = 2.0f * deltaB * deltaB + deltaDeltaRr;
 }
 
 
-void fillRadialEdgeCase(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, uint8_t* cmp, SwAlpha alpha, uint8_t csize, uint8_t opacity)
+static void _fillRadialEdgeCase(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, uint8_t* cmp, SwAlpha alpha, uint8_t csize, uint8_t opacity)
 {
     auto radial = &fill->radial;
     auto rx = (x + 0.5f) * radial->a11 + (y + 0.5f) * radial->a12 + radial->a13 - radial->fx;
@@ -320,21 +295,7 @@ void fillRadialEdgeCase(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t 
 }
 
 
-void fillRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlender op, uint8_t a)
-{
-    float b, delta_b, det, delta_det, delta_delta_det;
-    _calculateCoefficients(fill, x, y, b, delta_b, det, delta_det, delta_delta_det);
-
-    for (uint32_t i = 0; i < len; ++i, ++dst) {
-        *dst = op(_pixel(fill, sqrtf(det) - b), *dst, a);
-        det += delta_det;
-        delta_det += delta_delta_det;
-        b += delta_b;
-    }
-}
-
-
-void fillRadialEdgeCase(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlender op, uint8_t a)
+static void _fillRadialEdgeCase(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlender op, uint8_t a)
 {
     auto radial = &fill->radial;
     auto rx = (x + 0.5f) * radial->a11 + (y + 0.5f) * radial->a12 + radial->a13 - radial->fx;
@@ -348,33 +309,7 @@ void fillRadialEdgeCase(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t 
 }
 
 
-void fillRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlender op, SwBlender op2, uint8_t a)
-{
-    float b, delta_b, det, delta_det, delta_delta_det;
-    _calculateCoefficients(fill, x, y, b, delta_b, det, delta_det, delta_delta_det);
-
-    if (a == 255) {
-        for (uint32_t i = 0 ; i < len ; ++i, ++dst) {
-            auto tmp = op(_pixel(fill, sqrtf(det) - b), *dst, 255);
-            *dst = op2(tmp, *dst, 255);
-            det += delta_det;
-            delta_det += delta_delta_det;
-            b += delta_b;
-        }
-    } else {
-        for (uint32_t i = 0 ; i < len ; ++i, ++dst) {
-            auto tmp = op(_pixel(fill, sqrtf(det) - b), *dst, 255);
-            auto tmp2 = op2(tmp, *dst, 255);
-            *dst = INTERPOLATE(tmp2, *dst, a);
-            det += delta_det;
-            delta_det += delta_delta_det;
-            b += delta_b;
-        }
-    }
-}
-
-
-void fillRadialEdgeCase(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlender op, SwBlender op2, uint8_t a)
+static void _fillRadialEdgeCase(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlender op, SwBlender op2, uint8_t a)
 {
     auto radial = &fill->radial;
     auto rx = (x + 0.5f) * radial->a11 + (y + 0.5f) * radial->a12 + radial->a13 - radial->fx;
@@ -396,6 +331,84 @@ void fillRadialEdgeCase(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t 
             *dst = INTERPOLATE(tmp2, *dst, a);
             rx += radial->a11;
             ry += radial->a21;
+        }
+    }
+}
+
+/************************************************************************/
+/* External Class Implementation                                        */
+/************************************************************************/
+
+void fillRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, uint8_t* cmp, SwAlpha alpha, uint8_t csize, uint8_t opacity)
+{
+    if (fill->radial.a < FLT_EPSILON) {
+        return _fillRadialEdgeCase(fill, dst, y, x, len, cmp, alpha, csize, opacity);
+    }
+
+    float b, deltaB, det, deltaDet, deltaDeltaDet;
+    _calculateCoefficients(fill, x, y, b, deltaB, det, deltaDet, deltaDeltaDet);
+
+    if (opacity == 255) {
+        for (uint32_t i = 0 ; i < len ; ++i, ++dst, cmp += csize) {
+            *dst = opBlendNormal(_pixel(fill, sqrtf(det) - b), *dst, alpha(cmp));
+            det += deltaDet;
+            deltaDet += deltaDeltaDet;
+            b += deltaB;
+        }
+    } else {
+        for (uint32_t i = 0 ; i < len ; ++i, ++dst, cmp += csize) {
+            *dst = opBlendNormal(_pixel(fill, sqrtf(det) - b), *dst, MULTIPLY(opacity, alpha(cmp)));
+            det += deltaDet;
+            deltaDet += deltaDeltaDet;
+            b += deltaB;
+        }
+    }
+}
+
+
+void fillRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlender op, uint8_t a)
+{
+    if (fill->radial.a < FLT_EPSILON) {
+        return _fillRadialEdgeCase(fill, dst, y, x, len, op, a);
+    }
+
+    float b, deltaB, det, deltaDet, deltaDeltaDet;
+    _calculateCoefficients(fill, x, y, b, deltaB, det, deltaDet, deltaDeltaDet);
+
+    for (uint32_t i = 0; i < len; ++i, ++dst) {
+        *dst = op(_pixel(fill, sqrtf(det) - b), *dst, a);
+        det += deltaDet;
+        deltaDet += deltaDeltaDet;
+        b += deltaB;
+    }
+}
+
+
+void fillRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlender op, SwBlender op2, uint8_t a)
+{
+    if (fill->radial.a < FLT_EPSILON) {
+        return _fillRadialEdgeCase(fill, dst, y, x, len, op, op2, a);
+    }
+
+    float b, deltaB, det, deltaDet, deltaDeltaDet;
+    _calculateCoefficients(fill, x, y, b, deltaB, det, deltaDet, deltaDeltaDet);
+
+    if (a == 255) {
+        for (uint32_t i = 0 ; i < len ; ++i, ++dst) {
+            auto tmp = op(_pixel(fill, sqrtf(det) - b), *dst, 255);
+            *dst = op2(tmp, *dst, 255);
+            det += deltaDet;
+            deltaDet += deltaDeltaDet;
+            b += deltaB;
+        }
+    } else {
+        for (uint32_t i = 0 ; i < len ; ++i, ++dst) {
+            auto tmp = op(_pixel(fill, sqrtf(det) - b), *dst, 255);
+            auto tmp2 = op2(tmp, *dst, 255);
+            *dst = INTERPOLATE(tmp2, *dst, a);
+            det += deltaDet;
+            deltaDet += deltaDeltaDet;
+            b += deltaB;
         }
     }
 }

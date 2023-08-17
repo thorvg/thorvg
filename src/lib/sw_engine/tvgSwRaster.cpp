@@ -74,24 +74,6 @@ struct FillRadial
     }
 };
 
-struct FillRadialEdgeCase
-{
-    void operator()(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlender op, uint8_t a)
-    {
-        fillRadialEdgeCase(fill, dst, y, x, len, op, a);
-    }
-
-    void operator()(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, uint8_t* cmp, SwAlpha alpha, uint8_t csize, uint8_t opacity)
-    {
-        fillRadialEdgeCase(fill, dst, y, x, len, cmp, alpha, csize, opacity);
-    }
-
-    void operator()(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlender op, SwBlender op2, uint8_t a)
-    {
-        fillRadialEdgeCase(fill, dst, y, x, len, op, op2, a);
-    }
-};
-
 
 static bool _rasterDirectImage(SwSurface* surface, const SwImage* image, const SwBBox& region,  uint8_t opacity = 255);
 
@@ -1737,30 +1719,17 @@ static bool _rasterLinearGradientRect(SwSurface* surface, const SwBBox& region, 
 
 static bool _rasterRadialGradientRect(SwSurface* surface, const SwBBox& region, const SwFill* fill)
 {
-    if (fill->radial.a < FLT_EPSILON) {
-        if (_compositing(surface)) {
-            if (_matting(surface)) return _rasterGradientMattedRect<FillRadialEdgeCase>(surface, region, fill);
-            else return _rasterGradientMaskedRect<FillRadialEdgeCase>(surface, region, fill);
-        } else if (_blending(surface)) {
-            return _rasterBlendingGradientRect<FillRadialEdgeCase>(surface, region, fill);
-        } else {
-            if (fill->translucent) return _rasterTranslucentGradientRect<FillRadialEdgeCase>(surface, region, fill);
-            else _rasterSolidGradientRect<FillRadialEdgeCase>(surface, region, fill);
-        }
+    if (_compositing(surface)) {
+        if (_matting(surface)) return _rasterGradientMattedRect<FillRadial>(surface, region, fill);
+        else return _rasterGradientMaskedRect<FillRadial>(surface, region, fill);
+    } else if (_blending(surface)) {
+        return _rasterBlendingGradientRect<FillRadial>(surface, region, fill);
     } else {
-        if (_compositing(surface)) {
-            if (_matting(surface)) return _rasterGradientMattedRect<FillRadial>(surface, region, fill);
-            else return _rasterGradientMaskedRect<FillRadial>(surface, region, fill);
-        } else if (_blending(surface)) {
-            return _rasterBlendingGradientRect<FillRadial>(surface, region, fill);
-        } else {
-            if (fill->translucent) return _rasterTranslucentGradientRect<FillRadial>(surface, region, fill);
-            else _rasterSolidGradientRect<FillRadial>(surface, region, fill);
-        }
+        if (fill->translucent) return _rasterTranslucentGradientRect<FillRadial>(surface, region, fill);
+        else _rasterSolidGradientRect<FillRadial>(surface, region, fill);
     }
     return false;
 }
-
 
 
 /************************************************************************/
@@ -1904,26 +1873,14 @@ static bool _rasterRadialGradientRle(SwSurface* surface, const SwRleData* rle, c
 {
     if (!rle) return false;
 
-    if (fill->radial.a < FLT_EPSILON) {
-        if (_compositing(surface)) {
-            if (_matting(surface)) return _rasterGradientMattedRle<FillRadialEdgeCase>(surface, rle, fill);
-            else return _rasterGradientMaskedRle<FillRadialEdgeCase>(surface, rle, fill);
-        } else if (_blending(surface)) {
-            _rasterBlendingGradientRle<FillRadialEdgeCase>(surface, rle, fill);
-        } else {
-            if (fill->translucent) _rasterTranslucentGradientRle<FillRadialEdgeCase>(surface, rle, fill);
-            else return _rasterSolidGradientRle<FillRadialEdgeCase>(surface, rle, fill);
-        }
+    if (_compositing(surface)) {
+        if (_matting(surface)) return _rasterGradientMattedRle<FillRadial>(surface, rle, fill);
+        else return _rasterGradientMaskedRle<FillRadial>(surface, rle, fill);
+    } else if (_blending(surface)) {
+        _rasterBlendingGradientRle<FillRadial>(surface, rle, fill);
     } else {
-        if (_compositing(surface)) {
-            if (_matting(surface)) return _rasterGradientMattedRle<FillRadial>(surface, rle, fill);
-            else return _rasterGradientMaskedRle<FillRadial>(surface, rle, fill);
-        } else if (_blending(surface)) {
-            _rasterBlendingGradientRle<FillRadial>(surface, rle, fill);
-        } else {
-            if (fill->translucent) _rasterTranslucentGradientRle<FillRadial>(surface, rle, fill);
-            else return _rasterSolidGradientRle<FillRadial>(surface, rle, fill);
-        }
+        if (fill->translucent) _rasterTranslucentGradientRle<FillRadial>(surface, rle, fill);
+        else return _rasterSolidGradientRle<FillRadial>(surface, rle, fill);
     }
     return false;
 }
