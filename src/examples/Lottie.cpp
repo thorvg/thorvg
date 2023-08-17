@@ -149,11 +149,11 @@ int main(int argc, char **argv)
     if (threads > 0) --threads;    //Allow the designated main thread capacity
 
     //Initialize ThorVG Engine
-    if (tvg::Initializer::init(tvg::CanvasEngine::Sw, threads) == tvg::Result::Success) {
+    if (tvg::Initializer::init(tvg::CanvasEngine::Sw, 3) == tvg::Result::Success) {
 
         elm_init(argc, argv);
 
-        view = createSwView(1440, 1440);
+        view = createSwView(1280, 1280);
         ecore_animator_add(animatorCb, view);
 
         elm_run();

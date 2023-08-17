@@ -74,6 +74,18 @@ void LottieGroup::prepare(LottieObject::Type type)
 }
 
 
+void LottieLayer::prepare()
+{
+    LottieGroup::prepare(LottieObject::Layer);
+
+    /* if layer is hidden, only useulf data is its transform matrix.
+        so force it to be a Null Layer and release all resource. */
+    if (!hidden) return;
+    type = LottieLayer::Null;
+    children.reset();
+}
+
+
 int32_t LottieLayer::remap(int32_t frameNo)
 {
     if (timeRemap.frames) {

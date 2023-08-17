@@ -46,6 +46,7 @@ private:
     FillRule getFillRule();
     StrokeCap getStrokeCap();
     StrokeJoin getStrokeJoin();
+    CompositeMethod getMaskMethod(bool inversed);
     LottieInterpolator* getInterpolator(const char* key, Point& in, Point& out);
 
     void getInperpolatorPoint(Point& pt);
@@ -81,9 +82,11 @@ private:
     LottieRoundedCorner* parseRoundedCorner();
     LottieGradientFill* parseGradientFill();
     LottieLayer* parseLayers();
+    LottieMask* parseMask();
 
     void parseObject(LottieGroup* parent);
     void parseShapes(LottieLayer* layer);
+    void parseMasks(LottieLayer* layer);
     void parseTimeRemap(LottieLayer* layer);
     void parseStrokeDash(LottieStroke* stroke);
     void parseGradient(LottieGradient* gradient, const char* key);

@@ -99,6 +99,21 @@ struct LottieGradient
 };
 
 
+struct LottieMask
+{
+    LottiePathSet pathset = PathSet{nullptr, nullptr, 0, 0};
+    LottieOpacity opacity = 255;
+    CompositeMethod method;
+    bool inverse = false;
+
+    bool dynamic()
+    {
+        if (opacity.frames || pathset.frames) return true;
+        return false;
+    }
+};
+
+
 struct LottieObject
 {
     enum Type : uint8_t
@@ -359,19 +374,6 @@ struct LottieLayer : LottieGroup
         }
     }
 
-    void prepare()
-    {
-        LottieGroup::prepare(LottieObject::Layer);
-
-        /* if layer is hidden, only useulf data is its transform matrix.
-           so force it to be a Null Layer and release all resource. */
-        if (hidden) {
-            type = LottieLayer::Null;
-            children.reset();
-            return;
-        }
-    }
-
     uint8_t opacity(int32_t frameNo) override
     {
         //return zero if the visibility is false.
@@ -380,16 +382,22 @@ struct LottieLayer : LottieGroup
         return LottieGroup::opacity(frameNo);
     }
 
+    void prepare();
     int32_t remap(int32_t frameNo);
 
     //Optimize: compact data??
     RGB24 color = {255, 255, 255};
 
-    CompositeMethod matteType = CompositeMethod::None;
+    struct {
+        CompositeMethod type = CompositeMethod::None;
+        LottieLayer* target = nullptr;
+    } matte;
+
     BlendMethod blendMethod = BlendMethod::Normal;
     LottieLayer* parent = nullptr;
     LottieFloat timeRemap = 0.0f;
     LottieComposition* comp = nullptr;
+    Array<LottieMask*> masks;
 
     float timeStretch = 1.0f;
     uint32_t w, h;
@@ -409,8 +417,9 @@ struct LottieLayer : LottieGroup
 
     Type type = Null;
     bool autoOrient = false;
-    bool mask = false;
     bool roundedCorner = false;
+    bool clipself = false;      //clip the layer viewport
+    bool matteSrc = false;
 };
 
 

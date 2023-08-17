@@ -125,6 +125,19 @@ static inline void mathScale(Matrix* m, float sx, float sy)
 }
 
 
+static inline void mathScaleR(Matrix* m, float x, float y)
+{
+    if (x != 1.0f) {
+        m->e11 *= x;
+        m->e21 *= x;
+    }
+    if (y != 1.0f) {
+        m->e22 *= y;
+        m->e12 *= y;
+    }
+}
+
+
 static inline void mathTranslate(Matrix* m, float x, float y)
 {
     m->e13 += x;
@@ -171,6 +184,20 @@ static inline Matrix mathMultiply(const Matrix* lhs, const Matrix* rhs)
     m.e33 = lhs->e31 * rhs->e13 + lhs->e32 * rhs->e23 + lhs->e33 * rhs->e33;
 
     return m;
+}
+
+
+static inline void mathTranslateR(Matrix* m, float x, float y)
+{
+    if (x == 0.0f && y == 0.0f) return;
+    m->e13 += (x * m->e11 + y * m->e12);
+    m->e23 += (x * m->e21 + y * m->e22);
+}
+
+
+static inline void mathLog(Matrix* m)
+{
+    TVGLOG("MATH", "Matrix: [%f %f %f] [%f %f %f] [%f %f %f]", m->e11, m->e12, m->e13, m->e21, m->e22, m->e23, m->e31, m->e32, m->e33);
 }
 
 
