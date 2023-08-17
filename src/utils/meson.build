@@ -1,11 +1,11 @@
 source_file = [
    'tvgArray.h',
    'tvgBezier.h',
-   'tvgLzw.h',
+   'tvgCompressor.h',
    'tvgMath.h',
    'tvgStr.h',
    'tvgBezier.cpp',
-   'tvgLzw.cpp',
+   'tvgCompressor.cpp',
    'tvgMath.cpp',
    'tvgStr.cpp'
 ]

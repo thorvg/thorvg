@@ -23,6 +23,7 @@
 #include "tvgMath.h" /* to include math.h before cstring */
 #include <cstring>
 #include <string>
+#include "tvgCompressor.h"
 #include "tvgSvgLoaderCommon.h"
 #include "tvgSvgSceneBuilder.h"
 #include "tvgSvgPath.h"
@@ -543,10 +544,17 @@ static unique_ptr<Picture> _imageBuildHelper(SvgNode* node, const Box& vBox, con
         imageMimeTypeEncoding encoding;
         if (!_isValidImageMimeTypeAndEncoding(&href, &mimetype, &encoding)) return nullptr; //not allowed mime type or encoding
         if (encoding == imageMimeTypeEncoding::base64) {
-            string decoded = svgUtilBase64Decode(href);
-            if (picture->load(decoded.c_str(), decoded.size(), mimetype, true) != Result::Success) return nullptr;
+            char* decoded = nullptr;
+            auto size = b64Decode(href, strlen(href), &decoded);
+            //OPTIMIZE: Skip data copy.
+            if (picture->load(decoded, size, mimetype, true) != Result::Success) {
+                free(decoded);
+                return nullptr;
+            }
+            free(decoded);
         } else {
             string decoded = svgUtilURLDecode(href);
+            //OPTIMIZE: Skip data copy.
             if (picture->load(decoded.c_str(), decoded.size(), mimetype, true) != Result::Success) return nullptr;
         }
     } else {

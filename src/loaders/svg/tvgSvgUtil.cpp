@@ -34,15 +34,6 @@ static uint8_t _hexCharToDec(const char c)
     else return c - '0';
 }
 
-static uint8_t _base64Value(const char chr)
-{
-    if (chr >= 'A' && chr <= 'Z') return chr - 'A';
-    else if (chr >= 'a' && chr <= 'z') return chr - 'a' + ('Z' - 'A') + 1;
-    else if (chr >= '0' && chr <= '9') return chr - '0' + ('Z' - 'A') + ('z' - 'a') + 2;
-    else if (chr == '+' || chr == '-') return 62;
-    else return 63;
-}
-
 
 /************************************************************************/
 /* External Class Implementation                                        */
@@ -71,39 +62,6 @@ string svgUtilURLDecode(const char *src)
         } else {
             decoded += *src++;
         }
-    }
-    return decoded;
-}
-
-
-string svgUtilBase64Decode(const char *src)
-{
-    if (!src) return nullptr;
-
-    auto length = strlen(src);
-    if (length == 0) return nullptr;
-
-    string decoded;
-    decoded.reserve(3*(1+(length >> 2)));
-
-    while (*src && *(src+1)) {
-        if (*src <= 0x20) {
-            ++src;
-            continue;
-        }
-
-        auto value1 = _base64Value(src[0]);
-        auto value2 = _base64Value(src[1]);
-        decoded += (value1 << 2) + ((value2 & 0x30) >> 4);
-
-        if (!src[2] || src[2] == '=' || src[2] == '.') break;
-        auto value3 = _base64Value(src[2]);
-        decoded += ((value2 & 0x0f) << 4) + ((value3 & 0x3c) >> 2);
-
-        if (!src[3] || src[3] == '=' || src[3] == '.') break;
-        auto value4 = _base64Value(src[3]);
-        decoded += ((value3 & 0x03) << 6) + value4;
-        src += 4;
     }
     return decoded;
 }

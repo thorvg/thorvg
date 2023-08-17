@@ -24,7 +24,7 @@
 
 #include "tvgSaveModule.h"
 #include "tvgTvgSaver.h"
-#include "tvgLzw.h"
+#include "tvgCompressor.h"
 #include "tvgShapeImpl.h"
 #include "tvgPictureImpl.h"
 

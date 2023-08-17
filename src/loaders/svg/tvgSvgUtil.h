@@ -26,6 +26,5 @@
 #include "tvgCommon.h"
 
 string svgUtilURLDecode(const char *src);
-string svgUtilBase64Decode(const char *src);
 
 #endif //_TVG_SVG_UTIL_H_
