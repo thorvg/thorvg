@@ -58,6 +58,21 @@ static void _updateRoundedCorner(LottieGroup* parent, LottieRoundedCorner* round
 }
 
 
+CompositeMethod LottieParser::getMaskMethod(bool inversed)
+{
+    switch (getString()[0]) {
+        case 'a': {
+            if (inversed) return CompositeMethod::InvAlphaMask;
+            else return CompositeMethod::AddMask;
+        }
+        case 's': return CompositeMethod::SubtractMask;
+        case 'i': return CompositeMethod::IntersectMask;
+        case 'f': return CompositeMethod::DifferenceMask;
+        default: return CompositeMethod::None;
+    }
+}
+
+
 BlendMethod LottieParser::getBlendMethod()
 {
     switch (getInt()) {
@@ -493,7 +508,7 @@ LottieTransform* LottieParser::parseTransform(bool ddd)
     auto transform = new LottieTransform;
     if (!transform) return nullptr;
 
-    if (ddd) TVGLOG("LOTTIE", "3d transform(ddd) is not supported");
+    if (ddd) TVGERR("LOTTIE", "3d transform(ddd) is not supported");
 
     while (auto key = nextObjectKey()) {
         if (!strcmp(key, "p"))
@@ -754,7 +769,7 @@ LottieObject* LottieParser::parseObject()
     } else if (!strcmp(type, "sh")) {
         return parsePath();
     } else if (!strcmp(type, "sr")) {
-        TVGLOG("LOTTIE", "Polystar(sr) is not supported");
+        TVGERR("LOTTIE", "Polystar(sr) is not supported");
         return parsePolyStar();
     } else if (!strcmp(type, "rd")) {
         return parseRoundedCorner();
@@ -763,11 +778,11 @@ LottieObject* LottieParser::parseObject()
     } else if (!strcmp(type, "gs")) {
         return parseGradientStroke();
     } else if (!strcmp(type, "tm")) {
-        TVGLOG("LOTTIE", "Trimpath(tm) is not supported");
+        TVGERR("LOTTIE", "Trimpath(tm) is not supported");
     } else if (!strcmp(type, "rp")) {
-        TVGLOG("LOTTIE", "Repeater(rp) is not supported yet");
+        TVGERR("LOTTIE", "Repeater(rp) is not supported yet");
     } else if (!strcmp(type, "mm")) {
-        TVGLOG("LOTTIE", "MergePath(mm) is not supported yet");
+        TVGERR("LOTTIE", "MergePath(mm) is not supported yet");
     } else {
         TVGERR("LOTTIE", "Unkown object type(%s) is given", type);
     }
@@ -904,7 +919,6 @@ LottieObject* LottieParser::parseGroup()
 
 void LottieParser::parseTimeRemap(LottieLayer* layer)
 {
-    layer->comp = comp;
     parseProperty(layer->timeRemap);
 }
 
@@ -930,12 +944,39 @@ void LottieParser::getLayerSize(uint32_t& val)
     }
 }
 
+LottieMask* LottieParser::parseMask()
+{
+    auto mask = new LottieMask;
+    if (!mask) return nullptr;
+
+    enterObject();
+    while (auto key = nextObjectKey()) {
+        if (!strcmp(key, "inv")) mask->inverse = getBool();
+        else if (!strcmp(key, "mode")) mask->method = getMaskMethod(mask->inverse);
+        else if (!strcmp(key, "pt")) getPathSet(mask->pathset);
+        else if (!strcmp(key, "o")) parseProperty(mask->opacity);
+        else skip(key);
+    }
+
+    return mask;
+}
+
+
+void LottieParser::parseMasks(LottieLayer* layer)
+{
+    enterArray();
+    while (nextArrayValue()) {
+        layer->masks.push(parseMask());
+    }
+}
+
 
 LottieLayer* LottieParser::parseLayer()
 {
     auto layer = new LottieLayer;
     if (!layer) return nullptr;
 
+    layer->comp = comp;
     context->layer = layer;
 
     auto ddd = false;
@@ -964,15 +1005,11 @@ LottieLayer* LottieParser::parseLayer()
         else if (!strcmp(key, "w") || !strcmp(key, "sw")) getLayerSize(layer->w);
         else if (!strcmp(key, "h") || !strcmp(key, "sh")) getLayerSize(layer->h);
         else if (!strcmp(key, "sc")) layer->color = getColor(getString());
-        else if (!strcmp(key, "tt")) layer->matteType = getMatteType();
-        else if (!strcmp(key, "hasMask")) layer->mask = getBool();
-        else if (!strcmp(key, "masksProperties"))
-        {
-            TVGLOG("LOTTIE", "Masking(maskProperties) is not supported");
-            skip(key);
-        }
+        else if (!strcmp(key, "tt")) layer->matte.type = getMatteType();
+        else if (!strcmp(key, "masksProperties")) parseMasks(layer);
         else if (!strcmp(key, "hd")) layer->hidden = getBool();
         else if (!strcmp(key, "refId")) layer->refId = getStringCopy();
+        else if (!strcmp(key, "td")) layer->matteSrc = getInt();      //used for matte layer
         else skip(key);
     }
 
@@ -995,15 +1032,22 @@ LottieLayer* LottieParser::parseLayers()
     if (!root) return nullptr;
 
     root->type = LottieLayer::Precomp;
+    root->comp = comp;
 
     enterArray();
     while (nextArrayValue()) {
         if (auto layer = parseLayer()) {
+            if (layer->matte.type == CompositeMethod::None) {
+                root->children.push(layer);
+            } else {
+                //matte source must be located in the right previous.
+                layer->matte.target = static_cast<LottieLayer*>(root->children.last());
+                layer->statical &= layer->matte.target->statical;
+                root->children.last() = layer;
+            }
             root->statical &= layer->statical;
-            root->children.push(layer);
         }
     }
-
     root->prepare();
     return root;
 }
