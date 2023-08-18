@@ -132,7 +132,7 @@ struct SwShapeTask : SwTask
                    shape outline below stroke could be full covered by stroke drawing.
                    Thus it turns off antialising in that condition.
                    Also, it shouldn't be dash style. */
-                auto antiAlias = strokeAlpha < 255 || rshape->strokeWidth() <= 2 || rshape->strokeDash(nullptr) > 0 || (rshape->stroke && rshape->stroke->strokeFirst);
+                auto antiAlias = strokeAlpha < 255 || rshape->strokeWidth() <= 2 || rshape->strokeDash(nullptr, nullptr) > 0 || (rshape->stroke && rshape->stroke->strokeFirst);
 
                 if (!shapeGenRle(&shape, rshape, antiAlias)) goto err;
             }

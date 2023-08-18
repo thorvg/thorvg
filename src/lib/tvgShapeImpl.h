@@ -269,7 +269,7 @@ struct Shape::Impl
         return Result::Success;
     }
 
-    bool strokeDash(const float* pattern, uint32_t cnt)
+    bool strokeDash(const float* pattern, uint32_t cnt, float offset)
     {
         //Reset dash
         if (!pattern && cnt == 0) {
@@ -290,6 +290,7 @@ struct Shape::Impl
             }
         }
         rs.stroke->dashCnt = cnt;
+        rs.stroke->dashOffset = offset;
         flag |= RenderUpdateFlag::Stroke;
 
         return true;
@@ -338,6 +339,7 @@ struct Shape::Impl
             dup->rs.stroke = new RenderStroke();
             dup->rs.stroke->width = rs.stroke->width;
             dup->rs.stroke->dashCnt = rs.stroke->dashCnt;
+            dup->rs.stroke->dashOffset = rs.stroke->dashOffset;
             dup->rs.stroke->cap = rs.stroke->cap;
             dup->rs.stroke->join = rs.stroke->join;
             dup->rs.stroke->strokeFirst = rs.stroke->strokeFirst;

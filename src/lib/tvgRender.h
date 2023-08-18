@@ -137,6 +137,7 @@ struct RenderStroke
     Fill *fill = nullptr;
     float* dashPattern = nullptr;
     uint32_t dashCnt = 0;
+    float dashOffset = 0.0f;
     StrokeCap cap = StrokeCap::Square;
     StrokeJoin join = StrokeJoin::Bevel;
     float miterlimit = 4.0f;
@@ -200,10 +201,11 @@ struct RenderShape
         return stroke->fill;
     }
 
-    uint32_t strokeDash(const float** dashPattern) const
+    uint32_t strokeDash(const float** dashPattern, float* offset) const
     {
         if (!stroke) return 0;
         if (dashPattern) *dashPattern = stroke->dashPattern;
+        if (offset) *offset = stroke->dashOffset;
         return stroke->dashCnt;
     }
 
