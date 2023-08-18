@@ -330,6 +330,7 @@ struct LottieImage : LottieObject
     {
         free(b64Data);
         free(mimeType);
+        delete(picture);
     }
 
     void prepare()
@@ -372,6 +373,12 @@ struct LottieLayer : LottieGroup
             children.clear();
             free(refId);
         }
+
+        for (auto m = masks.data; m < masks.end(); ++m) {
+            delete(*m);
+        }
+
+        delete(matte.target);
     }
 
     uint8_t opacity(int32_t frameNo) override
