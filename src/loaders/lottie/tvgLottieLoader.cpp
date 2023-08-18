@@ -39,12 +39,12 @@ static bool _checkDotLottie(const char *str)
 }
 
 
-static int _str2float(const char* str, int len)
+static float _str2float(const char* str, int len)
 {
     auto tmp = strDuplicate(str, len);
     auto ret = strToFloat(tmp, nullptr);
     free(tmp);
-    return lround(ret);
+    return ret;
 }
 
 
@@ -71,8 +71,8 @@ void LottieLoader::run(unsigned tid)
         comp = parser.comp;
         if (!comp) return;
         builder->build(comp);
-        w = comp->w;
-        h = comp->h;
+        w = static_cast<float>(comp->w);
+        h = static_cast<float>(comp->h);
         frameDuration = comp->duration();
     }
 }
@@ -109,7 +109,7 @@ bool LottieLoader::header()
     //Quickly validate the given Lottie file without parsing in order to get the animation info.
     auto startFrame = 0.0f;
     auto endFrame = 0.0f;
-    float frameRate = 0.0f;
+    auto frameRate = 0.0f;
     uint32_t depth = 0;
 
     auto p = content;
