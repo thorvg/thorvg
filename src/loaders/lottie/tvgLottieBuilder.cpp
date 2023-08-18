@@ -440,7 +440,7 @@ static void _updateLayer(LottieLayer* root, LottieLayer* layer, int32_t frameNo)
         auto clipper = Shape::gen();
         clipper->appendRect(0, 0, layer->w, layer->h);
         clipper->transform(layer->cache.matrix);
-        cscene->composite(move(clipper), CompositeMethod::ClipPath);
+        cscene->composite(std::move(clipper), CompositeMethod::ClipPath);
         cscene->push(cast<Scene>(layer->scene));
         layer->scene = cscene.release();
     }
