@@ -80,7 +80,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     star->lineTo(546, 143);
     star->close();
     star->stroke(10);
-    star->stroke(255, 255, 255);
+    star->stroke(255, 255, 255, 255);
 
     //Mask3
     auto mask3 = tvg::Shape::gen();

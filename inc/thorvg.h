@@ -980,11 +980,11 @@ public:
      * @param[in] r The red color channel value in the range [0 ~ 255]. The default value is 0.
      * @param[in] g The green color channel value in the range [0 ~ 255]. The default value is 0.
      * @param[in] b The blue color channel value in the range [0 ~ 255]. The default value is 0.
-     * @param[in] a The alpha channel value in the range [0 ~ 255], where 0 is completely transparent and 255 is opaque. The default value is 0.
+     * @param[in] a The alpha channel value in the range [0 ~ 255], where 0 is completely transparent and 255 is opaque.
      *
      * @return Result::Success when succeed, Result::FailedAllocation otherwise.
      */
-    Result stroke(uint8_t r, uint8_t g, uint8_t b, uint8_t a = 255) noexcept;
+    Result stroke(uint8_t r, uint8_t g, uint8_t b, uint8_t a) noexcept;
 
     /**
      * @brief Sets the gradient fill of the stroke for all of the figures from the path.
@@ -1157,7 +1157,7 @@ public:
      *
      * @return Result::Success when succeed, Result::InsufficientCondition otherwise.
      */
-    Result strokeColor(uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a = nullptr) const noexcept;
+    Result strokeColor(uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a) const noexcept;
 
     /**
      * @brief Gets the pointer to the gradient fill of the stroke.

@@ -768,7 +768,7 @@ static unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, const Box& vBox,
                             uint8_t r, g, b;
                             shape->fillColor(&r, &g, &b);
                             if (shape->fill() || r < 255 || g < 255 || b < 255 || shape->strokeFill() ||
-                                (shape->strokeColor(&r, &g, &b) == Result::Success && (r < 255 || g < 255 || b < 255))) {
+                                (shape->strokeColor(&r, &g, &b, nullptr) == Result::Success && (r < 255 || g < 255 || b < 255))) {
                                 *isMaskWhite = false;
                             }
                         }
