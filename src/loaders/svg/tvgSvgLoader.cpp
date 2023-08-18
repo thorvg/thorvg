@@ -956,6 +956,12 @@ static void _handleStrokeDashArrayAttr(SvgLoaderData* loader, SvgNode* node, con
     _parseDashArray(loader, value, &node->style->stroke.dash);
 }
 
+static void _handleStrokeDashOffsetAttr(SvgLoaderData* loader, SvgNode* node, const char* value)
+{
+    node->style->stroke.flags = (node->style->stroke.flags | SvgStrokeFlags::DashOffset);
+    node->style->stroke.dash.offset = _toFloat(loader->svgParse, value, SvgParserLengthType::Horizontal);
+}
+
 static void _handleStrokeWidthAttr(SvgLoaderData* loader, SvgNode* node, const char* value)
 {
     node->style->stroke.flags = (node->style->stroke.flags | SvgStrokeFlags::Width);
@@ -1112,6 +1118,7 @@ static constexpr struct
     STYLE_DEF(stroke-linecap, StrokeLineCap, SvgStyleFlags::StrokeLineCap),
     STYLE_DEF(stroke-opacity, StrokeOpacity, SvgStyleFlags::StrokeOpacity),
     STYLE_DEF(stroke-dasharray, StrokeDashArray, SvgStyleFlags::StrokeDashArray),
+    STYLE_DEF(stroke-dashoffset, StrokeDashOffset, SvgStyleFlags::StrokeDashOffset),
     STYLE_DEF(transform, Transform, SvgStyleFlags::Transform),
     STYLE_DEF(clip-path, ClipPath, SvgStyleFlags::ClipPath),
     STYLE_DEF(mask, Mask, SvgStyleFlags::Mask),
@@ -2777,6 +2784,9 @@ static void _styleInherit(SvgStyleProperty* child, const SvgStyleProperty* paren
             }
         }
     }
+    if (!(child->stroke.flags & SvgStrokeFlags::DashOffset)) {
+        child->stroke.dash.offset = parent->stroke.dash.offset;
+    }
     if (!(child->stroke.flags & SvgStrokeFlags::Cap)) {
         child->stroke.cap = parent->stroke.cap;
     }
@@ -2843,13 +2853,15 @@ static void _styleCopy(SvgStyleProperty* to, const SvgStyleProperty* from)
             }
         }
     }
+    if (from->stroke.flags & SvgStrokeFlags::DashOffset) {
+        to->stroke.dash.offset = from->stroke.dash.offset;
+    }
     if (from->stroke.flags & SvgStrokeFlags::Cap) {
         to->stroke.cap = from->stroke.cap;
     }
     if (from->stroke.flags & SvgStrokeFlags::Join) {
         to->stroke.join = from->stroke.join;
     }
-
     if (from->stroke.flags & SvgStrokeFlags::Miterlimit) {
         to->stroke.miterlimit = from->stroke.miterlimit;
     }

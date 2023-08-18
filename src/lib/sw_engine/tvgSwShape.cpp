@@ -222,8 +222,26 @@ static SwOutline* _genDashOutline(const RenderShape* rshape, const Matrix* trans
     dash.curOpGap = false;
 
     const float* pattern;
-    dash.cnt = rshape->strokeDash(&pattern);
+    float offset;
+    dash.cnt = rshape->strokeDash(&pattern, &offset);
     if (dash.cnt == 0) return nullptr;
+
+    auto patternLength = 0.0f;
+    uint32_t offIdx = 0;
+    if (fabsf(offset) > FLT_EPSILON) {
+        for (auto i = 0; i < dash.cnt; ++i) patternLength += pattern[i];
+        bool isOdd = dash.cnt % 2;
+        if (isOdd) patternLength *= 2;
+
+        if (offset < 0) offset = patternLength + fmod(offset, patternLength);
+        else offset = fmod(offset, patternLength);
+
+        for (auto i = 0; i < dash.cnt * (1 + isOdd); ++i, ++offIdx) {
+            auto curPattern = pattern[i % dash.cnt];
+            if (offset < curPattern) break;
+            offset -= curPattern;
+        }
+    }
 
     //OPTMIZE ME: Use mempool???
     dash.pattern = const_cast<float*>(pattern);
@@ -271,9 +289,9 @@ static SwOutline* _genDashOutline(const RenderShape* rshape, const Matrix* trans
             }
             case PathCommand::MoveTo: {
                 //reset the dash
-                dash.curIdx = 0;
-                dash.curLen = *dash.pattern;
-                dash.curOpGap = false;
+                dash.curIdx = offIdx % dash.cnt;
+                dash.curLen = dash.pattern[dash.curIdx] - offset;
+                dash.curOpGap = offIdx % 2;
                 dash.ptStart = dash.ptCur = *pts;
                 ++pts;
                 break;
@@ -515,7 +533,7 @@ bool shapeGenStrokeRle(SwShape* shape, const RenderShape* rshape, const Matrix* 
     bool ret = true;
 
     //Dash Style Stroke
-    if (rshape->strokeDash(nullptr) > 0) {
+    if (rshape->strokeDash(nullptr, nullptr) > 0) {
         shapeOutline = _genDashOutline(rshape, transform);
         if (!shapeOutline) return false;
         freeOutline = true;
