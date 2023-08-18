@@ -267,7 +267,7 @@ canvas->update(animation->picture());                  //Update the picture to b
 Let's suppose the progress variable determines the position of the animation, ranging from 0 to 1 based on the total duration time of the animation. Adjusting the progress value allows you to control the animation at the desired position. Afterwards, the canvas is updated to redraw the picture with the updated animation frame.<br />
 <br />
 <p align="center">
-  <img width="600" height="600" src="https://github.com/thorvg/thorvg/blob/main/res/example_lottie.gif">
+  <img width="800" height="802" src="https://github.com/thorvg/thorvg/blob/main/res/example_lottie.gif">
 </p>
 
 [Back to contents](#contents)
