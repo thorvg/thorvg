@@ -17,6 +17,8 @@ source_file = [
    'tvgGlRenderTask.cpp',
    'tvgGlShader.cpp',
    'tvgGlShaderSrc.cpp',
+   'tvgGlTessellator.cpp',
+   'tvgGlTessellator.h',
 ]
 
 gles_dep = meson.get_compiler('cpp').find_library('GLESv2')
