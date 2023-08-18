@@ -153,31 +153,27 @@ bool GlRenderer::renderShape(RenderData data)
 
     GL_CHECK(glViewport(0, 0, (GLsizei)sdata->viewWd, (GLsizei)sdata->viewHt));
 
-    uint32_t primitiveCount = sdata->geometry->getPrimitiveCount();
-    for (uint32_t i = 0; i < primitiveCount; ++i)
+    if (flags & (RenderUpdateFlag::Gradient | RenderUpdateFlag::Transform))
     {
-        if (flags & (RenderUpdateFlag::Gradient | RenderUpdateFlag::Transform))
-        {
-            auto gradient = sdata->rshape->fill;
-            if (gradient) drawPrimitive(*sdata, gradient, i, RenderUpdateFlag::Gradient);
-        }
+        auto gradient = sdata->rshape->fill;
+        if (gradient) drawPrimitive(*sdata, gradient, RenderUpdateFlag::Gradient);
+    }
 
-        if(flags & (RenderUpdateFlag::Color | RenderUpdateFlag::Transform))
+    if(flags & (RenderUpdateFlag::Color | RenderUpdateFlag::Transform))
+    {
+        sdata->rshape->fillColor(&r, &g, &b, &a);
+        if (a > 0)
         {
-            sdata->rshape->fillColor(&r, &g, &b, &a);
-            if (a > 0)
-            {
-                drawPrimitive(*sdata, r, g, b, a, i, RenderUpdateFlag::Color);
-            }
+            drawPrimitive(*sdata, r, g, b, a, RenderUpdateFlag::Color);
         }
+    }
 
-        if (flags & (RenderUpdateFlag::Stroke | RenderUpdateFlag::Transform))
+    if (flags & (RenderUpdateFlag::Stroke | RenderUpdateFlag::Transform))
+    {
+        sdata->rshape->strokeColor(&r, &g, &b, &a);
+        if (a > 0)
         {
-            sdata->rshape->strokeColor(&r, &g, &b, &a);
-            if (a > 0)
-            {
-                drawPrimitive(*sdata, r, g, b, a, i, RenderUpdateFlag::Stroke);
-            }
+            drawPrimitive(*sdata, r, g, b, a, RenderUpdateFlag::Stroke);
         }
     }
 
@@ -230,7 +226,6 @@ RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const
     uint8_t alphaF = 0, alphaS = 0;
     rshape.fillColor(nullptr, nullptr, nullptr, &alphaF);
     rshape.strokeColor(nullptr, nullptr, nullptr, &alphaS);
-    auto strokeWd = rshape.strokeWidth();
 
     if ( ((sdata->updateFlag & RenderUpdateFlag::Gradient) == 0) &&
          ((sdata->updateFlag & RenderUpdateFlag::Color) && alphaF == 0) &&
@@ -243,9 +238,7 @@ RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const
 
     if (sdata->updateFlag & (RenderUpdateFlag::Color | RenderUpdateFlag::Stroke | RenderUpdateFlag::Gradient | RenderUpdateFlag::Transform) )
     {
-        if (!sdata->geometry->decomposeOutline(rshape)) return sdata;
-        if (!sdata->geometry->generateAAPoints(rshape, static_cast<float>(strokeWd), sdata->updateFlag)) return sdata;
-        if (!sdata->geometry->tesselate(rshape, sdata->viewWd, sdata->viewHt, sdata->updateFlag)) return sdata;
+        if (!sdata->geometry->tesselate(rshape, sdata->updateFlag)) return sdata;
     }
     return sdata;
 }
@@ -321,7 +314,7 @@ void GlRenderer::initShaders()
 }
 
 
-void GlRenderer::drawPrimitive(GlShape& sdata, uint8_t r, uint8_t g, uint8_t b, uint8_t a, uint32_t primitiveIndex, RenderUpdateFlag flag)
+void GlRenderer::drawPrimitive(GlShape& sdata, uint8_t r, uint8_t g, uint8_t b, uint8_t a, RenderUpdateFlag flag)
 {
     GlColorRenderTask* renderTask = static_cast<GlColorRenderTask*>(mRenderTasks[GlRenderTask::RenderTypes::RT_Color].get());
     assert(renderTask);
@@ -332,13 +325,13 @@ void GlRenderer::drawPrimitive(GlShape& sdata, uint8_t r, uint8_t g, uint8_t b, 
     renderTask->setTransform(FORMAT_SIZE_MAT_4x4, matrix);
     int32_t vertexLoc = renderTask->getLocationPropertyId();
     renderTask->uploadValues();
-    sdata.geometry->draw(vertexLoc, primitiveIndex, flag);
+    sdata.geometry->draw(vertexLoc, flag);
     sdata.geometry->disableVertex(vertexLoc);
 
 }
 
 
-void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, uint32_t primitiveIndex, RenderUpdateFlag flag)
+void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFlag flag)
 {
     const Fill::ColorStop* stops = nullptr;
     auto stopCnt = fill->colorStops(&stops);
@@ -386,7 +379,7 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, uint32_t primit
         }
 
         rTask->uploadValues();
-        sdata.geometry->draw(vertexLoc, primitiveIndex, flag);
+        sdata.geometry->draw(vertexLoc, flag);
         sdata.geometry->disableVertex(vertexLoc);
     }
 }
