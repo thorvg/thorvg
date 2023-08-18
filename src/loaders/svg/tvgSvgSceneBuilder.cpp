@@ -349,7 +349,7 @@ static void _applyProperty(SvgLoaderData& loaderData, SvgNode* node, Shape* vg, 
     vg->stroke(style->stroke.join);
     vg->strokeMiterlimit(style->stroke.miterlimit);
     if (style->stroke.dash.array.count > 0) {
-        vg->stroke(style->stroke.dash.array.data, style->stroke.dash.array.count);
+        vg->stroke(style->stroke.dash.array.data, style->stroke.dash.array.count, style->stroke.dash.offset);
     }
 
     //If stroke property is nullptr then do nothing

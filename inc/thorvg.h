@@ -1002,6 +1002,7 @@ public:
      *
      * @param[in] dashPattern The array of consecutive pair values of the dash length and the gap length.
      * @param[in] cnt The length of the @p dashPattern array.
+     * @param[in] offset The shift of the starting point within the repeating dash pattern from which the path's dashing begins.
      *
      * @retval Result::Success When succeed.
      * @retval Result::FailedAllocation An internal error with a memory allocation for an object to be dashed.
@@ -1010,7 +1011,7 @@ public:
      * @note To reset the stroke dash pattern, pass @c nullptr to @p dashPattern and zero to @p cnt.
      * @warning @p cnt must be greater than 1 if the dash pattern is valid.
      */
-    Result stroke(const float* dashPattern, uint32_t cnt) noexcept;
+    Result stroke(const float* dashPattern, uint32_t cnt, float offset = 0.0f) noexcept;
 
     /**
      * @brief Sets the cap style of the stroke in the open sub-paths.
@@ -1170,10 +1171,11 @@ public:
      * @brief Gets the dash pattern of the stroke.
      *
      * @param[out] dashPattern The pointer to the memory, where the dash pattern array is stored.
+     * @param[out] offset The shift of the starting point within the repeating dash pattern.
      *
      * @return The length of the @p dashPattern array.
      */
-    uint32_t strokeDash(const float** dashPattern) const noexcept;
+    uint32_t strokeDash(const float** dashPattern, float* offset = nullptr) const noexcept;
 
     /**
      * @brief Gets the cap style used for stroking the path.
