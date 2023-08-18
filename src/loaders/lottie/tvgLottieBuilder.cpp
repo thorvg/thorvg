@@ -351,7 +351,7 @@ static void _updatePrecomp(LottieLayer* precomp, int32_t frameNo)
 static void _updateSolid(LottieLayer* layer, int32_t frameNo)
 {
     auto shape = Shape::gen();
-    shape->appendRect(0, 0, layer->w, layer->h);
+    shape->appendRect(0, 0, static_cast<float>(layer->w), static_cast<float>(layer->h));
     shape->fill(layer->color.rgb[0], layer->color.rgb[1], layer->color.rgb[2], layer->opacity(frameNo));
     layer->scene->push(std::move(shape));
 }
