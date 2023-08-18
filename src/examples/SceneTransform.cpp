@@ -40,7 +40,7 @@ void tvgUpdateCmds(tvg::Canvas* canvas, float progress)
     shape1->appendRect(-235, -250, 400, 400, 50, 50);  //x, y, w, h, rx, ry
     shape1->fill(0, 255, 0);                           //r, g, b
     shape1->stroke(5);                                 //width
-    shape1->stroke(255, 255, 255);                     //r, g, b
+    shape1->stroke(255, 255, 255, 255);                //r, g, b, a
     scene->push(std::move(shape1));
 
     //Prepare Circle (Scene1)
@@ -79,7 +79,7 @@ void tvgUpdateCmds(tvg::Canvas* canvas, float progress)
     shape4->close();
     shape4->fill(0, 0, 255, 127);
     shape4->stroke(3);                             //width
-    shape4->stroke(0, 0, 255);                     //r, g, b
+    shape4->stroke(0, 0, 255, 255);                //r, g, b, a
     scene2->push(std::move(shape4));
 
     //Circle (Scene2)

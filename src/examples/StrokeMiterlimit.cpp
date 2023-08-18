@@ -53,9 +53,9 @@ void goWild(tvg::Canvas* canvas)
     path->lineTo(460, top / 2);
     path->close();
 
-    path->fill(150, 150, 255);   // fill color
-    path->stroke(20);            // stroke width
-    path->stroke(120, 120, 255); // stroke color
+    path->fill(150, 150, 255);        // fill color
+    path->stroke(20);                 // stroke width
+    path->stroke(120, 120, 255, 255); // stroke color
 
     // path->stroke(tvg::StrokeJoin::Round);
     // path->stroke(tvg::StrokeJoin::Bevel);

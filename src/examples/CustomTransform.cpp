@@ -48,7 +48,7 @@ void tvgUpdateCmds(tvg::Canvas* canvas, float progress)
     shape->close();
     shape->fill(0, 0, 255);
     shape->stroke(3);
-    shape->stroke(255, 255, 255);
+    shape->stroke(255, 255, 255, 255);
 
     //Transform Matrix
     tvg::Matrix m = {1, 0, 0, 0, 1, 0, 0, 0, 1};
