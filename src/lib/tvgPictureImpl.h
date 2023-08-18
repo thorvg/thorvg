@@ -188,7 +188,7 @@ struct Picture::Impl
         return true;
     }
 
-    bool bounds(float* x, float* y, float* w, float* h)
+    bool bounds(float* x, float* y, float* w, float* h, bool stroking)
     {
         if (rm.triangleCnt > 0) {
             auto triangles = rm.triangles;

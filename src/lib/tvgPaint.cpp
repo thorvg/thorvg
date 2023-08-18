@@ -263,12 +263,12 @@ RenderData Paint::Impl::update(RenderMethod& renderer, const RenderTransform* pT
 }
 
 
-bool Paint::Impl::bounds(float* x, float* y, float* w, float* h, bool transformed)
+bool Paint::Impl::bounds(float* x, float* y, float* w, float* h, bool transformed, bool stroking)
 {
     Matrix* m = nullptr;
 
     //Case: No transformed, quick return!
-    if (!transformed || !(m = this->transform())) return smethod->bounds(x, y, w, h);
+    if (!transformed || !(m = this->transform())) return smethod->bounds(x, y, w, h, stroking);
 
     //Case: Transformed
     auto tx = 0.0f;
@@ -276,7 +276,7 @@ bool Paint::Impl::bounds(float* x, float* y, float* w, float* h, bool transforme
     auto tw = 0.0f;
     auto th = 0.0f;
 
-    auto ret = smethod->bounds(&tx, &ty, &tw, &th);
+    auto ret = smethod->bounds(&tx, &ty, &tw, &th, stroking);
 
     //Get vertices
     Point pt[4] = {{tx, ty}, {tx + tw, ty}, {tx + tw, ty + th}, {tx, ty + th}};
@@ -365,7 +365,7 @@ TVG_DEPRECATED Result Paint::bounds(float* x, float* y, float* w, float* h) cons
 
 Result Paint::bounds(float* x, float* y, float* w, float* h, bool transform) const noexcept
 {
-    if (pImpl->bounds(x, y, w, h, transform)) return Result::Success;
+    if (pImpl->bounds(x, y, w, h, transform, true)) return Result::Success;
     return Result::InsufficientCondition;
 }
 

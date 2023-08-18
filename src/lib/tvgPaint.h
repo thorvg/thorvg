@@ -45,7 +45,7 @@ namespace tvg
         virtual bool dispose(RenderMethod& renderer) = 0;     //return true if the deletion is allowed.
         virtual void* update(RenderMethod& renderer, const RenderTransform* transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag pFlag, bool clipper) = 0;   //Return engine data if it has.
         virtual bool render(RenderMethod& renderer) = 0;
-        virtual bool bounds(float* x, float* y, float* w, float* h) = 0;
+        virtual bool bounds(float* x, float* y, float* w, float* h, bool stroking) = 0;
         virtual RenderRegion bounds(RenderMethod& renderer) const = 0;
         virtual Paint* duplicate() = 0;
         virtual Iterator* iterator() = 0;
@@ -160,7 +160,7 @@ namespace tvg
         bool rotate(float degree);
         bool scale(float factor);
         bool translate(float x, float y);
-        bool bounds(float* x, float* y, float* w, float* h, bool transformed);
+        bool bounds(float* x, float* y, float* w, float* h, bool transformed, bool stroking);
         RenderData update(RenderMethod& renderer, const RenderTransform* pTransform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag pFlag, bool clipper = false);
         bool render(RenderMethod& renderer);
         Paint* duplicate();
@@ -175,9 +175,9 @@ namespace tvg
         PaintMethod(T* _inst) : inst(_inst) {}
         ~PaintMethod() {}
 
-        bool bounds(float* x, float* y, float* w, float* h) override
+        bool bounds(float* x, float* y, float* w, float* h, bool stroking) override
         {
-            return inst->bounds(x, y, w, h);
+            return inst->bounds(x, y, w, h, stroking);
         }
 
         RenderRegion bounds(RenderMethod& renderer) const override

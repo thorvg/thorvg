@@ -181,7 +181,7 @@ struct Scene::Impl
         return {x1, y1, (x2 - x1), (y2 - y1)};
     }
 
-    bool bounds(float* px, float* py, float* pw, float* ph)
+    bool bounds(float* px, float* py, float* pw, float* ph, bool stroking)
     {
         if (paints.empty()) return false;
 
@@ -196,7 +196,7 @@ struct Scene::Impl
             auto w = 0.0f;
             auto h = 0.0f;
 
-            if (paint->bounds(&x, &y, &w, &h, true) != tvg::Result::Success) continue;
+            if (!P(paint)->bounds(&x, &y, &w, &h, true, stroking)) continue;
 
             //Merge regions
             if (x < x1) x1 = x;
