@@ -104,7 +104,7 @@ struct Shape::Impl
         return renderer.region(rd);
     }
 
-    bool bounds(float* x, float* y, float* w, float* h)
+    bool bounds(float* x, float* y, float* w, float* h, bool stroking)
     {
         //Path bounding size
         if (rs.path.pts.count > 0 ) {
@@ -126,7 +126,7 @@ struct Shape::Impl
         }
 
         //Stroke feathering
-        if (rs.stroke) {
+        if (stroking && rs.stroke) {
             if (x) *x -= rs.stroke->width * 0.5f;
             if (y) *y -= rs.stroke->width * 0.5f;
             if (w) *w += rs.stroke->width;
