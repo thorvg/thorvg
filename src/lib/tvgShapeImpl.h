@@ -70,7 +70,7 @@ struct Shape::Impl
         if (opacity == 0) return false;
 
         //Shape composition is only necessary when stroking & fill are valid.
-        if (!rs.stroke || rs.stroke->width < FLT_EPSILON || rs.stroke->color[3] == 0) return false;
+        if (!rs.stroke || rs.stroke->width < FLT_EPSILON || (!rs.stroke->fill && rs.stroke->color[3] == 0)) return false;
         if (!rs.fill && rs.color[3] == 0) return false;
 
         //translucent fill & stroke
