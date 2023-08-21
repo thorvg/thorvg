@@ -61,12 +61,6 @@ Result Scene::push(unique_ptr<Paint> paint) noexcept
 }
 
 
-Result Scene::reserve(TVG_UNUSED uint32_t size) noexcept
-{
-    return Result::NonSupport;
-}
-
-
 Result Scene::clear(bool free) noexcept
 {
     pImpl->clear(free);
