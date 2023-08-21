@@ -83,6 +83,6 @@ using Size = Point;
 uint16_t THORVG_VERSION_NUMBER();
 
 
-#define P(A) (A->pImpl)     //Access to pimpl.
+#define P(A) ((A)->pImpl)     //Access to pimpl.
 
 #endif //_TVG_COMMON_H_
