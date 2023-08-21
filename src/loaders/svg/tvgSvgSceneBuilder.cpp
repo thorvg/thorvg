@@ -35,9 +35,9 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-static bool _appendShape(SvgNode* node, Shape* shape, const Box& vBox, const string& svgPath);
-static bool _appendClipShape(SvgNode* node, Shape* shape, const Box& vBox, const string& svgPath, const Matrix* transform);
-static unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, const Box& vBox, const string& svgPath, bool mask, int depth, bool* isMaskWhite = nullptr);
+static bool _appendShape(SvgLoaderData& loaderData, SvgNode* node, Shape* shape, const Box& vBox, const string& svgPath);
+static bool _appendClipShape(SvgLoaderData& loaderData, SvgNode* node, Shape* shape, const Box& vBox, const string& svgPath, const Matrix* transform);
+static unique_ptr<Scene> _sceneBuildHelper(SvgLoaderData& loaderData, const SvgNode* node, const Box& vBox, const string& svgPath, bool mask, int depth, bool* isMaskWhite = nullptr);
 
 
 static inline bool _isGroupType(SvgNodeType type)
@@ -195,7 +195,7 @@ static unique_ptr<RadialGradient> _applyRadialGradientProperty(SvgStyleGradient*
 
 
 //The SVG standard allows only for 'use' nodes that point directly to a basic shape.
-static bool _appendClipUseNode(SvgNode* node, Shape* shape, const Box& vBox, const string& svgPath)
+static bool _appendClipUseNode(SvgLoaderData& loaderData, SvgNode* node, Shape* shape, const Box& vBox, const string& svgPath)
 {
     if (node->child.count != 1) return false;
     auto child = *(node->child.data);
@@ -208,16 +208,16 @@ static bool _appendClipUseNode(SvgNode* node, Shape* shape, const Box& vBox, con
     }
     if (child->transform) finalTransform = mathMultiply(child->transform, &finalTransform);
 
-    return _appendClipShape(child, shape, vBox, svgPath, mathIdentity((const Matrix*)(&finalTransform)) ? nullptr : &finalTransform);
+    return _appendClipShape(loaderData, child, shape, vBox, svgPath, mathIdentity((const Matrix*)(&finalTransform)) ? nullptr : &finalTransform);
 }
 
 
-static bool _appendClipChild(SvgNode* node, Shape* shape, const Box& vBox, const string& svgPath, bool clip)
+static bool _appendClipChild(SvgLoaderData& loaderData, SvgNode* node, Shape* shape, const Box& vBox, const string& svgPath, bool clip)
 {
     if (node->type == SvgNodeType::Use) {
-        return _appendClipUseNode(node, shape, vBox, svgPath);
+        return _appendClipUseNode(loaderData, node, shape, vBox, svgPath);
     }
-    return _appendClipShape(node, shape, vBox, svgPath, nullptr);
+    return _appendClipShape(loaderData, node, shape, vBox, svgPath, nullptr);
 }
 
 
@@ -241,7 +241,7 @@ static Matrix _compositionTransform(Paint* paint, const SvgNode* node, const Svg
 }
 
 
-static void _applyComposition(Paint* paint, const SvgNode* node, const Box& vBox, const string& svgPath)
+static void _applyComposition(SvgLoaderData& loaderData, Paint* paint, const SvgNode* node, const Box& vBox, const string& svgPath)
 {
     /* ClipPath */
     /* Do not drop in Circular Dependency for ClipPath.
@@ -259,7 +259,7 @@ static void _applyComposition(Paint* paint, const SvgNode* node, const Box& vBox
             auto valid = false; //Composite only when valid shapes exist
 
             for (uint32_t i = 0; i < compNode->child.count; ++i, ++child) {
-                if (_appendClipChild(*child, comp.get(), vBox, svgPath, compNode->child.count > 1)) valid = true;
+                if (_appendClipChild(loaderData, *child, comp.get(), vBox, svgPath, compNode->child.count > 1)) valid = true;
             }
 
             if (valid) {
@@ -284,7 +284,7 @@ static void _applyComposition(Paint* paint, const SvgNode* node, const Box& vBox
             node->style->mask.applying = true;
 
             bool isMaskWhite = true;
-            if (auto comp = _sceneBuildHelper(compNode, vBox, svgPath, true, 0, &isMaskWhite)) {
+            if (auto comp = _sceneBuildHelper(loaderData, compNode, vBox, svgPath, true, 0, &isMaskWhite)) {
                 Matrix finalTransform = _compositionTransform(paint, node, compNode, SvgNodeType::Mask);
                 comp->transform(finalTransform);
 
@@ -301,7 +301,7 @@ static void _applyComposition(Paint* paint, const SvgNode* node, const Box& vBox
 }
 
 
-static void _applyProperty(SvgNode* node, Shape* vg, const Box& vBox, const string& svgPath, bool clip)
+static void _applyProperty(SvgLoaderData& loaderData, SvgNode* node, Shape* vg, const Box& vBox, const string& svgPath, bool clip)
 {
     SvgStyleProperty* style = node->style;
 
@@ -376,14 +376,14 @@ static void _applyProperty(SvgNode* node, Shape* vg, const Box& vBox, const stri
         vg->stroke(style->stroke.paint.color.r, style->stroke.paint.color.g, style->stroke.paint.color.b, style->stroke.opacity);
     }
 
-    _applyComposition(vg, node, vBox, svgPath);
+    _applyComposition(loaderData, vg, node, vBox, svgPath);
 }
 
 
-static unique_ptr<Shape> _shapeBuildHelper(SvgNode* node, const Box& vBox, const string& svgPath)
+static unique_ptr<Shape> _shapeBuildHelper(SvgLoaderData& loaderData, SvgNode* node, const Box& vBox, const string& svgPath)
 {
     auto shape = Shape::gen();
-    if (_appendShape(node, shape.get(), vBox, svgPath)) return shape;
+    if (_appendShape(loaderData, node, shape.get(), vBox, svgPath)) return shape;
     else return nullptr;
 }
 
@@ -445,16 +445,16 @@ static bool _recognizeShape(SvgNode* node, Shape* shape)
 }
 
 
-static bool _appendShape(SvgNode* node, Shape* shape, const Box& vBox, const string& svgPath)
+static bool _appendShape(SvgLoaderData& loaderData, SvgNode* node, Shape* shape, const Box& vBox, const string& svgPath)
 {
     if (!_recognizeShape(node, shape)) return false;
 
-    _applyProperty(node, shape, vBox, svgPath, false);
+    _applyProperty(loaderData, node, shape, vBox, svgPath, false);
     return true;
 }
 
 
-static bool _appendClipShape(SvgNode* node, Shape* shape, const Box& vBox, const string& svgPath, const Matrix* transform)
+static bool _appendClipShape(SvgLoaderData& loaderData, SvgNode* node, Shape* shape, const Box& vBox, const string& svgPath, const Matrix* transform)
 {
     //The 'transform' matrix has higher priority than the node->transform, since it already contains it
     auto m = transform ? transform : (node->transform ? node->transform : nullptr);
@@ -475,7 +475,7 @@ static bool _appendClipShape(SvgNode* node, Shape* shape, const Box& vBox, const
         while (currentPtsCnt++ < ptsCnt) mathMultiply(p++, m);
     }
 
-    _applyProperty(node, shape, vBox, svgPath, true);
+    _applyProperty(loaderData, node, shape, vBox, svgPath, true);
     return true;
 }
 
@@ -552,7 +552,7 @@ static bool _isValidImageMimeTypeAndEncoding(const char** href, const char** mim
 }
 
 
-static unique_ptr<Picture> _imageBuildHelper(SvgNode* node, const Box& vBox, const string& svgPath)
+static unique_ptr<Picture> _imageBuildHelper(SvgLoaderData& loaderData, SvgNode* node, const Box& vBox, const string& svgPath)
 {
     if (!node->node.image.href) return nullptr;
     auto picture = Picture::gen();
@@ -563,20 +563,21 @@ static unique_ptr<Picture> _imageBuildHelper(SvgNode* node, const Box& vBox, con
         const char* mimetype;
         imageMimeTypeEncoding encoding;
         if (!_isValidImageMimeTypeAndEncoding(&href, &mimetype, &encoding)) return nullptr; //not allowed mime type or encoding
+        char *decoded = nullptr;
         if (encoding == imageMimeTypeEncoding::base64) {
-            char* decoded = nullptr;
             auto size = b64Decode(href, strlen(href), &decoded);
-            //OPTIMIZE: Skip data copy.
-            if (picture->load(decoded, size, mimetype, true) != Result::Success) {
+            if (picture->load(decoded, size, mimetype, false) != Result::Success) {
                 free(decoded);
                 return nullptr;
             }
-            free(decoded);
         } else {
-            string decoded = svgUtilURLDecode(href);
-            //OPTIMIZE: Skip data copy.
-            if (picture->load(decoded.c_str(), decoded.size(), mimetype, true) != Result::Success) return nullptr;
+            auto size = svgUtilURLDecode(href, &decoded);
+            if (picture->load(decoded, size, mimetype, false) != Result::Success) {
+                free(decoded);
+                return nullptr;
+            }
         }
+        loaderData.images.push(decoded);
     } else {
         if (!strncmp(href, "file://", sizeof("file://") - 1)) href += sizeof("file://") - 1;
         //TODO: protect against recursive svg image loading
@@ -604,7 +605,7 @@ static unique_ptr<Picture> _imageBuildHelper(SvgNode* node, const Box& vBox, con
     if (node->transform) m = mathMultiply(node->transform, &m);
     picture->transform(m);
 
-    _applyComposition(picture.get(), node, vBox, svgPath);
+    _applyComposition(loaderData, picture.get(), node, vBox, svgPath);
     return picture;
 }
 
@@ -683,10 +684,10 @@ static Matrix _calculateAspectRatioMatrix(AspectRatioAlign align, AspectRatioMee
 }
 
 
-static unique_ptr<Scene> _useBuildHelper(const SvgNode* node, const Box& vBox, const string& svgPath, int depth, bool* isMaskWhite)
+static unique_ptr<Scene> _useBuildHelper(SvgLoaderData& loaderData, const SvgNode* node, const Box& vBox, const string& svgPath, int depth, bool* isMaskWhite)
 {
     unique_ptr<Scene> finalScene;
-    auto scene = _sceneBuildHelper(node, vBox, svgPath, false, depth + 1, isMaskWhite);
+    auto scene = _sceneBuildHelper(loaderData, node, vBox, svgPath, false, depth + 1, isMaskWhite);
 
     // mUseTransform = mUseTransform * mTranslate
     Matrix mUseTransform = {1, 0, 0, 0, 1, 0, 0, 0, 1};
@@ -753,7 +754,7 @@ static unique_ptr<Scene> _useBuildHelper(const SvgNode* node, const Box& vBox, c
 }
 
 
-static unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, const Box& vBox, const string& svgPath, bool mask, int depth, bool* isMaskWhite)
+static unique_ptr<Scene> _sceneBuildHelper(SvgLoaderData& loaderData, const SvgNode* node, const Box& vBox, const string& svgPath, bool mask, int depth, bool* isMaskWhite)
 {
     /* Exception handling: Prevent invalid SVG data input.
        The size is the arbitrary value, we need an experimental size. */
@@ -772,17 +773,17 @@ static unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, const Box& vBox,
             for (uint32_t i = 0; i < node->child.count; ++i, ++child) {
                 if (_isGroupType((*child)->type)) {
                     if ((*child)->type == SvgNodeType::Use)
-                        scene->push(_useBuildHelper(*child, vBox, svgPath, depth + 1, isMaskWhite));
+                        scene->push(_useBuildHelper(loaderData, *child, vBox, svgPath, depth + 1, isMaskWhite));
                     else
-                        scene->push(_sceneBuildHelper(*child, vBox, svgPath, false, depth + 1, isMaskWhite));
+                        scene->push(_sceneBuildHelper(loaderData, *child, vBox, svgPath, false, depth + 1, isMaskWhite));
                 } else if ((*child)->type == SvgNodeType::Image) {
-                    auto image = _imageBuildHelper(*child, vBox, svgPath);
+                    auto image = _imageBuildHelper(loaderData, *child, vBox, svgPath);
                     if (image) {
                         scene->push(std::move(image));
                         if (isMaskWhite) *isMaskWhite = false;
                     }
                 } else if ((*child)->type != SvgNodeType::Mask) {
-                    auto shape = _shapeBuildHelper(*child, vBox, svgPath);
+                    auto shape = _shapeBuildHelper(loaderData, *child, vBox, svgPath);
                     if (shape) {
                         if (isMaskWhite) {
                             uint8_t r, g, b;
@@ -796,7 +797,7 @@ static unique_ptr<Scene> _sceneBuildHelper(const SvgNode* node, const Box& vBox,
                     }
                 }
             }
-            _applyComposition(scene.get(), node, vBox, svgPath);
+            _applyComposition(loaderData, scene.get(), node, vBox, svgPath);
             scene->opacity(node->style->opacity);
         }
         return scene;
@@ -835,7 +836,7 @@ unique_ptr<Scene> svgSceneBuild(SvgLoaderData& loaderData, Box vBox, float w, fl
 
     if (!loaderData.doc || (loaderData.doc->type != SvgNodeType::Doc)) return nullptr;
 
-    auto docNode = _sceneBuildHelper(loaderData.doc, vBox, svgPath, false, 0);
+    auto docNode = _sceneBuildHelper(loaderData, loaderData.doc, vBox, svgPath, false, 0);
 
     if (!(viewFlag & SvgViewFlag::Viewbox)) _updateInvalidViewSize(docNode.get(), vBox, w, h, viewFlag);
 

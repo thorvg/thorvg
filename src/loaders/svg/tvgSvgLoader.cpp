@@ -3685,6 +3685,11 @@ bool SvgLoader::close()
     loaderData.doc = nullptr;
     loaderData.stack.reset();
 
+    for (auto p = loaderData.images.data; p < loaderData.images.end(); ++p) {
+        free(*p);
+    }
+    loaderData.images.reset();
+
     clear();
 
     return true;
