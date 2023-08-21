@@ -106,9 +106,12 @@ struct TaskSchedulerImpl
     vector<thread>                 threads;
     vector<TaskQueue>              taskQueues;
     atomic<uint32_t>               idx{0};
+    thread::id                     tid;
 
     TaskSchedulerImpl(unsigned threadCnt) : threadCnt(threadCnt), taskQueues(threadCnt)
     {
+        tid = this_thread::get_id();
+
         for (unsigned i = 0; i < threadCnt; ++i) {
             threads.emplace_back([&, i] { run(i); });
         }
@@ -143,12 +146,23 @@ struct TaskSchedulerImpl
     {
         //Async
         if (threadCnt > 0) {
-            task->prepare();
-            auto i = idx++;
-            for (unsigned n = 0; n < threadCnt; ++n) {
-                if (taskQueues[(i + n) % threadCnt].tryPush(task)) return;
+            auto tid = this_thread::get_id();
+            if (tid == this->tid) {
+                task->prepare();
+                auto i = idx++;
+                for (unsigned n = 0; n < threadCnt; ++n) {
+                    if (taskQueues[(i + n) % threadCnt].tryPush(task)) return;
+                }
+                taskQueues[i % threadCnt].push(task);
+            //Not thread-safety now, it's requested from a worker-thread
+            } else {
+                for (unsigned i = 0; i < threadCnt; ++i) {
+                    if (tid == threads[i].get_id()) {
+                        task->prepare();
+                        (*task)(i + 1);
+                    }
+                }
             }
-            taskQueues[i % threadCnt].push(task);
         //Sync
         } else {
             task->run(0);
