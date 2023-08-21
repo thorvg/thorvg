@@ -84,9 +84,9 @@ void mathRotate(Matrix* m, float degree)
 
 bool mathIdentity(const Matrix* m)
 {
-    if (!mathEqual(m->e11, 1.0f) || !mathZero(m->e12) || !mathZero(m->e13) ||
-        !mathZero(m->e21) || !mathEqual(m->e22, 1.0f) || !mathZero(m->e23) ||
-        !mathZero(m->e31) || !mathZero(m->e32) || !mathEqual(m->e33, 1.0f)) {
+    if (m->e11 != 1.0f || m->e12 != 0.0f || m->e13 != 0.0f ||
+        m->e21 != 0.0f || m->e22 != 1.0f || m->e23 != 0.0f ||
+        m->e31 != 0.0f || m->e32 != 0.0f || m->e33 != 1.0f) {
         return false;
     }
     return true;

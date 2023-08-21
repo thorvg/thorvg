@@ -38,9 +38,12 @@ static bool _buildPrecomp(LottieComposition* comp, LottieGroup* parent);
 
 static bool _updateTransform(LottieTransform* transform, int32_t frameNo, bool autoOrient, Matrix& matrix, uint8_t& opacity)
 {
-    if (!transform) return false;
-
     mathIdentity(&matrix);
+
+    if (!transform) {
+        opacity = 255;
+        return false;
+    }
 
     if (transform->coords) {
         mathTranslate(&matrix, transform->coords->x(frameNo), transform->coords->y(frameNo));
@@ -76,15 +79,15 @@ static void _updateTransform(LottieLayer* layer, int32_t frameNo)
     if (parent) _updateTransform(parent, parent->remap(frameNo));
 
     auto& matrix = layer->cache.matrix;
-    uint8_t opacity;
 
-    _updateTransform(transform, frameNo, layer->autoOrient, matrix, opacity);
+    _updateTransform(transform, frameNo, layer->autoOrient, matrix, layer->cache.opacity);
 
     if (parent) {
-        layer->cache.matrix = mathMultiply(&parent->cache.matrix, &matrix);
-        layer->cache.opacity = MULTIPLY(opacity, parent->cache.opacity);
+        if (!mathIdentity((const Matrix*) &parent->cache.matrix)) {
+            if (mathIdentity((const Matrix*) &matrix)) layer->cache.matrix = parent->cache.matrix;
+            else layer->cache.matrix = mathMultiply(&parent->cache.matrix, &matrix);
+        }
     }
-    layer->cache.opacity = opacity;
     layer->cache.frameNo = frameNo;
 }
 
