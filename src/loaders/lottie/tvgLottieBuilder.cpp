@@ -35,25 +35,6 @@ static void _updateChildren(LottieGroup* parent, int32_t frameNo, Shape* baseSha
 static void _updateLayer(LottieLayer* root, LottieLayer* layer, int32_t frameNo);
 static bool _buildPrecomp(LottieComposition* comp, LottieGroup* parent);
 
-static bool _invisible(LottieGroup* group, int32_t frameNo)
-{
-    auto opacity = group->opacity(frameNo);
-    if (group->scene) group->scene->opacity(opacity);
-    if (opacity == 0) return true;
-    else return false;
-}
-
-
-static bool _invisible(LottieLayer* layer, int32_t frameNo)
-{
-    if (frameNo < layer->inFrame || frameNo > layer->outFrame) {
-        if (layer->scene) layer->scene->opacity(0);
-        return true;
-    }
-
-    return _invisible(static_cast<LottieGroup*>(layer), frameNo);
-}
-
 
 static bool _updateTransform(LottieTransform* transform, int32_t frameNo, bool autoOrient, Matrix& matrix, uint8_t& opacity)
 {
@@ -127,19 +108,22 @@ static Shape* _updateTransform(Paint* paint, LottieTransform* transform, int32_t
 static Shape* _updateGroup(LottieGroup* parent, LottieGroup* group, int32_t frameNo, Shape* baseShape)
 {
     //Prepare render data
-    auto scene = Scene::gen();
-    group->scene = scene.get();
-    parent->scene->push(std::move(scene));
+    group->scene = parent->scene;
 
-    if (_invisible(group, frameNo)) return nullptr;
+    auto opacity = group->opacity(frameNo);
+    if (opacity == 0) return nullptr;
 
     if (group->transform) {
+        TVGERR("LOTTIE", "group transform is not working!");
+#if 0
         Matrix matrix;
-        uint8_t opacity;
         _updateTransform(group->transform, frameNo, false, matrix, opacity);
-        group->scene->transform(matrix);
-        group->scene->opacity(opacity);
+        auto pmatrix = P((Paint*)group->scene)->transform();
+        group->scene->transform(pmatrix ? mathMultiply(pmatrix, &matrix) : matrix);
+        if (opacity < 255) group->scene->opacity(MULTIPLY(opacity, group->scene->opacity()));
+#endif
     }
+
     _updateChildren(group, frameNo, baseShape);
     return nullptr;
 }
@@ -388,15 +372,15 @@ static void _updateMaskings(LottieLayer* layer, int32_t frameNo)
 
 static void _updateLayer(LottieLayer* root, LottieLayer* layer, int32_t frameNo)
 {
-    layer->scene = nullptr;
-
-    if (_invisible(layer, frameNo)) return;
-
-    //Prepare render data
-    layer->scene = Scene::gen().release();
+    //visibility
+    if (frameNo < layer->inFrame || frameNo > layer->outFrame) return;
+    auto opacity = layer->opacity(frameNo);
+    if (opacity == 0) return;
 
     _updateTransform(layer, frameNo);
 
+    //Prepare render data
+    layer->scene = Scene::gen().release();
     layer->scene->transform(layer->cache.matrix);
 
     //FIXME: Ignore opacity when Null layer?
