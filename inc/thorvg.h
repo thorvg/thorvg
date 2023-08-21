@@ -379,22 +379,6 @@ public:
     Result blend(BlendMethod method) const noexcept;
 
     /**
-     * @brief Gets the bounding box of the paint object before any transformation.
-     *
-     * @param[out] x The x coordinate of the upper left corner of the object.
-     * @param[out] y The y coordinate of the upper left corner of the object.
-     * @param[out] w The width of the object.
-     * @param[out] h The height of the object.
-     *
-     * @return Result::Success when succeed, Result::InsufficientCondition otherwise.
-     *
-     * @note The bounding box doesn't indicate the final rendered region. It's the smallest rectangle that encloses the object.
-     * @see Paint::bounds(float* x, float* y, float* w, float* h, bool transformed);
-     * @deprecated Use bounds(float* x, float* y, float* w, float* h, bool transformed) instead
-     */
-    TVG_DEPRECATED Result bounds(float* x, float* y, float* w, float* h) const noexcept;
-
-    /**
      * @brief Gets the axis-aligned bounding box of the paint object.
      *
      * In case @p transform is @c true, all object's transformations are applied first, and then the bounding box is established. Otherwise, the bounding box is determined before any transformations.
@@ -409,7 +393,7 @@ public:
      *
      * @note The bounding box doesn't indicate the actual drawing region. It's the smallest rectangle that encloses the object.
      */
-    Result bounds(float* x, float* y, float* w, float* h, bool transformed) const noexcept;
+    Result bounds(float* x, float* y, float* w, float* h, bool transformed = false) const noexcept;
 
     /**
      * @brief Duplicates the object.
@@ -580,18 +564,6 @@ class TVG_API Canvas
 public:
     Canvas(RenderMethod*);
     virtual ~Canvas();
-
-    /**
-     * @brief Sets the size of the container, where all the paints pushed into the Canvas are stored.
-     *
-     * If the number of objects pushed into the Canvas is known in advance, calling the function
-     * prevents multiple memory reallocation, thus improving the performance.
-     *
-     * @param[in] n The number of objects for which the memory is to be reserved.
-     *
-     * @return Result::Success when succeed.
-     */
-    TVG_DEPRECATED Result reserve(uint32_t n) noexcept;
 
     /**
      * @brief Returns the list of the paints that currently held by the Canvas.
@@ -1254,24 +1226,6 @@ public:
      *
      * @param[in] data A pointer to a memory location where the content of the picture file is stored.
      * @param[in] size The size in bytes of the memory occupied by the @p data.
-     * @param[in] copy Decides whether the data should be copied into the engine local buffer.
-     *
-     * @retval Result::Success When succeed.
-     * @retval Result::InvalidArguments In case no data are provided or the @p size is zero or less.
-     * @retval Result::NonSupport When trying to load a file with an unknown extension.
-     * @retval Result::Unknown If an error occurs at a later stage.
-     *
-     * @warning: you have responsibility to release the @p data memory if the @p copy is true
-     * @deprecated Use load(const char* data, uint32_t size, const std::string& mimeType, bool copy) instead.
-     * @see Result load(const char* data, uint32_t size, const std::string& mimeType, bool copy = false) noexcept
-     */
-    TVG_DEPRECATED Result load(const char* data, uint32_t size, bool copy = false) noexcept;
-
-    /**
-     * @brief Loads a picture data from a memory block of a given size.
-     *
-     * @param[in] data A pointer to a memory location where the content of the picture file is stored.
-     * @param[in] size The size in bytes of the memory occupied by the @p data.
      * @param[in] mimeType Mimetype or extension of data such as "jpg", "jpeg", "lottie", "svg", "svg+xml", "png", etc. In case an empty string or an unknown type is provided, the loaders will be tried one by one.
      * @param[in] copy If @c true the data are copied into the engine local buffer, otherwise they are not.
      *
@@ -1280,7 +1234,7 @@ public:
      * @retval Result::NonSupport When trying to load a file with an unknown extension.
      * @retval Result::Unknown If an error occurs at a later stage.
      *
-     * @warning: It's the user responsibility to release the @p data memory if the @p copy is @c true.
+     * @warning: It's the user responsibility to release the @p data memory.
      *
      * @note If you are unsure about the MIME type, you can provide an empty value like @c "", and thorvg will attempt to figure it out.
      * @since 0.5
@@ -1410,18 +1364,6 @@ public:
      * @see Scene::clear()
      */
     Result push(std::unique_ptr<Paint> paint) noexcept;
-
-    /**
-     * @brief Sets the size of the container, where all the paints pushed into the Scene are stored.
-     *
-     * If the number of objects pushed into the scene is known in advance, calling the function
-     * prevents multiple memory reallocation, thus improving the performance.
-     *
-     * @param[in] size The number of objects for which the memory is to be reserved.
-     *
-     * @return Result::Success when succeed, Result::FailedAllocation otherwise.
-     */
-    TVG_DEPRECATED Result reserve(uint32_t size) noexcept;
 
     /**
      * @brief Returns the list of the paints that currently held by the Scene.
