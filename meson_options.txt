@@ -52,3 +52,8 @@ option('static',
     type: 'boolean',
     value: false,
     description: 'Force to use static linking modules in thorvg')
+
+option('windows',
+    type: 'boolean',
+    value: false,
+    description: 'Enable using tvg::Window based on GLFW')

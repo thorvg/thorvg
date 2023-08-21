@@ -149,6 +149,7 @@ Summary:
     Tool (Svg2Tvg):        @20@
     Tool (Svg2Png):        @21@
     Tool (Lottie2Gif):     @22@
+    tvg::Window:           @23@
 
 '''.format(
         meson.project_version(),
@@ -174,6 +175,7 @@ Summary:
         all_tools or get_option('tools').contains('svg2tvg'),
         all_tools or get_option('tools').contains('svg2png'),
         all_tools or get_option('tools').contains('lottie2gif'),
+        get_option('windows'),
     )
 
 message(summary)
