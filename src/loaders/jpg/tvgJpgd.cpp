@@ -431,7 +431,7 @@ struct Row<1>
 {
     static void idct(int* pTemp, const jpgd_block_t* pSrc)
     {
-        const int dcval = (pSrc[0] << PASS1_BITS);
+        const int dcval = pSrc[0] * (pSrc[0] * (PASS1_BITS * 2));
 
         pTemp[0] = dcval;
         pTemp[1] = dcval;
