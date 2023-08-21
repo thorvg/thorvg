@@ -46,7 +46,6 @@ source_file = [
     'SceneClipper.cpp',
     'SceneTransform.cpp',
     'Shape.cpp',
-    'Stress.cpp',
     'Stroke.cpp',
     'StrokeLine.cpp',
     'StrokeMiterlimit.cpp',
