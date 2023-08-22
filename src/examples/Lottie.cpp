@@ -29,8 +29,8 @@
 /* Drawing Commands                                                     */
 /************************************************************************/
 
-#define NUM_PER_ROW 7
-#define NUM_PER_COL 7
+#define NUM_PER_ROW 9
+#define NUM_PER_COL 9
 #define SIZE (WIDTH/NUM_PER_ROW)
 
 static int counter = 0;
