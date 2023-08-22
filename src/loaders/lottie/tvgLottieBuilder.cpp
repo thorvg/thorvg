@@ -231,6 +231,191 @@ static Shape* _updatePath(LottieGroup* parent, LottiePath* path, int32_t frameNo
 }
 
 
+static void _updateStar(LottieGroup* parent, LottiePolyStar* star, int32_t frameNo, Shape* mergingShape)
+{
+    static constexpr auto K_PI = 3.141592f;
+    static constexpr auto POLYSTAR_MAGIC_NUMBER = 0.47829f / 0.28f;
+
+    auto ptsCnt = star->ptsCnt(frameNo);
+    auto innerRadius = star->innerRadius(frameNo);
+    auto outerRadius = star->outerRadius(frameNo);
+    auto innerRoundness = star->innerRoundness(frameNo) * 0.01f;
+    auto outerRoundness = star->outerRoundness(frameNo) * 0.01f;
+
+    auto angle = -90.0f * K_PI / 180.0f;
+    auto partialPointRadius = 0.0f;
+    auto anglePerPoint = (2.0f * K_PI / ptsCnt);
+    auto halfAnglePerPoint = anglePerPoint * 0.5f;
+    auto partialPointAmount = ptsCnt - floorf(ptsCnt);
+    auto longSegment = false;
+    auto numPoints = size_t(ceilf(ptsCnt) * 2);
+    auto direction = star->direction ? 1.0f : -1.0f;
+    auto hasRoundness = false;
+
+    float x, y;
+
+    if (!mathZero(partialPointAmount)) {
+        angle += halfAnglePerPoint * (1.0f - partialPointAmount) * direction;
+    }
+
+    if (!mathZero(partialPointAmount)) {
+        partialPointRadius = innerRadius + partialPointAmount * (outerRadius - innerRadius);
+        x = partialPointRadius * cosf(angle);
+        y = partialPointRadius * sinf(angle);
+        angle += anglePerPoint * partialPointAmount * 0.5f * direction;
+    } else {
+        x = outerRadius * cosf(angle);
+        y = outerRadius * sinf(angle);
+        angle += halfAnglePerPoint * direction;
+    }
+
+    if (mathZero(innerRoundness) && mathZero(outerRoundness)) {
+        P(mergingShape)->rs.path.pts.reserve(numPoints + 2);
+        P(mergingShape)->rs.path.cmds.reserve(numPoints + 3);
+    } else {
+        P(mergingShape)->rs.path.pts.reserve(numPoints * 3 + 2);
+        P(mergingShape)->rs.path.cmds.reserve(numPoints + 3);
+        hasRoundness = true;
+    }
+
+    mergingShape->moveTo(x, y);
+
+    for (size_t i = 0; i < numPoints; i++) {
+        auto radius = longSegment ? outerRadius : innerRadius;
+        auto dTheta = halfAnglePerPoint;
+        if (!mathZero(partialPointRadius) && i == numPoints - 2) {
+            dTheta = anglePerPoint * partialPointAmount * 0.5f;
+        }
+        if (!mathZero(partialPointRadius) && i == numPoints - 1) {
+            radius = partialPointRadius;
+        }
+        auto previousX = x;
+        auto previousY = y;
+        x = radius * cosf(angle);
+        y = radius * sinf(angle);
+
+        if (hasRoundness) {
+            auto cp1Theta = (atan2f(previousY, previousX) - K_PI / 2.0f * direction);
+            auto cp1Dx = cosf(cp1Theta);
+            auto cp1Dy = sinf(cp1Theta);
+            auto cp2Theta = (atan2f(y, x) - K_PI / 2.0f * direction);
+            auto cp2Dx = cosf(cp2Theta);
+            auto cp2Dy = sinf(cp2Theta);
+
+            auto cp1Roundness = longSegment ? innerRoundness : outerRoundness;
+            auto cp2Roundness = longSegment ? outerRoundness : innerRoundness;
+            auto cp1Radius = longSegment ? innerRadius : outerRadius;
+            auto cp2Radius = longSegment ? outerRadius : innerRadius;
+
+            auto cp1x = cp1Radius * cp1Roundness * POLYSTAR_MAGIC_NUMBER * cp1Dx / ptsCnt;
+            auto cp1y = cp1Radius * cp1Roundness * POLYSTAR_MAGIC_NUMBER * cp1Dy / ptsCnt;
+            auto cp2x = cp2Radius * cp2Roundness * POLYSTAR_MAGIC_NUMBER * cp2Dx / ptsCnt;
+            auto cp2y = cp2Radius * cp2Roundness * POLYSTAR_MAGIC_NUMBER * cp2Dy / ptsCnt;
+
+            if (!mathZero(partialPointAmount) && ((i == 0) || (i == numPoints - 1))) {
+                cp1x *= partialPointAmount;
+                cp1y *= partialPointAmount;
+                cp2x *= partialPointAmount;
+                cp2y *= partialPointAmount;
+            }
+            mergingShape->cubicTo(previousX - cp1x, previousY - cp1y, x + cp2x,  y + cp2y, x, y);
+        } else {
+            mergingShape->lineTo(x, y);
+        }
+
+        angle += dTheta * direction;
+        longSegment = !longSegment;
+    }
+
+    mergingShape->close();
+}
+
+
+static void _updatePolygon(LottieGroup* parent, LottiePolyStar* star, int32_t frameNo, Shape* mergingShape)
+{
+    const static auto POLYGON_MAGIC_NUMBER = 0.25f;
+    static constexpr auto K_PI = 3.141592f;
+
+    auto ptsCnt = size_t(floor(star->ptsCnt(frameNo)));
+    auto radius = star->outerRadius(frameNo);
+    auto roundness = star->outerRoundness(frameNo) * 0.01f;
+
+    auto angle = -90.0f * K_PI / 180.0f;
+    auto anglePerPoint = 2.0f * K_PI / float(ptsCnt);
+    auto direction = star->direction ? 1.0f : -1.0f;
+    auto hasRoundness = false;
+    auto x = radius * cosf(angle);
+    auto y = radius * sinf(angle);
+
+    angle += anglePerPoint * direction;
+
+    if (mathZero(roundness)) {
+        P(mergingShape)->rs.path.pts.reserve(ptsCnt + 2);
+        P(mergingShape)->rs.path.cmds.reserve(ptsCnt + 3);
+    } else {
+        P(mergingShape)->rs.path.pts.reserve(ptsCnt * 3 + 2);
+        P(mergingShape)->rs.path.cmds.reserve(ptsCnt + 3);
+        hasRoundness = true;
+    }
+
+    mergingShape->moveTo(x, y);
+
+    for (size_t i = 0; i < ptsCnt; i++) {
+        auto previousX = x;
+        auto previousY = y;
+        x = (radius * cosf(angle));
+        y = (radius * sinf(angle));
+
+        if (hasRoundness) {
+            auto cp1Theta = atan2f(previousY, previousX) - K_PI * 0.5f * direction;
+            auto cp1Dx = cosf(cp1Theta);
+            auto cp1Dy = sinf(cp1Theta);
+            auto cp2Theta = atan2f(y, x) - K_PI * 0.5f * direction;
+            auto cp2Dx = cosf(cp2Theta);
+            auto cp2Dy = sinf(cp2Theta);
+
+            auto cp1x = radius * roundness * POLYGON_MAGIC_NUMBER * cp1Dx;
+            auto cp1y = radius * roundness * POLYGON_MAGIC_NUMBER * cp1Dy;
+            auto cp2x = radius * roundness * POLYGON_MAGIC_NUMBER * cp2Dx;
+            auto cp2y = radius * roundness * POLYGON_MAGIC_NUMBER * cp2Dy;
+
+            mergingShape->cubicTo(previousX - cp1x, previousY - cp1y, x + cp2x, y + cp2y, x, y);
+        } else {
+            mergingShape->lineTo(x, y);
+        }
+        angle += anglePerPoint * direction;
+    }
+    mergingShape->close();
+}
+
+
+static Shape* _updatePolystar(LottieGroup* parent, LottiePolyStar* star, int32_t frameNo, Shape* baseShape, Shape* mergingShape)
+{
+    if (!mergingShape) {
+        auto newShape = cast<Shape>(baseShape->duplicate());
+        mergingShape = newShape.get();
+        parent->scene->push(std::move(newShape));
+    }
+
+    if (star->type == LottiePolyStar::Star) _updateStar(parent, star, frameNo, mergingShape);
+    else _updatePolygon(parent, star, frameNo, mergingShape);
+
+    P(mergingShape)->update(RenderUpdateFlag::Path);
+
+    auto pos = star->position(frameNo);
+    auto rotation = star->rotation(frameNo);
+
+    if (rotation == 0.0f && pos.x == 0.0f && pos.y == 0.0f) return mergingShape;
+
+    auto matrix = mergingShape->transform();
+    mathTranslate(&matrix, pos.x, pos.y);
+    mathRotate(&matrix, rotation * 2.0f);
+    mergingShape->transform(matrix);
+
+    return mergingShape;
+}
+
+
 static void _updateImage(LottieGroup* parent, LottieImage* image, int32_t frameNo, Paint* baseShape)
 {
     auto picture = image->picture;
@@ -308,7 +493,7 @@ static void _updateChildren(LottieGroup* parent, int32_t frameNo, Shape* baseSha
                 break;
             }
             case LottieObject::Polystar: {
-                TVGERR("LOTTIE", "TODO: update Polystar");
+                mergingShape = _updatePolystar(parent, static_cast<LottiePolyStar*>(*child), frameNo, baseShape, mergingShape);
                 break;
             }
             case LottieObject::Image: {
