@@ -184,7 +184,7 @@ static unique_ptr<Fill> _parseShapeFill(const char *ptr, const char *end)
                 READ_FLOAT(&radius, ptr);
 
                 auto fillGradRadial = RadialGradient::gen();
-                fillGradRadial->radial(x, y, radius);
+                fillGradRadial->radial(x, y, radius, x, y, 0.0f);
                 fillGrad = std::move(fillGradRadial);
                 break;
             }

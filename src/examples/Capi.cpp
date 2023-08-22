@@ -107,7 +107,7 @@ void testCapi()
 
     //Prepare a radial gradient for the fill
     Tvg_Gradient* grad2 = tvg_radial_gradient_new();
-    tvg_radial_gradient_set(grad2, 600.0f, 180.0f, 50.0f);
+    tvg_radial_gradient_set(grad2, 600.0f, 180.0f, 50.0f, 600.0f, 180.0f, 0.0f);
     Tvg_Color_Stop color_stops2[3] =
     {
         {0.0f, 255,   0, 255, 255},
@@ -126,10 +126,10 @@ void testCapi()
     tvg_gradient_get_color_stops(grad2, &color_stops2_get, &cnt);
 
     float cx, cy, radius;
-    tvg_radial_gradient_get(grad2, &cx, &cy, &radius);
+    tvg_radial_gradient_get(grad2, &cx, &cy, &radius, nullptr, nullptr, nullptr);
 
     Tvg_Gradient* grad2_stroke = tvg_radial_gradient_new();
-    tvg_radial_gradient_set(grad2_stroke, cx, cy, radius);
+    tvg_radial_gradient_set(grad2_stroke, cx, cy, radius, cx, cy, 0.0f);
     tvg_gradient_set_color_stops(grad2_stroke, color_stops2_get, cnt);
     tvg_gradient_set_spread(grad2_stroke, TVG_STROKE_FILL_REPEAT);
 

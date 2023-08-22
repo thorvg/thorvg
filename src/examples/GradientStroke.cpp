@@ -83,7 +83,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     shape2->stroke(80);
 
     auto fillStroke2 = tvg::RadialGradient::gen();
-    fillStroke2->radial(600, 175, 100);
+    fillStroke2->radial(600, 175, 100, 600, 175, 0);
     fillStroke2->colorStops(colorStops2, 2);
     shape2->stroke(std::move(fillStroke2));
 

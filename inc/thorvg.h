@@ -765,7 +765,7 @@ public:
      *
      * @return Result::Success when succeed, Result::InvalidArguments in case the @p r value is zero or less.
      */
-    Result radial(float cx, float cy, float r) noexcept;
+    TVG_DEPRECATED Result radial(float cx, float cy, float r) noexcept;
 
     /**
      * @brief Sets the radial gradient attributes.
@@ -784,6 +784,9 @@ public:
      *
      * @return Result::Success when succeed, Result::InvalidArguments in case the @p r or @p fr value is zero or less.
      *
+     * @note Should you choose not to specify the focal point, ensure that the values for @p fx and @p fy match
+     * those of @p cx and @p cy, and set @p fr to 0.
+     *
      * @BETA_API
      */
     Result radial(float cx, float cy, float r, float fx, float fy, float fr) noexcept;
@@ -799,7 +802,7 @@ public:
     *
     * @return Result::Success when succeed.
     */
-    Result radial(float* cx, float* cy, float* r) const noexcept;
+    TVG_DEPRECATED Result radial(float* cx, float* cy, float* r) const noexcept;
 
     /**
      * @brief Gets the radial gradient attributes.

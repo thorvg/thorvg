@@ -93,7 +93,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     //RadialGradient
     auto fill2 = tvg::RadialGradient::gen();
-    fill2->radial(300, 800, 150);
+    fill2->radial(300, 800, 150, 300, 800, 0);
     fill2->colorStops(colorStops, 2);
 
     shape6->fill(std::move(fill2));

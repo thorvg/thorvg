@@ -412,7 +412,7 @@ TvgBinCounter TvgSaver::serializeFill(const Fill* fill, TvgBinTag tag, const Mat
     //radial fill
     if (fill->identifier() == TVG_CLASS_ID_RADIAL) {
         float args[3];
-        static_cast<const RadialGradient*>(fill)->radial(args, args + 1, args + 2);
+        static_cast<const RadialGradient*>(fill)->radial(args, args + 1, args + 2, nullptr, nullptr, nullptr);
         cnt += writeTagProperty(TVG_TAG_FILL_RADIAL_GRADIENT, SIZE(args), args);
     //linear fill
     } else {

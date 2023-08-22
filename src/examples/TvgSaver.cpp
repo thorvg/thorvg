@@ -130,7 +130,7 @@ unique_ptr<tvg::Paint> tvgNestedPaints(tvg::Fill::ColorStop* colorStops, int col
     auto shape2 = tvg::Shape::gen();
     shape2->appendRect(0, 0, 50, 100, 10, 40);
     auto fillShape = tvg::RadialGradient::gen();
-    fillShape->radial(25, 50, 25);
+    fillShape->radial(25, 50, 25, 25, 50, 0);
     fillShape->colorStops(colorStops, colorStopsCnt);
     shape2->fill(std::move(fillShape));
     shape2->scale(2);
@@ -178,7 +178,7 @@ unique_ptr<tvg::Paint> tvgCircle2(tvg::Fill::ColorStop* colorStops, int colorSto
     auto circ = tvg::Shape::gen();
     circ->appendCircle(400, 425, 50, 50);
     auto fill = tvg::RadialGradient::gen();
-    fill->radial(400, 425, 50);
+    fill->radial(400, 425, 50, 400, 425, 0);
     fill->colorStops(colorStops, colorStopsCnt);
     circ->fill(std::move(fill));
 

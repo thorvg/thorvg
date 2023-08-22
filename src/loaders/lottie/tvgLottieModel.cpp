@@ -50,7 +50,7 @@ Fill* LottieGradient::fill(int32_t frameNo)
         auto w = fabsf(end(frameNo).x - sx);
         auto h = fabsf(end(frameNo).y - sy);
         auto radius = (w > h) ? (w + 0.375f * h) : (h + 0.375f * w);
-        static_cast<RadialGradient*>(fill)->radial(sx, sy, radius);
+        static_cast<RadialGradient*>(fill)->radial(sx, sy, radius, sx, sy, 0.0f);
 
         //TODO: focal support?
     }

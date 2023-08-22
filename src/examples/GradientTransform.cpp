@@ -89,7 +89,7 @@ void tvgUpdateCmds(tvg::Canvas* canvas, float progress)
 
     //RadialGradient
     auto fill3 = tvg::RadialGradient::gen();
-    fill3->radial(175, 150, 75);
+    fill3->radial(175, 150, 75, 175, 150, 0);
 
     //Gradient Color Stops
     tvg::Fill::ColorStop colorStops3[4];

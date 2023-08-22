@@ -36,7 +36,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     //RadialGradient
     auto fill = tvg::RadialGradient::gen();
-    fill->radial(200, 200, 200);
+    fill->radial(200, 200, 200, 200, 200, 0);
 
     //Gradient Color Stops
     tvg::Fill::ColorStop colorStops[2];
@@ -54,7 +54,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     //RadialGradient
     auto fill2 = tvg::RadialGradient::gen();
-    fill2->radial(400, 400, 200);
+    fill2->radial(400, 400, 200, 450, 450, 50);
 
     //Gradient Color Stops
     tvg::Fill::ColorStop colorStops2[3];
@@ -74,7 +74,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     //RadialGradient
     auto fill3 = tvg::RadialGradient::gen();
-    fill3->radial(600, 600, 150);
+    fill3->radial(600, 600, 150, 600, 600, 0);
 
     //Gradient Color Stops
     tvg::Fill::ColorStop colorStops3[4];
