@@ -39,6 +39,12 @@ static std::vector<unique_ptr<tvg::Animation>> animations;
 static std::vector<Elm_Transit*> transitions;
 static unique_ptr<tvg::SwCanvas> swCanvas;
 
+//performance measure
+static double updateTime = 0;
+static double accumUpdateTime = 0;
+static double accumRasterTime = 0;
+static double accumTotalTime = 0;
+static uint32_t cnt = 0;
 
 void lottieDirCallback(const char* name, const char* path, void* data)
 {
@@ -86,12 +92,18 @@ void lottieDirCallback(const char* name, const char* path, void* data)
 
 void tvgUpdateCmds(Elm_Transit_Effect *effect, Elm_Transit* transit, double progress)
 {
+    auto before = ecore_time_get();
+
     auto animation = static_cast<tvg::Animation*>(effect);
 
     //Update animation frame
     animation->frame(roundf(animation->totalFrame() * progress));
 
     swCanvas->update(animation->picture());
+
+    auto after = ecore_time_get();
+
+    updateTime += after - before;
 }
 
 void tvgSwTest(uint32_t* buffer)
@@ -123,9 +135,25 @@ void tvgSwTest(uint32_t* buffer)
 
 void drawSwView(void* data, Eo* obj)
 {
+    auto before = ecore_time_get();
+
     if (swCanvas->draw() == tvg::Result::Success) {
         swCanvas->sync();
     }
+
+    auto after = ecore_time_get();
+
+    auto rasterTime = after - before;
+
+    ++cnt;
+
+    accumUpdateTime += updateTime;
+    accumRasterTime += rasterTime;
+    accumTotalTime += (updateTime + rasterTime);
+
+    printf("[%5d]: update = %fs,   raster = %fs,  total = %fs\n", cnt, accumUpdateTime / cnt, accumRasterTime / cnt, accumTotalTime / cnt);
+
+    updateTime = 0;
 }
 
 Eina_Bool animatorCb(void *data)
