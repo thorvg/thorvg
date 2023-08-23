@@ -194,14 +194,14 @@ struct SwStroke
 
 struct SwDashStroke
 {
-    SwOutline* outline;
-    float curLen;
-    int32_t curIdx;
-    Point ptStart;
-    Point ptCur;
-    float* pattern;
-    uint32_t cnt;
-    bool curOpGap;
+    SwOutline* outline = nullptr;
+    float curLen = 0;
+    int32_t curIdx = 0;
+    Point ptStart = {0, 0};
+    Point ptCur = {0, 0};
+    float* pattern = nullptr;
+    uint32_t cnt = 0;
+    bool curOpGap = false;
 };
 
 struct SwShape
