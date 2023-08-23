@@ -980,11 +980,11 @@ public:
      * @param[in] r The red color channel value in the range [0 ~ 255]. The default value is 0.
      * @param[in] g The green color channel value in the range [0 ~ 255]. The default value is 0.
      * @param[in] b The blue color channel value in the range [0 ~ 255]. The default value is 0.
-     * @param[in] a The alpha channel value in the range [0 ~ 255], where 0 is completely transparent and 255 is opaque.
+     * @param[in] a The alpha channel value in the range [0 ~ 255], where 0 is completely transparent and 255 is opaque. The default value is 0.
      *
      * @return Result::Success when succeed, Result::FailedAllocation otherwise.
      */
-    Result stroke(uint8_t r, uint8_t g, uint8_t b, uint8_t a) noexcept;
+    Result stroke(uint8_t r, uint8_t g, uint8_t b, uint8_t a = 255) noexcept;
 
     /**
      * @brief Sets the gradient fill of the stroke for all of the figures from the path.
@@ -1002,7 +1002,6 @@ public:
      *
      * @param[in] dashPattern The array of consecutive pair values of the dash length and the gap length.
      * @param[in] cnt The length of the @p dashPattern array.
-     * @param[in] offset The shift of the starting point within the repeating dash pattern from which the path's dashing begins.
      *
      * @retval Result::Success When succeed.
      * @retval Result::FailedAllocation An internal error with a memory allocation for an object to be dashed.
@@ -1011,7 +1010,7 @@ public:
      * @note To reset the stroke dash pattern, pass @c nullptr to @p dashPattern and zero to @p cnt.
      * @warning @p cnt must be greater than 1 if the dash pattern is valid.
      */
-    Result stroke(const float* dashPattern, uint32_t cnt, float offset = 0.0f) noexcept;
+    Result stroke(const float* dashPattern, uint32_t cnt) noexcept;
 
     /**
      * @brief Sets the cap style of the stroke in the open sub-paths.
@@ -1158,7 +1157,7 @@ public:
      *
      * @return Result::Success when succeed, Result::InsufficientCondition otherwise.
      */
-    Result strokeColor(uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a) const noexcept;
+    Result strokeColor(uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a = nullptr) const noexcept;
 
     /**
      * @brief Gets the pointer to the gradient fill of the stroke.
@@ -1171,11 +1170,10 @@ public:
      * @brief Gets the dash pattern of the stroke.
      *
      * @param[out] dashPattern The pointer to the memory, where the dash pattern array is stored.
-     * @param[out] offset The shift of the starting point within the repeating dash pattern.
      *
      * @return The length of the @p dashPattern array.
      */
-    uint32_t strokeDash(const float** dashPattern, float* offset = nullptr) const noexcept;
+    uint32_t strokeDash(const float** dashPattern) const noexcept;
 
     /**
      * @brief Gets the cap style used for stroking the path.

@@ -1316,12 +1316,18 @@ TVG_API Tvg_Result tvg_shape_get_stroke_gradient(const Tvg_Paint* paint, Tvg_Gra
 
 
 /*!
-* \brief Sets the shape's stroke dash pattern. (BETA_API)
+* \brief Sets the shape's stroke dash pattern.
+*
+* \code
+* //dash pattern examples
+* float dashPattern[2] = {20, 10};  // -- -- --
+* float dashPattern[2] = {40, 20};  // ----  ----  ----
+* float dashPattern[4] = {10, 20, 30, 40} // -  ---    -  ---
+* \endcode
 *
 * \param[in] paint A Tvg_Paint pointer to the shape object.
 * \param[in] dashPattern The array of consecutive pair values of the dash length and the gap length.
 * \param[in] cnt The size of the @p dashPattern array.
-* \param[in] offset The shift of the starting point within the repeating dash pattern from which the path's dashing begins.
 *
 * \return Tvg_Result enumeration.
 * \retval TVG_RESULT_SUCCESS Succeed.
@@ -1330,24 +1336,23 @@ TVG_API Tvg_Result tvg_shape_get_stroke_gradient(const Tvg_Paint* paint, Tvg_Gra
 *
 * \note To reset the stroke dash pattern, pass @c nullptr to @p dashPattern and zero to @p cnt.
 */
-TVG_API Tvg_Result tvg_shape_set_stroke_dash(Tvg_Paint* paint, const float* dashPattern, uint32_t cnt, float offset);
+TVG_API Tvg_Result tvg_shape_set_stroke_dash(Tvg_Paint* paint, const float* dashPattern, uint32_t cnt);
 
 
 /*!
-* \brief Gets the dash pattern of the stroke. (BETA_API)
+* \brief Gets the dash pattern of the stroke.
 *
 * The function does not allocate any memory.
 *
 * \param[in] paint A Tvg_Paint pointer to the shape object.
 * \param[out] dashPattern The array of consecutive pair values of the dash length and the gap length.
 * \param[out] cnt The size of the @p dashPattern array.
-* \param[out] offset The shift of the starting point within the repeating dash pattern.
 *
 * \return Tvg_Result enumeration.
 * \retval TVG_RESULT_SUCCESS Succeed.
 * \retval TVG_RESULT_INVALID_ARGUMENT An invalid pointer passed as an argument.
 */
-TVG_API Tvg_Result tvg_shape_get_stroke_dash(const Tvg_Paint* paint, const float** dashPattern, uint32_t* cnt, float* offset);
+TVG_API Tvg_Result tvg_shape_get_stroke_dash(const Tvg_Paint* paint, const float** dashPattern, uint32_t* cnt);
 
 
 /*!

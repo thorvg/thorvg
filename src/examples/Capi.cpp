@@ -159,7 +159,7 @@ void testCapi()
 
     //Prapare a dash for the stroke
     float dashPattern[4] = {15.0f, 30.0f, 2.0f, 30.0f};
-    tvg_shape_set_stroke_dash(scene_shape2, dashPattern, 4, 0.0f);
+    tvg_shape_set_stroke_dash(scene_shape2, dashPattern, 4);
     tvg_shape_set_stroke_cap(scene_shape2, TVG_STROKE_CAP_ROUND);
     tvg_shape_set_stroke_color(scene_shape2, 0, 0, 255, 255);
     tvg_shape_set_stroke_width(scene_shape2, 15.0f);
