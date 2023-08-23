@@ -269,8 +269,16 @@ struct Shape::Impl
         return Result::Success;
     }
 
-    bool strokeDash(const float* pattern, uint32_t cnt, float offset)
+    Result strokeDash(const float* pattern, uint32_t cnt, float offset)
     {
+        if ((cnt == 1) || (!pattern && cnt > 0) || (pattern && cnt == 0)) {
+            return Result::InvalidArguments;
+        }
+
+        for (uint32_t i = 0; i < cnt; i++) {
+            if (pattern[i] < FLT_EPSILON) return Result::InvalidArguments;
+        }
+
         //Reset dash
         if (!pattern && cnt == 0) {
             free(rs.stroke->dashPattern);
@@ -283,7 +291,7 @@ struct Shape::Impl
             }
             if (!rs.stroke->dashPattern) {
                 rs.stroke->dashPattern = static_cast<float*>(malloc(sizeof(float) * cnt));
-                if (!rs.stroke->dashPattern) return false;
+                if (!rs.stroke->dashPattern) return Result::FailedAllocation;
             }
             for (uint32_t i = 0; i < cnt; ++i) {
                 rs.stroke->dashPattern[i] = pattern[i];
@@ -293,7 +301,7 @@ struct Shape::Impl
         rs.stroke->dashOffset = offset;
         flag |= RenderUpdateFlag::Stroke;
 
-        return true;
+        return Result::Success;
     }
 
     bool strokeFirst()
