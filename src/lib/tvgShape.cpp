@@ -340,24 +340,15 @@ const Fill* Shape::strokeFill() const noexcept
 }
 
 
-Result Shape::stroke(const float* dashPattern, uint32_t cnt, float offset) noexcept
+Result Shape::stroke(const float* dashPattern, uint32_t cnt) noexcept
 {
-    if ((cnt == 1) || (!dashPattern && cnt > 0) || (dashPattern && cnt == 0)) {
-        return Result::InvalidArguments;
-    }
-
-    for (uint32_t i = 0; i < cnt; i++)
-        if (dashPattern[i] < FLT_EPSILON) return Result::InvalidArguments;
-
-    if (!pImpl->strokeDash(dashPattern, cnt, offset)) return Result::FailedAllocation;
-
-    return Result::Success;
+    return pImpl->strokeDash(dashPattern, cnt, 0);
 }
 
 
-uint32_t Shape::strokeDash(const float** dashPattern, float* offset) const noexcept
+uint32_t Shape::strokeDash(const float** dashPattern) const noexcept
 {
-    return pImpl->rs.strokeDash(dashPattern, offset);
+    return pImpl->rs.strokeDash(dashPattern, nullptr);
 }
 
 
