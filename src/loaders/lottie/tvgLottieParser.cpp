@@ -754,38 +754,21 @@ LottieObject* LottieParser::parseObject()
     auto type = getString();
     if (!type) return nullptr;
 
-    if (!strcmp(type, "gr")) {
-        return parseGroup();
-    } else if (!strcmp(type, "rc")) {
-        return parseRect();
-    } else if (!strcmp(type, "el")) {
-        return parseEllipse();
-    } else if (!strcmp(type, "tr")) {
-        return parseTransform();
-    } else if (!strcmp(type, "fl")) {
-        return parseSolidFill();
-    } else if (!strcmp(type, "st")) {
-        return parseSolidStroke();
-    } else if (!strcmp(type, "sh")) {
-        return parsePath();
-    } else if (!strcmp(type, "sr")) {
-        TVGERR("LOTTIE", "Polystar(sr) is not supported");
-        return parsePolyStar();
-    } else if (!strcmp(type, "rd")) {
-        return parseRoundedCorner();
-    } else if (!strcmp(type, "gf")) {
-        return parseGradientFill();
-    } else if (!strcmp(type, "gs")) {
-        return parseGradientStroke();
-    } else if (!strcmp(type, "tm")) {
-        TVGERR("LOTTIE", "Trimpath(tm) is not supported");
-    } else if (!strcmp(type, "rp")) {
-        TVGERR("LOTTIE", "Repeater(rp) is not supported yet");
-    } else if (!strcmp(type, "mm")) {
-        TVGERR("LOTTIE", "MergePath(mm) is not supported yet");
-    } else {
-        TVGERR("LOTTIE", "Unkown object type(%s) is given", type);
-    }
+    if (!strcmp(type, "gr")) return parseGroup();
+    else if (!strcmp(type, "rc")) return parseRect();
+    else if (!strcmp(type, "el")) return parseEllipse();
+    else if (!strcmp(type, "tr")) return parseTransform();
+    else if (!strcmp(type, "fl")) return parseSolidFill();
+    else if (!strcmp(type, "st")) return parseSolidStroke();
+    else if (!strcmp(type, "sh")) return parsePath();
+    else if (!strcmp(type, "sr")) return parsePolyStar();
+    else if (!strcmp(type, "rd")) return parseRoundedCorner();
+    else if (!strcmp(type, "gf")) return parseGradientFill();
+    else if (!strcmp(type, "gs")) return parseGradientStroke();
+    else if (!strcmp(type, "tm")) TVGERR("LOTTIE", "Trimpath(tm) is not supported");
+    else if (!strcmp(type, "rp")) TVGERR("LOTTIE", "Repeater(rp) is not supported yet");
+    else if (!strcmp(type, "mm")) TVGERR("LOTTIE", "MergePath(mm) is not supported yet");
+    else TVGERR("LOTTIE", "Unkown object type(%s) is given", type);
     return nullptr;
 }
 
