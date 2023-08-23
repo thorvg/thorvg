@@ -1207,6 +1207,8 @@ public:
      */
     static std::unique_ptr<Shape> gen() noexcept;
 
+    std::unique_ptr<Shape> extractOutline() const;
+
     /**
      * @brief Return the unique id value of this class.
      *
