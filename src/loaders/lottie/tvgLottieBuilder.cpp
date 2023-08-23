@@ -152,10 +152,11 @@ static Shape* _updateStroke(LottieSolidStroke* stroke, int32_t frameNo, Shape* b
     baseShape->stroke(stroke->join);
     baseShape->strokeMiterlimit(stroke->miterLimit);
 
-    //TODO: offset
     if (stroke->dashattr) {
         float dashes[2] = { stroke->dashSize(frameNo), stroke->dashGap(frameNo) };
-        baseShape->stroke(dashes, 2);
+        P(baseShape)->strokeDash(dashes, 2, stroke->dashOffset(frameNo));
+    } else {
+        baseShape->stroke(nullptr, 0);
     }
 
     return nullptr;
