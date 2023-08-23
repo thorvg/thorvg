@@ -229,14 +229,14 @@ static SwOutline* _genDashOutline(const RenderShape* rshape, const Matrix* trans
     auto patternLength = 0.0f;
     uint32_t offIdx = 0;
     if (fabsf(offset) > FLT_EPSILON) {
-        for (auto i = 0; i < dash.cnt; ++i) patternLength += pattern[i];
+        for (size_t i = 0; i < dash.cnt; ++i) patternLength += pattern[i];
         bool isOdd = dash.cnt % 2;
         if (isOdd) patternLength *= 2;
 
         if (offset < 0) offset = patternLength + fmod(offset, patternLength);
         else offset = fmod(offset, patternLength);
 
-        for (auto i = 0; i < dash.cnt * (1 + isOdd); ++i, ++offIdx) {
+        for (size_t i = 0; i < dash.cnt * (1 + isOdd); ++i, ++offIdx) {
             auto curPattern = pattern[i % dash.cnt];
             if (offset < curPattern) break;
             offset -= curPattern;
