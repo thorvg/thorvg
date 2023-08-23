@@ -90,6 +90,15 @@ static inline void mathIdentity(Matrix* m)
 }
 
 
+static inline void mathTransform(Matrix* transform, Point* coord)
+{
+    auto x = coord->x;
+    auto y = coord->y;
+    coord->x = x * transform->e11 + y * transform->e12 + transform->e13;
+    coord->y = x * transform->e21 + y * transform->e22 + transform->e23;
+}
+
+
 static inline void mathScale(Matrix* m, float sx, float sy)
 {
     m->e11 *= sx;

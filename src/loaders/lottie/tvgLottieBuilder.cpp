@@ -232,7 +232,7 @@ static Shape* _updatePath(LottieGroup* parent, LottiePath* path, int32_t frameNo
 }
 
 
-static void _updateStar(LottieGroup* parent, LottiePolyStar* star, int32_t frameNo, Shape* mergingShape)
+static void _updateStar(LottieGroup* parent, LottiePolyStar* star, Matrix* transform, int32_t frameNo, Shape* mergingShape)
 {
     static constexpr auto K_PI = 3.141592f;
     static constexpr auto POLYSTAR_MAGIC_NUMBER = 0.47829f / 0.28f;
@@ -279,7 +279,9 @@ static void _updateStar(LottieGroup* parent, LottiePolyStar* star, int32_t frame
         hasRoundness = true;
     }
 
-    mergingShape->moveTo(x, y);
+    Point in = {x, y};
+    if (transform) mathTransform(transform, &in);
+    mergingShape->moveTo(in.x, in.y);
 
     for (size_t i = 0; i < numPoints; i++) {
         auto radius = longSegment ? outerRadius : innerRadius;
@@ -319,22 +321,30 @@ static void _updateStar(LottieGroup* parent, LottiePolyStar* star, int32_t frame
                 cp2x *= partialPointAmount;
                 cp2y *= partialPointAmount;
             }
-            mergingShape->cubicTo(previousX - cp1x, previousY - cp1y, x + cp2x,  y + cp2y, x, y);
+            Point in2 = {previousX - cp1x, previousY - cp1y};
+            Point in3 = {x + cp2x, y + cp2y};
+            Point in4 = {x, y};
+            if (transform) {
+                mathTransform(transform, &in2);
+                mathTransform(transform, &in3);
+                mathTransform(transform, &in4);
+            }
+            mergingShape->cubicTo(in2.x, in2.y, in3.x, in3.y, in4.x, in4.y);
         } else {
-            mergingShape->lineTo(x, y);
+            Point in = {x, y};
+            if (transform) mathTransform(transform, &in);
+            mergingShape->lineTo(in.x, in.y);
         }
-
         angle += dTheta * direction;
         longSegment = !longSegment;
     }
-
     mergingShape->close();
 }
 
 
-static void _updatePolygon(LottieGroup* parent, LottiePolyStar* star, int32_t frameNo, Shape* mergingShape)
+static void _updatePolygon(LottieGroup* parent, LottiePolyStar* star, Matrix* transform, int32_t frameNo, Shape* mergingShape)
 {
-    const static auto POLYGON_MAGIC_NUMBER = 0.25f;
+    static constexpr auto POLYGON_MAGIC_NUMBER = 0.25f;
     static constexpr auto K_PI = 3.141592f;
 
     auto ptsCnt = size_t(floor(star->ptsCnt(frameNo)));
@@ -359,7 +369,9 @@ static void _updatePolygon(LottieGroup* parent, LottiePolyStar* star, int32_t fr
         hasRoundness = true;
     }
 
-    mergingShape->moveTo(x, y);
+    Point in = {x, y};
+    if (transform) mathTransform(transform, &in);
+    mergingShape->moveTo(in.x, in.y);
 
     for (size_t i = 0; i < ptsCnt; i++) {
         auto previousX = x;
@@ -380,9 +392,19 @@ static void _updatePolygon(LottieGroup* parent, LottiePolyStar* star, int32_t fr
             auto cp2x = radius * roundness * POLYGON_MAGIC_NUMBER * cp2Dx;
             auto cp2y = radius * roundness * POLYGON_MAGIC_NUMBER * cp2Dy;
 
-            mergingShape->cubicTo(previousX - cp1x, previousY - cp1y, x + cp2x, y + cp2y, x, y);
+            Point in2 = {previousX - cp1x, previousY - cp1y};
+            Point in3 = {x + cp2x, y + cp2y};
+            Point in4 = {x, y};
+            if (transform) {
+                mathTransform(transform, &in2);
+                mathTransform(transform, &in3);
+                mathTransform(transform, &in4);
+            }
+            mergingShape->cubicTo(in2.x, in2.y, in3.x, in3.y, in4.x, in4.y);
         } else {
-            mergingShape->lineTo(x, y);
+            Point in = {x, y};
+            if (transform) mathTransform(transform, &in);
+            mergingShape->lineTo(in.x, in.y);
         }
         angle += anglePerPoint * direction;
     }
@@ -398,20 +420,19 @@ static Shape* _updatePolystar(LottieGroup* parent, LottiePolyStar* star, int32_t
         parent->scene->push(std::move(newShape));
     }
 
-    if (star->type == LottiePolyStar::Star) _updateStar(parent, star, frameNo, mergingShape);
-    else _updatePolygon(parent, star, frameNo, mergingShape);
+    //Optimize: Can we skip the individual coords transform?
+    Matrix matrix;
+    mathIdentity(&matrix);
+    auto position = star->position(frameNo);
+    mathTranslate(&matrix, position.x, position.y);
+    mathRotate(&matrix, star->rotation(frameNo) * 2.0f);
+
+    auto identity = mathIdentity((const Matrix*)&matrix);
+
+    if (star->type == LottiePolyStar::Star) _updateStar(parent, star, identity ? nullptr : &matrix, frameNo, mergingShape);
+    else _updatePolygon(parent, star, identity  ? nullptr : &matrix, frameNo, mergingShape);
 
     P(mergingShape)->update(RenderUpdateFlag::Path);
-
-    auto pos = star->position(frameNo);
-    auto rotation = star->rotation(frameNo);
-
-    if (rotation == 0.0f && pos.x == 0.0f && pos.y == 0.0f) return mergingShape;
-
-    auto matrix = mergingShape->transform();
-    mathTranslate(&matrix, pos.x, pos.y);
-    mathRotate(&matrix, rotation * 2.0f);
-    mergingShape->transform(matrix);
 
     return mergingShape;
 }
