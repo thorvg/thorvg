@@ -38,6 +38,12 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     file.read(reinterpret_cast<char*>(data), sizeof (uint32_t) * 200 * 300);
     file.close();
 
+    //background
+    auto bg = tvg::Shape::gen();
+    bg->appendRect(0, 0, 625, HEIGHT);
+    bg->fill(50, 50, 50);
+    canvas->push(move(bg));
+
     {
         //Shape + Shape Mask Add
         auto shape = tvg::Shape::gen();
@@ -54,7 +60,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
         //Shape + Shape Mask Subtract
         auto shape2 = tvg::Shape::gen();
         shape2->appendCircle(375, 100, 50, 50);
-        shape2->fill(255, 255, 255);
+        shape2->fill(255, 255, 255, 127);
 
         auto mask2 = tvg::Shape::gen();
         mask2->appendCircle(400, 100, 50, 50);
@@ -67,7 +73,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
         //Shape + Shape Mask Intersect
         auto shape3 = tvg::Shape::gen();
         shape3->appendCircle(625, 100, 50, 50);
-        shape3->fill(255, 255, 255);
+        shape3->fill(255, 255, 255, 127);
 
         auto mask3 = tvg::Shape::gen();
         mask3->appendCircle(650, 100, 50, 50);
@@ -105,7 +111,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
         //Shape + Image Mask Subtract
         auto shape2 = tvg::Shape::gen();
         shape2->appendCircle(400, 250, 50, 50);
-        shape2->fill(255, 255, 255);
+        shape2->fill(255, 255, 255, 127);
 
         auto mask2 = tvg::Picture::gen();
         if (mask2->load(data, 200, 300, true) != tvg::Result::Success) return;
@@ -118,7 +124,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
         //Shape + Image Mask Intersect
         auto shape3 = tvg::Shape::gen();
         shape3->appendCircle(650, 250, 50, 50);
-        shape3->fill(255, 255, 255);
+        shape3->fill(255, 255, 255, 127);
 
         auto mask3 = tvg::Picture::gen();
         if (mask3->load(data, 200, 300, true) != tvg::Result::Success) return;
@@ -158,7 +164,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
         //Rect + Rect Mask Subtract
         auto shape2 = tvg::Shape::gen();
         shape2->appendRect(325, 500, 100, 100);
-        shape2->fill(255, 255, 255);
+        shape2->fill(255, 255, 255, 127);
 
         auto mask2 = tvg::Shape::gen();
         mask2->appendRect(375, 450, 100, 100);
@@ -170,7 +176,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
         //Rect + Rect Mask Intersect
         auto shape3 = tvg::Shape::gen();
         shape3->appendRect(575, 500, 100, 100);
-        shape3->fill(255, 255, 255);
+        shape3->fill(255, 255, 255, 127);
 
         auto mask3 = tvg::Shape::gen();
         mask3->appendRect(625, 450, 100, 100);
@@ -212,6 +218,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
         image2->translate(400, 650);
         image2->scale(0.5f);
         image2->rotate(45);
+        image2->opacity(127);
 
         auto mask2 = tvg::Shape::gen();
         mask2->appendCircle(375, 700, 50, 50);
@@ -225,6 +232,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
         image3->translate(650, 650);
         image3->scale(0.5f);
         image3->rotate(45);
+        image3->opacity(127);
 
         auto mask3 = tvg::Shape::gen();
         mask3->appendCircle(625, 700, 50, 50);
@@ -278,6 +286,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
         fill2->linear(300, 850, 400, 950);
         fill2->colorStops(colorStops, 2);
         shape2->fill(std::move(fill2));
+        shape2->opacity(127);
 
         auto mask2 = tvg::Shape::gen();
         mask2->appendCircle(400, 900, 50, 50);
@@ -296,6 +305,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
         fill3->linear(550, 850, 650, 950);
         fill3->colorStops(colorStops, 2);
         shape3->fill(std::move(fill3));
+        shape3->opacity(127);
 
         auto mask3 = tvg::Shape::gen();
         mask3->appendCircle(650, 900, 50, 50);

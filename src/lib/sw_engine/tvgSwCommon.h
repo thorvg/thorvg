@@ -463,46 +463,6 @@ static inline uint32_t opBlendSoftLight(uint32_t s, uint32_t d, TVG_UNUSED uint8
     return JOIN(255, c1, c2, c3);
 }
 
-static inline uint32_t opMaskAdd(uint32_t s, uint32_t d, uint8_t a)
-{
-    return opBlendNormal(s, d, a);
-}
-
-static inline uint32_t opMaskSubtract(uint32_t s, uint32_t d, uint8_t a)
-{
-    return ALPHA_BLEND(d, MULTIPLY(IA(s), a));
-}
-
-static inline uint32_t opMaskDifference(uint32_t s, uint32_t d, uint8_t a)
-{
-    auto t = ALPHA_BLEND(s, a);
-    return ALPHA_BLEND(t, IA(d)) + ALPHA_BLEND(d, IA(t));
-}
-
-static inline uint32_t opMaskIntersect(uint32_t s, uint32_t d, uint8_t a)
-{
-   return ALPHA_BLEND(d, MULTIPLY(IA(s), a));
-}
-
-static inline uint32_t opMaskPreAdd(uint32_t s, uint32_t d, TVG_UNUSED uint8_t a)
-{
-    return opBlendPreNormal(s, d, a);
-}
-
-static inline uint32_t opMaskPreSubtract(uint32_t s, uint32_t d, TVG_UNUSED uint8_t a)
-{
-    return ALPHA_BLEND(d, IA(s));
-}
-
-static inline uint32_t opMaskPreDifference(uint32_t s, uint32_t d, TVG_UNUSED uint8_t a)
-{
-   return ALPHA_BLEND(s, IA(d)) + ALPHA_BLEND(d, IA(s));
-}
-
-static inline uint32_t opMaskPreIntersect(uint32_t s, uint32_t d, TVG_UNUSED uint8_t a)
-{
-   return ALPHA_BLEND(d, MULTIPLY(a, IA(s)));
-}
 
 int64_t mathMultiply(int64_t a, int64_t b);
 int64_t mathDivide(int64_t a, int64_t b);
@@ -554,9 +514,11 @@ void fillFree(SwFill* fill);
 //OPTIMIZE_ME: Skip the function pointer access
 void fillLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlender op, uint8_t a);                                         //blending ver.
 void fillLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlender op, SwBlender op2, uint8_t a);                          //blending + BlendingMethod(op2) ver.
+void fillLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, uint32_t* cmp, SwBlender op, uint8_t a);                          //direct masking ver.
 void fillLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, uint8_t* cmp, SwAlpha alpha, uint8_t csize, uint8_t opacity);     //masking ver.
 void fillRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlender op, uint8_t a);                                         //blending ver.
 void fillRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlender op, SwBlender op2, uint8_t a);                          //blending + BlendingMethod(op2) ver.
+void fillRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, uint32_t* cmp, SwBlender op, uint8_t a) ;                         //direct masking ver.
 void fillRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, uint8_t* cmp, SwAlpha alpha, uint8_t csize, uint8_t opacity);     //masking ver.
 
 SwRleData* rleRender(SwRleData* rle, const SwOutline* outline, const SwBBox& renderRegion, bool antiAlias);

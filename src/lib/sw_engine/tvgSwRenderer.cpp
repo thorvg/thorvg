@@ -641,8 +641,6 @@ Compositor* SwRenderer::target(const RenderRegion& region, ColorSpace cs)
     if (x + w > sw) w = (sw - x);
     if (y + h > sh) h = (sh - y);
 
-    TVGLOG("SW_ENGINE", "Using intermediate composition [Region: %d %d %d %d]", x, y, w, h);
-
     cmp->compositor->recoverSfc = surface;
     cmp->compositor->recoverCmp = surface->compositor;
     cmp->compositor->valid = false;
