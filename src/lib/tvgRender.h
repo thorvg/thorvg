@@ -255,21 +255,22 @@ public:
     virtual bool endComposite(Compositor* cmp) = 0;
 };
 
-static inline bool MASK_OPERATION(CompositeMethod method)
+static inline bool MASK_REGION_MERGING(CompositeMethod method)
 {
     switch(method) {
         case CompositeMethod::AlphaMask:
         case CompositeMethod::InvAlphaMask:
         case CompositeMethod::LumaMask:
         case CompositeMethod::InvLumaMask:
-            return false;
-        case CompositeMethod::AddMask:
         case CompositeMethod::SubtractMask:
         case CompositeMethod::IntersectMask:
+            return false;
+        //these might expand the rendering region
+        case CompositeMethod::AddMask:
         case CompositeMethod::DifferenceMask:
             return true;
         default:
-            TVGERR("RENDERER", "Unsupported Composite Size! = %d", (int)method);
+            TVGERR("RENDERER", "Unsupported Composite Method! = %d", (int)method);
             return false;
     }
 }

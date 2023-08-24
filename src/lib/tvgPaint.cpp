@@ -166,7 +166,7 @@ bool Paint::Impl::render(RenderMethod& renderer)
         Create a composition image. */
     if (compData && compData->method != CompositeMethod::ClipPath && !(compData->target->pImpl->ctxFlag & ContextFlag::FastTrack)) {
         auto region = smethod->bounds(renderer);
-        if (MASK_OPERATION(compData->method)) region.add(compData->target->pImpl->smethod->bounds(renderer));
+        if (MASK_REGION_MERGING(compData->method)) region.add(compData->target->pImpl->smethod->bounds(renderer));
         if (region.w == 0 || region.h == 0) return true;
         cmp = renderer.target(region, COMPOSITE_TO_COLORSPACE(renderer, compData->method));
         if (renderer.beginComposite(cmp, CompositeMethod::None, 255)) {
@@ -206,23 +206,20 @@ RenderData Paint::Impl::update(RenderMethod& renderer, const RenderTransform* pT
         auto method = compData->method;
         target->pImpl->ctxFlag &= ~ContextFlag::FastTrack;   //reset
 
-        /* If transform has no rotation factors && ClipPath / AlphaMasking is a simple rectangle,
-           we can avoid regular ClipPath / AlphaMasking sequence but use viewport for performance */
+        /* If the transformation has no rotational factors and the ClipPath/Alpha(InvAlpha)Masking involves a simple rectangle,
+           we can optimize by using the viewport instead of the regular ClipPath/AlphaMasking sequence for improved performance. */
         auto tryFastTrack = false;
         if (target->identifier() == TVG_CLASS_ID_SHAPE) {
             if (method == CompositeMethod::ClipPath) tryFastTrack = true;
-            //OPTIMIZE HERE: Actually, this condition AlphaMask is useless. We can skip it?
-            else if (method == CompositeMethod::AlphaMask) {
+            else {
                 auto shape = static_cast<Shape*>(target);
                 uint8_t a;
                 shape->fillColor(nullptr, nullptr, nullptr, &a);
-                if (a == 255 && shape->opacity() == 255 && !shape->fill()) tryFastTrack = true;
-            //OPTIMIZE HERE: Actually, this condition InvAlphaMask is useless. We can skip it?
-            } else if (method == CompositeMethod::InvAlphaMask) {
-                auto shape = static_cast<Shape*>(target);
-                uint8_t a;
-                shape->fillColor(nullptr, nullptr, nullptr, &a);
-                if ((a == 0 || shape->opacity() == 0) && !shape->fill()) tryFastTrack = true;
+                //no gradient fill & no compositions of the composition target.
+                if (!shape->fill() && !(PP(shape)->compData)) {
+                    if (method == CompositeMethod::AlphaMask && a == 255 && PP(shape)->opacity == 255) tryFastTrack = true;
+                    else if (method == CompositeMethod::InvAlphaMask && (a == 0 || PP(shape)->opacity == 0)) tryFastTrack = true;
+                }
             }
             if (tryFastTrack) {
                 RenderRegion viewport2;
