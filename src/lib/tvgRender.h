@@ -297,13 +297,14 @@ static inline ColorSpace COMPOSITE_TO_COLORSPACE(RenderMethod& renderer, Composi
     switch(method) {
         case CompositeMethod::AlphaMask:
         case CompositeMethod::InvAlphaMask:
-            return ColorSpace::Grayscale8;
-        case CompositeMethod::LumaMask:
-        case CompositeMethod::InvLumaMask:
         case CompositeMethod::AddMask:
+        case CompositeMethod::DifferenceMask:
         case CompositeMethod::SubtractMask:
         case CompositeMethod::IntersectMask:
-        case CompositeMethod::DifferenceMask:
+            return ColorSpace::Grayscale8;
+        //TODO: Optimize Luma/InvLuma colorspace to Grayscale8
+        case CompositeMethod::LumaMask:
+        case CompositeMethod::InvLumaMask:
             return renderer.colorSpace();
         default:
             TVGERR("RENDERER", "Unsupported Composite Size! = %d", (int)method);
