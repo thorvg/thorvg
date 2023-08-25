@@ -279,7 +279,27 @@ void fillRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint3
 }
 
 
-void fillRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, uint32_t* cmp, SwBlender op, uint8_t a)
+void fillRadial(const SwFill* fill, uint8_t* dst, uint32_t y, uint32_t x, uint32_t len, SwMask maskOp, uint8_t a)
+{
+    auto rx = (x + 0.5f) * fill->radial.a11 + (y + 0.5f) * fill->radial.a12 + fill->radial.shiftX;
+    auto ry = (x + 0.5f) * fill->radial.a21 + (y + 0.5f) * fill->radial.a22 + fill->radial.shiftY;
+
+    // detSecondDerivative = d(detFirstDerivative)/dx = d( d(det)/dx )/dx
+    auto detSecondDerivative = fill->radial.detSecDeriv;
+    // detFirstDerivative = d(det)/dx
+    auto detFirstDerivative = 2.0f * (fill->radial.a11 * rx + fill->radial.a21 * ry) + 0.5f * detSecondDerivative;
+    auto det = rx * rx + ry * ry;
+
+    for (uint32_t i = 0 ; i < len ; ++i, ++dst) {
+        auto src = MULTIPLY(a, A(_pixel(fill, sqrtf(det))));
+        *dst = maskOp(src, *dst, ~src);
+        det += detFirstDerivative;
+        detFirstDerivative += detSecondDerivative;
+    }
+}
+
+
+void fillRadial(const SwFill* fill, uint8_t* dst, uint32_t y, uint32_t x, uint32_t len, uint8_t* cmp, SwMask maskOp, uint8_t a)
 {
     auto rx = (x + 0.5f) * fill->radial.a11 + (y + 0.5f) * fill->radial.a12 + fill->radial.shiftX;
     auto ry = (x + 0.5f) * fill->radial.a21 + (y + 0.5f) * fill->radial.a22 + fill->radial.shiftY;
@@ -291,13 +311,13 @@ void fillRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint3
     auto det = rx * rx + ry * ry;
 
     for (uint32_t i = 0 ; i < len ; ++i, ++dst, ++cmp) {
-        auto tmp = op(_pixel(fill, sqrtf(det)), *cmp, a);
-        *dst = tmp + ALPHA_BLEND(*dst, IA(tmp));
+        auto src = MULTIPLY(A(_pixel(fill, sqrtf(det))), a);
+        auto tmp = maskOp(src, *cmp, 0);
+        *dst = tmp + MULTIPLY(*dst, ~tmp);
         det += detFirstDerivative;
         detFirstDerivative += detSecondDerivative;
     }
 }
-
 
 
 void fillRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlender op, SwBlender op2, uint8_t a)
@@ -404,6 +424,95 @@ void fillLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint3
 }
 
 
+void fillLinear(const SwFill* fill, uint8_t* dst, uint32_t y, uint32_t x, uint32_t len, SwMask maskOp, uint8_t a)
+{
+    //Rotation
+    float rx = x + 0.5f;
+    float ry = y + 0.5f;
+    float t = (fill->linear.dx * rx + fill->linear.dy * ry + fill->linear.offset) * (GRADIENT_STOP_SIZE - 1);
+    float inc = (fill->linear.dx) * (GRADIENT_STOP_SIZE - 1);
+
+    if (mathZero(inc)) {
+        auto src = MULTIPLY(a, A(_fixedPixel(fill, static_cast<int32_t>(t * FIXPT_SIZE))));
+        for (uint32_t i = 0; i < len; ++i, ++dst) {
+            *dst = maskOp(src, *dst, ~src);
+        }
+        return;
+    }
+
+    auto vMax = static_cast<float>(INT32_MAX >> (FIXPT_BITS + 1));
+    auto vMin = -vMax;
+    auto v = t + (inc * len);
+
+    //we can use fixed point math
+    if (v < vMax && v > vMin) {
+        auto t2 = static_cast<int32_t>(t * FIXPT_SIZE);
+        auto inc2 = static_cast<int32_t>(inc * FIXPT_SIZE);
+        for (uint32_t j = 0; j < len; ++j, ++dst) {
+            auto src = MULTIPLY(_fixedPixel(fill, t2), a);
+            *dst = maskOp(src, *dst, ~src);
+            t2 += inc2;
+        }
+    //we have to fallback to float math
+    } else {
+        uint32_t counter = 0;
+        while (counter++ < len) {
+            auto src = MULTIPLY(_pixel(fill, t / GRADIENT_STOP_SIZE), a);
+            *dst = maskOp(src, *dst, ~src);
+            ++dst;
+            t += inc;
+        }
+    }
+}
+
+
+void fillLinear(const SwFill* fill, uint8_t* dst, uint32_t y, uint32_t x, uint32_t len, uint8_t* cmp, SwMask maskOp, uint8_t a)
+{
+    //Rotation
+    float rx = x + 0.5f;
+    float ry = y + 0.5f;
+    float t = (fill->linear.dx * rx + fill->linear.dy * ry + fill->linear.offset) * (GRADIENT_STOP_SIZE - 1);
+    float inc = (fill->linear.dx) * (GRADIENT_STOP_SIZE - 1);
+
+    if (mathZero(inc)) {
+        auto src = A(_fixedPixel(fill, static_cast<int32_t>(t * FIXPT_SIZE)));
+        src = MULTIPLY(src, a);
+        for (uint32_t i = 0; i < len; ++i, ++dst, ++cmp) {
+            auto tmp = maskOp(src, *cmp, 0);
+            *dst = tmp + MULTIPLY(*dst, ~tmp);
+        }
+        return;
+    }
+
+    auto vMax = static_cast<float>(INT32_MAX >> (FIXPT_BITS + 1));
+    auto vMin = -vMax;
+    auto v = t + (inc * len);
+
+    //we can use fixed point math
+    if (v < vMax && v > vMin) {
+        auto t2 = static_cast<int32_t>(t * FIXPT_SIZE);
+        auto inc2 = static_cast<int32_t>(inc * FIXPT_SIZE);
+        for (uint32_t j = 0; j < len; ++j, ++dst, ++cmp) {
+            auto src = MULTIPLY(a, A(_fixedPixel(fill, t2)));
+            auto tmp = maskOp(src, *cmp, 0);
+            *dst = tmp + MULTIPLY(*dst, ~tmp);
+            t2 += inc2;
+        }
+    //we have to fallback to float math
+    } else {
+        uint32_t counter = 0;
+        while (counter++ < len) {
+            auto src = MULTIPLY(A(_pixel(fill, t / GRADIENT_STOP_SIZE)), a);
+            auto tmp = maskOp(src, *cmp, 0);
+            *dst = tmp + MULTIPLY(*dst, ~tmp);
+            ++dst;
+            ++cmp;
+            t += inc;
+        }
+    }
+}
+
+
 void fillLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlender op, uint8_t a)
 {
     //Rotation
@@ -442,51 +551,6 @@ void fillLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint3
         }
     }
 }
-
-
-void fillLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, uint32_t* cmp, SwBlender op, uint8_t a)
-{
-    //Rotation
-    float rx = x + 0.5f;
-    float ry = y + 0.5f;
-    float t = (fill->linear.dx * rx + fill->linear.dy * ry + fill->linear.offset) * (GRADIENT_STOP_SIZE - 1);
-    float inc = (fill->linear.dx) * (GRADIENT_STOP_SIZE - 1);
-
-    if (mathZero(inc)) {
-        auto color = _fixedPixel(fill, static_cast<int32_t>(t * FIXPT_SIZE));
-        for (uint32_t i = 0; i < len; ++i, ++dst, ++cmp) {
-            auto tmp = op(color, *cmp, a);
-            *dst = tmp + ALPHA_BLEND(*dst, IA(tmp));
-        }
-        return;
-    }
-
-    auto vMax = static_cast<float>(INT32_MAX >> (FIXPT_BITS + 1));
-    auto vMin = -vMax;
-    auto v = t + (inc * len);
-
-    //we can use fixed point math
-    if (v < vMax && v > vMin) {
-        auto t2 = static_cast<int32_t>(t * FIXPT_SIZE);
-        auto inc2 = static_cast<int32_t>(inc * FIXPT_SIZE);
-        for (uint32_t j = 0; j < len; ++j, ++dst, ++cmp) {
-            auto tmp = op(_fixedPixel(fill, t2), *cmp, a);
-            *dst = tmp + ALPHA_BLEND(*dst, IA(tmp));
-            t2 += inc2;
-        }
-    //we have to fallback to float math
-    } else {
-        uint32_t counter = 0;
-        while (counter++ < len) {
-            auto tmp = op(_pixel(fill, t / GRADIENT_STOP_SIZE), *cmp, a);
-            *dst = tmp + ALPHA_BLEND(*dst, IA(tmp));
-            ++dst;
-            ++cmp;
-            t += inc;
-        }
-    }
-}
-
 
 
 void fillLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlender op, SwBlender op2, uint8_t a)
