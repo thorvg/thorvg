@@ -432,7 +432,7 @@ static void _updateLayer(LottieLayer* root, LottieLayer* layer, int32_t frameNo)
     }
 
     _updateMaskings(layer, rFrameNo);
-#if 0
+
     //clip the layer viewport
     if (layer->clipself) {
         //TODO: remove the intermediate scene....
@@ -444,7 +444,7 @@ static void _updateLayer(LottieLayer* root, LottieLayer* layer, int32_t frameNo)
         cscene->push(cast<Scene>(layer->scene));
         layer->scene = cscene.release();
     }
-#endif
+
     //the given matte source was composited by the target earlier.
     if (!layer->matteSrc) root->scene->push(cast<Scene>(layer->scene));
 }
