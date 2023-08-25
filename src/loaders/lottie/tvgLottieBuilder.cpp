@@ -555,6 +555,8 @@ static void _updateMaskings(LottieLayer* layer, int32_t frameNo)
     //maskings+clipping
     Shape* mergingMask = nullptr;
 
+    auto pmethod = CompositeMethod::AlphaMask;
+
     for (auto m = layer->masks.data; m < layer->masks.end(); ++m) {
         auto mask = static_cast<LottieMask*>(*m);
         auto shape = Shape::gen().release();
@@ -564,14 +566,17 @@ static void _updateMaskings(LottieLayer* layer, int32_t frameNo)
             P(shape)->update(RenderUpdateFlag::Path);
         }
         if (mergingMask) {
-            mergingMask->composite(cast<Shape>(shape), mask->method);
-        }
-        else {
             auto method = mask->method;
-            if (method == CompositeMethod::AddMask) method = CompositeMethod::AlphaMask;
-            if (method == CompositeMethod::SubtractMask) method = CompositeMethod::InvAlphaMask;
-            layer->scene->composite(cast<Shape>(shape), method);
+            if (method == CompositeMethod::SubtractMask && pmethod == method) {
+                method = CompositeMethod::AddMask;
+            } else if (pmethod == CompositeMethod::DifferenceMask && pmethod == method) {
+                method = CompositeMethod::IntersectMask;
+            }
+            mergingMask->composite(cast<Shape>(shape), method);
+        } else {
+            layer->scene->composite(cast<Shape>(shape), CompositeMethod::AlphaMask);
         }
+        pmethod = mask->method;
         mergingMask = shape;
     }
 }
