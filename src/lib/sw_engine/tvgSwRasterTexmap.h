@@ -72,13 +72,15 @@ static bool _arrange(const SwImage* image, const SwBBox* region, int& yStart, in
 
 static bool _rasterMaskedPolygonImageSegment(SwSurface* surface, const SwImage* image, const SwBBox* region, int yStart, int yEnd, AASpans* aaSpans, uint8_t opacity, uint8_t dirFlag = 0)
 {
+    return false;
+
+#if 0 //Enable it when GRAYSCALE image is supported
     auto maskOp = _getMaskOp(surface->compositor->method);
-    auto amaskOp = _getAMaskOp(surface->compositor->method);
     auto direct = _direct(surface->compositor->method);
     float _dudx = dudx, _dvdx = dvdx;
     float _dxdya = dxdya, _dxdyb = dxdyb, _dudya = dudya, _dvdya = dvdya;
     float _xa = xa, _xb = xb, _ua = ua, _va = va;
-    auto sbuf = image->buf32;
+    auto sbuf = image->buf8;
     int32_t sw = static_cast<int32_t>(image->stride);
     int32_t sh = image->h;
     int32_t x1, x2, x, y, ar, ab, iru, irv, px, ay;
@@ -138,8 +140,8 @@ static bool _rasterMaskedPolygonImageSegment(SwSurface* surface, const SwImage* 
 
             x = x1;
 
-            auto cmp = &surface->compositor->image.buf32[y * surface->compositor->image.stride + x1];
-            auto dst = &surface->buf32[y * surface->stride + x1];
+            auto cmp = &surface->compositor->image.buf8[y * surface->compositor->image.stride + x1];
+            auto dst = &surface->buf8[y * surface->stride + x1];
 
             if (opacity == 255) {
                 //Draw horizontal line
@@ -177,10 +179,10 @@ static bool _rasterMaskedPolygonImageSegment(SwSurface* surface, const SwImage* 
                     }
                     if (direct) {
                         auto tmp = maskOp(px, *cmp, 0);  //not use alpha
-                        *dst = tmp + ALPHA_BLEND(*dst, IA(tmp));
+                        *dst = tmp + MULTIPLY(*dst, ~tmp);
                         ++dst;
                     } else {
-                        *cmp = maskOp(px, *cmp, IA(px));
+                        *cmp = maskOp(px, *cmp, ~px);
                     }
                     ++cmp;
 
@@ -226,11 +228,12 @@ static bool _rasterMaskedPolygonImageSegment(SwSurface* surface, const SwImage* 
                     }
 
                     if (direct) {
-                        auto tmp = amaskOp(px, *cmp, opacity);
-                        *dst = tmp + ALPHA_BLEND(*dst, IA(tmp));
+                        auto tmp = maskOp(MULTIPLY(px, opacity), *cmp, 0);
+                        *dst = tmp + MULTIPLY(*dst, ~tmp);
                         ++dst;
                     } else {
-                        *cmp = amaskOp(px, *cmp, opacity);
+                        auto tmp = MULTIPLY(px, opacity);
+                        *cmp = maskOp(tmp, *cmp, ~px);
                     }
                     ++cmp;
 
@@ -259,6 +262,7 @@ static bool _rasterMaskedPolygonImageSegment(SwSurface* surface, const SwImage* 
     va = _va;
 
     return true;
+#endif
 }
 
 
@@ -1124,9 +1128,11 @@ static bool _rasterTexmapPolygon(SwSurface* surface, const SwImage* image, const
 
     _rasterPolygonImage(surface, image, region, polygon, aaSpans, opacity);
 
+#if 0
     if (_compositing(surface) && _masking(surface) && !_direct(surface->compositor->method)) {
-        _rasterDirectImage(surface, &surface->compositor->image, surface->compositor->bbox);
+        _compositeMaskImage(surface, &surface->compositor->image, surface->compositor->bbox);
     }
+#endif
     return _apply(surface, aaSpans);
 }
 
@@ -1179,9 +1185,11 @@ static bool _rasterTexmapPolygonMesh(SwSurface* surface, const SwImage* image, c
         for (uint32_t i = 0; i < mesh->triangleCnt; i++) {
             _rasterPolygonImage(surface, image, region, transformedTris[i], aaSpans, opacity);
         }
+#if 0
         if (_compositing(surface) && _masking(surface) && !_direct(surface->compositor->method)) {
-            _rasterDirectImage(surface, &surface->compositor->image, surface->compositor->bbox);
+            _compositeMaskImage(surface, &surface->compositor->image, surface->compositor->bbox);
         }
+#endif
         _apply(surface, aaSpans);
     }
     free(transformedTris);
