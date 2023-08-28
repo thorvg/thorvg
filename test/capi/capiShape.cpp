@@ -190,8 +190,8 @@ TEST_CASE("Stroke dash", "[capiStrokeDash]")
     float* dash_get;
     uint32_t cnt;
 
-    REQUIRE(tvg_shape_set_stroke_dash(paint, dash, 2) == TVG_RESULT_SUCCESS);
-    REQUIRE(tvg_shape_get_stroke_dash(paint, (const float**) &dash_get, &cnt) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_shape_set_stroke_dash(paint, dash, 2, 0.0f) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_shape_get_stroke_dash(paint, (const float**) &dash_get, &cnt, nullptr) == TVG_RESULT_SUCCESS);
     REQUIRE(cnt == 2);
     for (uint32_t i = 0; i < cnt; i++) {
         REQUIRE(dash_get[i] == dash[i]);

@@ -335,15 +335,15 @@ const Fill* Shape::strokeFill() const noexcept
 }
 
 
-Result Shape::strokeDash(const float* dashPattern, uint32_t cnt) noexcept
+Result Shape::strokeDash(const float* dashPattern, uint32_t cnt, float offset) noexcept
 {
-    return pImpl->strokeDash(dashPattern, cnt, 0);
+    return pImpl->strokeDash(dashPattern, cnt, offset);
 }
 
 
-uint32_t Shape::strokeDash(const float** dashPattern) const noexcept
+uint32_t Shape::strokeDash(const float** dashPattern, float* offset) const noexcept
 {
-    return pImpl->rs.strokeDash(dashPattern, nullptr);
+    return pImpl->rs.strokeDash(dashPattern, offset);
 }
 
 

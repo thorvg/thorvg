@@ -169,13 +169,17 @@ TEST_CASE("Stroking", "[tvgShape]")
 
     float dashPattern2[3] = {1.0f, 1.5f, 2.22f};
     REQUIRE(shape->strokeDash(dashPattern2, 3) == Result::Success);
+    REQUIRE(shape->strokeDash(dashPattern2, 3, 4.5) == Result::Success);
 
     const float* dashPattern3;
+    float offset;
     REQUIRE(shape->strokeDash(nullptr) == 3);
     REQUIRE(shape->strokeDash(&dashPattern3) == 3);
+    REQUIRE(shape->strokeDash(&dashPattern3, &offset) == 3);
     REQUIRE(dashPattern3[0] == 1.0f);
     REQUIRE(dashPattern3[1] == 1.5f);
     REQUIRE(dashPattern3[2] == 2.22f);
+    REQUIRE(offset == 4.5f);
 
     REQUIRE(shape->strokeDash(nullptr, 0) == Result::Success);
 

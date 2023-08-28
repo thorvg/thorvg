@@ -226,7 +226,7 @@ static void _updateStroke(LottieStroke* stroke, float frameNo, RenderContext& ct
         float dashes[2];
         dashes[0] = stroke->dashSize(frameNo);
         dashes[1] = dashes[0] + stroke->dashGap(frameNo);
-        P(ctx.propagator)->strokeDash(dashes, 2, stroke->dashOffset(frameNo));
+        ctx.propagator->strokeDash(dashes, 2, stroke->dashOffset(frameNo));
     } else {
         ctx.propagator->strokeDash(nullptr, 0);
     }
