@@ -36,9 +36,8 @@ elif (cc.get_id() != 'msvc')
     endif
 endif
 
-
-subdir('lib')
-subdir('utils')
+subdir('common')
+subdir('renderer')
 subdir('loaders')
 subdir('savers')
 
@@ -71,7 +70,7 @@ pkg_mod.generate(
     description  : 'A Thor library for rendering vector graphics'
 )
 
-subdir('bin')
+subdir('tools')
 
 if get_option('examples') == true
     subdir('examples')
