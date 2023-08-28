@@ -371,7 +371,7 @@ static void _parseDashArray(SvgLoaderData* loader, const char *str, SvgDash* das
         str = end;
     }
     //If dash array size is 1, it means that dash and gap size are the same.
-    if ((*dash).array.count == 1) (*dash).array.push((*dash).array.data[0]);
+    if ((*dash).array.count == 1) (*dash).array.push((*dash).array[0]);
 }
 
 
@@ -2622,7 +2622,7 @@ static GradientFactoryMethod _findGradientFactory(const char* name)
 static void _cloneGradStops(Array<Fill::ColorStop>& dst, const Array<Fill::ColorStop>& src)
 {
     for (uint32_t i = 0; i < src.count; ++i) {
-        dst.push(src.data[i]);
+        dst.push(src[i]);
     }
 }
 
@@ -2776,7 +2776,7 @@ static void _styleInherit(SvgStyleProperty* child, const SvgStyleProperty* paren
             child->stroke.dash.array.clear();
             child->stroke.dash.array.reserve(parent->stroke.dash.array.count);
             for (uint32_t i = 0; i < parent->stroke.dash.array.count; ++i) {
-                child->stroke.dash.array.push(parent->stroke.dash.array.data[i]);
+                child->stroke.dash.array.push(parent->stroke.dash.array[i]);
             }
         }
     }
@@ -2845,7 +2845,7 @@ static void _styleCopy(SvgStyleProperty* to, const SvgStyleProperty* from)
             to->stroke.dash.array.clear();
             to->stroke.dash.array.reserve(from->stroke.dash.array.count);
             for (uint32_t i = 0; i < from->stroke.dash.array.count; ++i) {
-                to->stroke.dash.array.push(from->stroke.dash.array.data[i]);
+                to->stroke.dash.array.push(from->stroke.dash.array[i]);
             }
         }
     }
@@ -2991,7 +2991,7 @@ static void _cloneNode(SvgNode* from, SvgNode* parent, int depth)
 static void _clonePostponedNodes(Array<SvgNodeIdPair>* cloneNodes, SvgNode* doc)
 {
     for (uint32_t i = 0; i < cloneNodes->count; ++i) {
-        auto nodeIdPair = cloneNodes->data[i];
+        auto nodeIdPair = (*cloneNodes)[i];
         auto defs = _getDefsNode(nodeIdPair.node);
         auto nodeFrom = _findNodeById(defs, nodeIdPair.id);
         if (!nodeFrom) nodeFrom = _findNodeById(doc, nodeIdPair.id);
@@ -3072,7 +3072,7 @@ static void _svgLoaderParserXmlOpen(SvgLoaderData* loader, const char* content, 
             loader->doc = node;
         } else {
             if (!strcmp(tagName, "svg")) return; //Already loaded <svg>(SvgNodeType::Doc) tag
-            if (loader->stack.count > 0) parent = loader->stack.data[loader->stack.count - 1];
+            if (loader->stack.count > 0) parent = loader->stack.last();
             else parent = loader->doc;
             if (!strcmp(tagName, "style")) {
                 // TODO: For now only the first style node is saved. After the css id selector
@@ -3093,7 +3093,7 @@ static void _svgLoaderParserXmlOpen(SvgLoaderData* loader, const char* content, 
             loader->stack.push(node);
         }
     } else if ((method = _findGraphicsFactory(tagName))) {
-        if (loader->stack.count > 0) parent = loader->stack.data[loader->stack.count - 1];
+        if (loader->stack.count > 0) parent = loader->stack.last();
         else parent = loader->doc;
         node = method(loader, parent, attrs, attrsLength, simpleXmlParseAttributes);
     } else if ((gradientMethod = _findGradientFactory(tagName))) {
