@@ -76,8 +76,8 @@ using Size = Point;
     #define TVGERR(tag, fmt, ...) fprintf(stderr, "%s[E]%s %s" tag "%s (%s %d): %s" fmt "\n", ErrorBgColor, ResetColors, ErrorColor, GreyColor, __FILE__, __LINE__, ResetColors, ##__VA_ARGS__)
     #define TVGLOG(tag, fmt, ...) fprintf(stdout, "%s[L]%s %s" tag "%s (%s %d): %s" fmt "\n", LogBgColor, ResetColors, LogColor, GreyColor, __FILE__, __LINE__, ResetColors, ##__VA_ARGS__)
 #else
-    #define TVGERR(...)
-    #define TVGLOG(...)
+    #define TVGERR(...) do {} while(0)
+    #define TVGLOG(...) do {} while(0)
 #endif
 
 uint16_t THORVG_VERSION_NUMBER();
