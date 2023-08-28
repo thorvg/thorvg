@@ -243,38 +243,20 @@ static SwOutline* _genDashOutline(const RenderShape* rshape, const Matrix* trans
     dash.outline = static_cast<SwOutline*>(calloc(1, sizeof(SwOutline)));
 
     //smart reservation
-    auto outlinePtsCnt = 0;
-    auto outlineCntrsCnt = 0;
+    auto closeCnt = 0;
+    auto moveCnt = 0;
 
     for (uint32_t i = 0; i < cmdCnt; ++i) {
-        switch (*(cmds + i)) {
-            case PathCommand::Close: {
-                ++outlinePtsCnt;
-                break;
-            }
-            case PathCommand::MoveTo: {
-                ++outlineCntrsCnt;
-                ++outlinePtsCnt;
-                break;
-            }
-            case PathCommand::LineTo: {
-                ++outlinePtsCnt;
-                break;
-            }
-            case PathCommand::CubicTo: {
-                outlinePtsCnt += 3;
-                break;
-            }
-        }
+        auto cmd = *(cmds + i);
+        if (cmd == PathCommand::Close) ++closeCnt;
+        else if (cmd == PathCommand::MoveTo) ++moveCnt;
     }
 
-    ++outlinePtsCnt;    //for close
-    ++outlineCntrsCnt;  //for end
-
     //No idea exact count.... Reserve Approximitely 20x...
-    dash.outline->pts.grow(20 * outlinePtsCnt);
-    dash.outline->types.grow(20 * outlinePtsCnt);
-    dash.outline->cntrs.grow(20 * outlineCntrsCnt);
+    //OPTIMIZE: we can directly copy the path points when the close is occupied with a point.
+    dash.outline->pts.grow(20 * (closeCnt + ptsCnt + 1));
+    dash.outline->types.grow(20 * (closeCnt + ptsCnt + 1));
+    dash.outline->cntrs.grow(20 * (moveCnt + 1));
 
     while (cmdCnt-- > 0) {
         switch (*cmds) {
@@ -342,47 +324,22 @@ static bool _genOutline(SwShape* shape, const RenderShape* rshape, const Matrix*
     if (cmdCnt == 0 || ptsCnt == 0) return false;
 
     //smart reservation
-    auto outlinePtsCnt = 0;
-    auto outlineCntrsCnt = 0;
+    auto moveCnt = 0;
     auto closeCnt = 0;
 
     for (uint32_t i = 0; i < cmdCnt; ++i) {
-        switch (*(cmds + i)) {
-            case PathCommand::Close: {
-                ++outlinePtsCnt;
-                ++closeCnt;
-                break;
-            }
-            case PathCommand::MoveTo: {
-                ++outlineCntrsCnt;
-                ++outlinePtsCnt;
-                break;
-            }
-            case PathCommand::LineTo: {
-                ++outlinePtsCnt;
-                break;
-            }
-            case PathCommand::CubicTo: {
-                outlinePtsCnt += 3;
-                break;
-            }
-        }
+        auto cmd = *(cmds + i);
+        if (cmd == PathCommand::Close) ++closeCnt;
+        else if (cmd == PathCommand::MoveTo) ++moveCnt;
     }
-
-    if (static_cast<uint32_t>(outlinePtsCnt - closeCnt) > ptsCnt) {
-        TVGERR("SW_ENGINE", "Wrong a pair of the commands & points - required(%d), current(%d)", outlinePtsCnt - closeCnt, ptsCnt);
-        return false;
-    }
-
-    ++outlinePtsCnt;    //for close
-    ++outlineCntrsCnt;  //for end
 
     shape->outline = mpoolReqOutline(mpool, tid);
     auto outline = shape->outline;
 
-    outline->pts.grow(outlinePtsCnt);
-    outline->types.grow(outlinePtsCnt);
-    outline->cntrs.grow(outlineCntrsCnt);
+    //OPTIMIZE: we can directly copy the path points when the close is occupied with a point.
+    outline->pts.grow(ptsCnt + closeCnt + 1);
+    outline->types.grow(ptsCnt + closeCnt + 1);
+    outline->cntrs.grow(moveCnt + 1);
 
     //Dash outlines are always opened.
     //Only normal outlines use this information, it sholud be same to their contour counts.
