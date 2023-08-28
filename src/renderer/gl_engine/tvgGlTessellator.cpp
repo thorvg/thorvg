@@ -108,7 +108,7 @@ struct Vertex : public Object
 
     Vertex() = default;
 
-    Vertex(const GlPoint &p) : point(std::ceilf(p.x * 100.f) / 100.f, std::ceilf(p.y * 100.f) / 100.f)
+    Vertex(const GlPoint &p) : point(ceilf(p.x * 100.f) / 100.f, ceilf(p.y * 100.f) / 100.f)
     {
     }
 
@@ -888,7 +888,7 @@ Tessellator::~Tessellator()
         auto count = outlines.count;
 
         for (uint32_t i = 0; i < count; i++) {
-            delete outlines.data[i];
+            delete outlines[i];
         }
     }
 
@@ -942,10 +942,10 @@ void Tessellator::tessellate(const Array<const RenderShape *> &shapes)
     this->fillRule = FillRule::Winding;
 
     for (uint32_t i = 0; i < shapes.count; i++) {
-        auto cmds = shapes.data[i]->path.cmds.data;
-        auto cmdCnt = shapes.data[i]->path.cmds.count;
-        auto pts = shapes.data[i]->path.pts.data;
-        auto ptsCnt = shapes.data[i]->path.pts.count;
+        auto cmds = shapes[i]->path.cmds.data;
+        auto cmdCnt = shapes[i]->path.cmds.count;
+        auto pts = shapes[i]->path.pts.data;
+        auto ptsCnt = shapes[i]->path.pts.count;
 
         this->visitShape(cmds, cmdCnt, pts, ptsCnt);
     }
@@ -1047,7 +1047,7 @@ void Tessellator::buildMesh()
     Array<detail::Vertex *> temp{};
 
     for (uint32_t i = 0; i < outlines.count; i++) {
-        auto list = outlines.data[i];
+        auto list = outlines[i];
 
         auto prev = list->tail;
         auto v = list->head;
@@ -1072,7 +1072,7 @@ void Tessellator::buildMesh()
     temp.sort<detail::VertexCompare>();
 
     for (uint32_t i = 0; i < temp.count; i++) {
-        this->pMesh->append(temp.data[i]);
+        this->pMesh->append(temp[i]);
     }
 }
 
@@ -1643,7 +1643,7 @@ void Stroker::stroke(const RenderShape *rshape)
     auto ptsCnt = rshape->path.pts.count;
 
     const float *dash_pattern = nullptr;
-    auto         dash_count = rshape->strokeDash(&dash_pattern);
+    auto dash_count = rshape->strokeDash(&dash_pattern, nullptr);
 
     if (dash_count == 0) {
         doStroke(cmds, cmdCnt, pts, ptsCnt);

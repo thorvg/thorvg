@@ -108,7 +108,7 @@ static void _outlineClose(SwOutline& outline)
     if (outline.pts.count == i) return;
 
     //Close the path
-    outline.pts.push(outline.pts.data[i]);
+    outline.pts.push(outline.pts[i]);
     outline.types.push(SW_CURVE_TYPE_POINT);
     outline.closed.push(true);
 }

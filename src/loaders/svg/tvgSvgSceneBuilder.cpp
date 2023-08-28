@@ -114,7 +114,7 @@ static unique_ptr<LinearGradient> _applyLinearGradientProperty(SvgStyleGradient*
         if (!stops) return fillGrad;
         auto prevOffset = 0.0f;
         for (uint32_t i = 0; i < g->stops.count; ++i) {
-            auto colorStop = &g->stops.data[i];
+            auto colorStop = &g->stops[i];
             //Use premultiplied color
             stops[i].r = colorStop->r;
             stops[i].g = colorStop->g;
@@ -176,7 +176,7 @@ static unique_ptr<RadialGradient> _applyRadialGradientProperty(SvgStyleGradient*
         if (!stops) return fillGrad;
         auto prevOffset = 0.0f;
         for (uint32_t i = 0; i < g->stops.count; ++i) {
-            auto colorStop = &g->stops.data[i];
+            auto colorStop = &g->stops[i];
             //Use premultiplied color
             stops[i].r = colorStop->r;
             stops[i].g = colorStop->g;
