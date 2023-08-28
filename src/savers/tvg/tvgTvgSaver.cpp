@@ -479,7 +479,7 @@ TvgBinCounter TvgSaver::serializeStroke(const Shape* shape, const Matrix* pTrans
     //dash
     const float* dashPattern = nullptr;
     float offset = 0.0f;
-    auto dashCnt = P(shape)->rs.strokeDash(&dashPattern, &offset);
+    auto dashCnt = shape->strokeDash(&dashPattern, &offset);
     if (dashPattern && dashCnt > 0) {
         TvgBinCounter dashCntSize = SIZE(dashCnt);
         TvgBinCounter dashPtrnSize = dashCnt * SIZE(dashPattern[0]);
