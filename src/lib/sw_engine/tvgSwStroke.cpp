@@ -842,7 +842,7 @@ bool strokeParseOutline(SwStroke* stroke, const SwOutline& outline)
             continue;
         }
 
-        auto start = outline.pts.data[first];
+        auto start = outline.pts[first];
         auto pt = outline.pts.data + first;
         auto types = outline.types.data + first;
         auto type = types[0];

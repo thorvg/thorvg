@@ -382,7 +382,7 @@ static bool _processCommand(Array<PathCommand>* cmds, Array<Point>* pts, char cm
         case 's':
         case 'S': {
             Point p[3], ctrl;
-            if ((cmds->count > 1) && (cmds->data[cmds->count - 1] == PathCommand::CubicTo) &&
+            if ((cmds->count > 1) && (cmds->last() == PathCommand::CubicTo) &&
                 !(*isQuadratic)) {
                 ctrl.x = 2 * cur->x - curCtl->x;
                 ctrl.y = 2 * cur->y - curCtl->y;
@@ -423,7 +423,7 @@ static bool _processCommand(Array<PathCommand>* cmds, Array<Point>* pts, char cm
         case 't':
         case 'T': {
             Point p[3], ctrl;
-            if ((cmds->count > 1) && (cmds->data[cmds->count - 1] == PathCommand::CubicTo) &&
+            if ((cmds->count > 1) && (cmds->last() == PathCommand::CubicTo) &&
                 *isQuadratic) {
                 ctrl.x = 2 * cur->x - curCtl->x;
                 ctrl.y = 2 * cur->y - curCtl->y;

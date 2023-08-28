@@ -187,7 +187,7 @@ struct LottieProperty
 
     LottieScalarFrame<T>& nextFrame()
     {
-        return frames->data[frames->count];
+        return (*frames)[frames->count];
     }
 
     T operator()(int32_t frameNo)
@@ -255,7 +255,7 @@ struct LottiePathSet
 
     LottieScalarFrame<PathSet>& nextFrame()
     {
-        return frames->data[frames->count];
+        return (*frames)[frames->count];
     }
 
     bool operator()(int32_t frameNo, Array<PathCommand>& cmds, Array<Point>& pts)
@@ -355,7 +355,7 @@ struct LottieColorStop
 
     LottieScalarFrame<ColorStop>& nextFrame()
     {
-        return frames->data[frames->count];
+        return (*frames)[frames->count];
     }
 
     void operator()(int32_t frameNo, Fill* fill)
@@ -450,7 +450,7 @@ struct LottiePosition
 
     LottieVectorFrame<Point>& nextFrame()
     {
-        return frames->data[frames->count];
+        return (*frames)[frames->count];
     }
 
     Point operator()(int32_t frameNo)
