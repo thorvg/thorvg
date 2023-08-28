@@ -189,16 +189,12 @@ struct SwStroke
     SwFixed subPathLineLength;
     SwFixed width;
     SwFixed miterlimit;
-
+    SwFill* fill = nullptr;
+    SwStrokeBorder borders[2];
+    float sx, sy;
     StrokeCap cap;
     StrokeJoin join;
     StrokeJoin joinSaved;
-    SwFill* fill = nullptr;
-
-    SwStrokeBorder borders[2];
-
-    float sx, sy;
-
     bool firstPt;
     bool closedSubPath;
     bool handleWideStrokes;

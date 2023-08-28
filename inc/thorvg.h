@@ -117,7 +117,7 @@ enum class PathCommand
 /**
  * @brief Enumeration determining the ending type of a stroke in the open sub-paths.
  */
-enum class StrokeCap
+enum class StrokeCap : uint8_t
 {
     Square = 0, ///< The stroke is extended in both end-points of a sub-path by a rectangle, with the width equal to the stroke width and the length equal to the half of the stroke width. For zero length sub-paths the square is rendered with the size of the stroke width.
     Round,      ///< The stroke is extended in both end-points of a sub-path by a half circle, with a radius equal to the half of a stroke width. For zero length sub-paths a full circle is rendered.
@@ -128,7 +128,7 @@ enum class StrokeCap
 /**
  * @brief Enumeration determining the style used at the corners of joined stroked path segments.
  */
-enum class StrokeJoin
+enum class StrokeJoin : uint8_t
 {
     Bevel = 0, ///< The outer corner of the joined path segments is bevelled at the join point. The triangular region of the corner is enclosed by a straight line between the outer corners of each stroke.
     Round,     ///< The outer corner of the joined path segments is rounded. The circular region is centered at the join point.
@@ -139,7 +139,7 @@ enum class StrokeJoin
 /**
  * @brief Enumeration specifying how to fill the area outside the gradient bounds.
  */
-enum class FillSpread
+enum class FillSpread : uint8_t
 {
     Pad = 0, ///< The remaining area is filled with the closest stop color.
     Reflect, ///< The gradient pattern is reflected outside the gradient area until the expected region is filled.
@@ -150,7 +150,7 @@ enum class FillSpread
 /**
  * @brief Enumeration specifying the algorithm used to establish which parts of the shape are treated as the inside of the shape.
  */
-enum class FillRule
+enum class FillRule : uint8_t
 {
     Winding = 0, ///< A line from the point to a location outside the shape is drawn. The intersections of the line with the path segment of the shape are counted. Starting from zero, if the path segment of the shape crosses the line clockwise, one is added, otherwise one is subtracted. If the resulting sum is non zero, the point is inside the shape.
     EvenOdd      ///< A line from the point to a location outside the shape is drawn and its intersections with the path segments of the shape are counted. If the number of intersections is an odd number, the point is inside the shape.
@@ -164,7 +164,7 @@ enum class FillRule
  *
  * @see Paint::composite()
  */
-enum class CompositeMethod
+enum class CompositeMethod : uint8_t
 {
     None = 0,           ///< No composition is applied.
     ClipPath,           ///< The intersection of the source and the target is determined and only the resulting pixels from the source are rendered.
@@ -210,7 +210,7 @@ enum class BlendMethod : uint8_t
 /**
  * @brief Enumeration specifying the engine type used for the graphics backend. For multiple backends bitwise operation is allowed.
  */
-enum class CanvasEngine
+enum class CanvasEngine : uint8_t
 {
     Sw = (1 << 1), ///< CPU rasterizer.
     Gl = (1 << 2), ///< OpenGL rasterizer.
@@ -1426,7 +1426,7 @@ public:
     /**
      * @brief Enumeration specifying the methods of combining the 8-bit color channels into 32-bit color.
      */
-    enum Colorspace
+    enum Colorspace : uint8_t
     {
         ABGR8888 = 0,      ///< The channels are joined in the order: alpha, blue, green, red. Colors are alpha-premultiplied. (a << 24 | b << 16 | g << 8 | r)
         ARGB8888,          ///< The channels are joined in the order: alpha, red, green, blue. Colors are alpha-premultiplied. (a << 24 | r << 16 | g << 8 | b)
@@ -1438,7 +1438,7 @@ public:
      * @brief Enumeration specifying the methods of Memory Pool behavior policy.
      * @since 0.4
      */
-    enum MempoolPolicy
+    enum MempoolPolicy : uint8_t
     {
         Default = 0, ///< Default behavior that ThorVG is designed to.
         Shareable,   ///< Memory Pool is shared among the SwCanvases.
