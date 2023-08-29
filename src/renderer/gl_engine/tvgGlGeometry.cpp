@@ -32,12 +32,9 @@
 
 GlGeometry::~GlGeometry()
 {
-    if (mVao) {
-        glDeleteVertexArrays(1, &mVao);
-    }
 }
 
-bool GlGeometry::tesselate(const RenderShape& rshape, RenderUpdateFlag flag)
+bool GlGeometry::tesselate(const RenderShape& rshape, RenderUpdateFlag flag, GlStageBuffer* gpuBuffer)
 {
     mFillVertexOffset = 0;
     mStrokeVertexOffset = 0;
@@ -46,13 +43,7 @@ bool GlGeometry::tesselate(const RenderShape& rshape, RenderUpdateFlag flag)
     mFillCount = 0;
     mStrokeCount = 0;
 
-    mStaveVertex.clear();
-    mStageIndex.clear();
-
     if (flag & (RenderUpdateFlag::Color | RenderUpdateFlag::Gradient | RenderUpdateFlag::Transform)) {
-        mFillVertexOffset = mStaveVertex.count * sizeof(float);
-        mFillIndexOffset = mStageIndex.count * sizeof(uint32_t);
-
         Array<float> vertex;
         Array<uint32_t> index;
 
@@ -61,14 +52,11 @@ bool GlGeometry::tesselate(const RenderShape& rshape, RenderUpdateFlag flag)
 
         mFillCount = index.count;
 
-        mStaveVertex.push(vertex);
-        mStageIndex.push(index);
+        mFillVertexOffset = gpuBuffer->push(vertex.data, vertex.count * sizeof(float));
+        mFillIndexOffset = gpuBuffer->push(index.data, index.count * sizeof(uint32_t));
     }
 
     if (flag & (RenderUpdateFlag::Stroke | RenderUpdateFlag::Transform)) {
-        mStrokeVertexOffset = mStaveVertex.count * sizeof(float);
-        mStrokeIndexOffset = mStageIndex.count * sizeof(uint32_t);
-
         Array<float> vertex;
         Array<uint32_t> index;
 
@@ -77,8 +65,8 @@ bool GlGeometry::tesselate(const RenderShape& rshape, RenderUpdateFlag flag)
 
         mStrokeCount = index.count;
 
-        mStaveVertex.push(vertex);
-        mStageIndex.push(index);
+        mStrokeVertexOffset = gpuBuffer->push(vertex.data, vertex.count * sizeof(float));
+        mStrokeIndexOffset = gpuBuffer->push(index.data, index.count * sizeof(uint32_t));
     }
 
     return true;
@@ -88,8 +76,6 @@ bool GlGeometry::tesselate(const RenderShape& rshape, RenderUpdateFlag flag)
 void GlGeometry::disableVertex(uint32_t location)
 {
     GL_CHECK(glDisableVertexAttribArray(location));
-    mVertexBuffer->unbind(GlGpuBuffer::Target::ARRAY_BUFFER);
-    mIndexBuffer->unbind(GlGpuBuffer::Target::ELEMENT_ARRAY_BUFFER);
 }
 
 
@@ -100,10 +86,6 @@ void GlGeometry::draw(const uint32_t location, RenderUpdateFlag flag)
         return;
     }
 
-    if (mVao == 0) glGenVertexArrays(1, &mVao);
-    glBindVertexArray(mVao);
-
-    updateBuffer(location);
 
     uint32_t vertexOffset = (flag == RenderUpdateFlag::Stroke) ? mStrokeVertexOffset : mFillVertexOffset;
     uint32_t indexOffset = (flag == RenderUpdateFlag::Stroke) ? mStrokeIndexOffset : mFillIndexOffset;
@@ -113,16 +95,6 @@ void GlGeometry::draw(const uint32_t location, RenderUpdateFlag flag)
     GL_CHECK(glEnableVertexAttribArray(location));
 
     GL_CHECK(glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_INT, reinterpret_cast<void*>(indexOffset)));
-}
-
-
-void GlGeometry::updateBuffer(uint32_t location)
-{
-    if (mVertexBuffer == nullptr) mVertexBuffer = std::make_unique<GlGpuBuffer>();
-    if (mIndexBuffer == nullptr) mIndexBuffer = std::make_unique<GlGpuBuffer>();
-
-    mVertexBuffer->updateBufferData(GlGpuBuffer::Target::ARRAY_BUFFER, mStaveVertex.count * sizeof(float), mStaveVertex.data);
-    mIndexBuffer->updateBufferData(GlGpuBuffer::Target::ELEMENT_ARRAY_BUFFER, mStageIndex.count * sizeof(uint32_t), mStageIndex.data);
 }
 
 

@@ -22,6 +22,9 @@
 
 #include "tvgGlGpuBuffer.h"
 
+#include <math.h>
+#include <string.h>
+
 /************************************************************************/
 /* Internal Class Implementation                                        */
 /************************************************************************/
@@ -44,12 +47,66 @@ GlGpuBuffer::~GlGpuBuffer()
 
 void GlGpuBuffer::updateBufferData(Target target, uint32_t size, const void* data)
 {
-    GL_CHECK(glBindBuffer(static_cast<uint32_t>(target), mGlBufferId));
     GL_CHECK(glBufferData(static_cast<uint32_t>(target), size, data, GL_STATIC_DRAW));
 }
 
+void GlGpuBuffer::bind(Target target)
+{
+    GL_CHECK(glBindBuffer(static_cast<uint32_t>(target), mGlBufferId));
+}
 
 void GlGpuBuffer::unbind(Target target)
 {
     GL_CHECK(glBindBuffer(static_cast<uint32_t>(target), 0));
+}
+
+GlStageBuffer::~GlStageBuffer()
+{
+    if (mVao) {
+        glDeleteVertexArrays(1, &mVao);
+        mVao = 0;
+    }
+}
+
+uint32_t GlStageBuffer::push(void *data, uint32_t size)
+{
+    uint32_t offset = mStageBuffer.count;
+
+    if (this->mStageBuffer.reserved - this->mStageBuffer.count < size) {
+        this->mStageBuffer.grow(max(size, this->mStageBuffer.reserved));
+    }
+
+    memcpy(this->mStageBuffer.data + offset, data, size);
+
+    this->mStageBuffer.count += size;
+
+    return offset;
+}
+
+void GlStageBuffer::flushToGPU()
+{
+    if (mStageBuffer.empty()) return;
+
+    if (!mGpuBuffer) {
+        mGpuBuffer.reset(new GlGpuBuffer);
+        GL_CHECK(glGenVertexArrays(1, &mVao));
+    }
+
+    mGpuBuffer->bind(GlGpuBuffer::Target::ARRAY_BUFFER);
+    mGpuBuffer->updateBufferData(GlGpuBuffer::Target::ARRAY_BUFFER, mStageBuffer.count, mStageBuffer.data);
+    mGpuBuffer->unbind(GlGpuBuffer::Target::ARRAY_BUFFER);
+}
+
+void GlStageBuffer::bind()
+{
+    glBindVertexArray(mVao);
+    mGpuBuffer->bind(GlGpuBuffer::Target::ARRAY_BUFFER);
+    mGpuBuffer->bind(GlGpuBuffer::Target::ELEMENT_ARRAY_BUFFER);
+}
+
+void GlStageBuffer::unbind()
+{
+    glBindVertexArray(0);
+    mGpuBuffer->unbind(GlGpuBuffer::Target::ARRAY_BUFFER);
+    mGpuBuffer->unbind(GlGpuBuffer::Target::ELEMENT_ARRAY_BUFFER);
 }

@@ -24,6 +24,7 @@
 #define _TVG_GL_RENDERER_H_
 
 #include "tvgGlRenderTask.h"
+#include "tvgGlGpuBuffer.h"
 
 class GlRenderer : public RenderMethod
 {
@@ -58,7 +59,7 @@ public:
     static int term();
 
 private:
-    GlRenderer(){};
+    GlRenderer(): mGpuBuffer(new GlStageBuffer) {};
     ~GlRenderer();
 
     void initShaders();
@@ -66,6 +67,7 @@ private:
     void drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFlag flag);
 
     vector<shared_ptr<GlRenderTask>>  mRenderTasks;
+    std::unique_ptr<GlStageBuffer> mGpuBuffer;
 };
 
 #endif /* _TVG_GL_RENDERER_H_ */

@@ -23,6 +23,9 @@
 #ifndef _TVG_GL_GPU_BUFFER_H_
 #define _TVG_GL_GPU_BUFFER_H_
 
+#include <memory>
+
+#include "tvgArray.h"
 #include "tvgGlCommon.h"
 
 class GlGpuBuffer
@@ -37,10 +40,30 @@ public:
     GlGpuBuffer();
     ~GlGpuBuffer();
     void updateBufferData(Target target, uint32_t size, const void* data);
+    void bind(Target target);
     void unbind(Target target);
 private:
     uint32_t    mGlBufferId = 0;
 
+};
+
+class GlStageBuffer {
+public:
+    GlStageBuffer() = default;
+    ~GlStageBuffer();
+
+    uint32_t push(void* data, uint32_t size);
+
+    void flushToGPU();
+
+    void bind();
+
+    void unbind();
+
+private:
+    GLuint mVao = 0;
+    unique_ptr<GlGpuBuffer> mGpuBuffer = {};
+    Array<uint8_t> mStageBuffer = {};
 };
 
 #endif /* _TVG_GL_GPU_BUFFER_H_ */
