@@ -32,10 +32,13 @@ void tvgUpdateCmds(tvg::Canvas* canvas, tvg::Animation* animation, float progres
 {
     if (!canvas) return;
 
-    //Update animation frame
-    animation->frame(roundf(animation->totalFrame() * progress));
+    //Update animation frame only when it's changed
+    auto frame = lroundf(animation->totalFrame() * progress);
 
-    canvas->update(animation->picture());
+    if (frame != animation->curFrame()) {
+        animation->frame(frame);
+        canvas->update(animation->picture());
+    }
 }
 
 

@@ -88,10 +88,13 @@ void tvgUpdateCmds(Elm_Transit_Effect *effect, Elm_Transit* transit, double prog
 {
     auto animation = static_cast<tvg::Animation*>(effect);
 
-    //Update animation frame
-    animation->frame(roundf(animation->totalFrame() * progress));
+    //Update animation frame only when it's changed
+    auto frame = lroundf(animation->totalFrame() * progress);
 
-    swCanvas->update(animation->picture());
+    if (frame != animation->curFrame()) {
+        animation->frame(frame);
+        swCanvas->update(animation->picture());
+    }
 }
 
 void tvgSwTest(uint32_t* buffer)
