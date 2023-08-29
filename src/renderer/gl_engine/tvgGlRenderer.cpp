@@ -87,16 +87,21 @@ bool GlRenderer::preRender()
     }
     GlRenderTask::unload();
 
+    mGpuBuffer->flushToGPU();
+
     // Blend function for straight alpha
     GL_CHECK(glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA));
     GL_CHECK(glEnable(GL_BLEND));
+
+    mGpuBuffer->bind();
+
     return true;
 }
 
 
 bool GlRenderer::postRender()
 {
-    //TODO: called just after render()
+    mGpuBuffer->unbind();
 
     return true;
 }
@@ -238,7 +243,7 @@ RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const
 
     if (sdata->updateFlag & (RenderUpdateFlag::Color | RenderUpdateFlag::Stroke | RenderUpdateFlag::Gradient | RenderUpdateFlag::Transform) )
     {
-        if (!sdata->geometry->tesselate(rshape, sdata->updateFlag)) return sdata;
+        if (!sdata->geometry->tesselate(rshape, sdata->updateFlag, mGpuBuffer.get())) return sdata;
     }
     return sdata;
 }

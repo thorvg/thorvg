@@ -181,7 +181,7 @@ public:
     }
 };
 
-class GlGpuBuffer;
+class GlStageBuffer;
 
 class GlGeometry
 {
@@ -189,26 +189,19 @@ public:
 
     ~GlGeometry();
 
-    bool tesselate(const RenderShape& rshape, RenderUpdateFlag flag);
+    bool tesselate(const RenderShape& rshape, RenderUpdateFlag flag, GlStageBuffer* gpuBuffer);
     void disableVertex(uint32_t location);
     void draw(const uint32_t location, RenderUpdateFlag flag);
     void updateTransform(const RenderTransform* transform, float w, float h);
     float* getTransforMatrix();
 
 private:
-    void updateBuffer(const uint32_t location);
-
-    Array<float> mStaveVertex;
-    Array<uint32_t> mStageIndex;
     uint32_t mFillVertexOffset;
     uint32_t mFillIndexOffset;
     uint32_t mFillCount;
     uint32_t mStrokeVertexOffset;
     uint32_t mStrokeIndexOffset;
     uint32_t mStrokeCount;
-    GLuint mVao = 0;
-    std::unique_ptr<GlGpuBuffer> mVertexBuffer;
-    std::unique_ptr<GlGpuBuffer> mIndexBuffer;
     float mTransform[16];
 };
 
