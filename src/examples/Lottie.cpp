@@ -92,18 +92,20 @@ void lottieDirCallback(const char* name, const char* path, void* data)
 
 void tvgUpdateCmds(Elm_Transit_Effect *effect, Elm_Transit* transit, double progress)
 {
-    auto before = ecore_time_get();
-
     auto animation = static_cast<tvg::Animation*>(effect);
 
-    //Update animation frame
-    animation->frame(roundf(animation->totalFrame() * progress));
+    //Update animation frame only when it's changed
+    auto frame = lroundf(animation->totalFrame() * progress);
 
-    swCanvas->update(animation->picture());
+    if (frame != animation->curFrame()) {
+        auto before = ecore_time_get();
 
-    auto after = ecore_time_get();
+        animation->frame(frame);
+        swCanvas->update(animation->picture());
 
-    updateTime += after - before;
+        auto after = ecore_time_get();
+        updateTime += after - before;
+    }
 }
 
 void tvgSwTest(uint32_t* buffer)
