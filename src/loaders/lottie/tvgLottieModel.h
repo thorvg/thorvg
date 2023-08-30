@@ -393,7 +393,7 @@ struct LottieLayer : LottieGroup
     int32_t remap(int32_t frameNo);
 
     //Optimize: compact data??
-    RGB24 color = {255, 255, 255};
+    RGB24 color;
 
     struct {
         CompositeMethod type = CompositeMethod::None;
