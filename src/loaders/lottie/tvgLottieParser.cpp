@@ -86,7 +86,7 @@ BlendMethod LottieParser::getBlendMethod()
 
 RGB24 LottieParser::getColor(const char *str)
 {
-    RGB24 color;
+    RGB24 color = {0, 0, 0};
 
     if (!str) return color;
 
