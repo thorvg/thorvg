@@ -345,25 +345,17 @@ struct Shape::Impl
         //Stroke
         if (rs.stroke) {
             dup->rs.stroke = new RenderStroke();
-            dup->rs.stroke->width = rs.stroke->width;
-            dup->rs.stroke->dashCnt = rs.stroke->dashCnt;
-            dup->rs.stroke->dashOffset = rs.stroke->dashOffset;
-            dup->rs.stroke->cap = rs.stroke->cap;
-            dup->rs.stroke->join = rs.stroke->join;
-            dup->rs.stroke->strokeFirst = rs.stroke->strokeFirst;
+            *dup->rs.stroke = *rs.stroke;
             memcpy(dup->rs.stroke->color, rs.stroke->color, sizeof(rs.stroke->color));
-
             if (rs.stroke->dashCnt > 0) {
                 dup->rs.stroke->dashPattern = static_cast<float*>(malloc(sizeof(float) * rs.stroke->dashCnt));
                 memcpy(dup->rs.stroke->dashPattern, rs.stroke->dashPattern, sizeof(float) * rs.stroke->dashCnt);
             }
-
-            dup->flag |= RenderUpdateFlag::Stroke;
-
             if (rs.stroke->fill) {
                 dup->rs.stroke->fill = rs.stroke->fill->duplicate();
                 dup->flag |= RenderUpdateFlag::GradientStroke;
             }
+            dup->flag |= RenderUpdateFlag::Stroke;
         }
 
         //Fill
