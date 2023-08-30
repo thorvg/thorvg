@@ -240,11 +240,12 @@ void LottieParser::getValue(ColorStop& color)
     auto count = context->gradient->colorStops.count;
     if (!color.data) color.data = static_cast<Fill::ColorStop*>(malloc(sizeof(Fill::ColorStop) * count));
 
+    //rgb
     while (nextArrayValue()) {
         auto remains = (idx % 4);
         if (remains == 0) {
             color.data[idx / 4].offset = getFloat();
-            color.data[idx / 4].a = 255; //Not used.
+            color.data[idx / 4].a = 255;        //in default
         } else if (remains == 1) {
             color.data[idx / 4].r = lroundf(getFloat() * 255.0f);
         } else if (remains == 2) {
@@ -252,7 +253,15 @@ void LottieParser::getValue(ColorStop& color)
         } else if (remains == 3) {
             color.data[idx / 4].b = lroundf(getFloat() * 255.0f);
         }
-        ++idx;
+        if ((++idx / 4) == count) break;
+    }
+
+    //alpha
+    idx = 0;
+    while (nextArrayValue()) {
+        auto offset = getFloat(); //not used for now.
+        if (!mathEqual(offset, color.data[idx].offset)) TVGERR("LOTTIE", "FIXME: Gradient alpha offset is ignored");
+        color.data[idx++].a = lroundf(getFloat() * 255.0f);
     }
 }
 
