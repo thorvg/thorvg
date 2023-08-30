@@ -78,6 +78,25 @@ struct SwShapeTask : SwTask
     bool cmpStroking = false;
     bool clipper = false;
 
+    /* We assume that if the stroke width is greater than 2,
+       the shape's outline beneath the stroke could be adequately covered by the stroke drawing.
+       Therefore, antialiasing is disabled under this condition.
+       Additionally, the stroke style should not be dashed. */
+    bool antialiasing()
+    {
+        if (!rshape->stroke) return true;
+
+        auto width = rshape->stroke->width;
+        if (mathZero(width)) return true;
+
+        if (transform) {
+            if (transform->e11 > transform->e22) width *= transform->e11;
+            else width *= transform->e22;
+        }
+
+        return rshape->stroke->color[3] < 255 || width < 2.0f || rshape->stroke->dashCnt > 0 || rshape->stroke->strokeFirst;
+    }
+
     bool clip(SwRleData* target) override
     {
         if (shape.fastTrack) rleClipRect(target, &bbox);
@@ -128,13 +147,7 @@ struct SwShapeTask : SwTask
         //Fill
         if (flags & (RenderUpdateFlag::Gradient | RenderUpdateFlag::Transform | RenderUpdateFlag::Color)) {
             if (visibleFill || clipper) {
-                /* We assume that if stroke width is bigger than 2,
-                   shape outline below stroke could be full covered by stroke drawing.
-                   Thus it turns off antialising in that condition.
-                   Also, it shouldn't be dash style. */
-                auto antiAlias = strokeAlpha < 255 || rshape->strokeWidth() <= 2 || rshape->strokeDash(nullptr, nullptr) > 0 || (rshape->stroke && rshape->stroke->strokeFirst);
-
-                if (!shapeGenRle(&shape, rshape, antiAlias)) goto err;
+                if (!shapeGenRle(&shape, rshape, antialiasing())) goto err;
             }
             if (auto fill = rshape->fill) {
                 auto ctable = (flags & RenderUpdateFlag::Gradient) ? true : false;
