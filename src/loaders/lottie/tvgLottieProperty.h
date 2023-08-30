@@ -388,7 +388,8 @@ struct LottieColorStop
             auto r = mathLerp(s->r, e->r, t);
             auto g = mathLerp(s->g, e->g, t);
             auto b = mathLerp(s->b, e->b, t);
-            result.push({offset, r, g, b, 255});
+            auto a = mathLerp(s->a, e->a, t);
+            result.push({offset, r, g, b, a});
         }
         fill->colorStops(result.data, count);
     }
