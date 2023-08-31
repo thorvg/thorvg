@@ -162,7 +162,6 @@ struct LottieRoundedCorner : LottieObject
         LottieObject::type = LottieObject::RoundedCorner;
         if (radius.frames) statical = false;
     }
-
     LottieFloat radius = 0.0f;
 };
 
@@ -184,18 +183,12 @@ struct LottieRect : LottieShape
     void prepare()
     {
         LottieObject::type = LottieObject::Rect;
-        if (position.frames || size.frames || round.frames) statical = false;
+        if (position.frames || size.frames || radius.frames) statical = false;
     }
 
-    float roundness(int32_t frameNo)
-    {
-        return roundedCorner ? roundedCorner->radius(frameNo) : round(frameNo);
-    }
-
-    LottieRoundedCorner* roundedCorner = nullptr;
     LottiePosition position = Point{0.0f, 0.0f};
     LottiePoint size = Point{0.0f, 0.0f};
-    LottieFloat round = 0.0f;
+    LottieFloat radius = 0.0f;       //rounded corner radius
 };
 
 

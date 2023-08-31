@@ -40,24 +40,6 @@ static char* _int2str(int num)
 }
 
 
-static void _updateRoundedCorner(LottieGroup* parent, LottieRoundedCorner* roundedCorner)
-{
-    for (auto child = parent->children.data; child < parent->children.end(); ++child) {
-        auto obj = *child;
-        if (obj->type == LottieObject::Rect) {
-            auto rect = static_cast<LottieRect*>(obj);
-            rect->roundedCorner = roundedCorner;
-            rect->statical &= roundedCorner->statical;
-            parent->statical &= roundedCorner->statical;
-            continue;
-        }
-        if (obj->type == LottieObject::Group || obj->type == LottieObject::Layer) {
-            _updateRoundedCorner(static_cast<LottieGroup*>(obj), roundedCorner);
-        }
-    }
-}
-
-
 CompositeMethod LottieParser::getMaskMethod(bool inversed)
 {
     switch (getString()[0]) {
@@ -484,7 +466,7 @@ LottieRect* LottieParser::parseRect()
         if (!strcmp(key, "d")) rect->direction = getInt();
         else if (!strcmp(key, "s")) parseProperty(rect->size);
         else if (!strcmp(key, "p")) parseProperty(rect->position);
-        else if (!strcmp(key, "r")) parseProperty(rect->round);
+        else if (!strcmp(key, "r")) parseProperty(rect->radius);
         else if (!strcmp(key, "nm")) rect->name = getStringCopy();
         else if (!strcmp(key, "hd")) rect->hidden = getBool();
         else skip(key);
@@ -787,14 +769,10 @@ void LottieParser::parseObject(LottieGroup* parent)
     enterObject();
     while (auto key = nextObjectKey()) {
         if (!strcmp(key, "ty")) {
-            auto child = parseObject();
-            if (child && !child->hidden) {
-                //propagate the rounded corner properties.
-                if (child->type == LottieObject::RoundedCorner) {
-                    _updateRoundedCorner(parent, static_cast<LottieRoundedCorner*>(child));
-                }
-                parent->children.push(child);
-            } else delete(child);
+            if (auto child = parseObject()) {
+                if (child->hidden) delete(child);
+                else parent->children.push(child);
+            }
         } else skip(key);
     }
 }
