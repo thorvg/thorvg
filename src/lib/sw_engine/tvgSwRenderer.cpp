@@ -88,6 +88,7 @@ struct SwShapeTask : SwTask
 
         auto width = rshape->stroke->width;
         if (mathZero(width)) return true;
+        if (rshape->strokeTrim()) return true;
 
         if (transform) {
             if (transform->e11 > transform->e22) width *= transform->e11;
@@ -118,14 +119,15 @@ struct SwShapeTask : SwTask
     {
         if (opacity == 0 && !clipper) return;  //Invisible
 
-        uint8_t strokeAlpha = 0;
         auto visibleStroke = false;
         bool visibleFill = false;
         auto clipRegion = bbox;
 
-        if (HALF_STROKE(rshape->strokeWidth()) > 0) {
-            rshape->strokeColor(nullptr, nullptr, nullptr, &strokeAlpha);
-            visibleStroke = rshape->strokeFill() || (MULTIPLY(strokeAlpha, opacity) > 0);
+        //confirm valid stroke
+        if (auto stroke = rshape->stroke) {
+            if (HALF_STROKE(stroke->width) > 0 && !mathZero(stroke->trim.begin - stroke->trim.end)) {
+                visibleStroke = stroke->fill || (MULTIPLY(stroke->color[3], opacity) > 0);
+            }
         }
 
         //This checks also for the case, if the invisible shape turned to visible by alpha.

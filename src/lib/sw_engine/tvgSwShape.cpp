@@ -21,9 +21,8 @@
  */
 
 #include "tvgSwCommon.h"
+#include "tvgMath.h"
 #include "tvgBezier.h"
-#include <float.h>
-#include <math.h>
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
@@ -205,11 +204,10 @@ static void _dashCubicTo(SwDashStroke& dash, const Point* ctrl1, const Point* ct
 }
 
 
-static SwOutline* _genDashOutline(const RenderShape* rshape, const Matrix* transform)
+static SwOutline* _genDashOutline(const RenderShape* rshape, const Matrix* transform, float length)
 {
     const PathCommand* cmds = rshape->path.cmds.data;
     auto cmdCnt = rshape->path.cmds.count;
-
     const Point* pts = rshape->path.pts.data;
     auto ptsCnt = rshape->path.pts.count;
 
@@ -217,14 +215,52 @@ static SwOutline* _genDashOutline(const RenderShape* rshape, const Matrix* trans
     if (cmdCnt == 0 || ptsCnt == 0) return nullptr;
 
     SwDashStroke dash;
+    auto offset = 0.0f;
+    auto trimmed = false;
 
-    float offset;
     dash.cnt = rshape->strokeDash((const float**)&dash.pattern, &offset);
-    if (dash.cnt == 0) return nullptr;
 
+    //dash by trimming.
+    if (length > 0.0f && dash.cnt == 0) {
+        auto begin = length * rshape->stroke->trim.begin;
+        auto end = length * rshape->stroke->trim.end;
+
+        //TODO: mix trimming + dash style
+
+        //default
+        if (end > begin) {
+            if (begin > 0) dash.cnt += 4;
+            else dash.cnt += 2;
+        //looping
+        } else dash.cnt += 3;
+
+        dash.pattern = (float*)malloc(sizeof(float) * dash.cnt);
+
+        if (dash.cnt == 2) {
+            dash.pattern[0] = end - begin;
+            dash.pattern[1] = length - (end - begin);
+        } else if (dash.cnt == 3) {
+            dash.pattern[0] = end;
+            dash.pattern[1] = (begin - end);
+            dash.pattern[2] = length - begin;
+        } else {
+            dash.pattern[0] = 0;     //zero dash to start with a space.
+            dash.pattern[1] = begin;
+            dash.pattern[2] = end - begin;
+            dash.pattern[3] = length - (end - begin);
+        }
+
+        trimmed = true;
+    //just a dasy style.
+    } else {
+
+        if (dash.cnt == 0) return nullptr;
+    }
+
+    //offset?
     auto patternLength = 0.0f;
     uint32_t offIdx = 0;
-    if (fabsf(offset) > FLT_EPSILON) {
+    if (!mathZero(offset)) {
         for (size_t i = 0; i < dash.cnt; ++i) patternLength += dash.pattern[i];
         bool isOdd = dash.cnt % 2;
         if (isOdd) patternLength *= 2;
@@ -246,10 +282,9 @@ static SwOutline* _genDashOutline(const RenderShape* rshape, const Matrix* trans
     auto closeCnt = 0;
     auto moveCnt = 0;
 
-    for (uint32_t i = 0; i < cmdCnt; ++i) {
-        auto cmd = *(cmds + i);
-        if (cmd == PathCommand::Close) ++closeCnt;
-        else if (cmd == PathCommand::MoveTo) ++moveCnt;
+    for (auto cmd = rshape->path.cmds.data; cmd < rshape->path.cmds.end(); ++cmd) {
+        if (*cmd == PathCommand::Close) ++closeCnt;
+        else if (*cmd == PathCommand::MoveTo) ++moveCnt;
     }
 
     //No idea exact count.... Reserve Approximitely 20x...
@@ -289,7 +324,52 @@ static SwOutline* _genDashOutline(const RenderShape* rshape, const Matrix* trans
 
     _outlineEnd(*dash.outline);
 
+    if (trimmed) free(dash.pattern);
+
     return dash.outline;
+}
+
+
+static float _outlineLength(const RenderShape* rshape)
+{
+    const PathCommand* cmds = rshape->path.cmds.data;
+    auto cmdCnt = rshape->path.cmds.count;
+    const Point* pts = rshape->path.pts.data;
+    auto ptsCnt = rshape->path.pts.count;
+
+    //No actual shape data
+    if (cmdCnt == 0 || ptsCnt == 0) return 0.0f;
+
+    const Point* close = nullptr;
+    auto length = 0.0f;
+
+    //Compute the whole length
+    while (cmdCnt-- > 0) {
+        switch (*cmds) {
+            case PathCommand::Close: {
+                length += mathLength(pts - 1, close);
+                ++pts;
+                break;
+            }
+            case PathCommand::MoveTo: {
+                close = pts;
+                ++pts;
+                break;
+            }
+            case PathCommand::LineTo: {
+                length += mathLength(pts - 1, pts);
+                ++pts;
+                break;
+            }
+            case PathCommand::CubicTo: {
+                length += bezLength({*(pts - 1), *pts, *(pts + 1), *(pts + 2)});
+                pts += 3;
+                break;
+            }
+        }
+        ++cmds;
+    }
+    return length;
 }
 
 
@@ -316,7 +396,6 @@ static bool _genOutline(SwShape* shape, const RenderShape* rshape, const Matrix*
 {
     const PathCommand* cmds = rshape->path.cmds.data;
     auto cmdCnt = rshape->path.cmds.count;
-
     const Point* pts = rshape->path.pts.data;
     auto ptsCnt = rshape->path.pts.count;
 
@@ -327,10 +406,9 @@ static bool _genOutline(SwShape* shape, const RenderShape* rshape, const Matrix*
     auto moveCnt = 0;
     auto closeCnt = 0;
 
-    for (uint32_t i = 0; i < cmdCnt; ++i) {
-        auto cmd = *(cmds + i);
-        if (cmd == PathCommand::Close) ++closeCnt;
-        else if (cmd == PathCommand::MoveTo) ++moveCnt;
+    for (auto cmd = rshape->path.cmds.data; cmd < rshape->path.cmds.end(); ++cmd) {
+        if (*cmd == PathCommand::Close) ++closeCnt;
+        else if (*cmd == PathCommand::MoveTo) ++moveCnt;
     }
 
     shape->outline = mpoolReqOutline(mpool, tid);
@@ -484,12 +562,14 @@ bool shapeGenStrokeRle(SwShape* shape, const RenderShape* rshape, const Matrix* 
     bool freeOutline = false;
     bool ret = true;
 
-    //Dash Style Stroke
-    if (rshape->strokeDash(nullptr, nullptr) > 0) {
-        shapeOutline = _genDashOutline(rshape, transform);
+    auto length = rshape->strokeTrim() ? _outlineLength(rshape) : 0.0f;
+
+    //Dash style (+trimming)
+    if (rshape->stroke->dashCnt > 0 || length > 0) {
+        shapeOutline = _genDashOutline(rshape, transform, length);
         if (!shapeOutline) return false;
         freeOutline = true;
-    //Normal Style stroke
+    //Normal style
     } else {
         if (!shape->outline) {
             if (!_genOutline(shape, rshape, transform, mpool, tid, false)) return false;

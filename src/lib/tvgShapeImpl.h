@@ -199,10 +199,24 @@ struct Shape::Impl
 
     bool strokeWidth(float width)
     {
-        //TODO: Size Exception?
-
         if (!rs.stroke) rs.stroke = new RenderStroke();
         rs.stroke->width = width;
+        flag |= RenderUpdateFlag::Stroke;
+
+        return true;
+    }
+
+    bool strokeTrim(float begin, float end)
+    {
+        if (!rs.stroke) {
+            if (begin == 0.0f && end == 1.0f) return true;
+            rs.stroke = new RenderStroke();
+        }
+
+        if (mathEqual(rs.stroke->trim.begin, begin) && mathEqual(rs.stroke->trim.end, end)) return true;
+
+        rs.stroke->trim.begin = begin;
+        rs.stroke->trim.end = end;
         flag |= RenderUpdateFlag::Stroke;
 
         return true;

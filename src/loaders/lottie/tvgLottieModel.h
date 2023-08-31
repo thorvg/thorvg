@@ -78,7 +78,6 @@ struct LottieStroke
 };
 
 
-
 struct LottieGradient
 {
     bool dynamic()
@@ -130,7 +129,7 @@ struct LottieObject
         Ellipse,
         Path,
         Polystar,
-        Trim,
+        Trimpath,
         Repeater,
         RoundedCorner,
         Image
@@ -148,10 +147,29 @@ struct LottieObject
 };
 
 
+struct LottieTrimpath : LottieObject
+{
+    enum Type : uint8_t { Simultaneous = 1, Individual = 2 };
+
+    void prepare()
+    {
+        LottieObject::type = LottieObject::Trimpath;
+        if (start.frames || end.frames || offset.frames) statical = false;
+    }
+
+    void segment(int32_t frameNo, float& start, float& end);
+
+    LottieFloat start = 0.0f;
+    LottieFloat end = 0.0f;
+    LottieFloat offset = 0.0f;
+    Type type = Simultaneous;
+};
+
+
 struct LottieShape : LottieObject
 {
     virtual ~LottieShape() {}
-    bool direction;   //path direction (clock wise vs coutner clock wise)
+    bool cw = true;   //path direction (clock wise vs coutner clock wise)
 };
 
 
