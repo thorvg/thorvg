@@ -33,6 +33,49 @@
 /* External Class Implementation                                        */
 /************************************************************************/
 
+void LottieTrimpath::segment(int32_t frameNo, float& start, float& end)
+{
+    auto s = this->start(frameNo) * 0.01f;
+    auto e = this->end(frameNo) * 0.01f;
+    auto o = fmod(this->offset(frameNo), 360.0f) / 360.0f;  //0 ~ 1
+
+    auto diff = fabs(s - e);
+    if (mathZero(diff)) {
+        start = 0.0f;
+        end = 0.0f;
+        return;
+    }
+    if (mathEqual(diff, 1.0f) || mathEqual(diff, 2.0f)) {
+        start = 0.0f;
+        end = 1.0f;
+        return;
+    }
+
+    s += o;
+    e += o;
+
+    auto loop = true;
+
+    //no loop
+    if (s > 1.0f && e > 1.0f) loop = false;
+    if (s < 0.0f && e < 0.0f) loop = false;
+    if (s >= 0.0f && s <= 1.0f && e >= 0.0f  && e <= 1.0f) loop = false;
+
+    if (s > 1.0f) s -= 1.0f;
+    if (s < 0.0f) s += 1.0f;
+    if (e > 1.0f) e -= 1.0f;
+    if (e < 0.0f) e += 1.0f;
+
+    if (loop) {
+        start = s > e ? s : e;
+        end = s < e ? s : e;
+    } else {
+        start = s < e ? s : e;
+        end = s > e ? s : e;
+    }
+}
+
+
 Fill* LottieGradient::fill(int32_t frameNo)
 {
     Fill* fill = nullptr;

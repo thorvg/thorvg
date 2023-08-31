@@ -258,7 +258,7 @@ static void _updateStar(LottieGroup* parent, LottiePolyStar* star, Matrix* trans
     auto partialPointAmount = ptsCnt - floorf(ptsCnt);
     auto longSegment = false;
     auto numPoints = size_t(ceilf(ptsCnt) * 2);
-    auto direction = star->direction ? 1.0f : -1.0f;
+    auto direction = star->cw ? 1.0f : -1.0f;
     auto hasRoundness = false;
 
     float x, y;
@@ -361,7 +361,7 @@ static void _updatePolygon(LottieGroup* parent, LottiePolyStar* star, Matrix* tr
 
     auto angle = -90.0f * K_PI / 180.0f;
     auto anglePerPoint = 2.0f * K_PI / float(ptsCnt);
-    auto direction = star->direction ? 1.0f : -1.0f;
+    auto direction = star->cw ? 1.0f : -1.0f;
     auto hasRoundness = false;
     auto x = radius * cosf(angle);
     auto y = radius * sinf(angle);
@@ -481,6 +481,27 @@ static float _updateRoundedCorner(LottieRoundedCorner* roundedCorner, int32_t fr
 }
 
 
+static Shape* _updateTrimpath(LottieGroup* parent, LottieTrimpath* trimpath, int32_t frameNo, Shape* baseShape)
+{
+    float begin, end;
+    trimpath->segment(frameNo, begin, end);
+
+    if (trimpath->type == LottieTrimpath::Simultaneous) {
+        if (P(baseShape)->rs.stroke) {
+            auto pbegin = P(baseShape)->rs.stroke->trim.begin;
+            auto pend = P(baseShape)->rs.stroke->trim.end;
+            auto length = fabsf(pend - pbegin);
+            begin = (length * begin) + pbegin;
+            end = (length * end) + pbegin;
+        }
+    }
+
+    P(baseShape)->strokeTrim(begin, end);
+
+    return nullptr;
+}
+
+
 static void _updateChildren(LottieGroup* parent, int32_t frameNo, Shape* baseShape, float roundedCorner)
 {
     if (parent->children.empty()) return;
@@ -536,6 +557,10 @@ static void _updateChildren(LottieGroup* parent, int32_t frameNo, Shape* baseSha
             }
             case LottieObject::RoundedCorner: {
                 roundedCorner = _updateRoundedCorner(static_cast<LottieRoundedCorner*>(*child), frameNo, roundedCorner);
+                break;
+            }
+            case LottieObject::Trimpath: {
+                mergingShape = _updateTrimpath(parent, static_cast<LottieTrimpath*>(*child), frameNo, baseShape);
                 break;
             }
             case LottieObject::Image: {

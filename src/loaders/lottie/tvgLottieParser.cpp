@@ -183,7 +183,8 @@ void LottieParser::getValue(PathSet& path)
     outCmds.data = path.cmds;
     outCmds.reserved = path.cmdsCnt;
 
-    outPts.reserve(pts.count * 3 + 1);
+    size_t extra = closed ? 3 : 0;
+    outPts.reserve(pts.count * 3 + 1 + extra);
     outCmds.reserve(pts.count + 2);
 
     outCmds.push(PathCommand::MoveTo);
@@ -463,7 +464,7 @@ LottieRect* LottieParser::parseRect()
     if (!rect) return nullptr;
 
     while (auto key = nextObjectKey()) {
-        if (!strcmp(key, "d")) rect->direction = getInt();
+        if (!strcmp(key, "d")) rect->cw = getInt();
         else if (!strcmp(key, "s")) parseProperty(rect->size);
         else if (!strcmp(key, "p")) parseProperty(rect->position);
         else if (!strcmp(key, "r")) parseProperty(rect->radius);
@@ -485,7 +486,7 @@ LottieEllipse* LottieParser::parseEllipse()
         if (!strcmp(key, "nm")) ellipse->name = getStringCopy();
         else if (!strcmp(key, "p")) parseProperty(ellipse->position);
         else if (!strcmp(key, "s")) parseProperty(ellipse->size);
-        else if (!strcmp(key, "d")) ellipse->direction = getInt();
+        else if (!strcmp(key, "d")) ellipse->cw = getInt();
         else if (!strcmp(key, "hd")) ellipse->hidden = getBool();
         else skip(key);
     }
@@ -565,7 +566,6 @@ void LottieParser::parseStrokeDash(LottieStroke* stroke)
                 if (!strcmp("o", style)) idx = 0;           //offset
                 else if (!strcmp("d", style)) idx = 1;      //dash
                 else if (!strcmp("g", style)) idx = 2;      //gap
-                else TVGERR("LOTTIE", "Unsupported Dash Style");
             } else if (!strcmp(key, "v")) {
                 parseProperty(stroke->dash(idx));
             } else skip(key);
@@ -625,7 +625,7 @@ LottiePath* LottieParser::parsePath()
     while (auto key = nextObjectKey()) {
         if (!strcmp(key, "nm")) path->name = getStringCopy();
         else if (!strcmp(key, "ks")) getPathSet(path->pathset);
-        else if (!strcmp(key, "d")) path->direction = getInt();
+        else if (!strcmp(key, "d")) path->cw = getInt();
         else if (!strcmp(key, "hd")) path->hidden = getBool();
         else skip(key);
     }
@@ -649,7 +649,7 @@ LottiePolyStar* LottieParser::parsePolyStar()
         else if (!strcmp(key, "os")) parseProperty(star->outerRoundness);
         else if (!strcmp(key, "r")) parseProperty(star->rotation);
         else if (!strcmp(key, "sy")) star->type = (LottiePolyStar::Type) getInt();
-        else if (!strcmp(key, "d")) star->direction = getInt();
+        else if (!strcmp(key, "d")) star->cw = getInt();
         else if (!strcmp(key, "hd")) star->hidden = getBool();
         else skip(key);
     }
@@ -740,6 +740,27 @@ LottieGradientStroke* LottieParser::parseGradientStroke()
 }
 
 
+LottieTrimpath* LottieParser::parseTrimpath()
+{
+    auto trim = new LottieTrimpath;
+    if (!trim) return nullptr;
+
+    while (auto key = nextObjectKey()) {
+        if (!strcmp(key, "nm")) trim->name = getStringCopy();
+        else if (!strcmp(key, "s")) parseProperty(trim->start);
+        else if (!strcmp(key, "e")) parseProperty(trim->end);
+        else if (!strcmp(key, "o")) parseProperty(trim->offset);
+        else if (!strcmp(key, "m")) trim->type = static_cast<LottieTrimpath::Type>(getInt());
+        else if (!strcmp(key, "hd")) trim->hidden = getBool();
+        else skip(key);
+    }
+
+    trim->prepare();
+
+    return trim;
+}
+
+
 LottieObject* LottieParser::parseObject()
 {
     auto type = getString();
@@ -756,7 +777,7 @@ LottieObject* LottieParser::parseObject()
     else if (!strcmp(type, "rd")) return parseRoundedCorner();
     else if (!strcmp(type, "gf")) return parseGradientFill();
     else if (!strcmp(type, "gs")) return parseGradientStroke();
-    else if (!strcmp(type, "tm")) TVGERR("LOTTIE", "Trimpath(tm) is not supported");
+    else if (!strcmp(type, "tm")) return parseTrimpath();
     else if (!strcmp(type, "rp")) TVGERR("LOTTIE", "Repeater(rp) is not supported yet");
     else if (!strcmp(type, "mm")) TVGERR("LOTTIE", "MergePath(mm) is not supported yet");
     else TVGERR("LOTTIE", "Unkown object type(%s) is given", type);
@@ -985,7 +1006,6 @@ LottieLayer* LottieParser::parseLayer()
 
     //Not a valid layer
     if (!layer->transform) {
-        TVGERR("LOTTIE", "Invalid Layer data, id(%d), transform(%p)", layer->id, layer->transform);
         delete(layer);
         return nullptr;
     }
