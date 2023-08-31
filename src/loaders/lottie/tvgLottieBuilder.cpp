@@ -31,7 +31,7 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-static void _updateChildren(LottieGroup* parent, int32_t frameNo, Shape* baseShape);
+static void _updateChildren(LottieGroup* parent, int32_t frameNo, Shape* baseShape, float roundedCorner);
 static void _updateLayer(LottieLayer* root, LottieLayer* layer, int32_t frameNo);
 static bool _buildPrecomp(LottieComposition* comp, LottieGroup* parent);
 
@@ -108,7 +108,7 @@ static Shape* _updateTransform(Paint* paint, LottieTransform* transform, int32_t
 }
 
 
-static Shape* _updateGroup(LottieGroup* parent, LottieGroup* group, int32_t frameNo, Shape* baseShape)
+static Shape* _updateGroup(LottieGroup* parent, LottieGroup* group, int32_t frameNo, Shape* baseShape, float roundedCorner)
 {
     //Prepare render data
     group->scene = parent->scene;
@@ -127,7 +127,7 @@ static Shape* _updateGroup(LottieGroup* parent, LottieGroup* group, int32_t fram
 #endif
     }
 
-    _updateChildren(group, frameNo, baseShape);
+    _updateChildren(group, frameNo, baseShape, roundedCorner);
     return nullptr;
 }
 
@@ -185,21 +185,23 @@ static Shape* _updateStroke(LottieGradientStroke* stroke, int32_t frameNo, Shape
 }
 
 
-static Shape* _updateRect(LottieGroup* parent, LottieRect* rect, int32_t frameNo, Shape* baseShape, Shape* mergingShape)
+static Shape* _updateRect(LottieGroup* parent, LottieRect* rect, int32_t frameNo, Shape* baseShape, Shape* mergingShape, float roundedCorner)
 {
     auto position = rect->position(frameNo);
     auto size = rect->size(frameNo);
-    auto roundness = rect->roundness(frameNo);
-    if (roundness != 0) {
-        if (roundness > size.x * 0.5f)  roundness = size.x * 0.5f;
-        if (roundness > size.y * 0.5f)  roundness = size.y * 0.5f;
+    auto round = rect->radius(frameNo);
+    if (roundedCorner > round) round = roundedCorner;
+
+    if (round > 0.0f) {
+        if (round > size.x * 0.5f)  round = size.x * 0.5f;
+        if (round > size.y * 0.5f)  round = size.y * 0.5f;
     }
     if (!mergingShape) {
         auto newShape = cast<Shape>(baseShape->duplicate());
         mergingShape = newShape.get();
         parent->scene->push(std::move(newShape));
     }
-    mergingShape->appendRect(position.x - size.x * 0.5f, position.y - size.y * 0.5f, size.x, size.y, roundness, roundness);
+    mergingShape->appendRect(position.x - size.x * 0.5f, position.y - size.y * 0.5f, size.x, size.y, round, round);
     return mergingShape;
 }
 
@@ -218,7 +220,7 @@ static Shape* _updateEllipse(LottieGroup* parent, LottieEllipse* ellipse, int32_
 }
 
 
-static Shape* _updatePath(LottieGroup* parent, LottiePath* path, int32_t frameNo, Shape* baseShape, Shape* mergingShape)
+static Shape* _updatePath(LottieGroup* parent, LottiePath* path, int32_t frameNo, Shape* baseShape, Shape* mergingShape, float roundedCorner)
 {
     if (!mergingShape) {
         auto newShape = cast<Shape>(baseShape->duplicate());
@@ -228,6 +230,12 @@ static Shape* _updatePath(LottieGroup* parent, LottiePath* path, int32_t frameNo
     if (path->pathset(frameNo, P(mergingShape)->rs.path.cmds, P(mergingShape)->rs.path.pts)) {
         P(mergingShape)->update(RenderUpdateFlag::Path);
     }
+
+    if (roundedCorner > 1.0f && P(mergingShape)->rs.stroke) {
+        TVGERR("LOTTIE", "FIXME: Path roundesss should be applied properly!");
+        P(mergingShape)->rs.stroke->join = StrokeJoin::Round;
+    }
+
     return mergingShape;
 }
 
@@ -465,7 +473,15 @@ static void _updateImage(LottieGroup* parent, LottieImage* image, int32_t frameN
 }
 
 
-static void _updateChildren(LottieGroup* parent, int32_t frameNo, Shape* baseShape)
+static float _updateRoundedCorner(LottieRoundedCorner* roundedCorner, int32_t frameNo, float baseValue)
+{
+    auto round = roundedCorner->radius(frameNo);
+    if (baseValue > round) round = baseValue;
+    return round;
+}
+
+
+static void _updateChildren(LottieGroup* parent, int32_t frameNo, Shape* baseShape, float roundedCorner)
 {
     if (parent->children.empty()) return;
 
@@ -479,7 +495,7 @@ static void _updateChildren(LottieGroup* parent, int32_t frameNo, Shape* baseSha
     for (auto child = parent->children.end() - 1; child >= parent->children.data; --child) {
         switch ((*child)->type) {
             case LottieObject::Group: {
-                mergingShape = _updateGroup(parent, static_cast<LottieGroup*>(*child), frameNo, baseShape);
+                mergingShape = _updateGroup(parent, static_cast<LottieGroup*>(*child), frameNo, baseShape, roundedCorner);
                 break;
             }
             case LottieObject::Transform: {
@@ -503,7 +519,7 @@ static void _updateChildren(LottieGroup* parent, int32_t frameNo, Shape* baseSha
                 break;
             }
             case LottieObject::Rect: {
-                mergingShape = _updateRect(parent, static_cast<LottieRect*>(*child), frameNo, baseShape, mergingShape);
+                mergingShape = _updateRect(parent, static_cast<LottieRect*>(*child), frameNo, baseShape, mergingShape, roundedCorner);
                 break;
             }
             case LottieObject::Ellipse: {
@@ -511,11 +527,15 @@ static void _updateChildren(LottieGroup* parent, int32_t frameNo, Shape* baseSha
                 break;
             }
             case LottieObject::Path: {
-                mergingShape = _updatePath(parent, static_cast<LottiePath*>(*child), frameNo, baseShape, mergingShape);
+                mergingShape = _updatePath(parent, static_cast<LottiePath*>(*child), frameNo, baseShape, mergingShape, roundedCorner);
                 break;
             }
             case LottieObject::Polystar: {
                 mergingShape = _updatePolystar(parent, static_cast<LottiePolyStar*>(*child), frameNo, baseShape, mergingShape);
+                break;
+            }
+            case LottieObject::RoundedCorner: {
+                roundedCorner = _updateRoundedCorner(static_cast<LottieRoundedCorner*>(*child), frameNo, roundedCorner);
                 break;
             }
             case LottieObject::Image: {
@@ -615,7 +635,7 @@ static void _updateLayer(LottieLayer* root, LottieLayer* layer, int32_t frameNo)
             break;
         }
         default: {
-            _updateChildren(layer, rFrameNo, nullptr);
+            _updateChildren(layer, rFrameNo, nullptr, 0);
             break;
         }
     }
