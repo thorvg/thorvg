@@ -585,8 +585,9 @@ static void _updateMaskings(LottieLayer* layer, int32_t frameNo)
         if (mask->pathset(frameNo, P(shape)->rs.path.cmds, P(shape)->rs.path.pts)) {
             P(shape)->update(RenderUpdateFlag::Path);
         }
+        auto method = mask->method;
         if (mergingMask) {
-            auto method = mask->method;
+            //false of false is true. invert.
             if (method == CompositeMethod::SubtractMask && pmethod == method) {
                 method = CompositeMethod::AddMask;
             } else if (pmethod == CompositeMethod::DifferenceMask && pmethod == method) {
@@ -594,7 +595,11 @@ static void _updateMaskings(LottieLayer* layer, int32_t frameNo)
             }
             mergingMask->composite(cast<Shape>(shape), method);
         } else {
-            layer->scene->composite(cast<Shape>(shape), CompositeMethod::AlphaMask);
+            if (method == CompositeMethod::SubtractMask) method = CompositeMethod::InvAlphaMask;
+            else if (method == CompositeMethod::AddMask) method = CompositeMethod::AlphaMask;
+            else if (method == CompositeMethod::IntersectMask) method = CompositeMethod::AlphaMask;
+            else if (method == CompositeMethod::DifferenceMask) method = CompositeMethod::AlphaMask;   //does this correct?
+            layer->scene->composite(cast<Shape>(shape), method);
         }
         pmethod = mask->method;
         mergingMask = shape;
