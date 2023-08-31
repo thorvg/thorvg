@@ -42,7 +42,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     auto bg = tvg::Shape::gen();
     bg->appendRect(0, 0, 625, HEIGHT);
     bg->fill(50, 50, 50);
-    canvas->push(move(bg));
+    canvas->push(std::move(bg));
 
     {
         //Shape + Shape Mask Add

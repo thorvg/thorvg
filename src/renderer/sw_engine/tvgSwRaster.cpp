@@ -166,13 +166,6 @@ static inline bool _matting(const SwSurface* surface)
 }
 
 
-static inline bool _masking(const SwSurface* surface)
-{
-    if ((int)surface->compositor->method >= (int)CompositeMethod::AddMask) return true;
-    else return false;
-}
-
-
 static inline uint8_t _opMaskAdd(uint8_t s, uint8_t d, uint8_t a)
 {
     return s + MULTIPLY(d, a);

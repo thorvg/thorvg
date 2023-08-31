@@ -83,6 +83,7 @@ private:
     LottieGradientFill* parseGradientFill();
     LottieLayer* parseLayers();
     LottieMask* parseMask();
+    LottieTrimpath* parseTrimpath();
 
     void parseObject(LottieGroup* parent);
     void parseShapes(LottieLayer* layer);

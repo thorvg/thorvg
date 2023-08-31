@@ -143,6 +143,11 @@ struct RenderStroke
     float miterlimit = 4.0f;
     bool strokeFirst = false;
 
+    struct {
+        float begin = 0.0f;
+        float end = 1.0f;
+    } trim;
+
     ~RenderStroke()
     {
         free(dashPattern);
@@ -181,6 +186,14 @@ struct RenderShape
     {
         if (!stroke) return 0;
         return stroke->width;
+    }
+
+    bool strokeTrim() const
+    {
+        if (!stroke) return false;
+        if (stroke->trim.begin == 0.0f && stroke->trim.end == 1.0f) return false;
+        if (stroke->trim.begin == 1.0f && stroke->trim.end == 0.0f) return false;
+        return true;
     }
 
     bool strokeColor(uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a) const
