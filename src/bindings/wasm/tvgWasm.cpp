@@ -93,11 +93,15 @@ public:
             return false;
         }
 
+        updated = true;
+
         return true;
     }
 
     bool update()
     {
+        if (!updated) return true;
+
         errorMsg = NoError;
 
         if (canvas->update() != Result::Success) {
@@ -114,12 +118,16 @@ public:
 
         if (!canvas || !animation) return val(typed_memory_view<uint8_t>(0, nullptr));
 
+        if (!updated) return val(typed_memory_view(width * height * 4, buffer));
+
         if (canvas->draw() != Result::Success) {
             errorMsg = "draw() fail";
             return val(typed_memory_view<uint8_t>(0, nullptr));
         }
 
         canvas->sync();
+
+        updated = false;
 
         return val(typed_memory_view(width * height * 4, buffer));
     }
@@ -144,10 +152,14 @@ public:
     bool frame(uint32_t no)
     {
         if (!canvas || !animation) return false;
+        if (animation->curFrame() == no) return true;
         if (animation->frame(no) != Result::Success) {
             errorMsg = "frame() fail";
             return false;
         }
+
+        updated = true;
+
         return true;
     }
 
@@ -175,6 +187,8 @@ public:
         }
         animation->picture()->scale(scale);
         animation->picture()->translate(shiftX, shiftY);
+
+        updated = true;
     }
 
     bool save(bool compress)
@@ -340,7 +354,8 @@ private:
     uint32_t               width = 0;
     uint32_t               height = 0;
     float                  bounds[4];
-    float                  psize[2];       //picture size
+    float                  psize[2];         //picture size
+    bool                   updated = false;
 };
 
 
