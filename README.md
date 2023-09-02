@@ -46,9 +46,9 @@ The task scheduler has been meticulously crafted to conceal complexity, streamli
 ## Contents
 - [ThorVG](#thorvg)
   - [Installation](#installation)
-    - [Meson Build](#meson-build)
-    - [Using with Visual Studio](#using-with-visual-studio)
-    - [vcpkg](#vcpkg)
+    - [Build and Install](#build-and-install)
+    - [Build with Visual Studio](#build-with-visual-studio)
+    - [Install with vcpkg](#install-with-vcpkg)
   - [Quick Start](#quick-start)
   - [SVG](#svg)
   - [Lottie](#lottie)
@@ -70,27 +70,32 @@ The task scheduler has been meticulously crafted to conceal complexity, streamli
 [](#contents)
 <br />
 ## Installation
-You can install ThorVG from either Meson build or vcpkg package manager.
+It explains how to set up the environment for building ThorVG.<br />
 <br />
-### Meson Build
-ThorVG supports [meson](https://mesonbuild.com/) build system. Install [meson](http://mesonbuild.com/Getting-meson.html) and [ninja](https://ninja-build.org/) if not already installed.
+### Build and Install
+ThorVG supports [meson](https://mesonbuild.com/) build system. Install [meson](http://mesonbuild.com/Getting-meson.html) and [ninja](https://ninja-build.org/) if you don't have them already.
 
-Run meson to configure ThorVG:
+Run meson to configure ThorVG in the thorvg root folder.
 ```
-meson build
+meson builddir
 ```
 Run ninja to build & install ThorVG:
 ```
-ninja -C build install
+ninja -C builddir install
 ```
 
-### Using with Visual Studio
+Regardless of the installation, all build results (symbols, executable) are generated in the builddir folder in thorvg. Some results such as examples won't be installed, you can check More examples section to see how to change it. <br/>
+​<br/>
+Note that some systems might include ThorVG package as a default component. In that case, you can skip this manual installation.</br>
+</br>
+
+### Build with Visual Studio
 If you want to create Visual Studio project files, use the command --backend=vs. The resulting solution file (thorvg.sln) will be located in the build folder.
 ```
 meson build --backend=vs
 ```
 
-### vcpkg
+### Install with vcpkg
 You can download and install pre-packaged ThorVG using the [vcpkg](https://vcpkg.io/en/index.html) package manager.
 
 Clone the vcpkg repo. Make sure you are in the directory you want the tool installed to before doing this.
