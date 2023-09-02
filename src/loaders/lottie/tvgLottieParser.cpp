@@ -384,7 +384,7 @@ void LottieParser::parseKeyFrame(T& prop)
     Point inTangent, outTangent;
     const char* interpolatorKey = nullptr;
     auto& frame = prop.newFrame();
-    bool interpolator = false;
+    auto interpolator = false;
 
     enterObject();
 
@@ -415,6 +415,8 @@ void LottieParser::parseKeyFrame(T& prop)
             getValue(frame2.value);
         } else if (parseTangent(key, frame)) {
             continue;
+        } else if (!strcmp(key, "h")) {
+            frame.hold = getInt();
         } else skip(key);
     }
 
