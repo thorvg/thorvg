@@ -242,7 +242,10 @@ struct Shape::Impl
 
     bool strokeMiterlimit(float miterlimit)
     {
-        if (!rs.stroke) rs.stroke = new RenderStroke();
+        if (!rs.stroke) {
+            if (miterlimit == 4.0f) return true;
+            rs.stroke = new RenderStroke();
+        }
         rs.stroke->miterlimit = miterlimit;
         flag |= RenderUpdateFlag::Stroke;
 

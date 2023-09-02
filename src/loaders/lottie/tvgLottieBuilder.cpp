@@ -138,6 +138,7 @@ static Shape* _updateFill(LottieSolidFill* fill, int32_t frameNo, Shape* baseSha
     auto color = fill->color(frameNo);
     baseShape->fill(color.rgb[0], color.rgb[1], color.rgb[2], fill->opacity(frameNo));
     baseShape->fill(fill->rule);
+    if (P(baseShape)->rs.strokeWidth() > 0) P(baseShape)->strokeFirst(true);
     return nullptr;
 }
 
@@ -145,6 +146,7 @@ static Shape* _updateFill(LottieSolidFill* fill, int32_t frameNo, Shape* baseSha
 static Shape* _updateStroke(LottieSolidStroke* stroke, int32_t frameNo, Shape* baseShape)
 {
     if (stroke->disabled) return nullptr;
+    P(baseShape)->strokeFirst(false);
     baseShape->stroke(stroke->width(frameNo));
     auto color = stroke->color(frameNo);
     baseShape->stroke(color.rgb[0], color.rgb[1], color.rgb[2], stroke->opacity(frameNo));
@@ -169,12 +171,14 @@ static Shape* _updateFill(LottieGradientFill* fill, int32_t frameNo, Shape* base
     //TODO: reuse the fill instance?
     baseShape->fill(unique_ptr<Fill>(fill->fill(frameNo)));
     baseShape->fill(fill->rule);
+    if (P(baseShape)->rs.strokeWidth() > 0) P(baseShape)->strokeFirst(true);
     return nullptr;
 }
 
 
 static Shape* _updateStroke(LottieGradientStroke* stroke, int32_t frameNo, Shape* baseShape)
 {
+    P(baseShape)->strokeFirst(false);
     baseShape->opacity(stroke->opacity(frameNo));
     baseShape->stroke(stroke->width(frameNo));
     baseShape->stroke(unique_ptr<Fill>(stroke->fill(frameNo)));
@@ -502,6 +506,56 @@ static Shape* _updateTrimpath(LottieGroup* parent, LottieTrimpath* trimpath, int
 }
 
 
+//stroking can be overlapped like this (stroke - shape - stroke)
+//this function branches out the shape drawing case if stroking meets another stroking
+static void _strokingShape(LottieGroup* parent, LottieObject** child, int32_t frameNo, Shape* baseShape, bool roundedCorner)
+{
+    if (baseShape->strokeWidth() == 0 || !P(baseShape)->rs.stroke->strokeFirst) return;
+
+    auto mergingShape = cast<Shape>(baseShape->duplicate());
+    mergingShape->fill(0, 0, 0, 0);
+
+    auto valid = false;
+
+    for (; child >= parent->children.data; --child) {
+        switch((*child)->type) {
+            case LottieObject::Group:
+            case LottieObject::SolidStroke:
+            case LottieObject::GradientStroke: {
+                TVGERR("LOTTIE", "FIXEME: Overlapped stroking group?");
+                return;
+            }
+            case LottieObject::Transform: {
+                _updateTransform(mergingShape.get(), static_cast<LottieTransform*>(*child), frameNo);
+                break;
+            }
+            case LottieObject::Rect: {
+                _updateRect(parent, static_cast<LottieRect*>(*child), frameNo, baseShape, mergingShape.get(), roundedCorner);
+                valid = true;
+                break;
+            }
+            case LottieObject::Ellipse: {
+                _updateEllipse(parent, static_cast<LottieEllipse*>(*child), frameNo, baseShape, mergingShape.get());
+                valid = true;
+                break;
+            }
+            case LottieObject::Path: {
+                _updatePath(parent, static_cast<LottiePath*>(*child), frameNo, baseShape, mergingShape.get(), roundedCorner);
+                valid = true;
+                break;
+            }
+            case LottieObject::Polystar: {
+                _updatePolystar(parent, static_cast<LottiePolyStar*>(*child), frameNo, baseShape, mergingShape.get());
+                valid = true;
+                break;
+            }
+            default: break;
+        }
+    }
+    if (valid) parent->scene->push(std::move(mergingShape));
+}
+
+
 static void _updateChildren(LottieGroup* parent, int32_t frameNo, Shape* baseShape, float roundedCorner)
 {
     if (parent->children.empty()) return;
@@ -528,6 +582,7 @@ static void _updateChildren(LottieGroup* parent, int32_t frameNo, Shape* baseSha
                 break;
             }
             case LottieObject::SolidStroke: {
+                _strokingShape(parent, child - 1, frameNo, baseShape, roundedCorner);
                 mergingShape = _updateStroke(static_cast<LottieSolidStroke*>(*child), frameNo, baseShape);
                 break;
             }
@@ -536,6 +591,7 @@ static void _updateChildren(LottieGroup* parent, int32_t frameNo, Shape* baseSha
                 break;
             }
             case LottieObject::GradientStroke: {
+                _strokingShape(parent, child - 1, frameNo, baseShape, roundedCorner);
                 mergingShape = _updateStroke(static_cast<LottieGradientStroke*>(*child), frameNo, baseShape);
                 break;
             }
