@@ -94,11 +94,17 @@ struct LottieScalarFrame
     T value;                    //keyframe value
     int32_t no;                 //frame number
     LottieInterpolator* interpolator;
+    bool hold = false;           //do not interpolate.
 
     T interpolate(LottieScalarFrame<T>* next, int32_t frameNo)
     {
         auto t = float(frameNo - no) / float(next->no - no);
         if (interpolator) t = interpolator->progress(t);
+
+        if (hold) {
+            if (t < 1.0f) return value;
+            else return next->value;
+        }
         return mathLerp(value, next->value, t);
     }
 };
@@ -113,11 +119,17 @@ struct LottieVectorFrame
     T outTangent, inTangent;
     float length;
     bool hasTangent = false;
+    bool hold = false;
 
     T interpolate(LottieVectorFrame* next, int32_t frameNo)
     {
         auto t = float(frameNo - no) / float(next->no - no);
         if (interpolator) t = interpolator->progress(t);
+
+        if (hold) {
+            if (t < 1.0f) return value;
+            else return next->value;
+        }
 
         if (hasTangent) {
             Bezier bz = {value, value + outTangent, next->value + inTangent, next->value};
