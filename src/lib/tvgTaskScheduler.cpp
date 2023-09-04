@@ -111,6 +111,7 @@ struct TaskSchedulerImpl
     TaskSchedulerImpl(unsigned threadCnt) : threadCnt(threadCnt), taskQueues(threadCnt)
     {
         tid = this_thread::get_id();
+        threads.reserve(threadCnt);
 
         for (unsigned i = 0; i < threadCnt; ++i) {
             threads.emplace_back([&, i] { run(i); });
