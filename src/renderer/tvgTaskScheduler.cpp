@@ -102,15 +102,15 @@ struct TaskQueue {
 
 struct TaskSchedulerImpl
 {
+    uint32_t                       threadCnt;
     vector<thread>                 threads;
     vector<TaskQueue>              taskQueues;
     atomic<uint32_t>               idx{0};
     thread::id                     tid;
 
-    TaskSchedulerImpl(unsigned threadCnt) : taskQueues(threadCnt)
+    TaskSchedulerImpl(unsigned threadCnt) : threadCnt(threadCnt), taskQueues(threadCnt)
     {
         tid = this_thread::get_id();
-
         threads.reserve(threadCnt);
 
         for (unsigned i = 0; i < threadCnt; ++i) {
@@ -131,8 +131,8 @@ struct TaskSchedulerImpl
         //Thread Loop
         while (true) {
             auto success = false;
-            for (unsigned x = 0; x < threads.size() * 2; ++x) {
-                if (taskQueues[(i + x) % threads.size()].tryPop(&task)) {
+            for (unsigned x = 0; x < threadCnt * 2; ++x) {
+                if (taskQueues[(i + x) % threadCnt].tryPop(&task)) {
                     success = true;
                     break;
                 }
@@ -146,18 +146,18 @@ struct TaskSchedulerImpl
     void request(Task* task)
     {
         //Async
-        if (threads.size() > 0) {
+        if (threadCnt > 0) {
             auto tid = this_thread::get_id();
             if (tid == this->tid) {
                 task->prepare();
                 auto i = idx++;
-                for (unsigned n = 0; n < threads.size(); ++n) {
-                    if (taskQueues[(i + n) % threads.size()].tryPush(task)) return;
+                for (unsigned n = 0; n < threadCnt; ++n) {
+                    if (taskQueues[(i + n) % threadCnt].tryPush(task)) return;
                 }
-                taskQueues[i % threads.size()].push(task);
+                taskQueues[i % threadCnt].push(task);
             //Not thread-safety now, it's requested from a worker-thread
             } else {
-                for (unsigned i = 0; i < threads.size(); ++i) {
+                for (unsigned i = 0; i < threadCnt; ++i) {
                     if (tid == threads[i].get_id()) {
                         task->prepare();
                         (*task)(i + 1);
@@ -202,6 +202,6 @@ void TaskScheduler::request(Task* task)
 
 unsigned TaskScheduler::threads()
 {
-    if (inst) return inst->threads.size();
+    if (inst) return inst->threadCnt;
     return 0;
 }
