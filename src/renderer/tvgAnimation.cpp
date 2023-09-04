@@ -20,11 +20,10 @@
  * SOFTWARE.
  */
 
-//#include "tvgAnimationImpl.h"
 #include "tvgCommon.h"
 #include "tvgFrameModule.h"
 #include "tvgPaint.h"
-#include "tvgPictureImpl.h"
+#include "tvgPicture.h"
 
 /************************************************************************/
 /* Internal Class Implementation                                        */

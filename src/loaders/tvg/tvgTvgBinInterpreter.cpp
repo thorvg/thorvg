@@ -31,7 +31,7 @@
 #endif
 
 #include "tvgTvgCommon.h"
-#include "tvgShapeImpl.h"
+#include "tvgShape.h"
 
 
 /************************************************************************/

@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-#include "tvgPictureImpl.h"
+#include "tvgPicture.h"
 
 /************************************************************************/
 /* Internal Class Implementation                                        */

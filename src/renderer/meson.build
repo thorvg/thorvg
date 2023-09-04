@@ -9,19 +9,19 @@ if get_option('engines').contains('gl_beta') == true
 endif
 
 source_file = [
-   'tvgCanvasImpl.h',
+   'tvgCanvas.h',
    'tvgCommon.h',
    'tvgBinaryDesc.h',
    'tvgFill.h',
    'tvgFrameModule.h',
    'tvgLoader.h',
    'tvgLoadModule.h',
-   'tvgPictureImpl.h',
+   'tvgPicture.h',
    'tvgRender.h',
    'tvgIteratorAccessor.h',
    'tvgSaveModule.h',
-   'tvgSceneImpl.h',
-   'tvgShapeImpl.h',
+   'tvgScene.h',
+   'tvgShape.h',
    'tvgTaskScheduler.h',
    'tvgAccessor.cpp',
    'tvgAnimation.cpp',
