@@ -184,7 +184,8 @@ enum class SvgGradientFlags
     Cy = 0x80,
     R = 0x100,
     Fx = 0x200,
-    Fy = 0x400
+    Fy = 0x400,
+    Fr = 0x800
 };
 
 constexpr bool operator &(SvgGradientFlags a, SvgGradientFlags b)
@@ -392,11 +393,13 @@ struct SvgRadialGradient
     float fx;
     float fy;
     float r;
+    float fr;
     bool isCxPercentage;
     bool isCyPercentage;
     bool isFxPercentage;
     bool isFyPercentage;
     bool isRPercentage;
+    bool isFrPercentage;
 };
 
 struct SvgComposite
