@@ -2100,6 +2100,12 @@ static void _handleRadialFyAttr(SvgLoaderData* loader, SvgRadialGradient* radial
 }
 
 
+static void _handleRadialFrAttr(SvgLoaderData* loader, SvgRadialGradient* radial, const char* value)
+{
+    radial->fr = _gradientToFloat(loader->svgParse, value, radial->isFrPercentage);
+}
+
+
 static void _handleRadialRAttr(SvgLoaderData* loader, SvgRadialGradient* radial, const char* value)
 {
     radial->r = _gradientToFloat(loader->svgParse, value, radial->isRPercentage);
@@ -2127,6 +2133,13 @@ static void _recalcRadialFxAttr(SvgLoaderData* loader, SvgRadialGradient* radial
 static void _recalcRadialFyAttr(SvgLoaderData* loader, SvgRadialGradient* radial, bool userSpace)
 {
     if (userSpace && !radial->isFyPercentage) radial->fy = radial->fy / loader->svgParse->global.h;
+}
+
+
+static void _recalcRadialFrAttr(SvgLoaderData* loader, SvgRadialGradient* radial, bool userSpace)
+{
+    // scaling factor based on the Units paragraph from : https://www.w3.org/TR/2015/WD-SVG2-20150915/coords.html
+    if (userSpace && !radial->isFrPercentage) radial->fr = radial->fr / (sqrtf(powf(loader->svgParse->global.h, 2) + powf(loader->svgParse->global.w, 2)) / sqrtf(2.0));
 }
 
 
@@ -2173,6 +2186,15 @@ static void _recalcInheritedRadialFyAttr(SvgLoaderData* loader, SvgRadialGradien
 }
 
 
+static void _recalcInheritedRadialFrAttr(SvgLoaderData* loader, SvgRadialGradient* radial, bool userSpace)
+{
+    if (!radial->isFrPercentage) {
+        if (userSpace) radial->fr /= sqrtf(powf(loader->svgParse->global.h, 2) + powf(loader->svgParse->global.w, 2)) / sqrtf(2.0);
+        else radial->fr *= sqrtf(powf(loader->svgParse->global.h, 2) + powf(loader->svgParse->global.w, 2)) / sqrtf(2.0);
+    }
+}
+
+
 static void _recalcInheritedRadialRAttr(SvgLoaderData* loader, SvgRadialGradient* radial, bool userSpace)
 {
     if (!radial->isRPercentage) {
@@ -2214,6 +2236,14 @@ static void _inheritRadialFyAttr(SvgStyleGradient* to, SvgStyleGradient* from)
 }
 
 
+static void _inheritRadialFrAttr(SvgStyleGradient* to, SvgStyleGradient* from)
+{
+    to->radial->fr = from->radial->fr;
+    to->radial->isFrPercentage = from->radial->isFrPercentage;
+    to->flags = (to->flags | SvgGradientFlags::Fr);
+}
+
+
 static void _inheritRadialRAttr(SvgStyleGradient* to, SvgStyleGradient* from)
 {
     to->radial->r = from->radial->r;
@@ -2247,7 +2277,8 @@ static constexpr struct
     RADIAL_DEF(cy, Cy, SvgGradientFlags::Cy),
     RADIAL_DEF(fx, Fx, SvgGradientFlags::Fx),
     RADIAL_DEF(fy, Fy, SvgGradientFlags::Fy),
-    RADIAL_DEF(r, R, SvgGradientFlags::R)
+    RADIAL_DEF(r, R, SvgGradientFlags::R),
+    RADIAL_DEF(fr, Fr, SvgGradientFlags::Fr)
 };
 
 
@@ -2315,6 +2346,7 @@ static SvgStyleGradient* _createRadialGradient(SvgLoaderData* loader, const char
     grad->radial->isFxPercentage = true;
     grad->radial->isFyPercentage = true;
     grad->radial->isRPercentage = true;
+    grad->radial->isFrPercentage = true;
 
     loader->svgParse->gradient.parsedFx = false;
     loader->svgParse->gradient.parsedFy = false;
