@@ -20,6 +20,7 @@
  * SOFTWARE.
  */
 
+#include "tvgFill.h"
 #include "tvgLottieModel.h"
 
 
@@ -88,14 +89,27 @@ Fill* LottieGradient::fill(int32_t frameNo)
     //Radial Gradient
     if (id == 2) {
         fill = RadialGradient::gen().release();
+
         auto sx = start(frameNo).x;
         auto sy = start(frameNo).y;
-        auto w = fabsf(end(frameNo).x - sx);
-        auto h = fabsf(end(frameNo).y - sy);
-        auto radius = (w > h) ? (w + 0.375f * h) : (h + 0.375f * w);
-        static_cast<RadialGradient*>(fill)->radial(sx, sy, radius);
+        auto ex = end(frameNo).x;
+        auto ey = end(frameNo).y;
+        auto w = fabsf(ex - sx);
+        auto h = fabsf(ey - sy);
+        auto r = (w > h) ? (w + 0.375f * h) : (h + 0.375f * w);
+        auto progress = this->height(frameNo) * 0.01f;
 
-        //TODO: focal support?
+        if (mathZero(progress)) {
+            P(static_cast<RadialGradient*>(fill))->radial(sx, sy, r, sx, sy, 0.0f);
+        } else {
+            if (mathEqual(progress, 1.0f)) progress = 0.99f;
+            auto startAngle = atan2(ey - sy, ex - sx) * 180.0f / MATH_PI;
+            auto angle = (startAngle + this->angle(frameNo)) * (MATH_PI / 180.0f);
+            auto fx = sx + cos(angle) * progress * r;
+            auto fy = sy + sin(angle) * progress * r;
+            // Lottie dosen't have any focal radius concept
+            P(static_cast<RadialGradient*>(fill))->radial(sx, sy, r, fx, fy, 0.0f);
+        }
     }
 
     if (!fill) return nullptr;

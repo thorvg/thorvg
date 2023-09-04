@@ -29,6 +29,8 @@
 #include <math.h>
 #include "tvgCommon.h"
 
+#define MATH_PI  3.14159265358979323846f
+#define MATH_PI2 1.57079632679489661923f
 
 #define mathMin(x, y) (((x) < (y)) ? (x) : (y))
 #define mathMax(x, y) (((x) > (y)) ? (x) : (y))

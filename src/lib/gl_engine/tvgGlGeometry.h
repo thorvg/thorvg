@@ -24,9 +24,9 @@
 #define _TVG_GL_GEOMETRY_H_
 
 #include <math.h>
-#include <vector>
-#include "tvgGlCommon.h"
-
+ #include <vector>
+ #include "tvgGlCommon.h"
+ 
 #define PI 3.1415926535897932384626433832795f
 
 #define MVP_MATRIX() \
