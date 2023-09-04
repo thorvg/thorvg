@@ -1595,8 +1595,6 @@ static bool _rasterLinearGradientRect(SwSurface* surface, const SwBBox& region, 
 
 static bool _rasterRadialGradientRect(SwSurface* surface, const SwBBox& region, const SwFill* fill)
 {
-    if (fill->radial.a < FLT_EPSILON) return false;
-
     if (_compositing(surface)) {
         if (_matting(surface)) return _rasterGradientMattedRect<FillRadial>(surface, region, fill);
         else return _rasterGradientMaskedRect<FillRadial>(surface, region, fill);
@@ -1608,7 +1606,6 @@ static bool _rasterRadialGradientRect(SwSurface* surface, const SwBBox& region, 
     }
     return false;
 }
-
 
 
 /************************************************************************/
@@ -1741,7 +1738,7 @@ static bool _rasterLinearGradientRle(SwSurface* surface, const SwRleData* rle, c
 
 static bool _rasterRadialGradientRle(SwSurface* surface, const SwRleData* rle, const SwFill* fill)
 {
-    if (!rle || fill->radial.a < FLT_EPSILON) return false;
+    if (!rle) return false;
 
     if (_compositing(surface)) {
         if (_matting(surface)) return _rasterGradientMattedRle<FillRadial>(surface, rle, fill);
