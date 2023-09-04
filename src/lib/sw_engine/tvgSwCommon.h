@@ -139,10 +139,11 @@ struct SwFill
     };
 
     struct SwRadial {
-        float a11, a12, shiftX;
-        float a21, a22, shiftY;
-        float detSecDeriv;
-        float a;
+        float a11, a12, a13;
+        float a21, a22, a23;
+        float fx, fy, fr;
+        float dx, dy, dr;
+        float invA, a;
     };
 
     union {
