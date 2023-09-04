@@ -240,6 +240,7 @@ struct Matrix
     float e31, e32, e33;
 };
 
+
 /**
  * @brief A data structure representing a texture mesh vertex
  *
