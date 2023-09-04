@@ -150,13 +150,13 @@ Result Shape::appendArc(float cx, float cy, float radius, float startAngle, floa
     //just circle
     if (sweep >= 360.0f || sweep <= -360.0f) return appendCircle(cx, cy, radius, radius);
 
-    startAngle = (startAngle * M_PI) / 180.0f;
-    sweep = sweep * M_PI / 180.0f;
+    startAngle = (startAngle * MATH_PI) / 180.0f;
+    sweep = sweep * MATH_PI / 180.0f;
 
-    auto nCurves = ceil(fabsf(sweep / float(M_PI_2)));
+    auto nCurves = ceil(fabsf(sweep / MATH_PI2));
     auto sweepSign = (sweep < 0 ? -1 : 1);
-    auto fract = fmodf(sweep, float(M_PI_2));
-    fract = (mathZero(fract)) ? float(M_PI_2) * sweepSign : fract;
+    auto fract = fmodf(sweep, MATH_PI2);
+    fract = (mathZero(fract)) ? MATH_PI2 * sweepSign : fract;
 
     //Start from here
     Point start = {radius * cosf(startAngle), radius * sinf(startAngle)};

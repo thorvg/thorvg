@@ -23,12 +23,11 @@
 #ifndef _TVG_GL_GEOMETRY_H_
 #define _TVG_GL_GEOMETRY_H_
 
-#include <math.h>
 #include <vector>
+#include "tvgMath.h"
 #include "tvgArray.h"
 #include "tvgGlCommon.h"
 
-#define PI 3.1415926535897932384626433832795f
 
 #define MVP_MATRIX() \
     float mvp[4*4] = { \
