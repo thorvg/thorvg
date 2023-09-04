@@ -22,7 +22,7 @@
 
 #include "tvgCommon.h"
 #include "tvgPaint.h"
-#include "tvgShapeImpl.h"
+#include "tvgShape.h"
 #include "tvgLottieModel.h"
 #include "tvgLottieBuilder.h"
 

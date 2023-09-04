@@ -25,8 +25,8 @@
 #include "tvgSaveModule.h"
 #include "tvgTvgSaver.h"
 #include "tvgCompressor.h"
-#include "tvgShapeImpl.h"
-#include "tvgPictureImpl.h"
+#include "tvgShape.h"
+#include "tvgPicture.h"
 
 #ifdef _WIN32
     #include <malloc.h>

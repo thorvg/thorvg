@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-#include "tvgSceneImpl.h"
+#include "tvgScene.h"
 
 /************************************************************************/
 /* External Class Implementation                                        */

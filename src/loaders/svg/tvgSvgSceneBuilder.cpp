@@ -23,7 +23,7 @@
 #include "tvgMath.h" /* to include math.h before cstring */
 #include <cstring>
 #include <string>
-#include "tvgShapeImpl.h"
+#include "tvgShape.h"
 #include "tvgCompressor.h"
 #include "tvgPaint.h"
 #include "tvgFill.h"
