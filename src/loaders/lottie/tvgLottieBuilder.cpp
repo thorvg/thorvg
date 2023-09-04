@@ -242,7 +242,6 @@ static Shape* _updatePath(LottieGroup* parent, LottiePath* path, int32_t frameNo
 
 static void _updateStar(LottieGroup* parent, LottiePolyStar* star, Matrix* transform, int32_t frameNo, Shape* mergingShape)
 {
-    static constexpr auto K_PI = 3.141592f;
     static constexpr auto POLYSTAR_MAGIC_NUMBER = 0.47829f / 0.28f;
 
     auto ptsCnt = star->ptsCnt(frameNo);
@@ -251,9 +250,9 @@ static void _updateStar(LottieGroup* parent, LottiePolyStar* star, Matrix* trans
     auto innerRoundness = star->innerRoundness(frameNo) * 0.01f;
     auto outerRoundness = star->outerRoundness(frameNo) * 0.01f;
 
-    auto angle = -90.0f * K_PI / 180.0f;
+    auto angle = -90.0f * MATH_PI / 180.0f;
     auto partialPointRadius = 0.0f;
-    auto anglePerPoint = (2.0f * K_PI / ptsCnt);
+    auto anglePerPoint = (2.0f * MATH_PI / ptsCnt);
     auto halfAnglePerPoint = anglePerPoint * 0.5f;
     auto partialPointAmount = ptsCnt - floorf(ptsCnt);
     auto longSegment = false;
@@ -306,10 +305,10 @@ static void _updateStar(LottieGroup* parent, LottiePolyStar* star, Matrix* trans
         y = radius * sinf(angle);
 
         if (hasRoundness) {
-            auto cp1Theta = (atan2f(previousY, previousX) - K_PI / 2.0f * direction);
+            auto cp1Theta = (atan2f(previousY, previousX) - MATH_PI2 * direction);
             auto cp1Dx = cosf(cp1Theta);
             auto cp1Dy = sinf(cp1Theta);
-            auto cp2Theta = (atan2f(y, x) - K_PI / 2.0f * direction);
+            auto cp2Theta = (atan2f(y, x) - MATH_PI2 * direction);
             auto cp2Dx = cosf(cp2Theta);
             auto cp2Dy = sinf(cp2Theta);
 
@@ -353,14 +352,13 @@ static void _updateStar(LottieGroup* parent, LottiePolyStar* star, Matrix* trans
 static void _updatePolygon(LottieGroup* parent, LottiePolyStar* star, Matrix* transform, int32_t frameNo, Shape* mergingShape)
 {
     static constexpr auto POLYGON_MAGIC_NUMBER = 0.25f;
-    static constexpr auto K_PI = 3.141592f;
 
     auto ptsCnt = size_t(floor(star->ptsCnt(frameNo)));
     auto radius = star->outerRadius(frameNo);
     auto roundness = star->outerRoundness(frameNo) * 0.01f;
 
-    auto angle = -90.0f * K_PI / 180.0f;
-    auto anglePerPoint = 2.0f * K_PI / float(ptsCnt);
+    auto angle = -90.0f * MATH_PI / 180.0f;
+    auto anglePerPoint = 2.0f * MATH_PI / float(ptsCnt);
     auto direction = star->cw ? 1.0f : -1.0f;
     auto hasRoundness = false;
     auto x = radius * cosf(angle);
@@ -388,10 +386,10 @@ static void _updatePolygon(LottieGroup* parent, LottiePolyStar* star, Matrix* tr
         y = (radius * sinf(angle));
 
         if (hasRoundness) {
-            auto cp1Theta = atan2f(previousY, previousX) - K_PI * 0.5f * direction;
+            auto cp1Theta = atan2f(previousY, previousX) - MATH_PI2 * direction;
             auto cp1Dx = cosf(cp1Theta);
             auto cp1Dy = sinf(cp1Theta);
-            auto cp2Theta = atan2f(y, x) - K_PI * 0.5f * direction;
+            auto cp2Theta = atan2f(y, x) - MATH_PI2 * direction;
             auto cp2Dx = cosf(cp2Theta);
             auto cp2Dy = sinf(cp2Theta);
 
@@ -735,7 +733,10 @@ static void _bulidHierarchy(LottieGroup* parent, LottieLayer* child)
 
 static void _buildSize(LottieComposition* comp, LottieLayer* layer)
 {
-    // default size is 0x0
+    //should not clip?
+    if (layer->refId) return;
+
+    //default size is 0x0
     if (layer->w == 0 || layer->h == 0) return;
 
     //compact layer size
