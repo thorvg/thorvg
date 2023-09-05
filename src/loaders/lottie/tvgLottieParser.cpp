@@ -755,10 +755,41 @@ LottieTrimpath* LottieParser::parseTrimpath()
         else if (!strcmp(key, "hd")) trim->hidden = getBool();
         else skip(key);
     }
-
     trim->prepare();
 
     return trim;
+}
+
+
+LottieRepeater* LottieParser::parseRepeater()
+{
+    auto repeater = new LottieRepeater;
+    if (!repeater) return nullptr;
+
+    while (auto key = nextObjectKey()) {
+        if (!strcmp(key, "nm")) repeater->name = getStringCopy();
+        else if (!strcmp(key, "c")) parseProperty(repeater->copies);
+        else if (!strcmp(key, "o")) parseProperty(repeater->offset);
+        else if (!strcmp(key, "m")) repeater->inorder = getInt();
+        else if (!strcmp(key, "tr"))
+        {
+            enterObject();
+            while (auto key2 = nextObjectKey()) {
+                if (!strcmp(key2, "a")) parseProperty(repeater->anchor);
+                else if (!strcmp(key2, "p")) parseProperty(repeater->position);
+                else if (!strcmp(key2, "r")) parseProperty(repeater->rotation);
+                else if (!strcmp(key2, "s")) parseProperty(repeater->scale);
+                else if (!strcmp(key2, "so")) parseProperty(repeater->startOpacity);
+                else if (!strcmp(key2, "eo")) parseProperty(repeater->endOpacity);
+                else skip(key2);
+            }
+        }
+        else if (!strcmp(key, "hd")) repeater->hidden = getBool();
+        else skip(key);
+    }
+    repeater->prepare();
+
+    return repeater;
 }
 
 
@@ -779,9 +810,12 @@ LottieObject* LottieParser::parseObject()
     else if (!strcmp(type, "gf")) return parseGradientFill();
     else if (!strcmp(type, "gs")) return parseGradientStroke();
     else if (!strcmp(type, "tm")) return parseTrimpath();
-    else if (!strcmp(type, "rp")) TVGERR("LOTTIE", "Repeater(rp) is not supported yet");
+    else if (!strcmp(type, "rp")) return parseRepeater();
     else if (!strcmp(type, "mm")) TVGERR("LOTTIE", "MergePath(mm) is not supported yet");
-    else TVGERR("LOTTIE", "Unkown object type(%s) is given", type);
+    else if (!strcmp(type, "pb")) TVGERR("LOTTIE", "Puker/Bloat(pb) is not supported yet");
+    else if (!strcmp(type, "tw")) TVGERR("LOTTIE", "Twist(tw) is not supported yet");
+    else if (!strcmp(type, "op")) TVGERR("LOTTIE", "Offset Path(op) is not supported yet");
+    else if (!strcmp(type, "zz")) TVGERR("LOTTIE", "Zig Zag(zz) is not supported yet");
     return nullptr;
 }
 
@@ -1002,6 +1036,11 @@ LottieLayer* LottieParser::parseLayer()
         else if (!strcmp(key, "hd")) layer->hidden = getBool();
         else if (!strcmp(key, "refId")) layer->refId = getStringCopy();
         else if (!strcmp(key, "td")) layer->matteSrc = getInt();      //used for matte layer
+        else if (!strcmp(key, "ef"))
+        {
+            TVGERR("LOTTIE", "layer effect(ef) is not supported!");
+            skip(key);
+        }
         else skip(key);
     }
 
