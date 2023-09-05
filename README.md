@@ -249,7 +249,7 @@ Currently, ThorVG provides experimental support for Lottie Animation, and while 
 <br />
 
  - Texts 
- - Merge-path
+ - Modifier
  - Layer Effects
  - Expressions
 
