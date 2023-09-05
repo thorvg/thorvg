@@ -130,10 +130,10 @@ struct LottieObject
         Ellipse,
         Path,
         Polystar,
+        Image,
         Trimpath,
         Repeater,
         RoundedCorner,
-        Image
     };
 
     virtual ~LottieObject()
@@ -347,6 +347,28 @@ struct LottieImage : LottieObject
     {
         LottieObject::type = LottieObject::Image;
     }
+};
+
+
+struct LottieRepeater : LottieObject
+{
+    void prepare()
+    {
+        LottieObject::type = LottieObject::Repeater;
+        if (copies.frames || offset.frames || position.frames || rotation.frames || scale.frames || anchor.frames || startOpacity.frames || endOpacity.frames) statical = false;
+    }
+
+    LottieFloat copies = 0.0f;
+    LottieFloat offset = 0.0f;
+
+    //Transform
+    LottiePosition position = Point{0.0f, 0.0f};
+    LottieFloat rotation = 0.0f;
+    LottiePoint scale = Point{100.0f, 100.0f};
+    LottiePoint anchor = Point{0.0f, 0.0f};
+    LottieOpacity startOpacity = 255;
+    LottieOpacity endOpacity = 255;
+    bool inorder = true;        //true: higher,  false: lower
 };
 
 
