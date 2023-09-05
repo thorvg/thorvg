@@ -131,7 +131,6 @@ static Shape* _updateGroup(LottieGroup* parent, LottieGroup* group, int32_t fram
 
 static Shape* _updateFill(LottieSolidFill* fill, int32_t frameNo, Shape* baseShape)
 {
-    if (fill->disabled) return nullptr;
     auto color = fill->color(frameNo);
     baseShape->fill(color.rgb[0], color.rgb[1], color.rgb[2], fill->opacity(frameNo));
     baseShape->fill(fill->rule);
@@ -139,18 +138,17 @@ static Shape* _updateFill(LottieSolidFill* fill, int32_t frameNo, Shape* baseSha
 }
 
 
-static Shape* _updateStroke(LottieSolidStroke* stroke, int32_t frameNo, Shape* baseShape)
+static Shape* _updateStroke(LottieStroke* stroke, int32_t frameNo, Shape* baseShape)
 {
-    if (stroke->disabled) return nullptr;
     baseShape->stroke(stroke->width(frameNo));
-    auto color = stroke->color(frameNo);
-    baseShape->stroke(color.rgb[0], color.rgb[1], color.rgb[2], stroke->opacity(frameNo));
     baseShape->stroke(stroke->cap);
     baseShape->stroke(stroke->join);
     baseShape->strokeMiterlimit(stroke->miterLimit);
 
     if (stroke->dashattr) {
-        float dashes[2] = { stroke->dashSize(frameNo), stroke->dashGap(frameNo) };
+        float dashes[2];
+        dashes[0] = stroke->dashSize(frameNo);
+        dashes[1] = dashes[0] + stroke->dashGap(frameNo);
         P(baseShape)->strokeDash(dashes, 2, stroke->dashOffset(frameNo));
     } else {
         baseShape->stroke(nullptr, 0);
@@ -160,24 +158,27 @@ static Shape* _updateStroke(LottieSolidStroke* stroke, int32_t frameNo, Shape* b
 }
 
 
-static Shape* _updateFill(LottieGradientFill* fill, int32_t frameNo, Shape* baseShape)
+static Shape* _updateStroke(LottieSolidStroke* stroke, int32_t frameNo, Shape* baseShape)
 {
-    baseShape->opacity(fill->opacity(frameNo));
-    //TODO: reuse the fill instance?
-    baseShape->fill(unique_ptr<Fill>(fill->fill(frameNo)));
-    baseShape->fill(fill->rule);
-    return nullptr;
+    auto color = stroke->color(frameNo);
+    baseShape->stroke(color.rgb[0], color.rgb[1], color.rgb[2], stroke->opacity(frameNo));
+
+    return _updateStroke(static_cast<LottieStroke*>(stroke), frameNo, baseShape);
 }
 
 
 static Shape* _updateStroke(LottieGradientStroke* stroke, int32_t frameNo, Shape* baseShape)
 {
-    baseShape->opacity(stroke->opacity(frameNo));
-    baseShape->stroke(stroke->width(frameNo));
     baseShape->stroke(unique_ptr<Fill>(stroke->fill(frameNo)));
-    baseShape->stroke(stroke->cap);
-    baseShape->stroke(stroke->join);
-    baseShape->strokeMiterlimit(stroke->miterLimit);
+    return _updateStroke(static_cast<LottieStroke*>(stroke), frameNo, baseShape);
+}
+
+
+static Shape* _updateFill(LottieGradientFill* fill, int32_t frameNo, Shape* baseShape)
+{
+    //TODO: reuse the fill instance?
+    baseShape->fill(unique_ptr<Fill>(fill->fill(frameNo)));
+    baseShape->fill(fill->rule);
     return nullptr;
 }
 

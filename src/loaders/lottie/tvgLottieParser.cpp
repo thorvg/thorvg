@@ -546,7 +546,7 @@ LottieSolidFill* LottieParser::parseSolidFill()
         if (!strcmp(key, "nm")) fill->name = getStringCopy();
         else if (!strcmp(key, "c")) parseProperty(fill->color);
         else if (!strcmp(key, "o")) parseProperty(fill->opacity);
-        else if (!strcmp(key, "fillEnabled")) fill->disabled = !getBool();
+        else if (!strcmp(key, "fillEnabled")) fill->hidden |= !getBool();
         else if (!strcmp(key, "r")) fill->rule = getFillRule();
         else if (!strcmp(key, "hd")) fill->hidden = getBool();
         else skip(key);
@@ -590,7 +590,7 @@ LottieSolidStroke* LottieParser::parseSolidStroke()
         else if (!strcmp(key, "ml")) stroke->miterLimit = getFloat();
         else if (!strcmp(key, "nm")) stroke->name = getStringCopy();
         else if (!strcmp(key, "hd")) stroke->hidden = getBool();
-        else if (!strcmp(key, "fillEnabled")) stroke->disabled = !getBool();
+        else if (!strcmp(key, "fillEnabled")) stroke->hidden |= !getBool();
         else if (!strcmp(key, "d")) parseStrokeDash(stroke);
         else skip(key);
     }
@@ -681,7 +681,6 @@ LottieRoundedCorner* LottieParser::parseRoundedCorner()
 void LottieParser::parseGradient(LottieGradient* gradient, const char* key)
 {
     if (!strcmp(key, "t")) gradient->id = getInt();
-    else if (!strcmp(key, "o")) parseProperty(gradient->opacity);
     else if (!strcmp(key, "g"))
     {
         enterObject();
