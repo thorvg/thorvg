@@ -61,7 +61,9 @@ struct LottieStroke
 
     float dashSize(int32_t frameNo)
     {
-        return dash(1)(frameNo);
+        auto d = dash(1)(frameNo);
+        if (d == 0.0f) return 0.1f;
+        else return d;
     }
 
     bool dynamic()
@@ -82,7 +84,7 @@ struct LottieGradient
 {
     bool dynamic()
     {
-        if (start.frames || end.frames || opacity.frames || height.frames || angle.frames || colorStops.frames) return true;
+        if (start.frames || end.frames || height.frames || angle.frames || colorStops.frames) return true;
         return false;
     }
 
@@ -90,7 +92,6 @@ struct LottieGradient
 
     LottiePoint start = Point{0.0f, 0.0f};
     LottiePoint end = Point{0.0f, 0.0f};
-    LottieOpacity opacity = 255;
     LottieFloat height = 0.0f;
     LottieFloat angle = 0.0f;
     LottieColorStop colorStops;
@@ -285,7 +286,6 @@ struct LottieSolidStroke : LottieObject, LottieStroke
 
     LottieColor color = RGB24{255, 255, 255};
     LottieOpacity opacity = 255;
-    bool disabled = false;    //TODO: can't replace with hidden?
 };
 
 
@@ -300,7 +300,6 @@ struct LottieSolidFill : LottieObject
     LottieColor color = RGB24{255, 255, 255};
     LottieOpacity opacity = 255;
     FillRule rule = FillRule::Winding;
-    bool disabled = false;   //TODO: can't replace with hidden?
 };
 
 
