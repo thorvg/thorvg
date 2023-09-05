@@ -82,21 +82,28 @@ struct SwShapeTask : SwTask
        the shape's outline beneath the stroke could be adequately covered by the stroke drawing.
        Therefore, antialiasing is disabled under this condition.
        Additionally, the stroke style should not be dashed. */
-    bool antialiasing()
+    bool antialiasing(float strokeWidth)
     {
-        if (!rshape->stroke) return true;
+        return strokeWidth < 2.0f || rshape->stroke->dashCnt > 0 || rshape->stroke->strokeFirst;
+    }
+
+    float validStrokeWidth()
+    {
+        if (!rshape->stroke) return 0.0f;
 
         auto width = rshape->stroke->width;
-        if (mathZero(width)) return true;
-        if (rshape->strokeTrim()) return true;
+        if (mathZero(width)) return 0.0f;
+
+        if (!rshape->stroke->fill && (MULTIPLY(rshape->stroke->color[3], opacity) == 0)) return 0.0f;
+        if (mathZero(rshape->stroke->trim.begin - rshape->stroke->trim.end)) return 0.0f;
 
         if (transform) {
             if (transform->e11 > transform->e22) width *= transform->e11;
             else width *= transform->e22;
         }
-
-        return rshape->stroke->color[3] < 255 || width < 2.0f || rshape->stroke->dashCnt > 0 || rshape->stroke->strokeFirst;
+        return fabsf(width);
     }
+
 
     bool clip(SwRleData* target) override
     {
@@ -119,16 +126,9 @@ struct SwShapeTask : SwTask
     {
         if (opacity == 0 && !clipper) return;  //Invisible
 
-        auto visibleStroke = false;
+        auto strokeWidth = validStrokeWidth();
         bool visibleFill = false;
         auto clipRegion = bbox;
-
-        //confirm valid stroke
-        if (auto stroke = rshape->stroke) {
-            if (HALF_STROKE(stroke->width) > 0 && !mathZero(stroke->trim.begin - stroke->trim.end)) {
-                visibleStroke = stroke->fill || (MULTIPLY(stroke->color[3], opacity) > 0);
-            }
-        }
 
         //This checks also for the case, if the invisible shape turned to visible by alpha.
         auto prepareShape = false;
@@ -140,16 +140,15 @@ struct SwShapeTask : SwTask
             rshape->fillColor(nullptr, nullptr, nullptr, &alpha);
             alpha = MULTIPLY(alpha, opacity);
             visibleFill = (alpha > 0 || rshape->fill);
-            if (visibleFill || visibleStroke || clipper) {
+            if (visibleFill || clipper) {
                 shapeReset(&shape);
                 if (!shapePrepare(&shape, rshape, transform, clipRegion, bbox, mpool, tid, clips.count > 0 ? true : false)) goto err;
             }
         }
-
         //Fill
         if (flags & (RenderUpdateFlag::Gradient | RenderUpdateFlag::Transform | RenderUpdateFlag::Color)) {
             if (visibleFill || clipper) {
-                if (!shapeGenRle(&shape, rshape, antialiasing())) goto err;
+                if (!shapeGenRle(&shape, rshape, antialiasing(strokeWidth))) goto err;
             }
             if (auto fill = rshape->fill) {
                 auto ctable = (flags & RenderUpdateFlag::Gradient) ? true : false;
@@ -159,10 +158,9 @@ struct SwShapeTask : SwTask
                 shapeDelFill(&shape);
             }
         }
-
         //Stroke
         if (flags & (RenderUpdateFlag::Stroke | RenderUpdateFlag::Transform)) {
-            if (visibleStroke) {
+            if (strokeWidth > 0.0f) {
                 shapeResetStroke(&shape, rshape, transform);
                 if (!shapeGenStrokeRle(&shape, rshape, transform, clipRegion, bbox, mpool, tid)) goto err;
 
