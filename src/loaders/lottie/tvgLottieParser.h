@@ -84,6 +84,7 @@ private:
     LottieLayer* parseLayers();
     LottieMask* parseMask();
     LottieTrimpath* parseTrimpath();
+    LottieRepeater* parseRepeater();
 
     void parseObject(LottieGroup* parent);
     void parseShapes(LottieLayer* layer);
