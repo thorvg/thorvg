@@ -682,7 +682,7 @@ static void _updateLayer(LottieLayer* root, LottieLayer* layer, int32_t frameNo)
     _updateMaskings(layer, rFrameNo);
 
     //clip the layer viewport
-    if (layer->clipself) {
+    if (layer->refId && layer->w > 0 && layer->h > 0) {
         //TODO: remove the intermediate scene....
         auto cscene = Scene::gen();
         auto clipper = Shape::gen();
@@ -732,33 +732,12 @@ static void _bulidHierarchy(LottieGroup* parent, LottieLayer* child)
 }
 
 
-static void _buildSize(LottieComposition* comp, LottieLayer* layer)
-{
-    //should not clip?
-    if (layer->refId) return;
-
-    //default size is 0x0
-    if (layer->w == 0 || layer->h == 0) return;
-
-    //compact layer size
-    if (layer->w > comp->w) layer->w = comp->w;
-    if (layer->h > comp->h) layer->h = comp->h;
-
-    if (layer->w < comp->w || layer->h < comp->h) {
-        layer->clipself = true;
-    }
-}
-
-
 static bool _buildPrecomp(LottieComposition* comp, LottieGroup* parent)
 {
     if (parent->children.count == 0) return false;
 
     for (auto c = parent->children.data; c < parent->children.end(); ++c) {
         auto child = static_cast<LottieLayer*>(*c);
-
-        //compact layer size
-        _buildSize(comp, child);
 
         //attach the referencing layer.
         if (child->refId) _buildReference(comp, child);
