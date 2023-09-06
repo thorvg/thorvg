@@ -435,7 +435,6 @@ struct LottieLayer : LottieGroup
     Type type = Null;
     bool autoOrient = false;
     bool roundedCorner = false;
-    bool clipself = false;      //clip the layer viewport
     bool matteSrc = false;
 };
 
