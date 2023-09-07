@@ -30,7 +30,7 @@
 /************************************************************************/
 
 #define NUM_PER_ROW 10
-#define NUM_PER_COL 10
+#define NUM_PER_COL 9
 #define SIZE (WIDTH/NUM_PER_ROW)
 
 static int counter = 0;

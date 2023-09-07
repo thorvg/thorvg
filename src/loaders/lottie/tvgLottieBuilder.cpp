@@ -64,6 +64,32 @@ static void _updateLayer(LottieLayer* root, LottieLayer* layer, int32_t frameNo)
 static bool _buildPrecomp(LottieComposition* comp, LottieGroup* parent);
 
 
+static void _rotateY(Matrix* m, float degree)
+{
+    if (degree == 0.0f) return;
+
+    auto radian = degree / 180.0f * M_PI;
+    auto cosVal = cosf(radian);
+    auto sinVal = sinf(radian);
+
+    m->e11 = cosVal;
+    m->e31 = -sinVal;
+}
+
+
+static void _rotateX(Matrix* m, float degree)
+{
+    if (degree == 0.0f) return;
+
+    auto radian = degree / 180.0f * M_PI;
+    auto cosVal = cosf(radian);
+    auto sinVal = sinf(radian);
+
+    m->e22 = cosVal;
+    m->e32 = -sinVal;
+}
+
+
 static bool _updateTransform(LottieTransform* transform, int32_t frameNo, bool autoOrient, Matrix& matrix, uint8_t& opacity)
 {
     if (!transform) return false;
@@ -80,6 +106,11 @@ static bool _updateTransform(LottieTransform* transform, int32_t frameNo, bool a
     auto angle = 0.0f;
     if (autoOrient) angle = transform->position.angle(frameNo);
     mathRotate(&matrix, transform->rotation(frameNo) + angle);
+
+    if (transform->rotationEx) {
+        _rotateY(&matrix, transform->rotationEx->y(frameNo));
+        _rotateX(&matrix, transform->rotationEx->x(frameNo));
+    }
 
     auto scale = transform->scale(frameNo);
     mathScaleR(&matrix, scale.x * 0.01f, scale.y * 0.01f);
