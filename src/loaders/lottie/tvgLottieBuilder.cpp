@@ -31,8 +31,9 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-struct LottieModifier
+struct RenderContext
 {
+    Shape* propagator = nullptr;
     Shape* merging = nullptr;                //merging shapes if possible (if shapes have same properties)
     float roundness = 0.0f;
 
@@ -50,16 +51,26 @@ struct LottieModifier
         bool valid = false;
     } repeater;
 
-    LottieModifier() = default;
-    LottieModifier(const LottieModifier& rhs)
+    RenderContext()
     {
+        propagator = Shape::gen().release();
+    }
+
+    ~RenderContext()
+    {
+        delete(propagator);
+    }
+
+    RenderContext(const RenderContext& rhs)
+    {
+        propagator = rhs.propagator ? static_cast<Shape*>(rhs.propagator->duplicate()) : Shape::gen().release();
         repeater = rhs.repeater;
         roundness = rhs.roundness;
     }
 };
 
 
-static void _updateChildren(LottieGroup* parent, int32_t frameNo, Shape* propagtor, LottieModifier& modifier);
+static void _updateChildren(LottieGroup* parent, int32_t frameNo, RenderContext& ctx);
 static void _updateLayer(LottieLayer* root, LottieLayer* layer, int32_t frameNo);
 static bool _buildPrecomp(LottieComposition* comp, LottieGroup* parent);
 
@@ -67,26 +78,18 @@ static bool _buildPrecomp(LottieComposition* comp, LottieGroup* parent);
 static void _rotateY(Matrix* m, float degree)
 {
     if (degree == 0.0f) return;
-
     auto radian = degree / 180.0f * M_PI;
-    auto cosVal = cosf(radian);
-    auto sinVal = sinf(radian);
-
-    m->e11 = cosVal;
-    m->e31 = -sinVal;
+    m->e11 = cosf(radian);
+    m->e31 = -sinf(radian);
 }
 
 
 static void _rotateX(Matrix* m, float degree)
 {
     if (degree == 0.0f) return;
-
     auto radian = degree / 180.0f * M_PI;
-    auto cosVal = cosf(radian);
-    auto sinVal = sinf(radian);
-
-    m->e22 = cosVal;
-    m->e32 = -sinVal;
+    m->e22 = cosf(radian);
+    m->e32 = -sinf(radian);
 }
 
 
@@ -151,23 +154,23 @@ static void _updateTransform(LottieLayer* layer, int32_t frameNo)
 }
 
 
-static void _updateTransform(LottieTransform* transform, int32_t frameNo, Paint* propagtor, LottieModifier& modifier)
+static void _updateTransform(LottieTransform* transform, int32_t frameNo, RenderContext& ctx)
 {
     if (!transform) return;
 
-    modifier.merging = nullptr;
+    ctx.merging = nullptr;
 
     Matrix matrix;
     uint8_t opacity;
     if (!_updateTransform(transform, frameNo, false, matrix, opacity)) return;
 
-    auto pmatrix = P(propagtor)->transform();
-    propagtor->transform(pmatrix ? mathMultiply(pmatrix, &matrix) : matrix);
-    propagtor->opacity(opacity);
+    auto pmatrix = PP(ctx.propagator)->transform();
+    ctx.propagator->transform(pmatrix ? mathMultiply(pmatrix, &matrix) : matrix);
+    ctx.propagator->opacity(opacity);
 }
 
 
-static void _updateGroup(LottieGroup* parent, LottieGroup* group, int32_t frameNo, Shape* propagtor, LottieModifier& modifier)
+static void _updateGroup(LottieGroup* parent, LottieGroup* group, int32_t frameNo, RenderContext& ctx)
 {
     //Prepare render data
     group->scene = parent->scene;
@@ -175,97 +178,92 @@ static void _updateGroup(LottieGroup* parent, LottieGroup* group, int32_t frameN
     auto opacity = group->opacity(frameNo);
     if (opacity == 0) return;
 
-    if (group->transform) {
-        TVGERR("LOTTIE", "group transform is not working!");
-#if 0
-        Matrix matrix;
-        _updateTransform(group->transform, frameNo, false, matrix, opacity);
-        auto pmatrix = P((Paint*)group->scene)->transform();
-        group->scene->transform(pmatrix ? mathMultiply(pmatrix, &matrix) : matrix);
-        if (opacity < 255) group->scene->opacity(MULTIPLY(opacity, group->scene->opacity()));
-#endif
-    }
+    //TODO: move transform to layer.
+    if (group->transform) TVGERR("LOTTIE", "group transform is not working?!");
 
-    auto modifier2 = modifier;
-    _updateChildren(group, frameNo, propagtor, modifier2);
+    auto ctx2 = ctx;
+    _updateChildren(group, frameNo, ctx2);
 }
 
 
-static void _updateFill(LottieSolidFill* fill, int32_t frameNo, Shape* propagtor, LottieModifier& modifier)
+static void _updateFill(LottieSolidFill* fill, int32_t frameNo, RenderContext& ctx)
 {
     //TODO: Skip if property has not been modified actually.
-    modifier.merging = nullptr;
+    ctx.merging = nullptr;
 
     auto color = fill->color(frameNo);
-    propagtor->fill(color.rgb[0], color.rgb[1], color.rgb[2], fill->opacity(frameNo));
-    propagtor->fill(fill->rule);
+    ctx.propagator->fill(color.rgb[0], color.rgb[1], color.rgb[2], fill->opacity(frameNo));
+    ctx.propagator->fill(fill->rule);
+
+    if (ctx.propagator->strokeWidth() > 0) ctx.propagator->order(true);
 }
 
 
-static void _updateStroke(LottieStroke* stroke, int32_t frameNo, Shape* propagtor)
+static void _updateStroke(LottieStroke* stroke, int32_t frameNo, RenderContext& ctx)
 {
-    propagtor->stroke(stroke->width(frameNo));
-    propagtor->stroke(stroke->cap);
-    propagtor->stroke(stroke->join);
-    propagtor->strokeMiterlimit(stroke->miterLimit);
+    ctx.propagator->stroke(stroke->width(frameNo));
+    ctx.propagator->stroke(stroke->cap);
+    ctx.propagator->stroke(stroke->join);
+    ctx.propagator->strokeMiterlimit(stroke->miterLimit);
 
     if (stroke->dashattr) {
         float dashes[2];
         dashes[0] = stroke->dashSize(frameNo);
         dashes[1] = dashes[0] + stroke->dashGap(frameNo);
-        P(propagtor)->strokeDash(dashes, 2, stroke->dashOffset(frameNo));
+        P(ctx.propagator)->strokeDash(dashes, 2, stroke->dashOffset(frameNo));
     } else {
-        propagtor->stroke(nullptr, 0);
+        ctx.propagator->stroke(nullptr, 0);
     }
 }
 
 
-static void _updateStroke(LottieSolidStroke* stroke, int32_t frameNo, Shape* propagtor, LottieModifier& modifier)
+static void _updateStroke(LottieSolidStroke* stroke, int32_t frameNo, RenderContext& ctx)
 {
-    modifier.merging = nullptr;
-
+    ctx.merging = nullptr;
     auto color = stroke->color(frameNo);
-    propagtor->stroke(color.rgb[0], color.rgb[1], color.rgb[2], stroke->opacity(frameNo));
-    _updateStroke(static_cast<LottieStroke*>(stroke), frameNo, propagtor);
+    ctx.propagator->stroke(color.rgb[0], color.rgb[1], color.rgb[2], stroke->opacity(frameNo));
+    _updateStroke(static_cast<LottieStroke*>(stroke), frameNo, ctx);
 }
 
 
-static void _updateStroke(LottieGradientStroke* stroke, int32_t frameNo, Shape* propagtor, LottieModifier& modifier)
+static void _updateStroke(LottieGradientStroke* stroke, int32_t frameNo, RenderContext& ctx)
 {
-    modifier.merging = nullptr;
-
-    propagtor->stroke(unique_ptr<Fill>(stroke->fill(frameNo)));
-    _updateStroke(static_cast<LottieStroke*>(stroke), frameNo, propagtor);
+    ctx.merging = nullptr;
+    ctx.propagator->stroke(unique_ptr<Fill>(stroke->fill(frameNo)));
+    _updateStroke(static_cast<LottieStroke*>(stroke), frameNo, ctx);
 }
 
 
-static Shape* _updateFill(LottieGradientFill* fill, int32_t frameNo, Shape* propagtor, LottieModifier& modifier)
+static Shape* _updateFill(LottieGradientFill* fill, int32_t frameNo, RenderContext& ctx)
 {
-    modifier.merging = nullptr;
+    ctx.merging = nullptr;
 
     //TODO: reuse the fill instance?
-    propagtor->fill(unique_ptr<Fill>(fill->fill(frameNo)));
-    propagtor->fill(fill->rule);
+    ctx.propagator->fill(unique_ptr<Fill>(fill->fill(frameNo)));
+    ctx.propagator->fill(fill->rule);
+
+    if (ctx.propagator->strokeWidth() > 0) ctx.propagator->order(true);
+
     return nullptr;
 }
 
 
-static Shape* _draw(LottieGroup* parent, int32_t frameNo, Shape* propagtor, LottieModifier& modifier)
+static Shape* _draw(LottieGroup* parent, int32_t frameNo, RenderContext& ctx)
 {
-    if (modifier.merging) return modifier.merging;
+    if (ctx.merging) return ctx.merging;
 
-    auto shape = cast<Shape>(propagtor->duplicate());
-    modifier.merging = shape.get();
+    auto shape = cast<Shape>(ctx.propagator->duplicate());
+    ctx.merging = shape.get();
     parent->scene->push(std::move(shape));
 
-    return modifier.merging;
+    return ctx.merging;
 }
 
 
 //OPTIMIZE: path?
-static void _repeat(LottieGroup* parent, int32_t frameNo, Shape* propagtor, unique_ptr<Shape> path, LottieModifier& modifier)
+static void _repeat(LottieGroup* parent, int32_t frameNo, unique_ptr<Shape> path, RenderContext& ctx)
 {
-    auto& repeater = modifier.repeater;
+    auto& repeater = ctx.repeater;
 
     Array<Shape*> shapes;
     shapes.reserve(repeater.cnt);
@@ -273,7 +271,7 @@ static void _repeat(LottieGroup* parent, int32_t frameNo, Shape* propagtor, uniq
     for (int i = 0; i < repeater.cnt; ++i) {
         auto multiplier = repeater.offset + static_cast<float>(i);
 
-        auto shape = static_cast<Shape*>(propagtor->duplicate());
+        auto shape = static_cast<Shape*>(ctx.propagator->duplicate());
         P(shape)->rs.path = P(path.get())->rs.path;
 
         auto opacity = repeater.interpOpacity ? mathLerp<uint8_t>(repeater.startOpacity, repeater.endOpacity, static_cast<float>(i + 1) / repeater.cnt) : repeater.startOpacity;
@@ -289,7 +287,7 @@ static void _repeat(LottieGroup* parent, int32_t frameNo, Shape* propagtor, uniq
         auto pm = PP(shape)->transform();
         shape->transform(pm ? mathMultiply(&m, pm) : m);
 
-        if (modifier.roundness > 1.0f && P(shape)->rs.stroke) {
+        if (ctx.roundness > 1.0f && P(shape)->rs.stroke) {
             TVGERR("LOTTIE", "FIXME: Path roundesss should be applied properly!");
             P(shape)->rs.stroke->join = StrokeJoin::Round;
         }
@@ -310,59 +308,59 @@ static void _repeat(LottieGroup* parent, int32_t frameNo, Shape* propagtor, uniq
 }
 
 
-static void _updateRect(LottieGroup* parent, LottieRect* rect, int32_t frameNo, Shape* propagtor, LottieModifier& modifier)
+static void _updateRect(LottieGroup* parent, LottieRect* rect, int32_t frameNo, RenderContext& ctx)
 {
     auto position = rect->position(frameNo);
     auto size = rect->size(frameNo);
     auto roundness = rect->radius(frameNo);
-    if (modifier.roundness > roundness) roundness = modifier.roundness;
+    if (ctx.roundness > roundness) roundness = ctx.roundness;
 
     if (roundness > 0.0f) {
         if (roundness > size.x * 0.5f)  roundness = size.x * 0.5f;
         if (roundness > size.y * 0.5f)  roundness = size.y * 0.5f;
     }
 
-    if (modifier.repeater.valid) {
+    if (ctx.repeater.valid) {
         auto path = Shape::gen();
         path->appendRect(position.x - size.x * 0.5f, position.y - size.y * 0.5f, size.x, size.y, roundness, roundness);
-        _repeat(parent, frameNo, propagtor, std::move(path), modifier);
+        _repeat(parent, frameNo, std::move(path), ctx);
     } else {
-        auto merging = _draw(parent, frameNo, propagtor, modifier);
+        auto merging = _draw(parent, frameNo, ctx);
         merging->appendRect(position.x - size.x * 0.5f, position.y - size.y * 0.5f, size.x, size.y, roundness, roundness);
     }
 }
 
 
-static void _updateEllipse(LottieGroup* parent, LottieEllipse* ellipse, int32_t frameNo, Shape* propagtor, LottieModifier& modifier)
+static void _updateEllipse(LottieGroup* parent, LottieEllipse* ellipse, int32_t frameNo, RenderContext& ctx)
 {
     auto position = ellipse->position(frameNo);
     auto size = ellipse->size(frameNo);
 
-    if (modifier.repeater.valid) {
+    if (ctx.repeater.valid) {
         auto path = Shape::gen();
         path->appendCircle(position.x, position.y, size.x * 0.5f, size.y * 0.5f);
-        _repeat(parent, frameNo, propagtor, std::move(path), modifier);
+        _repeat(parent, frameNo, std::move(path), ctx);
     } else {
-        auto merging = _draw(parent, frameNo, propagtor, modifier);
+        auto merging = _draw(parent, frameNo, ctx);
         merging->appendCircle(position.x, position.y, size.x * 0.5f, size.y * 0.5f);
     }
 }
 
 
-static void _updatePath(LottieGroup* parent, LottiePath* path, int32_t frameNo, Shape* propagtor, LottieModifier& modifier)
+static void _updatePath(LottieGroup* parent, LottiePath* path, int32_t frameNo, RenderContext& ctx)
 {
-    if (modifier.repeater.valid) {
+    if (ctx.repeater.valid) {
         auto p = Shape::gen();
         path->pathset(frameNo, P(p)->rs.path.cmds, P(p)->rs.path.pts);
-        _repeat(parent, frameNo, propagtor, std::move(p), modifier);
+        _repeat(parent, frameNo, std::move(p), ctx);
     } else {
-        auto merging = _draw(parent, frameNo, propagtor, modifier);
+        auto merging = _draw(parent, frameNo, ctx);
 
         if (path->pathset(frameNo, P(merging)->rs.path.cmds, P(merging)->rs.path.pts)) {
             P(merging)->update(RenderUpdateFlag::Path);
         }
 
-        if (modifier.roundness > 1.0f && P(merging)->rs.stroke) {
+        if (ctx.roundness > 1.0f && P(merging)->rs.stroke) {
             TVGERR("LOTTIE", "FIXME: Path roundesss should be applied properly!");
             P(merging)->rs.stroke->join = StrokeJoin::Round;
         }
@@ -548,7 +546,7 @@ static void _updatePolygon(LottieGroup* parent, LottiePolyStar* star, Matrix* tr
 }
 
 
-static void _updatePolystar(LottieGroup* parent, LottiePolyStar* star, int32_t frameNo, Shape* propagtor, LottieModifier& modifier)
+static void _updatePolystar(LottieGroup* parent, LottiePolyStar* star, int32_t frameNo, RenderContext& ctx)
 {
     //Optimize: Can we skip the individual coords transform?
     Matrix matrix;
@@ -560,13 +558,13 @@ static void _updatePolystar(LottieGroup* parent, LottiePolyStar* star, int32_t f
     auto identity = mathIdentity((const Matrix*)&matrix);
 
 
-    if (modifier.repeater.valid) {
+    if (ctx.repeater.valid) {
         auto p = Shape::gen();
         if (star->type == LottiePolyStar::Star) _updateStar(parent, star, identity ? nullptr : &matrix, frameNo, p.get());
         else _updatePolygon(parent, star, identity  ? nullptr : &matrix, frameNo, p.get());
-        _repeat(parent, frameNo, propagtor, std::move(p), modifier);
+        _repeat(parent, frameNo, std::move(p), ctx);
     } else {
-        auto merging = _draw(parent, frameNo, propagtor, modifier);
+        auto merging = _draw(parent, frameNo, ctx);
         if (star->type == LottiePolyStar::Star) _updateStar(parent, star, identity ? nullptr : &matrix, frameNo, merging);
         else _updatePolygon(parent, star, identity  ? nullptr : &matrix, frameNo, merging);
         P(merging)->update(RenderUpdateFlag::Path);
@@ -574,7 +572,7 @@ static void _updatePolystar(LottieGroup* parent, LottiePolyStar* star, int32_t f
 }
 
 
-static void _updateImage(LottieGroup* parent, LottieImage* image, int32_t frameNo, Paint* propagtor)
+static void _updateImage(LottieGroup* parent, LottieImage* image, int32_t frameNo, RenderContext& ctx)
 {
     auto picture = image->picture;
 
@@ -587,11 +585,11 @@ static void _updateImage(LottieGroup* parent, LottieImage* image, int32_t frameN
         }
     }
 
-    if (propagtor) {
-        if (auto matrix = P(propagtor)->transform()) {
+    if (ctx.propagator) {
+        if (auto matrix = PP(ctx.propagator)->transform()) {
             picture->transform(*matrix);
         }
-        picture->opacity(propagtor->opacity());
+        picture->opacity(ctx.propagator->opacity());
     }
 
     //TODO: remove duplicate.
@@ -601,39 +599,39 @@ static void _updateImage(LottieGroup* parent, LottieImage* image, int32_t frameN
 }
 
 
-static void _updateRoundedCorner(LottieRoundedCorner* roundedCorner, int32_t frameNo, LottieModifier& modifier)
+static void _updateRoundedCorner(LottieRoundedCorner* roundedCorner, int32_t frameNo, RenderContext& ctx)
 {
     auto roundness = roundedCorner->radius(frameNo);
-    if (modifier.roundness < roundness) modifier.roundness = roundness;
+    if (ctx.roundness < roundness) ctx.roundness = roundness;
 }
 
 
-static void _updateRepeater(LottieRepeater* repeater, int32_t frameNo, LottieModifier& modifier)
+static void _updateRepeater(LottieRepeater* repeater, int32_t frameNo, RenderContext& ctx)
 {
-    modifier.repeater.cnt = repeater->copies(frameNo);
-    modifier.repeater.offset = repeater->offset(frameNo);
-    modifier.repeater.position = repeater->position(frameNo);
-    modifier.repeater.anchor = repeater->anchor(frameNo);
-    modifier.repeater.scale = repeater->scale(frameNo);
-    modifier.repeater.rotation = repeater->rotation(frameNo);
-    modifier.repeater.startOpacity = repeater->startOpacity(frameNo);
-    modifier.repeater.endOpacity = repeater->endOpacity(frameNo);
-    modifier.repeater.inorder = repeater->inorder;
-    modifier.repeater.interpOpacity = (modifier.repeater.startOpacity == modifier.repeater.endOpacity) ? false : true;
-    modifier.repeater.valid = true;
+    ctx.repeater.cnt = repeater->copies(frameNo);
+    ctx.repeater.offset = repeater->offset(frameNo);
+    ctx.repeater.position = repeater->position(frameNo);
+    ctx.repeater.anchor = repeater->anchor(frameNo);
+    ctx.repeater.scale = repeater->scale(frameNo);
+    ctx.repeater.rotation = repeater->rotation(frameNo);
+    ctx.repeater.startOpacity = repeater->startOpacity(frameNo);
+    ctx.repeater.endOpacity = repeater->endOpacity(frameNo);
+    ctx.repeater.inorder = repeater->inorder;
+    ctx.repeater.interpOpacity = (ctx.repeater.startOpacity == ctx.repeater.endOpacity) ? false : true;
+    ctx.repeater.valid = true;
 
-    modifier.merging = nullptr;
+    ctx.merging = nullptr;
 }
 
 
-static void _updateTrimpath(LottieTrimpath* trimpath, int32_t frameNo, Shape* propagtor)
+static void _updateTrimpath(LottieTrimpath* trimpath, int32_t frameNo, RenderContext& ctx)
 {
     float begin, end;
     trimpath->segment(frameNo, begin, end);
 
-    if (P(propagtor)->rs.stroke) {
-        auto pbegin = P(propagtor)->rs.stroke->trim.begin;
-        auto pend = P(propagtor)->rs.stroke->trim.end;
+    if (P(ctx.propagator)->rs.stroke) {
+        auto pbegin = P(ctx.propagator)->rs.stroke->trim.begin;
+        auto pend = P(ctx.propagator)->rs.stroke->trim.end;
         auto length = fabsf(pend - pbegin);
         begin = (length * begin) + pbegin;
         end = (length * end) + pbegin;
@@ -643,81 +641,77 @@ static void _updateTrimpath(LottieTrimpath* trimpath, int32_t frameNo, Shape* pr
         TVGERR("LOTTIE", "TODO: Individual Trimpath");
     }
 
-    P(propagtor)->strokeTrim(begin, end);
+    P(ctx.propagator)->strokeTrim(begin, end);
 }
 
 
-static void _updateChildren(LottieGroup* parent, int32_t frameNo, Shape* propagtor, LottieModifier& modifier)
+static void _updateChildren(LottieGroup* parent, int32_t frameNo, RenderContext& ctx)
 {
     if (parent->children.empty()) return;
-
-    //inherits the parent's shape properties.
-    propagtor = propagtor ? static_cast<Shape*>(propagtor->duplicate()) : Shape::gen().release();
 
     //Draw the parent shapes first
     for (auto child = parent->children.end() - 1; child >= parent->children.data; --child) {
         //TODO: Polymorphsim?
         switch ((*child)->type) {
             case LottieObject::Group: {
-                _updateGroup(parent, static_cast<LottieGroup*>(*child), frameNo, propagtor, modifier);
+                _updateGroup(parent, static_cast<LottieGroup*>(*child), frameNo, ctx);
                 break;
             }
             case LottieObject::Transform: {
-                _updateTransform(static_cast<LottieTransform*>(*child), frameNo, propagtor, modifier);
+                _updateTransform(static_cast<LottieTransform*>(*child), frameNo, ctx);
                 break;
             }
             case LottieObject::SolidFill: {
-                _updateFill(static_cast<LottieSolidFill*>(*child), frameNo, propagtor, modifier);
+                _updateFill(static_cast<LottieSolidFill*>(*child), frameNo, ctx);
                 break;
             }
             case LottieObject::SolidStroke: {
-                _updateStroke(static_cast<LottieSolidStroke*>(*child), frameNo, propagtor, modifier);
+                _updateStroke(static_cast<LottieSolidStroke*>(*child), frameNo, ctx);
                 break;
             }
             case LottieObject::GradientFill: {
-                _updateFill(static_cast<LottieGradientFill*>(*child), frameNo, propagtor, modifier);
+                _updateFill(static_cast<LottieGradientFill*>(*child), frameNo, ctx);
                 break;
             }
             case LottieObject::GradientStroke: {
-                _updateStroke(static_cast<LottieGradientStroke*>(*child), frameNo, propagtor, modifier);
+                _updateStroke(static_cast<LottieGradientStroke*>(*child), frameNo, ctx);
                 break;
             }
             case LottieObject::Rect: {
-                _updateRect(parent, static_cast<LottieRect*>(*child), frameNo, propagtor, modifier);
+                _updateRect(parent, static_cast<LottieRect*>(*child), frameNo, ctx);
                 break;
             }
             case LottieObject::Ellipse: {
-                _updateEllipse(parent, static_cast<LottieEllipse*>(*child), frameNo, propagtor, modifier);
+                _updateEllipse(parent, static_cast<LottieEllipse*>(*child), frameNo, ctx);
                 break;
             }
             case LottieObject::Path: {
-                _updatePath(parent, static_cast<LottiePath*>(*child), frameNo, propagtor, modifier);
+                _updatePath(parent, static_cast<LottiePath*>(*child), frameNo, ctx);
                 break;
             }
             case LottieObject::Polystar: {
-                _updatePolystar(parent, static_cast<LottiePolyStar*>(*child), frameNo, propagtor, modifier);
+                _updatePolystar(parent, static_cast<LottiePolyStar*>(*child), frameNo, ctx);
                 break;
             }
             case LottieObject::Image: {
-                _updateImage(parent, static_cast<LottieImage*>(*child), frameNo, propagtor);
+                _updateImage(parent, static_cast<LottieImage*>(*child), frameNo, ctx);
                 break;
             }
             case LottieObject::Trimpath: {
-                _updateTrimpath(static_cast<LottieTrimpath*>(*child), frameNo, propagtor);
+                _updateTrimpath(static_cast<LottieTrimpath*>(*child), frameNo, ctx);
                 break;
             }
             case LottieObject::Repeater: {
-                _updateRepeater(static_cast<LottieRepeater*>(*child), frameNo, modifier);
+                _updateRepeater(static_cast<LottieRepeater*>(*child), frameNo, ctx);
                 break;
             }
             case LottieObject::RoundedCorner: {
-                _updateRoundedCorner(static_cast<LottieRoundedCorner*>(*child), frameNo, modifier);
+                _updateRoundedCorner(static_cast<LottieRoundedCorner*>(*child), frameNo, ctx);
                 break;
             }
             default: break;
         }
     }
-    delete (propagtor);
 }
 
 
@@ -811,8 +805,8 @@ static void _updateLayer(LottieLayer* root, LottieLayer* layer, int32_t frameNo)
             break;
         }
         default: {
-            LottieModifier modifier;
-            _updateChildren(layer, rFrameNo, nullptr, modifier);
+            RenderContext ctx;
+            _updateChildren(layer, rFrameNo, ctx);
             break;
         }
     }
