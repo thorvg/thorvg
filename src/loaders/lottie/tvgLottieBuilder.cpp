@@ -694,6 +694,8 @@ static void _updatePrecomp(LottieLayer* precomp, int32_t frameNo)
 {
     if (precomp->children.count == 0) return;
 
+    frameNo -= precomp->startFrame;
+
     //TODO: skip if the layer is static.
     for (auto child = precomp->children.end() - 1; child >= precomp->children.data; --child) {
         _updateLayer(precomp, static_cast<LottieLayer*>(*child), frameNo);
