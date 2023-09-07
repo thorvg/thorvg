@@ -502,7 +502,10 @@ LottieTransform* LottieParser::parseTransform(bool ddd)
     auto transform = new LottieTransform;
     if (!transform) return nullptr;
 
-    if (ddd) TVGERR("LOTTIE", "3d transform(ddd) is not supported");
+    if (ddd) {
+        transform->rotationEx = new LottieTransform::RotationEx;
+        TVGLOG("LOTTIE", "3D transform(ddd) is not 100% compatible.");
+    }
 
     while (auto key = nextObjectKey()) {
         if (!strcmp(key, "p"))
@@ -524,12 +527,12 @@ LottieTransform* LottieParser::parseTransform(bool ddd)
         else if (!strcmp(key, "s")) parseProperty(transform->scale);
         else if (!strcmp(key, "r")) parseProperty(transform->rotation);
         else if (!strcmp(key, "o")) parseProperty(transform->opacity);
-        //else if (!strcmp(key, "sk")) //skew
-        //else if (!strcmp(key, "sa")) //skew axis
-        //else if (!strcmp(key, "rx")  //3d rotation
-        //else if (!strcmp(key, "ry")  //3d rotation
-        else if (!strcmp(key, "rz")) parseProperty(transform->rotation);
+        else if (transform->rotationEx && !strcmp(key, "rx")) parseProperty(transform->rotationEx->x);
+        else if (transform->rotationEx && !strcmp(key, "ry")) parseProperty(transform->rotationEx->y);
+        else if (transform->rotationEx && !strcmp(key, "rz")) parseProperty(transform->rotation);
         else if (!strcmp(key, "nm")) transform->name = getStringCopy();
+        //else if (!strcmp(key, "sk")) //TODO: skew
+        //else if (!strcmp(key, "sa")) //TODO: skew axis
         else skip(key);
     }
     transform->prepare();

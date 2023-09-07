@@ -253,9 +253,16 @@ struct LottieTransform : LottieObject
         LottieFloat y = 0.0f;
     };
 
+    struct RotationEx
+    {
+        LottieFloat x = 0.0f;
+        LottieFloat y = 0.0f;
+    };
+
     ~LottieTransform()
     {
         delete(coords);
+        delete(rotationEx);
     }
 
     void prepare()
@@ -263,16 +270,17 @@ struct LottieTransform : LottieObject
         LottieObject::type = LottieObject::Transform;
         if (position.frames || rotation.frames || scale.frames || anchor.frames || opacity.frames) statical = false;
         else if (coords && (coords->x.frames || coords->y.frames)) statical = false;
+        else if (rotationEx && (rotationEx->x.frames || rotationEx->y.frames)) statical = false;
     }
 
     LottiePosition position = Point{0.0f, 0.0f};
-    LottieFloat rotation = 0.0f;
+    LottieFloat rotation = 0.0f;           //z rotation
     LottiePoint scale = Point{100.0f, 100.0f};
     LottiePoint anchor = Point{0.0f, 0.0f};
     LottieOpacity opacity = 255;
 
-    //either a position or separate coordinates
-    SeparateCoord* coords = nullptr;
+    SeparateCoord* coords = nullptr;       //either a position or separate coordinates
+    RotationEx* rotationEx = nullptr;      //extension for 3d rotation
 };
 
 
