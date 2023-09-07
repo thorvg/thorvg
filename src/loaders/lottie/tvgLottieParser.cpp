@@ -504,7 +504,7 @@ LottieTransform* LottieParser::parseTransform(bool ddd)
 
     if (ddd) {
         transform->rotationEx = new LottieTransform::RotationEx;
-        TVGLOG("LOTTIE", "3D transform(ddd) is not 100% compatible.");
+        TVGLOG("LOTTIE", "3D transform(ddd) is not totally compatible.");
     }
 
     while (auto key = nextObjectKey()) {
