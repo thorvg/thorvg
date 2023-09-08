@@ -56,7 +56,7 @@ struct LottieStroke
 
     float dashGap(int32_t frameNo)
     {
-        return dash(1)(frameNo) + dash(2)(frameNo);
+        return dash(2)(frameNo);
     }
 
     float dashSize(int32_t frameNo)
