@@ -94,6 +94,7 @@ If you want to create Visual Studio project files, use the command --backend=vs.
 ```
 meson build --backend=vs
 ```
+</br>
 
 ### Install with vcpkg
 You can download and install pre-packaged ThorVG using the [vcpkg](https://vcpkg.io/en/index.html) package manager.
