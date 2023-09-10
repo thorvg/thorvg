@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@200;300&display=swap');
+
 #nav-tree .children_ul {
   margin:0;
   padding:4px;
@@ -43,7 +45,7 @@
 #nav-tree .label {
   margin:0px;
   padding:0px;
-  font: 12px 'Lucida Grande',Geneva,Helvetica,Arial,sans-serif;
+  font: 300 14px Poppins,Geneva,Helvetica,Arial,sans-serif;
 }
 
 #nav-tree .label a {
@@ -62,7 +64,7 @@
 
 #nav-tree .item {
   margin:0px;
-  padding:0px;
+  padding: 6px 0px;
 }
 
 #nav-tree {
