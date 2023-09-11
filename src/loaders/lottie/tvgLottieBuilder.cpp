@@ -779,6 +779,8 @@ static void _updateMaskings(LottieLayer* layer, int32_t frameNo)
 
 static void _updateLayer(LottieLayer* root, LottieLayer* layer, int32_t frameNo)
 {
+    layer->scene = nullptr;
+
     //visibility
     if (frameNo < layer->inFrame || frameNo > layer->outFrame) return;
 
@@ -820,7 +822,7 @@ static void _updateLayer(LottieLayer* root, LottieLayer* layer, int32_t frameNo)
     //matte masking layer
     if (layer->matte.target) {
         _updateLayer(root, layer->matte.target, frameNo);
-        layer->scene->composite(cast<Scene>(layer->matte.target->scene), layer->matte.type);
+        if (layer->matte.target->scene) layer->scene->composite(cast<Scene>(layer->matte.target->scene), layer->matte.type);
     }
 
     _updateMaskings(layer, rFrameNo);
