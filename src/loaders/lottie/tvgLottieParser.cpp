@@ -1074,8 +1074,13 @@ LottieLayer* LottieParser::parseLayers()
                 root->children.push(layer);
             } else {
                 //matte source must be located in the right previous.
-                layer->matte.target = static_cast<LottieLayer*>(root->children.last());
-                layer->statical &= layer->matte.target->statical;
+                auto matte = static_cast<LottieLayer*>(root->children.last());
+                if (matte->matteSrc) {
+                    layer->matte.target = matte;
+                    layer->statical &= layer->matte.target->statical;
+                } else {
+                    TVGLOG("LOTTIE", "Matte Source(%s) is not designated?", matte->name);
+                }
                 root->children.last() = layer;
             }
             root->statical &= layer->statical;
