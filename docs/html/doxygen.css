@@ -3,11 +3,11 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@200;300&family=Source+Code+Pro&display=swap');
 
 body, table, div, p, dl {
-	font: 300 16px/22px Poppins,sans-serif;
+	font: 300 14px/18px Poppins,sans-serif;
 }
 
 p.reference, p.definition {
-	font: 400 14px/22px Poppins,sans-serif;
+	font: 400 14px/18px Poppins,sans-serif;
 }
 
 /* @group Heading Levels */
@@ -16,22 +16,26 @@ h1.groupheader {
 	font-size: 150%;
 }
 
+/* header title */
 .title {
 	font: 400 14px/28px Poppins,sans-serif;
-	font-size: 150%;
+	font-size: 130%;
 	font-weight: bold;
 	margin: 10px 2px;
+	letter-spacing: 0.8px;
 }
 
+/* Public Member Functions */
 h2.groupheader {
 	border-bottom: 1px solid #4A4A4A;
 	color: #0A0A0A;
-	font-size: 150%;
-	font-weight: normal;
+	font-size: 120%;
+	font-weight: bold;
 	margin-top: 1.75em;
 	padding-top: 8px;
 	padding-bottom: 4px;
 	width: 100%;
+	letter-spacing: 0.8px;
 }
 
 h3.groupheader {
@@ -597,29 +601,29 @@ table.memberdecls {
 .memItemLeft, .memItemRight,
 /* functions text */
 .memTemplItemLeft, .memTemplItemRight {
-    font: 300 16px/22px 'Source Code Pro',sans-serif;
+    font: 300 14px/18px 'Source Code Pro',sans-serif;
 }
 
 /* Classes text link */
 .memItemLeft a, .memItemLeft a:visited {
-    font: 300 18px/22px 'Source Code Pro',sans-serif;
+    font: 300 14px/18px 'Source Code Pro',sans-serif;
     color: #185abc;
 }
 
 .memItemRight a, .memItemRight a:visited,
 .memTemplItemRight a, .memTemplItemRight a:visited {
-    font: 300 18px/22px 'Source Code Pro',sans-serif;
+    font: 300 14px/18px 'Source Code Pro',sans-serif;
     color: #185abc;
     font-weight: bold;
 }
 
 .mdescRight .el {
-    font: 300 16px/22px 'Source Code Pro',sans-serif;
+    font: 300 14px/18px 'Source Code Pro',sans-serif;
     color: #185abc;
 }
 
 .memdoc .el {
-    font: 300 16px/22px 'Source Code Pro',sans-serif;
+    font: 300 14px/18px 'Source Code Pro',sans-serif;
     color: #185abc !important;
 }
 
@@ -664,6 +668,11 @@ table.memberdecls {
 	line-height: 1.25;
 	font-weight: 300;
 	float:left;
+}
+
+h2.memtitle {
+    font-size: 18px;
+    font-weight: bold;
 }
 
 .permalink
@@ -731,9 +740,11 @@ table.memberdecls {
         background-color: #f9f9f9;
 }
 
+/* mem title overload text */
 .overload {
-        font-family: "courier new",courier,monospace;
-	font-size: 65%;
+	font-family: 'Source Code Pro',"courier new",courier,monospace;
+	font-size: 12px;
+	font-weight: normal;
 }
 
 /* border, shadow, background in memdoc area */
@@ -785,10 +796,12 @@ dl.reflist dd {
         font-style: italic;
         vertical-align: top;
 }       
-        
+
+/* parameter type text */
 .params .paramdir, .tparams .paramdir {
-        font-family: "courier new",courier,monospace;
-        vertical-align: top;
+    font-family: 'Source Code Pro',"courier new",courier,monospace;
+    font-size: 12px;
+    vertical-align: top;
 }
 
 table.mlabels {
@@ -801,7 +814,7 @@ td.mlabels-left {
 }
 
 td.mlabels-left .memname {
-    font: 300 16px/22px 'Source Code Pro',sans-serif !important;
+    font: 300 14px/18px 'Source Code Pro',sans-serif !important;
 }
 
 td.mlabels-left .memname a {
@@ -935,7 +948,7 @@ div.directory {
 
 .iconfopen {
     width: 24px;
-    height: 18px;
+    height: 16px;
     margin-bottom: 4px;
     background-image:url('folderopen.png');
     background-position: 0px -4px;
@@ -946,7 +959,7 @@ div.directory {
 
 .iconfclosed {
     width: 24px;
-    height: 18px;
+    height: 16px;
     margin-bottom: 4px;
     background-image:url('folderclosed.png');
     background-position: 0px -4px;
@@ -957,7 +970,7 @@ div.directory {
 
 .icondoc {
     width: 24px;
-    height: 18px;
+    height: 16px;
     margin-bottom: 4px;
     background-image:url('doc.png');
     background-position: 0px -4px;
@@ -966,8 +979,9 @@ div.directory {
     display: inline-block;
 }
 
+/* Class List table */
 table.directory {
-    font: 300 16px Poppins,sans-serif;
+    font: 300 14px Poppins,sans-serif;
 }
 
 /* @end */
@@ -1085,6 +1099,7 @@ table.fieldtable {
 /* footer background */
 .navpath ul
 {
+	font-family: Poppins,sans-serif;
 	font-size: 11px;
 	height:30px;
 	line-height:30px;
@@ -1107,6 +1122,11 @@ table.fieldtable {
 	color:#0B0B0B;
 }
 
+.navpath li.navelem {
+	font-family: Poppins,'Lucida Grande',Geneva,Helvetica,Arial,sans-serif;
+	font-size: 10px;
+}
+
 .navpath li.navelem a
 {
 	height:32px;
@@ -1114,14 +1134,13 @@ table.fieldtable {
 	text-decoration: none;
 	outline: none;
 	color: #040404;
-	font-family: 'Lucida Grande',Geneva,Helvetica,Arial,sans-serif;
-	text-shadow: 0px 1px 1px rgba(255, 255, 255, 0.9);
+	/*text-shadow: 0px 1px 1px rgba(255, 255, 255, 0.9);*/
 	text-decoration: none;        
 }
 
 .navpath li.navelem a:hover
 {
-	color:#303030;
+	color:#eeeeee;
 }
 
 /* footer */

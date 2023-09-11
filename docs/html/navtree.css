@@ -45,7 +45,8 @@
 #nav-tree .label {
   margin:0px;
   padding:0px;
-  font: 300 14px Poppins,Geneva,Helvetica,Arial,sans-serif;
+  font: 300 12px Poppins,Geneva,Helvetica,Arial,sans-serif;
+  letter-spacing: 0.8px;
 }
 
 #nav-tree .label a {
