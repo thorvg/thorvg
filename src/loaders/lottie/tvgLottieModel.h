@@ -82,8 +82,97 @@ struct LottieStroke
 
 struct LottieGradient
 {
-    bool dynamic()
+    uint32_t populate(ColorStop& color)
     {
+        uint32_t alphaCnt = (color.input->count - (colorStops.count * 4)) / 2;
+        Array<Fill::ColorStop> output;
+        output.reserve(colorStops.count + alphaCnt);
+
+        uint32_t cidx = 0;               //color count
+        uint32_t clast = colorStops.count * 4;
+        uint32_t aidx = clast;           //alpha count
+
+        Fill::ColorStop cs;
+
+        //merge color stops
+        uint32_t cnt = (colorStops.count > alphaCnt) ? colorStops.count : alphaCnt;
+
+        for (uint32_t i = 0; i < cnt; ++i) {
+            if (cidx == clast || aidx == color.input->count) break;
+
+            if ((*color.input)[cidx] == (*color.input)[aidx]) {
+                cs.offset = (*color.input)[cidx];
+                cs.r = lroundf((*color.input)[cidx + 1] * 255.0f);
+                cs.g = lroundf((*color.input)[cidx + 2] * 255.0f);
+                cs.b = lroundf((*color.input)[cidx + 3] * 255.0f);
+                cs.a = lroundf((*color.input)[aidx + 1] * 255.0f);
+                cidx += 4;
+                aidx += 2;
+            } else if ((*color.input)[cidx] < (*color.input)[aidx]) {
+                cs.offset = (*color.input)[cidx];
+                cs.r = lroundf((*color.input)[cidx + 1] * 255.0f);
+                cs.g = lroundf((*color.input)[cidx + 2] * 255.0f);
+                cs.b = lroundf((*color.input)[cidx + 3] * 255.0f);
+                cs.a = (output.count > 0) ? output.last().a : 255;
+                cidx += 4;
+            } else {
+                cs.offset = (*color.input)[aidx];
+                if (output.count > 0) {
+                    cs.r = output.last().r;
+                    cs.g = output.last().g;
+                    cs.b = output.last().b;
+                } else {
+                    cs.r = cs.g = cs.b = 255;
+                }
+                cs.a = lroundf((*color.input)[aidx + 1] * 255.0f);
+                aidx += 2;
+            }
+            output.push(cs);
+        }
+
+        //color remains
+        while (cidx < clast) {
+            cs.offset = (*color.input)[cidx];
+            cs.r = lroundf((*color.input)[cidx + 1] * 255.0f);
+            cs.g = lroundf((*color.input)[cidx + 2] * 255.0f);
+            cs.b = lroundf((*color.input)[cidx + 3] * 255.0f);
+            cs.a = (output.count > 0) ? output.last().a : 255;
+            output.push(cs);
+            cidx += 4;
+        }
+        //alpha remains
+        while (aidx < color.input->count) {
+            cs.offset = (*color.input)[aidx];
+            if (output.count > 0) {
+                cs.r = output.last().r;
+                cs.g = output.last().g;
+                cs.b = output.last().b;
+            } else {
+                cs.r = cs.g = cs.b = 255;
+            }
+            cs.a = lroundf((*color.input)[aidx + 1] * 255.0f);
+            output.push(cs);
+            aidx += 2;
+        }
+
+        color.data = output.data;
+        output.data = nullptr;
+
+        color.input->reset();
+        delete(color.input);
+
+        return output.count;
+    }
+
+    bool prepare()
+    {
+        if (colorStops.frames) {
+            for (auto v = colorStops.frames->data; v < colorStops.frames->end(); ++v) {
+                colorStops.count = populate(v->value);
+            }
+        } else {
+            colorStops.count = populate(colorStops.value);
+        }
         if (start.frames || end.frames || height.frames || angle.frames || colorStops.frames) return true;
         return false;
     }
@@ -317,7 +406,7 @@ struct LottieGradientFill : LottieObject, LottieGradient
     void prepare()
     {
         LottieObject::type = LottieObject::GradientFill;
-        if (LottieGradient::dynamic()) statical = false;
+        if (LottieGradient::prepare()) statical = false;
     }
 
     FillRule rule = FillRule::Winding;
@@ -329,7 +418,7 @@ struct LottieGradientStroke : LottieObject, LottieStroke, LottieGradient
     void prepare()
     {
         LottieObject::type = LottieObject::GradientStroke;
-        if (LottieStroke::dynamic() || LottieGradient::dynamic()) statical = false;
+        if (LottieGradient::prepare() || LottieStroke::dynamic()) statical = false;
     }
 };
 

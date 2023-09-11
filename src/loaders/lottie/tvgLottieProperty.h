@@ -47,6 +47,7 @@ struct RGB24
 struct ColorStop
 {
     Fill::ColorStop* data = nullptr;
+    Array<float>* input = nullptr;
 };
 
 
