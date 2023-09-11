@@ -82,8 +82,48 @@ struct LottieStroke
 
 struct LottieGradient
 {
-    bool dynamic()
+    void populate(ColorStop& color, int count)
     {
+        color.data = static_cast<Fill::ColorStop*>(malloc(sizeof(Fill::ColorStop) * count));
+
+        int32_t idx;
+
+        //rgb
+        for (idx = 0; idx < count; ++idx) {
+            color.data[idx].offset = (*color.src)[(idx * 4)];
+            color.data[idx].r = lroundf((*color.src)[(idx * 4) + 1] * 255.0f);
+            color.data[idx].g = lroundf((*color.src)[(idx * 4) + 2] * 255.0f);
+            color.data[idx].b = lroundf((*color.src)[(idx * 4) + 3] * 255.0f);
+            color.data[idx].a = 255; //in default
+        }
+
+        //alpha
+        idx = 0;
+        auto aidx = (count * 4);
+        while (aidx < (int32_t) color.src->count) {
+            if (idx >= count) {
+                TVGERR("LOTTIE", "FIXME: Gradient alpha and color count are not matched");
+                break;
+            }
+            auto offset = (*color.src)[aidx++];
+            if (!mathEqual(offset, color.data[idx].offset)) TVGERR("LOTTIE", "FIXME: Gradient alpha offset is ignored");
+            color.data[idx].a = lroundf((*color.src)[aidx++] * 255.0f);
+            idx++;
+        }
+
+        color.src->reset();
+        delete(color.src);
+    }
+
+    bool prepare()
+    {
+        if (colorStops.frames) {
+            for (auto v = colorStops.frames->data; v < colorStops.frames->end(); ++v) {
+                populate(v->value, colorStops.count);
+            }
+        } else {
+            populate(colorStops.value, colorStops.count);
+        }
         if (start.frames || end.frames || height.frames || angle.frames || colorStops.frames) return true;
         return false;
     }
@@ -316,7 +356,7 @@ struct LottieGradientFill : LottieObject, LottieGradient
     void prepare()
     {
         LottieObject::type = LottieObject::GradientFill;
-        if (LottieGradient::dynamic()) statical = false;
+        if (LottieGradient::prepare()) statical = false;
     }
 
     FillRule rule = FillRule::Winding;
@@ -328,7 +368,7 @@ struct LottieGradientStroke : LottieObject, LottieStroke, LottieGradient
     void prepare()
     {
         LottieObject::type = LottieObject::GradientStroke;
-        if (LottieStroke::dynamic() || LottieGradient::dynamic()) statical = false;
+        if (LottieGradient::prepare() || LottieStroke::dynamic()) statical = false;
     }
 };
 
