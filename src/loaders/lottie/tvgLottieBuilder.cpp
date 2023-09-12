@@ -122,7 +122,9 @@ static bool _updateTransform(LottieTransform* transform, int32_t frameNo, bool a
     auto anchor = transform->anchor(frameNo);
     mathTranslateR(&matrix, -anchor.x, -anchor.y);
 
-    opacity = transform->opacity(frameNo);
+    //invisible just in case.
+    if (scale.x == 0.0f || scale.y == 0.0f) opacity = 0;
+    else opacity = transform->opacity(frameNo);
 
     return true;
 }
@@ -776,19 +778,19 @@ static void _updateLayer(LottieLayer* root, LottieLayer* layer, int32_t frameNo)
 {
     //visibility
     if (frameNo < layer->inFrame || frameNo > layer->outFrame) return;
-    auto opacity = layer->opacity(frameNo);
-    if (opacity == 0) return;
 
     _updateTransform(layer, frameNo);
 
     //Prepare render data
     layer->scene = Scene::gen().release();
-    layer->scene->transform(layer->cache.matrix);
 
     //FIXME: Ignore opacity when Null layer?
     if (layer->type != LottieLayer::Null) {
         layer->scene->opacity(layer->cache.opacity);
+        if (layer->cache.opacity == 0) return;
     }
+
+    layer->scene->transform(layer->cache.matrix);
 
     auto rFrameNo = layer->remap(frameNo);
 
