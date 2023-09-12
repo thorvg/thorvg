@@ -96,7 +96,8 @@ struct SwShapeTask : SwTask
 
         if (!rshape->stroke->fill && (MULTIPLY(rshape->stroke->color[3], opacity) == 0)) return 0.0f;
         if (mathZero(rshape->stroke->trim.begin - rshape->stroke->trim.end)) return 0.0f;
-        if (transform) return (width / sqrt(transform->e11 * transform->e11 + transform->e12 * transform->e12));
+
+        if (transform) return (width * sqrt(transform->e11 * transform->e11 + transform->e12 * transform->e12));
         else return width;
     }
 
