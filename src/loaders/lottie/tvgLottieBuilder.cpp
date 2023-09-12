@@ -885,11 +885,16 @@ static bool _buildPrecomp(LottieComposition* comp, LottieGroup* parent)
     for (auto c = parent->children.data; c < parent->children.end(); ++c) {
         auto child = static_cast<LottieLayer*>(*c);
 
-        //attach the referencing layer.
+        //attach the precomp layer.
         if (child->refId) _buildReference(comp, child);
 
-        //parenting
-        if (child->matte.target) _bulidHierarchy(parent, child->matte.target);
+        if (child->matte.target) {
+            //parenting
+            _bulidHierarchy(parent, child->matte.target);
+            //precomp referencing
+            if (child->matte.target->refId) _buildReference(comp, child->matte.target);
+        }
+
         if (child->pid != -1) _bulidHierarchy(parent, child);
     }
     return true;
