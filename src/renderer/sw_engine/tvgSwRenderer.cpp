@@ -741,6 +741,12 @@ void* SwRenderer::prepareCommon(SwTask* task, const RenderTransform* transform, 
         task->transform = nullptr;
     }
 
+    //zero size?
+    if (task->transform) {
+        if (task->transform->e11 == 0.0f && task->transform->e12 == 0.0f) return task; //zero width
+        if (task->transform->e21 == 0.0f && task->transform->e22 == 0.0f) return task; //zero height
+    }
+
     task->opacity = opacity;
     task->surface = surface;
     task->mpool = mpool;
