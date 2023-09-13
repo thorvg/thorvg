@@ -165,6 +165,10 @@ static inline bool _matting(const SwSurface* surface)
     else return false;
 }
 
+static inline uint8_t _opMaskNone(uint8_t s, TVG_UNUSED uint8_t d, TVG_UNUSED uint8_t a)
+{
+    return s;
+}
 
 static inline uint8_t _opMaskAdd(uint8_t s, uint8_t d, uint8_t a)
 {
@@ -1704,10 +1708,19 @@ static bool _rasterTranslucentGradientRle(SwSurface* surface, const SwRleData* r
 {
     auto span = rle->spans;
 
-    for (uint32_t i = 0; i < rle->size; ++i, ++span) {
-        auto dst = &surface->buf32[span->y * surface->stride + span->x];
-        if (span->coverage == 255) fillMethod()(fill, dst, span->y, span->x, span->len, opBlendPreNormal, 255);
-        else fillMethod()(fill, dst, span->y, span->x, span->len, opBlendNormal, span->coverage);
+    //32 bits
+    if (surface->channelSize == sizeof(uint32_t)) {
+        for (uint32_t i = 0; i < rle->size; ++i, ++span) {
+            auto dst = &surface->buf32[span->y * surface->stride + span->x];
+            if (span->coverage == 255) fillMethod()(fill, dst, span->y, span->x, span->len, opBlendPreNormal, 255);
+            else fillMethod()(fill, dst, span->y, span->x, span->len, opBlendNormal, span->coverage);
+        }
+    //8 bits
+    } else if (surface->channelSize == sizeof(uint8_t)) {
+        for (uint32_t i = 0; i < rle->size; ++i, ++span) {
+            auto dst = &surface->buf8[span->y * surface->stride + span->x];
+            fillMethod()(fill, dst, span->y, span->x, span->len, _opMaskAdd, 255);
+        }
     }
     return true;
 }
@@ -1718,11 +1731,22 @@ static bool _rasterSolidGradientRle(SwSurface* surface, const SwRleData* rle, co
 {
     auto span = rle->spans;
 
-    for (uint32_t i = 0; i < rle->size; ++i, ++span) {
-        auto dst = &surface->buf32[span->y * surface->stride + span->x];
-        if (span->coverage == 255) fillMethod()(fill, dst, span->y, span->x, span->len, opBlendSrcOver, 255);
-        else fillMethod()(fill, dst, span->y, span->x, span->len, opBlendInterp, span->coverage);
+    //32 bits
+    if (surface->channelSize == sizeof(uint32_t)) {
+        for (uint32_t i = 0; i < rle->size; ++i, ++span) {
+            auto dst = &surface->buf32[span->y * surface->stride + span->x];
+            if (span->coverage == 255) fillMethod()(fill, dst, span->y, span->x, span->len, opBlendSrcOver, 255);
+            else fillMethod()(fill, dst, span->y, span->x, span->len, opBlendInterp, span->coverage);
+        }
+    //8 bits
+    } else if (surface->channelSize == sizeof(uint8_t)) {
+        for (uint32_t i = 0; i < rle->size; ++i, ++span) {
+            auto dst = &surface->buf8[span->y * surface->stride + span->x];
+            if (span->coverage == 255) fillMethod()(fill, dst, span->y, span->x, span->len, _opMaskNone, 255);
+            else fillMethod()(fill, dst, span->y, span->x, span->len, _opMaskAdd, span->coverage);
+        }
     }
+
     return true;
 }
 
@@ -1890,11 +1914,6 @@ void rasterPremultiply(Surface* surface)
 
 bool rasterGradientShape(SwSurface* surface, SwShape* shape, unsigned id)
 {
-    if (surface->channelSize == sizeof(uint8_t)) {
-        TVGERR("SW_ENGINE", "Not supported grayscale gradient!");
-        return false;
-    }
-
     if (!shape->fill) return false;
 
     if (shape->fastTrack) {
@@ -1910,11 +1929,6 @@ bool rasterGradientShape(SwSurface* surface, SwShape* shape, unsigned id)
 
 bool rasterGradientStroke(SwSurface* surface, SwShape* shape, unsigned id)
 {
-    if (surface->channelSize == sizeof(uint8_t)) {
-        TVGERR("SW_ENGINE", "Not supported grayscale gradient!");
-        return false;
-    }
-
     if (!shape->stroke || !shape->stroke->fill || !shape->strokeRle) return false;
 
     if (id == TVG_CLASS_ID_LINEAR) return _rasterLinearGradientRle(surface, shape->strokeRle, shape->stroke->fill);
