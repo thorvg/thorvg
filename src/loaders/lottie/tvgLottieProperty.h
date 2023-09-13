@@ -302,6 +302,12 @@ struct LottiePathSet
         auto t = float(frameNo - pframe->no) / float(frame->no - pframe->no);
         if (pframe->interpolator) t = pframe->interpolator->progress(t);
 
+        if (pframe->hold) {
+            if (t < 1.0f) copy(pframe->value, pts);
+            else copy(frame->value, pts);
+            return true;
+        }
+
         auto s = pframe->value.pts;
         auto e = frame->value.pts;
 
@@ -389,6 +395,11 @@ struct LottieColorStop
         auto pframe = frame - 1;
         auto t = float(frameNo - pframe->no) / float(frame->no - pframe->no);
         if (pframe->interpolator) t = pframe->interpolator->progress(t);
+
+        if (pframe->hold) {
+            if (t < 1.0f) fill->colorStops(pframe->value.data, count);
+            else fill->colorStops(frame->value.data, count);
+        }
 
         auto s = pframe->value.data;
         auto e = frame->value.data;
