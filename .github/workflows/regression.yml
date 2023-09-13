@@ -1,4 +1,4 @@
-name: Regression Testing
+name: Regression
 
 on:
   pull_request:

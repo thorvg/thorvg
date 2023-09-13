@@ -1,0 +1,71 @@
+name: MacOS
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: true
+
+    - name: Install Packages
+      run: |
+        export HOMEBREW_NO_INSTALL_FROM_API=1
+        /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+        brew update
+        brew install meson efl
+        brew upgrade
+
+    - name: Build
+      run: |
+        meson . build -Dlog=true -Dexamples=true -Dloaders="all" -Dsavers="all" -Dbindings="capi" -Dtools="all"
+        ninja -C build install
+
+  static_loaders:
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: true
+
+    - name: Install Packages
+      run: |
+        brew update
+        brew install meson
+        brew upgrade
+
+    - name: Build
+      run: |
+        meson . build -Dlog=true -Dloaders="all" -Dsavers="all" -Dbindings="capi" -Dtools="all" -Dstatic=true
+        ninja -C build install
+
+  unit_test:
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: true
+
+    - name: Install Packages
+      run: |
+        brew update
+        brew install meson
+        brew upgrade
+
+    - name: Build
+      run: |
+        meson . build -Dloaders="all" -Dsavers="all" -Dbindings="capi" -Dtests=true --errorlogs
+        ninja -C build install test
+
+    - uses: actions/upload-artifact@v3
+      with:
+        name: UnitTestReport
+        path: build/meson-logs/testlog.txt
