@@ -620,7 +620,15 @@ static bool _rasterSolidRle(SwSurface* surface, const SwRleData* rle, uint8_t r,
     //8bit grayscale
     } else if (surface->channelSize == sizeof(uint8_t)) {
         for (uint32_t i = 0; i < rle->size; ++i, ++span) {
-            rasterGrayscale8(surface->buf8, span->coverage, span->y * surface->stride + span->x, span->len);
+            if (span->coverage == 255) {
+                rasterGrayscale8(surface->buf8, span->coverage, span->y * surface->stride + span->x, span->len);
+            } else {
+                auto dst = &surface->buf8[span->y * surface->stride + span->x];
+                auto ialpha = 255 - span->coverage;
+                for (uint32_t x = 0; x < span->len; ++x, ++dst) {
+                    *dst = span->coverage + MULTIPLY(*dst, ialpha);
+                }
+            }
         }
     }
     return true;
