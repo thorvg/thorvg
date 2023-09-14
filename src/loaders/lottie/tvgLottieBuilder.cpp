@@ -165,7 +165,7 @@ static void _updateTransform(LottieTransform* transform, int32_t frameNo, Render
 
     auto pmatrix = PP(ctx.propagator)->transform();
     ctx.propagator->transform(pmatrix ? mathMultiply(pmatrix, &matrix) : matrix);
-    ctx.propagator->opacity(opacity);
+    ctx.propagator->opacity(MULTIPLY(opacity, PP(ctx.propagator)->opacity));
 }
 
 
@@ -176,9 +176,6 @@ static void _updateGroup(LottieGroup* parent, LottieGroup* group, int32_t frameN
 
     auto opacity = group->opacity(frameNo);
     if (opacity == 0) return;
-
-    //TODO: move transform to layer.
-    if (group->transform) TVGERR("LOTTIE", "group transform is not working?!");
 
     auto ctx2 = ctx;
     _updateChildren(group, frameNo, ctx2);
@@ -938,8 +935,6 @@ void LottieBuilder::build(LottieComposition* comp)
     if (!comp->scene) return;
 
     _buildPrecomp(comp, comp->root);
-
-    //TODO: Process repeater objects?
 
     if (!update(comp, 0)) return;
 
