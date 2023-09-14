@@ -25,10 +25,8 @@
 
 #include <cstdint>
 
-#include "tvgCommon.h"
-#include "tvgArray.h"
-#include "tvgBezier.h"
 #include "tvgGlGeometry.h"
+#include "tvgBezier.h"
 
 namespace tvg
 {

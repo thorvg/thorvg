@@ -25,7 +25,6 @@
 
 #include <memory>
 
-#include "tvgArray.h"
 #include "tvgGlCommon.h"
 
 class GlGpuBuffer
