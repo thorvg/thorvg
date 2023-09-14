@@ -515,7 +515,7 @@ struct LottieComposition
 
     float duration() const
     {
-        return frameDuration() / frameRate;  // in second
+        return frameCnt() / frameRate;  // in second
     }
 
     int32_t frameAtTime(float timeInSec) const
@@ -523,15 +523,10 @@ struct LottieComposition
         auto p = timeInSec / duration();
         if (p < 0.0f) p = 0.0f;
         else if (p > 1.0f) p = 1.0f;
-        return (int32_t)lroundf(p * frameDuration());
+        return (int32_t)lroundf(p * frameCnt());
     }
 
     uint32_t frameCnt() const
-    {
-        return frameDuration() + 1;
-    }
-
-    uint32_t frameDuration() const
     {
         return endFrame - startFrame;
     }
