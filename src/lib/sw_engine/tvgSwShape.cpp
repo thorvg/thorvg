@@ -126,13 +126,17 @@ static void _dashLineTo(SwDashStroke& dash, const Point* to, const Matrix* trans
         }
     } else {
         while (len > dash.curLen) {
-            len -= dash.curLen;
             Line left, right;
-            _lineSplitAt(cur, dash.curLen, left, right);;
-            dash.curIdx = (dash.curIdx + 1) % dash.cnt;
-            if (!dash.curOpGap) {
-                _outlineMoveTo(*dash.outline, &left.pt1, transform);
-                _outlineLineTo(*dash.outline, &left.pt2, transform);
+            if (dash.curLen > 0) {
+                len -= dash.curLen;
+                _lineSplitAt(cur, dash.curLen, left, right);;
+                dash.curIdx = (dash.curIdx + 1) % dash.cnt;
+                if (!dash.curOpGap) {
+                    _outlineMoveTo(*dash.outline, &left.pt1, transform);
+                    _outlineLineTo(*dash.outline, &left.pt2, transform);
+                }
+            } else {
+                right = cur;
             }
             dash.curLen = dash.pattern[dash.curIdx];
             dash.curOpGap = !dash.curOpGap;
@@ -171,15 +175,19 @@ static void _dashCubicTo(SwDashStroke& dash, const Point* ctrl1, const Point* ct
         bool begin = true;          //starting with move_to
         while (len > dash.curLen) {
             Bezier left, right;
-            len -= dash.curLen;
-            bezSplitAt(cur, dash.curLen, left, right);
-            if (!dash.curOpGap) {
-                // leftovers from a previous command don't require moveTo
-                if (begin || dash.pattern[dash.curIdx] - dash.curLen < FLT_EPSILON) {
-                    _outlineMoveTo(*dash.outline, &left.start, transform);
-                    begin = false;
+            if (dash.curLen > 0) {
+                len -= dash.curLen;
+                bezSplitAt(cur, dash.curLen, left, right);
+                if (!dash.curOpGap) {
+                    // leftovers from a previous command don't require moveTo
+                    if (begin || dash.pattern[dash.curIdx] - dash.curLen < FLT_EPSILON) {
+                        _outlineMoveTo(*dash.outline, &left.start, transform);
+                        begin = false;
+                    }
+                    _outlineCubicTo(*dash.outline, &left.ctrl1, &left.ctrl2, &left.end, transform);
                 }
-                _outlineCubicTo(*dash.outline, &left.ctrl1, &left.ctrl2, &left.end, transform);
+            } else {
+                right = cur;
             }
             dash.curIdx = (dash.curIdx + 1) % dash.cnt;
             dash.curLen = dash.pattern[dash.curIdx];
