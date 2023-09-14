@@ -24,9 +24,8 @@
 #define _TVG_GL_GEOMETRY_H_
 
 #include <vector>
-#include "tvgMath.h"
-#include "tvgArray.h"
 #include "tvgGlCommon.h"
+#include "tvgMath.h"
 
 
 #define MVP_MATRIX() \
