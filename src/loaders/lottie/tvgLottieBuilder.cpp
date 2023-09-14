@@ -140,7 +140,7 @@ static void _updateTransform(LottieLayer* layer, int32_t frameNo)
     auto transform = layer->transform;
     auto parent = layer->parent;
 
-    if (parent) _updateTransform(parent, parent->remap(frameNo));
+    if (parent) _updateTransform(parent, frameNo);
 
     auto& matrix = layer->cache.matrix;
 
@@ -718,7 +718,7 @@ static void _updatePrecomp(LottieLayer* precomp, int32_t frameNo)
 {
     if (precomp->children.count == 0) return;
 
-    frameNo -= precomp->startFrame;
+    frameNo = precomp->remap(frameNo);
 
     //TODO: skip if the layer is static.
     for (auto child = precomp->children.end() - 1; child >= precomp->children.data; --child) {
@@ -779,7 +779,7 @@ static void _updateLayer(LottieLayer* root, LottieLayer* layer, int32_t frameNo)
     layer->scene = nullptr;
 
     //visibility
-    if (frameNo < layer->inFrame || frameNo > layer->outFrame) return;
+    if (frameNo < layer->inFrame || frameNo >= layer->outFrame) return;
 
     _updateTransform(layer, frameNo);
 
@@ -798,20 +798,18 @@ static void _updateLayer(LottieLayer* root, LottieLayer* layer, int32_t frameNo)
 
     layer->scene->transform(layer->cache.matrix);
 
-    auto rFrameNo = layer->remap(frameNo);
-
     switch (layer->type) {
         case LottieLayer::Precomp: {
-            _updatePrecomp(layer, rFrameNo);
+            _updatePrecomp(layer, frameNo);
             break;
         }
         case LottieLayer::Solid: {
-            _updateSolid(layer, rFrameNo);
+            _updateSolid(layer, frameNo);
             break;
         }
         default: {
             RenderContext ctx;
-            _updateChildren(layer, rFrameNo, ctx);
+            _updateChildren(layer, frameNo, ctx);
             break;
         }
     }
@@ -826,7 +824,7 @@ static void _updateLayer(LottieLayer* root, LottieLayer* layer, int32_t frameNo)
         if (layer->matte.target->scene) layer->scene->composite(cast<Scene>(layer->matte.target->scene), layer->matte.type);
     }
 
-    _updateMaskings(layer, rFrameNo);
+    _updateMaskings(layer, frameNo);
 
     //clip the layer viewport
     if (layer->refId && layer->w > 0 && layer->h > 0) {
@@ -910,7 +908,7 @@ bool LottieBuilder::update(LottieComposition* comp, int32_t frameNo)
 {
     frameNo += comp->startFrame;
     if (frameNo < comp->startFrame) frameNo = comp->startFrame;
-    if (frameNo > comp->endFrame) frameNo = comp->endFrame;
+    if (frameNo >= comp->endFrame) frameNo = (comp->endFrame - 1);
 
     //Update root layer
     auto root = comp->root;
