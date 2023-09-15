@@ -607,7 +607,7 @@ static void _updateRoundedCorner(LottieRoundedCorner* roundedCorner, int32_t fra
 
 static void _updateRepeater(LottieRepeater* repeater, int32_t frameNo, RenderContext& ctx)
 {
-    ctx.repeater.cnt = repeater->copies(frameNo);
+    ctx.repeater.cnt = static_cast<int>(repeater->copies(frameNo));
     ctx.repeater.offset = repeater->offset(frameNo);
     ctx.repeater.position = repeater->position(frameNo);
     ctx.repeater.anchor = repeater->anchor(frameNo);
@@ -788,8 +788,12 @@ static void _updateLayer(LottieLayer* root, LottieLayer* layer, int32_t frameNo)
 
     //FIXME: Ignore opacity when Null layer?
     if (layer->type != LottieLayer::Null) {
+        if (layer->cache.opacity == 0 && !layer->matteSrc) {
+            delete(layer->scene);
+            layer->scene = nullptr;
+            return;
+        }
         layer->scene->opacity(layer->cache.opacity);
-        if (layer->cache.opacity == 0) return;
     }
 
     layer->scene->transform(layer->cache.matrix);
