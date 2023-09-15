@@ -724,6 +724,18 @@ static void _updatePrecomp(LottieLayer* precomp, int32_t frameNo)
     for (auto child = precomp->children.end() - 1; child >= precomp->children.data; --child) {
         _updateLayer(precomp, static_cast<LottieLayer*>(*child), frameNo);
     }
+
+    //clip the layer viewport
+    if (precomp->w > 0 && precomp->h > 0) {
+        //TODO: remove the intermediate scene....
+        auto cscene = Scene::gen();
+        auto clipper = Shape::gen();
+        clipper->appendRect(0, 0, precomp->w, precomp->h);
+        clipper->transform(precomp->cache.matrix);
+        cscene->composite(std::move(clipper), CompositeMethod::ClipPath);
+        cscene->push(cast<Scene>(precomp->scene));
+        precomp->scene = cscene.release();
+    }
 }
 
 
@@ -798,6 +810,18 @@ static void _updateLayer(LottieLayer* root, LottieLayer* layer, int32_t frameNo)
 
     layer->scene->transform(layer->cache.matrix);
 
+    if (layer->matte.target && layer->masks.count > 0) {
+        TVGERR("LOTTIE", "FIXME: Matte + Masking??");
+    }
+
+    //matte masking layer
+    if (layer->matte.target) {
+        _updateLayer(root, layer->matte.target, frameNo);
+        if (layer->matte.target->scene) layer->scene->composite(cast<Scene>(layer->matte.target->scene), layer->matte.type);
+    }
+
+    _updateMaskings(layer, frameNo);
+
     switch (layer->type) {
         case LottieLayer::Precomp: {
             _updatePrecomp(layer, frameNo);
@@ -812,30 +836,6 @@ static void _updateLayer(LottieLayer* root, LottieLayer* layer, int32_t frameNo)
             _updateChildren(layer, frameNo, ctx);
             break;
         }
-    }
-
-    if (layer->matte.target && layer->masks.count > 0) {
-        TVGERR("LOTTIE", "FIXME: Matte + Masking??");
-    }
-
-    //matte masking layer
-    if (layer->matte.target) {
-        _updateLayer(root, layer->matte.target, frameNo);
-        if (layer->matte.target->scene) layer->scene->composite(cast<Scene>(layer->matte.target->scene), layer->matte.type);
-    }
-
-    _updateMaskings(layer, frameNo);
-
-    //clip the layer viewport
-    if (layer->refId && layer->w > 0 && layer->h > 0) {
-        //TODO: remove the intermediate scene....
-        auto cscene = Scene::gen();
-        auto clipper = Shape::gen();
-        clipper->appendRect(0, 0, layer->w, layer->h);
-        clipper->transform(layer->cache.matrix);
-        cscene->composite(std::move(clipper), CompositeMethod::ClipPath);
-        cscene->push(cast<Scene>(layer->scene));
-        layer->scene = cscene.release();
     }
 
     //the given matte source was composited by the target earlier.
