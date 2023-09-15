@@ -27,20 +27,26 @@
 
 const char* COLOR_VERT_SHADER = TVG_COMPOSE_SHADER(
     layout(location = 0) in vec3 aLocation;                         \n
-    uniform mat4 uTransform;                                        \n
+    layout(std140) uniform Matrix {                                 \n
+        mat4 transform;                                             \n
+    } uMatrix;                                                      \n
     out float vOpacity;                                             \n
     void main()                                                     \n
     {                                                               \n
-        gl_Position = uTransform * vec4(aLocation.xy, 0.0, 1.0);    \n
+        gl_Position =                                               \n
+            uMatrix.transform * vec4(aLocation.xy, 0.0, 1.0);       \n
         vOpacity = aLocation.z;                                     \n
     });
 
 const char* COLOR_FRAG_SHADER = TVG_COMPOSE_SHADER(
-    uniform vec4 uColor;                                     \n
+    layout(std140) uniform ColorInfo {                       \n
+        vec4 solidColor;                                     \n
+    } uColorInfo;                                            \n
     in float vOpacity;                                       \n
     out vec4 FragColor;                                      \n
     void main()                                              \n
     {                                                        \n
+       vec4 uColor = uColorInfo.solidColor;                  \n
        FragColor = vec4(uColor.xyz, uColor.w*vOpacity);      \n
     });
 
@@ -48,22 +54,20 @@ const char* GRADIENT_VERT_SHADER = TVG_COMPOSE_SHADER(
 layout(location = 0) in vec3 aLocation;                                         \n
 out float vOpacity;                                                             \n
 out vec2 vPos;                                                                  \n
-uniform mat4 uTransform;                                                        \n
+layout(std140) uniform Matrix {                                                 \n
+    mat4 transform;                                                             \n
+} uMatrix;                                                                      \n
                                                                                 \n
 void main()                                                                     \n
 {                                                                               \n
-    gl_Position = uTransform * vec4(aLocation.xy, 0.0, 1.0);                    \n
+    gl_Position = uMatrix.transform * vec4(aLocation.xy, 0.0, 1.0);             \n
     vOpacity = aLocation.z;                                                     \n
     vPos =  aLocation.xy;                                                       \n
 });
 
 
-std::string STR_GRADIENT_FRAG_COMMON_VARIABLES = TVG_COMPOSE_SHADER(                                                                               \n
+std::string STR_GRADIENT_FRAG_COMMON_VARIABLES = TVG_COMPOSE_SHADER(
 const int MAX_STOP_COUNT = 4;                                                                           \n
-uniform float nStops;                                                                                   \n
-uniform float noise_level;                                                                              \n
-uniform float stopPoints[MAX_STOP_COUNT];                                                               \n
-uniform vec4 stopColors[MAX_STOP_COUNT];                                                                \n
 in vec2 vPos;                                                                                           \n
 in float vOpacity;                                                                                      \n
 );
@@ -80,23 +84,26 @@ vec4 gradient(float t)                                                          
 {                                                                                                       \n
     vec4 col = vec4(0.0);                                                                               \n
     int i = 0;                                                                                          \n
-    int count = int(nStops);                                                                            \n
-    if (t <= stopPoints[0])                                                                              \n
+    int count = int(uGradientInfo.nStops[0]);                                                              \n
+    if (t <= uGradientInfo.stopPoints[0])                                                               \n
     {                                                                                                   \n
-        col += stopColors[0];                                                                           \n
+        col += uGradientInfo.stopColors[0];                                                             \n
     }                                                                                                   \n
-    else if (t >= stopPoints[count - 1])                                                                 \n
+    else if (t >= uGradientInfo.stopPoints[count - 1])                                                  \n
     {                                                                                                   \n
-        col += stopColors[count - 1];                                                                   \n
+        col += uGradientInfo.stopColors[count - 1];                                                     \n
     }                                                                                                   \n
     else                                                                                                \n
     {                                                                                                   \n
         for (i = 0; i < count - 1; ++i)                                                                 \n
         {                                                                                               \n
-            if (t > stopPoints[i] && t < stopPoints[i + 1])                                            \n
+            if (t > uGradientInfo.stopPoints[i] && t < uGradientInfo.stopPoints[i + 1])                 \n
             {                                                                                           \n
-                col += (stopColors[i] * (1. - gradientStep(stopPoints[i], stopPoints[i + 1], t)));      \n
-                col += (stopColors[i + 1] * gradientStep(stopPoints[i], stopPoints[i + 1], t));         \n
+                col += (uGradientInfo.stopColors[i] *                                                   \n
+                    (1. - gradientStep(uGradientInfo.stopPoints[i],                                     \n
+                                       uGradientInfo.stopPoints[i + 1], t)));                           \n
+                col += (uGradientInfo.stopColors[i + 1] *                                               \n
+                        gradientStep(uGradientInfo.stopPoints[i], uGradientInfo.stopPoints[i + 1], t)); \n
                 break;                                                                                  \n
             }                                                                                           \n
         }                                                                                               \n
@@ -113,8 +120,13 @@ vec3 ScreenSpaceDither(vec2 vScreenPos)                                         
 });
 
 std::string STR_LINEAR_GRADIENT_VARIABLES = TVG_COMPOSE_SHADER(
-uniform vec2 gradStartPos;                                                                              \n
-uniform vec2 gradEndPos;                                                                                \n
+layout(std140) uniform GradientInfo {                                                                   \n
+    vec4  nStops;                                                                                       \n
+    vec2  gradStartPos;                                                                                 \n
+    vec2  gradEndPos;                                                                                   \n
+    vec4  stopPoints;                                                                                   \n
+    vec4  stopColors[MAX_STOP_COUNT];                                                                   \n
+} uGradientInfo ;                                                                                       \n
 );
 
 std::string STR_LINEAR_GRADIENT_MAIN = TVG_COMPOSE_SHADER(
@@ -122,8 +134,8 @@ out vec4 FragColor;                                                             
 void main()                                                                                             \n
 {                                                                                                       \n
     vec2 pos = vPos;                                                                                    \n
-    vec2 st = gradStartPos;                                                                             \n
-    vec2 ed = gradEndPos;                                                                               \n
+    vec2 st = uGradientInfo.gradStartPos;                                                               \n
+    vec2 ed = uGradientInfo.gradEndPos;                                                                 \n
                                                                                                         \n
     vec2 ba = ed - st;                                                                                  \n
                                                                                                         \n
@@ -134,14 +146,19 @@ void main()                                                                     
                                                                                                         \n
     vec4 color = gradient(t);                                                                           \n
                                                                                                         \n
-    vec3 noise = 8.0 * noise_level * ScreenSpaceDither(pos);                                            \n
+    vec3 noise = 8.0 * uGradientInfo.nStops[1] * ScreenSpaceDither(pos);                                \n
     vec4 finalCol = vec4(color.xyz + noise, color.w);                                                   \n
     FragColor = vec4(finalCol.xyz, finalCol.w* vOpacity);                                               \n
 });
 
 std::string STR_RADIAL_GRADIENT_VARIABLES = TVG_COMPOSE_SHADER(
-    uniform vec2 gradStartPos;                                                                          \n
-    uniform float stRadius;                                                                             \n
+layout(std140) uniform GradientInfo {                                                                   \n
+    vec4  nStops;                                                                                       \n
+    vec2  centerPos;                                                                                    \n
+    vec2  radius;                                                                                       \n
+    vec4  stopPoints;                                                                                   \n
+    vec4  stopColors[MAX_STOP_COUNT];                                                                   \n
+} uGradientInfo ;                                                                                       \n
 );
 
 std::string STR_RADIAL_GRADIENT_MAIN = TVG_COMPOSE_SHADER(
@@ -150,8 +167,8 @@ void main()                                                                     
 {                                                                                                       \n
     vec2 pos = vPos;                                                                                    \n
                                                                                                         \n
-    float ba = stRadius;                                                                                \n
-    float d = distance(gradStartPos, pos);                                                              \n
+    float ba = uGradientInfo.radius.x;                                                                  \n
+    float d = distance(uGradientInfo.centerPos, pos);                                                   \n
     d = (d / ba);                                                                                       \n
                                                                                                         \n
     //float t = smoothstep(0.0, 1.0, clamp(d, 0.0, 1.0));                                               \n
@@ -159,7 +176,7 @@ void main()                                                                     
                                                                                                         \n
     vec4 color = gradient(t);                                                                           \n
                                                                                                         \n
-    vec3 noise = 8.0 * noise_level * ScreenSpaceDither(pos);                                            \n
+    vec3 noise = 8.0 * uGradientInfo.nStops[1] * ScreenSpaceDither(pos);                                \n
     vec4 finalCol = vec4(color.xyz + noise, color.w);                                                   \n
     FragColor = vec4(finalCol.xyz, finalCol.w * vOpacity);                                              \n
 });

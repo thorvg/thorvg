@@ -34,6 +34,7 @@ public:
     {
         ARRAY_BUFFER = GL_ARRAY_BUFFER,
         ELEMENT_ARRAY_BUFFER = GL_ELEMENT_ARRAY_BUFFER,
+        UNIFORM_BUFFER = GL_UNIFORM_BUFFER,
     };
 
     GlGpuBuffer();
@@ -41,6 +42,8 @@ public:
     void updateBufferData(Target target, uint32_t size, const void* data);
     void bind(Target target);
     void unbind(Target target);
+
+    uint32_t getBufferId() { return mGlBufferId; }
 private:
     uint32_t    mGlBufferId = 0;
 
@@ -48,10 +51,10 @@ private:
 
 class GlStageBuffer {
 public:
-    GlStageBuffer() = default;
+    GlStageBuffer();
     ~GlStageBuffer();
 
-    uint32_t push(void* data, uint32_t size);
+    uint32_t push(void* data, uint32_t size, bool alignGpuOffset = false);
 
     void flushToGPU();
 
@@ -59,6 +62,9 @@ public:
 
     void unbind();
 
+    GLuint getBufferId();
+private:
+    void alignOffset();
 private:
     GLuint mVao = 0;
     unique_ptr<GlGpuBuffer> mGpuBuffer = {};

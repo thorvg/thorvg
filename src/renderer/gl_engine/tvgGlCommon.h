@@ -61,5 +61,25 @@ struct GlShape
   unique_ptr<GlGeometry> geometry;
 };
 
+#define MAX_GRADIENT_STOPS 4
+
+struct GlLinearGradientBlock
+{
+    alignas(16) float nStops[4] = {};
+    alignas(16) float startPos[2] = {};
+    alignas(8) float stopPos[2] = {};
+    alignas(8) float stopPoints[MAX_GRADIENT_STOPS] = {};
+    alignas(16) float stopColors[4 * MAX_GRADIENT_STOPS] = {};
+};
+
+struct GlRadialGradientBlock
+{
+    alignas(16) float nStops[4] = {};
+    alignas(16) float centerPos[2] = {};
+    alignas(8) float radius[2] = {};
+    alignas(8) float stopPoints[MAX_GRADIENT_STOPS] = {};
+    alignas(16) float stopColors[4 * MAX_GRADIENT_STOPS] = {};
+};
+
 
 #endif /* _TVG_GL_COMMON_H_ */

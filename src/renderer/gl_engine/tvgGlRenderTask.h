@@ -23,102 +23,72 @@
 #ifndef _TVG_GL_RENDER_TASK_H_
 #define _TVG_GL_RENDER_TASK_H_
 
-#include "tvgGlRendererProperties.h"
+#include "tvgGlCommon.h"
+#include "tvgGlProgram.h"
 
-#define MAX_GRADIENT_STOPS 4
+
+struct GlVertexLayout
+{
+    uint32_t index;
+    uint32_t size;
+    uint32_t stride;
+    size_t   offset;
+};
+
+enum class GlBindingType
+{
+    kUniformBuffer,
+    kTexture,
+};
+
+
+struct GlBindingResource
+{
+    GlBindingType type;
+    /**
+     * Binding point index.
+     * Can be a uniform location for a texture
+     * Can be a uniform buffer binding index for a uniform block
+     */
+    uint32_t        bindPoint = {};
+    uint32_t        location = {};
+    GLuint          gBufferId = {};
+    uint32_t        bufferOffset = {};
+    uint32_t        bufferRange = {};
+
+    GlBindingResource() = default;
+
+    GlBindingResource(uint32_t index, uint32_t location, uint32_t bufferId, uint32_t offset, uint32_t range)
+        : type(GlBindingType::kUniformBuffer), bindPoint(index), location(location), gBufferId(bufferId), bufferOffset(offset), bufferRange(range)
+    {
+    }
+
+    GlBindingResource(uint32_t bindPoint, uint32_t texId, uint32_t location)
+        : type(GlBindingType::kTexture), bindPoint(bindPoint), location(location), gBufferId(texId)
+    {
+    }
+};
+
 
 class GlRenderTask
 {
 public:
-    enum RenderTypes
-    {
-        RT_Color = 0,
-        RT_LinGradient,
-        RT_RadGradient,
+    GlRenderTask(GlProgram* program): mProgram(program) {}
+    ~GlRenderTask() = default;
 
-        RT_None,
-    };
+    void run();
 
-    GlRenderTask(RenderTypes renderType, std::shared_ptr<GlShader> shader);
-    RenderTypes getRenderType();
+    void addVertexLayout(const GlVertexLayout& layout);
+    void addBindResource(const GlBindingResource& binding);
+    void setDrawRange(uint32_t offset, uint32_t count);
 
-    void load();
-    static void unload();
-    std::shared_ptr<GlProgram> getProgram();
-    std::map<int32_t, VertexProperty>& getAttributeVertexProperty();
-    std::map<int32_t, VertexProperty>& getUniformVertexProperty();
-    int32_t getLocationPropertyId() const;
-    int32_t getTransformLocationPropertyId() const;
-    void setTransform(int count, float* transform_matrix);
-    void uploadValues();
-
+    GlProgram* getProgram() { return mProgram; }
 private:
-    RenderTypes mRenderType;
-
-    std::shared_ptr<GlProgram> mProgram;
-    std::map<int32_t, VertexProperty> mAttributePropertyBuffer;
-    std::map<int32_t, VertexProperty> mUniformPropertyBuffer;
-
-    int32_t mLocVertexAttribute = -1;
-    int32_t mLocTransform = -1;
+    GlProgram* mProgram;
+    uint32_t mIndexOffset = {};
+    uint32_t mIndexCount = {};
+    Array<GlVertexLayout> mVertexLayout = {};
+    Array<GlBindingResource> mBindingResources = {};
 };
-
-class GlColorRenderTask : public GlRenderTask
-{
-public:
-    static std::shared_ptr<GlColorRenderTask> gen();
-    GlColorRenderTask();
-    void setColor(uint8_t r, uint8_t g, uint8_t b, uint8_t a);
-
-private:
-    int32_t mLocColor = -1;
-};
-
-class GlGradientRenderTask : public GlRenderTask
-{
-public:
-    GlGradientRenderTask(GlRenderTask::RenderTypes renderType, std::shared_ptr<GlShader> shader);
-    void setPrimitveSize(float width, float height);
-    void setCanvasSize(float width, float height);
-    void setNoise(float noise);
-    void setStopCount(int32_t count);
-    void setStopColor(int index, float stopVal, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
-    int32_t getTransformLocationPropertyId() const;
-private:
-    int32_t mLocNoise = -1;
-    int32_t mLocStopCnt = -1;
-    int32_t mLocStops = -1;
-    int32_t mLocStopColors = -1;
-};
-
-class GlLinearGradientRenderTask : public GlGradientRenderTask
-{
-public:
-    static std::shared_ptr<GlLinearGradientRenderTask> gen();
-    GlLinearGradientRenderTask();
-    void setStartPosition(float posX, float posY);
-    void setEndPosition(float posX, float posY);
-
-private:
-    int32_t mLocStartPos = -1;
-    int32_t mLocEndPos = -1;
-};
-
-class GlRadialGradientRenderTask : public GlGradientRenderTask
-{
-public:
-    static std::shared_ptr<GlRadialGradientRenderTask> gen();
-    GlRadialGradientRenderTask();
-    ~GlRadialGradientRenderTask();
-    void setStartPosition(float posX, float posY);
-    void setStartRadius(float radius);
-    void setEndRadius(float radius);
-
-private:
-    int32_t mLocStartPos = -1;
-    int32_t mLocStRadius = -1;
-    int32_t mLocEdRadius = -1;
-};
-
 
 #endif /* _TVG_GL_RENDER_TASK_H_ */
