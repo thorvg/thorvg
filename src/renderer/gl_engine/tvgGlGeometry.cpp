@@ -24,6 +24,7 @@
 #include "tvgGlGpuBuffer.h"
 #include "tvgGlGeometry.h"
 #include "tvgGlTessellator.h"
+#include "tvgGlRenderTask.h"
 
 #define NORMALIZED_TOP_3D 1.0f
 #define NORMALIZED_BOTTOM_3D -1.0f
@@ -34,39 +35,22 @@ GlGeometry::~GlGeometry()
 {
 }
 
-bool GlGeometry::tesselate(const RenderShape& rshape, RenderUpdateFlag flag, GlStageBuffer* gpuBuffer)
+bool GlGeometry::tesselate(const RenderShape& rshape, RenderUpdateFlag flag)
 {
-    mFillVertexOffset = 0;
-    mStrokeVertexOffset = 0;
-    mFillIndexOffset = 0;
-    mStrokeIndexOffset = 0;
-    mFillCount = 0;
-    mStrokeCount = 0;
-
     if (flag & (RenderUpdateFlag::Color | RenderUpdateFlag::Gradient | RenderUpdateFlag::Transform)) {
-        Array<float> vertex;
-        Array<uint32_t> index;
+        fillVertex.clear();
+        fillIndex.clear();
 
-        tvg::Tessellator tess{&vertex, &index};
+        Tessellator tess{&fillVertex, &fillIndex};
         tess.tessellate(&rshape, true);
-
-        mFillCount = index.count;
-
-        mFillVertexOffset = gpuBuffer->push(vertex.data, vertex.count * sizeof(float));
-        mFillIndexOffset = gpuBuffer->push(index.data, index.count * sizeof(uint32_t));
     }
 
     if (flag & (RenderUpdateFlag::Stroke | RenderUpdateFlag::Transform)) {
-        Array<float> vertex;
-        Array<uint32_t> index;
+        strokeVertex.clear();
+        strokeIndex.clear();
 
-        tvg::Stroker stroke{&vertex, &index};
+        Stroker stroke{&strokeVertex, &strokeIndex};
         stroke.stroke(&rshape);
-
-        mStrokeCount = index.count;
-
-        mStrokeVertexOffset = gpuBuffer->push(vertex.data, vertex.count * sizeof(float));
-        mStrokeIndexOffset = gpuBuffer->push(index.data, index.count * sizeof(uint32_t));
     }
 
     return true;
@@ -79,22 +63,34 @@ void GlGeometry::disableVertex(uint32_t location)
 }
 
 
-void GlGeometry::draw(const uint32_t location, RenderUpdateFlag flag)
+bool GlGeometry::draw(GlRenderTask* task, GlStageBuffer* gpuBuffer, RenderUpdateFlag flag)
 {
 
     if (flag == RenderUpdateFlag::None) {
-        return;
+        return false;
     }
 
+    Array<float>* vertexBuffer = nullptr;
+    Array<uint32_t>* indexBuffer = nullptr;
 
-    uint32_t vertexOffset = (flag == RenderUpdateFlag::Stroke) ? mStrokeVertexOffset : mFillVertexOffset;
-    uint32_t indexOffset = (flag == RenderUpdateFlag::Stroke) ? mStrokeIndexOffset : mFillIndexOffset;
-    uint32_t count = (flag == RenderUpdateFlag::Stroke) ? mStrokeCount : mFillCount;
+    if (flag & RenderUpdateFlag::Stroke) {
+        vertexBuffer = &strokeVertex;
+        indexBuffer = &strokeIndex;
+    } else {
+        vertexBuffer = &fillVertex;
+        indexBuffer = &fillIndex;
+    }
 
-    GL_CHECK(glVertexAttribPointer(location, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), reinterpret_cast<void*>(vertexOffset)));
-    GL_CHECK(glEnableVertexAttribArray(location));
+    if (indexBuffer->count == 0) return false;
 
-    GL_CHECK(glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_INT, reinterpret_cast<void*>(indexOffset)));
+    uint32_t vertexOffset = gpuBuffer->push(vertexBuffer->data, vertexBuffer->count * sizeof(float));
+    uint32_t indexOffset = gpuBuffer->push(indexBuffer->data, indexBuffer->count * sizeof(uint32_t));
+
+    // vertex layout
+    task->addVertexLayout(GlVertexLayout{0, 3, 3 * sizeof(float), vertexOffset});
+    task->setDrawRange(indexOffset, indexBuffer->count);
+
+    return true;
 }
 
 

@@ -87,6 +87,16 @@ int32_t GlProgram::getUniformLocation(const char* name)
     return location;
 }
 
+int32_t GlProgram::getUniformBlockIndex(const char* name)
+{
+    GL_CHECK(int32_t index = glGetUniformBlockIndex(mProgramObj, name));
+    return index;
+}
+
+uint32_t GlProgram::getProgramId()
+{
+    return mProgramObj;
+}
 
 void GlProgram::setUniform1Value(int32_t location, int count, const int* values)
 {

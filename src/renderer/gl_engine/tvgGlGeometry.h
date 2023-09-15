@@ -180,26 +180,25 @@ public:
 };
 
 class GlStageBuffer;
+class GlRenderTask;
 
 class GlGeometry
 {
 public:
-
+    GlGeometry() = default;
     ~GlGeometry();
 
-    bool tesselate(const RenderShape& rshape, RenderUpdateFlag flag, GlStageBuffer* gpuBuffer);
+    bool tesselate(const RenderShape& rshape, RenderUpdateFlag flag);
     void disableVertex(uint32_t location);
-    void draw(const uint32_t location, RenderUpdateFlag flag);
+    bool draw(GlRenderTask* task, GlStageBuffer* gpuBuffer, RenderUpdateFlag flag);
     void updateTransform(const RenderTransform* transform, float w, float h);
     float* getTransforMatrix();
 
 private:
-    uint32_t mFillVertexOffset;
-    uint32_t mFillIndexOffset;
-    uint32_t mFillCount;
-    uint32_t mStrokeVertexOffset;
-    uint32_t mStrokeIndexOffset;
-    uint32_t mStrokeCount;
+    Array<float> fillVertex = {};
+    Array<float> strokeVertex = {};
+    Array<uint32_t> fillIndex = {};
+    Array<uint32_t> strokeIndex = {};
     float mTransform[16];
 };
 

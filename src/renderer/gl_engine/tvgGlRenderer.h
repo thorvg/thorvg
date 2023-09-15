@@ -23,12 +23,23 @@
 #ifndef _TVG_GL_RENDERER_H_
 #define _TVG_GL_RENDERER_H_
 
+#include <vector>
+
 #include "tvgGlRenderTask.h"
 #include "tvgGlGpuBuffer.h"
 
 class GlRenderer : public RenderMethod
 {
 public:
+    enum RenderTypes
+    {
+        RT_Color = 0,
+        RT_LinGradient,
+        RT_RadGradient,
+
+        RT_None,
+    };
+
     Surface surface = {nullptr, 0, 0, 0, ColorSpace::Unsupported, true};
 
     RenderData prepare(const RenderShape& rshape, RenderData data, const RenderTransform* transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags, bool clipper) override;
@@ -59,15 +70,16 @@ public:
     static int term();
 
 private:
-    GlRenderer(): mGpuBuffer(new GlStageBuffer) {};
+    GlRenderer(); 
     ~GlRenderer();
 
     void initShaders();
     void drawPrimitive(GlShape& sdata, uint8_t r, uint8_t g, uint8_t b, uint8_t a, RenderUpdateFlag flag);
     void drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFlag flag);
 
-    vector<shared_ptr<GlRenderTask>>  mRenderTasks;
     std::unique_ptr<GlStageBuffer> mGpuBuffer;
+    vector<std::unique_ptr<GlProgram>> mPrograms;
+    vector<std::unique_ptr<GlRenderTask>> mRenderTasks;
 };
 
 #endif /* _TVG_GL_RENDERER_H_ */
