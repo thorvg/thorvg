@@ -386,20 +386,13 @@ struct LottieGroup : LottieObject
     virtual ~LottieGroup()
     {
         for (auto p = children.data; p < children.end(); ++p) delete(*p);
-        delete(transform);
     }
 
     void prepare(LottieObject::Type type = LottieObject::Group);
 
-    virtual uint8_t opacity(int32_t frameNo)
-    {
-        return (transform ? transform->opacity(frameNo) : 255);
-    }
-
     Scene* scene = nullptr;               //tvg render data
 
     Array<LottieObject*> children;
-    LottieTransform* transform = nullptr;
 };
 
 
@@ -420,14 +413,14 @@ struct LottieLayer : LottieGroup
         }
 
         delete(matte.target);
+        delete(transform);
     }
 
-    uint8_t opacity(int32_t frameNo) override
+    uint8_t opacity(int32_t frameNo)
     {
         //return zero if the visibility is false.
-        if (frameNo < inFrame || frameNo > outFrame) return 0;
         if (type == Null) return 255;
-        return LottieGroup::opacity(frameNo);
+        return transform->opacity(frameNo);
     }
 
     void prepare();
@@ -445,6 +438,7 @@ struct LottieLayer : LottieGroup
     LottieLayer* parent = nullptr;
     LottieFloat timeRemap = 0.0f;
     LottieComposition* comp = nullptr;
+    LottieTransform* transform = nullptr;
     Array<LottieMask*> masks;
 
     float timeStretch = 1.0f;
