@@ -174,10 +174,6 @@ static void _updateGroup(LottieGroup* parent, LottieGroup* group, int32_t frameN
 {
     //Prepare render data
     group->scene = parent->scene;
-
-    auto opacity = group->opacity(frameNo);
-    if (opacity == 0) return;
-
     auto ctx2 = ctx;
     _updateChildren(group, frameNo, ctx2);
 }

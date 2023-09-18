@@ -123,7 +123,6 @@ Fill* LottieGradient::fill(int32_t frameNo)
 void LottieGroup::prepare(LottieObject::Type type)
 {
     LottieObject::type = type;
-    if (transform) statical &= transform->statical;
     for (auto child = children.data; child < children.end(); ++child) {
         statical &= (*child)->statical;
         if (!statical) break;
@@ -133,13 +132,16 @@ void LottieGroup::prepare(LottieObject::Type type)
 
 void LottieLayer::prepare()
 {
-    LottieGroup::prepare(LottieObject::Layer);
+    if (transform) statical &= transform->statical;
 
-    /* if layer is hidden, only useulf data is its transform matrix.
+    /* if layer is hidden, only useful data is its transform matrix.
         so force it to be a Null Layer and release all resource. */
-    if (!hidden) return;
-    type = LottieLayer::Null;
-    children.reset();
+    if (hidden) {
+        type = LottieLayer::Null;
+        children.reset();
+        return;
+    }
+    LottieGroup::prepare(LottieObject::Layer);
 }
 
 
