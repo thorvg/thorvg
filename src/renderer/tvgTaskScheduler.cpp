@@ -100,17 +100,18 @@ struct TaskQueue {
 };
 
 
+static thread_local bool _async = true;  //toggle async tasking for each thread on/off
+
+
 struct TaskSchedulerImpl
 {
     uint32_t                       threadCnt;
     vector<thread>                 threads;
     vector<TaskQueue>              taskQueues;
     atomic<uint32_t>               idx{0};
-    thread::id                     tid;
 
     TaskSchedulerImpl(unsigned threadCnt) : threadCnt(threadCnt), taskQueues(threadCnt)
     {
-        tid = this_thread::get_id();
         threads.reserve(threadCnt);
 
         for (unsigned i = 0; i < threadCnt; ++i) {
@@ -146,24 +147,13 @@ struct TaskSchedulerImpl
     void request(Task* task)
     {
         //Async
-        if (threadCnt > 0) {
-            auto tid = this_thread::get_id();
-            if (tid == this->tid) {
-                task->prepare();
-                auto i = idx++;
-                for (unsigned n = 0; n < threadCnt; ++n) {
-                    if (taskQueues[(i + n) % threadCnt].tryPush(task)) return;
-                }
-                taskQueues[i % threadCnt].push(task);
-            //Not thread-safety now, it's requested from a worker-thread
-            } else {
-                for (unsigned i = 0; i < threadCnt; ++i) {
-                    if (tid == threads[i].get_id()) {
-                        task->prepare();
-                        (*task)(i + 1);
-                    }
-                }
+        if (threadCnt > 0 && _async) {
+            task->prepare();
+            auto i = idx++;
+            for (unsigned n = 0; n < threadCnt; ++n) {
+                if (taskQueues[(i + n) % threadCnt].tryPush(task)) return;
             }
+            taskQueues[i % threadCnt].push(task);
         //Sync
         } else {
             task->run(0);
@@ -204,4 +194,10 @@ unsigned TaskScheduler::threads()
 {
     if (inst) return inst->threadCnt;
     return 0;
+}
+
+
+void TaskScheduler::async(bool on)
+{
+    _async = on;
 }

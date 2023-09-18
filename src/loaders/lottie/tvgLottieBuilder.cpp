@@ -25,6 +25,7 @@
 #include "tvgShape.h"
 #include "tvgLottieModel.h"
 #include "tvgLottieBuilder.h"
+#include "tvgTaskScheduler.h"
 
 
 /************************************************************************/
@@ -577,11 +578,17 @@ static void _updateImage(LottieGroup* parent, LottieImage* image, int32_t frameN
 
     if (!picture) {
         picture = Picture::gen().release();
+
+        //force to load a picture on the same thread
+        TaskScheduler::async(false);
+
         if (image->size > 0) {
             if (picture->load((const char*)image->b64Data, image->size, image->mimeType, false) != Result::Success) return;
         } else {
             if (picture->load(image->path) != Result::Success) return;
         }
+
+        TaskScheduler::async(true);
     }
 
     if (ctx.propagator) {
