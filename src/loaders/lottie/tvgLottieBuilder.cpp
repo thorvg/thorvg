@@ -241,6 +241,7 @@ static Shape* _updateFill(LottieGradientFill* fill, int32_t frameNo, RenderConte
     //TODO: reuse the fill instance?
     ctx.propagator->fill(unique_ptr<Fill>(fill->fill(frameNo)));
     ctx.propagator->fill(fill->rule);
+    ctx.propagator->opacity(MULTIPLY(fill->opacity(frameNo), PP(ctx.propagator)->opacity));
 
     if (ctx.propagator->strokeWidth() > 0) ctx.propagator->order(true);
 
@@ -595,7 +596,7 @@ static void _updateImage(LottieGroup* parent, LottieImage* image, int32_t frameN
         if (auto matrix = PP(ctx.propagator)->transform()) {
             picture->transform(*matrix);
         }
-        picture->opacity(ctx.propagator->opacity());
+        picture->opacity(PP(ctx.propagator)->opacity);
     }
 
     //TODO: remove duplicate.

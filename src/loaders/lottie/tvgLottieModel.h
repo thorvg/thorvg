@@ -94,6 +94,7 @@ struct LottieGradient
     LottiePoint end = Point{0.0f, 0.0f};
     LottieFloat height = 0.0f;
     LottieFloat angle = 0.0f;
+    LottieOpacity opacity = 255;
     LottieColorStop colorStops;
     uint8_t id = 0;    //1: linear, 2: radial
 };
