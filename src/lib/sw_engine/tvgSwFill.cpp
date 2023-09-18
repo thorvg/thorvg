@@ -28,6 +28,7 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
+#define RADIAL_A_THRESHOLD 0.0005f
 #define GRADIENT_STOP_SIZE 1024
 #define FIXPT_BITS 8
 #define FIXPT_SIZE (1<<FIXPT_BITS)
@@ -204,22 +205,22 @@ bool _prepareRadial(SwFill* fill, const RadialGradient* radial, const Matrix* tr
         fill->radial.a = fill->radial.dr * fill->radial.dr - fill->radial.dx * fill->radial.dx - fill->radial.dy * fill->radial.dy;
     }
 
-    if (fill->radial.a > FLT_EPSILON) fill->radial.invA = 1.0f / fill->radial.a;
+    if (fill->radial.a > 0) fill->radial.invA = 1.0f / fill->radial.a;
 
     auto gradTransform = radial->transform();
     bool isTransformation = !mathIdentity((const Matrix*)(&gradTransform));
 
-    if (isTransformation) {
-        if (transform) gradTransform = mathMultiply(transform, &gradTransform);
-    } else if (transform) {
-        gradTransform = *transform;
-        isTransformation = true;
+    if (transform) {
+        if (isTransformation) gradTransform = mathMultiply(transform, &gradTransform);
+        else {
+            gradTransform = *transform;
+            isTransformation = true;
+        }
     }
 
     if (isTransformation) {
         Matrix invTransform;
         if (!mathInverse(&gradTransform, &invTransform)) return false;
-
         fill->radial.a11 = invTransform.e11;
         fill->radial.a12 = invTransform.e12;
         fill->radial.a13 = invTransform.e13;
@@ -231,7 +232,6 @@ bool _prepareRadial(SwFill* fill, const RadialGradient* radial, const Matrix* tr
         fill->radial.a12 = fill->radial.a13 = 0.0f;
         fill->radial.a21 = fill->radial.a23 = 0.0f;
     }
-
     return true;
 }
 
@@ -279,10 +279,11 @@ static inline uint32_t _pixel(const SwFill* fill, float pos)
 /* External Class Implementation                                        */
 /************************************************************************/
 
+
 void fillRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, uint8_t* cmp, SwAlpha alpha, uint8_t csize, uint8_t opacity)
 {
     //edge case
-    if (fill->radial.a < FLT_EPSILON) {
+    if (fill->radial.a < RADIAL_A_THRESHOLD) {
         auto radial = &fill->radial;
         auto rx = (x + 0.5f) * radial->a11 + (y + 0.5f) * radial->a12 + radial->a13 - radial->fx;
         auto ry = (x + 0.5f) * radial->a21 + (y + 0.5f) * radial->a22 + radial->a23 - radial->fy;
@@ -327,7 +328,7 @@ void fillRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint3
 
 void fillRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlender op, uint8_t a)
 {
-    if (fill->radial.a < FLT_EPSILON) {
+    if (fill->radial.a < RADIAL_A_THRESHOLD) {
         auto radial = &fill->radial;
         auto rx = (x + 0.5f) * radial->a11 + (y + 0.5f) * radial->a12 + radial->a13 - radial->fx;
         auto ry = (x + 0.5f) * radial->a21 + (y + 0.5f) * radial->a22 + radial->a23 - radial->fy;
@@ -353,7 +354,7 @@ void fillRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint3
 
 void fillRadial(const SwFill* fill, uint8_t* dst, uint32_t y, uint32_t x, uint32_t len, SwMask maskOp, uint8_t a)
 {
-    if (fill->radial.a < FLT_EPSILON) {
+    if (fill->radial.a < RADIAL_A_THRESHOLD) {
         auto radial = &fill->radial;
         auto rx = (x + 0.5f) * radial->a11 + (y + 0.5f) * radial->a12 + radial->a13 - radial->fx;
         auto ry = (x + 0.5f) * radial->a21 + (y + 0.5f) * radial->a22 + radial->a23 - radial->fy;
@@ -381,7 +382,7 @@ void fillRadial(const SwFill* fill, uint8_t* dst, uint32_t y, uint32_t x, uint32
 
 void fillRadial(const SwFill* fill, uint8_t* dst, uint32_t y, uint32_t x, uint32_t len, uint8_t* cmp, SwMask maskOp, uint8_t a)
 {
-    if (fill->radial.a < FLT_EPSILON) {
+    if (fill->radial.a < RADIAL_A_THRESHOLD) {
         auto radial = &fill->radial;
         auto rx = (x + 0.5f) * radial->a11 + (y + 0.5f) * radial->a12 + radial->a13 - radial->fx;
         auto ry = (x + 0.5f) * radial->a21 + (y + 0.5f) * radial->a22 + radial->a23 - radial->fy;
@@ -410,7 +411,7 @@ void fillRadial(const SwFill* fill, uint8_t* dst, uint32_t y, uint32_t x, uint32
 
 void fillRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlender op, SwBlender op2, uint8_t a)
 {
-    if (fill->radial.a < FLT_EPSILON) {
+    if (fill->radial.a < RADIAL_A_THRESHOLD) {
         auto radial = &fill->radial;
         auto rx = (x + 0.5f) * radial->a11 + (y + 0.5f) * radial->a12 + radial->a13 - radial->fx;
         auto ry = (x + 0.5f) * radial->a21 + (y + 0.5f) * radial->a22 + radial->a23 - radial->fy;
