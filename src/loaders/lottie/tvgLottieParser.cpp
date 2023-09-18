@@ -661,6 +661,7 @@ LottieRoundedCorner* LottieParser::parseRoundedCorner()
 void LottieParser::parseGradient(LottieGradient* gradient, const char* key)
 {
     if (!strcmp(key, "t")) gradient->id = getInt();
+    else if (!strcmp(key, "o")) parseProperty(gradient->opacity);
     else if (!strcmp(key, "g"))
     {
         enterObject();
