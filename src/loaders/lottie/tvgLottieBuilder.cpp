@@ -799,29 +799,29 @@ static void _updateLayer(LottieLayer* root, LottieLayer* layer, int32_t frameNo)
 
     _updateTransform(layer, frameNo);
 
+    //full transparent scene. no need to perform
+    if (layer->type != LottieLayer::Null && layer->cache.opacity == 0) return;
+
     //Prepare render data
     layer->scene = Scene::gen().release();
 
-    //FIXME: Ignore opacity when Null layer?
-    if (layer->type != LottieLayer::Null) {
-        if (layer->cache.opacity == 0 && !layer->matteSrc) {
-            delete(layer->scene);
-            layer->scene = nullptr;
-            return;
-        }
-        layer->scene->opacity(layer->cache.opacity);
-    }
+    //ignore opacity when Null layer?
+    if (layer->type != LottieLayer::Null) layer->scene->opacity(layer->cache.opacity);
 
     layer->scene->transform(layer->cache.matrix);
 
-    if (layer->matte.target && layer->masks.count > 0) {
-        TVGERR("LOTTIE", "FIXME: Matte + Masking??");
-    }
+    if (layer->matte.target && layer->masks.count > 0) TVGERR("LOTTIE", "FIXME: Matte + Masking??");
 
     //matte masking layer
     if (layer->matte.target) {
         _updateLayer(root, layer->matte.target, frameNo);
         if (layer->matte.target->scene) layer->scene->composite(cast<Scene>(layer->matte.target->scene), layer->matte.type);
+        else if (layer->matte.type == CompositeMethod::AlphaMask || layer->matte.type == CompositeMethod::LumaMask) {
+            //matte target is not exist. alpha blending definitely bring an invisible result
+            delete(layer->scene);
+            layer->scene = nullptr;
+            return;
+        }
     }
 
     _updateMaskings(layer, frameNo);
