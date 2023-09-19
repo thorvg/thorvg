@@ -26,6 +26,8 @@
 #include "tvgCommon.h"
 #include "tvgRender.h"
 
+#include <algorithm>
+
 #if 0
 #include <sys/time.h>
 static double timeStamp()
@@ -365,18 +367,18 @@ static inline uint32_t opBlendDifference(uint32_t s, uint32_t d, TVG_UNUSED uint
 static inline uint32_t opBlendExclusion(uint32_t s, uint32_t d, TVG_UNUSED uint8_t a)
 {
     //A + B - 2AB
-    auto c1 = min(255, C1(s) + C1(d) - min(255, (C1(s) * C1(d)) << 1));
-    auto c2 = min(255, C2(s) + C2(d) - min(255, (C2(s) * C2(d)) << 1));
-    auto c3 = min(255, C3(s) + C3(d) - min(255, (C3(s) * C3(d)) << 1));
+    auto c1 = std::min(255, C1(s) + C1(d) - std::min(255, (C1(s) * C1(d)) << 1));
+    auto c2 = std::min(255, C2(s) + C2(d) - std::min(255, (C2(s) * C2(d)) << 1));
+    auto c3 = std::min(255, C3(s) + C3(d) - std::min(255, (C3(s) * C3(d)) << 1));
     return JOIN(255, c1, c2, c3);
 }
 
 static inline uint32_t opBlendAdd(uint32_t s, uint32_t d, TVG_UNUSED uint8_t a)
 {
     // s + d
-    auto c1 = min(C1(s) + C1(d), 255);
-    auto c2 = min(C2(s) + C2(d), 255);
-    auto c3 = min(C3(s) + C3(d), 255);
+    auto c1 = std::min(C1(s) + C1(d), 255);
+    auto c2 = std::min(C2(s) + C2(d), 255);
+    auto c3 = std::min(C3(s) + C3(d), 255);
     return JOIN(255, c1, c2, c3);
 }
 
@@ -404,27 +406,27 @@ static inline uint32_t opBlendOverlay(uint32_t s, uint32_t d, TVG_UNUSED uint8_t
 {
     // if (2 * d < da) => 2 * s * d,
     // else => 1 - 2 * (1 - s) * (1 - d)
-    auto c1 = (C1(d) < 128) ? min(255, 2 * MULTIPLY(C1(s), C1(d))) : (255 - min(255, 2 * MULTIPLY(255 - C1(s), 255 - C1(d))));
-    auto c2 = (C2(d) < 128) ? min(255, 2 * MULTIPLY(C2(s), C2(d))) : (255 - min(255, 2 * MULTIPLY(255 - C2(s), 255 - C2(d))));
-    auto c3 = (C3(d) < 128) ? min(255, 2 * MULTIPLY(C3(s), C3(d))) : (255 - min(255, 2 * MULTIPLY(255 - C3(s), 255 - C3(d))));
+    auto c1 = (C1(d) < 128) ? std::min(255, 2 * MULTIPLY(C1(s), C1(d))) : (255 - std::min(255, 2 * MULTIPLY(255 - C1(s), 255 - C1(d))));
+    auto c2 = (C2(d) < 128) ? std::min(255, 2 * MULTIPLY(C2(s), C2(d))) : (255 - std::min(255, 2 * MULTIPLY(255 - C2(s), 255 - C2(d))));
+    auto c3 = (C3(d) < 128) ? std::min(255, 2 * MULTIPLY(C3(s), C3(d))) : (255 - std::min(255, 2 * MULTIPLY(255 - C3(s), 255 - C3(d))));
     return JOIN(255, c1, c2, c3);
 }
 
 static inline uint32_t opBlendDarken(uint32_t s, uint32_t d, TVG_UNUSED uint8_t a)
 {
     // min(s, d)
-    auto c1 = min(C1(s), C1(d));
-    auto c2 = min(C2(s), C2(d));
-    auto c3 = min(C3(s), C3(d));
+    auto c1 = std::min(C1(s), C1(d));
+    auto c2 = std::min(C2(s), C2(d));
+    auto c3 = std::min(C3(s), C3(d));
     return JOIN(255, c1, c2, c3);
 }
 
 static inline uint32_t opBlendLighten(uint32_t s, uint32_t d, TVG_UNUSED uint8_t a)
 {
     // max(s, d)
-    auto c1 = max(C1(s), C1(d));
-    auto c2 = max(C2(s), C2(d));
-    auto c3 = max(C3(s), C3(d));
+    auto c1 = std::max(C1(s), C1(d));
+    auto c2 = std::max(C2(s), C2(d));
+    auto c3 = std::max(C3(s), C3(d));
     return JOIN(255, c1, c2, c3);
 }
 
@@ -450,18 +452,18 @@ static inline uint32_t opBlendColorBurn(uint32_t s, uint32_t d, TVG_UNUSED uint8
 
 static inline uint32_t opBlendHardLight(uint32_t s, uint32_t d, TVG_UNUSED uint8_t a)
 {
-    auto c1 = (C1(s) < 128) ? min(255, 2 * MULTIPLY(C1(s), C1(d))) : (255 - min(255, 2 * MULTIPLY(255 - C1(s), 255 - C1(d))));
-    auto c2 = (C2(s) < 128) ? min(255, 2 * MULTIPLY(C2(s), C2(d))) : (255 - min(255, 2 * MULTIPLY(255 - C2(s), 255 - C2(d))));
-    auto c3 = (C3(s) < 128) ? min(255, 2 * MULTIPLY(C3(s), C3(d))) : (255 - min(255, 2 * MULTIPLY(255 - C3(s), 255 - C3(d))));
+    auto c1 = (C1(s) < 128) ? std::min(255, 2 * MULTIPLY(C1(s), C1(d))) : (255 - std::min(255, 2 * MULTIPLY(255 - C1(s), 255 - C1(d))));
+    auto c2 = (C2(s) < 128) ? std::min(255, 2 * MULTIPLY(C2(s), C2(d))) : (255 - std::min(255, 2 * MULTIPLY(255 - C2(s), 255 - C2(d))));
+    auto c3 = (C3(s) < 128) ? std::min(255, 2 * MULTIPLY(C3(s), C3(d))) : (255 - std::min(255, 2 * MULTIPLY(255 - C3(s), 255 - C3(d))));
     return JOIN(255, c1, c2, c3);
 }
 
 static inline uint32_t opBlendSoftLight(uint32_t s, uint32_t d, TVG_UNUSED uint8_t a)
 {
     //(255 - 2 * s) * (d * d) + (2 * s * b)
-    auto c1 = min(255, MULTIPLY(255 - min(255, 2 * C1(s)), MULTIPLY(C1(d), C1(d))) + 2 * MULTIPLY(C1(s), C1(d)));
-    auto c2 = min(255, MULTIPLY(255 - min(255, 2 * C2(s)), MULTIPLY(C2(d), C2(d))) + 2 * MULTIPLY(C2(s), C2(d)));
-    auto c3 = min(255, MULTIPLY(255 - min(255, 2 * C3(s)), MULTIPLY(C3(d), C3(d))) + 2 * MULTIPLY(C3(s), C3(d)));
+    auto c1 = std::min(255, MULTIPLY(255 - std::min(255, 2 * C1(s)), MULTIPLY(C1(d), C1(d))) + 2 * MULTIPLY(C1(s), C1(d)));
+    auto c2 = std::min(255, MULTIPLY(255 - std::min(255, 2 * C2(s)), MULTIPLY(C2(d), C2(d))) + 2 * MULTIPLY(C2(s), C2(d)));
+    auto c3 = std::min(255, MULTIPLY(255 - std::min(255, 2 * C3(s)), MULTIPLY(C3(d), C3(d))) + 2 * MULTIPLY(C3(s), C3(d)));
     return JOIN(255, c1, c2, c3);
 }
 
