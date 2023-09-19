@@ -442,7 +442,7 @@ struct LottieLayer : LottieGroup
     Array<LottieMask*> masks;
 
     float timeStretch = 1.0f;
-    uint32_t w, h;
+    uint32_t w = 0, h = 0;
     int32_t inFrame = 0;
     int32_t outFrame = 0;
     uint32_t startFrame = 0;
