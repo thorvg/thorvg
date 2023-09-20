@@ -167,6 +167,11 @@ static void _updateTransform(LottieTransform* transform, int32_t frameNo, Render
     auto pmatrix = PP(ctx.propagator)->transform();
     ctx.propagator->transform(pmatrix ? mathMultiply(pmatrix, &matrix) : matrix);
     ctx.propagator->opacity(MULTIPLY(opacity, PP(ctx.propagator)->opacity));
+
+    //preserve the stroke width
+    if (P(ctx.propagator)->rs.strokeWidth() > 0.0f) {
+        ctx.propagator->stroke(P(ctx.propagator)->rs.strokeWidth() / sqrt(matrix.e11 * matrix.e11 + matrix.e12 * matrix.e12));
+    }
 }
 
 
