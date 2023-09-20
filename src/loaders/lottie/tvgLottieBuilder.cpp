@@ -869,12 +869,20 @@ static void _bulidHierarchy(LottieGroup* parent, LottieLayer* child)
 {
     if (child->pid == -1) return;
 
+    if (child->matte.target && child->pid == child->matte.target->id) {
+        child->parent = child->matte.target;
+        return;
+    }
+
     for (auto p = parent->children.data; p < parent->children.end(); ++p) {
         auto parent = static_cast<LottieLayer*>(*p);
         if (child == parent) continue;
         if (child->pid == parent->id) {
             child->parent = parent;
-            parent->statical &= child->statical;
+            break;
+        }
+        if (parent->matte.target && parent->matte.target->id == child->pid) {
+            child->parent = parent->matte.target;
             break;
         }
     }
@@ -897,8 +905,7 @@ static bool _buildPrecomp(LottieComposition* comp, LottieGroup* parent)
             //precomp referencing
             if (child->matte.target->refId) _buildReference(comp, child->matte.target);
         }
-
-        if (child->pid != -1) _bulidHierarchy(parent, child);
+        _bulidHierarchy(parent, child);
     }
     return true;
 }
