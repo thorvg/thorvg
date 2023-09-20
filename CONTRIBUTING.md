@@ -45,9 +45,9 @@ If your change doesn't belong to any sub-modules, you can either replace this wi
 The name should be written entirely in lowercase letters.
   - e.g., build, doc, infra, common, sw_engine, gl_engine, svg_loader, examples, wasm, svg2png...
 
-- [Feature] indicates the primary function or feature you modified. Typically, this represents a file name.
-Retain the original file name, but please don't include any prefixes (e.g., "tvg") or suffixes (e.g., "Impl") here.
-  - e.g., Canvas, TaskScheduler, SvgLoader, SvgBuilder, SwRle, GlRenderer...
+- [Feature] indicates the primary function or feature you modified. Typically, this represents a class or file name.
+This is an optional.
+  - e.g., canvas, shape, paint, scene, picture, task-scheduler, loader, builder, ...
 
 - [Title] provides a brief description of your change and should be encapsulated in a single sentence.
   - e.g., "Fixed a typo."
@@ -75,7 +75,7 @@ Retain the original file name, but please don't include any prefixes (e.g., "tvg
 
 Here's a sample commit message for clarity:
 
-- common composite: Introduced path clipping feature
+- renderer/paint: Introduced path clipping feature
 
   We've added a new method, Paint::composite(), to support various composite behaviors. This allows paints to interact with other paint instances based on the chosen composite method. Initially, we're introducing the "ClipPath" method for path-based clipping.
 
