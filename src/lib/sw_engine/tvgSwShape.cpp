@@ -129,8 +129,7 @@ static void _dashLineTo(SwDashStroke& dash, const Point* to, const Matrix* trans
             Line left, right;
             if (dash.curLen > 0) {
                 len -= dash.curLen;
-                _lineSplitAt(cur, dash.curLen, left, right);;
-                dash.curIdx = (dash.curIdx + 1) % dash.cnt;
+                _lineSplitAt(cur, dash.curLen, left, right);
                 if (!dash.curOpGap) {
                     _outlineMoveTo(*dash.outline, &left.pt1, transform);
                     _outlineLineTo(*dash.outline, &left.pt2, transform);
@@ -138,6 +137,7 @@ static void _dashLineTo(SwDashStroke& dash, const Point* to, const Matrix* trans
             } else {
                 right = cur;
             }
+            dash.curIdx = (dash.curIdx + 1) % dash.cnt;
             dash.curLen = dash.pattern[dash.curIdx];
             dash.curOpGap = !dash.curOpGap;
             cur = right;
