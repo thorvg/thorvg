@@ -75,8 +75,8 @@ struct LottieStroke
     LottieFloat width = 0.0f;
     DashAttr* dashattr = nullptr;
     float miterLimit = 0;
-    StrokeCap cap = StrokeCap::Butt;
-    StrokeJoin join = StrokeJoin::Miter;
+    StrokeCap cap = StrokeCap::Round;
+    StrokeJoin join = StrokeJoin::Round;
 };
 
 
