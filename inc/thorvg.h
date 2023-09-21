@@ -946,7 +946,7 @@ public:
      *
      * @return Result::Success when succeed, Result::FailedAllocation otherwise.
      */
-    Result stroke(float width) noexcept;
+    Result strokeWidth(float width) noexcept;
 
     /**
      * @brief Sets the color of the stroke for all of the figures from the path.
@@ -958,7 +958,7 @@ public:
      *
      * @return Result::Success when succeed, Result::FailedAllocation otherwise.
      */
-    Result stroke(uint8_t r, uint8_t g, uint8_t b, uint8_t a = 255) noexcept;
+    Result strokeFill(uint8_t r, uint8_t g, uint8_t b, uint8_t a = 255) noexcept;
 
     /**
      * @brief Sets the gradient fill of the stroke for all of the figures from the path.
@@ -969,7 +969,7 @@ public:
      * @retval Result::FailedAllocation An internal error with a memory allocation for an object to be filled.
      * @retval Result::MemoryCorruption In case a @c nullptr is passed as the argument.
      */
-    Result stroke(std::unique_ptr<Fill> f) noexcept;
+    Result strokeFill(std::unique_ptr<Fill> f) noexcept;
 
     /**
      * @brief Sets the dash pattern of the stroke.
@@ -984,7 +984,7 @@ public:
      * @note To reset the stroke dash pattern, pass @c nullptr to @p dashPattern and zero to @p cnt.
      * @warning @p cnt must be greater than 1 if the dash pattern is valid.
      */
-    Result stroke(const float* dashPattern, uint32_t cnt) noexcept;
+    Result strokeDash(const float* dashPattern, uint32_t cnt) noexcept;
 
     /**
      * @brief Sets the cap style of the stroke in the open sub-paths.
@@ -993,7 +993,7 @@ public:
      *
      * @return Result::Success when succeed, Result::FailedAllocation otherwise.
      */
-    Result stroke(StrokeCap cap) noexcept;
+    Result strokeCap(StrokeCap cap) noexcept;
 
     /**
      * @brief Sets the join style for stroked path segments.
@@ -1004,7 +1004,7 @@ public:
      *
      * @return Result::Success when succeed, Result::FailedAllocation otherwise.
      */
-    Result stroke(StrokeJoin join) noexcept;
+    Result strokeJoin(StrokeJoin join) noexcept;
 
 
     /**
@@ -1131,7 +1131,7 @@ public:
      *
      * @return Result::Success when succeed, Result::InsufficientCondition otherwise.
      */
-    Result strokeColor(uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a = nullptr) const noexcept;
+    Result strokeFill(uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a = nullptr) const noexcept;
 
     /**
      * @brief Gets the pointer to the gradient fill of the stroke.

@@ -293,7 +293,7 @@ Result Shape::order(bool strokeFirst) noexcept
 }
 
 
-Result Shape::stroke(float width) noexcept
+Result Shape::strokeWidth(float width) noexcept
 {
     if (!pImpl->strokeWidth(width)) return Result::FailedAllocation;
 
@@ -307,23 +307,23 @@ float Shape::strokeWidth() const noexcept
 }
 
 
-Result Shape::stroke(uint8_t r, uint8_t g, uint8_t b, uint8_t a) noexcept
+Result Shape::strokeFill(uint8_t r, uint8_t g, uint8_t b, uint8_t a) noexcept
 {
-    if (!pImpl->strokeColor(r, g, b, a)) return Result::FailedAllocation;
+    if (!pImpl->strokeFill(r, g, b, a)) return Result::FailedAllocation;
 
     return Result::Success;
 }
 
 
-Result Shape::strokeColor(uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a) const noexcept
+Result Shape::strokeFill(uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a) const noexcept
 {
-    if (!pImpl->rs.strokeColor(r, g, b, a)) return Result::InsufficientCondition;
+    if (!pImpl->rs.strokeFill(r, g, b, a)) return Result::InsufficientCondition;
 
     return Result::Success;
 }
 
 
-Result Shape::stroke(unique_ptr<Fill> f) noexcept
+Result Shape::strokeFill(unique_ptr<Fill> f) noexcept
 {
     return pImpl->strokeFill(std::move(f));
 }
@@ -335,7 +335,7 @@ const Fill* Shape::strokeFill() const noexcept
 }
 
 
-Result Shape::stroke(const float* dashPattern, uint32_t cnt) noexcept
+Result Shape::strokeDash(const float* dashPattern, uint32_t cnt) noexcept
 {
     return pImpl->strokeDash(dashPattern, cnt, 0);
 }
@@ -347,7 +347,7 @@ uint32_t Shape::strokeDash(const float** dashPattern) const noexcept
 }
 
 
-Result Shape::stroke(StrokeCap cap) noexcept
+Result Shape::strokeCap(StrokeCap cap) noexcept
 {
     if (!pImpl->strokeCap(cap)) return Result::FailedAllocation;
 
@@ -355,7 +355,7 @@ Result Shape::stroke(StrokeCap cap) noexcept
 }
 
 
-Result Shape::stroke(StrokeJoin join) noexcept
+Result Shape::strokeJoin(StrokeJoin join) noexcept
 {
     if (!pImpl->strokeJoin(join)) return Result::FailedAllocation;
 

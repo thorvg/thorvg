@@ -51,8 +51,8 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     //fill property will be retained
     shape->fill(127, 255, 255);
-    shape->stroke(0, 0, 255);
-    shape->stroke(1);
+    shape->strokeFill(0, 0, 255);
+    shape->strokeWidth(1);
 
     if (canvas->push(std::move(shape)) != tvg::Result::Success) return;
 }
@@ -68,8 +68,8 @@ void tvgUpdateCmds(tvg::Canvas* canvas, float progress)
     if (pShape->reset() == tvg::Result::Success) {
         pShape->appendRect(-100 + (800 * progress), -100 + (800 * progress), 200, 200, (100 * progress), (100 * progress));
         pShape->fill(127, 255, 255);
-        pShape->stroke(0, 0, 255);
-        pShape->stroke(30 * progress);
+        pShape->strokeFill(0, 0, 255);
+        pShape->strokeWidth(30 * progress);
 
         //Update shape for drawing (this may work asynchronously)
         canvas->update(pShape);

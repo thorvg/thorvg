@@ -271,7 +271,7 @@ bool GlRenderer::renderShape(RenderData data)
 
     if (flags & (RenderUpdateFlag::Stroke | RenderUpdateFlag::Transform))
     {
-        sdata->rshape->strokeColor(&r, &g, &b, &a);
+        sdata->rshape->strokeFill(&r, &g, &b, &a);
         if (a > 0)
         {
             drawPrimitive(*sdata, r, g, b, a, RenderUpdateFlag::Stroke);
@@ -372,7 +372,7 @@ RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const
     //invisible?
     uint8_t alphaF = 0, alphaS = 0;
     rshape.fillColor(nullptr, nullptr, nullptr, &alphaF);
-    rshape.strokeColor(nullptr, nullptr, nullptr, &alphaS);
+    rshape.strokeFill(nullptr, nullptr, nullptr, &alphaS);
 
     if ( ((sdata->updateFlag & RenderUpdateFlag::Gradient) == 0) &&
          ((sdata->updateFlag & RenderUpdateFlag::Color) && alphaF == 0) &&
