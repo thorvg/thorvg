@@ -3,7 +3,7 @@ RED='\033[31m'
 GREEN='\033[32m'
 NC='\033[0m'
 
-INTERVAL=${1:-1}
+INTERVAL=${1:-2}
 EXAMPLES=`find . -executable -type f | sort | uniq`
 for EXAMPLE in $EXAMPLES
 do
