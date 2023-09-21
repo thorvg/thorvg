@@ -68,8 +68,8 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     //Source
     auto shape = tvg::Shape::gen();
     shape->appendRect(100, 100, 400, 400, 50, 50);
-    shape->stroke(0, 0, 255);
-    shape->stroke(10);
+    shape->strokeFill(0, 0, 255);
+    shape->strokeWidth(10);
     shape->fill(255, 255, 255);
     shape->composite(std::move(clipper), tvg::CompositeMethod::ClipPath);
     if (canvas->push(std::move(shape)) != tvg::Result::Success) return;

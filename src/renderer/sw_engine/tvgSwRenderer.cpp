@@ -350,7 +350,7 @@ static void _renderStroke(SwShapeTask* task, SwSurface* surface, uint8_t opacity
     if (auto strokeFill = task->rshape->strokeFill()) {
         rasterGradientStroke(surface, &task->shape, strokeFill->identifier());
     } else {
-        if (task->rshape->strokeColor(&r, &g, &b, &a)) {
+        if (task->rshape->strokeFill(&r, &g, &b, &a)) {
             a = MULTIPLY(opacity, a);
             if (a > 0) rasterStroke(surface, &task->shape, r, g, b, a);
         }

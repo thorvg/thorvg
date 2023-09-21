@@ -194,7 +194,7 @@ static void _updateTransform(TVG_UNUSED LottieGroup* parent, LottieObject** chil
 
     //FIXME: preserve the stroke width. too workaround, need a better design.
     if (P(ctx.propagator)->rs.strokeWidth() > 0.0f) {
-        ctx.propagator->stroke(P(ctx.propagator)->rs.strokeWidth() / sqrt(matrix.e11 * matrix.e11 + matrix.e12 * matrix.e12));
+        ctx.propagator->strokeWidth(P(ctx.propagator)->rs.strokeWidth() / sqrt(matrix.e11 * matrix.e11 + matrix.e12 * matrix.e12));
     }
 }
 
@@ -217,9 +217,9 @@ static void _updateGroup(LottieGroup* parent, LottieObject** child, float frameN
 
 static void _updateStroke(LottieStroke* stroke, float frameNo, RenderContext& ctx)
 {
-    ctx.propagator->stroke(stroke->width(frameNo));
-    ctx.propagator->stroke(stroke->cap);
-    ctx.propagator->stroke(stroke->join);
+    ctx.propagator->strokeWidth(stroke->width(frameNo));
+    ctx.propagator->strokeCap(stroke->cap);
+    ctx.propagator->strokeJoin(stroke->join);
     ctx.propagator->strokeMiterlimit(stroke->miterLimit);
 
     if (stroke->dashattr) {
@@ -228,7 +228,7 @@ static void _updateStroke(LottieStroke* stroke, float frameNo, RenderContext& ct
         dashes[1] = dashes[0] + stroke->dashGap(frameNo);
         P(ctx.propagator)->strokeDash(dashes, 2, stroke->dashOffset(frameNo));
     } else {
-        ctx.propagator->stroke(nullptr, 0);
+        ctx.propagator->strokeDash(nullptr, 0);
     }
 }
 
@@ -240,7 +240,7 @@ static bool _fragmentedStroking(LottieObject** child, queue<RenderContext>& cont
 
     contexts.push(ctx);
     auto& fragment = contexts.back();
-    fragment.propagator->stroke(0.0f);
+    fragment.propagator->strokeWidth(0.0f);
     fragment.begin = child - 1;
     ctx.stroking = true;
 
@@ -256,8 +256,7 @@ static void _updateSolidStroke(TVG_UNUSED LottieGroup* parent, LottieObject** ch
 
     ctx.merging = nullptr;
     auto color = stroke->color(frameNo);
-    ctx.propagator->stroke(color.rgb[0], color.rgb[1], color.rgb[2], stroke->opacity(frameNo));    
-
+    ctx.propagator->strokeFill(color.rgb[0], color.rgb[1], color.rgb[2], stroke->opacity(frameNo));
     _updateStroke(static_cast<LottieStroke*>(stroke), frameNo, ctx);
 }
 
@@ -269,8 +268,7 @@ static void _updateGradientStroke(TVG_UNUSED LottieGroup* parent, LottieObject**
     auto stroke = static_cast<LottieGradientStroke*>(*child);
 
     ctx.merging = nullptr;
-    ctx.propagator->stroke(unique_ptr<Fill>(stroke->fill(frameNo)));
-
+    ctx.propagator->strokeFill(unique_ptr<Fill>(stroke->fill(frameNo)));
     _updateStroke(static_cast<LottieStroke*>(stroke), frameNo, ctx);
 }
 

@@ -56,8 +56,8 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     auto star1 = tvg::Shape::gen();
     tvgDrawStar(star1.get());
     star1->fill(255, 255, 0);
-    star1->stroke(255 ,0, 0);
-    star1->stroke(10);
+    star1->strokeFill(255 ,0, 0);
+    star1->strokeWidth(10);
 
     //Move Star1
     star1->translate(-10, -10);
@@ -72,8 +72,8 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     auto star2 = tvg::Shape::gen();
     tvgDrawStar(star2.get());
     star2->fill(0, 255, 255);
-    star2->stroke(0 ,255, 0);
-    star2->stroke(10);
+    star2->strokeFill(0 ,255, 0);
+    star2->strokeWidth(10);
     star2->opacity(100);
 
     //Move Star2
@@ -105,8 +105,8 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     fill->colorStops(colorStops, 2);
     star3->fill(std::move(fill));
 
-    star3->stroke(255 ,0, 0);
-    star3->stroke(10);
+    star3->strokeFill(255 ,0, 0);
+    star3->strokeWidth(10);
     star3->translate(400, 0);
 
     // color/alpha/opacity are ignored for a clip object - no need to set them
