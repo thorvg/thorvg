@@ -55,9 +55,9 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     pMaskShape = maskShape.get();
     maskShape->appendCircle(180, 180, 75, 75);
     maskShape->fill(125, 125, 125);
-    maskShape->stroke(25, 25, 25);
-    maskShape->stroke(tvg::StrokeJoin::Round);
-    maskShape->stroke(10);
+    maskShape->strokeFill(25, 25, 25);
+    maskShape->strokeJoin(tvg::StrokeJoin::Round);
+    maskShape->strokeWidth(10);
     canvas->push(std::move(maskShape));
 
     auto mask = tvg::Shape::gen();

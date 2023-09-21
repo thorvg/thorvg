@@ -54,15 +54,15 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     auto shape4 = tvg::Shape::gen();
     shape4->appendCircle(400, 400, 100, 100);
     shape4->fill(255, 0, 0);
-    shape4->stroke(5);
-    shape4->stroke(255, 255, 255);
+    shape4->strokeWidth(5);
+    shape4->strokeFill(255, 255, 255);
     scene->push(std::move(shape4));
 
     auto shape5 = tvg::Shape::gen();
     shape5->appendCircle(550, 550, 150, 150);
     shape5->fill(255, 0, 255);
-    shape5->stroke(5);
-    shape5->stroke(255, 255, 255);
+    shape5->strokeWidth(5);
+    shape5->strokeFill(255, 255, 255);
     scene->push(std::move(shape5));
 
     if (canvas->push(std::move(scene)) != tvg::Result::Success) return;

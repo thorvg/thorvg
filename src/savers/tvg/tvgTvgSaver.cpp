@@ -99,8 +99,8 @@ static bool _merge(Shape* from, Shape* to)
 
     r = g = b = a = r2 = g2 = b2 = a2 = 0;
 
-    from->strokeColor(&r, &g, &b, &a);
-    to->strokeColor(&r2, &g2, &b2, &a2);
+    from->strokeFill(&r, &g, &b, &a);
+    to->strokeFill(&r2, &g2, &b2, &a2);
 
     if (r != r2 || g != g2 || b != b2 || a != a2) return false;
 
@@ -463,7 +463,7 @@ TvgBinCounter TvgSaver::serializeStroke(const Shape* shape, const Matrix* pTrans
         cnt += serializeFill(fill, TVG_TAG_SHAPE_STROKE_FILL, (preTransform ? pTransform : nullptr));
     } else {
         uint8_t color[4] = {0, 0, 0, 0};
-        shape->strokeColor(color, color + 1, color + 2, color + 3);
+        shape->strokeFill(color, color + 1, color + 2, color + 3);
         cnt += writeTagProperty(TVG_TAG_SHAPE_STROKE_COLOR, SIZE(color), &color);
     }
 
@@ -551,7 +551,7 @@ TvgBinCounter TvgSaver::serializeShape(const Shape* shape, const Matrix* pTransf
     //stroke
     if (shape->strokeWidth() > 0) {
         uint8_t color[4] = {0, 0, 0, 0};
-        shape->strokeColor(color, color + 1, color + 2, color + 3);
+        shape->strokeFill(color, color + 1, color + 2, color + 3);
         auto fill = shape->strokeFill();
         if (fill || color[3] > 0) {
             if (!mathEqual(cTransform->e11, cTransform->e22) || (mathZero(cTransform->e11) && !mathEqual(cTransform->e12, cTransform->e21)) || shape->strokeDash(nullptr) > 0) preTransform = false;

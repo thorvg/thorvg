@@ -45,8 +45,8 @@ TEST_CASE("Basic draw", "[tvgSwEngine]")
     REQUIRE(shape1);
 
     REQUIRE(shape1->appendArc(150, 150, 80, 10, 180, false) == Result::Success);
-    REQUIRE(shape1->stroke(255, 255, 255, 255) == Result::Success);
-    REQUIRE(shape1->stroke(2) == Result::Success);
+    REQUIRE(shape1->strokeFill(255, 255, 255, 255) == Result::Success);
+    REQUIRE(shape1->strokeWidth(2) == Result::Success);
     REQUIRE(canvas->push(std::move(shape1)) == Result::Success);
 
     //Cubic
@@ -56,7 +56,7 @@ TEST_CASE("Basic draw", "[tvgSwEngine]")
     REQUIRE(shape2->moveTo(50, 25) == Result::Success);
     REQUIRE(shape2->cubicTo(62, 25, 75, 38, 75, 50) == Result::Success);
     REQUIRE(shape2->close() == Result::Success);
-    REQUIRE(shape2->stroke(1) == Result::Success);
+    REQUIRE(shape2->strokeWidth(1) == Result::Success);
     REQUIRE(canvas->push(std::move(shape2)) == Result::Success);
 
     //Line
@@ -80,10 +80,10 @@ TEST_CASE("Basic draw", "[tvgSwEngine]")
     REQUIRE(shape4->lineTo(25, 25) == Result::Success);
     REQUIRE(shape4->cubicTo(50, 50, 75, -75, 50, 100) == Result::Success);
     REQUIRE(shape4->close() == Result::Success);
-    REQUIRE(shape4->stroke(255, 0, 0, 255) == Result::Success);
-    REQUIRE(shape4->stroke(2) == Result::Success);
-    REQUIRE(shape4->stroke(dashPattern, 2) == Result::Success);
-    REQUIRE(shape4->stroke(StrokeCap::Round) == Result::Success);
+    REQUIRE(shape4->strokeFill(255, 0, 0, 255) == Result::Success);
+    REQUIRE(shape4->strokeWidth(2) == Result::Success);
+    REQUIRE(shape4->strokeDash(dashPattern, 2) == Result::Success);
+    REQUIRE(shape4->strokeCap(StrokeCap::Round) == Result::Success);
     REQUIRE(canvas->push(std::move(shape4)) == Result::Success);
 
     //Draw

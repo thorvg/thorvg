@@ -157,9 +157,9 @@ unique_ptr<tvg::Paint> tvgGradientShape(tvg::Fill::ColorStop* colorStops, int co
     auto shape = tvg::Shape::gen();
     shape->appendCircle(200, 200, 180, 80);
     shape->fill(std::move(fillShape));
-    shape->stroke(20);
-    shape->stroke(dashPattern, 2);
-    shape->stroke(std::move(fillStroke));
+    shape->strokeWidth(20);
+    shape->strokeDash(dashPattern, 2);
+    shape->strokeFill(std::move(fillStroke));
 
     return shape;
 }

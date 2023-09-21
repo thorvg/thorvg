@@ -338,7 +338,7 @@ TVG_API Tvg_Result tvg_shape_get_path_commands(const Tvg_Paint* paint, Tvg_Path_
 TVG_API Tvg_Result tvg_shape_set_stroke_width(Tvg_Paint* paint, float width)
 {
     if (!paint) return TVG_RESULT_INVALID_ARGUMENT;
-    return (Tvg_Result) reinterpret_cast<Shape*>(paint)->stroke(width);
+    return (Tvg_Result) reinterpret_cast<Shape*>(paint)->strokeWidth(width);
 }
 
 
@@ -353,28 +353,28 @@ TVG_API Tvg_Result tvg_shape_get_stroke_width(const Tvg_Paint* paint, float* wid
 TVG_API Tvg_Result tvg_shape_set_stroke_color(Tvg_Paint* paint, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 {
     if (!paint) return TVG_RESULT_INVALID_ARGUMENT;
-    return (Tvg_Result) reinterpret_cast<Shape*>(paint)->stroke(r, g, b, a);
+    return (Tvg_Result) reinterpret_cast<Shape*>(paint)->strokeFill(r, g, b, a);
 }
 
 
 TVG_API Tvg_Result tvg_shape_get_stroke_color(const Tvg_Paint* paint, uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a)
 {
     if (!paint) return TVG_RESULT_INVALID_ARGUMENT;
-    return (Tvg_Result) reinterpret_cast<const Shape*>(paint)->strokeColor(r, g, b, a);
+    return (Tvg_Result) reinterpret_cast<const Shape*>(paint)->strokeFill(r, g, b, a);
 }
 
 
 TVG_API Tvg_Result tvg_shape_set_stroke_linear_gradient(Tvg_Paint* paint, Tvg_Gradient* gradient)
 {
     if (!paint) return TVG_RESULT_INVALID_ARGUMENT;
-    return (Tvg_Result) reinterpret_cast<Shape*>(paint)->stroke(unique_ptr<LinearGradient>((LinearGradient*)(gradient)));
+    return (Tvg_Result) reinterpret_cast<Shape*>(paint)->strokeFill(unique_ptr<LinearGradient>((LinearGradient*)(gradient)));
 }
 
 
 TVG_API Tvg_Result tvg_shape_set_stroke_radial_gradient(Tvg_Paint* paint, Tvg_Gradient* gradient)
 {
     if (!paint) return TVG_RESULT_INVALID_ARGUMENT;
-    return (Tvg_Result) reinterpret_cast<Shape*>(paint)->stroke(unique_ptr<RadialGradient>((RadialGradient*)(gradient)));
+    return (Tvg_Result) reinterpret_cast<Shape*>(paint)->strokeFill(unique_ptr<RadialGradient>((RadialGradient*)(gradient)));
 }
 
 
@@ -389,7 +389,7 @@ TVG_API Tvg_Result tvg_shape_get_stroke_gradient(const Tvg_Paint* paint, Tvg_Gra
 TVG_API Tvg_Result tvg_shape_set_stroke_dash(Tvg_Paint* paint, const float* dashPattern, uint32_t cnt, float offset)
 {
     if (!paint) return TVG_RESULT_INVALID_ARGUMENT;
-    return (Tvg_Result) reinterpret_cast<Shape*>(paint)->stroke(dashPattern, cnt, offset);
+    return (Tvg_Result) reinterpret_cast<Shape*>(paint)->strokeDash(dashPattern, cnt, offset);
 }
 
 
@@ -404,7 +404,7 @@ TVG_API Tvg_Result tvg_shape_get_stroke_dash(const Tvg_Paint* paint, const float
 TVG_API Tvg_Result tvg_shape_set_stroke_cap(Tvg_Paint* paint, Tvg_Stroke_Cap cap)
 {
     if (!paint) return TVG_RESULT_INVALID_ARGUMENT;
-    return (Tvg_Result) reinterpret_cast<Shape*>(paint)->stroke((StrokeCap)cap);
+    return (Tvg_Result) reinterpret_cast<Shape*>(paint)->strokeCap((StrokeCap)cap);
 }
 
 
@@ -419,7 +419,7 @@ TVG_API Tvg_Result tvg_shape_get_stroke_cap(const Tvg_Paint* paint, Tvg_Stroke_C
 TVG_API Tvg_Result tvg_shape_set_stroke_join(Tvg_Paint* paint, Tvg_Stroke_Join join)
 {
     if (!paint) return TVG_RESULT_INVALID_ARGUMENT;
-    return (Tvg_Result) reinterpret_cast<Shape*>(paint)->stroke((StrokeJoin)join);
+    return (Tvg_Result) reinterpret_cast<Shape*>(paint)->strokeJoin((StrokeJoin)join);
 }
 
 

@@ -197,9 +197,9 @@ static void _updateFill(LottieSolidFill* fill, int32_t frameNo, RenderContext& c
 
 static void _updateStroke(LottieStroke* stroke, int32_t frameNo, RenderContext& ctx)
 {
-    ctx.propagator->stroke(stroke->width(frameNo));
-    ctx.propagator->stroke(stroke->cap);
-    ctx.propagator->stroke(stroke->join);
+    ctx.propagator->strokeWidth(stroke->width(frameNo));
+    ctx.propagator->strokeCap(stroke->cap);
+    ctx.propagator->strokeJoin(stroke->join);
     ctx.propagator->strokeMiterlimit(stroke->miterLimit);
 
     if (stroke->dashattr) {
@@ -208,7 +208,7 @@ static void _updateStroke(LottieStroke* stroke, int32_t frameNo, RenderContext& 
         dashes[1] = dashes[0] + stroke->dashGap(frameNo);
         P(ctx.propagator)->strokeDash(dashes, 2, stroke->dashOffset(frameNo));
     } else {
-        ctx.propagator->stroke(nullptr, 0);
+        ctx.propagator->strokeDash(nullptr, 0);
     }
 }
 
@@ -217,7 +217,7 @@ static void _updateStroke(LottieSolidStroke* stroke, int32_t frameNo, RenderCont
 {
     ctx.merging = nullptr;
     auto color = stroke->color(frameNo);
-    ctx.propagator->stroke(color.rgb[0], color.rgb[1], color.rgb[2], stroke->opacity(frameNo));
+    ctx.propagator->strokeFill(color.rgb[0], color.rgb[1], color.rgb[2], stroke->opacity(frameNo));
     _updateStroke(static_cast<LottieStroke*>(stroke), frameNo, ctx);
 }
 
@@ -225,7 +225,7 @@ static void _updateStroke(LottieSolidStroke* stroke, int32_t frameNo, RenderCont
 static void _updateStroke(LottieGradientStroke* stroke, int32_t frameNo, RenderContext& ctx)
 {
     ctx.merging = nullptr;
-    ctx.propagator->stroke(unique_ptr<Fill>(stroke->fill(frameNo)));
+    ctx.propagator->strokeFill(unique_ptr<Fill>(stroke->fill(frameNo)));
     _updateStroke(static_cast<LottieStroke*>(stroke), frameNo, ctx);
 }
 

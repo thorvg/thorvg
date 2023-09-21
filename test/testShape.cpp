@@ -146,30 +146,30 @@ TEST_CASE("Stroking", "[tvgShape]")
     REQUIRE(shape->order(false) == Result::Success);
 
     //Stroke Width
-    REQUIRE(shape->stroke(0) == Result::Success);
+    REQUIRE(shape->strokeWidth(0) == Result::Success);
     REQUIRE(shape->strokeWidth() == 0);
-    REQUIRE(shape->stroke(300) == Result::Success);
+    REQUIRE(shape->strokeWidth(300) == Result::Success);
     REQUIRE(shape->strokeWidth() == 300);
 
     //Stroke Color
     uint8_t r, g, b, a;
-    REQUIRE(shape->stroke(0, 50, 100, 200) == Result::Success);
-    REQUIRE(shape->strokeColor(nullptr, nullptr, &b, nullptr) == Result::Success);
+    REQUIRE(shape->strokeFill(0, 50, 100, 200) == Result::Success);
+    REQUIRE(shape->strokeFill(nullptr, nullptr, &b, nullptr) == Result::Success);
     REQUIRE(b == 100);
-    REQUIRE(shape->strokeColor(&r, &g, &b, &a) == Result::Success);
+    REQUIRE(shape->strokeFill(&r, &g, &b, &a) == Result::Success);
     REQUIRE(r == 0);
     REQUIRE(g == 50);
     REQUIRE(b == 100);
     REQUIRE(a == 200);
-    REQUIRE(shape->strokeColor(nullptr, nullptr, nullptr, nullptr) == Result::Success);
+    REQUIRE(shape->strokeFill(nullptr, nullptr, nullptr, nullptr) == Result::Success);
 
     //Stroke Dash
     float dashPattern[3] = {0, 1.5f, 2.22f};
-    REQUIRE(shape->stroke(dashPattern, 3) == Result::InvalidArguments);
+    REQUIRE(shape->strokeDash(dashPattern, 3) == Result::InvalidArguments);
 
     float dashPattern2[3] = {1.0f, 1.5f, 2.22f};
-    REQUIRE(shape->stroke(dashPattern2, 3) == Result::Success);
-    REQUIRE(shape->stroke(dashPattern2, 3, 4.5) == Result::Success);
+    REQUIRE(shape->strokeDash(dashPattern2, 3) == Result::Success);
+    REQUIRE(shape->strokeDash(dashPattern2, 3, 4.5) == Result::Success);
 
     const float* dashPattern3;
     float offset;
@@ -181,18 +181,18 @@ TEST_CASE("Stroking", "[tvgShape]")
     REQUIRE(dashPattern3[2] == 2.22f);
     REQUIRE(offset == 4.5f);
 
-    REQUIRE(shape->stroke(nullptr, 0) == Result::Success);
+    REQUIRE(shape->strokeDash(nullptr, 0) == Result::Success);
 
     //Stroke Cap
     REQUIRE(shape->strokeCap() == StrokeCap::Square);
-    REQUIRE(shape->stroke(StrokeCap::Round) == Result::Success);
-    REQUIRE(shape->stroke(StrokeCap::Butt) == Result::Success);
+    REQUIRE(shape->strokeCap(StrokeCap::Round) == Result::Success);
+    REQUIRE(shape->strokeCap(StrokeCap::Butt) == Result::Success);
     REQUIRE(shape->strokeCap() == StrokeCap::Butt);
 
     //Stroke Join
     REQUIRE(shape->strokeJoin() == StrokeJoin::Bevel);
-    REQUIRE(shape->stroke(StrokeJoin::Miter) == Result::Success);
-    REQUIRE(shape->stroke(StrokeJoin::Round) == Result::Success);
+    REQUIRE(shape->strokeJoin(StrokeJoin::Miter) == Result::Success);
+    REQUIRE(shape->strokeJoin(StrokeJoin::Round) == Result::Success);
     REQUIRE(shape->strokeJoin() == StrokeJoin::Round);
 
     //Stroke Miterlimit

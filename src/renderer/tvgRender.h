@@ -196,7 +196,7 @@ struct RenderShape
         return true;
     }
 
-    bool strokeColor(uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a) const
+    bool strokeFill(uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a) const
     {
         if (!stroke) return false;
 

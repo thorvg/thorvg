@@ -38,11 +38,11 @@ void tvgDrawCmds(tvg::Canvas* canvas)
         shape1->appendRect(10, 10, 200, 200);
         shape1->appendRect(220, 10, 100, 100);
 
-        shape1->stroke(3);
-        shape1->stroke(0, 255, 0);
+        shape1->strokeWidth(3);
+        shape1->strokeFill(0, 255, 0);
 
         float dashPattern[2] = {4, 4};
-        shape1->stroke(dashPattern, 2);
+        shape1->strokeDash(dashPattern, 2);
         shape1->fill(255, 0, 0);
 
         //Duplicate Shape, Switch fill method

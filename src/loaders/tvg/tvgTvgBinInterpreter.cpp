@@ -264,7 +264,7 @@ static bool _parseShapeStrokeDashPattern(const char *ptr, const char *end, Shape
             return false;
         }
 
-        shape->stroke(dashPattern, dashPatternCnt);
+        shape->strokeDash(dashPattern, dashPatternCnt);
         free(dashPattern);
     }
     return true;
@@ -280,12 +280,12 @@ static bool _parseShapeStroke(const char *ptr, const char *end, Shape *shape)
         switch (block.type) {
             case TVG_TAG_SHAPE_STROKE_CAP: {
                 if (block.length != SIZE(TvgBinFlag)) return false;
-                shape->stroke((StrokeCap) *block.data);
+                shape->strokeCap((StrokeCap) *block.data);
                 break;
             }
             case TVG_TAG_SHAPE_STROKE_JOIN: {
                 if (block.length != SIZE(TvgBinFlag)) return false;
-                shape->stroke((StrokeJoin) *block.data);
+                shape->strokeJoin((StrokeJoin) *block.data);
                 break;
             }
             case TVG_TAG_SHAPE_STROKE_ORDER: {
@@ -297,18 +297,18 @@ static bool _parseShapeStroke(const char *ptr, const char *end, Shape *shape)
                 if (block.length != SIZE(float)) return false;
                 float width;
                 READ_FLOAT(&width, block.data);
-                shape->stroke(width);
+                shape->strokeWidth(width);
                 break;
             }
             case TVG_TAG_SHAPE_STROKE_COLOR: {
                 if (block.length != 4) return false;
-                shape->stroke(block.data[0], block.data[1], block.data[2], block.data[3]);
+                shape->strokeFill(block.data[0], block.data[1], block.data[2], block.data[3]);
                 break;
             }
             case TVG_TAG_SHAPE_STROKE_FILL: {
                 auto fill = _parseShapeFill(block.data, block.end);
                 if (!fill) return false;
-                shape->stroke(std::move(fill));
+                shape->strokeFill(std::move(fill));
                 break;
             }
             case TVG_TAG_SHAPE_STROKE_DASHPTRN: {
