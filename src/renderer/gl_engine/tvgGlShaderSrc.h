@@ -28,5 +28,7 @@ extern const char* COLOR_FRAG_SHADER;
 extern const char* GRADIENT_VERT_SHADER;
 extern const char* LINEAR_GRADIENT_FRAG_SHADER;
 extern const char* RADIAL_GRADIENT_FRAG_SHADER;
+extern const char* IMAGE_VERT_SHADER;
+extern const char* IMAGE_FRAG_SHADER;
 
 #endif /* _TVG_GL_SHADERSRC_H_ */

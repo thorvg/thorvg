@@ -56,6 +56,89 @@ bool GlGeometry::tesselate(const RenderShape& rshape, RenderUpdateFlag flag)
     return true;
 }
 
+bool GlGeometry::tesselate(const Surface* image, const RenderMesh* mesh, RenderUpdateFlag flag)
+{
+    if (flag & RenderUpdateFlag::Image) {
+        fillVertex.clear();
+        fillIndex.clear();
+
+        if (mesh && mesh->triangleCnt) {
+            fillVertex.reserve(mesh->triangleCnt * 3 * 5);
+            fillIndex.reserve(mesh->triangleCnt * 3);
+
+            uint32_t index = 0;
+            for (uint32_t i = 0; i < mesh->triangleCnt; i++) {
+                fillVertex.push(mesh->triangles[i].vertex[0].pt.x);
+                fillVertex.push(mesh->triangles[i].vertex[0].pt.y);
+                fillVertex.push(1.f);
+                fillVertex.push(mesh->triangles[i].vertex[0].uv.x);
+                fillVertex.push(mesh->triangles[i].vertex[0].uv.y);
+
+                fillVertex.push(mesh->triangles[i].vertex[1].pt.x);
+                fillVertex.push(mesh->triangles[i].vertex[1].pt.y);
+                fillVertex.push(1.f);
+                fillVertex.push(mesh->triangles[i].vertex[1].uv.x);
+                fillVertex.push(mesh->triangles[i].vertex[1].uv.y);
+
+                fillVertex.push(mesh->triangles[i].vertex[2].pt.x);
+                fillVertex.push(mesh->triangles[i].vertex[2].pt.y);
+                fillVertex.push(1.f);
+                fillVertex.push(mesh->triangles[i].vertex[2].uv.x);
+                fillVertex.push(mesh->triangles[i].vertex[2].uv.y);
+
+                fillIndex.push(index);
+                fillIndex.push(index + 1);
+                fillIndex.push(index + 2);
+                index += 3;
+            }
+
+        } else {
+            fillVertex.reserve(5 * 4);
+            fillIndex.reserve(6);
+
+            float left = 0.f;
+            float top = 0.f;
+            float right = image->w;
+            float bottom = image->h;
+
+            // left top point
+            fillVertex.push(left);
+            fillVertex.push(top);
+            fillVertex.push(1.f);
+            fillVertex.push(0.f);
+            fillVertex.push(1.f);
+            // left bottom point
+            fillVertex.push(left);
+            fillVertex.push(bottom);
+            fillVertex.push(1.f);
+            fillVertex.push(0.f);
+            fillVertex.push(0.f);
+            // right top point
+            fillVertex.push(right);
+            fillVertex.push(top);
+            fillVertex.push(1.f);
+            fillVertex.push(1.f);
+            fillVertex.push(1.f);
+            // right bottom point
+            fillVertex.push(right);
+            fillVertex.push(bottom);
+            fillVertex.push(1.f);
+            fillVertex.push(1.f);
+            fillVertex.push(0.f);
+
+            fillIndex.push(0);
+            fillIndex.push(1);
+            fillIndex.push(2);
+
+            fillIndex.push(2);
+            fillIndex.push(1);
+            fillIndex.push(3);
+        }
+    }
+
+    return true;
+}
+
 
 void GlGeometry::disableVertex(uint32_t location)
 {
@@ -87,7 +170,13 @@ bool GlGeometry::draw(GlRenderTask* task, GlStageBuffer* gpuBuffer, RenderUpdate
     uint32_t indexOffset = gpuBuffer->push(indexBuffer->data, indexBuffer->count * sizeof(uint32_t));
 
     // vertex layout
-    task->addVertexLayout(GlVertexLayout{0, 3, 3 * sizeof(float), vertexOffset});
+    if (flag & RenderUpdateFlag::Image) {
+        // image has two attribute: [pos, uv]
+        task->addVertexLayout(GlVertexLayout{0, 3, 5 * sizeof(float), vertexOffset});
+        task->addVertexLayout(GlVertexLayout{1, 2, 5 * sizeof(float), vertexOffset + 3 * sizeof(float)});
+    } else {
+        task->addVertexLayout(GlVertexLayout{0, 3, 3 * sizeof(float), vertexOffset});
+    }
     task->setDrawRange(indexOffset, indexBuffer->count);
 
     return true;
