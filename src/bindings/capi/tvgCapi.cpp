@@ -702,6 +702,62 @@ TVG_API Tvg_Result tvg_saver_del(Tvg_Saver* saver)
     return TVG_RESULT_SUCCESS;
 }
 
+
+/************************************************************************/
+/* Animation API                                                        */
+/************************************************************************/
+
+TVG_API Tvg_Animation* tvg_animation_new()
+{
+    return (Tvg_Animation*) Animation::gen().release();
+}
+
+
+TVG_API Tvg_Result tvg_animation_set_frame(Tvg_Animation* animation, uint32_t no)
+{
+    if (!animation) return TVG_RESULT_INVALID_ARGUMENT;
+    return (Tvg_Result) reinterpret_cast<Animation*>(animation)->frame(no);
+}
+
+
+TVG_API Tvg_Result tvg_animation_get_frame(Tvg_Animation* animation, uint32_t* no)
+{
+    if (!animation || !no) return TVG_RESULT_INVALID_ARGUMENT;
+    *no = reinterpret_cast<Animation*>(animation)->curFrame();
+    return TVG_RESULT_SUCCESS;
+}
+
+
+TVG_API Tvg_Result tvg_animation_get_total_frame(Tvg_Animation* animation, uint32_t* cnt)
+{
+    if (!animation || !cnt) return TVG_RESULT_INVALID_ARGUMENT;
+    *cnt = reinterpret_cast<Animation*>(animation)->totalFrame();
+    return TVG_RESULT_SUCCESS;
+}
+
+
+TVG_API Tvg_Paint* tvg_animation_get_picture(Tvg_Animation* animation)
+{
+    if (!animation) return nullptr;
+    return (Tvg_Paint*) reinterpret_cast<Animation*>(animation)->picture();
+}
+
+
+TVG_API Tvg_Result tvg_animation_get_duration(Tvg_Animation* animation, float* duration)
+{
+    if (!animation || !duration) return TVG_RESULT_INVALID_ARGUMENT;
+    *duration = reinterpret_cast<Animation*>(animation)->duration();
+    return TVG_RESULT_SUCCESS;
+}
+
+
+TVG_API Tvg_Result tvg_animation_del(Tvg_Animation* animation)
+{
+    if (!animation) return TVG_RESULT_INVALID_ARGUMENT;
+    delete(reinterpret_cast<Animation*>(animation));
+    return TVG_RESULT_SUCCESS;
+}
+
 #ifdef __cplusplus
 }
 #endif
