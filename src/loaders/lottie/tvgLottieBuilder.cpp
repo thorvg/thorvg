@@ -734,7 +734,7 @@ static void _updatePrecomp(LottieLayer* precomp, int32_t frameNo)
         //TODO: remove the intermediate scene....
         auto cscene = Scene::gen();
         auto clipper = Shape::gen();
-        clipper->appendRect(0, 0, precomp->w, precomp->h);
+        clipper->appendRect(0, 0, static_cast<float>(precomp->w), static_cast<float>(precomp->h));
         clipper->transform(precomp->cache.matrix);
         cscene->composite(std::move(clipper), CompositeMethod::ClipPath);
         cscene->push(cast<Scene>(precomp->scene));
