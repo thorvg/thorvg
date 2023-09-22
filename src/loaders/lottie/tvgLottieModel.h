@@ -94,12 +94,9 @@ struct LottieGradient
 
         Fill::ColorStop cs;
 
-        //merge color stops
-        uint32_t cnt = (colorStops.count > alphaCnt) ? colorStops.count : alphaCnt;
-
-        for (uint32_t i = 0; i < cnt; ++i) {
+        //merge color stops.
+        for (uint32_t i = 0; i < color.input->count; ++i) {
             if (cidx == clast || aidx == color.input->count) break;
-
             if ((*color.input)[cidx] == (*color.input)[aidx]) {
                 cs.offset = (*color.input)[cidx];
                 cs.r = lroundf((*color.input)[cidx + 1] * 255.0f);
@@ -113,18 +110,22 @@ struct LottieGradient
                 cs.r = lroundf((*color.input)[cidx + 1] * 255.0f);
                 cs.g = lroundf((*color.input)[cidx + 2] * 255.0f);
                 cs.b = lroundf((*color.input)[cidx + 3] * 255.0f);
-                cs.a = (output.count > 0) ? output.last().a : 255;
+                //generate alpha value
+                if (output.count > 0) {
+                    auto p = ((*color.input)[cidx] - output.last().offset) / ((*color.input)[aidx] - output.last().offset);
+                    cs.a = mathLerp<uint8_t>(output.last().a, lroundf((*color.input)[aidx + 1] * 255.0f), p);
+                } else cs.a = 255;
                 cidx += 4;
             } else {
                 cs.offset = (*color.input)[aidx];
-                if (output.count > 0) {
-                    cs.r = output.last().r;
-                    cs.g = output.last().g;
-                    cs.b = output.last().b;
-                } else {
-                    cs.r = cs.g = cs.b = 255;
-                }
                 cs.a = lroundf((*color.input)[aidx + 1] * 255.0f);
+                //generate color value
+                if (output.count > 0) {
+                    auto p = ((*color.input)[aidx] - output.last().offset) / ((*color.input)[cidx] - output.last().offset);
+                    cs.r = mathLerp<uint8_t>(output.last().r, lroundf((*color.input)[cidx + 1] * 255.0f), p);
+                    cs.g = mathLerp<uint8_t>(output.last().g, lroundf((*color.input)[cidx + 2] * 255.0f), p);
+                    cs.b = mathLerp<uint8_t>(output.last().b, lroundf((*color.input)[cidx + 3] * 255.0f), p);
+                } else cs.r = cs.g = cs.b = 255;
                 aidx += 2;
             }
             output.push(cs);
@@ -140,17 +141,16 @@ struct LottieGradient
             output.push(cs);
             cidx += 4;
         }
+
         //alpha remains
         while (aidx < color.input->count) {
             cs.offset = (*color.input)[aidx];
+            cs.a = lroundf((*color.input)[aidx + 1] * 255.0f);
             if (output.count > 0) {
                 cs.r = output.last().r;
                 cs.g = output.last().g;
                 cs.b = output.last().b;
-            } else {
-                cs.r = cs.g = cs.b = 255;
-            }
-            cs.a = lroundf((*color.input)[aidx + 1] * 255.0f);
+            } else cs.r = cs.g = cs.b = 255;
             output.push(cs);
             aidx += 2;
         }
