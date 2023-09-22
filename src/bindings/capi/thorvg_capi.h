@@ -96,6 +96,11 @@ typedef struct _Tvg_Gradient Tvg_Gradient;
 */
 typedef struct _Tvg_Saver Tvg_Saver;
 
+/**
+* \brief A structure representing an animation controller object. (BETA_API)
+*/
+typedef struct _Tvg_Animation Tvg_Animation;
+
 
 /**
 * \brief Enumeration specifying the engine type used for the graphics backend. For multiple backends bitwise operation is allowed.
@@ -2126,6 +2131,119 @@ TVG_API Tvg_Result tvg_saver_del(Tvg_Saver* saver);
 
 
 /** \} */   // end defgroup ThorVGCapi_Saver
+
+
+/**
+* \defgroup ThorVGCapi_Animation Animation
+* \brief A module for manipulation of animatable images.
+*
+* The module supports the display and control of animation frames.
+*
+* \{
+*/
+
+/************************************************************************/
+/* Animation API                                                        */
+/************************************************************************/
+
+/*!
+* \brief Creates a new Animation object. (BETA_API)
+*
+* \return Tvg_Animation A new Tvg_Animation object.
+*/
+TVG_API Tvg_Animation* tvg_animation_new();
+
+
+/*!
+* \brief Specifies the current frame in the animation. (BETA_API)
+*
+* \param[in] animation A Tvg_Animation pointer to the animation object.
+* \param[in] no The index of the animation frame to be displayed. The index should be less than the tvg_animatio_total_frame().
+*
+* \return Tvg_Result enumeration.
+* \retval TVG_RESULT_SUCCESS Succeed.
+* \retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Animation pointer.
+* \retval TVG_RESULT_INSUFFICIENT_CONDITION No animatable data loaded from the Picture.
+* \retval TVG_RESULT_NOT_SUPPORTED The picture data does not support animations.
+*
+* \see tvg_animation_get_total_frame()
+*/
+TVG_API Tvg_Result tvg_animation_set_frame(Tvg_Animation* animation, uint32_t no);
+
+
+/*!
+* \brief Retrieves a picture instance associated with this animation instance. (BETA_API)
+*
+* This function provides access to the picture instance that can be used to load animation formats, such as Lottie(json).
+* After setting up the picture, it can be pushed to the designated canvas, enabling control over animation frames
+* with this Animation instance.
+*
+* \param[in] animation A Tvg_Animation pointer to the animation object.
+*
+* \return A picture instance that is tied to this animation.
+*
+* \warning The picture instance is owned by Animation. It should not be deleted manually.
+*/
+TVG_API Tvg_Paint* tvg_animation_get_picture(Tvg_Animation* animation);
+
+
+/*!
+* \brief Retrieves the current frame number of the animation. (BETA_API)
+*
+* \param[in] animation A Tvg_Animation pointer to the animation object.
+* \param[in] no The current frame number of the animation, between 0 and totalFrame() - 1.
+*
+* \return Tvg_Result enumeration.
+* \retval TVG_RESULT_SUCCESS Succeed.
+* \retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Animation pointer or @p no
+*
+* \see tvg_animation_get_total_frame()
+* \see tvg_animation_set_frame()
+*/
+TVG_API Tvg_Result tvg_animation_get_frame(Tvg_Animation* animation, uint32_t* no);
+
+
+/*!
+* \brief Retrieves the total number of frames in the animation. (BETA_API)
+*
+* \param[in] animation A Tvg_Animation pointer to the animation object.
+* \param[in] cnt The total number of frames in the animation.
+*
+* \return Tvg_Result enumeration.
+* \retval TVG_RESULT_SUCCESS Succeed.
+* \retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Animation pointer or @p cnt.
+*
+* \note Frame numbering starts from 0.
+* \note If the Picture is not properly configured, this function will return 0.
+*/
+TVG_API Tvg_Result tvg_animation_get_total_frame(Tvg_Animation* animation, uint32_t* cnt);
+
+
+/*!
+* \brief Retrieves the duration of the animation in seconds. (BETA_API)
+*
+* \param[in] animation A Tvg_Animation pointer to the animation object.
+* \param[in] duration The duration of the animation in seconds.
+*
+* \return Tvg_Result enumeration.
+* \retval TVG_RESULT_SUCCESS Succeed.
+* \retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Animation pointer or @p duration.
+*
+* \note If the Picture is not properly configured, this function will return 0.
+*/
+TVG_API Tvg_Result tvg_animation_get_duration(Tvg_Animation* animation, float* duration);
+
+
+/*!
+* \brief Deletes the given Tvg_Animation object.
+*
+* \param[in] animation The Tvg_Animation object to be deleted.
+*
+* \return Tvg_Result enumeration.
+* \retval TVG_RESULT_SUCCESS Succeed.
+* \retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Animation pointer.
+*/
+TVG_API Tvg_Result tvg_animation_del(Tvg_Animation* animation);
 
 
 /** \} */   // end defgroup ThorVG_CAPI
