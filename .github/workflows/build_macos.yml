@@ -23,6 +23,7 @@ jobs:
         brew update
         brew install meson efl
         brew upgrade
+        brew link -f node
 
     - name: Build
       run: |
@@ -41,6 +42,7 @@ jobs:
         brew update
         brew install meson
         brew upgrade
+        brew link -f node
 
     - name: Build
       run: |
@@ -59,6 +61,7 @@ jobs:
         brew update
         brew install meson
         brew upgrade
+        brew link -f node
 
     - name: Build
       run: |
