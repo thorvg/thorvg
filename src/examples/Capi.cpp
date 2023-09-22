@@ -33,7 +33,9 @@
 
 static uint32_t* buffer = NULL;
 static Tvg_Canvas* canvas = NULL;
+static Tvg_Animation* animation = NULL;
 static Eo* view = NULL;
+static Elm_Transit *transit = NULL;
 
 void testCapi()
 {
@@ -176,7 +178,6 @@ void testCapi()
     //Push the scene into the canvas
     tvg_canvas_push(canvas, scene);
 
-
 //////5. Masked picture
     //Set a scene
     Tvg_Paint* pict = tvg_picture_new();
@@ -200,8 +201,7 @@ void testCapi()
         tvg_canvas_push(canvas, pict);
     }
 
-
-//////Save a paint
+//////6. Save a paint
     //Create a shape
     Tvg_Paint* shape = tvg_shape_new();
     tvg_shape_append_circle(shape, 420.0f, 420.0f, 10.0f, 10.0f);
@@ -226,9 +226,59 @@ void testCapi()
         tvg_canvas_push(canvas, pict_tvg);
     }
 
+//////7. Animation with a picture
+    animation = tvg_animation_new();
+    Tvg_Paint* pict_lottie = tvg_animation_get_picture(animation);
+    if (tvg_picture_load(pict_lottie, EXAMPLE_DIR"/sample.json") != TVG_RESULT_SUCCESS) {
+        printf("Problem with loading an lottie file\n");
+        tvg_animation_del(animation);
+    } else {
+        tvg_paint_scale(pict_lottie, 3.0f);
+        tvg_canvas_push(canvas, pict_lottie);
+
+        float duration;
+        tvg_animation_get_duration(animation, &duration);
+        elm_transit_duration_set(transit, duration);
+        elm_transit_repeat_times_set(transit, -1);
+        elm_transit_go(transit);
+    }
+
 //////Draw the canvas
     tvg_canvas_draw(canvas);
     tvg_canvas_sync(canvas);
+}
+
+
+/************************************************************************/
+/* Animation Code                                                       */
+/************************************************************************/
+
+void transitCb(Elm_Transit_Effect *effect, Elm_Transit* transit, double progress)
+{
+    if (!canvas) return;
+
+    uint32_t total_frame = 0;
+    tvg_animation_get_total_frame(animation, &total_frame);
+
+    uint32_t new_frame = lroundf(total_frame * progress);
+
+    uint32_t cur_frame = 0;
+    tvg_animation_get_frame(animation, &cur_frame);
+
+    //Update animation frame only when it's changed
+    if (new_frame == cur_frame) return;
+
+    tvg_animation_set_frame(animation, new_frame);
+    tvg_canvas_update_paint(canvas, tvg_animation_get_picture(animation));
+
+    //Draw the canvas
+    tvg_canvas_draw(canvas);
+    tvg_canvas_sync(canvas);
+
+    //Update Efl Canvas
+    Eo* img = (Eo*) effect;
+    evas_object_image_data_update_add(img, 0, 0, WIDTH, HEIGHT);
+    evas_object_image_pixels_dirty_set(img, EINA_TRUE);
 }
 
 
@@ -287,12 +337,17 @@ int main(int argc, char **argv)
     evas_object_geometry_set(win, 0, 0, WIDTH, HEIGHT);
     evas_object_show(win);
 
+    transit = elm_transit_add();
+
     testCapi();
+
+    elm_transit_effect_add(transit, transitCb, view, nullptr);
 
     elm_run();
 
     tvg_canvas_destroy(canvas);
     free(buffer);
+    tvg_animation_del(animation);
     tvg_engine_term(Tvg_Engine(TVG_ENGINE_SW | TVG_ENGINE_GL));
     elm_shutdown();
 
