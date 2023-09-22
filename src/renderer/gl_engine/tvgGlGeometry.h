@@ -189,6 +189,7 @@ public:
     ~GlGeometry();
 
     bool tesselate(const RenderShape& rshape, RenderUpdateFlag flag);
+    bool tesselate(const Surface* image, const RenderMesh* mesh, RenderUpdateFlag flag);
     void disableVertex(uint32_t location);
     bool draw(GlRenderTask* task, GlStageBuffer* gpuBuffer, RenderUpdateFlag flag);
     void updateTransform(const RenderTransform* transform, float w, float h);

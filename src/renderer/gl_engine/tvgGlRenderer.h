@@ -36,6 +36,7 @@ public:
         RT_Color = 0,
         RT_LinGradient,
         RT_RadGradient,
+        RT_Image,
 
         RT_None,
     };

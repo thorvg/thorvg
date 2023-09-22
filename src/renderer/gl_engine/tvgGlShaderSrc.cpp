@@ -196,3 +196,59 @@ STR_GRADIENT_FRAG_COMMON_FUNCTIONS +
 STR_RADIAL_GRADIENT_MAIN;
 
 const char* RADIAL_GRADIENT_FRAG_SHADER = STR_RADIAL_GRADIENT_FRAG_SHADER.c_str();
+
+
+const char* IMAGE_VERT_SHADER = TVG_COMPOSE_SHADER(
+    layout (location = 0) in vec3 aLocation;                                                \n
+    layout (location = 1) in vec2 aUV;                                                      \n
+    layout (std140) uniform Matrix {                                                        \n
+        mat4 transform;                                                                     \n
+    } uMatrix;                                                                              \n
+                                                                                            \n
+    out float aOpacity;                                                                     \n
+    out vec2 vUV;                                                                           \n
+                                                                                            \n
+    void main() {                                                                           \n
+        aOpacity = aLocation.z;                                                             \n
+        vUV = aUV;                                                                          \n
+        gl_Position = uMatrix.transform * vec4(aLocation.xy, 0.0, 1.0);                     \n
+    }                                                                                       \n
+);
+
+const char* IMAGE_FRAG_SHADER = TVG_COMPOSE_SHADER(
+    layout(std140) uniform ColorInfo {                                                      \n
+        int format;                                                                         \n
+        int flipY;                                                                          \n
+        int opacity;                                                                        \n
+        int dummy;                                                                          \n
+    } uColorInfo;                                                                           \n
+    uniform sampler2D uTexture;                                                             \n
+                                                                                            \n
+    in float aOpacity;                                                                      \n
+    in vec2 vUV;                                                                            \n
+                                                                                            \n
+    out vec4 FragColor;                                                                     \n
+                                                                                            \n
+    void main() {                                                                           \n
+        vec2 uv = vUV;                                                                      \n
+        if (uColorInfo.flipY == 1) { uv.y = 1.0 - uv.y; }                                   \n
+                                                                                            \n
+        vec4 color = texture(uTexture, uv);                                                 \n
+        vec4 result = color;                                                                \n
+        if (uColorInfo.format == 1) { /* FMT_ARGB8888 */                                    \n
+            result.r = color.b;                                                             \n
+            result.g = color.g;                                                             \n
+            result.b = color.r;                                                             \n
+            result.a = color.a;                                                             \n
+        } else if (uColorInfo.format == 2) { /* FMT_ABGR8888S */                            \n
+            result = vec4(color.rgb * color.a, color.a);                                    \n
+        } else if (uColorInfo.format == 3) { /* FMT_ARGB8888S */                            \n
+            result.r = color.b * color.a;                                                   \n
+            result.g = color.g * color.a;                                                   \n
+            result.b = color.b * color.a;                                                   \n
+            result.a = color.a;                                                             \n
+        }                                                                                   \n
+        float opacity = float(uColorInfo.opacity) / 255.0;                                  \n
+        FragColor = vec4(result.rgb, result.a * opacity * aOpacity);                        \n
+   }                                                                                        \n
+);

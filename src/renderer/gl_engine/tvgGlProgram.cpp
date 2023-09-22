@@ -83,7 +83,7 @@ int32_t GlProgram::getAttributeLocation(const char* name)
 
 int32_t GlProgram::getUniformLocation(const char* name)
 {
-    GL_CHECK(int32_t location = glGetUniformLocation(mCurrentProgram, name));
+    GL_CHECK(int32_t location = glGetUniformLocation(mProgramObj, name));
     return location;
 }
 
