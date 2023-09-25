@@ -36,6 +36,10 @@
     #include "tvgGlRenderer.h"
 #endif
 
+#ifdef THORVG_GL_RASTER_SUPPORT
+    #include "tvgWgpuRenderer.h"
+#endif
+
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
@@ -99,6 +103,11 @@ Result Initializer::init(CanvasEngine engine, uint32_t threads) noexcept
         #endif
     } else if (engine & CanvasEngine::Gl) {
         #ifdef THORVG_GL_RASTER_SUPPORT
+            if (!GlRenderer::init(threads)) return Result::FailedAllocation;
+            nonSupport = false;
+        #endif
+    } else if (engine & CanvasEngine::Wgpu) {
+        #ifdef THORVG_WGPU_RASTER_SUPPORT
             if (!GlRenderer::init(threads)) return Result::FailedAllocation;
             nonSupport = false;
         #endif
