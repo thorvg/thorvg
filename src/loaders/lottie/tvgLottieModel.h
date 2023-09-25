@@ -585,6 +585,7 @@ struct LottieComposition
     float frameRate;
     Array<LottieObject*> assets;
     Array<LottieInterpolator*> interpolators;
+    bool initiated = false;
 };
 
 #endif //_TVG_LOTTIE_MODEL_H_
