@@ -4,6 +4,7 @@ endif
 
 test_file = [
     'testAccessor.cpp',
+    'testAnimation.cpp',
     'testFill.cpp',
     'testInitializer.cpp',
     'testMain.cpp',

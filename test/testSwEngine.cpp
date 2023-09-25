@@ -93,7 +93,6 @@ TEST_CASE("Basic draw", "[tvgSwEngine]")
     REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
 }
 
-
 TEST_CASE("Image Draw", "[tvgSwEngine]")
 {
     REQUIRE(Initializer::init(CanvasEngine::Sw, 0) == Result::Success);
@@ -242,7 +241,6 @@ TEST_CASE("Image Draw", "[tvgSwEngine]")
     REQUIRE(basicPicture7->opacity(100) == Result::Success);
     REQUIRE(canvas->push(std::move(basicPicture7)) == Result::Success);
 
-
     // Upscaled images
     basicPicture = Picture::gen();
     REQUIRE(basicPicture);
@@ -306,7 +304,6 @@ TEST_CASE("Image Draw", "[tvgSwEngine]")
     REQUIRE(basicPicture7->composite(std::move(rleMask7), tvg::CompositeMethod::ClipPath) == Result::Success);
     REQUIRE(basicPicture7->opacity(100) == Result::Success);
     REQUIRE(canvas->push(std::move(basicPicture7)) == Result::Success);
-
 
     // Downscaled images
     basicPicture = Picture::gen();
@@ -381,7 +378,6 @@ TEST_CASE("Image Draw", "[tvgSwEngine]")
     free(data);
 }
 
-
 TEST_CASE("Rect Draw", "[tvgSwEngine]")
 {
     REQUIRE(Initializer::init(CanvasEngine::Sw, 0) == Result::Success);
@@ -439,7 +435,6 @@ TEST_CASE("Rect Draw", "[tvgSwEngine]")
 
     REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
 }
-
 
 TEST_CASE("RLE Draw", "[tvgSwEngine]")
 {
@@ -499,7 +494,6 @@ TEST_CASE("RLE Draw", "[tvgSwEngine]")
     REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
 }
 
-
 TEST_CASE("Filling Draw", "[tvgSwEngine]")
 {
     REQUIRE(Initializer::init(CanvasEngine::Sw, 0) == Result::Success);
@@ -549,7 +543,6 @@ TEST_CASE("Filling Draw", "[tvgSwEngine]")
     REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
 }
 
-
 TEST_CASE("Filling Opaque Draw", "[tvgSwEngine]")
 {
     REQUIRE(Initializer::init(CanvasEngine::Sw, 0) == Result::Success);
@@ -598,7 +591,6 @@ TEST_CASE("Filling Opaque Draw", "[tvgSwEngine]")
 
     REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
 }
-
 
 TEST_CASE("Filling AlphaMask", "[tvgSwEngine]")
 {
@@ -659,7 +651,6 @@ TEST_CASE("Filling AlphaMask", "[tvgSwEngine]")
     REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
 }
 
-
 TEST_CASE("Filling InvAlphaMask", "[tvgSwEngine]")
 {
     REQUIRE(Initializer::init(CanvasEngine::Sw, 0) == Result::Success);
@@ -718,7 +709,6 @@ TEST_CASE("Filling InvAlphaMask", "[tvgSwEngine]")
 
     REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
 }
-
 
 TEST_CASE("Filling LumaMask", "[tvgSwEngine]")
 {
@@ -779,7 +769,6 @@ TEST_CASE("Filling LumaMask", "[tvgSwEngine]")
     REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
 }
 
-
 TEST_CASE("Filling ClipPath", "[tvgSwEngine]")
 {
     REQUIRE(Initializer::init(CanvasEngine::Sw, 0) == Result::Success);
@@ -839,7 +828,6 @@ TEST_CASE("Filling ClipPath", "[tvgSwEngine]")
     REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
 }
 
-
 TEST_CASE("RLE Filling Draw", "[tvgSwEngine]")
 {
     REQUIRE(Initializer::init(CanvasEngine::Sw, 0) == Result::Success);
@@ -889,7 +877,6 @@ TEST_CASE("RLE Filling Draw", "[tvgSwEngine]")
     REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
 }
 
-
 TEST_CASE("RLE Filling Opaque Draw", "[tvgSwEngine]")
 {
     REQUIRE(Initializer::init(CanvasEngine::Sw, 0) == Result::Success);
@@ -938,7 +925,6 @@ TEST_CASE("RLE Filling Opaque Draw", "[tvgSwEngine]")
 
     REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
 }
-
 
 TEST_CASE("RLE Filling AlphaMask", "[tvgSwEngine]")
 {
@@ -999,7 +985,6 @@ TEST_CASE("RLE Filling AlphaMask", "[tvgSwEngine]")
     REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
 }
 
-
 TEST_CASE("RLE Filling InvAlphaMask", "[tvgSwEngine]")
 {
     REQUIRE(Initializer::init(CanvasEngine::Sw, 0) == Result::Success);
@@ -1058,7 +1043,6 @@ TEST_CASE("RLE Filling InvAlphaMask", "[tvgSwEngine]")
 
     REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
 }
-
 
 TEST_CASE("RLE Filling LumaMask", "[tvgSwEngine]")
 {
@@ -1119,7 +1103,6 @@ TEST_CASE("RLE Filling LumaMask", "[tvgSwEngine]")
     REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
 }
 
-
 TEST_CASE("RLE Filling InvLumaMask", "[tvgSwEngine]")
 {
     REQUIRE(Initializer::init(CanvasEngine::Sw, 0) == Result::Success);
@@ -1179,7 +1162,6 @@ TEST_CASE("RLE Filling InvLumaMask", "[tvgSwEngine]")
     REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
 }
 
-
 TEST_CASE("RLE Filling ClipPath", "[tvgSwEngine]")
 {
     REQUIRE(Initializer::init(CanvasEngine::Sw, 0) == Result::Success);
@@ -1231,6 +1213,264 @@ TEST_CASE("RLE Filling ClipPath", "[tvgSwEngine]")
     REQUIRE(scene->push(std::move(shape4)) == Result::Success);
     REQUIRE(scene->composite(std::move(mask), tvg::CompositeMethod::ClipPath) == Result::Success);
     REQUIRE(canvas->push(std::move(scene)) == Result::Success);
+
+    //Draw
+    REQUIRE(canvas->draw() == Result::Success);
+    REQUIRE(canvas->sync() == Result::Success);
+
+    REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
+}
+
+TEST_CASE("Blending Shapes", "[tvgSwEngine]")
+{
+    REQUIRE(Initializer::init(CanvasEngine::Sw, 0) == Result::Success);
+
+    auto canvas = SwCanvas::gen();
+    REQUIRE(canvas);
+
+    uint32_t buffer[100*100];
+    REQUIRE(canvas->target(buffer, 100, 100, 100, SwCanvas::Colorspace::ABGR8888) == Result::Success);
+
+    BlendMethod methods[14] = {
+        BlendMethod::Normal,
+        BlendMethod::Add,
+        BlendMethod::Screen,
+        BlendMethod::Multiply,
+        BlendMethod::Overlay,
+        BlendMethod::Difference,
+        BlendMethod::Exclusion,
+        BlendMethod::SrcOver,
+        BlendMethod::Darken,
+        BlendMethod::Lighten,
+        BlendMethod::ColorDodge,
+        BlendMethod::ColorBurn,
+        BlendMethod::HardLight,
+        BlendMethod::SoftLight
+    };
+
+    int i = 0;
+    for (; i < 7; ++i) {
+        auto shape = tvg::Shape::gen();
+        REQUIRE(shape);
+        REQUIRE(shape->appendRect(0, 0, 100, 100) == Result::Success);
+        REQUIRE(shape->fill(255, 255, 255) == Result::Success);
+        shape->blend(methods[i]);
+        REQUIRE(canvas->push(std::move(shape)) == Result::Success);
+    }
+
+    for (; i < 14; ++i) {
+        auto shape = tvg::Shape::gen();
+        REQUIRE(shape);
+        REQUIRE(shape->appendCircle(50, 50, 50, 50) == Result::Success);
+        REQUIRE(shape->fill(255, 255, 255) == Result::Success);
+        shape->blend(methods[i]);
+        REQUIRE(canvas->push(std::move(shape)) == Result::Success);
+    }
+
+    //Draw
+    REQUIRE(canvas->draw() == Result::Success);
+    REQUIRE(canvas->sync() == Result::Success);
+
+    REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
+}
+
+TEST_CASE("Blending Images", "[tvgSwEngine]")
+{
+    REQUIRE(Initializer::init(CanvasEngine::Sw, 0) == Result::Success);
+
+    auto canvas = SwCanvas::gen();
+    REQUIRE(canvas);
+
+    uint32_t buffer[100*100];
+    REQUIRE(canvas->target(buffer, 100, 100, 100, SwCanvas::Colorspace::ABGR8888) == Result::Success);
+
+    //raw image
+    ifstream file(TEST_DIR"/rawimage_200x300.raw");
+    if (!file.is_open()) return;
+    auto data = (uint32_t*)malloc(sizeof(uint32_t) * (200*300));
+    file.read(reinterpret_cast<char *>(data), sizeof (uint32_t) * 200 * 300);
+    file.close();
+
+    //direct clipped image
+    auto clipper = Shape::gen();
+    REQUIRE(clipper);
+    REQUIRE(clipper->appendCircle(100, 100, 100, 100) == Result::Success);
+
+    auto picture = Picture::gen();
+    REQUIRE(picture);
+    REQUIRE(picture->load(data, 200, 300, false) == Result::Success);
+    REQUIRE(picture->blend(BlendMethod::Lighten) == Result::Success);
+    REQUIRE(picture->composite(std::move(clipper), CompositeMethod::ClipPath) == Result::Success);
+    REQUIRE(canvas->push(std::move(picture)) == Result::Success);
+
+    //scaled images
+    auto picture2 = Picture::gen();
+    REQUIRE(picture2);
+    REQUIRE(picture2->load(data, 200, 300, false) == Result::Success);
+    REQUIRE(picture2->scale(2) == Result::Success);
+    REQUIRE(picture2->blend(BlendMethod::Lighten) == Result::Success);
+    REQUIRE(canvas->push(std::move(picture2)) == Result::Success);
+
+    //scaled clipped images
+    auto clipper2 = Shape::gen();
+    REQUIRE(clipper2);
+    REQUIRE(clipper2->appendCircle(100, 100, 100, 100) == Result::Success);
+
+    auto picture3 = Picture::gen();
+    REQUIRE(picture3);
+    REQUIRE(picture3->load(data, 200, 300, false) == Result::Success);
+    REQUIRE(picture3->scale(2) == Result::Success);
+    REQUIRE(picture3->blend(BlendMethod::Lighten) == Result::Success);
+    REQUIRE(picture3->composite(std::move(clipper2), CompositeMethod::ClipPath) == Result::Success);
+    REQUIRE(canvas->push(std::move(picture3)) == Result::Success);
+
+    //normal image
+    auto picture4 = Picture::gen();
+    REQUIRE(picture4);
+    REQUIRE(picture4->load(data, 200, 300, false) == Result::Success);
+    REQUIRE(picture4->blend(BlendMethod::Lighten) == Result::Success);
+    REQUIRE(canvas->push(std::move(picture4)) == Result::Success);
+
+    //texmap image
+    auto picture5 = Picture::gen();
+    REQUIRE(picture5);
+    REQUIRE(picture5->load(data, 200, 300, false) == Result::Success);
+    REQUIRE(picture5->blend(BlendMethod::Lighten) == Result::Success);
+    REQUIRE(picture5->rotate(45.0f) == Result::Success);
+    REQUIRE(canvas->push(std::move(picture5)) == Result::Success);
+
+    //texmap image with half-translucent
+    auto picture6 = Picture::gen();
+    REQUIRE(picture6);
+    REQUIRE(picture6->load(data, 200, 300, false) == Result::Success);
+    REQUIRE(picture6->blend(BlendMethod::Lighten) == Result::Success);
+    REQUIRE(picture6->rotate(45.0f) == Result::Success);
+    REQUIRE(picture6->opacity(127) == Result::Success);
+    REQUIRE(canvas->push(std::move(picture6)) == Result::Success);
+
+    //Draw
+    REQUIRE(canvas->draw() == Result::Success);
+    REQUIRE(canvas->sync() == Result::Success);
+
+    REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
+
+    free(data);
+}
+
+TEST_CASE("Blending with Gradient Filling", "[tvgSwEngine]")
+{
+    REQUIRE(Initializer::init(CanvasEngine::Sw, 0) == Result::Success);
+
+    auto canvas = SwCanvas::gen();
+    REQUIRE(canvas);
+
+    uint32_t buffer[100*100];
+    REQUIRE(canvas->target(buffer, 100, 100, 100, SwCanvas::Colorspace::ABGR8888) == Result::Success);
+
+    Fill::ColorStop cs[4] = {
+        {0.0f, 0, 0, 0, 0},
+        {0.2f, 50, 25, 50, 25},
+        {0.5f, 100, 100, 100, 125},
+        {1.0f, 255, 255, 255, 255}
+    };
+
+    //Linear fill Shape
+    auto linearFill = LinearGradient::gen();
+    REQUIRE(linearFill);
+    REQUIRE(linearFill->colorStops(cs, 4) == Result::Success);
+    REQUIRE(linearFill->linear(0.0f, 0.0f, 100.0f, 120.0f) == Result::Success);
+
+    auto shape1 = tvg::Shape::gen();
+    REQUIRE(shape1);
+    REQUIRE(shape1->appendRect(0, 0, 100, 100) == Result::Success);
+    REQUIRE(shape1->fill(std::move(linearFill)) == Result::Success);
+    REQUIRE(shape1->blend(BlendMethod::Difference) == Result::Success);
+    REQUIRE(canvas->push(std::move(shape1)) == Result::Success);
+
+    //Radial fill shape
+    auto radialFill = RadialGradient::gen();
+    REQUIRE(radialFill);
+    REQUIRE(radialFill->colorStops(cs, 4) == Result::Success);
+    REQUIRE(radialFill->radial(50.0f, 50.0f, 50.0f) == Result::Success);
+
+    auto shape2 = tvg::Shape::gen();
+    REQUIRE(shape2);
+    REQUIRE(shape2->appendRect(0, 0, 100, 100) == Result::Success);
+    REQUIRE(shape2->fill(std::move(radialFill)) == Result::Success);
+    REQUIRE(shape2->blend(BlendMethod::Difference) == Result::Success);
+    REQUIRE(canvas->push(std::move(shape2)) == Result::Success);
+
+    //Linear fill alpha mask shape
+    auto linearFill2 = LinearGradient::gen();
+    REQUIRE(linearFill2);
+    REQUIRE(linearFill2->colorStops(cs, 4) == Result::Success);
+    REQUIRE(linearFill2->linear(0.0f, 0.0f, 100.0f, 120.0f) == Result::Success);
+
+    auto mask = tvg::Shape::gen();
+    REQUIRE(mask);
+    mask->appendCircle(50, 50, 50, 50);
+
+    auto shape3 = tvg::Shape::gen();
+    REQUIRE(shape3);
+    REQUIRE(shape3->appendRect(0, 0, 100, 100) == Result::Success);
+    REQUIRE(shape3->fill(std::move(linearFill2)) == Result::Success);
+    REQUIRE(shape3->composite(std::move(mask), tvg::CompositeMethod::AlphaMask) == Result::Success);
+    REQUIRE(shape3->blend(BlendMethod::Difference) == Result::Success);
+    REQUIRE(canvas->push(std::move(shape3)) == Result::Success);
+
+    //Radial fill alpha mask shape
+    auto radialFill2 = RadialGradient::gen();
+    REQUIRE(radialFill2);
+    REQUIRE(radialFill2->colorStops(cs, 4) == Result::Success);
+    REQUIRE(radialFill2->radial(50.0f, 50.0f, 50.0f) == Result::Success);
+
+    auto mask2 = tvg::Shape::gen();
+    REQUIRE(mask2);
+    mask2->appendCircle(50, 50, 50, 50);
+
+    auto shape4 = tvg::Shape::gen();
+    REQUIRE(shape4);
+    REQUIRE(shape4->appendRect(0, 0, 100, 100) == Result::Success);
+    REQUIRE(shape4->fill(std::move(radialFill2)) == Result::Success);
+    REQUIRE(shape4->composite(std::move(mask2), tvg::CompositeMethod::AlphaMask) == Result::Success);
+    REQUIRE(shape4->blend(BlendMethod::Difference) == Result::Success);
+    REQUIRE(canvas->push(std::move(shape4)) == Result::Success);
+
+    //Linear fill add mask shape
+    auto linearFill3 = LinearGradient::gen();
+    REQUIRE(linearFill3);
+    REQUIRE(linearFill3->colorStops(cs, 4) == Result::Success);
+    REQUIRE(linearFill3->linear(0.0f, 0.0f, 100.0f, 120.0f) == Result::Success);
+
+    auto mask3 = tvg::Shape::gen();
+    REQUIRE(mask3);
+    mask3->appendCircle(50, 50, 50, 50);
+
+    auto shape5 = tvg::Shape::gen();
+    REQUIRE(shape5);
+    REQUIRE(shape5->appendRect(0, 0, 100, 100) == Result::Success);
+    REQUIRE(shape5->fill(std::move(linearFill3)) == Result::Success);
+    REQUIRE(shape5->composite(std::move(mask3), tvg::CompositeMethod::AddMask) == Result::Success);
+    REQUIRE(shape5->blend(BlendMethod::Difference) == Result::Success);
+    REQUIRE(canvas->push(std::move(shape5)) == Result::Success);
+
+    //Radial fill add mask shape
+    auto radialFill3 = RadialGradient::gen();
+    REQUIRE(radialFill3);
+    REQUIRE(radialFill3->colorStops(cs, 4) == Result::Success);
+    REQUIRE(radialFill3->radial(50.0f, 50.0f, 50.0f) == Result::Success);
+
+    auto mask4 = tvg::Shape::gen();
+    REQUIRE(mask4);
+    mask4->appendCircle(50, 50, 50, 50);
+
+    auto shape6 = tvg::Shape::gen();
+    REQUIRE(shape6);
+    REQUIRE(shape6->appendRect(0, 0, 100, 100) == Result::Success);
+    REQUIRE(shape6->fill(std::move(radialFill3)) == Result::Success);
+    REQUIRE(shape6->composite(std::move(mask4), tvg::CompositeMethod::SubtractMask) == Result::Success);
+    REQUIRE(shape6->blend(BlendMethod::Difference) == Result::Success);
+    REQUIRE(canvas->push(std::move(shape6)) == Result::Success);
 
     //Draw
     REQUIRE(canvas->draw() == Result::Success);
