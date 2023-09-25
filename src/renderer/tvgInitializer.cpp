@@ -36,7 +36,7 @@
     #include "tvgGlRenderer.h"
 #endif
 
-#ifdef THORVG_GL_RASTER_SUPPORT
+#ifdef THORVG_WGPU_RASTER_SUPPORT
     #include "tvgWgpuRenderer.h"
 #endif
 
