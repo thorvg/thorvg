@@ -27,7 +27,7 @@
   <td id="projectlogo"><img alt="Logo" src="small_logo.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">ThorVG
-   &#160;<span id="projectnumber">v0.10</span>
+   &#160;<span id="projectnumber">v0.11</span>
    </div>
   </td>
  </tr>
@@ -99,15 +99,6 @@ Inheritance diagram for Shape:</div>
 <div class="dyncontent">
 <div class="center"><img src="classtvg_1_1Shape__inherit__graph.png" border="0" usemap="#aShape_inherit__map" alt="Inheritance graph"/></div>
 <map name="aShape_inherit__map" id="aShape_inherit__map">
-<area shape="rect" title="A class representing two&#45;dimensional figures and their properties." alt="" coords="5,80,68,107"/>
-<area shape="rect" href="classtvg_1_1Paint.html" title="An abstract class for managing graphical elements." alt="" coords="9,5,64,32"/>
-</map>
-<center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
-<div class="dynheader">
-Collaboration diagram for Shape:</div>
-<div class="dyncontent">
-<div class="center"><img src="classtvg_1_1Shape__coll__graph.png" border="0" usemap="#aShape_coll__map" alt="Collaboration graph"/></div>
-<map name="aShape_coll__map" id="aShape_coll__map">
 <area shape="rect" title="A class representing two&#45;dimensional figures and their properties." alt="" coords="5,80,68,107"/>
 <area shape="rect" href="classtvg_1_1Paint.html" title="An abstract class for managing graphical elements." alt="" coords="9,5,64,32"/>
 </map>
@@ -1192,7 +1183,7 @@ ClipPath won't use the fill values. (see: enum class <a class="el" href="group__
 </div><div class="memdoc">
 
 <p>Resets the properties of the shape path. </p>
-<p>The color, the fill and the stroke properties are retained.</p>
+<p>The transformation matrix, the color, the fill and the stroke properties are retained.</p>
 <dl class="section return"><dt>Returns</dt><dd><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a505a83f220c02df2f85c3810cd9ceb38" title="The value returned in case of a correct request execution.">Result::Success</a> when succeed.</dd></dl>
 <dl class="section note"><dt>Note</dt><dd>The memory, where the path data is stored, is not deallocated at this stage for caching effect. </dd></dl>
 
@@ -1665,7 +1656,7 @@ ClipPath won't use the fill values. (see: enum class <a class="el" href="group__
 
 <p>Gets the stroke miterlimit. </p>
 <dl class="section return"><dt>Returns</dt><dd>The stroke miterlimit value when succeed, 4 if no stroke was set.</dd></dl>
-<p>@BETA_API </p>
+<dl class="section since"><dt>Since</dt><dd>0.11 </dd></dl>
 
 </div>
 </div>
@@ -1701,7 +1692,7 @@ ClipPath won't use the fill values. (see: enum class <a class="el" href="group__
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a505a83f220c02df2f85c3810cd9ceb38" title="The value returned in case of a correct request execution.">Result::Success</a> when succeed, <a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066aa0cfd518e4385f31d38720579321ed29" title="The value returned in case of choosing unsupported options.">Result::NonSupport</a> unsupported value, <a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066abc2b4181e818f2e9b52b2bc54dd55907" title="The value returned in case of unsuccessful memory allocation.">Result::FailedAllocation</a> otherwise.</dd></dl>
-<p>@BETA_API </p>
+<dl class="section since"><dt>Since</dt><dd>0.11 </dd></dl>
 
 </div>
 </div>

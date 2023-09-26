@@ -27,7 +27,7 @@
   <td id="projectlogo"><img alt="Logo" src="small_logo.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">ThorVG
-   &#160;<span id="projectnumber">v0.10</span>
+   &#160;<span id="projectnumber">v0.11</span>
    </div>
   </td>
  </tr>
@@ -116,7 +116,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:a82c5ec1c1ba93cf7671642400074201e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Passes drawing elements to the <a class="el" href="classtvg_1_1Canvas.html" title="An abstract class for drawing graphical elements.">Canvas</a> using <a class="el" href="classtvg_1_1Paint.html" title="An abstract class for managing graphical elements.">Paint</a> objects.  <a href="classtvg_1_1Canvas.html#a82c5ec1c1ba93cf7671642400074201e">More...</a><br /></td></tr>
 <tr class="separator:a82c5ec1c1ba93cf7671642400074201e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a99cdb01cd893f4199b521b754d21aefd"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Canvas.html#a99cdb01cd893f4199b521b754d21aefd">clear</a> (bool free=true) noexcept</td></tr>
-<tr class="memdesc:a99cdb01cd893f4199b521b754d21aefd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the total number of the paints pushed into the canvas to be zero. Depending on the value of the <code>free</code> argument, the paints are freed or not.  <a href="classtvg_1_1Canvas.html#a99cdb01cd893f4199b521b754d21aefd">More...</a><br /></td></tr>
+<tr class="memdesc:a99cdb01cd893f4199b521b754d21aefd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Clear the internal canvas resources that used for the drawing.  <a href="classtvg_1_1Canvas.html#a99cdb01cd893f4199b521b754d21aefd">More...</a><br /></td></tr>
 <tr class="separator:a99cdb01cd893f4199b521b754d21aefd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a89ac8a85a8c22723af9fb07c098472b3"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Canvas.html#a89ac8a85a8c22723af9fb07c098472b3">update</a> (<a class="el" href="classtvg_1_1Paint.html">Paint</a> *paint=nullptr) noexcept</td></tr>
 <tr class="memdesc:a89ac8a85a8c22723af9fb07c098472b3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Request the canvas to update the paint objects.  <a href="classtvg_1_1Canvas.html#a89ac8a85a8c22723af9fb07c098472b3">More...</a><br /></td></tr>
@@ -158,7 +158,8 @@ Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Sets the total number of the paints pushed into the canvas to be zero. Depending on the value of the <code>free</code> argument, the paints are freed or not. </p>
+<p>Clear the internal canvas resources that used for the drawing. </p>
+<p>This API sets the total number of paints pushed into the canvas to zero. Depending on the value of the <code>free</code> argument, the paints are either freed or retained. So if you need to update paint properties while maintaining the existing scene structure, you can set <code>free</code> = false.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">free</td><td>If <code>true</code>, the memory occupied by paints is deallocated, otherwise it is not.</td></tr>
@@ -166,7 +167,6 @@ Public Member Functions</h2></td></tr>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a505a83f220c02df2f85c3810cd9ceb38" title="The value returned in case of a correct request execution.">Result::Success</a> when succeed, <a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a119732ff568bf103d744e930ae2404f1" title="The value returned in case the request cannot be processed - e.g. asking for properties of an object,...">Result::InsufficientCondition</a> otherwise.</dd></dl>
-<dl class="section warning"><dt>Warning</dt><dd>If you don't free the paints they become dangled. They are supposed to be reused, otherwise you are responsible for their lives. Thus please use the <code>free</code> argument only when you know how it works, otherwise it's not recommended. </dd></dl>
 <dl class="section see"><dt>See also</dt><dd><a class="el" href="classtvg_1_1Canvas.html#a82c5ec1c1ba93cf7671642400074201e" title="Passes drawing elements to the Canvas using Paint objects.">Canvas::push()</a> </dd>
 <dd>
 <a class="el" href="classtvg_1_1Canvas.html#ace6c268f853a4c144076de89b7bbbe75" title="Returns the list of the paints that currently held by the Canvas.">Canvas::paints()</a> </dd></dl>
@@ -259,7 +259,7 @@ Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Passes drawing elements to the <a class="el" href="classtvg_1_1Canvas.html" title="An abstract class for drawing graphical elements.">Canvas</a> using <a class="el" href="classtvg_1_1Paint.html" title="An abstract class for managing graphical elements.">Paint</a> objects. </p>
-<p>Only pushed paints in the canvas will be drawing targets. They are retained by the canvas until you call <a class="el" href="classtvg_1_1Canvas.html#a99cdb01cd893f4199b521b754d21aefd" title="Sets the total number of the paints pushed into the canvas to be zero. Depending on the value of the ...">Canvas::clear()</a>.</p>
+<p>Only pushed paints in the canvas will be drawing targets. They are retained by the canvas until you call <a class="el" href="classtvg_1_1Canvas.html#a99cdb01cd893f4199b521b754d21aefd" title="Clear the internal canvas resources that used for the drawing.">Canvas::clear()</a>.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">paint</td><td>A <a class="el" href="classtvg_1_1Paint.html" title="An abstract class for managing graphical elements.">Paint</a> object to be drawn.</td></tr>
@@ -277,7 +277,7 @@ Public Member Functions</h2></td></tr>
 <dl class="section note"><dt>Note</dt><dd>The rendering order of the paints is the same as the order as they were pushed into the canvas. Consider sorting the paints before pushing them if you intend to use layering. </dd></dl>
 <dl class="section see"><dt>See also</dt><dd><a class="el" href="classtvg_1_1Canvas.html#ace6c268f853a4c144076de89b7bbbe75" title="Returns the list of the paints that currently held by the Canvas.">Canvas::paints()</a> </dd>
 <dd>
-<a class="el" href="classtvg_1_1Canvas.html#a99cdb01cd893f4199b521b754d21aefd" title="Sets the total number of the paints pushed into the canvas to be zero. Depending on the value of the ...">Canvas::clear()</a> </dd></dl>
+<a class="el" href="classtvg_1_1Canvas.html#a99cdb01cd893f4199b521b754d21aefd" title="Clear the internal canvas resources that used for the drawing.">Canvas::clear()</a> </dd></dl>
 
 </div>
 </div>

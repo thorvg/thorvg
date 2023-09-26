@@ -21,8 +21,5 @@ var hierarchy =
     [ "Point", "structtvg_1_1Point.html", null ],
     [ "Polygon", "structtvg_1_1Polygon.html", null ],
     [ "Saver", "classtvg_1_1Saver.html", null ],
-    [ "Tvg_Color_Stop", "structTvg__Color__Stop.html", null ],
-    [ "Tvg_Matrix", "structTvg__Matrix.html", null ],
-    [ "Tvg_Point", "structTvg__Point.html", null ],
     [ "Vertex", "structtvg_1_1Vertex.html", null ]
 ];
