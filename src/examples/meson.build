@@ -9,7 +9,6 @@ source_file = [
     'AnimateMasking.cpp',
     'Animation.cpp',
     'Arc.cpp',
-    'Async.cpp',
     'Blending.cpp',
     'ClipPath.cpp',
     'CustomTransform.cpp',
