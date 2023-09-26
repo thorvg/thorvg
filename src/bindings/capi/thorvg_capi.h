@@ -1875,7 +1875,7 @@ TVG_API Tvg_Result tvg_gradient_del(Tvg_Gradient* grad);
 /**
 * \defgroup ThorVGCapi_Picture Picture
 *
-* \brief A module enabling to create and to load an image in one of the supported formats: svg, png, jpg and raw.
+* \brief A module enabling to create and to load an image in one of the supported formats: svg, png, jpg, lottie and raw.
 *
 *
 * \{
@@ -1927,7 +1927,7 @@ TVG_API Tvg_Result tvg_picture_load_raw(Tvg_Paint* paint, uint32_t *data, uint32
 * \param[in] paint A Tvg_Paint pointer to the picture object.
 * \param[in] data A pointer to a memory location where the content of the picture file is stored.
 * \param[in] size The size in bytes of the memory occupied by the @p data.
-* \param[in] mimetype Mimetype or extension of data such as "jpg", "jpeg", "svg", "svg+xml", "png", etc. In case an empty string or an unknown type is provided, the loaders will be tried one by one.
+* \param[in] mimetype Mimetype or extension of data such as "jpg", "jpeg", "svg", "svg+xml", "lottie", "png", etc. In case an empty string or an unknown type is provided, the loaders will be tried one by one.
 * \param[in] copy If @c true the data are copied into the engine local buffer, otherwise they are not.
 *
 * \return Tvg_Result enumeration.
