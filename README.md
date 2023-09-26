@@ -335,7 +335,7 @@ here are plenty of sample code in `thorvg/src/examples` to help you in understan
 
 To execute these examples, you can build them with the following meson build option:
 ```
-meson setup . builddir -Dexamples=true
+meson setup builddir -Dexamples=true
 ```
 Note that these examples require the EFL dev package for launching. If you're using Linux-based OS, you can easily install this package from your OS distribution server. For Ubuntu, you can install it with this command.
 ```
@@ -364,7 +364,7 @@ ThorVG provides an executable `svg2png` converter that generates a PNG file from
 
 To use the `svg2png`, you must turn on this feature in the build option:
 ```
-meson setup . builddir -Dtools=svg2png
+meson setup builddir -Dtools=svg2png
 ```
 Alternatively, you can add the `svg2png` value to the `tools` option in `meson_option.txt`. The build output will be located in `{builddir}/src/bin/svg2png/`.
 <br />
@@ -399,7 +399,7 @@ ThorVG provides an executable `svg2tvg` converter that generates a TVG file from
 
 To use `svg2tvg`, you need to activate this feature in the build option:
 ```
-meson setup . builddir -Dtools=svg2tvg
+meson setup builddir -Dtools=svg2tvg
 ```
 Alternatively, you can add the `svg2tvg` value to the `tools` option in `meson_option.txt`. The build output will be located in `{builddir}/src/bin/svg2tvg/`.
 
@@ -421,7 +421,7 @@ Our main development APIs are written in C++, but ThorVG also provides API bindi
 
 To enable CAPI binding, you need to activate this feature in the build options:
 ```
-meson setup . builddir -Dbindings="capi"
+meson setup builddir -Dbindings="capi"
 ```
 [Back to contents](#contents)
 <br />
