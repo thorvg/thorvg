@@ -26,6 +26,7 @@
 #include "tvgTvgSaver.h"
 #include "tvgCompressor.h"
 #include "tvgShape.h"
+#include "tvgFill.h"
 #include "tvgPicture.h"
 
 #ifdef _WIN32
@@ -411,9 +412,17 @@ TvgBinCounter TvgSaver::serializeFill(const Fill* fill, TvgBinTag tag, const Mat
 
     //radial fill
     if (fill->identifier() == TVG_CLASS_ID_RADIAL) {
+        const RadialGradient* radial = static_cast<const RadialGradient*>(fill);
         float args[3];
-        static_cast<const RadialGradient*>(fill)->radial(args, args + 1, args + 2);
+        radial->radial(args, args + 1, args + 2);
         cnt += writeTagProperty(TVG_TAG_FILL_RADIAL_GRADIENT, SIZE(args), args);
+        //focal
+        if (!mathZero(P(radial)->fx)|| !mathZero(P(radial)->fy) || P(radial)->fr > 0.0f) {
+            args[0] = P(radial)->fx;
+            args[1] = P(radial)->fy;
+            args[2] = P(radial)->fr;
+            cnt += writeTagProperty(TVG_TAG_FILL_RADIAL_GRADIENT_FOCAL, SIZE(args), args);
+        }
     //linear fill
     } else {
         float args[4];
