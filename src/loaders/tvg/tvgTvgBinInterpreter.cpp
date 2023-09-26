@@ -322,6 +322,13 @@ static bool _parseShapeStroke(const char *ptr, const char *end, Shape *shape)
                 shape->strokeMiterlimit(miterlimit);
                 break;
             }
+            case TVG_TAG_SHAPE_STROKE_DASH_OFFSET: {
+                if (block.length != SIZE(float)) return false;
+                float offset;
+                READ_FLOAT(&offset, block.data);
+                P(shape)->rs.stroke->dashOffset = offset;
+                break;
+            }
             default: {
                 TVGLOG("TVG", "Unsupported tag %d (0x%x) used as one of stroke properties, %d bytes skipped", block.type, block.type, block.length);
                 break;
