@@ -21,18 +21,159 @@
  */
 
 #include "tvgWgpuRenderer.h"
-#include "tvgGlGpuBuffer.h"
-#include "tvgGlGeometry.h"
-#include "tvgGlRenderTask.h"
-#include "tvgGlProgram.h"
-#include "tvgGlShaderSrc.h"
 
-/************************************************************************/
-/* Internal Class Implementation                                        */
-/************************************************************************/
-static int32_t initEngineCnt = false;
-static int32_t rendererCnt = 0;
+// constructor
+WgpuRenderer::WgpuRenderer() {
+    initialize();
+}
 
-/************************************************************************/
-/* External Class Implementation                                        */
-/************************************************************************/
+// destructor
+WgpuRenderer::~WgpuRenderer() {
+    release();
+}
+
+// initialize renderer
+void WgpuRenderer::initialize() {
+    // will be created instances
+}
+
+// release renderer
+void WgpuRenderer::release() {
+    // will be released instances
+}
+
+// prepare render shape
+RenderData WgpuRenderer::prepare(const RenderShape& rshape, RenderData data, const RenderTransform* transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags, bool clipper) {
+    // nothing
+    return nullptr;
+}
+
+// prepare scene
+RenderData WgpuRenderer::prepare(const Array<RenderData>& scene, RenderData data, const RenderTransform* transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags) {
+    // nothing
+    return nullptr;
+}
+
+// prepare surface
+RenderData WgpuRenderer::prepare(Surface* surface, const RenderMesh* mesh, RenderData data, const RenderTransform* transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags) {
+    // nothing
+    return nullptr;
+}
+
+// pre render
+bool WgpuRenderer::preRender() {
+    // nothing
+    return true;
+}
+
+// render shape
+bool WgpuRenderer::renderShape(RenderData data) {
+    // nothing
+    return true;
+}
+
+// render image
+bool WgpuRenderer::renderImage(RenderData data) {
+    // nothing
+    return true;
+}
+
+// post render
+bool WgpuRenderer::postRender() {
+    // nothing
+    return true;
+}
+
+// dispose render data
+bool WgpuRenderer::dispose(RenderData data) {
+    // nothing
+    return true;
+}
+
+// get region of render data
+RenderRegion WgpuRenderer::region(RenderData data) {
+    // nothing
+    return { 0, 0, INT32_MAX, INT32_MAX };
+}
+
+// get current viewport
+RenderRegion WgpuRenderer::viewport() {
+    // nothing
+    return { 0, 0, INT32_MAX, INT32_MAX };
+}
+
+// set current viewport
+bool WgpuRenderer::viewport(const RenderRegion& vp) {
+    // nothing
+    return true;
+}
+
+// blend
+bool WgpuRenderer::blend(BlendMethod method) {
+    return false;
+}
+
+// color space
+ColorSpace WgpuRenderer::colorSpace() {
+    return ColorSpace::Unsupported;
+}
+
+// clear
+bool WgpuRenderer::clear() {
+    return true;
+}
+
+// sync
+bool WgpuRenderer::sync() {
+    // one of the main method!
+    return true;
+}
+
+// target
+bool WgpuRenderer::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h) {
+    // check properties
+    assert(w > 0);
+    assert(h > 0);
+
+    // store target surface properties
+    mTargetSurface.stride = stride;
+    mTargetSurface.w = w;
+    mTargetSurface.h = h;
+
+    // return result
+    return true;
+}
+
+// target
+Compositor* WgpuRenderer::target(const RenderRegion& region, ColorSpace cs) {
+    // not supported
+    return nullptr;
+}
+
+// begin composite
+bool WgpuRenderer::beginComposite(Compositor* cmp, CompositeMethod method, uint8_t opacity) {
+    //TODO: delete the given compositor and restore the context
+    return false;
+}
+
+// end composite
+bool WgpuRenderer::endComposite(Compositor* cmp) {
+    //TODO: delete the given compositor and restore the context
+    return false;
+}
+
+// generate renderer webgpu
+WgpuRenderer* WgpuRenderer::gen() {
+    // create new renderer instance
+    return new WgpuRenderer();
+}
+
+// initialize renderer
+bool WgpuRenderer::init(uint32_t threads) {
+    return true;
+}
+
+// terminate renderer
+bool WgpuRenderer::term() {
+    return true;
+}

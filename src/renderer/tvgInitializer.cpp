@@ -108,7 +108,7 @@ Result Initializer::init(CanvasEngine engine, uint32_t threads) noexcept
         #endif
     } else if (engine & CanvasEngine::Wgpu) {
         #ifdef THORVG_WGPU_RASTER_SUPPORT
-            if (!GlRenderer::init(threads)) return Result::FailedAllocation;
+            if (!WgpuRenderer::init(threads)) return Result::FailedAllocation;
             nonSupport = false;
         #endif
     } else {
@@ -143,6 +143,11 @@ Result Initializer::term(CanvasEngine engine) noexcept
     } else if (engine & CanvasEngine::Gl) {
         #ifdef THORVG_GL_RASTER_SUPPORT
             if (!GlRenderer::term()) return Result::InsufficientCondition;
+            nonSupport = false;
+        #endif
+    } else if (engine & CanvasEngine::Gl) {
+        #ifdef THORVG_WGPU_RASTER_SUPPORT
+            if (!WgpuRenderer::term()) return Result::InsufficientCondition;
             nonSupport = false;
         #endif
     } else {

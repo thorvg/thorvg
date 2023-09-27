@@ -44,6 +44,7 @@ struct WgpuCanvas::Impl
 /* External Class Implementation                                        */
 /************************************************************************/
 
+// webgpy canvas constructor
 #ifdef THORVG_WGPU_RASTER_SUPPORT
 WgpuCanvas::WgpuCanvas() : Canvas(WgpuRenderer::gen()), pImpl(new Impl)
 #else
@@ -52,14 +53,13 @@ WgpuCanvas::WgpuCanvas() : Canvas(nullptr), pImpl(new Impl)
 {
 }
 
-
-
+// webgpy canvas destructor
 WgpuCanvas::~WgpuCanvas()
 {
-    delete(pImpl);
+    delete pImpl;
 }
 
-
+// set target buffer
 Result WgpuCanvas::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h) noexcept
 {
 #ifdef THORVG_WGPU_RASTER_SUPPORT
@@ -77,11 +77,10 @@ Result WgpuCanvas::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_
     return Result::NonSupport;
 }
 
-
+// generate canvas instance
 unique_ptr<WgpuCanvas> WgpuCanvas::gen() noexcept
 {
 #ifdef THORVG_WGPU_RASTER_SUPPORT
-    if (WgpuRenderer::init() <= 0) return nullptr;
     return unique_ptr<WgpuCanvas>(new WgpuCanvas);
 #endif
     return nullptr;
