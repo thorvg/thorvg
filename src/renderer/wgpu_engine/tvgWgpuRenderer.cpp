@@ -21,6 +21,7 @@
  */
 
 #include "tvgWgpuRenderer.h"
+#include <iostream>
 
 // constructor
 WgpuRenderer::WgpuRenderer() {
@@ -34,12 +35,93 @@ WgpuRenderer::~WgpuRenderer() {
 
 // initialize renderer
 void WgpuRenderer::initialize() {
-    // will be created instances
+        // create instance
+    WGPUInstanceDescriptor instanceDesc{};
+    instanceDesc.nextInChain = nullptr;
+    mInstance = wgpuCreateInstance(&instanceDesc);
+    assert(mInstance);
+
+    // request adapter options
+    WGPURequestAdapterOptions requestAdapterOptions{};
+    requestAdapterOptions.nextInChain = nullptr;
+    requestAdapterOptions.compatibleSurface = nullptr;
+    requestAdapterOptions.powerPreference = WGPUPowerPreference_HighPerformance;
+    requestAdapterOptions.forceFallbackAdapter = false;
+    // on adapter request ended function
+    auto onAdapterRequestEnded = [](WGPURequestAdapterStatus status, WGPUAdapter adapter, char const * message, void * pUserData) {
+        assert(!status);
+        if (status != WGPURequestAdapterStatus_Success)
+            std::cout << "Adapter request: " << message << std::endl;
+        *((WGPUAdapter *)pUserData) = adapter;
+    };
+    // request adapter
+    wgpuInstanceRequestAdapter(mInstance, &requestAdapterOptions, onAdapterRequestEnded, &mAdapter);
+    assert(mAdapter);
+
+    // adapter enumarate fueatures
+    WGPUFeatureName featureNames[32]{};
+    size_t featuresCount = wgpuAdapterEnumerateFeatures(mAdapter, featureNames);
+    // get adapter properties
+    WGPUAdapterProperties adapterProperties{};
+    wgpuAdapterGetProperties(mAdapter, &adapterProperties);
+    // get supported limits
+    WGPUSupportedLimits supportedLimits{};
+    wgpuAdapterGetLimits(mAdapter, &supportedLimits);
+
+    // reguest device
+    WGPUDeviceDescriptor deviceDesc{};
+    deviceDesc.nextInChain = nullptr;
+    deviceDesc.label = "The device";
+    deviceDesc.requiredFeaturesCount = featuresCount;
+    deviceDesc.requiredFeatures = featureNames;
+    deviceDesc.requiredLimits = nullptr;
+    deviceDesc.defaultQueue.nextInChain = nullptr;
+    deviceDesc.defaultQueue.label = "The default queue";
+    deviceDesc.deviceLostCallback = nullptr;
+    deviceDesc.deviceLostUserdata = nullptr;
+    // on device request ended function
+    auto onDeviceRequestEnded = [](WGPURequestDeviceStatus status, WGPUDevice device, char const * message, void * pUserData) {
+        assert(!status);
+        if (status != WGPURequestDeviceStatus_Success)
+            std::cout << "Device request: " << message << std::endl;
+        *((WGPUDevice *)pUserData) = device;
+    };
+    // request device
+    wgpuAdapterRequestDevice(mAdapter, &deviceDesc, onDeviceRequestEnded, &mDevice);
+    assert(mDevice);
+
+    #ifdef _DEBUG
+    // on device error function
+    auto onDeviceError = [](WGPUErrorType type, char const* message, void* pUserData) {
+        std::cout << "Uncaptured device error: " << message << std::endl;
+    };
+    // set device error handling
+    wgpuDeviceSetUncapturedErrorCallback(mDevice, onDeviceError, nullptr);
+    #endif
+
+    // get queue
+    mQueue = wgpuDeviceGetQueue(mDevice);
+    assert(mQueue);
+
+    #ifdef _DEBUG
+    // queue work done function
+    auto onQueueWorkDone = [](WGPUQueueWorkDoneStatus status, void* pUserData) {
+        std::cout << "Queued work finished with status: " << status << std::endl;
+    };
+    // submittet queue work done function
+    wgpuQueueOnSubmittedWorkDone(mQueue, onQueueWorkDone, nullptr);
+    #endif
 }
 
 // release renderer
 void WgpuRenderer::release() {
-    // will be released instances
+    // device release
+    wgpuDeviceDestroy(mDevice);
+    wgpuDeviceRelease(mDevice);
+    // adapter release
+    wgpuAdapterRelease(mAdapter);
+    // instance release
+    wgpuInstanceRelease(mInstance);
 }
 
 // prepare render shape

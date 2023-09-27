@@ -62,6 +62,11 @@ public:
     static bool term();
 private:
     Surface mTargetSurface = { nullptr, 0, 0, 0, ColorSpace::Unsupported, true };
+    // webgpu instances
+    WGPUInstance  mInstance{};
+    WGPUAdapter   mAdapter{};
+    WGPUDevice    mDevice{};
+    WGPUQueue     mQueue{};
 };
 
 #endif /* _TVG_WGPU_RENDERER_H_ */

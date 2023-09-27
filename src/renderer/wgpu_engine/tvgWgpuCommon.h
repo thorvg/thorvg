@@ -24,6 +24,7 @@
 #define _TVG_WGPU_COMMON_H_
 
 #include <assert.h>
+#include <webgpu/webgpu.h>
 #include "tvgCommon.h"
 #include "tvgRender.h"
 
