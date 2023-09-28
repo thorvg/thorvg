@@ -20,52 +20,48 @@
  * SOFTWARE.
  */
 
-#ifndef _TVG_WGPU_BRUSH_COLOR_H_
-#define _TVG_WGPU_BRUSH_COLOR_H_
+#include "tvgWgpuBrushColor.h"
 
-#include "tvgWgpuBrush.h"
+#ifndef _TVG_WGPU_RENDER_DATA_H_
+#define _TVG_WGPU_RENDER_DATA_H_
 
-// brush color
-class WgpuBrushColor;
-
-// struct uMatrix
-struct WgpuBrushColorData_Matrix {
-    float matrix[16]{};
-};
-
-// struct uColorInfo
-struct WgpuBrushColorData_ColorInfo {
-    float color[4]{};
-};
-
-// uniforms data brush color
-struct WgpuBrushColorData {
-    WgpuBrushColorData_Matrix    uMatrix{};
-    WgpuBrushColorData_ColorInfo uColorInfo{};
-};
-
-// wgpu brush color uniforms data
-class WgpuBrushColorDataBindGroup {
-public:
-    // webgpu handles
-    WGPUBuffer mBufferUniform_uMatrix{};    // @binding(0)
-    WGPUBuffer mBufferUniform_uColorInfo{}; // @binding(1)
-    // bind group
-    WGPUBindGroup mBindGroup{};
+// render data
+class WgpuRenderData {
 public:
     // initialize and release
-    void initialize(WGPUDevice device, WgpuBrushColor& brushColor);
-    void release();
+    virtual void initialize(WGPUDevice device) = 0;
+    virtual void release() = 0;
 
-    // update buffers
-    void update(WGPUQueue queue, WgpuBrushColorData& data);
+    // sync (draw)
+    virtual void sync(WGPUCommandBuffer commandBuffer) = 0;
 };
 
-// brush color
-class WgpuBrushColor: public WgpuBrush {
+// render data shape
+class WgpuRenderDataShape: public WgpuRenderData {
 public:
-    void initialize(WGPUDevice device) override;
-    void release() override;
+    // render shape (outside)
+    const RenderShape* mRenderShape{};
+    // vertex buffer fill
+    WGPUBuffer mBufferVertex_Fill{};
+    WGPUBuffer mBufferIndex_Fill{};
+    WGPUBuffer mVertexCount_Fill{};
+    // vertex buffer stcoke
+    WGPUBuffer mBufferVertex_Stroke{};
+    WGPUBuffer mBufferIndex_Stroke{};
+    WGPUBuffer mVertexCount_Stroke{};
+    // brush color data
+    WgpuBrushColorData          mBrushColorData{};
+    WgpuBrushColorDataBindGroup mBrushColorDataBindGroup{};
+public:
+    // constructor
+    WgpuRenderDataShape(const RenderShape* renderShape): mRenderShape(renderShape) {}
+
+    // initialize and release
+    void initialize(WGPUDevice device) override {}
+    void release() override {}
+
+    // sync (draw)
+    void sync(WGPUCommandBuffer commandBuffer) override {}
 };
 
-#endif
+#endif // _TVG_WGPU_RENDER_DATA_H_

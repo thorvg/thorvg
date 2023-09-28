@@ -21,7 +21,9 @@
  */
 
 #include "tvgWgpuRenderer.h"
+
 #include <iostream>
+#include "tvgWgpuRenderData.h"
 
 // constructor
 WgpuRenderer::WgpuRenderer() {
@@ -117,7 +119,7 @@ void WgpuRenderer::initialize() {
     #endif
 
     // create brushes
-    mBrushColor.create(mDevice);
+    mBrushColor.initialize(mDevice);
 }
 
 // release renderer
@@ -135,6 +137,13 @@ void WgpuRenderer::release() {
 
 // prepare render shape
 RenderData WgpuRenderer::prepare(const RenderShape& rshape, RenderData data, const RenderTransform* transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags, bool clipper) {
+    // get or create render data shape
+    auto renderDataShape = (WgpuRenderDataShape *)data;
+    if (!renderDataShape) {
+        renderDataShape = new WgpuRenderDataShape(&rshape);
+        renderDataShape->initialize(mDevice);
+    }
+
     // nothing
     return nullptr;
 }
@@ -177,6 +186,10 @@ bool WgpuRenderer::postRender() {
 
 // dispose render data
 bool WgpuRenderer::dispose(RenderData data) {
+    // release render data
+    auto renderData = (WgpuRenderData *)data;
+    if (renderData)
+        renderData->release();
     // nothing
     return true;
 }

@@ -1,31 +1,133 @@
+/*
+ * Copyright (c) 2020 - 2023 the ThorVG project. All rights reserved.
+
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 #include "tvgWgpuBrushColor.h"
 #include "tvgWgpuShaderSrc.h"
 
+//************************************************************************
+// WgpuBrushColorDataBindGroup
+//************************************************************************
+
+// initialise
+void WgpuBrushColorDataBindGroup::initialize(WGPUDevice device, WgpuBrushColor& brushColor) {
+    // buffer uniform uMatrix
+    WGPUBufferDescriptor bufferUniformDesc_uMatrix{};
+    bufferUniformDesc_uMatrix.nextInChain = nullptr;
+    bufferUniformDesc_uMatrix.label = "Buffer uniform brush color uMatrix";
+    bufferUniformDesc_uMatrix.usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_Uniform;
+    bufferUniformDesc_uMatrix.size = sizeof(WgpuBrushColorData_Matrix);
+    bufferUniformDesc_uMatrix.mappedAtCreation = false;
+    mBufferUniform_uMatrix = wgpuDeviceCreateBuffer(device, &bufferUniformDesc_uMatrix);
+    assert(mBufferUniform_uMatrix);
+    // buffer uniform uColorInfo
+    WGPUBufferDescriptor bufferUniformDesc_uColorInfo{};
+    bufferUniformDesc_uColorInfo.nextInChain = nullptr;
+    bufferUniformDesc_uColorInfo.label = "Buffer uniform brush color uColorInfo";
+    bufferUniformDesc_uColorInfo.usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_Uniform;
+    bufferUniformDesc_uColorInfo.size = sizeof(WgpuBrushColorData_ColorInfo);
+    bufferUniformDesc_uColorInfo.mappedAtCreation = false;
+    mBufferUniform_uColorInfo = wgpuDeviceCreateBuffer(device, &bufferUniformDesc_uColorInfo);
+    assert(mBufferUniform_uColorInfo);
+
+    // bind group entry @binding(0) uMatrix
+    WGPUBindGroupEntry bindGroupEntry_uMatrix{};
+    bindGroupEntry_uMatrix.nextInChain = nullptr;
+    bindGroupEntry_uMatrix.binding = 0;
+    bindGroupEntry_uMatrix.buffer = mBufferUniform_uMatrix;
+    bindGroupEntry_uMatrix.offset = 0;
+    bindGroupEntry_uMatrix.size = sizeof(WgpuBrushColorData_Matrix);
+    bindGroupEntry_uMatrix.sampler = nullptr;
+    bindGroupEntry_uMatrix.textureView = nullptr;
+    // bind group entry @binding(1) uColorInfo
+    WGPUBindGroupEntry bindGroupEntry_uColorInfo{};
+    bindGroupEntry_uColorInfo.nextInChain = nullptr;
+    bindGroupEntry_uColorInfo.binding = 1;
+    bindGroupEntry_uColorInfo.buffer = mBufferUniform_uColorInfo;
+    bindGroupEntry_uColorInfo.offset = 0;
+    bindGroupEntry_uColorInfo.size = sizeof(WgpuBrushColorData_ColorInfo);
+    bindGroupEntry_uColorInfo.sampler = nullptr;
+    bindGroupEntry_uColorInfo.textureView = nullptr;
+    // bind group entries
+    WGPUBindGroupEntry bindGroupEntries[] {
+        bindGroupEntry_uMatrix,   // @binding(0) uMatrix
+        bindGroupEntry_uColorInfo // @binding(0) uColorInfo
+    };
+    // bind group descriptor
+    WGPUBindGroupDescriptor bindGroupDescBrush{};
+    bindGroupDescBrush.nextInChain = nullptr;
+    bindGroupDescBrush.label = "The binding group brush color";
+    bindGroupDescBrush.layout = brushColor.mBindGroupLayout;
+    bindGroupDescBrush.entryCount = 2;
+    bindGroupDescBrush.entries = bindGroupEntries;
+    mBindGroup = wgpuDeviceCreateBindGroup(device, &bindGroupDescBrush);
+    assert(mBindGroup);
+};
+
+// release
+void WgpuBrushColorDataBindGroup::release() {
+    // destroy uniform buffers
+    wgpuBufferDestroy(mBufferUniform_uColorInfo);
+    wgpuBufferRelease(mBufferUniform_uColorInfo);
+    wgpuBufferDestroy(mBufferUniform_uMatrix);
+    wgpuBufferRelease(mBufferUniform_uMatrix);
+    // release bind group
+    wgpuBindGroupRelease(mBindGroup);
+};
+
+// update buffers
+void WgpuBrushColorDataBindGroup::update(WGPUQueue queue, WgpuBrushColorData& data) {
+    wgpuQueueWriteBuffer(queue, mBufferUniform_uMatrix, 0, &data.uMatrix, sizeof(data.uMatrix));
+    wgpuQueueWriteBuffer(queue, mBufferUniform_uColorInfo, 0, &data.uColorInfo, sizeof(data.uColorInfo));
+};
+
+//***********************************************************************
+// WgpuBrushColor
+//***********************************************************************
+
 // create
-void WgpuBrushColor::create(WGPUDevice device) {
+void WgpuBrushColor::initialize(WGPUDevice device) {
     // bind group layout group 0
     // bind group layout descriptor @group(0) @binding(0) uMatrix
-    WGPUBindGroupLayoutEntry bindGroupLayoutEntryMatrix{};
-    bindGroupLayoutEntryMatrix.nextInChain = nullptr;
-    bindGroupLayoutEntryMatrix.binding = 0;
-    bindGroupLayoutEntryMatrix.visibility = WGPUShaderStage_Vertex | WGPUShaderStage_Fragment;
-    bindGroupLayoutEntryMatrix.buffer.nextInChain = nullptr;
-    bindGroupLayoutEntryMatrix.buffer.type = WGPUBufferBindingType_Uniform;
-    bindGroupLayoutEntryMatrix.buffer.hasDynamicOffset = false;
-    bindGroupLayoutEntryMatrix.buffer.minBindingSize = 0;
+    WGPUBindGroupLayoutEntry bindGroupLayoutEntry_uMatrix{};
+    bindGroupLayoutEntry_uMatrix.nextInChain = nullptr;
+    bindGroupLayoutEntry_uMatrix.binding = 0;
+    bindGroupLayoutEntry_uMatrix.visibility = WGPUShaderStage_Vertex | WGPUShaderStage_Fragment;
+    bindGroupLayoutEntry_uMatrix.buffer.nextInChain = nullptr;
+    bindGroupLayoutEntry_uMatrix.buffer.type = WGPUBufferBindingType_Uniform;
+    bindGroupLayoutEntry_uMatrix.buffer.hasDynamicOffset = false;
+    bindGroupLayoutEntry_uMatrix.buffer.minBindingSize = 0;
     // bind group layout descriptor @group(0) @binding(1) uColorInfo
-    WGPUBindGroupLayoutEntry bindGroupLayoutEntryColorInfo{};
-    bindGroupLayoutEntryColorInfo.nextInChain = nullptr;
-    bindGroupLayoutEntryColorInfo.binding = 1;
-    bindGroupLayoutEntryColorInfo.visibility = WGPUShaderStage_Vertex | WGPUShaderStage_Fragment;
-    bindGroupLayoutEntryColorInfo.buffer.nextInChain = nullptr;
-    bindGroupLayoutEntryColorInfo.buffer.type = WGPUBufferBindingType_Uniform;
-    bindGroupLayoutEntryColorInfo.buffer.hasDynamicOffset = false;
-    bindGroupLayoutEntryColorInfo.buffer.minBindingSize = 0;
+    WGPUBindGroupLayoutEntry bindGroupLayoutEntry_uColorInfo{};
+    bindGroupLayoutEntry_uColorInfo.nextInChain = nullptr;
+    bindGroupLayoutEntry_uColorInfo.binding = 1;
+    bindGroupLayoutEntry_uColorInfo.visibility = WGPUShaderStage_Vertex | WGPUShaderStage_Fragment;
+    bindGroupLayoutEntry_uColorInfo.buffer.nextInChain = nullptr;
+    bindGroupLayoutEntry_uColorInfo.buffer.type = WGPUBufferBindingType_Uniform;
+    bindGroupLayoutEntry_uColorInfo.buffer.hasDynamicOffset = false;
+    bindGroupLayoutEntry_uColorInfo.buffer.minBindingSize = 0;
     // bind group layout entries scene @group(0)
     WGPUBindGroupLayoutEntry bindGroupLayoutEntries[] {
-        bindGroupLayoutEntryMatrix,
-        bindGroupLayoutEntryColorInfo
+        bindGroupLayoutEntry_uMatrix,
+        bindGroupLayoutEntry_uColorInfo
     };
     // bind group layout descriptor scene @group(0)
     WGPUBindGroupLayoutDescriptor bindGroupLayoutDescScene{};
