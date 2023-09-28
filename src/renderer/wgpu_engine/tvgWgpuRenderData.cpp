@@ -80,4 +80,5 @@ void WgpuRenderDataShape::initialize(WGPUDevice device) {
 
 // release
 void WgpuRenderDataShape::release() {
+    mBrushColorDataBindGroup.release();
 }

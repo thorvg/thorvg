@@ -142,6 +142,7 @@ RenderData WgpuRenderer::prepare(const RenderShape& rshape, RenderData data, con
     if (!renderDataShape) {
         renderDataShape = new WgpuRenderDataShape(&rshape);
         renderDataShape->initialize(mDevice);
+        renderDataShape->mBrushColorDataBindGroup.initialize(mDevice, mBrushColor);
     }
 
     // simple vertex data
