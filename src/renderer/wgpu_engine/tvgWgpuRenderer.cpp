@@ -49,9 +49,11 @@ void WgpuRenderer::initialize() {
     requestAdapterOptions.forceFallbackAdapter = false;
     // on adapter request ended function
     auto onAdapterRequestEnded = [](WGPURequestAdapterStatus status, WGPUAdapter adapter, char const * message, void * pUserData) {
+        #ifdef _DEBUG
         assert(!status);
         if (status != WGPURequestAdapterStatus_Success)
             std::cout << "Adapter request: " << message << std::endl;
+        #endif
         *((WGPUAdapter *)pUserData) = adapter;
     };
     // request adapter
@@ -81,9 +83,11 @@ void WgpuRenderer::initialize() {
     deviceDesc.deviceLostUserdata = nullptr;
     // on device request ended function
     auto onDeviceRequestEnded = [](WGPURequestDeviceStatus status, WGPUDevice device, char const * message, void * pUserData) {
+        #ifdef _DEBUG
         assert(!status);
         if (status != WGPURequestDeviceStatus_Success)
             std::cout << "Device request: " << message << std::endl;
+        #endif
         *((WGPUDevice *)pUserData) = device;
     };
     // request device
@@ -111,10 +115,15 @@ void WgpuRenderer::initialize() {
     // submittet queue work done function
     wgpuQueueOnSubmittedWorkDone(mQueue, onQueueWorkDone, nullptr);
     #endif
+
+    // create brushes
+    mBrushColor.create(mDevice);
 }
 
 // release renderer
 void WgpuRenderer::release() {
+    // create brushes
+    mBrushColor.release();
     // device release
     wgpuDeviceDestroy(mDevice);
     wgpuDeviceRelease(mDevice);

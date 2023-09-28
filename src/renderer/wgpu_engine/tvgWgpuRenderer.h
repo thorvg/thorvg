@@ -23,7 +23,7 @@
 #ifndef _TVG_WGPU_RENDERER_H_
 #define _TVG_WGPU_RENDERER_H_
 
-#include "tvgWgpuCommon.h"
+#include "tvgWgpuBrushColor.h"
 
 // webgpu renderer
 class WgpuRenderer : public RenderMethod
@@ -67,6 +67,8 @@ private:
     WGPUAdapter   mAdapter{};
     WGPUDevice    mDevice{};
     WGPUQueue     mQueue{};
+private:
+    WgpuBrushColor mBrushColor;
 };
 
 #endif /* _TVG_WGPU_RENDERER_H_ */
