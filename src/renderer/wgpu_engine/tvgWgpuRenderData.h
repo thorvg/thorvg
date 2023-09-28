@@ -25,6 +25,24 @@
 #ifndef _TVG_WGPU_RENDER_DATA_H_
 #define _TVG_WGPU_RENDER_DATA_H_
 
+// geometry data
+class WgpuGeometryData {
+public:
+    WGPUBuffer mBufferVertex{};
+    WGPUBuffer mBufferIndex{};
+    size_t     mVertexCount{};
+    size_t     mIndexCount{};
+public:
+    // constructor and destructor
+    WgpuGeometryData() {}
+    virtual ~WgpuGeometryData() { release(); }
+
+    // update
+    void update(WGPUDevice device, WGPUQueue queue, float* vertexData, size_t vertexCount, uint32_t* indexData, size_t indexCount);
+    // release
+    void release();
+};
+
 // render data
 class WgpuRenderData {
 public:
@@ -39,16 +57,11 @@ public:
 // render data shape
 class WgpuRenderDataShape: public WgpuRenderData {
 public:
-    // render shape (outside)
+    // render shape (external)
     const RenderShape* mRenderShape{};
-    // vertex buffer fill
-    WGPUBuffer mBufferVertex_Fill{};
-    WGPUBuffer mBufferIndex_Fill{};
-    WGPUBuffer mVertexCount_Fill{};
-    // vertex buffer stcoke
-    WGPUBuffer mBufferVertex_Stroke{};
-    WGPUBuffer mBufferIndex_Stroke{};
-    WGPUBuffer mVertexCount_Stroke{};
+    // geometry data for fill and stroke
+    WgpuGeometryData mGeometryDataFill;
+    WgpuGeometryData mGeometryDataStroke;
     // brush color data
     WgpuBrushColorData          mBrushColorData{};
     WgpuBrushColorDataBindGroup mBrushColorDataBindGroup{};
@@ -57,8 +70,8 @@ public:
     WgpuRenderDataShape(const RenderShape* renderShape): mRenderShape(renderShape) {}
 
     // initialize and release
-    void initialize(WGPUDevice device) override {}
-    void release() override {}
+    void initialize(WGPUDevice device) override;
+    void release() override;
 
     // sync (draw)
     void sync(WGPUCommandBuffer commandBuffer) override {}

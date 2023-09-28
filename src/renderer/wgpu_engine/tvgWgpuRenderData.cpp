@@ -19,3 +19,65 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+
+#include "tvgWgpuRenderData.h"
+
+//***********************************************************************
+// WgpuGeometryData
+//***********************************************************************
+
+// update
+void WgpuGeometryData::update(WGPUDevice device, WGPUQueue queue, float* vertexData, size_t vertexCount, uint32_t* indexData, size_t indexCount) {
+    // release first (Sergii: I don`t like this solution, but I can`t come up how to do it better)
+    release();
+
+    // buffer vertex data create and write
+    WGPUBufferDescriptor bufferVertexDesc{};
+    bufferVertexDesc.nextInChain = nullptr;
+    bufferVertexDesc.label = "Buffer vertex geometry data";
+    bufferVertexDesc.usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_Uniform;
+    bufferVertexDesc.size = sizeof(float) * vertexCount * 3; // x, y, z
+    bufferVertexDesc.mappedAtCreation = false;
+    mBufferVertex = wgpuDeviceCreateBuffer(device, &bufferVertexDesc);
+    assert(mBufferVertex);
+    wgpuQueueWriteBuffer(queue, mBufferVertex, 0, &vertexData, sizeof(float) * vertexCount * 3);
+    mVertexCount = vertexCount;
+    // buffer index data create and write
+    WGPUBufferDescriptor bufferIndexDesc{};
+    bufferIndexDesc.nextInChain = nullptr;
+    bufferIndexDesc.label = "Buffer index geometry data";
+    bufferIndexDesc.usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_Uniform;
+    bufferIndexDesc.size = sizeof(uint32_t) * indexCount;
+    bufferIndexDesc.mappedAtCreation = false;
+    mBufferIndex = wgpuDeviceCreateBuffer(device, &bufferIndexDesc);
+    assert(mBufferIndex);
+    wgpuQueueWriteBuffer(queue, mBufferIndex, 0, &indexData, sizeof(uint32_t) * indexCount);
+    mIndexCount = indexCount;
+}
+
+// release
+void WgpuGeometryData::release() {
+    // buffer index destroy
+    if (mBufferIndex) wgpuBufferDestroy(mBufferIndex);
+    if (mBufferIndex) wgpuBufferRelease(mBufferIndex);
+    mBufferIndex = nullptr;
+    // buffer vertex destroy
+    if (mBufferVertex) wgpuBufferDestroy(mBufferVertex);
+    if (mBufferVertex) wgpuBufferRelease(mBufferVertex);
+    mBufferVertex = nullptr;
+    // null counts
+    mVertexCount = 0;
+    mIndexCount = 0;
+}
+
+//***********************************************************************
+// WgpuRenderDataShape
+//***********************************************************************
+
+// initialize
+void WgpuRenderDataShape::initialize(WGPUDevice device) {
+}
+
+// release
+void WgpuRenderDataShape::release() {
+}

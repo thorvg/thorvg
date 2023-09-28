@@ -144,8 +144,34 @@ RenderData WgpuRenderer::prepare(const RenderShape& rshape, RenderData data, con
         renderDataShape->initialize(mDevice);
     }
 
-    // nothing
-    return nullptr;
+    // simple vertex data
+    static float vertexData[] = {
+        0.5f, 0.5f, 0.0f,
+        0.7f, 0.7f, 0.0f,
+        0.3f, 0.7f, 0.0f
+    };
+    static size_t vertexCount = sizeof(vertexData) / sizeof(float) / 3;
+    // simple index data
+    static uint32_t indexData[] = { 
+        0, 1, 2
+    };
+    static size_t indexCount = sizeof(indexData) / sizeof(uint32_t);
+
+    // update geometry data
+    renderDataShape->mGeometryDataFill.update(mDevice, mQueue, vertexData, vertexCount, indexData, indexCount);
+
+    // update color brush
+    renderDataShape->mBrushColorData.uColorInfo = { 1.0f, 0.5f, 0.0f, 1.0f };
+    renderDataShape->mBrushColorData.uMatrix = { 
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f
+    };
+    renderDataShape->mBrushColorDataBindGroup.update(mQueue, renderDataShape->mBrushColorData);
+
+    // return render data shape
+    return renderDataShape;
 }
 
 // prepare scene

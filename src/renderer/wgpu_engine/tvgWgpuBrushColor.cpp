@@ -95,7 +95,9 @@ void WgpuBrushColorDataBindGroup::release() {
 
 // update buffers
 void WgpuBrushColorDataBindGroup::update(WGPUQueue queue, WgpuBrushColorData& data) {
+    // write uMatrux buffer
     wgpuQueueWriteBuffer(queue, mBufferUniform_uMatrix, 0, &data.uMatrix, sizeof(data.uMatrix));
+    // write uColorInfo buffer
     wgpuQueueWriteBuffer(queue, mBufferUniform_uColorInfo, 0, &data.uColorInfo, sizeof(data.uColorInfo));
 };
 
