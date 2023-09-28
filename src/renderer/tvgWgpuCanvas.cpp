@@ -77,6 +77,24 @@ Result WgpuCanvas::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_
     return Result::NonSupport;
 }
 
+// set target window
+Result WgpuCanvas::target(void* window, uint32_t w, uint32_t h) noexcept
+{
+#ifdef THORVG_WGPU_RASTER_SUPPORT
+    //We know renderer type, avoid dynamic_cast for performance.
+    auto renderer = static_cast<WgpuRenderer*>(Canvas::pImpl->renderer);
+    if (!renderer) return Result::MemoryCorruption;
+
+    if (!renderer->target(window, w, h)) return Result::Unknown;
+
+    //Paints must be updated again with this new target.
+    Canvas::pImpl->needRefresh();
+
+    return Result::Success;
+#endif
+    return Result::NonSupport;
+}
+
 // generate canvas instance
 unique_ptr<WgpuCanvas> WgpuCanvas::gen() noexcept
 {

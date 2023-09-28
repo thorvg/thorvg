@@ -23,6 +23,7 @@
 #ifndef _TVG_WGPU_RENDERER_H_
 #define _TVG_WGPU_RENDERER_H_
 
+#include <vector>
 #include "tvgWgpuBrushColor.h"
 
 // webgpu renderer
@@ -53,6 +54,7 @@ public:
     bool sync();
 
     bool target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h);
+    bool target(void* window, uint32_t w, uint32_t h); // temporary solution
     Compositor* target(const RenderRegion& region, ColorSpace cs);
     bool beginComposite(Compositor* cmp, CompositeMethod method, uint8_t opacity);
     bool endComposite(Compositor* cmp);
@@ -61,12 +63,18 @@ public:
     static bool init(uint32_t threads);
     static bool term();
 private:
+    // render targets array
+    Array<RenderData> mRenderDatas{};
+private:
     Surface mTargetSurface = { nullptr, 0, 0, 0, ColorSpace::Unsupported, true };
-    // webgpu instances
+    // webgpu instances (maybe, create separated entity?)
     WGPUInstance  mInstance{};
     WGPUAdapter   mAdapter{};
     WGPUDevice    mDevice{};
     WGPUQueue     mQueue{};
+    // webgpu surface (maybe, create separated entity?)
+    WGPUSurface   mSurface{};
+    WGPUSwapChain mSwapChain{};
 private:
     WgpuBrushColor mBrushColor;
 };

@@ -1616,6 +1616,7 @@ public:
      * @BETA_API
      */
     Result target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h) noexcept;
+    Result target(void* window, uint32_t w, uint32_t h) noexcept;
 
     /**
      * @brief Creates a new WgpuCanvas object.

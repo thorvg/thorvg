@@ -35,23 +35,23 @@ void WgpuGeometryData::update(WGPUDevice device, WGPUQueue queue, float* vertexD
     WGPUBufferDescriptor bufferVertexDesc{};
     bufferVertexDesc.nextInChain = nullptr;
     bufferVertexDesc.label = "Buffer vertex geometry data";
-    bufferVertexDesc.usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_Uniform;
+    bufferVertexDesc.usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_Vertex;
     bufferVertexDesc.size = sizeof(float) * vertexCount * 3; // x, y, z
     bufferVertexDesc.mappedAtCreation = false;
     mBufferVertex = wgpuDeviceCreateBuffer(device, &bufferVertexDesc);
     assert(mBufferVertex);
-    wgpuQueueWriteBuffer(queue, mBufferVertex, 0, &vertexData, sizeof(float) * vertexCount * 3);
+    wgpuQueueWriteBuffer(queue, mBufferVertex, 0, vertexData, sizeof(float) * vertexCount * 3);
     mVertexCount = vertexCount;
     // buffer index data create and write
     WGPUBufferDescriptor bufferIndexDesc{};
     bufferIndexDesc.nextInChain = nullptr;
     bufferIndexDesc.label = "Buffer index geometry data";
-    bufferIndexDesc.usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_Uniform;
+    bufferIndexDesc.usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_Index;
     bufferIndexDesc.size = sizeof(uint32_t) * indexCount;
     bufferIndexDesc.mappedAtCreation = false;
     mBufferIndex = wgpuDeviceCreateBuffer(device, &bufferIndexDesc);
     assert(mBufferIndex);
-    wgpuQueueWriteBuffer(queue, mBufferIndex, 0, &indexData, sizeof(uint32_t) * indexCount);
+    wgpuQueueWriteBuffer(queue, mBufferIndex, 0, indexData, sizeof(uint32_t) * indexCount);
     mIndexCount = indexCount;
 }
 
@@ -81,4 +81,12 @@ void WgpuRenderDataShape::initialize(WGPUDevice device) {
 // release
 void WgpuRenderDataShape::release() {
     mBrushColorDataBindGroup.release();
+}
+
+// sync
+void WgpuRenderDataShape::sync(WGPURenderPassEncoder renderPassEncoder) {
+    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, mBrushColorDataBindGroup.mBindGroup, 0, nullptr);
+    wgpuRenderPassEncoderSetVertexBuffer(renderPassEncoder, 0, mGeometryDataFill.mBufferVertex, 0, mGeometryDataFill.mVertexCount * sizeof(float) * 3);
+    wgpuRenderPassEncoderSetIndexBuffer(renderPassEncoder, mGeometryDataFill.mBufferIndex, WGPUIndexFormat_Uint32, 0, mGeometryDataFill.mIndexCount * sizeof(uint32_t));
+    wgpuRenderPassEncoderDrawIndexed(renderPassEncoder, mGeometryDataFill.mIndexCount, 1, 0, 0, 0);
 }

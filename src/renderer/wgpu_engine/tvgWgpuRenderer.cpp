@@ -23,7 +23,11 @@
 #include "tvgWgpuRenderer.h"
 
 #include <iostream>
+#ifdef _WIN32
+#include <windows.h>
+#endif
 #include "tvgWgpuRenderData.h"
+#include "tvgWgpuShaderSrc.h"
 
 // constructor
 WgpuRenderer::WgpuRenderer() {
@@ -124,15 +128,19 @@ void WgpuRenderer::initialize() {
 
 // release renderer
 void WgpuRenderer::release() {
+    // swapchaine release
+    if (mSwapChain) wgpuSwapChainRelease(mSwapChain);
+    // serface release
+    if (mSurface) wgpuSurfaceRelease(mSurface);
     // create brushes
     mBrushColor.release();
     // device release
-    wgpuDeviceDestroy(mDevice);
-    wgpuDeviceRelease(mDevice);
+    if (mDevice) wgpuDeviceDestroy(mDevice);
+    if (mDevice) wgpuDeviceRelease(mDevice);
     // adapter release
-    wgpuAdapterRelease(mAdapter);
+    if (mAdapter) wgpuAdapterRelease(mAdapter);
     // instance release
-    wgpuInstanceRelease(mInstance);
+    if (mInstance) wgpuInstanceRelease(mInstance);
 }
 
 // prepare render shape
@@ -145,31 +153,35 @@ RenderData WgpuRenderer::prepare(const RenderShape& rshape, RenderData data, con
         renderDataShape->mBrushColorDataBindGroup.initialize(mDevice, mBrushColor);
     }
 
-    // simple vertex data
-    static float vertexData[] = {
-        0.5f, 0.5f, 0.0f,
-        0.7f, 0.7f, 0.0f,
-        0.3f, 0.7f, 0.0f
+    static float vertexBuffer[] = {
+        0.0f, 0.0f, 0.0f,
+        1.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f,
+        0.9f, 0.9f, 0.0f
     };
-    static size_t vertexCount = sizeof(vertexData) / sizeof(float) / 3;
-    // simple index data
-    static uint32_t indexData[] = { 
-        0, 1, 2
+    static uint32_t indexBuffer[] = {
+        0, 1, 2,
+        1, 2, 3
     };
-    static size_t indexCount = sizeof(indexData) / sizeof(uint32_t);
+    size_t vertexCount = sizeof(vertexBuffer) / sizeof(float) / 3;
+    size_t indexCount = sizeof(indexBuffer) / sizeof(uint32_t);
 
     // update geometry data
-    renderDataShape->mGeometryDataFill.update(mDevice, mQueue, vertexData, vertexCount, indexData, indexCount);
+    renderDataShape->mGeometryDataFill.update(mDevice, mQueue, vertexBuffer, vertexCount, indexBuffer, indexCount);
 
-    // update color brush
-    renderDataShape->mBrushColorData.uColorInfo = { 1.0f, 0.5f, 0.0f, 1.0f };
-    renderDataShape->mBrushColorData.uMatrix = { 
+    // brush color data
+    WgpuBrushColorData mBrushColorData{};
+    mBrushColorData.uColorInfo = { 
+        1.0f, 0.0f, 0.0f, 1.0f
+    };
+    mBrushColorData.uMatrix = { 
         1.0f, 0.0f, 0.0f, 0.0f,
         0.0f, 1.0f, 0.0f, 0.0f,
         0.0f, 0.0f, 1.0f, 0.0f,
         0.0f, 0.0f, 0.0f, 1.0f
     };
-    renderDataShape->mBrushColorDataBindGroup.update(mQueue, renderDataShape->mBrushColorData);
+    // update brush color data
+    renderDataShape->mBrushColorDataBindGroup.update(mQueue, mBrushColorData);
 
     // return render data shape
     return renderDataShape;
@@ -195,7 +207,7 @@ bool WgpuRenderer::preRender() {
 
 // render shape
 bool WgpuRenderer::renderShape(RenderData data) {
-    // nothing
+    mRenderDatas.push(data);
     return true;
 }
 
@@ -256,7 +268,61 @@ bool WgpuRenderer::clear() {
 
 // sync
 bool WgpuRenderer::sync() {
-    // one of the main method!
+    // get buffer
+    WGPUTextureView backBufferView = wgpuSwapChainGetCurrentTextureView(mSwapChain);
+    
+    // command buffer descriptor
+    WGPUCommandBufferDescriptor commandBufferDesc{};
+    commandBufferDesc.nextInChain = nullptr;
+    commandBufferDesc.label = "The command buffer";
+    WGPUCommandBuffer commandsBuffer = nullptr; {
+        // command encoder descriptor
+        WGPUCommandEncoderDescriptor commandEncoderDesc{};
+        commandEncoderDesc.nextInChain = nullptr;
+        commandEncoderDesc.label = "The command encoder";
+        // begin render pass
+        WGPUCommandEncoder commandEncoder = wgpuDeviceCreateCommandEncoder(mDevice, &commandEncoderDesc); {
+            // render pass color attachment
+            WGPURenderPassColorAttachment colorAttachment{};
+            colorAttachment.view = backBufferView;
+            colorAttachment.resolveTarget = nullptr;
+            colorAttachment.loadOp = WGPULoadOp_Clear;
+            colorAttachment.storeOp = WGPUStoreOp_Store;
+            colorAttachment.clearValue = { 0.1f, 0.1f, 0.1f, 1.0 };
+            // render pass descriptor
+            WGPURenderPassDescriptor renderPassDesc{};
+            renderPassDesc.nextInChain = nullptr;
+            renderPassDesc.label = "The render pass";
+            renderPassDesc.colorAttachmentCount = 1;
+            renderPassDesc.colorAttachments = &colorAttachment;
+            renderPassDesc.depthStencilAttachment = nullptr;
+            renderPassDesc.occlusionQuerySet = nullptr;
+            renderPassDesc.timestampWriteCount = 0;
+            renderPassDesc.timestampWrites = nullptr;
+            // begin render pass
+            WGPURenderPassEncoder renderPassEncoder = wgpuCommandEncoderBeginRenderPass(commandEncoder, &renderPassDesc); {
+                wgpuRenderPassEncoderSetPipeline(renderPassEncoder, mBrushColor.mRenderPipeline);
+                for (size_t i = 0; i < mRenderDatas.count; i++) {
+                    WgpuRenderData* renderData = (WgpuRenderData*)(mRenderDatas[i]);
+                    renderData->sync(renderPassEncoder);
+                }
+                mRenderDatas.clear();
+            }
+            // end render pass
+            wgpuRenderPassEncoderEnd(renderPassEncoder);
+            wgpuRenderPassEncoderRelease(renderPassEncoder);
+
+            // release backbuffer and present
+            wgpuTextureViewRelease(backBufferView);
+        }
+        commandsBuffer = wgpuCommandEncoderFinish(commandEncoder, &commandBufferDesc);
+        wgpuCommandEncoderRelease(commandEncoder);
+    }
+    // queue submit and command buffer release
+    wgpuQueueSubmit(mQueue, 1, &commandsBuffer);
+    wgpuCommandBufferRelease(commandsBuffer);
+    
+    wgpuSwapChainPresent(mSwapChain);
     return true;
 }
 
@@ -272,6 +338,48 @@ bool WgpuRenderer::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_
     mTargetSurface.h = h;
 
     // return result
+    return true;
+}
+
+// target for native window handle
+bool WgpuRenderer::target(void* window, uint32_t w, uint32_t h) {
+    // store target surface properties
+    mTargetSurface.stride = w;
+    mTargetSurface.w = w > 1 ? w : 1;
+    mTargetSurface.h = h > 1 ? h : 1;
+
+    #ifdef _WIN32
+    // surface descriptor from windows hwnd
+    WGPUSurfaceDescriptorFromWindowsHWND surfaceDescHwnd{};
+    surfaceDescHwnd.chain.next = nullptr;
+    surfaceDescHwnd.chain.sType = WGPUSType_SurfaceDescriptorFromWindowsHWND;
+    surfaceDescHwnd.hinstance = GetModuleHandle(NULL);
+    surfaceDescHwnd.hwnd = (HWND)window;
+    // surface descriptor
+    WGPUSurfaceDescriptor surfaceDesc{};
+    surfaceDesc.nextInChain = (const WGPUChainedStruct*)&surfaceDescHwnd;
+    surfaceDesc.label = "The surface";
+    // create surface
+    mSurface = wgpuInstanceCreateSurface(mInstance, &surfaceDesc);
+    assert(mSurface);
+    #endif
+
+    // get preferred format
+    //WGPUTextureFormat swapChainFormat = wgpuSurfaceGetPreferredFormat(mSurface, mAdapter);
+    //WGPUTextureFormat swapChainFormat = WGPUTextureFormat_RGBA8Unorm;
+    WGPUTextureFormat swapChainFormat = WGPUTextureFormat_BGRA8UnormSrgb;
+    // swapchain descriptor
+    WGPUSwapChainDescriptor swapChainDesc{};
+    swapChainDesc.nextInChain = nullptr;
+    swapChainDesc.label = "The swapchain";
+    swapChainDesc.usage = WGPUTextureUsage_RenderAttachment;
+    swapChainDesc.format = swapChainFormat;
+    swapChainDesc.width = mTargetSurface.w;
+    swapChainDesc.height = mTargetSurface.h;
+    swapChainDesc.presentMode = WGPUPresentMode_Mailbox;
+    mSwapChain = wgpuDeviceCreateSwapChain(mDevice, mSurface, &swapChainDesc);
+    assert(mSwapChain);
+
     return true;
 }
 

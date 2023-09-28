@@ -51,7 +51,7 @@ public:
     virtual void release() = 0;
 
     // sync (draw)
-    virtual void sync(WGPUCommandBuffer commandBuffer) = 0;
+    virtual void sync(WGPURenderPassEncoder renderPassEncoder) = 0;
 };
 
 // render data shape
@@ -63,7 +63,6 @@ public:
     WgpuGeometryData mGeometryDataFill;
     WgpuGeometryData mGeometryDataStroke;
     // brush color data
-    WgpuBrushColorData          mBrushColorData{};
     WgpuBrushColorDataBindGroup mBrushColorDataBindGroup{};
 public:
     // constructor
@@ -74,7 +73,7 @@ public:
     void release() override;
 
     // sync (draw)
-    void sync(WGPUCommandBuffer commandBuffer) override {}
+    void sync(WGPURenderPassEncoder renderPassEncoder) override;
 };
 
 #endif // _TVG_WGPU_RENDER_DATA_H_

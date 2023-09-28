@@ -69,7 +69,7 @@ void WgpuBrushColorDataBindGroup::initialize(WGPUDevice device, WgpuBrushColor& 
     // bind group entries
     WGPUBindGroupEntry bindGroupEntries[] {
         bindGroupEntry_uMatrix,   // @binding(0) uMatrix
-        bindGroupEntry_uColorInfo // @binding(0) uColorInfo
+        bindGroupEntry_uColorInfo // @binding(1) uColorInfo
     };
     // bind group descriptor
     WGPUBindGroupDescriptor bindGroupDescBrush{};
@@ -155,29 +155,29 @@ void WgpuBrushColor::initialize(WGPUDevice device) {
     mPipelineLayout = wgpuDeviceCreatePipelineLayout(device, &pipelineLayoutDesc);
     assert(mPipelineLayout);
 
-    // depth stencil state
-    WGPUDepthStencilState depthStencilState{};
-    depthStencilState.nextInChain = nullptr;
-    depthStencilState.format = WGPUTextureFormat_Depth24PlusStencil8;
-    depthStencilState.depthWriteEnabled = false;
-    depthStencilState.depthCompare = WGPUCompareFunction_Always;
-    // depthStencilState.stencilFront
-    depthStencilState.stencilFront.compare = WGPUCompareFunction_Always;
-    depthStencilState.stencilFront.failOp = WGPUStencilOperation_Keep;
-    depthStencilState.stencilFront.depthFailOp = WGPUStencilOperation_Keep;
-    depthStencilState.stencilFront.passOp = WGPUStencilOperation_Keep;
-    // depthStencilState.stencilBack
-    depthStencilState.stencilBack.compare = WGPUCompareFunction_Always;
-    depthStencilState.stencilBack.failOp = WGPUStencilOperation_Keep;
-    depthStencilState.stencilBack.depthFailOp = WGPUStencilOperation_Keep;
-    depthStencilState.stencilBack.passOp = WGPUStencilOperation_Keep;
-    // stencil mask
-    depthStencilState.stencilReadMask = 0xFFFFFFFF;
-    depthStencilState.stencilWriteMask = 0xFFFFFFFF;
-    // depth bias
-    depthStencilState.depthBias = 0;
-    depthStencilState.depthBiasSlopeScale = 0.0f;
-    depthStencilState.depthBiasClamp = 0.0f;
+    // // depth stencil state
+    // WGPUDepthStencilState depthStencilState{};
+    // depthStencilState.nextInChain = nullptr;
+    // depthStencilState.format = WGPUTextureFormat_Depth24PlusStencil8;
+    // depthStencilState.depthWriteEnabled = false;
+    // depthStencilState.depthCompare = WGPUCompareFunction_Always;
+    // // depthStencilState.stencilFront
+    // depthStencilState.stencilFront.compare = WGPUCompareFunction_Always;
+    // depthStencilState.stencilFront.failOp = WGPUStencilOperation_Keep;
+    // depthStencilState.stencilFront.depthFailOp = WGPUStencilOperation_Keep;
+    // depthStencilState.stencilFront.passOp = WGPUStencilOperation_Keep;
+    // // depthStencilState.stencilBack
+    // depthStencilState.stencilBack.compare = WGPUCompareFunction_Always;
+    // depthStencilState.stencilBack.failOp = WGPUStencilOperation_Keep;
+    // depthStencilState.stencilBack.depthFailOp = WGPUStencilOperation_Keep;
+    // depthStencilState.stencilBack.passOp = WGPUStencilOperation_Keep;
+    // // stencil mask
+    // depthStencilState.stencilReadMask = 0xFFFFFFFF;
+    // depthStencilState.stencilWriteMask = 0xFFFFFFFF;
+    // // depth bias
+    // depthStencilState.depthBias = 0;
+    // depthStencilState.depthBiasSlopeScale = 0.0f;
+    // depthStencilState.depthBiasClamp = 0.0f;
 
     // shader module wgsl descriptor
     WGPUShaderModuleWGSLDescriptor shaderModuleWGSLDesc{};
@@ -216,14 +216,15 @@ void WgpuBrushColor::initialize(WGPUDevice device) {
     blendState.alpha.dstFactor = WGPUBlendFactor_One;
 
     // color target state (WGPUTextureFormat_BGRA8UnormSrgb)
-    WGPUColorTargetState colorTargetState{};
-    colorTargetState.nextInChain = nullptr;
-    colorTargetState.format = WGPUTextureFormat_BGRA8Unorm;
-    colorTargetState.blend = &blendState;
-    colorTargetState.writeMask = WGPUColorWriteMask_All;
+    WGPUColorTargetState colorTargetState0{};
+    colorTargetState0.nextInChain = nullptr;
+    //colorTargetState0.format = WGPUTextureFormat_BGRA8Unorm;
+    colorTargetState0.format = WGPUTextureFormat_BGRA8UnormSrgb;
+    colorTargetState0.blend = &blendState;
+    colorTargetState0.writeMask = WGPUColorWriteMask_All;
     // color target states
     WGPUColorTargetState colorTargetStates[] = {
-        colorTargetState
+        colorTargetState0
     };
     // fragmanet state
     WGPUFragmentState fragmentState{};
@@ -256,7 +257,7 @@ void WgpuBrushColor::initialize(WGPUDevice device) {
     renderPipelineDesc.primitive.frontFace = WGPUFrontFace_CCW;
     renderPipelineDesc.primitive.cullMode = WGPUCullMode_None;
     // renderPipelineDesc.depthStencil
-    renderPipelineDesc.depthStencil = &depthStencilState;
+    renderPipelineDesc.depthStencil = nullptr;//&depthStencilState;
     // renderPipelineDesc.multisample
     renderPipelineDesc.multisample.nextInChain = nullptr;
     renderPipelineDesc.multisample.count = 1;
