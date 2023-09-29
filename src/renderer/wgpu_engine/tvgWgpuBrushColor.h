@@ -40,16 +40,20 @@ struct WgpuBrushColorData_ColorInfo {
 
 // uniforms data brush color
 struct WgpuBrushColorData {
-    WgpuBrushColorData_Matrix    uMatrix{};
-    WgpuBrushColorData_ColorInfo uColorInfo{};
+    WgpuBrushColorData_Matrix    uMatrix{};    // @binding(0)
+    WgpuBrushColorData_ColorInfo uColorInfo{}; // @binding(1)
+
+    // update matrix
+    void updateMatrix(const float* viewMatrix, const RenderTransform* transform);
 };
 
 // wgpu brush color uniforms data
 class WgpuBrushColorDataBindGroup {
-public:
+private:
     // webgpu handles
     WGPUBuffer mBufferUniform_uMatrix{};    // @binding(0)
     WGPUBuffer mBufferUniform_uColorInfo{}; // @binding(1)
+public:
     // bind group
     WGPUBindGroup mBindGroup{};
 public:

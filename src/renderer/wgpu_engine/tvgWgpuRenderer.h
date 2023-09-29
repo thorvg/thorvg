@@ -66,7 +66,9 @@ private:
     // render targets array
     Array<RenderData> mRenderDatas{};
 private:
+    // surface
     Surface mTargetSurface = { nullptr, 0, 0, 0, ColorSpace::Unsupported, true };
+    float   mViewMatrix[16]{};
     // webgpu instances (maybe, create separated entity?)
     WGPUInstance  mInstance{};
     WGPUAdapter   mAdapter{};

@@ -54,8 +54,8 @@ struct VertexOutput {
 fn vs_main(in: VertexInput) -> VertexOutput {
     // fill output
     var out: VertexOutput;
-    //out.position = uMatrix.transform * vec4f(in.position.xy, 0.0, 1.0);
-    out.position = vec4f(in.position.xy, 0.0, 1.0);
+    out.position = uMatrix.transform * vec4f(in.position.xy, 0.0, 1.0);
+    //out.position = vec4f(in.position.xy, 0.0, 1.0);
     return out;
 }
 

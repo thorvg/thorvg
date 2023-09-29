@@ -24,6 +24,42 @@
 #include "tvgWgpuShaderSrc.h"
 
 //************************************************************************
+// WgpuBrushColorData
+//************************************************************************
+
+// update matrix
+void WgpuBrushColorData::updateMatrix(const float* viewMatrix, const RenderTransform* transform) {
+    // create model matrix 4*4
+    float modelMatrix[16]{};
+    if (transform) {
+        modelMatrix[0]  = transform->m.e11;
+        modelMatrix[1]  = transform->m.e21;
+        modelMatrix[3]  = transform->m.e31;
+        modelMatrix[4]  = transform->m.e12;
+        modelMatrix[5]  = transform->m.e22;
+        modelMatrix[7]  = transform->m.e32;
+        modelMatrix[10] = 1.0f;
+        modelMatrix[12] = transform->m.e13;
+        modelMatrix[13] = transform->m.e23;
+        modelMatrix[15] = transform->m.e33;
+    } else {
+        modelMatrix[0] = 1.0f;
+        modelMatrix[5] = 1.0f;
+        modelMatrix[10] = 1.0f;
+        modelMatrix[15] = 1.0f;
+    }
+    // matrix multiply
+    for(auto i = 0; i < 4; ++i) {
+        for(auto j = 0; j < 4; ++j) {
+            float sum = 0.0;
+            for (auto k = 0; k < 4; ++k)
+                sum += viewMatrix[k*4+i] * modelMatrix[j*4+k];
+            uMatrix.matrix[j*4+i] = sum;
+        }
+    }
+}
+
+//************************************************************************
 // WgpuBrushColorDataBindGroup
 //************************************************************************
 

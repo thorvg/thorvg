@@ -154,10 +154,10 @@ RenderData WgpuRenderer::prepare(const RenderShape& rshape, RenderData data, con
     }
 
     static float vertexBuffer[] = {
-        0.0f, 0.0f, 0.0f,
-        1.0f, 0.0f, 0.0f,
-        0.0f, 1.0f, 0.0f,
-        0.9f, 0.9f, 0.0f
+        0.0f,     0.0f, 0.0f,
+        100.0f,   0.0f, 0.0f,
+        0.0f,   100.0f, 0.0f,
+        200.0f, 800.0f, 0.0f
     };
     static uint32_t indexBuffer[] = {
         0, 1, 2,
@@ -171,15 +171,8 @@ RenderData WgpuRenderer::prepare(const RenderShape& rshape, RenderData data, con
 
     // brush color data
     WgpuBrushColorData mBrushColorData{};
-    mBrushColorData.uColorInfo = { 
-        1.0f, 0.0f, 0.0f, 1.0f
-    };
-    mBrushColorData.uMatrix = { 
-        1.0f, 0.0f, 0.0f, 0.0f,
-        0.0f, 1.0f, 0.0f, 0.0f,
-        0.0f, 0.0f, 1.0f, 0.0f,
-        0.0f, 0.0f, 0.0f, 1.0f
-    };
+    mBrushColorData.updateMatrix(mViewMatrix, transform);
+    mBrushColorData.uColorInfo = { 1.0f, 0.0f, 1.0f, 1.0f };
     // update brush color data
     renderDataShape->mBrushColorDataBindGroup.update(mQueue, mBrushColorData);
 
@@ -337,16 +330,33 @@ bool WgpuRenderer::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_
     mTargetSurface.w = w;
     mTargetSurface.h = h;
 
+    // update view matrix
+    mViewMatrix[ 0] = +2.0f / w; mViewMatrix[ 1] = +0.0f;     mViewMatrix[ 2] = +0.0f; mViewMatrix[ 3] = +0.0f;
+    mViewMatrix[ 4] = +0.0f;     mViewMatrix[ 5] = -2.0f / h; mViewMatrix[ 6] = +0.0f; mViewMatrix[ 7] = +0.0f;
+    mViewMatrix[ 8] = +0.0f;     mViewMatrix[ 9] = +0.0f;     mViewMatrix[10] = -1.0f; mViewMatrix[11] = +0.0f;
+    mViewMatrix[12] = -1.0f;     mViewMatrix[13] = +1.0f;     mViewMatrix[14] = +0.0f; mViewMatrix[15] = +1.0f;
+
     // return result
     return true;
 }
 
 // target for native window handle
 bool WgpuRenderer::target(void* window, uint32_t w, uint32_t h) {
+    // check properties
+    assert(window);
+    assert(w > 0);
+    assert(h > 0);
+
     // store target surface properties
     mTargetSurface.stride = w;
-    mTargetSurface.w = w > 1 ? w : 1;
-    mTargetSurface.h = h > 1 ? h : 1;
+    mTargetSurface.w = w > 0 ? w : 1;
+    mTargetSurface.h = h > 0 ? h : 1;
+
+    // update view matrix
+    mViewMatrix[ 0] = +2.0f / w; mViewMatrix[ 1] = +0.0f;     mViewMatrix[ 2] = +0.0f; mViewMatrix[ 3] = +0.0f;
+    mViewMatrix[ 4] = +0.0f;     mViewMatrix[ 5] = -2.0f / h; mViewMatrix[ 6] = +0.0f; mViewMatrix[ 7] = +0.0f;
+    mViewMatrix[ 8] = +0.0f;     mViewMatrix[ 9] = +0.0f;     mViewMatrix[10] = -1.0f; mViewMatrix[11] = +0.0f;
+    mViewMatrix[12] = -1.0f;     mViewMatrix[13] = +1.0f;     mViewMatrix[14] = +0.0f; mViewMatrix[15] = +1.0f;
 
     #ifdef _WIN32
     // surface descriptor from windows hwnd
