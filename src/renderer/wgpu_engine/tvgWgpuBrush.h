@@ -39,6 +39,9 @@ public:
 public:
     virtual void initialize(WGPUDevice device) = 0;
     virtual void release() = 0;
+
+    // set as current pipeline
+    void set(WGPURenderPassEncoder renderPassEncoder);
 };
 
 #endif // _TVG_WGPU_BRUSH_H_

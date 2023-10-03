@@ -21,3 +21,8 @@
  */
 
 #include "tvgWgpuBrush.h"
+
+// set as current pipeline
+void WgpuBrush::set(WGPURenderPassEncoder renderPassEncoder) {
+    wgpuRenderPassEncoderSetPipeline(renderPassEncoder, mRenderPipeline);
+}

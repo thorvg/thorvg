@@ -24,7 +24,9 @@
 #define _TVG_WGPU_RENDERER_H_
 
 #include <vector>
+#include "tvgWgpuBrushFill.h"
 #include "tvgWgpuBrushColor.h"
+#include "tvgWgpuRenderData.h"
 
 // webgpu renderer
 class WgpuRenderer : public RenderMethod
@@ -75,10 +77,16 @@ private:
     WGPUDevice    mDevice{};
     WGPUQueue     mQueue{};
     // webgpu surface (maybe, create separated entity?)
-    WGPUSurface   mSurface{};
-    WGPUSwapChain mSwapChain{};
+    WGPUSurface     mSurface{};
+    WGPUSwapChain   mSwapChain{};
+    WGPUTexture     mStencilTex{};
+    WGPUTextureView mStencilTexView{};
 private:
+    WgpuBrushFill  mBrushFill;
     WgpuBrushColor mBrushColor;
+    // brush geometry
+    WgpuGeometryData mGeometryDataFill;
+    WgpuBrushFillDataBindGroup mDataBindGroupFill;
 };
 
 #endif /* _TVG_WGPU_RENDERER_H_ */

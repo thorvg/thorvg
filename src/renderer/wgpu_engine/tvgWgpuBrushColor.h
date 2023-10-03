@@ -61,6 +61,8 @@ public:
     void initialize(WGPUDevice device, WgpuBrushColor& brushColor);
     void release();
 
+    // bind
+    void bind(WGPURenderPassEncoder renderPassEncoder, uint32_t groupIndex);
     // update buffers
     void update(WGPUQueue queue, WgpuBrushColorData& data);
 };

@@ -121,18 +121,28 @@ void WgpuRenderer::initialize() {
     // submittet queue work done function
     wgpuQueueOnSubmittedWorkDone(mQueue, onQueueWorkDone, nullptr);
     #endif
-
+    
     // create brushes
+    mBrushFill.initialize(mDevice);
     mBrushColor.initialize(mDevice);
+    mGeometryDataFill.initialize(mDevice);
+    mDataBindGroupFill.initialize(mDevice, mBrushFill);
 }
 
 // release renderer
 void WgpuRenderer::release() {
+    // remove stencil hendles
+    if (mStencilTex) wgpuTextureDestroy(mStencilTex);
+    if (mStencilTex) wgpuTextureRelease(mStencilTex);
+    if (mStencilTexView) wgpuTextureViewRelease(mStencilTexView);
     // swapchaine release
     if (mSwapChain) wgpuSwapChainRelease(mSwapChain);
     // serface release
     if (mSurface) wgpuSurfaceRelease(mSurface);
     // create brushes
+    mDataBindGroupFill.release();
+    mGeometryDataFill.release();
+    mBrushFill.release();
     mBrushColor.release();
     // device release
     if (mDevice) wgpuDeviceDestroy(mDevice);
@@ -148,32 +158,39 @@ RenderData WgpuRenderer::prepare(const RenderShape& rshape, RenderData data, con
     // get or create render data shape
     auto renderDataShape = (WgpuRenderDataShape *)data;
     if (!renderDataShape) {
-        renderDataShape = new WgpuRenderDataShape(&rshape);
+        renderDataShape = new WgpuRenderDataShape();
+        renderDataShape->mRenderShape = &rshape;
         renderDataShape->initialize(mDevice);
         renderDataShape->mBrushColorDataBindGroup.initialize(mDevice, mBrushColor);
     }
 
+    // debug vertex buffer
     static float vertexBuffer[] = {
-        0.0f,     0.0f, 0.0f,
-        100.0f,   0.0f, 0.0f,
-        0.0f,   100.0f, 0.0f,
-        200.0f, 800.0f, 0.0f
-    };
-    static uint32_t indexBuffer[] = {
-        0, 1, 2,
-        1, 2, 3
+        100.0f,  100.0f, 0.0f,
+        400.0f,  700.0f, 0.0f,
+        700.0f,  100.0f, 0.0f,
+        700.0f,  500.0f, 0.0f,
+        100.0f,  500.0f, 0.0f,
     };
     size_t vertexCount = sizeof(vertexBuffer) / sizeof(float) / 3;
-    size_t indexCount = sizeof(indexBuffer) / sizeof(uint32_t);
+    assert(vertexCount > 2);
+    // debug index buffer (for triangle fan)
+    Array<uint32_t> indexBuffer;
+    indexBuffer.reserve((vertexCount - 2) * 3);
+    for (size_t i = 0; i < vertexCount - 2; i++) {
+        indexBuffer.push(0);
+        indexBuffer.push(i + 1);
+        indexBuffer.push(i + 2);
+    }
 
     // update geometry data
-    renderDataShape->mGeometryDataFill.update(mDevice, mQueue, vertexBuffer, vertexCount, indexBuffer, indexCount);
+    renderDataShape->mGeometryDataFill.update(mDevice, mQueue, vertexBuffer, vertexCount, indexBuffer.data, indexBuffer.count);
 
     // brush color data
     WgpuBrushColorData mBrushColorData{};
     mBrushColorData.updateMatrix(mViewMatrix, transform);
-    mBrushColorData.uColorInfo = { 1.0f, 0.0f, 1.0f, 1.0f };
-    // update brush color data
+    mBrushColorData.uColorInfo = { { 1.0f, 0.5f, 0.0f, 1.0f } };
+    // update brush fill data
     renderDataShape->mBrushColorDataBindGroup.update(mQueue, mBrushColorData);
 
     // return render data shape
@@ -275,6 +292,17 @@ bool WgpuRenderer::sync() {
         commandEncoderDesc.label = "The command encoder";
         // begin render pass
         WGPUCommandEncoder commandEncoder = wgpuDeviceCreateCommandEncoder(mDevice, &commandEncoderDesc); {
+            // render pass depth stencil attachment
+            WGPURenderPassDepthStencilAttachment depthStencilAttachment{};
+            depthStencilAttachment.view = mStencilTexView;
+            depthStencilAttachment.depthLoadOp = WGPULoadOp_Clear;
+            depthStencilAttachment.depthStoreOp = WGPUStoreOp_Store;
+            depthStencilAttachment.depthClearValue = 1.0f;
+            depthStencilAttachment.depthReadOnly = false;
+            depthStencilAttachment.stencilLoadOp = WGPULoadOp_Clear;
+            depthStencilAttachment.stencilStoreOp = WGPUStoreOp_Store;
+            depthStencilAttachment.stencilClearValue = 0;
+            depthStencilAttachment.stencilReadOnly = false;
             // render pass color attachment
             WGPURenderPassColorAttachment colorAttachment{};
             colorAttachment.view = backBufferView;
@@ -288,17 +316,27 @@ bool WgpuRenderer::sync() {
             renderPassDesc.label = "The render pass";
             renderPassDesc.colorAttachmentCount = 1;
             renderPassDesc.colorAttachments = &colorAttachment;
-            renderPassDesc.depthStencilAttachment = nullptr;
+            renderPassDesc.depthStencilAttachment = &depthStencilAttachment;
+            //renderPassDesc.depthStencilAttachment = nullptr;
             renderPassDesc.occlusionQuerySet = nullptr;
             renderPassDesc.timestampWriteCount = 0;
             renderPassDesc.timestampWrites = nullptr;
             // begin render pass
             WGPURenderPassEncoder renderPassEncoder = wgpuCommandEncoderBeginRenderPass(commandEncoder, &renderPassDesc); {
-                wgpuRenderPassEncoderSetPipeline(renderPassEncoder, mBrushColor.mRenderPipeline);
                 for (size_t i = 0; i < mRenderDatas.count; i++) {
-                    WgpuRenderData* renderData = (WgpuRenderData*)(mRenderDatas[i]);
-                    renderData->sync(renderPassEncoder);
+                    WgpuRenderDataShape* renderData = (WgpuRenderDataShape*)(mRenderDatas[0]);
+
+                    // draw to stencil
+                    mBrushFill.set(renderPassEncoder);
+                    mDataBindGroupFill.bind(renderPassEncoder, 0);
+                    renderData->mGeometryDataFill.draw(renderPassEncoder);
+
+                    // draw brush
+                    mBrushColor.set(renderPassEncoder);
+                    renderData->mBrushColorDataBindGroup.bind(renderPassEncoder, 0);
+                    mGeometryDataFill.draw(renderPassEncoder);
                 }
+
                 mRenderDatas.clear();
             }
             // end render pass
@@ -389,6 +427,49 @@ bool WgpuRenderer::target(void* window, uint32_t w, uint32_t h) {
     swapChainDesc.presentMode = WGPUPresentMode_Mailbox;
     mSwapChain = wgpuDeviceCreateSwapChain(mDevice, mSurface, &swapChainDesc);
     assert(mSwapChain);
+
+    // depth-stencil texture
+    WGPUTextureDescriptor textureDesc{};
+    textureDesc.nextInChain = nullptr;
+    textureDesc.label = "The depth-stencil texture";
+    textureDesc.usage = WGPUTextureUsage_RenderAttachment;
+    textureDesc.dimension = WGPUTextureDimension_2D;
+    textureDesc.size = { swapChainDesc.width, swapChainDesc.height, 1 }; // window size
+    textureDesc.format = WGPUTextureFormat_Stencil8;
+    textureDesc.mipLevelCount = 1;
+    textureDesc.sampleCount = 1;
+    textureDesc.viewFormatCount = 0;
+    textureDesc.viewFormats = nullptr;
+    mStencilTex = wgpuDeviceCreateTexture(mDevice, &textureDesc);
+    assert(mStencilTex);
+
+    // depth-stencil texture view
+    WGPUTextureViewDescriptor textureViewDesc{};
+    textureViewDesc.nextInChain = nullptr;
+    textureViewDesc.label = "The depth-stencil texture view";
+    textureViewDesc.format = WGPUTextureFormat_Stencil8;
+    textureViewDesc.dimension = WGPUTextureViewDimension_2D;
+    textureViewDesc.baseMipLevel = 0;
+    textureViewDesc.mipLevelCount = 1;
+    textureViewDesc.baseArrayLayer = 0;
+    textureViewDesc.arrayLayerCount = 1;
+    textureViewDesc.aspect = WGPUTextureAspect_All;
+    mStencilTexView = wgpuTextureCreateView(mStencilTex, &textureViewDesc);
+    assert(mStencilTexView);
+
+    // update brush geometry data
+    static float vertexData[] = {
+            0.0f,     0.0f, 0.0f,
+        (float)w,     0.0f, 0.0f,
+        (float)w, (float)h, 0.0f,
+            1.0f, (float)h, 0.0f
+    };
+    static uint32_t indexData[] = { 0, 1, 2, 0, 2, 3 };
+    // update render data brush
+    mGeometryDataFill.update(mDevice, mQueue, vertexData, 4, indexData, 6);
+    WgpuBrushFillData brushFillData{};
+    brushFillData.updateMatrix(mViewMatrix, nullptr);
+    mDataBindGroupFill.update(mQueue, brushFillData);
 
     return true;
 }

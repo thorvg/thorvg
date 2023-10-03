@@ -20,15 +20,15 @@
  * SOFTWARE.
  */
 
-#include "tvgWgpuBrushColor.h"
+#include "tvgWgpuBrushFill.h"
 #include "tvgWgpuShaderSrc.h"
 
 //************************************************************************
-// WgpuBrushColorData
+// WgpuBrushFillData
 //************************************************************************
 
 // update matrix
-void WgpuBrushColorData::updateMatrix(const float* viewMatrix, const RenderTransform* transform) {
+void WgpuBrushFillData::updateMatrix(const float* viewMatrix, const RenderTransform* transform) {
     // create model matrix 4*4
     float modelMatrix[16]{};
     if (transform) {
@@ -60,29 +60,20 @@ void WgpuBrushColorData::updateMatrix(const float* viewMatrix, const RenderTrans
 }
 
 //************************************************************************
-// WgpuBrushColorDataBindGroup
+// WgpuBrushFillDataBindGroup
 //************************************************************************
 
 // initialise
-void WgpuBrushColorDataBindGroup::initialize(WGPUDevice device, WgpuBrushColor& brushColor) {
+void WgpuBrushFillDataBindGroup::initialize(WGPUDevice device, WgpuBrushFill& brushFill) {
     // buffer uniform uMatrix
     WGPUBufferDescriptor bufferUniformDesc_uMatrix{};
     bufferUniformDesc_uMatrix.nextInChain = nullptr;
-    bufferUniformDesc_uMatrix.label = "Buffer uniform brush color uMatrix";
+    bufferUniformDesc_uMatrix.label = "Buffer uniform brush fill uMatrix";
     bufferUniformDesc_uMatrix.usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_Uniform;
-    bufferUniformDesc_uMatrix.size = sizeof(WgpuBrushColorData_Matrix);
+    bufferUniformDesc_uMatrix.size = sizeof(WgpuBrushFillData_Matrix);
     bufferUniformDesc_uMatrix.mappedAtCreation = false;
     mBufferUniform_uMatrix = wgpuDeviceCreateBuffer(device, &bufferUniformDesc_uMatrix);
     assert(mBufferUniform_uMatrix);
-    // buffer uniform uColorInfo
-    WGPUBufferDescriptor bufferUniformDesc_uColorInfo{};
-    bufferUniformDesc_uColorInfo.nextInChain = nullptr;
-    bufferUniformDesc_uColorInfo.label = "Buffer uniform brush color uColorInfo";
-    bufferUniformDesc_uColorInfo.usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_Uniform;
-    bufferUniformDesc_uColorInfo.size = sizeof(WgpuBrushColorData_ColorInfo);
-    bufferUniformDesc_uColorInfo.mappedAtCreation = false;
-    mBufferUniform_uColorInfo = wgpuDeviceCreateBuffer(device, &bufferUniformDesc_uColorInfo);
-    assert(mBufferUniform_uColorInfo);
 
     // bind group entry @binding(0) uMatrix
     WGPUBindGroupEntry bindGroupEntry_uMatrix{};
@@ -90,39 +81,27 @@ void WgpuBrushColorDataBindGroup::initialize(WGPUDevice device, WgpuBrushColor& 
     bindGroupEntry_uMatrix.binding = 0;
     bindGroupEntry_uMatrix.buffer = mBufferUniform_uMatrix;
     bindGroupEntry_uMatrix.offset = 0;
-    bindGroupEntry_uMatrix.size = sizeof(WgpuBrushColorData_Matrix);
+    bindGroupEntry_uMatrix.size = sizeof(WgpuBrushFillData_Matrix);
     bindGroupEntry_uMatrix.sampler = nullptr;
     bindGroupEntry_uMatrix.textureView = nullptr;
-    // bind group entry @binding(1) uColorInfo
-    WGPUBindGroupEntry bindGroupEntry_uColorInfo{};
-    bindGroupEntry_uColorInfo.nextInChain = nullptr;
-    bindGroupEntry_uColorInfo.binding = 1;
-    bindGroupEntry_uColorInfo.buffer = mBufferUniform_uColorInfo;
-    bindGroupEntry_uColorInfo.offset = 0;
-    bindGroupEntry_uColorInfo.size = sizeof(WgpuBrushColorData_ColorInfo);
-    bindGroupEntry_uColorInfo.sampler = nullptr;
-    bindGroupEntry_uColorInfo.textureView = nullptr;
     // bind group entries
     WGPUBindGroupEntry bindGroupEntries[] {
-        bindGroupEntry_uMatrix,   // @binding(0) uMatrix
-        bindGroupEntry_uColorInfo // @binding(1) uColorInfo
+        bindGroupEntry_uMatrix // @binding(0) uMatrix
     };
     // bind group descriptor
     WGPUBindGroupDescriptor bindGroupDescBrush{};
     bindGroupDescBrush.nextInChain = nullptr;
     bindGroupDescBrush.label = "The binding group brush color";
-    bindGroupDescBrush.layout = brushColor.mBindGroupLayout;
-    bindGroupDescBrush.entryCount = 2;
+    bindGroupDescBrush.layout = brushFill.mBindGroupLayout;
+    bindGroupDescBrush.entryCount = 1;
     bindGroupDescBrush.entries = bindGroupEntries;
     mBindGroup = wgpuDeviceCreateBindGroup(device, &bindGroupDescBrush);
     assert(mBindGroup);
 };
 
 // release
-void WgpuBrushColorDataBindGroup::release() {
+void WgpuBrushFillDataBindGroup::release() {
     // destroy uniform buffers
-    wgpuBufferDestroy(mBufferUniform_uColorInfo);
-    wgpuBufferRelease(mBufferUniform_uColorInfo);
     wgpuBufferDestroy(mBufferUniform_uMatrix);
     wgpuBufferRelease(mBufferUniform_uMatrix);
     // release bind group
@@ -130,26 +109,24 @@ void WgpuBrushColorDataBindGroup::release() {
 };
 
 // bind
-void WgpuBrushColorDataBindGroup::bind(WGPURenderPassEncoder renderPassEncoder, uint32_t groupIndex) {
+void WgpuBrushFillDataBindGroup::bind(WGPURenderPassEncoder renderPassEncoder, uint32_t groupIndex) {
     wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, groupIndex, mBindGroup, 0, nullptr);
 }
 
 // update buffers
-void WgpuBrushColorDataBindGroup::update(WGPUQueue queue, WgpuBrushColorData& data) {
+void WgpuBrushFillDataBindGroup::update(WGPUQueue queue, WgpuBrushFillData& data) {
     // write uMatrux buffer
     wgpuQueueWriteBuffer(queue, mBufferUniform_uMatrix, 0, &data.uMatrix, sizeof(data.uMatrix));
-    // write uColorInfo buffer
-    wgpuQueueWriteBuffer(queue, mBufferUniform_uColorInfo, 0, &data.uColorInfo, sizeof(data.uColorInfo));
 };
 
 //***********************************************************************
-// WgpuBrushColor
+// WgpuBrushFill
 //***********************************************************************
 
 // create
-void WgpuBrushColor::initialize(WGPUDevice device) {
+void WgpuBrushFill::initialize(WGPUDevice device) {
     // bind group layout group 0
-    // bind group layout descriptor @group(0) @binding(0) uMatrix
+    // bind group layout descriptor @binding(0) uMatrix
     WGPUBindGroupLayoutEntry bindGroupLayoutEntry_uMatrix{};
     bindGroupLayoutEntry_uMatrix.nextInChain = nullptr;
     bindGroupLayoutEntry_uMatrix.binding = 0;
@@ -158,25 +135,15 @@ void WgpuBrushColor::initialize(WGPUDevice device) {
     bindGroupLayoutEntry_uMatrix.buffer.type = WGPUBufferBindingType_Uniform;
     bindGroupLayoutEntry_uMatrix.buffer.hasDynamicOffset = false;
     bindGroupLayoutEntry_uMatrix.buffer.minBindingSize = 0;
-    // bind group layout descriptor @group(0) @binding(1) uColorInfo
-    WGPUBindGroupLayoutEntry bindGroupLayoutEntry_uColorInfo{};
-    bindGroupLayoutEntry_uColorInfo.nextInChain = nullptr;
-    bindGroupLayoutEntry_uColorInfo.binding = 1;
-    bindGroupLayoutEntry_uColorInfo.visibility = WGPUShaderStage_Vertex | WGPUShaderStage_Fragment;
-    bindGroupLayoutEntry_uColorInfo.buffer.nextInChain = nullptr;
-    bindGroupLayoutEntry_uColorInfo.buffer.type = WGPUBufferBindingType_Uniform;
-    bindGroupLayoutEntry_uColorInfo.buffer.hasDynamicOffset = false;
-    bindGroupLayoutEntry_uColorInfo.buffer.minBindingSize = 0;
     // bind group layout entries @group(0)
     WGPUBindGroupLayoutEntry bindGroupLayoutEntries[] {
-        bindGroupLayoutEntry_uMatrix,
-        bindGroupLayoutEntry_uColorInfo
+        bindGroupLayoutEntry_uMatrix
     };
-    // bind group layout descriptor scene @group(0)
+    // bind group layout descriptor @group(0)
     WGPUBindGroupLayoutDescriptor bindGroupLayoutDesc{};
     bindGroupLayoutDesc.nextInChain = nullptr;
-    bindGroupLayoutDesc.label = "Brush color bind group layout scene";
-    bindGroupLayoutDesc.entryCount = 2;
+    bindGroupLayoutDesc.label = "Brush color bind group layout";
+    bindGroupLayoutDesc.entryCount = 1;
     bindGroupLayoutDesc.entries = bindGroupLayoutEntries; // @binding
     mBindGroupLayout = wgpuDeviceCreateBindGroupLayout(device, &bindGroupLayoutDesc);
     assert(mBindGroupLayout);
@@ -203,15 +170,15 @@ void WgpuBrushColor::initialize(WGPUDevice device) {
     depthStencilState.depthWriteEnabled = false;
     depthStencilState.depthCompare = WGPUCompareFunction_Always;
     // depthStencilState.stencilFront
-    depthStencilState.stencilFront.compare = WGPUCompareFunction_NotEqual;
-    depthStencilState.stencilFront.failOp = WGPUStencilOperation_Zero;
-    depthStencilState.stencilFront.depthFailOp = WGPUStencilOperation_Zero;
-    depthStencilState.stencilFront.passOp = WGPUStencilOperation_Zero;
+    depthStencilState.stencilFront.compare = WGPUCompareFunction_Always;
+    depthStencilState.stencilFront.failOp = WGPUStencilOperation_Invert;
+    depthStencilState.stencilFront.depthFailOp = WGPUStencilOperation_Invert;
+    depthStencilState.stencilFront.passOp = WGPUStencilOperation_Invert;
     // depthStencilState.stencilBack
-    depthStencilState.stencilBack.compare = WGPUCompareFunction_NotEqual;
-    depthStencilState.stencilBack.failOp = WGPUStencilOperation_Zero;
-    depthStencilState.stencilBack.depthFailOp = WGPUStencilOperation_Zero;
-    depthStencilState.stencilBack.passOp = WGPUStencilOperation_Zero;
+    depthStencilState.stencilBack.compare = WGPUCompareFunction_Always;
+    depthStencilState.stencilBack.failOp = WGPUStencilOperation_Invert;
+    depthStencilState.stencilBack.depthFailOp = WGPUStencilOperation_Invert;
+    depthStencilState.stencilBack.passOp = WGPUStencilOperation_Invert;
     // stencil mask
     depthStencilState.stencilReadMask = 0xFFFFFFFF;
     depthStencilState.stencilWriteMask = 0xFFFFFFFF;
@@ -224,7 +191,7 @@ void WgpuBrushColor::initialize(WGPUDevice device) {
     WGPUShaderModuleWGSLDescriptor shaderModuleWGSLDesc{};
 	shaderModuleWGSLDesc.chain.next = nullptr;
 	shaderModuleWGSLDesc.chain.sType = WGPUSType_ShaderModuleWGSLDescriptor;
-    shaderModuleWGSLDesc.code = cShaderSource_BrushColor;
+    shaderModuleWGSLDesc.code = cShaderSource_BrushFill;
     // shader module descriptor
     WGPUShaderModuleDescriptor shaderModuleDesc{};
     shaderModuleDesc.nextInChain = &shaderModuleWGSLDesc.chain;
@@ -280,7 +247,7 @@ void WgpuBrushColor::initialize(WGPUDevice device) {
     // render pipeline descriptor
     WGPURenderPipelineDescriptor renderPipelineDesc{};
     renderPipelineDesc.nextInChain = nullptr;
-    renderPipelineDesc.label = "Color pipeline state";
+    renderPipelineDesc.label = "Fill pipeline state";
     // renderPipelineDesc.layout
     renderPipelineDesc.layout = mPipelineLayout;
     // renderPipelineDesc.vertex
@@ -311,7 +278,7 @@ void WgpuBrushColor::initialize(WGPUDevice device) {
 }
 
 // release
-void WgpuBrushColor::release() {
+void WgpuBrushFill::release() {
     // render pipeline release
     wgpuRenderPipelineRelease(mRenderPipeline);
     // shader module release

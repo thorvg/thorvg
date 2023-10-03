@@ -26,6 +26,13 @@
 // WgpuGeometryData
 //***********************************************************************
 
+// synk
+void WgpuGeometryData::draw(WGPURenderPassEncoder renderPassEncoder) {
+    wgpuRenderPassEncoderSetVertexBuffer(renderPassEncoder, 0, mBufferVertex, 0, mVertexCount * sizeof(float) * 3);
+    wgpuRenderPassEncoderSetIndexBuffer(renderPassEncoder, mBufferIndex, WGPUIndexFormat_Uint32, 0, mIndexCount * sizeof(uint32_t));
+    wgpuRenderPassEncoderDrawIndexed(renderPassEncoder, mIndexCount, 1, 0, 0, 0);
+}
+
 // update
 void WgpuGeometryData::update(WGPUDevice device, WGPUQueue queue, float* vertexData, size_t vertexCount, uint32_t* indexData, size_t indexCount) {
     // release first (Sergii: I don`t like this solution, but I can`t come up how to do it better)
@@ -81,12 +88,4 @@ void WgpuRenderDataShape::initialize(WGPUDevice device) {
 // release
 void WgpuRenderDataShape::release() {
     mBrushColorDataBindGroup.release();
-}
-
-// sync
-void WgpuRenderDataShape::sync(WGPURenderPassEncoder renderPassEncoder) {
-    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, mBrushColorDataBindGroup.mBindGroup, 0, nullptr);
-    wgpuRenderPassEncoderSetVertexBuffer(renderPassEncoder, 0, mGeometryDataFill.mBufferVertex, 0, mGeometryDataFill.mVertexCount * sizeof(float) * 3);
-    wgpuRenderPassEncoderSetIndexBuffer(renderPassEncoder, mGeometryDataFill.mBufferIndex, WGPUIndexFormat_Uint32, 0, mGeometryDataFill.mIndexCount * sizeof(uint32_t));
-    wgpuRenderPassEncoderDrawIndexed(renderPassEncoder, mGeometryDataFill.mIndexCount, 1, 0, 0, 0);
 }

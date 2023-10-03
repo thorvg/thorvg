@@ -20,57 +20,51 @@
  * SOFTWARE.
  */
 
-#include "tvgWgpuBrushColor.h"
+#ifndef _TVG_WGPU_BRUSH_Fill_H_
+#define _TVG_WGPU_BRUSH_Fill_H_
 
-#ifndef _TVG_WGPU_RENDER_DATA_H_
-#define _TVG_WGPU_RENDER_DATA_H_
+#include "tvgWgpuBrush.h"
 
-// geometry data
-class WgpuGeometryData {
+// brush fill
+class WgpuBrushFill;
+
+// struct uMatrix
+struct WgpuBrushFillData_Matrix {
+    float matrix[16]{};
+};
+
+// uniforms data brush fill
+struct WgpuBrushFillData {
+    WgpuBrushFillData_Matrix uMatrix{}; // @binding(0)
+
+    // update matrix
+    void updateMatrix(const float* viewMatrix, const RenderTransform* transform);
+};
+
+// wgpu brush fill uniforms data
+class WgpuBrushFillDataBindGroup {
+private:
+    // webgpu handles
+    WGPUBuffer mBufferUniform_uMatrix{}; // @binding(0)
 public:
-    WGPUBuffer mBufferVertex{};
-    WGPUBuffer mBufferIndex{};
-    size_t     mVertexCount{};
-    size_t     mIndexCount{};
+    // bind group
+    WGPUBindGroup mBindGroup{};
 public:
-    // constructor and destructor
-    WgpuGeometryData() {}
-    virtual ~WgpuGeometryData() { release(); }
-
-    // initialize
-    void initialize(WGPUDevice device) {};
-    // draw
-    void draw(WGPURenderPassEncoder renderPassEncoder);
-    // update
-    void update(WGPUDevice device, WGPUQueue queue, float* vertexData, size_t vertexCount, uint32_t* indexData, size_t indexCount);
-    // release
+    // initialize and release
+    void initialize(WGPUDevice device, WgpuBrushFill& brushFill);
     void release();
+
+    // bind
+    void bind(WGPURenderPassEncoder renderPassEncoder, uint32_t groupIndex);
+    // update buffers
+    void update(WGPUQueue queue, WgpuBrushFillData& data);
 };
 
-// render data
-class WgpuRenderData {
+// brush Fill
+class WgpuBrushFill: public WgpuBrush {
 public:
-    // initialize and release
-    virtual void initialize(WGPUDevice device) = 0;
-    virtual void release() = 0;
-};
-
-// render data shape
-class WgpuRenderDataShape: public WgpuRenderData {
-public:
-    // render shape (external)
-    const RenderShape* mRenderShape{};
-    // geometry data for fill and stroke
-    WgpuGeometryData mGeometryDataFill;
-    // brushes data
-    WgpuBrushColorDataBindGroup mBrushColorDataBindGroup{};
-public:
-    // constructor
-    WgpuRenderDataShape() {}
-
-    // initialize and release
     void initialize(WGPUDevice device) override;
     void release() override;
 };
 
-#endif // _TVG_WGPU_RENDER_DATA_H_
+#endif

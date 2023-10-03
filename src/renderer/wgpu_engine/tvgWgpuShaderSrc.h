@@ -25,7 +25,10 @@
 #ifndef _TVG_WGPU_SHADER_SRC_H_
 #define _TVG_WGPU_SHADER_SRC_H_
 
-// brush solid shader module color
+// brush shader module fill
+extern const char* cShaderSource_BrushFill;
+
+// brush shader module color
 extern const char* cShaderSource_BrushColor;
 
 #endif
