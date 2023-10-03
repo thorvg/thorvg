@@ -1,0 +1,62 @@
+name: iOS
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+jobs:
+  build_x86_64:
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: true
+
+    - name: Install Packages
+      run: |
+        export HOMEBREW_NO_INSTALL_FROM_API=1
+        /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+        brew unlink node@18
+        brew update
+        brew upgrade
+        brew install meson
+
+    - name: Build
+      run: |
+        meson setup --backend=ninja build -Dlog=true -Dloaders="all" -Dstatic=true -Dsavers="all" -Dbindings="capi" --cross-file ./ios_x86_64_cross.txt
+        ninja -C build install
+
+    - uses: actions/upload-artifact@v3
+      with:
+        name: result
+        path: build/src/libthorvg*
+
+  build_armv64:
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: true
+
+    - name: Install Packages
+      run: |
+        export HOMEBREW_NO_INSTALL_FROM_API=1
+        /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+        brew unlink node@18
+        brew update
+        brew upgrade
+        brew install meson
+
+    - name: Build
+      run: |
+        meson setup --backend=ninja build -Dlog=true -Dloaders="all" -Dstatic=true -Dsavers="all" -Dbindings="capi" --cross-file ./ios_arm64_cross.txt
+        ninja -C build install
+
+    - uses: actions/upload-artifact@v3
+      with:
+        name: result
+        path: build/src/libthorvg*
