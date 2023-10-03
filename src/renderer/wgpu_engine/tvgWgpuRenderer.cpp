@@ -163,33 +163,127 @@ RenderData WgpuRenderer::prepare(const RenderShape& rshape, RenderData data, con
         renderDataShape->initialize(mDevice);
         renderDataShape->mBrushColorDataBindGroup.initialize(mDevice, mBrushColor);
     }
+    // release render data
+    renderDataShape->releaseRenderData();
 
-    // debug vertex buffer
-    static float vertexBuffer[] = {
-        100.0f,  100.0f, 0.0f,
-        400.0f,  700.0f, 0.0f,
-        700.0f,  100.0f, 0.0f,
-        700.0f,  500.0f, 0.0f,
-        100.0f,  500.0f, 0.0f,
-    };
-    size_t vertexCount = sizeof(vertexBuffer) / sizeof(float) / 3;
-    assert(vertexCount > 2);
-    // debug index buffer (for triangle fan)
-    Array<uint32_t> indexBuffer;
-    indexBuffer.reserve((vertexCount - 2) * 3);
-    for (size_t i = 0; i < vertexCount - 2; i++) {
-        indexBuffer.push(0);
-        indexBuffer.push(i + 1);
-        indexBuffer.push(i + 2);
+    // outlines
+    Array<Array<float>*> outlines;
+    // iterate commands
+    size_t pntIndex = 0;
+    for (uint32_t cmdIndex = 0; cmdIndex < rshape.path.cmds.count; cmdIndex++) {
+        // get current command
+        PathCommand cmd = rshape.path.cmds[cmdIndex];
+        // MoveTo command
+        if (cmd == PathCommand::MoveTo) {
+            // create new outline
+            outlines.push(new Array<float>);
+            // get last outline
+            auto outline = outlines.last();
+            // get point coordinates
+            float x = rshape.path.pts[pntIndex].x;
+            float y = rshape.path.pts[pntIndex].y;
+            // push new vertex
+            outline->push(x);
+            outline->push(y);
+            outline->push(0.0f);
+            // move to next point
+            pntIndex++;
+        } else // LineTo command
+        if (cmd == PathCommand::LineTo) {
+            // get last outline
+            auto outline = outlines.last();
+            // get point coordinates
+            float x = rshape.path.pts[pntIndex].x;
+            float y = rshape.path.pts[pntIndex].y;
+            // push new vertex
+            outline->push(x);
+            outline->push(y);
+            outline->push(0.0f);
+            // move to next point
+            pntIndex++;
+        } else // Close command
+        if (cmd == PathCommand::Close) {
+            // get last outline
+            auto outline = outlines.last();
+            // close path
+            if ((outline) && (outline->count > 1)) {
+                // get point coordinates
+                float x = outline->data[0]; // x
+                float y = outline->data[1]; // y
+                // push new vertex
+                outline->push(x);
+                outline->push(y);
+                outline->push(0.0f);
+            }
+        } else
+        if (cmd == PathCommand::CubicTo) {
+            // get last outline
+            auto outline = outlines.last();
+            // get cubic base points
+            Point p0{};
+            p0.x = outline->data[outline->count - 3];
+            p0.y = outline->data[outline->count - 2];
+            Point p1{};
+            p1.x = rshape.path.pts[pntIndex + 0].x;
+            p1.y = rshape.path.pts[pntIndex + 0].y;
+            Point p2{};
+            p2.x = rshape.path.pts[pntIndex + 1].x;
+            p2.y = rshape.path.pts[pntIndex + 1].y;
+            Point p3{};
+            p3.x = rshape.path.pts[pntIndex + 2].x;
+            p3.y = rshape.path.pts[pntIndex + 2].y;
+            // calculate cubic spline
+            const size_t segs = 16;
+            for (size_t i = 1; i <= segs; i++) {
+                float t = i / (float)segs;
+                // get coefficients
+                float t0 = 1 * (1.0f - t) * (1.0f - t) * (1.0f - t);
+                float t1 = 3 * (1.0f - t) * (1.0f - t) * t;
+                float t2 = 3 * (1.0f - t) * t * t;
+                float t3 = 1 * t * t * t;
+                // compute coordinates
+                float x = p0.x * t0 + p1.x * t1 + p2.x * t2 + p3.x * t3;
+                float y = p0.y * t0 + p1.y * t1 + p2.y * t2 + p3.y * t3;
+                // push new vertex
+                outline->push(x);
+                outline->push(y);
+                outline->push(0.0f);
+            }
+            // move to next point
+            pntIndex += 3;
+        } 
     }
-
-    // update geometry data
-    renderDataShape->mGeometryDataFill.update(mDevice, mQueue, vertexBuffer, vertexCount, indexBuffer.data, indexBuffer.count);
+    // create render datas
+    Array<uint32_t> indexBuffer;
+    for (size_t i = 0; i < outlines.count; i++) {
+        // get current outline
+        auto outline = outlines[i];
+        // get vertex count
+        size_t vertexCount = outline->count / 3;
+        assert(vertexCount > 2);
+        // debug index buffer (for triangle fan)
+        indexBuffer.clear();
+        indexBuffer.reserve((vertexCount - 2) * 3);
+        for (size_t j = 0; j < vertexCount - 2; j++) {
+            indexBuffer.push(0);
+            indexBuffer.push(j + 1);
+            indexBuffer.push(j + 2);
+        }
+        // create new geometry data
+        WgpuGeometryData* geometryData = new WgpuGeometryData();
+        geometryData->initialize(mDevice);
+        geometryData->update(mDevice, mQueue, outline->data, vertexCount, indexBuffer.data, indexBuffer.count);
+        // push geometry data
+        renderDataShape->mGeometryDataFill.push(geometryData);
+    }
+    // delete outlines
+    for (size_t i = 0; i < outlines.count; i++)
+        delete outlines[i];
 
     // brush color data
     WgpuBrushColorData mBrushColorData{};
     mBrushColorData.updateMatrix(mViewMatrix, transform);
-    mBrushColorData.uColorInfo = { { 1.0f, 0.5f, 0.0f, 1.0f } };
+    mBrushColorData.uColorInfo = { { 1.0f, 1.0f, 0.0f, 1.0f } };
     // update brush fill data
     renderDataShape->mBrushColorDataBindGroup.update(mQueue, mBrushColorData);
 
@@ -309,7 +403,7 @@ bool WgpuRenderer::sync() {
             colorAttachment.resolveTarget = nullptr;
             colorAttachment.loadOp = WGPULoadOp_Clear;
             colorAttachment.storeOp = WGPUStoreOp_Store;
-            colorAttachment.clearValue = { 0.1f, 0.1f, 0.1f, 1.0 };
+            colorAttachment.clearValue = { 0.0f, 0.0f, 0.0f, 1.0 };
             // render pass descriptor
             WGPURenderPassDescriptor renderPassDesc{};
             renderPassDesc.nextInChain = nullptr;
@@ -323,18 +417,23 @@ bool WgpuRenderer::sync() {
             renderPassDesc.timestampWrites = nullptr;
             // begin render pass
             WGPURenderPassEncoder renderPassEncoder = wgpuCommandEncoderBeginRenderPass(commandEncoder, &renderPassDesc); {
+                // iterate render data
                 for (size_t i = 0; i < mRenderDatas.count; i++) {
+                    // get render data
                     WgpuRenderDataShape* renderData = (WgpuRenderDataShape*)(mRenderDatas[0]);
+                    
+                    // iterate geometry data
+                    for (uint32_t j = 0; j < renderData->mGeometryDataFill.count; j++) {
+                        // draw to stencil
+                        mBrushFill.set(renderPassEncoder);
+                        mDataBindGroupFill.bind(renderPassEncoder, 0);
+                        renderData->mGeometryDataFill[j]->draw(renderPassEncoder);
 
-                    // draw to stencil
-                    mBrushFill.set(renderPassEncoder);
-                    mDataBindGroupFill.bind(renderPassEncoder, 0);
-                    renderData->mGeometryDataFill.draw(renderPassEncoder);
-
-                    // draw brush
-                    mBrushColor.set(renderPassEncoder);
-                    renderData->mBrushColorDataBindGroup.bind(renderPassEncoder, 0);
-                    mGeometryDataFill.draw(renderPassEncoder);
+                        // draw brush
+                        mBrushColor.set(renderPassEncoder);
+                        renderData->mBrushColorDataBindGroup.bind(renderPassEncoder, 0);
+                        mGeometryDataFill.draw(renderPassEncoder);
+                    }
                 }
 
                 mRenderDatas.clear();
@@ -414,8 +513,8 @@ bool WgpuRenderer::target(void* window, uint32_t w, uint32_t h) {
 
     // get preferred format
     //WGPUTextureFormat swapChainFormat = wgpuSurfaceGetPreferredFormat(mSurface, mAdapter);
-    //WGPUTextureFormat swapChainFormat = WGPUTextureFormat_RGBA8Unorm;
-    WGPUTextureFormat swapChainFormat = WGPUTextureFormat_BGRA8UnormSrgb;
+    WGPUTextureFormat swapChainFormat = WGPUTextureFormat_BGRA8Unorm;
+    //WGPUTextureFormat swapChainFormat = WGPUTextureFormat_BGRA8UnormSrgb;
     // swapchain descriptor
     WGPUSwapChainDescriptor swapChainDesc{};
     swapChainDesc.nextInChain = nullptr;

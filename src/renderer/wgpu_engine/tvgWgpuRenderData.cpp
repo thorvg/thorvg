@@ -87,5 +87,20 @@ void WgpuRenderDataShape::initialize(WGPUDevice device) {
 
 // release
 void WgpuRenderDataShape::release() {
+    // release render data
+    releaseRenderData();
+    // release bind group
     mBrushColorDataBindGroup.release();
+}
+
+// release render data
+void WgpuRenderDataShape::releaseRenderData() {
+    // release render datas fill
+    for (uint32_t i = 0; i < mGeometryDataFill.count; i++)
+        mGeometryDataFill[i]->release();
+    // delete render datas fill
+    for (uint32_t i = 0; i < mGeometryDataFill.count; i++)
+        delete mGeometryDataFill[i];
+    // clear render data fill
+    mGeometryDataFill.clear();
 }

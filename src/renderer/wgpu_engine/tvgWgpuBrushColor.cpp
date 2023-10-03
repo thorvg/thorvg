@@ -259,8 +259,8 @@ void WgpuBrushColor::initialize(WGPUDevice device) {
     // color target state (WGPUTextureFormat_BGRA8UnormSrgb)
     WGPUColorTargetState colorTargetState0{};
     colorTargetState0.nextInChain = nullptr;
-    //colorTargetState0.format = WGPUTextureFormat_BGRA8Unorm;
-    colorTargetState0.format = WGPUTextureFormat_BGRA8UnormSrgb;
+    colorTargetState0.format = WGPUTextureFormat_BGRA8Unorm;
+    //colorTargetState0.format = WGPUTextureFormat_BGRA8UnormSrgb;
     colorTargetState0.blend = &blendState;
     colorTargetState0.writeMask = WGPUColorWriteMask_All;
     // color target states

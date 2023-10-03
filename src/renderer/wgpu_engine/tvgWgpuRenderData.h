@@ -61,7 +61,7 @@ public:
     // render shape (external)
     const RenderShape* mRenderShape{};
     // geometry data for fill and stroke
-    WgpuGeometryData mGeometryDataFill;
+    Array<WgpuGeometryData*> mGeometryDataFill;
     // brushes data
     WgpuBrushColorDataBindGroup mBrushColorDataBindGroup{};
 public:
@@ -71,6 +71,7 @@ public:
     // initialize and release
     void initialize(WGPUDevice device) override;
     void release() override;
+    void releaseRenderData();
 };
 
 #endif // _TVG_WGPU_RENDER_DATA_H_
