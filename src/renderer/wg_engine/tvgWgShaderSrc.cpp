@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-#include "tvgWgpuShaderSrc.h"
+#include "tvgWgShaderSrc.h"
 #include <string>
 
 // brush fill shader module source

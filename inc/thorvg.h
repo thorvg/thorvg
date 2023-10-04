@@ -212,9 +212,9 @@ enum class BlendMethod : uint8_t
  */
 enum class CanvasEngine
 {
-    Sw   = (1 << 1), ///< CPU rasterizer.
-    Gl   = (1 << 2), ///< OpenGL rasterizer.
-    Wgpu = (1 << 3), ///< WebGPU rasterizer.
+    Sw = (1 << 1), ///< CPU rasterizer.
+    Gl = (1 << 2), ///< OpenGL rasterizer.
+    Wg = (1 << 3), ///< WebGPU rasterizer.
 };
 
 
@@ -1595,7 +1595,7 @@ public:
 
 
 /**
- * @class WgpuCanvas
+ * @class WgCanvas
  *
  * @brief A class for the rendering graphic elements with a WebGPU raster engine.
  *
@@ -1603,10 +1603,10 @@ public:
  *
  * @BETA_API
  */
-class TVG_API WgpuCanvas final : public Canvas
+class TVG_API WgCanvas final : public Canvas
 {
 public:
-    ~WgpuCanvas();
+    ~WgCanvas();
 
     /**
      * @brief Sets the target buffer for the rasterization.
@@ -1619,15 +1619,15 @@ public:
     Result target(void* window, uint32_t w, uint32_t h) noexcept;
 
     /**
-     * @brief Creates a new WgpuCanvas object.
+     * @brief Creates a new WgCanvas object.
      *
-     * @return A new WgpuCanvas object.
+     * @return A new WgCanvas object.
      *
      * @BETA_API
      */
-    static std::unique_ptr<WgpuCanvas> gen() noexcept;
+    static std::unique_ptr<WgCanvas> gen() noexcept;
 
-    _TVG_DECLARE_PRIVATE(WgpuCanvas);
+    _TVG_DECLARE_PRIVATE(WgCanvas);
 };
 
 

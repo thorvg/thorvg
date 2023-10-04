@@ -20,12 +20,9 @@
  * SOFTWARE.
  */
 
-#ifndef _TVG_WGPU_COMMON_H_
-#define _TVG_WGPU_COMMON_H_
+#include "tvgWgBrush.h"
 
-#include <cassert>
-#include <webgpu/webgpu.h>
-#include "tvgCommon.h"
-#include "tvgRender.h"
-
-#endif /* _TVG_WGPU_COMMON_H_ */
+// set as current pipeline
+void WgBrush::set(WGPURenderPassEncoder renderPassEncoder) {
+    wgpuRenderPassEncoderSetPipeline(renderPassEncoder, mRenderPipeline);
+}

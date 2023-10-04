@@ -20,51 +20,15 @@
  * SOFTWARE.
  */
 
-#ifndef _TVG_WGPU_BRUSH_Fill_H_
-#define _TVG_WGPU_BRUSH_Fill_H_
+#pragma once
 
-#include "tvgWgpuBrush.h"
+#ifndef _TVG_WG_SHADER_SRC_H_
+#define _TVG_WG_SHADER_SRC_H_
 
-// brush fill
-class WgpuBrushFill;
+// brush shader module fill
+extern const char* cShaderSource_BrushFill;
 
-// struct uMatrix
-struct WgpuBrushFillData_Matrix {
-    float matrix[16]{};
-};
-
-// uniforms data brush fill
-struct WgpuBrushFillData {
-    WgpuBrushFillData_Matrix uMatrix{}; // @binding(0)
-
-    // update matrix
-    void updateMatrix(const float* viewMatrix, const RenderTransform* transform);
-};
-
-// wgpu brush fill uniforms data
-class WgpuBrushFillDataBindGroup {
-private:
-    // webgpu handles
-    WGPUBuffer mBufferUniform_uMatrix{}; // @binding(0)
-public:
-    // bind group
-    WGPUBindGroup mBindGroup{};
-public:
-    // initialize and release
-    void initialize(WGPUDevice device, WgpuBrushFill& brushFill);
-    void release();
-
-    // bind
-    void bind(WGPURenderPassEncoder renderPassEncoder, uint32_t groupIndex);
-    // update buffers
-    void update(WGPUQueue queue, WgpuBrushFillData& data);
-};
-
-// brush Fill
-class WgpuBrushFill: public WgpuBrush {
-public:
-    void initialize(WGPUDevice device) override;
-    void release() override;
-};
+// brush shader module color
+extern const char* cShaderSource_BrushColor;
 
 #endif

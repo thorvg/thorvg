@@ -22,10 +22,10 @@
 
 #include "tvgCanvas.h"
 
-#ifdef THORVG_WGPU_RASTER_SUPPORT
-    #include "tvgWgpuRenderer.h"
+#ifdef THORVG_WG_RASTER_SUPPORT
+    #include "tvgWgRenderer.h"
 #else
-    class WgpuRenderer : public RenderMethod
+    class WgRenderer : public RenderMethod
     {
         //Non Supported. Dummy Class */
     };
@@ -35,7 +35,7 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-struct WgpuCanvas::Impl
+struct WgCanvas::Impl
 {
 };
 
@@ -45,26 +45,26 @@ struct WgpuCanvas::Impl
 /************************************************************************/
 
 // webgpy canvas constructor
-#ifdef THORVG_WGPU_RASTER_SUPPORT
-WgpuCanvas::WgpuCanvas() : Canvas(WgpuRenderer::gen()), pImpl(new Impl)
+#ifdef THORVG_WG_RASTER_SUPPORT
+WgCanvas::WgCanvas() : Canvas(WgRenderer::gen()), pImpl(new Impl)
 #else
-WgpuCanvas::WgpuCanvas() : Canvas(nullptr), pImpl(new Impl)
+WgCanvas::WgCanvas() : Canvas(nullptr), pImpl(new Impl)
 #endif
 {
 }
 
 // webgpy canvas destructor
-WgpuCanvas::~WgpuCanvas()
+WgCanvas::~WgCanvas()
 {
     delete pImpl;
 }
 
 // set target buffer
-Result WgpuCanvas::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h) noexcept
+Result WgCanvas::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h) noexcept
 {
-#ifdef THORVG_WGPU_RASTER_SUPPORT
+#ifdef THORVG_WG_RASTER_SUPPORT
     //We know renderer type, avoid dynamic_cast for performance.
-    auto renderer = static_cast<WgpuRenderer*>(Canvas::pImpl->renderer);
+    auto renderer = static_cast<WgRenderer*>(Canvas::pImpl->renderer);
     if (!renderer) return Result::MemoryCorruption;
 
     if (!renderer->target(buffer, stride, w, h)) return Result::Unknown;
@@ -78,11 +78,11 @@ Result WgpuCanvas::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_
 }
 
 // set target window
-Result WgpuCanvas::target(void* window, uint32_t w, uint32_t h) noexcept
+Result WgCanvas::target(void* window, uint32_t w, uint32_t h) noexcept
 {
-#ifdef THORVG_WGPU_RASTER_SUPPORT
+#ifdef THORVG_WG_RASTER_SUPPORT
     //We know renderer type, avoid dynamic_cast for performance.
-    auto renderer = static_cast<WgpuRenderer*>(Canvas::pImpl->renderer);
+    auto renderer = static_cast<WgRenderer*>(Canvas::pImpl->renderer);
     if (!renderer) return Result::MemoryCorruption;
 
     if (!renderer->target(window, w, h)) return Result::Unknown;
@@ -96,10 +96,10 @@ Result WgpuCanvas::target(void* window, uint32_t w, uint32_t h) noexcept
 }
 
 // generate canvas instance
-unique_ptr<WgpuCanvas> WgpuCanvas::gen() noexcept
+unique_ptr<WgCanvas> WgCanvas::gen() noexcept
 {
-#ifdef THORVG_WGPU_RASTER_SUPPORT
-    return unique_ptr<WgpuCanvas>(new WgpuCanvas);
+#ifdef THORVG_WG_RASTER_SUPPORT
+    return unique_ptr<WgCanvas>(new WgCanvas);
 #endif
     return nullptr;
 }

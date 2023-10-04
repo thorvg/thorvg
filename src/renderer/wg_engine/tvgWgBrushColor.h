@@ -20,35 +20,35 @@
  * SOFTWARE.
  */
 
-#ifndef _TVG_WGPU_BRUSH_COLOR_H_
-#define _TVG_WGPU_BRUSH_COLOR_H_
+#ifndef _TVG_WG_BRUSH_COLOR_H_
+#define _TVG_WG_BRUSH_COLOR_H_
 
-#include "tvgWgpuBrush.h"
+#include "tvgWgBrush.h"
 
 // brush color
-class WgpuBrushColor;
+class WgBrushColor;
 
 // struct uMatrix
-struct WgpuBrushColorData_Matrix {
+struct WgBrushColorData_Matrix {
     float matrix[16]{};
 };
 
 // struct uColorInfo
-struct WgpuBrushColorData_ColorInfo {
+struct WgBrushColorData_ColorInfo {
     float color[4]{};
 };
 
 // uniforms data brush color
-struct WgpuBrushColorData {
-    WgpuBrushColorData_Matrix    uMatrix{};    // @binding(0)
-    WgpuBrushColorData_ColorInfo uColorInfo{}; // @binding(1)
+struct WgBrushColorData {
+    WgBrushColorData_Matrix    uMatrix{};    // @binding(0)
+    WgBrushColorData_ColorInfo uColorInfo{}; // @binding(1)
 
     // update matrix
     void updateMatrix(const float* viewMatrix, const RenderTransform* transform);
 };
 
 // wgpu brush color uniforms data
-class WgpuBrushColorDataBindGroup {
+class WgBrushColorDataBindGroup {
 private:
     // webgpu handles
     WGPUBuffer mBufferUniform_uMatrix{};    // @binding(0)
@@ -58,20 +58,20 @@ public:
     WGPUBindGroup mBindGroup{};
 public:
     // initialize and release
-    void initialize(WGPUDevice device, WgpuBrushColor& brushColor);
+    void initialize(WGPUDevice device, WgBrushColor& brushColor);
     void release();
 
     // bind
     void bind(WGPURenderPassEncoder renderPassEncoder, uint32_t groupIndex);
     // update buffers
-    void update(WGPUQueue queue, WgpuBrushColorData& data);
+    void update(WGPUQueue queue, WgBrushColorData& data);
 };
 
 // brush color
-class WgpuBrushColor: public WgpuBrush {
+class WgBrushColor: public WgBrush {
 public:
     void initialize(WGPUDevice device) override;
     void release() override;
 };
 
-#endif
+#endif // _TVG_WG_BRUSH_COLOR_H_

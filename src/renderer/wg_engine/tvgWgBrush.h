@@ -20,15 +20,28 @@
  * SOFTWARE.
  */
 
-#pragma once
+#ifndef _TVG_WG_BRUSH_H_
+#define _TVG_WG_BRUSH_H_
 
-#ifndef _TVG_WGPU_SHADER_SRC_H_
-#define _TVG_WGPU_SHADER_SRC_H_
+#include "tvgWgCommon.h"
 
-// brush shader module fill
-extern const char* cShaderSource_BrushFill;
+// webgpu brush
+class WgBrush {
+public:
+    // bind group layouts
+    WGPUBindGroupLayout mBindGroupLayout{}; // @group(0)
+    // pipeline layout
+    WGPUPipelineLayout mPipelineLayout{};
+    // shader module
+    WGPUShaderModule mShaderModule{};
+    // render pipeline
+    WGPURenderPipeline mRenderPipeline{};
+public:
+    virtual void initialize(WGPUDevice device) = 0;
+    virtual void release() = 0;
 
-// brush shader module color
-extern const char* cShaderSource_BrushColor;
+    // set as current pipeline
+    void set(WGPURenderPassEncoder renderPassEncoder);
+};
 
-#endif
+#endif // _TVG_WG_BRUSH_H_

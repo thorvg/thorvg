@@ -20,15 +20,15 @@
  * SOFTWARE.
  */
 
-#include "tvgWgpuBrushFill.h"
-#include "tvgWgpuShaderSrc.h"
+#include "tvgWgBrushFill.h"
+#include "tvgWgShaderSrc.h"
 
 //************************************************************************
-// WgpuBrushFillData
+// WgBrushFillData
 //************************************************************************
 
 // update matrix
-void WgpuBrushFillData::updateMatrix(const float* viewMatrix, const RenderTransform* transform) {
+void WgBrushFillData::updateMatrix(const float* viewMatrix, const RenderTransform* transform) {
     // create model matrix 4*4
     float modelMatrix[16]{};
     if (transform) {
@@ -60,17 +60,17 @@ void WgpuBrushFillData::updateMatrix(const float* viewMatrix, const RenderTransf
 }
 
 //************************************************************************
-// WgpuBrushFillDataBindGroup
+// WgBrushFillDataBindGroup
 //************************************************************************
 
 // initialise
-void WgpuBrushFillDataBindGroup::initialize(WGPUDevice device, WgpuBrushFill& brushFill) {
+void WgBrushFillDataBindGroup::initialize(WGPUDevice device, WgBrushFill& brushFill) {
     // buffer uniform uMatrix
     WGPUBufferDescriptor bufferUniformDesc_uMatrix{};
     bufferUniformDesc_uMatrix.nextInChain = nullptr;
     bufferUniformDesc_uMatrix.label = "Buffer uniform brush fill uMatrix";
     bufferUniformDesc_uMatrix.usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_Uniform;
-    bufferUniformDesc_uMatrix.size = sizeof(WgpuBrushFillData_Matrix);
+    bufferUniformDesc_uMatrix.size = sizeof(WgBrushFillData_Matrix);
     bufferUniformDesc_uMatrix.mappedAtCreation = false;
     mBufferUniform_uMatrix = wgpuDeviceCreateBuffer(device, &bufferUniformDesc_uMatrix);
     assert(mBufferUniform_uMatrix);
@@ -81,7 +81,7 @@ void WgpuBrushFillDataBindGroup::initialize(WGPUDevice device, WgpuBrushFill& br
     bindGroupEntry_uMatrix.binding = 0;
     bindGroupEntry_uMatrix.buffer = mBufferUniform_uMatrix;
     bindGroupEntry_uMatrix.offset = 0;
-    bindGroupEntry_uMatrix.size = sizeof(WgpuBrushFillData_Matrix);
+    bindGroupEntry_uMatrix.size = sizeof(WgBrushFillData_Matrix);
     bindGroupEntry_uMatrix.sampler = nullptr;
     bindGroupEntry_uMatrix.textureView = nullptr;
     // bind group entries
@@ -100,7 +100,7 @@ void WgpuBrushFillDataBindGroup::initialize(WGPUDevice device, WgpuBrushFill& br
 };
 
 // release
-void WgpuBrushFillDataBindGroup::release() {
+void WgBrushFillDataBindGroup::release() {
     // destroy uniform buffers
     wgpuBufferDestroy(mBufferUniform_uMatrix);
     wgpuBufferRelease(mBufferUniform_uMatrix);
@@ -109,22 +109,22 @@ void WgpuBrushFillDataBindGroup::release() {
 };
 
 // bind
-void WgpuBrushFillDataBindGroup::bind(WGPURenderPassEncoder renderPassEncoder, uint32_t groupIndex) {
+void WgBrushFillDataBindGroup::bind(WGPURenderPassEncoder renderPassEncoder, uint32_t groupIndex) {
     wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, groupIndex, mBindGroup, 0, nullptr);
 }
 
 // update buffers
-void WgpuBrushFillDataBindGroup::update(WGPUQueue queue, WgpuBrushFillData& data) {
+void WgBrushFillDataBindGroup::update(WGPUQueue queue, WgBrushFillData& data) {
     // write uMatrux buffer
     wgpuQueueWriteBuffer(queue, mBufferUniform_uMatrix, 0, &data.uMatrix, sizeof(data.uMatrix));
 };
 
 //***********************************************************************
-// WgpuBrushFill
+// WgBrushFill
 //***********************************************************************
 
 // create
-void WgpuBrushFill::initialize(WGPUDevice device) {
+void WgBrushFill::initialize(WGPUDevice device) {
     // bind group layout group 0
     // bind group layout descriptor @binding(0) uMatrix
     WGPUBindGroupLayoutEntry bindGroupLayoutEntry_uMatrix{};
@@ -278,7 +278,7 @@ void WgpuBrushFill::initialize(WGPUDevice device) {
 }
 
 // release
-void WgpuBrushFill::release() {
+void WgBrushFill::release() {
     // render pipeline release
     wgpuRenderPipelineRelease(mRenderPipeline);
     // shader module release

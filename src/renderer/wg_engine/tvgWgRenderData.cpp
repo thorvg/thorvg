@@ -20,21 +20,21 @@
  * SOFTWARE.
  */
 
-#include "tvgWgpuRenderData.h"
+#include "tvgWgRenderData.h"
 
 //***********************************************************************
-// WgpuGeometryData
+// WgGeometryData
 //***********************************************************************
 
 // synk
-void WgpuGeometryData::draw(WGPURenderPassEncoder renderPassEncoder) {
+void WgGeometryData::draw(WGPURenderPassEncoder renderPassEncoder) {
     wgpuRenderPassEncoderSetVertexBuffer(renderPassEncoder, 0, mBufferVertex, 0, mVertexCount * sizeof(float) * 3);
     wgpuRenderPassEncoderSetIndexBuffer(renderPassEncoder, mBufferIndex, WGPUIndexFormat_Uint32, 0, mIndexCount * sizeof(uint32_t));
     wgpuRenderPassEncoderDrawIndexed(renderPassEncoder, mIndexCount, 1, 0, 0, 0);
 }
 
 // update
-void WgpuGeometryData::update(WGPUDevice device, WGPUQueue queue, float* vertexData, size_t vertexCount, uint32_t* indexData, size_t indexCount) {
+void WgGeometryData::update(WGPUDevice device, WGPUQueue queue, float* vertexData, size_t vertexCount, uint32_t* indexData, size_t indexCount) {
     // release first (Sergii: I don`t like this solution, but I can`t come up how to do it better)
     release();
 
@@ -63,7 +63,7 @@ void WgpuGeometryData::update(WGPUDevice device, WGPUQueue queue, float* vertexD
 }
 
 // release
-void WgpuGeometryData::release() {
+void WgGeometryData::release() {
     // buffer index destroy
     if (mBufferIndex) wgpuBufferDestroy(mBufferIndex);
     if (mBufferIndex) wgpuBufferRelease(mBufferIndex);
@@ -78,15 +78,15 @@ void WgpuGeometryData::release() {
 }
 
 //***********************************************************************
-// WgpuRenderDataShape
+// WgRenderDataShape
 //***********************************************************************
 
 // initialize
-void WgpuRenderDataShape::initialize(WGPUDevice device) {
+void WgRenderDataShape::initialize(WGPUDevice device) {
 }
 
 // release
-void WgpuRenderDataShape::release() {
+void WgRenderDataShape::release() {
     // release render data
     releaseRenderData();
     // release bind group
@@ -94,7 +94,7 @@ void WgpuRenderDataShape::release() {
 }
 
 // release render data
-void WgpuRenderDataShape::releaseRenderData() {
+void WgRenderDataShape::releaseRenderData() {
     // release render datas fill
     for (uint32_t i = 0; i < mGeometryDataFill.count; i++)
         mGeometryDataFill[i]->release();

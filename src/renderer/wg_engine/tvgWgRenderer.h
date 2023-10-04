@@ -20,20 +20,20 @@
  * SOFTWARE.
  */
 
-#ifndef _TVG_WGPU_RENDERER_H_
-#define _TVG_WGPU_RENDERER_H_
+#ifndef _TVG_WG_RENDERER_H_
+#define _TVG_WG_RENDERER_H_
 
 #include <vector>
-#include "tvgWgpuBrushFill.h"
-#include "tvgWgpuBrushColor.h"
-#include "tvgWgpuRenderData.h"
+#include "tvgWgBrushFill.h"
+#include "tvgWgBrushColor.h"
+#include "tvgWgRenderData.h"
 
 // webgpu renderer
-class WgpuRenderer : public RenderMethod
+class WgRenderer : public RenderMethod
 {
 private:
-    WgpuRenderer();
-    ~WgpuRenderer();
+    WgRenderer();
+    ~WgRenderer();
 private:
     void initialize();
     void release();
@@ -61,7 +61,7 @@ public:
     bool beginComposite(Compositor* cmp, CompositeMethod method, uint8_t opacity);
     bool endComposite(Compositor* cmp);
 public:
-    static WgpuRenderer* gen();
+    static WgRenderer* gen();
     static bool init(uint32_t threads);
     static bool term();
 private:
@@ -82,11 +82,11 @@ private:
     WGPUTexture     mStencilTex{};
     WGPUTextureView mStencilTexView{};
 private:
-    WgpuBrushFill  mBrushFill;
-    WgpuBrushColor mBrushColor;
+    WgBrushFill  mBrushFill;
+    WgBrushColor mBrushColor;
     // brush geometry
-    WgpuGeometryData mGeometryDataFill;
-    WgpuBrushFillDataBindGroup mDataBindGroupFill;
+    WgGeometryData mGeometryDataFill;
+    WgBrushFillDataBindGroup mDataBindGroupFill;
 };
 
-#endif /* _TVG_WGPU_RENDERER_H_ */
+#endif /* _TVG_WG_RENDERER_H_ */

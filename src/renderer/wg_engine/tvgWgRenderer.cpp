@@ -20,27 +20,27 @@
  * SOFTWARE.
  */
 
-#include "tvgWgpuRenderer.h"
+#include "tvgWgRenderer.h"
 
 #include <iostream>
 #ifdef _WIN32
 #include <windows.h>
 #endif
-#include "tvgWgpuRenderData.h"
-#include "tvgWgpuShaderSrc.h"
+#include "tvgWgRenderData.h"
+#include "tvgWgShaderSrc.h"
 
 // constructor
-WgpuRenderer::WgpuRenderer() {
+WgRenderer::WgRenderer() {
     initialize();
 }
 
 // destructor
-WgpuRenderer::~WgpuRenderer() {
+WgRenderer::~WgRenderer() {
     release();
 }
 
 // initialize renderer
-void WgpuRenderer::initialize() {
+void WgRenderer::initialize() {
         // create instance
     WGPUInstanceDescriptor instanceDesc{};
     instanceDesc.nextInChain = nullptr;
@@ -130,7 +130,7 @@ void WgpuRenderer::initialize() {
 }
 
 // release renderer
-void WgpuRenderer::release() {
+void WgRenderer::release() {
     // remove stencil hendles
     if (mStencilTex) wgpuTextureDestroy(mStencilTex);
     if (mStencilTex) wgpuTextureRelease(mStencilTex);
@@ -154,11 +154,11 @@ void WgpuRenderer::release() {
 }
 
 // prepare render shape
-RenderData WgpuRenderer::prepare(const RenderShape& rshape, RenderData data, const RenderTransform* transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags, bool clipper) {
+RenderData WgRenderer::prepare(const RenderShape& rshape, RenderData data, const RenderTransform* transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags, bool clipper) {
     // get or create render data shape
-    auto renderDataShape = (WgpuRenderDataShape *)data;
+    auto renderDataShape = (WgRenderDataShape *)data;
     if (!renderDataShape) {
-        renderDataShape = new WgpuRenderDataShape();
+        renderDataShape = new WgRenderDataShape();
         renderDataShape->mRenderShape = &rshape;
         renderDataShape->initialize(mDevice);
         renderDataShape->mBrushColorDataBindGroup.initialize(mDevice, mBrushColor);
@@ -270,7 +270,7 @@ RenderData WgpuRenderer::prepare(const RenderShape& rshape, RenderData data, con
             indexBuffer.push(j + 2);
         }
         // create new geometry data
-        WgpuGeometryData* geometryData = new WgpuGeometryData();
+        WgGeometryData* geometryData = new WgGeometryData();
         geometryData->initialize(mDevice);
         geometryData->update(mDevice, mQueue, outline->data, vertexCount, indexBuffer.data, indexBuffer.count);
         // push geometry data
@@ -281,7 +281,7 @@ RenderData WgpuRenderer::prepare(const RenderShape& rshape, RenderData data, con
         delete outlines[i];
 
     // brush color data
-    WgpuBrushColorData mBrushColorData{};
+    WgBrushColorData mBrushColorData{};
     mBrushColorData.updateMatrix(mViewMatrix, transform);
     mBrushColorData.uColorInfo = { { 1.0f, 1.0f, 0.0f, 1.0f } };
     // update brush fill data
@@ -292,45 +292,45 @@ RenderData WgpuRenderer::prepare(const RenderShape& rshape, RenderData data, con
 }
 
 // prepare scene
-RenderData WgpuRenderer::prepare(const Array<RenderData>& scene, RenderData data, const RenderTransform* transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags) {
+RenderData WgRenderer::prepare(const Array<RenderData>& scene, RenderData data, const RenderTransform* transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags) {
     // nothing
     return nullptr;
 }
 
 // prepare surface
-RenderData WgpuRenderer::prepare(Surface* surface, const RenderMesh* mesh, RenderData data, const RenderTransform* transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags) {
+RenderData WgRenderer::prepare(Surface* surface, const RenderMesh* mesh, RenderData data, const RenderTransform* transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags) {
     // nothing
     return nullptr;
 }
 
 // pre render
-bool WgpuRenderer::preRender() {
+bool WgRenderer::preRender() {
     // nothing
     return true;
 }
 
 // render shape
-bool WgpuRenderer::renderShape(RenderData data) {
+bool WgRenderer::renderShape(RenderData data) {
     mRenderDatas.push(data);
     return true;
 }
 
 // render image
-bool WgpuRenderer::renderImage(RenderData data) {
+bool WgRenderer::renderImage(RenderData data) {
     // nothing
     return true;
 }
 
 // post render
-bool WgpuRenderer::postRender() {
+bool WgRenderer::postRender() {
     // nothing
     return true;
 }
 
 // dispose render data
-bool WgpuRenderer::dispose(RenderData data) {
+bool WgRenderer::dispose(RenderData data) {
     // release render data
-    auto renderData = (WgpuRenderData *)data;
+    auto renderData = (WgRenderData *)data;
     if (renderData)
         renderData->release();
     // nothing
@@ -338,40 +338,40 @@ bool WgpuRenderer::dispose(RenderData data) {
 }
 
 // get region of render data
-RenderRegion WgpuRenderer::region(RenderData data) {
+RenderRegion WgRenderer::region(RenderData data) {
     // nothing
     return { 0, 0, INT32_MAX, INT32_MAX };
 }
 
 // get current viewport
-RenderRegion WgpuRenderer::viewport() {
+RenderRegion WgRenderer::viewport() {
     // nothing
     return { 0, 0, INT32_MAX, INT32_MAX };
 }
 
 // set current viewport
-bool WgpuRenderer::viewport(const RenderRegion& vp) {
+bool WgRenderer::viewport(const RenderRegion& vp) {
     // nothing
     return true;
 }
 
 // blend
-bool WgpuRenderer::blend(BlendMethod method) {
+bool WgRenderer::blend(BlendMethod method) {
     return false;
 }
 
 // color space
-ColorSpace WgpuRenderer::colorSpace() {
+ColorSpace WgRenderer::colorSpace() {
     return ColorSpace::Unsupported;
 }
 
 // clear
-bool WgpuRenderer::clear() {
+bool WgRenderer::clear() {
     return true;
 }
 
 // sync
-bool WgpuRenderer::sync() {
+bool WgRenderer::sync() {
     // get buffer
     WGPUTextureView backBufferView = wgpuSwapChainGetCurrentTextureView(mSwapChain);
     
@@ -420,7 +420,7 @@ bool WgpuRenderer::sync() {
                 // iterate render data
                 for (size_t i = 0; i < mRenderDatas.count; i++) {
                     // get render data
-                    WgpuRenderDataShape* renderData = (WgpuRenderDataShape*)(mRenderDatas[0]);
+                    WgRenderDataShape* renderData = (WgRenderDataShape*)(mRenderDatas[0]);
                     
                     // iterate geometry data
                     for (uint32_t j = 0; j < renderData->mGeometryDataFill.count; j++) {
@@ -457,7 +457,7 @@ bool WgpuRenderer::sync() {
 }
 
 // target
-bool WgpuRenderer::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h) {
+bool WgRenderer::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h) {
     // check properties
     assert(w > 0);
     assert(h > 0);
@@ -478,7 +478,7 @@ bool WgpuRenderer::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_
 }
 
 // target for native window handle
-bool WgpuRenderer::target(void* window, uint32_t w, uint32_t h) {
+bool WgRenderer::target(void* window, uint32_t w, uint32_t h) {
     // check properties
     assert(window);
     assert(w > 0);
@@ -566,7 +566,7 @@ bool WgpuRenderer::target(void* window, uint32_t w, uint32_t h) {
     static uint32_t indexData[] = { 0, 1, 2, 0, 2, 3 };
     // update render data brush
     mGeometryDataFill.update(mDevice, mQueue, vertexData, 4, indexData, 6);
-    WgpuBrushFillData brushFillData{};
+    WgBrushFillData brushFillData{};
     brushFillData.updateMatrix(mViewMatrix, nullptr);
     mDataBindGroupFill.update(mQueue, brushFillData);
 
@@ -574,35 +574,35 @@ bool WgpuRenderer::target(void* window, uint32_t w, uint32_t h) {
 }
 
 // target
-Compositor* WgpuRenderer::target(const RenderRegion& region, ColorSpace cs) {
+Compositor* WgRenderer::target(const RenderRegion& region, ColorSpace cs) {
     // not supported
     return nullptr;
 }
 
 // begin composite
-bool WgpuRenderer::beginComposite(Compositor* cmp, CompositeMethod method, uint8_t opacity) {
+bool WgRenderer::beginComposite(Compositor* cmp, CompositeMethod method, uint8_t opacity) {
     //TODO: delete the given compositor and restore the context
     return false;
 }
 
 // end composite
-bool WgpuRenderer::endComposite(Compositor* cmp) {
+bool WgRenderer::endComposite(Compositor* cmp) {
     //TODO: delete the given compositor and restore the context
     return false;
 }
 
 // generate renderer webgpu
-WgpuRenderer* WgpuRenderer::gen() {
+WgRenderer* WgRenderer::gen() {
     // create new renderer instance
-    return new WgpuRenderer();
+    return new WgRenderer();
 }
 
 // initialize renderer
-bool WgpuRenderer::init(uint32_t threads) {
+bool WgRenderer::init(uint32_t threads) {
     return true;
 }
 
 // terminate renderer
-bool WgpuRenderer::term() {
+bool WgRenderer::term() {
     return true;
 }
