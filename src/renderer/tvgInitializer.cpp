@@ -36,7 +36,7 @@
     #include "tvgGlRenderer.h"
 #endif
 
-#ifdef THORVG_WGPU_RASTER_SUPPORT
+#ifdef THORVG_WG_RASTER_SUPPORT
     #include "tvgWgRenderer.h"
 #endif
 
@@ -107,7 +107,7 @@ Result Initializer::init(CanvasEngine engine, uint32_t threads) noexcept
             nonSupport = false;
         #endif
     } else if (engine & CanvasEngine::Wg) {
-        #ifdef THORVG_WGPU_RASTER_SUPPORT
+        #ifdef THORVG_WG_RASTER_SUPPORT
             if (!WgRenderer::init(threads)) return Result::FailedAllocation;
             nonSupport = false;
         #endif
@@ -146,7 +146,7 @@ Result Initializer::term(CanvasEngine engine) noexcept
             nonSupport = false;
         #endif
     } else if (engine & CanvasEngine::Gl) {
-        #ifdef THORVG_WGPU_RASTER_SUPPORT
+        #ifdef THORVG_WG_RASTER_SUPPORT
             if (!WgRenderer::term()) return Result::InsufficientCondition;
             nonSupport = false;
         #endif
