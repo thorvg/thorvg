@@ -170,6 +170,11 @@ static void _updateTransform(LottieTransform* transform, int32_t frameNo, Render
     auto pmatrix = PP(ctx.propagator)->transform();
     ctx.propagator->transform(pmatrix ? mathMultiply(pmatrix, &matrix) : matrix);
     ctx.propagator->opacity(MULTIPLY(opacity, PP(ctx.propagator)->opacity));
+
+    //FIXME: preserve the stroke width. too workaround, need a better design.
+    if (P(ctx.propagator)->rs.strokeWidth() > 0.0f) {
+        ctx.propagator->stroke(P(ctx.propagator)->rs.strokeWidth() / sqrt(matrix.e11 * matrix.e11 + matrix.e12 * matrix.e12));
+    }
 }
 
 
@@ -580,9 +585,15 @@ static void _updateImage(LottieGroup* parent, LottieImage* image, int32_t frameN
         TaskScheduler::async(false);
 
         if (image->size > 0) {
-            if (picture->load((const char*)image->b64Data, image->size, image->mimeType, false) != Result::Success) return;
+            if (picture->load((const char*)image->b64Data, image->size, image->mimeType, false) != Result::Success) {
+                delete(picture);
+                return;
+            }
         } else {
-            if (picture->load(image->path) != Result::Success) return;
+            if (picture->load(image->path) != Result::Success) {
+                delete(picture);
+                return;
+            }
         }
 
         TaskScheduler::async(true);

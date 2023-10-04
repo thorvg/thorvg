@@ -32,6 +32,7 @@
 
 #include "tvgTvgCommon.h"
 #include "tvgShape.h"
+#include "tvgFill.h"
 
 
 /************************************************************************/
@@ -188,6 +189,25 @@ static unique_ptr<Fill> _parseShapeFill(const char *ptr, const char *end)
                 fillGrad = std::move(fillGradRadial);
                 break;
             }
+            case TVG_TAG_FILL_RADIAL_GRADIENT_FOCAL: {
+                if (block.length != 3 * SIZE(float)) return nullptr;
+
+                auto ptr = block.data;
+                float x, y, radius;
+
+                READ_FLOAT(&x, ptr);
+                ptr += SIZE(float);
+                READ_FLOAT(&y, ptr);
+                ptr += SIZE(float);
+                READ_FLOAT(&radius, ptr);
+
+                if (auto fillGradRadial = static_cast<RadialGradient*>(fillGrad.get())) {
+                    P(fillGradRadial)->fx = x;
+                    P(fillGradRadial)->fy = y;
+                    P(fillGradRadial)->fr = radius;
+                }
+                break;
+            }
             case TVG_TAG_FILL_LINEAR_GRADIENT: {
                 if (block.length != 4 * SIZE(float)) return nullptr;
 
@@ -320,6 +340,13 @@ static bool _parseShapeStroke(const char *ptr, const char *end, Shape *shape)
                 float miterlimit;
                 READ_FLOAT(&miterlimit, block.data);
                 shape->strokeMiterlimit(miterlimit);
+                break;
+            }
+            case TVG_TAG_SHAPE_STROKE_DASH_OFFSET: {
+                if (block.length != SIZE(float)) return false;
+                float offset;
+                READ_FLOAT(&offset, block.data);
+                P(shape)->rs.stroke->dashOffset = offset;
                 break;
             }
             default: {

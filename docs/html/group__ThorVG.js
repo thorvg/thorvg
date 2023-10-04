@@ -90,7 +90,6 @@ var group__ThorVG =
       [ "strokeWidth", "classtvg_1_1Shape.html#a1536ec32e91c29dd8300b0d4354773f9", null ]
     ] ],
     [ "Picture", "classtvg_1_1Picture.html", [
-      [ "data", "classtvg_1_1Picture.html#a21b1473525a4e1fccdc6b893bdfd4fbb", null ],
       [ "load", "classtvg_1_1Picture.html#a3e487c0b236a6eea853c5ccb7665cdce", null ],
       [ "load", "classtvg_1_1Picture.html#a95979a7c4ce51445c7ef9d6461c34767", null ],
       [ "load", "classtvg_1_1Picture.html#aaf06be7d0b572c5ce35315cbddd7d318", null ],

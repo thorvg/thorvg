@@ -137,7 +137,8 @@ typedef enum {
     TVG_COMPOSITE_METHOD_CLIP_PATH,          ///< The intersection of the source and the target is determined and only the resulting pixels from the source are rendered.
     TVG_COMPOSITE_METHOD_ALPHA_MASK,         ///< The pixels of the source and the target are alpha blended. As a result, only the part of the source, which intersects with the target is visible.
     TVG_COMPOSITE_METHOD_INVERSE_ALPHA_MASK, ///< The pixels of the source and the complement to the target's pixels are alpha blended. As a result, only the part of the source which is not covered by the target is visible.
-    TVG_COMPOSITE_METHOD_LUMA_MASK           ///< The source pixels are converted to grayscale (luma value) and alpha blended with the target. As a result, only the part of the source which intersects with the target is visible. \since 0.9
+    TVG_COMPOSITE_METHOD_LUMA_MASK,          ///< The source pixels are converted to grayscale (luma value) and alpha blended with the target. As a result, only the part of the source which intersects with the target is visible. \since 0.9
+    TVG_COMPOSITE_METHOD_INVERSE_LUMA_MASK   ///< The source pixels are converted to grayscale (luma value) and complement to the target's pixels are alpha blended. As a result, only the part of the source which is not covered by the target is visible. \BETA_API
 } Tvg_Composite_Method;
 
 
@@ -1417,7 +1418,7 @@ TVG_API Tvg_Result tvg_shape_get_stroke_join(const Tvg_Paint* paint, Tvg_Stroke_
 
 
 /*!
-* \brief Sets the stroke miterlimit. (BETA_API)
+* \brief Sets the stroke miterlimit.
 *
 * \param[in] paint A Tvg_Paint pointer to the shape object.
 * \param[in] miterlimit The miterlimit imposes a limit on the extent of the stroke join when the @c TVG_STROKE_JOIN_MITER join style is set. The default value is 4.
@@ -1427,12 +1428,14 @@ TVG_API Tvg_Result tvg_shape_get_stroke_join(const Tvg_Paint* paint, Tvg_Stroke_
 * \retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
 * \retval TVG_RESULT_NOT_SUPPORTED Unsupported value.
 * \retval TVG_RESULT_FAILED_ALLOCATION An internal error with a memory allocation.
+*
+* \since 0.11
 */
 TVG_API Tvg_Result tvg_shape_set_stroke_miterlimit(Tvg_Paint* paint, float miterlimit);
 
 
 /*!
-* \brief The function gets the stroke miterlimit. (BETA_API)
+* \brief The function gets the stroke miterlimit.
 *
 * \param[in] paint A Tvg_Paint pointer to the shape object.
 * \param[out] miterlimit The stroke miterlimit.
@@ -1440,6 +1443,8 @@ TVG_API Tvg_Result tvg_shape_set_stroke_miterlimit(Tvg_Paint* paint, float miter
 * \return Tvg_Result enumeration.
 * \retval TVG_RESULT_SUCCESS Succeed.
 * \retval TVG_RESULT_INVALID_ARGUMENT An invalid pointer passed as an argument.
+*
+* \since 0.11
 */
 TVG_API Tvg_Result tvg_shape_get_stroke_miterlimit(const Tvg_Paint* paint, float* miterlimit);
 
@@ -1870,7 +1875,7 @@ TVG_API Tvg_Result tvg_gradient_del(Tvg_Gradient* grad);
 /**
 * \defgroup ThorVGCapi_Picture Picture
 *
-* \brief A module enabling to create and to load an image in one of the supported formats: svg, png, jpg and raw.
+* \brief A module enabling to create and to load an image in one of the supported formats: svg, png, jpg, lottie and raw.
 *
 *
 * \{
@@ -1922,7 +1927,7 @@ TVG_API Tvg_Result tvg_picture_load_raw(Tvg_Paint* paint, uint32_t *data, uint32
 * \param[in] paint A Tvg_Paint pointer to the picture object.
 * \param[in] data A pointer to a memory location where the content of the picture file is stored.
 * \param[in] size The size in bytes of the memory occupied by the @p data.
-* \param[in] mimetype Mimetype or extension of data such as "jpg", "jpeg", "svg", "svg+xml", "png", etc. In case an empty string or an unknown type is provided, the loaders will be tried one by one.
+* \param[in] mimetype Mimetype or extension of data such as "jpg", "jpeg", "svg", "svg+xml", "lottie", "png", etc. In case an empty string or an unknown type is provided, the loaders will be tried one by one.
 * \param[in] copy If @c true the data are copied into the engine local buffer, otherwise they are not.
 *
 * \return Tvg_Result enumeration.

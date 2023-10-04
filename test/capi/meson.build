@@ -1,4 +1,5 @@
 test_file = [
+   'capiAnimation.cpp',
    'capiInitializer.cpp',
    'capiFill.cpp',
    'capiLinearGradient.cpp',

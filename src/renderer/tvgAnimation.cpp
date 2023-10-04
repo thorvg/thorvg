@@ -36,12 +36,12 @@ struct Animation::Impl
     Impl()
     {
         picture = Picture::gen().release();
-        static_cast<Paint*>(picture)->pImpl->ref();
+        PP(picture)->ref();
     }
 
     ~Impl()
     {
-        if (static_cast<Paint*>(picture)->pImpl->unref() == 0) {
+        if (PP(picture)->unref() == 0) {
             delete(picture);
         }
     }

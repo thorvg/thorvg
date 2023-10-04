@@ -304,6 +304,7 @@ unique_ptr<Paint> LottieLoader::paint()
 {
     this->done();
     if (!comp) return nullptr;
+    comp->initiated = true;
     return cast<Paint>(comp->scene);
 }
 

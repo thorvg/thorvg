@@ -21,7 +21,7 @@ jobs:
 
     - name: Build
       run: |
-        meson --backend=ninja build -Dlog=true -Dloaders="all" -Dsavers="all" -Dbindings="capi" -Dtools="all"
+        meson setup --backend=ninja build -Dlog=true -Dloaders="all" -Dsavers="all" -Dbindings="capi" -Dtools="all"
         where link
         ninja -C build install
 
@@ -42,7 +42,7 @@ jobs:
 
     - name: Build
       run: |
-        meson --backend=ninja build -Dlog=true -Dloaders="all" -Dsavers="all" -Dbindings="capi" -Dtools="all" -Dstatic=true
+        meson setup --backend=ninja build -Dlog=true -Dloaders="all" -Dsavers="all" -Dbindings="capi" -Dtools="all" -Dstatic=true
         where link
         ninja -C build install
 
@@ -63,7 +63,7 @@ jobs:
 
     - name: Build
       run: |
-        meson --backend=ninja build -Dloaders="all" -Dsavers="all" -Dbindings="capi" -Dtests=true --errorlogs
+        meson setup --backend=ninja build -Dloaders="all" -Dsavers="all" -Dbindings="capi" -Dtests=true --errorlogs
         where link
         ninja -C build install test
 

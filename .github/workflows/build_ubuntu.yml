@@ -27,7 +27,7 @@ jobs:
 
     - name: Build
       run: |
-        meson . build -Dlog=true -Dexamples=true -Dloaders="all" -Dsavers="all" -Dbindings="capi" -Dtools="all"
+        meson setup build -Dlog=true -Dexamples=true -Dloaders="all" -Dsavers="all" -Dbindings="capi" -Dtools="all"
         sudo ninja -C build install
 
   static_loaders:
@@ -46,7 +46,7 @@ jobs:
 
     - name: Build
       run: |
-        meson . build -Dlog=true -Dloaders="all" -Dsavers="all" -Dbindings="capi" -Dtools="all" -Dstatic=true
+        meson setup build -Dlog=true -Dloaders="all" -Dsavers="all" -Dbindings="capi" -Dtools="all" -Dstatic=true
         sudo ninja -C build install
 
   unit_test:
@@ -68,7 +68,7 @@ jobs:
 
     - name: Build
       run: |
-        meson . build -Dloaders="all" -Dsavers="all" -Dbindings="capi" -Dtests=true --errorlogs
+        meson setup build -Dloaders="all" -Dsavers="all" -Dbindings="capi" -Dtests=true --errorlogs
         sudo ninja -C build install test
 
     - uses: actions/upload-artifact@v3
@@ -87,7 +87,7 @@ jobs:
     - name: Build & Run memcheck Script(ASAN)
       run: |
         sudo rm -rf ./build
-        meson . build -Db_sanitize="address,undefined" -Dloaders="all, webp_beta" -Dsavers="all" -Dtests="true" -Dbindings="capi"
+        meson setup build -Db_sanitize="address,undefined" -Dloaders="all, webp_beta" -Dsavers="all" -Dtests="true" -Dbindings="capi"
         sudo ninja -C build install
         export PATH=$PATH:~/.local/bin/
         chmod +x "${GITHUB_WORKSPACE}/.github/workflows/memcheck_asan.sh"

@@ -19,8 +19,5 @@ var annotated_dup =
       [ "Animation", "classtvg_1_1Animation.html", "classtvg_1_1Animation" ],
       [ "Saver", "classtvg_1_1Saver.html", "classtvg_1_1Saver" ],
       [ "Accessor", "classtvg_1_1Accessor.html", "classtvg_1_1Accessor" ]
-    ] ],
-    [ "Tvg_Color_Stop", "structTvg__Color__Stop.html", "structTvg__Color__Stop" ],
-    [ "Tvg_Matrix", "structTvg__Matrix.html", null ],
-    [ "Tvg_Point", "structTvg__Point.html", null ]
+    ] ]
 ];

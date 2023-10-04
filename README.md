@@ -1,11 +1,12 @@
 [![Discord](https://img.shields.io/badge/Community-5865f2?style=flat&logo=discord&logoColor=white)](https://discord.gg/n25xj6J6HM)
 [![License](https://img.shields.io/badge/licence-MIT-green.svg?style=flat)](LICENSE)
-![BinarySize](https://img.shields.io/badge/Size-150kb-blue)
+![BinarySize](https://img.shields.io/badge/Size-200kb-blue)
 [![CodeFactor](https://www.codefactor.io/repository/github/hermet/thorvg/badge)](https://www.codefactor.io/repository/github/hermet/thorvg)
 <br>
 [![Build Ubuntu](https://github.com/thorvg/thorvg/actions/workflows/build_ubuntu.yml/badge.svg?branch=main&event=push)](https://github.com/thorvg/thorvg/actions/workflows/build_ubuntu.yml)
 [![Build Windows](https://github.com/thorvg/thorvg/actions/workflows/build_windows.yml/badge.svg?branch=main&event=push)](https://github.com/thorvg/thorvg/actions/workflows/build_windows.yml)
 [![Build MacOS](https://github.com/thorvg/thorvg/actions/workflows/build_macos.yml/badge.svg?branch=main&event=push)](https://github.com/thorvg/thorvg/actions/workflows/build_macos.yml)
+[![Build iOS](https://github.com/thorvg/thorvg/actions/workflows/build_ios.yml/badge.svg?branch=main&event=push)](https://github.com/thorvg/thorvg/actions/workflows/build_ios.yml)
 
 
 # ThorVG
@@ -79,7 +80,7 @@ ThorVG supports [meson](https://mesonbuild.com/) build system. Install [meson](h
 
 Run meson to configure ThorVG in the thorvg root folder.
 ```
-meson builddir
+meson setup builddir
 ```
 Run ninja to build & install ThorVG:
 ```
@@ -94,7 +95,7 @@ Note that some systems might include ThorVG package as a default component. In t
 ### Build with Visual Studio
 If you want to create Visual Studio project files, use the command --backend=vs. The resulting solution file (thorvg.sln) will be located in the build folder.
 ```
-meson build --backend=vs
+meson setup builddir --backend=vs
 ```
 </br>
 
@@ -335,7 +336,7 @@ here are plenty of sample code in `thorvg/src/examples` to help you in understan
 
 To execute these examples, you can build them with the following meson build option:
 ```
-meson . build -Dexamples=true
+meson setup builddir -Dexamples=true
 ```
 Note that these examples require the EFL dev package for launching. If you're using Linux-based OS, you can easily install this package from your OS distribution server. For Ubuntu, you can install it with this command.
 ```
@@ -364,7 +365,7 @@ ThorVG provides an executable `svg2png` converter that generates a PNG file from
 
 To use the `svg2png`, you must turn on this feature in the build option:
 ```
-meson . build -Dtools=svg2png
+meson setup builddir -Dtools=svg2png
 ```
 Alternatively, you can add the `svg2png` value to the `tools` option in `meson_option.txt`. The build output will be located in `{builddir}/src/bin/svg2png/`.
 <br />
@@ -399,7 +400,7 @@ ThorVG provides an executable `svg2tvg` converter that generates a TVG file from
 
 To use `svg2tvg`, you need to activate this feature in the build option:
 ```
-meson . build -Dtools=svg2tvg
+meson setup builddir -Dtools=svg2tvg
 ```
 Alternatively, you can add the `svg2tvg` value to the `tools` option in `meson_option.txt`. The build output will be located in `{builddir}/src/bin/svg2tvg/`.
 
@@ -421,7 +422,7 @@ Our main development APIs are written in C++, but ThorVG also provides API bindi
 
 To enable CAPI binding, you need to activate this feature in the build options:
 ```
-meson . build -Dbindings="capi"
+meson setup builddir -Dbindings="capi"
 ```
 [Back to contents](#contents)
 <br />

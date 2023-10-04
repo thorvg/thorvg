@@ -68,7 +68,7 @@ namespace tvg
         uint8_t ctxFlag = ContextFlag::Invalid;
         uint8_t id;
         uint8_t opacity = 255;
-        uint8_t refCnt = 1;
+        uint8_t refCnt = 0;
 
         ~Impl()
         {

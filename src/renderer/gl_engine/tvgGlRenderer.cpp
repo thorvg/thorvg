@@ -146,10 +146,53 @@ bool GlRenderer::blend(TVG_UNUSED BlendMethod method)
 }
 
 
-bool GlRenderer::renderImage(TVG_UNUSED void* data)
+bool GlRenderer::renderImage(void* data)
 {
-    //TODO: render requested images
-    return false;
+    auto sdata = static_cast<GlShape*>(data);
+
+    if (!sdata) return false;
+
+    if ((sdata->updateFlag & RenderUpdateFlag::Image) == 0) return false;
+
+    auto task = make_unique<GlRenderTask>(mPrograms[RT_Image].get());
+
+    if (!sdata->geometry->draw(task.get(), mGpuBuffer.get(), RenderUpdateFlag::Image)) return false;
+
+    // matrix buffer
+    {
+        auto matrix = sdata->geometry->getTransforMatrix();
+        uint32_t loc = task->getProgram()->getUniformBlockIndex("Matrix");
+
+        task->addBindResource(GlBindingResource{
+            0,
+            loc,
+            mGpuBuffer->getBufferId(),
+            mGpuBuffer->push(matrix, 16 * sizeof(float), true),
+            16 * sizeof(float),
+        });
+    }
+    // image info
+    {
+        uint32_t info[4] = {sdata->texColorSpace, sdata->texFlipY, sdata->texOpacity, 0};
+        uint32_t loc = task->getProgram()->getUniformBlockIndex("ColorInfo");
+
+        task->addBindResource(GlBindingResource{
+            1,
+            loc,
+            mGpuBuffer->getBufferId(),
+            mGpuBuffer->push(info, 4 * sizeof(uint32_t), true),
+            4 * sizeof(uint32_t),
+        });
+    }
+    // texture id
+    {
+        uint32_t loc = task->getProgram()->getUniformLocation("uTexture");
+        task->addBindResource(GlBindingResource{0, sdata->texId, loc});
+    }
+
+    mRenderTasks.emplace_back(std::move(task));
+
+    return true;
 }
 
 
@@ -196,15 +239,54 @@ bool GlRenderer::dispose(RenderData data)
     auto sdata = static_cast<GlShape*>(data);
     if (!sdata) return false;
 
+    if (sdata->texId) glDeleteTextures(1, &sdata->texId);
+
     delete sdata;
     return true;
 }
 
-
-RenderData GlRenderer::prepare(TVG_UNUSED Surface* surface, TVG_UNUSED const RenderMesh* mesh, TVG_UNUSED RenderData data, TVG_UNUSED const RenderTransform* transform, TVG_UNUSED Array<RenderData>& clips, TVG_UNUSED uint8_t opacity, TVG_UNUSED RenderUpdateFlag flags)
+static GLuint _genTexture(Surface* image)
 {
-    //TODO:
-    return nullptr;
+    GLuint tex = 0;
+
+    GL_CHECK(glGenTextures(1, &tex));
+
+    GL_CHECK(glBindTexture(GL_TEXTURE_2D, tex));
+    GL_CHECK(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, image->w, image->h, 0, GL_RGBA, GL_UNSIGNED_BYTE, image->data));
+
+    GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
+    GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
+    GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
+    GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
+
+    GL_CHECK(glBindTexture(GL_TEXTURE_2D, 0));
+
+    return tex;
+}
+
+RenderData GlRenderer::prepare(Surface* image, const RenderMesh* mesh, RenderData data, const RenderTransform* transform, TVG_UNUSED Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags)
+{
+    if (flags == RenderUpdateFlag::None) return nullptr;
+
+    auto sdata = static_cast<GlShape*>(data);
+
+    if (!sdata) sdata = new GlShape;
+
+    sdata->viewWd = static_cast<float>(surface.w);
+    sdata->viewHt = static_cast<float>(surface.h);
+    sdata->updateFlag = flags;
+
+    sdata->texId = _genTexture(image);
+    sdata->texOpacity = opacity;
+    sdata->texColorSpace = image->cs;
+    sdata->texFlipY = (mesh && mesh->triangleCnt) ? 0 : 1;
+    sdata->geometry = make_unique<GlGeometry>();
+
+    sdata->geometry->updateTransform(transform, sdata->viewWd, sdata->viewHt);
+
+    sdata->geometry->tesselate(image, mesh, flags);
+
+    return sdata;
 }
 
 
@@ -324,6 +406,9 @@ void GlRenderer::initShaders()
 
     // Radial Gradient Renderer
     mPrograms.push_back(make_unique<GlProgram>(GlShader::gen(GRADIENT_VERT_SHADER, RADIAL_GRADIENT_FRAG_SHADER)));
+
+    // image Renderer
+    mPrograms.push_back(make_unique<GlProgram>(GlShader::gen(IMAGE_VERT_SHADER, IMAGE_FRAG_SHADER)));
 }
 
 

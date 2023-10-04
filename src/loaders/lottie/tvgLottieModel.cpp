@@ -158,6 +158,8 @@ int32_t LottieLayer::remap(int32_t frameNo)
 
 LottieComposition::~LottieComposition()
 {
+    if (!initiated) delete(scene);
+
     delete(root);
     free(version);
     free(name);

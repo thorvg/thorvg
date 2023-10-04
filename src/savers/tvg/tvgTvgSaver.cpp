@@ -26,6 +26,7 @@
 #include "tvgTvgSaver.h"
 #include "tvgCompressor.h"
 #include "tvgShape.h"
+#include "tvgFill.h"
 #include "tvgPicture.h"
 
 #ifdef _WIN32
@@ -411,9 +412,17 @@ TvgBinCounter TvgSaver::serializeFill(const Fill* fill, TvgBinTag tag, const Mat
 
     //radial fill
     if (fill->identifier() == TVG_CLASS_ID_RADIAL) {
+        const RadialGradient* radial = static_cast<const RadialGradient*>(fill);
         float args[3];
-        static_cast<const RadialGradient*>(fill)->radial(args, args + 1, args + 2);
+        radial->radial(args, args + 1, args + 2);
         cnt += writeTagProperty(TVG_TAG_FILL_RADIAL_GRADIENT, SIZE(args), args);
+        //focal
+        if (!mathZero(P(radial)->fx)|| !mathZero(P(radial)->fy) || P(radial)->fr > 0.0f) {
+            args[0] = P(radial)->fx;
+            args[1] = P(radial)->fy;
+            args[2] = P(radial)->fr;
+            cnt += writeTagProperty(TVG_TAG_FILL_RADIAL_GRADIENT_FOCAL, SIZE(args), args);
+        }
     //linear fill
     } else {
         float args[4];
@@ -469,7 +478,8 @@ TvgBinCounter TvgSaver::serializeStroke(const Shape* shape, const Matrix* pTrans
 
     //dash
     const float* dashPattern = nullptr;
-    auto dashCnt = shape->strokeDash(&dashPattern);
+    float offset = 0.0f;
+    auto dashCnt = P(shape)->rs.strokeDash(&dashPattern, &offset);
     if (dashPattern && dashCnt > 0) {
         TvgBinCounter dashCntSize = SIZE(dashCnt);
         TvgBinCounter dashPtrnSize = dashCnt * SIZE(dashPattern[0]);
@@ -485,6 +495,11 @@ TvgBinCounter TvgSaver::serializeStroke(const Shape* shape, const Matrix* pTrans
     auto miterlimit = shape->strokeMiterlimit();
     if (fabsf(miterlimit - 4.0f) > FLT_EPSILON) {
         cnt += writeTagProperty(TVG_TAG_SHAPE_STROKE_MITERLIMIT, SIZE(miterlimit), &miterlimit);
+    }
+
+    //dash offset
+    if (!mathZero(offset)) {
+        cnt += writeTagProperty(TVG_TAG_SHAPE_STROKE_DASH_OFFSET, SIZE(offset), &offset);
     }
 
     writeReservedCount(cnt);

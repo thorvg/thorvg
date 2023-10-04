@@ -773,10 +773,8 @@ RenderData SwRenderer::prepare(Surface* surface, const RenderMesh* mesh, RenderD
     //prepare task
     auto task = static_cast<SwImageTask*>(data);
     if (!task) task = new SwImageTask;
-    if (flags & RenderUpdateFlag::Image) {
-        task->source = surface;
-        task->mesh = mesh;
-    }
+    task->source = surface;
+    task->mesh = mesh;
     return prepareCommon(task, transform, clips, opacity, flags);
 }
 

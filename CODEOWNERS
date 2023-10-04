@@ -8,7 +8,7 @@
 /src/loaders/external_webp/ @JSUYA
 /src/savers/tvg/ @mgrudzinska
 /src/bindings/capi/ @mgrudzinska
-/src/bin/svg2png/ @JSUYA
+/src/tools/svg2png/ @JSUYA
 /src/examples/ @JSUYA @mgrudzinska
 /test/* @JSUYA @mgrudzinska
 /test/capi/ @mgrudzinska
