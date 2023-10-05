@@ -4,6 +4,7 @@ We always appreciate your contribution. ThorVG doesn't expect patches to be perf
 Hermet Park (hermet) is the lead maintainer. Additionally, there are designated maintainers to whom you can direct your pull requests for separate modules.
 
 <b>sw_engine:</b> Junsu Choi (JSUYA), Mira Grudzinska (mgrudzinska) <br />
+<b>gl_engine:</b> Ruiwen Tang (RuiwenTang) <br />
 <b>svg_loader:</b> Junsu Choi (JSUYA), Mira Grudzinska (mgrudzinska) <br />
 <b>tvg_loader:</b> Mira Grudzinska (mgrudzinska) <br />
 <b>webp_loader:</b> Junsu Choi (JSUYA) <br />
