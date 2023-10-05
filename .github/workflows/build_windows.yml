@@ -17,7 +17,7 @@ jobs:
 
     - name: Install Packages
       run: |
-        pip install meson==0.58.0 ninja
+        pip install meson ninja
 
     - name: Build
       run: |
@@ -38,7 +38,7 @@ jobs:
 
     - name: Install Packages
       run: |
-        pip install meson==0.58.0 ninja
+        pip install meson ninja
 
     - name: Build
       run: |
@@ -59,7 +59,7 @@ jobs:
 
     - name: Install Packages
       run: |
-        pip install meson==0.58.0 ninja
+        pip install meson ninja
 
     - name: Build
       run: |
@@ -71,3 +71,4 @@ jobs:
       with:
         name: UnitTestReport
         path: build/meson-logs/testlog.txt
+
