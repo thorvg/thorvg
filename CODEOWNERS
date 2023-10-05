@@ -3,6 +3,7 @@
 # For more information, please consult the AUTHORS file.
 
 * @hermet
+/src/renderer/gl_engine @RuiwenTang
 /src/loaders/svg/ @JSUYA @mgrudzinska
 /src/loaders/tvg/ @mgrudzinska
 /src/loaders/external_webp/ @JSUYA
