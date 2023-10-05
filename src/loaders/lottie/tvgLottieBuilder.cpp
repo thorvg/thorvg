@@ -20,6 +20,8 @@
  * SOFTWARE.
  */
 
+#include <queue>
+
 #include "tvgCommon.h"
 #include "tvgPaint.h"
 #include "tvgShape.h"
@@ -35,7 +37,8 @@
 struct RenderContext
 {
     Shape* propagator = nullptr;
-    Shape* merging = nullptr;                //merging shapes if possible (if shapes have same properties)
+    Shape* merging = nullptr;  //merging shapes if possible (if shapes have same properties)
+    LottieObject** begin = nullptr; //iteration entry point
     float roundness = 0.0f;
 
     struct {
@@ -52,6 +55,8 @@ struct RenderContext
         bool valid = false;
     } repeater;
 
+    bool fragmented = false;  //context has been separated. allow adding visual properties(fill/stroking) if it is false.
+
     RenderContext()
     {
         propagator = Shape::gen().release();
@@ -64,14 +69,15 @@ struct RenderContext
 
     RenderContext(const RenderContext& rhs)
     {
-        propagator = rhs.propagator ? static_cast<Shape*>(rhs.propagator->duplicate()) : Shape::gen().release();
+        propagator = static_cast<Shape*>(rhs.propagator->duplicate());
         repeater = rhs.repeater;
         roundness = rhs.roundness;
+        fragmented = rhs.fragmented;
     }
 };
 
 
-static void _updateChildren(LottieGroup* parent, int32_t frameNo, RenderContext& ctx);
+static void _updateChildren(LottieGroup* parent, int32_t frameNo, queue<RenderContext>& contexts);
 static void _updateLayer(LottieLayer* root, LottieLayer* layer, int32_t frameNo);
 static bool _buildPrecomp(LottieComposition* comp, LottieGroup* parent);
 
@@ -180,23 +186,15 @@ static void _updateTransform(LottieTransform* transform, int32_t frameNo, Render
 
 static void _updateGroup(LottieGroup* parent, LottieGroup* group, int32_t frameNo, RenderContext& ctx)
 {
+    if (group->children.empty()) return;
+
     //Prepare render data
     group->scene = parent->scene;
-    auto ctx2 = ctx;
-    _updateChildren(group, frameNo, ctx2);
-}
 
+    queue<RenderContext> contexts;
+    contexts.push(ctx);
 
-static void _updateFill(LottieSolidFill* fill, int32_t frameNo, RenderContext& ctx)
-{
-    //TODO: Skip if property has not been modified actually.
-    ctx.merging = nullptr;
-
-    auto color = fill->color(frameNo);
-    ctx.propagator->fill(color.rgb[0], color.rgb[1], color.rgb[2], fill->opacity(frameNo));
-    ctx.propagator->fill(fill->rule);
-
-    if (ctx.propagator->strokeWidth() > 0) ctx.propagator->order(true);
+    _updateChildren(group, frameNo, contexts);
 }
 
 
@@ -218,25 +216,73 @@ static void _updateStroke(LottieStroke* stroke, int32_t frameNo, RenderContext& 
 }
 
 
-static void _updateStroke(LottieSolidStroke* stroke, int32_t frameNo, RenderContext& ctx)
+static void _updateSolidStroke(LottieObject** child, int32_t frameNo, queue<RenderContext>& contexts, RenderContext& ctx)
 {
+    //the rendering context is fragmented
+    if (ctx.propagator->strokeWidth() > 0.0f) {
+        contexts.push(ctx);
+        auto& fragment = contexts.back();
+        fragment.propagator->stroke(0.0f);
+        fragment.begin = child - 1;
+        _updateSolidStroke(child, frameNo, contexts, fragment);
+        ctx.fragmented = true;
+        return;
+    }
+
+    if (ctx.fragmented) return;
+
+    auto stroke = static_cast<LottieSolidStroke*>(*child);
+
     ctx.merging = nullptr;
     auto color = stroke->color(frameNo);
     ctx.propagator->stroke(color.rgb[0], color.rgb[1], color.rgb[2], stroke->opacity(frameNo));
+
     _updateStroke(static_cast<LottieStroke*>(stroke), frameNo, ctx);
 }
 
 
-static void _updateStroke(LottieGradientStroke* stroke, int32_t frameNo, RenderContext& ctx)
+static void _updateGradientStroke(LottieObject** child, int32_t frameNo, queue<RenderContext>& contexts, RenderContext& ctx)
 {
+    //the rendering context is fragmented
+    if (ctx.propagator->strokeWidth() > 0.0f) {
+        contexts.push(ctx);
+        auto& fragment = contexts.back();
+        fragment.propagator->stroke(0.0f);
+        fragment.begin = child - 1;
+        _updateGradientStroke(child, frameNo, contexts, fragment);
+        ctx.fragmented = true;
+        return;
+    }
+
+    if (ctx.fragmented) return;
+
+    auto stroke = static_cast<LottieGradientStroke*>(*child);
+
     ctx.merging = nullptr;
     ctx.propagator->stroke(unique_ptr<Fill>(stroke->fill(frameNo)));
+
     _updateStroke(static_cast<LottieStroke*>(stroke), frameNo, ctx);
+}
+
+
+static void _updateFill(LottieSolidFill* fill, int32_t frameNo, RenderContext& ctx)
+{
+    if (ctx.fragmented) return;
+
+    ctx.merging = nullptr;
+
+    auto color = fill->color(frameNo);
+    ctx.propagator->fill(color.rgb[0], color.rgb[1], color.rgb[2], fill->opacity(frameNo));
+    ctx.propagator->fill(fill->rule);
+
+    if (ctx.propagator->strokeWidth() > 0) ctx.propagator->order(true);
 }
 
 
 static Shape* _updateFill(LottieGradientFill* fill, int32_t frameNo, RenderContext& ctx)
 {
+    if (ctx.fragmented) return nullptr;
+
     ctx.merging = nullptr;
 
     //TODO: reuse the fill instance?
@@ -559,7 +605,6 @@ static void _updatePolystar(LottieGroup* parent, LottiePolyStar* star, int32_t f
 
     auto identity = mathIdentity((const Matrix*)&matrix);
 
-
     if (ctx.repeater.valid) {
         auto p = Shape::gen();
         if (star->type == LottiePolyStar::Star) _updateStar(parent, star, identity ? nullptr : &matrix, frameNo, p.get());
@@ -659,72 +704,75 @@ static void _updateTrimpath(LottieTrimpath* trimpath, int32_t frameNo, RenderCon
 }
 
 
-static void _updateChildren(LottieGroup* parent, int32_t frameNo, RenderContext& ctx)
+static void _updateChildren(LottieGroup* parent, int32_t frameNo, queue<RenderContext>& contexts)
 {
-    if (parent->children.empty()) return;
+    contexts.front().begin = parent->children.end() - 1;
 
-    //Draw the parent shapes first
-    for (auto child = parent->children.end() - 1; child >= parent->children.data; --child) {
-        //TODO: Polymorphsim?
-        switch ((*child)->type) {
-            case LottieObject::Group: {
-                _updateGroup(parent, static_cast<LottieGroup*>(*child), frameNo, ctx);
-                break;
+    while (contexts.size() > 0) {
+        auto& ctx = contexts.front();
+        for (auto child = ctx.begin; child >= parent->children.data; --child) {
+            //TODO: Polymorphsim?
+            switch ((*child)->type) {
+                case LottieObject::Group: {
+                    _updateGroup(parent, static_cast<LottieGroup*>(*child), frameNo, ctx);
+                    break;
+                }
+                case LottieObject::Transform: {
+                    _updateTransform(static_cast<LottieTransform*>(*child), frameNo, ctx);
+                    break;
+                }
+                case LottieObject::SolidFill: {
+                    _updateFill(static_cast<LottieSolidFill*>(*child), frameNo, ctx);
+                    break;
+                }
+                case LottieObject::SolidStroke: {
+                    _updateSolidStroke(child, frameNo, contexts, ctx);
+                    break;
+                }
+                case LottieObject::GradientFill: {
+                    _updateFill(static_cast<LottieGradientFill*>(*child), frameNo, ctx);
+                    break;
+                }
+                case LottieObject::GradientStroke: {
+                    _updateGradientStroke(child, frameNo, contexts, ctx);
+                    break;
+                }
+                case LottieObject::Rect: {
+                    _updateRect(parent, static_cast<LottieRect*>(*child), frameNo, ctx);
+                    break;
+                }
+                case LottieObject::Ellipse: {
+                    _updateEllipse(parent, static_cast<LottieEllipse*>(*child), frameNo, ctx);
+                    break;
+                }
+                case LottieObject::Path: {
+                    _updatePath(parent, static_cast<LottiePath*>(*child), frameNo, ctx);
+                    break;
+                }
+                case LottieObject::Polystar: {
+                    _updatePolystar(parent, static_cast<LottiePolyStar*>(*child), frameNo, ctx);
+                    break;
+                }
+                case LottieObject::Image: {
+                    _updateImage(parent, static_cast<LottieImage*>(*child), frameNo, ctx);
+                    break;
+                }
+                case LottieObject::Trimpath: {
+                    _updateTrimpath(static_cast<LottieTrimpath*>(*child), frameNo, ctx);
+                    break;
+                }
+                case LottieObject::Repeater: {
+                    _updateRepeater(static_cast<LottieRepeater*>(*child), frameNo, ctx);
+                    break;
+                }
+                case LottieObject::RoundedCorner: {
+                    _updateRoundedCorner(static_cast<LottieRoundedCorner*>(*child), frameNo, ctx);
+                    break;
+                }
+                default: break;
             }
-            case LottieObject::Transform: {
-                _updateTransform(static_cast<LottieTransform*>(*child), frameNo, ctx);
-                break;
-            }
-            case LottieObject::SolidFill: {
-                _updateFill(static_cast<LottieSolidFill*>(*child), frameNo, ctx);
-                break;
-            }
-            case LottieObject::SolidStroke: {
-                _updateStroke(static_cast<LottieSolidStroke*>(*child), frameNo, ctx);
-                break;
-            }
-            case LottieObject::GradientFill: {
-                _updateFill(static_cast<LottieGradientFill*>(*child), frameNo, ctx);
-                break;
-            }
-            case LottieObject::GradientStroke: {
-                _updateStroke(static_cast<LottieGradientStroke*>(*child), frameNo, ctx);
-                break;
-            }
-            case LottieObject::Rect: {
-                _updateRect(parent, static_cast<LottieRect*>(*child), frameNo, ctx);
-                break;
-            }
-            case LottieObject::Ellipse: {
-                _updateEllipse(parent, static_cast<LottieEllipse*>(*child), frameNo, ctx);
-                break;
-            }
-            case LottieObject::Path: {
-                _updatePath(parent, static_cast<LottiePath*>(*child), frameNo, ctx);
-                break;
-            }
-            case LottieObject::Polystar: {
-                _updatePolystar(parent, static_cast<LottiePolyStar*>(*child), frameNo, ctx);
-                break;
-            }
-            case LottieObject::Image: {
-                _updateImage(parent, static_cast<LottieImage*>(*child), frameNo, ctx);
-                break;
-            }
-            case LottieObject::Trimpath: {
-                _updateTrimpath(static_cast<LottieTrimpath*>(*child), frameNo, ctx);
-                break;
-            }
-            case LottieObject::Repeater: {
-                _updateRepeater(static_cast<LottieRepeater*>(*child), frameNo, ctx);
-                break;
-            }
-            case LottieObject::RoundedCorner: {
-                _updateRoundedCorner(static_cast<LottieRoundedCorner*>(*child), frameNo, ctx);
-                break;
-            }
-            default: break;
         }
+        contexts.pop();
     }
 }
 
@@ -839,7 +887,9 @@ static void _updateLayer(LottieLayer* root, LottieLayer* layer, int32_t frameNo)
 
     switch (layer->type) {
         case LottieLayer::Precomp: {
-            _updatePrecomp(layer, frameNo);
+            if (!layer->children.empty()) {
+                _updatePrecomp(layer, frameNo);
+            }
             break;
         }
         case LottieLayer::Solid: {
@@ -847,8 +897,11 @@ static void _updateLayer(LottieLayer* root, LottieLayer* layer, int32_t frameNo)
             break;
         }
         default: {
-            RenderContext ctx;
-            _updateChildren(layer, frameNo, ctx);
+            if (!layer->children.empty()) {
+                queue<RenderContext> contexts;
+                contexts.emplace();
+                _updateChildren(layer, frameNo, contexts);
+            }
             break;
         }
     }
