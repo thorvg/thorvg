@@ -30,6 +30,10 @@ jobs:
         name: result
         path: build/src/thorvg*
 
+    - if: ${{ failure() }}
+      uses: mxschmitt/action-tmate@v3
+      timeout-minutes: 15
+
   static_loaders:
     runs-on: windows-latest
     steps:
@@ -71,3 +75,4 @@ jobs:
       with:
         name: UnitTestReport
         path: build/meson-logs/testlog.txt
+
