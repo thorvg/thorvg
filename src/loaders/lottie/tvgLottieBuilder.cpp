@@ -34,27 +34,28 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
+struct RenderRepeater
+{
+    int cnt;
+    float offset;
+    Point position;
+    Point anchor;
+    Point scale;
+    float rotation;
+    uint8_t startOpacity;
+    uint8_t endOpacity;
+    bool interpOpacity;
+    bool inorder;
+};
+
+
 struct RenderContext
 {
     Shape* propagator = nullptr;
     Shape* merging = nullptr;  //merging shapes if possible (if shapes have same properties)
     LottieObject** begin = nullptr; //iteration entry point
+    RenderRepeater* repeater = nullptr;
     float roundness = 0.0f;
-
-    struct {
-        int cnt;
-        float offset;
-        Point position;
-        Point anchor;
-        Point scale;
-        float rotation;
-        uint8_t startOpacity;
-        uint8_t endOpacity;
-        bool interpOpacity;
-        bool inorder;
-        bool valid = false;
-    } repeater;
-
     bool fragmented = false;  //context has been separated. allow adding visual properties(fill/stroking) if it is false.
 
     RenderContext()
@@ -65,12 +66,16 @@ struct RenderContext
     ~RenderContext()
     {
         delete(propagator);
+        delete(repeater);
     }
 
     RenderContext(const RenderContext& rhs)
     {
         propagator = static_cast<Shape*>(rhs.propagator->duplicate());
-        repeater = rhs.repeater;
+        if (rhs.repeater) {
+            repeater = new RenderRepeater();
+            *repeater = *rhs.repeater;
+        }
         roundness = rhs.roundness;
         fragmented = rhs.fragmented;
     }
@@ -311,26 +316,26 @@ static Shape* _draw(LottieGroup* parent, int32_t frameNo, RenderContext& ctx)
 //OPTIMIZE: path?
 static void _repeat(LottieGroup* parent, int32_t frameNo, unique_ptr<Shape> path, RenderContext& ctx)
 {
-    auto& repeater = ctx.repeater;
+    auto repeater = ctx.repeater;
 
     Array<Shape*> shapes;
-    shapes.reserve(repeater.cnt);
+    shapes.reserve(repeater->cnt);
 
-    for (int i = 0; i < repeater.cnt; ++i) {
-        auto multiplier = repeater.offset + static_cast<float>(i);
+    for (int i = 0; i < repeater->cnt; ++i) {
+        auto multiplier = repeater->offset + static_cast<float>(i);
 
         auto shape = static_cast<Shape*>(ctx.propagator->duplicate());
         P(shape)->rs.path = P(path.get())->rs.path;
 
-        auto opacity = repeater.interpOpacity ? mathLerp<uint8_t>(repeater.startOpacity, repeater.endOpacity, static_cast<float>(i + 1) / repeater.cnt) : repeater.startOpacity;
+        auto opacity = repeater->interpOpacity ? mathLerp<uint8_t>(repeater->startOpacity, repeater->endOpacity, static_cast<float>(i + 1) / repeater->cnt) : repeater->startOpacity;
         shape->opacity(opacity);
 
         Matrix m;
         mathIdentity(&m);
-        mathTranslate(&m, repeater.position.x * multiplier + repeater.anchor.x, repeater.position.y * multiplier + repeater.anchor.y);
-        mathScale(&m, powf(repeater.scale.x * 0.01f, multiplier), powf(repeater.scale.y * 0.01f, multiplier));
-        mathRotate(&m, repeater.rotation * multiplier);
-        mathTranslateR(&m, -repeater.anchor.x, -repeater.anchor.y);
+        mathTranslate(&m, repeater->position.x * multiplier + repeater->anchor.x, repeater->position.y * multiplier + repeater->anchor.y);
+        mathScale(&m, powf(repeater->scale.x * 0.01f, multiplier), powf(repeater->scale.y * 0.01f, multiplier));
+        mathRotate(&m, repeater->rotation * multiplier);
+        mathTranslateR(&m, -repeater->anchor.x, -repeater->anchor.y);
 
         auto pm = PP(shape)->transform();
         shape->transform(pm ? mathMultiply(&m, pm) : m);
@@ -344,7 +349,7 @@ static void _repeat(LottieGroup* parent, int32_t frameNo, unique_ptr<Shape> path
     }
 
     //push repeat shapes in order.
-    if (repeater.inorder) {
+    if (repeater->inorder) {
         for (auto shape = shapes.data; shape < shapes.end(); ++shape) {
             parent->scene->push(cast<Shape>(*shape));
         }
@@ -368,7 +373,7 @@ static void _updateRect(LottieGroup* parent, LottieRect* rect, int32_t frameNo, 
         if (roundness > size.y * 0.5f)  roundness = size.y * 0.5f;
     }
 
-    if (ctx.repeater.valid) {
+    if (ctx.repeater) {
         auto path = Shape::gen();
         path->appendRect(position.x - size.x * 0.5f, position.y - size.y * 0.5f, size.x, size.y, roundness, roundness);
         _repeat(parent, frameNo, std::move(path), ctx);
@@ -384,7 +389,7 @@ static void _updateEllipse(LottieGroup* parent, LottieEllipse* ellipse, int32_t 
     auto position = ellipse->position(frameNo);
     auto size = ellipse->size(frameNo);
 
-    if (ctx.repeater.valid) {
+    if (ctx.repeater) {
         auto path = Shape::gen();
         path->appendCircle(position.x, position.y, size.x * 0.5f, size.y * 0.5f);
         _repeat(parent, frameNo, std::move(path), ctx);
@@ -397,7 +402,7 @@ static void _updateEllipse(LottieGroup* parent, LottieEllipse* ellipse, int32_t 
 
 static void _updatePath(LottieGroup* parent, LottiePath* path, int32_t frameNo, RenderContext& ctx)
 {
-    if (ctx.repeater.valid) {
+    if (ctx.repeater) {
         auto p = Shape::gen();
         path->pathset(frameNo, P(p)->rs.path.cmds, P(p)->rs.path.pts);
         _repeat(parent, frameNo, std::move(p), ctx);
@@ -605,7 +610,7 @@ static void _updatePolystar(LottieGroup* parent, LottiePolyStar* star, int32_t f
 
     auto identity = mathIdentity((const Matrix*)&matrix);
 
-    if (ctx.repeater.valid) {
+    if (ctx.repeater) {
         auto p = Shape::gen();
         if (star->type == LottiePolyStar::Star) _updateStar(parent, star, identity ? nullptr : &matrix, frameNo, p.get());
         else _updatePolygon(parent, star, identity  ? nullptr : &matrix, frameNo, p.get());
@@ -667,17 +672,17 @@ static void _updateRoundedCorner(LottieRoundedCorner* roundedCorner, int32_t fra
 
 static void _updateRepeater(LottieRepeater* repeater, int32_t frameNo, RenderContext& ctx)
 {
-    ctx.repeater.cnt = static_cast<int>(repeater->copies(frameNo));
-    ctx.repeater.offset = repeater->offset(frameNo);
-    ctx.repeater.position = repeater->position(frameNo);
-    ctx.repeater.anchor = repeater->anchor(frameNo);
-    ctx.repeater.scale = repeater->scale(frameNo);
-    ctx.repeater.rotation = repeater->rotation(frameNo);
-    ctx.repeater.startOpacity = repeater->startOpacity(frameNo);
-    ctx.repeater.endOpacity = repeater->endOpacity(frameNo);
-    ctx.repeater.inorder = repeater->inorder;
-    ctx.repeater.interpOpacity = (ctx.repeater.startOpacity == ctx.repeater.endOpacity) ? false : true;
-    ctx.repeater.valid = true;
+    if (!ctx.repeater) ctx.repeater = new RenderRepeater();
+    ctx.repeater->cnt = static_cast<int>(repeater->copies(frameNo));
+    ctx.repeater->offset = repeater->offset(frameNo);
+    ctx.repeater->position = repeater->position(frameNo);
+    ctx.repeater->anchor = repeater->anchor(frameNo);
+    ctx.repeater->scale = repeater->scale(frameNo);
+    ctx.repeater->rotation = repeater->rotation(frameNo);
+    ctx.repeater->startOpacity = repeater->startOpacity(frameNo);
+    ctx.repeater->endOpacity = repeater->endOpacity(frameNo);
+    ctx.repeater->inorder = repeater->inorder;
+    ctx.repeater->interpOpacity = (ctx.repeater->startOpacity == ctx.repeater->endOpacity) ? false : true;
 
     ctx.merging = nullptr;
 }
