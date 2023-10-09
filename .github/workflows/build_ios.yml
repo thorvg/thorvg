@@ -20,9 +20,7 @@ jobs:
       run: |
         export HOMEBREW_NO_INSTALL_FROM_API=1
         /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
-        brew unlink node@18
         brew update
-        brew upgrade
         brew install meson
 
     - name: Build
@@ -46,9 +44,7 @@ jobs:
       run: |
         export HOMEBREW_NO_INSTALL_FROM_API=1
         /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
-        brew unlink node@18
         brew update
-        brew upgrade
         brew install meson
 
     - name: Build
