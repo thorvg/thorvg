@@ -1,0 +1,16 @@
+[binaries]
+cpp     = 'NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/x86_64-linux-androidAPI-clang++'
+ar      = 'NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/x86_64-linux-android-ar'
+as      = 'NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/x86_64-linux-android-as'
+ranlib  = 'NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/x86_64-linux-android-ranlib'
+ld      = 'NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/x86_64-linux-android-ld'
+strip   = 'NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/x86_64-linux-android-strip'
+
+[properties]
+sys_root = 'NDK/sysroot'
+
+[host_machine]
+system = 'android'
+cpu_family = 'x86_64'
+cpu = 'x86_64'
+endian = 'little'
