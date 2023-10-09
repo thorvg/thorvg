@@ -27,7 +27,7 @@ jobs:
 
     - name: Build
       run: |
-        meson setup --backend=ninja build -Dlog=true -Dloaders="all" -Dstatic=true -Dsavers="all" -Dbindings="capi" --cross-file ./ios_x86_64_cross.txt
+        meson setup --backend=ninja build -Dlog=true -Dloaders="all" -Dstatic=true -Dsavers="all" -Dbindings="capi" --cross-file ./cross/ios_x86_64.txt
         ninja -C build install
 
     - uses: actions/upload-artifact@v3
@@ -53,7 +53,7 @@ jobs:
 
     - name: Build
       run: |
-        meson setup --backend=ninja build -Dlog=true -Dloaders="all" -Dstatic=true -Dsavers="all" -Dbindings="capi" --cross-file ./ios_arm64_cross.txt
+        meson setup --backend=ninja build -Dlog=true -Dloaders="all" -Dstatic=true -Dsavers="all" -Dbindings="capi" --cross-file ./cross/ios_aarch64.txt
         ninja -C build install
 
     - uses: actions/upload-artifact@v3
