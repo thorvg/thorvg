@@ -193,9 +193,11 @@ public:
     void disableVertex(uint32_t location);
     bool draw(GlRenderTask* task, GlStageBuffer* gpuBuffer, RenderUpdateFlag flag);
     void updateTransform(const RenderTransform* transform, float w, float h);
+    void setViewport(const RenderRegion& viewport);
     float* getTransforMatrix();
 
 private:
+    RenderRegion viewport = {};
     Array<float> fillVertex = {};
     Array<float> strokeVertex = {};
     Array<uint32_t> fillIndex = {};

@@ -31,6 +31,10 @@ void GlRenderTask::run()
 {
     // bind shader
     mProgram->load();
+
+    // setup scissor rect
+    GL_CHECK(glScissor(mViewport.x, mViewport.y, mViewport.w, mViewport.h));
+
     // setup attribute layout
     for (uint32_t i = 0; i < mVertexLayout.count; i++) {
         const auto &layout = mVertexLayout[i];
@@ -79,4 +83,9 @@ void GlRenderTask::setDrawRange(uint32_t offset, uint32_t count)
 {
     mIndexOffset = offset;
     mIndexCount = count;
+}
+
+void GlRenderTask::setViewport(const RenderRegion &viewport)
+{
+    mViewport = viewport;
 }
