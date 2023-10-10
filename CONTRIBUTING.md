@@ -1,7 +1,7 @@
 We always appreciate your contribution. ThorVG doesn't expect patches to be perfect; instead, we value contributions that make ThorVG better than before. This page outlines the ThorVG contribution format.<br />
 <br />
 ## Reviewers
-Hermet Park (hermet) is the lead maintainer. Additionally, there are designated maintainers to whom you can direct your pull requests for separate modules.
+Hermet Park (hermet) is the lead maintainer. Moreover, there are designated maintainers you can contact for individual modules when submitting pull requests.
 
 <b>gl_engine:</b> Ruiwen Tang (RuiwenTang) <br />
 <b>svg_loader:</b> Junsu Choi (JSUYA), Mira Grudzinska (mgrudzinska) <br />

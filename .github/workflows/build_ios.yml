@@ -33,7 +33,7 @@ jobs:
         name: result
         path: build/src/libthorvg*
 
-  build_armv64:
+  build_aarch64:
     runs-on: macos-latest
     steps:
     - uses: actions/checkout@v3
