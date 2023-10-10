@@ -178,7 +178,7 @@ bool GlGeometry::draw(GlRenderTask* task, GlStageBuffer* gpuBuffer, RenderUpdate
         task->addVertexLayout(GlVertexLayout{0, 3, 3 * sizeof(float), vertexOffset});
     }
     task->setDrawRange(indexOffset, indexBuffer->count);
-
+    task->setViewport(viewport);
     return true;
 }
 
@@ -198,6 +198,11 @@ void GlGeometry::updateTransform(const RenderTransform* transform, float w, floa
 
     MVP_MATRIX();
     MULTIPLY_MATRIX(mvp, modelMatrix, mTransform)
+}
+
+void GlGeometry::setViewport(const RenderRegion& viewport)
+{
+    this->viewport = viewport;
 }
 
 float* GlGeometry::getTransforMatrix()

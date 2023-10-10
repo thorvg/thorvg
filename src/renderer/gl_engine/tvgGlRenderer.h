@@ -78,6 +78,7 @@ private:
     void drawPrimitive(GlShape& sdata, uint8_t r, uint8_t g, uint8_t b, uint8_t a, RenderUpdateFlag flag);
     void drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFlag flag);
 
+    RenderRegion mViewport;
     std::unique_ptr<GlStageBuffer> mGpuBuffer;
     vector<std::unique_ptr<GlProgram>> mPrograms;
     vector<std::unique_ptr<GlRenderTask>> mRenderTasks;
