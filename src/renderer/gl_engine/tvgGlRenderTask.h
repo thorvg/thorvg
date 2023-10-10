@@ -81,10 +81,12 @@ public:
     void addVertexLayout(const GlVertexLayout& layout);
     void addBindResource(const GlBindingResource& binding);
     void setDrawRange(uint32_t offset, uint32_t count);
+    void setViewport(const RenderRegion& viewport);
 
     GlProgram* getProgram() { return mProgram; }
 private:
     GlProgram* mProgram;
+    RenderRegion mViewport = {};
     uint32_t mIndexOffset = {};
     uint32_t mIndexCount = {};
     Array<GlVertexLayout> mVertexLayout = {};

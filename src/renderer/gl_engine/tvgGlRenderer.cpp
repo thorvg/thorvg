@@ -63,6 +63,11 @@ bool GlRenderer::target(TVG_UNUSED uint32_t* buffer, uint32_t stride, uint32_t w
     surface.w = w;
     surface.h = h;
 
+    mViewport.x = 0;
+    mViewport.y = 0;
+    mViewport.w = surface.w;
+    mViewport.h = surface.h;
+
     return true;
 }
 
@@ -74,6 +79,7 @@ bool GlRenderer::sync()
     // Blend function for straight alpha
     GL_CHECK(glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA));
     GL_CHECK(glEnable(GL_BLEND));
+    GL_CHECK(glEnable(GL_SCISSOR_TEST));
 
     mGpuBuffer->bind();
 
@@ -84,6 +90,8 @@ bool GlRenderer::sync()
     mGpuBuffer->unbind();
 
     mRenderTasks.clear();
+
+    GL_CHECK(glDisable(GL_SCISSOR_TEST));
 
     return true;
 }
@@ -204,8 +212,6 @@ bool GlRenderer::renderShape(RenderData data)
     uint8_t r = 0, g = 0, b = 0, a = 0;
     size_t flags = static_cast<size_t>(sdata->updateFlag);
 
-    GL_CHECK(glViewport(0, 0, (GLsizei)sdata->viewWd, (GLsizei)sdata->viewHt));
-
     if (flags & (RenderUpdateFlag::Gradient | RenderUpdateFlag::Transform))
     {
         auto gradient = sdata->rshape->fill;
@@ -283,6 +289,12 @@ RenderData GlRenderer::prepare(Surface* image, const RenderMesh* mesh, RenderDat
     sdata->geometry = make_unique<GlGeometry>();
 
     sdata->geometry->updateTransform(transform, sdata->viewWd, sdata->viewHt);
+    sdata->geometry->setViewport(RenderRegion{
+        mViewport.x,
+        static_cast<int32_t>((surface.h - mViewport.y - mViewport.h)),
+        mViewport.w,
+        mViewport.h,
+    });
 
     sdata->geometry->tesselate(image, mesh, flags);
 
@@ -327,6 +339,12 @@ RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const
     }
 
     sdata->geometry->updateTransform(transform, sdata->viewWd, sdata->viewHt);
+    sdata->geometry->setViewport(RenderRegion{
+        mViewport.x,
+        static_cast<int32_t>(surface.h - mViewport.y - mViewport.h),
+        mViewport.w,
+        mViewport.h,
+    });
 
     if (sdata->updateFlag & (RenderUpdateFlag::Color | RenderUpdateFlag::Stroke | RenderUpdateFlag::Gradient | RenderUpdateFlag::Transform) )
     {
@@ -342,9 +360,9 @@ RenderRegion GlRenderer::viewport()
 }
 
 
-bool GlRenderer::viewport(TVG_UNUSED const RenderRegion& vp)
+bool GlRenderer::viewport(const RenderRegion& vp)
 {
-    //TODO:
+    mViewport = vp;
     return true;
 }
 
@@ -382,7 +400,7 @@ GlRenderer* GlRenderer::gen()
     return new GlRenderer();
 }
 
-GlRenderer::GlRenderer() :mGpuBuffer(new GlStageBuffer), mPrograms(), mRenderTasks()
+GlRenderer::GlRenderer() :mViewport() ,mGpuBuffer(new GlStageBuffer), mPrograms(), mRenderTasks()
 {
 }
 
