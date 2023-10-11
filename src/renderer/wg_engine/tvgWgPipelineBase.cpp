@@ -20,14 +20,14 @@
  * SOFTWARE.
  */
 
-#include "tvgWgBrush.h"
+#include "tvgWgPipelineBase.h"
 
 /************************************************************************/
-// WgBrushData
+// WgPipelineData
 /************************************************************************/
 
 // update matrix
-void WgBrushData::updateMatrix(const float* viewMatrix, const RenderTransform* transform) {
+void WgPipelineData::updateMatrix(const float* viewMatrix, const RenderTransform* transform) {
     // create model matrix 4*4
     float modelMatrix[16]{};
     if (transform) {
@@ -59,19 +59,19 @@ void WgBrushData::updateMatrix(const float* viewMatrix, const RenderTransform* t
 }
 
 /************************************************************************/
-// WgBrushBindGroup
+// WgPipelineBindGroup
 /************************************************************************/
 
-// brush data group bind
-void WgBrushBindGroup::bind(WGPURenderPassEncoder renderPassEncoder, uint32_t groupIndex) {
+// pipeline data group bind
+void WgPipelineBindGroup::bind(WGPURenderPassEncoder renderPassEncoder, uint32_t groupIndex) {
     wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, groupIndex, mBindGroup, 0, nullptr);
 }
 
 /************************************************************************/
-// WgBrushPipeline
+// WgPipelinePipeline
 /************************************************************************/
 
 // set as current pipeline
-void WgBrushPipeline::set(WGPURenderPassEncoder renderPassEncoder) {
+void WgPipelineBase::set(WGPURenderPassEncoder renderPassEncoder) {
     wgpuRenderPassEncoderSetPipeline(renderPassEncoder, mRenderPipeline);
 }

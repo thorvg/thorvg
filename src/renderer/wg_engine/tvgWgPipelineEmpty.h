@@ -20,34 +20,34 @@
  * SOFTWARE.
  */
 
-#ifndef _TVG_WG_BRUSH_EMPTY_H_
-#define _TVG_WG_BRUSH_EMPTY_H_
+#ifndef _TVG_WG_PIPELINE_EMPTY_H_
+#define _TVG_WG_PIPELINE_EMPTY_H_
 
-#include "tvgWgBrush.h"
+#include "tvgWgPipelineBase.h"
 
-// brush empty
-class WgBrushPipelineEmpty;
+// pipeline empty
+class WgPipelineEmpty;
 
-// uniforms data brush empty
-struct WgBrushDataEmpty: WgBrushData {};
+// uniforms data pipeline empty
+struct WgPipelineDataEmpty: WgPipelineData {};
 
-// wgpu brush color uniforms data
-class WgBrushBindGroupEmpty: public WgBrushBindGroup {
+// wgpu pipeline color uniforms data
+class WgPipelineBindGroupEmpty: public WgPipelineBindGroup {
 public:
     // initialize and release
-    void initialize(WGPUDevice device, WgBrushPipelineEmpty& brushPipelineEmpty);
+    void initialize(WGPUDevice device, WgPipelineEmpty& pipelinePipelineEmpty);
     void release();
 
     // update
-    void update(WGPUQueue mQueue, WgBrushDataEmpty& brushDataSolid);
+    void update(WGPUQueue mQueue, WgPipelineDataEmpty& pipelineDataSolid);
 };
 
-// brush color
-class WgBrushPipelineEmpty: public WgBrushPipeline {
+// pipeline color
+class WgPipelineEmpty: public WgPipelineBase {
 public:
     // initialize and release
     void initialize(WGPUDevice device) override;
     void release() override;
 };
 
-#endif // _TVG_WG_BRUSH_EMPTY_H_
+#endif // _TVG_WG_PIPELINE_EMPTY_H_

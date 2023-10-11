@@ -20,20 +20,20 @@
  * SOFTWARE.
  */
 
-#include "tvgWgBrushRadial.h"
+#include "tvgWgPipelineLinear.h"
 #include "tvgWgShaderSrc.h"
 
 //************************************************************************
-// WgBrushBindGroupRadial
+// WgPipelineBindGroupLinear
 //************************************************************************
 
-// update gradient radial
-void WgBrushDataRadial::updateGradient(RadialGradient* radialGradient) {
+// update gradient linear
+void WgPipelineDataLinear::updateGradient(LinearGradient* linearGradient) {
     // check handle
-    assert(radialGradient);
+    assert(linearGradient);
     // get stops
     const Fill::ColorStop* stops = nullptr;
-    auto stopCnt = radialGradient->colorStops(&stops);
+    auto stopCnt = linearGradient->colorStops(&stops);
     // set stops count
     uGradientInfo.nStops[0] = stopCnt * 1.0f;
     uGradientInfo.nStops[1] = 0.5f;
@@ -45,34 +45,35 @@ void WgBrushDataRadial::updateGradient(RadialGradient* radialGradient) {
         uGradientInfo.stopColors[i * 4 + 2] = stops[i].b / 255.f;
         uGradientInfo.stopColors[i * 4 + 3] = stops[i].a / 255.f;
     }
-    // get circle info
-    radialGradient->radial(
-        &uGradientInfo.centerPos[0],
-        &uGradientInfo.centerPos[1],
-        &uGradientInfo.radius[0]);
+    // get line info
+    linearGradient->linear(
+        &uGradientInfo.startPos[0],
+        &uGradientInfo.startPos[1],
+        &uGradientInfo.endPos[0],
+        &uGradientInfo.endPos[1]);
 }
 
 //************************************************************************
-// WgBrushBindGroupRadial
+// WgPipelineBindGroupLinear
 //************************************************************************
 
 // initialize
-void WgBrushBindGroupRadial::initialize(WGPUDevice device, WgBrushPipelineRadial& brushPipelineRadial) {
+void WgPipelineBindGroupLinear::initialize(WGPUDevice device, WgPipelineLinear& pipelinePipelineLinear) {
         // buffer uniform uMatrix
     WGPUBufferDescriptor bufferUniformDesc_uMatrix{};
     bufferUniformDesc_uMatrix.nextInChain = nullptr;
-    bufferUniformDesc_uMatrix.label = "Buffer uniform brush radial uMatrix";
+    bufferUniformDesc_uMatrix.label = "Buffer uniform pipeline linear uMatrix";
     bufferUniformDesc_uMatrix.usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_Uniform;
-    bufferUniformDesc_uMatrix.size = sizeof(WgBrushMatrix);
+    bufferUniformDesc_uMatrix.size = sizeof(WgPipelineMatrix);
     bufferUniformDesc_uMatrix.mappedAtCreation = false;
     uBufferMatrix = wgpuDeviceCreateBuffer(device, &bufferUniformDesc_uMatrix);
     assert(uBufferMatrix);
     // buffer uniform uColorInfo
     WGPUBufferDescriptor bufferUniformDesc_uGradientInfo{};
     bufferUniformDesc_uGradientInfo.nextInChain = nullptr;
-    bufferUniformDesc_uGradientInfo.label = "Buffer uniform brush radial uGradientInfo";
+    bufferUniformDesc_uGradientInfo.label = "Buffer uniform pipeline linear uGradientInfo";
     bufferUniformDesc_uGradientInfo.usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_Uniform;
-    bufferUniformDesc_uGradientInfo.size = sizeof(WgBrushRadialGradientInfo);
+    bufferUniformDesc_uGradientInfo.size = sizeof(WgPipelineLinearGradientInfo);
     bufferUniformDesc_uGradientInfo.mappedAtCreation = false;
     uBufferGradientInfo = wgpuDeviceCreateBuffer(device, &bufferUniformDesc_uGradientInfo);
     assert(uBufferGradientInfo);
@@ -83,7 +84,7 @@ void WgBrushBindGroupRadial::initialize(WGPUDevice device, WgBrushPipelineRadial
     bindGroupEntry_uMatrix.binding = 0;
     bindGroupEntry_uMatrix.buffer = uBufferMatrix;
     bindGroupEntry_uMatrix.offset = 0;
-    bindGroupEntry_uMatrix.size = sizeof(WgBrushMatrix);
+    bindGroupEntry_uMatrix.size = sizeof(WgPipelineMatrix);
     bindGroupEntry_uMatrix.sampler = nullptr;
     bindGroupEntry_uMatrix.textureView = nullptr;
     // bind group entry @binding(1) uGradientInfo
@@ -92,7 +93,7 @@ void WgBrushBindGroupRadial::initialize(WGPUDevice device, WgBrushPipelineRadial
     bindGroupEntry_uGradientInfo.binding = 1;
     bindGroupEntry_uGradientInfo.buffer = uBufferGradientInfo;
     bindGroupEntry_uGradientInfo.offset = 0;
-    bindGroupEntry_uGradientInfo.size = sizeof(WgBrushRadialGradientInfo);
+    bindGroupEntry_uGradientInfo.size = sizeof(WgPipelineLinearGradientInfo);
     bindGroupEntry_uGradientInfo.sampler = nullptr;
     bindGroupEntry_uGradientInfo.textureView = nullptr;
     // bind group entries
@@ -101,18 +102,18 @@ void WgBrushBindGroupRadial::initialize(WGPUDevice device, WgBrushPipelineRadial
         bindGroupEntry_uGradientInfo // @binding(1) uGradientInfo
     };
     // bind group descriptor
-    WGPUBindGroupDescriptor bindGroupDescBrush{};
-    bindGroupDescBrush.nextInChain = nullptr;
-    bindGroupDescBrush.label = "The binding group brush radial";
-    bindGroupDescBrush.layout = brushPipelineRadial.mBindGroupLayout;
-    bindGroupDescBrush.entryCount = 2;
-    bindGroupDescBrush.entries = bindGroupEntries;
-    mBindGroup = wgpuDeviceCreateBindGroup(device, &bindGroupDescBrush);
+    WGPUBindGroupDescriptor bindGroupDescPipeline{};
+    bindGroupDescPipeline.nextInChain = nullptr;
+    bindGroupDescPipeline.label = "The binding group pipeline linear";
+    bindGroupDescPipeline.layout = pipelinePipelineLinear.mBindGroupLayout;
+    bindGroupDescPipeline.entryCount = 2;
+    bindGroupDescPipeline.entries = bindGroupEntries;
+    mBindGroup = wgpuDeviceCreateBindGroup(device, &bindGroupDescPipeline);
     assert(mBindGroup);
 }
 
 // release
-void WgBrushBindGroupRadial::release() {
+void WgPipelineBindGroupLinear::release() {
     // destroy uniform buffer color info
     if (uBufferGradientInfo) wgpuBufferDestroy(uBufferGradientInfo);
     if (uBufferGradientInfo) wgpuBufferRelease(uBufferGradientInfo);
@@ -127,19 +128,19 @@ void WgBrushBindGroupRadial::release() {
 }
 
 // update buffers
-void WgBrushBindGroupRadial::update(WGPUQueue queue, WgBrushDataRadial& brushDataRadial) {
+void WgPipelineBindGroupLinear::update(WGPUQueue queue, WgPipelineDataLinear& pipelineDataLinear) {
     // write uMatrux buffer
-    wgpuQueueWriteBuffer(queue, uBufferMatrix, 0, &brushDataRadial.uMatrix, sizeof(brushDataRadial.uMatrix));
+    wgpuQueueWriteBuffer(queue, uBufferMatrix, 0, &pipelineDataLinear.uMatrix, sizeof(pipelineDataLinear.uMatrix));
     // write uColorInfo buffer
-    wgpuQueueWriteBuffer(queue, uBufferGradientInfo, 0, &brushDataRadial.uGradientInfo, sizeof(brushDataRadial.uGradientInfo));
+    wgpuQueueWriteBuffer(queue, uBufferGradientInfo, 0, &pipelineDataLinear.uGradientInfo, sizeof(pipelineDataLinear.uGradientInfo));
 }
 
 //************************************************************************
-// WgBrushPipelineRadial
+// WgPipelineLinear
 //************************************************************************
 
 // create
-void WgBrushPipelineRadial::initialize(WGPUDevice device) {
+void WgPipelineLinear::initialize(WGPUDevice device) {
     // bind group layout group 0
     // bind group layout descriptor @group(0) @binding(0) uMatrix
     WGPUBindGroupLayoutEntry bindGroupLayoutEntry_uMatrix{};
@@ -167,7 +168,7 @@ void WgBrushPipelineRadial::initialize(WGPUDevice device) {
     // bind group layout descriptor scene @group(0)
     WGPUBindGroupLayoutDescriptor bindGroupLayoutDesc{};
     bindGroupLayoutDesc.nextInChain = nullptr;
-    bindGroupLayoutDesc.label = "Bind group layout brush radial";
+    bindGroupLayoutDesc.label = "Bind group layout pipeline linear";
     bindGroupLayoutDesc.entryCount = 2;
     bindGroupLayoutDesc.entries = bindGroupLayoutEntries; // @binding
     mBindGroupLayout = wgpuDeviceCreateBindGroupLayout(device, &bindGroupLayoutDesc);
@@ -182,7 +183,7 @@ void WgBrushPipelineRadial::initialize(WGPUDevice device) {
     // pipeline layout descriptor
     WGPUPipelineLayoutDescriptor pipelineLayoutDesc{};
     pipelineLayoutDesc.nextInChain = nullptr;
-    pipelineLayoutDesc.label = "Brush pipeline layout radial";
+    pipelineLayoutDesc.label = "Pipeline pipeline layout linear";
     pipelineLayoutDesc.bindGroupLayoutCount = 1;
     pipelineLayoutDesc.bindGroupLayouts = mBindGroupLayouts;
     mPipelineLayout = wgpuDeviceCreatePipelineLayout(device, &pipelineLayoutDesc);
@@ -216,11 +217,11 @@ void WgBrushPipelineRadial::initialize(WGPUDevice device) {
     WGPUShaderModuleWGSLDescriptor shaderModuleWGSLDesc{};
 	shaderModuleWGSLDesc.chain.next = nullptr;
 	shaderModuleWGSLDesc.chain.sType = WGPUSType_ShaderModuleWGSLDescriptor;
-    shaderModuleWGSLDesc.code = cShaderSource_BrushRadial;
+    shaderModuleWGSLDesc.code = cShaderSource_PipelineLinear;
     // shader module descriptor
     WGPUShaderModuleDescriptor shaderModuleDesc{};
     shaderModuleDesc.nextInChain = &shaderModuleWGSLDesc.chain;
-    shaderModuleDesc.label = "The shader module brush radial";
+    shaderModuleDesc.label = "The shader module pipeline linear";
     shaderModuleDesc.hintCount = 0;
     shaderModuleDesc.hints = nullptr;
     mShaderModule = wgpuDeviceCreateShaderModule(device, &shaderModuleDesc);
@@ -272,7 +273,7 @@ void WgBrushPipelineRadial::initialize(WGPUDevice device) {
     // render pipeline descriptor
     WGPURenderPipelineDescriptor renderPipelineDesc{};
     renderPipelineDesc.nextInChain = nullptr;
-    renderPipelineDesc.label = "Render pipeline brush radial";
+    renderPipelineDesc.label = "Render pipeline pipeline linear";
     // renderPipelineDesc.layout
     renderPipelineDesc.layout = mPipelineLayout;
     // renderPipelineDesc.vertex
@@ -303,7 +304,7 @@ void WgBrushPipelineRadial::initialize(WGPUDevice device) {
 }
 
 // release
-void WgBrushPipelineRadial::release() {
+void WgPipelineLinear::release() {
     // render pipeline release
     wgpuRenderPipelineRelease(mRenderPipeline);
     // shader module release

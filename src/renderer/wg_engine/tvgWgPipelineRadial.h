@@ -20,51 +20,51 @@
  * SOFTWARE.
  */
 
-#ifndef _TVG_WG_BRUSH_LINEAR_H_
-#define _TVG_WG_BRUSH_LINEAR_H_
+#ifndef _TVG_WG_PIPELINE_RADIAL_H_
+#define _TVG_WG_PIPELINE_RADIAL_H_
 
-#include "tvgWgBrush.h"
+#include "tvgWgPipelineBase.h"
 
-// brush linear
-class WgBrushPipelineLinear;
+// pipeline radial
+class WgPipelineRadial;
 
 // struct uGradientInfo
-#define MAX_LINEAR_GRADIENT_STOPS 4
-struct WgBrushLinearGradientInfo {
+#define MAX_RADIAL_GRADIENT_STOPS 4
+struct WgPipelineRadialGradientInfo {
     alignas(16) float nStops[4]{};
-    alignas(16) float startPos[2]{};
-    alignas(8)  float endPos[2]{};
-    alignas(8)  float stopPoints[MAX_LINEAR_GRADIENT_STOPS]{};
-    alignas(16) float stopColors[4 * MAX_LINEAR_GRADIENT_STOPS]{};
+    alignas(16) float centerPos[2]{};
+    alignas(8)  float radius[2]{};
+    alignas(8)  float stopPoints[MAX_RADIAL_GRADIENT_STOPS]{};
+    alignas(16) float stopColors[4 * MAX_RADIAL_GRADIENT_STOPS]{};
 };
 
-// uniforms data brush color
-struct WgBrushDataLinear: WgBrushData {
+// uniforms data pipeline color
+struct WgPipelineDataRadial: WgPipelineData {
     // uColorInfo
-    WgBrushLinearGradientInfo uGradientInfo{}; // @binding(1)
-    void updateGradient(LinearGradient* linearGradient);
+    WgPipelineRadialGradientInfo uGradientInfo{}; // @binding(1)
+    void updateGradient(RadialGradient* radialGradient);
 };
 
-// wgpu brush linear uniforms data
-class WgBrushBindGroupLinear: public WgBrushBindGroup {
+// wgpu pipeline linear uniforms data
+class WgPipelineBindGroupRadial: public WgPipelineBindGroup {
 private:
     // data handles
     WGPUBuffer uBufferGradientInfo{}; // @binding(1)
 public:
     // initialize and release
-    void initialize(WGPUDevice device, WgBrushPipelineLinear& brushPipelineLinear);
+    void initialize(WGPUDevice device, WgPipelineRadial& pipelinePipelineRadial);
     void release();
 
     // update
-    void update(WGPUQueue mQueue, WgBrushDataLinear& brushDataLinear);
+    void update(WGPUQueue mQueue, WgPipelineDataRadial& pipelineDataRadial);
 };
 
-// brush color
-class WgBrushPipelineLinear: public WgBrushPipeline {
+// pipeline color
+class WgPipelineRadial: public WgPipelineBase {
 public:
     // initialize and release
     void initialize(WGPUDevice device) override;
     void release() override;
 };
 
-#endif //_TVG_WG_BRUSH_LINEAR_H_
+#endif //_TVG_WG_PIPELINE_RADIAL_H_

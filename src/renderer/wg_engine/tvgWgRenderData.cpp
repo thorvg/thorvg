@@ -90,9 +90,9 @@ void WgRenderDataShape::release() {
     // release render data
     releaseRenderData();
     // release bind group
-    mBrushBindGroupSolid.release();
-    //mBrushBindGroupLinear.release();
-    //mBrushBindGroupRadial.release();
+    mPipelineBindGroupSolid.release();
+    mPipelineBindGroupLinear.release();
+    mPipelineBindGroupRadial.release();
 }
 
 // release render data

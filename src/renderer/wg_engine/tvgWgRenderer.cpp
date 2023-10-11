@@ -123,12 +123,12 @@ void WgRenderer::initialize() {
     #endif
     
     // create brushes
-    mBrushPipelineEmpty.initialize(mDevice);
-    mBrushPipelineSolid.initialize(mDevice);
-    mBrushPipelineLinear.initialize(mDevice);
-    mBrushPipelineRadial.initialize(mDevice);
-    mBrushBindGroupEmpty.initialize(mDevice, mBrushPipelineEmpty);
-    mGeometryDataBrush.initialize(mDevice);
+    mPipelineEmpty.initialize(mDevice);
+    mPipelineSolid.initialize(mDevice);
+    mPipelineLinear.initialize(mDevice);
+    mPipelineRadial.initialize(mDevice);
+    mPipelineBindGroupEmpty.initialize(mDevice, mPipelineEmpty);
+    mGeometryDataPipeline.initialize(mDevice);
 }
 
 // release renderer
@@ -142,12 +142,12 @@ void WgRenderer::release() {
     // serface release
     if (mSurface) wgpuSurfaceRelease(mSurface);
     // create brushes
-    mGeometryDataBrush.release();
-    mBrushBindGroupEmpty.release();
-    mBrushPipelineRadial.release();
-    mBrushPipelineLinear.release();
-    mBrushPipelineSolid.release();
-    mBrushPipelineEmpty.release();
+    mGeometryDataPipeline.release();
+    mPipelineBindGroupEmpty.release();
+    mPipelineRadial.release();
+    mPipelineLinear.release();
+    mPipelineSolid.release();
+    mPipelineEmpty.release();
     // device release
     if (mDevice) wgpuDeviceDestroy(mDevice);
     if (mDevice) wgpuDeviceRelease(mDevice);
@@ -164,9 +164,9 @@ RenderData WgRenderer::prepare(const RenderShape& rshape, RenderData data, const
     if (!renderDataShape) {
         renderDataShape = new WgRenderDataShape();
         renderDataShape->initialize(mDevice);
-        renderDataShape->mBrushBindGroupSolid.initialize(mDevice, mBrushPipelineSolid);
-        renderDataShape->mBrushBindGroupLinear.initialize(mDevice, mBrushPipelineLinear);
-        renderDataShape->mBrushBindGroupRadial.initialize(mDevice, mBrushPipelineRadial);
+        renderDataShape->mPipelineBindGroupSolid.initialize(mDevice, mPipelineSolid);
+        renderDataShape->mPipelineBindGroupLinear.initialize(mDevice, mPipelineLinear);
+        renderDataShape->mPipelineBindGroupRadial.initialize(mDevice, mPipelineRadial);
     }
     
     // tesselate path
@@ -178,41 +178,41 @@ RenderData WgRenderer::prepare(const RenderShape& rshape, RenderData data, const
         // linear brush
         if (rshape.fill->identifier() == TVG_CLASS_ID_LINEAR) {
             // brush radial data
-            WgBrushDataLinear brushDataLinear{};
+            WgPipelineDataLinear brushDataLinear{};
             brushDataLinear.updateMatrix(mViewMatrix, transform);
             brushDataLinear.updateGradient((LinearGradient *)rshape.fill);
             // update bind group
-            renderDataShape->mBrushBindGroupLinear.update(mQueue, brushDataLinear);
+            renderDataShape->mPipelineBindGroupLinear.update(mQueue, brushDataLinear);
             // set current brush handles
-            renderDataShape->mBrushBindGroup = &renderDataShape->mBrushBindGroupLinear;
-            renderDataShape->mBrushPipeline = &mBrushPipelineLinear;
+            renderDataShape->mPipelineBindGroup = &renderDataShape->mPipelineBindGroupLinear;
+            renderDataShape->mPipelineBase = &mPipelineLinear;
         }
 
         // radial brush
         if (rshape.fill->identifier() == TVG_CLASS_ID_RADIAL) {
             // brush radial data
-            WgBrushDataRadial brushDataRadial{};
+            WgPipelineDataRadial brushDataRadial{};
             brushDataRadial.updateMatrix(mViewMatrix, transform);
             brushDataRadial.updateGradient((RadialGradient *)rshape.fill);
             // update bind group
-            renderDataShape->mBrushBindGroupRadial.update(mQueue, brushDataRadial);
+            renderDataShape->mPipelineBindGroupRadial.update(mQueue, brushDataRadial);
             // set current brush handles
-            renderDataShape->mBrushBindGroup = &renderDataShape->mBrushBindGroupRadial;
-            renderDataShape->mBrushPipeline = &mBrushPipelineRadial;
+            renderDataShape->mPipelineBindGroup = &renderDataShape->mPipelineBindGroupRadial;
+            renderDataShape->mPipelineBase = &mPipelineRadial;
         }
     }
 
     // solid fill
     if ((flags & (RenderUpdateFlag::Color | RenderUpdateFlag::Transform)) && (!rshape.fill)) {
         // update brush data solid
-        WgBrushDataSolid brushDataSolid{};
+        WgPipelineDataSolid brushDataSolid{};
         brushDataSolid.updateMatrix(mViewMatrix, transform);
         brushDataSolid.updateColor(rshape);
         // update bind group
-        renderDataShape->mBrushBindGroupSolid.update(mQueue, brushDataSolid);
+        renderDataShape->mPipelineBindGroupSolid.update(mQueue, brushDataSolid);
         // set current brush handles
-        renderDataShape->mBrushBindGroup = &renderDataShape->mBrushBindGroupSolid;
-        renderDataShape->mBrushPipeline = &mBrushPipelineSolid;
+        renderDataShape->mPipelineBindGroup = &renderDataShape->mPipelineBindGroupSolid;
+        renderDataShape->mPipelineBase = &mPipelineSolid;
     }
 
     // return render data shape
@@ -353,14 +353,14 @@ bool WgRenderer::sync() {
                     // iterate geometry data
                     for (uint32_t j = 0; j < renderData->mGeometryDataFill.count; j++) {
                         // draw to stencil
-                        mBrushPipelineEmpty.set(renderPassEncoder);
-                        mBrushBindGroupEmpty.bind(renderPassEncoder, 0);
+                        mPipelineEmpty.set(renderPassEncoder);
+                        mPipelineBindGroupEmpty.bind(renderPassEncoder, 0);
                         renderData->mGeometryDataFill[j]->draw(renderPassEncoder);
 
                         // draw brush
-                        renderData->mBrushPipeline->set(renderPassEncoder);
-                        renderData->mBrushBindGroup->bind(renderPassEncoder, 0);
-                        mGeometryDataBrush.draw(renderPassEncoder);
+                        renderData->mPipelineBase->set(renderPassEncoder);
+                        renderData->mPipelineBindGroup->bind(renderPassEncoder, 0);
+                        mGeometryDataPipeline.draw(renderPassEncoder);
                     }
                 }
             }
@@ -495,11 +495,11 @@ bool WgRenderer::target(void* window, uint32_t w, uint32_t h) {
     };
     static uint32_t indexData[] = { 0, 1, 2, 0, 2, 3 };
     // update render data brush empty
-    mGeometryDataBrush.update(mDevice, mQueue, vertexData, 4, indexData, 6);
+    mGeometryDataPipeline.update(mDevice, mQueue, vertexData, 4, indexData, 6);
     // update bind group brush empty
-    WgBrushDataEmpty brushDataEmpty{};
+    WgPipelineDataEmpty brushDataEmpty{};
     brushDataEmpty.updateMatrix(mViewMatrix, nullptr);
-    mBrushBindGroupEmpty.update(mQueue, brushDataEmpty);
+    mPipelineBindGroupEmpty.update(mQueue, brushDataEmpty);
 
     return true;
 }

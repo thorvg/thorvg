@@ -20,26 +20,26 @@
  * SOFTWARE.
  */
 
-#ifndef _TVG_WG_BRUSH_H_
-#define _TVG_WG_BRUSH_H_
+#ifndef _TVG_WG_PIPELINE_BASE_H_
+#define _TVG_WG_PIPELINE_BASE_H_
 
 #include "tvgWgCommon.h"
 
-// brush matrix
-struct WgBrushMatrix {
+// pipeline matrix
+struct WgPipelineMatrix {
     float transform[4*4]{};
 };
 
-// brush data
-struct WgBrushData {
+// pipeline data
+struct WgPipelineData {
     // uMatrix
-    WgBrushMatrix uMatrix{};
+    WgPipelineMatrix uMatrix{};
     // update matrix
     void updateMatrix(const float* viewMatrix, const RenderTransform* transform);
 };
 
-// brush bind group
-class WgBrushBindGroup {
+// pipeline bind group
+class WgPipelineBindGroup {
 public:
     // data handles
     WGPUBuffer uBufferMatrix{};
@@ -49,8 +49,8 @@ public:
     void bind(WGPURenderPassEncoder renderPassEncoder, uint32_t groupIndex);
 };
 
-// brush pipeline
-class WgBrushPipeline {
+// pipeline pipeline
+class WgPipelineBase {
 public:
     // handles
     WGPUBindGroupLayout mBindGroupLayout{}; // @group(0)
@@ -66,4 +66,4 @@ public:
     void set(WGPURenderPassEncoder renderPassEncoder);
 };
 
-#endif // _TVG_WG_BRUSH_H_
+#endif // _TVG_WG_PIPELINE_BASE_H_

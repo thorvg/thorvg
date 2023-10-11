@@ -24,9 +24,9 @@
 #include <string>
 
 //************************************************************************
-// cShaderSource_BrushEmpty
+// cShaderSource_PipelineEmpty
 //************************************************************************
-const char* cShaderSource_BrushEmpty = R"(
+const char* cShaderSource_PipelineEmpty = R"(
 // vertex input
 struct VertexInput {
     @location(0) position: vec3f
@@ -59,9 +59,9 @@ fn fs_main(in: VertexOutput) -> void {
 })";
 
 //************************************************************************
-// cShaderSource_BrushSolid
+// cShaderSource_PipelineSolid
 //************************************************************************
-const char* cShaderSource_BrushSolid = R"(
+const char* cShaderSource_PipelineSolid = R"(
 // vertex input
 struct VertexInput {
     @location(0) position: vec3f
@@ -102,9 +102,9 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
 })";
 
 //************************************************************************
-// cShaderSource_BrushRadial
+// cShaderSource_PipelineRadial
 //************************************************************************
-const char* cShaderSource_BrushRadial = R"(
+const char* cShaderSource_PipelineRadial = R"(
 // vertex input
 struct VertexInput {
     @location(0) position: vec3f
@@ -180,9 +180,9 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
 })";
 
 //************************************************************************
-// cShaderSource_BrushRadial
+// cShaderSource_PipelineRadial
 //************************************************************************
-const char* cShaderSource_BrushLinear = R"(
+const char* cShaderSource_PipelineLinear = R"(
 // vertex input
 struct VertexInput {
     @location(0) position: vec3f

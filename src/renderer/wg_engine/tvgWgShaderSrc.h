@@ -25,16 +25,16 @@
 #ifndef _TVG_WG_SHADER_SRC_H_
 #define _TVG_WG_SHADER_SRC_H_
 
-// brush shader module empty
-extern const char* cShaderSource_BrushEmpty;
+// pipeline shader module empty
+extern const char* cShaderSource_PipelineEmpty;
 
-// brush shader module solid
-extern const char* cShaderSource_BrushSolid;
+// pipeline shader module solid
+extern const char* cShaderSource_PipelineSolid;
 
-// brush shader module radial
-extern const char* cShaderSource_BrushRadial;
+// pipeline shader module radial
+extern const char* cShaderSource_PipelineRadial;
 
-// brush shader module linear
-extern const char* cShaderSource_BrushLinear;
+// pipeline shader module linear
+extern const char* cShaderSource_PipelineLinear;
 
 #endif

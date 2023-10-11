@@ -23,10 +23,10 @@
 #ifndef _TVG_WG_RENDERER_H_
 #define _TVG_WG_RENDERER_H_
 
-#include "tvgWgBrushEmpty.h"
-#include "tvgWgBrushSolid.h"
-#include "tvgWgBrushLinear.h"
-#include "tvgWgBrushRadial.h"
+#include "tvgWgPipelineEmpty.h"
+#include "tvgWgPipelineSolid.h"
+#include "tvgWgPipelineLinear.h"
+#include "tvgWgPipelineRadial.h"
 #include "tvgWgRenderData.h"
 
 // webgpu renderer
@@ -84,13 +84,13 @@ private:
     WGPUTextureView mStencilTexView{};
 private:
     // brush pipelines
-    WgBrushPipelineEmpty  mBrushPipelineEmpty;
-    WgBrushPipelineSolid  mBrushPipelineSolid;
-    WgBrushPipelineLinear mBrushPipelineLinear;
-    WgBrushPipelineRadial mBrushPipelineRadial;
+    WgPipelineEmpty  mPipelineEmpty;
+    WgPipelineSolid  mPipelineSolid;
+    WgPipelineLinear mPipelineLinear;
+    WgPipelineRadial mPipelineRadial;
     // brush geometry
-    WgGeometryData mGeometryDataBrush;
-    WgBrushBindGroupEmpty mBrushBindGroupEmpty;
+    WgGeometryData mGeometryDataPipeline;
+    WgPipelineBindGroupEmpty mPipelineBindGroupEmpty;
 };
 
 #endif /* _TVG_WG_RENDERER_H_ */

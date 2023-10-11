@@ -20,46 +20,51 @@
  * SOFTWARE.
  */
 
-#ifndef _TVG_WG_BRUSH_SOLID_H_
-#define _TVG_WG_BRUSH_SOLID_H_
+#ifndef _TVG_WG_PIPELINE_LINEAR_H_
+#define _TVG_WG_PIPELINE_LINEAR_H_
 
-#include "tvgWgBrush.h"
+#include "tvgWgPipelineBase.h"
 
-// brush color
-class WgBrushPipelineSolid;
+// pipeline linear
+class WgPipelineLinear;
 
-// struct uColorInfo
-struct WgBrushSolidColorInfo {
-    float color[4]{};
+// struct uGradientInfo
+#define MAX_LINEAR_GRADIENT_STOPS 4
+struct WgPipelineLinearGradientInfo {
+    alignas(16) float nStops[4]{};
+    alignas(16) float startPos[2]{};
+    alignas(8)  float endPos[2]{};
+    alignas(8)  float stopPoints[MAX_LINEAR_GRADIENT_STOPS]{};
+    alignas(16) float stopColors[4 * MAX_LINEAR_GRADIENT_STOPS]{};
 };
 
-// uniforms data brush color
-struct WgBrushDataSolid: WgBrushData {
+// uniforms data pipeline color
+struct WgPipelineDataLinear: WgPipelineData {
     // uColorInfo
-    WgBrushSolidColorInfo uColorInfo{}; // @binding(1)
-    void updateColor(const RenderShape& renderShape);
+    WgPipelineLinearGradientInfo uGradientInfo{}; // @binding(1)
+    void updateGradient(LinearGradient* linearGradient);
 };
 
-// wgpu brush color uniforms data
-class WgBrushBindGroupSolid: public WgBrushBindGroup {
+// wgpu pipeline linear uniforms data
+class WgPipelineBindGroupLinear: public WgPipelineBindGroup {
 private:
     // data handles
-    WGPUBuffer uBufferColorInfo{}; // @binding(1)
+    WGPUBuffer uBufferGradientInfo{}; // @binding(1)
 public:
     // initialize and release
-    void initialize(WGPUDevice device, WgBrushPipelineSolid& brushPipelineSolid);
+    void initialize(WGPUDevice device, WgPipelineLinear& pipelinePipelineLinear);
     void release();
 
     // update
-    void update(WGPUQueue mQueue, WgBrushDataSolid& brushDataSolid);
+    void update(WGPUQueue mQueue, WgPipelineDataLinear& pipelineDataLinear);
 };
 
-// brush color
-class WgBrushPipelineSolid: public WgBrushPipeline {
+// pipeline color
+class WgPipelineLinear: public WgPipelineBase {
 public:
     // initialize and release
     void initialize(WGPUDevice device) override;
     void release() override;
 };
 
-#endif //_TVG_WG_BRUSH_SOLID_H_
+#endif //_TVG_WG_PIPELINE_LINEAR_H_

@@ -20,14 +20,14 @@
  * SOFTWARE.
  */
 
-#include "tvgWgBrushSolid.h"
+#include "tvgWgPipelineSolid.h"
 #include "tvgWgShaderSrc.h"
 
 //************************************************************************
-// WgBrushDataSolid
+// WgPipelineDataSolid
 //************************************************************************
 
-void WgBrushDataSolid::updateColor(const RenderShape& renderShape) {
+void WgPipelineDataSolid::updateColor(const RenderShape& renderShape) {
     // get solid fill color
     uint8_t r = 0, g = 0, b = 0, a = 0;
     renderShape.fillColor(&r, &g, &b, &a);
@@ -39,26 +39,26 @@ void WgBrushDataSolid::updateColor(const RenderShape& renderShape) {
 }
 
 //************************************************************************
-// WgBrushBindGroupSolid
+// WgPipelineBindGroupSolid
 //************************************************************************
 
 // initialize
-void WgBrushBindGroupSolid::initialize(WGPUDevice device, WgBrushPipelineSolid& brushPipelineSolid) {
+void WgPipelineBindGroupSolid::initialize(WGPUDevice device, WgPipelineSolid& pipelinePipelineSolid) {
         // buffer uniform uMatrix
     WGPUBufferDescriptor bufferUniformDesc_uMatrix{};
     bufferUniformDesc_uMatrix.nextInChain = nullptr;
-    bufferUniformDesc_uMatrix.label = "Buffer uniform brush solid uMatrix";
+    bufferUniformDesc_uMatrix.label = "Buffer uniform pipeline solid uMatrix";
     bufferUniformDesc_uMatrix.usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_Uniform;
-    bufferUniformDesc_uMatrix.size = sizeof(WgBrushMatrix);
+    bufferUniformDesc_uMatrix.size = sizeof(WgPipelineMatrix);
     bufferUniformDesc_uMatrix.mappedAtCreation = false;
     uBufferMatrix = wgpuDeviceCreateBuffer(device, &bufferUniformDesc_uMatrix);
     assert(uBufferMatrix);
     // buffer uniform uColorInfo
     WGPUBufferDescriptor bufferUniformDesc_uColorInfo{};
     bufferUniformDesc_uColorInfo.nextInChain = nullptr;
-    bufferUniformDesc_uColorInfo.label = "Buffer uniform brush solid uColorInfo";
+    bufferUniformDesc_uColorInfo.label = "Buffer uniform pipeline solid uColorInfo";
     bufferUniformDesc_uColorInfo.usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_Uniform;
-    bufferUniformDesc_uColorInfo.size = sizeof(WgBrushSolidColorInfo);
+    bufferUniformDesc_uColorInfo.size = sizeof(WgPipelineSolidColorInfo);
     bufferUniformDesc_uColorInfo.mappedAtCreation = false;
     uBufferColorInfo = wgpuDeviceCreateBuffer(device, &bufferUniformDesc_uColorInfo);
     assert(uBufferColorInfo);
@@ -69,7 +69,7 @@ void WgBrushBindGroupSolid::initialize(WGPUDevice device, WgBrushPipelineSolid& 
     bindGroupEntry_uMatrix.binding = 0;
     bindGroupEntry_uMatrix.buffer = uBufferMatrix;
     bindGroupEntry_uMatrix.offset = 0;
-    bindGroupEntry_uMatrix.size = sizeof(WgBrushMatrix);
+    bindGroupEntry_uMatrix.size = sizeof(WgPipelineMatrix);
     bindGroupEntry_uMatrix.sampler = nullptr;
     bindGroupEntry_uMatrix.textureView = nullptr;
     // bind group entry @binding(1) uColorInfo
@@ -78,7 +78,7 @@ void WgBrushBindGroupSolid::initialize(WGPUDevice device, WgBrushPipelineSolid& 
     bindGroupEntry_uColorInfo.binding = 1;
     bindGroupEntry_uColorInfo.buffer = uBufferColorInfo;
     bindGroupEntry_uColorInfo.offset = 0;
-    bindGroupEntry_uColorInfo.size = sizeof(WgBrushSolidColorInfo);
+    bindGroupEntry_uColorInfo.size = sizeof(WgPipelineSolidColorInfo);
     bindGroupEntry_uColorInfo.sampler = nullptr;
     bindGroupEntry_uColorInfo.textureView = nullptr;
     // bind group entries
@@ -87,18 +87,18 @@ void WgBrushBindGroupSolid::initialize(WGPUDevice device, WgBrushPipelineSolid& 
         bindGroupEntry_uColorInfo // @binding(1) uColorInfo
     };
     // bind group descriptor
-    WGPUBindGroupDescriptor bindGroupDescBrush{};
-    bindGroupDescBrush.nextInChain = nullptr;
-    bindGroupDescBrush.label = "The binding group brush solid";
-    bindGroupDescBrush.layout = brushPipelineSolid.mBindGroupLayout;
-    bindGroupDescBrush.entryCount = 2;
-    bindGroupDescBrush.entries = bindGroupEntries;
-    mBindGroup = wgpuDeviceCreateBindGroup(device, &bindGroupDescBrush);
+    WGPUBindGroupDescriptor bindGroupDescPipeline{};
+    bindGroupDescPipeline.nextInChain = nullptr;
+    bindGroupDescPipeline.label = "The binding group pipeline solid";
+    bindGroupDescPipeline.layout = pipelinePipelineSolid.mBindGroupLayout;
+    bindGroupDescPipeline.entryCount = 2;
+    bindGroupDescPipeline.entries = bindGroupEntries;
+    mBindGroup = wgpuDeviceCreateBindGroup(device, &bindGroupDescPipeline);
     assert(mBindGroup);
 }
 
 // release
-void WgBrushBindGroupSolid::release() {
+void WgPipelineBindGroupSolid::release() {
     // destroy uniform buffer color info
     if (uBufferColorInfo) wgpuBufferDestroy(uBufferColorInfo);
     if (uBufferColorInfo) wgpuBufferRelease(uBufferColorInfo);
@@ -113,19 +113,19 @@ void WgBrushBindGroupSolid::release() {
 }
 
 // update buffers
-void WgBrushBindGroupSolid::update(WGPUQueue queue, WgBrushDataSolid& brushDataSolid) {
+void WgPipelineBindGroupSolid::update(WGPUQueue queue, WgPipelineDataSolid& pipelineDataSolid) {
     // write uMatrux buffer
-    wgpuQueueWriteBuffer(queue, uBufferMatrix, 0, &brushDataSolid.uMatrix, sizeof(brushDataSolid.uMatrix));
+    wgpuQueueWriteBuffer(queue, uBufferMatrix, 0, &pipelineDataSolid.uMatrix, sizeof(pipelineDataSolid.uMatrix));
     // write uColorInfo buffer
-    wgpuQueueWriteBuffer(queue, uBufferColorInfo, 0, &brushDataSolid.uColorInfo, sizeof(brushDataSolid.uColorInfo));
+    wgpuQueueWriteBuffer(queue, uBufferColorInfo, 0, &pipelineDataSolid.uColorInfo, sizeof(pipelineDataSolid.uColorInfo));
 }
 
 //************************************************************************
-// WgBrushPipelineSolid
+// WgPipelineSolid
 //************************************************************************
 
 // create
-void WgBrushPipelineSolid::initialize(WGPUDevice device) {
+void WgPipelineSolid::initialize(WGPUDevice device) {
     // bind group layout group 0
     // bind group layout descriptor @group(0) @binding(0) uMatrix
     WGPUBindGroupLayoutEntry bindGroupLayoutEntry_uMatrix{};
@@ -153,7 +153,7 @@ void WgBrushPipelineSolid::initialize(WGPUDevice device) {
     // bind group layout descriptor scene @group(0)
     WGPUBindGroupLayoutDescriptor bindGroupLayoutDesc{};
     bindGroupLayoutDesc.nextInChain = nullptr;
-    bindGroupLayoutDesc.label = "Bind group layout brush solid";
+    bindGroupLayoutDesc.label = "Bind group layout pipeline solid";
     bindGroupLayoutDesc.entryCount = 2;
     bindGroupLayoutDesc.entries = bindGroupLayoutEntries; // @binding
     mBindGroupLayout = wgpuDeviceCreateBindGroupLayout(device, &bindGroupLayoutDesc);
@@ -168,7 +168,7 @@ void WgBrushPipelineSolid::initialize(WGPUDevice device) {
     // pipeline layout descriptor
     WGPUPipelineLayoutDescriptor pipelineLayoutDesc{};
     pipelineLayoutDesc.nextInChain = nullptr;
-    pipelineLayoutDesc.label = "Brush pipeline layout solid";
+    pipelineLayoutDesc.label = "Pipeline pipeline layout solid";
     pipelineLayoutDesc.bindGroupLayoutCount = 1;
     pipelineLayoutDesc.bindGroupLayouts = mBindGroupLayouts;
     mPipelineLayout = wgpuDeviceCreatePipelineLayout(device, &pipelineLayoutDesc);
@@ -202,11 +202,11 @@ void WgBrushPipelineSolid::initialize(WGPUDevice device) {
     WGPUShaderModuleWGSLDescriptor shaderModuleWGSLDesc{};
 	shaderModuleWGSLDesc.chain.next = nullptr;
 	shaderModuleWGSLDesc.chain.sType = WGPUSType_ShaderModuleWGSLDescriptor;
-    shaderModuleWGSLDesc.code = cShaderSource_BrushSolid;
+    shaderModuleWGSLDesc.code = cShaderSource_PipelineSolid;
     // shader module descriptor
     WGPUShaderModuleDescriptor shaderModuleDesc{};
     shaderModuleDesc.nextInChain = &shaderModuleWGSLDesc.chain;
-    shaderModuleDesc.label = "The shader module brush solid";
+    shaderModuleDesc.label = "The shader module pipeline solid";
     shaderModuleDesc.hintCount = 0;
     shaderModuleDesc.hints = nullptr;
     mShaderModule = wgpuDeviceCreateShaderModule(device, &shaderModuleDesc);
@@ -258,7 +258,7 @@ void WgBrushPipelineSolid::initialize(WGPUDevice device) {
     // render pipeline descriptor
     WGPURenderPipelineDescriptor renderPipelineDesc{};
     renderPipelineDesc.nextInChain = nullptr;
-    renderPipelineDesc.label = "Render pipeline brush solid";
+    renderPipelineDesc.label = "Render pipeline pipeline solid";
     // renderPipelineDesc.layout
     renderPipelineDesc.layout = mPipelineLayout;
     // renderPipelineDesc.vertex
@@ -289,7 +289,7 @@ void WgBrushPipelineSolid::initialize(WGPUDevice device) {
 }
 
 // release
-void WgBrushPipelineSolid::release() {
+void WgPipelineSolid::release() {
     // render pipeline release
     wgpuRenderPipelineRelease(mRenderPipeline);
     // shader module release

@@ -20,9 +20,9 @@
  * SOFTWARE.
  */
 
-#include "tvgWgBrushSolid.h"
-#include "tvgWgBrushLinear.h"
-#include "tvgWgBrushRadial.h"
+#include "tvgWgPipelineSolid.h"
+#include "tvgWgPipelineLinear.h"
+#include "tvgWgPipelineRadial.h"
 
 #ifndef _TVG_WG_RENDER_DATA_H_
 #define _TVG_WG_RENDER_DATA_H_
@@ -64,12 +64,12 @@ public:
     Array<WgGeometryData*> mGeometryDataFill;
     Array<WgGeometryData*> mGeometryDataStroke;
     // brushes data
-    WgBrushBindGroupSolid mBrushBindGroupSolid{};
-    WgBrushBindGroupLinear mBrushBindGroupLinear{};
-    WgBrushBindGroupRadial mBrushBindGroupRadial{};
+    WgPipelineBindGroupSolid mPipelineBindGroupSolid{};
+    WgPipelineBindGroupLinear mPipelineBindGroupLinear{};
+    WgPipelineBindGroupRadial mPipelineBindGroupRadial{};
     // current brush handles
-    WgBrushPipeline* mBrushPipeline{}; // external
-    WgBrushBindGroup* mBrushBindGroup{}; // external
+    WgPipelineBase* mPipelineBase{}; // external
+    WgPipelineBindGroup* mPipelineBindGroup{}; // external
 public:
     // constructor
     WgRenderDataShape() {}

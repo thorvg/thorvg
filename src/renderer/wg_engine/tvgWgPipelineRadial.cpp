@@ -20,24 +20,62 @@
  * SOFTWARE.
  */
 
-#include "tvgWgBrushEmpty.h"
+#include "tvgWgPipelineRadial.h"
 #include "tvgWgShaderSrc.h"
 
 //************************************************************************
-// WgBrushBindGroupEmpty
+// WgPipelineBindGroupRadial
+//************************************************************************
+
+// update gradient radial
+void WgPipelineDataRadial::updateGradient(RadialGradient* radialGradient) {
+    // check handle
+    assert(radialGradient);
+    // get stops
+    const Fill::ColorStop* stops = nullptr;
+    auto stopCnt = radialGradient->colorStops(&stops);
+    // set stops count
+    uGradientInfo.nStops[0] = stopCnt * 1.0f;
+    uGradientInfo.nStops[1] = 0.5f;
+    // set stops
+    for (uint32_t i = 0; i < stopCnt; ++i) {
+        uGradientInfo.stopPoints[i] = stops[i].offset;
+        uGradientInfo.stopColors[i * 4 + 0] = stops[i].r / 255.f;
+        uGradientInfo.stopColors[i * 4 + 1] = stops[i].g / 255.f;
+        uGradientInfo.stopColors[i * 4 + 2] = stops[i].b / 255.f;
+        uGradientInfo.stopColors[i * 4 + 3] = stops[i].a / 255.f;
+    }
+    // get circle info
+    radialGradient->radial(
+        &uGradientInfo.centerPos[0],
+        &uGradientInfo.centerPos[1],
+        &uGradientInfo.radius[0]);
+}
+
+//************************************************************************
+// WgPipelineBindGroupRadial
 //************************************************************************
 
 // initialize
-void WgBrushBindGroupEmpty::initialize(WGPUDevice device, WgBrushPipelineEmpty& brushPipelineEmpty) {
-    // buffer uniform uMatrix
+void WgPipelineBindGroupRadial::initialize(WGPUDevice device, WgPipelineRadial& pipelinePipelineRadial) {
+        // buffer uniform uMatrix
     WGPUBufferDescriptor bufferUniformDesc_uMatrix{};
     bufferUniformDesc_uMatrix.nextInChain = nullptr;
-    bufferUniformDesc_uMatrix.label = "Buffer uniform brush empty uMatrix";
+    bufferUniformDesc_uMatrix.label = "Buffer uniform pipeline radial uMatrix";
     bufferUniformDesc_uMatrix.usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_Uniform;
-    bufferUniformDesc_uMatrix.size = sizeof(WgBrushMatrix);
+    bufferUniformDesc_uMatrix.size = sizeof(WgPipelineMatrix);
     bufferUniformDesc_uMatrix.mappedAtCreation = false;
     uBufferMatrix = wgpuDeviceCreateBuffer(device, &bufferUniformDesc_uMatrix);
     assert(uBufferMatrix);
+    // buffer uniform uColorInfo
+    WGPUBufferDescriptor bufferUniformDesc_uGradientInfo{};
+    bufferUniformDesc_uGradientInfo.nextInChain = nullptr;
+    bufferUniformDesc_uGradientInfo.label = "Buffer uniform pipeline radial uGradientInfo";
+    bufferUniformDesc_uGradientInfo.usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_Uniform;
+    bufferUniformDesc_uGradientInfo.size = sizeof(WgPipelineRadialGradientInfo);
+    bufferUniformDesc_uGradientInfo.mappedAtCreation = false;
+    uBufferGradientInfo = wgpuDeviceCreateBuffer(device, &bufferUniformDesc_uGradientInfo);
+    assert(uBufferGradientInfo);
 
     // bind group entry @binding(0) uMatrix
     WGPUBindGroupEntry bindGroupEntry_uMatrix{};
@@ -45,26 +83,40 @@ void WgBrushBindGroupEmpty::initialize(WGPUDevice device, WgBrushPipelineEmpty& 
     bindGroupEntry_uMatrix.binding = 0;
     bindGroupEntry_uMatrix.buffer = uBufferMatrix;
     bindGroupEntry_uMatrix.offset = 0;
-    bindGroupEntry_uMatrix.size = sizeof(WgBrushMatrix);
+    bindGroupEntry_uMatrix.size = sizeof(WgPipelineMatrix);
     bindGroupEntry_uMatrix.sampler = nullptr;
     bindGroupEntry_uMatrix.textureView = nullptr;
+    // bind group entry @binding(1) uGradientInfo
+    WGPUBindGroupEntry bindGroupEntry_uGradientInfo{};
+    bindGroupEntry_uGradientInfo.nextInChain = nullptr;
+    bindGroupEntry_uGradientInfo.binding = 1;
+    bindGroupEntry_uGradientInfo.buffer = uBufferGradientInfo;
+    bindGroupEntry_uGradientInfo.offset = 0;
+    bindGroupEntry_uGradientInfo.size = sizeof(WgPipelineRadialGradientInfo);
+    bindGroupEntry_uGradientInfo.sampler = nullptr;
+    bindGroupEntry_uGradientInfo.textureView = nullptr;
     // bind group entries
     WGPUBindGroupEntry bindGroupEntries[] {
-        bindGroupEntry_uMatrix // @binding(0) uMatrix
+        bindGroupEntry_uMatrix,      // @binding(0) uMatrix
+        bindGroupEntry_uGradientInfo // @binding(1) uGradientInfo
     };
     // bind group descriptor
-    WGPUBindGroupDescriptor bindGroupDescBrush{};
-    bindGroupDescBrush.nextInChain = nullptr;
-    bindGroupDescBrush.label = "The binding group brush empty";
-    bindGroupDescBrush.layout = brushPipelineEmpty.mBindGroupLayout;
-    bindGroupDescBrush.entryCount = 1;
-    bindGroupDescBrush.entries = bindGroupEntries;
-    mBindGroup = wgpuDeviceCreateBindGroup(device, &bindGroupDescBrush);
+    WGPUBindGroupDescriptor bindGroupDescPipeline{};
+    bindGroupDescPipeline.nextInChain = nullptr;
+    bindGroupDescPipeline.label = "The binding group pipeline radial";
+    bindGroupDescPipeline.layout = pipelinePipelineRadial.mBindGroupLayout;
+    bindGroupDescPipeline.entryCount = 2;
+    bindGroupDescPipeline.entries = bindGroupEntries;
+    mBindGroup = wgpuDeviceCreateBindGroup(device, &bindGroupDescPipeline);
     assert(mBindGroup);
 }
 
 // release
-void WgBrushBindGroupEmpty::release() {
+void WgPipelineBindGroupRadial::release() {
+    // destroy uniform buffer color info
+    if (uBufferGradientInfo) wgpuBufferDestroy(uBufferGradientInfo);
+    if (uBufferGradientInfo) wgpuBufferRelease(uBufferGradientInfo);
+    uBufferGradientInfo = nullptr;
     // destroy uniform buffer natrix
     if (uBufferMatrix) wgpuBufferDestroy(uBufferMatrix);
     if (uBufferMatrix) wgpuBufferRelease(uBufferMatrix);
@@ -75,17 +127,19 @@ void WgBrushBindGroupEmpty::release() {
 }
 
 // update buffers
-void WgBrushBindGroupEmpty::update(WGPUQueue queue, WgBrushDataEmpty& brushDataEmpty) {
+void WgPipelineBindGroupRadial::update(WGPUQueue queue, WgPipelineDataRadial& pipelineDataRadial) {
     // write uMatrux buffer
-    wgpuQueueWriteBuffer(queue, uBufferMatrix, 0, &brushDataEmpty.uMatrix, sizeof(brushDataEmpty.uMatrix));
+    wgpuQueueWriteBuffer(queue, uBufferMatrix, 0, &pipelineDataRadial.uMatrix, sizeof(pipelineDataRadial.uMatrix));
+    // write uColorInfo buffer
+    wgpuQueueWriteBuffer(queue, uBufferGradientInfo, 0, &pipelineDataRadial.uGradientInfo, sizeof(pipelineDataRadial.uGradientInfo));
 }
 
 //************************************************************************
-// WgBrushPipelineEmpty
+// WgPipelineRadial
 //************************************************************************
 
 // create
-void WgBrushPipelineEmpty::initialize(WGPUDevice device) {
+void WgPipelineRadial::initialize(WGPUDevice device) {
     // bind group layout group 0
     // bind group layout descriptor @group(0) @binding(0) uMatrix
     WGPUBindGroupLayoutEntry bindGroupLayoutEntry_uMatrix{};
@@ -96,15 +150,25 @@ void WgBrushPipelineEmpty::initialize(WGPUDevice device) {
     bindGroupLayoutEntry_uMatrix.buffer.type = WGPUBufferBindingType_Uniform;
     bindGroupLayoutEntry_uMatrix.buffer.hasDynamicOffset = false;
     bindGroupLayoutEntry_uMatrix.buffer.minBindingSize = 0;
+    // bind group layout descriptor @group(0) @binding(1) uColorInfo
+    WGPUBindGroupLayoutEntry bindGroupLayoutEntry_uColorInfo{};
+    bindGroupLayoutEntry_uColorInfo.nextInChain = nullptr;
+    bindGroupLayoutEntry_uColorInfo.binding = 1;
+    bindGroupLayoutEntry_uColorInfo.visibility = WGPUShaderStage_Vertex | WGPUShaderStage_Fragment;
+    bindGroupLayoutEntry_uColorInfo.buffer.nextInChain = nullptr;
+    bindGroupLayoutEntry_uColorInfo.buffer.type = WGPUBufferBindingType_Uniform;
+    bindGroupLayoutEntry_uColorInfo.buffer.hasDynamicOffset = false;
+    bindGroupLayoutEntry_uColorInfo.buffer.minBindingSize = 0;
     // bind group layout entries @group(0)
     WGPUBindGroupLayoutEntry bindGroupLayoutEntries[] {
-        bindGroupLayoutEntry_uMatrix
+        bindGroupLayoutEntry_uMatrix,
+        bindGroupLayoutEntry_uColorInfo
     };
     // bind group layout descriptor scene @group(0)
     WGPUBindGroupLayoutDescriptor bindGroupLayoutDesc{};
     bindGroupLayoutDesc.nextInChain = nullptr;
-    bindGroupLayoutDesc.label = "Bind group layout brush empty";
-    bindGroupLayoutDesc.entryCount = 1;
+    bindGroupLayoutDesc.label = "Bind group layout pipeline radial";
+    bindGroupLayoutDesc.entryCount = 2;
     bindGroupLayoutDesc.entries = bindGroupLayoutEntries; // @binding
     mBindGroupLayout = wgpuDeviceCreateBindGroupLayout(device, &bindGroupLayoutDesc);
     assert(mBindGroupLayout);
@@ -118,7 +182,7 @@ void WgBrushPipelineEmpty::initialize(WGPUDevice device) {
     // pipeline layout descriptor
     WGPUPipelineLayoutDescriptor pipelineLayoutDesc{};
     pipelineLayoutDesc.nextInChain = nullptr;
-    pipelineLayoutDesc.label = "Brush pipeline layout empty";
+    pipelineLayoutDesc.label = "Pipeline pipeline layout radial";
     pipelineLayoutDesc.bindGroupLayoutCount = 1;
     pipelineLayoutDesc.bindGroupLayouts = mBindGroupLayouts;
     mPipelineLayout = wgpuDeviceCreatePipelineLayout(device, &pipelineLayoutDesc);
@@ -131,15 +195,15 @@ void WgBrushPipelineEmpty::initialize(WGPUDevice device) {
     depthStencilState.depthWriteEnabled = false;
     depthStencilState.depthCompare = WGPUCompareFunction_Always;
     // depthStencilState.stencilFront
-    depthStencilState.stencilFront.compare = WGPUCompareFunction_Always;
-    depthStencilState.stencilFront.failOp = WGPUStencilOperation_Invert;
-    depthStencilState.stencilFront.depthFailOp = WGPUStencilOperation_Invert;
-    depthStencilState.stencilFront.passOp = WGPUStencilOperation_Invert;
+    depthStencilState.stencilFront.compare = WGPUCompareFunction_NotEqual;
+    depthStencilState.stencilFront.failOp = WGPUStencilOperation_Zero;
+    depthStencilState.stencilFront.depthFailOp = WGPUStencilOperation_Zero;
+    depthStencilState.stencilFront.passOp = WGPUStencilOperation_Zero;
     // depthStencilState.stencilBack
-    depthStencilState.stencilBack.compare = WGPUCompareFunction_Always;
-    depthStencilState.stencilBack.failOp = WGPUStencilOperation_Invert;
-    depthStencilState.stencilBack.depthFailOp = WGPUStencilOperation_Invert;
-    depthStencilState.stencilBack.passOp = WGPUStencilOperation_Invert;
+    depthStencilState.stencilBack.compare = WGPUCompareFunction_NotEqual;
+    depthStencilState.stencilBack.failOp = WGPUStencilOperation_Zero;
+    depthStencilState.stencilBack.depthFailOp = WGPUStencilOperation_Zero;
+    depthStencilState.stencilBack.passOp = WGPUStencilOperation_Zero;
     // stencil mask
     depthStencilState.stencilReadMask = 0xFFFFFFFF;
     depthStencilState.stencilWriteMask = 0xFFFFFFFF;
@@ -152,11 +216,11 @@ void WgBrushPipelineEmpty::initialize(WGPUDevice device) {
     WGPUShaderModuleWGSLDescriptor shaderModuleWGSLDesc{};
 	shaderModuleWGSLDesc.chain.next = nullptr;
 	shaderModuleWGSLDesc.chain.sType = WGPUSType_ShaderModuleWGSLDescriptor;
-    shaderModuleWGSLDesc.code = cShaderSource_BrushEmpty;
+    shaderModuleWGSLDesc.code = cShaderSource_PipelineRadial;
     // shader module descriptor
     WGPUShaderModuleDescriptor shaderModuleDesc{};
     shaderModuleDesc.nextInChain = &shaderModuleWGSLDesc.chain;
-    shaderModuleDesc.label = "The shader module brush empty";
+    shaderModuleDesc.label = "The shader module pipeline radial";
     shaderModuleDesc.hintCount = 0;
     shaderModuleDesc.hints = nullptr;
     mShaderModule = wgpuDeviceCreateShaderModule(device, &shaderModuleDesc);
@@ -208,7 +272,7 @@ void WgBrushPipelineEmpty::initialize(WGPUDevice device) {
     // render pipeline descriptor
     WGPURenderPipelineDescriptor renderPipelineDesc{};
     renderPipelineDesc.nextInChain = nullptr;
-    renderPipelineDesc.label = "Render pipeline brush empty";
+    renderPipelineDesc.label = "Render pipeline pipeline radial";
     // renderPipelineDesc.layout
     renderPipelineDesc.layout = mPipelineLayout;
     // renderPipelineDesc.vertex
@@ -239,7 +303,7 @@ void WgBrushPipelineEmpty::initialize(WGPUDevice device) {
 }
 
 // release
-void WgBrushPipelineEmpty::release() {
+void WgPipelineRadial::release() {
     // render pipeline release
     wgpuRenderPipelineRelease(mRenderPipeline);
     // shader module release
