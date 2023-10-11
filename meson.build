@@ -22,6 +22,10 @@ if get_option('engines').contains('gl_beta') == true
     config_h.set10('THORVG_GL_RASTER_SUPPORT', true)
 endif
 
+if get_option('engines').contains('wg_beta') == true
+    config_h.set10('THORVG_WG_RASTER_SUPPORT', true)
+endif
+
 #Loaders
 all_loaders = false
 
@@ -146,6 +150,7 @@ Summary:
         simd_type,
         get_option('engines').contains('sw'),
         get_option('engines').contains('gl_beta'),
+        get_option('engines').contains('wg_beta'),
         all_loaders or get_option('loaders').contains('tvg'),
         all_loaders or get_option('loaders').contains('svg'),
         all_loaders or get_option('loaders').contains('png'),
