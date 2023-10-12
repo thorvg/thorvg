@@ -39,7 +39,6 @@ struct WgCanvas::Impl
 /* External Class Implementation                                        */
 /************************************************************************/
 
-// webgpy canvas constructor
 #ifdef THORVG_WG_RASTER_SUPPORT
 WgCanvas::WgCanvas() : Canvas(WgRenderer::gen()), pImpl(new Impl)
 #else
@@ -48,13 +47,11 @@ WgCanvas::WgCanvas() : Canvas(nullptr), pImpl(nullptr)
 {
 }
 
-// webgpy canvas destructor
 WgCanvas::~WgCanvas()
 {
     delete pImpl;
 }
 
-// set target window
 Result WgCanvas::target(void* window, uint32_t w, uint32_t h) noexcept
 {
 #ifdef THORVG_WG_RASTER_SUPPORT
@@ -72,7 +69,6 @@ Result WgCanvas::target(void* window, uint32_t w, uint32_t h) noexcept
     return Result::NonSupport;
 }
 
-// generate canvas instance
 unique_ptr<WgCanvas> WgCanvas::gen() noexcept
 {
 #ifdef THORVG_WG_RASTER_SUPPORT
