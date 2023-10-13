@@ -20,7 +20,6 @@
  * SOFTWARE.
  */
 
-#define NO_GL_EXAMPLE
 
 #include <vector>
 #include "Common.h"
@@ -34,10 +33,9 @@
 #define SIZE (WIDTH/NUM_PER_ROW)
 
 static int counter = 0;
-static Eo* view = nullptr;
 static std::vector<unique_ptr<tvg::Animation>> animations;
 static std::vector<Elm_Transit*> transitions;
-static unique_ptr<tvg::SwCanvas> swCanvas;
+static tvg::Canvas* canvas;
 
 //performance measure
 static double updateTime = 0;
@@ -101,28 +99,24 @@ void tvgUpdateCmds(Elm_Transit_Effect *effect, Elm_Transit* transit, double prog
         auto before = ecore_time_get();
 
         animation->frame(frame);
-        swCanvas->update(animation->picture());
+        canvas->update(animation->picture());
 
         auto after = ecore_time_get();
         updateTime += after - before;
     }
 }
 
-void tvgSwTest(uint32_t* buffer)
+void tvgDrawCmds(tvg::Canvas* canvas)
 {
-    //Create a Canvas
-    swCanvas = tvg::SwCanvas::gen();
-    swCanvas->target(buffer, WIDTH, WIDTH, HEIGHT, tvg::SwCanvas::ARGB8888);
-
     //Background
     auto shape = tvg::Shape::gen();
     shape->appendRect(0, 0, WIDTH, HEIGHT);
     shape->fill(75, 75, 75);
 
-    if (swCanvas->push(std::move(shape)) != tvg::Result::Success) return;
+    if (canvas->push(std::move(shape)) != tvg::Result::Success) return;
 
-    eina_file_dir_list(EXAMPLE_DIR, EINA_TRUE, lottieDirCallback, swCanvas.get());
-   
+    eina_file_dir_list(EXAMPLE_DIR, EINA_TRUE, lottieDirCallback, canvas);
+
     //Run animation loop
     for (auto& animation : animations) {
         Elm_Transit* transit = elm_transit_add();
@@ -131,8 +125,26 @@ void tvgSwTest(uint32_t* buffer)
         elm_transit_repeat_times_set(transit, -1);
         elm_transit_go(transit);
 
-        swCanvas->push(tvg::cast<tvg::Picture>(animation->picture()));
+        canvas->push(tvg::cast<tvg::Picture>(animation->picture()));
     }
+}
+
+
+/************************************************************************/
+/* Sw Engine Test Code                                                  */
+/************************************************************************/
+
+static unique_ptr<tvg::SwCanvas> swCanvas;
+
+void tvgSwTest(uint32_t* buffer)
+{
+    //Create a Canvas
+    swCanvas = tvg::SwCanvas::gen();
+    swCanvas->target(buffer, WIDTH, WIDTH, HEIGHT, tvg::SwCanvas::ARGB8888);
+
+    tvgDrawCmds(swCanvas.get());
+
+    canvas = swCanvas.get();
 }
 
 void drawSwView(void* data, Eo* obj)
@@ -158,11 +170,65 @@ void drawSwView(void* data, Eo* obj)
     updateTime = 0;
 }
 
-Eina_Bool animatorCb(void *data)
+Eina_Bool animatorSwCb(void *data)
 {
     Eo* img = (Eo*) data;
     evas_object_image_data_update_add(img, 0, 0, WIDTH, HEIGHT);
     evas_object_image_pixels_dirty_set(img, EINA_TRUE);
+
+    return ECORE_CALLBACK_RENEW;
+}
+
+
+/************************************************************************/
+/* GL Engine Test Code                                                  */
+/************************************************************************/
+
+static unique_ptr<tvg::GlCanvas> glCanvas;
+
+void initGLview(Evas_Object *obj)
+{
+    static constexpr auto BPP = 4;
+
+    //Create a Canvas
+    glCanvas = tvg::GlCanvas::gen();
+    glCanvas->target(nullptr, WIDTH * BPP, WIDTH, HEIGHT);
+
+    tvgDrawCmds(glCanvas.get());
+
+    canvas = glCanvas.get();
+}
+
+void drawGLview(Evas_Object *obj)
+{
+    auto before = ecore_time_get();
+
+    auto gl = elm_glview_gl_api_get(obj);
+    gl->glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    gl->glClear(GL_COLOR_BUFFER_BIT);
+
+    if (glCanvas->draw() == tvg::Result::Success) {
+        glCanvas->sync();
+    }
+
+    auto after = ecore_time_get();
+
+    auto rasterTime = after - before;
+
+    ++cnt;
+
+    accumUpdateTime += updateTime;
+    accumRasterTime += rasterTime;
+    accumTotalTime += (updateTime + rasterTime);
+
+    printf("[%5d]: update = %fs,   raster = %fs,  total = %fs\n", cnt, accumUpdateTime / cnt, accumRasterTime / cnt, accumTotalTime / cnt);
+
+    updateTime = 0;
+}
+
+Eina_Bool animatorGlCb(void *data)
+{
+    elm_glview_changed_set((Evas_Object*)data);
 
     return ECORE_CALLBACK_RENEW;
 }
@@ -174,17 +240,35 @@ Eina_Bool animatorCb(void *data)
 
 int main(int argc, char **argv)
 {
+    tvg::CanvasEngine tvgEngine = tvg::CanvasEngine::Sw;
+
+    if (argc > 1) {
+        if (!strcmp(argv[1], "gl")) tvgEngine = tvg::CanvasEngine::Gl;
+    }
+
+    //Initialize ThorVG Engine
+    if (tvgEngine == tvg::CanvasEngine::Sw) {
+        cout << "tvg engine: software" << endl;
+    } else {
+        cout << "tvg engine: opengl" << endl;
+    }
+
     //Threads Count
     auto threads = std::thread::hardware_concurrency();
     if (threads > 0) --threads;    //Allow the designated main thread capacity
 
     //Initialize ThorVG Engine
-    if (tvg::Initializer::init(tvg::CanvasEngine::Sw, 3) == tvg::Result::Success) {
+    if (tvg::Initializer::init(tvgEngine, 3) == tvg::Result::Success) {
 
         elm_init(argc, argv);
 
-        view = createSwView(1280, 1280);
-        ecore_animator_add(animatorCb, view);
+        if (tvgEngine == tvg::CanvasEngine::Sw) {
+            auto view = createSwView(1280, 1280);
+            ecore_animator_add(animatorSwCb, view);
+        } else {
+            auto view = createGlView(1280, 1280);
+            ecore_animator_add(animatorGlCb, view);
+        }
 
         elm_run();
         elm_shutdown();
@@ -195,5 +279,6 @@ int main(int argc, char **argv)
     } else {
         cout << "engine is not supported" << endl;
     }
+
     return 0;
 }
