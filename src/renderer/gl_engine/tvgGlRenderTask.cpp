@@ -27,7 +27,7 @@
 /* External Class Implementation                                        */
 /************************************************************************/
 
-void GlRenderTask::run() 
+void GlRenderTask::run()
 {
     // bind shader
     mProgram->load();
@@ -88,4 +88,60 @@ void GlRenderTask::setDrawRange(uint32_t offset, uint32_t count)
 void GlRenderTask::setViewport(const RenderRegion &viewport)
 {
     mViewport = viewport;
+}
+
+GlComposeTask::GlComposeTask(GlProgram* program, GLuint target, GLuint selfFbo, vector<unique_ptr<GlRenderTask>> tasks)
+ :GlRenderTask(program) ,mTargetFbo(target), mSelfFbo(selfFbo), mTasks(std::move(tasks))
+{
+}
+
+void GlComposeTask::run()
+{
+    GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, getSelfFbo()));
+
+    // clear this fbo
+    GLenum color_buffer = GL_COLOR_ATTACHMENT0;
+    const float transparent[] = {0.f, 0.f, 0.f, 0.f};
+
+    GL_CHECK(glDrawBuffers(1, &color_buffer));
+    GL_CHECK(glClearBufferfv(GL_COLOR, 0, transparent));
+
+    for(auto& task : mTasks) {
+        task->run();
+    }
+}
+
+GlBlitTask::GlBlitTask(GlProgram* program, GLuint target, GLuint compose, vector<unique_ptr<GlRenderTask>> tasks)
+ : GlComposeTask(program, target, compose, std::move(tasks))
+{
+}
+
+void GlBlitTask::setSize(uint32_t width, uint32_t height)
+{
+    mWidth = width;
+    mHeight = height;
+}
+
+void GlBlitTask::run()
+{
+    GlComposeTask::run();
+
+    GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, getTargetFbo()));
+    GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, getSelfFbo()));
+
+    GL_CHECK(glBlitFramebuffer(0, 0, mWidth, mHeight, 0, 0, mWidth, mHeight, GL_COLOR_BUFFER_BIT, GL_NEAREST));
+}
+
+GlDrawBlitTask::GlDrawBlitTask(GlProgram* program, GLuint target, GLuint compose, vector<unique_ptr<GlRenderTask>> tasks)
+ : GlComposeTask(program, target, compose, std::move(tasks))
+{
+}
+
+void GlDrawBlitTask::run()
+{
+    GlComposeTask::run();
+
+    GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, getTargetFbo()));
+
+    GlRenderTask::run();
 }

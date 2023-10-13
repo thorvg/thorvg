@@ -57,8 +57,8 @@ struct GlShape
   const RenderShape* rshape = nullptr;
   float viewWd;
   float viewHt;
+  uint32_t opacity = 0;
   GLuint texId = 0;
-  uint32_t texOpacity = 0;
   uint32_t texFlipY = 0;
   ColorSpace texColorSpace = ColorSpace::ABGR8888;
   RenderUpdateFlag updateFlag = None;
