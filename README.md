@@ -12,7 +12,7 @@
 
 # ThorVG
 <p align="center">
-  <img width="800" height="400" src="https://github.com/thorvg/thorvg/blob/main/res/logo/512/thorvg-banner.png">
+  <img width="800" height="auto" src="https://github.com/thorvg/thorvg/blob/main/res/logo/512/thorvg-banner.png">
 </p>
 ThorVG is an open-source graphics library designed for creating vector-based scenes and animations. Embracing the philosophy of "Simpler is better," the ThorVG project offers intuitive and user-friendly interfaces, all the while maintaining a compact size and minimal software complexity. <br />
 <br />
@@ -27,7 +27,7 @@ The following list shows primitives that are supported by ThorVG: <br />
  * Images: TVG, SVG, JPG, PNG, WebP, Bitmap
  * Animations: Lottie
 <p align="center">
-  <img width="900" height="472" src="https://github.com/thorvg/thorvg/blob/main/res/example_primitives.png">
+  <img width="900" height="auto" src="https://github.com/thorvg/thorvg/blob/main/res/example_primitives.png">
 </p>
 <br />
 If your program includes the main renderer, you can seamlessly utilize ThorVG APIs by transitioning drawing contexts between the main renderer and ThorVG. Throughout these API calls, ThorVG effectively serializes drawing commands among volatile paint nodes. Subsequently, it undertakes synchronous or asynchronous rendering via its backend raster engines.<br />
@@ -35,7 +35,7 @@ If your program includes the main renderer, you can seamlessly utilize ThorVG AP
 ThorVG is adept at handling vector images, including formats like SVG, and it remains adaptable for accommodating additional popular formats as needed. In the rendering process, the library may generate intermediate frame buffers for scene compositing, though only when essential. The accompanying diagram provides a concise overview of how to effectively incorporate ThorVG within your system.<br />
 <br />
 <p align="center">
-  <img width="900" height="288" src="https://github.com/thorvg/thorvg/blob/main/res/example_flow.png">
+  <img width="900" height="auto" src="https://github.com/thorvg/thorvg/blob/main/res/example_flow.png">
 </p>
 <br />
 ThorVG incorporates a threading mechanism that aims to seamlessly acquire subsequent scenes without unnecessary delays. It operates using a finely-tuned task scheduler based on thread pools, encompassing various tasks such as encoding, decoding, updating, and rendering. This design ensures that all tasks can effectively leverage multi-processing capabilities.<br />
@@ -43,7 +43,7 @@ ThorVG incorporates a threading mechanism that aims to seamlessly acquire subseq
 The task scheduler has been meticulously crafted to conceal complexity, streamline integration, and enhance user convenience. Therefore, the policy it employs is optional, allowing users to select it based on their specific requirements..<br />
 <br />
 <p align="center">
-  <img width="900" height="313" src="https://github.com/thorvg/thorvg/blob/main/res/example_thread.png">
+  <img width="900" height="auto" src="https://github.com/thorvg/thorvg/blob/main/res/example_thread.png">
 </p>
 <br />
 
@@ -164,7 +164,7 @@ canvas->push(move(circle));                  //push the circle into the canvas
 This code generates the following result:
 
 <p align="center">
-  <img width="416" height="411" src="https://github.com/thorvg/thorvg/blob/main/res/example_shapes.png">
+  <img width="416" height="auto" src="https://github.com/thorvg/thorvg/blob/main/res/example_shapes.png">
 </p>
 
 You can also draw you own shapes and use dashed stroking:
@@ -200,7 +200,7 @@ canvas->push(move(path));                    //push the path into the canvas
 The code generates the following result:
 
 <p align="center">
-  <img width="300" height="300" src="https://github.com/thorvg/thorvg/blob/main/res/example_path.png">
+  <img width="300" height="auto" src="https://github.com/thorvg/thorvg/blob/main/res/example_path.png">
 </p>
 
 Now begin rendering & finish it at a particular time:
@@ -240,7 +240,7 @@ canvas->push(move(picture));                //push the picture into the canvas
 The result is:
 
 <p align="center">
-  <img width="300" height="300" src="https://github.com/thorvg/thorvg/blob/main/res/example_tiger.png">
+  <img width="300" height="auto" src="https://github.com/thorvg/thorvg/blob/main/res/example_tiger.png">
 </p>
 
 [Back to contents](#contents)
@@ -274,7 +274,7 @@ canvas->update(animation->picture());                  //Update the picture to b
 Let's suppose the progress variable determines the position of the animation, ranging from 0 to 1 based on the total duration time of the animation. Adjusting the progress value allows you to control the animation at the desired position. Afterwards, the canvas is updated to redraw the picture with the updated animation frame.<br />
 <br />
 <p align="center">
-  <img width="600" height="600" src="https://github.com/thorvg/thorvg/blob/main/res/example_lottie.gif">
+  <img width="600" height="auto" src="https://github.com/thorvg/thorvg/blob/main/res/example_lottie.gif">
 </p>
 
 [Back to contents](#contents)
@@ -293,13 +293,13 @@ Furthermore, TVG Picture substantially streamlines resource loading tasks by cir
 By adopting TVG Picture, you can achieve an average reduction of over 30% in data size and loading times (for more details, refer to "[See More](https://github.com/thorvg/thorvg/wiki/TVG-Picture-Binary-Size)"). Notably, the extent of performance improvement is contingent on resource size and complexity. </br>
 </br>
 <p align="center">
-  <img width="909" height="314" src="https://github.com/thorvg/thorvg/blob/main/res/example_tvgsize.png">
+  <img width="909" height="auto" src="https://github.com/thorvg/thorvg/blob/main/res/example_tvgsize.png">
 </p>
 
 As TVG Saver facilitates the export of the scene-tree into TVG Picture data files (TVG), the subsequent task of importing and restoring this data to programmable instances is efficiently handled by the TVG Loader. For seamless conversion from SVG to TVG, the ThorVG Viewer provides a swift solution.
 
 <p align="center">
-  <img width="710" height="215" src="https://github.com/thorvg/thorvg/blob/main/res/example_tvgmodule.png">
+  <img width="710" height="auto" src="https://github.com/thorvg/thorvg/blob/main/res/example_tvgmodule.png">
 </p>
 
 
@@ -311,14 +311,14 @@ As TVG Saver facilitates the export of the scene-tree into TVG Picture data file
 ThorVG has been integrated into the [Tizen](https://www.tizen.org) platform as the vector graphics engine. [NUI](https://docs.tizen.org/application/dotnet/guides/user-interface/nui/overview/) is the name of Tizen UI framework which is written in C#. ThorVG is the backend engine of the [NUI Vector Graphics](https://docs.tizen.org/application/dotnet/guides/user-interface/nui/vectorgraphics/Overview/) which is used for vector primitive drawings and scalable image contents such as SVG and Lottie Animation among the Tizen applications.
 
 <p align="center">
-  <img width="798" height="285" src="https://github.com/thorvg/thorvg/blob/main/res/example_tizen.png">
+  <img width="798" height="auto" src="https://github.com/thorvg/thorvg/blob/main/res/example_tizen.png">
 </p>
 
 ### Godot
 ThorVG has been integrated into the [Godot](https://www.godotengine.org) project to enable the creation of sleek and visually appealing user interfaces (UIs) and vector resources in the Godot game engine. Godot is a modern game engine that is both free and open-source, offering a comprehensive range of tools. With Godot, you can concentrate on developing your game without the need to recreate existing functionalities.
 
 <p align="center">
-  <img width="798" height="440" src="https://github.com/thorvg/thorvg/blob/main/res/example_godot.png">
+  <img width="798" height="auto" src="https://github.com/thorvg/thorvg/blob/main/res/example_godot.png">
 </p>
 
 ### Rive
@@ -326,7 +326,7 @@ We're also building a [Rive](https://rive.app/) port that supports Rive Animatio
 that supports fancy, user-interactive vector animations. For more details see [Rive-Tizen](https://github.com/rive-app/rive-tizen) on [Github](https://github.com/rive-app/).
 
 <p align="center">
-  <img width="600" height="324" src="https://github.com/thorvg/thorvg/blob/main/res/example_rive.gif">
+  <img width="600" height="auto" src="https://github.com/thorvg/thorvg/blob/main/res/example_rive.gif">
 </p>
 
 [Back to contents](#contents)
