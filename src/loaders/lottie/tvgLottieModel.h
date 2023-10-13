@@ -482,6 +482,8 @@ struct LottieGroup : LottieObject
     Scene* scene = nullptr;               //tvg render data
 
     Array<LottieObject*> children;
+
+    bool reqFragment = false;   //requirment to fragment the render context
 };
 
 
