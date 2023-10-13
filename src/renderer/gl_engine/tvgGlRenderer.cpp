@@ -68,6 +68,14 @@ bool GlRenderer::target(TVG_UNUSED uint32_t* buffer, uint32_t stride, uint32_t w
     mViewport.w = surface.w;
     mViewport.h = surface.h;
 
+    // get current binded framebuffer id
+    // EFL seems has a seperate framebuffer for evagl view
+    //TODO: introduce a new api to specify which fbo this canvas is binded
+    GL_CHECK(glGetIntegerv(GL_FRAMEBUFFER_BINDING, &mTargetFboId));
+
+    mRootTarget = make_unique<GlRenderTarget>(surface.w, surface.h);
+    mRootTarget->init(mTargetFboId);
+
     return true;
 }
 
@@ -83,15 +91,21 @@ bool GlRenderer::sync()
 
     mGpuBuffer->bind();
 
-    for(auto& task: mRenderTasks) {
-        task->run();
-    }
+    assert(mRenderPassStack.size() == 1);
+
+    auto task = mRenderPassStack.front().endRenderPass<GlBlitTask>(nullptr, mTargetFboId);
+
+    task->setSize(surface.w, surface.h);
+
+    task->run();
 
     mGpuBuffer->unbind();
 
-    mRenderTasks.clear();
 
     GL_CHECK(glDisable(GL_SCISSOR_TEST));
+
+    mRenderPassStack.clear();
+    mPoolIndex = 0;
 
     return true;
 }
@@ -110,6 +124,8 @@ bool GlRenderer::preRender()
         initShaders();
     }
 
+    mRenderPassStack.emplace_back(GlRenderPass(mRootTarget.get()));
+
     return true;
 }
 
@@ -122,22 +138,46 @@ bool GlRenderer::postRender()
 
 Compositor* GlRenderer::target(TVG_UNUSED const RenderRegion& region, TVG_UNUSED ColorSpace cs)
 {
-    //TODO: Prepare frameBuffer & Setup render target for composition
-    return nullptr;
+    mComposeStack.emplace_back(make_unique<tvg::Compositor>());
+    return mComposeStack.back().get();
 }
 
 
-bool GlRenderer::beginComposite(TVG_UNUSED Compositor* cmp, CompositeMethod method, uint8_t opacity)
+bool GlRenderer::beginComposite(Compositor* cmp, CompositeMethod method, uint8_t opacity)
 {
-    //TODO: delete the given compositor and restore the context
-    return false;
+    if (!cmp) return false;
+
+    // TODO handle other composite method with recursive begin composite
+
+    cmp->method = method;
+    cmp->opacity = opacity;
+
+    if (cmp->method == CompositeMethod::None) {
+        if (mPoolIndex >= mComposePool.size()) {
+            mComposePool.emplace_back(make_unique<GlRenderTarget>(surface.w, surface.h));
+            mComposePool.back()->init(mTargetFboId);
+        }
+        mRenderPassStack.emplace_back(GlRenderPass(mComposePool[mPoolIndex++].get()));
+    }
+
+    return true;
 }
 
 
 bool GlRenderer::endComposite(TVG_UNUSED Compositor* cmp)
 {
-    //TODO: delete the given compositor and restore the context
-    return false;
+    if (mComposeStack.empty()) return false;
+    if (mComposeStack.back().get() != cmp) return false;
+
+    // end current render pass;
+    auto currCmp  = std::move(mComposeStack.back());
+    mComposeStack.pop_back();
+
+    assert(cmp == currCmp.get());
+
+    endRenderPass(currCmp.get());
+
+    return true;
 }
 
 
@@ -181,7 +221,7 @@ bool GlRenderer::renderImage(void* data)
     }
     // image info
     {
-        uint32_t info[4] = {sdata->texColorSpace, sdata->texFlipY, sdata->texOpacity, 0};
+        uint32_t info[4] = {sdata->texColorSpace, sdata->texFlipY, sdata->opacity, 0};
         uint32_t loc = task->getProgram()->getUniformBlockIndex("ColorInfo");
 
         task->addBindResource(GlBindingResource{
@@ -198,7 +238,7 @@ bool GlRenderer::renderImage(void* data)
         task->addBindResource(GlBindingResource{0, sdata->texId, loc});
     }
 
-    mRenderTasks.emplace_back(std::move(task));
+    currentPass()->addRenderTask(std::move(task));
 
     return true;
 }
@@ -283,7 +323,7 @@ RenderData GlRenderer::prepare(Surface* image, const RenderMesh* mesh, RenderDat
     sdata->updateFlag = flags;
 
     sdata->texId = _genTexture(image);
-    sdata->texOpacity = opacity;
+    sdata->opacity = opacity;
     sdata->texColorSpace = image->cs;
     sdata->texFlipY = (mesh && mesh->triangleCnt) ? 0 : 1;
     sdata->geometry = make_unique<GlGeometry>();
@@ -309,7 +349,7 @@ RenderData GlRenderer::prepare(TVG_UNUSED const Array<RenderData>& scene, TVG_UN
 }
 
 
-RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const RenderTransform* transform, Array<RenderData>& clips, TVG_UNUSED uint8_t opacity, RenderUpdateFlag flags, TVG_UNUSED bool clipper)
+RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const RenderTransform* transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags, TVG_UNUSED bool clipper)
 {
     //prepare shape data
     GlShape* sdata = static_cast<GlShape*>(data);
@@ -325,6 +365,7 @@ RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const
     if (sdata->updateFlag == RenderUpdateFlag::None) return sdata;
 
     sdata->geometry = make_unique<GlGeometry>();
+    sdata->opacity = opacity;
 
     //invisible?
     uint8_t alphaF = 0, alphaS = 0;
@@ -400,14 +441,12 @@ GlRenderer* GlRenderer::gen()
     return new GlRenderer();
 }
 
-GlRenderer::GlRenderer() :mViewport() ,mGpuBuffer(new GlStageBuffer), mPrograms(), mRenderTasks()
+GlRenderer::GlRenderer() :mViewport() ,mGpuBuffer(new GlStageBuffer), mPrograms()
 {
 }
 
 GlRenderer::~GlRenderer()
 {
-    mRenderTasks.clear();
-
     --rendererCnt;
 
     if (rendererCnt == 0 && initEngineCnt == 0) _termEngine();
@@ -435,6 +474,8 @@ void GlRenderer::drawPrimitive(GlShape& sdata, uint8_t r, uint8_t g, uint8_t b, 
     auto task = make_unique<GlRenderTask>(mPrograms[RT_Color].get());
 
     if (!sdata.geometry->draw(task.get(), mGpuBuffer.get(), flag)) return;
+
+    a = MULTIPLY(a, sdata.opacity);
     
     // matrix buffer
     {
@@ -464,7 +505,7 @@ void GlRenderer::drawPrimitive(GlShape& sdata, uint8_t r, uint8_t g, uint8_t b, 
         });
     }
 
-    mRenderTasks.emplace_back(std::move(task));
+    currentPass()->addRenderTask(std::move(task));
 }
 
 
@@ -558,6 +599,128 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
         task->addBindResource(gradientBinding);
     }
 
-    mRenderTasks.emplace_back(std::move(task));
+    currentPass()->addRenderTask(std::move(task));
 }
 
+GlRenderPass* GlRenderer::currentPass() 
+{
+    if (mRenderPassStack.empty()) return nullptr;
+
+    return &mRenderPassStack.back();
+}
+
+void GlRenderer::prepareCmpTask(GlRenderTask* task)
+{
+    // we use 1:1 blit mapping since compositor fbo is same size as root fbo
+    Array<float> vertices;
+    vertices.reserve(5 * 4);
+
+    float left = -1.f;
+    float top = 1.f;
+    float right = 1.f;
+    float bottom = -1.f;
+
+    // left top point
+    vertices.push(left);
+    vertices.push(top);
+    vertices.push(1.f);
+    vertices.push(0.f);
+    vertices.push(1.f);
+    // left bottom point
+    vertices.push(left);
+    vertices.push(bottom);
+    vertices.push(1.f);
+    vertices.push(0.f);
+    vertices.push(0.f);
+    // right top point
+    vertices.push(right);
+    vertices.push(top);
+    vertices.push(1.f);
+    vertices.push(1.f);
+    vertices.push(1.f);
+    // right bottom point
+    vertices.push(right);
+    vertices.push(bottom);
+    vertices.push(1.f);
+    vertices.push(1.f);
+    vertices.push(0.f);
+
+    Array<uint32_t> indices;
+    indices.reserve(6);
+
+    indices.push(0);
+    indices.push(1);
+    indices.push(2);
+    indices.push(2);
+    indices.push(1);
+    indices.push(3);
+
+    uint32_t vertexOffset = mGpuBuffer->push(vertices.data, vertices.count * sizeof(float));
+    uint32_t indexOffset = mGpuBuffer->push(indices.data, vertices.count * sizeof(uint32_t));
+
+    task->addVertexLayout(GlVertexLayout{0, 3, 5 * sizeof(float), vertexOffset});
+    task->addVertexLayout(GlVertexLayout{1, 2, 5 * sizeof(float), vertexOffset + 3 * sizeof(float)});
+
+    task->setDrawRange(indexOffset, indices.count);
+    task->setViewport(RenderRegion{
+        mViewport.x,
+        static_cast<int32_t>((surface.h - mViewport.y - mViewport.h)),
+        mViewport.w,
+        mViewport.h,
+    });
+}
+
+void GlRenderer::endRenderPass(Compositor* cmp)
+{
+    if (cmp->method != CompositeMethod::None) {
+        //TODO support advance composite method with recursive compositor
+        return;
+    }
+
+    auto renderPass = std::move(mRenderPassStack.back());
+    mRenderPassStack.pop_back();
+
+    auto task = renderPass.endRenderPass<GlDrawBlitTask>(
+        mPrograms[RT_Image].get(), currentPass()->getFboId());
+
+    prepareCmpTask(task.get());
+
+    // matrix buffer
+    {
+        float matrix[16];
+        memset(matrix, 0, 16 * sizeof(float));
+        matrix[0] = 1.f;
+        matrix[5] = 1.f;
+        matrix[10] = 1.f;
+        matrix[15] = 1.f;
+        uint32_t loc = task->getProgram()->getUniformBlockIndex("Matrix");
+
+        task->addBindResource(GlBindingResource{
+            0,
+            loc,
+            mGpuBuffer->getBufferId(),
+            mGpuBuffer->push(matrix, 16 * sizeof(float), true),
+            16 * sizeof(float),
+        });
+    }
+    // image info
+    {
+        uint32_t info[4] = {ABGR8888, 0, cmp->opacity, 0};
+        uint32_t loc = task->getProgram()->getUniformBlockIndex("ColorInfo");
+
+        task->addBindResource(GlBindingResource{
+            1,
+            loc,
+            mGpuBuffer->getBufferId(),
+            mGpuBuffer->push(info, 4 * sizeof(uint32_t), true),
+            4 * sizeof(uint32_t),
+        });
+    }
+    // texture id
+    {
+        uint32_t loc = task->getProgram()->getUniformLocation("uTexture");
+        task->addBindResource(GlBindingResource{0, renderPass.getFboId(), loc});
+    }
+
+    currentPass()->addRenderTask(std::move(task));
+}
