@@ -36,6 +36,10 @@
     #include "tvgGlRenderer.h"
 #endif
 
+#ifdef THORVG_WG_RASTER_SUPPORT
+    #include "tvgWgRenderer.h"
+#endif
+
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
@@ -102,6 +106,11 @@ Result Initializer::init(CanvasEngine engine, uint32_t threads) noexcept
             if (!GlRenderer::init(threads)) return Result::FailedAllocation;
             nonSupport = false;
         #endif
+    } else if (engine & CanvasEngine::Wg) {
+        #ifdef THORVG_WG_RASTER_SUPPORT
+            if (!WgRenderer::init(threads)) return Result::FailedAllocation;
+            nonSupport = false;
+        #endif
     } else {
         return Result::InvalidArguments;
     }
@@ -134,6 +143,11 @@ Result Initializer::term(CanvasEngine engine) noexcept
     } else if (engine & CanvasEngine::Gl) {
         #ifdef THORVG_GL_RASTER_SUPPORT
             if (!GlRenderer::term()) return Result::InsufficientCondition;
+            nonSupport = false;
+        #endif
+    } else if (engine & CanvasEngine::Wg) {
+        #ifdef THORVG_WG_RASTER_SUPPORT
+            if (!WgRenderer::term()) return Result::InsufficientCondition;
             nonSupport = false;
         #endif
     } else {

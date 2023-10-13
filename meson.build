@@ -22,6 +22,10 @@ if get_option('engines').contains('gl_beta') == true
     config_h.set10('THORVG_GL_RASTER_SUPPORT', true)
 endif
 
+if get_option('engines').contains('wg_beta') == true
+    config_h.set10('THORVG_WG_RASTER_SUPPORT', true)
+endif
+
 #Loaders
 all_loaders = false
 
@@ -124,20 +128,21 @@ Summary:
     SIMD Instruction:      @3@
     Raster Engine (SW):    @4@
     Raster Engine (GL):    @5@
-    Loader (TVG):          @6@
-    Loader (SVG):          @7@
-    Loader (PNG):          @8@
-    Loader (JPG):          @9@
-    Loader (WEBP_BETA):    @10@
-    Loader (LOTTIE):       @11@
-    Saver (TVG):           @12@
-    Binding (CAPI):        @13@
-    Binding (WASM_BETA):   @14@
-    Log Message:           @15@
-    Tests:                 @16@
-    Examples:              @17@
-    Tool (Svg2Tvg):        @18@
-    Tool (Svg2Png):        @19@
+    Raster Engine (WG):    @6@
+    Loader (TVG):          @7@
+    Loader (SVG):          @8@
+    Loader (PNG):          @9@
+    Loader (JPG):          @10@
+    Loader (WEBP_BETA):    @11@
+    Loader (LOTTIE):       @12@
+    Saver (TVG):           @13@
+    Binding (CAPI):        @14@
+    Binding (WASM_BETA):   @15@
+    Log Message:           @16@
+    Tests:                 @17@
+    Examples:              @18@
+    Tool (Svg2Tvg):        @19@
+    Tool (Svg2Png):        @20@
 
 '''.format(
         meson.project_version(),
@@ -146,6 +151,7 @@ Summary:
         simd_type,
         get_option('engines').contains('sw'),
         get_option('engines').contains('gl_beta'),
+        get_option('engines').contains('wg_beta'),
         all_loaders or get_option('loaders').contains('tvg'),
         all_loaders or get_option('loaders').contains('svg'),
         all_loaders or get_option('loaders').contains('png'),
