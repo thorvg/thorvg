@@ -56,7 +56,8 @@ struct RenderContext
     LottieObject** begin = nullptr; //iteration entry point
     RenderRepeater* repeater = nullptr;
     float roundness = 0.0f;
-    bool fragmented = false;  //context has been separated. allow adding visual properties(fill/stroking) if it is false.
+    bool stroking = false;     //context has been separated by the stroking
+    bool reqFragment = false;  //requirment to fragment the render context
 
     RenderContext()
     {
@@ -77,7 +78,6 @@ struct RenderContext
             *repeater = *rhs.repeater;
         }
         roundness = rhs.roundness;
-        fragmented = rhs.fragmented;
     }
 };
 
@@ -229,26 +229,30 @@ static void _updateStroke(LottieStroke* stroke, int32_t frameNo, RenderContext& 
 }
 
 
+static bool _fragmentedStroking(LottieObject** child, queue<RenderContext>& contexts, RenderContext& ctx)
+{
+    if (!ctx.reqFragment) return false;
+    if (ctx.stroking) return true;
+
+    contexts.push(ctx);
+    auto& fragment = contexts.back();
+    fragment.propagator->stroke(0.0f);
+    fragment.begin = child - 1;
+    ctx.stroking = true;
+
+    return false;
+}
+
+
 static void _updateSolidStroke(LottieObject** child, int32_t frameNo, queue<RenderContext>& contexts, RenderContext& ctx)
 {
-    //the rendering context is fragmented
-    if (ctx.propagator->strokeWidth() > 0.0f) {
-        contexts.push(ctx);
-        auto& fragment = contexts.back();
-        fragment.propagator->stroke(0.0f);
-        fragment.begin = child - 1;
-        _updateSolidStroke(child, frameNo, contexts, fragment);
-        ctx.fragmented = true;
-        return;
-    }
-
-    if (ctx.fragmented) return;
+    if (_fragmentedStroking(child, contexts, ctx)) return;
 
     auto stroke = static_cast<LottieSolidStroke*>(*child);
 
     ctx.merging = nullptr;
     auto color = stroke->color(frameNo);
-    ctx.propagator->stroke(color.rgb[0], color.rgb[1], color.rgb[2], stroke->opacity(frameNo));
+    ctx.propagator->stroke(color.rgb[0], color.rgb[1], color.rgb[2], stroke->opacity(frameNo));    
 
     _updateStroke(static_cast<LottieStroke*>(stroke), frameNo, ctx);
 }
@@ -256,18 +260,7 @@ static void _updateSolidStroke(LottieObject** child, int32_t frameNo, queue<Rend
 
 static void _updateGradientStroke(LottieObject** child, int32_t frameNo, queue<RenderContext>& contexts, RenderContext& ctx)
 {
-    //the rendering context is fragmented
-    if (ctx.propagator->strokeWidth() > 0.0f) {
-        contexts.push(ctx);
-        auto& fragment = contexts.back();
-        fragment.propagator->stroke(0.0f);
-        fragment.begin = child - 1;
-        _updateGradientStroke(child, frameNo, contexts, fragment);
-        ctx.fragmented = true;
-        return;
-    }
-
-    if (ctx.fragmented) return;
+    if (_fragmentedStroking(child, contexts, ctx)) return;
 
     auto stroke = static_cast<LottieGradientStroke*>(*child);
 
@@ -280,7 +273,7 @@ static void _updateGradientStroke(LottieObject** child, int32_t frameNo, queue<R
 
 static void _updateFill(LottieSolidFill* fill, int32_t frameNo, RenderContext& ctx)
 {
-    if (ctx.fragmented) return;
+    if (ctx.stroking) return;
 
     ctx.merging = nullptr;
 
@@ -294,7 +287,7 @@ static void _updateFill(LottieSolidFill* fill, int32_t frameNo, RenderContext& c
 
 static Shape* _updateFill(LottieGradientFill* fill, int32_t frameNo, RenderContext& ctx)
 {
-    if (ctx.fragmented) return nullptr;
+    if (ctx.stroking) return nullptr;
 
     ctx.merging = nullptr;
 
@@ -723,6 +716,7 @@ static void _updateChildren(LottieGroup* parent, int32_t frameNo, queue<RenderCo
 
     while (contexts.size() > 0) {
         auto& ctx = contexts.front();
+        ctx.reqFragment = parent->reqFragment;
         for (auto child = ctx.begin; child >= parent->children.data; --child) {
             //TODO: Polymorphsim?
             switch ((*child)->type) {
@@ -966,6 +960,40 @@ static void _bulidHierarchy(LottieGroup* parent, LottieLayer* child)
 }
 
 
+//TODO: Optimize this. Can we preprocess in the parsing stage?
+static void _checkFragment(LottieGroup* parent)
+{
+    if (parent->children.count == 0) return;
+
+    int strokeCnt = 0;
+
+    /* Figure out if the rendering context should be fragmented.
+       Multiple stroking or grouping with a stroking would occur this.
+       This fragment resolves the overlapped stroke outlines. */
+    for (auto c = parent->children.end() - 1; c >= parent->children.data; --c) {
+        switch ((*c)->type) {
+            case LottieObject::Group: {
+                if (strokeCnt > 0) {
+                    parent->reqFragment = true;
+                    return;
+                }
+                break;
+            }
+            case LottieObject::SolidStroke:
+            case LottieObject::GradientStroke: {
+                if (strokeCnt > 0) {
+                    parent->reqFragment = true;
+                    return;
+                }
+                ++strokeCnt;
+                break;
+            }
+            default: break;
+        }
+    }
+}
+
+
 static bool _buildPrecomp(LottieComposition* comp, LottieGroup* parent)
 {
     if (parent->children.count == 0) return false;
@@ -983,6 +1011,8 @@ static bool _buildPrecomp(LottieComposition* comp, LottieGroup* parent)
             if (child->matte.target->refId) _buildReference(comp, child->matte.target);
         }
         _bulidHierarchy(parent, child);
+
+        _checkFragment(static_cast<LottieGroup*>(*c));
     }
     return true;
 }
