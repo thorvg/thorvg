@@ -23,6 +23,9 @@
 #ifndef _TVG_GL_RENDER_TASK_H_
 #define _TVG_GL_RENDER_TASK_H_
 
+#include <memory>
+#include <vector>
+
 #include "tvgGlCommon.h"
 #include "tvgGlProgram.h"
 
@@ -69,14 +72,13 @@ struct GlBindingResource
     }
 };
 
-
 class GlRenderTask
 {
 public:
     GlRenderTask(GlProgram* program): mProgram(program) {}
-    ~GlRenderTask() = default;
+    virtual ~GlRenderTask() = default;
 
-    void run();
+    virtual void run();
 
     void addVertexLayout(const GlVertexLayout& layout);
     void addBindResource(const GlBindingResource& binding);
@@ -92,5 +94,49 @@ private:
     Array<GlVertexLayout> mVertexLayout = {};
     Array<GlBindingResource> mBindingResources = {};
 };
+
+class GlComposeTask : public GlRenderTask 
+{
+public:
+    GlComposeTask(GlProgram* program, GLuint target, GLuint selfFbo, vector<unique_ptr<GlRenderTask>> tasks);
+    ~GlComposeTask() override = default;
+
+    void run() override;
+
+protected:
+    GLuint getTargetFbo() { return mTargetFbo; }
+
+    GLuint getSelfFbo() { return mSelfFbo; }
+
+private:
+    GLuint mTargetFbo;
+    GLuint mSelfFbo;
+    vector<unique_ptr<GlRenderTask>> mTasks;
+};
+
+class GlBlitTask : public GlComposeTask
+{
+public:
+    GlBlitTask(GlProgram*, GLuint target, GLuint compose, vector<unique_ptr<GlRenderTask>> tasks);
+    ~GlBlitTask() override = default;
+
+    void setSize(uint32_t width, uint32_t height);
+
+    void run() override;
+
+private:
+    uint32_t mWidth = 0;
+    uint32_t mHeight = 0;
+};
+
+class GlDrawBlitTask : public GlComposeTask
+{
+public:
+    GlDrawBlitTask(GlProgram*, GLuint target, GLuint compose, vector<unique_ptr<GlRenderTask>> tasks);
+    ~GlDrawBlitTask() override = default;
+
+    void run() override;
+};
+
 
 #endif /* _TVG_GL_RENDER_TASK_H_ */
