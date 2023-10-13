@@ -86,22 +86,30 @@ static void _updateChildren(LottieGroup* parent, int32_t frameNo, queue<RenderCo
 static void _updateLayer(LottieLayer* root, LottieLayer* layer, int32_t frameNo);
 static bool _buildPrecomp(LottieComposition* comp, LottieGroup* parent);
 
+static void _rotateX(Matrix* m, float degree)
+{
+    if (degree == 0.0f) return;
+    auto radian = degree / 180.0f * M_PI;
+    m->e22 *= cosf(radian);
+}
+
 
 static void _rotateY(Matrix* m, float degree)
 {
     if (degree == 0.0f) return;
     auto radian = degree / 180.0f * M_PI;
-    m->e11 = cosf(radian);
-    m->e31 = -sinf(radian);
+    m->e11 *= cosf(radian);
 }
 
 
-static void _rotateX(Matrix* m, float degree)
+static void _rotationZ(Matrix* m, float degree)
 {
     if (degree == 0.0f) return;
     auto radian = degree / 180.0f * M_PI;
+    m->e11 = cosf(radian);
+    m->e12 = -sinf(radian);
+    m->e21 = sinf(radian);
     m->e22 = cosf(radian);
-    m->e32 = -sinf(radian);
 }
 
 
@@ -123,7 +131,7 @@ static bool _updateTransform(LottieTransform* transform, int32_t frameNo, bool a
 
     auto angle = 0.0f;
     if (autoOrient) angle = transform->position.angle(frameNo);
-    mathRotate(&matrix, transform->rotation(frameNo) + angle);
+    _rotationZ(&matrix, transform->rotation(frameNo) + angle);
 
     if (transform->rotationEx) {
         _rotateY(&matrix, transform->rotationEx->y(frameNo));
