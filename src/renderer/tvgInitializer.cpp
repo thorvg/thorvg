@@ -95,24 +95,27 @@ static bool _buildVersionInfo()
 Result Initializer::init(CanvasEngine engine, uint32_t threads) noexcept
 {
     auto nonSupport = true;
+    if (static_cast<int>(engine) == 0) return Result::InvalidArguments;
 
     if (engine & CanvasEngine::Sw) {
         #ifdef THORVG_SW_RASTER_SUPPORT
             if (!SwRenderer::init(threads)) return Result::FailedAllocation;
             nonSupport = false;
         #endif
-    } else if (engine & CanvasEngine::Gl) {
+    }
+
+    if (engine & CanvasEngine::Gl) {
         #ifdef THORVG_GL_RASTER_SUPPORT
             if (!GlRenderer::init(threads)) return Result::FailedAllocation;
             nonSupport = false;
         #endif
-    } else if (engine & CanvasEngine::Wg) {
+    }
+
+    if (engine & CanvasEngine::Wg) {
         #ifdef THORVG_WG_RASTER_SUPPORT
             if (!WgRenderer::init(threads)) return Result::FailedAllocation;
             nonSupport = false;
         #endif
-    } else {
-        return Result::InvalidArguments;
     }
 
     if (nonSupport) return Result::NonSupport;
@@ -134,24 +137,27 @@ Result Initializer::term(CanvasEngine engine) noexcept
     if (_initCnt == 0) return Result::InsufficientCondition;
 
     auto nonSupport = true;
+    if (static_cast<int>(engine) == 0) return Result::InvalidArguments;
 
     if (engine & CanvasEngine::Sw) {
         #ifdef THORVG_SW_RASTER_SUPPORT
             if (!SwRenderer::term()) return Result::InsufficientCondition;
             nonSupport = false;
         #endif
-    } else if (engine & CanvasEngine::Gl) {
+    }
+
+    if (engine & CanvasEngine::Gl) {
         #ifdef THORVG_GL_RASTER_SUPPORT
             if (!GlRenderer::term()) return Result::InsufficientCondition;
             nonSupport = false;
         #endif
-    } else if (engine & CanvasEngine::Wg) {
+    }
+
+    if (engine & CanvasEngine::Wg) {
         #ifdef THORVG_WG_RASTER_SUPPORT
             if (!WgRenderer::term()) return Result::InsufficientCondition;
             nonSupport = false;
         #endif
-    } else {
-        return Result::InvalidArguments;
     }
 
     if (nonSupport) return Result::NonSupport;
@@ -170,3 +176,4 @@ uint16_t THORVG_VERSION_NUMBER()
 {
     return _version;
 }
+
