@@ -8,6 +8,10 @@ if get_option('engines').contains('gl_beta') == true
     subdir('gl_engine')
 endif
 
+if get_option('engines').contains('wg_beta') == true
+    subdir('wg_engine')
+endif
+
 source_file = [
    'tvgCanvas.h',
    'tvgCommon.h',
