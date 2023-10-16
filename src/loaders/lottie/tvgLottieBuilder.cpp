@@ -58,6 +58,7 @@ struct RenderContext
     float roundness = 0.0f;
     bool stroking = false;     //context has been separated by the stroking
     bool reqFragment = false;  //requirment to fragment the render context
+    bool allowMerging = true;  //individual trimpath doesn't allow merging shapes
 
     RenderContext()
     {
@@ -304,7 +305,7 @@ static Shape* _updateFill(LottieGradientFill* fill, int32_t frameNo, RenderConte
 
 static Shape* _draw(LottieGroup* parent, int32_t frameNo, RenderContext& ctx)
 {
-    if (ctx.merging) return ctx.merging;
+    if (ctx.allowMerging && ctx.merging) return ctx.merging;
 
     auto shape = cast<Shape>(ctx.propagator->duplicate());
     ctx.merging = shape.get();
@@ -702,11 +703,9 @@ static void _updateTrimpath(LottieTrimpath* trimpath, int32_t frameNo, RenderCon
         end = (length * end) + pbegin;
     }
 
-    if (trimpath->type == LottieTrimpath::Individual) {
-        TVGERR("LOTTIE", "TODO: Individual Trimpath");
-    }
-
     P(ctx.propagator)->strokeTrim(begin, end);
+
+    if (trimpath->type == LottieTrimpath::Individual) ctx.allowMerging = false;
 }
 
 
