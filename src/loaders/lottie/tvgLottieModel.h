@@ -240,7 +240,7 @@ struct LottieObject
 
 struct LottieTrimpath : LottieObject
 {
-    enum Type : uint8_t { Simultaneous = 1, Individual = 2 };
+    enum Type : uint8_t { Individual = 1, Simultaneous = 2 };
 
     void prepare()
     {
