@@ -23,7 +23,9 @@
 #ifndef _TVG_WG_RENDERER_H_
 #define _TVG_WG_RENDERER_H_
 
-#include "tvgRender.h"
+#include "tvgWgPipelineEmpty.h"
+#include "tvgWgPipelineSolid.h"
+#include "tvgWgRenderData.h"
 
 class WgRenderer : public RenderMethod
 {
@@ -51,6 +53,7 @@ public:
     bool clear();
     bool sync();
 
+    bool target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h);
     bool target(void* window, uint32_t w, uint32_t h); // temporary solution
     Compositor* target(const RenderRegion& region, ColorSpace cs);
     bool beginComposite(Compositor* cmp, CompositeMethod method, uint8_t opacity);
@@ -59,6 +62,26 @@ public:
     static WgRenderer* gen();
     static bool init(uint32_t threads);
     static bool term();
+private:
+    Array<RenderData> mRenderDatas{};
+private:
+    Surface mTargetSurface = { nullptr, 0, 0, 0, ColorSpace::Unsupported, true };
+    float mViewMatrix[16]{};
+    // basic webgpu instances (TODO: create separated entity)
+    WGPUInstance mInstance{};
+    WGPUAdapter mAdapter{};
+    WGPUDevice mDevice{};
+    WGPUQueue mQueue{};
+    // webgpu surface handles (TODO: create separated entity)
+    WGPUSurface mSurface{};
+    WGPUSwapChain mSwapChain{};
+    WGPUTexture mStencilTex{};
+    WGPUTextureView mStencilTexView{};
+private:
+    WgPipelineEmpty mPipelineEmpty;
+    WgPipelineSolid mPipelineSolid;
+    WgGeometryData mGeometryDataPipeline;
+    WgPipelineBindGroupEmpty mPipelineBindGroupEmpty;
 };
 
 #endif /* _TVG_WG_RENDERER_H_ */
