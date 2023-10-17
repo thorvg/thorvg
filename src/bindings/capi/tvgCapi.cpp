@@ -220,6 +220,21 @@ TVG_API Tvg_Result tvg_paint_get_composite_method(const Tvg_Paint* paint, const 
 }
 
 
+TVG_API Tvg_Result tvg_paint_set_blend_method(const Tvg_Paint* paint, Tvg_Blend_Method method)
+{
+   if (!paint) return TVG_RESULT_INVALID_ARGUMENT;
+   return (Tvg_Result) reinterpret_cast<const Paint*>(paint)->blend((BlendMethod)method);
+}
+
+
+TVG_API Tvg_Result tvg_paint_get_blend_method(const Tvg_Paint* paint, Tvg_Blend_Method* method)
+{
+    if (!paint || !method) return TVG_RESULT_INVALID_ARGUMENT;
+    *method = static_cast<Tvg_Blend_Method>(reinterpret_cast<const Paint*>(paint)->blend());
+    return TVG_RESULT_SUCCESS;
+}
+
+
 TVG_API Tvg_Result tvg_paint_get_identifier(const Tvg_Paint* paint, Tvg_Identifier* identifier)
 {
     if (!paint || !identifier) return TVG_RESULT_INVALID_ARGUMENT;
