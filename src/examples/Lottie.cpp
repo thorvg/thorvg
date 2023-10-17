@@ -125,7 +125,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
         elm_transit_repeat_times_set(transit, -1);
         elm_transit_go(transit);
 
-        canvas->push(tvg::cast<tvg::Picture>(animation->picture()));
+        canvas->push(tvg::cast(animation->picture()));
     }
 }
 
