@@ -88,7 +88,7 @@ public:
 
         resize(width, height);
 
-        if (canvas->push(cast<Picture>(animation->picture())) != Result::Success) {
+        if (canvas->push(cast(animation->picture())) != Result::Success) {
             errorMsg = "push() fail";
             return false;
         }

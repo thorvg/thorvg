@@ -1894,7 +1894,7 @@ public:
  * @brief The cast() function is a utility function used to cast a 'Paint' to type 'T'.
  * @since 0.11
  */
-template<typename T>
+template<typename T = tvg::Paint>
 std::unique_ptr<T> cast(Paint* paint)
 {
     return std::unique_ptr<T>(static_cast<T*>(paint));
@@ -1905,7 +1905,7 @@ std::unique_ptr<T> cast(Paint* paint)
  * @brief The cast() function is a utility function used to cast a 'Fill' to type 'T'.
  * @since 0.11
  */
-template<typename T>
+template<typename T = tvg::Fill>
 std::unique_ptr<T> cast(Fill* fill)
 {
     return std::unique_ptr<T>(static_cast<T*>(fill));

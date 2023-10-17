@@ -77,7 +77,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     picture->scale(scale);
     picture->translate(shiftX, shiftY);
 
-    canvas->push(tvg::cast<tvg::Picture>(picture));
+    canvas->push(tvg::cast(picture));
 
     //Run animation loop
     elm_transit_duration_set(transit, animation->duration());

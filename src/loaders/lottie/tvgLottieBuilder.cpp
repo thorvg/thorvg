@@ -359,11 +359,11 @@ static void _repeat(LottieGroup* parent, int32_t frameNo, unique_ptr<Shape> path
     //push repeat shapes in order.
     if (repeater->inorder) {
         for (auto shape = shapes.data; shape < shapes.end(); ++shape) {
-            parent->scene->push(cast<Shape>(*shape));
+            parent->scene->push(cast(*shape));
         }
     } else {
         for (auto shape = shapes.end() - 1; shape >= shapes.data; --shape) {
-            parent->scene->push(cast<Shape>(*shape));
+            parent->scene->push(cast(*shape));
         }
     }
 }
@@ -809,7 +809,7 @@ static void _updatePrecomp(LottieLayer* precomp, int32_t frameNo)
         clipper->appendRect(0, 0, static_cast<float>(precomp->w), static_cast<float>(precomp->h));
         clipper->transform(precomp->cache.matrix);
         cscene->composite(std::move(clipper), CompositeMethod::ClipPath);
-        cscene->push(cast<Scene>(precomp->scene));
+        cscene->push(cast(precomp->scene));
         precomp->scene = cscene.release();
     }
 }
@@ -920,7 +920,7 @@ static void _updateLayer(LottieLayer* root, LottieLayer* layer, int32_t frameNo)
     }
 
     //the given matte source was composited by the target earlier.
-    if (!layer->matteSrc) root->scene->push(cast<Scene>(layer->scene));
+    if (!layer->matteSrc) root->scene->push(cast(layer->scene));
 }
 
 
