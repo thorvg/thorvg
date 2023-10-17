@@ -141,6 +141,30 @@ typedef enum {
     TVG_COMPOSITE_METHOD_INVERSE_LUMA_MASK   ///< The source pixels are converted to grayscale (luma value) and complement to the target's pixels are alpha blended. As a result, only the part of the source which is not covered by the target is visible. \BETA_API
 } Tvg_Composite_Method;
 
+/**
+ * @brief Enumeration indicates the method used for blending paint. Please refer to the respective formulas for each method.
+ *
+ * \ingroup ThorVGCapi_Paint
+ *
+ * @BETA_API
+ */
+typedef enum {
+    TVG_BLEND_METHOD_NORMAL = 0,        ///< Perform the alpha blending(default). S if (Sa == 255), otherwise (Sa * S) + (255 - Sa) * D
+    TVG_BLEND_METHOD_ADD,               ///< Simply adds pixel values of one layer with the other. (S + D)
+    TVG_BLEND_METHOD_SCREEN,            ///< The values of the pixels in the two layers are inverted, multiplied, and then inverted again. (S + D) - (S * D)
+    TVG_BLEND_METHOD_MULTIPLY,          ///< Takes the RGB channel values from 0 to 255 of each pixel in the top layer and multiples them with the values for the corresponding pixel from the bottom layer. (S * D)
+    TVG_BLEND_METHOD_OVERLAY,           ///< Combines Multiply and Screen blend modes. (2 * S * D) if (2 * D < Da), otherwise (Sa * Da) - 2 * (Da - S) * (Sa - D)
+    TVG_BLEND_METHOD_DIFFERENCE,        ///< Subtracts the bottom layer from the top layer or the other way around, to always get a non-negative value. (S - D) if (S > D), otherwise (D - S)
+    TVG_BLEND_METHOD_EXCLUSION,         ///< The result is twice the product of the top and bottom layers, subtracted from their sum. s + d - (2 * s * d)
+    TVG_BLEND_METHOD_SRCOVER,           ///< Replace the bottom layer with the top layer.
+    TVG_BLEND_METHOD_DARKEN,            ///< Creates a pixel that retains the smallest components of the top and bottom layer pixels. min(S, D)
+    TVG_BLEND_METHOD_LIGHTEN,           ///< Only has the opposite action of Darken Only. max(S, D)
+    TVG_BLEND_METHOD_COLORDODGE,        ///< Divides the bottom layer by the inverted top layer. D / (255 - S)
+    TVG_BLEND_METHOD_COLORBURN,         ///< Divides the inverted bottom layer by the top layer, and then inverts the result. 255 - (255 - D) / S
+    TVG_BLEND_METHOD_HARDLIGHT,         ///< The same as Overlay but with the color roles reversed. (2 * S * D) if (S < Sa), otherwise (Sa * Da) - 2 * (Da - S) * (Sa - D)
+    TVG_BLEND_METHOD_SOFTLIGHT          ///< The same as Overlay but with applying pure black or white does not result in pure black or white. (1 - 2 * S) * (D ^ 2) + (2 * S * D)
+} Tvg_Blend_Method;
+
 
 /**
  * \brief Enumeration indicating the ThorVG class type.
@@ -944,8 +968,45 @@ TVG_API Tvg_Result tvg_paint_get_composite_method(const Tvg_Paint* paint, const 
 * \since 0.9
 */
 TVG_API Tvg_Result tvg_paint_get_identifier(const Tvg_Paint* paint, Tvg_Identifier* identifier);
-/** \} */   // end defgroup ThorVGCapi_Paint
 
+
+/**
+ * @brief Sets the blending method for the paint object.
+ *
+ * The blending feature allows you to combine colors to create visually appealing effects, including transparency, lighting, shading, and color mixing, among others.
+ * its process involves the combination of colors or images from the source paint object with the destination (the lower layer image) using blending operations.
+ * The blending operation is determined by the chosen @p BlendMethod, which specifies how the colors or images are combined.
+ *
+ * \param[in] paint The Tvg_Paint object of which to get the identifier value.
+ * \param[in] method The blending method to be set.
+ *
+ * \return Tvg_Result enumeration.
+ * \retval TVG_RESULT_INVALID_ARGUMENT In case a @c nullptr is passed as the argument.
+ *
+ * @BETA_API
+ */
+TVG_API Tvg_Result tvg_paint_set_blend_method(const Tvg_Paint* paint, Tvg_Blend_Method method);
+
+
+/**
+ * @brief Gets the blending method for the paint object.
+ *
+ * The blending feature allows you to combine colors to create visually appealing effects, including transparency, lighting, shading, and color mixing, among others.
+ * its process involves the combination of colors or images from the source paint object with the destination (the lower layer image) using blending operations.
+ * The blending operation is determined by the chosen @p BlendMethod, which specifies how the colors or images are combined.
+ *
+ * \param[in] paint The Tvg_Paint object of which to get the identifier value.
+ * \param[out] method The blending method of the paint.
+ *
+ * \return Tvg_Result enumeration.
+ * \retval TVG_RESULT_INVALID_ARGUMENT In case a @c nullptr is passed as the argument.
+ *
+ * @BETA_API
+ */
+TVG_API Tvg_Result tvg_paint_get_blend_method(const Tvg_Paint* paint, Tvg_Blend_Method* method);
+
+
+/** \} */   // end defgroup ThorVGCapi_Paint
 
 /**
 * \defgroup ThorVGCapi_Shape Shape
