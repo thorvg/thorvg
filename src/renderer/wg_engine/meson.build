@@ -1,5 +1,10 @@
 source_file = [
-   'tvgWgRenderer.cpp',
+    'tvgWgPipelineBase.cpp',
+    'tvgWgPipelineEmpty.cpp',
+    'tvgWgPipelineSolid.cpp',
+    'tvgWgRenderData.cpp',
+    'tvgWgRenderer.cpp',
+    'tvgWgShaderSrc.cpp'
 ]
 
 engine_dep += [declare_dependency(
