@@ -70,6 +70,10 @@ if all_savers or get_option('savers').contains('tvg') == true
     config_h.set10('THORVG_TVG_SAVER_SUPPORT', true)
 endif
 
+if all_savers or get_option('savers').contains('gif') == true
+    config_h.set10('THORVG_GIF_SAVER_SUPPORT', true)
+endif
+
 #Vectorization
 simd_type = 'none'
 
@@ -136,13 +140,14 @@ Summary:
     Loader (WEBP_BETA):    @11@
     Loader (LOTTIE):       @12@
     Saver (TVG):           @13@
-    Binding (CAPI):        @14@
-    Binding (WASM_BETA):   @15@
-    Log Message:           @16@
-    Tests:                 @17@
-    Examples:              @18@
-    Tool (Svg2Tvg):        @19@
-    Tool (Svg2Png):        @20@
+    Saver (GIF):           @14@
+    Binding (CAPI):        @15@
+    Binding (WASM_BETA):   @16@
+    Log Message:           @17@
+    Tests:                 @18@
+    Examples:              @19@
+    Tool (Svg2Tvg):        @20@
+    Tool (Svg2Png):        @21@
 
 '''.format(
         meson.project_version(),
@@ -159,6 +164,7 @@ Summary:
         get_option('loaders').contains('webp_beta'),
         all_loaders or get_option('loaders').contains('lottie'),
         all_savers or get_option('savers').contains('tvg'),
+        all_savers or get_option('savers').contains('gif'),
         get_option('bindings').contains('capi'),
         get_option('bindings').contains('wasm_beta'),
         get_option('log'),

@@ -811,3 +811,11 @@ bool TvgSaver::save(Paint* paint, const string& path, TVG_UNUSED uint32_t qualit
 
     return true;
 }
+
+
+bool TvgSaver::save(TVG_UNUSED Animation* animation, TVG_UNUSED const string& path, TVG_UNUSED uint32_t quality, TVG_UNUSED uint32_t fps)
+{
+    TVGLOG("TVG_SAVER", "Animation is not supported.");
+    return false;
+}
+
