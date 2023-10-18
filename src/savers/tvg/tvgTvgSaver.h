@@ -64,12 +64,14 @@ private:
     TvgBinCounter serializeChildren(Iterator* it, const Matrix* transform);
     TvgBinCounter serializeChild(const Paint* parent, const Paint* child, const Matrix* pTransform);
 
+    void run(unsigned tid) override;
+
 public:
     ~TvgSaver();
 
     bool save(Paint* paint, const string& path, uint32_t quality) override;
+    bool save(Animation* animation, const string& path, uint32_t quality, uint32_t fps) override;
     bool close() override;
-    void run(unsigned tid) override;
 };
 
 }
