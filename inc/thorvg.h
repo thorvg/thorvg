@@ -1769,6 +1769,31 @@ public:
     Result save(std::unique_ptr<Paint> paint, const std::string& path, bool compress = true) noexcept;
 
     /**
+     * @brief Export the provided animation data to the specified file path.
+     *
+     * This function exports the given animation data to the provided file path. You can also specify the desired frame rate in frames per second (FPS) by providing the fps parameter.
+     *
+     * @param[in] animation The animation to be saved, including all associated properties.
+     * @param[in] path The path to the file where the animation will be saved.
+     * @param[in] quality The encoded quality level. @c 0 is the minimum, @c 100 is the maximum value(recommended).
+     * @param[in] fps The desired frames per second (FPS). For example, to encode data at 60 FPS, pass 60. Pass 0 to keep the original frame data.
+     *
+     * @return Result::Success if the export succeeds.
+     * @return Result::InsufficientCondition if there are ongoing resource-saving operations.
+     * @return Result::NonSupport if an attempt is made to save the file with an unknown extension or in an unsupported format.
+     * @return Result::MemoryCorruption in case of an internal error.
+     * @return Result::Unknown if attempting to save an empty paint.
+     *
+     * @note A higher frames per second (FPS) would result in a larger file size. It is recommended to use the default value.
+     * @note Saving can be asynchronous if the assigned thread number is greater than zero. To guarantee the saving is done, call sync() afterwards.
+     *
+     * @see Saver::sync()
+     *
+     * @BETA_API
+     */
+    Result save(std::unique_ptr<Animation> animation, const std::string& path, uint32_t quality = 100, uint32_t fps = 0) noexcept;
+
+    /**
      * @brief Guarantees that the saving task is finished.
      *
      * The behavior of the Saver works on a sync/async basis, depending on the threading setting of the Initializer.
