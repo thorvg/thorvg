@@ -12,7 +12,7 @@ option('loaders',
 
 option('savers',
    type: 'array',
-   choices: ['', 'tvg', 'all'],
+   choices: ['', 'tvg', 'gif', 'all'],
    value: [''],
    description: 'Enable File Savers in thorvg')
 
