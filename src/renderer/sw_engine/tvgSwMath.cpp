@@ -50,11 +50,17 @@ bool mathSmallCubic(const SwPoint* base, SwFixed& angleIn, SwFixed& angleMid, Sw
     auto d2 = base[1] - base[2];
     auto d3 = base[0] - base[1];
 
+    if (d1 == d2 || d2 == d3) {
+        if (d3.small()) angleIn = angleMid = angleOut = 0;
+        else angleIn = angleMid = angleOut = mathAtan(d3);
+        return true;
+    }
+
     if (d1.small()) {
         if (d2.small()) {
             if (d3.small()) {
-                //basically a point.
-                //do nothing to retain original direction
+                angleIn = angleMid = angleOut = 0;
+                return true;
             } else {
                 angleIn = angleMid = angleOut = mathAtan(d3);
             }
@@ -205,7 +211,14 @@ SwFixed mathLength(const SwPoint& pt)
     if (pt.y == 0) return abs(pt.x);
 
     auto v = pt.toPoint();
-    return static_cast<SwFixed>(sqrtf(v.x * v.x + v.y * v.y) / 64.0f);
+    //return static_cast<SwFixed>(sqrtf(v.x * v.x + v.y * v.y) * 65536.0f);
+
+    /* approximate sqrt(x*x + y*y) using alpha max plus beta min algorithm.
+       With alpha = 1, beta = 3/8, giving results with the largest error less
+       than 7% compared to the exact value. */
+    if (v.x < 0) v.x = -v.x;
+    if (v.y < 0) v.y = -v.y;
+    return (v.x > v.y) ? (v.x + v.y * 0.375f) : (v.y + v.x * 0.375f);
 }
 
 
