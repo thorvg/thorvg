@@ -20,18 +20,42 @@
  * SOFTWARE.
  */
 
-#pragma once
+#ifndef _TVG_WG_PIPELINE_LINEAR_H_
+#define _TVG_WG_PIPELINE_LINEAR_H_
 
-#ifndef _TVG_WG_SHADER_SRC_H_
-#define _TVG_WG_SHADER_SRC_H_
+#include "tvgWgPipelineBase.h"
 
-// pipeline shader module empty
-extern const char* cShaderSource_PipelineEmpty;
+class WgPipelineLinear;
 
-// pipeline shader module solid
-extern const char* cShaderSource_PipelineSolid;
+#define MAX_LINEAR_GRADIENT_STOPS 4
+struct WgPipelineLinearGradientInfo {
+    alignas(16) float nStops[4]{};
+    alignas(16) float startPos[2]{};
+    alignas(8)  float endPos[2]{};
+    alignas(8)  float stopPoints[MAX_LINEAR_GRADIENT_STOPS]{};
+    alignas(16) float stopColors[4 * MAX_LINEAR_GRADIENT_STOPS]{};
+};
 
-// pipeline shader module linear
-extern const char* cShaderSource_PipelineLinear;
+struct WgPipelineDataLinear: WgPipelineData {
+    WgPipelineLinearGradientInfo uGradientInfo{}; // @binding(1)
 
-#endif
+    void updateGradient(LinearGradient* linearGradient);
+};
+
+class WgPipelineBindGroupLinear: public WgPipelineBindGroup {
+private:
+    WGPUBuffer uBufferGradientInfo{}; // @binding(1)
+public:
+    void initialize(WGPUDevice device, WgPipelineLinear& pipelinePipelineLinear);
+    void release();
+
+    void update(WGPUQueue mQueue, WgPipelineDataLinear& pipelineDataLinear);
+};
+
+class WgPipelineLinear: public WgPipelineBase {
+public:
+    void initialize(WGPUDevice device) override;
+    void release() override;
+};
+
+#endif //_TVG_WG_PIPELINE_LINEAR_H_
