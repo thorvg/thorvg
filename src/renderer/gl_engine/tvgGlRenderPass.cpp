@@ -29,12 +29,11 @@ GlRenderTarget::GlRenderTarget(uint32_t width, uint32_t height): mWidth(width), 
 GlRenderTarget::~GlRenderTarget()
 {
     if (mFbo == 0) return;
-
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, 0));
-
     GL_CHECK(glDeleteFramebuffers(1, &mFbo));
 
-    if (mColorTex) GL_CHECK(glDeleteTextures(1, &mColorTex));
+    if (mColorTex == 0) return;
+    GL_CHECK(glDeleteTextures(1, &mColorTex));
 }
 
 void GlRenderTarget::init(GLint resolveId)
