@@ -100,3 +100,87 @@ fn vs_main(in: VertexInput) -> VertexOutput {
 fn fs_main(in: VertexOutput) -> @location(0) vec4f {
     return uColorInfo.color;
 })";
+
+//************************************************************************
+// cShaderSource_PipelineRadial
+//************************************************************************
+const char* cShaderSource_PipelineLinear = R"(
+// vertex input
+struct VertexInput {
+    @location(0) position: vec3f
+};
+
+// Matrix
+struct Matrix {
+    transform: mat4x4f
+};
+
+// GradientInfo
+const MAX_STOP_COUNT = 4;
+struct GradientInfo {
+    nStops       : vec4f,
+    gradStartPos : vec2f,
+    gradEndPos   : vec2f,
+    stopPoints   : vec4f,
+    stopColors   : array<vec4f, MAX_STOP_COUNT>
+};
+
+// vertex output
+struct VertexOutput {
+    @builtin(position) position: vec4f,
+    @location(0) vScreenCoord: vec2f
+};
+
+// uMatrix
+@group(0) @binding(0) var<uniform> uMatrix: Matrix;
+// uGradientInfo
+@group(0) @binding(1) var<uniform> uGradientInfo: GradientInfo;
+
+@vertex
+fn vs_main(in: VertexInput) -> VertexOutput {
+    // fill output
+    var out: VertexOutput;
+    out.position = uMatrix.transform * vec4f(in.position.xy, 0.0, 1.0);
+    out.vScreenCoord = in.position.xy;
+    return out;
+}
+
+@fragment
+fn fs_main(in: VertexOutput) -> @location(0) vec4f {
+    let pos: vec2f = in.vScreenCoord;
+    let st: vec2f = uGradientInfo.gradStartPos;
+    let ed: vec2f = uGradientInfo.gradEndPos;
+
+    let ba: vec2f = ed - st;
+
+    // get interpolation factor
+    let t: f32 = clamp(dot(pos - st, ba) / dot(ba, ba), 0.0, 1.0);
+
+    // get stops count
+    let last: i32 = i32(uGradientInfo.nStops[0]) - 1;
+
+    // resulting color
+    var color = vec4(1.0);
+
+    // closer than first stop
+    if (t <= uGradientInfo.stopPoints[0]) {
+        color = uGradientInfo.stopColors[0];
+    }
+    
+    // further than last stop
+    if (t >= uGradientInfo.stopPoints[last]) {
+        color = uGradientInfo.stopColors[last];
+    }
+
+    // look in the middle
+    for (var i = 0i; i < last; i++) {
+        let strt = uGradientInfo.stopPoints[i];
+        let stop = uGradientInfo.stopPoints[i+1];
+        if ((t > strt) && (t < stop)) {
+            let step: f32 = (t - strt) / (stop - strt);
+            color = mix(uGradientInfo.stopColors[i], uGradientInfo.stopColors[i+1], step);
+        }
+    }
+
+    return color;
+})";

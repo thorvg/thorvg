@@ -1,6 +1,7 @@
 source_file = [
     'tvgWgPipelineBase.cpp',
     'tvgWgPipelineEmpty.cpp',
+    'tvgWgPipelineLinear.cpp',
     'tvgWgPipelineSolid.cpp',
     'tvgWgRenderData.cpp',
     'tvgWgRenderer.cpp',
