@@ -24,7 +24,6 @@
 #define _TVG_WG_RENDERER_H_
 
 #include "tvgWgPipelineEmpty.h"
-#include "tvgWgPipelineSolid.h"
 #include "tvgWgRenderData.h"
 
 class WgRenderer : public RenderMethod
@@ -80,6 +79,7 @@ private:
 private:
     WgPipelineEmpty mPipelineEmpty;
     WgPipelineSolid mPipelineSolid;
+    WgPipelineLinear mPipelineLinear;
     WgGeometryData mGeometryDataPipeline;
     WgPipelineBindGroupEmpty mPipelineBindGroupEmpty;
 };

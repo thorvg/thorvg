@@ -103,6 +103,7 @@ void WgRenderer::initialize() {
     // create pipelines
     mPipelineEmpty.initialize(mDevice);
     mPipelineSolid.initialize(mDevice);
+    mPipelineLinear.initialize(mDevice);
     mPipelineBindGroupEmpty.initialize(mDevice, mPipelineEmpty);
     mGeometryDataPipeline.initialize(mDevice);
 }
@@ -117,6 +118,7 @@ void WgRenderer::release() {
     if (mSurface) wgpuSurfaceRelease(mSurface);
     mGeometryDataPipeline.release();
     mPipelineBindGroupEmpty.release();
+    mPipelineLinear.release();
     mPipelineSolid.release();
     mPipelineEmpty.release();
     if (mDevice) {
@@ -134,10 +136,24 @@ RenderData WgRenderer::prepare(const RenderShape& rshape, RenderData data, const
         renderDataShape = new WgRenderDataShape();
         renderDataShape->initialize(mDevice);
         renderDataShape->mPipelineBindGroupSolid.initialize(mDevice, mPipelineSolid);
+        renderDataShape->mPipelineBindGroupLinear.initialize(mDevice, mPipelineLinear);
     }
     
     if (flags & RenderUpdateFlag::Path)
         renderDataShape->tesselate(mDevice, mQueue, rshape);
+
+    // setup fill properties
+    if ((flags & (RenderUpdateFlag::Gradient | RenderUpdateFlag::Transform)) && (rshape.fill)) {
+        // setup linear fill properties
+        if (rshape.fill->identifier() == TVG_CLASS_ID_LINEAR) {
+            WgPipelineDataLinear brushDataLinear{};
+            brushDataLinear.updateMatrix(mViewMatrix, transform);
+            brushDataLinear.updateGradient((LinearGradient*)rshape.fill);
+            renderDataShape->mPipelineBindGroupLinear.update(mQueue, brushDataLinear);
+            renderDataShape->mPipelineBindGroup = &renderDataShape->mPipelineBindGroupLinear;
+            renderDataShape->mPipelineBase = &mPipelineLinear;
+        }
+    }
 
     // setup solid fill properties
     if ((flags & (RenderUpdateFlag::Color | RenderUpdateFlag::Transform)) && (!rshape.fill)) {

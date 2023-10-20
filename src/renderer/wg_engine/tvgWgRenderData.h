@@ -21,6 +21,7 @@
  */
 
 #include "tvgWgPipelineSolid.h"
+#include "tvgWgPipelineLinear.h"
 
 #ifndef _TVG_WG_RENDER_DATA_H_
 #define _TVG_WG_RENDER_DATA_H_
@@ -53,6 +54,7 @@ public:
     Array<WgGeometryData*> mGeometryDataStroke;
 
     WgPipelineBindGroupSolid mPipelineBindGroupSolid{};
+    WgPipelineBindGroupLinear mPipelineBindGroupLinear{};
 
     WgPipelineBase* mPipelineBase{}; // external
     WgPipelineBindGroup* mPipelineBindGroup{}; // external
