@@ -98,8 +98,8 @@ private:
 class GlComposeTask : public GlRenderTask 
 {
 public:
-    GlComposeTask(GlProgram* program, GLuint target, GLuint selfFbo, vector<unique_ptr<GlRenderTask>> tasks);
-    ~GlComposeTask() override = default;
+    GlComposeTask(GlProgram* program, GLuint target, GLuint selfFbo, Array<GlRenderTask*>&& tasks);
+    ~GlComposeTask() override;
 
     void run() override;
 
@@ -111,13 +111,13 @@ protected:
 private:
     GLuint mTargetFbo;
     GLuint mSelfFbo;
-    vector<unique_ptr<GlRenderTask>> mTasks;
+    Array<GlRenderTask*> mTasks;
 };
 
 class GlBlitTask : public GlComposeTask
 {
 public:
-    GlBlitTask(GlProgram*, GLuint target, GLuint compose, vector<unique_ptr<GlRenderTask>> tasks);
+    GlBlitTask(GlProgram*, GLuint target, GLuint compose, Array<GlRenderTask*>&& tasks);
     ~GlBlitTask() override = default;
 
     void setSize(uint32_t width, uint32_t height);
@@ -132,7 +132,7 @@ private:
 class GlDrawBlitTask : public GlComposeTask
 {
 public:
-    GlDrawBlitTask(GlProgram*, GLuint target, GLuint compose, vector<unique_ptr<GlRenderTask>> tasks);
+    GlDrawBlitTask(GlProgram*, GLuint target, GLuint compose, Array<GlRenderTask*>&& tasks);
     ~GlDrawBlitTask() override = default;
 
     void run() override;

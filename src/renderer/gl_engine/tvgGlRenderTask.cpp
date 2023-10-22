@@ -90,9 +90,20 @@ void GlRenderTask::setViewport(const RenderRegion &viewport)
     mViewport = viewport;
 }
 
-GlComposeTask::GlComposeTask(GlProgram* program, GLuint target, GLuint selfFbo, vector<unique_ptr<GlRenderTask>> tasks)
- :GlRenderTask(program) ,mTargetFbo(target), mSelfFbo(selfFbo), mTasks(std::move(tasks))
+GlComposeTask::GlComposeTask(GlProgram* program, GLuint target, GLuint selfFbo, Array<GlRenderTask*>&& tasks)
+ :GlRenderTask(program) ,mTargetFbo(target), mSelfFbo(selfFbo), mTasks()
 {
+    mTasks.push(tasks);
+    tasks.clear();
+}
+
+GlComposeTask::~GlComposeTask()
+{
+    for(uint32_t i = 0; i < mTasks.count; i++) {
+        delete mTasks[i];
+    }
+
+    mTasks.clear();
 }
 
 void GlComposeTask::run()
@@ -106,12 +117,12 @@ void GlComposeTask::run()
     GL_CHECK(glDrawBuffers(1, &color_buffer));
     GL_CHECK(glClearBufferfv(GL_COLOR, 0, transparent));
 
-    for(auto& task : mTasks) {
-        task->run();
+    for(uint32_t i = 0; i < mTasks.count; i++) {
+        mTasks[i]->run();
     }
 }
 
-GlBlitTask::GlBlitTask(GlProgram* program, GLuint target, GLuint compose, vector<unique_ptr<GlRenderTask>> tasks)
+GlBlitTask::GlBlitTask(GlProgram* program, GLuint target, GLuint compose, Array<GlRenderTask*>&& tasks)
  : GlComposeTask(program, target, compose, std::move(tasks))
 {
 }
@@ -132,7 +143,7 @@ void GlBlitTask::run()
     GL_CHECK(glBlitFramebuffer(0, 0, mWidth, mHeight, 0, 0, mWidth, mHeight, GL_COLOR_BUFFER_BIT, GL_NEAREST));
 }
 
-GlDrawBlitTask::GlDrawBlitTask(GlProgram* program, GLuint target, GLuint compose, vector<unique_ptr<GlRenderTask>> tasks)
+GlDrawBlitTask::GlDrawBlitTask(GlProgram* program, GLuint target, GLuint compose, Array<GlRenderTask*>&& tasks)
  : GlComposeTask(program, target, compose, std::move(tasks))
 {
 }
