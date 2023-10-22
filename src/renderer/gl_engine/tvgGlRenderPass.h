@@ -57,17 +57,17 @@ public:
 
     ~GlRenderPass();
 
-    void addRenderTask(unique_ptr<GlRenderTask> task);
+    void addRenderTask(GlRenderTask* task);
 
     GLuint getFboId() { return mFbo->getFboId(); }
 
     template <class T>
-    unique_ptr<T> endRenderPass(GlProgram* program, GLuint targetFbo) {
-        return make_unique<T>(program, targetFbo, mFbo->getFboId(), std::move(mTasks));
+    T* endRenderPass(GlProgram* program, GLuint targetFbo) {
+        return new T(program, targetFbo, mFbo->getFboId(), std::move(mTasks));
     }
 private:
     GlRenderTarget* mFbo;
-    vector<unique_ptr<GlRenderTask>> mTasks = {};
+    Array<GlRenderTask*> mTasks = {};
 };
 
 
