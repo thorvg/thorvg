@@ -107,6 +107,8 @@ bool GlRenderer::sync()
     mRenderPassStack.clear();
     mPoolIndex = 0;
 
+    delete task;
+
     return true;
 }
 
@@ -202,9 +204,9 @@ bool GlRenderer::renderImage(void* data)
 
     if ((sdata->updateFlag & RenderUpdateFlag::Image) == 0) return false;
 
-    auto task = make_unique<GlRenderTask>(mPrograms[RT_Image].get());
+    auto task = new GlRenderTask(mPrograms[RT_Image].get());
 
-    if (!sdata->geometry->draw(task.get(), mGpuBuffer.get(), RenderUpdateFlag::Image)) return false;
+    if (!sdata->geometry->draw(task, mGpuBuffer.get(), RenderUpdateFlag::Image)) return false;
 
     // matrix buffer
     {
@@ -238,7 +240,7 @@ bool GlRenderer::renderImage(void* data)
         task->addBindResource(GlBindingResource{0, sdata->texId, loc});
     }
 
-    currentPass()->addRenderTask(std::move(task));
+    currentPass()->addRenderTask(task);
 
     return true;
 }
@@ -471,9 +473,9 @@ void GlRenderer::initShaders()
 
 void GlRenderer::drawPrimitive(GlShape& sdata, uint8_t r, uint8_t g, uint8_t b, uint8_t a, RenderUpdateFlag flag)
 {
-    auto task = make_unique<GlRenderTask>(mPrograms[RT_Color].get());
+    auto task = new GlRenderTask(mPrograms[RT_Color].get());
 
-    if (!sdata.geometry->draw(task.get(), mGpuBuffer.get(), flag)) return;
+    if (!sdata.geometry->draw(task, mGpuBuffer.get(), flag)) return;
 
     a = MULTIPLY(a, sdata.opacity);
     
@@ -505,7 +507,7 @@ void GlRenderer::drawPrimitive(GlShape& sdata, uint8_t r, uint8_t g, uint8_t b, 
         });
     }
 
-    currentPass()->addRenderTask(std::move(task));
+    currentPass()->addRenderTask(task);
 }
 
 
@@ -515,17 +517,17 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
     auto stopCnt = fill->colorStops(&stops);
     if (stopCnt < 2) return;
 
-    unique_ptr<GlRenderTask> task;
+    GlRenderTask* task = nullptr;
 
     if (fill->identifier() == TVG_CLASS_ID_LINEAR) {
-        task = make_unique<GlRenderTask>(mPrograms[RT_LinGradient].get());
+        task = new GlRenderTask(mPrograms[RT_LinGradient].get());
     } else if (fill->identifier() == TVG_CLASS_ID_RADIAL) {
-        task = make_unique<GlRenderTask>(mPrograms[RT_RadGradient].get());
+        task = new GlRenderTask(mPrograms[RT_RadGradient].get());
     } else {
         return;
     }
 
-    if (!sdata.geometry->draw(task.get(), mGpuBuffer.get(), flag)) return;
+    if (!sdata.geometry->draw(task, mGpuBuffer.get(), flag)) return;
 
     // matrix buffer
     {
@@ -599,7 +601,7 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
         task->addBindResource(gradientBinding);
     }
 
-    currentPass()->addRenderTask(std::move(task));
+    currentPass()->addRenderTask(task);
 }
 
 GlRenderPass* GlRenderer::currentPass() 
@@ -683,7 +685,7 @@ void GlRenderer::endRenderPass(Compositor* cmp)
     auto task = renderPass.endRenderPass<GlDrawBlitTask>(
         mPrograms[RT_Image].get(), currentPass()->getFboId());
 
-    prepareCmpTask(task.get());
+    prepareCmpTask(task);
 
     // matrix buffer
     {

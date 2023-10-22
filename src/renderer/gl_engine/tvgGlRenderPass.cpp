@@ -63,11 +63,25 @@ void GlRenderTarget::init(GLint resolveId)
 
 GlRenderPass::GlRenderPass(GlRenderTarget* fbo): mFbo(fbo), mTasks() {}
 
-GlRenderPass::GlRenderPass(GlRenderPass&& other): mFbo(other.mFbo), mTasks(std::move(other.mTasks)) {}
-
-GlRenderPass::~GlRenderPass() {}
-
-void GlRenderPass::addRenderTask(unique_ptr<GlRenderTask> task)
+GlRenderPass::GlRenderPass(GlRenderPass&& other): mFbo(other.mFbo), mTasks()
 {
-    mTasks.emplace_back(std::move(task));
+    mTasks.push(other.mTasks);
+
+    other.mTasks.clear();
+}
+
+GlRenderPass::~GlRenderPass()
+{
+    if (mTasks.empty()) return;
+
+    for(uint32_t i = 0; i < mTasks.count; i++) {
+        delete mTasks[i];
+    }
+
+    mTasks.clear();
+}
+
+void GlRenderPass::addRenderTask(GlRenderTask* task)
+{
+    mTasks.push(task);
 }
