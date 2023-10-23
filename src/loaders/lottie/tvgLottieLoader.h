@@ -35,8 +35,9 @@ class LottieLoader : public FrameModule, public Task
 public:
     const char* content = nullptr;      //lottie file data
     uint32_t size = 0;                  //lottie data size
-    uint32_t frameNo = 0;               //current frame number
-    float frameDuration;
+    float frameNo = 0.0f;               //current frame number
+    float frameCnt = 0.0f;
+    float frameDuration = 0.0f;
 
     LottieBuilder* builder = nullptr;
     LottieComposition* comp = nullptr;
@@ -57,9 +58,9 @@ public:
     unique_ptr<Paint> paint() override;
 
     //Frame Controls
-    bool frame(uint32_t frameNo) override;
-    uint32_t totalFrame() override;
-    uint32_t curFrame() override;
+    bool frame(float no) override;
+    float totalFrame() override;
+    float curFrame() override;
     float duration() override;
     void sync() override;
 
