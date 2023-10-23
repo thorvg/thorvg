@@ -104,6 +104,7 @@ void WgRenderer::initialize() {
     mPipelineEmpty.initialize(mDevice);
     mPipelineSolid.initialize(mDevice);
     mPipelineLinear.initialize(mDevice);
+    mPipelineRadial.initialize(mDevice);
     mPipelineBindGroupEmpty.initialize(mDevice, mPipelineEmpty);
     mGeometryDataPipeline.initialize(mDevice);
 }
@@ -118,6 +119,7 @@ void WgRenderer::release() {
     if (mSurface) wgpuSurfaceRelease(mSurface);
     mGeometryDataPipeline.release();
     mPipelineBindGroupEmpty.release();
+    mPipelineRadial.release();
     mPipelineLinear.release();
     mPipelineSolid.release();
     mPipelineEmpty.release();
@@ -137,6 +139,7 @@ RenderData WgRenderer::prepare(const RenderShape& rshape, RenderData data, const
         renderDataShape->initialize(mDevice);
         renderDataShape->mPipelineBindGroupSolid.initialize(mDevice, mPipelineSolid);
         renderDataShape->mPipelineBindGroupLinear.initialize(mDevice, mPipelineLinear);
+        renderDataShape->mPipelineBindGroupRadial.initialize(mDevice, mPipelineRadial);
     }
     
     if (flags & RenderUpdateFlag::Path)
@@ -152,6 +155,14 @@ RenderData WgRenderer::prepare(const RenderShape& rshape, RenderData data, const
             renderDataShape->mPipelineBindGroupLinear.update(mQueue, brushDataLinear);
             renderDataShape->mPipelineBindGroup = &renderDataShape->mPipelineBindGroupLinear;
             renderDataShape->mPipelineBase = &mPipelineLinear;
+        } // setup radial fill properties
+        else if (rshape.fill->identifier() == TVG_CLASS_ID_RADIAL) {
+            WgPipelineDataRadial brushDataRadial{};
+            brushDataRadial.updateMatrix(mViewMatrix, transform);
+            brushDataRadial.updateGradient((RadialGradient*)rshape.fill);
+            renderDataShape->mPipelineBindGroupRadial.update(mQueue, brushDataRadial);
+            renderDataShape->mPipelineBindGroup = &renderDataShape->mPipelineBindGroupRadial;
+            renderDataShape->mPipelineBase = &mPipelineRadial;
         }
     }
 
