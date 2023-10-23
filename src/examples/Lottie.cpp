@@ -29,7 +29,7 @@
 /************************************************************************/
 
 #define NUM_PER_ROW 10
-#define NUM_PER_COL 9
+#define NUM_PER_COL 10
 #define SIZE (WIDTH/NUM_PER_ROW)
 
 static int counter = 0;
@@ -97,10 +97,7 @@ void tvgUpdateCmds(Elm_Transit_Effect *effect, Elm_Transit* transit, double prog
 
     if (frame != animation->curFrame()) {
         auto before = ecore_time_get();
-
         animation->frame(frame);
-        canvas->update(animation->picture());
-
         auto after = ecore_time_get();
         updateTime += after - before;
     }
@@ -149,13 +146,23 @@ void tvgSwTest(uint32_t* buffer)
 
 void drawSwView(void* data, Eo* obj)
 {
+    //canvas update
     auto before = ecore_time_get();
+
+    swCanvas->update();
+
+    auto after = ecore_time_get();
+
+    updateTime += (after - before);
+
+    //canvas draw
+    before = ecore_time_get();
 
     if (swCanvas->draw() == tvg::Result::Success) {
         swCanvas->sync();
     }
 
-    auto after = ecore_time_get();
+    after = ecore_time_get();
 
     auto rasterTime = after - before;
 
@@ -258,7 +265,7 @@ int main(int argc, char **argv)
     if (threads > 0) --threads;    //Allow the designated main thread capacity
 
     //Initialize ThorVG Engine
-    if (tvg::Initializer::init(tvgEngine, 3) == tvg::Result::Success) {
+    if (tvg::Initializer::init(tvgEngine, 4) == tvg::Result::Success) {
 
         elm_init(argc, argv);
 
