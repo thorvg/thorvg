@@ -191,7 +191,8 @@ bool LottieLoader::header()
         return false;
     }
 
-    frameDuration = (endFrame - startFrame) / frameRate;
+    frameCnt = (endFrame - startFrame);
+    frameDuration = frameCnt / frameRate;
 
     TVGLOG("LOTTIE", "info: frame rate = %f, duration = %f size = %d x %d", frameRate, frameDuration, (int)w, (int)h);
 
@@ -286,6 +287,10 @@ bool LottieLoader::read()
 
     TaskScheduler::request(this);
 
+    if (comp && TaskScheduler::threads() == 0) {
+        frameCnt = comp->frameCnt();
+    }
+
     return true;
 }
 
@@ -309,15 +314,13 @@ unique_ptr<Paint> LottieLoader::paint()
 }
 
 
-bool LottieLoader::frame(uint32_t frameNo)
+bool LottieLoader::frame(float no)
 {
-    if (this->frameNo == frameNo) return true;
+    if (mathEqual(this->frameNo, no)) return false;
 
     this->done();
 
-    if (!comp || frameNo >= comp->frameCnt()) return false;
-
-    this->frameNo = frameNo;
+    this->frameNo = no;
 
     TaskScheduler::request(this);
 
@@ -325,16 +328,13 @@ bool LottieLoader::frame(uint32_t frameNo)
 }
 
 
-uint32_t LottieLoader::totalFrame()
+float LottieLoader::totalFrame()
 {
-    this->done();
-
-    if (!comp) return 0;
-    return comp->frameCnt();
+    return frameCnt;
 }
 
 
-uint32_t LottieLoader::curFrame()
+float LottieLoader::curFrame()
 {
     return frameNo;
 }

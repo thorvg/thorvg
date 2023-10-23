@@ -49,17 +49,17 @@ struct LottieStroke
         return dashattr->value[no];
     }
 
-    float dashOffset(int32_t frameNo)
+    float dashOffset(float frameNo)
     {
         return dash(0)(frameNo);
     }
 
-    float dashGap(int32_t frameNo)
+    float dashGap(float frameNo)
     {
         return dash(2)(frameNo);
     }
 
-    float dashSize(int32_t frameNo)
+    float dashSize(float frameNo)
     {
         auto d = dash(1)(frameNo);
         if (d == 0.0f) return 0.1f;
@@ -177,7 +177,7 @@ struct LottieGradient
         return false;
     }
 
-    Fill* fill(int32_t frameNo);
+    Fill* fill(float frameNo);
 
     LottiePoint start = Point{0.0f, 0.0f};
     LottiePoint end = Point{0.0f, 0.0f};
@@ -248,7 +248,7 @@ struct LottieTrimpath : LottieObject
         if (start.frames || end.frames || offset.frames) statical = false;
     }
 
-    void segment(int32_t frameNo, float& start, float& end);
+    void segment(float frameNo, float& start, float& end);
 
     LottieFloat start = 0.0f;
     LottieFloat end = 0.0f;
@@ -507,7 +507,7 @@ struct LottieLayer : LottieGroup
         delete(transform);
     }
 
-    uint8_t opacity(int32_t frameNo)
+    uint8_t opacity(float frameNo)
     {
         //return zero if the visibility is false.
         if (type == Null) return 255;
@@ -515,7 +515,7 @@ struct LottieLayer : LottieGroup
     }
 
     void prepare();
-    int32_t remap(int32_t frameNo);
+    float remap(float frameNo);
 
     //Optimize: compact data??
     RGB24 color;
@@ -534,16 +534,16 @@ struct LottieLayer : LottieGroup
 
     float timeStretch = 1.0f;
     uint32_t w = 0, h = 0;
-    int32_t inFrame = 0;
-    int32_t outFrame = 0;
-    uint32_t startFrame = 0;
+    float inFrame = 0.0f;
+    float outFrame = 0.0f;
+    float startFrame = 0.0f;
     char* refId = nullptr;      //pre-composition reference.
     int16_t pid = -1;           //id of the parent layer.
     int16_t id = -1;            //id of the current layer.
 
     //cached data
     struct {
-        int32_t frameNo = -1;
+        float frameNo = -1.0f;
         Matrix matrix;
         uint8_t opacity;
     } cache;
@@ -583,7 +583,7 @@ struct LottieComposition
     char* version = nullptr;
     char* name = nullptr;
     uint32_t w, h;
-    int32_t startFrame, endFrame;
+    float startFrame, endFrame;
     float frameRate;
     Array<LottieObject*> assets;
     Array<LottieInterpolator*> interpolators;

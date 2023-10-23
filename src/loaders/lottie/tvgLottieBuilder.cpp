@@ -83,8 +83,8 @@ struct RenderContext
 };
 
 
-static void _updateChildren(LottieGroup* parent, int32_t frameNo, queue<RenderContext>& contexts);
-static void _updateLayer(LottieLayer* root, LottieLayer* layer, int32_t frameNo);
+static void _updateChildren(LottieGroup* parent, float frameNo, queue<RenderContext>& contexts);
+static void _updateLayer(LottieLayer* root, LottieLayer* layer, float frameNo);
 static bool _buildPrecomp(LottieComposition* comp, LottieGroup* parent);
 
 static void _rotateX(Matrix* m, float degree)
@@ -114,7 +114,7 @@ static void _rotationZ(Matrix* m, float degree)
 }
 
 
-static bool _updateTransform(LottieTransform* transform, int32_t frameNo, bool autoOrient, Matrix& matrix, uint8_t& opacity)
+static bool _updateTransform(LottieTransform* transform, float frameNo, bool autoOrient, Matrix& matrix, uint8_t& opacity)
 {
     mathIdentity(&matrix);
 
@@ -154,9 +154,9 @@ static bool _updateTransform(LottieTransform* transform, int32_t frameNo, bool a
 }
 
 
-static void _updateTransform(LottieLayer* layer, int32_t frameNo)
+static void _updateTransform(LottieLayer* layer, float frameNo)
 {
-    if (!layer || layer->cache.frameNo == frameNo) return;
+    if (!layer || mathEqual(layer->cache.frameNo, frameNo)) return;
 
     auto transform = layer->transform;
     auto parent = layer->parent;
@@ -177,7 +177,7 @@ static void _updateTransform(LottieLayer* layer, int32_t frameNo)
 }
 
 
-static void _updateTransform(LottieTransform* transform, int32_t frameNo, RenderContext& ctx)
+static void _updateTransform(LottieTransform* transform, float frameNo, RenderContext& ctx)
 {
     if (!transform) return;
 
@@ -198,7 +198,7 @@ static void _updateTransform(LottieTransform* transform, int32_t frameNo, Render
 }
 
 
-static void _updateGroup(LottieGroup* parent, LottieGroup* group, int32_t frameNo, RenderContext& ctx)
+static void _updateGroup(LottieGroup* parent, LottieGroup* group, float frameNo, RenderContext& ctx)
 {
     if (group->children.empty()) return;
 
@@ -212,7 +212,7 @@ static void _updateGroup(LottieGroup* parent, LottieGroup* group, int32_t frameN
 }
 
 
-static void _updateStroke(LottieStroke* stroke, int32_t frameNo, RenderContext& ctx)
+static void _updateStroke(LottieStroke* stroke, float frameNo, RenderContext& ctx)
 {
     ctx.propagator->stroke(stroke->width(frameNo));
     ctx.propagator->stroke(stroke->cap);
@@ -245,7 +245,7 @@ static bool _fragmentedStroking(LottieObject** child, queue<RenderContext>& cont
 }
 
 
-static void _updateSolidStroke(LottieObject** child, int32_t frameNo, queue<RenderContext>& contexts, RenderContext& ctx)
+static void _updateSolidStroke(LottieObject** child, float frameNo, queue<RenderContext>& contexts, RenderContext& ctx)
 {
     if (_fragmentedStroking(child, contexts, ctx)) return;
 
@@ -259,7 +259,7 @@ static void _updateSolidStroke(LottieObject** child, int32_t frameNo, queue<Rend
 }
 
 
-static void _updateGradientStroke(LottieObject** child, int32_t frameNo, queue<RenderContext>& contexts, RenderContext& ctx)
+static void _updateGradientStroke(LottieObject** child, float frameNo, queue<RenderContext>& contexts, RenderContext& ctx)
 {
     if (_fragmentedStroking(child, contexts, ctx)) return;
 
@@ -272,7 +272,7 @@ static void _updateGradientStroke(LottieObject** child, int32_t frameNo, queue<R
 }
 
 
-static void _updateFill(LottieSolidFill* fill, int32_t frameNo, RenderContext& ctx)
+static void _updateFill(LottieSolidFill* fill, float frameNo, RenderContext& ctx)
 {
     if (ctx.stroking) return;
 
@@ -286,7 +286,7 @@ static void _updateFill(LottieSolidFill* fill, int32_t frameNo, RenderContext& c
 }
 
 
-static Shape* _updateFill(LottieGradientFill* fill, int32_t frameNo, RenderContext& ctx)
+static Shape* _updateFill(LottieGradientFill* fill, float frameNo, RenderContext& ctx)
 {
     if (ctx.stroking) return nullptr;
 
@@ -303,7 +303,7 @@ static Shape* _updateFill(LottieGradientFill* fill, int32_t frameNo, RenderConte
 }
 
 
-static Shape* _draw(LottieGroup* parent, int32_t frameNo, RenderContext& ctx)
+static Shape* _draw(LottieGroup* parent, RenderContext& ctx)
 {
     if (ctx.allowMerging && ctx.merging) return ctx.merging;
 
@@ -316,7 +316,7 @@ static Shape* _draw(LottieGroup* parent, int32_t frameNo, RenderContext& ctx)
 
 
 //OPTIMIZE: path?
-static void _repeat(LottieGroup* parent, int32_t frameNo, unique_ptr<Shape> path, RenderContext& ctx)
+static void _repeat(LottieGroup* parent, unique_ptr<Shape> path, RenderContext& ctx)
 {
     auto repeater = ctx.repeater;
 
@@ -363,7 +363,7 @@ static void _repeat(LottieGroup* parent, int32_t frameNo, unique_ptr<Shape> path
 }
 
 
-static void _updateRect(LottieGroup* parent, LottieRect* rect, int32_t frameNo, RenderContext& ctx)
+static void _updateRect(LottieGroup* parent, LottieRect* rect, float frameNo, RenderContext& ctx)
 {
     auto position = rect->position(frameNo);
     auto size = rect->size(frameNo);
@@ -378,15 +378,15 @@ static void _updateRect(LottieGroup* parent, LottieRect* rect, int32_t frameNo, 
     if (ctx.repeater) {
         auto path = Shape::gen();
         path->appendRect(position.x - size.x * 0.5f, position.y - size.y * 0.5f, size.x, size.y, roundness, roundness);
-        _repeat(parent, frameNo, std::move(path), ctx);
+        _repeat(parent, std::move(path), ctx);
     } else {
-        auto merging = _draw(parent, frameNo, ctx);
+        auto merging = _draw(parent, ctx);
         merging->appendRect(position.x - size.x * 0.5f, position.y - size.y * 0.5f, size.x, size.y, roundness, roundness);
     }
 }
 
 
-static void _updateEllipse(LottieGroup* parent, LottieEllipse* ellipse, int32_t frameNo, RenderContext& ctx)
+static void _updateEllipse(LottieGroup* parent, LottieEllipse* ellipse, float frameNo, RenderContext& ctx)
 {
     auto position = ellipse->position(frameNo);
     auto size = ellipse->size(frameNo);
@@ -394,22 +394,22 @@ static void _updateEllipse(LottieGroup* parent, LottieEllipse* ellipse, int32_t 
     if (ctx.repeater) {
         auto path = Shape::gen();
         path->appendCircle(position.x, position.y, size.x * 0.5f, size.y * 0.5f);
-        _repeat(parent, frameNo, std::move(path), ctx);
+        _repeat(parent, std::move(path), ctx);
     } else {
-        auto merging = _draw(parent, frameNo, ctx);
+        auto merging = _draw(parent, ctx);
         merging->appendCircle(position.x, position.y, size.x * 0.5f, size.y * 0.5f);
     }
 }
 
 
-static void _updatePath(LottieGroup* parent, LottiePath* path, int32_t frameNo, RenderContext& ctx)
+static void _updatePath(LottieGroup* parent, LottiePath* path, float frameNo, RenderContext& ctx)
 {
     if (ctx.repeater) {
         auto p = Shape::gen();
         path->pathset(frameNo, P(p)->rs.path.cmds, P(p)->rs.path.pts);
-        _repeat(parent, frameNo, std::move(p), ctx);
+        _repeat(parent, std::move(p), ctx);
     } else {
-        auto merging = _draw(parent, frameNo, ctx);
+        auto merging = _draw(parent, ctx);
 
         if (path->pathset(frameNo, P(merging)->rs.path.cmds, P(merging)->rs.path.pts)) {
             P(merging)->update(RenderUpdateFlag::Path);
@@ -423,7 +423,7 @@ static void _updatePath(LottieGroup* parent, LottiePath* path, int32_t frameNo, 
 }
 
 
-static void _updateStar(LottieGroup* parent, LottiePolyStar* star, Matrix* transform, int32_t frameNo, Shape* merging)
+static void _updateStar(LottieGroup* parent, LottiePolyStar* star, Matrix* transform, float frameNo, Shape* merging)
 {
     static constexpr auto POLYSTAR_MAGIC_NUMBER = 0.47829f / 0.28f;
 
@@ -532,7 +532,7 @@ static void _updateStar(LottieGroup* parent, LottiePolyStar* star, Matrix* trans
 }
 
 
-static void _updatePolygon(LottieGroup* parent, LottiePolyStar* star, Matrix* transform, int32_t frameNo, Shape* merging)
+static void _updatePolygon(LottieGroup* parent, LottiePolyStar* star, Matrix* transform, float frameNo, Shape* merging)
 {
     static constexpr auto POLYGON_MAGIC_NUMBER = 0.25f;
 
@@ -601,7 +601,7 @@ static void _updatePolygon(LottieGroup* parent, LottiePolyStar* star, Matrix* tr
 }
 
 
-static void _updatePolystar(LottieGroup* parent, LottiePolyStar* star, int32_t frameNo, RenderContext& ctx)
+static void _updatePolystar(LottieGroup* parent, LottiePolyStar* star, float frameNo, RenderContext& ctx)
 {
     //Optimize: Can we skip the individual coords transform?
     Matrix matrix;
@@ -616,9 +616,9 @@ static void _updatePolystar(LottieGroup* parent, LottiePolyStar* star, int32_t f
         auto p = Shape::gen();
         if (star->type == LottiePolyStar::Star) _updateStar(parent, star, identity ? nullptr : &matrix, frameNo, p.get());
         else _updatePolygon(parent, star, identity  ? nullptr : &matrix, frameNo, p.get());
-        _repeat(parent, frameNo, std::move(p), ctx);
+        _repeat(parent, std::move(p), ctx);
     } else {
-        auto merging = _draw(parent, frameNo, ctx);
+        auto merging = _draw(parent, ctx);
         if (star->type == LottiePolyStar::Star) _updateStar(parent, star, identity ? nullptr : &matrix, frameNo, merging);
         else _updatePolygon(parent, star, identity  ? nullptr : &matrix, frameNo, merging);
         P(merging)->update(RenderUpdateFlag::Path);
@@ -626,7 +626,7 @@ static void _updatePolystar(LottieGroup* parent, LottiePolyStar* star, int32_t f
 }
 
 
-static void _updateImage(LottieGroup* parent, LottieImage* image, int32_t frameNo, RenderContext& ctx)
+static void _updateImage(LottieGroup* parent, LottieImage* image, float frameNo, RenderContext& ctx)
 {
     auto picture = image->picture;
 
@@ -665,14 +665,14 @@ static void _updateImage(LottieGroup* parent, LottieImage* image, int32_t frameN
 }
 
 
-static void _updateRoundedCorner(LottieRoundedCorner* roundedCorner, int32_t frameNo, RenderContext& ctx)
+static void _updateRoundedCorner(LottieRoundedCorner* roundedCorner, float frameNo, RenderContext& ctx)
 {
     auto roundness = roundedCorner->radius(frameNo);
     if (ctx.roundness < roundness) ctx.roundness = roundness;
 }
 
 
-static void _updateRepeater(LottieRepeater* repeater, int32_t frameNo, RenderContext& ctx)
+static void _updateRepeater(LottieRepeater* repeater, float frameNo, RenderContext& ctx)
 {
     if (!ctx.repeater) ctx.repeater = new RenderRepeater();
     ctx.repeater->cnt = static_cast<int>(repeater->copies(frameNo));
@@ -690,7 +690,7 @@ static void _updateRepeater(LottieRepeater* repeater, int32_t frameNo, RenderCon
 }
 
 
-static void _updateTrimpath(LottieTrimpath* trimpath, int32_t frameNo, RenderContext& ctx)
+static void _updateTrimpath(LottieTrimpath* trimpath, float frameNo, RenderContext& ctx)
 {
     float begin, end;
     trimpath->segment(frameNo, begin, end);
@@ -709,7 +709,7 @@ static void _updateTrimpath(LottieTrimpath* trimpath, int32_t frameNo, RenderCon
 }
 
 
-static void _updateChildren(LottieGroup* parent, int32_t frameNo, queue<RenderContext>& contexts)
+static void _updateChildren(LottieGroup* parent, float frameNo, queue<RenderContext>& contexts)
 {
     contexts.front().begin = parent->children.end() - 1;
 
@@ -783,7 +783,7 @@ static void _updateChildren(LottieGroup* parent, int32_t frameNo, queue<RenderCo
 }
 
 
-static void _updatePrecomp(LottieLayer* precomp, int32_t frameNo)
+static void _updatePrecomp(LottieLayer* precomp, float frameNo)
 {
     if (precomp->children.count == 0) return;
 
@@ -808,7 +808,7 @@ static void _updatePrecomp(LottieLayer* precomp, int32_t frameNo)
 }
 
 
-static void _updateSolid(LottieLayer* layer, int32_t frameNo)
+static void _updateSolid(LottieLayer* layer, float frameNo)
 {
     auto shape = Shape::gen();
     shape->appendRect(0, 0, static_cast<float>(layer->w), static_cast<float>(layer->h));
@@ -817,7 +817,7 @@ static void _updateSolid(LottieLayer* layer, int32_t frameNo)
 }
 
 
-static void _updateMaskings(LottieLayer* layer, int32_t frameNo)
+static void _updateMaskings(LottieLayer* layer, float frameNo)
 {
     if (layer->masks.count == 0) return;
 
@@ -855,7 +855,7 @@ static void _updateMaskings(LottieLayer* layer, int32_t frameNo)
 }
 
 
-static void _updateLayer(LottieLayer* root, LottieLayer* layer, int32_t frameNo)
+static void _updateLayer(LottieLayer* root, LottieLayer* layer, float frameNo)
 {
     layer->scene = nullptr;
 
@@ -1021,7 +1021,7 @@ static bool _buildPrecomp(LottieComposition* comp, LottieGroup* parent)
 /* External Class Implementation                                        */
 /************************************************************************/
 
-bool LottieBuilder::update(LottieComposition* comp, int32_t frameNo)
+bool LottieBuilder::update(LottieComposition* comp, float frameNo)
 {
     frameNo += comp->startFrame;
     if (frameNo < comp->startFrame) frameNo = comp->startFrame;

@@ -39,9 +39,9 @@ TEST_CASE("Animation Basic", "[tvgAnimation]")
     REQUIRE(picture->identifier == Picture::identifier);
 
     //Negative cases
-    REQUIRE(animation->frame(0) == Result::InsufficientCondition);
-    REQUIRE(animation->curFrame() == 0);
-    REQUIRE(animation->totalFrame() == 0);
+    REQUIRE(animation->frame(0.0f) == Result::InsufficientCondition);
+    REQUIRE(animation->curFrame() == 0.0f);
+    REQUIRE(animation->totalFrame() == 0.0f);
     REQUIRE(animation->duration() == 0.0f);
 }
 
@@ -60,7 +60,7 @@ TEST_CASE("Animation Lottie", "[tvgAnimation]")
     REQUIRE(picture->load(TEST_DIR"/invalid.json") == Result::InvalidArguments);
     REQUIRE(picture->load(TEST_DIR"/test.json") == Result::Success);
 
-    REQUIRE(animation->totalFrame() == 120);
+    REQUIRE(animation->totalFrame() == Approx(120).margin(004004));
     REQUIRE(animation->curFrame() == 0);
     REQUIRE(animation->duration() == Approx(4).margin(004004));
     REQUIRE(animation->frame(20) == Result::Success);
