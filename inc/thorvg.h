@@ -1671,7 +1671,7 @@ public:
      *
      * @BETA_API
      */
-    Result frame(uint32_t no) noexcept;
+    Result frame(float no) noexcept;
 
     /**
      * @brief Retrieves a picture instance associated with this animation instance.
@@ -1695,12 +1695,12 @@ public:
      *
      * @note If the Picture is not properly configured, this function will return 0.
      *
-     * @see Animation::frame(uint32_t no)
+     * @see Animation::frame(float no)
      * @see Animation::totalFrame()
      *
      * @BETA_API
      */
-    uint32_t curFrame() const noexcept;
+    float curFrame() const noexcept;
 
     /**
      * @brief Retrieves the total number of frames in the animation.
@@ -1712,7 +1712,7 @@ public:
      *
      * @BETA_API
      */
-    uint32_t totalFrame() const noexcept;
+    float totalFrame() const noexcept;
 
     /**
      * @brief Retrieves the duration of the animation in seconds.

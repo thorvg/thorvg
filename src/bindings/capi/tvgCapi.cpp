@@ -713,14 +713,14 @@ TVG_API Tvg_Animation* tvg_animation_new()
 }
 
 
-TVG_API Tvg_Result tvg_animation_set_frame(Tvg_Animation* animation, uint32_t no)
+TVG_API Tvg_Result tvg_animation_set_frame(Tvg_Animation* animation, float no)
 {
     if (!animation) return TVG_RESULT_INVALID_ARGUMENT;
     return (Tvg_Result) reinterpret_cast<Animation*>(animation)->frame(no);
 }
 
 
-TVG_API Tvg_Result tvg_animation_get_frame(Tvg_Animation* animation, uint32_t* no)
+TVG_API Tvg_Result tvg_animation_get_frame(Tvg_Animation* animation, float* no)
 {
     if (!animation || !no) return TVG_RESULT_INVALID_ARGUMENT;
     *no = reinterpret_cast<Animation*>(animation)->curFrame();
@@ -728,7 +728,7 @@ TVG_API Tvg_Result tvg_animation_get_frame(Tvg_Animation* animation, uint32_t* n
 }
 
 
-TVG_API Tvg_Result tvg_animation_get_total_frame(Tvg_Animation* animation, uint32_t* cnt)
+TVG_API Tvg_Result tvg_animation_get_total_frame(Tvg_Animation* animation, float* cnt)
 {
     if (!animation || !cnt) return TVG_RESULT_INVALID_ARGUMENT;
     *cnt = reinterpret_cast<Animation*>(animation)->totalFrame();

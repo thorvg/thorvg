@@ -382,7 +382,7 @@ void LottieParser::parseKeyFrame(T& prop)
                 }
             }
         } else if (!strcmp(key, "t")) {
-            frame.no = lroundf(getFloat());
+            frame.no = getFloat();
         } else if (!strcmp(key, "s")) {
             getValue(frame.value);
         } else if (!strcmp(key, "e")) {
@@ -1003,9 +1003,9 @@ LottieLayer* LottieParser::parseLayer()
         }
         else if (!strcmp(key, "ao")) layer->autoOrient = getInt();
         else if (!strcmp(key, "shapes")) parseShapes(layer);
-        else if (!strcmp(key, "ip")) layer->inFrame = lroundf(getFloat());
-        else if (!strcmp(key, "op")) layer->outFrame = lroundf(getFloat());
-        else if (!strcmp(key, "st")) layer->startFrame = lroundf(getFloat());
+        else if (!strcmp(key, "ip")) layer->inFrame = getFloat();
+        else if (!strcmp(key, "op")) layer->outFrame = getFloat();
+        else if (!strcmp(key, "st")) layer->startFrame = getFloat();
         else if (!strcmp(key, "bm")) layer->blendMethod = getBlendMethod();
         else if (!strcmp(key, "parent")) layer->pid = getInt();
         else if (!strcmp(key, "tm")) parseTimeRemap(layer);
@@ -1091,8 +1091,8 @@ bool LottieParser::parse()
     while (auto key = nextObjectKey()) {
         if (!strcmp(key, "v")) comp->version = getStringCopy();
         else if (!strcmp(key, "fr")) comp->frameRate = getFloat();
-        else if (!strcmp(key, "ip")) comp->startFrame = lroundf(getFloat());
-        else if (!strcmp(key, "op")) comp->endFrame = lroundf(getFloat());
+        else if (!strcmp(key, "ip")) comp->startFrame = getFloat();
+        else if (!strcmp(key, "op")) comp->endFrame = getFloat();
         else if (!strcmp(key, "w")) comp->w = getInt();
         else if (!strcmp(key, "h")) comp->h = getInt();
         else if (!strcmp(key, "nm")) comp->name = getStringCopy();

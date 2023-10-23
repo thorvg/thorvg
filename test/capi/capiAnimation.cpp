@@ -40,16 +40,16 @@ TEST_CASE("Animation Basic", "[capiAnimation]")
 
     //Negative cases
     REQUIRE(tvg_animation_set_frame(animation, 0) == TVG_RESULT_INSUFFICIENT_CONDITION);
-    uint32_t frame = 0;
+    auto frame = 0.0f;
     REQUIRE(tvg_animation_set_frame(animation, frame) == TVG_RESULT_INSUFFICIENT_CONDITION);
 
     REQUIRE(tvg_animation_get_frame(animation, nullptr) == TVG_RESULT_INVALID_ARGUMENT);
     REQUIRE(tvg_animation_get_frame(animation, &frame) == TVG_RESULT_SUCCESS);
-    REQUIRE(frame == 0);
+    REQUIRE(frame == 0.0f);
 
     REQUIRE(tvg_animation_get_total_frame(animation, nullptr) == TVG_RESULT_INVALID_ARGUMENT);
     REQUIRE(tvg_animation_get_total_frame(animation, &frame) == TVG_RESULT_SUCCESS);
-    REQUIRE(frame == 0);
+    REQUIRE(frame == 0.0f);
 
     REQUIRE(tvg_animation_get_duration(animation, nullptr) == TVG_RESULT_INVALID_ARGUMENT);
     float duration = 0.0f;
@@ -79,13 +79,13 @@ TEST_CASE("Animation Lottie", "[capiAnimation]")
     REQUIRE(tvg_picture_load(picture, TEST_DIR"/invalid.json") == TVG_RESULT_INVALID_ARGUMENT);
     REQUIRE(tvg_picture_load(picture, TEST_DIR"/test.json") == TVG_RESULT_SUCCESS);
 
-    uint32_t frame;
+    float frame;
     REQUIRE(tvg_animation_get_total_frame(animation, &frame) == TVG_RESULT_SUCCESS);
-    REQUIRE(frame == 120);
+    REQUIRE(frame == Approx(120).margin(004004));
 
     REQUIRE(tvg_animation_set_frame(animation, frame - 1) == TVG_RESULT_SUCCESS);
     REQUIRE(tvg_animation_get_frame(animation, &frame) == TVG_RESULT_SUCCESS);
-    REQUIRE(frame == 119);
+    REQUIRE(frame == Approx(119).margin(004004));
 
     float duration;
     REQUIRE(tvg_animation_get_duration(animation, &duration) == TVG_RESULT_SUCCESS);

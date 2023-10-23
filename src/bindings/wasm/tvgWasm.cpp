@@ -149,10 +149,9 @@ public:
         return val(animation->totalFrame());
     }
 
-    bool frame(uint32_t no)
+    bool frame(float no)
     {
         if (!canvas || !animation) return false;
-        if (animation->curFrame() == no) return true;
         if (animation->frame(no) != Result::Success) {
             errorMsg = "frame() fail";
             return false;

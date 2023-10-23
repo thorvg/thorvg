@@ -95,14 +95,10 @@ void tvgUpdateCmds(Elm_Transit_Effect *effect, Elm_Transit* transit, double prog
     auto animation = static_cast<tvg::Animation*>(effect);
 
     //Update animation frame only when it's changed
-    auto frame = lroundf(animation->totalFrame() * progress);
-
-    if (frame != animation->curFrame()) {
-        auto before = ecore_time_get();
-        animation->frame(frame);
-        auto after = ecore_time_get();
-        updateTime += after - before;
-    }
+    auto before = ecore_time_get();
+    animation->frame(animation->totalFrame() * progress);
+    auto after = ecore_time_get();
+    updateTime += after - before;
 }
 
 void tvgSwTest(uint32_t* buffer)
