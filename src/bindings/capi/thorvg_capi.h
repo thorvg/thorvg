@@ -2234,7 +2234,7 @@ TVG_API Tvg_Animation* tvg_animation_new();
 *
 * \see tvg_animation_get_total_frame()
 */
-TVG_API Tvg_Result tvg_animation_set_frame(Tvg_Animation* animation, uint32_t no);
+TVG_API Tvg_Result tvg_animation_set_frame(Tvg_Animation* animation, float no);
 
 
 /*!
@@ -2266,7 +2266,7 @@ TVG_API Tvg_Paint* tvg_animation_get_picture(Tvg_Animation* animation);
 * \see tvg_animation_get_total_frame()
 * \see tvg_animation_set_frame()
 */
-TVG_API Tvg_Result tvg_animation_get_frame(Tvg_Animation* animation, uint32_t* no);
+TVG_API Tvg_Result tvg_animation_get_frame(Tvg_Animation* animation, float* no);
 
 
 /*!
@@ -2282,7 +2282,7 @@ TVG_API Tvg_Result tvg_animation_get_frame(Tvg_Animation* animation, uint32_t* n
 * \note Frame numbering starts from 0.
 * \note If the Picture is not properly configured, this function will return 0.
 */
-TVG_API Tvg_Result tvg_animation_get_total_frame(Tvg_Animation* animation, uint32_t* cnt);
+TVG_API Tvg_Result tvg_animation_get_total_frame(Tvg_Animation* animation, float* cnt);
 
 
 /*!

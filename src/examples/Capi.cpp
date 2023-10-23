@@ -257,19 +257,18 @@ void transitCb(Elm_Transit_Effect *effect, Elm_Transit* transit, double progress
 {
     if (!canvas) return;
 
-    uint32_t total_frame = 0;
+    float total_frame = 0.0f;
     tvg_animation_get_total_frame(animation, &total_frame);
 
-    uint32_t new_frame = lroundf(total_frame * progress);
+    float new_frame = total_frame * progress;
 
-    uint32_t cur_frame = 0;
+    float cur_frame = 0.0f;
     tvg_animation_get_frame(animation, &cur_frame);
 
     //Update animation frame only when it's changed
-    if (new_frame == cur_frame) return;
-
-    tvg_animation_set_frame(animation, new_frame);
-    tvg_canvas_update_paint(canvas, tvg_animation_get_picture(animation));
+    if (tvg_animation_set_frame(animation, new_frame) == TVG_RESULT_SUCCESS) {
+        tvg_canvas_update_paint(canvas, tvg_animation_get_picture(animation));
+    }
 
     //Draw the canvas
     tvg_canvas_draw(canvas);

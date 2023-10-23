@@ -29,7 +29,7 @@ struct LottieComposition;
 
 struct LottieBuilder
 {
-    bool update(LottieComposition* comp, int32_t frameNo);
+    bool update(LottieComposition* comp, float progress);
     void build(LottieComposition* comp);
 };
 

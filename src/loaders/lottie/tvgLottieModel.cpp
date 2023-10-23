@@ -34,7 +34,7 @@
 /* External Class Implementation                                        */
 /************************************************************************/
 
-void LottieTrimpath::segment(int32_t frameNo, float& start, float& end)
+void LottieTrimpath::segment(float frameNo, float& start, float& end)
 {
     auto s = this->start(frameNo) * 0.01f;
     auto e = this->end(frameNo) * 0.01f;
@@ -77,7 +77,7 @@ void LottieTrimpath::segment(int32_t frameNo, float& start, float& end)
 }
 
 
-Fill* LottieGradient::fill(int32_t frameNo)
+Fill* LottieGradient::fill(float frameNo)
 {
     Fill* fill = nullptr;
 
@@ -145,14 +145,14 @@ void LottieLayer::prepare()
 }
 
 
-int32_t LottieLayer::remap(int32_t frameNo)
+float LottieLayer::remap(float frameNo)
 {
     if (timeRemap.frames || timeRemap.value) {
         frameNo = comp->frameAtTime(timeRemap(frameNo));
     } else {
         frameNo -= startFrame;
     }
-    return (int32_t)(frameNo / timeStretch);
+    return (frameNo / timeStretch);
 }
 
 
