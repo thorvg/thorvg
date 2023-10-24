@@ -73,7 +73,7 @@ namespace tvg
         ~Impl()
         {
             if (compData) {
-                delete(compData->target);
+                if (P(compData->target)->unref() == 0) delete(compData->target);
                 free(compData);
             }
             delete(smethod);
@@ -141,7 +141,10 @@ namespace tvg
             if ((!target && method != CompositeMethod::None) || (target && method == CompositeMethod::None)) return false;
 
             if (compData) {
-                delete(compData->target);
+                P(compData->target)->unref();
+                if ((compData->target != target) && P(compData->target)->refCnt == 0) {
+                    delete(compData->target);
+                }
                 //Reset scenario
                 if (!target && method == CompositeMethod::None) {
                     free(compData);
@@ -152,6 +155,7 @@ namespace tvg
                 if (!target && method == CompositeMethod::None) return true;
                 compData = static_cast<Composite*>(calloc(1, sizeof(Composite)));
             }
+            P(target)->ref();
             compData->target = target;
             compData->source = source;
             compData->method = method;
