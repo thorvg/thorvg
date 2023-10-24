@@ -80,6 +80,7 @@ private:
     WgPipelineEmpty mPipelineEmpty;
     WgPipelineSolid mPipelineSolid;
     WgPipelineLinear mPipelineLinear;
+    WgPipelineRadial mPipelineRadial;
     WgGeometryData mGeometryDataPipeline;
     WgPipelineBindGroupEmpty mPipelineBindGroupEmpty;
 };

@@ -22,6 +22,7 @@
 
 #include "tvgWgPipelineSolid.h"
 #include "tvgWgPipelineLinear.h"
+#include "tvgWgPipelineRadial.h"
 
 #ifndef _TVG_WG_RENDER_DATA_H_
 #define _TVG_WG_RENDER_DATA_H_
@@ -55,6 +56,7 @@ public:
 
     WgPipelineBindGroupSolid mPipelineBindGroupSolid{};
     WgPipelineBindGroupLinear mPipelineBindGroupLinear{};
+    WgPipelineBindGroupRadial mPipelineBindGroupRadial{};
 
     WgPipelineBase* mPipelineBase{}; // external
     WgPipelineBindGroup* mPipelineBindGroup{}; // external

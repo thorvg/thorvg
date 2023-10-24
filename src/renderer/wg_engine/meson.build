@@ -3,6 +3,7 @@ source_file = [
     'tvgWgPipelineEmpty.cpp',
     'tvgWgPipelineLinear.cpp',
     'tvgWgPipelineSolid.cpp',
+    'tvgWgPipelineRadial.cpp',
     'tvgWgRenderData.cpp',
     'tvgWgRenderer.cpp',
     'tvgWgShaderSrc.cpp'
