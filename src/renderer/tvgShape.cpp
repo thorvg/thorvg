@@ -62,7 +62,7 @@ Result Shape::reset() noexcept
     pImpl->rs.path.cmds.clear();
     pImpl->rs.path.pts.clear();
 
-    pImpl->flag = RenderUpdateFlag::Path;
+    pImpl->flag |= RenderUpdateFlag::Path;
 
     return Result::Success;
 }
