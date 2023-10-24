@@ -81,6 +81,8 @@ void WgGeometryData::release() {
 void WgRenderDataShape::release() {
     releaseRenderData();
     mPipelineBindGroupSolid.release();
+    mPipelineBindGroupLinear.release();
+    mPipelineBindGroupRadial.release();
 }
 
 void WgRenderDataShape::releaseRenderData() {

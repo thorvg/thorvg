@@ -20,21 +20,42 @@
  * SOFTWARE.
  */
 
-#pragma once
+#ifndef _TVG_WG_PIPELINE_RADIAL_H_
+#define _TVG_WG_PIPELINE_RADIAL_H_
 
-#ifndef _TVG_WG_SHADER_SRC_H_
-#define _TVG_WG_SHADER_SRC_H_
+#include "tvgWgPipelineBase.h"
 
-// pipeline shader module empty
-extern const char* cShaderSource_PipelineEmpty;
+class WgPipelineRadial;
 
-// pipeline shader module solid
-extern const char* cShaderSource_PipelineSolid;
+#define MAX_RADIAL_GRADIENT_STOPS 4
+struct WgPipelineRadialGradientInfo {
+    alignas(16) float nStops[4]{};
+    alignas(16) float centerPos[2]{};
+    alignas(8)  float radius[2]{};
+    alignas(8)  float stopPoints[MAX_RADIAL_GRADIENT_STOPS]{};
+    alignas(16) float stopColors[4 * MAX_RADIAL_GRADIENT_STOPS]{};
+};
 
-// pipeline shader module linear
-extern const char* cShaderSource_PipelineLinear;
+struct WgPipelineDataRadial: WgPipelineData {
+    WgPipelineRadialGradientInfo uGradientInfo{}; // @binding(1)
 
-// pipeline shader module radial
-extern const char* cShaderSource_PipelineRadial;
+    void updateGradient(RadialGradient* radialGradient);
+};
 
-#endif // _TVG_WG_SHADER_SRC_H_
+class WgPipelineBindGroupRadial: public WgPipelineBindGroup {
+private:
+    WGPUBuffer uBufferGradientInfo{}; // @binding(1)
+public:
+    void initialize(WGPUDevice device, WgPipelineRadial& pipelinePipelineRadial);
+    void release();
+
+    void update(WGPUQueue mQueue, WgPipelineDataRadial& pipelineDataRadial);
+};
+
+class WgPipelineRadial: public WgPipelineBase {
+public:
+    void initialize(WGPUDevice device) override;
+    void release() override;
+};
+
+#endif //_TVG_WG_PIPELINE_RADIAL_H_
