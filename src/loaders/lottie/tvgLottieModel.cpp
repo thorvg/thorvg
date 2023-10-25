@@ -145,6 +145,7 @@ void LottieGroup::prepare(LottieObject::Type type)
 void LottieLayer::prepare()
 {
     if (transform) statical &= transform->statical;
+    if (timeRemap.frames) statical = false;
 
     /* if layer is hidden, only useful data is its transform matrix.
         so force it to be a Null Layer and release all resource. */

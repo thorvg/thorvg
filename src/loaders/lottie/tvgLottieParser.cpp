@@ -971,7 +971,9 @@ void LottieParser::parseMasks(LottieLayer* layer)
 {
     enterArray();
     while (nextArrayValue()) {
-        layer->masks.push(parseMask());
+        auto mask = parseMask();
+        if (mask->dynamic()) layer->statical = false;
+        layer->masks.push(mask);
     }
 }
 
@@ -1053,13 +1055,11 @@ LottieLayer* LottieParser::parseLayers()
                 auto matte = static_cast<LottieLayer*>(root->children.last());
                 if (matte->matteSrc) {
                     layer->matte.target = matte;
-                    layer->statical &= layer->matte.target->statical;
                 } else {
                     TVGLOG("LOTTIE", "Matte Source(%s) is not designated?", matte->name);
                 }
                 root->children.last() = layer;
             }
-            root->statical &= layer->statical;
         }
     }
     root->prepare();
