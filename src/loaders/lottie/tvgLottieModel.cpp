@@ -142,6 +142,25 @@ void LottieGroup::prepare(LottieObject::Type type)
 }
 
 
+LottieLayer::~LottieLayer()
+{
+    if (refId) {
+        //No need to free assets children because the Composition owns them.
+        children.clear();
+        free(refId);
+    }
+
+    for (auto m = masks.data; m < masks.end(); ++m) {
+        delete(*m);
+    }
+
+    delete(matte.target);
+    delete(transform);
+
+    if (cache.scene && PP(cache.scene)->unref() == 0) delete(cache.scene);
+    if (cache.clipper && PP(cache.clipper)->unref() == 0) delete(cache.clipper);
+}
+
 void LottieLayer::prepare()
 {
     if (transform) statical &= transform->statical;
