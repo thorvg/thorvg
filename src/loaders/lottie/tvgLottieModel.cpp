@@ -20,6 +20,7 @@
  * SOFTWARE.
  */
 
+#include "tvgPaint.h"
 #include "tvgFill.h"
 #include "tvgLottieModel.h"
 
@@ -33,6 +34,17 @@
 /************************************************************************/
 /* External Class Implementation                                        */
 /************************************************************************/
+
+LottieImage::~LottieImage()
+{
+    free(b64Data);
+    free(mimeType);
+
+    if (PP(picture)->unref() == 0) {
+        delete(picture);
+    }
+}
+
 
 void LottieTrimpath::segment(float frameNo, float& start, float& end)
 {
