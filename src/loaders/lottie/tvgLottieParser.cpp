@@ -645,8 +645,6 @@ LottieRoundedCorner* LottieParser::parseRoundedCorner()
     auto corner = new LottieRoundedCorner;
     if (!corner) return nullptr;
 
-    context->layer->roundedCorner = true;
-
     while (auto key = nextObjectKey()) {
         if (!strcmp(key, "nm")) corner->name = getStringCopy();
         else if (!strcmp(key, "r")) parseProperty(corner->radius);
