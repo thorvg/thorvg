@@ -223,7 +223,7 @@ struct LottieObject
         Image,
         Trimpath,
         Repeater,
-        RoundedCorner,
+        RoundedCorner
     };
 
     virtual ~LottieObject()
@@ -234,7 +234,7 @@ struct LottieObject
     char* name = nullptr;
     Type type;
     bool statical = true;      //no keyframes
-    bool hidden = false;
+    bool hidden = false;       //remove?
 };
 
 
@@ -358,9 +358,9 @@ struct LottieTransform : LottieObject
     void prepare()
     {
         LottieObject::type = LottieObject::Transform;
-        if (position.frames || rotation.frames || scale.frames || anchor.frames || opacity.frames) statical = false;
-        else if (coords && (coords->x.frames || coords->y.frames)) statical = false;
-        else if (rotationEx && (rotationEx->x.frames || rotationEx->y.frames)) statical = false;
+        if (position.frames || rotation.frames || scale.frames || anchor.frames || opacity.frames || (coords && (coords->x.frames || coords->y.frames)) || (rotationEx && (rotationEx->x.frames || rotationEx->y.frames))) {
+            statical = false;
+        }
     }
 
     LottiePosition position = Point{0.0f, 0.0f};
@@ -434,12 +434,7 @@ struct LottieImage : LottieObject
 
     Picture* picture = nullptr;   //tvg render data
 
-    ~LottieImage()
-    {
-        free(b64Data);
-        free(mimeType);
-        delete(picture);
-    }
+    ~LottieImage();
 
     void prepare()
     {
@@ -517,9 +512,6 @@ struct LottieLayer : LottieGroup
     void prepare();
     float remap(float frameNo);
 
-    //Optimize: compact data??
-    RGB24 color;
-
     struct {
         CompositeMethod type = CompositeMethod::None;
         LottieLayer* target = nullptr;
@@ -531,6 +523,7 @@ struct LottieLayer : LottieGroup
     LottieComposition* comp = nullptr;
     LottieTransform* transform = nullptr;
     Array<LottieMask*> masks;
+    RGB24 color;  //used by Solid layer
 
     float timeStretch = 1.0f;
     uint32_t w = 0, h = 0;
@@ -550,7 +543,6 @@ struct LottieLayer : LottieGroup
 
     Type type = Null;
     bool autoOrient = false;
-    bool roundedCorner = false;
     bool matteSrc = false;
 };
 
