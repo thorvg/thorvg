@@ -815,23 +815,28 @@ static void _updatePrecomp(LottieLayer* precomp, float frameNo, bool caching)
 
     //clip the layer viewport
     if (precomp->w > 0 && precomp->h > 0) {
+        if (!precomp->cache.clipper) {
+            precomp->cache.clipper = Shape::gen().release();
+            PP(precomp->cache.clipper)->ref();
+            precomp->cache.clipper->appendRect(0, 0, static_cast<float>(precomp->w), static_cast<float>(precomp->h));
+        }
+        auto clipper = precomp->cache.clipper;
+        clipper->transform(precomp->cache.matrix);
+
         //TODO: remove the intermediate scene....
         auto cscene = Scene::gen();
-        auto clipper = Shape::gen();
-        clipper->appendRect(0, 0, static_cast<float>(precomp->w), static_cast<float>(precomp->h));
-        clipper->transform(precomp->cache.matrix);
-        cscene->composite(std::move(clipper), CompositeMethod::ClipPath);
+        cscene->composite(cast(clipper), CompositeMethod::ClipPath);
         cscene->push(cast(precomp->scene));
         precomp->scene = cscene.release();
     }
 }
 
 
-static void _updateSolid(LottieLayer* layer, float frameNo)
+static void _updateSolid(LottieLayer* layer)
 {
     auto shape = Shape::gen();
     shape->appendRect(0, 0, static_cast<float>(layer->w), static_cast<float>(layer->h));
-    shape->fill(layer->color.rgb[0], layer->color.rgb[1], layer->color.rgb[2], layer->opacity(frameNo));
+    shape->fill(layer->color.rgb[0], layer->color.rgb[1], layer->color.rgb[2], layer->cache.opacity);
     layer->scene->push(std::move(shape));
 }
 
@@ -946,7 +951,7 @@ static void _updateLayer(LottieLayer* root, LottieLayer* layer, float frameNo, b
             break;
         }
         case LottieLayer::Solid: {
-            _updateSolid(layer, frameNo);
+            _updateSolid(layer);
             break;
         }
         default: {

@@ -316,7 +316,8 @@ unique_ptr<Paint> LottieLoader::paint()
 
 bool LottieLoader::frame(float no)
 {
-    if (mathEqual(this->frameNo, no)) return false;
+    //no meaing to update if frame diff is less then 1ms
+    if (fabsf(this->frameNo - no) < 0.001f) return false;
 
     this->done();
 
