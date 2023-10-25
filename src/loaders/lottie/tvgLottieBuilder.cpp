@@ -84,7 +84,7 @@ struct RenderContext
 
 
 static void _updateChildren(LottieGroup* parent, float frameNo, queue<RenderContext>& contexts);
-static void _updateLayer(LottieLayer* root, LottieLayer* layer, float frameNo);
+static void _updateLayer(LottieLayer* root, LottieLayer* layer, float frameNo, bool caching);
 static bool _buildComposition(LottieComposition* comp, LottieGroup* parent);
 
 static void _rotateX(Matrix* m, float degree)
@@ -803,15 +803,14 @@ static void _updateChildren(LottieGroup* parent, float frameNo, queue<RenderCont
 }
 
 
-static void _updatePrecomp(LottieLayer* precomp, float frameNo)
+static void _updatePrecomp(LottieLayer* precomp, float frameNo, bool caching)
 {
     if (precomp->children.count == 0) return;
 
     frameNo = precomp->remap(frameNo);
 
-    //TODO: skip if the layer is static.
     for (auto child = precomp->children.end() - 1; child >= precomp->children.data; --child) {
-        _updateLayer(precomp, static_cast<LottieLayer*>(*child), frameNo);
+        _updateLayer(precomp, static_cast<LottieLayer*>(*child), frameNo, caching);
     }
 
     //clip the layer viewport
@@ -875,15 +874,21 @@ static void _updateMaskings(LottieLayer* layer, float frameNo)
 }
 
 
-static bool _updateMatte(LottieLayer* root, LottieLayer* layer, float frameNo)
+static bool _updateMatte(LottieLayer* root, LottieLayer* layer, float frameNo, bool caching)
 {
     auto target = layer->matte.target;
     if (!target) return true;
 
-    _updateLayer(root, target, frameNo);
+    if (target->cache.scene) {
+        //TODO: remove duplicate, share the scene.
+        layer->scene->composite(cast<Scene>(target->cache.scene->duplicate()), layer->matte.type);
+        return true;
+    }
+
+    _updateLayer(root, target, frameNo, caching);
 
     if (target->scene) {
-        layer->scene->composite(cast(target->scene), layer->matte.type);
+        layer->scene->composite(cast<Scene>(target->scene), layer->matte.type);
     } else  if (layer->matte.type == CompositeMethod::AlphaMask || layer->matte.type == CompositeMethod::LumaMask) {
         //matte target is not exist. alpha blending definitely bring an invisible result
         delete(layer->scene);
@@ -894,17 +899,30 @@ static bool _updateMatte(LottieLayer* root, LottieLayer* layer, float frameNo)
 }
 
 
-static void _updateLayer(LottieLayer* root, LottieLayer* layer, float frameNo)
+static void _updateLayer(LottieLayer* root, LottieLayer* layer, float frameNo, bool caching)
 {
     layer->scene = nullptr;
 
     //visibility
     if (frameNo < layer->inFrame || frameNo >= layer->outFrame) return;
 
+    //static layer, no need to update it again. use a cache.
+    if (layer->cache.scene) {
+        //TODO: remove duplicate, share the scene.
+        root->scene->push(cast<Scene>(layer->cache.scene->duplicate()));
+        return;
+    }
+
     _updateTransform(layer, frameNo);
 
     //full transparent scene. no need to perform
     if (layer->type != LottieLayer::Null && layer->cache.opacity == 0) return;
+
+    //figure out this scene is static, reusable.
+    auto cache = false;
+    if (layer->statical && !layer->cache.scene && !caching) {
+        cache = caching = true;
+    }
 
     //Prepare render data
     layer->scene = Scene::gen().release();
@@ -916,14 +934,14 @@ static void _updateLayer(LottieLayer* root, LottieLayer* layer, float frameNo)
 
     if (layer->matte.target && layer->masks.count > 0) TVGERR("LOTTIE", "FIXME: Matte + Masking??");
 
-    if (!_updateMatte(root, layer, frameNo)) return;
+    if (!_updateMatte(root, layer, frameNo, caching)) return;
 
     _updateMaskings(layer, frameNo);
 
     switch (layer->type) {
         case LottieLayer::Precomp: {
             if (!layer->children.empty()) {
-                _updatePrecomp(layer, frameNo);
+                _updatePrecomp(layer, frameNo, caching);
             }
             break;
         }
@@ -943,6 +961,12 @@ static void _updateLayer(LottieLayer* root, LottieLayer* layer, float frameNo)
 
     //the given matte source was composited by the target earlier.
     if (!layer->matteSrc) root->scene->push(cast<Scene>(layer->scene));
+
+    //cache this static layer scene
+    if (cache) {
+        //TODO: remove duplicate, share the scene.
+        layer->cache.scene = layer->scene->duplicate();
+    }
 }
 
 
@@ -1037,10 +1061,14 @@ static bool _buildComposition(LottieComposition* comp, LottieGroup* parent)
             _bulidHierarchy(parent, child->matte.target);
             //precomp referencing
             if (child->matte.target->refId) _buildReference(comp, child->matte.target);
+            child->statical &= child->matte.target->statical;
         }
         _bulidHierarchy(parent, child);
 
         _checkFragment(static_cast<LottieGroup*>(*c));
+
+        child->statical &= parent->statical;
+        parent->statical &= child->statical;
     }
     return true;
 }
@@ -1069,9 +1097,8 @@ bool LottieBuilder::update(LottieComposition* comp, float frameNo)
     }
 
     //update children layers
-    //TODO: skip if the layer is static.
     for (auto child = root->children.end() - 1; child >= root->children.data; --child) {
-        _updateLayer(root, static_cast<LottieLayer*>(*child), frameNo);
+        _updateLayer(root, static_cast<LottieLayer*>(*child), frameNo, false);
     }
     return true;
 }
