@@ -485,22 +485,7 @@ struct LottieLayer : LottieGroup
 {
     enum Type : uint8_t {Precomp = 0, Solid, Image, Null, Shape, Text};
 
-    ~LottieLayer()
-    {
-        if (refId) {
-            //No need to free assets children because the Composition owns them.
-            children.clear();
-            free(refId);
-        }
-
-        for (auto m = masks.data; m < masks.end(); ++m) {
-            delete(*m);
-        }
-
-        delete(matte.target);
-        delete(transform);
-        delete(cache.scene);
-    }
+    ~LottieLayer();
 
     uint8_t opacity(float frameNo)
     {
@@ -539,7 +524,10 @@ struct LottieLayer : LottieGroup
         float frameNo = -1.0f;
         Matrix matrix;
         uint8_t opacity;
-        Paint* scene = nullptr; //tvg statc render ddata
+
+        //tvg render data
+        Paint* scene = nullptr;
+        tvg::Shape* clipper = nullptr; 
     } cache;
 
     Type type = Null;
