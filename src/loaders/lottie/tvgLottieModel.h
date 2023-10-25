@@ -173,7 +173,7 @@ struct LottieGradient
         } else {
             colorStops.count = populate(colorStops.value);
         }
-        if (start.frames || end.frames || height.frames || angle.frames || colorStops.frames) return true;
+        if (start.frames || end.frames || height.frames || angle.frames || opacity.frames || colorStops.frames) return true;
         return false;
     }
 
@@ -475,7 +475,6 @@ struct LottieGroup : LottieObject
     void prepare(LottieObject::Type type = LottieObject::Group);
 
     Scene* scene = nullptr;               //tvg render data
-
     Array<LottieObject*> children;
 
     bool reqFragment = false;   //requirment to fragment the render context
@@ -500,6 +499,7 @@ struct LottieLayer : LottieGroup
 
         delete(matte.target);
         delete(transform);
+        delete(cache.scene);
     }
 
     uint8_t opacity(float frameNo)
@@ -539,6 +539,7 @@ struct LottieLayer : LottieGroup
         float frameNo = -1.0f;
         Matrix matrix;
         uint8_t opacity;
+        Paint* scene = nullptr; //tvg statc render ddata
     } cache;
 
     Type type = Null;
