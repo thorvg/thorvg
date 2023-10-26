@@ -75,7 +75,7 @@ struct Scene::Impl
     ~Impl()
     {
         for (auto paint : paints) {
-            if (paint->pImpl->unref() == 0) delete(paint);
+            if (P(paint)->unref() == 0) delete(paint);
         }
     }
 
