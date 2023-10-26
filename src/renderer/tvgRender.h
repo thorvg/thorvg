@@ -123,10 +123,10 @@ struct RenderTransform
     float scale = 1.0f;   //scale factor
     bool overriding = false;  //user transform?
 
-    bool update();
+    void update();
     void override(const Matrix& m);
 
-    RenderTransform();
+    RenderTransform() {}
     RenderTransform(const RenderTransform* lhs, const RenderTransform* rhs);
 };
 
