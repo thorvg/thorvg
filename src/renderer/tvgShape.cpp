@@ -70,18 +70,14 @@ Result Shape::reset() noexcept
 
 uint32_t Shape::pathCommands(const PathCommand** cmds) const noexcept
 {
-    if (!cmds) return 0;
-
-    *cmds = pImpl->rs.path.cmds.data;
+    if (cmds) *cmds = pImpl->rs.path.cmds.data;
     return pImpl->rs.path.cmds.count;
 }
 
 
 uint32_t Shape::pathCoords(const Point** pts) const noexcept
 {
-    if (!pts) return 0;
-
-    *pts = pImpl->rs.path.pts.data;
+    if (pts) *pts = pImpl->rs.path.pts.data;
     return pImpl->rs.path.pts.count;
 }
 
