@@ -967,6 +967,11 @@ static void _updateLayer(LottieLayer* root, LottieLayer* layer, float frameNo, b
     //the given matte source was composited by the target earlier.
     if (!layer->matteSrc) root->scene->push(cast(layer->scene));
 
+    //Apply a layer blending mode
+    if (layer->blendMethod != BlendMethod::Normal) {
+        layer->scene->blend(layer->blendMethod);
+    }
+
     //cache this static layer scene
     if (cache) {
         //TODO: remove duplicate, share the scene.
