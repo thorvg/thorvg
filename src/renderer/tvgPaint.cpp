@@ -413,7 +413,10 @@ uint32_t Paint::identifier() const noexcept
 
 Result Paint::blend(BlendMethod method) const noexcept
 {
-    pImpl->blendMethod = method;
+    if (pImpl->blendMethod != method) {
+        pImpl->blendMethod = method;
+        pImpl->renderFlag |= RenderUpdateFlag::Blend;
+    }
 
     return Result::Success;
 }
