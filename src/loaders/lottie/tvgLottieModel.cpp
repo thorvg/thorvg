@@ -40,7 +40,7 @@ LottieImage::~LottieImage()
     free(b64Data);
     free(mimeType);
 
-    if (PP(picture)->unref() == 0) {
+    if (picture && PP(picture)->unref() == 0) {
         delete(picture);
     }
 }
@@ -157,7 +157,7 @@ LottieLayer::~LottieLayer()
     delete(matte.target);
     delete(transform);
 
-    if (cache.scene && PP(cache.scene)->unref() == 0) delete(cache.scene);
+    if (cache.scene) delete(cache.scene);
     if (cache.clipper && PP(cache.clipper)->unref() == 0) delete(cache.clipper);
 }
 
