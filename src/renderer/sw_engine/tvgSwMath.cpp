@@ -218,7 +218,7 @@ SwFixed mathLength(const SwPoint& pt)
        than 7% compared to the exact value. */
     if (v.x < 0) v.x = -v.x;
     if (v.y < 0) v.y = -v.y;
-    return (v.x > v.y) ? (v.x + v.y * 0.375f) : (v.y + v.x * 0.375f);
+    return static_cast<SwFixed>((v.x > v.y) ? (v.x + v.y * 0.375f) : (v.y + v.x * 0.375f));
 }
 
 
