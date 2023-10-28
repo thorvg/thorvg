@@ -169,14 +169,12 @@ public:
 private:
     void createCanvas()
     {
-        //Canvas Engine
-        tvg::CanvasEngine tvgEngine = tvg::CanvasEngine::Sw;
-
         //Threads Count
         auto threads = thread::hardware_concurrency();
+        if (threads > 0) --threads; 
 
         //Initialize ThorVG Engine
-        if (tvg::Initializer::init(tvgEngine, threads) != tvg::Result::Success) {
+        if (tvg::Initializer::init(threads, tvg::CanvasEngine::Sw) != tvg::Result::Success) {
             cout << "Error: Engine is not supported" << endl;
         }
 

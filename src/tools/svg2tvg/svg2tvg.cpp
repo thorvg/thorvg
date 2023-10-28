@@ -22,6 +22,7 @@
 
 #include <iostream>
 #include <vector>
+#include <thread>
 #include <thorvg.h>
 #ifdef _WIN32
     #include <windows.h>
@@ -62,7 +63,11 @@ private:
 
    bool convert(string& in, string& out)
    {
-      if (Initializer::init(CanvasEngine::Sw, 0) != Result::Success) return false;
+       //Threads Count
+      auto threads = std::thread::hardware_concurrency();
+      if (threads > 0) --threads;    //Allow the designated main thread capacity
+
+      if (Initializer::init(threads, CanvasEngine::Sw) != Result::Success) return false;
 
       auto picture = Picture::gen();
       if (picture->load(in) != Result::Success) return false;

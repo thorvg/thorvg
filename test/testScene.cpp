@@ -84,7 +84,7 @@ TEST_CASE("Scene Clear", "[tvgScene]")
 
 TEST_CASE("Scene Clear And Reuse Shape", "[tvgScene]")
 {
-    REQUIRE(Initializer::init(CanvasEngine::Sw, 0) == Result::Success);
+    REQUIRE(Initializer::init(0) == Result::Success);
 
     auto canvas = SwCanvas::gen();
     REQUIRE(canvas);
@@ -107,5 +107,5 @@ TEST_CASE("Scene Clear And Reuse Shape", "[tvgScene]")
     //Reuse shape.
     REQUIRE(pScene->push(std::unique_ptr<Shape>(pShape)) == Result::Success);
 
-    REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
+    REQUIRE(Initializer::term() == Result::Success);
 }

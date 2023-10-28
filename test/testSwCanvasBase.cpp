@@ -29,7 +29,7 @@ using namespace tvg;
 
 TEST_CASE("Pushing Paints", "[tvgSwCanvasBase]")
 {
-    REQUIRE(Initializer::init(CanvasEngine::Sw, 0) == Result::Success);
+    REQUIRE(Initializer::init(0) == Result::Success);
 
     auto canvas = SwCanvas::gen();
     REQUIRE(canvas);
@@ -80,12 +80,12 @@ TEST_CASE("Pushing Paints", "[tvgSwCanvasBase]")
        ++idx;
     }
 
-    REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
+    REQUIRE(Initializer::term() == Result::Success);
 }
 
 TEST_CASE("Clear", "[tvgSwCanvasBase]")
 {
-    REQUIRE(Initializer::init(CanvasEngine::Sw, 0) == Result::Success);
+    REQUIRE(Initializer::init(0) == Result::Success);
 
     auto canvas = SwCanvas::gen();
     REQUIRE(canvas);
@@ -134,12 +134,12 @@ TEST_CASE("Clear", "[tvgSwCanvasBase]")
     REQUIRE(canvas2->clear(false) == Result::Success);
     REQUIRE(canvas2->clear() == Result::Success);
 
-    REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
+    REQUIRE(Initializer::term() == Result::Success);
 }
 
 TEST_CASE("Update", "[tvgSwCanvasBase]")
 {
-    REQUIRE(Initializer::init(CanvasEngine::Sw, 0) == Result::Success);
+    REQUIRE(Initializer::init(0) == Result::Success);
 
     auto canvas = SwCanvas::gen();
     REQUIRE(canvas);
@@ -168,12 +168,12 @@ TEST_CASE("Update", "[tvgSwCanvasBase]")
     //Invalid shape
     REQUIRE(canvas->update(ptr) == Result::InsufficientCondition);
 
-    REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
+    REQUIRE(Initializer::term() == Result::Success);
 }
 
 TEST_CASE("Synchronized Drawing", "[tvgSwCanvasBase]")
 {
-    REQUIRE(Initializer::init(CanvasEngine::Sw, 0) == Result::Success);
+    REQUIRE(Initializer::init(0) == Result::Success);
 
     auto canvas = SwCanvas::gen();
     REQUIRE(canvas);
@@ -205,13 +205,13 @@ TEST_CASE("Synchronized Drawing", "[tvgSwCanvasBase]")
     REQUIRE(canvas->draw() == Result::Success);
     REQUIRE(canvas->sync() == Result::Success);
 
-    REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
+    REQUIRE(Initializer::term() == Result::Success);
 }
 
 TEST_CASE("Asynchronized Drawing", "[tvgSwCanvasBase]")
 {
     //Use multi-threading
-    REQUIRE(Initializer::init(CanvasEngine::Sw, 2) == Result::Success);
+    REQUIRE(Initializer::init(2) == Result::Success);
 
     auto canvas = SwCanvas::gen();
     REQUIRE(canvas);
@@ -231,5 +231,5 @@ TEST_CASE("Asynchronized Drawing", "[tvgSwCanvasBase]")
     REQUIRE(canvas->draw() == Result::Success);
     REQUIRE(canvas->sync() == Result::Success);
 
-    REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
+    REQUIRE(Initializer::term() == Result::Success);
 }

@@ -47,6 +47,8 @@ void win_del(void *data, Evas_Object *o, void *ev)
 
 static Eo* createSwView(uint32_t w = 800, uint32_t h = 800)
 {
+    cout << "tvg engine: software" << endl;
+
     WIDTH = w;
     HEIGHT = h;
 
@@ -80,6 +82,8 @@ void drawGLview(Evas_Object *obj);
 
 static Eo* createGlView(uint32_t w = 800, uint32_t h = 800)
 {
+    cout << "tvg engine: opengl" << endl;
+
     WIDTH = w;
     HEIGHT = h;
 

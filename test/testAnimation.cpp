@@ -49,7 +49,7 @@ TEST_CASE("Animation Basic", "[tvgAnimation]")
 
 TEST_CASE("Animation Lottie", "[tvgAnimation]")
 {
-    REQUIRE(Initializer::init(CanvasEngine::Sw, 1) == Result::Success);
+    REQUIRE(Initializer::init(1) == Result::Success);
 
     auto animation = Animation::gen();
     REQUIRE(animation);
@@ -65,12 +65,12 @@ TEST_CASE("Animation Lottie", "[tvgAnimation]")
     REQUIRE(animation->duration() == Approx(4).margin(004004));
     REQUIRE(animation->frame(20) == Result::Success);
 
-    REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
+    REQUIRE(Initializer::term() == Result::Success);
 }
 
 TEST_CASE("Animation Lottie2", "[tvgAnimation]")
 {
-    REQUIRE(Initializer::init(CanvasEngine::Sw, 0) == Result::Success);
+    REQUIRE(Initializer::init(0) == Result::Success);
 
     auto animation = Animation::gen();
     REQUIRE(animation);
@@ -82,12 +82,12 @@ TEST_CASE("Animation Lottie2", "[tvgAnimation]")
 
     REQUIRE(animation->frame(20) == Result::Success);
 
-    REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
+    REQUIRE(Initializer::term() == Result::Success);
 }
 
 TEST_CASE("Animation Lottie3", "[tvgAnimation]")
 {
-    REQUIRE(Initializer::init(CanvasEngine::Sw, 0) == Result::Success);
+    REQUIRE(Initializer::init(0) == Result::Success);
 
     auto animation = Animation::gen();
     REQUIRE(animation);
@@ -97,12 +97,12 @@ TEST_CASE("Animation Lottie3", "[tvgAnimation]")
 
     REQUIRE(picture->load(TEST_DIR"/test3.json") == Result::Success);
     
-    REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
+    REQUIRE(Initializer::term() == Result::Success);
 }
 
 TEST_CASE("Animation Lottie4", "[tvgAnimation]")
 {
-    REQUIRE(Initializer::init(CanvasEngine::Sw, 0) == Result::Success);
+    REQUIRE(Initializer::init(0) == Result::Success);
 
     auto animation = Animation::gen();
     REQUIRE(animation);
@@ -112,12 +112,12 @@ TEST_CASE("Animation Lottie4", "[tvgAnimation]")
 
     REQUIRE(picture->load(TEST_DIR"/test4.json") == Result::Success);
 
-    REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
+    REQUIRE(Initializer::term() == Result::Success);
 }
 
 TEST_CASE("Animation Lottie5", "[tvgAnimation]")
 {
-    REQUIRE(Initializer::init(CanvasEngine::Sw, 0) == Result::Success);
+    REQUIRE(Initializer::init(0) == Result::Success);
 
     auto animation = Animation::gen();
     REQUIRE(animation);
@@ -127,12 +127,12 @@ TEST_CASE("Animation Lottie5", "[tvgAnimation]")
 
     REQUIRE(picture->load(TEST_DIR"/test5.json") == Result::Success);
     
-    REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
+    REQUIRE(Initializer::term() == Result::Success);
 }
 
 TEST_CASE("Animation Lottie6", "[tvgAnimation]")
 {
-    REQUIRE(Initializer::init(CanvasEngine::Sw, 0) == Result::Success);
+    REQUIRE(Initializer::init(0) == Result::Success);
 
     auto animation = Animation::gen();
     REQUIRE(animation);
@@ -142,12 +142,12 @@ TEST_CASE("Animation Lottie6", "[tvgAnimation]")
 
     REQUIRE(picture->load(TEST_DIR"/test6.json") == Result::Success);
 
-    REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
+    REQUIRE(Initializer::term() == Result::Success);
 }
 
 TEST_CASE("Animation Lottie7", "[tvgAnimation]")
 {
-    REQUIRE(Initializer::init(CanvasEngine::Sw, 0) == Result::Success);
+    REQUIRE(Initializer::init(0) == Result::Success);
 
     auto animation = Animation::gen();
     REQUIRE(animation);
@@ -157,12 +157,12 @@ TEST_CASE("Animation Lottie7", "[tvgAnimation]")
 
     REQUIRE(picture->load(TEST_DIR"/test7.json") == Result::Success);
 
-    REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
+    REQUIRE(Initializer::term() == Result::Success);
 }
 
 TEST_CASE("Animation Lottie8", "[tvgAnimation]")
 {
-    REQUIRE(Initializer::init(CanvasEngine::Sw, 0) == Result::Success);
+    REQUIRE(Initializer::init(0) == Result::Success);
 
     auto animation = Animation::gen();
     REQUIRE(animation);
@@ -172,12 +172,12 @@ TEST_CASE("Animation Lottie8", "[tvgAnimation]")
 
     REQUIRE(picture->load(TEST_DIR"/test8.json") == Result::Success);
 
-    REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
+    REQUIRE(Initializer::term() == Result::Success);
 }
 
 TEST_CASE("Animation Lottie9", "[tvgAnimation]")
 {
-    REQUIRE(Initializer::init(CanvasEngine::Sw, 0) == Result::Success);
+    REQUIRE(Initializer::init(0) == Result::Success);
 
     auto animation = Animation::gen();
     REQUIRE(animation);
@@ -187,7 +187,7 @@ TEST_CASE("Animation Lottie9", "[tvgAnimation]")
 
     REQUIRE(picture->load(TEST_DIR"/test9.json") == Result::Success);
 
-    REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
+    REQUIRE(Initializer::term() == Result::Success);
 }
 
 #endif

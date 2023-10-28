@@ -49,7 +49,7 @@ TEST_CASE("Save empty shape", "[tvgSavers]")
 
 TEST_CASE("Save svg into tvg", "[tvgSavers]")
 {
-    REQUIRE(Initializer::init(CanvasEngine::Sw, 0) == Result::Success);
+    REQUIRE(Initializer::init(0) == Result::Success);
 
     auto picture = Picture::gen();
     REQUIRE(picture);
@@ -61,12 +61,12 @@ TEST_CASE("Save svg into tvg", "[tvgSavers]")
     REQUIRE(saver->save(std::move(picture), TEST_DIR"/tag.tvg") == Result::Success);
     REQUIRE(saver->sync() == Result::Success);
 
-    REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
+    REQUIRE(Initializer::term() == Result::Success);
 }
 
 TEST_CASE("Save scene into tvg", "[tvgSavers]")
 {
-    REQUIRE(Initializer::init(CanvasEngine::Sw, 0) == Result::Success);
+    REQUIRE(Initializer::init(0) == Result::Success);
 
     auto picture = tvg::Picture::gen();
     REQUIRE(picture);
@@ -92,7 +92,7 @@ TEST_CASE("Save scene into tvg", "[tvgSavers]")
     REQUIRE(saver->save(std::move(picture), TEST_DIR"/test.tvg") == Result::Success);
     REQUIRE(saver->sync() == Result::Success);
 
-    REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
+    REQUIRE(Initializer::term() == Result::Success);
 
     free(data);
 }
