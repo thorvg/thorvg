@@ -38,7 +38,7 @@ extern "C" {
 
 TVG_API Tvg_Result tvg_engine_init(Tvg_Engine engine_method, unsigned threads)
 {
-    return (Tvg_Result) Initializer::init(CanvasEngine(engine_method), threads);
+    return (Tvg_Result) Initializer::init(threads, CanvasEngine(engine_method));
 }
 
 

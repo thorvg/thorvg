@@ -35,7 +35,7 @@ TEST_CASE("Missing Initialization", "[tvgSwCanvas]")
 
 TEST_CASE("Basic Creation", "[tvgSwCanvas]")
 {
-    REQUIRE(Initializer::init(CanvasEngine::Sw, 0) == Result::Success);
+    REQUIRE(Initializer::init(0, CanvasEngine::Sw) == Result::Success);
 
     auto canvas = SwCanvas::gen();
     REQUIRE(canvas);
@@ -51,7 +51,7 @@ TEST_CASE("Basic Creation", "[tvgSwCanvas]")
 
 TEST_CASE("Target Buffer", "[tvgSwCanvas]")
 {
-    REQUIRE(Initializer::init(CanvasEngine::Sw, 0) == Result::Success);
+    REQUIRE(Initializer::init(0, CanvasEngine::Sw) == Result::Success);
 
     auto canvas = SwCanvas::gen();
     REQUIRE(canvas);
@@ -71,7 +71,7 @@ TEST_CASE("Target Buffer", "[tvgSwCanvas]")
 
 TEST_CASE("Memory Pool", "[tvgSwCanvas]")
 {
-    REQUIRE(Initializer::init(CanvasEngine::Sw, 0) == Result::Success);
+    REQUIRE(Initializer::init(0, CanvasEngine::Sw) == Result::Success);
 
     auto canvas = SwCanvas::gen();
     REQUIRE(canvas);

@@ -72,7 +72,7 @@ TEST_CASE("Load RAW Data", "[tvgPicture]")
 
 TEST_CASE("Load RAW file and render", "[tvgPicture]")
 {
-    REQUIRE(Initializer::init(CanvasEngine::Sw, 0) == Result::Success);
+    REQUIRE(Initializer::init(0) == Result::Success);
 
     auto canvas = SwCanvas::gen();
     REQUIRE(canvas);
@@ -95,7 +95,7 @@ TEST_CASE("Load RAW file and render", "[tvgPicture]")
 
     REQUIRE(canvas->push(std::move(picture)) == Result::Success);
 
-    REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
+    REQUIRE(Initializer::term() == Result::Success);
 
     free(data);
 }
@@ -266,7 +266,7 @@ TEST_CASE("Load SVG Data", "[tvgPicture]")
 
 TEST_CASE("Load SVG file and render", "[tvgPicture]")
 {
-    REQUIRE(Initializer::init(CanvasEngine::Sw, 0) == Result::Success);
+    REQUIRE(Initializer::init(0) == Result::Success);
 
     auto canvas = SwCanvas::gen();
     REQUIRE(canvas);
@@ -286,7 +286,7 @@ TEST_CASE("Load SVG file and render", "[tvgPicture]")
     REQUIRE(canvas->draw() == Result::Success);
     REQUIRE(canvas->sync() == Result::Success);
 
-    REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
+    REQUIRE(Initializer::term() == Result::Success);
 
     delete[] buffer;
 }
@@ -338,7 +338,7 @@ TEST_CASE("Load PNG file from data", "[tvgPicture]")
 
 TEST_CASE("Load PNG file and render", "[tvgPicture]")
 {
-    REQUIRE(Initializer::init(CanvasEngine::Sw, 0) == Result::Success);
+    REQUIRE(Initializer::init(0) == Result::Success);
 
     auto canvas = SwCanvas::gen();
     REQUIRE(canvas);
@@ -355,7 +355,7 @@ TEST_CASE("Load PNG file and render", "[tvgPicture]")
 
     REQUIRE(canvas->push(std::move(picture)) == Result::Success);
 
-    REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
+    REQUIRE(Initializer::term() == Result::Success);
 }
 
 #endif
@@ -408,7 +408,7 @@ TEST_CASE("Load JPG file from data", "[tvgPicture]")
 
 TEST_CASE("Load JPG file and render", "[tvgPicture]")
 {
-    REQUIRE(Initializer::init(CanvasEngine::Sw, 0) == Result::Success);
+    REQUIRE(Initializer::init(0) == Result::Success);
 
     auto canvas = SwCanvas::gen();
     REQUIRE(canvas);
@@ -423,7 +423,7 @@ TEST_CASE("Load JPG file and render", "[tvgPicture]")
 
     REQUIRE(canvas->push(std::move(picture)) == Result::Success);
 
-    REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
+    REQUIRE(Initializer::term() == Result::Success);
 }
 
 #endif
@@ -476,7 +476,7 @@ TEST_CASE("Load TVG file from data", "[tvgPicture]")
 
 TEST_CASE("Load TVG file and render", "[tvgPicture]")
 {
-    REQUIRE(Initializer::init(CanvasEngine::Sw, 0) == Result::Success);
+    REQUIRE(Initializer::init(0) == Result::Success);
 
     auto canvas = SwCanvas::gen();
     REQUIRE(canvas);
@@ -496,7 +496,7 @@ TEST_CASE("Load TVG file and render", "[tvgPicture]")
     REQUIRE(pictureTest->load(TEST_DIR"/test.tvg") == Result::Success);
     REQUIRE(canvas->push(std::move(pictureTest)) == Result::Success);
 
-    REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
+    REQUIRE(Initializer::term() == Result::Success);
 
     delete[] buffer;
 }
@@ -548,7 +548,7 @@ TEST_CASE("Load WEBP file from data", "[tvgPicture]")
 
 TEST_CASE("Load WEBP file and render", "[tvgPicture]")
 {
-    REQUIRE(Initializer::init(CanvasEngine::Sw, 0) == Result::Success);
+    REQUIRE(Initializer::init(0) == Result::Success);
 
     auto canvas = SwCanvas::gen();
     REQUIRE(canvas);
@@ -565,7 +565,7 @@ TEST_CASE("Load WEBP file and render", "[tvgPicture]")
 
     REQUIRE(canvas->push(std::move(picture)) == Result::Success);
 
-    REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
+    REQUIRE(Initializer::term() == Result::Success);
 }
 
 #endif

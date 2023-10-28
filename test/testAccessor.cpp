@@ -39,7 +39,7 @@ TEST_CASE("Accessor Creation", "[tvgAccessor]")
 
 TEST_CASE("Set", "[tvgAccessor]")
 {
-    REQUIRE(Initializer::init(CanvasEngine::Sw, 0) == Result::Success);
+    REQUIRE(Initializer::init(0) == Result::Success);
 
     auto canvas = SwCanvas::gen();
     REQUIRE(canvas);
@@ -74,7 +74,7 @@ TEST_CASE("Set", "[tvgAccessor]")
     picture = accessor->set(std::move(picture), f);
     REQUIRE(picture);
 
-    REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
+    REQUIRE(Initializer::term() == Result::Success);
 }
 
 #endif

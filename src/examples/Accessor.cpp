@@ -128,24 +128,18 @@ void drawGLview(Evas_Object *obj)
 
 int main(int argc, char **argv)
 {
-    tvg::CanvasEngine tvgEngine = tvg::CanvasEngine::Sw;
+    auto tvgEngine = tvg::CanvasEngine::Sw;
 
     if (argc > 1) {
         if (!strcmp(argv[1], "gl")) tvgEngine = tvg::CanvasEngine::Gl;
     }
 
-    //Initialize ThorVG Engine
-    if (tvgEngine == tvg::CanvasEngine::Sw) {
-        cout << "tvg engine: software" << endl;
-    } else {
-        cout << "tvg engine: opengl" << endl;
-    }
-
     //Threads Count
     auto threads = std::thread::hardware_concurrency();
+    if (threads > 0) --threads;    //Allow the designated main thread capacity
 
     //Initialize ThorVG Engine
-    if (tvg::Initializer::init(tvgEngine, threads) == tvg::Result::Success) {
+    if (tvg::Initializer::init(threads) == tvg::Result::Success) {
 
         elm_init(argc, argv);
 
@@ -159,7 +153,7 @@ int main(int argc, char **argv)
         elm_shutdown();
 
         //Terminate ThorVG Engine
-        tvg::Initializer::term(tvgEngine);
+        tvg::Initializer::term();
 
     } else {
         cout << "engine is not supported" << endl;

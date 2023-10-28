@@ -212,6 +212,7 @@ enum class BlendMethod : uint8_t
  */
 enum class CanvasEngine : uint8_t
 {
+    All = 0,       ///< All feasible rasterizers.
     Sw = (1 << 1), ///< CPU rasterizer.
     Gl = (1 << 2), ///< OpenGL rasterizer.
     Wg = (1 << 3), ///< WebGPU rasterizer. @BETA_API
@@ -1588,19 +1589,18 @@ public:
      * You can indicate the number of threads, the count of which is designated @p threads.
      * In the initialization step, TVG will generate/spawn the threads as set by @p threads count.
      *
-     * @param[in] engine The engine types to initialize. This is relative to the Canvas types, in which it will be used. For multiple backends bitwise operation is allowed.
      * @param[in] threads The number of additional threads. Zero indicates only the main thread is to be used.
+     * @param[in] engine The engine types to initialize. This is relative to the Canvas types, in which it will be used. For multiple backends bitwise operation is allowed.
      *
      * @retval Result::Success When succeed.
      * @retval Result::FailedAllocation An internal error possibly with memory allocation.
-     * @retval Result::InvalidArguments If unknown engine type chosen.
      * @retval Result::NonSupport In case the engine type is not supported on the system.
      * @retval Result::Unknown Others.
      *
      * @note The Initializer keeps track of the number of times it was called. Threads count is fixed at the first init() call.
      * @see Initializer::term()
      */
-    static Result init(CanvasEngine engine, uint32_t threads) noexcept;
+    static Result init(uint32_t threads, CanvasEngine engine = tvg::CanvasEngine::All) noexcept;
 
     /**
      * @brief Terminates TVG engines.
@@ -1609,14 +1609,13 @@ public:
      *
      * @retval Result::Success When succeed.
      * @retval Result::InsufficientCondition In case there is nothing to be terminated.
-     * @retval Result::InvalidArguments If unknown engine type chosen.
      * @retval Result::NonSupport In case the engine type is not supported on the system.
      * @retval Result::Unknown Others.
      *
      * @note Initializer does own reference counting for multiple calls.
      * @see Initializer::init()
      */
-    static Result term(CanvasEngine engine) noexcept;
+    static Result term(CanvasEngine engine = tvg::CanvasEngine::All) noexcept;
 
     _TVG_DISABLE_CTOR(Initializer);
 };

@@ -92,26 +92,25 @@ static bool _buildVersionInfo()
 /* External Class Implementation                                        */
 /************************************************************************/
 
-Result Initializer::init(CanvasEngine engine, uint32_t threads) noexcept
+Result Initializer::init(uint32_t threads, CanvasEngine engine) noexcept
 {
     auto nonSupport = true;
-    if (static_cast<int>(engine) == 0) return Result::InvalidArguments;
 
-    if (engine & CanvasEngine::Sw) {
+    if (engine == CanvasEngine::All || engine & CanvasEngine::Sw) {
         #ifdef THORVG_SW_RASTER_SUPPORT
             if (!SwRenderer::init(threads)) return Result::FailedAllocation;
             nonSupport = false;
         #endif
     }
 
-    if (engine & CanvasEngine::Gl) {
+    if (engine == CanvasEngine::All || engine & CanvasEngine::Gl) {
         #ifdef THORVG_GL_RASTER_SUPPORT
             if (!GlRenderer::init(threads)) return Result::FailedAllocation;
             nonSupport = false;
         #endif
     }
 
-    if (engine & CanvasEngine::Wg) {
+    if (engine == CanvasEngine::All || engine & CanvasEngine::Wg) {
         #ifdef THORVG_WG_RASTER_SUPPORT
             if (!WgRenderer::init(threads)) return Result::FailedAllocation;
             nonSupport = false;
@@ -137,23 +136,22 @@ Result Initializer::term(CanvasEngine engine) noexcept
     if (_initCnt == 0) return Result::InsufficientCondition;
 
     auto nonSupport = true;
-    if (static_cast<int>(engine) == 0) return Result::InvalidArguments;
 
-    if (engine & CanvasEngine::Sw) {
+    if (engine == CanvasEngine::All || engine & CanvasEngine::Sw) {
         #ifdef THORVG_SW_RASTER_SUPPORT
             if (!SwRenderer::term()) return Result::InsufficientCondition;
             nonSupport = false;
         #endif
     }
 
-    if (engine & CanvasEngine::Gl) {
+    if (engine == CanvasEngine::All || engine & CanvasEngine::Gl) {
         #ifdef THORVG_GL_RASTER_SUPPORT
             if (!GlRenderer::term()) return Result::InsufficientCondition;
             nonSupport = false;
         #endif
     }
 
-    if (engine & CanvasEngine::Wg) {
+    if (engine == CanvasEngine::All || engine & CanvasEngine::Wg) {
         #ifdef THORVG_WG_RASTER_SUPPORT
             if (!WgRenderer::term()) return Result::InsufficientCondition;
             nonSupport = false;
