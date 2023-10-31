@@ -152,13 +152,9 @@ public:
     bool frame(float no)
     {
         if (!canvas || !animation) return false;
-        if (animation->frame(no) != Result::Success) {
-            errorMsg = "frame() fail";
-            return false;
+        if (animation->frame(no) == Result::Success) {
+            updated = true;
         }
-
-        updated = true;
-
         return true;
     }
 

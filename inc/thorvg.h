@@ -1701,8 +1701,8 @@ public:
      * @param[in] no The index of the animation frame to be displayed. The index should be less than the totalFrame().
      *
      * @retval Result::Success Successfully set the frame.
-     * @retval Result::InsufficientCondition No animatable data loaded from the Picture.
-     * @retval Result::NonSupport The Picture data does not support animations.
+     * @retval Result::InsufficientCondition if the given @p no is the same as the current frame value.
+     * @retval Result::NonSupport The current Picture data does not support animations.
      *
      * @see totalFrame()
      *
