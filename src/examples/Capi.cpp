@@ -201,32 +201,7 @@ void testCapi()
         tvg_canvas_push(canvas, pict);
     }
 
-//////6. Save a paint
-    //Create a shape
-    Tvg_Paint* shape = tvg_shape_new();
-    tvg_shape_append_circle(shape, 420.0f, 420.0f, 10.0f, 10.0f);
-    tvg_shape_set_fill_color(shape, 0, 255, 0, 200);
-
-    //Save the shape
-    Tvg_Saver* saver = tvg_saver_new();
-    if (tvg_saver_save(saver, shape, EXAMPLE_DIR"/capi_test.tvg", true) != TVG_RESULT_SUCCESS) {
-        printf("Problem with saving a tvg file\n");
-    } else {
-      tvg_saver_sync(saver);
-    }
-    tvg_saver_del(saver);
-
-    //Load the saved paint
-    Tvg_Paint* pict_tvg = tvg_picture_new();
-    if (tvg_picture_load(pict_tvg, EXAMPLE_DIR"/capi_test.tvg") != TVG_RESULT_SUCCESS) {
-        printf("Problem with loading a tvg file\n");
-        tvg_paint_del(pict_tvg);
-    } else {
-        //Push the scene into the canvas
-        tvg_canvas_push(canvas, pict_tvg);
-    }
-
-//////7. Animation with a picture
+//////6. Animation with a picture
     animation = tvg_animation_new();
     Tvg_Paint* pict_lottie = tvg_animation_get_picture(animation);
     if (tvg_picture_load(pict_lottie, EXAMPLE_DIR"/sample.json") != TVG_RESULT_SUCCESS) {
