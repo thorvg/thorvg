@@ -223,11 +223,11 @@ void WgPipelineLinear::initialize(WGPUDevice device) {
 
     // vertex attributes
     WGPUVertexAttribute vertexAttributes[] = {
-        { WGPUVertexFormat_Float32x3, sizeof(float) * 0, 0 }, // position
+        { WGPUVertexFormat_Float32x2, sizeof(float) * 0, 0 }, // position
     };
     // vertex buffer layout
     WGPUVertexBufferLayout vertexBufferLayout{};
-    vertexBufferLayout.arrayStride = sizeof(float) * 3; // position
+    vertexBufferLayout.arrayStride = sizeof(float) * 2; // position
     vertexBufferLayout.stepMode = WGPUVertexStepMode_Vertex;
     vertexBufferLayout.attributeCount = 1; // position
     vertexBufferLayout.attributes = vertexAttributes;

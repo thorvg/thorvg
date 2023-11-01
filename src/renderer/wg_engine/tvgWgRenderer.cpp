@@ -102,11 +102,13 @@ void WgRenderer::initialize() {
     
     // create pipelines
     mPipelineEmpty.initialize(mDevice);
+    mPipelineStroke.initialize(mDevice);
     mPipelineSolid.initialize(mDevice);
     mPipelineLinear.initialize(mDevice);
     mPipelineRadial.initialize(mDevice);
     mPipelineBindGroupEmpty.initialize(mDevice, mPipelineEmpty);
-    mGeometryDataPipeline.initialize(mDevice);
+    mPipelineBindGroupStroke.initialize(mDevice, mPipelineStroke);
+    mGeometryDataWindow.initialize(mDevice);
 }
 
 void WgRenderer::release() {
@@ -117,11 +119,13 @@ void WgRenderer::release() {
     if (mStencilTexView) wgpuTextureViewRelease(mStencilTexView);
     if (mSwapChain) wgpuSwapChainRelease(mSwapChain);
     if (mSurface) wgpuSurfaceRelease(mSurface);
-    mGeometryDataPipeline.release();
+    mGeometryDataWindow.release();
+    mPipelineBindGroupStroke.release();
     mPipelineBindGroupEmpty.release();
     mPipelineRadial.release();
     mPipelineLinear.release();
     mPipelineSolid.release();
+    mPipelineStroke.release();
     mPipelineEmpty.release();
     if (mDevice) {
         wgpuDeviceDestroy(mDevice);
@@ -137,44 +141,31 @@ RenderData WgRenderer::prepare(const RenderShape& rshape, RenderData data, const
     if (!renderDataShape) {
         renderDataShape = new WgRenderDataShape();
         renderDataShape->initialize(mDevice);
-        renderDataShape->mPipelineBindGroupSolid.initialize(mDevice, mPipelineSolid);
-        renderDataShape->mPipelineBindGroupLinear.initialize(mDevice, mPipelineLinear);
-        renderDataShape->mPipelineBindGroupRadial.initialize(mDevice, mPipelineRadial);
+        renderDataShape->mRenderSettingsShape.mPipelineBindGroupSolid.initialize(mDevice, mPipelineSolid);
+        renderDataShape->mRenderSettingsShape.mPipelineBindGroupLinear.initialize(mDevice, mPipelineLinear);
+        renderDataShape->mRenderSettingsShape.mPipelineBindGroupRadial.initialize(mDevice, mPipelineRadial);
+        renderDataShape->mRenderSettingsStroke.mPipelineBindGroupSolid.initialize(mDevice, mPipelineSolid);
+        renderDataShape->mRenderSettingsStroke.mPipelineBindGroupLinear.initialize(mDevice, mPipelineLinear);
+        renderDataShape->mRenderSettingsStroke.mPipelineBindGroupRadial.initialize(mDevice, mPipelineRadial);
     }
     
+    if (flags & (RenderUpdateFlag::Path | RenderUpdateFlag::Stroke))
+        renderDataShape->releaseRenderData();
+
     if (flags & RenderUpdateFlag::Path)
         renderDataShape->tesselate(mDevice, mQueue, rshape);
 
-    // setup fill properties
-    if ((flags & (RenderUpdateFlag::Gradient | RenderUpdateFlag::Transform)) && (rshape.fill)) {
-        // setup linear fill properties
-        if (rshape.fill->identifier() == TVG_CLASS_ID_LINEAR) {
-            WgPipelineDataLinear brushDataLinear{};
-            brushDataLinear.updateMatrix(mViewMatrix, transform);
-            brushDataLinear.updateGradient((LinearGradient*)rshape.fill);
-            renderDataShape->mPipelineBindGroupLinear.update(mQueue, brushDataLinear);
-            renderDataShape->mPipelineBindGroup = &renderDataShape->mPipelineBindGroupLinear;
-            renderDataShape->mPipelineBase = &mPipelineLinear;
-        } // setup radial fill properties
-        else if (rshape.fill->identifier() == TVG_CLASS_ID_RADIAL) {
-            WgPipelineDataRadial brushDataRadial{};
-            brushDataRadial.updateMatrix(mViewMatrix, transform);
-            brushDataRadial.updateGradient((RadialGradient*)rshape.fill);
-            renderDataShape->mPipelineBindGroupRadial.update(mQueue, brushDataRadial);
-            renderDataShape->mPipelineBindGroup = &renderDataShape->mPipelineBindGroupRadial;
-            renderDataShape->mPipelineBase = &mPipelineRadial;
-        }
-    }
+    if (flags & RenderUpdateFlag::Stroke)
+        renderDataShape->stroke(mDevice, mQueue, rshape);
 
-    // setup solid fill properties
-    if ((flags & (RenderUpdateFlag::Color | RenderUpdateFlag::Transform)) && (!rshape.fill)) {
-        WgPipelineDataSolid pipelineDataSolid{};
-        pipelineDataSolid.updateMatrix(mViewMatrix, transform);
-        pipelineDataSolid.updateColor(rshape);
-        renderDataShape->mPipelineBindGroupSolid.update(mQueue, pipelineDataSolid);
-        renderDataShape->mPipelineBindGroup = &renderDataShape->mPipelineBindGroupSolid;
-        renderDataShape->mPipelineBase = &mPipelineSolid;
-    }
+    // setup shape fill properties
+    renderDataShape->mRenderSettingsShape.update(mQueue, rshape.fill, flags, transform, mViewMatrix, rshape.color,
+        mPipelineLinear, mPipelineRadial, mPipelineSolid);
+
+    // setup stroke fill properties
+    if (rshape.stroke)
+        renderDataShape->mRenderSettingsStroke.update(mQueue, rshape.stroke->fill, flags, transform, mViewMatrix, rshape.stroke->color,
+            mPipelineLinear, mPipelineRadial, mPipelineSolid);
 
     return renderDataShape;
 }
@@ -283,16 +274,33 @@ bool WgRenderer::sync() {
                 for (size_t i = 0; i < mRenderDatas.count; i++) {
                     WgRenderDataShape* renderData = (WgRenderDataShape*)(mRenderDatas[i]);
                     
-                    for (uint32_t j = 0; j < renderData->mGeometryDataFill.count; j++) {
+                    wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
+                    for (uint32_t j = 0; j < renderData->mGeometryDataShape.count; j++) {
                         // draw to stencil (first pass)
                         mPipelineEmpty.set(renderPassEncoder);
                         mPipelineBindGroupEmpty.bind(renderPassEncoder, 0);
-                        renderData->mGeometryDataFill[j]->draw(renderPassEncoder);
+                        renderData->mGeometryDataShape[j]->draw(renderPassEncoder);
 
-                        // fill shape (secind pass)
-                        renderData->mPipelineBase->set(renderPassEncoder);
-                        renderData->mPipelineBindGroup->bind(renderPassEncoder, 0);
-                        mGeometryDataPipeline.draw(renderPassEncoder);
+                        // fill shape (second pass)
+                        renderData->mRenderSettingsShape.mPipelineBase->set(renderPassEncoder);
+                        renderData->mRenderSettingsShape.mPipelineBindGroup->bind(renderPassEncoder, 0);
+                        mGeometryDataWindow.draw(renderPassEncoder);
+                    }
+
+                    if (renderData->mRenderSettingsStroke.mPipelineBase) {
+                        // draw strokes to stencil (first pass)
+                        wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 255);
+                        for (uint32_t j = 0; j < renderData->mGeometryDataStroke.count; j++) {
+                            mPipelineStroke.set(renderPassEncoder);
+                            mPipelineBindGroupStroke.bind(renderPassEncoder, 0);
+                            renderData->mGeometryDataStroke[j]->draw(renderPassEncoder);
+                        }
+
+                        // fill strokes (second pass)
+                        wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
+                        renderData->mRenderSettingsStroke.mPipelineBase->set(renderPassEncoder);
+                        renderData->mRenderSettingsStroke.mPipelineBindGroup->bind(renderPassEncoder, 0);
+                        mGeometryDataWindow.draw(renderPassEncoder);
                     }
                 }
             }
@@ -402,19 +410,21 @@ bool WgRenderer::target(void* window, uint32_t w, uint32_t h) {
     assert(mStencilTexView);
 
     // update pipeline geometry data
-    static float vertexData[] = {
-            0.0f,     0.0f, 0.0f,
-        (float)w,     0.0f, 0.0f,
-        (float)w, (float)h, 0.0f,
-            1.0f, (float)h, 0.0f
-    };
-    static uint32_t indexData[] = { 0, 1, 2, 0, 2, 3 };
-    // update render data pipeline empty
-    mGeometryDataPipeline.update(mDevice, mQueue, vertexData, 4, indexData, 6);
+    WgVertexList wnd;
+    wnd.appendRect(
+        WgPoint(0.0f, 0.0f), WgPoint(w, 0.0f),
+        WgPoint(0.0f, h),    WgPoint(w, h)
+    );
+    // update render data pipeline empty and stroke
+    mGeometryDataWindow.update(mDevice, mQueue, &wnd);
     // update bind group pipeline empty
     WgPipelineDataEmpty pipelineDataEmpty{};
     pipelineDataEmpty.updateMatrix(mViewMatrix, nullptr);
     mPipelineBindGroupEmpty.update(mQueue, pipelineDataEmpty);
+    // update bind group pipeline stroke
+    WgPipelineDataStroke pipelineDataStroke{};
+    pipelineDataStroke.updateMatrix(mViewMatrix, nullptr);
+    mPipelineBindGroupStroke.update(mQueue, pipelineDataStroke);
 
     return true;
 }

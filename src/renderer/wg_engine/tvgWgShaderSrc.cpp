@@ -30,7 +30,7 @@
 const char* cShaderSource_PipelineEmpty = R"(
 // vertex input
 struct VertexInput {
-    @location(0) position: vec3f
+    @location(0) position: vec2f
 };
 
 // Matrix
@@ -66,7 +66,7 @@ fn fs_main(in: VertexOutput) -> void {
 const char* cShaderSource_PipelineSolid = R"(
 // vertex input
 struct VertexInput {
-    @location(0) position: vec3f
+    @location(0) position: vec2f
 };
 
 // Matrix
@@ -110,7 +110,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
 const char* cShaderSource_PipelineLinear = R"(
 // vertex input
 struct VertexInput {
-    @location(0) position: vec3f
+    @location(0) position: vec2f
 };
 
 // Matrix
@@ -195,7 +195,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
 const char* cShaderSource_PipelineRadial = R"(
 // vertex input
 struct VertexInput {
-    @location(0) position: vec3f
+    @location(0) position: vec2f
 };
 
 // Matrix

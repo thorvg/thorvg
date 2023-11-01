@@ -27,9 +27,17 @@
 //***********************************************************************
 
 void WgGeometryData::draw(WGPURenderPassEncoder renderPassEncoder) {
-    wgpuRenderPassEncoderSetVertexBuffer(renderPassEncoder, 0, mBufferVertex, 0, mVertexCount * sizeof(float) * 3);
+    wgpuRenderPassEncoderSetVertexBuffer(renderPassEncoder, 0, mBufferVertex, 0, mVertexCount * sizeof(float) * 2);
     wgpuRenderPassEncoderSetIndexBuffer(renderPassEncoder, mBufferIndex, WGPUIndexFormat_Uint32, 0, mIndexCount * sizeof(uint32_t));
     wgpuRenderPassEncoderDrawIndexed(renderPassEncoder, mIndexCount, 1, 0, 0, 0);
+}
+
+void WgGeometryData::update(WGPUDevice device, WGPUQueue queue, WgVertexList* vertexList) {
+    update(device, queue, 
+           (float *)vertexList->mVertexList.data,
+           vertexList->mVertexList.count,
+           vertexList->mIndexList.data,
+           vertexList->mIndexList.count);
 }
 
 void WgGeometryData::update(WGPUDevice device, WGPUQueue queue, float* vertexData, size_t vertexCount, uint32_t* indexData, size_t indexCount) {
@@ -40,11 +48,11 @@ void WgGeometryData::update(WGPUDevice device, WGPUQueue queue, float* vertexDat
     bufferVertexDesc.nextInChain = nullptr;
     bufferVertexDesc.label = "Buffer vertex geometry data";
     bufferVertexDesc.usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_Vertex;
-    bufferVertexDesc.size = sizeof(float) * vertexCount * 3; // x, y, z
+    bufferVertexDesc.size = sizeof(float) * vertexCount * 2; // x, y
     bufferVertexDesc.mappedAtCreation = false;
     mBufferVertex = wgpuDeviceCreateBuffer(device, &bufferVertexDesc);
     assert(mBufferVertex);
-    wgpuQueueWriteBuffer(queue, mBufferVertex, 0, vertexData, sizeof(float) * vertexCount * 3);
+    wgpuQueueWriteBuffer(queue, mBufferVertex, 0, vertexData, vertexCount * sizeof(float) * 2);
     mVertexCount = vertexCount;
     // buffer index data create and write
     WGPUBufferDescriptor bufferIndexDesc{};
@@ -55,7 +63,7 @@ void WgGeometryData::update(WGPUDevice device, WGPUQueue queue, float* vertexDat
     bufferIndexDesc.mappedAtCreation = false;
     mBufferIndex = wgpuDeviceCreateBuffer(device, &bufferIndexDesc);
     assert(mBufferIndex);
-    wgpuQueueWriteBuffer(queue, mBufferIndex, 0, indexData, sizeof(uint32_t) * indexCount);
+    wgpuQueueWriteBuffer(queue, mBufferIndex, 0, indexData, indexCount * sizeof(uint32_t));
     mIndexCount = indexCount;
 }
 
@@ -75,104 +83,280 @@ void WgGeometryData::release() {
 }
 
 //***********************************************************************
-// WgRenderDataShape
+// WgRenderDataShapeSettings
 //***********************************************************************
 
-void WgRenderDataShape::release() {
-    releaseRenderData();
+void WgRenderDataShapeSettings::update(WGPUQueue queue, const Fill* fill, const RenderUpdateFlag flags,
+                                       const RenderTransform* transform, const float* viewMatrix, const uint8_t* color,
+                                       WgPipelineLinear& linear, WgPipelineRadial& radial, WgPipelineSolid& solid)
+
+{
+    // setup fill properties
+    if ((flags & (RenderUpdateFlag::Gradient | RenderUpdateFlag::Transform)) && fill) {
+        // setup linear fill properties
+        if (fill->identifier() == TVG_CLASS_ID_LINEAR) {
+            WgPipelineDataLinear brushDataLinear{};
+            brushDataLinear.updateMatrix(viewMatrix, transform);
+            brushDataLinear.updateGradient((LinearGradient*)fill);
+            mPipelineBindGroupLinear.update(queue, brushDataLinear);
+
+            mPipelineBindGroup = &mPipelineBindGroupLinear;
+            mPipelineBase = &linear;
+        } // setup radial fill properties
+        else if (fill->identifier() == TVG_CLASS_ID_RADIAL) {
+            WgPipelineDataRadial brushDataRadial{};
+            brushDataRadial.updateMatrix(viewMatrix, transform);
+            brushDataRadial.updateGradient((RadialGradient*)fill);
+            mPipelineBindGroupRadial.update(queue, brushDataRadial);
+
+            mPipelineBindGroup = &mPipelineBindGroupRadial;
+            mPipelineBase = &radial;
+        }
+    } // setup solid fill properties
+    else if ((flags & (RenderUpdateFlag::Color | RenderUpdateFlag::Transform)) && !fill) {
+        WgPipelineDataSolid pipelineDataSolid{};
+        pipelineDataSolid.updateMatrix(viewMatrix, transform);
+        pipelineDataSolid.updateColor(color);
+        mPipelineBindGroupSolid.update(queue, pipelineDataSolid);
+
+        mPipelineBindGroup = &mPipelineBindGroupSolid;
+        mPipelineBase = &solid;
+    }
+}
+
+void WgRenderDataShapeSettings::release() {
     mPipelineBindGroupSolid.release();
     mPipelineBindGroupLinear.release();
     mPipelineBindGroupRadial.release();
 }
 
+//***********************************************************************
+// WgRenderDataShape
+//***********************************************************************
+
+void WgRenderDataShape::release() {
+    releaseRenderData();
+    mRenderSettingsShape.release();
+    mRenderSettingsStroke.release();
+}
+
 void WgRenderDataShape::releaseRenderData() {
-    for (uint32_t i = 0; i < mGeometryDataFill.count; i++) {
-        mGeometryDataFill[i]->release();
-        delete mGeometryDataFill[i];
+    for (uint32_t i = 0; i < mGeometryDataStroke.count; i++) {
+        mGeometryDataStroke[i]->release();
+        delete mGeometryDataStroke[i];
     }
-    mGeometryDataFill.clear();
+    mGeometryDataStroke.clear();
+    for (uint32_t i = 0; i < mGeometryDataShape.count; i++) {
+        mGeometryDataShape[i]->release();
+        delete mGeometryDataShape[i];
+    }
+    mGeometryDataShape.clear();
 }
 
 void WgRenderDataShape::tesselate(WGPUDevice device, WGPUQueue queue, const RenderShape& rshape) {
-    releaseRenderData();
-    
-    Array<Array<float>*> outlines;
-    
+    Array<WgVertexList*> outlines{};
+    decodePath(rshape, outlines);
+
+    // create geometry data for fill for each outline
+    for (uint32_t i = 0; i < outlines.count; i++) {
+        auto outline = outlines[i];
+        // append shape if it can create at least one triangle
+        if (outline->mVertexList.count > 2) {
+            outline->computeTriFansIndexes();
+
+            // create geometry data for fill using triangle fan indexes
+            WgGeometryData* geometryData = new WgGeometryData();
+            geometryData->update(device, queue, outline);
+            mGeometryDataShape.push(geometryData);
+        }
+    }
+
+    for (uint32_t i = 0; i < outlines.count; i++)
+        delete outlines[i];
+}
+
+// TODO: separate to entity
+void WgRenderDataShape::stroke(WGPUDevice device, WGPUQueue queue, const RenderShape& rshape) {
+    if (!rshape.stroke) return;
+
+    // TODO: chnage to shared_ptrs
+    Array<WgVertexList*> outlines{};
+    decodePath(rshape, outlines);
+
+    WgVertexList strokes;
+    strokeSublines(rshape, outlines, strokes);
+
+    // append shape if it can create at least one triangle
+    // TODO: create single geometry data for strokes pere shape
+    if (strokes.mIndexList.count > 2) {
+        WgGeometryData* geometryData = new WgGeometryData();
+        geometryData->initialize(device);
+        geometryData->update(device, queue, &strokes);
+        mGeometryDataStroke.push(geometryData);
+    }
+
+    for (uint32_t i = 0; i < outlines.count; i++)
+        delete outlines[i];
+}
+
+void WgRenderDataShape::decodePath(const RenderShape& rshape, Array<WgVertexList*>& outlines) {
     size_t pntIndex = 0;
     for (uint32_t cmdIndex = 0; cmdIndex < rshape.path.cmds.count; cmdIndex++) {
         PathCommand cmd = rshape.path.cmds[cmdIndex];
         if (cmd == PathCommand::MoveTo) {
-            outlines.push(new Array<float>);
-
+            outlines.push(new WgVertexList);
             auto outline = outlines.last();
-            outline->push(rshape.path.pts[pntIndex].x);
-            outline->push(rshape.path.pts[pntIndex].y);
-            outline->push(0.0f);
-
+            outline->mVertexList.push(rshape.path.pts[pntIndex]);
             pntIndex++;
         } else if (cmd == PathCommand::LineTo) {
             auto outline = outlines.last();
-            outline->push(rshape.path.pts[pntIndex].x);
-            outline->push(rshape.path.pts[pntIndex].y);
-            outline->push(0.0f);
-            
+            if (outline)
+                outline->mVertexList.push(rshape.path.pts[pntIndex]);
             pntIndex++;
         } else if (cmd == PathCommand::Close) {
             auto outline = outlines.last();
-            if ((outline) && (outline->count > 1)) {
-                outline->push(outline->data[0]);
-                outline->push(outline->data[1]);
-                outline->push(0.0f);
-            }
+            if ((outline) && (outline->mVertexList.count > 0))
+                outline->mVertexList.push(outline->mVertexList[0]);
         } else if (cmd == PathCommand::CubicTo) {
             auto outline = outlines.last();
-            
-            Point p0 = { outline->data[outline->count - 3], outline->data[outline->count - 2] };
-            Point p1 = { rshape.path.pts[pntIndex + 0].x, rshape.path.pts[pntIndex + 0].y };
-            Point p2 = { rshape.path.pts[pntIndex + 1].x, rshape.path.pts[pntIndex + 1].y };
-            Point p3 = { rshape.path.pts[pntIndex + 2].x, rshape.path.pts[pntIndex + 2].y };
-            
-            const size_t segs = 16;
-            for (size_t i = 1; i <= segs; i++) {
-                float t = i / (float)segs;
-                // get cubic spline interpolation coefficients
-                float t0 = 1 * (1.0f - t) * (1.0f - t) * (1.0f - t);
-                float t1 = 3 * (1.0f - t) * (1.0f - t) * t;
-                float t2 = 3 * (1.0f - t) * t * t;
-                float t3 = 1 * t * t * t;
-                
-                outline->push(p0.x * t0 + p1.x * t1 + p2.x * t2 + p3.x * t3);
-                outline->push(p0.y * t0 + p1.y * t1 + p2.y * t2 + p3.y * t3);
-                outline->push(0.0f);
-            }
-            
+            if ((outline) && (outline->mVertexList.count > 0))
+                outline->appendCubic(
+                    rshape.path.pts[pntIndex + 0],
+                    rshape.path.pts[pntIndex + 1],
+                    rshape.path.pts[pntIndex + 2]
+                );
             pntIndex += 3;
         } 
     }
+}
 
-    // create render index buffers to emulate triangle fan polygon
-    Array<uint32_t> indexBuffer;
-    for (size_t i = 0; i < outlines.count; i++) {
+void WgRenderDataShape::strokeSublines(const RenderShape& rshape, Array<WgVertexList*>& outlines, WgVertexList& strokes) {
+    float wdt = rshape.stroke->width / 2;
+    for (uint32_t i = 0; i < outlines.count; i++) {
         auto outline = outlines[i];
 
-        size_t vertexCount = outline->count / 3;
-        assert(vertexCount > 2);
-
-        indexBuffer.clear();
-        indexBuffer.reserve((vertexCount - 2) * 3);
-        for (size_t j = 0; j < vertexCount - 2; j++) {
-            indexBuffer.push(0);
-            indexBuffer.push(j + 1);
-            indexBuffer.push(j + 2);
+        // single point sub-path
+        if (outline->mVertexList.count == 1) {
+            if (rshape.stroke->cap == StrokeCap::Round) {
+                strokes.appendCircle(outline->mVertexList[0], wdt);
+            } else if (rshape.stroke->cap == StrokeCap::Butt) {
+                // for zero length sub-paths no stroke is rendered
+            } else if (rshape.stroke->cap == StrokeCap::Square) {
+                strokes.appendRect(
+                    outline->mVertexList[0] + WgPoint(+wdt, +wdt),
+                    outline->mVertexList[0] + WgPoint(+wdt, -wdt),
+                    outline->mVertexList[0] + WgPoint(-wdt, +wdt),
+                    outline->mVertexList[0] + WgPoint(-wdt, -wdt)
+                );
+            }
         }
-        
-        WgGeometryData* geometryData = new WgGeometryData();
-        geometryData->initialize(device);
-        geometryData->update(device, queue, outline->data, vertexCount, indexBuffer.data, indexBuffer.count);
-        
-        mGeometryDataFill.push(geometryData);
 
+        // single line sub-path
+        if (outline->mVertexList.count == 2) {
+            WgPoint v0 = outline->mVertexList[0];
+            WgPoint v1 = outline->mVertexList[1];
+            WgPoint dir0 = (v1 - v0).normal();
+            WgPoint nrm0 = WgPoint{ -dir0.y, +dir0.x };
+            if (rshape.stroke->cap == StrokeCap::Round) {
+                strokes.appendRect(
+                    v0 - nrm0 * wdt, v0 + nrm0 * wdt, 
+                    v1 - nrm0 * wdt, v1 + nrm0 * wdt);
+                strokes.appendCircle(outline->mVertexList[0], wdt);
+                strokes.appendCircle(outline->mVertexList[1], wdt);
+            } else if (rshape.stroke->cap == StrokeCap::Butt) {
+                strokes.appendRect(
+                    v0 - nrm0 * wdt, v0 + nrm0 * wdt,
+                    v1 - nrm0 * wdt, v1 + nrm0 * wdt
+                );
+            } else if (rshape.stroke->cap == StrokeCap::Square) {
+                strokes.appendRect(
+                    v0 - nrm0 * wdt - dir0 * wdt, v0 + nrm0 * wdt - dir0 * wdt,
+                    v1 - nrm0 * wdt + dir0 * wdt, v1 + nrm0 * wdt + dir0 * wdt
+                );
+            }
+        }
+
+        // multi-lined sub-path
+        if (outline->mVertexList.count > 2) {
+            // append first cap
+            WgPoint v0 = outline->mVertexList[0];
+            WgPoint v1 = outline->mVertexList[1];
+            WgPoint dir0 = (v1 - v0).normal();
+            WgPoint nrm0 = WgPoint{ -dir0.y, +dir0.x };
+            if (rshape.stroke->cap == StrokeCap::Round) {
+                strokes.appendCircle(v0, wdt);
+            } else if (rshape.stroke->cap == StrokeCap::Butt) {
+                // no cap needed
+            } else if (rshape.stroke->cap == StrokeCap::Square) {
+                strokes.appendRect(
+                    v0 - nrm0 * wdt - dir0 * wdt,
+                    v0 + nrm0 * wdt - dir0 * wdt,
+                    v0 - nrm0 * wdt,
+                    v0 + nrm0 * wdt
+                );
+            }
+
+            // append last cap
+            v0 = outline->mVertexList[outline->mVertexList.count - 2];
+            v1 = outline->mVertexList[outline->mVertexList.count - 1];
+            dir0 = (v1 - v0).normal();
+            nrm0 = WgPoint{ -dir0.y, +dir0.x };
+            if (rshape.stroke->cap == StrokeCap::Round) {
+                strokes.appendCircle(v1, wdt);
+            } else if (rshape.stroke->cap == StrokeCap::Butt) {
+                // no cap needed
+            } else if (rshape.stroke->cap == StrokeCap::Square) {
+                strokes.appendRect(
+                    v1 - nrm0 * wdt,
+                    v1 + nrm0 * wdt,
+                    v1 - nrm0 * wdt + dir0 * wdt,
+                    v1 + nrm0 * wdt + dir0 * wdt
+                );
+            }
+
+            // append sub-lines
+            for (uint32_t j = 0; j < outline->mVertexList.count - 1; j++) {
+                WgPoint v0 = outline->mVertexList[j + 0];
+                WgPoint v1 = outline->mVertexList[j + 1];
+                WgPoint dir = (v1 - v0).normal();
+                WgPoint nrm { -dir.y, +dir.x };
+                strokes.appendRect(
+                    v0 - nrm * wdt,
+                    v0 + nrm * wdt,
+                    v1 - nrm * wdt,
+                    v1 + nrm * wdt
+                );
+            }
+
+            // append joints (TODO: separate by joint types)
+            for (uint32_t j = 1; j < outline->mVertexList.count - 1; j++) {
+                WgPoint v0 = outline->mVertexList[j - 1];
+                WgPoint v1 = outline->mVertexList[j + 0];
+                WgPoint v2 = outline->mVertexList[j + 1];
+                WgPoint dir0 = (v1 - v0).normal();
+                WgPoint dir1 = (v1 - v2).normal();
+                WgPoint nrm0 { -dir0.y, +dir0.x };
+                WgPoint nrm1 { +dir1.y, -dir1.x };
+                if (rshape.stroke->join == StrokeJoin::Round) {
+                    strokes.appendCircle(v1, wdt);
+                } else if (rshape.stroke->join == StrokeJoin::Bevel) {
+                    strokes.appendRect(
+                        v1 - nrm0 * wdt, v1 - nrm1 * wdt,
+                        v1 + nrm1 * wdt, v1 + nrm0 * wdt
+                    );
+                } else if (rshape.stroke->join == StrokeJoin::Miter) {
+                    WgPoint nrm = (dir0 + dir1).normal();
+                    float cosine = nrm.dot(nrm0);
+                    if ((cosine != 0.0f) && (abs(wdt / cosine) <= rshape.stroke->miterlimit * 2)) {
+                        strokes.appendRect(v1 + nrm * (wdt / cosine), v1 + nrm0 * wdt, v1 + nrm1 * wdt, v1);
+                        strokes.appendRect(v1 - nrm * (wdt / cosine), v1 - nrm0 * wdt, v1 - nrm1 * wdt, v1);
+                    } else {
+                        strokes.appendRect(
+                            v1 - nrm0 * wdt, v1 - nrm1 * wdt,
+                            v1 + nrm1 * wdt, v1 + nrm0 * wdt);
+                    }
+                }
+            }
+        }
     }
-    for (size_t i = 0; i < outlines.count; i++)
-        delete outlines[i];
 }
