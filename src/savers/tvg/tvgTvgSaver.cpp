@@ -135,8 +135,6 @@ static bool _merge(Shape* from, Shape* to)
 
 bool TvgSaver::saveEncoding(const std::string& path)
 {
-    if (!compress) return flushTo(path);
-
     //Try encoding
     auto uncompressed = buffer.data + headerSize;
     auto uncompressedSize = buffer.count - headerSize;
@@ -159,8 +157,7 @@ bool TvgSaver::saveEncoding(const std::string& path)
     //Update compress size in the header.
     uncompressed -= (TVG_HEADER_COMPRESS_SIZE + TVG_HEADER_RESERVED_LENGTH);
 
-    //Compression Flag
-    *uncompressed |= TVG_HEAD_FLAG_COMPRESSED;
+    //Rserved
     uncompressed += TVG_HEADER_RESERVED_LENGTH;
 
     //Uncompressed Size
@@ -702,12 +699,6 @@ TvgBinCounter TvgSaver::serializeChildren(Iterator* it, const Matrix* pTransform
         children.push(child);
     }
 
-    //TODO: Keep this for the compatibility, Remove in TVG 1.0 release
-    //The children of a reserved scene
-    if (reserved && children.count > 1) {
-        cnt += writeTagProperty(TVG_TAG_SCENE_RESERVEDCNT, SIZE(children.count), &children.count);
-    }
-
     //Serialize merged children.
     auto child = children.data;
     for (uint32_t i = 0; i < children.count; ++i, ++child) {
@@ -793,7 +784,7 @@ bool TvgSaver::close()
 }
 
 
-bool TvgSaver::save(Paint* paint, const string& path, bool compress)
+bool TvgSaver::save(Paint* paint, const string& path, TVG_UNUSED uint32_t quality)
 {
     close();
 
@@ -814,7 +805,6 @@ bool TvgSaver::save(Paint* paint, const string& path, bool compress)
     if (!this->path) return false;
 
     this->paint = paint;
-    this->compress = compress;
 
     TaskScheduler::request(this);
 

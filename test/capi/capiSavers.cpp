@@ -55,21 +55,21 @@ TEST_CASE("Save a paint into a file", "[capiSaver]")
     REQUIRE(paint3);
 
     //An invalid argument
-    REQUIRE(tvg_saver_save(nullptr, paint_empty, TEST_DIR"/test.tvg", false) == TVG_RESULT_INVALID_ARGUMENT);
-    REQUIRE(tvg_saver_save(saver, nullptr, TEST_DIR"/test.tvg", false) == TVG_RESULT_INVALID_ARGUMENT);
-    REQUIRE(tvg_saver_save(saver, paint_empty, nullptr, false) == TVG_RESULT_INVALID_ARGUMENT);
+    REQUIRE(tvg_saver_save(nullptr, paint_empty, TEST_DIR"/test.tvg", 50) == TVG_RESULT_INVALID_ARGUMENT);
+    REQUIRE(tvg_saver_save(saver, nullptr, TEST_DIR"/test.tvg", 999999) == TVG_RESULT_INVALID_ARGUMENT);
+    REQUIRE(tvg_saver_save(saver, paint_empty, nullptr, 100) == TVG_RESULT_INVALID_ARGUMENT);
 
     //Save an empty paint
-    REQUIRE(tvg_saver_save(saver, paint_empty, TEST_DIR"/test.tvg", false) == TVG_RESULT_UNKNOWN);
+    REQUIRE(tvg_saver_save(saver, paint_empty, TEST_DIR"/test.tvg", 0) == TVG_RESULT_UNKNOWN);
 
     //Unsupported target file format
-    REQUIRE(tvg_saver_save(saver, paint1, TEST_DIR"/test.err", false) == TVG_RESULT_NOT_SUPPORTED);
+    REQUIRE(tvg_saver_save(saver, paint1, TEST_DIR"/test.err", 0) == TVG_RESULT_NOT_SUPPORTED);
 
     //Correct call
-    REQUIRE(tvg_saver_save(saver, paint2, TEST_DIR"/test.tvg", false) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_saver_save(saver, paint2, TEST_DIR"/test.tvg", 100) == TVG_RESULT_SUCCESS);
 
     //Busy - saving some resources
-    REQUIRE(tvg_saver_save(saver, paint3, TEST_DIR"/test.tvg", false) == TVG_RESULT_INSUFFICIENT_CONDITION);
+    REQUIRE(tvg_saver_save(saver, paint3, TEST_DIR"/test.tvg", 100) == TVG_RESULT_INSUFFICIENT_CONDITION);
 
     REQUIRE(tvg_saver_del(saver) == TVG_RESULT_SUCCESS);
 }
@@ -92,11 +92,11 @@ TEST_CASE("Synchronize a Saver", "[capiSaver]")
     //Nothing to be synced
     REQUIRE(tvg_saver_sync(saver) == TVG_RESULT_INSUFFICIENT_CONDITION);
 
-    REQUIRE(tvg_saver_save(saver, paint1, TEST_DIR"/test.tvg", true) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_saver_save(saver, paint1, TEST_DIR"/test.tvg", 100) == TVG_RESULT_SUCCESS);
 
     //Releasing the saving task
     REQUIRE(tvg_saver_sync(saver) == TVG_RESULT_SUCCESS);
-    REQUIRE(tvg_saver_save(saver, paint2, TEST_DIR"/test.tvg", true) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_saver_save(saver, paint2, TEST_DIR"/test.tvg", 100) == TVG_RESULT_SUCCESS);
 
     REQUIRE(tvg_saver_del(saver) == TVG_RESULT_SUCCESS);
 }

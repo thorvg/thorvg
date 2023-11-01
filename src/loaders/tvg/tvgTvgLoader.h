@@ -40,7 +40,6 @@ public:
     uint32_t compressedSize = 0;
     uint32_t compressedSizeBits = 0;
     bool copy = false;
-    bool compressed = false;
 
     ~TvgLoader();
 

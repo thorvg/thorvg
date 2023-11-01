@@ -75,24 +75,20 @@ bool TvgLoader::readHeader()
     ptr += SIZE(float);
 
     //4. Reserved
-    if (*ptr & TVG_HEAD_FLAG_COMPRESSED) compressed = true;
     ptr += TVG_HEADER_RESERVED_LENGTH;
 
-    //5. Compressed Size if any
-    if (compressed) {
-        auto p = ptr;
+    auto p = ptr;
 
-        //TVG_HEADER_UNCOMPRESSED_SIZE
-        memcpy(&uncompressedSize, p, sizeof(uint32_t));
-        p += SIZE(uint32_t);
+    //TVG_HEADER_UNCOMPRESSED_SIZE
+    memcpy(&uncompressedSize, p, sizeof(uint32_t));
+    p += SIZE(uint32_t);
 
-        //TVG_HEADER_COMPRESSED_SIZE
-        memcpy(&compressedSize, p, sizeof(uint32_t));
-        p += SIZE(uint32_t);
+    //TVG_HEADER_COMPRESSED_SIZE
+    memcpy(&compressedSize, p, sizeof(uint32_t));
+    p += SIZE(uint32_t);
 
-        //TVG_HEADER_COMPRESSED_SIZE_BITS
-        memcpy(&compressedSizeBits, p, sizeof(uint32_t));
-    }
+    //TVG_HEADER_COMPRESSED_SIZE_BITS
+    memcpy(&compressedSizeBits, p, sizeof(uint32_t));
 
     ptr += TVG_HEADER_COMPRESS_SIZE;
 
@@ -213,13 +209,9 @@ void TvgLoader::run(unsigned tid)
 
     auto data = const_cast<char*>(ptr);
 
-    if (compressed) {
-        data = (char*) lzwDecode((uint8_t*) data, compressedSize, compressedSizeBits, uncompressedSize);
-        root = interpreter->run(data, data + uncompressedSize);
-        free(data);
-    } else {
-        root = interpreter->run(data, this->data + size);
-    }
+    data = (char*) lzwDecode((uint8_t*) data, compressedSize, compressedSizeBits, uncompressedSize);
+    root = interpreter->run(data, data + uncompressedSize);
+    free(data);
 
     if (!root) clear();
 }

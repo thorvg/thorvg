@@ -2146,6 +2146,7 @@ TVG_API Tvg_Saver* tvg_saver_new();
 * \param[in] paint The paint to be saved with all its associated properties.
 * \param[in] path A path to the file, in which the paint data is to be saved.
 * \param[in] compress If @c true then compress data if possible.
+* \param[in] quality The encoded quality level. @c 0 is the minimum, @c 100 is the maximum value(recommneded).
 *
 * \return Tvg_Result enumeration.
 * \retval TVG_RESULT_SUCCESS Succeed.
@@ -2158,7 +2159,7 @@ TVG_API Tvg_Saver* tvg_saver_new();
 * \note Saving can be asynchronous if the assigned thread number is greater than zero. To guarantee the saving is done, call tvg_saver_sync() afterwards.
 * \see tvg_saver_sync()
 */
-TVG_API Tvg_Result tvg_saver_save(Tvg_Saver* saver, Tvg_Paint* paint, const char* path, bool compress);
+TVG_API Tvg_Result tvg_saver_save(Tvg_Saver* saver, Tvg_Paint* paint, const char* path, uint32_t quality);
 
 
 /*!

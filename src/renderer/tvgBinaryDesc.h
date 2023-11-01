@@ -44,8 +44,7 @@ using TvgBinFlag = TvgBinByte;
 #define TVG_HEADER_UNCOMPRESSED_SIZE 4     //SIZE (TvgBinCounter)
 #define TVG_HEADER_COMPRESSED_SIZE 4       //SIZE (TvgBinCounter)
 #define TVG_HEADER_COMPRESSED_SIZE_BITS 4  //SIZE (TvgBinCounter)
-//Reserved Flag
-#define TVG_HEAD_FLAG_COMPRESSED                    0x01
+
 
 //Paint Type
 #define TVG_TAG_CLASS_PICTURE                       (TvgBinTag)0xfc
@@ -58,11 +57,6 @@ using TvgBinFlag = TvgBinByte;
 #define TVG_TAG_PAINT_TRANSFORM                     (TvgBinTag)0x11
 #define TVG_TAG_PAINT_CMP_TARGET                    (TvgBinTag)0x01
 #define TVG_TAG_PAINT_CMP_METHOD                    (TvgBinTag)0x20
-
-
-//TODO: Keep this for the compatibility, Remove in TVG 1.0 release
-//Scene
- #define TVG_TAG_SCENE_RESERVEDCNT                   (TvgBinTag)0x30
 
 
 //Shape
