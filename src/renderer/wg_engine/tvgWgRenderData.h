@@ -83,6 +83,7 @@ public:
     void stroke(WGPUDevice device, WGPUQueue queue, const RenderShape& rshape);
 private:
     void decodePath(const RenderShape& rshape, Array<WgVertexList*>& outlines);
+    void strokeSegments(const RenderShape& rshape, Array<WgVertexList*>& outlines, Array<WgVertexList*>& segments);
     void strokeSublines(const RenderShape& rshape, Array<WgVertexList*>& outlines, WgVertexList& strokes);
 };
 
