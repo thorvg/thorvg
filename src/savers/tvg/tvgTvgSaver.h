@@ -24,7 +24,7 @@
 #define _TVG_TVGSAVER_H_
 
 #include "tvgArray.h"
-#include "tvgBinaryDesc.h"
+#include "tvgFormat.h"
 #include "tvgTaskScheduler.h"
 
 namespace tvg
@@ -61,7 +61,7 @@ private:
     TvgBinCounter serializeStroke(const Shape* shape, const Matrix* pTransform, bool preTransform);
     TvgBinCounter serializePath(const Shape* shape, const Matrix* transform, bool preTransform);
     TvgBinCounter serializeComposite(const Paint* cmpTarget, CompositeMethod cmpMethod, const Matrix* pTransform);
-    TvgBinCounter serializeChildren(Iterator* it, const Matrix* transform, bool reserved);
+    TvgBinCounter serializeChildren(Iterator* it, const Matrix* transform);
     TvgBinCounter serializeChild(const Paint* parent, const Paint* child, const Matrix* pTransform);
 
 public:

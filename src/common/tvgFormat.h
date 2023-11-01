@@ -20,8 +20,8 @@
  * SOFTWARE.
  */
 
-#ifndef _TVG_BINARY_DESC_H_
-#define _TVG_BINARY_DESC_H_
+#ifndef _TVG_FORMAT_H_
+#define _TVG_FORMAT_H_
 
 /* TODO: Need to consider whether uin8_t is enough size for extension...
    Rather than optimal data, we can use enough size and data compress? */
@@ -36,7 +36,7 @@ using TvgBinFlag = TvgBinByte;
 #define TVG_HEADER_SIZE 33                //TVG_HEADER_SIGNATURE_LENGTH + TVG_HEADER_VERSION_LENGTH + 2*SIZE(float) + TVG_HEADER_RESERVED_LENGTH + TVG_HEADER_COMPRESS_SIZE
 #define TVG_HEADER_SIGNATURE "ThorVG"
 #define TVG_HEADER_SIGNATURE_LENGTH 6
-#define TVG_HEADER_VERSION "001100"       //Major 00, Minor 11, Micro 00
+#define TVG_HEADER_VERSION "010000"       //Major 01, Minor 00, Micro 00
 #define TVG_HEADER_VERSION_LENGTH 6
 #define TVG_HEADER_RESERVED_LENGTH 1      //Storing flags for extensions
 #define TVG_HEADER_COMPRESS_SIZE 12       //TVG_HEADER_UNCOMPRESSED_SIZE + TVG_HEADER_COMPRESSED_SIZE + TVG_HEADER_COMPRESSED_SIZE_BITS
@@ -58,11 +58,6 @@ using TvgBinFlag = TvgBinByte;
 #define TVG_TAG_PAINT_TRANSFORM                     (TvgBinTag)0x11
 #define TVG_TAG_PAINT_CMP_TARGET                    (TvgBinTag)0x01
 #define TVG_TAG_PAINT_CMP_METHOD                    (TvgBinTag)0x20
-
-
-//TODO: Keep this for the compatibility, Remove in TVG 1.0 release
-//Scene
- #define TVG_TAG_SCENE_RESERVEDCNT                   (TvgBinTag)0x30
 
 
 //Shape
@@ -97,4 +92,4 @@ using TvgBinFlag = TvgBinByte;
 #define TVG_TAG_PICTURE_RAW_IMAGE                   (TvgBinTag)0x70
 #define TVG_TAG_PICTURE_MESH                        (TvgBinTag)0x71
 
-#endif //_TVG_BINARY_DESC_H_
+#endif //_TVG_FORMAT_H_
