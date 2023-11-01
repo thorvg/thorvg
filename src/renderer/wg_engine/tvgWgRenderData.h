@@ -20,12 +20,13 @@
  * SOFTWARE.
  */
 
+#ifndef _TVG_WG_RENDER_DATA_H_
+#define _TVG_WG_RENDER_DATA_H_
+
 #include "tvgWgPipelineSolid.h"
 #include "tvgWgPipelineLinear.h"
 #include "tvgWgPipelineRadial.h"
-
-#ifndef _TVG_WG_RENDER_DATA_H_
-#define _TVG_WG_RENDER_DATA_H_
+#include "tvgWgGeometry.h"
 
 class WgGeometryData {
 public:
@@ -39,6 +40,7 @@ public:
 
     void initialize(WGPUDevice device) {};
     void draw(WGPURenderPassEncoder renderPassEncoder);
+    void update(WGPUDevice device, WGPUQueue queue, WgVertexList* vertexList);
     void update(WGPUDevice device, WGPUQueue queue, float* vertexData, size_t vertexCount, uint32_t* indexData, size_t indexCount);
     void release();
 };
@@ -49,17 +51,28 @@ public:
     virtual void release() = 0;
 };
 
-class WgRenderDataShape: public WgRenderData {
-public:
-    Array<WgGeometryData*> mGeometryDataFill;
-    Array<WgGeometryData*> mGeometryDataStroke;
-
+struct WgRenderDataShapeSettings {
     WgPipelineBindGroupSolid mPipelineBindGroupSolid{};
     WgPipelineBindGroupLinear mPipelineBindGroupLinear{};
     WgPipelineBindGroupRadial mPipelineBindGroupRadial{};
 
     WgPipelineBase* mPipelineBase{}; // external
     WgPipelineBindGroup* mPipelineBindGroup{}; // external
+
+    // update render shape settings defined by flags and fill settings
+    void update(WGPUQueue queue, const Fill* fill, const RenderUpdateFlag flags,
+                const RenderTransform* transform, const float* viewMatrix, const uint8_t* color,
+                WgPipelineLinear& linear, WgPipelineRadial& radial, WgPipelineSolid& solid);
+    void release();
+};
+
+class WgRenderDataShape: public WgRenderData {
+public:
+    Array<WgGeometryData*> mGeometryDataShape;
+    Array<WgGeometryData*> mGeometryDataStroke;
+
+    WgRenderDataShapeSettings mRenderSettingsShape;
+    WgRenderDataShapeSettings mRenderSettingsStroke;
 public:
     WgRenderDataShape() {}
     
@@ -67,6 +80,10 @@ public:
     void releaseRenderData();
 
     void tesselate(WGPUDevice device, WGPUQueue queue, const RenderShape& rshape);
+    void stroke(WGPUDevice device, WGPUQueue queue, const RenderShape& rshape);
+private:
+    void decodePath(const RenderShape& rshape, Array<WgVertexList*>& outlines);
+    void strokeSublines(const RenderShape& rshape, Array<WgVertexList*>& outlines, WgVertexList& strokes);
 };
 
 #endif //_TVG_WG_RENDER_DATA_H_

@@ -24,6 +24,7 @@
 #define _TVG_WG_RENDERER_H_
 
 #include "tvgWgPipelineEmpty.h"
+#include "tvgWgPipelineStroke.h"
 #include "tvgWgRenderData.h"
 
 class WgRenderer : public RenderMethod
@@ -78,11 +79,13 @@ private:
     WGPUTextureView mStencilTexView{};
 private:
     WgPipelineEmpty mPipelineEmpty;
+    WgPipelineStroke mPipelineStroke;
     WgPipelineSolid mPipelineSolid;
     WgPipelineLinear mPipelineLinear;
     WgPipelineRadial mPipelineRadial;
-    WgGeometryData mGeometryDataPipeline;
+    WgGeometryData mGeometryDataWindow;
     WgPipelineBindGroupEmpty mPipelineBindGroupEmpty;
+    WgPipelineBindGroupStroke mPipelineBindGroupStroke;
 };
 
 #endif /* _TVG_WG_RENDERER_H_ */
