@@ -1753,7 +1753,7 @@ public:
      *
      * @param[in] paint The paint to be saved with all its associated properties.
      * @param[in] path A path to the file, in which the paint data is to be saved.
-     * @param[in] compress If @c true then compress data if possible.
+     * @param[in] quality The encoded quality level. @c 0 is the minimum, @c 100 is the maximum value(recommended).
      *
      * @retval Result::Success When succeed.
      * @retval Result::InsufficientCondition If currently saving other resources.
@@ -1766,7 +1766,7 @@ public:
      *
      * @since 0.5
      */
-    Result save(std::unique_ptr<Paint> paint, const std::string& path, bool compress = true) noexcept;
+    Result save(std::unique_ptr<Paint> paint, const std::string& path, uint32_t quality = 100) noexcept;
 
     /**
      * @brief Guarantees that the saving task is finished.
