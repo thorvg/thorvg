@@ -20,18 +20,18 @@
  * SOFTWARE.
  */
 
-#include "tvgWgPipelineEmpty.h"
+#include "tvgWgPipelineStroke.h"
 #include "tvgWgShaderSrc.h"
 
 //************************************************************************
-// WgPipelineBindGroupEmpty
+// WgPipelineBindGroupStroke
 //************************************************************************
 
-void WgPipelineBindGroupEmpty::initialize(WGPUDevice device, WgPipelineEmpty& pipelinePipelineEmpty) {
+void WgPipelineBindGroupStroke::initialize(WGPUDevice device, WgPipelineStroke& pipelinePipelineStroke) {
     // buffer uniform uMatrix
     WGPUBufferDescriptor bufferUniformDesc_uMatrix{};
     bufferUniformDesc_uMatrix.nextInChain = nullptr;
-    bufferUniformDesc_uMatrix.label = "Buffer uniform pipeline empty uMatrix";
+    bufferUniformDesc_uMatrix.label = "Buffer uniform pipeline Stroke uMatrix";
     bufferUniformDesc_uMatrix.usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_Uniform;
     bufferUniformDesc_uMatrix.size = sizeof(WgPipelineMatrix);
     bufferUniformDesc_uMatrix.mappedAtCreation = false;
@@ -54,15 +54,15 @@ void WgPipelineBindGroupEmpty::initialize(WGPUDevice device, WgPipelineEmpty& pi
     // bind group descriptor
     WGPUBindGroupDescriptor bindGroupDescPipeline{};
     bindGroupDescPipeline.nextInChain = nullptr;
-    bindGroupDescPipeline.label = "The binding group pipeline empty";
-    bindGroupDescPipeline.layout = pipelinePipelineEmpty.mBindGroupLayout;
+    bindGroupDescPipeline.label = "The binding group pipeline stroke";
+    bindGroupDescPipeline.layout = pipelinePipelineStroke.mBindGroupLayout;
     bindGroupDescPipeline.entryCount = 1;
     bindGroupDescPipeline.entries = bindGroupEntries;
     mBindGroup = wgpuDeviceCreateBindGroup(device, &bindGroupDescPipeline);
     assert(mBindGroup);
 }
 
-void WgPipelineBindGroupEmpty::release() {
+void WgPipelineBindGroupStroke::release() {
     if (uBufferMatrix) {
         wgpuBufferDestroy(uBufferMatrix);
         wgpuBufferRelease(uBufferMatrix);
@@ -74,15 +74,15 @@ void WgPipelineBindGroupEmpty::release() {
     }
 }
 
-void WgPipelineBindGroupEmpty::update(WGPUQueue queue, WgPipelineDataEmpty& pipelineDataEmpty) {
-    wgpuQueueWriteBuffer(queue, uBufferMatrix, 0, &pipelineDataEmpty.uMatrix, sizeof(pipelineDataEmpty.uMatrix));
+void WgPipelineBindGroupStroke::update(WGPUQueue queue, WgPipelineDataStroke& pipelineDataStroke) {
+    wgpuQueueWriteBuffer(queue, uBufferMatrix, 0, &pipelineDataStroke.uMatrix, sizeof(pipelineDataStroke.uMatrix));
 }
 
 //************************************************************************
-// WgPipelineEmpty
+// WgPipelineStroke
 //************************************************************************
 
-void WgPipelineEmpty::initialize(WGPUDevice device) {
+void WgPipelineStroke::initialize(WGPUDevice device) {
     // bind group layout group 0
     // bind group layout descriptor @group(0) @binding(0) uMatrix
     WGPUBindGroupLayoutEntry bindGroupLayoutEntry_uMatrix{};
@@ -100,7 +100,7 @@ void WgPipelineEmpty::initialize(WGPUDevice device) {
     // bind group layout descriptor scene @group(0)
     WGPUBindGroupLayoutDescriptor bindGroupLayoutDesc{};
     bindGroupLayoutDesc.nextInChain = nullptr;
-    bindGroupLayoutDesc.label = "Bind group layout pipeline empty";
+    bindGroupLayoutDesc.label = "Bind group layout pipeline stroke";
     bindGroupLayoutDesc.entryCount = 1;
     bindGroupLayoutDesc.entries = bindGroupLayoutEntries; // @binding
     mBindGroupLayout = wgpuDeviceCreateBindGroupLayout(device, &bindGroupLayoutDesc);
@@ -115,7 +115,7 @@ void WgPipelineEmpty::initialize(WGPUDevice device) {
     // pipeline layout descriptor
     WGPUPipelineLayoutDescriptor pipelineLayoutDesc{};
     pipelineLayoutDesc.nextInChain = nullptr;
-    pipelineLayoutDesc.label = "Pipeline pipeline layout empty";
+    pipelineLayoutDesc.label = "Pipeline pipeline layout stroke";
     pipelineLayoutDesc.bindGroupLayoutCount = 1;
     pipelineLayoutDesc.bindGroupLayouts = mBindGroupLayouts;
     mPipelineLayout = wgpuDeviceCreatePipelineLayout(device, &pipelineLayoutDesc);
@@ -129,14 +129,14 @@ void WgPipelineEmpty::initialize(WGPUDevice device) {
     depthStencilState.depthCompare = WGPUCompareFunction_Always;
     // depthStencilState.stencilFront
     depthStencilState.stencilFront.compare = WGPUCompareFunction_Always;
-    depthStencilState.stencilFront.failOp = WGPUStencilOperation_Invert;
-    depthStencilState.stencilFront.depthFailOp = WGPUStencilOperation_Invert;
-    depthStencilState.stencilFront.passOp = WGPUStencilOperation_Invert;
+    depthStencilState.stencilFront.failOp = WGPUStencilOperation_Replace;
+    depthStencilState.stencilFront.depthFailOp = WGPUStencilOperation_Replace;
+    depthStencilState.stencilFront.passOp = WGPUStencilOperation_Replace;
     // depthStencilState.stencilBack
     depthStencilState.stencilBack.compare = WGPUCompareFunction_Always;
-    depthStencilState.stencilBack.failOp = WGPUStencilOperation_Invert;
-    depthStencilState.stencilBack.depthFailOp = WGPUStencilOperation_Invert;
-    depthStencilState.stencilBack.passOp = WGPUStencilOperation_Invert;
+    depthStencilState.stencilBack.failOp = WGPUStencilOperation_Replace;
+    depthStencilState.stencilBack.depthFailOp = WGPUStencilOperation_Replace;
+    depthStencilState.stencilBack.passOp = WGPUStencilOperation_Replace;
     // stencil mask
     depthStencilState.stencilReadMask = 0xFFFFFFFF;
     depthStencilState.stencilWriteMask = 0xFFFFFFFF;
@@ -153,7 +153,7 @@ void WgPipelineEmpty::initialize(WGPUDevice device) {
     // shader module descriptor
     WGPUShaderModuleDescriptor shaderModuleDesc{};
     shaderModuleDesc.nextInChain = &shaderModuleWGSLDesc.chain;
-    shaderModuleDesc.label = "The shader module pipeline empty";
+    shaderModuleDesc.label = "The shader module pipeline Stroke";
     shaderModuleDesc.hintCount = 0;
     shaderModuleDesc.hints = nullptr;
     mShaderModule = wgpuDeviceCreateShaderModule(device, &shaderModuleDesc);
@@ -205,7 +205,7 @@ void WgPipelineEmpty::initialize(WGPUDevice device) {
     // render pipeline descriptor
     WGPURenderPipelineDescriptor renderPipelineDesc{};
     renderPipelineDesc.nextInChain = nullptr;
-    renderPipelineDesc.label = "Render pipeline pipeline empty";
+    renderPipelineDesc.label = "Render pipeline pipeline stroke";
     // renderPipelineDesc.layout
     renderPipelineDesc.layout = mPipelineLayout;
     // renderPipelineDesc.vertex
@@ -235,7 +235,7 @@ void WgPipelineEmpty::initialize(WGPUDevice device) {
     assert(mRenderPipeline);
 }
 
-void WgPipelineEmpty::release() {
+void WgPipelineStroke::release() {
     wgpuRenderPipelineRelease(mRenderPipeline);
     wgpuShaderModuleRelease(mShaderModule);
     wgpuPipelineLayoutRelease(mPipelineLayout);

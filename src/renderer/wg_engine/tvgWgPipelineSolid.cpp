@@ -27,11 +27,11 @@
 // WgPipelineDataSolid
 //************************************************************************
 
-void WgPipelineDataSolid::updateColor(const RenderShape& renderShape) {
-    uColorInfo.color[0] = renderShape.color[0] / 255.0f; // red
-    uColorInfo.color[1] = renderShape.color[1] / 255.0f; // green
-    uColorInfo.color[2] = renderShape.color[2] / 255.0f; // blue
-    uColorInfo.color[3] = renderShape.color[3] / 255.0f; // alpha
+void WgPipelineDataSolid::updateColor(const uint8_t* color) {
+    uColorInfo.color[0] = color[0] / 255.0f; // red
+    uColorInfo.color[1] = color[1] / 255.0f; // green
+    uColorInfo.color[2] = color[2] / 255.0f; // blue
+    uColorInfo.color[3] = color[3] / 255.0f; // alpha
 }
 
 //************************************************************************
@@ -207,11 +207,11 @@ void WgPipelineSolid::initialize(WGPUDevice device) {
 
     // vertex attributes
     WGPUVertexAttribute vertexAttributes[] = {
-        { WGPUVertexFormat_Float32x3, sizeof(float) * 0, 0 }, // position
+        { WGPUVertexFormat_Float32x2, sizeof(float) * 0, 0 }, // position
     };
     // vertex buffer layout
     WGPUVertexBufferLayout vertexBufferLayout{};
-    vertexBufferLayout.arrayStride = sizeof(float) * 3; // position
+    vertexBufferLayout.arrayStride = sizeof(float) * 2; // position
     vertexBufferLayout.stepMode = WGPUVertexStepMode_Vertex;
     vertexBufferLayout.attributeCount = 1; // position
     vertexBufferLayout.attributes = vertexAttributes;

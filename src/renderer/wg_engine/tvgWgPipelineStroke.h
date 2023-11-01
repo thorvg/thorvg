@@ -20,37 +20,27 @@
  * SOFTWARE.
  */
 
-#ifndef _TVG_WG_PIPELINE_SOLID_H_
-#define _TVG_WG_PIPELINE_SOLID_H_
+#ifndef _TVG_WG_PIPELINE_STROKE_H_
+#define _TVG_WG_PIPELINE_STROKE_H_
 
 #include "tvgWgPipelineBase.h"
 
-class WgPipelineSolid;
+class WgPipelineStroke;
 
-struct WgPipelineSolidColorInfo {
-    float color[4]{};
-};
+struct WgPipelineDataStroke: WgPipelineData {};
 
-struct WgPipelineDataSolid: WgPipelineData {
-    WgPipelineSolidColorInfo uColorInfo{}; // @binding(1)
-
-    void updateColor(const uint8_t* color);
-};
-
-class WgPipelineBindGroupSolid: public WgPipelineBindGroup {
-private:
-    WGPUBuffer uBufferColorInfo{}; // @binding(1)
+class WgPipelineBindGroupStroke: public WgPipelineBindGroup {
 public:
-    void initialize(WGPUDevice device, WgPipelineSolid& pipelinePipelineSolid);
+    void initialize(WGPUDevice device, WgPipelineStroke& pipelinePipelineStroke);
     void release();
 
-    void update(WGPUQueue mQueue, WgPipelineDataSolid& pipelineDataSolid);
+    void update(WGPUQueue mQueue, WgPipelineDataStroke& pipelineDataSolid);
 };
 
-class WgPipelineSolid: public WgPipelineBase {
+class WgPipelineStroke: public WgPipelineBase {
 public:
     void initialize(WGPUDevice device) override;
     void release() override;
 };
 
-#endif //_TVG_WG_PIPELINE_SOLID_H_
+#endif // _TVG_WG_PIPELINE_STROKE_H_
