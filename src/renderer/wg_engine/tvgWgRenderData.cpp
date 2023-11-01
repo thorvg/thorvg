@@ -184,7 +184,14 @@ void WgRenderDataShape::stroke(WGPUDevice device, WGPUQueue queue, const RenderS
     decodePath(rshape, outlines);
 
     WgVertexList strokes;
-    strokeSublines(rshape, outlines, strokes);
+    if (rshape.stroke->dashPattern) {
+        Array<WgVertexList*> segments;
+        strokeSegments(rshape, outlines, segments);
+        strokeSublines(rshape, segments, strokes);
+        for (uint32_t i = 0; i < segments.count; i++)
+            delete segments[i];
+    } else 
+        strokeSublines(rshape, outlines, strokes);
 
     // append shape if it can create at least one triangle
     // TODO: create single geometry data for strokes pere shape
@@ -227,6 +234,43 @@ void WgRenderDataShape::decodePath(const RenderShape& rshape, Array<WgVertexList
                 );
             pntIndex += 3;
         } 
+    }
+}
+
+void WgRenderDataShape::strokeSegments(const RenderShape& rshape, Array<WgVertexList*>& outlines, Array<WgVertexList*>& segments) {
+    for (uint32_t i = 0; i < outlines.count; i++) {
+        auto& vlist = outlines[i]->mVertexList;
+        
+        // append single point segment
+        if (vlist.count == 1) {
+            auto segment = new WgVertexList();
+            segment->mVertexList.push(vlist.last());
+            segments.push(segment);
+        }
+
+        if (vlist.count >= 2) {
+            uint32_t icurr = 1;
+            uint32_t ipatt = 0;
+            WgPoint vcurr = vlist[0];
+            while (icurr < vlist.count) {
+                if (ipatt % 2 == 0) {
+                    segments.push(new WgVertexList());
+                    segments.last()->mVertexList.push(vcurr);
+                }
+                float lcurr = rshape.stroke->dashPattern[ipatt];
+                while ((icurr < vlist.count) && (vlist[icurr].dist(vcurr) < lcurr)) {
+                    lcurr -= vlist[icurr].dist(vcurr);
+                    vcurr = vlist[icurr];
+                    icurr++;
+                    if (ipatt % 2 == 0) segments.last()->mVertexList.push(vcurr);
+                }
+                if (icurr < vlist.count) {
+                    vcurr = vcurr + (vlist[icurr] - vlist[icurr-1]).normal() * lcurr;
+                    if (ipatt % 2 == 0) segments.last()->mVertexList.push(vcurr);
+                }
+                ipatt = (ipatt + 1) % rshape.stroke->dashCnt;
+            }
+        }
     }
 }
 
