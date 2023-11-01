@@ -24,7 +24,7 @@
 #define _TVG_TVG_COMMON_H_
 
 #include "tvgCommon.h"
-#include "tvgBinaryDesc.h"
+#include "tvgFormat.h"
 
 #define SIZE(A) sizeof(A)
 #define READ_UI32(dst, src) memcpy(dst, (src), sizeof(uint32_t))

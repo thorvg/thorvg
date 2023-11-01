@@ -378,7 +378,7 @@ TvgBinCounter TvgSaver::serializeScene(const Scene* scene, const Matrix* pTransf
 
     //Case - Delegator Scene: This scene is just a delegator, we can skip this:
     if (scene->composite(nullptr) == CompositeMethod::None && scene->opacity() == 255) {
-        auto ret = serializeChildren(it, cTransform, false);
+        auto ret = serializeChildren(it, cTransform);
         delete(it);
         return ret;
     }
@@ -387,7 +387,7 @@ TvgBinCounter TvgSaver::serializeScene(const Scene* scene, const Matrix* pTransf
     writeTag(TVG_TAG_CLASS_SCENE);
     reserveCount();
 
-    auto cnt = serializeChildren(it, cTransform, true) + serializePaint(scene, pTransform);
+    auto cnt = serializeChildren(it, cTransform) + serializePaint(scene, pTransform);
 
     delete(it);
 
@@ -609,7 +609,7 @@ TvgBinCounter TvgSaver::serializePicture(const Picture* picture, const Matrix* p
         } else {
             writeTag(TVG_TAG_CLASS_SCENE);
             reserveCount();
-            auto cnt = serializeChildren(it, cTransform, true) + serializePaint(picture, pTransform);
+            auto cnt = serializeChildren(it, cTransform) + serializePaint(picture, pTransform);
             writeReservedCount(cnt);
             delete(it);
             return SERIAL_DONE(cnt);
@@ -678,7 +678,7 @@ TvgBinCounter TvgSaver::serializeComposite(const Paint* cmpTarget, CompositeMeth
 }
 
 
-TvgBinCounter TvgSaver::serializeChildren(Iterator* it, const Matrix* pTransform, bool reserved)
+TvgBinCounter TvgSaver::serializeChildren(Iterator* it, const Matrix* pTransform)
 {
     TvgBinCounter cnt = 0;
 
@@ -698,12 +698,6 @@ TvgBinCounter TvgSaver::serializeChildren(Iterator* it, const Matrix* pTransform
             }
         }
         children.push(child);
-    }
-
-    //TODO: Keep this for the compatibility, Remove in TVG 1.0 release
-    //The children of a reserved scene
-    if (reserved && children.count > 1) {
-        cnt += writeTagProperty(TVG_TAG_SCENE_RESERVEDCNT, SIZE(children.count), &children.count);
     }
 
     //Serialize merged children.
