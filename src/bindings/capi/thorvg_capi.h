@@ -2145,7 +2145,7 @@ TVG_API Tvg_Saver* tvg_saver_new();
 * \param[in] saver The Tvg_Saver object connected with the saving task.
 * \param[in] paint The paint to be saved with all its associated properties.
 * \param[in] path A path to the file, in which the paint data is to be saved.
-* \param[in] compress If @c true then compress data if possible.
+* \param[in] quality The encoded quality level. @c 0 is the minimum, @c 100 is the maximum value(recommended).
 *
 * \return Tvg_Result enumeration.
 * \retval TVG_RESULT_SUCCESS Succeed.
@@ -2158,7 +2158,7 @@ TVG_API Tvg_Saver* tvg_saver_new();
 * \note Saving can be asynchronous if the assigned thread number is greater than zero. To guarantee the saving is done, call tvg_saver_sync() afterwards.
 * \see tvg_saver_sync()
 */
-TVG_API Tvg_Result tvg_saver_save(Tvg_Saver* saver, Tvg_Paint* paint, const char* path, bool compress);
+TVG_API Tvg_Result tvg_saver_save(Tvg_Saver* saver, Tvg_Paint* paint, const char* path, uint32_t quality);
 
 
 /*!
@@ -2226,7 +2226,7 @@ TVG_API Tvg_Animation* tvg_animation_new();
 * \return Tvg_Result enumeration.
 * \retval TVG_RESULT_SUCCESS Succeed.
 * \retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Animation pointer.
-* \retval TVG_RESULT_INSUFFICIENT_CONDITION No animatable data loaded from the Picture.
+* \retval TVG_RESULT_INSUFFICIENT_CONDITION if the given @p no is the same as the current frame value.
 * \retval TVG_RESULT_NOT_SUPPORTED The picture data does not support animations.
 *
 * \see tvg_animation_get_total_frame()

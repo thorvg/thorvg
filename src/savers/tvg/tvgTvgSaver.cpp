@@ -135,8 +135,6 @@ static bool _merge(Shape* from, Shape* to)
 
 bool TvgSaver::saveEncoding(const std::string& path)
 {
-    if (!compress) return flushTo(path);
-
     //Try encoding
     auto uncompressed = buffer.data + headerSize;
     auto uncompressedSize = buffer.count - headerSize;
@@ -793,7 +791,7 @@ bool TvgSaver::close()
 }
 
 
-bool TvgSaver::save(Paint* paint, const string& path, bool compress)
+bool TvgSaver::save(Paint* paint, const string& path, TVG_UNUSED uint32_t quality)
 {
     close();
 
@@ -814,7 +812,6 @@ bool TvgSaver::save(Paint* paint, const string& path, bool compress)
     if (!this->path) return false;
 
     this->paint = paint;
-    this->compress = compress;
 
     TaskScheduler::request(this);
 
