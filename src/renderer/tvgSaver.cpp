@@ -80,7 +80,7 @@ static SaveModule* _find(FileType type)
             break;
         }
     }
-    TVGLOG("SAVER", "%s format is not supported", format);
+    TVGLOG("RENDERER", "%s format is not supported", format);
 #endif
     return nullptr;
 }
