@@ -64,7 +64,7 @@ public:
 
     GLuint getBufferId();
 private:
-    void alignOffset();
+    void alignOffset(uint32_t size);
 private:
     GLuint mVao = 0;
     unique_ptr<GlGpuBuffer> mGpuBuffer = {};
