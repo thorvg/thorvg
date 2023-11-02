@@ -146,7 +146,7 @@ typedef enum {
  *
  * \ingroup ThorVGCapi_Paint
  *
- * @BETA_API
+ * @note: Experimental API
  */
 typedef enum {
     TVG_BLEND_METHOD_NORMAL = 0,        ///< Perform the alpha blending(default). S if (Sa == 255), otherwise (Sa * S) + (255 - Sa) * D
@@ -983,7 +983,7 @@ TVG_API Tvg_Result tvg_paint_get_identifier(const Tvg_Paint* paint, Tvg_Identifi
  * \return Tvg_Result enumeration.
  * \retval TVG_RESULT_INVALID_ARGUMENT In case a @c nullptr is passed as the argument.
  *
- * @BETA_API
+ * @note: Experimental API
  */
 TVG_API Tvg_Result tvg_paint_set_blend_method(const Tvg_Paint* paint, Tvg_Blend_Method method);
 
@@ -1001,7 +1001,7 @@ TVG_API Tvg_Result tvg_paint_set_blend_method(const Tvg_Paint* paint, Tvg_Blend_
  * \return Tvg_Result enumeration.
  * \retval TVG_RESULT_INVALID_ARGUMENT In case a @c nullptr is passed as the argument.
  *
- * @BETA_API
+ * @note: Experimental API
  */
 TVG_API Tvg_Result tvg_paint_get_blend_method(const Tvg_Paint* paint, Tvg_Blend_Method* method);
 
