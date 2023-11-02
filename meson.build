@@ -148,6 +148,7 @@ Summary:
     Examples:              @19@
     Tool (Svg2Tvg):        @20@
     Tool (Svg2Png):        @21@
+    Tool (Lottie2Gif):     @22@
 
 '''.format(
         meson.project_version(),
@@ -172,6 +173,7 @@ Summary:
         get_option('examples'),
         all_tools or get_option('tools').contains('svg2tvg'),
         all_tools or get_option('tools').contains('svg2png'),
+        all_tools or get_option('tools').contains('lottie2gif'),
     )
 
 message(summary)
