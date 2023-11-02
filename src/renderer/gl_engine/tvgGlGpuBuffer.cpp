@@ -87,7 +87,7 @@ GlStageBuffer::~GlStageBuffer()
 
 uint32_t GlStageBuffer::push(void *data, uint32_t size, bool alignGpuOffset)
 {
-    if (alignGpuOffset) alignOffset();
+    if (alignGpuOffset) alignOffset(size);
 
     uint32_t offset = mStageBuffer.count;
 
@@ -135,7 +135,7 @@ GLuint GlStageBuffer::getBufferId()
     return mGpuBuffer->getBufferId();
 }
 
-void GlStageBuffer::alignOffset()
+void GlStageBuffer::alignOffset(uint32_t size)
 {
 
     uint32_t alignment = _getGpuBufferAlign();
@@ -145,8 +145,8 @@ void GlStageBuffer::alignOffset()
 
     uint32_t offset = alignment - mStageBuffer.count % alignment;
 
-    if (mStageBuffer.count + offset > mStageBuffer.reserved) {
-        mStageBuffer.grow(max(alignment, mStageBuffer.reserved));
+    if (mStageBuffer.count + offset + size > mStageBuffer.reserved) {
+        mStageBuffer.grow(max(offset + size, mStageBuffer.reserved));
     }
 
     mStageBuffer.count += offset;
