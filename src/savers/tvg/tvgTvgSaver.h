@@ -24,7 +24,7 @@
 #define _TVG_TVGSAVER_H_
 
 #include "tvgArray.h"
-#include "tvgBinaryDesc.h"
+#include "tvgFormat.h"
 #include "tvgTaskScheduler.h"
 
 namespace tvg
@@ -38,7 +38,6 @@ private:
     char *path = nullptr;
     uint32_t headerSize;
     float vsize[2] = {0.0f, 0.0f};
-    bool compress;
 
     bool flushTo(const std::string& path);
     bool saveEncoding(const std::string& path);
@@ -62,13 +61,13 @@ private:
     TvgBinCounter serializeStroke(const Shape* shape, const Matrix* pTransform, bool preTransform);
     TvgBinCounter serializePath(const Shape* shape, const Matrix* transform, bool preTransform);
     TvgBinCounter serializeComposite(const Paint* cmpTarget, CompositeMethod cmpMethod, const Matrix* pTransform);
-    TvgBinCounter serializeChildren(Iterator* it, const Matrix* transform, bool reserved);
+    TvgBinCounter serializeChildren(Iterator* it, const Matrix* transform);
     TvgBinCounter serializeChild(const Paint* parent, const Paint* child, const Matrix* pTransform);
 
 public:
     ~TvgSaver();
 
-    bool save(Paint* paint, const string& path, bool compress) override;
+    bool save(Paint* paint, const string& path, uint32_t quality) override;
     bool save(Animation* animation, const string& path, uint32_t quality, uint32_t fps) override;
     bool close() override;
     void run(unsigned tid) override;

@@ -4,7 +4,14 @@ GREEN='\033[32m'
 NC='\033[0m'
 
 INTERVAL=${1:-2}
-EXAMPLES=`find . -executable -type f | sort | uniq`
+CHECK_OS="`uname -s`"
+
+if [[ "$CHECK_OS" = "Darwin"* ]]; then
+	EXAMPLES=`find . -perm +111 -type f | sort | uniq`
+else
+	EXAMPLES=`find . -executable -type f | sort | uniq`
+fi
+
 for EXAMPLE in $EXAMPLES
 do
 	if [[ $EXAMPLE == *.sh ]]; then

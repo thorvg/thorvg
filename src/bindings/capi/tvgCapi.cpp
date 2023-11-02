@@ -696,10 +696,10 @@ TVG_API Tvg_Saver* tvg_saver_new()
 }
 
 
-TVG_API Tvg_Result tvg_saver_save(Tvg_Saver* saver, Tvg_Paint* paint, const char* path, bool compress)
+TVG_API Tvg_Result tvg_saver_save(Tvg_Saver* saver, Tvg_Paint* paint, const char* path, uint32_t quality)
 {
     if (!saver || !paint || !path) return TVG_RESULT_INVALID_ARGUMENT;
-    return (Tvg_Result) reinterpret_cast<Saver*>(saver)->save(unique_ptr<Paint>((Paint*)paint), path, compress);
+    return (Tvg_Result) reinterpret_cast<Saver*>(saver)->save(unique_ptr<Paint>((Paint*)paint), path, quality);
 }
 
 
