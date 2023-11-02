@@ -29,7 +29,7 @@ option('bindings',
 
 option('tools',
    type: 'array',
-   choices: ['', 'svg2tvg', 'svg2png', 'all'],
+   choices: ['', 'svg2tvg', 'svg2png', 'lottie2gif', 'all'],
    value: [''],
    description: 'Enable building thorvg tools')
 
