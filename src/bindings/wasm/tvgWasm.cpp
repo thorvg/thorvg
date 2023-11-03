@@ -185,7 +185,7 @@ public:
         updated = true;
     }
 
-    bool save(bool compress)
+    bool save()
     {
         errorMsg = NoError;
 
@@ -203,7 +203,7 @@ public:
             errorMsg = "duplicate(), fail";
             return false;
         }
-        if (saver->save(std::move(duplicate), "output.tvg", compress) != tvg::Result::Success) {
+        if (saver->save(std::move(duplicate), "output.tvg") != tvg::Result::Success) {
             errorMsg = "save(), fail";
             return false;
         }
