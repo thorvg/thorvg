@@ -186,7 +186,7 @@ enum class CompositeMethod : uint8_t
  *
  * @see Paint::blend()
  *
- * @note: Experimental API
+ * @note Experimental API
  */
 enum class BlendMethod : uint8_t
 {
@@ -249,7 +249,7 @@ struct Matrix
  * @param pt The vertex coordinate
  * @param uv The normalized texture coordinate in the range (0.0..1.0, 0.0..1.0)
  *
- * @note: Experimental API
+ * @note Experimental API
  */
 struct Vertex
 {
@@ -263,7 +263,7 @@ struct Vertex
  *
  * @param vertex The three vertices that make up the polygon
  *
- * @note: Experimental API
+ * @note Experimental API
  */
 struct Polygon
 {
@@ -375,7 +375,7 @@ public:
      *
      * @return Result::Success when the blending method is successfully set.
      *
-     * @note: Experimental API
+     * @note Experimental API
      */
     Result blend(BlendMethod method) const noexcept;
 
@@ -428,7 +428,7 @@ public:
      *
      * @return The blending method
      *
-     * @note: Experimental API
+     * @note Experimental API
      */
     BlendMethod blend() const noexcept;
 
@@ -574,7 +574,7 @@ public:
      * @warning  Please avoid accessing the paints during Canvas update/draw. You can access them after calling sync().
      * @see Canvas::sync()
      *
-     * @note: Experimental API
+     * @note Experimental API
      */
     std::list<Paint*>& paints() noexcept;
 
@@ -1301,7 +1301,7 @@ public:
      * @note The Polygons are copied internally, so modifying them after calling Mesh::mesh has no affect.
      * @warning Please do not use it, this API is not official one. It could be modified in the next version.
      *
-     * @note: Experimental API
+     * @note Experimental API
      */
     Result mesh(const Polygon* triangles, uint32_t triangleCnt) noexcept;
 
@@ -1315,7 +1315,7 @@ public:
      * @note Modifying the triangles returned by this method will modify them directly within the mesh.
      * @warning Please do not use it, this API is not official one. It could be modified in the next version.
      *
-     * @note: Experimental API
+     * @note Experimental API
      */
     uint32_t mesh(const Polygon** triangles) const noexcept;
 
@@ -1382,7 +1382,7 @@ public:
      * @see Scene::push()
      * @see Scene::clear()
      *
-     * @note: Experimental API
+     * @note Experimental API
      */
     std::list<Paint*>& paints() noexcept;
 
@@ -1514,7 +1514,7 @@ public:
  *
  * @warning Please do not use it. This class is not fully supported yet.
  *
- * @note: Experimental API
+ * @note Experimental API
  */
 class TVG_API GlCanvas final : public Canvas
 {
@@ -1526,7 +1526,7 @@ public:
      *
      * @warning Please do not use it, this API is not official one. It could be modified in the next version.
      *
-     * @note: Experimental API
+     * @note Experimental API
      */
     Result target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h) noexcept;
 
@@ -1535,7 +1535,7 @@ public:
      *
      * @return A new GlCanvas object.
      *
-     * @note: Experimental API
+     * @note Experimental API
      */
     static std::unique_ptr<GlCanvas> gen() noexcept;
 
@@ -1550,7 +1550,7 @@ public:
  *
  * @warning Please do not use it. This class is not fully supported yet.
  *
- * @note: Experimental API
+ * @note Experimental API
  */
 class TVG_API WgCanvas final : public Canvas
 {
@@ -1562,7 +1562,7 @@ public:
      *
      * @warning Please do not use it, this API is not official one. It could be modified in the next version.
      *
-     * @note: Experimental API
+     * @note Experimental API
      */
     Result target(void* window, uint32_t w, uint32_t h) noexcept;
 
@@ -1571,7 +1571,7 @@ public:
      *
      * @return A new WgCanvas object.
      *
-     * @note: Experimental API
+     * @note Experimental API
      */
     static std::unique_ptr<WgCanvas> gen() noexcept;
 
@@ -1634,7 +1634,7 @@ public:
  *
  * This class supports the display and control of animation frames.
  *
- * @note: Experimental API
+ * @note Experimental API
  */
 
 class TVG_API Animation
@@ -1653,7 +1653,7 @@ public:
      *
      * @see totalFrame()
      *
-     * @note: Experimental API
+     * @note Experimental API
      */
     Result frame(float no) noexcept;
 
@@ -1668,7 +1668,7 @@ public:
      *
      * @warning The picture instance is owned by Animation. It should not be deleted manually.
      *
-     * @note: Experimental API
+     * @note Experimental API
      */
     Picture* picture() const noexcept;
 
@@ -1682,7 +1682,7 @@ public:
      * @see Animation::frame(float no)
      * @see Animation::totalFrame()
      *
-     * @note: Experimental API
+     * @note Experimental API
      */
     float curFrame() const noexcept;
 
@@ -1694,7 +1694,7 @@ public:
      * @note Frame numbering starts from 0.
      * @note If the Picture is not properly configured, this function will return 0.
      *
-     * @note: Experimental API
+     * @note Experimental API
      */
     float totalFrame() const noexcept;
 
@@ -1705,7 +1705,7 @@ public:
      *
      * @note If the Picture is not properly configured, this function will return 0.
      *
-     * @note: Experimental API
+     * @% Experimental API
      */
     float duration() const noexcept;
 
@@ -1714,7 +1714,7 @@ public:
      *
      * @return A new Animation object.
      *
-     * @note: Experimental API
+     * @note Experimental API
      */
     static std::unique_ptr<Animation> gen() noexcept;
 
@@ -1789,7 +1789,7 @@ public:
      *
      * @see Saver::sync()
      *
-     * @note: Experimental API
+     * @note Experimental API
      */
     Result save(std::unique_ptr<Animation> animation, const std::string& path, uint32_t quality = 100, uint32_t fps = 0) noexcept;
 
