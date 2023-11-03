@@ -185,17 +185,11 @@ public:
         updated = true;
     }
 
-    bool save()
+    bool save2Tvg()
     {
         errorMsg = NoError;
 
-        if (!canvas || !animation) return false;
-
-        auto saver = Saver::gen();
-        if (!saver) {
-            errorMsg = "Invalid saver";
-            return false;
-        }
+        if (!animation) return false;
 
         auto duplicate = cast<Picture>(animation->picture()->duplicate());
 
@@ -203,7 +197,48 @@ public:
             errorMsg = "duplicate(), fail";
             return false;
         }
+
+        auto saver = Saver::gen();
+        if (!saver) {
+            errorMsg = "Invalid saver";
+            return false;
+        }
+
         if (saver->save(std::move(duplicate), "output.tvg") != tvg::Result::Success) {
+            errorMsg = "save(), fail";
+            return false;
+        }
+
+        saver->sync();
+
+        return true;
+    }
+
+    bool save2Gif(string data, string mimetype, int width, int height, int fps)
+    {
+        errorMsg = NoError;
+
+        auto animation = Animation::gen();
+
+        if (!animation) {
+            errorMsg = "Invalid animation";
+            return false;
+        }
+        
+        if (animation->picture()->load(data.c_str(), data.size(), mimetype, false) != Result::Success) {
+            errorMsg = "load() fail";
+            return false;
+        }
+
+        animation->picture()->size(width, height);
+
+        auto saver = Saver::gen();
+        if (!saver) {
+            errorMsg = "Invalid saver";
+            return false;
+        }
+
+        if (saver->save(std::move(animation), "output.gif", 100, fps) != tvg::Result::Success) {
             errorMsg = "save(), fail";
             return false;
         }
@@ -365,7 +400,8 @@ EMSCRIPTEN_BINDINGS(thorvg_bindings) {
     .function("duration", &TvgWasm::duration)
     .function("totalFrame", &TvgWasm::totalFrame)
     .function("frame", &TvgWasm::frame)
-    .function("save", &TvgWasm::save)
+    .function("save2Tvg", &TvgWasm::save2Tvg)
+    .function("save2Gif", &TvgWasm::save2Gif)
     .function("layers", &TvgWasm::layers)
     .function("geometry", &TvgWasm::geometry)
     .function("opacity", &TvgWasm::opacity);
