@@ -65,6 +65,7 @@ The task scheduler has been meticulously crafted to conceal complexity, streamli
   - [Documentation](#documentation)
   - [Tools](#tools)
     - [ThorVG Viewer](#thorvg-viewer)
+    - [Lottie to GIF](#lottie-to-gif)
     - [SVG to PNG](#svg-to-png)
     - [SVG to TVG](#svg-to-tvg)
   - [API Bindings](#api-bindings)
@@ -361,6 +362,37 @@ ThorVG provides the resource verification tool for the ThorVG Engine. [ThorVG vi
 
 https://user-images.githubusercontent.com/71131832/130445967-fb8f7d81-9c89-4598-b7e4-2c046d5d7438.mp4
 
+### Lottie to GIF
+ThorVG provides an executable `lottie2gif` converter that generates a GIF file from a Lottie file.
+
+To use the `lottie2gif`, you must turn on this feature in the build option:
+```
+meson setup builddir -Dtools=lottie2gif
+```
+To use the 'lottie2gif' converter, you need to provide the 'Lottie files' parameter. This parameter can be a file name with the '.json' extension or a directory name. It also accepts multiple files or directories separated by spaces. If a directory is specified, the converter will search for files with the '.json' extension within that directory and all its subdirectories.<br />
+<br />
+Optionally, you can specify the image resolution in the 'WxH' format, with two numbers separated by an 'x' sign, following the '-r' flag.
+<br />
+Both flags, if provided, are applied to all of the `.json` files.
+
+The usage examples of the `lottie2gif`:
+```
+Usage:
+    lottie2gif [Lottie file] or [Lottie folder] [-r resolution] [-f fps]
+
+Flags:
+    -r set the output image resolution.
+    -f specifies the frames per second (fps) for the generated animation.
+
+Examples:
+    $ lottie2gif input.json
+    $ lottie2gif input.json -f 30
+    $ lottie2gif input.json -r 600x600 -f 30
+    $ lottie2gif lottiefolder
+    $ lottie2gif lottiefolder -r 600x600
+    $ lottie2gif lottiefolder -r 600x600 -f 30
+```
+
 ### SVG to PNG
 ThorVG provides an executable `svg2png` converter that generates a PNG file from an SVG file.
 
@@ -368,12 +400,9 @@ To use the `svg2png`, you must turn on this feature in the build option:
 ```
 meson setup builddir -Dtools=svg2png
 ```
-Alternatively, you can add the `svg2png` value to the `tools` option in `meson_option.txt`. The build output will be located in `{builddir}/src/bin/svg2png/`.
+To use the 'svg2png' converter, you need to provide the 'SVG files' parameter. This parameter can be a file name with the '.svg' extension or a directory name. It also accepts multiple files or directories separated by spaces. If a directory is specified, the converter will search for files with the '.svg' extension within that directory and all its subdirectories.<br />
 <br />
-
-To use the `svg2png` converter you have to pass the `SVG files` parameter. It can be a file name with the `.svg` extension or a directory name. Multiple files or directories separated by a space are also accepted. If a directory is passed, the `.svg` file extension is searched inside it and in all of its subdirectories.
-
-Optionally, the image resolution can be provided in the `WxH` format (two numbers separated by an `x` sign) following the `-r` flag.
+Optionally, you can specify the image resolution in the 'WxH' format, with two numbers separated by an 'x' sign, following the '-r' flag.<br />
 <br />
 The background color can be set with the `-b` flag. The `bgColor` parameter should be passed as a three-bytes hexadecimal value in the `ffffff` format. The default background is transparent.
 <br />
@@ -403,7 +432,6 @@ To use `svg2tvg`, you need to activate this feature in the build option:
 ```
 meson setup builddir -Dtools=svg2tvg
 ```
-Alternatively, you can add the `svg2tvg` value to the `tools` option in `meson_option.txt`. The build output will be located in `{builddir}/src/bin/svg2tvg/`.
 
 Examples of the usage of the `svg2tvg`:
 ```
