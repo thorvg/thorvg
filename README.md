@@ -361,13 +361,13 @@ ThorVG API documentation is available at [thorvg.org/apis](https://www.thorvg.or
 ThorVG provides the resource verification tool for the ThorVG Engine. [ThorVG viewer](https://thorvg.github.io/thorvg.viewer/) does immediate rendering via web browser running on the ThorVG web-assembly binary, allowing real-time editing of the vector elements on it. It doesn't upload your resources to any external server while allowing to export to supported formats such as TVG, so the designer resource copyright is protected.
 
 https://user-images.githubusercontent.com/71131832/130445967-fb8f7d81-9c89-4598-b7e4-2c046d5d7438.mp4
-
+<br />
 ### Lottie to GIF
 ThorVG provides an executable `lottie2gif` converter that generates a GIF file from a Lottie file.
 
 To use the `lottie2gif`, you must turn on this feature in the build option:
 ```
-meson setup builddir -Dtools=lottie2gif
+meson setup builddir -Dtools=lottie2gif -Dsavers=gif
 ```
 To use the 'lottie2gif' converter, you need to provide the 'Lottie files' parameter. This parameter can be a file name with the '.json' extension or a directory name. It also accepts multiple files or directories separated by spaces. If a directory is specified, the converter will search for files with the '.json' extension within that directory and all its subdirectories.<br />
 <br />
@@ -430,7 +430,7 @@ ThorVG provides an executable `svg2tvg` converter that generates a TVG file from
 
 To use `svg2tvg`, you need to activate this feature in the build option:
 ```
-meson setup builddir -Dtools=svg2tvg
+meson setup builddir -Dtools=svg2tvg -Dsavers=tvg
 ```
 
 Examples of the usage of the `svg2tvg`:
