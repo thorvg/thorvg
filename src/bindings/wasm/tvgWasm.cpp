@@ -33,16 +33,6 @@ static const char* NoError = "None";
 
 class __attribute__((visibility("default"))) TvgWasm
 {
-    //This structure data should be aligned with the ThorVG Viewer implementation.
-    struct Layer
-    {
-        uint32_t paint;         //cast of a paint pointer
-        uint32_t depth;
-        uint32_t type;
-        uint8_t opacity;
-        CompositeMethod method;
-    };
-
 public:
     ~TvgWasm()
     {
@@ -248,60 +238,6 @@ public:
         return true;
     }
 
-    val layers()
-    {
-        if (!canvas || !animation) return val(nullptr);
-
-        //returns an array of a structure Layer: [id] [depth] [type] [composite]
-        children.reset();
-        sublayers(&children, animation->picture(), 0);
-
-        return val(typed_memory_view(children.count * sizeof(Layer) / sizeof(uint32_t), (uint32_t *)(children.data)));
-    }
-
-    bool opacity(uint32_t id, uint8_t opacity)
-    {
-        if (!canvas || !animation) return false;
-
-        auto paint = findPaintById(animation->picture(), id, nullptr);
-        if (!paint) return false;
-        const_cast<Paint*>(paint)->opacity(opacity);
-        return true;
-    }
-
-    val geometry(uint32_t id)
-    {
-        if (!canvas || !animation) return val(typed_memory_view<float>(0, nullptr));
-
-        Array<const Paint*> parents;
-        auto paint = findPaintById(animation->picture(), id, &parents);
-        if (!paint) return val(typed_memory_view<float>(0, nullptr));
-        paint->bounds(&bounds[0], &bounds[1], &bounds[2], &bounds[3], false);
-
-        float points[8] = { //clockwise points
-            bounds[0], bounds[1], //(x1, y1)
-            bounds[0] + bounds[2], bounds[1], //(x2, y1)
-            bounds[0] + bounds[2], bounds[1] + bounds[3], //(x2, y2)
-            bounds[0], bounds[1] + bounds[3], //(x1, y2)
-        };
-
-        for (auto paint = parents.data; paint < parents.end(); ++paint) {
-            auto m = const_cast<Paint*>(*paint)->transform();
-            for (int i = 0; i < 8; i += 2) {
-                float x = points[i] * m.e11 + points[i+1] * m.e12 + m.e13;
-                points[i] = x;
-                points[i + 1] = points[i] * m.e21 + points[i + 1] * m.e22 + m.e23;
-            }
-        }
-
-        bounds[0] = points[0]; //x(p1)
-        bounds[1] = points[3]; //y(p2)
-        bounds[2] = points[4] - bounds[0]; //x(p3)
-        bounds[3] = points[7] - bounds[1]; //y(p4)
-
-        return val(typed_memory_view(4, bounds));
-    }
-
 private:
     explicit TvgWasm()
     {
@@ -319,70 +255,13 @@ private:
         if (!animation) errorMsg = "Invalid animation";
     }
 
-    void sublayers(Array<Layer>* layers, const Paint* paint, uint32_t depth)
-    {
-        //paint
-        if (paint->identifier() != Shape::identifier()) {
-            auto it = IteratorAccessor::iterator(paint);
-            if (it->count() > 0) {
-                it->begin();
-                layers->grow(it->count());
-                while (auto child = it->next()) {
-                    uint32_t type = child->identifier();
-                    layers->push({.paint = reinterpret_cast<uint32_t>(child), .depth = depth + 1, .type = type, .opacity = child->opacity(), .method = CompositeMethod::None});
-                    sublayers(layers, child, depth + 1);
-                }
-            }
-        }
-        //composite
-        const Paint* target = nullptr;
-        CompositeMethod method = paint->composite(&target);
-        if (target && method != CompositeMethod::None) {
-            layers->push({.paint = reinterpret_cast<uint32_t>(target), .depth = depth, .type = target->identifier(), .opacity = target->opacity(), .method = method});
-            sublayers(layers, target, depth);
-        }
-    }
-
-    const Paint* findPaintById(const Paint* parent, uint32_t id, Array<const Paint *>* parents) {
-        //validate paintId is correct and exists in the picture
-        if (reinterpret_cast<uint32_t>(parent) == id) {
-            if (parents) parents->push(parent);
-            return parent;
-        }
-        //paint
-        if (parent->identifier() != Shape::identifier()) {
-            auto it = IteratorAccessor::iterator(parent);
-            if (it->count() > 0) {
-                it->begin();
-                while (auto child = it->next()) {
-                    if (auto paint = findPaintById(child, id, parents)) {
-                        if (parents) parents->push(parent);
-                        return paint;
-                    }
-                }
-            }
-        }
-        //composite
-        const Paint* target = nullptr;
-        CompositeMethod method = parent->composite(&target);
-        if (target && method != CompositeMethod::None) {
-            if (auto paint = findPaintById(target, id, parents)) {
-                if (parents) parents->push(parent);
-                return paint;
-            }
-        }
-        return nullptr;
-    }
-
 private:
     string                 errorMsg;
     unique_ptr<SwCanvas>   canvas = nullptr;
     unique_ptr<Animation>  animation = nullptr;
     uint8_t*               buffer = nullptr;
-    Array<Layer>           children;
     uint32_t               width = 0;
     uint32_t               height = 0;
-    float                  bounds[4];
     float                  psize[2];         //picture size
     bool                   updated = false;
 };
@@ -401,8 +280,5 @@ EMSCRIPTEN_BINDINGS(thorvg_bindings) {
     .function("totalFrame", &TvgWasm::totalFrame)
     .function("frame", &TvgWasm::frame)
     .function("save2Tvg", &TvgWasm::save2Tvg)
-    .function("save2Gif", &TvgWasm::save2Gif)
-    .function("layers", &TvgWasm::layers)
-    .function("geometry", &TvgWasm::geometry)
-    .function("opacity", &TvgWasm::opacity);
+    .function("save2Gif", &TvgWasm::save2Gif);
 }
