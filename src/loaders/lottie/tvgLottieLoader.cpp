@@ -274,6 +274,11 @@ bool LottieLoader::resize(Paint* paint, float w, float h)
     Matrix m = {sx, 0, 0, 0, sy, 0, 0, 0, 1};
     paint->transform(m);
 
+    //apply the scale to the base clipper
+    const Paint* clipper;
+    paint->composite(&clipper);
+    if (clipper) const_cast<Paint*>(clipper)->transform(m);
+
     return true;
 }
 
