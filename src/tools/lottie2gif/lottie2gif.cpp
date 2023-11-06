@@ -72,7 +72,10 @@ private:
       auto picture = animation->picture();
       if (picture->load(in) != Result::Success) return false;
 
-      picture->size(static_cast<float>(width), static_cast<float>(height));
+      float width, height;
+      picture->size(&width, &height);
+      float scale =  static_cast<float>(this->width) / width;
+      picture->size(width * scale, height * scale);
 
       auto saver = Saver::gen();
       if (saver->save(std::move(animation), out, 100, fps) != Result::Success) return false;
