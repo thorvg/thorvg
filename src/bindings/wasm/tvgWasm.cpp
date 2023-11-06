@@ -220,7 +220,11 @@ public:
             return false;
         }
 
-        animation->picture()->size(width, height);
+        //keep the aspect ratio.
+        float ow, oh;
+        animation->picture()->size(&ow, &oh);
+        float scale =  static_cast<float>(width) / ow;
+        animation->picture()->size(ow * scale, oh * scale);
 
         auto saver = Saver::gen();
         if (!saver) {
