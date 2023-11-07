@@ -31,7 +31,7 @@ struct LoaderMgr
     static bool term();
     static shared_ptr<LoadModule> loader(const string& path, bool* invalid);
     static shared_ptr<LoadModule> loader(const char* data, uint32_t size, const string& mimeType, bool copy);
-    static shared_ptr<LoadModule> loader(const uint32_t* data, uint32_t w, uint32_t h, bool copy);
+    static shared_ptr<LoadModule> loader(const uint32_t* data, uint32_t w, uint32_t h, bool premultiplied, bool copy);
 };
 
 #endif //_TVG_LOADER_H_

@@ -77,7 +77,7 @@ TEST_CASE("Save scene into tvg", "[tvgSavers]")
     file.read(reinterpret_cast<char *>(data), sizeof (uint32_t) * 200 * 300);
     file.close();
 
-    REQUIRE(picture->load(data, 200, 300, false) == Result::Success);
+    REQUIRE(picture->load(data, 200, 300, true, false) == Result::Success);
     REQUIRE(picture->translate(50, 0) == Result::Success);
     REQUIRE(picture->scale(2) == Result::Success);
 

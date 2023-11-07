@@ -47,12 +47,12 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     file.close();
 
     auto picture = tvg::Picture::gen();
-    if (picture->load(data, 200, 300, true) != tvg::Result::Success) return;
+    if (picture->load(data, 200, 300, true, true) != tvg::Result::Success) return;
     picture->translate(400, 250);
     canvas->push(std::move(picture));
 
     auto picture2 = tvg::Picture::gen();
-    if (picture2->load(data, 200, 300, true) != tvg::Result::Success) return;
+    if (picture2->load(data, 200, 300, true, true) != tvg::Result::Success) return;
 
     picture2->translate(400, 200);
     picture2->rotate(47);

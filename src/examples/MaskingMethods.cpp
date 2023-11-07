@@ -243,7 +243,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     {
         //Transformed Image + Shape Mask Add
         auto image = tvg::Picture::gen();
-        if (image->load(data, 200, 300, true) != tvg::Result::Success) return;
+        if (image->load(data, 200, 300, true, true) != tvg::Result::Success) return;
         image->translate(150, 650);
         image->scale(0.5f);
         image->rotate(45);
@@ -261,7 +261,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
          //Transformed Image + Shape Mask Subtract
         auto image2 = tvg::Picture::gen();
-        if (image2->load(data, 200, 300, true) != tvg::Result::Success) return;
+        if (image2->load(data, 200, 300, true, true) != tvg::Result::Success) return;
         image2->translate(400, 650);
         image2->scale(0.5f);
         image2->rotate(45);
@@ -279,7 +279,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
         //Transformed Image + Shape Mask Intersect
         auto image3 = tvg::Picture::gen();
-        if (image3->load(data, 200, 300, true) != tvg::Result::Success) return;
+        if (image3->load(data, 200, 300, true, true) != tvg::Result::Success) return;
         image3->translate(650, 650);
         image3->scale(0.5f);
         image3->rotate(45);
@@ -297,7 +297,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
         //Transformed Image + Shape Mask Difference
         auto image4 = tvg::Picture::gen();
-        if (image4->load(data, 200, 300, true) != tvg::Result::Success) return;
+        if (image4->load(data, 200, 300, true, true) != tvg::Result::Success) return;
         image4->translate(900, 650);
         image4->scale(0.5f);
         image4->rotate(45);
@@ -316,7 +316,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     {
         //Transformed Image + Shape Mask Add
         auto image = tvg::Picture::gen();
-        if (image->load(data, 200, 300, true) != tvg::Result::Success) return;
+        if (image->load(data, 200, 300, true, true) != tvg::Result::Success) return;
         image->translate(150, 850);
         image->scale(0.5f);
         image->rotate(45);
@@ -334,7 +334,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
          //Transformed Image + Shape Mask Subtract
         auto image2 = tvg::Picture::gen();
-        if (image2->load(data, 200, 300, true) != tvg::Result::Success) return;
+        if (image2->load(data, 200, 300, true, true) != tvg::Result::Success) return;
         image2->translate(400, 850);
         image2->scale(0.5f);
         image2->rotate(45);
@@ -352,7 +352,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
         //Transformed Image + Shape Mask Intersect
         auto image3 = tvg::Picture::gen();
-        if (image3->load(data, 200, 300, true) != tvg::Result::Success) return;
+        if (image3->load(data, 200, 300, true, true) != tvg::Result::Success) return;
         image3->translate(650, 850);
         image3->scale(0.5f);
         image3->rotate(45);
@@ -370,7 +370,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
         //Transformed Image + Shape Mask Difference
         auto image4 = tvg::Picture::gen();
-        if (image4->load(data, 200, 300, true) != tvg::Result::Success) return;
+        if (image4->load(data, 200, 300, true, true) != tvg::Result::Success) return;
         image4->translate(900, 850);
         image4->scale(0.5f);
         image4->rotate(45);

@@ -132,7 +132,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     //Lighten
     auto picture = tvg::Picture::gen();
-    if (picture->load(data, 200, 300, true) != tvg::Result::Success) return;
+    if (picture->load(data, 200, 300, true, true) != tvg::Result::Success) return;
     picture->translate(800, 700);
     picture->rotate(40);
     picture->blend(tvg::BlendMethod::Lighten);
@@ -147,7 +147,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     //ColorBurn
     auto picture2 = tvg::Picture::gen();
-    if (picture2->load(data, 200, 300, true) != tvg::Result::Success) return;
+    if (picture2->load(data, 200, 300, true, true) != tvg::Result::Success) return;
     picture2->translate(600, 250);
     picture2->blend(tvg::BlendMethod::ColorBurn);
     picture2->opacity(150);
@@ -155,14 +155,14 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     //HardLight
     auto picture3 = tvg::Picture::gen();
-    if (picture3->load(data, 200, 300, true) != tvg::Result::Success) return;
+    if (picture3->load(data, 200, 300, true, true) != tvg::Result::Success) return;
     picture3->translate(700, 150);
     picture3->blend(tvg::BlendMethod::HardLight);
     canvas->push(std::move(picture3));
 
     //SoftLight
     auto picture4 = tvg::Picture::gen();
-    if (picture4->load(data, 200, 300, true) != tvg::Result::Success) return;
+    if (picture4->load(data, 200, 300, true, true) != tvg::Result::Success) return;
     picture4->translate(350, 600);
     picture4->rotate(90);
     picture4->blend(tvg::BlendMethod::SoftLight);

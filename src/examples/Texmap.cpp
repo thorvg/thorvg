@@ -49,7 +49,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     //Picture
     auto picture = tvg::Picture::gen();
-    if (picture->load(data, 200, 300, true) != tvg::Result::Success) return;
+    if (picture->load(data, 200, 300, true, true) != tvg::Result::Success) return;
 
     //Composing Meshes
     tvg::Polygon triangles[4];

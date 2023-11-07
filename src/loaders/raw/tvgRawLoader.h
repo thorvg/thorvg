@@ -28,11 +28,12 @@ class RawLoader : public LoadModule
 public:
     uint32_t* content = nullptr;
     bool copy = false;
+    bool premultiplied = false;
 
     ~RawLoader();
 
     using LoadModule::open;
-    bool open(const uint32_t* data, uint32_t w, uint32_t h, bool copy) override;
+    bool open(const uint32_t* data, uint32_t w, uint32_t h, bool premultiplied, bool copy) override;
     bool read() override;
     bool close() override;
 

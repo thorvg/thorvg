@@ -38,7 +38,7 @@ public:
 
     virtual bool open(const string& path) { return false; }
     virtual bool open(const char* data, uint32_t size, bool copy) { return false; }
-    virtual bool open(const uint32_t* data, uint32_t w, uint32_t h, bool copy) { return false; }
+    virtual bool open(const uint32_t* data, uint32_t w, uint32_t h, bool premultiplied, bool copy) { return false; }
 
     //Override this if the vector-format has own resizing policy.
     virtual bool resize(Paint* paint, float w, float h) { return false; }

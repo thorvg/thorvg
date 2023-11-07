@@ -97,7 +97,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     file.close();
 
     auto image = tvg::Picture::gen();
-    if (image->load(data, 200, 300, true) != tvg::Result::Success) return;
+    if (image->load(data, 200, 300, true, true) != tvg::Result::Success) return;
     image->translate(500, 400);
 
     //Mask4
