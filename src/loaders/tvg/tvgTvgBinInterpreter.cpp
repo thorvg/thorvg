@@ -404,7 +404,7 @@ static bool _parsePicture(TvgBinBlock block, Paint* paint)
             auto size = w * h * SIZE(uint32_t);
             if (block.length != 2 * SIZE(uint32_t) + size) return false;
 
-            picture->load((uint32_t*) ptr, w, h, true);
+            picture->load((uint32_t*) ptr, w, h, true, true);
 
             return true;
         }

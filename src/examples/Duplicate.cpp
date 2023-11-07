@@ -123,7 +123,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
         file.close();
 
         auto picture1 = tvg::Picture::gen();
-        if (picture1->load(data, 200, 300, true) != tvg::Result::Success) return;
+        if (picture1->load(data, 200, 300, true, true) != tvg::Result::Success) return;
         picture1->scale(0.8);
         picture1->translate(400, 450);
 

@@ -1279,7 +1279,7 @@ public:
      *
      * @since 0.9
      */
-    Result load(uint32_t* data, uint32_t w, uint32_t h, bool copy) noexcept;
+    Result load(uint32_t* data, uint32_t w, uint32_t h, bool premultiplied, bool copy) noexcept;
 
     /**
      * @brief Sets or removes the triangle mesh to deform the image.

@@ -50,7 +50,7 @@ void tvgDrawStar(tvg::Shape* star)
 unique_ptr<tvg::Paint> tvgTexmap(uint32_t * data, int width, int heigth)
 {
     auto texmap = tvg::Picture::gen();
-    if (texmap->load(data, width, heigth, true) != tvg::Result::Success) return nullptr;
+    if (texmap->load(data, width, heigth, true, true) != tvg::Result::Success) return nullptr;
     texmap->translate(100, 100);
 
     //Composing Meshes
@@ -79,7 +79,7 @@ unique_ptr<tvg::Paint> tvgTexmap(uint32_t * data, int width, int heigth)
 unique_ptr<tvg::Paint> tvgClippedImage(uint32_t * data, int width, int heigth)
 {
     auto image = tvg::Picture::gen();
-    if (image->load(data, width, heigth, true) != tvg::Result::Success) return nullptr;
+    if (image->load(data, width, heigth, true, true) != tvg::Result::Success) return nullptr;
     image->translate(400, 0);
     image->scale(2);
 

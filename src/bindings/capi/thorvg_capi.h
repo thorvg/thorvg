@@ -1976,7 +1976,7 @@ TVG_API Tvg_Result tvg_picture_load(Tvg_Paint* paint, const char* path);
 *
 * \since 0.9
 */
-TVG_API Tvg_Result tvg_picture_load_raw(Tvg_Paint* paint, uint32_t *data, uint32_t w, uint32_t h, bool copy);
+TVG_API Tvg_Result tvg_picture_load_raw(Tvg_Paint* paint, uint32_t *data, uint32_t w, uint32_t h, bool premultiplied, bool copy);
 
 
 /*!

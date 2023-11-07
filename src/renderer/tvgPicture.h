@@ -230,11 +230,11 @@ struct Picture::Impl
         return Result::Success;
     }
 
-    Result load(uint32_t* data, uint32_t w, uint32_t h, bool copy)
+    Result load(uint32_t* data, uint32_t w, uint32_t h, bool premultiplied, bool copy)
     {
         if (paint || surface) return Result::InsufficientCondition;
         if (loader) loader->close();
-        loader = LoaderMgr::loader(data, w, h, copy);
+        loader = LoaderMgr::loader(data, w, h, premultiplied, copy);
         if (!loader) return Result::FailedAllocation;
         this->w = loader->w;
         this->h = loader->h;

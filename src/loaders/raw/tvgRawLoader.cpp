@@ -43,13 +43,14 @@ RawLoader::~RawLoader()
 }
 
 
-bool RawLoader::open(const uint32_t* data, uint32_t w, uint32_t h, bool copy)
+bool RawLoader::open(const uint32_t* data, uint32_t w, uint32_t h, bool premultiplied, bool copy)
 {
     if (!data || w == 0 || h == 0) return false;
 
     this->w = (float)w;
     this->h = (float)h;
     this->copy = copy;
+    this->premultiplied = premultiplied;
 
     if (copy) {
         content = (uint32_t*)malloc(sizeof(uint32_t) * w * h);
@@ -88,7 +89,7 @@ unique_ptr<Surface> RawLoader::bitmap()
     surface->h = static_cast<uint32_t>(h);
     surface->cs = cs;
     surface->channelSize = sizeof(uint32_t);
-    surface->premultiplied = true;
+    surface->premultiplied = premultiplied;
     surface->owner = true;
 
     return unique_ptr<Surface>(surface);

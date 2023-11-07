@@ -99,11 +99,11 @@ Result Picture::load(const char* data, uint32_t size, const string& mimeType, bo
 }
 
 
-Result Picture::load(uint32_t* data, uint32_t w, uint32_t h, bool copy) noexcept
+Result Picture::load(uint32_t* data, uint32_t w, uint32_t h, bool premultiplied, bool copy) noexcept
 {
     if (!data || w <= 0 || h <= 0) return Result::InvalidArguments;
 
-    return pImpl->load(data, w, h, copy);
+    return pImpl->load(data, w, h, premultiplied, copy);
 }
 
 

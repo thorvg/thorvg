@@ -517,10 +517,10 @@ TVG_API Tvg_Result tvg_picture_load(Tvg_Paint* paint, const char* path)
 }
 
 
-TVG_API Tvg_Result tvg_picture_load_raw(Tvg_Paint* paint, uint32_t *data, uint32_t w, uint32_t h, bool copy)
+TVG_API Tvg_Result tvg_picture_load_raw(Tvg_Paint* paint, uint32_t *data, uint32_t w, uint32_t h, bool premultiplied, bool copy)
 {
     if (!paint) return TVG_RESULT_INVALID_ARGUMENT;
-    return (Tvg_Result) reinterpret_cast<Picture*>(paint)->load(data, w, h, copy);
+    return (Tvg_Result) reinterpret_cast<Picture*>(paint)->load(data, w, h, premultiplied, copy);
 }
 
 
