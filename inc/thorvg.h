@@ -1313,6 +1313,13 @@ public:
     /**
      * @brief Loads a raw data from a memory block with a given size.
      *
+     * @param[in] paint A Tvg_Paint pointer to the picture object.
+     * @param[in] data A pointer to a memory location where the content of the picture raw data is stored.
+     * @param[in] w The width of the image @p data in pixels.
+     * @param[in] h The height of the image @p data in pixels.
+     * @param[in] premultiplied If @c true, the given image data is alpha-premultiplied.
+     * @param[in] copy If @c true the data are copied into the engine local buffer, otherwise they are not.
+     *
      * @retval Result::Success When succeed, Result::InsufficientCondition otherwise.
      * @retval Result::FailedAllocation An internal error possibly with memory allocation.
      *
