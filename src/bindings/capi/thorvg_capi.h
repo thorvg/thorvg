@@ -97,7 +97,7 @@ typedef struct _Tvg_Gradient Tvg_Gradient;
 typedef struct _Tvg_Saver Tvg_Saver;
 
 /**
-* \brief A structure representing an animation controller object. (BETA_API)
+* \brief A structure representing an animation controller object. (Experimental API)
 */
 typedef struct _Tvg_Animation Tvg_Animation;
 
@@ -138,7 +138,7 @@ typedef enum {
     TVG_COMPOSITE_METHOD_ALPHA_MASK,         ///< The pixels of the source and the target are alpha blended. As a result, only the part of the source, which intersects with the target is visible.
     TVG_COMPOSITE_METHOD_INVERSE_ALPHA_MASK, ///< The pixels of the source and the complement to the target's pixels are alpha blended. As a result, only the part of the source which is not covered by the target is visible.
     TVG_COMPOSITE_METHOD_LUMA_MASK,          ///< The source pixels are converted to grayscale (luma value) and alpha blended with the target. As a result, only the part of the source which intersects with the target is visible. \since 0.9
-    TVG_COMPOSITE_METHOD_INVERSE_LUMA_MASK   ///< The source pixels are converted to grayscale (luma value) and complement to the target's pixels are alpha blended. As a result, only the part of the source which is not covered by the target is visible. \BETA_API
+    TVG_COMPOSITE_METHOD_INVERSE_LUMA_MASK   ///< The source pixels are converted to grayscale (luma value) and complement to the target's pixels are alpha blended. As a result, only the part of the source which is not covered by the target is visible. \Experimental API
 } Tvg_Composite_Method;
 
 /**
@@ -2213,7 +2213,7 @@ TVG_API Tvg_Result tvg_saver_del(Tvg_Saver* saver);
 /************************************************************************/
 
 /*!
-* \brief Creates a new Animation object. (BETA_API)
+* \brief Creates a new Animation object. (Experimental API)
 *
 * \return Tvg_Animation A new Tvg_Animation object.
 */
@@ -2221,7 +2221,7 @@ TVG_API Tvg_Animation* tvg_animation_new();
 
 
 /*!
-* \brief Specifies the current frame in the animation. (BETA_API)
+* \brief Specifies the current frame in the animation. (Experimental API)
 *
 * \param[in] animation A Tvg_Animation pointer to the animation object.
 * \param[in] no The index of the animation frame to be displayed. The index should be less than the tvg_animatio_total_frame().
@@ -2238,7 +2238,7 @@ TVG_API Tvg_Result tvg_animation_set_frame(Tvg_Animation* animation, float no);
 
 
 /*!
-* \brief Retrieves a picture instance associated with this animation instance. (BETA_API)
+* \brief Retrieves a picture instance associated with this animation instance. (Experimental API)
 *
 * This function provides access to the picture instance that can be used to load animation formats, such as Lottie(json).
 * After setting up the picture, it can be pushed to the designated canvas, enabling control over animation frames
@@ -2254,7 +2254,7 @@ TVG_API Tvg_Paint* tvg_animation_get_picture(Tvg_Animation* animation);
 
 
 /*!
-* \brief Retrieves the current frame number of the animation. (BETA_API)
+* \brief Retrieves the current frame number of the animation. (Experimental API)
 *
 * \param[in] animation A Tvg_Animation pointer to the animation object.
 * \param[in] no The current frame number of the animation, between 0 and totalFrame() - 1.
@@ -2270,7 +2270,7 @@ TVG_API Tvg_Result tvg_animation_get_frame(Tvg_Animation* animation, float* no);
 
 
 /*!
-* \brief Retrieves the total number of frames in the animation. (BETA_API)
+* \brief Retrieves the total number of frames in the animation. (Experimental API)
 *
 * \param[in] animation A Tvg_Animation pointer to the animation object.
 * \param[in] cnt The total number of frames in the animation.
@@ -2286,7 +2286,7 @@ TVG_API Tvg_Result tvg_animation_get_total_frame(Tvg_Animation* animation, float
 
 
 /*!
-* \brief Retrieves the duration of the animation in seconds. (BETA_API)
+* \brief Retrieves the duration of the animation in seconds. (Experimental API)
 *
 * \param[in] animation A Tvg_Animation pointer to the animation object.
 * \param[in] duration The duration of the animation in seconds.
