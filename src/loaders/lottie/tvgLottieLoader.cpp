@@ -66,10 +66,11 @@ void LottieLoader::run(unsigned tid)
         builder->update(comp, frameNo);
     //initial loading
     } else {
-        LottieParser parser(content, dirName);
-        if (!parser.parse()) return;
-        comp = parser.comp;
-        if (!comp) return;
+        if (!comp) {
+            LottieParser parser(content, dirName);
+            if (!parser.parse()) return;
+            comp = parser.comp;
+        }
         builder->build(comp);
         w = static_cast<float>(comp->w);
         h = static_cast<float>(comp->h);
@@ -104,7 +105,12 @@ LottieLoader::~LottieLoader()
 bool LottieLoader::header()
 {
     //A single thread doesn't need to perform intensive tasks.
-    if (TaskScheduler::threads() == 0) return true;
+    if (TaskScheduler::threads() == 0) {
+        LottieParser parser(content, dirName);
+        if (!parser.parse()) return false;
+        comp = parser.comp;
+        return true;
+    }
 
     //Quickly validate the given Lottie file without parsing in order to get the animation info.
     auto startFrame = 0.0f;
