@@ -53,6 +53,8 @@ void tvgUpdateCmds(tvg::Canvas* canvas, float progress)
 {
     if (!canvas) return;
 
+    canvas->clear(false);
+
     pPicture->translate(WIDTH * progress * 0.05f, HEIGHT * progress * 0.05f);
 
     auto before = ecore_time_get();

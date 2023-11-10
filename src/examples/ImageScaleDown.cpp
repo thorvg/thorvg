@@ -50,6 +50,8 @@ void tvgUpdateCmds(tvg::Canvas* canvas, float progress)
 {
     if (!canvas || !pPicture) return;
 
+    canvas->clear(false);
+
     auto scale = 1.0f;
 
     if (progress > 0.875f) scale = 0.125f;

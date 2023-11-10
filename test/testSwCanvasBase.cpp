@@ -89,17 +89,24 @@ TEST_CASE("Clear", "[tvgSwCanvasBase]")
 
     auto canvas = SwCanvas::gen();
     REQUIRE(canvas);
+
     auto canvas2 = SwCanvas::gen();
     REQUIRE(canvas2);
 
-    //Try 0: Clear
-    REQUIRE(canvas->clear() == Result::Success);
-    REQUIRE(canvas->clear(false) == Result::Success);
-    REQUIRE(canvas->clear() == Result::Success);
+    //Try 0: Negative
+    REQUIRE(canvas->clear() == Result::InsufficientCondition);
+    REQUIRE(canvas->clear(false) == Result::InsufficientCondition);
+    REQUIRE(canvas->clear() == Result::InsufficientCondition);
 
-    REQUIRE(canvas2->clear(false) == Result::Success);
-    REQUIRE(canvas2->clear() == Result::Success);
-    REQUIRE(canvas2->clear(false) == Result::Success);
+    REQUIRE(canvas2->clear(false) == Result::InsufficientCondition);
+    REQUIRE(canvas2->clear() == Result::InsufficientCondition);
+    REQUIRE(canvas2->clear(false) == Result::InsufficientCondition);
+
+    uint32_t buffer[100*100];
+    REQUIRE(canvas->target(buffer, 100, 100, 100, SwCanvas::Colorspace::ARGB8888) == Result::Success);
+
+    uint32_t buffer2[100*100];
+    REQUIRE(canvas2->target(buffer2, 100, 100, 100, SwCanvas::Colorspace::ARGB8888) == Result::Success);
 
     //Try 1: Push -> Clear
     for (int i = 0; i < 5; ++i) {
