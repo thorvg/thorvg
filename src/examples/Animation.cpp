@@ -32,10 +32,11 @@ static Elm_Transit *transit;
 void tvgUpdateCmds(tvg::Canvas* canvas, tvg::Animation* animation, float progress)
 {
     if (!canvas) return;
+    canvas->clear(false);
 
     //Update animation frame only when it's changed
     if (animation->frame(animation->totalFrame() * progress) == tvg::Result::Success) {
-        canvas->update(animation->picture());
+        canvas->update();
     }
 }
 
