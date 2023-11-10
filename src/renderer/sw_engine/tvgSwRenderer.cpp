@@ -377,6 +377,13 @@ SwRenderer::~SwRenderer()
 
 bool SwRenderer::clear()
 {
+    if (surface) return rasterClear(surface, 0, 0, surface->w, surface->h);
+    return false;
+}
+
+
+bool SwRenderer::sync()
+{
     for (auto task = tasks.data; task < tasks.end(); ++task) {
         if ((*task)->disposed) {
             delete(*task);
@@ -389,18 +396,6 @@ bool SwRenderer::clear()
 
     if (!sharedMpool) mpoolClear(mpool);
 
-    if (surface) {
-        vport.x = vport.y = 0;
-        vport.w = surface->w;
-        vport.h = surface->h;
-    }
-
-    return true;
-}
-
-
-bool SwRenderer::sync()
-{
     return true;
 }
 
@@ -443,7 +438,13 @@ bool SwRenderer::target(pixel_t* data, uint32_t stride, uint32_t w, uint32_t h, 
 
 bool SwRenderer::preRender()
 {
-    return rasterClear(surface, 0, 0, surface->w, surface->h);
+    if (surface) {
+        vport.x = vport.y = 0;
+        vport.w = surface->w;
+        vport.h = surface->h;
+    }
+
+    return true;
 }
 
 
