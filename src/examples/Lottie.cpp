@@ -142,6 +142,8 @@ void tvgSwTest(uint32_t* buffer)
 
 void drawSwView(void* data, Eo* obj)
 {
+    swCanvas->clear(false);
+
     //canvas update
     auto before = ecore_time_get();
 
