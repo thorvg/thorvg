@@ -1805,6 +1805,15 @@ public:
     ~Saver();
 
     /**
+     * @brief Sets the base background content for the saved image.
+     *
+     * @param[in] paint The paint to be drawn as the background image for the saving paint.
+     *
+     * @note Experimental API
+     */
+    Result background(std::unique_ptr<Paint> paint) noexcept;
+
+    /**
      * @brief Exports the given @p paint data to the given @p path
      *
      * If the saver module supports any compression mechanism, it will optimize the data size.

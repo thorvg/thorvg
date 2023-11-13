@@ -780,15 +780,14 @@ bool TvgSaver::close()
 {
     this->done();
 
-    if (paint) {
-        delete(paint);
-        paint = nullptr;
-    }
-    if (path) {
-        free(path);
-        path = nullptr;
-    }
+    delete(paint);
+    paint = nullptr;
+
+    free(path);
+    path = nullptr;
+
     buffer.reset();
+
     return true;
 }
 
@@ -822,7 +821,7 @@ bool TvgSaver::save(Paint* paint, const string& path, bool compress)
 }
 
 
-bool TvgSaver::save(TVG_UNUSED Animation* animation, TVG_UNUSED const string& path, TVG_UNUSED uint32_t quality, TVG_UNUSED uint32_t fps)
+bool TvgSaver::save(TVG_UNUSED Animation* animation, TVG_UNUSED Paint* bg, TVG_UNUSED const string& path, TVG_UNUSED uint32_t quality, TVG_UNUSED uint32_t fps)
 {
     TVGLOG("TVG_SAVER", "Animation is not supported.");
     return false;

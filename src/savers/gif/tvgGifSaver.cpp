@@ -42,13 +42,7 @@ void GifSaver::run(unsigned tid)
 
     buffer = (uint32_t*)realloc(buffer, sizeof(uint32_t) * w * h);
     canvas->target(buffer, w, w, h, tvg::SwCanvas::ABGR8888);
-
-    //base white background
-    auto bg = Shape::gen();
-    bg->appendRect(0, 0, vsize[0], vsize[1]);
-    bg->fill(255, 255, 255);
-    canvas->push(std::move(bg));
-
+    canvas->push(cast(bg));
     canvas->push(cast(animation->picture()));
 
     //use the default fps
@@ -81,6 +75,8 @@ void GifSaver::run(unsigned tid)
     }
 
     if (!GifEnd(&writer)) TVGERR("GIF_SAVER", "Failed gif encoding");
+
+    this->bg = nullptr;
 }
 
 
@@ -97,6 +93,9 @@ GifSaver::~GifSaver()
 bool GifSaver::close()
 {
     this->done();
+
+    delete(bg);
+    bg = nullptr;
 
     delete(animation);
     animation = nullptr;
@@ -118,7 +117,7 @@ bool GifSaver::save(TVG_UNUSED Paint* paint, TVG_UNUSED const string& path, TVG_
 }
 
 
-bool GifSaver::save(Animation* animation, const string& path, TVG_UNUSED uint32_t quality, uint32_t fps)
+bool GifSaver::save(Animation* animation, Paint* bg, const string& path, TVG_UNUSED uint32_t quality, uint32_t fps)
 {
     close();
 
@@ -140,6 +139,7 @@ bool GifSaver::save(Animation* animation, const string& path, TVG_UNUSED uint32_
     if (!this->path) return false;
 
     this->animation = animation;
+    if (bg) this->bg = bg->duplicate();
     this->fps = static_cast<float>(fps);
 
     TaskScheduler::request(this);
