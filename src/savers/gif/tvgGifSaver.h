@@ -34,6 +34,7 @@ class GifSaver : public SaveModule, public Task
 private:
     uint32_t* buffer = nullptr;
     Animation* animation = nullptr;
+    Paint* bg = nullptr;
     char *path = nullptr;
     float vsize[2] = {0.0f, 0.0f};
     float fps = 0.0f;
@@ -43,8 +44,8 @@ private:
 public:
     ~GifSaver();
 
-    bool save(Paint* paint, const string& path, uint32_t quality) override;
-    bool save(Animation* animation, const string& path, uint32_t quality, uint32_t fps) override;
+    bool save(Paint* paint, Paint* bg, const string& path, uint32_t quality) override;
+    bool save(Animation* animation, Paint* bg, const string& path, uint32_t quality, uint32_t fps) override;
     bool close() override;
 };
 

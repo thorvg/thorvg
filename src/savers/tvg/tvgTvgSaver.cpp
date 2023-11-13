@@ -772,20 +772,19 @@ bool TvgSaver::close()
 {
     this->done();
 
-    if (paint) {
-        delete(paint);
-        paint = nullptr;
-    }
-    if (path) {
-        free(path);
-        path = nullptr;
-    }
+    delete(paint);
+    paint = nullptr;
+
+    free(path);
+    path = nullptr;
+
     buffer.reset();
+
     return true;
 }
 
 
-bool TvgSaver::save(Paint* paint, const string& path, TVG_UNUSED uint32_t quality)
+bool TvgSaver::save(Paint* paint, Paint* bg, const string& path, TVG_UNUSED uint32_t quality)
 {
     close();
 
@@ -805,7 +804,14 @@ bool TvgSaver::save(Paint* paint, const string& path, TVG_UNUSED uint32_t qualit
     this->path = strdup(path.c_str());
     if (!this->path) return false;
 
-    this->paint = paint;
+    if (bg) {
+        auto scene = Scene::gen();
+        scene->push(cast(bg->duplicate()));
+        scene->push(cast(paint));
+        this->paint = scene.release();
+    } else {
+        this->paint = paint;
+    }
 
     TaskScheduler::request(this);
 
@@ -813,7 +819,7 @@ bool TvgSaver::save(Paint* paint, const string& path, TVG_UNUSED uint32_t qualit
 }
 
 
-bool TvgSaver::save(TVG_UNUSED Animation* animation, TVG_UNUSED const string& path, TVG_UNUSED uint32_t quality, TVG_UNUSED uint32_t fps)
+bool TvgSaver::save(TVG_UNUSED Animation* animation, TVG_UNUSED Paint* bg, TVG_UNUSED const string& path, TVG_UNUSED uint32_t quality, TVG_UNUSED uint32_t fps)
 {
     TVGLOG("TVG_SAVER", "Animation is not supported.");
     return false;
