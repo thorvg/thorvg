@@ -378,7 +378,7 @@ Both flags, if provided, are applied to all of the `.json` files.
 The usage examples of the `lottie2gif`:
 ```
 Usage:
-    lottie2gif [Lottie file] or [Lottie folder] [-r resolution] [-f fps]
+    lottie2gif [Lottie file] or [Lottie folder] [-r resolution] [-f fps] [-b background color]
 
 Flags:
     -r set the output image resolution.
@@ -390,7 +390,7 @@ Examples:
     $ lottie2gif input.json -r 600x600 -f 30
     $ lottie2gif lottiefolder
     $ lottie2gif lottiefolder -r 600x600
-    $ lottie2gif lottiefolder -r 600x600 -f 30
+    $ lottie2gif lottiefolder -r 600x600 -f 30 -b fa7410
 ```
 
 ### SVG to PNG

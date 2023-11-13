@@ -47,10 +47,11 @@ private:
    uint32_t fps = 30;
    uint32_t width = 600;
    uint32_t height = 600;
+   uint32_t bgColor = 0xffffffff;  //a white by default.
 
    void helpMsg()
    {
-      cout << "Usage: \n   lottie2gif [Lottie file] or [Lottie folder] [-r resolution] [-f fps]\n\nExamples: \n    $ lottie2gif input.json\n    $ lottie2gif input.json -r 600x600\n    $ lottie2gif input.json -f 30\n    $ lottie2gif input.json -r 600x600 -f 30\n    $ lottie2gif lottiefolder\n    $ lottie2gif lottiefolder -r 600x600 -f 30\n\n";
+      cout << "Usage: \n   lottie2gif [Lottie file] or [Lottie folder] [-r resolution] [-f fps] [-b background color]\n\nExamples: \n    $ lottie2gif input.json\n    $ lottie2gif input.json -r 600x600\n    $ lottie2gif input.json -f 30\n    $ lottie2gif input.json -r 600x600 -f 30\n    $ lottie2gif lottiefolder\n    $ lottie2gif lottiefolder -r 600x600 -f 30 -b fa7410\n\n";
    }
 
    bool validate(string& lottieName)
@@ -78,6 +79,17 @@ private:
       picture->size(width * scale, height * scale);
 
       auto saver = Saver::gen();
+
+      //set a background color
+      auto r = (uint8_t)((bgColor & 0xff0000) >> 16);
+      auto g = (uint8_t)((bgColor & 0x00ff00) >> 8);
+      auto b = (uint8_t)((bgColor & 0x0000ff));
+
+      auto bg = tvg::Shape::gen();
+      bg->fill(r, g, b, 255);
+      bg->appendRect(0, 0, width * scale, height * scale);
+      saver->background(std::move(bg));
+
       if (saver->save(std::move(animation), out, 100, fps) != Result::Success) return false;
       if (saver->sync() != Result::Success) return false;
 
@@ -216,6 +228,13 @@ public:
                   return 1;
                }
                fps = atoi(p_arg);
+            } else if (p[1] == 'b') {
+               //background color
+               if (!p_arg) {
+                  cout << "Error: Missing background color attribute. Expected eg. -b fa7410." << endl;
+                  return 1;
+               }
+               bgColor = (uint32_t) strtol(p_arg, NULL, 16);
             } else {
                cout << "Warning: Unknown flag (" << p << ")." << endl;
             }
