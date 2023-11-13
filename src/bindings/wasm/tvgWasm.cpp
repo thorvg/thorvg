@@ -22,8 +22,6 @@
 
 #include <thorvg.h>
 #include <emscripten/bind.h>
-#include "tvgIteratorAccessor.h"
-
 
 using namespace emscripten;
 using namespace std;
@@ -231,6 +229,13 @@ public:
             errorMsg = "Invalid saver";
             return false;
         }
+
+        //set a white opaque background
+        auto bg = tvg::Shape::gen();
+        bg->fill(255, 255, 255, 255);
+        bg->appendRect(0, 0, ow * scale, oh * scale);
+
+        saver->background(std::move(bg));
 
         if (saver->save(std::move(animation), "output.gif", 100, fps) != tvg::Result::Success) {
             errorMsg = "save(), fail";
