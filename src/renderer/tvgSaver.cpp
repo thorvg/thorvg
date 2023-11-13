@@ -37,9 +37,12 @@
 struct Saver::Impl
 {
     SaveModule* saveModule = nullptr;
+    Paint* bg = nullptr;
+
     ~Impl()
     {
         delete(saveModule);
+        delete(bg);
     }
 };
 
@@ -113,7 +116,7 @@ Saver::~Saver()
 }
 
 
-Result Saver::save(std::unique_ptr<Paint> paint, const string& path, uint32_t quality) noexcept
+Result Saver::save(unique_ptr<Paint> paint, const string& path, uint32_t quality) noexcept
 {
     auto p = paint.release();
     if (!p) return Result::MemoryCorruption;
@@ -125,7 +128,7 @@ Result Saver::save(std::unique_ptr<Paint> paint, const string& path, uint32_t qu
     }
 
     if (auto saveModule = _find(path)) {
-        if (saveModule->save(p, path, quality)) {
+        if (saveModule->save(p, pImpl->bg, path, quality)) {
             pImpl->saveModule = saveModule;
             return Result::Success;
         } else {
@@ -139,7 +142,16 @@ Result Saver::save(std::unique_ptr<Paint> paint, const string& path, uint32_t qu
 }
 
 
-Result Saver::save(std::unique_ptr<Animation> animation, const string& path, uint32_t quality, uint32_t fps) noexcept
+Result Saver::background(unique_ptr<Paint> paint) noexcept
+{
+    delete(pImpl->bg);
+    pImpl->bg = paint.release();
+
+    return Result::Success;
+}
+
+
+Result Saver::save(unique_ptr<Animation> animation, const string& path, uint32_t quality, uint32_t fps) noexcept
 {
     auto a = animation.release();
     if (!a) return Result::MemoryCorruption;
@@ -156,7 +168,7 @@ Result Saver::save(std::unique_ptr<Animation> animation, const string& path, uin
     }
 
     if (auto saveModule = _find(path)) {
-        if (saveModule->save(a, path, quality, fps)) {
+        if (saveModule->save(a, pImpl->bg, path, quality, fps)) {
             pImpl->saveModule = saveModule;
             return Result::Success;
         } else {
