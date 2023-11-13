@@ -55,6 +55,14 @@ void exportGif()
     picture->size(800, 800);
 
     saver = tvg::Saver::gen();
+
+    //set a white opaque background
+    auto bg = tvg::Shape::gen();
+    bg->fill(255, 255, 255, 255);
+    bg->appendRect(0, 0, 800, 800);
+
+    saver->background(std::move(bg));
+
     if (saver->save(std::move(animation), "./test_60fps.gif", 100, 60) != tvg::Result::Success) {
         cout << "Problem with saving the json file. Did you enable Gif Saver?" << endl;
         return;
