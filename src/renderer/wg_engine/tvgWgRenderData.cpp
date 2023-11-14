@@ -32,6 +32,13 @@ void WgGeometryData::draw(WGPURenderPassEncoder renderPassEncoder) {
     wgpuRenderPassEncoderDrawIndexed(renderPassEncoder, mIndexCount, 1, 0, 0, 0);
 }
 
+void WgGeometryData::drawImage(WGPURenderPassEncoder renderPassEncoder) {
+    wgpuRenderPassEncoderSetVertexBuffer(renderPassEncoder, 0, mBufferVertex, 0, mVertexCount * sizeof(float) * 2);
+    wgpuRenderPassEncoderSetVertexBuffer(renderPassEncoder, 1, mBufferTexCoords, 0, mVertexCount * sizeof(float) * 2);
+    wgpuRenderPassEncoderSetIndexBuffer(renderPassEncoder, mBufferIndex, WGPUIndexFormat_Uint32, 0, mIndexCount * sizeof(uint32_t));
+    wgpuRenderPassEncoderDrawIndexed(renderPassEncoder, mIndexCount, 1, 0, 0, 0);
+}
+
 void WgGeometryData::update(WGPUDevice device, WGPUQueue queue, WgVertexList* vertexList) {
     update(device, queue, 
            (float *)vertexList->mVertexList.data,
@@ -67,12 +74,31 @@ void WgGeometryData::update(WGPUDevice device, WGPUQueue queue, float* vertexDat
     mIndexCount = indexCount;
 }
 
+void WgGeometryData::update(WGPUDevice device, WGPUQueue queue, float* vertexData, float* texCoordsData, size_t vertexCount, uint32_t* indexData, size_t indexCount) {
+    update(device, queue, vertexData, vertexCount, indexData, indexCount);
+    // buffer tex coords data create and write
+    WGPUBufferDescriptor bufferTexCoordsDesc{};
+    bufferTexCoordsDesc.nextInChain = nullptr;
+    bufferTexCoordsDesc.label = "Buffer tex coords geometry data";
+    bufferTexCoordsDesc.usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_Vertex;
+    bufferTexCoordsDesc.size = sizeof(float) * vertexCount * 2; // u, v
+    bufferTexCoordsDesc.mappedAtCreation = false;
+    mBufferTexCoords = wgpuDeviceCreateBuffer(device, &bufferTexCoordsDesc);
+    assert(mBufferTexCoords);
+    wgpuQueueWriteBuffer(queue, mBufferTexCoords, 0, texCoordsData, vertexCount * sizeof(float) * 2);
+}
+
 void WgGeometryData::release() {
     if (mBufferIndex) { 
         wgpuBufferDestroy(mBufferIndex);
         wgpuBufferRelease(mBufferIndex);
         mBufferIndex = nullptr;
         mVertexCount = 0;
+    }
+    if (mBufferTexCoords) {
+        wgpuBufferDestroy(mBufferTexCoords);
+        wgpuBufferRelease(mBufferTexCoords);
+        mBufferTexCoords = nullptr;
     }
     if (mBufferVertex) {
         wgpuBufferDestroy(mBufferVertex);
@@ -89,7 +115,6 @@ void WgGeometryData::release() {
 void WgRenderDataShapeSettings::update(WGPUQueue queue, const Fill* fill, const RenderUpdateFlag flags,
                                        const RenderTransform* transform, const float* viewMatrix, const uint8_t* color,
                                        WgPipelineLinear& linear, WgPipelineRadial& radial, WgPipelineSolid& solid)
-
 {
     // setup fill properties
     if ((flags & (RenderUpdateFlag::Gradient | RenderUpdateFlag::Transform)) && fill) {
@@ -138,9 +163,14 @@ void WgRenderDataShape::release() {
     releaseRenderData();
     mRenderSettingsShape.release();
     mRenderSettingsStroke.release();
+    mPipelineBindGroupImage.release();
 }
 
 void WgRenderDataShape::releaseRenderData() {
+    for (uint32_t i = 0; i < mGeometryDataImage.count; i++) {
+        mGeometryDataImage[i]->release();
+        delete mGeometryDataImage[i];
+    }
     for (uint32_t i = 0; i < mGeometryDataStroke.count; i++) {
         mGeometryDataStroke[i]->release();
         delete mGeometryDataStroke[i];
@@ -151,6 +181,52 @@ void WgRenderDataShape::releaseRenderData() {
         delete mGeometryDataShape[i];
     }
     mGeometryDataShape.clear();
+}
+
+void WgRenderDataShape::tesselate(WGPUDevice device, WGPUQueue queue, Surface* surface, const RenderMesh* mesh) {
+    // create image geometry data
+    Array<WgPoint> vertexList;
+    Array<WgPoint> texCoordsList;
+    Array<uint32_t> indexList;
+
+    if (mesh && mesh->triangleCnt) {
+        vertexList.reserve(mesh->triangleCnt * 3);
+        texCoordsList.reserve(mesh->triangleCnt * 3);
+        indexList.reserve(mesh->triangleCnt * 3);
+        for (uint32_t i = 0; i < mesh->triangleCnt; i++) {
+            vertexList.push(mesh->triangles[i].vertex[0].pt);
+            vertexList.push(mesh->triangles[i].vertex[1].pt);
+            vertexList.push(mesh->triangles[i].vertex[2].pt);
+            texCoordsList.push(mesh->triangles[i].vertex[0].uv);
+            texCoordsList.push(mesh->triangles[i].vertex[1].uv);
+            texCoordsList.push(mesh->triangles[i].vertex[2].uv);
+            indexList.push(i*3 + 0);
+            indexList.push(i*3 + 1);
+            indexList.push(i*3 + 2);
+        }
+    } else {
+        vertexList.push({ 0.0f, 0.0f });
+        vertexList.push({ (float)surface->w, 0.0f });
+        vertexList.push({ (float)surface->w, (float)surface->h });
+        vertexList.push({ 0.0f, (float)surface->h });
+        texCoordsList.push({0.0f, 0.0f});
+        texCoordsList.push({1.0f, 0.0f});
+        texCoordsList.push({1.0f, 1.0f});
+        texCoordsList.push({0.0f, 1.0f});
+        indexList.push(0);
+        indexList.push(1);
+        indexList.push(2);
+        indexList.push(0);
+        indexList.push(2);
+        indexList.push(3);
+    }
+
+    // create geometry data for image
+    WgGeometryData* geometryData = new WgGeometryData();
+    geometryData->update(device, queue,
+        (float *)vertexList.data, (float *)texCoordsList.data, vertexList.count,
+        indexList.data, indexList.count);
+    mGeometryDataImage.push(geometryData);
 }
 
 void WgRenderDataShape::tesselate(WGPUDevice device, WGPUQueue queue, const RenderShape& rshape) {

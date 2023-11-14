@@ -83,6 +83,7 @@ private:
     WgPipelineSolid mPipelineSolid;
     WgPipelineLinear mPipelineLinear;
     WgPipelineRadial mPipelineRadial;
+    WgPipelineImage mPipelineImage;
     WgGeometryData mGeometryDataWindow;
     WgPipelineBindGroupEmpty mPipelineBindGroupEmpty;
     WgPipelineBindGroupStroke mPipelineBindGroupStroke;
