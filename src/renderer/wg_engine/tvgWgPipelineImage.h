@@ -20,24 +20,40 @@
  * SOFTWARE.
  */
 
-#pragma once
+#ifndef _TVG_WG_PIPELINE_IMAGE_H_
+#define _TVG_WG_PIPELINE_IMAGE_H_
 
-#ifndef _TVG_WG_SHADER_SRC_H_
-#define _TVG_WG_SHADER_SRC_H_
+#include "tvgWgPipelineBase.h"
 
-// pipeline shader module empty
-extern const char* cShaderSource_PipelineEmpty;
+class WgPipelineImage;
 
-// pipeline shader module solid
-extern const char* cShaderSource_PipelineSolid;
+struct WgPipelineImageColorInfo {
+    float color[4]{};
+};
 
-// pipeline shader module linear
-extern const char* cShaderSource_PipelineLinear;
+struct WgPipelineDataImage: WgPipelineData {
+    WgPipelineImageColorInfo uColorInfo{}; // @binding(1)
 
-// pipeline shader module radial
-extern const char* cShaderSource_PipelineRadial;
+    void updateOpacity(const uint8_t opacity);
+};
 
-// pipeline shader module image
-extern const char* cShaderSource_PipelineImage;
+class WgPipelineBindGroupImage: public WgPipelineBindGroup {
+private:
+    WGPUBuffer uBufferColorInfo{}; // @binding(1)
+    WGPUSampler uSamplerBase{};     // @binding(2)
+    WGPUTextureView uTextureViewBase{}; // @binding(3)
+    WGPUTexture mTextureBase{}; // gpu texture data
+public:
+    void initialize(WGPUDevice device, WgPipelineImage& pipelineImage, Surface* surface);
+    void release();
 
-#endif // _TVG_WG_SHADER_SRC_H_
+    void update(WGPUQueue mQueue, WgPipelineDataImage& pipelineDataImage, Surface* surface);
+};
+
+class WgPipelineImage: public WgPipelineBase {
+public:
+    void initialize(WGPUDevice device) override;
+    void release() override;
+};
+
+#endif //_TVG_WG_PIPELINE_IMAGE_H_
