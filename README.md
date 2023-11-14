@@ -143,7 +143,7 @@ Next you can draw multiple shapes on the canvas:
 ```cpp
 auto rect = tvg::Shape::gen();               //generate a shape
 rect->appendRect(50, 50, 200, 200, 20, 20);  //define it as a rounded rectangle (x, y, w, h, rx, ry)
-rect->fill(100, 100, 100, 255);              //set its color (r, g, b, a)
+rect->fill(100, 100, 100);                   //set its color (r, g, b)
 canvas->push(move(rect));                    //push the rectangle into the canvas
 
 auto circle = tvg::Shape::gen();             //generate a shape
@@ -184,7 +184,7 @@ path->lineTo(26, 161);
 path->lineTo(146, 143);
 path->close();
 
-path->fill(150, 150, 255, 255);              //path color
+path->fill(150, 150, 255);                   //path color
 
 path->stroke(3);                             //stroke width
 path->stroke(0, 0, 255, 255);                //stroke color
