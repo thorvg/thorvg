@@ -41,7 +41,7 @@ void GifSaver::run(unsigned tid)
     auto h = static_cast<uint32_t>(vsize[1]);
 
     buffer = (uint32_t*)realloc(buffer, sizeof(uint32_t) * w * h);
-    canvas->target(buffer, w, w, h, tvg::SwCanvas::ABGR8888);
+    canvas->target(buffer, w, w, h, tvg::SwCanvas::ABGR8888S);
     canvas->push(cast(bg));
     canvas->push(cast(animation->picture()));
 
@@ -52,6 +52,7 @@ void GifSaver::run(unsigned tid)
     }
 
     auto delay = (1.0f / fps);
+    auto transparent = bg ? false : true;
 
     GifWriter writer;
     if (!GifBegin(&writer, path, w, h, uint32_t(delay * 100.f))) {
@@ -68,7 +69,7 @@ void GifSaver::run(unsigned tid)
         if (canvas->draw() == tvg::Result::Success) {
             canvas->sync();
         }
-        if (!GifWriteFrame(&writer, reinterpret_cast<uint8_t*>(buffer), w, h, uint32_t(delay * 100.0f))) {
+        if (!GifWriteFrame(&writer, reinterpret_cast<uint8_t*>(buffer), w, h, uint32_t(delay * 100.0f), transparent)) {
             TVGERR("GIF_SAVER", "Failed gif encoding");
             break;
         }

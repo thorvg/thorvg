@@ -47,7 +47,7 @@ private:
    uint32_t fps = 30;
    uint32_t width = 600;
    uint32_t height = 600;
-   uint32_t bgColor = 0xffffffff;  //a white by default.
+   unique_ptr<Shape> bg = nullptr; //transparent
 
    void helpMsg()
    {
@@ -81,15 +81,10 @@ private:
       auto saver = Saver::gen();
 
       //set a background color
-      auto r = (uint8_t)((bgColor & 0xff0000) >> 16);
-      auto g = (uint8_t)((bgColor & 0x00ff00) >> 8);
-      auto b = (uint8_t)((bgColor & 0x0000ff));
-
-      auto bg = tvg::Shape::gen();
-      bg->fill(r, g, b, 255);
-      bg->appendRect(0, 0, width * scale, height * scale);
-      saver->background(std::move(bg));
-
+      if (bg) {
+         bg->appendRect(0, 0, width * scale, height * scale);
+         saver->background(std::move(bg));
+      }
       if (saver->save(std::move(animation), out, 100, fps) != Result::Success) return false;
       if (saver->sync() != Result::Success) return false;
 
@@ -234,7 +229,13 @@ public:
                   cout << "Error: Missing background color attribute. Expected eg. -b fa7410." << endl;
                   return 1;
                }
-               bgColor = (uint32_t) strtol(p_arg, NULL, 16);
+               auto bgColor = (uint32_t) strtol(p_arg, NULL, 16);
+               auto r = (uint8_t)((bgColor & 0xff0000) >> 16);
+               auto g = (uint8_t)((bgColor & 0x00ff00) >> 8);
+               auto b = (uint8_t)((bgColor & 0x0000ff));
+               bg = tvg::Shape::gen();
+               bg->fill(r, g, b, 255);
+
             } else {
                cout << "Warning: Unknown flag (" << p << ")." << endl;
             }
