@@ -93,6 +93,8 @@ void WgRenderer::initialize() {
     // on device error function
     auto onDeviceError = [](WGPUErrorType type, char const* message, void* pUserData) {
         TVGERR("WG_RENDERER", "Uncaptured device error: %s", message);
+        // TODO: remove direct error message
+        std::cout << message << std::endl;
     };
     // set device error handling
     wgpuDeviceSetUncapturedErrorCallback(mDevice, onDeviceError, nullptr);
@@ -106,6 +108,7 @@ void WgRenderer::initialize() {
     mPipelineSolid.initialize(mDevice);
     mPipelineLinear.initialize(mDevice);
     mPipelineRadial.initialize(mDevice);
+    mPipelineImage.initialize(mDevice);
     mPipelineBindGroupEmpty.initialize(mDevice, mPipelineEmpty);
     mPipelineBindGroupStroke.initialize(mDevice, mPipelineStroke);
     mGeometryDataWindow.initialize(mDevice);
@@ -122,6 +125,7 @@ void WgRenderer::release() {
     mGeometryDataWindow.release();
     mPipelineBindGroupStroke.release();
     mPipelineBindGroupEmpty.release();
+    mPipelineImage.release();
     mPipelineRadial.release();
     mPipelineLinear.release();
     mPipelineSolid.release();
@@ -175,7 +179,21 @@ RenderData WgRenderer::prepare(const Array<RenderData>& scene, RenderData data, 
 }
 
 RenderData WgRenderer::prepare(Surface* surface, const RenderMesh* mesh, RenderData data, const RenderTransform* transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags) {
-    return nullptr;
+    // get or create render data shape
+    auto renderDataShape = (WgRenderDataShape*)data;
+    if (!renderDataShape) {
+        renderDataShape = new WgRenderDataShape();
+        renderDataShape->initialize(mDevice);
+        renderDataShape->mPipelineBindGroupImage.initialize(mDevice, mPipelineImage, surface);
+    }
+    if (flags & (RenderUpdateFlag::Color | RenderUpdateFlag::Image | RenderUpdateFlag::Transform)) {
+        WgPipelineDataImage pipelineDataImage{};
+        pipelineDataImage.updateMatrix(mViewMatrix, transform);
+        pipelineDataImage.updateOpacity(opacity);
+        renderDataShape->mPipelineBindGroupImage.update(mQueue, pipelineDataImage, surface);
+        renderDataShape->tesselate(mDevice, mQueue, surface, mesh);
+    }
+    return renderDataShape;
 }
 
 bool WgRenderer::preRender() {
@@ -188,6 +206,7 @@ bool WgRenderer::renderShape(RenderData data) {
 }
 
 bool WgRenderer::renderImage(RenderData data) {
+    mRenderDatas.push(data);
     return true;
 }
 
@@ -274,6 +293,7 @@ bool WgRenderer::sync() {
                 for (size_t i = 0; i < mRenderDatas.count; i++) {
                     WgRenderDataShape* renderData = (WgRenderDataShape*)(mRenderDatas[i]);
                     
+                    // draw shape geometry
                     wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
                     for (uint32_t j = 0; j < renderData->mGeometryDataShape.count; j++) {
                         // draw to stencil (first pass)
@@ -287,6 +307,7 @@ bool WgRenderer::sync() {
                         mGeometryDataWindow.draw(renderPassEncoder);
                     }
 
+                    // draw stroke geometry
                     if (renderData->mRenderSettingsStroke.mPipelineBase) {
                         // draw strokes to stencil (first pass)
                         wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 255);
@@ -301,6 +322,14 @@ bool WgRenderer::sync() {
                         renderData->mRenderSettingsStroke.mPipelineBase->set(renderPassEncoder);
                         renderData->mRenderSettingsStroke.mPipelineBindGroup->bind(renderPassEncoder, 0);
                         mGeometryDataWindow.draw(renderPassEncoder);
+                    }
+
+                    // draw image geometry
+                    wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
+                    for (uint32_t j = 0; j < renderData->mGeometryDataImage.count; j++) {
+                        mPipelineImage.set(renderPassEncoder);
+                        renderData->mPipelineBindGroupImage.bind(renderPassEncoder, 0);
+                        renderData->mGeometryDataImage[j]->drawImage(renderPassEncoder);
                     }
                 }
             }

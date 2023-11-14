@@ -26,11 +26,13 @@
 #include "tvgWgPipelineSolid.h"
 #include "tvgWgPipelineLinear.h"
 #include "tvgWgPipelineRadial.h"
+#include "tvgWgPipelineImage.h"
 #include "tvgWgGeometry.h"
 
 class WgGeometryData {
 public:
     WGPUBuffer mBufferVertex{};
+    WGPUBuffer mBufferTexCoords{};
     WGPUBuffer mBufferIndex{};
     size_t mVertexCount{};
     size_t mIndexCount{};
@@ -40,8 +42,10 @@ public:
 
     void initialize(WGPUDevice device) {};
     void draw(WGPURenderPassEncoder renderPassEncoder);
+    void drawImage(WGPURenderPassEncoder renderPassEncoder);
     void update(WGPUDevice device, WGPUQueue queue, WgVertexList* vertexList);
     void update(WGPUDevice device, WGPUQueue queue, float* vertexData, size_t vertexCount, uint32_t* indexData, size_t indexCount);
+    void update(WGPUDevice device, WGPUQueue queue, float* vertexData, float* texCoordsData, size_t vertexCount, uint32_t* indexData, size_t indexCount);
     void release();
 };
 
@@ -70,15 +74,18 @@ class WgRenderDataShape: public WgRenderData {
 public:
     Array<WgGeometryData*> mGeometryDataShape;
     Array<WgGeometryData*> mGeometryDataStroke;
+    Array<WgGeometryData*> mGeometryDataImage;
 
     WgRenderDataShapeSettings mRenderSettingsShape;
     WgRenderDataShapeSettings mRenderSettingsStroke;
+    WgPipelineBindGroupImage mPipelineBindGroupImage;
 public:
     WgRenderDataShape() {}
     
     void release() override;
     void releaseRenderData();
 
+    void tesselate(WGPUDevice device, WGPUQueue queue, Surface* surface, const RenderMesh* mesh);
     void tesselate(WGPUDevice device, WGPUQueue queue, const RenderShape& rshape);
     void stroke(WGPUDevice device, WGPUQueue queue, const RenderShape& rshape);
 private:
