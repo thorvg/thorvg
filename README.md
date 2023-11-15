@@ -383,6 +383,7 @@ Usage:
 Flags:
     -r set the output image resolution.
     -f specifies the frames per second (fps) for the generated animation.
+    -b specifies the base background color (RGB in hex). If not specified, the background color will follow the original content.
 
 Examples:
     $ lottie2gif input.json
