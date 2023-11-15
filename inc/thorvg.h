@@ -597,6 +597,21 @@ public:
     virtual Result push(std::unique_ptr<Paint> paint) noexcept;
 
     /**
+     * @brief Clear the target buffer that used for the drawing.
+     *
+     * @param[in] r The red color channel value in the range [0 ~ 255].
+     * @param[in] g The green color channel value in the range [0 ~ 255].
+     * @param[in] b The blue color channel value in the range [0 ~ 255].
+     * @param[in] a The alpha channel value in the range [0 ~ 255], where 0 is completely transparent and 255 is opaque.
+     *
+     * @return Result::Success when succeed, Result::InsufficientCondition otherwise.
+     * 
+     * @note Clearing a buffer is effective only for the current frame.
+     * @note Experimental_API
+     */
+    virtual Result clear(uint8_t r, uint8_t g, uint8_t b, uint8_t a) noexcept;
+
+    /**
      * @brief Clear the internal canvas resources that used for the drawing.
      *
      * This API sets the total number of paints pushed into the canvas to zero.

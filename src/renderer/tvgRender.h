@@ -260,7 +260,7 @@ public:
     virtual bool blend(BlendMethod method) = 0;
     virtual ColorSpace colorSpace() = 0;
 
-    virtual bool clear() = 0;
+    virtual bool clear(uint8_t r, uint8_t g, uint8_t b, uint8_t a) = 0;
     virtual bool sync() = 0;
 
     virtual Compositor* target(const RenderRegion& region, ColorSpace cs) = 0;

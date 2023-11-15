@@ -60,7 +60,7 @@ public:
 
     bool target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h);
     bool sync() override;
-    bool clear() override;
+    bool clear(uint8_t r, uint8_t g, uint8_t b, uint8_t a) override;
 
     Compositor* target(const RenderRegion& region, ColorSpace cs) override;
     bool beginComposite(Compositor* cmp, CompositeMethod method, uint8_t opacity) override;
@@ -84,6 +84,7 @@ private:
     void prepareCmpTask(GlRenderTask* task);
     void endRenderPass(Compositor* cmp);
 
+    GLfloat mClearColor[4]{};
     GLint mTargetFboId = 0;
     RenderRegion mViewport;
     std::unique_ptr<GlStageBuffer> mGpuBuffer;

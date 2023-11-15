@@ -50,6 +50,7 @@ public:
     bool blend(BlendMethod method);
     ColorSpace colorSpace();
 
+    bool clear(uint8_t r, uint8_t g, uint8_t b, uint8_t a) override;
     bool clear();
     bool sync();
 
@@ -77,6 +78,8 @@ private:
     WGPUSwapChain mSwapChain{};
     WGPUTexture mStencilTex{};
     WGPUTextureView mStencilTexView{};
+    WGPUColor mClearColor{};
+    bool mClear = false;
 private:
     WgPipelineEmpty mPipelineEmpty;
     WgPipelineStroke mPipelineStroke;

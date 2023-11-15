@@ -76,11 +76,16 @@ struct Canvas::Impl
         return update(p, true);
     }
 
-    Result clear(bool free)
+    Result clear(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
     {
         //Clear render target
-        if (!renderer || !renderer->clear()) return Result::InsufficientCondition;
+        if (!renderer || !renderer->clear(r, g, b, a)) return Result::InsufficientCondition;
 
+        return Result::Success;
+    }
+
+    Result clear(bool free)
+    {
         clearPaints(free);
 
         return Result::Success;

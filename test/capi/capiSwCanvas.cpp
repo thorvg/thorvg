@@ -129,7 +129,7 @@ TEST_CASE("Canvas update, clear and reuse", "[capiSwCanvas]")
     REQUIRE(tvg_canvas_update_paint(canvas, paint) == TVG_RESULT_SUCCESS);
 
     //negative
-    REQUIRE(tvg_canvas_clear(canvas, false) == TVG_RESULT_INSUFFICIENT_CONDITION);
+    REQUIRE(tvg_canvas_clear(canvas, false) == TVG_RESULT_SUCCESS);
 
     uint32_t buffer[25];
     REQUIRE(tvg_swcanvas_set_target(canvas, buffer, 5, 5, 5, TVG_COLORSPACE_ARGB8888) == TVG_RESULT_SUCCESS);

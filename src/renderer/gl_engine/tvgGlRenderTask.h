@@ -103,12 +103,15 @@ public:
 
     void run() override;
 
+    void clear(GLfloat clearColor[4]);
 protected:
     GLuint getTargetFbo() { return mTargetFbo; }
 
     GLuint getSelfFbo() { return mSelfFbo; }
 
 private:
+    GLfloat mClearColor[4]{};
+    GLboolean mClear{};
     GLuint mTargetFbo;
     GLuint mSelfFbo;
     Array<GlRenderTask*> mTasks;

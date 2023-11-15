@@ -50,7 +50,7 @@ public:
     bool blend(BlendMethod method) override;
     ColorSpace colorSpace() override;
 
-    bool clear() override;
+    bool clear(uint8_t r, uint8_t g, uint8_t b, uint8_t a) override;
     bool sync() override;
     bool target(pixel_t* data, uint32_t stride, uint32_t w, uint32_t h, ColorSpace cs);
     bool mempool(bool shared);

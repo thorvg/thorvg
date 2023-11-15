@@ -106,16 +106,25 @@ GlComposeTask::~GlComposeTask()
     mTasks.clear();
 }
 
+void GlComposeTask::clear(GLfloat clearColor[4]) {
+    mClearColor[0] = clearColor[0];
+    mClearColor[1] = clearColor[1];
+    mClearColor[2] = clearColor[2];
+    mClearColor[3] = clearColor[3];
+    mClear = true;
+}
+
 void GlComposeTask::run()
 {
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, getSelfFbo()));
 
     // clear this fbo
     GLenum color_buffer = GL_COLOR_ATTACHMENT0;
-    const float transparent[] = {0.f, 0.f, 0.f, 0.f};
-
     GL_CHECK(glDrawBuffers(1, &color_buffer));
-    GL_CHECK(glClearBufferfv(GL_COLOR, 0, transparent));
+    if (mClear) {
+        GL_CHECK(glClearBufferfv(GL_COLOR, 0, mClearColor));
+        mClear = false;
+    }
 
     for(uint32_t i = 0; i < mTasks.count; i++) {
         mTasks[i]->run();

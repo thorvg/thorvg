@@ -49,6 +49,12 @@ Result Canvas::push(unique_ptr<Paint> paint) noexcept
 }
 
 
+Result Canvas::clear(uint8_t r, uint8_t g, uint8_t b, uint8_t a) noexcept
+{
+    return pImpl->clear(r, g, b, a);
+}
+
+
 Result Canvas::clear(bool free) noexcept
 {
     return pImpl->clear(free);

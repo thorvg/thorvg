@@ -374,13 +374,11 @@ SwRenderer::~SwRenderer()
     if (rendererCnt == 0 && initEngineCnt == 0) _termEngine();
 }
 
-
-bool SwRenderer::clear()
+bool SwRenderer::clear(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 {
-    if (surface) return rasterClear(surface, 0, 0, surface->w, surface->h);
-    return false;
+    if (surface) return rasterClear(surface, surface->join(r, g, b, a), 0, 0, surface->w, surface->h);
+    return true;
 }
-
 
 bool SwRenderer::sync()
 {
@@ -668,7 +666,7 @@ Compositor* SwRenderer::target(const RenderRegion& region, ColorSpace cs)
     cmp->w = cmp->compositor->image.w;
     cmp->h = cmp->compositor->image.h;
 
-    rasterClear(cmp, x, y, w, h);
+    rasterClear(cmp, 0x00, x, y, w, h);
 
     //Switch render target
     surface = cmp;

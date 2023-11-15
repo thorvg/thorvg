@@ -47,13 +47,13 @@ static void _termEngine()
 
 #define NOISE_LEVEL 0.5f
 
-bool GlRenderer::clear()
-{
-    //TODO: (Request) to clear target
-    // Will be adding glClearColor for input buffer
+bool GlRenderer::clear(uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
+    mClearColor[0] = r / 255.0f;
+    mClearColor[1] = b / 255.0f;
+    mClearColor[2] = b / 255.0f;
+    mClearColor[3] = a / 255.0f;
     return true;
-}
-
+};
 
 bool GlRenderer::target(TVG_UNUSED uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h)
 {
@@ -94,9 +94,8 @@ bool GlRenderer::sync()
     assert(mRenderPassStack.size() == 1);
 
     auto task = mRenderPassStack.front().endRenderPass<GlBlitTask>(nullptr, mTargetFboId);
-
     task->setSize(surface.w, surface.h);
-
+    task->clear(mClearColor);
     task->run();
 
     mGpuBuffer->unbind();

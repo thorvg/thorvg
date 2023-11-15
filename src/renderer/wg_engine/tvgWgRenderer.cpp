@@ -221,6 +221,15 @@ ColorSpace WgRenderer::colorSpace() {
     return ColorSpace::Unsupported;
 }
 
+bool WgRenderer::clear(uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
+    mClearColor.r = r / 255.0;
+    mClearColor.g = g / 255.0;
+    mClearColor.b = b / 255.0;
+    mClearColor.a = a / 255.0;
+    mClear = true;
+    return true;
+};
+
 bool WgRenderer::clear() {
     return true;
 }
@@ -254,9 +263,9 @@ bool WgRenderer::sync() {
             WGPURenderPassColorAttachment colorAttachment{};
             colorAttachment.view = backBufferView;
             colorAttachment.resolveTarget = nullptr;
-            colorAttachment.loadOp = WGPULoadOp_Clear;
+            colorAttachment.loadOp = mClear ? WGPULoadOp_Clear : WGPULoadOp_Load;
             colorAttachment.storeOp = WGPUStoreOp_Store;
-            colorAttachment.clearValue = { 0.0f, 0.0f, 0.0f, 1.0 };
+            colorAttachment.clearValue = mClearColor;
             // render pass descriptor
             WGPURenderPassDescriptor renderPassDesc{};
             renderPassDesc.nextInChain = nullptr;
@@ -320,6 +329,7 @@ bool WgRenderer::sync() {
     // go to the next frame
     wgpuSwapChainPresent(mSwapChain);
 
+    mClear = false;
     mRenderDatas.clear();
     return true;
 }

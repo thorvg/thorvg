@@ -1792,7 +1792,7 @@ bool rasterCompositor(SwSurface* surface)
 }
 
 
-bool rasterClear(SwSurface* surface, uint32_t x, uint32_t y, uint32_t w, uint32_t h)
+bool rasterClear(SwSurface* surface, uint32_t val, uint32_t x, uint32_t y, uint32_t w, uint32_t h)
 {
     if (!surface || !surface->buf32 || surface->stride == 0 || surface->w == 0 || surface->h == 0) return false;
 
@@ -1800,11 +1800,11 @@ bool rasterClear(SwSurface* surface, uint32_t x, uint32_t y, uint32_t w, uint32_
     if (surface->channelSize == sizeof(uint32_t)) {
         //full clear
         if (w == surface->stride) {
-            rasterPixel32(surface->buf32, 0x00000000, surface->stride * y, w * h);
+            rasterPixel32(surface->buf32, val, surface->stride * y, w * h);
         //partial clear
         } else {
             for (uint32_t i = 0; i < h; i++) {
-                rasterPixel32(surface->buf32, 0x00000000, (surface->stride * y + x) + (surface->stride * i), w);
+                rasterPixel32(surface->buf32, val, (surface->stride * y + x) + (surface->stride * i), w);
             }
         }
     //8 bits
