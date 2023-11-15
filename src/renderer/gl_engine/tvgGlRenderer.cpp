@@ -82,6 +82,9 @@ bool GlRenderer::target(TVG_UNUSED uint32_t* buffer, uint32_t stride, uint32_t w
 
 bool GlRenderer::sync()
 {
+    //nothing to be done.
+    if (mRenderPassStack.size() == 0) return true;
+
     mGpuBuffer->flushToGPU();
 
     // Blend function for straight alpha
@@ -90,8 +93,6 @@ bool GlRenderer::sync()
     GL_CHECK(glEnable(GL_SCISSOR_TEST));
 
     mGpuBuffer->bind();
-
-    assert(mRenderPassStack.size() == 1);
 
     auto task = mRenderPassStack.front().endRenderPass<GlBlitTask>(nullptr, mTargetFboId);
 
