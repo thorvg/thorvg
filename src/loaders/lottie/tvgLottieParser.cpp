@@ -950,8 +950,19 @@ void LottieParser::parseShapes(LottieLayer* layer)
 {
     enterArray();
     while (nextArrayValue()) {
-        parseObject(layer);
-    }
+        enterObject();
+        while (auto key = nextObjectKey()) {
+            if (!strcmp(key, "it")) {
+                enterArray();
+                while (nextArrayValue()) parseObject(layer);
+            } else if (!strcmp(key, "ty")) {
+                if (auto child = parseObject()) {
+                    if (child->hidden) delete(child);
+                    else layer->children.push(child);
+                }
+            } else skip(key);
+        }
+     }
 }
 
 
