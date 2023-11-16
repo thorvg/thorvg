@@ -1,3 +1,26 @@
+/*
+ * Copyright (c) 2023 the ThorVG project. All rights reserved.
+
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+
 //
 // gif.h
 // by Charlie Tangora
@@ -26,8 +49,8 @@
 // Finally, call GifEnd() to close the file handle and free memory.
 //
 
-#ifndef gif_h
-#define gif_h
+#ifndef TVG_GIF_ENCODER_H
+#define TVG_GIF_ENCODER_H
 
 #include <stdio.h>   // for FILE*
 #include <string.h>  // for memcpy and bzero
@@ -282,19 +305,20 @@ void GifSplitPalette(uint8_t* image, int numPixels, int firstElt, int lastElt, i
 // moves them to the from of the buffer.
 // This allows us to build a palette optimized for the colors of the
 // changed pixels only.
-int GifPickChangedPixels( const uint8_t* lastFrame, uint8_t* frame, int numPixels )
+int GifPickChangedPixels( const uint8_t* lastFrame, uint8_t* frame, int numPixels, bool transparent)
 {
     int numChanged = 0;
     uint8_t* writeIter = frame;
 
-    for (int ii=0; ii<numPixels; ++ii)
-    {
-        if ((frame[3] == 255) && (lastFrame[0] != frame[0] || lastFrame[1] != frame[1] || lastFrame[2] != frame[2])) {
-            writeIter[0] = frame[0];
-            writeIter[1] = frame[1];
-            writeIter[2] = frame[2];
-            ++numChanged;
-            writeIter += 4;
+    for (int ii=0; ii < numPixels; ++ii) {
+        if (frame[3] == 255) {
+            if (transparent || (lastFrame[0] != frame[0] || lastFrame[1] != frame[1] || lastFrame[2] != frame[2])) {
+                writeIter[0] = frame[0];
+                writeIter[1] = frame[1];
+                writeIter[2] = frame[2];
+                ++numChanged;
+                writeIter += 4;
+            }
         }
         lastFrame += 4;
         frame += 4;
@@ -305,7 +329,7 @@ int GifPickChangedPixels( const uint8_t* lastFrame, uint8_t* frame, int numPixel
 
 // Creates a palette by placing all the image pixels in a k-d tree and then averaging the blocks at the bottom.
 // This is known as the "modified median split" technique
-void GifMakePalette( const uint8_t* lastFrame, const uint8_t* nextFrame, uint32_t width, uint32_t height, int bitDepth, GifPalette* pPal )
+void GifMakePalette( const uint8_t* lastFrame, const uint8_t* nextFrame, uint32_t width, uint32_t height, int bitDepth, GifPalette* pPal, bool transparent)
 {
     pPal->bitDepth = bitDepth;
 
@@ -316,8 +340,7 @@ void GifMakePalette( const uint8_t* lastFrame, const uint8_t* nextFrame, uint32_
     memcpy(destroyableImage, nextFrame, imageSize);
 
     int numPixels = (int)(width * height);
-    if(lastFrame)
-        numPixels = GifPickChangedPixels(lastFrame, destroyableImage, numPixels);
+    if(lastFrame) numPixels = GifPickChangedPixels(lastFrame, destroyableImage, numPixels, transparent);
 
     const int lastElt = 1 << bitDepth;
     const int splitElt = lastElt/2;
@@ -663,7 +686,7 @@ bool GifWriteFrame(GifWriter* writer, const uint8_t* image, uint32_t width, uint
     writer->firstFrame = false;
 
     GifPalette pal;
-    GifMakePalette(oldImage, image, width, height, 8, &pal);
+    GifMakePalette(oldImage, image, width, height, 8, &pal, transparent);
 
     GifThresholdImage(oldImage, image, writer->oldImage, width, height, &pal, transparent);
 
@@ -689,4 +712,4 @@ bool GifEnd( GifWriter* writer )
     return true;
 }
 
-#endif
+#endif //TVG_GIF_ENCODER_H

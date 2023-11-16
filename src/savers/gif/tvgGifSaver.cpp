@@ -21,7 +21,7 @@
  */
 
 #include <stdlib.h>
-#include "gif.h"
+#include "tvgGifEncoder.h"
 #include "tvgGifSaver.h"
 
 
@@ -63,6 +63,7 @@ void GifSaver::run(unsigned tid)
     auto duration = animation->duration();
 
     for (auto p = 0.0f; p < duration; p += delay) {
+        canvas->clear(false);
         auto frameNo = animation->totalFrame() * (p / duration);
         animation->frame(frameNo);
         canvas->update();
