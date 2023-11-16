@@ -1,4 +1,5 @@
 source_file = [
+   'tvgGifEncoder.h',
    'tvgGifSaver.h',
    'tvgGifSaver.cpp',
 ]
