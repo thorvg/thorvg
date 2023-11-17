@@ -31,6 +31,7 @@ typedef struct
 {
     FILE* f;
     uint8_t* oldImage;
+    uint8_t* tmpImage;
     bool firstFrame;
 } GifWriter;
 
