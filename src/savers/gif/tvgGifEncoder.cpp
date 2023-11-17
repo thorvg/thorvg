@@ -302,26 +302,21 @@ static int _pickChangedPixels(const uint8_t* lastFrame, uint8_t* frame, int numP
 
 // Creates a palette by placing all the image pixels in a k-d tree and then averaging the blocks at the bottom.
 // This is known as the "modified median split" technique
-static void _makePalette(const uint8_t* lastFrame, const uint8_t* nextFrame, uint32_t width, uint32_t height, int bitDepth, GifPalette* pPal, bool transparent)
+static void _makePalette(GifWriter* writer, const uint8_t* lastFrame, const uint8_t* nextFrame, uint32_t width, uint32_t height, int bitDepth, GifPalette* pPal, bool transparent)
 {
     pPal->bitDepth = bitDepth;
 
-    // SplitPalette is destructive (it sorts the pixels by color) so
-    // we must create a copy of the image for it to destroy
     size_t imageSize = (size_t)(width * height * 4 * sizeof(uint8_t));
-    uint8_t* destroyableImage = (uint8_t*)malloc(imageSize);
-    memcpy(destroyableImage, nextFrame, imageSize);
+    memcpy(writer->tmpImage, nextFrame, imageSize);
 
     int numPixels = (int)(width * height);
-    if (lastFrame) numPixels = _pickChangedPixels(lastFrame, destroyableImage, numPixels, transparent);
+    if (lastFrame) numPixels = _pickChangedPixels(lastFrame, writer->tmpImage, numPixels, transparent);
 
     const int lastElt = 1 << bitDepth;
     const int splitElt = lastElt/2;
     const int splitDist = splitElt/2;
 
-    _splitPalette(destroyableImage, numPixels, 1, lastElt, splitElt, splitDist, 1, pPal);
-
-    free(destroyableImage);
+    _splitPalette(writer->tmpImage, numPixels, 1, lastElt, splitElt, splitDist, 1, pPal);
 
     // add the bottom node for the transparency index
     pPal->treeSplit[1 << (bitDepth-1)] = 0;
@@ -568,6 +563,7 @@ bool gifBegin(GifWriter* writer, const char* filename, uint32_t width, uint32_t 
 
     // allocate
     writer->oldImage = (uint8_t*)malloc(width*height*4);
+    writer->tmpImage = (uint8_t*)malloc(width*height*4);
 
     fputs("GIF89a", writer->f);
 
@@ -618,7 +614,7 @@ bool gifWriteFrame(GifWriter* writer, const uint8_t* image, uint32_t width, uint
     writer->firstFrame = false;
 
     GifPalette pal;
-    _makePalette(oldImage, image, width, height, 8, &pal, transparent);
+    _makePalette(writer, oldImage, image, width, height, 8, &pal, transparent);
 
     _thresholdImage(oldImage, image, writer->oldImage, width, height, &pal, transparent);
 
@@ -635,6 +631,7 @@ bool gifEnd(GifWriter* writer)
     fputc(0x3b, writer->f); // end of file
     fclose(writer->f);
     free(writer->oldImage);
+    free(writer->tmpImage);
 
     writer->f = NULL;
     writer->oldImage = NULL;
