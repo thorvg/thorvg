@@ -102,3 +102,13 @@ TEST_CASE("Synchronize a Saver", "[capiSaver]")
 }
 
 #endif
+
+
+#ifdef THORVG_GIF_SAVER_SUPPORT
+
+TEST_CASE("Save a lottie into gif", "[capiSavers]")
+{
+    //TODO: GIF Save Test
+}
+
+#endif
