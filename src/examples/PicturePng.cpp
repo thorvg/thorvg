@@ -54,7 +54,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     }
 
     //Open file manually
-    ifstream file(EXAMPLE_DIR"/test.png");
+    ifstream file(EXAMPLE_DIR"/test.png", ios::binary);
     if (!file.is_open()) return;
     auto begin = file.tellg();
     file.seekg(0, std::ios::end);

@@ -92,7 +92,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     if (canvas->push(std::move(star)) != tvg::Result::Success) return;
 
     //Image
-    ifstream file(EXAMPLE_DIR"/rawimage_200x300.raw");
+    ifstream file(EXAMPLE_DIR"/rawimage_200x300.raw", ios::binary);
     if (!file.is_open()) return;
     auto data = (uint32_t*) malloc(sizeof(uint32_t) * (200 * 300));
     file.read(reinterpret_cast<char*>(data), sizeof (uint32_t) * 200 * 300);
