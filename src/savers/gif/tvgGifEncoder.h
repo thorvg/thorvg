@@ -27,11 +27,27 @@
 #include <stdio.h>
 #include <cstdint>
 
+
+typedef struct
+{
+    uint8_t r[256];
+    uint8_t g[256];
+    uint8_t b[256];
+
+    // k-d tree over RGB space, organized in heap fashion
+    // i.e. left child of node i is node i*2, right child is node i*2+1
+    // nodes 256-511 are implicitly the leaves, containing a color
+    uint8_t treeSplitElt[256];
+    uint8_t treeSplit[256];
+} GifPalette;
+
+
 typedef struct
 {
     FILE* f;
     uint8_t* oldImage;
     uint8_t* tmpImage;
+    GifPalette pal;
     bool firstFrame;
 } GifWriter;
 
