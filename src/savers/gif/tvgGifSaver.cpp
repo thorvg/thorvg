@@ -20,10 +20,8 @@
  * SOFTWARE.
  */
 
-#include <stdlib.h>
 #include "tvgGifEncoder.h"
 #include "tvgGifSaver.h"
-
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
@@ -55,7 +53,7 @@ void GifSaver::run(unsigned tid)
     auto transparent = bg ? false : true;
 
     GifWriter writer;
-    if (!GifBegin(&writer, path, w, h, uint32_t(delay * 100.f))) {
+    if (!gifBegin(&writer, path, w, h, uint32_t(delay * 100.f))) {
         TVGERR("GIF_SAVER", "Failed gif encoding");
         return;
     }
@@ -70,13 +68,13 @@ void GifSaver::run(unsigned tid)
         if (canvas->draw() == tvg::Result::Success) {
             canvas->sync();
         }
-        if (!GifWriteFrame(&writer, reinterpret_cast<uint8_t*>(buffer), w, h, uint32_t(delay * 100.0f), transparent)) {
+        if (!gifWriteFrame(&writer, reinterpret_cast<uint8_t*>(buffer), w, h, uint32_t(delay * 100.0f), transparent)) {
             TVGERR("GIF_SAVER", "Failed gif encoding");
             break;
         }
     }
 
-    if (!GifEnd(&writer)) TVGERR("GIF_SAVER", "Failed gif encoding");
+    if (!gifEnd(&writer)) TVGERR("GIF_SAVER", "Failed gif encoding");
 
     this->bg = nullptr;
 }
