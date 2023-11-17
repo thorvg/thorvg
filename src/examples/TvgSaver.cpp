@@ -193,7 +193,7 @@ void exportTvg()
     //prepare image source
     const int width = 200;
     const int height = 300;
-    ifstream file(EXAMPLE_DIR"/rawimage_200x300.raw");
+    ifstream file(EXAMPLE_DIR"/rawimage_200x300.raw", ios::binary);
     if (!file.is_open()) return;
     uint32_t *data = (uint32_t*) malloc(sizeof(uint32_t) * width * height);
     if (!data) return;
