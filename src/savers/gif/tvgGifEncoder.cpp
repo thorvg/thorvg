@@ -51,6 +51,7 @@
 
 
 #define TRANSPARENT_IDX 0
+#define TRANSPARENT_THRESHOLD 127
 
 typedef struct
 {
@@ -283,7 +284,7 @@ static int _pickChangedPixels(const uint8_t* lastFrame, uint8_t* frame, int numP
     uint8_t* writeIter = frame;
 
     for (int ii=0; ii < numPixels; ++ii) {
-        if (frame[3] == 255) {
+        if (frame[3] >= TRANSPARENT_THRESHOLD) {
             if (transparent || (lastFrame[0] != frame[0] || lastFrame[1] != frame[1] || lastFrame[2] != frame[2])) {
                 writeIter[0] = frame[0];
                 writeIter[1] = frame[1];
@@ -347,7 +348,7 @@ static void _thresholdImage(const uint8_t* lastFrame, const uint8_t* nextFrame, 
 
     if (transparent) {
         for (uint32_t ii = 0; ii < numPixels; ++ii) {
-            if (nextFrame[3] < 255) {
+            if (nextFrame[3] < TRANSPARENT_THRESHOLD) {
                 outFrame[0] = 0;
                 outFrame[1] = 0;
                 outFrame[2] = 0;
