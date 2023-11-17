@@ -41,6 +41,8 @@ void GifSaver::run(unsigned tid)
     buffer = (uint32_t*)realloc(buffer, sizeof(uint32_t) * w * h);
     canvas->target(buffer, w, w, h, tvg::SwCanvas::ABGR8888S);
     canvas->push(cast(bg));
+    bg = nullptr;
+
     canvas->push(cast(animation->picture()));
 
     //use the default fps
@@ -75,8 +77,6 @@ void GifSaver::run(unsigned tid)
     }
 
     if (!gifEnd(&writer)) TVGERR("GIF_SAVER", "Failed gif encoding");
-
-    this->bg = nullptr;
 }
 
 
