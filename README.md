@@ -92,14 +92,12 @@ ninja -C builddir install
 Regardless of the installation, all build results (symbols, executable) are generated in the builddir folder in thorvg. Some results such as examples won't be installed, you can check More examples section to see how to change it. <br/>
 ​<br/>
 Note that some systems might include ThorVG package as a default component. In that case, you can skip this manual installation.</br>
-</br>
 
 ### Build with Visual Studio
 If you want to create Visual Studio project files, use the command --backend=vs. The resulting solution file (thorvg.sln) will be located in the build folder.
 ```
 meson setup builddir --backend=vs
 ```
-</br>
 
 ### Install with vcpkg
 You can download and install pre-packaged ThorVG using the [vcpkg](https://vcpkg.io/en/index.html) package manager.
@@ -358,9 +356,12 @@ ThorVG API documentation is available at [thorvg.org/apis](https://www.thorvg.or
 <br />
 ## Tools
 ### ThorVG Viewer
-ThorVG provides the resource verification tool for the ThorVG Engine. [ThorVG viewer](https://thorvg.github.io/thorvg.viewer/) does immediate rendering via web browser running on the ThorVG web-assembly binary, allowing real-time editing of the vector elements on it. It doesn't upload your resources to any external server while allowing to export to supported formats such as TVG, so the designer resource copyright is protected.
+ThorVG provides the resource verification tool for the ThorVG Engine. [ThorVG viewer](https://thorvg.github.io/thorvg.viewer/) does immediate rendering via web browser running on the ThorVG web-assembly binary, allowing real-time editing of the vector elements on it. It doesn't upload your resources to any external server while allowing to export to supported formats such as TVG, so the designer resource copyright is protected.</br>
+</br>
 
-https://user-images.githubusercontent.com/71131832/130445967-fb8f7d81-9c89-4598-b7e4-2c046d5d7438.mp4
+<p align="center">
+  <img width="700" height="auto" src="https://github.com/thorvg/thorvg/assets/3711518/edadcc5e-3bbf-489d-a9a1-9570079c7d55"/>
+</p>
 
 ### Lottie to GIF
 ThorVG provides an executable `lottie2gif` converter that generates a GIF file from a Lottie file.
