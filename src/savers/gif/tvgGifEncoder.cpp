@@ -52,21 +52,7 @@
 
 #define TRANSPARENT_IDX 0
 #define TRANSPARENT_THRESHOLD 127
-
-typedef struct
-{
-    int bitDepth;
-
-    uint8_t r[256];
-    uint8_t g[256];
-    uint8_t b[256];
-
-    // k-d tree over RGB space, organized in heap fashion
-    // i.e. left child of node i is node i*2, right child is node i*2+1
-    // nodes 256-511 are implicitly the leaves, containing a color
-    uint8_t treeSplitElt[256];
-    uint8_t treeSplit[256];
-} GifPalette;
+#define BIT_DEPTH 8
 
 
 // Simple structure to write out the LZW-compressed portion of the image
@@ -100,8 +86,8 @@ typedef struct
 static void _getClosestPaletteColor( GifPalette* pPal, int r, int g, int b, int* bestInd, int* bestDiff, int treeRoot )
 {
     // base case, reached the bottom of the tree
-    if(treeRoot > (1<<pPal->bitDepth)-1) {
-        int ind = treeRoot-(1<<pPal->bitDepth);
+    if (treeRoot > (1 << BIT_DEPTH) - 1) {
+        int ind = treeRoot-(1 << BIT_DEPTH);
         if(ind == TRANSPARENT_IDX) return;
 
         // check whether this color is better than the current winner
@@ -118,7 +104,8 @@ static void _getClosestPaletteColor( GifPalette* pPal, int r, int g, int b, int*
     }
 
     // take the appropriate color (r, g, or b) for this node of the k-d tree
-    int comps[3]; comps[0] = r; comps[1] = g; comps[2] = b;
+    int comps[3] = {r, g, b};
+
     int splitComp = comps[pPal->treeSplitElt[treeRoot]];
 
     int splitPos = pPal->treeSplit[treeRoot];
@@ -228,7 +215,6 @@ static void _splitPalette(uint8_t* image, int numPixels, int firstElt, int lastE
         pal->r[firstElt] = (uint8_t)r;
         pal->g[firstElt] = (uint8_t)g;
         pal->b[firstElt] = (uint8_t)b;
-
         return;
     }
 
@@ -303,9 +289,9 @@ static int _pickChangedPixels(const uint8_t* lastFrame, uint8_t* frame, int numP
 
 // Creates a palette by placing all the image pixels in a k-d tree and then averaging the blocks at the bottom.
 // This is known as the "modified median split" technique
-static void _makePalette(GifWriter* writer, const uint8_t* lastFrame, const uint8_t* nextFrame, uint32_t width, uint32_t height, int bitDepth, GifPalette* pPal, bool transparent)
+static void _makePalette(GifWriter* writer, const uint8_t* lastFrame, const uint8_t* nextFrame, uint32_t width, uint32_t height, int bitDepth, bool transparent)
 {
-    pPal->bitDepth = bitDepth;
+    auto& pal = writer->pal;
 
     size_t imageSize = (size_t)(width * height * 4 * sizeof(uint8_t));
     memcpy(writer->tmpImage, nextFrame, imageSize);
@@ -317,13 +303,12 @@ static void _makePalette(GifWriter* writer, const uint8_t* lastFrame, const uint
     const int splitElt = lastElt/2;
     const int splitDist = splitElt/2;
 
-    _splitPalette(writer->tmpImage, numPixels, 1, lastElt, splitElt, splitDist, 1, pPal);
+    _splitPalette(writer->tmpImage, numPixels, 1, lastElt, splitElt, splitDist, 1, &pal);
 
     // add the bottom node for the transparency index
-    pPal->treeSplit[1 << (bitDepth-1)] = 0;
-    pPal->treeSplitElt[1 << (bitDepth-1)] = 0;
-
-    pPal->r[0] = pPal->g[0] = pPal->b[0] = 0;
+    pal.treeSplit[1 << (bitDepth-1)] = 0;
+    pal.treeSplitElt[1 << (bitDepth-1)] = 0;
+    pal.r[0] = pal.g[0] = pal.b[0] = 0;
 }
 
 
@@ -342,8 +327,9 @@ void _palettizePixel(const uint8_t* nextFrame, uint8_t* outFrame, GifPalette* pP
 
 
 // Picks palette colors for the image using simple thresholding, no dithering
-static void _thresholdImage(const uint8_t* lastFrame, const uint8_t* nextFrame, uint8_t* outFrame, uint32_t width, uint32_t height, GifPalette* pPal, bool transparent)
+static void _thresholdImage(GifWriter* writer, const uint8_t* lastFrame, const uint8_t* nextFrame,  uint32_t width, uint32_t height, bool transparent)
 {
+    auto outFrame = writer->oldImage;
     uint32_t numPixels = width*height;
 
     if (transparent) {
@@ -354,7 +340,7 @@ static void _thresholdImage(const uint8_t* lastFrame, const uint8_t* nextFrame, 
                 outFrame[2] = 0;
                 outFrame[3] = TRANSPARENT_IDX;
             } else {
-                _palettizePixel(nextFrame, outFrame, pPal);
+                _palettizePixel(nextFrame, outFrame, &writer->pal);
             }
             if (lastFrame) lastFrame += 4;
             outFrame += 4;
@@ -370,7 +356,7 @@ static void _thresholdImage(const uint8_t* lastFrame, const uint8_t* nextFrame, 
                 outFrame[2] = lastFrame[2];
                 outFrame[3] = TRANSPARENT_IDX;
             } else {
-                _palettizePixel(nextFrame, outFrame, pPal);
+                _palettizePixel(nextFrame, outFrame, &writer->pal);
             }
             if (lastFrame) lastFrame += 4;
             outFrame += 4;
@@ -427,7 +413,7 @@ static void _writePalette(const GifPalette* pPal, FILE* f)
     fputc(0, f);
     fputc(0, f);
 
-    for (int ii = 1; ii < (1 << pPal->bitDepth); ++ii) {
+    for (int ii = 1; ii < (1 << BIT_DEPTH); ++ii) {
         uint32_t r = pPal->r[ii];
         uint32_t g = pPal->g[ii];
         uint32_t b = pPal->b[ii];
@@ -440,8 +426,11 @@ static void _writePalette(const GifPalette* pPal, FILE* f)
 
 
 // write the image header, LZW-compress and write out the image
-static void _writeLzwImage(FILE* f, uint8_t* image, uint32_t left, uint32_t top,  uint32_t width, uint32_t height, uint32_t delay, GifPalette* pPal, bool transparent)
+static void _writeLzwImage(GifWriter* writer, uint32_t width, uint32_t height, uint32_t delay, bool transparent)
 {
+    auto f = writer->f;
+    auto image = writer->oldImage;
+
     // graphics control extension
     fputc(0x21, f);
     fputc(0xf9, f);
@@ -454,10 +443,11 @@ static void _writeLzwImage(FILE* f, uint8_t* image, uint32_t left, uint32_t top,
 
     fputc(0x2c, f); // image descriptor block
 
-    fputc(left & 0xff, f);           // corner of image in canvas space
-    fputc((left >> 8) & 0xff, f);
-    fputc(top & 0xff, f);
-    fputc((top >> 8) & 0xff, f);
+    // corner of image (left, top) in canvas space
+    fputc(0, f);
+    fputc(0, f);
+    fputc(0, f);
+    fputc(0, f);
 
     fputc(width & 0xff, f);          // width and height of image
     fputc((width >> 8) & 0xff, f);
@@ -467,11 +457,11 @@ static void _writeLzwImage(FILE* f, uint8_t* image, uint32_t left, uint32_t top,
     //fputc(0, f); // no local color table, no transparency
     //fputc(0x80, f); // no local color table, but transparency
 
-    fputc(0x80 + pPal->bitDepth-1, f); // local color table present, 2 ^ bitDepth entries
-    _writePalette(pPal, f);
+    fputc(0x80 + BIT_DEPTH - 1, f); // local color table present, 2 ^ bitDepth entries
+    _writePalette(&writer->pal, f);
 
-    const int minCodeSize = pPal->bitDepth;
-    const uint32_t clearCode = 1 << pPal->bitDepth;
+    const int minCodeSize = BIT_DEPTH;
+    const uint32_t clearCode = 1 << BIT_DEPTH;
 
     fputc(minCodeSize, f); // min code size 8 bits
 
@@ -614,12 +604,9 @@ bool gifWriteFrame(GifWriter* writer, const uint8_t* image, uint32_t width, uint
     const uint8_t* oldImage = writer->firstFrame? NULL : writer->oldImage;
     writer->firstFrame = false;
 
-    GifPalette pal;
-    _makePalette(writer, oldImage, image, width, height, 8, &pal, transparent);
-
-    _thresholdImage(oldImage, image, writer->oldImage, width, height, &pal, transparent);
-
-    _writeLzwImage(writer->f, writer->oldImage, 0, 0, width, height, delay, &pal, transparent);
+    _makePalette(writer, oldImage, image, width, height, 8, transparent);
+    _thresholdImage(writer, oldImage, image, width, height, transparent);
+    _writeLzwImage(writer, width, height, delay, transparent);
 
     return true;
 }
