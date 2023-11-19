@@ -28,12 +28,16 @@
 class WgPipelineImage;
 
 struct WgPipelineImageColorInfo {
-    float color[4]{};
+    uint32_t format{};
+    float dummy0{};
+    float dummy1{};
+    float opacity{};
 };
 
 struct WgPipelineDataImage: WgPipelineData {
     WgPipelineImageColorInfo uColorInfo{}; // @binding(1)
 
+    void updateFormat(const ColorSpace format);
     void updateOpacity(const uint8_t opacity);
 };
 

@@ -281,7 +281,10 @@ struct Matrix {
 
 // ColorInfo
 struct ColorInfo {
-    color: vec4f
+    format: u32,
+    dummy0: f32,
+    dummy1: f32,
+    opacity: f32
 };
 
 // vertex output
@@ -312,5 +315,14 @@ fn vs_main(in: VertexInput) -> VertexOutput {
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4f {
     var color: vec4f = textureSample(uTextureViewBase, uSamplerBase, in.texCoords.xy);
-    return vec4f(color.rgb, color.a * uColorInfo.color.a);
+    var result: vec4f = color;
+    var format: u32 = uColorInfo.format;
+    if (format == 1u) { /* FMT_ARGB8888 */
+        result = color.bgra;
+    } else if (format == 2u) { /* FMT_ABGR8888S */
+        result = vec4(color.rgb * color.a, color.a);
+    } else if (format == 3u) { /* FMT_ARGB8888S */
+        result = vec4(color.bgr * color.a, color.a);
+    }
+    return vec4f(result.rgb, result.a * uColorInfo.opacity);
 })";
