@@ -189,6 +189,7 @@ RenderData WgRenderer::prepare(Surface* surface, const RenderMesh* mesh, RenderD
     if (flags & (RenderUpdateFlag::Color | RenderUpdateFlag::Image | RenderUpdateFlag::Transform)) {
         WgPipelineDataImage pipelineDataImage{};
         pipelineDataImage.updateMatrix(mViewMatrix, transform);
+        pipelineDataImage.updateFormat(surface->cs);
         pipelineDataImage.updateOpacity(opacity);
         renderDataShape->mPipelineBindGroupImage.update(mQueue, pipelineDataImage, surface);
         renderDataShape->tesselate(mDevice, mQueue, surface, mesh);

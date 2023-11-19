@@ -27,11 +27,12 @@
 // WgPipelineDataImage
 //************************************************************************
 
+void WgPipelineDataImage::updateFormat(const ColorSpace format) {
+    uColorInfo.format = (uint32_t)format;
+}
+
 void WgPipelineDataImage::updateOpacity(const uint8_t opacity) {
-    uColorInfo.color[0] = 1.0f; // red
-    uColorInfo.color[1] = 1.0f; // green
-    uColorInfo.color[2] = 1.0f; // blue
-    uColorInfo.color[3] = opacity / 255.0f; // alpha
+    uColorInfo.opacity = opacity / 255.0f; // alpha
 }
 
 //************************************************************************
