@@ -49,9 +49,9 @@ Result Canvas::push(unique_ptr<Paint> paint) noexcept
 }
 
 
-Result Canvas::clear(bool free) noexcept
+Result Canvas::clear(bool paints, bool buffer) noexcept
 {
-    return pImpl->clear(free);
+    return pImpl->clear(paints, buffer);
 }
 
 

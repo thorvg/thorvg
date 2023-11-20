@@ -49,8 +49,7 @@ static void _termEngine()
 
 bool GlRenderer::clear()
 {
-    //TODO: (Request) to clear target
-    // Will be adding glClearColor for input buffer
+    mClearBuffer = true;
     return true;
 }
 
@@ -98,15 +97,17 @@ bool GlRenderer::sync()
 
     task->setSize(surface.w, surface.h);
 
+    task->mClearBuffer = mClearBuffer;
+
     task->run();
 
     mGpuBuffer->unbind();
-
 
     GL_CHECK(glDisable(GL_SCISSOR_TEST));
 
     mRenderPassStack.clear();
     mPoolIndex = 0;
+    mClearBuffer = false;
 
     delete task;
 

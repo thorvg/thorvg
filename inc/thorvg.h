@@ -603,14 +603,15 @@ public:
      * Depending on the value of the @p free argument, the paints are either freed or retained.
      * So if you need to update paint properties while maintaining the existing scene structure, you can set @p free = false.
      *
-     * @param[in] free If @c true, the memory occupied by paints is deallocated, otherwise it is not.
+     * @param[in] paints If @c true, The memory occupied by paints is deallocated; otherwise, the paints will be retained on the canvas.
+     * @param[in] buffer If @c true, the canvas target buffer is cleared with a zero value.
      *
      * @return Result::Success when succeed, Result::InsufficientCondition otherwise.
      *
      * @see Canvas::push()
      * @see Canvas::paints()
      */
-    virtual Result clear(bool free = true) noexcept;
+    virtual Result clear(bool paints = true, bool buffer = true) noexcept;
 
     /**
      * @brief Request the canvas to update the paint objects.

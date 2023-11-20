@@ -86,13 +86,16 @@ private:
 
     GLint mTargetFboId = 0;
     RenderRegion mViewport;
-    std::unique_ptr<GlStageBuffer> mGpuBuffer;
+    //TODO: remove all unique_ptr / replace the vector with tvg::Array
+    unique_ptr<GlStageBuffer> mGpuBuffer;
     vector<std::unique_ptr<GlProgram>> mPrograms;
     unique_ptr<GlRenderTarget> mRootTarget = {};
     vector<unique_ptr<GlRenderTarget>> mComposePool = {};
     size_t mPoolIndex = 0;
     vector<GlRenderPass> mRenderPassStack = {};
     vector<unique_ptr<Compositor>> mComposeStack = {};
+
+    bool mClearBuffer = true;
 };
 
 #endif /* _TVG_GL_RENDERER_H_ */

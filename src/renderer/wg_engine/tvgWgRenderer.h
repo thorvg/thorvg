@@ -87,6 +87,8 @@ private:
     WgGeometryData mGeometryDataWindow;
     WgPipelineBindGroupEmpty mPipelineBindGroupEmpty;
     WgPipelineBindGroupStroke mPipelineBindGroupStroke;
+
+    bool mClearBuffer;
 };
 
 #endif /* _TVG_WG_RENDERER_H_ */
