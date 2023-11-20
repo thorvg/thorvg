@@ -103,6 +103,8 @@ public:
 
     void run() override;
 
+    bool mClearBuffer = true;
+
 protected:
     GLuint getTargetFbo() { return mTargetFbo; }
 

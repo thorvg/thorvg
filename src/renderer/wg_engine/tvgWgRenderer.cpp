@@ -242,6 +242,7 @@ ColorSpace WgRenderer::colorSpace() {
 }
 
 bool WgRenderer::clear() {
+    mClearBuffer = true;
     return true;
 }
 
@@ -274,9 +275,13 @@ bool WgRenderer::sync() {
             WGPURenderPassColorAttachment colorAttachment{};
             colorAttachment.view = backBufferView;
             colorAttachment.resolveTarget = nullptr;
-            colorAttachment.loadOp = WGPULoadOp_Clear;
+            if (mClearBuffer) {
+                colorAttachment.loadOp = WGPULoadOp_Clear
+                colorAttachment.clearValue = {0, 0, 0, 0};
+            } else {
+                colorAttachment.loadOp = WGPULoadOp_Load;
+            }
             colorAttachment.storeOp = WGPUStoreOp_Store;
-            colorAttachment.clearValue = { 0.0f, 0.0f, 0.0f, 1.0 };
             // render pass descriptor
             WGPURenderPassDescriptor renderPassDesc{};
             renderPassDesc.nextInChain = nullptr;
@@ -351,6 +356,9 @@ bool WgRenderer::sync() {
     wgpuSwapChainPresent(mSwapChain);
 
     mRenderDatas.clear();
+
+    mClearBuffer = false;
+
     return true;
 }
 

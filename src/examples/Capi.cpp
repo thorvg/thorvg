@@ -246,6 +246,7 @@ void transitCb(Elm_Transit_Effect *effect, Elm_Transit* transit, double progress
     }
 
     //Draw the canvas
+    tvg_canvas_clear(canvas, false, true);
     tvg_canvas_draw(canvas);
     tvg_canvas_sync(canvas);
 

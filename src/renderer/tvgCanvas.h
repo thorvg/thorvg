@@ -45,22 +45,19 @@ struct Canvas::Impl
         //make it sure any deffered jobs
         if (renderer) renderer->sync();
 
-        clearPaints(true);
+        clearPaints();
         delete(renderer);
     }
 
-    void clearPaints(bool free)
+    void clearPaints()
     {
-        if (free) {
-            for (auto paint : paints) {
-                P(paint)->unref();
-                if (paint->pImpl->dispose(*renderer) && P(paint)->refCnt == 0) {
-                    delete(paint);
-                }
+        for (auto paint : paints) {
+            P(paint)->unref();
+            if (paint->pImpl->dispose(*renderer) && P(paint)->refCnt == 0) {
+                delete(paint);
             }
-            paints.clear();
         }
-        drawing = false;
+        paints.clear();
     }
 
     Result push(unique_ptr<Paint> paint)
@@ -76,12 +73,16 @@ struct Canvas::Impl
         return update(p, true);
     }
 
-    Result clear(bool free)
+    Result clear(bool paints, bool buffer)
     {
-        //Clear render target
-        if (!renderer || !renderer->clear()) return Result::InsufficientCondition;
+        if (drawing) return Result::InsufficientCondition;
 
-        clearPaints(free);
+        //Clear render target
+        if (buffer) {
+            if (!renderer || !renderer->clear()) return Result::InsufficientCondition;
+        }
+
+        if (paints) clearPaints();
 
         return Result::Success;
     }

@@ -614,18 +614,17 @@ TVG_DEPRECATED TVG_API Tvg_Result tvg_canvas_reserve(Tvg_Canvas* canvas, uint32_
 * all paints should be released manually in order to avoid memory leaks.
 *
 * \param[in] canvas The Tvg_Canvas object to be cleared.
-* \param[in] free If @c true the memory occupied by paints is deallocated, otherwise it is not.
+* \param[in] paints If @c true, The memory occupied by paints is deallocated; otherwise, the paints will be retained on the canvas.
+* \param[in] buffer If @c true the canvas target buffer is cleared with a zero value.
 *
 * \return Tvg_Result enumeration.
 * \retval TVG_RESULT_SUCCESS Succeed.
 * \retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Canvas pointer.
 * \retval TVG_RESULT_INSUFFICIENT_CONDITION An internal error.
 *
-* \warning Please use the @p free argument only when you know how it works, otherwise it's not recommended.
-*
 * \see tvg_canvas_destroy()
 */
-TVG_API Tvg_Result tvg_canvas_clear(Tvg_Canvas* canvas, bool free);
+TVG_API Tvg_Result tvg_canvas_clear(Tvg_Canvas* canvas, bool paints, bool buffer);
 
 
 /*!

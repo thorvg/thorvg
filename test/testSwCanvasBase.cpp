@@ -169,6 +169,8 @@ TEST_CASE("Update", "[tvgSwCanvasBase]")
     REQUIRE(canvas->update() == Result::Success);
     REQUIRE(canvas->draw() == Result::Success);
     REQUIRE(canvas->update() == Result::InsufficientCondition);
+    REQUIRE(canvas->clear() == Result::InsufficientCondition);
+    REQUIRE(canvas->sync() == Result::Success);
 
     REQUIRE(canvas->clear() == Result::Success);
 
