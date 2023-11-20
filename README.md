@@ -184,13 +184,13 @@ path->close();
 
 path->fill(150, 150, 255);                   //path color
 
-path->stroke(3);                             //stroke width
-path->stroke(0, 0, 255, 255);                //stroke color
-path->stroke(tvg::StrokeJoin::Round);        //stroke join style
-path->stroke(tvg::StrokeCap::Round);         //stroke cap style
+path->strokeWidth(3);                        //stroke width
+path->strokeFill(0, 0, 255);                 //stroke color
+path->strokeJoin(tvg::StrokeJoin::Round);    //stroke join style
+path->strokeCap(tvg::StrokeCap::Round);      //stroke cap style
 
 float pattern[2] = {10, 10};                 //stroke dash pattern (line, gap)
-path->stroke(pattern, 2);                    //set the stroke pattern
+path->strokeDash(pattern, 2);                //set the stroke pattern
 
 canvas->push(move(path));                    //push the path into the canvas
 
