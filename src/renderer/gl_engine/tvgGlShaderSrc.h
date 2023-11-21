@@ -30,5 +30,14 @@ extern const char* LINEAR_GRADIENT_FRAG_SHADER;
 extern const char* RADIAL_GRADIENT_FRAG_SHADER;
 extern const char* IMAGE_VERT_SHADER;
 extern const char* IMAGE_FRAG_SHADER;
+extern const char* MASK_VERT_SHADER;
+extern const char* MASK_ALPHA_FRAG_SHADER;
+extern const char* MASK_INV_ALPHA_FRAG_SHADER;
+extern const char* MASK_LUMA_FRAG_SHADER;
+extern const char* MASK_INV_LUMA_FRAG_SHADER;
+extern const char* MASK_ADD_FRAG_SHADER;
+extern const char* MASK_SUB_FRAG_SHADER;
+extern const char* MASK_INTERSECT_FRAG_SHADER;
+extern const char* MASK_DIFF_FRAG_SHADER;
 
 #endif /* _TVG_GL_SHADERSRC_H_ */

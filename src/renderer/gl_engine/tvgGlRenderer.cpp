@@ -116,7 +116,7 @@ bool GlRenderer::sync()
 
 RenderRegion GlRenderer::region(TVG_UNUSED RenderData data)
 {
-    return {0, 0, 0, 0};
+    return {0, 0, static_cast<int32_t>(surface.w), static_cast<int32_t>(surface.h)};
 }
 
 
@@ -150,18 +150,14 @@ bool GlRenderer::beginComposite(Compositor* cmp, CompositeMethod method, uint8_t
 {
     if (!cmp) return false;
 
-    // TODO handle other composite method with recursive begin composite
-
     cmp->method = method;
     cmp->opacity = opacity;
 
-    if (cmp->method == CompositeMethod::None) {
-        if (mPoolIndex >= mComposePool.size()) {
-            mComposePool.emplace_back(make_unique<GlRenderTarget>(surface.w, surface.h));
-            mComposePool.back()->init(mTargetFboId);
-        }
-        mRenderPassStack.emplace_back(GlRenderPass(mComposePool[mPoolIndex++].get()));
+    if (mPoolIndex >= mComposePool.size()) {
+        mComposePool.emplace_back(make_unique<GlRenderTarget>(surface.w, surface.h));
+        mComposePool.back()->init(mTargetFboId);
     }
+    mRenderPassStack.emplace_back(GlRenderPass(mComposePool[mPoolIndex++].get()));
 
     return true;
 }
@@ -469,6 +465,16 @@ void GlRenderer::initShaders()
 
     // image Renderer
     mPrograms.push_back(make_unique<GlProgram>(GlShader::gen(IMAGE_VERT_SHADER, IMAGE_FRAG_SHADER)));
+
+    // compose Renderer
+    mPrograms.push_back(make_unique<GlProgram>(GlShader::gen(MASK_VERT_SHADER, MASK_ALPHA_FRAG_SHADER)));
+    mPrograms.push_back(make_unique<GlProgram>(GlShader::gen(MASK_VERT_SHADER, MASK_INV_ALPHA_FRAG_SHADER)));
+    mPrograms.push_back(make_unique<GlProgram>(GlShader::gen(MASK_VERT_SHADER, MASK_LUMA_FRAG_SHADER)));
+    mPrograms.push_back(make_unique<GlProgram>(GlShader::gen(MASK_VERT_SHADER, MASK_INV_LUMA_FRAG_SHADER)));
+    mPrograms.push_back(make_unique<GlProgram>(GlShader::gen(MASK_VERT_SHADER, MASK_ADD_FRAG_SHADER)));
+    mPrograms.push_back(make_unique<GlProgram>(GlShader::gen(MASK_VERT_SHADER, MASK_SUB_FRAG_SHADER)));
+    mPrograms.push_back(make_unique<GlProgram>(GlShader::gen(MASK_VERT_SHADER, MASK_INTERSECT_FRAG_SHADER)));
+    mPrograms.push_back(make_unique<GlProgram>(GlShader::gen(MASK_VERT_SHADER, MASK_DIFF_FRAG_SHADER)));
 }
 
 
@@ -612,7 +618,7 @@ GlRenderPass* GlRenderer::currentPass()
     return &mRenderPassStack.back();
 }
 
-void GlRenderer::prepareCmpTask(GlRenderTask* task)
+void GlRenderer::prepareCmpTask(GlRenderTask* task, float opacity)
 {
     // we use 1:1 blit mapping since compositor fbo is same size as root fbo
     Array<float> vertices;
@@ -626,25 +632,25 @@ void GlRenderer::prepareCmpTask(GlRenderTask* task)
     // left top point
     vertices.push(left);
     vertices.push(top);
-    vertices.push(1.f);
+    vertices.push(opacity);
     vertices.push(0.f);
     vertices.push(1.f);
     // left bottom point
     vertices.push(left);
     vertices.push(bottom);
-    vertices.push(1.f);
+    vertices.push(opacity);
     vertices.push(0.f);
     vertices.push(0.f);
     // right top point
     vertices.push(right);
     vertices.push(top);
-    vertices.push(1.f);
+    vertices.push(opacity);
     vertices.push(1.f);
     vertices.push(1.f);
     // right bottom point
     vertices.push(right);
     vertices.push(bottom);
-    vertices.push(1.f);
+    vertices.push(opacity);
     vertices.push(1.f);
     vertices.push(0.f);
 
@@ -676,54 +682,115 @@ void GlRenderer::prepareCmpTask(GlRenderTask* task)
 void GlRenderer::endRenderPass(Compositor* cmp)
 {
     if (cmp->method != CompositeMethod::None) {
-        //TODO support advance composite method with recursive compositor
-        return;
+        auto self_pass = std::move(mRenderPassStack.back());
+        mRenderPassStack.pop_back();
+
+        // mask is pushed first
+        auto mask_pass = std::move(mRenderPassStack.back());
+        mRenderPassStack.pop_back();
+
+        GlProgram* program = nullptr;
+        switch(cmp->method) {
+            case CompositeMethod::ClipPath:
+            case CompositeMethod::AlphaMask:
+                program = mPrograms[RT_MaskAlpha].get();
+                break;
+            case CompositeMethod::InvAlphaMask:
+                program = mPrograms[RT_MaskAlphaInv].get();
+                break;
+            case CompositeMethod::LumaMask:
+                program = mPrograms[RT_MaskLuma].get();
+                break;
+            case CompositeMethod::InvLumaMask:
+                program = mPrograms[RT_MaskLumaInv].get();
+                break;
+            case CompositeMethod::AddMask:
+                program = mPrograms[RT_MaskAdd].get();
+                break;
+            case CompositeMethod::SubtractMask:
+                program = mPrograms[RT_MaskSub].get();
+                break;
+            case CompositeMethod::IntersectMask:
+                program = mPrograms[RT_MaskIntersect].get();
+                break;
+            case CompositeMethod::DifferenceMask:
+                program = mPrograms[RT_MaskDifference].get();
+                break;
+            default:
+                break;
+        }
+
+        if (program == nullptr) {
+            return;
+        }
+
+        auto prev_task = mask_pass.endRenderPass<GlComposeTask>(nullptr, currentPass()->getFboId());
+
+        currentPass()->addRenderTask(prev_task);
+
+        auto compose_task = self_pass.endRenderPass<GlDrawBlitTask>(program, currentPass()->getFboId());
+
+        prepareCmpTask(compose_task, cmp->opacity / 255.f);
+
+        {
+            uint32_t loc = program->getUniformLocation("uSrcTexture");
+            compose_task->addBindResource(GlBindingResource{0, self_pass.getTextureId(), loc});
+        }
+
+        {
+            uint32_t loc = program->getUniformLocation("uMaskTexture");
+            compose_task->addBindResource(GlBindingResource{1, mask_pass.getTextureId(), loc});
+        }
+
+
+        currentPass()->addRenderTask(compose_task);
+    } else {
+
+        auto renderPass = std::move(mRenderPassStack.back());
+        mRenderPassStack.pop_back();
+
+        auto task = renderPass.endRenderPass<GlDrawBlitTask>(
+            mPrograms[RT_Image].get(), currentPass()->getFboId());
+
+        prepareCmpTask(task, 1.f);
+
+        // matrix buffer
+        {
+            float matrix[16];
+            memset(matrix, 0, 16 * sizeof(float));
+            matrix[0] = 1.f;
+            matrix[5] = 1.f;
+            matrix[10] = 1.f;
+            matrix[15] = 1.f;
+            uint32_t loc = task->getProgram()->getUniformBlockIndex("Matrix");
+
+            task->addBindResource(GlBindingResource{
+                0,
+                loc,
+                mGpuBuffer->getBufferId(),
+                mGpuBuffer->push(matrix, 16 * sizeof(float), true),
+                16 * sizeof(float),
+            });
+        }
+        // image info
+        {
+            uint32_t info[4] = {ABGR8888, 0, cmp->opacity, 0};
+            uint32_t loc = task->getProgram()->getUniformBlockIndex("ColorInfo");
+
+            task->addBindResource(GlBindingResource{
+                1,
+                loc,
+                mGpuBuffer->getBufferId(),
+                mGpuBuffer->push(info, 4 * sizeof(uint32_t), true),
+                4 * sizeof(uint32_t),
+            });
+        }
+        // texture id
+        {
+            uint32_t loc = task->getProgram()->getUniformLocation("uTexture");
+            task->addBindResource(GlBindingResource{0, renderPass.getTextureId(), loc});
+        }
+
+        currentPass()->addRenderTask(std::move(task));
     }
-
-    auto renderPass = std::move(mRenderPassStack.back());
-    mRenderPassStack.pop_back();
-
-    auto task = renderPass.endRenderPass<GlDrawBlitTask>(
-        mPrograms[RT_Image].get(), currentPass()->getFboId());
-
-    prepareCmpTask(task);
-
-    // matrix buffer
-    {
-        float matrix[16];
-        memset(matrix, 0, 16 * sizeof(float));
-        matrix[0] = 1.f;
-        matrix[5] = 1.f;
-        matrix[10] = 1.f;
-        matrix[15] = 1.f;
-        uint32_t loc = task->getProgram()->getUniformBlockIndex("Matrix");
-
-        task->addBindResource(GlBindingResource{
-            0,
-            loc,
-            mGpuBuffer->getBufferId(),
-            mGpuBuffer->push(matrix, 16 * sizeof(float), true),
-            16 * sizeof(float),
-        });
-    }
-    // image info
-    {
-        uint32_t info[4] = {ABGR8888, 0, cmp->opacity, 0};
-        uint32_t loc = task->getProgram()->getUniformBlockIndex("ColorInfo");
-
-        task->addBindResource(GlBindingResource{
-            1,
-            loc,
-            mGpuBuffer->getBufferId(),
-            mGpuBuffer->push(info, 4 * sizeof(uint32_t), true),
-            4 * sizeof(uint32_t),
-        });
-    }
-    // texture id
-    {
-        uint32_t loc = task->getProgram()->getUniformLocation("uTexture");
-        task->addBindResource(GlBindingResource{0, renderPass.getFboId(), loc});
-    }
-
-    currentPass()->addRenderTask(std::move(task));
 }

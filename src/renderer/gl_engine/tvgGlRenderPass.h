@@ -61,6 +61,8 @@ public:
 
     GLuint getFboId() { return mFbo->getFboId(); }
 
+    GLuint getTextureId() { return mFbo->getColorTexture(); }
+
     template <class T>
     T* endRenderPass(GlProgram* program, GLuint targetFbo) {
         return new T(program, targetFbo, mFbo->getFboId(), std::move(mTasks));
