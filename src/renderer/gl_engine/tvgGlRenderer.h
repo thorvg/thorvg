@@ -38,6 +38,14 @@ public:
         RT_LinGradient,
         RT_RadGradient,
         RT_Image,
+        RT_MaskAlpha,
+        RT_MaskAlphaInv,
+        RT_MaskLuma,
+        RT_MaskLumaInv,
+        RT_MaskAdd,
+        RT_MaskSub,
+        RT_MaskIntersect,
+        RT_MaskDifference,
 
         RT_None,
     };
@@ -81,7 +89,7 @@ private:
 
     GlRenderPass* currentPass();
 
-    void prepareCmpTask(GlRenderTask* task);
+    void prepareCmpTask(GlRenderTask* task, float opacity);
     void endRenderPass(Compositor* cmp);
 
     GLint mTargetFboId = 0;
