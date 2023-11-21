@@ -157,7 +157,6 @@ LottieLayer::~LottieLayer()
     delete(matte.target);
     delete(transform);
 
-    if (cache.scene) delete(cache.scene);
     if (cache.clipper && PP(cache.clipper)->unref() == 0) delete(cache.clipper);
 }
 
