@@ -23,6 +23,7 @@
 #ifndef _TVG_WEBP_LOADER_H_
 #define _TVG_WEBP_LOADER_H_
 
+#include "tvgLoader.h"
 #include "tvgTaskScheduler.h"
 
 class WebpLoader : public LoadModule, public Task
@@ -38,10 +39,10 @@ public:
     bool close() override;
 
     unique_ptr<Surface> bitmap() override;
-    void run(unsigned tid) override;
 
 private:
     void clear();
+    void run(unsigned tid) override;
 
     unsigned char* data = nullptr;
     unsigned char *image = nullptr;

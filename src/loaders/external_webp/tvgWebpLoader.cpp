@@ -23,7 +23,6 @@
 #include <memory.h>
 #include <webp/decode.h>
 
-#include "tvgLoader.h"
 #include "tvgWebpLoader.h"
 
 
@@ -37,6 +36,17 @@ void WebpLoader::clear()
     data = nullptr;
     size = 0;
     freeData = false;
+}
+
+
+void WebpLoader::run(unsigned tid)
+{
+    if (image) {
+        WebPFree(image);
+        image = nullptr;
+    }
+
+    image = WebPDecodeBGRA(data, size, nullptr, nullptr);
 }
 
 
@@ -156,15 +166,4 @@ unique_ptr<Surface> WebpLoader::bitmap()
     surface->premultiplied = false;
     surface->owner = true;
     return unique_ptr<Surface>(surface);
-}
-
-
-void WebpLoader::run(unsigned tid)
-{
-    if (image) {
-        WebPFree(image);
-        image = nullptr;
-    }
-
-    image = WebPDecodeBGRA(data, size, nullptr, nullptr);
 }

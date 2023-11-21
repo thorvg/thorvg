@@ -21,7 +21,6 @@
  */
 
 #include <memory.h>
-#include "tvgLoader.h"
 #include "tvgJpgLoader.h"
 
 /************************************************************************/
@@ -35,6 +34,16 @@ void JpgLoader::clear()
     decoder = nullptr;
     data = nullptr;
     freeData = false;
+}
+
+
+void JpgLoader::run(unsigned tid)
+{
+    if (image) {
+        free(image);
+        image = nullptr;
+    }
+    image = jpgdDecompress(decoder);
 }
 
 
@@ -130,14 +139,4 @@ unique_ptr<Surface> JpgLoader::bitmap()
     surface->owner = true;
 
     return unique_ptr<Surface>(surface);
-}
-
-
-void JpgLoader::run(unsigned tid)
-{
-    if (image) {
-        free(image);
-        image = nullptr;
-    }
-    image = jpgdDecompress(decoder);
 }

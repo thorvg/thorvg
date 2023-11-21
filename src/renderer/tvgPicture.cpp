@@ -55,6 +55,71 @@ RenderUpdateFlag Picture::Impl::load()
     return RenderUpdateFlag::None;
 }
 
+
+bool Picture::Impl::needComposition(uint8_t opacity)
+{
+    //In this case, paint(scene) would try composition itself.
+    if (opacity < 255) return false;
+
+    //Composition test
+    const Paint* target;
+    auto method = picture->composite(&target);
+    if (!target || method == tvg::CompositeMethod::ClipPath) return false;
+    if (target->pImpl->opacity == 255 || target->pImpl->opacity == 0) return false;
+
+    return true;
+}
+
+
+bool Picture::Impl::render(RenderMethod &renderer)
+{
+    bool ret = false;
+    if (surface) return renderer.renderImage(rd);
+    else if (paint) {
+        Compositor* cmp = nullptr;
+        if (needComp) {
+            cmp = renderer.target(bounds(renderer), renderer.colorSpace());
+            renderer.beginComposite(cmp, CompositeMethod::None, 255);
+        }
+        ret = paint->pImpl->render(renderer);
+        if (cmp) renderer.endComposite(cmp);
+    }
+    return ret;
+}
+
+
+bool Picture::Impl::size(float w, float h)
+{
+    this->w = w;
+    this->h = h;
+    resizing = true;
+    return true;
+}
+
+
+RenderRegion Picture::Impl::bounds(RenderMethod& renderer)
+{
+    if (rd) return renderer.region(rd);
+    if (paint) return paint->pImpl->bounds(renderer);
+    return {0, 0, 0, 0};
+}
+
+
+RenderTransform Picture::Impl::resizeTransform(const RenderTransform* pTransform)
+{
+    //Overriding Transformation by the desired image size
+    auto sx = w / loader->w;
+    auto sy = h / loader->h;
+    auto scale = sx < sy ? sx : sy;
+
+    RenderTransform tmp;
+    tmp.m = {scale, 0, 0, 0, scale, 0, 0, 0, 1};
+
+    if (!pTransform) return tmp;
+    else return RenderTransform(pTransform, &tmp);
+}
+
+
 /************************************************************************/
 /* External Class Implementation                                        */
 /************************************************************************/

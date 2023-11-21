@@ -20,16 +20,13 @@
  * SOFTWARE.
  */
 
-#ifndef _TVG_SHAPE_IMPL_H_
-#define _TVG_SHAPE_IMPL_H_
+#ifndef _TVG_SHAPE_H_
+#define _TVG_SHAPE_H_
 
 #include <memory.h>
 #include "tvgMath.h"
 #include "tvgPaint.h"
 
-/************************************************************************/
-/* Internal Class Implementation                                        */
-/************************************************************************/
 
 struct Shape::Impl
 {
@@ -388,4 +385,4 @@ struct Shape::Impl
     }
 };
 
-#endif //_TVG_SHAPE_IMPL_H_
+#endif //_TVG_SHAPE_H_
