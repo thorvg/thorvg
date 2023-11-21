@@ -624,7 +624,7 @@ static void _updatePolystar(LottieGroup* parent, LottieObject** child, float fra
     mathIdentity(&matrix);
     auto position = star->position(frameNo);
     mathTranslate(&matrix, position.x, position.y);
-    mathRotate(&matrix, star->rotation(frameNo) * 2.0f);
+    mathRotate(&matrix, star->rotation(frameNo));
 
     auto identity = mathIdentity((const Matrix*)&matrix);
 
