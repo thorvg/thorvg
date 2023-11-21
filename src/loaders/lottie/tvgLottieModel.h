@@ -526,7 +526,6 @@ struct LottieLayer : LottieGroup
         uint8_t opacity;
 
         //tvg render data
-        Paint* scene = nullptr;
         tvg::Shape* clipper = nullptr; 
     } cache;
 
