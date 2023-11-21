@@ -37,6 +37,7 @@ private:
     bool freeData = false;
 
     void clear();
+    void run(unsigned tid) override;
 
 public:
     PngLoader();
@@ -49,7 +50,6 @@ public:
     bool close() override;
 
     unique_ptr<Surface> bitmap() override;
-    void run(unsigned tid) override;
 };
 
 #endif //_TVG_PNG_LOADER_H_
