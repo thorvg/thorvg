@@ -194,7 +194,8 @@ static void _updateTransform(TVG_UNUSED LottieGroup* parent, LottieObject** chil
 
     //FIXME: preserve the stroke width. too workaround, need a better design.
     if (P(ctx.propagator)->rs.strokeWidth() > 0.0f) {
-        ctx.propagator->stroke(P(ctx.propagator)->rs.strokeWidth() / sqrt(matrix.e11 * matrix.e11 + matrix.e12 * matrix.e12));
+        auto denominator = sqrtf(matrix.e11 * matrix.e11 + matrix.e12 * matrix.e12);
+        if (denominator > 1.0f) ctx.propagator->stroke(ctx.propagator->strokeWidth() / denominator);
     }
 }
 
