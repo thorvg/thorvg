@@ -23,6 +23,8 @@
 #ifndef _TVG_JPG_LOADER_H_
 #define _TVG_JPG_LOADER_H_
 
+#include "tvgLoader.h"
+
 using tjhandle = void*;
 
 //TODO: Use Task?

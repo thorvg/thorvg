@@ -20,7 +20,6 @@
  * SOFTWARE.
  */
 
-#include "tvgLoader.h"
 #include "tvgPngLoader.h"
 
 /************************************************************************/

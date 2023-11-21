@@ -23,6 +23,7 @@
 #ifndef _TVG_JPG_LOADER_H_
 #define _TVG_JPG_LOADER_H_
 
+#include "tvgLoader.h"
 #include "tvgTaskScheduler.h"
 #include "tvgJpgd.h"
 
@@ -35,6 +36,7 @@ private:
     bool freeData = false;
 
     void clear();
+    void run(unsigned tid) override;
 
 public:
     ~JpgLoader();
@@ -46,7 +48,6 @@ public:
     bool close() override;
 
     unique_ptr<Surface> bitmap() override;
-    void run(unsigned tid) override;
 };
 
 #endif //_TVG_JPG_LOADER_H_

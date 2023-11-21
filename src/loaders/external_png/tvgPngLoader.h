@@ -24,6 +24,7 @@
 #define _TVG_PNG_LOADER_H_
 
 #include <png.h>
+#include "tvgLoader.h"
 
 class PngLoader : public LoadModule
 {

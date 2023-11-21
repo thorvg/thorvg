@@ -40,6 +40,21 @@ void PngLoader::clear()
 }
 
 
+void PngLoader::run(unsigned tid)
+{
+    if (image) {
+        free(image);
+        image = nullptr;
+    }
+    auto width = static_cast<unsigned>(w);
+    auto height = static_cast<unsigned>(h);
+
+    if (lodepng_decode(&image, &width, &height, &state, data, size)) {
+        TVGERR("PNG", "Failed to decode image");
+    }
+}
+
+
 /************************************************************************/
 /* External Class Implementation                                        */
 /************************************************************************/
@@ -167,19 +182,4 @@ unique_ptr<Surface> PngLoader::bitmap()
     surface->owner = true;
 
     return unique_ptr<Surface>(surface);
-}
-
-
-void PngLoader::run(unsigned tid)
-{
-    if (image) {
-        free(image);
-        image = nullptr;
-    }
-    auto width = static_cast<unsigned>(w);
-    auto height = static_cast<unsigned>(h);
-
-    if (lodepng_decode(&image, &width, &height, &state, data, size)) {
-        TVGERR("PNG", "Failed to decode image");
-    }
 }
