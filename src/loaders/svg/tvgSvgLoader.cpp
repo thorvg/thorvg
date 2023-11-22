@@ -3671,7 +3671,7 @@ bool SvgLoader::header()
 }
 
 
-bool SvgLoader::open(const char* data, uint32_t size, bool copy)
+bool SvgLoader::open(const char* data, uint32_t size, bool copy, const string& resourcePath)
 {
     clear();
 

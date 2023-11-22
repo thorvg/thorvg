@@ -37,7 +37,7 @@ public:
     virtual ~LoadModule() {}
 
     virtual bool open(const string& path) { return false; }
-    virtual bool open(const char* data, uint32_t size, bool copy) { return false; }
+    virtual bool open(const char* data, uint32_t size, bool copy, const string& resourcePath = "") { return false; }
 
     //Override this if the vector-format has own resizing policy.
     virtual bool resize(Paint* paint, float w, float h) { return false; }

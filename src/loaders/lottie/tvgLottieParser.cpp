@@ -867,9 +867,9 @@ LottieImage* LottieParser::parseImage(const char* key)
         image->size = b64Decode(b64Data, length, &image->b64Data);
     //external image resource
     } else {
-        auto len = strlen(dirName) + strlen(subPath) + strlen(data) + 1;
+        auto len = strlen(dirName) + strlen(subPath) + strlen(data) + 2;
         image->path = static_cast<char*>(malloc(len));
-        snprintf(image->path, len, "%s%s%s", dirName, subPath, data);
+        snprintf(image->path, len, "%s/%s%s", dirName, subPath, data);
     }
 
     image->prepare();

@@ -212,12 +212,12 @@ shared_ptr<LoadModule> LoaderMgr::loader(const string& path, bool* invalid)
 }
 
 
-shared_ptr<LoadModule> LoaderMgr::loader(const char* data, uint32_t size, const string& mimeType, bool copy)
+shared_ptr<LoadModule> LoaderMgr::loader(const char* data, uint32_t size, const string& mimeType, bool copy, const string& resourcePath)
 {
     //Try with the given MimeType
     if (!mimeType.empty()) {
         if (auto loader = _findByType(mimeType)) {
-            if (loader->open(data, size, copy)) {
+            if (loader->open(data, size, copy, resourcePath)) {
                 return shared_ptr<LoadModule>(loader);
             } else {
                 TVGLOG("LOADER", "Given mimetype \"%s\" seems incorrect or not supported.", mimeType.c_str());
