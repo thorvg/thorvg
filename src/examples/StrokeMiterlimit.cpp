@@ -143,7 +143,7 @@ void svg(tvg::Canvas* canvas)
     std::size_t svg_text_size = svg_text.size();
     std::unique_ptr<tvg::Picture> picture = tvg::Picture::gen();
 
-    if (picture->load(svg_text.data(), svg_text_size, "svg", true) != tvg::Result::Success) {
+    if (picture->load(svg_text.data(), svg_text_size, "svg", "", true) != tvg::Result::Success) {
         cout << "Couldn't load svg text data." << endl;
         return;
     }

@@ -1993,7 +1993,7 @@ TVG_API Tvg_Result tvg_picture_load_raw(Tvg_Paint* paint, uint32_t *data, uint32
 * \param[in] size The size in bytes of the memory occupied by the @p data.
 * \param[in] mimetype Mimetype or extension of data such as "jpg", "jpeg", "svg", "svg+xml", "lottie", "png", etc. In case an empty string or an unknown type is provided, the loaders will be tried one by one.
 * \param[in] copy If @c true the data are copied into the engine local buffer, otherwise they are not.
-* \param[in] resourcePath Directory path to load external images.
+* \param[in] rpath A resource directory path, if the @p data needs to access any external resources.
 *
 * \return Tvg_Result enumeration.
 * \retval TVG_RESULT_SUCCESS Succeed.
@@ -2003,7 +2003,7 @@ TVG_API Tvg_Result tvg_picture_load_raw(Tvg_Paint* paint, uint32_t *data, uint32
 *
 * \warning: It's the user responsibility to release the @p data memory if the @p copy is @c true.
 */
-TVG_API Tvg_Result tvg_picture_load_data(Tvg_Paint* paint, const char *data, uint32_t size, const char *mimetype, bool copy, const char* resourcePath = "");
+TVG_API Tvg_Result tvg_picture_load_data(Tvg_Paint* paint, const char *data, uint32_t size, const char *mimetype, const char* rpath, bool copy);
 
 
 /*!

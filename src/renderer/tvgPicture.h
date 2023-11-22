@@ -162,11 +162,11 @@ struct Picture::Impl
         return Result::Success;
     }
 
-    Result load(const char* data, uint32_t size, const string& mimeType, bool copy, const string& resourcePath)
+    Result load(const char* data, uint32_t size, const string& mimeType, const string& rpath, bool copy)
     {
         if (paint || surface) return Result::InsufficientCondition;
         if (loader) loader->close();
-        loader = LoaderMgr::loader(data, size, mimeType, copy, resourcePath);
+        loader = LoaderMgr::loader(data, size, mimeType, rpath, copy);
         if (!loader) return Result::NonSupport;
         if (!loader->read()) return Result::Unknown;
         w = loader->w;

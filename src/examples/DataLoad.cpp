@@ -41,7 +41,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     if (canvas->push(std::move(shape)) != tvg::Result::Success) return;
 
     auto picture = tvg::Picture::gen();
-    if (picture->load(svg, strlen(svg), "svg", false) != tvg::Result::Success) return;
+    if (picture->load(svg, strlen(svg), "svg") != tvg::Result::Success) return;
 
     picture->size(WIDTH, HEIGHT);
 

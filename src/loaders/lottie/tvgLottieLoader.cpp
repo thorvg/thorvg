@@ -206,7 +206,7 @@ bool LottieLoader::header()
 }
 
 
-bool LottieLoader::open(const char* data, uint32_t size, bool copy, const std::string& resourcePath)
+bool LottieLoader::open(const char* data, uint32_t size, const std::string& rpath, bool copy)
 {
     clear();
 
@@ -226,8 +226,8 @@ bool LottieLoader::open(const char* data, uint32_t size, bool copy, const std::s
     this->size = size;
     this->copy = copy;
 
-    if (!resourcePath.empty()) {
-        this->dirName = strdup(resourcePath.c_str());
+    if (!rpath.empty()) {
+        this->dirName = strdup(rpath.c_str());
     }
 
     return header();

@@ -60,7 +60,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     file.close();
 
     auto picture = tvg::Picture::gen();
-    if (picture->load(data, size, "jpg", true) != tvg::Result::Success) {
+    if (picture->load(data, size, "jpg", "", true) != tvg::Result::Success) {
         cout << "Couldn't load JPG file from data." << endl;
         return;
     }

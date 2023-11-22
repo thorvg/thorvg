@@ -572,14 +572,14 @@ static unique_ptr<Picture> _imageBuildHelper(SvgLoaderData& loaderData, SvgNode*
         char *decoded = nullptr;
         if (encoding == imageMimeTypeEncoding::base64) {
             auto size = b64Decode(href, strlen(href), &decoded);
-            if (picture->load(decoded, size, mimetype, false) != Result::Success) {
+            if (picture->load(decoded, size, mimetype) != Result::Success) {
                 free(decoded);
                 TaskScheduler::async(true);
                 return nullptr;
             }
         } else {
             auto size = svgUtilURLDecode(href, &decoded);
-            if (picture->load(decoded, size, mimetype, false) != Result::Success) {
+            if (picture->load(decoded, size, mimetype) != Result::Success) {
                 free(decoded);
                 TaskScheduler::async(true);
                 return nullptr;
