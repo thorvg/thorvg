@@ -4,7 +4,6 @@ source_file = [
    'tvgFormat.h',
    'tvgCompressor.h',
    'tvgInlist.h',
-   'tvgList.h',
    'tvgMath.h',
    'tvgStr.h',
    'tvgBezier.cpp',
