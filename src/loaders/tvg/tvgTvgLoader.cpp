@@ -148,7 +148,7 @@ bool TvgLoader::open(const string &path)
 }
 
 
-bool TvgLoader::open(const char *data, uint32_t size, bool copy,const string& resourcePath)
+bool TvgLoader::open(const char *data, uint32_t size, TVG_UNUSED const string& rpath, bool copy)
 {
     clear();
 

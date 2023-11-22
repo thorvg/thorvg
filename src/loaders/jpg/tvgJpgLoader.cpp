@@ -76,7 +76,7 @@ bool JpgLoader::open(const string& path)
 }
 
 
-bool JpgLoader::open(const char* data, uint32_t size, bool copy, const string& resourcePath)
+bool JpgLoader::open(const char* data, uint32_t size, TVG_UNUSED const string& rpath, bool copy)
 {
     clear();
 

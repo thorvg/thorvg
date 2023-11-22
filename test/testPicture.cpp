@@ -252,11 +252,11 @@ TEST_CASE("Load SVG Data", "[tvgPicture]")
     REQUIRE(picture);
 
     //Negative cases
-    REQUIRE(picture->load(nullptr, 100, "", false) == Result::InvalidArguments);
-    REQUIRE(picture->load(svg, 0, "", false) == Result::InvalidArguments);
+    REQUIRE(picture->load(nullptr, 100, "") == Result::InvalidArguments);
+    REQUIRE(picture->load(svg, 0, "") == Result::InvalidArguments);
 
     //Positive cases
-    REQUIRE(picture->load(svg, strlen(svg), "svg", false) == Result::Success);
+    REQUIRE(picture->load(svg, strlen(svg), "svg") == Result::Success);
 
     float w, h;
     REQUIRE(picture->size(&w, &h) == Result::Success);
@@ -325,8 +325,8 @@ TEST_CASE("Load PNG file from data", "[tvgPicture]")
     file.read(data, size);
     file.close();
 
-    REQUIRE(picture->load(data, size, "", false) == Result::Success);
-    REQUIRE(picture->load(data, size, "png", true) == Result::Success);
+    REQUIRE(picture->load(data, size, "") == Result::Success);
+    REQUIRE(picture->load(data, size, "png", "", true) == Result::Success);
 
     float w, h;
     REQUIRE(picture->size(&w, &h) == Result::Success);
@@ -395,8 +395,8 @@ TEST_CASE("Load JPG file from data", "[tvgPicture]")
     file.read(data, size);
     file.close();
 
-    REQUIRE(picture->load(data, size, "", false) == Result::Success);
-    REQUIRE(picture->load(data, size, "jpg", true) == Result::Success);
+    REQUIRE(picture->load(data, size, "") == Result::Success);
+    REQUIRE(picture->load(data, size, "jpg", "", true) == Result::Success);
 
     float w, h;
     REQUIRE(picture->size(&w, &h) == Result::Success);
@@ -463,8 +463,8 @@ TEST_CASE("Load TVG file from data", "[tvgPicture]")
     file.read(data, size);
     file.close();
 
-    REQUIRE(picture->load(data, size, "", false) == Result::Success);
-    REQUIRE(picture->load(data, size, "tvg", true) == Result::Success);
+    REQUIRE(picture->load(data, size, "") == Result::Success);
+    REQUIRE(picture->load(data, size, "tvg", "", true) == Result::Success);
 
     float w, h;
     REQUIRE(picture->size(&w, &h) == Result::Success);
@@ -535,8 +535,8 @@ TEST_CASE("Load WEBP file from data", "[tvgPicture]")
     file.read(data, size);
     file.close();
 
-    REQUIRE(picture->load(data, size, "", false) == Result::Success);
-    REQUIRE(picture->load(data, size, "webp", true) == Result::Success);
+    REQUIRE(picture->load(data, size, "") == Result::Success);
+    REQUIRE(picture->load(data, size, "webp", "", true) == Result::Success);
 
     float w, h;
     REQUIRE(picture->size(&w, &h) == Result::Success);

@@ -655,7 +655,7 @@ static void _updateImage(LottieGroup* parent, LottieObject** child, float frameN
         TaskScheduler::async(false);
 
         if (image->size > 0) {
-            if (picture->load((const char*)image->b64Data, image->size, image->mimeType, false) != Result::Success) {
+            if (picture->load((const char*)image->b64Data, image->size, image->mimeType) != Result::Success) {
                 delete(picture);
                 return;
             }

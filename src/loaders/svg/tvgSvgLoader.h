@@ -44,7 +44,7 @@ public:
 
     using LoadModule::open;
     bool open(const string& path) override;
-    bool open(const char* data, uint32_t size, bool copy, const string& resourcePath) override;
+    bool open(const char* data, uint32_t size, const string& rpath, bool copy) override;
     bool resize(Paint* paint, float w, float h) override;
     bool read() override;
     bool close() override;

@@ -105,12 +105,12 @@ TEST_CASE("Load Svg Data in Picture", "[capiPicture]")
     REQUIRE(picture);
 
     //Negative
-    REQUIRE(tvg_picture_load_data(nullptr, svg, strlen(svg), nullptr, true) == TVG_RESULT_INVALID_ARGUMENT);
-    REQUIRE(tvg_picture_load_data(picture, nullptr, strlen(svg), "", true) == TVG_RESULT_INVALID_ARGUMENT);
-    REQUIRE(tvg_picture_load_data(picture, svg, 0, "", true) == TVG_RESULT_INVALID_ARGUMENT);
+    REQUIRE(tvg_picture_load_data(nullptr, svg, strlen(svg), nullptr, nullptr, true) == TVG_RESULT_INVALID_ARGUMENT);
+    REQUIRE(tvg_picture_load_data(picture, nullptr, strlen(svg), nullptr, nullptr, true) == TVG_RESULT_INVALID_ARGUMENT);
+    REQUIRE(tvg_picture_load_data(picture, svg, 0, nullptr, nullptr, true) == TVG_RESULT_INVALID_ARGUMENT);
 
     //Positive
-    REQUIRE(tvg_picture_load_data(picture, svg, strlen(svg), "svg", false) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_picture_load_data(picture, svg, strlen(svg), "svg", nullptr, false) == TVG_RESULT_SUCCESS);
 
     //Verify Size
     float w, h;
