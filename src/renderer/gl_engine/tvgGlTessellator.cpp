@@ -22,7 +22,7 @@
 
 #include "tvgGlTessellator.h"
 #include "tvgRender.h"
-#include "tvgList.h"
+#include "tvgGlList.h"
 
 #include <algorithm>
 #include <array>
