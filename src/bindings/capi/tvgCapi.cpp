@@ -524,10 +524,10 @@ TVG_API Tvg_Result tvg_picture_load_raw(Tvg_Paint* paint, uint32_t *data, uint32
 }
 
 
-TVG_API Tvg_Result tvg_picture_load_data(Tvg_Paint* paint, const char *data, uint32_t size, const char *mimetype, bool copy)
+TVG_API Tvg_Result tvg_picture_load_data(Tvg_Paint* paint, const char *data, uint32_t size, const char *mimetype, bool copy, const char* resourcePath)
 {
     if (!paint) return TVG_RESULT_INVALID_ARGUMENT;
-    return (Tvg_Result) reinterpret_cast<Picture*>(paint)->load(data, size, mimetype ? mimetype : "", copy);
+    return (Tvg_Result) reinterpret_cast<Picture*>(paint)->load(data, size, mimetype ? mimetype : "", copy, resourcePath);
 }
 
 
