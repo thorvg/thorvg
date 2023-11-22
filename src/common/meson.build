@@ -2,6 +2,7 @@ source_file = [
    'tvgArray.h',
    'tvgBezier.h',
    'tvgCompressor.h',
+   'tvgInlist.h',
    'tvgList.h',
    'tvgMath.h',
    'tvgStr.h',
