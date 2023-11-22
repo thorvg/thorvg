@@ -117,7 +117,7 @@ finalize:
 }
 
 
-bool PngLoader::open(const char* data, uint32_t size, bool copy)
+bool PngLoader::open(const char* data, uint32_t size, bool copy, const string& resourcePath)
 {
     clear();
 

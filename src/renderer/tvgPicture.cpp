@@ -156,11 +156,11 @@ Result Picture::load(const std::string& path) noexcept
 }
 
 
-Result Picture::load(const char* data, uint32_t size, const string& mimeType, bool copy) noexcept
+Result Picture::load(const char* data, uint32_t size, const string& mimeType, bool copy, const string& resourcePath) noexcept
 {
     if (!data || size <= 0) return Result::InvalidArguments;
 
-    return pImpl->load(data, size, mimeType, copy);
+    return pImpl->load(data, size, mimeType, copy, resourcePath);
 }
 
 

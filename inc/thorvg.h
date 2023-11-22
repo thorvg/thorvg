@@ -1236,6 +1236,7 @@ public:
      * @param[in] size The size in bytes of the memory occupied by the @p data.
      * @param[in] mimeType Mimetype or extension of data such as "jpg", "jpeg", "lottie", "svg", "svg+xml", "png", etc. In case an empty string or an unknown type is provided, the loaders will be tried one by one.
      * @param[in] copy If @c true the data are copied into the engine local buffer, otherwise they are not.
+     * @param[in] resourcePath Directory path to load external images.
      *
      * @retval Result::Success When succeed.
      * @retval Result::InvalidArguments In case no data are provided or the @p size is zero or less.
@@ -1247,7 +1248,7 @@ public:
      * @note If you are unsure about the MIME type, you can provide an empty value like @c "", and thorvg will attempt to figure it out.
      * @since 0.5
      */
-    Result load(const char* data, uint32_t size, const std::string& mimeType, bool copy = false) noexcept;
+    Result load(const char* data, uint32_t size, const std::string& mimeType, bool copy = false, const std::string& resourcePath = "") noexcept;
 
     /**
      * @brief Resizes the picture content to the given width and height.

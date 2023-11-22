@@ -36,7 +36,7 @@ public:
 
     using LoadModule::open;
     bool open(const string& path) override;
-    bool open(const char* data, uint32_t size, bool copy) override;
+    bool open(const char* data, uint32_t size, bool copy, const string& resourcePath) override;
     bool read() override;
     bool close() override;
 
