@@ -33,8 +33,8 @@ namespace tvg {
 template<typename T>
 struct Inlist
 {
-    T *head = nullptr;
-    T *tail = nullptr;
+    T* head = nullptr;
+    T* tail = nullptr;
 
     void free()
     {
@@ -52,6 +52,7 @@ struct Inlist
             tail->next = element;
             element->prev = tail;
             element->next = nullptr;
+            tail = element;
         } else {
             head = tail = element;
             element->prev = nullptr;
@@ -62,9 +63,10 @@ struct Inlist
     void front(T* element)
     {
         if (head) {
+            head->prev = element;
             element->prev = nullptr;
             element->next = head;
-            head->prev = element;
+            head = element;
         } else {
             head = tail = element;
             element->prev = nullptr;
@@ -88,6 +90,14 @@ struct Inlist
         head = t->next;
         if (!head) tail = nullptr;
         return t;
+    }
+
+    void remove(T* element)
+    {
+        if (element->prev) element->prev->next = element->next;
+        if (element->next) element->next->prev = element->prev;
+        if (element == head) head = element->next;
+        if (element == tail) tail = element->prev;
     }
 
     bool empty()

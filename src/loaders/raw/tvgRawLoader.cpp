@@ -34,6 +34,11 @@
 /* External Class Implementation                                        */
 /************************************************************************/
 
+RawLoader::RawLoader() : LoadModule(FileType::Raw)
+{
+}
+
+
 RawLoader::~RawLoader()
 {
     if (copy && content) {
@@ -45,6 +50,8 @@ RawLoader::~RawLoader()
 
 bool RawLoader::open(const uint32_t* data, uint32_t w, uint32_t h, bool premultiplied, bool copy)
 {
+    if (!LoadModule::read()) return true;
+
     if (!data || w == 0 || h == 0) return false;
 
     this->w = (float)w;
@@ -67,12 +74,7 @@ bool RawLoader::open(const uint32_t* data, uint32_t w, uint32_t h, bool premulti
 
 bool RawLoader::read()
 {
-    return true;
-}
-
-
-bool RawLoader::close()
-{
+    LoadModule::read();
     return true;
 }
 
