@@ -349,7 +349,7 @@ Alternatively, you can download the package [here](https://download.enlightenmen
 <br />
 
 ## Documentation
-ThorVG API documentation is available at [thorvg.org/apis](https://www.thorvg.org/apis), and can also found in the [docs](/docs) folder of this repo.
+The ThorVG API documentation can be accessed at [thorvg.org/apis](https://www.thorvg.org/apis), and is also available in the [C++ API](https://github.com/thorvg/thorvg/blob/main/inc/thorvg.h), [C API](https://github.com/thorvg/thorvg/blob/main/src/bindings/capi/thorvg_capi.h) within this repository.
 
 [Back to contents](#contents)
 <br />
