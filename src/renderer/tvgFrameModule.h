@@ -31,6 +31,7 @@ namespace tvg
 class FrameModule: public LoadModule
 {
 public:
+    FrameModule(FileType type) : LoadModule(type) {}
     virtual ~FrameModule() {}
 
     virtual bool frame(float no) = 0;       //set the current frame number

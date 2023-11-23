@@ -30,22 +30,9 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-void WebpLoader::clear()
-{
-    if (freeData) free(data);
-    data = nullptr;
-    size = 0;
-    freeData = false;
-}
-
 
 void WebpLoader::run(unsigned tid)
 {
-    if (image) {
-        WebPFree(image);
-        image = nullptr;
-    }
-
     image = WebPDecodeBGRA(data, size, nullptr, nullptr);
 }
 
@@ -54,22 +41,25 @@ void WebpLoader::run(unsigned tid)
 /* External Class Implementation                                        */
 /************************************************************************/
 
-WebpLoader::WebpLoader()
+WebpLoader::WebpLoader() : LoadModule(FileType::Webp)
 {
 }
 
 
 WebpLoader::~WebpLoader()
 {
+    this->done();
+
     if (freeData) free(data);
+    data = nullptr;
+    size = 0;
+    freeData = false;
     WebPFree(image);
 }
 
 
 bool WebpLoader::open(const string& path)
 {
-    clear();
-
     auto webpFile = fopen(path.c_str(), "rb");
     if (!webpFile) return false;
 
@@ -85,21 +75,16 @@ bool WebpLoader::open(const string& path)
 
     freeData = true;
 
-    if (fread(data, size, 1, webpFile) < 1) goto failure;
+    if (fread(data, size, 1, webpFile) < 1) goto finalize;
 
     int width, height;
-    if (!WebPGetInfo(data, size, &width, &height)) goto failure;
+    if (!WebPGetInfo(data, size, &width, &height)) goto finalize;
 
     w = static_cast<float>(width);
     h = static_cast<float>(height);
     cs = ColorSpace::ARGB8888;
 
     ret = true;
-
-    goto finalize;
-
-failure:
-    clear();
 
 finalize:
     fclose(webpFile);
@@ -109,8 +94,6 @@ finalize:
 
 bool WebpLoader::open(const char* data, uint32_t size, bool copy)
 {
-    clear();
-
     if (copy) {
         this->data = (unsigned char *) malloc(size);
         if (!this->data) return false;
@@ -134,17 +117,11 @@ bool WebpLoader::open(const char* data, uint32_t size, bool copy)
 
 bool WebpLoader::read()
 {
-    if (!data || w <= 0 || h <= 0) return false;
+    if (!LoadModule::read()) return true;
+
+    if (!data || w == 0 || h == 0) return false;
 
     TaskScheduler::request(this);
-    return true;
-}
-
-
-bool WebpLoader::close()
-{
-    this->done();
-    clear();
     return true;
 }
 

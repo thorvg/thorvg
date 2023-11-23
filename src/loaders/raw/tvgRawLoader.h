@@ -29,12 +29,12 @@ public:
     uint32_t* content = nullptr;
     bool copy = false;
 
+    RawLoader();
     ~RawLoader();
 
     using LoadModule::open;
     bool open(const uint32_t* data, uint32_t w, uint32_t h, bool copy);
     bool read() override;
-    bool close() override;
 
     unique_ptr<Surface> bitmap() override;
 };

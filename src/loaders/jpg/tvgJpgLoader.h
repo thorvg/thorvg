@@ -39,6 +39,7 @@ private:
     void run(unsigned tid) override;
 
 public:
+    JpgLoader();
     ~JpgLoader();
 
     using LoadModule::open;

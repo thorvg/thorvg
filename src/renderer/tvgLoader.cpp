@@ -20,6 +20,7 @@
  * SOFTWARE.
  */
 
+#include "tvgInlist.h"
 #include "tvgLoader.h"
 
 #ifdef THORVG_SVG_LOADER_SUPPORT
@@ -48,9 +49,18 @@
 
 #include "tvgRawLoader.h"
 
+
+uint64_t HASH_KEY(const char* data, uint64_t size)
+{
+    return (((uint64_t) data) << 32) | size;
+}
+
 /************************************************************************/
 /* Internal Class Implementation                                        */
 /************************************************************************/
+
+static Inlist<LoadModule> _activeLoaders;
+
 
 static LoadModule* _find(FileType type)
 {
@@ -156,10 +166,8 @@ static LoadModule* _findByPath(const string& path)
 }
 
 
-static LoadModule* _findByType(const string& mimeType)
+static FileType _convert(const string& mimeType)
 {
-    if (mimeType.empty()) return nullptr;
-
     auto type = FileType::Unknown;
 
     if (mimeType == "tvg") type = FileType::Tvg;
@@ -169,12 +177,50 @@ static LoadModule* _findByType(const string& mimeType)
     else if (mimeType == "png") type = FileType::Png;
     else if (mimeType == "jpg" || mimeType == "jpeg") type = FileType::Jpg;
     else if (mimeType == "webp") type = FileType::Webp;
-    else {
-        TVGLOG("RENDERER", "Given mimetype is unknown = \"%s\".", mimeType.c_str());
-        return nullptr;
-    }
+    else TVGLOG("RENDERER", "Given mimetype is unknown = \"%s\".", mimeType.c_str());
 
-    return _find(type);
+    return type;
+}
+
+
+static LoadModule* _findByType(const string& mimeType)
+{
+    return _find(_convert(mimeType));
+}
+
+
+static LoadModule* _findFromCache(const string& path)
+{
+    auto loader = _activeLoaders.head;
+
+    while (loader) {
+        if (loader->hashpath == path) {
+            ++loader->sharing;
+            return loader;
+        }
+        loader = loader->next;
+    }
+    return nullptr;
+}
+
+
+static LoadModule* _findFromCache(const char* data, uint32_t size, const string& mimeType)
+{
+    auto type = _convert(mimeType);
+    if (type == FileType::Unknown) return nullptr;
+
+    auto loader = _activeLoaders.head;
+
+    auto key = HASH_KEY(data, size);
+
+    while (loader) {
+        if (loader->type == type && loader->hashkey == key) {
+            ++loader->sharing;
+            return loader;
+        }
+        loader = loader->next;
+    }
+    return nullptr;
 }
 
 
@@ -185,40 +231,57 @@ static LoadModule* _findByType(const string& mimeType)
 
 bool LoaderMgr::init()
 {
-    //TODO:
-
     return true;
 }
 
 
 bool LoaderMgr::term()
 {
-    //TODO:
-
     return true;
 }
 
 
-shared_ptr<LoadModule> LoaderMgr::loader(const string& path, bool* invalid)
+void LoaderMgr::retrieve(LoadModule* loader)
+{
+    if (!loader) return;
+
+    if (loader->close()) {
+        _activeLoaders.remove(loader);
+        delete(loader);
+    }
+}
+
+
+LoadModule* LoaderMgr::loader(const string& path, bool* invalid)
 {
     *invalid = false;
 
+    if (auto loader = _findFromCache(path)) return loader;
+
     if (auto loader = _findByPath(path)) {
-        if (loader->open(path)) return shared_ptr<LoadModule>(loader);
-        else delete(loader);
+        if (loader->open(path)) {
+            loader->hashpath = path;
+            _activeLoaders.back(loader);
+            return loader;
+        }
+        delete(loader);
         *invalid = true;
     }
     return nullptr;
 }
 
 
-shared_ptr<LoadModule> LoaderMgr::loader(const char* data, uint32_t size, const string& mimeType, bool copy)
+LoadModule* LoaderMgr::loader(const char* data, uint32_t size, const string& mimeType, bool copy)
 {
+    if (auto loader = _findFromCache(data, size, mimeType)) return loader;
+
     //Try with the given MimeType
     if (!mimeType.empty()) {
         if (auto loader = _findByType(mimeType)) {
             if (loader->open(data, size, copy)) {
-                return shared_ptr<LoadModule>(loader);
+                loader->hashkey = HASH_KEY(data, size);                
+                _activeLoaders.back(loader);
+                return loader;
             } else {
                 TVGLOG("LOADER", "Given mimetype \"%s\" seems incorrect or not supported.", mimeType.c_str());
                 delete(loader);
@@ -229,8 +292,12 @@ shared_ptr<LoadModule> LoaderMgr::loader(const char* data, uint32_t size, const 
         for (int i = 0; i < static_cast<int>(FileType::Unknown); i++) {
             auto loader = _find(static_cast<FileType>(i));
             if (loader) {
-                if (loader->open(data, size, copy)) return shared_ptr<LoadModule>(loader);
-                else delete(loader);
+                if (loader->open(data, size, copy)) {
+                    loader->hashkey = HASH_KEY(data, size);
+                    _activeLoaders.back(loader);
+                    return loader;
+                }
+                delete(loader);
             }
         }
     }
@@ -238,12 +305,18 @@ shared_ptr<LoadModule> LoaderMgr::loader(const char* data, uint32_t size, const 
 }
 
 
-shared_ptr<LoadModule> LoaderMgr::loader(const uint32_t *data, uint32_t w, uint32_t h, bool copy)
+LoadModule* LoaderMgr::loader(const uint32_t *data, uint32_t w, uint32_t h, bool copy)
 {
+    //TODO: should we check premultiplied??
+    if (auto loader = _findFromCache((const char*)(data), w * h, "raw")) return loader;
+
     //function is dedicated for raw images only
     auto loader = new RawLoader;
-    if (loader->open(data, w, h, copy)) return shared_ptr<LoadModule>(loader);
-    else delete(loader);
-
+    if (loader->open(data, w, h, copy)) {
+        loader->hashkey = HASH_KEY((const char*)data, w * h);
+        _activeLoaders.back(loader);
+        return loader;
+    }
+    delete(loader);
     return nullptr;
 }

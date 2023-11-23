@@ -36,12 +36,10 @@ public:
     bool open(const string& path) override;
     bool open(const char* data, uint32_t size, bool copy) override;
     bool read() override;
-    bool close() override;
 
     unique_ptr<Surface> bitmap() override;
 
 private:
-    void clear();
     void run(unsigned tid) override;
 
     unsigned char* data = nullptr;

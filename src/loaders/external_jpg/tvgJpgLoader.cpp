@@ -41,7 +41,7 @@ void JpgLoader::clear()
 /* External Class Implementation                                        */
 /************************************************************************/
 
-JpgLoader::JpgLoader()
+JpgLoader::JpgLoader() : LoadModule(FileType::Jpg)
 {
     jpegDecompressor = tjInitDecompress();
 }
@@ -49,7 +49,7 @@ JpgLoader::JpgLoader()
 
 JpgLoader::~JpgLoader()
 {
-    if (freeData) free(data);
+    clear();
     tjDestroy(jpegDecompressor);
 
     //This image is shared with raster engine.
@@ -59,8 +59,6 @@ JpgLoader::~JpgLoader()
 
 bool JpgLoader::open(const string& path)
 {
-    clear();
-
     auto jpegFile = fopen(path.c_str(), "rb");
     if (!jpegFile) return false;
 
@@ -102,8 +100,6 @@ finalize:
 
 bool JpgLoader::open(const char* data, uint32_t size, bool copy)
 {
-    clear();
-
     int width, height, subSample, colorSpace;
     if (tjDecompressHeader3(jpegDecompressor, (unsigned char *) data, size, &width, &height, &subSample, &colorSpace) < 0) return false;
 
@@ -128,6 +124,10 @@ bool JpgLoader::open(const char* data, uint32_t size, bool copy)
 
 bool JpgLoader::read()
 {
+    if (!LoadModule::read()) return true;
+
+    if (w == 0 || h == 0) return false;
+
     /* OPTIMIZE: We assume the desired colorspace is ColorSpace::ARGB
        How could we notice the renderer colorspace at this time? */
     if (image) tjFree(image);
@@ -142,12 +142,6 @@ bool JpgLoader::read()
         return false;
     }
 
-    return true;
-}
-
-
-bool JpgLoader::close()
-{
     clear();
     return true;
 }

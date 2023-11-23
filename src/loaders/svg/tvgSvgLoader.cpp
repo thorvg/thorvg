@@ -3538,14 +3538,15 @@ void SvgLoader::clear(bool all)
 /* External Class Implementation                                        */
 /************************************************************************/
 
-SvgLoader::SvgLoader()
+SvgLoader::SvgLoader() : LoadModule(FileType::Svg)
 {
 }
 
 
 SvgLoader::~SvgLoader()
 {
-    close();
+    this->done();
+    clear();
 }
 
 
@@ -3727,6 +3728,8 @@ bool SvgLoader::read()
 {
     if (!content || size == 0) return false;
 
+    if (!LoadModule::read()) return true;
+
     //the loading has been already completed in header()
     if (root) return true;
 
@@ -3738,10 +3741,9 @@ bool SvgLoader::read()
 
 bool SvgLoader::close()
 {
+    if (!LoadModule::close()) return false;
     this->done();
-
     clear();
-
     return true;
 }
 

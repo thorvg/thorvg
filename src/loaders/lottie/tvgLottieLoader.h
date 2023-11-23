@@ -39,7 +39,7 @@ public:
     float frameCnt = 0.0f;
     float frameDuration = 0.0f;
 
-    LottieBuilder* builder = nullptr;
+    LottieBuilder* builder;
     LottieComposition* comp = nullptr;
 
     char* dirName = nullptr;            //base resource directory
@@ -54,7 +54,6 @@ public:
     bool open(const char* data, uint32_t size, bool copy) override;
     bool resize(Paint* paint, float w, float h) override;
     bool read() override;
-    bool close() override;
     unique_ptr<Paint> paint() override;
 
     //Frame Controls

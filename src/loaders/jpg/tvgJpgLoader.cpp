@@ -44,6 +44,8 @@ void JpgLoader::run(unsigned tid)
         image = nullptr;
     }
     image = jpgdDecompress(decoder);
+
+    clear();
 }
 
 
@@ -51,19 +53,21 @@ void JpgLoader::run(unsigned tid)
 /* External Class Implementation                                        */
 /************************************************************************/
 
+JpgLoader::JpgLoader() : LoadModule(FileType::Jpg)
+{
+
+}
+
 
 JpgLoader::~JpgLoader()
 {
-    jpgdDelete(decoder);
-    if (freeData) free(data);
+    clear();
     free(image);
 }
 
 
 bool JpgLoader::open(const string& path)
 {
-    clear();
-
     int width, height;
     decoder = jpgdHeader(path.c_str(), &width, &height);
     if (!decoder) return false;
@@ -78,8 +82,6 @@ bool JpgLoader::open(const string& path)
 
 bool JpgLoader::open(const char* data, uint32_t size, bool copy)
 {
-    clear();
-
     if (copy) {
         this->data = (char *) malloc(size);
         if (!this->data) return false;
@@ -105,7 +107,9 @@ bool JpgLoader::open(const char* data, uint32_t size, bool copy)
 
 bool JpgLoader::read()
 {
-    if (!decoder || w <= 0 || h <= 0) return false;
+    if (!LoadModule::read()) return true;
+
+    if (!decoder || w == 0 || h == 0) return false;
 
     TaskScheduler::request(this);
 
@@ -115,8 +119,8 @@ bool JpgLoader::read()
 
 bool JpgLoader::close()
 {
+    if (!LoadModule::close()) return false;
     this->done();
-    clear();
     return true;
 }
 

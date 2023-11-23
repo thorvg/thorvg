@@ -57,7 +57,7 @@ struct PictureIterator : Iterator
 
 struct Picture::Impl
 {
-    shared_ptr<LoadModule> loader = nullptr;
+    LoadModule* loader = nullptr;
 
     Paint* paint = nullptr;           //vector picture uses
     Surface* surface = nullptr;       //bitmap picture uses
@@ -73,6 +73,7 @@ struct Picture::Impl
     bool render(RenderMethod &renderer);
     bool size(float w, float h);
     RenderRegion bounds(RenderMethod& renderer);
+    Result load(LoadModule* ploader);
 
     Impl(Picture* p) : picture(p)
     {
@@ -80,6 +81,7 @@ struct Picture::Impl
 
     ~Impl()
     {
+        LoaderMgr::retrieve(loader);
         delete(paint);
         delete(surface);
     }
@@ -149,40 +151,32 @@ struct Picture::Impl
     Result load(const string& path)
     {
         if (paint || surface) return Result::InsufficientCondition;
-        if (loader) loader->close();
+
         bool invalid;  //Invalid Path
-        loader = LoaderMgr::loader(path, &invalid);
+        auto loader = LoaderMgr::loader(path, &invalid);
         if (!loader) {
             if (invalid) return Result::InvalidArguments;
             return Result::NonSupport;
         }
-        if (!loader->read()) return Result::Unknown;
-        w = loader->w;
-        h = loader->h;
-        return Result::Success;
+        return load(loader);
     }
 
     Result load(const char* data, uint32_t size, const string& mimeType, bool copy)
     {
         if (paint || surface) return Result::InsufficientCondition;
-        if (loader) loader->close();
-        loader = LoaderMgr::loader(data, size, mimeType, copy);
+        auto loader = LoaderMgr::loader(data, size, mimeType, copy);
         if (!loader) return Result::NonSupport;
-        if (!loader->read()) return Result::Unknown;
-        w = loader->w;
-        h = loader->h;
-        return Result::Success;
+        return load(loader);
     }
 
     Result load(uint32_t* data, uint32_t w, uint32_t h, bool copy)
     {
         if (paint || surface) return Result::InsufficientCondition;
-        if (loader) loader->close();
-        loader = LoaderMgr::loader(data, w, h, copy);
+
+        auto loader = LoaderMgr::loader(data, w, h, copy);
         if (!loader) return Result::FailedAllocation;
-        this->w = loader->w;
-        this->h = loader->h;
-        return Result::Success;
+
+        return load(loader);
     }
 
     void mesh(const Polygon* triangles, const uint32_t triangleCnt)
@@ -208,10 +202,11 @@ struct Picture::Impl
         if (paint) dup->paint = paint->duplicate();
 
         dup->loader = loader;
+        ++dup->loader->sharing;
+
         if (surface) {
             dup->surface = new Surface;
             *dup->surface = *surface;
-            //TODO: A dupilcation is not a proxy... it needs copy of the pixel data?
             dup->surface->owner = false;
         }
         dup->w = w;

@@ -32,7 +32,6 @@ RenderUpdateFlag Picture::Impl::load()
         if (!paint) {
             if (auto p = loader->paint()) {
                 paint = p.release();
-                loader->close();
                 if (w != loader->w || h != loader->h) {
                     if (!resizing) {
                         w = loader->w;
@@ -47,7 +46,6 @@ RenderUpdateFlag Picture::Impl::load()
 
         if (!surface) {
             if ((surface = loader->bitmap().release())) {
-                loader->close();
                 return RenderUpdateFlag::Image;
             }
         }
@@ -118,6 +116,28 @@ RenderTransform Picture::Impl::resizeTransform(const RenderTransform* pTransform
     if (!pTransform) return tmp;
     else return RenderTransform(pTransform, &tmp);
 }
+
+
+Result Picture::Impl::load(LoadModule* loader)
+{
+    //Same resource has been loaded.
+    if (this->loader == loader) {
+        this->loader->sharing--;  //make it sure the reference counting.
+        return Result::Success;
+    } else if (this->loader) {
+        LoaderMgr::retrieve(this->loader);
+    }
+
+    this->loader = loader;
+
+    if (!loader->read()) return Result::Unknown;
+
+    this->w = loader->w;
+    this->h = loader->h;    
+
+    return Result::Success;
+}
+
 
 
 /************************************************************************/
