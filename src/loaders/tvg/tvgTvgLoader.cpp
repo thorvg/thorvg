@@ -39,10 +39,8 @@ void TvgLoader::clear()
     size = 0;
     copy = false;
 
-    if (interpreter) {
-        delete(interpreter);
-        interpreter = nullptr;
-    }
+    delete(interpreter);
+    interpreter = nullptr;
 }
 
 
@@ -103,13 +101,37 @@ bool TvgLoader::readHeader()
 }
 
 
+void TvgLoader::run(unsigned tid)
+{
+    if (root) root.reset();
+
+    auto data = const_cast<char*>(ptr);
+
+    if (compressed) {
+        data = (char*) lzwDecode((uint8_t*) data, compressedSize, compressedSizeBits, uncompressedSize);
+        root = interpreter->run(data, data + uncompressedSize);
+        free(data);
+    } else {
+        root = interpreter->run(data, this->data + size);
+    }
+
+    clear();
+}
+
+
 /************************************************************************/
 /* External Class Implementation                                        */
 /************************************************************************/
 
+TvgLoader::TvgLoader() : LoadModule(FileType::Tvg)
+{
+}
+
+
 TvgLoader::~TvgLoader()
 {
-    close();
+    this->done();
+    clear();
 }
 
 
@@ -193,35 +215,11 @@ bool TvgLoader::read()
 {
     if (!ptr || size == 0) return false;
 
+    if (!LoadModule::read()) return true;
+
     TaskScheduler::request(this);
 
     return true;
-}
-
-
-bool TvgLoader::close()
-{
-    this->done();
-    clear();
-    return true;
-}
-
-
-void TvgLoader::run(unsigned tid)
-{
-    if (root) root.reset();
-
-    auto data = const_cast<char*>(ptr);
-
-    if (compressed) {
-        data = (char*) lzwDecode((uint8_t*) data, compressedSize, compressedSizeBits, uncompressedSize);
-        root = interpreter->run(data, data + uncompressedSize);
-        free(data);
-    } else {
-        root = interpreter->run(data, this->data + size);
-    }
-
-    if (!root) clear();
 }
 
 
