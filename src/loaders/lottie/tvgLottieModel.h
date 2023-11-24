@@ -524,9 +524,6 @@ struct LottieLayer : LottieGroup
         float frameNo = -1.0f;
         Matrix matrix;
         uint8_t opacity;
-
-        //tvg render data
-        tvg::Shape* clipper = nullptr; 
     } cache;
 
     Type type = Null;

@@ -817,12 +817,8 @@ static void _updatePrecomp(LottieLayer* precomp, float frameNo)
 
     //clip the layer viewport
     if (precomp->w > 0 && precomp->h > 0) {
-        if (!precomp->cache.clipper) {
-            precomp->cache.clipper = Shape::gen().release();
-            PP(precomp->cache.clipper)->ref();
-            precomp->cache.clipper->appendRect(0, 0, static_cast<float>(precomp->w), static_cast<float>(precomp->h));
-        }
-        auto clipper = precomp->cache.clipper;
+        auto clipper = Shape::gen().release();
+        clipper->appendRect(0, 0, static_cast<float>(precomp->w), static_cast<float>(precomp->h));
         clipper->transform(precomp->cache.matrix);
 
         //TODO: remove the intermediate scene....
