@@ -4,7 +4,9 @@
   "description": "A web lottie player using ThorVG as a renderer",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint ./src --ext .ts,.tsx,.js",
+    "lint:fix": "eslint ./src --ext .ts,.tsx,.js --fix"
   },
   "repository": {
     "type": "git",
@@ -23,6 +25,13 @@
     "tvg"
   ],
   "devDependencies": {
-    "typescript": "^5.3.2"
+    "@typescript-eslint/eslint-plugin": "^6.4.0",
+    "eslint": "^8.0.1",
+    "eslint-config-standard-with-typescript": "^40.0.0",
+    "eslint-plugin-import": "^2.25.2",
+    "eslint-plugin-n": "^15.0.0 || ^16.0.0 ",
+    "eslint-plugin-promise": "^6.0.0",
+    "eslint-plugin-wc": "^2.0.4",
+    "typescript": "*"
   }
 }
