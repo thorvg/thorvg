@@ -1457,6 +1457,7 @@ void jpeg_decoder::locate_sof_marker()
 
     switch (c) {
         case M_SOF2: m_progressive_flag = true;
+            /* fallthrough */
         case M_SOF0:  /* baseline DCT */
         case M_SOF1: { /* extended sequential DCT */
           read_sof_marker();
