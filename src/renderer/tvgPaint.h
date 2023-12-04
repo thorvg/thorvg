@@ -57,7 +57,7 @@ namespace tvg
         uint8_t opacity = 255;
         uint8_t refCnt = 0;
 
-        Impl(Paint* paint) : paint(paint)
+        Impl(Paint* pnt) : paint(pnt)
         {
         }
 
