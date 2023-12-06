@@ -58,9 +58,9 @@ The task scheduler has been meticulously crafted to conceal complexity, streamli
   - [Lottie](#lottie)
   - [TVG Picture](#tvg-picture)
   - [Practices](#practices)
-    - [Tizen](#tizen)
-    - [Rive](#rive)
+    - [dotLottie](#dotlottie)
     - [Godot](#godot)
+    - [Tizen](#tizen)
   - [Examples](#examples)
   - [Documentation](#documentation)
   - [Tools](#tools)
@@ -306,11 +306,10 @@ As TVG Saver facilitates the export of the scene-tree into TVG Picture data file
 <br />
 <br />
 ## Practices
-### Tizen
-ThorVG has been integrated into the [Tizen](https://www.tizen.org) platform as the vector graphics engine. [NUI](https://docs.tizen.org/application/dotnet/guides/user-interface/nui/overview/) is the name of Tizen UI framework which is written in C#. ThorVG is the backend engine of the [NUI Vector Graphics](https://docs.tizen.org/application/dotnet/guides/user-interface/nui/vectorgraphics/Overview/) which is used for vector primitive drawings and scalable image contents such as SVG and Lottie Animation among the Tizen applications.
-
+### dotLottie
+[dotLottie](https://dotlottie.io/) is an open-source file format that aggregates one or more Lottie files and their associated resources, such as images and fonts, into a single file. This enables an efficient and easy distribution of animations. dotLottie files are ZIP archives compressed with the Deflate compression method and carry the file extension of “.lottie”. Think of it as a superset of Lottie. LottieFiles aims to achieve just that. [dotLottie player](https://github.com/LottieFiles/dotlottie-web) by LottieFiles is now powered by ThorVG.
 <p align="center">
-  <img width="798" height="auto" src="https://github.com/thorvg/thorvg/blob/main/res/example_tizen.png">
+  <img width="798" height="auto" src="https://github.com/thorvg/thorvg/blob/main/res/example_dotlottie.png">
 </p>
 
 ### Godot
@@ -320,12 +319,11 @@ ThorVG has been integrated into the [Godot](https://www.godotengine.org) project
   <img width="798" height="auto" src="https://github.com/thorvg/thorvg/blob/main/res/example_godot.png">
 </p>
 
-### Rive
-We're also building a [Rive](https://rive.app/) port that supports Rive Animation run through the ThorVG backend. Rive is a brand new animation platform
-that supports fancy, user-interactive vector animations. For more details see [Rive-Tizen](https://github.com/rive-app/rive-tizen) on [Github](https://github.com/rive-app/).
+### Tizen
+ThorVG has been integrated into the [Tizen](https://www.tizen.org) platform as the vector graphics engine. [NUI](https://docs.tizen.org/application/dotnet/guides/user-interface/nui/overview/) is the name of Tizen UI framework which is written in C#. ThorVG is the backend engine of the [NUI Vector Graphics](https://docs.tizen.org/application/dotnet/guides/user-interface/nui/vectorgraphics/Overview/) which is used for vector primitive drawings and scalable image contents such as SVG and Lottie Animation among the Tizen applications.
 
 <p align="center">
-  <img width="600" height="auto" src="https://github.com/thorvg/thorvg/blob/main/res/example_rive.gif">
+  <img width="798" height="auto" src="https://github.com/thorvg/thorvg/blob/main/res/example_tizen.png">
 </p>
 
 [Back to contents](#contents)
