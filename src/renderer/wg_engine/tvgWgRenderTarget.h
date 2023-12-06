@@ -20,44 +20,36 @@
  * SOFTWARE.
  */
 
-#ifndef _TVG_WG_PIPELINE_IMAGE_H_
-#define _TVG_WG_PIPELINE_IMAGE_H_
+#ifndef _TVG_WG_RENDER_TARGET_H_
+#define _TVG_WG_RENDER_TARGET_H_
 
-#include "tvgWgPipelineBase.h"
+#include "tvgWgRenderData.h"
 
-class WgPipelineImage;
+struct WgRenderTarget {
+    // command buffer
+    WGPURenderPassEncoder mRenderPassEncoder{};
+    // fill and blit data
+    WgBindGroupCanvas mBindGroupCanvasWnd;
+    WgBindGroupPaint mBindGroupPaintWnd;
+    WgGeometryData mGeometryDataWnd;
+    // gpu buffers
+    WGPUSampler mSampler{};
+    WGPUTexture mTextureColor{};
+    WGPUTexture mTextureStencil{};
+    WGPUTextureView mTextureViewColor{};
+    WGPUTextureView mTextureViewStencil{};
+    WgPipelines* mPipelines{}; // external handle
 
-struct WgPipelineImageColorInfo {
-    uint32_t format{};
-    float dummy0{};
-    float dummy1{};
-    float opacity{};
-};
-
-struct WgPipelineDataImage: WgPipelineData {
-    WgPipelineImageColorInfo uColorInfo{}; // @binding(1)
-
-    void updateFormat(const ColorSpace format);
-    void updateOpacity(const uint8_t opacity);
-};
-
-class WgPipelineBindGroupImage: public WgPipelineBindGroup {
-private:
-    WGPUBuffer uBufferColorInfo{}; // @binding(1)
-    WGPUSampler uSamplerBase{};     // @binding(2)
-    WGPUTextureView uTextureViewBase{}; // @binding(3)
-    WGPUTexture mTextureBase{}; // gpu texture data
-public:
-    void initialize(WGPUDevice device, WgPipelineImage& pipelineImage, Surface* surface);
+    void initialize(WgContext& context, WgPipelines& pipelines, uint32_t w, uint32_t h);
     void release();
 
-    void update(WGPUQueue mQueue, WgPipelineDataImage& pipelineDataImage, Surface* surface);
+    void beginRenderPass(WGPUCommandEncoder commandEncoder, WGPUTextureView colorAttachement);
+    void beginRenderPass(WGPUCommandEncoder commandEncoder);
+    void endRenderPass();
+
+    void renderShape(WgRenderDataShape* renderData);
+    void renderStroke(WgRenderDataShape* renderData);
+    void renderImage(WgRenderDataShape* renderData);
 };
 
-class WgPipelineImage: public WgPipelineBase {
-public:
-    void initialize(WGPUDevice device) override;
-    void release() override;
-};
-
-#endif //_TVG_WG_PIPELINE_IMAGE_H_
+#endif

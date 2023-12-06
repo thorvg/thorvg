@@ -23,9 +23,7 @@
 #ifndef _TVG_WG_RENDERER_H_
 #define _TVG_WG_RENDERER_H_
 
-#include "tvgWgPipelineEmpty.h"
-#include "tvgWgPipelineStroke.h"
-#include "tvgWgRenderData.h"
+#include "tvgWgRenderTarget.h"
 
 class WgRenderer : public RenderMethod
 {
@@ -65,30 +63,11 @@ public:
 private:
     Array<RenderData> mRenderDatas{};
 private:
-    Surface mTargetSurface = { nullptr, 0, 0, 0, ColorSpace::Unsupported, true };
-    float mViewMatrix[16]{};
-    // basic webgpu instances (TODO: create separated entity)
-    WGPUInstance mInstance{};
-    WGPUAdapter mAdapter{};
-    WGPUDevice mDevice{};
-    WGPUQueue mQueue{};
-    // webgpu surface handles (TODO: create separated entity)
+    WgContext mContext;
+    WgPipelines mPipelines;
+    WgRenderTarget mmRenderTarget;
     WGPUSurface mSurface{};
     WGPUSwapChain mSwapChain{};
-    WGPUTexture mStencilTex{};
-    WGPUTextureView mStencilTexView{};
-private:
-    WgPipelineEmpty mPipelineEmpty;
-    WgPipelineStroke mPipelineStroke;
-    WgPipelineSolid mPipelineSolid;
-    WgPipelineLinear mPipelineLinear;
-    WgPipelineRadial mPipelineRadial;
-    WgPipelineImage mPipelineImage;
-    WgGeometryData mGeometryDataWindow;
-    WgPipelineBindGroupEmpty mPipelineBindGroupEmpty;
-    WgPipelineBindGroupStroke mPipelineBindGroupStroke;
-
-    bool mClearBuffer;
 };
 
 #endif /* _TVG_WG_RENDERER_H_ */

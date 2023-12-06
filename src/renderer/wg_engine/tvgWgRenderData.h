@@ -23,20 +23,16 @@
 #ifndef _TVG_WG_RENDER_DATA_H_
 #define _TVG_WG_RENDER_DATA_H_
 
-#include "tvgWgPipelineSolid.h"
-#include "tvgWgPipelineLinear.h"
-#include "tvgWgPipelineRadial.h"
-#include "tvgWgPipelineImage.h"
+#include "tvgWgPipelines.h"
 #include "tvgWgGeometry.h"
 
-class WgGeometryData {
-public:
+struct WgGeometryData {
     WGPUBuffer mBufferVertex{};
     WGPUBuffer mBufferTexCoords{};
     WGPUBuffer mBufferIndex{};
     size_t mVertexCount{};
     size_t mIndexCount{};
-public:
+
     WgGeometryData() {}
     virtual ~WgGeometryData() { release(); }
 
@@ -49,36 +45,51 @@ public:
     void release();
 };
 
+struct WgImageData {
+    WGPUSampler mSampler{};
+    WGPUTexture mTexture{};
+    WGPUTextureView mTextureView{};
+
+    WgImageData() {}
+    virtual ~WgImageData() { release(); }
+
+    void initialize(WGPUDevice device) {};
+    void update(WGPUDevice device, WGPUQueue queue, Surface* surface);
+    void release();
+};
+
 class WgRenderData {
 public:
     virtual void initialize(WGPUDevice device) {};
     virtual void release() = 0;
 };
 
+enum class WgRenderDataShapeFillType { None = 0, Solid = 1, Linear = 2, Radial = 3 };
 struct WgRenderDataShapeSettings {
-    WgPipelineBindGroupSolid mPipelineBindGroupSolid{};
-    WgPipelineBindGroupLinear mPipelineBindGroupLinear{};
-    WgPipelineBindGroupRadial mPipelineBindGroupRadial{};
-
-    WgPipelineBase* mPipelineBase{}; // external
-    WgPipelineBindGroup* mPipelineBindGroup{}; // external
+    WgBindGroupSolidColor mBindGroupSolid{};
+    WgBindGroupLinearGradient mBindGroupLinear{};
+    WgBindGroupRadialGradient mBindGroupRadial{};
+    WgRenderDataShapeFillType mFillType{}; // Default: None
 
     // update render shape settings defined by flags and fill settings
-    void update(WGPUQueue queue, const Fill* fill, const RenderUpdateFlag flags,
-                const RenderTransform* transform, const float* viewMatrix, const uint8_t* color,
-                WgPipelineLinear& linear, WgPipelineRadial& radial, WgPipelineSolid& solid);
+    void update(WGPUDevice device, WGPUQueue queue,
+                const Fill* fill, const uint8_t* color, const RenderUpdateFlag flags);
     void release();
 };
 
 class WgRenderDataShape: public WgRenderData {
 public:
+    // geometry data for shapes, strokes and image
     Array<WgGeometryData*> mGeometryDataShape;
     Array<WgGeometryData*> mGeometryDataStroke;
     Array<WgGeometryData*> mGeometryDataImage;
+    WgImageData mImageData;
 
+    // shader settings
+    WgBindGroupPaint mBindGroupPaint;
     WgRenderDataShapeSettings mRenderSettingsShape;
     WgRenderDataShapeSettings mRenderSettingsStroke;
-    WgPipelineBindGroupImage mPipelineBindGroupImage;
+    WgBindGroupPicture mBindGroupPicture;
 public:
     WgRenderDataShape() {}
     

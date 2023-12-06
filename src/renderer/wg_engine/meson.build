@@ -1,14 +1,22 @@
 source_file = [
+    'tvgWgBindGroups.cpp',
+    'tvgWgBindGroups.h',
+    'tvgWgCommon.cpp',
+    'tvgWgCommon.h',
     'tvgWgGeometry.cpp',
-    'tvgWgPipelineBase.cpp',
-    'tvgWgPipelineEmpty.cpp',
-    'tvgWgPipelineLinear.cpp',
-    'tvgWgPipelineSolid.cpp',
-    'tvgWgPipelineRadial.cpp',
-    'tvgWgPipelineStroke.cpp',
+    'tvgWgGeometry.h',
+    'tvgWgPipelines.cpp',
+    'tvgWgPipelines.h',
     'tvgWgRenderData.cpp',
+    'tvgWgRenderData.h',
     'tvgWgRenderer.cpp',
-    'tvgWgShaderSrc.cpp'
+    'tvgWgRenderer.h',
+    'tvgWgRenderTarget.cpp',
+    'tvgWgRenderTarget.h',
+    'tvgWgShaderSrc.cpp',
+    'tvgWgShaderSrc.h',
+    'tvgWgShaderTypes.cpp'
+    'tvgWgShaderTypes.h'
 ]
 
 engine_dep += [declare_dependency(
