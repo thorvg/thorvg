@@ -21,7 +21,7 @@ The following list shows primitives that are supported by ThorVG: <br />
 
  * Shapes: Line, Arc, Curve, Path, Polygon
  * Filling: Solid & Gradients and Texture Mapping
- * Scene Graph & Affine Transformation (translation, rotation, scale, ...)
+ * Scene Graph & Affine Transformation
  * Stroking: Width, Join, Cap, Dash
  * Composition: Blending, Masking, Path Clipping
  * Images: TVG, SVG, JPG, PNG, WebP, Bitmap
