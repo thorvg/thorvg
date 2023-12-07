@@ -912,7 +912,9 @@ void LottieParser::parseAssets()
 {
     enterArray();
     while (nextArrayValue()) {
-        comp->assets.push(parseAsset());
+        auto asset = parseAsset();
+        if (asset) comp->assets.push(asset);
+        else TVGERR("LOTTIE", "Invalid Asset!");
     }
 }
 
