@@ -80,6 +80,7 @@ private:
         pending = true;
     }
 
+    friend struct TaskScheduler;
     friend struct TaskSchedulerImpl;
 };
 

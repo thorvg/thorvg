@@ -87,6 +87,11 @@ if get_option('vector') == true
   endif
 endif
 
+#Threads
+if get_option('threads') == true
+    config_h.set10('THORVG_THREAD_SUPPORT', true)
+endif
+
 #Bindings
 if get_option('bindings').contains('capi') == true
     config_h.set10('THORVG_CAPI_BINDING_SUPPORT', true)
@@ -130,31 +135,33 @@ Summary:
     Build Type:            @1@
     Prefix:                @2@
     SIMD Instruction:      @3@
-    Raster Engine (SW):    @4@
-    Raster Engine (GL):    @5@
-    Raster Engine (WG):    @6@
-    Loader (TVG):          @7@
-    Loader (SVG):          @8@
-    Loader (PNG):          @9@
-    Loader (JPG):          @10@
-    Loader (WEBP_BETA):    @11@
-    Loader (LOTTIE):       @12@
-    Saver (TVG):           @13@
-    Saver (GIF):           @14@
-    Binding (CAPI):        @15@
-    Binding (WASM_BETA):   @16@
-    Log Message:           @17@
-    Tests:                 @18@
-    Examples:              @19@
-    Tool (Svg2Tvg):        @20@
-    Tool (Svg2Png):        @21@
-    Tool (Lottie2Gif):     @22@
+    Threads:               @4@
+    Raster Engine (SW):    @5@
+    Raster Engine (GL):    @6@
+    Raster Engine (WG):    @7@
+    Loader (TVG):          @8@
+    Loader (SVG):          @9@
+    Loader (PNG):          @10@
+    Loader (JPG):          @11@
+    Loader (WEBP_BETA):    @12@
+    Loader (LOTTIE):       @13@
+    Saver (TVG):           @14@
+    Saver (GIF):           @15@
+    Binding (CAPI):        @16@
+    Binding (WASM_BETA):   @17@
+    Log Message:           @18@
+    Tests:                 @19@
+    Examples:              @20@
+    Tool (Svg2Tvg):        @21@
+    Tool (Svg2Png):        @22@
+    Tool (Lottie2Gif):     @23@
 
 '''.format(
         meson.project_version(),
         get_option('buildtype'),
         get_option('prefix'),
         simd_type,
+        get_option('threads'),
         get_option('engines').contains('sw'),
         get_option('engines').contains('gl_beta'),
         get_option('engines').contains('wg_beta'),

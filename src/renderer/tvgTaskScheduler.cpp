@@ -172,7 +172,10 @@ static TaskSchedulerImpl* inst = nullptr;
 void TaskScheduler::init(unsigned threads)
 {
     if (inst) return;
-    inst = new TaskSchedulerImpl(threads);
+
+    #ifdef THORVG_THREAD_SUPPORT
+        inst = new TaskSchedulerImpl(threads);
+    #endif
 }
 
 
@@ -186,7 +189,11 @@ void TaskScheduler::term()
 
 void TaskScheduler::request(Task* task)
 {
-    if (inst) inst->request(task);
+    #ifdef THORVG_THREAD_SUPPORT
+        if (inst) inst->request(task);
+    #else
+        (*task)(0);
+    #endif
 }
 
 
