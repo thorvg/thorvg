@@ -39,7 +39,7 @@ public:
 
     /* ptr: points the tvg binary body (after header)
        end: end of the tvg binary data */
-    virtual unique_ptr<Scene> run(const char* ptr, const char* end) = 0;
+    virtual Scene* run(const char* ptr, const char* end) = 0;
 };
 
 
@@ -47,7 +47,7 @@ public:
 class TvgBinInterpreter : public TvgBinInterpreterBase
 {
 public:
-    unique_ptr<Scene> run(const char* ptr, const char* end) override;
+    Scene* run(const char* ptr, const char* end) override;
 };
 
 

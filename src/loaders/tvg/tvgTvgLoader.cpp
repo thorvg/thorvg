@@ -103,8 +103,6 @@ bool TvgLoader::readHeader()
 
 void TvgLoader::run(unsigned tid)
 {
-    if (root) root.reset();
-
     auto data = const_cast<char*>(ptr);
 
     if (compressed) {
@@ -223,8 +221,8 @@ bool TvgLoader::read()
 }
 
 
-unique_ptr<Paint> TvgLoader::paint()
+Paint* TvgLoader::paint()
 {
     this->done();
-    return std::move(root);
+    return root;
 }

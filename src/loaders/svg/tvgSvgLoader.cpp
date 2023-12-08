@@ -3555,7 +3555,7 @@ void SvgLoader::run(unsigned tid)
     //According to the SVG standard the value of the width/height of the viewbox set to 0 disables rendering
     if ((viewFlag & SvgViewFlag::Viewbox) && (fabsf(vw) <= FLT_EPSILON || fabsf(vh) <= FLT_EPSILON)) {
         TVGLOG("SVG", "The <viewBox> width and/or height set to 0 - rendering disabled.");
-        root = Scene::gen();
+        root = Scene::gen().release();
         return;
     }
 
@@ -3748,8 +3748,8 @@ bool SvgLoader::close()
 }
 
 
-unique_ptr<Paint> SvgLoader::paint()
+Paint* SvgLoader::paint()
 {
     this->done();
-    return std::move(root);
+    return root;
 }
