@@ -70,7 +70,7 @@ struct LoadModule
     }
 
     virtual unique_ptr<Surface> bitmap() { return nullptr; }
-    virtual unique_ptr<Paint> paint() { return nullptr; }
+    virtual Paint* paint() { return nullptr; }
 };
 
 }

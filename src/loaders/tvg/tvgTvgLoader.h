@@ -34,7 +34,7 @@ public:
     const char* ptr = nullptr;
     uint32_t size = 0;
     uint16_t version = 0;
-    unique_ptr<Scene> root = nullptr;
+    Scene* root = nullptr;
     TvgBinInterpreterBase* interpreter = nullptr;
     uint32_t uncompressedSize = 0;
     uint32_t compressedSize = 0;
@@ -51,7 +51,7 @@ public:
     bool read() override;
     bool resize(Paint* paint, float w, float h) override;
 
-    unique_ptr<Paint> paint() override;
+    Paint* paint() override;
 
 private:
     bool readHeader();

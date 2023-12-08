@@ -493,7 +493,7 @@ static Paint* _parsePaint(TvgBinBlock baseBlock)
 /* External Class Implementation                                        */
 /************************************************************************/
 
-unique_ptr<Scene> TvgBinInterpreter::run(const char *ptr, const char* end)
+Scene* TvgBinInterpreter::run(const char *ptr, const char* end)
 {
     auto scene = Scene::gen();
     if (!scene) return nullptr;
@@ -508,5 +508,5 @@ unique_ptr<Scene> TvgBinInterpreter::run(const char *ptr, const char* end)
         ptr = block.end;
     }
 
-    return scene;
+    return scene.release();
 }

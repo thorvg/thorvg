@@ -288,12 +288,12 @@ bool LottieLoader::read()
 }
 
 
-unique_ptr<Paint> LottieLoader::paint()
+Paint* LottieLoader::paint()
 {
     this->done();
     if (!comp) return nullptr;
     comp->initiated = true;
-    return cast<Paint>(comp->scene);
+    return comp->scene;
 }
 
 

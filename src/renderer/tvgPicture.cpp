@@ -30,8 +30,8 @@ RenderUpdateFlag Picture::Impl::load()
 {
     if (loader) {
         if (!paint) {
-            if (auto p = loader->paint()) {
-                paint = p.release();
+            paint = loader->paint();
+            if (paint) {
                 if (w != loader->w || h != loader->h) {
                     if (!resizing) {
                         w = loader->w;
@@ -40,7 +40,7 @@ RenderUpdateFlag Picture::Impl::load()
                     loader->resize(paint, w, h);
                     resizing = false;
                 }
-                if (paint) return RenderUpdateFlag::None;
+                return RenderUpdateFlag::None;
             }
         } else loader->sync();
 

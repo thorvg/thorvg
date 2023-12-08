@@ -35,7 +35,7 @@ public:
     uint32_t size = 0;
 
     SvgLoaderData loaderData;
-    unique_ptr<Scene> root;
+    Scene* root = nullptr;
 
     bool copy = false;
 
@@ -49,7 +49,7 @@ public:
     bool read() override;
     bool close() override;
 
-    unique_ptr<Paint> paint() override;
+    Paint* paint() override;
 
 private:
     SvgViewFlag viewFlag = SvgViewFlag::None;

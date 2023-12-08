@@ -54,7 +54,7 @@ public:
     bool open(const char* data, uint32_t size, bool copy) override;
     bool resize(Paint* paint, float w, float h) override;
     bool read() override;
-    unique_ptr<Paint> paint() override;
+    Paint* paint() override;
 
     //Frame Controls
     bool frame(float no) override;
