@@ -219,8 +219,8 @@ Result Shape::appendRect(float x, float y, float w, float h, float rx, float ry)
     } else if (mathEqual(rx, halfW) && mathEqual(ry, halfH)) {
         return appendCircle(x + (w * 0.5f), y + (h * 0.5f), rx, ry);
     } else {
-        auto hrx = rx * 0.5f;
-        auto hry = ry * 0.5f;
+        auto hrx = rx * PATH_KAPPA;
+        auto hry = ry * PATH_KAPPA;
         pImpl->grow(10, 17);
         pImpl->moveTo(x + rx, y);
         pImpl->lineTo(x + w - rx, y);
