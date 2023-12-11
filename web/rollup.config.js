@@ -1,7 +1,8 @@
 import { swc } from 'rollup-plugin-swc3';
 import resolve from '@rollup/plugin-node-resolve';
+import commonjs from '@rollup/plugin-commonjs';
 
-const extensions = [".js", ".jsx", ".ts", ".tsx", ".mjs"];
+const extensions = [".js", ".jsx", ".ts", ".tsx", ".mjs", ".wasm"];
 const globals = {
   'lit': 'lit',
   'lit/decorators.js': 'lit/decorators.js',
@@ -30,6 +31,13 @@ export default {
   ],
   plugins: [
     resolve(),
+    commonjs({
+      include: [
+        './dist/thorvg-wasm.js',
+        './dist/thorvg-wasm.wasm'
+      ],
+      requireReturnsDefault: 'auto',
+    }),
     swc({
       include: /\.[mc]?[jt]sx?$/,
       exclude: /node_modules/,
