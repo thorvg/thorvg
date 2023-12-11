@@ -12,7 +12,7 @@ exe_suffix = 'js'
 
 [built-in options]
 cpp_args = ['-Wshift-negative-value', '-flto', '-Os', '-fno-exceptions']
-cpp_link_args = ['-Wshift-negative-value', '-flto', '-Os', '-fno-exceptions', '--bind', '-sWASM=1', '-sALLOW_MEMORY_GROWTH=1', '-sFORCE_FILESYSTEM=1']
+cpp_link_args = ['-Wshift-negative-value', '-flto', '-Os', '-fno-exceptions', '--bind', '-sWASM=1', '-sALLOW_MEMORY_GROWTH=1', '-sEXPORT_ES6=1', '-sFORCE_FILESYSTEM=1', '-sMODULARIZE=1', '-sEXPORTED_RUNTIME_METHODS=FS', '-sSINGLE_FILE=1']
 #cpp_link_args = ['-Wshift-negative-value', '-flto', '-Os', '-fno-exceptions', '--bind', '-sWASM=1', '-sALLOW_MEMORY_GROWTH=1', '-sFORCE_FILESYSTEM=1', '-g']   //enable g flag for wasm debugging
 
 [host_machine]
