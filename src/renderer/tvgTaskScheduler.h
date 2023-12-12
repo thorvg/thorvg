@@ -26,6 +26,7 @@
 #include <mutex>
 #include <condition_variable>
 #include "tvgCommon.h"
+#include "tvgInlist.h"
 
 namespace tvg
 {
@@ -50,6 +51,8 @@ private:
     bool                    pending = false;
 
 public:
+    INLIST_ITEM(Task);
+
     virtual ~Task() = default;
 
     void done()
