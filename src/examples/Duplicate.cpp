@@ -137,6 +137,22 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
         free(data);
     }
+
+    //Duplicate Text
+    {
+        auto text = tvg::Text::gen();
+        text->load(EXAMPLE_DIR"/Arial.ttf");
+        text->font("Arial", 50);
+        text->translate(0, 650);
+        text->text("ThorVG Text");
+        text->fill(100, 100, 255);
+
+        auto text2 = tvg::cast<tvg::Text>(text->duplicate());
+        text2->translate(0, 700);
+
+        canvas->push(std::move(text));
+        canvas->push(std::move(text2));
+    }
 }
 
 

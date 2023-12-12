@@ -52,6 +52,7 @@ source_file = [
     'StrokeMiterlimit.cpp',
     'Svg.cpp',
     'Texmap.cpp',
+    'Text.cpp',
     'Transform.cpp',
     'Tvg.cpp',
     'TvgSaver.cpp',
