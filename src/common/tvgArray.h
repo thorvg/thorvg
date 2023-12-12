@@ -38,6 +38,11 @@ struct Array
 
     Array(){}
 
+    Array(int32_t size)
+    {
+        reserve(size);
+    }
+
     Array(const Array& rhs)
     {
         reset();

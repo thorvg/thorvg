@@ -685,8 +685,7 @@ TvgBinCounter TvgSaver::serializeChildren(Iterator* it, const Matrix* pTransform
     TvgBinCounter cnt = 0;
 
     //Merging shapes. the result is written in the children.
-    Array<const Paint*> children;
-    children.reserve(it->count());
+    Array<const Paint*> children(it->count());
     children.push(it->next());
 
     while (auto child = it->next()) {

@@ -123,8 +123,7 @@ struct Scene::Impl
         this->renderer = &renderer;
 
         if (clipper) {
-            Array<RenderData> rds;
-            rds.reserve(paints.size());
+            Array<RenderData> rds(paints.size());
             for (auto paint : paints) {
                 rds.push(paint->pImpl->update(renderer, transform, clips, opacity, flag, true));
             }
