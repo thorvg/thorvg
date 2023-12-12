@@ -85,13 +85,10 @@ struct LottieGradient
     uint32_t populate(ColorStop& color)
     {
         uint32_t alphaCnt = (color.input->count - (colorStops.count * 4)) / 2;
-        Array<Fill::ColorStop> output;
-        output.reserve(colorStops.count + alphaCnt);
-
+        Array<Fill::ColorStop> output(colorStops.count + alphaCnt);
         uint32_t cidx = 0;               //color count
         uint32_t clast = colorStops.count * 4;
         uint32_t aidx = clast;           //alpha count
-
         Fill::ColorStop cs;
 
         //merge color stops.
