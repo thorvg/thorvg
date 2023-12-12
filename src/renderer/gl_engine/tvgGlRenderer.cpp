@@ -622,8 +622,7 @@ GlRenderPass* GlRenderer::currentPass()
 void GlRenderer::prepareCmpTask(GlRenderTask* task, float opacity)
 {
     // we use 1:1 blit mapping since compositor fbo is same size as root fbo
-    Array<float> vertices;
-    vertices.reserve(5 * 4);
+    Array<float> vertices(5 * 4);
 
     float left = -1.f;
     float top = 1.f;
@@ -655,8 +654,7 @@ void GlRenderer::prepareCmpTask(GlRenderTask* task, float opacity)
     vertices.push(1.f);
     vertices.push(0.f);
 
-    Array<uint32_t> indices;
-    indices.reserve(6);
+    Array<uint32_t> indices(6);
 
     indices.push(0);
     indices.push(1);

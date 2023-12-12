@@ -237,8 +237,7 @@ void LottieParser::getValue(ColorStop& color)
 {
     if (peekType() == kArrayType) enterArray();
 
-    color.input = new Array<float>;
-    color.input->reserve(context->gradient->colorStops.count);
+    color.input = new Array<float>(context->gradient->colorStops.count);
 
     while (nextArrayValue()) color.input->push(getFloat());
 }

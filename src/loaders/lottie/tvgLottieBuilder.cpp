@@ -329,8 +329,7 @@ static void _repeat(LottieGroup* parent, unique_ptr<Shape> path, RenderContext* 
 {
     auto repeater = ctx->repeater;
 
-    Array<Shape*> shapes;
-    shapes.reserve(repeater->cnt);
+    Array<Shape*> shapes(repeater->cnt);
 
     for (int i = 0; i < repeater->cnt; ++i) {
         auto multiplier = repeater->offset + static_cast<float>(i);
