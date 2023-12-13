@@ -28,4 +28,63 @@
 #include "tvgCommon.h"
 #include "tvgRender.h"
 
+struct WgBindGroup {
+    WGPUBindGroup mBindGroup{};
+
+    void set(WGPURenderPassEncoder encoder, uint32_t groupIndex);
+
+    static WGPUBindGroupEntry makeBindGroupEntryBuffer(uint32_t binding, WGPUBuffer buffer);
+    static WGPUBindGroupEntry makeBindGroupEntrySampler(uint32_t binding, WGPUSampler sampler);
+    static WGPUBindGroupEntry makeBindGroupEntryTextureView(uint32_t binding, WGPUTextureView textureView);
+
+    static WGPUBindGroupLayoutEntry makeBindGroupLayoutEntryBuffer(uint32_t binding);
+    static WGPUBindGroupLayoutEntry makeBindGroupLayoutEntrySampler(uint32_t binding);
+    static WGPUBindGroupLayoutEntry makeBindGroupLayoutEntryTextureView(uint32_t binding);
+
+    static WGPUBuffer createBuffer(WGPUDevice device, WGPUQueue queue, const void *data, size_t size);
+    static WGPUBindGroup createBindGroup(WGPUDevice device, WGPUBindGroupLayout layout, const WGPUBindGroupEntry* bindGroupEntries, uint32_t count);
+    static WGPUBindGroupLayout createBindGroupLayout(WGPUDevice device, const WGPUBindGroupLayoutEntry* bindGroupLayoutEntries, uint32_t count);
+
+    static void releaseBuffer(WGPUBuffer& buffer);
+    static void releaseBindGroup(WGPUBindGroup& bindGroup);
+    static void releaseBindGroupLayout(WGPUBindGroupLayout& bindGroupLayout);
+};
+
+struct WgPipeline {
+protected:
+    void allocate(WGPUDevice device,
+                  WGPUVertexBufferLayout vertexBufferLayouts[], uint32_t attribsCount,
+                  WGPUBindGroupLayout bindGroupLayouts[], uint32_t bindGroupsCount,
+                  WGPUCompareFunction stencilCompareFunction, WGPUStencilOperation stencilOperation,
+                  const char* shaderSource, const char* shaderLabel, const char* pipelineLabel);
+    WGPUPipelineLayout mPipelineLayout{};
+    WGPUShaderModule mShaderModule{};
+    WGPURenderPipeline mRenderPipeline{};
+public:
+    virtual void initialize(WGPUDevice device) = 0;
+    virtual void release();
+    void set(WGPURenderPassEncoder renderPassEncoder);
+
+    static WGPUBlendState makeBlendState();
+    static WGPUColorTargetState makeColorTargetState(const WGPUBlendState* blendState);
+    static WGPUVertexBufferLayout makeVertexBufferLayout(const WGPUVertexAttribute* vertexAttributes, uint32_t count, uint64_t stride);
+    static WGPUVertexState makeVertexState(WGPUShaderModule shaderModule, const WGPUVertexBufferLayout* buffers, uint32_t count);
+    static WGPUPrimitiveState makePrimitiveState();
+    static WGPUDepthStencilState makeDepthStencilState(WGPUCompareFunction compare, WGPUStencilOperation operation);
+    static WGPUMultisampleState makeMultisampleState();
+    static WGPUFragmentState makeFragmentState(WGPUShaderModule shaderModule, WGPUColorTargetState* targets, uint32_t size);
+
+    static WGPUPipelineLayout createPipelineLayout(WGPUDevice device, const WGPUBindGroupLayout* bindGroupLayouts, uint32_t count);
+    static WGPUShaderModule createShaderModule(WGPUDevice device, const char* code, const char* label);
+    static WGPURenderPipeline createRenderPipeline(
+        WGPUDevice device,
+        WGPUVertexBufferLayout vertexBufferLayouts[], uint32_t attribsCount,
+        WGPUCompareFunction stencilCompareFunction, WGPUStencilOperation stencilOperation,
+        WGPUPipelineLayout pipelineLayout, WGPUShaderModule shaderModule,
+        const char* pipelineLabel);
+    static void destroyPipelineLayout(WGPUPipelineLayout& pipelineLayout);
+    static void destroyShaderModule(WGPUShaderModule& shaderModule);
+    static void destroyRenderPipeline(WGPURenderPipeline& renderPipeline);
+};
+
 #endif // _TVG_WG_COMMON_H_
