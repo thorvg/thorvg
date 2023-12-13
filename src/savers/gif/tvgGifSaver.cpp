@@ -20,6 +20,8 @@
  * SOFTWARE.
  */
 
+#include <cstring>
+
 #include "tvgGifEncoder.h"
 #include "tvgGifSaver.h"
 

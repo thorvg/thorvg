@@ -20,6 +20,8 @@
  * SOFTWARE.
  */
 
+#include <cstring>
+
 #include "tvgCommon.h"
 #include "tvgPaint.h"
 #include "tvgShape.h"
