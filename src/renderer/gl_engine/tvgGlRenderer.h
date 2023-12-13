@@ -97,8 +97,7 @@ private:
     std::unique_ptr<GlStageBuffer> mGpuBuffer;
     vector<std::unique_ptr<GlProgram>> mPrograms;
     unique_ptr<GlRenderTarget> mRootTarget = {};
-    vector<unique_ptr<GlRenderTarget>> mComposePool = {};
-    size_t mPoolIndex = 0;
+    Array<GlRenderTarget*> mComposePool = {};
     vector<GlRenderPass> mRenderPassStack = {};
     vector<unique_ptr<Compositor>> mComposeStack = {};
 };

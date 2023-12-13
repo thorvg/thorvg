@@ -106,7 +106,6 @@ bool GlRenderer::sync()
     GL_CHECK(glDisable(GL_SCISSOR_TEST));
 
     mRenderPassStack.clear();
-    mPoolIndex = 0;
 
     delete task;
 
@@ -153,17 +152,19 @@ bool GlRenderer::beginComposite(Compositor* cmp, CompositeMethod method, uint8_t
     cmp->method = method;
     cmp->opacity = opacity;
 
-    if (mPoolIndex >= mComposePool.size()) {
-        mComposePool.emplace_back(make_unique<GlRenderTarget>(surface.w, surface.h));
-        mComposePool.back()->init(mTargetFboId);
+    uint32_t index = mRenderPassStack.size() - 1;
+
+    if (index >= mComposePool.count) {
+        mComposePool.push( new GlRenderTarget(surface.w, surface.h));
+        mComposePool[index]->init(mTargetFboId);
     }
-    mRenderPassStack.emplace_back(GlRenderPass(mComposePool[mPoolIndex++].get()));
+    mRenderPassStack.emplace_back(GlRenderPass(mComposePool[index]));
 
     return true;
 }
 
 
-bool GlRenderer::endComposite(TVG_UNUSED Compositor* cmp)
+bool GlRenderer::endComposite(Compositor* cmp)
 {
     if (mComposeStack.empty()) return false;
     if (mComposeStack.back().get() != cmp) return false;
@@ -440,12 +441,16 @@ GlRenderer* GlRenderer::gen()
     return new GlRenderer();
 }
 
-GlRenderer::GlRenderer() :mViewport() ,mGpuBuffer(new GlStageBuffer), mPrograms()
+GlRenderer::GlRenderer() :mViewport() ,mGpuBuffer(new GlStageBuffer), mPrograms(), mComposePool()
 {
 }
 
 GlRenderer::~GlRenderer()
 {
+    for (auto i = 0; i < mComposePool.count; i++) {
+        if (mComposePool[i]) delete mComposePool[i];
+    }
+
     --rendererCnt;
 
     if (rendererCnt == 0 && initEngineCnt == 0) _termEngine();
