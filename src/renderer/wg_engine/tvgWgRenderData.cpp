@@ -109,50 +109,120 @@ void WgGeometryData::release() {
 }
 
 //***********************************************************************
+// WgImageData
+//***********************************************************************
+
+void WgImageData::update(WGPUDevice device, WGPUQueue queue, Surface* surface) {
+    release();
+    // sampler descriptor
+    WGPUSamplerDescriptor samplerDesc{};
+    samplerDesc.nextInChain = nullptr;
+    samplerDesc.label = "The shape sampler";
+    samplerDesc.addressModeU = WGPUAddressMode_ClampToEdge;
+    samplerDesc.addressModeV = WGPUAddressMode_ClampToEdge;
+    samplerDesc.addressModeW = WGPUAddressMode_ClampToEdge;
+    samplerDesc.magFilter = WGPUFilterMode_Nearest;
+    samplerDesc.minFilter = WGPUFilterMode_Nearest;
+    samplerDesc.mipmapFilter = WGPUMipmapFilterMode_Nearest;
+    samplerDesc.lodMinClamp = 0.0f;
+    samplerDesc.lodMaxClamp = 32.0f;
+    samplerDesc.compare = WGPUCompareFunction_Undefined;
+    samplerDesc.maxAnisotropy = 1;
+    mSampler = wgpuDeviceCreateSampler(device, &samplerDesc);
+    assert(mSampler);
+    // texture descriptor
+    WGPUTextureDescriptor textureDesc{};
+    textureDesc.nextInChain = nullptr;
+    textureDesc.label = "The shape texture";
+    textureDesc.usage = WGPUTextureUsage_TextureBinding | WGPUTextureUsage_CopyDst;
+    textureDesc.dimension = WGPUTextureDimension_2D;
+    textureDesc.size = { surface->w, surface->h, 1 };
+    textureDesc.format = WGPUTextureFormat_RGBA8Unorm;
+    textureDesc.mipLevelCount = 1;
+    textureDesc.sampleCount = 1;
+    textureDesc.viewFormatCount = 0;
+    textureDesc.viewFormats = nullptr;
+    mTexture = wgpuDeviceCreateTexture(device, &textureDesc);
+    assert(mTexture);
+    // texture view descriptor
+    WGPUTextureViewDescriptor textureViewDesc{};
+    textureViewDesc.nextInChain = nullptr;
+    textureViewDesc.label = "The shape texture view";
+    textureViewDesc.format = WGPUTextureFormat_RGBA8Unorm;
+    textureViewDesc.dimension = WGPUTextureViewDimension_2D;
+    textureViewDesc.baseMipLevel = 0;
+    textureViewDesc.mipLevelCount = 1;
+    textureViewDesc.baseArrayLayer = 0;
+    textureViewDesc.arrayLayerCount = 1;
+    textureViewDesc.aspect = WGPUTextureAspect_All;
+    mTextureView = wgpuTextureCreateView(mTexture, &textureViewDesc);
+    assert(mTextureView);
+    // update texture data
+    WGPUImageCopyTexture imageCopyTexture{};
+    imageCopyTexture.nextInChain = nullptr;
+    imageCopyTexture.texture = mTexture;
+    imageCopyTexture.mipLevel = 0;
+    imageCopyTexture.origin = { 0, 0, 0 };
+    imageCopyTexture.aspect = WGPUTextureAspect_All;
+    WGPUTextureDataLayout textureDataLayout{};
+    textureDataLayout.nextInChain = nullptr;
+    textureDataLayout.offset = 0;
+    textureDataLayout.bytesPerRow = 4 * surface->w;
+    textureDataLayout.rowsPerImage = surface->h;
+    WGPUExtent3D writeSize{};
+    writeSize.width = surface->w;
+    writeSize.height = surface->h;
+    writeSize.depthOrArrayLayers = 1;
+    wgpuQueueWriteTexture(queue, &imageCopyTexture, surface->data, 4 * surface->w * surface->h, &textureDataLayout, &writeSize);
+}
+
+void WgImageData::release() {
+    if (mTexture) {
+        wgpuTextureDestroy(mTexture);
+        wgpuTextureRelease(mTexture);
+        mTexture = nullptr;
+    } 
+    if (mTextureView) {
+        wgpuTextureViewRelease(mTextureView);
+        mTextureView = nullptr;
+    }
+    if (mSampler) {
+        wgpuSamplerRelease(mSampler);
+        mSampler = nullptr;
+    }
+}
+
+//***********************************************************************
 // WgRenderDataShapeSettings
 //***********************************************************************
 
-void WgRenderDataShapeSettings::update(WGPUQueue queue, const Fill* fill, const RenderUpdateFlag flags,
-                                       const RenderTransform* transform, const float* viewMatrix, const uint8_t* color,
-                                       WgPipelineLinear& linear, WgPipelineRadial& radial, WgPipelineSolid& solid)
+void WgRenderDataShapeSettings::update(WGPUDevice device, WGPUQueue queue,
+                                       const Fill* fill, const uint8_t* color,
+                                       const RenderUpdateFlag flags)
 {
     // setup fill properties
-    if ((flags & (RenderUpdateFlag::Gradient | RenderUpdateFlag::Transform)) && fill) {
+    if ((flags & (RenderUpdateFlag::Gradient)) && fill) {
         // setup linear fill properties
         if (fill->identifier() == TVG_CLASS_ID_LINEAR) {
-            WgPipelineDataLinear brushDataLinear{};
-            brushDataLinear.updateMatrix(viewMatrix, transform);
-            brushDataLinear.updateGradient((LinearGradient*)fill);
-            mPipelineBindGroupLinear.update(queue, brushDataLinear);
-
-            mPipelineBindGroup = &mPipelineBindGroupLinear;
-            mPipelineBase = &linear;
-        } // setup radial fill properties
-        else if (fill->identifier() == TVG_CLASS_ID_RADIAL) {
-            WgPipelineDataRadial brushDataRadial{};
-            brushDataRadial.updateMatrix(viewMatrix, transform);
-            brushDataRadial.updateGradient((RadialGradient*)fill);
-            mPipelineBindGroupRadial.update(queue, brushDataRadial);
-
-            mPipelineBindGroup = &mPipelineBindGroupRadial;
-            mPipelineBase = &radial;
+            WgShaderTypeLinearGradient linearGradient((LinearGradient*)fill);
+            mBindGroupLinear.initialize(device, queue, linearGradient);
+            mFillType = WgRenderDataShapeFillType::Linear;
+        } else if (fill->identifier() == TVG_CLASS_ID_RADIAL) {
+            WgShaderTypeRadialGradient radialGradient((RadialGradient*)fill);
+            mBindGroupRadial.initialize(device, queue, radialGradient);
+            mFillType = WgRenderDataShapeFillType::Radial;
         }
-    } // setup solid fill properties
-    else if ((flags & (RenderUpdateFlag::Color | RenderUpdateFlag::Transform)) && !fill) {
-        WgPipelineDataSolid pipelineDataSolid{};
-        pipelineDataSolid.updateMatrix(viewMatrix, transform);
-        pipelineDataSolid.updateColor(color);
-        mPipelineBindGroupSolid.update(queue, pipelineDataSolid);
-
-        mPipelineBindGroup = &mPipelineBindGroupSolid;
-        mPipelineBase = &solid;
+    } else if ((flags & (RenderUpdateFlag::Color)) && !fill) {
+        WgShaderTypeSolidColor solidColor(color);
+        mBindGroupSolid.initialize(device, queue, solidColor);
+        mFillType = WgRenderDataShapeFillType::Solid;
     }
 }
 
 void WgRenderDataShapeSettings::release() {
-    mPipelineBindGroupSolid.release();
-    mPipelineBindGroupLinear.release();
-    mPipelineBindGroupRadial.release();
+    mBindGroupSolid.release();
+    mBindGroupLinear.release();
+    mBindGroupRadial.release();
 }
 
 //***********************************************************************
@@ -161,9 +231,11 @@ void WgRenderDataShapeSettings::release() {
 
 void WgRenderDataShape::release() {
     releaseRenderData();
+    mImageData.release();
+    mBindGroupPaint.release();
     mRenderSettingsShape.release();
     mRenderSettingsStroke.release();
-    mPipelineBindGroupImage.release();
+    mBindGroupPicture.release();
 }
 
 void WgRenderDataShape::releaseRenderData() {
@@ -227,6 +299,9 @@ void WgRenderDataShape::tesselate(WGPUDevice device, WGPUQueue queue, Surface* s
         (float *)vertexList.data, (float *)texCoordsList.data, vertexList.count,
         indexList.data, indexList.count);
     mGeometryDataImage.push(geometryData);
+
+    // update image data
+    mImageData.update(device, queue, surface);
 }
 
 void WgRenderDataShape::tesselate(WGPUDevice device, WGPUQueue queue, const RenderShape& rshape) {

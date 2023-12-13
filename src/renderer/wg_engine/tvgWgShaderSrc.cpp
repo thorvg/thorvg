@@ -24,18 +24,21 @@
 #include <string>
 
 //************************************************************************
-// cShaderSource_PipelineEmpty
+// shader pipeline fill
 //************************************************************************
 
-const char* cShaderSource_PipelineEmpty = R"(
+const char* cShaderSource_PipelineFill = R"(
 // vertex input
 struct VertexInput {
     @location(0) position: vec2f
 };
 
-// Matrix
-struct Matrix {
-    transform: mat4x4f
+// BlendSettigs
+struct BlendSettigs {
+    format : u32, // ColorSpace
+    dummy0 : f32,
+    dummy1 : f32,
+    dummy2 : f32
 };
 
 // vertex output
@@ -43,24 +46,27 @@ struct VertexOutput {
     @builtin(position) position: vec4f
 };
 
-// uMatrix
-@group(0) @binding(0) var<uniform> uMatrix: Matrix;
+// uniforms
+@group(0) @binding(0) var<uniform> uViewMat      : mat4x4f;
+@group(1) @binding(0) var<uniform> uModelMat     : mat4x4f;
+@group(1) @binding(1) var<uniform> uBlendSettigs : BlendSettigs;
 
 @vertex
 fn vs_main(in: VertexInput) -> VertexOutput {
     // fill output
     var out: VertexOutput;
-    out.position = uMatrix.transform * vec4f(in.position.xy, 0.0, 1.0);
+    out.position = uViewMat * uModelMat * vec4f(in.position.xy, 0.0, 1.0);
     return out;
 }
 
 @fragment
 fn fs_main(in: VertexOutput) -> void {
     // nothing to draw, just stencil value
-})";
+}
+)";
 
 //************************************************************************
-// cShaderSource_PipelineSolid
+// shader pipeline solid
 //************************************************************************
 
 const char* cShaderSource_PipelineSolid = R"(
@@ -69,14 +75,12 @@ struct VertexInput {
     @location(0) position: vec2f
 };
 
-// Matrix
-struct Matrix {
-    transform: mat4x4f
-};
-
-// ColorInfo
-struct ColorInfo {
-    color: vec4f
+// BlendSettigs
+struct BlendSettigs {
+    format : u32, // ColorSpace
+    dummy0 : f32,
+    dummy1 : f32,
+    dummy2 : f32
 };
 
 // vertex output
@@ -84,27 +88,34 @@ struct VertexOutput {
     @builtin(position) position: vec4f
 };
 
-// uMatrix
-@group(0) @binding(0) var<uniform> uMatrix: Matrix;
-// uColorInfo
-@group(0) @binding(1) var<uniform> uColorInfo: ColorInfo;
+// uniforms
+@group(0) @binding(0) var<uniform> uViewMat      : mat4x4f;
+@group(1) @binding(0) var<uniform> uModelMat     : mat4x4f;
+@group(1) @binding(1) var<uniform> uBlendSettigs : BlendSettigs;
+@group(2) @binding(0) var<uniform> uSolidColor   : vec4f;
 
 @vertex
 fn vs_main(in: VertexInput) -> VertexOutput {
     // fill output
     var out: VertexOutput;
-    out.position = uMatrix.transform * vec4f(in.position.xy, 0.0, 1.0);
-    //out.position = vec4f(in.position.xy, 0.0, 1.0);
+    out.position = uViewMat * uModelMat * vec4f(in.position.xy, 0.0, 1.0);
     return out;
 }
 
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4f {
-    return uColorInfo.color;
-})";
+    // resulting color
+    var color = vec4(1.0);
+
+    // get color
+    color = uSolidColor;
+
+    return vec4f(color.rgb, color.a);
+}
+)";
 
 //************************************************************************
-// cShaderSource_PipelineLinear
+// shader pipeline linear
 //************************************************************************
 
 const char* cShaderSource_PipelineLinear = R"(
@@ -113,46 +124,53 @@ struct VertexInput {
     @location(0) position: vec2f
 };
 
-// Matrix
-struct Matrix {
-    transform: mat4x4f
+// BlendSettigs
+struct BlendSettigs {
+    format : u32, // ColorSpace
+    dummy0 : f32,
+    dummy1 : f32,
+    dummy2 : f32
 };
 
-// GradientInfo
-const MAX_STOP_COUNT = 4;
-struct GradientInfo {
+// LinearGradient
+const MAX_LINEAR_GRADIENT_STOPS = 4;
+struct LinearGradient {
     nStops       : vec4f,
     gradStartPos : vec2f,
     gradEndPos   : vec2f,
     stopPoints   : vec4f,
-    stopColors   : array<vec4f, MAX_STOP_COUNT>
+    stopColors   : array<vec4f, MAX_LINEAR_GRADIENT_STOPS>
 };
 
 // vertex output
 struct VertexOutput {
-    @builtin(position) position: vec4f,
-    @location(0) vScreenCoord: vec2f
+    @builtin(position) position : vec4f,
+    @location(0) vScreenCoord   : vec2f
 };
 
-// uMatrix
-@group(0) @binding(0) var<uniform> uMatrix: Matrix;
-// uGradientInfo
-@group(0) @binding(1) var<uniform> uGradientInfo: GradientInfo;
+// uniforms
+@group(0) @binding(0) var<uniform> uViewMat        : mat4x4f;
+@group(1) @binding(0) var<uniform> uModelMat       : mat4x4f;
+@group(1) @binding(1) var<uniform> uBlendSettigs   : BlendSettigs;
+@group(2) @binding(0) var<uniform> uLinearGradient : LinearGradient;
 
 @vertex
 fn vs_main(in: VertexInput) -> VertexOutput {
     // fill output
     var out: VertexOutput;
-    out.position = uMatrix.transform * vec4f(in.position.xy, 0.0, 1.0);
+    out.position = uViewMat * uModelMat * vec4f(in.position.xy, 0.0, 1.0);
     out.vScreenCoord = in.position.xy;
     return out;
 }
 
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4f {
+    // resulting color
+    var color = vec4(1.0);
+
     let pos: vec2f = in.vScreenCoord;
-    let st: vec2f = uGradientInfo.gradStartPos;
-    let ed: vec2f = uGradientInfo.gradEndPos;
+    let st: vec2f = uLinearGradient.gradStartPos;
+    let ed: vec2f = uLinearGradient.gradEndPos;
 
     let ba: vec2f = ed - st;
 
@@ -160,36 +178,34 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
     let t: f32 = clamp(dot(pos - st, ba) / dot(ba, ba), 0.0, 1.0);
 
     // get stops count
-    let last: i32 = i32(uGradientInfo.nStops[0]) - 1;
-
-    // resulting color
-    var color = vec4(1.0);
+    let last: i32 = i32(uLinearGradient.nStops[0]) - 1;
 
     // closer than first stop
-    if (t <= uGradientInfo.stopPoints[0]) {
-        color = uGradientInfo.stopColors[0];
+    if (t <= uLinearGradient.stopPoints[0]) {
+        color = uLinearGradient.stopColors[0];
     }
     
     // further than last stop
-    if (t >= uGradientInfo.stopPoints[last]) {
-        color = uGradientInfo.stopColors[last];
+    if (t >= uLinearGradient.stopPoints[last]) {
+        color = uLinearGradient.stopColors[last];
     }
 
     // look in the middle
     for (var i = 0i; i < last; i++) {
-        let strt = uGradientInfo.stopPoints[i];
-        let stop = uGradientInfo.stopPoints[i+1];
+        let strt = uLinearGradient.stopPoints[i];
+        let stop = uLinearGradient.stopPoints[i+1];
         if ((t > strt) && (t < stop)) {
             let step: f32 = (t - strt) / (stop - strt);
-            color = mix(uGradientInfo.stopColors[i], uGradientInfo.stopColors[i+1], step);
+            color = mix(uLinearGradient.stopColors[i], uLinearGradient.stopColors[i+1], step);
         }
     }
 
-    return color;
-})";
+    return vec4f(color.rgb, color.a);
+}
+)";
 
 //************************************************************************
-// cShaderSource_PipelineRadial
+// shader pipeline radial
 //************************************************************************
 
 const char* cShaderSource_PipelineRadial = R"(
@@ -198,125 +214,125 @@ struct VertexInput {
     @location(0) position: vec2f
 };
 
-// Matrix
-struct Matrix {
-    transform: mat4x4f
+// BlendSettigs
+struct BlendSettigs {
+    format : u32, // ColorSpace
+    dummy0 : f32,
+    dummy1 : f32,
+    dummy2 : f32
 };
 
-// GradientInfo
-const MAX_STOP_COUNT = 4;
-struct GradientInfo {
+// RadialGradient
+const MAX_RADIAL_GRADIENT_STOPS = 4;
+struct RadialGradient {
     nStops     : vec4f,
     centerPos  : vec2f,
     radius     : vec2f,
     stopPoints : vec4f,
-    stopColors : array<vec4f, MAX_STOP_COUNT>
+    stopColors : array<vec4f, MAX_RADIAL_GRADIENT_STOPS>
 };
 
 // vertex output
 struct VertexOutput {
-    @builtin(position) position: vec4f,
-    @location(0) vScreenCoord: vec2f
+    @builtin(position) position : vec4f,
+    @location(0) vScreenCoord   : vec2f
 };
 
-// uMatrix
-@group(0) @binding(0) var<uniform> uMatrix: Matrix;
-// uGradientInfo
-@group(0) @binding(1) var<uniform> uGradientInfo: GradientInfo;
+// uniforms
+@group(0) @binding(0) var<uniform> uViewMat        : mat4x4f;
+@group(1) @binding(0) var<uniform> uModelMat       : mat4x4f;
+@group(1) @binding(1) var<uniform> uBlendSettigs   : BlendSettigs;
+@group(2) @binding(0) var<uniform> uRadialGradient : RadialGradient;
 
 @vertex
 fn vs_main(in: VertexInput) -> VertexOutput {
     // fill output
     var out: VertexOutput;
-    out.position = uMatrix.transform * vec4f(in.position.xy, 0.0, 1.0);
+    out.position = uViewMat * uModelMat * vec4f(in.position.xy, 0.0, 1.0);
     out.vScreenCoord = in.position.xy;
     return out;
 }
 
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4f {
-    // get interpolation factor
-    let t: f32 = clamp(distance(uGradientInfo.centerPos, in.vScreenCoord) / uGradientInfo.radius.x, 0.0, 1.0);
-
-    // get stops count
-    let last: i32 = i32(uGradientInfo.nStops[0]) - 1;
-
     // resulting color
     var color = vec4(1.0);
 
+    // get interpolation factor
+    let t: f32 = clamp(distance(uRadialGradient.centerPos, in.vScreenCoord) / uRadialGradient.radius.x, 0.0, 1.0);
+
+    // get stops count
+    let last: i32 = i32(uRadialGradient.nStops[0]) - 1;
+
     // closer than first stop
-    if (t <= uGradientInfo.stopPoints[0]) {
-        color = uGradientInfo.stopColors[0];
+    if (t <= uRadialGradient.stopPoints[0]) {
+        color = uRadialGradient.stopColors[0];
     }
     
     // further than last stop
-    if (t >= uGradientInfo.stopPoints[last]) {
-        color = uGradientInfo.stopColors[last];
+    if (t >= uRadialGradient.stopPoints[last]) {
+        color = uRadialGradient.stopColors[last];
     }
 
     // look in the middle
     for (var i = 0i; i < last; i++) {
-        let strt = uGradientInfo.stopPoints[i];
-        let stop = uGradientInfo.stopPoints[i+1];
+        let strt = uRadialGradient.stopPoints[i];
+        let stop = uRadialGradient.stopPoints[i+1];
         if ((t > strt) && (t < stop)) {
             let step: f32 = (t - strt) / (stop - strt);
-            color = mix(uGradientInfo.stopColors[i], uGradientInfo.stopColors[i+1], step);
+            color = mix(uRadialGradient.stopColors[i], uRadialGradient.stopColors[i+1], step);
         }
     }
 
-    return color;
-})";
+    return vec4f(color.rgb, color.a);
+}
+)";
+
+//************************************************************************
+// cShaderSource_PipelineImage
+//************************************************************************
 
 const char* cShaderSource_PipelineImage = R"(
 // vertex input
 struct VertexInput {
     @location(0) position: vec2f,
-    @location(1) texCoords: vec2f
+    @location(1) texCoord: vec2f
 };
 
-// Matrix
-struct Matrix {
-    transform: mat4x4f
-};
-
-// ColorInfo
-struct ColorInfo {
-    format: u32,
-    dummy0: f32,
-    dummy1: f32,
-    opacity: f32
+// BlendSettigs
+struct BlendSettigs {
+    format : u32, // ColorSpace
+    dummy0 : f32,
+    dummy1 : f32,
+    dummy2 : f32
 };
 
 // vertex output
 struct VertexOutput {
     @builtin(position) position: vec4f,
-    @location(0) texCoords: vec2f,
+    @location(0) texCoord: vec2f
 };
 
-// uMatrix
-@group(0) @binding(0) var<uniform> uMatrix: Matrix;
-// uColorInfo
-@group(0) @binding(1) var<uniform> uColorInfo: ColorInfo;
-// uSamplerBase
-@group(0) @binding(2) var uSamplerBase: sampler;
-// uTextureViewBase
-@group(0) @binding(3) var uTextureViewBase: texture_2d<f32>;
-
+@group(0) @binding(0) var<uniform> uViewMat      : mat4x4f;
+@group(1) @binding(0) var<uniform> uModelMat     : mat4x4f;
+@group(1) @binding(1) var<uniform> uBlendSettigs : BlendSettigs;
+@group(2) @binding(0) var uSampler               : sampler;
+@group(2) @binding(1) var uTextureView           : texture_2d<f32>;
 
 @vertex
 fn vs_main(in: VertexInput) -> VertexOutput {
     // fill output
     var out: VertexOutput;
-    out.position = uMatrix.transform * vec4f(in.position.xy, 0.0, 1.0);
-    out.texCoords = in.texCoords;
+    out.position = uViewMat * uModelMat * vec4f(in.position.xy, 0.0, 1.0);
+    out.texCoord = in.texCoord;
     return out;
 }
 
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4f {
-    var color: vec4f = textureSample(uTextureViewBase, uSamplerBase, in.texCoords.xy);
+    var color: vec4f = textureSample(uTextureView, uSampler, in.texCoord.xy);
     var result: vec4f = color;
-    var format: u32 = uColorInfo.format;
+    var format: u32 = uBlendSettigs.format;
     if (format == 1u) { /* FMT_ARGB8888 */
         result = color.bgra;
     } else if (format == 2u) { /* FMT_ABGR8888S */
@@ -324,5 +340,6 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
     } else if (format == 3u) { /* FMT_ARGB8888S */
         result = vec4(color.bgr * color.a, color.a);
     }
-    return vec4f(result.rgb, result.a * uColorInfo.opacity);
-})";
+    return vec4f(result.rgb, result.a);
+};
+)";
