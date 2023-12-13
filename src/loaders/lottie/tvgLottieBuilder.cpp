@@ -21,6 +21,7 @@
  */
 
 #include <queue>
+#include <cstring>
 
 #include "tvgCommon.h"
 #include "tvgPaint.h"

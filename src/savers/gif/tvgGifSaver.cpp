@@ -21,6 +21,7 @@
  */
 
 #include <stdlib.h>
+#include <cstring>
 #include "gif.h"
 #include "tvgGifSaver.h"
 
