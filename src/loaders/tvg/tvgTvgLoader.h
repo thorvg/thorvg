@@ -45,7 +45,6 @@ public:
     TvgLoader();
     ~TvgLoader();
 
-    using LoadModule::open;
     bool open(const string &path) override;
     bool open(const char *data, uint32_t size, const string& rpath, bool copy) override;
     bool read() override;
