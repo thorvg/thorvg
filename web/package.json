@@ -1,0 +1,25 @@
+{
+  "name": "@thorvg/lottie-player",
+  "version": "1.0.0-beta.0",
+  "description": "A web lottie player using ThorVG as a renderer",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/thorvg/thorvg.git"
+  },
+  "author": "Jinny You <jinny@lottiefiles.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/thorvg/thorvg/issues"
+  },
+  "homepage": "https://thorvg.org",
+  "keywords": [
+    "lottie",
+    "animation",
+    "thorvg",
+    "tvg"
+  ]
+}
