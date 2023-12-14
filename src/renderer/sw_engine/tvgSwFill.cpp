@@ -140,7 +140,7 @@ bool _prepareLinear(SwFill* fill, const LinearGradient* linear, const Matrix* tr
     fill->linear.dy = y2 - y1;
     fill->linear.len = fill->linear.dx * fill->linear.dx + fill->linear.dy * fill->linear.dy;
 
-    if (fill->linear.len < FLT_EPSILON) return true;
+    if (fill->linear.len < FLT_EPSILON) return false;
 
     fill->linear.dx /= fill->linear.len;
     fill->linear.dy /= fill->linear.len;
@@ -167,7 +167,7 @@ bool _prepareLinear(SwFill* fill, const LinearGradient* linear, const Matrix* tr
         fill->linear.dy = dx * invTransform.e12 + fill->linear.dy * invTransform.e22;
 
         fill->linear.len = fill->linear.dx * fill->linear.dx + fill->linear.dy * fill->linear.dy;
-        if (fill->linear.len < FLT_EPSILON) return true;
+        if (fill->linear.len < FLT_EPSILON) return false;
     }
 
     return true;
@@ -183,7 +183,7 @@ bool _prepareRadial(SwFill* fill, const RadialGradient* radial, const Matrix* tr
     auto fy = P(radial)->fy;
     auto fr = P(radial)->fr;
 
-    if (r < FLT_EPSILON) return true;
+    if (r < FLT_EPSILON) return false;
 
     fill->radial.dr = r - fr;
     fill->radial.dx = cx - fx;
