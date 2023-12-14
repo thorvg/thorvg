@@ -3,16 +3,14 @@ We always appreciate your contribution. ThorVG doesn't expect patches to be perf
 ## Reviewers
 Hermet Park (hermet) is the lead maintainer. Moreover, there are designated reviewers you can contact for individual modules when submitting pull requests.
 
-<b>gl_engine:</b> Ruiwen Tang (RuiwenTang) <br />
+<b>gl_engine:</b> Ruiwen Tang (RuiwenTang), Sergii Liebodkin (SergeyLebedkin) <br />
 <b>wg_engine:</b> Sergii Liebodkin (SergeyLebedkin) <br />
-<b>svg_loader:</b> Junsu Choi (JSUYA), Mira Grudzinska (mgrudzinska) <br />
-<b>tvg_loader:</b> Mira Grudzinska (mgrudzinska) <br />
+<b>svg_loader:</b> Junsu Choi (JSUYA) <br />
+<b>gif_loader:</b> Junsu Choi (JSUYA) <br />
 <b>webp_loader:</b> Junsu Choi (JSUYA) <br />
-<b>tvg_saver:</b> Mira Grudzinska (mgrudzinska) <br />
-<b>capi:</b> Mira Grudzinska (mgrudzinska) <br />
-<b>test:</b> Junsu Choi (JSUYA), Mira Grudzinska (mgrudzinska) <br />
+<b>test:</b> Junsu Choi (JSUYA) <br />
 <b>svg2png:</b> Junsu Choi (JSUYA) <br />
-<b>examples:</b> Junsu Choi (JSUYA), Mira Grudzinska (mgrudzinska) <br />
+<b>examples:</b> Junsu Choi (JSUYA), Sergii Liebodkin (SergeyLebedkin) <br />
 <br />
 
 ## Self Test & Verification
