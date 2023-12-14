@@ -5,12 +5,9 @@
 * @hermet
 /src/renderer/gl_engine @RuiwenTang @SergeyLebedkin
 /src/renderer/wg_engine @SergeyLebedkin
-/src/loaders/svg/ @JSUYA @mgrudzinska
-/src/loaders/tvg/ @mgrudzinska
 /src/loaders/external_webp/ @JSUYA
-/src/savers/tvg/ @mgrudzinska
-/src/bindings/capi/ @mgrudzinska
+/src/loaders/svg/ @JSUYA
+/src/loaders/gif/ @JSUYA
 /src/tools/svg2png/ @JSUYA
-/src/examples/ @JSUYA @mgrudzinska
-/test/* @JSUYA @mgrudzinska
-/test/capi/ @mgrudzinska
+/src/examples/ @JSUYA @SergeyLebedkin
+/test/* @JSUYA
