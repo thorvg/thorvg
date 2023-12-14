@@ -48,8 +48,6 @@ public:
     LottieLoader();
     ~LottieLoader();
 
-    //Lottie Loaders
-    using LoadModule::open;
     bool open(const string& path) override;
     bool open(const char* data, uint32_t size, bool copy) override;
     bool resize(Paint* paint, float w, float h) override;
