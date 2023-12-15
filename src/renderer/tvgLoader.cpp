@@ -43,6 +43,10 @@
     #include "tvgWebpLoader.h"
 #endif
 
+#ifdef THORVG_TTF_LOADER_SUPPORT
+    #include "tvgTtfLoader.h"
+#endif
+
 #ifdef THORVG_LOTTIE_LOADER_SUPPORT
     #include "tvgLottieLoader.h"
 #endif
@@ -74,6 +78,12 @@ static LoadModule* _find(FileType type)
         case FileType::Svg: {
 #ifdef THORVG_SVG_LOADER_SUPPORT
             return new SvgLoader;
+#endif
+            break;
+        }
+        case FileType::Ttf: {
+#ifdef THORVG_TTF_LOADER_SUPPORT
+            return new TtfLoader;
 #endif
             break;
         }
@@ -121,6 +131,10 @@ static LoadModule* _find(FileType type)
             format = "SVG";
             break;
         }
+        case FileType::Ttf: {
+            format = "TTF";
+            break;
+        }
         case FileType::Lottie: {
             format = "lottie(json)";
             break;
@@ -162,6 +176,8 @@ static LoadModule* _findByPath(const string& path)
     if (!ext.compare("png")) return _find(FileType::Png);
     if (!ext.compare("jpg")) return _find(FileType::Jpg);
     if (!ext.compare("webp")) return _find(FileType::Webp);
+    if (!ext.compare("ttf") || !ext.compare("ttc")) return _find(FileType::Ttf);
+    if (!ext.compare("otf") || !ext.compare("otc")) return _find(FileType::Ttf);
     return nullptr;
 }
 
@@ -172,6 +188,7 @@ static FileType _convert(const string& mimeType)
 
     if (mimeType == "tvg") type = FileType::Tvg;
     else if (mimeType == "svg" || mimeType == "svg+xml") type = FileType::Svg;
+    else if (mimeType == "ttf" || mimeType == "otf") type = FileType::Ttf;
     else if (mimeType == "lottie") type = FileType::Lottie;
     else if (mimeType == "raw") type = FileType::Raw;
     else if (mimeType == "png") type = FileType::Png;
@@ -237,18 +254,28 @@ bool LoaderMgr::init()
 
 bool LoaderMgr::term()
 {
+    auto loader = _activeLoaders.head;
+
+    //clean up the remained font loaders which is globally used.
+    while (loader && loader->type == FileType::Ttf) {
+        auto ret = loader->close();
+        auto tmp = loader;
+        loader = loader->next;
+        _activeLoaders.remove(tmp);
+        if (ret) delete(loader);
+    }
     return true;
 }
 
 
-void LoaderMgr::retrieve(LoadModule* loader)
+bool LoaderMgr::retrieve(LoadModule* loader)
 {
-    if (!loader) return;
-
+    if (!loader) return false;
     if (loader->close()) {
         _activeLoaders.remove(loader);
         delete(loader);
     }
+    return true;
 }
 
 
@@ -266,6 +293,27 @@ LoadModule* LoaderMgr::loader(const string& path, bool* invalid)
         }
         delete(loader);
         *invalid = true;
+    }
+    return nullptr;
+}
+
+
+bool LoaderMgr::retrieve(const string& path)
+{
+    return retrieve(_findFromCache(path));
+}
+
+
+LoadModule* LoaderMgr::loader(const char* key)
+{
+    auto loader = _activeLoaders.head;
+
+    while (loader) {
+        if (loader->hashpath && strstr(loader->hashpath, key)) {
+            ++loader->sharing;
+            return loader;
+        }
+        loader = loader->next;
     }
     return nullptr;
 }
