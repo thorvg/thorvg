@@ -42,7 +42,7 @@ RenderUpdateFlag Picture::Impl::load()
                 }
                 return RenderUpdateFlag::None;
             }
-        }
+        } else loader->sync();
 
         if (!surface) {
             if ((surface = loader->bitmap().release())) {
