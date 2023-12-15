@@ -7,10 +7,11 @@ import nodePolyfills from 'rollup-plugin-polyfill-node';
 import bakedEnv from 'rollup-plugin-baked-env';
 import pkg from './package.json';
 
-const extensions = [".js", ".jsx", ".ts", ".tsx", ".mjs", ".wasm"];
+const name = 'lottie-player';
 const globals = {
-  'lit': 'lit',
-  'lit/decorators.js': 'lit/decorators.js',
+  url: "url",
+  lit: "lit",
+  "lit/decorators.js": "lit/decorators.js",
 };
 
 export default [

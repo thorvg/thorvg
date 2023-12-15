@@ -32,11 +32,11 @@
     "skipLibCheck": true
   },
   "include": [
-    "src/**/*.ts",
-    "types/**/*.ts"
+    "src/**/*.ts"
   ],
   "exclude": [
     "node_modules",
-    "dist",
+    "example",
+    "dist"
   ],
 }
