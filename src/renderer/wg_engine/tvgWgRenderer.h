@@ -30,7 +30,6 @@ class WgRenderer : public RenderMethod
 private:
     WgRenderer();
     ~WgRenderer();
-private:
     void initialize();
     void release();
 public:
@@ -56,13 +55,14 @@ public:
     Compositor* target(const RenderRegion& region, ColorSpace cs);
     bool beginComposite(Compositor* cmp, CompositeMethod method, uint8_t opacity);
     bool endComposite(Compositor* cmp);
-public:
+
     static WgRenderer* gen();
     static bool init(uint32_t threads);
     static bool term();
+
 private:
     Array<RenderData> mRenderDatas{};
-private:
+
     Surface mTargetSurface = { nullptr, 0, 0, 0, ColorSpace::Unsupported, true };
     float mViewMatrix[16]{};
     // basic webgpu instances (TODO: create separated entity)
@@ -78,7 +78,6 @@ private:
     WgBindGroupCanvas mBindGroupCanvasWnd;
     WgBindGroupPaint mBindGroupPaintWnd;
     WgGeometryData mGeometryDataWnd;
-private:
     WgPipelines mPipelines;
 
     bool mClearBuffer;

@@ -25,7 +25,8 @@
 
 #define ARRAY_ELEMENTS_COUNT(arr) sizeof(arr)/sizeof(arr[0])
 
-void WgPipelineFillShape::initialize(WGPUDevice device) {
+void WgPipelineFillShape::initialize(WGPUDevice device)
+{
     // vertex attributes settings
     WGPUVertexAttribute vertexAttributesPos = { WGPUVertexFormat_Float32x2, sizeof(float) * 0, 0 };
     WGPUVertexBufferLayout vertexBufferLayouts[] = {
@@ -43,20 +44,21 @@ void WgPipelineFillShape::initialize(WGPUDevice device) {
     WGPUStencilOperation stencilOperation = WGPUStencilOperation_Invert;
 
     // sheder source and labels
-    const char* shaderSource = cShaderSource_PipelineFill;
-    const char* shaderLabel = "The shader fill";
-    const char* pipelineLabel = "The render pipeline fill shape";
+    auto shaderSource = cShaderSource_PipelineFill;
+    auto shaderLabel = "The shader fill";
+    auto pipelineLabel = "The render pipeline fill shape";
 
     // allocate all pipeline handles
-    allocate(
-        device,
-        vertexBufferLayouts, ARRAY_ELEMENTS_COUNT(vertexBufferLayouts),
-        bindGroupLayouts, ARRAY_ELEMENTS_COUNT(bindGroupLayouts),
-        stencilFuncion, stencilOperation,
-        shaderSource, shaderLabel, pipelineLabel);
-};
+    allocate(device,
+             vertexBufferLayouts, ARRAY_ELEMENTS_COUNT(vertexBufferLayouts),
+             bindGroupLayouts, ARRAY_ELEMENTS_COUNT(bindGroupLayouts),
+             stencilFuncion, stencilOperation,
+             shaderSource, shaderLabel, pipelineLabel);
+}
 
-void WgPipelineFillStroke::initialize(WGPUDevice device) {
+
+void WgPipelineFillStroke::initialize(WGPUDevice device)
+{
     // vertex and buffers settings
     WGPUVertexAttribute vertexAttributesPos = { WGPUVertexFormat_Float32x2, sizeof(float) * 0, 0 };
     WGPUVertexBufferLayout vertexBufferLayouts[] = {
@@ -74,20 +76,21 @@ void WgPipelineFillStroke::initialize(WGPUDevice device) {
     WGPUStencilOperation stencilOperation = WGPUStencilOperation_Replace;
 
     // sheder source and labels
-    const char* shaderSource = cShaderSource_PipelineFill;
-    const char* shaderLabel = "The shader fill";
-    const char* pipelineLabel = "The render pipeline fill stroke";
+    auto shaderSource = cShaderSource_PipelineFill;
+    auto shaderLabel = "The shader fill";
+    auto pipelineLabel = "The render pipeline fill stroke";
 
     // allocate all pipeline handles
-    allocate(
-        device,
-        vertexBufferLayouts, ARRAY_ELEMENTS_COUNT(vertexBufferLayouts),
-        bindGroupLayouts, ARRAY_ELEMENTS_COUNT(bindGroupLayouts),
-        stencilFuncion, stencilOperation,
-        shaderSource, shaderLabel, pipelineLabel);
-};
+    allocate(device,
+             vertexBufferLayouts, ARRAY_ELEMENTS_COUNT(vertexBufferLayouts),
+             bindGroupLayouts, ARRAY_ELEMENTS_COUNT(bindGroupLayouts),
+             stencilFuncion, stencilOperation,
+             shaderSource, shaderLabel, pipelineLabel);
+}
 
-void WgPipelineSolid::initialize(WGPUDevice device) {
+
+void WgPipelineSolid::initialize(WGPUDevice device)
+{
     // vertex and buffers settings
     WGPUVertexAttribute vertexAttributesPos = { WGPUVertexFormat_Float32x2, sizeof(float) * 0, 0 };
     WGPUVertexBufferLayout vertexBufferLayouts[] = {
@@ -106,20 +109,21 @@ void WgPipelineSolid::initialize(WGPUDevice device) {
     WGPUStencilOperation stencilOperation = WGPUStencilOperation_Zero;
 
     // sheder source and labels
-    const char* shaderSource = cShaderSource_PipelineSolid;
-    const char* shaderLabel = "The shader solid color";
-    const char* pipelineLabel = "The render pipeline solid color";
+    auto shaderSource = cShaderSource_PipelineSolid;
+    auto shaderLabel = "The shader solid color";
+    auto pipelineLabel = "The render pipeline solid color";
 
     // allocate all pipeline handles
-    allocate(
-        device,
-        vertexBufferLayouts, ARRAY_ELEMENTS_COUNT(vertexBufferLayouts),
-        bindGroupLayouts, ARRAY_ELEMENTS_COUNT(bindGroupLayouts),
-        stencilFuncion, stencilOperation,
-        shaderSource, shaderLabel, pipelineLabel);
-};
+    allocate(device,
+             vertexBufferLayouts, ARRAY_ELEMENTS_COUNT(vertexBufferLayouts),
+             bindGroupLayouts, ARRAY_ELEMENTS_COUNT(bindGroupLayouts),
+             stencilFuncion, stencilOperation,
+             shaderSource, shaderLabel, pipelineLabel);
+}
 
-void WgPipelineLinear::initialize(WGPUDevice device) {
+
+void WgPipelineLinear::initialize(WGPUDevice device)
+{
     // vertex and buffers settings
     WGPUVertexAttribute vertexAttributesPos = { WGPUVertexFormat_Float32x2, sizeof(float) * 0, 0 };
     WGPUVertexBufferLayout vertexBufferLayouts[] = {
@@ -138,20 +142,21 @@ void WgPipelineLinear::initialize(WGPUDevice device) {
     WGPUStencilOperation stencilOperation = WGPUStencilOperation_Zero;
 
     // sheder source and labels
-    const char* shaderSource = cShaderSource_PipelineLinear;
-    const char* shaderLabel = "The shader linear gradient";
-    const char* pipelineLabel = "The render pipeline linear gradient";
+    auto shaderSource = cShaderSource_PipelineLinear;
+    auto shaderLabel = "The shader linear gradient";
+    auto pipelineLabel = "The render pipeline linear gradient";
 
     // allocate all pipeline handles
-    allocate(
-        device,
-        vertexBufferLayouts, ARRAY_ELEMENTS_COUNT(vertexBufferLayouts),
-        bindGroupLayouts, ARRAY_ELEMENTS_COUNT(bindGroupLayouts),
-        stencilFuncion, stencilOperation,
-        shaderSource, shaderLabel, pipelineLabel);
-};
+    allocate(device,
+             vertexBufferLayouts, ARRAY_ELEMENTS_COUNT(vertexBufferLayouts),
+             bindGroupLayouts, ARRAY_ELEMENTS_COUNT(bindGroupLayouts),
+             stencilFuncion, stencilOperation,
+             shaderSource, shaderLabel, pipelineLabel);
+}
 
-void WgPipelineRadial::initialize(WGPUDevice device) {
+
+void WgPipelineRadial::initialize(WGPUDevice device)
+{
     // vertex and buffers settings
     WGPUVertexAttribute vertexAttributesPos = { WGPUVertexFormat_Float32x2, sizeof(float) * 0, 0 };
     WGPUVertexBufferLayout vertexBufferLayouts[] = {
@@ -170,20 +175,21 @@ void WgPipelineRadial::initialize(WGPUDevice device) {
     WGPUStencilOperation stencilOperation = WGPUStencilOperation_Zero;
 
     // sheder source and labels
-    const char* shaderSource = cShaderSource_PipelineRadial;
-    const char* shaderLabel = "The shader radial gradient";
-    const char* pipelineLabel = "The render pipeline radial gradient";
+    auto shaderSource = cShaderSource_PipelineRadial;
+    auto shaderLabel = "The shader radial gradient";
+    auto pipelineLabel = "The render pipeline radial gradient";
 
     // allocate all pipeline handles
-    allocate(
-        device,
-        vertexBufferLayouts, ARRAY_ELEMENTS_COUNT(vertexBufferLayouts),
-        bindGroupLayouts, ARRAY_ELEMENTS_COUNT(bindGroupLayouts),
-        stencilFuncion, stencilOperation,
-        shaderSource, shaderLabel, pipelineLabel);
-};
+    allocate(device,
+             vertexBufferLayouts, ARRAY_ELEMENTS_COUNT(vertexBufferLayouts),
+             bindGroupLayouts, ARRAY_ELEMENTS_COUNT(bindGroupLayouts),
+             stencilFuncion, stencilOperation,
+             shaderSource, shaderLabel, pipelineLabel);
+}
 
-void WgPipelineImage::initialize(WGPUDevice device) {
+
+void WgPipelineImage::initialize(WGPUDevice device)
+{
     // vertex and buffers settings
     WGPUVertexAttribute vertexAttributesPos = { WGPUVertexFormat_Float32x2, sizeof(float) * 0, 0 };
     WGPUVertexAttribute vertexAttributesTex = { WGPUVertexFormat_Float32x2, sizeof(float) * 0, 1 };
@@ -204,24 +210,25 @@ void WgPipelineImage::initialize(WGPUDevice device) {
     WGPUStencilOperation stencilOperation = WGPUStencilOperation_Zero;
 
     // sheder source and labels
-    const char* shaderSource = cShaderSource_PipelineImage;
-    const char* shaderLabel = "The shader image";
-    const char* pipelineLabel = "The render pipeline image";
+    auto shaderSource = cShaderSource_PipelineImage;
+    auto shaderLabel = "The shader image";
+    auto pipelineLabel = "The render pipeline image";
 
     // allocate all pipeline handles
-    allocate(
-        device,
-        vertexBufferLayouts, ARRAY_ELEMENTS_COUNT(vertexBufferLayouts),
-        bindGroupLayouts, ARRAY_ELEMENTS_COUNT(bindGroupLayouts),
-        stencilFuncion, stencilOperation,
-        shaderSource, shaderLabel, pipelineLabel);
-};
+    allocate(device,
+             vertexBufferLayouts, ARRAY_ELEMENTS_COUNT(vertexBufferLayouts),
+             bindGroupLayouts, ARRAY_ELEMENTS_COUNT(bindGroupLayouts),
+             stencilFuncion, stencilOperation,
+             shaderSource, shaderLabel, pipelineLabel);
+}
+
 
 //************************************************************************
 // pipelines
 //************************************************************************
 
-void WgPipelines::initialize(WGPUDevice device) {
+void WgPipelines::initialize(WGPUDevice device)
+{
     mPipelineFillShape.initialize(device);
     mPipelineFillStroke.initialize(device);
     mPipelineSolid.initialize(device);
@@ -230,7 +237,9 @@ void WgPipelines::initialize(WGPUDevice device) {
     mPipelineImage.initialize(device);
 }
 
-void WgPipelines::release() {
+
+void WgPipelines::release()
+{
     WgBindGroupCompose::releaseLayout();
     WgBindGroupPicture::releaseLayout();
     WgBindGroupRadialGradient::releaseLayout();

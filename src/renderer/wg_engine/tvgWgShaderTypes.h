@@ -30,7 +30,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 // mat4x4f
-struct WgShaderTypeMat4x4f {
+struct WgShaderTypeMat4x4f
+{
     float mat[16]{};
 
     WgShaderTypeMat4x4f();
@@ -47,7 +48,8 @@ struct WgShaderTypeMat4x4f {
 //     dummy1  : f32,
 //     opacity : f32
 // };
-struct WgShaderTypeBlendSettings {
+struct WgShaderTypeBlendSettings
+{
     uint32_t format{}; // ColorSpace
     float dummy0{};
     float dummy1{};
@@ -61,7 +63,8 @@ struct WgShaderTypeBlendSettings {
 // struct SolidColor {
 //     color: vec4f
 // };
-struct WgShaderTypeSolidColor {
+struct WgShaderTypeSolidColor
+{
     float color[4]{};
 
     WgShaderTypeSolidColor(const uint8_t* c);
@@ -77,7 +80,8 @@ struct WgShaderTypeSolidColor {
 //     stopColors   : array<vec4f, MAX_LINEAR_GRADIENT_STOPS>
 // };
 #define MAX_LINEAR_GRADIENT_STOPS 4
-struct WgShaderTypeLinearGradient {
+struct WgShaderTypeLinearGradient
+{
     alignas(16) float nStops[4]{};
     alignas(16) float startPos[2]{};
     alignas(8)  float endPos[2]{};
@@ -97,7 +101,8 @@ struct WgShaderTypeLinearGradient {
 //     stopColors : array<vec4f, MAX_RADIAL_GRADIENT_STOPS>
 // };
 #define MAX_RADIAL_GRADIENT_STOPS 4
-struct WgShaderTypeRadialGradient {
+struct WgShaderTypeRadialGradient
+{
     alignas(16) float nStops[4]{};
     alignas(16) float centerPos[2]{};
     alignas(8)  float radius[2]{};

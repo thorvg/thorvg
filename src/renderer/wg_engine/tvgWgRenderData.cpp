@@ -26,20 +26,25 @@
 // WgGeometryData
 //***********************************************************************
 
-void WgGeometryData::draw(WGPURenderPassEncoder renderPassEncoder) {
+void WgGeometryData::draw(WGPURenderPassEncoder renderPassEncoder)
+{
     wgpuRenderPassEncoderSetVertexBuffer(renderPassEncoder, 0, mBufferVertex, 0, mVertexCount * sizeof(float) * 2);
     wgpuRenderPassEncoderSetIndexBuffer(renderPassEncoder, mBufferIndex, WGPUIndexFormat_Uint32, 0, mIndexCount * sizeof(uint32_t));
     wgpuRenderPassEncoderDrawIndexed(renderPassEncoder, mIndexCount, 1, 0, 0, 0);
 }
 
-void WgGeometryData::drawImage(WGPURenderPassEncoder renderPassEncoder) {
+
+void WgGeometryData::drawImage(WGPURenderPassEncoder renderPassEncoder)
+{
     wgpuRenderPassEncoderSetVertexBuffer(renderPassEncoder, 0, mBufferVertex, 0, mVertexCount * sizeof(float) * 2);
     wgpuRenderPassEncoderSetVertexBuffer(renderPassEncoder, 1, mBufferTexCoords, 0, mVertexCount * sizeof(float) * 2);
     wgpuRenderPassEncoderSetIndexBuffer(renderPassEncoder, mBufferIndex, WGPUIndexFormat_Uint32, 0, mIndexCount * sizeof(uint32_t));
     wgpuRenderPassEncoderDrawIndexed(renderPassEncoder, mIndexCount, 1, 0, 0, 0);
 }
 
-void WgGeometryData::update(WGPUDevice device, WGPUQueue queue, WgVertexList* vertexList) {
+
+void WgGeometryData::update(WGPUDevice device, WGPUQueue queue, WgVertexList* vertexList)
+{
     update(device, queue, 
            (float *)vertexList->mVertexList.data,
            vertexList->mVertexList.count,
@@ -47,7 +52,9 @@ void WgGeometryData::update(WGPUDevice device, WGPUQueue queue, WgVertexList* ve
            vertexList->mIndexList.count);
 }
 
-void WgGeometryData::update(WGPUDevice device, WGPUQueue queue, float* vertexData, size_t vertexCount, uint32_t* indexData, size_t indexCount) {
+
+void WgGeometryData::update(WGPUDevice device, WGPUQueue queue, float* vertexData, size_t vertexCount, uint32_t* indexData, size_t indexCount)
+{
     release();
 
     // buffer vertex data create and write
@@ -74,6 +81,7 @@ void WgGeometryData::update(WGPUDevice device, WGPUQueue queue, float* vertexDat
     mIndexCount = indexCount;
 }
 
+
 void WgGeometryData::update(WGPUDevice device, WGPUQueue queue, float* vertexData, float* texCoordsData, size_t vertexCount, uint32_t* indexData, size_t indexCount) {
     update(device, queue, vertexData, vertexCount, indexData, indexCount);
     // buffer tex coords data create and write
@@ -88,7 +96,9 @@ void WgGeometryData::update(WGPUDevice device, WGPUQueue queue, float* vertexDat
     wgpuQueueWriteBuffer(queue, mBufferTexCoords, 0, texCoordsData, vertexCount * sizeof(float) * 2);
 }
 
-void WgGeometryData::release() {
+
+void WgGeometryData::release()
+{
     if (mBufferIndex) { 
         wgpuBufferDestroy(mBufferIndex);
         wgpuBufferRelease(mBufferIndex);
@@ -112,7 +122,8 @@ void WgGeometryData::release() {
 // WgImageData
 //***********************************************************************
 
-void WgImageData::update(WGPUDevice device, WGPUQueue queue, Surface* surface) {
+void WgImageData::update(WGPUDevice device, WGPUQueue queue, Surface* surface)
+{
     release();
     // sampler descriptor
     WGPUSamplerDescriptor samplerDesc{};
@@ -176,7 +187,9 @@ void WgImageData::update(WGPUDevice device, WGPUQueue queue, Surface* surface) {
     wgpuQueueWriteTexture(queue, &imageCopyTexture, surface->data, 4 * surface->w * surface->h, &textureDataLayout, &writeSize);
 }
 
-void WgImageData::release() {
+
+void WgImageData::release()
+{
     if (mTexture) {
         wgpuTextureDestroy(mTexture);
         wgpuTextureRelease(mTexture);
@@ -219,7 +232,8 @@ void WgRenderDataShapeSettings::update(WGPUDevice device, WGPUQueue queue,
     }
 }
 
-void WgRenderDataShapeSettings::release() {
+void WgRenderDataShapeSettings::release()
+{
     mBindGroupSolid.release();
     mBindGroupLinear.release();
     mBindGroupRadial.release();
@@ -229,7 +243,8 @@ void WgRenderDataShapeSettings::release() {
 // WgRenderDataShape
 //***********************************************************************
 
-void WgRenderDataShape::release() {
+void WgRenderDataShape::release()
+{
     releaseRenderData();
     mImageData.release();
     mBindGroupPaint.release();
@@ -238,7 +253,9 @@ void WgRenderDataShape::release() {
     mBindGroupPicture.release();
 }
 
-void WgRenderDataShape::releaseRenderData() {
+
+void WgRenderDataShape::releaseRenderData()
+{
     for (uint32_t i = 0; i < mGeometryDataImage.count; i++) {
         mGeometryDataImage[i]->release();
         delete mGeometryDataImage[i];
@@ -255,7 +272,9 @@ void WgRenderDataShape::releaseRenderData() {
     mGeometryDataShape.clear();
 }
 
-void WgRenderDataShape::tesselate(WGPUDevice device, WGPUQueue queue, Surface* surface, const RenderMesh* mesh) {
+
+void WgRenderDataShape::tesselate(WGPUDevice device, WGPUQueue queue, Surface* surface, const RenderMesh* mesh)
+{
     // create image geometry data
     Array<WgPoint> vertexList;
     Array<WgPoint> texCoordsList;
@@ -304,7 +323,9 @@ void WgRenderDataShape::tesselate(WGPUDevice device, WGPUQueue queue, Surface* s
     mImageData.update(device, queue, surface);
 }
 
-void WgRenderDataShape::tesselate(WGPUDevice device, WGPUQueue queue, const RenderShape& rshape) {
+
+void WgRenderDataShape::tesselate(WGPUDevice device, WGPUQueue queue, const RenderShape& rshape)
+{
     Array<WgVertexList*> outlines{};
     decodePath(rshape, outlines);
 
@@ -326,8 +347,10 @@ void WgRenderDataShape::tesselate(WGPUDevice device, WGPUQueue queue, const Rend
         delete outlines[i];
 }
 
+
 // TODO: separate to entity
-void WgRenderDataShape::stroke(WGPUDevice device, WGPUQueue queue, const RenderShape& rshape) {
+void WgRenderDataShape::stroke(WGPUDevice device, WGPUQueue queue, const RenderShape& rshape)
+{
     if (!rshape.stroke) return;
 
     // TODO: chnage to shared_ptrs
@@ -357,7 +380,9 @@ void WgRenderDataShape::stroke(WGPUDevice device, WGPUQueue queue, const RenderS
         delete outlines[i];
 }
 
-void WgRenderDataShape::decodePath(const RenderShape& rshape, Array<WgVertexList*>& outlines) {
+
+void WgRenderDataShape::decodePath(const RenderShape& rshape, Array<WgVertexList*>& outlines)
+{
     size_t pntIndex = 0;
     for (uint32_t cmdIndex = 0; cmdIndex < rshape.path.cmds.count; cmdIndex++) {
         PathCommand cmd = rshape.path.cmds[cmdIndex];
@@ -388,7 +413,9 @@ void WgRenderDataShape::decodePath(const RenderShape& rshape, Array<WgVertexList
     }
 }
 
-void WgRenderDataShape::strokeSegments(const RenderShape& rshape, Array<WgVertexList*>& outlines, Array<WgVertexList*>& segments) {
+
+void WgRenderDataShape::strokeSegments(const RenderShape& rshape, Array<WgVertexList*>& outlines, Array<WgVertexList*>& segments)
+{
     for (uint32_t i = 0; i < outlines.count; i++) {
         auto& vlist = outlines[i]->mVertexList;
         
@@ -425,7 +452,9 @@ void WgRenderDataShape::strokeSegments(const RenderShape& rshape, Array<WgVertex
     }
 }
 
-void WgRenderDataShape::strokeSublines(const RenderShape& rshape, Array<WgVertexList*>& outlines, WgVertexList& strokes) {
+
+void WgRenderDataShape::strokeSublines(const RenderShape& rshape, Array<WgVertexList*>& outlines, WgVertexList& strokes)
+{
     float wdt = rshape.stroke->width / 2;
     for (uint32_t i = 0; i < outlines.count; i++) {
         auto outline = outlines[i];
