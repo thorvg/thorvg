@@ -5,6 +5,7 @@ source_file = [
     'tvgWgPipelines.h',
     'tvgWgRenderData.h',
     'tvgWgRenderer.h',
+    'tvgWgRenderTarget.h',
     'tvgWgShaderSrc.h',
     'tvgWgShaderTypes.h'
     'tvgWgBindGroups.cpp',
@@ -13,6 +14,7 @@ source_file = [
     'tvgWgPipelines.cpp',
     'tvgWgRenderData.cpp',
     'tvgWgRenderer.cpp',
+    'tvgWgRenderTarget.cpp',
     'tvgWgShaderSrc.cpp',
     'tvgWgShaderTypes.cpp'
 ]
