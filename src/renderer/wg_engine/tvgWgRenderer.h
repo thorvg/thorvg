@@ -23,7 +23,7 @@
 #ifndef _TVG_WG_RENDERER_H_
 #define _TVG_WG_RENDERER_H_
 
-#include "tvgWgRenderData.h"
+#include "tvgWgRenderTarget.h"
 
 class WgRenderer : public RenderMethod
 {
@@ -64,7 +64,6 @@ private:
     Array<RenderData> mRenderDatas{};
 
     Surface mTargetSurface = { nullptr, 0, 0, 0, ColorSpace::Unsupported, true };
-    float mViewMatrix[16]{};
     // basic webgpu instances (TODO: create separated entity)
     WGPUInstance mInstance{};
     WGPUAdapter mAdapter{};
@@ -73,12 +72,8 @@ private:
     // webgpu surface handles (TODO: create separated entity)
     WGPUSurface mSurface{};
     WGPUSwapChain mSwapChain{};
-    WGPUTexture mStencilTex{};
-    WGPUTextureView mStencilTexView{};
-    WgBindGroupCanvas mBindGroupCanvasWnd;
-    WgBindGroupPaint mBindGroupPaintWnd;
-    WgGeometryData mGeometryDataWnd;
     WgPipelines mPipelines;
+    WgRenderTarget mRenderTarget;
 
     bool mClearBuffer;
 };

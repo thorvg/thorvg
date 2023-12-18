@@ -114,16 +114,7 @@ void WgRenderer::initialize()
 
 void WgRenderer::release()
 {
-    if (mStencilTex) {
-        wgpuTextureDestroy(mStencilTex);
-        wgpuTextureRelease(mStencilTex);
-    }
-    if (mStencilTexView) wgpuTextureViewRelease(mStencilTexView);
-    if (mSwapChain) wgpuSwapChainRelease(mSwapChain);
-    if (mSurface) wgpuSurfaceRelease(mSurface);
-    mBindGroupCanvasWnd.release();
-    mBindGroupPaintWnd.release();
-    mGeometryDataWnd.release();
+    mRenderTarget.release();
     mPipelines.release();
     if (mDevice) {
         wgpuDeviceDestroy(mDevice);
@@ -276,125 +267,38 @@ bool WgRenderer::sync()
 {
     WGPUTextureView backBufferView = wgpuSwapChainGetCurrentTextureView(mSwapChain);
     
-    // command buffer descriptor
+    // command encoder descriptor
+    WGPUCommandEncoderDescriptor commandEncoderDesc{};
+    commandEncoderDesc.nextInChain = nullptr;
+    commandEncoderDesc.label = "The command encoder";
+    WGPUCommandEncoder commandEncoder = wgpuDeviceCreateCommandEncoder(mDevice, &commandEncoderDesc);
+
+    // render datas
+    mRenderTarget.beginRenderPass(commandEncoder, backBufferView);
+    for (size_t i = 0; i < mRenderDatas.count; i++) {
+        WgRenderDataShape* renderData = (WgRenderDataShape*)(mRenderDatas[i]);
+        mRenderTarget.renderShape(renderData);
+        mRenderTarget.renderStroke(renderData);
+        mRenderTarget.renderImage(renderData);
+    }
+    mRenderTarget.endRenderPass();
+
+    // execute command encoder
     WGPUCommandBufferDescriptor commandBufferDesc{};
     commandBufferDesc.nextInChain = nullptr;
     commandBufferDesc.label = "The command buffer";
-    WGPUCommandBuffer commandsBuffer = nullptr; {
-        // command encoder descriptor
-        WGPUCommandEncoderDescriptor commandEncoderDesc{};
-        commandEncoderDesc.nextInChain = nullptr;
-        commandEncoderDesc.label = "The command encoder";
-        // begin render pass
-        WGPUCommandEncoder commandEncoder = wgpuDeviceCreateCommandEncoder(mDevice, &commandEncoderDesc); {
-            // render pass depth stencil attachment
-            WGPURenderPassDepthStencilAttachment depthStencilAttachment{};
-            depthStencilAttachment.view = mStencilTexView;
-            depthStencilAttachment.depthLoadOp = WGPULoadOp_Clear;
-            depthStencilAttachment.depthStoreOp = WGPUStoreOp_Store;
-            depthStencilAttachment.depthClearValue = 1.0f;
-            depthStencilAttachment.depthReadOnly = false;
-            depthStencilAttachment.stencilLoadOp = WGPULoadOp_Clear;
-            depthStencilAttachment.stencilStoreOp = WGPUStoreOp_Store;
-            depthStencilAttachment.stencilClearValue = 0;
-            depthStencilAttachment.stencilReadOnly = false;
-            // render pass color attachment
-            WGPURenderPassColorAttachment colorAttachment{};
-            colorAttachment.view = backBufferView;
-            colorAttachment.resolveTarget = nullptr;
-            if (mClearBuffer) {
-                colorAttachment.loadOp = WGPULoadOp_Clear;
-                colorAttachment.clearValue = {0, 0, 0, 0};
-            } else {
-                colorAttachment.loadOp = WGPULoadOp_Load;
-            }
-            colorAttachment.storeOp = WGPUStoreOp_Store;
-            colorAttachment.clearValue = { 0.0f, 0.0f, 0.0f, 1.0 };
-            // render pass descriptor
-            WGPURenderPassDescriptor renderPassDesc{};
-            renderPassDesc.nextInChain = nullptr;
-            renderPassDesc.label = "The render pass";
-            renderPassDesc.colorAttachmentCount = 1;
-            renderPassDesc.colorAttachments = &colorAttachment;
-            renderPassDesc.depthStencilAttachment = &depthStencilAttachment;
-            //renderPassDesc.depthStencilAttachment = nullptr;
-            renderPassDesc.occlusionQuerySet = nullptr;
-            renderPassDesc.timestampWriteCount = 0;
-            renderPassDesc.timestampWrites = nullptr;
-            // begin render pass
-            WGPURenderPassEncoder renderPassEncoder = wgpuCommandEncoderBeginRenderPass(commandEncoder, &renderPassDesc); {
-                // iterate render data
-                for (size_t i = 0; i < mRenderDatas.count; i++) {
-                    WgRenderDataShape* renderData = (WgRenderDataShape*)(mRenderDatas[i]);
-                    
-                    // draw shape geometry
-                    wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
-                    for (uint32_t j = 0; j < renderData->mGeometryDataShape.count; j++) {
-                        // draw to stencil (first pass)
-                        mPipelines.mPipelineFillShape.use(renderPassEncoder, mBindGroupCanvasWnd, renderData->mBindGroupPaint);
-                        renderData->mGeometryDataShape[j]->draw(renderPassEncoder);
-                        // fill shape (second pass)
-                        WgRenderDataShapeSettings& settings = renderData->mRenderSettingsShape;
-                        if (settings.mFillType == WgRenderDataShapeFillType::Solid)
-                            mPipelines.mPipelineSolid.use(renderPassEncoder, mBindGroupCanvasWnd, mBindGroupPaintWnd, settings.mBindGroupSolid);
-                        else if (settings.mFillType == WgRenderDataShapeFillType::Linear)
-                            mPipelines.mPipelineLinear.use(renderPassEncoder, mBindGroupCanvasWnd, mBindGroupPaintWnd, settings.mBindGroupLinear);
-                        else if (settings.mFillType == WgRenderDataShapeFillType::Radial)
-                            mPipelines.mPipelineRadial.use(renderPassEncoder, mBindGroupCanvasWnd, mBindGroupPaintWnd, settings.mBindGroupRadial);
-                        mGeometryDataWnd.draw(renderPassEncoder);
-                    }
-
-                    // draw stroke geometry
-                    if (renderData->mGeometryDataStroke.count > 0) {
-                        // draw strokes to stencil (first pass)
-                        wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 255);
-                        for (uint32_t j = 0; j < renderData->mGeometryDataStroke.count; j++) {
-                            mPipelines.mPipelineFillStroke.use(renderPassEncoder, mBindGroupCanvasWnd, renderData->mBindGroupPaint);
-                            renderData->mGeometryDataStroke[j]->draw(renderPassEncoder);
-                        }
-                        // fill shape (second pass)
-                        wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
-                        WgRenderDataShapeSettings& settings = renderData->mRenderSettingsStroke;
-                        if (settings.mFillType == WgRenderDataShapeFillType::Solid)
-                            mPipelines.mPipelineSolid.use(renderPassEncoder, mBindGroupCanvasWnd, mBindGroupPaintWnd, settings.mBindGroupSolid);
-                        else if (settings.mFillType == WgRenderDataShapeFillType::Linear)
-                            mPipelines.mPipelineLinear.use(renderPassEncoder, mBindGroupCanvasWnd, mBindGroupPaintWnd, settings.mBindGroupLinear);
-                        else if (settings.mFillType == WgRenderDataShapeFillType::Radial)
-                            mPipelines.mPipelineRadial.use(renderPassEncoder, mBindGroupCanvasWnd, mBindGroupPaintWnd, settings.mBindGroupRadial);
-                        mGeometryDataWnd.draw(renderPassEncoder);
-                    }
-
-                    // render image
-                    if (renderData->mGeometryDataImage.count > 0) {
-                        wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
-                        for (uint32_t j = 0; j < renderData->mGeometryDataImage.count; j++) {
-                            mPipelines.mPipelineImage.use(
-                                renderPassEncoder,
-                                mBindGroupCanvasWnd,
-                                renderData->mBindGroupPaint,
-                                renderData->mBindGroupPicture);
-                            renderData->mGeometryDataImage[j]->drawImage(renderPassEncoder);
-                        }
-                    }
-                }
-            }
-            // end render pass
-            wgpuRenderPassEncoderEnd(renderPassEncoder);
-            wgpuRenderPassEncoderRelease(renderPassEncoder);
-
-            // release backbuffer and present
-            wgpuTextureViewRelease(backBufferView);
-        }
-        commandsBuffer = wgpuCommandEncoderFinish(commandEncoder, &commandBufferDesc);
-        wgpuCommandEncoderRelease(commandEncoder);
-    }
+    WGPUCommandBuffer commandsBuffer{};
+    commandsBuffer = wgpuCommandEncoderFinish(commandEncoder, &commandBufferDesc);
     wgpuQueueSubmit(mQueue, 1, &commandsBuffer);
     wgpuCommandBufferRelease(commandsBuffer);
-    
+    wgpuCommandEncoderRelease(commandEncoder);
+
     // go to the next frame
+    wgpuTextureViewRelease(backBufferView);
     wgpuSwapChainPresent(mSwapChain);
 
     mRenderDatas.clear();
+
     return true;
 }
 
@@ -405,12 +309,6 @@ bool WgRenderer::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t 
     mTargetSurface.stride = stride;
     mTargetSurface.w = w;
     mTargetSurface.h = h;
-
-    // update view matrix
-    mViewMatrix[0]  = +2.0f / w; mViewMatrix[1]  = +0.0f;     mViewMatrix[2]  = +0.0f; mViewMatrix[3]  = +0.0f;
-    mViewMatrix[4]  = +0.0f;     mViewMatrix[5]  = -2.0f / h; mViewMatrix[6]  = +0.0f; mViewMatrix[7]  = +0.0f;
-    mViewMatrix[8]  = +0.0f;     mViewMatrix[9]  = +0.0f;     mViewMatrix[10] = -1.0f; mViewMatrix[11] = +0.0f;
-    mViewMatrix[12] = -1.0f;     mViewMatrix[13] = +1.0f;     mViewMatrix[14] = +0.0f; mViewMatrix[15] = +1.0f;
 
     // TODO: Add ability to render into offscreen buffer
     return true;
@@ -424,12 +322,6 @@ bool WgRenderer::target(void* window, uint32_t w, uint32_t h)
     mTargetSurface.stride = w;
     mTargetSurface.w = w > 0 ? w : 1;
     mTargetSurface.h = h > 0 ? h : 1;
-
-    // update view matrix
-    mViewMatrix[0]  = +2.0f / w; mViewMatrix[1]  = +0.0f;     mViewMatrix[2]  = +0.0f; mViewMatrix[3]  = +0.0f;
-    mViewMatrix[4]  = +0.0f;     mViewMatrix[5]  = -2.0f / h; mViewMatrix[6]  = +0.0f; mViewMatrix[7]  = +0.0f;
-    mViewMatrix[8]  = +0.0f;     mViewMatrix[9]  = +0.0f;     mViewMatrix[10] = -1.0f; mViewMatrix[11] = +0.0f;
-    mViewMatrix[12] = -1.0f;     mViewMatrix[13] = +1.0f;     mViewMatrix[14] = +0.0f; mViewMatrix[15] = +1.0f;
 
     // TODO: replace solution to cross-platform realization
     // surface descriptor from windows hwnd
@@ -458,46 +350,7 @@ bool WgRenderer::target(void* window, uint32_t w, uint32_t h)
     mSwapChain = wgpuDeviceCreateSwapChain(mDevice, mSurface, &swapChainDesc);
     assert(mSwapChain);
 
-    // depth-stencil texture
-    WGPUTextureDescriptor textureDesc{};
-    textureDesc.nextInChain = nullptr;
-    textureDesc.label = "The depth-stencil texture";
-    textureDesc.usage = WGPUTextureUsage_RenderAttachment;
-    textureDesc.dimension = WGPUTextureDimension_2D;
-    textureDesc.size = { swapChainDesc.width, swapChainDesc.height, 1 }; // window size
-    textureDesc.format = WGPUTextureFormat_Stencil8;
-    textureDesc.mipLevelCount = 1;
-    textureDesc.sampleCount = 1;
-    textureDesc.viewFormatCount = 0;
-    textureDesc.viewFormats = nullptr;
-    mStencilTex = wgpuDeviceCreateTexture(mDevice, &textureDesc);
-    assert(mStencilTex);
-
-    // depth-stencil texture view
-    WGPUTextureViewDescriptor textureViewDesc{};
-    textureViewDesc.nextInChain = nullptr;
-    textureViewDesc.label = "The depth-stencil texture view";
-    textureViewDesc.format = WGPUTextureFormat_Stencil8;
-    textureViewDesc.dimension = WGPUTextureViewDimension_2D;
-    textureViewDesc.baseMipLevel = 0;
-    textureViewDesc.mipLevelCount = 1;
-    textureViewDesc.baseArrayLayer = 0;
-    textureViewDesc.arrayLayerCount = 1;
-    textureViewDesc.aspect = WGPUTextureAspect_All;
-    mStencilTexView = wgpuTextureCreateView(mStencilTex, &textureViewDesc);
-    assert(mStencilTexView);
-
-    // initialize window binding groups
-    WgShaderTypeMat4x4f viewMat(w, h);
-    mBindGroupCanvasWnd.initialize(mDevice, mQueue, viewMat);
-    WgShaderTypeMat4x4f modelMat;
-    WgShaderTypeBlendSettings blendSettings(ColorSpace::ABGR8888);
-    mBindGroupPaintWnd.initialize(mDevice, mQueue, modelMat, blendSettings);
-    // update pipeline geometry data
-    WgVertexList wnd;
-    wnd.appendRect(WgPoint(0.0f, 0.0f), WgPoint(w, 0.0f), WgPoint(0.0f, h), WgPoint(w, h));
-    mGeometryDataWnd.update(mDevice, mQueue, &wnd);
-
+    mRenderTarget.initialize(mDevice, mQueue, mPipelines, w, h);
     return true;
 }
 
