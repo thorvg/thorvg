@@ -27,7 +27,8 @@
 #include "tvgWgShaderTypes.h"
 
 // @group(0)
-struct WgBindGroupCanvas: public WgBindGroup {
+struct WgBindGroupCanvas : public WgBindGroup
+{
     static WGPUBindGroupLayout layout;
     static WGPUBindGroupLayout getLayout(WGPUDevice device);
     static void releaseLayout();
@@ -38,8 +39,10 @@ struct WgBindGroupCanvas: public WgBindGroup {
     void release();
 };
 
+
 // @group(1)
-struct WgBindGroupPaint: public WgBindGroup {
+struct WgBindGroupPaint : public WgBindGroup
+{
     static WGPUBindGroupLayout layout;
     static WGPUBindGroupLayout getLayout(WGPUDevice device);
     static void releaseLayout();
@@ -53,7 +56,8 @@ struct WgBindGroupPaint: public WgBindGroup {
 };
 
 // @group(2)
-struct WgBindGroupSolidColor: public WgBindGroup {
+struct WgBindGroupSolidColor : public  WgBindGroup
+{
     static WGPUBindGroupLayout layout;
     static WGPUBindGroupLayout getLayout(WGPUDevice device);
     static void releaseLayout();
@@ -65,7 +69,8 @@ struct WgBindGroupSolidColor: public WgBindGroup {
 };
 
 // @group(2)
-struct WgBindGroupLinearGradient: public WgBindGroup {
+struct WgBindGroupLinearGradient : public  WgBindGroup
+{
     static WGPUBindGroupLayout layout;
     static WGPUBindGroupLayout getLayout(WGPUDevice device);
     static void releaseLayout();
@@ -77,7 +82,8 @@ struct WgBindGroupLinearGradient: public WgBindGroup {
 };
 
 // @group(2)
-struct WgBindGroupRadialGradient: public WgBindGroup {
+struct WgBindGroupRadialGradient : public  WgBindGroup
+{
     static WGPUBindGroupLayout layout;
     static WGPUBindGroupLayout getLayout(WGPUDevice device);
     static void releaseLayout();
@@ -89,7 +95,8 @@ struct WgBindGroupRadialGradient: public WgBindGroup {
 };
 
 // @group(2)
-struct WgBindGroupPicture: public WgBindGroup {
+struct WgBindGroupPicture : public  WgBindGroup
+{
     static WGPUBindGroupLayout layout;
     static WGPUBindGroupLayout getLayout(WGPUDevice device);
     static void releaseLayout();
@@ -101,7 +108,8 @@ struct WgBindGroupPicture: public WgBindGroup {
 };
 
 // @group(2)
-struct WgBindGroupCompose: public WgBindGroup {
+struct WgBindGroupCompose : public  WgBindGroup
+{
     static WGPUBindGroupLayout layout;
     static WGPUBindGroupLayout getLayout(WGPUDevice device);
     static void releaseLayout();
