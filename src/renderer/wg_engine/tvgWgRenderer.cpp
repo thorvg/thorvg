@@ -30,15 +30,20 @@
 #include "tvgWgRenderData.h"
 #include "tvgWgShaderSrc.h"
 
-WgRenderer::WgRenderer() {
+WgRenderer::WgRenderer()
+{
     initialize();
 }
 
-WgRenderer::~WgRenderer() {
+
+WgRenderer::~WgRenderer()
+{
     release();
 }
 
-void WgRenderer::initialize() {
+
+void WgRenderer::initialize()
+{
     // create instance
     WGPUInstanceDescriptor instanceDesc{};
     instanceDesc.nextInChain = nullptr;
@@ -106,7 +111,9 @@ void WgRenderer::initialize() {
     mPipelines.initialize(mDevice);
 }
 
-void WgRenderer::release() {
+
+void WgRenderer::release()
+{
     if (mStencilTex) {
         wgpuTextureDestroy(mStencilTex);
         wgpuTextureRelease(mStencilTex);
@@ -126,7 +133,9 @@ void WgRenderer::release() {
     if (mInstance) wgpuInstanceRelease(mInstance);
 }
 
-RenderData WgRenderer::prepare(const RenderShape& rshape, RenderData data, const RenderTransform* transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags, bool clipper) {
+
+RenderData WgRenderer::prepare(const RenderShape& rshape, RenderData data, const RenderTransform* transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags, bool clipper)
+{
     // get or create render data shape
     auto renderDataShape = (WgRenderDataShape*)data;
     if (!renderDataShape) {
@@ -156,11 +165,15 @@ RenderData WgRenderer::prepare(const RenderShape& rshape, RenderData data, const
     return renderDataShape;
 }
 
-RenderData WgRenderer::prepare(const Array<RenderData>& scene, RenderData data, const RenderTransform* transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags) {
+
+RenderData WgRenderer::prepare(TVG_UNUSED const Array<RenderData>& scene, TVG_UNUSED RenderData data, TVG_UNUSED const RenderTransform* transform, TVG_UNUSED Array<RenderData>& clips, TVG_UNUSED uint8_t opacity, TVG_UNUSED RenderUpdateFlag flags)
+{
     return nullptr;
 }
 
-RenderData WgRenderer::prepare(Surface* surface, const RenderMesh* mesh, RenderData data, const RenderTransform* transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags) {
+
+RenderData WgRenderer::prepare(Surface* surface, const RenderMesh* mesh, RenderData data, const RenderTransform* transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags)
+{
     // get or create render data shape
     auto renderDataShape = (WgRenderDataShape*)data;
     if (!renderDataShape) {
@@ -188,55 +201,79 @@ RenderData WgRenderer::prepare(Surface* surface, const RenderMesh* mesh, RenderD
     return renderDataShape;
 }
 
-bool WgRenderer::preRender() {
+
+bool WgRenderer::preRender()
+{
     return true;
 }
 
-bool WgRenderer::renderShape(RenderData data) {
+
+bool WgRenderer::renderShape(RenderData data)
+{
     mRenderDatas.push(data);
     return true;
 }
 
-bool WgRenderer::renderImage(RenderData data) {
+
+bool WgRenderer::renderImage(RenderData data)
+{
     mRenderDatas.push(data);
     return true;
 }
 
-bool WgRenderer::postRender() {
+
+bool WgRenderer::postRender()
+{
     return true;
 }
 
-bool WgRenderer::dispose(RenderData data) {
+
+bool WgRenderer::dispose(RenderData data)
+{
     auto renderData = (WgRenderData*)data;
     if (renderData) renderData->release();
     return true;
 }
 
-RenderRegion WgRenderer::region(RenderData data) {
+
+RenderRegion WgRenderer::region(TVG_UNUSED RenderData data)
+{
     return { 0, 0, INT32_MAX, INT32_MAX };
 }
+
 
 RenderRegion WgRenderer::viewport() {
     return { 0, 0, INT32_MAX, INT32_MAX };
 }
 
-bool WgRenderer::viewport(const RenderRegion& vp) {
+
+bool WgRenderer::viewport(TVG_UNUSED const RenderRegion& vp)
+{
     return true;
 }
 
-bool WgRenderer::blend(BlendMethod method) {
+
+bool WgRenderer::blend(TVG_UNUSED BlendMethod method)
+{
     return false;
 }
 
-ColorSpace WgRenderer::colorSpace() {
+
+ColorSpace WgRenderer::colorSpace()
+{
     return ColorSpace::Unsupported;
 }
 
-bool WgRenderer::clear() {
+
+bool WgRenderer::clear()
+{
+    mClearBuffer = true;
     return true;
 }
 
-bool WgRenderer::sync() {
+
+bool WgRenderer::sync()
+{
     WGPUTextureView backBufferView = wgpuSwapChainGetCurrentTextureView(mSwapChain);
     
     // command buffer descriptor
@@ -361,7 +398,9 @@ bool WgRenderer::sync() {
     return true;
 }
 
-bool WgRenderer::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h) {
+
+bool WgRenderer::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h)
+{
     // store target surface properties
     mTargetSurface.stride = stride;
     mTargetSurface.w = w;
@@ -377,8 +416,10 @@ bool WgRenderer::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t 
     return true;
 }
 
+
 // target for native window handle
-bool WgRenderer::target(void* window, uint32_t w, uint32_t h) {
+bool WgRenderer::target(void* window, uint32_t w, uint32_t h)
+{
     // store target surface properties
     mTargetSurface.stride = w;
     mTargetSurface.w = w > 0 ? w : 1;
@@ -460,26 +501,37 @@ bool WgRenderer::target(void* window, uint32_t w, uint32_t h) {
     return true;
 }
 
-Compositor* WgRenderer::target(const RenderRegion& region, ColorSpace cs) {
+
+Compositor* WgRenderer::target(TVG_UNUSED const RenderRegion& region, TVG_UNUSED ColorSpace cs)
+{
     return nullptr;
 }
 
-bool WgRenderer::beginComposite(Compositor* cmp, CompositeMethod method, uint8_t opacity) {
+bool WgRenderer::beginComposite(TVG_UNUSED Compositor* cmp, TVG_UNUSED CompositeMethod method, TVG_UNUSED uint8_t opacity)
+{
     return false;
 }
 
-bool WgRenderer::endComposite(Compositor* cmp) {
+
+bool WgRenderer::endComposite(TVG_UNUSED Compositor* cmp)
+{
     return false;
 }
 
-WgRenderer* WgRenderer::gen() {
+
+WgRenderer* WgRenderer::gen()
+{
     return new WgRenderer();
 }
 
-bool WgRenderer::init(uint32_t threads) {
+
+bool WgRenderer::init(TVG_UNUSED uint32_t threads)
+{
     return true;
 }
 
-bool WgRenderer::term() {
+
+bool WgRenderer::term()
+{
     return true;
 }

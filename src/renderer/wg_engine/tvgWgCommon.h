@@ -28,7 +28,8 @@
 #include "tvgCommon.h"
 #include "tvgRender.h"
 
-struct WgBindGroup {
+struct WgBindGroup
+{
     WGPUBindGroup mBindGroup{};
 
     void set(WGPURenderPassEncoder encoder, uint32_t groupIndex);
@@ -50,7 +51,8 @@ struct WgBindGroup {
     static void releaseBindGroupLayout(WGPUBindGroupLayout& bindGroupLayout);
 };
 
-struct WgPipeline {
+struct WgPipeline
+{
 protected:
     void allocate(WGPUDevice device,
                   WGPUVertexBufferLayout vertexBufferLayouts[], uint32_t attribsCount,
@@ -76,12 +78,11 @@ public:
 
     static WGPUPipelineLayout createPipelineLayout(WGPUDevice device, const WGPUBindGroupLayout* bindGroupLayouts, uint32_t count);
     static WGPUShaderModule createShaderModule(WGPUDevice device, const char* code, const char* label);
-    static WGPURenderPipeline createRenderPipeline(
-        WGPUDevice device,
-        WGPUVertexBufferLayout vertexBufferLayouts[], uint32_t attribsCount,
-        WGPUCompareFunction stencilCompareFunction, WGPUStencilOperation stencilOperation,
-        WGPUPipelineLayout pipelineLayout, WGPUShaderModule shaderModule,
-        const char* pipelineLabel);
+    static WGPURenderPipeline createRenderPipeline(WGPUDevice device,
+                                                   WGPUVertexBufferLayout vertexBufferLayouts[], uint32_t attribsCount,
+                                                   WGPUCompareFunction stencilCompareFunction, WGPUStencilOperation stencilOperation,
+                                                   WGPUPipelineLayout pipelineLayout, WGPUShaderModule shaderModule,
+                                                   const char* pipelineLabel);
     static void destroyPipelineLayout(WGPUPipelineLayout& pipelineLayout);
     static void destroyShaderModule(WGPUShaderModule& shaderModule);
     static void destroyRenderPipeline(WGPURenderPipeline& renderPipeline);

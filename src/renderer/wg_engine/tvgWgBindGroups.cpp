@@ -22,8 +22,18 @@
 
 #include "tvgWgBindGroups.h"
 
+
 WGPUBindGroupLayout WgBindGroupCanvas::layout = nullptr;
-WGPUBindGroupLayout WgBindGroupCanvas::getLayout(WGPUDevice device) {
+WGPUBindGroupLayout WgBindGroupPaint::layout = nullptr;
+WGPUBindGroupLayout WgBindGroupSolidColor::layout = nullptr;
+WGPUBindGroupLayout WgBindGroupLinearGradient::layout = nullptr;
+WGPUBindGroupLayout WgBindGroupRadialGradient::layout = nullptr;
+WGPUBindGroupLayout WgBindGroupPicture::layout = nullptr;
+WGPUBindGroupLayout WgBindGroupCompose::layout = nullptr;
+
+
+WGPUBindGroupLayout WgBindGroupCanvas::getLayout(WGPUDevice device)
+{
     if (layout) return layout;
     const WGPUBindGroupLayoutEntry bindGroupLayoutEntries[] {
         makeBindGroupLayoutEntryBuffer(0)
@@ -33,11 +43,15 @@ WGPUBindGroupLayout WgBindGroupCanvas::getLayout(WGPUDevice device) {
     return layout;
 }
 
-void WgBindGroupCanvas::releaseLayout() {
-    releaseBindGroupLayout(layout);
-};
 
-void WgBindGroupCanvas::initialize(WGPUDevice device, WGPUQueue queue, WgShaderTypeMat4x4f& uViewMat) {
+void WgBindGroupCanvas::releaseLayout()
+{
+    releaseBindGroupLayout(layout);
+}
+
+
+void WgBindGroupCanvas::initialize(WGPUDevice device, WGPUQueue queue, WgShaderTypeMat4x4f& uViewMat)
+{
     release();
     uBufferViewMat = createBuffer(device, queue, &uViewMat, sizeof(uViewMat));
     const WGPUBindGroupEntry bindGroupEntries[] {
@@ -47,13 +61,16 @@ void WgBindGroupCanvas::initialize(WGPUDevice device, WGPUQueue queue, WgShaderT
     assert(mBindGroup);
 }
 
-void WgBindGroupCanvas::release() {
+
+void WgBindGroupCanvas::release()
+{
     releaseBindGroup(mBindGroup);
     releaseBuffer(uBufferViewMat);
 }
 
-WGPUBindGroupLayout WgBindGroupPaint::layout = nullptr;
-WGPUBindGroupLayout WgBindGroupPaint::getLayout(WGPUDevice device) {
+
+WGPUBindGroupLayout WgBindGroupPaint::getLayout(WGPUDevice device)
+{
     if (layout) return layout;
     const WGPUBindGroupLayoutEntry bindGroupLayoutEntries[] {
         makeBindGroupLayoutEntryBuffer(0),
@@ -64,11 +81,15 @@ WGPUBindGroupLayout WgBindGroupPaint::getLayout(WGPUDevice device) {
     return layout;
 }
 
-void WgBindGroupPaint::releaseLayout() {
-    releaseBindGroupLayout(layout);
-};
 
-void WgBindGroupPaint::initialize(WGPUDevice device, WGPUQueue queue, WgShaderTypeMat4x4f& uModelMat, WgShaderTypeBlendSettings& uBlendSettings) {
+void WgBindGroupPaint::releaseLayout()
+{
+    releaseBindGroupLayout(layout);
+}
+
+
+void WgBindGroupPaint::initialize(WGPUDevice device, WGPUQueue queue, WgShaderTypeMat4x4f& uModelMat, WgShaderTypeBlendSettings& uBlendSettings)
+{
     release();
     uBufferModelMat = createBuffer(device, queue, &uModelMat, sizeof(uModelMat));
     uBufferBlendSettings = createBuffer(device, queue, &uBlendSettings, sizeof(uBlendSettings));
@@ -80,14 +101,17 @@ void WgBindGroupPaint::initialize(WGPUDevice device, WGPUQueue queue, WgShaderTy
     assert(mBindGroup);
 }
 
-void WgBindGroupPaint::release() {
+
+void WgBindGroupPaint::release()
+{
     releaseBindGroup(mBindGroup);
     releaseBuffer(uBufferBlendSettings);
     releaseBuffer(uBufferModelMat);
 }
 
-WGPUBindGroupLayout WgBindGroupSolidColor::layout = nullptr;
-WGPUBindGroupLayout WgBindGroupSolidColor::getLayout(WGPUDevice device) {
+
+WGPUBindGroupLayout WgBindGroupSolidColor::getLayout(WGPUDevice device)
+{
     if (layout) return layout;
     const WGPUBindGroupLayoutEntry bindGroupLayoutEntries[] {
         makeBindGroupLayoutEntryBuffer(0)
@@ -97,11 +121,15 @@ WGPUBindGroupLayout WgBindGroupSolidColor::getLayout(WGPUDevice device) {
     return layout;
 }
 
-void WgBindGroupSolidColor::releaseLayout() {
-    releaseBindGroupLayout(layout);
-};
 
-void WgBindGroupSolidColor::initialize(WGPUDevice device, WGPUQueue queue, WgShaderTypeSolidColor &uSolidColor) {
+void WgBindGroupSolidColor::releaseLayout()
+{
+    releaseBindGroupLayout(layout);
+}
+
+
+void WgBindGroupSolidColor::initialize(WGPUDevice device, WGPUQueue queue, WgShaderTypeSolidColor &uSolidColor)
+{
     release();
     uBufferSolidColor = createBuffer(device, queue, &uSolidColor, sizeof(uSolidColor));
     const WGPUBindGroupEntry bindGroupEntries[] {
@@ -111,13 +139,16 @@ void WgBindGroupSolidColor::initialize(WGPUDevice device, WGPUQueue queue, WgSha
     assert(mBindGroup);
 }
 
-void WgBindGroupSolidColor::release() {
+
+void WgBindGroupSolidColor::release()
+{
     releaseBindGroup(mBindGroup);
     releaseBuffer(uBufferSolidColor);
 }
 
-WGPUBindGroupLayout WgBindGroupLinearGradient::layout = nullptr;
-WGPUBindGroupLayout WgBindGroupLinearGradient::getLayout(WGPUDevice device) {
+
+WGPUBindGroupLayout WgBindGroupLinearGradient::getLayout(WGPUDevice device)
+{
     if (layout) return layout;
     const WGPUBindGroupLayoutEntry bindGroupLayoutEntries[] {
         makeBindGroupLayoutEntryBuffer(0)
@@ -127,11 +158,15 @@ WGPUBindGroupLayout WgBindGroupLinearGradient::getLayout(WGPUDevice device) {
     return layout;
 }
 
-void WgBindGroupLinearGradient::releaseLayout() {
-    releaseBindGroupLayout(layout);
-};
 
-void WgBindGroupLinearGradient::initialize(WGPUDevice device, WGPUQueue queue, WgShaderTypeLinearGradient &uLinearGradient) {
+void WgBindGroupLinearGradient::releaseLayout()
+{
+    releaseBindGroupLayout(layout);
+}
+
+
+void WgBindGroupLinearGradient::initialize(WGPUDevice device, WGPUQueue queue, WgShaderTypeLinearGradient &uLinearGradient)
+{
     release();
     uBufferLinearGradient = createBuffer(device, queue, &uLinearGradient, sizeof(uLinearGradient));
     const WGPUBindGroupEntry bindGroupEntries[] {
@@ -141,13 +176,16 @@ void WgBindGroupLinearGradient::initialize(WGPUDevice device, WGPUQueue queue, W
     assert(mBindGroup);
 }
 
-void WgBindGroupLinearGradient::release() {
+
+void WgBindGroupLinearGradient::release()
+{
     releaseBindGroup(mBindGroup);
     releaseBuffer(uBufferLinearGradient);
 }
 
-WGPUBindGroupLayout WgBindGroupRadialGradient::layout = nullptr;
-WGPUBindGroupLayout WgBindGroupRadialGradient::getLayout(WGPUDevice device) {
+
+WGPUBindGroupLayout WgBindGroupRadialGradient::getLayout(WGPUDevice device)
+{
     if (layout) return layout;
     const WGPUBindGroupLayoutEntry bindGroupLayoutEntries[] {
         makeBindGroupLayoutEntryBuffer(0)
@@ -157,11 +195,15 @@ WGPUBindGroupLayout WgBindGroupRadialGradient::getLayout(WGPUDevice device) {
     return layout;
 }
 
-void WgBindGroupRadialGradient::releaseLayout() {
-    releaseBindGroupLayout(layout);
-};
 
-void WgBindGroupRadialGradient::initialize(WGPUDevice device, WGPUQueue queue, WgShaderTypeRadialGradient &uRadialGradient) {
+void WgBindGroupRadialGradient::releaseLayout()
+{
+    releaseBindGroupLayout(layout);
+}
+
+
+void WgBindGroupRadialGradient::initialize(WGPUDevice device, WGPUQueue queue, WgShaderTypeRadialGradient &uRadialGradient)
+{
     release();
     uBufferRadialGradient = createBuffer(device, queue, &uRadialGradient, sizeof(uRadialGradient));
     const WGPUBindGroupEntry bindGroupEntries[] {
@@ -171,13 +213,16 @@ void WgBindGroupRadialGradient::initialize(WGPUDevice device, WGPUQueue queue, W
     assert(mBindGroup);
 }
 
-void WgBindGroupRadialGradient::release() {
+
+void WgBindGroupRadialGradient::release()
+{
     releaseBuffer(uBufferRadialGradient);
     releaseBindGroup(mBindGroup);
 }
 
-WGPUBindGroupLayout WgBindGroupPicture::layout = nullptr;
-WGPUBindGroupLayout WgBindGroupPicture::getLayout(WGPUDevice device) {
+
+WGPUBindGroupLayout WgBindGroupPicture::getLayout(WGPUDevice device)
+{
     if (layout) return layout;
     const WGPUBindGroupLayoutEntry bindGroupLayoutEntries[] {
         makeBindGroupLayoutEntrySampler(0),
@@ -188,11 +233,15 @@ WGPUBindGroupLayout WgBindGroupPicture::getLayout(WGPUDevice device) {
     return layout;
 }
 
-void WgBindGroupPicture::releaseLayout() {
-    releaseBindGroupLayout(layout);
-};
 
-void WgBindGroupPicture::initialize(WGPUDevice device, WGPUQueue queue, WGPUSampler uSampler, WGPUTextureView uTextureView) {
+void WgBindGroupPicture::releaseLayout()
+{
+    releaseBindGroupLayout(layout);
+}
+
+
+void WgBindGroupPicture::initialize(WGPUDevice device, WGPUQueue queue, WGPUSampler uSampler, WGPUTextureView uTextureView)
+{
     release();
     const WGPUBindGroupEntry bindGroupEntries[] {
         makeBindGroupEntrySampler(0, uSampler),
@@ -202,12 +251,15 @@ void WgBindGroupPicture::initialize(WGPUDevice device, WGPUQueue queue, WGPUSamp
     assert(mBindGroup);
 }
 
-void WgBindGroupPicture::release() {
+
+void WgBindGroupPicture::release()
+{
     releaseBindGroup(mBindGroup);
 }
 
-WGPUBindGroupLayout WgBindGroupCompose::layout = nullptr;
-WGPUBindGroupLayout WgBindGroupCompose::getLayout(WGPUDevice device) {
+
+WGPUBindGroupLayout WgBindGroupCompose::getLayout(WGPUDevice device)
+{
     if (layout) return layout;
     const WGPUBindGroupLayoutEntry bindGroupLayoutEntries[] {
         makeBindGroupLayoutEntrySampler(0),
@@ -219,11 +271,15 @@ WGPUBindGroupLayout WgBindGroupCompose::getLayout(WGPUDevice device) {
     return layout;
 }
 
-void WgBindGroupCompose::releaseLayout() {
-    releaseBindGroupLayout(layout);
-};
 
-void WgBindGroupCompose::initialize(WGPUDevice device, WGPUQueue queue, WGPUSampler uSampler, WGPUTextureView uTextureSrc, WGPUTextureView uTextureDst) {
+void WgBindGroupCompose::releaseLayout()
+{
+    releaseBindGroupLayout(layout);
+}
+
+
+void WgBindGroupCompose::initialize(WGPUDevice device, WGPUQueue queue, WGPUSampler uSampler, WGPUTextureView uTextureSrc, WGPUTextureView uTextureDst)
+{
     release();
     const WGPUBindGroupEntry bindGroupEntries[] {
         makeBindGroupEntrySampler(0, uSampler),
@@ -234,6 +290,8 @@ void WgBindGroupCompose::initialize(WGPUDevice device, WGPUQueue queue, WGPUSamp
     assert(mBindGroup);
 }
 
-void WgBindGroupCompose::release() {
+
+void WgBindGroupCompose::release()
+{
     releaseBindGroup(mBindGroup);
 }

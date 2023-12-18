@@ -26,7 +26,8 @@
 #include "tvgWgPipelines.h"
 #include "tvgWgGeometry.h"
 
-struct WgGeometryData {
+struct WgGeometryData
+{
     WGPUBuffer mBufferVertex{};
     WGPUBuffer mBufferTexCoords{};
     WGPUBuffer mBufferIndex{};
@@ -45,7 +46,8 @@ struct WgGeometryData {
     void release();
 };
 
-struct WgImageData {
+struct WgImageData
+{
     WGPUSampler mSampler{};
     WGPUTexture mTexture{};
     WGPUTextureView mTextureView{};
@@ -58,14 +60,17 @@ struct WgImageData {
     void release();
 };
 
-class WgRenderData {
+class WgRenderData
+{
 public:
     virtual void initialize(WGPUDevice device) {};
     virtual void release() = 0;
 };
 
 enum class WgRenderDataShapeFillType { None = 0, Solid = 1, Linear = 2, Radial = 3 };
-struct WgRenderDataShapeSettings {
+
+struct WgRenderDataShapeSettings
+{
     WgBindGroupSolidColor mBindGroupSolid{};
     WgBindGroupLinearGradient mBindGroupLinear{};
     WgBindGroupRadialGradient mBindGroupRadial{};
@@ -77,7 +82,8 @@ struct WgRenderDataShapeSettings {
     void release();
 };
 
-class WgRenderDataShape: public WgRenderData {
+class WgRenderDataShape: public WgRenderData
+{
 public:
     // geometry data for shapes, strokes and image
     Array<WgGeometryData*> mGeometryDataShape;

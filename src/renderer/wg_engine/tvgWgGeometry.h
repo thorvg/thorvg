@@ -34,7 +34,6 @@ public:
     float x;
     float y;
 
-public:
     WgPoint() {}
     WgPoint(float x, float y): x(x), y(y) {}
     WgPoint(const Point& p): x(p.x), y(p.y) {}
@@ -54,26 +53,30 @@ public:
     float length() const { return sqrt(x*x + y*y); }
 
     float dot(const WgPoint& p) const { return x * p.x + y * p.y; }
-    float dist(const WgPoint& p) const { 
+    float dist(const WgPoint& p) const
+    { 
         return sqrt(
             (p.x - x)*(p.x - x) + 
             (p.y - y)*(p.y - y)
         ); 
     }
 
-    void normalize() {
+    void normalize()
+    {
         float rlen = 1.0f / length();
         x *= rlen;
         y *= rlen;
     }
 
-    WgPoint normal() const {
+    WgPoint normal() const
+    {
         float rlen = 1.0f / length();
         return { x * rlen, y * rlen };
     }
 };
 
-class WgVertexList {
+class WgVertexList
+{
 public:
     Array<WgPoint> mVertexList;
     Array<uint32_t> mIndexList;

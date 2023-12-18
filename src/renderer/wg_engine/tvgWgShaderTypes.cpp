@@ -26,26 +26,35 @@
 // shader types
 ///////////////////////////////////////////////////////////////////////////////
 
-WgShaderTypeMat4x4f::WgShaderTypeMat4x4f() {
+WgShaderTypeMat4x4f::WgShaderTypeMat4x4f()
+{
     identity();
 }
 
-WgShaderTypeMat4x4f::WgShaderTypeMat4x4f(const RenderTransform* transform) {
+
+WgShaderTypeMat4x4f::WgShaderTypeMat4x4f(const RenderTransform* transform)
+{
     update(transform);
 }
 
-void WgShaderTypeMat4x4f::identity() {
+
+void WgShaderTypeMat4x4f::identity()
+{
     mat[0]  = 1.0f; mat[1]  = 0.0f; mat[2]  = 0.0f; mat[3]  = 0.0f;
     mat[4]  = 0.0f; mat[5]  = 1.0f; mat[6]  = 0.0f; mat[7]  = 0.0f;
     mat[8]  = 0.0f; mat[9]  = 0.0f; mat[10] = 1.0f; mat[11] = 0.0f;
     mat[12] = 0.0f; mat[13] = 0.0f; mat[14] = 0.0f; mat[15] = 1.0f;
 }
 
-WgShaderTypeMat4x4f::WgShaderTypeMat4x4f(size_t w, size_t h) {
+
+WgShaderTypeMat4x4f::WgShaderTypeMat4x4f(size_t w, size_t h)
+{
     update(w, h);
 }
 
-void WgShaderTypeMat4x4f::update(const RenderTransform* transform) {
+
+void WgShaderTypeMat4x4f::update(const RenderTransform* transform)
+{
     identity();
     if (transform) {
         mat[0]  = transform->m.e11;
@@ -65,42 +74,56 @@ void WgShaderTypeMat4x4f::update(const RenderTransform* transform) {
         mat[14] = 0.0f;
         mat[15] = transform->m.e33;
     };
-};
+}
 
-void WgShaderTypeMat4x4f::update(size_t w, size_t h) {
+
+void WgShaderTypeMat4x4f::update(size_t w, size_t h)
+{
     mat[0]  = +2.0f / w; mat[1]  = +0.0f;     mat[2]  = +0.0f; mat[3]  = +0.0f;
     mat[4]  = +0.0f;     mat[5]  = -2.0f / h; mat[6]  = +0.0f; mat[7]  = +0.0f;
     mat[8]  = +0.0f;     mat[9]  = +0.0f;     mat[10] = -1.0f; mat[11] = +0.0f;
     mat[12] = -1.0f;     mat[13] = +1.0f;     mat[14] = +0.0f; mat[15] = +1.0f;
-};
+}
 
-WgShaderTypeBlendSettings::WgShaderTypeBlendSettings(const ColorSpace colorSpace) {
+
+WgShaderTypeBlendSettings::WgShaderTypeBlendSettings(const ColorSpace colorSpace)
+{
     update(colorSpace);
 }
 
-void WgShaderTypeBlendSettings::update(const ColorSpace colorSpace) {
+
+void WgShaderTypeBlendSettings::update(const ColorSpace colorSpace)
+{
     format = (uint32_t)colorSpace;
     dummy0 = 0.0f;
     dummy1 = 0.0f;
     dummy2 = 0.0f;
-};
+}
 
-WgShaderTypeSolidColor::WgShaderTypeSolidColor(const uint8_t* c) {
+
+WgShaderTypeSolidColor::WgShaderTypeSolidColor(const uint8_t* c)
+{
     update(c);
 }
 
-void WgShaderTypeSolidColor::update(const uint8_t* c) {
+
+void WgShaderTypeSolidColor::update(const uint8_t* c)
+{
     color[0] = c[0] / 255.0f; // red
     color[1] = c[1] / 255.0f; // green
     color[2] = c[2] / 255.0f; // blue
     color[3] = c[3] / 255.0f; // alpha
-};
+}
 
-WgShaderTypeLinearGradient::WgShaderTypeLinearGradient(const LinearGradient* linearGradient) {
+
+WgShaderTypeLinearGradient::WgShaderTypeLinearGradient(const LinearGradient* linearGradient)
+{
     update(linearGradient);
 }
 
-void WgShaderTypeLinearGradient::update(const LinearGradient* linearGradient) {
+
+void WgShaderTypeLinearGradient::update(const LinearGradient* linearGradient)
+{
     const Fill::ColorStop* stops = nullptr;
     auto stopCnt = linearGradient->colorStops(&stops);
     
@@ -116,13 +139,17 @@ void WgShaderTypeLinearGradient::update(const LinearGradient* linearGradient) {
     }
     
     linearGradient->linear(&startPos[0], &startPos[1], &endPos[0], &endPos[1]);
-};
+}
 
-WgShaderTypeRadialGradient::WgShaderTypeRadialGradient(const RadialGradient* radialGradient) {
+
+WgShaderTypeRadialGradient::WgShaderTypeRadialGradient(const RadialGradient* radialGradient)
+{
     update(radialGradient);
 }
 
-void WgShaderTypeRadialGradient::update(const RadialGradient* radialGradient) {
+
+void WgShaderTypeRadialGradient::update(const RadialGradient* radialGradient)
+{
     const Fill::ColorStop* stops = nullptr;
     auto stopCnt = radialGradient->colorStops(&stops);
 
@@ -138,4 +165,4 @@ void WgShaderTypeRadialGradient::update(const RadialGradient* radialGradient) {
     }
 
     radialGradient->radial(&centerPos[0], &centerPos[1], &radius[0]);
-};
+}

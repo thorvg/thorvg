@@ -22,7 +22,8 @@
 
 #include "tvgWgGeometry.h"
 
-void WgVertexList::computeTriFansIndexes() {
+void WgVertexList::computeTriFansIndexes()
+{
     assert(mVertexList.count > 2);
     mIndexList.reserve((mVertexList.count - 2) * 3);
     for (size_t i = 0; i < mVertexList.count - 2; i++) {
@@ -32,7 +33,9 @@ void WgVertexList::computeTriFansIndexes() {
     }
 }
 
-void WgVertexList::appendCubic(WgPoint p1, WgPoint p2, WgPoint p3) {
+
+void WgVertexList::appendCubic(WgPoint p1, WgPoint p2, WgPoint p3)
+{
     WgPoint p0 = mVertexList.count > 0 ? mVertexList.last() : WgPoint(0.0f, 0.0f);
     const size_t segs = 16;
     for (size_t i = 1; i <= segs; i++) {
@@ -46,7 +49,9 @@ void WgVertexList::appendCubic(WgPoint p1, WgPoint p2, WgPoint p3) {
     }
 }
 
-void WgVertexList::appendRect(WgPoint p0, WgPoint p1, WgPoint p2, WgPoint p3) {
+
+void WgVertexList::appendRect(WgPoint p0, WgPoint p1, WgPoint p2, WgPoint p3)
+{
     uint32_t index = mVertexList.count;
     mVertexList.push(p0); // +0
     mVertexList.push(p1); // +1
@@ -60,8 +65,10 @@ void WgVertexList::appendRect(WgPoint p0, WgPoint p1, WgPoint p2, WgPoint p3) {
     mIndexList.push(index + 2);
 }
 
+
 // TODO: optimize vertex and index count 
-void WgVertexList::appendCircle(WgPoint center, float radius) {
+void WgVertexList::appendCircle(WgPoint center, float radius)
+{
     uint32_t index = mVertexList.count;
     uint32_t nSegments = 32;
     for (uint32_t i = 0; i < nSegments; i++) {
@@ -79,7 +86,10 @@ void WgVertexList::appendCircle(WgPoint center, float radius) {
     }
 }
 
-void WgVertexList::close() {
-    if (mVertexList.count > 1)
+
+void WgVertexList::close()
+{
+    if (mVertexList.count > 1) {
         mVertexList.push(mVertexList[0]);
+    }
 }
