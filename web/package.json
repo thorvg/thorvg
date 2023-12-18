@@ -4,9 +4,10 @@
   "description": "A web lottie player using ThorVG as a renderer",
   "main": "index.js",
   "scripts": {
-    "build": "npm run clean && npm run copy:wasm && rollup -c --bundleConfigAsCjs",
-    "copy:wasm": "cp ../build_wasm/src/bindings/wasm/thorvg-wasm.{wasm,js} ./dist",
-    "clean": "rm -rf dist && mkdir dist",
+    "build": "npm run clean && npm run copy:wasm && THORVG_VERSION=$(sed -n -e 4p ../meson.build | sed 's/..$//' | sed -r 's/.{19}//') rollup -c --bundleConfigAsCjs && rm -rf ./dist/thorvg-wasm.js",
+    "build:watch": "npm run clean && npm run copy:wasm && rollup -c --bundleConfigAsCjs --watch",
+    "copy:wasm": "cp ../build_wasm/src/bindings/wasm/thorvg-wasm.js ./dist",
+    "clean": "rm -rf dist && mkdir dist && touch dist/index.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint ./src --ext .ts,.tsx,.js",
     "lint:fix": "eslint ./src --ext .ts,.tsx,.js --fix"
@@ -39,6 +40,9 @@
     "eslint-plugin-promise": "^6.0.0",
     "eslint-plugin-wc": "^2.0.4",
     "rollup": "^4.6.0",
+    "rollup-plugin-baked-env": "^1.0.1",
+    "rollup-plugin-dts": "^6.1.0",
+    "rollup-plugin-polyfill-node": "^0.13.0",
     "rollup-plugin-swc3": "^0.10.4",
     "typescript": "*"
   },
