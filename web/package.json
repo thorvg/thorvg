@@ -21,5 +21,8 @@
     "animation",
     "thorvg",
     "tvg"
-  ]
+  ],
+  "devDependencies": {
+    "typescript": "^5.3.2"
+  }
 }
