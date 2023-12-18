@@ -1,0 +1,40 @@
+{
+  "compilerOptions": {
+    "baseUrl": "./",
+    "paths": {
+      "@dist/*": [  
+        "dist/*"
+      ]
+    },
+    "target": "es2017",
+    "lib": [
+      "esnext.array",
+      "esnext",
+      "es2017",
+      "dom"
+    ],
+    "experimentalDecorators": true,
+    "module": "esnext",
+    "moduleResolution": "node",
+    "allowJs": true,
+    "checkJs": false,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "noImplicitAny": true,
+    "noImplicitThis": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "skipLibCheck": true
+  },
+  "include": [
+    "src/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+  ],
+}
