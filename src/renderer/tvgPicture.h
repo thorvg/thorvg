@@ -196,13 +196,15 @@ struct Picture::Impl
     {
         load();
 
-        auto ret = Picture::gen();
+        auto ret = Picture::gen().release();
+        auto dup = ret->pImpl;
 
-        auto dup = ret.get()->pImpl;
         if (paint) dup->paint = paint->duplicate();
 
-        dup->loader = loader;
-        ++dup->loader->sharing;
+        if (loader) {
+            dup->loader = loader;
+            ++dup->loader->sharing;
+        }
 
         if (surface) {
             dup->surface = new Surface;
@@ -219,7 +221,7 @@ struct Picture::Impl
             memcpy(dup->rm.triangles, rm.triangles, sizeof(Polygon) * rm.triangleCnt);
         }
 
-        return ret.release();
+        return ret;
     }
 
     Iterator* iterator()

@@ -212,9 +212,8 @@ struct Scene::Impl
 
     Paint* duplicate()
     {
-        auto ret = Scene::gen();
-
-        auto dup = ret.get()->pImpl;
+        auto ret = Scene::gen().release();
+        auto dup = ret->pImpl;
 
         for (auto paint : paints) {
             auto cdup = paint->duplicate();
@@ -222,7 +221,7 @@ struct Scene::Impl
             dup->paints.push_back(cdup);
         }
 
-        return ret.release();
+        return ret;
     }
 
     void clear(bool free)
