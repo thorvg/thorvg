@@ -338,9 +338,9 @@ struct Shape::Impl
 
     Paint* duplicate()
     {
-        auto ret = Shape::gen();
+        auto ret = Shape::gen().release();
+        auto dup = ret->pImpl;
 
-        auto dup = ret.get()->pImpl;
         dup->rs.rule = rs.rule;
 
         //Color
@@ -376,7 +376,7 @@ struct Shape::Impl
             dup->flag |= RenderUpdateFlag::Gradient;
         }
 
-        return ret.release();
+        return ret;
     }
 
     Iterator* iterator()
