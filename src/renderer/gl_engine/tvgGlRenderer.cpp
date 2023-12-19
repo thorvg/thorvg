@@ -397,7 +397,7 @@ RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const
 
 RenderRegion GlRenderer::viewport()
 {
-    return {0, 0, INT32_MAX, INT32_MAX};
+    return {0, 0, static_cast<int32_t>(surface.w), static_cast<int32_t>(surface.h)};
 }
 
 

@@ -137,6 +137,7 @@ void GlBlitTask::run()
 {
     GlComposeTask::run();
 
+    GL_CHECK(glScissor(0, 0, mWidth, mHeight));
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, getTargetFbo()));
     GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, getSelfFbo()));
 
