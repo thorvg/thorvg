@@ -58,6 +58,12 @@ source_file = [
     'Update.cpp',
 ]
 
+if get_option('windows') == true
+    source_file += [
+        'Window.cpp',
+    ]
+endif
+
 foreach current_file : source_file
     name = current_file.split('.')[0]
     executable(name, current_file,
