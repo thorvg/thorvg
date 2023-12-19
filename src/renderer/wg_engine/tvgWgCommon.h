@@ -28,6 +28,22 @@
 #include "tvgCommon.h"
 #include "tvgRender.h"
 
+struct WgContext {
+    WGPUInstance instance{};
+    WGPUAdapter adapter{};
+    WGPUDevice device{};
+    WGPUQueue queue{};
+
+    WGPUFeatureName featureNames[32]{};
+    WGPUAdapterProperties adapterProperties{};
+    WGPUSupportedLimits supportedLimits{};
+    
+    void initialize();
+    void release();
+
+    void executeCommandEncoder(WGPUCommandEncoder commandEncoder);
+};
+
 struct WgBindGroup
 {
     WGPUBindGroup mBindGroup{};
