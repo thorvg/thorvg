@@ -21,6 +21,96 @@
  */
 
 #include "tvgWgCommon.h"
+#include <iostream>
+
+//*****************************************************************************
+// context
+//*****************************************************************************
+
+void WgContext::initialize()
+{
+    // create instance
+    WGPUInstanceDescriptor instanceDesc{};
+    instanceDesc.nextInChain = nullptr;
+    instance = wgpuCreateInstance(&instanceDesc);
+    assert(instance);
+
+    // request adapter options
+    WGPURequestAdapterOptions requestAdapterOptions{};
+    requestAdapterOptions.nextInChain = nullptr;
+    requestAdapterOptions.compatibleSurface = nullptr;
+    requestAdapterOptions.powerPreference = WGPUPowerPreference_HighPerformance;
+    requestAdapterOptions.forceFallbackAdapter = false;
+    // on adapter request ended function
+    auto onAdapterRequestEnded = [](WGPURequestAdapterStatus status, WGPUAdapter adapter, char const * message, void * pUserData) {
+        if (status != WGPURequestAdapterStatus_Success)
+            TVGERR("WG_RENDERER", "Adapter request: %s", message);
+        *((WGPUAdapter*)pUserData) = adapter;
+    };
+    // request adapter
+    wgpuInstanceRequestAdapter(instance, &requestAdapterOptions, onAdapterRequestEnded, &adapter);
+    assert(adapter);
+
+    // adapter enumarate fueatures
+    size_t featuresCount = wgpuAdapterEnumerateFeatures(adapter, featureNames);
+    wgpuAdapterGetProperties(adapter, &adapterProperties);
+    wgpuAdapterGetLimits(adapter, &supportedLimits);
+
+    // reguest device
+    WGPUDeviceDescriptor deviceDesc{};
+    deviceDesc.nextInChain = nullptr;
+    deviceDesc.label = "The device";
+    deviceDesc.requiredFeaturesCount = featuresCount;
+    deviceDesc.requiredFeatures = featureNames;
+    deviceDesc.requiredLimits = nullptr;
+    deviceDesc.defaultQueue.nextInChain = nullptr;
+    deviceDesc.defaultQueue.label = "The default queue";
+    deviceDesc.deviceLostCallback = nullptr;
+    deviceDesc.deviceLostUserdata = nullptr;
+    // on device request ended function
+    auto onDeviceRequestEnded = [](WGPURequestDeviceStatus status, WGPUDevice device, char const * message, void * pUserData) {
+        if (status != WGPURequestDeviceStatus_Success)
+            TVGERR("WG_RENDERER", "Device request: %s", message);
+        *((WGPUDevice*)pUserData) = device;
+    };
+    // request device
+    wgpuAdapterRequestDevice(adapter, &deviceDesc, onDeviceRequestEnded, &device);
+    assert(device);
+
+    // on device error function
+    auto onDeviceError = [](WGPUErrorType type, char const* message, void* pUserData) {
+        TVGERR("WG_RENDERER", "Uncaptured device error: %s", message);
+        // TODO: remove direct error message
+        std::cout << message << std::endl;
+    };
+    // set device error handling
+    wgpuDeviceSetUncapturedErrorCallback(device, onDeviceError, nullptr);
+
+    queue = wgpuDeviceGetQueue(device);
+    assert(queue);
+}
+
+void WgContext::release()
+{
+    if (device) {
+        wgpuDeviceDestroy(device);
+        wgpuDeviceRelease(device);
+    }
+    if (adapter) wgpuAdapterRelease(adapter);
+    if (instance) wgpuInstanceRelease(instance);
+}
+
+void WgContext::executeCommandEncoder(WGPUCommandEncoder commandEncoder)
+{
+    // command buffer descriptor
+    WGPUCommandBufferDescriptor commandBufferDesc{};
+    commandBufferDesc.nextInChain = nullptr;
+    commandBufferDesc.label = "The command buffer";
+    WGPUCommandBuffer commandsBuffer = nullptr;
+    commandsBuffer = wgpuCommandEncoderFinish(commandEncoder, &commandBufferDesc);
+    wgpuQueueSubmit(queue, 1, &commandsBuffer);
+    wgpuCommandBufferRelease(commandsBuffer);
+}
 
 //*****************************************************************************
 // bind group

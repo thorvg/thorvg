@@ -62,20 +62,12 @@ public:
 
 private:
     Array<RenderData> mRenderDatas{};
-
-    Surface mTargetSurface = { nullptr, 0, 0, 0, ColorSpace::Unsupported, true };
-    // basic webgpu instances (TODO: create separated entity)
-    WGPUInstance mInstance{};
-    WGPUAdapter mAdapter{};
-    WGPUDevice mDevice{};
-    WGPUQueue mQueue{};
-    // webgpu surface handles (TODO: create separated entity)
-    WGPUSurface mSurface{};
-    WGPUSwapChain mSwapChain{};
+    WgContext mContext;
     WgPipelines mPipelines;
     WgRenderTarget mRenderTarget;
-
-    bool mClearBuffer;
+    WGPUSurface mSurface{};
+    WGPUSwapChain mSwapChain{};
+    Surface mTargetSurface = { nullptr, 0, 0, 0, ColorSpace::Unsupported, true };
 };
 
 #endif /* _TVG_WG_RENDERER_H_ */

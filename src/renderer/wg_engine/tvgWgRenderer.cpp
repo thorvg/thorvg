@@ -22,13 +22,10 @@
 
 #include "tvgWgRenderer.h"
 
-#include <iostream>
 #ifdef _WIN32
 // TODO: cross-platform realization
 #include <windows.h>
 #endif
-#include "tvgWgRenderData.h"
-#include "tvgWgShaderSrc.h"
 
 WgRenderer::WgRenderer()
 {
@@ -44,84 +41,18 @@ WgRenderer::~WgRenderer()
 
 void WgRenderer::initialize()
 {
-    // create instance
-    WGPUInstanceDescriptor instanceDesc{};
-    instanceDesc.nextInChain = nullptr;
-    mInstance = wgpuCreateInstance(&instanceDesc);
-    assert(mInstance);
-
-    // request adapter options
-    WGPURequestAdapterOptions requestAdapterOptions{};
-    requestAdapterOptions.nextInChain = nullptr;
-    requestAdapterOptions.compatibleSurface = nullptr;
-    requestAdapterOptions.powerPreference = WGPUPowerPreference_HighPerformance;
-    requestAdapterOptions.forceFallbackAdapter = false;
-    // on adapter request ended function
-    auto onAdapterRequestEnded = [](WGPURequestAdapterStatus status, WGPUAdapter adapter, char const * message, void * pUserData) {
-        if (status != WGPURequestAdapterStatus_Success)
-            TVGERR("WG_RENDERER", "Adapter request: %s", message);
-        *((WGPUAdapter*)pUserData) = adapter;
-    };
-    // request adapter
-    wgpuInstanceRequestAdapter(mInstance, &requestAdapterOptions, onAdapterRequestEnded, &mAdapter);
-    assert(mAdapter);
-
-    // adapter enumarate fueatures
-    WGPUFeatureName featureNames[32]{};
-    size_t featuresCount = wgpuAdapterEnumerateFeatures(mAdapter, featureNames);
-    WGPUAdapterProperties adapterProperties{};
-    wgpuAdapterGetProperties(mAdapter, &adapterProperties);
-    WGPUSupportedLimits supportedLimits{};
-    wgpuAdapterGetLimits(mAdapter, &supportedLimits);
-
-    // reguest device
-    WGPUDeviceDescriptor deviceDesc{};
-    deviceDesc.nextInChain = nullptr;
-    deviceDesc.label = "The device";
-    deviceDesc.requiredFeaturesCount = featuresCount;
-    deviceDesc.requiredFeatures = featureNames;
-    deviceDesc.requiredLimits = nullptr;
-    deviceDesc.defaultQueue.nextInChain = nullptr;
-    deviceDesc.defaultQueue.label = "The default queue";
-    deviceDesc.deviceLostCallback = nullptr;
-    deviceDesc.deviceLostUserdata = nullptr;
-    // on device request ended function
-    auto onDeviceRequestEnded = [](WGPURequestDeviceStatus status, WGPUDevice device, char const * message, void * pUserData) {
-        if (status != WGPURequestDeviceStatus_Success)
-            TVGERR("WG_RENDERER", "Device request: %s", message);
-        *((WGPUDevice*)pUserData) = device;
-    };
-    // request device
-    wgpuAdapterRequestDevice(mAdapter, &deviceDesc, onDeviceRequestEnded, &mDevice);
-    assert(mDevice);
-
-    // on device error function
-    auto onDeviceError = [](WGPUErrorType type, char const* message, void* pUserData) {
-        TVGERR("WG_RENDERER", "Uncaptured device error: %s", message);
-        // TODO: remove direct error message
-        std::cout << message << std::endl;
-    };
-    // set device error handling
-    wgpuDeviceSetUncapturedErrorCallback(mDevice, onDeviceError, nullptr);
-
-    mQueue = wgpuDeviceGetQueue(mDevice);
-    assert(mQueue);
-    
-    // create pipelines
-    mPipelines.initialize(mDevice);
+    mContext.initialize();
+    mPipelines.initialize(mContext.device);
 }
 
 
 void WgRenderer::release()
 {
-    mRenderTarget.release();
     mPipelines.release();
-    if (mDevice) {
-        wgpuDeviceDestroy(mDevice);
-        wgpuDeviceRelease(mDevice);
-    }
-    if (mAdapter) wgpuAdapterRelease(mAdapter);
-    if (mInstance) wgpuInstanceRelease(mInstance);
+    if (mSwapChain) wgpuSwapChainRelease(mSwapChain);
+    if (mSurface) wgpuSurfaceRelease(mSurface);
+    mPipelines.release();
+    mContext.release();
 }
 
 
@@ -131,27 +62,27 @@ RenderData WgRenderer::prepare(const RenderShape& rshape, RenderData data, const
     auto renderDataShape = (WgRenderDataShape*)data;
     if (!renderDataShape) {
         renderDataShape = new WgRenderDataShape();
-        renderDataShape->initialize(mDevice);
+        renderDataShape->initialize(mContext.device);
     }
     
     // update geometry
     if (flags & (RenderUpdateFlag::Path | RenderUpdateFlag::Stroke)) {
         renderDataShape->releaseRenderData();
-        renderDataShape->tesselate(mDevice, mQueue, rshape);
-        renderDataShape->stroke(mDevice, mQueue, rshape);
+        renderDataShape->tesselate(mContext.device, mContext.queue, rshape);
+        renderDataShape->stroke(mContext.device, mContext.queue, rshape);
     }
 
      // update paint settings
     if (flags & (RenderUpdateFlag::Transform | RenderUpdateFlag::Blend)) {
         WgShaderTypeMat4x4f modelMat(transform);
         WgShaderTypeBlendSettings blendSettings(mTargetSurface.cs);
-        renderDataShape->mBindGroupPaint.initialize(mDevice, mQueue, modelMat, blendSettings);
+        renderDataShape->mBindGroupPaint.initialize(mContext.device, mContext.queue, modelMat, blendSettings);
     }
 
     // setup fill settings
-    renderDataShape->mRenderSettingsShape.update(mDevice, mQueue, rshape.fill, rshape.color, flags);
+    renderDataShape->mRenderSettingsShape.update(mContext.device, mContext.queue, rshape.fill, rshape.color, flags);
     if (rshape.stroke)
-        renderDataShape->mRenderSettingsStroke.update(mDevice, mQueue, rshape.stroke->fill, rshape.stroke->color, flags);
+        renderDataShape->mRenderSettingsStroke.update(mContext.device, mContext.queue, rshape.stroke->fill, rshape.stroke->color, flags);
 
     return renderDataShape;
 }
@@ -169,22 +100,22 @@ RenderData WgRenderer::prepare(Surface* surface, const RenderMesh* mesh, RenderD
     auto renderDataShape = (WgRenderDataShape*)data;
     if (!renderDataShape) {
         renderDataShape = new WgRenderDataShape();
-        renderDataShape->initialize(mDevice);
+        renderDataShape->initialize(mContext.device);
     }
 
     // update paint settings
     if (flags & (RenderUpdateFlag::Transform | RenderUpdateFlag::Blend)) {
         WgShaderTypeMat4x4f modelMat(transform);
         WgShaderTypeBlendSettings blendSettings(surface->cs);
-        renderDataShape->mBindGroupPaint.initialize(mDevice, mQueue, modelMat, blendSettings);
+        renderDataShape->mBindGroupPaint.initialize(mContext.device, mContext.queue, modelMat, blendSettings);
     }
     
     // update image data
     if (flags & (RenderUpdateFlag::Path | RenderUpdateFlag::Image)) {
         renderDataShape->releaseRenderData();
-        renderDataShape->tesselate(mDevice, mQueue, surface, mesh);
+        renderDataShape->tesselate(mContext.device, mContext.queue, surface, mesh);
         renderDataShape->mBindGroupPicture.initialize(
-            mDevice, mQueue,
+            mContext.device, mContext.queue,
             renderDataShape->mImageData.mSampler,
             renderDataShape->mImageData.mTextureView);
     }
@@ -258,7 +189,6 @@ ColorSpace WgRenderer::colorSpace()
 
 bool WgRenderer::clear()
 {
-    mClearBuffer = true;
     return true;
 }
 
@@ -271,7 +201,7 @@ bool WgRenderer::sync()
     WGPUCommandEncoderDescriptor commandEncoderDesc{};
     commandEncoderDesc.nextInChain = nullptr;
     commandEncoderDesc.label = "The command encoder";
-    WGPUCommandEncoder commandEncoder = wgpuDeviceCreateCommandEncoder(mDevice, &commandEncoderDesc);
+    WGPUCommandEncoder commandEncoder = wgpuDeviceCreateCommandEncoder(mContext.device, &commandEncoderDesc);
 
     // render datas
     mRenderTarget.beginRenderPass(commandEncoder, backBufferView);
@@ -283,14 +213,7 @@ bool WgRenderer::sync()
     }
     mRenderTarget.endRenderPass();
 
-    // execute command encoder
-    WGPUCommandBufferDescriptor commandBufferDesc{};
-    commandBufferDesc.nextInChain = nullptr;
-    commandBufferDesc.label = "The command buffer";
-    WGPUCommandBuffer commandsBuffer{};
-    commandsBuffer = wgpuCommandEncoderFinish(commandEncoder, &commandBufferDesc);
-    wgpuQueueSubmit(mQueue, 1, &commandsBuffer);
-    wgpuCommandBufferRelease(commandsBuffer);
+    mContext.executeCommandEncoder(commandEncoder);
     wgpuCommandEncoderRelease(commandEncoder);
 
     // go to the next frame
@@ -333,7 +256,7 @@ bool WgRenderer::target(void* window, uint32_t w, uint32_t h)
     WGPUSurfaceDescriptor surfaceDesc{};
     surfaceDesc.nextInChain = (const WGPUChainedStruct*)&surfaceDescHwnd;
     surfaceDesc.label = "The surface";
-    mSurface = wgpuInstanceCreateSurface(mInstance, &surfaceDesc);
+    mSurface = wgpuInstanceCreateSurface(mContext.instance, &surfaceDesc);
     assert(mSurface);
 
     // get preferred format
@@ -347,10 +270,10 @@ bool WgRenderer::target(void* window, uint32_t w, uint32_t h)
     swapChainDesc.width = mTargetSurface.w;
     swapChainDesc.height = mTargetSurface.h;
     swapChainDesc.presentMode = WGPUPresentMode_Mailbox;
-    mSwapChain = wgpuDeviceCreateSwapChain(mDevice, mSurface, &swapChainDesc);
+    mSwapChain = wgpuDeviceCreateSwapChain(mContext.device, mSurface, &swapChainDesc);
     assert(mSwapChain);
 
-    mRenderTarget.initialize(mDevice, mQueue, mPipelines, w, h);
+    mRenderTarget.initialize(mContext.device, mContext.queue, mPipelines, w, h);
     return true;
 }
 
