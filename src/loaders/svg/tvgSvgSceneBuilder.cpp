@@ -396,13 +396,9 @@ static bool _recognizeShape(SvgNode* node, Shape* shape)
     switch (node->type) {
         case SvgNodeType::Path: {
             if (node->node.path.path) {
-                Array<PathCommand> cmds;
-                Array<Point> pts;
-                if (svgPathToTvgPath(node->node.path.path, cmds, pts)) {
-                    if (shape->appendPath(cmds.data, cmds.count, pts.data, pts.count) != Result::Success) {
-                        TVGERR("SVG", "Invalid path information.");
-                        return false;
-                    }
+                if (!svgPathToShape(node->node.path.path, shape)) {
+                    TVGERR("SVG", "Invalid path information.");
+                    return false;
                 }
             }
             break;
