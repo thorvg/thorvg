@@ -9,5 +9,6 @@
 /src/loaders/svg/ @JSUYA
 /src/loaders/gif/ @JSUYA
 /src/tools/svg2png/ @JSUYA
-/src/examples/ @JSUYA @SergeyLebedkin
-/test/* @JSUYA
+/src/examples/ @JSUYA @RuiwenTang @SergeyLebedkin @tinyjin
+/test/* @JSUYA @RuiwenTang @SergeyLebedkin @tinyjin
+/web/* @tinyjin
