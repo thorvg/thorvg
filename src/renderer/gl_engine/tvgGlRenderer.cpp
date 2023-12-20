@@ -527,7 +527,8 @@ void GlRenderer::drawPrimitive(GlShape& sdata, uint8_t r, uint8_t g, uint8_t b, 
 void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFlag flag)
 {
     const Fill::ColorStop* stops = nullptr;
-    auto stopCnt = fill->colorStops(&stops);
+    auto stopCnt = min(fill->colorStops(&stops),
+                       static_cast<uint32_t>(MAX_GRADIENT_STOPS));
     if (stopCnt < 2) return;
 
     GlRenderTask* task = nullptr;
@@ -576,7 +577,15 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
                 gradientBlock.stopColors[i * 4 + 3] = stops[i].a / 255.f;
             }
 
-            linearFill->linear(&gradientBlock.startPos[0], &gradientBlock.startPos[1], &gradientBlock.stopPos[0], &gradientBlock.stopPos[1]);
+            float x1, x2, y1, y2;
+            linearFill->linear(&x1, &y1, &x2, &y2);
+
+            auto transform = linearFill->transform();
+
+            gradientBlock.startPos[0] = x1 * transform.e11 + transform.e13;
+            gradientBlock.startPos[1] = y1 * transform.e22 + transform.e23;
+            gradientBlock.stopPos[0] = x2 * transform.e11 + transform.e13;
+            gradientBlock.stopPos[1] = y2 * transform.e22 + transform.e23;
 
             gradientBinding = GlBindingResource{
                 1,
@@ -600,7 +609,14 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
                 gradientBlock.stopColors[i * 4 + 3] = stops[i].a / 255.f;
             }
 
-            radialFill->radial(&gradientBlock.centerPos[0], &gradientBlock.centerPos[1], &gradientBlock.radius[0]);
+            float x, y, r;
+            radialFill->radial(&x, &y, &r);
+
+            auto transform = radialFill->transform();
+
+            gradientBlock.centerPos[0] = x * transform.e11 + transform.e13;
+            gradientBlock.centerPos[1] = y * transform.e22 + transform.e23;
+            gradientBlock.radius[0] = r * transform.e11;
 
             gradientBinding = GlBindingResource{
                 1,
