@@ -81,4 +81,12 @@ struct ImageLoader : LoadModule
     virtual Paint* paint() { return nullptr; }
 };
 
+
+struct FontLoader : LoadModule
+{
+    FontLoader(FileType type) : LoadModule(type) {}
+
+    virtual bool request(Shape* shape, char* text, bool italic = false) = 0;
+};
+
 #endif //_TVG_LOAD_MODULE_H_
