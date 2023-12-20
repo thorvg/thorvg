@@ -53,6 +53,7 @@
 #include <cstring>
 #include <math.h>
 #include <ctype.h>
+#include "tvgShape.h"
 #include "tvgSvgLoaderCommon.h"
 #include "tvgSvgPath.h"
 #include "tvgStr.h"
@@ -534,7 +535,7 @@ static char* _nextCommand(char* path, char* cmd, float* arr, int* count)
 /************************************************************************/
 
 
-bool svgPathToTvgPath(const char* svgPath, Array<PathCommand>& cmds, Array<Point>& pts)
+bool svgPathToShape(const char* svgPath, Shape* shape)
 {
     float numberArray[7];
     int numberCount = 0;
@@ -545,11 +546,16 @@ bool svgPathToTvgPath(const char* svgPath, Array<PathCommand>& cmds, Array<Point
     bool isQuadratic = false;
     char* path = (char*)svgPath;
 
+    auto& pts = P(shape)->rs.path.pts;
+    auto& cmds = P(shape)->rs.path.cmds;
+    auto lastCmds = cmds.count;
+
     while ((path[0] != '\0')) {
         path = _nextCommand(path, &cmd, numberArray, &numberCount);
         if (!path) break;
         if (!_processCommand(&cmds, &pts, cmd, numberArray, numberCount, &cur, &curCtl, &startPoint, &isQuadratic)) break;
     }
 
+    if (cmds.count > lastCmds && cmds[lastCmds] != PathCommand::MoveTo) return false;
     return true;
 }
