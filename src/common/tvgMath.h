@@ -174,6 +174,18 @@ static inline Point operator*(const Point& lhs, float rhs)
 }
 
 
+static inline Point operator*(const float& lhs, const Point& rhs)
+{
+    return {lhs * rhs.x, lhs * rhs.y};
+}
+
+
+static inline Point operator/(const Point& lhs, const float rhs)
+{
+    return {lhs.x / rhs, lhs.y / rhs};
+}
+
+
 template <typename T>
 static inline T mathLerp(const T &start, const T &end, float t)
 {

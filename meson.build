@@ -57,6 +57,9 @@ if get_option('loaders').contains('webp_beta') == true
     config_h.set10('THORVG_WEBP_LOADER_SUPPORT', true)
 endif
 
+if get_option('loaders').contains('ttf_beta') == true
+    config_h.set10('THORVG_TTF_LOADER_SUPPORT', true)
+endif
 
 
 #Savers
@@ -135,20 +138,21 @@ Summary:
     Raster Engine (WG):    @6@
     Loader (TVG):          @7@
     Loader (SVG):          @8@
-    Loader (PNG):          @9@
-    Loader (JPG):          @10@
-    Loader (WEBP_BETA):    @11@
-    Loader (LOTTIE):       @12@
-    Saver (TVG):           @13@
-    Saver (GIF):           @14@
-    Binding (CAPI):        @15@
-    Binding (WASM_BETA):   @16@
-    Log Message:           @17@
-    Tests:                 @18@
-    Examples:              @19@
-    Tool (Svg2Tvg):        @20@
-    Tool (Svg2Png):        @21@
-    Tool (Lottie2Gif):     @22@
+    Loader (TTF_BETA):     @9@
+    Loader (LOTTIE):       @10@
+    Loader (PNG):          @11@
+    Loader (JPG):          @12@
+    Loader (WEBP_BETA):    @13@
+    Saver (TVG):           @14@
+    Saver (GIF):           @15@
+    Binding (CAPI):        @16@
+    Binding (WASM_BETA):   @17@
+    Log Message:           @18@
+    Tests:                 @19@
+    Examples:              @20@
+    Tool (Svg2Tvg):        @21@
+    Tool (Svg2Png):        @22@
+    Tool (Lottie2Gif):     @23@
 
 '''.format(
         meson.project_version(),
@@ -160,10 +164,11 @@ Summary:
         get_option('engines').contains('wg_beta'),
         all_loaders or get_option('loaders').contains('tvg'),
         all_loaders or get_option('loaders').contains('svg'),
+        get_option('loaders').contains('ttf_beta'),
+        all_loaders or get_option('loaders').contains('lottie'),
         all_loaders or get_option('loaders').contains('png'),
         all_loaders or get_option('loaders').contains('jpg'),
         get_option('loaders').contains('webp_beta'),
-        all_loaders or get_option('loaders').contains('lottie'),
         all_savers or get_option('savers').contains('tvg'),
         all_savers or get_option('savers').contains('gif'),
         get_option('bindings').contains('capi'),
