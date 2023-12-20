@@ -33,14 +33,6 @@ struct VertexInput {
     @location(0) position: vec2f
 };
 
-// BlendSettigs
-struct BlendSettigs {
-    format : u32, // ColorSpace
-    dummy0 : f32,
-    dummy1 : f32,
-    dummy2 : f32
-};
-
 // vertex output
 struct VertexOutput {
     @builtin(position) position: vec4f
@@ -49,7 +41,6 @@ struct VertexOutput {
 // uniforms
 @group(0) @binding(0) var<uniform> uViewMat      : mat4x4f;
 @group(1) @binding(0) var<uniform> uModelMat     : mat4x4f;
-@group(1) @binding(1) var<uniform> uBlendSettigs : BlendSettigs;
 
 @vertex
 fn vs_main(in: VertexInput) -> VertexOutput {
@@ -77,10 +68,10 @@ struct VertexInput {
 
 // BlendSettigs
 struct BlendSettigs {
-    format : u32, // ColorSpace
-    dummy0 : f32,
-    dummy1 : f32,
-    dummy2 : f32
+    format  : u32, // ColorSpace
+    dummy0  : f32,
+    dummy1  : f32,
+    opacity : f32
 };
 
 // vertex output
@@ -110,7 +101,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
     // get color
     color = uSolidColor;
 
-    return vec4f(color.rgb, color.a);
+    return vec4f(color.rgb, color.a * uBlendSettigs.opacity);
 }
 )";
 
@@ -126,10 +117,10 @@ struct VertexInput {
 
 // BlendSettigs
 struct BlendSettigs {
-    format : u32, // ColorSpace
-    dummy0 : f32,
-    dummy1 : f32,
-    dummy2 : f32
+    format  : u32, // ColorSpace
+    dummy0  : f32,
+    dummy1  : f32,
+    opacity : f32
 };
 
 // LinearGradient
@@ -200,7 +191,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
         }
     }
 
-    return vec4f(color.rgb, color.a);
+    return vec4f(color.rgb, color.a * uBlendSettigs.opacity);
 }
 )";
 
@@ -216,10 +207,10 @@ struct VertexInput {
 
 // BlendSettigs
 struct BlendSettigs {
-    format : u32, // ColorSpace
-    dummy0 : f32,
-    dummy1 : f32,
-    dummy2 : f32
+    format  : u32, // ColorSpace
+    dummy0  : f32,
+    dummy1  : f32,
+    opacity : f32
 };
 
 // RadialGradient
@@ -284,7 +275,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
         }
     }
 
-    return vec4f(color.rgb, color.a);
+    return vec4f(color.rgb, color.a * uBlendSettigs.opacity);
 }
 )";
 
@@ -301,10 +292,10 @@ struct VertexInput {
 
 // BlendSettigs
 struct BlendSettigs {
-    format : u32, // ColorSpace
-    dummy0 : f32,
-    dummy1 : f32,
-    dummy2 : f32
+    format  : u32, // ColorSpace
+    dummy0  : f32,
+    dummy1  : f32,
+    opacity : f32
 };
 
 // vertex output
@@ -340,6 +331,6 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
     } else if (format == 3u) { /* FMT_ARGB8888S */
         result = vec4(color.bgr * color.a, color.a);
     }
-    return vec4f(result.rgb, result.a);
+    return vec4f(result.rgb, result.a * uBlendSettigs.opacity);
 };
 )";
