@@ -399,7 +399,10 @@ static bool _recognizeShape(SvgNode* node, Shape* shape)
                 Array<PathCommand> cmds;
                 Array<Point> pts;
                 if (svgPathToTvgPath(node->node.path.path, cmds, pts)) {
-                    shape->appendPath(cmds.data, cmds.count, pts.data, pts.count);
+                    if (shape->appendPath(cmds.data, cmds.count, pts.data, pts.count) != Result::Success) {
+                        TVGERR("SVG", "Invalid path information.");
+                        return false;
+                    }
                 }
             }
             break;
