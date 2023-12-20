@@ -27,7 +27,7 @@
 #include "tvgTaskScheduler.h"
 #include "tvgJpgd.h"
 
-class JpgLoader : public LoadModule, public Task
+class JpgLoader : public ImageLoader, public Task
 {
 private:
     jpeg_decoder* decoder = nullptr;

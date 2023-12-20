@@ -49,7 +49,7 @@ void PngLoader::run(unsigned tid)
 /* External Class Implementation                                        */
 /************************************************************************/
 
-PngLoader::PngLoader() : LoadModule(FileType::Png)
+PngLoader::PngLoader() : ImageLoader(FileType::Png)
 {
     lodepng_state_init(&state);
 }

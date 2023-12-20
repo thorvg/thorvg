@@ -26,7 +26,7 @@
 #include "tvgTaskScheduler.h"
 #include "tvgSvgLoaderCommon.h"
 
-class SvgLoader : public LoadModule, public Task
+class SvgLoader : public ImageLoader, public Task
 {
 public:
     string filePath;

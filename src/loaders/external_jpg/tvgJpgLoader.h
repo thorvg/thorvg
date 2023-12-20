@@ -28,7 +28,7 @@
 using tjhandle = void*;
 
 //TODO: Use Task?
-class JpgLoader : public LoadModule
+class JpgLoader : public ImageLoader
 {
 public:
     JpgLoader();

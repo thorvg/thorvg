@@ -38,7 +38,7 @@ void PngLoader::clear()
 /* External Class Implementation                                        */
 /************************************************************************/
 
-PngLoader::PngLoader() : LoadModule(FileType::Png)
+PngLoader::PngLoader() : ImageLoader(FileType::Png)
 {
     image = static_cast<png_imagep>(calloc(1, sizeof(png_image)));
     image->version = PNG_IMAGE_VERSION;
