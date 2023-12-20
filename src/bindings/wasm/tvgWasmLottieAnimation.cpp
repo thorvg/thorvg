@@ -29,18 +29,18 @@ using namespace tvg;
 
 static const char* NoError = "None";
 
-class __attribute__((visibility("default"))) TvgWasm
+class __attribute__((visibility("default"))) TvgLottieAnimation
 {
 public:
-    ~TvgWasm()
+    ~TvgLottieAnimation()
     {
         free(buffer);
         Initializer::term();
     }
 
-    static unique_ptr<TvgWasm> create()
+    static unique_ptr<TvgLottieAnimation> create()
     {
-        return unique_ptr<TvgWasm>(new TvgWasm());
+        return unique_ptr<TvgLottieAnimation>(new TvgLottieAnimation());
     }
 
     string error()
@@ -48,7 +48,32 @@ public:
         return errorMsg;
     }
 
-    bool load(string data, string mimetype, int width, int height)
+    // Getter methods
+    val size()
+    {
+        return val(typed_memory_view(2, psize));
+    }
+
+    val duration()
+    {
+        if (!canvas || !animation) return val(0);
+        return val(animation->duration());
+    }
+
+    val totalFrame()
+    {
+        if (!canvas || !animation) return val(0);
+        return val(animation->totalFrame());
+    }
+
+    val curFrame()
+    {
+        if (!canvas || !animation) return val(0);
+        return val(animation->curFrame());
+    }
+
+    // Render methods
+    bool load(string data, string mimetype, int width, int height, string rpath = "")
     {
         errorMsg = NoError;
 
@@ -63,7 +88,7 @@ public:
 
         animation = Animation::gen();
 
-        if (animation->picture()->load(data.c_str(), data.size(), mimetype, false) != Result::Success) {
+        if (animation->picture()->load(data.c_str(), data.size(), mimetype, rpath, false) != Result::Success) {
             errorMsg = "load() fail";
             return false;
         }
@@ -82,20 +107,6 @@ public:
         }
 
         updated = true;
-
-        return true;
-    }
-
-    bool update()
-    {
-        if (!updated) return true;
-
-        errorMsg = NoError;
-
-        if (canvas->update() != Result::Success) {
-            errorMsg = "update() fail";
-            return false;
-        }
 
         return true;
     }
@@ -120,21 +131,18 @@ public:
         return val(typed_memory_view(width * height * 4, buffer));
     }
 
-    val size()
+    bool update()
     {
-        return val(typed_memory_view(2, psize));
-    }
+        if (!updated) return true;
 
-    val duration()
-    {
-        if (!canvas || !animation) return val(0);
-        return val(animation->duration());
-    }
+        errorMsg = NoError;
 
-    val totalFrame()
-    {
-        if (!canvas || !animation) return val(0);
-        return val(animation->totalFrame());
+        if (canvas->update() != Result::Success) {
+            errorMsg = "update() fail";
+            return false;
+        }
+
+        return true;
     }
 
     bool frame(float no)
@@ -173,35 +181,7 @@ public:
         updated = true;
     }
 
-    bool save2Tvg()
-    {
-        errorMsg = NoError;
-
-        if (!animation) return false;
-
-        auto duplicate = cast<Picture>(animation->picture()->duplicate());
-
-        if (!duplicate) {
-            errorMsg = "duplicate(), fail";
-            return false;
-        }
-
-        auto saver = Saver::gen();
-        if (!saver) {
-            errorMsg = "Invalid saver";
-            return false;
-        }
-
-        if (saver->save(std::move(duplicate), "output.tvg") != tvg::Result::Success) {
-            errorMsg = "save(), fail";
-            return false;
-        }
-
-        saver->sync();
-
-        return true;
-    }
-
+    // Saver methods
     bool save2Gif(string data, string mimetype, int width, int height, int fps)
     {
         errorMsg = NoError;
@@ -213,7 +193,7 @@ public:
             return false;
         }
         
-        if (animation->picture()->load(data.c_str(), data.size(), mimetype, false) != Result::Success) {
+        if (animation->picture()->load(data.c_str(), data.size(), mimetype, "", false) != Result::Success) {
             errorMsg = "load() fail";
             return false;
         }
@@ -247,8 +227,10 @@ public:
         return true;
     }
 
+    // TODO: Advanced APIs wrt Interactivty & theme methods...
+
 private:
-    explicit TvgWasm()
+    explicit TvgLottieAnimation()
     {
         errorMsg = NoError;
 
@@ -275,19 +257,19 @@ private:
     bool                   updated = false;
 };
 
-
-EMSCRIPTEN_BINDINGS(thorvg_bindings) {
-  class_<TvgWasm>("TvgWasm")
-    .constructor(&TvgWasm::create)
-    .function("error", &TvgWasm::error, allow_raw_pointers())
-    .function("load", &TvgWasm::load)
-    .function("update", &TvgWasm::update)
-    .function("resize", &TvgWasm::resize)
-    .function("render", &TvgWasm::render)
-    .function("size", &TvgWasm::size)
-    .function("duration", &TvgWasm::duration)
-    .function("totalFrame", &TvgWasm::totalFrame)
-    .function("frame", &TvgWasm::frame)
-    .function("save2Tvg", &TvgWasm::save2Tvg)
-    .function("save2Gif", &TvgWasm::save2Gif);
+EMSCRIPTEN_BINDINGS(thorvg_bindings)
+{
+    class_<TvgLottieAnimation>("TvgLottieAnimation")
+        .constructor(&TvgLottieAnimation ::create)
+        .function("error", &TvgLottieAnimation ::error, allow_raw_pointers())
+        .function("size", &TvgLottieAnimation ::size)
+        .function("duration", &TvgLottieAnimation ::duration)
+        .function("totalFrame", &TvgLottieAnimation ::totalFrame)
+        .function("curFrame", &TvgLottieAnimation ::curFrame)
+        .function("render", &TvgLottieAnimation::render)
+        .function("load", &TvgLottieAnimation ::load)
+        .function("update", &TvgLottieAnimation ::update)
+        .function("frame", &TvgLottieAnimation ::frame)
+        .function("resize", &TvgLottieAnimation ::resize)
+        .function("save2Gif", &TvgLottieAnimation ::save2Gif);
 }
