@@ -34,7 +34,7 @@
 /* External Class Implementation                                        */
 /************************************************************************/
 
-RawLoader::RawLoader() : LoadModule(FileType::Raw)
+RawLoader::RawLoader() : ImageLoader(FileType::Raw)
 {
 }
 

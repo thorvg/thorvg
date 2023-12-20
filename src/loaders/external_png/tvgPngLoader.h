@@ -26,7 +26,7 @@
 #include <png.h>
 #include "tvgLoader.h"
 
-class PngLoader : public LoadModule
+class PngLoader : public ImageLoader
 {
 public:
     PngLoader();

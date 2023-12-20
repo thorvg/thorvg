@@ -121,7 +121,7 @@ void TvgLoader::run(unsigned tid)
 /* External Class Implementation                                        */
 /************************************************************************/
 
-TvgLoader::TvgLoader() : LoadModule(FileType::Tvg)
+TvgLoader::TvgLoader() : ImageLoader(FileType::Tvg)
 {
 }
 

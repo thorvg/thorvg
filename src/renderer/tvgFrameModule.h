@@ -28,10 +28,10 @@
 namespace tvg
 {
 
-class FrameModule: public LoadModule
+class FrameModule: public ImageLoader
 {
 public:
-    FrameModule(FileType type) : LoadModule(type) {}
+    FrameModule(FileType type) : ImageLoader(type) {}
     virtual ~FrameModule() {}
 
     virtual bool frame(float no) = 0;       //set the current frame number

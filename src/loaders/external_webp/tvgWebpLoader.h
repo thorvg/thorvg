@@ -26,7 +26,7 @@
 #include "tvgLoader.h"
 #include "tvgTaskScheduler.h"
 
-class WebpLoader : public LoadModule, public Task
+class WebpLoader : public ImageLoader, public Task
 {
 public:
     WebpLoader();
