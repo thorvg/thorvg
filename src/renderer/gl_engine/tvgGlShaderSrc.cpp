@@ -67,7 +67,7 @@ void main()                                                                     
 
 
 std::string STR_GRADIENT_FRAG_COMMON_VARIABLES = TVG_COMPOSE_SHADER(
-const int MAX_STOP_COUNT = 4;                                                                           \n
+const int MAX_STOP_COUNT = 16;                                                                          \n
 in vec2 vPos;                                                                                           \n
 in float vOpacity;                                                                                      \n
 );
@@ -80,16 +80,38 @@ float gradientStep(float edge0, float edge1, float x)                           
     return x;                                                                                           \n
 }                                                                                                       \n
                                                                                                         \n
+float gradientStop(int index)                                                                           \n
+{                                                                                                       \n
+    if (index >= MAX_STOP_COUNT) index = MAX_STOP_COUNT - 1;                                            \n
+    int i = index / 4;                                                                                  \n
+    int j = index % 4;                                                                                  \n
+    return uGradientInfo.stopPoints[i][j];                                                              \n
+}                                                                                                       \n
+                                                                                                        \n
+float gradientWrap(float d)                                                                             \n
+{                                                                                                       \n
+    int i = 1;                                                                                          \n
+    while (d > 1.0) {                                                                                   \n
+        d = d - 1.0;                                                                                    \n
+        i *= -1;                                                                                        \n
+    }                                                                                                   \n
+                                                                                                        \n
+    if (i == 1)                                                                                         \n
+        return smoothstep(0.0, 1.0, d);                                                                 \n
+    else                                                                                                \n
+        return smoothstep(1.0, 0.0, d);                                                                 \n
+}                                                                                                       \n
+                                                                                                        \n
 vec4 gradient(float t)                                                                                  \n
 {                                                                                                       \n
     vec4 col = vec4(0.0);                                                                               \n
     int i = 0;                                                                                          \n
-    int count = int(uGradientInfo.nStops[0]);                                                              \n
-    if (t <= uGradientInfo.stopPoints[0])                                                               \n
+    int count = int(uGradientInfo.nStops[0]);                                                           \n
+    if (t <= gradientStop(0))                                                                           \n
     {                                                                                                   \n
         col += uGradientInfo.stopColors[0];                                                             \n
     }                                                                                                   \n
-    else if (t >= uGradientInfo.stopPoints[count - 1])                                                  \n
+    else if (t >= gradientStop(count - 1))                                                              \n
     {                                                                                                   \n
         col += uGradientInfo.stopColors[count - 1];                                                     \n
     }                                                                                                   \n
@@ -97,13 +119,12 @@ vec4 gradient(float t)                                                          
     {                                                                                                   \n
         for (i = 0; i < count - 1; ++i)                                                                 \n
         {                                                                                               \n
-            if (t > uGradientInfo.stopPoints[i] && t < uGradientInfo.stopPoints[i + 1])                 \n
+            float stopi = gradientStop(i);                                                              \n
+            float stopi1 = gradientStop(i + 1);                                                         \n
+            if (t > stopi && t <stopi1)                                                                 \n
             {                                                                                           \n
-                col += (uGradientInfo.stopColors[i] *                                                   \n
-                    (1. - gradientStep(uGradientInfo.stopPoints[i],                                     \n
-                                       uGradientInfo.stopPoints[i + 1], t)));                           \n
-                col += (uGradientInfo.stopColors[i + 1] *                                               \n
-                        gradientStep(uGradientInfo.stopPoints[i], uGradientInfo.stopPoints[i + 1], t)); \n
+                col += (uGradientInfo.stopColors[i] * (1. - gradientStep(stopi, stopi1, t)));           \n
+                col += (uGradientInfo.stopColors[i + 1] * gradientStep(stopi, stopi1, t));              \n
                 break;                                                                                  \n
             }                                                                                           \n
         }                                                                                               \n
@@ -124,7 +145,7 @@ layout(std140) uniform GradientInfo {                                           
     vec4  nStops;                                                                                       \n
     vec2  gradStartPos;                                                                                 \n
     vec2  gradEndPos;                                                                                   \n
-    vec4  stopPoints;                                                                                   \n
+    vec4  stopPoints[MAX_STOP_COUNT / 4];                                                                                   \n
     vec4  stopColors[MAX_STOP_COUNT];                                                                   \n
 } uGradientInfo ;                                                                                       \n
 );
@@ -141,8 +162,7 @@ void main()                                                                     
                                                                                                         \n
     float t = dot(pos - st, ba) / dot(ba, ba);                                                          \n
                                                                                                         \n
-    //t = smoothstep(0.0, 1.0, clamp(t, 0.0, 1.0));                                                     \n
-    t = clamp(t, 0.0, 1.0);                                                                             \n
+    t = gradientWrap(t);                                                                                \n
                                                                                                         \n
     vec4 color = gradient(t);                                                                           \n
                                                                                                         \n
@@ -156,7 +176,7 @@ layout(std140) uniform GradientInfo {                                           
     vec4  nStops;                                                                                       \n
     vec2  centerPos;                                                                                    \n
     vec2  radius;                                                                                       \n
-    vec4  stopPoints;                                                                                   \n
+    vec4  stopPoints[MAX_STOP_COUNT / 4];                                                               \n
     vec4  stopColors[MAX_STOP_COUNT];                                                                   \n
 } uGradientInfo ;                                                                                       \n
 );
@@ -171,8 +191,7 @@ void main()                                                                     
     float d = distance(uGradientInfo.centerPos, pos);                                                   \n
     d = (d / ba);                                                                                       \n
                                                                                                         \n
-    //float t = smoothstep(0.0, 1.0, clamp(d, 0.0, 1.0));                                               \n
-    float t = clamp(d, 0.0, 1.0);                                                                       \n
+    float t = gradientWrap(d);                                                                          \n
                                                                                                         \n
     vec4 color = gradient(t);                                                                           \n
                                                                                                         \n

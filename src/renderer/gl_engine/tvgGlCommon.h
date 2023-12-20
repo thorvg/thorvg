@@ -65,7 +65,7 @@ struct GlShape
   unique_ptr<GlGeometry> geometry;
 };
 
-#define MAX_GRADIENT_STOPS 4
+#define MAX_GRADIENT_STOPS 16
 
 struct GlLinearGradientBlock
 {
