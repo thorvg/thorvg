@@ -3538,7 +3538,7 @@ void SvgLoader::clear(bool all)
 /* External Class Implementation                                        */
 /************************************************************************/
 
-SvgLoader::SvgLoader() : LoadModule(FileType::Svg)
+SvgLoader::SvgLoader() : ImageLoader(FileType::Svg)
 {
 }
 

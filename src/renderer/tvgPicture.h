@@ -57,7 +57,7 @@ struct PictureIterator : Iterator
 
 struct Picture::Impl
 {
-    LoadModule* loader = nullptr;
+    ImageLoader* loader = nullptr;
 
     Paint* paint = nullptr;           //vector picture uses
     Surface* surface = nullptr;       //bitmap picture uses
@@ -73,7 +73,7 @@ struct Picture::Impl
     bool render(RenderMethod &renderer);
     bool size(float w, float h);
     RenderRegion bounds(RenderMethod& renderer);
-    Result load(LoadModule* ploader);
+    Result load(ImageLoader* ploader);
 
     Impl(Picture* p) : picture(p)
     {
@@ -153,7 +153,7 @@ struct Picture::Impl
         if (paint || surface) return Result::InsufficientCondition;
 
         bool invalid;  //Invalid Path
-        auto loader = LoaderMgr::loader(path, &invalid);
+        auto loader = static_cast<ImageLoader*>(LoaderMgr::loader(path, &invalid));
         if (!loader) {
             if (invalid) return Result::InvalidArguments;
             return Result::NonSupport;
@@ -164,7 +164,7 @@ struct Picture::Impl
     Result load(const char* data, uint32_t size, const string& mimeType, bool copy)
     {
         if (paint || surface) return Result::InsufficientCondition;
-        auto loader = LoaderMgr::loader(data, size, mimeType, copy);
+        auto loader = static_cast<ImageLoader*>(LoaderMgr::loader(data, size, mimeType, copy));
         if (!loader) return Result::NonSupport;
         return load(loader);
     }
@@ -173,7 +173,7 @@ struct Picture::Impl
     {
         if (paint || surface) return Result::InsufficientCondition;
 
-        auto loader = LoaderMgr::loader(data, w, h, copy);
+        auto loader = static_cast<ImageLoader*>(LoaderMgr::loader(data, w, h, copy));
         if (!loader) return Result::FailedAllocation;
 
         return load(loader);

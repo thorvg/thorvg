@@ -118,7 +118,7 @@ RenderTransform Picture::Impl::resizeTransform(const RenderTransform* pTransform
 }
 
 
-Result Picture::Impl::load(LoadModule* loader)
+Result Picture::Impl::load(ImageLoader* loader)
 {
     //Same resource has been loaded.
     if (this->loader == loader) {

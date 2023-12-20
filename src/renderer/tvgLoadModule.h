@@ -26,8 +26,6 @@
 #include "tvgRender.h"
 #include "tvgInlist.h"
 
-namespace tvg
-{
 
 struct LoadModule
 {
@@ -35,16 +33,17 @@ struct LoadModule
 
     //Use either hashkey(data) or hashpath(path)
     uint64_t hashkey;
-    string hashpath;
+    char* hashpath = nullptr;
 
-    float w = 0, h = 0;                             //default image size
-    ColorSpace cs = ColorSpace::Unsupported;        //must be clarified at open()
     FileType type;                                  //current loader file type
     uint16_t sharing = 0;                           //reference count
     bool readied = false;                           //read done already.
 
     LoadModule(FileType type) : type(type) {}
-    virtual ~LoadModule() {}
+    virtual ~LoadModule()
+    {
+        free(hashpath);
+    }
 
     virtual bool open(const string& path) { return false; }
     virtual bool open(const char* data, uint32_t size, bool copy) { return false; }
@@ -52,7 +51,6 @@ struct LoadModule
     //Override this if the vector-format has own resizing policy.
     virtual bool resize(Paint* paint, float w, float h) { return false; }
 
-    virtual bool animatable() { return false; }  //true if this loader supports animation.
     virtual void sync() {};  //finish immediately if any async update jobs.
 
     virtual bool read()
@@ -68,11 +66,19 @@ struct LoadModule
         --sharing;
         return false;
     }
+};
 
+
+struct ImageLoader : LoadModule
+{
+    float w = 0, h = 0;                             //default image size
+    ColorSpace cs = ColorSpace::Unsupported;        //must be clarified at open()
+
+    ImageLoader(FileType type) : LoadModule(type) {}
+
+    virtual bool animatable() { return false; }  //true if this loader supports animation.
     virtual unique_ptr<Surface> bitmap() { return nullptr; }
     virtual Paint* paint() { return nullptr; }
 };
-
-}
 
 #endif //_TVG_LOAD_MODULE_H_

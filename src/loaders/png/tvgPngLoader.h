@@ -27,7 +27,7 @@
 #include "tvgTaskScheduler.h"
 
 
-class PngLoader : public LoadModule, public Task
+class PngLoader : public ImageLoader, public Task
 {
 private:
     LodePNGState state;

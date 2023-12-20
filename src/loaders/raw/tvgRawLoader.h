@@ -23,7 +23,7 @@
 #ifndef _TVG_RAW_LOADER_H_
 #define _TVG_RAW_LOADER_H_
 
-class RawLoader : public LoadModule
+class RawLoader : public ImageLoader
 {
 public:
     uint32_t* content = nullptr;

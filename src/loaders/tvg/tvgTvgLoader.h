@@ -27,7 +27,7 @@
 #include "tvgTvgCommon.h"
 
 
-class TvgLoader : public LoadModule, public Task
+class TvgLoader : public ImageLoader, public Task
 {
 public:
     const char* data = nullptr;

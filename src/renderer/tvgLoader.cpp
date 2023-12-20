@@ -194,7 +194,7 @@ static LoadModule* _findFromCache(const string& path)
     auto loader = _activeLoaders.head;
 
     while (loader) {
-        if (loader->hashpath == path) {
+        if (loader->hashpath && !strcmp(loader->hashpath, path.c_str())) {
             ++loader->sharing;
             return loader;
         }
@@ -260,7 +260,7 @@ LoadModule* LoaderMgr::loader(const string& path, bool* invalid)
 
     if (auto loader = _findByPath(path)) {
         if (loader->open(path)) {
-            loader->hashpath = path;
+            loader->hashpath = strdup(path.c_str());
             _activeLoaders.back(loader);
             return loader;
         }
