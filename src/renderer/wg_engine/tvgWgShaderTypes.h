@@ -53,11 +53,11 @@ struct WgShaderTypeBlendSettings
     uint32_t format{}; // ColorSpace
     float dummy0{};
     float dummy1{};
-    float dummy2{};
+    float opacity{};
 
     WgShaderTypeBlendSettings() {};
-    WgShaderTypeBlendSettings(const ColorSpace colorSpace);
-    void update(const ColorSpace colorSpace);
+    WgShaderTypeBlendSettings(const ColorSpace colorSpace, uint8_t o);
+    void update(const ColorSpace colorSpace, uint8_t o);
 };
 
 // struct SolidColor {

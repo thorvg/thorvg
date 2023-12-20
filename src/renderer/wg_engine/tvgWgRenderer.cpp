@@ -75,7 +75,7 @@ RenderData WgRenderer::prepare(const RenderShape& rshape, RenderData data, const
      // update paint settings
     if (flags & (RenderUpdateFlag::Transform | RenderUpdateFlag::Blend)) {
         WgShaderTypeMat4x4f modelMat(transform);
-        WgShaderTypeBlendSettings blendSettings(mTargetSurface.cs);
+        WgShaderTypeBlendSettings blendSettings(mTargetSurface.cs, opacity);
         renderDataShape->mBindGroupPaint.initialize(mContext.device, mContext.queue, modelMat, blendSettings);
     }
 
@@ -106,7 +106,7 @@ RenderData WgRenderer::prepare(Surface* surface, const RenderMesh* mesh, RenderD
     // update paint settings
     if (flags & (RenderUpdateFlag::Transform | RenderUpdateFlag::Blend)) {
         WgShaderTypeMat4x4f modelMat(transform);
-        WgShaderTypeBlendSettings blendSettings(surface->cs);
+        WgShaderTypeBlendSettings blendSettings(surface->cs, opacity);
         renderDataShape->mBindGroupPaint.initialize(mContext.device, mContext.queue, modelMat, blendSettings);
     }
     

@@ -99,7 +99,7 @@ void WgRenderTarget::initialize(WGPUDevice device, WGPUQueue queue, WgPipelines&
     WgShaderTypeMat4x4f viewMat(w, h);
     mBindGroupCanvasWnd.initialize(device, queue, viewMat);
     WgShaderTypeMat4x4f modelMat;
-    WgShaderTypeBlendSettings blendSettings(ColorSpace::ABGR8888);
+    WgShaderTypeBlendSettings blendSettings(ColorSpace::ABGR8888, 255);
     mBindGroupPaintWnd.initialize(device, queue, modelMat, blendSettings);
     // update pipeline geometry data
     WgVertexList wnd;
@@ -193,11 +193,11 @@ void WgRenderTarget::renderShape(WgRenderDataShape* renderData)
         // fill shape (second pass)
         WgRenderDataShapeSettings& settings = renderData->mRenderSettingsShape;
         if (settings.mFillType == WgRenderDataShapeFillType::Solid)
-            mPipelines->mPipelineSolid.use(mRenderPassEncoder, mBindGroupCanvasWnd, mBindGroupPaintWnd, settings.mBindGroupSolid);
+            mPipelines->mPipelineSolid.use(mRenderPassEncoder, mBindGroupCanvasWnd, renderData->mBindGroupPaint, settings.mBindGroupSolid);
         else if (settings.mFillType == WgRenderDataShapeFillType::Linear)
-            mPipelines->mPipelineLinear.use(mRenderPassEncoder, mBindGroupCanvasWnd, mBindGroupPaintWnd, settings.mBindGroupLinear);
+            mPipelines->mPipelineLinear.use(mRenderPassEncoder, mBindGroupCanvasWnd, renderData->mBindGroupPaint, settings.mBindGroupLinear);
         else if (settings.mFillType == WgRenderDataShapeFillType::Radial)
-            mPipelines->mPipelineRadial.use(mRenderPassEncoder, mBindGroupCanvasWnd, mBindGroupPaintWnd, settings.mBindGroupRadial);
+            mPipelines->mPipelineRadial.use(mRenderPassEncoder, mBindGroupCanvasWnd, renderData->mBindGroupPaint, settings.mBindGroupRadial);
         mGeometryDataWnd.draw(mRenderPassEncoder);
     }
 }
@@ -218,11 +218,11 @@ void WgRenderTarget::renderStroke(WgRenderDataShape* renderData)
         wgpuRenderPassEncoderSetStencilReference(mRenderPassEncoder, 0);
         WgRenderDataShapeSettings& settings = renderData->mRenderSettingsStroke;
         if (settings.mFillType == WgRenderDataShapeFillType::Solid)
-            mPipelines->mPipelineSolid.use(mRenderPassEncoder, mBindGroupCanvasWnd, mBindGroupPaintWnd, settings.mBindGroupSolid);
+            mPipelines->mPipelineSolid.use(mRenderPassEncoder, mBindGroupCanvasWnd, renderData->mBindGroupPaint, settings.mBindGroupSolid);
         else if (settings.mFillType == WgRenderDataShapeFillType::Linear)
-            mPipelines->mPipelineLinear.use(mRenderPassEncoder, mBindGroupCanvasWnd, mBindGroupPaintWnd, settings.mBindGroupLinear);
+            mPipelines->mPipelineLinear.use(mRenderPassEncoder, mBindGroupCanvasWnd, renderData->mBindGroupPaint, settings.mBindGroupLinear);
         else if (settings.mFillType == WgRenderDataShapeFillType::Radial)
-            mPipelines->mPipelineRadial.use(mRenderPassEncoder, mBindGroupCanvasWnd, mBindGroupPaintWnd, settings.mBindGroupRadial);
+            mPipelines->mPipelineRadial.use(mRenderPassEncoder, mBindGroupCanvasWnd, renderData->mBindGroupPaint, settings.mBindGroupRadial);
         mGeometryDataWnd.draw(mRenderPassEncoder);
     }
 }

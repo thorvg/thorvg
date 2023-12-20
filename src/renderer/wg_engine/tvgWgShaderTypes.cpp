@@ -86,18 +86,18 @@ void WgShaderTypeMat4x4f::update(size_t w, size_t h)
 }
 
 
-WgShaderTypeBlendSettings::WgShaderTypeBlendSettings(const ColorSpace colorSpace)
+WgShaderTypeBlendSettings::WgShaderTypeBlendSettings(const ColorSpace colorSpace, uint8_t o)
 {
-    update(colorSpace);
+    update(colorSpace, o);
 }
 
 
-void WgShaderTypeBlendSettings::update(const ColorSpace colorSpace)
+void WgShaderTypeBlendSettings::update(const ColorSpace colorSpace, uint8_t o)
 {
     format = (uint32_t)colorSpace;
     dummy0 = 0.0f;
     dummy1 = 0.0f;
-    dummy2 = 0.0f;
+    opacity = o / 255.0f;
 }
 
 
