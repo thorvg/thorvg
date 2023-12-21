@@ -1479,6 +1479,138 @@ public:
 
 
 /**
+ * @class Text
+ *
+ * @brief A class to represent text objects in a graphical context, allowing for rendering and manipulation of unicode text.
+ *
+ * @note Experimental API
+ */
+class TVG_API Text final : public Paint
+{
+public:
+    ~Text();
+
+    /**
+     * @brief Sets the font properties for the text.
+     *
+     * This function allows you to define the font characteristics used for text rendering.
+     * It sets the font name, size and optionally the style.
+     *
+     * @param[in] name The name of the font. This should correspond to a font available in the canvas.
+     * @param[in] size The size of the font in points. This determines how large the text will appear.
+     * @param[in] style The style of the font. It can be used to set the font to 'italic'.
+     *                  If not specified, the default style is used. Only 'italic' style is supported currently.
+     *
+     * @retval Result::Success when the font properties are set successfully.
+     * @retval Result::InsufficientCondition when the specified @p name cannot be found.
+     *
+     * @note Experimental API
+     */
+    Result font(const char* name, float size, const char* style = nullptr) noexcept;
+
+    /**
+     * @brief Assigns the given unicode text to be rendered.
+     *
+     * This function sets the unicode string that will be displayed by the rendering system.
+     * The text is set according to the specified UTF encoding method, which defaults to UTF-8.
+     *
+     * @param[in] text The multi-byte text encoded with utf8 string to be rendered.
+     *
+     * @retval Result::Success when succeed.
+     *
+     * @note Experimental API
+     */
+    Result text(const char* text) noexcept;
+
+    /**
+     * @brief Sets the text color.
+     *
+     * @param[in] r The red color channel value in the range [0 ~ 255]. The default value is 0.
+     * @param[in] g The green color channel value in the range [0 ~ 255]. The default value is 0.
+     * @param[in] b The blue color channel value in the range [0 ~ 255]. The default value is 0.
+     *
+     * @retval Result::Success when succeed.
+     * @retval Result::InsufficientCondition when the font has not been set up prior to this operation.
+     *
+     * @see Text::font()
+     *
+     * @note Experimental API
+     */
+    Result fill(uint8_t r, uint8_t g, uint8_t b) noexcept;
+
+    /**
+     * @brief Sets the gradient fill for all of the figures from the text.
+     *
+     * The parts of the text defined as inner are filled.
+     *
+     * @param[in] f The unique pointer to the gradient fill.
+     *
+     * @retval Result::Success when succeed, Result::MemoryCorruption otherwise.
+     * @retval Result::InsufficientCondition when the font has not been set up prior to this operation.
+     *
+     * @note Either a solid color or a gradient fill is applied, depending on what was set as last.
+     * @note Experimental API
+     *
+     * @see Text::font()
+     */
+    Result fill(std::unique_ptr<Fill> f) noexcept;
+
+    /**
+     * @brief Loads a scalable font data(ttf) from a file.
+     *
+     * @param[in] path The path to the font file.
+     *
+     * @retval Result::Success When succeed.
+     * @retval Result::InvalidArguments In case the @p path is invalid.
+     * @retval Result::NonSupport When trying to load a file with an unknown extension.
+     * @retval Result::Unknown If an error occurs at a later stage.
+     *
+     * @note Experimental API
+     *
+     * @see Text::unload(const std::string& path)
+     */
+    static Result load(const std::string& path) noexcept;
+
+    /**
+     * @brief Unloads the specified scalable font data (TTF) that was previously loaded.
+     *
+     * This function is used to release resources associated with a font file that has been loaded into memory.
+     *
+     * @param[in] path The file path of the loaded font.
+     *
+     * @retval Result::Success Successfully unloads the font data.
+     * @retval Result::InsufficientCondition Fails if the loader is not initialized.
+     *
+     * @note If the font data is currently in use, it will not be immediately unloaded.
+     * @note Experimental API
+     *
+     * @see Text::load(const std::string& path)
+     */
+    static Result unload(const std::string& path) noexcept;
+
+    /**
+     * @brief Creates a new Text object.
+     *
+     * @return A new Text object.
+     *
+     * @note Experimental API
+     */
+    static std::unique_ptr<Text> gen() noexcept;
+
+    /**
+     * @brief Return the unique id value of this class.
+     *
+     * This method can be referred for identifying the Text class type.
+     *
+     * @return The type id of the Text class.
+     */
+    static uint32_t identifier() noexcept;
+
+    _TVG_DECLARE_PRIVATE(Text);
+};
+
+
+/**
  * @class SwCanvas
  *
  * @brief A class for the rendering graphical elements with a software raster engine.
