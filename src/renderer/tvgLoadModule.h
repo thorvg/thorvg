@@ -81,6 +81,8 @@ struct ImageLoader : LoadModule
 
 struct FontLoader : LoadModule
 {
+    float scale = 1.0f;
+
     FontLoader(FileType type) : LoadModule(type) {}
 
     virtual bool request(Shape* shape, char* text, bool italic = false) = 0;

@@ -61,6 +61,7 @@ using namespace tvg;
 #define TVG_CLASS_ID_PICTURE   3
 #define TVG_CLASS_ID_LINEAR    4
 #define TVG_CLASS_ID_RADIAL    5
+#define TVG_CLASS_ID_TEXT      6
 
 enum class FileType { Tvg = 0, Svg, Ttf, Lottie, Raw, Png, Jpg, Webp, Gif, Unknown };
 
