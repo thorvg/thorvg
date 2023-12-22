@@ -90,6 +90,7 @@ void WgContext::initialize()
     assert(queue);
 }
 
+
 void WgContext::release()
 {
     if (device) {
@@ -99,6 +100,7 @@ void WgContext::release()
     if (adapter) wgpuAdapterRelease(adapter);
     if (instance) wgpuInstanceRelease(instance);
 }
+
 
 void WgContext::executeCommandEncoder(WGPUCommandEncoder commandEncoder)
 {
@@ -111,6 +113,7 @@ void WgContext::executeCommandEncoder(WGPUCommandEncoder commandEncoder)
     wgpuQueueSubmit(queue, 1, &commandsBuffer);
     wgpuCommandBufferRelease(commandsBuffer);
 }
+
 
 //*****************************************************************************
 // bind group

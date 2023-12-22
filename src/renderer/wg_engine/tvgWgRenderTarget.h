@@ -31,8 +31,6 @@ private:
     WGPURenderPassEncoder mRenderPassEncoder{};
     // fill and blit data
     WgBindGroupCanvas mBindGroupCanvasWnd;
-    WgBindGroupPaint mBindGroupPaintWnd;
-    WgGeometryData mGeometryDataWnd;
     // gpu buffers
     WGPUSampler mSampler{};
     WGPUTexture mTextureColor{};
@@ -41,8 +39,8 @@ private:
     WGPUTextureView mTextureViewStencil{};
     WgPipelines* mPipelines{}; // external handle
 public:
-    void initialize(WGPUDevice device, WGPUQueue queue, WgPipelines& pipelines, uint32_t w, uint32_t h);
-    void release();
+    void initialize(WgContext& context, WgPipelines& pipelines, uint32_t w, uint32_t h);
+    void release(WgContext& context);
 
     void beginRenderPass(WGPUCommandEncoder commandEncoder, WGPUTextureView colorAttachement);
     void beginRenderPass(WGPUCommandEncoder commandEncoder);
@@ -50,7 +48,7 @@ public:
 
     void renderShape(WgRenderDataShape* renderData);
     void renderStroke(WgRenderDataShape* renderData);
-    void renderImage(WgRenderDataShape* renderData);
+    void renderPicture(WgRenderDataPicture* renderData);
 };
 
 #endif
