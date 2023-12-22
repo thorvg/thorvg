@@ -22,9 +22,9 @@
 
 #include "tvgWgRenderTarget.h"
 
-void WgRenderTarget::initialize(WGPUDevice device, WGPUQueue queue, WgPipelines& pipelines, uint32_t w, uint32_t h)
+void WgRenderTarget::initialize(WgContext& context, WgPipelines& pipelines, uint32_t w, uint32_t h)
 {
-    release();
+    release(context);
     // sampler descriptor
     WGPUSamplerDescriptor samplerDesc{};
     samplerDesc.nextInChain = nullptr;
@@ -39,7 +39,7 @@ void WgRenderTarget::initialize(WGPUDevice device, WGPUQueue queue, WgPipelines&
     samplerDesc.lodMaxClamp = 32.0f;
     samplerDesc.compare = WGPUCompareFunction_Undefined;
     samplerDesc.maxAnisotropy = 1;
-    mSampler = wgpuDeviceCreateSampler(device, &samplerDesc);
+    mSampler = wgpuDeviceCreateSampler(context.device, &samplerDesc);
     assert(mSampler);
     // texture descriptor
     WGPUTextureDescriptor textureDescColor{};
@@ -53,7 +53,7 @@ void WgRenderTarget::initialize(WGPUDevice device, WGPUQueue queue, WgPipelines&
     textureDescColor.sampleCount = 1;
     textureDescColor.viewFormatCount = 0;
     textureDescColor.viewFormats = nullptr;
-    mTextureColor = wgpuDeviceCreateTexture(device, &textureDescColor);
+    mTextureColor = wgpuDeviceCreateTexture(context.device, &textureDescColor);
     assert(mTextureColor);
     // texture view descriptor
     WGPUTextureViewDescriptor textureViewDescColor{};
@@ -80,7 +80,7 @@ void WgRenderTarget::initialize(WGPUDevice device, WGPUQueue queue, WgPipelines&
     textureDescStencil.sampleCount = 1;
     textureDescStencil.viewFormatCount = 0;
     textureDescStencil.viewFormats = nullptr;
-    mTextureStencil = wgpuDeviceCreateTexture(device, &textureDescStencil);
+    mTextureStencil = wgpuDeviceCreateTexture(context.device, &textureDescStencil);
     assert(mTextureStencil);
     // texture view descriptor
     WGPUTextureViewDescriptor textureViewDescStencil{};
@@ -97,22 +97,14 @@ void WgRenderTarget::initialize(WGPUDevice device, WGPUQueue queue, WgPipelines&
     assert(mTextureViewStencil);
     // initialize window binding groups
     WgShaderTypeMat4x4f viewMat(w, h);
-    mBindGroupCanvasWnd.initialize(device, queue, viewMat);
-    WgShaderTypeMat4x4f modelMat;
-    WgShaderTypeBlendSettings blendSettings(ColorSpace::ABGR8888, 255);
-    mBindGroupPaintWnd.initialize(device, queue, modelMat, blendSettings);
-    // update pipeline geometry data
-    WgVertexList wnd;
-    wnd.appendRect(WgPoint(0.0f, 0.0f), WgPoint(w, 0.0f), WgPoint(0.0f, h), WgPoint(w, h));
-    mGeometryDataWnd.update(device, queue, &wnd);
+    mBindGroupCanvasWnd.initialize(context.device, context.queue, viewMat);
     mPipelines = &pipelines;
 }
 
-void WgRenderTarget::release()
+
+void WgRenderTarget::release(WgContext& context)
 {
     mBindGroupCanvasWnd.release();
-    mBindGroupPaintWnd.release();
-    mGeometryDataWnd.release();
     if (mTextureStencil) {
         wgpuTextureDestroy(mTextureStencil);
         wgpuTextureRelease(mTextureStencil);
@@ -131,10 +123,12 @@ void WgRenderTarget::release()
     mSampler = nullptr;
 }
 
+
 void WgRenderTarget::beginRenderPass(WGPUCommandEncoder commandEncoder)
 {
     beginRenderPass(commandEncoder, mTextureViewColor);
 }
+
 
 void WgRenderTarget::beginRenderPass(WGPUCommandEncoder commandEncoder, WGPUTextureView colorAttachement)
 {
@@ -172,6 +166,7 @@ void WgRenderTarget::beginRenderPass(WGPUCommandEncoder commandEncoder, WGPUText
     mRenderPassEncoder = wgpuCommandEncoderBeginRenderPass(commandEncoder, &renderPassDesc);
 }
 
+
 void WgRenderTarget::endRenderPass()
 {
     assert(mRenderPassEncoder);
@@ -180,66 +175,67 @@ void WgRenderTarget::endRenderPass()
     mRenderPassEncoder = nullptr;
 }
 
+
 void WgRenderTarget::renderShape(WgRenderDataShape* renderData)
 {
     assert(renderData);
     assert(mRenderPassEncoder);
     // draw shape geometry
     wgpuRenderPassEncoderSetStencilReference(mRenderPassEncoder, 0);
-    for (uint32_t i = 0; i < renderData->mGeometryDataShape.count; i++) {
+    for (uint32_t i = 0; i < renderData->meshGroupShapes.meshes.count; i++) {
         // draw to stencil (first pass)
-        mPipelines->mPipelineFillShape.use(mRenderPassEncoder, mBindGroupCanvasWnd, renderData->mBindGroupPaint);
-        renderData->mGeometryDataShape[i]->draw(mRenderPassEncoder);
+        mPipelines->mPipelineFillShape.use(mRenderPassEncoder, mBindGroupCanvasWnd, renderData->bindGroupPaint);
+        renderData->meshGroupShapes.meshes[i]->draw(mRenderPassEncoder);
         // fill shape (second pass)
-        WgRenderDataShapeSettings& settings = renderData->mRenderSettingsShape;
-        if (settings.mFillType == WgRenderDataShapeFillType::Solid)
-            mPipelines->mPipelineSolid.use(mRenderPassEncoder, mBindGroupCanvasWnd, renderData->mBindGroupPaint, settings.mBindGroupSolid);
-        else if (settings.mFillType == WgRenderDataShapeFillType::Linear)
-            mPipelines->mPipelineLinear.use(mRenderPassEncoder, mBindGroupCanvasWnd, renderData->mBindGroupPaint, settings.mBindGroupLinear);
-        else if (settings.mFillType == WgRenderDataShapeFillType::Radial)
-            mPipelines->mPipelineRadial.use(mRenderPassEncoder, mBindGroupCanvasWnd, renderData->mBindGroupPaint, settings.mBindGroupRadial);
-        mGeometryDataWnd.draw(mRenderPassEncoder);
+        WgRenderSettings& settings = renderData->renderSettingsShape;
+        if (settings.fillType == WgRenderSettingsType::Solid)
+            mPipelines->mPipelineSolid.use(mRenderPassEncoder, mBindGroupCanvasWnd, renderData->bindGroupPaint, settings.bindGroupSolid);
+        else if (settings.fillType == WgRenderSettingsType::Linear)
+            mPipelines->mPipelineLinear.use(mRenderPassEncoder, mBindGroupCanvasWnd, renderData->bindGroupPaint, settings.bindGroupLinear);
+        else if (settings.fillType == WgRenderSettingsType::Radial)
+            mPipelines->mPipelineRadial.use(mRenderPassEncoder, mBindGroupCanvasWnd, renderData->bindGroupPaint, settings.bindGroupRadial);
+        renderData->meshBBoxShapes.draw(mRenderPassEncoder);
     }
 }
+
 
 void WgRenderTarget::renderStroke(WgRenderDataShape* renderData)
 {
     assert(renderData);
     assert(mRenderPassEncoder);
     // draw stroke geometry
-    if (renderData->mGeometryDataStroke.count > 0) {
+    if (renderData->meshGroupStrokes.meshes.count > 0) {
         // draw strokes to stencil (first pass)
         wgpuRenderPassEncoderSetStencilReference(mRenderPassEncoder, 255);
-        for (uint32_t i = 0; i < renderData->mGeometryDataStroke.count; i++) {
-            mPipelines->mPipelineFillStroke.use(mRenderPassEncoder, mBindGroupCanvasWnd, renderData->mBindGroupPaint);
-            renderData->mGeometryDataStroke[i]->draw(mRenderPassEncoder);
+        for (uint32_t i = 0; i < renderData->meshGroupStrokes.meshes.count; i++) {
+            mPipelines->mPipelineFillStroke.use(mRenderPassEncoder, mBindGroupCanvasWnd, renderData->bindGroupPaint);
+            renderData->meshGroupStrokes.meshes[i]->draw(mRenderPassEncoder);
         }
         // fill shape (second pass)
         wgpuRenderPassEncoderSetStencilReference(mRenderPassEncoder, 0);
-        WgRenderDataShapeSettings& settings = renderData->mRenderSettingsStroke;
-        if (settings.mFillType == WgRenderDataShapeFillType::Solid)
-            mPipelines->mPipelineSolid.use(mRenderPassEncoder, mBindGroupCanvasWnd, renderData->mBindGroupPaint, settings.mBindGroupSolid);
-        else if (settings.mFillType == WgRenderDataShapeFillType::Linear)
-            mPipelines->mPipelineLinear.use(mRenderPassEncoder, mBindGroupCanvasWnd, renderData->mBindGroupPaint, settings.mBindGroupLinear);
-        else if (settings.mFillType == WgRenderDataShapeFillType::Radial)
-            mPipelines->mPipelineRadial.use(mRenderPassEncoder, mBindGroupCanvasWnd, renderData->mBindGroupPaint, settings.mBindGroupRadial);
-        mGeometryDataWnd.draw(mRenderPassEncoder);
+        WgRenderSettings& settings = renderData->renderSettingsStroke;
+        if (settings.fillType == WgRenderSettingsType::Solid)
+            mPipelines->mPipelineSolid.use(mRenderPassEncoder, mBindGroupCanvasWnd, renderData->bindGroupPaint, settings.bindGroupSolid);
+        else if (settings.fillType == WgRenderSettingsType::Linear)
+            mPipelines->mPipelineLinear.use(mRenderPassEncoder, mBindGroupCanvasWnd, renderData->bindGroupPaint, settings.bindGroupLinear);
+        else if (settings.fillType == WgRenderSettingsType::Radial)
+            mPipelines->mPipelineRadial.use(mRenderPassEncoder, mBindGroupCanvasWnd, renderData->bindGroupPaint, settings.bindGroupRadial);
+        renderData->meshBBoxStrokes.draw(mRenderPassEncoder);
     }
 }
 
-void WgRenderTarget::renderImage(WgRenderDataShape* renderData)
+
+void WgRenderTarget::renderPicture(WgRenderDataPicture* renderData)
 {
     assert(renderData);
     assert(mRenderPassEncoder);
-    if (renderData->mGeometryDataImage.count > 0) {
+    if (renderData->meshData.bufferTexCoord) {
         wgpuRenderPassEncoderSetStencilReference(mRenderPassEncoder, 0);
-        for (uint32_t j = 0; j < renderData->mGeometryDataImage.count; j++) {
-            mPipelines->mPipelineImage.use(
-                mRenderPassEncoder,
-                mBindGroupCanvasWnd,
-                renderData->mBindGroupPaint,
-                renderData->mBindGroupPicture);
-            renderData->mGeometryDataImage[j]->drawImage(mRenderPassEncoder);
-        }
+        mPipelines->mPipelineImage.use(
+            mRenderPassEncoder,
+            mBindGroupCanvasWnd,
+            renderData->bindGroupPaint,
+            renderData->bindGroupPicture);
+        renderData->meshData.drawImage(mRenderPassEncoder);
     }
 }

@@ -60,29 +60,24 @@ RenderData WgRenderer::prepare(const RenderShape& rshape, RenderData data, const
 {
     // get or create render data shape
     auto renderDataShape = (WgRenderDataShape*)data;
-    if (!renderDataShape) {
+    if (!renderDataShape)
         renderDataShape = new WgRenderDataShape();
-        renderDataShape->initialize(mContext.device);
-    }
     
     // update geometry
-    if (flags & (RenderUpdateFlag::Path | RenderUpdateFlag::Stroke)) {
-        renderDataShape->releaseRenderData();
-        renderDataShape->tesselate(mContext.device, mContext.queue, rshape);
-        renderDataShape->stroke(mContext.device, mContext.queue, rshape);
-    }
+    if (flags & (RenderUpdateFlag::Path | RenderUpdateFlag::Stroke))
+        renderDataShape->updateMeshes(mContext, rshape);
 
      // update paint settings
     if (flags & (RenderUpdateFlag::Transform | RenderUpdateFlag::Blend)) {
         WgShaderTypeMat4x4f modelMat(transform);
         WgShaderTypeBlendSettings blendSettings(mTargetSurface.cs, opacity);
-        renderDataShape->mBindGroupPaint.initialize(mContext.device, mContext.queue, modelMat, blendSettings);
+        renderDataShape->bindGroupPaint.initialize(mContext.device, mContext.queue, modelMat, blendSettings);
     }
 
     // setup fill settings
-    renderDataShape->mRenderSettingsShape.update(mContext.device, mContext.queue, rshape.fill, rshape.color, flags);
+    renderDataShape->renderSettingsShape.update(mContext, rshape.fill, rshape.color, flags);
     if (rshape.stroke)
-        renderDataShape->mRenderSettingsStroke.update(mContext.device, mContext.queue, rshape.stroke->fill, rshape.stroke->color, flags);
+        renderDataShape->renderSettingsStroke.update(mContext, rshape.stroke->fill, rshape.stroke->color, flags);
 
     return renderDataShape;
 }
@@ -97,30 +92,32 @@ RenderData WgRenderer::prepare(TVG_UNUSED const Array<RenderData>& scene, TVG_UN
 RenderData WgRenderer::prepare(Surface* surface, const RenderMesh* mesh, RenderData data, const RenderTransform* transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags)
 {
     // get or create render data shape
-    auto renderDataShape = (WgRenderDataShape*)data;
-    if (!renderDataShape) {
-        renderDataShape = new WgRenderDataShape();
-        renderDataShape->initialize(mContext.device);
-    }
+    auto renderDataPicture = (WgRenderDataPicture*)data;
+    if (!renderDataPicture)
+        renderDataPicture = new WgRenderDataPicture();
 
     // update paint settings
     if (flags & (RenderUpdateFlag::Transform | RenderUpdateFlag::Blend)) {
         WgShaderTypeMat4x4f modelMat(transform);
         WgShaderTypeBlendSettings blendSettings(surface->cs, opacity);
-        renderDataShape->mBindGroupPaint.initialize(mContext.device, mContext.queue, modelMat, blendSettings);
+        renderDataPicture->bindGroupPaint.initialize(mContext.device, mContext.queue, modelMat, blendSettings);
     }
     
     // update image data
     if (flags & (RenderUpdateFlag::Path | RenderUpdateFlag::Image)) {
-        renderDataShape->releaseRenderData();
-        renderDataShape->tesselate(mContext.device, mContext.queue, surface, mesh);
-        renderDataShape->mBindGroupPicture.initialize(
+        WgGeometryData geometryData;
+        if (mesh->triangleCnt == 0) geometryData.appendImageBox(surface->w, surface->h);
+        else geometryData.appendMesh(mesh);
+        renderDataPicture->meshData.release(mContext);
+        renderDataPicture->meshData.update(mContext, &geometryData);
+        renderDataPicture->imageData.update(mContext, surface);
+        renderDataPicture->bindGroupPicture.initialize(
             mContext.device, mContext.queue,
-            renderDataShape->mImageData.mSampler,
-            renderDataShape->mImageData.mTextureView);
+            renderDataPicture->imageData.sampler,
+            renderDataPicture->imageData.textureView);
     }
 
-    return renderDataShape;
+    return renderDataPicture;
 }
 
 
@@ -152,8 +149,8 @@ bool WgRenderer::postRender()
 
 bool WgRenderer::dispose(RenderData data)
 {
-    auto renderData = (WgRenderData*)data;
-    if (renderData) renderData->release();
+    auto renderData = (WgRenderDataPaint*)data;
+    if (renderData) renderData->release(mContext);
     return true;
 }
 
@@ -206,10 +203,13 @@ bool WgRenderer::sync()
     // render datas
     mRenderTarget.beginRenderPass(commandEncoder, backBufferView);
     for (size_t i = 0; i < mRenderDatas.count; i++) {
-        WgRenderDataShape* renderData = (WgRenderDataShape*)(mRenderDatas[i]);
-        mRenderTarget.renderShape(renderData);
-        mRenderTarget.renderStroke(renderData);
-        mRenderTarget.renderImage(renderData);
+        WgRenderDataPaint* renderData = (WgRenderDataShape*)(mRenderDatas[i]);
+        if (renderData->identifier() == TVG_CLASS_ID_SHAPE) {
+            mRenderTarget.renderShape((WgRenderDataShape *)renderData);
+            mRenderTarget.renderStroke((WgRenderDataShape *)renderData);
+        } else if (renderData->identifier() == TVG_CLASS_ID_PICTURE) {
+            mRenderTarget.renderPicture((WgRenderDataPicture *)renderData);
+        }
     }
     mRenderTarget.endRenderPass();
 
@@ -273,7 +273,7 @@ bool WgRenderer::target(void* window, uint32_t w, uint32_t h)
     mSwapChain = wgpuDeviceCreateSwapChain(mContext.device, mSurface, &swapChainDesc);
     assert(mSwapChain);
 
-    mRenderTarget.initialize(mContext.device, mContext.queue, mPipelines, w, h);
+    mRenderTarget.initialize(mContext, mPipelines, w, h);
     return true;
 }
 
@@ -282,6 +282,7 @@ Compositor* WgRenderer::target(TVG_UNUSED const RenderRegion& region, TVG_UNUSED
 {
     return nullptr;
 }
+
 
 bool WgRenderer::beginComposite(TVG_UNUSED Compositor* cmp, TVG_UNUSED CompositeMethod method, TVG_UNUSED uint8_t opacity)
 {

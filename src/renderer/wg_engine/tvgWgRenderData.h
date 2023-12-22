@@ -20,95 +20,82 @@
  * SOFTWARE.
  */
 
-#ifndef _TVG_WG_RENDER_DATA_H_
-#define _TVG_WG_RENDER_DATA_H_
-
 #include "tvgWgPipelines.h"
 #include "tvgWgGeometry.h"
 
-struct WgGeometryData
-{
-    WGPUBuffer mBufferVertex{};
-    WGPUBuffer mBufferTexCoords{};
-    WGPUBuffer mBufferIndex{};
-    size_t mVertexCount{};
-    size_t mIndexCount{};
+struct WgMeshData {
+    WGPUBuffer bufferPosition{};
+    WGPUBuffer bufferTexCoord{};
+    WGPUBuffer bufferIndex{};
+    size_t vertexCount{};
+    size_t indexCount{};
 
-    WgGeometryData() {}
-    virtual ~WgGeometryData() { release(); }
-
-    void initialize(WGPUDevice device) {};
     void draw(WGPURenderPassEncoder renderPassEncoder);
     void drawImage(WGPURenderPassEncoder renderPassEncoder);
-    void update(WGPUDevice device, WGPUQueue queue, WgVertexList* vertexList);
-    void update(WGPUDevice device, WGPUQueue queue, float* vertexData, size_t vertexCount, uint32_t* indexData, size_t indexCount);
-    void update(WGPUDevice device, WGPUQueue queue, float* vertexData, float* texCoordsData, size_t vertexCount, uint32_t* indexData, size_t indexCount);
-    void release();
+
+    void update(WgContext& context, WgGeometryData* geometryData);
+    void release(WgContext& context);
 };
 
-struct WgImageData
+struct WgMeshDataGroup {
+    Array<WgMeshData*> meshes{};
+
+    void update(WgContext& context, WgGeometryDataGroup* geometryDataGroup);
+    void release(WgContext& context);
+};
+
+struct WgImageData {
+    WGPUSampler sampler{};
+    WGPUTexture texture{};
+    WGPUTextureView textureView{};
+
+    void update(WgContext& context, Surface* surface);
+    void release(WgContext& context);
+};
+
+enum class WgRenderSettingsType { None = 0, Solid = 1, Linear = 2, Radial = 3 };
+
+struct WgRenderSettings
 {
-    WGPUSampler mSampler{};
-    WGPUTexture mTexture{};
-    WGPUTextureView mTextureView{};
+    WgBindGroupSolidColor bindGroupSolid{};
+    WgBindGroupLinearGradient bindGroupLinear{};
+    WgBindGroupRadialGradient bindGroupRadial{};
+    WgRenderSettingsType fillType{};
 
-    WgImageData() {}
-    virtual ~WgImageData() { release(); }
-
-    void initialize(WGPUDevice device) {};
-    void update(WGPUDevice device, WGPUQueue queue, Surface* surface);
-    void release();
+    void update(WgContext& context, const Fill* fill, const uint8_t* color, const RenderUpdateFlag flags);
+    void release(WgContext& context);
 };
 
-class WgRenderData
+struct WgRenderDataPaint
 {
-public:
-    virtual void initialize(WGPUDevice device) {};
-    virtual void release() = 0;
+    WgBindGroupPaint bindGroupPaint{};
+
+    virtual void release(WgContext& context);
+    virtual uint32_t identifier() { return TVG_CLASS_ID_UNDEFINED; };
 };
 
-enum class WgRenderDataShapeFillType { None = 0, Solid = 1, Linear = 2, Radial = 3 };
-
-struct WgRenderDataShapeSettings
+struct WgRenderDataShape: public WgRenderDataPaint
 {
-    WgBindGroupSolidColor mBindGroupSolid{};
-    WgBindGroupLinearGradient mBindGroupLinear{};
-    WgBindGroupRadialGradient mBindGroupRadial{};
-    WgRenderDataShapeFillType mFillType{}; // Default: None
+    WgRenderSettings renderSettingsShape{};
+    WgRenderSettings renderSettingsStroke{};
+    WgMeshDataGroup meshGroupShapes{};
+    WgMeshDataGroup meshGroupStrokes{};
+    WgMeshData meshBBoxShapes{};
+    WgMeshData meshBBoxStrokes{};
 
-    // update render shape settings defined by flags and fill settings
-    void update(WGPUDevice device, WGPUQueue queue,
-                const Fill* fill, const uint8_t* color, const RenderUpdateFlag flags);
-    void release();
+    void updateMeshes(WgContext& context, const RenderShape& rshape);
+    void releaseMeshes(WgContext& context);
+    void release(WgContext& context) override;
+    uint32_t identifier() override { return TVG_CLASS_ID_SHAPE; };
 };
 
-class WgRenderDataShape: public WgRenderData
+struct WgRenderDataPicture: public WgRenderDataPaint
 {
-public:
-    // geometry data for shapes, strokes and image
-    Array<WgGeometryData*> mGeometryDataShape;
-    Array<WgGeometryData*> mGeometryDataStroke;
-    Array<WgGeometryData*> mGeometryDataImage;
-    WgImageData mImageData;
+    WgBindGroupPicture bindGroupPicture{};
+    WgImageData imageData{};
+    WgMeshData meshData{};
 
-    // shader settings
-    WgBindGroupPaint mBindGroupPaint;
-    WgRenderDataShapeSettings mRenderSettingsShape;
-    WgRenderDataShapeSettings mRenderSettingsStroke;
-    WgBindGroupPicture mBindGroupPicture;
-public:
-    WgRenderDataShape() {}
-    
-    void release() override;
-    void releaseRenderData();
-
-    void tesselate(WGPUDevice device, WGPUQueue queue, Surface* surface, const RenderMesh* mesh);
-    void tesselate(WGPUDevice device, WGPUQueue queue, const RenderShape& rshape);
-    void stroke(WGPUDevice device, WGPUQueue queue, const RenderShape& rshape);
-private:
-    void decodePath(const RenderShape& rshape, Array<WgVertexList*>& outlines);
-    void strokeSegments(const RenderShape& rshape, Array<WgVertexList*>& outlines, Array<WgVertexList*>& segments);
-    void strokeSublines(const RenderShape& rshape, Array<WgVertexList*>& outlines, WgVertexList& strokes);
+    void update(WgContext& context);
+    void release(WgContext& context) override;
+    uint32_t identifier() override { return TVG_CLASS_ID_PICTURE; };
 };
-
-#endif //_TVG_WG_RENDER_DATA_H_
