@@ -1714,7 +1714,7 @@ static bool _rasterSolidGradientRle(SwSurface* surface, const SwRleData* rle, co
 
 static bool _rasterLinearGradientRle(SwSurface* surface, const SwRleData* rle, const SwFill* fill)
 {
-    if (!rle || fill->linear.len < FLT_EPSILON) return false;
+    if (!rle) return false;
 
     if (_compositing(surface)) {
         if (_matting(surface)) return _rasterGradientMattedRle<FillLinear>(surface, rle, fill);
