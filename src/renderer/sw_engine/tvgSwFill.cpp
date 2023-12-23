@@ -167,7 +167,6 @@ bool _prepareLinear(SwFill* fill, const LinearGradient* linear, const Matrix* tr
         fill->linear.dy = dx * invTransform.e12 + fill->linear.dy * invTransform.e22;
 
         fill->linear.len = fill->linear.dx * fill->linear.dx + fill->linear.dy * fill->linear.dy;
-        if (fill->linear.len < FLT_EPSILON) return true;
     }
 
     return true;
