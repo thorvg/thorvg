@@ -21,11 +21,12 @@ The following list shows primitives that are supported by ThorVG: <br />
 <br />
 
  * Shapes: Line, Arc, Curve, Path, Polygon
- * Filling: Solid & Gradients and Texture Mapping
- * Scene Graph & Affine Transformation
- * Stroking: Width, Join, Cap, Dash
+ * Filling: Solid Color, Linear & Radial Gradients and Texture Mapping 
+ * Stroking: Width, Join, Cap, Dash Patterns
+ * Scene Graph & Transformations
  * Composition: Blending, Masking, Path Clipping
- * Images: TVG, SVG, JPG, PNG, WebP, Bitmap
+ * Text: Unicode Characters and Horizontal Text Layout using the Scalable Fonts (TTF)
+ * Images: TVG, SVG, JPG, PNG, WebP, Raw Bitmap
  * Animations: Lottie
 <p align="center">
   <img width="900" height="auto" src="https://github.com/thorvg/thorvg/blob/main/res/example_primitives.png">
