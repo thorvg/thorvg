@@ -29,9 +29,8 @@ The following list shows primitives that are supported by ThorVG: <br />
  * Images: TVG, SVG, JPG, PNG, WebP, Raw Bitmap
  * Animations: Lottie
 <p align="center">
-  <img width="900" height="auto" src="https://github.com/thorvg/thorvg/blob/main/res/example_primitives.png">
+  <img width="700" height="auto" src="https://github.com/thorvg/thorvg/blob/main/res/example_primitives.png">
 </p>
-<br />
 ​ThorVG is designed for a wide range of programs, offering adaptability for integration and use in various applications and systems. It achieves this through a single binary with selectively buildable, modular components in a building block style. This ensures both optimal size and efficiency.<br />
 <br />
 <p align="center">
