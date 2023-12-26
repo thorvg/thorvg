@@ -32,12 +32,11 @@ The following list shows primitives that are supported by ThorVG: <br />
   <img width="900" height="auto" src="https://github.com/thorvg/thorvg/blob/main/res/example_primitives.png">
 </p>
 <br />
-​ThorVG is designed for a wide range of programs, offering adaptability for integration and use in various applications and systems. It achieves this through a single binary with selectively buildable, modular components in a building block style. This ensures both optimal size and efficiency.
+​ThorVG is designed for a wide range of programs, offering adaptability for integration and use in various applications and systems. It achieves this through a single binary with selectively buildable, modular components in a building block style. This ensures both optimal size and efficiency.<br />
 <br />
 <p align="center">
-  <img width="900" height="auto" src="https://github.com/thorvg/thorvg/blob/main/res/example_structure.png">
+  <img width="700" height="auto" src="https://github.com/thorvg/thorvg/blob/main/res/example_structure.png">
 </p>
-</br>
 If your program includes the main renderer, you can seamlessly utilize ThorVG APIs by transitioning drawing contexts between the main renderer and ThorVG. Throughout these API calls, ThorVG effectively serializes drawing commands among volatile paint nodes. Subsequently, it undertakes synchronous or asynchronous rendering via its backend raster engines.<br />
 <br />
 ThorVG is adept at handling vector images, including formats like SVG, and it remains adaptable for accommodating additional popular formats as needed. In the rendering process, the library may generate intermediate frame buffers for scene compositing, though only when essential. The accompanying diagram provides a concise overview of how to effectively incorporate ThorVG within your system.<br />
@@ -45,15 +44,13 @@ ThorVG is adept at handling vector images, including formats like SVG, and it re
 <p align="center">
   <img width="900" height="auto" src="https://github.com/thorvg/thorvg/blob/main/res/example_flow.png">
 </p>
-<br />
 ThorVG incorporates a threading mechanism that aims to seamlessly acquire subsequent scenes without unnecessary delays. It operates using a finely-tuned task scheduler based on thread pools, encompassing various tasks such as encoding, decoding, updating, and rendering. This design ensures that all tasks can effectively leverage multi-processing capabilities.<br />
 <br />
-The task scheduler has been meticulously crafted to conceal complexity, streamline integration, and enhance user convenience. Therefore, the policy it employs is optional, allowing users to select it based on their specific requirements..<br />
+The task scheduler has been meticulously crafted to conceal complexity, streamline integration, and enhance user convenience. Therefore, the policy it employs is optional, allowing users to select it based on their specific requirements.<br />
 <br />
 <p align="center">
   <img width="900" height="auto" src="https://github.com/thorvg/thorvg/blob/main/res/example_thread.png">
 </p>
-<br />
 
 ## Contents
 - [ThorVG](#thorvg)
