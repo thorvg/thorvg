@@ -212,7 +212,7 @@ enum class BlendMethod : uint8_t
  */
 enum class CanvasEngine : uint8_t
 {
-    All = 0,       ///< All feasible rasterizers.
+    All = 0,       ///< All feasible rasterizers. @since 1.0
     Sw = (1 << 1), ///< CPU rasterizer.
     Gl = (1 << 2), ///< OpenGL rasterizer.
     Wg = (1 << 3), ///< WebGPU rasterizer. (Experimental API)
@@ -1578,8 +1578,8 @@ public:
     {
         ABGR8888 = 0,      ///< The channels are joined in the order: alpha, blue, green, red. Colors are alpha-premultiplied. (a << 24 | b << 16 | g << 8 | r)
         ARGB8888,          ///< The channels are joined in the order: alpha, red, green, blue. Colors are alpha-premultiplied. (a << 24 | r << 16 | g << 8 | b)
-        ABGR8888S,         ///< The channels are joined in the order: alpha, blue, green, red. Colors are un-alpha-premultiplied. (Experimental API)
-        ARGB8888S,         ///< The channels are joined in the order: alpha, red, green, blue. Colors are un-alpha-premultiplied. (Experimental API)
+        ABGR8888S,         ///< The channels are joined in the order: alpha, blue, green, red. Colors are un-alpha-premultiplied. @since 0.12
+        ARGB8888S,         ///< The channels are joined in the order: alpha, red, green, blue. Colors are un-alpha-premultiplied. @since 0.12
     };
 
     /**
