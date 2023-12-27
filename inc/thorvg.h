@@ -1,17 +1,3 @@
-/*!
- * @file thorvg.h
- *
- * The main APIs enabling the TVG initialization, preparation of the canvas and provisioning of its content:
- * - drawing shapes: line, arc, curve, path, polygon...
- * - drawing pictures: tvg, svg, png, jpg, bitmap...
- * - drawing fillings: solid, linear and radial gradient...
- * - drawing stroking: continuous stroking with arbitrary width, join, cap, dash styles.
- * - drawing composition: blending, masking, path clipping...
- * - drawing scene graph & affine transformation (translation, rotation, scale, ...)
- * and finally drawing the canvas and TVG termination.
- */
-
-
 #ifndef _THORVG_H_
 #define _THORVG_H_
 
