@@ -447,7 +447,7 @@ GlRenderer::GlRenderer() :mViewport() ,mGpuBuffer(new GlStageBuffer), mPrograms(
 
 GlRenderer::~GlRenderer()
 {
-    for (auto i = 0; i < mComposePool.count; i++) {
+    for (uint32_t i = 0; i < mComposePool.count; i++) {
         if (mComposePool[i]) delete mComposePool[i];
     }
 
