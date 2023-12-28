@@ -108,7 +108,10 @@ struct TaskSchedulerImpl
 
         for (unsigned i = 0; i < threadCnt; ++i) {
             taskQueues.push(new TaskQueue);
-            threads.push(new thread([&, i] { run(i); }));
+            threads.push(new thread);
+        }
+        for (unsigned i = 0; i < threadCnt; ++i) {
+            *threads.data[i] = thread([&, i] { run(i); });
         }
     }
 
