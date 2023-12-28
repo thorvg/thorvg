@@ -862,15 +862,11 @@ Scene* svgSceneBuild(SvgLoaderData& loaderData, Box vBox, float w, float h, Aspe
     }
 
     auto viewBoxClip = Shape::gen();
-    viewBoxClip->appendRect(0, 0, w, h, 0, 0);
-    viewBoxClip->fill(0, 0, 0);
-
-    auto compositeLayer = Scene::gen();
-    compositeLayer->composite(std::move(viewBoxClip), CompositeMethod::ClipPath);
-    compositeLayer->push(std::move(docNode));
+    viewBoxClip->appendRect(0, 0, w, h);
 
     auto root = Scene::gen();
-    root->push(std::move(compositeLayer));
+    root->composite(std::move(viewBoxClip), CompositeMethod::ClipPath);
+    root->push(std::move(docNode));
 
     loaderData.doc->node.doc.vx = vBox.x;
     loaderData.doc->node.doc.vy = vBox.y;
