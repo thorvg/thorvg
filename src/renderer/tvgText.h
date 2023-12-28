@@ -45,6 +45,7 @@ struct Text::Impl
 
     ~Impl()
     {
+        free(utf8);
         LoaderMgr::retrieve(loader);
         delete(paint);
     }
