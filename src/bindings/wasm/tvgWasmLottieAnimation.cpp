@@ -88,7 +88,12 @@ public:
 
         animation = Animation::gen();
 
-        if (animation->picture()->load(data.c_str(), data.size(), mimetype, rpath, false) != Result::Success) {
+        string filetype = mimetype;
+        if (filetype == "json") {
+            filetype = "lottie";
+        }
+
+        if (animation->picture()->load(data.c_str(), data.size(), filetype, rpath, false) != Result::Success) {
             errorMsg = "load() fail";
             return false;
         }
@@ -182,27 +187,23 @@ public:
     }
 
     // Saver methods
-    bool save2Gif(string data, string mimetype, int width, int height, int fps)
+    bool save(string mimetype)
+    {
+        if (mimetype == "gif") {
+            return save2Gif();
+        } else if (mimetype == "tvg") {
+            return save2Tvg();
+        }
+
+        errorMsg = "Invalid mimetype";
+        return false;
+    }
+
+    bool save2Gif()
     {
         errorMsg = NoError;
 
-        auto animation = Animation::gen();
-
-        if (!animation) {
-            errorMsg = "Invalid animation";
-            return false;
-        }
-        
-        if (animation->picture()->load(data.c_str(), data.size(), mimetype, "", false) != Result::Success) {
-            errorMsg = "load() fail";
-            return false;
-        }
-
-        //keep the aspect ratio.
-        float ow, oh;
-        animation->picture()->size(&ow, &oh);
-        float scale =  static_cast<float>(width) / ow;
-        animation->picture()->size(ow * scale, oh * scale);
+        if (!animation) return false;
 
         auto saver = Saver::gen();
         if (!saver) {
@@ -213,11 +214,40 @@ public:
         //set a white opaque background
         auto bg = tvg::Shape::gen();
         bg->fill(255, 255, 255, 255);
-        bg->appendRect(0, 0, ow * scale, oh * scale);
+        bg->appendRect(0, 0, width, height);
 
         saver->background(std::move(bg));
 
-        if (saver->save(std::move(animation), "output.gif", 100, fps) != tvg::Result::Success) {
+        if (saver->save(std::move(animation), "output.gif", 100, 30) != tvg::Result::Success) {
+            errorMsg = "save(), fail";
+            return false;
+        }
+
+        saver->sync();
+
+        return true;
+    }
+
+    bool save2Tvg()
+    {
+        errorMsg = NoError;
+
+        if (!animation) return false;
+
+        auto duplicate = cast<Picture>(animation->picture()->duplicate());
+
+        if (!duplicate) {
+            errorMsg = "duplicate(), fail";
+            return false;
+        }
+
+        auto saver = Saver::gen();
+        if (!saver) {
+            errorMsg = "Invalid saver";
+            return false;
+        }
+
+        if (saver->save(std::move(duplicate), "output.tvg") != tvg::Result::Success) {
             errorMsg = "save(), fail";
             return false;
         }
@@ -271,5 +301,5 @@ EMSCRIPTEN_BINDINGS(thorvg_bindings)
         .function("update", &TvgLottieAnimation ::update)
         .function("frame", &TvgLottieAnimation ::frame)
         .function("resize", &TvgLottieAnimation ::resize)
-        .function("save2Gif", &TvgLottieAnimation ::save2Gif);
+        .function("save", &TvgLottieAnimation ::save);
 }
