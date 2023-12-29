@@ -45,6 +45,16 @@ export interface LibraryVersion {
 // Define file type which can be exported
 export enum ExportableType {
   GIF = 'gif',
+  TVG = 'tvg',
+}
+
+// Define mime type which player can load
+export enum MimeType {
+  JSON = 'json',
+  JPG = 'jpg',
+  PNG = 'png',
+  SVG = 'svg',
+  TVG = 'tvg',
 }
 
 // Define valid player states
@@ -79,7 +89,7 @@ export enum PlayerEvent {
   Stop = "stop",
 }
 
-const _parseURL = async (url: string): Promise<LottieJson> => {
+const _parseLottieFromURL = async (url: string): Promise<LottieJson> => {
   if (typeof url !== "string") {
     throw new Error(`The url value must be a string`);
   }
@@ -97,21 +107,45 @@ const _parseURL = async (url: string): Promise<LottieJson> => {
   }
 }
 
-const _parseSrc = async (src: string | object): Promise<Uint8Array> => {
-  let data = src;
-  if (typeof data === "object") {
-    data = JSON.stringify(data);
-  } else if (typeof data === "string") {
-    try {
-      data = JSON.parse(data);
-    } catch (err) {
-      const json = await _parseURL(data as string);
-      data = JSON.stringify(json);
-    }
+const _parseImageFromURL = async (url: string): Promise<ArrayBuffer> => {
+  const response = await fetch(url);
+  return response.arrayBuffer();
+}
+
+const _parseJSON = async (data: string): Promise<string> => {
+  try {
+    data = JSON.parse(data);
+  } catch (err) {
+    const json = await _parseLottieFromURL(data as string);
+    data = JSON.stringify(json);
   }
 
+  return data;
+}
+
+const _parseSrc = async (src: string | object | ArrayBuffer, mimeType: MimeType): Promise<Uint8Array> => {
   const encoder = new TextEncoder();
-  return encoder.encode(data as string);
+  let data = src;
+
+  switch (typeof data) {
+    case 'object':
+      if (data instanceof ArrayBuffer) {
+        return new Uint8Array(data);
+      }
+
+      data = JSON.stringify(data);
+      return encoder.encode(data);
+    case 'string':
+      if (mimeType === MimeType.JSON) {
+        data = await _parseJSON(data);
+        return encoder.encode(data);
+      }
+
+      const buffer = await _parseImageFromURL(data);
+      return new Uint8Array(buffer);
+    default:
+      throw new Error('Invalid src type');
+  }
 }
 
 const _wait = (timeToDelay: number) => {
@@ -140,6 +174,13 @@ export class LottiePlayer extends LitElement {
   */
   @property({ type: String })
   public src?: string;
+
+  /**
+  * File mime type.
+  * @since 1.0
+  */
+  @property({ type: MimeType })
+  public mimeType: MimeType = MimeType.JSON;
 
   /**
    * Animation speed.
@@ -244,7 +285,7 @@ export class LottiePlayer extends LitElement {
     this._TVG = _tvg;
 
     if (this.src) {
-      this.load(this.src);
+      this.load(this.src, this.mimeType);
     }
   }
 
@@ -258,7 +299,7 @@ export class LottiePlayer extends LitElement {
 
     if (this.src) {
       if (this._TVG) {
-        this.load(this.src);
+        this.load(this.src, this.mimeType);
       } else {
         this._timer = setInterval(this._delayedLoad.bind(this), 100);
       }
@@ -282,7 +323,7 @@ export class LottiePlayer extends LitElement {
   }
 
   private _loadBytes(data: Uint8Array, rPath: string = ''): void {
-    const isLoaded = this._TVG.load(data, 'lottie', this._canvas!.width, this._canvas!.height, rPath);
+    const isLoaded = this._TVG.load(data, this.mimeType, this._canvas!.width, this._canvas!.height, rPath);
     if (!isLoaded) {
       throw new Error('Unable to load an image. Error: ', this._TVG.error());
     }
@@ -372,11 +413,12 @@ export class LottiePlayer extends LitElement {
    * Configure and load
    * @since 1.0
    */
-  public async load(src: string | object): Promise<void> {
+  public async load(src: string | object, mimeType: MimeType = MimeType.JSON): Promise<void> {
     try {
-      const bytes = await _parseSrc(src);
+      const bytes = await _parseSrc(src, mimeType);
       this.dispatchEvent(new CustomEvent(PlayerEvent.Ready));
 
+      this.mimeType = mimeType;
       this._loadBytes(bytes);
     } catch (err) {
       this.currentState = PlayerState.Error;
@@ -389,6 +431,10 @@ export class LottiePlayer extends LitElement {
    * @since 1.0
    */
   public play(): void {
+    if (this.mimeType !== MimeType.JSON) {
+      return;
+    }
+
     this.totalFrame = this._TVG.totalFrame();
     if (this.totalFrame < 1) {
       return;
@@ -528,31 +574,33 @@ export class LottiePlayer extends LitElement {
       return;
     }
 
-    const bytes = await _parseSrc(this.src);
-    
-    switch (target) {
-      case ExportableType.GIF:
-        const isExported = this._TVG.save2Gif(bytes, 'lottie', this._canvas!.width, this._canvas!.height, 30);
-        if (!isExported) {
-          throw new Error('Unable to save a GIF. Error: ', this._TVG.error());
-        }
-
-        const data = _module.FS.readFile('output.gif');
-        if (data.length < 6) {
-          throw new Error("Unable to save the Gif data. The generated file size is invalid.");
-        }
-
-        const blob = new Blob([data], {type: 'application/octet-stream'});
-        const link = document.createElement("a");
-        link.setAttribute('href', URL.createObjectURL(blob));
-        link.setAttribute('download', 'output.gif');
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        break;
-      default:
-        throw new Error('Unsupported file type.');
+    const isExported = this._TVG.save(target);
+    if (!isExported) {
+      throw new Error('Unable to save. Error: ', this._TVG.error());
     }
+
+    const fileName = `output.${target}`;
+    const data = _module.FS.readFile(fileName);
+
+    if (target === ExportableType.GIF && data.length < 6) {
+      throw new Error(
+        `Unable to save the GIF data. The generated file size is invalid.`
+      );
+    }
+
+    if (target === ExportableType.TVG && data.length < 33) {
+      throw new Error(
+        `Unable to save the TVG data. The generated file size is invalid.`
+      );
+    }
+
+    const blob = new Blob([data], {type: 'application/octet-stream'});
+    const link = document.createElement("a");
+    link.setAttribute('href', URL.createObjectURL(blob));
+    link.setAttribute('download', fileName);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   }
 
   /**
