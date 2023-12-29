@@ -74,7 +74,7 @@ struct ImageLoader : LoadModule
     ImageLoader(FileType type) : LoadModule(type) {}
 
     virtual bool animatable() { return false; }  //true if this loader supports animation.
-    virtual unique_ptr<Surface> bitmap() { return nullptr; }
+    virtual Surface* bitmap() { return nullptr; }
     virtual Paint* paint() { return nullptr; }
 };
 

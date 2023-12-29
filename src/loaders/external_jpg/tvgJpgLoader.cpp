@@ -147,7 +147,7 @@ bool JpgLoader::read()
 }
 
 
-unique_ptr<Surface> JpgLoader::bitmap()
+Surface* JpgLoader::bitmap()
 {
     if (!image) return nullptr;
 
@@ -162,5 +162,5 @@ unique_ptr<Surface> JpgLoader::bitmap()
     surface->premultiplied = true;
     surface->owner = true;
 
-    return unique_ptr<Surface>(surface);
+    return surface;
 }
