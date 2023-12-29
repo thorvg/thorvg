@@ -45,8 +45,11 @@ struct SwTask : Task
     bool pushed = false;                  //Pushed into task list?
     bool disposed = false;                //Disposed task?
 
-    RenderRegion bounds() const
+    RenderRegion bounds()
     {
+        //Can we skip the synchronization?
+        done();
+
         RenderRegion region;
 
         //Range over?
