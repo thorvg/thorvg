@@ -63,6 +63,7 @@ uint64_t HASH_KEY(const char* data, uint64_t size)
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
+static mutex mtx;
 static Inlist<LoadModule> _activeLoaders;
 
 
@@ -208,6 +209,8 @@ static LoadModule* _findByType(const string& mimeType)
 
 static LoadModule* _findFromCache(const string& path)
 {
+    unique_lock<mutex> lock{mtx};
+
     auto loader = _activeLoaders.head;
 
     while (loader) {
@@ -226,6 +229,7 @@ static LoadModule* _findFromCache(const char* data, uint32_t size, const string&
     auto type = _convert(mimeType);
     if (type == FileType::Unknown) return nullptr;
 
+    unique_lock<mutex> lock{mtx};
     auto loader = _activeLoaders.head;
 
     auto key = HASH_KEY(data, size);
@@ -272,7 +276,10 @@ bool LoaderMgr::retrieve(LoadModule* loader)
 {
     if (!loader) return false;
     if (loader->close()) {
-        _activeLoaders.remove(loader);
+        {
+            unique_lock<mutex> lock{mtx};
+            _activeLoaders.remove(loader);
+        }
         delete(loader);
     }
     return true;
@@ -288,7 +295,10 @@ LoadModule* LoaderMgr::loader(const string& path, bool* invalid)
     if (auto loader = _findByPath(path)) {
         if (loader->open(path)) {
             loader->hashpath = strdup(path.c_str());
-            _activeLoaders.back(loader);
+            {
+                unique_lock<mutex> lock{mtx};
+                _activeLoaders.back(loader);
+            }
             return loader;
         }
         delete(loader);
@@ -328,6 +338,7 @@ LoadModule* LoaderMgr::loader(const char* data, uint32_t size, const string& mim
         if (auto loader = _findByType(mimeType)) {
             if (loader->open(data, size, copy)) {
                 loader->hashkey = HASH_KEY(data, size);                
+                unique_lock<mutex> lock{mtx};
                 _activeLoaders.back(loader);
                 return loader;
             } else {
@@ -342,7 +353,10 @@ LoadModule* LoaderMgr::loader(const char* data, uint32_t size, const string& mim
             if (loader) {
                 if (loader->open(data, size, copy)) {
                     loader->hashkey = HASH_KEY(data, size);
-                    _activeLoaders.back(loader);
+                    {
+                        unique_lock<mutex> lock{mtx};
+                        _activeLoaders.back(loader);
+                    }
                     return loader;
                 }
                 delete(loader);
@@ -362,7 +376,10 @@ LoadModule* LoaderMgr::loader(const uint32_t *data, uint32_t w, uint32_t h, bool
     auto loader = new RawLoader;
     if (loader->open(data, w, h, copy)) {
         loader->hashkey = HASH_KEY((const char*)data, w * h);
-        _activeLoaders.back(loader);
+        {
+            unique_lock<mutex> lock{mtx};
+            _activeLoaders.back(loader);
+        }
         return loader;
     }
     delete(loader);
