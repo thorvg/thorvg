@@ -36,7 +36,7 @@ public:
     bool open(const char* data, uint32_t size, const string& rpath, bool copy) override;
     bool read() override;
 
-    unique_ptr<Surface> bitmap() override;
+    Surface* bitmap() override;
 
 private:
     void clear();
