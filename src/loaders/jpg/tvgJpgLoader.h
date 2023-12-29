@@ -47,7 +47,7 @@ public:
     bool read() override;
     bool close() override;
 
-    unique_ptr<Surface> bitmap() override;
+    Surface* bitmap() override;
 };
 
 #endif //_TVG_JPG_LOADER_H_

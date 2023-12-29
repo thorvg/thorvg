@@ -45,7 +45,7 @@ RenderUpdateFlag Picture::Impl::load()
         } else loader->sync();
 
         if (!surface) {
-            if ((surface = loader->bitmap().release())) {
+            if ((surface = loader->bitmap())) {
                 return RenderUpdateFlag::Image;
             }
         }

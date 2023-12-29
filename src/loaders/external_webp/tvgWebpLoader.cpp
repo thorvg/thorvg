@@ -126,7 +126,7 @@ bool WebpLoader::read()
 }
 
 
-unique_ptr<Surface> WebpLoader::bitmap()
+Surface* WebpLoader::bitmap()
 {
     this->done();
 
@@ -142,5 +142,5 @@ unique_ptr<Surface> WebpLoader::bitmap()
     surface->channelSize = sizeof(uint32_t);
     surface->premultiplied = false;
     surface->owner = true;
-    return unique_ptr<Surface>(surface);
+    return surface;
 }

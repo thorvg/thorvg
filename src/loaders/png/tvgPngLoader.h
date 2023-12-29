@@ -46,7 +46,7 @@ public:
     bool open(const char* data, uint32_t size, bool copy) override;
     bool read() override;
 
-    unique_ptr<Surface> bitmap() override;
+    Surface* bitmap() override;
 };
 
 #endif //_TVG_PNG_LOADER_H_

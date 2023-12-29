@@ -78,7 +78,7 @@ bool RawLoader::read()
 }
 
 
-unique_ptr<Surface> RawLoader::bitmap()
+Surface* RawLoader::bitmap()
 {
     if (!content) return nullptr;
 
@@ -93,5 +93,5 @@ unique_ptr<Surface> RawLoader::bitmap()
     surface->premultiplied = true;
     surface->owner = true;
 
-    return unique_ptr<Surface>(surface);
+    return surface;
 }

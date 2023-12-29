@@ -140,7 +140,7 @@ bool PngLoader::read()
 }
 
 
-unique_ptr<Surface> PngLoader::bitmap()
+Surface* PngLoader::bitmap()
 {
     this->done();
 
@@ -157,5 +157,5 @@ unique_ptr<Surface> PngLoader::bitmap()
     surface->premultiplied = false;
     surface->owner = true;
 
-    return unique_ptr<Surface>(surface);
+    return surface;
 }

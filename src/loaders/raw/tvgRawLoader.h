@@ -36,7 +36,7 @@ public:
     bool open(const uint32_t* data, uint32_t w, uint32_t h, bool copy);
     bool read() override;
 
-    unique_ptr<Surface> bitmap() override;
+    Surface* bitmap() override;
 };
 
 
