@@ -32,7 +32,6 @@ class PngLoader : public ImageLoader, public Task
 private:
     LodePNGState state;
     unsigned char* data = nullptr;
-    unsigned char *image = nullptr;
     unsigned long size = 0;
     bool freeData = false;
 

@@ -48,7 +48,7 @@ PngLoader::PngLoader() : ImageLoader(FileType::Png)
 PngLoader::~PngLoader()
 {
     clear();
-    free((void*)content);
+    free((void*)surface.buf32);
 }
 
 
@@ -60,7 +60,6 @@ bool PngLoader::open(const string& path)
 
     w = (float)image->width;
     h = (float)image->height;
-    cs = ColorSpace::ARGB8888;
 
     return true;
 }
@@ -74,7 +73,6 @@ bool PngLoader::open(const char* data, uint32_t size, bool copy)
 
     w = (float)image->width;
     h = (float)image->height;
-    cs = ColorSpace::ARGB8888;
 
     return true;
 }
@@ -98,28 +96,17 @@ bool PngLoader::read()
         free(buffer);
         return false;
     }
-    content = reinterpret_cast<uint32_t*>(buffer);
+
+    //setup the surface
+    surface.buf32 = reinterpret_cast<uint32_t*>(buffer);
+    surface.stride = (uint32_t)w;
+    surface.w = (uint32_t)w;
+    surface.h = (uint32_t)h;
+    surface.channelSize = sizeof(uint32_t);
+    surface.cs = ColorSpace::ARGB8888;
+    surface.premultiplied = false;
 
     clear();
 
     return true;
-}
-
-
-Surface* PngLoader::bitmap()
-{
-    if (!content) return nullptr;
-
-    //TODO: It's better to keep this surface instance in the loader side
-    auto surface = new Surface;
-    surface->buf32 = content;
-    surface->stride = (uint32_t)w;
-    surface->w = (uint32_t)w;
-    surface->h = (uint32_t)h;
-    surface->cs = cs;
-    surface->channelSize = sizeof(uint32_t);
-    surface->owner = true;
-    surface->premultiplied = false;
-
-    return surface;
 }

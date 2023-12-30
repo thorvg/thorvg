@@ -69,13 +69,18 @@ struct LoadModule
 struct ImageLoader : LoadModule
 {
     float w = 0, h = 0;                             //default image size
-    ColorSpace cs = ColorSpace::Unsupported;        //must be clarified at open()
+    Surface surface;
 
     ImageLoader(FileType type) : LoadModule(type) {}
 
     virtual bool animatable() { return false; }  //true if this loader supports animation.
-    virtual Surface* bitmap() { return nullptr; }
     virtual Paint* paint() { return nullptr; }
+
+    virtual Surface* bitmap()
+    {
+        if (surface.data) return &surface;
+        return nullptr;
+    }
 };
 
 

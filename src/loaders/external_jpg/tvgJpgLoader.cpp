@@ -53,7 +53,7 @@ JpgLoader::~JpgLoader()
     tjDestroy(jpegDecompressor);
 
     //This image is shared with raster engine.
-    tjFree(image);
+    tjFree(surface.buf8);
 }
 
 
@@ -84,7 +84,6 @@ bool JpgLoader::open(const string& path)
 
     w = static_cast<float>(width);
     h = static_cast<float>(height);
-    cs = ColorSpace::ARGB8888;
     ret = true;
 
     goto finalize;
@@ -115,7 +114,6 @@ bool JpgLoader::open(const char* data, uint32_t size, bool copy)
 
     w = static_cast<float>(width);
     h = static_cast<float>(height);
-    cs = ColorSpace::ARGB8888;
     this->size = size;
 
     return true;
@@ -130,8 +128,7 @@ bool JpgLoader::read()
 
     /* OPTIMIZE: We assume the desired colorspace is ColorSpace::ARGB
        How could we notice the renderer colorspace at this time? */
-    if (image) tjFree(image);
-    image = (unsigned char *)tjAlloc(static_cast<int>(w) * static_cast<int>(h) * tjPixelSize[TJPF_BGRX]);
+    auto image = (unsigned char *)tjAlloc(static_cast<int>(w) * static_cast<int>(h) * tjPixelSize[TJPF_BGRX]);
     if (!image) return false;
 
     //decompress jpg image
@@ -142,25 +139,15 @@ bool JpgLoader::read()
         return false;
     }
 
+    //setup the surface
+    surface.buf8 = image;
+    surface.stride = w;
+    surface.w = w;
+    surface.h = h;
+    surface.channelSize = sizeof(uint32_t);
+    surface.cs = ColorSpace::ARGB8888;
+    surface.premultiplied = true;
+
     clear();
     return true;
-}
-
-
-Surface* JpgLoader::bitmap()
-{
-    if (!image) return nullptr;
-
-    //TODO: It's better to keep this surface instance in the loader side
-    auto surface = new Surface;
-    surface->buf8 = image;
-    surface->stride = w;
-    surface->w = w;
-    surface->h = h;
-    surface->cs = cs;
-    surface->channelSize = sizeof(uint32_t);
-    surface->premultiplied = true;
-    surface->owner = true;
-
-    return surface;
 }

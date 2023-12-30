@@ -32,16 +32,19 @@
 
 void PngLoader::run(unsigned tid)
 {
-    if (image) {
-        free(image);
-        image = nullptr;
-    }
     auto width = static_cast<unsigned>(w);
     auto height = static_cast<unsigned>(h);
 
-    if (lodepng_decode(&image, &width, &height, &state, data, size)) {
+    if (lodepng_decode(&surface.buf8, &width, &height, &state, data, size)) {
         TVGERR("PNG", "Failed to decode image");
     }
+
+    //setup the surface
+    surface.stride = width;
+    surface.w = width;
+    surface.h = height;
+    surface.channelSize = sizeof(uint32_t);
+    surface.premultiplied = false;
 }
 
 
@@ -58,7 +61,7 @@ PngLoader::PngLoader() : ImageLoader(FileType::Png)
 PngLoader::~PngLoader()
 {
     if (freeData) free(data);
-    free(image);
+    free(surface.buf8);
     lodepng_state_cleanup(&state);
 }
 
@@ -90,8 +93,8 @@ bool PngLoader::open(const string& path)
     w = static_cast<float>(width);
     h = static_cast<float>(height);
 
-    if (state.info_png.color.colortype == LCT_RGBA) cs = ColorSpace::ABGR8888;
-    else cs = ColorSpace::ARGB8888;
+    if (state.info_png.color.colortype == LCT_RGBA) surface.cs = ColorSpace::ABGR8888;
+    else surface.cs = ColorSpace::ARGB8888;
 
     ret = true;
 
@@ -122,7 +125,7 @@ bool PngLoader::open(const char* data, uint32_t size, bool copy)
     h = static_cast<float>(height);
     this->size = size;
 
-    cs = ColorSpace::ABGR8888;
+    surface.cs = ColorSpace::ABGR8888;
 
     return true;
 }
@@ -143,19 +146,5 @@ bool PngLoader::read()
 Surface* PngLoader::bitmap()
 {
     this->done();
-
-    if (!image) return nullptr;
-
-    //TODO: It's better to keep this surface instance in the loader side
-    auto surface = new Surface;
-    surface->buf8 = image;
-    surface->stride = static_cast<uint32_t>(w);
-    surface->w = static_cast<uint32_t>(w);
-    surface->h = static_cast<uint32_t>(h);
-    surface->cs = cs;
-    surface->channelSize = sizeof(uint32_t);
-    surface->premultiplied = false;
-    surface->owner = true;
-
-    return surface;
+    return ImageLoader::bitmap();
 }

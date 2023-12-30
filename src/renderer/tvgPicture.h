@@ -83,7 +83,6 @@ struct Picture::Impl
     {
         LoaderMgr::retrieve(loader);
         delete(paint);
-        delete(surface);
     }
 
     bool dispose(RenderMethod& renderer)
@@ -206,11 +205,7 @@ struct Picture::Impl
             ++dup->loader->sharing;
         }
 
-        if (surface) {
-            dup->surface = new Surface;
-            *dup->surface = *surface;
-            dup->surface->owner = false;
-        }
+        dup->surface = surface;
         dup->w = w;
         dup->h = h;
         dup->resizing = resizing;

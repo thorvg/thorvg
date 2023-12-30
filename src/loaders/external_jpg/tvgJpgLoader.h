@@ -38,14 +38,11 @@ public:
     bool open(const char* data, uint32_t size, bool copy) override;
     bool read() override;
 
-    Surface* bitmap() override;
-
 private:
     void clear();
 
     tjhandle jpegDecompressor;
     unsigned char* data = nullptr;
-    unsigned char *image = nullptr;
     unsigned long size = 0;
     bool freeData = false;
 };

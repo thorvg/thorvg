@@ -50,7 +50,7 @@ public:
         RT_None,
     };
 
-    Surface surface = {nullptr, 0, 0, 0, ColorSpace::Unsupported, true};
+    Surface surface;
 
     RenderData prepare(const RenderShape& rshape, RenderData data, const RenderTransform* transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags, bool clipper) override;
     RenderData prepare(const Array<RenderData>& scene, RenderData data, const RenderTransform* transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags) override;

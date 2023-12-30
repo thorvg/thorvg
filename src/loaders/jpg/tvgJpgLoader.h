@@ -32,7 +32,6 @@ class JpgLoader : public ImageLoader, public Task
 private:
     jpeg_decoder* decoder = nullptr;
     char* data = nullptr;
-    unsigned char *image = nullptr;
     bool freeData = false;
 
     void clear();

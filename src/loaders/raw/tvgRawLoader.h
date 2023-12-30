@@ -26,7 +26,6 @@
 class RawLoader : public ImageLoader
 {
 public:
-    uint32_t* content = nullptr;
     bool copy = false;
 
     RawLoader();
@@ -35,8 +34,6 @@ public:
     using LoadModule::open;
     bool open(const uint32_t* data, uint32_t w, uint32_t h, bool copy);
     bool read() override;
-
-    Surface* bitmap() override;
 };
 
 
