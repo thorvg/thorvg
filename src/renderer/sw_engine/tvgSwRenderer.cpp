@@ -281,10 +281,8 @@ struct SwImageTask : SwTask
         auto clipRegion = bbox;
 
         //Convert colorspace if it's not aligned.
-        if (source->owner) {
-            if (source->cs != surface->cs) rasterConvertCS(source, surface->cs);
-            if (!source->premultiplied) rasterPremultiply(source);
-        }
+        rasterConvertCS(source, surface->cs);
+        rasterPremultiply(source);
 
         image.data = source->data;
         image.w = source->w;
@@ -431,7 +429,6 @@ bool SwRenderer::target(pixel_t* data, uint32_t stride, uint32_t w, uint32_t h, 
     surface->cs = cs;
     surface->channelSize = CHANNEL_SIZE(cs);
     surface->premultiplied = true;
-    surface->owner = true;
 
     vport.x = vport.y = 0;
     vport.w = surface->w;
@@ -639,11 +636,8 @@ Compositor* SwRenderer::target(const RenderRegion& region, ColorSpace cs)
 
     //New Composition
     if (!cmp) {
-        cmp = new SwSurface;
-
         //Inherits attributes from main surface
-        *cmp = *surface;
-
+        cmp = new SwSurface(surface);
         cmp->compositor = new SwCompositor;
 
         //TODO: We can optimize compositor surface size from (surface->stride x surface->h) to Parameter(w x h)

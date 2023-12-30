@@ -67,7 +67,7 @@ private:
     WgRenderTarget mRenderTarget;
     WGPUSurface mSurface{};
     WGPUSwapChain mSwapChain{};
-    Surface mTargetSurface = { nullptr, 0, 0, 0, ColorSpace::Unsupported, true };
+    Surface mTargetSurface;
 };
 
 #endif /* _TVG_WG_RENDERER_H_ */

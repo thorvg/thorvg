@@ -33,7 +33,16 @@
 
 void WebpLoader::run(unsigned tid)
 {
-    image = WebPDecodeBGRA(data, size, nullptr, nullptr);
+    surface.buf8 = WebPDecodeBGRA(data, size, nullptr, nullptr);
+
+    //setup the surface
+    surface.stride = (uint32_t)w;
+    surface.w = (uint32_t)w;
+    surface.h = (uint32_t)h;
+    surface.channelSize = sizeof(uint32_t);
+    surface.cs = ColorSpace::ARGB8888;
+    surface.premultiplied = false;
+
 }
 
 
@@ -54,7 +63,7 @@ WebpLoader::~WebpLoader()
     data = nullptr;
     size = 0;
     freeData = false;
-    WebPFree(image);
+    WebPFree(surface.buf8);
 }
 
 
@@ -82,7 +91,6 @@ bool WebpLoader::open(const string& path)
 
     w = static_cast<float>(width);
     h = static_cast<float>(height);
-    cs = ColorSpace::ARGB8888;
 
     ret = true;
 
@@ -109,7 +117,7 @@ bool WebpLoader::open(const char* data, uint32_t size, TVG_UNUSED const string& 
 
     w = static_cast<float>(width);
     h = static_cast<float>(height);
-    cs = ColorSpace::ARGB8888;
+    surface.cs = ColorSpace::ARGB8888;
     this->size = size;
     return true;
 }
@@ -122,6 +130,7 @@ bool WebpLoader::read()
     if (!data || w == 0 || h == 0) return false;
 
     TaskScheduler::request(this);
+
     return true;
 }
 
@@ -130,17 +139,5 @@ Surface* WebpLoader::bitmap()
 {
     this->done();
 
-    if (!image) return nullptr;
-
-    //TODO: It's better to keep this surface instance in the loader side
-    auto surface = new Surface;
-    surface->buf8 = image;
-    surface->stride = static_cast<uint32_t>(w);
-    surface->w = static_cast<uint32_t>(w);
-    surface->h = static_cast<uint32_t>(h);
-    surface->cs = cs;
-    surface->channelSize = sizeof(uint32_t);
-    surface->premultiplied = false;
-    surface->owner = true;
-    return surface;
+    return ImageLoader::bitmap();
 }

@@ -39,11 +39,13 @@ void JpgLoader::clear()
 
 void JpgLoader::run(unsigned tid)
 {
-    if (image) {
-        free(image);
-        image = nullptr;
-    }
-    image = jpgdDecompress(decoder);
+    surface.buf8 = jpgdDecompress(decoder);
+    surface.stride = static_cast<uint32_t>(w);
+    surface.w = static_cast<uint32_t>(w);
+    surface.h = static_cast<uint32_t>(h);
+    surface.cs = ColorSpace::ARGB8888;
+    surface.channelSize = sizeof(uint32_t);
+    surface.premultiplied = true;
 
     clear();
 }
@@ -62,7 +64,7 @@ JpgLoader::JpgLoader() : ImageLoader(FileType::Jpg)
 JpgLoader::~JpgLoader()
 {
     clear();
-    free(image);
+    free(surface.buf8);
 }
 
 
@@ -74,7 +76,6 @@ bool JpgLoader::open(const string& path)
 
     w = static_cast<float>(width);
     h = static_cast<float>(height);
-    cs = ColorSpace::ARGB8888;
 
     return true;
 }
@@ -98,7 +99,6 @@ bool JpgLoader::open(const char* data, uint32_t size, TVG_UNUSED const string& r
 
     w = static_cast<float>(width);
     h = static_cast<float>(height);
-    cs = ColorSpace::ARGB8888;
 
     return true;
 }
@@ -128,19 +128,5 @@ bool JpgLoader::close()
 Surface* JpgLoader::bitmap()
 {
     this->done();
-
-    if (!image) return nullptr;
-
-    //TODO: It's better to keep this surface instance in the loader side
-    auto surface = new Surface;
-    surface->buf8 = image;
-    surface->stride = static_cast<uint32_t>(w);
-    surface->w = static_cast<uint32_t>(w);
-    surface->h = static_cast<uint32_t>(h);
-    surface->cs = cs;
-    surface->channelSize = sizeof(uint32_t);
-    surface->premultiplied = true;
-    surface->owner = true;
-
-    return surface;
+    return ImageLoader::bitmap();
 }
