@@ -3528,6 +3528,10 @@ void SvgLoader::clear(bool all)
     loaderData.images.reset();
 
     if (copy) free((char*)content);
+
+    delete(root);
+    root = nullptr;
+
     size = 0;
     content = nullptr;
     copy = false;
@@ -3751,5 +3755,7 @@ bool SvgLoader::close()
 Paint* SvgLoader::paint()
 {
     this->done();
-    return root;
+    auto ret = root;
+    root = nullptr;
+    return ret;
 }
