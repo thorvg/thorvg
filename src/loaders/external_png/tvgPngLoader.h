@@ -36,13 +36,10 @@ public:
     bool open(const char* data, uint32_t size, const string& rpath, bool copy) override;
     bool read() override;
 
-    Surface* bitmap() override;
-
 private:
     void clear();
 
     png_imagep image = nullptr;
-    uint32_t* content = nullptr;
 };
 
 #endif //_TVG_PNG_LOADER_H_
