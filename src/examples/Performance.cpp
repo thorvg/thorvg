@@ -30,6 +30,7 @@ static tvg::Picture* pPicture = nullptr;
 static double updateTime = 0;
 static double accumulateTime = 0;
 static uint32_t cnt = 0;
+static bool reqSync = false;
 
 void tvgDrawCmds(tvg::Canvas* canvas)
 {
@@ -51,7 +52,9 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
 void tvgUpdateCmds(tvg::Canvas* canvas, float progress)
 {
-    if (!canvas) return;
+    if (!canvas || reqSync) return;
+
+    canvas->clear(false);
 
     canvas->clear(false);
 
@@ -59,11 +62,13 @@ void tvgUpdateCmds(tvg::Canvas* canvas, float progress)
 
     auto before = ecore_time_get();
 
-    canvas->update(pPicture);
+    canvas->update();
 
     auto after = ecore_time_get();
 
     updateTime = after - before;
+
+    reqSync = true;
 }
 
 
@@ -102,6 +107,7 @@ void drawSwView(void* data, Eo* obj)
 
     if (swCanvas->draw() == tvg::Result::Success) {
         swCanvas->sync();
+        reqSync = false;
     }
 
     auto after = ecore_time_get();
@@ -192,6 +198,9 @@ int main(int argc, char **argv)
         elm_transit_go(transit);
 
         elm_run();
+
+        elm_transit_del(transit);
+
         elm_shutdown();
 
         //Terminate ThorVG Engine

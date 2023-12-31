@@ -182,15 +182,20 @@ int main(int argc, char **argv)
 
         elm_init(argc, argv);
 
+        Ecore_Timer* timer;
+
         if (tvgEngine == tvg::CanvasEngine::Sw) {
             auto view = createSwView();
-            ecore_timer_add(0.33, timerSwCb, view);
+            timer = ecore_timer_add(0.33, timerSwCb, view);
         } else {
             auto view = createGlView();
-            ecore_timer_add(0.33, timerGlCb, view);
+            timer = ecore_timer_add(0.33, timerGlCb, view);
         }
 
         elm_run();
+
+        ecore_timer_del(timer);
+
         elm_shutdown();
 
         //Terminate ThorVG Engine
