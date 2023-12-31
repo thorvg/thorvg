@@ -63,6 +63,7 @@ void tvgUpdateCmds(tvg::Canvas* canvas, float progress)
 
     /* Update shape directly.
        You can update necessary properties of this shape. */
+       canvas->clear(false);
 
     //Reset Shape
     if (pShape->reset() == tvg::Result::Success) {
@@ -197,6 +198,9 @@ int main(int argc, char **argv)
         elm_transit_go(transit);
 
         elm_run();
+
+        elm_transit_del(transit);
+
         elm_shutdown();
 
         //Terminate ThorVG Engine
