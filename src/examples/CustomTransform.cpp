@@ -203,6 +203,9 @@ int main(int argc, char **argv)
         elm_transit_go(transit);
 
         elm_run();
+
+        elm_transit_del(transit);
+
         elm_shutdown();
 
         //Terminate ThorVG Engine
