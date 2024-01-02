@@ -27,7 +27,7 @@
   <td id="projectlogo"><img alt="Logo" src="small_logo.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">ThorVG
-   &#160;<span id="projectnumber">v0.11</span>
+   &#160;<span id="projectnumber">v0.12</span>
    </div>
   </td>
  </tr>
@@ -98,10 +98,11 @@ Inheritance diagram for Paint:</div>
 <div class="dyncontent">
 <div class="center"><img src="classtvg_1_1Paint__inherit__graph.png" border="0" usemap="#aPaint_inherit__map" alt="Inheritance graph"/></div>
 <map name="aPaint_inherit__map" id="aPaint_inherit__map">
-<area shape="rect" title="An abstract class for managing graphical elements." alt="" coords="99,5,154,32"/>
+<area shape="rect" title="An abstract class for managing graphical elements." alt="" coords="142,5,197,32"/>
 <area shape="rect" href="classtvg_1_1Picture.html" title="A class representing an image read in one of the supported formats: raw, svg, png,..." alt="" coords="5,80,72,107"/>
 <area shape="rect" href="classtvg_1_1Scene.html" title="A class to composite children paints." alt="" coords="96,80,157,107"/>
 <area shape="rect" href="classtvg_1_1Shape.html" title="A class representing two&#45;dimensional figures and their properties." alt="" coords="182,80,245,107"/>
+<area shape="rect" href="classtvg_1_1Text.html" title="A class to represent text objects in a graphical context, allowing for rendering and manipulation of ..." alt="" coords="269,80,318,107"/>
 </map>
 <center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
 <table class="memberdecls">
@@ -182,7 +183,7 @@ Public Member Functions</h2></td></tr>
 
 <p>Gets the blending method of the object. </p>
 <dl class="section return"><dt>Returns</dt><dd>The blending method</dd></dl>
-<p>@BETA_API </p>
+<dl class="section note"><dt>Note</dt><dd>Experimental API </dd></dl>
 
 </div>
 </div>
@@ -218,8 +219,13 @@ Public Member Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a505a83f220c02df2f85c3810cd9ceb38" title="The value returned in case of a correct request execution.">Result::Success</a> when the blending method is successfully set.</dd></dl>
-<p>@BETA_API </p>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a505a83f220c02df2f85c3810cd9ceb38" title="The value returned in case of a correct request execution.">Result::Success</a></td><td>when the blending method is successfully set.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section note"><dt>Note</dt><dd>Experimental API </dd></dl>
 
 </div>
 </div>
@@ -349,7 +355,12 @@ Public Member Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a505a83f220c02df2f85c3810cd9ceb38" title="The value returned in case of a correct request execution.">Result::Success</a> when succeed, <a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a119732ff568bf103d744e930ae2404f1" title="The value returned in case the request cannot be processed - e.g. asking for properties of an object,...">Result::InsufficientCondition</a> otherwise.</dd></dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a505a83f220c02df2f85c3810cd9ceb38" title="The value returned in case of a correct request execution.">Result::Success</a></td><td>when succeed, <a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a119732ff568bf103d744e930ae2404f1" title="The value returned in case the request cannot be processed - e.g. asking for properties of an object,...">Result::InsufficientCondition</a> otherwise.</td></tr>
+  </table>
+  </dd>
+</dl>
 <dl class="section note"><dt>Note</dt><dd>The bounding box doesn't indicate the actual drawing region. It's the smallest rectangle that encloses the object. </dd></dl>
 
 </div>
@@ -432,7 +443,12 @@ Public Member Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a505a83f220c02df2f85c3810cd9ceb38" title="The value returned in case of a correct request execution.">Result::Success</a> when succeed, <a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066ae73a2e92f1c87086c838b442552a4775" title="The value returned in the event of a problem with the arguments given to the API - e....">Result::InvalidArguments</a> otherwise. </dd></dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a505a83f220c02df2f85c3810cd9ceb38" title="The value returned in case of a correct request execution.">Result::Success</a></td><td>when succeed, <a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066ae73a2e92f1c87086c838b442552a4775" title="The value returned in the event of a problem with the arguments given to the API - e....">Result::InvalidArguments</a> otherwise. </td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -553,7 +569,12 @@ Public Member Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a505a83f220c02df2f85c3810cd9ceb38" title="The value returned in case of a correct request execution.">Result::Success</a> when succeed.</dd></dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a505a83f220c02df2f85c3810cd9ceb38" title="The value returned in case of a correct request execution.">Result::Success</a></td><td>when succeed.</td></tr>
+  </table>
+  </dd>
+</dl>
 <dl class="section note"><dt>Note</dt><dd>Setting the opacity with this API may require multiple render pass for composition. It is recommended to avoid changing the opacity if possible. </dd>
 <dd>
 ClipPath won't use the opacity value. (see: enum class <a class="el" href="group__ThorVG.html#ggaabdf94ada64e69d06deabc5aa6576f87a60575a18ece363c72551a982450efd52" title="The intersection of the source and the target is determined and only the resulting pixels from the so...">CompositeMethod::ClipPath</a>) </dd></dl>
@@ -592,7 +613,12 @@ ClipPath won't use the opacity value. (see: enum class <a class="el" href="group
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a505a83f220c02df2f85c3810cd9ceb38" title="The value returned in case of a correct request execution.">Result::Success</a> when succeed, <a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066abc2b4181e818f2e9b52b2bc54dd55907" title="The value returned in case of unsuccessful memory allocation.">Result::FailedAllocation</a> otherwise. </dd></dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a505a83f220c02df2f85c3810cd9ceb38" title="The value returned in case of a correct request execution.">Result::Success</a></td><td>when succeed, <a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066abc2b4181e818f2e9b52b2bc54dd55907" title="The value returned in case of unsuccessful memory allocation.">Result::FailedAllocation</a> otherwise. </td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -627,7 +653,12 @@ ClipPath won't use the opacity value. (see: enum class <a class="el" href="group
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a505a83f220c02df2f85c3810cd9ceb38" title="The value returned in case of a correct request execution.">Result::Success</a> when succeed, <a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066abc2b4181e818f2e9b52b2bc54dd55907" title="The value returned in case of unsuccessful memory allocation.">Result::FailedAllocation</a> otherwise. </dd></dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a505a83f220c02df2f85c3810cd9ceb38" title="The value returned in case of a correct request execution.">Result::Success</a></td><td>when succeed, <a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066abc2b4181e818f2e9b52b2bc54dd55907" title="The value returned in case of unsuccessful memory allocation.">Result::FailedAllocation</a> otherwise. </td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -693,7 +724,12 @@ ClipPath won't use the opacity value. (see: enum class <a class="el" href="group
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a505a83f220c02df2f85c3810cd9ceb38" title="The value returned in case of a correct request execution.">Result::Success</a> when succeed, <a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066abc2b4181e818f2e9b52b2bc54dd55907" title="The value returned in case of unsuccessful memory allocation.">Result::FailedAllocation</a> otherwise. </dd></dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a505a83f220c02df2f85c3810cd9ceb38" title="The value returned in case of a correct request execution.">Result::Success</a></td><td>when succeed, <a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066abc2b4181e818f2e9b52b2bc54dd55907" title="The value returned in case of unsuccessful memory allocation.">Result::FailedAllocation</a> otherwise. </td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -740,7 +776,12 @@ ClipPath won't use the opacity value. (see: enum class <a class="el" href="group
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a505a83f220c02df2f85c3810cd9ceb38" title="The value returned in case of a correct request execution.">Result::Success</a> when succeed, <a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066abc2b4181e818f2e9b52b2bc54dd55907" title="The value returned in case of unsuccessful memory allocation.">Result::FailedAllocation</a> otherwise. </dd></dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a505a83f220c02df2f85c3810cd9ceb38" title="The value returned in case of a correct request execution.">Result::Success</a></td><td>when succeed, <a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066abc2b4181e818f2e9b52b2bc54dd55907" title="The value returned in case of unsuccessful memory allocation.">Result::FailedAllocation</a> otherwise. </td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>

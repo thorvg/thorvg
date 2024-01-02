@@ -4,7 +4,8 @@ var hierarchy =
     [ "Animation", "classtvg_1_1Animation.html", null ],
     [ "Canvas", "classtvg_1_1Canvas.html", [
       [ "GlCanvas", "classtvg_1_1GlCanvas.html", null ],
-      [ "SwCanvas", "classtvg_1_1SwCanvas.html", null ]
+      [ "SwCanvas", "classtvg_1_1SwCanvas.html", null ],
+      [ "WgCanvas", "classtvg_1_1WgCanvas.html", null ]
     ] ],
     [ "Fill::ColorStop", "structtvg_1_1Fill_1_1ColorStop.html", null ],
     [ "Fill", "classtvg_1_1Fill.html", [
@@ -16,7 +17,8 @@ var hierarchy =
     [ "Paint", "classtvg_1_1Paint.html", [
       [ "Picture", "classtvg_1_1Picture.html", null ],
       [ "Scene", "classtvg_1_1Scene.html", null ],
-      [ "Shape", "classtvg_1_1Shape.html", null ]
+      [ "Shape", "classtvg_1_1Shape.html", null ],
+      [ "Text", "classtvg_1_1Text.html", null ]
     ] ],
     [ "Point", "structtvg_1_1Point.html", null ],
     [ "Polygon", "structtvg_1_1Polygon.html", null ],

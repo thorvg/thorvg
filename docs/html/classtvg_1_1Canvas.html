@@ -27,7 +27,7 @@
   <td id="projectlogo"><img alt="Logo" src="small_logo.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">ThorVG
-   &#160;<span id="projectnumber">v0.11</span>
+   &#160;<span id="projectnumber">v0.12</span>
    </div>
   </td>
  </tr>
@@ -98,9 +98,10 @@ Inheritance diagram for Canvas:</div>
 <div class="dyncontent">
 <div class="center"><img src="classtvg_1_1Canvas__inherit__graph.png" border="0" usemap="#aCanvas_inherit__map" alt="Inheritance graph"/></div>
 <map name="aCanvas_inherit__map" id="aCanvas_inherit__map">
-<area shape="rect" title="An abstract class for drawing graphical elements." alt="" coords="67,5,137,32"/>
+<area shape="rect" title="An abstract class for drawing graphical elements." alt="" coords="123,5,193,32"/>
 <area shape="rect" href="classtvg_1_1GlCanvas.html" title="A class for the rendering graphic elements with a GL raster engine." alt="" coords="5,80,89,107"/>
 <area shape="rect" href="classtvg_1_1SwCanvas.html" title="A class for the rendering graphical elements with a software raster engine." alt="" coords="113,80,203,107"/>
+<area shape="rect" href="classtvg_1_1WgCanvas.html" title="A class for the rendering graphic elements with a WebGPU raster engine." alt="" coords="227,80,318,107"/>
 </map>
 <center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
 <table class="memberdecls">
@@ -166,7 +167,12 @@ Public Member Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a505a83f220c02df2f85c3810cd9ceb38" title="The value returned in case of a correct request execution.">Result::Success</a> when succeed, <a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a119732ff568bf103d744e930ae2404f1" title="The value returned in case the request cannot be processed - e.g. asking for properties of an object,...">Result::InsufficientCondition</a> otherwise.</dd></dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a505a83f220c02df2f85c3810cd9ceb38" title="The value returned in case of a correct request execution.">Result::Success</a></td><td>when succeed, <a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a119732ff568bf103d744e930ae2404f1" title="The value returned in case the request cannot be processed - e.g. asking for properties of an object,...">Result::InsufficientCondition</a> otherwise.</td></tr>
+  </table>
+  </dd>
+</dl>
 <dl class="section see"><dt>See also</dt><dd><a class="el" href="classtvg_1_1Canvas.html#a82c5ec1c1ba93cf7671642400074201e" title="Passes drawing elements to the Canvas using Paint objects.">Canvas::push()</a> </dd>
 <dd>
 <a class="el" href="classtvg_1_1Canvas.html#ace6c268f853a4c144076de89b7bbbe75" title="Returns the list of the paints that currently held by the Canvas.">Canvas::paints()</a> </dd></dl>
@@ -197,7 +203,12 @@ Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Requests the canvas to draw the <a class="el" href="classtvg_1_1Paint.html" title="An abstract class for managing graphical elements.">Paint</a> objects. </p>
-<dl class="section return"><dt>Returns</dt><dd><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a505a83f220c02df2f85c3810cd9ceb38" title="The value returned in case of a correct request execution.">Result::Success</a> when succeed, <a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a119732ff568bf103d744e930ae2404f1" title="The value returned in case the request cannot be processed - e.g. asking for properties of an object,...">Result::InsufficientCondition</a> otherwise.</dd></dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a505a83f220c02df2f85c3810cd9ceb38" title="The value returned in case of a correct request execution.">Result::Success</a></td><td>when succeed, <a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a119732ff568bf103d744e930ae2404f1" title="The value returned in case the request cannot be processed - e.g. asking for properties of an object,...">Result::InsufficientCondition</a> otherwise.</td></tr>
+  </table>
+  </dd>
+</dl>
 <dl class="section note"><dt>Note</dt><dd>Drawing can be asynchronous if the assigned thread number is greater than zero. To guarantee the drawing is done, call <a class="el" href="classtvg_1_1Canvas.html#adbca600af79f9a0b8e8366e3be7450e9" title="Guarantees that drawing task is finished.">sync()</a> afterwards. </dd></dl>
 <dl class="section see"><dt>See also</dt><dd><a class="el" href="classtvg_1_1Canvas.html#adbca600af79f9a0b8e8366e3be7450e9" title="Guarantees that drawing task is finished.">Canvas::sync()</a> </dd></dl>
 
@@ -230,7 +241,7 @@ Public Member Functions</h2></td></tr>
 <p>This function provides the list of paint nodes, allowing users a direct opportunity to modify the scene tree.</p>
 <dl class="section warning"><dt>Warning</dt><dd>Please avoid accessing the paints during <a class="el" href="classtvg_1_1Canvas.html" title="An abstract class for drawing graphical elements.">Canvas</a> update/draw. You can access them after calling <a class="el" href="classtvg_1_1Canvas.html#adbca600af79f9a0b8e8366e3be7450e9" title="Guarantees that drawing task is finished.">sync()</a>. </dd></dl>
 <dl class="section see"><dt>See also</dt><dd><a class="el" href="classtvg_1_1Canvas.html#adbca600af79f9a0b8e8366e3be7450e9" title="Guarantees that drawing task is finished.">Canvas::sync()</a></dd></dl>
-<p>@BETA_API </p>
+<dl class="section note"><dt>Note</dt><dd>Experimental API </dd></dl>
 
 </div>
 </div>
@@ -342,7 +353,12 @@ Public Member Functions</h2></td></tr>
 
 <p>Guarantees that drawing task is finished. </p>
 <p>The <a class="el" href="classtvg_1_1Canvas.html" title="An abstract class for drawing graphical elements.">Canvas</a> rendering can be performed asynchronously. To make sure that rendering is finished, the <a class="el" href="classtvg_1_1Canvas.html#adbca600af79f9a0b8e8366e3be7450e9" title="Guarantees that drawing task is finished.">sync()</a> must be called after the <a class="el" href="classtvg_1_1Canvas.html#aabf9e5a14da3b4bfd5883c2b4459abd0" title="Requests the canvas to draw the Paint objects.">draw()</a> regardless of threading.</p>
-<dl class="section return"><dt>Returns</dt><dd><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a505a83f220c02df2f85c3810cd9ceb38" title="The value returned in case of a correct request execution.">Result::Success</a> when succeed, <a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a119732ff568bf103d744e930ae2404f1" title="The value returned in case the request cannot be processed - e.g. asking for properties of an object,...">Result::InsufficientCondition</a> otherwise. </dd></dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a505a83f220c02df2f85c3810cd9ceb38" title="The value returned in case of a correct request execution.">Result::Success</a></td><td>when succeed, <a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a119732ff568bf103d744e930ae2404f1" title="The value returned in case the request cannot be processed - e.g. asking for properties of an object,...">Result::InsufficientCondition</a> otherwise. </td></tr>
+  </table>
+  </dd>
+</dl>
 <dl class="section see"><dt>See also</dt><dd><a class="el" href="classtvg_1_1Canvas.html#aabf9e5a14da3b4bfd5883c2b4459abd0" title="Requests the canvas to draw the Paint objects.">Canvas::draw()</a> </dd></dl>
 
 </div>
@@ -379,7 +395,12 @@ Public Member Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a505a83f220c02df2f85c3810cd9ceb38" title="The value returned in case of a correct request execution.">Result::Success</a> when succeed, <a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a119732ff568bf103d744e930ae2404f1" title="The value returned in case the request cannot be processed - e.g. asking for properties of an object,...">Result::InsufficientCondition</a> otherwise.</dd></dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a505a83f220c02df2f85c3810cd9ceb38" title="The value returned in case of a correct request execution.">Result::Success</a></td><td>when succeed, <a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a119732ff568bf103d744e930ae2404f1" title="The value returned in case the request cannot be processed - e.g. asking for properties of an object,...">Result::InsufficientCondition</a> otherwise.</td></tr>
+  </table>
+  </dd>
+</dl>
 <dl class="section note"><dt>Note</dt><dd>The Update behavior can be asynchronous if the assigned thread number is greater than zero. </dd></dl>
 
 </div>

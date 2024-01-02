@@ -27,7 +27,7 @@
   <td id="projectlogo"><img alt="Logo" src="small_logo.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">ThorVG
-   &#160;<span id="projectnumber">v0.11</span>
+   &#160;<span id="projectnumber">v0.12</span>
    </div>
   </td>
  </tr>
@@ -97,9 +97,15 @@ $(document).ready(function(){initNavTree('classtvg_1_1Saver.html',''); initResiz
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
+<tr class="memitem:a8e3b775984e506f816d6998ca12fd3fb"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Saver.html#a8e3b775984e506f816d6998ca12fd3fb">background</a> (std::unique_ptr&lt; <a class="el" href="classtvg_1_1Paint.html">Paint</a> &gt; paint) noexcept</td></tr>
+<tr class="memdesc:a8e3b775984e506f816d6998ca12fd3fb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the base background content for the saved image.  <a href="classtvg_1_1Saver.html#a8e3b775984e506f816d6998ca12fd3fb">More...</a><br /></td></tr>
+<tr class="separator:a8e3b775984e506f816d6998ca12fd3fb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:acda492a458f3ddc2da01df672ecd85bd"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Saver.html#acda492a458f3ddc2da01df672ecd85bd">save</a> (std::unique_ptr&lt; <a class="el" href="classtvg_1_1Paint.html">Paint</a> &gt; paint, const std::string &amp;path, bool compress=true) noexcept</td></tr>
 <tr class="memdesc:acda492a458f3ddc2da01df672ecd85bd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Exports the given <code>paint</code> data to the given <code>path</code>.  <a href="classtvg_1_1Saver.html#acda492a458f3ddc2da01df672ecd85bd">More...</a><br /></td></tr>
 <tr class="separator:acda492a458f3ddc2da01df672ecd85bd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4d421f31d37ea28b650ad0331735710a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Saver.html#a4d421f31d37ea28b650ad0331735710a">save</a> (std::unique_ptr&lt; <a class="el" href="classtvg_1_1Animation.html">Animation</a> &gt; animation, const std::string &amp;path, uint32_t quality=100, uint32_t fps=0) noexcept</td></tr>
+<tr class="memdesc:a4d421f31d37ea28b650ad0331735710a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Export the provided animation data to the specified file path.  <a href="classtvg_1_1Saver.html#a4d421f31d37ea28b650ad0331735710a">More...</a><br /></td></tr>
+<tr class="separator:a4d421f31d37ea28b650ad0331735710a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2fdf9b2208358ea10f912b1877733778"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Saver.html#a2fdf9b2208358ea10f912b1877733778">sync</a> () noexcept</td></tr>
 <tr class="memdesc:a2fdf9b2208358ea10f912b1877733778"><td class="mdescLeft">&#160;</td><td class="mdescRight">Guarantees that the saving task is finished.  <a href="classtvg_1_1Saver.html#a2fdf9b2208358ea10f912b1877733778">More...</a><br /></td></tr>
 <tr class="separator:a2fdf9b2208358ea10f912b1877733778"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -118,6 +124,41 @@ Static Public Member Functions</h2></td></tr>
 <dl class="section see"><dt>See also</dt><dd><a class="el" href="classtvg_1_1Picture.html#aaf06be7d0b572c5ce35315cbddd7d318" title="Loads a picture data directly from a file.">Picture::load()</a></dd></dl>
 <dl class="section since"><dt>Since</dt><dd>0.5 </dd></dl>
 </div><h2 class="groupheader">Member Function Documentation</h2>
+<a id="a8e3b775984e506f816d6998ca12fd3fb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8e3b775984e506f816d6998ca12fd3fb">&#9670;&nbsp;</a></span>background()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a> background </td>
+          <td>(</td>
+          <td class="paramtype">std::unique_ptr&lt; <a class="el" href="classtvg_1_1Paint.html">Paint</a> &gt;&#160;</td>
+          <td class="paramname"><em>paint</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Sets the base background content for the saved image. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">paint</td><td>The paint to be drawn as the background image for the saving paint.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section note"><dt>Note</dt><dd>Experimental API </dd></dl>
+
+</div>
+</div>
 <a id="a938c339098e9da63f98f2b182a4cf683"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a938c339098e9da63f98f2b182a4cf683">&#9670;&nbsp;</a></span>gen()</h2>
 
@@ -147,8 +188,83 @@ Static Public Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="a4d421f31d37ea28b650ad0331735710a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4d421f31d37ea28b650ad0331735710a">&#9670;&nbsp;</a></span>save() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a> save </td>
+          <td>(</td>
+          <td class="paramtype">std::unique_ptr&lt; <a class="el" href="classtvg_1_1Animation.html">Animation</a> &gt;&#160;</td>
+          <td class="paramname"><em>animation</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>path</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint32_t&#160;</td>
+          <td class="paramname"><em>quality</em> = <code>100</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint32_t&#160;</td>
+          <td class="paramname"><em>fps</em> = <code>0</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Export the provided animation data to the specified file path. </p>
+<p>This function exports the given animation data to the provided file path. You can also specify the desired frame rate in frames per second (FPS) by providing the fps parameter.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">animation</td><td>The animation to be saved, including all associated properties. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">path</td><td>The path to the file where the animation will be saved. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">quality</td><td>The encoded quality level. <code>0</code> is the minimum, <code>100</code> is the maximum value(recommended). </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">fps</td><td>The desired frames per second (FPS). For example, to encode data at 60 FPS, pass 60. Pass 0 to keep the original frame data.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a505a83f220c02df2f85c3810cd9ceb38" title="The value returned in case of a correct request execution.">Result::Success</a></td><td>if the export succeeds. </td></tr>
+    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a119732ff568bf103d744e930ae2404f1" title="The value returned in case the request cannot be processed - e.g. asking for properties of an object,...">Result::InsufficientCondition</a></td><td>if there are ongoing resource-saving operations. </td></tr>
+    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066aa0cfd518e4385f31d38720579321ed29" title="The value returned in case of choosing unsupported options.">Result::NonSupport</a></td><td>if an attempt is made to save the file with an unknown extension or in an unsupported format. </td></tr>
+    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066ae8c0c653fcac575c31470f0f800991c6" title="The value returned in the event of bad memory handling - e.g. failing in pointer releasing or casting...">Result::MemoryCorruption</a></td><td>in case of an internal error. </td></tr>
+    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a88183b946cc5f0e8c96b2e66e1c74a7e" title="The value returned in all other cases.">Result::Unknown</a></td><td>if attempting to save an empty paint.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section note"><dt>Note</dt><dd>A higher frames per second (FPS) would result in a larger file size. It is recommended to use the default value. </dd>
+<dd>
+Saving can be asynchronous if the assigned thread number is greater than zero. To guarantee the saving is done, call <a class="el" href="classtvg_1_1Saver.html#a2fdf9b2208358ea10f912b1877733778" title="Guarantees that the saving task is finished.">sync()</a> afterwards.</dd></dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="classtvg_1_1Saver.html#a2fdf9b2208358ea10f912b1877733778" title="Guarantees that the saving task is finished.">Saver::sync()</a></dd></dl>
+<dl class="section note"><dt>Note</dt><dd>Experimental API </dd></dl>
+
+</div>
+</div>
 <a id="acda492a458f3ddc2da01df672ecd85bd"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#acda492a458f3ddc2da01df672ecd85bd">&#9670;&nbsp;</a></span>save()</h2>
+<h2 class="memtitle"><span class="permalink"><a href="#acda492a458f3ddc2da01df672ecd85bd">&#9670;&nbsp;</a></span>save() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">

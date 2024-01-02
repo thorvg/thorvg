@@ -27,7 +27,7 @@
   <td id="projectlogo"><img alt="Logo" src="small_logo.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">ThorVG
-   &#160;<span id="projectnumber">v0.11</span>
+   &#160;<span id="projectnumber">v0.12</span>
    </div>
   </td>
  </tr>
@@ -210,7 +210,12 @@ Static Public Member Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a505a83f220c02df2f85c3810cd9ceb38" title="The value returned in case of a correct request execution.">Result::Success</a> when succeed</dd></dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a505a83f220c02df2f85c3810cd9ceb38" title="The value returned in case of a correct request execution.">Result::Success</a></td><td>when succeed</td></tr>
+  </table>
+  </dd>
+</dl>
 <dl class="section warning"><dt>Warning</dt><dd>If you don't free the paints they become dangled. They are supposed to be reused, otherwise you are responsible for their lives. Thus please use the <code>free</code> argument only when you know how it works, otherwise it's not recommended.</dd></dl>
 <dl class="section since"><dt>Since</dt><dd>0.2 </dd></dl>
 
@@ -304,7 +309,7 @@ Static Public Member Functions</h2></td></tr>
 <a class="el" href="classtvg_1_1Scene.html#a19240cd5b53571da718fabef8afb7103" title="Passes drawing elements to the Scene using Paint objects.">Scene::push()</a> </dd>
 <dd>
 <a class="el" href="classtvg_1_1Scene.html#ac020ea777be697067c6f5c8b18f6a4ed" title="Sets the total number of the paints pushed into the scene to be zero. Depending on the value of the f...">Scene::clear()</a></dd></dl>
-<p>@BETA_API </p>
+<dl class="section note"><dt>Note</dt><dd>Experimental API </dd></dl>
 
 </div>
 </div>
@@ -340,7 +345,12 @@ Static Public Member Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a505a83f220c02df2f85c3810cd9ceb38" title="The value returned in case of a correct request execution.">Result::Success</a> when succeed, <a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066ae8c0c653fcac575c31470f0f800991c6" title="The value returned in the event of bad memory handling - e.g. failing in pointer releasing or casting...">Result::MemoryCorruption</a> otherwise.</dd></dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a505a83f220c02df2f85c3810cd9ceb38" title="The value returned in case of a correct request execution.">Result::Success</a></td><td>when succeed, <a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066ae8c0c653fcac575c31470f0f800991c6" title="The value returned in the event of bad memory handling - e.g. failing in pointer releasing or casting...">Result::MemoryCorruption</a> otherwise.</td></tr>
+  </table>
+  </dd>
+</dl>
 <dl class="section note"><dt>Note</dt><dd>The rendering order of the paints is the same as the order as they were pushed. Consider sorting the paints before pushing them if you intend to use layering. </dd></dl>
 <dl class="section see"><dt>See also</dt><dd><a class="el" href="classtvg_1_1Scene.html#ace6c268f853a4c144076de89b7bbbe75" title="Returns the list of the paints that currently held by the Scene.">Scene::paints()</a> </dd>
 <dd>

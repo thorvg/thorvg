@@ -27,7 +27,7 @@
   <td id="projectlogo"><img alt="Logo" src="small_logo.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">ThorVG
-   &#160;<span id="projectnumber">v0.11</span>
+   &#160;<span id="projectnumber">v0.12</span>
    </div>
   </td>
  </tr>
@@ -133,11 +133,17 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Scene.html">Scene</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A class to composite children paints.  <a href="classtvg_1_1Scene.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Text.html">Text</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A class to represent text objects in a graphical context, allowing for rendering and manipulation of unicode text.  <a href="classtvg_1_1Text.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1SwCanvas.html">SwCanvas</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A class for the rendering graphical elements with a software raster engine.  <a href="classtvg_1_1SwCanvas.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1GlCanvas.html">GlCanvas</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A class for the rendering graphic elements with a GL raster engine.  <a href="classtvg_1_1GlCanvas.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1WgCanvas.html">WgCanvas</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A class for the rendering graphic elements with a WebGPU raster engine.  <a href="classtvg_1_1WgCanvas.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Initializer.html">Initializer</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A class that enables initialization and termination of the TVG engines.  <a href="classtvg_1_1Initializer.html#details">More...</a><br /></td></tr>
@@ -238,17 +244,18 @@ Enumerations</h2></td></tr>
 <tr class="separator:ga4dd2f3776540c10b565e0446aa8e9e02"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga3dfc0651e85484b1011772dd9f8300df"><td class="memItemLeft" align="right" valign="top">enum class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__ThorVG.html#ga3dfc0651e85484b1011772dd9f8300df">CanvasEngine</a> { <a class="el" href="group__ThorVG.html#gga3dfc0651e85484b1011772dd9f8300dfa1f030517f6d25e8607a2a9a7f6227ebc">Sw</a> = (1 &lt;&lt; 1)
 , <a class="el" href="group__ThorVG.html#gga3dfc0651e85484b1011772dd9f8300dfa0f16de4274952a7184e059c5f2d048d6">Gl</a> = (1 &lt;&lt; 2)
+, <a class="el" href="group__ThorVG.html#gga3dfc0651e85484b1011772dd9f8300dfaaa30321309dc6c2ee993415b375db259">Wg</a> = (1 &lt;&lt; 3)
  }</td></tr>
 <tr class="memdesc:ga3dfc0651e85484b1011772dd9f8300df"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enumeration specifying the engine type used for the graphics backend. For multiple backends bitwise operation is allowed.  <a href="group__ThorVG.html#ga3dfc0651e85484b1011772dd9f8300df">More...</a><br /></td></tr>
 <tr class="separator:ga3dfc0651e85484b1011772dd9f8300df"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:ga18826bfb9bff2e77bdafce9a510be57f"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
+<tr class="memitem:ga18826bfb9bff2e77bdafce9a510be57f"><td class="memTemplParams" colspan="2">template&lt;typename T  = tvg::Paint&gt; </td></tr>
 <tr class="memitem:ga18826bfb9bff2e77bdafce9a510be57f"><td class="memTemplItemLeft" align="right" valign="top">std::unique_ptr&lt; T &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group__ThorVG.html#ga18826bfb9bff2e77bdafce9a510be57f">cast</a> (<a class="el" href="classtvg_1_1Paint.html">Paint</a> *paint)</td></tr>
 <tr class="memdesc:ga18826bfb9bff2e77bdafce9a510be57f"><td class="mdescLeft">&#160;</td><td class="mdescRight">The <a class="el" href="group__ThorVG.html#ga151ac90e5e41b7dcbea2265cfd6a54ca" title="The cast() function is a utility function used to cast a &#39;Fill&#39; to type &#39;T&#39;.">cast()</a> function is a utility function used to cast a '<a class="el" href="classtvg_1_1Paint.html" title="An abstract class for managing graphical elements.">Paint</a>' to type 'T'.  <a href="group__ThorVG.html#ga18826bfb9bff2e77bdafce9a510be57f">More...</a><br /></td></tr>
 <tr class="separator:ga18826bfb9bff2e77bdafce9a510be57f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga151ac90e5e41b7dcbea2265cfd6a54ca"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
+<tr class="memitem:ga151ac90e5e41b7dcbea2265cfd6a54ca"><td class="memTemplParams" colspan="2">template&lt;typename T  = tvg::Fill&gt; </td></tr>
 <tr class="memitem:ga151ac90e5e41b7dcbea2265cfd6a54ca"><td class="memTemplItemLeft" align="right" valign="top">std::unique_ptr&lt; T &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group__ThorVG.html#ga151ac90e5e41b7dcbea2265cfd6a54ca">cast</a> (<a class="el" href="classtvg_1_1Fill.html">Fill</a> *fill)</td></tr>
 <tr class="memdesc:ga151ac90e5e41b7dcbea2265cfd6a54ca"><td class="mdescLeft">&#160;</td><td class="mdescRight">The <a class="el" href="group__ThorVG.html#ga151ac90e5e41b7dcbea2265cfd6a54ca" title="The cast() function is a utility function used to cast a &#39;Fill&#39; to type &#39;T&#39;.">cast()</a> function is a utility function used to cast a '<a class="el" href="classtvg_1_1Fill.html" title="An abstract class representing the gradient fill of the Shape object.">Fill</a>' to type 'T'.  <a href="group__ThorVG.html#ga151ac90e5e41b7dcbea2265cfd6a54ca">More...</a><br /></td></tr>
 <tr class="separator:ga151ac90e5e41b7dcbea2265cfd6a54ca"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -279,7 +286,7 @@ Functions</h2></td></tr>
 <p>Enumeration indicates the method used for blending paint. Please refer to the respective formulas for each method. </p>
 <p>Notation: S(source paint as the top layer), D(destination as the bottom layer), Sa(source paint alpha), Da(destination alpha)</p>
 <dl class="section see"><dt>See also</dt><dd><a class="el" href="classtvg_1_1Paint.html#a7e1214a5dc2f3c19ddeedc5371c4e488" title="Sets the blending method for the paint object.">Paint::blend()</a></dd></dl>
-<p>@BETA_API </p>
+<dl class="section note"><dt>Note</dt><dd>Experimental API </dd></dl>
 <table class="fieldtable">
 <tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="gga4dd2f3776540c10b565e0446aa8e9e02a960b44c579bc2f6818d2daaf9e4c16f0"></a>Normal&#160;</td><td class="fielddoc"><p>Perform the alpha blending(default). S if (Sa == 255), otherwise (Sa * S) + (255 - Sa) * D. </p>
 </td></tr>
@@ -339,6 +346,8 @@ Functions</h2></td></tr>
 </td></tr>
 <tr><td class="fieldname"><a id="gga3dfc0651e85484b1011772dd9f8300dfa0f16de4274952a7184e059c5f2d048d6"></a>Gl&#160;</td><td class="fielddoc"><p>OpenGL rasterizer. </p>
 </td></tr>
+<tr><td class="fieldname"><a id="gga3dfc0651e85484b1011772dd9f8300dfaaa30321309dc6c2ee993415b375db259"></a>Wg&#160;</td><td class="fielddoc"><p>WebGPU rasterizer. (Experimental API) </p>
+</td></tr>
 </table>
 
 </div>
@@ -380,13 +389,13 @@ Functions</h2></td></tr>
 </td></tr>
 <tr><td class="fieldname"><a id="ggaabdf94ada64e69d06deabc5aa6576f87a28f3dcc7d8cad65deff7d3a83031ef5a"></a>InvLumaMask&#160;</td><td class="fielddoc"><p>Alpha Masking using the grayscale (0.2125R + 0.7154G + 0.0721*B) of the complement to the compositing target's pixels. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="ggaabdf94ada64e69d06deabc5aa6576f87a8e1e296c3f01c21b1a3db79f0ce4fe9a"></a>AddMask&#160;</td><td class="fielddoc"><p>Combines the target and source objects pixels using target alpha. (T * TA) + (S * (255 - TA)) @BETA_API. </p>
+<tr><td class="fieldname"><a id="ggaabdf94ada64e69d06deabc5aa6576f87a8e1e296c3f01c21b1a3db79f0ce4fe9a"></a>AddMask&#160;</td><td class="fielddoc"><p>Combines the target and source objects pixels using target alpha. (T * TA) + (S * (255 - TA)) (Experimental API) </p>
 </td></tr>
-<tr><td class="fieldname"><a id="ggaabdf94ada64e69d06deabc5aa6576f87a9d512562eaac237c0cb5119d202decb1"></a>SubtractMask&#160;</td><td class="fielddoc"><p>Subtracts the source color from the target color while considering their respective target alpha. (T * TA) - (S * (255 - TA)) @BETA_API. </p>
+<tr><td class="fieldname"><a id="ggaabdf94ada64e69d06deabc5aa6576f87a9d512562eaac237c0cb5119d202decb1"></a>SubtractMask&#160;</td><td class="fielddoc"><p>Subtracts the source color from the target color while considering their respective target alpha. (T * TA) - (S * (255 - TA)) (Experimental API) </p>
 </td></tr>
-<tr><td class="fieldname"><a id="ggaabdf94ada64e69d06deabc5aa6576f87ac41b6c9f18e9ee080e9f74bceff36a47"></a>IntersectMask&#160;</td><td class="fielddoc"><p>Computes the result by taking the minimum value between the target alpha and the source alpha and multiplies it with the target color. (T * min(TA, SA)) @BETA_API. </p>
+<tr><td class="fieldname"><a id="ggaabdf94ada64e69d06deabc5aa6576f87ac41b6c9f18e9ee080e9f74bceff36a47"></a>IntersectMask&#160;</td><td class="fielddoc"><p>Computes the result by taking the minimum value between the target alpha and the source alpha and multiplies it with the target color. (T * min(TA, SA)) (Experimental API) </p>
 </td></tr>
-<tr><td class="fieldname"><a id="ggaabdf94ada64e69d06deabc5aa6576f87a8c6c379355c2381e10645dbd19f29884"></a>DifferenceMask&#160;</td><td class="fielddoc"><p>Calculates the absolute difference between the target color and the source color multiplied by the complement of the target alpha. abs(T - S * (255 - TA)) @BETA_API. </p>
+<tr><td class="fieldname"><a id="ggaabdf94ada64e69d06deabc5aa6576f87a8c6c379355c2381e10645dbd19f29884"></a>DifferenceMask&#160;</td><td class="fielddoc"><p>Calculates the absolute difference between the target color and the source color multiplied by the complement of the target alpha. abs(T - S * (255 - TA)) (Experimental API) </p>
 </td></tr>
 </table>
 
