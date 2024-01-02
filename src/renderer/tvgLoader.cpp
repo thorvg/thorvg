@@ -20,6 +20,8 @@
  * SOFTWARE.
  */
 
+#include <string.h>
+
 #include "tvgInlist.h"
 #include "tvgLoader.h"
 
