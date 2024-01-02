@@ -27,7 +27,7 @@
   <td id="projectlogo"><img alt="Logo" src="small_logo.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">ThorVG
-   &#160;<span id="projectnumber">v0.11</span>
+   &#160;<span id="projectnumber">v0.12</span>
    </div>
   </td>
  </tr>
@@ -475,6 +475,17 @@ See <a class="el" href="classtvg_1_1Animation.html" title="The Animation class e
 </div><div class="memdoc">
 
 <p>Loads a raw data from a memory block with a given size. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">paint</td><td>A Tvg_Paint pointer to the picture object. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">data</td><td>A pointer to a memory location where the content of the picture raw data is stored. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">w</td><td>The width of the image <code>data</code> in pixels. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">h</td><td>The height of the image <code>data</code> in pixels. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">premultiplied</td><td>If <code>true</code>, the given image data is alpha-premultiplied. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">copy</td><td>If <code>true</code> the data are copied into the engine local buffer, otherwise they are not.</td></tr>
+  </table>
+  </dd>
+</dl>
 <dl class="retval"><dt>Return values</dt><dd>
   <table class="retval">
     <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a505a83f220c02df2f85c3810cd9ceb38" title="The value returned in case of a correct request execution.">Result::Success</a></td><td>When succeed, <a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a119732ff568bf103d744e930ae2404f1" title="The value returned in case the request cannot be processed - e.g. asking for properties of an object,...">Result::InsufficientCondition</a> otherwise. </td></tr>
@@ -517,10 +528,10 @@ See <a class="el" href="classtvg_1_1Animation.html" title="The Animation class e
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>uint32_t The number of polygons in the array.</dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>The number of polygons in the array.</dd></dl>
 <dl class="section note"><dt>Note</dt><dd>Modifying the triangles returned by this method will modify them directly within the mesh. </dd></dl>
 <dl class="section warning"><dt>Warning</dt><dd>Please do not use it, this API is not official one. It could be modified in the next version.</dd></dl>
-<p>@BETA_API </p>
+<dl class="section note"><dt>Note</dt><dd>Experimental API </dd></dl>
 
 </div>
 </div>
@@ -578,7 +589,7 @@ See <a class="el" href="classtvg_1_1Animation.html" title="The Animation class e
 </dl>
 <dl class="section note"><dt>Note</dt><dd>The Polygons are copied internally, so modifying them after calling Mesh::mesh has no affect. </dd></dl>
 <dl class="section warning"><dt>Warning</dt><dd>Please do not use it, this API is not official one. It could be modified in the next version.</dd></dl>
-<p>@BETA_API </p>
+<dl class="section note"><dt>Note</dt><dd>Experimental API </dd></dl>
 
 </div>
 </div>
@@ -624,7 +635,12 @@ See <a class="el" href="classtvg_1_1Animation.html" title="The Animation class e
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a505a83f220c02df2f85c3810cd9ceb38" title="The value returned in case of a correct request execution.">Result::Success</a> when succeed. </dd></dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a505a83f220c02df2f85c3810cd9ceb38" title="The value returned in case of a correct request execution.">Result::Success</a></td><td>when succeed. </td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -671,7 +687,12 @@ See <a class="el" href="classtvg_1_1Animation.html" title="The Animation class e
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a505a83f220c02df2f85c3810cd9ceb38" title="The value returned in case of a correct request execution.">Result::Success</a> when succeed, <a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a119732ff568bf103d744e930ae2404f1" title="The value returned in case the request cannot be processed - e.g. asking for properties of an object,...">Result::InsufficientCondition</a> otherwise. </dd></dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname"><a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a505a83f220c02df2f85c3810cd9ceb38" title="The value returned in case of a correct request execution.">Result::Success</a></td><td>when succeed, <a class="el" href="group__ThorVG.html#gga28287671eaf7406afd604bd055ba4066a119732ff568bf103d744e930ae2404f1" title="The value returned in case the request cannot be processed - e.g. asking for properties of an object,...">Result::InsufficientCondition</a> otherwise. </td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
