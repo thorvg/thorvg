@@ -105,6 +105,12 @@ var group__ThorVG =
       [ "push", "classtvg_1_1Scene.html#a19240cd5b53571da718fabef8afb7103", null ],
       [ "reserve", "classtvg_1_1Scene.html#a7b0edd52cb97da03615fe9af3ee768a9", null ]
     ] ],
+    [ "Text", "classtvg_1_1Text.html", [
+      [ "fill", "classtvg_1_1Text.html#ad0cb7b2ec8d18d7c6d366cc84741682c", null ],
+      [ "fill", "classtvg_1_1Text.html#ab82934b0e19f300568f0aaab976e56fa", null ],
+      [ "font", "classtvg_1_1Text.html#ae75b2b7eaa5757cfaa6620df127c0416", null ],
+      [ "text", "classtvg_1_1Text.html#a9dd4d33d94a639639321538338e9f9f8", null ]
+    ] ],
     [ "SwCanvas", "classtvg_1_1SwCanvas.html", [
       [ "Colorspace", "classtvg_1_1SwCanvas.html#a7a7e24cdb2a27271343f0adceff89f65", [
         [ "ABGR8888", "classtvg_1_1SwCanvas.html#a7a7e24cdb2a27271343f0adceff89f65adb1b146d65c52857a5a4af54e5006101", null ],
@@ -123,15 +129,20 @@ var group__ThorVG =
     [ "GlCanvas", "classtvg_1_1GlCanvas.html", [
       [ "target", "classtvg_1_1GlCanvas.html#aad369f9a4a762338d0ef4a16265a0f29", null ]
     ] ],
+    [ "WgCanvas", "classtvg_1_1WgCanvas.html", [
+      [ "target", "classtvg_1_1WgCanvas.html#a9b5dc178ae416c6279877c87ca0e6330", null ]
+    ] ],
     [ "Initializer", "classtvg_1_1Initializer.html", null ],
     [ "Animation", "classtvg_1_1Animation.html", [
-      [ "curFrame", "classtvg_1_1Animation.html#a0e791c8144b0ad30d25f06c042496d27", null ],
+      [ "curFrame", "classtvg_1_1Animation.html#a45585afc7e6dbab9fb2d5295b67c45ee", null ],
       [ "duration", "classtvg_1_1Animation.html#a90ab38b7a2cb72d6b9de4492ff3e6679", null ],
-      [ "frame", "classtvg_1_1Animation.html#ac13e2b8f811686e95f3f22c08ac75f8a", null ],
+      [ "frame", "classtvg_1_1Animation.html#a974f03b024a8beed5c8bfe32b56ac2c9", null ],
       [ "picture", "classtvg_1_1Animation.html#a004ba625c58005c931b244fb2515624f", null ],
-      [ "totalFrame", "classtvg_1_1Animation.html#a91d83102afb1ec5c65f009240b29250c", null ]
+      [ "totalFrame", "classtvg_1_1Animation.html#a624e4fdeebf70f286188685e769125f3", null ]
     ] ],
     [ "Saver", "classtvg_1_1Saver.html", [
+      [ "background", "classtvg_1_1Saver.html#a8e3b775984e506f816d6998ca12fd3fb", null ],
+      [ "save", "classtvg_1_1Saver.html#a4d421f31d37ea28b650ad0331735710a", null ],
       [ "save", "classtvg_1_1Saver.html#acda492a458f3ddc2da01df672ecd85bd", null ],
       [ "sync", "classtvg_1_1Saver.html#a2fdf9b2208358ea10f912b1877733778", null ]
     ] ],
@@ -156,7 +167,8 @@ var group__ThorVG =
     ] ],
     [ "CanvasEngine", "group__ThorVG.html#ga3dfc0651e85484b1011772dd9f8300df", [
       [ "Sw", "group__ThorVG.html#gga3dfc0651e85484b1011772dd9f8300dfa1f030517f6d25e8607a2a9a7f6227ebc", null ],
-      [ "Gl", "group__ThorVG.html#gga3dfc0651e85484b1011772dd9f8300dfa0f16de4274952a7184e059c5f2d048d6", null ]
+      [ "Gl", "group__ThorVG.html#gga3dfc0651e85484b1011772dd9f8300dfa0f16de4274952a7184e059c5f2d048d6", null ],
+      [ "Wg", "group__ThorVG.html#gga3dfc0651e85484b1011772dd9f8300dfaaa30321309dc6c2ee993415b375db259", null ]
     ] ],
     [ "CompositeMethod", "group__ThorVG.html#gaabdf94ada64e69d06deabc5aa6576f87", [
       [ "None", "group__ThorVG.html#ggaabdf94ada64e69d06deabc5aa6576f87a6adf97f83acf6453d4a6a4b1070f3754", null ],

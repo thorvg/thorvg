@@ -1,0 +1,4 @@
+<map id="WgCanvas" name="WgCanvas">
+<area shape="rect" id="node1" title="A class for the rendering graphic elements with a WebGPU raster engine." alt="" coords="5,80,96,107"/>
+<area shape="rect" id="node2" href="$classtvg_1_1Canvas.html" title="An abstract class for drawing graphical elements." alt="" coords="15,5,86,32"/>
+</map>

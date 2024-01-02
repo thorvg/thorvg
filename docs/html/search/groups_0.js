@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['thorvg_299',['ThorVG',['../group__ThorVG.html',1,'']]]
+  ['thorvg_313',['ThorVG',['../group__ThorVG.html',1,'']]]
 ];

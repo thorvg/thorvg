@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['vertex_168',['Vertex',['../structtvg_1_1Vertex.html',1,'tvg']]]
+  ['text_175',['Text',['../classtvg_1_1Text.html',1,'tvg']]]
 ];
