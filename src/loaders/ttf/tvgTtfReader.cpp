@@ -20,7 +20,14 @@
  * SOFTWARE.
  */
 
-#include <memory.h>
+
+#ifdef _WIN32
+    #include <malloc.h>
+#elif defined(__linux__)
+    #include <alloca.h>
+#else
+    #include <stdlib.h>
+#endif
 
 #include "tvgMath.h"
 #include "tvgShape.h"
@@ -54,12 +61,6 @@ static inline int16_t _i16(uint8_t* data, uint32_t offset)
 static inline uint8_t _u8(uint8_t* data, uint32_t offset)
 {
     return *(data + offset);
-}
-
-
-static inline int8_t _i8(uint8_t* data, uint32_t offset)
-{
-    return (int8_t) _u8(data, offset);
 }
 
 
@@ -242,7 +243,7 @@ bool TtfReader::points(uint32_t outline, uint8_t* flags, Point* pts, uint32_t pt
                 return false;
             }
             auto value = (long) _u8(data, outline++);
-            auto bit = !!(flags[i] & X_CHANGE_IS_POSITIVE);
+            auto bit = (uint8_t)!!(flags[i] & X_CHANGE_IS_POSITIVE);
             accum -= (value ^ -bit) + bit;
         } else if (!(flags[i] & X_CHANGE_IS_ZERO)) {
             if (!validate(outline, 2)) return false;
@@ -258,7 +259,7 @@ bool TtfReader::points(uint32_t outline, uint8_t* flags, Point* pts, uint32_t pt
         if (flags[i] & Y_CHANGE_IS_SMALL) {
             if (!validate(outline, 1)) return false;
             auto value = (long) _u8(data, outline++);
-            auto bit = !!(flags[i] & Y_CHANGE_IS_POSITIVE);
+            auto bit = (uint8_t)!!(flags[i] & Y_CHANGE_IS_POSITIVE);
             accum -= (value ^ -bit) + bit;
         } else if (!(flags[i] & Y_CHANGE_IS_ZERO)) {
             if (!validate(outline, 2)) return false;
@@ -444,7 +445,7 @@ bool TtfReader::convert(Shape* shape, TtfGlyphMetrics& gmetrics, const Point& of
     if (!validate(outline, cntrsCnt * 2 + 2)) return false;
 
     auto ptsCnt = _u16(data, outline + (cntrsCnt - 1) * 2) + 1;
-    size_t endPts[cntrsCnt];  //the index of the contour points.
+    auto endPts = (size_t*)alloca(cntrsCnt * sizeof(size_t));  //the index of the contour points.
 
     for (uint32_t i = 0; i < cntrsCnt; ++i) {
         endPts[i] = (uint32_t) _u16(data, outline);
@@ -452,10 +453,10 @@ bool TtfReader::convert(Shape* shape, TtfGlyphMetrics& gmetrics, const Point& of
     }
     outline += 2U + _u16(data, outline);
 
-    uint8_t flags[ptsCnt];
+    auto flags = (uint8_t*)alloca(ptsCnt * sizeof(uint8_t));
     if (!this->flags(&outline, flags, ptsCnt)) return false;
 
-    Point pts[ptsCnt];
+    auto pts = (Point*)alloca(ptsCnt * sizeof(Point));
     if (!this->points(outline, flags, pts, ptsCnt, offset + kerning)) return false;
 
     //generate tvg pathes.
