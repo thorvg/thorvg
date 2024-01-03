@@ -8,7 +8,7 @@ if all_loaders or get_option('loaders').contains('svg') == true
     subdir('svg')
 endif
 
-if get_option('loaders').contains('ttf_beta') == true
+if all_loaders or get_option('loaders').contains('ttf') == true
     subdir('ttf')
 endif
 

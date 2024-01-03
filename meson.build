@@ -53,12 +53,12 @@ if all_loaders or get_option('loaders').contains('lottie') == true
     config_h.set10('THORVG_LOTTIE_LOADER_SUPPORT', true)
 endif
 
-if get_option('loaders').contains('webp_beta') == true
-    config_h.set10('THORVG_WEBP_LOADER_SUPPORT', true)
+if all_loaders or get_option('loaders').contains('ttf') == true
+    config_h.set10('THORVG_TTF_LOADER_SUPPORT', true)
 endif
 
-if get_option('loaders').contains('ttf_beta') == true
-    config_h.set10('THORVG_TTF_LOADER_SUPPORT', true)
+if get_option('loaders').contains('webp_beta') == true
+    config_h.set10('THORVG_WEBP_LOADER_SUPPORT', true)
 endif
 
 
@@ -138,7 +138,7 @@ Summary:
     Raster Engine (WG):    @6@
     Loader (TVG):          @7@
     Loader (SVG):          @8@
-    Loader (TTF_BETA):     @9@
+    Loader (TTF):          @9@
     Loader (LOTTIE):       @10@
     Loader (PNG):          @11@
     Loader (JPG):          @12@
@@ -164,7 +164,7 @@ Summary:
         get_option('engines').contains('wg_beta'),
         all_loaders or get_option('loaders').contains('tvg'),
         all_loaders or get_option('loaders').contains('svg'),
-        get_option('loaders').contains('ttf_beta'),
+        all_loaders or get_option('loaders').contains('ttf'),
         all_loaders or get_option('loaders').contains('lottie'),
         all_loaders or get_option('loaders').contains('png'),
         all_loaders or get_option('loaders').contains('jpg'),
