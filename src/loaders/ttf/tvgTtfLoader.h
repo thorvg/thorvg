@@ -31,7 +31,7 @@
 struct TtfLoader : public FontLoader
 {
 #if defined(_WIN32)
-    HANDLE mapping = nullptr;
+    void* mapping = nullptr;
 #endif
     TtfReader reader;
     char* text = nullptr;
