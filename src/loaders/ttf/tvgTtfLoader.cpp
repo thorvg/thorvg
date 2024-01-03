@@ -20,6 +20,9 @@
  * SOFTWARE.
  */
 
+
+#include "tvgTtfLoader.h"
+
 #ifdef _WIN32
     #include <windows.h>
 #else
@@ -28,10 +31,6 @@
     #include <sys/mman.h>
     #include <sys/stat.h>
 #endif
-
-#include <memory.h>
-#include "tvgTtfLoader.h"
-
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
@@ -43,7 +42,7 @@ static bool _map(TtfLoader* loader, const string& path)
 {
     auto& reader = loader->reader;
 
-	auto file = CreateFileA(path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
+	auto file = CreateFileA(path.c_str(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
 	if (file == INVALID_HANDLE_VALUE) return false;
 
 	DWORD high;
@@ -55,16 +54,16 @@ static bool _map(TtfLoader* loader, const string& path)
 
 	reader.size = (uint32_t)((size_t)high << (8 * sizeof(DWORD)) | low);
 
-	loader.mapping = (uint8_t*)CreateFileMapping(file, NULL, PAGE_READONLY, high, low, NULL);
+	loader->mapping = (uint8_t*)CreateFileMapping(file, NULL, PAGE_READONLY, high, low, NULL);
 
 	CloseHandle(file);
 
-	if (!mapping) return false;
+	if (!loader->mapping) return false;
 
-	font->data = (uint8_t*) MapViewOfFile(loader.mapping, FILE_MAP_READ, 0, 0, 0);
-	if (!font->data) {
-		CloseHandle(loader.mapping);
-		font->reader = NULL;
+	loader->reader.data = (uint8_t*) MapViewOfFile(loader->mapping, FILE_MAP_READ, 0, 0, 0);
+	if (!loader->reader.data) {
+		CloseHandle(loader->mapping);
+		loader->mapping = nullptr;
 		return false;
 	}
 	return true;
@@ -74,9 +73,9 @@ static void _unmap(TtfLoader* loader)
 {
     auto& reader = loader->reader;
 
-	if (reader->data) {
-		UnmapViewOfFile(reader->data);
-		reader->data = nullptr;
+	if (reader.data) {
+		UnmapViewOfFile(reader.data);
+		reader.data = nullptr;
 	}
 	if (loader->mapping) {
 		CloseHandle(loader->mapping);
