@@ -378,13 +378,6 @@ TvgBinCounter TvgSaver::serializeScene(const Scene* scene, const Matrix* pTransf
 
     it->begin();
 
-    //Case - Delegator Scene: This scene is just a delegator, we can skip this:
-    if (scene->composite(nullptr) == CompositeMethod::None && scene->opacity() == 255) {
-        auto ret = serializeChildren(it, cTransform, false);
-        delete(it);
-        return ret;
-    }
-
     //Case - Serialize Scene & its children
     writeTag(TVG_TAG_CLASS_SCENE);
     reserveCount();
