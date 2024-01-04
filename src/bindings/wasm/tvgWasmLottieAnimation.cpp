@@ -142,6 +142,8 @@ public:
 
         errorMsg = NoError;
 
+        this->canvas->clear(false);
+
         if (canvas->update() != Result::Success) {
             errorMsg = "update() fail";
             return false;
