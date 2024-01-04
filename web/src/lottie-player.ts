@@ -306,12 +306,13 @@ export class LottiePlayer extends LitElement {
     this._observer = new IntersectionObserver(_observerCallback);
     this._observer.observe(this);
 
+    if (!this._TVG) {
+      this._timer = setInterval(this._delayedLoad.bind(this), 100);
+      return;
+    }
+
     if (this.src) {
-      if (this._TVG) {
-        this.load(this.src, this.mimeType);
-      } else {
-        this._timer = setInterval(this._delayedLoad.bind(this), 100);
-      }
+      this.load(this.src, this.mimeType);
     }
   }
 
