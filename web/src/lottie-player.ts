@@ -46,6 +46,7 @@ export interface LibraryVersion {
 export enum ExportableType {
   GIF = 'gif',
   TVG = 'tvg',
+  PNG = 'png',
 }
 
 // Define mime type which player can load
@@ -164,6 +165,15 @@ const _observerCallback = (entries: IntersectionObserverEntry[]) => {
     target.freeze();
     target.dispatchEvent(new CustomEvent(PlayerEvent.Freeze));
   }
+}
+
+const _downloadFile = (fileName: string, blob: Blob) => {
+  const link = document.createElement("a");
+  link.setAttribute('href', URL.createObjectURL(blob));
+  link.setAttribute('download', fileName);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 }
 
 @customElement('lottie-player')
@@ -595,7 +605,20 @@ export class LottiePlayer extends LitElement {
    * @since 1.0
    */
   public async save(target: ExportableType): Promise<void> {
-    if (!this._TVG || !this.src) {
+    if (!this._TVG) {
+      return;
+    }
+
+    const fileName = `output.${target}`;
+
+    if (target === ExportableType.PNG) {
+      this._canvas!.toBlob((blob: Blob | null) => {
+        if (!blob) {
+          return;
+        }
+
+        _downloadFile('output.png', blob);
+      }, 'image/png');
       return;
     }
 
@@ -604,7 +627,6 @@ export class LottiePlayer extends LitElement {
       throw new Error('Unable to save. Error: ', this._TVG.error());
     }
 
-    const fileName = `output.${target}`;
     const data = _module.FS.readFile(fileName);
 
     if (target === ExportableType.GIF && data.length < 6) {
@@ -620,12 +642,7 @@ export class LottiePlayer extends LitElement {
     }
 
     const blob = new Blob([data], {type: 'application/octet-stream'});
-    const link = document.createElement("a");
-    link.setAttribute('href', URL.createObjectURL(blob));
-    link.setAttribute('download', fileName);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    _downloadFile(fileName, blob);
   }
 
   /**
