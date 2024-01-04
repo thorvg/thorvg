@@ -252,6 +252,15 @@ export class LottiePlayer extends LitElement {
   @property({ type: Number })
   public currentState: PlayerState = PlayerState.Loading;
 
+  /**
+   * original size of the animation (readonly)
+   * @since 1.0
+   */
+  @property({ type: Float32Array })
+  public get size(): Float32Array {
+    return Float32Array.from(this._TVG?.size() || [0, 0]);
+  }
+
   private _TVG?: TvgModule;
   private _canvas?: HTMLCanvasElement;
   private _imageData?: ImageData;
@@ -489,6 +498,21 @@ export class LottiePlayer extends LitElement {
     this._frame(frame);
     await this._update();
     this._render();
+  }
+
+  /**
+   * Adjust the canvas size.
+   * @param width The width to resize
+   * @param height The height to resize
+   * @since 1.0
+   */
+  public resize(width: number, height: number) {
+    this._canvas!.width = width;
+    this._canvas!.height = height;
+
+    if (this.currentState !== PlayerState.Playing) {
+      this._render();
+    }
   }
 
   /**
