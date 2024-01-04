@@ -15,6 +15,7 @@
         <button onclick="playAnimation()">Play</button>
         <button onclick="save2gif()">save2gif</button>
         <button onclick="save2tvg()">save2tvg</button>
+        <button onclick="save2png()">save2png</button>
         <div>
           <label for="reverseCheckbox">Reverse</label>
           <input type="checkbox" id="reverseCheckbox" onchange="toggleReverse(event)">
@@ -102,6 +103,10 @@
 
       function save2tvg() {
         animation.save('tvg');
+      }
+
+      function save2png() {
+        animation.save('png');
       }
   </script>
   </body>
