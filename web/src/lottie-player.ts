@@ -476,7 +476,7 @@ export class LottiePlayer extends LitElement {
     this.currentState = PlayerState.Stopped;
     this.currentFrame = 0;
     this._counter = 1;
-    this._TVG.frame(0);
+    this.seek(0);
 
     this.dispatchEvent(new CustomEvent(PlayerEvent.Stop));
   }
