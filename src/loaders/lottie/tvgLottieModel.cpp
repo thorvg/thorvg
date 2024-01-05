@@ -203,4 +203,9 @@ LottieComposition::~LottieComposition()
     for (auto a = assets.data; a < assets.end(); ++a) {
         delete(*a);
     }
+
+    //delete fonts
+    for (auto f = fonts.data; f < fonts.end(); ++f) {
+        delete(*f);
+    }
 }

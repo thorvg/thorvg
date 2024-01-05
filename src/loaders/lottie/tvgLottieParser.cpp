@@ -153,6 +153,28 @@ StrokeJoin LottieParser::getStrokeJoin()
 }
 
 
+void LottieParser::getValue(TextDocument& doc)
+{
+    enterObject();
+    while (auto key = nextObjectKey()) {
+        if (!strcmp(key, "s")) doc.size = getFloat();
+        else if (!strcmp(key, "f")) doc.name = getStringCopy();
+        else if (!strcmp(key, "t")) doc.text = getStringCopy();
+        else if (!strcmp(key, "j")) doc.justify = getInt();
+        else if (!strcmp(key, "tr")) doc.tracking = getInt();
+        else if (!strcmp(key, "lh")) doc.height = getFloat();
+        else if (!strcmp(key, "ls")) doc.shift = getFloat();
+        else if (!strcmp(key, "fc")) getValue(doc.color);
+        else if (!strcmp(key, "ps")) getValue(doc.bbox.pos);
+        else if (!strcmp(key, "sz")) getValue(doc.bbox.size);
+        else if (!strcmp(key, "sc")) getValue(doc.stroke.color);
+        else if (!strcmp(key, "sw")) doc.stroke.width = getFloat();
+        else if (!strcmp(key, "of")) doc.stroke.render = getBool();
+        else skip(key);
+    }
+}
+
+
 void LottieParser::getValue(PathSet& path)
 {
     Array<Point> outs, ins, pts;
@@ -427,6 +449,8 @@ void LottieParser::parsePropertyInternal(T& prop)
         getValue(prop.value);
     //multi value property
     } else {
+        //TODO: Here might be a single frame.
+        //Can we figure out the frame number in advance?
         enterArray();
         while (nextArrayValue()) {
             //keyframes value
@@ -816,14 +840,14 @@ LottieObject* LottieParser::parseObject()
 }
 
 
-void LottieParser::parseObject(LottieGroup* parent)
+void LottieParser::parseObject(Array<LottieObject*>& parent)
 {
     enterObject();
     while (auto key = nextObjectKey()) {
         if (!strcmp(key, "ty")) {
             if (auto child = parseObject()) {
                 if (child->hidden) delete(child);
-                else parent->children.push(child);
+                else parent.push(child);
             }
         } else skip(key);
     }
@@ -907,6 +931,24 @@ LottieObject* LottieParser::parseAsset()
 }
 
 
+LottieFont* LottieParser::parseFont()
+{
+    enterObject();
+
+    auto font = new LottieFont;
+
+    while (auto key = nextObjectKey()) {
+        if (!strcmp(key, "fName")) font->name = getStringCopy();
+        else if (!strcmp(key, "fFamily")) font->family = getStringCopy();
+        else if (!strcmp(key, "fStyle")) font->style = getStringCopy();
+        else if (!strcmp(key, "ascent")) font->ascent = getFloat();
+        else if (!strcmp(key, "origin")) font->origin = (LottieFont::Origin) getInt();
+        else skip(key);
+    }
+    return font;
+}
+
+
 void LottieParser::parseAssets()
 {
     enterArray();
@@ -914,6 +956,58 @@ void LottieParser::parseAssets()
         auto asset = parseAsset();
         if (asset) comp->assets.push(asset);
         else TVGERR("LOTTIE", "Invalid Asset!");
+    }
+}
+
+
+void LottieParser::parseChars()
+{
+    if (comp->fonts.count == 0) {
+        TVGERR("LOTTIE", "No font data?");
+        return;
+    }
+
+    enterArray();
+    while (nextArrayValue()) {
+        enterObject();
+        //a new glyph
+        auto glyph = new LottieGlyph;
+        char* style = nullptr;
+        char* family = nullptr;
+        while (auto key = nextObjectKey()) {
+            if (!strcmp("ch", key)) glyph->code = getStringCopy();
+            else if (!strcmp("size", key)) glyph->size = static_cast<uint16_t>(getFloat());
+            else if (!strcmp("style", key)) style = const_cast<char*>(getString());
+            else if (!strcmp("w", key)) glyph->width = getFloat();
+            else if (!strcmp("fFamily", key)) family = const_cast<char*>(getString());
+            else if (!strcmp("data", key))
+            {   //glyph shapes
+                enterObject();
+                while (auto key = nextObjectKey()) {
+                    if (!strcmp(key, "shapes")) parseShapes(glyph->children);
+                }
+            } else skip(key);
+        }
+        //aggregate the font characters
+        for (uint32_t i = 0; i < comp->fonts.count; ++i) {
+            auto& font = comp->fonts[i];
+            if (!strcmp(font->family, family) && !strcmp(font->style, style)) font->chars.push(glyph);
+            else TVGERR("LOTTIE", "No font data?");
+        }
+        glyph->prepare();
+    }
+}
+
+void LottieParser::parseFonts()
+{
+    enterObject();
+    while (auto key = nextObjectKey()) {
+        if (!strcmp("list", key)) {
+            enterArray();
+            while (nextArrayValue()) {
+                comp->fonts.push(parseFont());
+            }
+        } else skip(key);
     }
 }
 
@@ -928,7 +1022,7 @@ LottieObject* LottieParser::parseGroup()
             group->name = getStringCopy();
         } else if (!strcmp(key, "it")) {
             enterArray();
-            while (nextArrayValue()) parseObject(group);
+            while (nextArrayValue()) parseObject(group->children);
         } else skip(key);
     }
     if (group->children.empty()) {
@@ -947,7 +1041,7 @@ void LottieParser::parseTimeRemap(LottieLayer* layer)
 }
 
 
-void LottieParser::parseShapes(LottieLayer* layer)
+void LottieParser::parseShapes(Array<LottieObject*>& parent)
 {
     enterArray();
     while (nextArrayValue()) {
@@ -955,15 +1049,52 @@ void LottieParser::parseShapes(LottieLayer* layer)
         while (auto key = nextObjectKey()) {
             if (!strcmp(key, "it")) {
                 enterArray();
-                while (nextArrayValue()) parseObject(layer);
+                while (nextArrayValue()) parseObject(parent);
             } else if (!strcmp(key, "ty")) {
                 if (auto child = parseObject()) {
                     if (child->hidden) delete(child);
-                    else layer->children.push(child);
+                    else parent.push(child);
                 }
             } else skip(key);
         }
      }
+}
+
+
+void LottieParser::parseTextRange(LottieText* text)
+{
+    enterArray();
+    while (nextArrayValue()) {
+        enterObject();
+        while (auto key2 = nextObjectKey()) {
+            if (!strcmp(key2, "a")) {  //text style
+                enterObject();
+                while (auto key3 = nextObjectKey()) {
+                    if (!strcmp(key3, "t")) parseProperty(text->spacing);
+                    else skip(key3);
+                }
+            } else skip(key2);
+        }
+    }
+}
+
+
+void LottieParser::parseText(Array<LottieObject*>& parent)
+{
+    enterObject();
+
+    auto text = new LottieText;
+
+    while (auto key = nextObjectKey()) {
+        if (!strcmp(key, "d")) parseProperty(text->doc);
+        else if (!strcmp(key, "a")) parseTextRange(text);
+        //else if (!strcmp(key, "p")) TVGLOG("LOTTIE", "Text Follow Path (p) is not supported"); 
+        //else if (!strcmp(key, "m")) TVGLOG("LOTTIE", "Text Alignment Option (m) is not supported");
+        else skip(key);
+    }
+
+    text->prepare();
+    parent.push(text);
 }
 
 
@@ -1032,7 +1163,7 @@ LottieLayer* LottieParser::parseLayer()
             layer->transform = parseTransform(ddd);
         }
         else if (!strcmp(key, "ao")) layer->autoOrient = getInt();
-        else if (!strcmp(key, "shapes")) parseShapes(layer);
+        else if (!strcmp(key, "shapes")) parseShapes(layer->children);
         else if (!strcmp(key, "ip")) layer->inFrame = getFloat();
         else if (!strcmp(key, "op")) layer->outFrame = getFloat();
         else if (!strcmp(key, "st")) layer->startFrame = getFloat();
@@ -1047,6 +1178,7 @@ LottieLayer* LottieParser::parseLayer()
         else if (!strcmp(key, "hd")) layer->hidden = getBool();
         else if (!strcmp(key, "refId")) layer->refId = getStringCopy();
         else if (!strcmp(key, "td")) layer->matteSrc = getInt();      //used for matte layer
+        else if (!strcmp(key, "t")) parseText(layer->children);
         else if (!strcmp(key, "ef"))
         {
             TVGERR("LOTTIE", "layer effect(ef) is not supported!");
@@ -1126,6 +1258,8 @@ bool LottieParser::parse()
         else if (!strcmp(key, "nm")) comp->name = getStringCopy();
         else if (!strcmp(key, "assets")) parseAssets();
         else if (!strcmp(key, "layers")) comp->root = parseLayers();
+        else if (!strcmp(key, "fonts")) parseFonts();
+        else if (!strcmp(key, "chars")) parseChars();
         else skip(key);
     }
 
