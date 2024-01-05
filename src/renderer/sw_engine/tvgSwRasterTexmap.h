@@ -1108,8 +1108,7 @@ static bool _rasterTexmapPolygon(SwSurface* surface, const SwImage* image, const
 
     float ys = FLT_MAX, ye = -1.0f;
     for (int i = 0; i < 4; i++) {
-        mathMultiply(&vertices[i].pt, transform);
-
+        if (transform) mathMultiply(&vertices[i].pt, transform);
         if (vertices[i].pt.y < ys) ys = vertices[i].pt.y;
         if (vertices[i].pt.y > ye) ye = vertices[i].pt.y;
     }

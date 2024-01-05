@@ -418,7 +418,7 @@ static void _updateEllipse(LottieGroup* parent, LottieObject** child, float fram
 
 static void _updatePath(LottieGroup* parent, LottieObject** child, float frameNo, TVG_UNUSED Inlist<RenderContext>& contexts, RenderContext* ctx)
 {
-    auto path= static_cast<LottiePath*>(*child);
+    auto path = static_cast<LottiePath*>(*child);
 
     if (ctx->repeater) {
         auto p = Shape::gen();
@@ -436,6 +436,77 @@ static void _updatePath(LottieGroup* parent, LottieObject** child, float frameNo
             P(merging)->rs.stroke->join = StrokeJoin::Round;
         }
     }
+}
+
+
+static void _updateText(LottieGroup* parent, LottieObject** child, float frameNo, TVG_UNUSED Inlist<RenderContext>& contexts, TVG_UNUSED RenderContext* ctx)
+{
+    auto text = static_cast<LottieText*>(*child);
+    auto& doc = text->doc(frameNo);
+    auto p = doc.text;
+
+    if (!p || !text->font) return;
+
+    auto scale = doc.size * 0.01f;
+    float spacing = text->spacing(frameNo) / scale;
+    Point cursor = {0.0f, 0.0f};
+    auto scene = Scene::gen();
+
+    //text string
+    while (*p != '\0') {
+        //find the glyph
+        for (auto g = text->font->chars.data; g < text->font->chars.end(); ++g) {
+            auto glyph = *g;
+            //draw matched glyphs
+            if (!strncmp(glyph->code, p, glyph->len)) {
+                //TODO: caching?
+                auto shape = Shape::gen();
+                for (auto g = glyph->children.data; g < glyph->children.end(); ++g) {
+                    auto group = static_cast<LottieGroup*>(*g);
+                    for (auto p = group->children.data; p < group->children.end(); ++p) {
+                        if (static_cast<LottiePath*>(*p)->pathset(frameNo, P(shape)->rs.path.cmds, P(shape)->rs.path.pts)) {
+                            P(shape)->update(RenderUpdateFlag::Path);
+                        }
+                    }
+                }
+                shape->fill(doc.color.rgb[0], doc.color.rgb[1], doc.color.rgb[2]);
+                shape->translate(cursor.x, cursor.y);
+
+                if (doc.stroke.render) {
+                    shape->strokeJoin(StrokeJoin::Round);
+                    shape->strokeWidth(doc.stroke.width / scale);
+                    shape->strokeFill(doc.stroke.color.rgb[0], doc.stroke.color.rgb[1], doc.stroke.color.rgb[2]);
+                }
+
+                scene->push(std::move(shape));
+
+                p += glyph->len; 
+
+                //end of text, new line of the cursor position
+                if (*p == 13 || *p == 3) {
+                    cursor.x = 0.0f;
+                    cursor.y += (doc.height / scale);
+                    ++p;
+                //advance the cursor position horizontally
+                } else {
+                    cursor.x += glyph->width + spacing;
+                }
+                break;
+            }
+        }
+    }
+
+    //text layout position
+    Point layout = {doc.bbox.pos.x, (doc.bbox.pos.y * 0.5f) - doc.shift};
+
+    //adjust the layout
+    if (doc.justify == 1) layout.x -= (cursor.x * scale);              //right aligned
+    else if (doc.justify == 2) layout.x -= (cursor.x * 0.5f * scale);  //center aligned
+
+    scene->translate(layout.x, layout.y);
+    scene->scale(scale);
+
+    parent->scene->push(std::move(scene));
 }
 
 
@@ -790,6 +861,10 @@ static void _updateChildren(LottieGroup* parent, float frameNo, Inlist<RenderCon
                     _updateTrimpath(parent, child, frameNo, contexts, ctx);
                     break;
                 }
+                case LottieObject::Text: {
+                    _updateText(parent, child, frameNo, contexts, ctx);
+                    break;
+                }
                 case LottieObject::Repeater: {
                     _updateRepeater(parent, child, frameNo, contexts, ctx);
                     break;
@@ -1028,6 +1103,26 @@ static void _checkFragment(LottieGroup* parent)
 }
 
 
+static void _attachFont(LottieComposition* comp, LottieLayer* parent)
+{
+    //TODO: Consider to migrate this attachment to the frame update time.
+    for (auto c = parent->children.data; c < parent->children.end(); ++c) {
+        auto text = static_cast<LottieText*>(*c);
+        auto& doc = text->doc(0);
+        if (!doc.name) continue;
+        auto len = strlen(doc.name);
+        for (uint32_t i = 0; i < comp->fonts.count; ++i) {
+            auto font = comp->fonts[i];
+            auto len2 = strlen(font->name);
+            if (!strncmp(font->name, doc.name, len < len2 ? len : len2)) {
+                text->font = font;
+                break;
+            }
+        }
+    }
+}
+
+
 static bool _buildComposition(LottieComposition* comp, LottieGroup* parent)
 {
     if (parent->children.count == 0) return false;
@@ -1048,6 +1143,9 @@ static bool _buildComposition(LottieComposition* comp, LottieGroup* parent)
         _bulidHierarchy(parent, child);
 
         _checkFragment(static_cast<LottieGroup*>(*c));
+
+        //attach the necessary font data
+        if (child->type == LottieLayer::Text) _attachFont(comp, child);
 
         child->statical &= parent->statical;
         parent->statical &= child->statical;
