@@ -51,6 +51,8 @@ private:
 
     void getInperpolatorPoint(Point& pt);
     void getPathSet(LottiePathSet& path);
+    void getLayerSize(uint32_t& val);
+    void getValue(TextDocument& doc);
     void getValue(PathSet& path);
     void getValue(Array<Point>& pts);
     void getValue(ColorStop& color);
@@ -58,7 +60,6 @@ private:
     void getValue(uint8_t& val);
     void getValue(Point& pt);
     void getValue(RGB24& color);
-    void getLayerSize(uint32_t& val);
 
     template<typename T> bool parseTangent(const char *key, LottieVectorFrame<T>& value);
     template<typename T> bool parseTangent(const char *key, LottieScalarFrame<T>& value);
@@ -85,14 +86,19 @@ private:
     LottieMask* parseMask();
     LottieTrimpath* parseTrimpath();
     LottieRepeater* parseRepeater();
+    LottieFont* parseFont();
 
-    void parseObject(LottieGroup* parent);
-    void parseShapes(LottieLayer* layer);
+    void parseObject(Array<LottieObject*>& parent);
+    void parseShapes(Array<LottieObject*>& parent);
+    void parseText(Array<LottieObject*>& parent);
     void parseMasks(LottieLayer* layer);
     void parseTimeRemap(LottieLayer* layer);
     void parseStrokeDash(LottieStroke* stroke);
     void parseGradient(LottieGradient* gradient, const char* key);
+    void parseTextRange(LottieText* text);
     void parseAssets();
+    void parseFonts();
+    void parseChars();
 
     //Current parsing context
     struct Context {

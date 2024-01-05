@@ -51,6 +51,30 @@ struct ColorStop
 };
 
 
+struct LottieFont;
+
+struct TextDocument
+{
+    char* text = nullptr;
+    float height;
+    float shift;
+    RGB24 color;
+    struct {
+        Point pos;
+        Point size;
+    } bbox;
+    struct {
+        RGB24 color;
+        float width;
+        bool render = false;
+    } stroke;
+    char* name = nullptr;
+    uint16_t size;
+    uint8_t justify;
+    uint8_t tracking;
+};
+
+
 static inline RGB24 operator-(const RGB24& lhs, const RGB24& rhs)
 {
     return {lhs.rgb[0] - rhs.rgb[0], lhs.rgb[1] - rhs.rgb[1], lhs.rgb[2] - rhs.rgb[2]};
@@ -502,6 +526,66 @@ struct LottiePosition
         }
     }
 
+};
+
+
+struct LottieTextDoc
+{
+    Array<LottieScalarFrame<TextDocument>>* frames = nullptr;
+    TextDocument value;
+
+    ~LottieTextDoc()
+    {
+        free(value.text);
+        free(value.name);
+
+        if (!frames) return;
+        for (auto p = frames->data; p < frames->end(); ++p) {
+            free((*p).value.text);
+            free((*p).value.name);
+        }
+        delete(frames);
+    }
+
+    LottieScalarFrame<TextDocument>& newFrame()
+    {
+        if (!frames) frames = new Array<LottieScalarFrame<TextDocument>>;
+        if (frames->count + 1 >= frames->reserved) {
+            auto old = frames->reserved;
+            frames->grow(frames->count + 2);
+            memset((void*)(frames->data + old), 0x00, sizeof(LottieScalarFrame<TextDocument>) * (frames->reserved - old));
+        }
+        ++frames->count;
+        return frames->last();
+    }
+
+    LottieScalarFrame<TextDocument>& nextFrame()
+    {
+        return (*frames)[frames->count];
+    }
+
+    TextDocument& operator()(float frameNo)
+    {
+        if (!frames) return value;
+        if (frames->count == 1 || frameNo <= frames->first().no) return frames->first().value;
+        if (frameNo >= frames->last().no) return frames->last().value;
+
+        uint32_t low = 0;
+        uint32_t high = frames->count - 1;
+
+        while (low <= high) {
+            auto mid = low + (high - low) / 2;
+            auto frame = frames->data + mid;
+            if (mathEqual(frameNo, frame->no)) return frame->value;
+            else if (frameNo < frame->no) high = mid - 1;
+            else low = mid + 1;
+        }
+        if (high < low) low = high;
+
+        return (*frames)[low].value;
+    }
+
+    void prepare() {}
 };
 
 
