@@ -125,7 +125,7 @@ static uint32_t* _codepoints(const char* text, size_t n)
 
     auto utf8 = text;
     //preserve approximate enough space.
-    auto utf32 = (uint32_t*) malloc(sizeof(uint32_t) * n + 1);
+    auto utf32 = (uint32_t*) malloc(sizeof(uint32_t) * (n + 1));
 
     while(*utf8) {
         if (!(*utf8 & 0x80U)) {
@@ -148,7 +148,7 @@ static uint32_t* _codepoints(const char* text, size_t n)
             return nullptr;
         }
     }
-    utf32[i - 1] = 0;   //end of the unicdoe
+    utf32[i] = 0;   //end of the unicdoe
     return utf32;
 }
 
