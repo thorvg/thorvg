@@ -280,10 +280,8 @@ bool LottieLoader::read()
 {
     if (!content || size == 0) return false;
 
-    if (!LoadModule::read()) return true;
-
-    //the loading has been already completed in header()
-    if (comp) return true;
+    //the loading has been already completed
+    if (comp || !LoadModule::read()) return true;
 
     TaskScheduler::request(this);
 

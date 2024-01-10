@@ -55,7 +55,7 @@ public:
 private:
     bool readHeader();
     void run(unsigned tid) override;
-    void clear();
+    void clear(bool all = true);
 };
 
 #endif //_TVG_TVG_LOADER_H_
