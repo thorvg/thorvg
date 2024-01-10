@@ -283,8 +283,9 @@ bool LoaderMgr::retrieve(LoadModule* loader)
             _activeLoaders.remove(loader);
         }
         delete(loader);
+        return true;
     }
-    return true;
+    return false;
 }
 
 

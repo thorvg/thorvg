@@ -303,6 +303,11 @@ Paint* LottieLoader::paint()
     return comp->scene;
 }
 
+const char* LottieLoader::data(uint32_t& size)
+{
+    size = this->size;
+    return content;
+}
 
 bool LottieLoader::frame(float no)
 {

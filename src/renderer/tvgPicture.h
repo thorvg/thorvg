@@ -81,7 +81,7 @@ struct Picture::Impl
 
     ~Impl()
     {
-        LoaderMgr::retrieve(loader);
+        if (LoaderMgr::retrieve(loader))
         delete(paint);
     }
 
@@ -239,6 +239,12 @@ struct Picture::Impl
         }
         if (surface) return surface->buf32;
         else return nullptr;
+    }
+
+    const char* data(uint32_t& size)
+    {
+        if (!loader) return nullptr;
+        return loader->data(size);
     }
 
     RenderUpdateFlag load();
