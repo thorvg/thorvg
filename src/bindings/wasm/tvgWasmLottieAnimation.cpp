@@ -22,6 +22,7 @@
 
 #include <thorvg.h>
 #include <emscripten/bind.h>
+#include "tvgPicture.h"
 
 using namespace emscripten;
 using namespace std;
@@ -205,7 +206,33 @@ public:
     {
         errorMsg = NoError;
 
-        if (!animation) return false;
+        // Copy a new animation to save
+        uint32_t size = 0;
+
+        auto data = P(this->animation->picture())->data(size);
+        if (!data) {
+            errorMsg = "Invalid data";
+            return false;
+        }
+
+        auto animation = Animation::gen();
+        if (!animation) {
+            errorMsg = "Invalid animation";
+            return false;
+        };
+
+        if (animation->picture()->load(data, size, "lottie", "", false) != Result::Success) {
+            errorMsg = "load() fail";
+            return false;
+        }
+
+        // Keep the frame & aspect ratio.
+        float curFrame = this->animation->curFrame();
+
+        float ow, oh;
+        animation->picture()->size(&ow, &oh);
+        float scale =  static_cast<float>(width) / ow;
+        animation->picture()->size(ow * scale, oh * scale);
 
         auto saver = Saver::gen();
         if (!saver) {
@@ -213,7 +240,7 @@ public:
             return false;
         }
 
-        //set a white opaque background
+        // Set a white opaque background
         auto bg = tvg::Shape::gen();
         bg->fill(255, 255, 255, 255);
         bg->appendRect(0, 0, width, height);
@@ -226,6 +253,12 @@ public:
         }
 
         saver->sync();
+
+        // Revert the states
+        this->animation->picture()->size(ow, oh);
+        this->frame(curFrame);
+        this->update();
+        this->render();
 
         return true;
     }
