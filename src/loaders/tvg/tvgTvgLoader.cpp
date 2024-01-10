@@ -32,7 +32,7 @@
 /************************************************************************/
 
 
-void TvgLoader::clear()
+void TvgLoader::clear(bool all)
 {
     if (copy) free((char*)data);
     ptr = data = nullptr;
@@ -41,6 +41,8 @@ void TvgLoader::clear()
 
     delete(interpreter);
     interpreter = nullptr;
+
+    if (all) delete(root);
 }
 
 
@@ -113,7 +115,7 @@ void TvgLoader::run(unsigned tid)
         root = interpreter->run(data, this->data + size);
     }
 
-    clear();
+    clear(false);
 }
 
 
@@ -213,7 +215,8 @@ bool TvgLoader::read()
 {
     if (!ptr || size == 0) return false;
 
-    if (!LoadModule::read()) return true;
+    //the loading has been already completed
+    if (root || !LoadModule::read()) return true;
 
     TaskScheduler::request(this);
 
@@ -224,5 +227,7 @@ bool TvgLoader::read()
 Paint* TvgLoader::paint()
 {
     this->done();
-    return root;
+    auto ret = root;
+    root = nullptr;
+    return ret;
 }
