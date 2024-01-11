@@ -334,3 +334,373 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
     return vec4f(result.rgb, result.a * uBlendSettigs.opacity);
 };
 )";
+
+//************************************************************************
+// cShaderSource_PipelineBlit
+//************************************************************************
+
+const char* cShaderSource_PipelineBlit = R"(
+// vertex input
+struct VertexInput {
+    @location(0) position: vec2f,
+    @location(1) texCoord: vec2f
+};
+
+// vertex output
+struct VertexOutput {
+    @builtin(position) position: vec4f,
+    @location(0) texCoord: vec2f
+};
+
+@group(0) @binding(0) var uSamplerSrc     : sampler;
+@group(0) @binding(1) var uTextureViewSrc : texture_2d<f32>;
+
+@vertex
+fn vs_main(in: VertexInput) -> VertexOutput {
+    // fill output
+    var out: VertexOutput;
+    out.position = vec4f(in.position.xy, 0.0, 1.0);
+    out.texCoord = in.texCoord;
+    return out;
+}
+
+@fragment
+fn fs_main(in: VertexOutput) -> @location(0) vec4f {
+    return textureSample(uTextureViewSrc, uSamplerSrc, in.texCoord.xy);
+};
+)";
+
+//************************************************************************
+// cShaderSource_PipelineBlitColor
+//************************************************************************
+
+const char* cShaderSource_PipelineBlitColor = R"(
+// vertex input
+struct VertexInput {
+    @location(0) position: vec2f,
+    @location(1) texCoord: vec2f
+};
+
+// vertex output
+struct VertexOutput {
+    @builtin(position) position: vec4f,
+    @location(0) texCoord: vec2f
+};
+
+@group(0) @binding(0) var uSamplerSrc     : sampler;
+@group(0) @binding(1) var uTextureViewSrc : texture_2d<f32>;
+
+@vertex
+fn vs_main(in: VertexInput) -> VertexOutput {
+    // fill output
+    var out: VertexOutput;
+    out.position = vec4f(in.position.xy, 0.0, 1.0);
+    out.texCoord = in.texCoord;
+    return out;
+}
+
+@fragment
+fn fs_main(in: VertexOutput) -> @location(0) vec4f {
+    let color: vec4f = textureSample(uTextureViewSrc, uSamplerSrc, in.texCoord.xy);
+    return vec4f(color.rgb, 1.0);
+};
+)";
+
+//************************************************************************
+// cShaderSource_PipelineCompAlphaMask
+//************************************************************************
+
+const char* cShaderSource_PipelineCompAlphaMask = R"(
+// vertex input
+struct VertexInput {
+    @location(0) position: vec2f,
+    @location(1) texCoord: vec2f
+};
+
+// vertex output
+struct VertexOutput {
+    @builtin(position) position: vec4f,
+    @location(0) texCoord: vec2f
+};
+
+@group(0) @binding(0) var uSamplerSrc     : sampler;
+@group(0) @binding(1) var uTextureViewSrc : texture_2d<f32>;
+@group(1) @binding(0) var uSamplerMsk     : sampler;
+@group(1) @binding(1) var uTextureViewMsk : texture_2d<f32>;
+
+@vertex
+fn vs_main(in: VertexInput) -> VertexOutput {
+    // fill output
+    var out: VertexOutput;
+    out.position = vec4f(in.position.xy, 0.0, 1.0);
+    out.texCoord = in.texCoord;
+    return out;
+}
+
+@fragment
+fn fs_main(in: VertexOutput) -> @location(0) vec4f {
+    let colorSrc: vec4f = textureSample(uTextureViewSrc, uSamplerSrc, in.texCoord.xy);
+    let colorMsk: vec4f = textureSample(uTextureViewMsk, uSamplerMsk, in.texCoord.xy);
+    return vec4f(colorSrc.rgb, colorSrc.a * colorMsk.a);
+};
+)";
+
+const char* cShaderSource_PipelineCompInvAlphaMask = R"(
+// vertex input
+struct VertexInput {
+    @location(0) position: vec2f,
+    @location(1) texCoord: vec2f
+};
+
+// vertex output
+struct VertexOutput {
+    @builtin(position) position: vec4f,
+    @location(0) texCoord: vec2f
+};
+
+@group(0) @binding(0) var uSamplerSrc     : sampler;
+@group(0) @binding(1) var uTextureViewSrc : texture_2d<f32>;
+@group(1) @binding(0) var uSamplerMsk     : sampler;
+@group(1) @binding(1) var uTextureViewMsk : texture_2d<f32>;
+
+@vertex
+fn vs_main(in: VertexInput) -> VertexOutput {
+    // fill output
+    var out: VertexOutput;
+    out.position = vec4f(in.position.xy, 0.0, 1.0);
+    out.texCoord = in.texCoord;
+    return out;
+}
+
+@fragment
+fn fs_main(in: VertexOutput) -> @location(0) vec4f {
+    let colorSrc: vec4f = textureSample(uTextureViewSrc, uSamplerSrc, in.texCoord.xy);
+    let colorMsk: vec4f = textureSample(uTextureViewMsk, uSamplerMsk, in.texCoord.xy);
+    return vec4f(colorSrc.rgb, colorSrc.a * (1.0 - colorMsk.a));
+};
+)";
+
+const char* cShaderSource_PipelineCompLumaMask = R"(
+// vertex input
+struct VertexInput {
+    @location(0) position: vec2f,
+    @location(1) texCoord: vec2f
+};
+
+// vertex output
+struct VertexOutput {
+    @builtin(position) position: vec4f,
+    @location(0) texCoord: vec2f
+};
+
+@group(0) @binding(0) var uSamplerSrc     : sampler;
+@group(0) @binding(1) var uTextureViewSrc : texture_2d<f32>;
+@group(1) @binding(0) var uSamplerMsk     : sampler;
+@group(1) @binding(1) var uTextureViewMsk : texture_2d<f32>;
+
+@vertex
+fn vs_main(in: VertexInput) -> VertexOutput {
+    // fill output
+    var out: VertexOutput;
+    out.position = vec4f(in.position.xy, 0.0, 1.0);
+    out.texCoord = in.texCoord;
+    return out;
+}
+
+@fragment
+fn fs_main(in: VertexOutput) -> @location(0) vec4f {
+    let colorSrc: vec4f = textureSample(uTextureViewSrc, uSamplerSrc, in.texCoord.xy);
+    let colorMsk: vec4f = textureSample(uTextureViewMsk, uSamplerMsk, in.texCoord.xy);
+    let luma: f32 = (0.299 * colorMsk.r + 0.587 * colorMsk.g + 0.114 * colorMsk.b);
+    return colorSrc * luma;
+};
+)";
+
+const char* cShaderSource_PipelineCompInvLumaMask = R"(
+// vertex input
+struct VertexInput {
+    @location(0) position: vec2f,
+    @location(1) texCoord: vec2f
+};
+
+// vertex output
+struct VertexOutput {
+    @builtin(position) position: vec4f,
+    @location(0) texCoord: vec2f
+};
+
+@group(0) @binding(0) var uSamplerSrc     : sampler;
+@group(0) @binding(1) var uTextureViewSrc : texture_2d<f32>;
+@group(1) @binding(0) var uSamplerMsk     : sampler;
+@group(1) @binding(1) var uTextureViewMsk : texture_2d<f32>;
+
+@vertex
+fn vs_main(in: VertexInput) -> VertexOutput {
+    // fill output
+    var out: VertexOutput;
+    out.position = vec4f(in.position.xy, 0.0, 1.0);
+    out.texCoord = in.texCoord;
+    return out;
+}
+
+@fragment
+fn fs_main(in: VertexOutput) -> @location(0) vec4f {
+    let colorSrc: vec4f = textureSample(uTextureViewSrc, uSamplerSrc, in.texCoord.xy);
+    let colorMsk: vec4f = textureSample(uTextureViewMsk, uSamplerMsk, in.texCoord.xy);
+    let luma: f32 = (0.299 * colorMsk.r + 0.587 * colorMsk.g + 0.114 * colorMsk.b);
+    return colorSrc * (1.0 - luma);
+};
+)";
+
+const char* cShaderSource_PipelineCompAddMask = R"(
+// vertex input
+struct VertexInput {
+    @location(0) position: vec2f,
+    @location(1) texCoord: vec2f
+};
+
+// vertex output
+struct VertexOutput {
+    @builtin(position) position: vec4f,
+    @location(0) texCoord: vec2f
+};
+
+@group(0) @binding(0) var uSamplerSrc     : sampler;
+@group(0) @binding(1) var uTextureViewSrc : texture_2d<f32>;
+@group(1) @binding(0) var uSamplerMsk     : sampler;
+@group(1) @binding(1) var uTextureViewMsk : texture_2d<f32>;
+
+@vertex
+fn vs_main(in: VertexInput) -> VertexOutput {
+    // fill output
+    var out: VertexOutput;
+    out.position = vec4f(in.position.xy, 0.0, 1.0);
+    out.texCoord = in.texCoord;
+    return out;
+}
+
+@fragment
+fn fs_main(in: VertexOutput) -> @location(0) vec4f {
+    let colorSrc: vec4f = textureSample(uTextureViewSrc, uSamplerSrc, in.texCoord.xy);
+    let colorMsk: vec4f = textureSample(uTextureViewMsk, uSamplerMsk, in.texCoord.xy);
+    let color: vec4f = colorSrc + colorMsk * (1.0 - colorSrc.a);
+    return min(color, vec4f(1.0));
+};
+)";
+
+const char* cShaderSource_PipelineCompSubtractMask = R"(
+// vertex input
+struct VertexInput {
+    @location(0) position: vec2f,
+    @location(1) texCoord: vec2f
+};
+
+// vertex output
+struct VertexOutput {
+    @builtin(position) position: vec4f,
+    @location(0) texCoord: vec2f
+};
+
+@group(0) @binding(0) var uSamplerSrc     : sampler;
+@group(0) @binding(1) var uTextureViewSrc : texture_2d<f32>;
+@group(1) @binding(0) var uSamplerMsk     : sampler;
+@group(1) @binding(1) var uTextureViewMsk : texture_2d<f32>;
+
+@vertex
+fn vs_main(in: VertexInput) -> VertexOutput {
+    // fill output
+    var out: VertexOutput;
+    out.position = vec4f(in.position.xy, 0.0, 1.0);
+    out.texCoord = in.texCoord;
+    return out;
+}
+
+@fragment
+fn fs_main(in: VertexOutput) -> @location(0) vec4f {
+    let colorSrc: vec4f = textureSample(uTextureViewSrc, uSamplerSrc, in.texCoord.xy);
+    let colorMsk: vec4f = textureSample(uTextureViewMsk, uSamplerMsk, in.texCoord.xy);
+
+    let a: f32 = colorSrc.a - colorMsk.a;
+    if (a <= 0.0) {
+        return vec4f(0.0, 0.0, 0.0, 0.0);
+    } else {
+        return vec4f(colorSrc.rgb, colorSrc.a * a);
+    }
+};
+)";
+
+const char* cShaderSource_PipelineCompIntersectMask = R"(
+// vertex input
+struct VertexInput {
+    @location(0) position: vec2f,
+    @location(1) texCoord: vec2f
+};
+
+// vertex output
+struct VertexOutput {
+    @builtin(position) position: vec4f,
+    @location(0) texCoord: vec2f
+};
+
+@group(0) @binding(0) var uSamplerSrc     : sampler;
+@group(0) @binding(1) var uTextureViewSrc : texture_2d<f32>;
+@group(1) @binding(0) var uSamplerMsk     : sampler;
+@group(1) @binding(1) var uTextureViewMsk : texture_2d<f32>;
+
+@vertex
+fn vs_main(in: VertexInput) -> VertexOutput {
+    // fill output
+    var out: VertexOutput;
+    out.position = vec4f(in.position.xy, 0.0, 1.0);
+    out.texCoord = in.texCoord;
+    return out;
+}
+
+@fragment
+fn fs_main(in: VertexOutput) -> @location(0) vec4f {
+    let colorSrc: vec4f = textureSample(uTextureViewSrc, uSamplerSrc, in.texCoord.xy);
+    let colorMsk: vec4f = textureSample(uTextureViewMsk, uSamplerMsk, in.texCoord.xy);
+    let intAlpha: f32 = colorSrc.a * colorMsk.a;
+    return vec4f(colorMsk.rgb, colorMsk.a * intAlpha);
+};
+)";
+
+const char* cShaderSource_PipelineCompDifferenceMask = R"(
+// vertex input
+struct VertexInput {
+    @location(0) position: vec2f,
+    @location(1) texCoord: vec2f
+};
+
+// vertex output
+struct VertexOutput {
+    @builtin(position) position: vec4f,
+    @location(0) texCoord: vec2f
+};
+
+@group(0) @binding(0) var uSamplerSrc     : sampler;
+@group(0) @binding(1) var uTextureViewSrc : texture_2d<f32>;
+@group(1) @binding(0) var uSamplerMsk     : sampler;
+@group(1) @binding(1) var uTextureViewMsk : texture_2d<f32>;
+
+@vertex
+fn vs_main(in: VertexInput) -> VertexOutput {
+    // fill output
+    var out: VertexOutput;
+    out.position = vec4f(in.position.xy, 0.0, 1.0);
+    out.texCoord = in.texCoord;
+    return out;
+}
+
+@fragment
+fn fs_main(in: VertexOutput) -> @location(0) vec4f {
+    let colorSrc: vec4f = textureSample(uTextureViewSrc, uSamplerSrc, in.texCoord.xy);
+    let colorMsk: vec4f = textureSample(uTextureViewMsk, uSamplerMsk, in.texCoord.xy);
+    let da: f32 = colorSrc.a - colorMsk.a;
+    if (da > 0.0) {
+        return vec4f(colorSrc.rgb, colorSrc.a * da);
+    } else {
+        return vec4f(colorMsk.rgb, colorMsk.a * (-da));
+    }
+};
+)";

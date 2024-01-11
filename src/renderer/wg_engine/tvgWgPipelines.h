@@ -95,17 +95,62 @@ struct WgPipelineImage: public WgPipeline
     }
 };
 
+struct WgPipelineBlit: public WgPipeline
+{
+    void initialize(WGPUDevice device) override;
+    void use(WGPURenderPassEncoder encoder, WgBindGroupBlit& groupBlit)
+    {
+        set(encoder);
+        groupBlit.set(encoder, 0);
+    }
+};
+
+struct WgPipelineBlitColor: public WgPipeline
+{
+    void initialize(WGPUDevice device) override;
+    void use(WGPURenderPassEncoder encoder, WgBindGroupBlit& groupBlit)
+    {
+        set(encoder);
+        groupBlit.set(encoder, 0);
+    }
+};
+
+struct WgPipelineComposition: public WgPipeline
+{
+    void initialize(WGPUDevice device) override {};
+    void initialize(WGPUDevice device, const char* shaderSrc);
+    void use(WGPURenderPassEncoder encoder, WgBindGroupBlit& groupBlitSrc, WgBindGroupBlit& groupBlitMsk)
+    {
+        set(encoder);
+        groupBlitSrc.set(encoder, 0);
+        groupBlitMsk.set(encoder, 1);
+    }
+};
+
 struct WgPipelines
 {
-    WgPipelineFillShape mPipelineFillShape;
-    WgPipelineFillStroke mPipelineFillStroke;
-    WgPipelineSolid mPipelineSolid;
-    WgPipelineLinear mPipelineLinear;
-    WgPipelineRadial mPipelineRadial;
-    WgPipelineImage mPipelineImage;
+    WgPipelineFillShape fillShape;
+    WgPipelineFillStroke fillStroke;
+    WgPipelineSolid solid;
+    WgPipelineLinear linear;
+    WgPipelineRadial radial;
+    WgPipelineImage image;
+    WgPipelineBlit blit;
+    WgPipelineBlitColor blitColor;
+    // composition pipelines
+    WgPipelineComposition compAlphaMask;
+    WgPipelineComposition compInvAlphaMask;
+    WgPipelineComposition compLumaMask;
+    WgPipelineComposition compInvLumaMask;
+    WgPipelineComposition compAddMask;
+    WgPipelineComposition compSubtractMask;
+    WgPipelineComposition compIntersectMask;
+    WgPipelineComposition compDifferenceMask;
 
     void initialize(WGPUDevice device);
     void release();
+
+    WgPipelineComposition* getCompositionPipeline(CompositeMethod method);
 };
 
 #endif // _TVG_WG_PIPELINES_H_
