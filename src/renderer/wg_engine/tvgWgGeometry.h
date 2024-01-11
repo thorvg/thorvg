@@ -90,6 +90,7 @@ struct WgGeometryData
     void appendRect(WgPoint p0, WgPoint p1, WgPoint p2, WgPoint p3);
     void appendCircle(WgPoint center, float radius);
     void appendImageBox(float w, float h);
+    void appendBlitBox();
     void appendMesh(const RenderMesh* rmesh);
     void close();
 };

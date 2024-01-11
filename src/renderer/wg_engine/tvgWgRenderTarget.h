@@ -31,24 +31,32 @@ private:
     WGPURenderPassEncoder mRenderPassEncoder{};
     // fill and blit data
     WgBindGroupCanvas mBindGroupCanvasWnd;
+    // composition handles
+    WgMeshData mMeshDataCanvasWnd;
     // gpu buffers
-    WGPUSampler mSampler{};
     WGPUTexture mTextureColor{};
     WGPUTexture mTextureStencil{};
-    WGPUTextureView mTextureViewColor{};
-    WGPUTextureView mTextureViewStencil{};
     WgPipelines* mPipelines{}; // external handle
+public:
+    WGPUSampler sampler{};
+    WGPUTextureView textureViewColor{};
+    WGPUTextureView textureViewStencil{};
+    WgBindGroupBlit bindGroupBlit;
 public:
     void initialize(WgContext& context, WgPipelines& pipelines, uint32_t w, uint32_t h);
     void release(WgContext& context);
 
-    void beginRenderPass(WGPUCommandEncoder commandEncoder, WGPUTextureView colorAttachement);
-    void beginRenderPass(WGPUCommandEncoder commandEncoder);
+    void beginRenderPass(WGPUCommandEncoder commandEncoder, WGPUTextureView colorAttachement, bool clear);
+    void beginRenderPass(WGPUCommandEncoder commandEncoder, bool clear);
     void endRenderPass();
 
     void renderShape(WgRenderDataShape* renderData);
     void renderStroke(WgRenderDataShape* renderData);
     void renderPicture(WgRenderDataPicture* renderData);
+
+    void blit(WgContext& context, WgRenderTarget* renderTargetSrc);
+    void blitColor(WgContext& context, WgRenderTarget* renderTargetSrc);
+    void compose(WgContext& context, WgRenderTarget* renderTargetSrc, WgRenderTarget* renderTargetMsk, CompositeMethod method);
 };
 
 #endif

@@ -40,4 +40,18 @@ extern const char* cShaderSource_PipelineRadial;
 // pipeline shader module image
 extern const char* cShaderSource_PipelineImage;
 
+// pipeline shader module blit
+extern const char* cShaderSource_PipelineBlit;
+extern const char* cShaderSource_PipelineBlitColor;
+
+// pipeline shader module composes
+extern const char* cShaderSource_PipelineCompAlphaMask;
+extern const char* cShaderSource_PipelineCompInvAlphaMask;
+extern const char* cShaderSource_PipelineCompLumaMask;
+extern const char* cShaderSource_PipelineCompInvLumaMask;
+extern const char* cShaderSource_PipelineCompAddMask;
+extern const char* cShaderSource_PipelineCompSubtractMask;
+extern const char* cShaderSource_PipelineCompIntersectMask;
+extern const char* cShaderSource_PipelineCompDifferenceMask;
+
 #endif // _TVG_WG_SHADER_SRC_H_

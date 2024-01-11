@@ -29,7 +29,7 @@ WGPUBindGroupLayout WgBindGroupSolidColor::layout = nullptr;
 WGPUBindGroupLayout WgBindGroupLinearGradient::layout = nullptr;
 WGPUBindGroupLayout WgBindGroupRadialGradient::layout = nullptr;
 WGPUBindGroupLayout WgBindGroupPicture::layout = nullptr;
-WGPUBindGroupLayout WgBindGroupCompose::layout = nullptr;
+WGPUBindGroupLayout WgBindGroupBlit::layout = nullptr;
 
 
 WGPUBindGroupLayout WgBindGroupCanvas::getLayout(WGPUDevice device)
@@ -258,40 +258,38 @@ void WgBindGroupPicture::release()
 }
 
 
-WGPUBindGroupLayout WgBindGroupCompose::getLayout(WGPUDevice device)
+WGPUBindGroupLayout WgBindGroupBlit::getLayout(WGPUDevice device)
 {
     if (layout) return layout;
     const WGPUBindGroupLayoutEntry bindGroupLayoutEntries[] {
         makeBindGroupLayoutEntrySampler(0),
-        makeBindGroupLayoutEntryTextureView(1),
-        makeBindGroupLayoutEntryTextureView(2)
+        makeBindGroupLayoutEntryTextureView(1)
     };
-    layout = createBindGroupLayout(device, bindGroupLayoutEntries, 3);
+    layout = createBindGroupLayout(device, bindGroupLayoutEntries, 2);
     assert(layout);
     return layout;
 }
 
 
-void WgBindGroupCompose::releaseLayout()
+void WgBindGroupBlit::releaseLayout()
 {
     releaseBindGroupLayout(layout);
 }
 
 
-void WgBindGroupCompose::initialize(WGPUDevice device, WGPUQueue queue, WGPUSampler uSampler, WGPUTextureView uTextureSrc, WGPUTextureView uTextureDst)
+void WgBindGroupBlit::initialize(WGPUDevice device, WGPUQueue queue, WGPUSampler uSampler, WGPUTextureView uTexture)
 {
     release();
     const WGPUBindGroupEntry bindGroupEntries[] {
         makeBindGroupEntrySampler(0, uSampler),
-        makeBindGroupEntryTextureView(1, uTextureSrc),
-        makeBindGroupEntryTextureView(2, uTextureDst)
+        makeBindGroupEntryTextureView(1, uTexture)
     };
-    mBindGroup = createBindGroup(device, getLayout(device), bindGroupEntries, 3);
+    mBindGroup = createBindGroup(device, getLayout(device), bindGroupEntries, 2);
     assert(mBindGroup);
 }
 
 
-void WgBindGroupCompose::release()
+void WgBindGroupBlit::release()
 {
     releaseBindGroup(mBindGroup);
 }

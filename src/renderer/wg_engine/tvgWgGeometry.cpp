@@ -120,6 +120,25 @@ void WgGeometryData::appendImageBox(float w, float h)
 };
 
 
+void WgGeometryData::appendBlitBox()
+{
+    positions.push({ -1.0f, +1.0f });
+    positions.push({ +1.0f, +1.0f });
+    positions.push({ +1.0f, -1.0f });
+    positions.push({ -1.0f, -1.0f });
+    texCoords.push({ 0.0f, 0.0f });
+    texCoords.push({ 1.0f, 0.0f });
+    texCoords.push({ 1.0f, 1.0f });
+    texCoords.push({ 0.0f, 1.0f });
+    indexes.push(0);
+    indexes.push(1);
+    indexes.push(2);
+    indexes.push(0);
+    indexes.push(2);
+    indexes.push(3);
+}
+
+
 void WgGeometryData::appendMesh(const RenderMesh* rmesh)
 {
     assert(rmesh);

@@ -107,8 +107,8 @@ struct WgBindGroupPicture : public  WgBindGroup
     void release();
 };
 
-// @group(2)
-struct WgBindGroupCompose : public  WgBindGroup
+// @group(0 or 1)
+struct WgBindGroupBlit : public  WgBindGroup
 {
     static WGPUBindGroupLayout layout;
     static WGPUBindGroupLayout getLayout(WGPUDevice device);
@@ -116,8 +116,7 @@ struct WgBindGroupCompose : public  WgBindGroup
 
     void initialize(WGPUDevice device, WGPUQueue queue,
                     WGPUSampler     uSampler,
-                    WGPUTextureView uTextureSrc,
-                    WGPUTextureView uTextureDst);
+                    WGPUTextureView uTexture);
     void release();
 };
 

@@ -313,8 +313,8 @@ WGPUBlendState WgPipeline::makeBlendState()
     blendState.color.srcFactor = WGPUBlendFactor_SrcAlpha;
     blendState.color.dstFactor = WGPUBlendFactor_OneMinusSrcAlpha;
     blendState.alpha.operation = WGPUBlendOperation_Add;
-    blendState.alpha.srcFactor = WGPUBlendFactor_Zero;
-    blendState.alpha.dstFactor = WGPUBlendFactor_One;
+    blendState.alpha.srcFactor = WGPUBlendFactor_One;
+    blendState.alpha.dstFactor = WGPUBlendFactor_Zero;
     return blendState;
 }
 

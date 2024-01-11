@@ -223,33 +223,171 @@ void WgPipelineImage::initialize(WGPUDevice device)
 }
 
 
+void WgPipelineBlit::initialize(WGPUDevice device)
+{
+    // vertex and buffers settings
+    WGPUVertexAttribute vertexAttributesPos = { WGPUVertexFormat_Float32x2, sizeof(float) * 0, 0 };
+    WGPUVertexAttribute vertexAttributesTex = { WGPUVertexFormat_Float32x2, sizeof(float) * 0, 1 };
+    WGPUVertexBufferLayout vertexBufferLayouts[] = {
+        makeVertexBufferLayout(&vertexAttributesPos, 1, sizeof(float) * 2),
+        makeVertexBufferLayout(&vertexAttributesTex, 1, sizeof(float) * 2)
+    };
+
+    // bind groups and layouts
+    WGPUBindGroupLayout bindGroupLayouts[] = {
+        WgBindGroupBlit::getLayout(device)
+    };
+
+    // stencil function
+    WGPUCompareFunction stencilFuncion = WGPUCompareFunction_Always;
+    WGPUStencilOperation stencilOperation = WGPUStencilOperation_Zero;
+
+    // sheder source and labels
+    auto shaderSource = cShaderSource_PipelineBlit;
+    auto shaderLabel = "The shader blit";
+    auto pipelineLabel = "The render pipeline blit";
+
+    // allocate all pipeline handles
+    allocate(device,
+             vertexBufferLayouts, ARRAY_ELEMENTS_COUNT(vertexBufferLayouts),
+             bindGroupLayouts, ARRAY_ELEMENTS_COUNT(bindGroupLayouts),
+             stencilFuncion, stencilOperation,
+             shaderSource, shaderLabel, pipelineLabel);
+}
+
+
+void WgPipelineBlitColor::initialize(WGPUDevice device)
+{
+    // vertex and buffers settings
+    WGPUVertexAttribute vertexAttributesPos = { WGPUVertexFormat_Float32x2, sizeof(float) * 0, 0 };
+    WGPUVertexAttribute vertexAttributesTex = { WGPUVertexFormat_Float32x2, sizeof(float) * 0, 1 };
+    WGPUVertexBufferLayout vertexBufferLayouts[] = {
+        makeVertexBufferLayout(&vertexAttributesPos, 1, sizeof(float) * 2),
+        makeVertexBufferLayout(&vertexAttributesTex, 1, sizeof(float) * 2)
+    };
+
+    // bind groups and layouts
+    WGPUBindGroupLayout bindGroupLayouts[] = {
+        WgBindGroupBlit::getLayout(device)
+    };
+
+    // stencil function
+    WGPUCompareFunction stencilFuncion = WGPUCompareFunction_Always;
+    WGPUStencilOperation stencilOperation = WGPUStencilOperation_Zero;
+
+    // sheder source and labels
+    auto shaderSource = cShaderSource_PipelineBlitColor;
+    auto shaderLabel = "The shader blit color";
+    auto pipelineLabel = "The render pipeline blit color";
+
+    // allocate all pipeline handles
+    allocate(device,
+             vertexBufferLayouts, ARRAY_ELEMENTS_COUNT(vertexBufferLayouts),
+             bindGroupLayouts, ARRAY_ELEMENTS_COUNT(bindGroupLayouts),
+             stencilFuncion, stencilOperation,
+             shaderSource, shaderLabel, pipelineLabel);
+}
+
+
+void WgPipelineComposition::initialize(WGPUDevice device, const char* shaderSrc)
+{
+    // vertex and buffers settings
+    WGPUVertexAttribute vertexAttributesPos = { WGPUVertexFormat_Float32x2, sizeof(float) * 0, 0 };
+    WGPUVertexAttribute vertexAttributesTex = { WGPUVertexFormat_Float32x2, sizeof(float) * 0, 1 };
+    WGPUVertexBufferLayout vertexBufferLayouts[] = {
+        makeVertexBufferLayout(&vertexAttributesPos, 1, sizeof(float) * 2),
+        makeVertexBufferLayout(&vertexAttributesTex, 1, sizeof(float) * 2)
+    };
+
+    // bind groups and layouts
+    WGPUBindGroupLayout bindGroupLayouts[] = {
+        WgBindGroupBlit::getLayout(device),
+        WgBindGroupBlit::getLayout(device)
+    };
+
+    // stencil function
+    WGPUCompareFunction stencilFuncion = WGPUCompareFunction_Always;
+    WGPUStencilOperation stencilOperation = WGPUStencilOperation_Zero;
+
+    // sheder source and labels
+    auto shaderSource = shaderSrc;
+    auto shaderLabel = "The shader compose alpha mask";
+    auto pipelineLabel = "The render pipeline compose alpha mask";
+
+    // allocate all pipeline handles
+    allocate(device,
+             vertexBufferLayouts, ARRAY_ELEMENTS_COUNT(vertexBufferLayouts),
+             bindGroupLayouts, ARRAY_ELEMENTS_COUNT(bindGroupLayouts),
+             stencilFuncion, stencilOperation,
+             shaderSource, shaderLabel, pipelineLabel);
+}
+
 //************************************************************************
 // pipelines
 //************************************************************************
 
 void WgPipelines::initialize(WGPUDevice device)
 {
-    mPipelineFillShape.initialize(device);
-    mPipelineFillStroke.initialize(device);
-    mPipelineSolid.initialize(device);
-    mPipelineLinear.initialize(device);
-    mPipelineRadial.initialize(device);
-    mPipelineImage.initialize(device);
+    fillShape.initialize(device);
+    fillStroke.initialize(device);
+    solid.initialize(device);
+    linear.initialize(device);
+    radial.initialize(device);
+    image.initialize(device);
+    blit.initialize(device);
+    blitColor.initialize(device);
+    // composition pipelines
+    compAlphaMask.initialize(device, cShaderSource_PipelineCompAlphaMask);
+    compInvAlphaMask.initialize(device, cShaderSource_PipelineCompInvAlphaMask);
+    compLumaMask.initialize(device, cShaderSource_PipelineCompLumaMask);
+    compInvLumaMask.initialize(device, cShaderSource_PipelineCompInvLumaMask);
+    compAddMask.initialize(device, cShaderSource_PipelineCompAddMask);
+    compSubtractMask.initialize(device, cShaderSource_PipelineCompSubtractMask);
+    compIntersectMask.initialize(device, cShaderSource_PipelineCompIntersectMask);
+    compDifferenceMask.initialize(device, cShaderSource_PipelineCompDifferenceMask);
 }
 
 
 void WgPipelines::release()
 {
-    WgBindGroupCompose::releaseLayout();
+    WgBindGroupBlit::releaseLayout();
     WgBindGroupPicture::releaseLayout();
     WgBindGroupRadialGradient::releaseLayout();
     WgBindGroupLinearGradient::releaseLayout();
     WgBindGroupSolidColor::releaseLayout();
     WgBindGroupCanvas::releaseLayout();
-    mPipelineImage.release();
-    mPipelineRadial.release();
-    mPipelineLinear.release();
-    mPipelineSolid.release();
-    mPipelineFillStroke.release();
-    mPipelineFillShape.release();
+    compDifferenceMask.release();
+    compIntersectMask.release();
+    compSubtractMask.release();
+    compAddMask.release();
+    compInvLumaMask.release();
+    compLumaMask.release();
+    compInvAlphaMask.release();
+    compAlphaMask.release();
+    blitColor.release();
+    blit.release();
+    image.release();
+    radial.release();
+    linear.release();
+    solid.release();
+    fillStroke.release();
+    fillShape.release();
+}
+
+
+WgPipelineComposition* WgPipelines::getCompositionPipeline(CompositeMethod method)
+{
+    switch (method) {
+        case CompositeMethod::ClipPath:
+        case CompositeMethod::AlphaMask:      return &compAlphaMask; break;
+        case CompositeMethod::InvAlphaMask:   return &compInvAlphaMask; break;
+        case CompositeMethod::LumaMask:       return &compLumaMask; break;
+        case CompositeMethod::InvLumaMask:    return &compInvLumaMask; break;
+        case CompositeMethod::AddMask:        return &compAddMask; break;
+        case CompositeMethod::SubtractMask:   return &compSubtractMask; break;
+        case CompositeMethod::IntersectMask:  return &compIntersectMask; break;
+        case CompositeMethod::DifferenceMask: return &compDifferenceMask; break;
+        default: return nullptr; break;
+    }
+    return nullptr;
 }

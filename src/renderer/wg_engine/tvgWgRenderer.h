@@ -60,11 +60,19 @@ public:
     static bool init(uint32_t threads);
     static bool term();
 
+    // render handles
+    WGPUCommandEncoder mCommandEncoder{};
+    Array<WgRenderTarget*> mRenderTargetStack;
+    Array<WgRenderTarget*> mRenderTargetPool;
+    Array<Compositor*> mCompositorStack;
+
+    WgRenderTarget* allocateRenderTarget();
+    void releaseRenderTarget(WgRenderTarget* renderTarget);
 private:
-    Array<RenderData> mRenderDatas{};
     WgContext mContext;
     WgPipelines mPipelines;
-    WgRenderTarget mRenderTarget;
+    WgRenderTarget mRenderTargetRoot;
+    WgRenderTarget mRenderTargetWnd;
     WGPUSurface mSurface{};
     WGPUSwapChain mSwapChain{};
     Surface mTargetSurface;
