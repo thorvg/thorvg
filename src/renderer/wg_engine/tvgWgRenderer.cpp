@@ -48,7 +48,14 @@ void WgRenderer::initialize()
 
 void WgRenderer::release()
 {
-    mPipelines.release();
+    // clear render targets
+    for (uint32_t i = 0; i < mRenderTargetPool.count; i++) {
+        mRenderTargetPool[i]->release(mContext);
+        delete mRenderTargetPool[i];
+    }
+    mRenderTargetPool.clear();
+    mRenderTargetRoot.release(mContext);
+    mRenderTargetWnd.release(mContext);
     if (mSwapChain) wgpuSwapChainRelease(mSwapChain);
     if (mSurface) wgpuSurfaceRelease(mSurface);
     mPipelines.release();
@@ -123,26 +130,39 @@ RenderData WgRenderer::prepare(Surface* surface, const RenderMesh* mesh, RenderD
 
 bool WgRenderer::preRender()
 {
+    // command encoder descriptor
+    WGPUCommandEncoderDescriptor commandEncoderDesc{};
+    commandEncoderDesc.nextInChain = nullptr;
+    commandEncoderDesc.label = "The command encoder";
+    mCommandEncoder = wgpuDeviceCreateCommandEncoder(mContext.device, &commandEncoderDesc);
+    // render datas
+    mRenderTargetStack.push(&mRenderTargetRoot);
+    mRenderTargetRoot.beginRenderPass(mCommandEncoder, true);
     return true;
 }
 
 
 bool WgRenderer::renderShape(RenderData data)
 {
-    mRenderDatas.push(data);
+    mRenderTargetStack.last()->renderShape((WgRenderDataShape *)data);
+    mRenderTargetStack.last()->renderStroke((WgRenderDataShape *)data);
     return true;
 }
 
 
 bool WgRenderer::renderImage(RenderData data)
 {
-    mRenderDatas.push(data);
+    mRenderTargetStack.last()->renderPicture((WgRenderDataPicture *)data);
     return true;
 }
 
 
 bool WgRenderer::postRender()
 {
+    mRenderTargetRoot.endRenderPass();
+    mRenderTargetStack.pop();
+    mContext.executeCommandEncoder(mCommandEncoder);
+    wgpuCommandEncoderRelease(mCommandEncoder);
     return true;
 }
 
@@ -193,35 +213,17 @@ bool WgRenderer::clear()
 bool WgRenderer::sync()
 {
     WGPUTextureView backBufferView = wgpuSwapChainGetCurrentTextureView(mSwapChain);
-    
-    // command encoder descriptor
     WGPUCommandEncoderDescriptor commandEncoderDesc{};
     commandEncoderDesc.nextInChain = nullptr;
     commandEncoderDesc.label = "The command encoder";
     WGPUCommandEncoder commandEncoder = wgpuDeviceCreateCommandEncoder(mContext.device, &commandEncoderDesc);
-
-    // render datas
-    mRenderTarget.beginRenderPass(commandEncoder, backBufferView);
-    for (size_t i = 0; i < mRenderDatas.count; i++) {
-        WgRenderDataPaint* renderData = (WgRenderDataShape*)(mRenderDatas[i]);
-        if (renderData->identifier() == TVG_CLASS_ID_SHAPE) {
-            mRenderTarget.renderShape((WgRenderDataShape *)renderData);
-            mRenderTarget.renderStroke((WgRenderDataShape *)renderData);
-        } else if (renderData->identifier() == TVG_CLASS_ID_PICTURE) {
-            mRenderTarget.renderPicture((WgRenderDataPicture *)renderData);
-        }
-    }
-    mRenderTarget.endRenderPass();
-
+    mRenderTargetWnd.beginRenderPass(commandEncoder, backBufferView, true);
+    mRenderTargetWnd.blitColor(mContext, &mRenderTargetRoot);
+    mRenderTargetWnd.endRenderPass();
     mContext.executeCommandEncoder(commandEncoder);
     wgpuCommandEncoderRelease(commandEncoder);
-
-    // go to the next frame
     wgpuTextureViewRelease(backBufferView);
     wgpuSwapChainPresent(mSwapChain);
-
-    mRenderDatas.clear();
-
     return true;
 }
 
@@ -233,7 +235,7 @@ bool WgRenderer::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t 
     mTargetSurface.w = w;
     mTargetSurface.h = h;
 
-    // TODO: Add ability to render into offscreen buffer
+    mRenderTargetRoot.initialize(mContext, mPipelines, w, h);
     return true;
 }
 
@@ -273,26 +275,99 @@ bool WgRenderer::target(void* window, uint32_t w, uint32_t h)
     mSwapChain = wgpuDeviceCreateSwapChain(mContext.device, mSurface, &swapChainDesc);
     assert(mSwapChain);
 
-    mRenderTarget.initialize(mContext, mPipelines, w, h);
+    mRenderTargetWnd.initialize(mContext, mPipelines, w, h);
+    mRenderTargetRoot.initialize(mContext, mPipelines, w, h);
     return true;
 }
 
 
 Compositor* WgRenderer::target(TVG_UNUSED const RenderRegion& region, TVG_UNUSED ColorSpace cs)
 {
-    return nullptr;
+    mCompositorStack.push(new Compositor);
+    return mCompositorStack.last();
 }
 
 
 bool WgRenderer::beginComposite(TVG_UNUSED Compositor* cmp, TVG_UNUSED CompositeMethod method, TVG_UNUSED uint8_t opacity)
 {
-    return false;
+    // save current composition settings
+    cmp->method = method;
+    cmp->opacity = opacity;
+
+    // end current render target
+    mRenderTargetStack.last()->endRenderPass();
+
+    // create new render target and begin new render pass
+    WgRenderTarget* renderTarget = allocateRenderTarget();
+    renderTarget->beginRenderPass(mCommandEncoder, true);
+    mRenderTargetStack.push(renderTarget);
+
+    return true;
 }
 
 
 bool WgRenderer::endComposite(TVG_UNUSED Compositor* cmp)
 {
-    return false;
+    if (cmp->method == CompositeMethod::None) {
+        // end current render pass
+        mRenderTargetStack.last()->endRenderPass();
+
+        // get two last render targets
+        WgRenderTarget* renderTargetSrc = mRenderTargetStack.last();
+        mRenderTargetStack.pop();
+    
+        // apply current render target
+        WgRenderTarget* renderTarget = mRenderTargetStack.last();
+        renderTarget->beginRenderPass(mCommandEncoder, false);
+        renderTarget->blit(mContext, renderTargetSrc);
+
+        // back render targets to the pool
+        releaseRenderTarget(renderTargetSrc);
+    } else {
+        // end current render pass
+        mRenderTargetStack.last()->endRenderPass();
+
+        // get two last render targets
+        WgRenderTarget* renderTargetSrc = mRenderTargetStack.last();
+        mRenderTargetStack.pop();
+        WgRenderTarget* renderTargetMsk = mRenderTargetStack.last();
+        mRenderTargetStack.pop();
+    
+        // apply current render target
+        WgRenderTarget* renderTarget = mRenderTargetStack.last();
+        renderTarget->beginRenderPass(mCommandEncoder, false);
+        renderTarget->compose(mContext, renderTargetSrc, renderTargetMsk, cmp->method);
+
+        // back render targets to the pool
+        releaseRenderTarget(renderTargetSrc);
+        releaseRenderTarget(renderTargetMsk);
+    }
+
+    // delete current compositor
+    delete mCompositorStack.last();
+    mCompositorStack.pop();
+
+    return true;
+}
+
+
+WgRenderTarget* WgRenderer::allocateRenderTarget()
+{
+    WgRenderTarget* renderTarget = nullptr;
+    if (mRenderTargetPool.count > 0) {
+        renderTarget = mRenderTargetPool.last();
+        mRenderTargetPool.pop();
+    } else {
+        renderTarget = new WgRenderTarget;
+        renderTarget->initialize(mContext, mPipelines, mTargetSurface.w, mTargetSurface.h);
+    }
+    return renderTarget;
+}
+
+
+void WgRenderer::releaseRenderTarget(WgRenderTarget* renderTarget)
+{
+    mRenderTargetPool.push(renderTarget);
 }
 
 
