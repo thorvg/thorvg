@@ -569,6 +569,7 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
 
             gradientBlock.nStops[0] = stopCnt * 1.f;
             gradientBlock.nStops[1] = NOISE_LEVEL;
+            gradientBlock.nStops[2] = static_cast<int32_t>(fill->spread()) * 1.f;
             for (uint32_t i = 0; i < stopCnt; ++i) {
                 gradientBlock.stopPoints[i] = stops[i].offset;
                 gradientBlock.stopColors[i * 4 + 0] = stops[i].r / 255.f;
@@ -601,6 +602,7 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
 
             gradientBlock.nStops[0] = stopCnt * 1.f;
             gradientBlock.nStops[1] = NOISE_LEVEL;
+            gradientBlock.nStops[2] = static_cast<int32_t>(fill->spread()) * 1.f;
             for (uint32_t i = 0; i < stopCnt; ++i) {
                 gradientBlock.stopPoints[i] = stops[i].offset;
                 gradientBlock.stopColors[i * 4 + 0] = stops[i].r / 255.f;
