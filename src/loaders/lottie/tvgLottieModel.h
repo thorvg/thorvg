@@ -598,7 +598,6 @@ struct LottieComposition
     {
         auto p = timeInSec / duration();
         if (p < 0.0f) p = 0.0f;
-        else if (p > 1.0f) p = 1.0f;
         return p * frameCnt();
     }
 
