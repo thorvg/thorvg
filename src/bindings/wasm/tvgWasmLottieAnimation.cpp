@@ -93,7 +93,7 @@ public:
             filetype = "lottie";
         }
 
-        if (animation->picture()->load(data.c_str(), data.size(), mimetype, false) != Result::Success) {
+        if (animation->picture()->load(data.c_str(), data.size(), filetype, false) != Result::Success) {
             errorMsg = "load() fail";
             return false;
         }
