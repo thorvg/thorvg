@@ -90,10 +90,20 @@ float gradientStop(int index)                                                   
                                                                                                         \n
 float gradientWrap(float d)                                                                             \n
 {                                                                                                       \n
+    int spread = int(uGradientInfo.nStops[2]);                                                          \n
+                                                                                                        \n
+    if (spread == 0) { /* pad */                                                                        \n
+        return clamp(d, 0.0, 1.0);                                                                      \n
+    }                                                                                                   \n
+                                                                                                        \n
     int i = 1;                                                                                          \n
     while (d > 1.0) {                                                                                   \n
         d = d - 1.0;                                                                                    \n
         i *= -1;                                                                                        \n
+    }                                                                                                   \n
+                                                                                                        \n
+    if (spread == 2) {  /* Reflect */                                                                   \n
+        return smoothstep(0.0, 1.0, d);                                                                 \n
     }                                                                                                   \n
                                                                                                         \n
     if (i == 1)                                                                                         \n
