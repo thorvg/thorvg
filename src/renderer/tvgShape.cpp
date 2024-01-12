@@ -130,11 +130,11 @@ Result Shape::appendCircle(float cx, float cy, float rx, float ry) noexcept
     auto ryKappa = ry * PATH_KAPPA;
 
     pImpl->grow(6, 13);
-    pImpl->moveTo(cx + rx, cy);
+    pImpl->moveTo(cx, cy - ry);
+    pImpl->cubicTo(cx + rxKappa, cy - ry, cx + rx, cy - ryKappa, cx + rx, cy);
     pImpl->cubicTo(cx + rx, cy + ryKappa, cx + rxKappa, cy + ry, cx, cy + ry);
     pImpl->cubicTo(cx - rxKappa, cy + ry, cx - rx, cy + ryKappa, cx - rx, cy);
     pImpl->cubicTo(cx - rx, cy - ryKappa, cx - rxKappa, cy - ry, cx, cy - ry);
-    pImpl->cubicTo(cx + rxKappa, cy - ry, cx + rx, cy - ryKappa, cx + rx, cy);
     pImpl->close();
 
     return Result::Success;
@@ -217,7 +217,17 @@ Result Shape::appendRect(float x, float y, float w, float h, float rx, float ry)
         pImpl->close();
     //circle
     } else if (mathEqual(rx, halfW) && mathEqual(ry, halfH)) {
-        return appendCircle(x + (w * 0.5f), y + (h * 0.5f), rx, ry);
+        auto rxKappa = rx * PATH_KAPPA;
+        auto ryKappa = ry * PATH_KAPPA;
+        auto cx = x + (w * 0.5f);
+        auto cy = y + (h * 0.5f);
+        pImpl->grow(6, 13);
+        pImpl->moveTo(cx + rx, cy);
+        pImpl->cubicTo(cx + rx, cy + ryKappa, cx + rxKappa, cy + ry, cx, cy + ry);
+        pImpl->cubicTo(cx - rxKappa, cy + ry, cx - rx, cy + ryKappa, cx - rx, cy);
+        pImpl->cubicTo(cx - rx, cy - ryKappa, cx - rxKappa, cy - ry, cx, cy - ry);
+        pImpl->cubicTo(cx + rxKappa, cy - ry, cx + rx, cy - ryKappa, cx + rx, cy);
+        pImpl->close();
     } else {
         auto hrx = rx * PATH_KAPPA;
         auto hry = ry * PATH_KAPPA;
