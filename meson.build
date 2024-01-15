@@ -13,6 +13,11 @@ add_project_arguments('-DEXAMPLE_DIR="@0@/src/examples/resources"'.format(src_di
 
 config_h.set_quoted('THORVG_VERSION_STRING', meson.project_version())
 
+#Multi-Tasking
+if get_option('threads') == true
+  config_h.set10('THORVG_THREAD_SUPPORT', true)
+endif
+
 #Engines
 if get_option('engines').contains('sw') == true
     config_h.set10('THORVG_SW_RASTER_SUPPORT', true)
@@ -132,32 +137,34 @@ Summary:
     ThorVG version:        @0@
     Build Type:            @1@
     Prefix:                @2@
-    SIMD Instruction:      @3@
-    Raster Engine (SW):    @4@
-    Raster Engine (GL):    @5@
-    Raster Engine (WG):    @6@
-    Loader (TVG):          @7@
-    Loader (SVG):          @8@
-    Loader (TTF):          @9@
-    Loader (LOTTIE):       @10@
-    Loader (PNG):          @11@
-    Loader (JPG):          @12@
-    Loader (WEBP_BETA):    @13@
-    Saver (TVG):           @14@
-    Saver (GIF):           @15@
-    Binding (CAPI):        @16@
-    Binding (WASM_BETA):   @17@
-    Log Message:           @18@
-    Tests:                 @19@
-    Examples:              @20@
-    Tool (Svg2Tvg):        @21@
-    Tool (Svg2Png):        @22@
-    Tool (Lottie2Gif):     @23@
+    Multi-Tasking:         @3@
+    SIMD Instruction:      @4@
+    Raster Engine (SW):    @5@
+    Raster Engine (GL):    @6@
+    Raster Engine (WG):    @7@
+    Loader (TVG):          @8@
+    Loader (SVG):          @9@
+    Loader (TTF):          @10@
+    Loader (LOTTIE):       @11@
+    Loader (PNG):          @12@
+    Loader (JPG):          @13@
+    Loader (WEBP_BETA):    @14@
+    Saver (TVG):           @15@
+    Saver (GIF):           @16@
+    Binding (CAPI):        @17@
+    Binding (WASM_BETA):   @18@
+    Log Message:           @19@
+    Tests:                 @20@
+    Examples:              @21@
+    Tool (Svg2Tvg):        @22@
+    Tool (Svg2Png):        @23@
+    Tool (Lottie2Gif):     @24@
 
 '''.format(
         meson.project_version(),
         get_option('buildtype'),
         get_option('prefix'),
+        get_option('threads'),
         simd_type,
         get_option('engines').contains('sw'),
         get_option('engines').contains('gl_beta'),
