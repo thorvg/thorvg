@@ -1855,7 +1855,7 @@ void rasterUnpremultiply(Surface* surface)
 
 void rasterPremultiply(Surface* surface)
 {
-    unique_lock<mutex> lock{surface->mtx};
+    ScopedLock lock(surface->key);
     if (surface->premultiplied || (surface->channelSize != sizeof(uint32_t))) return;
     surface->premultiplied = true;
 
@@ -1936,7 +1936,7 @@ bool rasterImage(SwSurface* surface, SwImage* image, const RenderMesh* mesh, con
 
 bool rasterConvertCS(Surface* surface, ColorSpace to)
 {
-    unique_lock<mutex> lock{surface->mtx};
+    ScopedLock lock(surface->key);
     if (surface->cs == to) return true;
 
     //TOOD: Support SIMD accelerations

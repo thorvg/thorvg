@@ -3,6 +3,7 @@ source_file = [
    'tvgBezier.h',
    'tvgCompressor.h',
    'tvgInlist.h',
+   'tvgLock.h',
    'tvgMath.h',
    'tvgStr.h',
    'tvgBezier.cpp',

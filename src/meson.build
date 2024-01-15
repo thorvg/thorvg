@@ -42,7 +42,8 @@ subdir('loaders')
 subdir('savers')
 
 thorvg_lib_dep = [common_dep, utils_dep, loader_dep, saver_dep]
-if host_machine.system() != 'windows' and host_machine.system() != 'android'
+
+if get_option('threads') == true and host_machine.system() != 'windows' and host_machine.system() != 'android'
     thread_dep = meson.get_compiler('cpp').find_library('pthread')
     thorvg_lib_dep += [thread_dep]
 endif
