@@ -16,6 +16,11 @@ option('savers',
    value: [''],
    description: 'Enable File Savers in thorvg')
 
+option('threads',
+   type: 'boolean',
+   value: true,
+   description: 'Enable the multi-threading task scheduler in thorvg')
+
 option('vector',
    type: 'boolean',
    value: false,
