@@ -130,6 +130,8 @@ public:
             return 1;
         }
 
+        canvas->clear();
+
         //Background color if needed
         if (bgColor != 0xffffffff) {
             uint8_t r = (uint8_t)((bgColor & 0xff0000) >> 16);
@@ -153,8 +155,6 @@ public:
         builder.build(dst, w, h, buffer);
 
         cout << "Generated PNG file: " << dst << endl;
-
-        canvas->clear(true);
 
         return 0;
     }
