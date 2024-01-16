@@ -272,146 +272,10 @@ void WgBindGroup::releaseBindGroupLayout(WGPUBindGroupLayout& bindGroupLayout)
 // pipeline
 //*****************************************************************************
 
-void WgPipeline::allocate(WGPUDevice device,
-                          WGPUVertexBufferLayout vertexBufferLayouts[], uint32_t attribsCount,
-                          WGPUBindGroupLayout bindGroupLayouts[], uint32_t bindGroupsCount,
-                          WGPUCompareFunction stencilCompareFunction, WGPUStencilOperation stencilOperation,
-                          const char* shaderSource, const char* shaderLabel, const char* pipelineLabel)
-{
-    mShaderModule = createShaderModule(device, shaderSource, shaderLabel);
-    assert(mShaderModule);
-
-    mPipelineLayout = createPipelineLayout(device, bindGroupLayouts, bindGroupsCount);
-    assert(mPipelineLayout);
-
-    mRenderPipeline = createRenderPipeline(device,
-                                           vertexBufferLayouts, attribsCount,
-                                           stencilCompareFunction, stencilOperation,
-                                           mPipelineLayout, mShaderModule, pipelineLabel);
-    assert(mRenderPipeline);
-}
-
-
 void WgPipeline::release()
 {
-    destroyRenderPipeline(mRenderPipeline);
     destroyShaderModule(mShaderModule);
     destroyPipelineLayout(mPipelineLayout);
-}
-
-
-void WgPipeline::set(WGPURenderPassEncoder renderPassEncoder)
-{
-    wgpuRenderPassEncoderSetPipeline(renderPassEncoder, mRenderPipeline);
-};
-
-
-WGPUBlendState WgPipeline::makeBlendState()
-{
-    WGPUBlendState blendState{};
-    blendState.color.operation = WGPUBlendOperation_Add;
-    blendState.color.srcFactor = WGPUBlendFactor_SrcAlpha;
-    blendState.color.dstFactor = WGPUBlendFactor_OneMinusSrcAlpha;
-    blendState.alpha.operation = WGPUBlendOperation_Add;
-    blendState.alpha.srcFactor = WGPUBlendFactor_One;
-    blendState.alpha.dstFactor = WGPUBlendFactor_Zero;
-    return blendState;
-}
-
-
-WGPUColorTargetState WgPipeline::makeColorTargetState(const WGPUBlendState* blendState)
-{
-    WGPUColorTargetState colorTargetState{};
-    colorTargetState.nextInChain = nullptr;
-    colorTargetState.format = WGPUTextureFormat_BGRA8Unorm; // (WGPUTextureFormat_BGRA8UnormSrgb)
-    colorTargetState.blend = blendState;
-    colorTargetState.writeMask = WGPUColorWriteMask_All;
-    return colorTargetState;
-}
-
-
-WGPUVertexBufferLayout WgPipeline::makeVertexBufferLayout(const WGPUVertexAttribute* vertexAttributes, uint32_t count, uint64_t stride)
-{
-    WGPUVertexBufferLayout vertexBufferLayoutPos{};
-    vertexBufferLayoutPos.arrayStride = stride;
-    vertexBufferLayoutPos.stepMode = WGPUVertexStepMode_Vertex;
-    vertexBufferLayoutPos.attributeCount = count;
-    vertexBufferLayoutPos.attributes = vertexAttributes;
-    return vertexBufferLayoutPos;
-}
-
-
-WGPUVertexState WgPipeline::makeVertexState(WGPUShaderModule shaderModule, const WGPUVertexBufferLayout* buffers, uint32_t count)
-{
-    WGPUVertexState vertexState{};
-    vertexState.nextInChain = nullptr;
-    vertexState.module = shaderModule;
-    vertexState.entryPoint = "vs_main";
-    vertexState.constantCount = 0;
-    vertexState.constants = nullptr;
-    vertexState.bufferCount = count;
-    vertexState.buffers = buffers;
-    return vertexState;
-}
-
-
-WGPUPrimitiveState WgPipeline::makePrimitiveState()
-{
-    WGPUPrimitiveState primitiveState{};
-    primitiveState.nextInChain = nullptr;
-    primitiveState.topology = WGPUPrimitiveTopology_TriangleList;
-    primitiveState.stripIndexFormat = WGPUIndexFormat_Undefined;
-    primitiveState.frontFace = WGPUFrontFace_CCW;
-    primitiveState.cullMode = WGPUCullMode_None;
-    return primitiveState;
-}
-
-WGPUDepthStencilState WgPipeline::makeDepthStencilState(WGPUCompareFunction compare, WGPUStencilOperation operation)
-{
-    WGPUDepthStencilState depthStencilState{};
-    depthStencilState.nextInChain = nullptr;
-    depthStencilState.format = WGPUTextureFormat_Stencil8;
-    depthStencilState.depthWriteEnabled = false;
-    depthStencilState.depthCompare = WGPUCompareFunction_Always;
-    depthStencilState.stencilFront.compare = compare;
-    depthStencilState.stencilFront.failOp = operation;
-    depthStencilState.stencilFront.depthFailOp = operation;
-    depthStencilState.stencilFront.passOp = operation;
-    depthStencilState.stencilBack.compare = compare;
-    depthStencilState.stencilBack.failOp = operation;
-    depthStencilState.stencilBack.depthFailOp = operation;
-    depthStencilState.stencilBack.passOp = operation;
-    depthStencilState.stencilReadMask = 0xFFFFFFFF;
-    depthStencilState.stencilWriteMask = 0xFFFFFFFF;
-    depthStencilState.depthBias = 0;
-    depthStencilState.depthBiasSlopeScale = 0.0f;
-    depthStencilState.depthBiasClamp = 0.0f;
-    return depthStencilState;
-}
-
-
-WGPUMultisampleState WgPipeline::makeMultisampleState()
-{
-    WGPUMultisampleState multisampleState{};
-    multisampleState.nextInChain = nullptr;
-    multisampleState.count = 1;
-    multisampleState.mask = 0xFFFFFFFF;
-    multisampleState.alphaToCoverageEnabled = false;
-    return multisampleState;
-}
-
-
-WGPUFragmentState WgPipeline::makeFragmentState(WGPUShaderModule shaderModule, WGPUColorTargetState* targets, uint32_t size)
-{
-    WGPUFragmentState fragmentState{};
-    fragmentState.nextInChain = nullptr;
-    fragmentState.module = shaderModule;
-    fragmentState.entryPoint = "fs_main";
-    fragmentState.constantCount = 0;
-    fragmentState.constants = nullptr;
-    fragmentState.targetCount = size;
-    fragmentState.targets = targets;
-    return fragmentState;
 }
 
 
@@ -441,7 +305,165 @@ WGPUShaderModule WgPipeline::createShaderModule(WGPUDevice device, const char* c
 }
 
 
-WGPURenderPipeline WgPipeline::createRenderPipeline(WGPUDevice device,
+void WgPipeline::destroyPipelineLayout(WGPUPipelineLayout& pipelineLayout)
+{
+    if (pipelineLayout) wgpuPipelineLayoutRelease(pipelineLayout);
+    pipelineLayout = nullptr;
+}
+
+
+void WgPipeline::destroyShaderModule(WGPUShaderModule& shaderModule)
+{
+    if (shaderModule) wgpuShaderModuleRelease(shaderModule);
+    shaderModule = nullptr;
+}
+
+//*****************************************************************************
+// render pipeline
+//*****************************************************************************
+
+void WgRenderPipeline::allocate(WGPUDevice device, 
+                          WGPUVertexBufferLayout vertexBufferLayouts[], uint32_t attribsCount,
+                          WGPUBindGroupLayout bindGroupLayouts[], uint32_t bindGroupsCount,
+                          WGPUCompareFunction stencilCompareFunction, WGPUStencilOperation stencilOperation,
+                          const char* shaderSource, const char* shaderLabel, const char* pipelineLabel)
+{
+    mShaderModule = createShaderModule(device, shaderSource, shaderLabel);
+    assert(mShaderModule);
+
+    mPipelineLayout = createPipelineLayout(device, bindGroupLayouts, bindGroupsCount);
+    assert(mPipelineLayout);
+
+    mRenderPipeline = createRenderPipeline(device,
+                                           vertexBufferLayouts, attribsCount,
+                                           stencilCompareFunction, stencilOperation,
+                                           mPipelineLayout, mShaderModule, pipelineLabel);
+    assert(mRenderPipeline);
+}
+
+
+void WgRenderPipeline::release()
+{
+    destroyRenderPipeline(mRenderPipeline);
+    WgPipeline::release();
+}
+
+
+void WgRenderPipeline::set(WGPURenderPassEncoder renderPassEncoder)
+{
+    wgpuRenderPassEncoderSetPipeline(renderPassEncoder, mRenderPipeline);
+};
+
+
+WGPUBlendState WgRenderPipeline::makeBlendState()
+{
+    WGPUBlendState blendState{};
+    blendState.color.operation = WGPUBlendOperation_Add;
+    blendState.color.srcFactor = WGPUBlendFactor_SrcAlpha;
+    blendState.color.dstFactor = WGPUBlendFactor_OneMinusSrcAlpha;
+    blendState.alpha.operation = WGPUBlendOperation_Add;
+    blendState.alpha.srcFactor = WGPUBlendFactor_One;
+    blendState.alpha.dstFactor = WGPUBlendFactor_One;
+    return blendState;
+}
+
+
+WGPUColorTargetState WgRenderPipeline::makeColorTargetState(const WGPUBlendState* blendState)
+{
+    WGPUColorTargetState colorTargetState{};
+    colorTargetState.nextInChain = nullptr;
+    colorTargetState.format = WGPUTextureFormat_BGRA8Unorm; // (WGPUTextureFormat_BGRA8UnormSrgb)
+    colorTargetState.blend = blendState;
+    colorTargetState.writeMask = WGPUColorWriteMask_All;
+    return colorTargetState;
+}
+
+
+WGPUVertexBufferLayout WgRenderPipeline::makeVertexBufferLayout(const WGPUVertexAttribute* vertexAttributes, uint32_t count, uint64_t stride)
+{
+    WGPUVertexBufferLayout vertexBufferLayoutPos{};
+    vertexBufferLayoutPos.arrayStride = stride;
+    vertexBufferLayoutPos.stepMode = WGPUVertexStepMode_Vertex;
+    vertexBufferLayoutPos.attributeCount = count;
+    vertexBufferLayoutPos.attributes = vertexAttributes;
+    return vertexBufferLayoutPos;
+}
+
+
+WGPUVertexState WgRenderPipeline::makeVertexState(WGPUShaderModule shaderModule, const WGPUVertexBufferLayout* buffers, uint32_t count)
+{
+    WGPUVertexState vertexState{};
+    vertexState.nextInChain = nullptr;
+    vertexState.module = shaderModule;
+    vertexState.entryPoint = "vs_main";
+    vertexState.constantCount = 0;
+    vertexState.constants = nullptr;
+    vertexState.bufferCount = count;
+    vertexState.buffers = buffers;
+    return vertexState;
+}
+
+
+WGPUPrimitiveState WgRenderPipeline::makePrimitiveState()
+{
+    WGPUPrimitiveState primitiveState{};
+    primitiveState.nextInChain = nullptr;
+    primitiveState.topology = WGPUPrimitiveTopology_TriangleList;
+    primitiveState.stripIndexFormat = WGPUIndexFormat_Undefined;
+    primitiveState.frontFace = WGPUFrontFace_CCW;
+    primitiveState.cullMode = WGPUCullMode_None;
+    return primitiveState;
+}
+
+WGPUDepthStencilState WgRenderPipeline::makeDepthStencilState(WGPUCompareFunction compare, WGPUStencilOperation operation)
+{
+    WGPUDepthStencilState depthStencilState{};
+    depthStencilState.nextInChain = nullptr;
+    depthStencilState.format = WGPUTextureFormat_Stencil8;
+    depthStencilState.depthWriteEnabled = false;
+    depthStencilState.depthCompare = WGPUCompareFunction_Always;
+    depthStencilState.stencilFront.compare = compare;
+    depthStencilState.stencilFront.failOp = operation;
+    depthStencilState.stencilFront.depthFailOp = operation;
+    depthStencilState.stencilFront.passOp = operation;
+    depthStencilState.stencilBack.compare = compare;
+    depthStencilState.stencilBack.failOp = operation;
+    depthStencilState.stencilBack.depthFailOp = operation;
+    depthStencilState.stencilBack.passOp = operation;
+    depthStencilState.stencilReadMask = 0xFFFFFFFF;
+    depthStencilState.stencilWriteMask = 0xFFFFFFFF;
+    depthStencilState.depthBias = 0;
+    depthStencilState.depthBiasSlopeScale = 0.0f;
+    depthStencilState.depthBiasClamp = 0.0f;
+    return depthStencilState;
+}
+
+
+WGPUMultisampleState WgRenderPipeline::makeMultisampleState()
+{
+    WGPUMultisampleState multisampleState{};
+    multisampleState.nextInChain = nullptr;
+    multisampleState.count = 1;
+    multisampleState.mask = 0xFFFFFFFF;
+    multisampleState.alphaToCoverageEnabled = false;
+    return multisampleState;
+}
+
+
+WGPUFragmentState WgRenderPipeline::makeFragmentState(WGPUShaderModule shaderModule, WGPUColorTargetState* targets, uint32_t size)
+{
+    WGPUFragmentState fragmentState{};
+    fragmentState.nextInChain = nullptr;
+    fragmentState.module = shaderModule;
+    fragmentState.entryPoint = "fs_main";
+    fragmentState.constantCount = 0;
+    fragmentState.constants = nullptr;
+    fragmentState.targetCount = size;
+    fragmentState.targets = targets;
+    return fragmentState;
+}
+
+WGPURenderPipeline WgRenderPipeline::createRenderPipeline(WGPUDevice device,
                                                     WGPUVertexBufferLayout vertexBufferLayouts[], uint32_t attribsCount,
                                                     WGPUCompareFunction stencilCompareFunction, WGPUStencilOperation stencilOperation,
                                                     WGPUPipelineLayout pipelineLayout, WGPUShaderModule shaderModule,
@@ -470,22 +492,7 @@ WGPURenderPipeline WgPipeline::createRenderPipeline(WGPUDevice device,
     return wgpuDeviceCreateRenderPipeline(device, &renderPipelineDesc);
 }
 
-
-void WgPipeline::destroyPipelineLayout(WGPUPipelineLayout& pipelineLayout)
-{
-    if (pipelineLayout) wgpuPipelineLayoutRelease(pipelineLayout);
-    pipelineLayout = nullptr;
-}
-
-
-void WgPipeline::destroyShaderModule(WGPUShaderModule& shaderModule)
-{
-    if (shaderModule) wgpuShaderModuleRelease(shaderModule);
-    shaderModule = nullptr;
-}
-
-
-void WgPipeline::destroyRenderPipeline(WGPURenderPipeline& renderPipeline)
+void WgRenderPipeline::destroyRenderPipeline(WGPURenderPipeline& renderPipeline)
 {
     if (renderPipeline) wgpuRenderPipelineRelease(renderPipeline);
     renderPipeline = nullptr;

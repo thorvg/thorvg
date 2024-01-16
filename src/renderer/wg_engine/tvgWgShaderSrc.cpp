@@ -352,8 +352,9 @@ struct VertexOutput {
     @location(0) texCoord: vec2f
 };
 
-@group(0) @binding(0) var uSamplerSrc     : sampler;
-@group(0) @binding(1) var uTextureViewSrc : texture_2d<f32>;
+@group(0) @binding(0) var uSamplerSrc       : sampler;
+@group(0) @binding(1) var uTextureViewSrc   : texture_2d<f32>;
+@group(1) @binding(0) var<uniform> uOpacity : f32;
 
 @vertex
 fn vs_main(in: VertexInput) -> VertexOutput {
@@ -366,7 +367,9 @@ fn vs_main(in: VertexInput) -> VertexOutput {
 
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4f {
-    return textureSample(uTextureViewSrc, uSamplerSrc, in.texCoord.xy);
+    let color: vec4f = textureSample(uTextureViewSrc, uSamplerSrc, in.texCoord.xy);
+    return vec4f(color.rgb, uOpacity);
+    //return vec4f(color.rgb, 0.5);
 };
 )";
 

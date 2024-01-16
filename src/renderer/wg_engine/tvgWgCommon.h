@@ -28,6 +28,8 @@
 #include "tvgCommon.h"
 #include "tvgRender.h"
 
+struct WgPipelines;
+
 struct WgContext {
     WGPUInstance instance{};
     WGPUAdapter adapter{};
@@ -37,6 +39,8 @@ struct WgContext {
     WGPUFeatureName featureNames[32]{};
     WGPUAdapterProperties adapterProperties{};
     WGPUSupportedLimits supportedLimits{};
+
+    WgPipelines* pipelines{}; // external handle (do not release)
     
     void initialize();
     void release();
@@ -70,17 +74,29 @@ struct WgBindGroup
 struct WgPipeline
 {
 protected:
+    WGPUPipelineLayout mPipelineLayout{};
+    WGPUShaderModule mShaderModule{};
+public:
+    virtual void initialize(WGPUDevice device) = 0;
+    virtual void release();
+
+    static WGPUPipelineLayout createPipelineLayout(WGPUDevice device, const WGPUBindGroupLayout* bindGroupLayouts, uint32_t count);
+    static WGPUShaderModule createShaderModule(WGPUDevice device, const char* code, const char* label);
+    static void destroyPipelineLayout(WGPUPipelineLayout& pipelineLayout);
+    static void destroyShaderModule(WGPUShaderModule& shaderModule);
+};
+
+struct WgRenderPipeline: public WgPipeline
+{
+protected:
+    WGPURenderPipeline mRenderPipeline{};
     void allocate(WGPUDevice device,
                   WGPUVertexBufferLayout vertexBufferLayouts[], uint32_t attribsCount,
                   WGPUBindGroupLayout bindGroupLayouts[], uint32_t bindGroupsCount,
                   WGPUCompareFunction stencilCompareFunction, WGPUStencilOperation stencilOperation,
                   const char* shaderSource, const char* shaderLabel, const char* pipelineLabel);
-    WGPUPipelineLayout mPipelineLayout{};
-    WGPUShaderModule mShaderModule{};
-    WGPURenderPipeline mRenderPipeline{};
 public:
-    virtual void initialize(WGPUDevice device) = 0;
-    virtual void release();
+    void release() override;
     void set(WGPURenderPassEncoder renderPassEncoder);
 
     static WGPUBlendState makeBlendState();
@@ -92,15 +108,11 @@ public:
     static WGPUMultisampleState makeMultisampleState();
     static WGPUFragmentState makeFragmentState(WGPUShaderModule shaderModule, WGPUColorTargetState* targets, uint32_t size);
 
-    static WGPUPipelineLayout createPipelineLayout(WGPUDevice device, const WGPUBindGroupLayout* bindGroupLayouts, uint32_t count);
-    static WGPUShaderModule createShaderModule(WGPUDevice device, const char* code, const char* label);
     static WGPURenderPipeline createRenderPipeline(WGPUDevice device,
                                                    WGPUVertexBufferLayout vertexBufferLayouts[], uint32_t attribsCount,
                                                    WGPUCompareFunction stencilCompareFunction, WGPUStencilOperation stencilOperation,
                                                    WGPUPipelineLayout pipelineLayout, WGPUShaderModule shaderModule,
                                                    const char* pipelineLabel);
-    static void destroyPipelineLayout(WGPUPipelineLayout& pipelineLayout);
-    static void destroyShaderModule(WGPUShaderModule& shaderModule);
     static void destroyRenderPipeline(WGPURenderPipeline& renderPipeline);
 };
 

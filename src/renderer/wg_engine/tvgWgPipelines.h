@@ -25,7 +25,7 @@
 
 #include "tvgWgBindGroups.h"
 
-struct WgPipelineFillShape: public WgPipeline
+struct WgPipelineFillShape: public WgRenderPipeline
 {
     void initialize(WGPUDevice device) override;
     void use(WGPURenderPassEncoder encoder, WgBindGroupCanvas& groupCanvas, WgBindGroupPaint& groupPaint)
@@ -36,7 +36,7 @@ struct WgPipelineFillShape: public WgPipeline
     }
 };
 
-struct WgPipelineFillStroke: public WgPipeline
+struct WgPipelineFillStroke: public WgRenderPipeline
 {
     void initialize(WGPUDevice device) override;
     void use(WGPURenderPassEncoder encoder, WgBindGroupCanvas& groupCanvas, WgBindGroupPaint& groupPaint)
@@ -47,7 +47,7 @@ struct WgPipelineFillStroke: public WgPipeline
     }
 };
 
-struct WgPipelineSolid: public WgPipeline
+struct WgPipelineSolid: public WgRenderPipeline
 {
     void initialize(WGPUDevice device) override;
     void use(WGPURenderPassEncoder encoder, WgBindGroupCanvas& groupCanvas,WgBindGroupPaint& groupPaint, WgBindGroupSolidColor& groupSolid)
@@ -59,7 +59,7 @@ struct WgPipelineSolid: public WgPipeline
     }
 };
 
-struct WgPipelineLinear: public WgPipeline
+struct WgPipelineLinear: public WgRenderPipeline
 {
     void initialize(WGPUDevice device) override;
     void use(WGPURenderPassEncoder encoder, WgBindGroupCanvas& groupCanvas, WgBindGroupPaint& groupPaint, WgBindGroupLinearGradient& groupLinear)
@@ -71,7 +71,7 @@ struct WgPipelineLinear: public WgPipeline
     }
 };
 
-struct WgPipelineRadial: public WgPipeline
+struct WgPipelineRadial: public WgRenderPipeline
 {
     void initialize(WGPUDevice device) override;
     void use(WGPURenderPassEncoder encoder, WgBindGroupCanvas& groupCanvas, WgBindGroupPaint& groupPaint, WgBindGroupRadialGradient& groupRadial)
@@ -83,7 +83,7 @@ struct WgPipelineRadial: public WgPipeline
     }
 };
 
-struct WgPipelineImage: public WgPipeline
+struct WgPipelineImage: public WgRenderPipeline
 {
     void initialize(WGPUDevice device) override;
     void use(WGPURenderPassEncoder encoder, WgBindGroupCanvas& groupCanvas, WgBindGroupPaint& groupPaint, WgBindGroupPicture& groupPicture)
@@ -95,7 +95,20 @@ struct WgPipelineImage: public WgPipeline
     }
 };
 
-struct WgPipelineBlit: public WgPipeline
+struct WgPipelineBlit: public WgRenderPipeline
+{
+    void initialize(WGPUDevice device) override;
+    void use(WGPURenderPassEncoder encoder,
+             WgBindGroupBlit& groupBlit,
+             WgBindGroupOpacity& groupOpacity)
+    {
+        set(encoder);
+        groupBlit.set(encoder, 0);
+        groupOpacity.set(encoder, 1);
+    }
+};
+
+struct WgPipelineBlitColor: public WgRenderPipeline
 {
     void initialize(WGPUDevice device) override;
     void use(WGPURenderPassEncoder encoder, WgBindGroupBlit& groupBlit)
@@ -105,17 +118,7 @@ struct WgPipelineBlit: public WgPipeline
     }
 };
 
-struct WgPipelineBlitColor: public WgPipeline
-{
-    void initialize(WGPUDevice device) override;
-    void use(WGPURenderPassEncoder encoder, WgBindGroupBlit& groupBlit)
-    {
-        set(encoder);
-        groupBlit.set(encoder, 0);
-    }
-};
-
-struct WgPipelineComposition: public WgPipeline
+struct WgPipelineComposition: public WgRenderPipeline
 {
     void initialize(WGPUDevice device) override {};
     void initialize(WGPUDevice device, const char* shaderSrc);
@@ -147,7 +150,7 @@ struct WgPipelines
     WgPipelineComposition compIntersectMask;
     WgPipelineComposition compDifferenceMask;
 
-    void initialize(WGPUDevice device);
+    void initialize(WgContext& context);
     void release();
 
     WgPipelineComposition* getCompositionPipeline(CompositeMethod method);
