@@ -1035,6 +1035,7 @@ static void _buildReference(LottieComposition* comp, LottieLayer* layer)
             auto assetLayer = static_cast<LottieLayer*>(*asset);
             if (_buildComposition(comp, assetLayer)) {
                 layer->children = assetLayer->children;
+                layer->reqFragment = assetLayer->reqFragment;
             }
         } else if (layer->type == LottieLayer::Image) {
             layer->children.push(*asset);
@@ -1064,40 +1065,6 @@ static void _bulidHierarchy(LottieGroup* parent, LottieLayer* child)
         if (parent->matte.target && parent->matte.target->id == child->pid) {
             child->parent = parent->matte.target;
             break;
-        }
-    }
-}
-
-
-//TODO: Optimize this. Can we preprocess in the parsing stage?
-static void _checkFragment(LottieGroup* parent)
-{
-    if (parent->children.count == 0) return;
-
-    int strokeCnt = 0;
-
-    /* Figure out if the rendering context should be fragmented.
-       Multiple stroking or grouping with a stroking would occur this.
-       This fragment resolves the overlapped stroke outlines. */
-    for (auto c = parent->children.end() - 1; c >= parent->children.data; --c) {
-        switch ((*c)->type) {
-            case LottieObject::Group: {
-                if (strokeCnt > 0) {
-                    parent->reqFragment = true;
-                    return;
-                }
-                break;
-            }
-            case LottieObject::SolidStroke:
-            case LottieObject::GradientStroke: {
-                if (strokeCnt > 0) {
-                    parent->reqFragment = true;
-                    return;
-                }
-                ++strokeCnt;
-                break;
-            }
-            default: break;
         }
     }
 }
@@ -1141,8 +1108,6 @@ static bool _buildComposition(LottieComposition* comp, LottieGroup* parent)
             child->statical &= child->matte.target->statical;
         }
         _bulidHierarchy(parent, child);
-
-        _checkFragment(static_cast<LottieGroup*>(*c));
 
         //attach the necessary font data
         if (child->type == LottieLayer::Text) _attachFont(comp, child);

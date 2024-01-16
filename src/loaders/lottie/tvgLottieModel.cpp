@@ -135,9 +135,23 @@ Fill* LottieGradient::fill(float frameNo)
 void LottieGroup::prepare(LottieObject::Type type)
 {
     LottieObject::type = type;
-    for (auto child = children.data; child < children.end(); ++child) {
-        statical &= (*child)->statical;
-        if (!statical) break;
+
+    if (children.count == 0) return;
+
+    size_t strokeCnt = 0;
+
+    for (auto c = children.end() - 1; c >= children.data; --c) {
+        if (reqFragment && !statical) break;
+        auto child = static_cast<LottieObject*>(*c);
+        if (statical) statical &= child->statical;
+        /* Figure out if the rendering context should be fragmented.
+           Multiple stroking or grouping with a stroking would occur this.
+           This fragment resolves the overlapped stroke outlines. */
+        if (reqFragment) continue;
+        if (child->type == LottieObject::SolidStroke || child->type == LottieObject::GradientStroke) {
+            if (strokeCnt > 0) reqFragment = true;
+            else ++strokeCnt;
+        } else if (child->type == LottieObject::Group && strokeCnt > 0) reqFragment = true;
     }
 }
 
