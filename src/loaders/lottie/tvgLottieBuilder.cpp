@@ -59,7 +59,7 @@ struct RenderContext
     LottieObject** begin = nullptr; //iteration entry point
     RenderRepeater* repeater = nullptr;
     float roundness = 0.0f;
-    bool stroking = false;     //context has been separated by the stroking
+    bool fragmenting = false;  //render context has been fragmented by filling
     bool reqFragment = false;  //requirment to fragment the render context
     bool allowMerging = true;  //individual trimpath doesn't allow merging shapes
 
@@ -239,16 +239,18 @@ static void _updateStroke(LottieStroke* stroke, float frameNo, RenderContext* ct
 }
 
 
-static bool _fragmentedStroking(LottieObject** child, Inlist<RenderContext>& contexts, RenderContext* ctx)
+static bool _fragmented(LottieObject** child, Inlist<RenderContext>& contexts, RenderContext* ctx)
 {
     if (!ctx->reqFragment) return false;
-    if (ctx->stroking) return true;
+    if (ctx->fragmenting) return true;
 
     contexts.back(new RenderContext(*ctx));
     auto fragment = contexts.tail;
     fragment->propagator->strokeWidth(0.0f);
     fragment->begin = child - 1;
-    ctx->stroking = true;
+    ctx->fragmenting = true;
+
+    TVGERR("LOTTIE", "Rendering is fragmented.");
 
     return false;
 }
@@ -256,7 +258,7 @@ static bool _fragmentedStroking(LottieObject** child, Inlist<RenderContext>& con
 
 static void _updateSolidStroke(TVG_UNUSED LottieGroup* parent, LottieObject** child, float frameNo, Inlist<RenderContext>& contexts, RenderContext* ctx)
 {
-    if (_fragmentedStroking(child, contexts, ctx)) return;
+    if (_fragmented(child, contexts, ctx)) return;
 
     auto stroke = static_cast<LottieSolidStroke*>(*child);
 
@@ -269,7 +271,7 @@ static void _updateSolidStroke(TVG_UNUSED LottieGroup* parent, LottieObject** ch
 
 static void _updateGradientStroke(TVG_UNUSED LottieGroup* parent, LottieObject** child, float frameNo, Inlist<RenderContext>& contexts, RenderContext* ctx)
 {
-    if (_fragmentedStroking(child, contexts, ctx)) return;
+    if (_fragmented(child, contexts, ctx)) return;
 
     auto stroke = static_cast<LottieGradientStroke*>(*child);
 
@@ -281,12 +283,11 @@ static void _updateGradientStroke(TVG_UNUSED LottieGroup* parent, LottieObject**
 
 static void _updateSolidFill(TVG_UNUSED LottieGroup* parent, LottieObject** child, float frameNo, TVG_UNUSED Inlist<RenderContext>& contexts, RenderContext* ctx)
 {
-    if (ctx->stroking) return;
+    if (_fragmented(child, contexts, ctx)) return;
 
     auto fill = static_cast<LottieSolidFill*>(*child);
 
     ctx->merging = nullptr;
-
     auto color = fill->color(frameNo);
     ctx->propagator->fill(color.rgb[0], color.rgb[1], color.rgb[2], fill->opacity(frameNo));
     ctx->propagator->fill(fill->rule);
@@ -297,12 +298,11 @@ static void _updateSolidFill(TVG_UNUSED LottieGroup* parent, LottieObject** chil
 
 static Shape* _updateGradientFill(TVG_UNUSED LottieGroup* parent, LottieObject** child, float frameNo, TVG_UNUSED Inlist<RenderContext>& contexts, RenderContext* ctx)
 {
-    if (ctx->stroking) return nullptr;
+    if (_fragmented(child, contexts, ctx)) return nullptr;
 
     auto fill = static_cast<LottieGradientFill*>(*child);
 
     ctx->merging = nullptr;
-
     //TODO: reuse the fill instance?
     ctx->propagator->fill(unique_ptr<Fill>(fill->fill(frameNo)));
     ctx->propagator->fill(fill->rule);
@@ -883,7 +883,7 @@ static void _updateChildren(LottieGroup* parent, float frameNo, Inlist<RenderCon
 
 static void _updatePrecomp(LottieLayer* precomp, float frameNo)
 {
-    if (precomp->children.count == 0) return;
+    if (precomp->children.empty()) return;
 
     frameNo = precomp->remap(frameNo);
 
@@ -1000,9 +1000,7 @@ static void _updateLayer(LottieLayer* root, LottieLayer* layer, float frameNo)
 
     switch (layer->type) {
         case LottieLayer::Precomp: {
-            if (!layer->children.empty()) {
-                _updatePrecomp(layer, frameNo);
-            }
+            _updatePrecomp(layer, frameNo);
             break;
         }
         case LottieLayer::Solid: {
