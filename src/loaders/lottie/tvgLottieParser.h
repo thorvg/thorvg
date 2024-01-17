@@ -48,6 +48,7 @@ private:
     StrokeJoin getStrokeJoin();
     CompositeMethod getMaskMethod(bool inversed);
     LottieInterpolator* getInterpolator(const char* key, Point& in, Point& out);
+    uint8_t getDirection();
 
     void getInperpolatorPoint(Point& pt);
     void getPathSet(LottiePathSet& path);
