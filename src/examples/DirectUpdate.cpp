@@ -61,9 +61,8 @@ void tvgUpdateCmds(tvg::Canvas* canvas, float progress)
 {
     if (!canvas) return;
 
-    /* Update shape directly.
-       You can update necessary properties of this shape. */
-       canvas->clear(false);
+    //It's not necessary to clear canvas since it has a solid background and retaining the paints.
+    //canvas->clear(false);
 
     //Reset Shape
     if (pShape->reset() == tvg::Result::Success) {
