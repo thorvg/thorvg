@@ -142,7 +142,8 @@ void tvgSwTest(uint32_t* buffer)
 
 void drawSwView(void* data, Eo* obj)
 {
-    swCanvas->clear(false);
+    //It's not necessary to clear buffer since it has a solid background
+    //swCanvas->clear(false);
 
     //canvas update
     auto before = ecore_time_get();

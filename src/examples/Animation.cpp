@@ -28,15 +28,16 @@
 
 static unique_ptr<tvg::Animation> animation;
 static Elm_Transit *transit;
+static bool updated = false;
 
 void tvgUpdateCmds(tvg::Canvas* canvas, tvg::Animation* animation, float progress)
 {
-    if (!canvas) return;
-    canvas->clear(false);
+    if (updated || !canvas) return;
 
     //Update animation frame only when it's changed
     if (animation->frame(animation->totalFrame() * progress) == tvg::Result::Success) {
         canvas->update();
+        updated = true;
     }
 }
 
@@ -101,8 +102,12 @@ void tvgSwTest(uint32_t* buffer)
 
 void drawSwView(void* data, Eo* obj)
 {
+    //It's not necessary to clear buffer since it has a solid background
+    //swCanvas->clear(false);
+
     if (swCanvas->draw() == tvg::Result::Success) {
         swCanvas->sync();
+        updated = false;
     }
 }
 
