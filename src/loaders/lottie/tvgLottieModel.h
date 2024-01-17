@@ -313,7 +313,7 @@ struct LottieTrimpath : LottieObject
 struct LottieShape : LottieObject
 {
     virtual ~LottieShape() {}
-    bool cw = true;   //path direction (clock wise vs coutner clock wise)
+    uint8_t direction = 0;   //0: clockwise, 2: counter-clockwise, 3: xor(?)
 };
 
 
