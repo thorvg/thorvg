@@ -115,8 +115,8 @@ RGB24 LottieParser::getColor(const char *str)
 FillRule LottieParser::getFillRule()
 {
     switch (getInt()) {
-        case 2: return FillRule::EvenOdd;
-        default: return FillRule::Winding;
+        case 1: return FillRule::Winding;
+        default: return FillRule::EvenOdd;
     }
 }
 
@@ -484,8 +484,7 @@ LottieRect* LottieParser::parseRect()
     if (!rect) return nullptr;
 
     while (auto key = nextObjectKey()) {
-        if (!strcmp(key, "d")) rect->cw = getInt();
-        else if (!strcmp(key, "s")) parseProperty(rect->size);
+        if (!strcmp(key, "s")) parseProperty(rect->size);
         else if (!strcmp(key, "p")) parseProperty(rect->position);
         else if (!strcmp(key, "r")) parseProperty(rect->radius);
         else if (!strcmp(key, "nm")) rect->name = getStringCopy();
@@ -506,7 +505,6 @@ LottieEllipse* LottieParser::parseEllipse()
         if (!strcmp(key, "nm")) ellipse->name = getStringCopy();
         else if (!strcmp(key, "p")) parseProperty(ellipse->position);
         else if (!strcmp(key, "s")) parseProperty(ellipse->size);
-        else if (!strcmp(key, "d")) ellipse->cw = getInt();
         else if (!strcmp(key, "hd")) ellipse->hidden = getBool();
         else skip(key);
     }
@@ -648,7 +646,6 @@ LottiePath* LottieParser::parsePath()
     while (auto key = nextObjectKey()) {
         if (!strcmp(key, "nm")) path->name = getStringCopy();
         else if (!strcmp(key, "ks")) getPathSet(path->pathset);
-        else if (!strcmp(key, "d")) path->cw = getInt();
         else if (!strcmp(key, "hd")) path->hidden = getBool();
         else skip(key);
     }
@@ -672,7 +669,6 @@ LottiePolyStar* LottieParser::parsePolyStar()
         else if (!strcmp(key, "os")) parseProperty(star->outerRoundness);
         else if (!strcmp(key, "r")) parseProperty(star->rotation);
         else if (!strcmp(key, "sy")) star->type = (LottiePolyStar::Type) getInt();
-        else if (!strcmp(key, "d")) star->cw = getInt();
         else if (!strcmp(key, "hd")) star->hidden = getBool();
         else skip(key);
     }
@@ -1041,19 +1037,34 @@ void LottieParser::parseTimeRemap(LottieLayer* layer)
 }
 
 
+uint8_t LottieParser::getDirection()
+{
+    auto v = getInt();
+    if (v == 1) return 0;
+    if (v == 2) return 3;
+    if (v == 3) return 2;
+    return 0;
+}
+
 void LottieParser::parseShapes(Array<LottieObject*>& parent)
 {
+    uint8_t direction;
+
     enterArray();
     while (nextArrayValue()) {
+        direction = 0;
         enterObject();
         while (auto key = nextObjectKey()) {
             if (!strcmp(key, "it")) {
                 enterArray();
                 while (nextArrayValue()) parseObject(parent);
+            } else if (!strcmp(key, "d")) {
+                direction = getDirection();
             } else if (!strcmp(key, "ty")) {
                 if (auto child = parseObject()) {
                     if (child->hidden) delete(child);
                     else parent.push(child);
+                    if (direction > 0) static_cast<LottieShape*>(child)->direction = direction;
                 }
             } else skip(key);
         }

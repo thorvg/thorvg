@@ -250,8 +250,6 @@ static bool _fragmented(LottieObject** child, Inlist<RenderContext>& contexts, R
     fragment->begin = child - 1;
     ctx->fragmenting = true;
 
-    TVGERR("LOTTIE", "Rendering is fragmented.");
-
     return false;
 }
 
@@ -394,6 +392,7 @@ static void _updateRect(LottieGroup* parent, LottieObject** child, float frameNo
     } else {
         auto merging = _draw(parent, ctx);
         merging->appendRect(position.x - size.x * 0.5f, position.y - size.y * 0.5f, size.x, size.y, roundness, roundness);
+        if (rect->direction == 2) merging->fill(FillRule::EvenOdd);
     }
 }
 
@@ -412,6 +411,7 @@ static void _updateEllipse(LottieGroup* parent, LottieObject** child, float fram
     } else {
         auto merging = _draw(parent, ctx);
         merging->appendCircle(position.x, position.y, size.x * 0.5f, size.y * 0.5f);
+        if (ellipse->direction == 2) merging->fill(FillRule::EvenOdd);
     }
 }
 
@@ -426,15 +426,14 @@ static void _updatePath(LottieGroup* parent, LottieObject** child, float frameNo
         _repeat(parent, std::move(p), ctx);
     } else {
         auto merging = _draw(parent, ctx);
-
         if (path->pathset(frameNo, P(merging)->rs.path.cmds, P(merging)->rs.path.pts)) {
             P(merging)->update(RenderUpdateFlag::Path);
         }
-
         if (ctx->roundness > 1.0f && P(merging)->rs.stroke) {
             TVGERR("LOTTIE", "FIXME: Path roundesss should be applied properly!");
             P(merging)->rs.stroke->join = StrokeJoin::Round;
         }
+        if (path->direction == 2) merging->fill(FillRule::EvenOdd);
     }
 }
 
@@ -527,7 +526,7 @@ static void _updateStar(LottieGroup* parent, LottiePolyStar* star, Matrix* trans
     auto partialPointAmount = ptsCnt - floorf(ptsCnt);
     auto longSegment = false;
     auto numPoints = size_t(ceilf(ptsCnt) * 2);
-    auto direction = star->cw ? 1.0f : -1.0f;
+    auto direction = (star->direction == 0) ? 1.0f : -1.0f;
     auto hasRoundness = false;
 
     float x, y;
@@ -629,7 +628,7 @@ static void _updatePolygon(LottieGroup* parent, LottiePolyStar* star, Matrix* tr
 
     auto angle = -90.0f * MATH_PI / 180.0f;
     auto anglePerPoint = 2.0f * MATH_PI / float(ptsCnt);
-    auto direction = star->cw ? 1.0f : -1.0f;
+    auto direction = (star->direction == 0) ? 1.0f : -1.0f;
     auto hasRoundness = false;
     auto x = radius * cosf(angle);
     auto y = radius * sinf(angle);
@@ -711,6 +710,7 @@ static void _updatePolystar(LottieGroup* parent, LottieObject** child, float fra
         if (star->type == LottiePolyStar::Star) _updateStar(parent, star, identity ? nullptr : &matrix, frameNo, merging);
         else _updatePolygon(parent, star, identity  ? nullptr : &matrix, frameNo, merging);
         P(merging)->update(RenderUpdateFlag::Path);
+        if (star->direction == 2) merging->fill(FillRule::EvenOdd);
     }
 }
 
