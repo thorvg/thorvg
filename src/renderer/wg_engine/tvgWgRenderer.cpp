@@ -42,18 +42,16 @@ WgRenderer::~WgRenderer()
 void WgRenderer::initialize()
 {
     mContext.initialize();
-    mPipelines.initialize(mContext.device);
+    mPipelines.initialize(mContext);
 }
 
 
 void WgRenderer::release()
 {
-    // clear render targets
-    for (uint32_t i = 0; i < mRenderTargetPool.count; i++) {
-        mRenderTargetPool[i]->release(mContext);
-        delete mRenderTargetPool[i];
-    }
-    mRenderTargetPool.clear();
+    mCompositorStack.clear();
+    mRenderTargetStack.clear();
+    mBindGroupOpacityPool.release();
+    mRenderTargetPool.release(mContext);
     mRenderTargetRoot.release(mContext);
     mRenderTargetWnd.release(mContext);
     if (mSwapChain) wgpuSwapChainRelease(mSwapChain);
@@ -161,6 +159,7 @@ bool WgRenderer::postRender()
 {
     mRenderTargetRoot.endRenderPass();
     mRenderTargetStack.pop();
+    mBindGroupOpacityPool.reset();
     mContext.executeCommandEncoder(mCommandEncoder);
     wgpuCommandEncoderRelease(mCommandEncoder);
     return true;
@@ -235,7 +234,7 @@ bool WgRenderer::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t 
     mTargetSurface.w = w;
     mTargetSurface.h = h;
 
-    mRenderTargetRoot.initialize(mContext, mPipelines, w, h);
+    mRenderTargetRoot.initialize(mContext, w, h);
     return true;
 }
 
@@ -275,8 +274,8 @@ bool WgRenderer::target(void* window, uint32_t w, uint32_t h)
     mSwapChain = wgpuDeviceCreateSwapChain(mContext.device, mSurface, &swapChainDesc);
     assert(mSwapChain);
 
-    mRenderTargetWnd.initialize(mContext, mPipelines, w, h);
-    mRenderTargetRoot.initialize(mContext, mPipelines, w, h);
+    mRenderTargetWnd.initialize(mContext, w, h);
+    mRenderTargetRoot.initialize(mContext, w, h);
     return true;
 }
 
@@ -298,7 +297,7 @@ bool WgRenderer::beginComposite(TVG_UNUSED Compositor* cmp, TVG_UNUSED Composite
     mRenderTargetStack.last()->endRenderPass();
 
     // create new render target and begin new render pass
-    WgRenderTarget* renderTarget = allocateRenderTarget();
+    WgRenderTarget* renderTarget = mRenderTargetPool.allocate(mContext, mTargetSurface.w, mTargetSurface.h);
     renderTarget->beginRenderPass(mCommandEncoder, true);
     mRenderTargetStack.push(renderTarget);
 
@@ -319,10 +318,13 @@ bool WgRenderer::endComposite(TVG_UNUSED Compositor* cmp)
         // apply current render target
         WgRenderTarget* renderTarget = mRenderTargetStack.last();
         renderTarget->beginRenderPass(mCommandEncoder, false);
-        renderTarget->blit(mContext, renderTargetSrc);
+
+        // blit scene to current render tartget
+        WgBindGroupOpacity* mBindGroupOpacity = mBindGroupOpacityPool.allocate(mContext, cmp->opacity);
+        renderTarget->blit(mContext, renderTargetSrc, mBindGroupOpacity);
 
         // back render targets to the pool
-        releaseRenderTarget(renderTargetSrc);
+        mRenderTargetPool.free(mContext, renderTargetSrc);
     } else {
         // end current render pass
         mRenderTargetStack.last()->endRenderPass();
@@ -339,8 +341,8 @@ bool WgRenderer::endComposite(TVG_UNUSED Compositor* cmp)
         renderTarget->compose(mContext, renderTargetSrc, renderTargetMsk, cmp->method);
 
         // back render targets to the pool
-        releaseRenderTarget(renderTargetSrc);
-        releaseRenderTarget(renderTargetMsk);
+        mRenderTargetPool.free(mContext, renderTargetSrc);
+        mRenderTargetPool.free(mContext, renderTargetMsk);
     }
 
     // delete current compositor
@@ -348,26 +350,6 @@ bool WgRenderer::endComposite(TVG_UNUSED Compositor* cmp)
     mCompositorStack.pop();
 
     return true;
-}
-
-
-WgRenderTarget* WgRenderer::allocateRenderTarget()
-{
-    WgRenderTarget* renderTarget = nullptr;
-    if (mRenderTargetPool.count > 0) {
-        renderTarget = mRenderTargetPool.last();
-        mRenderTargetPool.pop();
-    } else {
-        renderTarget = new WgRenderTarget;
-        renderTarget->initialize(mContext, mPipelines, mTargetSurface.w, mTargetSurface.h);
-    }
-    return renderTarget;
-}
-
-
-void WgRenderer::releaseRenderTarget(WgRenderTarget* renderTarget)
-{
-    mRenderTargetPool.push(renderTarget);
 }
 
 

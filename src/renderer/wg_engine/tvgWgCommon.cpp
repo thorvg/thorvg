@@ -272,7 +272,57 @@ void WgBindGroup::releaseBindGroupLayout(WGPUBindGroupLayout& bindGroupLayout)
 // pipeline
 //*****************************************************************************
 
-void WgPipeline::allocate(WGPUDevice device,
+void WgPipeline::release()
+{
+    destroyShaderModule(mShaderModule);
+    destroyPipelineLayout(mPipelineLayout);
+}
+
+
+WGPUPipelineLayout WgPipeline::createPipelineLayout(WGPUDevice device, const WGPUBindGroupLayout* bindGroupLayouts, uint32_t count)
+{
+    WGPUPipelineLayoutDescriptor pipelineLayoutDesc{};
+    pipelineLayoutDesc.nextInChain = nullptr;
+    pipelineLayoutDesc.label = "The Pipeline layout";
+    pipelineLayoutDesc.bindGroupLayoutCount = count;
+    pipelineLayoutDesc.bindGroupLayouts = bindGroupLayouts;
+    return wgpuDeviceCreatePipelineLayout(device, &pipelineLayoutDesc);
+}
+
+
+WGPUShaderModule WgPipeline::createShaderModule(WGPUDevice device, const char* code, const char* label)
+{
+    WGPUShaderModuleWGSLDescriptor shaderModuleWGSLDesc{};
+    shaderModuleWGSLDesc.chain.next = nullptr;
+    shaderModuleWGSLDesc.chain.sType = WGPUSType_ShaderModuleWGSLDescriptor;
+    shaderModuleWGSLDesc.code = code;
+    WGPUShaderModuleDescriptor shaderModuleDesc{};
+    shaderModuleDesc.nextInChain = &shaderModuleWGSLDesc.chain;
+    shaderModuleDesc.label = label;
+    shaderModuleDesc.hintCount = 0;
+    shaderModuleDesc.hints = nullptr;
+    return wgpuDeviceCreateShaderModule(device, &shaderModuleDesc);
+}
+
+
+void WgPipeline::destroyPipelineLayout(WGPUPipelineLayout& pipelineLayout)
+{
+    if (pipelineLayout) wgpuPipelineLayoutRelease(pipelineLayout);
+    pipelineLayout = nullptr;
+}
+
+
+void WgPipeline::destroyShaderModule(WGPUShaderModule& shaderModule)
+{
+    if (shaderModule) wgpuShaderModuleRelease(shaderModule);
+    shaderModule = nullptr;
+}
+
+//*****************************************************************************
+// render pipeline
+//*****************************************************************************
+
+void WgRenderPipeline::allocate(WGPUDevice device, 
                           WGPUVertexBufferLayout vertexBufferLayouts[], uint32_t attribsCount,
                           WGPUBindGroupLayout bindGroupLayouts[], uint32_t bindGroupsCount,
                           WGPUCompareFunction stencilCompareFunction, WGPUStencilOperation stencilOperation,
@@ -292,21 +342,20 @@ void WgPipeline::allocate(WGPUDevice device,
 }
 
 
-void WgPipeline::release()
+void WgRenderPipeline::release()
 {
     destroyRenderPipeline(mRenderPipeline);
-    destroyShaderModule(mShaderModule);
-    destroyPipelineLayout(mPipelineLayout);
+    WgPipeline::release();
 }
 
 
-void WgPipeline::set(WGPURenderPassEncoder renderPassEncoder)
+void WgRenderPipeline::set(WGPURenderPassEncoder renderPassEncoder)
 {
     wgpuRenderPassEncoderSetPipeline(renderPassEncoder, mRenderPipeline);
 };
 
 
-WGPUBlendState WgPipeline::makeBlendState()
+WGPUBlendState WgRenderPipeline::makeBlendState()
 {
     WGPUBlendState blendState{};
     blendState.color.operation = WGPUBlendOperation_Add;
@@ -314,12 +363,12 @@ WGPUBlendState WgPipeline::makeBlendState()
     blendState.color.dstFactor = WGPUBlendFactor_OneMinusSrcAlpha;
     blendState.alpha.operation = WGPUBlendOperation_Add;
     blendState.alpha.srcFactor = WGPUBlendFactor_One;
-    blendState.alpha.dstFactor = WGPUBlendFactor_Zero;
+    blendState.alpha.dstFactor = WGPUBlendFactor_One;
     return blendState;
 }
 
 
-WGPUColorTargetState WgPipeline::makeColorTargetState(const WGPUBlendState* blendState)
+WGPUColorTargetState WgRenderPipeline::makeColorTargetState(const WGPUBlendState* blendState)
 {
     WGPUColorTargetState colorTargetState{};
     colorTargetState.nextInChain = nullptr;
@@ -330,7 +379,7 @@ WGPUColorTargetState WgPipeline::makeColorTargetState(const WGPUBlendState* blen
 }
 
 
-WGPUVertexBufferLayout WgPipeline::makeVertexBufferLayout(const WGPUVertexAttribute* vertexAttributes, uint32_t count, uint64_t stride)
+WGPUVertexBufferLayout WgRenderPipeline::makeVertexBufferLayout(const WGPUVertexAttribute* vertexAttributes, uint32_t count, uint64_t stride)
 {
     WGPUVertexBufferLayout vertexBufferLayoutPos{};
     vertexBufferLayoutPos.arrayStride = stride;
@@ -341,7 +390,7 @@ WGPUVertexBufferLayout WgPipeline::makeVertexBufferLayout(const WGPUVertexAttrib
 }
 
 
-WGPUVertexState WgPipeline::makeVertexState(WGPUShaderModule shaderModule, const WGPUVertexBufferLayout* buffers, uint32_t count)
+WGPUVertexState WgRenderPipeline::makeVertexState(WGPUShaderModule shaderModule, const WGPUVertexBufferLayout* buffers, uint32_t count)
 {
     WGPUVertexState vertexState{};
     vertexState.nextInChain = nullptr;
@@ -355,7 +404,7 @@ WGPUVertexState WgPipeline::makeVertexState(WGPUShaderModule shaderModule, const
 }
 
 
-WGPUPrimitiveState WgPipeline::makePrimitiveState()
+WGPUPrimitiveState WgRenderPipeline::makePrimitiveState()
 {
     WGPUPrimitiveState primitiveState{};
     primitiveState.nextInChain = nullptr;
@@ -366,7 +415,7 @@ WGPUPrimitiveState WgPipeline::makePrimitiveState()
     return primitiveState;
 }
 
-WGPUDepthStencilState WgPipeline::makeDepthStencilState(WGPUCompareFunction compare, WGPUStencilOperation operation)
+WGPUDepthStencilState WgRenderPipeline::makeDepthStencilState(WGPUCompareFunction compare, WGPUStencilOperation operation)
 {
     WGPUDepthStencilState depthStencilState{};
     depthStencilState.nextInChain = nullptr;
@@ -390,7 +439,7 @@ WGPUDepthStencilState WgPipeline::makeDepthStencilState(WGPUCompareFunction comp
 }
 
 
-WGPUMultisampleState WgPipeline::makeMultisampleState()
+WGPUMultisampleState WgRenderPipeline::makeMultisampleState()
 {
     WGPUMultisampleState multisampleState{};
     multisampleState.nextInChain = nullptr;
@@ -401,7 +450,7 @@ WGPUMultisampleState WgPipeline::makeMultisampleState()
 }
 
 
-WGPUFragmentState WgPipeline::makeFragmentState(WGPUShaderModule shaderModule, WGPUColorTargetState* targets, uint32_t size)
+WGPUFragmentState WgRenderPipeline::makeFragmentState(WGPUShaderModule shaderModule, WGPUColorTargetState* targets, uint32_t size)
 {
     WGPUFragmentState fragmentState{};
     fragmentState.nextInChain = nullptr;
@@ -414,34 +463,7 @@ WGPUFragmentState WgPipeline::makeFragmentState(WGPUShaderModule shaderModule, W
     return fragmentState;
 }
 
-
-WGPUPipelineLayout WgPipeline::createPipelineLayout(WGPUDevice device, const WGPUBindGroupLayout* bindGroupLayouts, uint32_t count)
-{
-    WGPUPipelineLayoutDescriptor pipelineLayoutDesc{};
-    pipelineLayoutDesc.nextInChain = nullptr;
-    pipelineLayoutDesc.label = "The Pipeline layout";
-    pipelineLayoutDesc.bindGroupLayoutCount = count;
-    pipelineLayoutDesc.bindGroupLayouts = bindGroupLayouts;
-    return wgpuDeviceCreatePipelineLayout(device, &pipelineLayoutDesc);
-}
-
-
-WGPUShaderModule WgPipeline::createShaderModule(WGPUDevice device, const char* code, const char* label)
-{
-    WGPUShaderModuleWGSLDescriptor shaderModuleWGSLDesc{};
-	shaderModuleWGSLDesc.chain.next = nullptr;
-	shaderModuleWGSLDesc.chain.sType = WGPUSType_ShaderModuleWGSLDescriptor;
-    shaderModuleWGSLDesc.code = code;
-    WGPUShaderModuleDescriptor shaderModuleDesc{};
-    shaderModuleDesc.nextInChain = &shaderModuleWGSLDesc.chain;
-    shaderModuleDesc.label = label;
-    shaderModuleDesc.hintCount = 0;
-    shaderModuleDesc.hints = nullptr;
-    return wgpuDeviceCreateShaderModule(device, &shaderModuleDesc);
-}
-
-
-WGPURenderPipeline WgPipeline::createRenderPipeline(WGPUDevice device,
+WGPURenderPipeline WgRenderPipeline::createRenderPipeline(WGPUDevice device,
                                                     WGPUVertexBufferLayout vertexBufferLayouts[], uint32_t attribsCount,
                                                     WGPUCompareFunction stencilCompareFunction, WGPUStencilOperation stencilOperation,
                                                     WGPUPipelineLayout pipelineLayout, WGPUShaderModule shaderModule,
@@ -470,22 +492,7 @@ WGPURenderPipeline WgPipeline::createRenderPipeline(WGPUDevice device,
     return wgpuDeviceCreateRenderPipeline(device, &renderPipelineDesc);
 }
 
-
-void WgPipeline::destroyPipelineLayout(WGPUPipelineLayout& pipelineLayout)
-{
-    if (pipelineLayout) wgpuPipelineLayoutRelease(pipelineLayout);
-    pipelineLayout = nullptr;
-}
-
-
-void WgPipeline::destroyShaderModule(WGPUShaderModule& shaderModule)
-{
-    if (shaderModule) wgpuShaderModuleRelease(shaderModule);
-    shaderModule = nullptr;
-}
-
-
-void WgPipeline::destroyRenderPipeline(WGPURenderPipeline& renderPipeline)
+void WgRenderPipeline::destroyRenderPipeline(WGPURenderPipeline& renderPipeline)
 {
     if (renderPipeline) wgpuRenderPipelineRelease(renderPipeline);
     renderPipeline = nullptr;

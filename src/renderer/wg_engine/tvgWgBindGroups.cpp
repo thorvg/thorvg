@@ -29,6 +29,7 @@ WGPUBindGroupLayout WgBindGroupSolidColor::layout = nullptr;
 WGPUBindGroupLayout WgBindGroupLinearGradient::layout = nullptr;
 WGPUBindGroupLayout WgBindGroupRadialGradient::layout = nullptr;
 WGPUBindGroupLayout WgBindGroupPicture::layout = nullptr;
+WGPUBindGroupLayout WgBindGroupOpacity::layout = nullptr;
 WGPUBindGroupLayout WgBindGroupBlit::layout = nullptr;
 
 
@@ -258,6 +259,50 @@ void WgBindGroupPicture::release()
 }
 
 
+WGPUBindGroupLayout WgBindGroupOpacity::getLayout(WGPUDevice device)
+{
+    if (layout) return layout;
+    const WGPUBindGroupLayoutEntry bindGroupLayoutEntries[] {
+        makeBindGroupLayoutEntryBuffer(0)
+    };
+    layout = createBindGroupLayout(device, bindGroupLayoutEntries, 1);
+    assert(layout);
+    return layout;
+}
+
+
+void WgBindGroupOpacity::releaseLayout()
+{
+    releaseBindGroupLayout(layout);
+}
+
+
+void WgBindGroupOpacity::initialize(WGPUDevice device, WGPUQueue queue, uint32_t uOpacity)
+{
+    release();
+    float opacity = uOpacity / 255.0f;
+    uBufferOpacity = createBuffer(device, queue, &opacity, sizeof(float));
+    const WGPUBindGroupEntry bindGroupEntries[] {
+        makeBindGroupEntryBuffer(0, uBufferOpacity)
+    };
+    mBindGroup = createBindGroup(device, getLayout(device), bindGroupEntries, 1);
+    assert(mBindGroup);
+}
+
+
+void WgBindGroupOpacity::update(WGPUDevice device, WGPUQueue queue, uint32_t uOpacity) {
+    float opacity = uOpacity / 255.0f;
+    wgpuQueueWriteBuffer(queue, uBufferOpacity, 0, &opacity, sizeof(float));
+}
+
+
+void WgBindGroupOpacity::release()
+{
+    releaseBuffer(uBufferOpacity);
+    releaseBindGroup(mBindGroup);
+}
+
+
 WGPUBindGroupLayout WgBindGroupBlit::getLayout(WGPUDevice device)
 {
     if (layout) return layout;
@@ -293,3 +338,45 @@ void WgBindGroupBlit::release()
 {
     releaseBindGroup(mBindGroup);
 }
+
+//************************************************************************
+// bind groups pools
+//************************************************************************
+
+WgBindGroupOpacity* WgBindGroupOpacityPool::allocate(WgContext& context, uint32_t opacity)
+{
+    WgBindGroupOpacity* bindGroup{};
+    if (mPool.count == 0) {
+        bindGroup = new WgBindGroupOpacity;
+        bindGroup->initialize(context.device, context.queue, opacity);
+        mUsed.push(bindGroup);
+        mList.push(bindGroup);
+    } else {
+        bindGroup = mPool.last();
+        bindGroup->update(context.device, context.queue, opacity);
+        mUsed.push(bindGroup);
+        mPool.pop();
+    }
+    return bindGroup;
+}
+
+
+void WgBindGroupOpacityPool::reset()
+{
+    for (uint32_t i = 0; i < mUsed.count; i++)
+        mPool.push(mUsed[i]);
+    mUsed.clear();
+}
+
+
+void WgBindGroupOpacityPool::release()
+{
+    for (uint32_t i = 0; i < mList.count; i++) {
+        mList[i]->release();
+        delete mList[i];
+    }
+    mList.clear();
+    mUsed.clear();
+    mPool.clear();
+}
+
