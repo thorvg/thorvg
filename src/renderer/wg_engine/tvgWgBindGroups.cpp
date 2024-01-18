@@ -420,16 +420,13 @@ void WgBindGroupTextureSampled::release()
 
 void WgBindGroupOpacityPool::initialize(WgContext& context)
 {
-    release(context);
-    mPool.reserve(256);
-    for (uint32_t i = 0; i < mPool.reserved; i++)
-        mPool.push(nullptr);
+    memset(mPool, 0x00, sizeof(mPool));
 }
 
 
 void WgBindGroupOpacityPool::release(WgContext& context)
 {
-    for (uint32_t i = 0; i < mPool.count; i++) {
+    for (uint32_t i = 0; i < 256; i++) {
         if (mPool[i]) {
             mPool[i]->release();
             delete mPool[i];

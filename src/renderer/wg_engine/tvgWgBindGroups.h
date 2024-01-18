@@ -163,7 +163,7 @@ struct WgBindGroupTextureSampled : public WgBindGroup
 class WgBindGroupOpacityPool
 {
 private:
-    Array<WgBindGroupOpacity*> mPool;
+    WgBindGroupOpacity* mPool[256];
 public:
     void initialize(WgContext& context);
     void release(WgContext& context);

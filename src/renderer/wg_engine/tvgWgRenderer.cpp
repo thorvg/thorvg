@@ -262,19 +262,6 @@ bool WgRenderer::target(void* window, uint32_t w, uint32_t h)
     mSurface = wgpuInstanceCreateSurface(mContext.instance, &surfaceDesc);
     assert(mSurface);
 
-    // // get preferred format
-    // //WGPUTextureFormat swapChainFormat = WGPUTextureFormat_BGRA8Unorm;
-    // WGPUTextureFormat swapChainFormat = WGPUTextureFormat_RGBA8Unorm;
-    // // swapchain descriptor
-    // WGPUSwapChainDescriptor swapChainDesc{};
-    // swapChainDesc.nextInChain = nullptr;
-    // swapChainDesc.label = "The swapchain";
-    // swapChainDesc.usage = WGPUTextureUsage_RenderAttachment;
-    // swapChainDesc.format = swapChainFormat;
-    // swapChainDesc.width = mTargetSurface.w;
-    // swapChainDesc.height = mTargetSurface.h;
-    // swapChainDesc.presentMode = WGPUPresentMode_Mailbox;
-
     WGPUSurfaceConfiguration surfaceConfiguration{};
     surfaceConfiguration.nextInChain = nullptr;
     surfaceConfiguration.device = mContext.device;

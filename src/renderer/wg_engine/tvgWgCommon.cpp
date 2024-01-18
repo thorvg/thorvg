@@ -535,10 +535,10 @@ WGPUFragmentState WgRenderPipeline::makeFragmentState(WGPUShaderModule shaderMod
 
 
 WGPURenderPipeline WgRenderPipeline::createRenderPipeline(WGPUDevice device,
-                                                    WGPUVertexBufferLayout vertexBufferLayouts[], uint32_t attribsCount,
-                                                    WGPUCompareFunction stencilCompareFunction, WGPUStencilOperation stencilOperation,
-                                                    WGPUPipelineLayout pipelineLayout, WGPUShaderModule shaderModule,
-                                                    const char* pipelineName)
+                                                          WGPUVertexBufferLayout vertexBufferLayouts[], uint32_t attribsCount,
+                                                          WGPUCompareFunction stencilCompareFunction, WGPUStencilOperation stencilOperation,
+                                                          WGPUPipelineLayout pipelineLayout, WGPUShaderModule shaderModule,
+                                                          const char* pipelineName)
 {
     WGPUBlendState blendState = makeBlendState();
     WGPUColorTargetState colorTargetStates[] = { 
