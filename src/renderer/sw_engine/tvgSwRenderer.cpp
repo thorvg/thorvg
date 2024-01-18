@@ -475,7 +475,6 @@ bool SwRenderer::postRender()
     }
     tasks.clear();
 
-    clearCompositors();
     return true;
 }
 
