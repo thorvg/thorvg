@@ -47,6 +47,7 @@ private:
     uint32_t mHeight = 0;
     GLuint mFbo = 0;
     GLuint mColorTex = 0;
+    GLuint mStencilBuffer = 0;
 };
 
 class GlRenderPass
