@@ -36,7 +36,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     //Original
     auto picture = tvg::Picture::gen();
 
-    if (picture->load(EXAMPLE_DIR"/scaledown.png") != tvg::Result::Success) {
+    if (picture->load(EXAMPLE_DIR"/scaledown.jpg") != tvg::Result::Success) {
         cout << "The PNG file is not loaded correctly. Did you enable PNG Loader?" << endl;
         return;
     }
@@ -50,18 +50,7 @@ void tvgUpdateCmds(tvg::Canvas* canvas, float progress)
 {
     if (!canvas || !pPicture) return;
 
-    auto scale = 1.0f;
-
-    if (progress > 0.875f) scale = 0.125f;
-    else if (progress > 0.75f) scale = 0.25f;
-    else if (progress > 0.625f) scale = 0.375f;
-    else if (progress > 0.5f) scale = 0.5f;
-    else if (progress > 0.375f) scale = 0.625f;
-    else if (progress > 0.25f) scale = 0.75f;
-    else if (progress > 0.125f) scale = 0.875f;
-    else scale = 1.0f;
-
-    pPicture->scale(scale);
+    pPicture->scale(1.0f - progress);
 
     canvas->update(pPicture);
 }
