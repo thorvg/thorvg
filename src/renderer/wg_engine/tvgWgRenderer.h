@@ -62,12 +62,12 @@ public:
 
     // render handles
     WGPUCommandEncoder mCommandEncoder{};
-    Array<WgRenderTarget*> mRenderTargetStack;
-    Array<WgRenderTarget*> mRenderTargetPool;
     Array<Compositor*> mCompositorStack;
+    Array<WgRenderTarget*> mRenderTargetStack;
 
-    WgRenderTarget* allocateRenderTarget();
-    void releaseRenderTarget(WgRenderTarget* renderTarget);
+    // render object pools
+    WgRenderTargetPool mRenderTargetPool;
+    WgBindGroupOpacityPool mBindGroupOpacityPool;
 private:
     WgContext mContext;
     WgPipelines mPipelines;

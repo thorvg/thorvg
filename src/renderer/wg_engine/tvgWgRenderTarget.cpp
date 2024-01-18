@@ -22,7 +22,7 @@
 
 #include "tvgWgRenderTarget.h"
 
-void WgRenderTarget::initialize(WgContext& context, WgPipelines& pipelines, uint32_t w, uint32_t h)
+void WgRenderTarget::initialize(WgContext& context, uint32_t w, uint32_t h)
 {
     release(context);
     // sampler descriptor
@@ -45,7 +45,7 @@ void WgRenderTarget::initialize(WgContext& context, WgPipelines& pipelines, uint
     WGPUTextureDescriptor textureDescColor{};
     textureDescColor.nextInChain = nullptr;
     textureDescColor.label = "The target texture color";
-    textureDescColor.usage = WGPUTextureUsage_RenderAttachment | WGPUTextureUsage_TextureBinding | WGPUTextureUsage_CopyDst;
+    textureDescColor.usage = WGPUTextureUsage_RenderAttachment | WGPUTextureUsage_TextureBinding | WGPUTextureUsage_CopyDst | WGPUTextureUsage_StorageBinding;
     textureDescColor.dimension = WGPUTextureDimension_2D;
     textureDescColor.size = { w, h, 1 };
     textureDescColor.format = WGPUTextureFormat_BGRA8Unorm;
@@ -103,7 +103,7 @@ void WgRenderTarget::initialize(WgContext& context, WgPipelines& pipelines, uint
     WgGeometryData geometryDataWnd;
     geometryDataWnd.appendBlitBox();
     mMeshDataCanvasWnd.update(context, &geometryDataWnd);
-    mPipelines = &pipelines;
+    mPipelines = context.pipelines;
 }
 
 
@@ -248,10 +248,10 @@ void WgRenderTarget::renderPicture(WgRenderDataPicture* renderData)
 }
 
 
-void WgRenderTarget::blit(WgContext& context, WgRenderTarget* renderTargetSrc)
+void WgRenderTarget::blit(WgContext& context, WgRenderTarget* renderTargetSrc, WgBindGroupOpacity* mBindGroupOpacity)
 {
     assert(mRenderPassEncoder);
-    mPipelines->blit.use(mRenderPassEncoder, renderTargetSrc->bindGroupBlit);
+    mPipelines->blit.use(mRenderPassEncoder, renderTargetSrc->bindGroupBlit, *mBindGroupOpacity);
     mMeshDataCanvasWnd.drawImage(mRenderPassEncoder);
 }
 
@@ -272,3 +272,37 @@ void WgRenderTarget::compose(WgContext& context, WgRenderTarget* renderTargetSrc
     pipeline->use(mRenderPassEncoder, renderTargetSrc->bindGroupBlit, renderTargetMsk->bindGroupBlit);
     mMeshDataCanvasWnd.drawImage(mRenderPassEncoder);
 }
+
+//*****************************************************************************
+// render terget pool
+//*****************************************************************************
+
+WgRenderTarget* WgRenderTargetPool::allocate(WgContext& context, uint32_t w, uint32_t h)
+{
+   WgRenderTarget* renderTarget{};
+   if (mPool.count > 0) {
+      renderTarget = mPool.last();
+      mPool.pop();
+   } else {
+      renderTarget = new WgRenderTarget;
+      renderTarget->initialize(context, w, h);
+      mList.push(renderTarget);
+   }
+   return renderTarget;
+};
+
+
+void WgRenderTargetPool::free(WgContext& context, WgRenderTarget* renderTarget) {
+   mPool.push(renderTarget);
+};
+
+
+void WgRenderTargetPool::release(WgContext& context)
+{
+   for (uint32_t i = 0; i < mList.count; i++) {
+      mList[i]->release(context);
+      delete mList[i];
+   }
+   mList.clear();
+   mPool.clear();
+};
