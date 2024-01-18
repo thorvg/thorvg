@@ -235,7 +235,8 @@ void WgPipelineBlit::initialize(WGPUDevice device)
 
     // bind groups and layouts
     WGPUBindGroupLayout bindGroupLayouts[] = {
-        WgBindGroupBlit::getLayout(device)
+        WgBindGroupBlit::getLayout(device),
+        WgBindGroupOpacity::getLayout(device)
     };
 
     // stencil function
@@ -326,35 +327,39 @@ void WgPipelineComposition::initialize(WGPUDevice device, const char* shaderSrc)
 // pipelines
 //************************************************************************
 
-void WgPipelines::initialize(WGPUDevice device)
+void WgPipelines::initialize(WgContext& context)
 {
-    fillShape.initialize(device);
-    fillStroke.initialize(device);
-    solid.initialize(device);
-    linear.initialize(device);
-    radial.initialize(device);
-    image.initialize(device);
-    blit.initialize(device);
-    blitColor.initialize(device);
+    fillShape.initialize(context.device);
+    fillStroke.initialize(context.device);
+    solid.initialize(context.device);
+    linear.initialize(context.device);
+    radial.initialize(context.device);
+    image.initialize(context.device);
+    blit.initialize(context.device);
+    blitColor.initialize(context.device);
     // composition pipelines
-    compAlphaMask.initialize(device, cShaderSource_PipelineCompAlphaMask);
-    compInvAlphaMask.initialize(device, cShaderSource_PipelineCompInvAlphaMask);
-    compLumaMask.initialize(device, cShaderSource_PipelineCompLumaMask);
-    compInvLumaMask.initialize(device, cShaderSource_PipelineCompInvLumaMask);
-    compAddMask.initialize(device, cShaderSource_PipelineCompAddMask);
-    compSubtractMask.initialize(device, cShaderSource_PipelineCompSubtractMask);
-    compIntersectMask.initialize(device, cShaderSource_PipelineCompIntersectMask);
-    compDifferenceMask.initialize(device, cShaderSource_PipelineCompDifferenceMask);
+    compAlphaMask.initialize(context.device, cShaderSource_PipelineCompAlphaMask);
+    compInvAlphaMask.initialize(context.device, cShaderSource_PipelineCompInvAlphaMask);
+    compLumaMask.initialize(context.device, cShaderSource_PipelineCompLumaMask);
+    compInvLumaMask.initialize(context.device, cShaderSource_PipelineCompInvLumaMask);
+    compAddMask.initialize(context.device, cShaderSource_PipelineCompAddMask);
+    compSubtractMask.initialize(context.device, cShaderSource_PipelineCompSubtractMask);
+    compIntersectMask.initialize(context.device, cShaderSource_PipelineCompIntersectMask);
+    compDifferenceMask.initialize(context.device, cShaderSource_PipelineCompDifferenceMask);
+    // store pipelines to context
+    context.pipelines = this;
 }
 
 
 void WgPipelines::release()
 {
     WgBindGroupBlit::releaseLayout();
+    WgBindGroupOpacity::releaseLayout();
     WgBindGroupPicture::releaseLayout();
     WgBindGroupRadialGradient::releaseLayout();
     WgBindGroupLinearGradient::releaseLayout();
     WgBindGroupSolidColor::releaseLayout();
+    WgBindGroupPaint::releaseLayout();
     WgBindGroupCanvas::releaseLayout();
     compDifferenceMask.release();
     compIntersectMask.release();

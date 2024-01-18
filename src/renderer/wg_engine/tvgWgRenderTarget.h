@@ -43,7 +43,7 @@ public:
     WGPUTextureView textureViewStencil{};
     WgBindGroupBlit bindGroupBlit;
 public:
-    void initialize(WgContext& context, WgPipelines& pipelines, uint32_t w, uint32_t h);
+    void initialize(WgContext& context, uint32_t w, uint32_t h);
     void release(WgContext& context);
 
     void beginRenderPass(WGPUCommandEncoder commandEncoder, WGPUTextureView colorAttachement, bool clear);
@@ -54,9 +54,21 @@ public:
     void renderStroke(WgRenderDataShape* renderData);
     void renderPicture(WgRenderDataPicture* renderData);
 
-    void blit(WgContext& context, WgRenderTarget* renderTargetSrc);
+    void blit(WgContext& context, WgRenderTarget* renderTargetSrc, WgBindGroupOpacity* bindGroupOpacity);
     void blitColor(WgContext& context, WgRenderTarget* renderTargetSrc);
     void compose(WgContext& context, WgRenderTarget* renderTargetSrc, WgRenderTarget* renderTargetMsk, CompositeMethod method);
 };
+
+
+class WgRenderTargetPool {
+private:
+   Array<WgRenderTarget*> mList;
+   Array<WgRenderTarget*> mPool;
+public:
+   WgRenderTarget* allocate(WgContext& context, uint32_t w, uint32_t h);
+   void free(WgContext& context, WgRenderTarget* renderTarget);
+   void release(WgContext& context);
+};
+
 
 #endif

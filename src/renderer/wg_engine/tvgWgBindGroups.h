@@ -62,7 +62,7 @@ struct WgBindGroupSolidColor : public  WgBindGroup
     static WGPUBindGroupLayout getLayout(WGPUDevice device);
     static void releaseLayout();
 
-    WGPUBuffer uBufferSolidColor;
+    WGPUBuffer uBufferSolidColor{};
     void initialize(WGPUDevice device, WGPUQueue queue,
                     WgShaderTypeSolidColor &uSolidColor);
     void release();
@@ -75,7 +75,7 @@ struct WgBindGroupLinearGradient : public  WgBindGroup
     static WGPUBindGroupLayout getLayout(WGPUDevice device);
     static void releaseLayout();
 
-    WGPUBuffer uBufferLinearGradient;
+    WGPUBuffer uBufferLinearGradient{};
     void initialize(WGPUDevice device, WGPUQueue queue,
                     WgShaderTypeLinearGradient &uLinearGradient);
     void release();
@@ -88,7 +88,7 @@ struct WgBindGroupRadialGradient : public  WgBindGroup
     static WGPUBindGroupLayout getLayout(WGPUDevice device);
     static void releaseLayout();
 
-    WGPUBuffer uBufferRadialGradient;
+    WGPUBuffer uBufferRadialGradient{};
     void initialize(WGPUDevice device, WGPUQueue queue,
                     WgShaderTypeRadialGradient &uRadialGradient);
     void release();
@@ -107,6 +107,19 @@ struct WgBindGroupPicture : public  WgBindGroup
     void release();
 };
 
+// @group(1 or 2)
+struct WgBindGroupOpacity : public  WgBindGroup
+{
+    static WGPUBindGroupLayout layout;
+    static WGPUBindGroupLayout getLayout(WGPUDevice device);
+    static void releaseLayout();
+
+    WGPUBuffer uBufferOpacity{};
+    void initialize(WGPUDevice device, WGPUQueue queue, uint32_t uOpacity);
+    void update(WGPUDevice device, WGPUQueue queue, uint32_t uOpacity);
+    void release();
+};
+
 // @group(0 or 1)
 struct WgBindGroupBlit : public  WgBindGroup
 {
@@ -117,6 +130,22 @@ struct WgBindGroupBlit : public  WgBindGroup
     void initialize(WGPUDevice device, WGPUQueue queue,
                     WGPUSampler     uSampler,
                     WGPUTextureView uTexture);
+    void release();
+};
+
+//************************************************************************
+// bind group pools
+//************************************************************************
+
+class WgBindGroupOpacityPool
+{
+private:
+    Array<WgBindGroupOpacity*> mList;
+    Array<WgBindGroupOpacity*> mPool;
+    Array<WgBindGroupOpacity*> mUsed;
+public:
+    WgBindGroupOpacity* allocate(WgContext& context, uint32_t opacity);
+    void reset();
     void release();
 };
 
