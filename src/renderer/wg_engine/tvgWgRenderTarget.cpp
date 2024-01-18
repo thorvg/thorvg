@@ -48,7 +48,7 @@ void WgRenderTarget::initialize(WgContext& context, uint32_t w, uint32_t h)
     textureDescColor.usage = WGPUTextureUsage_RenderAttachment | WGPUTextureUsage_TextureBinding | WGPUTextureUsage_CopyDst | WGPUTextureUsage_StorageBinding;
     textureDescColor.dimension = WGPUTextureDimension_2D;
     textureDescColor.size = { w, h, 1 };
-    textureDescColor.format = WGPUTextureFormat_BGRA8Unorm;
+    textureDescColor.format = WGPUTextureFormat_RGBA8Unorm;
     textureDescColor.mipLevelCount = 1;
     textureDescColor.sampleCount = 1;
     textureDescColor.viewFormatCount = 0;
@@ -59,7 +59,7 @@ void WgRenderTarget::initialize(WgContext& context, uint32_t w, uint32_t h)
     WGPUTextureViewDescriptor textureViewDescColor{};
     textureViewDescColor.nextInChain = nullptr;
     textureViewDescColor.label = "The target texture view color";
-    textureViewDescColor.format = WGPUTextureFormat_BGRA8Unorm;
+    textureViewDescColor.format = WGPUTextureFormat_RGBA8Unorm;
     textureViewDescColor.dimension = WGPUTextureViewDimension_2D;
     textureViewDescColor.baseMipLevel = 0;
     textureViewDescColor.mipLevelCount = 1;
@@ -96,7 +96,9 @@ void WgRenderTarget::initialize(WgContext& context, uint32_t w, uint32_t h)
     textureViewStencil = wgpuTextureCreateView(mTextureStencil, &textureViewDescStencil);
     assert(textureViewStencil);
     // initialize bind group for blitting
-    bindGroupBlit.initialize(context.device, context.queue, sampler, textureViewColor);
+    bindGroupTex.initialize(context.device, context.queue, textureViewColor);
+    bindGroupStorageTex.initialize(context.device, context.queue, textureViewColor);
+    bindGroupTexSampled.initialize(context.device, context.queue, sampler, textureViewColor);
     // initialize window binding groups
     WgShaderTypeMat4x4f viewMat(w, h);
     mBindGroupCanvasWnd.initialize(context.device, context.queue, viewMat);
@@ -111,7 +113,9 @@ void WgRenderTarget::release(WgContext& context)
 {
     mMeshDataCanvasWnd.release(context);
     mBindGroupCanvasWnd.release();
-    bindGroupBlit.release();
+    bindGroupTexSampled.release();
+    bindGroupStorageTex.release();
+    bindGroupTex.release();
     if (mTextureStencil) {
         wgpuTextureDestroy(mTextureStencil);
         wgpuTextureRelease(mTextureStencil);
@@ -167,7 +171,6 @@ void WgRenderTarget::beginRenderPass(WGPUCommandEncoder commandEncoder, WGPUText
     renderPassDesc.depthStencilAttachment = &depthStencilAttachment;
     //renderPassDesc.depthStencilAttachment = nullptr;
     renderPassDesc.occlusionQuerySet = nullptr;
-    renderPassDesc.timestampWriteCount = 0;
     renderPassDesc.timestampWrites = nullptr;
     // begin render pass
     mRenderPassEncoder = wgpuCommandEncoderBeginRenderPass(commandEncoder, &renderPassDesc);
@@ -251,7 +254,7 @@ void WgRenderTarget::renderPicture(WgRenderDataPicture* renderData)
 void WgRenderTarget::blit(WgContext& context, WgRenderTarget* renderTargetSrc, WgBindGroupOpacity* mBindGroupOpacity)
 {
     assert(mRenderPassEncoder);
-    mPipelines->blit.use(mRenderPassEncoder, renderTargetSrc->bindGroupBlit, *mBindGroupOpacity);
+    mPipelines->blit.use(mRenderPassEncoder, renderTargetSrc->bindGroupTexSampled, *mBindGroupOpacity);
     mMeshDataCanvasWnd.drawImage(mRenderPassEncoder);
 }
 
@@ -259,7 +262,7 @@ void WgRenderTarget::blit(WgContext& context, WgRenderTarget* renderTargetSrc, W
 void WgRenderTarget::blitColor(WgContext& context, WgRenderTarget* renderTargetSrc)
 {
     assert(mRenderPassEncoder);
-    mPipelines->blitColor.use(mRenderPassEncoder, renderTargetSrc->bindGroupBlit);
+    mPipelines->blitColor.use(mRenderPassEncoder, renderTargetSrc->bindGroupTexSampled);
     mMeshDataCanvasWnd.drawImage(mRenderPassEncoder);
 }
 
@@ -269,7 +272,7 @@ void WgRenderTarget::compose(WgContext& context, WgRenderTarget* renderTargetSrc
     assert(mRenderPassEncoder);
     WgPipelineComposition* pipeline = mPipelines->getCompositionPipeline(method);
     assert(pipeline);
-    pipeline->use(mRenderPassEncoder, renderTargetSrc->bindGroupBlit, renderTargetMsk->bindGroupBlit);
+    pipeline->use(mRenderPassEncoder, renderTargetSrc->bindGroupTexSampled, renderTargetMsk->bindGroupTexSampled);
     mMeshDataCanvasWnd.drawImage(mRenderPassEncoder);
 }
 

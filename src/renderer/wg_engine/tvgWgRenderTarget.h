@@ -41,7 +41,9 @@ public:
     WGPUSampler sampler{};
     WGPUTextureView textureViewColor{};
     WGPUTextureView textureViewStencil{};
-    WgBindGroupBlit bindGroupBlit;
+    WgBindGroupTexture bindGroupTex;
+    WgBindGroupStorageTexture bindGroupStorageTex;
+    WgBindGroupTextureSampled bindGroupTexSampled;
 public:
     void initialize(WgContext& context, uint32_t w, uint32_t h);
     void release(WgContext& context);
