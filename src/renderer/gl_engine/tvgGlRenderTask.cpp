@@ -112,13 +112,18 @@ void GlComposeTask::run()
 
     // clear this fbo
     if (mClearBuffer) {
-        const float transparent[] = {0.f, 0.f, 0.f, 0.f};
-        GL_CHECK(glClearBufferfv(GL_COLOR, 0, transparent));
+        GL_CHECK(glClearColor(0, 0, 0, 0));
+        GL_CHECK(glClearStencil(0));
+
+        GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT));
     }
 
     for(uint32_t i = 0; i < mTasks.count; i++) {
         mTasks[i]->run();
     }
+
+    GLenum stencil_attachment = GL_STENCIL_ATTACHMENT;
+    GL_CHECK(glInvalidateFramebuffer(GL_FRAMEBUFFER, 1, &stencil_attachment));
 }
 
 GlBlitTask::GlBlitTask(GlProgram* program, GLuint target, GLuint compose, Array<GlRenderTask*>&& tasks)
