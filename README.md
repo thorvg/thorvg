@@ -128,7 +128,7 @@ ThorVG renders vector shapes to a given canvas buffer. The following is a quick 
 First, you should initialize the ThorVG engine:
 
 ```cpp
-tvg::Initializer::init(tvg::CanvasEngine::Sw, 0);   //engine method, thread count
+tvg::Initializer::init(0);   //thread count
 ```
 
 Then it would be best if you prepared an empty canvas for drawing on it:
@@ -218,7 +218,7 @@ Then you can acquire the rendered image from the buffer memory.
 Lastly, terminate the engine after its usage:
 
 ```cpp
-tvg::Initializer::term(tvg::CanvasEngine::Sw);
+tvg::Initializer::term();
 ```
 [Back to contents](#contents)
 <br />
