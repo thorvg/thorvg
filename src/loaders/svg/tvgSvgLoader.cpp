@@ -786,6 +786,16 @@ static Matrix* _parseTransformationMatrix(const char* value)
             if (ptCount == 2) sy = points[1];
             Matrix tmp = { sx, 0, 0, 0, sy, 0, 0, 0, 1 };
             _matrixCompose(matrix, &tmp, matrix);
+        } else if (state == MatrixState::SkewX) {
+            if (ptCount != 1) goto error;
+            auto deg = tanf(points[0] * (M_PI / 180.0));
+            Matrix tmp = { 1, deg, 0, 0, 1, 0, 0, 0, 1 };
+            _matrixCompose(matrix, &tmp, matrix);
+        } else if (state == MatrixState::SkewY) {
+            if (ptCount != 1) goto error;
+            auto deg = tanf(points[0] * (M_PI / 180.0));
+            Matrix tmp = { 1, 0, 0, deg, 1, 0, 0, 0, 1 };
+            _matrixCompose(matrix, &tmp, matrix);
         }
     }
     return matrix;
