@@ -43,6 +43,7 @@ void WgRenderer::initialize()
 {
     mContext.initialize();
     mPipelines.initialize(mContext);
+    mBindGroupOpacityPool.initialize(mContext);
 }
 
 
@@ -50,12 +51,12 @@ void WgRenderer::release()
 {
     mCompositorStack.clear();
     mRenderTargetStack.clear();
-    mBindGroupOpacityPool.release();
+    mBindGroupOpacityPool.release(mContext);
     mRenderTargetPool.release(mContext);
     mRenderTargetRoot.release(mContext);
     mRenderTargetWnd.release(mContext);
-    if (mSwapChain) wgpuSwapChainRelease(mSwapChain);
-    if (mSurface) wgpuSurfaceRelease(mSurface);
+    wgpuSurfaceUnconfigure(mSurface);
+    wgpuSurfaceRelease(mSurface);
     mPipelines.release();
     mContext.release();
 }
@@ -159,7 +160,6 @@ bool WgRenderer::postRender()
 {
     mRenderTargetRoot.endRenderPass();
     mRenderTargetStack.pop();
-    mBindGroupOpacityPool.reset();
     mContext.executeCommandEncoder(mCommandEncoder);
     wgpuCommandEncoderRelease(mCommandEncoder);
     return true;
@@ -211,7 +211,9 @@ bool WgRenderer::clear()
 
 bool WgRenderer::sync()
 {
-    WGPUTextureView backBufferView = wgpuSwapChainGetCurrentTextureView(mSwapChain);
+    WGPUSurfaceTexture backBuffer{};
+    wgpuSurfaceGetCurrentTexture(mSurface, &backBuffer);
+    WGPUTextureView backBufferView = mContext.createTextureView2d(backBuffer.texture, "Surface texture view");
     WGPUCommandEncoderDescriptor commandEncoderDesc{};
     commandEncoderDesc.nextInChain = nullptr;
     commandEncoderDesc.label = "The command encoder";
@@ -222,7 +224,7 @@ bool WgRenderer::sync()
     mContext.executeCommandEncoder(commandEncoder);
     wgpuCommandEncoderRelease(commandEncoder);
     wgpuTextureViewRelease(backBufferView);
-    wgpuSwapChainPresent(mSwapChain);
+    wgpuSurfacePresent(mSurface);
     return true;
 }
 
@@ -260,22 +262,22 @@ bool WgRenderer::target(void* window, uint32_t w, uint32_t h)
     mSurface = wgpuInstanceCreateSurface(mContext.instance, &surfaceDesc);
     assert(mSurface);
 
-    // get preferred format
-    WGPUTextureFormat swapChainFormat = WGPUTextureFormat_BGRA8Unorm;
-    // swapchain descriptor
-    WGPUSwapChainDescriptor swapChainDesc{};
-    swapChainDesc.nextInChain = nullptr;
-    swapChainDesc.label = "The swapchain";
-    swapChainDesc.usage = WGPUTextureUsage_RenderAttachment;
-    swapChainDesc.format = swapChainFormat;
-    swapChainDesc.width = mTargetSurface.w;
-    swapChainDesc.height = mTargetSurface.h;
-    swapChainDesc.presentMode = WGPUPresentMode_Mailbox;
-    mSwapChain = wgpuDeviceCreateSwapChain(mContext.device, mSurface, &swapChainDesc);
-    assert(mSwapChain);
+    WGPUSurfaceConfiguration surfaceConfiguration{};
+    surfaceConfiguration.nextInChain = nullptr;
+    surfaceConfiguration.device = mContext.device;
+    surfaceConfiguration.format = WGPUTextureFormat_RGBA8Unorm;
+    surfaceConfiguration.usage = WGPUTextureUsage_RenderAttachment;
+    surfaceConfiguration.viewFormatCount = 0;
+    surfaceConfiguration.viewFormats = nullptr;
+    surfaceConfiguration.alphaMode = WGPUCompositeAlphaMode_Auto;
+    surfaceConfiguration.width = mTargetSurface.w;
+    surfaceConfiguration.height = mTargetSurface.h;
+    surfaceConfiguration.presentMode = WGPUPresentMode_Mailbox;
+    wgpuSurfaceConfigure(mSurface, &surfaceConfiguration);
 
     mRenderTargetWnd.initialize(mContext, w, h);
     mRenderTargetRoot.initialize(mContext, w, h);
+
     return true;
 }
 

@@ -39,7 +39,6 @@ struct WgBindGroupCanvas : public WgBindGroup
     void release();
 };
 
-
 // @group(1)
 struct WgBindGroupPaint : public WgBindGroup
 {
@@ -56,7 +55,7 @@ struct WgBindGroupPaint : public WgBindGroup
 };
 
 // @group(2)
-struct WgBindGroupSolidColor : public  WgBindGroup
+struct WgBindGroupSolidColor : public WgBindGroup
 {
     static WGPUBindGroupLayout layout;
     static WGPUBindGroupLayout getLayout(WGPUDevice device);
@@ -69,7 +68,7 @@ struct WgBindGroupSolidColor : public  WgBindGroup
 };
 
 // @group(2)
-struct WgBindGroupLinearGradient : public  WgBindGroup
+struct WgBindGroupLinearGradient : public WgBindGroup
 {
     static WGPUBindGroupLayout layout;
     static WGPUBindGroupLayout getLayout(WGPUDevice device);
@@ -82,7 +81,7 @@ struct WgBindGroupLinearGradient : public  WgBindGroup
 };
 
 // @group(2)
-struct WgBindGroupRadialGradient : public  WgBindGroup
+struct WgBindGroupRadialGradient : public WgBindGroup
 {
     static WGPUBindGroupLayout layout;
     static WGPUBindGroupLayout getLayout(WGPUDevice device);
@@ -95,7 +94,7 @@ struct WgBindGroupRadialGradient : public  WgBindGroup
 };
 
 // @group(2)
-struct WgBindGroupPicture : public  WgBindGroup
+struct WgBindGroupPicture : public WgBindGroup
 {
     static WGPUBindGroupLayout layout;
     static WGPUBindGroupLayout getLayout(WGPUDevice device);
@@ -108,7 +107,7 @@ struct WgBindGroupPicture : public  WgBindGroup
 };
 
 // @group(1 or 2)
-struct WgBindGroupOpacity : public  WgBindGroup
+struct WgBindGroupOpacity : public WgBindGroup
 {
     static WGPUBindGroupLayout layout;
     static WGPUBindGroupLayout getLayout(WGPUDevice device);
@@ -121,7 +120,31 @@ struct WgBindGroupOpacity : public  WgBindGroup
 };
 
 // @group(0 or 1)
-struct WgBindGroupBlit : public  WgBindGroup
+struct WgBindGroupTexture : public WgBindGroup
+{
+    static WGPUBindGroupLayout layout;
+    static WGPUBindGroupLayout getLayout(WGPUDevice device);
+    static void releaseLayout();
+
+    void initialize(WGPUDevice device, WGPUQueue queue,
+                    WGPUTextureView uTexture);
+    void release();
+};
+
+// @group(0 or 1)
+struct WgBindGroupStorageTexture : public WgBindGroup
+{
+    static WGPUBindGroupLayout layout;
+    static WGPUBindGroupLayout getLayout(WGPUDevice device);
+    static void releaseLayout();
+
+    void initialize(WGPUDevice device, WGPUQueue queue,
+                    WGPUTextureView uTexture);
+    void release();
+};
+
+// @group(0 or 1)
+struct WgBindGroupTextureSampled : public WgBindGroup
 {
     static WGPUBindGroupLayout layout;
     static WGPUBindGroupLayout getLayout(WGPUDevice device);
@@ -140,13 +163,11 @@ struct WgBindGroupBlit : public  WgBindGroup
 class WgBindGroupOpacityPool
 {
 private:
-    Array<WgBindGroupOpacity*> mList;
-    Array<WgBindGroupOpacity*> mPool;
-    Array<WgBindGroupOpacity*> mUsed;
+    WgBindGroupOpacity* mPool[256];
 public:
-    WgBindGroupOpacity* allocate(WgContext& context, uint32_t opacity);
-    void reset();
-    void release();
+    void initialize(WgContext& context);
+    void release(WgContext& context);
+    WgBindGroupOpacity* allocate(WgContext& context, uint8_t opacity);
 };
 
 #endif // _TVG_WG_BIND_GROUPS_H_

@@ -235,7 +235,7 @@ void WgPipelineBlit::initialize(WGPUDevice device)
 
     // bind groups and layouts
     WGPUBindGroupLayout bindGroupLayouts[] = {
-        WgBindGroupBlit::getLayout(device),
+        WgBindGroupTextureSampled::getLayout(device),
         WgBindGroupOpacity::getLayout(device)
     };
 
@@ -269,7 +269,7 @@ void WgPipelineBlitColor::initialize(WGPUDevice device)
 
     // bind groups and layouts
     WGPUBindGroupLayout bindGroupLayouts[] = {
-        WgBindGroupBlit::getLayout(device)
+        WgBindGroupTextureSampled::getLayout(device)
     };
 
     // stencil function
@@ -302,8 +302,8 @@ void WgPipelineComposition::initialize(WGPUDevice device, const char* shaderSrc)
 
     // bind groups and layouts
     WGPUBindGroupLayout bindGroupLayouts[] = {
-        WgBindGroupBlit::getLayout(device),
-        WgBindGroupBlit::getLayout(device)
+        WgBindGroupTextureSampled::getLayout(device),
+        WgBindGroupTextureSampled::getLayout(device)
     };
 
     // stencil function
@@ -323,18 +323,40 @@ void WgPipelineComposition::initialize(WGPUDevice device, const char* shaderSrc)
              shaderSource, shaderLabel, pipelineLabel);
 }
 
+void WgPipelineBlend::initialize(WGPUDevice device, const char* shaderSrc)
+{
+    // bind groups and layouts
+    WGPUBindGroupLayout bindGroupLayouts[] = {
+        //WgBindGroupTexture::getLayout(device),
+        WgBindGroupStorageTexture::getLayout(device),
+        WgBindGroupStorageTexture::getLayout(device)
+    };
+
+    // sheder source and labels
+    auto shaderSource = shaderSrc;
+    auto shaderLabel = "The compute shader blend";
+    auto pipelineLabel = "The compute pipeline blend";
+
+    // allocate all pipeline handles
+    allocate(device,
+             bindGroupLayouts, ARRAY_ELEMENTS_COUNT(bindGroupLayouts),
+             shaderSource, shaderLabel, pipelineLabel);
+}
+
 //************************************************************************
 // pipelines
 //************************************************************************
 
 void WgPipelines::initialize(WgContext& context)
 {
+    // fill pipelines
     fillShape.initialize(context.device);
     fillStroke.initialize(context.device);
     solid.initialize(context.device);
     linear.initialize(context.device);
     radial.initialize(context.device);
     image.initialize(context.device);
+    // blit pipelines
     blit.initialize(context.device);
     blitColor.initialize(context.device);
     // composition pipelines
@@ -346,6 +368,8 @@ void WgPipelines::initialize(WgContext& context)
     compSubtractMask.initialize(context.device, cShaderSource_PipelineCompSubtractMask);
     compIntersectMask.initialize(context.device, cShaderSource_PipelineCompIntersectMask);
     compDifferenceMask.initialize(context.device, cShaderSource_PipelineCompDifferenceMask);
+    // compute pipelines
+    computeBlend.initialize(context.device, cShaderSource_PipelineComputeBlend);
     // store pipelines to context
     context.pipelines = this;
 }
@@ -353,7 +377,9 @@ void WgPipelines::initialize(WgContext& context)
 
 void WgPipelines::release()
 {
-    WgBindGroupBlit::releaseLayout();
+    WgBindGroupTextureSampled::releaseLayout();
+    WgBindGroupStorageTexture::releaseLayout();
+    WgBindGroupTexture::releaseLayout();
     WgBindGroupOpacity::releaseLayout();
     WgBindGroupPicture::releaseLayout();
     WgBindGroupRadialGradient::releaseLayout();
@@ -361,6 +387,9 @@ void WgPipelines::release()
     WgBindGroupSolidColor::releaseLayout();
     WgBindGroupPaint::releaseLayout();
     WgBindGroupCanvas::releaseLayout();
+    // compute pipelines
+    computeBlend.release();
+    // composition pipelines
     compDifferenceMask.release();
     compIntersectMask.release();
     compSubtractMask.release();
@@ -369,8 +398,10 @@ void WgPipelines::release()
     compLumaMask.release();
     compInvAlphaMask.release();
     compAlphaMask.release();
+    // blit pipelines
     blitColor.release();
     blit.release();
+    // fill pipelines
     image.release();
     radial.release();
     linear.release();
