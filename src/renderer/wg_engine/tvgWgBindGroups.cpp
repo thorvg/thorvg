@@ -22,15 +22,20 @@
 
 #include "tvgWgBindGroups.h"
 
-
+// canvas information group
 WGPUBindGroupLayout WgBindGroupCanvas::layout = nullptr;
+// paint object information group
 WGPUBindGroupLayout WgBindGroupPaint::layout = nullptr;
+// fill properties information groups
 WGPUBindGroupLayout WgBindGroupSolidColor::layout = nullptr;
 WGPUBindGroupLayout WgBindGroupLinearGradient::layout = nullptr;
 WGPUBindGroupLayout WgBindGroupRadialGradient::layout = nullptr;
 WGPUBindGroupLayout WgBindGroupPicture::layout = nullptr;
+// composition and blending properties gropus
 WGPUBindGroupLayout WgBindGroupOpacity::layout = nullptr;
-WGPUBindGroupLayout WgBindGroupBlit::layout = nullptr;
+WGPUBindGroupLayout WgBindGroupTexture::layout = nullptr;
+WGPUBindGroupLayout WgBindGroupStorageTexture::layout = nullptr;
+WGPUBindGroupLayout WgBindGroupTextureSampled::layout = nullptr;
 
 
 WGPUBindGroupLayout WgBindGroupCanvas::getLayout(WGPUDevice device)
@@ -227,7 +232,7 @@ WGPUBindGroupLayout WgBindGroupPicture::getLayout(WGPUDevice device)
     if (layout) return layout;
     const WGPUBindGroupLayoutEntry bindGroupLayoutEntries[] {
         makeBindGroupLayoutEntrySampler(0),
-        makeBindGroupLayoutEntryTextureView(1)
+        makeBindGroupLayoutEntryTexture(1)
     };
     layout = createBindGroupLayout(device, bindGroupLayoutEntries, 2);
     assert(layout);
@@ -303,12 +308,82 @@ void WgBindGroupOpacity::release()
 }
 
 
-WGPUBindGroupLayout WgBindGroupBlit::getLayout(WGPUDevice device)
+WGPUBindGroupLayout WgBindGroupTexture::getLayout(WGPUDevice device)
+{
+    if (layout) return layout;
+    const WGPUBindGroupLayoutEntry bindGroupLayoutEntries[] {
+        makeBindGroupLayoutEntryTexture(0)
+    };
+    layout = createBindGroupLayout(device, bindGroupLayoutEntries, 1);
+    assert(layout);
+    return layout;
+}
+
+
+void WgBindGroupTexture::releaseLayout()
+{
+    releaseBindGroupLayout(layout);
+}
+
+
+void WgBindGroupTexture::initialize(WGPUDevice device, WGPUQueue queue, WGPUTextureView uTexture)
+{
+    release();
+    const WGPUBindGroupEntry bindGroupEntries[] {
+        makeBindGroupEntryTextureView(0, uTexture)
+    };
+    mBindGroup = createBindGroup(device, getLayout(device), bindGroupEntries, 1);
+    assert(mBindGroup);
+}
+
+
+void WgBindGroupTexture::release()
+{
+    releaseBindGroup(mBindGroup);
+}
+
+
+WGPUBindGroupLayout WgBindGroupStorageTexture::getLayout(WGPUDevice device)
+{
+    if (layout) return layout;
+    const WGPUBindGroupLayoutEntry bindGroupLayoutEntries[] {
+        makeBindGroupLayoutEntryStorageTexture(0)
+    };
+    layout = createBindGroupLayout(device, bindGroupLayoutEntries, 1);
+    assert(layout);
+    return layout;
+}
+
+
+void WgBindGroupStorageTexture::releaseLayout()
+{
+    releaseBindGroupLayout(layout);
+}
+
+
+void WgBindGroupStorageTexture::initialize(WGPUDevice device, WGPUQueue queue, WGPUTextureView uTexture)
+{
+    release();
+    const WGPUBindGroupEntry bindGroupEntries[] {
+        makeBindGroupEntryTextureView(0, uTexture)
+    };
+    mBindGroup = createBindGroup(device, getLayout(device), bindGroupEntries, 1);
+    assert(mBindGroup);
+}
+
+
+void WgBindGroupStorageTexture::release()
+{
+    releaseBindGroup(mBindGroup);
+}
+
+
+WGPUBindGroupLayout WgBindGroupTextureSampled::getLayout(WGPUDevice device)
 {
     if (layout) return layout;
     const WGPUBindGroupLayoutEntry bindGroupLayoutEntries[] {
         makeBindGroupLayoutEntrySampler(0),
-        makeBindGroupLayoutEntryTextureView(1)
+        makeBindGroupLayoutEntryTexture(1)
     };
     layout = createBindGroupLayout(device, bindGroupLayoutEntries, 2);
     assert(layout);
@@ -316,13 +391,13 @@ WGPUBindGroupLayout WgBindGroupBlit::getLayout(WGPUDevice device)
 }
 
 
-void WgBindGroupBlit::releaseLayout()
+void WgBindGroupTextureSampled::releaseLayout()
 {
     releaseBindGroupLayout(layout);
 }
 
 
-void WgBindGroupBlit::initialize(WGPUDevice device, WGPUQueue queue, WGPUSampler uSampler, WGPUTextureView uTexture)
+void WgBindGroupTextureSampled::initialize(WGPUDevice device, WGPUQueue queue, WGPUSampler uSampler, WGPUTextureView uTexture)
 {
     release();
     const WGPUBindGroupEntry bindGroupEntries[] {
@@ -334,49 +409,40 @@ void WgBindGroupBlit::initialize(WGPUDevice device, WGPUQueue queue, WGPUSampler
 }
 
 
-void WgBindGroupBlit::release()
+void WgBindGroupTextureSampled::release()
 {
     releaseBindGroup(mBindGroup);
 }
 
 //************************************************************************
-// bind groups pools
+// bind group pools
 //************************************************************************
 
-WgBindGroupOpacity* WgBindGroupOpacityPool::allocate(WgContext& context, uint32_t opacity)
+void WgBindGroupOpacityPool::initialize(WgContext& context)
 {
-    WgBindGroupOpacity* bindGroup{};
-    if (mPool.count == 0) {
-        bindGroup = new WgBindGroupOpacity;
-        bindGroup->initialize(context.device, context.queue, opacity);
-        mUsed.push(bindGroup);
-        mList.push(bindGroup);
-    } else {
-        bindGroup = mPool.last();
-        bindGroup->update(context.device, context.queue, opacity);
-        mUsed.push(bindGroup);
-        mPool.pop();
+    memset(mPool, 0x00, sizeof(mPool));
+}
+
+
+void WgBindGroupOpacityPool::release(WgContext& context)
+{
+    for (uint32_t i = 0; i < 256; i++) {
+        if (mPool[i]) {
+            mPool[i]->release();
+            delete mPool[i];
+            mPool[i] = nullptr;
+        }
     }
-    return bindGroup;
 }
 
 
-void WgBindGroupOpacityPool::reset()
+WgBindGroupOpacity* WgBindGroupOpacityPool::allocate(WgContext& context, uint8_t opacity)
 {
-    for (uint32_t i = 0; i < mUsed.count; i++)
-        mPool.push(mUsed[i]);
-    mUsed.clear();
-}
-
-
-void WgBindGroupOpacityPool::release()
-{
-    for (uint32_t i = 0; i < mList.count; i++) {
-        mList[i]->release();
-        delete mList[i];
+    WgBindGroupOpacity* bindGroupOpacity = mPool[opacity];
+    if (!bindGroupOpacity) {
+        bindGroupOpacity = new WgBindGroupOpacity;
+        bindGroupOpacity->initialize(context.device, context.queue, opacity);
+        mPool[opacity] = bindGroupOpacity;
     }
-    mList.clear();
-    mUsed.clear();
-    mPool.clear();
+    return bindGroupOpacity;
 }
-

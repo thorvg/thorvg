@@ -707,3 +707,23 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
     }
 };
 )";
+
+//************************************************************************
+// cShaderSource_PipelineComputeBlend
+//************************************************************************
+
+// pipeline shader modules blend (simple example)
+const char* cShaderSource_PipelineComputeBlend = R"(
+@group(0) @binding(0) var imageSrc : texture_storage_2d<rgba8unorm, write>;
+@group(1) @binding(0) var imageDst : texture_storage_2d<rgba8unorm, write>;
+
+@compute @workgroup_size(8, 8)
+fn cs_main( @builtin(global_invocation_id) id: vec3u) {
+   let texSize = textureDimensions(imageSrc);
+   if ((id.x >= texSize.x) || (id.y >= texSize.y)) { return; };
+
+   // var src = textureLoad(imageSrc, id.xy);
+   textureStore(imageDst, id.xy, vec4(0.5, 1.0, 0.1, 1.0));
+}
+
+)";

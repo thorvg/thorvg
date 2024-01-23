@@ -59,7 +59,7 @@ public:
     static WgRenderer* gen();
     static bool init(uint32_t threads);
     static bool term();
-
+private:
     // render handles
     WGPUCommandEncoder mCommandEncoder{};
     Array<Compositor*> mCompositorStack;
@@ -74,7 +74,6 @@ private:
     WgRenderTarget mRenderTargetRoot;
     WgRenderTarget mRenderTargetWnd;
     WGPUSurface mSurface{};
-    WGPUSwapChain mSwapChain{};
     Surface mTargetSurface;
 };
 

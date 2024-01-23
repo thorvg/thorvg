@@ -25,26 +25,22 @@
 #ifndef _TVG_WG_SHADER_SRC_H_
 #define _TVG_WG_SHADER_SRC_H_
 
-// pipeline shader module fill
+//*****************************************************************************
+// render shader modules
+//*****************************************************************************
+
+// pipeline shader modules fill
 extern const char* cShaderSource_PipelineFill;
-
-// pipeline shader module solid
 extern const char* cShaderSource_PipelineSolid;
-
-// pipeline shader module linear
 extern const char* cShaderSource_PipelineLinear;
-
-// pipeline shader module radial
 extern const char* cShaderSource_PipelineRadial;
-
-// pipeline shader module image
 extern const char* cShaderSource_PipelineImage;
 
-// pipeline shader module blit
+// pipeline shader modules blit
 extern const char* cShaderSource_PipelineBlit;
 extern const char* cShaderSource_PipelineBlitColor;
 
-// pipeline shader module composes
+// pipeline shader modules composes
 extern const char* cShaderSource_PipelineCompAlphaMask;
 extern const char* cShaderSource_PipelineCompInvAlphaMask;
 extern const char* cShaderSource_PipelineCompLumaMask;
@@ -53,5 +49,12 @@ extern const char* cShaderSource_PipelineCompAddMask;
 extern const char* cShaderSource_PipelineCompSubtractMask;
 extern const char* cShaderSource_PipelineCompIntersectMask;
 extern const char* cShaderSource_PipelineCompDifferenceMask;
+
+//*****************************************************************************
+// compute shader modules
+//*****************************************************************************
+
+// pipeline shader modules blend
+extern const char* cShaderSource_PipelineComputeBlend;
 
 #endif // _TVG_WG_SHADER_SRC_H_

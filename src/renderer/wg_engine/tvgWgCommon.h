@@ -46,6 +46,11 @@ struct WgContext {
     void release();
 
     void executeCommandEncoder(WGPUCommandEncoder commandEncoder);
+
+    WGPUTexture createTexture2d(WGPUTextureUsage usage, WGPUTextureFormat format, uint32_t width, uint32_t height, char const * label);
+    WGPUTextureView createTextureView2d(WGPUTexture texture, WGPU_NULLABLE char const * label);
+    void releaseTexture(WGPUTexture& texture);
+    void releaseTextureView(WGPUTextureView& textureView);
 };
 
 struct WgBindGroup
@@ -53,6 +58,7 @@ struct WgBindGroup
     WGPUBindGroup mBindGroup{};
 
     void set(WGPURenderPassEncoder encoder, uint32_t groupIndex);
+    void set(WGPUComputePassEncoder encoder, uint32_t groupIndex);
 
     static WGPUBindGroupEntry makeBindGroupEntryBuffer(uint32_t binding, WGPUBuffer buffer);
     static WGPUBindGroupEntry makeBindGroupEntrySampler(uint32_t binding, WGPUSampler sampler);
@@ -60,7 +66,8 @@ struct WgBindGroup
 
     static WGPUBindGroupLayoutEntry makeBindGroupLayoutEntryBuffer(uint32_t binding);
     static WGPUBindGroupLayoutEntry makeBindGroupLayoutEntrySampler(uint32_t binding);
-    static WGPUBindGroupLayoutEntry makeBindGroupLayoutEntryTextureView(uint32_t binding);
+    static WGPUBindGroupLayoutEntry makeBindGroupLayoutEntryTexture(uint32_t binding);
+    static WGPUBindGroupLayoutEntry makeBindGroupLayoutEntryStorageTexture(uint32_t binding);
 
     static WGPUBuffer createBuffer(WGPUDevice device, WGPUQueue queue, const void *data, size_t size);
     static WGPUBindGroup createBindGroup(WGPUDevice device, WGPUBindGroupLayout layout, const WGPUBindGroupEntry* bindGroupEntries, uint32_t count);
@@ -114,6 +121,19 @@ public:
                                                    WGPUPipelineLayout pipelineLayout, WGPUShaderModule shaderModule,
                                                    const char* pipelineLabel);
     static void destroyRenderPipeline(WGPURenderPipeline& renderPipeline);
+};
+
+struct WgComputePipeline: public WgPipeline
+{
+protected:
+    WGPUComputePipeline mComputePipeline{};
+    void allocate(WGPUDevice device,
+                  WGPUBindGroupLayout bindGroupLayouts[], uint32_t bindGroupsCount,
+                  const char* shaderSource, const char* shaderLabel, const char* pipelineLabel);
+
+public:
+    void release() override;
+    void set(WGPUComputePassEncoder computePassEncoder);
 };
 
 #endif // _TVG_WG_COMMON_H_
