@@ -211,6 +211,7 @@ static void _updateGroup(LottieGroup* parent, LottieObject** child, float frameN
 
     //Prepare render data
     group->scene = parent->scene;
+    group->reqFragment |= ctx->reqFragment;
 
     Inlist<RenderContext> contexts;
     contexts.back(new RenderContext(*ctx));
@@ -246,7 +247,6 @@ static bool _fragmented(LottieObject** child, Inlist<RenderContext>& contexts, R
 
     contexts.back(new RenderContext(*ctx));
     auto fragment = contexts.tail;
-    fragment->propagator->strokeWidth(0.0f);
     fragment->begin = child - 1;
     ctx->fragmenting = true;
 
