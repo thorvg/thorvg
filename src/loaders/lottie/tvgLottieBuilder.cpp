@@ -1091,6 +1091,8 @@ static void _attachFont(LottieComposition* comp, LottieLayer* parent)
 static bool _buildComposition(LottieComposition* comp, LottieGroup* parent)
 {
     if (parent->children.count == 0) return false;
+    if (parent->buildDone) return true;
+    parent->buildDone = true;
 
     for (auto c = parent->children.data; c < parent->children.end(); ++c) {
         auto child = static_cast<LottieLayer*>(*c);
