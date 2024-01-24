@@ -531,6 +531,7 @@ struct LottieGroup : LottieObject
     Array<LottieObject*> children;
 
     bool reqFragment = false;   //requirment to fragment the render context
+    bool buildDone = false;     //completed in building the composition.
 };
 
 
