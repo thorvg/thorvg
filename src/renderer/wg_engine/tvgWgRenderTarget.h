@@ -27,48 +27,65 @@
 
 class WgRenderTarget {
 private:
-    // command buffer
-    WGPURenderPassEncoder mRenderPassEncoder{};
-    // fill and blit data
-    WgBindGroupCanvas mBindGroupCanvasWnd;
-    // composition handles
-    WgMeshData mMeshDataCanvasWnd;
-    // gpu buffers
-    WGPUTexture mTextureColor{};
-    WGPUTexture mTextureStencil{};
+    // canvas info
+    WgBindGroupCanvas mBindGroupCanvas;
     WgPipelines* mPipelines{}; // external handle
 public:
-    WGPUSampler sampler{};
-    WGPUTextureView textureViewColor{};
-    WGPUTextureView textureViewStencil{};
-    WgBindGroupTexture bindGroupTex;
-    WgBindGroupStorageTexture bindGroupStorageTex;
-    WgBindGroupTextureSampled bindGroupTexSampled;
+    WGPUTexture texColor{};
+    WGPUTexture texStencil{};
+    WGPUTextureView texViewColor{};
+    WGPUTextureView texViewStencil{};
+    WgBindGroupTextureStorage bindGroupTexStorage;
 public:
     void initialize(WgContext& context, uint32_t w, uint32_t h);
     void release(WgContext& context);
 
-    void beginRenderPass(WGPUCommandEncoder commandEncoder, WGPUTextureView colorAttachement, bool clear);
-    void beginRenderPass(WGPUCommandEncoder commandEncoder, bool clear);
-    void endRenderPass();
+    void renderShape(WGPUCommandEncoder commandEncoder, WgRenderDataShape* renderData);
+    void renderPicture(WGPUCommandEncoder commandEncoder, WgRenderDataPicture* renderData);
+private:
+    void drawShape(WGPURenderPassEncoder renderPassEncoder, WgRenderDataShape* renderData);
+    void drawStroke(WGPURenderPassEncoder renderPassEncoder, WgRenderDataShape* renderData);
 
-    void renderShape(WgRenderDataShape* renderData);
-    void renderStroke(WgRenderDataShape* renderData);
-    void renderPicture(WgRenderDataPicture* renderData);
-
-    void blit(WgContext& context, WgRenderTarget* renderTargetSrc, WgBindGroupOpacity* bindGroupOpacity);
-    void blitColor(WgContext& context, WgRenderTarget* renderTargetSrc);
-    void compose(WgContext& context, WgRenderTarget* renderTargetSrc, WgRenderTarget* renderTargetMsk, CompositeMethod method);
+    WGPURenderPassEncoder beginRenderPass(WGPUCommandEncoder commandEncoder);
+    void endRenderPass(WGPURenderPassEncoder renderPassEncoder);
 };
 
 
-class WgRenderTargetPool {
+class WgRenderStorage {
 private:
-   Array<WgRenderTarget*> mList;
-   Array<WgRenderTarget*> mPool;
+    // texture buffers
+    WgPipelines* mPipelines{}; // external handle
 public:
-   WgRenderTarget* allocate(WgContext& context, uint32_t w, uint32_t h);
-   void free(WgContext& context, WgRenderTarget* renderTarget);
+    WGPUTexture texStorage{};
+    WGPUTextureView texViewStorage{};
+    WgBindGroupTextureStorage bindGroupTexStorage;
+    uint32_t width{};
+    uint32_t height{};
+    uint32_t workgroupsCountX{};
+    uint32_t workgroupsCountY{};
+public:
+    void initialize(WgContext& context, uint32_t w, uint32_t h);
+    void release(WgContext& context);
+
+    void clear(WGPUCommandEncoder commandEncoder);
+    void blend(WGPUCommandEncoder commandEncoder, WgRenderTarget* targetSrc, WgBindGroupBlendMethod* blendMethod);
+    void blend(WGPUCommandEncoder commandEncoder, WgRenderStorage* targetSrc, WgBindGroupBlendMethod* blendMethod);
+    void compose(WGPUCommandEncoder commandEncoder, WgRenderStorage* targetMsk, WgBindGroupCompositeMethod* composeMethod, WgBindGroupOpacity* opacity);
+private:
+    void dispatchWorkgroups(WGPUComputePassEncoder computePassEncoder);
+
+    WGPUComputePassEncoder beginComputePass(WGPUCommandEncoder commandEncoder);
+    void endRenderPass(WGPUComputePassEncoder computePassEncoder);
+};
+
+
+class WgRenderStoragePool {
+private:
+   Array<WgRenderStorage*> mList;
+   Array<WgRenderStorage*> mPool;
+public:
+   WgRenderStorage* allocate(WgContext& context, uint32_t w, uint32_t h);
+   void free(WgContext& context, WgRenderStorage* renderTarget);
    void release(WgContext& context);
 };
 

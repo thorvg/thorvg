@@ -43,18 +43,22 @@ void WgRenderer::initialize()
 {
     mContext.initialize();
     mPipelines.initialize(mContext);
-    mBindGroupOpacityPool.initialize(mContext);
+    mOpacityPool.initialize(mContext);
+    mBlendMethodPool.initialize(mContext);
+    mCompositeMethodPool.initialize(mContext);
 }
 
 
 void WgRenderer::release()
 {
     mCompositorStack.clear();
-    mRenderTargetStack.clear();
-    mBindGroupOpacityPool.release(mContext);
-    mRenderTargetPool.release(mContext);
-    mRenderTargetRoot.release(mContext);
-    mRenderTargetWnd.release(mContext);
+    mRenderStorageStack.clear();
+    mRenderStoragePool.release(mContext);
+    mCompositeMethodPool.release(mContext);
+    mBlendMethodPool.release(mContext);
+    mOpacityPool.release(mContext);
+    mRenderStorageRoot.release(mContext);
+    mRenderTarget.release(mContext);
     wgpuSurfaceUnconfigure(mSurface);
     wgpuSurfaceRelease(mSurface);
     mPipelines.release();
@@ -108,7 +112,7 @@ RenderData WgRenderer::prepare(Surface* surface, const RenderMesh* mesh, RenderD
         WgShaderTypeBlendSettings blendSettings(surface->cs, opacity);
         renderDataPicture->bindGroupPaint.initialize(mContext.device, mContext.queue, modelMat, blendSettings);
     }
-    
+
     // update image data
     if (flags & (RenderUpdateFlag::Path | RenderUpdateFlag::Image)) {
         WgGeometryData geometryData;
@@ -119,7 +123,7 @@ RenderData WgRenderer::prepare(Surface* surface, const RenderMesh* mesh, RenderD
         renderDataPicture->imageData.update(mContext, surface);
         renderDataPicture->bindGroupPicture.initialize(
             mContext.device, mContext.queue,
-            renderDataPicture->imageData.sampler,
+            mContext.samplerLinear,
             renderDataPicture->imageData.textureView);
     }
 
@@ -129,37 +133,41 @@ RenderData WgRenderer::prepare(Surface* surface, const RenderMesh* mesh, RenderD
 
 bool WgRenderer::preRender()
 {
-    // command encoder descriptor
     WGPUCommandEncoderDescriptor commandEncoderDesc{};
     commandEncoderDesc.nextInChain = nullptr;
     commandEncoderDesc.label = "The command encoder";
     mCommandEncoder = wgpuDeviceCreateCommandEncoder(mContext.device, &commandEncoderDesc);
-    // render datas
-    mRenderTargetStack.push(&mRenderTargetRoot);
-    mRenderTargetRoot.beginRenderPass(mCommandEncoder, true);
+    mRenderStorageRoot.clear(mCommandEncoder);
+    mRenderStorageStack.push(&mRenderStorageRoot);
     return true;
 }
 
 
 bool WgRenderer::renderShape(RenderData data)
 {
-    mRenderTargetStack.last()->renderShape((WgRenderDataShape *)data);
-    mRenderTargetStack.last()->renderStroke((WgRenderDataShape *)data);
+    // render shape to render target
+    mRenderTarget.renderShape(mCommandEncoder, (WgRenderDataShape *)data);
+    // blend shape with current render storage
+    WgBindGroupBlendMethod* blendMethod = mBlendMethodPool.allocate(mContext, mBlendMethod);
+    mRenderStorageStack.last()->blend(mCommandEncoder, &mRenderTarget, blendMethod);
     return true;
 }
 
 
 bool WgRenderer::renderImage(RenderData data)
 {
-    mRenderTargetStack.last()->renderPicture((WgRenderDataPicture *)data);
+    // render image to render target
+    mRenderTarget.renderPicture(mCommandEncoder, (WgRenderDataPicture *)data);
+    // blend image with current render storage
+    WgBindGroupBlendMethod* blendMethod = mBlendMethodPool.allocate(mContext, mBlendMethod);
+    mRenderStorageStack.last()->blend(mCommandEncoder, &mRenderTarget, blendMethod);
     return true;
 }
 
 
 bool WgRenderer::postRender()
 {
-    mRenderTargetRoot.endRenderPass();
-    mRenderTargetStack.pop();
+    mRenderStorageStack.pop();
     mContext.executeCommandEncoder(mCommandEncoder);
     wgpuCommandEncoderRelease(mCommandEncoder);
     return true;
@@ -193,6 +201,7 @@ bool WgRenderer::viewport(TVG_UNUSED const RenderRegion& vp)
 
 bool WgRenderer::blend(TVG_UNUSED BlendMethod method)
 {
+    mBlendMethod = method;
     return false;
 }
 
@@ -213,17 +222,25 @@ bool WgRenderer::sync()
 {
     WGPUSurfaceTexture backBuffer{};
     wgpuSurfaceGetCurrentTexture(mSurface, &backBuffer);
-    WGPUTextureView backBufferView = mContext.createTextureView2d(backBuffer.texture, "Surface texture view");
+    
     WGPUCommandEncoderDescriptor commandEncoderDesc{};
     commandEncoderDesc.nextInChain = nullptr;
     commandEncoderDesc.label = "The command encoder";
     WGPUCommandEncoder commandEncoder = wgpuDeviceCreateCommandEncoder(mContext.device, &commandEncoderDesc);
-    mRenderTargetWnd.beginRenderPass(commandEncoder, backBufferView, true);
-    mRenderTargetWnd.blitColor(mContext, &mRenderTargetRoot);
-    mRenderTargetWnd.endRenderPass();
+
+    WGPUImageCopyTexture source{};
+    source.texture = mRenderStorageRoot.texStorage;
+    WGPUImageCopyTexture dest{};
+    dest.texture = backBuffer.texture;
+    WGPUExtent3D copySize{};
+    copySize.width = mTargetSurface.w;
+    copySize.height = mTargetSurface.h;
+    copySize.depthOrArrayLayers = 1;
+    wgpuCommandEncoderCopyTextureToTexture(commandEncoder, &source, &dest, &copySize);
+
     mContext.executeCommandEncoder(commandEncoder);
     wgpuCommandEncoderRelease(commandEncoder);
-    wgpuTextureViewRelease(backBufferView);
+    
     wgpuSurfacePresent(mSurface);
     return true;
 }
@@ -236,7 +253,7 @@ bool WgRenderer::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t 
     mTargetSurface.w = w;
     mTargetSurface.h = h;
 
-    mRenderTargetRoot.initialize(mContext, w, h);
+    mRenderTarget.initialize(mContext, w, h);
     return true;
 }
 
@@ -266,7 +283,7 @@ bool WgRenderer::target(void* window, uint32_t w, uint32_t h)
     surfaceConfiguration.nextInChain = nullptr;
     surfaceConfiguration.device = mContext.device;
     surfaceConfiguration.format = WGPUTextureFormat_RGBA8Unorm;
-    surfaceConfiguration.usage = WGPUTextureUsage_RenderAttachment;
+    surfaceConfiguration.usage = WGPUTextureUsage_RenderAttachment | WGPUTextureUsage_CopyDst;
     surfaceConfiguration.viewFormatCount = 0;
     surfaceConfiguration.viewFormats = nullptr;
     surfaceConfiguration.alphaMode = WGPUCompositeAlphaMode_Auto;
@@ -275,8 +292,8 @@ bool WgRenderer::target(void* window, uint32_t w, uint32_t h)
     surfaceConfiguration.presentMode = WGPUPresentMode_Mailbox;
     wgpuSurfaceConfigure(mSurface, &surfaceConfiguration);
 
-    mRenderTargetWnd.initialize(mContext, w, h);
-    mRenderTargetRoot.initialize(mContext, w, h);
+    mRenderTarget.initialize(mContext, w, h);
+    mRenderStorageRoot.initialize(mContext, w, h);
 
     return true;
 }
@@ -291,17 +308,14 @@ Compositor* WgRenderer::target(TVG_UNUSED const RenderRegion& region, TVG_UNUSED
 
 bool WgRenderer::beginComposite(TVG_UNUSED Compositor* cmp, TVG_UNUSED CompositeMethod method, TVG_UNUSED uint8_t opacity)
 {
-    // save current composition settings
+        // save current composition settings
     cmp->method = method;
     cmp->opacity = opacity;
 
-    // end current render target
-    mRenderTargetStack.last()->endRenderPass();
-
-    // create new render target and begin new render pass
-    WgRenderTarget* renderTarget = mRenderTargetPool.allocate(mContext, mTargetSurface.w, mTargetSurface.h);
-    renderTarget->beginRenderPass(mCommandEncoder, true);
-    mRenderTargetStack.push(renderTarget);
+    // allocate new render storage and push it to top of render tree
+    WgRenderStorage* renderStorage = mRenderStoragePool.allocate(mContext, mTargetSurface.w, mTargetSurface.h);
+    renderStorage->clear(mCommandEncoder);
+    mRenderStorageStack.push(renderStorage);
 
     return true;
 }
@@ -310,41 +324,35 @@ bool WgRenderer::beginComposite(TVG_UNUSED Compositor* cmp, TVG_UNUSED Composite
 bool WgRenderer::endComposite(TVG_UNUSED Compositor* cmp)
 {
     if (cmp->method == CompositeMethod::None) {
-        // end current render pass
-        mRenderTargetStack.last()->endRenderPass();
-
         // get two last render targets
-        WgRenderTarget* renderTargetSrc = mRenderTargetStack.last();
-        mRenderTargetStack.pop();
+        WgRenderStorage* renderStorageSrc = mRenderStorageStack.last();
+        mRenderStorageStack.pop();
     
-        // apply current render target
-        WgRenderTarget* renderTarget = mRenderTargetStack.last();
-        renderTarget->beginRenderPass(mCommandEncoder, false);
-
-        // blit scene to current render tartget
-        WgBindGroupOpacity* mBindGroupOpacity = mBindGroupOpacityPool.allocate(mContext, cmp->opacity);
-        renderTarget->blit(mContext, renderTargetSrc, mBindGroupOpacity);
+        // blent scene to current render storage
+        WgBindGroupBlendMethod* blendMethod = mBlendMethodPool.allocate(mContext, mBlendMethod);
+        mRenderStorageStack.last()->blend(mCommandEncoder, renderStorageSrc, blendMethod);
 
         // back render targets to the pool
-        mRenderTargetPool.free(mContext, renderTargetSrc);
+        mRenderStoragePool.free(mContext, renderStorageSrc);
     } else {
-        // end current render pass
-        mRenderTargetStack.last()->endRenderPass();
-
         // get two last render targets
-        WgRenderTarget* renderTargetSrc = mRenderTargetStack.last();
-        mRenderTargetStack.pop();
-        WgRenderTarget* renderTargetMsk = mRenderTargetStack.last();
-        mRenderTargetStack.pop();
+        WgRenderStorage* renderStorageSrc = mRenderStorageStack.last();
+        mRenderStorageStack.pop();
+        WgRenderStorage* renderStorageMsk = mRenderStorageStack.last();
+        mRenderStorageStack.pop();
     
-        // apply current render target
-        WgRenderTarget* renderTarget = mRenderTargetStack.last();
-        renderTarget->beginRenderPass(mCommandEncoder, false);
-        renderTarget->compose(mContext, renderTargetSrc, renderTargetMsk, cmp->method);
+        // compose shape and mask
+        WgBindGroupOpacity* opacity = mOpacityPool.allocate(mContext, cmp->opacity);
+        WgBindGroupCompositeMethod* composeMethod = mCompositeMethodPool.allocate(mContext, cmp->method);
+        renderStorageSrc->compose(mCommandEncoder, renderStorageMsk, composeMethod, opacity);
+
+        // blent scene to current render storage
+        WgBindGroupBlendMethod* blendMethod = mBlendMethodPool.allocate(mContext, mBlendMethod);
+        mRenderStorageStack.last()->blend(mCommandEncoder, renderStorageSrc, blendMethod);
 
         // back render targets to the pool
-        mRenderTargetPool.free(mContext, renderTargetSrc);
-        mRenderTargetPool.free(mContext, renderTargetMsk);
+        mRenderStoragePool.free(mContext, renderStorageSrc);
+        mRenderStoragePool.free(mContext, renderStorageMsk);
     }
 
     // delete current compositor

@@ -106,19 +106,6 @@ struct WgBindGroupPicture : public WgBindGroup
     void release();
 };
 
-// @group(1 or 2)
-struct WgBindGroupOpacity : public WgBindGroup
-{
-    static WGPUBindGroupLayout layout;
-    static WGPUBindGroupLayout getLayout(WGPUDevice device);
-    static void releaseLayout();
-
-    WGPUBuffer uBufferOpacity{};
-    void initialize(WGPUDevice device, WGPUQueue queue, uint32_t uOpacity);
-    void update(WGPUDevice device, WGPUQueue queue, uint32_t uOpacity);
-    void release();
-};
-
 // @group(0 or 1)
 struct WgBindGroupTexture : public WgBindGroup
 {
@@ -132,7 +119,7 @@ struct WgBindGroupTexture : public WgBindGroup
 };
 
 // @group(0 or 1)
-struct WgBindGroupStorageTexture : public WgBindGroup
+struct WgBindGroupTextureStorage : public WgBindGroup
 {
     static WGPUBindGroupLayout layout;
     static WGPUBindGroupLayout getLayout(WGPUDevice device);
@@ -156,6 +143,44 @@ struct WgBindGroupTextureSampled : public WgBindGroup
     void release();
 };
 
+// @group(1 or 2)
+struct WgBindGroupOpacity : public WgBindGroup
+{
+    static WGPUBindGroupLayout layout;
+    static WGPUBindGroupLayout getLayout(WGPUDevice device);
+    static void releaseLayout();
+
+    WGPUBuffer uBufferOpacity{};
+    void initialize(WGPUDevice device, WGPUQueue queue, uint32_t uOpacity);
+    void release();
+};
+
+// @group(2)
+struct WgBindGroupBlendMethod : public WgBindGroup
+{
+    static WGPUBindGroupLayout layout;
+    static WGPUBindGroupLayout getLayout(WGPUDevice device);
+    static void releaseLayout();
+
+    WGPUBuffer uBufferBlendMethod{};
+    void initialize(WGPUDevice device, WGPUQueue queue,
+                    BlendMethod uBlendMethod);
+    void release();
+};
+
+// @group(2)
+struct WgBindGroupCompositeMethod : public WgBindGroup
+{
+    static WGPUBindGroupLayout layout;
+    static WGPUBindGroupLayout getLayout(WGPUDevice device);
+    static void releaseLayout();
+
+    WGPUBuffer uBufferCompositeMethod{};
+    void initialize(WGPUDevice device, WGPUQueue queue,
+                    CompositeMethod uCompositeMethod);
+    void release();
+};
+
 //************************************************************************
 // bind group pools
 //************************************************************************
@@ -163,11 +188,31 @@ struct WgBindGroupTextureSampled : public WgBindGroup
 class WgBindGroupOpacityPool
 {
 private:
-    WgBindGroupOpacity* mPool[256];
+    WgBindGroupOpacity* mPool[256]{};
 public:
     void initialize(WgContext& context);
     void release(WgContext& context);
     WgBindGroupOpacity* allocate(WgContext& context, uint8_t opacity);
+};
+
+class WgBindGroupBlendMethodPool
+{
+private:
+    WgBindGroupBlendMethod* mPool[(uint8_t)BlendMethod::SoftLight + 1]{};
+public:
+    void initialize(WgContext& context);
+    void release(WgContext& context);
+    WgBindGroupBlendMethod* allocate(WgContext& context, BlendMethod blendMethod);
+};
+
+class WgBindGroupCompositeMethodPool
+{
+private:
+    WgBindGroupCompositeMethod* mPool[(uint8_t)CompositeMethod::DifferenceMask + 1]{};
+public:
+    void initialize(WgContext& context);
+    void release(WgContext& context);
+    WgBindGroupCompositeMethod* allocate(WgContext& context, CompositeMethod composeMethod);
 };
 
 #endif // _TVG_WG_BIND_GROUPS_H_

@@ -144,48 +144,12 @@ void WgImageData::update(WgContext& context, Surface* surface)
 {
     release(context);
     assert(surface);
-    // sampler descriptor
-    WGPUSamplerDescriptor samplerDesc{};
-    samplerDesc.nextInChain = nullptr;
-    samplerDesc.label = "The shape sampler";
-    samplerDesc.addressModeU = WGPUAddressMode_ClampToEdge;
-    samplerDesc.addressModeV = WGPUAddressMode_ClampToEdge;
-    samplerDesc.addressModeW = WGPUAddressMode_ClampToEdge;
-    samplerDesc.magFilter = WGPUFilterMode_Nearest;
-    samplerDesc.minFilter = WGPUFilterMode_Nearest;
-    samplerDesc.mipmapFilter = WGPUMipmapFilterMode_Nearest;
-    samplerDesc.lodMinClamp = 0.0f;
-    samplerDesc.lodMaxClamp = 32.0f;
-    samplerDesc.compare = WGPUCompareFunction_Undefined;
-    samplerDesc.maxAnisotropy = 1;
-    sampler = wgpuDeviceCreateSampler(context.device, &samplerDesc);
-    assert(sampler);
-    // texture descriptor
-    WGPUTextureDescriptor textureDesc{};
-    textureDesc.nextInChain = nullptr;
-    textureDesc.label = "The shape texture";
-    textureDesc.usage = WGPUTextureUsage_TextureBinding | WGPUTextureUsage_CopyDst;
-    textureDesc.dimension = WGPUTextureDimension_2D;
-    textureDesc.size = { surface->w, surface->h, 1 };
-    textureDesc.format = WGPUTextureFormat_RGBA8Unorm;
-    textureDesc.mipLevelCount = 1;
-    textureDesc.sampleCount = 1;
-    textureDesc.viewFormatCount = 0;
-    textureDesc.viewFormats = nullptr;
-    texture = wgpuDeviceCreateTexture(context.device, &textureDesc);
+    texture = context.createTexture2d(
+        WGPUTextureUsage_TextureBinding | WGPUTextureUsage_CopyDst,
+        WGPUTextureFormat_RGBA8Unorm,
+        surface->w, surface->h, "The shape texture");
     assert(texture);
-    // texture view descriptor
-    WGPUTextureViewDescriptor textureViewDesc{};
-    textureViewDesc.nextInChain = nullptr;
-    textureViewDesc.label = "The shape texture view";
-    textureViewDesc.format = WGPUTextureFormat_RGBA8Unorm;
-    textureViewDesc.dimension = WGPUTextureViewDimension_2D;
-    textureViewDesc.baseMipLevel = 0;
-    textureViewDesc.mipLevelCount = 1;
-    textureViewDesc.baseArrayLayer = 0;
-    textureViewDesc.arrayLayerCount = 1;
-    textureViewDesc.aspect = WGPUTextureAspect_All;
-    textureView = wgpuTextureCreateView(texture, &textureViewDesc);
+    textureView = context.createTextureView2d(texture, "The shape texture view");
     assert(textureView);
     // update texture data
     WGPUImageCopyTexture imageCopyTexture{};
@@ -209,19 +173,8 @@ void WgImageData::update(WgContext& context, Surface* surface)
 
 void WgImageData::release(WgContext& context)
 {
-    if (textureView) {
-        wgpuTextureViewRelease(textureView);
-        textureView = nullptr;
-    }
-    if (texture) {
-        wgpuTextureDestroy(texture);
-        wgpuTextureRelease(texture);
-        texture = nullptr;
-    } 
-    if (sampler) {
-        wgpuSamplerRelease(sampler);
-        sampler = nullptr;
-    }
+    context.releaseTextureView(textureView);
+    context.releaseTexture(texture);
 };
 
 //***********************************************************************

@@ -54,7 +54,9 @@ extern const char* cShaderSource_PipelineCompDifferenceMask;
 // compute shader modules
 //*****************************************************************************
 
-// pipeline shader modules blend
+// pipeline shader modules clear, compose and blend
+extern const char* cShaderSource_PipelineComputeClear;
 extern const char* cShaderSource_PipelineComputeBlend;
+extern const char* cShaderSource_PipelineComputeCompose;
 
 #endif // _TVG_WG_SHADER_SRC_H_
