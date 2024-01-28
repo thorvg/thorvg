@@ -99,59 +99,52 @@ struct WgPipelineImage: public WgRenderPipeline
     }
 };
 
-struct WgPipelineBlit: public WgRenderPipeline
-{
-    void initialize(WGPUDevice device) override;
-    void use(WGPURenderPassEncoder encoder,
-             WgBindGroupTextureSampled& groupTexSampled,
-             WgBindGroupOpacity& groupOpacity)
-    {
-        set(encoder);
-        groupTexSampled.set(encoder, 0);
-        groupOpacity.set(encoder, 1);
-    }
-};
-
-struct WgPipelineBlitColor: public WgRenderPipeline
-{
-    void initialize(WGPUDevice device) override;
-    void use(WGPURenderPassEncoder encoder, 
-             WgBindGroupTextureSampled& groupTexSampled)
-    {
-        set(encoder);
-        groupTexSampled.set(encoder, 0);
-    }
-};
-
-struct WgPipelineComposition: public WgRenderPipeline
-{
-    void initialize(WGPUDevice device) override {};
-    void initialize(WGPUDevice device, const char* shaderSrc);
-    void use(WGPURenderPassEncoder encoder,
-             WgBindGroupTextureSampled& groupTexSampledSrc,
-             WgBindGroupTextureSampled& groupTexSampledMsk)
-    {
-        set(encoder);
-        groupTexSampledSrc.set(encoder, 0);
-        groupTexSampledMsk.set(encoder, 1);
-    }
-};
-
 //*****************************************************************************
 // compute pipelines
 //*****************************************************************************
 
+struct WgPipelineClear: public WgComputePipeline
+{
+    void initialize(WGPUDevice device) override;
+    void use(WGPUComputePassEncoder encoder,
+             WgBindGroupTextureStorage& groupTexDst)
+    {
+        set(encoder);
+        groupTexDst.set(encoder, 0);
+    }
+};
+
+
 struct WgPipelineBlend: public WgComputePipeline
 {
-    void initialize(WGPUDevice device) override {};
-    void initialize(WGPUDevice device, const char* shaderSrc);
+    void initialize(WGPUDevice device) override;
     void use(WGPUComputePassEncoder encoder,
-             WgBindGroupStorageTexture& groupTexSrc,
-             WgBindGroupStorageTexture& groupTexDst)
+             WgBindGroupTextureStorage& groupTexSrc,
+             WgBindGroupTextureStorage& groupTexDst,
+             WgBindGroupBlendMethod& blendMethod)
     {
         set(encoder);
         groupTexSrc.set(encoder, 0);
         groupTexDst.set(encoder, 1);
+        blendMethod.set(encoder, 2);
+    }
+};
+
+
+struct WgPipelineCompose: public WgComputePipeline
+{
+    void initialize(WGPUDevice device) override;
+    void use(WGPUComputePassEncoder encoder,
+             WgBindGroupTextureStorage& groupTexSrc,
+             WgBindGroupTextureStorage& groupTexMsk,
+             WgBindGroupCompositeMethod& groupComposeMethod,
+             WgBindGroupOpacity& groupOpacity)
+    {
+        set(encoder);
+        groupTexSrc.set(encoder, 0);
+        groupTexMsk.set(encoder, 1);
+        groupComposeMethod.set(encoder, 2);
+        groupOpacity.set(encoder, 3);
     }
 };
 
@@ -161,30 +154,20 @@ struct WgPipelineBlend: public WgComputePipeline
 
 struct WgPipelines
 {
+    // render pipelines
     WgPipelineFillShape fillShape;
     WgPipelineFillStroke fillStroke;
     WgPipelineSolid solid;
     WgPipelineLinear linear;
     WgPipelineRadial radial;
     WgPipelineImage image;
-    WgPipelineBlit blit;
-    WgPipelineBlitColor blitColor;
-    // composition pipelines
-    WgPipelineComposition compAlphaMask;
-    WgPipelineComposition compInvAlphaMask;
-    WgPipelineComposition compLumaMask;
-    WgPipelineComposition compInvLumaMask;
-    WgPipelineComposition compAddMask;
-    WgPipelineComposition compSubtractMask;
-    WgPipelineComposition compIntersectMask;
-    WgPipelineComposition compDifferenceMask;
     // compute pipelines
+    WgPipelineClear computeClear;
     WgPipelineBlend computeBlend;
+    WgPipelineCompose computeCompose;
 
     void initialize(WgContext& context);
     void release();
-
-    WgPipelineComposition* getCompositionPipeline(CompositeMethod method);
 };
 
 #endif // _TVG_WG_PIPELINES_H_

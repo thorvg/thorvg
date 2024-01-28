@@ -88,11 +88,19 @@ void WgContext::initialize()
 
     queue = wgpuDeviceGetQueue(device);
     assert(queue);
+    
+    // create default nearest and linear samplers
+    samplerNearest = createSampler(WGPUFilterMode_Nearest, WGPUMipmapFilterMode_Nearest);
+    assert(samplerNearest);
+    samplerLinear = createSampler(WGPUFilterMode_Linear, WGPUMipmapFilterMode_Linear);
+    assert(samplerLinear);
 }
 
 
 void WgContext::release()
 {
+    releaseSampler(samplerNearest);
+    releaseSampler(samplerLinear);
     if (device) {
         wgpuDeviceDestroy(device);
         wgpuDeviceRelease(device);
@@ -115,7 +123,26 @@ void WgContext::executeCommandEncoder(WGPUCommandEncoder commandEncoder)
 }
 
 
-WGPUTexture WgContext::createTexture2d(WGPUTextureUsage usage, WGPUTextureFormat format, uint32_t width, uint32_t height, char const * label) {
+WGPUSampler WgContext::createSampler(WGPUFilterMode minFilter, WGPUMipmapFilterMode mipmapFilter) 
+{
+    WGPUSamplerDescriptor samplerDesc{};
+    samplerDesc.nextInChain = nullptr;
+    samplerDesc.label = "The sampler";
+    samplerDesc.addressModeU = WGPUAddressMode_ClampToEdge;
+    samplerDesc.addressModeV = WGPUAddressMode_ClampToEdge;
+    samplerDesc.addressModeW = WGPUAddressMode_ClampToEdge;
+    samplerDesc.magFilter = minFilter;
+    samplerDesc.minFilter = minFilter;
+    samplerDesc.mipmapFilter = mipmapFilter;
+    samplerDesc.lodMinClamp = 0.0f;
+    samplerDesc.lodMaxClamp = 32.0f;
+    samplerDesc.compare = WGPUCompareFunction_Undefined;
+    samplerDesc.maxAnisotropy = 1;
+    return wgpuDeviceCreateSampler(device, &samplerDesc);
+}
+
+
+WGPUTexture WgContext::createTexture2d(WGPUTextureUsageFlags usage, WGPUTextureFormat format, uint32_t width, uint32_t height, char const * label) {
     WGPUTextureDescriptor textureDesc{};
     textureDesc.nextInChain = nullptr;
     textureDesc.label = label;
@@ -147,7 +174,16 @@ WGPUTextureView WgContext::createTextureView2d(WGPUTexture texture, WGPU_NULLABL
 };
 
 
-void WgContext::releaseTexture(WGPUTexture& texture) {
+void WgContext::releaseSampler(WGPUSampler& sampler)
+{
+    if (sampler) {
+        wgpuSamplerRelease(sampler);
+        sampler = nullptr;
+    }
+}
+
+void WgContext::releaseTexture(WGPUTexture& texture)
+{
     if (texture) {
         wgpuTextureDestroy(texture);
         wgpuTextureRelease(texture);
@@ -157,7 +193,8 @@ void WgContext::releaseTexture(WGPUTexture& texture) {
 }
 
 
-void WgContext::releaseTextureView(WGPUTextureView& textureView) {
+void WgContext::releaseTextureView(WGPUTextureView& textureView)
+{
     if (textureView) wgpuTextureViewRelease(textureView);
     textureView = nullptr;
 }
@@ -226,7 +263,7 @@ WGPUBindGroupLayoutEntry WgBindGroup::makeBindGroupLayoutEntryBuffer(uint32_t bi
     WGPUBindGroupLayoutEntry bindGroupLayoutEntry{};
     bindGroupLayoutEntry.nextInChain = nullptr;
     bindGroupLayoutEntry.binding = binding;
-    bindGroupLayoutEntry.visibility = WGPUShaderStage_Vertex | WGPUShaderStage_Fragment;
+    bindGroupLayoutEntry.visibility = WGPUShaderStage_Vertex | WGPUShaderStage_Fragment | WGPUShaderStage_Compute;
     bindGroupLayoutEntry.buffer.nextInChain = nullptr;
     bindGroupLayoutEntry.buffer.type = WGPUBufferBindingType_Uniform;
     bindGroupLayoutEntry.buffer.hasDynamicOffset = false;
@@ -261,14 +298,14 @@ WGPUBindGroupLayoutEntry WgBindGroup::makeBindGroupLayoutEntryTexture(uint32_t b
 }
 
 
-WGPUBindGroupLayoutEntry WgBindGroup::makeBindGroupLayoutEntryStorageTexture(uint32_t binding)
+WGPUBindGroupLayoutEntry WgBindGroup::makeBindGroupLayoutEntryStorageTexture(uint32_t binding, WGPUStorageTextureAccess access)
 {
     WGPUBindGroupLayoutEntry bindGroupLayoutEntry{};
     bindGroupLayoutEntry.nextInChain = nullptr;
     bindGroupLayoutEntry.binding = binding;
     bindGroupLayoutEntry.visibility = WGPUShaderStage_Fragment | WGPUShaderStage_Compute;
     bindGroupLayoutEntry.storageTexture.nextInChain = nullptr;
-    bindGroupLayoutEntry.storageTexture.access = WGPUStorageTextureAccess_ReadWrite;
+    bindGroupLayoutEntry.storageTexture.access = access;
     bindGroupLayoutEntry.storageTexture.format = WGPUTextureFormat_RGBA8Unorm;
     bindGroupLayoutEntry.storageTexture.viewDimension = WGPUTextureViewDimension_2D;
     return bindGroupLayoutEntry;
@@ -427,11 +464,11 @@ WGPUBlendState WgRenderPipeline::makeBlendState()
 {
     WGPUBlendState blendState{};
     blendState.color.operation = WGPUBlendOperation_Add;
-    blendState.color.srcFactor = WGPUBlendFactor_SrcAlpha;
-    blendState.color.dstFactor = WGPUBlendFactor_OneMinusSrcAlpha;
+    blendState.color.srcFactor = WGPUBlendFactor_One;
+    blendState.color.dstFactor = WGPUBlendFactor_Zero;
     blendState.alpha.operation = WGPUBlendOperation_Add;
     blendState.alpha.srcFactor = WGPUBlendFactor_One;
-    blendState.alpha.dstFactor = WGPUBlendFactor_One;
+    blendState.alpha.dstFactor = WGPUBlendFactor_Zero;
     return blendState;
 }
 
