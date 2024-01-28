@@ -22,133 +22,128 @@
 
 #include "tvgWgRenderTarget.h"
 
+//*****************************************************************************
+// render target
+//*****************************************************************************
+
 void WgRenderTarget::initialize(WgContext& context, uint32_t w, uint32_t h)
 {
     release(context);
-    // sampler descriptor
-    WGPUSamplerDescriptor samplerDesc{};
-    samplerDesc.nextInChain = nullptr;
-    samplerDesc.label = "The target sampler";
-    samplerDesc.addressModeU = WGPUAddressMode_ClampToEdge;
-    samplerDesc.addressModeV = WGPUAddressMode_ClampToEdge;
-    samplerDesc.addressModeW = WGPUAddressMode_ClampToEdge;
-    samplerDesc.magFilter = WGPUFilterMode_Nearest;
-    samplerDesc.minFilter = WGPUFilterMode_Nearest;
-    samplerDesc.mipmapFilter = WGPUMipmapFilterMode_Nearest;
-    samplerDesc.lodMinClamp = 0.0f;
-    samplerDesc.lodMaxClamp = 32.0f;
-    samplerDesc.compare = WGPUCompareFunction_Undefined;
-    samplerDesc.maxAnisotropy = 1;
-    sampler = wgpuDeviceCreateSampler(context.device, &samplerDesc);
-    assert(sampler);
-    // texture descriptor
-    WGPUTextureDescriptor textureDescColor{};
-    textureDescColor.nextInChain = nullptr;
-    textureDescColor.label = "The target texture color";
-    textureDescColor.usage = WGPUTextureUsage_RenderAttachment | WGPUTextureUsage_TextureBinding | WGPUTextureUsage_CopyDst | WGPUTextureUsage_StorageBinding;
-    textureDescColor.dimension = WGPUTextureDimension_2D;
-    textureDescColor.size = { w, h, 1 };
-    textureDescColor.format = WGPUTextureFormat_RGBA8Unorm;
-    textureDescColor.mipLevelCount = 1;
-    textureDescColor.sampleCount = 1;
-    textureDescColor.viewFormatCount = 0;
-    textureDescColor.viewFormats = nullptr;
-    mTextureColor = wgpuDeviceCreateTexture(context.device, &textureDescColor);
-    assert(mTextureColor);
-    // texture view descriptor
-    WGPUTextureViewDescriptor textureViewDescColor{};
-    textureViewDescColor.nextInChain = nullptr;
-    textureViewDescColor.label = "The target texture view color";
-    textureViewDescColor.format = WGPUTextureFormat_RGBA8Unorm;
-    textureViewDescColor.dimension = WGPUTextureViewDimension_2D;
-    textureViewDescColor.baseMipLevel = 0;
-    textureViewDescColor.mipLevelCount = 1;
-    textureViewDescColor.baseArrayLayer = 0;
-    textureViewDescColor.arrayLayerCount = 1;
-    textureViewDescColor.aspect = WGPUTextureAspect_All;
-    textureViewColor = wgpuTextureCreateView(mTextureColor, &textureViewDescColor);
-    assert(textureViewColor);
-    // stencil texture
-    WGPUTextureDescriptor textureDescStencil{};
-    textureDescStencil.nextInChain = nullptr;
-    textureDescStencil.label = "The target texture stencil";
-    textureDescStencil.usage = WGPUTextureUsage_RenderAttachment;
-    textureDescStencil.dimension = WGPUTextureDimension_2D;
-    textureDescStencil.size = { w, h, 1 };
-    textureDescStencil.format = WGPUTextureFormat_Stencil8;
-    textureDescStencil.mipLevelCount = 1;
-    textureDescStencil.sampleCount = 1;
-    textureDescStencil.viewFormatCount = 0;
-    textureDescStencil.viewFormats = nullptr;
-    mTextureStencil = wgpuDeviceCreateTexture(context.device, &textureDescStencil);
-    assert(mTextureStencil);
-    // texture view descriptor
-    WGPUTextureViewDescriptor textureViewDescStencil{};
-    textureViewDescStencil.nextInChain = nullptr;
-    textureViewDescStencil.label = "The target texture view stncil";
-    textureViewDescStencil.format = WGPUTextureFormat_Stencil8;
-    textureViewDescStencil.dimension = WGPUTextureViewDimension_2D;
-    textureViewDescStencil.baseMipLevel = 0;
-    textureViewDescStencil.mipLevelCount = 1;
-    textureViewDescStencil.baseArrayLayer = 0;
-    textureViewDescStencil.arrayLayerCount = 1;
-    textureViewDescStencil.aspect = WGPUTextureAspect_All;
-    textureViewStencil = wgpuTextureCreateView(mTextureStencil, &textureViewDescStencil);
-    assert(textureViewStencil);
+    // create color and stencil textures
+    texColor = context.createTexture2d(
+        WGPUTextureUsage_RenderAttachment | WGPUTextureUsage_StorageBinding,
+        WGPUTextureFormat_RGBA8Unorm, 
+        w, h, "The target texture color");
+    texStencil = context.createTexture2d(
+        WGPUTextureUsage_RenderAttachment,
+        WGPUTextureFormat_Stencil8, 
+        w, h, "The target texture stencil");
+    assert(texColor);
+    assert(texStencil);
+    texViewColor = context.createTextureView2d(texColor, "The target texture view color");
+    texViewStencil = context.createTextureView2d(texStencil, "The target texture view stencil");
+    assert(texViewColor);
+    assert(texViewStencil);
     // initialize bind group for blitting
-    bindGroupTex.initialize(context.device, context.queue, textureViewColor);
-    bindGroupStorageTex.initialize(context.device, context.queue, textureViewColor);
-    bindGroupTexSampled.initialize(context.device, context.queue, sampler, textureViewColor);
+    bindGroupTexStorage.initialize(context.device, context.queue, texViewColor);
     // initialize window binding groups
     WgShaderTypeMat4x4f viewMat(w, h);
-    mBindGroupCanvasWnd.initialize(context.device, context.queue, viewMat);
-    WgGeometryData geometryDataWnd;
-    geometryDataWnd.appendBlitBox();
-    mMeshDataCanvasWnd.update(context, &geometryDataWnd);
+    mBindGroupCanvas.initialize(context.device, context.queue, viewMat);
     mPipelines = context.pipelines;
 }
 
 
 void WgRenderTarget::release(WgContext& context)
 {
-    mMeshDataCanvasWnd.release(context);
-    mBindGroupCanvasWnd.release();
-    bindGroupTexSampled.release();
-    bindGroupStorageTex.release();
-    bindGroupTex.release();
-    if (mTextureStencil) {
-        wgpuTextureDestroy(mTextureStencil);
-        wgpuTextureRelease(mTextureStencil);
-        mTextureStencil = nullptr;
-    }
-    if (textureViewStencil) wgpuTextureViewRelease(textureViewStencil);
-    textureViewStencil = nullptr;
-    if (mTextureColor) {
-        wgpuTextureDestroy(mTextureColor);
-        wgpuTextureRelease(mTextureColor);
-        mTextureColor = nullptr;
-    }
-    if (textureViewColor) wgpuTextureViewRelease(textureViewColor);
-    textureViewColor = nullptr;
-    if (sampler) wgpuSamplerRelease(sampler);
-    sampler = nullptr;
+    mBindGroupCanvas.release();
+    bindGroupTexStorage.release();
+    context.releaseTextureView(texViewStencil);
+    context.releaseTextureView(texViewColor);
+    context.releaseTexture(texStencil);
+    context.releaseTexture(texColor);
 }
 
 
-void WgRenderTarget::beginRenderPass(WGPUCommandEncoder commandEncoder, bool clear)
+void WgRenderTarget::renderShape(WGPUCommandEncoder commandEncoder, WgRenderDataShape* renderData)
 {
-    beginRenderPass(commandEncoder, textureViewColor, clear);
+    assert(renderData);
+    assert(commandEncoder);
+    WGPURenderPassEncoder renderPassEncoder = beginRenderPass(commandEncoder);
+    drawShape(renderPassEncoder, renderData);
+    drawStroke(renderPassEncoder, renderData);
+    endRenderPass(renderPassEncoder);
 }
 
 
-void WgRenderTarget::beginRenderPass(WGPUCommandEncoder commandEncoder, WGPUTextureView colorAttachement, bool clear)
+void WgRenderTarget::renderPicture(WGPUCommandEncoder commandEncoder, WgRenderDataPicture* renderData)
 {
-    assert(!mRenderPassEncoder);
+    assert(renderData);
+    assert(commandEncoder);
+    WGPURenderPassEncoder renderPassEncoder = beginRenderPass(commandEncoder);
+    wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
+    mPipelines->image.use(renderPassEncoder, mBindGroupCanvas, renderData->bindGroupPaint, renderData->bindGroupPicture);
+    renderData->meshData.drawImage(renderPassEncoder);
+    endRenderPass(renderPassEncoder);
+}
+
+
+void WgRenderTarget::drawShape(WGPURenderPassEncoder renderPassEncoder, WgRenderDataShape* renderData)
+{
+    assert(renderData);
+    assert(renderPassEncoder);
+    // draw shape geometry
+    wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
+    for (uint32_t i = 0; i < renderData->meshGroupShapes.meshes.count; i++) {
+        // draw to stencil (first pass)
+        mPipelines->fillShape.use(renderPassEncoder, mBindGroupCanvas, renderData->bindGroupPaint);
+        renderData->meshGroupShapes.meshes[i]->draw(renderPassEncoder);
+        // fill shape (second pass)
+        WgRenderSettings& settings = renderData->renderSettingsShape;
+        if (settings.fillType == WgRenderSettingsType::Solid)
+            mPipelines->solid.use(renderPassEncoder, mBindGroupCanvas, renderData->bindGroupPaint, settings.bindGroupSolid);
+        else if (settings.fillType == WgRenderSettingsType::Linear)
+            mPipelines->linear.use(renderPassEncoder, mBindGroupCanvas, renderData->bindGroupPaint, settings.bindGroupLinear);
+        else if (settings.fillType == WgRenderSettingsType::Radial)
+            mPipelines->radial.use(renderPassEncoder, mBindGroupCanvas, renderData->bindGroupPaint, settings.bindGroupRadial);
+        renderData->meshBBoxShapes.draw(renderPassEncoder);
+    }
+}
+
+
+void WgRenderTarget::drawStroke(WGPURenderPassEncoder renderPassEncoder, WgRenderDataShape* renderData)
+{
+    assert(renderData);
+    assert(renderPassEncoder);
+    // draw stroke geometry
+    if (renderData->meshGroupStrokes.meshes.count > 0) {
+        // draw strokes to stencil (first pass)
+        wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 255);
+        for (uint32_t i = 0; i < renderData->meshGroupStrokes.meshes.count; i++) {
+            mPipelines->fillStroke.use(renderPassEncoder, mBindGroupCanvas, renderData->bindGroupPaint);
+            renderData->meshGroupStrokes.meshes[i]->draw(renderPassEncoder);
+        }
+        // fill shape (second pass)
+        wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
+        WgRenderSettings& settings = renderData->renderSettingsStroke;
+        if (settings.fillType == WgRenderSettingsType::Solid)
+            mPipelines->solid.use(renderPassEncoder, mBindGroupCanvas, renderData->bindGroupPaint, settings.bindGroupSolid);
+        else if (settings.fillType == WgRenderSettingsType::Linear)
+            mPipelines->linear.use(renderPassEncoder, mBindGroupCanvas, renderData->bindGroupPaint, settings.bindGroupLinear);
+        else if (settings.fillType == WgRenderSettingsType::Radial)
+            mPipelines->radial.use(renderPassEncoder, mBindGroupCanvas, renderData->bindGroupPaint, settings.bindGroupRadial);
+        renderData->meshBBoxStrokes.draw(renderPassEncoder);
+    }
+}
+
+
+WGPURenderPassEncoder WgRenderTarget::beginRenderPass(WGPUCommandEncoder commandEncoder)
+{
+    assert(commandEncoder);
     // render pass depth stencil attachment
     WGPURenderPassDepthStencilAttachment depthStencilAttachment{};
-    depthStencilAttachment.view = textureViewStencil;
-    depthStencilAttachment.depthLoadOp = WGPULoadOp_Clear;
-    depthStencilAttachment.depthStoreOp = WGPUStoreOp_Store;
+    depthStencilAttachment.view = texViewStencil;
+    depthStencilAttachment.depthLoadOp = WGPULoadOp_Load;
+    depthStencilAttachment.depthStoreOp = WGPUStoreOp_Discard;
     depthStencilAttachment.depthClearValue = 1.0f;
     depthStencilAttachment.depthReadOnly = false;
     depthStencilAttachment.stencilLoadOp = WGPULoadOp_Clear;
@@ -157,9 +152,9 @@ void WgRenderTarget::beginRenderPass(WGPUCommandEncoder commandEncoder, WGPUText
     depthStencilAttachment.stencilReadOnly = false;
     // render pass color attachment
     WGPURenderPassColorAttachment colorAttachment{};
-    colorAttachment.view = colorAttachement;
+    colorAttachment.view = texViewColor;
     colorAttachment.resolveTarget = nullptr;
-    colorAttachment.loadOp = clear ? WGPULoadOp_Clear : WGPULoadOp_Load;
+    colorAttachment.loadOp = WGPULoadOp_Clear;
     colorAttachment.clearValue = { 0, 0, 0, 0 };
     colorAttachment.storeOp = WGPUStoreOp_Store;
     // render pass descriptor
@@ -173,134 +168,145 @@ void WgRenderTarget::beginRenderPass(WGPUCommandEncoder commandEncoder, WGPUText
     renderPassDesc.occlusionQuerySet = nullptr;
     renderPassDesc.timestampWrites = nullptr;
     // begin render pass
-    mRenderPassEncoder = wgpuCommandEncoderBeginRenderPass(commandEncoder, &renderPassDesc);
+    return wgpuCommandEncoderBeginRenderPass(commandEncoder, &renderPassDesc);
 }
 
 
-void WgRenderTarget::endRenderPass()
+void WgRenderTarget::endRenderPass(WGPURenderPassEncoder renderPassEncoder)
 {
-    assert(mRenderPassEncoder);
-    wgpuRenderPassEncoderEnd(mRenderPassEncoder);
-    wgpuRenderPassEncoderRelease(mRenderPassEncoder);
-    mRenderPassEncoder = nullptr;
-}
-
-
-void WgRenderTarget::renderShape(WgRenderDataShape* renderData)
-{
-    assert(renderData);
-    assert(mRenderPassEncoder);
-    // draw shape geometry
-    wgpuRenderPassEncoderSetStencilReference(mRenderPassEncoder, 0);
-    for (uint32_t i = 0; i < renderData->meshGroupShapes.meshes.count; i++) {
-        // draw to stencil (first pass)
-        mPipelines->fillShape.use(mRenderPassEncoder, mBindGroupCanvasWnd, renderData->bindGroupPaint);
-        renderData->meshGroupShapes.meshes[i]->draw(mRenderPassEncoder);
-        // fill shape (second pass)
-        WgRenderSettings& settings = renderData->renderSettingsShape;
-        if (settings.fillType == WgRenderSettingsType::Solid)
-            mPipelines->solid.use(mRenderPassEncoder, mBindGroupCanvasWnd, renderData->bindGroupPaint, settings.bindGroupSolid);
-        else if (settings.fillType == WgRenderSettingsType::Linear)
-            mPipelines->linear.use(mRenderPassEncoder, mBindGroupCanvasWnd, renderData->bindGroupPaint, settings.bindGroupLinear);
-        else if (settings.fillType == WgRenderSettingsType::Radial)
-            mPipelines->radial.use(mRenderPassEncoder, mBindGroupCanvasWnd, renderData->bindGroupPaint, settings.bindGroupRadial);
-        renderData->meshBBoxShapes.draw(mRenderPassEncoder);
-    }
-}
-
-
-void WgRenderTarget::renderStroke(WgRenderDataShape* renderData)
-{
-    assert(renderData);
-    assert(mRenderPassEncoder);
-    // draw stroke geometry
-    if (renderData->meshGroupStrokes.meshes.count > 0) {
-        // draw strokes to stencil (first pass)
-        wgpuRenderPassEncoderSetStencilReference(mRenderPassEncoder, 255);
-        for (uint32_t i = 0; i < renderData->meshGroupStrokes.meshes.count; i++) {
-            mPipelines->fillStroke.use(mRenderPassEncoder, mBindGroupCanvasWnd, renderData->bindGroupPaint);
-            renderData->meshGroupStrokes.meshes[i]->draw(mRenderPassEncoder);
-        }
-        // fill shape (second pass)
-        wgpuRenderPassEncoderSetStencilReference(mRenderPassEncoder, 0);
-        WgRenderSettings& settings = renderData->renderSettingsStroke;
-        if (settings.fillType == WgRenderSettingsType::Solid)
-            mPipelines->solid.use(mRenderPassEncoder, mBindGroupCanvasWnd, renderData->bindGroupPaint, settings.bindGroupSolid);
-        else if (settings.fillType == WgRenderSettingsType::Linear)
-            mPipelines->linear.use(mRenderPassEncoder, mBindGroupCanvasWnd, renderData->bindGroupPaint, settings.bindGroupLinear);
-        else if (settings.fillType == WgRenderSettingsType::Radial)
-            mPipelines->radial.use(mRenderPassEncoder, mBindGroupCanvasWnd, renderData->bindGroupPaint, settings.bindGroupRadial);
-        renderData->meshBBoxStrokes.draw(mRenderPassEncoder);
-    }
-}
-
-
-void WgRenderTarget::renderPicture(WgRenderDataPicture* renderData)
-{
-    assert(renderData);
-    assert(mRenderPassEncoder);
-    if (renderData->meshData.bufferTexCoord) {
-        wgpuRenderPassEncoderSetStencilReference(mRenderPassEncoder, 0);
-        mPipelines->image.use(
-            mRenderPassEncoder,
-            mBindGroupCanvasWnd,
-            renderData->bindGroupPaint,
-            renderData->bindGroupPicture);
-        renderData->meshData.drawImage(mRenderPassEncoder);
-    }
-}
-
-
-void WgRenderTarget::blit(WgContext& context, WgRenderTarget* renderTargetSrc, WgBindGroupOpacity* mBindGroupOpacity)
-{
-    assert(mRenderPassEncoder);
-    mPipelines->blit.use(mRenderPassEncoder, renderTargetSrc->bindGroupTexSampled, *mBindGroupOpacity);
-    mMeshDataCanvasWnd.drawImage(mRenderPassEncoder);
-}
-
-
-void WgRenderTarget::blitColor(WgContext& context, WgRenderTarget* renderTargetSrc)
-{
-    assert(mRenderPassEncoder);
-    mPipelines->blitColor.use(mRenderPassEncoder, renderTargetSrc->bindGroupTexSampled);
-    mMeshDataCanvasWnd.drawImage(mRenderPassEncoder);
-}
-
-
-void WgRenderTarget::compose(WgContext& context, WgRenderTarget* renderTargetSrc, WgRenderTarget* renderTargetMsk, CompositeMethod method)
-{
-    assert(mRenderPassEncoder);
-    WgPipelineComposition* pipeline = mPipelines->getCompositionPipeline(method);
-    assert(pipeline);
-    pipeline->use(mRenderPassEncoder, renderTargetSrc->bindGroupTexSampled, renderTargetMsk->bindGroupTexSampled);
-    mMeshDataCanvasWnd.drawImage(mRenderPassEncoder);
+    assert(renderPassEncoder);
+    wgpuRenderPassEncoderEnd(renderPassEncoder);
+    wgpuRenderPassEncoderRelease(renderPassEncoder);
 }
 
 //*****************************************************************************
-// render terget pool
+// render storage
 //*****************************************************************************
 
-WgRenderTarget* WgRenderTargetPool::allocate(WgContext& context, uint32_t w, uint32_t h)
+ void WgRenderStorage::initialize(WgContext& context, uint32_t w, uint32_t h)
+ {
+    release(context);
+    // store target storage size
+    width = w;
+    height = h;
+    workgroupsCountX = (width  + WG_COMPUTE_WORKGROUP_SIZE_X - 1) / WG_COMPUTE_WORKGROUP_SIZE_X; // workgroup size x == 8
+    workgroupsCountY = (height + WG_COMPUTE_WORKGROUP_SIZE_Y - 1) / WG_COMPUTE_WORKGROUP_SIZE_Y; // workgroup size y == 8
+    // create color and stencil textures
+    texStorage = context.createTexture2d(
+        WGPUTextureUsage_StorageBinding | WGPUTextureUsage_CopySrc,
+        WGPUTextureFormat_RGBA8Unorm,
+        w, h, "The target texture storage color");
+    assert(texStorage);
+    texViewStorage = context.createTextureView2d(texStorage, "The target texture storage view color");
+    assert(texViewStorage);
+    // initialize bind group for blitting
+    bindGroupTexStorage.initialize(context.device, context.queue, texViewStorage);
+    mPipelines = context.pipelines;
+ }
+
+
+void WgRenderStorage::release(WgContext& context)
 {
-   WgRenderTarget* renderTarget{};
+    bindGroupTexStorage.release();
+    context.releaseTextureView(texViewStorage);
+    context.releaseTexture(texStorage);
+    workgroupsCountX = 0;
+    workgroupsCountY = 0;
+    height = 0;
+    width = 0;
+}
+
+void WgRenderStorage::clear(WGPUCommandEncoder commandEncoder)
+{
+    assert(commandEncoder);
+    WGPUComputePassEncoder computePassEncoder = beginComputePass(commandEncoder);
+    mPipelines->computeClear.use(computePassEncoder, bindGroupTexStorage);
+    dispatchWorkgroups(computePassEncoder);
+    endRenderPass(computePassEncoder);
+}
+
+
+void WgRenderStorage::blend(WGPUCommandEncoder commandEncoder, WgRenderTarget* targetSrc, WgBindGroupBlendMethod* blendMethod)
+{
+    assert(commandEncoder);
+    assert(targetSrc);
+    WGPUComputePassEncoder computePassEncoder = beginComputePass(commandEncoder);
+    mPipelines->computeBlend.use(computePassEncoder, targetSrc->bindGroupTexStorage, bindGroupTexStorage, *blendMethod);
+    dispatchWorkgroups(computePassEncoder);
+    endRenderPass(computePassEncoder);
+};
+
+void WgRenderStorage::blend(WGPUCommandEncoder commandEncoder, WgRenderStorage* targetSrc, WgBindGroupBlendMethod* blendMethod)
+{
+    assert(commandEncoder);
+    assert(targetSrc);
+    WGPUComputePassEncoder computePassEncoder = beginComputePass(commandEncoder);
+    mPipelines->computeBlend.use(computePassEncoder, targetSrc->bindGroupTexStorage, bindGroupTexStorage, *blendMethod);
+    dispatchWorkgroups(computePassEncoder);
+    endRenderPass(computePassEncoder);
+};
+
+
+void WgRenderStorage::compose(WGPUCommandEncoder commandEncoder, WgRenderStorage* targetMsk, WgBindGroupCompositeMethod* composeMethod, WgBindGroupOpacity* opacity)
+{
+    assert(commandEncoder);
+    assert(targetMsk);
+    WGPUComputePassEncoder computePassEncoder = beginComputePass(commandEncoder);
+    mPipelines->computeCompose.use(computePassEncoder, bindGroupTexStorage, targetMsk->bindGroupTexStorage, *composeMethod, *opacity);
+    dispatchWorkgroups(computePassEncoder);
+    endRenderPass(computePassEncoder);
+};
+
+
+void WgRenderStorage::dispatchWorkgroups(WGPUComputePassEncoder computePassEncoder)
+{
+    assert(computePassEncoder);
+    wgpuComputePassEncoderDispatchWorkgroups(computePassEncoder, workgroupsCountX, workgroupsCountY, 1);
+}
+
+
+WGPUComputePassEncoder WgRenderStorage::beginComputePass(WGPUCommandEncoder commandEncoder)
+{
+    assert(commandEncoder);
+    WGPUComputePassDescriptor computePassDesc{};
+    computePassDesc.nextInChain = nullptr;
+    computePassDesc.label = "The compute pass composition";
+    computePassDesc.timestampWrites = nullptr;
+    return wgpuCommandEncoderBeginComputePass(commandEncoder, &computePassDesc);
+};
+
+
+void WgRenderStorage::endRenderPass(WGPUComputePassEncoder computePassEncoder)
+{
+    assert(computePassEncoder);
+    wgpuComputePassEncoderEnd(computePassEncoder);
+}
+
+//*****************************************************************************
+// render storage pool
+//*****************************************************************************
+
+WgRenderStorage* WgRenderStoragePool::allocate(WgContext& context, uint32_t w, uint32_t h)
+{
+   WgRenderStorage* renderStorage{};
    if (mPool.count > 0) {
-      renderTarget = mPool.last();
+      renderStorage = mPool.last();
       mPool.pop();
    } else {
-      renderTarget = new WgRenderTarget;
-      renderTarget->initialize(context, w, h);
-      mList.push(renderTarget);
+      renderStorage = new WgRenderStorage;
+      renderStorage->initialize(context, w, h);
+      mList.push(renderStorage);
    }
-   return renderTarget;
+   return renderStorage;
 };
 
 
-void WgRenderTargetPool::free(WgContext& context, WgRenderTarget* renderTarget) {
-   mPool.push(renderTarget);
+void WgRenderStoragePool::free(WgContext& context, WgRenderStorage* renderStorage) {
+   mPool.push(renderStorage);
 };
 
 
-void WgRenderTargetPool::release(WgContext& context)
+void WgRenderStoragePool::release(WgContext& context)
 {
    for (uint32_t i = 0; i < mList.count; i++) {
       mList[i]->release(context);

@@ -25,6 +25,10 @@
 
 #define ARRAY_ELEMENTS_COUNT(arr) sizeof(arr)/sizeof(arr[0])
 
+//************************************************************************
+// graphics pipelines
+//************************************************************************
+
 void WgPipelineFillShape::initialize(WGPUDevice device)
 {
     // vertex attributes settings
@@ -222,120 +226,64 @@ void WgPipelineImage::initialize(WGPUDevice device)
              shaderSource, shaderLabel, pipelineLabel);
 }
 
+//************************************************************************
+// compute pipelines
+//************************************************************************
 
-void WgPipelineBlit::initialize(WGPUDevice device)
+void WgPipelineClear::initialize(WGPUDevice device)
 {
-    // vertex and buffers settings
-    WGPUVertexAttribute vertexAttributesPos = { WGPUVertexFormat_Float32x2, sizeof(float) * 0, 0 };
-    WGPUVertexAttribute vertexAttributesTex = { WGPUVertexFormat_Float32x2, sizeof(float) * 0, 1 };
-    WGPUVertexBufferLayout vertexBufferLayouts[] = {
-        makeVertexBufferLayout(&vertexAttributesPos, 1, sizeof(float) * 2),
-        makeVertexBufferLayout(&vertexAttributesTex, 1, sizeof(float) * 2)
-    };
-
     // bind groups and layouts
     WGPUBindGroupLayout bindGroupLayouts[] = {
-        WgBindGroupTextureSampled::getLayout(device),
+        WgBindGroupTextureStorage::getLayout(device)
+    };
+
+    // sheder source and labels
+    auto shaderSource = cShaderSource_PipelineComputeClear;
+    auto shaderLabel = "The compute shader clear";
+    auto pipelineLabel = "The compute pipeline clear";
+
+    // allocate all pipeline handles
+    allocate(device,
+             bindGroupLayouts, ARRAY_ELEMENTS_COUNT(bindGroupLayouts),
+             shaderSource, shaderLabel, pipelineLabel);
+}
+
+
+void WgPipelineBlend::initialize(WGPUDevice device)
+{
+    // bind groups and layouts
+    WGPUBindGroupLayout bindGroupLayouts[] = {
+        WgBindGroupTextureStorage::getLayout(device),
+        WgBindGroupTextureStorage::getLayout(device),
+        WgBindGroupBlendMethod::getLayout(device)
+    };
+
+    // sheder source and labels
+    auto shaderSource = cShaderSource_PipelineComputeBlend;
+    auto shaderLabel = "The compute shader blend";
+    auto pipelineLabel = "The compute pipeline blend";
+
+    // allocate all pipeline handles
+    allocate(device,
+             bindGroupLayouts, ARRAY_ELEMENTS_COUNT(bindGroupLayouts),
+             shaderSource, shaderLabel, pipelineLabel);
+}
+
+
+void WgPipelineCompose::initialize(WGPUDevice device)
+{
+    // bind groups and layouts
+    WGPUBindGroupLayout bindGroupLayouts[] = {
+        WgBindGroupTextureStorage::getLayout(device),
+        WgBindGroupTextureStorage::getLayout(device),
+        WgBindGroupCompositeMethod::getLayout(device),
         WgBindGroupOpacity::getLayout(device)
     };
 
-    // stencil function
-    WGPUCompareFunction stencilFuncion = WGPUCompareFunction_Always;
-    WGPUStencilOperation stencilOperation = WGPUStencilOperation_Zero;
-
     // sheder source and labels
-    auto shaderSource = cShaderSource_PipelineBlit;
-    auto shaderLabel = "The shader blit";
-    auto pipelineLabel = "The render pipeline blit";
-
-    // allocate all pipeline handles
-    allocate(device,
-             vertexBufferLayouts, ARRAY_ELEMENTS_COUNT(vertexBufferLayouts),
-             bindGroupLayouts, ARRAY_ELEMENTS_COUNT(bindGroupLayouts),
-             stencilFuncion, stencilOperation,
-             shaderSource, shaderLabel, pipelineLabel);
-}
-
-
-void WgPipelineBlitColor::initialize(WGPUDevice device)
-{
-    // vertex and buffers settings
-    WGPUVertexAttribute vertexAttributesPos = { WGPUVertexFormat_Float32x2, sizeof(float) * 0, 0 };
-    WGPUVertexAttribute vertexAttributesTex = { WGPUVertexFormat_Float32x2, sizeof(float) * 0, 1 };
-    WGPUVertexBufferLayout vertexBufferLayouts[] = {
-        makeVertexBufferLayout(&vertexAttributesPos, 1, sizeof(float) * 2),
-        makeVertexBufferLayout(&vertexAttributesTex, 1, sizeof(float) * 2)
-    };
-
-    // bind groups and layouts
-    WGPUBindGroupLayout bindGroupLayouts[] = {
-        WgBindGroupTextureSampled::getLayout(device)
-    };
-
-    // stencil function
-    WGPUCompareFunction stencilFuncion = WGPUCompareFunction_Always;
-    WGPUStencilOperation stencilOperation = WGPUStencilOperation_Zero;
-
-    // sheder source and labels
-    auto shaderSource = cShaderSource_PipelineBlitColor;
-    auto shaderLabel = "The shader blit color";
-    auto pipelineLabel = "The render pipeline blit color";
-
-    // allocate all pipeline handles
-    allocate(device,
-             vertexBufferLayouts, ARRAY_ELEMENTS_COUNT(vertexBufferLayouts),
-             bindGroupLayouts, ARRAY_ELEMENTS_COUNT(bindGroupLayouts),
-             stencilFuncion, stencilOperation,
-             shaderSource, shaderLabel, pipelineLabel);
-}
-
-
-void WgPipelineComposition::initialize(WGPUDevice device, const char* shaderSrc)
-{
-    // vertex and buffers settings
-    WGPUVertexAttribute vertexAttributesPos = { WGPUVertexFormat_Float32x2, sizeof(float) * 0, 0 };
-    WGPUVertexAttribute vertexAttributesTex = { WGPUVertexFormat_Float32x2, sizeof(float) * 0, 1 };
-    WGPUVertexBufferLayout vertexBufferLayouts[] = {
-        makeVertexBufferLayout(&vertexAttributesPos, 1, sizeof(float) * 2),
-        makeVertexBufferLayout(&vertexAttributesTex, 1, sizeof(float) * 2)
-    };
-
-    // bind groups and layouts
-    WGPUBindGroupLayout bindGroupLayouts[] = {
-        WgBindGroupTextureSampled::getLayout(device),
-        WgBindGroupTextureSampled::getLayout(device)
-    };
-
-    // stencil function
-    WGPUCompareFunction stencilFuncion = WGPUCompareFunction_Always;
-    WGPUStencilOperation stencilOperation = WGPUStencilOperation_Zero;
-
-    // sheder source and labels
-    auto shaderSource = shaderSrc;
-    auto shaderLabel = "The shader compose alpha mask";
-    auto pipelineLabel = "The render pipeline compose alpha mask";
-
-    // allocate all pipeline handles
-    allocate(device,
-             vertexBufferLayouts, ARRAY_ELEMENTS_COUNT(vertexBufferLayouts),
-             bindGroupLayouts, ARRAY_ELEMENTS_COUNT(bindGroupLayouts),
-             stencilFuncion, stencilOperation,
-             shaderSource, shaderLabel, pipelineLabel);
-}
-
-void WgPipelineBlend::initialize(WGPUDevice device, const char* shaderSrc)
-{
-    // bind groups and layouts
-    WGPUBindGroupLayout bindGroupLayouts[] = {
-        //WgBindGroupTexture::getLayout(device),
-        WgBindGroupStorageTexture::getLayout(device),
-        WgBindGroupStorageTexture::getLayout(device)
-    };
-
-    // sheder source and labels
-    auto shaderSource = shaderSrc;
-    auto shaderLabel = "The compute shader blend";
-    auto pipelineLabel = "The compute pipeline blend";
+    auto shaderSource = cShaderSource_PipelineComputeCompose;
+    auto shaderLabel = "The compute shader compose";
+    auto pipelineLabel = "The compute pipeline compose";
 
     // allocate all pipeline handles
     allocate(device,
@@ -356,20 +304,10 @@ void WgPipelines::initialize(WgContext& context)
     linear.initialize(context.device);
     radial.initialize(context.device);
     image.initialize(context.device);
-    // blit pipelines
-    blit.initialize(context.device);
-    blitColor.initialize(context.device);
-    // composition pipelines
-    compAlphaMask.initialize(context.device, cShaderSource_PipelineCompAlphaMask);
-    compInvAlphaMask.initialize(context.device, cShaderSource_PipelineCompInvAlphaMask);
-    compLumaMask.initialize(context.device, cShaderSource_PipelineCompLumaMask);
-    compInvLumaMask.initialize(context.device, cShaderSource_PipelineCompInvLumaMask);
-    compAddMask.initialize(context.device, cShaderSource_PipelineCompAddMask);
-    compSubtractMask.initialize(context.device, cShaderSource_PipelineCompSubtractMask);
-    compIntersectMask.initialize(context.device, cShaderSource_PipelineCompIntersectMask);
-    compDifferenceMask.initialize(context.device, cShaderSource_PipelineCompDifferenceMask);
     // compute pipelines
-    computeBlend.initialize(context.device, cShaderSource_PipelineComputeBlend);
+    computeClear.initialize(context.device);
+    computeBlend.initialize(context.device);
+    computeCompose.initialize(context.device);
     // store pipelines to context
     context.pipelines = this;
 }
@@ -378,7 +316,7 @@ void WgPipelines::initialize(WgContext& context)
 void WgPipelines::release()
 {
     WgBindGroupTextureSampled::releaseLayout();
-    WgBindGroupStorageTexture::releaseLayout();
+    WgBindGroupTextureStorage::releaseLayout();
     WgBindGroupTexture::releaseLayout();
     WgBindGroupOpacity::releaseLayout();
     WgBindGroupPicture::releaseLayout();
@@ -388,19 +326,9 @@ void WgPipelines::release()
     WgBindGroupPaint::releaseLayout();
     WgBindGroupCanvas::releaseLayout();
     // compute pipelines
+    computeCompose.release();
     computeBlend.release();
-    // composition pipelines
-    compDifferenceMask.release();
-    compIntersectMask.release();
-    compSubtractMask.release();
-    compAddMask.release();
-    compInvLumaMask.release();
-    compLumaMask.release();
-    compInvAlphaMask.release();
-    compAlphaMask.release();
-    // blit pipelines
-    blitColor.release();
-    blit.release();
+    computeClear.release();
     // fill pipelines
     image.release();
     radial.release();
@@ -408,22 +336,4 @@ void WgPipelines::release()
     solid.release();
     fillStroke.release();
     fillShape.release();
-}
-
-
-WgPipelineComposition* WgPipelines::getCompositionPipeline(CompositeMethod method)
-{
-    switch (method) {
-        case CompositeMethod::ClipPath:
-        case CompositeMethod::AlphaMask:      return &compAlphaMask; break;
-        case CompositeMethod::InvAlphaMask:   return &compInvAlphaMask; break;
-        case CompositeMethod::LumaMask:       return &compLumaMask; break;
-        case CompositeMethod::InvLumaMask:    return &compInvLumaMask; break;
-        case CompositeMethod::AddMask:        return &compAddMask; break;
-        case CompositeMethod::SubtractMask:   return &compSubtractMask; break;
-        case CompositeMethod::IntersectMask:  return &compIntersectMask; break;
-        case CompositeMethod::DifferenceMask: return &compDifferenceMask; break;
-        default: return nullptr; break;
-    }
-    return nullptr;
 }

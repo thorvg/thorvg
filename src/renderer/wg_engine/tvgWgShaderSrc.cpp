@@ -712,18 +712,92 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
 // cShaderSource_PipelineComputeBlend
 //************************************************************************
 
-// pipeline shader modules blend (simple example)
-const char* cShaderSource_PipelineComputeBlend = R"(
-@group(0) @binding(0) var imageSrc : texture_storage_2d<rgba8unorm, write>;
-@group(1) @binding(0) var imageDst : texture_storage_2d<rgba8unorm, write>;
+// pipeline shader modules clear
+const char* cShaderSource_PipelineComputeClear = R"(
+@group(0) @binding(0) var imageDst : texture_storage_2d<rgba8unorm, read_write>;
 
 @compute @workgroup_size(8, 8)
 fn cs_main( @builtin(global_invocation_id) id: vec3u) {
-   let texSize = textureDimensions(imageSrc);
-   if ((id.x >= texSize.x) || (id.y >= texSize.y)) { return; };
-
-   // var src = textureLoad(imageSrc, id.xy);
-   textureStore(imageDst, id.xy, vec4(0.5, 1.0, 0.1, 1.0));
+    textureStore(imageDst, id.xy, vec4f(0.0, 0.0, 0.0, 0.0));
 }
+)";
 
+
+// pipeline shader modules blend
+const char* cShaderSource_PipelineComputeBlend = R"(
+@group(0) @binding(0) var imageSrc : texture_storage_2d<rgba8unorm, read_write>;
+@group(1) @binding(0) var imageDst : texture_storage_2d<rgba8unorm, read_write>;
+@group(2) @binding(0) var<uniform> blendMethod : u32;
+
+@compute @workgroup_size(8, 8)
+fn cs_main( @builtin(global_invocation_id) id: vec3u) {
+    let texSize = textureDimensions(imageSrc);
+    if ((id.x >= texSize.x) || (id.y >= texSize.y)) { return; };
+
+    let srcColor = textureLoad(imageSrc, id.xy);
+    if (srcColor.a == 0.0) { return; };
+    let dstColor = textureLoad(imageDst, id.xy);
+
+    let Sa: f32  = srcColor.a;
+    let Da: f32  = dstColor.a;
+    let S: vec3f = srcColor.xyz;
+    let D: vec3f = dstColor.xyz;
+    let One: vec3f = vec3(1.0);
+
+    var color: vec3f = vec3f(0.0, 0.0, 0.0);
+    switch blendMethod {
+        /* Normal     */ case 0u:  { color = (Sa * S) + (1.0 - Sa) * D; }
+        /* Add        */ case 1u:  { color = (S + D); }
+        /* Screen     */ case 2u:  { color = (S + D) - (S * D); }
+        /* Multiply   */ case 3u:  { color = (S * D); }
+        /* Overlay    */ case 4u:  { color = S * D; }
+        /* Difference */ case 5u:  { color = abs(S - D); }
+        /* Exclusion  */ case 6u:  { color = S + D - (2 * S * D); }
+        /* SrcOver    */ case 7u:  { color = S; }
+        /* Darken     */ case 8u:  { color = min(S, D); }
+        /* Lighten    */ case 9u:  { color = max(S, D); }
+        /* ColorDodge */ case 10u: { color = D / (One - S); }
+        /* ColorBurn  */ case 11u: { color = One - (One - D) / S; }
+        /* HardLight  */ case 12u: { color = (Sa * Da) - 2.0 * (Da - S) * (Sa - D); }
+        /* SoftLight  */ case 13u: { color = (One - 2 * S) * (D * D) + (2 * S * D); }
+        default:  { color = (Sa * S) + (1.0 - Sa) * D; }
+    }
+
+    textureStore(imageDst, id.xy, vec4f(color, Sa));
+}
+)";
+
+// pipeline shader modules compose
+const char* cShaderSource_PipelineComputeCompose = R"(
+@group(0) @binding(0) var imageSrc : texture_storage_2d<rgba8unorm, read_write>;
+@group(1) @binding(0) var imageMsk : texture_storage_2d<rgba8unorm, read_write>;
+@group(2) @binding(0) var<uniform> composeMethod : u32;
+@group(3) @binding(0) var<uniform> opacity : f32;
+
+@compute @workgroup_size(8, 8)
+fn cs_main( @builtin(global_invocation_id) id: vec3u) {
+    let texSize = textureDimensions(imageSrc);
+    if ((id.x >= texSize.x) || (id.y >= texSize.y)) { return; };
+
+    let colorSrc = textureLoad(imageSrc, id.xy);
+    let colorMsk = textureLoad(imageMsk, id.xy);
+
+    var color: vec3f = colorSrc.xyz;
+    var alpha: f32   = colorMsk.a;
+    switch composeMethod {
+        /* None           */ case 0u: { color = colorSrc.xyz; }
+        /* ClipPath       */ case 1u: { if (colorMsk.a == 0) { alpha = 0.0; }; }
+        /* AlphaMask      */ case 2u: { color = mix(colorMsk.xyz, colorSrc.xyz, colorSrc.a * colorMsk.b); }
+        /* InvAlphaMask   */ case 3u: { color = mix(colorSrc.xyz, colorMsk.xyz, colorSrc.a * colorMsk.b); alpha = 1.0 - colorMsk.b; }
+        /* LumaMask       */ case 4u: { color = colorSrc.xyz * (0.299 * colorMsk.r + 0.587 * colorMsk.g + 0.114 * colorMsk.b);  }
+        /* InvLumaMask    */ case 5u: { color = colorSrc.xyz * (1.0 - (0.299 * colorMsk.r + 0.587 * colorMsk.g + 0.114 * colorMsk.b)); alpha = 1.0 - colorMsk.b; }
+        /* AddMask        */ case 6u: { color = colorSrc.xyz * colorSrc.a + colorMsk.xyz * (1.0 - colorSrc.a); }
+        /* SubtractMask   */ case 7u: { color = colorSrc.xyz * colorSrc.a - colorMsk.xyz * (1.0 - colorSrc.a); }
+        /* IntersectMask  */ case 8u: { color = colorSrc.xyz * min(colorSrc.a, colorMsk.a); }
+        /* DifferenceMask */ case 9u: { color = abs(colorSrc.xyz - colorMsk.xyz * (1.0 - colorMsk.a)); }
+        default: { color = colorSrc.xyz; }
+    }
+
+    textureStore(imageSrc, id.xy, vec4f(color, alpha * opacity));
+}
 )";

@@ -40,6 +40,9 @@ struct WgContext {
     WGPUAdapterProperties adapterProperties{};
     WGPUSupportedLimits supportedLimits{};
 
+    WGPUSampler samplerNearest{};
+    WGPUSampler samplerLinear{};
+
     WgPipelines* pipelines{}; // external handle (do not release)
     
     void initialize();
@@ -47,8 +50,10 @@ struct WgContext {
 
     void executeCommandEncoder(WGPUCommandEncoder commandEncoder);
 
-    WGPUTexture createTexture2d(WGPUTextureUsage usage, WGPUTextureFormat format, uint32_t width, uint32_t height, char const * label);
+    WGPUSampler createSampler(WGPUFilterMode minFilter, WGPUMipmapFilterMode mipmapFilter);
+    WGPUTexture createTexture2d(WGPUTextureUsageFlags usage, WGPUTextureFormat format, uint32_t width, uint32_t height, char const * label);
     WGPUTextureView createTextureView2d(WGPUTexture texture, WGPU_NULLABLE char const * label);
+    void releaseSampler(WGPUSampler& sampler);
     void releaseTexture(WGPUTexture& texture);
     void releaseTextureView(WGPUTextureView& textureView);
 };
@@ -67,7 +72,7 @@ struct WgBindGroup
     static WGPUBindGroupLayoutEntry makeBindGroupLayoutEntryBuffer(uint32_t binding);
     static WGPUBindGroupLayoutEntry makeBindGroupLayoutEntrySampler(uint32_t binding);
     static WGPUBindGroupLayoutEntry makeBindGroupLayoutEntryTexture(uint32_t binding);
-    static WGPUBindGroupLayoutEntry makeBindGroupLayoutEntryStorageTexture(uint32_t binding);
+    static WGPUBindGroupLayoutEntry makeBindGroupLayoutEntryStorageTexture(uint32_t binding, WGPUStorageTextureAccess access);
 
     static WGPUBuffer createBuffer(WGPUDevice device, WGPUQueue queue, const void *data, size_t size);
     static WGPUBindGroup createBindGroup(WGPUDevice device, WGPUBindGroupLayout layout, const WGPUBindGroupEntry* bindGroupEntries, uint32_t count);
@@ -122,6 +127,9 @@ public:
                                                    const char* pipelineLabel);
     static void destroyRenderPipeline(WGPURenderPipeline& renderPipeline);
 };
+
+#define WG_COMPUTE_WORKGROUP_SIZE_X 8
+#define WG_COMPUTE_WORKGROUP_SIZE_Y 8
 
 struct WgComputePipeline: public WgPipeline
 {

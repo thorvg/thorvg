@@ -45,7 +45,6 @@ struct WgMeshDataGroup {
 };
 
 struct WgImageData {
-    WGPUSampler sampler{};
     WGPUTexture texture{};
     WGPUTextureView textureView{};
 

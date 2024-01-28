@@ -62,19 +62,24 @@ public:
 private:
     // render handles
     WGPUCommandEncoder mCommandEncoder{};
-    Array<Compositor*> mCompositorStack;
-    Array<WgRenderTarget*> mRenderTargetStack;
+    WgRenderTarget mRenderTarget;
+    WgRenderStorage mRenderStorageRoot;
+    WgRenderStoragePool mRenderStoragePool;
+    WgBindGroupOpacityPool mOpacityPool;
+    WgBindGroupBlendMethodPool mBlendMethodPool;
+    WgBindGroupCompositeMethodPool mCompositeMethodPool;
 
-    // render object pools
-    WgRenderTargetPool mRenderTargetPool;
-    WgBindGroupOpacityPool mBindGroupOpacityPool;
+    // render tree stacks
+    Array<Compositor*> mCompositorStack;
+    Array<WgRenderStorage*> mRenderStorageStack;
+
+    // native window handles
+    WGPUSurface mSurface{};
 private:
     WgContext mContext;
     WgPipelines mPipelines;
-    WgRenderTarget mRenderTargetRoot;
-    WgRenderTarget mRenderTargetWnd;
-    WGPUSurface mSurface{};
     Surface mTargetSurface;
+    BlendMethod mBlendMethod{};
 };
 
 #endif /* _TVG_WG_RENDERER_H_ */
