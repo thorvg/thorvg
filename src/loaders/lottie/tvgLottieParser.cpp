@@ -956,26 +956,19 @@ void LottieParser::parseAssets()
 }
 
 
-void LottieParser::parseChars()
+void LottieParser::parseChars(Array<LottieGlyph*>& glyphes)
 {
-    if (comp->fonts.count == 0) {
-        TVGERR("LOTTIE", "No font data?");
-        return;
-    }
-
     enterArray();
     while (nextArrayValue()) {
         enterObject();
         //a new glyph
         auto glyph = new LottieGlyph;
-        char* style = nullptr;
-        char* family = nullptr;
         while (auto key = nextObjectKey()) {
             if (!strcmp("ch", key)) glyph->code = getStringCopy();
             else if (!strcmp("size", key)) glyph->size = static_cast<uint16_t>(getFloat());
-            else if (!strcmp("style", key)) style = const_cast<char*>(getString());
+            else if (!strcmp("style", key)) glyph->style = getStringCopy();
             else if (!strcmp("w", key)) glyph->width = getFloat();
-            else if (!strcmp("fFamily", key)) family = const_cast<char*>(getString());
+            else if (!strcmp("fFamily", key)) glyph->family = getStringCopy();
             else if (!strcmp("data", key))
             {   //glyph shapes
                 enterObject();
@@ -984,13 +977,8 @@ void LottieParser::parseChars()
                 }
             } else skip(key);
         }
-        //aggregate the font characters
-        for (uint32_t i = 0; i < comp->fonts.count; ++i) {
-            auto& font = comp->fonts[i];
-            if (!strcmp(font->family, family) && !strcmp(font->style, style)) font->chars.push(glyph);
-            else TVGERR("LOTTIE", "No font data?");
-        }
         glyph->prepare();
+        glyphes.push(glyph);
     }
 }
 
@@ -1240,6 +1228,24 @@ LottieLayer* LottieParser::parseLayers()
 }
 
 
+void LottieParser::postProcess(Array<LottieGlyph*>& glyphes)
+{
+    //aggregate font characters
+    for (uint32_t g = 0; g < glyphes.count; ++g) {
+        auto glyph = glyphes[g];
+        for (uint32_t i = 0; i < comp->fonts.count; ++i) {
+            auto& font = comp->fonts[i];
+            if (!strcmp(font->family, glyph->family) && !strcmp(font->style, glyph->style)) {
+                font->chars.push(glyph);
+                free(glyph->family);
+                free(glyph->style);
+                break;
+            }
+        }
+    }
+}
+
+
 /************************************************************************/
 /* External Class Implementation                                        */
 /************************************************************************/
@@ -1254,6 +1260,8 @@ bool LottieParser::parse()
     if (comp) delete(comp);
     comp = new LottieComposition;
     if (!comp) return false;
+
+    Array<LottieGlyph*> glyphes;
 
     //assign parsing context
     LottieParser::Context context;
@@ -1270,7 +1278,7 @@ bool LottieParser::parse()
         else if (!strcmp(key, "assets")) parseAssets();
         else if (!strcmp(key, "layers")) comp->root = parseLayers();
         else if (!strcmp(key, "fonts")) parseFonts();
-        else if (!strcmp(key, "chars")) parseChars();
+        else if (!strcmp(key, "chars")) parseChars(glyphes);
         else skip(key);
     }
 
@@ -1278,5 +1286,8 @@ bool LottieParser::parse()
 
     comp->root->inFrame = comp->startFrame;
     comp->root->outFrame = comp->endFrame;
+
+    postProcess(glyphes);
+
     return true;
 }
