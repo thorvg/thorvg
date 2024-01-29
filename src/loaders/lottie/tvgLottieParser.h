@@ -99,7 +99,8 @@ private:
     void parseTextRange(LottieText* text);
     void parseAssets();
     void parseFonts();
-    void parseChars();
+    void parseChars(Array<LottieGlyph*>& glyphes);
+    void postProcess(Array<LottieGlyph*>& glyphes);
 
     //Current parsing context
     struct Context {
