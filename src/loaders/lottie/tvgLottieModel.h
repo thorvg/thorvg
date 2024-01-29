@@ -241,6 +241,8 @@ struct LottieGlyph
     Array<LottieObject*> children;   //glyph shapes.
     float width;
     char* code;
+    char* family = nullptr;
+    char* style = nullptr;
     uint16_t size;
     uint8_t len;
 
