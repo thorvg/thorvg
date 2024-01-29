@@ -51,7 +51,6 @@
 #define _USE_MATH_DEFINES       //Math Constants are not defined in Standard C/C++.
 
 #include <cstring>
-#include <math.h>
 #include <ctype.h>
 #include "tvgMath.h"
 #include "tvgShape.h"
@@ -472,13 +471,12 @@ static bool _processCommand(Array<PathCommand>* cmds, Array<Point>* pts, char cm
         }
         case 'a':
         case 'A': {
-            if (arr[0] < FLT_EPSILON || arr[1] < FLT_EPSILON) {
+            if (mathZero(arr[0]) || mathZero(arr[1])) {
                 Point p = {arr[5], arr[6]};
                 cmds->push(PathCommand::LineTo);
                 pts->push(p);
                 *cur = {arr[5], arr[6]};
-            }
-            else if (!mathEqual(cur->x, arr[5]) || !mathEqual(cur->y, arr[6])) {
+            } else if (!mathEqual(cur->x, arr[5]) || !mathEqual(cur->y, arr[6])) {
                 _pathAppendArcTo(cmds, pts, cur, curCtl, arr[5], arr[6], fabsf(arr[0]), fabsf(arr[1]), arr[2], arr[3], arr[4]);
                 *cur = *curCtl = {arr[5], arr[6]};
                 *isQuadratic = false;
