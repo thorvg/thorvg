@@ -496,11 +496,13 @@ static void _updateText(LottieGroup* parent, LottieObject** child, float frameNo
     }
 
     //text layout position
-    Point layout = {doc.bbox.pos.x, (doc.bbox.pos.y * 0.5f) - doc.shift};
+    auto ascent = text->font->ascent * scale;
+    if (ascent > doc.bbox.size.y) ascent = doc.bbox.size.y;
+    Point layout = {doc.bbox.pos.x, doc.bbox.pos.y + ascent - doc.shift};
 
     //adjust the layout
-    if (doc.justify == 1) layout.x -= (cursor.x * scale);              //right aligned
-    else if (doc.justify == 2) layout.x -= (cursor.x * 0.5f * scale);  //center aligned
+    if (doc.justify == 1) layout.x += doc.bbox.size.x - (cursor.x * scale);  //right aligned
+    else if (doc.justify == 2) layout.x += (doc.bbox.size.x * 0.5f) - (cursor.x * 0.5f * scale);  //center aligned
 
     scene->translate(layout.x, layout.y);
     scene->scale(scale);
