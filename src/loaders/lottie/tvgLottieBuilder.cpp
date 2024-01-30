@@ -1133,20 +1133,13 @@ bool LottieBuilder::update(LottieComposition* comp, float frameNo)
 
     //Update root layer
     auto root = comp->root;
-
-    //Prepare render data
-    if (!root->scene) {
-        auto scene = Scene::gen();
-        root->scene = scene.get();
-        comp->scene->push(std::move(scene));
-    } else {
-        root->scene->clear();
-    }
+    root->scene->clear();
 
     //update children layers
     for (auto child = root->children.end() - 1; child >= root->children.data; --child) {
         _updateLayer(root, static_cast<LottieLayer*>(*child), frameNo);
     }
+
     return true;
 }
 
@@ -1155,12 +1148,14 @@ void LottieBuilder::build(LottieComposition* comp)
 {
     if (!comp || !comp->root || comp->scene) return;
 
+    //Prepare render data
     comp->scene = Scene::gen().release();
-    if (!comp->scene) return;
+
+    auto scene = Scene::gen();
+    comp->root->scene = scene.get();
+    comp->scene->push(std::move(scene));
 
     _buildComposition(comp, comp->root);
-
-    if (!update(comp, 0)) return;
 
     //viewport clip
     auto clip = Shape::gen();

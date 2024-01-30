@@ -44,6 +44,7 @@ public:
 
     char* dirName = nullptr;            //base resource directory
     bool copy = false;                  //"content" is owned by this loader
+    bool updated = false;               //scene updated
 
     LottieLoader();
     ~LottieLoader();

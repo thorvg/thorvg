@@ -51,7 +51,7 @@ void LottieLoader::run(unsigned tid)
 {
     //update frame
     if (comp && comp->scene) {
-        builder->update(comp, frameNo);
+        updated = builder->update(comp, frameNo);
     //initial loading
     } else {
         if (!comp) {
@@ -296,7 +296,12 @@ bool LottieLoader::read()
 Paint* LottieLoader::paint()
 {
     this->done();
+
     if (!comp) return nullptr;
+
+    //frame is not updated yet?
+    if (!updated) run(0);
+
     comp->initiated = true;
     return comp->scene;
 }
