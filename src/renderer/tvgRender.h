@@ -286,7 +286,7 @@ public:
     virtual bool renderShape(RenderData data) = 0;
     virtual bool renderImage(RenderData data) = 0;
     virtual bool postRender() = 0;
-    virtual bool dispose(RenderData data) = 0;
+    virtual void dispose(RenderData data) = 0;
     virtual RenderRegion region(RenderData data) = 0;
     virtual RenderRegion viewport() = 0;
     virtual bool viewport(const RenderRegion& vp) = 0;
