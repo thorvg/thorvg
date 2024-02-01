@@ -131,15 +131,15 @@ namespace tvg
             return true;
         }
 
-        RenderRegion bounds(RenderMethod& renderer) const;
-        bool dispose(RenderMethod& renderer);
+        RenderRegion bounds(RenderMethod* renderer) const;
+        bool dispose(RenderMethod* renderer);
         Iterator* iterator();
         bool rotate(float degree);
         bool scale(float factor);
         bool translate(float x, float y);
         bool bounds(float* x, float* y, float* w, float* h, bool transformed, bool stroking);
-        RenderData update(RenderMethod& renderer, const RenderTransform* pTransform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag pFlag, bool clipper = false);
-        bool render(RenderMethod& renderer);
+        RenderData update(RenderMethod* renderer, const RenderTransform* pTransform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag pFlag, bool clipper = false);
+        bool render(RenderMethod* renderer);
         Paint* duplicate();
     };
 }
