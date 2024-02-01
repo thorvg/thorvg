@@ -35,7 +35,6 @@
 
 struct Text::Impl
 {
-    RenderData rd = nullptr;
     FontLoader* loader = nullptr;
     Shape* paint = nullptr;
     char* utf8 = nullptr;
@@ -94,7 +93,8 @@ struct Text::Impl
 
     RenderRegion bounds(RenderMethod* renderer)
     {
-        return renderer->region(rd);
+        if (paint) return P(paint)->bounds(renderer);
+        else return {0, 0, 0, 0};
     }
 
     bool render(RenderMethod* renderer)
@@ -142,21 +142,13 @@ struct Text::Impl
                 P(static_cast<RadialGradient*>(fill))->fr *= scale;
             }
         }
-        rd = PP(paint)->update(renderer, transform, clips, opacity, pFlag, clipper);
-        return rd;
+        return PP(paint)->update(renderer, transform, clips, opacity, pFlag, clipper);
     }
 
     bool bounds(float* x, float* y, float* w, float* h, TVG_UNUSED bool stroking)
     {
         if (!load() || !paint) return false;
         paint->bounds(x, y, w, h, true);
-        return true;
-    }
-
-    bool dispose(RenderMethod* renderer)
-    {
-        renderer->dispose(rd);
-        this->rd = nullptr;
         return true;
     }
 

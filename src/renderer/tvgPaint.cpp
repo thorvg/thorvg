@@ -114,16 +114,6 @@ RenderRegion Paint::Impl::bounds(RenderMethod* renderer) const
 }
 
 
-bool Paint::Impl::dispose(RenderMethod* renderer)
-{
-    if (compData) compData->target->pImpl->dispose(renderer);
-
-    bool ret;
-    PAINT_METHOD(ret, dispose(renderer));
-    return ret;
-}
-
-
 Iterator* Paint::Impl::iterator()
 {
     Iterator* ret;
@@ -231,6 +221,12 @@ bool Paint::Impl::render(RenderMethod* renderer)
 
 RenderData Paint::Impl::update(RenderMethod* renderer, const RenderTransform* pTransform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag pFlag, bool clipper)
 {
+    if (this->renderer != renderer) {
+        if (this->renderer) TVGERR("RENDERER", "paint's renderer has been changed!");
+        ++renderer->refCnt;
+        this->renderer = renderer;
+    }
+
     if (renderFlag & RenderUpdateFlag::Transform) {
         if (!rTransform) return nullptr;
         rTransform->update();

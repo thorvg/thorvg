@@ -43,16 +43,16 @@ struct Canvas::Impl
         if (renderer) renderer->sync();
 
         clearPaints();
-        delete(renderer);
+
+        if (renderer) {
+            if ((--renderer->refCnt) == 0) delete(renderer);
+        }
     }
 
     void clearPaints()
     {
         for (auto paint : paints) {
-            P(paint)->unref();
-            if (paint->pImpl->dispose(renderer) && P(paint)->refCnt == 0) {
-                delete(paint);
-            }
+            if (P(paint)->unref() == 0) delete(paint);
         }
         paints.clear();
     }
