@@ -59,7 +59,6 @@ struct SceneIterator : Iterator
 struct Scene::Impl
 {
     list<Paint*> paints;
-    RenderMethod* renderer = nullptr;    //keep it for explicit clear
     RenderData rd = nullptr;
     Scene* scene = nullptr;
     uint8_t opacity;                     //for composition
@@ -74,19 +73,10 @@ struct Scene::Impl
         for (auto paint : paints) {
             if (P(paint)->unref() == 0) delete(paint);
         }
-    }
 
-    bool dispose(RenderMethod* renderer)
-    {
-        for (auto paint : paints) {
-            paint->pImpl->dispose(renderer);
+        if (auto renderer = PP(scene)->renderer) {
+            renderer->dispose(rd);
         }
-
-        renderer->dispose(rd);
-        this->renderer = nullptr;
-        this->rd = nullptr;
-
-        return true;
     }
 
     bool needComposition(uint8_t opacity)
@@ -119,8 +109,6 @@ struct Scene::Impl
             this->opacity = opacity;
             opacity = 255;
         }
-
-        this->renderer = renderer;
 
         if (clipper) {
             Array<RenderData> rds(paints.size());
@@ -226,14 +214,10 @@ struct Scene::Impl
 
     void clear(bool free)
     {
-        auto dispose = renderer ? true : false;
-
         for (auto paint : paints) {
-            if (dispose) free &= P(paint)->dispose(renderer);
             if (P(paint)->unref() == 0 && free) delete(paint);
         }
         paints.clear();
-        renderer = nullptr;
     }
 
     Iterator* iterator()
