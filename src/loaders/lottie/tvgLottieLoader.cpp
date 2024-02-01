@@ -50,15 +50,13 @@ static float _str2float(const char* str, int len)
 void LottieLoader::run(unsigned tid)
 {
     //update frame
-    if (comp && comp->scene) {
+    if (comp) {
         builder->update(comp, frameNo);
     //initial loading
     } else {
-        if (!comp) {
-            LottieParser parser(content, dirName);
-            if (!parser.parse()) return;
-            comp = parser.comp;
-        }
+        LottieParser parser(content, dirName);
+        if (!parser.parse()) return;
+        comp = parser.comp;
         builder->build(comp);
     }
 }
@@ -298,7 +296,7 @@ Paint* LottieLoader::paint()
     this->done();
     if (!comp) return nullptr;
     comp->initiated = true;
-    return comp->scene;
+    return comp->root->scene;
 }
 
 

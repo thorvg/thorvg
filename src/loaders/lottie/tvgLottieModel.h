@@ -609,8 +609,6 @@ struct LottieComposition
         return endFrame - startFrame;
     }
 
-    Scene* scene = nullptr;       //tvg render data
-
     LottieLayer* root = nullptr;
     char* version = nullptr;
     char* name = nullptr;
