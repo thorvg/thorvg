@@ -850,27 +850,10 @@ void LottieParser::parseObject(Array<LottieObject*>& parent)
 }
 
 
-LottieImage* LottieParser::parseImage(const char* key)
+LottieImage* LottieParser::parseImage(const char* data, const char* subPath, bool embedded)
 {
     //Used for Image Asset
-    const char* data = nullptr;
-    const char* subPath = nullptr;
-    auto embedded = false;
-
-    do {
-        if (!strcmp(key, "u")) {
-            subPath = getString();
-        } else if (!strcmp(key, "p")) {
-            data = getString();
-        } else if (!strcmp(key, "e")) {
-            embedded = getInt();
-        } else skip(key);
-    } while ((key = nextObjectKey()));
-
-    if (!data) return nullptr;
-
     auto image = new LottieImage;
-    if (!image) return nullptr;
 
     //embeded image resource. should start with "data:"
     //header look like "data:image/png;base64," so need to skip till ','.
@@ -879,7 +862,6 @@ LottieImage* LottieParser::parseImage(const char* key)
         auto mimeType = data + 11;
         auto needle = strstr(mimeType, ";");
         image->mimeType = strDuplicate(mimeType, needle - mimeType);
-
         //b64 data
         auto b64Data = strstr(data, ",") + 1;
         size_t length = strlen(data) - (b64Data - data);
@@ -904,24 +886,27 @@ LottieObject* LottieParser::parseAsset()
     LottieObject* obj = nullptr;
     char *id = nullptr;
 
+    //Used for Image Asset
+    const char* data = nullptr;
+    const char* subPath = nullptr;
+    auto embedded = false;
+
     while (auto key = nextObjectKey()) {
-        if (!strcmp(key, "id")) {
+        if (!strcmp(key, "id"))
+        {
             if (peekType() == kStringType) {
                 id = getStringCopy();
             } else {
                 id = _int2str(getInt());
             }
-        //Precomposition asset
-        } else if (!strcmp(key, "layers")) {
-            obj = parseLayers();
-        } else if (!strcmp(key, "w") || !strcmp(key, "h") || !strcmp(key, "nm") || !strcmp(key, "fr")) {
-            skip(key);
-        //Image asset
-        } else {
-            obj = parseImage(key);
-            break;
         }
+        else if (!strcmp(key, "layers")) obj = parseLayers();
+        else if (!strcmp(key, "u")) subPath = getString();
+        else if (!strcmp(key, "p")) data = getString();
+        else if (!strcmp(key, "e")) embedded = getInt();
+        else skip(key);
     }
+    if (data) obj = parseImage(data, subPath, embedded);
     if (obj) obj->name = id;
     return obj;
 }
