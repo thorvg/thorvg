@@ -92,12 +92,12 @@ struct Text::Impl
         return Result::Success;
     }
 
-    RenderRegion bounds(RenderMethod& renderer)
+    RenderRegion bounds(RenderMethod* renderer)
     {
-        return renderer.region(rd);
+        return renderer->region(rd);
     }
 
-    bool render(RenderMethod& renderer)
+    bool render(RenderMethod* renderer)
     {
         if (paint) return PP(paint)->render(renderer);
         return false;
@@ -120,7 +120,7 @@ struct Text::Impl
         return false;
     }
 
-    RenderData update(RenderMethod& renderer, const RenderTransform* transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag pFlag, bool clipper)
+    RenderData update(RenderMethod* renderer, const RenderTransform* transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag pFlag, bool clipper)
     {
         if (!load()) return nullptr;
 
@@ -153,9 +153,9 @@ struct Text::Impl
         return true;
     }
 
-    bool dispose(RenderMethod& renderer)
+    bool dispose(RenderMethod* renderer)
     {
-        renderer.dispose(rd);
+        renderer->dispose(rd);
         this->rd = nullptr;
         return true;
     }
