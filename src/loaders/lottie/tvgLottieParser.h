@@ -70,7 +70,7 @@ private:
 
     LottieObject* parseObject();
     LottieObject* parseAsset();
-    LottieImage* parseImage(const char* key);
+    LottieImage* parseImage(const char* data, const char* subPath, bool embedded);
     LottieLayer* parseLayer();
     LottieObject* parseGroup();
     LottieRect* parseRect();
