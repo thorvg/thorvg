@@ -82,15 +82,12 @@ struct Picture::Impl
     ~Impl()
     {
         LoaderMgr::retrieve(loader);
+        if (surface) {
+            if (auto renderer = PP(picture)->renderer) {
+                renderer->dispose(rd);
+            }
+        }
         delete(paint);
-    }
-
-    bool dispose(RenderMethod* renderer)
-    {
-        if (paint) paint->pImpl->dispose(renderer);
-        else if (surface) renderer->dispose(rd);
-        rd = nullptr;
-        return true;
     }
 
     RenderData update(RenderMethod* renderer, const RenderTransform* pTransform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag pFlag, bool clipper)

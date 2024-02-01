@@ -41,11 +41,11 @@ struct Shape::Impl
     {
     }
 
-    bool dispose(RenderMethod* renderer)
+    ~Impl()
     {
-        renderer->dispose(rd);
-        rd = nullptr;
-        return true;
+        if (auto renderer = PP(shape)->renderer) {
+            renderer->dispose(rd);
+        }
     }
 
     bool render(RenderMethod* renderer)
