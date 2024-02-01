@@ -1136,19 +1136,10 @@ bool LottieBuilder::update(LottieComposition* comp, float frameNo)
     if (frameNo < comp->startFrame) frameNo = comp->startFrame;
     if (frameNo >= comp->endFrame) frameNo = (comp->endFrame - 1);
 
-    //Update root layer
-    auto root = comp->root;
-
-    //Prepare render data
-    if (!root->scene) {
-        auto scene = Scene::gen();
-        root->scene = scene.get();
-        comp->scene->push(std::move(scene));
-    } else {
-        root->scene->clear();
-    }
-
     //update children layers
+    auto root = comp->root;
+    root->scene->clear();
+
     for (auto child = root->children.end() - 1; child >= root->children.data; --child) {
         _updateLayer(root, static_cast<LottieLayer*>(*child), frameNo);
     }
@@ -1158,10 +1149,10 @@ bool LottieBuilder::update(LottieComposition* comp, float frameNo)
 
 void LottieBuilder::build(LottieComposition* comp)
 {
-    if (!comp || !comp->root || comp->scene) return;
+    if (!comp) return;
 
-    comp->scene = Scene::gen().release();
-    if (!comp->scene) return;
+    comp->root->scene = Scene::gen().release();
+    if (!comp->root->scene) return;
 
     _buildComposition(comp, comp->root);
 
@@ -1170,5 +1161,5 @@ void LottieBuilder::build(LottieComposition* comp)
     //viewport clip
     auto clip = Shape::gen();
     clip->appendRect(0, 0, static_cast<float>(comp->w), static_cast<float>(comp->h));
-    comp->scene->composite(std::move(clip), CompositeMethod::ClipPath);
+    comp->root->scene->composite(std::move(clip), CompositeMethod::ClipPath);
 }
