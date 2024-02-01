@@ -51,12 +51,12 @@ namespace tvg
         RenderTransform* rTransform = nullptr;
         Composite* compData = nullptr;
         RenderMethod* renderer = nullptr;
-        BlendMethod blendMethod = BlendMethod::Normal;              //uint8_t
+        BlendMethod blendMethod = BlendMethod::Normal;   //uint8_t
         uint8_t renderFlag = RenderUpdateFlag::None;
         uint8_t ctxFlag = ContextFlag::Invalid;
         uint8_t id;
         uint8_t opacity = 255;
-        uint8_t refCnt = 0;
+        uint8_t refCnt = 0;                              //reference count
 
         Impl(Paint* pnt) : paint(pnt) {}
 
@@ -67,18 +67,19 @@ namespace tvg
                 free(compData);
             }
             delete(rTransform);
+            if (renderer && (renderer->unref() == 0)) delete(renderer);
         }
 
         uint8_t ref()
         {
             if (refCnt == 255) TVGERR("RENDERER", "Corrupted reference count!");
-            return (++refCnt);
+            return ++refCnt;
         }
 
         uint8_t unref()
         {
             if (refCnt == 0) TVGERR("RENDERER", "Corrupted reference count!");
-            return (--refCnt);
+            return --refCnt;
         }
 
         bool transform(const Matrix& m)

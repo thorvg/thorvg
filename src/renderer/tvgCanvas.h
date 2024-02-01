@@ -33,8 +33,9 @@ struct Canvas::Impl
     bool refresh = false;   //if all paints should be updated by force.
     bool drawing = false;   //on drawing condition?
 
-    Impl(RenderMethod* pRenderer):renderer(pRenderer)
+    Impl(RenderMethod* pRenderer) : renderer(pRenderer)
     {
+        renderer->ref();
     }
 
     ~Impl()
@@ -44,9 +45,7 @@ struct Canvas::Impl
 
         clearPaints();
 
-        if (renderer) {
-            if ((--renderer->refCnt) == 0) delete(renderer);
-        }
+        if (renderer && (renderer->unref() == 0)) delete(renderer);
     }
 
     void clearPaints()
