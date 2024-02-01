@@ -50,6 +50,7 @@ namespace tvg
         Paint* paint = nullptr;
         RenderTransform* rTransform = nullptr;
         Composite* compData = nullptr;
+        RenderMethod* renderer = nullptr;
         BlendMethod blendMethod = BlendMethod::Normal;              //uint8_t
         uint8_t renderFlag = RenderUpdateFlag::None;
         uint8_t ctxFlag = ContextFlag::Invalid;
@@ -57,9 +58,7 @@ namespace tvg
         uint8_t opacity = 255;
         uint8_t refCnt = 0;
 
-        Impl(Paint* pnt) : paint(pnt)
-        {
-        }
+        Impl(Paint* pnt) : paint(pnt) {}
 
         ~Impl()
         {
@@ -132,7 +131,6 @@ namespace tvg
         }
 
         RenderRegion bounds(RenderMethod* renderer) const;
-        bool dispose(RenderMethod* renderer);
         Iterator* iterator();
         bool rotate(float degree);
         bool scale(float factor);
