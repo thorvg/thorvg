@@ -223,7 +223,7 @@ RenderData Paint::Impl::update(RenderMethod* renderer, const RenderTransform* pT
 {
     if (this->renderer != renderer) {
         if (this->renderer) TVGERR("RENDERER", "paint's renderer has been changed!");
-        ++renderer->refCnt;
+        renderer->ref();
         this->renderer = renderer;
     }
 
