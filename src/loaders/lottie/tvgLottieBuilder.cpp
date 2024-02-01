@@ -738,7 +738,7 @@ static void _updateImage(LottieGroup* parent, LottieObject** child, float frameN
                     break;
                 }
             }
-        } else if (picture->load(image->path) != Result::Success) succeed = true;
+        } else if (picture->load(image->path) == Result::Success) succeed = true;
 
         if (!succeed) {
             delete(picture);
