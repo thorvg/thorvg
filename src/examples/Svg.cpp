@@ -35,6 +35,8 @@ static int counter = 0;
 
 static std::vector<unique_ptr<tvg::Picture>> pictures;
 
+const char* targetSvgFileName = nullptr;
+
 void svgDirCallback(const char* name, const char* path, void* data)
 {
     if (counter >= NUM_PER_ROW * NUM_PER_COL) return;
@@ -74,6 +76,32 @@ void svgDirCallback(const char* name, const char* path, void* data)
     counter++;
 }
 
+void drawTargetSvg(tvg::Canvas* canvas)
+{
+    //ignore if not svgs.
+    const char *ext = targetSvgFileName + strlen(targetSvgFileName) - 3;
+    if (strcmp(ext, "svg")) return;
+
+    auto picture = tvg::Picture::gen();
+    char buf[PATH_MAX];
+    snprintf(buf, sizeof(buf), EXAMPLE_DIR"/%s", targetSvgFileName);
+    if (picture->load(buf) != tvg::Result::Success) return;
+
+    //image scaling preserving its aspect ratio
+    float scale;
+    float w, h;
+    picture->size(&w, &h);
+    if (w > h) {
+        scale = WIDTH / w;
+    } else {
+        scale = HEIGHT / h;
+    }
+
+    picture->scale(scale);
+    canvas->push(std::move(picture));
+    cout << "SVG: " << buf << endl;
+}
+
 void tvgDrawCmds(tvg::Canvas* canvas)
 {
     if (!canvas) return;
@@ -85,17 +113,21 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     if (canvas->push(std::move(shape)) != tvg::Result::Success) return;
 
-    eina_file_dir_list(EXAMPLE_DIR, EINA_TRUE, svgDirCallback, canvas);
+    if (targetSvgFileName == nullptr) {
+        eina_file_dir_list(EXAMPLE_DIR, EINA_TRUE, svgDirCallback, canvas);
 
-    /* This showcase shows you asynchrounous loading of svg.
-       For this, pushing pictures at a certian sync time.
-       This means it earns the time to finish loading svg resources,
-       otherwise you can push pictures immediately. */
-    for (auto& paint : pictures) {
-        canvas->push(std::move(paint));
+        /* This showcase shows you asynchrounous loading of svg.
+           For this, pushing pictures at a certian sync time.
+           This means it earns the time to finish loading svg resources,
+           otherwise you can push pictures immediately. */
+        for (auto& paint : pictures) {
+            canvas->push(std::move(paint));
+        }
+
+        pictures.clear();
+    } else {
+        drawTargetSvg(canvas);
     }
-
-    pictures.clear();
 }
 
 
@@ -169,6 +201,7 @@ int main(int argc, char **argv)
 
     if (argc > 1) {
         if (!strcmp(argv[1], "gl")) tvgEngine = tvg::CanvasEngine::Gl;
+        if (argc > 2 && !strcmp(argv[1], "-t")) targetSvgFileName = argv[2];
     }
 
     //Threads Count
