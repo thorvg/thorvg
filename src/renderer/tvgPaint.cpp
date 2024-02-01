@@ -106,7 +106,7 @@ static bool _compFastTrack(Paint* cmpTarget, const RenderTransform* pTransform, 
 }
 
 
-RenderRegion Paint::Impl::bounds(RenderMethod& renderer) const
+RenderRegion Paint::Impl::bounds(RenderMethod* renderer) const
 {
     RenderRegion ret;
     PAINT_METHOD(ret, bounds(renderer));
@@ -114,7 +114,7 @@ RenderRegion Paint::Impl::bounds(RenderMethod& renderer) const
 }
 
 
-bool Paint::Impl::dispose(RenderMethod& renderer)
+bool Paint::Impl::dispose(RenderMethod* renderer)
 {
     if (compData) compData->target->pImpl->dispose(renderer);
 
@@ -198,7 +198,7 @@ bool Paint::Impl::translate(float x, float y)
 }
 
 
-bool Paint::Impl::render(RenderMethod& renderer)
+bool Paint::Impl::render(RenderMethod* renderer)
 {
     Compositor* cmp = nullptr;
 
@@ -210,26 +210,26 @@ bool Paint::Impl::render(RenderMethod& renderer)
 
         if (MASK_REGION_MERGING(compData->method)) region.add(P(compData->target)->bounds(renderer));
         if (region.w == 0 || region.h == 0) return true;
-        cmp = renderer.target(region, COMPOSITE_TO_COLORSPACE(renderer, compData->method));
-        if (renderer.beginComposite(cmp, CompositeMethod::None, 255)) {
+        cmp = renderer->target(region, COMPOSITE_TO_COLORSPACE(renderer, compData->method));
+        if (renderer->beginComposite(cmp, CompositeMethod::None, 255)) {
             compData->target->pImpl->render(renderer);
         }
     }
 
-    if (cmp) renderer.beginComposite(cmp, compData->method, compData->target->pImpl->opacity);
+    if (cmp) renderer->beginComposite(cmp, compData->method, compData->target->pImpl->opacity);
 
-    renderer.blend(blendMethod);
+    renderer->blend(blendMethod);
 
     bool ret;
     PAINT_METHOD(ret, render(renderer));
 
-    if (cmp) renderer.endComposite(cmp);
+    if (cmp) renderer->endComposite(cmp);
 
     return ret;
 }
 
 
-RenderData Paint::Impl::update(RenderMethod& renderer, const RenderTransform* pTransform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag pFlag, bool clipper)
+RenderData Paint::Impl::update(RenderMethod* renderer, const RenderTransform* pTransform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag pFlag, bool clipper)
 {
     if (renderFlag & RenderUpdateFlag::Transform) {
         if (!rTransform) return nullptr;
@@ -265,9 +265,9 @@ RenderData Paint::Impl::update(RenderMethod& renderer, const RenderTransform* pT
             if (tryFastTrack) {
                 RenderRegion viewport2;
                 if ((compFastTrack = _compFastTrack(target, pTransform, target->pImpl->rTransform, viewport2))) {
-                    viewport = renderer.viewport();
+                    viewport = renderer->viewport();
                     viewport2.intersect(viewport);
-                    renderer.viewport(viewport2);
+                    renderer->viewport(viewport2);
                     target->pImpl->ctxFlag |= ContextFlag::FastTrack;
                 }
             }
@@ -289,7 +289,7 @@ RenderData Paint::Impl::update(RenderMethod& renderer, const RenderTransform* pT
     PAINT_METHOD(rd, update(renderer, &outTransform, clips, opacity, newFlag, clipper));
 
     /* 3. Composition Post Processing */
-    if (compFastTrack) renderer.viewport(viewport);
+    if (compFastTrack) renderer->viewport(viewport);
     else if (childClipper) clips.pop();
 
     return rd;

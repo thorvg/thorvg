@@ -65,7 +65,7 @@ struct Canvas::Impl
         if (free) {
             for (auto paint : paints) {
                 P(paint)->unref();
-                if (paint->pImpl->dispose(*renderer) && P(paint)->refCnt == 0) {
+                if (paint->pImpl->dispose(renderer) && P(paint)->refCnt == 0) {
                     delete(paint);
                 }
             }
@@ -94,7 +94,7 @@ struct Canvas::Impl
             //Optimize Me: Can we skip the searching?
             for (auto paint2 : paints) {
                 if (paint2 == paint) {
-                    paint->pImpl->update(*renderer, nullptr, clips, 255, flag);
+                    paint->pImpl->update(renderer, nullptr, clips, 255, flag);
                     return Result::Success;
                 }
             }
@@ -102,7 +102,7 @@ struct Canvas::Impl
         //Update all retained paint nodes
         } else {
             for (auto paint : paints) {
-                paint->pImpl->update(*renderer, nullptr, clips, 255, flag);
+                paint->pImpl->update(renderer, nullptr, clips, 255, flag);
             }
         }
 
@@ -117,7 +117,7 @@ struct Canvas::Impl
 
         bool rendered = false;
         for (auto paint : paints) {
-            if (paint->pImpl->render(*renderer)) rendered = true;
+            if (paint->pImpl->render(renderer)) rendered = true;
         }
 
         if (!rendered || !renderer->postRender()) return Result::InsufficientCondition;
