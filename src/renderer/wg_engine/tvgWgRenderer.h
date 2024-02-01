@@ -40,7 +40,7 @@ public:
     bool renderShape(RenderData data);
     bool renderImage(RenderData data);
     bool postRender();
-    bool dispose(RenderData data);
+    void dispose(RenderData data);
     RenderRegion region(RenderData data);
     RenderRegion viewport();
     bool viewport(const RenderRegion& vp);
