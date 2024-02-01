@@ -281,15 +281,14 @@ bool GlRenderer::renderShape(RenderData data)
 }
 
 
-bool GlRenderer::dispose(RenderData data)
+void GlRenderer::dispose(RenderData data)
 {
     auto sdata = static_cast<GlShape*>(data);
-    if (!sdata) return false;
+    if (!sdata) return;
 
     if (sdata->texId) glDeleteTextures(1, &sdata->texId);
 
     delete sdata;
-    return true;
 }
 
 static GLuint _genTexture(Surface* image)

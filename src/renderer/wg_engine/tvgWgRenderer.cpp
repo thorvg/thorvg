@@ -174,11 +174,10 @@ bool WgRenderer::postRender()
 }
 
 
-bool WgRenderer::dispose(RenderData data)
+void WgRenderer::dispose(RenderData data)
 {
     auto renderData = (WgRenderDataPaint*)data;
     if (renderData) renderData->release(mContext);
-    return true;
 }
 
 
