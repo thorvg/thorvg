@@ -69,7 +69,7 @@ struct TextDocument
         bool render = false;
     } stroke;
     char* name = nullptr;
-    uint16_t size;
+    float size;
     uint8_t justify;
     uint8_t tracking;
 };
