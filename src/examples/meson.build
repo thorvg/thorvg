@@ -38,6 +38,7 @@ source_file = [
     'PictureJpg.cpp',
     'PicturePng.cpp',
     'PictureRaw.cpp',
+    'PictureSvg.cpp',
     'PictureTvg.cpp',
     'PictureWebp.cpp',
     'RadialGradient.cpp',
