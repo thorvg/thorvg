@@ -26,6 +26,7 @@
 /* Drawing Commands                                                     */
 /************************************************************************/
 tvg::Shape* pShape = nullptr;
+static bool updated = false;
 
 void tvgDrawCmds(tvg::Canvas* canvas)
 {
@@ -55,11 +56,13 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     shape->stroke(1);
 
     if (canvas->push(std::move(shape)) != tvg::Result::Success) return;
+
+    updated = true;
 }
 
 void tvgUpdateCmds(tvg::Canvas* canvas, float progress)
 {
-    if (!canvas) return;
+    if (updated || !canvas) return;
 
     //It's not necessary to clear canvas since it has a solid background and retaining the paints.
     //canvas->clear(false);
@@ -73,6 +76,7 @@ void tvgUpdateCmds(tvg::Canvas* canvas, float progress)
 
         //Update shape for drawing (this may work asynchronously)
         canvas->update(pShape);
+        updated = true;
     }
 }
 
@@ -110,6 +114,7 @@ void drawSwView(void* data, Eo* obj)
 {
     if (swCanvas->draw() == tvg::Result::Success) {
         swCanvas->sync();
+        updated = false;
     }
 }
 
