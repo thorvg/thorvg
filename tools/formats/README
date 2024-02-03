@@ -1,8 +1,0 @@
-    [Tools] Added scripts for code style validation and auto fixing
-
-    [Features]
-      - tools/codestyle/code_formatter.sh - formatter for C/C++ (changes files)
-      - tools/codestyle/c++_clang_formatter.sh - for auto formating C++ files
-      - code_format - link to script for easier access
-
-    [Help] You can check usage for code_format using '-h' option
