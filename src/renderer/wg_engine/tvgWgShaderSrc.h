@@ -36,20 +36,6 @@ extern const char* cShaderSource_PipelineLinear;
 extern const char* cShaderSource_PipelineRadial;
 extern const char* cShaderSource_PipelineImage;
 
-// pipeline shader modules blit
-extern const char* cShaderSource_PipelineBlit;
-extern const char* cShaderSource_PipelineBlitColor;
-
-// pipeline shader modules composes
-extern const char* cShaderSource_PipelineCompAlphaMask;
-extern const char* cShaderSource_PipelineCompInvAlphaMask;
-extern const char* cShaderSource_PipelineCompLumaMask;
-extern const char* cShaderSource_PipelineCompInvLumaMask;
-extern const char* cShaderSource_PipelineCompAddMask;
-extern const char* cShaderSource_PipelineCompSubtractMask;
-extern const char* cShaderSource_PipelineCompIntersectMask;
-extern const char* cShaderSource_PipelineCompDifferenceMask;
-
 //*****************************************************************************
 // compute shader modules
 //*****************************************************************************
