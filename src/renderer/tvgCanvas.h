@@ -98,7 +98,7 @@ struct Canvas::Impl
 
         //Update single paint node
         if (paint) {
-            //Optimize Me: Can we skip the searching?
+            //TODO: Leave this for backward compatibility. Remove this when 1.0 out.
             for (auto paint2 : paints) {
                 if (paint2 == paint) {
                     paint->pImpl->update(renderer, nullptr, clips, 255, flag);
