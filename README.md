@@ -467,14 +467,13 @@ meson setup builddir -Dbindings="capi"
 <br />
 <br />
 ## Dependencies
-ThorVG core has no dependencies. However, ThorVG has optional feature extensions. Some of these have dependencies as follows:
+ThorVG offers versatile support for image loading, accommodating both static and external loaders. This flexibility ensures that, even in environments without external libraries, users can still leverage static loaders as a reliable alternative. At its foundation, the ThorVG core library is engineered to function autonomously, free from external dependencies. However, it is important to note that ThorVG also encompasses a range of optional feature extensions, each with its specific set of dependencies. The dependencies associated with these selective features are outlined as follows:
 
 * GL renderer: [EGL](https://www.khronos.org/egl), [GLESv2](https://www.khronos.org/opengles/)
 * External PNG support: [libpng](https://github.com/glennrp/libpng)
 * External JPG support: [turbojpeg](https://github.com/libjpeg-turbo/libjpeg-turbo)
+* External WebP support: [libwebp](https://developers.google.com/speed/webp/download)
 * Examples: [EFL](https://www.enlightenment.org/about-efl.md)
-
-Note that ThorVG supports both static/external image loaders. If your system has no external libraries, you can choose static loaders instead.
 
 [Back to contents](#contents)
 <br />
