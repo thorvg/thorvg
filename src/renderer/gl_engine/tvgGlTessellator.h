@@ -54,7 +54,7 @@ public:
     Tessellator(Array<float>* points, Array<uint32_t>* indices);
     ~Tessellator();
 
-    void tessellate(const RenderShape *rshape, bool antialias = false);
+    bool tessellate(const RenderShape *rshape, bool antialias = false);
 
     void tessellate(const Array<const RenderShape*> &shapes);
 
@@ -65,9 +65,9 @@ private:
 
     void mergeVertices();
 
-    void simplifyMesh();
+    bool simplifyMesh();
 
-    void tessMesh();
+    bool tessMesh();
 
     bool matchFillRule(int32_t winding);
 
