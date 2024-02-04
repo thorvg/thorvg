@@ -662,8 +662,10 @@ static bool _validEdgePair(Edge* left, Edge* right) {
 bool ActiveEdgeList::valid()
 {
     auto left = head;
-    if (!left) {
+    if (!left && !tail) {
         return true;
+    } else if (!left || !tail) {
+        return false;
     }
 
     for(auto right = left->right; right; right = right->right) {
@@ -898,7 +900,7 @@ Tessellator::~Tessellator()
 }
 
 
-void Tessellator::tessellate(const RenderShape *rshape, bool antialias)
+bool Tessellator::tessellate(const RenderShape *rshape, bool antialias)
 {
     auto cmds = rshape->path.cmds.data;
     auto cmdCnt = rshape->path.cmds.count;
@@ -913,9 +915,9 @@ void Tessellator::tessellate(const RenderShape *rshape, bool antialias)
 
     this->mergeVertices();
 
-    this->simplifyMesh();
+    if (!this->simplifyMesh()) return false;
 
-    this->tessMesh();
+    if (!this->tessMesh()) return false;
 
     // output triangles
     for (auto poly = this->pPolygon; poly; poly = poly->next) {
@@ -935,6 +937,8 @@ void Tessellator::tessellate(const RenderShape *rshape, bool antialias)
     if (antialias) {
         // TODO extract outline from current polygon list and generate aa edges
     }
+
+    return true;
 }
 
 void Tessellator::tessellate(const Array<const RenderShape *> &shapes)
@@ -1085,7 +1089,7 @@ void Tessellator::mergeVertices()
     for (auto v = pMesh->head->next; v;) {
         auto next = v->next;
 
-        if (detail::VertexCompare::compare(v->point, v->prev->point)) {
+        if (detail::VertexCompare::compare(v->point, v->prev->point) || detail::_pointLength(v->point - v->prev->point) <= 0.025f) {
             // already sorted, this means these two points is same
             v->point = v->prev->point;
         }
@@ -1107,7 +1111,7 @@ void Tessellator::mergeVertices()
     }
 }
 
-void Tessellator::simplifyMesh()
+bool Tessellator::simplifyMesh()
 {
     /// this is a basic sweep line algorithm
     /// https://www.youtube.com/watch?v=qkhUNzCGDt0&t=293s
@@ -1134,6 +1138,11 @@ void Tessellator::simplifyMesh()
             v->left = left_enclosing;
             v->right = right_enclosing;
 
+            if (!ael.valid()) {
+                // If AEL is not valid, means we meet the problem caused by floating point precision
+                return false;
+            }
+
             if (v->edge_below.head) {
                 for (auto e = v->edge_below.head; e; e = e->below_next) {
                     // check current edge is intersected by left or right neighbor edges
@@ -1154,7 +1163,7 @@ void Tessellator::simplifyMesh()
 
         if (!ael.valid()) {
             // If AEL is not valid, means we meet the problem caused by floating point precision
-            return;
+            return false;
         }
 
         // we are done for all edge end with current point
@@ -1170,9 +1179,11 @@ void Tessellator::simplifyMesh()
             left = e;
         }
     }
+
+    return true;
 }
 
-void Tessellator::tessMesh()
+bool Tessellator::tessMesh()
 {
     /// this function also use sweep line algorithm
     /// but during the process, we calculate the winding number of left and right
@@ -1184,6 +1195,8 @@ void Tessellator::tessMesh()
         if (!v->isConnected()) {
             continue;
         }
+
+        if (!ael.valid()) return false;
 
         detail::Edge *left_enclosing = nullptr;
         detail::Edge *right_enclosing = nullptr;
@@ -1315,6 +1328,8 @@ void Tessellator::tessMesh()
             v->edge_below.tail->right_poly = right_poly;
         }
     }
+
+    return true;
 }
 
 bool Tessellator::matchFillRule(int32_t winding)

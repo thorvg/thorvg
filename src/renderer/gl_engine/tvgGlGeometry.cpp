@@ -42,7 +42,10 @@ bool GlGeometry::tesselate(const RenderShape& rshape, RenderUpdateFlag flag)
         fillIndex.clear();
 
         Tessellator tess{&fillVertex, &fillIndex};
-        tess.tessellate(&rshape, true);
+        if (!tess.tessellate(&rshape, true)) {
+            fillVertex.clear();
+            fillIndex.clear();
+        }
     }
 
     if (flag & (RenderUpdateFlag::Stroke | RenderUpdateFlag::Transform)) {
