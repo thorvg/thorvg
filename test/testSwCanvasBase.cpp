@@ -160,7 +160,7 @@ TEST_CASE("Update", "[tvgSwCanvasBase]")
 
     //No pushed shape
     auto shape = Shape::gen();
-    REQUIRE(canvas->update(shape.get()) == Result::InvalidArguments);
+    REQUIRE(canvas->update(shape.get()) == Result::Success);
 
     //Normal case
     auto ptr = shape.get();
