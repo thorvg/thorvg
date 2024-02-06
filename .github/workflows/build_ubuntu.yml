@@ -87,7 +87,7 @@ jobs:
     - name: Build & Run memcheck Script(ASAN)
       run: |
         sudo rm -rf ./build
-        meson setup build -Db_sanitize="address,undefined" -Dloaders="all, webp_beta" -Dsavers="all" -Dtests="true" -Dbindings="capi"
+        meson setup build -Db_sanitize="address,undefined" -Dloaders="all" -Dsavers="all" -Dtests="true" -Dbindings="capi"
         sudo ninja -C build install
         export PATH=$PATH:~/.local/bin/
         chmod +x "${GITHUB_WORKSPACE}/.github/workflows/memcheck_asan.sh"
