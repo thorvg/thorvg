@@ -6,9 +6,9 @@ option('engines',
 
 option('loaders',
    type: 'array',
-   choices: ['', 'tvg', 'svg', 'png', 'jpg', 'lottie', 'ttf', 'webp_beta', 'all'],
+   choices: ['', 'tvg', 'svg', 'png', 'jpg', 'lottie', 'ttf', 'webp', 'all'],
    value: ['svg', 'tvg', 'lottie'],
-   description: 'Enable File Loaders in thorvg ("all" does not include "*_beta".)')
+   description: 'Enable File Loaders in thorvg')
 
 option('savers',
    type: 'array',
