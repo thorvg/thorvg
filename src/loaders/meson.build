@@ -38,11 +38,14 @@ if all_loaders or get_option('loaders').contains('jpg') == true
     endif
 endif
 
-if get_option('loaders').contains('webp_beta') == true
+if all_loaders or get_option('loaders').contains('webp') == true
     if get_option('static') == true
-        message('static webp is not available, disable webp_beta loader.')
+        subdir('webp')
     else
         subdir('external_webp')
+        if not webp_dep.found()
+            subdir('webp')
+        endif
     endif
 endif
 

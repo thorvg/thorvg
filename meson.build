@@ -62,7 +62,7 @@ if all_loaders or get_option('loaders').contains('ttf') == true
     config_h.set10('THORVG_TTF_LOADER_SUPPORT', true)
 endif
 
-if get_option('loaders').contains('webp_beta') == true
+if all_loaders or get_option('loaders').contains('webp') == true
     config_h.set10('THORVG_WEBP_LOADER_SUPPORT', true)
 endif
 
@@ -134,31 +134,31 @@ endif
 summary = '''
 
 Summary:
-    ThorVG version:        @0@
-    Build Type:            @1@
-    Prefix:                @2@
-    Multi-Tasking:         @3@
-    SIMD Instruction:      @4@
-    Raster Engine (SW):    @5@
-    Raster Engine (GL):    @6@
-    Raster Engine (WG):    @7@
-    Loader (TVG):          @8@
-    Loader (SVG):          @9@
-    Loader (TTF):          @10@
-    Loader (LOTTIE):       @11@
-    Loader (PNG):          @12@
-    Loader (JPG):          @13@
-    Loader (WEBP_BETA):    @14@
-    Saver (TVG):           @15@
-    Saver (GIF):           @16@
-    Binding (CAPI):        @17@
-    Binding (WASM_BETA):   @18@
-    Log Message:           @19@
-    Tests:                 @20@
-    Examples:              @21@
-    Tool (Svg2Tvg):        @22@
-    Tool (Svg2Png):        @23@
-    Tool (Lottie2Gif):     @24@
+    ThorVG version:          @0@
+    Build Type:              @1@
+    Prefix:                  @2@
+    Multi-Tasking:           @3@
+    SIMD Instruction:        @4@
+    Raster Engine (SW):      @5@
+    Raster Engine (GL_BETA): @6@
+    Raster Engine (WG_BETA): @7@
+    Loader (TVG):            @8@
+    Loader (SVG):            @9@
+    Loader (TTF):            @10@
+    Loader (LOTTIE):         @11@
+    Loader (PNG):            @12@
+    Loader (JPG):            @13@
+    Loader (WEBP):           @14@
+    Saver (TVG):             @15@
+    Saver (GIF):             @16@
+    Binding (CAPI):          @17@
+    Binding (WASM_BETA):     @18@
+    Log Message:             @19@
+    Tests:                   @20@
+    Examples:                @21@
+    Tool (Svg2Tvg):          @22@
+    Tool (Svg2Png):          @23@
+    Tool (Lottie2Gif):       @24@
 
 '''.format(
         meson.project_version(),
@@ -175,7 +175,7 @@ Summary:
         all_loaders or get_option('loaders').contains('lottie'),
         all_loaders or get_option('loaders').contains('png'),
         all_loaders or get_option('loaders').contains('jpg'),
-        get_option('loaders').contains('webp_beta'),
+        all_loaders or get_option('loaders').contains('webp'),
         all_savers or get_option('savers').contains('tvg'),
         all_savers or get_option('savers').contains('gif'),
         get_option('bindings').contains('capi'),
