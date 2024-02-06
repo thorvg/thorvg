@@ -453,3 +453,19 @@ void main() {                                                           \n
     }                                                                   \n
 }                                                                       \n
 );
+
+const char* STENCIL_VERT_SHADER = TVG_COMPOSE_SHADER(
+    layout(location = 0) in vec3 aLocation;                         \n
+    layout(std140) uniform Matrix {                                 \n
+        mat4 transform;                                             \n
+    } uMatrix;                                                      \n
+    void main()                                                     \n
+    {                                                               \n
+        gl_Position =                                               \n
+            uMatrix.transform * vec4(aLocation.xy, 0.0, 1.0);       \n
+    });
+
+const char* STENCIL_FRAG_SHADER = TVG_COMPOSE_SHADER(
+    out vec4 FragColor;                                             \n
+    void main() { FragColor = vec4(0.0); }                          \n
+);

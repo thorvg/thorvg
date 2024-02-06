@@ -90,6 +90,8 @@ bool GlRenderer::sync()
     GL_CHECK(glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA));
     GL_CHECK(glEnable(GL_BLEND));
     GL_CHECK(glEnable(GL_SCISSOR_TEST));
+    GL_CHECK(glCullFace(GL_FRONT_AND_BACK));
+    GL_CHECK(glFrontFace(GL_CCW));
 
     mGpuBuffer->bind();
 
@@ -480,6 +482,8 @@ void GlRenderer::initShaders()
     mPrograms.push_back(make_unique<GlProgram>(GlShader::gen(MASK_VERT_SHADER, MASK_SUB_FRAG_SHADER)));
     mPrograms.push_back(make_unique<GlProgram>(GlShader::gen(MASK_VERT_SHADER, MASK_INTERSECT_FRAG_SHADER)));
     mPrograms.push_back(make_unique<GlProgram>(GlShader::gen(MASK_VERT_SHADER, MASK_DIFF_FRAG_SHADER)));
+    // stencil Renderer
+    mPrograms.push_back(make_unique<GlProgram>(GlShader::gen(STENCIL_VERT_SHADER, STENCIL_FRAG_SHADER)));
 }
 
 
@@ -489,6 +493,10 @@ void GlRenderer::drawPrimitive(GlShape& sdata, uint8_t r, uint8_t g, uint8_t b, 
 
     if (!sdata.geometry->draw(task, mGpuBuffer.get(), flag)) return;
 
+    GlRenderTask* stencilTask = nullptr;
+
+    if (sdata.geometry->needStencilCover(flag)) stencilTask = new GlRenderTask(mPrograms[RT_Stencil].get(), task);
+
     a = MULTIPLY(a, sdata.opacity);
     
     // matrix buffer
@@ -496,13 +504,25 @@ void GlRenderer::drawPrimitive(GlShape& sdata, uint8_t r, uint8_t g, uint8_t b, 
         auto matrix = sdata.geometry->getTransforMatrix();
         uint32_t loc = task->getProgram()->getUniformBlockIndex("Matrix");
 
+        uint32_t viewOffset = mGpuBuffer->push(matrix, 16 * sizeof(float), true);
+
         task->addBindResource(GlBindingResource{
             0,
             loc,
             mGpuBuffer->getBufferId(),
-            mGpuBuffer->push(matrix, 16 * sizeof(float), true),
+            viewOffset,
             16 * sizeof(float),
         });
+
+        if (stencilTask) {
+            stencilTask->addBindResource(GlBindingResource{
+                0,
+                static_cast<uint32_t>(stencilTask->getProgram()->getUniformBlockIndex("Matrix")),
+                mGpuBuffer->getBufferId(),
+                viewOffset,
+                16 * sizeof(float),
+            });
+        }
     }
     // color 
     {
@@ -519,7 +539,11 @@ void GlRenderer::drawPrimitive(GlShape& sdata, uint8_t r, uint8_t g, uint8_t b, 
         });
     }
 
-    currentPass()->addRenderTask(task);
+    if (stencilTask) {
+        currentPass()->addRenderTask(new GlStencilCoverTask(stencilTask, task));
+    } else {
+        currentPass()->addRenderTask(task);
+    }
 }
 
 
@@ -542,18 +566,34 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
 
     if (!sdata.geometry->draw(task, mGpuBuffer.get(), flag)) return;
 
+    GlRenderTask* stencilTask = nullptr;
+
+    if (sdata.geometry->needStencilCover(flag)) stencilTask = new GlRenderTask(mPrograms[RT_Stencil].get(), task);
+
     // matrix buffer
     {
         auto matrix = sdata.geometry->getTransforMatrix();
         uint32_t loc = task->getProgram()->getUniformBlockIndex("Matrix");
 
+        uint32_t viewOffset = mGpuBuffer->push(matrix, 16 * sizeof(float), true);
+
         task->addBindResource(GlBindingResource{
             0,
             loc,
             mGpuBuffer->getBufferId(),
-            mGpuBuffer->push(matrix, 16 * sizeof(float), true),
+            viewOffset,
             16 * sizeof(float),
         });
+
+        if (stencilTask) {
+            stencilTask->addBindResource(GlBindingResource{
+                0,
+                static_cast<uint32_t>(stencilTask->getProgram()->getUniformBlockIndex("Matrix")),
+                mGpuBuffer->getBufferId(),
+                viewOffset,
+                16 * sizeof(float),
+            });
+        }
     }
 
     // gradient block
@@ -631,7 +671,11 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
         task->addBindResource(gradientBinding);
     }
 
-    currentPass()->addRenderTask(task);
+    if (stencilTask) {
+        currentPass()->addRenderTask(new GlStencilCoverTask(stencilTask, task));
+    } else {
+        currentPass()->addRenderTask(task);
+    }
 }
 
 GlRenderPass* GlRenderer::currentPass() 

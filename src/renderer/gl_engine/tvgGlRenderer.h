@@ -46,6 +46,7 @@ public:
         RT_MaskSub,
         RT_MaskIntersect,
         RT_MaskDifference,
+        RT_Stencil,
 
         RT_None,
     };

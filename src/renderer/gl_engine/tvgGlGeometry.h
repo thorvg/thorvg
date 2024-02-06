@@ -195,6 +195,7 @@ public:
     void updateTransform(const RenderTransform* transform, float w, float h);
     void setViewport(const RenderRegion& viewport);
     float* getTransforMatrix();
+    bool needStencilCover(RenderUpdateFlag flag);
 
 private:
     RenderRegion viewport = {};
@@ -203,6 +204,8 @@ private:
     Array<uint32_t> fillIndex = {};
     Array<uint32_t> strokeIndex = {};
     float mTransform[16];
+
+    bool mStencilFill = false;
 };
 
 #endif /* _TVG_GL_GEOMETRY_H_ */

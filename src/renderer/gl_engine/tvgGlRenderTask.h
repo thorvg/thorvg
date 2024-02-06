@@ -76,6 +76,8 @@ class GlRenderTask
 {
 public:
     GlRenderTask(GlProgram* program): mProgram(program) {}
+    GlRenderTask(GlProgram* program, GlRenderTask* other);
+
     virtual ~GlRenderTask() = default;
 
     virtual void run();
@@ -93,6 +95,19 @@ private:
     uint32_t mIndexCount = {};
     Array<GlVertexLayout> mVertexLayout = {};
     Array<GlBindingResource> mBindingResources = {};
+};
+
+class GlStencilCoverTask : public GlRenderTask
+{
+public:
+    GlStencilCoverTask(GlRenderTask* stencil, GlRenderTask* cover);
+    ~GlStencilCoverTask() override;
+
+    void run() override;
+
+private:
+    GlRenderTask* mStencilTask;
+    GlRenderTask* mCoverTask;
 };
 
 class GlComposeTask : public GlRenderTask 

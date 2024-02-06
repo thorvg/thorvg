@@ -45,6 +45,12 @@ bool GlGeometry::tesselate(const RenderShape& rshape, RenderUpdateFlag flag)
         if (!tess.tessellate(&rshape, true)) {
             fillVertex.clear();
             fillIndex.clear();
+
+            BWTessellator bwTess{&fillVertex, &fillIndex};
+
+            bwTess.tessellate(&rshape);
+
+            mStencilFill = true;
         }
     }
 
@@ -211,4 +217,13 @@ void GlGeometry::setViewport(const RenderRegion& viewport)
 float* GlGeometry::getTransforMatrix()
 {
     return mTransform;
+}
+
+bool GlGeometry::needStencilCover(RenderUpdateFlag flag)
+{
+    if (flag & RenderUpdateFlag::Stroke) return false;
+    if (flag & RenderUpdateFlag::GradientStroke) return false;
+    if (flag & RenderUpdateFlag::Image) return false;
+
+    return mStencilFill;
 }
