@@ -177,6 +177,23 @@ private:
     GlPoint mPtCur;
 };
 
+class BWTessellator
+{
+public:
+    BWTessellator(Array<float>* points, Array<uint32_t>* indices);
+    ~BWTessellator() = default;
+
+    void tessellate(const RenderShape *rshape);
+
+private:
+    uint32_t pushVertex(float x, float y);
+    void pushTriangle(uint32_t a, uint32_t b, uint32_t c);
+
+private:
+    Array<float>* mResPoints;
+    Array<uint32_t>* mResIndices;
+};
+
 }  // namespace tvg
 
 #endif /* _TVG_GL_TESSELLATOR_H_ */
