@@ -2107,4 +2107,87 @@ void DashStroke::cubicTo(const GlPoint &cnt1, const GlPoint &cnt2, const GlPoint
     mCmds->push(PathCommand::CubicTo);
 }
 
+
+BWTessellator::BWTessellator(Array<float>* points, Array<uint32_t>* indices): mResPoints(points), mResIndices(indices)
+{
+}
+
+void BWTessellator::tessellate(const RenderShape *rshape)
+{
+    auto cmds = rshape->path.cmds.data;
+    auto cmdCnt = rshape->path.cmds.count;
+    auto pts = rshape->path.pts.data;
+    auto ptsCnt = rshape->path.pts.count;
+
+    if (ptsCnt <= 2) return;
+
+    uint32_t firstIndex = 0;
+    uint32_t prevIndex = 0;
+
+    mResPoints->reserve(ptsCnt * 2);
+    mResIndices->reserve((ptsCnt - 2) * 3);
+
+    for (uint32_t i = 0; i < cmdCnt; i++) {
+        switch(cmds[i]) {
+            case PathCommand::MoveTo: {
+                firstIndex = pushVertex(pts->x, pts->y);
+                prevIndex = 0;
+                pts++;                
+            } break;
+            case PathCommand::LineTo: {
+                if (prevIndex == 0) {
+                    prevIndex = pushVertex(pts->x, pts->y);
+                    pts++;
+                } else {
+                    auto currIndex = pushVertex(pts->x, pts->y);
+
+                    pushTriangle(firstIndex, prevIndex, currIndex);
+
+                    prevIndex = currIndex;
+                    pts++;
+                }
+            } break;
+            case PathCommand::CubicTo: {
+                Bezier curve{pts[-1], pts[0], pts[1], pts[2]};
+
+                auto stepCount = detail::_bezierCurveCount(curve);
+
+                if (stepCount <= 1) stepCount = 2;
+
+                float step = 1.f / stepCount;
+
+                for (uint32_t s = 1; s < static_cast<uint32_t>(stepCount); s++) {
+                    auto pt = bezPointAt(curve, step * s);
+                    auto currIndex = pushVertex(pt.x, pt.y);
+
+                    if (prevIndex == 0) {
+                        prevIndex = currIndex;
+                        continue;
+                    }
+
+                    pushTriangle(firstIndex, prevIndex, currIndex);
+                    prevIndex = currIndex;
+                }
+
+                pts += 3;
+            } break;
+            case PathCommand::Close: 
+            default:
+                break;
+        }
+    }
+}
+
+uint32_t BWTessellator::pushVertex(float x, float y)
+{
+    return detail::_pushVertex(mResPoints, x, y, 1.f);
+}
+
+void BWTessellator::pushTriangle(uint32_t a, uint32_t b, uint32_t c)
+{
+    mResIndices->push(a);
+    mResIndices->push(b);
+    mResIndices->push(c);
+}
+
 }  // namespace tvg

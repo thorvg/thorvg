@@ -39,5 +39,7 @@ extern const char* MASK_ADD_FRAG_SHADER;
 extern const char* MASK_SUB_FRAG_SHADER;
 extern const char* MASK_INTERSECT_FRAG_SHADER;
 extern const char* MASK_DIFF_FRAG_SHADER;
+extern const char* STENCIL_VERT_SHADER;
+extern const char* STENCIL_FRAG_SHADER;
 
 #endif /* _TVG_GL_SHADERSRC_H_ */
