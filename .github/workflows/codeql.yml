@@ -71,7 +71,7 @@ jobs:
         sudo pip3 install meson
         sudo apt-get install libturbojpeg0-dev libpng-dev libwebp-dev
 
-        meson . build -Dbindings="capi" -Dloaders="all, webp_beta" -Dsavers="all" -Dtools="all"
+        meson . build -Dbindings="capi" -Dloaders="all" -Dsavers="all" -Dtools="all"
         sudo ninja -C build install
          
 

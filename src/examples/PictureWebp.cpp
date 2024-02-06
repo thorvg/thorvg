@@ -75,7 +75,6 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     picture->translate(400, 0);
     picture->scale(0.8);
     canvas->push(std::move(picture));
-
 }
 
 
