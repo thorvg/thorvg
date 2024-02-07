@@ -126,13 +126,21 @@ bool JpgLoader::read()
 
     if (w == 0 || h == 0) return false;
 
-    /* OPTIMIZE: We assume the desired colorspace is ColorSpace::ARGB
-       How could we notice the renderer colorspace at this time? */
-    auto image = (unsigned char *)tjAlloc(static_cast<int>(w) * static_cast<int>(h) * tjPixelSize[TJPF_BGRX]);
+    //determine the image format
+    TJPF format;
+    if (cs == ColorSpace::ARGB8888 || cs == ColorSpace::ARGB8888S) {
+        format = TJPF_BGRX;
+        surface.cs = ColorSpace::ARGB8888;
+    } else {
+        format = TJPF_RGBX;
+        surface.cs = ColorSpace::ABGR8888;
+    }
+
+    auto image = (unsigned char *)tjAlloc(static_cast<int>(w) * static_cast<int>(h) * tjPixelSize[format]);
     if (!image) return false;
 
     //decompress jpg image
-    if (tjDecompress2(jpegDecompressor, data, size, image, static_cast<int>(w), 0, static_cast<int>(h), TJPF_BGRX, 0) < 0) {
+    if (tjDecompress2(jpegDecompressor, data, size, image, static_cast<int>(w), 0, static_cast<int>(h), format, 0) < 0) {
         TVGERR("JPG LOADER", "%s", tjGetErrorStr());
         tjFree(image);
         image = nullptr;
@@ -145,7 +153,6 @@ bool JpgLoader::read()
     surface.w = w;
     surface.h = h;
     surface.channelSize = sizeof(uint32_t);
-    surface.cs = ColorSpace::ARGB8888;
     surface.premultiplied = true;
 
     clear();
