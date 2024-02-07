@@ -6,8 +6,9 @@
 /src/renderer/gl_engine @RuiwenTang @SergeyLebedkin
 /src/renderer/wg_engine @SergeyLebedkin
 /src/loaders/external_webp/ @JSUYA
+/src/loaders/webp/ @JSUYA
 /src/loaders/svg/ @JSUYA
-/src/loaders/gif/ @JSUYA
+/src/savers/gif/ @JSUYA
 /src/tools/svg2png/ @JSUYA
 /src/examples/ @JSUYA @RuiwenTang @SergeyLebedkin @tinyjin
 /test/* @JSUYA @RuiwenTang @SergeyLebedkin @tinyjin
