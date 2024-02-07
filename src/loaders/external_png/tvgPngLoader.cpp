@@ -104,6 +104,7 @@ bool PngLoader::read()
     surface.h = (uint32_t)h;
     surface.channelSize = sizeof(uint32_t);
     surface.cs = ColorSpace::ARGB8888;
+    //TODO: we can acquire a pre-multiplied image. See "png_structrp"
     surface.premultiplied = false;
 
     clear();
