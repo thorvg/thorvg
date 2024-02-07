@@ -38,10 +38,10 @@ namespace tvg {
     {
         Key* key = nullptr;
 
-        ScopedLock(Key& key)
+        ScopedLock(Key& k)
         {
-            key.mtx.lock();
-            this->key = &key;
+            k.mtx.lock();
+            key = &k;
         }
 
         ~ScopedLock()
@@ -68,3 +68,4 @@ namespace tvg {
 #endif //THORVG_THREAD_SUPPORT
 
 #endif //_TVG_LOCK_H_
+
