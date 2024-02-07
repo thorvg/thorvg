@@ -42,7 +42,7 @@ void WebpLoader::run(unsigned tid)
     surface.h = static_cast<uint32_t>(h);
     surface.cs = ColorSpace::ARGB8888;
     surface.channelSize = sizeof(uint32_t);
-    surface.premultiplied = false;
+    surface.premultiplied = true;
 
     clear();
 }
