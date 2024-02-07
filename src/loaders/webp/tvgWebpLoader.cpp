@@ -35,12 +35,17 @@ void WebpLoader::clear()
 
 void WebpLoader::run(unsigned tid)
 {
-    //TODO: we can figure out the requested image format in advance.
-    surface.buf8 = WebPDecodeBGRA(data, size, nullptr, nullptr);
+    if (surface.cs == ColorSpace::ARGB8888 || surface.cs == ColorSpace::ARGB8888S) {
+        surface.buf8 = WebPDecodeBGRA(data, size, nullptr, nullptr);
+        surface.cs = ColorSpace::ARGB8888;
+    } else  {
+        surface.buf8 = WebPDecodeRGBA(data, size, nullptr, nullptr);
+        surface.cs = ColorSpace::ABGR8888;
+    }
+
     surface.stride = static_cast<uint32_t>(w);
     surface.w = static_cast<uint32_t>(w);
     surface.h = static_cast<uint32_t>(h);
-    surface.cs = ColorSpace::ARGB8888;
     surface.channelSize = sizeof(uint32_t);
     surface.premultiplied = true;
 
@@ -127,6 +132,8 @@ bool WebpLoader::read()
     if (!LoadModule::read()) return true;
 
     if (!data || w == 0 || h == 0) return false;
+
+    surface.cs = this->cs;
 
     TaskScheduler::request(this);
 
