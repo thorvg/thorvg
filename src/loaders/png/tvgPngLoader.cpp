@@ -44,7 +44,9 @@ void PngLoader::run(unsigned tid)
     surface.w = width;
     surface.h = height;
     surface.channelSize = sizeof(uint32_t);
-    surface.premultiplied = false;
+
+    if (state.info_png.color.colortype == LCT_RGBA) surface.premultiplied = false;
+    else surface.premultiplied = true;
 }
 
 
