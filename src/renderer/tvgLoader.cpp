@@ -66,6 +66,8 @@ uint64_t HASH_KEY(const char* data, uint64_t size)
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
+ColorSpace ImageLoader::cs = ColorSpace::ARGB8888;
+
 static Key key;
 static Inlist<LoadModule> _activeLoaders;
 
