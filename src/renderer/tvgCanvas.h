@@ -102,10 +102,8 @@ struct Canvas::Impl
             for (auto paint : paints) {
                 paint->pImpl->update(renderer, nullptr, clips, 255, flag);
             }
+            refresh = false;
         }
-
-        refresh = false;
-
         return Result::Success;
     }
 
