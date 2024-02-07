@@ -33,9 +33,8 @@
 
 void WebpLoader::run(unsigned tid)
 {
+    //TODO: acquire the current colorspace format & pre-multiplied alpha image.
     surface.buf8 = WebPDecodeBGRA(data, size, nullptr, nullptr);
-
-    //setup the surface
     surface.stride = (uint32_t)w;
     surface.w = (uint32_t)w;
     surface.h = (uint32_t)h;
