@@ -727,22 +727,17 @@ static void _updateImage(LottieGroup* parent, LottieObject** child, float frameN
 
         //force to load a picture on the same thread
         TaskScheduler::async(false);
-        auto succeed = false;
 
         if (image->size > 0) {
-            //try all, just in case.
-            const char* type[] = {image->mimeType, "png", "jpg", "webp"};
-            for (int i = 0; i < 4; ++i) {
-                if (picture->load((const char*)image->b64Data, image->size, type[i]) == Result::Success) {
-                    succeed = true;
-                    break;
-                }
+            if (picture->load((const char*)image->b64Data, image->size, image->mimeType) != Result::Success) {
+                delete(picture);
+                return;
             }
-        } else if (picture->load(image->path) == Result::Success) succeed = true;
-
-        if (!succeed) {
-            delete(picture);
-            return;
+        } else {
+            if (picture->load(image->path) != Result::Success) {
+                delete(picture);
+                return;
+            }
         }
 
         TaskScheduler::async(true);
