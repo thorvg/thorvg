@@ -6,7 +6,7 @@ Hermet Park (hermet) is the lead maintainer. Moreover, there are designated revi
 <b>gl_engine:</b> Ruiwen Tang (RuiwenTang), Sergii Liebodkin (SergeyLebedkin) <br />
 <b>wg_engine:</b> Sergii Liebodkin (SergeyLebedkin) <br />
 <b>svg_loader:</b> Junsu Choi (JSUYA) <br />
-<b>gif_loader:</b> Junsu Choi (JSUYA) <br />
+<b>gif_saver:</b> Junsu Choi (JSUYA) <br />
 <b>webp_loader:</b> Junsu Choi (JSUYA) <br />
 <b>web:</b> Jinny You (tinyjin) <br />
 <b>svg2png:</b> Junsu Choi (JSUYA) <br />
