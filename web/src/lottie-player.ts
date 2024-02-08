@@ -60,38 +60,38 @@ export enum MimeType {
 
 // Define valid player states
 export enum PlayerState {
-  Destroyed = "destroyed", // Player is destroyed by `destroy()` method
-  Error = "error", // An error occurred
-  Loading = "loading", // Player is loading
-  Paused = "paused", // Player is paused
-  Playing = "playing", // Player is playing
-  Stopped = "stopped",  // Player is stopped
-  Frozen = "frozen", // Player is paused due to player being invisible
+  Destroyed = 'destroyed', // Player is destroyed by `destroy()` method
+  Error = 'error', // An error occurred
+  Loading = 'loading', // Player is loading
+  Paused = 'paused', // Player is paused
+  Playing = 'playing', // Player is playing
+  Stopped = 'stopped',  // Player is stopped
+  Frozen = 'frozen', // Player is paused due to player being invisible
 }
 
 // Define play modes
 export enum PlayMode {
-  Bounce = "bounce",
-  Normal = "normal",
+  Bounce = 'bounce',
+  Normal = 'normal',
 }
 
 // Define player events
 export enum PlayerEvent {
-  Complete = "complete",
-  Destroyed = "destroyed",
-  Error = "error",
-  Frame = "frame",
-  Freeze = "freeze",
-  Load = "load",
-  Loop = "loop",
-  Pause = "pause",
-  Play = "play",
-  Ready = "ready",
-  Stop = "stop",
+  Complete = 'complete',
+  Destroyed = 'destroyed',
+  Error = 'error',
+  Frame = 'frame',
+  Freeze = 'freeze',
+  Load = 'load',
+  Loop = 'loop',
+  Pause = 'pause',
+  Play = 'play',
+  Ready = 'ready',
+  Stop = 'stop',
 }
 
 const _parseLottieFromURL = async (url: string): Promise<LottieJson> => {
-  if (typeof url !== "string") {
+  if (typeof url !== 'string') {
     throw new Error(`The url value must be a string`);
   }
 
@@ -168,7 +168,7 @@ const _observerCallback = (entries: IntersectionObserverEntry[]) => {
 }
 
 const _downloadFile = (fileName: string, blob: Blob) => {
-  const link = document.createElement("a");
+  const link = document.createElement('a');
   link.setAttribute('href', URL.createObjectURL(blob));
   link.setAttribute('download', fileName);
   document.body.appendChild(link);
@@ -179,7 +179,7 @@ const _downloadFile = (fileName: string, blob: Blob) => {
 @customElement('lottie-player')
 export class LottiePlayer extends LitElement {
   /**
-  * LottieFiles JSON data or URL to JSON.
+  * Lottie animation JSON data or URL to JSON.
   * @since 1.0
   */
   @property({ type: String })
@@ -431,6 +431,8 @@ export class LottiePlayer extends LitElement {
 
   /**
    * Configure and load
+   * @param src Lottie animation JSON data or URL to JSON.
+   * @param mimeType The MIME type of the data to be loaded, defaults to JSON
    * @since 1.0
    */
   public async load(src: string | object, mimeType: MimeType = MimeType.JSON): Promise<void> {
@@ -461,7 +463,7 @@ export class LottiePlayer extends LitElement {
     }
 
     this._beginTime = Date.now() / 1000;
-    if (this.currentState == PlayerState.Playing) {
+    if (this.currentState === PlayerState.Playing) {
       return;
     }
 
