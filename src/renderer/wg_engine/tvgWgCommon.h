@@ -52,10 +52,13 @@ struct WgContext {
 
     WGPUSampler createSampler(WGPUFilterMode minFilter, WGPUMipmapFilterMode mipmapFilter);
     WGPUTexture createTexture2d(WGPUTextureUsageFlags usage, WGPUTextureFormat format, uint32_t width, uint32_t height, char const * label);
-    WGPUTextureView createTextureView2d(WGPUTexture texture, WGPU_NULLABLE char const * label);
+    WGPUTextureView createTextureView2d(WGPUTexture texture, char const * label);
+    WGPUBuffer createBuffer(WGPUBufferUsageFlags usage, uint64_t size,char const * label);
+
     void releaseSampler(WGPUSampler& sampler);
     void releaseTexture(WGPUTexture& texture);
     void releaseTextureView(WGPUTextureView& textureView);
+    void releaseBuffer(WGPUBuffer& buffer);
 };
 
 struct WgBindGroup

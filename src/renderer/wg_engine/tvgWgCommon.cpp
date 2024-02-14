@@ -158,7 +158,7 @@ WGPUTexture WgContext::createTexture2d(WGPUTextureUsageFlags usage, WGPUTextureF
 }
 
 
-WGPUTextureView WgContext::createTextureView2d(WGPUTexture texture, WGPU_NULLABLE char const * label)
+WGPUTextureView WgContext::createTextureView2d(WGPUTexture texture, char const * label)
 {
     WGPUTextureViewDescriptor textureViewDescColor{};
     textureViewDescColor.nextInChain = nullptr;
@@ -174,6 +174,18 @@ WGPUTextureView WgContext::createTextureView2d(WGPUTexture texture, WGPU_NULLABL
 };
 
 
+WGPUBuffer WgContext::createBuffer(WGPUBufferUsageFlags usage, uint64_t size,char const * label)
+{
+    WGPUBufferDescriptor bufferDesc{};
+    bufferDesc.nextInChain = nullptr;
+    bufferDesc.label = label;
+    bufferDesc.usage = usage;
+    bufferDesc.size = size;
+    bufferDesc.mappedAtCreation = false;
+    return wgpuDeviceCreateBuffer(device, &bufferDesc);
+}
+
+
 void WgContext::releaseSampler(WGPUSampler& sampler)
 {
     if (sampler) {
@@ -181,6 +193,7 @@ void WgContext::releaseSampler(WGPUSampler& sampler)
         sampler = nullptr;
     }
 }
+
 
 void WgContext::releaseTexture(WGPUTexture& texture)
 {
@@ -195,8 +208,20 @@ void WgContext::releaseTexture(WGPUTexture& texture)
 
 void WgContext::releaseTextureView(WGPUTextureView& textureView)
 {
-    if (textureView) wgpuTextureViewRelease(textureView);
-    textureView = nullptr;
+    if (textureView) {
+        wgpuTextureViewRelease(textureView);
+        textureView = nullptr;
+    }
+}
+
+
+void WgContext::releaseBuffer(WGPUBuffer& buffer)
+{
+    if (buffer) { 
+        wgpuBufferDestroy(buffer);
+        wgpuBufferRelease(buffer);
+        buffer = nullptr;
+    }
 }
 
 
