@@ -48,43 +48,45 @@ void WgMeshData::drawImage(WGPURenderPassEncoder renderPassEncoder)
 
 
 void WgMeshData::update(WgContext& context, WgGeometryData* geometryData){
-    release(context);
     assert(geometryData);
     // buffer position data create and write
     if(geometryData->positions.count > 0) {
         vertexCount = geometryData->positions.count;
-        WGPUBufferDescriptor bufferDesc{};
-        bufferDesc.nextInChain = nullptr;
-        bufferDesc.label = "Buffer position geometry data";
-        bufferDesc.usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_Vertex;
-        bufferDesc.size = sizeof(float) * vertexCount * 2; // x, y
-        bufferDesc.mappedAtCreation = false;
-        bufferPosition = wgpuDeviceCreateBuffer(context.device, &bufferDesc);
+        if (bufferPosition && (wgpuBufferGetSize(bufferPosition) < sizeof(float) * vertexCount * 2))
+            context.releaseBuffer(bufferPosition);
+        if (!bufferPosition) {
+            bufferPosition = context.createBuffer(
+                WGPUBufferUsage_CopyDst | WGPUBufferUsage_Vertex, 
+                sizeof(float) * vertexCount * 2,
+                "Buffer position geometry data");
+        }
         assert(bufferPosition);
         wgpuQueueWriteBuffer(context.queue, bufferPosition, 0, &geometryData->positions[0], vertexCount * sizeof(float) * 2);
     }
     // buffer vertex data create and write
     if(geometryData->texCoords.count > 0) {
-        WGPUBufferDescriptor bufferDesc{};
-        bufferDesc.nextInChain = nullptr;
-        bufferDesc.label = "Buffer tex coords geometry data";
-        bufferDesc.usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_Vertex;
-        bufferDesc.size = sizeof(float) * vertexCount * 2; // u, v
-        bufferDesc.mappedAtCreation = false;
-        bufferTexCoord = wgpuDeviceCreateBuffer(context.device, &bufferDesc);
-        assert(bufferPosition);
+        if (bufferTexCoord && (wgpuBufferGetSize(bufferTexCoord) < sizeof(float) * vertexCount * 2))
+            context.releaseBuffer(bufferTexCoord);
+        if (!bufferTexCoord) {
+            bufferTexCoord = context.createBuffer(
+                WGPUBufferUsage_CopyDst | WGPUBufferUsage_Vertex, 
+                sizeof(float) * vertexCount * 2, 
+                "Buffer tex coords geometry data");
+        }
+        assert(bufferTexCoord);
         wgpuQueueWriteBuffer(context.queue, bufferTexCoord, 0, &geometryData->texCoords[0], vertexCount * sizeof(float) * 2);
     }
     // buffer index data create and write
     if(geometryData->indexes.count > 0) {
         indexCount = geometryData->indexes.count;
-        WGPUBufferDescriptor bufferDesc{};
-        bufferDesc.nextInChain = nullptr;
-        bufferDesc.label = "Buffer index geometry data";
-        bufferDesc.usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_Index;
-        bufferDesc.size = sizeof(uint32_t) * indexCount;
-        bufferDesc.mappedAtCreation = false;
-        bufferIndex = wgpuDeviceCreateBuffer(context.device, &bufferDesc);
+        if (bufferIndex && (wgpuBufferGetSize(bufferIndex) < sizeof(uint32_t) * indexCount))
+            context.releaseBuffer(bufferIndex);
+        if (!bufferIndex) {
+            bufferIndex = context.createBuffer(
+                WGPUBufferUsage_CopyDst | WGPUBufferUsage_Index, 
+                sizeof(uint32_t) * indexCount, 
+                "Buffer index geometry data");
+        }
         assert(bufferIndex);
         wgpuQueueWriteBuffer(context.queue, bufferIndex, 0, &geometryData->indexes[0], indexCount * sizeof(uint32_t));
     }
@@ -93,23 +95,9 @@ void WgMeshData::update(WgContext& context, WgGeometryData* geometryData){
 
 void WgMeshData::release(WgContext& context)
 {
-    if (bufferIndex) { 
-        wgpuBufferDestroy(bufferIndex);
-        wgpuBufferRelease(bufferIndex);
-        bufferIndex = nullptr;
-        indexCount = 0;
-    }
-    if (bufferTexCoord) {
-        wgpuBufferDestroy(bufferTexCoord);
-        wgpuBufferRelease(bufferTexCoord);
-        bufferTexCoord = nullptr;
-    }
-    if (bufferPosition) {
-        wgpuBufferDestroy(bufferPosition);
-        wgpuBufferRelease(bufferPosition);
-        bufferPosition = nullptr;
-        bufferPosition = 0;
-    }
+    context.releaseBuffer(bufferIndex);
+    context.releaseBuffer(bufferTexCoord);
+    context.releaseBuffer(bufferPosition);
 };
 
 //***********************************************************************
