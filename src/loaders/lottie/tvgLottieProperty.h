@@ -184,6 +184,24 @@ struct LottieVectorFrame
 
 
 template<typename T>
+uint32_t bsearch(T* frames, float frameNo)
+{
+    uint32_t low = 0;
+    uint32_t high = frames->count - 1;
+
+    while (low <= high) {
+        auto mid = low + (high - low) / 2;
+        auto frame = frames->data + mid;
+        if (mathEqual(frameNo, frame->no)) return mid;
+        else if (frameNo < frame->no) high = mid - 1;
+        else low = mid + 1;
+    }
+    if (high < low) low = high;
+    return low;
+}
+
+
+template<typename T>
 struct LottieProperty
 {
     //Property has an either keyframes or single value.
@@ -220,19 +238,9 @@ struct LottieProperty
         if (frames->count == 1 || frameNo <= frames->first().no) return frames->first().value;
         if (frameNo >= frames->last().no) return frames->last().value;
 
-        uint32_t low = 1;
-        uint32_t high = frames->count - 1;
-
-        while (low <= high) {
-            auto mid = low + (high - low) / 2;
-            auto frame = frames->data + mid;
-            if (mathEqual(frameNo, frame->no)) return frame->value;
-            else if (frameNo > frame->no) low = mid + 1;
-            else high = mid - 1;
-        }
-
-        auto frame = frames->data + low;
-        return (frame - 1)->interpolate(frame, frameNo);
+        auto frame = frames->data + bsearch(frames, frameNo);
+        if (frame->no == frameNo) return frame->value;
+        return frame->interpolate(frame + 1, frameNo);
     }
 
     float angle(float frameNo) { return 0; }
@@ -302,41 +310,30 @@ struct LottiePathSet
             return true;
         }
 
-        uint32_t low = 1;
-        uint32_t high = frames->count - 1;
+        auto frame = frames->data + bsearch(frames, frameNo);
 
-        while (low <= high) {
-            auto mid = low + (high - low) / 2;
-            auto frame = frames->data + mid;
-            if (mathEqual(frameNo, frame->no)) {
-                copy(frame->value, cmds);
-                copy(frame->value, pts);
-                return true;
-            } else if (frameNo > frame->no) {
-                low = mid + 1;
-            } else {
-                high = mid - 1;
-            }
-        }
-
-        //interpolate
-        auto frame = frames->data + low;
-        auto pframe = frame - 1;
-        copy(pframe->value, cmds);
-
-        auto t = (frameNo - pframe->no) / (frame->no - pframe->no);
-        if (pframe->interpolator) t = pframe->interpolator->progress(t);
-
-        if (pframe->hold) {
-            if (t < 1.0f) copy(pframe->value, pts);
-            else copy(frame->value, pts);
+        if (frame->no == frameNo) {
+            copy(frame->value, cmds);
+            copy(frame->value, pts);
             return true;
         }
 
-        auto s = pframe->value.pts;
-        auto e = frame->value.pts;
+        //interpolate
+        copy(frame->value, cmds);
 
-        for (auto i = 0; i < pframe->value.ptsCnt; ++i, ++s, ++e) {
+        auto t = (frameNo - frame->no) / ((frame + 1)->no - frame->no);
+        if (frame->interpolator) t = frame->interpolator->progress(t);
+
+        if (frame->hold) {
+            if (t < 1.0f) copy(frame->value, pts);
+            else copy((frame + 1)->value, pts);
+            return true;
+        }
+
+        auto s = frame->value.pts;
+        auto e = (frame + 1)->value.pts;
+
+        for (auto i = 0; i < frame->value.ptsCnt; ++i, ++s, ++e) {
             pts.push(mathLerp(*s, *e, t));
         }
         return true;
@@ -399,35 +396,23 @@ struct LottieColorStop
             return;
         }
 
-        uint32_t low = 1;
-        uint32_t high = frames->count - 1;
-
-        while (low <= high) {
-            auto mid = low + (high - low) / 2;
-            auto frame = frames->data + mid;
-            if (mathEqual(frameNo, frame->no)) {
-                fill->colorStops(frame->value.data, count);
-                return;
-            } else if (frameNo > frame->no) {
-                low = mid + 1;
-            } else {
-                high = mid - 1;
-            }
+        auto frame = frames->data + bsearch(frames, frameNo);
+        if (frame->no == frameNo) {
+            fill->colorStops(frame->value.data, count);
+            return;
         }
 
         //interpolate
-        auto frame = frames->data + low;
-        auto pframe = frame - 1;
-        auto t = (frameNo - pframe->no) / (frame->no - pframe->no);
-        if (pframe->interpolator) t = pframe->interpolator->progress(t);
+        auto t = (frameNo - frame->no) / ((frame + 1)->no - frame->no);
+        if (frame->interpolator) t = frame->interpolator->progress(t);
 
-        if (pframe->hold) {
-            if (t < 1.0f) fill->colorStops(pframe->value.data, count);
-            else fill->colorStops(frame->value.data, count);
+        if (frame->hold) {
+            if (t < 1.0f) fill->colorStops(frame->value.data, count);
+            else fill->colorStops((frame + 1)->value.data, count);
         }
 
-        auto s = pframe->value.data;
-        auto e = frame->value.data;
+        auto s = frame->value.data;
+        auto e = (frame + 1)->value.data;
 
         Array<Fill::ColorStop> result;
 
@@ -483,19 +468,9 @@ struct LottiePosition
         if (frames->count == 1 || frameNo <= frames->first().no) return frames->first().value;
         if (frameNo >= frames->last().no) return frames->last().value;
 
-        uint32_t low = 1;
-        uint32_t high = frames->count - 1;
-
-        while (low <= high) {
-            auto mid = low + (high - low) / 2;
-            auto frame = frames->data + mid;
-            if (mathEqual(frameNo, frame->no)) return frame->value;
-            else if (frameNo > frame->no) low = mid + 1;
-            else high = mid - 1;
-        }
-
-        auto frame = frames->data + low;
-        return (frame - 1)->interpolate(frame, frameNo);
+        auto frame = frames->data + bsearch(frames, frameNo);
+        if (frame->no == frameNo) return frame->value;
+        return frame->interpolate(frame + 1, frameNo);
     }
 
     float angle(float frameNo)
@@ -504,18 +479,8 @@ struct LottiePosition
         if (frames->count == 1 || frameNo <= frames->first().no) return 0;
         if (frameNo >= frames->last().no) return 0;
 
-        uint32_t low = 1;
-        uint32_t high = frames->count - 1;
-
-        while (low <= high) {
-            auto mid = low + (high - low) / 2;
-            auto frame = frames->data + mid;
-            if (frameNo > frame->no) low = mid + 1;
-            else high = mid - 1;
-        }
-
-        auto frame = frames->data + low;
-        return (frame - 1)->angle(frame, frameNo);
+        auto frame = frames->data + bsearch(frames, frameNo);
+        return frame->angle(frame + 1, frameNo);
     }
 
     void prepare()
@@ -525,7 +490,6 @@ struct LottiePosition
             (frame - 1)->prepare(frame);
         }
     }
-
 };
 
 
@@ -570,19 +534,8 @@ struct LottieTextDoc
         if (frames->count == 1 || frameNo <= frames->first().no) return frames->first().value;
         if (frameNo >= frames->last().no) return frames->last().value;
 
-        uint32_t low = 0;
-        uint32_t high = frames->count - 1;
-
-        while (low <= high) {
-            auto mid = low + (high - low) / 2;
-            auto frame = frames->data + mid;
-            if (mathEqual(frameNo, frame->no)) return frame->value;
-            else if (frameNo < frame->no) high = mid - 1;
-            else low = mid + 1;
-        }
-        if (high < low) low = high;
-
-        return (*frames)[low].value;
+        auto frame = frames->data + bsearch(frames, frameNo);
+        return frame->value;
     }
 
     void prepare() {}
