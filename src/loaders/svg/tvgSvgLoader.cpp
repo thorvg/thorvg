@@ -89,6 +89,7 @@ static char* _skipSpace(const char* str, const char* end)
 static char* _copyId(const char* str)
 {
     if (!str) return nullptr;
+    if (strlen(str) == 0) return nullptr;
 
     return strdup(str);
 }
