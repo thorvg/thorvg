@@ -37,14 +37,7 @@ typedef long long int int64_t;
 #endif  /* _MSC_VER */
 
 #ifndef WEBP_EXTERN
-// This explicitly marks library functions and allows for changing the
-// signature for e.g., Windows DLL builds.
-# if defined(__GNUC__) && __GNUC__ >= 4
-#  define WEBP_EXTERN(type) extern __attribute__ ((visibility ("default"))) type
-# else
 #  define WEBP_EXTERN(type) extern type
-# endif  /* __GNUC__ >= 4 */
-
 #endif  /* WEBP_EXTERN */
 
 // Macro to check ABI compatibility (same major revision number)
