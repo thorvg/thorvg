@@ -378,19 +378,25 @@ static void _parseDashArray(SvgLoaderData* loader, const char *str, SvgDash* das
 
 static char* _idFromUrl(const char* url)
 {
-    url = _skipSpace(url, nullptr);
-    if ((*url) == '(') {
-        ++url;
-        url = _skipSpace(url, nullptr);
+    auto open = strchr(url, '(');
+    auto close = strchr(url, ')');
+    if (!open || !close || open >= close) return nullptr;
+
+    open = strchr(url, '#');
+    if (!open || open >= close) return nullptr;
+
+    ++open;
+    --close;
+
+    //trim the rest of the spaces if any
+    while (open < close && *close == ' ') --close;
+
+    //quick verification
+    for (auto id = open; id < close; id++) {
+        if (*id == ' ' || *id == '\'') return nullptr;
     }
 
-    if ((*url) == '\'') ++url;
-    if ((*url) == '#') ++url;
-
-    int i = 0;
-    while (url[i] > ' ' && url[i] != ')' && url[i] != '\'') ++i;
-    
-    return strDuplicate(url, i);
+    return strDuplicate(open, (close - open + 1));
 }
 
 
