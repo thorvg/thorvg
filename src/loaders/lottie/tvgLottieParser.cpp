@@ -187,18 +187,11 @@ void LottieParser::getValue(PathSet& path)
 
     enterObject();
     while (auto key = nextObjectKey()) {
-        if (!strcmp(key, "i")) {
-            getValue(ins);
-        } else if (!strcmp(key, "o")) {
-            getValue(outs);
-        } else if (!strcmp(key, "v")) {
-            getValue(pts);
-        } else if (!strcmp(key, "c")) {
-            closed = getBool();
-        } else {
-            Error();
-            skip(key);
-        }
+        if (!strcmp(key, "i")) getValue(ins);
+        else if (!strcmp(key, "o")) getValue(outs);
+        else if (!strcmp(key, "v")) getValue(pts);
+        else if (!strcmp(key, "c")) closed = getBool();
+        else skip(key);
     }
 
     //exit properly from the array
@@ -284,10 +277,8 @@ void LottieParser::getValue(uint8_t& val)
         if (nextArrayValue()) val = (uint8_t)(getFloat() * 2.55f);
         //discard rest
         while (nextArrayValue()) getFloat();
-    } else if (peekType() == kNumberType) {
-        val = (uint8_t)(getFloat() * 2.55f);
     } else {
-        Error();
+        val = (uint8_t)(getFloat() * 2.55f);
     }
 }
 
@@ -299,10 +290,8 @@ void LottieParser::getValue(float& val)
         if (nextArrayValue()) val = getFloat();
         //discard rest
         while (nextArrayValue()) getFloat();
-    } else if (peekType() == kNumberType) {
-        val = getFloat();
     } else {
-        Error();
+        val = getFloat();
     }
 }
 
@@ -627,10 +616,6 @@ LottieSolidStroke* LottieParser::parseSolidStroke()
                 enterArray();
                 while (nextArrayValue()) parseKeyFrame(path);
             } else {
-                if (path.frames) {
-                    Error();
-                    return;
-                }
                 getValue(path.value);
             }
         } else skip(key);
