@@ -392,7 +392,9 @@ static char* _idFromUrl(const char* url)
 
     const char* start = hash + 1;
     const char* end = close - 1;
-    if (end <= start) return nullptr;
+    start = _skipSpace(start, nullptr);
+    if (*start == ')') return strDuplicate(start, end - start + 1);
+    if (end < start) return nullptr;
 
     while (start < end && *end == ' ') --end;
     for (const char* id = start; id != end; id++) {
