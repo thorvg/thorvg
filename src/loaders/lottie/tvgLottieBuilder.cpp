@@ -360,11 +360,11 @@ static void _repeat(LottieGroup* parent, unique_ptr<Shape> path, RenderContext* 
 
     //push repeat shapes in order.
     if (repeater->inorder) {
-        for (auto shape = shapes.data; shape < shapes.end(); ++shape) {
+        for (auto shape = shapes.begin(); shape < shapes.end(); ++shape) {
             parent->scene->push(cast(*shape));
         }
     } else {
-        for (auto shape = shapes.end() - 1; shape >= shapes.data; --shape) {
+        for (auto shape = shapes.end() - 1; shape >= shapes.begin(); --shape) {
             parent->scene->push(cast(*shape));
         }
     }
@@ -454,15 +454,15 @@ static void _updateText(LottieGroup* parent, LottieObject** child, float frameNo
     //text string
     while (*p != '\0') {
         //find the glyph
-        for (auto g = text->font->chars.data; g < text->font->chars.end(); ++g) {
+        for (auto g = text->font->chars.begin(); g < text->font->chars.end(); ++g) {
             auto glyph = *g;
             //draw matched glyphs
             if (!strncmp(glyph->code, p, glyph->len)) {
                 //TODO: caching?
                 auto shape = Shape::gen();
-                for (auto g = glyph->children.data; g < glyph->children.end(); ++g) {
+                for (auto g = glyph->children.begin(); g < glyph->children.end(); ++g) {
                     auto group = static_cast<LottieGroup*>(*g);
-                    for (auto p = group->children.data; p < group->children.end(); ++p) {
+                    for (auto p = group->children.begin(); p < group->children.end(); ++p) {
                         if (static_cast<LottiePath*>(*p)->pathset(frameNo, P(shape)->rs.path.cmds, P(shape)->rs.path.pts)) {
                             P(shape)->update(RenderUpdateFlag::Path);
                         }
@@ -889,7 +889,7 @@ static void _updatePrecomp(LottieLayer* precomp, float frameNo)
 
     frameNo = precomp->remap(frameNo);
 
-    for (auto child = precomp->children.end() - 1; child >= precomp->children.data; --child) {
+    for (auto child = precomp->children.end() - 1; child >= precomp->children.begin(); --child) {
         _updateLayer(precomp, static_cast<LottieLayer*>(*child), frameNo);
     }
 
@@ -925,7 +925,7 @@ static void _updateMaskings(LottieLayer* layer, float frameNo)
     Shape* pmask = nullptr;
     auto pmethod = CompositeMethod::AlphaMask;
 
-    for (auto m = layer->masks.data; m < layer->masks.end(); ++m) {
+    for (auto m = layer->masks.begin(); m < layer->masks.end(); ++m) {
         auto mask = static_cast<LottieMask*>(*m);
         auto shape = Shape::gen().release();
         shape->fill(255, 255, 255, mask->opacity(frameNo));
@@ -1029,7 +1029,7 @@ static void _updateLayer(LottieLayer* root, LottieLayer* layer, float frameNo)
 
 static void _buildReference(LottieComposition* comp, LottieLayer* layer)
 {
-    for (auto asset = comp->assets.data; asset < comp->assets.end(); ++asset) {
+    for (auto asset = comp->assets.begin(); asset < comp->assets.end(); ++asset) {
         if (strcmp(layer->refId, (*asset)->name)) continue;
         if (layer->type == LottieLayer::Precomp) {
             auto assetLayer = static_cast<LottieLayer*>(*asset);
@@ -1055,7 +1055,7 @@ static void _bulidHierarchy(LottieGroup* parent, LottieLayer* child)
         return;
     }
 
-    for (auto p = parent->children.data; p < parent->children.end(); ++p) {
+    for (auto p = parent->children.begin(); p < parent->children.end(); ++p) {
         auto parent = static_cast<LottieLayer*>(*p);
         if (child == parent) continue;
         if (child->pid == parent->id) {
@@ -1073,7 +1073,7 @@ static void _bulidHierarchy(LottieGroup* parent, LottieLayer* child)
 static void _attachFont(LottieComposition* comp, LottieLayer* parent)
 {
     //TODO: Consider to migrate this attachment to the frame update time.
-    for (auto c = parent->children.data; c < parent->children.end(); ++c) {
+    for (auto c = parent->children.begin(); c < parent->children.end(); ++c) {
         auto text = static_cast<LottieText*>(*c);
         auto& doc = text->doc(0);
         if (!doc.name) continue;
@@ -1096,7 +1096,7 @@ static bool _buildComposition(LottieComposition* comp, LottieGroup* parent)
     if (parent->buildDone) return true;
     parent->buildDone = true;
 
-    for (auto c = parent->children.data; c < parent->children.end(); ++c) {
+    for (auto c = parent->children.begin(); c < parent->children.end(); ++c) {
         auto child = static_cast<LottieLayer*>(*c);
 
         //attach the precomp layer.
@@ -1135,7 +1135,7 @@ bool LottieBuilder::update(LottieComposition* comp, float frameNo)
     auto root = comp->root;
     root->scene->clear();
 
-    for (auto child = root->children.end() - 1; child >= root->children.data; --child) {
+    for (auto child = root->children.end() - 1; child >= root->children.begin(); --child) {
         _updateLayer(root, static_cast<LottieLayer*>(*child), frameNo);
     }
     return true;

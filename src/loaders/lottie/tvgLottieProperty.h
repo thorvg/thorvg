@@ -263,7 +263,7 @@ struct LottiePathSet
         free(value.pts);
 
         if (!frames) return;
-        for (auto p = frames->data; p < frames->end(); ++p) {
+        for (auto p = frames->begin(); p < frames->end(); ++p) {
             free((*p).value.cmds);
             free((*p).value.pts);
         }
@@ -353,7 +353,7 @@ struct LottieColorStop
     {
         free(value.data);
         if (!frames) return;
-        for (auto p = frames->data; p < frames->end(); ++p) {
+        for (auto p = frames->begin(); p < frames->end(); ++p) {
             free((*p).value.data);
         }
         free(frames->data);
@@ -486,7 +486,7 @@ struct LottiePosition
     void prepare()
     {
         if (!frames || frames->count < 2) return;
-        for (auto frame = frames->data + 1; frame < frames->end(); ++frame) {
+        for (auto frame = frames->begin() + 1; frame < frames->end(); ++frame) {
             (frame - 1)->prepare(frame);
         }
     }
@@ -504,7 +504,7 @@ struct LottieTextDoc
         free(value.name);
 
         if (!frames) return;
-        for (auto p = frames->data; p < frames->end(); ++p) {
+        for (auto p = frames->begin(); p < frames->end(); ++p) {
             free((*p).value.text);
             free((*p).value.name);
         }
