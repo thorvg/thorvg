@@ -3495,7 +3495,7 @@ void SvgLoader::clear(bool all)
     free(loaderData.svgParse);
     loaderData.svgParse = nullptr;
 
-    for (auto gradient = loaderData.gradients.data; gradient < loaderData.gradients.end(); ++gradient) {
+    for (auto gradient = loaderData.gradients.begin(); gradient < loaderData.gradients.end(); ++gradient) {
         (*gradient)->clear();
         free(*gradient);
     }
@@ -3507,7 +3507,7 @@ void SvgLoader::clear(bool all)
 
     if (!all) return;
 
-    for (auto p = loaderData.images.data; p < loaderData.images.end(); ++p) {
+    for (auto p = loaderData.images.begin(); p < loaderData.images.end(); ++p) {
         free(*p);
     }
     loaderData.images.reset();

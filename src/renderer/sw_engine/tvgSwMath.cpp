@@ -293,12 +293,12 @@ bool mathUpdateOutlineBBox(const SwOutline* outline, const SwBBox& clipRegion, S
 {
     if (!outline) return false;
 
-    auto pt = outline->pts.data;
-
     if (outline->pts.empty() || outline->cntrs.empty()) {
         renderRegion.reset();
         return false;
     }
+
+    auto pt = outline->pts.begin();
 
     auto xMin = pt->x;
     auto xMax = pt->x;
