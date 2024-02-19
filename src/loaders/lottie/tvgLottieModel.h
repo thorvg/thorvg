@@ -164,7 +164,7 @@ struct LottieGradient
     bool prepare()
     {
         if (colorStops.frames) {
-            for (auto v = colorStops.frames->data; v < colorStops.frames->end(); ++v) {
+            for (auto v = colorStops.frames->begin(); v < colorStops.frames->end(); ++v) {
                 colorStops.count = populate(v->value);
             }
         } else {
@@ -253,7 +253,7 @@ struct LottieGlyph
 
     ~LottieGlyph()
     {
-        for (auto p = children.data; p < children.end(); ++p) delete(*p);
+        for (auto p = children.begin(); p < children.end(); ++p) delete(*p);
         free(code);
     }
 };
@@ -265,7 +265,7 @@ struct LottieFont
 
     ~LottieFont()
     {
-        for (auto c = chars.data; c < chars.end(); ++c) delete(*c);
+        for (auto c = chars.begin(); c < chars.end(); ++c) delete(*c);
         free(style);
         free(family);
         free(name);
@@ -524,7 +524,7 @@ struct LottieGroup : LottieObject
 {
     virtual ~LottieGroup()
     {
-        for (auto p = children.data; p < children.end(); ++p) delete(*p);
+        for (auto p = children.begin(); p < children.end(); ++p) delete(*p);
     }
 
     void prepare(LottieObject::Type type = LottieObject::Group);
