@@ -141,7 +141,7 @@ void LottieGroup::prepare(LottieObject::Type type)
     size_t strokeCnt = 0;
     size_t fillCnt = 0;
 
-    for (auto c = children.end() - 1; c >= children.data; --c) {
+    for (auto c = children.end() - 1; c >= children.begin(); --c) {
         if (reqFragment && !statical) break;
         auto child = static_cast<LottieObject*>(*c);
         if (statical) statical &= child->statical;
@@ -170,7 +170,7 @@ LottieLayer::~LottieLayer()
         free(refId);
     }
 
-    for (auto m = masks.data; m < masks.end(); ++m) {
+    for (auto m = masks.begin(); m < masks.end(); ++m) {
         delete(*m);
     }
 
@@ -214,18 +214,18 @@ LottieComposition::~LottieComposition()
     free(name);
 
     //delete interpolators
-    for (auto i = interpolators.data; i < interpolators.end(); ++i) {
+    for (auto i = interpolators.begin(); i < interpolators.end(); ++i) {
         free((*i)->key);
         free(*i);
     }
 
     //delete assets
-    for (auto a = assets.data; a < assets.end(); ++a) {
+    for (auto a = assets.begin(); a < assets.end(); ++a) {
         delete(*a);
     }
 
     //delete fonts
-    for (auto f = fonts.data; f < fonts.end(); ++f) {
+    for (auto f = fonts.begin(); f < fonts.end(); ++f) {
         delete(*f);
     }
 }

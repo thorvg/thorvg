@@ -209,9 +209,9 @@ void LottieParser::getValue(PathSet& path)
     if (ins.count != outs.count || outs.count != pts.count) return;
 
     //convert path
-    auto out = outs.data;
-    auto in = ins.data;
-    auto pt = pts.data;
+    auto out = outs.begin();
+    auto in = ins.begin();
+    auto pt = pts.begin();
 
     //Store manipulated results
     Array<Point> outPts;
@@ -379,7 +379,7 @@ LottieInterpolator* LottieParser::getInterpolator(const char* key, Point& in, Po
     LottieInterpolator* interpolator = nullptr;
 
     //get a cached interpolator if it has any.
-    for (auto i = comp->interpolators.data; i < comp->interpolators.end(); ++i) {
+    for (auto i = comp->interpolators.begin(); i < comp->interpolators.end(); ++i) {
         if (!strncmp((*i)->key, key, sizeof(buf))) interpolator = *i;
     }
 
