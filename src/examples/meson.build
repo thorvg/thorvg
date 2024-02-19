@@ -60,6 +60,12 @@ source_file = [
     'Update.cpp',
 ]
 
+
+if get_option('loaders').contains('all') == true or get_option('loaders').contains('lottie') == true
+  source_file += 'LottieExtension.cpp'
+endif
+
+
 foreach current_file : source_file
     name = current_file.split('.')[0]
     executable(name, current_file,
