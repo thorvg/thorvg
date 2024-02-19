@@ -50,7 +50,20 @@ void tvgDrawCmds(tvg::Canvas* canvas)
         return;
     }
 
-    picture->size(WIDTH, HEIGHT);
+    float scale;
+    float shiftX = 0.0f, shiftY = 0.0f;
+    float w, h;
+    picture->size(&w, &h);
+    if (w > h) {
+        scale = WIDTH / w;
+        shiftY = (HEIGHT - h * scale) * 0.5f;
+    } else {
+        scale = HEIGHT / h;
+        shiftX = (WIDTH - w * scale) * 0.5f;
+    }
+    picture->translate(shiftX, shiftY);
+    picture->scale(scale);
+
     if (canvas->push(std::move(picture)) != tvg::Result::Success) return;
     cout << "SVG: " << buf << endl;
 }
