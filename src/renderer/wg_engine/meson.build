@@ -7,7 +7,7 @@ source_file = [
     'tvgWgRenderer.h',
     'tvgWgRenderTarget.h',
     'tvgWgShaderSrc.h',
-    'tvgWgShaderTypes.h'
+    'tvgWgShaderTypes.h',
     'tvgWgBindGroups.cpp',
     'tvgWgCommon.cpp',
     'tvgWgGeometry.cpp',
