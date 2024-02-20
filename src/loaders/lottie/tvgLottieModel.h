@@ -325,20 +325,24 @@ struct LottieTransform : LottieObject
 };
 
 
-struct LottieSolidStroke : LottieObject, LottieStroke
+struct LottieSolid : LottieObject 
+{
+    LottieColor color = RGB24{255, 255, 255};
+    LottieOpacity opacity = 255;
+};
+
+
+struct LottieSolidStroke : LottieSolid, LottieStroke
 {
     void prepare()
     {
         LottieObject::type = LottieObject::SolidStroke;
         if (color.frames || opacity.frames || LottieStroke::dynamic()) statical = false;
     }
-
-    LottieColor color = RGB24{255, 255, 255};
-    LottieOpacity opacity = 255;
 };
 
 
-struct LottieSolidFill : LottieObject
+struct LottieSolidFill : LottieSolid
 {
     void prepare()
     {
@@ -346,8 +350,6 @@ struct LottieSolidFill : LottieObject
         if (color.frames || opacity.frames) statical = false;
     }
 
-    LottieColor color = RGB24{255, 255, 255};
-    LottieOpacity opacity = 255;
     FillRule rule = FillRule::Winding;
 };
 
