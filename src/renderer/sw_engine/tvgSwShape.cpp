@@ -37,8 +37,13 @@ struct Line
 
 static float _lineLength(const Point& pt1, const Point& pt2)
 {
+    /* approximate sqrt(x*x + y*y) using alpha max plus beta min algorithm.
+       With alpha = 1, beta = 3/8, giving results with the largest error less
+       than 7% compared to the exact value. */
     Point diff = {pt2.x - pt1.x, pt2.y - pt1.y};
-    return sqrtf(diff.x * diff.x + diff.y * diff.y);
+    if (diff.x < 0) diff.x = -diff.x;
+    if (diff.y < 0) diff.y = -diff.y;
+    return (diff.x > diff.y) ? (diff.x + diff.y * 0.375f) : (diff.y + diff.x * 0.375f);
 }
 
 
@@ -383,7 +388,7 @@ static float _outlineLength(const RenderShape* rshape)
                 break;
             }
             case PathCommand::CubicTo: {
-                length += bezLengthApprox({*(pts - 1), *pts, *(pts + 1), *(pts + 2)});
+                length += bezLength({*(pts - 1), *pts, *(pts + 1), *(pts + 2)});
                 pts += 3;
                 break;
             }
