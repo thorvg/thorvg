@@ -22,38 +22,11 @@
 
 #include "tvgSwCommon.h"
 #include "tvgMath.h"
-#include "tvgBezier.h"
+#include "tvgLines.h"
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
 /************************************************************************/
-
-struct Line
-{
-    Point pt1;
-    Point pt2;
-};
-
-
-static float _lineLength(const Point& pt1, const Point& pt2)
-{
-    Point diff = {pt2.x - pt1.x, pt2.y - pt1.y};
-    return sqrtf(diff.x * diff.x + diff.y * diff.y);
-}
-
-
-static void _lineSplitAt(const Line& cur, float at, Line& left, Line& right)
-{
-    auto len = _lineLength(cur.pt1, cur.pt2);
-    auto dx = ((cur.pt2.x - cur.pt1.x) / len) * at;
-    auto dy = ((cur.pt2.y - cur.pt1.y) / len) * at;
-    left.pt1 = cur.pt1;
-    left.pt2.x = left.pt1.x + dx;
-    left.pt2.y = left.pt1.y + dy;
-    right.pt1 = left.pt2;
-    right.pt2 = cur.pt2;
-}
-
 
 static void _outlineEnd(SwOutline& outline)
 {
@@ -115,7 +88,7 @@ static void _outlineClose(SwOutline& outline)
 static void _dashLineTo(SwDashStroke& dash, const Point* to, const Matrix* transform)
 {
     Line cur = {dash.ptCur, *to};
-    auto len = _lineLength(cur.pt1, cur.pt2);
+    auto len = lineLength(cur.pt1, cur.pt2);
 
     if (mathZero(len)) {
         _outlineMoveTo(*dash.outline, &dash.ptCur, transform);
@@ -133,7 +106,7 @@ static void _dashLineTo(SwDashStroke& dash, const Point* to, const Matrix* trans
             Line left, right;
             if (dash.curLen > 0) {
                 len -= dash.curLen;
-                _lineSplitAt(cur, dash.curLen, left, right);
+                lineSplitAt(cur, dash.curLen, left, right);
                 if (!dash.curOpGap) {
                     if (dash.move || dash.pattern[dash.curIdx] - dash.curLen < FLT_EPSILON) {
                         _outlineMoveTo(*dash.outline, &left.pt1, transform);
