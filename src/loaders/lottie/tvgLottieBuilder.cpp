@@ -34,6 +34,8 @@
 /************************************************************************/
 /* Internal Class Implementation                                        */
 /************************************************************************/
+constexpr auto PATH_KAPPA = 0.552284f;
+
 
 struct RenderRepeater
 {
@@ -371,9 +373,65 @@ static void _repeat(LottieGroup* parent, unique_ptr<Shape> path, RenderContext* 
 }
 
 
+static void _appendSharpRect(Shape* shape, float x, float y, float w, float h, float r)
+{
+    constexpr int commandsCnt = 5;
+    PathCommand commands[commandsCnt] = {
+        PathCommand::MoveTo, PathCommand::LineTo, PathCommand::LineTo,
+        PathCommand::LineTo, PathCommand::Close
+    };
+
+    constexpr int pointsCnt = 4;
+    Point points[pointsCnt] = {{x + w, y}, {x + w, y + h}, {x, y + h}, {x, y}};
+
+    shape->appendPath(commands, commandsCnt, points, pointsCnt);
+}
+
+static void _appendRoundedRect(Shape* shape, float x, float y, float w, float h, float r)
+{
+    constexpr int commandsCnt = 10;
+    PathCommand commands[commandsCnt] = {
+        PathCommand::MoveTo, PathCommand::LineTo, PathCommand::CubicTo,
+        PathCommand::LineTo, PathCommand::CubicTo, PathCommand::LineTo,
+        PathCommand::CubicTo, PathCommand::LineTo, PathCommand::CubicTo,
+        PathCommand::Close
+    };
+
+    auto halfW = w * 0.5f;
+    auto halfH = h * 0.5f;
+
+    auto rx = r > halfW ? halfW : r;
+    auto ry = r > halfH ? halfH : r;
+
+    auto hrx = rx * PATH_KAPPA;
+    auto hry = ry * PATH_KAPPA;
+
+    constexpr int pointsCnt = 17;
+    Point points[pointsCnt] = {
+        {x + w, y + ry}, //moveTo
+        {x + w, y + h - ry}, //lineTo
+        {x + w, y + h - ry + hry}, {x + w - rx + hrx, y + h}, {x + w - rx, y + h}, //cubicTo
+        {x + rx, y + h}, //lineTo
+        {x + rx - hrx, y + h}, {x, y + h - ry + hry}, {x, y + h - ry}, //cubicTo
+        {x, y + ry}, //lineTo
+        {x, y + ry - hry}, {x + rx - hrx, y}, {x + rx, y}, //cubicTo
+        {x + w - rx, y}, //lineTo
+        {x + w - rx + hrx, y}, {x + w, y + ry - hry}, {x + w, y + ry} //cubicTo
+    };
+
+    shape->appendPath(commands, commandsCnt, points, pointsCnt);
+}
+
+
+static void _appendRect(Shape* shape, float x, float y, float w, float h, float r)
+{
+    if (mathZero(r)) _appendSharpRect(shape, x, y, w, h, r);
+    else _appendRoundedRect(shape, x, y, w, h, r);
+}
+
 static void _updateRect(LottieGroup* parent, LottieObject** child, float frameNo, TVG_UNUSED Inlist<RenderContext>& contexts, RenderContext* ctx)
 {
-    auto rect= static_cast<LottieRect*>(*child);
+    auto rect = static_cast<LottieRect*>(*child);
 
     auto position = rect->position(frameNo);
     auto size = rect->size(frameNo);
@@ -387,30 +445,53 @@ static void _updateRect(LottieGroup* parent, LottieObject** child, float frameNo
 
     if (ctx->repeater) {
         auto path = Shape::gen();
-        path->appendRect(position.x - size.x * 0.5f, position.y - size.y * 0.5f, size.x, size.y, roundness, roundness);
+        _appendRect(path.get(), position.x - size.x * 0.5f, position.y - size.y * 0.5f, size.x, size.y, roundness);
         _repeat(parent, std::move(path), ctx);
     } else {
         auto merging = _draw(parent, ctx);
-        merging->appendRect(position.x - size.x * 0.5f, position.y - size.y * 0.5f, size.x, size.y, roundness, roundness);
+        _appendRect(merging, position.x - size.x * 0.5f, position.y - size.y * 0.5f, size.x, size.y, roundness);
         if (rect->direction == 2) merging->fill(FillRule::EvenOdd);
     }
 }
 
 
+static void _appendCircle(Shape* shape, float cx, float cy, float rx, float ry)
+{
+    auto rxKappa = rx * PATH_KAPPA;
+    auto ryKappa = ry * PATH_KAPPA;
+
+    constexpr int commandsSize = 6;
+    PathCommand commands[commandsSize] = {
+        PathCommand::MoveTo, PathCommand::CubicTo, PathCommand::CubicTo,
+        PathCommand::CubicTo, PathCommand::CubicTo, PathCommand::Close
+    };
+
+    constexpr int pointsSize = 13;
+    Point points[pointsSize] = {
+        {cx, cy - ry}, //moveTo
+        {cx + rxKappa, cy - ry}, {cx + rx, cy - ryKappa}, {cx + rx, cy}, //cubicTo
+        {cx + rx, cy + ryKappa}, {cx + rxKappa, cy + ry}, {cx, cy + ry}, //cubicTo
+        {cx - rxKappa, cy + ry}, {cx - rx, cy + ryKappa}, {cx - rx, cy}, //cubicTo
+        {cx - rx, cy - ryKappa}, {cx - rxKappa, cy - ry}, {cx, cy - ry}  //cubicTo
+    };
+    
+    shape->appendPath(commands, commandsSize, points, pointsSize);
+}
+
 static void _updateEllipse(LottieGroup* parent, LottieObject** child, float frameNo, TVG_UNUSED Inlist<RenderContext>& contexts, RenderContext* ctx)
 {
-    auto ellipse= static_cast<LottieEllipse*>(*child);
+    auto ellipse = static_cast<LottieEllipse*>(*child);
 
     auto position = ellipse->position(frameNo);
     auto size = ellipse->size(frameNo);
 
     if (ctx->repeater) {
         auto path = Shape::gen();
-        path->appendCircle(position.x, position.y, size.x * 0.5f, size.y * 0.5f);
+        _appendCircle(path.get(), position.x, position.y, size.x * 0.5f, size.y * 0.5f);
         _repeat(parent, std::move(path), ctx);
     } else {
         auto merging = _draw(parent, ctx);
-        merging->appendCircle(position.x, position.y, size.x * 0.5f, size.y * 0.5f);
+        _appendCircle(merging, position.x, position.y, size.x * 0.5f, size.y * 0.5f);
         if (ellipse->direction == 2) merging->fill(FillRule::EvenOdd);
     }
 }
