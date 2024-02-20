@@ -377,9 +377,6 @@ static void _lineTo(SwStroke& stroke, const SwPoint& to)
     //a zero-length lineto is a no-op; avoid creating a spurious corner
     if (delta.zero()) return;
 
-    //compute length of line
-    auto angle = mathAtan(delta);
-
     /* The lineLength is used to determine the intersection of strokes outlines.
        The scale needs to be reverted since the stroke width has not been scaled.
        An alternative option is to scale the width of the stroke properly by
@@ -387,6 +384,7 @@ static void _lineTo(SwStroke& stroke, const SwPoint& to)
     delta.x = static_cast<SwCoord>(delta.x / stroke.sx);
     delta.y = static_cast<SwCoord>(delta.y / stroke.sy);
     auto lineLength = mathLength(delta);
+    auto angle = mathAtan(delta);
 
     delta = {static_cast<SwCoord>(stroke.width), 0};
     mathRotate(delta, angle + SW_ANGLE_PI2);
