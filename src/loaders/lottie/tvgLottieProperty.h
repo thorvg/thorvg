@@ -201,16 +201,22 @@ uint32_t bsearch(T* frames, float frameNo)
 }
 
 
-template<typename T>
 struct LottieProperty
+{
+    enum class Type : uint8_t { Point = 0, Float, Opacity, Color, PathSet, ColorStop, Position, TextDoc, Invalid };
+};
+
+
+template<typename T>
+struct LottieGenericProperty : LottieProperty
 {
     //Property has an either keyframes or single value.
     Array<LottieScalarFrame<T>>* frames = nullptr;
     T value;
 
-    LottieProperty(T v) : value(v) {}
+    LottieGenericProperty(T v) : value(v) {}
 
-    ~LottieProperty()
+    ~LottieGenericProperty()
     {
         delete(frames);
     }
@@ -248,7 +254,7 @@ struct LottieProperty
 };
 
 
-struct LottiePathSet
+struct LottiePathSet : LottieProperty
 {
     Array<LottieScalarFrame<PathSet>>* frames = nullptr;
     PathSet value;
@@ -343,7 +349,7 @@ struct LottiePathSet
 };
 
 
-struct LottieColorStop
+struct LottieColorStop : LottieProperty
 {
     Array<LottieScalarFrame<ColorStop>>* frames = nullptr;
     ColorStop value;
@@ -431,7 +437,7 @@ struct LottieColorStop
 };
 
 
-struct LottiePosition
+struct LottiePosition : LottieProperty
 {
     Array<LottieVectorFrame<Point>>* frames = nullptr;
     Point value;
@@ -493,7 +499,7 @@ struct LottiePosition
 };
 
 
-struct LottieTextDoc
+struct LottieTextDoc : LottieProperty
 {
     Array<LottieScalarFrame<TextDocument>>* frames = nullptr;
     TextDocument value;
@@ -542,9 +548,9 @@ struct LottieTextDoc
 };
 
 
-using LottiePoint = LottieProperty<Point>;
-using LottieFloat = LottieProperty<float>;
-using LottieOpacity = LottieProperty<uint8_t>;
-using LottieColor = LottieProperty<RGB24>;
+using LottiePoint = LottieGenericProperty<Point>;
+using LottieFloat = LottieGenericProperty<float>;
+using LottieOpacity = LottieGenericProperty<uint8_t>;
+using LottieColor = LottieGenericProperty<RGB24>;
 
 #endif //_TVG_LOTTIE_PROPERTY_H_
