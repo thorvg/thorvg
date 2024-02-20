@@ -158,7 +158,7 @@ struct LottieVectorFrame
 
         if (hasTangent) {
             Bezier bz = {value, value + outTangent, next->value + inTangent, next->value};
-            t = bezAtApprox(bz, t * length, length);
+            t = bezAt(bz, t * length, length);
             return bezPointAt(bz, t);
         } else {
             return mathLerp(value, next->value, t);
@@ -171,14 +171,14 @@ struct LottieVectorFrame
         auto t = (frameNo - no) / (next->no - no);
         if (interpolator) t = interpolator->progress(t);
         Bezier bz = {value, value + outTangent, next->value + inTangent, next->value};
-        t = bezAtApprox(bz, t * length, length);
+        t = bezAt(bz, t * length, length);
         return -bezAngleAt(bz, t);
     }
 
     void prepare(LottieVectorFrame* next)
     {
         Bezier bz = {value, value + outTangent, next->value + inTangent, next->value};
-        length = bezLengthApprox(bz);
+        length = bezLength(bz);
     }
 };
 
