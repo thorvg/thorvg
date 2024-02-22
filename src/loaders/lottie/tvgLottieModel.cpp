@@ -228,4 +228,9 @@ LottieComposition::~LottieComposition()
     for (auto f = fonts.begin(); f < fonts.end(); ++f) {
         delete(*f);
     }
+
+    //delete slots
+    for (auto s = slots.begin(); s < slots.end(); ++s) {
+        delete(*s);
+    }
 }
