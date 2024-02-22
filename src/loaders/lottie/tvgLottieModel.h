@@ -23,6 +23,8 @@
 #ifndef _TVG_LOTTIE_MODEL_H_
 #define _TVG_LOTTIE_MODEL_H_
 
+#include <cstring>
+
 #include "tvgCommon.h"
 #include "tvgRender.h"
 #include "tvgLottieProperty.h"
