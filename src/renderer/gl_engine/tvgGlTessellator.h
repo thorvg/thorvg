@@ -26,7 +26,7 @@
 #include <cstdint>
 
 #include "tvgGlGeometry.h"
-#include "tvgBezier.h"
+#include "tvgLines.h"
 
 namespace tvg
 {
