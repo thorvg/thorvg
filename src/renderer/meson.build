@@ -13,6 +13,7 @@ if get_option('engines').contains('wg_beta') == true
 endif
 
 source_file = [
+   'tvgAnimation.h',
    'tvgCanvas.h',
    'tvgCommon.h',
    'tvgBinaryDesc.h',

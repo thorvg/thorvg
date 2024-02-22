@@ -1,4 +1,5 @@
 source_file = [
+   'tvgLottieAnimation.cpp',
    'tvgLottieBuilder.h',
    'tvgLottieInterpolator.h',
    'tvgLottieLoader.h',
@@ -18,3 +19,6 @@ subloader_dep += [declare_dependency(
     include_directories : include_directories('.'),
     sources : source_file
 )]
+
+install_headers('thorvg_lottie.h')
+headers += include_directories('.')
