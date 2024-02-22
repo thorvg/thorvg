@@ -300,6 +300,24 @@ Paint* LottieLoader::paint()
 }
 
 
+bool LottieLoader::override(const char* slot)
+{
+    if (!slot) return false;
+
+    auto parser = new LottieParser(strdup(slot), dirName);
+    parser->comp = comp;
+
+    auto sid = parser->sid();
+    if (!sid) return false;
+
+    for (auto s = comp->slots.begin(); s < comp->slots.end(); ++s) {
+        if (!strcmp(s->sid, sid)) return parser->parse(s);
+    }
+
+    return false;
+}
+
+
 bool LottieLoader::frame(float no)
 {
     //no meaing to update if frame diff is less then 1ms

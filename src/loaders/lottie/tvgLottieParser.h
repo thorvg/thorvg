@@ -36,6 +36,9 @@ public:
     }
 
     bool parse();
+    bool parse(LottieSlot* slot);
+
+    const char* sid();
 
     LottieComposition* comp = nullptr;
     const char* dirName = nullptr;       //base resource directory

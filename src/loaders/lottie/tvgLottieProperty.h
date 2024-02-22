@@ -249,6 +249,17 @@ struct LottieGenericProperty : LottieProperty
         return frame->interpolate(frame + 1, frameNo);
     }
 
+    T& operator=(const T& other)
+    {
+        value = other.value;
+        if (other.frames) {
+            delete(frames);
+            memcpy(frames, other.frames, sizeof(LottieScalarFrame<T>) * other.frames->count);
+        }
+
+        return *this;
+    }
+
     float angle(float frameNo) { return 0; }
     void prepare() {}
 };
@@ -433,6 +444,18 @@ struct LottieColorStop : LottieProperty
         fill->colorStops(result.data, count);
     }
 
+    LottieColorStop& operator=(const LottieColorStop& other)
+    {
+        value = other.value;
+        count = other.count;
+        if (other.frames) {
+            delete(frames);
+            memcpy(frames, other.frames, sizeof(LottieScalarFrame<ColorStop>) * other.frames->count);
+        }
+
+        return *this;
+    }
+
     void prepare() {}
 };
 
@@ -542,6 +565,17 @@ struct LottieTextDoc : LottieProperty
 
         auto frame = frames->data + bsearch(frames, frameNo);
         return frame->value;
+    }
+
+    LottieTextDoc& operator=(const LottieTextDoc& other)
+    {
+        value = other.value;
+        if (other.frames) {
+            delete(frames);
+            memcpy(frames, other.frames, sizeof(LottieScalarFrame<TextDocument>) * other.frames->count);
+        }
+
+        return *this;
     }
 
     void prepare() {}

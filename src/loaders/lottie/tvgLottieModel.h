@@ -123,6 +123,11 @@ struct LottieObject
         free(name);
     }
 
+    virtual void override(LottieObject* prop)
+    {
+        TVGERR("LOTTIE", "Unsupported slot type");
+    }
+
     char* name = nullptr;
     Type type;
     bool statical = true;      //no keyframes
@@ -179,6 +184,12 @@ struct LottieText : LottieObject
     void prepare()
     {
         LottieObject::type = LottieObject::Text;
+    }
+
+    void override(LottieObject* prop) override
+    {
+        this->doc = static_cast<LottieText*>(prop)->doc;
+        this->prepare();
     }
 
     LottieTextDoc doc;
@@ -337,6 +348,12 @@ struct LottieSolidStroke : LottieSolid, LottieStroke
         LottieObject::type = LottieObject::SolidStroke;
         if (color.frames || opacity.frames || LottieStroke::dynamic()) statical = false;
     }
+
+    void override(LottieObject* prop) override
+    {
+        this->color = static_cast<LottieSolid*>(prop)->color;
+        this->prepare();
+    }
 };
 
 
@@ -346,6 +363,12 @@ struct LottieSolidFill : LottieSolid
     {
         LottieObject::type = LottieObject::SolidFill;
         if (color.frames || opacity.frames) statical = false;
+    }
+
+    void override(LottieObject* prop) override
+    {
+        this->color = static_cast<LottieSolid*>(prop)->color;
+        this->prepare();
     }
 
     FillRule rule = FillRule::Winding;
@@ -466,6 +489,12 @@ struct LottieGradientFill : LottieGradient
         if (LottieGradient::prepare()) statical = false;
     }
 
+    void override(LottieObject* prop) override
+    {
+        this->colorStops = static_cast<LottieGradient*>(prop)->colorStops;
+        this->prepare();
+    }
+
     FillRule rule = FillRule::Winding;
 };
 
@@ -476,6 +505,12 @@ struct LottieGradientStroke : LottieGradient, LottieStroke
     {
         LottieObject::type = LottieObject::GradientStroke;
         if (LottieGradient::prepare() || LottieStroke::dynamic()) statical = false;
+    }
+
+    void override(LottieObject* prop) override
+    {
+        this->colorStops = static_cast<LottieGradient*>(prop)->colorStops;
+        this->prepare();
     }
 };
 

@@ -1230,6 +1230,79 @@ void LottieParser::postProcess(Array<LottieGlyph*>& glyphes)
 /* External Class Implementation                                        */
 /************************************************************************/
 
+const char* LottieParser::sid()
+{
+    //verify json.
+    if (!parseNext()) return nullptr;
+    enterObject();
+
+    return nextObjectKey();
+}
+
+
+bool LottieParser::parse(LottieSlot* slot)
+{
+    enterObject();
+
+    // Generate context
+    LottieParser::Context context;
+    this->context = &context;
+
+    switch (slot->type) {
+        case LottieProperty::Type::ColorStop: {
+            auto gradient = new LottieGradient;
+            this->context->gradient = gradient;
+
+            while (auto key = nextObjectKey()) {
+                if (!strcmp(key, "p")) parseProperty(gradient->colorStops);
+                else skip(key);
+            }
+
+            for (auto obj = slot->objs.begin(); obj < slot->objs.end(); ++obj) {
+                (*obj)->override(gradient);
+            }
+            delete(gradient);
+            break;
+        }
+        case LottieProperty::Type::Color: {
+            auto solid = new LottieSolid;
+
+            while (auto key = nextObjectKey()) {
+                if (!strcmp(key, "p")) parseProperty(solid->color);
+                else skip(key);
+            }
+
+            for (auto obj = slot->objs.begin(); obj < slot->objs.end(); ++obj) {
+                (*obj)->override(solid);
+            }
+            delete(solid);
+            break;
+        }
+        case LottieProperty::Type::TextDoc: {
+            auto text = new LottieText;
+
+            while (auto key = nextObjectKey()) {
+                if (!strcmp(key, "p")) parseProperty(text->doc);
+                else skip(key);
+            }
+
+            for (auto obj = slot->objs.begin(); obj < slot->objs.end(); ++obj) {
+                (*obj)->override(text);
+            }
+            delete(text);
+            break;
+        }
+        default: {
+            break;
+        }
+    }
+
+    if (Invalid() || !comp->root) return false;
+
+    return true;
+}
+
+
 bool LottieParser::parse()
 {
     //verify json.
