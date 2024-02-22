@@ -296,6 +296,27 @@ Paint* LottieLoader::paint()
 }
 
 
+bool LottieLoader::override(const char* slot)
+{
+    if (!slot) return false;
+
+    //parsing slot json
+    LottieParser parser(slot, dirName);
+    auto sid = parser.sid();
+    if (!sid) return false;
+
+    bool ret = false;
+
+    for (auto s = comp->slots.begin(); s < comp->slots.end(); ++s) {
+        if (!strcmp((*s)->sid, sid)) continue;
+        ret = parser.parse(*s);
+        break;
+    }
+
+    return ret;
+}
+
+
 bool LottieLoader::frame(float no)
 {
     //no meaing to update if frame diff is less then 1ms

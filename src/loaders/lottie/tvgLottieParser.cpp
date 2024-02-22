@@ -334,6 +334,17 @@ void LottieParser::getInperpolatorPoint(Point& pt)
     }
 }
 
+
+template<typename T>
+void LottieParser::parseSlotProperty(T& prop)
+{
+    while (auto key = nextObjectKey()) {
+        if (!strcmp(key, "p")) parseProperty(prop);
+        else skip(key);
+    }
+}
+
+
 template<typename T>
 bool LottieParser::parseTangent(const char *key, LottieVectorFrame<T>& value)
 {
@@ -456,13 +467,22 @@ void LottieParser::parsePropertyInternal(T& prop)
 }
 
 
-template<typename T>
-void LottieParser::parseProperty(T& prop)
+template<LottieProperty::Type type, typename T>
+void LottieParser::parseProperty(T& prop, LottieObject* obj)
 {
     enterObject();
     while (auto key = nextObjectKey()) {
         if (!strcmp(key, "k")) parsePropertyInternal(prop);
-        else skip(key);
+        else if (obj && !strcmp(key, "sid")) {
+            auto sid = getStringCopy();
+            //append object if the slot already exists.
+            for (auto slot = comp->slots.begin(); slot < comp->slots.end(); ++slot) {
+                if (strcmp((*slot)->sid, sid)) continue;
+                (*slot)->objs.push(obj);
+                return;
+            }
+            comp->slots.push(new LottieSlot(sid, obj, type));
+        } else skip(key);
     }
 }
 
@@ -552,8 +572,8 @@ LottieSolidFill* LottieParser::parseSolidFill()
 
     while (auto key = nextObjectKey()) {
         if (!strcmp(key, "nm")) fill->name = getStringCopy();
-        else if (!strcmp(key, "c")) parseProperty(fill->color);
-        else if (!strcmp(key, "o")) parseProperty(fill->opacity);
+        else if (!strcmp(key, "c")) parseProperty<LottieProperty::Type::Color>(fill->color, fill);
+        else if (!strcmp(key, "o")) parseProperty<LottieProperty::Type::Opacity>(fill->opacity, fill);
         else if (!strcmp(key, "fillEnabled")) fill->hidden |= !getBool();
         else if (!strcmp(key, "r")) fill->rule = getFillRule();
         else if (!strcmp(key, "hd")) fill->hidden = getBool();
@@ -590,9 +610,9 @@ LottieSolidStroke* LottieParser::parseSolidStroke()
     if (!stroke) return nullptr;
 
     while (auto key = nextObjectKey()) {
-        if (!strcmp(key, "c")) parseProperty(stroke->color);
-        else if (!strcmp(key, "o")) parseProperty(stroke->opacity);
-        else if (!strcmp(key, "w")) parseProperty(stroke->width);
+        if (!strcmp(key, "c")) parseProperty<LottieProperty::Type::Color>(stroke->color, stroke);
+        else if (!strcmp(key, "o")) parseProperty<LottieProperty::Type::Opacity>(stroke->opacity, stroke);
+        else if (!strcmp(key, "w")) parseProperty<LottieProperty::Type::Float>(stroke->width, stroke);
         else if (!strcmp(key, "lc")) stroke->cap = getStrokeCap();
         else if (!strcmp(key, "lj")) stroke->join = getStrokeJoin();
         else if (!strcmp(key, "ml")) stroke->miterLimit = getFloat();
@@ -680,21 +700,23 @@ LottieRoundedCorner* LottieParser::parseRoundedCorner()
 
 void LottieParser::parseGradient(LottieGradient* gradient, const char* key)
 {
+    context->gradient = gradient;
+
     if (!strcmp(key, "t")) gradient->id = getInt();
-    else if (!strcmp(key, "o")) parseProperty(gradient->opacity);
+    else if (!strcmp(key, "o")) parseProperty<LottieProperty::Type::Opacity>(gradient->opacity, gradient);
     else if (!strcmp(key, "g"))
     {
         enterObject();
         while (auto key = nextObjectKey()) {
             if (!strcmp(key, "p")) gradient->colorStops.count = getInt();
-            else if (!strcmp(key, "k")) parseProperty(gradient->colorStops);
+            else if (!strcmp(key, "k")) parseProperty<LottieProperty::Type::ColorStop>(gradient->colorStops, gradient);
             else skip(key);
         }
     }
-    else if (!strcmp(key, "s")) parseProperty(gradient->start);
-    else if (!strcmp(key, "e")) parseProperty(gradient->end);
-    else if (!strcmp(key, "h")) parseProperty(gradient->height);
-    else if (!strcmp(key, "a")) parseProperty(gradient->angle);
+    else if (!strcmp(key, "s")) parseProperty<LottieProperty::Type::Point>(gradient->start, gradient);
+    else if (!strcmp(key, "e")) parseProperty<LottieProperty::Type::Point>(gradient->end, gradient);
+    else if (!strcmp(key, "h")) parseProperty<LottieProperty::Type::Float>(gradient->height, gradient);
+    else if (!strcmp(key, "a")) parseProperty<LottieProperty::Type::Float>(gradient->angle, gradient);
     else skip(key);
 }
 
@@ -703,8 +725,6 @@ LottieGradientFill* LottieParser::parseGradientFill()
 {
     auto fill = new LottieGradientFill;
     if (!fill) return nullptr;
-
-    context->gradient = fill;
 
     while (auto key = nextObjectKey()) {
         if (!strcmp(key, "nm")) fill->name = getStringCopy();
@@ -723,8 +743,6 @@ LottieGradientStroke* LottieParser::parseGradientStroke()
 {
     auto stroke = new LottieGradientStroke;
     if (!stroke) return nullptr;
-
-    context->gradient = stroke;
 
     while (auto key = nextObjectKey()) {
         if (!strcmp(key, "nm")) stroke->name = getStringCopy();
@@ -1055,7 +1073,7 @@ void LottieParser::parseText(Array<LottieObject*>& parent)
     auto text = new LottieText;
 
     while (auto key = nextObjectKey()) {
-        if (!strcmp(key, "d")) parseProperty(text->doc);
+        if (!strcmp(key, "d")) parseProperty<LottieProperty::Type::TextDoc>(text->doc, text);
         else if (!strcmp(key, "a")) parseTextRange(text);
         //else if (!strcmp(key, "p")) TVGLOG("LOTTIE", "Text Follow Path (p) is not supported"); 
         //else if (!strcmp(key, "m")) TVGLOG("LOTTIE", "Text Alignment Option (m) is not supported");
@@ -1219,6 +1237,56 @@ void LottieParser::postProcess(Array<LottieGlyph*>& glyphes)
 /************************************************************************/
 /* External Class Implementation                                        */
 /************************************************************************/
+
+const char* LottieParser::sid()
+{
+    //verify json
+    if (!parseNext()) return nullptr;
+    enterObject();
+    return nextObjectKey();
+}
+
+
+bool LottieParser::parse(LottieSlot* slot)
+{
+    enterObject();
+
+    LottieParser::Context context;
+    this->context = &context;
+    LottieObject* obj = nullptr;  //slot object
+
+    switch (slot->type) {
+        case LottieProperty::Type::ColorStop: {
+            obj = new LottieGradient;
+            context.gradient = static_cast<LottieGradient*>(obj);
+            parseSlotProperty(static_cast<LottieGradient*>(obj)->colorStops);
+            break;
+        }
+        case LottieProperty::Type::Color: {
+            obj = new LottieSolid;
+            parseSlotProperty(static_cast<LottieSolid*>(obj)->color);
+            break;
+        }
+        case LottieProperty::Type::TextDoc: {
+            obj = new LottieText;
+            parseSlotProperty(static_cast<LottieText*>(obj)->doc);
+            break;
+        }
+        default: break;
+    }
+
+    if (!obj || Invalid()) return false;
+
+    //apply slot object to all targets
+    for (auto target = slot->objs.begin(); target < slot->objs.end(); ++target) {
+        (*target)->override(obj);
+    }
+
+    delete(obj);
+
+    return true;
+}
+
 
 bool LottieParser::parse()
 {
