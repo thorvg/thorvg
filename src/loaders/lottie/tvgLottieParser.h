@@ -25,6 +25,7 @@
 
 #include "tvgCommon.h"
 #include "tvgLottieParserHandler.h"
+#include "tvgLottieProperty.h"
 
 struct LottieParser : LookaheadParserHandler
 {
@@ -66,7 +67,7 @@ private:
     template<typename T> bool parseTangent(const char *key, LottieScalarFrame<T>& value);
     template<typename T> void parseKeyFrame(T& prop);
     template<typename T> void parsePropertyInternal(T& prop);
-    template<typename T> void parseProperty(T& prop);
+    template<LottieProperty::Type type = LottieProperty::Type::Invalid, typename T> void parseProperty(T& prop, LottieObject* obj = nullptr);
 
     LottieObject* parseObject();
     LottieObject* parseAsset();

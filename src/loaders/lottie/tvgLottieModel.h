@@ -590,6 +590,14 @@ struct LottieLayer : LottieGroup
 };
 
 
+struct LottieSlot
+{
+    char* sid = nullptr;
+    LottieProperty::Type type;
+    Array<LottieObject*> objs;
+};
+
+
 struct LottieComposition
 {
     ~LottieComposition();
@@ -620,6 +628,7 @@ struct LottieComposition
     Array<LottieObject*> assets;
     Array<LottieInterpolator*> interpolators;
     Array<LottieFont*> fonts;
+    Array<LottieSlot> slots;
     bool initiated = false;
 };
 
