@@ -53,6 +53,7 @@ public:
     bool resize(Paint* paint, float w, float h) override;
     bool read() override;
     Paint* paint() override;
+    bool override(const char* slot);
 
     //Frame Controls
     bool frame(float no) override;

@@ -249,6 +249,15 @@ struct LottieGenericProperty : LottieProperty
         return frame->interpolate(frame + 1, frameNo);
     }
 
+    T& operator=(const T& other)
+    {
+        //shallow copy, used for slot overriding
+        delete(frames);
+        *this = other;
+        const_cast<T&>(other).frames = nullptr;
+        return *this;
+    }
+
     float angle(float frameNo) { return 0; }
     void prepare() {}
 };
@@ -433,6 +442,15 @@ struct LottieColorStop : LottieProperty
         fill->colorStops(result.data, count);
     }
 
+    LottieColorStop& operator=(const LottieColorStop& other)
+    {
+        //shallow copy, used for slot overriding
+        delete(frames);
+        *this = other;
+        const_cast<LottieColorStop&>(other).frames = nullptr;
+        return *this;
+    }
+
     void prepare() {}
 };
 
@@ -542,6 +560,15 @@ struct LottieTextDoc : LottieProperty
 
         auto frame = frames->data + bsearch(frames, frameNo);
         return frame->value;
+    }
+
+    LottieTextDoc& operator=(const LottieTextDoc& other)
+    {
+        //shallow copy, used for slot overriding
+        delete(frames);
+        *this = other;
+        const_cast<LottieTextDoc&>(other).frames = nullptr;
+        return *this;
     }
 
     void prepare() {}
