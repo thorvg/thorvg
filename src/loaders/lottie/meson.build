@@ -1,4 +1,5 @@
 source_file = [
+   'tvgLottieAnimation.cpp',
    'tvgLottieBuilder.h',
    'tvgLottieInterpolator.h',
    'tvgLottieLoader.h',
