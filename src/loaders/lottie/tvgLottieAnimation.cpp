@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 - 2024 the ThorVG project. All rights reserved.
+ * Copyright (c) 2024 the ThorVG project. All rights reserved.
 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,8 +20,11 @@
  * SOFTWARE.
  */
 
-#include "tvgFrameModule.h"
+#include "tvgCommon.h"
+#include "thorvg_lottie.h"
+#include "tvgLottieLoader.h"
 #include "tvgAnimation.h"
+
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
@@ -31,69 +34,23 @@
 /* External Class Implementation                                        */
 /************************************************************************/
 
-Animation::~Animation()
-{
-    delete(pImpl);
-}
-
-
-Animation::Animation() : pImpl(new Impl)
+LottieAnimation::~LottieAnimation()
 {
 }
 
-
-Result Animation::frame(float no) noexcept
+Result LottieAnimation::override(const char* slot) noexcept
 {
-    auto loader = pImpl->picture->pImpl->loader;
+    if (!pImpl->picture->pImpl->loader) return Result::InsufficientCondition;
 
-    if (!loader) return Result::InsufficientCondition;
-    if (!loader->animatable()) return Result::NonSupport;
+    if (static_cast<LottieLoader*>(pImpl->picture->pImpl->loader)->override(slot)) {
+        return Result::Success;
+    }
 
-    if (static_cast<FrameModule*>(loader)->frame(no)) return Result::Success;
     return Result::InsufficientCondition;
 }
 
 
-Picture* Animation::picture() const noexcept
+unique_ptr<LottieAnimation> LottieAnimation::gen() noexcept
 {
-    return pImpl->picture;
-}
-
-
-float Animation::curFrame() const noexcept
-{
-    auto loader = pImpl->picture->pImpl->loader;
-
-    if (!loader) return 0;
-    if (!loader->animatable()) return 0;
-
-    return static_cast<FrameModule*>(loader)->curFrame();
-}
-
-
-float Animation::totalFrame() const noexcept
-{
-    auto loader = pImpl->picture->pImpl->loader;
-
-    if (!loader) return 0;
-    if (!loader->animatable()) return 0;
-
-    return static_cast<FrameModule*>(loader)->totalFrame();
-}
-
-
-float Animation::duration() const noexcept
-{
-    auto loader = pImpl->picture->pImpl->loader;
-
-    if (!loader) return 0;
-    if (!loader->animatable()) return 0;
-
-    return static_cast<FrameModule*>(loader)->duration();
-}
-
-
-unique_ptr<Animation> Animation::gen() noexcept
-{
-    return unique_ptr<Animation>(new Animation);
+    return unique_ptr<LottieAnimation>(new LottieAnimation);
 }
