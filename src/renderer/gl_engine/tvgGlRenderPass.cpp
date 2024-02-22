@@ -32,8 +32,12 @@ GlRenderTarget::~GlRenderTarget()
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, 0));
     GL_CHECK(glDeleteFramebuffers(1, &mFbo));
 
-    if (mColorTex != 0) GL_CHECK(glDeleteTextures(1, &mColorTex));
-    if (mStencilBuffer != 0) GL_CHECK(glDeleteRenderbuffers(1, &mStencilBuffer));
+    if (mColorTex != 0) {
+        GL_CHECK(glDeleteTextures(1, &mColorTex));
+    }
+    if (mStencilBuffer != 0) {
+        GL_CHECK(glDeleteRenderbuffers(1, &mStencilBuffer));
+    }
 }
 
 void GlRenderTarget::init(GLint resolveId)
