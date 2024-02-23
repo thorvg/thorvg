@@ -253,7 +253,8 @@ struct LottieGenericProperty : LottieProperty
     {
         //shallow copy, used for slot overriding
         delete(frames);
-        *this = other;
+        frames = other.frames;
+        value = other.value;
         const_cast<T&>(other).frames = nullptr;
         return *this;
     }
@@ -446,7 +447,9 @@ struct LottieColorStop : LottieProperty
     {
         //shallow copy, used for slot overriding
         delete(frames);
-        *this = other;
+        frames = other.frames;
+        value = other.value;
+        count = other.count;
         const_cast<LottieColorStop&>(other).frames = nullptr;
         return *this;
     }
@@ -566,7 +569,8 @@ struct LottieTextDoc : LottieProperty
     {
         //shallow copy, used for slot overriding
         delete(frames);
-        *this = other;
+        frames = other.frames;
+        value = other.value;
         const_cast<LottieTextDoc&>(other).frames = nullptr;
         return *this;
     }
