@@ -25,7 +25,7 @@
 /************************************************************************/
 /* Drawing Commands                                                     */
 /************************************************************************/
-tvg::Shape* pShape = nullptr;
+static tvg::Shape* pShape = nullptr;
 static bool updated = false;
 
 void tvgDrawCmds(tvg::Canvas* canvas)
@@ -148,6 +148,7 @@ void drawGLview(Evas_Object *obj)
 
     if (glCanvas->draw() == tvg::Result::Success) {
         glCanvas->sync();
+        updated = false;
     }
 }
 
