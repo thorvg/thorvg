@@ -304,19 +304,25 @@ bool LottieLoader::override(const char* slot)
 {
     if (!slot) return false;
 
+    //TODO: Crashed, does this necessary?
+    auto temp = strdup(slot);
+
     //parsing slot json
-    LottieParser parser(slot, dirName);
+    LottieParser parser(temp, dirName);
     auto sid = parser.sid();
-    if (!sid) return false;
+    if (!sid) {
+        free(temp);
+        return false;
+    }
 
     bool ret = false;
-
     for (auto s = comp->slots.begin(); s < comp->slots.end(); ++s) {
-        if (!strcmp((*s)->sid, sid)) continue;
+        if (strcmp((*s)->sid, sid)) continue;
         ret = parser.parse(*s);
         break;
     }
 
+    free(temp);
     return ret;
 }
 
