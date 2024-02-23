@@ -147,6 +147,7 @@ void drawGLview(Evas_Object *obj)
 
     if (glCanvas->draw() == tvg::Result::Success) {
         glCanvas->sync();
+        updated = false;
     }
 }
 
