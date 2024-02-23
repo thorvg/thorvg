@@ -26,8 +26,9 @@
 /* Drawing Commands                                                     */
 /************************************************************************/
 
-tvg::Shape *pMaskShape = nullptr;
-tvg::Shape *pMask = nullptr;
+static tvg::Shape *pMaskShape = nullptr;
+static tvg::Shape *pMask = nullptr;
+static bool updated = false;
 
 
 void tvgDrawCmds(tvg::Canvas* canvas)
@@ -67,6 +68,8 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     picture2->composite(std::move(mask), tvg::CompositeMethod::AlphaMask);
     if (canvas->push(std::move(picture2)) != tvg::Result::Success) return;
+
+    updated = true;
 }
 
 
@@ -93,6 +96,7 @@ void drawSwView(void* data, Eo* obj)
 {
     if (swCanvas->draw() == tvg::Result::Success) {
         swCanvas->sync();
+        updated = false;
     }
 }
 
@@ -109,6 +113,7 @@ void tvgUpdateCmds(tvg::Canvas* canvas, float progress)
     pMask->translate(0 , progress * 300 - 100);
 
     canvas->update();
+    updated = true;
 }
 
 void transitSwCb(Elm_Transit_Effect *effect, Elm_Transit* transit, double progress)
@@ -149,6 +154,7 @@ void drawGLview(Evas_Object *obj)
 
     if (glCanvas->draw() == tvg::Result::Success) {
         glCanvas->sync();
+        updated = false;
     }
 }
 
