@@ -2319,7 +2319,47 @@ TVG_API Tvg_Result tvg_animation_get_duration(Tvg_Animation* animation, float* d
 TVG_API Tvg_Result tvg_animation_del(Tvg_Animation* animation);
 
 
-/** \} */   // end defgroup ThorVG_CAPI
+/** \} */   // end defgroup ThorVGCapi_Animation
+
+
+/**
+* \defgroup ThorVGCapi_LottieAnimation LottieAnimation
+* \brief A module for manipulation of lottie extension features.
+*
+* The module enables control of advanced Lottie features.
+* \{
+*/
+
+/************************************************************************/
+/* LottieAnimation Extension API                                        */
+/************************************************************************/
+
+/*!
+* \brief Creates a new LottieAnimation object. (Experimental API)
+*
+* \return Tvg_Animation A new Tvg_LottieAnimation object.
+*/
+TVG_API Tvg_Animation* tvg_lottie_animation_new();
+
+
+/*!
+* \brief Override the lottie properties through the slot data. (Experimental API)
+*
+* \param[in] animation The Tvg_Animation object to override the property with the slot.
+* \param[in] slot The lottie slot data in json.
+*
+* \return Tvg_Animation A new Tvg_LottieAnimation object.
+* \retval TVG_RESULT_SUCCESS Succeed.
+* \retval TVG_RESULT_INSUFFICIENT_CONDITION When the given @p slot is invalid
+* \retval TVG_RESULT_NOT_SUPPORTED The Lottie Animation is not supported.
+*/
+TVG_API Tvg_Result tvg_lottie_animation_override(Tvg_Animation* animation, const char* slot);
+
+
+/** \} */   // end addtogroup ThorVGCapi_LottieAnimation
+
+
+/** \} */   // end defgroup ThorVGCapi
 
 
 #ifdef __cplusplus
