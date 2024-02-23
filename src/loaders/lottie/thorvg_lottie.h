@@ -23,9 +23,9 @@ public:
     ~LottieAnimation();
 
     /**
-     * @brief Rewrite lottie properties through the slot data
+     * @brief Override Lottie properties using slot data.
      *
-     * @param[in] slot The lottie slot data
+     * @param[in] slot The Lottie slot data in JSON format.
      *
      * @retval Result::Success When succeed.
      * @retval Result::InsufficientCondition When the given parameter is invalid.
