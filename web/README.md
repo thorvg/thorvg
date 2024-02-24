@@ -9,7 +9,7 @@ A Lottie Player which uses [ThorVG](https://github.com/thorvg/thorvg) as a rende
 <script src="https://unpkg.com/@thorvg/lottie-player@latest/dist/lottie-player.js"></script>
 ```
 
-- Install from NPM
+- Install from [NPM](https://www.npmjs.com/package/@thorvg/lottie-player)
 ```sh
 npm install @thorvg/lottie-player
 ```
