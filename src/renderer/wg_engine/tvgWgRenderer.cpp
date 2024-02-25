@@ -27,6 +27,8 @@
 #include <windows.h>
 #endif
 
+#define WG_SSAA_SAMPLES (2)
+
 WgRenderer::WgRenderer()
 {
     initialize();
@@ -58,6 +60,7 @@ void WgRenderer::release()
     mBlendMethodPool.release(mContext);
     mOpacityPool.release(mContext);
     mRenderStorageRoot.release(mContext);
+    mRenderStorageScreen.release(mContext);
     mRenderTarget.release(mContext);
     wgpuSurfaceUnconfigure(mSurface);
     wgpuSurfaceRelease(mSurface);
@@ -227,8 +230,10 @@ bool WgRenderer::sync()
     commandEncoderDesc.label = "The command encoder";
     WGPUCommandEncoder commandEncoder = wgpuDeviceCreateCommandEncoder(mContext.device, &commandEncoderDesc);
 
+    mRenderStorageScreen.antialias(commandEncoder, &mRenderStorageRoot);
+
     WGPUImageCopyTexture source{};
-    source.texture = mRenderStorageRoot.texStorage;
+    source.texture = mRenderStorageScreen.texStorage;
     WGPUImageCopyTexture dest{};
     dest.texture = backBuffer.texture;
     WGPUExtent3D copySize{};
@@ -252,7 +257,7 @@ bool WgRenderer::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t 
     mTargetSurface.w = w;
     mTargetSurface.h = h;
 
-    mRenderTarget.initialize(mContext, w, h);
+    mRenderTarget.initialize(mContext, w * WG_SSAA_SAMPLES, h * WG_SSAA_SAMPLES);
     return true;
 }
 
@@ -291,8 +296,9 @@ bool WgRenderer::target(void* window, uint32_t w, uint32_t h)
     surfaceConfiguration.presentMode = WGPUPresentMode_Mailbox;
     wgpuSurfaceConfigure(mSurface, &surfaceConfiguration);
 
-    mRenderTarget.initialize(mContext, w, h);
-    mRenderStorageRoot.initialize(mContext, w, h);
+    mRenderTarget.initialize(mContext, w, h, WG_SSAA_SAMPLES);
+    mRenderStorageRoot.initialize(mContext, w, h, WG_SSAA_SAMPLES);
+    mRenderStorageScreen.initialize(mContext, w, h);
 
     return true;
 }
@@ -312,7 +318,7 @@ bool WgRenderer::beginComposite(TVG_UNUSED Compositor* cmp, TVG_UNUSED Composite
     cmp->opacity = opacity;
 
     // allocate new render storage and push it to top of render tree
-    WgRenderStorage* renderStorage = mRenderStoragePool.allocate(mContext, mTargetSurface.w, mTargetSurface.h);
+    WgRenderStorage* renderStorage = mRenderStoragePool.allocate(mContext, mTargetSurface.w * WG_SSAA_SAMPLES, mTargetSurface.h * WG_SSAA_SAMPLES);
     renderStorage->clear(mCommandEncoder);
     mRenderStorageStack.push(renderStorage);
 

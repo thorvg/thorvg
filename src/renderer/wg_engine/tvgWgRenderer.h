@@ -64,6 +64,7 @@ private:
     WGPUCommandEncoder mCommandEncoder{};
     WgRenderTarget mRenderTarget;
     WgRenderStorage mRenderStorageRoot;
+    WgRenderStorage mRenderStorageScreen;
     WgRenderStoragePool mRenderStoragePool;
     WgBindGroupOpacityPool mOpacityPool;
     WgBindGroupBlendMethodPool mBlendMethodPool;

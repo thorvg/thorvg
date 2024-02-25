@@ -26,18 +26,18 @@
 // render target
 //*****************************************************************************
 
-void WgRenderTarget::initialize(WgContext& context, uint32_t w, uint32_t h)
+void WgRenderTarget::initialize(WgContext& context, uint32_t w, uint32_t h, uint32_t samples)
 {
     release(context);
     // create color and stencil textures
     texColor = context.createTexture2d(
         WGPUTextureUsage_RenderAttachment | WGPUTextureUsage_StorageBinding,
         WGPUTextureFormat_RGBA8Unorm, 
-        w, h, "The target texture color");
+        w * samples, h * samples, "The target texture color");
     texStencil = context.createTexture2d(
         WGPUTextureUsage_RenderAttachment,
         WGPUTextureFormat_Stencil8, 
-        w, h, "The target texture stencil");
+        w * samples, h * samples, "The target texture stencil");
     assert(texColor);
     assert(texStencil);
     texViewColor = context.createTextureView2d(texColor, "The target texture view color");
@@ -183,19 +183,19 @@ void WgRenderTarget::endRenderPass(WGPURenderPassEncoder renderPassEncoder)
 // render storage
 //*****************************************************************************
 
- void WgRenderStorage::initialize(WgContext& context, uint32_t w, uint32_t h)
+ void WgRenderStorage::initialize(WgContext& context, uint32_t w, uint32_t h, uint32_t samples)
  {
     release(context);
     // store target storage size
-    width = w;
-    height = h;
+    width = w * samples;
+    height = h * samples;
     workgroupsCountX = (width  + WG_COMPUTE_WORKGROUP_SIZE_X - 1) / WG_COMPUTE_WORKGROUP_SIZE_X; // workgroup size x == 8
     workgroupsCountY = (height + WG_COMPUTE_WORKGROUP_SIZE_Y - 1) / WG_COMPUTE_WORKGROUP_SIZE_Y; // workgroup size y == 8
     // create color and stencil textures
     texStorage = context.createTexture2d(
-        WGPUTextureUsage_StorageBinding | WGPUTextureUsage_CopySrc,
+        WGPUTextureUsage_StorageBinding | WGPUTextureUsage_CopySrc | WGPUTextureUsage_CopyDst,
         WGPUTextureFormat_RGBA8Unorm,
-        w, h, "The target texture storage color");
+        width, height, "The target texture storage color");
     assert(texStorage);
     texViewStorage = context.createTextureView2d(texStorage, "The target texture storage view color");
     assert(texViewStorage);
@@ -256,6 +256,17 @@ void WgRenderStorage::compose(WGPUCommandEncoder commandEncoder, WgRenderStorage
     dispatchWorkgroups(computePassEncoder);
     endRenderPass(computePassEncoder);
 };
+
+
+void WgRenderStorage::antialias(WGPUCommandEncoder commandEncoder, WgRenderStorage* targetSrc)
+{
+    assert(commandEncoder);
+    assert(targetSrc);
+    WGPUComputePassEncoder computePassEncoder = beginComputePass(commandEncoder);
+    mPipelines->computeAntiAliasing.use(computePassEncoder, targetSrc->bindGroupTexStorage, bindGroupTexStorage);
+    dispatchWorkgroups(computePassEncoder);
+    endRenderPass(computePassEncoder);
+}
 
 
 void WgRenderStorage::dispatchWorkgroups(WGPUComputePassEncoder computePassEncoder)
