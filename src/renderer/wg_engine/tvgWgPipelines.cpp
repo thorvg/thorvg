@@ -291,6 +291,26 @@ void WgPipelineCompose::initialize(WGPUDevice device)
              shaderSource, shaderLabel, pipelineLabel);
 }
 
+
+void WgPipelineAntiAliasing::initialize(WGPUDevice device)
+{
+    // bind groups and layouts
+    WGPUBindGroupLayout bindGroupLayouts[] = {
+        WgBindGroupTextureStorage::getLayout(device),
+        WgBindGroupTextureStorage::getLayout(device)
+    };
+
+    // sheder source and labels
+    auto shaderSource = cShaderSource_PipelineComputeAntiAlias;
+    auto shaderLabel = "The compute shader anti-aliasing";
+    auto pipelineLabel = "The compute pipeline anti-aliasing";
+
+    // allocate all pipeline handles
+    allocate(device,
+             bindGroupLayouts, ARRAY_ELEMENTS_COUNT(bindGroupLayouts),
+             shaderSource, shaderLabel, pipelineLabel);
+}
+
 //************************************************************************
 // pipelines
 //************************************************************************
@@ -308,6 +328,7 @@ void WgPipelines::initialize(WgContext& context)
     computeClear.initialize(context.device);
     computeBlend.initialize(context.device);
     computeCompose.initialize(context.device);
+    computeAntiAliasing.initialize(context.device);
     // store pipelines to context
     context.pipelines = this;
 }
@@ -326,6 +347,7 @@ void WgPipelines::release()
     WgBindGroupPaint::releaseLayout();
     WgBindGroupCanvas::releaseLayout();
     // compute pipelines
+    computeAntiAliasing.release();
     computeCompose.release();
     computeBlend.release();
     computeClear.release();

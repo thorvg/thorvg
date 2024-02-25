@@ -37,7 +37,7 @@ public:
     WGPUTextureView texViewStencil{};
     WgBindGroupTextureStorage bindGroupTexStorage;
 public:
-    void initialize(WgContext& context, uint32_t w, uint32_t h);
+    void initialize(WgContext& context, uint32_t w, uint32_t h, uint32_t samples = 1);
     void release(WgContext& context);
 
     void renderShape(WGPUCommandEncoder commandEncoder, WgRenderDataShape* renderData);
@@ -64,13 +64,14 @@ public:
     uint32_t workgroupsCountX{};
     uint32_t workgroupsCountY{};
 public:
-    void initialize(WgContext& context, uint32_t w, uint32_t h);
+    void initialize(WgContext& context, uint32_t w, uint32_t h, uint32_t samples = 1);
     void release(WgContext& context);
 
     void clear(WGPUCommandEncoder commandEncoder);
     void blend(WGPUCommandEncoder commandEncoder, WgRenderTarget* targetSrc, WgBindGroupBlendMethod* blendMethod);
     void blend(WGPUCommandEncoder commandEncoder, WgRenderStorage* targetSrc, WgBindGroupBlendMethod* blendMethod);
     void compose(WGPUCommandEncoder commandEncoder, WgRenderStorage* targetMsk, WgBindGroupCompositeMethod* composeMethod, WgBindGroupOpacity* opacity);
+    void antialias(WGPUCommandEncoder commandEncoder, WgRenderStorage* targetSrc);
 private:
     void dispatchWorkgroups(WGPUComputePassEncoder computePassEncoder);
 

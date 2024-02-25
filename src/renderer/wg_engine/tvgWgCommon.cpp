@@ -158,6 +158,24 @@ WGPUTexture WgContext::createTexture2d(WGPUTextureUsageFlags usage, WGPUTextureF
 }
 
 
+WGPUTexture WgContext::createTexture2dMS(WGPUTextureUsageFlags usage, WGPUTextureFormat format, uint32_t width, uint32_t height, uint32_t sc, char const * label)
+{
+
+    WGPUTextureDescriptor textureDesc{};
+    textureDesc.nextInChain = nullptr;
+    textureDesc.label = label;
+    textureDesc.usage = usage;
+    textureDesc.dimension = WGPUTextureDimension_2D;
+    textureDesc.size = { width, height, 1 };
+    textureDesc.format = format;
+    textureDesc.mipLevelCount = 1;
+    textureDesc.sampleCount = sc;
+    textureDesc.viewFormatCount = 0;
+    textureDesc.viewFormats = nullptr;
+    return wgpuDeviceCreateTexture(device, &textureDesc);
+}
+
+
 WGPUTextureView WgContext::createTextureView2d(WGPUTexture texture, char const * label)
 {
     WGPUTextureViewDescriptor textureViewDescColor{};
