@@ -106,8 +106,7 @@ struct WgPipelineImage: public WgRenderPipeline
 struct WgPipelineClear: public WgComputePipeline
 {
     void initialize(WGPUDevice device) override;
-    void use(WGPUComputePassEncoder encoder,
-             WgBindGroupTextureStorage& groupTexDst)
+    void use(WGPUComputePassEncoder encoder, WgBindGroupTextureStorage& groupTexDst)
     {
         set(encoder);
         groupTexDst.set(encoder, 0);
@@ -118,10 +117,7 @@ struct WgPipelineClear: public WgComputePipeline
 struct WgPipelineBlend: public WgComputePipeline
 {
     void initialize(WGPUDevice device) override;
-    void use(WGPUComputePassEncoder encoder,
-             WgBindGroupTextureStorage& groupTexSrc,
-             WgBindGroupTextureStorage& groupTexDst,
-             WgBindGroupBlendMethod& blendMethod)
+    void use(WGPUComputePassEncoder encoder, WgBindGroupTextureStorage& groupTexSrc, WgBindGroupTextureStorage& groupTexDst, WgBindGroupBlendMethod& blendMethod)
     {
         set(encoder);
         groupTexSrc.set(encoder, 0);
@@ -134,17 +130,25 @@ struct WgPipelineBlend: public WgComputePipeline
 struct WgPipelineCompose: public WgComputePipeline
 {
     void initialize(WGPUDevice device) override;
-    void use(WGPUComputePassEncoder encoder,
-             WgBindGroupTextureStorage& groupTexSrc,
-             WgBindGroupTextureStorage& groupTexMsk,
-             WgBindGroupCompositeMethod& groupComposeMethod,
-             WgBindGroupOpacity& groupOpacity)
+    void use(WGPUComputePassEncoder encoder, WgBindGroupTextureStorage& groupTexSrc, WgBindGroupTextureStorage& groupTexMsk, WgBindGroupCompositeMethod& groupComposeMethod, WgBindGroupOpacity& groupOpacity)
     {
         set(encoder);
         groupTexSrc.set(encoder, 0);
         groupTexMsk.set(encoder, 1);
         groupComposeMethod.set(encoder, 2);
         groupOpacity.set(encoder, 3);
+    }
+};
+
+
+struct WgPipelineAntiAliasing: public WgComputePipeline
+{
+    void initialize(WGPUDevice device) override;
+    void use(WGPUComputePassEncoder encoder, WgBindGroupTextureStorage& groupTexSrc, WgBindGroupTextureStorage& groupTexDst)
+    {
+        set(encoder);
+        groupTexSrc.set(encoder, 0);
+        groupTexDst.set(encoder, 1);
     }
 };
 
@@ -165,6 +169,7 @@ struct WgPipelines
     WgPipelineClear computeClear;
     WgPipelineBlend computeBlend;
     WgPipelineCompose computeCompose;
+    WgPipelineAntiAliasing computeAntiAliasing;
 
     void initialize(WgContext& context);
     void release();

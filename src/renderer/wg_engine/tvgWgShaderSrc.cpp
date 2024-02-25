@@ -428,3 +428,26 @@ fn cs_main( @builtin(global_invocation_id) id: vec3u) {
     textureStore(imageSrc, id.xy, vec4f(color, alpha * opacity));
 }
 )";
+
+// pipeline shader modules anti-aliasing
+const char* cShaderSource_PipelineComputeAntiAlias = R"(
+@group(0) @binding(0) var imageSrc : texture_storage_2d<rgba8unorm, read_write>;
+@group(1) @binding(0) var imageDst : texture_storage_2d<rgba8unorm, read_write>;
+
+@compute @workgroup_size(8, 8)
+fn cs_main( @builtin(global_invocation_id) id: vec3u) {
+    let texSizeSrc = textureDimensions(imageSrc);
+    let texSizeDst = textureDimensions(imageDst);
+    if ((id.x >= texSizeDst.x) || (id.y >= texSizeDst.y)) { return; };
+
+    let samples = u32(texSizeSrc.x / texSizeDst.x);
+    var color = vec4f(0);
+    for (var i = 0u; i < samples; i++) {
+        for (var j = 0u; j < samples; j++) {
+            color += textureLoad(imageSrc, vec2(id.x * samples + j, id.y * samples + i));
+        }
+    }
+
+    textureStore(imageDst, id.xy, color / f32(samples * samples));
+}
+)";
