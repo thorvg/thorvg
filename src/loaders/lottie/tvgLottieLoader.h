@@ -62,6 +62,7 @@ public:
     float curFrame() override;
     float duration() override;
     void sync() override;
+    const char* data(uint32_t& size) override;
 
 private:
     bool header();
