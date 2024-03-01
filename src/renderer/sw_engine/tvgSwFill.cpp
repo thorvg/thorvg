@@ -204,7 +204,7 @@ bool _prepareRadial(SwFill* fill, const RadialGradient* radial, const Matrix* tr
         fill->radial.a = fill->radial.dr * fill->radial.dr - fill->radial.dx * fill->radial.dx - fill->radial.dy * fill->radial.dy;
     }
 
-    if (fill->radial.a > 0) fill->radial.invA = 1.0f / fill->radial.a;
+    if (fill->radial.a > RADIAL_A_THRESHOLD) fill->radial.invA = 1.0f / fill->radial.a;
 
     auto gradTransform = radial->transform();
     bool isTransformation = !mathIdentity((const Matrix*)(&gradTransform));
