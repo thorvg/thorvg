@@ -85,6 +85,9 @@ public:
             return false;
         }
 
+        //back up for saving
+        this->data = data;
+
         canvas->clear(true);
 
         animation = Animation::gen();
@@ -204,7 +207,10 @@ public:
     {
         errorMsg = NoError;
 
-        if (!animation) return false;
+        if (data.empty()) {
+            errorMsg = "Invalid data";
+            return false;
+        }
 
         auto saver = Saver::gen();
         if (!saver) {
@@ -212,12 +218,42 @@ public:
             return false;
         }
 
+        //animation to save
+        auto animation = Animation::gen();
+        if (!animation) {
+            errorMsg = "Invalid animation";
+            return false;
+        }
+
+        if (animation->picture()->load(data.c_str(), data.size(), "lottie", false) != Result::Success) {
+            errorMsg = "load() fail";
+            return false;
+        }
+
+        //gif resolution (600x600)
+        constexpr float GIF_SIZE = 600;
+
+        //transform
+        float width, height;
+        animation->picture()->size(&width, &height);
+        float scale;
+        if (width > height) scale = GIF_SIZE / width;
+        else scale = GIF_SIZE / height;
+        animation->picture()->size(width * scale, height * scale);
+
         //set a white opaque background
         auto bg = tvg::Shape::gen();
+        if (!bg) {
+            errorMsg = "Invalid bg";
+            return false;
+        }
         bg->fill(255, 255, 255, 255);
-        bg->appendRect(0, 0, width, height);
+        bg->appendRect(0, 0, GIF_SIZE, GIF_SIZE);
 
-        saver->background(std::move(bg));
+        if (saver->background(std::move(bg)) != Result::Success) {
+            errorMsg = "background() fail";
+            return false;
+        }
 
         if (saver->save(std::move(animation), "output.gif", 100, 30) != tvg::Result::Success) {
             errorMsg = "save(), fail";
@@ -280,6 +316,7 @@ private:
     string                 errorMsg;
     unique_ptr<SwCanvas>   canvas = nullptr;
     unique_ptr<Animation>  animation = nullptr;
+    string                 data;
     uint8_t*               buffer = nullptr;
     uint32_t               width = 0;
     uint32_t               height = 0;
