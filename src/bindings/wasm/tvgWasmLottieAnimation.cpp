@@ -22,6 +22,7 @@
 
 #include <thorvg.h>
 #include <emscripten/bind.h>
+#include "tvgPicture.h"
 
 using namespace emscripten;
 using namespace std;
@@ -213,12 +214,51 @@ public:
             return false;
         }
 
+        //acquire the animation data
+        uint32_t size;
+        auto data = P(this->animation->picture())->data(size);
+        if (!data) {
+            errorMsg = "No data?";
+            return false;
+        }
+
+        //animation to save
+        auto animation = Animation::gen();
+        if (!animation) {
+            errorMsg = "Invalid animation";
+            return false;
+        }
+
+        if (animation->picture()->load(data, size, "lottie", nullptr, false) != Result::Success) {
+            errorMsg = "load() fail";
+            return false;
+        }
+
+        //gif resolution (600x600)
+        constexpr float GIF_SIZE = 600;
+
+        float width, height;
+        animation->picture()->size(&width, &height);
+        auto scale = GIF_SIZE / width;
+        auto shiftY = (GIF_SIZE - height * scale) * 0.5f;
+
+        //transform
+        animation->picture()->scale(scale);
+        animation->picture()->translate(0, shiftY);
+
         //set a white opaque background
         auto bg = tvg::Shape::gen();
+        if (!bg) {
+            errorMsg = "Invalid bg";
+            return false;
+        }
         bg->fill(255, 255, 255, 255);
-        bg->appendRect(0, 0, width, height);
+        bg->appendRect(0, 0, GIF_SIZE, GIF_SIZE);
 
-        saver->background(std::move(bg));
+        if (saver->background(std::move(bg)) != Result::Success) {
+            errorMsg = "background() fail";
+            return false;
+        }
 
         if (saver->save(std::move(animation), "output.gif", 100, 30) != tvg::Result::Success) {
             errorMsg = "save(), fail";
