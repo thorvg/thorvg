@@ -276,25 +276,24 @@ public:
 
         if (!animation) return false;
 
-        auto duplicate = cast<Picture>(animation->picture()->duplicate());
-
-        if (!duplicate) {
-            errorMsg = "duplicate(), fail";
-            return false;
-        }
-
         auto saver = Saver::gen();
         if (!saver) {
             errorMsg = "Invalid saver";
             return false;
         }
 
-        if (saver->save(std::move(duplicate), "output.tvg") != tvg::Result::Success) {
+        //preserve the picture using the reference counting
+        PP(animation->picture())->ref();
+
+        if (saver->save(tvg::cast<Picture>(animation->picture()), "output.tvg") != tvg::Result::Success) {
+            PP(animation->picture())->unref();
             errorMsg = "save(), fail";
             return false;
         }
 
         saver->sync();
+
+        PP(animation->picture())->unref();
 
         return true;
     }
