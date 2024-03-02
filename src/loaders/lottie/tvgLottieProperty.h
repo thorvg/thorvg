@@ -31,10 +31,10 @@
 
 struct PathSet
 {
-    Point* pts;
-    PathCommand* cmds;
-    uint16_t ptsCnt;
-    uint16_t cmdsCnt;
+    Point* pts = nullptr;
+    PathCommand* cmds = nullptr;
+    uint16_t ptsCnt = 0;
+    uint16_t cmdsCnt = 0;
 };
 
 
@@ -253,8 +253,8 @@ struct LottieGenericProperty : LottieProperty
     {
         //shallow copy, used for slot overriding
         delete(frames);
-        frames = other.frames;
-        value = other.value;
+        if (other.frames) frames = other.frames;
+        else value = other.value;
         const_cast<T&>(other).frames = nullptr;
         return *this;
     }
@@ -268,10 +268,6 @@ struct LottiePathSet : LottieProperty
 {
     Array<LottieScalarFrame<PathSet>>* frames = nullptr;
     PathSet value;
-
-    LottiePathSet(PathSet v) : value(v)
-    {
-    }
 
     ~LottiePathSet()
     {
@@ -447,8 +443,8 @@ struct LottieColorStop : LottieProperty
     {
         //shallow copy, used for slot overriding
         delete(frames);
-        frames = other.frames;
-        value = other.value;
+        if (other.frames) frames = other.frames;
+        else value = other.value;
         count = other.count;
         const_cast<LottieColorStop&>(other).frames = nullptr;
         return *this;
@@ -569,8 +565,8 @@ struct LottieTextDoc : LottieProperty
     {
         //shallow copy, used for slot overriding
         delete(frames);
-        frames = other.frames;
-        value = other.value;
+        if (other.frames) frames = other.frames;
+        else value = other.value;
         const_cast<LottieTextDoc&>(other).frames = nullptr;
         return *this;
     }
