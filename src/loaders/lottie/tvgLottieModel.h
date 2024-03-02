@@ -84,7 +84,7 @@ struct LottieStroke
 
 struct LottieMask
 {
-    LottiePathSet pathset = PathSet{nullptr, nullptr, 0, 0};
+    LottiePathSet pathset;
     LottieOpacity opacity = 255;
     CompositeMethod method;
     bool inverse = false;
@@ -245,7 +245,7 @@ struct LottiePath : LottieShape
         if (pathset.frames) statical = false;
     }
 
-    LottiePathSet pathset = PathSet{nullptr, nullptr, 0, 0};
+    LottiePathSet pathset;
 };
 
 
