@@ -23,6 +23,7 @@
 #include <cstring>
 
 #include "tvgCommon.h"
+#include "tvgMath.h"
 #include "tvgPaint.h"
 #include "tvgShape.h"
 #include "tvgInlist.h"
@@ -34,8 +35,6 @@
 /************************************************************************/
 /* Internal Class Implementation                                        */
 /************************************************************************/
-constexpr auto PATH_KAPPA = 0.552284f;
-
 
 struct RenderRepeater
 {
@@ -373,60 +372,46 @@ static void _repeat(LottieGroup* parent, unique_ptr<Shape> path, RenderContext* 
 }
 
 
-static void _appendSharpRect(Shape* shape, float x, float y, float w, float h, float r)
-{
-    constexpr int commandsCnt = 5;
-    PathCommand commands[commandsCnt] = {
-        PathCommand::MoveTo, PathCommand::LineTo, PathCommand::LineTo,
-        PathCommand::LineTo, PathCommand::Close
-    };
-
-    constexpr int pointsCnt = 4;
-    Point points[pointsCnt] = {{x + w, y}, {x + w, y + h}, {x, y + h}, {x, y}};
-
-    shape->appendPath(commands, commandsCnt, points, pointsCnt);
-}
-
-static void _appendRoundedRect(Shape* shape, float x, float y, float w, float h, float r)
-{
-    constexpr int commandsCnt = 10;
-    PathCommand commands[commandsCnt] = {
-        PathCommand::MoveTo, PathCommand::LineTo, PathCommand::CubicTo,
-        PathCommand::LineTo, PathCommand::CubicTo, PathCommand::LineTo,
-        PathCommand::CubicTo, PathCommand::LineTo, PathCommand::CubicTo,
-        PathCommand::Close
-    };
-
-    auto halfW = w * 0.5f;
-    auto halfH = h * 0.5f;
-
-    auto rx = r > halfW ? halfW : r;
-    auto ry = r > halfH ? halfH : r;
-
-    auto hrx = rx * PATH_KAPPA;
-    auto hry = ry * PATH_KAPPA;
-
-    constexpr int pointsCnt = 17;
-    Point points[pointsCnt] = {
-        {x + w, y + ry}, //moveTo
-        {x + w, y + h - ry}, //lineTo
-        {x + w, y + h - ry + hry}, {x + w - rx + hrx, y + h}, {x + w - rx, y + h}, //cubicTo
-        {x + rx, y + h}, //lineTo
-        {x + rx - hrx, y + h}, {x, y + h - ry + hry}, {x, y + h - ry}, //cubicTo
-        {x, y + ry}, //lineTo
-        {x, y + ry - hry}, {x + rx - hrx, y}, {x + rx, y}, //cubicTo
-        {x + w - rx, y}, //lineTo
-        {x + w - rx + hrx, y}, {x + w, y + ry - hry}, {x + w, y + ry} //cubicTo
-    };
-
-    shape->appendPath(commands, commandsCnt, points, pointsCnt);
-}
-
-
 static void _appendRect(Shape* shape, float x, float y, float w, float h, float r)
 {
-    if (mathZero(r)) _appendSharpRect(shape, x, y, w, h, r);
-    else _appendRoundedRect(shape, x, y, w, h, r);
+    //sharp rect
+    if (mathZero(r)) {
+        PathCommand commands[] = {
+            PathCommand::MoveTo, PathCommand::LineTo, PathCommand::LineTo,
+            PathCommand::LineTo, PathCommand::Close
+        };
+        Point points[] = {{x + w, y}, {x + w, y + h}, {x, y + h}, {x, y}};
+        shape->appendPath(commands, 5, points, 4);
+    //round rect
+    } else {
+        PathCommand commands[] = {
+            PathCommand::MoveTo, PathCommand::LineTo, PathCommand::CubicTo,
+            PathCommand::LineTo, PathCommand::CubicTo, PathCommand::LineTo,
+            PathCommand::CubicTo, PathCommand::LineTo, PathCommand::CubicTo,
+            PathCommand::Close
+        };
+
+        auto halfW = w * 0.5f;
+        auto halfH = h * 0.5f;
+        auto rx = r > halfW ? halfW : r;
+        auto ry = r > halfH ? halfH : r;
+        auto hrx = rx * PATH_KAPPA;
+        auto hry = ry * PATH_KAPPA;
+
+        Point points[] = {
+            {x + w, y + ry}, //moveTo
+            {x + w, y + h - ry}, //lineTo
+            {x + w, y + h - ry + hry}, {x + w - rx + hrx, y + h}, {x + w - rx, y + h}, //cubicTo
+            {x + rx, y + h}, //lineTo
+            {x + rx - hrx, y + h}, {x, y + h - ry + hry}, {x, y + h - ry}, //cubicTo
+            {x, y + ry}, //lineTo
+            {x, y + ry - hry}, {x + rx - hrx, y}, {x + rx, y}, //cubicTo
+            {x + w - rx, y}, //lineTo
+            {x + w - rx + hrx, y}, {x + w, y + ry - hry}, {x + w, y + ry} //cubicTo
+        };
+
+        shape->appendPath(commands, 10, points, 17);
+    }
 }
 
 static void _updateRect(LottieGroup* parent, LottieObject** child, float frameNo, TVG_UNUSED Inlist<RenderContext>& contexts, RenderContext* ctx)
