@@ -383,7 +383,7 @@ static float _outlineLength(const RenderShape* rshape)
                 break;
             }
             case PathCommand::CubicTo: {
-                length += bezLengthApprox({*(pts - 1), *pts, *(pts + 1), *(pts + 2)});
+                length += bezLength({*(pts - 1), *pts, *(pts + 1), *(pts + 2)});
                 pts += 3;
                 break;
             }
