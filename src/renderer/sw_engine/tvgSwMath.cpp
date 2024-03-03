@@ -50,12 +50,6 @@ bool mathSmallCubic(const SwPoint* base, SwFixed& angleIn, SwFixed& angleMid, Sw
     auto d2 = base[1] - base[2];
     auto d3 = base[0] - base[1];
 
-    if (d1 == d2 || d2 == d3) {
-        if (d3.small()) angleIn = angleMid = angleOut = 0;
-        else angleIn = angleMid = angleOut = mathAtan(d3);
-        return true;
-    }
-
     if (d1.small()) {
         if (d2.small()) {
             if (d3.small()) {
