@@ -3,14 +3,16 @@
 # For more information, please consult the AUTHORS file.
 
 * @hermet
+/src/renderer/sw_engine @mgrudzinska
 /src/renderer/gl_engine @RuiwenTang @SergeyLebedkin
 /src/renderer/wg_engine @SergeyLebedkin
 /src/loaders/external_webp/ @JSUYA
 /src/loaders/raw/ @JSUYA
-/src/loaders/svg/ @JSUYA
+/src/loaders/tvg/ @mgrudzinska
+/src/loaders/svg/ @JSUYA @mgrudzinska
 /src/loaders/webp/ @JSUYA
 /src/savers/gif/ @JSUYA
 /src/tools/svg2png/ @JSUYA
-/src/examples/ @JSUYA @RuiwenTang @SergeyLebedkin @tinyjin
-/test/* @JSUYA @RuiwenTang @SergeyLebedkin @tinyjin
+/src/examples/ @JSUYA @RuiwenTang @SergeyLebedkin @tinyjin @mgrudzinska
+/test/* @JSUYA @RuiwenTang @SergeyLebedkin @tinyjin @mgrudzinska
 /web/* @tinyjin
