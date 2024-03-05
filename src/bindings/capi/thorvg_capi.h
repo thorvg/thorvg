@@ -1952,6 +1952,10 @@ TVG_API Tvg_Paint* tvg_picture_new();
 /*!
 * \brief Loads a picture data directly from a file.
 *
+* ThorVG efficiently caches the loaded data using the specified @p path as a key.
+* This means that loading the same file again will not result in duplicate operations;
+* instead, ThorVG will reuse the previously loaded picture data.
+*
 * \param[in] paint A Tvg_Paint pointer to the picture object.
 * \param[in] path The absolute path to the image file.
 *
@@ -1966,6 +1970,10 @@ TVG_API Tvg_Result tvg_picture_load(Tvg_Paint* paint, const char* path);
 
 /*!
 * \brief Loads a picture data from a memory block of a given size.
+*
+* ThorVG efficiently caches the loaded data using the specified @p data address as a key
+* when the @p copy has @c false. This means that loading the same data again will not result in duplicate operations
+* for the sharable @p data. Instead, ThorVG will reuse the previously loaded picture data.
 *
 * \param[in] paint A Tvg_Paint pointer to the picture object.
 * \param[in] data A pointer to a memory location where the content of the picture raw data is stored.
@@ -1987,6 +1995,10 @@ TVG_API Tvg_Result tvg_picture_load_raw(Tvg_Paint* paint, uint32_t *data, uint32
 
 /*!
 * \brief Loads a picture data from a memory block of a given size.
+*
+* ThorVG efficiently caches the loaded data using the specified @p data address as a key
+* when the @p copy has @c false. This means that loading the same data again will not result in duplicate operations
+* for the sharable @p data. Instead, ThorVG will reuse the previously loaded picture data.
 *
 * \param[in] paint A Tvg_Paint pointer to the picture object.
 * \param[in] data A pointer to a memory location where the content of the picture file is stored.
