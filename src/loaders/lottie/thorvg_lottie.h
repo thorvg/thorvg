@@ -28,7 +28,8 @@ public:
      * @param[in] slot The Lottie slot data in JSON format.
      *
      * @retval Result::Success When succeed.
-     * @retval Result::InsufficientCondition When the given parameter is invalid.
+     * @retval Result::InsufficientCondition In case the animation is not loaded.
+     * @retval Result::InvalidArguments When the given parameter is invalid.
      *
      * @note Experimental API
      */
