@@ -75,7 +75,8 @@ The task scheduler has been meticulously crafted to conceal complexity, streamli
     - [SVG to TVG](#svg-to-tvg)
   - [API Bindings](#api-bindings)
   - [Dependencies](#dependencies)
-  - [Issues or Feature Requests](#issues-or-feature-requests)
+  - [Contributors](#contributors)
+  - [Communication](#communication)
 
 [](#contents)
 <br />
@@ -479,5 +480,17 @@ ThorVG offers versatile support for image loading, accommodating both static and
 [Back to contents](#contents)
 <br />
 <br />
-## Issues or Feature Requests
-For support, please reach us in [Discord](https://discord.gg/n25xj6J6HM)
+## Contributors
+We are grateful to the individuals, organizations, and companies that have contributed to the development of the ThorVG project. The dedicated efforts of the individuals and entities listed below have enabled ThorVG to reach its current state.
+
+* [Individuals](https://github.com/thorvg/thorvg/blob/main/AUTHORS)
+* [LottieFiles](https://lottiefiles.com/) by Design Barn Inc.
+* Samsung Electronics Co., Ltd
+
+[Back to contents](#contents)
+<br />
+<br />
+## Communication
+For real-time conversations and discussions, please join us on [Discord](https://discord.gg/n25xj6J6HM)
+
+[Back to contents](#contents)
