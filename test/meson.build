@@ -7,6 +7,7 @@ test_file = [
     'testAnimation.cpp',
     'testFill.cpp',
     'testInitializer.cpp',
+    'testLottie.cpp',
     'testMain.cpp',
     'testPaint.cpp',
     'testPicture.cpp',
