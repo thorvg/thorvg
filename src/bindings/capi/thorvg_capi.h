@@ -2359,7 +2359,8 @@ TVG_API Tvg_Animation* tvg_lottie_animation_new();
 *
 * \return Tvg_Animation A new Tvg_LottieAnimation object.
 * \retval TVG_RESULT_SUCCESS Succeed.
-* \retval TVG_RESULT_INSUFFICIENT_CONDITION When the given @p slot is invalid
+* \retval TVG_RESULT_INSUFFICIENT_CONDITION In case the animation is not loaded.
+* \retval TVG_RESULT_INVALID_ARGUMENT When the given @p slot is invalid
 * \retval TVG_RESULT_NOT_SUPPORTED The Lottie Animation is not supported.
 */
 TVG_API Tvg_Result tvg_lottie_animation_override(Tvg_Animation* animation, const char* slot);
