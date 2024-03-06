@@ -62,7 +62,7 @@ The task scheduler has been meticulously crafted to conceal complexity, streamli
   - [SVG](#svg)
   - [Lottie](#lottie)
   - [TVG Picture](#tvg-picture)
-  - [Practices](#practices)
+  - [In Practice](#in-practice)
     - [dotLottie](#dotlottie)
     - [Godot](#godot)
     - [Tizen](#tizen)
@@ -310,7 +310,7 @@ As TVG Saver facilitates the export of the scene-tree into TVG Picture data file
 [Back to contents](#contents)
 <br />
 <br />
-## Practices
+## In Practice
 ### dotLottie
 [dotLottie](https://dotlottie.io/) is an open-source file format that aggregates one or more Lottie files and their associated resources, such as images and fonts, into a single file. This enables an efficient and easy distribution of animations. dotLottie files are ZIP archives compressed with the Deflate compression method and carry the file extension of “.lottie”. Think of it as a superset of Lottie. [LottieFiles](https://lottiefiles.com/) aims to achieve just that. [dotLottie player](https://github.com/LottieFiles/dotlottie-web) by LottieFiles is now powered by ThorVG.
 <p align="center">
