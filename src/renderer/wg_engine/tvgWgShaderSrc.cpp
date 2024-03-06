@@ -126,7 +126,10 @@ struct BlendSettigs {
 // LinearGradient
 const MAX_LINEAR_GRADIENT_STOPS = 4;
 struct LinearGradient {
-    nStops       : vec4f,
+    nStops       : u32,
+    spread       : u32,
+    dummy0       : u32,
+    dummy1       : u32,
     gradStartPos : vec2f,
     gradEndPos   : vec2f,
     stopPoints   : vec4f,
@@ -166,10 +169,18 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
     let ba: vec2f = ed - st;
 
     // get interpolation factor
-    let t: f32 = clamp(dot(pos - st, ba) / dot(ba, ba), 0.0, 1.0);
+    var t: f32 = abs(dot(pos - st, ba) / dot(ba, ba));
+
+    // fill spread
+    switch uLinearGradient.spread {
+        /* Pad     */ case 0u: { t = clamp(t, 0.0, 1.0); }
+        /* Reflect */ case 1u: { t = select(1.0 - fract(t), fract(t), u32(t) % 2 == 0); }
+        /* Repeat  */ case 2u: { t = fract(t); }
+        default: { t = t; }
+    }
 
     // get stops count
-    let last: i32 = i32(uLinearGradient.nStops[0]) - 1;
+    let last: i32 = i32(uLinearGradient.nStops) - 1;
 
     // closer than first stop
     if (t <= uLinearGradient.stopPoints[0]) {
@@ -216,7 +227,10 @@ struct BlendSettigs {
 // RadialGradient
 const MAX_RADIAL_GRADIENT_STOPS = 4;
 struct RadialGradient {
-    nStops     : vec4f,
+    nStops     : u32,
+    spread     : u32,
+    dummy0     : u32,
+    dummy1     : u32,
     centerPos  : vec2f,
     radius     : vec2f,
     stopPoints : vec4f,
@@ -250,10 +264,18 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
     var color = vec4(1.0);
 
     // get interpolation factor
-    let t: f32 = clamp(distance(uRadialGradient.centerPos, in.vScreenCoord) / uRadialGradient.radius.x, 0.0, 1.0);
+    var t: f32 = distance(uRadialGradient.centerPos, in.vScreenCoord) / uRadialGradient.radius.x;
+
+    // fill spread
+    switch uRadialGradient.spread {
+        /* Pad     */ case 0u: { t = clamp(t, 0.0, 1.0); }
+        /* Reflect */ case 1u: { t = select(1.0 - fract(t), fract(t), u32(t) % 2 == 0); }
+        /* Repeat  */ case 2u: { t = fract(t); }
+        default: { t = t; }
+    }
 
     // get stops count
-    let last: i32 = i32(uRadialGradient.nStops[0]) - 1;
+    let last: i32 = i32(uRadialGradient.nStops) - 1;
 
     // closer than first stop
     if (t <= uRadialGradient.stopPoints[0]) {
