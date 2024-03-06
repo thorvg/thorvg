@@ -127,8 +127,8 @@ void WgShaderTypeLinearGradient::update(const LinearGradient* linearGradient)
     const Fill::ColorStop* stops = nullptr;
     auto stopCnt = linearGradient->colorStops(&stops);
     
-    nStops[0] = stopCnt;
-    nStops[1] = 0.5f;
+    nStops = stopCnt;
+    spread = uint32_t(linearGradient->spread());
     
     for (uint32_t i = 0; i < stopCnt; ++i) {
         stopPoints[i] = stops[i].offset;
@@ -153,8 +153,8 @@ void WgShaderTypeRadialGradient::update(const RadialGradient* radialGradient)
     const Fill::ColorStop* stops = nullptr;
     auto stopCnt = radialGradient->colorStops(&stops);
 
-    nStops[0] = stopCnt;
-    nStops[1] = 0.5f;
+    nStops = stopCnt;
+    spread = uint32_t(radialGradient->spread());
 
     for (uint32_t i = 0; i < stopCnt; ++i) {
         stopPoints[i] = stops[i].offset;
