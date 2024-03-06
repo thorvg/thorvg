@@ -20,16 +20,10 @@
  * SOFTWARE.
  */
 
-#include <float.h>
 #include "tvgGlGpuBuffer.h"
 #include "tvgGlGeometry.h"
 #include "tvgGlTessellator.h"
 #include "tvgGlRenderTask.h"
-
-#define NORMALIZED_TOP_3D 1.0f
-#define NORMALIZED_BOTTOM_3D -1.0f
-#define NORMALIZED_LEFT_3D -1.0f
-#define NORMALIZED_RIGHT_3D 1.0f
 
 GlGeometry::~GlGeometry()
 {
@@ -74,19 +68,19 @@ bool GlGeometry::tesselate(const Surface* image, const RenderMesh* mesh, RenderU
             for (uint32_t i = 0; i < mesh->triangleCnt; i++) {
                 fillVertex.push(mesh->triangles[i].vertex[0].pt.x);
                 fillVertex.push(mesh->triangles[i].vertex[0].pt.y);
-                fillVertex.push(1.f);
+
                 fillVertex.push(mesh->triangles[i].vertex[0].uv.x);
                 fillVertex.push(mesh->triangles[i].vertex[0].uv.y);
 
                 fillVertex.push(mesh->triangles[i].vertex[1].pt.x);
                 fillVertex.push(mesh->triangles[i].vertex[1].pt.y);
-                fillVertex.push(1.f);
+
                 fillVertex.push(mesh->triangles[i].vertex[1].uv.x);
                 fillVertex.push(mesh->triangles[i].vertex[1].uv.y);
 
                 fillVertex.push(mesh->triangles[i].vertex[2].pt.x);
                 fillVertex.push(mesh->triangles[i].vertex[2].pt.y);
-                fillVertex.push(1.f);
+
                 fillVertex.push(mesh->triangles[i].vertex[2].uv.x);
                 fillVertex.push(mesh->triangles[i].vertex[2].uv.y);
 
@@ -108,25 +102,25 @@ bool GlGeometry::tesselate(const Surface* image, const RenderMesh* mesh, RenderU
             // left top point
             fillVertex.push(left);
             fillVertex.push(top);
-            fillVertex.push(1.f);
+
             fillVertex.push(0.f);
             fillVertex.push(1.f);
             // left bottom point
             fillVertex.push(left);
             fillVertex.push(bottom);
-            fillVertex.push(1.f);
+
             fillVertex.push(0.f);
             fillVertex.push(0.f);
             // right top point
             fillVertex.push(right);
             fillVertex.push(top);
-            fillVertex.push(1.f);
+
             fillVertex.push(1.f);
             fillVertex.push(1.f);
             // right bottom point
             fillVertex.push(right);
             fillVertex.push(bottom);
-            fillVertex.push(1.f);
+
             fillVertex.push(1.f);
             fillVertex.push(0.f);
 
@@ -176,10 +170,10 @@ bool GlGeometry::draw(GlRenderTask* task, GlStageBuffer* gpuBuffer, RenderUpdate
     // vertex layout
     if (flag & RenderUpdateFlag::Image) {
         // image has two attribute: [pos, uv]
-        task->addVertexLayout(GlVertexLayout{0, 3, 5 * sizeof(float), vertexOffset});
-        task->addVertexLayout(GlVertexLayout{1, 2, 5 * sizeof(float), vertexOffset + 3 * sizeof(float)});
+        task->addVertexLayout(GlVertexLayout{0, 2, 4 * sizeof(float), vertexOffset});
+        task->addVertexLayout(GlVertexLayout{1, 2, 4 * sizeof(float), vertexOffset + 2 * sizeof(float)});
     } else {
-        task->addVertexLayout(GlVertexLayout{0, 3, 3 * sizeof(float), vertexOffset});
+        task->addVertexLayout(GlVertexLayout{0, 2, 2 * sizeof(float), vertexOffset});
     }
     task->setDrawRange(indexOffset, indexBuffer->count);
     task->setViewport(viewport);

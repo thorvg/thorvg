@@ -497,7 +497,7 @@ void GlRenderer::drawPrimitive(GlShape& sdata, uint8_t r, uint8_t g, uint8_t b, 
     if (sdata.geometry->needStencilCover(flag)) stencilTask = new GlRenderTask(mPrograms[RT_Stencil].get(), task);
 
     a = MULTIPLY(a, sdata.opacity);
-    
+
     // matrix buffer
     {
         auto matrix = sdata.geometry->getTransforMatrix();
@@ -523,7 +523,7 @@ void GlRenderer::drawPrimitive(GlShape& sdata, uint8_t r, uint8_t g, uint8_t b, 
             });
         }
     }
-    // color 
+    // color
     {
         float color[4] = {r / 255.f, g / 255.f, b / 255.f, a / 255.f};
 
@@ -677,7 +677,7 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
     }
 }
 
-GlRenderPass* GlRenderer::currentPass() 
+GlRenderPass* GlRenderer::currentPass()
 {
     if (mRenderPassStack.empty()) return nullptr;
 
