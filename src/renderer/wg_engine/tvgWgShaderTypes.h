@@ -73,7 +73,10 @@ struct WgShaderTypeSolidColor
 
 // const MAX_LINEAR_GRADIENT_STOPS = 4;
 // struct LinearGradient {
-//     nStops       : vec4f,
+//     nStops       : u32,
+//     spread       : u32,
+//     dummy0       : u32,
+//     dummy1       : u32,
 //     gradStartPos : vec2f,
 //     gradEndPos   : vec2f,
 //     stopPoints   : vec4f,
@@ -82,11 +85,14 @@ struct WgShaderTypeSolidColor
 #define MAX_LINEAR_GRADIENT_STOPS 4
 struct WgShaderTypeLinearGradient
 {
-    alignas(16) float nStops[4]{};
-    alignas(16) float startPos[2]{};
-    alignas(8)  float endPos[2]{};
-    alignas(8)  float stopPoints[MAX_LINEAR_GRADIENT_STOPS]{};
-    alignas(16) float stopColors[4 * MAX_LINEAR_GRADIENT_STOPS]{};
+    uint32_t nStops{};
+    uint32_t spread{};
+    uint32_t dummy0{}; // allign with WGSL struct
+    uint32_t dummy1{}; // allign with WGSL struct
+    float startPos[2]{};
+    float endPos[2]{};
+    float stopPoints[MAX_LINEAR_GRADIENT_STOPS]{};
+    float stopColors[4 * MAX_LINEAR_GRADIENT_STOPS]{};
 
     WgShaderTypeLinearGradient(const LinearGradient* linearGradient);
     void update(const LinearGradient* linearGradient);
@@ -94,7 +100,10 @@ struct WgShaderTypeLinearGradient
 
 // const MAX_RADIAL_GRADIENT_STOPS = 4;
 // struct RadialGradient {
-//     nStops     : vec4f,
+//     nStops     : u32,
+//     spread     : u32,
+//     dummy0     : u32,
+//     dummy1     : u32,
 //     centerPos  : vec2f,
 //     radius     : vec2f,
 //     stopPoints : vec4f,
@@ -103,11 +112,14 @@ struct WgShaderTypeLinearGradient
 #define MAX_RADIAL_GRADIENT_STOPS 4
 struct WgShaderTypeRadialGradient
 {
-    alignas(16) float nStops[4]{};
-    alignas(16) float centerPos[2]{};
-    alignas(8)  float radius[2]{};
-    alignas(8)  float stopPoints[MAX_RADIAL_GRADIENT_STOPS]{};
-    alignas(16) float stopColors[4 * MAX_RADIAL_GRADIENT_STOPS]{};
+    uint32_t nStops{};
+    uint32_t spread{};
+    uint32_t dummy0{}; // allign with WGSL struct
+    uint32_t dummy1{}; // allign with WGSL struct
+    float centerPos[2]{};
+    float radius[2]{};
+    float stopPoints[MAX_RADIAL_GRADIENT_STOPS]{};
+    float stopColors[4 * MAX_RADIAL_GRADIENT_STOPS]{};
 
     WgShaderTypeRadialGradient(const RadialGradient* radialGradient);
     void update(const RadialGradient* radialGradient);
