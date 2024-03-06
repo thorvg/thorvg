@@ -20,8 +20,10 @@
  * SOFTWARE.
  */
 
+#include "config.h"
 #include <string>
 #include <thorvg.h>
+#include <thorvg_lottie.h>
 #include "thorvg_capi.h"
 
 using namespace std;
