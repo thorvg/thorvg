@@ -46,7 +46,7 @@ Result LottieAnimation::override(const char* slot) noexcept
         return Result::Success;
     }
 
-    return Result::InsufficientCondition;
+    return Result::InvalidArguments;
 }
 
 
