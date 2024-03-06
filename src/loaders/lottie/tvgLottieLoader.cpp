@@ -298,7 +298,7 @@ Paint* LottieLoader::paint()
 
 bool LottieLoader::override(const char* slot)
 {
-    if (!slot) return false;
+    if (!slot || !comp || comp->slots.count == 0) return false;
 
     //TODO: Crashed, does this necessary?
     auto temp = strdup(slot);
