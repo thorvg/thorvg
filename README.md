@@ -481,7 +481,7 @@ ThorVG offers versatile support for image loading, accommodating both static and
 <br />
 <br />
 ## Contributors
-We are grateful to the individuals, organizations, and companies that have contributed to the development of the ThorVG project. The dedicated efforts of the individuals and entities listed below have enabled ThorVG to reach its current state.
+ThorVG stands as a purely open-source initiatives. We are grateful to the individuals, organizations, and companies that have contributed to the development of the ThorVG project. The dedicated efforts of the individuals and entities listed below have enabled ThorVG to reach its current state.
 
 * [Individuals](https://github.com/thorvg/thorvg/blob/main/AUTHORS)
 * [LottieFiles](https://lottiefiles.com/) by Design Barn Inc.
