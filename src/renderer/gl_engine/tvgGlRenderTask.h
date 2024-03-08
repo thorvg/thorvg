@@ -110,10 +110,12 @@ private:
     GlRenderTask* mCoverTask;
 };
 
+class GlRenderTarget;
+
 class GlComposeTask : public GlRenderTask 
 {
 public:
-    GlComposeTask(GlProgram* program, GLuint target, GLuint selfFbo, Array<GlRenderTask*>&& tasks);
+    GlComposeTask(GlProgram* program, GLuint target, GlRenderTarget* fbo, Array<GlRenderTask*>&& tasks);
     ~GlComposeTask() override;
 
     void run() override;
@@ -123,23 +125,29 @@ public:
 protected:
     GLuint getTargetFbo() { return mTargetFbo; }
 
-    GLuint getSelfFbo() { return mSelfFbo; }
+    GLuint getSelfFbo();
 
+    GLuint getResolveFboId();
+
+    virtual void onResolve();
 private:
     GLuint mTargetFbo;
-    GLuint mSelfFbo;
+    GlRenderTarget* mFbo;
     Array<GlRenderTask*> mTasks;
 };
 
 class GlBlitTask : public GlComposeTask
 {
 public:
-    GlBlitTask(GlProgram*, GLuint target, GLuint compose, Array<GlRenderTask*>&& tasks);
+    GlBlitTask(GlProgram*, GLuint target, GlRenderTarget* fbo, Array<GlRenderTask*>&& tasks);
     ~GlBlitTask() override = default;
 
     void setSize(uint32_t width, uint32_t height);
 
     void run() override;
+
+protected:
+    void onResolve() override {}
 
 private:
     uint32_t mWidth = 0;
@@ -149,7 +157,7 @@ private:
 class GlDrawBlitTask : public GlComposeTask
 {
 public:
-    GlDrawBlitTask(GlProgram*, GLuint target, GLuint compose, Array<GlRenderTask*>&& tasks);
+    GlDrawBlitTask(GlProgram*, GLuint target, GlRenderTarget* fbo, Array<GlRenderTask*>&& tasks);
     ~GlDrawBlitTask() override = default;
 
     void run() override;
