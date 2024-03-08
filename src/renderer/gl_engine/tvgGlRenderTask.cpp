@@ -22,6 +22,7 @@
 
 #include "tvgGlRenderTask.h"
 #include "tvgGlProgram.h"
+#include "tvgGlRenderPass.h"
 
 /************************************************************************/
 /* External Class Implementation                                        */
@@ -131,8 +132,8 @@ void GlStencilCoverTask::run()
     GL_CHECK(glDisable(GL_STENCIL_TEST));
 }
 
-GlComposeTask::GlComposeTask(GlProgram* program, GLuint target, GLuint selfFbo, Array<GlRenderTask*>&& tasks)
- :GlRenderTask(program) ,mTargetFbo(target), mSelfFbo(selfFbo), mTasks()
+GlComposeTask::GlComposeTask(GlProgram* program, GLuint target, GlRenderTarget* fbo, Array<GlRenderTask*>&& tasks)
+ :GlRenderTask(program) ,mTargetFbo(target), mFbo(fbo), mTasks()
 {
     mTasks.push(tasks);
     tasks.clear();
@@ -162,10 +163,23 @@ void GlComposeTask::run()
 
     GLenum stencil_attachment = GL_STENCIL_ATTACHMENT;
     GL_CHECK(glInvalidateFramebuffer(GL_FRAMEBUFFER, 1, &stencil_attachment));
+
+    onResolve();
 }
 
-GlBlitTask::GlBlitTask(GlProgram* program, GLuint target, GLuint compose, Array<GlRenderTask*>&& tasks)
- : GlComposeTask(program, target, compose, std::move(tasks))
+GLuint GlComposeTask::getSelfFbo() { return mFbo->getFboId(); }
+
+GLuint GlComposeTask::getResolveFboId() { return mFbo->getResolveFboId(); }
+
+void GlComposeTask::onResolve() {
+    GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, getSelfFbo()));
+    GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, getResolveFboId()));
+
+    GL_CHECK(glBlitFramebuffer(0, 0, mFbo->getWidth(), mFbo->getHeight(), 0, 0, mFbo->getWidth(), mFbo->getHeight(), GL_COLOR_BUFFER_BIT, GL_NEAREST));
+}
+
+GlBlitTask::GlBlitTask(GlProgram* program, GLuint target, GlRenderTarget* fbo, Array<GlRenderTask*>&& tasks)
+ : GlComposeTask(program, target, fbo, std::move(tasks))
 {
 }
 
@@ -186,8 +200,8 @@ void GlBlitTask::run()
     GL_CHECK(glBlitFramebuffer(0, 0, mWidth, mHeight, 0, 0, mWidth, mHeight, GL_COLOR_BUFFER_BIT, GL_NEAREST));
 }
 
-GlDrawBlitTask::GlDrawBlitTask(GlProgram* program, GLuint target, GLuint compose, Array<GlRenderTask*>&& tasks)
- : GlComposeTask(program, target, compose, std::move(tasks))
+GlDrawBlitTask::GlDrawBlitTask(GlProgram* program, GLuint target, GlRenderTarget* fbo, Array<GlRenderTask*>&& tasks)
+ : GlComposeTask(program, target, fbo, std::move(tasks))
 {
 }
 

@@ -40,14 +40,20 @@ public:
     void init(GLint resolveId);
 
     GLuint getFboId() { return mFbo; }
+    GLuint getResolveFboId() { return mResolveFbo; }
     GLuint getColorTexture() { return mColorTex; }
+
+    uint32_t getWidth() const { return mWidth; }
+    uint32_t getHeight() const { return mHeight; }
 
 private:
     uint32_t mWidth = 0;
     uint32_t mHeight = 0;
     GLuint mFbo = 0;
-    GLuint mColorTex = 0;
+    GLuint mColorBuffer = 0;
     GLuint mStencilBuffer = 0;
+    GLuint mResolveFbo = 0;
+    GLuint mColorTex = 0;
 };
 
 class GlRenderPass
@@ -66,7 +72,7 @@ public:
 
     template <class T>
     T* endRenderPass(GlProgram* program, GLuint targetFbo) {
-        return new T(program, targetFbo, mFbo->getFboId(), std::move(mTasks));
+        return new T(program, targetFbo, mFbo, std::move(mTasks));
     }
 private:
     GlRenderTarget* mFbo;
