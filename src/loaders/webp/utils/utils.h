@@ -60,6 +60,18 @@ static WEBP_INLINE int BitsLog2Floor(uint32_t n) {
 #endif
 
 //------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+// Alignment
+
+#include <string.h>
+// memcpy() is the safe way of moving potentially unaligned 32b memory.
+static WEBP_INLINE uint32_t WebPMemToUint32(const uint8_t* const ptr) {
+  uint32_t A;
+  memcpy(&A, ptr, sizeof(A));
+  return A;
+}
+
+//------------------------------------------------------------------------------
 
 #ifdef __cplusplus
 }    // extern "C"
