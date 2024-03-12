@@ -55,11 +55,11 @@ bool GlRenderer::clear()
 }
 
 
-bool GlRenderer::target(TVG_UNUSED uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h)
+bool GlRenderer::target(int32_t id, uint32_t w, uint32_t h)
 {
     assert(w > 0 && h > 0);
 
-    surface.stride = stride;
+    surface.stride = w;
     surface.w = w;
     surface.h = h;
 
@@ -68,10 +68,7 @@ bool GlRenderer::target(TVG_UNUSED uint32_t* buffer, uint32_t stride, uint32_t w
     mViewport.w = surface.w;
     mViewport.h = surface.h;
 
-    // get current binded framebuffer id
-    // EFL seems has a seperate framebuffer for evagl view
-    //TODO: introduce a new api to specify which fbo this canvas is binded
-    GL_CHECK(glGetIntegerv(GL_FRAMEBUFFER_BINDING, &mTargetFboId));
+    mTargetFboId = static_cast<GLint>(id);
 
     mRootTarget = make_unique<GlRenderTarget>(surface.w, surface.h);
     mRootTarget->init(mTargetFboId);

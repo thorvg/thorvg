@@ -67,7 +67,7 @@ public:
     bool blend(BlendMethod method) override;
     ColorSpace colorSpace() override;
 
-    bool target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h);
+    bool target(int32_t id, uint32_t w, uint32_t h);
     bool sync() override;
     bool clear() override;
 
