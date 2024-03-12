@@ -1238,11 +1238,13 @@ void LottieParser::postProcess(Array<LottieGlyph*>& glyphes)
 /* External Class Implementation                                        */
 /************************************************************************/
 
-const char* LottieParser::sid()
+const char* LottieParser::sid(bool first)
 {
-    //verify json
-    if (!parseNext()) return nullptr;
-    enterObject();
+    if (first) {
+        //verify json
+        if (!parseNext()) return nullptr;
+        enterObject();
+    }
     return nextObjectKey();
 }
 
