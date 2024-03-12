@@ -305,21 +305,22 @@ bool LottieLoader::override(const char* slot)
 
     //parsing slot json
     LottieParser parser(temp, dirName);
-    auto sid = parser.sid();
-    if (!sid) {
-        free(temp);
-        return false;
+
+    auto idx = 0;
+    auto success = true;
+    while (auto sid = parser.sid(idx == 0)) {
+        for (auto s = comp->slots.begin(); s < comp->slots.end(); ++s) {
+            if (strcmp((*s)->sid, sid)) continue;
+            if (!parser.parse(*s)) success = false;
+            break;
+        }
+        ++idx;
     }
 
-    bool ret = false;
-    for (auto s = comp->slots.begin(); s < comp->slots.end(); ++s) {
-        if (strcmp((*s)->sid, sid)) continue;
-        ret = parser.parse(*s);
-        break;
-    }
+    if (idx < 1) success = false;
 
     free(temp);
-    return ret;
+    return success;
 }
 
 
