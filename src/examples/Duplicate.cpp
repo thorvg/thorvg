@@ -191,11 +191,15 @@ static unique_ptr<tvg::GlCanvas> glCanvas;
 
 void initGLview(Evas_Object *obj)
 {
-    static constexpr auto BPP = 4;
-
     //Create a Canvas
     glCanvas = tvg::GlCanvas::gen();
-    glCanvas->target(nullptr, WIDTH * BPP, WIDTH, HEIGHT);
+
+    //Get the drawing target id
+    int32_t targetId;
+    auto gl = elm_glview_gl_api_get(obj);
+    gl->glGetIntegerv(GL_FRAMEBUFFER_BINDING, &targetId);
+
+    glCanvas->target(targetId, WIDTH, HEIGHT);
 
     /* Push the shape into the Canvas drawing list
        When this shape is into the canvas list, the shape could update & prepare
