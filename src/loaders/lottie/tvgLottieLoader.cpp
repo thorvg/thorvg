@@ -302,7 +302,24 @@ Paint* LottieLoader::paint()
 
 bool LottieLoader::override(const char* slot)
 {
-    if (!slot || !comp || comp->slots.count == 0) return false;
+    if (!comp || comp->slots.count == 0) return false;
+
+    //reverting whole slots
+    if (!slot) {
+        // Clear all overridden slots
+        for (auto s = comp->slots.begin(); s < comp->slots.end(); ++s) {
+            for (
+                auto origin = (*s)->origins.begin(), obj = (*s)->objs.begin();
+                origin < (*s)->origins.end() && obj < (*s)->objs.end();
+                ++origin, ++obj
+            ) {
+                // cout << "origin" << *origin << endl;
+                // cout << "obj" << *obj << endl;
+                (*obj)->override(*origin);
+            }
+        }
+        return true;
+    }
 
     //TODO: Crashed, does this necessary?
     auto temp = strdup(slot);

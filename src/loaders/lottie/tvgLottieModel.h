@@ -631,11 +631,38 @@ struct LottieSlot
 {
     char* sid;
     Array<LottieObject*> objs;
+    Array<LottieObject*> origins; // FIXME: It doesn't assure objs and origins are aligned
     LottieProperty::Type type;
 
     LottieSlot(char* sid, LottieObject* obj, LottieProperty::Type type) : sid(sid), type(type)
     {
         objs.push(obj);
+
+        LottieObject* origin = nullptr;
+
+        switch (type) {
+            case LottieProperty::Type::ColorStop: {
+                origin = new LottieGradient;
+                // memcpy(origin, obj, sizeof(LottieGradient));
+                static_cast<LottieGradient*>(origin)->colorStops = reinterpret_cast<LottieGradient*>(obj)->colorStops;
+                break;
+            }
+            case LottieProperty::Type::Color: {
+                origin = new LottieSolid;
+                // memcpy(origin, obj, sizeof(LottieSolid));
+                static_cast<LottieSolid*>(origin)->color = reinterpret_cast<LottieSolid*>(obj)->color;
+                break;
+            }
+            case LottieProperty::Type::TextDoc: {
+                origin = new LottieText;
+                // memcpy(origin, obj, sizeof(LottieText));
+                static_cast<LottieText*>(origin)->doc = reinterpret_cast<LottieText*>(obj)->doc;
+                break;
+            }
+            default: return;
+        }
+
+        origins.push(origin);
     }
 
     ~LottieSlot()

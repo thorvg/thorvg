@@ -85,6 +85,11 @@ void tvgDrawCmds(tvg::Canvas* canvas)
         cout << "Failed to override the slot" << endl;
     }
 
+    //Revert
+    if (animation->override(nullptr) == tvg::Result::Success) {
+        canvas->update();
+    }
+
     //Run animation loop
     elm_transit_duration_set(transit, animation->duration());
     elm_transit_repeat_times_set(transit, -1);
