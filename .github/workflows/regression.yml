@@ -1,5 +1,6 @@
 name: Regression
 
+# on: [push, pull_request] - enable when testing
 on:
   pull_request:
     branches:
@@ -9,7 +10,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Install things
         run: |
           sudo apt-get update
@@ -18,14 +19,14 @@ jobs:
 
       - name: Compile Thorvg PR
         run: |
-          meson . build -Dtools=svg2png -Db_sanitize=address,undefined
+          meson . build -Dtools=svg2png
           sudo ninja -C build install
 
       - name: Compile Thorvg Develop
         run: |
           git clone https://github.com/thorvg/thorvg.git thorvg_develop
           cd thorvg_develop
-          meson . build -Dtools=svg2png -Db_sanitize=address,undefined
+          meson . build -Dtools=svg2png
           sudo ninja -C build install
           cd ..
 
@@ -38,8 +39,9 @@ jobs:
       # Test valid files
       - name: Prepare valid files to test
         run: |
-          wget https://github.com/qarmin/SVG-regression-finder/releases/download/0.3.0/ThorvgValidFiles.zip
-          unzip ThorvgValidFiles.zip
+          wget https://github.com/qarmin/SVG-regression-finder/releases/download/0.3.0/ThorvgValidFiles.zip -O files.zip
+          unzip -q files.zip
+          rm files.zip
           mv ThorvgValidFiles FilesToTest
 
       - name: Run regression finder tests
@@ -47,14 +49,14 @@ jobs:
           ./svg_tester 2>&1 | tee result_valid_files.txt
 
       - name: Store Broken Images for valid inputs
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: differences-in-valid-files
           path: BrokenSVG
           if-no-files-found: ignore
 
       - name: Store Problematic Images for valid inputs
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: problematic-images-in-valid-files
           path: ProblematicSVG
@@ -70,8 +72,9 @@ jobs:
       # Test files that may not work currently good with Thorvg, errors from this are not critical
       - name: Prepare not valid to test
         run: |
-          wget https://github.com/qarmin/SVG-regression-finder/releases/download/0.3.0/ThorvgNotValidFiles.zip
-          unzip ThorvgNotValidFiles.zip
+          wget https://github.com/qarmin/SVG-regression-finder/releases/download/0.3.0/ThorvgNotValidFiles.zip -O files.zip
+          unzip -q files.zip
+          rm files.zip
           mv ThorvgNotValidFiles FilesToTest
 
       - name: Run invalid files tests
@@ -79,14 +82,14 @@ jobs:
           ./svg_tester 2>&1 | tee result_not_valid_files.txt
 
       - name: Store Broken Images for not valid inputs
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: differences-in-not-valid-files
           path: BrokenSVG
           if-no-files-found: ignore
 
       - name: Store Problematic Images for not valid inputs
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: problematic-images-in-not-valid-files
           path: ProblematicSVG
@@ -101,20 +104,16 @@ jobs:
 
       - name: Test png reproducibility
         run: |
-          wget https://github.com/thorvg/thorvg/files/11356766/AA_5.svg.zip
-          unzip AA_5.svg.zip
+          wget https://github.com/thorvg/thorvg/files/11356766/AA_5.svg.zip -O files.zip
+          unzip -q files.zip
+          rm files.zip
           cp test/regression/check_same_image_size.py check_same_image_size.py
-          taskset -c 0-15 python3 check_same_image_size.py AA_5.svg ./build/src/bin/svg2png/svg2png 100 500 2>&1 | tee result_image_size.txt
+          # Forces to run tasks on different threads if possible, which should help find problem with data races
+          taskset -c 0-15 python3 check_same_image_size.py AA_5.svg ./build/src/tools/svg2png/svg2png 100 500 2>&1 | tee result_image_size.txt
 
-      - name: Add comment to PR
+      - name: Check output and send comment
         run: |
           export PATH=$PATH:~/.local/bin/
-          chmod +x "${GITHUB_WORKSPACE}/.github/workflows/regression_check.sh"
-          "${GITHUB_WORKSPACE}/.github/workflows/regression_check.sh"
+          python3 "${GITHUB_WORKSPACE}/.github/workflows/regression_check.py"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      # Failing should happen after creating comment PR and passing all tests
-      - name: Fail if needed
-        run: |
-          if [ -f "EXIT_REQUESTED" ]; then false; fi

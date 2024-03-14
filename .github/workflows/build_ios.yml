@@ -12,7 +12,7 @@ jobs:
   build_x86_64:
     runs-on: macos-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         submodules: true
 
@@ -33,15 +33,15 @@ jobs:
         meson setup --backend=ninja build -Dlog=true -Dloaders="all" -Dstatic=true -Dsavers="all" -Dbindings="capi" --cross-file ./cross/ios_x86_64.txt
         ninja -C build install
 
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
-        name: result
+        name: result_x86_64
         path: build/src/libthorvg*
 
   build_aarch64:
     runs-on: macos-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         submodules: true
 
@@ -62,7 +62,7 @@ jobs:
         meson setup --backend=ninja build -Dlog=true -Dloaders="all" -Dstatic=true -Dsavers="all" -Dbindings="capi" --cross-file ./cross/ios_aarch64.txt
         ninja -C build install
 
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
-        name: result
+        name: result_aarch64
         path: build/src/libthorvg*
