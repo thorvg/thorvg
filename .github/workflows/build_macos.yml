@@ -12,7 +12,7 @@ jobs:
   build:
     runs-on: macos-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         submodules: true
 
@@ -36,7 +36,7 @@ jobs:
   static_loaders:
     runs-on: macos-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         submodules: true
 
@@ -59,7 +59,7 @@ jobs:
   unit_test:
     runs-on: macos-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         submodules: true
 
@@ -79,7 +79,7 @@ jobs:
         meson setup build -Dloaders="all" -Dsavers="all" -Dbindings="capi" -Dtests=true --errorlogs
         ninja -C build install test
 
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
         name: UnitTestReport
         path: build/meson-logs/testlog.txt

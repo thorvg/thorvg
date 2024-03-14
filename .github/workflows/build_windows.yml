@@ -12,7 +12,7 @@ jobs:
   build:
     runs-on: windows-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - uses: ilammy/msvc-dev-cmd@v1
 
     - name: Install Packages
@@ -25,15 +25,15 @@ jobs:
         where link
         ninja -C build install
 
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
-        name: result
+        name: result_windows
         path: build/src/thorvg*
 
   static_loaders:
     runs-on: windows-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - uses: ilammy/msvc-dev-cmd@v1
 
     - name: Install Packages
@@ -46,15 +46,15 @@ jobs:
         where link
         ninja -C build install
 
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
-        name: result
+        name: result_windows_static
         path: build/src/thorvg*
 
   unit_test:
     runs-on: windows-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - uses: ilammy/msvc-dev-cmd@v1
 
     - name: Install Packages
@@ -67,7 +67,7 @@ jobs:
         where link
         ninja -C build install test
 
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
         name: UnitTestReport
         path: build/meson-logs/testlog.txt
