@@ -644,8 +644,8 @@ struct LottieSlot
             case LottieProperty::Type::ColorStop: {
                 auto origin = new LottieGradient;
                 auto target = reinterpret_cast<LottieGradient*>(obj);
-                // deep copy -> can change to simple line like memcpy?
                 
+                //deep copy, used for slot reverting
                 if (target->colorStops.frames) {
                   origin->colorStops.frames = new Array<LottieScalarFrame<ColorStop>>;
                   for (auto i = target->colorStops.frames->begin(); i < target->colorStops.frames->end(); ++i) {
@@ -683,19 +683,20 @@ struct LottieSlot
             }
             case LottieProperty::Type::TextDoc: {
                 auto origin = new LottieText;
-                // deep copy
-
-                if (static_cast<LottieText*>(obj)->doc.frames) {
+                auto target = reinterpret_cast<LottieText*>(obj);
+                
+                //deep copy, used for slot reverting
+                if (target->doc.frames) {
                   origin->doc.frames = new Array<LottieScalarFrame<TextDocument>>;
-                  for (auto i = static_cast<LottieText*>(obj)->doc.frames->begin(); i < static_cast<LottieText*>(obj)->doc.frames->end(); ++i) {
+                  for (auto i = target->doc.frames->begin(); i < target->doc.frames->end(); ++i) {
                     origin->doc.frames->push(*i);
                     origin->doc.frames->last().value.text = strdup(origin->doc.frames->last().value.text);
                     origin->doc.frames->last().value.name = strdup(origin->doc.frames->last().value.name);
                   }
                 } else {
-                  origin->doc.value = reinterpret_cast<LottieText*>(obj)->doc.value;
-                  origin->doc.value.text = strdup(reinterpret_cast<LottieText*>(obj)->doc.value.text);
-                  origin->doc.value.name = strdup(reinterpret_cast<LottieText*>(obj)->doc.value.name);
+                  origin->doc.value = target->doc.value;
+                  origin->doc.value.text = strdup(target->doc.value.text);
+                  origin->doc.value.name = strdup(target->doc.value.name);
                 }
 
                 origins.push(origin);
