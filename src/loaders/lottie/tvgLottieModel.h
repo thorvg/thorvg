@@ -643,8 +643,27 @@ struct LottieSlot
         switch (type) {
             case LottieProperty::Type::ColorStop: {
                 origin = new LottieGradient;
-                // memcpy(origin, obj, sizeof(LottieGradient));
-                static_cast<LottieGradient*>(origin)->colorStops = reinterpret_cast<LottieGradient*>(obj)->colorStops;
+                // static_cast<LottieGradient*>(origin)->colorStops = reinterpret_cast<LottieGradient*>(obj)->colorStops;
+
+                // deep copy -> can change to simple line like memcpy?
+                //FIXME: refactor
+                if (reinterpret_cast<LottieGradient*>(obj)->colorStops.value.data) {
+                  static_cast<LottieGradient*>(origin)->colorStops.value.data->a = reinterpret_cast<LottieGradient*>(obj)->colorStops.value.data->a;
+                  static_cast<LottieGradient*>(origin)->colorStops.value.data->b = reinterpret_cast<LottieGradient*>(obj)->colorStops.value.data->b;
+                  static_cast<LottieGradient*>(origin)->colorStops.value.data->g = reinterpret_cast<LottieGradient*>(obj)->colorStops.value.data->g;
+                  static_cast<LottieGradient*>(origin)->colorStops.value.data->offset = reinterpret_cast<LottieGradient*>(obj)->colorStops.value.data->offset;
+                  static_cast<LottieGradient*>(origin)->colorStops.value.data->r = reinterpret_cast<LottieGradient*>(obj)->colorStops.value.data->r;
+                }
+
+                if (reinterpret_cast<LottieGradient*>(obj)->colorStops.value.input) {
+                  static_cast<LottieGradient*>(origin)->colorStops.value.input = new Array<float>;
+
+                  for (auto i = reinterpret_cast<LottieGradient*>(obj)->colorStops.value.input->begin(); i < reinterpret_cast<LottieGradient*>(obj)->colorStops.value.input->end(); ++i) {
+                    float v = *i;
+                    static_cast<LottieGradient*>(origin)->colorStops.value.input->push(v);
+                  }
+                }
+                static_cast<LottieGradient*>(origin)->colorStops.count = reinterpret_cast<LottieGradient*>(obj)->colorStops.count;
                 break;
             }
             case LottieProperty::Type::Color: {
