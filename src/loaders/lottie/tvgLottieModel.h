@@ -643,24 +643,35 @@ struct LottieSlot
         switch (type) {
             case LottieProperty::Type::ColorStop: {
                 auto origin = new LottieGradient;
-                // static_cast<LottieGradient*>(origin)->colorStops = reinterpret_cast<LottieGradient*>(obj)->colorStops;
-
+                auto target = reinterpret_cast<LottieGradient*>(obj);
                 // deep copy -> can change to simple line like memcpy?
-                // need to support frames
-                //FIXME: refactor
-                if (reinterpret_cast<LottieGradient*>(obj)->colorStops.value.data) {
-                  *(origin->colorStops.value.data) = *(reinterpret_cast<LottieGradient*>(obj)->colorStops.value.data);
-                }
+                
+                if (target->colorStops.frames) {
+                  origin->colorStops.frames = new Array<LottieScalarFrame<ColorStop>>;
+                  for (auto i = target->colorStops.frames->begin(); i < target->colorStops.frames->end(); ++i) {
+                    origin->colorStops.frames->push(*i);
 
-                if (reinterpret_cast<LottieGradient*>(obj)->colorStops.value.input) {
-                  origin->colorStops.value.input = new Array<float>;
+                    origin->colorStops.frames->last().value.input = new Array<float>;
+                    for (auto j = i->value.input->begin(); j < i->value.input->end(); ++j) {
+                      origin->colorStops.frames->last().value.input->push(*j);
+                    }
+                  }
 
-                  for (auto i = reinterpret_cast<LottieGradient*>(obj)->colorStops.value.input->begin(); i < reinterpret_cast<LottieGradient*>(obj)->colorStops.value.input->end(); ++i) {
-                    origin->colorStops.value.input->push(*i);
+                } else {
+                  if (target->colorStops.value.data) {
+                    *(origin->colorStops.value.data) = *(target->colorStops.value.data);
+                  }
+
+                  if (target->colorStops.value.input) {
+                    origin->colorStops.value.input = new Array<float>;
+
+                    for (auto i = target->colorStops.value.input->begin(); i < target->colorStops.value.input->end(); ++i) {
+                      origin->colorStops.value.input->push(*i);
+                    }
                   }
                 }
-                static_cast<LottieGradient*>(origin)->colorStops.count = reinterpret_cast<LottieGradient*>(obj)->colorStops.count;
 
+                origin->colorStops.count = target->colorStops.count;
                 origins.push(origin);
                 break;
             }
@@ -683,9 +694,8 @@ struct LottieSlot
                   }
                 } else {
                   origin->doc.value = reinterpret_cast<LottieText*>(obj)->doc.value;
-
-                  *(origin->doc.value.text) = *(reinterpret_cast<LottieText*>(obj)->doc.value.text);
-                  *(origin->doc.value.name) = *(reinterpret_cast<LottieText*>(obj)->doc.value.name);
+                  origin->doc.value.text = strdup(reinterpret_cast<LottieText*>(obj)->doc.value.text);
+                  origin->doc.value.name = strdup(reinterpret_cast<LottieText*>(obj)->doc.value.name);
                 }
 
                 origins.push(origin);
