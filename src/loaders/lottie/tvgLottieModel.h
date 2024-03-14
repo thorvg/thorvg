@@ -132,6 +132,11 @@ struct LottieObject
         TVGERR("LOTTIE", "Unsupported slot type");
     }
 
+    virtual void save(LottieProperty::Type type)
+    {
+        TVGERR("LOTTIE", "Unsupported slot type");
+    }
+
     char* name = nullptr;
     Type type;
     bool statical = true;      //no keyframes
@@ -195,6 +200,28 @@ struct LottieText : LottieObject
     {
         this->doc = static_cast<LottieText*>(prop)->doc;
         this->prepare();
+    }
+
+    void save(LottieProperty::Type type) override
+    {
+        auto origin = new LottieText;
+        auto target = reinterpret_cast<LottieText*>(this);
+        
+        //deep copy, used for slot reverting
+        if (target->doc.frames) {
+            origin->doc.frames = new Array<LottieScalarFrame<TextDocument>>;
+            for (auto i = target->doc.frames->begin(); i < target->doc.frames->end(); ++i) {
+            origin->doc.frames->push(*i);
+            origin->doc.frames->last().value.text = strdup(origin->doc.frames->last().value.text);
+            origin->doc.frames->last().value.name = strdup(origin->doc.frames->last().value.name);
+            }
+        } else {
+            origin->doc.value = target->doc.value;
+            origin->doc.value.text = strdup(target->doc.value.text);
+            origin->doc.value.name = strdup(target->doc.value.name);
+        }
+
+        this->origin = origin;
     }
 
     LottieTextDoc doc;
@@ -343,6 +370,13 @@ struct LottieSolid : LottieObject
 {
     LottieColor color = RGB24{255, 255, 255};
     LottieOpacity opacity = 255;
+
+    void save(LottieProperty::Type type) override
+    {
+        auto origin = new LottieSolid;
+        origin->color = reinterpret_cast<LottieSolid*>(this)->color;
+        this->origin = origin;
+    }
 };
 
 
@@ -473,6 +507,41 @@ struct LottieGradient : LottieObject
         }
         if (start.frames || end.frames || height.frames || angle.frames || opacity.frames || colorStops.frames) return true;
         return false;
+    }
+
+    void save(LottieProperty::Type type) override
+    {
+        auto origin = new LottieGradient;
+        auto target = reinterpret_cast<LottieGradient*>(this);
+
+        //deep copy, used for slot reverting
+        if (target->colorStops.frames) {
+            origin->colorStops.frames = new Array<LottieScalarFrame<ColorStop>>;
+            for (auto i = target->colorStops.frames->begin(); i < target->colorStops.frames->end(); ++i) {
+                origin->colorStops.frames->push(*i);
+
+                origin->colorStops.frames->last().value.input = new Array<float>;
+                for (auto j = i->value.input->begin(); j < i->value.input->end(); ++j) {
+                    origin->colorStops.frames->last().value.input->push(*j);
+                }
+            }
+
+        } else {
+            if (target->colorStops.value.data) {
+                *(origin->colorStops.value.data) = *(target->colorStops.value.data);
+            }
+
+            if (target->colorStops.value.input) {
+                origin->colorStops.value.input = new Array<float>;
+
+                for (auto i = target->colorStops.value.input->begin(); i < target->colorStops.value.input->end(); ++i) {
+                    origin->colorStops.value.input->push(*i);
+                }
+            }
+        }
+
+        origin->colorStops.count = target->colorStops.count;
+        this->origin = origin;
     }
 
     Fill* fill(float frameNo);
@@ -637,70 +706,21 @@ struct LottieSlot
     Array<LottieObject*> objs;
     LottieProperty::Type type;
 
-    LottieSlot(char* sid, LottieObject* obj, LottieProperty::Tgype type) : sid(sid), type(type)
+    LottieSlot(char* sid, LottieObject* obj, LottieProperty::Type type) : sid(sid), type(type)
     {
         objs.push(obj);
 
         switch (type) {
             case LottieProperty::Type::ColorStop: {
-                auto origin = new LottieGradient;
-                auto target = reinterpret_cast<LottieGradient*>(obj);
-                
-                //deep copy, used for slot reverting
-                if (target->colorStops.frames) {
-                  origin->colorStops.frames = new Array<LottieScalarFrame<ColorStop>>;
-                  for (auto i = target->colorStops.frames->begin(); i < target->colorStops.frames->end(); ++i) {
-                    origin->colorStops.frames->push(*i);
-
-                    origin->colorStops.frames->last().value.input = new Array<float>;
-                    for (auto j = i->value.input->begin(); j < i->value.input->end(); ++j) {
-                      origin->colorStops.frames->last().value.input->push(*j);
-                    }
-                  }
-
-                } else {
-                  if (target->colorStops.value.data) {
-                    *(origin->colorStops.value.data) = *(target->colorStops.value.data);
-                  }
-
-                  if (target->colorStops.value.input) {
-                    origin->colorStops.value.input = new Array<float>;
-
-                    for (auto i = target->colorStops.value.input->begin(); i < target->colorStops.value.input->end(); ++i) {
-                      origin->colorStops.value.input->push(*i);
-                    }
-                  }
-                }
-
-                origin->colorStops.count = target->colorStops.count;
-                obj->origin = origin;
+                obj->save(type);
                 break;
             }
             case LottieProperty::Type::Color: {
-                auto origin = new LottieSolid;
-                origin->color = reinterpret_cast<LottieSolid*>(obj)->color;
-                obj->origin = origin;
+                obj->save(type);
                 break;
             }
             case LottieProperty::Type::TextDoc: {
-                auto origin = new LottieText;
-                auto target = reinterpret_cast<LottieText*>(obj);
-                
-                //deep copy, used for slot reverting
-                if (target->doc.frames) {
-                  origin->doc.frames = new Array<LottieScalarFrame<TextDocument>>;
-                  for (auto i = target->doc.frames->begin(); i < target->doc.frames->end(); ++i) {
-                    origin->doc.frames->push(*i);
-                    origin->doc.frames->last().value.text = strdup(origin->doc.frames->last().value.text);
-                    origin->doc.frames->last().value.name = strdup(origin->doc.frames->last().value.name);
-                  }
-                } else {
-                  origin->doc.value = target->doc.value;
-                  origin->doc.value.text = strdup(target->doc.value.text);
-                  origin->doc.value.name = strdup(target->doc.value.name);
-                }
-
-                obj->origin = origin;
+                obj->save(type);
                 break;
             }
             default: return;
