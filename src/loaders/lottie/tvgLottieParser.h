@@ -110,7 +110,7 @@ private:
     struct Context {
         LottieLayer* layer = nullptr;
         LottieGradient* gradient = nullptr;
-    } *context;
+    } context;
 };
 
 #endif //_TVG_LOTTIE_PARSER_H_
