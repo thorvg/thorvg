@@ -84,6 +84,7 @@ struct WgGeometryData
     // webgpu did not support triangle fans primitives type
     // so we can emulate triangle fans using indexing
     void computeTriFansIndexes();
+    void computeContour(WgGeometryData* data);
 
     void appendCubic(WgPoint p1, WgPoint p2, WgPoint p3);
     void appendBox(WgPoint pmin, WgPoint pmax);
@@ -92,7 +93,17 @@ struct WgGeometryData
     void appendImageBox(float w, float h);
     void appendBlitBox();
     void appendMesh(const RenderMesh* rmesh);
+
+    bool getClosestIntersection(WgPoint p1, WgPoint p2, WgPoint& pi, uint32_t& index);
+    bool isCW(WgPoint p1, WgPoint p2, WgPoint p3);
+
+    uint32_t getIndexMinX();
+    uint32_t getIndexMaxX();
+    uint32_t getIndexMinY();
+    uint32_t getIndexMaxY();
+
     void close();
+    void clear();
 };
 
 struct WgGeometryDataGroup
@@ -103,6 +114,7 @@ struct WgGeometryDataGroup
     void getBBox(WgPoint& pmin, WgPoint& pmax);
     void tesselate(const RenderShape& rshape);
     void stroke(const RenderShape& rshape);
+    void contours(WgGeometryDataGroup& outlines);
     void release();
 private:
     static void decodePath(const RenderShape& rshape, WgGeometryDataGroup* outlines);

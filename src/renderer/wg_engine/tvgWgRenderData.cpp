@@ -216,7 +216,13 @@ void WgRenderDataShape::updateMeshes(WgContext &context, const RenderShape &rsha
     releaseMeshes(context);
     // update shapes geometry
     WgGeometryDataGroup shapes;
-    shapes.tesselate(rshape);
+    if(rshape.rule == tvg::FillRule::EvenOdd) {
+        shapes.tesselate(rshape);
+    } else if(rshape.rule == tvg::FillRule::Winding) {
+        WgGeometryDataGroup lines;
+        lines.tesselate(rshape);
+        shapes.contours(lines);
+    }
     meshGroupShapes.update(context, &shapes);
     // update shapes bbox
     WgPoint pmin{}, pmax{};

@@ -38,6 +38,51 @@ void WgGeometryData::computeTriFansIndexes()
 };
 
 
+void WgGeometryData::computeContour(WgGeometryData* data)
+{
+    assert(data);
+    assert(data->positions.count > 1);
+    clear();
+    uint32_t istart = data->getIndexMinX(); // index start
+    uint32_t icnt = data->positions.count;  // index count
+
+    uint32_t iprev = istart == 0 ? icnt - 1 : istart - 1;
+    uint32_t inext = (istart + 1) % icnt;   // index current
+    WgPoint p0 = data->positions[istart];   // current segment start
+    bool isIntersected = false;
+    bool isClockWise = !isCW(data->positions[iprev], data->positions[istart], data->positions[inext]);
+
+    uint32_t ii{}; // intersected segment index
+    WgPoint pi{};  // intersection point
+    positions.push(p0);
+    while(!((inext == istart) && (!isIntersected))) {
+        if (data->getClosestIntersection(p0, data->positions[inext], pi, ii)) {
+            isIntersected = true;
+            p0 = pi;
+            // operate intersection point
+            if (isClockWise) { // clock wise behavior
+                if (isCW(p0, pi, data->positions[ii])) {
+                    inext = ii;
+                } else {
+                    inext = ((ii + 1) % icnt);
+                }
+            } else { // contr-clock wise behavior
+                if (isCW(p0, pi, data->positions[ii])) {
+                    inext = ((ii + 1) % icnt);
+                } else {
+                    inext = ii;
+                }
+            }
+        } else { // simple next point
+            isIntersected = false;
+            p0 = data->positions[inext];
+            inext = (inext + 1) % icnt;
+        }
+        positions.push(p0);
+    }
+}
+
+
 void WgGeometryData::appendCubic(WgPoint p1, WgPoint p2, WgPoint p3)
 {
     WgPoint p0 = positions.count > 0 ? positions.last() : WgPoint(0.0f, 0.0f);
@@ -159,12 +204,97 @@ void WgGeometryData::appendMesh(const RenderMesh* rmesh)
 };
 
 
+bool WgGeometryData::getClosestIntersection(WgPoint p1, WgPoint p2, WgPoint& pi, uint32_t& index)
+{
+    bool finded = false;
+    pi = p2;
+    float dist = p1.dist(p2);
+    for (uint32_t i = 0; i < positions.count - 1; i++) {
+        WgPoint p3 = positions[i+0];
+        WgPoint p4 = positions[i+1];
+        float bot = (p1.x - p2.x)*(p3.y - p4.y) - (p1.y - p2.y)*(p3.x - p4.x);
+        if (bot != 0) {
+            float top0 = (p1.x - p3.x)*(p3.y - p4.y) - (p1.y - p3.y)*(p3.x - p4.x);
+            float top1 = (p1.x - p2.x)*(p1.y - p3.y) - (p1.y - p2.y)*(p1.x - p3.x);
+            float t0 = +top0 / bot;
+            float t1 = -top1 / bot;
+            if ((t0 > 0.0f) && (t0 < 1.0f) && (t1 > 0.0f) && (t1 < 1.0f)) {
+                WgPoint p = { p1.x + (p2.x - p1.x) * top0 / bot, p1.y + (p2.y - p1.y) * top0 / bot };
+                float d = p.dist(p1);
+                if (d < dist) {
+                    pi = p;
+                    index = i;
+                    dist = d;
+                    finded = true;
+                }
+            }
+        }
+    }
+    return finded;
+}
+
+bool WgGeometryData::isCW(WgPoint p1, WgPoint p2, WgPoint p3)
+{
+    WgPoint v1 = p2 - p1;
+    WgPoint v2 = p3 - p1;
+    return (v1.x*v2.y - v1.y*v2.x) < 0.0;
+}
+
+
+uint32_t WgGeometryData::getIndexMinX()
+{
+    assert(positions.count > 0);
+    uint32_t index = 0;
+    for (uint32_t i = 1; i < positions.count; i++)
+        if (positions[index].x > positions[i].x) index = i;
+    return index;
+}
+
+
+uint32_t WgGeometryData::getIndexMaxX()
+{
+    assert(positions.count > 0);
+    uint32_t index = 0;
+    for (uint32_t i = 1; i < positions.count; i++)
+        if (positions[index].x < positions[i].x) index = i;
+    return index;
+}
+
+
+uint32_t WgGeometryData::getIndexMinY()
+{
+    assert(positions.count > 0);
+    uint32_t index = 0;
+    for (uint32_t i = 1; i < positions.count; i++)
+        if (positions[index].y > positions[i].y) index = i;
+    return index;
+}
+
+
+uint32_t WgGeometryData::getIndexMaxY()
+{
+    assert(positions.count > 0);
+    uint32_t index = 0;
+    for (uint32_t i = 1; i < positions.count; i++)
+        if (positions[index].y < positions[i].y) index = i;
+    return index;
+}
+
+
 void WgGeometryData::close()
 {
     if (positions.count > 1) {
         positions.push(positions[0]);
     }
 };
+
+
+void WgGeometryData::clear()
+{
+    indexes.clear();
+    positions.clear();
+    texCoords.clear();
+}
 
 //***********************************************************************
 // WgGeometryDataGroup
@@ -218,6 +348,17 @@ void WgGeometryDataGroup::stroke(const RenderShape& rshape)
         strokeSublines(rshape, &outlines, strokeData);
         // append strokes geometry data
         geometries.push(strokeData);
+    }
+}
+
+
+void WgGeometryDataGroup::contours(WgGeometryDataGroup& outlines) 
+{
+    for (uint32_t i = 0 ; i < outlines.geometries.count; i++) {
+        WgGeometryData* geometry = new WgGeometryData();
+        geometry->computeContour(outlines.geometries[i]);
+        geometry->computeTriFansIndexes();
+        this->geometries.push(geometry);
     }
 }
 
