@@ -252,7 +252,7 @@ void LottieParser::getValue(ColorStop& color)
 {
     if (peekType() == kArrayType) enterArray();
 
-    color.input = new Array<float>(context->gradient->colorStops.count);
+    color.input = new Array<float>(context.gradient->colorStops.count);
 
     while (nextArrayValue()) color.input->push(getFloat());
 }
@@ -700,7 +700,7 @@ LottieRoundedCorner* LottieParser::parseRoundedCorner()
 
 void LottieParser::parseGradient(LottieGradient* gradient, const char* key)
 {
-    context->gradient = gradient;
+    context.gradient = gradient;
 
     if (!strcmp(key, "t")) gradient->id = getInt();
     else if (!strcmp(key, "o")) parseProperty<LottieProperty::Type::Opacity>(gradient->opacity, gradient);
@@ -1132,7 +1132,7 @@ LottieLayer* LottieParser::parseLayer()
     if (!layer) return nullptr;
 
     layer->comp = comp;
-    context->layer = layer;
+    context.layer = layer;
 
     auto ddd = false;
 
@@ -1253,8 +1253,6 @@ bool LottieParser::parse(LottieSlot* slot)
 {
     enterObject();
 
-    LottieParser::Context context;
-    this->context = &context;
     LottieObject* obj = nullptr;  //slot object
 
     switch (slot->type) {
@@ -1302,10 +1300,6 @@ bool LottieParser::parse()
     if (!comp) return false;
 
     Array<LottieGlyph*> glyphes;
-
-    //assign parsing context
-    LottieParser::Context context;
-    this->context = &context;
 
     while (auto key = nextObjectKey()) {
         if (!strcmp(key, "v")) comp->version = getStringCopy();
