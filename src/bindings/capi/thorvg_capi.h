@@ -398,8 +398,10 @@ typedef enum {
  * \brief Enumeration specifying the methods of combining the 8-bit color channels into 32-bit color.
  */
 typedef enum {
-    TVG_COLORSPACE_ABGR8888 = 0, ///< The 8-bit color channels are combined into 32-bit color in the order: alpha, blue, green, red.
-    TVG_COLORSPACE_ARGB8888      ///< The 8-bit color channels are combined into 32-bit color in the order: alpha, red, green, blue.
+    TVG_COLORSPACE_ABGR8888 = 0, ///< The channels are joined in the order: alpha, blue, green, red. Colors are alpha-premultiplied. (a << 24 | b << 16 | g << 8 | r)
+    TVG_COLORSPACE_ARGB8888,     ///< The channels are joined in the order: alpha, red, green, blue. Colors are alpha-premultiplied. (a << 24 | r << 16 | g << 8 | b)
+    TVG_COLORSPACE_ABGR8888S,    ///< The channels are joined in the order: alpha, blue, green, red. Colors are un-alpha-premultiplied. @since 0.13
+    TVG_COLORSPACE_ARGB8888S     ///< The channels are joined in the order: alpha, red, green, blue. Colors are un-alpha-premultiplied. @since 0.13
 } Tvg_Colorspace;
 
 
