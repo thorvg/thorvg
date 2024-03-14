@@ -28,6 +28,7 @@
 #include "tvgCommon.h"
 #include "tvgRender.h"
 #include "tvgLottieProperty.h"
+#include "iostream"
 
 
 struct LottieComposition;
@@ -465,6 +466,7 @@ struct LottieGradient : LottieObject
                 colorStops.count = populate(v->value);
             }
         } else {
+          // This calles segment default
             colorStops.count = populate(colorStops.value);
         }
         if (start.frames || end.frames || height.frames || angle.frames || opacity.frames || colorStops.frames) return true;
@@ -646,21 +648,17 @@ struct LottieSlot
                 // static_cast<LottieGradient*>(origin)->colorStops = reinterpret_cast<LottieGradient*>(obj)->colorStops;
 
                 // deep copy -> can change to simple line like memcpy?
+                // need to support frames
                 //FIXME: refactor
                 if (reinterpret_cast<LottieGradient*>(obj)->colorStops.value.data) {
-                  static_cast<LottieGradient*>(origin)->colorStops.value.data->a = reinterpret_cast<LottieGradient*>(obj)->colorStops.value.data->a;
-                  static_cast<LottieGradient*>(origin)->colorStops.value.data->b = reinterpret_cast<LottieGradient*>(obj)->colorStops.value.data->b;
-                  static_cast<LottieGradient*>(origin)->colorStops.value.data->g = reinterpret_cast<LottieGradient*>(obj)->colorStops.value.data->g;
-                  static_cast<LottieGradient*>(origin)->colorStops.value.data->offset = reinterpret_cast<LottieGradient*>(obj)->colorStops.value.data->offset;
-                  static_cast<LottieGradient*>(origin)->colorStops.value.data->r = reinterpret_cast<LottieGradient*>(obj)->colorStops.value.data->r;
+                  *(static_cast<LottieGradient*>(origin)->colorStops.value.data) = *(reinterpret_cast<LottieGradient*>(obj)->colorStops.value.data);
                 }
 
                 if (reinterpret_cast<LottieGradient*>(obj)->colorStops.value.input) {
                   static_cast<LottieGradient*>(origin)->colorStops.value.input = new Array<float>;
 
                   for (auto i = reinterpret_cast<LottieGradient*>(obj)->colorStops.value.input->begin(); i < reinterpret_cast<LottieGradient*>(obj)->colorStops.value.input->end(); ++i) {
-                    float v = *i;
-                    static_cast<LottieGradient*>(origin)->colorStops.value.input->push(v);
+                    static_cast<LottieGradient*>(origin)->colorStops.value.input->push(*i);
                   }
                 }
                 static_cast<LottieGradient*>(origin)->colorStops.count = reinterpret_cast<LottieGradient*>(obj)->colorStops.count;
@@ -668,14 +666,27 @@ struct LottieSlot
             }
             case LottieProperty::Type::Color: {
                 origin = new LottieSolid;
-                // memcpy(origin, obj, sizeof(LottieSolid));
                 static_cast<LottieSolid*>(origin)->color = reinterpret_cast<LottieSolid*>(obj)->color;
                 break;
             }
             case LottieProperty::Type::TextDoc: {
                 origin = new LottieText;
-                // memcpy(origin, obj, sizeof(LottieText));
-                static_cast<LottieText*>(origin)->doc = reinterpret_cast<LottieText*>(obj)->doc;
+                // deep copy
+
+                if (static_cast<LottieText*>(obj)->doc.frames) {
+                  static_cast<LottieText*>(origin)->doc.frames = new Array<LottieScalarFrame<TextDocument>>;
+                  for (auto i = static_cast<LottieText*>(obj)->doc.frames->begin(); i < static_cast<LottieText*>(obj)->doc.frames->end(); ++i) {
+                    static_cast<LottieText*>(origin)->doc.frames->push(*i);
+                    static_cast<LottieText*>(origin)->doc.frames->last().value.text = strdup(static_cast<LottieText*>(origin)->doc.frames->last().value.text);
+                    static_cast<LottieText*>(origin)->doc.frames->last().value.name = strdup(static_cast<LottieText*>(origin)->doc.frames->last().value.name);
+                  }
+                } else {
+                  static_cast<LottieText*>(origin)->doc.value = reinterpret_cast<LottieText*>(obj)->doc.value;
+
+                  *(static_cast<LottieText*>(origin)->doc.value.text) = *(reinterpret_cast<LottieText*>(obj)->doc.value.text);
+                  *(static_cast<LottieText*>(origin)->doc.value.name) = *(reinterpret_cast<LottieText*>(obj)->doc.value.name);
+                }
+
                 break;
             }
             default: return;
