@@ -21,12 +21,12 @@ remove_generated_png_files_at_end = false # Remove all png from output folder at
 
 [first_tool]
 name = "thorvg_pr"
-path = "./build/src/bin/svg2png/svg2png"
+path = "./build/src/tools/svg2png/svg2png"
 png_name_ending = "_thorvg_pr.png"
 arguments = "{FILE} -r {SIZE}x{SIZE}"
 
 [other_tool]
 name = "thorvg_develop"
-path = "./thorvg_develop/build/src/bin/svg2png/svg2png"
-png_name_ending = "_thorvg_pr.png"
+path = "./thorvg_develop/build/src/tools/svg2png/svg2png"
+png_name_ending = "_thorvg_develop.png"
 arguments = "{FILE} -r {SIZE}x{SIZE}"
