@@ -124,6 +124,7 @@ struct LottieObject
     virtual ~LottieObject()
     {
         free(name);
+        delete(origin);
     }
 
     virtual void override(LottieObject* prop)
@@ -135,6 +136,7 @@ struct LottieObject
     Type type;
     bool statical = true;      //no keyframes
     bool hidden = false;       //remove?
+    LottieObject* origin = nullptr; // slot reverting
 };
 
 
@@ -633,10 +635,9 @@ struct LottieSlot
 {
     char* sid;
     Array<LottieObject*> objs;
-    Array<LottieObject*> origins; // FIXME: It doesn't assure objs and origins are aligned
     LottieProperty::Type type;
 
-    LottieSlot(char* sid, LottieObject* obj, LottieProperty::Type type) : sid(sid), type(type)
+    LottieSlot(char* sid, LottieObject* obj, LottieProperty::Tgype type) : sid(sid), type(type)
     {
         objs.push(obj);
 
@@ -672,13 +673,13 @@ struct LottieSlot
                 }
 
                 origin->colorStops.count = target->colorStops.count;
-                origins.push(origin);
+                obj->origin = origin;
                 break;
             }
             case LottieProperty::Type::Color: {
                 auto origin = new LottieSolid;
                 origin->color = reinterpret_cast<LottieSolid*>(obj)->color;
-                origins.push(origin);
+                obj->origin = origin;
                 break;
             }
             case LottieProperty::Type::TextDoc: {
@@ -699,7 +700,7 @@ struct LottieSlot
                   origin->doc.value.name = strdup(target->doc.value.name);
                 }
 
-                origins.push(origin);
+                obj->origin = origin;
                 break;
             }
             default: return;

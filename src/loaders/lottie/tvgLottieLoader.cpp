@@ -25,6 +25,7 @@
 #include "tvgLottieParser.h"
 #include "tvgLottieBuilder.h"
 #include "tvgStr.h"
+#include "iostream"
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
@@ -308,14 +309,8 @@ bool LottieLoader::override(const char* slot)
     if (!slot) {
         // Clear all overridden slots
         for (auto s = comp->slots.begin(); s < comp->slots.end(); ++s) {
-            for (
-                auto origin = (*s)->origins.begin(), obj = (*s)->objs.begin();
-                origin < (*s)->origins.end() && obj < (*s)->objs.end();
-                ++origin, ++obj
-            ) {
-                // cout << "origin" << *origin << endl;
-                // cout << "obj" << *obj << endl;
-                (*obj)->override(*origin);
+            for (auto obj = (*s)->objs.begin(); obj < (*s)->objs.end(); ++obj) {
+              if ((*obj)->origin) (*obj)->override((*obj)->origin);
             }
         }
         return true;
