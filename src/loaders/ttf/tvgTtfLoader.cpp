@@ -23,9 +23,9 @@
 
 #include "tvgTtfLoader.h"
 
-#ifdef _WIN32
+#if defined(_WIN32)
     #include <windows.h>
-#else
+#elif defined(__linux__)
     #include <fcntl.h>
     #include <unistd.h>
     #include <sys/mman.h>
@@ -36,7 +36,7 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-#ifdef _WIN32
+#if defined(_WIN32)
 
 static bool _map(TtfLoader* loader, const string& path)
 {
@@ -83,7 +83,7 @@ static void _unmap(TtfLoader* loader)
 	}
 }
 
-#else
+#elif defined(__linux__)
 
 static bool _map(TtfLoader* loader, const string& path)
 {
@@ -113,6 +113,44 @@ static void _unmap(TtfLoader* loader)
     if (reader.data == (uint8_t*) -1) return;
     munmap((void *) reader.data, reader.size);
     reader.data = (uint8_t*)-1;
+    reader.size = 0;
+}
+#else
+static bool _map(TtfLoader* loader, const string& path)
+{
+    auto& reader = loader->reader;
+
+    auto f = fopen(path.c_str(), "rb");
+    if (!f) return false;
+
+    fseek(f, 0, SEEK_END);
+
+    reader.size = ftell(f);
+    if (reader.size == 0) {
+        fclose(f);
+        return false;
+    }
+
+    reader.data = (uint8_t*)malloc(reader.size);
+
+    fseek(f, 0, SEEK_SET);
+    auto ret = fread(reader.data, sizeof(char), reader.size, f);
+    if (ret < reader.size) {
+        fclose(f);
+        return false;
+    }
+
+    fclose(f);
+
+    return true;
+}
+
+
+static void _unmap(TtfLoader* loader)
+{
+    auto& reader = loader->reader;
+    free(reader.data);
+    reader.data = nullptr;
     reader.size = 0;
 }
 #endif
