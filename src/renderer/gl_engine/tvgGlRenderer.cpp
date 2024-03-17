@@ -84,7 +84,7 @@ bool GlRenderer::sync()
     mGpuBuffer->flushToGPU();
 
     // Blend function for straight alpha
-    GL_CHECK(glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA));
+    GL_CHECK(glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA));
     GL_CHECK(glEnable(GL_BLEND));
     GL_CHECK(glEnable(GL_SCISSOR_TEST));
     GL_CHECK(glCullFace(GL_FRONT_AND_BACK));
@@ -687,7 +687,7 @@ GlRenderPass* GlRenderer::currentPass()
     return &mRenderPassStack.back();
 }
 
-void GlRenderer::prepareCmpTask(GlRenderTask* task, float opacity)
+void GlRenderer::prepareCmpTask(GlRenderTask* task)
 {
     // we use 1:1 blit mapping since compositor fbo is same size as root fbo
     Array<float> vertices(5 * 4);
@@ -700,25 +700,21 @@ void GlRenderer::prepareCmpTask(GlRenderTask* task, float opacity)
     // left top point
     vertices.push(left);
     vertices.push(top);
-    vertices.push(opacity);
     vertices.push(0.f);
     vertices.push(1.f);
     // left bottom point
     vertices.push(left);
     vertices.push(bottom);
-    vertices.push(opacity);
     vertices.push(0.f);
     vertices.push(0.f);
     // right top point
     vertices.push(right);
     vertices.push(top);
-    vertices.push(opacity);
     vertices.push(1.f);
     vertices.push(1.f);
     // right bottom point
     vertices.push(right);
     vertices.push(bottom);
-    vertices.push(opacity);
     vertices.push(1.f);
     vertices.push(0.f);
 
@@ -734,8 +730,8 @@ void GlRenderer::prepareCmpTask(GlRenderTask* task, float opacity)
     uint32_t vertexOffset = mGpuBuffer->push(vertices.data, vertices.count * sizeof(float));
     uint32_t indexOffset = mGpuBuffer->push(indices.data, vertices.count * sizeof(uint32_t));
 
-    task->addVertexLayout(GlVertexLayout{0, 3, 5 * sizeof(float), vertexOffset});
-    task->addVertexLayout(GlVertexLayout{1, 2, 5 * sizeof(float), vertexOffset + 3 * sizeof(float)});
+    task->addVertexLayout(GlVertexLayout{0, 2, 4 * sizeof(float), vertexOffset});
+    task->addVertexLayout(GlVertexLayout{1, 2, 4 * sizeof(float), vertexOffset + 2 * sizeof(float)});
 
     task->setDrawRange(indexOffset, indices.count);
     task->setViewport(RenderRegion{
@@ -797,7 +793,7 @@ void GlRenderer::endRenderPass(Compositor* cmp)
 
         auto compose_task = self_pass.endRenderPass<GlDrawBlitTask>(program, currentPass()->getFboId());
 
-        prepareCmpTask(compose_task, cmp->opacity / 255.f);
+        prepareCmpTask(compose_task);
 
         {
             uint32_t loc = program->getUniformLocation("uSrcTexture");
@@ -819,7 +815,7 @@ void GlRenderer::endRenderPass(Compositor* cmp)
         auto task = renderPass.endRenderPass<GlDrawBlitTask>(
             mPrograms[RT_Image].get(), currentPass()->getFboId());
 
-        prepareCmpTask(task, 1.f);
+        prepareCmpTask(task);
 
         // matrix buffer
         {

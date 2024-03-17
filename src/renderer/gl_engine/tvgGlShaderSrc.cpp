@@ -43,7 +43,7 @@ const char* COLOR_FRAG_SHADER = TVG_COMPOSE_SHADER(
     void main()                                              \n
     {                                                        \n
        vec4 uColor = uColorInfo.solidColor;                  \n
-       FragColor =  uColor;                                  \n
+       FragColor =  vec4(uColor.rgb * uColor.a, uColor.a);   \n
     });
 
 const char* GRADIENT_VERT_SHADER = TVG_COMPOSE_SHADER(
@@ -171,7 +171,7 @@ void main()                                                                     
                                                                                                         \n
     vec3 noise = 8.0 * uGradientInfo.nStops[1] * ScreenSpaceDither(pos);                                \n
     vec4 finalCol = vec4(color.xyz + noise, color.w);                                                   \n
-    FragColor =  finalCol;                                                                              \n
+    FragColor =  vec4(finalCol.rgb * finalCol.a, finalCol.a);                                           \n
 });
 
 std::string STR_RADIAL_GRADIENT_VARIABLES = TVG_COMPOSE_SHADER(
@@ -200,7 +200,7 @@ void main()                                                                     
                                                                                                         \n
     vec3 noise = 8.0 * uGradientInfo.nStops[1] * ScreenSpaceDither(pos);                                \n
     vec4 finalCol = vec4(color.xyz + noise, color.w);                                                   \n
-    FragColor =  finalCol;                                                                              \n
+    FragColor =  vec4(finalCol.rgb * finalCol.a, finalCol.a);                                           \n
 });
 
 std::string STR_LINEAR_GRADIENT_FRAG_SHADER =
@@ -255,20 +255,20 @@ const char* IMAGE_FRAG_SHADER = TVG_COMPOSE_SHADER(
         vec4 color = texture(uTexture, uv);                                                 \n
         vec4 result = color;                                                                \n
         if (uColorInfo.format == 1) { /* FMT_ARGB8888 */                                    \n
-            result.r = color.b;                                                             \n
-            result.g = color.g;                                                             \n
-            result.b = color.r;                                                             \n
-            result.a = color.a;                                                             \n
-        } else if (uColorInfo.format == 2) { /* FMT_ABGR8888S */                            \n
-            result = vec4(color.rgb * color.a, color.a);                                    \n
-        } else if (uColorInfo.format == 3) { /* FMT_ARGB8888S */                            \n
             result.r = color.b * color.a;                                                   \n
             result.g = color.g * color.a;                                                   \n
-            result.b = color.b * color.a;                                                   \n
+            result.b = color.r * color.a;                                                   \n
+            result.a = color.a;                                                             \n
+        } else if (uColorInfo.format == 2) { /* FMT_ABGR8888S */                            \n
+            result = color;                                                                 \n
+        } else if (uColorInfo.format == 3) { /* FMT_ARGB8888S */                            \n
+            result.r = color.b;                                                             \n
+            result.g = color.g;                                                             \n
+            result.b = color.b;                                                             \n
             result.a = color.a;                                                             \n
         }                                                                                   \n
         float opacity = float(uColorInfo.opacity) / 255.0;                                  \n
-        FragColor = vec4(result.rgb, result.a * opacity);                                   \n
+        FragColor = result * opacity;                                                       \n
    }                                                                                        \n
 );
 
@@ -298,8 +298,7 @@ void main() {                                           \n
     vec4 srcColor = texture(uSrcTexture, vUV);          \n
     vec4 maskColor = texture(uMaskTexture, vUV);        \n
                                                         \n
-    FragColor = vec4(srcColor.rgb,                      \n
-             srcColor.a * maskColor.a);                 \n
+    FragColor = srcColor * maskColor.a;                 \n
 }                                                       \n
 );
 
@@ -315,8 +314,7 @@ void main() {                                               \n
     vec4 srcColor = texture(uSrcTexture, vUV);              \n
     vec4 maskColor = texture(uMaskTexture, vUV);            \n
                                                             \n
-    FragColor = vec4(srcColor.rgb,                          \n
-             srcColor.a * (1.0 - maskColor.a));             \n
+    FragColor = srcColor *(1.0 - maskColor.a);              \n
 }                                                           \n
 );
 
@@ -332,7 +330,12 @@ void main() {                                                                   
     vec4 srcColor = texture(uSrcTexture, vUV);                                                          \n
     vec4 maskColor = texture(uMaskTexture, vUV);                                                        \n
                                                                                                         \n
-    FragColor = srcColor * (0.299 * maskColor.r + 0.587 * maskColor.g + 0.114 * maskColor.b);           \n
+    if (maskColor.a > 0.000001) {                                                                       \n
+        maskColor = vec4(maskColor.rgb / maskColor.a, maskColor.a);                                     \n
+    }                                                                                                   \n
+                                                                                                        \n
+    FragColor =                                                                                         \n
+        srcColor * (0.299 * maskColor.r + 0.587 * maskColor.g + 0.114 * maskColor.b) * maskColor.a;     \n
 }                                                                                                       \n
 );
 
@@ -349,6 +352,7 @@ void main() {                                                                   
     vec4 maskColor = texture(uMaskTexture, vUV);                                    \n
                                                                                     \n
     float luma = (0.299 * maskColor.r + 0.587 * maskColor.g + 0.114 * maskColor.b); \n
+    luma *= maskColor.a;                                                            \n
     FragColor = srcColor * (1.0 - luma);                                            \n
 }                                                                                   \n
 );
@@ -384,10 +388,11 @@ void main() {                                                           \n
     vec4 maskColor = texture(uMaskTexture, vUV);                        \n
     float a = srcColor.a - maskColor.a;                                 \n
                                                                         \n
-    if (a <= 0.0) {                                                     \n
+    if (a < 0.0 || srcColor.a == 0.0) {                                 \n
         FragColor = vec4(0.0, 0.0, 0.0, 0.0);                           \n
     } else {                                                            \n
-        FragColor = vec4(srcColor.rgb, srcColor.a * a);                 \n
+        vec3 srcRgb = srcColor.rgb / srcColor.a;                        \n
+        FragColor = vec4(srcRgb * a, a);                                \n
     }                                                                   \n
 }                                                                       \n
 );
@@ -404,9 +409,8 @@ void main() {                                                           \n
     vec4 srcColor = texture(uSrcTexture, vUV);                          \n
     vec4 maskColor = texture(uMaskTexture, vUV);                        \n
                                                                         \n
-    float intAlpha = srcColor.a * maskColor.a;                          \n
                                                                         \n
-    FragColor = vec4(maskColor.rgb, maskColor.a * intAlpha);            \n
+    FragColor = maskColor * srcColor.a;                                 \n
 }                                                                       \n
 );
 
@@ -427,9 +431,9 @@ void main() {                                                           \n
     if (da == 0.0) {                                                    \n
         FragColor = vec4(0.0, 0.0, 0.0, 0.0);                           \n
     } else if (da > 0.0) {                                              \n
-        FragColor = vec4(srcColor.rgb, srcColor.a * da);                \n
+        FragColor = srcColor * da;                                      \n
     } else {                                                            \n
-        FragColor = vec4(maskColor.rgb, maskColor.a * (-da));           \n
+        FragColor = maskColor * (-da);                                  \n
     }                                                                   \n
 }                                                                       \n
 );
