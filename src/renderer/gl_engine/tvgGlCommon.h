@@ -50,6 +50,13 @@
     } while(0)
 
 
+enum class GlStencilMode {
+    None,
+    FillWinding,
+    FillEvenOdd,
+    Stroke,
+};
+
 class GlGeometry;
 
 struct GlShape
