@@ -90,7 +90,7 @@ private:
 
     GlRenderPass* currentPass();
 
-    void prepareCmpTask(GlRenderTask* task, float opacity);
+    void prepareCmpTask(GlRenderTask* task);
     void endRenderPass(Compositor* cmp);
 
     GLint mTargetFboId = 0;
