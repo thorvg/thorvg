@@ -100,7 +100,7 @@ private:
 class GlStencilCoverTask : public GlRenderTask
 {
 public:
-    GlStencilCoverTask(GlRenderTask* stencil, GlRenderTask* cover);
+    GlStencilCoverTask(GlRenderTask* stencil, GlRenderTask* cover, GlStencilMode mode);
     ~GlStencilCoverTask() override;
 
     void run() override;
@@ -108,6 +108,7 @@ public:
 private:
     GlRenderTask* mStencilTask;
     GlRenderTask* mCoverTask;
+    GlStencilMode mStencilMode;
 };
 
 class GlRenderTarget;

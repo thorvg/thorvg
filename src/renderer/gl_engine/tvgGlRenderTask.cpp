@@ -99,8 +99,8 @@ void GlRenderTask::setViewport(const RenderRegion &viewport)
     mViewport = viewport;
 }
 
-GlStencilCoverTask::GlStencilCoverTask(GlRenderTask* stencil, GlRenderTask* cover)
- :GlRenderTask(nullptr), mStencilTask(stencil), mCoverTask(cover) {}
+GlStencilCoverTask::GlStencilCoverTask(GlRenderTask* stencil, GlRenderTask* cover, GlStencilMode mode)
+ :GlRenderTask(nullptr), mStencilTask(stencil), mCoverTask(cover), mStencilMode(mode) {}
 
 GlStencilCoverTask::~GlStencilCoverTask()
 {
@@ -112,22 +112,42 @@ void GlStencilCoverTask::run()
 {
     GL_CHECK(glEnable(GL_STENCIL_TEST));
 
-    GL_CHECK(glStencilFuncSeparate(GL_FRONT, GL_ALWAYS, 0x1, 0xFF));
-    GL_CHECK(glStencilOpSeparate(GL_FRONT, GL_KEEP, GL_KEEP, GL_INCR_WRAP));
+    if (mStencilMode == GlStencilMode::Stroke) {
+        GL_CHECK(glStencilFunc(GL_NOTEQUAL, 0x1, 0xFF));
+        GL_CHECK(glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE));
+    } else {
+        GL_CHECK(glStencilFuncSeparate(GL_FRONT, GL_ALWAYS, 0x1, 0xFF));
+        GL_CHECK(glStencilOpSeparate(GL_FRONT, GL_KEEP, GL_KEEP, GL_INCR_WRAP));
 
-    GL_CHECK(glStencilFuncSeparate(GL_BACK, GL_ALWAYS, 0x1, 0xFF));
-    GL_CHECK(glStencilOpSeparate(GL_BACK, GL_KEEP, GL_KEEP, GL_DECR_WRAP));
-
+        GL_CHECK(glStencilFuncSeparate(GL_BACK, GL_ALWAYS, 0x1, 0xFF));
+        GL_CHECK(glStencilOpSeparate(GL_BACK, GL_KEEP, GL_KEEP, GL_DECR_WRAP));
+    }
     GL_CHECK(glColorMask(0, 0, 0, 0));
 
     mStencilTask->run();
 
-    GL_CHECK(glStencilFunc(GL_NOTEQUAL, 0x0, 0xFF));
-    GL_CHECK(glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE));
+    if (mStencilMode == GlStencilMode::FillEvenOdd) {
+        GL_CHECK(glStencilFunc(GL_EQUAL, 0x01, 0x01));
+        GL_CHECK(glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE));
+    } else {
+        GL_CHECK(glStencilFunc(GL_NOTEQUAL, 0x0, 0xFF));
+        GL_CHECK(glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE));
+    }
 
     GL_CHECK(glColorMask(1, 1, 1, 1));
 
     mCoverTask->run();
+
+    if (mStencilMode == GlStencilMode::FillEvenOdd) {
+        GL_CHECK(glStencilFunc(GL_NOTEQUAL, 0x0, 0xFF));
+        GL_CHECK(glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE));
+
+        GL_CHECK(glColorMask(0, 0, 0, 0));
+
+        mStencilTask->run();
+
+        GL_CHECK(glColorMask(1, 1, 1, 1));
+    }
 
     GL_CHECK(glDisable(GL_STENCIL_TEST));
 }
