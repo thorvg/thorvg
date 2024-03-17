@@ -266,12 +266,17 @@ bool GlRenderer::renderShape(RenderData data)
         }
     }
 
-    if (flags & (RenderUpdateFlag::Stroke | RenderUpdateFlag::Transform))
+    if (flags & (RenderUpdateFlag::Stroke | RenderUpdateFlag::GradientStroke | RenderUpdateFlag::Transform))
     {
-        sdata->rshape->strokeFill(&r, &g, &b, &a);
-        if (a > 0)
-        {
-            drawPrimitive(*sdata, r, g, b, a, RenderUpdateFlag::Stroke);
+        auto gradient =  sdata->rshape->strokeFill();
+        if (gradient) {
+            drawPrimitive(*sdata, gradient, RenderUpdateFlag::GradientStroke);
+        } else {
+            sdata->rshape->strokeFill(&r, &g, &b, &a);
+            if (a > 0)
+            {
+                drawPrimitive(*sdata, r, g, b, a, RenderUpdateFlag::Stroke);
+            }
         }
     }
 
@@ -491,7 +496,8 @@ void GlRenderer::drawPrimitive(GlShape& sdata, uint8_t r, uint8_t g, uint8_t b, 
 
     GlRenderTask* stencilTask = nullptr;
 
-    if (sdata.geometry->needStencilCover(flag)) stencilTask = new GlRenderTask(mPrograms[RT_Stencil].get(), task);
+    GlStencilMode stencilMode = sdata.geometry->getStencilMode(flag);
+    if (stencilMode != GlStencilMode::None) stencilTask = new GlRenderTask(mPrograms[RT_Stencil].get(), task);
 
     a = MULTIPLY(a, sdata.opacity);
 
@@ -536,7 +542,7 @@ void GlRenderer::drawPrimitive(GlShape& sdata, uint8_t r, uint8_t g, uint8_t b, 
     }
 
     if (stencilTask) {
-        currentPass()->addRenderTask(new GlStencilCoverTask(stencilTask, task));
+        currentPass()->addRenderTask(new GlStencilCoverTask(stencilTask, task, stencilMode));
     } else {
         currentPass()->addRenderTask(task);
     }
@@ -563,8 +569,8 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
     if (!sdata.geometry->draw(task, mGpuBuffer.get(), flag)) return;
 
     GlRenderTask* stencilTask = nullptr;
-
-    if (sdata.geometry->needStencilCover(flag)) stencilTask = new GlRenderTask(mPrograms[RT_Stencil].get(), task);
+    GlStencilMode stencilMode = sdata.geometry->getStencilMode(flag);
+    if (stencilMode != GlStencilMode::None) stencilTask = new GlRenderTask(mPrograms[RT_Stencil].get(), task);
 
     // matrix buffer
     {
@@ -668,7 +674,7 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
     }
 
     if (stencilTask) {
-        currentPass()->addRenderTask(new GlStencilCoverTask(stencilTask, task));
+        currentPass()->addRenderTask(new GlStencilCoverTask(stencilTask, task, stencilMode));
     } else {
         currentPass()->addRenderTask(task);
     }

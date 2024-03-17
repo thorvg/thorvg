@@ -40,7 +40,7 @@ bool GlGeometry::tesselate(const RenderShape& rshape, RenderUpdateFlag flag)
 
         bwTess.tessellate(&rshape);
 
-        mStencilFill = true;
+        mFillRule = rshape.rule;
     }
 
     if (flag & (RenderUpdateFlag::Stroke | RenderUpdateFlag::Transform)) {
@@ -154,7 +154,7 @@ bool GlGeometry::draw(GlRenderTask* task, GlStageBuffer* gpuBuffer, RenderUpdate
     Array<float>* vertexBuffer = nullptr;
     Array<uint32_t>* indexBuffer = nullptr;
 
-    if (flag & RenderUpdateFlag::Stroke) {
+    if ((flag & RenderUpdateFlag::Stroke) || (flag & RenderUpdateFlag::GradientStroke)) {
         vertexBuffer = &strokeVertex;
         indexBuffer = &strokeIndex;
     } else {
@@ -208,11 +208,14 @@ float* GlGeometry::getTransforMatrix()
     return mTransform;
 }
 
-bool GlGeometry::needStencilCover(RenderUpdateFlag flag)
+GlStencilMode GlGeometry::getStencilMode(RenderUpdateFlag flag)
 {
-    if (flag & RenderUpdateFlag::Stroke) return false;
-    if (flag & RenderUpdateFlag::GradientStroke) return false;
-    if (flag & RenderUpdateFlag::Image) return false;
+    if (flag & RenderUpdateFlag::Stroke) return GlStencilMode::Stroke;
+    if (flag & RenderUpdateFlag::GradientStroke) return GlStencilMode::Stroke;
+    if (flag & RenderUpdateFlag::Image) return GlStencilMode::None;
 
-    return mStencilFill;
+    if (mFillRule == FillRule::Winding) return GlStencilMode::FillWinding;
+    if (mFillRule == FillRule::EvenOdd) return GlStencilMode::FillEvenOdd;
+
+    return GlStencilMode::None;
 }
