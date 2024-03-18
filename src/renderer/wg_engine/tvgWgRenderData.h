@@ -81,6 +81,7 @@ struct WgRenderDataShape: public WgRenderDataPaint
     WgMeshDataGroup meshGroupStrokes{};
     WgMeshData meshBBoxShapes{};
     WgMeshData meshBBoxStrokes{};
+    bool strokeFirst{};
 
     void updateMeshes(WgContext& context, const RenderShape& rshape);
     void releaseMeshes(WgContext& context);

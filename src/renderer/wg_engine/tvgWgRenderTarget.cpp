@@ -69,8 +69,11 @@ void WgRenderTarget::renderShape(WGPUCommandEncoder commandEncoder, WgRenderData
     assert(renderData);
     assert(commandEncoder);
     WGPURenderPassEncoder renderPassEncoder = beginRenderPass(commandEncoder);
+    if (renderData->strokeFirst)
+        drawStroke(renderPassEncoder, renderData);
     drawShape(renderPassEncoder, renderData);
-    drawStroke(renderPassEncoder, renderData);
+    if (!renderData->strokeFirst)
+        drawStroke(renderPassEncoder, renderData);
     endRenderPass(renderPassEncoder);
 }
 
