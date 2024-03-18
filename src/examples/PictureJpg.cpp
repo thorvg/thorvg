@@ -36,7 +36,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     //Load jpg file from path
     for (int i = 0; i < 7; ++i) {
         auto picture = tvg::Picture::gen();
-        if (picture->load(EXAMPLE_DIR"/test.jpg") != tvg::Result::Success) {
+        if (picture->load(EXAMPLE_DIR"/image/test.jpg") != tvg::Result::Success) {
              cout << "JPG is not supported. Did you enable JPG Loader?" << endl;
              return;
         }
@@ -48,7 +48,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     }
 
     //Open file manually
-    ifstream file(EXAMPLE_DIR"/test.jpg", ios::binary);
+    ifstream file(EXAMPLE_DIR"/image/test.jpg", ios::binary);
     if (!file.is_open()) return;
     auto begin = file.tellg();
     file.seekg(0, std::ios::end);

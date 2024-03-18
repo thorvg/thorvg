@@ -85,7 +85,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     if (canvas->push(std::move(shape)) != tvg::Result::Success) return;
 
-    eina_file_dir_list(EXAMPLE_DIR, EINA_TRUE, svgDirCallback, canvas);
+    eina_file_dir_list(EXAMPLE_DIR"/svg", EINA_TRUE, svgDirCallback, canvas);
 
     /* This showcase shows you asynchrounous loading of svg.
        For this, pushing pictures at a certian sync time.

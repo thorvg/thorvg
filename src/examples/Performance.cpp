@@ -43,7 +43,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     mask->opacity(125);
 
     auto picture = tvg::Picture::gen();
-    picture->load(EXAMPLE_DIR"/tiger.svg");
+    picture->load(EXAMPLE_DIR"/svg/tiger.svg");
     picture->size(WIDTH, HEIGHT);
     picture->composite(std::move(mask), tvg::CompositeMethod::AlphaMask);
     pPicture = picture.get();

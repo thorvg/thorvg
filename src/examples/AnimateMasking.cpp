@@ -43,12 +43,12 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     // image
     auto picture1 = tvg::Picture::gen();
-    picture1->load(EXAMPLE_DIR"/cartman.svg");
+    picture1->load(EXAMPLE_DIR"/svg/cartman.svg");
     picture1->size(400, 400);
     canvas->push(std::move(picture1));
 
     auto picture2 = tvg::Picture::gen();
-    picture2->load(EXAMPLE_DIR"/logo.svg");
+    picture2->load(EXAMPLE_DIR"/svg/logo.svg");
     picture2->size(400, 400);
 
     //mask

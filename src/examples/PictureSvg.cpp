@@ -38,7 +38,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     canvas->push(std::move(bg));
 
     char buf[PATH_MAX];
-    snprintf(buf, sizeof(buf), EXAMPLE_DIR"/logo.svg");
+    snprintf(buf, sizeof(buf), EXAMPLE_DIR"/svg/logo.svg");
 
     auto picture = tvg::Picture::gen();
     tvg::Result ret = picture->load(buf);

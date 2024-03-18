@@ -102,7 +102,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     //Duplicate Picture - svg
     {
         auto picture1 = tvg::Picture::gen();
-        picture1->load(EXAMPLE_DIR"/tiger.svg");
+        picture1->load(EXAMPLE_DIR"/svg/tiger.svg");
         picture1->translate(350, 200);
         picture1->scale(0.25);
 
@@ -115,7 +115,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     //Duplicate Picture - raw
     {
-        string path(EXAMPLE_DIR"/rawimage_200x300.raw");
+        string path(EXAMPLE_DIR"/image/rawimage_200x300.raw");
         ifstream file(path, ios::binary);
         if (!file.is_open()) return ;
         uint32_t* data = (uint32_t*)malloc(sizeof(uint32_t) * 200 * 300);
@@ -141,7 +141,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     //Duplicate Text
     {
         auto text = tvg::Text::gen();
-        text->load(EXAMPLE_DIR"/Arial.ttf");
+        text->load(EXAMPLE_DIR"/font/Arial.ttf");
         text->font("Arial", 50);
         text->translate(0, 650);
         text->text("ThorVG Text");

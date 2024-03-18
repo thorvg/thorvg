@@ -108,7 +108,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     if (canvas->push(std::move(shape)) != tvg::Result::Success) return;
 
-    eina_file_dir_list(EXAMPLE_DIR, EINA_TRUE, lottieDirCallback, canvas);
+    eina_file_dir_list(EXAMPLE_DIR"/lottie", EINA_TRUE, lottieDirCallback, canvas);
 
     //Run animation loop
     for (auto& animation : animations) {

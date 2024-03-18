@@ -40,17 +40,17 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     //The loaded font will be released when the Initializer::term() is called.
     //Otherwise, you can immedately unload the font data.
     //Please check Text::unload() APIs.
-    if (tvg::Text::load(EXAMPLE_DIR"/Arial.ttf") != tvg::Result::Success) {
+    if (tvg::Text::load(EXAMPLE_DIR"/font/Arial.ttf") != tvg::Result::Success) {
         cout << "TTF is not supported. Did you enable TTF Loader?" << endl;
         return;
     }
 
-    if (tvg::Text::load(EXAMPLE_DIR"/NanumGothicCoding.ttf") != tvg::Result::Success) {
+    if (tvg::Text::load(EXAMPLE_DIR"/font/NanumGothicCoding.ttf") != tvg::Result::Success) {
         cout << "TTF is not supported. Did you enable TTF Loader?" << endl;
         return;
     }
 
-    if (tvg::Text::load(EXAMPLE_DIR"/SentyCloud.ttf") != tvg::Result::Success) {
+    if (tvg::Text::load(EXAMPLE_DIR"/font/SentyCloud.ttf") != tvg::Result::Success) {
         cout << "TTF is not supported. Did you enable TTF Loader?" << endl;
         return;
     }

@@ -30,7 +30,7 @@ void exportGif()
 {
     auto animation = tvg::Animation::gen();
     auto picture = animation->picture();
-    if (picture->load(EXAMPLE_DIR"/walker.json") != tvg::Result::Success) {
+    if (picture->load(EXAMPLE_DIR"/lottie/walker.json") != tvg::Result::Success) {
         cout << "Lottie is not supported. Did you enable Lottie Loader?" << endl;
         return;
     }
