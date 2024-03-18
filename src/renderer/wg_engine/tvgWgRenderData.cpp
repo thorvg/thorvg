@@ -214,6 +214,7 @@ void WgRenderDataPaint::release(WgContext& context)
 void WgRenderDataShape::updateMeshes(WgContext &context, const RenderShape &rshape)
 {
     releaseMeshes(context);
+    strokeFirst = false;
     // update shapes geometry
     WgGeometryDataGroup shapes;
     if(rshape.rule == tvg::FillRule::EvenOdd) {
@@ -232,6 +233,7 @@ void WgRenderDataShape::updateMeshes(WgContext &context, const RenderShape &rsha
     meshBBoxShapes.update(context, &box);
     // update strokes geometry
     if (rshape.stroke) {
+        strokeFirst = rshape.stroke->strokeFirst;
         WgGeometryDataGroup strokes;
         strokes.stroke(rshape);
         strokes.getBBox(pmin, pmax);
