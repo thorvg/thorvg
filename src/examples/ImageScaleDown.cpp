@@ -36,7 +36,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     //Original
     auto picture = tvg::Picture::gen();
 
-    if (picture->load(EXAMPLE_DIR"/scaledown.jpg") != tvg::Result::Success) {
+    if (picture->load(EXAMPLE_DIR"/image/scaledown.jpg") != tvg::Result::Success) {
         cout << "The PNG file is not loaded correctly. Did you enable PNG Loader?" << endl;
         return;
     }

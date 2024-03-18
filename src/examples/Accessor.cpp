@@ -33,7 +33,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     //load the tvg file
     auto picture = tvg::Picture::gen();
-    if (picture->load(EXAMPLE_DIR"/favorite_on.svg") != tvg::Result::Success) return;
+    if (picture->load(EXAMPLE_DIR"/svg/favorite_on.svg") != tvg::Result::Success) return;
     picture->size(WIDTH, HEIGHT);
 
     auto accessor = tvg::Accessor::gen();

@@ -181,7 +181,7 @@ void testCapi()
 //////5. Masked picture
     //Set a scene
     Tvg_Paint* pict = tvg_picture_new();
-    if (tvg_picture_load(pict, EXAMPLE_DIR"/tiger.svg") != TVG_RESULT_SUCCESS) {
+    if (tvg_picture_load(pict, EXAMPLE_DIR"/svg/tiger.svg") != TVG_RESULT_SUCCESS) {
         printf("Problem with loading an svg file\n");
         tvg_paint_del(pict);
     } else {
@@ -204,7 +204,7 @@ void testCapi()
 //////6. Animation with a picture
     animation = tvg_animation_new();
     Tvg_Paint* pict_lottie = tvg_animation_get_picture(animation);
-    if (tvg_picture_load(pict_lottie, EXAMPLE_DIR"/sample.json") != TVG_RESULT_SUCCESS) {
+    if (tvg_picture_load(pict_lottie, EXAMPLE_DIR"/lottie/sample.json") != TVG_RESULT_SUCCESS) {
         printf("Problem with loading an lottie file\n");
         tvg_animation_del(animation);
     } else {

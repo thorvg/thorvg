@@ -42,7 +42,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     for (int i = 0; i < 7; ++i) {
         auto picture = tvg::Picture::gen();
-        if (picture->load(EXAMPLE_DIR"/test.webp") != tvg::Result::Success) {
+        if (picture->load(EXAMPLE_DIR"/image/test.webp") != tvg::Result::Success) {
              cout << "WEBP is not supported. Did you enable WEBP Loader?" << endl;
              return;
         }
@@ -54,7 +54,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     }
 
     //Open file manually
-    ifstream file(EXAMPLE_DIR"/test.webp", ios::binary);
+    ifstream file(EXAMPLE_DIR"/image/test.webp", ios::binary);
     if (!file.is_open()) return;
     auto begin = file.tellg();
     file.seekg(0, std::ios::end);

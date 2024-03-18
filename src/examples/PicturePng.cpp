@@ -42,7 +42,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     for (int i = 0; i < 7; ++i) {
         auto picture = tvg::Picture::gen();
-        if (picture->load(EXAMPLE_DIR"/test.png") != tvg::Result::Success) {
+        if (picture->load(EXAMPLE_DIR"/image/test.png") != tvg::Result::Success) {
              cout << "PNG is not supported. Did you enable PNG Loader?" << endl;
              return;
         }
@@ -54,7 +54,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     }
 
     //Open file manually
-    ifstream file(EXAMPLE_DIR"/test.png", ios::binary);
+    ifstream file(EXAMPLE_DIR"/image/test.png", ios::binary);
     if (!file.is_open()) return;
     auto begin = file.tellg();
     file.seekg(0, std::ios::end);

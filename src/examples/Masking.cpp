@@ -52,7 +52,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     //SVG
     auto svg = tvg::Picture::gen();
-    if (svg->load(EXAMPLE_DIR"/cartman.svg") != tvg::Result::Success) return;
+    if (svg->load(EXAMPLE_DIR"/svg/cartman.svg") != tvg::Result::Success) return;
     svg->opacity(100);
     svg->scale(3);
     svg->translate(50, 400);
@@ -92,7 +92,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     if (canvas->push(std::move(star)) != tvg::Result::Success) return;
 
     //Image
-    ifstream file(EXAMPLE_DIR"/rawimage_200x300.raw", ios::binary);
+    ifstream file(EXAMPLE_DIR"/image/rawimage_200x300.raw", ios::binary);
     if (!file.is_open()) return;
     auto data = (uint32_t*) malloc(sizeof(uint32_t) * (200 * 300));
     file.read(reinterpret_cast<char*>(data), sizeof (uint32_t) * 200 * 300);
