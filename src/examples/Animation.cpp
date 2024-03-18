@@ -54,7 +54,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     if (canvas->push(std::move(shape)) != tvg::Result::Success) return;
 
-    if (picture->load(EXAMPLE_DIR"/sample.json") != tvg::Result::Success) {
+    if (picture->load(EXAMPLE_DIR"/lottie/sample.json") != tvg::Result::Success) {
         cout << "Lottie is not supported. Did you enable Lottie Loader?" << endl;
         return;
     }

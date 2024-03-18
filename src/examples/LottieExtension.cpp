@@ -54,7 +54,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     const char* slotJson = R"({"gradient_fill":{"p":{"a":0,"k":[0,0.1,0.1,0.2,1,1,0.1,0.2,0.1,1]}}})";
 
-    if (picture->load(EXAMPLE_DIR"/slotsample.json") != tvg::Result::Success) {
+    if (picture->load(EXAMPLE_DIR"/lottie/extensions/slotsample.json") != tvg::Result::Success) {
         cout << "Lottie is not supported. Did you enable Lottie Loader?" << endl;
         return;
     }

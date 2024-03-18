@@ -122,7 +122,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     if (canvas->push(std::move(shape9)) != tvg::Result::Success) return;
 
     //Prepare Transformed Image
-    string path(EXAMPLE_DIR"/rawimage_200x300.raw");
+    string path(EXAMPLE_DIR"/image/rawimage_200x300.raw");
 
     ifstream file(path, ios::binary);
     if (!file.is_open()) return ;
