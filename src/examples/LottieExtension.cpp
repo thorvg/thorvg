@@ -62,6 +62,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
         return;
     }
 
+    std::cout << "[SLOT LOG] Animation Loaded" << std::endl;
     //image scaling preserving its aspect ratio
     float scale;
     float shiftX = 0.0f, shiftY = 0.0f;
@@ -82,6 +83,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     canvas->push(tvg::cast(picture));
   
     //Override slot data
+    std::cout << "[SLOT LOG] Override() called" << std::endl;
     if (animation->override(slotJson) == tvg::Result::Success) {
         canvas->update();
     } else {
@@ -89,7 +91,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     }
 
     //Revert
-    std::cout << "Revert" << std::endl;
+    std::cout << "[SLOT LOG] Revert - override(nullptr) called" << std::endl;
     if (animation->override(nullptr) == tvg::Result::Success) {
         canvas->update();
     }

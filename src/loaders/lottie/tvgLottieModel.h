@@ -418,7 +418,7 @@ struct LottieGradient : LottieObject
 {
     uint32_t populate(ColorStop& color)
     {
-        std::cout << "populate" << std::endl;
+        std::cout << "[SLOT LOG] populate() called" << std::endl;
 
         uint32_t alphaCnt = (color.input->count - (colorStops.count * 4)) / 2;
         Array<Fill::ColorStop> output(colorStops.count + alphaCnt);
@@ -509,8 +509,7 @@ struct LottieGradient : LottieObject
                 colorStops.count = populate(colorStops.value);
             }
         } else {
-            std::cout << "colorStops.count" << std::endl;
-            std::cout << colorStops.count << std::endl;
+            std::cout << "[SLOT LOG] Populating prevented" << std::endl;
         }
         if (start.frames || end.frames || height.frames || angle.frames || opacity.frames || colorStops.frames) return true;
         return false;
@@ -533,18 +532,15 @@ struct LottieGradient : LottieObject
                 }
             }
         } else {
-            // origin->colorStops.value = target->colorStops.value;
             if (target->colorStops.value.data) {
                 origin->colorStops.value.data = new Fill::ColorStop;
                 *(origin->colorStops.value.data) = *(target->colorStops.value.data);
             }
+        }
 
-            
-
-            // origin->colorStops.value.input = new Array<float>;
-            // for (auto i = target->colorStops.value.input->begin(); i < target->colorStops.value.input->end(); ++i) {
-            //     origin->colorStops.value.input->push(*i);
-            // }
+        if (target->colorStops.populated) {
+          std::cout << "[SLOT LOG] Original theme saving: current gradient populated." << std::endl;
+          std::cout << "[SLOT LOG] Original theme saving: won't call populate() with this saved theme." << std::endl;
         }
 
         origin->colorStops.populated = target->colorStops.populated;
@@ -575,8 +571,6 @@ struct LottieGradientFill : LottieGradient
     void override(LottieObject* prop) override
     {
         // new theme -> need to clear, origin theme -> don't populate
-        // this->colorStops.populated = false;
-
         this->colorStops = static_cast<LottieGradient*>(prop)->colorStops;
         this->prepare();
     }
