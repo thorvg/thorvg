@@ -418,6 +418,8 @@ struct LottieGradient : LottieObject
 {
     uint32_t populate(ColorStop& color)
     {
+        std::cout << "populate" << std::endl;
+
         uint32_t alphaCnt = (color.input->count - (colorStops.count * 4)) / 2;
         Array<Fill::ColorStop> output(colorStops.count + alphaCnt);
         uint32_t cidx = 0;               //color count
@@ -492,18 +494,23 @@ struct LottieGradient : LottieObject
         color.input->reset();
         delete(color.input);
 
+        colorStops.populated = true;
         return output.count;
     }
 
     bool prepare()
     {
-        if (colorStops.frames) {
-            for (auto v = colorStops.frames->begin(); v < colorStops.frames->end(); ++v) {
-                colorStops.count = populate(v->value);
+        if (!colorStops.populated) {
+            if (colorStops.frames) {
+                for (auto v = colorStops.frames->begin(); v < colorStops.frames->end(); ++v) {
+                    colorStops.count = populate(v->value);
+                }
+            } else {
+                colorStops.count = populate(colorStops.value);
             }
         } else {
-          // This calles segment default
-            colorStops.count = populate(colorStops.value);
+            std::cout << "colorStops.count" << std::endl;
+            std::cout << colorStops.count << std::endl;
         }
         if (start.frames || end.frames || height.frames || angle.frames || opacity.frames || colorStops.frames) return true;
         return false;
@@ -525,21 +532,22 @@ struct LottieGradient : LottieObject
                     origin->colorStops.frames->last().value.input->push(*j);
                 }
             }
-
         } else {
+            // origin->colorStops.value = target->colorStops.value;
             if (target->colorStops.value.data) {
+                origin->colorStops.value.data = new Fill::ColorStop;
                 *(origin->colorStops.value.data) = *(target->colorStops.value.data);
             }
 
-            if (target->colorStops.value.input) {
-                origin->colorStops.value.input = new Array<float>;
+            
 
-                for (auto i = target->colorStops.value.input->begin(); i < target->colorStops.value.input->end(); ++i) {
-                    origin->colorStops.value.input->push(*i);
-                }
-            }
+            // origin->colorStops.value.input = new Array<float>;
+            // for (auto i = target->colorStops.value.input->begin(); i < target->colorStops.value.input->end(); ++i) {
+            //     origin->colorStops.value.input->push(*i);
+            // }
         }
 
+        origin->colorStops.populated = target->colorStops.populated;
         origin->colorStops.count = target->colorStops.count;
         this->origin = origin;
     }
@@ -566,6 +574,9 @@ struct LottieGradientFill : LottieGradient
 
     void override(LottieObject* prop) override
     {
+        // new theme -> need to clear, origin theme -> don't populate
+        // this->colorStops.populated = false;
+
         this->colorStops = static_cast<LottieGradient*>(prop)->colorStops;
         this->prepare();
     }
@@ -709,23 +720,18 @@ struct LottieSlot
     LottieSlot(char* sid, LottieObject* obj, LottieProperty::Type type) : sid(sid), type(type)
     {
         objs.push(obj);
-
-        switch (type) {
-            case LottieProperty::Type::ColorStop: {
-                obj->save(type);
-                break;
-            }
-            case LottieProperty::Type::Color: {
-                obj->save(type);
-                break;
-            }
-            case LottieProperty::Type::TextDoc: {
-                obj->save(type);
-                break;
-            }
-            default: return;
-        }
+        // obj->save(type);
     }
+
+    // void save()
+    // {
+    //     // Save all obj origin data for post overriding
+    //     for (auto obj = objs.begin(); obj < objs.end(); ++obj)
+    //     {
+    //         // if ((*obj)->origin) delete((*obj)->origin); // Move to object->save
+    //         (*obj)->save(type);
+    //     }
+    // }
 
     ~LottieSlot()
     {

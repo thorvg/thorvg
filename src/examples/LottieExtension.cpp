@@ -19,6 +19,7 @@
 
 #include "Common.h"
 #include <thorvg_lottie.h>
+#include "iostream"
 
 /************************************************************************/
 /* Drawing Commands                                                     */
@@ -53,6 +54,8 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     if (canvas->push(std::move(shape)) != tvg::Result::Success) return;
 
     const char* slotJson = R"({"gradient_fill":{"p":{"a":0,"k":[0,0.1,0.1,0.2,1,1,0.1,0.2,0.1,1]}}})";
+    // const char* slotJson = R"({"solid_fill":{"p":{"a":0,"k":[0.259,1,0.518]}}})";
+    // const char* slotJson = R"({"text_document_data":{"p":{"k":[{"s":{"s":71,"f":"OmnesMedium","t":"AAAA","j":2,"tr":0,"lh":85.2,"ls":0,"fc":[0.549,0.549,0.549]},"t":0}]}}})";
 
     if (picture->load(EXAMPLE_DIR"/slotsample.json") != tvg::Result::Success) {
         cout << "Lottie is not supported. Did you enable Lottie Loader?" << endl;
@@ -77,7 +80,7 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     picture->translate(shiftX, shiftY);
 
     canvas->push(tvg::cast(picture));
-
+  
     //Override slot data
     if (animation->override(slotJson) == tvg::Result::Success) {
         canvas->update();
@@ -86,10 +89,11 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     }
 
     //Revert
+    std::cout << "Revert" << std::endl;
     if (animation->override(nullptr) == tvg::Result::Success) {
         canvas->update();
     }
-
+  
     //Run animation loop
     elm_transit_duration_set(transit, animation->duration());
     elm_transit_repeat_times_set(transit, -1);

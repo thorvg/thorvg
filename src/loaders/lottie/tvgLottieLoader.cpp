@@ -310,7 +310,10 @@ bool LottieLoader::override(const char* slot)
         // Clear all overridden slots
         for (auto s = comp->slots.begin(); s < comp->slots.end(); ++s) {
             for (auto obj = (*s)->objs.begin(); obj < (*s)->objs.end(); ++obj) {
-              if ((*obj)->origin) (*obj)->override((*obj)->origin);
+                if ((*obj)->origin) {
+                    (*obj)->override((*obj)->origin);
+                    // (*obj)->save((*s)->type);
+                }
             }
         }
         return true;

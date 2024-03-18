@@ -24,6 +24,7 @@
 #include "tvgCompressor.h"
 #include "tvgLottieModel.h"
 #include "tvgLottieParser.h"
+#include "iostream"
 
 
 /************************************************************************/
@@ -1281,6 +1282,7 @@ bool LottieParser::parse(LottieSlot* slot)
 
     //apply slot object to all targets
     for (auto target = slot->objs.begin(); target < slot->objs.end(); ++target) {
+        (*target)->save(slot->type);
         (*target)->override(obj);
     }
 
