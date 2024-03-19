@@ -391,9 +391,14 @@ struct LottieSolid : LottieObject
 
     void copy(SlotPair* pair) override
     {
-        // auto origin = new LottieSolid;
-        // origin->color = reinterpret_cast<LottieSolid*>(this)->color;
-        // this->origin = origin;
+        pair->prop = this->color.shallowCopy();
+    }
+
+    void revert(LottieProperty* prop) override
+    {
+        auto target = static_cast<LottieColor*>(prop);
+        this->color.value = target->value;
+        this->color.frames = target->frames;
     }
 };
 

@@ -54,13 +54,14 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     if (canvas->push(std::move(shape)) != tvg::Result::Success) return;
 
 
-    const char* slotJson = R"({"gradient_fill":{"p":{"a":0,"k":[0,0.1,0.1,0.2,1,1,0.1,0.2,0.1,1]}}})";
+    // const char* slotJson = R"({"gradient_fill":{"p":{"a":0,"k":[0,0.1,0.1,0.2,1,1,0.1,0.2,0.1,1]}}})";
     // const char* slotJson = R"({"text_document_data":{"p":{"k":[{"s":{"s":71,"f":"OmnesMedium","t":"AAAA","j":2,"tr":0,"lh":85.2,"ls":0,"fc":[0.549,0.549,0.549]},"t":0}]}}})";
 
     // const char* slotJson = R"({"gradient_fill":{"p":{"a":0,"k":[0,0.1,0.1,0.1,0.2,1,1,0.1,0.2,0.1,11]}}})";
     // const char* slotJson2 = R"({"gradient_fill":{"p":{"a":0,"k":[0,0.514,0.373,0.984,0.141,0.478,0.412,0.984,0.283,0.443,0.451,0.984,0.379,0.408,0.49,0.984,0.475,0.373,0.529,0.984,0.606,0.278,0.647,0.925,0.737,0.184,0.765,0.867,0.868,0.092,0.882,0.808,1,0,1,0.749]}}})";
+    const char* slotJson = R"({"solid_fill":{"p":{"a":0,"k":[0.259,1,0.518]}}})";
 
-    if (picture->load(EXAMPLE_DIR"/slotsample.json") != tvg::Result::Success) {
+    if (picture->load(EXAMPLE_DIR"/slotsamplecolor.json") != tvg::Result::Success) {
         cout << "Lottie is not supported. Did you enable Lottie Loader?" << endl;
         return;
     }

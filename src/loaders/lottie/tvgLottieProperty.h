@@ -250,15 +250,25 @@ struct LottieGenericProperty : LottieProperty
         return frame->interpolate(frame + 1, frameNo);
     }
 
-    T& operator=(const T& other)
+    LottieGenericProperty<T>* shallowCopy()
+    {
+        auto ret = new LottieGenericProperty<T>(value);
+        if (frames) {
+            ret->frames = frames;
+        } else {
+            ret->value = value;
+        }
+        return ret;
+    }
+
+    void copy(const T& other)
     {
         //shallow copy, used for slot overriding
-        delete(frames);
+        // delete(frames);
         if (other.frames) {
             frames = other.frames;
             const_cast<T&>(other).frames = nullptr;
         } else value = other.value;
-        return *this;
     }
 
     float angle(float frameNo) { return 0; }
