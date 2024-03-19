@@ -21,6 +21,7 @@
  */
 
 #include "tvgFill.h"
+#include "iostream"
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
@@ -89,6 +90,16 @@ Fill::~Fill()
 Result Fill::colorStops(const ColorStop* colorStops, uint32_t cnt) noexcept
 {
     if ((!colorStops && cnt > 0) || (colorStops && cnt == 0)) return Result::InvalidArguments;
+
+      // std::cout << "colorStops" << std::endl;
+      // std::cout << sizeof(colorStops)/sizeof(Fill::ColorStop) << std::endl;
+      // std::cout << cnt << std::endl;
+      // std::cout << "colorStops->value" << std::endl;
+      // std::cout << unsigned(colorStops->a) << std::endl;
+      // std::cout << unsigned(colorStops->r) << std::endl;
+      // std::cout << unsigned(colorStops->g) << std::endl;
+      // std::cout << unsigned(colorStops->b) << std::endl;
+      
 
     if (cnt == 0) {
         if (pImpl->colorStops) {

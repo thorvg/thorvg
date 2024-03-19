@@ -97,6 +97,7 @@ struct LottieMask
     }
 };
 
+struct LottieSlot;
 
 struct LottieObject
 {
@@ -124,7 +125,6 @@ struct LottieObject
     virtual ~LottieObject()
     {
         free(name);
-        delete(origin);
     }
 
     virtual void override(LottieObject* prop)
@@ -132,7 +132,7 @@ struct LottieObject
         TVGERR("LOTTIE", "Unsupported slot type");
     }
 
-    virtual void save(LottieProperty::Type type)
+    virtual void save(LottieSlot* slot)
     {
         TVGERR("LOTTIE", "Unsupported slot type");
     }
@@ -141,8 +141,31 @@ struct LottieObject
     Type type;
     bool statical = true;      //no keyframes
     bool hidden = false;       //remove?
-    LottieObject* origin = nullptr; // slot reverting
 };
+
+
+struct LottieSlot
+{
+    struct Pair {
+        LottieObject* obj;
+        LottieProperty* prop;
+    };
+
+    char* sid;
+    Array<Pair> pairs;
+    LottieProperty::Type type;
+
+    LottieSlot(char* sid, LottieObject* obj, LottieProperty::Type type) : sid(sid), type(type)
+    {
+        pairs.push({obj, nullptr});
+    }
+
+    ~LottieSlot()
+    {
+        free(sid);
+    }
+};
+
 
 
 struct LottieGlyph
@@ -202,26 +225,26 @@ struct LottieText : LottieObject
         this->prepare();
     }
 
-    void save(LottieProperty::Type type) override
+    void save(LottieSlot* slot) override
     {
-        auto origin = new LottieText;
-        auto target = reinterpret_cast<LottieText*>(this);
+        // auto origin = new LottieText;
+        // auto target = reinterpret_cast<LottieText*>(this);
         
-        //deep copy, used for slot reverting
-        if (target->doc.frames) {
-            origin->doc.frames = new Array<LottieScalarFrame<TextDocument>>;
-            for (auto i = target->doc.frames->begin(); i < target->doc.frames->end(); ++i) {
-            origin->doc.frames->push(*i);
-            origin->doc.frames->last().value.text = strdup(origin->doc.frames->last().value.text);
-            origin->doc.frames->last().value.name = strdup(origin->doc.frames->last().value.name);
-            }
-        } else {
-            origin->doc.value = target->doc.value;
-            origin->doc.value.text = strdup(target->doc.value.text);
-            origin->doc.value.name = strdup(target->doc.value.name);
-        }
+        // //deep copy, used for slot reverting
+        // if (target->doc.frames) {
+        //     origin->doc.frames = new Array<LottieScalarFrame<TextDocument>>;
+        //     for (auto i = target->doc.frames->begin(); i < target->doc.frames->end(); ++i) {
+        //     origin->doc.frames->push(*i);
+        //     origin->doc.frames->last().value.text = strdup(origin->doc.frames->last().value.text);
+        //     origin->doc.frames->last().value.name = strdup(origin->doc.frames->last().value.name);
+        //     }
+        // } else {
+        //     origin->doc.value = target->doc.value;
+        //     origin->doc.value.text = strdup(target->doc.value.text);
+        //     origin->doc.value.name = strdup(target->doc.value.name);
+        // }
 
-        this->origin = origin;
+        // this->origin = origin;
     }
 
     LottieTextDoc doc;
@@ -371,11 +394,11 @@ struct LottieSolid : LottieObject
     LottieColor color = RGB24{255, 255, 255};
     LottieOpacity opacity = 255;
 
-    void save(LottieProperty::Type type) override
+    void save(LottieSlot* slot) override
     {
-        auto origin = new LottieSolid;
-        origin->color = reinterpret_cast<LottieSolid*>(this)->color;
-        this->origin = origin;
+        // auto origin = new LottieSolid;
+        // origin->color = reinterpret_cast<LottieSolid*>(this)->color;
+        // this->origin = origin;
     }
 };
 
@@ -515,37 +538,41 @@ struct LottieGradient : LottieObject
         return false;
     }
 
-    void save(LottieProperty::Type type) override
+    void save(LottieSlot* slot) override
     {
-        auto origin = new LottieGradient;
-        auto target = reinterpret_cast<LottieGradient*>(this);
+        for (auto pair = slot->pairs.begin(); pair < slot->pairs.end(); ++pair) {
+            if ((*pair).obj == this) {
+                std::cout << "[SLOT LOG] Found my self in slot" << std::endl;
 
-        //deep copy, used for slot reverting
-        if (target->colorStops.frames) {
-            origin->colorStops.frames = new Array<LottieScalarFrame<ColorStop>>;
-            for (auto i = target->colorStops.frames->begin(); i < target->colorStops.frames->end(); ++i) {
-                origin->colorStops.frames->push(*i);
+                std::cout << unsigned(reinterpret_cast<LottieGradient*>((*pair).obj)->colorStops.value.data->a) << std::endl;
+                std::cout << unsigned(reinterpret_cast<LottieGradient*>((*pair).obj)->colorStops.value.data->r) << std::endl;
+                std::cout << unsigned(reinterpret_cast<LottieGradient*>((*pair).obj)->colorStops.value.data->g) << std::endl;
+                std::cout << unsigned(reinterpret_cast<LottieGradient*>((*pair).obj)->colorStops.value.data->b) << std::endl;
+                std::cout << unsigned(reinterpret_cast<LottieGradient*>((*pair).obj)->colorStops.value.data->offset) << std::endl;
+                std::cout << unsigned(reinterpret_cast<LottieGradient*>((*pair).obj)->colorStops.count) << std::endl;
 
-                origin->colorStops.frames->last().value.input = new Array<float>;
-                for (auto j = i->value.input->begin(); j < i->value.input->end(); ++j) {
-                    origin->colorStops.frames->last().value.input->push(*j);
-                }
-            }
-        } else {
-            if (target->colorStops.value.data) {
-                origin->colorStops.value.data = new Fill::ColorStop;
-                *(origin->colorStops.value.data) = *(target->colorStops.value.data);
+                auto target = reinterpret_cast<LottieGradient*>((*pair).obj);
+                (*pair).prop = &(target->colorStops);
+
+                // (*pair).prop = new LottieColorStop;
+                // static_cast<LottieColorStop*>((*pair).prop)->count = target->colorStops.count;
+                // static_cast<LottieColorStop*>((*pair).prop)->populated = target->colorStops.populated;
+                // static_cast<LottieColorStop*>((*pair).prop)->value = target->colorStops.value;
+                
+                // memcpy(static_cast<LottieColorStop*>((*pair).prop)->value.data, target->colorStops.value.data, target->colorStops.count * sizeof(Fill::ColorStop));
+
+                std::cout << "address check" << std::endl;
+                std::cout << (*pair).prop << std::endl;
+                std::cout << &(target->colorStops) << std::endl;
+
+                std::cout << "[saving] pair.prop check" << std::endl;
+                std::cout << unsigned(reinterpret_cast<LottieColorStop*>((*pair).prop)->value.data->a) << std::endl;
+                std::cout << unsigned(reinterpret_cast<LottieColorStop*>((*pair).prop)->value.data->r) << std::endl;
+                std::cout << unsigned(reinterpret_cast<LottieColorStop*>((*pair).prop)->value.data->g) << std::endl;
+                std::cout << unsigned(reinterpret_cast<LottieColorStop*>((*pair).prop)->value.data->b) << std::endl;
+                std::cout << unsigned(reinterpret_cast<LottieColorStop*>((*pair).prop)->value.data->offset) << std::endl;
             }
         }
-
-        if (target->colorStops.populated) {
-          std::cout << "[SLOT LOG] Original theme saving: current gradient populated." << std::endl;
-          std::cout << "[SLOT LOG] Original theme saving: won't call populate() with this saved theme." << std::endl;
-        }
-
-        origin->colorStops.populated = target->colorStops.populated;
-        origin->colorStops.count = target->colorStops.count;
-        this->origin = origin;
     }
 
     Fill* fill(float frameNo);
@@ -571,7 +598,7 @@ struct LottieGradientFill : LottieGradient
     void override(LottieObject* prop) override
     {
         // new theme -> need to clear, origin theme -> don't populate
-        this->colorStops = static_cast<LottieGradient*>(prop)->colorStops;
+        this->colorStops.override(static_cast<LottieGradient*>(prop)->colorStops);
         this->prepare();
     }
 
@@ -589,7 +616,7 @@ struct LottieGradientStroke : LottieGradient, LottieStroke
 
     void override(LottieObject* prop) override
     {
-        this->colorStops = static_cast<LottieGradient*>(prop)->colorStops;
+        this->colorStops.override(static_cast<LottieGradient*>(prop)->colorStops);
         this->prepare();
     }
 };
@@ -702,35 +729,6 @@ struct LottieLayer : LottieGroup
     Type type = Null;
     bool autoOrient = false;
     bool matteSrc = false;
-};
-
-
-struct LottieSlot
-{
-    char* sid;
-    Array<LottieObject*> objs;
-    LottieProperty::Type type;
-
-    LottieSlot(char* sid, LottieObject* obj, LottieProperty::Type type) : sid(sid), type(type)
-    {
-        objs.push(obj);
-        // obj->save(type);
-    }
-
-    // void save()
-    // {
-    //     // Save all obj origin data for post overriding
-    //     for (auto obj = objs.begin(); obj < objs.end(); ++obj)
-    //     {
-    //         // if ((*obj)->origin) delete((*obj)->origin); // Move to object->save
-    //         (*obj)->save(type);
-    //     }
-    // }
-
-    ~LottieSlot()
-    {
-        free(sid);
-    }
 };
 
 

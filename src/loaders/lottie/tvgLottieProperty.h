@@ -28,6 +28,7 @@
 #include "tvgMath.h"
 #include "tvgLines.h"
 #include "tvgLottieInterpolator.h"
+#include "iostream"
 
 struct PathSet
 {
@@ -452,20 +453,20 @@ struct LottieColorStop : LottieProperty
         fill->colorStops(result.data, count);
     }
 
-    LottieColorStop& operator=(const LottieColorStop& other)
+    void override(const LottieColorStop& other)
     {
         //shallow copy, used for slot overriding
-        release();
+        // release();
         if (other.frames) {
             frames = other.frames;
             const_cast<LottieColorStop&>(other).frames = nullptr;
         } else {
+            // Is it changing the value of the color stop at same address?
             value = other.value;
             const_cast<LottieColorStop&>(other).value.data = nullptr;
         }
         populated = other.populated;
         count = other.count;
-        return *this;
     }
 
     void prepare() {}

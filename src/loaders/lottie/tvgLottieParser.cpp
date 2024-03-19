@@ -479,7 +479,7 @@ void LottieParser::parseProperty(T& prop, LottieObject* obj)
             //append object if the slot already exists.
             for (auto slot = comp->slots.begin(); slot < comp->slots.end(); ++slot) {
                 if (strcmp((*slot)->sid, sid)) continue;
-                (*slot)->objs.push(obj);
+                (*slot)->pairs.push({obj, nullptr});
                 return;
             }
             comp->slots.push(new LottieSlot(sid, obj, type));
@@ -1281,9 +1281,9 @@ bool LottieParser::parse(LottieSlot* slot)
     if (!obj || Invalid()) return false;
 
     //apply slot object to all targets
-    for (auto target = slot->objs.begin(); target < slot->objs.end(); ++target) {
-        (*target)->save(slot->type);
-        (*target)->override(obj);
+    for (auto target = slot->pairs.begin(); target < slot->pairs.end(); ++target) {
+        (*target).obj->save(slot);
+        (*target).obj->override(obj);
     }
 
     delete(obj);

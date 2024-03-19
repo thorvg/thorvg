@@ -95,8 +95,16 @@ Fill* LottieGradient::fill(float frameNo)
 
     //Linear Graident
     if (id == 1) {
+        tvg::Fill::ColorStop colorStops[2];
+        colorStops[0] = {0.0, 245, 40, 145, 255};
+        colorStops[1] = {1.0, 0, 0, 0, 255};
+
+
         fill = LinearGradient::gen().release();
         static_cast<LinearGradient*>(fill)->linear(start(frameNo).x, start(frameNo).y, end(frameNo).x, end(frameNo).y);
+        
+        
+        static_cast<LinearGradient*>(fill)->colorStops(colorStops, 2);
     }
     //Radial Gradient
     if (id == 2) {

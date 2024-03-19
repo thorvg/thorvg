@@ -309,9 +309,71 @@ bool LottieLoader::override(const char* slot)
     if (!slot) {
         // Clear all overridden slots
         for (auto s = comp->slots.begin(); s < comp->slots.end(); ++s) {
-            for (auto obj = (*s)->objs.begin(); obj < (*s)->objs.end(); ++obj) {
-                if ((*obj)->origin) {
-                    (*obj)->override((*obj)->origin);
+            for (auto pair = (*s)->pairs.begin(); pair < (*s)->pairs.end(); ++pair) {
+                if ((*pair).prop) {
+                    std::cout << "pair prop called" << std::endl;
+
+                    std::cout << "[overriding] pair.prop check" << std::endl;
+                    std::cout << unsigned(static_cast<LottieColorStop*>((*pair).prop)->value.data->a) << std::endl;
+                    std::cout << unsigned(static_cast<LottieColorStop*>((*pair).prop)->value.data->r) << std::endl;
+                    std::cout << unsigned(static_cast<LottieColorStop*>((*pair).prop)->value.data->g) << std::endl;
+                    std::cout << unsigned(static_cast<LottieColorStop*>((*pair).prop)->value.data->b) << std::endl;
+                    std::cout << unsigned(static_cast<LottieColorStop*>((*pair).prop)->value.data->offset) << std::endl;
+
+                    // tvg::Fill::ColorStop colorStops[2];
+                    // // 1st color values (offset, r, g, b, a)
+                    // colorStops[0] = {0.0, 255, 255, 255, 255};
+                    // // 2nd color values (offset, r, g, b, a)
+                    // colorStops[1] = {1.0, 0, 0, 0, 255};
+
+                    // static_cast<LottieGradient*>((*pair).obj)->colorStops.value.data = colorStops;
+
+                    
+                    tvg::Fill::ColorStop* colorStops = new Fill::ColorStop[2];
+                    // 1st color values (offset, r, g, b, a)
+                    colorStops[0] = {0.0, 245, 40, 145, 255};
+                    colorStops[1] = {1.0, 0, 0, 0, 255};
+                    // 2nd color values (offset, r, g, b, a)
+
+                    memcpy(static_cast<LottieGradient*>((*pair).obj)->colorStops.value.data, static_cast<LottieColorStop*>((*pair).prop)->value.data, 9 * sizeof(Fill::ColorStop));
+                    // memcpy(static_cast<LottieGradient*>((*pair).obj)->colorStops.value.data, static_cast<LottieColorStop*>((*pair).prop)->value.data, reinterpret_cast<LottieColorStop*>((*pair).prop)->count * sizeof(ColorStop));
+                    // static_cast<LottieGradient*>((*pair).obj)->colorStops.value.data = colorStops;
+
+                    // static_cast<LottieGradient*>((*pair).obj)->colorStops.populated = true;
+                    // reinterpret_cast<LottieGradientFill*>((*pair).obj)->colorStops.count = 2;
+
+
+                    // static_cast<LottieGradient*>((*pair).obj)->colorStops.value.data->a = 255;
+                    // static_cast<LottieGradient*>((*pair).obj)->colorStops.value.data->r = 0;
+                    // static_cast<LottieGradient*>((*pair).obj)->colorStops.value.data->g = 0;
+                    // static_cast<LottieGradient*>((*pair).obj)->colorStops.value.data->b = 0;
+                    // static_cast<LottieGradient*>((*pair).obj)->colorStops.value.data->offset = 0;
+                    // static_cast<LottieGradient*>((*pair).obj)->colorStops.populated = true;
+                    // static_cast<LottieGradient*>((*pair).obj)->colorStops.count = 9;
+
+                    // reinterpret_cast<LottieGradientFill*>((*pair).obj)->colorStops.value.data->a = reinterpret_cast<LottieColorStop*>((*pair).prop)->value.data->a;
+                    // reinterpret_cast<LottieGradientFill*>((*pair).obj)->colorStops.value.data->r = reinterpret_cast<LottieColorStop*>((*pair).prop)->value.data->r;
+                    // reinterpret_cast<LottieGradientFill*>((*pair).obj)->colorStops.value.data->g = reinterpret_cast<LottieColorStop*>((*pair).prop)->value.data->g;
+                    // reinterpret_cast<LottieGradientFill*>((*pair).obj)->colorStops.value.data->b = reinterpret_cast<LottieColorStop*>((*pair).prop)->value.data->b;
+                    // static_cast<LottieGradient*>((*pair).obj)->colorStops.value.data->offset = reinterpret_cast<LottieColorStop*>((*pair).prop)->value.data->offset;
+
+                    static_cast<LottieGradient*>((*pair).obj)->colorStops.populated = reinterpret_cast<LottieColorStop*>((*pair).prop)->populated;
+                    // reinterpret_cast<LottieGradientFill*>((*pair).obj)->colorStops.count = 2;
+                    reinterpret_cast<LottieGradientFill*>((*pair).obj)->colorStops.count = reinterpret_cast<LottieColorStop*>((*pair).prop)->count;
+
+                    // static_cast<LottieGradientFill*>((*pair).obj)->prepare();
+
+
+                    // std::cout << "pair.obj check" << std::endl;
+                    // std::cout << unsigned(reinterpret_cast<LottieGradientFill*>((*pair).obj)->colorStops.value.data->a) << std::endl;
+                    // std::cout << unsigned(reinterpret_cast<LottieGradientFill*>((*pair).obj)->colorStops.value.data->r) << std::endl;
+                    // std::cout << unsigned(reinterpret_cast<LottieGradientFill*>((*pair).obj)->colorStops.value.data->g) << std::endl;
+                    // std::cout << unsigned(reinterpret_cast<LottieGradientFill*>((*pair).obj)->colorStops.value.data->b) << std::endl;
+                    // std::cout << unsigned(reinterpret_cast<LottieGradientFill*>((*pair).obj)->colorStops.value.data->offset) << std::endl;
+
+                    
+
+                    // (*pair).obj->override(gradient);
                     // (*obj)->save((*s)->type);
                 }
             }
