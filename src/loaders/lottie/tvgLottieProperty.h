@@ -470,7 +470,7 @@ struct LottieColorStop : LottieProperty
         fill->colorStops(result.data, count);
     }
 
-    void override(const LottieColorStop& other)
+    void copy(const LottieColorStop& other)
     {
         //shallow copy, used for slot overriding
         // release();
@@ -621,7 +621,7 @@ struct LottieTextDoc : LottieProperty
         return frame->value;
     }
 
-    void override(const LottieTextDoc& other)
+    void copy(const LottieTextDoc& other)
     {
         //shallow copy, used for slot overriding
         // release();

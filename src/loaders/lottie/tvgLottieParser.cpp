@@ -1282,7 +1282,7 @@ bool LottieParser::parse(LottieSlot* slot)
 
     //apply slot object to all targets
     for (auto target = slot->pairs.begin(); target < slot->pairs.end(); ++target) {
-        (*target).obj->save(target);
+        (*target).obj->copy(target);
         (*target).obj->override(obj);
     }
 

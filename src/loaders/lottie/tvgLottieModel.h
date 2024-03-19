@@ -137,7 +137,7 @@ struct LottieObject
         TVGERR("LOTTIE", "Unsupported slot type");
     }
 
-    virtual void save(SlotPair* pair)
+    virtual void copy(SlotPair* pair)
     {
         TVGERR("LOTTIE", "Unsupported slot type");
     }
@@ -226,11 +226,11 @@ struct LottieText : LottieObject
 
     void override(LottieObject* prop) override
     {
-        this->doc.override(static_cast<LottieText*>(prop)->doc);
+        this->doc.copy(static_cast<LottieText*>(prop)->doc);
         this->prepare();
     }
 
-    void save(SlotPair* pair) override
+    void copy(SlotPair* pair) override
     {
         pair->prop = this->doc.shallowCopy();
     }
@@ -389,7 +389,7 @@ struct LottieSolid : LottieObject
     LottieColor color = RGB24{255, 255, 255};
     LottieOpacity opacity = 255;
 
-    void save(SlotPair* pair) override
+    void copy(SlotPair* pair) override
     {
         // auto origin = new LottieSolid;
         // origin->color = reinterpret_cast<LottieSolid*>(this)->color;
@@ -533,9 +533,18 @@ struct LottieGradient : LottieObject
         return false;
     }
 
-    void save(SlotPair* pair) override
+    void copy(SlotPair* pair) override
     {
         pair->prop = this->colorStops.shallowCopy();
+    }
+
+    void revert(LottieProperty* prop) override
+    {
+        auto target = static_cast<LottieColorStop*>(prop);
+        this->colorStops.value = target->value;
+        this->colorStops.count = target->count;
+        this->colorStops.frames = target->frames;
+        this->colorStops.populated = target->populated;
     }
 
     Fill* fill(float frameNo);
@@ -560,18 +569,8 @@ struct LottieGradientFill : LottieGradient
 
     void override(LottieObject* prop) override
     {
-        // new theme -> need to clear, origin theme -> don't populate
-        this->colorStops.override(static_cast<LottieGradient*>(prop)->colorStops);
+        this->colorStops.copy(static_cast<LottieGradient*>(prop)->colorStops);
         this->prepare();
-    }
-
-    void revert(LottieProperty* prop) override
-    {
-        auto target = static_cast<LottieColorStop*>(prop);
-        this->colorStops.value = target->value;
-        this->colorStops.count = target->count;
-        this->colorStops.frames = target->frames;
-        this->colorStops.populated = target->populated;
     }
 
     FillRule rule = FillRule::Winding;
@@ -588,7 +587,7 @@ struct LottieGradientStroke : LottieGradient, LottieStroke
 
     void override(LottieObject* prop) override
     {
-        this->colorStops.override(static_cast<LottieGradient*>(prop)->colorStops);
+        this->colorStops.copy(static_cast<LottieGradient*>(prop)->colorStops);
         this->prepare();
     }
 };
