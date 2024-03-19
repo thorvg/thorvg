@@ -1316,7 +1316,10 @@ bool LottieParser::parse()
         else skip(key);
     }
 
-    if (Invalid() || !comp->root) return false;
+    if (Invalid() || !comp->root) {
+        delete(comp);
+        return false;
+    }
 
     comp->root->inFrame = comp->startFrame;
     comp->root->outFrame = comp->endFrame;
