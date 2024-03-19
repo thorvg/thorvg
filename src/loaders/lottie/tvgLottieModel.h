@@ -226,14 +226,14 @@ struct LottieText : LottieObject
 
     void override(LottieObject* prop) override
     {
-        this->doc.copy(static_cast<LottieText*>(prop)->doc);
+        this->doc.shallowCopy(static_cast<LottieText*>(prop)->doc);
         this->prepare();
     }
 
     void copy(SlotPair* pair) override
     {
         if (pair->prop) delete(pair->prop);
-        pair->prop = this->doc.shallowCopy();
+        pair->prop = this->doc.copy();
     }
 
     void revert(LottieProperty* prop) override
@@ -395,7 +395,7 @@ struct LottieSolid : LottieObject
     void copy(SlotPair* pair) override
     {
         if (pair->prop) delete(pair->prop);
-        pair->prop = this->color.shallowCopy();
+        pair->prop = this->color.copy();
     }
 
     void revert(LottieProperty* prop) override
@@ -547,7 +547,7 @@ struct LottieGradient : LottieObject
     void copy(SlotPair* pair) override
     {
         if (pair->prop) delete(pair->prop);
-        pair->prop = this->colorStops.shallowCopy();
+        pair->prop = this->colorStops.copy();
     }
 
     void revert(LottieProperty* prop) override
@@ -583,7 +583,7 @@ struct LottieGradientFill : LottieGradient
 
     void override(LottieObject* prop) override
     {
-        this->colorStops.copy(static_cast<LottieGradient*>(prop)->colorStops);
+        this->colorStops.shallowCopy(static_cast<LottieGradient*>(prop)->colorStops);
         this->prepare();
     }
 
@@ -601,7 +601,7 @@ struct LottieGradientStroke : LottieGradient, LottieStroke
 
     void override(LottieObject* prop) override
     {
-        this->colorStops.copy(static_cast<LottieGradient*>(prop)->colorStops);
+        this->colorStops.shallowCopy(static_cast<LottieGradient*>(prop)->colorStops);
         this->prepare();
     }
 };

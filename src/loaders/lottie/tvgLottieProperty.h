@@ -250,8 +250,9 @@ struct LottieGenericProperty : LottieProperty
         return frame->interpolate(frame + 1, frameNo);
     }
 
-    LottieGenericProperty<T>* shallowCopy()
+    LottieGenericProperty<T>* copy()
     {
+        //copy, used for slot reverting
         auto ret = new LottieGenericProperty<T>(value);
         if (frames) {
             ret->frames = frames;
@@ -261,7 +262,7 @@ struct LottieGenericProperty : LottieProperty
         return ret;
     }
 
-    void copy(const T& other)
+    void shallowCopy(const T& other)
     {
         //shallow copy, used for slot overriding
         if (other.frames) {
@@ -462,8 +463,9 @@ struct LottieColorStop : LottieProperty
         fill->colorStops(result.data, count);
     }
 
-    LottieColorStop* shallowCopy()
+    LottieColorStop* copy()
     {
+        //copy, used for slot reverting
         auto ret = new LottieColorStop();
         if (frames) {
             ret->frames = frames;
@@ -479,7 +481,7 @@ struct LottieColorStop : LottieProperty
         return ret;
     }
 
-    void copy(const LottieColorStop& other)
+    void shallowCopy(const LottieColorStop& other)
     {
         //shallow copy, used for slot overriding
         if (other.frames) {
@@ -617,8 +619,9 @@ struct LottieTextDoc : LottieProperty
         return frame->value;
     }
 
-    LottieTextDoc* shallowCopy()
+    LottieTextDoc* copy()
     {
+        //copy, used for slot reverting
         auto ret = new LottieTextDoc();
         if (frames) {
             ret->frames = frames;
@@ -628,7 +631,7 @@ struct LottieTextDoc : LottieProperty
         return ret;
     }
 
-    void copy(const LottieTextDoc& other)
+    void shallowCopy(const LottieTextDoc& other)
     {
         //shallow copy, used for slot overriding
         if (other.frames) {
