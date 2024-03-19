@@ -389,10 +389,14 @@ struct LottieColorStop : LottieProperty
     LottieColorStop* shallowCopy()
     {
         auto ret = new LottieColorStop();
-        ret->value = {};
-        ret->value.data = value.data;
-        ret->value.input = nullptr;
-        ret->frames = frames;
+        if (frames) {
+            ret->frames = frames;
+        } else {
+            ret->value = {};
+            ret->value.data = value.data;
+            ret->value.input = nullptr;
+        }
+        
         ret->count = count;
         ret->populated = populated;
 
@@ -579,6 +583,17 @@ struct LottieTextDoc : LottieProperty
         frames = nullptr;
     }
 
+    LottieTextDoc* shallowCopy()
+    {
+        auto ret = new LottieTextDoc();
+        if (frames) {
+            ret->frames = frames;
+        } else {
+            ret->value = value;
+        }
+        return ret;
+    }
+
     LottieScalarFrame<TextDocument>& newFrame()
     {
         if (!frames) frames = new Array<LottieScalarFrame<TextDocument>>;
@@ -606,10 +621,10 @@ struct LottieTextDoc : LottieProperty
         return frame->value;
     }
 
-    LottieTextDoc& operator=(const LottieTextDoc& other)
+    void override(const LottieTextDoc& other)
     {
         //shallow copy, used for slot overriding
-        release();
+        // release();
         if (other.frames) {
             frames = other.frames;
             const_cast<LottieTextDoc&>(other).frames = nullptr;
@@ -618,7 +633,6 @@ struct LottieTextDoc : LottieProperty
             const_cast<LottieTextDoc&>(other).value.text = nullptr;
             const_cast<LottieTextDoc&>(other).value.name = nullptr;
         }
-        return *this;
     }
 
     void prepare() {}

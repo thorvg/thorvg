@@ -142,6 +142,11 @@ struct LottieObject
         TVGERR("LOTTIE", "Unsupported slot type");
     }
 
+    virtual void revert(LottieProperty* prop)
+    {
+        TVGERR("LOTTIE", "Unsupported slot type");
+    }
+
     char* name = nullptr;
     Type type;
     bool statical = true;      //no keyframes
@@ -221,30 +226,20 @@ struct LottieText : LottieObject
 
     void override(LottieObject* prop) override
     {
-        this->doc = static_cast<LottieText*>(prop)->doc;
+        this->doc.override(static_cast<LottieText*>(prop)->doc);
         this->prepare();
     }
 
     void save(SlotPair* pair) override
     {
-        // auto origin = new LottieText;
-        // auto target = reinterpret_cast<LottieText*>(this);
-        
-        // //deep copy, used for slot reverting
-        // if (target->doc.frames) {
-        //     origin->doc.frames = new Array<LottieScalarFrame<TextDocument>>;
-        //     for (auto i = target->doc.frames->begin(); i < target->doc.frames->end(); ++i) {
-        //     origin->doc.frames->push(*i);
-        //     origin->doc.frames->last().value.text = strdup(origin->doc.frames->last().value.text);
-        //     origin->doc.frames->last().value.name = strdup(origin->doc.frames->last().value.name);
-        //     }
-        // } else {
-        //     origin->doc.value = target->doc.value;
-        //     origin->doc.value.text = strdup(target->doc.value.text);
-        //     origin->doc.value.name = strdup(target->doc.value.name);
-        // }
+        pair->prop = this->doc.shallowCopy();
+    }
 
-        // this->origin = origin;
+    void revert(LottieProperty* prop) override
+    {
+        auto target = static_cast<LottieTextDoc*>(prop);
+        this->doc.value = target->value;
+        this->doc.frames = target->frames;
     }
 
     LottieTextDoc doc;
@@ -568,6 +563,15 @@ struct LottieGradientFill : LottieGradient
         // new theme -> need to clear, origin theme -> don't populate
         this->colorStops.override(static_cast<LottieGradient*>(prop)->colorStops);
         this->prepare();
+    }
+
+    void revert(LottieProperty* prop) override
+    {
+        auto target = static_cast<LottieColorStop*>(prop);
+        this->colorStops.value = target->value;
+        this->colorStops.count = target->count;
+        this->colorStops.frames = target->frames;
+        this->colorStops.populated = target->populated;
     }
 
     FillRule rule = FillRule::Winding;

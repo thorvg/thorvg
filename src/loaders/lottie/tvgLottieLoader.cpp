@@ -311,19 +311,7 @@ bool LottieLoader::override(const char* slot)
         for (auto s = comp->slots.begin(); s < comp->slots.end(); ++s) {
             for (auto pair = (*s)->pairs.begin(); pair < (*s)->pairs.end(); ++pair) {
                 if ((*pair).prop) {
-                    std::cout << "pair prop called" << std::endl;
-
-                    std::cout << "[overriding] pair.prop check" << std::endl;
-                    std::cout << unsigned(static_cast<LottieColorStop*>((*pair).prop)->value.data->a) << std::endl;
-                    std::cout << unsigned(static_cast<LottieColorStop*>((*pair).prop)->value.data->r) << std::endl;
-                    std::cout << unsigned(static_cast<LottieColorStop*>((*pair).prop)->value.data->g) << std::endl;
-                    std::cout << unsigned(static_cast<LottieColorStop*>((*pair).prop)->value.data->b) << std::endl;
-                    std::cout << unsigned(static_cast<LottieColorStop*>((*pair).prop)->value.data->offset) << std::endl;
-
-                    static_cast<LottieGradient*>((*pair).obj)->colorStops.value = static_cast<LottieColorStop*>((*pair).prop)->value;
-                    static_cast<LottieGradient*>((*pair).obj)->colorStops.count = static_cast<LottieColorStop*>((*pair).prop)->count;
-                    static_cast<LottieGradient*>((*pair).obj)->colorStops.frames = static_cast<LottieColorStop*>((*pair).prop)->frames;
-                    static_cast<LottieGradient*>((*pair).obj)->colorStops.populated = static_cast<LottieColorStop*>((*pair).prop)->populated;
+                    (*pair).obj->revert((*pair).prop);
                 }
             }
         }
