@@ -98,6 +98,11 @@ struct LottieMask
 };
 
 struct LottieSlot;
+struct LottieObject;
+struct SlotPair {
+    LottieObject* obj;
+    LottieProperty* prop;
+};
 
 struct LottieObject
 {
@@ -132,7 +137,7 @@ struct LottieObject
         TVGERR("LOTTIE", "Unsupported slot type");
     }
 
-    virtual void save(LottieSlot* slot)
+    virtual void save(SlotPair* pair)
     {
         TVGERR("LOTTIE", "Unsupported slot type");
     }
@@ -146,13 +151,8 @@ struct LottieObject
 
 struct LottieSlot
 {
-    struct Pair {
-        LottieObject* obj;
-        LottieProperty* prop;
-    };
-
     char* sid;
-    Array<Pair> pairs;
+    Array<SlotPair> pairs;
     LottieProperty::Type type;
 
     LottieSlot(char* sid, LottieObject* obj, LottieProperty::Type type) : sid(sid), type(type)
@@ -225,7 +225,7 @@ struct LottieText : LottieObject
         this->prepare();
     }
 
-    void save(LottieSlot* slot) override
+    void save(SlotPair* pair) override
     {
         // auto origin = new LottieText;
         // auto target = reinterpret_cast<LottieText*>(this);
@@ -394,7 +394,7 @@ struct LottieSolid : LottieObject
     LottieColor color = RGB24{255, 255, 255};
     LottieOpacity opacity = 255;
 
-    void save(LottieSlot* slot) override
+    void save(SlotPair* pair) override
     {
         // auto origin = new LottieSolid;
         // origin->color = reinterpret_cast<LottieSolid*>(this)->color;
@@ -538,41 +538,9 @@ struct LottieGradient : LottieObject
         return false;
     }
 
-    void save(LottieSlot* slot) override
+    void save(SlotPair* pair) override
     {
-        for (auto pair = slot->pairs.begin(); pair < slot->pairs.end(); ++pair) {
-            if ((*pair).obj == this) {
-                std::cout << "[SLOT LOG] Found my self in slot" << std::endl;
-
-                std::cout << unsigned(reinterpret_cast<LottieGradient*>((*pair).obj)->colorStops.value.data->a) << std::endl;
-                std::cout << unsigned(reinterpret_cast<LottieGradient*>((*pair).obj)->colorStops.value.data->r) << std::endl;
-                std::cout << unsigned(reinterpret_cast<LottieGradient*>((*pair).obj)->colorStops.value.data->g) << std::endl;
-                std::cout << unsigned(reinterpret_cast<LottieGradient*>((*pair).obj)->colorStops.value.data->b) << std::endl;
-                std::cout << unsigned(reinterpret_cast<LottieGradient*>((*pair).obj)->colorStops.value.data->offset) << std::endl;
-                std::cout << unsigned(reinterpret_cast<LottieGradient*>((*pair).obj)->colorStops.count) << std::endl;
-
-                auto target = reinterpret_cast<LottieGradient*>((*pair).obj);
-                (*pair).prop = &(target->colorStops);
-
-                // (*pair).prop = new LottieColorStop;
-                // static_cast<LottieColorStop*>((*pair).prop)->count = target->colorStops.count;
-                // static_cast<LottieColorStop*>((*pair).prop)->populated = target->colorStops.populated;
-                // static_cast<LottieColorStop*>((*pair).prop)->value = target->colorStops.value;
-                
-                // memcpy(static_cast<LottieColorStop*>((*pair).prop)->value.data, target->colorStops.value.data, target->colorStops.count * sizeof(Fill::ColorStop));
-
-                std::cout << "address check" << std::endl;
-                std::cout << (*pair).prop << std::endl;
-                std::cout << &(target->colorStops) << std::endl;
-
-                std::cout << "[saving] pair.prop check" << std::endl;
-                std::cout << unsigned(reinterpret_cast<LottieColorStop*>((*pair).prop)->value.data->a) << std::endl;
-                std::cout << unsigned(reinterpret_cast<LottieColorStop*>((*pair).prop)->value.data->r) << std::endl;
-                std::cout << unsigned(reinterpret_cast<LottieColorStop*>((*pair).prop)->value.data->g) << std::endl;
-                std::cout << unsigned(reinterpret_cast<LottieColorStop*>((*pair).prop)->value.data->b) << std::endl;
-                std::cout << unsigned(reinterpret_cast<LottieColorStop*>((*pair).prop)->value.data->offset) << std::endl;
-            }
-        }
+        pair->prop = this->colorStops.shallowCopy();
     }
 
     Fill* fill(float frameNo);

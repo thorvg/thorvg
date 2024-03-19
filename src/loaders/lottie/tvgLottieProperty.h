@@ -386,6 +386,19 @@ struct LottieColorStop : LottieProperty
         frames = nullptr;
     }
 
+    LottieColorStop* shallowCopy()
+    {
+        auto ret = new LottieColorStop();
+        ret->value = {};
+        ret->value.data = value.data;
+        ret->value.input = nullptr;
+        ret->frames = frames;
+        ret->count = count;
+        ret->populated = populated;
+
+        return ret;
+    }
+
     LottieScalarFrame<ColorStop>& newFrame()
     {
         if (!frames) {
