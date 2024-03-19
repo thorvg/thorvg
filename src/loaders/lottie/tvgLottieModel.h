@@ -232,11 +232,14 @@ struct LottieText : LottieObject
 
     void copy(SlotPair* pair) override
     {
+        if (pair->prop) delete(pair->prop);
         pair->prop = this->doc.shallowCopy();
     }
 
     void revert(LottieProperty* prop) override
     {
+        this->doc.release();
+
         auto target = static_cast<LottieTextDoc*>(prop);
         this->doc.value = target->value;
         this->doc.frames = target->frames;
@@ -391,11 +394,14 @@ struct LottieSolid : LottieObject
 
     void copy(SlotPair* pair) override
     {
+        if (pair->prop) delete(pair->prop);
         pair->prop = this->color.shallowCopy();
     }
 
     void revert(LottieProperty* prop) override
     {
+        delete(color.frames);
+        
         auto target = static_cast<LottieColor*>(prop);
         this->color.value = target->value;
         this->color.frames = target->frames;
@@ -540,15 +546,18 @@ struct LottieGradient : LottieObject
 
     void copy(SlotPair* pair) override
     {
+        if (pair->prop) delete(pair->prop);
         pair->prop = this->colorStops.shallowCopy();
     }
 
     void revert(LottieProperty* prop) override
     {
+        this->colorStops.release();
+
         auto target = static_cast<LottieColorStop*>(prop);
         this->colorStops.value = target->value;
-        this->colorStops.count = target->count;
         this->colorStops.frames = target->frames;
+        this->colorStops.count = target->count;
         this->colorStops.populated = target->populated;
     }
 
