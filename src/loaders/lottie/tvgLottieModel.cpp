@@ -207,7 +207,7 @@ float LottieLayer::remap(float frameNo)
 
 LottieComposition::~LottieComposition()
 {
-    if (!initiated) delete(root->scene);
+    if (!initiated && root) delete(root->scene);
 
     delete(root);
     free(version);
