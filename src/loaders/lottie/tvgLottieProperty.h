@@ -361,6 +361,7 @@ struct LottieColorStop : LottieProperty
     Array<LottieScalarFrame<ColorStop>>* frames = nullptr;
     ColorStop value;
     uint16_t count = 0;     //colorstop count
+    bool populated = false;
 
     ~LottieColorStop()
     {
@@ -462,6 +463,7 @@ struct LottieColorStop : LottieProperty
             value = other.value;
             const_cast<LottieColorStop&>(other).value.data = nullptr;
         }
+        populated = other.populated;
         count = other.count;
         return *this;
     }

@@ -455,17 +455,20 @@ struct LottieGradient : LottieObject
         color.input->reset();
         delete(color.input);
 
+        colorStops.populated = true;
         return output.count;
     }
 
     bool prepare()
     {
-        if (colorStops.frames) {
-            for (auto v = colorStops.frames->begin(); v < colorStops.frames->end(); ++v) {
-                colorStops.count = populate(v->value);
+        if (!colorStops.populated) {
+            if (colorStops.frames) {
+                for (auto v = colorStops.frames->begin(); v < colorStops.frames->end(); ++v) {
+                    colorStops.count = populate(v->value);
+                }
+            } else {
+                colorStops.count = populate(colorStops.value);
             }
-        } else {
-            colorStops.count = populate(colorStops.value);
         }
         if (start.frames || end.frames || height.frames || angle.frames || opacity.frames || colorStops.frames) return true;
         return false;
