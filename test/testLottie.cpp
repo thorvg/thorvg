@@ -47,8 +47,19 @@ TEST_CASE("Lottie Slot", "[tvgLottie]")
     //Slot override before loaded
     REQUIRE(animation->override(slotJson) == Result::InsufficientCondition);
 
-    //Slot override
+    //Animation load
     REQUIRE(picture->load(TEST_DIR"/lottieslot.json") == Result::Success);
+
+    //Slot revert before overriding
+    REQUIRE(animation->override(nullptr) == Result::Success);
+
+    //Slot override
+    REQUIRE(animation->override(slotJson) == Result::Success);
+
+    //Slot revert
+    REQUIRE(animation->override(nullptr) == Result::Success);
+
+    //Slot override after reverting
     REQUIRE(animation->override(slotJson) == Result::Success);
 
     //Slot override with invalid JSON
