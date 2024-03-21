@@ -46,8 +46,19 @@ TEST_CASE("Lottie Slot", "[capiLottie]")
     //Slot override before loaded
     REQUIRE(tvg_lottie_animation_override(animation, slotJson) == TVG_RESULT_INSUFFICIENT_CONDITION);
 
-    //Slot override
+    //Animation load
     REQUIRE(tvg_picture_load(picture, TEST_DIR"/lottieslot.json") == TVG_RESULT_SUCCESS);
+
+    //Slot revert before overriding
+    REQUIRE(tvg_lottie_animation_override(animation, nullptr) == TVG_RESULT_SUCCESS);
+
+    //Slot override
+    REQUIRE(tvg_lottie_animation_override(animation, slotJson) == TVG_RESULT_SUCCESS);
+
+    //Slot revert
+    REQUIRE(tvg_lottie_animation_override(animation, nullptr) == TVG_RESULT_SUCCESS);
+
+    //Slot override after reverting
     REQUIRE(tvg_lottie_animation_override(animation, slotJson) == TVG_RESULT_SUCCESS);
 
     //Slot override with invalid JSON
