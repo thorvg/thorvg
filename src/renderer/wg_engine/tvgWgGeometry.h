@@ -94,6 +94,9 @@ struct WgGeometryData
     void appendBlitBox();
     void appendMesh(const RenderMesh* rmesh);
 
+    WgPoint interpolate(float t, uint32_t& ind); // t = [0;1]
+
+    float getLength();
     bool getClosestIntersection(WgPoint p1, WgPoint p2, WgPoint& pi, uint32_t& index);
     bool isCW(WgPoint p1, WgPoint p2, WgPoint p3);
 
@@ -117,9 +120,10 @@ struct WgGeometryDataGroup
     void contours(WgGeometryDataGroup& outlines);
     void release();
 private:
-    static void decodePath(const RenderShape& rshape, WgGeometryDataGroup* outlines);
-    static void strokeSegments(const RenderShape& rshape, WgGeometryDataGroup* outlines, WgGeometryDataGroup* segments);
-    static void strokeSublines(const RenderShape& rshape, WgGeometryDataGroup* outlines, WgGeometryData* strokes);
+    static void decodePath(const RenderShape& rshape, WgGeometryDataGroup* polyline);
+    static void trimPolyline(WgGeometryDataGroup* polyline, WgGeometryDataGroup* trimmed, RenderStroke *stroke);
+    static void splitPolyline(WgGeometryDataGroup* polyline, WgGeometryDataGroup* splitted, RenderStroke *stroke);
+    static void strokePolyline(WgGeometryDataGroup* polyline, WgGeometryData* strokes, RenderStroke *stroke);
 };
 
 #endif // _TVG_WG_GEOMETRY_H_
