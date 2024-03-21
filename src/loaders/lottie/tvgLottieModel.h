@@ -632,19 +632,89 @@ struct LottieLayer : LottieGroup
 
 struct LottieSlot
 {
-    char* sid;
-    Array<LottieObject*> objs;
-    LottieProperty::Type type;
+    struct Pair {
+        LottieObject* obj;
+        LottieProperty* prop;
+    };
+
+    void assign(LottieObject* target)
+    {
+        //apply slot object to all targets
+        for (auto pair = pairs.begin(); pair < pairs.end(); ++pair) {
+            //backup the original properties before overwriting
+            if (!overriden) {
+                switch (type) {
+                    case LottieProperty::Type::ColorStop: {
+                        pair->prop = new LottieColorStop;
+                        *static_cast<LottieColorStop*>(pair->prop) = static_cast<LottieGradient*>(pair->obj)->colorStops;
+                        break;
+                    }
+                    case LottieProperty::Type::Color: {
+                        pair->prop = new LottieColor;
+                        *static_cast<LottieColor*>(pair->prop) = static_cast<LottieSolid*>(pair->obj)->color;
+                        break;
+                    }
+                    case LottieProperty::Type::TextDoc: {
+                        pair->prop = new LottieTextDoc;
+                        *static_cast<LottieTextDoc*>(pair->prop) = static_cast<LottieText*>(pair->obj)->doc;
+                        break;
+                    }
+                    default: break;
+                }
+            }
+            //FIXME: it overrides the object's whole properties, but it acutally needs a single property of it.
+            pair->obj->override(target);
+        }
+        overriden = true;
+    }
+
+    void reset()
+    {
+        if (!overriden) return;
+
+        for (auto pair = pairs.begin(); pair < pairs.end(); ++pair) {
+            switch (type) {
+                case LottieProperty::Type::ColorStop: {
+                    static_cast<LottieGradient*>(pair->obj)->colorStops.release();
+                    static_cast<LottieGradient*>(pair->obj)->colorStops = *static_cast<LottieColorStop*>(pair->prop);
+                    break;
+                }
+                case LottieProperty::Type::Color: {
+                    static_cast<LottieSolid*>(pair->obj)->color.release();
+                    static_cast<LottieSolid*>(pair->obj)->color = *static_cast<LottieColor*>(pair->prop);
+                    break;
+                }
+                case LottieProperty::Type::TextDoc: {
+                    static_cast<LottieText*>(pair->obj)->doc.release();
+                    static_cast<LottieText*>(pair->obj)->doc = *static_cast<LottieTextDoc*>(pair->prop);
+                    break;
+                }
+                default: break;
+            }
+            delete(pair->prop);
+            pair->prop = nullptr;
+        }
+        overriden = false;
+    }
 
     LottieSlot(char* sid, LottieObject* obj, LottieProperty::Type type) : sid(sid), type(type)
     {
-        objs.push(obj);
+        pairs.push({obj});
     }
 
     ~LottieSlot()
     {
         free(sid);
+        if (!overriden) return;
+        for (auto pair = pairs.begin(); pair < pairs.end(); ++pair) {
+            delete(pair->prop);
+        }
     }
+
+    char* sid;
+    Array<Pair> pairs;
+    LottieProperty::Type type;
+    bool overriden = false;
 };
 
 

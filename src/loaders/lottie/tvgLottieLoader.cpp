@@ -298,28 +298,39 @@ Paint* LottieLoader::paint()
 
 bool LottieLoader::override(const char* slot)
 {
-    if (!slot || !comp || comp->slots.count == 0) return false;
+    if (!comp || comp->slots.count == 0) return false;
 
-    //TODO: Crashed, does this necessary?
-    auto temp = strdup(slot);
-
-    //parsing slot json
-    LottieParser parser(temp, dirName);
-
-    auto idx = 0;
     auto success = true;
-    while (auto sid = parser.sid(idx == 0)) {
-        for (auto s = comp->slots.begin(); s < comp->slots.end(); ++s) {
-            if (strcmp((*s)->sid, sid)) continue;
-            if (!parser.parse(*s)) success = false;
-            break;
+
+    //override slots
+    if (slot) {
+        //TODO: Crashed, does this necessary?
+        auto temp = strdup(slot);
+
+        //parsing slot json
+        LottieParser parser(temp, dirName);
+
+        auto idx = 0;
+        while (auto sid = parser.sid(idx == 0)) {
+            for (auto s = comp->slots.begin(); s < comp->slots.end(); ++s) {
+                if (strcmp((*s)->sid, sid)) continue;
+                if (!parser.apply(*s)) success = false;
+                break;
+            }
+            ++idx;
         }
-        ++idx;
+
+        if (idx < 1) success = false;
+        free(temp);
+        overriden = success;
+
+    //reset slots
+    } else if (overriden) {
+        for (auto s = comp->slots.begin(); s < comp->slots.end(); ++s) {
+            (*s)->reset();
+        }
+        overriden = false;
     }
-
-    if (idx < 1) success = false;
-
-    free(temp);
     return success;
 }
 

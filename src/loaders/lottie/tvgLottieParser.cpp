@@ -478,7 +478,7 @@ void LottieParser::parseProperty(T& prop, LottieObject* obj)
             //append object if the slot already exists.
             for (auto slot = comp->slots.begin(); slot < comp->slots.end(); ++slot) {
                 if (strcmp((*slot)->sid, sid)) continue;
-                (*slot)->objs.push(obj);
+                (*slot)->pairs.push({obj});
                 return;
             }
             comp->slots.push(new LottieSlot(sid, obj, type));
@@ -1250,10 +1250,11 @@ const char* LottieParser::sid(bool first)
 }
 
 
-bool LottieParser::parse(LottieSlot* slot)
+bool LottieParser::apply(LottieSlot* slot)
 {
     enterObject();
 
+    //OPTIMIZE: we can create the property directly, without object
     LottieObject* obj = nullptr;  //slot object
 
     switch (slot->type) {
@@ -1278,10 +1279,7 @@ bool LottieParser::parse(LottieSlot* slot)
 
     if (!obj || Invalid()) return false;
 
-    //apply slot object to all targets
-    for (auto target = slot->objs.begin(); target < slot->objs.end(); ++target) {
-        (*target)->override(obj);
-    }
+    slot->assign(obj);
 
     delete(obj);
 

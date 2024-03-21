@@ -36,7 +36,7 @@ public:
     }
 
     bool parse();
-    bool parse(LottieSlot* slot);
+    bool apply(LottieSlot* slot);
     const char* sid(bool first = false);
 
     LottieComposition* comp = nullptr;
