@@ -44,6 +44,7 @@ public:
 
     char* dirName = nullptr;            //base resource directory
     bool copy = false;                  //"content" is owned by this loader
+    bool overriden = false;             //overridden properties with slots.
 
     LottieLoader();
     ~LottieLoader();
