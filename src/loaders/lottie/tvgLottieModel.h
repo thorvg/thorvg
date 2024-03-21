@@ -632,18 +632,47 @@ struct LottieLayer : LottieGroup
 
 struct LottieSlot
 {
+    struct Pair {
+        LottieObject* obj;
+        LottieProperty* prop;
+
+        void override(LottieObject* target, LottieProperty::Type type)
+        {
+            delete(prop);
+
+            switch (type) {
+                case LottieProperty::Type::ColorStop: {
+                    prop = static_cast<LottieGradient*>(obj)->colorStops.copy();
+                    break;
+                }
+                case LottieProperty::Type::Color: {
+                    prop = static_cast<LottieSolid*>(obj)->color.copy();
+                    break;
+                }
+                case LottieProperty::Type::TextDoc: {
+                    prop = static_cast<LottieText*>(obj)->doc.copy();
+                    break;
+                }
+                default: break;
+            }
+
+            obj->override(target);
+        }
+    };
+
     char* sid;
-    Array<LottieObject*> objs;
+    Array<Pair> pairs;
     LottieProperty::Type type;
 
     LottieSlot(char* sid, LottieObject* obj, LottieProperty::Type type) : sid(sid), type(type)
     {
-        objs.push(obj);
+        pairs.push({obj});
     }
 
     ~LottieSlot()
     {
         free(sid);
+        for (auto p = pairs.begin(); p < pairs.end(); ++p) delete((*p).prop);
     }
 };
 

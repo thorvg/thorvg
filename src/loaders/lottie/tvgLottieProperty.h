@@ -249,10 +249,18 @@ struct LottieGenericProperty : LottieProperty
         return frame->interpolate(frame + 1, frameNo);
     }
 
+    LottieGenericProperty<T>* copy()
+    {
+        //copy, used for slot reverting
+        auto ret = new LottieGenericProperty<T>(value);
+        if (frames) ret->frames = frames;
+        else ret->value = value;
+        return ret;
+    }
+
     T& operator=(const T& other)
     {
         //shallow copy, used for slot overriding
-        delete(frames);
         if (other.frames) {
             frames = other.frames;
             const_cast<T&>(other).frames = nullptr;
@@ -452,10 +460,25 @@ struct LottieColorStop : LottieProperty
         fill->colorStops(result.data, count);
     }
 
+    LottieColorStop* copy()
+    {
+        //copy, used for slot reverting
+        auto ret = new LottieColorStop();
+        if (frames) ret->frames = frames;
+        else {
+            ret->value = {value.data};
+            ret->value.input = nullptr;
+        }
+
+        ret->count = count;
+        ret->populated = populated;
+
+        return ret;
+    }
+
     LottieColorStop& operator=(const LottieColorStop& other)
     {
         //shallow copy, used for slot overriding
-        release();
         if (other.frames) {
             frames = other.frames;
             const_cast<LottieColorStop&>(other).frames = nullptr;
@@ -592,10 +615,18 @@ struct LottieTextDoc : LottieProperty
         return frame->value;
     }
 
+    LottieTextDoc* copy()
+    {
+        //copy, used for slot reverting
+        auto ret = new LottieTextDoc();
+        if (frames) ret->frames = frames;
+        else ret->value = value;
+        return ret;
+    }
+
     LottieTextDoc& operator=(const LottieTextDoc& other)
     {
         //shallow copy, used for slot overriding
-        release();
         if (other.frames) {
             frames = other.frames;
             const_cast<LottieTextDoc&>(other).frames = nullptr;

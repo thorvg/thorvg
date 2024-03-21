@@ -302,7 +302,44 @@ Paint* LottieLoader::paint()
 
 bool LottieLoader::override(const char* slot)
 {
-    if (!slot || !comp || comp->slots.count == 0) return false;
+    if (!comp || comp->slots.count == 0) return false;
+
+    //reverting whole slots
+    if (!slot) {
+        if (!this->overriden) return true;
+
+        for (auto s = comp->slots.begin(); s < comp->slots.end(); ++s) {
+            for (auto pair = (*s)->pairs.begin(); pair < (*s)->pairs.end(); ++pair) {
+                if ((*pair).prop) {
+                    switch ((*s)->type) {
+                        case LottieProperty::Type::ColorStop: {
+                            auto target = static_cast<LottieGradient*>((*pair).obj);
+                            target->colorStops.release();
+                            target->colorStops = *static_cast<LottieColorStop*>((*pair).prop);
+                            break;
+                        }
+                        case LottieProperty::Type::Color: {
+                            auto target = static_cast<LottieSolid*>((*pair).obj);
+                            delete(target->color.frames);
+                            target->color = *static_cast<LottieColor*>((*pair).prop);
+                            break;
+                        }
+                        case LottieProperty::Type::TextDoc: {
+                            auto target = static_cast<LottieText*>((*pair).obj);
+                            target->doc.release();
+                            target->doc = *static_cast<LottieTextDoc*>((*pair).prop);
+                            break;
+                        }
+                        default: break;
+                    }
+                }
+            }
+        }
+
+        this->overriden = false;
+        return true;
+    }
+
 
     //TODO: Crashed, does this necessary?
     auto temp = strdup(slot);
@@ -324,6 +361,7 @@ bool LottieLoader::override(const char* slot)
     if (idx < 1) success = false;
 
     free(temp);
+    this->overriden = success;
     return success;
 }
 

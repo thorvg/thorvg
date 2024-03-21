@@ -2357,7 +2357,7 @@ TVG_API Tvg_Animation* tvg_lottie_animation_new();
 * \brief Override the lottie properties through the slot data. (Experimental API)
 *
 * \param[in] animation The Tvg_Animation object to override the property with the slot.
-* \param[in] slot The lottie slot data in json.
+* \param[in] slot The Lottie slot data in json, or @c nullptr to reset.
 *
 * \return Tvg_Animation A new Tvg_LottieAnimation object.
 * \retval TVG_RESULT_SUCCESS Succeed.
