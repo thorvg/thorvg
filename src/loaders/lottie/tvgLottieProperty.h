@@ -204,6 +204,7 @@ uint32_t bsearch(T* frames, float frameNo)
 struct LottieProperty
 {
     enum class Type : uint8_t { Point = 0, Float, Opacity, Color, PathSet, ColorStop, Position, TextDoc, Invalid };
+    virtual ~LottieProperty() {}
 };
 
 
@@ -258,7 +259,6 @@ struct LottieGenericProperty : LottieProperty
     T& operator=(const T& other)
     {
         //shallow copy, used for slot overriding
-        delete(frames);
         if (other.frames) {
             frames = other.frames;
             const_cast<T&>(other).frames = nullptr;
@@ -467,7 +467,6 @@ struct LottieColorStop : LottieProperty
     LottieColorStop& operator=(const LottieColorStop& other)
     {
         //shallow copy, used for slot overriding
-        release();
         if (other.frames) {
             frames = other.frames;
             const_cast<LottieColorStop&>(other).frames = nullptr;
@@ -613,7 +612,6 @@ struct LottieTextDoc : LottieProperty
     LottieTextDoc& operator=(const LottieTextDoc& other)
     {
         //shallow copy, used for slot overriding
-        release();
         if (other.frames) {
             frames = other.frames;
             const_cast<LottieTextDoc&>(other).frames = nullptr;
