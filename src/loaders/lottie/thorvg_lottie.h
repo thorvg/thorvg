@@ -25,7 +25,7 @@ public:
     /**
      * @brief Override Lottie properties using slot data.
      *
-     * @param[in] slot The Lottie slot data in JSON format.
+     * @param[in] slot The Lottie slot data in JSON format to override, or @c nullptr to reset.
      *
      * @retval Result::Success When succeed.
      * @retval Result::InsufficientCondition In case the animation is not loaded.
