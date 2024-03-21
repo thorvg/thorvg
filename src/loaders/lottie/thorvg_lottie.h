@@ -34,7 +34,21 @@ public:
      * @note Experimental API
      */
     Result override(const char* slot) noexcept;
-
+    
+    /**
+     * @brief Specify segment by marker. Markers are used to control animation playback
+     * byspecifying start and end points, eliminating the need to know the exact frame numbers.
+     * Generally, markers are designated at the design level, meaning the callers must know the
+     * marker name in advance to use it.
+     *
+     * @param[out] marker segment name
+     *
+     * @note Set @c nullptr to reset specified segment
+     *
+     * @note Experimental API
+     */
+    bool segment(const char* marker);
+    
     /**
      * @brief Creates a new LottieAnimation object.
      *

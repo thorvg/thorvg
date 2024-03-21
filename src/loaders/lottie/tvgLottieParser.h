@@ -92,6 +92,7 @@ private:
     LottieTrimpath* parseTrimpath();
     LottieRepeater* parseRepeater();
     LottieFont* parseFont();
+    LottieMarker* parseMarker();
 
     void parseObject(Array<LottieObject*>& parent);
     void parseShapes(Array<LottieObject*>& parent);
@@ -104,6 +105,7 @@ private:
     void parseAssets();
     void parseFonts();
     void parseChars(Array<LottieGlyph*>& glyphes);
+    void parseMarkers();
     void postProcess(Array<LottieGlyph*>& glyphes);
 
     //Current parsing context

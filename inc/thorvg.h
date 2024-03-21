@@ -1848,6 +1848,15 @@ public:
      * @note Experimental API
      */
     float totalFrame() const noexcept;
+    
+    /**
+     * @brief Retrieves the start frame number specified by segment.
+     *
+     * @return Start frame number specified by segment. If there is no segment returns first frame;
+     *
+     * @note Experimental API
+     */
+    float startFrame() const noexcept;
 
     /**
      * @brief Retrieves the duration of the animation in seconds.
@@ -1859,6 +1868,20 @@ public:
      * @% Experimental API
      */
     float duration() const noexcept;
+    
+    /**
+     * @brief Specify segment in scope. 
+     * Selecting the scope could play only that part with animation controllers.
+     *
+     * @param[in] begin  start position
+     *
+     * @param[in] end  end position
+     *
+     * @note range from 0.0 to 1.0
+     *
+     * @note Experimental API
+     */
+    void segment(float begin, float end);
 
     /**
      * @brief Creates a new Animation object.

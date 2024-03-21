@@ -19,7 +19,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-
 #include "tvgStr.h"
 #include "tvgCompressor.h"
 #include "tvgLottieModel.h"
@@ -943,6 +942,29 @@ void LottieParser::parseAssets()
     }
 }
 
+LottieMarker* LottieParser::parseMarker()
+{
+    enterObject();
+    
+    auto marker = new LottieMarker;
+    
+    while (auto key = nextObjectKey()) {
+        if (!strcmp(key, "cm")) marker->name = getStringCopy();
+        else if (!strcmp(key, "tm")) marker->time = getInt();
+        else if (!strcmp(key, "dr")) marker->duration = getInt();
+        else skip(key);
+    }
+    
+    return marker;
+}
+
+void LottieParser::parseMarkers()
+{
+    enterArray();
+    while (nextArrayValue()) {
+        comp->markers.push(parseMarker());
+    }
+}
 
 void LottieParser::parseChars(Array<LottieGlyph*>& glyphes)
 {
@@ -982,7 +1004,6 @@ void LottieParser::parseFonts()
         } else skip(key);
     }
 }
-
 
 LottieObject* LottieParser::parseGroup()
 {
@@ -1313,6 +1334,7 @@ bool LottieParser::parse()
         else if (!strcmp(key, "layers")) comp->root = parseLayers();
         else if (!strcmp(key, "fonts")) parseFonts();
         else if (!strcmp(key, "chars")) parseChars(glyphes);
+        else if (!strcmp(key, "markers")) parseMarkers();
         else skip(key);
     }
 

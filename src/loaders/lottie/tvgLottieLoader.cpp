@@ -342,6 +342,10 @@ bool LottieLoader::frame(float no)
     return true;
 }
 
+float LottieLoader::startFrame()
+{
+    return frameCnt * selectedSegmentBegin;
+}
 
 float LottieLoader::totalFrame()
 {
@@ -354,12 +358,41 @@ float LottieLoader::curFrame()
     return frameNo;
 }
 
-
 float LottieLoader::duration()
 {
-    return frameDuration;
+    if(selectedSegmentBegin == 0.0f && selectedSegmentEnd == 1.0f) return frameDuration;
+
+    if(!comp) done();
+
+    float distance = selectedSegmentEnd - selectedSegmentBegin;
+    float frames = frameCnt * distance;
+    return frames / comp->frameRate;
 }
 
+bool LottieLoader::getSegment(float& start, float& end, const char* marker)
+{
+    if(marker == nullptr) {
+        start = selectedSegmentBegin;
+        end = selectedSegmentEnd;
+        return true;
+    }
+    
+    if(!comp) done();
+    
+    for(auto it : comp->markers)
+        if(0 == std::strcmp(marker, it->name)) {
+            start = it->time / frameCnt;
+            end = (it->time + it->duration) / frameCnt;
+            return true;
+        }
+    return false;
+}
+
+void LottieLoader::segment(float begin, float end)
+{
+    selectedSegmentBegin = begin;
+    selectedSegmentEnd = end;
+}
 
 void LottieLoader::sync()
 {

@@ -34,11 +34,13 @@ public:
     FrameModule(FileType type) : ImageLoader(type) {}
     virtual ~FrameModule() {}
 
-    virtual bool frame(float no) = 0;       //set the current frame number
-    virtual float totalFrame() = 0;         //return the total frame count
-    virtual float curFrame() = 0;           //return the current frame number
-    virtual float duration() = 0;           //return the animation duration in seconds
-
+    virtual bool frame(float no) = 0;           //set the current frame number
+    virtual float totalFrame() = 0;             //return the total frame count
+    virtual float startFrame() { return 0.0f; }; //return start frame
+    virtual float curFrame() = 0;               //return the current frame number
+    virtual float duration() = 0;               //return the animation duration in seconds
+    virtual bool getSegment(float& beign, float& end, const char* marker = nullptr) { return false; }
+    virtual void segment(float begin, float end) {}
     virtual bool animatable() override { return true; }
 };
 

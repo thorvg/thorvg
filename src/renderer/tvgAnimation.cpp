@@ -81,6 +81,13 @@ float Animation::totalFrame() const noexcept
     return static_cast<FrameModule*>(loader)->totalFrame();
 }
 
+float Animation::startFrame() const noexcept
+{
+    auto loader = pImpl->picture->pImpl->loader;
+    if (!loader || !loader->animatable()) return 0;
+
+    return static_cast<FrameModule*>(loader)->startFrame();
+}
 
 float Animation::duration() const noexcept
 {
@@ -92,6 +99,14 @@ float Animation::duration() const noexcept
     return static_cast<FrameModule*>(loader)->duration();
 }
 
+void Animation::segment(float begin, float end)
+{
+    auto loader = pImpl->picture->pImpl->loader;
+
+    if (!loader || !loader->animatable()) return;
+
+    static_cast<FrameModule*>(loader)->segment(begin,end);
+}
 
 unique_ptr<Animation> Animation::gen() noexcept
 {
