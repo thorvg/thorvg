@@ -39,6 +39,9 @@ public:
     float frameCnt = 0.0f;
     float frameDuration = 0.0f;
 
+    float selectedSegmentBegin = 0.0f;
+    float selectedSegmentEnd = 1.0f;
+
     LottieBuilder* builder;
     LottieComposition* comp = nullptr;
 
@@ -61,11 +64,16 @@ public:
     float totalFrame() override;
     float curFrame() override;
     float duration() override;
+    bool getSegment(float& beign, float& end, const char* marker = nullptr);
+    void segment(float begin, float end);
+    uint32_t markerCount();
+    const char* markers(uint32_t index);
     void sync() override;
 
 private:
     bool header();
     void clear();
+    float startFrame();
     void run(unsigned tid) override;
 };
 

@@ -324,33 +324,82 @@ bool LottieLoader::frame(float no)
 
     this->done();
 
-    this->frameNo = no;
+    this->frameNo = no + startFrame();
 
     TaskScheduler::request(this);
 
     return true;
 }
 
+float LottieLoader::startFrame()
+{
+    return frameCnt * selectedSegmentBegin;
+}
 
 float LottieLoader::totalFrame()
 {
-    return frameCnt;
+    return (selectedSegmentEnd - selectedSegmentBegin) * frameCnt;
 }
 
 
 float LottieLoader::curFrame()
 {
-    return frameNo;
+    return frameNo - startFrame();
 }
 
 
 float LottieLoader::duration()
 {
-    return frameDuration;
+    if (selectedSegmentBegin == 0.0f && selectedSegmentEnd == 1.0f) return frameDuration;
+
+    if (!comp) done();
+
+    float distance = selectedSegmentEnd - selectedSegmentBegin;
+    float frames = frameCnt * distance;
+    return frames / comp->frameRate;
 }
 
+bool LottieLoader::getSegment(float& start, float& end, const char* marker)
+{
+    if (!marker) {
+        start = selectedSegmentBegin;
+        end = selectedSegmentEnd;
+        return true;
+    }
+    
+    if (!comp) done();
+    
+    for (auto m = comp->markers.begin(); m < comp->markers.end(); ++m)
+        if (!strcmp(marker, (*m)->name)) {
+            start = (*m)->time / frameCnt;
+            end = ((*m)->time + (*m)->duration) / frameCnt;
+            return true;
+        }
+    return false;
+}
+
+void LottieLoader::segment(float begin, float end)
+{
+    selectedSegmentBegin = begin;
+    selectedSegmentEnd = end;
+}
 
 void LottieLoader::sync()
 {
     this->done();
+}
+
+uint32_t LottieLoader::markerCount()
+{
+    if (!comp) done();
+    return comp->markers.end() - comp->markers.begin();
+}
+
+const char* LottieLoader::markers(uint32_t index)
+{
+    if (!comp) done();
+    if (index < 0 || index >= markerCount())
+        return nullptr;
+    auto marker = comp->markers.begin() + index;
+    return (*marker)->name;
 }

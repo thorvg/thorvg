@@ -54,3 +54,52 @@ unique_ptr<LottieAnimation> LottieAnimation::gen() noexcept
 {
     return unique_ptr<LottieAnimation>(new LottieAnimation);
 }
+
+Result LottieAnimation::segment(const char* marker) noexcept
+{
+    auto loader = pImpl->picture->pImpl->loader;
+    if (!loader) return Result::InsufficientCondition;
+    if (!loader->animatable()) return Result::NonSupport;
+    
+    auto lottieLoader = static_cast<LottieLoader*>(loader);
+    
+    if (!marker) {
+        lottieLoader->segment(0.0, 1.0);
+        return Result::Success;
+    }
+    
+    float begin, end;
+    if (!lottieLoader->getSegment(begin, end, marker)) {
+        return Result::InvalidArguments;
+    }
+    return segment(begin, end);
+}
+
+Result LottieAnimation::segment(float begin, float end) noexcept
+{
+    if (begin < 0.0 || end > 1.0 || begin >= end) return Result::InvalidArguments;
+    
+    auto loader = pImpl->picture->pImpl->loader;
+    if (!loader) return Result::InsufficientCondition;
+    if (!loader->animatable()) return Result::NonSupport;
+    
+    static_cast<LottieLoader*>(loader)->segment(begin, end);
+    
+    return Result::Success;
+}
+
+uint32_t LottieAnimation::markerCnt() noexcept
+{
+    auto loader = pImpl->picture->pImpl->loader;
+    if (!loader) return 0;
+    if (!loader->animatable()) return 0;
+    return static_cast<LottieLoader*>(loader)->markerCount();
+}
+
+const char* LottieAnimation::markers(uint32_t idx) noexcept
+{
+    auto loader = pImpl->picture->pImpl->loader;
+    if (!loader) return 0;
+    if (!loader->animatable()) return 0;
+    return static_cast<LottieLoader*>(loader)->markers(idx);
+}

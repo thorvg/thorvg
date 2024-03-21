@@ -947,6 +947,29 @@ void LottieParser::parseAssets()
     }
 }
 
+LottieMarker* LottieParser::parseMarker()
+{
+    enterObject();
+    
+    auto marker = new LottieMarker;
+    
+    while (auto key = nextObjectKey()) {
+        if (!strcmp(key, "cm")) marker->name = getStringCopy();
+        else if (!strcmp(key, "tm")) marker->time = getFloat();
+        else if (!strcmp(key, "dr")) marker->duration = getInt();
+        else skip(key);
+    }
+    
+    return marker;
+}
+
+void LottieParser::parseMarkers()
+{
+    enterArray();
+    while (nextArrayValue()) {
+        comp->markers.push(parseMarker());
+    }
+}
 
 void LottieParser::parseChars(Array<LottieGlyph*>& glyphes)
 {
@@ -1314,6 +1337,7 @@ bool LottieParser::parse()
         else if (!strcmp(key, "layers")) comp->root = parseLayers();
         else if (!strcmp(key, "fonts")) parseFonts();
         else if (!strcmp(key, "chars")) parseChars(glyphes);
+        else if (!strcmp(key, "markers")) parseMarkers();
         else skip(key);
     }
 
