@@ -204,6 +204,40 @@ void WgGeometryData::appendMesh(const RenderMesh* rmesh)
 };
 
 
+WgPoint WgGeometryData::interpolate(float t, uint32_t& index)
+{
+    assert(t >= 0.0f);
+    assert(t <= 1.0f);
+    // get total length
+    float totalLength = 0.0f;
+    for (uint32_t i = 0; i < positions.count - 1; i++)
+        totalLength += positions[i].dist(positions[i+1]);
+    float targetLength = totalLength * t;
+    // find current segment index and interpolation factor
+    float currentFactor = 0.0f;
+    float currentLength = 0.0f;
+    for (index = 0; index < positions.count - 1; index++) {
+        float segmentLength = positions[index].dist(positions[index+1]);
+        currentLength += segmentLength;
+        if(currentLength >= targetLength) {
+            currentFactor = 1.0f -(currentLength - targetLength) / segmentLength;
+            break;
+        }
+    }
+    // get interpolated position and segment index
+    return positions[index] * (1.0f - currentFactor) + positions[index + 1] * currentFactor;
+}
+
+
+float WgGeometryData::getLength()
+{
+    float length = 0.0f;
+    for (uint32_t i = 0; i < positions.count - 1; i++)
+        length += positions[i].dist(positions[i+1]);
+    return length;
+}
+
+
 bool WgGeometryData::getClosestIntersection(WgPoint p1, WgPoint p2, WgPoint& pi, uint32_t& index)
 {
     bool finded = false;
@@ -327,28 +361,32 @@ void WgGeometryDataGroup::tesselate(const RenderShape& rshape)
 void WgGeometryDataGroup::stroke(const RenderShape& rshape)
 {
     assert(rshape.stroke);
+    auto strokeData = new WgGeometryData();
+    // decode
+    WgGeometryDataGroup polylines{};
+    decodePath(rshape, &polylines);
+    // trim -> split -> stroke
+    if ((rshape.stroke->dashPattern) && ((rshape.stroke->trim.begin != 0.0f) || (rshape.stroke->trim.end != 1.0f))) {
+        WgGeometryDataGroup trimmed{};
+        WgGeometryDataGroup splitted{};
+        trimPolyline(&polylines, &trimmed, rshape.stroke);
+        splitPolyline(&trimmed, &splitted, rshape.stroke);
+        strokePolyline(&splitted, strokeData, rshape.stroke);
+    } else // trim -> stroke
+    if ((rshape.stroke->trim.begin != 0.0f) || (rshape.stroke->trim.end != 1.0f)) {
+        WgGeometryDataGroup trimmed{};
+        trimPolyline(&polylines, &trimmed, rshape.stroke);
+        strokePolyline(&trimmed, strokeData, rshape.stroke);
+    } else // split -> stroke
     if (rshape.stroke->dashPattern) {
-        // first step: decode path data
-        WgGeometryDataGroup segments{};
-        decodePath(rshape, &segments);
-        // second step: split path to segments using dash patterns
-        WgGeometryDataGroup outlines{};
-        strokeSegments(rshape, &segments, &outlines);
-        // third step: create geometry for strokes
-        auto strokeData = new WgGeometryData;
-        strokeSublines(rshape, &outlines, strokeData);
-        // append strokes geometry data
-        geometries.push(strokeData);
-    } else {
-        // first step: decode path data
-        WgGeometryDataGroup outlines{};
-        decodePath(rshape, &outlines);
-        // second step: create geometry for strokes
-        auto strokeData = new WgGeometryData;
-        strokeSublines(rshape, &outlines, strokeData);
-        // append strokes geometry data
-        geometries.push(strokeData);
+        WgGeometryDataGroup splitted{};
+        splitPolyline(&polylines, &splitted, rshape.stroke);
+        strokePolyline(&splitted, strokeData, rshape.stroke);
+    } else { // stroke
+        strokePolyline(&polylines, strokeData, rshape.stroke);
     }
+    // append stroke geometry
+    geometries.push(strokeData);
 }
 
 
@@ -362,7 +400,6 @@ void WgGeometryDataGroup::contours(WgGeometryDataGroup& outlines)
     }
 }
 
-
 void WgGeometryDataGroup::release()
 {
     for (uint32_t i = 0; i < geometries.count; i++)
@@ -371,27 +408,27 @@ void WgGeometryDataGroup::release()
 }
 
 
-void WgGeometryDataGroup::decodePath(const RenderShape& rshape, WgGeometryDataGroup* outlines)
+void WgGeometryDataGroup::decodePath(const RenderShape& rshape, WgGeometryDataGroup* polyline)
 {
     size_t pntIndex = 0;
     for (uint32_t cmdIndex = 0; cmdIndex < rshape.path.cmds.count; cmdIndex++) {
         PathCommand cmd = rshape.path.cmds[cmdIndex];
         if (cmd == PathCommand::MoveTo) {
-            outlines->geometries.push(new WgGeometryData);
-            auto outline = outlines->geometries.last();
+            polyline->geometries.push(new WgGeometryData);
+            auto outline = polyline->geometries.last();
             outline->positions.push(rshape.path.pts[pntIndex]);
             pntIndex++;
         } else if (cmd == PathCommand::LineTo) {
-            auto outline = outlines->geometries.last();
+            auto outline = polyline->geometries.last();
             if (outline)
                 outline->positions.push(rshape.path.pts[pntIndex]);
             pntIndex++;
         } else if (cmd == PathCommand::Close) {
-            auto outline = outlines->geometries.last();
+            auto outline = polyline->geometries.last();
             if ((outline) && (outline->positions.count > 0))
                 outline->positions.push(outline->positions[0]);
         } else if (cmd == PathCommand::CubicTo) {
-            auto outline = outlines->geometries.last();
+            auto outline = polyline->geometries.last();
             if ((outline) && (outline->positions.count > 0))
                 outline->appendCubic(
                     rshape.path.pts[pntIndex + 0],
@@ -404,16 +441,35 @@ void WgGeometryDataGroup::decodePath(const RenderShape& rshape, WgGeometryDataGr
 }
 
 
-void WgGeometryDataGroup::strokeSegments(const RenderShape& rshape, WgGeometryDataGroup* outlines, WgGeometryDataGroup* segments)
+void WgGeometryDataGroup::trimPolyline(WgGeometryDataGroup* polyline, WgGeometryDataGroup* trimmed, RenderStroke *stroke)
 {
-    for (uint32_t i = 0; i < outlines->geometries.count; i++) {
-        auto& vlist = outlines->geometries[i]->positions;
+    assert(stroke);
+    for (uint32_t i = 0; i < polyline->geometries.count; i++) {
+        auto segment = new WgGeometryData;
+        uint32_t is = 0;
+        uint32_t ie = 0;
+        WgPoint vs = polyline->geometries[i]->interpolate(stroke->trim.begin, is);
+        WgPoint ve = polyline->geometries[i]->interpolate(stroke->trim.end, ie);
+        segment->positions.push(vs);
+        for (uint32_t j = is+1; j <= ie; j++)
+            segment->positions.push(polyline->geometries[i]->positions[j]);
+        segment->positions.push(ve);
+        trimmed->geometries.push(segment);
+    }
+}
+
+
+void WgGeometryDataGroup::splitPolyline(WgGeometryDataGroup* polyline, WgGeometryDataGroup* splitted, RenderStroke *stroke)
+{
+    assert(stroke);
+    for (uint32_t i = 0; i < polyline->geometries.count; i++) {
+        auto& vlist = polyline->geometries[i]->positions;
         
         // append single point segment
         if (vlist.count == 1) {
             auto segment = new WgGeometryData;
             segment->positions.push(vlist.last());
-            segments->geometries.push(segment);
+            splitted->geometries.push(segment);
         }
 
         if (vlist.count >= 2) {
@@ -422,40 +478,40 @@ void WgGeometryDataGroup::strokeSegments(const RenderShape& rshape, WgGeometryDa
             WgPoint vcurr = vlist[0];
             while (icurr < vlist.count) {
                 if (ipatt % 2 == 0) {
-                    segments->geometries.push(new WgGeometryData);
-                    segments->geometries.last()->positions.push(vcurr);
+                    splitted->geometries.push(new WgGeometryData);
+                    splitted->geometries.last()->positions.push(vcurr);
                 }
-                float lcurr = rshape.stroke->dashPattern[ipatt];
+                float lcurr = stroke->dashPattern[ipatt];
                 while ((icurr < vlist.count) && (vlist[icurr].dist(vcurr) < lcurr)) {
                     lcurr -= vlist[icurr].dist(vcurr);
                     vcurr = vlist[icurr];
                     icurr++;
-                    if (ipatt % 2 == 0) segments->geometries.last()->positions.push(vcurr);
+                    if (ipatt % 2 == 0) splitted->geometries.last()->positions.push(vcurr);
                 }
                 if (icurr < vlist.count) {
                     vcurr = vcurr + (vlist[icurr] - vlist[icurr-1]).normal() * lcurr;
-                    if (ipatt % 2 == 0) segments->geometries.last()->positions.push(vcurr);
+                    if (ipatt % 2 == 0) splitted->geometries.last()->positions.push(vcurr);
                 }
-                ipatt = (ipatt + 1) % rshape.stroke->dashCnt;
+                ipatt = (ipatt + 1) % stroke->dashCnt;
             }
         }
     }
 }
 
 
-void WgGeometryDataGroup::strokeSublines(const RenderShape& rshape, WgGeometryDataGroup* outlines, WgGeometryData* strokes)
+void WgGeometryDataGroup::strokePolyline(WgGeometryDataGroup* polyline, WgGeometryData* strokes, RenderStroke *stroke)
 {
-    float wdt = rshape.stroke->width / 2;
-    for (uint32_t i = 0; i < outlines->geometries.count; i++) {
-        auto outline = outlines->geometries[i];
+    float wdt = stroke->width / 2;
+    for (uint32_t i = 0; i < polyline->geometries.count; i++) {
+        auto outline = polyline->geometries[i];
 
         // single point sub-path
         if (outline->positions.count == 1) {
-            if (rshape.stroke->cap == StrokeCap::Round) {
+            if (stroke->cap == StrokeCap::Round) {
                 strokes->appendCircle(outline->positions[0], wdt);
-            } else if (rshape.stroke->cap == StrokeCap::Butt) {
+            } else if (stroke->cap == StrokeCap::Butt) {
                 // for zero length sub-paths no stroke is rendered
-            } else if (rshape.stroke->cap == StrokeCap::Square) {
+            } else if (stroke->cap == StrokeCap::Square) {
                 strokes->appendRect(
                     outline->positions[0] + WgPoint(+wdt, +wdt),
                     outline->positions[0] + WgPoint(+wdt, -wdt),
@@ -471,18 +527,18 @@ void WgGeometryDataGroup::strokeSublines(const RenderShape& rshape, WgGeometryDa
             WgPoint v1 = outline->positions[1];
             WgPoint dir0 = (v1 - v0).normal();
             WgPoint nrm0 = WgPoint{ -dir0.y, +dir0.x };
-            if (rshape.stroke->cap == StrokeCap::Round) {
+            if (stroke->cap == StrokeCap::Round) {
                 strokes->appendRect(
                     v0 - nrm0 * wdt, v0 + nrm0 * wdt, 
                     v1 - nrm0 * wdt, v1 + nrm0 * wdt);
                 strokes->appendCircle(outline->positions[0], wdt);
                 strokes->appendCircle(outline->positions[1], wdt);
-            } else if (rshape.stroke->cap == StrokeCap::Butt) {
+            } else if (stroke->cap == StrokeCap::Butt) {
                 strokes->appendRect(
                     v0 - nrm0 * wdt, v0 + nrm0 * wdt,
                     v1 - nrm0 * wdt, v1 + nrm0 * wdt
                 );
-            } else if (rshape.stroke->cap == StrokeCap::Square) {
+            } else if (stroke->cap == StrokeCap::Square) {
                 strokes->appendRect(
                     v0 - nrm0 * wdt - dir0 * wdt, v0 + nrm0 * wdt - dir0 * wdt,
                     v1 - nrm0 * wdt + dir0 * wdt, v1 + nrm0 * wdt + dir0 * wdt
@@ -497,11 +553,11 @@ void WgGeometryDataGroup::strokeSublines(const RenderShape& rshape, WgGeometryDa
             WgPoint v1 = outline->positions[1];
             WgPoint dir0 = (v1 - v0).normal();
             WgPoint nrm0 = WgPoint{ -dir0.y, +dir0.x };
-            if (rshape.stroke->cap == StrokeCap::Round) {
+            if (stroke->cap == StrokeCap::Round) {
                 strokes->appendCircle(v0, wdt);
-            } else if (rshape.stroke->cap == StrokeCap::Butt) {
+            } else if (stroke->cap == StrokeCap::Butt) {
                 // no cap needed
-            } else if (rshape.stroke->cap == StrokeCap::Square) {
+            } else if (stroke->cap == StrokeCap::Square) {
                 strokes->appendRect(
                     v0 - nrm0 * wdt - dir0 * wdt,
                     v0 + nrm0 * wdt - dir0 * wdt,
@@ -515,11 +571,11 @@ void WgGeometryDataGroup::strokeSublines(const RenderShape& rshape, WgGeometryDa
             v1 = outline->positions[outline->positions.count - 1];
             dir0 = (v1 - v0).normal();
             nrm0 = WgPoint{ -dir0.y, +dir0.x };
-            if (rshape.stroke->cap == StrokeCap::Round) {
+            if (stroke->cap == StrokeCap::Round) {
                 strokes->appendCircle(v1, wdt);
-            } else if (rshape.stroke->cap == StrokeCap::Butt) {
+            } else if (stroke->cap == StrokeCap::Butt) {
                 // no cap needed
-            } else if (rshape.stroke->cap == StrokeCap::Square) {
+            } else if (stroke->cap == StrokeCap::Square) {
                 strokes->appendRect(
                     v1 - nrm0 * wdt,
                     v1 + nrm0 * wdt,
@@ -551,17 +607,17 @@ void WgGeometryDataGroup::strokeSublines(const RenderShape& rshape, WgGeometryDa
                 WgPoint dir1 = (v1 - v2).normal();
                 WgPoint nrm0 { -dir0.y, +dir0.x };
                 WgPoint nrm1 { +dir1.y, -dir1.x };
-                if (rshape.stroke->join == StrokeJoin::Round) {
+                if (stroke->join == StrokeJoin::Round) {
                     strokes->appendCircle(v1, wdt);
-                } else if (rshape.stroke->join == StrokeJoin::Bevel) {
+                } else if (stroke->join == StrokeJoin::Bevel) {
                     strokes->appendRect(
                         v1 - nrm0 * wdt, v1 - nrm1 * wdt,
                         v1 + nrm1 * wdt, v1 + nrm0 * wdt
                     );
-                } else if (rshape.stroke->join == StrokeJoin::Miter) {
+                } else if (stroke->join == StrokeJoin::Miter) {
                     WgPoint nrm = (dir0 + dir1).normal();
                     float cosine = nrm.dot(nrm0);
-                    if ((cosine != 0.0f) && (abs(wdt / cosine) <= rshape.stroke->miterlimit * 2)) {
+                    if ((cosine != 0.0f) && (abs(wdt / cosine) <= stroke->miterlimit * 2)) {
                         strokes->appendRect(v1 + nrm * (wdt / cosine), v1 + nrm0 * wdt, v1 + nrm1 * wdt, v1);
                         strokes->appendRect(v1 - nrm * (wdt / cosine), v1 - nrm0 * wdt, v1 - nrm1 * wdt, v1);
                     } else {
