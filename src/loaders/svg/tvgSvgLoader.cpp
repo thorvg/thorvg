@@ -1919,6 +1919,19 @@ static SvgNode* _findNodeById(SvgNode *node, const char* id)
 }
 
 
+static SvgNode* _findParentById(SvgNode* node, char* id, SvgNode* doc)
+{
+    SvgNode *parent = node->parent;
+    while (parent != nullptr && parent != doc) {
+        if (parent->id && !strcmp(parent->id, id)) {
+            return parent;
+        }
+        parent = parent->parent;
+    }
+    return nullptr;
+}
+
+
 static constexpr struct
 {
     const char* tag;
@@ -1959,8 +1972,12 @@ static bool _attrParseUseNode(void* data, const char* key, const char* value)
         defs = _getDefsNode(node);
         nodeFrom = _findNodeById(defs, id);
         if (nodeFrom) {
-            _cloneNode(nodeFrom, node, 0);
-            if (nodeFrom->type == SvgNodeType::Symbol) use->symbol = nodeFrom;
+            if (!_findParentById(node, id, loader->doc)) {
+                _cloneNode(nodeFrom, node, 0);
+                if (nodeFrom->type == SvgNodeType::Symbol) use->symbol = nodeFrom;
+            } else {
+                TVGLOG("SVG", "%s is ancestor element. This reference is invalid.", id);
+            }
             free(id);
         } else {
             //some svg export software include <defs> element at the end of the file
@@ -3018,9 +3035,13 @@ static void _clonePostponedNodes(Array<SvgNodeIdPair>* cloneNodes, SvgNode* doc)
         auto defs = _getDefsNode(nodeIdPair.node);
         auto nodeFrom = _findNodeById(defs, nodeIdPair.id);
         if (!nodeFrom) nodeFrom = _findNodeById(doc, nodeIdPair.id);
-        _cloneNode(nodeFrom, nodeIdPair.node, 0);
-        if (nodeFrom && nodeFrom->type == SvgNodeType::Symbol && nodeIdPair.node->type == SvgNodeType::Use) {
-            nodeIdPair.node->node.use.symbol = nodeFrom;
+        if (!_findParentById(nodeIdPair.node, nodeIdPair.id, doc)) {
+            _cloneNode(nodeFrom, nodeIdPair.node, 0);
+            if (nodeFrom && nodeFrom->type == SvgNodeType::Symbol && nodeIdPair.node->type == SvgNodeType::Use) {
+                nodeIdPair.node->node.use.symbol = nodeFrom;
+            }
+        } else {
+            TVGLOG("SVG", "%s is ancestor element. This reference is invalid.", nodeIdPair.id);
         }
         free(nodeIdPair.id);
     }
