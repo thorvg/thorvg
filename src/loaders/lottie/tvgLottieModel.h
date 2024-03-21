@@ -125,7 +125,7 @@ struct LottieObject
         free(name);
     }
 
-    virtual void override(LottieObject* prop)
+    virtual void override(LottieProperty* prop)
     {
         TVGERR("LOTTIE", "Unsupported slot type");
     }
@@ -188,9 +188,9 @@ struct LottieText : LottieObject
         LottieObject::type = LottieObject::Text;
     }
 
-    void override(LottieObject* prop) override
+    void override(LottieProperty* prop) override
     {
-        this->doc = static_cast<LottieText*>(prop)->doc;
+        this->doc = *static_cast<LottieTextDoc*>(prop);
         this->prepare();
     }
 
@@ -351,9 +351,9 @@ struct LottieSolidStroke : LottieSolid, LottieStroke
         if (color.frames || opacity.frames || LottieStroke::dynamic()) statical = false;
     }
 
-    void override(LottieObject* prop) override
+    void override(LottieProperty* prop) override
     {
-        this->color = static_cast<LottieSolid*>(prop)->color;
+        this->color = *static_cast<LottieColor*>(prop);
         this->prepare();
     }
 };
@@ -367,9 +367,9 @@ struct LottieSolidFill : LottieSolid
         if (color.frames || opacity.frames) statical = false;
     }
 
-    void override(LottieObject* prop) override
+    void override(LottieProperty* prop) override
     {
-        this->color = static_cast<LottieSolid*>(prop)->color;
+        this->color = *static_cast<LottieColor*>(prop);
         this->prepare();
     }
 
@@ -494,9 +494,9 @@ struct LottieGradientFill : LottieGradient
         if (LottieGradient::prepare()) statical = false;
     }
 
-    void override(LottieObject* prop) override
+    void override(LottieProperty* prop) override
     {
-        this->colorStops = static_cast<LottieGradient*>(prop)->colorStops;
+        this->colorStops = *static_cast<LottieColorStop*>(prop);
         this->prepare();
     }
 
@@ -512,9 +512,9 @@ struct LottieGradientStroke : LottieGradient, LottieStroke
         if (LottieGradient::prepare() || LottieStroke::dynamic()) statical = false;
     }
 
-    void override(LottieObject* prop) override
+    void override(LottieProperty* prop) override
     {
-        this->colorStops = static_cast<LottieGradient*>(prop)->colorStops;
+        this->colorStops = *static_cast<LottieColorStop*>(prop);
         this->prepare();
     }
 };
@@ -642,28 +642,36 @@ struct LottieSlot
         //apply slot object to all targets
         for (auto pair = pairs.begin(); pair < pairs.end(); ++pair) {
             //backup the original properties before overwriting
-            if (!overriden) {
-                switch (type) {
-                    case LottieProperty::Type::ColorStop: {
+            switch (type) {
+                case LottieProperty::Type::ColorStop: {
+                    if (!overriden) {
                         pair->prop = new LottieColorStop;
                         *static_cast<LottieColorStop*>(pair->prop) = static_cast<LottieGradient*>(pair->obj)->colorStops;
-                        break;
                     }
-                    case LottieProperty::Type::Color: {
+
+                    pair->obj->override(&static_cast<LottieGradient*>(target)->colorStops);
+                    break;
+                }
+                case LottieProperty::Type::Color: {
+                    if (!overriden) {
                         pair->prop = new LottieColor;
                         *static_cast<LottieColor*>(pair->prop) = static_cast<LottieSolid*>(pair->obj)->color;
-                        break;
                     }
-                    case LottieProperty::Type::TextDoc: {
+
+                    pair->obj->override(&static_cast<LottieSolid*>(target)->color);
+                    break;
+                }
+                case LottieProperty::Type::TextDoc: {
+                    if (!overriden) {
                         pair->prop = new LottieTextDoc;
                         *static_cast<LottieTextDoc*>(pair->prop) = static_cast<LottieText*>(pair->obj)->doc;
-                        break;
                     }
-                    default: break;
+
+                    pair->obj->override(&static_cast<LottieText*>(target)->doc);
+                    break;
                 }
+                default: break;
             }
-            //FIXME: it overrides the object's whole properties, but it acutally needs a single property of it.
-            pair->obj->override(target);
         }
         overriden = true;
     }
