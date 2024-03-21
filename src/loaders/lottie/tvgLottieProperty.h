@@ -215,8 +215,14 @@ struct LottieGenericProperty : LottieProperty
     T value;
 
     LottieGenericProperty(T v) : value(v) {}
+    LottieGenericProperty() {}
 
     ~LottieGenericProperty()
+    {
+        release();
+    }
+
+    void release()
     {
         delete(frames);
     }
@@ -272,10 +278,16 @@ struct LottiePathSet : LottieProperty
 
     ~LottiePathSet()
     {
+        release();
+    }
+
+    void release()
+    {
         free(value.cmds);
         free(value.pts);
 
         if (!frames) return;
+
         for (auto p = frames->begin(); p < frames->end(); ++p) {
             free((*p).value.cmds);
             free((*p).value.pts);
@@ -461,10 +473,11 @@ struct LottieColorStop : LottieProperty
             const_cast<LottieColorStop&>(other).frames = nullptr;
         } else {
             value = other.value;
-            const_cast<LottieColorStop&>(other).value.data = nullptr;
+            const_cast<LottieColorStop&>(other).value = {nullptr, nullptr};
         }
         populated = other.populated;
         count = other.count;
+
         return *this;
     }
 
@@ -482,6 +495,11 @@ struct LottiePosition : LottieProperty
     }
 
     ~LottiePosition()
+    {
+        release();
+    }
+
+    void release()
     {
         delete(frames);
     }
