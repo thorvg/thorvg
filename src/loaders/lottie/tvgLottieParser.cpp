@@ -911,6 +911,7 @@ LottieObject* LottieParser::parseAsset()
     }
     if (data) obj = parseImage(data, subPath, embedded);
     if (obj) obj->name = id;
+    else free(id);
     return obj;
 }
 
