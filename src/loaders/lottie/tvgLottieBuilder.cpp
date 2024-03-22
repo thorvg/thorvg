@@ -94,7 +94,7 @@ static bool _buildComposition(LottieComposition* comp, LottieGroup* parent);
 static void _rotateX(Matrix* m, float degree)
 {
     if (degree == 0.0f) return;
-    auto radian = degree / 180.0f * M_PI;
+    auto radian = degree / 180.0f * MATH_PI;
     m->e22 *= cosf(radian);
 }
 
@@ -102,7 +102,7 @@ static void _rotateX(Matrix* m, float degree)
 static void _rotateY(Matrix* m, float degree)
 {
     if (degree == 0.0f) return;
-    auto radian = degree / 180.0f * M_PI;
+    auto radian = degree / 180.0f * MATH_PI;
     m->e11 *= cosf(radian);
 }
 
@@ -110,7 +110,7 @@ static void _rotateY(Matrix* m, float degree)
 static void _rotationZ(Matrix* m, float degree)
 {
     if (degree == 0.0f) return;
-    auto radian = degree / 180.0f * M_PI;
+    auto radian = degree / 180.0f * MATH_PI;
     m->e11 = cosf(radian);
     m->e12 = -sinf(radian);
     m->e21 = sinf(radian);

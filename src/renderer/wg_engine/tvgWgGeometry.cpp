@@ -131,8 +131,8 @@ void WgGeometryData::appendCircle(WgPoint center, float radius)
     uint32_t index = positions.count;
     uint32_t nSegments = std::trunc(radius);
     for (uint32_t i = 0; i < nSegments; i++) {
-        float angle0 = (float)(i + 0) / nSegments * (float)M_PI * 2.0f;
-        float angle1 = (float)(i + 1) / nSegments * (float)M_PI * 2.0f;
+        float angle0 = (float)(i + 0) / nSegments * MATH_PI * 2.0f;
+        float angle1 = (float)(i + 1) / nSegments * MATH_PI * 2.0f;
         WgPoint p0 = center + WgPoint(sin(angle0) * radius, cos(angle0) * radius);
         WgPoint p1 = center + WgPoint(sin(angle1) * radius, cos(angle1) * radius);
         positions.push(center); // +0
