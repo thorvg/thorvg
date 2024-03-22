@@ -306,7 +306,7 @@ static SwOutline* _genDashOutline(const RenderShape* rshape, const Matrix* trans
         bool isOdd = dash.cnt % 2;
         if (isOdd) patternLength *= 2;
 
-        offset = fmod(offset, patternLength);
+        offset = fmodf(offset, patternLength);
         if (offset < 0) offset += patternLength;
 
         for (size_t i = 0; i < dash.cnt * (1 + (size_t)isOdd); ++i, ++offIdx) {

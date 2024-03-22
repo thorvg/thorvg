@@ -50,7 +50,7 @@ void LottieTrimpath::segment(float frameNo, float& start, float& end)
 {
     auto s = this->start(frameNo) * 0.01f;
     auto e = this->end(frameNo) * 0.01f;
-    auto o = fmod(this->offset(frameNo), 360.0f) / 360.0f;  //0 ~ 1
+    auto o = fmodf(this->offset(frameNo), 360.0f) / 360.0f;  //0 ~ 1
 
     auto diff = fabs(s - e);
     if (mathZero(diff)) {
