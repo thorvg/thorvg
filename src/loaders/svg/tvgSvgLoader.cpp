@@ -743,7 +743,7 @@ static Matrix* _parseTransformationMatrix(const char* value)
             } else goto error;
         } else if (state == MatrixState::Rotate) {
             //Transform to signed.
-            points[0] = fmod(points[0], 360);
+            points[0] = fmodf(points[0], 360.0f);
             if (points[0] < 0) points[0] += 360.0f;
             auto c = cosf(points[0] * (MATH_PI / 180.0f));
             auto s = sinf(points[0] * (MATH_PI / 180.0f));
