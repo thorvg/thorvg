@@ -23,7 +23,7 @@
 
 #include "tvgTtfLoader.h"
 
-#if defined(_WIN32)
+#if defined(_WIN32) && (WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP)
     #include <windows.h>
 #elif defined(__linux__)
     #include <fcntl.h>
@@ -36,7 +36,7 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-#if defined(_WIN32)
+#if defined(_WIN32) && (WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP)
 
 static bool _map(TtfLoader* loader, const string& path)
 {
