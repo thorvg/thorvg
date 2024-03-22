@@ -30,7 +30,7 @@
 
 struct TtfLoader : public FontLoader
 {
-#if defined(_WIN32)
+#if defined(_WIN32) && (WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP)
     void* mapping = nullptr;
 #endif
     TtfReader reader;
