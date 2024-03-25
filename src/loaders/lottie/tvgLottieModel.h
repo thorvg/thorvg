@@ -586,6 +586,20 @@ struct LottieGroup : LottieObject
     void prepare(LottieObject::Type type = LottieObject::Group);
     bool mergeable() override { return allowMerge; }
 
+    LottieObject* content(const char* id)
+    {
+        if (name && !strcmp(name, id)) return this;
+
+        //source has children, find recursively.
+        for (auto c = children.begin(); c < children.end(); ++c) {
+            auto child = *c;
+            if (child->type == LottieObject::Type::Group || type == LottieObject::Type::Layer) {
+                if (auto ret = static_cast<LottieGroup*>(child)->content(id)) return ret;
+            } else if (child->name && !strcmp(child->name, id)) return child;
+        }
+        return nullptr;
+    }
+
     Scene* scene = nullptr;               //tvg render data
     Array<LottieObject*> children;
 
@@ -761,9 +775,41 @@ struct LottieComposition
         return p * frameCnt();
     }
 
+    float timeAtFrame(float frameNo)
+    {
+        return (frameNo - startFrame) / frameRate;
+    }
+
     float frameCnt() const
     {
         return endFrame - startFrame;
+    }
+
+    LottieLayer* layer(const char* name)
+    {
+        for (auto child = root->children.begin(); child < root->children.end(); ++child) {
+            auto layer = static_cast<LottieLayer*>(*child);
+            if (layer->name && !strcmp(layer->name, name)) return layer;
+        }
+        return nullptr;
+    }
+
+    LottieLayer* layer(int16_t id)
+    {
+        for (auto child = root->children.begin(); child < root->children.end(); ++child) {
+            auto layer = static_cast<LottieLayer*>(*child);
+            if (layer->id == id) return layer;
+        }
+        return nullptr;
+    }
+
+    LottieLayer* asset(const char* name)
+    {
+        for (auto asset = assets.begin(); asset < assets.end(); ++asset) {
+            auto layer = static_cast<LottieLayer*>(*asset);
+            if (layer->name && !strcmp(layer->name, name)) return layer;
+        }
+        return nullptr;
     }
 
     LottieLayer* root = nullptr;
