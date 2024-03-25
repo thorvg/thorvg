@@ -1836,7 +1836,6 @@ public:
  *
  * This class supports the display and control of animation frames.
  *
- * @note Experimental API
  */
 
 class TVG_API Animation
@@ -1855,7 +1854,6 @@ public:
      *
      * @see totalFrame()
      *
-     * @note Experimental API
      */
     Result frame(float no) noexcept;
 
@@ -1870,7 +1868,6 @@ public:
      *
      * @warning The picture instance is owned by Animation. It should not be deleted manually.
      *
-     * @note Experimental API
      */
     Picture* picture() const noexcept;
 
@@ -1884,7 +1881,6 @@ public:
      * @see Animation::frame(float no)
      * @see Animation::totalFrame()
      *
-     * @note Experimental API
      */
     float curFrame() const noexcept;
 
@@ -1896,7 +1892,6 @@ public:
      * @note Frame numbering starts from 0.
      * @note If the Picture is not properly configured, this function will return 0.
      *
-     * @note Experimental API
      */
     float totalFrame() const noexcept;
 
@@ -1907,7 +1902,6 @@ public:
      *
      * @note If the Picture is not properly configured, this function will return 0.
      *
-     * @% Experimental API
      */
     float duration() const noexcept;
 
@@ -1916,7 +1910,6 @@ public:
      *
      * @return A new Animation object.
      *
-     * @note Experimental API
      */
     static std::unique_ptr<Animation> gen() noexcept;
 
