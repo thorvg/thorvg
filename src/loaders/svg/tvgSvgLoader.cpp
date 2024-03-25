@@ -2669,7 +2669,7 @@ static void _inheritGradient(SvgLoaderData* loader, SvgStyleGradient* to, SvgSty
         if (to->transform) memcpy(to->transform, from->transform, sizeof(Matrix));
     }
 
-    if (to->type == SvgGradientType::Linear && from->type == SvgGradientType::Linear) {
+    if (to->type == SvgGradientType::Linear) {
         for (unsigned int i = 0; i < sizeof(linear_tags) / sizeof(linear_tags[0]); i++) {
             bool coordSet = to->flags & linear_tags[i].flag;
             if (!(to->flags & linear_tags[i].flag) && (from->flags & linear_tags[i].flag)) {
@@ -2686,7 +2686,7 @@ static void _inheritGradient(SvgLoaderData* loader, SvgStyleGradient* to, SvgSty
                 linear_tags[i].tagInheritedRecalc(loader, to->linear, to->userSpace);
             }
         }
-    } else if (to->type == SvgGradientType::Radial && from->type == SvgGradientType::Radial) {
+    } else if (to->type == SvgGradientType::Radial) {
         for (unsigned int i = 0; i < sizeof(radialTags) / sizeof(radialTags[0]); i++) {
             bool coordSet = (to->flags & radialTags[i].flag);
             if (!(to->flags & radialTags[i].flag) && (from->flags & radialTags[i].flag)) {
@@ -2696,10 +2696,16 @@ static void _inheritGradient(SvgLoaderData* loader, SvgStyleGradient* to, SvgSty
             //GradUnits not set directly, coord set
             if (!gradUnitSet && coordSet) {
                 radialTags[i].tagRecalc(loader, to->radial, to->userSpace);
+                //If fx and fy are not set, set cx and cy.
+                if (!strcmp(radialTags[i].tag, "cx") && !(to->flags & SvgGradientFlags::Fx)) to->radial->fx = to->radial->cx;
+                if (!strcmp(radialTags[i].tag, "cy") && !(to->flags & SvgGradientFlags::Fy)) to->radial->fy = to->radial->cy;
             }
             //GradUnits set, coord not set directly
             if (to->userSpace == from->userSpace) continue;
             if (gradUnitSet && !coordSet) {
+                //If fx and fx are not set, do not call recalc.
+                if (!strcmp(radialTags[i].tag, "fx") && !(to->flags & SvgGradientFlags::Fx)) continue;
+                if (!strcmp(radialTags[i].tag, "fy") && !(to->flags & SvgGradientFlags::Fy)) continue;
                 radialTags[i].tagInheritedRecalc(loader, to->radial, to->userSpace);
             }
         }
