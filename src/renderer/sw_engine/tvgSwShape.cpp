@@ -28,6 +28,19 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
+
+static bool _outlineJump(SwOutline& outline)
+{
+    //Make a contour if lineTo/curveTo without calling close/moveTo beforehand.
+    if (!outline.pts.empty()) {
+        outline.cntrs.push(outline.pts.count - 1);
+        outline.pts.push(outline.pts[outline.cntrs.last()]);
+        outline.types.push(SW_CURVE_TYPE_POINT);
+    }
+    return false;
+}
+
+
 static void _outlineEnd(SwOutline& outline)
 {
     if (outline.pts.empty()) return;
@@ -68,20 +81,22 @@ static void _outlineCubicTo(SwOutline& outline, const Point* ctrl1, const Point*
 }
 
 
-static void _outlineClose(SwOutline& outline)
+static bool _outlineClose(SwOutline& outline)
 {
-    uint32_t i = 0;
+    uint32_t i;
 
     if (outline.cntrs.count > 0) i = outline.cntrs.last() + 1;
-    else i = 0;   //First Path
+    else i = 0;
 
     //Make sure there is at least one point in the current path
-    if (outline.pts.count == i) return;
+    if (outline.pts.count == i) return false;
 
     //Close the path
     outline.pts.push(outline.pts[i]);
     outline.types.push(SW_CURVE_TYPE_POINT);
     outline.closed.push(true);
+
+    return true;
 }
 
 
@@ -398,25 +413,28 @@ static bool _genOutline(SwShape* shape, const RenderShape* rshape, const Matrix*
 
     shape->outline = mpoolReqOutline(mpool, tid);
     auto outline = shape->outline;
-
+    bool closed = false;
     //Generate Outlines
     while (cmdCnt-- > 0) {
         switch (*cmds) {
             case PathCommand::Close: {
-                _outlineClose(*outline);
+                if (!closed) closed = _outlineClose(*outline);
                 break;
             }
             case PathCommand::MoveTo: {
+                if (closed) closed = false;
                 _outlineMoveTo(*outline, pts, transform);
                 ++pts;
                 break;
             }
             case PathCommand::LineTo: {
+                if (closed) closed = _outlineJump(*outline);
                 _outlineLineTo(*outline, pts, transform);
                 ++pts;
                 break;
             }
             case PathCommand::CubicTo: {
+                if (closed) closed = _outlineJump(*outline);
                 _outlineCubicTo(*outline, pts, pts + 1, pts + 2, transform);
                 pts += 3;
                 break;
