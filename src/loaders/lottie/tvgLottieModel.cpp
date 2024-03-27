@@ -142,9 +142,8 @@ void LottieGroup::prepare(LottieObject::Type type)
     size_t fillCnt = 0;
 
     for (auto c = children.end() - 1; c >= children.begin(); --c) {
-        if (reqFragment && !statical) break;
+        if (reqFragment) break;
         auto child = static_cast<LottieObject*>(*c);
-        if (statical) statical &= child->statical;
         /* Figure out if the rendering context should be fragmented.
            Multiple stroking or grouping with a stroking would occur this.
            This fragment resolves the overlapped stroke outlines. */
@@ -180,11 +179,8 @@ LottieLayer::~LottieLayer()
 
 void LottieLayer::prepare()
 {
-    if (transform) statical &= transform->statical;
-    if (timeRemap.frames) statical = false;
-
     /* if layer is hidden, only useful data is its transform matrix.
-        so force it to be a Null Layer and release all resource. */
+       so force it to be a Null Layer and release all resource. */
     if (hidden) {
         type = LottieLayer::Null;
         children.reset();

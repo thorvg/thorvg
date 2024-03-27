@@ -1106,7 +1106,6 @@ static void _buildReference(LottieComposition* comp, LottieLayer* layer)
         } else if (layer->type == LottieLayer::Image) {
             layer->children.push(*asset);
         }
-        layer->statical &= (*asset)->statical;
         break;
     }
 }
@@ -1173,15 +1172,11 @@ static bool _buildComposition(LottieComposition* comp, LottieGroup* parent)
             _bulidHierarchy(parent, child->matte.target);
             //precomp referencing
             if (child->matte.target->refId) _buildReference(comp, child->matte.target);
-            child->statical &= child->matte.target->statical;
         }
         _bulidHierarchy(parent, child);
 
         //attach the necessary font data
         if (child->type == LottieLayer::Text) _attachFont(comp, child);
-
-        child->statical &= parent->statical;
-        parent->statical &= child->statical;
     }
     return true;
 }
