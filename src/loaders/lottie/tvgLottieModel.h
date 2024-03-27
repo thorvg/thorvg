@@ -381,6 +381,9 @@ struct LottieGradient : LottieObject
 {
     uint32_t populate(ColorStop& color)
     {
+        colorStops.populated = true;
+        if (!color.input) return 0;
+
         uint32_t alphaCnt = (color.input->count - (colorStops.count * 4)) / 2;
         Array<Fill::ColorStop> output(colorStops.count + alphaCnt);
         uint32_t cidx = 0;               //color count
@@ -455,7 +458,6 @@ struct LottieGradient : LottieObject
         color.input->reset();
         delete(color.input);
 
-        colorStops.populated = true;
         return output.count;
     }
 
