@@ -22,6 +22,7 @@
 
 #include <thorvg.h>
 #include <emscripten/bind.h>
+#include "tvgPicture.h"
 
 using namespace emscripten;
 using namespace std;
@@ -213,12 +214,49 @@ public:
             return false;
         }
 
+        //acquire the animation data
+        uint32_t size;
+        auto data = P(this->animation->picture())->data(size);
+        if (!data) {
+            errorMsg = "No data?";
+            return false;
+        }
+
+        //animation to save
+        auto animation = Animation::gen();
+        if (!animation) {
+            errorMsg = "Invalid animation";
+            return false;
+        }
+
+        if (animation->picture()->load(data, size, "lottie", "", true) != Result::Success) {
+            errorMsg = "load() fail";
+            return false;
+        }
+
+        //gif resolution (600x600)
+        float width, height;
+        animation->picture()->size(&width, &height);
+        auto scale = 600 / width;
+        auto shiftY = (600 - height * scale) * 0.5f;
+
+        //transform
+        animation->picture()->scale(scale);
+        animation->picture()->translate(0, shiftY);
+
         //set a white opaque background
         auto bg = tvg::Shape::gen();
+        if (!bg) {
+            errorMsg = "Invalid bg";
+            return false;
+        }
         bg->fill(255, 255, 255, 255);
-        bg->appendRect(0, 0, width, height);
+        bg->appendRect(0, 0, 600, 600);
 
-        saver->background(std::move(bg));
+        if (saver->background(std::move(bg)) != Result::Success) {
+            errorMsg = "background() fail";
+            return false;
+        }
 
         if (saver->save(std::move(animation), "output.gif", 100, 30) != tvg::Result::Success) {
             errorMsg = "save(), fail";
@@ -236,25 +274,24 @@ public:
 
         if (!animation) return false;
 
-        auto duplicate = cast<Picture>(animation->picture()->duplicate());
-
-        if (!duplicate) {
-            errorMsg = "duplicate(), fail";
-            return false;
-        }
-
         auto saver = Saver::gen();
         if (!saver) {
             errorMsg = "Invalid saver";
             return false;
         }
 
-        if (saver->save(std::move(duplicate), "output.tvg") != tvg::Result::Success) {
+        //preserve the picture using the reference counting
+        PP(animation->picture())->ref();
+
+        if (saver->save(tvg::cast<Picture>(animation->picture()), "output.tvg") != tvg::Result::Success) {
+            PP(animation->picture())->unref();
             errorMsg = "save(), fail";
             return false;
         }
 
         saver->sync();
+
+        PP(animation->picture())->unref();
 
         return true;
     }

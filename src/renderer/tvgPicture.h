@@ -222,6 +222,12 @@ struct Picture::Impl
         return new PictureIterator(paint);
     }
 
+    const char* data(uint32_t& size)
+    {
+        if (!loader) return nullptr;
+        return loader->data(size);
+    }
+
     uint32_t* data(uint32_t* w, uint32_t* h)
     {
         //Try it, If not loaded yet.
