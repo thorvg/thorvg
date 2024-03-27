@@ -1124,7 +1124,6 @@ void LottieParser::parseMasks(LottieLayer* layer)
     enterArray();
     while (nextArrayValue()) {
         auto mask = parseMask();
-        if (mask->dynamic()) layer->statical = false;
         layer->masks.push(mask);
     }
 }
