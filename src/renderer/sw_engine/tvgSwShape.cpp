@@ -29,35 +29,24 @@
 /************************************************************************/
 
 
-static bool _outlineJump(SwOutline& outline)
+static bool _outlineEnd(SwOutline& outline)
 {
     //Make a contour if lineTo/curveTo without calling close/moveTo beforehand.
-    if (!outline.pts.empty()) {
-        outline.cntrs.push(outline.pts.count - 1);
-        outline.pts.push(outline.pts[outline.cntrs.last()]);
-        outline.types.push(SW_CURVE_TYPE_POINT);
-    }
+    if (outline.pts.empty()) return false;
+    outline.cntrs.push(outline.pts.count - 1);
+    outline.closed.push(false);
     return false;
 }
 
 
-static void _outlineEnd(SwOutline& outline)
+static bool _outlineMoveTo(SwOutline& outline, const Point* to, const Matrix* transform, bool closed = false)
 {
-    if (outline.pts.empty()) return;
-    outline.cntrs.push(outline.pts.count - 1);
-    outline.closed.push(false);
-}
-
-
-static void _outlineMoveTo(SwOutline& outline, const Point* to, const Matrix* transform)
-{
-    if (outline.pts.count > 0) {
-        outline.cntrs.push(outline.pts.count - 1);
-        outline.closed.push(false);
-    }
+    //make it a contour, if the last contour is not closed yet.
+    if (!closed) _outlineEnd(outline);
 
     outline.pts.push(mathTransform(to, transform));
     outline.types.push(SW_CURVE_TYPE_POINT);
+    return false;
 }
 
 
@@ -84,7 +73,6 @@ static void _outlineCubicTo(SwOutline& outline, const Point* ctrl1, const Point*
 static bool _outlineClose(SwOutline& outline)
 {
     uint32_t i;
-
     if (outline.cntrs.count > 0) i = outline.cntrs.last() + 1;
     else i = 0;
 
@@ -93,6 +81,7 @@ static bool _outlineClose(SwOutline& outline)
 
     //Close the path
     outline.pts.push(outline.pts[i]);
+    outline.cntrs.push(outline.pts.count - 1);
     outline.types.push(SW_CURVE_TYPE_POINT);
     outline.closed.push(true);
 
@@ -414,6 +403,7 @@ static bool _genOutline(SwShape* shape, const RenderShape* rshape, const Matrix*
     shape->outline = mpoolReqOutline(mpool, tid);
     auto outline = shape->outline;
     bool closed = false;
+
     //Generate Outlines
     while (cmdCnt-- > 0) {
         switch (*cmds) {
@@ -422,19 +412,18 @@ static bool _genOutline(SwShape* shape, const RenderShape* rshape, const Matrix*
                 break;
             }
             case PathCommand::MoveTo: {
-                if (closed) closed = false;
-                _outlineMoveTo(*outline, pts, transform);
+                closed = _outlineMoveTo(*outline, pts, transform, closed);
                 ++pts;
                 break;
             }
             case PathCommand::LineTo: {
-                if (closed) closed = _outlineJump(*outline);
+                if (closed) closed = _outlineEnd(*outline);
                 _outlineLineTo(*outline, pts, transform);
                 ++pts;
                 break;
             }
             case PathCommand::CubicTo: {
-                if (closed) closed = _outlineJump(*outline);
+                if (closed) closed = _outlineEnd(*outline);
                 _outlineCubicTo(*outline, pts, pts + 1, pts + 2, transform);
                 pts += 3;
                 break;
@@ -443,7 +432,7 @@ static bool _genOutline(SwShape* shape, const RenderShape* rshape, const Matrix*
         ++cmds;
     }
 
-    _outlineEnd(*outline);
+    if (!closed) _outlineEnd(*outline);
 
     outline->fillRule = rshape->rule;
     shape->outline = outline;
