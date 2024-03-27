@@ -88,12 +88,6 @@ struct LottieMask
     LottieOpacity opacity = 255;
     CompositeMethod method;
     bool inverse = false;
-
-    bool dynamic()
-    {
-        if (opacity.frames || pathset.frames) return true;
-        return false;
-    }
 };
 
 
@@ -132,7 +126,6 @@ struct LottieObject
 
     char* name = nullptr;
     Type type;
-    bool statical = true;      //no keyframes
     bool hidden = false;       //remove?
 };
 
@@ -207,7 +200,6 @@ struct LottieTrimpath : LottieObject
     void prepare()
     {
         LottieObject::type = LottieObject::Trimpath;
-        if (start.frames || end.frames || offset.frames) statical = false;
     }
 
     void segment(float frameNo, float& start, float& end);
@@ -231,7 +223,6 @@ struct LottieRoundedCorner : LottieObject
     void prepare()
     {
         LottieObject::type = LottieObject::RoundedCorner;
-        if (radius.frames) statical = false;
     }
     LottieFloat radius = 0.0f;
 };
@@ -242,7 +233,6 @@ struct LottiePath : LottieShape
     void prepare()
     {
         LottieObject::type = LottieObject::Path;
-        if (pathset.frames) statical = false;
     }
 
     LottiePathSet pathset;
@@ -254,7 +244,6 @@ struct LottieRect : LottieShape
     void prepare()
     {
         LottieObject::type = LottieObject::Rect;
-        if (position.frames || size.frames || radius.frames) statical = false;
     }
 
     LottiePosition position = Point{0.0f, 0.0f};
@@ -270,7 +259,6 @@ struct LottiePolyStar : LottieShape
     void prepare()
     {
         LottieObject::type = LottieObject::Polystar;
-        if (position.frames || innerRadius.frames || outerRadius.frames || innerRoundness.frames || outerRoundness.frames || rotation.frames || ptsCnt.frames) statical = false;
     }
 
     LottiePosition position = Point{0.0f, 0.0f};
@@ -289,7 +277,6 @@ struct LottieEllipse : LottieShape
     void prepare()
     {
         LottieObject::type = LottieObject::Ellipse;
-        if (position.frames || size.frames) statical = false;
     }
 
     LottiePosition position = Point{0.0f, 0.0f};
@@ -320,9 +307,6 @@ struct LottieTransform : LottieObject
     void prepare()
     {
         LottieObject::type = LottieObject::Transform;
-        if (position.frames || rotation.frames || scale.frames || anchor.frames || opacity.frames || (coords && (coords->x.frames || coords->y.frames)) || (rotationEx && (rotationEx->x.frames || rotationEx->y.frames))) {
-            statical = false;
-        }
     }
 
     LottiePosition position = Point{0.0f, 0.0f};
@@ -348,7 +332,6 @@ struct LottieSolidStroke : LottieSolid, LottieStroke
     void prepare()
     {
         LottieObject::type = LottieObject::SolidStroke;
-        if (color.frames || opacity.frames || LottieStroke::dynamic()) statical = false;
     }
 
     void override(LottieProperty* prop) override
@@ -364,7 +347,6 @@ struct LottieSolidFill : LottieSolid
     void prepare()
     {
         LottieObject::type = LottieObject::SolidFill;
-        if (color.frames || opacity.frames) statical = false;
     }
 
     void override(LottieProperty* prop) override
@@ -493,7 +475,7 @@ struct LottieGradientFill : LottieGradient
     void prepare()
     {
         LottieObject::type = LottieObject::GradientFill;
-        if (LottieGradient::prepare()) statical = false;
+        LottieGradient::prepare();
     }
 
     void override(LottieProperty* prop) override
@@ -511,7 +493,7 @@ struct LottieGradientStroke : LottieGradient, LottieStroke
     void prepare()
     {
         LottieObject::type = LottieObject::GradientStroke;
-        if (LottieGradient::prepare() || LottieStroke::dynamic()) statical = false;
+        LottieGradient::prepare();
     }
 
     void override(LottieProperty* prop) override
@@ -547,7 +529,6 @@ struct LottieRepeater : LottieObject
     void prepare()
     {
         LottieObject::type = LottieObject::Repeater;
-        if (copies.frames || offset.frames || position.frames || rotation.frames || scale.frames || anchor.frames || startOpacity.frames || endOpacity.frames) statical = false;
     }
 
     LottieFloat copies = 0.0f;
