@@ -49,47 +49,26 @@ void WgMeshData::drawImage(WGPURenderPassEncoder renderPassEncoder)
 
 void WgMeshData::update(WgContext& context, WgGeometryData* geometryData){
     assert(geometryData);
+    vertexCount = geometryData->positions.count;
+    indexCount = geometryData->indexes.count;
     // buffer position data create and write
-    if(geometryData->positions.count > 0) {
-        vertexCount = geometryData->positions.count;
-        if (bufferPosition && (wgpuBufferGetSize(bufferPosition) < sizeof(float) * vertexCount * 2))
-            context.releaseBuffer(bufferPosition);
-        if (!bufferPosition) {
-            bufferPosition = context.createBuffer(
-                WGPUBufferUsage_CopyDst | WGPUBufferUsage_Vertex, 
-                sizeof(float) * vertexCount * 2,
-                "Buffer position geometry data");
-        }
-        assert(bufferPosition);
-        wgpuQueueWriteBuffer(context.queue, bufferPosition, 0, &geometryData->positions[0], vertexCount * sizeof(float) * 2);
-    }
-    // buffer vertex data create and write
-    if(geometryData->texCoords.count > 0) {
-        if (bufferTexCoord && (wgpuBufferGetSize(bufferTexCoord) < sizeof(float) * vertexCount * 2))
-            context.releaseBuffer(bufferTexCoord);
-        if (!bufferTexCoord) {
-            bufferTexCoord = context.createBuffer(
-                WGPUBufferUsage_CopyDst | WGPUBufferUsage_Vertex, 
-                sizeof(float) * vertexCount * 2, 
-                "Buffer tex coords geometry data");
-        }
-        assert(bufferTexCoord);
-        wgpuQueueWriteBuffer(context.queue, bufferTexCoord, 0, &geometryData->texCoords[0], vertexCount * sizeof(float) * 2);
-    }
+    if (geometryData->positions.count > 0)
+        context.createOrUpdateBuffer(
+            bufferPosition, WGPUBufferUsage_CopyDst | WGPUBufferUsage_Vertex,
+            &geometryData->positions[0], vertexCount * sizeof(float) * 2,
+            "Buffer position geometry data");
+    // buffer tex coords data create and write
+    if (geometryData->texCoords.count > 0)
+        context.createOrUpdateBuffer(
+            bufferTexCoord, WGPUBufferUsage_CopyDst | WGPUBufferUsage_Vertex,
+            &geometryData->texCoords[0], vertexCount * sizeof(float) * 2,
+            "Buffer tex coords geometry data");
     // buffer index data create and write
-    if(geometryData->indexes.count > 0) {
-        indexCount = geometryData->indexes.count;
-        if (bufferIndex && (wgpuBufferGetSize(bufferIndex) < sizeof(uint32_t) * indexCount))
-            context.releaseBuffer(bufferIndex);
-        if (!bufferIndex) {
-            bufferIndex = context.createBuffer(
-                WGPUBufferUsage_CopyDst | WGPUBufferUsage_Index, 
-                sizeof(uint32_t) * indexCount, 
-                "Buffer index geometry data");
-        }
-        assert(bufferIndex);
-        wgpuQueueWriteBuffer(context.queue, bufferIndex, 0, &geometryData->indexes[0], indexCount * sizeof(uint32_t));
-    }
+    if (geometryData->indexes.count > 0)
+        context.createOrUpdateBuffer(
+            bufferIndex, WGPUBufferUsage_CopyDst | WGPUBufferUsage_Index,
+            &geometryData->indexes[0], indexCount * sizeof(uint32_t),
+            "Buffer index geometry data");
 };
 
 
@@ -217,13 +196,7 @@ void WgRenderDataShape::updateMeshes(WgContext &context, const RenderShape &rsha
     strokeFirst = false;
     // update shapes geometry
     WgGeometryDataGroup shapes;
-    if(rshape.rule == tvg::FillRule::EvenOdd) {
-        shapes.tesselate(rshape);
-    } else if(rshape.rule == tvg::FillRule::Winding) {
-        WgGeometryDataGroup lines;
-        lines.tesselate(rshape);
-        shapes.contours(lines);
-    }
+    shapes.tesselate(rshape);
     meshGroupShapes.update(context, &shapes);
     // update shapes bbox
     WgPoint pmin{}, pmax{};

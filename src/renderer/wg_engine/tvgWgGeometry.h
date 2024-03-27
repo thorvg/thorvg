@@ -117,10 +117,10 @@ struct WgGeometryDataGroup
     void getBBox(WgPoint& pmin, WgPoint& pmax);
     void tesselate(const RenderShape& rshape);
     void stroke(const RenderShape& rshape);
-    void contours(WgGeometryDataGroup& outlines);
     void release();
 private:
     static void decodePath(const RenderShape& rshape, WgGeometryDataGroup* polyline);
+    static void contourPolyline(WgGeometryDataGroup* polyline, WgGeometryDataGroup* contours);
     static void trimPolyline(WgGeometryDataGroup* polyline, WgGeometryDataGroup* trimmed, RenderStroke *stroke);
     static void splitPolyline(WgGeometryDataGroup* polyline, WgGeometryDataGroup* splitted, RenderStroke *stroke);
     static void strokePolyline(WgGeometryDataGroup* polyline, WgGeometryData* strokes, RenderStroke *stroke);
