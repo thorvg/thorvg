@@ -54,7 +54,8 @@ struct WgContext {
     WGPUTexture createTexture2d(WGPUTextureUsageFlags usage, WGPUTextureFormat format, uint32_t width, uint32_t height, char const * label);
     WGPUTexture createTexture2dMS(WGPUTextureUsageFlags usage, WGPUTextureFormat format, uint32_t width, uint32_t height, uint32_t sc, char const * label);
     WGPUTextureView createTextureView2d(WGPUTexture texture, char const * label);
-    WGPUBuffer createBuffer(WGPUBufferUsageFlags usage, uint64_t size,char const * label);
+    WGPUBuffer createBuffer(WGPUBufferUsageFlags usage, uint64_t size, char const * label);
+    void createOrUpdateBuffer(WGPUBuffer& buffer, WGPUBufferUsageFlags usage, const void *data, uint64_t size, char const * label);
 
     void releaseSampler(WGPUSampler& sampler);
     void releaseTexture(WGPUTexture& texture);

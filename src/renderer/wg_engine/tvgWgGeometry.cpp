@@ -60,19 +60,10 @@ void WgGeometryData::computeContour(WgGeometryData* data)
             isIntersected = true;
             p0 = pi;
             // operate intersection point
-            if (isClockWise) { // clock wise behavior
-                if (isCW(p0, pi, data->positions[ii])) {
-                    inext = ii;
-                } else {
-                    inext = ((ii + 1) % icnt);
-                }
-            } else { // contr-clock wise behavior
-                if (isCW(p0, pi, data->positions[ii])) {
-                    inext = ((ii + 1) % icnt);
-                } else {
-                    inext = ii;
-                }
-            }
+            if (isClockWise) // clock wise behavior
+                inext = isCW(p0, pi, data->positions[ii]) ? ii : ((ii + 1) % icnt);
+            else // contr-clock wise behavior
+                inext = isCW(p0, pi, data->positions[ii]) ? ((ii + 1) % icnt) : ii;
         } else { // simple next point
             isIntersected = false;
             p0 = data->positions[inext];
@@ -352,7 +343,16 @@ void WgGeometryDataGroup::getBBox(WgPoint& pmin, WgPoint& pmax) {
 
 void WgGeometryDataGroup::tesselate(const RenderShape& rshape)
 {
-    decodePath(rshape, this);
+    // windiwg fill rule
+    if (rshape.rule == FillRule::Winding) {
+        WgGeometryDataGroup polylines{};
+        decodePath(rshape, &polylines);
+        contourPolyline(&polylines, this);
+    } else // even-odd fill rule
+    if (rshape.rule == FillRule::EvenOdd) {
+        decodePath(rshape, this);
+    }
+    // update triangle fans indexes
     for (uint32_t i = 0; i < geometries.count; i++)
         geometries[i]->computeTriFansIndexes();
 }
@@ -389,16 +389,6 @@ void WgGeometryDataGroup::stroke(const RenderShape& rshape)
     geometries.push(strokeData);
 }
 
-
-void WgGeometryDataGroup::contours(WgGeometryDataGroup& outlines) 
-{
-    for (uint32_t i = 0 ; i < outlines.geometries.count; i++) {
-        WgGeometryData* geometry = new WgGeometryData();
-        geometry->computeContour(outlines.geometries[i]);
-        geometry->computeTriFansIndexes();
-        this->geometries.push(geometry);
-    }
-}
 
 void WgGeometryDataGroup::release()
 {
@@ -437,6 +427,18 @@ void WgGeometryDataGroup::decodePath(const RenderShape& rshape, WgGeometryDataGr
                 );
             pntIndex += 3;
         }
+    }
+}
+
+
+void WgGeometryDataGroup::contourPolyline(WgGeometryDataGroup* polyline, WgGeometryDataGroup* contours)
+{
+    assert(polyline);
+    assert(contours);
+    for (uint32_t i = 0 ; i < polyline->geometries.count; i++) {
+        WgGeometryData* geometry = new WgGeometryData();
+        geometry->computeContour(polyline->geometries[i]);
+        contours->geometries.push(geometry);
     }
 }
 

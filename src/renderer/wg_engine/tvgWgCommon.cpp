@@ -204,6 +204,30 @@ WGPUBuffer WgContext::createBuffer(WGPUBufferUsageFlags usage, uint64_t size,cha
 }
 
 
+void WgContext::createOrUpdateBuffer(WGPUBuffer& buffer, WGPUBufferUsageFlags usage, const void *data, uint64_t size, char const * label)
+{
+    if ((buffer) && (wgpuBufferGetSize(buffer) >= size)) {
+        // update data in existing buffer
+        wgpuQueueWriteBuffer(queue, buffer, 0, data, size);
+    } else {
+        // create new buffer and upload data
+        releaseBuffer(buffer);
+        WGPUBufferDescriptor bufferDesc{};
+        bufferDesc.nextInChain = nullptr;
+        bufferDesc.label = label;
+        bufferDesc.usage = usage;
+        bufferDesc.size = size;
+        bufferDesc.mappedAtCreation = true;
+        buffer = wgpuDeviceCreateBuffer(device, &bufferDesc);
+        assert(buffer);
+        void* buff = wgpuBufferGetMappedRange(buffer, 0, size);
+        assert(buff);
+        memcpy(buff, data, size);
+        wgpuBufferUnmap(buffer);
+    }
+}
+
+
 void WgContext::releaseSampler(WGPUSampler& sampler)
 {
     if (sampler) {
