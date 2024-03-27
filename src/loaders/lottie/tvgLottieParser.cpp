@@ -42,7 +42,10 @@ static char* _int2str(int num)
 
 CompositeMethod LottieParser::getMaskMethod(bool inversed)
 {
-    switch (getString()[0]) {
+    auto mode = getString();
+    if (!mode) return CompositeMethod::None;
+
+    switch (mode[0]) {
         case 'a': {
             if (inversed) return CompositeMethod::InvAlphaMask;
             else return CompositeMethod::AddMask;
