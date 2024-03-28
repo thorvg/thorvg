@@ -59,10 +59,11 @@ struct RenderContext
     Shape* merging = nullptr;  //merging shapes if possible (if shapes have same properties)
     LottieObject** begin = nullptr; //iteration entry point
     RenderRepeater* repeater = nullptr;
+    Matrix* transform = nullptr;
     float roundness = 0.0f;
     bool fragmenting = false;  //render context has been fragmented by filling
     bool reqFragment = false;  //requirment to fragment the render context
-    bool allowMerging = true;  //individual trimpath doesn't allow merging shapes
+    bool ownPropagator = true; //this rendering context shares the propergator
 
     RenderContext()
     {
@@ -71,13 +72,21 @@ struct RenderContext
 
     ~RenderContext()
     {
-        delete(propagator);
+        if (ownPropagator) delete(propagator);
         delete(repeater);
+        free(transform);
     }
 
-    RenderContext(const RenderContext& rhs)
+    RenderContext(const RenderContext& rhs, bool mergeable = false)
     {
-        propagator = static_cast<Shape*>(rhs.propagator->duplicate());
+        if (mergeable) {
+            this->ownPropagator = false;
+            propagator = rhs.propagator;
+            merging = rhs.merging;
+        } else {
+            propagator = static_cast<Shape*>(rhs.propagator->duplicate());
+        }
+
         if (rhs.repeater) {
             repeater = new RenderRepeater();
             *repeater = *rhs.repeater;
@@ -90,6 +99,7 @@ struct RenderContext
 static void _updateChildren(LottieGroup* parent, float frameNo, Inlist<RenderContext>& contexts);
 static void _updateLayer(LottieLayer* root, LottieLayer* layer, float frameNo);
 static bool _buildComposition(LottieComposition* comp, LottieGroup* parent);
+static Shape* _draw(LottieGroup* parent, RenderContext* ctx);
 
 static void _rotateX(Matrix* m, float degree)
 {
@@ -181,15 +191,22 @@ static void _updateTransform(LottieLayer* layer, float frameNo)
 }
 
 
-static void _updateTransform(TVG_UNUSED LottieGroup* parent, LottieObject** child, float frameNo, TVG_UNUSED Inlist<RenderContext>& contexts, RenderContext* ctx)
+static void _updateTransform(LottieGroup* parent, LottieObject** child, float frameNo, TVG_UNUSED Inlist<RenderContext>& contexts, RenderContext* ctx)
 {
     auto transform = static_cast<LottieTransform*>(*child);
     if (!transform) return;
 
+    uint8_t opacity;
+
+    if (parent->mergeable) {
+        if (!ctx->transform) ctx->transform = (Matrix*)malloc(sizeof(Matrix));
+        _updateTransform(transform, frameNo, false, *ctx->transform, opacity);
+        return;
+    }
+
     ctx->merging = nullptr;
 
     Matrix matrix;
-    uint8_t opacity;
     if (!_updateTransform(transform, frameNo, false, matrix, opacity)) return;
 
     auto pmatrix = PP(ctx->propagator)->transform();
@@ -214,8 +231,11 @@ static void _updateGroup(LottieGroup* parent, LottieObject** child, float frameN
     group->scene = parent->scene;
     group->reqFragment |= ctx->reqFragment;
 
+    //generate a merging shape to consolidate partial shapes into a single entity
+    if (group->mergeable) _draw(parent, ctx);
+
     Inlist<RenderContext> contexts;
-    contexts.back(new RenderContext(*ctx));
+    contexts.back(new RenderContext(*ctx, group->mergeable));
 
     _updateChildren(group, frameNo, contexts);
 
@@ -315,7 +335,7 @@ static Shape* _updateGradientFill(TVG_UNUSED LottieGroup* parent, LottieObject**
 
 static Shape* _draw(LottieGroup* parent, RenderContext* ctx)
 {
-    if (ctx->allowMerging && ctx->merging) return ctx->merging;
+    if (ctx->merging) return ctx->merging;
 
     auto shape = cast<Shape>(ctx->propagator->duplicate());
     ctx->merging = shape.get();
@@ -372,7 +392,7 @@ static void _repeat(LottieGroup* parent, unique_ptr<Shape> path, RenderContext* 
 }
 
 
-static void _appendRect(Shape* shape, float x, float y, float w, float h, float r)
+static void _appendRect(Shape* shape, float x, float y, float w, float h, float r, Matrix* transform)
 {
     //sharp rect
     if (mathZero(r)) {
@@ -380,7 +400,11 @@ static void _appendRect(Shape* shape, float x, float y, float w, float h, float 
             PathCommand::MoveTo, PathCommand::LineTo, PathCommand::LineTo,
             PathCommand::LineTo, PathCommand::Close
         };
+
         Point points[] = {{x + w, y}, {x + w, y + h}, {x, y + h}, {x, y}};
+        if (transform) {
+            for (int i = 0; i < 4; i++) mathTransform(transform, &points[i]);
+        }
         shape->appendPath(commands, 5, points, 4);
     //round rect
     } else {
@@ -398,7 +422,8 @@ static void _appendRect(Shape* shape, float x, float y, float w, float h, float 
         auto hrx = rx * PATH_KAPPA;
         auto hry = ry * PATH_KAPPA;
 
-        Point points[] = {
+        constexpr int ptsCnt = 17;
+        Point points[ptsCnt] = {
             {x + w, y + ry}, //moveTo
             {x + w, y + h - ry}, //lineTo
             {x + w, y + h - ry + hry}, {x + w - rx + hrx, y + h}, {x + w - rx, y + h}, //cubicTo
@@ -409,8 +434,11 @@ static void _appendRect(Shape* shape, float x, float y, float w, float h, float 
             {x + w - rx, y}, //lineTo
             {x + w - rx + hrx, y}, {x + w, y + ry - hry}, {x + w, y + ry} //cubicTo
         };
-
-        shape->appendPath(commands, 10, points, 17);
+    
+        if (transform) {
+            for (int i = 0; i < ptsCnt; i++) mathTransform(transform, &points[i]);
+        }
+        shape->appendPath(commands, 10, points, ptsCnt);
     }
 }
 
@@ -430,38 +458,43 @@ static void _updateRect(LottieGroup* parent, LottieObject** child, float frameNo
 
     if (ctx->repeater) {
         auto path = Shape::gen();
-        _appendRect(path.get(), position.x - size.x * 0.5f, position.y - size.y * 0.5f, size.x, size.y, roundness);
+        _appendRect(path.get(), position.x - size.x * 0.5f, position.y - size.y * 0.5f, size.x, size.y, roundness, ctx->transform);
         _repeat(parent, std::move(path), ctx);
     } else {
         auto merging = _draw(parent, ctx);
-        _appendRect(merging, position.x - size.x * 0.5f, position.y - size.y * 0.5f, size.x, size.y, roundness);
+        _appendRect(merging, position.x - size.x * 0.5f, position.y - size.y * 0.5f, size.x, size.y, roundness, ctx->transform);
         if (rect->direction == 2) merging->fill(FillRule::EvenOdd);
     }
 }
 
 
-static void _appendCircle(Shape* shape, float cx, float cy, float rx, float ry)
+static void _appendCircle(Shape* shape, float cx, float cy, float rx, float ry, Matrix* transform)
 {
     auto rxKappa = rx * PATH_KAPPA;
     auto ryKappa = ry * PATH_KAPPA;
 
-    constexpr int commandsSize = 6;
-    PathCommand commands[commandsSize] = {
+    constexpr int cmdsCnt = 6;
+    PathCommand commands[cmdsCnt] = {
         PathCommand::MoveTo, PathCommand::CubicTo, PathCommand::CubicTo,
         PathCommand::CubicTo, PathCommand::CubicTo, PathCommand::Close
     };
 
-    constexpr int pointsSize = 13;
-    Point points[pointsSize] = {
+    constexpr int ptsCnt = 13;
+    Point points[ptsCnt] = {
         {cx, cy - ry}, //moveTo
         {cx + rxKappa, cy - ry}, {cx + rx, cy - ryKappa}, {cx + rx, cy}, //cubicTo
         {cx + rx, cy + ryKappa}, {cx + rxKappa, cy + ry}, {cx, cy + ry}, //cubicTo
         {cx - rxKappa, cy + ry}, {cx - rx, cy + ryKappa}, {cx - rx, cy}, //cubicTo
         {cx - rx, cy - ryKappa}, {cx - rxKappa, cy - ry}, {cx, cy - ry}  //cubicTo
     };
+
+    if (transform) {
+        for (int i = 0; i < ptsCnt; ++i) mathTransform(transform, &points[i]);
+    }
     
-    shape->appendPath(commands, commandsSize, points, pointsSize);
+    shape->appendPath(commands, cmdsCnt, points, ptsCnt);
 }
+
 
 static void _updateEllipse(LottieGroup* parent, LottieObject** child, float frameNo, TVG_UNUSED Inlist<RenderContext>& contexts, RenderContext* ctx)
 {
@@ -472,11 +505,11 @@ static void _updateEllipse(LottieGroup* parent, LottieObject** child, float fram
 
     if (ctx->repeater) {
         auto path = Shape::gen();
-        _appendCircle(path.get(), position.x, position.y, size.x * 0.5f, size.y * 0.5f);
+        _appendCircle(path.get(), position.x, position.y, size.x * 0.5f, size.y * 0.5f, ctx->transform);
         _repeat(parent, std::move(path), ctx);
     } else {
         auto merging = _draw(parent, ctx);
-        _appendCircle(merging, position.x, position.y, size.x * 0.5f, size.y * 0.5f);
+        _appendCircle(merging, position.x, position.y, size.x * 0.5f, size.y * 0.5f, ctx->transform);
         if (ellipse->direction == 2) merging->fill(FillRule::EvenOdd);
     }
 }
@@ -488,11 +521,11 @@ static void _updatePath(LottieGroup* parent, LottieObject** child, float frameNo
 
     if (ctx->repeater) {
         auto p = Shape::gen();
-        path->pathset(frameNo, P(p)->rs.path.cmds, P(p)->rs.path.pts);
+        path->pathset(frameNo, P(p)->rs.path.cmds, P(p)->rs.path.pts, ctx->transform);
         _repeat(parent, std::move(p), ctx);
     } else {
         auto merging = _draw(parent, ctx);
-        if (path->pathset(frameNo, P(merging)->rs.path.cmds, P(merging)->rs.path.pts)) {
+        if (path->pathset(frameNo, P(merging)->rs.path.cmds, P(merging)->rs.path.pts, ctx->transform)) {
             P(merging)->update(RenderUpdateFlag::Path);
         }
         if (ctx->roundness > 1.0f && P(merging)->rs.stroke) {
@@ -766,6 +799,8 @@ static void _updatePolystar(LottieGroup* parent, LottieObject** child, float fra
     mathTranslate(&matrix, position.x, position.y);
     mathRotate(&matrix, star->rotation(frameNo));
 
+    if (ctx->transform) mathMultiply(ctx->transform, &matrix);
+
     auto identity = mathIdentity((const Matrix*)&matrix);
 
     if (ctx->repeater) {
@@ -868,7 +903,7 @@ static void _updateTrimpath(TVG_UNUSED LottieGroup* parent, LottieObject** child
 
     P(ctx->propagator)->strokeTrim(begin, end);
 
-    if (trimpath->type == LottieTrimpath::Individual) ctx->allowMerging = false;
+    //TODO: individual or simultaenous mode
 }
 
 
