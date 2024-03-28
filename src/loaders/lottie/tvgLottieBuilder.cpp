@@ -885,10 +885,6 @@ static void _updateChildren(LottieGroup* parent, float frameNo, Inlist<RenderCon
                     _updateGroup(parent, child, frameNo, contexts, ctx);
                     break;
                 }
-                case LottieObject::Transform: {
-                    _updateTransform(parent, child, frameNo, contexts, ctx);
-                    break;
-                }
                 case LottieObject::SolidFill: {
                     _updateSolidFill(parent, child, frameNo, contexts, ctx);
                     break;
@@ -903,22 +899,6 @@ static void _updateChildren(LottieGroup* parent, float frameNo, Inlist<RenderCon
                 }
                 case LottieObject::GradientStroke: {
                     _updateGradientStroke(parent, child, frameNo, contexts, ctx);
-                    break;
-                }
-                case LottieObject::Rect: {
-                    _updateRect(parent, child, frameNo, contexts, ctx);
-                    break;
-                }
-                case LottieObject::Ellipse: {
-                    _updateEllipse(parent, child, frameNo, contexts, ctx);
-                    break;
-                }
-                case LottieObject::Path: {
-                    _updatePath(parent, child, frameNo, contexts, ctx);
-                    break;
-                }
-                case LottieObject::Polystar: {
-                    _updatePolystar(parent, child, frameNo, contexts, ctx);
                     break;
                 }
                 case LottieObject::Image: {
@@ -939,6 +919,26 @@ static void _updateChildren(LottieGroup* parent, float frameNo, Inlist<RenderCon
                 }
                 case LottieObject::RoundedCorner: {
                     _updateRoundedCorner(parent, child, frameNo, contexts, ctx);
+                    break;
+                }
+                case LottieObject::Transform: {
+                    _updateTransform(parent, child, frameNo, contexts, ctx);
+                    break;
+                }
+                case LottieObject::Rect: {
+                    _updateRect(parent, child, frameNo, contexts, ctx);
+                    break;
+                }
+                case LottieObject::Ellipse: {
+                    _updateEllipse(parent, child, frameNo, contexts, ctx);
+                    break;
+                }
+                case LottieObject::Path: {
+                    _updatePath(parent, child, frameNo, contexts, ctx);
+                    break;
+                }
+                case LottieObject::Polystar: {
+                    _updatePolystar(parent, child, frameNo, contexts, ctx);
                     break;
                 }
                 default: break;

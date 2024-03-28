@@ -98,20 +98,20 @@ struct LottieObject
         Composition = 0,
         Layer,
         Group,
-        Transform,
         SolidFill,
         SolidStroke,
         GradientFill,
         GradientStroke,
-        Rect,
-        Ellipse,
-        Path,
-        Polystar,
         Image,
         Trimpath,
         Text,
         Repeater,
-        RoundedCorner
+        RoundedCorner,
+        Transform,
+        Rect,
+        Ellipse,
+        Path,
+        Polystar
     };
 
     virtual ~LottieObject()
@@ -122,6 +122,12 @@ struct LottieObject
     virtual void override(LottieProperty* prop)
     {
         TVGERR("LOTTIE", "Unsupported slot type");
+    }
+
+    bool shape()
+    {
+        if ((int) type < (int) LottieObject::Transform) return false;
+        return true;
     }
 
     char* name = nullptr;
@@ -559,6 +565,7 @@ struct LottieGroup : LottieObject
 
     bool reqFragment = false;   //requirment to fragment the render context
     bool buildDone = false;     //completed in building the composition.
+    bool mergeable = true;      //if this group is consisted of simple (transformed) shapes.
 };
 
 
