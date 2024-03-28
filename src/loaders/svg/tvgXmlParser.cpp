@@ -561,7 +561,11 @@ const char* simpleXmlParseCSSAttribute(const char* buf, unsigned bufLength, char
     else *tag = strDuplicate(itr, p - itr);
 
     if (p == itrEnd) *name = nullptr;
-    else *name = strDuplicate(p + 1, itrEnd - p - 1);
+    else {
+        auto nameStart = (const char*)memchr(p + 1, '.', itrEnd - p - 1);
+        if (!nameStart) *name = strDuplicate(p + 1, itrEnd - p - 1);
+        else *name = strDuplicate(nameStart + 1, itrEnd - nameStart - 1);
+    }
 
     return (nextElement ? nextElement + 1 : nullptr);
 }
