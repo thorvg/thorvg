@@ -21,21 +21,26 @@
  */
 
 #include "Common.h"
+#include <thorvg_lottie.h>
 
 /************************************************************************/
 /* Drawing Commands                                                     */
 /************************************************************************/
 
-static unique_ptr<tvg::Animation> animation;
+static unique_ptr<tvg::LottieAnimation> animation;
 static Elm_Transit *transit;
 static bool updated = false;
+static float selectedDuration;
+static int selectedBegin;
+static int frameRate;
 
 void tvgUpdateCmds(tvg::Canvas* canvas, tvg::Animation* animation, float progress)
 {
     if (updated || !canvas) return;
-
-    //Update animation frame only when it's changed
-    if (animation->frame(animation->totalFrame() * progress) == tvg::Result::Success) {
+    
+    //Update animation frame only when it's changed    
+    float frameNumber = selectedBegin + selectedDuration * frameRate * progress;
+    if (animation->frame(frameNumber) == tvg::Result::Success) {
         canvas->update();
         updated = true;
     }
@@ -44,7 +49,7 @@ void tvgUpdateCmds(tvg::Canvas* canvas, tvg::Animation* animation, float progres
 void tvgDrawCmds(tvg::Canvas* canvas)
 {
     //Animation Controller
-    animation = tvg::Animation::gen();
+    animation = tvg::LottieAnimation::gen();
     auto picture = animation->picture();
 
     //Background
@@ -58,6 +63,11 @@ void tvgDrawCmds(tvg::Canvas* canvas)
         cout << "Lottie is not supported. Did you enable Lottie Loader?" << endl;
         return;
     }
+    
+    frameRate = animation->totalFrame() / animation->duration();
+    animation->segment("sectionC");
+    selectedDuration = animation->duration();
+    selectedBegin = animation->startFrame();
 
     //image scaling preserving its aspect ratio
     float scale;

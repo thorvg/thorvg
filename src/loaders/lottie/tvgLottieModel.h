@@ -173,6 +173,16 @@ struct LottieFont
     Origin origin = Embedded;
 };
 
+struct LottieMarker
+{
+    char* name = nullptr;
+    int time = 0;
+    int duration = 0;
+    
+    ~LottieMarker() {
+        free(name);
+    }
+};
 
 struct LottieText : LottieObject
 {
@@ -708,7 +718,6 @@ struct LottieSlot
     bool overriden = false;
 };
 
-
 struct LottieComposition
 {
     ~LottieComposition();
@@ -740,6 +749,7 @@ struct LottieComposition
     Array<LottieInterpolator*> interpolators;
     Array<LottieFont*> fonts;
     Array<LottieSlot*> slots;
+    Array<LottieMarker*> markers;
     bool initiated = false;
 };
 

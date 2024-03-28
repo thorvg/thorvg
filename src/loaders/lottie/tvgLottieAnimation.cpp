@@ -54,3 +54,20 @@ unique_ptr<LottieAnimation> LottieAnimation::gen() noexcept
 {
     return unique_ptr<LottieAnimation>(new LottieAnimation);
 }
+
+bool LottieAnimation::segment(const char* marker)
+{
+    auto loader = pImpl->picture->pImpl->loader;
+    if (!loader || !loader->animatable()) return false;
+    
+    if(!marker) {
+        static_cast<FrameModule*>(loader)->segment(0.0, 1.0);
+        return true;
+    }
+    
+    float begin, end;
+    bool success = static_cast<FrameModule*>(loader)->getSegment(begin, end, marker);
+    if(success)
+        static_cast<FrameModule*>(loader)->segment(begin, end);
+    return success;
+}

@@ -26,10 +26,10 @@
 #include "tvgCommon.h"
 #include "tvgFrameModule.h"
 #include "tvgTaskScheduler.h"
+#include "tvgLottieModel.h"
 
 struct LottieComposition;
 struct LottieBuilder;
-
 class LottieLoader : public FrameModule, public Task
 {
 public:
@@ -38,6 +38,9 @@ public:
     float frameNo = 0.0f;               //current frame number
     float frameCnt = 0.0f;
     float frameDuration = 0.0f;
+
+    float selectedSegmentBegin = 0.0f;
+    float selectedSegmentEnd = 1.0f;
 
     LottieBuilder* builder;
     LottieComposition* comp = nullptr;
@@ -59,8 +62,11 @@ public:
     //Frame Controls
     bool frame(float no) override;
     float totalFrame() override;
+    float startFrame() override;
     float curFrame() override;
     float duration() override;
+    bool getSegment(float& beign, float& end, const char* marker = nullptr) override;
+    void segment(float begin, float end) override;
     void sync() override;
 
 private:
