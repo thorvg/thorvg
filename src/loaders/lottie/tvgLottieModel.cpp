@@ -142,13 +142,20 @@ void LottieGroup::prepare(LottieObject::Type type)
     size_t fillCnt = 0;
 
     for (auto c = children.end() - 1; c >= children.begin(); --c) {
-        if (reqFragment) break;
+        if (!mergeable && reqFragment) break;
+
         auto child = static_cast<LottieObject*>(*c);
+
+        /* Figure out if this group is a simple path drawing.
+           In that case, the rendering context can be sharable with the parent's. */
+        if (mergeable && !child->mergeable()) mergeable = false;
+
+        if (reqFragment) continue;
+
         /* Figure out if the rendering context should be fragmented.
            Multiple stroking or grouping with a stroking would occur this.
            This fragment resolves the overlapped stroke outlines. */
-        if (reqFragment) continue;
-        if (child->type == LottieObject::Group) {
+        if (child->type == LottieObject::Group && !static_cast<LottieGroup*>(child)->mergeable) {
             if (strokeCnt > 0 || fillCnt > 0) reqFragment = true;
         } else if (child->type == LottieObject::SolidStroke || child->type == LottieObject::GradientStroke) {
             if (strokeCnt > 0) reqFragment = true;
