@@ -57,6 +57,7 @@ namespace tvg
         uint8_t id;
         uint8_t opacity = 255;
         uint8_t refCnt = 0;                              //reference count
+        std::string name = "";
 
         Impl(Paint* pnt) : paint(pnt) {}
 
