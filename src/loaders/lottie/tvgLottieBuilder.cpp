@@ -59,10 +59,11 @@ struct RenderContext
     Shape* merging = nullptr;  //merging shapes if possible (if shapes have same properties)
     LottieObject** begin = nullptr; //iteration entry point
     RenderRepeater* repeater = nullptr;
+    Matrix* transform = nullptr;
     float roundness = 0.0f;
     bool fragmenting = false;  //render context has been fragmented by filling
     bool reqFragment = false;  //requirment to fragment the render context
-    bool allowMerging = true;  //individual trimpath doesn't allow merging shapes
+    bool ownPropagator = true; //this rendering context shares the propergator
 
     RenderContext()
     {
@@ -71,13 +72,21 @@ struct RenderContext
 
     ~RenderContext()
     {
-        delete(propagator);
+        if (ownPropagator) delete(propagator);
         delete(repeater);
+        free(transform);
     }
 
-    RenderContext(const RenderContext& rhs)
+    RenderContext(const RenderContext& rhs, bool mergeable = false)
     {
-        propagator = static_cast<Shape*>(rhs.propagator->duplicate());
+        if (mergeable) {
+            this->ownPropagator = false;
+            propagator = rhs.propagator;
+            merging = rhs.merging;
+        } else {
+            propagator = static_cast<Shape*>(rhs.propagator->duplicate());
+        }
+
         if (rhs.repeater) {
             repeater = new RenderRepeater();
             *repeater = *rhs.repeater;
@@ -90,6 +99,7 @@ struct RenderContext
 static void _updateChildren(LottieGroup* parent, float frameNo, Inlist<RenderContext>& contexts);
 static void _updateLayer(LottieLayer* root, LottieLayer* layer, float frameNo);
 static bool _buildComposition(LottieComposition* comp, LottieGroup* parent);
+static Shape* _draw(LottieGroup* parent, RenderContext* ctx);
 
 static void _rotateX(Matrix* m, float degree)
 {
@@ -181,15 +191,22 @@ static void _updateTransform(LottieLayer* layer, float frameNo)
 }
 
 
-static void _updateTransform(TVG_UNUSED LottieGroup* parent, LottieObject** child, float frameNo, TVG_UNUSED Inlist<RenderContext>& contexts, RenderContext* ctx)
+static void _updateTransform(LottieGroup* parent, LottieObject** child, float frameNo, TVG_UNUSED Inlist<RenderContext>& contexts, RenderContext* ctx)
 {
     auto transform = static_cast<LottieTransform*>(*child);
     if (!transform) return;
 
+    uint8_t opacity;
+
+    if (parent->mergeable) {
+        if (!ctx->transform) ctx->transform = (Matrix*)malloc(sizeof(Matrix));
+        _updateTransform(transform, frameNo, false, *ctx->transform, opacity);
+        return;
+    }
+
     ctx->merging = nullptr;
 
     Matrix matrix;
-    uint8_t opacity;
     if (!_updateTransform(transform, frameNo, false, matrix, opacity)) return;
 
     auto pmatrix = PP(ctx->propagator)->transform();
@@ -214,8 +231,11 @@ static void _updateGroup(LottieGroup* parent, LottieObject** child, float frameN
     group->scene = parent->scene;
     group->reqFragment |= ctx->reqFragment;
 
+    //generate a merging shape to consolidate partial shapes into a single entity
+    if (group->mergeable) _draw(parent, ctx);
+
     Inlist<RenderContext> contexts;
-    contexts.back(new RenderContext(*ctx));
+    contexts.back(new RenderContext(*ctx, group->mergeable));
 
     _updateChildren(group, frameNo, contexts);
 
@@ -315,7 +335,7 @@ static Shape* _updateGradientFill(TVG_UNUSED LottieGroup* parent, LottieObject**
 
 static Shape* _draw(LottieGroup* parent, RenderContext* ctx)
 {
-    if (ctx->allowMerging && ctx->merging) return ctx->merging;
+    if (ctx->merging) return ctx->merging;
 
     auto shape = cast<Shape>(ctx->propagator->duplicate());
     ctx->merging = shape.get();
@@ -488,11 +508,11 @@ static void _updatePath(LottieGroup* parent, LottieObject** child, float frameNo
 
     if (ctx->repeater) {
         auto p = Shape::gen();
-        path->pathset(frameNo, P(p)->rs.path.cmds, P(p)->rs.path.pts);
+        path->pathset(frameNo, P(p)->rs.path.cmds, P(p)->rs.path.pts, ctx->transform);
         _repeat(parent, std::move(p), ctx);
     } else {
         auto merging = _draw(parent, ctx);
-        if (path->pathset(frameNo, P(merging)->rs.path.cmds, P(merging)->rs.path.pts)) {
+        if (path->pathset(frameNo, P(merging)->rs.path.cmds, P(merging)->rs.path.pts, ctx->transform)) {
             P(merging)->update(RenderUpdateFlag::Path);
         }
         if (ctx->roundness > 1.0f && P(merging)->rs.stroke) {
@@ -868,7 +888,7 @@ static void _updateTrimpath(TVG_UNUSED LottieGroup* parent, LottieObject** child
 
     P(ctx->propagator)->strokeTrim(begin, end);
 
-    if (trimpath->type == LottieTrimpath::Individual) ctx->allowMerging = false;
+    //TODO: individual or simultaenous mode
 }
 
 

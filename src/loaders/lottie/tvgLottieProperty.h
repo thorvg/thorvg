@@ -93,13 +93,22 @@ static inline RGB24 operator*(const RGB24& lhs, float rhs)
 }
 
 
-static void copy(PathSet& pathset, Array<Point>& outPts)
+static void copy(PathSet& pathset, Array<Point>& outPts, Matrix* transform)
 {
     Array<Point> inPts;
-    inPts.data = pathset.pts;
-    inPts.count = pathset.ptsCnt;
-    outPts.push(inPts);
-    inPts.data = nullptr;
+
+    if (transform) {
+        for (int i = 0; i < pathset.ptsCnt; ++i) {
+            Point pt = pathset.pts[i];
+            mathMultiply(&pt, transform);
+            outPts.push(pt);
+        }
+    } else {
+        inPts.data = pathset.pts;
+        inPts.count = pathset.ptsCnt;
+        outPts.push(inPts);
+        inPts.data = nullptr;
+    }
 }
 
 
@@ -315,23 +324,23 @@ struct LottiePathSet : LottieProperty
         return (*frames)[frames->count];
     }
 
-    bool operator()(float frameNo, Array<PathCommand>& cmds, Array<Point>& pts)
+    bool operator()(float frameNo, Array<PathCommand>& cmds, Array<Point>& pts, Matrix* transform = nullptr)
     {
         if (!frames) {
             copy(value, cmds);
-            copy(value, pts);
+            copy(value, pts, transform);
             return true;
         }
 
         if (frames->count == 1 || frameNo <= frames->first().no) {
             copy(frames->first().value, cmds);
-            copy(frames->first().value, pts);
+            copy(frames->first().value, pts, transform);
             return true;
         }
 
         if (frameNo >= frames->last().no) {
             copy(frames->last().value, cmds);
-            copy(frames->last().value, pts);
+            copy(frames->last().value, pts, transform);
             return true;
         }
 
@@ -339,7 +348,7 @@ struct LottiePathSet : LottieProperty
 
         if (frame->no == frameNo) {
             copy(frame->value, cmds);
-            copy(frame->value, pts);
+            copy(frame->value, pts, transform);
             return true;
         }
 
@@ -350,8 +359,8 @@ struct LottiePathSet : LottieProperty
         if (frame->interpolator) t = frame->interpolator->progress(t);
 
         if (frame->hold) {
-            if (t < 1.0f) copy(frame->value, pts);
-            else copy((frame + 1)->value, pts);
+            if (t < 1.0f) copy(frame->value, pts, transform);
+            else copy((frame + 1)->value, pts, transform);
             return true;
         }
 
@@ -359,7 +368,9 @@ struct LottiePathSet : LottieProperty
         auto e = (frame + 1)->value.pts;
 
         for (auto i = 0; i < frame->value.ptsCnt; ++i, ++s, ++e) {
-            pts.push(mathLerp(*s, *e, t));
+            auto pt = mathLerp(*s, *e, t);
+            if (transform) mathMultiply(&pt,transform);
+            pts.push(pt);
         }
         return true;
     }
