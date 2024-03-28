@@ -124,6 +124,8 @@ struct LottieObject
         TVGERR("LOTTIE", "Unsupported slot type");
     }
 
+    virtual bool mergeable() { return false; }
+
     char* name = nullptr;
     Type type;
     bool hidden = false;       //remove?
@@ -195,17 +197,23 @@ struct LottieText : LottieObject
 
 struct LottieTrimpath : LottieObject
 {
-    enum Type : uint8_t { Individual = 1, Simultaneous = 2 };
+    enum Type : uint8_t { Simultaneous = 1, Individual = 2 };
 
     void prepare()
     {
         LottieObject::type = LottieObject::Trimpath;
     }
 
+    bool mergeable() override
+    {
+        if (!start.frames && start.value == 0.0f && !end.frames && end.value == 100.0f && !offset.frames && offset.value == 0.0f) return true;
+        return false;
+    }
+
     void segment(float frameNo, float& start, float& end);
 
     LottieFloat start = 0.0f;
-    LottieFloat end = 0.0f;
+    LottieFloat end = 100.0f;
     LottieFloat offset = 0.0f;
     Type type = Simultaneous;
 };
@@ -215,6 +223,11 @@ struct LottieShape : LottieObject
 {
     virtual ~LottieShape() {}
     uint8_t direction = 0;   //0: clockwise, 2: counter-clockwise, 3: xor(?)
+
+    bool mergeable() override
+    {
+        return true;
+    }
 };
 
 
@@ -307,6 +320,12 @@ struct LottieTransform : LottieObject
     void prepare()
     {
         LottieObject::type = LottieObject::Transform;
+    }
+
+    bool mergeable() override
+    {
+        if (!opacity.frames && opacity.value == 255) return true;
+        return false;
     }
 
     LottiePosition position = Point{0.0f, 0.0f};
@@ -559,6 +578,7 @@ struct LottieGroup : LottieObject
 
     bool reqFragment = false;   //requirment to fragment the render context
     bool buildDone = false;     //completed in building the composition.
+    bool mergeable = true;     //if this group is consisted of simple (transformed) shapes.
 };
 
 
