@@ -14,12 +14,12 @@ jobs:
       - name: Install things
         run: |
           sudo apt-get update
-          sudo apt-get install -y wget2 librsvg2-dev librsvg2-bin ninja-build git gcc-multilib g++-multilib
+          sudo apt-get install -y wget2 librsvg2-dev librsvg2-bin ninja-build git gcc-multilib g++-multilib earlyoom
           sudo pip3 install meson
 
       - name: Compile Thorvg PR
         run: |
-          meson . build -Dtools=svg2png
+          meson . build -Dtools=svg2png,lottie2gif -Dsavers=gif -Db_sanitize=address,undefined
           sudo ninja -C build install
 
       - name: Compile Thorvg Develop
@@ -32,14 +32,52 @@ jobs:
 
       - name: Download SVG Regression finder and setup settings
         run: |
-          wget https://github.com/qarmin/SVG-regression-finder/releases/download/0.3.0/svg_tester
+          wget -q https://github.com/qarmin/SVG-regression-finder/releases/download/0.4.0/svg_tester
           chmod +x ./svg_tester
-          mv test/regression/settings.toml settings.toml
+
+      - name: Prepare valid files to test
+        run: |
+          wget -q https://github.com/qarmin/SVG-regression-finder/releases/download/0.3.0/ThorvgValidFiles.zip -O files.zip
+          unzip -q files.zip
+          rm files.zip
+          wget -q https://github.com/qarmin/SVG-regression-finder/releases/download/0.3.0/ThorvgNotValidFiles.zip -O files.zip
+          unzip -q files.zip
+          rm files.zip
+          mv ThorvgValidFiles FilesToTest
+          find ThorvgNotValidFiles -type f -exec mv {} FilesToTest \;
+          rmdir ThorvgNotValidFiles
+
+      - name: Setup settings for crash/leak/timeout tests
+        run: |
+          mv test/regression/settings_crash_leak.toml settings.toml
+
+      - name: Run regression finder tests
+        run: |
+          ./svg_tester 2>&1 | tee result_crashes.txt
+
+      - name: Setup settings for comparison tests
+        run: |
+          mv test/regression/settings_comparison.toml settings.toml
+
+      - name: Store Crashing/Leaking/Timeouting Images
+        uses: actions/upload-artifact@v4
+        with:
+          name: crashing-leaking-timeouting-images
+          path: BrokenFILES
+          if-no-files-found: ignore
+
+      - name: Clean Data
+        run: |
+          rm -rf BrokenSVG || true
+          rm -rf FilesToTest || true
+          rm -rf ProblematicSVG || true
+          rm -rf IgnoredSVG || true
+          rm -rf BrokenFILES || true
 
       # Test valid files
       - name: Prepare valid files to test
         run: |
-          wget https://github.com/qarmin/SVG-regression-finder/releases/download/0.3.0/ThorvgValidFiles.zip -O files.zip
+          wget -q https://github.com/qarmin/SVG-regression-finder/releases/download/0.3.0/ThorvgValidFiles.zip -O files.zip
           unzip -q files.zip
           rm files.zip
           mv ThorvgValidFiles FilesToTest
@@ -68,11 +106,13 @@ jobs:
           rm -rf FilesToTest || true
           rm -rf ProblematicSVG || true
           rm -rf IgnoredSVG || true
+          rm -rf BrokenFILES || true
 
       # Test files that may not work currently good with Thorvg, errors from this are not critical
+      # it is possible that this will find also some improvements
       - name: Prepare not valid to test
         run: |
-          wget https://github.com/qarmin/SVG-regression-finder/releases/download/0.3.0/ThorvgNotValidFiles.zip -O files.zip
+          wget -q https://github.com/qarmin/SVG-regression-finder/releases/download/0.3.0/ThorvgNotValidFiles.zip -O files.zip
           unzip -q files.zip
           rm files.zip
           mv ThorvgNotValidFiles FilesToTest
@@ -101,19 +141,42 @@ jobs:
           rm -rf FilesToTest || true
           rm -rf ProblematicSVG || true
           rm -rf IgnoredSVG || true
+          rm -rf BrokenFILES || true
 
       - name: Test png reproducibility
         run: |
-          wget https://github.com/thorvg/thorvg/files/11356766/AA_5.svg.zip -O files.zip
+          wget -q https://github.com/thorvg/thorvg/files/11356766/AA_5.svg.zip -O files.zip
           unzip -q files.zip
           rm files.zip
           cp test/regression/check_same_image_size.py check_same_image_size.py
           # Forces to run tasks on different threads if possible, which should help find problem with data races
           taskset -c 0-15 python3 check_same_image_size.py AA_5.svg ./build/src/tools/svg2png/svg2png 100 500 2>&1 | tee result_image_size.txt
 
-      - name: Check output and send comment
+      - name: Check results
         run: |
           export PATH=$PATH:~/.local/bin/
           python3 "${GITHUB_WORKSPACE}/.github/workflows/regression_check.py"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Find Comment
+        uses: peter-evans/find-comment@v3
+        id: fc
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-author: 'github-actions[bot]'
+          body-includes: Regression report
+
+# TODO - not works
+#      - name: Create or update comment
+#        uses: peter-evans/create-or-update-comment@v4
+#        with:
+#          comment-id: ${{ steps.fc.outputs.comment-id }}
+#          issue-number: ${{ github.event.pull_request.number }}
+#          body-path: 'comment.txt'
+#          edit-mode: replace
+
+      - name: Fail CI if regression found
+        run: |
+          if [[ -f "fail_ci.txt" ]]; then
+            echo "Check Check results section for more details which tests failed"
+            exit 1
+          fi
