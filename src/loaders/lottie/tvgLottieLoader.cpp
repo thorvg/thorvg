@@ -304,7 +304,7 @@ bool LottieLoader::override(const char* slot)
 
     //override slots
     if (slot) {
-        //TODO: Crashed, does this necessary?
+        //Copy the input data because the JSON parser will encode the data immediately.
         auto temp = strdup(slot);
 
         //parsing slot json
