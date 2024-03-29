@@ -667,7 +667,7 @@ static bool _hslToRgb(float hue, float satuation, float brightness, uint8_t* red
 }
 
 
-static void _toColor(const char* str, uint8_t* r, uint8_t* g, uint8_t* b, char** ref)
+static bool _toColor(const char* str, uint8_t* r, uint8_t* g, uint8_t* b, char** ref)
 {
     unsigned int len = strlen(str);
     char *red, *green, *blue;
@@ -687,6 +687,7 @@ static void _toColor(const char* str, uint8_t* r, uint8_t* g, uint8_t* b, char**
             tmp[1] = str[3];
             *b = strtol(tmp, nullptr, 16);
         }
+        return true;
     } else if (len == 7 && str[0] == '#') {
         if (isxdigit(str[1]) && isxdigit(str[2]) && isxdigit(str[3]) && isxdigit(str[4]) && isxdigit(str[5]) && isxdigit(str[6])) {
             char tmp[3] = { '\0', '\0', '\0' };
@@ -700,6 +701,7 @@ static void _toColor(const char* str, uint8_t* r, uint8_t* g, uint8_t* b, char**
             tmp[1] = str[6];
             *b = strtol(tmp, nullptr, 16);
         }
+        return true;
     } else if (len >= 10 && (str[0] == 'r' || str[0] == 'R') && (str[1] == 'g' || str[1] == 'G') && (str[2] == 'b' || str[2] == 'B') && str[3] == '(' && str[len - 1] == ')') {
         tr = _parseColor(str + 4, &red);
         if (red && *red == ',') {
@@ -713,9 +715,11 @@ static void _toColor(const char* str, uint8_t* r, uint8_t* g, uint8_t* b, char**
                 }
             }
         }
+        return true;
     } else if (ref && len >= 3 && !strncmp(str, "url", 3)) {
         if (*ref) free(*ref);
         *ref = _idFromUrl((const char*)(str + 3));
+        return true;
     } else if (len >= 10 && (str[0] == 'h' || str[0] == 'H') && (str[1] == 's' || str[1] == 'S') && (str[2] == 'l' || str[2] == 'L') && str[3] == '(' && str[len - 1] == ')') {
         float_t th, ts, tb;
         const char *content, *hue, *satuation, *brightness;
@@ -735,7 +739,7 @@ static void _toColor(const char* str, uint8_t* r, uint8_t* g, uint8_t* b, char**
                     tb /= 100.0f;
                     brightness = _skipSpace(brightness + 1, nullptr);
                     if (brightness && brightness[0] == ')' && brightness[1] == '\0') {
-                       if (_hslToRgb(th, ts, tb, r, g, b)) return;
+                       return _hslToRgb(th, ts, tb, r, g, b);
                     }
                 }
             }
@@ -747,10 +751,11 @@ static void _toColor(const char* str, uint8_t* r, uint8_t* g, uint8_t* b, char**
                 *r = (((uint8_t*)(&(colors[i].value)))[2]);
                 *g = (((uint8_t*)(&(colors[i].value)))[1]);
                 *b = (((uint8_t*)(&(colors[i].value)))[0]);
-                return;
+                return true;
             }
         }
     }
+    return false;
 }
 
 
@@ -1013,20 +1018,21 @@ static void _handlePaintAttr(SvgPaint* paint, const char* value)
         paint->none = true;
         return;
     }
-    paint->none = false;
     if (!strcmp(value, "currentColor")) {
         paint->curColor = true;
+        paint->none = false;
         return;
     }
-    _toColor(value, &paint->color.r, &paint->color.g, &paint->color.b, &paint->url);
+    if (_toColor(value, &paint->color.r, &paint->color.g, &paint->color.b, &paint->url)) paint->none = false;
 }
 
 
 static void _handleColorAttr(TVG_UNUSED SvgLoaderData* loader, SvgNode* node, const char* value)
 {
     SvgStyleProperty* style = node->style;
-    style->curColorSet = true;
-    _toColor(value, &style->color.r, &style->color.g, &style->color.b, nullptr);
+    if (_toColor(value, &style->color.r, &style->color.g, &style->color.b, nullptr)) {
+        style->curColorSet = true;
+    }
 }
 
 
@@ -2493,8 +2499,9 @@ static bool _attrParseStopsStyle(void* data, const char* key, const char* value)
         stop->a = _toOpacity(value);
         loader->svgParse->flags = (loader->svgParse->flags | SvgStopStyleFlags::StopOpacity);
     } else if (!strcmp(key, "stop-color")) {
-        _toColor(value, &stop->r, &stop->g, &stop->b, nullptr);
-        loader->svgParse->flags = (loader->svgParse->flags | SvgStopStyleFlags::StopColor);
+        if (_toColor(value, &stop->r, &stop->g, &stop->b, nullptr)) {
+            loader->svgParse->flags = (loader->svgParse->flags | SvgStopStyleFlags::StopColor);
+        }
     } else {
         return false;
     }
