@@ -463,7 +463,6 @@ static void _updateRect(LottieGroup* parent, LottieObject** child, float frameNo
     } else {
         auto merging = _draw(parent, ctx);
         _appendRect(merging, position.x - size.x * 0.5f, position.y - size.y * 0.5f, size.x, size.y, roundness, ctx->transform);
-        if (rect->direction == 2) merging->fill(FillRule::EvenOdd);
     }
 }
 
@@ -510,7 +509,6 @@ static void _updateEllipse(LottieGroup* parent, LottieObject** child, float fram
     } else {
         auto merging = _draw(parent, ctx);
         _appendCircle(merging, position.x, position.y, size.x * 0.5f, size.y * 0.5f, ctx->transform);
-        if (ellipse->direction == 2) merging->fill(FillRule::EvenOdd);
     }
 }
 
@@ -532,7 +530,6 @@ static void _updatePath(LottieGroup* parent, LottieObject** child, float frameNo
             TVGERR("LOTTIE", "FIXME: Path roundesss should be applied properly!");
             P(merging)->rs.stroke->join = StrokeJoin::Round;
         }
-        if (path->direction == 2) merging->fill(FillRule::EvenOdd);
     }
 }
 
@@ -813,7 +810,6 @@ static void _updatePolystar(LottieGroup* parent, LottieObject** child, float fra
         if (star->type == LottiePolyStar::Star) _updateStar(parent, star, identity ? nullptr : &matrix, frameNo, merging);
         else _updatePolygon(parent, star, identity  ? nullptr : &matrix, frameNo, merging);
         P(merging)->update(RenderUpdateFlag::Path);
-        if (star->direction == 2) merging->fill(FillRule::EvenOdd);
     }
 }
 
