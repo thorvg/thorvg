@@ -308,11 +308,8 @@ bool LottieLoader::override(const char* slot)
 
     //override slots
     if (slot) {
-        //TODO: Crashed, does this necessary?
-        auto temp = strdup(slot);
-
         //parsing slot json
-        LottieParser parser(temp, dirName);
+        LottieParser parser(slot, dirName);
 
         auto idx = 0;
         while (auto sid = parser.sid(idx == 0)) {
@@ -323,11 +320,8 @@ bool LottieLoader::override(const char* slot)
             }
             ++idx;
         }
-
         if (idx < 1) success = false;
-        free(temp);
         overriden = success;
-
     //reset slots
     } else if (overriden) {
         for (auto s = comp->slots.begin(); s < comp->slots.end(); ++s) {

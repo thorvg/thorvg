@@ -31,6 +31,7 @@ public:
      * @retval Result::InsufficientCondition In case the animation is not loaded.
      * @retval Result::InvalidArguments When the given parameter is invalid.
      *
+     * @warning The slot data must be stored in the runtime memory (not in text section) for efficient encoding; otherwise, it will be aborted.
      * @note Experimental API
      */
     Result override(const char* slot) noexcept;

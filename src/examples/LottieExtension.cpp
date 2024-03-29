@@ -52,8 +52,6 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     if (canvas->push(std::move(shape)) != tvg::Result::Success) return;
 
-    const char* slotJson = R"({"gradient_fill":{"p":{"a":0,"k":[0,0.1,0.1,0.2,1,1,0.1,0.2,0.1,1]}}})";
-
     if (picture->load(EXAMPLE_DIR"/lottie/extensions/slotsample.json") != tvg::Result::Success) {
         cout << "Lottie is not supported. Did you enable Lottie Loader?" << endl;
         return;
@@ -79,7 +77,9 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     canvas->push(tvg::cast(picture));
 
     //Override slot data
-    if (animation->override(slotJson) == tvg::Result::Success) {
+    std::string slotJson = R"({"gradient_fill":{"p":{"a":0,"k":[0,0.1,0.1,0.2,1,1,0.1,0.2,0.1,1]}}})";
+
+    if (animation->override(slotJson.c_str()) == tvg::Result::Success) {
         canvas->update();
     } else {
         cout << "Failed to override the slot" << endl;
