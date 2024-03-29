@@ -9,8 +9,10 @@ if (
     or not os.path.isfile(sys.argv[2])
 ):
     print('Proper usage "python app.py AA.svg /path/to/svg2png 400 100"')
-    print('Proper usage "python app.py SVG_FILE SVG_PNG_PATH SIZE_IMAGE TRYING"')
-    raise ValueError("Missing or invalid input file or missing path to svg2png (panicked)")
+    print('Proper usage "python app.py SVG_FILE SVG_PNG_PATH SIZE_IMAGE NUMBER_OF_TRIES"')
+    raise ValueError(
+        "POSSIBLE_PROBLEM - Missing or invalid input file or missing path to svg2png"
+    )
 
 try_number = int(sys.argv[4])
 image_size = sys.argv[3]
@@ -33,8 +35,9 @@ for i in range(try_number + 1):
 sizes = dict(sorted(sizes.items(), key=lambda item: item[1], reverse=True))
 
 if len(sizes) == 1:
-    print(f"Image size {str(sizes)}")
+    print(f"Not found problem with generating images, sizes - {str(sizes)}")
 else:
     print(
-        f"POSSIBLE_PROBLEM - Converting svg to png is not reproducible - file sizes {str(sizes)}"
+        f"POSSIBLE_PROBLEM - Converting svg to png is not reproducible - file sizes {str(sizes)}",
+        file=sys.stderr,
     )
