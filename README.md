@@ -82,7 +82,7 @@ The task scheduler has been meticulously crafted to conceal complexity, streamli
 [](#contents)
 <br />
 ## Installation
-It explains how to set up the environment for building ThorVG.<br />
+This section details the steps required to configure the environment for installing ThorVG.<br />
 <br />
 ### Build and Install
 ThorVG supports [meson](https://mesonbuild.com/) build system. Install [meson](http://mesonbuild.com/Getting-meson.html) and [ninja](https://ninja-build.org/) if you don't have them already.
