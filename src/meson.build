@@ -73,6 +73,3 @@ pkg_mod.generate(
 
 subdir('tools')
 
-if get_option('examples') == true
-    subdir('examples')
-endif

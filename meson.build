@@ -7,7 +7,7 @@ project('thorvg',
 config_h = configuration_data()
 
 src_dir = '/'.join(meson.current_source_dir().split('\\'))
-add_project_arguments('-DEXAMPLE_DIR="@0@/src/examples/resources"'.format(src_dir),
+add_project_arguments('-DEXAMPLE_DIR="@0@/examples/resources"'.format(src_dir),
                       '-DTEST_DIR="@0@/test/resources"'.format(src_dir),
                       language : 'cpp')
 
@@ -126,6 +126,10 @@ headers = [include_directories('inc'), include_directories('.')]
 
 subdir('inc')
 subdir('src')
+
+if get_option('examples') == true
+    subdir('examples')
+endif
 
 if get_option('tests') == true
    subdir('test')
