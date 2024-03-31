@@ -28,10 +28,19 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
+static bool _outlineBegin(SwOutline& outline)
+{
+    //Make a contour if lineTo/curveTo without calling close or moveTo beforehand.
+    if (outline.pts.empty()) return false;
+    outline.cntrs.push(outline.pts.count - 1);
+    outline.pts.push(outline.pts[outline.cntrs.last()]);
+    outline.types.push(SW_CURVE_TYPE_POINT);
+    return false;
+}
+
 
 static bool _outlineEnd(SwOutline& outline)
 {
-    //Make a contour if lineTo/curveTo without calling close/moveTo beforehand.
     if (outline.pts.empty()) return false;
     outline.cntrs.push(outline.pts.count - 1);
     outline.closed.push(false);
@@ -402,7 +411,7 @@ static bool _genOutline(SwShape* shape, const RenderShape* rshape, const Matrix*
 
     shape->outline = mpoolReqOutline(mpool, tid);
     auto outline = shape->outline;
-    bool closed = false;
+    auto closed = false;
 
     //Generate Outlines
     while (cmdCnt-- > 0) {
@@ -417,13 +426,13 @@ static bool _genOutline(SwShape* shape, const RenderShape* rshape, const Matrix*
                 break;
             }
             case PathCommand::LineTo: {
-                if (closed) closed = _outlineEnd(*outline);
+                if (closed) closed = _outlineBegin(*outline);
                 _outlineLineTo(*outline, pts, transform);
                 ++pts;
                 break;
             }
             case PathCommand::CubicTo: {
-                if (closed) closed = _outlineEnd(*outline);
+                if (closed) closed = _outlineBegin(*outline);
                 _outlineCubicTo(*outline, pts, pts + 1, pts + 2, transform);
                 pts += 3;
                 break;
