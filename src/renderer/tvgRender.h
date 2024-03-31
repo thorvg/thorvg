@@ -161,6 +161,7 @@ struct RenderStroke
     struct {
         float begin = 0.0f;
         float end = 1.0f;
+        bool individual = false;
     } trim;
 
     ~RenderStroke()
