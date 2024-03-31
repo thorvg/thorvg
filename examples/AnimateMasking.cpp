@@ -172,7 +172,7 @@ void transitGlCb(Elm_Transit_Effect *effect, Elm_Transit* transit, double progre
 
 int main(int argc, char **argv)
 {
-    tvg::CanvasEngine tvgEngine = tvg::CanvasEngine::Sw;
+    auto tvgEngine = tvg::CanvasEngine::Sw;
 
     if (argc > 1) {
         if (!strcmp(argv[1], "gl")) tvgEngine = tvg::CanvasEngine::Gl;
