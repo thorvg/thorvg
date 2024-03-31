@@ -897,7 +897,7 @@ static void _updateTrimpath(TVG_UNUSED LottieGroup* parent, LottieObject** child
         end = (length * end) + pbegin;
     }
 
-    P(ctx->propagator)->strokeTrim(begin, end);
+    P(ctx->propagator)->strokeTrim(begin, end, false);
 
     //TODO: individual or simultaenous mode
 }
