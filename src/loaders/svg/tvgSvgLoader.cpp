@@ -103,15 +103,19 @@ static const char* _skipComma(const char* content)
 }
 
 
-static bool _parseNumber(const char** content, float* number)
+static bool _parseNumber(const char** content, const char** end, float* number)
 {
-    char* end = nullptr;
+    const char* _end = end ? *end : nullptr;
 
-    *number = strToFloat(*content, &end);
+    *number = strToFloat(*content, (char**)&_end);
     //If the start of string is not number
-    if ((*content) == end) return false;
+    if ((*content) == _end) {
+        if (end) *end = _end;
+        return false;
+    }
     //Skip comma if any
-    *content = _skipComma(end);
+    *content = _skipComma(_end);
+    if (end) *end = _end;
 
     return true;
 }
@@ -576,6 +580,93 @@ static constexpr struct
 };
 
 
+static bool _hslToRgb(float hue, float satuation, float brightness, uint8_t* red, uint8_t* green, uint8_t* blue)
+{
+    if (!red || !green || !blue) return false;
+
+    float sv, vsf, f, p, q, t, v;
+    float _red = 0, _green = 0, _blue = 0;
+    uint32_t i = 0;
+
+    if (mathZero(satuation))  _red = _green = _blue = brightness;
+    else {
+        if (mathEqual(hue, 360.0)) hue = 0.0f;
+        hue /= 60.0f;
+
+        v = (brightness <= 0.5f) ? (brightness * (1.0f + satuation)) : (brightness + satuation - (brightness * satuation));
+        p = brightness + brightness - v;
+
+        if (!mathZero(v)) sv = (v - p) / v;
+        else sv = 0;
+
+        i = static_cast<uint8_t>(hue);
+        f = hue - i;
+
+        vsf = v * sv * f;
+
+        t = p + vsf;
+        q = v - vsf;
+
+        switch (i) {
+            case 0: {
+                _red = v;
+                _green = t;
+                _blue = p;
+                break;
+            }
+            case 1: {
+                _red = q;
+                _green = v;
+                _blue = p;
+                break;
+            }
+            case 2: {
+                _red = p;
+                _green = v;
+                _blue = t;
+                break;
+            }
+            case 3: {
+                _red = p;
+                _green = q;
+                _blue = v;
+                break;
+            }
+            case 4: {
+                _red = t;
+                _green = p;
+                _blue = v;
+                break;
+            }
+            case 5: {
+                _red = v;
+                _green = p;
+                _blue = q;
+                break;
+            }
+        }
+    }
+
+    i = static_cast<uint8_t>(_red * 255.0);
+    f = (_red * 255.0) - i;
+    _red = (f <= 0.5) ? i : (i + 1);
+
+    i = static_cast<uint8_t>(_green * 255.0);
+    f = (_green * 255.0) - i;
+    _green = (f <= 0.5) ? i : (i + 1);
+
+    i = static_cast<uint8_t>(_blue * 255.0);
+    f = (_blue * 255.0) - i;
+    _blue = (f <= 0.5) ? i : (i + 1);
+
+    *red = static_cast<uint8_t>(_red);
+    *green = static_cast<uint8_t>(_green);
+    *blue = static_cast<uint8_t>(_blue);
+
+    return true;
+}
+
+
 static void _toColor(const char* str, uint8_t* r, uint8_t* g, uint8_t* b, char** ref)
 {
     unsigned int len = strlen(str);
@@ -625,6 +716,30 @@ static void _toColor(const char* str, uint8_t* r, uint8_t* g, uint8_t* b, char**
     } else if (ref && len >= 3 && !strncmp(str, "url", 3)) {
         if (*ref) free(*ref);
         *ref = _idFromUrl((const char*)(str + 3));
+    } else if (len >= 10 && (str[0] == 'h' || str[0] == 'H') && (str[1] == 's' || str[1] == 'S') && (str[2] == 'l' || str[2] == 'L') && str[3] == '(' && str[len - 1] == ')') {
+        float_t th, ts, tb;
+        const char *content, *hue, *satuation, *brightness;
+        content = str + 4;
+        content = _skipSpace(content, nullptr);
+        if (_parseNumber(&content, &hue, &th) && hue) {
+            th = static_cast<uint32_t>(th) % 360;
+            hue = _skipSpace(hue, nullptr);
+            hue = (char*)_skipComma(hue);
+            hue = _skipSpace(hue, nullptr);
+            if (_parseNumber(&hue, &satuation, &ts) && satuation && *satuation == '%') {
+                ts /= 100.0f;
+                satuation = _skipSpace(satuation + 1, nullptr);
+                satuation = (char*)_skipComma(satuation);
+                satuation = _skipSpace(satuation, nullptr);
+                if (_parseNumber(&satuation, &brightness, &tb) && brightness && *brightness == '%') {
+                    tb /= 100.0f;
+                    brightness = _skipSpace(brightness + 1, nullptr);
+                    if (brightness && brightness[0] == ')' && brightness[1] == '\0') {
+                       if (_hslToRgb(th, ts, tb, r, g, b)) return;
+                    }
+                }
+            }
+        }
     } else {
         //Handle named color
         for (unsigned int i = 0; i < (sizeof(colors) / sizeof(colors[0])); i++) {
@@ -854,10 +969,10 @@ static bool _attrParseSvgNode(void* data, const char* key, const char* value)
             doc->viewFlag = (doc->viewFlag | SvgViewFlag::Height);
         }
     } else if (!strcmp(key, "viewBox")) {
-        if (_parseNumber(&value, &doc->vx)) {
-            if (_parseNumber(&value, &doc->vy)) {
-                if (_parseNumber(&value, &doc->vw)) {
-                    if (_parseNumber(&value, &doc->vh)) {
+        if (_parseNumber(&value, nullptr, &doc->vx)) {
+            if (_parseNumber(&value, nullptr, &doc->vy)) {
+                if (_parseNumber(&value, nullptr, &doc->vw)) {
+                    if (_parseNumber(&value, nullptr, &doc->vh)) {
                         doc->viewFlag = (doc->viewFlag | SvgViewFlag::Viewbox);
                         loader->svgParse->global.h = doc->vh;
                     }
@@ -1267,8 +1382,8 @@ static bool _attrParseSymbolNode(void* data, const char* key, const char* value)
     SvgSymbolNode* symbol = &(node->node.symbol);
 
     if (!strcmp(key, "viewBox")) {
-        if (!_parseNumber(&value, &symbol->vx) || !_parseNumber(&value, &symbol->vy)) return false;
-        if (!_parseNumber(&value, &symbol->vw) || !_parseNumber(&value, &symbol->vh)) return false;
+        if (!_parseNumber(&value, nullptr, &symbol->vx) || !_parseNumber(&value, nullptr, &symbol->vy)) return false;
+        if (!_parseNumber(&value, nullptr, &symbol->vw) || !_parseNumber(&value, nullptr, &symbol->vh)) return false;
         symbol->hasViewBox = true;
     } else if (!strcmp(key, "width")) {
         symbol->w = _toFloat(loader->svgParse, value, SvgParserLengthType::Horizontal);
@@ -1616,7 +1731,7 @@ static SvgNode* _createEllipseNode(SvgLoaderData* loader, SvgNode* parent, const
 static bool _attrParsePolygonPoints(const char* str, SvgPolygonNode* polygon)
 {
     float num;
-    while (_parseNumber(&str, &num)) polygon->pts.push(num);
+    while (_parseNumber(&str, nullptr, &num)) polygon->pts.push(num);
     return true;
 }
 
