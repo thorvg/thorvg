@@ -124,7 +124,8 @@ struct BlendSettigs {
 };
 
 // LinearGradient
-const MAX_LINEAR_GRADIENT_STOPS = 4;
+const MAX_LINEAR_GRADIENT_STOPS = 32;
+const MAX_LINEAR_GRADIENT_STOPS_PACKED = MAX_LINEAR_GRADIENT_STOPS / 4;
 struct LinearGradient {
     nStops       : u32,
     spread       : u32,
@@ -132,7 +133,7 @@ struct LinearGradient {
     dummy1       : u32,
     gradStartPos : vec2f,
     gradEndPos   : vec2f,
-    stopPoints   : vec4f,
+    stopPoints   : array<vec4f, MAX_LINEAR_GRADIENT_STOPS_PACKED>,
     stopColors   : array<vec4f, MAX_LINEAR_GRADIENT_STOPS>
 };
 
@@ -183,19 +184,19 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
     let last: i32 = i32(uLinearGradient.nStops) - 1;
 
     // closer than first stop
-    if (t <= uLinearGradient.stopPoints[0]) {
+    if (t <= uLinearGradient.stopPoints[0][0]) {
         color = uLinearGradient.stopColors[0];
     }
     
     // further than last stop
-    if (t >= uLinearGradient.stopPoints[last]) {
+    if (t >= uLinearGradient.stopPoints[last/4][last%4]) {
         color = uLinearGradient.stopColors[last];
     }
 
     // look in the middle
     for (var i = 0i; i < last; i++) {
-        let strt = uLinearGradient.stopPoints[i];
-        let stop = uLinearGradient.stopPoints[i+1];
+        let strt = uLinearGradient.stopPoints[i/4][i%4];
+        let stop = uLinearGradient.stopPoints[(i+1)/4][(i+1)%4];
         if ((t > strt) && (t < stop)) {
             let step: f32 = (t - strt) / (stop - strt);
             color = mix(uLinearGradient.stopColors[i], uLinearGradient.stopColors[i+1], step);
@@ -225,7 +226,8 @@ struct BlendSettigs {
 };
 
 // RadialGradient
-const MAX_RADIAL_GRADIENT_STOPS = 4;
+const MAX_RADIAL_GRADIENT_STOPS = 32;
+const MAX_RADIAL_GRADIENT_STOPS_PACKED = MAX_RADIAL_GRADIENT_STOPS / 4;
 struct RadialGradient {
     nStops     : u32,
     spread     : u32,
@@ -233,7 +235,7 @@ struct RadialGradient {
     dummy1     : u32,
     centerPos  : vec2f,
     radius     : vec2f,
-    stopPoints : vec4f,
+    stopPoints : array<vec4f, MAX_RADIAL_GRADIENT_STOPS_PACKED>,
     stopColors : array<vec4f, MAX_RADIAL_GRADIENT_STOPS>
 };
 
@@ -278,19 +280,19 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
     let last: i32 = i32(uRadialGradient.nStops) - 1;
 
     // closer than first stop
-    if (t <= uRadialGradient.stopPoints[0]) {
+    if (t <= uRadialGradient.stopPoints[0][0]) {
         color = uRadialGradient.stopColors[0];
     }
     
     // further than last stop
-    if (t >= uRadialGradient.stopPoints[last]) {
+    if (t >= uRadialGradient.stopPoints[last/4][last%4]) {
         color = uRadialGradient.stopColors[last];
     }
 
     // look in the middle
     for (var i = 0i; i < last; i++) {
-        let strt = uRadialGradient.stopPoints[i];
-        let stop = uRadialGradient.stopPoints[i+1];
+        let strt = uRadialGradient.stopPoints[i/4][i%4];
+        let stop = uRadialGradient.stopPoints[(i+1)/4][(i+1)%4];
         if ((t > strt) && (t < stop)) {
             let step: f32 = (t - strt) / (stop - strt);
             color = mix(uRadialGradient.stopColors[i], uRadialGradient.stopColors[i+1], step);
