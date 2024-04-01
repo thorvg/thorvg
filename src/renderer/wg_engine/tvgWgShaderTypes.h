@@ -82,7 +82,7 @@ struct WgShaderTypeSolidColor
 //     stopPoints   : vec4f,
 //     stopColors   : array<vec4f, MAX_LINEAR_GRADIENT_STOPS>
 // };
-#define MAX_LINEAR_GRADIENT_STOPS 4
+#define MAX_LINEAR_GRADIENT_STOPS 32
 struct WgShaderTypeLinearGradient
 {
     uint32_t nStops{};
@@ -109,7 +109,7 @@ struct WgShaderTypeLinearGradient
 //     stopPoints : vec4f,
 //     stopColors : array<vec4f, MAX_RADIAL_GRADIENT_STOPS>
 // };
-#define MAX_RADIAL_GRADIENT_STOPS 4
+#define MAX_RADIAL_GRADIENT_STOPS 32
 struct WgShaderTypeRadialGradient
 {
     uint32_t nStops{};
