@@ -198,7 +198,7 @@ static void _updateTransform(LottieGroup* parent, LottieObject** child, float fr
 
     uint8_t opacity;
 
-    if (parent->mergeable) {
+    if (parent->mergeable()) {
         if (!ctx->transform) ctx->transform = (Matrix*)malloc(sizeof(Matrix));
         _updateTransform(transform, frameNo, false, *ctx->transform, opacity);
         return;
@@ -232,10 +232,10 @@ static void _updateGroup(LottieGroup* parent, LottieObject** child, float frameN
     group->reqFragment |= ctx->reqFragment;
 
     //generate a merging shape to consolidate partial shapes into a single entity
-    if (group->mergeable) _draw(parent, ctx);
+    if (group->mergeable()) _draw(parent, ctx);
 
     Inlist<RenderContext> contexts;
-    contexts.back(new RenderContext(*ctx, group->mergeable));
+    contexts.back(new RenderContext(*ctx, group->mergeable()));
 
     _updateChildren(group, frameNo, contexts);
 
@@ -897,9 +897,7 @@ static void _updateTrimpath(TVG_UNUSED LottieGroup* parent, LottieObject** child
         end = (length * end) + pbegin;
     }
 
-    P(ctx->propagator)->strokeTrim(begin, end, false);
-
-    //TODO: individual or simultaenous mode
+    P(ctx->propagator)->strokeTrim(begin, end, trimpath->type == LottieTrimpath::Type::Individual ? true : false);
 }
 
 
