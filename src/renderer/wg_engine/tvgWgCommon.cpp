@@ -494,7 +494,7 @@ void WgPipeline::destroyShaderModule(WGPUShaderModule& shaderModule)
 // render pipeline
 //*****************************************************************************
 
-void WgRenderPipeline::allocate(WGPUDevice device,
+void WgRenderPipeline::allocate(WGPUDevice device, WgPipelineBlendType blendType,
                                 WGPUVertexBufferLayout vertexBufferLayouts[], uint32_t attribsCount,
                                 WGPUBindGroupLayout bindGroupLayouts[], uint32_t bindGroupsCount,
                                 WGPUCompareFunction stencilCompareFunction, WGPUStencilOperation stencilOperation,
@@ -506,7 +506,7 @@ void WgRenderPipeline::allocate(WGPUDevice device,
     mPipelineLayout = createPipelineLayout(device, bindGroupLayouts, bindGroupsCount);
     assert(mPipelineLayout);
 
-    mRenderPipeline = createRenderPipeline(device,
+    mRenderPipeline = createRenderPipeline(device, blendType,
                                            vertexBufferLayouts, attribsCount,
                                            stencilCompareFunction, stencilOperation,
                                            mPipelineLayout, mShaderModule, pipelineLabel);
@@ -527,14 +527,42 @@ void WgRenderPipeline::set(WGPURenderPassEncoder renderPassEncoder)
 };
 
 
-WGPUBlendState WgRenderPipeline::makeBlendState()
+WGPUBlendState WgRenderPipeline::makeBlendState(WgPipelineBlendType blendType)
 {
     WGPUBlendState blendState{};
-    blendState.color.operation = WGPUBlendOperation_Add;
-    blendState.color.srcFactor = WGPUBlendFactor_One;
-    blendState.color.dstFactor = WGPUBlendFactor_Zero;
+    // src
+    if (blendType == WgPipelineBlendType::Src) {
+        blendState.color.operation = WGPUBlendOperation_Add;
+        blendState.color.srcFactor = WGPUBlendFactor_One;
+        blendState.color.dstFactor = WGPUBlendFactor_Zero;
+    } else // normal
+    if (blendType == WgPipelineBlendType::Normal) {
+        blendState.color.operation = WGPUBlendOperation_Add;
+        blendState.color.srcFactor = WGPUBlendFactor_SrcAlpha;
+        blendState.color.dstFactor = WGPUBlendFactor_OneMinusSrcAlpha;
+    } else // add
+    if (blendType == WgPipelineBlendType::Add) {
+        blendState.color.operation = WGPUBlendOperation_Add;
+        blendState.color.srcFactor = WGPUBlendFactor_One;
+        blendState.color.dstFactor = WGPUBlendFactor_One;
+    } else // mult
+    if (blendType == WgPipelineBlendType::Mult) {
+        blendState.color.operation = WGPUBlendOperation_Add;
+        blendState.color.srcFactor = WGPUBlendFactor_Dst;
+        blendState.color.dstFactor = WGPUBlendFactor_Zero;
+    } else // min
+    if (blendType == WgPipelineBlendType::Min) {
+        blendState.color.operation = WGPUBlendOperation_Min;
+        blendState.color.srcFactor = WGPUBlendFactor_One;
+        blendState.color.dstFactor = WGPUBlendFactor_One;
+    } else // max
+    if (blendType == WgPipelineBlendType::Max) {
+        blendState.color.operation = WGPUBlendOperation_Max;
+        blendState.color.srcFactor = WGPUBlendFactor_One;
+        blendState.color.dstFactor = WGPUBlendFactor_One;
+    }
     blendState.alpha.operation = WGPUBlendOperation_Add;
-    blendState.alpha.srcFactor = WGPUBlendFactor_One;
+    blendState.alpha.srcFactor = WGPUBlendFactor_SrcAlpha;
     blendState.alpha.dstFactor = WGPUBlendFactor_Zero;
     return blendState;
 }
@@ -638,13 +666,13 @@ WGPUFragmentState WgRenderPipeline::makeFragmentState(WGPUShaderModule shaderMod
 }
 
 
-WGPURenderPipeline WgRenderPipeline::createRenderPipeline(WGPUDevice device,
+WGPURenderPipeline WgRenderPipeline::createRenderPipeline(WGPUDevice device, WgPipelineBlendType blendType,
                                                           WGPUVertexBufferLayout vertexBufferLayouts[], uint32_t attribsCount,
                                                           WGPUCompareFunction stencilCompareFunction, WGPUStencilOperation stencilOperation,
                                                           WGPUPipelineLayout pipelineLayout, WGPUShaderModule shaderModule,
                                                           const char* pipelineName)
 {
-    WGPUBlendState blendState = makeBlendState();
+    WGPUBlendState blendState = makeBlendState(blendType);
     WGPUColorTargetState colorTargetStates[] = { 
         makeColorTargetState(&blendState)
     };

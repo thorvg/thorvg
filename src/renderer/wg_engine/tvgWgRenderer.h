@@ -62,7 +62,7 @@ public:
 private:
     // render handles
     WGPUCommandEncoder mCommandEncoder{};
-    WgRenderTarget mRenderTarget;
+    WgRenderStorage mRenderTarget;
     WgRenderStorage mRenderStorageRoot;
     WgRenderStorage mRenderStorageScreen;
     WgRenderStoragePool mRenderStoragePool;
@@ -76,7 +76,6 @@ private:
 
     // native window handles
     WGPUSurface mSurface{};
-private:
     WgContext mContext;
     WgPipelines mPipelines;
     Surface mTargetSurface;
