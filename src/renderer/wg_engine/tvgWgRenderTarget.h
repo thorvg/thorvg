@@ -25,39 +25,17 @@
 
 #include "tvgWgRenderData.h"
 
-class WgRenderTarget {
+class WgRenderStorage {
 private:
-    // canvas info
+    // texture buffers
     WgBindGroupCanvas mBindGroupCanvas;
+    WGPURenderPassEncoder mRenderPassEncoder{};
     WgPipelines* mPipelines{}; // external handle
 public:
     WGPUTexture texColor{};
     WGPUTexture texStencil{};
     WGPUTextureView texViewColor{};
     WGPUTextureView texViewStencil{};
-    WgBindGroupTextureStorage bindGroupTexStorage;
-public:
-    void initialize(WgContext& context, uint32_t w, uint32_t h, uint32_t samples = 1);
-    void release(WgContext& context);
-
-    void renderShape(WGPUCommandEncoder commandEncoder, WgRenderDataShape* renderData);
-    void renderPicture(WGPUCommandEncoder commandEncoder, WgRenderDataPicture* renderData);
-private:
-    void drawShape(WGPURenderPassEncoder renderPassEncoder, WgRenderDataShape* renderData);
-    void drawStroke(WGPURenderPassEncoder renderPassEncoder, WgRenderDataShape* renderData);
-
-    WGPURenderPassEncoder beginRenderPass(WGPUCommandEncoder commandEncoder);
-    void endRenderPass(WGPURenderPassEncoder renderPassEncoder);
-};
-
-
-class WgRenderStorage {
-private:
-    // texture buffers
-    WgPipelines* mPipelines{}; // external handle
-public:
-    WGPUTexture texStorage{};
-    WGPUTextureView texViewStorage{};
     WgBindGroupTextureStorage bindGroupTexStorage;
     uint32_t width{};
     uint32_t height{};
@@ -67,16 +45,24 @@ public:
     void initialize(WgContext& context, uint32_t w, uint32_t h, uint32_t samples = 1);
     void release(WgContext& context);
 
+    void beginRenderPass(WGPUCommandEncoder commandEncoder, bool clear);
+    void endRenderPass();
+
+    void renderShape(WgRenderDataShape* renderData, WgPipelineBlendType blendType);
+    void renderPicture(WgRenderDataPicture* renderData, WgPipelineBlendType blendType);
+
     void clear(WGPUCommandEncoder commandEncoder);
-    void blend(WGPUCommandEncoder commandEncoder, WgRenderTarget* targetSrc, WgBindGroupBlendMethod* blendMethod);
     void blend(WGPUCommandEncoder commandEncoder, WgRenderStorage* targetSrc, WgBindGroupBlendMethod* blendMethod);
     void compose(WGPUCommandEncoder commandEncoder, WgRenderStorage* targetMsk, WgBindGroupCompositeMethod* composeMethod, WgBindGroupOpacity* opacity);
     void antialias(WGPUCommandEncoder commandEncoder, WgRenderStorage* targetSrc);
 private:
+    void drawShape(WgRenderDataShape* renderData, WgPipelineBlendType blendType);
+    void drawStroke(WgRenderDataShape* renderData, WgPipelineBlendType blendType);
+
     void dispatchWorkgroups(WGPUComputePassEncoder computePassEncoder);
 
     WGPUComputePassEncoder beginComputePass(WGPUCommandEncoder commandEncoder);
-    void endRenderPass(WGPUComputePassEncoder computePassEncoder);
+    void endComputePass(WGPUComputePassEncoder computePassEncoder);
 };
 
 

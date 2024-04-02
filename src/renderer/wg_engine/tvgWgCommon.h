@@ -28,6 +28,15 @@
 #include "tvgCommon.h"
 #include "tvgRender.h"
 
+enum class WgPipelineBlendType {
+    Src = 0, // S
+    Normal,  // (Sa * S) + (255 - Sa) * D
+    Add,     // (S + D)
+    Mult,    // (S * D)
+    Min,     // min(S, D)
+    Max      // max(S, D)
+};
+
 struct WgPipelines;
 
 struct WgContext {
@@ -107,7 +116,7 @@ struct WgRenderPipeline: public WgPipeline
 {
 protected:
     WGPURenderPipeline mRenderPipeline{};
-    void allocate(WGPUDevice device,
+    void allocate(WGPUDevice device, WgPipelineBlendType blendType,
                   WGPUVertexBufferLayout vertexBufferLayouts[], uint32_t attribsCount,
                   WGPUBindGroupLayout bindGroupLayouts[], uint32_t bindGroupsCount,
                   WGPUCompareFunction stencilCompareFunction, WGPUStencilOperation stencilOperation,
@@ -116,7 +125,7 @@ public:
     void release() override;
     void set(WGPURenderPassEncoder renderPassEncoder);
 
-    static WGPUBlendState makeBlendState();
+    static WGPUBlendState makeBlendState(WgPipelineBlendType blendType);
     static WGPUColorTargetState makeColorTargetState(const WGPUBlendState* blendState);
     static WGPUVertexBufferLayout makeVertexBufferLayout(const WGPUVertexAttribute* vertexAttributes, uint32_t count, uint64_t stride);
     static WGPUVertexState makeVertexState(WGPUShaderModule shaderModule, const WGPUVertexBufferLayout* buffers, uint32_t count);
@@ -125,7 +134,7 @@ public:
     static WGPUMultisampleState makeMultisampleState();
     static WGPUFragmentState makeFragmentState(WGPUShaderModule shaderModule, WGPUColorTargetState* targets, uint32_t size);
 
-    static WGPURenderPipeline createRenderPipeline(WGPUDevice device,
+    static WGPURenderPipeline createRenderPipeline(WGPUDevice device, WgPipelineBlendType blendType,
                                                    WGPUVertexBufferLayout vertexBufferLayouts[], uint32_t attribsCount,
                                                    WGPUCompareFunction stencilCompareFunction, WGPUStencilOperation stencilOperation,
                                                    WGPUPipelineLayout pipelineLayout, WGPUShaderModule shaderModule,
