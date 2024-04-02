@@ -572,13 +572,15 @@ struct LottieGroup : LottieObject
     }
 
     void prepare(LottieObject::Type type = LottieObject::Group);
+    bool mergeable() override { return allowMerge; }
 
     Scene* scene = nullptr;               //tvg render data
     Array<LottieObject*> children;
 
     bool reqFragment = false;   //requirment to fragment the render context
     bool buildDone = false;     //completed in building the composition.
-    bool mergeable = true;     //if this group is consisted of simple (transformed) shapes.
+    bool allowMerge = true;     //if this group is consisted of simple (transformed) shapes.
+    bool trimpath = false;      //this group has a trimpath.
 };
 
 
@@ -594,6 +596,8 @@ struct LottieLayer : LottieGroup
         if (type == Null) return 255;
         return transform->opacity(frameNo);
     }
+
+    bool mergeable() override { return false; }
 
     void prepare();
     float remap(float frameNo);
