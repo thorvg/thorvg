@@ -142,20 +142,20 @@ void LottieGroup::prepare(LottieObject::Type type)
     size_t fillCnt = 0;
 
     for (auto c = children.end() - 1; c >= children.begin(); --c) {
-        if (!mergeable && reqFragment) break;
-
         auto child = static_cast<LottieObject*>(*c);
+
+        if (child->type == LottieObject::Type::Trimpath) trimpath = true;
 
         /* Figure out if this group is a simple path drawing.
            In that case, the rendering context can be sharable with the parent's. */
-        if (mergeable && !child->mergeable()) mergeable = false;
+        if (allowMerge && (child->type == LottieObject::Group || !child->mergeable())) allowMerge = false;
 
         if (reqFragment) continue;
 
         /* Figure out if the rendering context should be fragmented.
            Multiple stroking or grouping with a stroking would occur this.
            This fragment resolves the overlapped stroke outlines. */
-        if (child->type == LottieObject::Group && !static_cast<LottieGroup*>(child)->mergeable) {
+        if (child->type == LottieObject::Group && !child->mergeable()) {
             if (strokeCnt > 0 || fillCnt > 0) reqFragment = true;
         } else if (child->type == LottieObject::SolidStroke || child->type == LottieObject::GradientStroke) {
             if (strokeCnt > 0) reqFragment = true;
@@ -164,6 +164,25 @@ void LottieGroup::prepare(LottieObject::Type type)
             if (fillCnt > 0) reqFragment = true;
             else ++fillCnt;
         }
+    }
+
+    //Reverse the drawing order if this group has a trimpath.
+    if (!trimpath) return;
+
+    for (uint32_t i = 0; i < children.count - 1; ) {
+        auto child2 = children[i + 1];
+        if (!child2->mergeable() || child2->type == LottieObject::Transform) {
+            i += 2;
+            continue;
+        }
+        auto child = children[i];
+        if (!child->mergeable() || child->type == LottieObject::Transform) {
+            i++;
+            continue;
+        }
+        children[i] = child2;
+        children[i + 1] = child;
+        i++;
     }
 }
 
