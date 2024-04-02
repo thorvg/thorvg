@@ -53,7 +53,8 @@ struct WgPipelineFillStroke: public WgRenderPipeline
 
 struct WgPipelineSolid: public WgRenderPipeline
 {
-    void initialize(WGPUDevice device) override;
+    void initialize(WGPUDevice device) override {}
+    void initialize(WGPUDevice device, WgPipelineBlendType blendType);
     void use(WGPURenderPassEncoder encoder, WgBindGroupCanvas& groupCanvas,WgBindGroupPaint& groupPaint, WgBindGroupSolidColor& groupSolid)
     {
         set(encoder);
@@ -65,7 +66,8 @@ struct WgPipelineSolid: public WgRenderPipeline
 
 struct WgPipelineLinear: public WgRenderPipeline
 {
-    void initialize(WGPUDevice device) override;
+    void initialize(WGPUDevice device) override {}
+    void initialize(WGPUDevice device, WgPipelineBlendType blendType);
     void use(WGPURenderPassEncoder encoder, WgBindGroupCanvas& groupCanvas, WgBindGroupPaint& groupPaint, WgBindGroupLinearGradient& groupLinear)
     {
         set(encoder);
@@ -77,7 +79,8 @@ struct WgPipelineLinear: public WgRenderPipeline
 
 struct WgPipelineRadial: public WgRenderPipeline
 {
-    void initialize(WGPUDevice device) override;
+    void initialize(WGPUDevice device) override {}
+    void initialize(WGPUDevice device, WgPipelineBlendType blendType);
     void use(WGPURenderPassEncoder encoder, WgBindGroupCanvas& groupCanvas, WgBindGroupPaint& groupPaint, WgBindGroupRadialGradient& groupRadial)
     {
         set(encoder);
@@ -89,7 +92,8 @@ struct WgPipelineRadial: public WgRenderPipeline
 
 struct WgPipelineImage: public WgRenderPipeline
 {
-    void initialize(WGPUDevice device) override;
+    void initialize(WGPUDevice device) override {}
+    void initialize(WGPUDevice device, WgPipelineBlendType blendType);
     void use(WGPURenderPassEncoder encoder, WgBindGroupCanvas& groupCanvas, WgBindGroupPaint& groupPaint, WgBindGroupPicture& groupPicture)
     {
         set(encoder);
@@ -161,10 +165,11 @@ struct WgPipelines
     // render pipelines
     WgPipelineFillShape fillShape;
     WgPipelineFillStroke fillStroke;
-    WgPipelineSolid solid;
-    WgPipelineLinear linear;
-    WgPipelineRadial radial;
-    WgPipelineImage image;
+    // fill pipelines
+    WgPipelineSolid solid[6];
+    WgPipelineLinear linear[6];
+    WgPipelineRadial radial[6];
+    WgPipelineImage image[6];
     // compute pipelines
     WgPipelineClear computeClear;
     WgPipelineBlend computeBlend;
@@ -173,6 +178,9 @@ struct WgPipelines
 
     void initialize(WgContext& context);
     void release();
+
+    static bool isBlendMethodSupportsHW(BlendMethod blendMethod);
+    static WgPipelineBlendType blendMethodToBlendType(BlendMethod blendMethod);
 };
 
 #endif // _TVG_WG_PIPELINES_H_

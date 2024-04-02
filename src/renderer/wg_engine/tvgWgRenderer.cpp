@@ -133,43 +133,74 @@ RenderData WgRenderer::prepare(Surface* surface, const RenderMesh* mesh, RenderD
     return renderDataPicture;
 }
 
-
 bool WgRenderer::preRender()
 {
     WGPUCommandEncoderDescriptor commandEncoderDesc{};
     commandEncoderDesc.nextInChain = nullptr;
     commandEncoderDesc.label = "The command encoder";
     mCommandEncoder = wgpuDeviceCreateCommandEncoder(mContext.device, &commandEncoderDesc);
-    mRenderStorageRoot.clear(mCommandEncoder);
     mRenderStorageStack.push(&mRenderStorageRoot);
+    //mRenderStorageRoot.clear(mCommandEncoder);
+    mRenderStorageRoot.beginRenderPass(mCommandEncoder, true);
     return true;
 }
 
 
 bool WgRenderer::renderShape(RenderData data)
 {
-    // render shape to render target
-    mRenderTarget.renderShape(mCommandEncoder, (WgRenderDataShape *)data);
-    // blend shape with current render storage
-    WgBindGroupBlendMethod* blendMethod = mBlendMethodPool.allocate(mContext, mBlendMethod);
-    mRenderStorageStack.last()->blend(mCommandEncoder, &mRenderTarget, blendMethod);
+    // get current render storage
+    WgPipelineBlendType blendType = WgPipelines::blendMethodToBlendType(mBlendMethod);
+    WgRenderStorage* renderStorage = mRenderStorageStack.last();
+    assert(renderStorage);
+    // use hardware blend
+    if (WgPipelines::isBlendMethodSupportsHW(mBlendMethod))
+        renderStorage->renderShape((WgRenderDataShape *)data, blendType);
+    else { // use custom blend
+        // terminate current render pass
+        renderStorage->endRenderPass();
+        // render image to render target
+        mRenderTarget.beginRenderPass(mCommandEncoder, true);
+        mRenderTarget.renderShape((WgRenderDataShape *)data, blendType);
+        mRenderTarget.endRenderPass();
+        // blend shape with current render storage
+        WgBindGroupBlendMethod* blendMethod = mBlendMethodPool.allocate(mContext, mBlendMethod);
+        renderStorage->blend(mCommandEncoder, &mRenderTarget, blendMethod);
+        // restore current render pass
+        renderStorage->beginRenderPass(mCommandEncoder, false);
+    }
     return true;
 }
 
 
 bool WgRenderer::renderImage(RenderData data)
 {
-    // render image to render target
-    mRenderTarget.renderPicture(mCommandEncoder, (WgRenderDataPicture *)data);
-    // blend image with current render storage
-    WgBindGroupBlendMethod* blendMethod = mBlendMethodPool.allocate(mContext, mBlendMethod);
-    mRenderStorageStack.last()->blend(mCommandEncoder, &mRenderTarget, blendMethod);
+    // get current render storage
+    WgPipelineBlendType blendType = WgPipelines::blendMethodToBlendType(mBlendMethod);
+    WgRenderStorage* renderStorage = mRenderStorageStack.last();
+    assert(renderStorage);
+    // use hardware blend
+    if (WgPipelines::isBlendMethodSupportsHW(mBlendMethod))
+        renderStorage->renderPicture((WgRenderDataPicture *)data, blendType);
+    else { // use custom blend
+        // terminate current render pass
+        renderStorage->endRenderPass();
+        // render image to render target
+        mRenderTarget.beginRenderPass(mCommandEncoder, true);
+        mRenderTarget.renderPicture((WgRenderDataPicture *)data, blendType);
+        mRenderTarget.endRenderPass();
+        // blend shape with current render storage
+        WgBindGroupBlendMethod* blendMethod = mBlendMethodPool.allocate(mContext, mBlendMethod);
+        renderStorage->blend(mCommandEncoder, &mRenderTarget, blendMethod);
+        // restore current render pass
+        renderStorage->beginRenderPass(mCommandEncoder, false);
+    }
     return true;
 }
 
 
 bool WgRenderer::postRender()
 {
+    mRenderStorageRoot.endRenderPass();
     mRenderStorageStack.pop();
     mContext.executeCommandEncoder(mCommandEncoder);
     wgpuCommandEncoderRelease(mCommandEncoder);
@@ -233,7 +264,7 @@ bool WgRenderer::sync()
     mRenderStorageScreen.antialias(commandEncoder, &mRenderStorageRoot);
 
     WGPUImageCopyTexture source{};
-    source.texture = mRenderStorageScreen.texStorage;
+    source.texture = mRenderStorageScreen.texColor;
     WGPUImageCopyTexture dest{};
     dest.texture = backBuffer.texture;
     WGPUExtent3D copySize{};
@@ -313,15 +344,17 @@ Compositor* WgRenderer::target(TVG_UNUSED const RenderRegion& region, TVG_UNUSED
 
 bool WgRenderer::beginComposite(TVG_UNUSED Compositor* cmp, TVG_UNUSED CompositeMethod method, TVG_UNUSED uint8_t opacity)
 {
-        // save current composition settings
+    // save current composition settings
     cmp->method = method;
     cmp->opacity = opacity;
 
+    // end current render pass
+    mRenderStorageStack.last()->endRenderPass();
     // allocate new render storage and push it to top of render tree
     WgRenderStorage* renderStorage = mRenderStoragePool.allocate(mContext, mTargetSurface.w * WG_SSAA_SAMPLES, mTargetSurface.h * WG_SSAA_SAMPLES);
-    renderStorage->clear(mCommandEncoder);
     mRenderStorageStack.push(renderStorage);
-
+    // begin last render pass
+    mRenderStorageStack.last()->beginRenderPass(mCommandEncoder, true);
     return true;
 }
 
@@ -329,6 +362,8 @@ bool WgRenderer::beginComposite(TVG_UNUSED Compositor* cmp, TVG_UNUSED Composite
 bool WgRenderer::endComposite(TVG_UNUSED Compositor* cmp)
 {
     if (cmp->method == CompositeMethod::None) {
+        // end current render pass
+        mRenderStorageStack.last()->endRenderPass();
         // get two last render targets
         WgRenderStorage* renderStorageSrc = mRenderStorageStack.last();
         mRenderStorageStack.pop();
@@ -339,7 +374,11 @@ bool WgRenderer::endComposite(TVG_UNUSED Compositor* cmp)
 
         // back render targets to the pool
         mRenderStoragePool.free(mContext, renderStorageSrc);
+        // begin last render pass
+        mRenderStorageStack.last()->beginRenderPass(mCommandEncoder, false);
     } else {
+        // end current render pass
+        mRenderStorageStack.last()->endRenderPass();
         // get two last render targets
         WgRenderStorage* renderStorageSrc = mRenderStorageStack.last();
         mRenderStorageStack.pop();
@@ -358,6 +397,8 @@ bool WgRenderer::endComposite(TVG_UNUSED Compositor* cmp)
         // back render targets to the pool
         mRenderStoragePool.free(mContext, renderStorageSrc);
         mRenderStoragePool.free(mContext, renderStorageMsk);
+        // begin last render pass
+        mRenderStorageStack.last()->beginRenderPass(mCommandEncoder, false);
     }
 
     // delete current compositor
