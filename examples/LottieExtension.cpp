@@ -17,6 +17,7 @@
  * SOFTWARE.
  */
 
+#include <vector>
 #include "Common.h"
 #include <thorvg_lottie.h>
 
@@ -24,41 +25,73 @@
 /* Drawing Commands                                                     */
 /************************************************************************/
 
-static unique_ptr<tvg::LottieAnimation> animation;
-static Elm_Transit *transit;
-static bool updated = false;
+#define NUM_PER_ROW 2
+#define NUM_PER_COL 1
+#define SIZE (WIDTH/NUM_PER_ROW)
 
-void tvgUpdateCmds(tvg::Canvas* canvas, tvg::LottieAnimation* animation, float progress)
+static int counter = 0;
+static std::vector<unique_ptr<tvg::Animation>> animations;
+static std::vector<Elm_Transit*> transitions;
+static tvg::Canvas* canvas;
+
+//performance measure
+static double updateTime = 0;
+static double accumUpdateTime = 0;
+static double accumRasterTime = 0;
+static double accumTotalTime = 0;
+static uint32_t cnt = 0;
+
+void slotSample(unique_ptr<tvg::LottieAnimation>& animation)
 {
-    if (updated || !canvas) return;
-
-    //Update animation frame only when it's changed
-    if (animation->frame(animation->totalFrame() * progress) == tvg::Result::Success) {
+    const char* slotJson = R"({"gradient_fill":{"p":{"a":0,"k":[0,0.1,0.1,0.2,1,1,0.1,0.2,0.1,1]}}})";
+    if (animation->override(slotJson) == tvg::Result::Success) {
         canvas->update();
-        updated = true;
+    } else {
+        cout << "Failed to override the slot" << endl;
     }
 }
 
-void tvgDrawCmds(tvg::Canvas* canvas)
+void markerSample(unique_ptr<tvg::LottieAnimation>& animation)
 {
-    //Animation Controller
-    animation = tvg::LottieAnimation::gen();
-    auto picture = animation->picture();
+    auto cnt = animation->markerCnt();
+    cout << "num of markers: " << cnt << endl;
+    auto markerName = animation->markers(1);
+    cout << "second marker name: " << markerName << endl;
+    if (animation->segment("sectionC") != tvg::Result::Success) {
+        cout << "Failed to segment by the marker" << endl;
+    }
+}
 
-    //Background
-    auto shape = tvg::Shape::gen();
-    shape->appendRect(0, 0, WIDTH, HEIGHT);
-    shape->fill(50, 50, 50);
+void lottieDirCallback(const char* name, const char* path, void* data)
+{
+    if (counter >= NUM_PER_ROW * NUM_PER_COL) return;
 
-    if (canvas->push(std::move(shape)) != tvg::Result::Success) return;
-
-    const char* slotJson = R"({"gradient_fill":{"p":{"a":0,"k":[0,0.1,0.1,0.2,1,1,0.1,0.2,0.1,1]}}})";
-
-    if (picture->load(EXAMPLE_DIR"/lottie/extensions/slotsample.json") != tvg::Result::Success) {
-        cout << "Lottie is not supported. Did you enable Lottie Loader?" << endl;
+    std::function<void(unique_ptr<tvg::LottieAnimation>&)> setupSample;
+    if (!strcmp(name, "slotsample.json")) {
+        setupSample = slotSample;
+    }
+    else if (!strcmp(name, "marker_sample.json")) {
+        setupSample = markerSample;
+    }
+    else {
         return;
     }
 
+    char buf[PATH_MAX];
+    snprintf(buf, sizeof(buf), "/%s/%s", path, name);
+
+    //Animation Controller
+    auto animation = tvg::LottieAnimation::gen();
+    auto picture = animation->picture();
+
+    if (picture->load(buf) != tvg::Result::Success) {
+        cout << "Lottie is not supported. Did you enable Lottie Loader?" << endl;
+        return;
+    }
+    
+    canvas->push(tvg::cast(picture));
+    setupSample(animation);
+    
     //image scaling preserving its aspect ratio
     float scale;
     float shiftX = 0.0f, shiftY = 0.0f;
@@ -66,29 +99,54 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     picture->size(&w, &h);
 
     if (w > h) {
-        scale = WIDTH / w;
-        shiftY = (HEIGHT - h * scale) * 0.5f;
+        scale = SIZE / w;
+        shiftY = (SIZE - h * scale) * 0.5f;
     } else {
-        scale = HEIGHT / h;
-        shiftX = (WIDTH - w * scale) * 0.5f;
+        scale = SIZE / h;
+        shiftX = (SIZE - w * scale) * 0.5f;
     }
 
     picture->scale(scale);
-    picture->translate(shiftX, shiftY);
+    picture->translate((counter % NUM_PER_ROW) * SIZE + shiftX, (counter / NUM_PER_ROW) * (HEIGHT / NUM_PER_COL) + shiftY);
 
-    canvas->push(tvg::cast(picture));
+    animations.push_back(std::move(animation));
 
-    //Override slot data
-    if (animation->override(slotJson) == tvg::Result::Success) {
-        canvas->update();
-    } else {
-        cout << "Failed to override the slot" << endl;
-    }
+    cout << "Lottie: " << buf << endl;
+
+    counter++;
+}
+
+void tvgUpdateCmds(Elm_Transit_Effect *effect, Elm_Transit* transit, double progress)
+{
+    auto animation = static_cast<tvg::Animation*>(effect);
+
+    //Update animation frame only when it's changed
+    auto before = ecore_time_get();
+    animation->frame(animation->totalFrame() * progress);
+    auto after = ecore_time_get();
+    updateTime += after - before;
+}
+
+void tvgDrawCmds(tvg::Canvas* canvas)
+{
+    //Background
+    auto shape = tvg::Shape::gen();
+    shape->appendRect(0, 0, WIDTH, HEIGHT);
+    shape->fill(75, 75, 75);
+
+    if (canvas->push(std::move(shape)) != tvg::Result::Success) return;
+
+    eina_file_dir_list(EXAMPLE_DIR"/lottie/extensions", EINA_FALSE, lottieDirCallback, canvas);
 
     //Run animation loop
-    elm_transit_duration_set(transit, animation->duration());
-    elm_transit_repeat_times_set(transit, -1);
-    elm_transit_go(transit);
+    for (auto& animation : animations) {
+        Elm_Transit* transit = elm_transit_add();
+        elm_transit_effect_add(transit, tvgUpdateCmds, animation.get(), nullptr);
+        elm_transit_duration_set(transit, animation->duration());
+        elm_transit_repeat_times_set(transit, -1);
+        elm_transit_go(transit);
+
+    }
 }
 
 
@@ -104,7 +162,9 @@ void tvgSwTest(uint32_t* buffer)
     swCanvas = tvg::SwCanvas::gen();
     swCanvas->target(buffer, WIDTH, WIDTH, HEIGHT, tvg::SwCanvas::ARGB8888);
 
+    canvas = swCanvas.get();
     tvgDrawCmds(swCanvas.get());
+
 }
 
 void drawSwView(void* data, Eo* obj)
@@ -112,20 +172,44 @@ void drawSwView(void* data, Eo* obj)
     //It's not necessary to clear buffer since it has a solid background
     //swCanvas->clear(false);
 
+    //canvas update
+    auto before = ecore_time_get();
+
+    swCanvas->update();
+
+    auto after = ecore_time_get();
+
+    updateTime += (after - before);
+
+    //canvas draw
+    before = ecore_time_get();
+
     if (swCanvas->draw() == tvg::Result::Success) {
         swCanvas->sync();
-        updated = false;
     }
+
+    after = ecore_time_get();
+
+    auto rasterTime = after - before;
+
+    ++cnt;
+
+    accumUpdateTime += updateTime;
+    accumRasterTime += rasterTime;
+    accumTotalTime += (updateTime + rasterTime);
+
+    printf("[%5d]: update = %fs,   raster = %fs,  total = %fs\n", cnt, accumUpdateTime / cnt, accumRasterTime / cnt, accumTotalTime / cnt);
+
+    updateTime = 0;
 }
 
-void transitSwCb(Elm_Transit_Effect *effect, Elm_Transit* transit, double progress)
+Eina_Bool animatorSwCb(void *data)
 {
-    tvgUpdateCmds(swCanvas.get(), animation.get(), progress);
-
-    //Update Efl Canvas
-    Eo* img = (Eo*) effect;
+    Eo* img = (Eo*) data;
     evas_object_image_data_update_add(img, 0, 0, WIDTH, HEIGHT);
     evas_object_image_pixels_dirty_set(img, EINA_TRUE);
+
+    return ECORE_CALLBACK_RENEW;
 }
 
 
@@ -147,11 +231,15 @@ void initGLview(Evas_Object *obj)
 
     glCanvas->target(targetId, WIDTH, HEIGHT);
 
+    canvas = glCanvas.get();
     tvgDrawCmds(glCanvas.get());
+
 }
 
 void drawGLview(Evas_Object *obj)
 {
+    auto before = ecore_time_get();
+
     auto gl = elm_glview_gl_api_get(obj);
     gl->glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     gl->glClear(GL_COLOR_BUFFER_BIT);
@@ -159,12 +247,27 @@ void drawGLview(Evas_Object *obj)
     if (glCanvas->draw() == tvg::Result::Success) {
         glCanvas->sync();
     }
+
+    auto after = ecore_time_get();
+
+    auto rasterTime = after - before;
+
+    ++cnt;
+
+    accumUpdateTime += updateTime;
+    accumRasterTime += rasterTime;
+    accumTotalTime += (updateTime + rasterTime);
+
+    printf("[%5d]: update = %fs,   raster = %fs,  total = %fs\n", cnt, accumUpdateTime / cnt, accumRasterTime / cnt, accumTotalTime / cnt);
+
+    updateTime = 0;
 }
 
-void transitGlCb(Elm_Transit_Effect *effect, Elm_Transit* transit, double progress)
+Eina_Bool animatorGlCb(void *data)
 {
-    tvgUpdateCmds(glCanvas.get(), animation.get(), progress);
-    elm_glview_changed_set((Evas_Object*)effect);
+    elm_glview_changed_set((Evas_Object*)data);
+
+    return ECORE_CALLBACK_RENEW;
 }
 
 
@@ -185,28 +288,24 @@ int main(int argc, char **argv)
     if (threads > 0) --threads;    //Allow the designated main thread capacity
 
     //Initialize ThorVG Engine
-    if (tvg::Initializer::init(threads) == tvg::Result::Success) {
+    if (tvg::Initializer::init(4) == tvg::Result::Success) {
 
         elm_init(argc, argv);
 
-        transit = elm_transit_add();
-
         if (tvgEngine == tvg::CanvasEngine::Sw) {
-            auto view = createSwView(1024, 1024);
-            elm_transit_effect_add(transit, transitSwCb, view, nullptr);
+            auto view = createSwView(1280, 1280);
+            ecore_animator_add(animatorSwCb, view);
         } else {
-            auto view = createGlView(1024, 1024);
-            elm_transit_effect_add(transit, transitGlCb, view, nullptr);
+            auto view = createGlView(1280, 1280);
+            ecore_animator_add(animatorGlCb, view);
         }
 
         elm_run();
-
-        elm_transit_del(transit);
-
         elm_shutdown();
 
         //Terminate ThorVG Engine
         tvg::Initializer::term();
+
     } else {
         cout << "engine is not supported" << endl;
     }
