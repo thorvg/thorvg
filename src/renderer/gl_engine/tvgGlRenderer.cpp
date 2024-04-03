@@ -57,7 +57,7 @@ bool GlRenderer::clear()
 
 bool GlRenderer::target(int32_t id, uint32_t w, uint32_t h)
 {
-    assert(w > 0 && h > 0);
+    if (id == GL_INVALID_VALUE || w == 0 || h == 0) return false;
 
     surface.stride = w;
     surface.w = w;
@@ -69,6 +69,11 @@ bool GlRenderer::target(int32_t id, uint32_t w, uint32_t h)
     mViewport.h = surface.h;
 
     mTargetFboId = static_cast<GLint>(id);
+
+    //TODO: It's not allow to draw onto the main surface. Need to confirm the policy.
+    if (mTargetFboId == 0) {
+        GL_CHECK(glGetIntegerv(GL_FRAMEBUFFER_BINDING, &mTargetFboId));
+    }
 
     mRootTarget = make_unique<GlRenderTarget>(surface.w, surface.h);
     mRootTarget->init(mTargetFboId);
