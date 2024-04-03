@@ -30,7 +30,7 @@ jobs:
         NDK: ${{ steps.setup-ndk.outputs.ndk-path }}
         API: 21
       run: |
-        sed -e "s|NDK|$NDK|g" -e "s|API|$API|g" ./cross/android_x86_64.txt > /tmp/android_cross.txt
+        sed -e "s|NDK|$NDK|g" -e "s|HOST_TAG|linux-x86_64|g" -e "s|API|$API|g" ./cross/android_x86_64.txt > /tmp/android_cross.txt
         meson setup build -Dlog=true -Dloaders="all" -Dsavers="all" -Dbindings="capi" --cross-file /tmp/android_cross.txt
         sudo ninja -C build install
 
@@ -60,7 +60,7 @@ jobs:
         NDK: ${{ steps.setup-ndk.outputs.ndk-path }}
         API: 21
       run: |
-        sed -e "s|NDK|$NDK|g" -e "s|API|$API|g" ./cross/android_aarch64.txt > /tmp/android_cross.txt
+        sed -e "s|NDK|$NDK|g" -e "s|HOST_TAG|linux-x86_64|g" -e "s|API|$API|g" ./cross/android_aarch64.txt > /tmp/android_cross.txt
         meson setup build -Dlog=true -Dloaders="all" -Dsavers="all" -Dbindings="capi" --cross-file /tmp/android_cross.txt
         sudo ninja -C build install
 
