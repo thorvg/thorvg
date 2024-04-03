@@ -33,6 +33,7 @@ static bool _outlineBegin(SwOutline& outline)
     //Make a contour if lineTo/curveTo without calling close or moveTo beforehand.
     if (outline.pts.empty()) return false;
     outline.cntrs.push(outline.pts.count - 1);
+    outline.closed.push(false);
     outline.pts.push(outline.pts[outline.cntrs.last()]);
     outline.types.push(SW_CURVE_TYPE_POINT);
     return false;
