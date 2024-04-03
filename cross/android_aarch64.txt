@@ -1,13 +1,16 @@
+# Android developer (Use the NDK with other build systems)
+# https://developer.android.com/ndk/guides/other_build_systems
+
 [binaries]
-cpp     = 'NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-androidAPI-clang++'
-ar      = 'NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android-ar'
-as      = 'NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android-as'
-ranlib  = 'NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android-ranlib'
-ld      = 'NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android-ld'
-strip   = 'NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android-strip'
+cpp     = 'NDK/toolchains/llvm/prebuilt/HOST_TAG/bin/aarch64-linux-androidAPI-clang++'
+ar      = 'NDK/toolchains/llvm/prebuilt/HOST_TAG/bin/llvm-ar'
+as      = 'NDK/toolchains/llvm/prebuilt/HOST_TAG/bin/llvm-as'
+ranlib  = 'NDK/toolchains/llvm/prebuilt/HOST_TAG/bin/llvm-ranlib'
+ld      = 'NDK/toolchains/llvm/prebuilt/HOST_TAG/bin/ld'
+strip   = 'NDK/toolchains/llvm/prebuilt/HOST_TAG/bin/llvm-strip'
 
 [properties]
-sys_root = 'NDK/sysroot'
+sys_root = 'NDK/toolchains/llvm/prebuilt/HOST_TAG/sysroot'
 
 [host_machine]
 system = 'android'
