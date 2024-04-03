@@ -383,10 +383,7 @@ struct LottieGradient : LottieObject
     uint32_t populate(ColorStop& color)
     {
         colorStops.populated = true;
-        if (!color.input || color.input->count % 4 != 0) {
-            TVGERR("LOTTIE", "The given colorstop value is not correct!");
-            return 0;
-        }
+        if (!color.input) return 0;
 
         uint32_t alphaCnt = (color.input->count - (colorStops.count * 4)) / 2;
         Array<Fill::ColorStop> output(colorStops.count + alphaCnt);
@@ -434,7 +431,7 @@ struct LottieGradient : LottieObject
         }
 
         //color remains
-        while (cidx < clast) {
+        while (cidx + 3 < clast) {
             cs.offset = (*color.input)[cidx];
             cs.r = lroundf((*color.input)[cidx + 1] * 255.0f);
             cs.g = lroundf((*color.input)[cidx + 2] * 255.0f);
