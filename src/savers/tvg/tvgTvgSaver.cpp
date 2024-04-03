@@ -764,7 +764,7 @@ bool TvgSaver::close()
 {
     this->done();
 
-    delete(paint);
+    if (paint && P(paint)->refCnt == 0) delete(paint);
     paint = nullptr;
 
     free(path);

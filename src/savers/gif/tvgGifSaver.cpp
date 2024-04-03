@@ -99,7 +99,8 @@ bool GifSaver::close()
     delete(bg);
     bg = nullptr;
 
-    delete(animation);
+    //animation holds the picture, it must be 1 at the bottom.
+    if (animation && PP(animation->picture())->refCnt <= 1) delete(animation);
     animation = nullptr;
 
     free(path);
@@ -126,7 +127,7 @@ bool GifSaver::save(Animation* animation, Paint* bg, const string& path, TVG_UNU
     auto picture = animation->picture();
     float x, y;
     x = y = 0;
-    picture->bounds(&x, &y, &vsize[0], &vsize[1], false);
+    picture->bounds(&x, &y, &vsize[0], &vsize[1], true);
 
     //cut off the negative space
     if (x < 0) vsize[0] += x;
