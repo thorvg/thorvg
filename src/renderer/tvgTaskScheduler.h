@@ -68,7 +68,7 @@ private:
         cv.notify_one();
     }
 
-    void prepare()
+    void prepare() noexcept
     {
         ready = false;
         pending = true;

@@ -82,12 +82,13 @@ enum class SvgFillFlags
 
 constexpr bool operator &(SvgFillFlags a, SvgFillFlags b)
 {
-    return int(a) & int(b);
+    return static_cast<int>(a) & static_cast<int>(b);
 }
 
 constexpr SvgFillFlags operator |(SvgFillFlags a, SvgFillFlags b)
 {
-    return SvgFillFlags(int(a) | int(b));
+    return static_cast<SvgFillFlags>((static_cast<int>(a) | static_cast<int>(b)));
+
 }
 
 enum class SvgStrokeFlags
@@ -106,12 +107,13 @@ enum class SvgStrokeFlags
 
 constexpr bool operator &(SvgStrokeFlags a, SvgStrokeFlags b)
 {
-    return int(a) & int(b);
+    return static_cast<int>(a) & static_cast<int>(b);
+
 }
 
 constexpr SvgStrokeFlags operator |(SvgStrokeFlags a, SvgStrokeFlags b)
 {
-    return SvgStrokeFlags(int(a) | int(b));
+    return static_cast<SvgStrokeFlags>((static_cast<int>(a) | static_cast<int>(b)));
 }
 
 
@@ -146,12 +148,13 @@ enum class SvgStyleFlags
 
 constexpr bool operator &(SvgStyleFlags a, SvgStyleFlags b)
 {
-    return int(a) & int(b);
+    return static_cast<int>(a) & static_cast<int>(b);
 }
 
 constexpr SvgStyleFlags operator |(SvgStyleFlags a, SvgStyleFlags b)
 {
-    return SvgStyleFlags(int(a) | int(b));
+    return static_cast<SvgStyleFlags>(static_cast<int>(a) | static_cast<int>(b));
+
 }
 
 enum class SvgStopStyleFlags
@@ -163,12 +166,12 @@ enum class SvgStopStyleFlags
 
 constexpr bool operator &(SvgStopStyleFlags a, SvgStopStyleFlags b)
 {
-    return int(a) & int(b);
+    return static_cast<int>(a) & static_cast<int>(b);
 }
 
 constexpr SvgStopStyleFlags operator |(SvgStopStyleFlags a, SvgStopStyleFlags b)
 {
-    return SvgStopStyleFlags(int(a) | int(b));
+    return static_cast<SvgStopStyleFlags>(static_cast<int>(a) | static_cast<int>(b));
 }
 
 enum class SvgGradientFlags
@@ -190,12 +193,12 @@ enum class SvgGradientFlags
 
 constexpr bool operator &(SvgGradientFlags a, SvgGradientFlags b)
 {
-    return int(a) & int(b);
+    return  static_cast<int>(a) & static_cast<int>(b);
 }
 
 constexpr SvgGradientFlags operator |(SvgGradientFlags a, SvgGradientFlags b)
 {
-    return SvgGradientFlags(int(a) | int(b));
+    return static_cast<SvgGradientFlags>((static_cast<int>(a) | static_cast<int>(b)));
 }
 
 enum class SvgFillRule
@@ -236,12 +239,12 @@ constexpr bool operator &(SvgViewFlag a, SvgViewFlag b)
 
 constexpr SvgViewFlag operator |(SvgViewFlag a, SvgViewFlag b)
 {
-    return SvgViewFlag(int(a) | int(b));
+    return static_cast<SvgViewFlag>(static_cast<int>(a) | static_cast<int>(b));
 }
 
 constexpr SvgViewFlag operator ^(SvgViewFlag a, SvgViewFlag b)
 {
-    return SvgViewFlag(int(a) ^ int(b));
+    return static_cast<SvgViewFlag>(static_cast<int>(a) ^ static_cast<int>(b));
 }
 
 enum class AspectRatioAlign

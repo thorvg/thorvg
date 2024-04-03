@@ -60,7 +60,7 @@ struct LoadModule
         return true;
     }
 
-    bool cached()
+    bool cached() const
     {
         if (hashkey) return true;
         return false;

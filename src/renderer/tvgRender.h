@@ -198,13 +198,13 @@ struct RenderShape
         if (a) *a = color[3];
     }
 
-    float strokeWidth() const
+    float strokeWidth() const noexcept
     {
         if (!stroke) return 0;
         return stroke->width;
     }
 
-    bool strokeTrim() const
+    bool strokeTrim() const noexcept
     {
         if (!stroke) return false;
         if (stroke->trim.begin == 0.0f && stroke->trim.end == 1.0f) return false;
@@ -212,7 +212,7 @@ struct RenderShape
         return true;
     }
 
-    bool strokeFill(uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a) const
+    bool strokeFill(uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a) const 
     {
         if (!stroke) return false;
 
@@ -224,13 +224,13 @@ struct RenderShape
         return true;
     }
 
-    const Fill* strokeFill() const
+    const Fill* strokeFill() const noexcept
     {
         if (!stroke) return nullptr;
         return stroke->fill;
     }
 
-    uint32_t strokeDash(const float** dashPattern, float* offset) const
+    uint32_t strokeDash(const float** dashPattern, float* offset) const noexcept
     {
         if (!stroke) return 0;
         if (dashPattern) *dashPattern = stroke->dashPattern;
@@ -238,23 +238,23 @@ struct RenderShape
         return stroke->dashCnt;
     }
 
-    StrokeCap strokeCap() const
+    StrokeCap strokeCap() const noexcept
     {
         if (!stroke) return StrokeCap::Square;
         return stroke->cap;
     }
 
-    StrokeJoin strokeJoin() const
+    StrokeJoin strokeJoin() const noexcept
     {
         if (!stroke) return StrokeJoin::Bevel;
         return stroke->join;
     }
 
-    float strokeMiterlimit() const
+    float strokeMiterlimit() const noexcept
     {
         if (!stroke) return 4.0f;
 
-        return stroke->miterlimit;;
+        return stroke->miterlimit;
     }
 };
 

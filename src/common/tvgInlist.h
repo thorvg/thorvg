@@ -27,8 +27,8 @@ namespace tvg {
 
 //NOTE: declare this in your list item
 #define INLIST_ITEM(T) \
-    T* prev; \
-    T* next
+    T* prev = nullptr; \
+    T* next = nullptr
 
 template<typename T>
 struct Inlist

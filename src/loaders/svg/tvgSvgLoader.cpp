@@ -647,15 +647,15 @@ static bool _hslToRgb(float hue, float satuation, float brightness, uint8_t* red
         }
     }
 
-    i = static_cast<uint8_t>(_red * 255.0);
+    i = static_cast<uint8_t>(_red * 255.0f);
     f = (_red * 255.0) - i;
     _red = (f <= 0.5) ? i : (i + 1);
 
-    i = static_cast<uint8_t>(_green * 255.0);
+    i = static_cast<uint8_t>(_green * 255.0f);
     f = (_green * 255.0) - i;
     _green = (f <= 0.5) ? i : (i + 1);
 
-    i = static_cast<uint8_t>(_blue * 255.0);
+    i = static_cast<uint8_t>(_blue * 255.0f);
     f = (_blue * 255.0) - i;
     _blue = (f <= 0.5) ? i : (i + 1);
 
@@ -2040,7 +2040,7 @@ static SvgNode* _findNodeById(SvgNode *node, const char* id)
 }
 
 
-static SvgNode* _findParentById(SvgNode* node, char* id, SvgNode* doc)
+static SvgNode* _findParentById(SvgNode* node, char* id, SvgNode* doc) noexcept
 {
     SvgNode *parent = node->parent;
     while (parent != nullptr && parent != doc) {
@@ -2181,7 +2181,7 @@ FIND_FACTORY(Group, groupTags)
 FIND_FACTORY(Graphics, graphicsTags)
 
 
-FillSpread _parseSpreadValue(const char* value)
+FillSpread _parseSpreadValue(const char* value) noexcept
 {
     auto spread = FillSpread::Pad;
 
@@ -2272,7 +2272,7 @@ static void _recalcRadialFrAttr(SvgLoaderData* loader, SvgRadialGradient* radial
 }
 
 
-static void _recalcRadialRAttr(SvgLoaderData* loader, SvgRadialGradient* radial, bool userSpace)
+static void _recalcRadialRAttr(SvgLoaderData* loader, SvgRadialGradient* radial, const bool userSpace)
 {
     // scaling factor based on the Units paragraph from : https://www.w3.org/TR/2015/WD-SVG2-20150915/coords.html
     if (userSpace && !radial->isRPercentage) radial->r = radial->r / (sqrtf(powf(loader->svgParse->global.h, 2) + powf(loader->svgParse->global.w, 2)) / sqrtf(2.0));
@@ -3859,9 +3859,9 @@ bool SvgLoader::resize(Paint* paint, float w, float h)
 {
     if (!paint) return false;
 
-    auto sx = w / this->w;
-    auto sy = h / this->h;
-    Matrix m = {sx, 0, 0, 0, sy, 0, 0, 0, 1};
+    const auto sx = w / this->w;
+    const auto sy = h / this->h;
+    const Matrix m = {sx, 0, 0, 0, sy, 0, 0, 0, 1};
     paint->transform(m);
 
     return true;
