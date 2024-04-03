@@ -1675,6 +1675,7 @@ public:
      * @param[in] h The height (in pixels) of the raster image.
      *
      * @warning This API is experimental and not officially supported. It may be modified or removed in future versions.
+     * @warning Drawing on the main surface is currently not permitted. If the identifier (@p id) is set to @c 0, the operation will be aborted.
      *
      * @note Currently, this only allows the GL_RGBA8 color space format.
      * @note Experimental API
