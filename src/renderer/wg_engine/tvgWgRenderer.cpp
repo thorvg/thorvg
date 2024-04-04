@@ -48,11 +48,15 @@ void WgRenderer::initialize()
     mOpacityPool.initialize(mContext);
     mBlendMethodPool.initialize(mContext);
     mCompositeMethodPool.initialize(mContext);
+    WgMeshDataGroup::MeshDataPool = new WgMeshDataPool();
 }
 
 
 void WgRenderer::release()
 {
+    mRenderDataShapePool.release(mContext);
+    WgMeshDataGroup::MeshDataPool->release(mContext);
+    delete WgMeshDataGroup::MeshDataPool;
     mCompositorStack.clear();
     mRenderStorageStack.clear();
     mRenderStoragePool.release(mContext);
@@ -74,7 +78,7 @@ RenderData WgRenderer::prepare(const RenderShape& rshape, RenderData data, const
     // get or create render data shape
     auto renderDataShape = (WgRenderDataShape*)data;
     if (!renderDataShape)
-        renderDataShape = new WgRenderDataShape();
+        renderDataShape = mRenderDataShapePool.allocate(mContext);
     
     // update geometry
     if (flags & (RenderUpdateFlag::Path | RenderUpdateFlag::Stroke))
@@ -211,7 +215,12 @@ bool WgRenderer::postRender()
 void WgRenderer::dispose(RenderData data)
 {
     auto renderData = (WgRenderDataPaint*)data;
-    if (renderData) renderData->release(mContext);
+    if (renderData) {
+        if (renderData->identifier() == TVG_CLASS_ID_SHAPE)
+            mRenderDataShapePool.free(mContext, (WgRenderDataShape*)renderData);
+        else
+            renderData->release(mContext);
+    }
 }
 
 

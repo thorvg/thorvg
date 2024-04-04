@@ -69,6 +69,7 @@ private:
     WgBindGroupOpacityPool mOpacityPool;
     WgBindGroupBlendMethodPool mBlendMethodPool;
     WgBindGroupCompositeMethodPool mCompositeMethodPool;
+    WgRenderDataShapePool mRenderDataShapePool;
 
     // render tree stacks
     Array<Compositor*> mCompositorStack;
