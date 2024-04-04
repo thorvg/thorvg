@@ -178,7 +178,6 @@ static LoadModule* _findByPath(const string& path)
     if (!ext.compare("tvg")) return _find(FileType::Tvg);
     if (!ext.compare("svg")) return _find(FileType::Svg);
     if (!ext.compare("json")) return _find(FileType::Lottie);
-    if (!ext.compare("lottie")) return _find(FileType::Lottie);
     if (!ext.compare("png")) return _find(FileType::Png);
     if (!ext.compare("jpg")) return _find(FileType::Jpg);
     if (!ext.compare("webp")) return _find(FileType::Webp);
