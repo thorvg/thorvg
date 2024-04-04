@@ -30,14 +30,6 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-static bool _checkDotLottie(const char *str)
-{
-    //check the .Lottie signature.
-    if (str[0] == 0x50 && str[1] == 0x4B && str[2] == 0x03 && str[3] == 0x04) return true;
-    else return false;
-}
-
-
 static float _str2float(const char* str, int len)
 {
     auto tmp = strDuplicate(str, len);
@@ -197,13 +189,6 @@ bool LottieLoader::header()
 
 bool LottieLoader::open(const char* data, uint32_t size, const std::string& rpath, bool copy)
 {
-    //If the format is dotLottie
-    auto dotLottie = _checkDotLottie(data);
-    if (dotLottie) {
-        TVGLOG("LOTTIE", "Requested .Lottie Format, Not Supported yet.");
-        return false;
-    }
-
     if (copy) {
         content = (char*)malloc(size);
         if (!content) return false;
@@ -244,13 +229,6 @@ bool LottieLoader::open(const string& path)
     content[size] = '\0';
 
     fclose(f);
-
-    //If the format is dotLottie
-    auto dotLottie = _checkDotLottie(content);
-    if (dotLottie) {
-        TVGLOG("LOTTIE", "Requested .Lottie Format, Not Supported yet.");
-        return false;
-    }
 
     this->dirName = strDirname(path.c_str());
     this->content = content;
