@@ -204,30 +204,6 @@ WGPUBuffer WgContext::createBuffer(WGPUBufferUsageFlags usage, uint64_t size,cha
 }
 
 
-void WgContext::createOrUpdateBuffer(WGPUBuffer& buffer, WGPUBufferUsageFlags usage, const void *data, uint64_t size, char const * label)
-{
-    if ((buffer) && (wgpuBufferGetSize(buffer) >= size)) {
-        // update data in existing buffer
-        wgpuQueueWriteBuffer(queue, buffer, 0, data, size);
-    } else {
-        // create new buffer and upload data
-        releaseBuffer(buffer);
-        WGPUBufferDescriptor bufferDesc{};
-        bufferDesc.nextInChain = nullptr;
-        bufferDesc.label = label;
-        bufferDesc.usage = usage;
-        bufferDesc.size = size;
-        bufferDesc.mappedAtCreation = true;
-        buffer = wgpuDeviceCreateBuffer(device, &bufferDesc);
-        assert(buffer);
-        void* buff = wgpuBufferGetMappedRange(buffer, 0, size);
-        assert(buff);
-        memcpy(buff, data, size);
-        wgpuBufferUnmap(buffer);
-    }
-}
-
-
 void WgContext::releaseSampler(WGPUSampler& sampler)
 {
     if (sampler) {
@@ -264,6 +240,56 @@ void WgContext::releaseBuffer(WGPUBuffer& buffer)
         wgpuBufferRelease(buffer);
         buffer = nullptr;
     }
+}
+
+
+void WgContext::allocateVertexBuffer(WGPUBuffer& buffer, const void *data, uint64_t size)
+{
+    if ((buffer) && (wgpuBufferGetSize(buffer) >= size))
+        wgpuQueueWriteBuffer(queue, buffer, 0, data, size);
+    else {
+        // create new buffer and upload data
+        releaseBuffer(buffer);
+        WGPUBufferDescriptor bufferDesc{};
+        bufferDesc.nextInChain = nullptr;
+        bufferDesc.label = "The vertex buffer";
+        bufferDesc.usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_Vertex;
+        bufferDesc.size = size > WG_VERTEX_BUFFER_MIN_SIZE ? size : WG_VERTEX_BUFFER_MIN_SIZE;
+        bufferDesc.mappedAtCreation = false;
+        buffer = wgpuDeviceCreateBuffer(device, &bufferDesc);
+        wgpuQueueWriteBuffer(queue, buffer, 0, data, size);
+    }
+}
+
+
+void WgContext::allocateIndexBuffer(WGPUBuffer& buffer, const void *data, uint64_t size)
+{
+    if ((buffer) && (wgpuBufferGetSize(buffer) >= size))
+        wgpuQueueWriteBuffer(queue, buffer, 0, data, size);
+    else {
+        // create new buffer and upload data
+        releaseBuffer(buffer);
+        WGPUBufferDescriptor bufferDesc{};
+        bufferDesc.nextInChain = nullptr;
+        bufferDesc.label = "The index buffer";
+        bufferDesc.usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_Index;
+        bufferDesc.size = size > WG_INDEX_BUFFER_MIN_SIZE ? size : WG_INDEX_BUFFER_MIN_SIZE;
+        bufferDesc.mappedAtCreation = false;
+        buffer = wgpuDeviceCreateBuffer(device, &bufferDesc);
+        wgpuQueueWriteBuffer(queue, buffer, 0, data, size);
+    }
+}
+
+
+void WgContext::releaseVertexBuffer(WGPUBuffer& buffer)
+{
+    releaseBuffer(buffer);
+}
+
+
+void WgContext::releaseIndexBuffer(WGPUBuffer& buffer)
+{
+    releaseBuffer(buffer);
 }
 
 
