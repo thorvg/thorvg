@@ -28,6 +28,9 @@
 #include "tvgCommon.h"
 #include "tvgRender.h"
 
+#define WG_VERTEX_BUFFER_MIN_SIZE 2048
+#define WG_INDEX_BUFFER_MIN_SIZE 2048
+
 enum class WgPipelineBlendType {
     Src = 0, // S
     Normal,  // (Sa * S) + (255 - Sa) * D
@@ -64,12 +67,16 @@ struct WgContext {
     WGPUTexture createTexture2dMS(WGPUTextureUsageFlags usage, WGPUTextureFormat format, uint32_t width, uint32_t height, uint32_t sc, char const * label);
     WGPUTextureView createTextureView2d(WGPUTexture texture, char const * label);
     WGPUBuffer createBuffer(WGPUBufferUsageFlags usage, uint64_t size, char const * label);
-    void createOrUpdateBuffer(WGPUBuffer& buffer, WGPUBufferUsageFlags usage, const void *data, uint64_t size, char const * label);
 
     void releaseSampler(WGPUSampler& sampler);
     void releaseTexture(WGPUTexture& texture);
     void releaseTextureView(WGPUTextureView& textureView);
     void releaseBuffer(WGPUBuffer& buffer);
+
+    void allocateVertexBuffer(WGPUBuffer& buffer, const void *data, uint64_t size);
+    void allocateIndexBuffer(WGPUBuffer& buffer, const void *data, uint64_t size);
+    void releaseVertexBuffer(WGPUBuffer& buffer);
+    void releaseIndexBuffer(WGPUBuffer& buffer);
 };
 
 struct WgBindGroup

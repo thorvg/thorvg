@@ -98,15 +98,19 @@ void WgBindGroupPaint::releaseLayout()
 
 void WgBindGroupPaint::initialize(WGPUDevice device, WGPUQueue queue, WgShaderTypeMat4x4f& uModelMat, WgShaderTypeBlendSettings& uBlendSettings)
 {
-    release();
-    uBufferModelMat = createBuffer(device, queue, &uModelMat, sizeof(uModelMat));
-    uBufferBlendSettings = createBuffer(device, queue, &uBlendSettings, sizeof(uBlendSettings));
-    const WGPUBindGroupEntry bindGroupEntries[] {
-        makeBindGroupEntryBuffer(0, uBufferModelMat),
-        makeBindGroupEntryBuffer(1, uBufferBlendSettings)
-    };
-    mBindGroup = createBindGroup(device, getLayout(device), bindGroupEntries, 2);
-    assert(mBindGroup);
+    if (!uBufferModelMat && !uBufferBlendSettings && !mBindGroup) {
+        uBufferModelMat = createBuffer(device, queue, &uModelMat, sizeof(uModelMat));
+        uBufferBlendSettings = createBuffer(device, queue, &uBlendSettings, sizeof(uBlendSettings));
+        const WGPUBindGroupEntry bindGroupEntries[] {
+            makeBindGroupEntryBuffer(0, uBufferModelMat),
+            makeBindGroupEntryBuffer(1, uBufferBlendSettings)
+        };
+        mBindGroup = createBindGroup(device, getLayout(device), bindGroupEntries, 2);
+        assert(mBindGroup);
+        return;
+    }
+    wgpuQueueWriteBuffer(queue, uBufferModelMat, 0, &uModelMat, sizeof(uModelMat));
+    wgpuQueueWriteBuffer(queue, uBufferBlendSettings, 0, &uBlendSettings, sizeof(uBlendSettings));
 }
 
 
@@ -138,13 +142,16 @@ void WgBindGroupSolidColor::releaseLayout()
 
 void WgBindGroupSolidColor::initialize(WGPUDevice device, WGPUQueue queue, WgShaderTypeSolidColor &uSolidColor)
 {
-    release();
-    uBufferSolidColor = createBuffer(device, queue, &uSolidColor, sizeof(uSolidColor));
-    const WGPUBindGroupEntry bindGroupEntries[] {
-        makeBindGroupEntryBuffer(0, uBufferSolidColor)
-    };
-    mBindGroup = createBindGroup(device, getLayout(device), bindGroupEntries, 1);
-    assert(mBindGroup);
+    if (!uBufferSolidColor && !mBindGroup) {
+        uBufferSolidColor = createBuffer(device, queue, &uSolidColor, sizeof(uSolidColor));
+        const WGPUBindGroupEntry bindGroupEntries[] {
+            makeBindGroupEntryBuffer(0, uBufferSolidColor)
+        };
+        mBindGroup = createBindGroup(device, getLayout(device), bindGroupEntries, 1);
+        assert(mBindGroup);
+        return;
+    }
+    wgpuQueueWriteBuffer(queue, uBufferSolidColor, 0, &uSolidColor, sizeof(uSolidColor));
 }
 
 
@@ -175,13 +182,16 @@ void WgBindGroupLinearGradient::releaseLayout()
 
 void WgBindGroupLinearGradient::initialize(WGPUDevice device, WGPUQueue queue, WgShaderTypeLinearGradient &uLinearGradient)
 {
-    release();
-    uBufferLinearGradient = createBuffer(device, queue, &uLinearGradient, sizeof(uLinearGradient));
-    const WGPUBindGroupEntry bindGroupEntries[] {
-        makeBindGroupEntryBuffer(0, uBufferLinearGradient)
-    };
-    mBindGroup = createBindGroup(device, getLayout(device), bindGroupEntries, 1);
-    assert(mBindGroup);
+    if (!uBufferLinearGradient && !mBindGroup) {
+        uBufferLinearGradient = createBuffer(device, queue, &uLinearGradient, sizeof(uLinearGradient));
+        const WGPUBindGroupEntry bindGroupEntries[] {
+            makeBindGroupEntryBuffer(0, uBufferLinearGradient)
+        };
+        mBindGroup = createBindGroup(device, getLayout(device), bindGroupEntries, 1);
+        assert(mBindGroup);
+        return;
+    }
+    wgpuQueueWriteBuffer(queue, uBufferLinearGradient, 0, &uLinearGradient, sizeof(uLinearGradient));
 }
 
 
@@ -212,13 +222,16 @@ void WgBindGroupRadialGradient::releaseLayout()
 
 void WgBindGroupRadialGradient::initialize(WGPUDevice device, WGPUQueue queue, WgShaderTypeRadialGradient &uRadialGradient)
 {
-    release();
-    uBufferRadialGradient = createBuffer(device, queue, &uRadialGradient, sizeof(uRadialGradient));
-    const WGPUBindGroupEntry bindGroupEntries[] {
-        makeBindGroupEntryBuffer(0, uBufferRadialGradient)
-    };
-    mBindGroup = createBindGroup(device, getLayout(device), bindGroupEntries, 1);
-    assert(mBindGroup);
+    if (!uBufferRadialGradient && !mBindGroup) {
+        uBufferRadialGradient = createBuffer(device, queue, &uRadialGradient, sizeof(uRadialGradient));
+        const WGPUBindGroupEntry bindGroupEntries[] {
+            makeBindGroupEntryBuffer(0, uBufferRadialGradient)
+        };
+        mBindGroup = createBindGroup(device, getLayout(device), bindGroupEntries, 1);
+        assert(mBindGroup);
+        return;
+    }
+    wgpuQueueWriteBuffer(queue, uBufferRadialGradient, 0, &uRadialGradient, sizeof(uRadialGradient));
 }
 
 

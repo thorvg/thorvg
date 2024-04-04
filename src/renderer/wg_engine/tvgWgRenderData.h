@@ -37,7 +37,19 @@ struct WgMeshData {
     void release(WgContext& context);
 };
 
+class WgMeshDataPool {
+private:
+    Array<WgMeshData*> mPool;
+    Array<WgMeshData*> mList;
+public:
+    WgMeshData* allocate(WgContext& context);
+    void free(WgContext& context, WgMeshData* meshData);
+    void release(WgContext& context);
+};
+
 struct WgMeshDataGroup {
+    static WgMeshDataPool* MeshDataPool;
+
     Array<WgMeshData*> meshes{};
 
     void update(WgContext& context, WgGeometryDataGroup* geometryDataGroup);
@@ -69,6 +81,7 @@ struct WgRenderDataPaint
 {
     WgBindGroupPaint bindGroupPaint{};
 
+    virtual ~WgRenderDataPaint() {};
     virtual void release(WgContext& context);
     virtual uint32_t identifier() { return TVG_CLASS_ID_UNDEFINED; };
 };
@@ -87,6 +100,16 @@ struct WgRenderDataShape: public WgRenderDataPaint
     void releaseMeshes(WgContext& context);
     void release(WgContext& context) override;
     uint32_t identifier() override { return TVG_CLASS_ID_SHAPE; };
+};
+
+class WgRenderDataShapePool {
+private:
+    Array<WgRenderDataShape*> mPool;
+    Array<WgRenderDataShape*> mList;
+public:
+    WgRenderDataShape* allocate(WgContext& context);
+    void free(WgContext& context, WgRenderDataShape* dataShape);
+    void release(WgContext& context);
 };
 
 struct WgRenderDataPicture: public WgRenderDataPaint

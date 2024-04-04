@@ -53,22 +53,13 @@ void WgMeshData::update(WgContext& context, WgGeometryData* geometryData){
     indexCount = geometryData->indexes.count;
     // buffer position data create and write
     if (geometryData->positions.count > 0)
-        context.createOrUpdateBuffer(
-            bufferPosition, WGPUBufferUsage_CopyDst | WGPUBufferUsage_Vertex,
-            &geometryData->positions[0], vertexCount * sizeof(float) * 2,
-            "Buffer position geometry data");
+        context.allocateVertexBuffer(bufferPosition, &geometryData->positions[0], vertexCount * sizeof(float) * 2);
     // buffer tex coords data create and write
     if (geometryData->texCoords.count > 0)
-        context.createOrUpdateBuffer(
-            bufferTexCoord, WGPUBufferUsage_CopyDst | WGPUBufferUsage_Vertex,
-            &geometryData->texCoords[0], vertexCount * sizeof(float) * 2,
-            "Buffer tex coords geometry data");
+        context.allocateVertexBuffer(bufferTexCoord, &geometryData->texCoords[0], vertexCount * sizeof(float) * 2);
     // buffer index data create and write
     if (geometryData->indexes.count > 0)
-        context.createOrUpdateBuffer(
-            bufferIndex, WGPUBufferUsage_CopyDst | WGPUBufferUsage_Index,
-            &geometryData->indexes[0], indexCount * sizeof(uint32_t),
-            "Buffer index geometry data");
+        context.allocateIndexBuffer(bufferIndex, &geometryData->indexes[0], indexCount * sizeof(uint32_t));
 };
 
 
@@ -78,6 +69,43 @@ void WgMeshData::release(WgContext& context)
     context.releaseBuffer(bufferTexCoord);
     context.releaseBuffer(bufferPosition);
 };
+
+
+//***********************************************************************
+// WgMeshDataPool
+//***********************************************************************
+
+WgMeshData* WgMeshDataPool::allocate(WgContext& context)
+{
+    WgMeshData* meshData{};
+    if (mPool.count > 0) {
+        meshData = mPool.last();
+        mPool.pop();
+    } else {
+        meshData = new WgMeshData();
+        mList.push(meshData);
+    }
+    return meshData;
+}
+
+
+void WgMeshDataPool::free(WgContext& context, WgMeshData* meshData)
+{
+    mPool.push(meshData);
+}
+
+
+void WgMeshDataPool::release(WgContext& context)
+{
+    for (uint32_t i = 0; i < mList.count; i++) {
+        mList[i]->release(context);
+        delete mList[i];
+    }
+    mPool.clear();
+    mList.clear();
+}
+
+WgMeshDataPool* WgMeshDataGroup::MeshDataPool = nullptr;
 
 //***********************************************************************
 // WgMeshDataGroup
@@ -89,7 +117,7 @@ void WgMeshDataGroup::update(WgContext& context, WgGeometryDataGroup* geometryDa
     assert(geometryDataGroup);
     for (uint32_t i = 0; i < geometryDataGroup->geometries.count; i++) {
         if (geometryDataGroup->geometries[i]->positions.count > 2) {
-            meshes.push(new WgMeshData());
+            meshes.push(MeshDataPool->allocate(context));
             meshes.last()->update(context, geometryDataGroup->geometries[i]);
         }
     }
@@ -99,9 +127,10 @@ void WgMeshDataGroup::update(WgContext& context, WgGeometryDataGroup* geometryDa
 void WgMeshDataGroup::release(WgContext& context)
 {
     for (uint32_t i = 0; i < meshes.count; i++)
-        meshes[i]->release(context);
+        MeshDataPool->free(context, meshes[i]);
     meshes.clear();
 };
+
 
 //***********************************************************************
 // WgImageData
@@ -223,8 +252,6 @@ void WgRenderDataShape::updateMeshes(WgContext &context, const RenderShape &rsha
 
 void WgRenderDataShape::releaseMeshes(WgContext &context)
 {
-    meshBBoxStrokes.release(context);
-    meshBBoxShapes.release(context);
     meshGroupStrokes.release(context);
     meshGroupShapes.release(context);
 }
@@ -232,11 +259,47 @@ void WgRenderDataShape::releaseMeshes(WgContext &context)
 
 void WgRenderDataShape::release(WgContext& context)
 {
+    meshBBoxStrokes.release(context);
+    meshBBoxShapes.release(context);
     releaseMeshes(context);
     renderSettingsStroke.release(context);
     renderSettingsShape.release(context);
     WgRenderDataPaint::release(context);
 };
+
+//***********************************************************************
+// WgRenderDataShapePool
+//***********************************************************************
+
+WgRenderDataShape* WgRenderDataShapePool::allocate(WgContext& context)
+{
+    WgRenderDataShape* dataShape{};
+    if (mPool.count > 0) {
+        dataShape = mPool.last();
+        mPool.pop();
+    } else {
+        dataShape = new WgRenderDataShape();
+        mList.push(dataShape);
+    }
+    return dataShape;
+}
+
+
+void WgRenderDataShapePool::free(WgContext& context, WgRenderDataShape* dataShape)
+{
+    mPool.push(dataShape);
+}
+
+
+void WgRenderDataShapePool::release(WgContext& context)
+{
+    for (uint32_t i = 0; i < mList.count; i++) {
+        mList[i]->release(context);
+        delete mList[i];
+    }
+    mPool.clear();
+    mList.clear();
+}
 
 //***********************************************************************
 // WgRenderDataPicture
