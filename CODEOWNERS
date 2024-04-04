@@ -16,3 +16,4 @@
 /examples/ @JSUYA @RuiwenTang @SergeyLebedkin @tinyjin @mgrudzinska
 /test/* @JSUYA @RuiwenTang @SergeyLebedkin @tinyjin @mgrudzinska
 /web/* @tinyjin
+/.github/workflows/* @JSUYA @tinyjin
