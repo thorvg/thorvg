@@ -1726,6 +1726,10 @@ static bool _attrParsePolygonPoints(const char* str, SvgPolygonNode* polygon)
 {
     float num;
     while (_parseNumber(&str, nullptr, &num)) polygon->pts.push(num);
+    if (polygon->pts.count % 2 != 0) {
+        polygon->pts.clear();
+        return false;
+    }
     return true;
 }
 
@@ -1768,7 +1772,7 @@ static SvgNode* _createPolygonNode(SvgLoaderData* loader, SvgNode* parent, const
 
     if (!loader->svgParse->node) return nullptr;
 
-    func(buf, bufLength, _attrParsePolygonNode, loader);
+    if (!func(buf, bufLength, _attrParsePolygonNode, loader)) return nullptr;
     return loader->svgParse->node;
 }
 

@@ -358,6 +358,7 @@ bool simpleXmlParseAttributes(const char* buf, unsigned bufLength, simpleXMLAttr
         if (!func((void*)data, tmpBuf, tval)) {
             if (!_isIgnoreUnsupportedLogAttributes(tmpBuf, tval)) {
                 TVGLOG("SVG", "Unsupported attributes used [Elements type: %s][Id : %s][Attribute: %s][Value: %s]", simpleXmlNodeTypeToString(((SvgLoaderData*)data)->svgParse->node->type), ((SvgLoaderData*)data)->svgParse->node->id ? ((SvgLoaderData*)data)->svgParse->node->id : "NO_ID", tmpBuf, tval ? tval : "NONE");
+                goto error;
             }
         }
     }
