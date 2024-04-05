@@ -2,7 +2,7 @@
 [![ThorVGPT](https://img.shields.io/badge/ThorVGPT-76A99C?style=flat&logo=openai&logoColor=white)](https://chat.openai.com/g/g-Ht3dYIwLO-thorvgpt)
 [![OpenCollective](https://img.shields.io/badge/OpenCollective-84B5FC?style=flat&logo=opencollective&logoColor=white)](https://opencollective.com/thorvg)
 [![License](https://img.shields.io/badge/licence-MIT-green.svg?style=flat)](LICENSE)
-![BinarySize](https://img.shields.io/badge/Size-200kb-blue)
+![BinarySize](https://img.shields.io/badge/Size->150kb-blue)
 [![CodeFactor](https://www.codefactor.io/repository/github/hermet/thorvg/badge)](https://www.codefactor.io/repository/github/hermet/thorvg)
 <br>
 [![Build Ubuntu](https://github.com/thorvg/thorvg/actions/workflows/build_ubuntu.yml/badge.svg?branch=main&event=push)](https://github.com/thorvg/thorvg/actions/workflows/build_ubuntu.yml)
