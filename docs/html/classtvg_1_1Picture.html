@@ -27,7 +27,7 @@
   <td id="projectlogo"><img alt="Logo" src="small_logo.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">ThorVG
-   &#160;<span id="projectnumber">v0.12</span>
+   &#160;<span id="projectnumber">v0.13</span>
    </div>
   </td>
  </tr>
@@ -290,6 +290,7 @@ See <a class="el" href="classtvg_1_1Animation.html" title="The Animation class e
 </div><div class="memdoc">
 
 <p>Loads a picture data from a memory block of a given size. </p>
+<p>ThorVG efficiently caches the loaded data using the specified <code>data</code> address as a key when the <code>copy</code> has <code>false</code>. This means that loading the same data again will not result in duplicate operations for the sharable <code>data</code>. Instead, ThorVG will reuse the previously loaded picture data.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">data</td><td>A pointer to a memory location where the content of the picture file is stored. </td></tr>
@@ -408,6 +409,7 @@ See <a class="el" href="classtvg_1_1Animation.html" title="The Animation class e
 </div><div class="memdoc">
 
 <p>Loads a picture data directly from a file. </p>
+<p>ThorVG efficiently caches the loaded data using the specified <code>path</code> as a key. This means that loading the same file again will not result in duplicate operations; instead, ThorVG will reuse the previously loaded picture data.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">path</td><td>A path to the picture file.</td></tr>
@@ -475,6 +477,7 @@ See <a class="el" href="classtvg_1_1Animation.html" title="The Animation class e
 </div><div class="memdoc">
 
 <p>Loads a raw data from a memory block with a given size. </p>
+<p>ThorVG efficiently caches the loaded data using the specified <code>data</code> address as a key when the <code>copy</code> has <code>false</code>. This means that loading the same data again will not result in duplicate operations for the sharable <code>data</code>. Instead, ThorVG will reuse the previously loaded picture data.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">paint</td><td>A Tvg_Paint pointer to the picture object. </td></tr>
