@@ -1,7 +1,9 @@
 var hierarchy =
 [
     [ "Accessor", "classtvg_1_1Accessor.html", null ],
-    [ "Animation", "classtvg_1_1Animation.html", null ],
+    [ "Animation", "classtvg_1_1Animation.html", [
+      [ "LottieAnimation", "classtvg_1_1LottieAnimation.html", null ]
+    ] ],
     [ "Canvas", "classtvg_1_1Canvas.html", [
       [ "GlCanvas", "classtvg_1_1GlCanvas.html", null ],
       [ "SwCanvas", "classtvg_1_1SwCanvas.html", null ],

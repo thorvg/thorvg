@@ -127,7 +127,7 @@ var group__ThorVG =
       [ "target", "classtvg_1_1SwCanvas.html#a2d4c80a0ba45465b073ee0c279e8c8dc", null ]
     ] ],
     [ "GlCanvas", "classtvg_1_1GlCanvas.html", [
-      [ "target", "classtvg_1_1GlCanvas.html#aad369f9a4a762338d0ef4a16265a0f29", null ]
+      [ "target", "classtvg_1_1GlCanvas.html#a182ae193566dbc09fc2ec5a369ad38ad", null ]
     ] ],
     [ "WgCanvas", "classtvg_1_1WgCanvas.html", [
       [ "target", "classtvg_1_1WgCanvas.html#a9b5dc178ae416c6279877c87ca0e6330", null ]

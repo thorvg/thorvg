@@ -27,7 +27,7 @@
   <td id="projectlogo"><img alt="Logo" src="small_logo.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">ThorVG
-   &#160;<span id="projectnumber">v0.12</span>
+   &#160;<span id="projectnumber">v0.13</span>
    </div>
   </td>
  </tr>
@@ -106,9 +106,9 @@ Inheritance diagram for GlCanvas:</div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:aad369f9a4a762338d0ef4a16265a0f29"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1GlCanvas.html#aad369f9a4a762338d0ef4a16265a0f29">target</a> (uint32_t *buffer, uint32_t stride, uint32_t w, uint32_t h) noexcept</td></tr>
-<tr class="memdesc:aad369f9a4a762338d0ef4a16265a0f29"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the target buffer for the rasterization.  <a href="classtvg_1_1GlCanvas.html#aad369f9a4a762338d0ef4a16265a0f29">More...</a><br /></td></tr>
-<tr class="separator:aad369f9a4a762338d0ef4a16265a0f29"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a182ae193566dbc09fc2ec5a369ad38ad"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1GlCanvas.html#a182ae193566dbc09fc2ec5a369ad38ad">target</a> (int32_t id, uint32_t w, uint32_t h) noexcept</td></tr>
+<tr class="memdesc:a182ae193566dbc09fc2ec5a369ad38ad"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the drawing target for rasterization.  <a href="classtvg_1_1GlCanvas.html#a182ae193566dbc09fc2ec5a369ad38ad">More...</a><br /></td></tr>
+<tr class="separator:a182ae193566dbc09fc2ec5a369ad38ad"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_classtvg_1_1Canvas"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classtvg_1_1Canvas')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="classtvg_1_1Canvas.html">Canvas</a></td></tr>
 <tr class="memitem:a1db0cc15b62127da865b37981402b411 inherit pub_methods_classtvg_1_1Canvas"><td class="memItemLeft" align="right" valign="top">TVG_DEPRECATED <a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtvg_1_1Canvas.html#a1db0cc15b62127da865b37981402b411">reserve</a> (uint32_t n) noexcept</td></tr>
 <tr class="memdesc:a1db0cc15b62127da865b37981402b411 inherit pub_methods_classtvg_1_1Canvas"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the size of the container, where all the paints pushed into the <a class="el" href="classtvg_1_1Canvas.html" title="An abstract class for drawing graphical elements.">Canvas</a> are stored.  <a href="classtvg_1_1Canvas.html#a1db0cc15b62127da865b37981402b411">More...</a><br /></td></tr>
@@ -172,8 +172,8 @@ Static Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="aad369f9a4a762338d0ef4a16265a0f29"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aad369f9a4a762338d0ef4a16265a0f29">&#9670;&nbsp;</a></span>target()</h2>
+<a id="a182ae193566dbc09fc2ec5a369ad38ad"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a182ae193566dbc09fc2ec5a369ad38ad">&#9670;&nbsp;</a></span>target()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -184,14 +184,8 @@ Static Public Member Functions</h2></td></tr>
         <tr>
           <td class="memname"><a class="el" href="group__ThorVG.html#ga28287671eaf7406afd604bd055ba4066">Result</a> target </td>
           <td>(</td>
-          <td class="paramtype">uint32_t *&#160;</td>
-          <td class="paramname"><em>buffer</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">uint32_t&#160;</td>
-          <td class="paramname"><em>stride</em>, </td>
+          <td class="paramtype">int32_t&#160;</td>
+          <td class="paramname"><em>id</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -218,9 +212,22 @@ Static Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Sets the target buffer for the rasterization. </p>
-<dl class="section warning"><dt>Warning</dt><dd>Please do not use it, this API is not official one. It could be modified in the next version.</dd></dl>
-<dl class="section note"><dt>Note</dt><dd>Experimental API </dd></dl>
+<p>Sets the drawing target for rasterization. </p>
+<p>This function specifies the drawing target where the rasterization will occur. It can target a specific framebuffer object (FBO) or the main surface.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">id</td><td>The GL target ID, usually indicating the FBO ID. A value of <code>0</code> specifies the main surface. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">w</td><td>The width (in pixels) of the raster image. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">h</td><td>The height (in pixels) of the raster image.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section warning"><dt>Warning</dt><dd>This API is experimental and not officially supported. It may be modified or removed in future versions. </dd>
+<dd>
+Drawing on the main surface is currently not permitted. If the identifier (<code>id</code>) is set to <code>0</code>, the operation will be aborted.</dd></dl>
+<dl class="section note"><dt>Note</dt><dd>Currently, this only allows the GL_RGBA8 color space format. </dd>
+<dd>
+Experimental API </dd></dl>
 
 </div>
 </div>
