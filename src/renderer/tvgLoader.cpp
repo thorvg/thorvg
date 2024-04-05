@@ -270,7 +270,7 @@ bool LoaderMgr::term()
         auto tmp = loader;
         loader = loader->next;
         _activeLoaders.remove(tmp);
-        if (ret) delete(loader);
+        if (ret) delete(tmp);
     }
     return true;
 }
