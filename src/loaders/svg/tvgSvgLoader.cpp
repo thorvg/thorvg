@@ -647,21 +647,9 @@ static bool _hslToRgb(float hue, float satuation, float brightness, uint8_t* red
         }
     }
 
-    i = static_cast<uint8_t>(_red * 255.0);
-    f = (_red * 255.0) - i;
-    _red = (f <= 0.5) ? i : (i + 1);
-
-    i = static_cast<uint8_t>(_green * 255.0);
-    f = (_green * 255.0) - i;
-    _green = (f <= 0.5) ? i : (i + 1);
-
-    i = static_cast<uint8_t>(_blue * 255.0);
-    f = (_blue * 255.0) - i;
-    _blue = (f <= 0.5) ? i : (i + 1);
-
-    *red = static_cast<uint8_t>(_red);
-    *green = static_cast<uint8_t>(_green);
-    *blue = static_cast<uint8_t>(_blue);
+    *red = static_cast<uint8_t>(ceil(_red * 255.0f));
+    *green = static_cast<uint8_t>(ceil(_green * 255.0f));
+    *blue = static_cast<uint8_t>(ceil(_blue * 255.0f));
 
     return true;
 }
@@ -726,7 +714,7 @@ static bool _toColor(const char* str, uint8_t* r, uint8_t* g, uint8_t* b, char**
         content = str + 4;
         content = _skipSpace(content, nullptr);
         if (_parseNumber(&content, &hue, &th) && hue) {
-            th = static_cast<uint32_t>(th) % 360;
+            th = float(uint32_t(th) % 360);
             hue = _skipSpace(hue, nullptr);
             hue = (char*)_skipComma(hue);
             hue = _skipSpace(hue, nullptr);
