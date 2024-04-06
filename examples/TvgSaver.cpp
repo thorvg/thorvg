@@ -94,7 +94,7 @@ unique_ptr<tvg::Paint> tvgClippedImage(uint32_t * data, int width, int heigth)
 unique_ptr<tvg::Paint> tvgMaskedSvg()
 {
     auto svg = tvg::Picture::gen();
-    if (svg->load(EXAMPLE_DIR"/tiger.svg") != tvg::Result::Success) return nullptr;
+    if (svg->load(EXAMPLE_DIR"/svg/tiger.svg") != tvg::Result::Success) return nullptr;
     svg->opacity(200);
     svg->scale(0.3);
     svg->translate(50, 450);
@@ -251,7 +251,7 @@ void exportTvg()
 
     //save the tvg file
     auto saver = tvg::Saver::gen();
-    if (saver->save(std::move(scene), EXAMPLE_DIR"/test.tvg") == tvg::Result::Success) {
+    if (saver->save(std::move(scene), EXAMPLE_DIR"/tvg/test.tvg") == tvg::Result::Success) {
         saver->sync();
         cout << "Successfully exported to test.tvg, Please check the result using PictureTvg!" << endl;
         return;
