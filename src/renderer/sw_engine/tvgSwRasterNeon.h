@@ -31,6 +31,32 @@ static inline uint8x8_t ALPHA_BLEND(uint8x8_t c, uint8x8_t a)
 }
 
 
+static void neonRasterGrayscale8(uint8_t* dst, uint8_t val, uint32_t offset, int32_t len)
+{
+    const int32_t NEON_ALIGNMENT = 16;
+
+    dst += offset;
+
+    int32_t alignment = (NEON_ALIGNMENT - ((uintptr_t)dst % NEON_ALIGNMENT));
+    if (alignment != 0) {
+        memset(dst, val, alignment);
+        dst += alignment;
+        len -= alignment;
+    }
+
+    int32_t i = 0;
+    uint8x16_t valVec = vdupq_n_u8(val);
+
+    for (; i <= len - NEON_ALIGNMENT; i += NEON_ALIGNMENT) {
+        vst1q_u8(dst + i, valVec);
+    }
+
+    if (i < len) {
+        memset(dst + i, val, len - i);
+    }
+}
+
+
 static void neonRasterPixel32(uint32_t *dst, uint32_t val, uint32_t offset, int32_t len)
 {
     uint32_t iterations = len / 4;
