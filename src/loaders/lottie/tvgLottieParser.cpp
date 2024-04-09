@@ -1089,14 +1089,14 @@ void LottieParser::parseText(Array<LottieObject*>& parent)
 }
 
 
-void LottieParser::getLayerSize(uint32_t& val)
+void LottieParser::getLayerSize(float& val)
 {
-    if (val == 0) {
-        val = getInt();
+    if (val == 0.0f) {
+        val = getFloat();
     } else {
         //layer might have both w(width) & sw(solid color width)
         //override one if the a new size is smaller.
-        uint32_t w = getInt();
+        auto w = getFloat();
         if (w < val) val = w;
     }
 }
@@ -1307,8 +1307,8 @@ bool LottieParser::parse()
         else if (!strcmp(key, "fr")) comp->frameRate = getFloat();
         else if (!strcmp(key, "ip")) comp->startFrame = getFloat();
         else if (!strcmp(key, "op")) comp->endFrame = getFloat();
-        else if (!strcmp(key, "w")) comp->w = getInt();
-        else if (!strcmp(key, "h")) comp->h = getInt();
+        else if (!strcmp(key, "w")) comp->w = getFloat();
+        else if (!strcmp(key, "h")) comp->h = getFloat();
         else if (!strcmp(key, "nm")) comp->name = getStringCopy();
         else if (!strcmp(key, "assets")) parseAssets();
         else if (!strcmp(key, "layers")) comp->root = parseLayers();
