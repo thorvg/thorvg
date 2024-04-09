@@ -2253,6 +2253,8 @@ TVG_API Tvg_Animation* tvg_animation_new();
 * \retval TVG_RESULT_INSUFFICIENT_CONDITION No animatable data loaded from the Picture.
 * \retval TVG_RESULT_NOT_SUPPORTED The picture data does not support animations.
 *
+* \note For efficiency, ThorVG ignores updates to the new frame value if the difference from the current frame value
+*       is less than 0.001. In such cases, it returns @c Result::InsufficientCondition.
 * \see tvg_animation_get_total_frame()
 */
 TVG_API Tvg_Result tvg_animation_set_frame(Tvg_Animation* animation, float no);
