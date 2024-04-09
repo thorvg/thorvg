@@ -319,10 +319,15 @@ bool LottieLoader::override(const char* slot)
 
 bool LottieLoader::frame(float no)
 {
-    //no meaing to update if frame diff is less then 1ms
-    if (fabsf(this->frameNo - no) < 0.001f) return false;
+    //Skip update if frame diff is too small.
+    if (fabsf(this->frameNo - no) < 0.0009f) return false;
 
     this->done();
+
+    //This ensures that the perfect last frame is reached.
+    no *= 1000.0f;
+    no = roundf(no);
+    no *= 0.001f;
 
     this->frameNo = no;
 
