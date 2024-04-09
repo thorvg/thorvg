@@ -1802,6 +1802,9 @@ public:
      * @retval Result::InsufficientCondition if the given @p no is the same as the current frame value.
      * @retval Result::NonSupport The current Picture data does not support animations.
      *
+     * @note For efficiency, ThorVG ignores updates to the new frame value if the difference from the current frame value
+     *       is less than 0.001. In such cases, it returns @c Result::InsufficientCondition.
+     *
      * @see totalFrame()
      *
      */
