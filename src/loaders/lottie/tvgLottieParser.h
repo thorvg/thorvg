@@ -55,7 +55,7 @@ private:
 
     void getInperpolatorPoint(Point& pt);
     void getPathSet(LottiePathSet& path);
-    void getLayerSize(uint32_t& val);
+    void getLayerSize(float& val);
     void getValue(TextDocument& doc);
     void getValue(PathSet& path);
     void getValue(Array<Point>& pts);
