@@ -125,7 +125,7 @@ Install the ThorVG package.
 ### Install with MSYS2
 You can download and install pre-packaged ThorVG using the [MSYS2](https://www.msys2.org/) package manager.
 
-Download and execute the MSYS2 installer on the web page above and follow the steps. When done, just launch one of the terminals in the start menu, according to the architecture and compiler you want (either 32 or 64 bits, with MSVCRT or UCR C library). Then you can install the ThorVG package :
+Download and execute the MSYS2 installer on the web page above and follow the steps. When done, just launch one of the terminals in the start menu, according to the architecture and compiler you want (either 32 or 64 bits, with MSVCRT or UCRT library). Then you can install the ThorVG package :
 
 ```
 pacman -S thorvg
