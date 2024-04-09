@@ -617,7 +617,7 @@ struct LottieLayer : LottieGroup
     RGB24 color;  //used by Solid layer
 
     float timeStretch = 1.0f;
-    uint32_t w = 0, h = 0;
+    float w = 0.0f, h = 0.0f;
     float inFrame = 0.0f;
     float outFrame = 0.0f;
     float startFrame = 0.0f;
@@ -758,7 +758,7 @@ struct LottieComposition
     LottieLayer* root = nullptr;
     char* version = nullptr;
     char* name = nullptr;
-    uint32_t w, h;
+    float w, h;
     float startFrame, endFrame;
     float frameRate;
     Array<LottieObject*> assets;
