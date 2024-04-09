@@ -48,16 +48,16 @@ public:
     void beginRenderPass(WGPUCommandEncoder commandEncoder, bool clear);
     void endRenderPass();
 
-    void renderShape(WgRenderDataShape* renderData, WgPipelineBlendType blendType);
-    void renderPicture(WgRenderDataPicture* renderData, WgPipelineBlendType blendType);
+    void renderShape(WgContext& context, WgRenderDataShape* renderData, WgPipelineBlendType blendType);
+    void renderPicture(WgContext& context, WgRenderDataPicture* renderData, WgPipelineBlendType blendType);
 
     void clear(WGPUCommandEncoder commandEncoder);
     void blend(WGPUCommandEncoder commandEncoder, WgRenderStorage* targetSrc, WgBindGroupBlendMethod* blendMethod);
     void compose(WGPUCommandEncoder commandEncoder, WgRenderStorage* targetMsk, WgBindGroupCompositeMethod* composeMethod, WgBindGroupOpacity* opacity);
     void antialias(WGPUCommandEncoder commandEncoder, WgRenderStorage* targetSrc);
 private:
-    void drawShape(WgRenderDataShape* renderData, WgPipelineBlendType blendType);
-    void drawStroke(WgRenderDataShape* renderData, WgPipelineBlendType blendType);
+    void drawShape(WgContext& context, WgRenderDataShape* renderData, WgPipelineBlendType blendType);
+    void drawStroke(WgContext& context, WgRenderDataShape* renderData, WgPipelineBlendType blendType);
 
     void dispatchWorkgroups(WGPUComputePassEncoder computePassEncoder);
 
