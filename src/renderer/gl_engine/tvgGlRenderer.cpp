@@ -86,8 +86,6 @@ bool GlRenderer::sync()
     //nothing to be done.
     if (mRenderPassStack.size() == 0) return true;
 
-    mGpuBuffer->flushToGPU();
-
     // Blend function for straight alpha
     GL_CHECK(glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA));
     GL_CHECK(glEnable(GL_BLEND));
@@ -95,13 +93,14 @@ bool GlRenderer::sync()
     GL_CHECK(glCullFace(GL_FRONT_AND_BACK));
     GL_CHECK(glFrontFace(GL_CCW));
 
-    mGpuBuffer->bind();
+    auto task = mRenderPassStack.front().endRenderPass<GlBlitTask>(mPrograms[RT_Blit].get(), mTargetFboId);
 
-    auto task = mRenderPassStack.front().endRenderPass<GlBlitTask>(nullptr, mTargetFboId);
-
-    task->setSize(surface.w, surface.h);
+    prepareBlitTask(task);
 
     task->mClearBuffer = mClearBuffer;
+
+    mGpuBuffer->flushToGPU();
+    mGpuBuffer->bind();
 
     task->run();
 
@@ -490,6 +489,8 @@ void GlRenderer::initShaders()
     mPrograms.push_back(make_unique<GlProgram>(GlShader::gen(MASK_VERT_SHADER, MASK_DIFF_FRAG_SHADER)));
     // stencil Renderer
     mPrograms.push_back(make_unique<GlProgram>(GlShader::gen(STENCIL_VERT_SHADER, STENCIL_FRAG_SHADER)));
+    // blit Renderer
+    mPrograms.push_back(make_unique<GlProgram>(GlShader::gen(BLIT_VERT_SHADER, BLIT_FRAG_SHADER)));
 }
 
 
@@ -690,6 +691,16 @@ GlRenderPass* GlRenderer::currentPass()
     if (mRenderPassStack.empty()) return nullptr;
 
     return &mRenderPassStack.back();
+}
+
+void GlRenderer::prepareBlitTask(GlBlitTask* task)
+{
+    prepareCmpTask(task);
+
+    {
+        uint32_t loc = task->getProgram()->getUniformLocation("uSrcTexture");
+        task->addBindResource(GlBindingResource{0, task->getColorTextore(), loc});
+    }
 }
 
 void GlRenderer::prepareCmpTask(GlRenderTask* task)

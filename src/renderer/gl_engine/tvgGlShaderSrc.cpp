@@ -453,3 +453,22 @@ const char* STENCIL_FRAG_SHADER = TVG_COMPOSE_SHADER(
     out vec4 FragColor;                                             \n
     void main() { FragColor = vec4(0.0); }                          \n
 );
+
+const char* BLIT_VERT_SHADER = TVG_COMPOSE_SHADER(
+    layout(location = 0) in vec2 aLocation;                         \n
+    layout(location = 1) in vec2 aUV;                               \n
+    out vec2 vUV;                                                   \n
+    void main() {                                                   \n
+        vUV = aUV;                                                  \n
+        gl_Position = vec4(aLocation, 0.0, 1.0);                    \n
+    }
+);
+
+const char* BLIT_FRAG_SHADER = TVG_COMPOSE_SHADER(
+    uniform sampler2D uSrcTexture;                                  \n
+    in vec2 vUV;                                                    \n
+    out vec4 FragColor;                                             \n
+    void main() {                                                   \n
+        FragColor = texture(uSrcTexture, vUV);                      \n
+    }
+);
