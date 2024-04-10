@@ -47,6 +47,7 @@ public:
         RT_MaskIntersect,
         RT_MaskDifference,
         RT_Stencil,
+        RT_Blit,
 
         RT_None,
     };
@@ -90,6 +91,7 @@ private:
 
     GlRenderPass* currentPass();
 
+    void prepareBlitTask(GlBlitTask* task);
     void prepareCmpTask(GlRenderTask* task);
     void endRenderPass(Compositor* cmp);
 

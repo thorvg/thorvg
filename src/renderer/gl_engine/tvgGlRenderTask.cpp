@@ -199,25 +199,24 @@ void GlComposeTask::onResolve() {
 }
 
 GlBlitTask::GlBlitTask(GlProgram* program, GLuint target, GlRenderTarget* fbo, Array<GlRenderTask*>&& tasks)
- : GlComposeTask(program, target, fbo, std::move(tasks))
+ : GlComposeTask(program, target, fbo, std::move(tasks)), mColorTex(fbo->getColorTexture())
 {
-}
-
-void GlBlitTask::setSize(uint32_t width, uint32_t height)
-{
-    mWidth = width;
-    mHeight = height;
 }
 
 void GlBlitTask::run()
 {
     GlComposeTask::run();
 
-    GL_CHECK(glScissor(0, 0, mWidth, mHeight));
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, getTargetFbo()));
-    GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, getSelfFbo()));
 
-    GL_CHECK(glBlitFramebuffer(0, 0, mWidth, mHeight, 0, 0, mWidth, mHeight, GL_COLOR_BUFFER_BIT, GL_NEAREST));
+    GL_CHECK(glClearColor(0, 0, 0, 0));
+    GL_CHECK(glClear(GL_COLOR_BUFFER_BIT));
+
+    // make sure the blending is correct
+    GL_CHECK(glEnable(GL_BLEND));
+    GL_CHECK(glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA));
+
+    GlRenderTask::run();
 }
 
 GlDrawBlitTask::GlDrawBlitTask(GlProgram* program, GLuint target, GlRenderTarget* fbo, Array<GlRenderTask*>&& tasks)
