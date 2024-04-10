@@ -130,7 +130,7 @@ protected:
 
     GLuint getResolveFboId();
 
-    virtual void onResolve();
+    void onResolve();
 private:
     GLuint mTargetFbo;
     GlRenderTarget* mFbo;
@@ -143,16 +143,11 @@ public:
     GlBlitTask(GlProgram*, GLuint target, GlRenderTarget* fbo, Array<GlRenderTask*>&& tasks);
     ~GlBlitTask() override = default;
 
-    void setSize(uint32_t width, uint32_t height);
-
     void run() override;
 
-protected:
-    void onResolve() override {}
-
+    GLuint getColorTextore() const { return mColorTex; }
 private:
-    uint32_t mWidth = 0;
-    uint32_t mHeight = 0;
+    GLuint mColorTex = 0;
 };
 
 class GlDrawBlitTask : public GlComposeTask
