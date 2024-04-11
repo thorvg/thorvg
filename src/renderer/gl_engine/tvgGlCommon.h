@@ -70,6 +70,7 @@ struct GlShape
   ColorSpace texColorSpace = ColorSpace::ABGR8888;
   RenderUpdateFlag updateFlag = None;
   unique_ptr<GlGeometry> geometry;
+  Array<RenderData> clips;
 };
 
 #define MAX_GRADIENT_STOPS 16

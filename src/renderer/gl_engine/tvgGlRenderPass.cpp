@@ -35,8 +35,8 @@ GlRenderTarget::~GlRenderTarget()
     if (mColorTex != 0) {
         GL_CHECK(glDeleteTextures(1, &mColorTex));
     }
-    if (mStencilBuffer != 0) {
-        GL_CHECK(glDeleteRenderbuffers(1, &mStencilBuffer));
+    if (mDepthStencilBuffer != 0) {
+        GL_CHECK(glDeleteRenderbuffers(1, &mDepthStencilBuffer));
     }
 }
 
@@ -52,16 +52,16 @@ void GlRenderTarget::init(GLint resolveId)
     GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, mColorBuffer));
     GL_CHECK(glRenderbufferStorageMultisample(GL_RENDERBUFFER, 4, GL_RGBA8, mWidth, mHeight));
 
-    GL_CHECK(glGenRenderbuffers(1, &mStencilBuffer));
+    GL_CHECK(glGenRenderbuffers(1, &mDepthStencilBuffer));
 
-    GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, mStencilBuffer));
+    GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, mDepthStencilBuffer));
 
-    GL_CHECK(glRenderbufferStorageMultisample(GL_RENDERBUFFER, 4, GL_STENCIL_INDEX8, mWidth, mHeight));
+    GL_CHECK(glRenderbufferStorageMultisample(GL_RENDERBUFFER, 4, GL_DEPTH24_STENCIL8, mWidth, mHeight));
 
     GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, 0));
 
     GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, mColorBuffer));
-    GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, mStencilBuffer));
+    GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, mDepthStencilBuffer));
 
     // resolve target
     GL_CHECK(glGenTextures(1, &mColorTex));

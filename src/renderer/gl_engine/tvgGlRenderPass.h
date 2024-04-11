@@ -51,7 +51,7 @@ private:
     uint32_t mHeight = 0;
     GLuint mFbo = 0;
     GLuint mColorBuffer = 0;
-    GLuint mStencilBuffer = 0;
+    GLuint mDepthStencilBuffer = 0;
     GLuint mResolveFbo = 0;
     GLuint mColorTex = 0;
 };

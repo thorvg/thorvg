@@ -92,6 +92,8 @@ bool GlRenderer::sync()
     GL_CHECK(glEnable(GL_SCISSOR_TEST));
     GL_CHECK(glCullFace(GL_FRONT_AND_BACK));
     GL_CHECK(glFrontFace(GL_CCW));
+    GL_CHECK(glEnable(GL_DEPTH_TEST));
+    GL_CHECK(glDepthFunc(GL_LESS));
 
     auto task = mRenderPassStack.front().endRenderPass<GlBlitTask>(mPrograms[RT_Blit].get(), mTargetFboId);
 
@@ -205,6 +207,8 @@ bool GlRenderer::renderImage(void* data)
 
     if ((sdata->updateFlag & RenderUpdateFlag::Image) == 0) return false;
 
+    if (!sdata->clips.empty()) drawClip(sdata->clips);
+
     auto task = new GlRenderTask(mPrograms[RT_Image].get());
 
     if (!sdata->geometry->draw(task, mGpuBuffer.get(), RenderUpdateFlag::Image)) return false;
@@ -243,6 +247,8 @@ bool GlRenderer::renderImage(void* data)
 
     currentPass()->addRenderTask(task);
 
+    if (!sdata->clips.empty()) currentPass()->addRenderTask(new GlClipClearTask);
+
     return true;
 }
 
@@ -251,6 +257,8 @@ bool GlRenderer::renderShape(RenderData data)
 {
     auto sdata = static_cast<GlShape*>(data);
     if (!sdata) return false;
+
+    if (!sdata->clips.empty()) drawClip(sdata->clips);
 
     uint8_t r = 0, g = 0, b = 0, a = 0;
     size_t flags = static_cast<size_t>(sdata->updateFlag);
@@ -276,13 +284,14 @@ bool GlRenderer::renderShape(RenderData data)
         if (gradient) {
             drawPrimitive(*sdata, gradient, RenderUpdateFlag::GradientStroke);
         } else {
-            sdata->rshape->strokeFill(&r, &g, &b, &a);
-            if (a > 0)
+            if (sdata->rshape->strokeFill(&r, &g, &b, &a) && a > 0)
             {
                 drawPrimitive(*sdata, r, g, b, a, RenderUpdateFlag::Stroke);
             }
         }
     }
+
+    if (!sdata->clips.empty()) currentPass()->addRenderTask(new GlClipClearTask);
 
     return true;
 }
@@ -317,7 +326,7 @@ static GLuint _genTexture(Surface* image)
     return tex;
 }
 
-RenderData GlRenderer::prepare(Surface* image, const RenderMesh* mesh, RenderData data, const RenderTransform* transform, TVG_UNUSED Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags)
+RenderData GlRenderer::prepare(Surface* image, const RenderMesh* mesh, RenderData data, const RenderTransform* transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags)
 {
     if (flags == RenderUpdateFlag::None) return nullptr;
 
@@ -347,6 +356,8 @@ RenderData GlRenderer::prepare(Surface* image, const RenderMesh* mesh, RenderDat
 
     sdata->geometry->tesselate(image, mesh, flags);
 
+    if (!clips.empty()) sdata->clips.push(clips);
+
     return sdata;
 }
 
@@ -358,8 +369,11 @@ RenderData GlRenderer::prepare(TVG_UNUSED const Array<RenderData>& scene, TVG_UN
 }
 
 
-RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const RenderTransform* transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags, TVG_UNUSED bool clipper)
+RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const RenderTransform* transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags, bool clipper)
 {
+    // If prepare for clip, only path is meaningful.
+    if (clipper) flags = RenderUpdateFlag::Path;
+
     //prepare shape data
     GlShape* sdata = static_cast<GlShape*>(data);
     if (!sdata) {
@@ -396,10 +410,13 @@ RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const
         mViewport.h,
     });
 
-    if (sdata->updateFlag & (RenderUpdateFlag::Color | RenderUpdateFlag::Stroke | RenderUpdateFlag::Gradient | RenderUpdateFlag::Transform) )
+    if (sdata->updateFlag & (RenderUpdateFlag::Color | RenderUpdateFlag::Stroke | RenderUpdateFlag::Gradient | RenderUpdateFlag::Transform | RenderUpdateFlag::Path))
     {
         if (!sdata->geometry->tesselate(rshape, sdata->updateFlag)) return sdata;
     }
+
+    if (!clipper && !clips.empty()) sdata->clips.push(clips);
+
     return sdata;
 }
 
@@ -685,6 +702,80 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
         currentPass()->addRenderTask(new GlStencilCoverTask(stencilTask, task, stencilMode));
     } else {
         currentPass()->addRenderTask(task);
+    }
+}
+
+void GlRenderer::drawClip(Array<RenderData>& clips)
+{
+    Array<float> identityVertex(4 * 2);
+    float left = -1.f;
+    float top = 1.f;
+    float right = 1.f;
+    float bottom = -1.f;
+
+    identityVertex.push(left);
+    identityVertex.push(top);
+    identityVertex.push(left);
+    identityVertex.push(bottom);
+    identityVertex.push(right);
+    identityVertex.push(top);
+    identityVertex.push(right);
+    identityVertex.push(bottom);
+
+    Array<uint32_t> indentityIndex(6);
+    indentityIndex.push(0);
+    indentityIndex.push(1);
+    indentityIndex.push(2);
+    indentityIndex.push(2);
+    indentityIndex.push(1);
+    indentityIndex.push(3);
+
+    float mat4[16];
+    memset(mat4, 0, sizeof(float) * 16);
+    mat4[0] = 1.f;
+    mat4[5] = 1.f;
+    mat4[10] = 1.f;
+    mat4[15] = 1.f;
+
+    auto identityVertexOffset = mGpuBuffer->push(identityVertex.data, 8 * sizeof(float));
+    auto identityIndexOffset = mGpuBuffer->push(indentityIndex.data, 6 * sizeof(uint32_t));
+    auto mat4Offset = mGpuBuffer->push(mat4, 16 * sizeof(float), true);
+
+    for (uint32_t i = 0; i < clips.count; ++i) {
+        auto sdata = static_cast<GlShape*>(clips[i]);
+
+        auto clipTask = new GlRenderTask(mPrograms[RT_Stencil].get());
+
+        sdata->geometry->draw(clipTask, mGpuBuffer.get(), RenderUpdateFlag::Path);
+
+        auto matrix = sdata->geometry->getTransforMatrix();
+
+        uint32_t loc = clipTask->getProgram()->getUniformBlockIndex("Matrix");
+
+        uint32_t viewOffset = mGpuBuffer->push(matrix, 16 * sizeof(float), true);
+
+        clipTask->addBindResource(GlBindingResource{
+            0,
+            loc,
+            mGpuBuffer->getBufferId(),
+            viewOffset,
+            16 * sizeof(float),
+        });
+
+        auto maskTask = new GlRenderTask(mPrograms[RT_Stencil].get());
+
+        maskTask->addVertexLayout(GlVertexLayout{0, 2, 2 * sizeof(float), identityVertexOffset});
+        maskTask->addBindResource(GlBindingResource{
+            0,
+            loc,
+            mGpuBuffer->getBufferId(),
+            mat4Offset, 16 * sizeof(float),
+        });
+
+        maskTask->setDrawRange(identityIndexOffset, 6);
+        maskTask->setViewport(RenderRegion{0, 0, static_cast<int32_t>(surface.w), static_cast<int32_t>(surface.h)});
+
+        currentPass()->addRenderTask(new GlClipTask(clipTask, maskTask));
     }
 }
 
