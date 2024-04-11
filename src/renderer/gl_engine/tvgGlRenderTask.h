@@ -157,5 +157,27 @@ public:
     void run() override;
 };
 
+class GlClipTask : public GlRenderTask
+{
+public:
+    GlClipTask(GlRenderTask* clip, GlRenderTask* mask);
+    ~GlClipTask() override = default;
+
+    void run() override;
+
+private:
+    GlRenderTask* mClipTask;
+    GlRenderTask* mMaskTask;
+};
+
+class GlClipClearTask : public GlRenderTask
+{
+public:
+    GlClipClearTask(): GlRenderTask(nullptr) {}
+    ~GlClipClearTask() override = default;
+
+    void run() override;
+};
+
 
 #endif /* _TVG_GL_RENDER_TASK_H_ */

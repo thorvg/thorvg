@@ -175,15 +175,21 @@ void GlComposeTask::run()
     // clear this fbo
     GL_CHECK(glClearColor(0, 0, 0, 0));
     GL_CHECK(glClearStencil(0));
-    GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT));
+    GL_CHECK(glClearDepthf(1.0));
+    GL_CHECK(glDepthMask(1));
+
+    GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+    GL_CHECK(glDepthMask(0));
 
     for(uint32_t i = 0; i < mTasks.count; i++) {
         mTasks[i]->run();
     }
 
-    GLenum stencil_attachment = GL_STENCIL_ATTACHMENT;
-    GL_CHECK(glInvalidateFramebuffer(GL_FRAMEBUFFER, 1, &stencil_attachment));
+    GLenum attachments[2] = {GL_STENCIL_ATTACHMENT, GL_DEPTH_ATTACHMENT };
+    GL_CHECK(glInvalidateFramebuffer(GL_FRAMEBUFFER, 2, attachments));
 
+    // reset scissor box
+    GL_CHECK(glScissor(0, 0, mFbo->getWidth(), mFbo->getHeight()));
     onResolve();
 }
 
@@ -212,6 +218,7 @@ void GlBlitTask::run()
     GL_CHECK(glClearColor(0, 0, 0, 0));
     GL_CHECK(glClear(GL_COLOR_BUFFER_BIT));
 
+    GL_CHECK(glDisable(GL_DEPTH_TEST));
     // make sure the blending is correct
     GL_CHECK(glEnable(GL_BLEND));
     GL_CHECK(glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA));
@@ -231,4 +238,44 @@ void GlDrawBlitTask::run()
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, getTargetFbo()));
 
     GlRenderTask::run();
+}
+
+GlClipTask::GlClipTask(GlRenderTask* clip, GlRenderTask* mask)
+ :GlRenderTask(nullptr), mClipTask(clip), mMaskTask(mask) {}
+
+void GlClipTask::run()
+{
+    GL_CHECK(glEnable(GL_STENCIL_TEST));
+    GL_CHECK(glDepthFunc(GL_ALWAYS));
+    GL_CHECK(glColorMask(0, 0, 0, 0));
+    // draw clip path as normal stencil mask
+    GL_CHECK(glStencilFuncSeparate(GL_FRONT, GL_ALWAYS, 0x1, 0xFF));
+    GL_CHECK(glStencilOpSeparate(GL_FRONT, GL_KEEP, GL_KEEP, GL_INCR_WRAP));
+
+    GL_CHECK(glStencilFuncSeparate(GL_BACK, GL_ALWAYS, 0x1, 0xFF));
+    GL_CHECK(glStencilOpSeparate(GL_BACK, GL_KEEP, GL_KEEP, GL_DECR_WRAP));
+
+    mClipTask->run();
+
+
+    // draw clip mask
+    GL_CHECK(glDepthMask(1));
+    GL_CHECK(glStencilFunc(GL_EQUAL, 0x0, 0xFF));
+    GL_CHECK(glStencilOp(GL_REPLACE, GL_KEEP, GL_REPLACE));
+
+    mMaskTask->run();
+
+    GL_CHECK(glColorMask(1, 1, 1, 1));
+    GL_CHECK(glDepthMask(0));
+    GL_CHECK(glDepthFunc(GL_LESS));
+    GL_CHECK(glDisable(GL_STENCIL_TEST));
+}
+
+void GlClipClearTask::run()
+{
+    GL_CHECK(glDisable(GL_SCISSOR_TEST));
+    GL_CHECK(glDepthMask(1));
+    GL_CHECK(glClear(GL_DEPTH_BUFFER_BIT));
+    GL_CHECK(glDepthMask(0));
+    GL_CHECK(glEnable(GL_SCISSOR_TEST));
 }
