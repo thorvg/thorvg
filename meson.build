@@ -71,6 +71,11 @@ endif
 
 if lottie_loader
     config_h.set10('THORVG_LOTTIE_LOADER_SUPPORT', true)
+    #Experimental feature, enable it manually
+    lottie_expressions = false
+    if lottie_expressions
+        config_h.set10('THORVG_LOTTIE_EXPRESSIONS_SUPPORT', false)
+    endif
 endif
 
 if ttf_loader
