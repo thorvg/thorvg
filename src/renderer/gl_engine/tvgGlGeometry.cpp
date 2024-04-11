@@ -31,7 +31,7 @@ GlGeometry::~GlGeometry()
 
 bool GlGeometry::tesselate(const RenderShape& rshape, RenderUpdateFlag flag)
 {
-    if (flag & (RenderUpdateFlag::Color | RenderUpdateFlag::Gradient | RenderUpdateFlag::Transform)) {
+    if (flag & (RenderUpdateFlag::Color | RenderUpdateFlag::Gradient | RenderUpdateFlag::Transform | RenderUpdateFlag::Path)) {
         fillVertex.clear();
         fillIndex.clear();
 
