@@ -1,3 +1,7 @@
+if lottie_expressions
+    subdir('jerryscript')
+endif
+
 source_file = [
    'tvgLottieAnimation.cpp',
    'tvgLottieBuilder.h',
