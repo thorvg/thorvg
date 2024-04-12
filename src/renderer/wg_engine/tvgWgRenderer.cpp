@@ -48,15 +48,19 @@ void WgRenderer::initialize()
     mOpacityPool.initialize(mContext);
     mBlendMethodPool.initialize(mContext);
     mCompositeMethodPool.initialize(mContext);
-    WgMeshDataGroup::MeshDataPool = new WgMeshDataPool();
+    WgMeshDataGroup::gMeshDataPool = new WgMeshDataPool();
+    WgGeometryData::gMath = new WgMath();
+    WgGeometryData::gMath->initialize();
 }
 
 
 void WgRenderer::release()
 {
+    WgGeometryData::gMath->release();
+    delete WgGeometryData::gMath;
     mRenderDataShapePool.release(mContext);
-    WgMeshDataGroup::MeshDataPool->release(mContext);
-    delete WgMeshDataGroup::MeshDataPool;
+    WgMeshDataGroup::gMeshDataPool->release(mContext);
+    delete WgMeshDataGroup::gMeshDataPool;
     mCompositorStack.clear();
     mRenderStorageStack.clear();
     mRenderStoragePool.release(mContext);
@@ -158,13 +162,13 @@ bool WgRenderer::renderShape(RenderData data)
     assert(renderStorage);
     // use hardware blend
     if (WgPipelines::isBlendMethodSupportsHW(mBlendMethod))
-        renderStorage->renderShape((WgRenderDataShape *)data, blendType);
+        renderStorage->renderShape(mContext, (WgRenderDataShape *)data, blendType);
     else { // use custom blend
         // terminate current render pass
         renderStorage->endRenderPass();
         // render image to render target
         mRenderTarget.beginRenderPass(mCommandEncoder, true);
-        mRenderTarget.renderShape((WgRenderDataShape *)data, blendType);
+        mRenderTarget.renderShape(mContext, (WgRenderDataShape *)data, blendType);
         mRenderTarget.endRenderPass();
         // blend shape with current render storage
         WgBindGroupBlendMethod* blendMethod = mBlendMethodPool.allocate(mContext, mBlendMethod);
@@ -184,13 +188,13 @@ bool WgRenderer::renderImage(RenderData data)
     assert(renderStorage);
     // use hardware blend
     if (WgPipelines::isBlendMethodSupportsHW(mBlendMethod))
-        renderStorage->renderPicture((WgRenderDataPicture *)data, blendType);
+        renderStorage->renderPicture(mContext, (WgRenderDataPicture *)data, blendType);
     else { // use custom blend
         // terminate current render pass
         renderStorage->endRenderPass();
         // render image to render target
         mRenderTarget.beginRenderPass(mCommandEncoder, true);
-        mRenderTarget.renderPicture((WgRenderDataPicture *)data, blendType);
+        mRenderTarget.renderPicture(mContext, (WgRenderDataPicture *)data, blendType);
         mRenderTarget.endRenderPass();
         // blend shape with current render storage
         WgBindGroupBlendMethod* blendMethod = mBlendMethodPool.allocate(mContext, mBlendMethod);

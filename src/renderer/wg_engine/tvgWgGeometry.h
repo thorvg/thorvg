@@ -49,42 +49,67 @@ public:
     WgPoint operator / (const float c) const { return { x / c, y / c }; }
 
     WgPoint negative() const { return {-x, -y}; }
-    void negate() { x = -x; y = -y; }
-    float length() const { return sqrt(x*x + y*y); }
-
-    float dot(const WgPoint& p) const { return x * p.x + y * p.y; }
-    float dist(const WgPoint& p) const
-    { 
-        return sqrt(
-            (p.x - x)*(p.x - x) + 
-            (p.y - y)*(p.y - y)
-        ); 
-    }
-
-    void normalize()
-    {
-        float rlen = 1.0f / length();
-        x *= rlen;
-        y *= rlen;
-    }
-
-    WgPoint normal() const
-    {
-        float rlen = 1.0f / length();
-        return { x * rlen, y * rlen };
-    }
+    inline void negate() { x = -x; y = -y; }
+    inline float length() const { return sqrt(x*x + y*y); }
+    inline float dot(const WgPoint& p) const { return x * p.x + y * p.y; }
+    inline float dist(const WgPoint& p) const { return sqrt(dist2(p)); }
+    inline float dist2(const WgPoint& p) const { return ((p.x - x)*(p.x - x) + (p.y - y)*(p.y - y)); }
+    inline void normalize() { float rlen = 1.0f / length(); x *= rlen; y *= rlen; }
+    inline WgPoint normal() const { float rlen = 1.0f / length(); return { x * rlen, y * rlen }; }
+    inline WgPoint lerp(const WgPoint& p, float t) const { return { x + (p.x - x) * t, y + (p.y - y) * t }; };
 };
+
+struct WgMath
+{
+    Array<float> sinus;
+    Array<float> cosin;
+    bool initialized{};
+
+    void initialize();
+    void release();
+};
+
+
+struct WgPolyline
+{
+    // polyline points
+    Array<WgPoint> pts;
+    // polyline segment distances
+    Array<float> dist;
+    // polyline bbox min indexes
+    uint32_t iminx{};
+    uint32_t iminy{};
+    // polyline bbox max indexes
+    uint32_t imaxx{};
+    uint32_t imaxy{};
+    // polyline total length
+    float len{};
+
+    WgPolyline();
+
+    void appendPoint(WgPoint pt);
+    void appendCubic(WgPoint p1, WgPoint p2, WgPoint p3);
+
+    void trim(WgPolyline* polyline, float trimBegin, float trimEnd) const;
+
+    void close();
+    void clear();
+
+    bool isClosed() const;
+    void getBBox(WgPoint& pmin, WgPoint& pmax) const;
+};
+
 
 struct WgGeometryData
 {
-    Array<WgPoint> positions{};
+    static WgMath* gMath;
+
+    WgPolyline positions{};
     Array<WgPoint> texCoords{};
     Array<uint32_t> indexes{};
 
-    // webgpu did not support triangle fans primitives type
-    // so we can emulate triangle fans using indexing
-    void computeTriFansIndexes();
-    void computeContour(WgGeometryData* data);
+    WgGeometryData();
+    void clear();
 
     void appendCubic(WgPoint p1, WgPoint p2, WgPoint p3);
     void appendBox(WgPoint pmin, WgPoint pmax);
@@ -93,37 +118,8 @@ struct WgGeometryData
     void appendImageBox(float w, float h);
     void appendBlitBox();
     void appendMesh(const RenderMesh* rmesh);
-
-    WgPoint interpolate(float t, uint32_t& ind); // t = [0;1]
-
-    float getLength();
-    bool getClosestIntersection(WgPoint p1, WgPoint p2, WgPoint& pi, uint32_t& index);
-    bool isCW(WgPoint p1, WgPoint p2, WgPoint p3);
-
-    uint32_t getIndexMinX();
-    uint32_t getIndexMaxX();
-    uint32_t getIndexMinY();
-    uint32_t getIndexMaxY();
-
-    void close();
-    void clear();
-};
-
-struct WgGeometryDataGroup
-{
-    Array<WgGeometryData*> geometries{};
-    virtual ~WgGeometryDataGroup() { release(); }
-
-    void getBBox(WgPoint& pmin, WgPoint& pmax);
-    void tesselate(const RenderShape& rshape);
-    void stroke(const RenderShape& rshape);
-    void release();
-private:
-    static void decodePath(const RenderShape& rshape, WgGeometryDataGroup* polyline);
-    static void contourPolyline(WgGeometryDataGroup* polyline, WgGeometryDataGroup* contours);
-    static void trimPolyline(WgGeometryDataGroup* polyline, WgGeometryDataGroup* trimmed, RenderStroke *stroke);
-    static void splitPolyline(WgGeometryDataGroup* polyline, WgGeometryDataGroup* splitted, RenderStroke *stroke);
-    static void strokePolyline(WgGeometryDataGroup* polyline, WgGeometryData* strokes, RenderStroke *stroke);
+    void appendStrokeDashed(const WgPolyline* polyline, const RenderStroke *stroke);
+    void appendStroke(const WgPolyline* polyline, const RenderStroke *stroke);
 };
 
 #endif // _TVG_WG_GEOMETRY_H_
