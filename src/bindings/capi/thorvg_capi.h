@@ -2321,6 +2321,36 @@ TVG_API Tvg_Result tvg_animation_get_duration(Tvg_Animation* animation, float* d
 
 
 /*!
+* \brief Specifies the playback segment of the animation. (Experimental API)
+*
+* \param[in] animation The Tvg_Animation pointer to the animation object.
+* \param[in] begin segment begin.
+* \param[in] end segment end.
+*
+* \return Tvg_Result enumeration.
+* \retval TVG_RESULT_SUCCESS Succeed.
+* \retval TVG_RESULT_INSUFFICIENT_CONDITION In case the animation is not loaded.
+* \retval TVG_RESULT_INVALID_ARGUMENT When the given parameters are out of range.
+*/
+TVG_API Tvg_Result tvg_animation_set_segment(Tvg_Animation* animation, float begin, float end);
+
+
+/*!
+* \brief Gets the current segment. (Experimental API)
+*
+* \param[in] animation The Tvg_Animation pointer to the animation object.
+* \param[out] begin segment begin.
+* \param[out] end segment end.
+*
+* \return Tvg_Result enumeration.
+* \retval TVG_RESULT_SUCCESS Succeed.
+* \retval TVG_RESULT_INSUFFICIENT_CONDITION In case the animation is not loaded.
+* \retval TVG_RESULT_INVALID_ARGUMENT When the given parameters are @c nullptr.
+*/
+TVG_API Tvg_Result tvg_animation_get_segment(Tvg_Animation* animation, float* begin, float* end = nullptr);
+
+
+/*!
 * \brief Deletes the given Tvg_Animation object.
 *
 * \param[in] animation The Tvg_Animation object to be deleted.
@@ -2368,6 +2398,48 @@ TVG_API Tvg_Animation* tvg_lottie_animation_new();
 * \retval TVG_RESULT_NOT_SUPPORTED The Lottie Animation is not supported.
 */
 TVG_API Tvg_Result tvg_lottie_animation_override(Tvg_Animation* animation, const char* slot);
+
+
+/*!
+* \brief Specifies a segment by marker. (Experimental API)
+*
+* \param[in] animation The Tvg_Animation pointer to the Lottie animation object.
+* \param[in] marker The name of the segment marker.
+*
+* \return Tvg_Result enumeration.
+* \retval TVG_RESULT_SUCCESS Succeed.
+* \retval TVG_RESULT_INSUFFICIENT_CONDITION In case the animation is not loaded.
+* \retval TVG_RESULT_INVALID_ARGUMENT When the given @p marker is invalid.
+* \retval TVG_RESULT_NOT_SUPPORTED The Lottie Animation is not supported.
+*/
+TVG_API Tvg_Result tvg_lottie_animation_set_marker(Tvg_Animation* animation, const char* marker);
+
+
+/*!
+* \brief Gets the marker count of the animation. (Experimental API)
+*
+* \param[in] animation The Tvg_Animation pointer to the Lottie animation object.
+* \param[out] cnt The count value of the merkers.
+*
+* \return Tvg_Result enumeration.
+* \retval TVG_RESULT_SUCCESS Succeed.
+* \retval TVG_RESULT_INVALID_ARGUMENT In case a @c nullptr is passed as the argument.
+*/
+TVG_API Tvg_Result tvg_lottie_animation_get_markers_cnt(Tvg_Animation* animation, uint32_t* cnt);
+
+
+/*!
+* \brief Gets the marker name by a given index. (Experimental API)
+*
+* \param[in] animation The Tvg_Animation pointer to the Lottie animation object.
+* \param[in] idx The index of the animation marker, starts from 0.
+* \param[out] name The name of marker when succeed.
+*
+* \return Tvg_Result enumeration.
+* \retval TVG_RESULT_SUCCESS Succeed.
+* \retval TVG_RESULT_INVALID_ARGUMENT In case @c nullptr is passed as the argument or @c idx is out of range.
+*/
+TVG_API Tvg_Result tvg_lottie_animation_get_marker(Tvg_Animation* animation, uint32_t idx, const char** name);
 
 
 /** \} */   // end addtogroup ThorVGCapi_LottieAnimation
