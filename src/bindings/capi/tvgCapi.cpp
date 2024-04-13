@@ -768,6 +768,20 @@ TVG_API Tvg_Result tvg_animation_get_duration(Tvg_Animation* animation, float* d
 }
 
 
+TVG_API Tvg_Result tvg_animation_set_segment(Tvg_Animation* animation, float start, float end)
+{
+    if (!animation) return TVG_RESULT_INVALID_ARGUMENT;
+    return (Tvg_Result) reinterpret_cast<Animation*>(animation)->segment(start, end);
+}
+
+
+TVG_API Tvg_Result tvg_animation_get_segment(Tvg_Animation* animation, float* start, float* end)
+{
+    if (!animation) return TVG_RESULT_INVALID_ARGUMENT;
+    return (Tvg_Result) reinterpret_cast<Animation*>(animation)->segment(start, end);
+}
+
+
 TVG_API Tvg_Result tvg_animation_del(Tvg_Animation* animation)
 {
     if (!animation) return TVG_RESULT_INVALID_ARGUMENT;
@@ -794,6 +808,39 @@ TVG_API Tvg_Result tvg_lottie_animation_override(Tvg_Animation* animation, const
 #ifdef THORVG_LOTTIE_LOADER_SUPPORT
     if (!animation) return TVG_RESULT_INVALID_ARGUMENT;
     return (Tvg_Result) reinterpret_cast<LottieAnimation*>(animation)->override(slot);
+#endif
+    return TVG_RESULT_NOT_SUPPORTED;
+}
+
+
+TVG_API Tvg_Result tvg_lottie_animation_set_marker(Tvg_Animation* animation, const char* marker)
+{
+#ifdef THORVG_LOTTIE_LOADER_SUPPORT
+    if (!animation) return TVG_RESULT_INVALID_ARGUMENT;
+    return (Tvg_Result) reinterpret_cast<LottieAnimation*>(animation)->segment(marker);
+#endif
+    return TVG_RESULT_NOT_SUPPORTED;
+}
+
+
+TVG_API Tvg_Result tvg_lottie_animation_get_markers_cnt(Tvg_Animation* animation, uint32_t* cnt)
+{
+#ifdef THORVG_LOTTIE_LOADER_SUPPORT
+    if (!animation || !cnt) return TVG_RESULT_INVALID_ARGUMENT;
+    *cnt = reinterpret_cast<LottieAnimation*>(animation)->markersCnt();
+    return TVG_RESULT_SUCCESS;
+#endif
+    return TVG_RESULT_NOT_SUPPORTED;
+}
+
+
+TVG_API Tvg_Result tvg_lottie_animation_get_marker(Tvg_Animation* animation, uint32_t idx, const char** name)
+{
+#ifdef THORVG_LOTTIE_LOADER_SUPPORT
+    if (!animation || !name) return TVG_RESULT_INVALID_ARGUMENT;
+    *name = reinterpret_cast<LottieAnimation*>(animation)->marker(idx);
+    if (!(*name)) return TVG_RESULT_INVALID_ARGUMENT;
+    return TVG_RESULT_SUCCESS;
 #endif
     return TVG_RESULT_NOT_SUPPORTED;
 }
