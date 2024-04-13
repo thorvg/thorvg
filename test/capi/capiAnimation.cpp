@@ -96,4 +96,59 @@ TEST_CASE("Animation Lottie", "[capiAnimation]")
     REQUIRE(tvg_engine_term(TVG_ENGINE_SW) == TVG_RESULT_SUCCESS);
 }
 
+
+TEST_CASE("Animation Segment", "[capiAnimation]")
+{
+    REQUIRE(tvg_engine_init(TVG_ENGINE_SW, 0) == TVG_RESULT_SUCCESS);
+
+    Tvg_Animation* animation = tvg_animation_new();
+    REQUIRE(animation);
+
+    Tvg_Paint* picture = tvg_animation_get_picture(animation);
+    REQUIRE(picture);
+
+    Tvg_Identifier id = TVG_IDENTIFIER_UNDEF;
+    REQUIRE(tvg_paint_get_identifier(picture, &id) == TVG_RESULT_SUCCESS);
+    REQUIRE(id == TVG_IDENTIFIER_PICTURE);
+
+    float begin, end;
+
+    //Segment by range before loaded
+    REQUIRE(tvg_animation_set_segment(animation, 0, 0.5) == TVG_RESULT_INSUFFICIENT_CONDITION);
+
+    //Get current segment before loaded
+    REQUIRE(tvg_animation_get_segment(animation, &begin, &end) == TVG_RESULT_INSUFFICIENT_CONDITION);
+
+    //Animation load
+    REQUIRE(tvg_picture_load(picture, TEST_DIR"/lottiemarker.json") == TVG_RESULT_SUCCESS);
+    
+    //Get current segment before segment
+    REQUIRE(tvg_animation_get_segment(animation, &begin, &end) == TVG_RESULT_SUCCESS);
+    REQUIRE(begin == 0.0f);
+    REQUIRE(end == 1.0f);
+
+    //Get only segment begin
+    REQUIRE(tvg_animation_get_segment(animation, &begin) == TVG_RESULT_SUCCESS);
+    REQUIRE(begin == 0.0f);
+
+    //Get only segment end
+    REQUIRE(tvg_animation_get_segment(animation, nullptr, &end) == TVG_RESULT_SUCCESS);
+    REQUIRE(end == 1.0f);
+
+    //Segment by range
+    REQUIRE(tvg_animation_set_segment(animation, 0.25, 0.5) == TVG_RESULT_SUCCESS);
+
+    //Get current segment before segment
+    REQUIRE(tvg_animation_get_segment(animation, &begin, &end) == TVG_RESULT_SUCCESS);
+    REQUIRE(begin == 0.25);
+    REQUIRE(end == 0.5);
+
+    //Segment by invalid range
+    REQUIRE(tvg_animation_set_segment(animation, -0.5, 1.5) == TVG_RESULT_INVALID_ARGUMENT);
+
+    REQUIRE(tvg_animation_del(animation) == TVG_RESULT_SUCCESS);
+
+    REQUIRE(tvg_engine_term(TVG_ENGINE_SW) == TVG_RESULT_SUCCESS);
+}
+
 #endif

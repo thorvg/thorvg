@@ -69,4 +69,48 @@ TEST_CASE("Lottie Slot", "[capiLottie]")
     REQUIRE(tvg_engine_term(TVG_ENGINE_SW) == TVG_RESULT_SUCCESS);
 }
 
+TEST_CASE("Lottie Marker", "[capiLottie]")
+{
+    REQUIRE(tvg_engine_init(TVG_ENGINE_SW, 0) == TVG_RESULT_SUCCESS);
+
+    Tvg_Animation* animation = tvg_lottie_animation_new();
+    REQUIRE(animation);
+
+    Tvg_Paint* picture = tvg_animation_get_picture(animation);
+    REQUIRE(picture);
+
+    Tvg_Identifier id = TVG_IDENTIFIER_UNDEF;
+    REQUIRE(tvg_paint_get_identifier(picture, &id) == TVG_RESULT_SUCCESS);
+    REQUIRE(id == TVG_IDENTIFIER_PICTURE);
+
+    //Set marker before loaded
+    REQUIRE(tvg_lottie_animation_set_marker(animation, "sectionC") == TVG_RESULT_INSUFFICIENT_CONDITION);
+
+    //Animation load
+    REQUIRE(tvg_picture_load(picture, TEST_DIR"/lottiemarker.json") == TVG_RESULT_SUCCESS);
+    
+    //Set marker
+    REQUIRE(tvg_lottie_animation_set_marker(animation, "sectionA") == TVG_RESULT_SUCCESS);
+
+    //Set marker by invalid name
+    REQUIRE(tvg_lottie_animation_set_marker(animation, "") == TVG_RESULT_INVALID_ARGUMENT);
+
+    //Get marker count
+    uint32_t cnt = 0;
+    REQUIRE(tvg_lottie_animation_get_markers_cnt(animation, &cnt) == TVG_RESULT_SUCCESS);
+    REQUIRE(cnt == 3);
+
+    //Get marker name by index
+    const char* name = nullptr;
+    REQUIRE(tvg_lottie_animation_get_marker(animation, 1, &name) == TVG_RESULT_SUCCESS);
+    REQUIRE(!strcmp(name, "sectionB"));
+
+    //Get marker name by invalid index
+    REQUIRE(tvg_lottie_animation_get_marker(animation, -1, &name) == TVG_RESULT_INVALID_ARGUMENT);
+
+    REQUIRE(tvg_animation_del(animation) == TVG_RESULT_SUCCESS);
+
+    REQUIRE(tvg_engine_term(TVG_ENGINE_SW) == TVG_RESULT_SUCCESS);
+}
+
 #endif
