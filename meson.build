@@ -92,6 +92,9 @@ if get_option('vector') == true
   elif host_machine.cpu_family() == 'arm'
     config_h.set10('THORVG_NEON_VECTOR_SUPPORT', true)
     simd_type = 'neon'
+  elif host_machine.cpu_family() == 'aarch64'
+    config_h.set10('THORVG_NEON_VECTOR_SUPPORT', true)
+    simd_type = 'adv_neon'
   endif
 endif
 
