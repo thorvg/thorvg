@@ -69,7 +69,7 @@ static bool neonRasterTranslucentRle(SwSurface* surface, const SwRleData* rle, u
         auto dst = &surface->buf32[span->y * surface->stride + span->x];
         auto ialpha = IA(src);
 
-        if ((((uint32_t) dst) & 0x7) != 0) {
+        if ((((uintptr_t) dst) & 0x7) != 0) {
             //fill not aligned byte
             *dst = src + ALPHA_BLEND(*dst, ialpha);
             vDst = (uint8x8_t*)(dst + 1);
@@ -116,7 +116,7 @@ static bool neonRasterTranslucentRect(SwSurface* surface, const SwBBox& region, 
     for (uint32_t y = 0; y < h; ++y) {
         auto dst = &buffer[y * surface->stride];
 
-        if ((((uint32_t) dst) & 0x7) != 0) {
+        if ((((uintptr_t) dst) & 0x7) != 0) {
             //fill not aligned byte
             *dst = color + ALPHA_BLEND(*dst, ialpha);
             vDst = (uint8x8_t*) (dst + 1);
