@@ -190,4 +190,52 @@ TEST_CASE("Animation Lottie9", "[tvgAnimation]")
     REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
 }
 
+TEST_CASE("Animation Segment", "[tvgAnimation]")
+{
+    REQUIRE(Initializer::init(CanvasEngine::Sw, 0) == Result::Success);
+
+    auto animation = Animation::gen();
+    REQUIRE(animation);
+
+    auto picture = animation->picture();
+    REQUIRE(picture->identifier == Picture::identifier);
+
+    float begin, end;
+
+    //Segment by range before loaded
+    REQUIRE(animation->segment(0, 0.5) == Result::InsufficientCondition);
+
+    //Get current segment before loaded
+    REQUIRE(animation->segment(&begin, &end) == Result::InsufficientCondition);
+
+    //Animation load
+    REQUIRE(picture->load(TEST_DIR"/lottiemarker.json") == Result::Success);
+
+    //Get current segment before segment
+    REQUIRE(animation->segment(&begin, &end) == Result::Success);
+    REQUIRE(begin == 0.0f);
+    REQUIRE(end == 1.0f);
+
+    //Segment by range
+    REQUIRE(animation->segment(0.25, 0.5) == Result::Success);
+
+    //Get current segment
+    REQUIRE(animation->segment(&begin, &end) == Result::Success);
+    REQUIRE(begin == 0.25);
+    REQUIRE(end == 0.5);
+
+    //Get only segment begin
+    REQUIRE(animation->segment(&begin) == Result::Success);
+    REQUIRE(begin == 0.25);
+
+    //Get only segment end
+    REQUIRE(animation->segment(nullptr, &end) == Result::Success);
+    REQUIRE(end == 0.5);
+
+    //Segment by invalid range
+    REQUIRE(animation->segment(-0.5, 1.5) == Result::InvalidArguments);
+
+    REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
+}
+
 #endif
