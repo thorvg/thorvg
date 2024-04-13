@@ -68,4 +68,38 @@ TEST_CASE("Lottie Slot", "[tvgLottie]")
     REQUIRE(Initializer::term() == Result::Success);
 }
 
+TEST_CASE("Lottie Marker", "[tvgLottie]")
+{
+    REQUIRE(Initializer::init(0) == Result::Success);
+
+    auto animation = LottieAnimation::gen();
+    REQUIRE(animation);
+
+    auto picture = animation->picture();
+    REQUIRE(picture->identifier == Picture::identifier);
+
+    //Set marker name before loaded
+    REQUIRE(animation->segment("sectionC") == Result::InsufficientCondition);
+
+    //Animation load
+    REQUIRE(picture->load(TEST_DIR"/lottiemarker.json") == Result::Success);
+
+    //Set marker
+    REQUIRE(animation->segment("sectionA") == Result::Success);
+
+    //Set marker by invalid name
+    REQUIRE(animation->segment("") == Result::InvalidArguments);
+
+    //Get marker count
+    REQUIRE(animation->markersCnt() == 3);
+
+    //Get marker name by index
+    REQUIRE(!strcmp(animation->marker(1), "sectionB"));
+
+    //Get marker name by invalid index
+    REQUIRE(animation->marker(-1) == nullptr);
+
+    REQUIRE(Initializer::term() == Result::Success);
+}
+
 #endif
