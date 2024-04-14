@@ -42,12 +42,14 @@ public:
     virtual float curFrame() = 0;           //return the current frame number
     virtual float duration() = 0;           //return the animation duration in seconds
 
-    void segment(float* begin, float* end) {
+    void segment(float* begin, float* end)
+    {
         if (begin) *begin = segmentBegin;
         if (end) *end = segmentEnd;
     }
 
-    void segment(float begin, float end) {
+    void segment(float begin, float end)
+    {
         segmentBegin = begin;
         segmentEnd = end;
     }
