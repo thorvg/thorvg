@@ -63,9 +63,15 @@ public:
     float duration() override;
     void sync() override;
 
+    //Marker Supports
+    uint32_t markerCount();
+    const char* markers(uint32_t index);
+    bool getSegment(float& beign, float& end, const char* marker);
+
 private:
     bool header();
     void clear();
+    float startFrame();
     void run(unsigned tid) override;
 };
 

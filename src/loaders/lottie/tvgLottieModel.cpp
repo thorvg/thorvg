@@ -255,4 +255,8 @@ LottieComposition::~LottieComposition()
     for (auto s = slots.begin(); s < slots.end(); ++s) {
         delete(*s);
     }
+    
+    for (auto m = markers.begin(); m < markers.end(); ++m) {
+        delete(*m);
+    }
 }
