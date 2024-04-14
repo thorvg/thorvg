@@ -85,13 +85,16 @@ endif
 #Vectorization
 simd_type = 'none'
 
-if get_option('vector') == true
-  if host_machine.cpu_family() == 'x86' or host_machine.cpu_family() == 'x86_64'
+if get_option('simd') == true
+  if host_machine.cpu_family().startswith('x86')
     config_h.set10('THORVG_AVX_VECTOR_SUPPORT', true)
     simd_type = 'avx'
-  elif host_machine.cpu_family() == 'arm'
+  elif host_machine.cpu_family().startswith('arm')
     config_h.set10('THORVG_NEON_VECTOR_SUPPORT', true)
-    simd_type = 'neon'
+    simd_type = 'neon-arm'
+  elif host_machine.cpu().startswith('aarch')
+    config_h.set10('THORVG_NEON_VECTOR_SUPPORT', true)
+    simd_type = 'neon-aarch'
   endif
 endif
 
