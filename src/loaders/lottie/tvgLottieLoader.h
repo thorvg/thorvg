@@ -64,9 +64,9 @@ public:
     void sync() override;
 
     //Marker Supports
-    uint32_t markerCount();
+    uint32_t markersCnt();
     const char* markers(uint32_t index);
-    bool getSegment(float& beign, float& end, const char* marker);
+    bool segment(const char* marker, float& beign, float& end);
 
 private:
     bool header();
