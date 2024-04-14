@@ -14,7 +14,7 @@ if (cc.get_id() == 'clang-cl')
     if simd_type == 'avx'
         compiler_flags += ['/clang:-mavx']
     endif
-    if simd_type == 'neon'
+    if simd_type == 'neon-arm'
         compiler_flags += ['/clang:-mfpu=neon']
     endif
     if get_option('b_sanitize') == 'none'
@@ -26,7 +26,7 @@ elif (cc.get_id() != 'msvc')
     if simd_type == 'avx'
         compiler_flags += ['-mavx']
     endif
-    if simd_type == 'neon'
+    if simd_type == 'neon-arm'
         compiler_flags += ['-mfpu=neon']
     endif
     if get_option('b_sanitize') == 'none'
