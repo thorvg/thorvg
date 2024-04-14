@@ -1859,6 +1859,44 @@ public:
     float duration() const noexcept;
 
     /**
+     * @brief Specifies the playback segment of the animation.
+     *
+     * The set segment is designated as the play area of the animation.
+     * This is useful for playing a specific segment within the entire animation.
+     * After setting, the number of animation frames and the playback time are calculated
+     * by mapping the playback segment as the entire range.
+     *
+     * @param[in] begin segment start.
+     * @param[in] end segment end.
+     *
+     * @retval Result::Success When succeed.
+     * @retval Result::InsufficientCondition In case the animation is not loaded.
+     * @retval Result::InvalidArguments When the given parameter is invalid.
+     * @retval Result::NonSupport When it's not animatable.
+     *
+     * @note Range from 0.0~1.0
+     * @note If a marker has been specified, its range will be disregarded.
+     * @see LottieAnimation::segment(const char* marker)
+     * @note Experimental API
+     */
+    Result segment(float begin, float end) noexcept;
+
+    /**
+     * @brief Gets the current segment.
+     *
+     * @param[out] begin segment start.
+     * @param[out] end segment end.
+     *
+     * @retval Result::Success When succeed.
+     * @retval Result::InsufficientCondition In case the animation is not loaded.
+     * @retval Result::InvalidArguments When the given parameter is invalid.
+     * @retval Result::NonSupport When it's not animatable.
+     *
+     * @note Experimental API
+     */
+    Result segment(float* begin, float* end = nullptr) noexcept;
+
+    /**
      * @brief Creates a new Animation object.
      *
      * @return A new Animation object.
