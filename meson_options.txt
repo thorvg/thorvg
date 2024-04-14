@@ -21,7 +21,7 @@ option('threads',
    value: true,
    description: 'Enable the multi-threading task scheduler in thorvg')
 
-option('vector',
+option('simd',
    type: 'boolean',
    value: false,
    description: 'Enable CPU Vectorization(SIMD) in thorvg')
