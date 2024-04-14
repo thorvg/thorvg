@@ -359,7 +359,7 @@ void LottieLoader::sync()
 }
 
 
-uint32_t LottieLoader::markerCount()
+uint32_t LottieLoader::markersCnt()
 {
     if (!comp) done();
     return comp->markers.count;
@@ -369,13 +369,13 @@ uint32_t LottieLoader::markerCount()
 const char* LottieLoader::markers(uint32_t index)
 {
     if (!comp) done();
-    if (index < 0 || index >= markerCount()) return nullptr;
+    if (index < 0 || index >= markersCnt()) return nullptr;
     auto marker = comp->markers.begin() + index;
     return (*marker)->name;
 }
 
 
-bool LottieLoader::getSegment(float& begin, float& end, const char* marker)
+bool LottieLoader::segment(const char* marker, float& begin, float& end)
 {
     if (!comp) done();
     
