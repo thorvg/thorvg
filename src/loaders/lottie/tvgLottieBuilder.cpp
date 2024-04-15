@@ -104,7 +104,7 @@ static Shape* _draw(LottieGroup* parent, RenderContext* ctx);
 static void _rotateX(Matrix* m, float degree)
 {
     if (degree == 0.0f) return;
-    auto radian = degree / 180.0f * MATH_PI;
+    auto radian = mathDeg2Rad(degree);
     m->e22 *= cosf(radian);
 }
 
@@ -112,7 +112,7 @@ static void _rotateX(Matrix* m, float degree)
 static void _rotateY(Matrix* m, float degree)
 {
     if (degree == 0.0f) return;
-    auto radian = degree / 180.0f * MATH_PI;
+    auto radian = mathDeg2Rad(degree);
     m->e11 *= cosf(radian);
 }
 
@@ -120,7 +120,7 @@ static void _rotateY(Matrix* m, float degree)
 static void _rotationZ(Matrix* m, float degree)
 {
     if (degree == 0.0f) return;
-    auto radian = degree / 180.0f * MATH_PI;
+    auto radian = mathDeg2Rad(degree);
     m->e11 = cosf(radian);
     m->e12 = -sinf(radian);
     m->e21 = sinf(radian);
@@ -617,7 +617,7 @@ static void _updateStar(LottieGroup* parent, LottiePolyStar* star, Matrix* trans
     auto innerRoundness = star->innerRoundness(frameNo) * 0.01f;
     auto outerRoundness = star->outerRoundness(frameNo) * 0.01f;
 
-    auto angle = -90.0f * MATH_PI / 180.0f;
+    auto angle = mathDeg2Rad(-90.0f);
     auto partialPointRadius = 0.0f;
     auto anglePerPoint = (2.0f * MATH_PI / ptsCnt);
     auto halfAnglePerPoint = anglePerPoint * 0.5f;
@@ -724,7 +724,7 @@ static void _updatePolygon(LottieGroup* parent, LottiePolyStar* star, Matrix* tr
     auto radius = star->outerRadius(frameNo);
     auto roundness = star->outerRoundness(frameNo) * 0.01f;
 
-    auto angle = -90.0f * MATH_PI / 180.0f;
+    auto angle = mathDeg2Rad(-90.0f);
     auto anglePerPoint = 2.0f * MATH_PI / float(ptsCnt);
     auto direction = (star->direction == 0) ? 1.0f : -1.0f;
     auto hasRoundness = false;
