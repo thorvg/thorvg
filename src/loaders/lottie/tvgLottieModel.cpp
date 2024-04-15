@@ -115,8 +115,8 @@ Fill* LottieGradient::fill(float frameNo)
             P(static_cast<RadialGradient*>(fill))->radial(sx, sy, r, sx, sy, 0.0f);
         } else {
             if (mathEqual(progress, 1.0f)) progress = 0.99f;
-            auto startAngle = atan2(ey - sy, ex - sx) * 180.0f / MATH_PI;
-            auto angle = (startAngle + this->angle(frameNo)) * (MATH_PI / 180.0f);
+            auto startAngle = mathRad2Deg(atan2(ey - sy, ex - sx));
+            auto angle = mathDeg2Rad((startAngle + this->angle(frameNo)));
             auto fx = sx + cos(angle) * progress * r;
             auto fy = sy + sin(angle) * progress * r;
             // Lottie dosen't have any focal radius concept
