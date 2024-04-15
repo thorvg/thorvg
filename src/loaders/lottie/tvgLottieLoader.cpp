@@ -258,7 +258,8 @@ bool LottieLoader::read()
 
 Paint* LottieLoader::paint()
 {
-    this->done();
+    done();
+
     if (!comp) return nullptr;
     comp->initiated = true;
     return comp->root->scene;
@@ -267,6 +268,8 @@ Paint* LottieLoader::paint()
 
 bool LottieLoader::override(const char* slot)
 {
+    if (!comp) done();
+
     if (!comp || comp->slots.count == 0) return false;
 
     auto success = true;
