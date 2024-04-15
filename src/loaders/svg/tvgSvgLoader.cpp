@@ -3813,10 +3813,11 @@ bool SvgLoader::open(const char* data, uint32_t size, bool copy)
     clear();
 
     if (copy) {
-        content = (char*)malloc(size);
+        content = (char*)malloc(size + 1);
         if (!content) return false;
         memcpy((char*)content, data, size);
-    } else content = data;
+        content[size] = '\0';
+    } else content = (char*)data;
 
     this->size = size;
     this->copy = copy;
@@ -3840,7 +3841,7 @@ bool SvgLoader::open(const string& path)
 
     if (filePath.empty()) return false;
 
-    content = filePath.c_str();
+    content = (char*)filePath.c_str();
     size = filePath.size();
 
     return header();
