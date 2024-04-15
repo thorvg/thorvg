@@ -370,7 +370,7 @@ static float _outlineLength(const RenderShape* rshape)
 
     const Point* close = nullptr;
     auto length = 0.0f;
-    auto slength = 0.0f;
+    auto slength = -1.0f;
     auto simutaneous = !rshape->stroke->trim.individual;
 
     //Compute the whole length
@@ -379,8 +379,8 @@ static float _outlineLength(const RenderShape* rshape)
             case PathCommand::Close: {
                 length += mathLength(pts - 1, close);
                 //retrieve the max length of the shape if the simultaneous mode.
-                if (simutaneous && slength < length) {
-                    slength = length;
+                if (simutaneous) {
+                    if (slength < length) slength = length;
                     length = 0.0f;
                 }
                 break;
