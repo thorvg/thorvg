@@ -329,11 +329,13 @@ RenderData GlRenderer::prepare(Surface* image, const RenderMesh* mesh, RenderDat
     sdata->viewHt = static_cast<float>(surface.h);
     sdata->updateFlag = flags;
 
-    sdata->texId = _genTexture(image);
-    sdata->opacity = opacity;
-    sdata->texColorSpace = image->cs;
-    sdata->texFlipY = (mesh && mesh->triangleCnt) ? 0 : 1;
-    sdata->geometry = make_unique<GlGeometry>();
+    if (sdata->texId == 0) {
+        sdata->texId = _genTexture(image);
+        sdata->opacity = opacity;
+        sdata->texColorSpace = image->cs;
+        sdata->texFlipY = (mesh && mesh->triangleCnt) ? 0 : 1;
+        sdata->geometry = make_unique<GlGeometry>();
+    }
 
     sdata->geometry->updateTransform(transform, sdata->viewWd, sdata->viewHt);
     sdata->geometry->setViewport(RenderRegion{
@@ -706,7 +708,7 @@ void GlRenderer::prepareBlitTask(GlBlitTask* task)
 void GlRenderer::prepareCmpTask(GlRenderTask* task)
 {
     // we use 1:1 blit mapping since compositor fbo is same size as root fbo
-    Array<float> vertices(5 * 4);
+    Array<float> vertices(4 * 4);
 
     float left = -1.f;
     float top = 1.f;
@@ -744,7 +746,7 @@ void GlRenderer::prepareCmpTask(GlRenderTask* task)
     indices.push(3);
 
     uint32_t vertexOffset = mGpuBuffer->push(vertices.data, vertices.count * sizeof(float));
-    uint32_t indexOffset = mGpuBuffer->push(indices.data, vertices.count * sizeof(uint32_t));
+    uint32_t indexOffset = mGpuBuffer->push(indices.data, indices.count * sizeof(uint32_t));
 
     task->addVertexLayout(GlVertexLayout{0, 2, 4 * sizeof(float), vertexOffset});
     task->addVertexLayout(GlVertexLayout{1, 2, 4 * sizeof(float), vertexOffset + 2 * sizeof(float)});
