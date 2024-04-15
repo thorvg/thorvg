@@ -126,7 +126,7 @@ void _pathAppendArcTo(Array<PathCommand>* cmds, Array<Point>* pts, Point* cur, P
     rx = fabsf(rx);
     ry = fabsf(ry);
 
-    angle = angle * MATH_PI / 180.0f;
+    angle = mathDeg2Rad(angle);
     cosPhi = cosf(angle);
     sinPhi = sinf(angle);
     dx2 = (sx - x) / 2.0f;
