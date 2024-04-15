@@ -2394,7 +2394,7 @@ TVG_API Tvg_Animation* tvg_lottie_animation_new();
 * \param[in] animation The Tvg_Animation object to override the property with the slot.
 * \param[in] slot The Lottie slot data in json, or @c nullptr to reset.
 *
-* \return Tvg_Animation A new Tvg_LottieAnimation object.
+* \return Tvg_Result enumeration.
 * \retval TVG_RESULT_SUCCESS Succeed.
 * \retval TVG_RESULT_INSUFFICIENT_CONDITION In case the animation is not loaded.
 * \retval TVG_RESULT_INVALID_ARGUMENT When the given @p slot is invalid
