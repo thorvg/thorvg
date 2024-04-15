@@ -256,7 +256,7 @@ void LottieParser::getValue(ColorStop& color)
 {
     if (peekType() == kArrayType) enterArray();
 
-    color.input = new Array<float>(context.gradient->colorStops.count);
+    color.input = new Array<float>(static_cast<LottieGradient*>(context.parent)->colorStops.count);
 
     while (nextArrayValue()) color.input->push(getFloat());
 }
@@ -496,6 +496,8 @@ LottieRect* LottieParser::parseRect()
     auto rect = new LottieRect;
     if (!rect) return nullptr;
 
+    context.parent = rect;
+
     while (auto key = nextObjectKey()) {
         if (KEY_AS("s")) parseProperty(rect->size);
         else if (KEY_AS("p")) parseProperty(rect->position);
@@ -514,6 +516,8 @@ LottieEllipse* LottieParser::parseEllipse()
     auto ellipse = new LottieEllipse;
     if (!ellipse) return nullptr;
 
+    context.parent = ellipse;
+
     while (auto key = nextObjectKey()) {
         if (KEY_AS("nm")) ellipse->name = getStringCopy();
         else if (KEY_AS("p")) parseProperty(ellipse->position);
@@ -530,6 +534,8 @@ LottieTransform* LottieParser::parseTransform(bool ddd)
 {
     auto transform = new LottieTransform;
     if (!transform) return nullptr;
+
+    context.parent = transform;
 
     if (ddd) {
         transform->rotationEx = new LottieTransform::RotationEx;
@@ -574,6 +580,8 @@ LottieSolidFill* LottieParser::parseSolidFill()
     auto fill = new LottieSolidFill;
     if (!fill) return nullptr;
 
+    context.parent = fill;
+
     while (auto key = nextObjectKey()) {
         if (KEY_AS("nm")) fill->name = getStringCopy();
         else if (KEY_AS("c")) parseProperty<LottieProperty::Type::Color>(fill->color, fill);
@@ -612,6 +620,8 @@ LottieSolidStroke* LottieParser::parseSolidStroke()
 {
     auto stroke = new LottieSolidStroke;
     if (!stroke) return nullptr;
+
+    context.parent = stroke;
 
     while (auto key = nextObjectKey()) {
         if (KEY_AS("c")) parseProperty<LottieProperty::Type::Color>(stroke->color, stroke);
@@ -668,6 +678,8 @@ LottiePolyStar* LottieParser::parsePolyStar()
     auto star = new LottiePolyStar;
     if (!star) return nullptr;
 
+    context.parent = star;
+
     while (auto key = nextObjectKey()) {
         if (KEY_AS("nm")) star->name = getStringCopy();
         else if (KEY_AS("p")) parseProperty(star->position);
@@ -691,6 +703,8 @@ LottieRoundedCorner* LottieParser::parseRoundedCorner()
     auto corner = new LottieRoundedCorner;
     if (!corner) return nullptr;
 
+    context.parent = corner;
+
     while (auto key = nextObjectKey()) {
         if (KEY_AS("nm")) corner->name = getStringCopy();
         else if (KEY_AS("r")) parseProperty(corner->radius);
@@ -704,8 +718,6 @@ LottieRoundedCorner* LottieParser::parseRoundedCorner()
 
 void LottieParser::parseGradient(LottieGradient* gradient, const char* key)
 {
-    context.gradient = gradient;
-
     if (KEY_AS("t")) gradient->id = getInt();
     else if (KEY_AS("o")) parseProperty<LottieProperty::Type::Opacity>(gradient->opacity, gradient);
     else if (KEY_AS("g"))
@@ -730,6 +742,8 @@ LottieGradientFill* LottieParser::parseGradientFill()
     auto fill = new LottieGradientFill;
     if (!fill) return nullptr;
 
+    context.parent = fill;
+
     while (auto key = nextObjectKey()) {
         if (KEY_AS("nm")) fill->name = getStringCopy();
         else if (KEY_AS("r")) fill->rule = getFillRule();
@@ -747,6 +761,8 @@ LottieGradientStroke* LottieParser::parseGradientStroke()
 {
     auto stroke = new LottieGradientStroke;
     if (!stroke) return nullptr;
+
+    context.parent = stroke;
 
     while (auto key = nextObjectKey()) {
         if (KEY_AS("nm")) stroke->name = getStringCopy();
@@ -769,6 +785,8 @@ LottieTrimpath* LottieParser::parseTrimpath()
     auto trim = new LottieTrimpath;
     if (!trim) return nullptr;
 
+    context.parent = trim;
+
     while (auto key = nextObjectKey()) {
         if (KEY_AS("nm")) trim->name = getStringCopy();
         else if (KEY_AS("s")) parseProperty(trim->start);
@@ -788,6 +806,8 @@ LottieRepeater* LottieParser::parseRepeater()
 {
     auto repeater = new LottieRepeater;
     if (!repeater) return nullptr;
+
+    context.parent = repeater;
 
     while (auto key = nextObjectKey()) {
         if (KEY_AS("nm")) repeater->name = getStringCopy();
@@ -1286,17 +1306,19 @@ bool LottieParser::apply(LottieSlot* slot)
     switch (slot->type) {
         case LottieProperty::Type::ColorStop: {
             obj = new LottieGradient;
-            context.gradient = static_cast<LottieGradient*>(obj);
+            context.parent = obj;
             parseSlotProperty(static_cast<LottieGradient*>(obj)->colorStops);
             break;
         }
         case LottieProperty::Type::Color: {
             obj = new LottieSolid;
+            context.parent = obj;
             parseSlotProperty(static_cast<LottieSolid*>(obj)->color);
             break;
         }
         case LottieProperty::Type::TextDoc: {
             obj = new LottieText;
+            context.parent = obj;
             parseSlotProperty(static_cast<LottieText*>(obj)->doc);
             break;
         }
