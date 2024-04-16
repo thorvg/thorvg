@@ -23,8 +23,10 @@
 #include "config.h"
 #include <string>
 #include <thorvg.h>
-#include <thorvg_lottie.h>
 #include "thorvg_capi.h"
+#ifdef THORVG_LOTTIE_LOADER_SUPPORT
+#include <thorvg_lottie.h>
+#endif
 
 using namespace std;
 using namespace tvg;
