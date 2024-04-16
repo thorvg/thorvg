@@ -54,6 +54,7 @@ struct WgContext {
 
     WGPUSampler samplerNearest{};
     WGPUSampler samplerLinear{};
+    WGPUBuffer indexBufferFan{};
 
     WgPipelines* pipelines{}; // external handle (do not release)
     
@@ -75,6 +76,7 @@ struct WgContext {
 
     void allocateVertexBuffer(WGPUBuffer& buffer, const void *data, uint64_t size);
     void allocateIndexBuffer(WGPUBuffer& buffer, const void *data, uint64_t size);
+    void allocateIndexBufferFan(uint64_t size);
     void releaseVertexBuffer(WGPUBuffer& buffer);
     void releaseIndexBuffer(WGPUBuffer& buffer);
 };
