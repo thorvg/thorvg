@@ -59,7 +59,6 @@ public:
     inline WgPoint lerp(const WgPoint& p, float t) const { return { x + (p.x - x) * t, y + (p.y - y) * t }; };
 };
 
-
 struct WgMath
 {
     Array<float> sinus;
@@ -102,14 +101,12 @@ struct WgGeometryData
 {
     static WgMath* gMath;
 
-    Array<WgPoint> positions{};
+    WgPolyline positions{};
     Array<WgPoint> texCoords{};
     Array<uint32_t> indexes{};
 
-    // webgpu did not support triangle fans primitives type
-    // so we can emulate triangle fans using indexing
-    void computeTriFansIndexes();
-    void computeContour(WgGeometryData* data);
+    WgGeometryData();
+    void clear();
 
     void appendCubic(WgPoint p1, WgPoint p2, WgPoint p3);
     void appendBox(WgPoint pmin, WgPoint pmax);
@@ -118,37 +115,8 @@ struct WgGeometryData
     void appendImageBox(float w, float h);
     void appendBlitBox();
     void appendMesh(const RenderMesh* rmesh);
-
-    WgPoint interpolate(float t, uint32_t& ind); // t = [0;1]
-
-    float getLength();
-    bool getClosestIntersection(WgPoint p1, WgPoint p2, WgPoint& pi, uint32_t& index);
-    bool isCW(WgPoint p1, WgPoint p2, WgPoint p3);
-
-    uint32_t getIndexMinX();
-    uint32_t getIndexMaxX();
-    uint32_t getIndexMinY();
-    uint32_t getIndexMaxY();
-
-    void close();
-    void clear();
-};
-
-struct WgGeometryDataGroup
-{
-    Array<WgGeometryData*> geometries{};
-    virtual ~WgGeometryDataGroup() { release(); }
-
-    void getBBox(WgPoint& pmin, WgPoint& pmax);
-    void tesselate(const RenderShape& rshape);
-    void stroke(const RenderShape& rshape);
-    void release();
-private:
-    static void decodePath(const RenderShape& rshape, WgGeometryDataGroup* polyline);
-    static void contourPolyline(WgGeometryDataGroup* polyline, WgGeometryDataGroup* contours);
-    static void trimPolyline(WgGeometryDataGroup* polyline, WgGeometryDataGroup* trimmed, RenderStroke *stroke);
-    static void splitPolyline(WgGeometryDataGroup* polyline, WgGeometryDataGroup* splitted, RenderStroke *stroke);
-    static void strokePolyline(WgGeometryDataGroup* polyline, WgGeometryData* strokes, RenderStroke *stroke);
+    void appendStrokeDashed(const WgPolyline* polyline, const RenderStroke *stroke);
+    void appendStroke(const WgPolyline* polyline, const RenderStroke *stroke);
 };
 
 #endif // _TVG_WG_GEOMETRY_H_
