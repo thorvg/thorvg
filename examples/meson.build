@@ -61,7 +61,7 @@ source_file = [
 ]
 
 
-if get_option('loaders').contains('all') == true or get_option('loaders').contains('lottie') == true
+if lottie_loader
   source_file += 'LottieExtension.cpp'
 endif
 
