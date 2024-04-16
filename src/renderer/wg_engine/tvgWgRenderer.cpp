@@ -49,11 +49,15 @@ void WgRenderer::initialize()
     mBlendMethodPool.initialize(mContext);
     mCompositeMethodPool.initialize(mContext);
     WgMeshDataGroup::MeshDataPool = new WgMeshDataPool();
+    WgGeometryData::gMath = new WgMath();
+    WgGeometryData::gMath->initialize();
 }
 
 
 void WgRenderer::release()
 {
+    WgGeometryData::gMath->release();
+    delete WgGeometryData::gMath;
     mRenderDataShapePool.release(mContext);
     WgMeshDataGroup::MeshDataPool->release(mContext);
     delete WgMeshDataGroup::MeshDataPool;

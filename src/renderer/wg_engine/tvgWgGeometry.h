@@ -49,34 +49,59 @@ public:
     WgPoint operator / (const float c) const { return { x / c, y / c }; }
 
     WgPoint negative() const { return {-x, -y}; }
-    void negate() { x = -x; y = -y; }
-    float length() const { return sqrt(x*x + y*y); }
-
-    float dot(const WgPoint& p) const { return x * p.x + y * p.y; }
-    float dist(const WgPoint& p) const
-    { 
-        return sqrt(
-            (p.x - x)*(p.x - x) + 
-            (p.y - y)*(p.y - y)
-        ); 
-    }
-
-    void normalize()
-    {
-        float rlen = 1.0f / length();
-        x *= rlen;
-        y *= rlen;
-    }
-
-    WgPoint normal() const
-    {
-        float rlen = 1.0f / length();
-        return { x * rlen, y * rlen };
-    }
+    inline void negate() { x = -x; y = -y; }
+    inline float length() const { return sqrt(x*x + y*y); }
+    inline float dot(const WgPoint& p) const { return x * p.x + y * p.y; }
+    inline float dist(const WgPoint& p) const { return sqrt(dist2(p)); }
+    inline float dist2(const WgPoint& p) const { return ((p.x - x)*(p.x - x) + (p.y - y)*(p.y - y)); }
+    inline void normalize() { float rlen = 1.0f / length(); x *= rlen; y *= rlen; }
+    inline WgPoint normal() const { float rlen = 1.0f / length(); return { x * rlen, y * rlen }; }
+    inline WgPoint lerp(const WgPoint& p, float t) const { return { x + (p.x - x) * t, y + (p.y - y) * t }; };
 };
+
+
+struct WgMath
+{
+    Array<float> sinus;
+    Array<float> cosin;
+    bool initialized{};
+
+    void initialize();
+    void release();
+};
+
+
+struct WgPolyline
+{
+    Array<WgPoint> pts;
+    Array<float> dist;
+    // polyline bbox points indexes
+    uint32_t iminx{};
+    uint32_t iminy{};
+    uint32_t imaxx{};
+    uint32_t imaxy{};
+    // total polyline length
+    float len{};
+
+    WgPolyline();
+
+    void appendPoint(WgPoint pt);
+    void appendCubic(WgPoint p1, WgPoint p2, WgPoint p3);
+
+    void trim(WgPolyline* polyline, float trimBegin, float trimEnd) const;
+
+    void close();
+    void clear();
+
+    bool isClosed() const;
+    void getBBox(WgPoint& pmin, WgPoint& pmax) const;
+};
+
 
 struct WgGeometryData
 {
+    static WgMath* gMath;
+
     Array<WgPoint> positions{};
     Array<WgPoint> texCoords{};
     Array<uint32_t> indexes{};
