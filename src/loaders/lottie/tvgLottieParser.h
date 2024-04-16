@@ -70,7 +70,7 @@ private:
     template<typename T> void parseKeyFrame(T& prop);
     template<typename T> void parsePropertyInternal(T& prop);
     template<LottieProperty::Type type = LottieProperty::Type::Invalid, typename T> void parseProperty(T& prop, LottieObject* obj = nullptr);
-    template<typename T> void parseSlotProperty(T& prop);
+    template<LottieProperty::Type type = LottieProperty::Type::Invalid, typename T> void parseSlotProperty(T& prop);
 
     LottieObject* parseObject();
     LottieObject* parseAsset();
