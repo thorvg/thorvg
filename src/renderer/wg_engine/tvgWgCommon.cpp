@@ -94,11 +94,14 @@ void WgContext::initialize()
     assert(samplerNearest);
     samplerLinear = createSampler(WGPUFilterMode_Linear, WGPUMipmapFilterMode_Linear);
     assert(samplerLinear);
+    allocateIndexBufferFan(1024);
+    assert(indexBufferFan);
 }
 
 
 void WgContext::release()
 {
+    releaseBuffer(indexBufferFan);
     releaseSampler(samplerNearest);
     releaseSampler(samplerLinear);
     if (device) {
@@ -277,6 +280,30 @@ void WgContext::allocateIndexBuffer(WGPUBuffer& buffer, const void *data, uint64
         bufferDesc.mappedAtCreation = false;
         buffer = wgpuDeviceCreateBuffer(device, &bufferDesc);
         wgpuQueueWriteBuffer(queue, buffer, 0, data, size);
+    }
+}
+
+
+void WgContext::allocateIndexBufferFan(uint64_t vertsCount)
+{
+    assert(vertsCount >= 3);
+    uint64_t indexCount = (vertsCount - 2) * 3;
+    if ((!indexBufferFan) || (wgpuBufferGetSize(indexBufferFan) < indexCount * sizeof(uint32_t))) {
+        Array<uint32_t> indexes(indexCount);
+        for (size_t i = 0; i < vertsCount - 2; i++) {
+            indexes.push(0);
+            indexes.push(i + 1);
+            indexes.push(i + 2);
+        }
+        releaseBuffer(indexBufferFan);
+        WGPUBufferDescriptor bufferDesc{};
+        bufferDesc.nextInChain = nullptr;
+        bufferDesc.label = "The index buffer";
+        bufferDesc.usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_Index;
+        bufferDesc.size = indexCount * sizeof(uint32_t);
+        bufferDesc.mappedAtCreation = false;
+        indexBufferFan = wgpuDeviceCreateBuffer(device, &bufferDesc);
+        wgpuQueueWriteBuffer(queue, indexBufferFan, 0, &indexes[0], indexCount * sizeof(uint32_t));
     }
 }
 
