@@ -195,8 +195,8 @@ struct LottieVectorFrame
 template<typename T>
 uint32_t bsearch(T* frames, float frameNo)
 {
-    uint32_t low = 0;
-    uint32_t high = frames->count - 1;
+    int32_t low = 0;
+    int32_t high = int32_t(frames->count) - 1;
 
     while (low <= high) {
         auto mid = low + (high - low) / 2;
@@ -206,6 +206,8 @@ uint32_t bsearch(T* frames, float frameNo)
         else low = mid + 1;
     }
     if (high < low) low = high;
+    if (low < 0) low = 0;
+
     return low;
 }
 
