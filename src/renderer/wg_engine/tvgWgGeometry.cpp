@@ -23,6 +23,159 @@
 #include "tvgWgGeometry.h"
 
 //***********************************************************************
+// WgPolyline
+//***********************************************************************
+
+WgMath* WgGeometryData::gMath = nullptr;
+
+void WgMath::initialize()
+{
+    if (initialized) return;
+    initialized = true;
+    const uint32_t nPoints = 360;
+    sinus.reserve(360);
+    cosin.reserve(360);
+    for (uint32_t i = 0; i < nPoints; i++) {
+        float angle = i * (2 * M_PI) / nPoints;
+        sinus.push(sin(angle));
+        cosin.push(cos(angle));
+    }
+};
+
+
+void WgMath::release() {
+    sinus.clear();
+    cosin.clear();
+};
+
+//***********************************************************************
+// WgPolyline
+//***********************************************************************
+
+WgPolyline::WgPolyline()
+{
+    pts.reserve(1024);
+    dist.reserve(1014);
+}
+
+
+void WgPolyline::appendPoint(WgPoint pt)
+{
+    if (pts.count > 0) {
+        float distance = pts.last().dist(pt);
+        if (distance > 0) {
+            // update min and max indexes
+            iminx = pts[iminx].x >= pt.x ? pts.count : iminx;
+            imaxx = pts[imaxx].x <= pt.x ? pts.count : imaxx;
+            iminy = pts[iminy].y >= pt.y ? pts.count : iminy;
+            imaxy = pts[imaxy].y <= pt.y ? pts.count : imaxy;
+            // update total length
+            len += distance;
+            // update points and distances
+            pts.push(pt);
+            dist.push(distance);
+        };
+    } else {
+        // reset min and max indexes and total length
+        iminx = imaxx = iminy = imaxy = 0;
+        len = 0.0f;
+        // update points and distances
+        pts.push(pt);
+        dist.push(0.0f);
+    }
+}
+
+
+void WgPolyline::appendCubic(WgPoint p1, WgPoint p2, WgPoint p3)
+{
+    WgPoint p0 = pts.count > 0 ? pts.last() : WgPoint(0.0f, 0.0f);
+    size_t segs = ((uint32_t)(p0.dist(p3) / 8.0f));
+    segs = segs == 0 ? 1 : segs;
+    for (size_t i = 1; i <= segs; i++) {
+        float t = i / (float)segs;
+        // get cubic spline interpolation coefficients
+        float t0 = 1.0f * (1.0f - t) * (1.0f - t) * (1.0f - t);
+        float t1 = 3.0f * (1.0f - t) * (1.0f - t) * t;
+        float t2 = 3.0f * (1.0f - t) * t * t;
+        float t3 = 1.0f * t * t * t;
+        appendPoint(p0 * t0 + p1 * t1 + p2 * t2 + p3 * t3);
+    }
+}
+
+
+void WgPolyline::trim(WgPolyline* polyline, float trimBegin, float trimEnd) const
+{
+    assert(polyline);
+    polyline->clear();
+    float begLen = len * trimBegin;
+    float endLen = len * trimEnd;
+    float currentLength = 0.0f;
+    // find start point
+    uint32_t indexStart = 0;
+    WgPoint pointStart{};
+    currentLength = 0.0f;
+    for (indexStart = 1; indexStart < pts.count; indexStart++) {
+        currentLength += dist[indexStart];
+        if(currentLength >= begLen) {
+            float t = 1.0f - (currentLength - begLen) / dist[indexStart];
+            pointStart = pts[indexStart-1] * (1.0f - t) + pts[indexStart] * t;
+            break;
+        }
+    }
+    if (indexStart >= pts.count) return;
+    // find end point
+    uint32_t indexEnd = 0;
+    WgPoint pointEnd{};
+    currentLength = 0.0f;
+    for (indexEnd = 1; indexEnd < pts.count; indexEnd++) {
+        currentLength += dist[indexEnd];
+        if(currentLength >= endLen) {
+            float t = 1.0f - (currentLength - endLen) / dist[indexEnd];
+            pointEnd = pts[indexEnd-1] * (1.0f - t) + pts[indexEnd] * t;
+            break;
+        }
+    }
+    if (indexEnd >= pts.count) return;
+    // fill polyline
+    polyline->appendPoint(pointStart);
+    for (uint32_t i = indexStart; i <= indexEnd - 1; i++)
+        polyline->appendPoint(pts[i]);
+    polyline->appendPoint(pointEnd);
+}
+
+
+void WgPolyline::close()
+{
+    if (pts.count > 0) appendPoint(pts[0]);
+}
+
+
+bool WgPolyline::isClosed() const
+{
+    return (pts.count >= 2) && (pts[0].dist2(pts.last()) == 0.0f);
+}
+
+
+void WgPolyline::clear()
+{
+    // reset min and max indexes and total length
+    iminx = imaxx = iminy = imaxy = 0;
+    len = 0.0f;
+    // clear points and distances
+    pts.clear();
+    dist.clear();
+}
+
+
+void WgPolyline::getBBox(WgPoint& pmin, WgPoint& pmax) const
+{
+    pmin.x = pts[iminx].x;
+    pmin.y = pts[iminy].y;
+    pmax.x = pts[imaxx].x;
+    pmax.y = pts[imaxy].y;
+}
+
+//***********************************************************************
 // WgGeometryData
 //***********************************************************************
 
