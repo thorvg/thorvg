@@ -20,11 +20,13 @@
  * SOFTWARE.
  */
 
+#include "config.h"
 #include <thorvg.h>
+#ifdef THORVG_LOTTIE_LOADER_SUPPORT
 #include <thorvg_lottie.h>
+#endif
 #include <fstream>
 #include <cstring>
-#include "config.h"
 #include "catch.hpp"
 
 using namespace tvg;
