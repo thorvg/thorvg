@@ -1,10 +1,10 @@
 subsaver_dep = []
 
-if all_savers or get_option('savers').contains('tvg') == true
+if tvg_saver
     subdir('tvg')
 endif
 
-if all_savers or get_option('savers').contains('gif') == true
+if gif_saver
     subdir('gif')
 endif
 

@@ -1,22 +1,22 @@
 subloader_dep = []
 
-if all_loaders or get_option('loaders').contains('tvg') == true
+if tvg_loader
     subdir('tvg')
 endif
 
-if all_loaders or get_option('loaders').contains('svg') == true
+if svg_loader
     subdir('svg')
 endif
 
-if all_loaders or get_option('loaders').contains('ttf') == true
+if ttf_loader
     subdir('ttf')
 endif
 
-if all_loaders or get_option('loaders').contains('lottie') == true
+if lottie_loader
     subdir('lottie')
 endif
 
-if all_loaders or get_option('loaders').contains('png') == true
+if png_loader
     if get_option('static') == true
         subdir('png')
     else
@@ -27,7 +27,7 @@ if all_loaders or get_option('loaders').contains('png') == true
     endif
 endif
 
-if all_loaders or get_option('loaders').contains('jpg') == true
+if jpg_loader
     if get_option('static') == true
         subdir('jpg')
     else
@@ -38,7 +38,7 @@ if all_loaders or get_option('loaders').contains('jpg') == true
     endif
 endif
 
-if all_loaders or get_option('loaders').contains('webp') == true
+if webp_loader
     if get_option('static') == true
         subdir('webp')
     else
