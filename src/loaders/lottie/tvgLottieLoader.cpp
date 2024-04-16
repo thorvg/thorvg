@@ -352,8 +352,7 @@ float LottieLoader::duration()
     if (!comp) done();
     if (!comp) return 0.0f;
 
-    auto frameNo = frameCnt * (segmentEnd - segmentBegin);
-    return frameNo / comp->frameRate;
+    return frameCnt * (segmentEnd - segmentBegin) / comp->frameRate;
 }
 
 
@@ -374,7 +373,7 @@ uint32_t LottieLoader::markersCnt()
 const char* LottieLoader::markers(uint32_t index)
 {
     if (!comp) done();
-    if (!comp || index < 0 || index >= markersCnt()) return nullptr;
+    if (!comp || index >= comp->markers.count) return nullptr;
     auto marker = comp->markers.begin() + index;
     return (*marker)->name;
 }
