@@ -32,53 +32,61 @@ if get_option('engines').contains('wg_beta') == true
 endif
 
 #Loaders
-all_loaders = false
+all_loaders = get_option('loaders').contains('all')
+svg_loader = all_loaders or get_option('loaders').contains('svg')
+tvg_loader = all_loaders or get_option('loaders').contains('tvg')
+png_loader = all_loaders or get_option('loaders').contains('png')
+jpg_loader = all_loaders or get_option('loaders').contains('jpg')
+lottie_loader = all_loaders or get_option('loaders').contains('lottie')
+ttf_loader = all_loaders or get_option('loaders').contains('ttf')
+webp_loader = all_loaders or get_option('loaders').contains('webp')
 
-if get_option('loaders').contains('all') == true
-    all_loaders = true
-endif
+#Savers
+all_savers = get_option('savers').contains('all')
+tvg_saver = all_savers or get_option('savers').contains('tvg')
+gif_saver = all_savers or get_option('savers').contains('gif')
 
-if all_loaders or get_option('loaders').contains('svg') == true
+#Tools
+all_tools = get_option('tools').contains('all')
+svg_loader = svg_loader or all_tools or get_option('tools').contains('svg')
+lottie_loader = lottie_loader or all_tools or get_option('tools').contains('lottie')
+tvg_saver = tvg_saver or all_tools or get_option('tools').contains('tvg')
+gif_saver = gif_saver or all_tools or get_option('tools').contains('gif')
+
+#Loaders/savers/tools config
+if svg_loader
     config_h.set10('THORVG_SVG_LOADER_SUPPORT', true)
 endif
 
-if all_loaders or get_option('loaders').contains('tvg') == true
+if tvg_loader
     config_h.set10('THORVG_TVG_LOADER_SUPPORT', true)
 endif
 
-if all_loaders or get_option('loaders').contains('png') == true
+if png_loader
    config_h.set10('THORVG_PNG_LOADER_SUPPORT', true)
 endif
 
-if all_loaders or get_option('loaders').contains('jpg') == true
+if jpg_loader
     config_h.set10('THORVG_JPG_LOADER_SUPPORT', true)
 endif
 
-if all_loaders or get_option('loaders').contains('lottie') == true
+if lottie_loader
     config_h.set10('THORVG_LOTTIE_LOADER_SUPPORT', true)
 endif
 
-if all_loaders or get_option('loaders').contains('ttf') == true
+if ttf_loader
     config_h.set10('THORVG_TTF_LOADER_SUPPORT', true)
 endif
 
-if all_loaders or get_option('loaders').contains('webp') == true
+if webp_loader
     config_h.set10('THORVG_WEBP_LOADER_SUPPORT', true)
 endif
 
-
-#Savers
-all_savers = false
-
-if get_option('savers').contains('all') == true
-    all_savers = true
-endif
-
-if all_savers or get_option('savers').contains('tvg') == true
+if tvg_saver
     config_h.set10('THORVG_TVG_SAVER_SUPPORT', true)
 endif
 
-if all_savers or get_option('savers').contains('gif') == true
+if gif_saver
     config_h.set10('THORVG_GIF_SAVER_SUPPORT', true)
 endif
 
@@ -110,13 +118,6 @@ endif
 #Log
 if get_option('log') == true
     config_h.set10('THORVG_LOG_ENABLED', true)
-endif
-
-#Tools
-all_tools = false
-
-if get_option('tools').contains('all') == true
-    all_tools = true
 endif
 
 
@@ -176,15 +177,15 @@ Summary:
         get_option('engines').contains('sw'),
         get_option('engines').contains('gl_beta'),
         get_option('engines').contains('wg_beta'),
-        all_loaders or get_option('loaders').contains('tvg'),
-        all_loaders or get_option('loaders').contains('svg'),
-        all_loaders or get_option('loaders').contains('ttf'),
-        all_loaders or get_option('loaders').contains('lottie'),
-        all_loaders or get_option('loaders').contains('png'),
-        all_loaders or get_option('loaders').contains('jpg'),
-        all_loaders or get_option('loaders').contains('webp'),
-        all_savers or get_option('savers').contains('tvg'),
-        all_savers or get_option('savers').contains('gif'),
+        tvg_loader,
+        svg_loader,
+        ttf_loader,
+        lottie_loader,
+        png_loader,
+        jpg_loader,
+        webp_loader,
+        tvg_saver,
+        gif_saver,
         get_option('bindings').contains('capi'),
         get_option('bindings').contains('wasm_beta'),
         get_option('log'),
