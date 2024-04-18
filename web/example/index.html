@@ -9,13 +9,14 @@
   <body>
     <div>
       <div>
+        <button onclick="playAnimation()">Play</button>
         <button onclick="pauseAnimation()">Pause</button>
         <button onclick="stopAnimation()">Stop</button>
+        <button onclick="createAnimation()">Create</button>
         <button onclick="destroyAnimation()">Destroy</button>
-        <button onclick="playAnimation()">Play</button>
-        <button onclick="save2gif()">save2gif</button>
-        <button onclick="save2tvg()">save2tvg</button>
-        <button onclick="save2png()">save2png</button>
+        <button onclick="save('gif')">save2gif</button>
+        <button onclick="save('tvg')">save2tvg</button>
+        <button onclick="save('png')">save2png</button>
         <div>
           <label for="reverseCheckbox">Reverse</label>
           <input type="checkbox" id="reverseCheckbox" onchange="toggleReverse(event)">
@@ -23,7 +24,7 @@
           
         <div>
           <label for="loopCheckbox">Loop</label>
-          <input type="checkbox" id="loopCheckbox" onchange="toggleLoop(event)">
+          <input type="checkbox" id="loopCheckbox" onchange="toggleLoop(event)" checked>
         </div>
         
         <div>
@@ -37,17 +38,31 @@
         </div>
       </div>
 
-      <lottie-player 
-        autoPlay 
-        intermission="1000"
-        mode="normal"
-        src="https://lottie.host/6d7dd6e2-ab92-4e98-826a-2f8430768886/NGnHQ6brWA.json"
-        style="width: 500px; height: 500px;"
-      ></lottie-player>
+      <div class="lottie"></div>
     </div>
     <script>
       let animation;
       window.onload = function() {
+        createAnimation();
+      }
+
+      function createAnimation() {
+        if (animation) {
+          alert('Animation already exists');
+          return;
+        }
+
+        const lottie = document.querySelector('.lottie');
+        animation = document.createElement('lottie-player');
+
+        animation.autoPlay = true;
+        animation.loop = true;
+        animation.src = "https://lottie.host/6d7dd6e2-ab92-4e98-826a-2f8430768886/NGnHQ6brWA.json";
+        animation.style.width = "500px";
+        animation.style.height = "500px";
+
+        lottie.appendChild(animation);
+
         animation = document.querySelector('lottie-player');
         const frameRange = document.querySelector('#frameRange');
 
@@ -57,26 +72,57 @@
       }
 
       function pauseAnimation() {
-          animation.pause();
+        if (!animation) {
+          alert('Animation is not created yet');
+          return;
+        }
+
+        animation.pause();
       }
 
       function stopAnimation() {
-          animation.stop();
+        if (!animation) {
+          alert('Animation is not created yet');
+          return;
+        }
+
+        animation.stop();
       }
 
       function seekFrame(framePercentage) {
-          animation.seek(animation.totalFrames * framePercentage / 100);
+        if (!animation) {
+          alert('Animation is not created yet');
+          return;
+        }
+
+        animation.seek(animation.totalFrames * framePercentage / 100);
       }
 
       function destroyAnimation() {
-        animation.destory();
+        if (!animation) {
+          alert('No animation to destroy');
+          return;
+        }
+
+        animation.destroy();
+        animation = undefined;
       }
 
       function playAnimation() {
+        if (!animation) {
+          alert('Animation is not created yet');
+          return;
+        }
+
         animation.play();
       }
 
       function toggleLoop(e) {
+        if (!animation) {
+          alert('Animation is not created yet');
+          return;
+        }
+
         animation.setLooping(e.target.checked);
         if (animation.currentState !== 'playing') {
           animation.play();
@@ -84,6 +130,11 @@
       }
 
       function changeSpeed(speed) {
+        if (!animation) {
+          alert('Animation is not created yet');
+          return;
+        }
+
         animation.setSpeed(speed);
         if (animation.currentState !== 'playing') {
           animation.play();
@@ -91,22 +142,24 @@
       }
 
       function toggleReverse(e) {
+        if (!animation) {
+          alert('Animation is not created yet');
+          return;
+        }
+
         animation.setDirection(e.target.checked ? -1 : 1);
         if (animation.currentState !== 'playing') {
           animation.play();
         }
       }
 
-      function save2gif() {
-        animation.save('gif');
-      }
+      function save(ext) {
+        if (!animation) {
+          alert('Animation is not created yet');
+          return;
+        }
 
-      function save2tvg() {
-        animation.save('tvg');
-      }
-
-      function save2png() {
-        animation.save('png');
+        animation.save(ext);
       }
   </script>
   </body>
