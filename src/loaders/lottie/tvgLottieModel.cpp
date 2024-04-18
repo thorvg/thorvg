@@ -46,11 +46,11 @@ LottieImage::~LottieImage()
 }
 
 
-void LottieTrimpath::segment(float frameNo, float& start, float& end)
+void LottieTrimpath::segment(float frameNo, float& start, float& end, LottieExpressions* exps)
 {
-    auto s = this->start(frameNo) * 0.01f;
-    auto e = this->end(frameNo) * 0.01f;
-    auto o = fmodf(this->offset(frameNo), 360.0f) / 360.0f;  //0 ~ 1
+    auto s = this->start(frameNo, exps) * 0.01f;
+    auto e = this->end(frameNo, exps) * 0.01f;
+    auto o = fmodf(this->offset(frameNo, exps), 360.0f) / 360.0f;  //0 ~ 1
 
     auto diff = fabs(s - e);
     if (mathZero(diff)) {
@@ -89,7 +89,7 @@ void LottieTrimpath::segment(float frameNo, float& start, float& end)
 }
 
 
-Fill* LottieGradient::fill(float frameNo)
+Fill* LottieGradient::fill(float frameNo, LottieExpressions* exps)
 {
     Fill* fill = nullptr;
 
@@ -126,7 +126,7 @@ Fill* LottieGradient::fill(float frameNo)
 
     if (!fill) return nullptr;
 
-    colorStops(frameNo, fill);
+    colorStops(frameNo, fill, exps);
 
     return fill;
 }
@@ -216,10 +216,10 @@ void LottieLayer::prepare()
 }
 
 
-float LottieLayer::remap(float frameNo)
+float LottieLayer::remap(float frameNo, LottieExpressions* exp)
 {
     if (timeRemap.frames || timeRemap.value) {
-        frameNo = comp->frameAtTime(timeRemap(frameNo));
+        frameNo = comp->frameAtTime(timeRemap(frameNo, exp));
     } else {
         frameNo -= startFrame;
     }

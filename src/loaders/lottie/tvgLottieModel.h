@@ -51,27 +51,21 @@ struct LottieStroke
         return dashattr->value[no];
     }
 
-    float dashOffset(float frameNo)
+    float dashOffset(float frameNo, LottieExpressions* exps)
     {
-        return dash(0)(frameNo);
+        return dash(0)(frameNo, exps);
     }
 
-    float dashGap(float frameNo)
+    float dashGap(float frameNo, LottieExpressions* exps)
     {
-        return dash(2)(frameNo);
+        return dash(2)(frameNo, exps);
     }
 
-    float dashSize(float frameNo)
+    float dashSize(float frameNo, LottieExpressions* exps)
     {
-        auto d = dash(1)(frameNo);
+        auto d = dash(1)(frameNo, exps);
         if (d == 0.0f) return 0.1f;
         else return d;
-    }
-
-    bool dynamic()
-    {
-        if (width.frames || dashattr) return true;
-        return false;
     }
 
     LottieFloat width = 0.0f;
@@ -221,7 +215,7 @@ struct LottieTrimpath : LottieObject
         return false;
     }
 
-    void segment(float frameNo, float& start, float& end);
+    void segment(float frameNo, float& start, float& end, LottieExpressions* exps);
 
     LottieFloat start = 0.0f;
     LottieFloat end = 100.0f;
@@ -489,7 +483,7 @@ struct LottieGradient : LottieObject
         return false;
     }
 
-    Fill* fill(float frameNo);
+    Fill* fill(float frameNo, LottieExpressions* exps);
 
     LottiePoint start = Point{0.0f, 0.0f};
     LottiePoint end = Point{0.0f, 0.0f};
@@ -626,7 +620,7 @@ struct LottieLayer : LottieGroup
     bool mergeable() override { return false; }
 
     void prepare();
-    float remap(float frameNo);
+    float remap(float frameNo, LottieExpressions* exp);
 
     struct {
         CompositeMethod type = CompositeMethod::None;
@@ -823,6 +817,7 @@ struct LottieComposition
     Array<LottieFont*> fonts;
     Array<LottieSlot*> slots;
     Array<LottieMarker*> markers;
+    bool expressions = false;
     bool initiated = false;
 };
 
