@@ -24,6 +24,7 @@
 #include "tvgCompressor.h"
 #include "tvgLottieModel.h"
 #include "tvgLottieParser.h"
+#include "tvgLottieExpressions.h"
 
 
 /************************************************************************/
@@ -31,6 +32,22 @@
 /************************************************************************/
 
 #define KEY_AS(name) !strcmp(key, name)
+
+
+static LottieExpression* _expression(char* code, LottieComposition* comp, LottieLayer* layer, LottieObject* object, LottieProperty* property, LottieProperty::Type type)
+{
+    if (!comp->expressions) comp->expressions = true;
+
+    auto inst = new LottieExpression;
+    inst->code = code;
+    inst->comp = comp;
+    inst->layer = layer;
+    inst->object = object;
+    inst->property = property;
+    inst->type = type;
+
+    return inst;
+}
 
 
 static char* _int2str(int num)
@@ -486,7 +503,10 @@ void LottieParser::parseProperty(T& prop, LottieObject* obj)
                 return;
             }
             comp->slots.push(new LottieSlot(sid, obj, type));
-        } else skip(key);
+        } else if (!strcmp(key, "x")) {
+            prop.exp = _expression(getStringCopy(), comp, context.layer, context.parent, &prop, type);
+        }
+        else skip(key);
     }
 }
 
@@ -552,6 +572,7 @@ LottieTransform* LottieParser::parseTransform(bool ddd)
                 //check separateCoord to figure out whether "x(expression)" / "x(coord)"
                 else if (transform->coords && KEY_AS("x")) parseProperty<LottieProperty::Type::Float>(transform->coords->x);
                 else if (transform->coords && KEY_AS("y")) parseProperty<LottieProperty::Type::Float>(transform->coords->y);
+                else if (KEY_AS("x")) transform->position.exp = _expression(getStringCopy(), comp, context.layer, context.parent, &transform->position, LottieProperty::Type::Position);
                 else skip(key);
             }
         }
@@ -638,7 +659,7 @@ LottieSolidStroke* LottieParser::parseSolidStroke()
 }
 
 
- void LottieParser::getPathSet(LottiePathSet& path)
+void LottieParser::getPathSet(LottiePathSet& path)
 {
     enterObject();
     while (auto key = nextObjectKey()) {
@@ -649,6 +670,8 @@ LottieSolidStroke* LottieParser::parseSolidStroke()
             } else {
                 getValue(path.value);
             }
+        } else if (!strcmp(key, "x")) {
+            path.exp = _expression(getStringCopy(), comp, context.layer, context.parent, &path, LottieProperty::Type::PathSet);
         } else skip(key);
     }
 }
