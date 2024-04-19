@@ -2154,7 +2154,7 @@ void BWTessellator::tessellate(const RenderShape *rshape)
 
                 float step = 1.f / stepCount;
 
-                for (uint32_t s = 1; s < static_cast<uint32_t>(stepCount); s++) {
+                for (uint32_t s = 1; s <= static_cast<uint32_t>(stepCount); s++) {
                     auto pt = bezPointAt(curve, step * s);
                     auto currIndex = pushVertex(pt.x, pt.y);
 
