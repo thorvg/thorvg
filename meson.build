@@ -31,27 +31,26 @@ if get_option('engines').contains('wg_beta') == true
     config_h.set10('THORVG_WG_RASTER_SUPPORT', true)
 endif
 
+#Tools
+all_tools = get_option('tools').contains('all')
+svg2tvg = all_tools or get_option('tools').contains('svg2tvg')
+lottie2gif = all_tools or get_option('tools').contains('lottie2gif')
+svg2png = all_tools or get_option('tools').contains('svg2png')
+
 #Loaders
 all_loaders = get_option('loaders').contains('all')
-svg_loader = all_loaders or get_option('loaders').contains('svg')
+svg_loader = all_loaders or get_option('loaders').contains('svg') or svg2tvg or svg2png
 tvg_loader = all_loaders or get_option('loaders').contains('tvg')
 png_loader = all_loaders or get_option('loaders').contains('png')
 jpg_loader = all_loaders or get_option('loaders').contains('jpg')
-lottie_loader = all_loaders or get_option('loaders').contains('lottie')
+lottie_loader = all_loaders or get_option('loaders').contains('lottie') or lottie2gif
 ttf_loader = all_loaders or get_option('loaders').contains('ttf')
 webp_loader = all_loaders or get_option('loaders').contains('webp')
 
 #Savers
 all_savers = get_option('savers').contains('all')
-tvg_saver = all_savers or get_option('savers').contains('tvg')
-gif_saver = all_savers or get_option('savers').contains('gif')
-
-#Tools
-all_tools = get_option('tools').contains('all')
-svg_loader = svg_loader or all_tools or get_option('tools').contains('svg')
-lottie_loader = lottie_loader or all_tools or get_option('tools').contains('lottie')
-tvg_saver = tvg_saver or all_tools or get_option('tools').contains('tvg')
-gif_saver = gif_saver or all_tools or get_option('tools').contains('gif')
+tvg_saver = all_savers or get_option('savers').contains('tvg') or svg2tvg
+gif_saver = all_savers or get_option('savers').contains('gif') or lottie2gif
 
 #Loaders/savers/tools config
 if svg_loader
@@ -191,9 +190,9 @@ Summary:
         get_option('log'),
         get_option('tests'),
         get_option('examples'),
-        all_tools or get_option('tools').contains('svg2tvg'),
-        all_tools or get_option('tools').contains('svg2png'),
-        all_tools or get_option('tools').contains('lottie2gif'),
+        svg2tvg,
+        svg2png,
+        lottie2gif
     )
 
 message(summary)
