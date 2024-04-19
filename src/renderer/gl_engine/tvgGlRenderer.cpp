@@ -20,6 +20,7 @@
  * SOFTWARE.
  */
 
+#include "tvgMath.h"
 #include "tvgGlRenderer.h"
 #include "tvgGlGpuBuffer.h"
 #include "tvgGlGeometry.h"
@@ -600,6 +601,22 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
     // matrix buffer
     {
         auto matrix = sdata.geometry->getTransforMatrix();
+
+        auto gradientTransform = fill->transform();
+        float invMat4[16];
+        if (!mathIdentity(const_cast<const Matrix*>(&gradientTransform))) {
+            Matrix inv{};
+            mathInverse(&gradientTransform  , &inv);
+
+            GET_MATRIX44(inv, invMat4);
+        } else {
+            memset(invMat4, 0, 16 * sizeof(float));
+            invMat4[0] = 1.f;
+            invMat4[5] = 1.f;
+            invMat4[10] = 1.f;
+            invMat4[15] = 1.f;
+        }
+
         uint32_t loc = task->getProgram()->getUniformBlockIndex("Matrix");
 
         uint32_t viewOffset = mGpuBuffer->push(matrix, 16 * sizeof(float), true);
@@ -621,6 +638,17 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
                 16 * sizeof(float),
             });
         }
+
+        loc = task->getProgram()->getUniformBlockIndex("InvMatrix");
+        viewOffset = mGpuBuffer->push(invMat4, 16 * sizeof(float), true);
+
+        task->addBindResource(GlBindingResource{
+            1,
+            loc,
+            mGpuBuffer->getBufferId(),
+            viewOffset,
+            16 * sizeof(float),
+        });
     }
 
     // gradient block
@@ -633,29 +661,31 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
 
             GlLinearGradientBlock gradientBlock;
 
-            gradientBlock.nStops[0] = stopCnt * 1.f;
             gradientBlock.nStops[1] = NOISE_LEVEL;
             gradientBlock.nStops[2] = static_cast<int32_t>(fill->spread()) * 1.f;
+            uint32_t nStops = 0;
             for (uint32_t i = 0; i < stopCnt; ++i) {
+                if (i > 0 && gradientBlock.stopPoints[nStops - 1] > stops[i].offset) continue;
+
                 gradientBlock.stopPoints[i] = stops[i].offset;
                 gradientBlock.stopColors[i * 4 + 0] = stops[i].r / 255.f;
                 gradientBlock.stopColors[i * 4 + 1] = stops[i].g / 255.f;
                 gradientBlock.stopColors[i * 4 + 2] = stops[i].b / 255.f;
                 gradientBlock.stopColors[i * 4 + 3] = stops[i].a / 255.f;
+                nStops++;
             }
+            gradientBlock.nStops[0] = nStops * 1.f;
 
             float x1, x2, y1, y2;
             linearFill->linear(&x1, &y1, &x2, &y2);
 
-            auto transform = linearFill->transform();
-
-            gradientBlock.startPos[0] = x1 * transform.e11 + transform.e13;
-            gradientBlock.startPos[1] = y1 * transform.e22 + transform.e23;
-            gradientBlock.stopPos[0] = x2 * transform.e11 + transform.e13;
-            gradientBlock.stopPos[1] = y2 * transform.e22 + transform.e23;
+            gradientBlock.startPos[0] = x1;
+            gradientBlock.startPos[1] = y1;
+            gradientBlock.stopPos[0] = x2;
+            gradientBlock.stopPos[1] = y2;
 
             gradientBinding = GlBindingResource{
-                1,
+                2,
                 loc,
                 mGpuBuffer->getBufferId(),
                 mGpuBuffer->push(&gradientBlock, sizeof(GlLinearGradientBlock), true),
@@ -666,28 +696,31 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
 
             GlRadialGradientBlock gradientBlock;
 
-            gradientBlock.nStops[0] = stopCnt * 1.f;
             gradientBlock.nStops[1] = NOISE_LEVEL;
             gradientBlock.nStops[2] = static_cast<int32_t>(fill->spread()) * 1.f;
+
+            uint32_t nStops = 0;
             for (uint32_t i = 0; i < stopCnt; ++i) {
+                if (i > 0 && gradientBlock.stopPoints[nStops - 1] > stops[i].offset) continue; 
+
                 gradientBlock.stopPoints[i] = stops[i].offset;
                 gradientBlock.stopColors[i * 4 + 0] = stops[i].r / 255.f;
                 gradientBlock.stopColors[i * 4 + 1] = stops[i].g / 255.f;
                 gradientBlock.stopColors[i * 4 + 2] = stops[i].b / 255.f;
                 gradientBlock.stopColors[i * 4 + 3] = stops[i].a / 255.f;
+                nStops++;
             }
+            gradientBlock.nStops[0] = nStops * 1.f;
 
             float x, y, r;
             radialFill->radial(&x, &y, &r);
 
-            auto transform = radialFill->transform();
-
-            gradientBlock.centerPos[0] = x * transform.e11 + transform.e13;
-            gradientBlock.centerPos[1] = y * transform.e22 + transform.e23;
-            gradientBlock.radius[0] = r * transform.e11;
+            gradientBlock.centerPos[0] = x;
+            gradientBlock.centerPos[1] = y;
+            gradientBlock.radius[0] = r;
 
             gradientBinding = GlBindingResource{
-                1,
+                2,
                 loc,
                 mGpuBuffer->getBufferId(),
                 mGpuBuffer->push(&gradientBlock, sizeof(GlRadialGradientBlock), true),
