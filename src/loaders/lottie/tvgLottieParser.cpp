@@ -955,10 +955,19 @@ LottieMarker* LottieParser::parseMarker()
     auto marker = new LottieMarker;
     
     while (auto key = nextObjectKey()) {
-        if (KEY_AS("cm")) marker->name = getStringCopy();
-        else if (KEY_AS("tm")) marker->time = getFloat();
-        else if (KEY_AS("dr")) marker->duration = getFloat();
-        else skip(key);
+        if (KEY_AS("cm")) {
+            if (peekType() == kObjectType) {
+                enterObject();
+                while (auto key = nextObjectKey()) {
+                    if (KEY_AS("name")) marker->name = getStringCopy();
+                    else skip(key);
+                }
+            } else marker->name = getStringCopy();
+        } else if (KEY_AS("tm")) {
+            marker->time = getFloat();
+        } else if (KEY_AS("dr")) {
+            marker->duration = getFloat();
+        } else skip(key);
     }
     
     return marker;
