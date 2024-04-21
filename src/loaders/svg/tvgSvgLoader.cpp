@@ -1724,8 +1724,11 @@ static SvgNode* _createEllipseNode(SvgLoaderData* loader, SvgNode* parent, const
 
 static bool _attrParsePolygonPoints(const char* str, SvgPolygonNode* polygon)
 {
-    float num;
-    while (_parseNumber(&str, nullptr, &num)) polygon->pts.push(num);
+    float num_x, num_y;
+    while (_parseNumber(&str, nullptr, &num_x) && _parseNumber(&str, nullptr, &num_y)) {
+        polygon->pts.push(num_x);
+        polygon->pts.push(num_y);
+    }
     return true;
 }
 
