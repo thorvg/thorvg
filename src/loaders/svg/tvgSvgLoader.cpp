@@ -3198,6 +3198,14 @@ static void _svgLoaderParserXmlClose(SvgLoaderData* loader, const char* content)
         }
     }
 
+    for (unsigned int i = 0; i < sizeof(graphicsTags) / sizeof(graphicsTags[0]); i++) {
+        if (!strncmp(content, graphicsTags[i].tag, graphicsTags[i].sz - 1)) {
+            loader->currentGraphicsNode = nullptr;
+            loader->stack.pop();
+            break;
+        }
+    }
+
     loader->level--;
 }
 
@@ -3264,6 +3272,11 @@ static void _svgLoaderParserXmlOpen(SvgLoaderData* loader, const char* content, 
         if (loader->stack.count > 0) parent = loader->stack.last();
         else parent = loader->doc;
         node = method(loader, parent, attrs, attrsLength, simpleXmlParseAttributes);
+        if (node && !empty) {
+            auto defs = _createDefsNode(loader, nullptr, nullptr, 0, nullptr);
+            loader->stack.push(defs);
+            loader->currentGraphicsNode = node;
+        }
     } else if ((gradientMethod = _findGradientFactory(tagName))) {
         SvgStyleGradient* gradient;
         gradient = gradientMethod(loader, attrs, attrsLength);
