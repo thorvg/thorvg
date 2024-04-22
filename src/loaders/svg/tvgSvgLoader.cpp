@@ -3025,6 +3025,7 @@ static void _styleCopy(SvgStyleProperty* to, const SvgStyleProperty* from)
 
 static void _copyAttr(SvgNode* to, const SvgNode* from)
 {
+    to->display = from->display;
     //Copy matrix attribute
     if (from->transform) {
         to->transform = (Matrix*)malloc(sizeof(Matrix));
