@@ -33,6 +33,17 @@
 #define KEY_AS(name) !strcmp(key, name)
 
 
+static bool _curve2line(Point& a, Point& b, Point& c, Point& d)
+{
+    auto m = (d.y - a.y) / (d.x - a.x);
+    auto by = m * (b.x - a.x) + a.y;
+    if (!mathEqual(by, b.y)) return false;
+    auto cy = m * (c.x - a.x) + a.y;
+    if (!mathEqual(cy, c.y)) return false;    
+    return true;
+}
+
+
 static char* _int2str(int num)
 {
     char str[20];
@@ -179,7 +190,7 @@ void LottieParser::getValue(TextDocument& doc)
 }
 
 
-void LottieParser::getValue(PathSet& path)
+void LottieParser::getValue(PathSet& path, bool optimize)
 {
     Array<Point> outs, ins, pts;
     bool closed = false;
@@ -228,18 +239,30 @@ void LottieParser::getValue(PathSet& path)
     outPts.push(*pt);
 
     for (++pt, ++out, ++in; pt < pts.end(); ++pt, ++out, ++in) {
-        outCmds.push(PathCommand::CubicTo);
-        outPts.push(*(pt - 1) + *(out - 1));
-        outPts.push(*pt + *in);
+        auto ctrl1 = *(pt - 1) + *(out - 1);
+        auto ctrl2 = *pt + *in;
+        if (optimize && _curve2line(*(pt - 1), ctrl1, ctrl2, *pt)) {
+            outCmds.push(PathCommand::LineTo);
+        } else {
+            outCmds.push(PathCommand::CubicTo);
+            outPts.push(ctrl1);
+            outPts.push(ctrl2);
+        }
         outPts.push(*pt);
     }
 
     if (closed) {
-        outPts.push(pts.last() + outs.last());
-        outPts.push(pts.first() + ins.first());
-        outPts.push(pts.first());
-        outCmds.push(PathCommand::CubicTo);
-        outCmds.push(PathCommand::Close);
+        auto ctrl1 = pts.last() + outs.last();
+        auto ctrl2 = pts.first() + ins.first();
+        if (optimize && _curve2line(*(pt - 1), ctrl1, ctrl2, pts.first())) {
+            outCmds.push(PathCommand::Close);
+        } else {
+            outPts.push(ctrl1);
+            outPts.push(ctrl2);
+            outPts.push(pts.first());
+            outCmds.push(PathCommand::CubicTo);
+            outCmds.push(PathCommand::Close);
+        }
     }
 
     path.pts = outPts.data;
@@ -640,7 +663,7 @@ LottieSolidStroke* LottieParser::parseSolidStroke()
                 enterArray();
                 while (nextArrayValue()) parseKeyFrame(path);
             } else {
-                getValue(path.value);
+                getValue(path.value, true);
             }
         } else skip(key);
     }

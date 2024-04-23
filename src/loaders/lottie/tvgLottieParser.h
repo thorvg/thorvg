@@ -57,7 +57,7 @@ private:
     void getPathSet(LottiePathSet& path);
     void getLayerSize(float& val);
     void getValue(TextDocument& doc);
-    void getValue(PathSet& path);
+    void getValue(PathSet& path, bool optimize = false);
     void getValue(Array<Point>& pts);
     void getValue(ColorStop& color);
     void getValue(float& val);
