@@ -30,11 +30,9 @@ import { THORVG_VERSION } from './version';
 type LottieJson = Map<PropertyKey, any>;
 type TvgModule = any;
 
-let _tvg: TvgModule;
 let _module: any;
 (async () => {  
   _module = await Module();
-  _tvg = new _module.TvgLottieAnimation();
 })();
 
 // Define library version
@@ -279,29 +277,21 @@ export class LottiePlayer extends LitElement {
   private _timer?: ReturnType<typeof setInterval>;
   private _observer?: IntersectionObserver;
 
-  constructor() {
-    super();
-    this._init();
-  }
-
   private async _init(): Promise<void> {
-    if (!_tvg) {
-      // throw new Error('ThorVG has not loaded');
+    if (!_module) {
+      //NOTE: ThorVG Module has not loaded
       return;
     }
 
-    this._TVG = _tvg;
-  }
-
-  private _delayedLoad(): void {
-    if (!_tvg || !this._timer) {
+    if (!this._timer) {
+      //NOTE: ThorVG Module has loaded, but called this function again
       return;
     }
 
     clearInterval(this._timer);
     this._timer = undefined;
 
-    this._TVG = _tvg;
+    this._TVG = new _module.TvgLottieAnimation();
 
     if (this.src) {
       this.load(this.src, this.mimeType);
@@ -317,7 +307,7 @@ export class LottiePlayer extends LitElement {
     this._observer.observe(this);
 
     if (!this._TVG) {
-      this._timer = setInterval(this._delayedLoad.bind(this), 100);
+      this._timer = setInterval(this._init.bind(this), 100);
       return;
     }
 
@@ -537,6 +527,7 @@ export class LottiePlayer extends LitElement {
       return;
     }
 
+    this._TVG.delete();
     this._TVG = null;
     this.currentState = PlayerState.Destroyed;
 
