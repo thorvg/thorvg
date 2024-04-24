@@ -1104,6 +1104,7 @@ static void _handleFillRuleAttr(TVG_UNUSED SvgLoaderData* loader, SvgNode* node,
 
 static void _handleOpacityAttr(TVG_UNUSED SvgLoaderData* loader, SvgNode* node, const char* value)
 {
+    node->style->flags = (node->style->flags | SvgStyleFlags::Opacity);
     node->style->opacity = _toOpacity(value);
 }
 
@@ -2961,6 +2962,9 @@ static void _styleCopy(SvgStyleProperty* to, const SvgStyleProperty* from)
     if (from->curColorSet) {
         to->color = from->color;
         to->curColorSet = true;
+    }
+    if (from->flags & SvgStyleFlags::Opacity) {
+        to->opacity = from->opacity;
     }
     if (from->flags & SvgStyleFlags::PaintOrder) {
         to->paintOrder = from->paintOrder;
