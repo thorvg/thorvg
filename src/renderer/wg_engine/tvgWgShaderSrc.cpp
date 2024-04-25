@@ -453,6 +453,68 @@ fn cs_main( @builtin(global_invocation_id) id: vec3u) {
 }
 )";
 
+// pipeline shader modules compose blend
+const char* cShaderSource_PipelineComputeComposeBlend = R"(
+@group(0) @binding(0) var imageSrc : texture_storage_2d<rgba8unorm, read>;
+@group(0) @binding(1) var imageMsk : texture_storage_2d<rgba8unorm, read>;
+@group(0) @binding(2) var imageDst : texture_storage_2d<rgba8unorm, read_write>;
+@group(1) @binding(0) var<uniform> composeMethod : u32;
+@group(2) @binding(0) var<uniform> blendMethod : u32;
+@group(3) @binding(0) var<uniform> opacity : f32;
+
+@compute @workgroup_size(8, 8)
+fn cs_main( @builtin(global_invocation_id) id: vec3u) {
+    let texSize = textureDimensions(imageSrc);
+    if ((id.x >= texSize.x) || (id.y >= texSize.y)) { return; };
+
+    let colorSrc = textureLoad(imageSrc, id.xy);
+    let colorMsk = textureLoad(imageMsk, id.xy);
+    let colorDst = textureLoad(imageDst, id.xy);
+
+    var color: vec3f = colorSrc.xyz;
+    var alpha: f32   = colorMsk.a;
+    let luma: vec3f  = vec3f(0.299, 0.587, 0.114);
+    switch composeMethod {
+        /* None           */ case 0u: { color = colorSrc.xyz; }
+        /* ClipPath       */ case 1u: { if (colorMsk.a == 0) { alpha = 0.0; }; }
+        /* AlphaMask      */ case 2u: { color = mix(colorMsk.xyz, colorSrc.xyz, colorSrc.a * colorMsk.b); }
+        /* InvAlphaMask   */ case 3u: { color = mix(colorSrc.xyz, colorMsk.xyz, colorSrc.a * colorMsk.b); alpha = 1.0 - colorMsk.b; }
+        /* LumaMask       */ case 4u: { color = colorSrc.xyz * dot(colorMsk.xyz, luma); }
+        /* InvLumaMask    */ case 5u: { color = colorSrc.xyz * (1.0 - dot(colorMsk.xyz, luma)); alpha = 1.0 - colorMsk.b; }
+        /* AddMask        */ case 6u: { color = colorSrc.xyz * colorSrc.a + colorMsk.xyz * (1.0 - colorSrc.a); }
+        /* SubtractMask   */ case 7u: { color = colorSrc.xyz * colorSrc.a - colorMsk.xyz * (1.0 - colorSrc.a); }
+        /* IntersectMask  */ case 8u: { color = colorSrc.xyz * min(colorSrc.a, colorMsk.a); }
+        /* DifferenceMask */ case 9u: { color = abs(colorMsk.xyz - colorSrc.xyz * (1.0 - colorMsk.a)); }
+        default: { color = colorSrc.xyz; }
+    }
+
+    let S: vec3f = color.xyz;
+    let D: vec3f = colorDst.xyz;
+    let Sa: f32  = alpha * opacity;
+    let Da: f32  = colorDst.a;
+    let One: vec3f = vec3(1.0);
+    switch blendMethod {
+        /* Normal     */ case 0u:  { color = (Sa * S) + (1.0 - Sa) * D; }
+        /* Add        */ case 1u:  { color = (S + D); }
+        /* Screen     */ case 2u:  { color = (S + D) - (S * D); }
+        /* Multiply   */ case 3u:  { color = (S * D); }
+        /* Overlay    */ case 4u:  { color = S * D; }
+        /* Difference */ case 5u:  { color = abs(S - D); }
+        /* Exclusion  */ case 6u:  { color = S + D - (2 * S * D); }
+        /* SrcOver    */ case 7u:  { color = S; }
+        /* Darken     */ case 8u:  { color = min(S, D); }
+        /* Lighten    */ case 9u:  { color = max(S, D); }
+        /* ColorDodge */ case 10u: { color = D / (One - S); }
+        /* ColorBurn  */ case 11u: { color = One - (One - D) / S; }
+        /* HardLight  */ case 12u: { color = (Sa * Da) - 2.0 * (Da - S) * (Sa - D); }
+        /* SoftLight  */ case 13u: { color = (One - 2 * S) * (D * D) + (2 * S * D); }
+        default:  { color = (Sa * S) + (1.0 - Sa) * D; }
+    }
+
+    textureStore(imageDst, id.xy, vec4f(color, Sa));
+}
+)";
+
 // pipeline shader modules anti-aliasing
 const char* cShaderSource_PipelineComputeAntiAlias = R"(
 @group(0) @binding(0) var imageSrc : texture_storage_2d<rgba8unorm, read_write>;

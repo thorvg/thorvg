@@ -185,6 +185,28 @@ void WgRenderStorage::compose(WGPUCommandEncoder commandEncoder, WgRenderStorage
 };
 
 
+void WgRenderStorage::composeBlend(
+    WgContext& context,
+    WGPUCommandEncoder commandEncoder,
+    WgRenderStorage* texSrc,
+    WgRenderStorage* texMsk,
+    WgBindGroupCompositeMethod* composeMethod,
+    WgBindGroupBlendMethod* blendMethod,
+    WgBindGroupOpacity* opacity)
+{
+    assert(commandEncoder);
+    assert(texSrc);
+    assert(texMsk);
+    WgBindGroupTexComposeBlend composeBlend;
+    composeBlend.initialize(context.device, context.queue, texSrc->texViewColor, texMsk->texViewColor, texViewColor);
+    WGPUComputePassEncoder computePassEncoder = beginComputePass(commandEncoder);
+    mPipelines->computeComposeBlend.use(computePassEncoder, composeBlend, *composeMethod, *blendMethod, *opacity);
+    dispatchWorkgroups(computePassEncoder);
+    endComputePass(computePassEncoder);
+    composeBlend.release();
+}
+
+
 void WgRenderStorage::antialias(WGPUCommandEncoder commandEncoder, WgRenderStorage* targetSrc)
 {
     assert(commandEncoder);

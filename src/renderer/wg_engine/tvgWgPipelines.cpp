@@ -292,6 +292,28 @@ void WgPipelineCompose::initialize(WGPUDevice device)
 }
 
 
+void WgPipelineComposeBlend::initialize(WGPUDevice device)
+{
+    // bind groups and layouts
+    WGPUBindGroupLayout bindGroupLayouts[] = {
+        WgBindGroupTexComposeBlend::getLayout(device),
+        WgBindGroupCompositeMethod::getLayout(device),
+        WgBindGroupBlendMethod::getLayout(device),
+        WgBindGroupOpacity::getLayout(device)
+    };
+
+    // sheder source and labels
+    auto shaderSource = cShaderSource_PipelineComputeComposeBlend;
+    auto shaderLabel = "The compute shader compose blend";
+    auto pipelineLabel = "The compute pipeline compose blend";
+
+    // allocate all pipeline handles
+    allocate(device,
+             bindGroupLayouts, ARRAY_ELEMENTS_COUNT(bindGroupLayouts),
+             shaderSource, shaderLabel, pipelineLabel);
+}
+
+
 void WgPipelineAntiAliasing::initialize(WGPUDevice device)
 {
     // bind groups and layouts
@@ -330,6 +352,7 @@ void WgPipelines::initialize(WgContext& context)
     computeClear.initialize(context.device);
     computeBlend.initialize(context.device);
     computeCompose.initialize(context.device);
+    computeComposeBlend.initialize(context.device);
     computeAntiAliasing.initialize(context.device);
     // store pipelines to context
     context.pipelines = this;
@@ -338,6 +361,7 @@ void WgPipelines::initialize(WgContext& context)
 
 void WgPipelines::release()
 {
+    WgBindGroupTexComposeBlend::layout = nullptr;
     WgBindGroupTextureSampled::releaseLayout();
     WgBindGroupTextureStorage::releaseLayout();
     WgBindGroupTexture::releaseLayout();
@@ -350,6 +374,7 @@ void WgPipelines::release()
     WgBindGroupCanvas::releaseLayout();
     // compute pipelines
     computeAntiAliasing.release();
+    computeComposeBlend.release();
     computeCompose.release();
     computeBlend.release();
     computeClear.release();

@@ -44,6 +44,7 @@ extern const char* cShaderSource_PipelineImage;
 extern const char* cShaderSource_PipelineComputeClear;
 extern const char* cShaderSource_PipelineComputeBlend;
 extern const char* cShaderSource_PipelineComputeCompose;
+extern const char* cShaderSource_PipelineComputeComposeBlend;
 extern const char* cShaderSource_PipelineComputeAntiAlias;
 
 #endif // _TVG_WG_SHADER_SRC_H_
