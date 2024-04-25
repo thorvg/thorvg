@@ -459,11 +459,6 @@ ecma_builtin_arraybuffer_slice (ecma_value_t this_arg, const ecma_value_t *argum
   /* 11. */
   ecma_builtin_id_t buffer_builtin_id = ECMA_BUILTIN_ID_ARRAYBUFFER;
 
-  if (ecma_is_shared_arraybuffer (this_arg))
-  {
-    buffer_builtin_id = ECMA_BUILTIN_ID_SHARED_ARRAYBUFFER;
-  }
-
   ecma_value_t ctor = ecma_op_species_constructor (object_p, buffer_builtin_id);
 
   if (ECMA_IS_VALUE_ERROR (ctor))
