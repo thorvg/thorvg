@@ -668,24 +668,12 @@ ecma_set_typedarray_element (ecma_typedarray_info_t *info_p, /**< typedarray inf
                              uint32_t index) /**< element index */
 {
   ecma_value_t to_num;
-  if (ECMA_TYPEDARRAY_IS_BIGINT_TYPE (info_p->id))
-  {
-    to_num = ecma_bigint_to_bigint (value, false);
+  ecma_number_t result_num;
+  to_num = ecma_op_to_numeric (value, &result_num, ECMA_TO_NUMERIC_NO_OPTS);
 
-    if (ECMA_IS_VALUE_ERROR (to_num))
-    {
-      return to_num;
-    }
-  }
-  else
+  if (ECMA_IS_VALUE_ERROR (to_num))
   {
-    ecma_number_t result_num;
-    to_num = ecma_op_to_numeric (value, &result_num, ECMA_TO_NUMERIC_NO_OPTS);
-
-    if (ECMA_IS_VALUE_ERROR (to_num))
-    {
-      return to_num;
-    }
+    return to_num;
   }
 
   if (ECMA_ARRAYBUFFER_LAZY_ALLOC (info_p->array_buffer_p))

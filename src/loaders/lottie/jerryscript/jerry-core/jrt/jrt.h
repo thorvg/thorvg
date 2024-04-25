@@ -21,8 +21,10 @@
 
 #include "jerryscript-core.h"
 #include "jerryscript-port.h"
-
 #include "jrt-types.h"
+
+
+#define JERRY_NDEBUG
 
 /*
  * Constants

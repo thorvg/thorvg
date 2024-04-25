@@ -58,7 +58,7 @@ ecma_builtin_arraybuffer_object_is_view (ecma_value_t this_arg, /**< 'this' argu
 {
   JERRY_UNUSED (this_arg);
 
-  return ecma_make_boolean_value (ecma_is_typedarray (arg) || ecma_is_dataview (arg));
+  return ecma_make_boolean_value (ecma_is_typedarray (arg));
 } /* ecma_builtin_arraybuffer_object_is_view */
 
 /**
