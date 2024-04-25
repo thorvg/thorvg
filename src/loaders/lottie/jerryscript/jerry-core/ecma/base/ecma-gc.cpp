@@ -1615,32 +1615,6 @@ ecma_gc_free_property (ecma_object_t *object_p, /**< object */
       ecma_compact_collection_destroy (compact_collection_p);
       break;
     }
-#if JERRY_BUILTIN_WEAKREF || JERRY_BUILTIN_CONTAINER
-    case LIT_INTERNAL_MAGIC_STRING_WEAK_REFS:
-    {
-      ecma_collection_t *refs_p = ECMA_GET_INTERNAL_VALUE_POINTER (ecma_collection_t, value);
-      for (uint32_t j = 0; j < refs_p->item_count; j++)
-      {
-        const ecma_value_t reference_value = refs_p->buffer_p[j];
-
-        if (!ecma_is_value_empty (reference_value))
-        {
-          ecma_object_t *obj_p = ecma_get_object_from_value (reference_value);
-
-          if (ecma_object_class_is (obj_p, ECMA_OBJECT_CLASS_WEAKREF))
-          {
-            ecma_extended_object_t *ext_obj_p = (ecma_extended_object_t *) obj_p;
-            ext_obj_p->u.cls.u3.target = ECMA_VALUE_UNDEFINED;
-            continue;
-          }
-          ecma_op_container_remove_weak_entry (obj_p, ecma_make_object_value (object_p));
-        }
-      }
-
-      ecma_collection_destroy (refs_p);
-      break;
-    }
-#endif /* JERRY_BUILTIN_CONTAINER */
     default:
     {
       JERRY_ASSERT (name_cp == LIT_INTERNAL_MAGIC_STRING_NATIVE_POINTER
