@@ -58,6 +58,7 @@ The task scheduler has been meticulously crafted to conceal complexity, streamli
     - [Build and Install](#build-and-install)
     - [Build with Visual Studio](#build-with-visual-studio)
     - [Install with vcpkg](#install-with-vcpkg)
+    - [Install with Conan](#install-with-conan)
     - [Install with MSYS2](#install-with-msys2)
   - [Quick Start](#quick-start)
   - [SVG](#svg)
@@ -120,6 +121,17 @@ Run the bootstrap script to build the vcpkg.
 Install the ThorVG package.
 ```
 ./vcpkg install thorvg
+```
+
+### Install with Conan
+You can download and install pre-packaged ThorVG using the [Conan](https://conan.io/) package manager.
+
+Follow the instructions on [this page on how to set up Conan](https://conan.io/downloads).
+
+Install the ThorVG package:
+
+```
+conan install --requires=thorvg/0.13.0 --build=missing
 ```
 
 ### Install with MSYS2
