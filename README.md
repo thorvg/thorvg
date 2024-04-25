@@ -131,7 +131,7 @@ Follow the instructions on [this page on how to set up Conan](https://conan.io/d
 Install the ThorVG package:
 
 ```
-conan install --requires=thorvg/0.13.0 --build=missing
+conan install --requires="thorvg/[*]" --build=missing
 ```
 
 ### Install with MSYS2
