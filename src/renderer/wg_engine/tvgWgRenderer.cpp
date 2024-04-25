@@ -392,20 +392,24 @@ bool WgRenderer::endComposite(TVG_UNUSED Compositor* cmp)
     } else {
         // end current render pass
         mRenderStorageStack.last()->endRenderPass();
-        // get two last render targets
+
+        // get source, mask and destination render storages
         WgRenderStorage* renderStorageSrc = mRenderStorageStack.last();
         mRenderStorageStack.pop();
         WgRenderStorage* renderStorageMsk = mRenderStorageStack.last();
         mRenderStorageStack.pop();
-    
-        // compose shape and mask
-        WgBindGroupOpacity* opacity = mOpacityPool.allocate(mContext, cmp->opacity);
-        WgBindGroupCompositeMethod* composeMethod = mCompositeMethodPool.allocate(mContext, cmp->method);
-        renderStorageSrc->compose(mCommandEncoder, renderStorageMsk, composeMethod, opacity);
+        WgRenderStorage* renderStorageDst = mRenderStorageStack.last();
 
-        // blent scene to current render storage
+        // get compose, blend and opacity settings
+        WgBindGroupCompositeMethod* composeMethod = mCompositeMethodPool.allocate(mContext, cmp->method);
         WgBindGroupBlendMethod* blendMethod = mBlendMethodPool.allocate(mContext, mBlendMethod);
-        mRenderStorageStack.last()->blend(mCommandEncoder, renderStorageSrc, blendMethod);
+        WgBindGroupOpacity* opacity = mOpacityPool.allocate(mContext, cmp->opacity);
+
+        // compose and blend
+        // dest = blend(dest, compose(src, msk, composeMethod), blendMethod, opacity)
+        renderStorageDst->composeBlend(mContext, mCommandEncoder,
+            renderStorageSrc, renderStorageMsk,
+            composeMethod, blendMethod, opacity);
 
         // back render targets to the pool
         mRenderStoragePool.free(mContext, renderStorageSrc);

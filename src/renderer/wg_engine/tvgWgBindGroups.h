@@ -143,6 +143,21 @@ struct WgBindGroupTextureSampled : public WgBindGroup
     void release();
 };
 
+// @group(0)
+struct WgBindGroupTexComposeBlend : public WgBindGroup
+{
+    static WGPUBindGroupLayout layout;
+    static WGPUBindGroupLayout getLayout(WGPUDevice device);
+    static void releaseLayout();
+
+    void initialize(WGPUDevice device, WGPUQueue queue,
+                    WGPUTextureView uTexSrc,
+                    WGPUTextureView uTexMsk,
+                    WGPUTextureView uTexDst);
+    void release();
+};
+
+
 // @group(1 or 2)
 struct WgBindGroupOpacity : public WgBindGroup
 {
