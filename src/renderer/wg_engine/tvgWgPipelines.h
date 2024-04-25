@@ -145,6 +145,20 @@ struct WgPipelineCompose: public WgComputePipeline
 };
 
 
+struct WgPipelineComposeBlend: public WgComputePipeline
+{
+    void initialize(WGPUDevice device) override;
+    void use(WGPUComputePassEncoder encoder, WgBindGroupTexComposeBlend& groupTexs, WgBindGroupCompositeMethod& groupComposeMethod, WgBindGroupBlendMethod& groupBlendMethod, WgBindGroupOpacity& groupOpacity)
+    {
+        set(encoder);
+        groupTexs.set(encoder, 0);
+        groupComposeMethod.set(encoder, 1);
+        groupBlendMethod.set(encoder, 2);
+        groupOpacity.set(encoder, 3);
+    }
+};
+
+
 struct WgPipelineAntiAliasing: public WgComputePipeline
 {
     void initialize(WGPUDevice device) override;
@@ -174,6 +188,7 @@ struct WgPipelines
     WgPipelineClear computeClear;
     WgPipelineBlend computeBlend;
     WgPipelineCompose computeCompose;
+    WgPipelineComposeBlend computeComposeBlend;
     WgPipelineAntiAliasing computeAntiAliasing;
 
     void initialize(WgContext& context);

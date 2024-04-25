@@ -54,6 +54,14 @@ public:
     void clear(WGPUCommandEncoder commandEncoder);
     void blend(WGPUCommandEncoder commandEncoder, WgRenderStorage* targetSrc, WgBindGroupBlendMethod* blendMethod);
     void compose(WGPUCommandEncoder commandEncoder, WgRenderStorage* targetMsk, WgBindGroupCompositeMethod* composeMethod, WgBindGroupOpacity* opacity);
+    void composeBlend(
+        WgContext& context,
+        WGPUCommandEncoder commandEncoder,
+        WgRenderStorage* texMsk,
+        WgRenderStorage* texSrc,
+        WgBindGroupCompositeMethod* composeMethod,
+        WgBindGroupBlendMethod* blendMethod,
+        WgBindGroupOpacity* opacity);
     void antialias(WGPUCommandEncoder commandEncoder, WgRenderStorage* targetSrc);
 private:
     void drawShape(WgContext& context, WgRenderDataShape* renderData, WgPipelineBlendType blendType);
