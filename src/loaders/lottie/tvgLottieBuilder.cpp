@@ -546,9 +546,36 @@ static void _updateText(LottieGroup* parent, LottieObject** child, float frameNo
     float spacing = text->spacing(frameNo) / scale;
     Point cursor = {0.0f, 0.0f};
     auto scene = Scene::gen();
+    int line = 0;
 
     //text string
-    while (*p != '\0') {
+    while (true) {
+        //TODO: remove nested scenes.
+        //end of text, new line of the cursor position
+        if (*p == 13 || *p == 3 || *p == '\0') {
+            //text layout position
+            auto ascent = text->font->ascent * scale;
+            if (ascent > doc.bbox.size.y) ascent = doc.bbox.size.y;
+            Point layout = {doc.bbox.pos.x, doc.bbox.pos.y + ascent - doc.shift};
+
+            //adjust the layout
+            if (doc.justify == 1) layout.x += doc.bbox.size.x - (cursor.x * scale);  //right aligned
+            else if (doc.justify == 2) layout.x += (doc.bbox.size.x * 0.5f) - (cursor.x * 0.5f * scale);  //center aligned
+
+            scene->translate(layout.x, layout.y);
+            scene->scale(scale);
+
+            parent->scene->push(std::move(scene));
+
+            if (*p == '\0') break;
+            ++p;
+
+            //new text group, single scene for each line
+            scene = Scene::gen();
+            cursor.x = 0.0f;
+            cursor.y = ++line * (doc.height / scale);
+        }
+        
         //find the glyph
         for (auto g = text->font->chars.begin(); g < text->font->chars.end(); ++g) {
             auto glyph = *g;
@@ -577,33 +604,12 @@ static void _updateText(LottieGroup* parent, LottieObject** child, float frameNo
 
                 p += glyph->len; 
 
-                //end of text, new line of the cursor position
-                if (*p == 13 || *p == 3) {
-                    cursor.x = 0.0f;
-                    cursor.y += (doc.height / scale);
-                    ++p;
                 //advance the cursor position horizontally
-                } else {
-                    cursor.x += glyph->width + spacing;
-                }
+                cursor.x += glyph->width + spacing;
                 break;
             }
         }
     }
-
-    //text layout position
-    auto ascent = text->font->ascent * scale;
-    if (ascent > doc.bbox.size.y) ascent = doc.bbox.size.y;
-    Point layout = {doc.bbox.pos.x, doc.bbox.pos.y + ascent - doc.shift};
-
-    //adjust the layout
-    if (doc.justify == 1) layout.x += doc.bbox.size.x - (cursor.x * scale);  //right aligned
-    else if (doc.justify == 2) layout.x += (doc.bbox.size.x * 0.5f) - (cursor.x * 0.5f * scale);  //center aligned
-
-    scene->translate(layout.x, layout.y);
-    scene->scale(scale);
-
-    parent->scene->push(std::move(scene));
 }
 
 
