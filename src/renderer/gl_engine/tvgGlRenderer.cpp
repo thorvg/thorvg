@@ -68,11 +68,24 @@ bool GlRenderer::target(int32_t id, uint32_t w, uint32_t h)
     mViewport.w = surface.w;
     mViewport.h = surface.h;
 
+    mTargetViewport.x = 0;
+    mTargetViewport.y = 0;
+    mTargetViewport.w = surface.w;
+    mTargetViewport.h = surface.h;
+
     mTargetFboId = static_cast<GLint>(id);
 
     //TODO: It's not allow to draw onto the main surface. Need to confirm the policy.
     if (mTargetFboId == 0) {
         GL_CHECK(glGetIntegerv(GL_FRAMEBUFFER_BINDING, &mTargetFboId));
+
+        GLint dims[4] = {0};
+
+        GL_CHECK(glGetIntegerv(GL_VIEWPORT, dims));
+        // If targeting on the main framebuffer ,the actual size may by adjusted by the window system.
+        // In case the size is different from logical size, query and set the actual viewport here
+        mTargetViewport.w = dims[2];
+        mTargetViewport.h = dims[3];
     }
 
     mRootTarget = make_unique<GlRenderTarget>(surface.w, surface.h);
@@ -101,6 +114,7 @@ bool GlRenderer::sync()
     prepareBlitTask(task);
 
     task->mClearBuffer = mClearBuffer;
+    task->setTargetViewport(mTargetViewport);
 
     mGpuBuffer->flushToGPU();
     mGpuBuffer->bind();

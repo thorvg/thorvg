@@ -128,7 +128,7 @@ void GlStencilCoverTask::run()
 
     if (mStencilMode == GlStencilMode::FillEvenOdd) {
         GL_CHECK(glStencilFunc(GL_EQUAL, 0x01, 0x01));
-        GL_CHECK(glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE));
+        GL_CHECK(glStencilOp(GL_REPLACE, GL_KEEP, GL_REPLACE));
     } else {
         GL_CHECK(glStencilFunc(GL_NOTEQUAL, 0x0, 0xFF));
         GL_CHECK(glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE));
@@ -137,17 +137,6 @@ void GlStencilCoverTask::run()
     GL_CHECK(glColorMask(1, 1, 1, 1));
 
     mCoverTask->run();
-
-    if (mStencilMode == GlStencilMode::FillEvenOdd) {
-        GL_CHECK(glStencilFunc(GL_NOTEQUAL, 0x0, 0xFF));
-        GL_CHECK(glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE));
-
-        GL_CHECK(glColorMask(0, 0, 0, 0));
-
-        mStencilTask->run();
-
-        GL_CHECK(glColorMask(1, 1, 1, 1));
-    }
 
     GL_CHECK(glDisable(GL_STENCIL_TEST));
 }
@@ -171,6 +160,7 @@ GlComposeTask::~GlComposeTask()
 void GlComposeTask::run()
 {
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, getSelfFbo()));
+    GL_CHECK(glViewport(0, 0, mFbo->getWidth(), mFbo->getHeight()));
 
     // clear this fbo
     if (mClearBuffer) {
@@ -216,6 +206,7 @@ void GlBlitTask::run()
     GlComposeTask::run();
 
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, getTargetFbo()));
+    GL_CHECK(glViewport(mTargetViewport.x, mTargetViewport.y, mTargetViewport.w, mTargetViewport.h));
 
     if (mClearBuffer) {
         GL_CHECK(glClearColor(0, 0, 0, 0));

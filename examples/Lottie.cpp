@@ -217,6 +217,8 @@ void drawGLview(Evas_Object *obj)
     gl->glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     gl->glClear(GL_COLOR_BUFFER_BIT);
 
+    glCanvas->update();
+
     if (glCanvas->draw() == tvg::Result::Success) {
         glCanvas->sync();
     }
