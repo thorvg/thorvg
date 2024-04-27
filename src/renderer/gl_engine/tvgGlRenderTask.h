@@ -144,8 +144,11 @@ public:
     void run() override;
 
     GLuint getColorTextore() const { return mColorTex; }
+
+    void setTargetViewport(const RenderRegion& vp) { mTargetViewport = vp; }
 private:
     GLuint mColorTex = 0;
+    RenderRegion mTargetViewport = {};
 };
 
 class GlDrawBlitTask : public GlComposeTask

@@ -98,7 +98,9 @@ private:
 
     GLint mTargetFboId = 0;
     RenderRegion mViewport;
-    std::unique_ptr<GlStageBuffer> mGpuBuffer;
+    RenderRegion mTargetViewport;
+    //TODO: remove all unique_ptr / replace the vector with tvg::Array
+    unique_ptr<GlStageBuffer> mGpuBuffer;
     vector<std::unique_ptr<GlProgram>> mPrograms;
     unique_ptr<GlRenderTarget> mRootTarget = {};
     Array<GlRenderTarget*> mComposePool = {};
