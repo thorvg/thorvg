@@ -24,7 +24,11 @@
 #include "tvgTtfLoader.h"
 
 #if defined(_WIN32) && (WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP)
+    #ifndef WIN32_LEAN_AND_MEAN
+        #define WIN32_LEAN_AND_MEAN
+    #endif
     #include <windows.h>
+    #undef WIN32_LEAN_AND_MEAN
 #elif defined(__linux__)
     #include <fcntl.h>
     #include <unistd.h>
