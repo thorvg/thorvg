@@ -56,6 +56,19 @@ struct SceneIterator : Iterator
     }
 };
 
+struct Viewport
+{
+    RenderRegion vregion;
+    Shape* vclip = nullptr;
+};
+
+enum ViewportType: uint8_t
+{
+    General = 0,
+    AxisAligned,
+    None
+};
+
 struct Scene::Impl
 {
     list<Paint*> paints;
@@ -63,6 +76,7 @@ struct Scene::Impl
     Scene* scene = nullptr;
     uint8_t opacity;                     //for composition
     bool needComp = false;               //composite or not
+    Viewport* vport = nullptr;
 
     Impl(Scene* s) : scene(s)
     {
@@ -77,6 +91,9 @@ struct Scene::Impl
         if (auto renderer = PP(scene)->renderer) {
             renderer->dispose(rd);
         }
+
+        if (vport) delete(vport->vclip);
+        delete(vport);
     }
 
     bool needComposition(uint8_t opacity)
@@ -99,6 +116,36 @@ struct Scene::Impl
         if (paints.size() == 1 && paints.front()->identifier() == TVG_CLASS_ID_SHAPE) return false;
 
         return true;
+    }
+
+    ViewportType applyViewport(RenderMethod* renderer, const RenderTransform* transform, Array<RenderData>& clips, RenderUpdateFlag pFlag, RenderData& vrd)
+    {
+        if (!vport) return ViewportType::None;
+
+        auto sceneViewport = vport->vregion;
+
+        //rotated/skewed rectangle
+        if (transform && (!mathRightAngle(&transform->m) || mathSkewed(&transform->m))) {
+            if (!vport->vclip) {
+                vport->vclip = Shape::gen().release();
+                vport->vclip->appendRect((float)sceneViewport.x, (float)sceneViewport.y, (float)sceneViewport.w, (float)sceneViewport.h);
+            }
+            vrd = PP(vport->vclip)->update(renderer, transform, clips, 255, pFlag, true);
+            clips.push(vrd);
+            return ViewportType::General;
+        //axis aligned rectangle
+        } else {
+            if (transform && !mathIdentity((const Matrix*)&transform->m)) {
+                sceneViewport.x = sceneViewport.x * transform->m.e11 + transform->m.e13;
+                sceneViewport.y = sceneViewport.y * transform->m.e22 + transform->m.e23;
+                sceneViewport.w *= transform->m.e11;
+                sceneViewport.h *= transform->m.e22;
+           }
+            auto viewport = renderer->viewport();
+            sceneViewport.intersect(viewport);
+            renderer->viewport(sceneViewport);
+            return ViewportType::AxisAligned;
+        }
     }
 
     RenderData update(RenderMethod* renderer, const RenderTransform* transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flag, bool clipper)
@@ -209,7 +256,26 @@ struct Scene::Impl
             dup->paints.push_back(cdup);
         }
 
+        if (vport) dup->viewport(vport->vregion.x, vport->vregion.y, vport->vregion.w, vport->vregion.h);
+
         return ret;
+    }
+
+    void viewport(int32_t x, int32_t y, int32_t w, int32_t h)
+    {
+        if (!vport) vport = new Viewport();
+        vport->vregion = {x, y, w, h};
+    }
+
+    bool viewport(int32_t* x, int32_t* y, int32_t* w, int32_t* h)
+    {
+        if (!vport) return false;
+
+        if (x) *x = vport->vregion.x;
+        if (y) *y = vport->vregion.y;
+        if (w) *w = vport->vregion.w;
+        if (h) *h = vport->vregion.h;
+        return true;
     }
 
     void clear(bool free)

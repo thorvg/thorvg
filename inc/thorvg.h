@@ -1394,6 +1394,36 @@ public:
     std::list<Paint*>& paints() noexcept;
 
     /**
+     * @brief Sets the scene's viewport.
+     *
+     * Allows specifying a rectangular viewport for the scene by providing the coordinates of its top-left corner and its dimensions.
+     *
+     * @param[in] x The horizontal coordinate of the upper left corner of the viewport.
+     * @param[in] y The vertical coordinate of the upper left corner of the viewport.
+     * @param[in] w The width of the viewport.
+     * @param[in] h The height of the viewport.
+     *
+     * @retval Result::InvalidArguments if the provided width @p w or height @p h are less than 0, Result::Success otherwise.
+     *
+     * @note Experimental API
+     */
+    Result viewport(int32_t x, int32_t y, int32_t w, int32_t h) noexcept;
+
+    /**
+     * @brief Gets the scene's viewport.
+     *
+     * @param[out] x The horizontal coordinate of the upper left corner of the viewport.
+     * @param[out] y The vertical coordinate of the upper left corner of the viewport.
+     * @param[out] w The width of the viewport.
+     * @param[out] h The height of the viewport.
+     *
+     * @retval Result::InsufficientCondition if the viewport was not set, Result::Success otherwise.
+     *
+     * @note Experimental API
+     */
+    Result viewport(int32_t* x, int32_t* y, int32_t* w, int32_t* h) noexcept;
+
+    /**
      * @brief Sets the total number of the paints pushed into the scene to be zero.
      * Depending on the value of the @p free argument, the paints are freed or not.
      *

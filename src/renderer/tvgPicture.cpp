@@ -38,6 +38,13 @@ RenderUpdateFlag Picture::Impl::load()
                         h = loader->h;
                     }
                     loader->resize(paint, w, h);
+                    if (paint->identifier() == TVG_CLASS_ID_SCENE) {
+                        auto scene = static_cast<Scene*>(paint);
+                        int32_t vx, vy;
+                        if (scene->viewport(&vx, &vy, nullptr, nullptr) == Result::Success) {
+                            scene->viewport(vx, vy, static_cast<int32_t>(w), static_cast<int32_t>(h));
+                        }
+                    }
                     resizing = false;
                 }
                 return RenderUpdateFlag::None;
