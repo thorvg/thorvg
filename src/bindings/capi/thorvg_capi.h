@@ -2347,7 +2347,7 @@ TVG_API Tvg_Result tvg_animation_set_segment(Tvg_Animation* animation, float beg
 * \retval TVG_RESULT_INSUFFICIENT_CONDITION In case the animation is not loaded.
 * \retval TVG_RESULT_INVALID_ARGUMENT When the given parameters are @c nullptr.
 */
-TVG_API Tvg_Result tvg_animation_get_segment(Tvg_Animation* animation, float* begin, float* end = nullptr);
+TVG_API Tvg_Result tvg_animation_get_segment(Tvg_Animation* animation, float* begin, float* end);
 
 
 /*!
