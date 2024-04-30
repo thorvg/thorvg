@@ -26,7 +26,11 @@
 #include <vector>
 #include "lodepng.h"
 #ifdef _WIN32
+    #ifndef WIN32_LEAN_AND_MEAN
+        #define WIN32_LEAN_AND_MEAN
+    #endif
     #include <windows.h>
+    #undef WIN32_LEAN_AND_MEAN
     #ifndef PATH_MAX
         #define PATH_MAX MAX_PATH
     #endif
