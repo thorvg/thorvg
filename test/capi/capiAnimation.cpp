@@ -128,7 +128,7 @@ TEST_CASE("Animation Segment", "[capiAnimation]")
     REQUIRE(end == 1.0f);
 
     //Get only segment begin
-    REQUIRE(tvg_animation_get_segment(animation, &begin) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_animation_get_segment(animation, &begin, nullptr) == TVG_RESULT_SUCCESS);
     REQUIRE(begin == 0.0f);
 
     //Get only segment end
