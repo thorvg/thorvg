@@ -2237,6 +2237,8 @@ TVG_API Tvg_Result tvg_saver_del(Tvg_Saver* saver);
 * \brief Creates a new Animation object.
 *
 * \return Tvg_Animation A new Tvg_Animation object.
+*
+* \since 0.13
 */
 TVG_API Tvg_Animation* tvg_animation_new();
 
@@ -2256,6 +2258,8 @@ TVG_API Tvg_Animation* tvg_animation_new();
 * \note For efficiency, ThorVG ignores updates to the new frame value if the difference from the current frame value
 *       is less than 0.001. In such cases, it returns @c Result::InsufficientCondition.
 * \see tvg_animation_get_total_frame()
+*
+* \since 0.13
 */
 TVG_API Tvg_Result tvg_animation_set_frame(Tvg_Animation* animation, float no);
 
@@ -2272,6 +2276,8 @@ TVG_API Tvg_Result tvg_animation_set_frame(Tvg_Animation* animation, float no);
 * \return A picture instance that is tied to this animation.
 *
 * \warning The picture instance is owned by Animation. It should not be deleted manually.
+*
+* \since 0.13
 */
 TVG_API Tvg_Paint* tvg_animation_get_picture(Tvg_Animation* animation);
 
@@ -2288,6 +2294,8 @@ TVG_API Tvg_Paint* tvg_animation_get_picture(Tvg_Animation* animation);
 *
 * \see tvg_animation_get_total_frame()
 * \see tvg_animation_set_frame()
+*
+* \since 0.13
 */
 TVG_API Tvg_Result tvg_animation_get_frame(Tvg_Animation* animation, float* no);
 
@@ -2304,6 +2312,8 @@ TVG_API Tvg_Result tvg_animation_get_frame(Tvg_Animation* animation, float* no);
 *
 * \note Frame numbering starts from 0.
 * \note If the Picture is not properly configured, this function will return 0.
+*
+* \since 0.13
 */
 TVG_API Tvg_Result tvg_animation_get_total_frame(Tvg_Animation* animation, float* cnt);
 
@@ -2319,6 +2329,8 @@ TVG_API Tvg_Result tvg_animation_get_total_frame(Tvg_Animation* animation, float
 * \retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Animation pointer or @p duration.
 *
 * \note If the Picture is not properly configured, this function will return 0.
+*
+* \since 0.13
 */
 TVG_API Tvg_Result tvg_animation_get_duration(Tvg_Animation* animation, float* duration);
 
@@ -2334,6 +2346,8 @@ TVG_API Tvg_Result tvg_animation_get_duration(Tvg_Animation* animation, float* d
 * \retval TVG_RESULT_SUCCESS Succeed.
 * \retval TVG_RESULT_INSUFFICIENT_CONDITION In case the animation is not loaded.
 * \retval TVG_RESULT_INVALID_ARGUMENT When the given parameters are out of range.
+*
+* \since 0.13
 */
 TVG_API Tvg_Result tvg_animation_set_segment(Tvg_Animation* animation, float begin, float end);
 
@@ -2361,6 +2375,8 @@ TVG_API Tvg_Result tvg_animation_get_segment(Tvg_Animation* animation, float* be
 * \return Tvg_Result enumeration.
 * \retval TVG_RESULT_SUCCESS Succeed.
 * \retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Animation pointer.
+*
+* \since 0.13
 */
 TVG_API Tvg_Result tvg_animation_del(Tvg_Animation* animation);
 

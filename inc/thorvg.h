@@ -1837,6 +1837,7 @@ public:
  *
  * This class supports the display and control of animation frames.
  *
+ * @since 0.13
  */
 
 class TVG_API Animation
