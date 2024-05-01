@@ -116,10 +116,10 @@ void GlStencilCoverTask::run()
         GL_CHECK(glStencilFunc(GL_NOTEQUAL, 0x1, 0xFF));
         GL_CHECK(glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE));
     } else {
-        GL_CHECK(glStencilFuncSeparate(GL_FRONT, GL_ALWAYS, 0x1, 0xFF));
+        GL_CHECK(glStencilFuncSeparate(GL_FRONT, GL_ALWAYS, 0x0, 0xFF));
         GL_CHECK(glStencilOpSeparate(GL_FRONT, GL_KEEP, GL_KEEP, GL_INCR_WRAP));
 
-        GL_CHECK(glStencilFuncSeparate(GL_BACK, GL_ALWAYS, 0x1, 0xFF));
+        GL_CHECK(glStencilFuncSeparate(GL_BACK, GL_ALWAYS, 0x0, 0xFF));
         GL_CHECK(glStencilOpSeparate(GL_BACK, GL_KEEP, GL_KEEP, GL_DECR_WRAP));
     }
     GL_CHECK(glColorMask(0, 0, 0, 0));
@@ -127,7 +127,7 @@ void GlStencilCoverTask::run()
     mStencilTask->run();
 
     if (mStencilMode == GlStencilMode::FillEvenOdd) {
-        GL_CHECK(glStencilFunc(GL_EQUAL, 0x01, 0x01));
+        GL_CHECK(glStencilFunc(GL_NOTEQUAL, 0x00, 0x01));
         GL_CHECK(glStencilOp(GL_REPLACE, GL_KEEP, GL_REPLACE));
     } else {
         GL_CHECK(glStencilFunc(GL_NOTEQUAL, 0x0, 0xFF));
