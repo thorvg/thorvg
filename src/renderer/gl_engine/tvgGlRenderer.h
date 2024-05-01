@@ -93,7 +93,7 @@ private:
     GlRenderPass* currentPass();
 
     void prepareBlitTask(GlBlitTask* task);
-    void prepareCmpTask(GlRenderTask* task);
+    void prepareCmpTask(GlRenderTask* task, const RenderRegion& vp);
     void endRenderPass(Compositor* cmp);
 
     GLint mTargetFboId = 0;
@@ -105,7 +105,7 @@ private:
     unique_ptr<GlRenderTarget> mRootTarget = {};
     Array<GlRenderTarget*> mComposePool = {};
     vector<GlRenderPass> mRenderPassStack = {};
-    vector<unique_ptr<Compositor>> mComposeStack = {};
+    vector<unique_ptr<GlCompositor>> mComposeStack = {};
 };
 
 #endif /* _TVG_GL_RENDERER_H_ */

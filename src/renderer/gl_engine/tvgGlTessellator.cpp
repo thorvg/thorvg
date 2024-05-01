@@ -1638,7 +1638,7 @@ void Tessellator::emitTriangle(detail::Vertex *p1, detail::Vertex *p2, detail::V
 }
 
 
-Stroker::Stroker(Array<float> *points, Array<uint32_t> *indices) : mResGlPoints(points), mResIndices(indices)
+Stroker::Stroker(Array<float> *points, Array<uint32_t> *indices, const Matrix& matrix) : mResGlPoints(points), mResIndices(indices), mMatrix(matrix)
 {
 }
 
@@ -1663,6 +1663,16 @@ void Stroker::stroke(const RenderShape *rshape)
     } else {
         doDashStroke(cmds, cmdCnt, pts, ptsCnt, dash_count, dash_pattern);
     }
+}
+
+RenderRegion Stroker::bounds() const
+{
+    return RenderRegion {
+        static_cast<int32_t>(mLeftTop.x),
+        static_cast<int32_t>(mLeftTop.y),
+        static_cast<int32_t>(mRightBottom.x - mLeftTop.x),
+        static_cast<int32_t>(mRightBottom.y - mLeftTop.y),
+    };
 }
 
 void Stroker::doStroke(const PathCommand *cmds, uint32_t cmd_count, const Point *pts, uint32_t pts_count)
@@ -1773,6 +1783,16 @@ void Stroker::strokeLineTo(const GlPoint &curr)
         mStrokeState.prevPtDir = dir;
         mStrokeState.prevPt = curr;
     }
+
+    if (ia == 0) {
+        mRightBottom.x = mLeftTop.x = curr.x;
+        mRightBottom.y = mLeftTop.y = curr.y;
+    } else {
+        mLeftTop.x = min(mLeftTop.x, curr.x);
+        mLeftTop.y = min(mLeftTop.y, curr.y);
+        mRightBottom.x = max(mRightBottom.x, curr.x);
+        mRightBottom.y = max(mRightBottom.y , curr.y);
+    }
 }
 
 void Stroker::strokeCubicTo(const GlPoint &cnt1, const GlPoint &cnt2, const GlPoint &end)
@@ -1783,7 +1803,13 @@ void Stroker::strokeCubicTo(const GlPoint &cnt1, const GlPoint &cnt2, const GlPo
     curve.ctrl2 = Point{cnt2.x, cnt2.y};
     curve.end = Point{end.x, end.y};
 
-    auto count = detail::_bezierCurveCount(curve);
+    Bezier relCurve {curve.start, curve.ctrl1, curve.ctrl2, curve.end};
+    mathMultiply(&relCurve.start, &mMatrix);
+    mathMultiply(&relCurve.ctrl1, &mMatrix);
+    mathMultiply(&relCurve.ctrl2, &mMatrix);
+    mathMultiply(&relCurve.end, &mMatrix);
+
+    auto count = detail::_bezierCurveCount(relCurve);
 
     float step = 1.f / count;
 
@@ -2110,7 +2136,7 @@ BWTessellator::BWTessellator(Array<float>* points, Array<uint32_t>* indices): mR
 {
 }
 
-void BWTessellator::tessellate(const RenderShape *rshape)
+void BWTessellator::tessellate(const RenderShape *rshape, const Matrix& matrix)
 {
     auto cmds = rshape->path.cmds.data;
     auto cmdCnt = rshape->path.cmds.count;
@@ -2148,7 +2174,13 @@ void BWTessellator::tessellate(const RenderShape *rshape)
             case PathCommand::CubicTo: {
                 Bezier curve{pts[-1], pts[0], pts[1], pts[2]};
 
-                auto stepCount = detail::_bezierCurveCount(curve);
+                Bezier relCurve {pts[-1], pts[0], pts[1], pts[2]};
+                mathMultiply(&relCurve.start, &matrix);
+                mathMultiply(&relCurve.ctrl1, &matrix);
+                mathMultiply(&relCurve.ctrl2, &matrix);
+                mathMultiply(&relCurve.end, &matrix);
+
+                auto stepCount = detail::_bezierCurveCount(relCurve);
 
                 if (stepCount <= 1) stepCount = 2;
 
@@ -2176,9 +2208,31 @@ void BWTessellator::tessellate(const RenderShape *rshape)
     }
 }
 
+RenderRegion BWTessellator::bounds() const
+{
+    return RenderRegion {
+        static_cast<int32_t>(mLeftTop.x),
+        static_cast<int32_t>(mLeftTop.y),
+        static_cast<int32_t>(mRightBottom.x - mLeftTop.x),
+        static_cast<int32_t>(mRightBottom.y - mLeftTop.y),
+    };
+}
+
 uint32_t BWTessellator::pushVertex(float x, float y)
 {
-    return detail::_pushVertex(mResPoints, x, y);
+    auto index = detail::_pushVertex(mResPoints, x, y);
+
+    if (index == 0) {
+        mRightBottom.x = mLeftTop.x = x;
+        mRightBottom.y = mLeftTop.y = y;
+    } else {
+        mLeftTop.x = min(mLeftTop.x, x);
+        mLeftTop.y = min(mLeftTop.y, y);
+        mRightBottom.x = max(mRightBottom.x, x);
+        mRightBottom.y = max(mRightBottom.y , y);
+    }
+
+    return index;
 }
 
 void BWTessellator::pushTriangle(uint32_t a, uint32_t b, uint32_t c)
