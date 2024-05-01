@@ -196,6 +196,7 @@ public:
     void setViewport(const RenderRegion& viewport);
     float* getTransforMatrix();
     GlStencilMode getStencilMode(RenderUpdateFlag flag);
+    RenderRegion getBounds() const;
 
 private:
     RenderRegion viewport = {};
@@ -204,8 +205,10 @@ private:
     Array<uint32_t> fillIndex = {};
     Array<uint32_t> strokeIndex = {};
     float mTransform[16];
+    Matrix mMatrix = {};
 
     FillRule mFillRule = FillRule::Winding;
+    RenderRegion mBounds = {};
 };
 
 #endif /* _TVG_GL_GEOMETRY_H_ */
