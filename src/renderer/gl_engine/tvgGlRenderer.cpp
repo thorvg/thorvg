@@ -133,9 +133,10 @@ bool GlRenderer::sync()
 }
 
 
-RenderRegion GlRenderer::region(TVG_UNUSED RenderData data)
+RenderRegion GlRenderer::region(RenderData data)
 {
-    return {0, 0, static_cast<int32_t>(surface.w), static_cast<int32_t>(surface.h)};
+    auto shape = reinterpret_cast<GlShape*>(data);
+    return shape->geometry->getBounds();
 }
 
 
@@ -158,9 +159,9 @@ bool GlRenderer::postRender()
 }
 
 
-Compositor* GlRenderer::target(TVG_UNUSED const RenderRegion& region, TVG_UNUSED ColorSpace cs)
+Compositor* GlRenderer::target(const RenderRegion& region, TVG_UNUSED ColorSpace cs)
 {
-    mComposeStack.emplace_back(make_unique<tvg::Compositor>());
+    mComposeStack.emplace_back(make_unique<GlCompositor>(region));
     return mComposeStack.back().get();
 }
 
@@ -209,6 +210,9 @@ ColorSpace GlRenderer::colorSpace()
 
 bool GlRenderer::blend(TVG_UNUSED BlendMethod method)
 {
+    if (method != BlendMethod::Normal) {
+        return true;
+    }
     //TODO:
     return false;
 }
@@ -272,6 +276,8 @@ bool GlRenderer::renderShape(RenderData data)
 {
     auto sdata = static_cast<GlShape*>(data);
     if (!sdata) return false;
+
+    if (sdata->updateFlag == RenderUpdateFlag::None) return false;
 
     if (!sdata->clips.empty()) drawClip(sdata->clips);
 
@@ -351,7 +357,7 @@ RenderData GlRenderer::prepare(Surface* image, const RenderMesh* mesh, RenderDat
 
     sdata->viewWd = static_cast<float>(surface.w);
     sdata->viewHt = static_cast<float>(surface.h);
-    sdata->updateFlag = flags;
+    sdata->updateFlag = RenderUpdateFlag::Image;
 
     if (sdata->texId == 0) {
         sdata->texId = _genTexture(image);
@@ -398,9 +404,7 @@ RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const
 
     sdata->viewWd = static_cast<float>(surface.w);
     sdata->viewHt = static_cast<float>(surface.h);
-    sdata->updateFlag = flags;
-
-    if (sdata->updateFlag == RenderUpdateFlag::None) return sdata;
+    sdata->updateFlag = RenderUpdateFlag::None;
 
     sdata->geometry = make_unique<GlGeometry>();
     sdata->opacity = opacity;
@@ -416,6 +420,17 @@ RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const
     {
         return sdata;
     }
+
+    if (clipper) {
+        sdata->updateFlag = RenderUpdateFlag::Path;
+    } else {
+        if (alphaF) sdata->updateFlag = static_cast<RenderUpdateFlag>(RenderUpdateFlag::Color | sdata->updateFlag);
+        if (rshape.fill) sdata->updateFlag = static_cast<RenderUpdateFlag>(RenderUpdateFlag::Gradient | sdata->updateFlag);
+        if (alphaS) sdata->updateFlag = static_cast<RenderUpdateFlag>(RenderUpdateFlag::Stroke | sdata->updateFlag);
+        if (rshape.strokeFill()) sdata->updateFlag = static_cast<RenderUpdateFlag>(RenderUpdateFlag::GradientStroke | sdata->updateFlag);
+    }
+
+    if (sdata->updateFlag == RenderUpdateFlag::None) return sdata;
 
     sdata->geometry->updateTransform(transform, sdata->viewWd, sdata->viewHt);
     sdata->geometry->setViewport(RenderRegion{
@@ -835,7 +850,7 @@ GlRenderPass* GlRenderer::currentPass()
 
 void GlRenderer::prepareBlitTask(GlBlitTask* task)
 {
-    prepareCmpTask(task);
+    prepareCmpTask(task, mViewport);
 
     {
         uint32_t loc = task->getProgram()->getUniformLocation("uSrcTexture");
@@ -843,7 +858,7 @@ void GlRenderer::prepareBlitTask(GlBlitTask* task)
     }
 }
 
-void GlRenderer::prepareCmpTask(GlRenderTask* task)
+void GlRenderer::prepareCmpTask(GlRenderTask* task, const RenderRegion& vp)
 {
     // we use 1:1 blit mapping since compositor fbo is same size as root fbo
     Array<float> vertices(4 * 4);
@@ -891,15 +906,16 @@ void GlRenderer::prepareCmpTask(GlRenderTask* task)
 
     task->setDrawRange(indexOffset, indices.count);
     task->setViewport(RenderRegion{
-        mViewport.x,
-        static_cast<int32_t>((surface.h - mViewport.y - mViewport.h)),
-        mViewport.w,
-        mViewport.h,
+        vp.x,
+        static_cast<int32_t>((surface.h - vp.y - vp.h)),
+        vp.w,
+        vp.h,
     });
 }
 
 void GlRenderer::endRenderPass(Compositor* cmp)
 {
+    auto gl_cmp = static_cast<GlCompositor*>(cmp);
     if (cmp->method != CompositeMethod::None) {
         auto self_pass = std::move(mRenderPassStack.back());
         mRenderPassStack.pop_back();
@@ -949,7 +965,7 @@ void GlRenderer::endRenderPass(Compositor* cmp)
 
         auto compose_task = self_pass.endRenderPass<GlDrawBlitTask>(program, currentPass()->getFboId());
 
-        prepareCmpTask(compose_task);
+        prepareCmpTask(compose_task, gl_cmp->bbox);
 
         {
             uint32_t loc = program->getUniformLocation("uSrcTexture");
@@ -971,7 +987,7 @@ void GlRenderer::endRenderPass(Compositor* cmp)
         auto task = renderPass.endRenderPass<GlDrawBlitTask>(
             mPrograms[RT_Image].get(), currentPass()->getFboId());
 
-        prepareCmpTask(task);
+        prepareCmpTask(task, gl_cmp->bbox);
 
         // matrix buffer
         {

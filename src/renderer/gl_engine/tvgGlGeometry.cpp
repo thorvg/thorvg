@@ -38,17 +38,21 @@ bool GlGeometry::tesselate(const RenderShape& rshape, RenderUpdateFlag flag)
 
         BWTessellator bwTess{&fillVertex, &fillIndex};
 
-        bwTess.tessellate(&rshape);
+        bwTess.tessellate(&rshape, mMatrix);
 
         mFillRule = rshape.rule;
+
+        mBounds = bwTess.bounds();
     }
 
     if (flag & (RenderUpdateFlag::Stroke | RenderUpdateFlag::Transform)) {
         strokeVertex.clear();
         strokeIndex.clear();
 
-        Stroker stroke{&strokeVertex, &strokeIndex};
+        Stroker stroke{&strokeVertex, &strokeIndex, mMatrix};
         stroke.stroke(&rshape);
+
+        mBounds = stroke.bounds();
     }
 
     return true;
@@ -89,6 +93,32 @@ bool GlGeometry::tesselate(const Surface* image, const RenderMesh* mesh, RenderU
                 fillIndex.push(index + 2);
                 index += 3;
             }
+
+            float left = mesh->triangles[0].vertex[0].pt.x;
+            float top = mesh->triangles[0].vertex[0].pt.y;
+            float right = mesh->triangles[0].vertex[0].pt.x;
+            float bottom = mesh->triangles[0].vertex[0].pt.y;
+
+            for (uint32_t i = 0; i < mesh->triangleCnt; i++) {
+                left = min(left, mesh->triangles[i].vertex[0].pt.x);
+                left = min(left, mesh->triangles[i].vertex[1].pt.x);
+                left = min(left, mesh->triangles[i].vertex[2].pt.x);
+                top = min(top, mesh->triangles[i].vertex[0].pt.y);
+                top = min(top, mesh->triangles[i].vertex[1].pt.y);
+                top = min(top, mesh->triangles[i].vertex[2].pt.y);
+
+                right = max(right, mesh->triangles[i].vertex[0].pt.x);
+                right = max(right, mesh->triangles[i].vertex[1].pt.x);
+                right = max(right, mesh->triangles[i].vertex[2].pt.x);
+                bottom = max(bottom, mesh->triangles[i].vertex[0].pt.y);
+                bottom = max(bottom, mesh->triangles[i].vertex[1].pt.y);
+                bottom = max(bottom, mesh->triangles[i].vertex[2].pt.y);
+            }
+
+            mBounds.x = static_cast<int32_t>(left);
+            mBounds.y = static_cast<int32_t>(top);
+            mBounds.w = static_cast<int32_t>(right - left);
+            mBounds.h = static_cast<int32_t>(bottom - top);
 
         } else {
             fillVertex.reserve(5 * 4);
@@ -131,6 +161,11 @@ bool GlGeometry::tesselate(const Surface* image, const RenderMesh* mesh, RenderU
             fillIndex.push(2);
             fillIndex.push(1);
             fillIndex.push(3);
+
+            mBounds.x = 0;
+            mBounds.y = 0;
+            mBounds.w = image->w;
+            mBounds.h = image->h;
         }
     }
 
@@ -186,12 +221,15 @@ void GlGeometry::updateTransform(const RenderTransform* transform, float w, floa
     float modelMatrix[16];
     if (transform) {
         GET_MATRIX44(transform->m, modelMatrix);
+        mMatrix = transform->m;
     } else {
         memset(modelMatrix, 0, 16 * sizeof(float));
         modelMatrix[0] = 1.f;
         modelMatrix[5] = 1.f;
         modelMatrix[10] = 1.f;
         modelMatrix[15] = 1.f;
+
+        mMatrix = Matrix{1, 0, 0, 0, 1, 0, 0, 0, 1};
     }
 
     MVP_MATRIX();
@@ -218,4 +256,38 @@ GlStencilMode GlGeometry::getStencilMode(RenderUpdateFlag flag)
     if (mFillRule == FillRule::EvenOdd) return GlStencilMode::FillEvenOdd;
 
     return GlStencilMode::None;
+}
+
+RenderRegion GlGeometry::getBounds() const
+{
+    if (mathIdentity(&mMatrix)) {
+        return mBounds;
+    } else {
+        Point lt{static_cast<float>(mBounds.x), static_cast<float>(mBounds.y)};
+        Point lb{static_cast<float>(mBounds.x), static_cast<float>(mBounds.y + mBounds.h)};
+        Point rt{static_cast<float>(mBounds.x + mBounds.w), static_cast<float>(mBounds.y)};
+        Point rb{static_cast<float>(mBounds.x + mBounds.w), static_cast<float>(mBounds.y + mBounds.h)};
+
+        mathMultiply(&lt, &mMatrix);
+        mathMultiply(&lb, &mMatrix);
+        mathMultiply(&rt, &mMatrix);
+        mathMultiply(&rb, &mMatrix);
+
+        float left = min(min(lt.x, lb.x), min(rt.x, rb.x));
+        float top = min(min(lt.y, lb.y), min(rt.y, rb.y));
+        float right = max(max(lt.x, lb.x), max(rt.x, rb.x));
+        float bottom = max(max(lt.y, lb.y), max(rt.y, rb.y));
+
+        auto bounds = RenderRegion {
+            static_cast<int32_t>(left),
+            static_cast<int32_t>(top),
+            static_cast<int32_t>(right - left),
+            static_cast<int32_t>(bottom - top),
+        };
+        if (bounds.x < 0 || bounds.y < 0 || bounds.w < 0 || bounds.h < 0) {
+            return mBounds;
+        } else {
+            return bounds;
+        }
+    }
 }
