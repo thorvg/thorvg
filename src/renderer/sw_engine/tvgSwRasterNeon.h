@@ -24,6 +24,15 @@
 
 #include <arm_neon.h>
 
+//TODO : need to support windows ARM
+ 
+#if defined(__ARM_64BIT_STATE) || defined(_M_ARM64)
+#define TVG_AARCH64 1
+#else
+#define TVG_AARCH64 0
+#endif
+
+
 static inline uint8x8_t ALPHA_BLEND(uint8x8_t c, uint8x8_t a)
 {
     uint16x8_t t = vmull_u8(c, a);
@@ -36,12 +45,17 @@ static void neonRasterGrayscale8(uint8_t* dst, uint8_t val, uint32_t offset, int
     dst += offset;
 
     int32_t i = 0;
-    uint8x16_t valVec = vdupq_n_u8(val);
-
+    const uint8x16_t valVec = vdupq_n_u8(val);
+#if TVG_AARCH64
+    uint8x16x4_t valQuad = {valVec, valVec, valVec, valVec};
+    for (; i <= len - 16 * 4; i += 16 * 4) {
+        vst1q_u8_x4(dst + i, valQuad);
+    }
+#else
     for (; i <= len - 16; i += 16) {
         vst1q_u8(dst + i, valVec);
     }
-
+#endif
     for (; i < len; i++) {
         dst[i] = val;
     }
