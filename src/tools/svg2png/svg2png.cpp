@@ -24,8 +24,8 @@
 #include <thread>
 #include <thorvg.h>
 #include <vector>
-#include "lodepng.h"
 #ifdef _WIN32
+    #define WIN32_LEAN_AND_MEAN
     #include <windows.h>
     #ifndef PATH_MAX
         #define PATH_MAX MAX_PATH
@@ -36,6 +36,7 @@
     #include <limits.h>
     #include <sys/stat.h>
 #endif
+#include "lodepng.h"
 
 #define WIDTH_8K 7680
 #define HEIGHT_8K 4320
