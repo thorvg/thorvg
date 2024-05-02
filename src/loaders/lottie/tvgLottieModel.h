@@ -587,7 +587,7 @@ struct LottieGroup : LottieObject
         //source has children, find recursively.
         for (auto c = children.begin(); c < children.end(); ++c) {
             auto child = *c;
-            if (child->type == LottieObject::Type::Group || type == LottieObject::Type::Layer) {
+            if (child->type == LottieObject::Type::Group || child->type == LottieObject::Type::Layer) {
                 if (auto ret = static_cast<LottieGroup*>(child)->content(id)) return ret;
             } else if (child->name && !strcmp(child->name, id)) return child;
         }
