@@ -124,6 +124,8 @@ if get_option('tools').contains('all') == true
     all_tools = true
 endif
 
+#Miscellaneous
+config_h.set10('WIN32_LEAN_AND_MEAN', true)
 
 configure_file(
     output: 'config.h',
