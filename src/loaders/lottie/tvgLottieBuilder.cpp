@@ -1232,7 +1232,7 @@ bool LottieBuilder::update(LottieComposition* comp, float frameNo)
     auto root = comp->root;
     root->scene->clear();
 
-    if (exps && comp->expressions) exps->update(frameNo, comp->timeAtFrame(frameNo));
+    if (exps && comp->expressions) exps->update(comp->timeAtFrame(frameNo));
 
     for (auto child = root->children.end() - 1; child >= root->children.begin(); --child) {
         _updateLayer(root, static_cast<LottieLayer*>(*child), frameNo, exps);
