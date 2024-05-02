@@ -997,15 +997,32 @@ static void _updatePrecomp(LottieLayer* precomp, float frameNo, LottieExpression
 
     //clip the layer viewport
     if (precomp->w > 0 && precomp->h > 0) {
-        auto clipper = Shape::gen().release();
-        clipper->appendRect(0, 0, static_cast<float>(precomp->w), static_cast<float>(precomp->h));
-        clipper->transform(precomp->cache.matrix);
+        auto& m = precomp->cache.matrix;
 
-        //TODO: remove the intermediate scene....
-        auto cscene = Scene::gen();
-        cscene->composite(cast(clipper), CompositeMethod::ClipPath);
-        cscene->push(cast(precomp->scene));
-        precomp->scene = cscene.release();
+        if (!mathIdentity((const Matrix*)&m)) {
+            //rotated/skewed rectangle - composition required
+            if (!mathRightAngle(&m) || mathSkewed(&m)) {
+                auto clipper = Shape::gen().release();
+                clipper->appendRect(0, 0, precomp->w, precomp->h);
+                clipper->transform(m);
+
+                //intermediate scene needed
+                if (precomp->scene->composite(nullptr) != CompositeMethod::None) {
+                    auto cscene = Scene::gen();
+                    cscene->composite(cast(clipper), CompositeMethod::ClipPath);
+                    cscene->push(cast(precomp->scene));
+                    precomp->scene = cscene.release();
+                } else {
+                    precomp->scene->composite(cast(clipper), CompositeMethod::ClipPath);
+                }
+            //axis aligned rectangle - in order to optimize replaced by viewport
+            } else {
+                precomp->scene->viewport(static_cast<int32_t>(m.e13), static_cast<int32_t>(m.e23),
+                                         static_cast<int32_t>(precomp->w * m.e11), static_cast<int32_t>(precomp->h * m.e22));
+            }
+        } else {
+            precomp->scene->viewport(0, 0, static_cast<int32_t>(precomp->w), static_cast<int32_t>(precomp->h));
+        }
     }
 }
 
@@ -1253,8 +1270,5 @@ void LottieBuilder::build(LottieComposition* comp)
 
     if (!update(comp, 0)) return;
 
-    //viewport clip
-    auto clip = Shape::gen();
-    clip->appendRect(0, 0, static_cast<float>(comp->w), static_cast<float>(comp->h));
-    comp->root->scene->composite(std::move(clip), CompositeMethod::ClipPath);
+    comp->root->scene->viewport(0, 0, static_cast<int32_t>(comp->w), static_cast<int32_t>(comp->h));
 }

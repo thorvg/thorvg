@@ -740,24 +740,28 @@ static unique_ptr<Scene> _useBuildHelper(SvgLoaderData& loaderData, const SvgNod
         if (node->node.use.symbol->node.symbol.overflowVisible) {
             finalScene = std::move(scene);
         } else {
-            auto viewBoxClip = Shape::gen();
-            viewBoxClip->appendRect(0, 0, width, height, 0, 0);
-
             // mClipTransform = mUseTransform * mSymbolTransform
             Matrix mClipTransform = mUseTransform;
             if (node->node.use.symbol->transform) {
                 mClipTransform = mathMultiply(&mUseTransform, node->node.use.symbol->transform);
             }
-            viewBoxClip->transform(mClipTransform);
 
-            auto compositeLayer = Scene::gen();
-            compositeLayer->composite(std::move(viewBoxClip), CompositeMethod::ClipPath);
-            compositeLayer->push(std::move(scene));
-
-            auto root = Scene::gen();
-            root->push(std::move(compositeLayer));
-
-            finalScene = std::move(root);
+            if (!mathIdentity((const Matrix*)&mClipTransform)) {
+                //rotated/skewed rectangle - composition required
+                if (!mathRightAngle(&mClipTransform) || mathSkewed(&mClipTransform)) {
+                    auto viewBoxClip = Shape::gen();
+                    viewBoxClip->appendRect(0, 0, width, height);
+                    viewBoxClip->transform(mClipTransform);
+                    scene->composite(std::move(viewBoxClip), CompositeMethod::ClipPath);
+                //axis aligned rectangle - in order to optimize replaced by viewport
+                } else {
+                    scene->viewport(static_cast<int32_t>(mClipTransform.e13), static_cast<int32_t>(mClipTransform.e23),
+                                    static_cast<int32_t>(width * mClipTransform.e11), static_cast<int32_t>(height * mClipTransform.e22));
+                }
+            } else {
+                scene->viewport(0, 0, static_cast<int32_t>(width), static_cast<int32_t>(height));
+            }
+            finalScene = std::move(scene);
         }
     } else {
         scene->transform(mUseTransform);
@@ -861,15 +865,9 @@ Scene* svgSceneBuild(SvgLoaderData& loaderData, Box vBox, float w, float h, Aspe
         docNode->translate(-vBox.x, -vBox.y);
     }
 
-    auto viewBoxClip = Shape::gen();
-    viewBoxClip->appendRect(0, 0, w, h);
-
-    auto compositeLayer = Scene::gen();
-    compositeLayer->composite(std::move(viewBoxClip), CompositeMethod::ClipPath);
-    compositeLayer->push(std::move(docNode));
-
     auto root = Scene::gen();
-    root->push(std::move(compositeLayer));
+    root->push(std::move(docNode));
+    root->viewport(0, 0, static_cast<int32_t>(w), static_cast<int32_t>(h));
 
     loaderData.doc->node.doc.vx = vBox.x;
     loaderData.doc->node.doc.vy = vBox.y;
