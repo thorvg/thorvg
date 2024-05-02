@@ -124,6 +124,8 @@ if get_option('log') == true
     config_h.set10('THORVG_LOG_ENABLED', true)
 endif
 
+#Miscellaneous
+config_h.set10('WIN32_LEAN_AND_MEAN', true)
 
 configure_file(
     output: 'config.h',
