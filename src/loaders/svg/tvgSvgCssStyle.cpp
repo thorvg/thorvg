@@ -49,6 +49,14 @@ static void _copyStyle(SvgStyleProperty* to, const SvgStyleProperty* from)
             to->flagsImportance = (to->flagsImportance | SvgStyleFlags::Color);
         }
     }
+    if (((from->flags & SvgStyleFlags::PaintOrder) && !(to->flags & SvgStyleFlags::PaintOrder)) ||
+        _isImportanceApplicable(to->flagsImportance, from->flagsImportance, SvgStyleFlags::PaintOrder)) {
+        to->paintOrder = from->paintOrder;
+        to->flags = (to->flags | SvgStyleFlags::PaintOrder);
+        if (from->flagsImportance & SvgStyleFlags::PaintOrder) {
+            to->flagsImportance = (to->flagsImportance | SvgStyleFlags::PaintOrder);
+        }
+    }
     //Fill
     if (((from->fill.flags & SvgFillFlags::Paint) && !(to->flags & SvgStyleFlags::Fill)) ||
         _isImportanceApplicable(to->flagsImportance, from->flagsImportance, SvgStyleFlags::Fill)) {
