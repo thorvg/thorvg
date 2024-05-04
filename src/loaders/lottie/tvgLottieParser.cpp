@@ -45,6 +45,7 @@ static LottieExpression* _expression(char* code, LottieComposition* comp, Lottie
     inst->object = object;
     inst->property = property;
     inst->type = type;
+    inst->enabled = true;
 
     return inst;
 }
