@@ -40,7 +40,6 @@ public:
     template<typename Property, typename NumType>
     bool result(float frameNo, NumType& out, LottieExpression* exp)
     {
-        auto success = true;
         auto bm_rt = evaluate(frameNo, exp);
 
         if (auto prop = static_cast<Property*>(jerry_object_get_native_ptr(bm_rt, nullptr))) {
@@ -49,16 +48,15 @@ public:
             out = (NumType) jerry_value_as_number(bm_rt);
         } else {
             TVGERR("LOTTIE", "Failed dispatching a Value!");
-            success = false;
+            return false;
         }
         jerry_value_free(bm_rt);
-        return success;
+        return true;
     }
 
     template<typename Property>
     bool result(float frameNo, Point& out, LottieExpression* exp)
     {
-        auto success = true;
         auto bm_rt = evaluate(frameNo, exp);
 
         if (jerry_value_is_object(bm_rt)) {
@@ -74,58 +72,55 @@ public:
             }
         } else {
             TVGERR("LOTTIE", "Failed dispatching Point!");
-            success = false;
+            return false;
         }
         jerry_value_free(bm_rt);
-        return success;
+        return true;
     }
 
     template<typename Property>
     bool result(float frameNo, RGB24& out, LottieExpression* exp)
     {
-        auto success = true;
         auto bm_rt = evaluate(frameNo, exp);
 
         if (auto color = static_cast<Property*>(jerry_object_get_native_ptr(bm_rt, nullptr))) {
             out = (*color)(frameNo);
         } else {
             TVGERR("LOTTIE", "Failed dispatching Color!");
-            success = false;
+            return false;
         }
         jerry_value_free(bm_rt);
-        return success;
+        return true;
     }
 
     template<typename Property>
     bool result(float frameNo, Fill* fill, LottieExpression* exp)
     {
-        auto success = true;
         auto bm_rt = evaluate(frameNo, exp);
 
         if (auto colorStop = static_cast<Property*>(jerry_object_get_native_ptr(bm_rt, nullptr))) {
             (*colorStop)(frameNo, fill, this);
         } else {
             TVGERR("LOTTIE", "Failed dispatching ColorStop!");
-            success = false;
+            return false;
         }
         jerry_value_free(bm_rt);
-        return success;
+        return true;
     }
 
     template<typename Property>
     bool result(float frameNo, Array<PathCommand>& cmds, Array<Point>& pts, Matrix* transform, LottieExpression* exp)
     {
-        auto success = true;
         auto bm_rt = evaluate(frameNo, exp);
 
         if (auto pathset = static_cast<Property*>(jerry_object_get_native_ptr(bm_rt, nullptr))) {
             (*pathset)(frameNo, cmds, pts, transform);
          } else {
             TVGERR("LOTTIE", "Failed dispatching PathSet!");
-            success = false;
+            return false;
          }
         jerry_value_free(bm_rt);
-        return success;
+        return true;
     }
 
     void update(float curTime);

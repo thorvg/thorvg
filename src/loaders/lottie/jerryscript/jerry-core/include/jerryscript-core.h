@@ -29,6 +29,7 @@ jerry_value_t jerry_run (const jerry_value_t script);
 bool jerry_value_is_undefined (const jerry_value_t value);
 bool jerry_value_is_number (const jerry_value_t value);
 bool jerry_value_is_object (const jerry_value_t value);
+bool jerry_value_is_exception (const jerry_value_t value);
 jerry_value_t jerry_value_to_object (const jerry_value_t value);
 jerry_value_t jerry_value_to_string (const jerry_value_t value);
 double jerry_value_as_number (const jerry_value_t value);
