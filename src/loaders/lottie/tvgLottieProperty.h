@@ -194,6 +194,8 @@ struct LottieExpression
     LottieProperty* property;
     LottieProperty::Type type;
 
+    bool enabled;
+
     struct {
         uint32_t key = 0;      //the keyframe number repeating to
         float in = FLT_MAX;    //looping duration in frame number
@@ -367,7 +369,7 @@ struct LottieGenericProperty : LottieProperty
     T operator()(float frameNo, LottieExpressions* exps)
     {
         T out{};
-        if (exps && exp) {
+        if (exps && (exp && exp->enabled)) {
             if (exp->loop.mode != LottieExpression::LoopMode::None) frameNo = _loop(frames, frameNo, exp);
             if (exps->result<LottieGenericProperty<T>>(frameNo, out, exp)) return out;
         }
@@ -507,7 +509,7 @@ struct LottiePathSet : LottieProperty
 
     bool operator()(float frameNo, Array<PathCommand>& cmds, Array<Point>& pts, Matrix* transform, LottieExpressions* exps)
     {
-        if (exps && exp) {
+        if (exps && (exp && exp->enabled)) {
             if (exp->loop.mode != LottieExpression::LoopMode::None) frameNo = _loop(frames, frameNo, exp);
             if (exps->result<LottiePathSet>(frameNo, cmds, pts, transform, exp)) return true;
         }
@@ -588,7 +590,7 @@ struct LottieColorStop : LottieProperty
 
     Result operator()(float frameNo, Fill* fill, LottieExpressions* exps)
     {
-        if (exps && exp) {
+        if (exps && (exp && exp->enabled)) {
             if (exp->loop.mode != LottieExpression::LoopMode::None) frameNo = _loop(frames, frameNo, exp);
             if (exps->result<LottieColorStop>(frameNo, fill, exp)) return Result::Success;
         }
@@ -724,7 +726,7 @@ struct LottiePosition : LottieProperty
     Point operator()(float frameNo, LottieExpressions* exps)
     {
         Point out{};
-        if (exps && exp) {
+        if (exps && (exp && exp->enabled)) {
             if (exp->loop.mode != LottieExpression::LoopMode::None) frameNo = _loop(frames, frameNo, exp);
             if (exps->result<LottiePosition>(frameNo, out, exp)) return out;
         }
