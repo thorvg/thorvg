@@ -181,6 +181,18 @@ jerry_current_realm (void)
 } /* jerry_current_realm */
 
 /**
+ * Check if the specified value is an error or abort value.
+ *
+ * @return true  - if the specified value is an error value,
+ *         false - otherwise
+ */
+bool
+jerry_value_is_exception (const jerry_value_t value) /**< api value */
+{
+  return ecma_is_value_exception (value);
+} /* jerry_value_is_exception */
+
+/**
  * Check if the specified value is number.
  *
  * @return true  - if the specified value is number,

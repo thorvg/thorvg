@@ -1219,8 +1219,9 @@ jerry_value_t LottieExpressions::evaluate(float frameNo, LottieExpression* exp)
     //evaluate the code
     auto eval = jerry_eval((jerry_char_t *) exp->code, strlen(exp->code), JERRY_PARSE_NO_OPTS);
 
-    if (jerry_value_is_undefined(eval)) TVGERR("LOTTIE", "Expression error");
-    else jerry_value_free(eval);
+    if (jerry_value_is_exception(eval)) return jerry_undefined();
+
+    jerry_value_free(eval);
 
     return jerry_object_get_sz(global, "$bm_rt");
 }
