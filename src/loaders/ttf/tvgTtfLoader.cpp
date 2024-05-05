@@ -203,12 +203,11 @@ void TtfLoader::clear()
 /************************************************************************/
 
 
-bool TtfLoader::resize(Paint* paint, float sx, TVG_UNUSED float sy)
+bool TtfLoader::resize(Paint* paint, float fontSize, TVG_UNUSED float unused)
 {
     if (!paint) return false;
     auto shift = 0.0f;
-    auto dpi = 96.0f / 72.0f;   //dpi base?
-    scale = sx * dpi / reader.metrics.unitsPerEm;
+    scale = fontSize / reader.metrics.unitsPerEm;
     if (italic) shift = -scale * 0.18f;  //experimental decision.
     Matrix m = {scale, shift, -(shift * reader.metrics.minw), 0, scale, 0, 0, 0, 1};
     paint->transform(m);
