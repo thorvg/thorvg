@@ -19,6 +19,8 @@
 
 #include "ecma-builtin-helpers-macro-defines.inc.h"
 
+#ifdef JERRY_BUILTIN_REGEXP
+
 STRING_VALUE (LIT_GLOBAL_SYMBOL_TO_STRING_TAG,
               LIT_MAGIC_STRING_REGEXP_STRING_ITERATOR_UL,
               ECMA_PROPERTY_FLAG_CONFIGURABLE)
@@ -26,5 +28,7 @@ STRING_VALUE (LIT_GLOBAL_SYMBOL_TO_STRING_TAG,
 /* Routine properties:
  *  (property name, C routine name, arguments number or NON_FIXED, value of the routine's length property) */
 ROUTINE (LIT_MAGIC_STRING_NEXT, ecma_builtin_regexp_string_iterator_prototype_object_next, 0, 0)
+
+#endif
 
 #include "ecma-builtin-helpers-macro-undefs.inc.h"
