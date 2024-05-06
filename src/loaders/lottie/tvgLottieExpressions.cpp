@@ -1219,7 +1219,7 @@ jerry_value_t LottieExpressions::evaluate(float frameNo, LottieExpression* exp)
     //evaluate the code
     auto eval = jerry_eval((jerry_char_t *) exp->code, strlen(exp->code), JERRY_PARSE_NO_OPTS);
 
-    if (jerry_value_is_exception(eval)) {
+    if (jerry_value_is_exception(eval) || jerry_value_is_undefined(eval)) {
         exp->enabled = false;  // The feature is experimental, it will be forcely turned off if it's incompatible.
         return jerry_undefined();
     }
