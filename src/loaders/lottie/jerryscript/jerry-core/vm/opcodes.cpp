@@ -2245,12 +2245,6 @@ opfunc_lexical_scope_has_restricted_binding (vm_frame_ctx_t *frame_ctx_p, /**< f
 {
   JERRY_ASSERT (ecma_get_lex_env_type (frame_ctx_p->lex_env_p) == ECMA_LEXICAL_ENVIRONMENT_DECLARATIVE);
 
-#if JERRY_BUILTIN_REALMS
-  JERRY_ASSERT (frame_ctx_p->this_binding == JERRY_CONTEXT (global_object_p)->this_binding);
-#else /* !JERRY_BUILTIN_REALMS */
-  JERRY_ASSERT (frame_ctx_p->this_binding == ecma_builtin_get_global ());
-#endif /* JERRY_BUILTIN_REALMS */
-
   ecma_object_t *lex_env_p = frame_ctx_p->lex_env_p;
   ecma_property_t *binding_p = ecma_find_named_property (lex_env_p, name_p);
 
@@ -2258,6 +2252,8 @@ opfunc_lexical_scope_has_restricted_binding (vm_frame_ctx_t *frame_ctx_p, /**< f
   {
     return ECMA_VALUE_TRUE;
   }
+
+  ecma_object_t *global_obj_p = ecma_get_object_from_value (frame_ctx_p->this_binding);
 
 #if JERRY_BUILTIN_REALMS
   ecma_object_t *const global_scope_p = ecma_get_global_scope ((ecma_object_t *) JERRY_CONTEXT (global_object_p));
@@ -2269,8 +2265,6 @@ opfunc_lexical_scope_has_restricted_binding (vm_frame_ctx_t *frame_ctx_p, /**< f
   {
     return ECMA_VALUE_FALSE;
   }
-
-  ecma_object_t *global_obj_p = ecma_get_object_from_value (frame_ctx_p->this_binding);
 
 #if JERRY_BUILTIN_PROXY
   if (ECMA_OBJECT_IS_PROXY (global_obj_p))
