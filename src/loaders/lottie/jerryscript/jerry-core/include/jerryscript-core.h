@@ -58,9 +58,6 @@ jerry_value_t jerry_object_get_sz (const jerry_value_t object, const char *key_p
 jerry_value_t jerry_object_get_index (const jerry_value_t object, uint32_t index);
 void *jerry_object_get_native_ptr (const jerry_value_t object, const jerry_object_native_info_t *native_info_p);
 jerry_value_t jerry_function_external (jerry_external_handler_t handler);
-jerry_value_t jerry_realm (void);
-jerry_value_t jerry_realm_this (jerry_value_t realm);
-jerry_value_t jerry_realm_set_this (jerry_value_t realm, jerry_value_t this_value);
 void jerry_value_free (jerry_value_t value);
 
 JERRY_C_API_END
