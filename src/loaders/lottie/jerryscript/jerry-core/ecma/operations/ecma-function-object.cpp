@@ -1013,7 +1013,6 @@ ecma_op_function_call_constructor (vm_frame_ctx_shared_args_t *shared_args_p, /*
   shared_args_p->header.status_flags |= VM_FRAME_CTX_SHARED_NON_ARROW_FUNC;
 
   ecma_value_t ret_value;
-  ecma_global_object_t *saved_global_object_p;
   ecma_extended_object_t *ext_func_p;
 
   if (JERRY_CONTEXT (current_new_target_p) == NULL)
@@ -1031,7 +1030,7 @@ ecma_op_function_call_constructor (vm_frame_ctx_shared_args_t *shared_args_p, /*
   ecma_op_create_environment_record (scope_p, this_binding, shared_args_p->header.function_object_p);
 
 #if JERRY_BUILTIN_REALMS
-  saved_global_object_p = JERRY_CONTEXT (global_object_p);
+  ecma_global_object_t *saved_global_object_p = JERRY_CONTEXT (global_object_p);
   JERRY_CONTEXT (global_object_p) = ecma_op_function_get_realm (shared_args_p->header.bytecode_header_p);
 #endif /* JERRY_BUILTIN_REALMS */
 

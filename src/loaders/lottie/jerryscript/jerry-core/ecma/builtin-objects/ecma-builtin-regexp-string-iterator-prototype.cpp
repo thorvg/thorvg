@@ -49,6 +49,7 @@
  * @return iterator result object, if success
  *         error - otherwise
  */
+#ifdef JERRY_BUILTIN_REGEXP
 static ecma_value_t
 ecma_builtin_regexp_string_iterator_prototype_object_next (ecma_value_t this_val) /**< this argument */
 {
@@ -176,6 +177,7 @@ free_variables:
 
   return result;
 } /* ecma_builtin_regexp_string_iterator_prototype_object_next */
+#endif
 
 /**
  * @}

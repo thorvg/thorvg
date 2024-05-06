@@ -2978,6 +2978,7 @@ ecma_op_is_concat_spreadable (ecma_value_t arg) /**< argument */
 ecma_value_t
 ecma_op_is_regexp (ecma_value_t arg) /**< argument */
 {
+#if JERRY_BUILTIN_REGEXP
   if (!ecma_is_value_object (arg))
   {
     return ECMA_VALUE_FALSE;
@@ -2998,6 +2999,9 @@ ecma_op_is_regexp (ecma_value_t arg) /**< argument */
   }
 
   return ecma_make_boolean_value (ecma_object_is_regexp_object (arg));
+#else
+  return ECMA_VALUE_FALSE;
+#endif
 } /* ecma_op_is_regexp */
 
 /**
