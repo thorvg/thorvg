@@ -288,7 +288,6 @@ Currently, ThorVG supports Lottie animations. Although most features are support
 
  - Shape Modifiers
  - Layer Effects
- - Expressions
 
 The following code snippet demonstrates how to use ThorVG to play a Lottie animation.
 ```cpp
