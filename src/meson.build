@@ -19,8 +19,9 @@ if (cc.get_id() == 'clang-cl')
     endif
     if get_option('b_sanitize') == 'none'
         override_options += ['cpp_eh=none','cpp_rtti=false']
-        compiler_flags += ['/clang:-fno-math-errno',
-                           '/clang:-Woverloaded-virtual', '/clang:-Wno-unused-value', '-Wno-deprecated-declarations']
+        compiler_flags += ['/clang:-fno-math-errno', '/clang:-Woverloaded-virtual',
+                           '/clang:-fno-stack-protector', '/clang:-fno-unwind-tables' ,
+                           '/clang:-fno-asynchronous-unwind-tables']
     endif
 elif (cc.get_id() != 'msvc')
     if simd_type == 'avx'
@@ -32,7 +33,7 @@ elif (cc.get_id() != 'msvc')
     if get_option('b_sanitize') == 'none'
         compiler_flags += ['-fno-exceptions', '-fno-rtti', '-fno-stack-protector', '-fno-math-errno',
                            '-fno-unwind-tables' , '-fno-asynchronous-unwind-tables',
-                           '-Woverloaded-virtual', '-Wno-unused-parameter']
+                           '-Woverloaded-virtual']
     endif
 endif
 
