@@ -71,11 +71,6 @@ endif
 
 if lottie_loader
     config_h.set10('THORVG_LOTTIE_LOADER_SUPPORT', true)
-    #Experimental feature, enable it manually
-    lottie_expressions = false
-    if lottie_expressions
-        config_h.set10('THORVG_LOTTIE_EXPRESSIONS_SUPPORT', false)
-    endif
 endif
 
 if ttf_loader
@@ -124,6 +119,13 @@ if get_option('log') == true
     config_h.set10('THORVG_LOG_ENABLED', true)
 endif
 
+#Extra
+lottie_expressions = lottie_loader and get_option('extra').contains('lottie_expressions')
+
+if lottie_expressions
+    config_h.set10('THORVG_LOTTIE_EXPRESSIONS_SUPPORT', true)
+endif
+
 #Miscellaneous
 config_h.set10('WIN32_LEAN_AND_MEAN', true)
 
@@ -148,31 +150,32 @@ endif
 summary = '''
 
 Summary:
-    ThorVG version:          @0@
-    Build Type:              @1@
-    Prefix:                  @2@
-    Multi-Tasking:           @3@
-    SIMD Instruction:        @4@
-    Raster Engine (SW):      @5@
-    Raster Engine (GL_BETA): @6@
-    Raster Engine (WG_BETA): @7@
-    Loader (TVG):            @8@
-    Loader (SVG):            @9@
-    Loader (TTF):            @10@
-    Loader (LOTTIE):         @11@
-    Loader (PNG):            @12@
-    Loader (JPG):            @13@
-    Loader (WEBP):           @14@
-    Saver (TVG):             @15@
-    Saver (GIF):             @16@
-    Binding (CAPI):          @17@
-    Binding (WASM_BETA):     @18@
-    Log Message:             @19@
-    Tests:                   @20@
-    Examples:                @21@
-    Tool (Svg2Tvg):          @22@
-    Tool (Svg2Png):          @23@
-    Tool (Lottie2Gif):       @24@
+    ThorVG version:             @0@
+    Build Type:                 @1@
+    Prefix:                     @2@
+    Multi-Tasking:              @3@
+    SIMD Instruction:           @4@
+    Raster Engine (SW):         @5@
+    Raster Engine (GL_BETA):    @6@
+    Raster Engine (WG_BETA):    @7@
+    Loader (TVG):               @8@
+    Loader (SVG):               @9@
+    Loader (TTF):               @10@
+    Loader (LOTTIE):            @11@
+    Loader (PNG):               @12@
+    Loader (JPG):               @13@
+    Loader (WEBP):              @14@
+    Saver (TVG):                @15@
+    Saver (GIF):                @16@
+    Binding (CAPI):             @17@
+    Binding (WASM_BETA):        @18@
+    Log Message:                @19@
+    Tests:                      @20@
+    Examples:                   @21@
+    Tool (Svg2Tvg):             @22@
+    Tool (Svg2Png):             @23@
+    Tool (Lottie2Gif):          @24@
+    Extra (Lottie Expressions): @25@
 
 '''.format(
         meson.project_version(),
@@ -199,7 +202,8 @@ Summary:
         get_option('examples'),
         svg2tvg,
         svg2png,
-        lottie2gif
+        lottie2gif,
+        lottie_expressions
     )
 
 message(summary)

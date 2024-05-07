@@ -39,9 +39,9 @@ option('tools',
    description: 'Enable building thorvg tools')
 
 option('examples',
-    type: 'boolean',
-    value: false,
-    description: 'Enable building examples')
+   type: 'boolean',
+   value: false,
+   description: 'Enable building examples')
 
 option('tests',
    type: 'boolean',
@@ -49,11 +49,17 @@ option('tests',
    description: 'Enable building Unit Tests')
 
 option('log',
-    type: 'boolean',
-    value: false,
-    description: 'Enable log message')
+   type: 'boolean',
+   value: false,
+   description: 'Enable log message')
 
 option('static',
-    type: 'boolean',
-    value: false,
-    description: 'Force to use static linking modules in thorvg')
+   type: 'boolean',
+   value: false,
+   description: 'Force to use static linking modules in thorvg')
+
+option('extra',
+   type: 'array',
+   choices: ['', 'lottie_expressions'],
+   value: ['lottie_expressions'],
+   description: '"Enable support for exceptionally advanced features')
