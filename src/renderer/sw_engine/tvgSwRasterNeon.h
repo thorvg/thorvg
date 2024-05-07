@@ -64,17 +64,26 @@ static void neonRasterGrayscale8(uint8_t* dst, uint8_t val, uint32_t offset, int
 
 static void neonRasterPixel32(uint32_t *dst, uint32_t val, uint32_t offset, int32_t len)
 {
+    dst += offset;
+
+    uint32x4_t vectorVal = vdupq_n_u32(val);
+
+#if TVG_AARCH64
+    uint32_t iterations = len / 16;
+    uint32_t neonFilled = iterations * 16;
+    uint32x4x4_t valQuad = {vectorVal, vectorVal, vectorVal, vectorVal};
+    for (uint32_t i = 0; i < iterations; ++i) {
+        vst4q_u32(dst, valQuad);
+        dst += 16;
+    }
+#else
     uint32_t iterations = len / 4;
     uint32_t neonFilled = iterations * 4;
-
-    dst += offset;
-    uint32x4_t vectorVal = {val, val, val, val};
-
     for (uint32_t i = 0; i < iterations; ++i) {
         vst1q_u32(dst, vectorVal);
         dst += 4;
     }
-
+#endif
     int32_t leftovers = len - neonFilled;
     while (leftovers--) *dst++ = val;
 }
