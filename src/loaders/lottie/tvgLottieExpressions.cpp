@@ -52,6 +52,8 @@ static const char* EXP_VALUE = "value";
 static const char* EXP_INDEX = "index";
 static const char* EXP_EFFECT= "effect";
 
+static LottieExpressions* exps = nullptr;   //singleton instance engine
+
 
 static void contentFree(void *native_p, struct jerry_object_native_info_t *info_p)
 {
@@ -1267,8 +1269,6 @@ void LottieExpressions::update(float curTime)
 
 LottieExpressions* LottieExpressions::instance()
 {
-    static LottieExpressions* exps = nullptr;
-
     //FIXME: Threads support
     if (TaskScheduler::threads() > 1) {
         TVGLOG("LOTTIE", "Lottie Expressions are not supported with tvg threads");
@@ -1283,7 +1283,10 @@ LottieExpressions* LottieExpressions::instance()
 
 void LottieExpressions::retrieve(LottieExpressions* instance)
 {
-    if (--engineRefCnt == 0) delete(instance);
+    if (--engineRefCnt == 0) {
+        delete(instance);
+        exps = nullptr;
+    }
 }
 
 
