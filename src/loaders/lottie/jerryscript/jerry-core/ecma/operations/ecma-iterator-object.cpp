@@ -130,13 +130,13 @@ ecma_op_create_iterator_object (ecma_value_t iterated_value, /**< value from cre
                                 ecma_iterator_kind_t kind) /**< iterator kind*/
 {
   /* 1. */
-  JERRY_ASSERT (iterator_type == ECMA_OBJECT_CLASS_ARRAY_ITERATOR || iterator_type == ECMA_OBJECT_CLASS_SET_ITERATOR
-                || iterator_type == ECMA_OBJECT_CLASS_MAP_ITERATOR
 #ifdef JERRY_BUILTIN_REGEXP
-                || iterator_type == ECMA_OBJECT_CLASS_REGEXP_STRING_ITERATOR
+  JERRY_ASSERT (iterator_type == ECMA_OBJECT_CLASS_ARRAY_ITERATOR || iterator_type == ECMA_OBJECT_CLASS_SET_ITERATOR || iterator_type == ECMA_OBJECT_CLASS_MAP_ITERATOR ||
+                iterator_type == ECMA_OBJECT_CLASS_REGEXP_STRING_ITERATOR || iterator_type == ECMA_OBJECT_CLASS_STRING_ITERATOR);
+#else
+  JERRY_ASSERT (iterator_type == ECMA_OBJECT_CLASS_ARRAY_ITERATOR || iterator_type == ECMA_OBJECT_CLASS_SET_ITERATOR || iterator_type == ECMA_OBJECT_CLASS_MAP_ITERATOR ||
+                iterator_type == ECMA_OBJECT_CLASS_STRING_ITERATOR);
 #endif
-                || iterator_type == ECMA_OBJECT_CLASS_STRING_ITERATOR);
-  JERRY_ASSERT (kind < ECMA_ITERATOR__COUNT);
 
   /* 2. */
   ecma_object_t *object_p =
