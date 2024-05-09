@@ -45,7 +45,7 @@ void win_del(void *data, Evas_Object *o, void *ev)
     elm_exit();
 }
 
-static Eo* createSwView(uint32_t w = 800, uint32_t h = 800)
+static Eo* createSwView(uint32_t w = WIDTH, uint32_t h = HEIGHT)
 {
     cout << "tvg engine: software" << endl;
 
@@ -80,7 +80,7 @@ static Eo* createSwView(uint32_t w = 800, uint32_t h = 800)
 void initGLview(Evas_Object *obj);
 void drawGLview(Evas_Object *obj);
 
-static Eo* createGlView(uint32_t w = 800, uint32_t h = 800)
+static Eo* createGlView(uint32_t w = WIDTH, uint32_t h = HEIGHT)
 {
     cout << "tvg engine: opengl" << endl;
 
@@ -109,3 +109,4 @@ static Eo* createGlView(uint32_t w = 800, uint32_t h = 800)
 }
 
 #endif //NO_GL_EXAMPLE
+
