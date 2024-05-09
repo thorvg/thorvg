@@ -23,7 +23,7 @@
 #include "tvgMath.h"
 #include "tvgLines.h"
 
-#define BEZIER_EPSILON 1e-4f
+#define BEZIER_EPSILON 1e-2f
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
