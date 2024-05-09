@@ -75,7 +75,7 @@ struct TextDocument
     } stroke;
     char* name = nullptr;
     float size;
-    float tracking;
+    float tracking = 0.0f;
     uint8_t justify;
 };
 
