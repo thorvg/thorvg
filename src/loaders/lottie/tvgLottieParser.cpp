@@ -183,7 +183,7 @@ void LottieParser::getValue(TextDocument& doc)
         else if (KEY_AS("f")) doc.name = getStringCopy();
         else if (KEY_AS("t")) doc.text = getStringCopy();
         else if (KEY_AS("j")) doc.justify = getInt();
-        else if (KEY_AS("tr")) doc.tracking = getInt();
+        else if (KEY_AS("tr")) doc.tracking = getFloat() * 0.1f;
         else if (KEY_AS("lh")) doc.height = getFloat();
         else if (KEY_AS("ls")) doc.shift = getFloat();
         else if (KEY_AS("fc")) getValue(doc.color);
