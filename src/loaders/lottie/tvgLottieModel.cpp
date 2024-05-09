@@ -207,6 +207,7 @@ void LottieLayer::prepare()
        so force it to be a Null Layer and release all resource. */
     if (hidden) {
         type = LottieLayer::Null;
+        for (auto p = children.begin(); p < children.end(); ++p) delete(*p);
         children.reset();
         return;
     }
