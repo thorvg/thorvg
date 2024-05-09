@@ -606,7 +606,7 @@ static void _updateText(LottieGroup* parent, LottieObject** child, float frameNo
                 p += glyph->len; 
 
                 //advance the cursor position horizontally
-                cursor.x += glyph->width + spacing;
+                cursor.x += glyph->width + spacing + doc.tracking;
                 break;
             }
         }
