@@ -520,15 +520,14 @@ static void _updatePath(LottieGroup* parent, LottieObject** child, float frameNo
 
     if (ctx->repeater) {
         auto p = Shape::gen();
-        path->pathset(frameNo, P(p)->rs.path.cmds, P(p)->rs.path.pts, ctx->transform, exps);
+        path->pathset(frameNo, P(p)->rs.path.cmds, P(p)->rs.path.pts, ctx->transform, ctx->roundness, exps);
         _repeat(parent, std::move(p), ctx);
     } else {
         auto merging = _draw(parent, ctx);
-        if (path->pathset(frameNo, P(merging)->rs.path.cmds, P(merging)->rs.path.pts, ctx->transform, exps)) {
+        if (path->pathset(frameNo, P(merging)->rs.path.cmds, P(merging)->rs.path.pts, ctx->transform, ctx->roundness, exps)) {
             P(merging)->update(RenderUpdateFlag::Path);
         }
-        if (ctx->roundness > 1.0f && P(merging)->rs.stroke) {
-            TVGERR("LOTTIE", "FIXME: Path roundesss should be applied properly!");
+        if (ctx->roundness > ROUNDNESS_EPSILON && P(merging)->rs.stroke) {
             P(merging)->rs.stroke->join = StrokeJoin::Round;
         }
     }
@@ -587,7 +586,7 @@ static void _updateText(LottieGroup* parent, LottieObject** child, float frameNo
                 for (auto g = glyph->children.begin(); g < glyph->children.end(); ++g) {
                     auto group = static_cast<LottieGroup*>(*g);
                     for (auto p = group->children.begin(); p < group->children.end(); ++p) {
-                        if (static_cast<LottiePath*>(*p)->pathset(frameNo, P(shape)->rs.path.cmds, P(shape)->rs.path.pts, nullptr, exps)) {
+                        if (static_cast<LottiePath*>(*p)->pathset(frameNo, P(shape)->rs.path.cmds, P(shape)->rs.path.pts, nullptr, 0.0f, exps)) {
                             P(shape)->update(RenderUpdateFlag::Path);
                         }
                     }
@@ -1032,7 +1031,7 @@ static void _updateMaskings(LottieLayer* layer, float frameNo, LottieExpressions
         auto shape = Shape::gen().release();
         shape->fill(255, 255, 255, mask->opacity(frameNo));
         shape->transform(layer->cache.matrix);
-        if (mask->pathset(frameNo, P(shape)->rs.path.cmds, P(shape)->rs.path.pts, nullptr, exps)) {
+        if (mask->pathset(frameNo, P(shape)->rs.path.cmds, P(shape)->rs.path.pts, nullptr, 0.0f, exps)) {
             P(shape)->update(RenderUpdateFlag::Path);
         }
         auto method = mask->method;

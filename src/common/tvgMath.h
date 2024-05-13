@@ -62,6 +62,12 @@ static inline bool mathZero(float a)
 }
 
 
+static inline bool mathZero(const Point& p)
+{
+    return mathZero(p.x) && mathZero(p.y);
+}
+
+
 static inline bool mathEqual(float a, float b)
 {
     return (fabsf(a - b) < FLT_EPSILON);
@@ -166,6 +172,12 @@ static inline float mathLength(const Point* a, const Point* b)
     if (y < 0) y = -y;
 
     return (x > y) ? (x + 0.375f * y) : (y + 0.375f * x);
+}
+
+
+static inline float mathLength(const Point& a)
+{
+    return sqrtf(a.x * a.x + a.y * a.y);
 }
 
 

@@ -30,6 +30,7 @@
 #include "tvgLottieInterpolator.h"
 #include "tvgLottieExpressions.h"
 
+#define ROUNDNESS_EPSILON 1.0f
 
 struct LottieFont;
 struct LottieLayer;
@@ -455,11 +456,14 @@ struct LottiePathSet : LottieProperty
         return (*frames)[frames->count];
     }
 
-    bool operator()(float frameNo, Array<PathCommand>& cmds, Array<Point>& pts, Matrix* transform)
+    bool operator()(float frameNo, Array<PathCommand>& cmds, Array<Point>& pts, Matrix* transform, float roundness)
     {
         if (!frames) {
-            _copy(value, cmds);
-            _copy(value, pts, transform);
+            if (roundness > ROUNDNESS_EPSILON) _handleCorners(cmds, pts, transform, roundness);
+            else {
+                _copy(value, cmds);
+                _copy(value, pts, transform);
+            }
             return true;
         }
 
@@ -507,16 +511,88 @@ struct LottiePathSet : LottieProperty
     }
 
 
-    bool operator()(float frameNo, Array<PathCommand>& cmds, Array<Point>& pts, Matrix* transform, LottieExpressions* exps)
+    bool operator()(float frameNo, Array<PathCommand>& cmds, Array<Point>& pts, Matrix* transform, float roundness, LottieExpressions* exps)
     {
         if (exps && (exp && exp->enabled)) {
             if (exp->loop.mode != LottieExpression::LoopMode::None) frameNo = _loop(frames, frameNo, exp);
-            if (exps->result<LottiePathSet>(frameNo, cmds, pts, transform, exp)) return true;
+            if (exps->result<LottiePathSet>(frameNo, cmds, pts, transform, roundness, exp)) return true;
         }
-        return operator()(frameNo, cmds, pts, transform);
+        return operator()(frameNo, cmds, pts, transform, roundness);
     }
 
     void prepare() {}
+
+private:
+    void _roundCorner(Array<PathCommand>& cmds, Array<Point>& pts, const Point& prev, const Point& curr, const Point& next, float roundness)
+    {
+        auto lenPrev = mathLength(prev - curr);
+        auto rPrev = lenPrev > 0.0f ? 0.5f * mathMin(lenPrev * 0.5f, roundness) / lenPrev : 0.0f;
+        auto lenNext = mathLength(next - curr);
+        auto rNext = lenNext > 0.0f ? 0.5f * mathMin(lenNext * 0.5f, roundness) / lenNext : 0.0f;
+
+        auto dPrev = rPrev * (curr - prev);
+        auto dNext = rNext * (curr - next);
+
+        pts.push(curr - 2.0f * dPrev);
+        pts.push(curr - dPrev);
+        pts.push(curr - dNext);
+        pts.push(curr - 2.0f * dNext);
+        cmds.push(PathCommand::LineTo);
+        cmds.push(PathCommand::CubicTo);
+    }
+
+    void _handleCorners(Array<PathCommand>& cmds, Array<Point>& pts, Matrix* transform, float roundness)
+    {
+        cmds.reserve(value.cmdsCnt * 2);
+        pts.reserve((uint16_t)(value.ptsCnt * 1.5));
+        auto ptsCnt = pts.count;
+
+        for (auto iCmds = 0, iPts = 0; iCmds < value.cmdsCnt; ++iCmds) {
+            auto startIndex = 0;
+            switch (value.cmds[iCmds]) {
+                case PathCommand::MoveTo: {
+                    startIndex = pts.count;
+                    cmds.push(PathCommand::MoveTo);
+                    pts.push(value.pts[iPts++]);
+                    break;
+                }
+                case PathCommand::CubicTo: {
+                    auto& prev = value.pts[iPts - 1];
+                    auto& curr = value.pts[iPts + 2];
+                    if (iCmds < value.cmdsCnt - 1 &&
+                        (mathZero(value.pts[iPts - 1] - value.pts[iPts]) ||
+                        mathZero(value.pts[iPts + 1] - value.pts[iPts + 2]))) {
+                        if (value.cmds[iCmds + 1] == PathCommand::CubicTo &&
+                            (mathZero(value.pts[iPts + 2] - value.pts[iPts + 3]) ||
+                            mathZero(value.pts[iPts + 4] - value.pts[iPts + 5]))) {
+                            _roundCorner(cmds, pts, prev, curr, value.pts[iPts + 5], roundness);
+                            iPts += 3;
+                            break;
+                        } else if (value.cmds[iCmds + 1] == PathCommand::Close) {
+                            _roundCorner(cmds, pts, prev, curr, value.pts[2], roundness);
+                            pts[startIndex] = pts.last();
+                            iPts += 3;
+                            break;
+                        }
+                    }
+                    cmds.push(PathCommand::CubicTo);
+                    pts.push(value.pts[iPts++]);
+                    pts.push(value.pts[iPts++]);
+                    pts.push(value.pts[iPts++]);
+                    break;
+                }
+                case PathCommand::Close: {
+                    cmds.push(PathCommand::Close);
+                    break;
+                }
+                default: break;
+            }
+        }
+        if (transform) {
+            for (auto i = ptsCnt; i < pts.count; ++i)
+                mathTransform(transform, &pts[i]);
+        }
+    }
 };
 
 
