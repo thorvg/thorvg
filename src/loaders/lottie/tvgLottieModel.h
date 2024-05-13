@@ -712,16 +712,19 @@ struct LottieSlot
                 case LottieProperty::Type::ColorStop: {
                     static_cast<LottieGradient*>(pair->obj)->colorStops.release();
                     static_cast<LottieGradient*>(pair->obj)->colorStops = *static_cast<LottieColorStop*>(pair->prop);
+                    static_cast<LottieColorStop*>(pair->prop)->frames = nullptr;
                     break;
                 }
                 case LottieProperty::Type::Color: {
                     static_cast<LottieSolid*>(pair->obj)->color.release();
                     static_cast<LottieSolid*>(pair->obj)->color = *static_cast<LottieColor*>(pair->prop);
+                    static_cast<LottieColor*>(pair->prop)->frames = nullptr;
                     break;
                 }
                 case LottieProperty::Type::TextDoc: {
                     static_cast<LottieText*>(pair->obj)->doc.release();
                     static_cast<LottieText*>(pair->obj)->doc = *static_cast<LottieTextDoc*>(pair->prop);
+                    static_cast<LottieTextDoc*>(pair->prop)->frames = nullptr;
                     break;
                 }
                 default: break;
