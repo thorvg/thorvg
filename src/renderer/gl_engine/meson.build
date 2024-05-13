@@ -21,7 +21,7 @@ source_file = [
    'tvgGlTessellator.h',
 ]
 
-gles_dep = meson.get_compiler('cpp').find_library('GLESv2')
+gles_dep = meson.get_compiler('cpp').find_library('GLESv3')
 
 external_dep = [gles_dep]
 
