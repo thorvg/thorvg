@@ -309,17 +309,19 @@ bool LottieLoader::override(const char* slot)
 
 bool LottieLoader::frame(float no)
 {
+    auto frameNo = no + startFrame();
+
+    //This ensures that the target frame number is reached.
+    frameNo *= 10000.0f;
+    frameNo = roundf(frameNo);
+    frameNo *= 0.0001f;
+
     //Skip update if frame diff is too small.
-    if (fabsf(this->frameNo - no) < 0.0009f) return false;
+    if (fabsf(this->frameNo - frameNo) <= 0.0009f) return false;
 
     this->done();
 
-    //This ensures that the perfect last frame is reached.
-    no *= 1000.0f;
-    no = roundf(no);
-    no *= 0.001f;
-
-    this->frameNo = no + startFrame();
+    this->frameNo = frameNo;
 
     TaskScheduler::request(this);
 

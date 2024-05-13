@@ -1856,6 +1856,7 @@ public:
      *
      * @note For efficiency, ThorVG ignores updates to the new frame value if the difference from the current frame value
      *       is less than 0.001. In such cases, it returns @c Result::InsufficientCondition.
+     *       Values less than 0.001 may be disregarded and may not be accurately retained by the Animation.
      *
      * @see totalFrame()
      *
