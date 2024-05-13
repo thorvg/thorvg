@@ -362,7 +362,7 @@ struct LottieGenericProperty : LottieProperty
         if (frameNo >= frames->last().no) return frames->last().value;
 
         auto frame = frames->data + _bsearch(frames, frameNo);
-        if (frame->no == frameNo) return frame->value;
+        if (mathEqual(frame->no, frameNo)) return frame->value;
         return frame->interpolate(frame + 1, frameNo);
     }
 
@@ -477,7 +477,7 @@ struct LottiePathSet : LottieProperty
 
         auto frame = frames->data + _bsearch(frames, frameNo);
 
-        if (frame->no == frameNo) {
+        if (mathEqual(frame->no, frameNo)) {
             _copy(frame->value, cmds);
             _copy(frame->value, pts, transform);
             return true;
@@ -601,14 +601,10 @@ struct LottieColorStop : LottieProperty
             return fill->colorStops(frames->first().value.data, count);
         }
 
-        if (frameNo >= frames->last().no) {
-            return fill->colorStops(frames->last().value.data, count);
-        }
+        if (frameNo >= frames->last().no) return fill->colorStops(frames->last().value.data, count);
 
         auto frame = frames->data + _bsearch(frames, frameNo);
-        if (frame->no == frameNo) {
-            return fill->colorStops(frame->value.data, count);
-        }
+        if (mathEqual(frame->no, frameNo)) return fill->colorStops(frame->value.data, count);
 
         //interpolate
         auto t = (frameNo - frame->no) / ((frame + 1)->no - frame->no);
@@ -719,7 +715,7 @@ struct LottiePosition : LottieProperty
         if (frameNo >= frames->last().no) return frames->last().value;
 
         auto frame = frames->data + _bsearch(frames, frameNo);
-        if (frame->no == frameNo) return frame->value;
+        if (mathEqual(frame->no, frameNo)) return frame->value;
         return frame->interpolate(frame + 1, frameNo);
     }
 
