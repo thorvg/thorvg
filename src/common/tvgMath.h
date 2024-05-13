@@ -169,6 +169,12 @@ static inline float mathLength(const Point* a, const Point* b)
 }
 
 
+static inline float mathLength(const Point& a)
+{
+    return sqrtf(a.x * a.x + a.y * a.y);
+}
+
+
 static inline Point operator-(const Point& lhs, const Point& rhs)
 {
     return {lhs.x - rhs.x, lhs.y - rhs.y};

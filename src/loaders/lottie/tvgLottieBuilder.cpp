@@ -614,9 +614,10 @@ static void _updateText(LottieGroup* parent, LottieObject** child, float frameNo
 }
 
 
-static void _updateStar(LottieGroup* parent, LottiePolyStar* star, Matrix* transform, float frameNo, Shape* merging, LottieExpressions* exps)
+static void _updateStar(LottieGroup* parent, LottiePolyStar* star, Matrix* transform, float roundness, float frameNo, Shape* merging, LottieExpressions* exps)
 {
     static constexpr auto POLYSTAR_MAGIC_NUMBER = 0.47829f / 0.28f;
+    static constexpr auto ROUNDED_POLYSTAR_MAGIC_NUMBER = 0.47829f;
 
     auto ptsCnt = star->ptsCnt(frameNo, exps);
     auto innerRadius = star->innerRadius(frameNo, exps);
@@ -633,6 +634,8 @@ static void _updateStar(LottieGroup* parent, LottiePolyStar* star, Matrix* trans
     auto numPoints = size_t(ceilf(ptsCnt) * 2);
     auto direction = (star->direction == 0) ? 1.0f : -1.0f;
     auto hasRoundness = false;
+    bool applyExtRoundness = roundness > ROUNDNESS_EPSILON && (mathZero(innerRoundness) || mathZero(outerRoundness));
+    auto shape = applyExtRoundness ? Shape::gen().release() : merging;
 
     float x, y;
 
@@ -652,17 +655,17 @@ static void _updateStar(LottieGroup* parent, LottiePolyStar* star, Matrix* trans
     }
 
     if (mathZero(innerRoundness) && mathZero(outerRoundness)) {
-        P(merging)->rs.path.pts.reserve(numPoints + 2);
-        P(merging)->rs.path.cmds.reserve(numPoints + 3);
+        P(shape)->rs.path.pts.reserve(numPoints + 2);
+        P(shape)->rs.path.cmds.reserve(numPoints + 3);
     } else {
-        P(merging)->rs.path.pts.reserve(numPoints * 3 + 2);
-        P(merging)->rs.path.cmds.reserve(numPoints + 3);
+        P(shape)->rs.path.pts.reserve(numPoints * 3 + 2);
+        P(shape)->rs.path.cmds.reserve(numPoints + 3);
         hasRoundness = true;
     }
 
     Point in = {x, y};
     if (transform) mathTransform(transform, &in);
-    merging->moveTo(in.x, in.y);
+    shape->moveTo(in.x, in.y);
 
     for (size_t i = 0; i < numPoints; i++) {
         auto radius = longSegment ? outerRadius : innerRadius;
@@ -710,16 +713,76 @@ static void _updateStar(LottieGroup* parent, LottiePolyStar* star, Matrix* trans
                 mathTransform(transform, &in3);
                 mathTransform(transform, &in4);
             }
-            merging->cubicTo(in2.x, in2.y, in3.x, in3.y, in4.x, in4.y);
+            shape->cubicTo(in2.x, in2.y, in3.x, in3.y, in4.x, in4.y);
         } else {
             Point in = {x, y};
             if (transform) mathTransform(transform, &in);
-            merging->lineTo(in.x, in.y);
+            shape->lineTo(in.x, in.y);
         }
         angle += dTheta * direction;
         longSegment = !longSegment;
     }
-    merging->close();
+    shape->close();
+
+    if (applyExtRoundness) {
+        auto cmdCnt = shape->pathCommands(nullptr);
+        const Point *pts = nullptr;
+        auto ptsCnt = shape->pathCoords(&pts);
+
+        auto len = mathLength(pts[1] - pts[2]);
+        auto r = len > 0.0f ? ROUNDED_POLYSTAR_MAGIC_NUMBER * mathMin(len * 0.5f, roundness) / len : 0.0f;
+
+        if (hasRoundness) {
+            P(merging)->rs.path.cmds.grow((uint32_t)(1.5 * cmdCnt));
+            P(merging)->rs.path.pts.grow((uint32_t)(4.5 * cmdCnt));
+
+            int start = 3 * mathZero(outerRoundness);
+            merging->moveTo(pts[start].x, pts[start].y);
+
+            for (int i = 1 + start; i < ptsCnt; i += 6) {
+                auto& prev = pts[i];
+                auto& curr = pts[i + 2];
+                auto& next = (i < ptsCnt - start) ? pts[i + 4] : pts[2];
+                auto& nextCtrl = (i < ptsCnt - start) ? pts[i + 5] : pts[3];
+                auto dNext = r * (curr - next);
+                auto dPrev = r * (curr - prev);
+
+                auto p0 = curr - 2.0f * dPrev;
+                auto p1 = curr - dPrev;
+                auto p2 = curr - dNext;
+                auto p3 = curr - 2.0f * dNext;
+
+                merging->cubicTo(prev.x, prev.y, p0.x, p0.y, p0.x, p0.y);
+                merging->cubicTo(p1.x, p1.y, p2.x, p2.y, p3.x, p3.y);
+                merging->cubicTo(p3.x, p3.y, next.x, next.y, nextCtrl.x, nextCtrl.y);
+            }
+        } else {
+            P(merging)->rs.path.cmds.grow(2 * cmdCnt);
+            P(merging)->rs.path.pts.grow(4 * cmdCnt);
+
+            auto dPrev = r * (pts[1] - pts[0]);
+            auto p = pts[0] + 2.0f * dPrev;
+            merging->moveTo(p.x, p.y);
+
+            for (int i = 1; i < ptsCnt; ++i) {
+                auto& curr = pts[i];
+                auto& next = (i == ptsCnt - 1) ? pts[1] : pts[i + 1];
+                auto dNext = r * (curr - next);
+
+                auto p0 = curr - 2.0f * dPrev;
+                auto p1 = curr - dPrev;
+                auto p2 = curr - dNext;
+                auto p3 = curr - 2.0f * dNext;
+
+                merging->lineTo(p0.x, p0.y);
+                merging->cubicTo(p1.x, p1.y, p2.x, p2.y, p3.x, p3.y);
+
+                dPrev = -1.0f * dNext;
+            }
+        }
+        merging->close();
+        delete(shape);
+    }
 }
 
 
@@ -809,12 +872,12 @@ static void _updatePolystar(LottieGroup* parent, LottieObject** child, float fra
 
     if (ctx->repeater) {
         auto p = Shape::gen();
-        if (star->type == LottiePolyStar::Star) _updateStar(parent, star, identity ? nullptr : &matrix, frameNo, p.get(), exps);
+        if (star->type == LottiePolyStar::Star) _updateStar(parent, star, identity ? nullptr : &matrix, ctx->roundness, frameNo, p.get(), exps);
         else _updatePolygon(parent, star, identity  ? nullptr : &matrix, frameNo, p.get(), exps);
         _repeat(parent, std::move(p), ctx);
     } else {
         auto merging = _draw(parent, ctx);
-        if (star->type == LottiePolyStar::Star) _updateStar(parent, star, identity ? nullptr : &matrix, frameNo, merging, exps);
+        if (star->type == LottiePolyStar::Star) _updateStar(parent, star, identity ? nullptr : &matrix, ctx->roundness, frameNo, merging, exps);
         else _updatePolygon(parent, star, identity  ? nullptr : &matrix, frameNo, merging, exps);
         P(merging)->update(RenderUpdateFlag::Path);
     }

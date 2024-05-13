@@ -30,6 +30,7 @@
 #include "tvgLottieInterpolator.h"
 #include "tvgLottieExpressions.h"
 
+#define ROUNDNESS_EPSILON 1.0f
 
 struct LottieFont;
 struct LottieLayer;
