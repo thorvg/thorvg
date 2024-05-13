@@ -81,15 +81,15 @@ TEST_CASE("Animation Lottie", "[capiAnimation]")
 
     float frame;
     REQUIRE(tvg_animation_get_total_frame(animation, &frame) == TVG_RESULT_SUCCESS);
-    REQUIRE(frame == Approx(120).margin(004004));
+    REQUIRE(frame == Approx(120).margin(0.001f));
 
     REQUIRE(tvg_animation_set_frame(animation, frame - 1) == TVG_RESULT_SUCCESS);
     REQUIRE(tvg_animation_get_frame(animation, &frame) == TVG_RESULT_SUCCESS);
-    REQUIRE(frame == Approx(119).margin(004004));
+    REQUIRE(frame == Approx(119).margin(0.001f));
 
     float duration;
     REQUIRE(tvg_animation_get_duration(animation, &duration) == TVG_RESULT_SUCCESS);
-    REQUIRE(duration == Approx(4).margin(004004));
+    REQUIRE(duration == Approx(4.004).margin(0.001f)); //120/29.97
 
     REQUIRE(tvg_animation_del(animation) == TVG_RESULT_SUCCESS);
 
