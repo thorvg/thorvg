@@ -239,9 +239,9 @@ static void _copy(PathSet& pathset, Array<PathCommand>& outCmds)
 }
 
 
-static void _roundCorner(Array<PathCommand>& cmds, Array<Point>& pts, const Point& prev, const Point& curr, const Point& next, float roundness)
+static void _roundCorner(Array<PathCommand>& cmds, Array<Point>& pts, const Point& prev, const Point& curr, const Point& next, float roundness, bool continuity, float& lenPrev)
 {
-    auto lenPrev = mathLength(prev - curr);
+    if (!continuity) lenPrev = mathLength(prev - curr);
     auto rPrev = lenPrev > 0.0f ? 0.5f * mathMin(lenPrev * 0.5f, roundness) / lenPrev : 0.0f;
     auto lenNext = mathLength(next - curr);
     auto rNext = lenNext > 0.0f ? 0.5f * mathMin(lenNext * 0.5f, roundness) / lenNext : 0.0f;
@@ -255,6 +255,8 @@ static void _roundCorner(Array<PathCommand>& cmds, Array<Point>& pts, const Poin
     pts.push(curr - 2.0f * dNext);
     cmds.push(PathCommand::LineTo);
     cmds.push(PathCommand::CubicTo);
+
+    lenPrev = lenNext;
 }
 
 
@@ -262,15 +264,19 @@ static void _handleCorners(const PathSet& path, Array<PathCommand>& cmds, Array<
 {
     cmds.reserve(path.cmdsCnt * 2);
     pts.reserve((uint16_t)(path.ptsCnt * 1.5));
-    auto ptsCnt = pts.count;
 
+    auto ptsCnt = pts.count;
+    auto continuity = false;
     auto startIndex = 0;
+    float distance;
+
     for (auto iCmds = 0, iPts = 0; iCmds < path.cmdsCnt; ++iCmds) {
         switch (path.cmds[iCmds]) {
             case PathCommand::MoveTo: {
                 startIndex = pts.count;
                 cmds.push(PathCommand::MoveTo);
                 pts.push(path.pts[iPts++]);
+                continuity = false;
                 break;
             }
             case PathCommand::CubicTo: {
@@ -282,11 +288,12 @@ static void _handleCorners(const PathSet& path, Array<PathCommand>& cmds, Array<
                     if (path.cmds[iCmds + 1] == PathCommand::CubicTo &&
                         mathZero(path.pts[iPts + 2] - path.pts[iPts + 3]) &&
                         mathZero(path.pts[iPts + 4] - path.pts[iPts + 5])) {
-                        _roundCorner(cmds, pts, prev, curr, path.pts[iPts + 5], roundness);
+                        _roundCorner(cmds, pts, prev, curr, path.pts[iPts + 5], roundness, continuity, distance);
+                        continuity = true;
                         iPts += 3;
                         break;
                     } else if (path.cmds[iCmds + 1] == PathCommand::Close) {
-                        _roundCorner(cmds, pts, prev, curr, path.pts[2], roundness);
+                        _roundCorner(cmds, pts, prev, curr, path.pts[2], roundness, continuity, distance);
                         pts[startIndex] = pts.last();
                         iPts += 3;
                         break;
@@ -296,10 +303,12 @@ static void _handleCorners(const PathSet& path, Array<PathCommand>& cmds, Array<
                 pts.push(path.pts[iPts++]);
                 pts.push(path.pts[iPts++]);
                 pts.push(path.pts[iPts++]);
+                continuity = false;
                 break;
             }
             case PathCommand::Close: {
                 cmds.push(PathCommand::Close);
+                continuity = false;
                 break;
             }
             default: break;
