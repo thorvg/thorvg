@@ -109,12 +109,12 @@ public:
     }
 
     template<typename Property>
-    bool result(float frameNo, Array<PathCommand>& cmds, Array<Point>& pts, Matrix* transform, LottieExpression* exp)
+    bool result(float frameNo, Array<PathCommand>& cmds, Array<Point>& pts, Matrix* transform, float roundness, LottieExpression* exp)
     {
         auto bm_rt = evaluate(frameNo, exp);
 
         if (auto pathset = static_cast<Property*>(jerry_object_get_native_ptr(bm_rt, nullptr))) {
-            (*pathset)(frameNo, cmds, pts, transform);
+            (*pathset)(frameNo, cmds, pts, transform, roundness);
          } else {
             TVGERR("LOTTIE", "Failed dispatching PathSet!");
             return false;
