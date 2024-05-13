@@ -239,6 +239,79 @@ static void _copy(PathSet& pathset, Array<PathCommand>& outCmds)
 }
 
 
+static void _roundCorner(Array<PathCommand>& cmds, Array<Point>& pts, const Point& prev, const Point& curr, const Point& next, float roundness)
+{
+    auto lenPrev = mathLength(prev - curr);
+    auto rPrev = lenPrev > 0.0f ? 0.5f * mathMin(lenPrev * 0.5f, roundness) / lenPrev : 0.0f;
+    auto lenNext = mathLength(next - curr);
+    auto rNext = lenNext > 0.0f ? 0.5f * mathMin(lenNext * 0.5f, roundness) / lenNext : 0.0f;
+
+    auto dPrev = rPrev * (curr - prev);
+    auto dNext = rNext * (curr - next);
+
+    pts.push(curr - 2.0f * dPrev);
+    pts.push(curr - dPrev);
+    pts.push(curr - dNext);
+    pts.push(curr - 2.0f * dNext);
+    cmds.push(PathCommand::LineTo);
+    cmds.push(PathCommand::CubicTo);
+}
+
+
+static void _handleCorners(const PathSet& path, Array<PathCommand>& cmds, Array<Point>& pts, Matrix* transform, float roundness)
+{
+    cmds.reserve(path.cmdsCnt * 2);
+    pts.reserve((uint16_t)(path.ptsCnt * 1.5));
+    auto ptsCnt = pts.count;
+
+    auto startIndex = 0;
+    for (auto iCmds = 0, iPts = 0; iCmds < path.cmdsCnt; ++iCmds) {
+        switch (path.cmds[iCmds]) {
+            case PathCommand::MoveTo: {
+                startIndex = pts.count;
+                cmds.push(PathCommand::MoveTo);
+                pts.push(path.pts[iPts++]);
+                break;
+            }
+            case PathCommand::CubicTo: {
+                auto& prev = path.pts[iPts - 1];
+                auto& curr = path.pts[iPts + 2];
+                if (iCmds < path.cmdsCnt - 1 &&
+                    mathZero(path.pts[iPts - 1] - path.pts[iPts]) &&
+                    mathZero(path.pts[iPts + 1] - path.pts[iPts + 2])) {
+                    if (path.cmds[iCmds + 1] == PathCommand::CubicTo &&
+                        mathZero(path.pts[iPts + 2] - path.pts[iPts + 3]) &&
+                        mathZero(path.pts[iPts + 4] - path.pts[iPts + 5])) {
+                        _roundCorner(cmds, pts, prev, curr, path.pts[iPts + 5], roundness);
+                        iPts += 3;
+                        break;
+                    } else if (path.cmds[iCmds + 1] == PathCommand::Close) {
+                        _roundCorner(cmds, pts, prev, curr, path.pts[2], roundness);
+                        pts[startIndex] = pts.last();
+                        iPts += 3;
+                        break;
+                    }
+                }
+                cmds.push(PathCommand::CubicTo);
+                pts.push(path.pts[iPts++]);
+                pts.push(path.pts[iPts++]);
+                pts.push(path.pts[iPts++]);
+                break;
+            }
+            case PathCommand::Close: {
+                cmds.push(PathCommand::Close);
+                break;
+            }
+            default: break;
+        }
+    }
+    if (transform) {
+        for (auto i = ptsCnt; i < pts.count; ++i)
+            mathTransform(transform, &pts[i]);
+    }
+}
+
+
 template<typename T>
 uint32_t _bsearch(T* frames, float frameNo)
 {
@@ -456,21 +529,33 @@ struct LottiePathSet : LottieProperty
         return (*frames)[frames->count];
     }
 
-    bool operator()(float frameNo, Array<PathCommand>& cmds, Array<Point>& pts, Matrix* transform)
+    bool operator()(float frameNo, Array<PathCommand>& cmds, Array<Point>& pts, Matrix* transform, float roundness)
     {
         if (!frames) {
+            if (roundness > ROUNDNESS_EPSILON) {
+                _handleCorners(value, cmds, pts, transform, roundness);
+                return true;
+            }
             _copy(value, cmds);
             _copy(value, pts, transform);
             return true;
         }
 
         if (frames->count == 1 || frameNo <= frames->first().no) {
+            if (roundness > ROUNDNESS_EPSILON) {
+                _handleCorners(frames->first().value, cmds, pts, transform, roundness);
+                return true;
+            }
             _copy(frames->first().value, cmds);
             _copy(frames->first().value, pts, transform);
             return true;
         }
 
         if (frameNo >= frames->last().no) {
+            if (roundness > ROUNDNESS_EPSILON) {
+                _handleCorners(frames->last().value, cmds, pts, transform, roundness);
+                return true;
+            }
             _copy(frames->last().value, cmds);
             _copy(frames->last().value, pts, transform);
             return true;
@@ -478,43 +563,66 @@ struct LottiePathSet : LottieProperty
 
         auto frame = frames->data + _bsearch(frames, frameNo);
 
-        if (frame->no == frameNo) {
+        if (mathEqual(frame->no, frameNo)) {
+            if (roundness > ROUNDNESS_EPSILON) {
+                _handleCorners(frame->value, cmds, pts, transform, roundness);
+                return true;
+            }
             _copy(frame->value, cmds);
             _copy(frame->value, pts, transform);
             return true;
         }
 
         //interpolate
-        _copy(frame->value, cmds);
-
         auto t = (frameNo - frame->no) / ((frame + 1)->no - frame->no);
         if (frame->interpolator) t = frame->interpolator->progress(t);
 
         if (frame->hold) {
-            if (t < 1.0f) _copy(frame->value, pts, transform);
-            else _copy((frame + 1)->value, pts, transform);
+            if (roundness > ROUNDNESS_EPSILON) {
+                _handleCorners((frame + ((t < 1.0f) ? 0 : 1))->value, cmds, pts, transform, roundness);
+                return true;
+            }
+            _copy((frame + ((t < 1.0f) ? 0 : 1))->value, cmds);
+            _copy((frame)->value, pts, transform);
             return true;
         }
 
         auto s = frame->value.pts;
         auto e = (frame + 1)->value.pts;
 
+        if (roundness > ROUNDNESS_EPSILON) {
+            PathSet interpPathSet = frame->value;
+            interpPathSet.pts = (Point*)malloc(frame->value.ptsCnt * sizeof(Point));
+
+            auto p = interpPathSet.pts;
+            for (auto i = 0; i < frame->value.ptsCnt; ++i, ++s, ++e, ++p) {
+                auto pt = mathLerp(*s, *e, t);
+                if (transform) mathMultiply(&pt, transform);
+                *p = pt;
+            }
+            _handleCorners(interpPathSet, cmds, pts, nullptr, roundness);
+            free(interpPathSet.pts);
+            return true;
+        }
+
         for (auto i = 0; i < frame->value.ptsCnt; ++i, ++s, ++e) {
             auto pt = mathLerp(*s, *e, t);
-            if (transform) mathMultiply(&pt,transform);
+            if (transform) mathMultiply(&pt, transform);
             pts.push(pt);
         }
+        _copy(frame->value, cmds);
+
         return true;
     }
 
 
-    bool operator()(float frameNo, Array<PathCommand>& cmds, Array<Point>& pts, Matrix* transform, LottieExpressions* exps)
+    bool operator()(float frameNo, Array<PathCommand>& cmds, Array<Point>& pts, Matrix* transform, float roundness, LottieExpressions* exps)
     {
         if (exps && (exp && exp->enabled)) {
             if (exp->loop.mode != LottieExpression::LoopMode::None) frameNo = _loop(frames, frameNo, exp);
-            if (exps->result<LottiePathSet>(frameNo, cmds, pts, transform, exp)) return true;
+            if (exps->result<LottiePathSet>(frameNo, cmds, pts, transform, roundness, exp)) return true;
         }
-        return operator()(frameNo, cmds, pts, transform);
+        return operator()(frameNo, cmds, pts, transform, roundness);
     }
 
     void prepare() {}
