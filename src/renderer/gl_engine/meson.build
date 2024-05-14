@@ -21,12 +21,14 @@ source_file = [
    'tvgGlTessellator.h',
 ]
 
-gles_dep = meson.get_compiler('cpp').find_library('GLESv3')
+gles_dep = meson.get_compiler('cpp').find_library('GLESv3', required: false)
 
-external_dep = [gles_dep]
+if not gles_dep.found()
+  gles_dep = meson.get_compiler('cpp').find_library('GLESv2', required: true)
+endif
 
 engine_dep += [declare_dependency(
-    dependencies        : external_dep,
+    dependencies        : gles_dep,
     include_directories : include_directories('.'),
     sources             : source_file,
 )]
