@@ -47,6 +47,44 @@ TEST_CASE("Animation Basic", "[tvgAnimation]")
 
 #ifdef THORVG_LOTTIE_LOADER_SUPPORT
 
+TEST_CASE("Animation Frames Counting", "[tvgAnimation]")
+{
+    REQUIRE(Initializer::init(CanvasEngine::Sw, 1) == Result::Success);
+
+    auto animation = Animation::gen();
+    REQUIRE(animation);
+
+    auto picture = animation->picture();
+    REQUIRE(picture->identifier() == Picture::identifier());
+
+    REQUIRE(picture->load(TEST_DIR"/test.json") == Result::Success);
+
+    for (float i = 1.0f; i < 120.0f; i += 10.0f) {
+        REQUIRE(animation->frame(i) == Result::Success);
+        REQUIRE(animation->curFrame() == i);
+    }
+
+    REQUIRE(animation->frame(102.8f) == Result::Success);
+    REQUIRE(animation->curFrame() == Approx(102.8f));
+
+    REQUIRE(animation->frame(13.32f) == Result::Success);
+    REQUIRE(animation->curFrame() == Approx(13.32f));
+
+    REQUIRE(animation->frame(27.1232f) == Result::Success);
+    REQUIRE(animation->curFrame() == Approx(27.1232f));
+
+    REQUIRE(animation->frame(87.0004f) == Result::Success);
+    REQUIRE(animation->curFrame() == Approx(87.0004f));
+
+    REQUIRE(animation->frame(88.0005f) == Result::Success);
+    REQUIRE(animation->curFrame() == Approx(88.0005f));
+
+    REQUIRE(animation->frame(89.0009f) == Result::Success);
+    REQUIRE(animation->curFrame() == Approx(89.0009f));
+
+    REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
+}
+
 TEST_CASE("Animation Lottie", "[tvgAnimation]")
 {
     REQUIRE(Initializer::init(CanvasEngine::Sw, 1) == Result::Success);
@@ -63,7 +101,7 @@ TEST_CASE("Animation Lottie", "[tvgAnimation]")
     REQUIRE(animation->totalFrame() == Approx(120).margin(0.001f));
     REQUIRE(animation->curFrame() == 0);
     REQUIRE(animation->duration() == Approx(4.004).margin(0.001f)); //120/29.97
-    REQUIRE(animation->frame(20) == Result::Success);
+    REQUIRE(animation->frame(20.0f) == Result::Success);
 
     REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
 }
@@ -80,7 +118,7 @@ TEST_CASE("Animation Lottie2", "[tvgAnimation]")
 
     REQUIRE(picture->load(TEST_DIR"/test2.json") == Result::Success);
 
-    REQUIRE(animation->frame(20) == Result::Success);
+    REQUIRE(animation->frame(20.0f) == Result::Success);
 
     REQUIRE(Initializer::term(CanvasEngine::Sw) == Result::Success);
 }
