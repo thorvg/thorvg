@@ -129,6 +129,42 @@ static void _rotationZ(Matrix* m, float degree)
 }
 
 
+static void _skew(Matrix* m, float angleDeg, float axisDeg)
+{
+    auto angle = -mathDeg2Rad(angleDeg);
+    float tanVal = tanf(angle);
+
+    axisDeg = fmod(axisDeg, 180.0f);
+    if (fabsf(axisDeg) < 0.01f || fabsf(axisDeg - 180.0f) < 0.01f || fabsf(axisDeg + 180.0f) < 0.01f) {
+        float cosVal = cosf(mathDeg2Rad(axisDeg));
+        auto B = cosVal * cosVal * tanVal;
+        m->e12 += B * m->e11;
+        m->e22 += B * m->e21;
+        return;
+    } else if (fabsf(axisDeg - 90.0f) < 0.01f || fabsf(axisDeg + 90.0f) < 0.01f) {
+        float sinVal = -sinf(mathDeg2Rad(axisDeg));
+        auto C = sinVal * sinVal * tanVal;
+        m->e11 -= C * m->e12;
+        m->e21 -= C * m->e22;
+        return;
+    }
+
+    auto axis = -mathDeg2Rad(axisDeg);
+    float cosVal = cosf(axis);
+    float sinVal = sinf(axis);
+    auto A = sinVal * cosVal * tanVal;
+    auto B = cosVal * cosVal * tanVal;
+    auto C = sinVal * sinVal * tanVal;
+
+    auto e11 = m->e11;
+    auto e21 = m->e21;
+    m->e11 = (1.0f - A) * e11 - C * m->e12;
+    m->e12 = B * e11 + (1.0f + A) * m->e12;
+    m->e21 = (1.0f - A) * e21 - C * m->e22;
+    m->e22 = B * e21 + (1.0f + A) * m->e22;
+}
+
+
 static bool _updateTransform(LottieTransform* transform, float frameNo, bool autoOrient, Matrix& matrix, uint8_t& opacity, LottieExpressions* exps)
 {
     mathIdentity(&matrix);
@@ -152,6 +188,16 @@ static bool _updateTransform(LottieTransform* transform, float frameNo, bool aut
     if (transform->rotationEx) {
         _rotateY(&matrix, transform->rotationEx->y(frameNo, exps));
         _rotateX(&matrix, transform->rotationEx->x(frameNo, exps));
+    }
+
+    auto skewAngle = transform->skewAngle(frameNo, exps);
+    if (fabsf(skewAngle) > 0.01f) {
+        // For angles where tangent explodes, the shape degenerates into an infinitely thin line.
+        // This is handled by zeroing out the matrix due to finite numerical precision.
+        skewAngle = fmod(skewAngle, 180.0f);
+        if (fabsf(skewAngle - 90.0f) < 0.01f || fabsf(skewAngle + 90.0f) < 0.01f) return false;
+        auto skewAxis = transform->skewAxis(frameNo, exps);
+        _skew(&matrix, skewAngle, skewAxis);
     }
 
     auto scale = transform->scale(frameNo, exps);

@@ -338,6 +338,8 @@ struct LottieTransform : LottieObject
     LottiePoint scale = Point{100.0f, 100.0f};
     LottiePoint anchor = Point{0.0f, 0.0f};
     LottieOpacity opacity = 255;
+    LottieFloat skewAngle = 0.0f;
+    LottieFloat skewAxis = 0.0f;
 
     SeparateCoord* coords = nullptr;       //either a position or separate coordinates
     RotationEx* rotationEx = nullptr;      //extension for 3d rotation
