@@ -585,8 +585,8 @@ LottieTransform* LottieParser::parseTransform(bool ddd)
         else if (transform->rotationEx && KEY_AS("ry")) parseProperty<LottieProperty::Type::Float>(transform->rotationEx->y);
         else if (transform->rotationEx && KEY_AS("rz")) parseProperty<LottieProperty::Type::Float>(transform->rotation);
         else if (KEY_AS("nm")) transform->name = getStringCopy();
-        //else if (KEY_AS("sk")) //TODO: skew
-        //else if (KEY_AS("sa")) //TODO: skew axis
+        else if (KEY_AS("sk")) parseProperty<LottieProperty::Type::Float>(transform->skewAngle);
+        else if (KEY_AS("sa")) parseProperty<LottieProperty::Type::Float>(transform->skewAxis);
         else skip(key);
     }
     transform->prepare();
