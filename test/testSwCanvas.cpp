@@ -311,3 +311,37 @@ TEST_CASE("Asynchronized Drawing", "[tvgSwCanvas]")
 
     REQUIRE(Initializer::term() == Result::Success);
 }
+
+TEST_CASE("Viewport", "[tvgSwCanvas]")
+{
+    REQUIRE(Initializer::init(0) == Result::Success);
+
+    auto canvas = SwCanvas::gen();
+    REQUIRE(canvas);
+
+    REQUIRE(canvas->viewport(25, 25, 100, 100) == Result::Success);
+
+    uint32_t buffer[100*100];
+    REQUIRE(canvas->target(buffer, 100, 100, 100, SwCanvas::Colorspace::ARGB8888) == Result::Success);
+
+    REQUIRE(canvas->viewport(25, 25, 50, 50) == Result::Success);
+
+    auto shape = Shape::gen();
+    REQUIRE(shape);
+    REQUIRE(shape->appendRect(0, 0, 100, 100) == Result::Success);
+    REQUIRE(shape->fill(255, 255, 255, 255) == Result::Success);
+
+    REQUIRE(canvas->push(std::move(shape)) == Result::Success);
+
+    //Negative, not allowed
+    REQUIRE(canvas->viewport(15, 25, 5, 5) == Result::InsufficientCondition);
+
+    REQUIRE(canvas->draw() == Result::Success);
+
+    //Negative, not allowed
+    REQUIRE(canvas->viewport(25, 25, 10, 10) == Result::InsufficientCondition);
+
+    REQUIRE(canvas->sync() == Result::Success);
+
+    REQUIRE(Initializer::term() == Result::Success);
+}
