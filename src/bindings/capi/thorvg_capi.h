@@ -453,7 +453,7 @@ TVG_API Tvg_Canvas* tvg_swcanvas_create();
 * \retval TVG_RESULT_INVALID_ARGUMENTS An invalid canvas or buffer pointer passed or one of the @p stride, @p w or @p h being zero.
 * \retval TVG_RESULT_NOT_SUPPORTED The software engine is not supported.
 *
-* \warning Do not access @p buffer during tvg_canvas_draw() - tvg_canvas_sync(). It should not be accessed while TVG is writing on it.
+* \warning Do not access @p buffer during tvg_canvas_draw() - tvg_canvas_sync(). It should not be accessed while the engine is writing on it.
 *
 * \see Tvg_Colorspace
 */
@@ -741,6 +741,30 @@ TVG_API Tvg_Result tvg_canvas_draw(Tvg_Canvas* canvas);
 */
 TVG_API Tvg_Result tvg_canvas_sync(Tvg_Canvas* canvas);
 
+
+/*!
+* \brief Sets the drawing region in the canvas.
+*
+* This function defines the rectangular area of the canvas that will be used for drawing operations.
+* The specified viewport is used to clip the rendering output to the boundaries of the rectangle.
+*
+* \param[in] canvas The Tvg_Canvas object containing elements which were drawn.
+* \param[in] x The x-coordinate of the upper-left corner of the rectangle.
+* \param[in] y The y-coordinate of the upper-left corner of the rectangle.
+* \param[in] w The width of the rectangle.
+* \param[in] h The height of the rectangle.
+*
+* \return Tvg_Result enumeration.
+* \retval TVG_RESULT_SUCCESS Succeed.
+* \retval TVG_RESULT_INSUFFICIENT_CONDITION An internal error.
+*
+* \warning It's not allowed to change the viewport during tvg_canvas_update() - tvg_canvas_sync() or tvg_canvas_push() - tvg_canvas_sync().
+*
+* \note The specified viewport region will be intersected with the target region.
+* \note Experimental API
+* \see tvg_swcanvas_set_target()
+*/
+TVG_API Tvg_Result tvg_canvas_set_viewport(Tvg_Canvas* canvas, int32_t x, int32_t y, int32_t w, int32_t h);
 
 /** \} */   // end defgroup ThorVGCapi_Canvas
 
