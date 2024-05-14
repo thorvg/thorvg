@@ -33,28 +33,29 @@ private:
     void initialize();
     void release();
 public:
-    RenderData prepare(const RenderShape& rshape, RenderData data, const RenderTransform* transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags, bool clipper);
-    RenderData prepare(const Array<RenderData>& scene, RenderData data, const RenderTransform* transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags);
-    RenderData prepare(Surface* surface, const RenderMesh* mesh, RenderData data, const RenderTransform* transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags);
-    bool preRender();
-    bool renderShape(RenderData data);
-    bool renderImage(RenderData data);
-    bool postRender();
-    void dispose(RenderData data);
-    RenderRegion region(RenderData data);
-    RenderRegion viewport();
-    bool viewport(const RenderRegion& vp);
-    bool blend(BlendMethod method);
-    ColorSpace colorSpace();
+    RenderData prepare(const RenderShape& rshape, RenderData data, const RenderTransform* transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags, bool clipper) override;
+    RenderData prepare(const Array<RenderData>& scene, RenderData data, const RenderTransform* transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags) override;
+    RenderData prepare(Surface* surface, const RenderMesh* mesh, RenderData data, const RenderTransform* transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags) override;
+    bool preRender() override;
+    bool renderShape(RenderData data) override;
+    bool renderImage(RenderData data) override;
+    bool postRender() override;
+    void dispose(RenderData data) override;
+    RenderRegion region(RenderData data) override;
+    RenderRegion viewport() override;
+    bool viewport(const RenderRegion& vp) override;
+    bool blend(BlendMethod method) override;
+    ColorSpace colorSpace() override;
 
-    bool clear();
-    bool sync();
+    bool clear() override;
+    bool sync() override;
 
     bool target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h);
     bool target(void* window, uint32_t w, uint32_t h); // temporary solution
-    Compositor* target(const RenderRegion& region, ColorSpace cs);
-    bool beginComposite(Compositor* cmp, CompositeMethod method, uint8_t opacity);
-    bool endComposite(Compositor* cmp);
+
+    Compositor* target(const RenderRegion& region, ColorSpace cs) override;
+    bool beginComposite(Compositor* cmp, CompositeMethod method, uint8_t opacity) override;
+    bool endComposite(Compositor* cmp) override;
 
     static WgRenderer* gen();
     static bool init(uint32_t threads);
