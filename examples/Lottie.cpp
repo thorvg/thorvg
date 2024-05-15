@@ -20,7 +20,8 @@
  * SOFTWARE.
  */
 
-
+#include <stdio.h>
+#include <limits.h>
 #include <vector>
 #include "Common.h"
 
@@ -34,15 +35,6 @@
 
 static int counter = 0;
 static std::vector<unique_ptr<tvg::Animation>> animations;
-static std::vector<Elm_Transit*> transitions;
-static tvg::Canvas* canvas;
-
-//performance measure
-static double updateTime = 0;
-static double accumUpdateTime = 0;
-static double accumRasterTime = 0;
-static double accumTotalTime = 0;
-static uint32_t cnt = 0;
 
 void lottieDirCallback(const char* name, const char* path, void* data)
 {
@@ -88,14 +80,14 @@ void lottieDirCallback(const char* name, const char* path, void* data)
     counter++;
 }
 
-void tvgUpdateCmds(Elm_Transit_Effect *effect, Elm_Transit* transit, double progress)
+void tvgUpdateCmds(void* data, void* obj, double progress)
 {
-    auto animation = static_cast<tvg::Animation*>(effect);
+    auto animation = static_cast<tvg::Animation*>(data);
 
     //Update animation frame only when it's changed
-    auto before = ecore_time_get();
+    auto before = system_time_get();
     animation->frame(animation->totalFrame() * progress);
-    auto after = ecore_time_get();
+    auto after = system_time_get();
     updateTime += after - before;
 }
 
@@ -108,143 +100,14 @@ void tvgDrawCmds(tvg::Canvas* canvas)
 
     if (canvas->push(std::move(shape)) != tvg::Result::Success) return;
 
-    eina_file_dir_list(EXAMPLE_DIR"/lottie", EINA_FALSE, lottieDirCallback, canvas);
+    file_dir_list(EXAMPLE_DIR"/lottie", false, lottieDirCallback, canvas);
 
     //Run animation loop
     for (auto& animation : animations) {
-        Elm_Transit* transit = elm_transit_add();
-        elm_transit_effect_add(transit, tvgUpdateCmds, animation.get(), nullptr);
-        elm_transit_duration_set(transit, animation->duration());
-        elm_transit_repeat_times_set(transit, -1);
-        elm_transit_go(transit);
-
+        addAnimatorTransit(animation->duration(), -1, tvgUpdateCmds, animation.get());
         canvas->push(tvg::cast(animation->picture()));
     }
 }
-
-
-/************************************************************************/
-/* Sw Engine Test Code                                                  */
-/************************************************************************/
-
-static unique_ptr<tvg::SwCanvas> swCanvas;
-
-void tvgSwTest(uint32_t* buffer)
-{
-    //Create a Canvas
-    swCanvas = tvg::SwCanvas::gen();
-    swCanvas->target(buffer, WIDTH, WIDTH, HEIGHT, tvg::SwCanvas::ARGB8888);
-
-    tvgDrawCmds(swCanvas.get());
-
-    canvas = swCanvas.get();
-}
-
-void drawSwView(void* data, Eo* obj)
-{
-    //It's not necessary to clear buffer since it has a solid background
-    //swCanvas->clear(false);
-
-    //canvas update
-    auto before = ecore_time_get();
-
-    swCanvas->update();
-
-    auto after = ecore_time_get();
-
-    updateTime += (after - before);
-
-    //canvas draw
-    before = ecore_time_get();
-
-    if (swCanvas->draw() == tvg::Result::Success) {
-        swCanvas->sync();
-    }
-
-    after = ecore_time_get();
-
-    auto rasterTime = after - before;
-
-    ++cnt;
-
-    accumUpdateTime += updateTime;
-    accumRasterTime += rasterTime;
-    accumTotalTime += (updateTime + rasterTime);
-
-    printf("[%5d]: update = %fs,   raster = %fs,  total = %fs\n", cnt, accumUpdateTime / cnt, accumRasterTime / cnt, accumTotalTime / cnt);
-
-    updateTime = 0;
-}
-
-Eina_Bool animatorSwCb(void *data)
-{
-    Eo* img = (Eo*) data;
-    evas_object_image_data_update_add(img, 0, 0, WIDTH, HEIGHT);
-    evas_object_image_pixels_dirty_set(img, EINA_TRUE);
-
-    return ECORE_CALLBACK_RENEW;
-}
-
-
-/************************************************************************/
-/* GL Engine Test Code                                                  */
-/************************************************************************/
-
-static unique_ptr<tvg::GlCanvas> glCanvas;
-
-void initGLview(Evas_Object *obj)
-{
-    //Create a Canvas
-    glCanvas = tvg::GlCanvas::gen();
-
-    //Get the drawing target id
-    int32_t targetId;
-    auto gl = elm_glview_gl_api_get(obj);
-    gl->glGetIntegerv(GL_FRAMEBUFFER_BINDING, &targetId);
-
-    glCanvas->target(targetId, WIDTH, HEIGHT);
-
-    tvgDrawCmds(glCanvas.get());
-
-    canvas = glCanvas.get();
-}
-
-void drawGLview(Evas_Object *obj)
-{
-    auto before = ecore_time_get();
-
-    auto gl = elm_glview_gl_api_get(obj);
-    gl->glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    gl->glClear(GL_COLOR_BUFFER_BIT);
-
-    glCanvas->update();
-
-    if (glCanvas->draw() == tvg::Result::Success) {
-        glCanvas->sync();
-    }
-
-    auto after = ecore_time_get();
-
-    auto rasterTime = after - before;
-
-    ++cnt;
-
-    accumUpdateTime += updateTime;
-    accumRasterTime += rasterTime;
-    accumTotalTime += (updateTime + rasterTime);
-
-    printf("[%5d]: update = %fs,   raster = %fs,  total = %fs\n", cnt, accumUpdateTime / cnt, accumRasterTime / cnt, accumTotalTime / cnt);
-
-    updateTime = 0;
-}
-
-Eina_Bool animatorGlCb(void *data)
-{
-    elm_glview_changed_set((Evas_Object*)data);
-
-    return ECORE_CALLBACK_RENEW;
-}
-
 
 /************************************************************************/
 /* Main Code                                                            */
@@ -265,18 +128,18 @@ int main(int argc, char **argv)
     //Initialize ThorVG Engine
     if (tvg::Initializer::init(4) == tvg::Result::Success) {
 
-        elm_init(argc, argv);
+        plat_init(argc, argv);
 
         if (tvgEngine == tvg::CanvasEngine::Sw) {
-            auto view = createSwView(1280, 1280);
-            ecore_animator_add(animatorSwCb, view);
+            auto view = createSwView();
+            setAnimatorSw(view);
         } else {
-            auto view = createGlView(1280, 1280);
-            ecore_animator_add(animatorGlCb, view);
+            auto view = createGlView();
+            setAnimatorGl(view);
         }
 
-        elm_run();
-        elm_shutdown();
+        plat_run();
+        plat_shutdown();
 
         //Terminate ThorVG Engine
         tvg::Initializer::term();

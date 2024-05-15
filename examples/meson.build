@@ -2,7 +2,14 @@ if (lib_type == 'static')
     compiler_flags += ['-DTVG_STATIC']
 endif
 
+if get_option('example_backend').contains('gtk2') == true
+examples_dep = dependency('gtk+-2.0', required : true)
+examples_dep = dependency('gtkgl-2.0', required : true)
+platform_file = 'Gtk2Platform.cpp'
+else
 examples_dep = dependency('elementary', required : true)
+platform_file = 'EvasPlatform.cpp'
+endif
 
 source_file = [
     'Accessor.cpp',
@@ -29,7 +36,6 @@ source_file = [
     'LumaMasking.cpp',
     'Masking.cpp',
     'MaskingMethods.cpp',
-    'MultiCanvas.cpp',
     'MultiShapes.cpp',
     'Opacity.cpp',
     'PathCopy.cpp',
@@ -65,10 +71,13 @@ if lottie_loader
   source_file += 'LottieExtension.cpp'
 endif
 
+if get_option('example_backend').contains('gtk2') == false
+  source_file += 'MultiCanvas.cpp'
+endif
 
 foreach current_file : source_file
     name = current_file.split('.')[0]
-    executable(name, current_file,
+    executable(name, current_file, platform_file,
         include_directories : headers,
         link_with : thorvg_lib,
         cpp_args : compiler_flags,

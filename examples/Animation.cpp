@@ -27,17 +27,16 @@
 /************************************************************************/
 
 static unique_ptr<tvg::Animation> animation;
-static Elm_Transit *transit;
-static bool updated = false;
+static void *transit;
 
-void tvgUpdateCmds(tvg::Canvas* canvas, tvg::Animation* animation, float progress)
+void tvgUpdateCmds(void* data, void* obj, double progress)
 {
-    if (updated || !canvas) return;
+    if (getUpdate() || !getCanvas()) return;
 
     //Update animation frame only when it's changed
     if (animation->frame(animation->totalFrame() * progress) == tvg::Result::Success) {
-        canvas->update();
-        updated = true;
+        getCanvas()->update();
+        setUpdate(true);
     }
 }
 
@@ -79,88 +78,8 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     canvas->push(tvg::cast(picture));
 
     //Run animation loop
-    elm_transit_duration_set(transit, animation->duration());
-    elm_transit_repeat_times_set(transit, -1);
-    elm_transit_go(transit);
+    transit = addAnimatorTransit(animation->duration(), -1, tvgUpdateCmds, NULL);
 }
-
-
-/************************************************************************/
-/* Sw Engine Test Code                                                  */
-/************************************************************************/
-
-static unique_ptr<tvg::SwCanvas> swCanvas;
-
-void tvgSwTest(uint32_t* buffer)
-{
-    //Create a Canvas
-    swCanvas = tvg::SwCanvas::gen();
-    swCanvas->target(buffer, WIDTH, WIDTH, HEIGHT, tvg::SwCanvas::ARGB8888);
-
-    tvgDrawCmds(swCanvas.get());
-}
-
-void drawSwView(void* data, Eo* obj)
-{
-    //It's not necessary to clear buffer since it has a solid background
-    //swCanvas->clear(false);
-
-    if (swCanvas->draw() == tvg::Result::Success) {
-        swCanvas->sync();
-        updated = false;
-    }
-}
-
-void transitSwCb(Elm_Transit_Effect *effect, Elm_Transit* transit, double progress)
-{
-    tvgUpdateCmds(swCanvas.get(), animation.get(), progress);
-
-    //Update Efl Canvas
-    Eo* img = (Eo*) effect;
-    evas_object_image_data_update_add(img, 0, 0, WIDTH, HEIGHT);
-    evas_object_image_pixels_dirty_set(img, EINA_TRUE);
-}
-
-
-/************************************************************************/
-/* GL Engine Test Code                                                  */
-/************************************************************************/
-
-static unique_ptr<tvg::GlCanvas> glCanvas;
-
-void initGLview(Evas_Object *obj)
-{
-    //Create a Canvas
-    glCanvas = tvg::GlCanvas::gen();
-
-    //Get the drawing target id
-    int32_t targetId;
-    auto gl = elm_glview_gl_api_get(obj);
-    gl->glGetIntegerv(GL_FRAMEBUFFER_BINDING, &targetId);
-
-    glCanvas->target(targetId, WIDTH, HEIGHT);
-
-    tvgDrawCmds(glCanvas.get());
-}
-
-void drawGLview(Evas_Object *obj)
-{
-    auto gl = elm_glview_gl_api_get(obj);
-    gl->glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    gl->glClear(GL_COLOR_BUFFER_BIT);
-
-    if (glCanvas->draw() == tvg::Result::Success) {
-        glCanvas->sync();
-        updated = false;
-    }
-}
-
-void transitGlCb(Elm_Transit_Effect *effect, Elm_Transit* transit, double progress)
-{
-    tvgUpdateCmds(glCanvas.get(), animation.get(), progress);
-    elm_glview_changed_set((Evas_Object*)effect);
-}
-
 
 /************************************************************************/
 /* Main Code                                                            */
@@ -181,23 +100,21 @@ int main(int argc, char **argv)
     //Initialize ThorVG Engine
     if (tvg::Initializer::init(threads) == tvg::Result::Success) {
 
-        elm_init(argc, argv);
-
-        transit = elm_transit_add();
+        plat_init(argc, argv);
 
         if (tvgEngine == tvg::CanvasEngine::Sw) {
-            auto view = createSwView(1024, 1024);
-            elm_transit_effect_add(transit, transitSwCb, view, nullptr);
+            auto view = createSwView();
+            setAnimatorSw(view);
         } else {
-            auto view = createGlView(1024, 1024);
-            elm_transit_effect_add(transit, transitGlCb, view, nullptr);
+            auto view = createGlView();
+            setAnimatorGl(view);
         }
 
-        elm_run();
+        plat_run();
 
-        elm_transit_del(transit);
+        delAnimatorTransit(transit);
 
-        elm_shutdown();
+        plat_shutdown();
 
         //Terminate ThorVG Engine
         tvg::Initializer::term();
