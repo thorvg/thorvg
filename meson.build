@@ -176,6 +176,7 @@ Summary:
     Tool (Svg2Png):             @23@
     Tool (Lottie2Gif):          @24@
     Extra (Lottie Expressions): @25@
+    Examples Backend:           @26@
 
 '''.format(
         meson.project_version(),
@@ -203,7 +204,8 @@ Summary:
         svg2tvg,
         svg2png,
         lottie2gif,
-        lottie_expressions
+        lottie_expressions,
+        get_option('example_backend')
     )
 
 message(summary)

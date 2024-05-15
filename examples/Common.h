@@ -22,91 +22,56 @@
 
 #include <iostream>
 #include <thread>
-#include <Elementary.h>
 #include <thorvg.h>
+#include <string.h>
 
+#include <config.h>
 using namespace std;
 
 static uint32_t WIDTH = 800;
 static uint32_t HEIGHT = 800;
-static uint32_t* buffer = nullptr;
 
+extern double updateTime;
+extern double accumUpdateTime;
+extern double accumRasterTime;
+extern double accumTotalTime;
+extern uint32_t cnt;
 
 /************************************************************************/
 /* Common Infrastructure Code                                           */
 /************************************************************************/
 
-void tvgSwTest(uint32_t* buffer);
-void drawSwView(void* data, Eo* obj);
+void plat_init(int argc, char* argv[]);
+void plat_run(void);
+void plat_shutdown(void);
 
-void win_del(void *data, Evas_Object *o, void *ev)
-{
-    free(buffer);
-    elm_exit();
-}
+double system_time_get(void);
 
-static Eo* createSwView(uint32_t w = WIDTH, uint32_t h = HEIGHT)
-{
-    cout << "tvg engine: software" << endl;
+typedef void (*DIR_LIST_CB)(const char* name, const char* path, void* data);
+bool file_dir_list(const char* path, bool recursive, DIR_LIST_CB cb, void * data);
 
-    WIDTH = w;
-    HEIGHT = h;
+void* createSwView(uint32_t w = WIDTH, uint32_t h = HEIGHT);
+void setAnimatorSw(void * obj);
+void updateSwView(void* obj);
 
-    buffer = static_cast<uint32_t*>(malloc(w * h * sizeof(uint32_t)));
+typedef void (*AnimatCb)(void * data, void * obj, double progress);
+void* addAnimatorTransit(double duration, int repeat, AnimatCb cb, void * data);
+void setAnimatorTransitAutoReverse(void* tl, bool b);
+void delAnimatorTransit(void* tl);
 
-    Eo* win = elm_win_util_standard_add(NULL, "ThorVG Test");
-    evas_object_smart_callback_add(win, "delete,request", win_del, 0);
+typedef int (*TimerCb)(void * data);
+void* system_timer_add(double s, TimerCb cb, void* data);
+void system_timer_del(void* timer);
 
-    Eo* view = evas_object_image_filled_add(evas_object_evas_get(win));
-    evas_object_image_size_set(view, WIDTH, HEIGHT);
-    evas_object_image_data_set(view, buffer);
-    evas_object_image_pixels_get_callback_set(view, drawSwView, nullptr);
-    evas_object_image_pixels_dirty_set(view, EINA_TRUE);
-    evas_object_image_data_update_add(view, 0, 0, WIDTH, HEIGHT);
-    evas_object_size_hint_weight_set(view, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
-    evas_object_show(view);
+tvg::Canvas* getCanvas(void);
 
-    elm_win_resize_object_add(win, view);
-    evas_object_geometry_set(win, 0, 0, WIDTH, HEIGHT);
-    evas_object_show(win);
+bool getUpdate(void);
+void setUpdate(bool b);
 
-    tvgSwTest(buffer);
-
-    return view;
-}
+void tvgDrawCmds(tvg::Canvas* canvas);
 
 #ifndef NO_GL_EXAMPLE
-
-void initGLview(Evas_Object *obj);
-void drawGLview(Evas_Object *obj);
-
-static Eo* createGlView(uint32_t w = WIDTH, uint32_t h = HEIGHT)
-{
-    cout << "tvg engine: opengl" << endl;
-
-    WIDTH = w;
-    HEIGHT = h;
-
-    elm_config_accel_preference_set("gl");
-
-    Eo* win = elm_win_util_standard_add(NULL, "ThorVG Test");
-    evas_object_smart_callback_add(win, "delete,request", win_del, 0);
-
-    Eo* view = elm_glview_version_add(win, EVAS_GL_GLES_3_X);
-    evas_object_size_hint_weight_set(view, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
-    elm_glview_mode_set(view, ELM_GLVIEW_ALPHA);
-    elm_glview_resize_policy_set(view, ELM_GLVIEW_RESIZE_POLICY_RECREATE);
-    elm_glview_render_policy_set(view, ELM_GLVIEW_RENDER_POLICY_ON_DEMAND);
-    elm_glview_init_func_set(view, initGLview);
-    elm_glview_render_func_set(view, drawGLview);
-    evas_object_show(view);
-
-    elm_win_resize_object_add(win, view);
-    evas_object_geometry_set(win, 0, 0, WIDTH, HEIGHT);
-    evas_object_show(win);
-
-    return view;
-}
-
+void* createGlView(uint32_t w = WIDTH, uint32_t h = HEIGHT);
+void setAnimatorGl(void * obj);
+void updateGlView(void* obj);
 #endif //NO_GL_EXAMPLE
-

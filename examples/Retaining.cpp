@@ -81,87 +81,20 @@ void tvgUpdateCmds(tvg::Canvas* canvas)
 }
 
 
-/************************************************************************/
-/* Sw Engine Test Code                                                  */
-/************************************************************************/
-
-static unique_ptr<tvg::SwCanvas> swCanvas;
-
-void tvgSwTest(uint32_t* buffer)
+int timerSwCb(void *data)
 {
-    //Create a Canvas
-    swCanvas = tvg::SwCanvas::gen();
-    swCanvas->target(buffer, WIDTH, WIDTH, HEIGHT, tvg::SwCanvas::ARGB8888);
+    tvgUpdateCmds(getCanvas());
+    updateSwView(data);
 
-    /* Push the shape into the Canvas drawing list
-       When this shape is into the canvas list, the shape could update & prepare
-       internal data asynchronously for coming rendering.
-       Canvas keeps this shape node unless user call canvas->clear() */
-    tvgDrawCmds(swCanvas.get());
+    return 1;
 }
 
-void drawSwView(void* data, Eo* obj)
+int timerGlCb(void *data)
 {
-    if (swCanvas->draw() == tvg::Result::Success) {
-        swCanvas->sync();
-    }
-}
+    tvgUpdateCmds(getCanvas());
+    updateGlView(data);
 
-
-Eina_Bool timerSwCb(void *data)
-{
-    tvgUpdateCmds(swCanvas.get());
-
-    Eo* img = (Eo*) data;
-    evas_object_image_data_update_add(img, 0, 0, WIDTH, HEIGHT);
-    evas_object_image_pixels_dirty_set(img, EINA_TRUE);
-
-    return ECORE_CALLBACK_RENEW;
-}
-
-
-/************************************************************************/
-/* GL Engine Test Code                                                  */
-/************************************************************************/
-
-static unique_ptr<tvg::GlCanvas> glCanvas;
-
-void initGLview(Evas_Object *obj)
-{
-    //Create a Canvas
-    glCanvas = tvg::GlCanvas::gen();
-
-    //Get the drawing target id
-    int32_t targetId;
-    auto gl = elm_glview_gl_api_get(obj);
-    gl->glGetIntegerv(GL_FRAMEBUFFER_BINDING, &targetId);
-
-    glCanvas->target(targetId, WIDTH, HEIGHT);
-
-    /* Push the shape into the Canvas drawing list
-       When this shape is into the canvas list, the shape could update & prepare
-       internal data asynchronously for coming rendering.
-       Canvas keeps this shape node unless user call canvas->clear() */
-    tvgDrawCmds(glCanvas.get());
-}
-
-void drawGLview(Evas_Object *obj)
-{
-    auto gl = elm_glview_gl_api_get(obj);
-    gl->glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    gl->glClear(GL_COLOR_BUFFER_BIT);
-
-    if (glCanvas->draw() == tvg::Result::Success) {
-        glCanvas->sync();
-    }
-}
-
-
-Eina_Bool timerGlCb(void *data)
-{
-    tvgUpdateCmds(glCanvas.get());
-
-    return ECORE_CALLBACK_RENEW;
+    return 1;
 }
 
 
@@ -184,23 +117,23 @@ int main(int argc, char **argv)
     //Initialize ThorVG Engine
     if (tvg::Initializer::init(threads) == tvg::Result::Success) {
 
-        elm_init(argc, argv);
+        plat_init(argc, argv);
 
-        Ecore_Timer* timer;
+        void* timer;
 
         if (tvgEngine == tvg::CanvasEngine::Sw) {
             auto view = createSwView();
-            timer = ecore_timer_add(0.33, timerSwCb, view);
+            timer = system_timer_add(0.33, timerSwCb, view);
         } else {
             auto view = createGlView();
-            timer = ecore_timer_add(0.33, timerGlCb, view);
+            timer = system_timer_add(0.33, timerGlCb, view);
         }
 
-        elm_run();
+        plat_run();
 
-        ecore_timer_del(timer);
+        system_timer_del(timer);
 
-        elm_shutdown();
+        plat_shutdown();
 
         //Terminate ThorVG Engine
         tvg::Initializer::term();

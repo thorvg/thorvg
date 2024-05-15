@@ -26,6 +26,10 @@
 
 using namespace std;
 
+void tvgDrawCmds(tvg::Canvas* canvas)
+{
+}
+
 void exportGif()
 {
     auto animation = tvg::Animation::gen();

@@ -238,9 +238,9 @@ int main(int argc, char **argv)
         evas_object_smart_callback_add(win, "delete,request", win_del, 0);
 
         if (tvgEngine == tvg::CanvasEngine::Sw) {
-            eina_file_dir_list(EXAMPLE_DIR"/svg", EINA_TRUE, tvgSwTest, win);
+            eina_file_dir_list(EXAMPLE_DIR"/svg", true, tvgSwTest, win);
         } else {
-            eina_file_dir_list(EXAMPLE_DIR"/svg", EINA_TRUE, tvgGlTest, win);
+            eina_file_dir_list(EXAMPLE_DIR"/svg", true, tvgGlTest, win);
         }
 
         evas_object_geometry_set(win, 0, 0, WIDTH, HEIGHT);

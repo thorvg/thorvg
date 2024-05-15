@@ -32,6 +32,10 @@ using namespace std;
 /* Drawing Commands                                                     */
 /************************************************************************/
 
+void tvgDrawCmds(tvg::Canvas* canvas)
+{
+}
+
 void tvgDrawStar(tvg::Shape* star)
 {
     star->moveTo(199, 34);

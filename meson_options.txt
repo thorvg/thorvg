@@ -38,6 +38,12 @@ option('tools',
    value: [''],
    description: 'Enable building thorvg tools')
 
+option('example_backend',
+   type: 'combo',
+   choices: ['elementary', 'gtk2'],
+   value: 'elementary',
+   description: 'Enable building examples backend')
+
 option('examples',
    type: 'boolean',
    value: false,
