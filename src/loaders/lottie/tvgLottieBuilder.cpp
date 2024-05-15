@@ -1224,6 +1224,8 @@ static bool _buildComposition(LottieComposition* comp, LottieGroup* parent)
 
 bool LottieBuilder::update(LottieComposition* comp, float frameNo)
 {
+    if (comp->root->children.empty()) return false;
+
     frameNo += comp->startFrame;
     if (frameNo < comp->startFrame) frameNo = comp->startFrame;
     if (frameNo >= comp->endFrame) frameNo = (comp->endFrame - 1);
