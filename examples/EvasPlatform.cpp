@@ -151,11 +151,7 @@ void updateSwView(void* obj)
     evas_object_image_pixels_dirty_set(img, EINA_TRUE);
 }
 
-<<<<<<< HEAD
 Eina_Bool animatorSwCb(void *data)
-=======
-Eina_Bool animatorSwCb(Eo *data)
->>>>>>> 7e23bbca513363d158c6c03e9c3f2825baca7131
 {
     Eo* img = (Eo*) data;
     evas_object_image_data_update_add(img, 0, 0, WIDTH, HEIGHT);
@@ -172,25 +168,16 @@ void setAnimatorSw(void * obj)
 
 void* addAnimatorTransit(double duration, int repeat, AnimatCb cb, void * data)
 {
-<<<<<<< HEAD
     Elm_Transit_Effect_Transition_Cb tcb = (Elm_Transit_Effect_Transition_Cb)cb;
     Elm_Transit* transit = elm_transit_add();
     elm_transit_effect_add(transit, tcb, data, nullptr);
-=======
-    Elm_Transit* transit = elm_transit_add();
-    elm_transit_effect_add(transit, cb, data, nullptr);
->>>>>>> 7e23bbca513363d158c6c03e9c3f2825baca7131
     elm_transit_duration_set(transit, duration);
     elm_transit_repeat_times_set(transit, repeat);
     elm_transit_go(transit);
     return (void*)transit;
 }
 
-<<<<<<< HEAD
 void setAnimatorTransitAutoReverse(void* tl, bool b)
-=======
-void setAnimatorTransitAutoReverse(void* tl, bool b);
->>>>>>> 7e23bbca513363d158c6c03e9c3f2825baca7131
 {
     Elm_Transit* transit = (Elm_Transit*)tl;
     elm_transit_auto_reverse_set(transit, b ? EINA_TRUE : EINA_FALSE);
@@ -300,7 +287,6 @@ void updateGlView(void* obj)
 
 bool file_dir_list(const char* path, bool recursive, DIR_LIST_CB cb, void * data)
 {
-<<<<<<< HEAD
     return eina_file_dir_list(path, recursive ? EINA_TRUE : EINA_FALSE, cb, data) ? true : false;
 }
 
@@ -310,17 +296,11 @@ struct _timer_st {
     void * data;
 };
 
-=======
-    eina_file_dir_list(path, recursive ? EINA_TRUE : EINA_FALSE, cb, data);
-}
-
->>>>>>> 7e23bbca513363d158c6c03e9c3f2825baca7131
 double system_time_get(void)
 {
     return ecore_time_get();
 }
 
-<<<<<<< HEAD
 Eina_Bool timerCb(void *data)
 {
     _timer_st * t = (_timer_st*)data;
@@ -336,20 +316,11 @@ void* system_timer_add(double s, TimerCb cb, void* data)
     t->et = ecore_timer_add(s, timerCb, t);
 
     return (void*)t;
-=======
-void* system_timer_add(double s, TimerCb cb, void* data)
-{
-    return (void*)ecore_timer_add(s, cb, data);
->>>>>>> 7e23bbca513363d158c6c03e9c3f2825baca7131
 }
 
 void system_timer_del(void* timer)
 {
-<<<<<<< HEAD
     _timer_st * t = (_timer_st*)timer;
     ecore_timer_del(t->et);
     delete t;
-=======
-    ecore_timer_del((Ecore_Timer*)timer);
->>>>>>> 7e23bbca513363d158c6c03e9c3f2825baca7131
 }
