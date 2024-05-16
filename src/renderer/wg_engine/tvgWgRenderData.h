@@ -97,10 +97,15 @@ struct WgRenderDataShape: public WgRenderDataPaint
     WgRenderSettings renderSettingsStroke{};
     WgMeshDataGroup meshGroupShapes{};
     WgMeshDataGroup meshGroupShapesBBox{};
+    WgMeshData meshDataBBox{};
     WgMeshDataGroup meshGroupStrokes{};
     WgMeshDataGroup meshGroupStrokesBBox{};
+    WgPoint pMin{};
+    WgPoint pMax{};
     bool strokeFirst{};
+    FillRule fillRule{};
 
+    void updateBBox(WgPoint pmin, WgPoint pmax);
     void updateMeshes(WgContext& context, const RenderShape& rshape);
     void updateMeshes(WgContext& context, const WgPolyline* polyline, const RenderStroke* rstroke);
     void releaseMeshes(WgContext& context);
