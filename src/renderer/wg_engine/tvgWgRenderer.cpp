@@ -93,6 +93,7 @@ RenderData WgRenderer::prepare(const RenderShape& rshape, RenderData data, const
         WgShaderTypeMat4x4f modelMat(transform);
         WgShaderTypeBlendSettings blendSettings(mTargetSurface.cs, opacity);
         renderDataShape->bindGroupPaint.initialize(mContext.device, mContext.queue, modelMat, blendSettings);
+        renderDataShape->fillRule = rshape.rule;
     }
 
     // setup fill settings
