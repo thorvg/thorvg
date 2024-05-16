@@ -191,6 +191,12 @@ ColorSpace GlRenderer::colorSpace()
 }
 
 
+const Surface* GlRenderer::mainSurface()
+{
+    return &surface;
+}
+
+
 bool GlRenderer::blend(TVG_UNUSED BlendMethod method)
 {
     //TODO:

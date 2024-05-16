@@ -254,6 +254,12 @@ ColorSpace WgRenderer::colorSpace()
 }
 
 
+const Surface* WgRenderer::mainSurface()
+{
+    return &mTargetSurface;
+}
+
+
 bool WgRenderer::clear()
 {
     return true;

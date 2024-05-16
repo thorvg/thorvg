@@ -607,6 +607,12 @@ bool SwRenderer::mempool(bool shared)
 }
 
 
+const Surface* SwRenderer::mainSurface()
+{
+    return surface;
+}
+
+
 Compositor* SwRenderer::target(const RenderRegion& region, ColorSpace cs)
 {
     auto x = region.x;
