@@ -735,7 +735,7 @@ static void _updateStar(LottieGroup* parent, LottiePolyStar* star, Matrix* trans
             int start = 3 * mathZero(outerRoundness);
             merging->moveTo(pts[start].x, pts[start].y);
 
-            for (int i = 1 + start; i < ptsCnt; i += 6) {
+            for (uint32_t i = 1 + start; i < ptsCnt; i += 6) {
                 auto& prev = pts[i];
                 auto& curr = pts[i + 2];
                 auto& next = (i < ptsCnt - start) ? pts[i + 4] : pts[2];
@@ -760,7 +760,7 @@ static void _updateStar(LottieGroup* parent, LottiePolyStar* star, Matrix* trans
             auto p = pts[0] + 2.0f * dPrev;
             merging->moveTo(p.x, p.y);
 
-            for (int i = 1; i < ptsCnt; ++i) {
+            for (uint32_t i = 1; i < ptsCnt; ++i) {
                 auto& curr = pts[i];
                 auto& next = (i == ptsCnt - 1) ? pts[1] : pts[i + 1];
                 auto dNext = r * (curr - next);
