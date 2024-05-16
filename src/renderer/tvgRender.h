@@ -293,6 +293,7 @@ public:
     virtual bool viewport(const RenderRegion& vp) = 0;
     virtual bool blend(BlendMethod method) = 0;
     virtual ColorSpace colorSpace() = 0;
+    virtual const Surface* mainSurface() = 0;
 
     virtual bool clear() = 0;
     virtual bool sync() = 0;
