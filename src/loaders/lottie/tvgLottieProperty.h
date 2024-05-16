@@ -210,30 +210,30 @@ struct LottieExpression
 };
 
 
-static void _copy(PathSet& pathset, Array<Point>& outPts, Matrix* transform)
+static void _copy(PathSet* pathset, Array<Point>& outPts, Matrix* transform)
 {
     Array<Point> inPts;
 
     if (transform) {
-        for (int i = 0; i < pathset.ptsCnt; ++i) {
-            Point pt = pathset.pts[i];
+        for (int i = 0; i < pathset->ptsCnt; ++i) {
+            Point pt = pathset->pts[i];
             mathMultiply(&pt, transform);
             outPts.push(pt);
         }
     } else {
-        inPts.data = pathset.pts;
-        inPts.count = pathset.ptsCnt;
+        inPts.data = pathset->pts;
+        inPts.count = pathset->ptsCnt;
         outPts.push(inPts);
         inPts.data = nullptr;
     }
 }
 
 
-static void _copy(PathSet& pathset, Array<PathCommand>& outCmds)
+static void _copy(PathSet* pathset, Array<PathCommand>& outCmds)
 {
     Array<PathCommand> inCmds;
-    inCmds.data = pathset.cmds;
-    inCmds.count = pathset.cmdsCnt;
+    inCmds.data = pathset->cmds;
+    inCmds.count = pathset->cmdsCnt;
     outCmds.push(inCmds);
     inCmds.data = nullptr;
 }
@@ -258,44 +258,44 @@ static void _roundCorner(Array<PathCommand>& cmds, Array<Point>& pts, const Poin
 }
 
 
-static void _handleCorners(const PathSet& path, Array<PathCommand>& cmds, Array<Point>& pts, Matrix* transform, float roundness)
+static bool _modifier(Point* inputPts, uint32_t inputPtsCnt, PathCommand* inputCmds, uint32_t inputCmdsCnt, Array<PathCommand>& cmds, Array<Point>& pts, Matrix* transform, float roundness)
 {
-    cmds.reserve(path.cmdsCnt * 2);
-    pts.reserve((uint16_t)(path.ptsCnt * 1.5));
+    cmds.reserve(inputCmdsCnt * 2);
+    pts.reserve((uint16_t)(inputPtsCnt * 1.5));
     auto ptsCnt = pts.count;
 
     auto startIndex = 0;
-    for (auto iCmds = 0, iPts = 0; iCmds < path.cmdsCnt; ++iCmds) {
-        switch (path.cmds[iCmds]) {
+    for (uint32_t iCmds = 0, iPts = 0; iCmds < inputCmdsCnt; ++iCmds) {
+        switch (inputCmds[iCmds]) {
             case PathCommand::MoveTo: {
                 startIndex = pts.count;
                 cmds.push(PathCommand::MoveTo);
-                pts.push(path.pts[iPts++]);
+                pts.push(inputPts[iPts++]);
                 break;
             }
             case PathCommand::CubicTo: {
-                auto& prev = path.pts[iPts - 1];
-                auto& curr = path.pts[iPts + 2];
-                if (iCmds < path.cmdsCnt - 1 &&
-                    mathZero(path.pts[iPts - 1] - path.pts[iPts]) &&
-                    mathZero(path.pts[iPts + 1] - path.pts[iPts + 2])) {
-                    if (path.cmds[iCmds + 1] == PathCommand::CubicTo &&
-                        mathZero(path.pts[iPts + 2] - path.pts[iPts + 3]) &&
-                        mathZero(path.pts[iPts + 4] - path.pts[iPts + 5])) {
-                        _roundCorner(cmds, pts, prev, curr, path.pts[iPts + 5], roundness);
+                auto& prev = inputPts[iPts - 1];
+                auto& curr = inputPts[iPts + 2];
+                if (iCmds < inputCmdsCnt - 1 &&
+                    mathZero(inputPts[iPts - 1] - inputPts[iPts]) &&
+                    mathZero(inputPts[iPts + 1] - inputPts[iPts + 2])) {
+                    if (inputCmds[iCmds + 1] == PathCommand::CubicTo &&
+                        mathZero(inputPts[iPts + 2] - inputPts[iPts + 3]) &&
+                        mathZero(inputPts[iPts + 4] - inputPts[iPts + 5])) {
+                        _roundCorner(cmds, pts, prev, curr, inputPts[iPts + 5], roundness);
                         iPts += 3;
                         break;
-                    } else if (path.cmds[iCmds + 1] == PathCommand::Close) {
-                        _roundCorner(cmds, pts, prev, curr, path.pts[2], roundness);
+                    } else if (inputCmds[iCmds + 1] == PathCommand::Close) {
+                        _roundCorner(cmds, pts, prev, curr, inputPts[2], roundness);
                         pts[startIndex] = pts.last();
                         iPts += 3;
                         break;
                     }
                 }
                 cmds.push(PathCommand::CubicTo);
-                pts.push(path.pts[iPts++]);
-                pts.push(path.pts[iPts++]);
-                pts.push(path.pts[iPts++]);
+                pts.push(inputPts[iPts++]);
+                pts.push(inputPts[iPts++]);
+                pts.push(inputPts[iPts++]);
                 break;
             }
             case PathCommand::Close: {
@@ -309,6 +309,7 @@ static void _handleCorners(const PathSet& path, Array<PathCommand>& cmds, Array<
         for (auto i = ptsCnt; i < pts.count; ++i)
             mathTransform(transform, &pts[i]);
     }
+    return true;
 }
 
 
@@ -442,8 +443,8 @@ struct LottieGenericProperty : LottieProperty
 
     T operator()(float frameNo, LottieExpressions* exps)
     {
-        T out{};
         if (exps && (exp && exp->enabled)) {
+            T out{};
             if (exp->loop.mode != LottieExpression::LoopMode::None) frameNo = _loop(frames, frameNo, exp);
             if (exps->result<LottieGenericProperty<T>>(frameNo, out, exp)) return out;
         }
@@ -531,59 +532,29 @@ struct LottiePathSet : LottieProperty
 
     bool operator()(float frameNo, Array<PathCommand>& cmds, Array<Point>& pts, Matrix* transform, float roundness)
     {
-        if (!frames) {
-            if (roundness > ROUNDNESS_EPSILON) {
-                _handleCorners(value, cmds, pts, transform, roundness);
-                return true;
+        PathSet* path = nullptr;
+        LottieScalarFrame<PathSet>* frame = nullptr;
+        float t;
+        bool interpolate = false;
+
+        if (!frames) path = &value;
+        else if (frames->count == 1 || frameNo <= frames->first().no) path = &frames->first().value;
+        else if (frameNo >= frames->last().no) path = &frames->last().value;
+        else {
+            frame = frames->data + _bsearch(frames, frameNo);
+            if (mathEqual(frame->no, frameNo)) path = &frame->value;
+            else {
+                t = (frameNo - frame->no) / ((frame + 1)->no - frame->no);
+                if (frame->interpolator) t = frame->interpolator->progress(t);
+                if (frame->hold) path = &(frame + ((t < 1.0f) ? 0 : 1))->value;
+                else interpolate = true;
             }
-            _copy(value, cmds);
-            _copy(value, pts, transform);
-            return true;
         }
 
-        if (frames->count == 1 || frameNo <= frames->first().no) {
-            if (roundness > ROUNDNESS_EPSILON) {
-                _handleCorners(frames->first().value, cmds, pts, transform, roundness);
-                return true;
-            }
-            _copy(frames->first().value, cmds);
-            _copy(frames->first().value, pts, transform);
-            return true;
-        }
-
-        if (frameNo >= frames->last().no) {
-            if (roundness > ROUNDNESS_EPSILON) {
-                _handleCorners(frames->last().value, cmds, pts, transform, roundness);
-                return true;
-            }
-            _copy(frames->last().value, cmds);
-            _copy(frames->last().value, pts, transform);
-            return true;
-        }
-
-        auto frame = frames->data + _bsearch(frames, frameNo);
-
-        if (mathEqual(frame->no, frameNo)) {
-            if (roundness > ROUNDNESS_EPSILON) {
-                _handleCorners(frame->value, cmds, pts, transform, roundness);
-                return true;
-            }
-            _copy(frame->value, cmds);
-            _copy(frame->value, pts, transform);
-            return true;
-        }
-
-        //interpolate
-        auto t = (frameNo - frame->no) / ((frame + 1)->no - frame->no);
-        if (frame->interpolator) t = frame->interpolator->progress(t);
-
-        if (frame->hold) {
-            if (roundness > ROUNDNESS_EPSILON) {
-                _handleCorners((frame + ((t < 1.0f) ? 0 : 1))->value, cmds, pts, transform, roundness);
-                return true;
-            }
-            _copy((frame + ((t < 1.0f) ? 0 : 1))->value, cmds);
-            _copy((frame)->value, pts, transform);
+        if (!interpolate) {
+            if (roundness > ROUNDNESS_EPSILON) return _modifier(path->pts, path->ptsCnt, path->cmds, path->cmdsCnt, cmds, pts, transform, roundness);
+            _copy(path, cmds);
+            _copy(path, pts, transform);
             return true;
         }
 
@@ -591,27 +562,23 @@ struct LottiePathSet : LottieProperty
         auto e = (frame + 1)->value.pts;
 
         if (roundness > ROUNDNESS_EPSILON) {
-            PathSet interpPathSet = frame->value;
-            interpPathSet.pts = (Point*)malloc(frame->value.ptsCnt * sizeof(Point));
-
-            auto p = interpPathSet.pts;
+            auto interpPts = (Point*)malloc(frame->value.ptsCnt * sizeof(Point));
+            auto p = interpPts;
             for (auto i = 0; i < frame->value.ptsCnt; ++i, ++s, ++e, ++p) {
+                *p = mathLerp(*s, *e, t);
+                if (transform) mathMultiply(p, transform);
+            }
+            _modifier(interpPts, frame->value.ptsCnt, frame->value.cmds, frame->value.cmdsCnt, cmds, pts, nullptr, roundness);
+            free(interpPts);
+            return true;
+        } else {
+            for (auto i = 0; i < frame->value.ptsCnt; ++i, ++s, ++e) {
                 auto pt = mathLerp(*s, *e, t);
                 if (transform) mathMultiply(&pt, transform);
-                *p = pt;
+                pts.push(pt);
             }
-            _handleCorners(interpPathSet, cmds, pts, nullptr, roundness);
-            free(interpPathSet.pts);
-            return true;
+            _copy(&frame->value, cmds);
         }
-
-        for (auto i = 0; i < frame->value.ptsCnt; ++i, ++s, ++e) {
-            auto pt = mathLerp(*s, *e, t);
-            if (transform) mathMultiply(&pt, transform);
-            pts.push(pt);
-        }
-        _copy(frame->value, cmds);
-
         return true;
     }
 
