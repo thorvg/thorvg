@@ -28,10 +28,13 @@
 
 struct Canvas::Impl
 {
+    enum Status : uint8_t {Synced = 0, Updating, Drawing};
+
     list<Paint*> paints;
     RenderMethod* renderer;
+    Status status = Status::Synced;
+
     bool refresh = false;   //if all paints should be updated by force.
-    bool drawing = false;   //on drawing condition?
 
     Impl(RenderMethod* pRenderer) : renderer(pRenderer)
     {
@@ -59,7 +62,7 @@ struct Canvas::Impl
     Result push(unique_ptr<Paint> paint)
     {
         //You can not push paints during rendering.
-        if (drawing) return Result::InsufficientCondition;
+        if (status == Status::Drawing) return Result::InsufficientCondition;
 
         auto p = paint.release();
         if (!p) return Result::MemoryCorruption;
@@ -71,7 +74,7 @@ struct Canvas::Impl
 
     Result clear(bool paints, bool buffer)
     {
-        if (drawing) return Result::InsufficientCondition;
+        if (status == Status::Drawing) return Result::InsufficientCondition;
 
         //Clear render target
         if (buffer) {
@@ -90,7 +93,7 @@ struct Canvas::Impl
 
     Result update(Paint* paint, bool force)
     {
-        if (paints.empty() || drawing || !renderer) return Result::InsufficientCondition;
+        if (paints.empty() || status == Status::Drawing) return Result::InsufficientCondition;
 
         Array<RenderData> clips;
         auto flag = RenderUpdateFlag::None;
@@ -104,12 +107,13 @@ struct Canvas::Impl
             }
             refresh = false;
         }
+        status = Status::Updating;
         return Result::Success;
     }
 
     Result draw()
     {
-        if (drawing || paints.empty() || !renderer || !renderer->preRender()) return Result::InsufficientCondition;
+        if (status == Status::Drawing || paints.empty() || !renderer->preRender()) return Result::InsufficientCondition;
 
         bool rendered = false;
         for (auto paint : paints) {
@@ -118,17 +122,16 @@ struct Canvas::Impl
 
         if (!rendered || !renderer->postRender()) return Result::InsufficientCondition;
 
-        drawing = true;
-
+        status = Status::Drawing;
         return Result::Success;
     }
 
     Result sync()
     {
-        if (!drawing) return Result::InsufficientCondition;
+        if (status == Status::Synced) return Result::InsufficientCondition;
 
         if (renderer->sync()) {
-            drawing = false;
+            status = Status::Synced;
             return Result::Success;
         }
 
