@@ -460,7 +460,7 @@ RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const
 
 RenderRegion GlRenderer::viewport()
 {
-    return {0, 0, static_cast<int32_t>(surface.w), static_cast<int32_t>(surface.h)};
+    return mViewport;
 }
 
 
@@ -504,7 +504,7 @@ GlRenderer* GlRenderer::gen()
     return new GlRenderer();
 }
 
-GlRenderer::GlRenderer() :mViewport() ,mGpuBuffer(new GlStageBuffer), mPrograms(), mComposePool()
+GlRenderer::GlRenderer() :mGpuBuffer(new GlStageBuffer), mPrograms(), mComposePool()
 {
 }
 
