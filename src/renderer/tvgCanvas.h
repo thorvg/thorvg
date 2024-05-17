@@ -32,6 +32,7 @@ struct Canvas::Impl
 
     list<Paint*> paints;
     RenderMethod* renderer;
+    RenderRegion vport = {0, 0, INT32_MAX, INT32_MAX};
     Status status = Status::Synced;
 
     bool refresh = false;   //if all paints should be updated by force.
@@ -44,11 +45,11 @@ struct Canvas::Impl
     ~Impl()
     {
         //make it sure any deffered jobs
-        if (renderer) renderer->sync();
+        renderer->sync();
 
         clearPaints();
 
-        if (renderer && (renderer->unref() == 0)) delete(renderer);
+        if (renderer->unref() == 0) delete(renderer);
     }
 
     void clearPaints()
@@ -78,7 +79,7 @@ struct Canvas::Impl
 
         //Clear render target
         if (buffer) {
-            if (!renderer || !renderer->clear()) return Result::InsufficientCondition;
+            if (!renderer->clear()) return Result::InsufficientCondition;
         }
 
         if (paints) clearPaints();
@@ -136,6 +137,22 @@ struct Canvas::Impl
         }
 
         return Result::InsufficientCondition;
+    }
+
+    Result viewport(int32_t x, int32_t y, int32_t w, int32_t h)
+    {
+        if (status != Status::Synced) return Result::InsufficientCondition;
+        RenderRegion val = {x, y, w, h};
+        //intersect if the target buffer is already set.
+        auto surface = renderer->mainSurface();
+        if (surface && surface->w > 0 && surface->h > 0) {
+            val.intersect({0, 0, (int32_t)surface->w, (int32_t)surface->h});
+        }
+        if (vport == val) return Result::Success;
+        renderer->viewport(val);
+        vport = val;
+        needRefresh();
+        return Result::Success;
     }
 };
 
