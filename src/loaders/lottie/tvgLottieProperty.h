@@ -30,7 +30,6 @@
 #include "tvgLottieInterpolator.h"
 #include "tvgLottieExpressions.h"
 
-#define ROUNDNESS_EPSILON 1.0f
 
 struct LottieFont;
 struct LottieLayer;
@@ -97,6 +96,16 @@ static inline RGB24 operator*(const RGB24& lhs, float rhs)
 {
     return {(int32_t)lroundf(lhs.rgb[0] * rhs), (int32_t)lroundf(lhs.rgb[1] * rhs), (int32_t)lroundf(lhs.rgb[2] * rhs)};
 }
+
+
+struct LottieModifier
+{
+    virtual ~LottieModifier() {}
+    virtual bool rect(float& roundess) = 0;
+    virtual bool path(Point* inPts, uint32_t inPtsCnt, PathCommand* inCmds, uint32_t inCmdsCnt, Array<PathCommand>& outCmds, Array<Point>& outPts, Matrix* transform) = 0;
+    //FIXME: Remove Shape dependency
+    virtual bool star(Shape* star, Shape* merging, float outerRoundness, bool hasRoundness) = 0;
+};
 
 
 template<typename T>
@@ -236,80 +245,6 @@ static void _copy(PathSet* pathset, Array<PathCommand>& outCmds)
     inCmds.count = pathset->cmdsCnt;
     outCmds.push(inCmds);
     inCmds.data = nullptr;
-}
-
-
-static void _roundCorner(Array<PathCommand>& cmds, Array<Point>& pts, const Point& prev, const Point& curr, const Point& next, float roundness)
-{
-    auto lenPrev = mathLength(prev - curr);
-    auto rPrev = lenPrev > 0.0f ? 0.5f * mathMin(lenPrev * 0.5f, roundness) / lenPrev : 0.0f;
-    auto lenNext = mathLength(next - curr);
-    auto rNext = lenNext > 0.0f ? 0.5f * mathMin(lenNext * 0.5f, roundness) / lenNext : 0.0f;
-
-    auto dPrev = rPrev * (curr - prev);
-    auto dNext = rNext * (curr - next);
-
-    pts.push(curr - 2.0f * dPrev);
-    pts.push(curr - dPrev);
-    pts.push(curr - dNext);
-    pts.push(curr - 2.0f * dNext);
-    cmds.push(PathCommand::LineTo);
-    cmds.push(PathCommand::CubicTo);
-}
-
-
-static bool _modifier(Point* inputPts, uint32_t inputPtsCnt, PathCommand* inputCmds, uint32_t inputCmdsCnt, Array<PathCommand>& cmds, Array<Point>& pts, Matrix* transform, float roundness)
-{
-    cmds.reserve(inputCmdsCnt * 2);
-    pts.reserve((uint16_t)(inputPtsCnt * 1.5));
-    auto ptsCnt = pts.count;
-
-    auto startIndex = 0;
-    for (uint32_t iCmds = 0, iPts = 0; iCmds < inputCmdsCnt; ++iCmds) {
-        switch (inputCmds[iCmds]) {
-            case PathCommand::MoveTo: {
-                startIndex = pts.count;
-                cmds.push(PathCommand::MoveTo);
-                pts.push(inputPts[iPts++]);
-                break;
-            }
-            case PathCommand::CubicTo: {
-                auto& prev = inputPts[iPts - 1];
-                auto& curr = inputPts[iPts + 2];
-                if (iCmds < inputCmdsCnt - 1 &&
-                    mathZero(inputPts[iPts - 1] - inputPts[iPts]) &&
-                    mathZero(inputPts[iPts + 1] - inputPts[iPts + 2])) {
-                    if (inputCmds[iCmds + 1] == PathCommand::CubicTo &&
-                        mathZero(inputPts[iPts + 2] - inputPts[iPts + 3]) &&
-                        mathZero(inputPts[iPts + 4] - inputPts[iPts + 5])) {
-                        _roundCorner(cmds, pts, prev, curr, inputPts[iPts + 5], roundness);
-                        iPts += 3;
-                        break;
-                    } else if (inputCmds[iCmds + 1] == PathCommand::Close) {
-                        _roundCorner(cmds, pts, prev, curr, inputPts[2], roundness);
-                        pts[startIndex] = pts.last();
-                        iPts += 3;
-                        break;
-                    }
-                }
-                cmds.push(PathCommand::CubicTo);
-                pts.push(inputPts[iPts++]);
-                pts.push(inputPts[iPts++]);
-                pts.push(inputPts[iPts++]);
-                break;
-            }
-            case PathCommand::Close: {
-                cmds.push(PathCommand::Close);
-                break;
-            }
-            default: break;
-        }
-    }
-    if (transform) {
-        for (auto i = ptsCnt; i < pts.count; ++i)
-            mathTransform(transform, &pts[i]);
-    }
-    return true;
 }
 
 
@@ -530,7 +465,7 @@ struct LottiePathSet : LottieProperty
         return (*frames)[frames->count];
     }
 
-    bool operator()(float frameNo, Array<PathCommand>& cmds, Array<Point>& pts, Matrix* transform, float roundness)
+    bool operator()(float frameNo, Array<PathCommand>& cmds, Array<Point>& pts, Matrix* transform, LottieModifier* modifier)
     {
         PathSet* path = nullptr;
         LottieScalarFrame<PathSet>* frame = nullptr;
@@ -552,7 +487,7 @@ struct LottiePathSet : LottieProperty
         }
 
         if (!interpolate) {
-            if (roundness > ROUNDNESS_EPSILON) return _modifier(path->pts, path->ptsCnt, path->cmds, path->cmdsCnt, cmds, pts, transform, roundness);
+            if (modifier) return modifier->path(path->pts, path->ptsCnt, path->cmds, path->cmdsCnt, cmds, pts, transform);
             _copy(path, cmds);
             _copy(path, pts, transform);
             return true;
@@ -561,14 +496,14 @@ struct LottiePathSet : LottieProperty
         auto s = frame->value.pts;
         auto e = (frame + 1)->value.pts;
 
-        if (roundness > ROUNDNESS_EPSILON) {
+        if (modifier) {
             auto interpPts = (Point*)malloc(frame->value.ptsCnt * sizeof(Point));
             auto p = interpPts;
             for (auto i = 0; i < frame->value.ptsCnt; ++i, ++s, ++e, ++p) {
                 *p = mathLerp(*s, *e, t);
                 if (transform) mathMultiply(p, transform);
             }
-            _modifier(interpPts, frame->value.ptsCnt, frame->value.cmds, frame->value.cmdsCnt, cmds, pts, nullptr, roundness);
+            modifier->path(interpPts, frame->value.ptsCnt, frame->value.cmds, frame->value.cmdsCnt, cmds, pts, nullptr);
             free(interpPts);
             return true;
         } else {
@@ -583,13 +518,13 @@ struct LottiePathSet : LottieProperty
     }
 
 
-    bool operator()(float frameNo, Array<PathCommand>& cmds, Array<Point>& pts, Matrix* transform, float roundness, LottieExpressions* exps)
+    bool operator()(float frameNo, Array<PathCommand>& cmds, Array<Point>& pts, Matrix* transform, LottieModifier* modifier, LottieExpressions* exps)
     {
         if (exps && (exp && exp->enabled)) {
             if (exp->loop.mode != LottieExpression::LoopMode::None) frameNo = _loop(frames, frameNo, exp);
-            if (exps->result<LottiePathSet>(frameNo, cmds, pts, transform, roundness, exp)) return true;
+            if (exps->result<LottiePathSet>(frameNo, cmds, pts, transform, modifier, exp)) return true;
         }
-        return operator()(frameNo, cmds, pts, transform, roundness);
+        return operator()(frameNo, cmds, pts, transform, modifier);
     }
 
     void prepare() {}
