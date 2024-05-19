@@ -35,6 +35,79 @@
 /* External Class Implementation                                        */
 /************************************************************************/
 
+void LottieSlot::reset()
+{
+    if (!overriden) return;
+
+    for (auto pair = pairs.begin(); pair < pairs.end(); ++pair) {
+        switch (type) {
+            case LottieProperty::Type::ColorStop: {
+                static_cast<LottieGradient*>(pair->obj)->colorStops.release();
+                static_cast<LottieGradient*>(pair->obj)->colorStops = *static_cast<LottieColorStop*>(pair->prop);
+                static_cast<LottieColorStop*>(pair->prop)->frames = nullptr;
+                break;
+            }
+            case LottieProperty::Type::Color: {
+                static_cast<LottieSolid*>(pair->obj)->color.release();
+                static_cast<LottieSolid*>(pair->obj)->color = *static_cast<LottieColor*>(pair->prop);
+                static_cast<LottieColor*>(pair->prop)->frames = nullptr;
+                break;
+            }
+            case LottieProperty::Type::TextDoc: {
+                static_cast<LottieText*>(pair->obj)->doc.release();
+                static_cast<LottieText*>(pair->obj)->doc = *static_cast<LottieTextDoc*>(pair->prop);
+                static_cast<LottieTextDoc*>(pair->prop)->frames = nullptr;
+                break;
+            }
+            default: break;
+        }
+        delete(pair->prop);
+        pair->prop = nullptr;
+    }
+    overriden = false;
+}
+
+
+void LottieSlot::assign(LottieObject* target)
+{
+    //apply slot object to all targets
+    for (auto pair = pairs.begin(); pair < pairs.end(); ++pair) {
+        //backup the original properties before overwriting
+        switch (type) {
+            case LottieProperty::Type::ColorStop: {
+                if (!overriden) {
+                    pair->prop = new LottieColorStop;
+                    *static_cast<LottieColorStop*>(pair->prop) = static_cast<LottieGradient*>(pair->obj)->colorStops;
+                }
+
+                pair->obj->override(&static_cast<LottieGradient*>(target)->colorStops);
+                break;
+            }
+            case LottieProperty::Type::Color: {
+                if (!overriden) {
+                    pair->prop = new LottieColor;
+                    *static_cast<LottieColor*>(pair->prop) = static_cast<LottieSolid*>(pair->obj)->color;
+                }
+
+                pair->obj->override(&static_cast<LottieSolid*>(target)->color);
+                break;
+            }
+            case LottieProperty::Type::TextDoc: {
+                if (!overriden) {
+                    pair->prop = new LottieTextDoc;
+                    *static_cast<LottieTextDoc*>(pair->prop) = static_cast<LottieText*>(pair->obj)->doc;
+                }
+
+                pair->obj->override(&static_cast<LottieText*>(target)->doc);
+                break;
+            }
+            default: break;
+        }
+    }
+    overriden = true;
+}
+
+
 LottieImage::~LottieImage()
 {
     free(b64Data);
@@ -86,6 +159,90 @@ void LottieTrimpath::segment(float frameNo, float& start, float& end, LottieExpr
         start = s < e ? s : e;
         end = s > e ? s : e;
     }
+}
+
+
+uint32_t LottieGradient::populate(ColorStop& color)
+{
+    colorStops.populated = true;
+    if (!color.input) return 0;
+
+    uint32_t alphaCnt = (color.input->count - (colorStops.count * 4)) / 2;
+    Array<Fill::ColorStop> output(colorStops.count + alphaCnt);
+    uint32_t cidx = 0;               //color count
+    uint32_t clast = colorStops.count * 4;
+    if (clast > color.input->count) clast = color.input->count;
+    uint32_t aidx = clast;           //alpha count
+    Fill::ColorStop cs;
+
+    //merge color stops.
+    for (uint32_t i = 0; i < color.input->count; ++i) {
+        if (cidx == clast || aidx == color.input->count) break;
+        if ((*color.input)[cidx] == (*color.input)[aidx]) {
+            cs.offset = (*color.input)[cidx];
+            cs.r = lroundf((*color.input)[cidx + 1] * 255.0f);
+            cs.g = lroundf((*color.input)[cidx + 2] * 255.0f);
+            cs.b = lroundf((*color.input)[cidx + 3] * 255.0f);
+            cs.a = lroundf((*color.input)[aidx + 1] * 255.0f);
+            cidx += 4;
+            aidx += 2;
+        } else if ((*color.input)[cidx] < (*color.input)[aidx]) {
+            cs.offset = (*color.input)[cidx];
+            cs.r = lroundf((*color.input)[cidx + 1] * 255.0f);
+            cs.g = lroundf((*color.input)[cidx + 2] * 255.0f);
+            cs.b = lroundf((*color.input)[cidx + 3] * 255.0f);
+            //generate alpha value
+            if (output.count > 0) {
+                auto p = ((*color.input)[cidx] - output.last().offset) / ((*color.input)[aidx] - output.last().offset);
+                cs.a = mathLerp<uint8_t>(output.last().a, lroundf((*color.input)[aidx + 1] * 255.0f), p);
+            } else cs.a = 255;
+            cidx += 4;
+        } else {
+            cs.offset = (*color.input)[aidx];
+            cs.a = lroundf((*color.input)[aidx + 1] * 255.0f);
+            //generate color value
+            if (output.count > 0) {
+                auto p = ((*color.input)[aidx] - output.last().offset) / ((*color.input)[cidx] - output.last().offset);
+                cs.r = mathLerp<uint8_t>(output.last().r, lroundf((*color.input)[cidx + 1] * 255.0f), p);
+                cs.g = mathLerp<uint8_t>(output.last().g, lroundf((*color.input)[cidx + 2] * 255.0f), p);
+                cs.b = mathLerp<uint8_t>(output.last().b, lroundf((*color.input)[cidx + 3] * 255.0f), p);
+            } else cs.r = cs.g = cs.b = 255;
+            aidx += 2;
+        }
+        output.push(cs);
+    }
+
+    //color remains
+    while (cidx + 3 < clast) {
+        cs.offset = (*color.input)[cidx];
+        cs.r = lroundf((*color.input)[cidx + 1] * 255.0f);
+        cs.g = lroundf((*color.input)[cidx + 2] * 255.0f);
+        cs.b = lroundf((*color.input)[cidx + 3] * 255.0f);
+        cs.a = (output.count > 0) ? output.last().a : 255;
+        output.push(cs);
+        cidx += 4;
+    }
+
+    //alpha remains
+    while (aidx < color.input->count) {
+        cs.offset = (*color.input)[aidx];
+        cs.a = lroundf((*color.input)[aidx + 1] * 255.0f);
+        if (output.count > 0) {
+            cs.r = output.last().r;
+            cs.g = output.last().g;
+            cs.b = output.last().b;
+        } else cs.r = cs.g = cs.b = 255;
+        output.push(cs);
+        aidx += 2;
+    }
+
+    color.data = output.data;
+    output.data = nullptr;
+
+    color.input->reset();
+    delete(color.input);
+
+    return output.count;
 }
 
 
