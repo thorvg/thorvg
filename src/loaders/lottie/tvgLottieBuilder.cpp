@@ -361,9 +361,9 @@ static void _updateSolidFill(TVG_UNUSED LottieGroup* parent, LottieObject** chil
 }
 
 
-static Shape* _updateGradientFill(TVG_UNUSED LottieGroup* parent, LottieObject** child, float frameNo, TVG_UNUSED Inlist<RenderContext>& contexts, RenderContext* ctx, LottieExpressions* exps)
+static void _updateGradientFill(TVG_UNUSED LottieGroup* parent, LottieObject** child, float frameNo, TVG_UNUSED Inlist<RenderContext>& contexts, RenderContext* ctx, LottieExpressions* exps)
 {
-    if (_fragmented(child, contexts, ctx)) return nullptr;
+    if (_fragmented(child, contexts, ctx)) return;
 
     auto fill = static_cast<LottieGradientFill*>(*child);
 
@@ -374,8 +374,6 @@ static Shape* _updateGradientFill(TVG_UNUSED LottieGroup* parent, LottieObject**
     ctx->propagator->opacity(MULTIPLY(fill->opacity(frameNo), PP(ctx->propagator)->opacity));
 
     if (ctx->propagator->strokeWidth() > 0) ctx->propagator->order(true);
-
-    return nullptr;
 }
 
 
@@ -975,7 +973,6 @@ static void _updateImage(LottieGroup* parent, LottieObject** child, float frameN
 static void _updateRoundedCorner(TVG_UNUSED LottieGroup* parent, LottieObject** child, float frameNo, TVG_UNUSED Inlist<RenderContext>& contexts, RenderContext* ctx, LottieExpressions* exps)
 {
     auto roundedCorner= static_cast<LottieRoundedCorner*>(*child);
-
     auto roundness = roundedCorner->radius(frameNo, exps);
     if (ctx->roundness < roundness) ctx->roundness = roundness;
 }
@@ -1028,6 +1025,7 @@ static void _updateChildren(LottieGroup* parent, float frameNo, Inlist<RenderCon
         auto ctx = contexts.front();
         ctx->reqFragment = parent->reqFragment;
         for (auto child = ctx->begin; child >= parent->children.data; --child) {
+            //Here switch-case statements are more performant than virtual methods.
             switch ((*child)->type) {
                 case LottieObject::Group: {
                     _updateGroup(parent, child, frameNo, contexts, ctx, exps);
