@@ -39,9 +39,9 @@ public:
         Initializer::term();
     }
 
-    static unique_ptr<TvgLottieAnimation> create()
+    static TvgLottieAnimation* create()
     {
-        return unique_ptr<TvgLottieAnimation>(new TvgLottieAnimation());
+        return new TvgLottieAnimation;
     }
 
     string error()
@@ -55,22 +55,22 @@ public:
         return val(typed_memory_view(2, psize));
     }
 
-    val duration()
+    float duration()
     {
-        if (!canvas || !animation) return val(0);
-        return val(animation->duration());
+        if (!canvas || !animation) return 0;
+        return animation->duration();
     }
 
-    val totalFrame()
+    float totalFrame()
     {
-        if (!canvas || !animation) return val(0);
-        return val(animation->totalFrame());
+        if (!canvas || !animation) return 0;
+        return animation->totalFrame();
     }
 
-    val curFrame()
+    float curFrame()
     {
-        if (!canvas || !animation) return val(0);
-        return val(animation->curFrame());
+        if (!canvas || !animation) return 0;
+        return animation->curFrame();
     }
 
     // Render methods
