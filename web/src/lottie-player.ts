@@ -360,7 +360,7 @@ export class LottiePlayer extends LitElement {
     }
 
     const buffer = this._TVG.render();
-    const clampedBuffer = Uint8ClampedArray.from(buffer);
+    const clampedBuffer = new Uint8ClampedArray(buffer.buffer, buffer.byteOffset, buffer.byteLength);
     if (clampedBuffer.length < 1) {
       return;
     }
