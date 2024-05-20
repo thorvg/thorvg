@@ -642,7 +642,7 @@ public:
      *
      * @warning It's not allowed to change the viewport during Canvas::push() - Canvas::sync() or Canvas::update() - Canvas::sync().
      *
-     * @note The specified viewport region will be intersected with the target region.
+     * @note When resetting the target, the viewport will also be reset to the target size.
      * @note Experimental API
      */
     virtual Result viewport(int32_t x, int32_t y, int32_t w, int32_t h) noexcept;

@@ -760,7 +760,7 @@ TVG_API Tvg_Result tvg_canvas_sync(Tvg_Canvas* canvas);
 *
 * \warning It's not allowed to change the viewport during tvg_canvas_update() - tvg_canvas_sync() or tvg_canvas_push() - tvg_canvas_sync().
 *
-* \note The specified viewport region will be intersected with the target region.
+* \note When resetting the target, the viewport will also be reset to the target size.
 * \note Experimental API
 * \see tvg_swcanvas_set_target()
 */
