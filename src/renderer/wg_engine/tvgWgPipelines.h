@@ -29,7 +29,18 @@
 // render pipelines
 //*****************************************************************************
 
-struct WgPipelineFillShape: public WgRenderPipeline
+struct WgPipelineFillShapeWinding: public WgRenderPipeline
+{
+    void initialize(WGPUDevice device) override;
+    void use(WGPURenderPassEncoder encoder, WgBindGroupCanvas& groupCanvas, WgBindGroupPaint& groupPaint)
+    {
+        set(encoder);
+        groupCanvas.set(encoder, 0);
+        groupPaint.set(encoder, 1);
+    }
+};
+
+struct WgPipelineFillShapeEvenOdd: public WgRenderPipeline
 {
     void initialize(WGPUDevice device) override;
     void use(WGPURenderPassEncoder encoder, WgBindGroupCanvas& groupCanvas, WgBindGroupPaint& groupPaint)
@@ -177,7 +188,8 @@ struct WgPipelineAntiAliasing: public WgComputePipeline
 struct WgPipelines
 {
     // render pipelines
-    WgPipelineFillShape fillShape;
+    WgPipelineFillShapeWinding fillShapeWinding;
+    WgPipelineFillShapeEvenOdd fillShapeEvenOdd;
     WgPipelineFillStroke fillStroke;
     // fill pipelines
     WgPipelineSolid solid[6];
