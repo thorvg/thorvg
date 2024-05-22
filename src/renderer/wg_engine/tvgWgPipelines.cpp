@@ -29,7 +29,7 @@
 // graphics pipelines
 //************************************************************************
 
-void WgPipelineFillShape::initialize(WGPUDevice device)
+void WgPipelineFillShapeWinding::initialize(WGPUDevice device)
 {
     // vertex attributes settings
     WGPUVertexAttribute vertexAttributesPos = { WGPUVertexFormat_Float32x2, sizeof(float) * 0, 0 };
@@ -44,19 +44,55 @@ void WgPipelineFillShape::initialize(WGPUDevice device)
     };
 
     // stencil function
-    WGPUCompareFunction stencilFuncion = WGPUCompareFunction_Always;
-    WGPUStencilOperation stencilOperation = WGPUStencilOperation_Invert;
+    WGPUCompareFunction stencilFuncionFront = WGPUCompareFunction_Always;
+    WGPUStencilOperation stencilOperationFront = WGPUStencilOperation_IncrementWrap;
+    WGPUCompareFunction stencilFuncionBack = WGPUCompareFunction_Always;
+    WGPUStencilOperation stencilOperationBack = WGPUStencilOperation_DecrementWrap;
 
     // sheder source and labels
     auto shaderSource = cShaderSource_PipelineFill;
     auto shaderLabel = "The shader fill";
-    auto pipelineLabel = "The render pipeline fill shape";
+    auto pipelineLabel = "The render pipeline fill shape winding";
 
     // allocate all pipeline handles
     allocate(device, WgPipelineBlendType::Src,
              vertexBufferLayouts, ARRAY_ELEMENTS_COUNT(vertexBufferLayouts),
              bindGroupLayouts, ARRAY_ELEMENTS_COUNT(bindGroupLayouts),
-             stencilFuncion, stencilOperation,
+             stencilFuncionFront, stencilOperationFront, stencilFuncionBack, stencilOperationBack,
+             shaderSource, shaderLabel, pipelineLabel);
+}
+
+
+void WgPipelineFillShapeEvenOdd::initialize(WGPUDevice device)
+{
+    // vertex attributes settings
+    WGPUVertexAttribute vertexAttributesPos = { WGPUVertexFormat_Float32x2, sizeof(float) * 0, 0 };
+    WGPUVertexBufferLayout vertexBufferLayouts[] = {
+        makeVertexBufferLayout(&vertexAttributesPos, 1, sizeof(float) * 2)
+    };
+
+    // bind groups
+    WGPUBindGroupLayout bindGroupLayouts[] = {
+        WgBindGroupCanvas::getLayout(device),
+        WgBindGroupPaint::getLayout(device)
+    };
+
+    // stencil function
+    WGPUCompareFunction stencilFuncionFront = WGPUCompareFunction_Always;
+    WGPUStencilOperation stencilOperationFront = WGPUStencilOperation_Invert;
+    WGPUCompareFunction stencilFuncionBack = WGPUCompareFunction_Always;
+    WGPUStencilOperation stencilOperationBack = WGPUStencilOperation_Invert;
+
+    // sheder source and labels
+    auto shaderSource = cShaderSource_PipelineFill;
+    auto shaderLabel = "The shader fill";
+    auto pipelineLabel = "The render pipeline fill shape Even Odd";
+
+    // allocate all pipeline handles
+    allocate(device, WgPipelineBlendType::Src,
+             vertexBufferLayouts, ARRAY_ELEMENTS_COUNT(vertexBufferLayouts),
+             bindGroupLayouts, ARRAY_ELEMENTS_COUNT(bindGroupLayouts),
+             stencilFuncionFront, stencilOperationFront, stencilFuncionBack, stencilOperationBack,
              shaderSource, shaderLabel, pipelineLabel);
 }
 
@@ -88,7 +124,7 @@ void WgPipelineFillStroke::initialize(WGPUDevice device)
     allocate(device, WgPipelineBlendType::Src,
              vertexBufferLayouts, ARRAY_ELEMENTS_COUNT(vertexBufferLayouts),
              bindGroupLayouts, ARRAY_ELEMENTS_COUNT(bindGroupLayouts),
-             stencilFuncion, stencilOperation,
+             stencilFuncion, stencilOperation, stencilFuncion, stencilOperation,
              shaderSource, shaderLabel, pipelineLabel);
 }
 
@@ -121,7 +157,7 @@ void WgPipelineSolid::initialize(WGPUDevice device, WgPipelineBlendType blendTyp
     allocate(device, blendType,
              vertexBufferLayouts, ARRAY_ELEMENTS_COUNT(vertexBufferLayouts),
              bindGroupLayouts, ARRAY_ELEMENTS_COUNT(bindGroupLayouts),
-             stencilFuncion, stencilOperation,
+             stencilFuncion, stencilOperation, stencilFuncion, stencilOperation,
              shaderSource, shaderLabel, pipelineLabel);
 }
 
@@ -154,7 +190,7 @@ void WgPipelineLinear::initialize(WGPUDevice device, WgPipelineBlendType blendTy
     allocate(device, blendType,
              vertexBufferLayouts, ARRAY_ELEMENTS_COUNT(vertexBufferLayouts),
              bindGroupLayouts, ARRAY_ELEMENTS_COUNT(bindGroupLayouts),
-             stencilFuncion, stencilOperation,
+             stencilFuncion, stencilOperation, stencilFuncion, stencilOperation,
              shaderSource, shaderLabel, pipelineLabel);
 }
 
@@ -187,7 +223,7 @@ void WgPipelineRadial::initialize(WGPUDevice device, WgPipelineBlendType blendTy
     allocate(device, blendType,
              vertexBufferLayouts, ARRAY_ELEMENTS_COUNT(vertexBufferLayouts),
              bindGroupLayouts, ARRAY_ELEMENTS_COUNT(bindGroupLayouts),
-             stencilFuncion, stencilOperation,
+             stencilFuncion, stencilOperation, stencilFuncion, stencilOperation,
              shaderSource, shaderLabel, pipelineLabel);
 }
 
@@ -222,7 +258,7 @@ void WgPipelineImage::initialize(WGPUDevice device, WgPipelineBlendType blendTyp
     allocate(device, blendType,
              vertexBufferLayouts, ARRAY_ELEMENTS_COUNT(vertexBufferLayouts),
              bindGroupLayouts, ARRAY_ELEMENTS_COUNT(bindGroupLayouts),
-             stencilFuncion, stencilOperation,
+             stencilFuncion, stencilOperation, stencilFuncion, stencilOperation,
              shaderSource, shaderLabel, pipelineLabel);
 }
 
@@ -340,7 +376,8 @@ void WgPipelineAntiAliasing::initialize(WGPUDevice device)
 void WgPipelines::initialize(WgContext& context)
 {
     // fill pipelines
-    fillShape.initialize(context.device);
+    fillShapeWinding.initialize(context.device);
+    fillShapeEvenOdd.initialize(context.device);
     fillStroke.initialize(context.device);
     for (uint8_t type = (uint8_t)WgPipelineBlendType::Src; type <= (uint8_t)WgPipelineBlendType::Max; type++) {
         solid[type].initialize(context.device, (WgPipelineBlendType)type);
@@ -386,7 +423,8 @@ void WgPipelines::release()
         solid[type].release();
     }
     fillStroke.release();
-    fillShape.release();
+    fillShapeEvenOdd.release();
+    fillShapeWinding.release();
 }
 
 
