@@ -27,6 +27,7 @@
 
 struct LottieExpression;
 struct LottieComposition;
+struct LottieModifier;
 struct RGB24;
 
 #ifdef THORVG_LOTTIE_EXPRESSIONS_SUPPORT
@@ -109,12 +110,12 @@ public:
     }
 
     template<typename Property>
-    bool result(float frameNo, Array<PathCommand>& cmds, Array<Point>& pts, Matrix* transform, float roundness, LottieExpression* exp)
+    bool result(float frameNo, Array<PathCommand>& cmds, Array<Point>& pts, Matrix* transform, LottieModifier* modifier, LottieExpression* exp)
     {
         auto bm_rt = evaluate(frameNo, exp);
 
         if (auto pathset = static_cast<Property*>(jerry_object_get_native_ptr(bm_rt, nullptr))) {
-            (*pathset)(frameNo, cmds, pts, transform, roundness);
+            (*pathset)(frameNo, cmds, pts, transform, modifier);
          } else {
             TVGERR("LOTTIE", "Failed dispatching PathSet!");
             return false;
@@ -154,7 +155,7 @@ struct LottieExpressions
     template<typename Property> bool result(TVG_UNUSED float, TVG_UNUSED Point&, LottieExpression*) { return false; }
     template<typename Property> bool result(TVG_UNUSED float, TVG_UNUSED RGB24&, TVG_UNUSED LottieExpression*) { return false; }
     template<typename Property> bool result(TVG_UNUSED float, TVG_UNUSED Fill*, TVG_UNUSED LottieExpression*) { return false; }
-    template<typename Property> bool result(TVG_UNUSED float, TVG_UNUSED Array<PathCommand>&, TVG_UNUSED Array<Point>&, TVG_UNUSED Matrix* transform, TVG_UNUSED float, TVG_UNUSED LottieExpression*) { return false; }
+    template<typename Property> bool result(TVG_UNUSED float, TVG_UNUSED Array<PathCommand>&, TVG_UNUSED Array<Point>&, TVG_UNUSED Matrix* transform, TVG_UNUSED LottieModifier*, TVG_UNUSED LottieExpression*) { return false; }
     void update(TVG_UNUSED float) {}
     static LottieExpressions* instance() { return nullptr; }
     static void retrieve(TVG_UNUSED LottieExpressions* instance) {}
