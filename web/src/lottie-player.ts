@@ -285,6 +285,37 @@ export class LottiePlayer extends LitElement {
     }
   }
 
+  private _viewport(): void {
+    const { left, right, top, bottom } = this.getBoundingClientRect();
+    const windowWidth = window.innerWidth;
+    const windowHeight = window.innerHeight;
+
+    let x = 0;
+    let y = 0;
+    let width = this._canvas!.width;
+    let height = this._canvas!.height;
+
+    if (left < 0) {
+      x = Math.abs(left);
+      width -= x;
+    }
+
+    if (top < 0) {
+      y = Math.abs(top);
+      height -= y;
+    }
+
+    if (right > windowWidth) {
+      width -= right - windowWidth;
+    }
+
+    if (bottom > windowHeight) {
+      height -= bottom - windowHeight;
+    }
+
+    this._TVG.viewport(x, y, width, height);
+  }
+
   private _observerCallback(entries: IntersectionObserverEntry[]) {
     const entry = entries[0];
     const target = entry.target as LottiePlayer;
@@ -355,6 +386,7 @@ export class LottiePlayer extends LitElement {
 
   private _render(): void {
     this._TVG.resize(this._canvas!.width, this._canvas!.height);
+    this._viewport();
     const isUpdated = this._TVG.update();
 
     if (!isUpdated) {
