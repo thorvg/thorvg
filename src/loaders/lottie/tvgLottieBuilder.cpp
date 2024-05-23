@@ -230,7 +230,7 @@ static void _updateTransform(LottieLayer* layer, float frameNo, LottieExpression
     if (parent) {
         if (!mathIdentity((const Matrix*) &parent->cache.matrix)) {
             if (mathIdentity((const Matrix*) &matrix)) layer->cache.matrix = parent->cache.matrix;
-            else layer->cache.matrix = mathMultiply(&parent->cache.matrix, &matrix);
+            else layer->cache.matrix = parent->cache.matrix * matrix;
         }
     }
     layer->cache.frameNo = frameNo;
@@ -256,7 +256,7 @@ static void _updateTransform(LottieGroup* parent, LottieObject** child, float fr
     if (!_updateTransform(transform, frameNo, false, matrix, opacity, exps)) return;
 
     auto pmatrix = PP(ctx->propagator)->transform();
-    ctx->propagator->transform(pmatrix ? mathMultiply(pmatrix, &matrix) : matrix);
+    ctx->propagator->transform(pmatrix ? (*pmatrix * matrix) : matrix);
     ctx->propagator->opacity(MULTIPLY(opacity, PP(ctx->propagator)->opacity));
 
     //FIXME: preserve the stroke width. too workaround, need a better design.
@@ -413,7 +413,7 @@ static void _repeat(LottieGroup* parent, unique_ptr<Shape> path, RenderContext* 
         mathTranslateR(&m, -repeater->anchor.x, -repeater->anchor.y);
 
         auto pm = PP(shape)->transform();
-        shape->transform(pm ? mathMultiply(&m, pm) : m);
+        shape->transform(pm ? (m * *pm) : m);
 
         if (ctx->roundness > 1.0f && P(shape)->rs.stroke) {
             TVGERR("LOTTIE", "FIXME: Path roundesss should be applied properly!");
@@ -447,7 +447,9 @@ static void _appendRect(Shape* shape, float x, float y, float w, float h, float 
 
         Point points[] = {{x + w, y}, {x + w, y + h}, {x, y + h}, {x, y}};
         if (transform) {
-            for (int i = 0; i < 4; i++) mathTransform(transform, &points[i]);
+            for (int i = 0; i < 4; i++) {
+                points[i] *= *transform;
+            }
         }
         shape->appendPath(commands, 5, points, 4);
     //round rect
@@ -480,7 +482,9 @@ static void _appendRect(Shape* shape, float x, float y, float w, float h, float 
         };
     
         if (transform) {
-            for (int i = 0; i < ptsCnt; i++) mathTransform(transform, &points[i]);
+            for (int i = 0; i < ptsCnt; i++) {
+                points[i] *= *transform;
+            }
         }
         shape->appendPath(commands, 10, points, ptsCnt);
     }
@@ -532,7 +536,9 @@ static void _appendCircle(Shape* shape, float cx, float cy, float rx, float ry, 
     };
 
     if (transform) {
-        for (int i = 0; i < ptsCnt; ++i) mathTransform(transform, &points[i]);
+        for (int i = 0; i < ptsCnt; ++i) {
+            points[i] *= *transform;
+        }
     }
     
     shape->appendPath(commands, cmdsCnt, points, ptsCnt);
@@ -766,7 +772,7 @@ static void _updateStar(LottieGroup* parent, LottiePolyStar* star, Matrix* trans
     }
 
     Point in = {x, y};
-    if (transform) mathTransform(transform, &in);
+    if (transform) in *= *transform;
     shape->moveTo(in.x, in.y);
 
     for (size_t i = 0; i < numPoints; i++) {
@@ -811,14 +817,14 @@ static void _updateStar(LottieGroup* parent, LottiePolyStar* star, Matrix* trans
             Point in3 = {x + cp2x, y + cp2y};
             Point in4 = {x, y};
             if (transform) {
-                mathTransform(transform, &in2);
-                mathTransform(transform, &in3);
-                mathTransform(transform, &in4);
+                in2 *= *transform;
+                in3 *= *transform;
+                in4 *= *transform;
             }
             shape->cubicTo(in2.x, in2.y, in3.x, in3.y, in4.x, in4.y);
         } else {
             Point in = {x, y};
-            if (transform) mathTransform(transform, &in);
+            if (transform) in *= *transform;
             shape->lineTo(in.x, in.y);
         }
         angle += dTheta * direction;
@@ -860,7 +866,7 @@ static void _updatePolygon(LottieGroup* parent, LottiePolyStar* star, Matrix* tr
     }
 
     Point in = {x, y};
-    if (transform) mathTransform(transform, &in);
+    if (transform) in *= *transform;
     merging->moveTo(in.x, in.y);
 
     for (size_t i = 0; i < ptsCnt; i++) {
@@ -886,14 +892,14 @@ static void _updatePolygon(LottieGroup* parent, LottiePolyStar* star, Matrix* tr
             Point in3 = {x + cp2x, y + cp2y};
             Point in4 = {x, y};
             if (transform) {
-                mathTransform(transform, &in2);
-                mathTransform(transform, &in3);
-                mathTransform(transform, &in4);
+                in2 *= *transform;
+                in3 *= *transform;
+                in4 *= *transform;
             }
             merging->cubicTo(in2.x, in2.y, in3.x, in3.y, in4.x, in4.y);
         } else {
             Point in = {x, y};
-            if (transform) mathTransform(transform, &in);
+            if (transform) in *= *transform;
             merging->lineTo(in.x, in.y);
         }
         angle += anglePerPoint * direction;
@@ -913,7 +919,7 @@ static void _updatePolystar(LottieGroup* parent, LottieObject** child, float fra
     mathTranslate(&matrix, position.x, position.y);
     mathRotate(&matrix, star->rotation(frameNo, exps));
 
-    if (ctx->transform) matrix = mathMultiply(ctx->transform, &matrix);
+    if (ctx->transform) matrix = *ctx->transform * matrix;
 
     auto identity = mathIdentity((const Matrix*)&matrix);
 

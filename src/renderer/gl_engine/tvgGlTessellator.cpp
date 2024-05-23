@@ -1804,10 +1804,10 @@ void Stroker::strokeCubicTo(const GlPoint &cnt1, const GlPoint &cnt2, const GlPo
     curve.end = Point{end.x, end.y};
 
     Bezier relCurve {curve.start, curve.ctrl1, curve.ctrl2, curve.end};
-    mathMultiply(&relCurve.start, &mMatrix);
-    mathMultiply(&relCurve.ctrl1, &mMatrix);
-    mathMultiply(&relCurve.ctrl2, &mMatrix);
-    mathMultiply(&relCurve.end, &mMatrix);
+    relCurve.start *= mMatrix;
+    relCurve.ctrl1 *= mMatrix;
+    relCurve.ctrl2 *= mMatrix;
+    relCurve.end *= mMatrix;
 
     auto count = detail::_bezierCurveCount(relCurve);
 
@@ -2175,10 +2175,10 @@ void BWTessellator::tessellate(const RenderShape *rshape, const Matrix& matrix)
                 Bezier curve{pts[-1], pts[0], pts[1], pts[2]};
 
                 Bezier relCurve {pts[-1], pts[0], pts[1], pts[2]};
-                mathMultiply(&relCurve.start, &matrix);
-                mathMultiply(&relCurve.ctrl1, &matrix);
-                mathMultiply(&relCurve.ctrl2, &matrix);
-                mathMultiply(&relCurve.end, &matrix);
+                relCurve.start *= matrix;
+                relCurve.ctrl1 *= matrix;
+                relCurve.ctrl2 *= matrix;
+                relCurve.end *= matrix;
 
                 auto stepCount = detail::_bezierCurveCount(relCurve);
 
