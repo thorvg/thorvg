@@ -27,8 +27,8 @@
 /* Drawing Commands                                                     */
 /************************************************************************/
 
-#define NUM_PER_ROW 7
-#define NUM_PER_COL 7
+#define NUM_PER_ROW 8
+#define NUM_PER_COL 8
 #define SIZE (WIDTH/NUM_PER_ROW)
 
 static int counter = 0;
@@ -192,9 +192,9 @@ int main(int argc, char **argv)
         elm_init(argc, argv);
 
         if (tvgEngine == tvg::CanvasEngine::Sw) {
-            createSwView(1024, 1024);
+            createSwView(1280, 1280);
         } else {
-            createGlView(1024, 1024);
+            createGlView(1280, 1280);
         }
 
         elm_run();
