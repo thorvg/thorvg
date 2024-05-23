@@ -550,7 +550,8 @@ void WgPipeline::destroyShaderModule(WGPUShaderModule& shaderModule)
 void WgRenderPipeline::allocate(WGPUDevice device, WgPipelineBlendType blendType,
                                 WGPUVertexBufferLayout vertexBufferLayouts[], uint32_t attribsCount,
                                 WGPUBindGroupLayout bindGroupLayouts[], uint32_t bindGroupsCount,
-                                WGPUCompareFunction stencilCompareFunction, WGPUStencilOperation stencilOperation,
+                                WGPUCompareFunction compareFront, WGPUStencilOperation operationFront,
+                                WGPUCompareFunction compareBack, WGPUStencilOperation operationBack,
                                 const char* shaderSource, const char* shaderLabel, const char* pipelineLabel)
 {
     mShaderModule = createShaderModule(device, shaderSource, shaderLabel);
@@ -561,7 +562,8 @@ void WgRenderPipeline::allocate(WGPUDevice device, WgPipelineBlendType blendType
 
     mRenderPipeline = createRenderPipeline(device, blendType,
                                            vertexBufferLayouts, attribsCount,
-                                           stencilCompareFunction, stencilOperation,
+                                           compareFront, operationFront,
+                                           compareBack, operationBack,
                                            mPipelineLayout, mShaderModule, pipelineLabel);
     assert(mRenderPipeline);
 }
@@ -670,21 +672,21 @@ WGPUPrimitiveState WgRenderPipeline::makePrimitiveState()
 }
 
 
-WGPUDepthStencilState WgRenderPipeline::makeDepthStencilState(WGPUCompareFunction compare, WGPUStencilOperation operation)
+WGPUDepthStencilState WgRenderPipeline::makeDepthStencilState(WGPUCompareFunction compareFront, WGPUStencilOperation operationFront, WGPUCompareFunction compareBack, WGPUStencilOperation operationBack)
 {
     WGPUDepthStencilState depthStencilState{};
     depthStencilState.nextInChain = nullptr;
     depthStencilState.format = WGPUTextureFormat_Stencil8;
     depthStencilState.depthWriteEnabled = false;
     depthStencilState.depthCompare = WGPUCompareFunction_Always;
-    depthStencilState.stencilFront.compare = compare;
-    depthStencilState.stencilFront.failOp = operation;
-    depthStencilState.stencilFront.depthFailOp = operation;
-    depthStencilState.stencilFront.passOp = operation;
-    depthStencilState.stencilBack.compare = compare;
-    depthStencilState.stencilBack.failOp = operation;
-    depthStencilState.stencilBack.depthFailOp = operation;
-    depthStencilState.stencilBack.passOp = operation;
+    depthStencilState.stencilFront.compare = compareFront;
+    depthStencilState.stencilFront.failOp = operationFront;
+    depthStencilState.stencilFront.depthFailOp = operationFront;
+    depthStencilState.stencilFront.passOp = operationFront;
+    depthStencilState.stencilBack.compare = compareBack;
+    depthStencilState.stencilBack.failOp = operationBack;
+    depthStencilState.stencilBack.depthFailOp = operationBack;
+    depthStencilState.stencilBack.passOp = operationBack;
     depthStencilState.stencilReadMask = 0xFFFFFFFF;
     depthStencilState.stencilWriteMask = 0xFFFFFFFF;
     depthStencilState.depthBias = 0;
@@ -721,7 +723,8 @@ WGPUFragmentState WgRenderPipeline::makeFragmentState(WGPUShaderModule shaderMod
 
 WGPURenderPipeline WgRenderPipeline::createRenderPipeline(WGPUDevice device, WgPipelineBlendType blendType,
                                                           WGPUVertexBufferLayout vertexBufferLayouts[], uint32_t attribsCount,
-                                                          WGPUCompareFunction stencilCompareFunction, WGPUStencilOperation stencilOperation,
+                                                          WGPUCompareFunction compareFront, WGPUStencilOperation operationFront,
+                                                          WGPUCompareFunction compareBack, WGPUStencilOperation operationBack,
                                                           WGPUPipelineLayout pipelineLayout, WGPUShaderModule shaderModule,
                                                           const char* pipelineName)
 {
@@ -732,7 +735,7 @@ WGPURenderPipeline WgRenderPipeline::createRenderPipeline(WGPUDevice device, WgP
 
     WGPUVertexState vertexState = makeVertexState(shaderModule, vertexBufferLayouts, attribsCount);
     WGPUPrimitiveState primitiveState = makePrimitiveState();
-    WGPUDepthStencilState depthStencilState = makeDepthStencilState(stencilCompareFunction, stencilOperation);
+    WGPUDepthStencilState depthStencilState = makeDepthStencilState(compareFront, operationFront, compareBack, operationBack);
     WGPUMultisampleState multisampleState = makeMultisampleState();
     WGPUFragmentState fragmentState = makeFragmentState(shaderModule, colorTargetStates, 1);
 

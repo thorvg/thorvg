@@ -117,7 +117,7 @@ void WgRenderStorage::drawShapeWinding(WgContext& context, WgRenderDataShape* re
     wgpuRenderPassEncoderSetStencilReference(mRenderPassEncoder, 0);
     for (uint32_t i = 0; i < renderData->meshGroupShapes.meshes.count; i++) {
         // draw to stencil (first pass)
-        mPipelines->fillShape.use(mRenderPassEncoder, mBindGroupCanvas, renderData->bindGroupPaint);
+        mPipelines->fillShapeWinding.use(mRenderPassEncoder, mBindGroupCanvas, renderData->bindGroupPaint);
         renderData->meshGroupShapes.meshes[i]->drawFan(context, mRenderPassEncoder);
         // fill shape (second pass)
         WgRenderSettings& settings = renderData->renderSettingsShape;
@@ -140,7 +140,7 @@ void WgRenderStorage::drawShapeEvenOdd(WgContext& context, WgRenderDataShape* re
     // draw shape geometry
     wgpuRenderPassEncoderSetStencilReference(mRenderPassEncoder, 0);
     // draw to stencil (first pass)
-    mPipelines->fillShape.use(mRenderPassEncoder, mBindGroupCanvas, renderData->bindGroupPaint);
+    mPipelines->fillShapeEvenOdd.use(mRenderPassEncoder, mBindGroupCanvas, renderData->bindGroupPaint);
     for (uint32_t i = 0; i < renderData->meshGroupShapes.meshes.count; i++)
         renderData->meshGroupShapes.meshes[i]->drawFan(context, mRenderPassEncoder);
     // fill shape geometry (second pass)

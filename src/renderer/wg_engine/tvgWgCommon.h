@@ -128,7 +128,8 @@ protected:
     void allocate(WGPUDevice device, WgPipelineBlendType blendType,
                   WGPUVertexBufferLayout vertexBufferLayouts[], uint32_t attribsCount,
                   WGPUBindGroupLayout bindGroupLayouts[], uint32_t bindGroupsCount,
-                  WGPUCompareFunction stencilCompareFunction, WGPUStencilOperation stencilOperation,
+                  WGPUCompareFunction compareFront, WGPUStencilOperation operationFront,
+                  WGPUCompareFunction compareBack, WGPUStencilOperation operationBack,
                   const char* shaderSource, const char* shaderLabel, const char* pipelineLabel);
 public:
     void release() override;
@@ -139,13 +140,14 @@ public:
     static WGPUVertexBufferLayout makeVertexBufferLayout(const WGPUVertexAttribute* vertexAttributes, uint32_t count, uint64_t stride);
     static WGPUVertexState makeVertexState(WGPUShaderModule shaderModule, const WGPUVertexBufferLayout* buffers, uint32_t count);
     static WGPUPrimitiveState makePrimitiveState();
-    static WGPUDepthStencilState makeDepthStencilState(WGPUCompareFunction compare, WGPUStencilOperation operation);
+    static WGPUDepthStencilState makeDepthStencilState(WGPUCompareFunction compareFront, WGPUStencilOperation operationFront, WGPUCompareFunction compareBack, WGPUStencilOperation operationBack);
     static WGPUMultisampleState makeMultisampleState();
     static WGPUFragmentState makeFragmentState(WGPUShaderModule shaderModule, WGPUColorTargetState* targets, uint32_t size);
 
     static WGPURenderPipeline createRenderPipeline(WGPUDevice device, WgPipelineBlendType blendType,
                                                    WGPUVertexBufferLayout vertexBufferLayouts[], uint32_t attribsCount,
-                                                   WGPUCompareFunction stencilCompareFunction, WGPUStencilOperation stencilOperation,
+                                                   WGPUCompareFunction compareFront, WGPUStencilOperation operationFront,
+                                                   WGPUCompareFunction compareBack, WGPUStencilOperation operationBack,
                                                    WGPUPipelineLayout pipelineLayout, WGPUShaderModule shaderModule,
                                                    const char* pipelineLabel);
     static void destroyRenderPipeline(WGPURenderPipeline& renderPipeline);
