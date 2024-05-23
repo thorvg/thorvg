@@ -281,13 +281,7 @@ The result is:
 <br />
 ## Lottie
 
-ThorVG aims to fully support Lottie Animation features. Lottie is a JSON-based vector animation file format that enables seamless distribution of animations on any platform, akin to shipping static assets. These files are compact and compatible with various devices, scaling up or down without pixelation. With Lottie, you can easily create, edit, test, collaborate, and distribute animations in a user-friendly manner. For more information, please visit [LottieFiles](https://www.lottiefiles.com)' website. <br />
-<br />
-Currently, ThorVG supports Lottie animations. Although most features are supported, some advanced properties of Lottie may not be available yet:
-<br />
-
- - Shape Modifiers
- - Layer Effects
+ThorVG supports the most powerful Lottie Animation [features](https://lottiefiles.com/supported-features). Lottie is a JSON-based vector animation file format that enables seamless distribution of animations on any platform, akin to shipping static assets. These files are compact and compatible with various devices, scaling up or down without pixelation. With Lottie, you can easily create, edit, test, collaborate, and distribute animations in a user-friendly manner. For more information, please visit [LottieFiles](https://www.lottiefiles.com)' website. <br />
 
 The following code snippet demonstrates how to use ThorVG to play a Lottie animation.
 ```cpp
