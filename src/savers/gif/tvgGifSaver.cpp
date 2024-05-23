@@ -133,7 +133,7 @@ bool GifSaver::save(Animation* animation, Paint* bg, const string& path, TVG_UNU
     if (x < 0) vsize[0] += x;
     if (y < 0) vsize[1] += y;
 
-    if (vsize[0] < FLT_EPSILON || vsize[1] < FLT_EPSILON) {
+    if (vsize[0] < FLOAT_EPSILON || vsize[1] < FLOAT_EPSILON) {
         TVGLOG("GIF_SAVER", "Saving animation(%p) has zero view size.", animation);
         return false;
     }

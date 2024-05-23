@@ -31,6 +31,7 @@
 
 #define MATH_PI  3.14159265358979323846f
 #define MATH_PI2 1.57079632679489661923f
+#define FLOAT_EPSILON 1.0e-06f  //1.192092896e-07f
 #define PATH_KAPPA 0.552284f
 
 #define mathMin(x, y) (((x) < (y)) ? (x) : (y))
@@ -58,7 +59,7 @@ static inline float mathRad2Deg(float radian)
 
 static inline bool mathZero(float a)
 {
-    return (fabsf(a) < FLT_EPSILON) ? true : false;
+    return (fabsf(a) <= FLOAT_EPSILON) ? true : false;
 }
 
 
@@ -70,7 +71,7 @@ static inline bool mathZero(const Point& p)
 
 static inline bool mathEqual(float a, float b)
 {
-    return (fabsf(a - b) < FLT_EPSILON);
+    return mathZero(a - b);
 }
 
 
@@ -88,14 +89,14 @@ static inline bool mathEqual(const Matrix& a, const Matrix& b)
 static inline bool mathRightAngle(const Matrix* m)
 {
    auto radian = fabsf(atan2f(m->e21, m->e11));
-   if (radian < FLT_EPSILON || mathEqual(radian, MATH_PI2) || mathEqual(radian, MATH_PI)) return true;
+   if (radian < FLOAT_EPSILON || mathEqual(radian, MATH_PI2) || mathEqual(radian, MATH_PI)) return true;
    return false;
 }
 
 
 static inline bool mathSkewed(const Matrix* m)
 {
-    return (fabsf(m->e21 + m->e12) > FLT_EPSILON);
+    return !mathZero(m->e21 + m->e12);
 }
 
 
