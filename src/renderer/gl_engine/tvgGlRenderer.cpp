@@ -63,11 +63,6 @@ bool GlRenderer::target(int32_t id, uint32_t w, uint32_t h)
     surface.w = w;
     surface.h = h;
 
-    mViewport.x = 0;
-    mViewport.y = 0;
-    mViewport.w = surface.w;
-    mViewport.h = surface.h;
-
     mTargetViewport.x = 0;
     mTargetViewport.y = 0;
     mTargetViewport.w = surface.w;
@@ -205,6 +200,12 @@ bool GlRenderer::endComposite(Compositor* cmp)
 ColorSpace GlRenderer::colorSpace()
 {
     return ColorSpace::Unsupported;
+}
+
+
+const Surface* GlRenderer::mainSurface()
+{
+    return &surface;
 }
 
 
@@ -453,7 +454,7 @@ RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const
 
 RenderRegion GlRenderer::viewport()
 {
-    return {0, 0, static_cast<int32_t>(surface.w), static_cast<int32_t>(surface.h)};
+    return mViewport;
 }
 
 
@@ -497,7 +498,7 @@ GlRenderer* GlRenderer::gen()
     return new GlRenderer();
 }
 
-GlRenderer::GlRenderer() :mViewport() ,mGpuBuffer(new GlStageBuffer), mPrograms(), mComposePool()
+GlRenderer::GlRenderer() :mGpuBuffer(new GlStageBuffer), mPrograms(), mComposePool()
 {
 }
 

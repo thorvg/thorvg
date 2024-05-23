@@ -93,6 +93,7 @@ RenderData WgRenderer::prepare(const RenderShape& rshape, RenderData data, const
         WgShaderTypeMat4x4f modelMat(transform);
         WgShaderTypeBlendSettings blendSettings(mTargetSurface.cs, opacity);
         renderDataShape->bindGroupPaint.initialize(mContext.device, mContext.queue, modelMat, blendSettings);
+        renderDataShape->fillRule = rshape.rule;
     }
 
     // setup fill settings
@@ -255,6 +256,12 @@ bool WgRenderer::blend(TVG_UNUSED BlendMethod method)
 ColorSpace WgRenderer::colorSpace()
 {
     return ColorSpace::Unsupported;
+}
+
+
+const Surface* WgRenderer::mainSurface()
+{
+    return &mTargetSurface;
 }
 
 

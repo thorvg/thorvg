@@ -64,7 +64,8 @@ public:
         WgBindGroupOpacity* opacity);
     void antialias(WGPUCommandEncoder commandEncoder, WgRenderStorage* targetSrc);
 private:
-    void drawShape(WgContext& context, WgRenderDataShape* renderData, WgPipelineBlendType blendType);
+    void drawShapeWinding(WgContext& context, WgRenderDataShape* renderData, WgPipelineBlendType blendType);
+    void drawShapeEvenOdd(WgContext& context, WgRenderDataShape* renderData, WgPipelineBlendType blendType);
     void drawStroke(WgContext& context, WgRenderDataShape* renderData, WgPipelineBlendType blendType);
 
     void dispatchWorkgroups(WGPUComputePassEncoder computePassEncoder);

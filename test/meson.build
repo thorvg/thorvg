@@ -15,7 +15,6 @@ test_file = [
     'testScene.cpp',
     'testShape.cpp',
     'testSwCanvas.cpp',
-    'testSwCanvasBase.cpp',
     'testSwEngine.cpp',
     'testText.cpp'
 ]

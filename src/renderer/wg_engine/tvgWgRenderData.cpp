@@ -264,10 +264,19 @@ void WgRenderDataPaint::release(WgContext& context)
 // WgRenderDataShape
 //***********************************************************************
 
+void WgRenderDataShape::updateBBox(WgPoint pmin, WgPoint pmax)
+{
+    pMin.x = std::min(pMin.x, pmin.x);
+    pMin.y = std::min(pMin.y, pmin.y);
+    pMax.x = std::max(pMax.x, pmax.x);
+    pMax.y = std::max(pMax.y, pmax.y);
+}
+
+
 void WgRenderDataShape::updateMeshes(WgContext &context, const RenderShape &rshape)
 {
     releaseMeshes(context);
-    strokeFirst = false;
+    strokeFirst = rshape.stroke ? rshape.stroke->strokeFirst : false;
 
     static WgPolyline polyline;
     polyline.clear();
@@ -296,6 +305,7 @@ void WgRenderDataShape::updateMeshes(WgContext &context, const RenderShape &rsha
     }
     // proceed last polyline
     updateMeshes(context, &polyline, rshape.stroke);
+    meshDataBBox.update(context, pMin, pMax);
 }
 
 
@@ -308,6 +318,7 @@ void WgRenderDataShape::updateMeshes(WgContext& context, const WgPolyline* polyl
         polyline->getBBox(pmin, pmax);
         meshGroupShapes.append(context, polyline);
         meshGroupShapesBBox.append(context, pmin, pmax);
+        updateBBox(pmin, pmax);
     }
     // generate strokes geometry
     if ((polyline->pts.count >= 1) && rstroke) {
@@ -342,12 +353,15 @@ void WgRenderDataShape::releaseMeshes(WgContext &context)
     meshGroupStrokes.release(context);
     meshGroupShapesBBox.release(context);
     meshGroupShapes.release(context);
+    pMin = {0.0f, 0.0f };
+    pMax = {0.0f, 0.0f };
 }
 
 
 void WgRenderDataShape::release(WgContext& context)
 {
     releaseMeshes(context);
+    meshDataBBox.release(context);
     renderSettingsStroke.release(context);
     renderSettingsShape.release(context);
     WgRenderDataPaint::release(context);

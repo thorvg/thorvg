@@ -64,6 +64,7 @@ source_file = [
     'Tvg.cpp',
     'TvgSaver.cpp',
     'Update.cpp',
+    'Viewport.cpp'
 ]
 
 

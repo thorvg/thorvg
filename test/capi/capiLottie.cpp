@@ -69,6 +69,39 @@ TEST_CASE("Lottie Slot", "[capiLottie]")
     REQUIRE(tvg_engine_term(TVG_ENGINE_SW) == TVG_RESULT_SUCCESS);
 }
 
+TEST_CASE("Lottie Slot 2", "[capiLottie]")
+{
+    REQUIRE(tvg_engine_init(TVG_ENGINE_SW, 0) == TVG_RESULT_SUCCESS);
+
+    Tvg_Animation* animation = tvg_lottie_animation_new();
+    REQUIRE(animation);
+
+    Tvg_Paint* picture = tvg_animation_get_picture(animation);
+    REQUIRE(picture);
+
+    Tvg_Identifier id = TVG_IDENTIFIER_UNDEF;
+    REQUIRE(tvg_paint_get_identifier(picture, &id) == TVG_RESULT_SUCCESS);
+    REQUIRE(id == TVG_IDENTIFIER_PICTURE);
+
+    const char* slotJson = R"({"lottie-icon-outline":{"p":{"a":0,"k":[1,1,0]}},"lottie-icon-solid":{"p":{"a":0,"k":[0,0,1]}}})";
+
+    //Animation load
+    REQUIRE(tvg_picture_load(picture, TEST_DIR"/lottieslotkeyframe.json") == TVG_RESULT_SUCCESS);
+
+    //Slot override
+    REQUIRE(tvg_lottie_animation_override(animation, slotJson) == TVG_RESULT_SUCCESS);
+
+    //Slot revert
+    REQUIRE(tvg_lottie_animation_override(animation, nullptr) == TVG_RESULT_SUCCESS);
+
+    //Slot override after reverting
+    REQUIRE(tvg_lottie_animation_override(animation, slotJson) == TVG_RESULT_SUCCESS);
+
+    REQUIRE(tvg_animation_del(animation) == TVG_RESULT_SUCCESS);
+
+    REQUIRE(tvg_engine_term(TVG_ENGINE_SW) == TVG_RESULT_SUCCESS);
+}
+
 TEST_CASE("Lottie Marker", "[capiLottie]")
 {
     REQUIRE(tvg_engine_init(TVG_ENGINE_SW, 0) == TVG_RESULT_SUCCESS);

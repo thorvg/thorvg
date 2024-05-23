@@ -70,6 +70,33 @@ TEST_CASE("Lottie Slot", "[tvgLottie]")
     REQUIRE(Initializer::term() == Result::Success);
 }
 
+TEST_CASE("Lottie Slot 2", "[tvgLottie]")
+{
+    REQUIRE(Initializer::init(0) == Result::Success);
+
+    auto animation = LottieAnimation::gen();
+    REQUIRE(animation);
+
+    auto picture = animation->picture();
+    REQUIRE(picture->identifier() == Picture::identifier());
+
+    const char* slotJson = R"({"lottie-icon-outline":{"p":{"a":0,"k":[1,1,0]}},"lottie-icon-solid":{"p":{"a":0,"k":[0,0,1]}}})";
+
+    //Animation load
+    REQUIRE(picture->load(TEST_DIR"/lottieslotkeyframe.json") == Result::Success);
+
+    //Slot override
+    REQUIRE(animation->override(slotJson) == Result::Success);
+
+    //Slot revert
+    REQUIRE(animation->override(nullptr) == Result::Success);
+
+    //Slot override after reverting
+    REQUIRE(animation->override(slotJson) == Result::Success);
+
+    REQUIRE(Initializer::term() == Result::Success);
+}
+
 TEST_CASE("Lottie Marker", "[tvgLottie]")
 {
     REQUIRE(Initializer::init(0) == Result::Success);

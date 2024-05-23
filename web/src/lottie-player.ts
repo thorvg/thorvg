@@ -151,20 +151,6 @@ const _wait = (timeToDelay: number) => {
   return new Promise((resolve) => setTimeout(resolve, timeToDelay))
 };
 
-const _observerCallback = (entries: IntersectionObserverEntry[]) => {
-  const entry = entries[0];
-  const target = entry.target as LottiePlayer;
-  
-  if (entry.isIntersecting) {
-    if (target.currentState === PlayerState.Frozen) {
-      target.play();
-    }
-  } else if (target.currentState === PlayerState.Playing) {
-    target.freeze();
-    target.dispatchEvent(new CustomEvent(PlayerEvent.Freeze));
-  }
-}
-
 const _downloadFile = (fileName: string, blob: Blob) => {
   const link = document.createElement('a');
   link.setAttribute('href', URL.createObjectURL(blob));
@@ -276,6 +262,7 @@ export class LottiePlayer extends LitElement {
   private _counter: number = 1;
   private _timer?: ReturnType<typeof setInterval>;
   private _observer?: IntersectionObserver;
+  private _observable: boolean = false;
 
   private async _init(): Promise<void> {
     if (!_module) {
@@ -298,12 +285,27 @@ export class LottiePlayer extends LitElement {
     }
   }
 
+  private _observerCallback(entries: IntersectionObserverEntry[]) {
+    const entry = entries[0];
+    const target = entry.target as LottiePlayer;
+    target._observable = entry.isIntersecting;
+
+    if (entry.isIntersecting) {
+      if (target.currentState === PlayerState.Frozen) {
+        target.play();
+      }
+    } else if (target.currentState === PlayerState.Playing) {
+      target.freeze();
+      target.dispatchEvent(new CustomEvent(PlayerEvent.Freeze));
+    }
+  }
+
   protected firstUpdated(_changedProperties: PropertyValueMap<any> | Map<PropertyKey, unknown>): void {
     this._canvas = this.shadowRoot!.querySelector('#thorvg-canvas') as HTMLCanvasElement;
     this._canvas.width = this._canvas.offsetWidth;
     this._canvas.height = this._canvas.offsetHeight;
 
-    this._observer = new IntersectionObserver(_observerCallback);
+    this._observer = new IntersectionObserver(this._observerCallback);
     this._observer.observe(this);
 
     if (!this._TVG) {
@@ -360,7 +362,7 @@ export class LottiePlayer extends LitElement {
     }
 
     const buffer = this._TVG.render();
-    const clampedBuffer = Uint8ClampedArray.from(buffer);
+    const clampedBuffer = new Uint8ClampedArray(buffer.buffer, buffer.byteOffset, buffer.byteLength);
     if (clampedBuffer.length < 1) {
       return;
     }
@@ -457,8 +459,13 @@ export class LottiePlayer extends LitElement {
       return;
     }
 
-    this.currentState = PlayerState.Playing;
-    window.requestAnimationFrame(this._animLoop.bind(this));
+    if (this._observable) {
+      this.currentState = PlayerState.Playing;
+      window.requestAnimationFrame(this._animLoop.bind(this));
+      return;
+    }
+
+    this.currentState = PlayerState.Frozen;
   }
 
   /**

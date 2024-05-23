@@ -52,8 +52,6 @@ public:
         RT_None,
     };
 
-    Surface surface;
-
     RenderData prepare(const RenderShape& rshape, RenderData data, const RenderTransform* transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags, bool clipper) override;
     RenderData prepare(const Array<RenderData>& scene, RenderData data, const RenderTransform* transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags) override;
     RenderData prepare(Surface* surface, const RenderMesh* mesh, RenderData data, const RenderTransform* transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags) override;
@@ -67,6 +65,7 @@ public:
     bool viewport(const RenderRegion& vp) override;
     bool blend(BlendMethod method) override;
     ColorSpace colorSpace() override;
+    const Surface* mainSurface() override;
 
     bool target(int32_t id, uint32_t w, uint32_t h);
     bool sync() override;
@@ -96,6 +95,7 @@ private:
     void prepareCmpTask(GlRenderTask* task, const RenderRegion& vp);
     void endRenderPass(Compositor* cmp);
 
+    Surface surface;
     GLint mTargetFboId = 0;
     RenderRegion mViewport;
     RenderRegion mTargetViewport;

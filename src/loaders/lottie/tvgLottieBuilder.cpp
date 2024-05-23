@@ -129,6 +129,42 @@ static void _rotationZ(Matrix* m, float degree)
 }
 
 
+static void _skew(Matrix* m, float angleDeg, float axisDeg)
+{
+    auto angle = -mathDeg2Rad(angleDeg);
+    float tanVal = tanf(angle);
+
+    axisDeg = fmod(axisDeg, 180.0f);
+    if (fabsf(axisDeg) < 0.01f || fabsf(axisDeg - 180.0f) < 0.01f || fabsf(axisDeg + 180.0f) < 0.01f) {
+        float cosVal = cosf(mathDeg2Rad(axisDeg));
+        auto B = cosVal * cosVal * tanVal;
+        m->e12 += B * m->e11;
+        m->e22 += B * m->e21;
+        return;
+    } else if (fabsf(axisDeg - 90.0f) < 0.01f || fabsf(axisDeg + 90.0f) < 0.01f) {
+        float sinVal = -sinf(mathDeg2Rad(axisDeg));
+        auto C = sinVal * sinVal * tanVal;
+        m->e11 -= C * m->e12;
+        m->e21 -= C * m->e22;
+        return;
+    }
+
+    auto axis = -mathDeg2Rad(axisDeg);
+    float cosVal = cosf(axis);
+    float sinVal = sinf(axis);
+    auto A = sinVal * cosVal * tanVal;
+    auto B = cosVal * cosVal * tanVal;
+    auto C = sinVal * sinVal * tanVal;
+
+    auto e11 = m->e11;
+    auto e21 = m->e21;
+    m->e11 = (1.0f - A) * e11 - C * m->e12;
+    m->e12 = B * e11 + (1.0f + A) * m->e12;
+    m->e21 = (1.0f - A) * e21 - C * m->e22;
+    m->e22 = B * e21 + (1.0f + A) * m->e22;
+}
+
+
 static bool _updateTransform(LottieTransform* transform, float frameNo, bool autoOrient, Matrix& matrix, uint8_t& opacity, LottieExpressions* exps)
 {
     mathIdentity(&matrix);
@@ -152,6 +188,15 @@ static bool _updateTransform(LottieTransform* transform, float frameNo, bool aut
     if (transform->rotationEx) {
         _rotateY(&matrix, transform->rotationEx->y(frameNo, exps));
         _rotateX(&matrix, transform->rotationEx->x(frameNo, exps));
+    }
+
+    auto skewAngle = transform->skewAngle(frameNo, exps);
+    if (skewAngle != 0.0f) {
+        // For angles where tangent explodes, the shape degenerates into an infinitely thin line.
+        // This is handled by zeroing out the matrix due to finite numerical precision.
+        skewAngle = fmod(skewAngle, 180.0f);
+        if (fabsf(skewAngle - 90.0f) < 0.01f || fabsf(skewAngle + 90.0f) < 0.01f) return false;
+        _skew(&matrix, skewAngle, transform->skewAxis(frameNo, exps));
     }
 
     auto scale = transform->scale(frameNo, exps);
@@ -316,9 +361,9 @@ static void _updateSolidFill(TVG_UNUSED LottieGroup* parent, LottieObject** chil
 }
 
 
-static Shape* _updateGradientFill(TVG_UNUSED LottieGroup* parent, LottieObject** child, float frameNo, TVG_UNUSED Inlist<RenderContext>& contexts, RenderContext* ctx, LottieExpressions* exps)
+static void _updateGradientFill(TVG_UNUSED LottieGroup* parent, LottieObject** child, float frameNo, TVG_UNUSED Inlist<RenderContext>& contexts, RenderContext* ctx, LottieExpressions* exps)
 {
-    if (_fragmented(child, contexts, ctx)) return nullptr;
+    if (_fragmented(child, contexts, ctx)) return;
 
     auto fill = static_cast<LottieGradientFill*>(*child);
 
@@ -329,8 +374,6 @@ static Shape* _updateGradientFill(TVG_UNUSED LottieGroup* parent, LottieObject**
     ctx->propagator->opacity(MULTIPLY(fill->opacity(frameNo), PP(ctx->propagator)->opacity));
 
     if (ctx->propagator->strokeWidth() > 0) ctx->propagator->order(true);
-
-    return nullptr;
 }
 
 
@@ -452,7 +495,7 @@ static void _updateRect(LottieGroup* parent, LottieObject** child, float frameNo
     auto roundness = rect->radius(frameNo, exps);
     if (ctx->roundness > roundness) roundness = ctx->roundness;
 
-    if (roundness > 0.0f) {
+    if (roundness > ROUNDNESS_EPSILON) {
         if (roundness > size.x * 0.5f)  roundness = size.x * 0.5f;
         if (roundness > size.y * 0.5f)  roundness = size.y * 0.5f;
     }
@@ -610,10 +653,72 @@ static void _updateText(LottieGroup* parent, LottieObject** child, float frameNo
 }
 
 
+static void _applyRoundedCorner(Shape* star, Shape* merging, float outerRoundness, float roundness, bool hasRoundness)
+{
+    static constexpr auto ROUNDED_POLYSTAR_MAGIC_NUMBER = 0.47829f;
+
+    auto cmdCnt = star->pathCommands(nullptr);
+    const Point *pts = nullptr;
+    auto ptsCnt = star->pathCoords(&pts);
+
+    auto len = mathLength(pts[1] - pts[2]);
+    auto r = len > 0.0f ? ROUNDED_POLYSTAR_MAGIC_NUMBER * mathMin(len * 0.5f, roundness) / len : 0.0f;
+
+    if (hasRoundness) {
+        P(merging)->rs.path.cmds.grow((uint32_t)(1.5 * cmdCnt));
+        P(merging)->rs.path.pts.grow((uint32_t)(4.5 * cmdCnt));
+
+        int start = 3 * mathZero(outerRoundness);
+        merging->moveTo(pts[start].x, pts[start].y);
+
+        for (uint32_t i = 1 + start; i < ptsCnt; i += 6) {
+            auto& prev = pts[i];
+            auto& curr = pts[i + 2];
+            auto& next = (i < ptsCnt - start) ? pts[i + 4] : pts[2];
+            auto& nextCtrl = (i < ptsCnt - start) ? pts[i + 5] : pts[3];
+            auto dNext = r * (curr - next);
+            auto dPrev = r * (curr - prev);
+
+            auto p0 = curr - 2.0f * dPrev;
+            auto p1 = curr - dPrev;
+            auto p2 = curr - dNext;
+            auto p3 = curr - 2.0f * dNext;
+
+            merging->cubicTo(prev.x, prev.y, p0.x, p0.y, p0.x, p0.y);
+            merging->cubicTo(p1.x, p1.y, p2.x, p2.y, p3.x, p3.y);
+            merging->cubicTo(p3.x, p3.y, next.x, next.y, nextCtrl.x, nextCtrl.y);
+        }
+    } else {
+        P(merging)->rs.path.cmds.grow(2 * cmdCnt);
+        P(merging)->rs.path.pts.grow(4 * cmdCnt);
+
+        auto dPrev = r * (pts[1] - pts[0]);
+        auto p = pts[0] + 2.0f * dPrev;
+        merging->moveTo(p.x, p.y);
+
+        for (uint32_t i = 1; i < ptsCnt; ++i) {
+            auto& curr = pts[i];
+            auto& next = (i == ptsCnt - 1) ? pts[1] : pts[i + 1];
+            auto dNext = r * (curr - next);
+
+            auto p0 = curr - 2.0f * dPrev;
+            auto p1 = curr - dPrev;
+            auto p2 = curr - dNext;
+            auto p3 = curr - 2.0f * dNext;
+
+            merging->lineTo(p0.x, p0.y);
+            merging->cubicTo(p1.x, p1.y, p2.x, p2.y, p3.x, p3.y);
+
+            dPrev = -1.0f * dNext;
+        }
+    }
+    merging->close();
+}
+
+
 static void _updateStar(LottieGroup* parent, LottiePolyStar* star, Matrix* transform, float roundness, float frameNo, Shape* merging, LottieExpressions* exps)
 {
     static constexpr auto POLYSTAR_MAGIC_NUMBER = 0.47829f / 0.28f;
-    static constexpr auto ROUNDED_POLYSTAR_MAGIC_NUMBER = 0.47829f;
 
     auto ptsCnt = star->ptsCnt(frameNo, exps);
     auto innerRadius = star->innerRadius(frameNo, exps);
@@ -630,8 +735,9 @@ static void _updateStar(LottieGroup* parent, LottiePolyStar* star, Matrix* trans
     auto numPoints = size_t(ceilf(ptsCnt) * 2);
     auto direction = (star->direction == 0) ? 1.0f : -1.0f;
     auto hasRoundness = false;
-    bool applyExtRoundness = roundness > ROUNDNESS_EPSILON && (mathZero(innerRoundness) || mathZero(outerRoundness));
-    auto shape = applyExtRoundness ? Shape::gen().release() : merging;
+    bool roundedCorner = (roundness > ROUNDNESS_EPSILON) && (mathZero(innerRoundness) || mathZero(outerRoundness));
+    //TODO: we can use PathCommand / PathCoord directly.
+    auto shape = roundedCorner ? Shape::gen().release() : merging;
 
     float x, y;
 
@@ -720,63 +826,8 @@ static void _updateStar(LottieGroup* parent, LottiePolyStar* star, Matrix* trans
     }
     shape->close();
 
-    if (applyExtRoundness) {
-        auto cmdCnt = shape->pathCommands(nullptr);
-        const Point *pts = nullptr;
-        auto ptsCnt = shape->pathCoords(&pts);
-
-        auto len = mathLength(pts[1] - pts[2]);
-        auto r = len > 0.0f ? ROUNDED_POLYSTAR_MAGIC_NUMBER * mathMin(len * 0.5f, roundness) / len : 0.0f;
-
-        if (hasRoundness) {
-            P(merging)->rs.path.cmds.grow((uint32_t)(1.5 * cmdCnt));
-            P(merging)->rs.path.pts.grow((uint32_t)(4.5 * cmdCnt));
-
-            int start = 3 * mathZero(outerRoundness);
-            merging->moveTo(pts[start].x, pts[start].y);
-
-            for (uint32_t i = 1 + start; i < ptsCnt; i += 6) {
-                auto& prev = pts[i];
-                auto& curr = pts[i + 2];
-                auto& next = (i < ptsCnt - start) ? pts[i + 4] : pts[2];
-                auto& nextCtrl = (i < ptsCnt - start) ? pts[i + 5] : pts[3];
-                auto dNext = r * (curr - next);
-                auto dPrev = r * (curr - prev);
-
-                auto p0 = curr - 2.0f * dPrev;
-                auto p1 = curr - dPrev;
-                auto p2 = curr - dNext;
-                auto p3 = curr - 2.0f * dNext;
-
-                merging->cubicTo(prev.x, prev.y, p0.x, p0.y, p0.x, p0.y);
-                merging->cubicTo(p1.x, p1.y, p2.x, p2.y, p3.x, p3.y);
-                merging->cubicTo(p3.x, p3.y, next.x, next.y, nextCtrl.x, nextCtrl.y);
-            }
-        } else {
-            P(merging)->rs.path.cmds.grow(2 * cmdCnt);
-            P(merging)->rs.path.pts.grow(4 * cmdCnt);
-
-            auto dPrev = r * (pts[1] - pts[0]);
-            auto p = pts[0] + 2.0f * dPrev;
-            merging->moveTo(p.x, p.y);
-
-            for (uint32_t i = 1; i < ptsCnt; ++i) {
-                auto& curr = pts[i];
-                auto& next = (i == ptsCnt - 1) ? pts[1] : pts[i + 1];
-                auto dNext = r * (curr - next);
-
-                auto p0 = curr - 2.0f * dPrev;
-                auto p1 = curr - dPrev;
-                auto p2 = curr - dNext;
-                auto p3 = curr - 2.0f * dNext;
-
-                merging->lineTo(p0.x, p0.y);
-                merging->cubicTo(p1.x, p1.y, p2.x, p2.y, p3.x, p3.y);
-
-                dPrev = -1.0f * dNext;
-            }
-        }
-        merging->close();
+    if (roundedCorner) {
+        _applyRoundedCorner(shape, merging, outerRoundness, roundness, hasRoundness);
         delete(shape);
     }
 }
@@ -862,7 +913,7 @@ static void _updatePolystar(LottieGroup* parent, LottieObject** child, float fra
     mathTranslate(&matrix, position.x, position.y);
     mathRotate(&matrix, star->rotation(frameNo, exps));
 
-    if (ctx->transform) mathMultiply(ctx->transform, &matrix);
+    if (ctx->transform) matrix = mathMultiply(ctx->transform, &matrix);
 
     auto identity = mathIdentity((const Matrix*)&matrix);
 
@@ -922,7 +973,6 @@ static void _updateImage(LottieGroup* parent, LottieObject** child, float frameN
 static void _updateRoundedCorner(TVG_UNUSED LottieGroup* parent, LottieObject** child, float frameNo, TVG_UNUSED Inlist<RenderContext>& contexts, RenderContext* ctx, LottieExpressions* exps)
 {
     auto roundedCorner= static_cast<LottieRoundedCorner*>(*child);
-
     auto roundness = roundedCorner->radius(frameNo, exps);
     if (ctx->roundness < roundness) ctx->roundness = roundness;
 }
@@ -975,6 +1025,7 @@ static void _updateChildren(LottieGroup* parent, float frameNo, Inlist<RenderCon
         auto ctx = contexts.front();
         ctx->reqFragment = parent->reqFragment;
         for (auto child = ctx->begin; child >= parent->children.data; --child) {
+            //Here switch-case statements are more performant than virtual methods.
             switch ((*child)->type) {
                 case LottieObject::Group: {
                     _updateGroup(parent, child, frameNo, contexts, ctx, exps);
@@ -1283,6 +1334,8 @@ static bool _buildComposition(LottieComposition* comp, LottieGroup* parent)
 
 bool LottieBuilder::update(LottieComposition* comp, float frameNo)
 {
+    if (comp->root->children.empty()) return false;
+
     frameNo += comp->startFrame;
     if (frameNo < comp->startFrame) frameNo = comp->startFrame;
     if (frameNo >= comp->endFrame) frameNo = (comp->endFrame - 1);

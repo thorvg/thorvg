@@ -53,8 +53,6 @@ void tvgUpdateCmds(void* data, void* obj, double progress)
 
     canvas->clear(false);
 
-    canvas->clear(false);
-
     pPicture->translate(WIDTH * progress * 0.05f, HEIGHT * progress * 0.05f);
 
     auto before = system_time_get();
