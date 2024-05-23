@@ -42,6 +42,7 @@ void LottieLoader::run(unsigned tid)
         comp = parser.comp;
         builder->build(comp);
     }
+    rebuild = false;
 }
 
 
@@ -298,14 +299,14 @@ bool LottieLoader::override(const char* slot)
 
         if (idx < 1) success = false;
         free(temp);
-        overriden = success;
-
+        rebuild = overriden = success;
     //reset slots
     } else if (overriden) {
         for (auto s = comp->slots.begin(); s < comp->slots.end(); ++s) {
             (*s)->reset();
         }
         overriden = false;
+        rebuild = true;
     }
     return success;
 }
@@ -365,6 +366,8 @@ float LottieLoader::duration()
 void LottieLoader::sync()
 {
     this->done();
+
+    if (rebuild) run(0);
 }
 
 
