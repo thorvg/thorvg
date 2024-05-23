@@ -1784,7 +1784,6 @@ void Stroker::strokeCubicTo(const GlPoint &cnt1, const GlPoint &cnt2, const GlPo
     curve.end = Point{end.x, end.y};
 
     auto count = detail::_bezierCurveCount(curve);
-
     float step = 1.f / count;
 
     for (int32_t i = 0; i <= count; i++) {
@@ -2149,7 +2148,6 @@ void BWTessellator::tessellate(const RenderShape *rshape)
                 Bezier curve{pts[-1], pts[0], pts[1], pts[2]};
 
                 auto stepCount = detail::_bezierCurveCount(curve);
-
                 if (stepCount <= 1) stepCount = 2;
 
                 float step = 1.f / stepCount;

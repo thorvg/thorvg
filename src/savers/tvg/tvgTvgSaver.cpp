@@ -93,7 +93,7 @@ static bool _merge(Shape* from, Shape* to)
     auto t1 = from->transform();
     auto t2 = to->transform();
 
-    if (!mathEqual(t1, t2)) return false;
+    if (t1 != t2) return false;
 
     //stroke
     if (P(from)->strokeFirst() != P(to)->strokeFirst()) return false;
@@ -428,7 +428,7 @@ TvgBinCounter TvgSaver::serializeFill(const Fill* fill, TvgBinTag tag, const Mat
     cnt += writeTagProperty(TVG_TAG_FILL_COLORSTOPS, stopsCnt * SIZE(Fill::ColorStop), stops);
 
     auto gTransform = fill->transform();
-    if (pTransform) gTransform = mathMultiply(pTransform, &gTransform);
+    if (pTransform) gTransform = *pTransform * gTransform;
 
     cnt += writeTransform(&gTransform, TVG_TAG_FILL_TRANSFORM);
 
@@ -530,7 +530,10 @@ TvgBinCounter TvgSaver::serializePath(const Shape* shape, const Matrix* transfor
             !mathZero(transform->e21) || !mathEqual(transform->e22, 1.0f) || !mathZero(transform->e23) ||
             !mathZero(transform->e31) || !mathZero(transform->e32) || !mathEqual(transform->e33, 1.0f)) {
             auto p = const_cast<Point*>(pts);
-            for (uint32_t i = 0; i < ptsCnt; ++i) mathMultiply(p++, transform);
+            for (uint32_t i = 0; i < ptsCnt; ++i) {
+                *p *= *transform;
+                ++p;
+            }
         }
     }
 
@@ -718,7 +721,7 @@ TvgBinCounter TvgSaver::serialize(const Paint* paint, const Matrix* pTransform, 
     if (!compTarget && paint->opacity() == 0) return 0;
 
     auto transform = const_cast<Paint*>(paint)->transform();
-    if (pTransform) transform = mathMultiply(pTransform, &transform);
+    if (pTransform) transform = *pTransform * transform;
 
     switch (paint->identifier()) {
         case TVG_CLASS_ID_SHAPE: return serializeShape(static_cast<const Shape*>(paint), pTransform, &transform);
