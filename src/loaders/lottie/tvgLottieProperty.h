@@ -217,7 +217,7 @@ static void _copy(PathSet* pathset, Array<Point>& outPts, Matrix* transform)
     if (transform) {
         for (int i = 0; i < pathset->ptsCnt; ++i) {
             Point pt = pathset->pts[i];
-            mathMultiply(&pt, transform);
+            pt *= *transform;
             outPts.push(pt);
         }
     } else {
@@ -306,8 +306,9 @@ static bool _modifier(Point* inputPts, uint32_t inputPtsCnt, PathCommand* inputC
         }
     }
     if (transform) {
-        for (auto i = ptsCnt; i < pts.count; ++i)
-            mathTransform(transform, &pts[i]);
+        for (auto i = ptsCnt; i < pts.count; ++i) {
+            pts[i] *= *transform;
+        }
     }
     return true;
 }
@@ -566,7 +567,7 @@ struct LottiePathSet : LottieProperty
             auto p = interpPts;
             for (auto i = 0; i < frame->value.ptsCnt; ++i, ++s, ++e, ++p) {
                 *p = mathLerp(*s, *e, t);
-                if (transform) mathMultiply(p, transform);
+                if (transform) *p *= *transform;
             }
             _modifier(interpPts, frame->value.ptsCnt, frame->value.cmds, frame->value.cmdsCnt, cmds, pts, nullptr, roundness);
             free(interpPts);
@@ -574,7 +575,7 @@ struct LottiePathSet : LottieProperty
         } else {
             for (auto i = 0; i < frame->value.ptsCnt; ++i, ++s, ++e) {
                 auto pt = mathLerp(*s, *e, t);
-                if (transform) mathMultiply(&pt, transform);
+                if (transform) pt *= *transform;
                 pts.push(pt);
             }
             _copy(&frame->value, cmds);
