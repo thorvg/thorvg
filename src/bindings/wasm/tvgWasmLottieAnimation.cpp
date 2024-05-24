@@ -163,6 +163,17 @@ public:
         return true;
     }
 
+    bool viewport(float x, float y, float width, float height)
+    {
+        if (!canvas || !animation) return false;
+        if (canvas->viewport(x, y, width, height) != Result::Success) {
+            errorMsg = "viewport() fail";
+            return false;
+        }
+
+        return true;
+    }
+
     void resize(int width, int height)
     {
         if (!canvas || !animation) return;
@@ -337,6 +348,7 @@ EMSCRIPTEN_BINDINGS(thorvg_bindings)
         .function("load", &TvgLottieAnimation ::load)
         .function("update", &TvgLottieAnimation ::update)
         .function("frame", &TvgLottieAnimation ::frame)
+        .function("viewport", &TvgLottieAnimation ::viewport)
         .function("resize", &TvgLottieAnimation ::resize)
         .function("save", &TvgLottieAnimation ::save);
 }
