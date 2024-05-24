@@ -548,7 +548,13 @@ struct LottiePathSet : LottieProperty
                 t = (frameNo - frame->no) / ((frame + 1)->no - frame->no);
                 if (frame->interpolator) t = frame->interpolator->progress(t);
                 if (frame->hold) path = &(frame + ((t < 1.0f) ? 0 : 1))->value;
-                else interpolate = true;
+                else {
+                    if (frame->value.ptsCnt != (frame + 1)->value.ptsCnt) {
+                        path = &frame->value;
+                        TVGLOG("LOTTIE", "Different numbers of points in consecutive frames - interpolation omitted.");
+                    }
+                    else interpolate = true;
+                }
             }
         }
 
