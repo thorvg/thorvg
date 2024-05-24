@@ -105,7 +105,7 @@ static bool _merge(Shape* from, Shape* to)
 
     if (r != r2 || g != g2 || b != b2 || a != a2) return false;
 
-    if (fabs(from->strokeWidth() - to->strokeWidth()) > FLT_EPSILON) return false;
+    if (fabs(from->strokeWidth() - to->strokeWidth()) > FLOAT_EPSILON) return false;
 
     //OPTIMIZE: Yet we can't merge outlining shapes unless we can support merging shapes feature.
     if (from->strokeWidth() > 0 || to->strokeWidth() > 0) return false;
@@ -115,7 +115,7 @@ static bool _merge(Shape* from, Shape* to)
     if (from->strokeDash(nullptr) > 0 || to->strokeDash(nullptr) > 0) return false;
     if (from->strokeFill() || to->strokeFill()) return false;
 
-    if (fabsf(from->strokeMiterlimit() - to->strokeMiterlimit()) > FLT_EPSILON) return false;
+    if (fabsf(from->strokeMiterlimit() - to->strokeMiterlimit()) > FLOAT_EPSILON) return false;
 
     //fill rule
     if (from->fillRule() != to->fillRule()) return false;
@@ -484,7 +484,7 @@ TvgBinCounter TvgSaver::serializeStroke(const Shape* shape, const Matrix* pTrans
 
     //miterlimit (the default value is 4)
     auto miterlimit = shape->strokeMiterlimit();
-    if (fabsf(miterlimit - 4.0f) > FLT_EPSILON) {
+    if (fabsf(miterlimit - 4.0f) > FLOAT_EPSILON) {
         cnt += writeTagProperty(TVG_TAG_SHAPE_STROKE_MITERLIMIT, SIZE(miterlimit), &miterlimit);
     }
 
@@ -788,7 +788,7 @@ bool TvgSaver::save(Paint* paint, Paint* bg, const string& path, TVG_UNUSED uint
     if (x < 0) vsize[0] += x;
     if (y < 0) vsize[1] += y;
 
-    if (vsize[0] < FLT_EPSILON || vsize[1] < FLT_EPSILON) {
+    if (vsize[0] < FLOAT_EPSILON || vsize[1] < FLOAT_EPSILON) {
         TVGLOG("TVG_SAVER", "Saving paint(%p) has zero view size.", paint);
         return false;
     }
