@@ -4,16 +4,17 @@
 
 * @hermet
 /src/renderer/sw_engine @mgrudzinska
-/src/renderer/gl_engine @RuiwenTang @SergeyLebedkin
+/src/renderer/gl_engine @RuiwenTang
 /src/renderer/wg_engine @SergeyLebedkin
 /src/loaders/external_webp/ @JSUYA
 /src/loaders/raw/ @JSUYA
 /src/loaders/tvg/ @mgrudzinska
 /src/loaders/svg/ @JSUYA @mgrudzinska
 /src/loaders/webp/ @JSUYA
+/src/bindings/capi @mgrudzinska
+/src/bindings/wasm @tinyjin
 /src/savers/gif/ @JSUYA
 /src/tools/svg2png/ @JSUYA
 /examples/ @JSUYA @RuiwenTang @SergeyLebedkin @tinyjin @mgrudzinska
 /test/* @JSUYA @RuiwenTang @SergeyLebedkin @tinyjin @mgrudzinska
-/web/* @tinyjin
-/.github/workflows/* @JSUYA @tinyjin
+/.github/workflows/* @JSUYA
