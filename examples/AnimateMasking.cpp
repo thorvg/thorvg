@@ -164,6 +164,9 @@ void drawGLview(Evas_Object *obj)
 
 void transitGlCb(Elm_Transit_Effect *effect, Elm_Transit* transit, double progress)
 {
+    tvgUpdateCmds(glCanvas.get(), progress);
+
+    elm_glview_changed_set((Evas_Object*)effect);
 }
 
 /************************************************************************/
