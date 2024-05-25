@@ -1712,6 +1712,8 @@ void Stroker::doStroke(const PathCommand *cmds, uint32_t cmd_count, const Point 
                 break;
         }
     }
+
+    strokeCap();
 }
 
 void Stroker::doDashStroke(const PathCommand *cmds, uint32_t cmd_count, const Point *pts, uint32_t pts_count,
@@ -1732,6 +1734,19 @@ void Stroker::doDashStroke(const PathCommand *cmds, uint32_t cmd_count, const Po
 
 void Stroker::strokeCap()
 {
+    if (mStrokeState.firstPt == mStrokeState.prevPt) {
+        return;
+    }
+
+    if (mStrokeCap == StrokeCap::Butt) return;
+    else if (mStrokeCap == StrokeCap::Square) {
+        strokeSquare(mStrokeState.firstPt, GlPoint{-mStrokeState.firstPtDir.x, -mStrokeState.firstPtDir.y});
+        strokeSquare(mStrokeState.prevPt, mStrokeState.prevPtDir);
+    } else if (mStrokeCap == StrokeCap::Round) {
+        strokeRound(mStrokeState.firstPt, GlPoint{-mStrokeState.firstPtDir.x, -mStrokeState.firstPtDir.y});
+        strokeRound(mStrokeState.prevPt, mStrokeState.prevPtDir);
+    }
+
 }
 
 void Stroker::strokeLineTo(const GlPoint &curr)
@@ -1961,6 +1976,42 @@ void Stroker::strokeBevel(const GlPoint &prev, const GlPoint &curr, const GlPoin
     mResIndices->push(a);
     mResIndices->push(b);
     mResIndices->push(c);
+}
+
+void Stroker::strokeSquare(const GlPoint& p, const GlPoint& outDir)
+{
+    GlPoint normal{-outDir.y, outDir.x};
+
+    GlPoint a = p + normal * strokeRadius();
+    GlPoint b = p - normal * strokeRadius();
+    GlPoint c = a + outDir * strokeRadius();
+    GlPoint d = b + outDir * strokeRadius();
+
+
+    auto ai = detail::_pushVertex(mResGlPoints, a.x, a.y);
+    auto bi = detail::_pushVertex(mResGlPoints, b.x, b.y);
+    auto ci = detail::_pushVertex(mResGlPoints, c.x, c.y);
+    auto di = detail::_pushVertex(mResGlPoints, d.x, d.y);
+
+    mResIndices->push(ai);
+    mResIndices->push(bi);
+    mResIndices->push(ci);
+
+    mResIndices->push(ci);
+    mResIndices->push(bi);
+    mResIndices->push(di);
+}
+
+void Stroker::strokeRound(const GlPoint& p, const GlPoint& outDir)
+{
+    GlPoint normal{-outDir.y, outDir.x};
+
+    GlPoint a = p + normal * strokeRadius();
+    GlPoint b = p - normal * strokeRadius();
+    GlPoint c = p + outDir * strokeRadius();
+
+    strokeRound(a, c, p);
+    strokeRound(c, b, p);
 }
 
 DashStroke::DashStroke(Array<PathCommand> *cmds, Array<Point> *pts, uint32_t dash_count, const float *dash_pattern)

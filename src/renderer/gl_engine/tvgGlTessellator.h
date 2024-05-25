@@ -140,6 +140,10 @@ private:
     void strokeMiter(const GlPoint &prev, const GlPoint &curr, const GlPoint &center);
 
     void strokeBevel(const GlPoint &prev, const GlPoint &curr, const GlPoint &center);
+
+    void strokeSquare(const GlPoint& p, const GlPoint& outDir);
+
+    void strokeRound(const GlPoint& p, const GlPoint& outDir);
 private:
     Array<float>* mResGlPoints;
     Array<uint32_t>* mResIndices;
