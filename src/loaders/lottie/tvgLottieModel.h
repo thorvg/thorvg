@@ -561,6 +561,7 @@ struct LottieLayer : LottieGroup
     float outFrame = 0.0f;
     float startFrame = 0.0f;
     char* refId = nullptr;      //pre-composition reference.
+    int16_t mid = -1;           //id of the matte layer.
     int16_t pid = -1;           //id of the parent layer.
     int16_t id = -1;            //id of the current layer.
 
