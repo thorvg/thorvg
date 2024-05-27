@@ -1319,6 +1319,21 @@ static bool _buildComposition(LottieComposition* comp, LottieGroup* parent)
         //attach the precomp layer.
         if (child->refId) _buildReference(comp, child);
 
+        if (child->matte.type != CompositeMethod::None) {
+            //no index of the matte layer is provided: the layer above is used as the matte source
+            if (child->mid == -1) {
+                if (c == parent->children.begin()) TVGERR("LOTTIE", "The default matte source doesn't exist.");
+                else {
+                    auto matte = static_cast<LottieLayer*>(*(c - 1));
+                    if (matte->matteSrc) child->matte.target = matte;
+                }
+            //matte layer is specified by an index.
+            } else {
+                auto matte = comp->layer(child->mid);
+                if (matte && matte->matteSrc) child->matte.target = matte;
+            }
+        }
+
         if (child->matte.target) {
             //parenting
             _bulidHierarchy(parent, child->matte.target);
@@ -1353,7 +1368,8 @@ bool LottieBuilder::update(LottieComposition* comp, float frameNo)
     if (exps && comp->expressions) exps->update(comp->timeAtFrame(frameNo));
 
     for (auto child = root->children.end() - 1; child >= root->children.begin(); --child) {
-        _updateLayer(root, static_cast<LottieLayer*>(*child), frameNo, exps);
+        auto layer = static_cast<LottieLayer*>(*child);
+        if (!layer->matteSrc) _updateLayer(root, layer, frameNo, exps);
     }
 
     return true;

@@ -354,7 +354,7 @@ LottieLayer::~LottieLayer()
         delete(*m);
     }
 
-    delete(matte.target);
+    matte.target = nullptr;
     delete(transform);
 }
 
