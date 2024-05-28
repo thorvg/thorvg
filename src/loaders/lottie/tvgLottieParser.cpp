@@ -246,18 +246,27 @@ void LottieParser::getValue(PathSet& path)
     outPts.push(*pt);
 
     for (++pt, ++out, ++in; pt < pts.end(); ++pt, ++out, ++in) {
-        outCmds.push(PathCommand::CubicTo);
-        outPts.push(*(pt - 1) + *(out - 1));
-        outPts.push(*pt + *in);
-        outPts.push(*pt);
+        if (mathZero(*(out - 1)) && mathZero(*in)) {
+            outPts.push(*pt);
+            outCmds.push(PathCommand::LineTo);
+        } else {
+            outPts.push(*(pt - 1) + *(out - 1));
+            outPts.push(*pt + *in);
+            outPts.push(*pt);
+            outCmds.push(PathCommand::CubicTo);
+        }
     }
 
     if (closed) {
-        outPts.push(pts.last() + outs.last());
-        outPts.push(pts.first() + ins.first());
-        outPts.push(pts.first());
-        outCmds.push(PathCommand::CubicTo);
-        outCmds.push(PathCommand::Close);
+        if (mathZero(outs.last()) && mathZero(ins.first())) {
+            outCmds.push(PathCommand::Close);
+        } else {
+            outPts.push(pts.last() + outs.last());
+            outPts.push(pts.first() + ins.first());
+            outPts.push(pts.first());
+            outCmds.push(PathCommand::CubicTo);
+            outCmds.push(PathCommand::Close);
+        }
     }
 
     path.pts = outPts.data;

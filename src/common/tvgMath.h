@@ -61,6 +61,12 @@ static inline bool mathZero(float a)
 }
 
 
+static inline bool mathZero(const Point& p)
+{
+    return mathZero(p.x) && mathZero(p.y);
+}
+
+
 static inline bool mathEqual(float a, float b)
 {
     return mathZero(a - b);
