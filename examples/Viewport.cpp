@@ -27,10 +27,6 @@
 /************************************************************************/
 
 static tvg::Picture* pPicture = nullptr;
-static double updateTime = 0;
-static double accumulateTime = 0;
-static uint32_t cnt = 0;
-static bool reqSync = false;
 
 void tvgDrawCmds(tvg::Canvas* canvas)
 {
@@ -50,120 +46,25 @@ void tvgDrawCmds(tvg::Canvas* canvas)
     canvas->push(std::move(picture));
 }
 
-void tvgUpdateCmds(tvg::Canvas* canvas, float progress)
+void tvgUpdateCmds(void* data, void* obj, double progress)
 {
     constexpr uint32_t VPORT_SIZE = 300;
 
-    if (!canvas || reqSync) return;
+    tvg::Canvas* canvas = getCanvas();
+    if (!canvas) return;
 
     canvas->clear(false);
 
     canvas->viewport((WIDTH - VPORT_SIZE) * progress, (HEIGHT - VPORT_SIZE) * progress, VPORT_SIZE, VPORT_SIZE);
 
-    auto before = ecore_time_get();
+    auto before = system_time_get();
 
     canvas->update();
 
-    auto after = ecore_time_get();
+    auto after = system_time_get();
 
     updateTime = after - before;
-
-    reqSync = true;
 }
-
-
-/************************************************************************/
-/* Sw Engine Test Code                                                  */
-/************************************************************************/
-
-static unique_ptr<tvg::SwCanvas> swCanvas;
-
-void tvgSwTest(uint32_t* buffer)
-{
-    //Create a Canvas
-    swCanvas = tvg::SwCanvas::gen();
-    swCanvas->target(buffer, WIDTH, WIDTH, HEIGHT, tvg::SwCanvas::ARGB8888);
-
-    /* Push the shape into the Canvas drawing list
-       When this shape is into the canvas list, the shape could update & prepare
-       internal data asynchronously for coming rendering.
-       Canvas keeps this shape node unless user call canvas->clear() */
-    tvgDrawCmds(swCanvas.get());
-}
-
-void transitSwCb(Elm_Transit_Effect *effect, Elm_Transit* transit, double progress)
-{
-    tvgUpdateCmds(swCanvas.get(), progress);
-
-    //Update Efl Canvas
-    Eo* img = (Eo*) effect;
-    evas_object_image_data_update_add(img, 0, 0, WIDTH, HEIGHT);
-    evas_object_image_pixels_dirty_set(img, EINA_TRUE);
-}
-
-void drawSwView(void* data, Eo* obj)
-{
-    auto before = ecore_time_get();
-
-    if (swCanvas->draw() == tvg::Result::Success) {
-        swCanvas->sync();
-        reqSync = false;
-    }
-
-    auto after = ecore_time_get();
-
-    auto rasterTime = after - before;
-
-    ++cnt;
-
-    accumulateTime += (updateTime + rasterTime);
-
-    printf("[%5d]: rendering = %fs,  average = %fs\n", cnt, updateTime + rasterTime, accumulateTime / cnt);
-}
-
-
-/************************************************************************/
-/* GL Engine Test Code                                                  */
-/************************************************************************/
-
-static unique_ptr<tvg::GlCanvas> glCanvas;
-
-void initGLview(Evas_Object *obj)
-{
-    //Create a Canvas
-    glCanvas = tvg::GlCanvas::gen();
-
-    //Get the drawing target id
-    int32_t targetId;
-    auto gl = elm_glview_gl_api_get(obj);
-    gl->glGetIntegerv(GL_FRAMEBUFFER_BINDING, &targetId);
-
-    glCanvas->target(targetId, WIDTH, HEIGHT);
-
-    /* Push the shape into the Canvas drawing list
-       When this shape is into the canvas list, the shape could update & prepare
-       internal data asynchronously for coming rendering.
-       Canvas keeps this shape node unless user call canvas->clear() */
-    tvgDrawCmds(glCanvas.get());
-}
-
-void drawGLview(Evas_Object *obj)
-{
-    auto gl = elm_glview_gl_api_get(obj);
-    gl->glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    gl->glClear(GL_COLOR_BUFFER_BIT);
-
-    if (glCanvas->draw() == tvg::Result::Success) {
-        glCanvas->sync();
-    }
-}
-
-void transitGlCb(Elm_Transit_Effect *effect, Elm_Transit* transit, double progress)
-{
-    tvgUpdateCmds(glCanvas.get(), progress);
-    elm_glview_changed_set((Evas_Object*)effect);
-}
-
 
 /************************************************************************/
 /* Main Code                                                            */
@@ -184,28 +85,24 @@ int main(int argc, char **argv)
     //Initialize ThorVG Engine
     if (tvg::Initializer::init(threads) == tvg::Result::Success) {
 
-        elm_init(argc, argv);
-
-        Elm_Transit *transit = elm_transit_add();
+        plat_init(argc, argv);
 
         if (tvgEngine == tvg::CanvasEngine::Sw) {
-            auto view = createSwView(1024, 1024);
-            elm_transit_effect_add(transit, transitSwCb, view, nullptr);
+            auto view = createSwView();
+            setAnimatorSw(view);
         } else {
-            auto view = createGlView(1024, 1024);
-            elm_transit_effect_add(transit, transitGlCb, view, nullptr);
+            auto view = createGlView();
+            setAnimatorGl(view);
         }
 
-        elm_transit_duration_set(transit, 2);
-        elm_transit_repeat_times_set(transit, -1);
-        elm_transit_auto_reverse_set(transit, EINA_TRUE);
-        elm_transit_go(transit);
+        auto transit = addAnimatorTransit(2, -1, tvgUpdateCmds, NULL);
+        setAnimatorTransitAutoReverse(transit, true);
 
-        elm_run();
+        plat_run();
 
-        elm_transit_del(transit);
+        delAnimatorTransit(transit);
 
-        elm_shutdown();
+        plat_shutdown();
 
         //Terminate ThorVG Engine
         tvg::Initializer::term();
