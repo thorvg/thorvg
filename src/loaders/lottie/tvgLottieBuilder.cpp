@@ -1191,14 +1191,14 @@ static void _updateMaskings(LottieLayer* layer, float frameNo, LottieExpressions
 
 static bool _updateMatte(LottieLayer* root, LottieLayer* layer, float frameNo, LottieExpressions* exps)
 {
-    auto target = layer->matte.target;
+    auto target = layer->matteTarget;
     if (!target) return true;
 
     _updateLayer(root, target, frameNo, exps);
 
     if (target->scene) {
-        layer->scene->composite(cast(target->scene), layer->matte.type);
-    } else  if (layer->matte.type == CompositeMethod::AlphaMask || layer->matte.type == CompositeMethod::LumaMask) {
+        layer->scene->composite(cast(target->scene), layer->matteType);
+    } else  if (layer->matteType == CompositeMethod::AlphaMask || layer->matteType == CompositeMethod::LumaMask) {
         //matte target is not exist. alpha blending definitely bring an invisible result
         delete(layer->scene);
         layer->scene = nullptr;
@@ -1228,7 +1228,7 @@ static void _updateLayer(LottieLayer* root, LottieLayer* layer, float frameNo, L
 
     layer->scene->transform(layer->cache.matrix);
 
-    if (layer->matte.target && layer->masks.count > 0) TVGERR("LOTTIE", "FIXME: Matte + Masking??");
+    if (layer->matteTarget && layer->masks.count > 0) TVGERR("LOTTIE", "FIXME: Matte + Masking??");
 
     if (!_updateMatte(root, layer, frameNo, exps)) return;
 
@@ -1283,8 +1283,8 @@ static void _bulidHierarchy(LottieGroup* parent, LottieLayer* child)
 {
     if (child->pidx == -1) return;
 
-    if (child->matte.target && child->pidx == child->matte.target->idx) {
-        child->parent = child->matte.target;
+    if (child->matteTarget && child->pidx == child->matteTarget->idx) {
+        child->parent = child->matteTarget;
         return;
     }
 
@@ -1295,8 +1295,8 @@ static void _bulidHierarchy(LottieGroup* parent, LottieLayer* child)
             child->parent = parent;
             break;
         }
-        if (parent->matte.target && parent->matte.target->idx == child->pidx) {
-            child->parent = parent->matte.target;
+        if (parent->matteTarget && parent->matteTarget->idx == child->pidx) {
+            child->parent = parent->matteTarget;
             break;
         }
     }
@@ -1335,25 +1335,25 @@ static bool _buildComposition(LottieComposition* comp, LottieGroup* parent)
         //attach the precomp layer.
         if (child->rid) _buildReference(comp, child);
 
-        if (child->matte.type != CompositeMethod::None) {
+        if (child->matteType != CompositeMethod::None) {
             //no index of the matte layer is provided: the layer above is used as the matte source
             if (child->mid == -1) {
                 if (c > parent->children.begin()) {
-                    child->matte.target = static_cast<LottieLayer*>(*(c - 1));
+                    child->matteTarget = static_cast<LottieLayer*>(*(c - 1));
                 }
             //matte layer is specified by an index.
             } else {
-                if (auto matte = comp->layer(child->mid)) {
-                    child->matte.target = matte;
+                if (auto matte = comp->layerByIdx(child->mid)) {
+                    child->matteTarget = matte;
                 }
             }
         }
 
-        if (child->matte.target) {
+        if (child->matteTarget) {
             //parenting
-            _bulidHierarchy(parent, child->matte.target);
+            _bulidHierarchy(parent, child->matteTarget);
             //precomp referencing
-            if (child->matte.target->rid) _buildReference(comp, child->matte.target);
+            if (child->matteTarget->rid) _buildReference(comp, child->matteTarget);
         }
         _bulidHierarchy(parent, child);
 

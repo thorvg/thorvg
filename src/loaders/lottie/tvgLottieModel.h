@@ -541,19 +541,14 @@ struct LottieLayer : LottieGroup
     void prepare();
     float remap(float frameNo, LottieExpressions* exp);
 
-    struct {
-        CompositeMethod type = CompositeMethod::None;
-        LottieLayer* target = nullptr;
-    } matte;
-
     char* name = nullptr;
-    BlendMethod blendMethod = BlendMethod::Normal;
     LottieLayer* parent = nullptr;
     LottieFloat timeRemap = 0.0f;
     LottieComposition* comp = nullptr;
     LottieTransform* transform = nullptr;
     Array<LottieMask*> masks;
     RGB24 color;  //used by Solid layer
+    LottieLayer* matteTarget = nullptr;
 
     float timeStretch = 1.0f;
     float w = 0.0f, h = 0.0f;
@@ -571,6 +566,8 @@ struct LottieLayer : LottieGroup
         uint8_t opacity;
     } cache;
 
+    CompositeMethod matteType = CompositeMethod::None;
+    BlendMethod blendMethod = BlendMethod::Normal;
     Type type = Null;
     bool autoOrient = false;
     bool matteSrc = false;
