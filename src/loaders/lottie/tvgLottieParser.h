@@ -94,6 +94,7 @@ private:
     LottieFont* parseFont();
     LottieMarker* parseMarker();
 
+    bool parseCommon(LottieObject* obj, const char* key);
     void parseObject(Array<LottieObject*>& parent);
     void parseShapes(Array<LottieObject*>& parent);
     void parseText(Array<LottieObject*>& parent);
