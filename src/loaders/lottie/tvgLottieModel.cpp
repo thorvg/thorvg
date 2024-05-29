@@ -344,11 +344,8 @@ void LottieGroup::prepare(LottieObject::Type type)
 
 LottieLayer::~LottieLayer()
 {
-    if (refId) {
-        //No need to free assets children because the Composition owns them.
-        children.clear();
-        free(refId);
-    }
+    //No need to free assets children because the Composition owns them.
+    if (rid) children.clear();
 
     for (auto m = masks.begin(); m < masks.end(); ++m) {
         delete(*m);
@@ -356,6 +353,7 @@ LottieLayer::~LottieLayer()
 
     matte.target = nullptr;
     delete(transform);
+    free(name);
 }
 
 void LottieLayer::prepare()
