@@ -1216,7 +1216,7 @@ LottieLayer* LottieParser::parseLayer()
         else if (KEY_AS("w") || KEY_AS("sw")) getLayerSize(layer->w);
         else if (KEY_AS("h") || KEY_AS("sh")) getLayerSize(layer->h);
         else if (KEY_AS("sc")) layer->color = getColor(getString());
-        else if (KEY_AS("tt")) layer->matte.type = getMatteType();
+        else if (KEY_AS("tt")) layer->matteType = getMatteType();
         else if (KEY_AS("tp")) layer->mid = getInt();
         else if (KEY_AS("masksProperties")) parseMasks(layer);
         else if (KEY_AS("hd")) layer->hidden = getBool();
