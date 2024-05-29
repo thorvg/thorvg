@@ -1281,9 +1281,9 @@ static void _buildReference(LottieComposition* comp, LottieLayer* layer)
 
 static void _bulidHierarchy(LottieGroup* parent, LottieLayer* child)
 {
-    if (child->pid == -1) return;
+    if (child->pidx == -1) return;
 
-    if (child->matte.target && child->pid == child->matte.target->id) {
+    if (child->matte.target && child->pidx == child->matte.target->idx) {
         child->parent = child->matte.target;
         return;
     }
@@ -1291,11 +1291,11 @@ static void _bulidHierarchy(LottieGroup* parent, LottieLayer* child)
     for (auto p = parent->children.begin(); p < parent->children.end(); ++p) {
         auto parent = static_cast<LottieLayer*>(*p);
         if (child == parent) continue;
-        if (child->pid == parent->id) {
+        if (child->pidx == parent->idx) {
             child->parent = parent;
             break;
         }
-        if (parent->matte.target && parent->matte.target->id == child->pid) {
+        if (parent->matte.target && parent->matte.target->idx == child->pidx) {
             child->parent = parent->matte.target;
             break;
         }
