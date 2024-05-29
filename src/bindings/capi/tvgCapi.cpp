@@ -139,6 +139,13 @@ TVG_API Tvg_Result tvg_canvas_sync(Tvg_Canvas* canvas)
 }
 
 
+TVG_API Tvg_Result tvg_canvas_set_viewport(Tvg_Canvas* canvas, int32_t x, int32_t y, int32_t w, int32_t h)
+{
+    if (!canvas) return TVG_RESULT_INVALID_ARGUMENT;
+    return (Tvg_Result) reinterpret_cast<Canvas*>(canvas)->viewport(x, y, w, h);
+}
+
+
 /************************************************************************/
 /* Paint API                                                            */
 /************************************************************************/

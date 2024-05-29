@@ -217,7 +217,7 @@ static void _copy(PathSet* pathset, Array<Point>& outPts, Matrix* transform)
     if (transform) {
         for (int i = 0; i < pathset->ptsCnt; ++i) {
             Point pt = pathset->pts[i];
-            mathMultiply(&pt, transform);
+            pt *= *transform;
             outPts.push(pt);
         }
     } else {
@@ -306,8 +306,9 @@ static bool _modifier(Point* inputPts, uint32_t inputPtsCnt, PathCommand* inputC
         }
     }
     if (transform) {
-        for (auto i = ptsCnt; i < pts.count; ++i)
-            mathTransform(transform, &pts[i]);
+        for (auto i = ptsCnt; i < pts.count; ++i) {
+            pts[i] *= *transform;
+        }
     }
     return true;
 }
@@ -543,7 +544,10 @@ struct LottiePathSet : LottieProperty
         else {
             frame = frames->data + _bsearch(frames, frameNo);
             if (mathEqual(frame->no, frameNo)) path = &frame->value;
-            else {
+            else if (frame->value.ptsCnt != (frame + 1)->value.ptsCnt) {
+                path = &frame->value;
+                TVGLOG("LOTTIE", "Different numbers of points in consecutive frames - interpolation omitted.");
+            } else {
                 t = (frameNo - frame->no) / ((frame + 1)->no - frame->no);
                 if (frame->interpolator) t = frame->interpolator->progress(t);
                 if (frame->hold) path = &(frame + ((t < 1.0f) ? 0 : 1))->value;
@@ -566,7 +570,7 @@ struct LottiePathSet : LottieProperty
             auto p = interpPts;
             for (auto i = 0; i < frame->value.ptsCnt; ++i, ++s, ++e, ++p) {
                 *p = mathLerp(*s, *e, t);
-                if (transform) mathMultiply(p, transform);
+                if (transform) *p *= *transform;
             }
             _modifier(interpPts, frame->value.ptsCnt, frame->value.cmds, frame->value.cmdsCnt, cmds, pts, nullptr, roundness);
             free(interpPts);
@@ -574,7 +578,7 @@ struct LottiePathSet : LottieProperty
         } else {
             for (auto i = 0; i < frame->value.ptsCnt; ++i, ++s, ++e) {
                 auto pt = mathLerp(*s, *e, t);
-                if (transform) mathMultiply(&pt, transform);
+                if (transform) pt *= *transform;
                 pts.push(pt);
             }
             _copy(&frame->value, cmds);

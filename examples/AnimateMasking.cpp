@@ -83,6 +83,7 @@ void tvgUpdateCmds(void* data, void* obj, double progress)
     pMaskShape->translate(0 , progress * 300 - 100);
     pMask->translate(0 , progress * 300 - 100);
 
+
     getCanvas()->update();
     setUpdate(true);
 }

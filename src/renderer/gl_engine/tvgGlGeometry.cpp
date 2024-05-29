@@ -268,10 +268,10 @@ RenderRegion GlGeometry::getBounds() const
         Point rt{static_cast<float>(mBounds.x + mBounds.w), static_cast<float>(mBounds.y)};
         Point rb{static_cast<float>(mBounds.x + mBounds.w), static_cast<float>(mBounds.y + mBounds.h)};
 
-        mathMultiply(&lt, &mMatrix);
-        mathMultiply(&lb, &mMatrix);
-        mathMultiply(&rt, &mMatrix);
-        mathMultiply(&rb, &mMatrix);
+        lt *= mMatrix;
+        lb *= mMatrix;
+        rt *= mMatrix;
+        rb *= mMatrix;
 
         float left = min(min(lt.x, lb.x), min(rt.x, rb.x));
         float top = min(min(lt.y, lb.y), min(rt.y, rb.y));
