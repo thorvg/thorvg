@@ -850,10 +850,12 @@ LottieRepeater* LottieParser::parseRepeater()
 }
 
 
-LottieObject* LottieParser::parseObject()
+LottieObject* LottieParser::parseObject(const char* type)
 {
-    auto type = getString();
-    if (!type) return nullptr;
+    if (!type) {
+        type = getString();
+        if (!type) return nullptr;
+    }
 
     if (!strcmp(type, "gr")) return parseGroup();
     else if (!strcmp(type, "rc")) return parseRect();
@@ -880,6 +882,23 @@ LottieObject* LottieParser::parseObject()
 void LottieParser::parseObject(Array<LottieObject*>& parent)
 {
     enterObject();
+
+    //object type key is not listed as the first one
+    auto value = peekValue();
+    if (value && strcmp(value->GetString(), "ty")) {
+        if (auto type = findObjectType()) {
+            if (auto child = parseObject(type)) {
+                if (child->hidden) delete (child);
+                else parent.push(child);
+            } else {
+                //skip unsupported type
+                while (auto key = nextObjectKey()) skip(key);
+            }
+            free(type);
+            return;
+        }
+    }
+    //object type key either listed as the first one or never - skip the entire object
     while (auto key = nextObjectKey()) {
         if (KEY_AS("ty")) {
             if (auto child = parseObject()) {
@@ -1084,20 +1103,7 @@ uint8_t LottieParser::getDirection()
 void LottieParser::parseShapes(Array<LottieObject*>& parent)
 {
     enterArray();
-    while (nextArrayValue()) {
-        enterObject();
-        while (auto key = nextObjectKey()) {
-            if (KEY_AS("it")) {
-                enterArray();
-                while (nextArrayValue()) parseObject(parent);
-            } else if (KEY_AS("ty")) {
-                if (auto child = parseObject()) {
-                    if (child->hidden) delete(child);
-                    else parent.push(child);
-                }
-            } else skip(key);
-        }
-     }
+    while (nextArrayValue()) parseObject(parent);
 }
 
 
