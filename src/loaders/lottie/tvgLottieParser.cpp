@@ -51,11 +51,11 @@ static LottieExpression* _expression(char* code, LottieComposition* comp, Lottie
 }
 
 
-static char* _int2str(int num)
+static unsigned long _int2str(int num)
 {
     char str[20];
     snprintf(str, 20, "%d", num);
-    return strdup(str);
+    return djb2Encode(str);
 }
 
 
@@ -515,7 +515,7 @@ void LottieParser::parseProperty(T& prop, LottieObject* obj)
 bool LottieParser::parseCommon(LottieObject* obj, const char* key)
 {
     if (KEY_AS("nm")) {
-        obj->name = getStringCopy();
+        obj->id = djb2Encode(getString());
         return true;
     } else if (KEY_AS("hd")) {
         obj->hidden = getBool();
@@ -921,7 +921,7 @@ LottieObject* LottieParser::parseAsset()
     enterObject();
 
     LottieObject* obj = nullptr;
-    char *id = nullptr;
+    unsigned long id = 0;
 
     //Used for Image Asset
     const char* data = nullptr;
@@ -932,7 +932,7 @@ LottieObject* LottieParser::parseAsset()
         if (KEY_AS("id"))
         {
             if (peekType() == kStringType) {
-                id = getStringCopy();
+                id = djb2Encode(getString());
             } else {
                 id = _int2str(getInt());
             }
@@ -944,8 +944,7 @@ LottieObject* LottieParser::parseAsset()
         else skip(key);
     }
     if (data) obj = parseImage(data, subPath, embedded);
-    if (obj) obj->name = id;
-    else free(id);
+    if (obj) obj->id = id;
     return obj;
 }
 
@@ -1192,10 +1191,14 @@ LottieLayer* LottieParser::parseLayer()
     enterObject();
 
     while (auto key = nextObjectKey()) {
-        if (KEY_AS("ddd")) ddd = getInt();  //3d layer
+        if (KEY_AS("nm"))
+        {
+            layer->name = getStringCopy();
+            layer->id = djb2Encode(layer->name);
+        }
+        else if (KEY_AS("ddd")) ddd = getInt();  //3d layer
         else if (KEY_AS("ind")) layer->idx = getInt();
         else if (KEY_AS("ty")) layer->type = (LottieLayer::Type) getInt();
-        else if (KEY_AS("nm")) layer->name = getStringCopy();
         else if (KEY_AS("sr")) layer->timeStretch = getFloat();
         else if (KEY_AS("ks"))
         {
@@ -1217,7 +1220,7 @@ LottieLayer* LottieParser::parseLayer()
         else if (KEY_AS("tp")) layer->mid = getInt();
         else if (KEY_AS("masksProperties")) parseMasks(layer);
         else if (KEY_AS("hd")) layer->hidden = getBool();
-        else if (KEY_AS("refId")) layer->refId = getStringCopy();
+        else if (KEY_AS("refId")) layer->rid = djb2Encode(getString());
         else if (KEY_AS("td")) layer->matteSrc = getInt();      //used for matte layer
         else if (KEY_AS("t")) parseText(layer->children);
         else if (KEY_AS("ef"))

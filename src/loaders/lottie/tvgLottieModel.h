@@ -110,7 +110,6 @@ struct LottieObject
 
     virtual ~LottieObject()
     {
-        free(name);
     }
 
     virtual void override(LottieProperty* prop)
@@ -120,7 +119,7 @@ struct LottieObject
 
     virtual bool mergeable() { return false; }
 
-    char* name = nullptr;
+    unsigned long id = 0;
     Type type;
     bool hidden = false;       //remove?
 };
@@ -500,16 +499,16 @@ struct LottieGroup : LottieObject
     void prepare(LottieObject::Type type = LottieObject::Group);
     bool mergeable() override { return allowMerge; }
 
-    LottieObject* content(const char* id)
+    LottieObject* content(unsigned long id)
     {
-        if (name && !strcmp(name, id)) return this;
+        if (this->id == id) return this;
 
         //source has children, find recursively.
         for (auto c = children.begin(); c < children.end(); ++c) {
             auto child = *c;
             if (child->type == LottieObject::Type::Group || child->type == LottieObject::Type::Layer) {
                 if (auto ret = static_cast<LottieGroup*>(child)->content(id)) return ret;
-            } else if (child->name && !strcmp(child->name, id)) return child;
+            } else if (child->id == id) return child;
         }
         return nullptr;
     }
@@ -547,6 +546,7 @@ struct LottieLayer : LottieGroup
         LottieLayer* target = nullptr;
     } matte;
 
+    char* name = nullptr;
     BlendMethod blendMethod = BlendMethod::Normal;
     LottieLayer* parent = nullptr;
     LottieFloat timeRemap = 0.0f;
@@ -560,12 +560,11 @@ struct LottieLayer : LottieGroup
     float inFrame = 0.0f;
     float outFrame = 0.0f;
     float startFrame = 0.0f;
-    char* refId = nullptr;      //pre-composition reference.
+    unsigned long rid = 0;      //pre-composition reference id.
     int16_t mid = -1;           //id of the matte layer.
     int16_t pidx = -1;          //index of the parent layer.
     int16_t idx = -1;           //index of the current layer.
 
-    //cached data
     struct {
         float frameNo = -1.0f;
         Matrix matrix;
@@ -635,16 +634,16 @@ struct LottieComposition
         return endFrame - startFrame;
     }
 
-    LottieLayer* layer(const char* name)
+    LottieLayer* layerById(unsigned long id)
     {
         for (auto child = root->children.begin(); child < root->children.end(); ++child) {
             auto layer = static_cast<LottieLayer*>(*child);
-            if (layer->name && !strcmp(layer->name, name)) return layer;
+            if (layer->id == id) return layer;
         }
         return nullptr;
     }
 
-    LottieLayer* layer(int16_t idx)
+    LottieLayer* layerByIdx(int16_t idx)
     {
         for (auto child = root->children.begin(); child < root->children.end(); ++child) {
             auto layer = static_cast<LottieLayer*>(*child);
@@ -653,11 +652,11 @@ struct LottieComposition
         return nullptr;
     }
 
-    LottieLayer* asset(const char* name)
+    LottieLayer* asset(unsigned long id)
     {
         for (auto asset = assets.begin(); asset < assets.end(); ++asset) {
             auto layer = static_cast<LottieLayer*>(*asset);
-            if (layer->name && !strcmp(layer->name, name)) return layer;
+            if (layer->id == id) return layer;
         }
         return nullptr;
     }

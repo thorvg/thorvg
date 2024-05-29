@@ -22,6 +22,7 @@
 
 
 #include "tvgMath.h"
+#include "tvgCompressor.h"
 #include "tvgLottieModel.h"
 #include "tvgLottieExpressions.h"
 
@@ -73,6 +74,15 @@ static char* _name(jerry_value_t args)
     name[len] = '\0';
     jerry_value_free(arg0);
     return (char*) name;
+}
+
+
+static unsigned long _idByName(jerry_value_t args)
+{
+    auto name = _name(args);
+    auto id = djb2Encode(name);
+    free(name);
+    return id;
 }
 
 
@@ -537,11 +547,9 @@ static jerry_value_t _fromCompToSurface(const jerry_call_info_t* info, const jer
 
 static jerry_value_t _content(const jerry_call_info_t* info, const jerry_value_t args[], const jerry_length_t argsCnt)
 {
-    auto name = _name(args[0]);
     auto data = static_cast<ExpContent*>(jerry_object_get_native_ptr(info->function, &freeCb));
     auto group = static_cast<LottieGroup*>(data->obj);
-    auto target = group->content((char*)name);
-    free(name);
+    auto target = group->content(_idByName(args[0]));
     if (!target) return jerry_undefined();
 
     //find the a path property(sh) in the group layer?
@@ -598,13 +606,11 @@ static jerry_value_t _layer(const jerry_call_info_t* info, const jerry_value_t a
     //layer index
     if (jerry_value_is_number(args[0])) {
         auto idx = (uint16_t)jerry_value_as_int32(args[0]);
-        layer = comp->layer(idx);
+        layer = comp->layerByIdx(idx);
         jerry_value_free(idx);
     //layer name
     } else {
-        auto name = _name(args[0]);
-        layer = comp->layer((char*)name);
-        free(name);
+        layer = comp->layerById(_idByName(args[0]));
     }
 
     if (!layer) return jerry_undefined();
@@ -998,17 +1004,7 @@ static void _buildProperty(float frameNo, jerry_value_t context, LottieExpressio
 static jerry_value_t _comp(const jerry_call_info_t* info, const jerry_value_t args[], const jerry_length_t argsCnt)
 {
     auto comp = static_cast<LottieComposition*>(jerry_object_get_native_ptr(info->function, nullptr));
-    LottieLayer* layer;
-
-    auto arg0 = jerry_value_to_string(args[0]);
-    auto len = jerry_string_length(arg0);
-    auto name = (jerry_char_t*)alloca(len * sizeof(jerry_char_t) + 1);
-    jerry_string_to_buffer(arg0, JERRY_ENCODING_UTF8, name, len);
-    name[len] = '\0';
-
-    jerry_value_free(arg0);
-
-    layer = comp->asset((char*)name);
+    auto layer = comp->asset(_idByName(args[0]));
 
     if (!layer) return jerry_undefined();
 

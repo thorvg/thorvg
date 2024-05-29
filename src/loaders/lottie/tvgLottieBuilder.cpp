@@ -1264,7 +1264,7 @@ static void _updateLayer(LottieLayer* root, LottieLayer* layer, float frameNo, L
 static void _buildReference(LottieComposition* comp, LottieLayer* layer)
 {
     for (auto asset = comp->assets.begin(); asset < comp->assets.end(); ++asset) {
-        if (strcmp(layer->refId, (*asset)->name)) continue;
+        if (layer->rid != (*asset)->id) continue;
         if (layer->type == LottieLayer::Precomp) {
             auto assetLayer = static_cast<LottieLayer*>(*asset);
             if (_buildComposition(comp, assetLayer)) {
@@ -1333,7 +1333,7 @@ static bool _buildComposition(LottieComposition* comp, LottieGroup* parent)
         auto child = static_cast<LottieLayer*>(*c);
 
         //attach the precomp layer.
-        if (child->refId) _buildReference(comp, child);
+        if (child->rid) _buildReference(comp, child);
 
         if (child->matte.type != CompositeMethod::None) {
             //no index of the matte layer is provided: the layer above is used as the matte source
@@ -1353,7 +1353,7 @@ static bool _buildComposition(LottieComposition* comp, LottieGroup* parent)
             //parenting
             _bulidHierarchy(parent, child->matte.target);
             //precomp referencing
-            if (child->matte.target->refId) _buildReference(comp, child->matte.target);
+            if (child->matte.target->rid) _buildReference(comp, child->matte.target);
         }
         _bulidHierarchy(parent, child);
 
