@@ -130,7 +130,7 @@ static void _buildLayer(jerry_value_t context, LottieLayer* layer, LottieComposi
     jerry_object_set_sz(context, EXP_HEIGHT, height);
     jerry_value_free(height);
 
-    auto index = jerry_number(layer->id);
+    auto index = jerry_number(layer->idx);
     jerry_object_set_sz(context, EXP_INDEX, index);
     jerry_value_free(index);
 

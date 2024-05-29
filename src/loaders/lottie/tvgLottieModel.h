@@ -562,8 +562,8 @@ struct LottieLayer : LottieGroup
     float startFrame = 0.0f;
     char* refId = nullptr;      //pre-composition reference.
     int16_t mid = -1;           //id of the matte layer.
-    int16_t pid = -1;           //id of the parent layer.
-    int16_t id = -1;            //id of the current layer.
+    int16_t pidx = -1;          //index of the parent layer.
+    int16_t idx = -1;           //index of the current layer.
 
     //cached data
     struct {
@@ -644,11 +644,11 @@ struct LottieComposition
         return nullptr;
     }
 
-    LottieLayer* layer(int16_t id)
+    LottieLayer* layer(int16_t idx)
     {
         for (auto child = root->children.begin(); child < root->children.end(); ++child) {
             auto layer = static_cast<LottieLayer*>(*child);
-            if (layer->id == id) return layer;
+            if (layer->idx == idx) return layer;
         }
         return nullptr;
     }
