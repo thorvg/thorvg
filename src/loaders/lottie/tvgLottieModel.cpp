@@ -121,11 +121,11 @@ LottieImage::~LottieImage()
 
 void LottieTrimpath::segment(float frameNo, float& start, float& end, LottieExpressions* exps)
 {
-    auto s = this->start(frameNo, exps) * 0.01f;
-    auto e = this->end(frameNo, exps) * 0.01f;
+    start = this->start(frameNo, exps) * 0.01f;
+    end = this->end(frameNo, exps) * 0.01f;
     auto o = fmodf(this->offset(frameNo, exps), 360.0f) / 360.0f;  //0 ~ 1
 
-    auto diff = fabs(s - e);
+    auto diff = fabs(start - end);
     if (mathZero(diff)) {
         start = 0.0f;
         end = 0.0f;
@@ -137,28 +137,8 @@ void LottieTrimpath::segment(float frameNo, float& start, float& end, LottieExpr
         return;
     }
 
-    s += o;
-    e += o;
-
-    auto loop = true;
-
-    //no loop
-    if (s > 1.0f && e > 1.0f) loop = false;
-    if (s < 0.0f && e < 0.0f) loop = false;
-    if (s >= 0.0f && s <= 1.0f && e >= 0.0f  && e <= 1.0f) loop = false;
-
-    if (s > 1.0f) s -= 1.0f;
-    if (s < 0.0f) s += 1.0f;
-    if (e > 1.0f) e -= 1.0f;
-    if (e < 0.0f) e += 1.0f;
-
-    if (loop) {
-        start = s > e ? s : e;
-        end = s < e ? s : e;
-    } else {
-        start = s < e ? s : e;
-        end = s > e ? s : e;
-    }
+    start += o;
+    end += o;
 }
 
 
