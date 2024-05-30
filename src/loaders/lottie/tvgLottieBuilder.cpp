@@ -527,7 +527,7 @@ static void _updateRect(LottieGroup* parent, LottieObject** child, float frameNo
 }
 
 
-static void _appendCircle(Shape* shape, float cx, float cy, float rx, float ry, Matrix* transform)
+static void _appendCircle(Shape* shape, float cx, float cy, float rx, float ry, float direction, Matrix* transform)
 {
     auto rxKappa = rx * PATH_KAPPA;
     auto ryKappa = ry * PATH_KAPPA;
@@ -539,13 +539,21 @@ static void _appendCircle(Shape* shape, float cx, float cy, float rx, float ry, 
     };
 
     constexpr int ptsCnt = 13;
-    Point points[ptsCnt] = {
-        {cx, cy - ry}, //moveTo
-        {cx + rxKappa, cy - ry}, {cx + rx, cy - ryKappa}, {cx + rx, cy}, //cubicTo
-        {cx + rx, cy + ryKappa}, {cx + rxKappa, cy + ry}, {cx, cy + ry}, //cubicTo
-        {cx - rxKappa, cy + ry}, {cx - rx, cy + ryKappa}, {cx - rx, cy}, //cubicTo
-        {cx - rx, cy - ryKappa}, {cx - rxKappa, cy - ry}, {cx, cy - ry}  //cubicTo
-    };
+    Point points[ptsCnt];
+
+    if (direction > 0) {
+        points[0] = {cx, cy - ry}; //moveTo
+        points[1] = {cx + rxKappa, cy - ry}; points[2] = {cx + rx, cy - ryKappa}; points[3] = {cx + rx, cy}; //cubicTo
+        points[4] = {cx + rx, cy + ryKappa}; points[5] = {cx + rxKappa, cy + ry}; points[6] = {cx, cy + ry}; //cubicTo
+        points[7] = {cx - rxKappa, cy + ry}; points[8] = {cx - rx, cy + ryKappa}; points[9] = {cx - rx, cy}; //cubicTo
+        points[10] = {cx - rx, cy - ryKappa}; points[11] = {cx - rxKappa, cy - ry}; points[12] = {cx, cy - ry}; //cubicTo
+    } else {
+        points[0] = {cx, cy - ry}; //moveTo
+        points[1] = {cx - rxKappa, cy - ry}; points[2] = {cx - rx, cy - ryKappa}; points[3] = {cx - rx, cy}; //cubicTo
+        points[4] = {cx - rx, cy + ryKappa}; points[5] = {cx - rxKappa, cy + ry}; points[6] = {cx, cy + ry}; //cubicTo
+        points[7] = {cx + rxKappa, cy + ry}; points[8] = {cx + rx, cy + ryKappa}; points[9] = {cx + rx, cy}; //cubicTo
+        points[10] = {cx + rx, cy - ryKappa}; points[11] = {cx + rxKappa, cy - ry}; points[12] = {cx, cy - ry}; //cubicTo
+    }
 
     if (transform) {
         for (int i = 0; i < ptsCnt; ++i) {
@@ -563,14 +571,15 @@ static void _updateEllipse(LottieGroup* parent, LottieObject** child, float fram
 
     auto position = ellipse->position(frameNo, exps);
     auto size = ellipse->size(frameNo, exps);
+    auto direction = (ellipse->direction == 0) ? 1.0f : -1.0f;
 
     if (!ctx->repeaters.empty()) {
         auto path = Shape::gen();
-        _appendCircle(path.get(), position.x, position.y, size.x * 0.5f, size.y * 0.5f, ctx->transform);
+        _appendCircle(path.get(), position.x, position.y, size.x * 0.5f, size.y * 0.5f, direction, ctx->transform);
         _repeat(parent, std::move(path), ctx);
     } else {
         auto merging = _draw(parent, ctx);
-        _appendCircle(merging, position.x, position.y, size.x * 0.5f, size.y * 0.5f, ctx->transform);
+        _appendCircle(merging, position.x, position.y, size.x * 0.5f, size.y * 0.5f, direction, ctx->transform);
     }
 }
 
