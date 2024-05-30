@@ -216,21 +216,50 @@ struct Shape::Impl
         return true;
     }
 
-    bool strokeTrim(float begin, float end, bool individual)
+    void strokeTrim(float begin, float end, bool simultaneous)
     {
         if (!rs.stroke) {
-            if (begin == 0.0f && end == 1.0f) return true;
+            if (begin == 0.0f && end == 1.0f) return;
             rs.stroke = new RenderStroke();
         }
 
-        if (mathEqual(rs.stroke->trim.begin, begin) && mathEqual(rs.stroke->trim.end, end)) return true;
+        if (mathEqual(rs.stroke->trim.begin, begin) && mathEqual(rs.stroke->trim.end, end) &&
+            rs.stroke->trim.simultaneous == simultaneous) return;
+
+        auto loop = true;
+
+        if (begin > 1.0f && end > 1.0f) loop = false;
+        if (begin < 0.0f && end < 0.0f) loop = false;
+        if (begin >= 0.0f && begin <= 1.0f && end >= 0.0f  && end <= 1.0f) loop = false;
+
+        if (begin > 1.0f) begin -= 1.0f;
+        if (begin < 0.0f) begin += 1.0f;
+        if (end > 1.0f) end -= 1.0f;
+        if (end < 0.0f) end += 1.0f;
+
+        if ((loop && begin < end) || (!loop && begin > end)) {
+            auto tmp = begin;
+            begin = end;
+            end = tmp;
+        }
 
         rs.stroke->trim.begin = begin;
         rs.stroke->trim.end = end;
-        rs.stroke->trim.individual = individual;
+        rs.stroke->trim.simultaneous = simultaneous;
         flag |= RenderUpdateFlag::Stroke;
+    }
 
-        return true;
+    bool strokeTrim(float* begin, float* end)
+    {
+        if (rs.stroke) {
+            if (begin) *begin = rs.stroke->trim.begin;
+            if (end) *end = rs.stroke->trim.end;
+            return rs.stroke->trim.simultaneous;
+        } else {
+            if (begin) *begin = 0.0f;
+            if (end) *end = 1.0f;
+            return false;
+        }
     }
 
     bool strokeCap(StrokeCap cap)
