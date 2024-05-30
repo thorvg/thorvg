@@ -110,7 +110,6 @@ struct LottieObject
 
     virtual ~LottieObject()
     {
-        free(name);
     }
 
     virtual void override(LottieProperty* prop)
@@ -120,7 +119,7 @@ struct LottieObject
 
     virtual bool mergeable() { return false; }
 
-    char* name = nullptr;
+    unsigned long id = 0;
     Type type;
     bool hidden = false;       //remove?
 };
@@ -500,16 +499,16 @@ struct LottieGroup : LottieObject
     void prepare(LottieObject::Type type = LottieObject::Group);
     bool mergeable() override { return allowMerge; }
 
-    LottieObject* content(const char* id)
+    LottieObject* content(unsigned long id)
     {
-        if (name && !strcmp(name, id)) return this;
+        if (this->id == id) return this;
 
         //source has children, find recursively.
         for (auto c = children.begin(); c < children.end(); ++c) {
             auto child = *c;
             if (child->type == LottieObject::Type::Group || child->type == LottieObject::Type::Layer) {
                 if (auto ret = static_cast<LottieGroup*>(child)->content(id)) return ret;
-            } else if (child->name && !strcmp(child->name, id)) return child;
+            } else if (child->id == id) return child;
         }
         return nullptr;
     }
@@ -542,36 +541,33 @@ struct LottieLayer : LottieGroup
     void prepare();
     float remap(float frameNo, LottieExpressions* exp);
 
-    struct {
-        CompositeMethod type = CompositeMethod::None;
-        LottieLayer* target = nullptr;
-    } matte;
-
-    BlendMethod blendMethod = BlendMethod::Normal;
+    char* name = nullptr;
     LottieLayer* parent = nullptr;
     LottieFloat timeRemap = 0.0f;
     LottieComposition* comp = nullptr;
     LottieTransform* transform = nullptr;
     Array<LottieMask*> masks;
     RGB24 color;  //used by Solid layer
+    LottieLayer* matteTarget = nullptr;
 
     float timeStretch = 1.0f;
     float w = 0.0f, h = 0.0f;
     float inFrame = 0.0f;
     float outFrame = 0.0f;
     float startFrame = 0.0f;
-    char* refId = nullptr;      //pre-composition reference.
+    unsigned long rid = 0;      //pre-composition reference id.
     int16_t mid = -1;           //id of the matte layer.
-    int16_t pid = -1;           //id of the parent layer.
-    int16_t id = -1;            //id of the current layer.
+    int16_t pidx = -1;          //index of the parent layer.
+    int16_t idx = -1;           //index of the current layer.
 
-    //cached data
     struct {
         float frameNo = -1.0f;
         Matrix matrix;
         uint8_t opacity;
     } cache;
 
+    CompositeMethod matteType = CompositeMethod::None;
+    BlendMethod blendMethod = BlendMethod::Normal;
     Type type = Null;
     bool autoOrient = false;
     bool matteSrc = false;
@@ -635,16 +631,7 @@ struct LottieComposition
         return endFrame - startFrame;
     }
 
-    LottieLayer* layer(const char* name)
-    {
-        for (auto child = root->children.begin(); child < root->children.end(); ++child) {
-            auto layer = static_cast<LottieLayer*>(*child);
-            if (layer->name && !strcmp(layer->name, name)) return layer;
-        }
-        return nullptr;
-    }
-
-    LottieLayer* layer(int16_t id)
+    LottieLayer* layerById(unsigned long id)
     {
         for (auto child = root->children.begin(); child < root->children.end(); ++child) {
             auto layer = static_cast<LottieLayer*>(*child);
@@ -653,11 +640,20 @@ struct LottieComposition
         return nullptr;
     }
 
-    LottieLayer* asset(const char* name)
+    LottieLayer* layerByIdx(int16_t idx)
+    {
+        for (auto child = root->children.begin(); child < root->children.end(); ++child) {
+            auto layer = static_cast<LottieLayer*>(*child);
+            if (layer->idx == idx) return layer;
+        }
+        return nullptr;
+    }
+
+    LottieLayer* asset(unsigned long id)
     {
         for (auto asset = assets.begin(); asset < assets.end(); ++asset) {
             auto layer = static_cast<LottieLayer*>(*asset);
-            if (layer->name && !strcmp(layer->name, name)) return layer;
+            if (layer->id == id) return layer;
         }
         return nullptr;
     }
