@@ -203,6 +203,17 @@ TEST_CASE("Stroking", "[tvgShape]")
     REQUIRE(shape->strokeMiterlimit() == 1000.0f);
     REQUIRE(shape->strokeMiterlimit(-0.001f) == Result::NonSupport);
 
+    //Stroke Trim
+    float begin, end;
+    REQUIRE(shape->strokeTrim(&begin, &end) == true);
+    REQUIRE(begin == Approx(0.0).margin(0.000001));
+    REQUIRE(end == Approx(1.0).margin(0.000001));
+
+    REQUIRE(shape->strokeTrim(0.3, 0.88, false) == Result::Success);
+    REQUIRE(shape->strokeTrim(&begin, &end) == false);
+    REQUIRE(begin == Approx(0.3).margin(0.000001));
+    REQUIRE(end == Approx(0.88).margin(0.000001));
+
     //Stroke Order After Stroke Setting
     REQUIRE(shape->order(true) == Result::Success);
     REQUIRE(shape->order(false) == Result::Success);
