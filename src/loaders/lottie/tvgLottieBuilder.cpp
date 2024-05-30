@@ -40,6 +40,7 @@
 struct RenderRepeater
 {
     int cnt;
+    Matrix transform;
     float offset;
     Point position;
     Point anchor;
@@ -59,7 +60,7 @@ struct RenderContext
     Shape* propagator = nullptr;
     Shape* merging = nullptr;  //merging shapes if possible (if shapes have same properties)
     LottieObject** begin = nullptr; //iteration entry point
-    RenderRepeater* repeater = nullptr;
+    Array<RenderRepeater> repeaters;
     Matrix* transform = nullptr;
     float roundness = 0.0f;
     bool fragmenting = false;  //render context has been fragmented by filling
@@ -74,7 +75,6 @@ struct RenderContext
     ~RenderContext()
     {
         if (ownPropagator) delete(propagator);
-        delete(repeater);
         free(transform);
     }
 
@@ -88,9 +88,8 @@ struct RenderContext
             propagator = static_cast<Shape*>(rhs.propagator->duplicate());
         }
 
-        if (rhs.repeater) {
-            repeater = new RenderRepeater();
-            *repeater = *rhs.repeater;
+        for (auto repeater = rhs.repeaters.begin(); repeater < rhs.repeaters.end(); ++repeater) {
+            repeaters.push(*repeater);
         }
         roundness = rhs.roundness;
     }
@@ -392,46 +391,59 @@ static Shape* _draw(LottieGroup* parent, RenderContext* ctx)
 //OPTIMIZE: path?
 static void _repeat(LottieGroup* parent, unique_ptr<Shape> path, RenderContext* ctx)
 {
-    auto repeater = ctx->repeater;
+    Array<Shape*> propagators;
+    propagators.push(ctx->propagator);
+    Array<Shape*> shapes;
 
-    Array<Shape*> shapes(repeater->cnt);
+    for (auto repeater = ctx->repeaters.end() - 1; repeater >= ctx->repeaters.begin(); --repeater) {
+        shapes.reserve(repeater->cnt);
 
-    for (int i = 0; i < repeater->cnt; ++i) {
-        auto multiplier = repeater->offset + static_cast<float>(i);
+        for (int i = 0; i < repeater->cnt; ++i) {
+            auto multiplier = repeater->offset + static_cast<float>(i);
 
-        auto shape = static_cast<Shape*>(ctx->propagator->duplicate());
-        P(shape)->rs.path = P(path.get())->rs.path;
+            for (auto propagator = propagators.begin(); propagator < propagators.end(); ++propagator) {
+                auto shape = static_cast<Shape*>((*propagator)->duplicate());
+                P(shape)->rs.path = P(path.get())->rs.path;
 
-        auto opacity = repeater->interpOpacity ? mathLerp<uint8_t>(repeater->startOpacity, repeater->endOpacity, static_cast<float>(i + 1) / repeater->cnt) : repeater->startOpacity;
-        shape->opacity(opacity);
+                auto opacity = repeater->interpOpacity ? mathLerp<uint8_t>(repeater->startOpacity, repeater->endOpacity, static_cast<float>(i + 1) / repeater->cnt) : repeater->startOpacity;
+                shape->opacity(opacity);
 
-        Matrix m;
-        mathIdentity(&m);
-        mathTranslate(&m, repeater->position.x * multiplier + repeater->anchor.x, repeater->position.y * multiplier + repeater->anchor.y);
-        mathScale(&m, powf(repeater->scale.x * 0.01f, multiplier), powf(repeater->scale.y * 0.01f, multiplier));
-        mathRotate(&m, repeater->rotation * multiplier);
-        mathTranslateR(&m, -repeater->anchor.x, -repeater->anchor.y);
+                Matrix m;
+                mathIdentity(&m);
+                mathTranslate(&m, repeater->position.x * multiplier + repeater->anchor.x, repeater->position.y * multiplier + repeater->anchor.y);
+                mathScale(&m, powf(repeater->scale.x * 0.01f, multiplier), powf(repeater->scale.y * 0.01f, multiplier));
+                mathRotate(&m, repeater->rotation * multiplier);
+                mathTranslateR(&m, -repeater->anchor.x, -repeater->anchor.y);
+                m = repeater->transform * m;
 
-        auto pm = PP(shape)->transform();
-        shape->transform(pm ? (m * *pm) : m);
+                auto pm = PP(shape)->transform();
+                if (pm) {
+                    Matrix inverse;
+                    mathInverse(&repeater->transform, &inverse);
+                    *pm = inverse * *pm;
+                }
 
-        if (ctx->roundness > 1.0f && P(shape)->rs.stroke) {
-            TVGERR("LOTTIE", "FIXME: Path roundesss should be applied properly!");
-            P(shape)->rs.stroke->join = StrokeJoin::Round;
+                shape->transform(pm ? m * *pm : m);
+                shapes.push(shape);
+            }
         }
 
-        shapes.push(shape);
-    }
+        propagators.clear();
+        propagators.reserve(shapes.count);
 
-    //push repeat shapes in order.
-    if (repeater->inorder) {
-        for (auto shape = shapes.begin(); shape < shapes.end(); ++shape) {
-            parent->scene->push(cast(*shape));
+        //push repeat shapes in order.
+        if (repeater->inorder) {
+            for (auto shape = shapes.begin(); shape < shapes.end(); ++shape) {
+                parent->scene->push(cast(*shape));
+                propagators.push(*shape);
+            }
+        } else {
+            for (auto shape = shapes.end() - 1; shape >= shapes.begin(); --shape) {
+                parent->scene->push(cast(*shape));
+                propagators.push(*shape);
+            }
         }
-    } else {
-        for (auto shape = shapes.end() - 1; shape >= shapes.begin(); --shape) {
-            parent->scene->push(cast(*shape));
-        }
+        shapes.clear();
     }
 }
 
@@ -504,7 +516,7 @@ static void _updateRect(LottieGroup* parent, LottieObject** child, float frameNo
         if (roundness > size.y * 0.5f)  roundness = size.y * 0.5f;
     }
 
-    if (ctx->repeater) {
+    if (!ctx->repeaters.empty()) {
         auto path = Shape::gen();
         _appendRect(path.get(), position.x - size.x * 0.5f, position.y - size.y * 0.5f, size.x, size.y, roundness, ctx->transform);
         _repeat(parent, std::move(path), ctx);
@@ -552,7 +564,7 @@ static void _updateEllipse(LottieGroup* parent, LottieObject** child, float fram
     auto position = ellipse->position(frameNo, exps);
     auto size = ellipse->size(frameNo, exps);
 
-    if (ctx->repeater) {
+    if (!ctx->repeaters.empty()) {
         auto path = Shape::gen();
         _appendCircle(path.get(), position.x, position.y, size.x * 0.5f, size.y * 0.5f, ctx->transform);
         _repeat(parent, std::move(path), ctx);
@@ -567,7 +579,7 @@ static void _updatePath(LottieGroup* parent, LottieObject** child, float frameNo
 {
     auto path = static_cast<LottiePath*>(*child);
 
-    if (ctx->repeater) {
+    if (!ctx->repeaters.empty()) {
         auto p = Shape::gen();
         path->pathset(frameNo, P(p)->rs.path.cmds, P(p)->rs.path.pts, ctx->transform, ctx->roundness, exps);
         _repeat(parent, std::move(p), ctx);
@@ -923,7 +935,7 @@ static void _updatePolystar(LottieGroup* parent, LottieObject** child, float fra
 
     auto identity = mathIdentity((const Matrix*)&matrix);
 
-    if (ctx->repeater) {
+    if (!ctx->repeaters.empty()) {
         auto p = Shape::gen();
         if (star->type == LottiePolyStar::Star) _updateStar(parent, star, identity ? nullptr : &matrix, ctx->roundness, frameNo, p.get(), exps);
         else _updatePolygon(parent, star, identity  ? nullptr : &matrix, frameNo, p.get(), exps);
@@ -988,17 +1000,20 @@ static void _updateRepeater(TVG_UNUSED LottieGroup* parent, LottieObject** child
 {
     auto repeater= static_cast<LottieRepeater*>(*child);
 
-    if (!ctx->repeater) ctx->repeater = new RenderRepeater();
-    ctx->repeater->cnt = static_cast<int>(repeater->copies(frameNo, exps));
-    ctx->repeater->offset = repeater->offset(frameNo, exps);
-    ctx->repeater->position = repeater->position(frameNo, exps);
-    ctx->repeater->anchor = repeater->anchor(frameNo, exps);
-    ctx->repeater->scale = repeater->scale(frameNo, exps);
-    ctx->repeater->rotation = repeater->rotation(frameNo, exps);
-    ctx->repeater->startOpacity = repeater->startOpacity(frameNo, exps);
-    ctx->repeater->endOpacity = repeater->endOpacity(frameNo, exps);
-    ctx->repeater->inorder = repeater->inorder;
-    ctx->repeater->interpOpacity = (ctx->repeater->startOpacity == ctx->repeater->endOpacity) ? false : true;
+    RenderRepeater r;
+    r.cnt = static_cast<int>(repeater->copies(frameNo, exps));
+    if (auto tr = PP(ctx->propagator)->transform()) r.transform = *tr;
+    else mathIdentity(&r.transform);
+    r.offset = repeater->offset(frameNo, exps);
+    r.position = repeater->position(frameNo, exps);
+    r.anchor = repeater->anchor(frameNo, exps);
+    r.scale = repeater->scale(frameNo, exps);
+    r.rotation = repeater->rotation(frameNo, exps);
+    r.startOpacity = repeater->startOpacity(frameNo, exps);
+    r.endOpacity = repeater->endOpacity(frameNo, exps);
+    r.inorder = repeater->inorder;
+    r.interpOpacity = (r.startOpacity == r.endOpacity) ? false : true;
+    ctx->repeaters.push(r);
 
     ctx->merging = nullptr;
 }
@@ -1006,7 +1021,7 @@ static void _updateRepeater(TVG_UNUSED LottieGroup* parent, LottieObject** child
 
 static void _updateTrimpath(TVG_UNUSED LottieGroup* parent, LottieObject** child, float frameNo, TVG_UNUSED Inlist<RenderContext>& contexts, RenderContext* ctx, LottieExpressions* exps)
 {
-    auto trimpath= static_cast<LottieTrimpath*>(*child);
+    auto trimpath = static_cast<LottieTrimpath*>(*child);
 
     float begin, end;
     trimpath->segment(frameNo, begin, end, exps);
@@ -1319,6 +1334,20 @@ static bool _buildComposition(LottieComposition* comp, LottieGroup* parent)
         //attach the precomp layer.
         if (child->refId) _buildReference(comp, child);
 
+        if (child->matte.type != CompositeMethod::None) {
+            //no index of the matte layer is provided: the layer above is used as the matte source
+            if (child->mid == -1) {
+                if (c > parent->children.begin()) {
+                    child->matte.target = static_cast<LottieLayer*>(*(c - 1));
+                }
+            //matte layer is specified by an index.
+            } else {
+                if (auto matte = comp->layer(child->mid)) {
+                    child->matte.target = matte;
+                }
+            }
+        }
+
         if (child->matte.target) {
             //parenting
             _bulidHierarchy(parent, child->matte.target);
@@ -1353,7 +1382,8 @@ bool LottieBuilder::update(LottieComposition* comp, float frameNo)
     if (exps && comp->expressions) exps->update(comp->timeAtFrame(frameNo));
 
     for (auto child = root->children.end() - 1; child >= root->children.begin(); --child) {
-        _updateLayer(root, static_cast<LottieLayer*>(*child), frameNo, exps);
+        auto layer = static_cast<LottieLayer*>(*child);
+        if (!layer->matteSrc) _updateLayer(root, layer, frameNo, exps);
     }
 
     return true;

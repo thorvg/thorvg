@@ -1229,6 +1229,7 @@ LottieLayer* LottieParser::parseLayer()
         else if (KEY_AS("h") || KEY_AS("sh")) getLayerSize(layer->h);
         else if (KEY_AS("sc")) layer->color = getColor(getString());
         else if (KEY_AS("tt")) layer->matte.type = getMatteType();
+        else if (KEY_AS("tp")) layer->mid = getInt();
         else if (KEY_AS("masksProperties")) parseMasks(layer);
         else if (KEY_AS("hd")) layer->hidden = getBool();
         else if (KEY_AS("refId")) layer->refId = getStringCopy();
@@ -1264,21 +1265,9 @@ LottieLayer* LottieParser::parseLayers()
 
     enterArray();
     while (nextArrayValue()) {
-        if (auto layer = parseLayer()) {
-            if (layer->matte.type == CompositeMethod::None) {
-                root->children.push(layer);
-            } else {
-                //matte source must be located in the right previous.
-                auto matte = static_cast<LottieLayer*>(root->children.last());
-                if (matte->matteSrc) {
-                    layer->matte.target = matte;
-                } else {
-                    TVGLOG("LOTTIE", "Matte Source(%s) is not designated?", matte->name);
-                }
-                root->children.last() = layer;
-            }
-        }
+        if (auto layer = parseLayer()) root->children.push(layer);
     }
+
     root->prepare();
     return root;
 }
