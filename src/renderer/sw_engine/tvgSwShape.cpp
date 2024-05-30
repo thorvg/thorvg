@@ -331,8 +331,9 @@ static SwOutline* _genDashOutline(const RenderShape* rshape, const Matrix* trans
                 break;
             }
             case PathCommand::MoveTo: {
-                if (rshape->stroke->trim.individual) _dashMoveTo(dash, pts);
-                else _dashMoveTo(dash, offIdx, offset, pts);
+                if (rshape->stroke->trim.simultaneous) _dashMoveTo(dash, offIdx, offset, pts);
+                else _dashMoveTo(dash, pts);
+
                 ++pts;
                 break;
             }
@@ -371,7 +372,7 @@ static float _outlineLength(const RenderShape* rshape)
     const Point* close = nullptr;
     auto length = 0.0f;
     auto slength = -1.0f;
-    auto simultaneous = !rshape->stroke->trim.individual;
+    auto simultaneous = rshape->stroke->trim.simultaneous;
 
     //Compute the whole length
     while (cmdCnt-- > 0) {

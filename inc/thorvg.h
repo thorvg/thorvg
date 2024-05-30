@@ -1044,7 +1044,6 @@ public:
      */
     Result stroke(StrokeJoin join) noexcept;
 
-
     /**
      * @brief Sets the stroke miterlimit.
      *
@@ -1055,6 +1054,22 @@ public:
      * @since 0.11
      */
     Result strokeMiterlimit(float miterlimit) noexcept;
+
+    /**
+     * @brief Sets the trim of the stroke along the defined path segment, allowing control over which part of the stroke is visible.
+     *
+     * The values of the arguments @p begin, @p end, and @p offset are in the range of 0.0 to 1.0, representing the beginning of the path and the end, respectively.
+     *
+     * @param[in] begin Specifies the start of the segment to display along the path.
+     * @param[in] end Specifies the end of the segment to display along the path.
+     * @param[in] simultaneous Determines how to trim multiple paths within a single shape. If set to @c true (default), trimming is applied simultaneously to all paths;
+     * Otherwise, all paths are treated as a single entity with a combined length equal to the sum of their individual lengths and are trimmed as such.
+     *
+     * @retval Result::Success when succeed.
+     *
+     * @note Experimental API
+     */
+    Result strokeTrim(float begin, float end, bool simultaneous = true) noexcept;
 
     /**
      * @brief Sets the solid color for all of the figures from the path.
@@ -1095,7 +1110,6 @@ public:
      */
     Result fill(FillRule r) noexcept;
 
-
     /**
      * @brief Sets the rendering order of the stroke and the fill.
      *
@@ -1106,7 +1120,6 @@ public:
      * @since 0.10
      */
     Result order(bool strokeFirst) noexcept;
-
 
     /**
      * @brief Gets the commands data of the path.
@@ -1209,6 +1222,18 @@ public:
      * @since 0.11
      */
     float strokeMiterlimit() const noexcept;
+
+    /**
+     * @brief Gets the trim of the stroke along the defined path segment.
+     *
+     * @param[out] begin The starting point of the segment to display along the path.
+     * @param[out] end Specifies the end of the segment to display along the path.
+     *
+     * @retval @c true if trimming is applied simultaneously to all paths of the shape, @c false otherwise.
+     *
+     * @note Experimental API
+     */
+    bool strokeTrim(float* begin, float* end) const noexcept;
 
     /**
      * @brief Creates a new Shape object.

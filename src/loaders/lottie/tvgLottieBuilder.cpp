@@ -916,7 +916,7 @@ static void _updateTrimpath(TVG_UNUSED LottieGroup* parent, LottieObject** child
         end = (length * end) + pbegin;
     }
 
-    P(ctx->propagator)->strokeTrim(begin, end, trimpath->type == LottieTrimpath::Type::Individual ? true : false);
+    P(ctx->propagator)->strokeTrim(begin, end, trimpath->type == LottieTrimpath::Type::Simultaneous);
 }
 
 
