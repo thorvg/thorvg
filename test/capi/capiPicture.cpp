@@ -31,11 +31,11 @@ TEST_CASE("Load Raw file in Picture", "[capiPicture]")
     Tvg_Paint* picture = tvg_picture_new();
     REQUIRE(picture);
 
-    Tvg_Identifier id = TVG_IDENTIFIER_UNDEF;
-    REQUIRE(tvg_paint_get_identifier(picture, &id) == TVG_RESULT_SUCCESS);
-    REQUIRE(id == TVG_IDENTIFIER_PICTURE);
-    REQUIRE(id != TVG_IDENTIFIER_SHAPE);
-    REQUIRE(id != TVG_IDENTIFIER_SCENE);
+    Tvg_Type type = TVG_TYPE_UNDEF;
+    REQUIRE(tvg_paint_get_type(picture, &type) == TVG_RESULT_SUCCESS);
+    REQUIRE(type == TVG_TYPE_PICTURE);
+    REQUIRE(type != TVG_TYPE_SHAPE);
+    REQUIRE(type != TVG_TYPE_SCENE);
 
     //Load Raw Data
     FILE* fp = fopen(TEST_DIR"/rawimage_200x300.raw", "r");

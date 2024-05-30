@@ -29,10 +29,10 @@ TEST_CASE("Linear Gradient Basic Create", "[capiLinearGradient]")
     Tvg_Gradient *gradient = tvg_linear_gradient_new();
     REQUIRE(gradient);
 
-    Tvg_Identifier id = TVG_IDENTIFIER_UNDEF;
-    REQUIRE(tvg_gradient_get_identifier(gradient, &id) == TVG_RESULT_SUCCESS);
-    REQUIRE(id == TVG_IDENTIFIER_LINEAR_GRAD);
-    REQUIRE(id != TVG_IDENTIFIER_RADIAL_GRAD);
+    Tvg_Type type = TVG_TYPE_UNDEF;
+    REQUIRE(tvg_gradient_get_type(gradient, &type) == TVG_RESULT_SUCCESS);
+    REQUIRE(type == TVG_TYPE_LINEAR_GRAD);
+    REQUIRE(type != TVG_TYPE_RADIAL_GRAD);
 
     REQUIRE(tvg_gradient_del(gradient) == TVG_RESULT_SUCCESS);
 }
@@ -144,7 +144,7 @@ TEST_CASE("Linear Gradient duplicate", "[capiLinearGradient]")
     REQUIRE(tvg_paint_del(shape) == TVG_RESULT_SUCCESS);
 }
 
-TEST_CASE("Linear Gradient identifier", "[capiLinearGradient]")
+TEST_CASE("Linear Gradient type", "[capiLinearGradient]")
 {
     Tvg_Gradient* grad = tvg_linear_gradient_new();
     REQUIRE(grad);
@@ -152,14 +152,14 @@ TEST_CASE("Linear Gradient identifier", "[capiLinearGradient]")
     Tvg_Gradient* grad_copy = tvg_gradient_duplicate(grad);
     REQUIRE(grad_copy);
 
-    Tvg_Identifier id = TVG_IDENTIFIER_UNDEF;
-    Tvg_Identifier id_copy = TVG_IDENTIFIER_UNDEF;
+    Tvg_Type type = TVG_TYPE_UNDEF;
+    Tvg_Type type2 = TVG_TYPE_UNDEF;
 
-    REQUIRE(tvg_gradient_get_identifier(nullptr, &id) == TVG_RESULT_INVALID_ARGUMENT);
-    REQUIRE(tvg_gradient_get_identifier(grad, nullptr) == TVG_RESULT_INVALID_ARGUMENT);
-    REQUIRE(tvg_gradient_get_identifier(grad, &id) == TVG_RESULT_SUCCESS);
-    REQUIRE(tvg_gradient_get_identifier(grad_copy, &id_copy) == TVG_RESULT_SUCCESS);
-    REQUIRE(id_copy == id);
+    REQUIRE(tvg_gradient_get_type(nullptr, &type) == TVG_RESULT_INVALID_ARGUMENT);
+    REQUIRE(tvg_gradient_get_type(grad, nullptr) == TVG_RESULT_INVALID_ARGUMENT);
+    REQUIRE(tvg_gradient_get_type(grad, &type) == TVG_RESULT_SUCCESS);
+    REQUIRE(tvg_gradient_get_type(grad_copy, &type2) == TVG_RESULT_SUCCESS);
+    REQUIRE(type2 == type);
 
     REQUIRE(tvg_gradient_del(grad_copy) == TVG_RESULT_SUCCESS);
     REQUIRE(tvg_gradient_del(grad) == TVG_RESULT_SUCCESS);
