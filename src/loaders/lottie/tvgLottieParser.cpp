@@ -533,8 +533,9 @@ LottieRect* LottieParser::parseRect()
     while (auto key = nextObjectKey()) {
         if (parseCommon(rect, key)) continue;
         else if (KEY_AS("s")) parseProperty<LottieProperty::Type::Point>(rect->size);
-        else if (KEY_AS("p"))parseProperty<LottieProperty::Type::Position>(rect->position);
+        else if (KEY_AS("p")) parseProperty<LottieProperty::Type::Position>(rect->position);
         else if (KEY_AS("r")) parseProperty<LottieProperty::Type::Float>(rect->radius);
+        else if (KEY_AS("d")) rect->direction = getDirection();
         else skip(key);
     }
     rect->prepare();
@@ -552,6 +553,7 @@ LottieEllipse* LottieParser::parseEllipse()
         if (parseCommon(ellipse, key)) continue;
         else if (KEY_AS("p")) parseProperty<LottieProperty::Type::Position>(ellipse->position);
         else if (KEY_AS("s")) parseProperty<LottieProperty::Type::Point>(ellipse->size);
+        else if (KEY_AS("d")) ellipse->direction = getDirection();
         else skip(key);
     }
     ellipse->prepare();
@@ -688,6 +690,7 @@ LottiePath* LottieParser::parsePath()
     while (auto key = nextObjectKey()) {
         if (parseCommon(path, key)) continue;
         else if (KEY_AS("ks")) getPathSet(path->pathset);
+        else if (KEY_AS("d")) path->direction = getDirection();
         else skip(key);
     }
     path->prepare();
@@ -711,6 +714,7 @@ LottiePolyStar* LottieParser::parsePolyStar()
         else if (KEY_AS("os")) parseProperty<LottieProperty::Type::Float>(star->outerRoundness);
         else if (KEY_AS("r")) parseProperty<LottieProperty::Type::Float>(star->rotation);
         else if (KEY_AS("sy")) star->type = (LottiePolyStar::Type) getInt();
+        else if (KEY_AS("d")) star->direction = getDirection();
         else skip(key);
     }
     star->prepare();
@@ -1079,23 +1083,17 @@ uint8_t LottieParser::getDirection()
 
 void LottieParser::parseShapes(Array<LottieObject*>& parent)
 {
-    uint8_t direction;
-
     enterArray();
     while (nextArrayValue()) {
-        direction = 0;
         enterObject();
         while (auto key = nextObjectKey()) {
             if (KEY_AS("it")) {
                 enterArray();
                 while (nextArrayValue()) parseObject(parent);
-            } else if (KEY_AS("d")) {
-                direction = getDirection();
             } else if (KEY_AS("ty")) {
                 if (auto child = parseObject()) {
                     if (child->hidden) delete(child);
                     else parent.push(child);
-                    if (direction > 0) static_cast<LottieShape*>(child)->direction = direction;
                 }
             } else skip(key);
         }
