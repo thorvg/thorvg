@@ -1122,8 +1122,9 @@ static void _updatePrecomp(LottieLayer* precomp, float frameNo, LottieExpression
 
     frameNo = precomp->remap(frameNo, exps);
 
-    for (auto child = precomp->children.end() - 1; child >= precomp->children.begin(); --child) {
-        _updateLayer(precomp, static_cast<LottieLayer*>(*child), frameNo, exps);
+    for (auto c = precomp->children.end() - 1; c >= precomp->children.begin(); --c) {
+        auto child = static_cast<LottieLayer*>(*c);
+        if (!child->matteSrc) _updateLayer(precomp, child, frameNo, exps);
     }
 
     //clip the layer viewport
