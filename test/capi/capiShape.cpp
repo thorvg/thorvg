@@ -29,11 +29,11 @@ TEST_CASE("Multiple shapes", "[capiShapes]")
     Tvg_Paint* paint = tvg_shape_new();
     REQUIRE(paint);
 
-    Tvg_Identifier id = TVG_IDENTIFIER_UNDEF;
-    REQUIRE(tvg_paint_get_identifier(paint, &id) == TVG_RESULT_SUCCESS);
-    REQUIRE(id == TVG_IDENTIFIER_SHAPE);
-    REQUIRE(id != TVG_IDENTIFIER_SCENE);
-    REQUIRE(id != TVG_IDENTIFIER_PICTURE);
+    Tvg_Type type = TVG_TYPE_UNDEF;
+    REQUIRE(tvg_paint_get_type(paint, &type) == TVG_RESULT_SUCCESS);
+    REQUIRE(type == TVG_TYPE_SHAPE);
+    REQUIRE(type != TVG_TYPE_SCENE);
+    REQUIRE(type != TVG_TYPE_PICTURE);
 
     REQUIRE(tvg_shape_append_rect(paint, 0, 0, 100, 100, 0, 0) == TVG_RESULT_SUCCESS);
     REQUIRE(tvg_shape_append_rect(paint, 0, 0, 100, 100, 50, 50) == TVG_RESULT_SUCCESS);
