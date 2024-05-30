@@ -1533,6 +1533,37 @@ TVG_API Tvg_Result tvg_shape_get_stroke_miterlimit(const Tvg_Paint* paint, float
 
 
 /*!
+* \brief Sets the trim of the stroke along the defined path segment, allowing control over which part of the stroke is visible. (Experimental API)
+*
+* The values of the arguments @p begin, @p end, and @p offset are in the range of 0.0 to 1.0, representing the beginning of the path and the end, respectively.
+*
+* \param[in] begin Specifies the start of the segment to display along the path.
+* \param[in] end Specifies the end of the segment to display along the path.
+* \param[in] simultaneous Determines how to trim multiple paths within a single shape. If set to @c true (default), trimming is applied simultaneously to all paths;
+* Otherwise, all paths are treated as a single entity with a combined length equal to the sum of their individual lengths and are trimmed as such.
+*
+* \return Tvg_Result enumeration.
+* \retval TVG_RESULT_SUCCESS Succeed.
+* \retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
+*/
+TVG_API Tvg_Result tvg_shape_set_stroke_trim(Tvg_Paint* paint, float begin, float end, bool simultaneous);
+
+
+/*!
+* \brief Gets the trim of the stroke along the defined path segment. (Experimental API)
+*
+* \param[out] begin The starting point of the segment to display along the path.
+* \param[out] end Specifies the end of the segment to display along the path.
+* \param[out] simultaneous Determines how to trim multiple paths within a shape.
+*
+* \return Tvg_Result enumeration.
+* \retval TVG_RESULT_SUCCESS Succeed.
+* \retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Paint pointer.
+*/
+TVG_API Tvg_Result tvg_shape_get_stroke_trim(Tvg_Paint* paint, float* begin, float* end, bool* simultaneous);
+
+
+/*!
 * \brief Sets the shape's solid color.
 *
 * The parts of the shape defined as inner are colored.
