@@ -319,7 +319,8 @@ int main(int argc, char **argv)
     elm_transit_effect_add(transit, transitCb, view, nullptr);
 
     elm_run();
-
+    elm_transit_del(transit);
+    
     tvg_canvas_destroy(canvas);
     free(buffer);
     tvg_animation_del(animation);
