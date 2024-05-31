@@ -430,6 +430,12 @@ public:
     uint32_t type() const noexcept;
 
     /**
+     * @brief A extra property to uniquely identify a specific paint instance.
+     * @note Experimental API
+     */
+    uint32_t id = 0;
+
+    /**
      * @see Paint::type()
      */
     TVG_DEPRECATED uint32_t identifier() const noexcept;
