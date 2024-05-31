@@ -21,6 +21,7 @@
  */
 
 #include "tvgIteratorAccessor.h"
+#include "tvgCompressor.h"
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
@@ -64,6 +65,12 @@ unique_ptr<Picture> Accessor::set(unique_ptr<Picture> picture, function<bool(con
         delete(it);
     }
     return picture;
+}
+
+
+uint32_t Accessor::identifier(const char* key)
+{
+    return djb2Encode(key);
 }
 
 

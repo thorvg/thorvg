@@ -431,6 +431,8 @@ public:
 
     /**
      * @brief A extra property to uniquely identify a specific paint instance.
+     *
+     * @see Accessor::identifier()
      * @note Experimental API
      */
     uint32_t id = 0;
@@ -2138,6 +2140,22 @@ public:
      * @note The bitmap based picture might not have the scene-tree.
      */
     std::unique_ptr<Picture> set(std::unique_ptr<Picture> picture, std::function<bool(const Paint* paint)> func) noexcept;
+
+    /**
+     * @brief Generates a unique ID value from the given string @p key.
+     *
+     * This function can be used to generate a paint ID from a string. Picture nested scene paints will have these values
+     * when their Scene or Document Data Model suggests a specific name for individual elements.
+     *
+     * @param[in] key A unique string that will serve as the seed for the hash key.
+     *
+     * @return Returns the generated hash key value.
+     *
+     * @see Paint::id
+     *
+     * @note Experimental API
+     */
+    uint32_t identifier(const char* key) noexcept;
 
     /**
      * @brief Creates a new Accessor object.
