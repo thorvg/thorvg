@@ -320,8 +320,7 @@ bool WgRenderer::target(void* window, uint32_t w, uint32_t h)
     mTargetSurface.stride = w;
     mTargetSurface.w = w > 0 ? w : 1;
     mTargetSurface.h = h > 0 ? h : 1;
-
-    // TODO: replace solution to cross-platform realization
+    
     // surface descriptor from windows hwnd
     WGPUSurfaceDescriptorFromWindowsHWND surfaceDescHwnd{};
     surfaceDescHwnd.chain.next = nullptr;
@@ -337,8 +336,8 @@ bool WgRenderer::target(void* window, uint32_t w, uint32_t h)
     WGPUSurfaceConfiguration surfaceConfiguration{};
     surfaceConfiguration.nextInChain = nullptr;
     surfaceConfiguration.device = mContext.device;
-    surfaceConfiguration.format = WGPUTextureFormat_RGBA8Unorm;
-    surfaceConfiguration.usage = WGPUTextureUsage_RenderAttachment | WGPUTextureUsage_CopyDst;
+    surfaceConfiguration.format = WGPUTextureFormat_BGRA8Unorm;
+    surfaceConfiguration.usage = WGPUTextureUsage_CopyDst;
     surfaceConfiguration.viewFormatCount = 0;
     surfaceConfiguration.viewFormats = nullptr;
     surfaceConfiguration.alphaMode = WGPUCompositeAlphaMode_Auto;

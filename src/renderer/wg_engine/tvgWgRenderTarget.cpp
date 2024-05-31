@@ -41,7 +41,7 @@
         WGPUTextureUsage_TextureBinding |
         WGPUTextureUsage_StorageBinding |
         WGPUTextureUsage_RenderAttachment,
-        WGPUTextureFormat_RGBA8Unorm,
+        WGPUTextureFormat_BGRA8Unorm,
         width, height, "The target texture color");
     texStencil = context.createTexture2d(
         WGPUTextureUsage_RenderAttachment,
@@ -266,7 +266,7 @@ void WgRenderStorage::beginRenderPass(WGPUCommandEncoder commandEncoder, bool cl
     depthStencilAttachment.depthClearValue = 1.0f;
     depthStencilAttachment.depthReadOnly = false;
     depthStencilAttachment.stencilLoadOp = WGPULoadOp_Clear;
-    depthStencilAttachment.stencilStoreOp = WGPUStoreOp_Store;
+    depthStencilAttachment.stencilStoreOp = WGPUStoreOp_Discard;
     depthStencilAttachment.stencilClearValue = 0;
     depthStencilAttachment.stencilReadOnly = false;
     // render pass color attachment
