@@ -476,9 +476,9 @@ size_t b64Decode(const char* encoded, const size_t len, char** decoded)
 /* DJB2 Implementation                                                   */
 /************************************************************************/
 
-unsigned long djb2Encode(const char* str)
+uint32_t djb2Encode(const char* str)
 {
-    unsigned long hash = 5381;
+    uint32_t hash = 5381;
     int c;
 
     while ((c = *str++)) {

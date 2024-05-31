@@ -1329,13 +1329,13 @@ static bool _buildComposition(LottieComposition* comp, LottieGroup* parent)
 
         if (child->matteType != CompositeMethod::None) {
             //no index of the matte layer is provided: the layer above is used as the matte source
-            if (child->mid == -1) {
+            if (child->midx == -1) {
                 if (c > parent->children.begin()) {
                     child->matteTarget = static_cast<LottieLayer*>(*(c - 1));
                 }
             //matte layer is specified by an index.
             } else {
-                if (auto matte = comp->layerByIdx(child->mid)) {
+                if (auto matte = comp->layerByIdx(child->midx)) {
                     child->matteTarget = matte;
                 }
             }

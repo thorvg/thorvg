@@ -119,7 +119,7 @@ struct LottieObject
 
     virtual bool mergeable() { return false; }
 
-    unsigned long id = 0;
+    uint32_t id = 0;
     Type type;
     bool hidden = false;       //remove?
 };
@@ -499,7 +499,7 @@ struct LottieGroup : LottieObject
     void prepare(LottieObject::Type type = LottieObject::Group);
     bool mergeable() override { return allowMerge; }
 
-    LottieObject* content(unsigned long id)
+    LottieObject* content(uint32_t id)
     {
         if (this->id == id) return this;
 
@@ -555,8 +555,8 @@ struct LottieLayer : LottieGroup
     float inFrame = 0.0f;
     float outFrame = 0.0f;
     float startFrame = 0.0f;
-    unsigned long rid = 0;      //pre-composition reference id.
-    int16_t mid = -1;           //id of the matte layer.
+    uint32_t rid = 0;           //pre-composition reference id.
+    int16_t midx = -1;          //index of the matte layer.
     int16_t pidx = -1;          //index of the parent layer.
     int16_t idx = -1;           //index of the current layer.
 
@@ -631,7 +631,7 @@ struct LottieComposition
         return endFrame - startFrame;
     }
 
-    LottieLayer* layerById(unsigned long id)
+    LottieLayer* layerById(uint32_t id)
     {
         for (auto child = root->children.begin(); child < root->children.end(); ++child) {
             auto layer = static_cast<LottieLayer*>(*child);
@@ -649,7 +649,7 @@ struct LottieComposition
         return nullptr;
     }
 
-    LottieLayer* asset(unsigned long id)
+    LottieLayer* asset(uint32_t id)
     {
         for (auto asset = assets.begin(); asset < assets.end(); ++asset) {
             auto layer = static_cast<LottieLayer*>(*asset);

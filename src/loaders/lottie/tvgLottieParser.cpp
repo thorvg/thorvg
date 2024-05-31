@@ -51,7 +51,7 @@ static LottieExpression* _expression(char* code, LottieComposition* comp, Lottie
 }
 
 
-static unsigned long _int2str(int num)
+static uint32_t _int2str(int num)
 {
     char str[20];
     snprintf(str, 20, "%d", num);
@@ -921,7 +921,7 @@ LottieObject* LottieParser::parseAsset()
     enterObject();
 
     LottieObject* obj = nullptr;
-    unsigned long id = 0;
+    uint32_t id = 0;
 
     //Used for Image Asset
     const char* data = nullptr;
@@ -1217,7 +1217,7 @@ LottieLayer* LottieParser::parseLayer()
         else if (KEY_AS("h") || KEY_AS("sh")) getLayerSize(layer->h);
         else if (KEY_AS("sc")) layer->color = getColor(getString());
         else if (KEY_AS("tt")) layer->matteType = getMatteType();
-        else if (KEY_AS("tp")) layer->mid = getInt();
+        else if (KEY_AS("tp")) layer->midx = getInt();
         else if (KEY_AS("masksProperties")) parseMasks(layer);
         else if (KEY_AS("hd")) layer->hidden = getBool();
         else if (KEY_AS("refId")) layer->rid = djb2Encode(getString());

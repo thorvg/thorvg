@@ -77,7 +77,7 @@ static char* _name(jerry_value_t args)
 }
 
 
-static unsigned long _idByName(jerry_value_t args)
+static uint32_t _idByName(jerry_value_t args)
 {
     auto name = _name(args);
     auto id = djb2Encode(name);
