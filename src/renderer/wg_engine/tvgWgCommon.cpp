@@ -107,9 +107,16 @@ void WgContext::release()
     if (device) {
         wgpuDeviceDestroy(device);
         wgpuDeviceRelease(device);
+        device =  nullptr;
     }
-    if (adapter) wgpuAdapterRelease(adapter);
-    if (instance) wgpuInstanceRelease(instance);
+    if (adapter) {
+        wgpuAdapterRelease(adapter);
+        adapter = nullptr;
+    }
+    if (instance) {
+        wgpuInstanceRelease(instance);
+        instance = nullptr;
+    }
 }
 
 
@@ -426,7 +433,7 @@ WGPUBindGroupLayoutEntry WgBindGroup::makeBindGroupLayoutEntryStorageTexture(uin
     bindGroupLayoutEntry.visibility = WGPUShaderStage_Fragment | WGPUShaderStage_Compute;
     bindGroupLayoutEntry.storageTexture.nextInChain = nullptr;
     bindGroupLayoutEntry.storageTexture.access = access;
-    bindGroupLayoutEntry.storageTexture.format = WGPUTextureFormat_RGBA8Unorm;
+    bindGroupLayoutEntry.storageTexture.format = WGPUTextureFormat_BGRA8Unorm;
     bindGroupLayoutEntry.storageTexture.viewDimension = WGPUTextureViewDimension_2D;
     return bindGroupLayoutEntry;
 }
@@ -547,7 +554,7 @@ void WgPipeline::destroyShaderModule(WGPUShaderModule& shaderModule)
 // render pipeline
 //*****************************************************************************
 
-void WgRenderPipeline::allocate(WGPUDevice device, WgPipelineBlendType blendType,
+void WgRenderPipeline::allocate(WGPUDevice device, WgPipelineBlendType blendType, WGPUColorWriteMask writeMask,
                                 WGPUVertexBufferLayout vertexBufferLayouts[], uint32_t attribsCount,
                                 WGPUBindGroupLayout bindGroupLayouts[], uint32_t bindGroupsCount,
                                 WGPUCompareFunction compareFront, WGPUStencilOperation operationFront,
@@ -560,7 +567,7 @@ void WgRenderPipeline::allocate(WGPUDevice device, WgPipelineBlendType blendType
     mPipelineLayout = createPipelineLayout(device, bindGroupLayouts, bindGroupsCount);
     assert(mPipelineLayout);
 
-    mRenderPipeline = createRenderPipeline(device, blendType,
+    mRenderPipeline = createRenderPipeline(device, blendType, writeMask,
                                            vertexBufferLayouts, attribsCount,
                                            compareFront, operationFront,
                                            compareBack, operationBack,
@@ -623,14 +630,13 @@ WGPUBlendState WgRenderPipeline::makeBlendState(WgPipelineBlendType blendType)
 }
 
 
-WGPUColorTargetState WgRenderPipeline::makeColorTargetState(const WGPUBlendState* blendState)
+WGPUColorTargetState WgRenderPipeline::makeColorTargetState(const WGPUBlendState* blendState, const WGPUColorWriteMask writeMask)
 {
     WGPUColorTargetState colorTargetState{};
     colorTargetState.nextInChain = nullptr;
-    //colorTargetState.format = WGPUTextureFormat_BGRA8Unorm; // (WGPUTextureFormat_BGRA8UnormSrgb)
-    colorTargetState.format = WGPUTextureFormat_RGBA8Unorm; // (WGPUTextureFormat_BGRA8UnormSrgb)
+    colorTargetState.format = WGPUTextureFormat_BGRA8Unorm;
     colorTargetState.blend = blendState;
-    colorTargetState.writeMask = WGPUColorWriteMask_All;
+    colorTargetState.writeMask = writeMask;
     return colorTargetState;
 }
 
@@ -721,7 +727,7 @@ WGPUFragmentState WgRenderPipeline::makeFragmentState(WGPUShaderModule shaderMod
 }
 
 
-WGPURenderPipeline WgRenderPipeline::createRenderPipeline(WGPUDevice device, WgPipelineBlendType blendType,
+WGPURenderPipeline WgRenderPipeline::createRenderPipeline(WGPUDevice device, WgPipelineBlendType blendType, WGPUColorWriteMask writeMask,
                                                           WGPUVertexBufferLayout vertexBufferLayouts[], uint32_t attribsCount,
                                                           WGPUCompareFunction compareFront, WGPUStencilOperation operationFront,
                                                           WGPUCompareFunction compareBack, WGPUStencilOperation operationBack,
@@ -730,7 +736,7 @@ WGPURenderPipeline WgRenderPipeline::createRenderPipeline(WGPUDevice device, WgP
 {
     WGPUBlendState blendState = makeBlendState(blendType);
     WGPUColorTargetState colorTargetStates[] = { 
-        makeColorTargetState(&blendState)
+        makeColorTargetState(&blendState, writeMask)
     };
 
     WGPUVertexState vertexState = makeVertexState(shaderModule, vertexBufferLayouts, attribsCount);

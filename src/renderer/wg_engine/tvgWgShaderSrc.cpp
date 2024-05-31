@@ -365,7 +365,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
 
 // pipeline shader modules clear
 const char* cShaderSource_PipelineComputeClear = R"(
-@group(0) @binding(0) var imageDst : texture_storage_2d<rgba8unorm, read_write>;
+@group(0) @binding(0) var imageDst : texture_storage_2d<bgra8unorm, read_write>;
 
 @compute @workgroup_size(8, 8)
 fn cs_main( @builtin(global_invocation_id) id: vec3u) {
@@ -376,8 +376,8 @@ fn cs_main( @builtin(global_invocation_id) id: vec3u) {
 
 // pipeline shader modules blend
 const char* cShaderSource_PipelineComputeBlend = R"(
-@group(0) @binding(0) var imageSrc : texture_storage_2d<rgba8unorm, read_write>;
-@group(1) @binding(0) var imageDst : texture_storage_2d<rgba8unorm, read_write>;
+@group(0) @binding(0) var imageSrc : texture_storage_2d<bgra8unorm, read_write>;
+@group(1) @binding(0) var imageDst : texture_storage_2d<bgra8unorm, read_write>;
 @group(2) @binding(0) var<uniform> blendMethod : u32;
 
 @compute @workgroup_size(8, 8)
@@ -420,8 +420,8 @@ fn cs_main( @builtin(global_invocation_id) id: vec3u) {
 
 // pipeline shader modules compose
 const char* cShaderSource_PipelineComputeCompose = R"(
-@group(0) @binding(0) var imageSrc : texture_storage_2d<rgba8unorm, read_write>;
-@group(1) @binding(0) var imageMsk : texture_storage_2d<rgba8unorm, read_write>;
+@group(0) @binding(0) var imageSrc : texture_storage_2d<bgra8unorm, read_write>;
+@group(1) @binding(0) var imageMsk : texture_storage_2d<bgra8unorm, read_write>;
 @group(2) @binding(0) var<uniform> composeMethod : u32;
 @group(3) @binding(0) var<uniform> opacity : f32;
 
@@ -455,9 +455,9 @@ fn cs_main( @builtin(global_invocation_id) id: vec3u) {
 
 // pipeline shader modules compose blend
 const char* cShaderSource_PipelineComputeComposeBlend = R"(
-@group(0) @binding(0) var imageSrc : texture_storage_2d<rgba8unorm, read>;
-@group(0) @binding(1) var imageMsk : texture_storage_2d<rgba8unorm, read>;
-@group(0) @binding(2) var imageDst : texture_storage_2d<rgba8unorm, read_write>;
+@group(0) @binding(0) var imageSrc : texture_storage_2d<bgra8unorm, read>;
+@group(0) @binding(1) var imageMsk : texture_storage_2d<bgra8unorm, read>;
+@group(0) @binding(2) var imageDst : texture_storage_2d<bgra8unorm, read_write>;
 @group(1) @binding(0) var<uniform> composeMethod : u32;
 @group(2) @binding(0) var<uniform> blendMethod : u32;
 @group(3) @binding(0) var<uniform> opacity : f32;
@@ -517,8 +517,8 @@ fn cs_main( @builtin(global_invocation_id) id: vec3u) {
 
 // pipeline shader modules anti-aliasing
 const char* cShaderSource_PipelineComputeAntiAlias = R"(
-@group(0) @binding(0) var imageSrc : texture_storage_2d<rgba8unorm, read_write>;
-@group(1) @binding(0) var imageDst : texture_storage_2d<rgba8unorm, read_write>;
+@group(0) @binding(0) var imageSrc : texture_storage_2d<bgra8unorm, read_write>;
+@group(1) @binding(0) var imageDst : texture_storage_2d<bgra8unorm, read_write>;
 
 @compute @workgroup_size(8, 8)
 fn cs_main( @builtin(global_invocation_id) id: vec3u) {
