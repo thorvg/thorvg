@@ -353,8 +353,8 @@ void WgRenderDataShape::releaseMeshes(WgContext &context)
     meshGroupStrokes.release(context);
     meshGroupShapesBBox.release(context);
     meshGroupShapes.release(context);
-    pMin = {0.0f, 0.0f };
-    pMax = {0.0f, 0.0f };
+    pMin = {FLT_MAX, FLT_MAX};
+    pMax = {0.0f, 0.0f};
 }
 
 
