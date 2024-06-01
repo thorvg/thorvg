@@ -415,9 +415,9 @@ RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const
     rshape.fillColor(nullptr, nullptr, nullptr, &alphaF);
     rshape.strokeFill(nullptr, nullptr, nullptr, &alphaS);
 
-    if ( ((sdata->updateFlag & RenderUpdateFlag::Gradient) == 0) &&
-         ((sdata->updateFlag & RenderUpdateFlag::Color) && alphaF == 0) &&
-         ((sdata->updateFlag & RenderUpdateFlag::Stroke) && alphaS == 0) )
+    if ( ((flags & RenderUpdateFlag::Gradient) == 0) &&
+         ((flags & RenderUpdateFlag::Color) && alphaF == 0) &&
+         ((flags & RenderUpdateFlag::Stroke) && alphaS == 0) )
     {
         return sdata;
     }
@@ -441,7 +441,7 @@ RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const
         mViewport.h,
     });
 
-    if (sdata->updateFlag & (RenderUpdateFlag::Color | RenderUpdateFlag::Stroke | RenderUpdateFlag::Gradient | RenderUpdateFlag::Transform | RenderUpdateFlag::Path))
+    if (sdata->updateFlag & (RenderUpdateFlag::Color | RenderUpdateFlag::Stroke | RenderUpdateFlag::Gradient | RenderUpdateFlag::GradientStroke | RenderUpdateFlag::Transform | RenderUpdateFlag::Path))
     {
         if (!sdata->geometry->tesselate(rshape, sdata->updateFlag)) return sdata;
     }
