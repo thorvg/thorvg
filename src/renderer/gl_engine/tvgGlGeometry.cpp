@@ -45,7 +45,7 @@ bool GlGeometry::tesselate(const RenderShape& rshape, RenderUpdateFlag flag)
         mBounds = bwTess.bounds();
     }
 
-    if (flag & (RenderUpdateFlag::Stroke | RenderUpdateFlag::Transform)) {
+    if (flag & (RenderUpdateFlag::Stroke | RenderUpdateFlag::GradientStroke | RenderUpdateFlag::Transform)) {
         strokeVertex.clear();
         strokeIndex.clear();
 
