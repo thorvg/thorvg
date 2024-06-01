@@ -107,7 +107,7 @@ static void _dashLineTo(SwDashStroke& dash, const Point* to, const Matrix* trans
     if (mathZero(len)) {
         _outlineMoveTo(*dash.outline, &dash.ptCur, transform);
     //draw the current line fully
-    } else if (len < dash.curLen) {
+    } else if (len <= dash.curLen) {
         dash.curLen -= len;
         if (!dash.curOpGap) {
             if (dash.move) {
@@ -168,7 +168,7 @@ static void _dashCubicTo(SwDashStroke& dash, const Point* ctrl1, const Point* ct
     //draw the current line fully
     if (mathZero(len)) {
         _outlineMoveTo(*dash.outline, &dash.ptCur, transform);
-    } else if (len < dash.curLen) {
+    } else if (len <= dash.curLen) {
         dash.curLen -= len;
         if (!dash.curOpGap) {
             if (dash.move) {
