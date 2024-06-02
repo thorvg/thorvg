@@ -1529,7 +1529,7 @@ public:
     Result fill(std::unique_ptr<Fill> f) noexcept;
 
     /**
-     * @brief Loads a scalable font data(ttf) from a file.
+     * @brief Loads a scalable font data (ttf) from a file.
      *
      * ThorVG efficiently caches the loaded data using the specified @p path as a key.
      * This means that loading the same file again will not result in duplicate operations;
@@ -1544,16 +1544,42 @@ public:
      *
      * @note Experimental API
      *
-     * @see Text::unload(const std::string& path)
+     * @see Text::unload(const std::string& fontId)
      */
     static Result load(const std::string& path) noexcept;
+
+    /**
+     * @brief Loads a scalable font data (ttf) from a memory block of a given size.
+     *
+     * ThorVG efficiently caches the loaded font data using the specified @p name as a key when @p copy
+     * is set to @c false. This means that loading the same fonts again will not result in duplicate
+     * operations for the shared @p data. Instead, ThorVG will reuse the previously loaded font data.
+     *
+     * @param[in] name The name under which the font will be stored and accessible.
+     * @param[in] data A pointer to a memory location where the content of the ttf data is stored.
+     * @param[in] size The size in bytes of the memory occupied by the @p data.
+     * @param[in] rpath A resource directory path, if the @p data needs to access any external resources.
+     * @param[in] copy If @c true the data are copied into the engine local buffer, otherwise they are not.
+     *
+     * @retval Result::Success When succeed.
+     * @retval Result::InvalidArguments In case no data are provided or the @p size is zero or less.
+     * @retval Result::NonSupport When trying to load a file with an unsupported extension.
+     * @retval Result::Unknown If an error occurs at a later stage.
+     *
+     * @warning: It's the user responsibility to release the @p data memory.
+     *
+     * @note Experimental API
+     *
+     * @see Text::unload(const std::string& fontId)
+     */
+    static Result load(const std::string& name, const char* data, uint32_t size, const std::string& rpath = "", bool copy = false) noexcept;
 
     /**
      * @brief Unloads the specified scalable font data (TTF) that was previously loaded.
      *
      * This function is used to release resources associated with a font file that has been loaded into memory.
      *
-     * @param[in] path The file path of the loaded font.
+     * @param[in] fontId The file path or the font name of the loaded font depending on which method was used for loading.
      *
      * @retval Result::Success Successfully unloads the font data.
      * @retval Result::InsufficientCondition Fails if the loader is not initialized.
@@ -1562,8 +1588,9 @@ public:
      * @note Experimental API
      *
      * @see Text::load(const std::string& path)
+     * @see Text::load(const std::string& name, const char* data, uint32_t size, const std::string& rpath, bool copy)
      */
-    static Result unload(const std::string& path) noexcept;
+    static Result unload(const std::string& fontId) noexcept;
 
     /**
      * @brief Creates a new Text object.

@@ -71,9 +71,17 @@ Result Text::load(const std::string& path) noexcept
 }
 
 
-Result Text::unload(const std::string& path) noexcept
+Result Text::load(const std::string& name, const char* data, uint32_t size, const string& rpath, bool copy) noexcept
 {
-    if (LoaderMgr::retrieve(path)) return Result::Success;
+    if (!data || size <= 0) return Result::InvalidArguments;
+    if (!LoaderMgr::loader(name, data, size, rpath, copy)) return Result::NonSupport;
+    return Result::Success;
+}
+
+
+Result Text::unload(const std::string& fontId) noexcept
+{
+    if (LoaderMgr::retrieve(fontId)) return Result::Success;
     return Result::InsufficientCondition;
 }
 

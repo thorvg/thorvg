@@ -433,3 +433,32 @@ LoadModule* LoaderMgr::loader(const uint32_t *data, uint32_t w, uint32_t h, bool
     delete(loader);
     return nullptr;
 }
+
+
+LoadModule* LoaderMgr::loader(const string& name, const char* data, uint32_t size, const string& rpath, bool copy)
+{
+    //Note that users could use the same data pointer with the different content.
+    //Thus caching is only valid for shareable.
+    auto allowCache = !copy;
+
+    if (allowCache) {
+        if (auto loader = _findFromCache(name)) return loader;
+    }
+
+    if (auto loader = _findByType("ttf")) {
+        if (loader->open(data, size, rpath, copy)) {
+            if (allowCache) {
+                loader->hashpath = strdup(name.c_str());
+                loader->pathcache = true;
+                ScopedLock lock(key);
+                _activeLoaders.back(loader);
+            }
+            return loader;
+        } else {
+            TVGLOG("LOADER", "Given data \"%s\" could not be loaded.", name.c_str());
+            delete(loader);
+        }
+    }
+
+    return nullptr;
+}
