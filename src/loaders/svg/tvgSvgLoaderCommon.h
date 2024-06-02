@@ -374,6 +374,14 @@ struct SvgCssStyleNode
 {
 };
 
+struct SvgTextNode
+{
+    char* text;
+    float x, y;
+    float fontSize;
+    char* fontFamily;
+};
+
 struct SvgLinearGradient
 {
     float x1;
@@ -518,6 +526,7 @@ struct SvgNode
         SvgClipNode clip;
         SvgCssStyleNode cssStyle;
         SvgSymbolNode symbol;
+        SvgTextNode text;
     } node;
     ~SvgNode();
 };
@@ -545,6 +554,19 @@ struct SvgNodeIdPair
     char *id;
 };
 
+struct EmbeddedFont
+{
+    char* name;
+    char* src;
+};
+
+enum class OpenedTagType : uint8_t
+{
+    Other = 0,
+    Style,
+    Text
+};
+
 struct SvgLoaderData
 {
     Array<SvgNode*> stack;
@@ -556,10 +578,11 @@ struct SvgLoaderData
     SvgParser* svgParse = nullptr;
     Array<SvgNodeIdPair> cloneNodes;
     Array<SvgNodeIdPair> nodesToStyle;
-    Array<char*> images;        //embedded images
+    Array<char*> images; //embedded images
+    Array<EmbeddedFont> fonts;
     int level = 0;
     bool result = false;
-    bool style = false;
+    OpenedTagType openedTag = OpenedTagType::Other;
     SvgNode* currentGraphicsNode = nullptr;
 };
 

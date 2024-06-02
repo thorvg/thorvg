@@ -404,6 +404,28 @@ static char* _idFromUrl(const char* url)
 }
 
 
+static char* _srcFromUrl(const char* url)
+{
+    auto open = strchr(url, '(');
+    auto close = strchr(url, ')');
+    if (!open || !close || open >= close) return nullptr;
+
+    open = strchr(open, '\'');
+    if (!open || open >= close) return nullptr;
+    ++open;
+
+    close = strchr(open, '\'');
+    if (!close || close == open) return nullptr;
+    --close;
+
+    //trim the rest of the spaces if any
+    while (open < close && *open == ' ') ++open;
+    while (open < close && *close == ' ') --close;
+
+    return strDuplicate(open, (close - open + 1));
+}
+
+
 static unsigned char _parseColor(const char* value, char** end)
 {
     float r;
@@ -1999,6 +2021,36 @@ static SvgNode* _createImageNode(SvgLoaderData* loader, SvgNode* parent, const c
 }
 
 
+static bool _attrParseFontFace(void* data, const char* key, const char* value)
+{
+    if (!key || !value) return false;
+
+    //Trim the white space
+    key = _skipSpace(key, nullptr);
+    value = _skipSpace(value, nullptr);
+
+    auto loader = (SvgLoaderData*)data;
+    auto& embeddedFont = loader->fonts.last();
+
+    if (!strcmp(key, "font-family")) {
+        if (embeddedFont.name) free(embeddedFont.name);
+        embeddedFont.name = strdup(value);
+    } else if (!strcmp(key, "src")) {
+        if (embeddedFont.src) free(embeddedFont.src);
+        embeddedFont.src = _srcFromUrl(value);
+    }
+
+    return true;
+}
+
+
+static void _createEmbeddedFont(SvgLoaderData* loader, const char* buf, unsigned bufLength, parseAttributes func)
+{
+    loader->fonts.push({});
+    func(buf, bufLength, _attrParseFontFace, loader);
+}
+
+
 static SvgNode* _getDefsNode(SvgNode* node)
 {
     if (!node) return nullptr;
@@ -2119,7 +2171,71 @@ static SvgNode* _createUseNode(SvgLoaderData* loader, SvgNode* parent, const cha
 }
 
 
-//TODO: Implement 'text' primitive
+static constexpr struct
+{
+    const char* tag;
+    SvgParserLengthType type;
+    int sz;
+    size_t offset;
+} textTags[] = {
+        {"x", SvgParserLengthType::Horizontal, sizeof("x"), offsetof(SvgTextNode, x)},
+        {"y", SvgParserLengthType::Vertical, sizeof("y"), offsetof(SvgTextNode, y)},
+        {"font-size", SvgParserLengthType::Vertical, sizeof("font-size"), offsetof(SvgTextNode, fontSize)}
+};
+
+
+static bool _attrParseTextNode(void* data, const char* key, const char* value)
+{
+    SvgLoaderData* loader = (SvgLoaderData*)data;
+    SvgNode* node = loader->svgParse->node;
+    SvgTextNode* text = &(node->node.text);
+
+    unsigned char* array;
+    int sz = strlen(key);
+
+    array = (unsigned char*)text;
+    for (unsigned int i = 0; i < sizeof(textTags) / sizeof(textTags[0]); i++) {
+        if (textTags[i].sz - 1 == sz && !strncmp(textTags[i].tag, key, sz)) {
+            *((float*)(array + textTags[i].offset)) = _toFloat(loader->svgParse, value, textTags[i].type);
+            return true;
+        }
+    }
+
+    if (!strcmp(key, "font-family")) {
+        if (text->fontFamily && value) free(text->fontFamily);
+        text->fontFamily = strdup(value);
+    } else if (!strcmp(key, "style")) {
+        return simpleXmlParseW3CAttribute(value, strlen(value), _parseStyleAttr, loader);
+    } else if (!strcmp(key, "clip-path")) {
+        _handleClipPathAttr(loader, node, value);
+    } else if (!strcmp(key, "mask")) {
+        _handleMaskAttr(loader, node, value);
+    } else if (!strcmp(key, "id")) {
+        if (node->id && value) free(node->id);
+        node->id = _copyId(value);
+    } else if (!strcmp(key, "class")) {
+        _handleCssClassAttr(loader, node, value);
+    } else {
+        return _parseStyleAttr(loader, key, value, false);
+    }
+    return true;
+}
+
+
+static SvgNode* _createTextNode(SvgLoaderData* loader, SvgNode* parent, const char* buf, unsigned bufLength, parseAttributes func)
+{
+    loader->svgParse->node = _createNode(parent, SvgNodeType::Text);
+    if (!loader->svgParse->node) return nullptr;
+
+    loader->svgParse->node->node.text.fontSize = 10.0f;
+    //TODO: support the def font: loader->svgParse->node->node.text.fontFamily = ...
+
+    func(buf, bufLength, _attrParseTextNode, loader);
+
+    return loader->svgParse->node;
+}
+
+
 static constexpr struct
 {
     const char* tag;
@@ -2134,7 +2250,8 @@ static constexpr struct
     {"rect", sizeof("rect"), _createRectNode},
     {"polyline", sizeof("polyline"), _createPolylineNode},
     {"line", sizeof("line"), _createLineNode},
-    {"image", sizeof("image"), _createImageNode}
+    {"image", sizeof("image"), _createImageNode},
+    {"text", sizeof("text"), _createTextNode}
 };
 
 
@@ -3122,6 +3239,20 @@ static void _copyAttr(SvgNode* to, const SvgNode* from)
             to->node.use.symbol = from->node.use.symbol;
             break;
         }
+        case SvgNodeType::Text: {
+            to->node.text.x = from->node.text.x;
+            to->node.text.y = from->node.text.y;
+            to->node.text.fontSize = from->node.text.fontSize;
+            if (from->node.text.text) {
+                if (to->node.text.text) free(to->node.text.text);
+                to->node.text.text = strdup(from->node.text.text);
+            }
+            if (from->node.text.fontFamily) {
+                if (to->node.text.fontFamily) free(to->node.text.fontFamily);
+                to->node.text.fontFamily = strdup(from->node.text.fontFamily);
+            }
+            break;
+        }
         default: {
             break;
         }
@@ -3244,7 +3375,7 @@ static void _svgLoaderParserXmlOpen(SvgLoaderData* loader, const char* content, 
                     node = method(loader, nullptr, attrs, attrsLength, simpleXmlParseAttributes);
                     loader->cssStyle = node;
                     loader->doc->node.doc.style = node;
-                    loader->style = true;
+                    loader->openedTag = OpenedTagType::Style;
                 }
             } else {
                 node = method(loader, parent, attrs, attrsLength, simpleXmlParseAttributes);
@@ -3260,9 +3391,12 @@ static void _svgLoaderParserXmlOpen(SvgLoaderData* loader, const char* content, 
         else parent = loader->doc;
         node = method(loader, parent, attrs, attrsLength, simpleXmlParseAttributes);
         if (node && !empty) {
-            auto defs = _createDefsNode(loader, nullptr, nullptr, 0, nullptr);
-            loader->stack.push(defs);
-            loader->currentGraphicsNode = node;
+            if (!strcmp(tagName, "text")) loader->openedTag = OpenedTagType::Text;
+            else {
+                auto defs = _createDefsNode(loader, nullptr, nullptr, 0, nullptr);
+                loader->stack.push(defs);
+                loader->currentGraphicsNode = node;
+            }
         }
     } else if ((gradientMethod = _findGradientFactory(tagName))) {
         SvgStyleGradient* gradient;
@@ -3295,6 +3429,15 @@ static void _svgLoaderParserXmlOpen(SvgLoaderData* loader, const char* content, 
 }
 
 
+static void _svgLoaderParserText(SvgLoaderData* loader, const char* content, unsigned int length)
+{
+    auto text = &loader->svgParse->node->node.text;
+    if (text->text) free(text->text);
+    text->text = strDuplicate(content, length);
+    loader->openedTag = OpenedTagType::Other;
+}
+
+
 static void _svgLoaderParserXmlCssStyle(SvgLoaderData* loader, const char* content, unsigned int length)
 {
     char* tag;
@@ -3317,6 +3460,8 @@ static void _svgLoaderParserXmlCssStyle(SvgLoaderData* loader, const char* conte
             TVGLOG("SVG", "Unsupported elements used in the internal CSS style sheets [Elements: %s]", tag);
         } else if (!strcmp(tag, "all")) {
             if ((node = _createCssStyleNode(loader, loader->cssStyle, attrs, attrsLength, simpleXmlParseW3CAttribute))) node->id = _copyId(name);
+        } else if (!strcmp(tag, "@font-face")) { //css at-rule specifying font
+            _createEmbeddedFont(loader, attrs, attrsLength, simpleXmlParseW3CAttribute);
         } else if (!isIgnoreUnsupportedLogElements(tag)) {
             TVGLOG("SVG", "Unsupported elements used in the internal CSS style sheets [Elements: %s]", tag);
         }
@@ -3327,7 +3472,7 @@ static void _svgLoaderParserXmlCssStyle(SvgLoaderData* loader, const char* conte
         free(tag);
         free(name);
     }
-    loader->style = false;
+    loader->openedTag = OpenedTagType::Other;
 }
 
 
@@ -3350,7 +3495,8 @@ static bool _svgLoaderParser(void* data, SimpleXMLType type, const char* content
         }
         case SimpleXMLType::Data:
         case SimpleXMLType::CData: {
-            if (loader->style) _svgLoaderParserXmlCssStyle(loader, content, length);
+            if (loader->openedTag == OpenedTagType::Style) _svgLoaderParserXmlCssStyle(loader, content, length);
+            else if (loader->openedTag == OpenedTagType::Text) _svgLoaderParserText(loader, content, length);
             break;
         }
         case SimpleXMLType::DoctypeChild: {
@@ -3572,6 +3718,11 @@ static void _freeNode(SvgNode* node)
              free(node->node.image.href);
              break;
          }
+         case SvgNodeType::Text: {
+             free(node->node.text.text);
+             free(node->node.text.fontFamily);
+             break;
+         }
          default: {
              break;
          }
@@ -3662,6 +3813,12 @@ void SvgLoader::clear(bool all)
         free(*p);
     }
     loaderData.images.reset();
+
+    for (auto font = loaderData.fonts.begin(); font < loaderData.fonts.end(); ++font) {
+        Text::unload(font->name);
+        free(font->name);
+    }
+    loaderData.fonts.reset();
 
     if (copy) free((char*)content);
 

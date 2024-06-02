@@ -67,6 +67,14 @@ static Box _boundingBox(const Shape* shape)
 }
 
 
+static Box _boundingBox(const Text* text)
+{
+    float x, y, w, h;
+    text->bounds(&x, &y, &w, &h, false);
+    return {x, y, w, h};
+}
+
+
 static void _transformMultiply(const Matrix* mBBox, Matrix* gradTransf)
 {
     gradTransf->e13 = gradTransf->e13 * mBBox->e11 + mBBox->e13;
@@ -304,14 +312,9 @@ static void _applyComposition(SvgLoaderData& loaderData, Paint* paint, const Svg
 }
 
 
-static void _applyProperty(SvgLoaderData& loaderData, SvgNode* node, Shape* vg, const Box& vBox, const string& svgPath, bool clip)
+//TODO: unify with _applyFillProperty for text after the opacity to the text is introduced or after the shape's fill api doesn't change the alpha channel
+static void _applyFillProperty(SvgStyleProperty* style, Shape* vg, const Box& vBox)
 {
-    SvgStyleProperty* style = node->style;
-
-    //Clip transformation is applied directly to the path in the _appendClipShape function
-    if (node->transform && !clip) vg->transform(*node->transform);
-    if (node->type == SvgNodeType::Doc || !node->style->display) return;
-
     //If fill property is nullptr then do nothing
     if (style->fill.paint.none) {
         //Do nothing
@@ -320,11 +323,11 @@ static void _applyProperty(SvgLoaderData& loaderData, SvgNode* node, Shape* vg, 
         if (!style->fill.paint.gradient->userSpace) bBox = _boundingBox(vg);
 
         if (style->fill.paint.gradient->type == SvgGradientType::Linear) {
-             auto linear = _applyLinearGradientProperty(style->fill.paint.gradient, bBox, style->fill.opacity);
-             vg->fill(std::move(linear));
+            auto linear = _applyLinearGradientProperty(style->fill.paint.gradient, bBox, style->fill.opacity);
+            vg->fill(std::move(linear));
         } else if (style->fill.paint.gradient->type == SvgGradientType::Radial) {
-             auto radial = _applyRadialGradientProperty(style->fill.paint.gradient, bBox, style->fill.opacity);
-             vg->fill(std::move(radial));
+            auto radial = _applyRadialGradientProperty(style->fill.paint.gradient, bBox, style->fill.opacity);
+            vg->fill(std::move(radial));
         }
     } else if (style->fill.paint.url) {
         //TODO: Apply the color pointed by url
@@ -335,6 +338,46 @@ static void _applyProperty(SvgLoaderData& loaderData, SvgNode* node, Shape* vg, 
         //Apply the fill color
         vg->fill(style->fill.paint.color.r, style->fill.paint.color.g, style->fill.paint.color.b, style->fill.opacity);
     }
+}
+
+
+static void _applyFillProperty(SvgStyleProperty* style, Text* vg, const Box& vBox)
+{
+    //If fill property is nullptr then do nothing
+    if (style->fill.paint.none) {
+        //Do nothing
+    } else if (style->fill.paint.gradient) {
+        Box bBox = vBox;
+        if (!style->fill.paint.gradient->userSpace) bBox = _boundingBox(vg);
+
+        if (style->fill.paint.gradient->type == SvgGradientType::Linear) {
+            auto linear = _applyLinearGradientProperty(style->fill.paint.gradient, bBox, style->fill.opacity);
+            vg->fill(std::move(linear));
+        } else if (style->fill.paint.gradient->type == SvgGradientType::Radial) {
+            auto radial = _applyRadialGradientProperty(style->fill.paint.gradient, bBox, style->fill.opacity);
+            vg->fill(std::move(radial));
+        }
+    } else if (style->fill.paint.url) {
+        //TODO: Apply the color pointed by url
+    } else if (style->fill.paint.curColor) {
+        //Apply the current style color
+        vg->fill(style->color.r, style->color.g, style->color.b);
+    } else {
+        //Apply the fill color
+        vg->fill(style->fill.paint.color.r, style->fill.paint.color.g, style->fill.paint.color.b);
+    }
+}
+
+
+static void _applyProperty(SvgLoaderData& loaderData, SvgNode* node, Shape* vg, const Box& vBox, const string& svgPath, bool clip)
+{
+    SvgStyleProperty* style = node->style;
+
+    //Clip transformation is applied directly to the path in the _appendClipShape function
+    if (node->transform && !clip) vg->transform(*node->transform);
+    if (node->type == SvgNodeType::Doc || !node->style->display) return;
+
+    _applyFillProperty(style, vg, vBox);
 
     //Apply the fill rule
     vg->fill((tvg::FillRule)style->fill.fillRule);
@@ -771,6 +814,32 @@ static unique_ptr<Scene> _useBuildHelper(SvgLoaderData& loaderData, const SvgNod
 }
 
 
+static unique_ptr<Text> _textBuildHelper(SvgLoaderData& loaderData, const SvgNode* node, const Box& vBox, const string& svgPath)
+{
+    auto textNode = &node->node.text;
+    auto text = Text::gen();
+
+    Matrix textTransform = {1, 0, 0, 0, 1, 0, 0, 0, 1};
+    if (node->transform) textTransform = *node->transform;
+    if (!mathZero(node->node.text.x) || !mathZero(node->node.text.y)) {
+        Matrix translate = {1, 0, node->node.text.x, 0, 1, node->node.text.y - textNode->fontSize, 0, 0, 1};
+        textTransform *= translate;
+    }
+    text->transform(textTransform);
+
+    const float ptPerPx = 0.75f; //1 pt = 1/72; 1 in = 96 px; -> 72/96 = 0.75
+    auto fontSizePt = textNode->fontSize * ptPerPx;
+    //TODO: handle default fonts
+    if (textNode->fontFamily) text->font(textNode->fontFamily, fontSizePt);
+    text->text(textNode->text);
+
+    _applyFillProperty(node->style, text.get(), vBox);
+    _applyComposition(loaderData, text.get(), node, vBox, svgPath);
+
+    return text;
+}
+
+
 static unique_ptr<Scene> _sceneBuildHelper(SvgLoaderData& loaderData, const SvgNode* node, const Box& vBox, const string& svgPath, bool mask, int depth, bool* isMaskWhite)
 {
     /* Exception handling: Prevent invalid SVG data input.
@@ -799,6 +868,9 @@ static unique_ptr<Scene> _sceneBuildHelper(SvgLoaderData& loaderData, const SvgN
                         scene->push(std::move(image));
                         if (isMaskWhite) *isMaskWhite = false;
                     }
+                } else if ((*child)->type == SvgNodeType::Text) {
+                    auto text = _textBuildHelper(loaderData, *child, vBox, svgPath);
+                    if (text) scene->push(std::move(text));
                 } else if ((*child)->type != SvgNodeType::Mask) {
                     auto shape = _shapeBuildHelper(loaderData, *child, vBox, svgPath);
                     if (shape) {
@@ -843,6 +915,41 @@ static void _updateInvalidViewSize(const Scene* scene, Box& vBox, float& w, floa
     if (!validHeight) h *= vBox.h;
 }
 
+
+static void _loadFonts(Array<EmbeddedFont>& fonts)
+{
+    if (fonts.empty()) return;
+
+    TaskScheduler::async(false);
+    for (auto font = fonts.begin(); font < fonts.end(); ++font) {
+        if (!font->src || !font->name) return;
+
+        auto src = font->src;
+        if (!strncmp(src, "data:", sizeof("data:") - 1)) {
+            src += sizeof("data:") - 1;
+
+            //Other possibilities? now handling: 1) data:font/ttf;base64, 2) data:application/font-ttf;base64,
+            src = strstr(src, "ttf;base64,");
+            if (!src) {
+                TVGLOG("SVG", "The embedded font named \"%s\" not loaded properly.", font->name);
+                free(font->src);
+                font->src = nullptr;
+                continue;
+            }
+            src += sizeof("ttf;base64,") - 1;
+
+            char *decoded = nullptr;
+            auto size = b64Decode(src, strlen(src), &decoded);
+            if (Text::load(font->name, decoded, size) != Result::Success)
+                TVGERR("SVG", "Error while loading the ttf font named %s.", font->name);
+        }
+        free(font->src);
+        font->src = nullptr;
+    }
+
+    TaskScheduler::async(true);
+}
+
 /************************************************************************/
 /* External Class Implementation                                        */
 /************************************************************************/
@@ -852,6 +959,8 @@ Scene* svgSceneBuild(SvgLoaderData& loaderData, Box vBox, float w, float h, Aspe
     //TODO: aspect ratio is valid only if viewBox was set
 
     if (!loaderData.doc || (loaderData.doc->type != SvgNodeType::Doc)) return nullptr;
+
+    _loadFonts(loaderData.fonts);
 
     auto docNode = _sceneBuildHelper(loaderData, loaderData.doc, vBox, svgPath, false, 0);
 
