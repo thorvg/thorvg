@@ -1271,7 +1271,7 @@ static void _buildReference(LottieComposition* comp, LottieLayer* layer)
 }
 
 
-static void _bulidHierarchy(LottieGroup* parent, LottieLayer* child)
+static void _buildHierarchy(LottieGroup* parent, LottieLayer* child)
 {
     if (child->pidx == -1) return;
 
@@ -1343,11 +1343,11 @@ static bool _buildComposition(LottieComposition* comp, LottieGroup* parent)
 
         if (child->matteTarget) {
             //parenting
-            _bulidHierarchy(parent, child->matteTarget);
+            _buildHierarchy(parent, child->matteTarget);
             //precomp referencing
             if (child->matteTarget->rid) _buildReference(comp, child->matteTarget);
         }
-        _bulidHierarchy(parent, child);
+        _buildHierarchy(parent, child);
 
         //attach the necessary font data
         if (child->type == LottieLayer::Text) _attachFont(comp, child);
