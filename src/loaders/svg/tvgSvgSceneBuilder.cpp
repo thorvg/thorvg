@@ -508,6 +508,7 @@ static constexpr struct
 } imageMimeTypes[] = {
     {"jpeg", sizeof("jpeg"), imageMimeTypeEncoding::base64},
     {"png", sizeof("png"), imageMimeTypeEncoding::base64},
+    {"webp", sizeof("webp"), imageMimeTypeEncoding::base64},
     {"svg+xml", sizeof("svg+xml"), imageMimeTypeEncoding::base64 | imageMimeTypeEncoding::utf8},
 };
 
