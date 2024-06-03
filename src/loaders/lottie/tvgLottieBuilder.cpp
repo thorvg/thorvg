@@ -98,7 +98,7 @@ struct RenderContext
 
 static void _updateChildren(LottieGroup* parent, float frameNo, Inlist<RenderContext>& contexts, LottieExpressions* exps);
 static void _updateLayer(LottieLayer* root, LottieLayer* layer, float frameNo, LottieExpressions* exps);
-static bool _buildComposition(LottieComposition* comp, LottieGroup* parent);
+static bool _buildComposition(LottieComposition* comp, LottieLayer* parent);
 static Shape* _draw(LottieGroup* parent, RenderContext* ctx);
 
 static void _rotateX(Matrix* m, float degree)
@@ -1315,7 +1315,7 @@ static void _attachFont(LottieComposition* comp, LottieLayer* parent)
 }
 
 
-static bool _buildComposition(LottieComposition* comp, LottieGroup* parent)
+static bool _buildComposition(LottieComposition* comp, LottieLayer* parent)
 {
     if (parent->children.count == 0) return false;
     if (parent->buildDone) return true;
@@ -1334,11 +1334,7 @@ static bool _buildComposition(LottieComposition* comp, LottieGroup* parent)
                     child->matteTarget = static_cast<LottieLayer*>(*(c - 1));
                 }
             //matte layer is specified by an index.
-            } else {
-                if (auto matte = comp->layerByIdx(child->mid)) {
-                    child->matteTarget = matte;
-                }
-            }
+            } else child->matteTarget = parent->layerByIdx(child->mid);
         }
 
         if (child->matteTarget) {
