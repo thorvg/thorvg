@@ -21,6 +21,7 @@
  */
 
 #include "Common.h"
+#include <fstream>
 
 /************************************************************************/
 /* Drawing Commands                                                     */
@@ -50,10 +51,20 @@ void tvgDrawCmds(tvg::Canvas* canvas)
         return;
     }
 
-    if (tvg::Text::load(EXAMPLE_DIR"/font/SentyCloud.ttf") != tvg::Result::Success) {
-        cout << "TTF is not supported. Did you enable TTF Loader?" << endl;
-        return;
+    //Load from memory
+    ifstream file(EXAMPLE_DIR"/font/SentyCloud.ttf", ios::binary);
+    if (!file.is_open()) return;
+    file.seekg(0, std::ios::end);
+    auto size = file.tellg();
+    file.seekg(0, std::ios::beg);
+    auto data = (char*)malloc(size);
+    if (!data) return;
+    file.read(data, size);
+    file.close();
+    if (tvg::Text::load("SentyCloud", data, size, "ttf", true) != tvg::Result::Success) {
+        cout << "Error while loading TTF from memory. Did you enable TTF Loader?" << endl;
     }
+    free(data);
 
     auto text = tvg::Text::gen();
     text->font("Arial", 80);
