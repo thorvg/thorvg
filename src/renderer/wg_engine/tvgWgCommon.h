@@ -44,6 +44,7 @@ struct WgPipelines;
 
 struct WgContext {
     WGPUInstance instance{};
+    WGPUSurface surface{};
     WGPUAdapter adapter{};
     WGPUDevice device{};
     WGPUQueue queue{};
@@ -58,7 +59,7 @@ struct WgContext {
 
     WgPipelines* pipelines{}; // external handle (do not release)
     
-    void initialize();
+    void initialize(void* disp_inst, void* wind_serf, uint32_t w, uint32_t h);
     void release();
 
     void executeCommandEncoder(WGPUCommandEncoder commandEncoder);
@@ -79,6 +80,8 @@ struct WgContext {
     void allocateIndexBufferFan(uint64_t size);
     void releaseVertexBuffer(WGPUBuffer& buffer);
     void releaseIndexBuffer(WGPUBuffer& buffer);
+
+    static WGPUSurface createSurface(WGPUInstance instance, void* disp_inst, void* wind_serf);
 };
 
 struct WgBindGroup

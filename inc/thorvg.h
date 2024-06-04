@@ -1745,7 +1745,7 @@ public:
      * @note Experimental API
      * @see Canvas::viewport()
      */
-    Result target(void* window, uint32_t w, uint32_t h) noexcept;
+    Result target(void *disp_inst, void *wind_serf, uint32_t w, uint32_t h) noexcept;
 
     /**
      * @brief Creates a new WgCanvas object.

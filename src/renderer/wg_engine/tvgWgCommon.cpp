@@ -27,7 +27,7 @@
 // context
 //*****************************************************************************
 
-void WgContext::initialize()
+void WgContext::initialize(void* disp_inst, void* wind_serf, uint32_t w, uint32_t h)
 {
     // create instance
     WGPUInstanceDescriptor instanceDesc{};
@@ -35,10 +35,14 @@ void WgContext::initialize()
     instance = wgpuCreateInstance(&instanceDesc);
     assert(instance);
 
+    // cretae netive surface
+    surface = createSurface(instance, disp_inst, wind_serf);
+    assert(surface);
+
     // request adapter options
     WGPURequestAdapterOptions requestAdapterOptions{};
     requestAdapterOptions.nextInChain = nullptr;
-    requestAdapterOptions.compatibleSurface = nullptr;
+    requestAdapterOptions.compatibleSurface = surface;
     requestAdapterOptions.powerPreference = WGPUPowerPreference_HighPerformance;
     requestAdapterOptions.forceFallbackAdapter = false;
     // on adapter request ended function
@@ -86,6 +90,20 @@ void WgContext::initialize()
     // set device error handling
     wgpuDeviceSetUncapturedErrorCallback(device, onDeviceError, nullptr);
 
+    // configure surface
+    WGPUSurfaceConfiguration surfaceConfiguration{};
+    surfaceConfiguration.nextInChain = nullptr;
+    surfaceConfiguration.device = device;
+    surfaceConfiguration.format = WGPUTextureFormat_BGRA8Unorm;
+    surfaceConfiguration.usage = WGPUTextureUsage_CopyDst;
+    surfaceConfiguration.viewFormatCount = 0;
+    surfaceConfiguration.viewFormats = nullptr;
+    surfaceConfiguration.alphaMode = WGPUCompositeAlphaMode_Auto;
+    surfaceConfiguration.width = w;
+    surfaceConfiguration.height = h;
+    surfaceConfiguration.presentMode = WGPUPresentMode_Mailbox;
+    wgpuSurfaceConfigure(surface, &surfaceConfiguration);
+
     queue = wgpuDeviceGetQueue(device);
     assert(queue);
     
@@ -112,6 +130,11 @@ void WgContext::release()
     if (adapter) {
         wgpuAdapterRelease(adapter);
         adapter = nullptr;
+    }
+    if (surface) {
+        wgpuSurfaceUnconfigure(surface);
+        wgpuSurfaceRelease(surface);
+        surface = nullptr;
     }
     if (instance) {
         wgpuInstanceRelease(instance);
@@ -170,7 +193,6 @@ WGPUTexture WgContext::createTexture2d(WGPUTextureUsageFlags usage, WGPUTextureF
 
 WGPUTexture WgContext::createTexture2dMS(WGPUTextureUsageFlags usage, WGPUTextureFormat format, uint32_t width, uint32_t height, uint32_t sc, char const * label)
 {
-
     WGPUTextureDescriptor textureDesc{};
     textureDesc.nextInChain = nullptr;
     textureDesc.label = label;
@@ -326,6 +348,27 @@ void WgContext::releaseIndexBuffer(WGPUBuffer& buffer)
     releaseBuffer(buffer);
 }
 
+
+WGPUSurface WgContext::createSurface(WGPUInstance instance, void* disp_inst, void* wind_serf)
+{
+    #if defined(_WIN32)
+    WGPUSurfaceDescriptorFromWindowsHWND surfaceDescNative{};
+    surfaceDescNative.chain.next = nullptr;
+    surfaceDescNative.chain.sType = WGPUSType_SurfaceDescriptorFromWindowsHWND;
+    surfaceDescNative.hinstance = disp_inst;
+    surfaceDescNative.hwnd = wind_serf;
+    #elif defined(__GNUC__)
+    WGPUSurfaceDescriptorFromXlibWindow surfaceDescNative;
+    surfaceDescNative.chain.next = NULL;
+    surfaceDescNative.chain.sType = WGPUSType_SurfaceDescriptorFromXlibWindow;
+    surfaceDescNative.display = disp_inst;
+    surfaceDescNative.window = (uint64_t)wind_serf;
+    #endif
+    WGPUSurfaceDescriptor surfaceDesc{};
+    surfaceDesc.nextInChain = (const WGPUChainedStruct*)&surfaceDescNative;
+    surfaceDesc.label = "The surface";
+    return wgpuInstanceCreateSurface(instance, &surfaceDesc);
+}
 
 //*****************************************************************************
 // bind group

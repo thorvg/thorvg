@@ -22,28 +22,22 @@
 
 #include "tvgWgRenderer.h"
 
-#ifdef _WIN32
-// TODO: cross-platform realization
-#include <windows.h>
-#endif
-
 #define WG_SSAA_SAMPLES (2)
 
 WgRenderer::WgRenderer()
 {
-    initialize();
 }
 
 
 WgRenderer::~WgRenderer()
 {
     release();
+    mContext.release();
 }
 
 
 void WgRenderer::initialize()
 {
-    mContext.initialize();
     mPipelines.initialize(mContext);
     mOpacityPool.initialize(mContext);
     mBlendMethodPool.initialize(mContext);
@@ -70,10 +64,7 @@ void WgRenderer::release()
     mRenderStorageRoot.release(mContext);
     mRenderStorageScreen.release(mContext);
     mRenderTarget.release(mContext);
-    wgpuSurfaceUnconfigure(mSurface);
-    wgpuSurfaceRelease(mSurface);
     mPipelines.release();
-    mContext.release();
 }
 
 
@@ -274,7 +265,7 @@ bool WgRenderer::clear()
 bool WgRenderer::sync()
 {
     WGPUSurfaceTexture backBuffer{};
-    wgpuSurfaceGetCurrentTexture(mSurface, &backBuffer);
+    wgpuSurfaceGetCurrentTexture(mContext.surface, &backBuffer);
     
     WGPUCommandEncoderDescriptor commandEncoderDesc{};
     commandEncoderDesc.nextInChain = nullptr;
@@ -296,7 +287,7 @@ bool WgRenderer::sync()
     mContext.executeCommandEncoder(commandEncoder);
     wgpuCommandEncoderRelease(commandEncoder);
     
-    wgpuSurfacePresent(mSurface);
+    wgpuSurfacePresent(mContext.surface);
     return true;
 }
 
@@ -314,38 +305,15 @@ bool WgRenderer::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t 
 
 
 // target for native window handle
-bool WgRenderer::target(void* window, uint32_t w, uint32_t h)
+bool WgRenderer::target(void *disp_inst, void *wind_serf, uint32_t w, uint32_t h)
 {
     // store target surface properties
     mTargetSurface.stride = w;
     mTargetSurface.w = w > 0 ? w : 1;
     mTargetSurface.h = h > 0 ? h : 1;
     
-    // surface descriptor from windows hwnd
-    WGPUSurfaceDescriptorFromWindowsHWND surfaceDescHwnd{};
-    surfaceDescHwnd.chain.next = nullptr;
-    surfaceDescHwnd.chain.sType = WGPUSType_SurfaceDescriptorFromWindowsHWND;
-    surfaceDescHwnd.hinstance = GetModuleHandle(NULL);
-    surfaceDescHwnd.hwnd = (HWND)window;
-    WGPUSurfaceDescriptor surfaceDesc{};
-    surfaceDesc.nextInChain = (const WGPUChainedStruct*)&surfaceDescHwnd;
-    surfaceDesc.label = "The surface";
-    mSurface = wgpuInstanceCreateSurface(mContext.instance, &surfaceDesc);
-    assert(mSurface);
-
-    WGPUSurfaceConfiguration surfaceConfiguration{};
-    surfaceConfiguration.nextInChain = nullptr;
-    surfaceConfiguration.device = mContext.device;
-    surfaceConfiguration.format = WGPUTextureFormat_BGRA8Unorm;
-    surfaceConfiguration.usage = WGPUTextureUsage_CopyDst;
-    surfaceConfiguration.viewFormatCount = 0;
-    surfaceConfiguration.viewFormats = nullptr;
-    surfaceConfiguration.alphaMode = WGPUCompositeAlphaMode_Auto;
-    surfaceConfiguration.width = mTargetSurface.w;
-    surfaceConfiguration.height = mTargetSurface.h;
-    surfaceConfiguration.presentMode = WGPUPresentMode_Mailbox;
-    wgpuSurfaceConfigure(mSurface, &surfaceConfiguration);
-
+    mContext.initialize(disp_inst, wind_serf, w, h);
+    initialize();
     mRenderTarget.initialize(mContext, w, h, WG_SSAA_SAMPLES);
     mRenderStorageRoot.initialize(mContext, w, h, WG_SSAA_SAMPLES);
     mRenderStorageScreen.initialize(mContext, w, h);
