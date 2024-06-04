@@ -433,3 +433,26 @@ LoadModule* LoaderMgr::loader(const uint32_t *data, uint32_t w, uint32_t h, bool
     delete(loader);
     return nullptr;
 }
+
+
+//loads fonts from memory - loader is cached (regardless of copy value) in order to access it while setting font
+LoadModule* LoaderMgr::loader(const char* name, const char* data, uint32_t size, const string& mimeType, bool copy)
+{
+    //TODO: add check for mimetype ?
+    if (auto loader = _findFromCache(name)) return loader;
+
+    if (auto loader = _findByType(mimeType)) {
+        if (loader->open(data, size, copy)) {
+            loader->hashpath = strdup(name);
+            loader->pathcache = true;
+            ScopedLock lock(key);
+            _activeLoaders.back(loader);
+            return loader;
+        } else {
+            TVGLOG("LOADER", "The font data \"%s\" could not be loaded.", name);
+            delete(loader);
+        }
+    }
+
+    return nullptr;
+}

@@ -193,7 +193,13 @@ static uint32_t* _codepoints(const char* text, size_t n)
 
 void TtfLoader::clear()
 {
-    _unmap(this);
+    if (nomap) {
+        if (freeData) free(reader.data);
+        reader.data = nullptr;
+        reader.size = 0;
+        freeData = false;
+        nomap = false;
+    } else _unmap(this);
     shape = nullptr;
 }
 
@@ -232,6 +238,22 @@ bool TtfLoader::open(const string& path)
 {
     clear();
     if (!_map(this, path)) return false;
+    return reader.header();
+}
+
+
+bool TtfLoader::open(const char* data, uint32_t size, bool copy)
+{
+    reader.size = size;
+    nomap = true;
+
+    if (copy) {
+        reader.data = (uint8_t*)malloc(size);
+        if (!reader.data) return false;
+        memcpy((char*)reader.data, data, reader.size);
+        freeData = true;
+    } else reader.data = (uint8_t*)data;
+
     return reader.header();
 }
 

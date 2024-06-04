@@ -1601,7 +1601,7 @@ public:
     Result fill(std::unique_ptr<Fill> f) noexcept;
 
     /**
-     * @brief Loads a scalable font data(ttf) from a file.
+     * @brief Loads a scalable font data (ttf) from a file.
      *
      * ThorVG efficiently caches the loaded data using the specified @p path as a key.
      * This means that loading the same file again will not result in duplicate operations;
@@ -1619,6 +1619,34 @@ public:
      * @see Text::unload(const std::string& path)
      */
     static Result load(const std::string& path) noexcept;
+
+    /**
+     * @brief Loads a scalable font data (ttf) from a memory block of a given size.
+     *
+     * ThorVG efficiently caches the loaded font data using the specified @p name as a key.
+     * This means that loading the same fonts again will not result in duplicate operations.
+     * Instead, ThorVG will reuse the previously loaded font data.
+     *
+     * @param[in] name The name under which the font will be stored and accessible (e.x. in a @p font() API).
+     * @param[in] data A pointer to a memory location where the content of the font data is stored.
+     * @param[in] size The size in bytes of the memory occupied by the @p data.
+     * @param[in] mimeType Mimetype or extension of font data. In case an empty string is provided the loader will be determined automatically.
+     * @param[in] copy If @c true the data are copied into the engine local buffer, otherwise they are not (default).
+     *
+     * @retval Result::Success When succeed.
+     * @retval Result::InvalidArguments If no name is provided or if @p size is zero while @p data points to a valid memory location.
+     * @retval Result::NonSupport When trying to load a file with an unsupported extension.
+     * @retval Result::Unknown If an error occurs at a later stage.
+     *
+     * @warning: It's the user responsibility to release the @p data memory.
+     *
+     * @note To unload the font data loaded using this API, pass the proper @p name and @c nullptr as @p data.
+     * @note If you are unsure about the MIME type, you can provide an empty value like @c "", and thorvg will attempt to figure it out.
+     * @note Experimental API
+     *
+     * @see Text::font(const char* name, float size, const char* style)
+     */
+    static Result load(const char* name, const char* data, uint32_t size, const std::string& mimeType = "ttf", bool copy = false) noexcept;
 
     /**
      * @brief Unloads the specified scalable font data (TTF) that was previously loaded.
