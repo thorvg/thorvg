@@ -73,3 +73,18 @@ list<Paint*>& Scene::paints() noexcept
 {
     return pImpl->paints;
 }
+
+
+Result Scene::viewport(int32_t x, int32_t y, int32_t w, int32_t h) noexcept
+{
+    if (w < 0 || h < 0) return Result::InvalidArguments;
+    pImpl->viewport(x, y, w, h);
+    return Result::Success;
+}
+
+
+Result Scene::viewport(int32_t* x, int32_t* y, int32_t* w, int32_t* h) noexcept
+{
+    if (pImpl->viewport(x, y, w, h)) return Result::Success;
+    return Result::InsufficientCondition;
+}

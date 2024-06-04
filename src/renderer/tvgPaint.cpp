@@ -41,7 +41,6 @@
     }
 
 
-
 static Result _compFastTrack(Paint* cmpTarget, const RenderTransform* pTransform, RenderTransform* rTransform, RenderRegion& viewport)
 {
     /* Access Shape class by Paint is bad... but it's ok still it's an internal usage. */
@@ -237,9 +236,15 @@ RenderData Paint::Impl::update(RenderMethod* renderer, const RenderTransform* pT
         rTransform->update();
     }
 
+    RenderData vrd = nullptr;                 // viewport render data
+    auto initialViewport = renderer->viewport();
+    auto viewportType = ViewportType::None;
+    if (paint->identifier() == TVG_CLASS_ID_SCENE) {
+        viewportType = P(static_cast<Scene*>(paint))->applyViewport(renderer, pTransform, clips, pFlag, vrd);
+    }
+
     /* 1. Composition Pre Processing */
     RenderData trd = nullptr;                 //composite target render data
-    RenderRegion viewport;
     Result compFastTrack = Result::InsufficientCondition;
     bool childClipper = false;
 
@@ -266,7 +271,7 @@ RenderData Paint::Impl::update(RenderMethod* renderer, const RenderTransform* pT
             if (tryFastTrack) {
                 RenderRegion viewport2;
                 if ((compFastTrack = _compFastTrack(target, pTransform, target->pImpl->rTransform, viewport2)) == Result::Success) {
-                    viewport = renderer->viewport();
+                    auto viewport = renderer->viewport();
                     viewport2.intersect(viewport);
                     renderer->viewport(viewport2);
                     target->pImpl->ctxFlag |= ContextFlag::FastTrack;
@@ -290,8 +295,8 @@ RenderData Paint::Impl::update(RenderMethod* renderer, const RenderTransform* pT
     PAINT_METHOD(rd, update(renderer, &outTransform, clips, opacity, newFlag, clipper));
 
     /* 3. Composition Post Processing */
-    if (compFastTrack == Result::Success) renderer->viewport(viewport);
-    else if (childClipper) clips.pop();
+    if (compFastTrack == Result::Success || viewportType == ViewportType::AxisAligned) renderer->viewport(initialViewport);
+    else if (childClipper || viewportType == ViewportType::General) clips.pop();
 
     return rd;
 }
