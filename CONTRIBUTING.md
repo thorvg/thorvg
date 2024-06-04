@@ -1,18 +1,7 @@
 We always appreciate your contribution. ThorVG doesn't expect patches to be perfect; instead, we value contributions that make ThorVG better than before. This page outlines the ThorVG contribution format.<br />
 <br />
 ## Reviewers
-Hermet Park (hermet) is the lead maintainer. Moreover, there are designated reviewers you can contact for individual modules when submitting pull requests.
-
-<b>sw_engine:</b> Mira Grudzinska (mgrudzinska) <br />
-<b>gl_engine:</b> Ruiwen Tang (RuiwenTang), Sergii Liebodkin (SergeyLebedkin) <br />
-<b>wg_engine:</b> Sergii Liebodkin (SergeyLebedkin) <br />
-<b>svg_loader:</b> Junsu Choi (JSUYA), Mira Grudzinska (mgrudzinska) <br />
-<b>tvg_loader:</b> Mira Grudzinska (mgrudzinska) <br />
-<b>gif_saver:</b> Junsu Choi (JSUYA) <br />
-<b>webp_loader:</b> Junsu Choi (JSUYA) <br />
-<b>web:</b> Jinny You (tinyjin) <br />
-<b>svg2png:</b> Junsu Choi (JSUYA) <br />
-<br />
+ThorVG uses GitHub infrastructure to automatically assign code reviewers for your changes. To see the full list of reviewers, please refer to the [CODEOWNERS](https://github.com/thorvg/thorvg/blob/main/CODEOWNERS) file.
 
 ## Self Test & Verification
 After updating the ThorVG code, please ensure your changes don't break the library. We recommend conducting unit tests. You can easily run them using the following build commands: <br />
