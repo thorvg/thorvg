@@ -2,9 +2,10 @@ We always appreciate your contribution. ThorVG doesn't expect patches to be perf
 <br />
 ## Reviewers
 ThorVG uses GitHub infrastructure to automatically assign code reviewers for your changes. To see the full list of reviewers, please refer to the [CODEOWNERS](https://github.com/thorvg/thorvg/blob/main/CODEOWNERS) file.
+<br />
 
 ## Self Test & Verification
-After updating the ThorVG code, please ensure your changes don't break the library. We recommend conducting unit tests. You can easily run them using the following build commands: <br />
+After updating the ThorVG code, please ensure your changes don't break the library. We recommend conducting unit tests. You can easily run them using the following build commands:
 <br/>
 `
 $meson . build -Dtests=true -Dloaders="all" -Dsavers="all" -Dbindings="capi" -Dtools="all" -Dlog=true
@@ -22,7 +23,7 @@ Fail:               0<br/>
 Unexpected Pass:    0<br/>
 Skipped:            0<br/>
 Timeout:            0<br/>
-<br/>
+
 ## Commit Message
 [Module][Feature]: [Title]
 
@@ -81,7 +82,6 @@ Here's a sample commit message for clarity:
   @References: [Provide any relevant links, such as screenshots.]
 
   @Issues: [Link to the issue]
-<br />
 
 ## Pull Request
 
