@@ -1668,10 +1668,10 @@ void Stroker::stroke(const RenderShape *rshape)
 RenderRegion Stroker::bounds() const
 {
     return RenderRegion {
-        static_cast<int32_t>(mLeftTop.x),
-        static_cast<int32_t>(mLeftTop.y),
-        static_cast<int32_t>(mRightBottom.x - mLeftTop.x),
-        static_cast<int32_t>(mRightBottom.y - mLeftTop.y),
+        static_cast<int32_t>(floor(mLeftTop.x)),
+        static_cast<int32_t>(floor(mLeftTop.y)),
+        static_cast<int32_t>(ceil(mRightBottom.x - floor(mLeftTop.x))),
+        static_cast<int32_t>(ceil(mRightBottom.y - floor(mLeftTop.y))),
     };
 }
 
@@ -1802,12 +1802,12 @@ void Stroker::strokeLineTo(const GlPoint &curr)
     if (ia == 0) {
         mRightBottom.x = mLeftTop.x = curr.x;
         mRightBottom.y = mLeftTop.y = curr.y;
-    } else {
-        mLeftTop.x = min(mLeftTop.x, curr.x);
-        mLeftTop.y = min(mLeftTop.y, curr.y);
-        mRightBottom.x = max(mRightBottom.x, curr.x);
-        mRightBottom.y = max(mRightBottom.y , curr.y);
     }
+
+    mLeftTop.x = std::min(mLeftTop.x, min(min(a.x, b.x), min(c.x, d.x)));
+    mLeftTop.y = std::min(mLeftTop.y, min(min(a.y, b.y), min(c.y, d.y)));
+    mRightBottom.x = std::max(mRightBottom.x, max(max(a.x, b.x), max(c.x, d.x)));
+    mRightBottom.y = std::max(mRightBottom.y, max(max(a.y, b.y), max(c.y, d.y)));
 }
 
 void Stroker::strokeCubicTo(const GlPoint &cnt1, const GlPoint &cnt2, const GlPoint &end)
@@ -1903,6 +1903,11 @@ void Stroker::strokeRound(const GlPoint &prev, const GlPoint &curr, const GlPoin
         return;
     }
 
+    mLeftTop.x = std::min(mLeftTop.x, min(center.x, min(prev.x, curr.x)));
+    mLeftTop.y = std::min(mLeftTop.y, min(center.y, min(prev.y, curr.y)));
+    mRightBottom.x = std::max(mRightBottom.x, max(center.x, max(prev.x, curr.x)));
+    mRightBottom.y = std::max(mRightBottom.y, max(center.y, max(prev.y, curr.y)));
+
     // Fixme: just use bezier curve to calculate step count
     auto count = detail::_bezierCurveCount(detail::_bezFromArc(prev, curr, strokeRadius()));
 
@@ -1930,6 +1935,11 @@ void Stroker::strokeRound(const GlPoint &prev, const GlPoint &curr, const GlPoin
         this->mResIndices->push(oi);
 
         pi = oi;
+
+        mLeftTop.x = std::min(mLeftTop.x, out.x);
+        mLeftTop.y = std::min(mLeftTop.y, out.y);
+        mRightBottom.x = std::max(mRightBottom.x, out.x);
+        mRightBottom.y = std::max(mRightBottom.y, out.y);
     }
 }
 
@@ -1965,6 +1975,12 @@ void Stroker::strokeMiter(const GlPoint &prev, const GlPoint &curr, const GlPoin
     this->mResIndices->push(e);
     this->mResIndices->push(cp2);
     this->mResIndices->push(c);
+
+    mLeftTop.x = std::min(mLeftTop.x, join.x);
+    mLeftTop.y = std::min(mLeftTop.y, join.y);
+
+    mRightBottom.x = std::max(mRightBottom.x, join.x);
+    mRightBottom.y = std::max(mRightBottom.y, join.y);
 }
 
 void Stroker::strokeBevel(const GlPoint &prev, const GlPoint &curr, const GlPoint &center)
@@ -2000,6 +2016,11 @@ void Stroker::strokeSquare(const GlPoint& p, const GlPoint& outDir)
     mResIndices->push(ci);
     mResIndices->push(bi);
     mResIndices->push(di);
+
+    mLeftTop.x = std::min(mLeftTop.x, min(min(a.x, b.x), min(c.x, d.x)));
+    mLeftTop.y = std::min(mLeftTop.y, min(min(a.y, b.y), min(c.y, d.y)));
+    mRightBottom.x = std::max(mRightBottom.x, max(max(a.x, b.x), max(c.x, d.x)));
+    mRightBottom.y = std::max(mRightBottom.y, max(max(a.y, b.y), max(c.y, d.y)));
 }
 
 void Stroker::strokeRound(const GlPoint& p, const GlPoint& outDir)
@@ -2262,10 +2283,10 @@ void BWTessellator::tessellate(const RenderShape *rshape, const Matrix& matrix)
 RenderRegion BWTessellator::bounds() const
 {
     return RenderRegion {
-        static_cast<int32_t>(mLeftTop.x),
-        static_cast<int32_t>(mLeftTop.y),
-        static_cast<int32_t>(mRightBottom.x - mLeftTop.x),
-        static_cast<int32_t>(mRightBottom.y - mLeftTop.y),
+        static_cast<int32_t>(floor(mLeftTop.x)),
+        static_cast<int32_t>(floor(mLeftTop.y)),
+        static_cast<int32_t>(ceil(mRightBottom.x - floor(mLeftTop.x))),
+        static_cast<int32_t>(ceil(mRightBottom.y - floor(mLeftTop.y))),
     };
 }
 

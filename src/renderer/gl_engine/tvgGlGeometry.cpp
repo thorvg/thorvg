@@ -279,10 +279,10 @@ RenderRegion GlGeometry::getBounds() const
         float bottom = max(max(lt.y, lb.y), max(rt.y, rb.y));
 
         auto bounds = RenderRegion {
-            static_cast<int32_t>(left),
-            static_cast<int32_t>(top),
-            static_cast<int32_t>(right - left),
-            static_cast<int32_t>(bottom - top),
+            static_cast<int32_t>(floor(left)),
+            static_cast<int32_t>(floor(top)),
+            static_cast<int32_t>(ceil(right - floor(left))),
+            static_cast<int32_t>(ceil(bottom - floor(top))),
         };
         if (bounds.x < 0 || bounds.y < 0 || bounds.w < 0 || bounds.h < 0) {
             return mBounds;

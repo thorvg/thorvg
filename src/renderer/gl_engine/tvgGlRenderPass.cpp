@@ -83,13 +83,15 @@ void GlRenderTarget::init(GLint resolveId)
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, resolveId));
 }
 
-GlRenderPass::GlRenderPass(GlRenderTarget* fbo): mFbo(fbo), mTasks() {}
+GlRenderPass::GlRenderPass(GlRenderTarget* fbo): mFbo(fbo), mTasks(), mDrawDepth(0) {}
 
-GlRenderPass::GlRenderPass(GlRenderPass&& other): mFbo(other.mFbo), mTasks()
+GlRenderPass::GlRenderPass(GlRenderPass&& other): mFbo(other.mFbo), mTasks(), mDrawDepth(0)
 {
     mTasks.push(other.mTasks);
 
     other.mTasks.clear();
+
+    mDrawDepth = other.mDrawDepth;
 }
 
 GlRenderPass::~GlRenderPass()
