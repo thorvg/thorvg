@@ -1306,7 +1306,7 @@ static void _attachFont(LottieComposition* comp, LottieLayer* parent)
         for (uint32_t i = 0; i < comp->fonts.count; ++i) {
             auto font = comp->fonts[i];
             auto len2 = strlen(font->name);
-            if (!strncmp(font->name, doc.name, len < len2 ? len : len2)) {
+            if (len == len2 && !strcmp(font->name, doc.name)) {
                 text->font = font;
                 break;
             }
