@@ -1099,6 +1099,7 @@ static void _updateText(LottieLayer* layer, float frameNo)
             cursor.y = ++line * (doc.height / scale);
         }
         //find the glyph
+        bool found = false;
         for (auto g = text->font->chars.begin(); g < text->font->chars.end(); ++g) {
             auto glyph = *g;
             //draw matched glyphs
@@ -1128,9 +1129,13 @@ static void _updateText(LottieLayer* layer, float frameNo)
 
                 //advance the cursor position horizontally
                 cursor.x += glyph->width + spacing + doc.tracking;
+
+                found = true;
                 break;
             }
         }
+
+        if (!found) ++p;
     }
 }
 
